@@ -23,9 +23,6 @@ class WorkflowData:
     index: Index
     """A finalized index to be used for testing analyses."""
 
-    new_index: Index
-    """An un-finalized index for testing index creation workflows."""
-
     job: JobWithKey
     """A fake job."""
 
@@ -184,11 +181,6 @@ def workflow_data(
     index.reference = ReferenceNested.parse_obj(reference)
     index.ready = True
 
-    new_index: Index = IndexFactory.build()
-    new_index.reference = ReferenceNested.parse_obj(reference)
-    new_index.files = []
-    new_index.ready = False
-
     subtraction = SubtractionFactory.build()
     subtraction.files = [
         SubtractionFile(
@@ -218,7 +210,6 @@ def workflow_data(
     return WorkflowData(
         analysis=analysis,
         index=index,
-        new_index=new_index,
         job=job,
         acquired=False,
         reference=reference,

@@ -1,6 +1,5 @@
 from datetime import datetime
 
-from virtool.jobs.models import JobMinimal
 from virtool.models import SearchResult
 from virtool.models.base import BaseModel
 from virtool.references.models import ReferenceNested
@@ -15,7 +14,6 @@ class IndexNested(BaseModel):
 class IndexMinimal(IndexNested):
     change_count: int
     created_at: datetime
-    job: JobMinimal | None
     modified_otu_count: int
     ready: bool
     reference: ReferenceNested
@@ -27,7 +25,6 @@ class IndexMinimal(IndexNested):
                 "change_count": 0,
                 "created_at": "2015-10-06T20:00:00Z",
                 "id": 5,
-                "job": {"id": "bf1b993c"},
                 "modified_otu_count": 0,
                 "ready": False,
                 "reference": {"id": "foo"},
@@ -68,7 +65,6 @@ class Index(IndexMinimal):
                 "version": 0,
                 "created_at": "2015-10-06T20:00:00Z",
                 "ready": False,
-                "job": {"id": "foo"},
                 "reference": {"id": "foo"},
                 "user": {
                     "id": "bf1b993c",

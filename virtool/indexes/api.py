@@ -16,13 +16,12 @@ from virtool.api.streaming import stream_storage_response
 from virtool.data.errors import ResourceConflictError, ResourceNotFoundError
 from virtool.data.utils import get_data_from_req
 from virtool.history.models import HistorySearchResult
-from virtool.indexes.db import INDEX_FILE_NAMES, JOB_INDEX_FILE_NAMES
+from virtool.indexes.db import INDEX_FILE_NAMES
 from virtool.indexes.models import Index, IndexSearchResult
 from virtool.indexes.oas import (
     ListIndexesResponse,
     ReadyIndexesResponse,
 )
-from virtool.indexes.utils import check_index_file_type
 from virtool.models.roles import AdministratorRole
 
 routes = Routes()
@@ -221,58 +220,6 @@ async def download_index_file_for_jobs(req: Request):
             "Content-Type": "application/octet-stream",
         },
     )
-
-
-@routes.jobs_api.put("/indexes/{index_id}/files/{filename}")
-async def upload(req):
-    """Upload an index file.
-
-    Uploads a new index file.
-    """
-    index_id = _parse_index_id(req.match_info["index_id"])
-    name = req.match_info["filename"]
-
-    if name not in JOB_INDEX_FILE_NAMES:
-        raise APINotFound("Index file not found")
-
-    try:
-        await get_data_from_req(req).index.get_reference(index_id)
-    except ResourceNotFoundError:
-        raise APINotFound()
-
-    file_type = check_index_file_type(name)
-
-    try:
-        index_file = await get_data_from_req(req).index.upload_file(
-            index_id, file_type, name, req.multipart
-        )
-    except ResourceConflictError:
-        raise APIConflict("File name already exists")
-
-    return json_response(
-        index_file,
-        headers={"Location": f"/indexes/{index_id}/files/{name}"},
-        status=201,
-    )
-
-
-@routes.jobs_api.patch("/indexes/{index_id}")
-async def finalize(req):
-    """Finalize an index.
-
-    Sets the `ready` flag and updates associated OTUs' `last_indexed_version` fields.
-
-    """
-    index_id = _parse_index_id(req.match_info["index_id"])
-
-    try:
-        document = await get_data_from_req(req).index.finalize(index_id)
-    except ResourceNotFoundError:
-        raise APINotFound
-    except ResourceConflictError as err:
-        raise APIConflict(str(err))
-
-    return json_response(document)
 
 
 @routes.view("/indexes/{index_id}/history")

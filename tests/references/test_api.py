@@ -929,7 +929,7 @@ class TestCreateIndex:
 
         body = await resp.json()
         assert body["ready"] is False
-        assert body["job"] is None
+        assert "job" not in body
         assert "task" not in body
 
         async with AsyncSession(pg) as session:

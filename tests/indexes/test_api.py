@@ -23,9 +23,8 @@ from virtool.data.layer import DataLayer
 from virtool.fake.next import DataFaker
 from virtool.history.db import legacy_history_values
 from virtool.history.sql import SQLLegacyHistory
-from virtool.indexes.db import JOB_INDEX_FILE_NAMES
 from virtool.indexes.sql import SQLIndex, SQLIndexFile
-from virtool.indexes.utils import check_index_file_type, compose_index_file_key
+from virtool.indexes.utils import compose_index_file_key
 from virtool.jobs.pg import SQLJob
 from virtool.models.enums import Permission
 from virtool.otus.sql import SQLOTU
@@ -426,7 +425,7 @@ class TestCreate:
 
         body = await resp.json()
         assert body["ready"] is False
-        assert body["job"] is None
+        assert "job" not in body
         assert "task" not in body
 
         async with AsyncSession(pg) as session:
@@ -701,161 +700,6 @@ async def test_delete_ready_index(
             )
             is not None
         )
-
-
-@pytest.mark.parametrize("error", [None, "409", "404_index", "404_file"])
-@pytest.mark.usefixtures("static_time")
-async def test_upload(
-    error: str | None,
-    example_path: Path,
-    fake: DataFaker,
-    memory_storage: StorageBackend,
-    pg: AsyncEngine,
-    resp_is,
-    snapshot: SnapshotAssertion,
-    spawn_job_client: JobClientSpawner,
-):
-    client = await spawn_job_client(authenticated=True)
-
-    path = example_path / "indexes" / "reference.1.bt2"
-
-    files = {"file": open(path, "rb")}
-
-    user = await fake.users.create()
-
-    reference = await fake.references.create(user=user, name="Bar")
-    job = await fake.jobs.create(user=user, workflow="build_index")
-
-    index_id = "missing"
-    storage_key = "missing"
-
-    if error != "404_index":
-        index_id = (await fake.indexes.create(reference, user, job=job)).id
-
-        async with AsyncSession(pg) as session:
-            storage_key = await session.scalar(
-                select(SQLIndex.storage_key).where(SQLIndex.id == index_id),
-            )
-
-    if error == "409":
-        async with AsyncSession(pg) as session:
-            session.add(
-                SQLIndexFile(
-                    name="reference.1.bt2",
-                    index=str(index_id),
-                    index_id=index_id,
-                ),
-            )
-            await session.commit()
-
-    url = f"/indexes/{index_id}/files"
-
-    if error == "404_file":
-        url += "/reference.foo.bt2"
-    else:
-        url += "/reference.1.bt2"
-
-    resp = await client.put(url, data=files)
-
-    if error == "404_file":
-        await resp_is.not_found(resp, "Index file not found")
-        return
-
-    if error == "404_index":
-        await resp_is.not_found(resp, "Not found")
-        return
-
-    if error == "409":
-        await resp_is.conflict(resp, "File name already exists")
-        return
-
-    assert resp.status == 201
-
-    expected_key = compose_index_file_key(storage_key, "reference.1.bt2")
-
-    found = False
-    async for info in memory_storage.list(expected_key):
-        if info.key == expected_key:
-            found = True
-            break
-    assert found
-
-    chunks = []
-    async for chunk in memory_storage.read(expected_key):
-        chunks.append(chunk)
-    assert b"".join(chunks) == path.read_bytes()
-
-    assert await resp.json() == snapshot
-
-    async with AsyncSession(pg) as session:
-        assert (
-            await session.execute(select(SQLIndexFile).filter_by(id=1))
-        ).scalar() == snapshot
-
-
-@pytest.mark.parametrize("error", [None, "409_genome", "409_fasta"])
-@pytest.mark.usefixtures("static_time")
-async def test_finalize(
-    error: str | None,
-    fake: DataFaker,
-    pg: AsyncEngine,
-    snapshot: SnapshotAssertion,
-    spawn_job_client: JobClientSpawner,
-):
-    """Test that an index can be finalized using the Jobs API."""
-    client = await spawn_job_client(authenticated=True)
-
-    user = await fake.users.create()
-    job = await fake.jobs.create(user=user, workflow="build_index")
-
-    if error == "409_genome":
-        files = ["reference.fa.gz"]
-    elif error == "409_fasta":
-        files = ["reference.json.gz"]
-    else:
-        files = JOB_INDEX_FILE_NAMES
-
-    reference = await fake.references.create(user=user)
-
-    # The Postgres-backed read that drives the stamp reflects the OTU's `version` in
-    # `last_indexed_version` after finalizing.
-    otu = await fake.otus.create(reference.id, user)
-
-    index = await fake.indexes.create(
-        reference,
-        user,
-        job=job,
-        manifest={"foo": 4},
-        version=2,
-    )
-
-    async with AsyncSession(pg) as session:
-        session.add_all(
-            [
-                SQLIndexFile(
-                    index=str(index.id),
-                    index_id=index.id,
-                    name=file_name,
-                    size=9000,
-                    type=check_index_file_type(file_name),
-                )
-                for file_name in files
-            ],
-        )
-        await session.commit()
-
-    resp = await client.patch(f"/indexes/{index.id}")
-
-    assert await resp.json() == snapshot
-
-    if not error:
-        assert resp.status == HTTPStatus.OK
-
-        async with AsyncSession(pg) as session:
-            row = await session.scalar(select(SQLOTU).where(SQLOTU.id == otu.id))
-
-        assert row.last_indexed_version == row.version
-        assert row.data["last_indexed_version"] == row.version
 
 
 @pytest.mark.parametrize("status", [200, 404])

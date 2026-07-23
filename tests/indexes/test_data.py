@@ -4,7 +4,6 @@ from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 
 from virtool.data.errors import (
     ResourceConflictError,
-    ResourceError,
     ResourceNotFoundError,
 )
 from virtool.data.layer import DataLayer
@@ -12,15 +11,10 @@ from virtool.fake.next import DataFaker
 from virtool.history.sql import SQLLegacyHistory
 from virtool.indexes.sql import SQLIndex, SQLIndexFile
 from virtool.indexes.utils import compose_index_file_key
-from virtool.otus.sql import SQLOTU
 
 
 async def add_index_files(pg: AsyncEngine, index_id: int) -> None:
-    """Add the complete set of files that finalizing ``index_id`` requires.
-
-    Finalization blocks on the bowtie2 and FASTA checks, so an index missing any of
-    these never reaches the code under test.
-    """
+    """Add a complete set of built index files for ``index_id``."""
     names = [
         ("reference.1.bt2", "bowtie2"),
         ("reference.2.bt2", "bowtie2"),
@@ -46,85 +40,6 @@ async def add_index_files(pg: AsyncEngine, index_id: int) -> None:
             ],
         )
         await session.commit()
-
-
-@pytest.mark.usefixtures("static_time")
-async def test_finalize(
-    data_layer: DataLayer,
-    fake: DataFaker,
-    pg: AsyncEngine,
-    snapshot,
-):
-    user = await fake.users.create()
-    job = await fake.jobs.create(user=user)
-    reference = await fake.references.create(user=user)
-
-    index = await fake.indexes.create(
-        reference,
-        user,
-        job=job,
-        manifest={},
-        version=2,
-    )
-
-    await add_index_files(pg, index.id)
-
-    # Ensure return value is correct.
-    assert await data_layer.index.finalize(index.id) == snapshot
-
-    # The Postgres row is marked ready.
-    async with AsyncSession(pg) as session:
-        row = await session.scalar(
-            select(SQLIndex).where(SQLIndex.id == index.id),
-        )
-
-    assert row.ready is True
-
-
-@pytest.mark.usefixtures("static_time")
-async def test_finalize_stamps_last_indexed_version(
-    data_layer: DataLayer,
-    fake: DataFaker,
-    pg: AsyncEngine,
-):
-    """Finalizing an index stamps ``last_indexed_version`` on the promoted column and
-    its ``data`` counterpart, so ``legacy_otus`` does not drift from itself.
-    """
-    user = await fake.users.create()
-    job = await fake.jobs.create(user=user)
-
-    reference = await fake.references.create(user=user)
-    otu = await fake.otus.create(reference.id, user)
-
-    index = await fake.indexes.create(
-        reference,
-        user,
-        job=job,
-        manifest={},
-        version=2,
-    )
-
-    await add_index_files(pg, index.id)
-
-    await data_layer.index.finalize(index.id)
-
-    async with AsyncSession(pg) as session:
-        row = await session.scalar(select(SQLOTU).where(SQLOTU.id == otu.id))
-
-    assert row.last_indexed_version == row.version
-    assert row.data["last_indexed_version"] == row.version
-
-
-async def test_finalize_index_missing_from_postgres(
-    data_layer: DataLayer,
-):
-    """An index with no Postgres row cannot finalize and marks nothing ready.
-
-    Finalize reads the index and its reference straight off ``SQLIndex``, so an index
-    with no Postgres row has no reference to resolve and fails loudly.
-    """
-    with pytest.raises(ResourceError, match="Could not find index reference id"):
-        await data_layer.index.finalize("foo")
 
 
 class TestDelete:

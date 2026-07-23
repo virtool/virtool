@@ -24,8 +24,6 @@ from structlog import get_logger
 from virtool.analyses.models import Analysis
 from virtool.indexes.db import REFERENCE_JSON_V2_FILE_NAME
 from virtool.indexes.models import Index
-from virtool.jobs.models import Job
-from virtool.references.models import ReferenceNested
 from virtool.utils import decompress_file
 from virtool.workflow.client import WorkflowAPIClient
 from virtool.workflow.data.index_sqlite import (
@@ -39,8 +37,6 @@ from virtool.workflow.data.index_sqlite import (
     reference_table,
     sequences_table,
 )
-from virtool.workflow.errors import MissingJobArgumentError
-from virtool.workflow.files import VirtoolFileFormat
 
 logger = get_logger("api")
 
@@ -231,71 +227,6 @@ class WFIndex:
             raise ValueError(msg)
 
         return otu_ref_by_sequence_id
-
-
-class WFNewIndex:
-    def __init__(
-        self,
-        api: WorkflowAPIClient,
-        index_id: int,
-        manifest: dict[str, int],
-        path: Path,
-        reference: ReferenceNested,
-    ):
-        self._api = api
-
-        self.id = index_id
-        """The ID of the index."""
-
-        self.manifest = manifest
-        """The manifest (OTU ID: OTU Version) for the index."""
-
-        self.path = path
-        """The path to the index directory in the workflow's work directory."""
-
-        self.reference = reference
-        """The parent reference."""
-
-    async def delete(self) -> None:
-        await self._api.delete(f"/indexes/{self.id}")
-
-    async def finalize(self) -> None:
-        """Finalize the current index."""
-        await self._api.patch_json(f"/indexes/{self.id}", {})
-
-    async def upload(
-        self,
-        path: Path,
-        fmt: VirtoolFileFormat = "fasta",
-        name: str | None = None,
-    ):
-        """Upload a file to associate with the index being built.
-
-        Allowed file names are:
-
-        - reference.json.gz
-        - reference.fa.gz
-        - reference.1.bt2
-        - reference.2.bt2
-        - reference.3.bt2
-        - reference.4.bt2
-        - reference.rev.1.bt2
-        - reference.rev.2.bt2
-        :param path: The path to the file.
-        :param fmt: The format of the file.
-        :param name: An optional name for the file different that its name on disk.
-        :return: A :class:`VirtoolFile` object.
-        """
-        return await self._api.put_file(
-            f"/indexes/{self.id}/files/{name or path.name}",
-            path,
-            fmt,
-        )
-
-    @property
-    def otus_json_path(self) -> Path:
-        """The path to the JSON file of the index's OTUs in the workflow work path."""
-        return self.path / "otus.json"
 
 
 def _identity[T](value: T) -> T:
@@ -629,52 +560,4 @@ async def index(
         index_work_path / INDEX_SQLITE_FILE_NAME,
         reference,
         otus,
-    )
-
-
-@fixture
-async def new_index(
-    _api: WorkflowAPIClient,
-    job: Job,
-    proc: int,
-    work_path: Path,
-) -> WFNewIndex:
-    """The :class:`.WFNewIndex` for an index being created by the current job."""
-    try:
-        id_ = job.args["index_id"]
-    except KeyError:
-        raise MissingJobArgumentError("Missing jobs args key 'index_id'")
-
-    log = logger.bind(resource="new_index", id=id_, job_id=job.id)
-    log.info("loading index")
-
-    index_json = await _api.get_json(f"/indexes/{id_}")
-    index_ = Index(**index_json)
-
-    log.info("got index json")
-
-    index_work_path = work_path / "indexes" / str(index_.id)
-    await asyncio.to_thread(index_work_path.mkdir, parents=True, exist_ok=True)
-
-    log.info("created index directory")
-
-    compressed_otus_json_path = index_work_path / "otus.json.gz"
-    await _api.get_file(f"/indexes/{id_}/files/otus.json.gz", compressed_otus_json_path)
-    log.info("downloaded otus json")
-
-    await asyncio.to_thread(
-        decompress_file,
-        compressed_otus_json_path,
-        index_work_path / "otus.json",
-        processes=proc,
-    )
-
-    log.info("decompressed otus json")
-
-    return WFNewIndex(
-        api=_api,
-        index_id=id_,
-        manifest=index_.manifest,
-        path=index_work_path,
-        reference=index_.reference,
     )
