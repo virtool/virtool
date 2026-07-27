@@ -4,7 +4,7 @@ from enum import Enum
 from virtool.groups.models import GroupMinimal
 from virtool.jobs.models import JobMinimal
 from virtool.labels.models import LabelNested
-from virtool.models import BaseModel, SearchResult
+from virtool.models import BaseModel
 from virtool.models.enums import LibraryType
 from virtool.quality.models import Quality
 from virtool.samples.models_base import SampleNested
@@ -205,7 +205,3 @@ class Sample(SampleMinimal):
                 },
             },
         }
-
-
-class SampleSearchResult(SearchResult):
-    documents: list[SampleMinimal]

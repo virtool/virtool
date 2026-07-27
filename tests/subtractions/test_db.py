@@ -2,7 +2,7 @@ import virtool.subtractions.db
 from virtool.data.layer import DataLayer
 from virtool.data.transforms import apply_transforms
 from virtool.fake.next import DataFaker
-from virtool.samples.oas import UpdateSampleRequest
+from virtool.samples.oas import CreateSampleRequest
 from virtool.subtractions.db import (
     AttachSubtractionsTransform,
     get_missing_subtraction_ids,
@@ -96,22 +96,31 @@ async def test_get_linked_samples(data_layer: DataLayer, fake: DataFaker, pg):
     target = await fake.subtractions.create(user=user, upload=upload)
     other = await fake.subtractions.create(user=user, upload=upload)
 
-    sample_with_target = await fake.samples.create(user)
-    await data_layer.samples.update(
-        sample_with_target.id,
-        UpdateSampleRequest(subtractions=[other.id, target.id]),
+    sample_with_target = await data_layer.samples.create(
+        CreateSampleRequest(
+            files=[(await fake.uploads.create(user=user)).id],
+            name="Sample With Target",
+            subtractions=[other.id, target.id],
+        ),
+        user.id,
     )
 
-    another_with_target = await fake.samples.create(user)
-    await data_layer.samples.update(
-        another_with_target.id,
-        UpdateSampleRequest(subtractions=[target.id]),
+    another_with_target = await data_layer.samples.create(
+        CreateSampleRequest(
+            files=[(await fake.uploads.create(user=user)).id],
+            name="Another With Target",
+            subtractions=[target.id],
+        ),
+        user.id,
     )
 
-    sample_without_target = await fake.samples.create(user)
-    await data_layer.samples.update(
-        sample_without_target.id,
-        UpdateSampleRequest(subtractions=[other.id]),
+    await data_layer.samples.create(
+        CreateSampleRequest(
+            files=[(await fake.uploads.create(user=user)).id],
+            name="Sample Without Target",
+            subtractions=[other.id],
+        ),
+        user.id,
     )
 
     samples = await virtool.subtractions.db.get_linked_samples(pg, target.id)

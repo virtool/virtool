@@ -5,12 +5,11 @@ from aiohttp.web import (
     Response,
 )
 from aiohttp_pydantic import PydanticView
-from aiohttp_pydantic.oas.typing import r200, r201, r204, r400, r403, r404, r409
-from pydantic import Field, conint, constr
+from aiohttp_pydantic.oas.typing import r200, r201, r400, r403, r404, r409
+from pydantic import conint
 from structlog import get_logger
 
 from virtool.analyses.models import AnalysisMinimal
-from virtool.api.client import UserClient
 from virtool.api.custom_json import json_response
 from virtool.api.errors import (
     APIBadRequest,
@@ -20,11 +19,9 @@ from virtool.api.errors import (
     APINoContent,
     APINotFound,
 )
-from virtool.api.policy import PermissionRoutePolicy, policy
 from virtool.api.routes import Routes
 from virtool.api.schema import schema
 from virtool.api.streaming import stream_storage_response
-from virtool.authorization.permissions import LegacyPermission
 from virtool.data.errors import (
     ResourceConflictError,
     ResourceError,
@@ -32,14 +29,7 @@ from virtool.data.errors import (
 )
 from virtool.data.utils import get_data_from_req
 from virtool.jobs.models import TERMINAL_JOB_STATES
-from virtool.models.roles import AdministratorRole
-from virtool.samples.models import Sample, SampleSearchResult
-from virtool.samples.oas import (
-    CreateAnalysisRequest,
-    CreateSampleRequest,
-    UpdateRightsRequest,
-    UpdateSampleRequest,
-)
+from virtool.samples.oas import CreateAnalysisRequest
 from virtool.samples.utils import SampleRight
 from virtool.uploads.utils import (
     multipart_file_chunker,
@@ -56,189 +46,6 @@ DELETABLE_JOB_STATES = {s.value for s in TERMINAL_JOB_STATES}
 Samples with jobs in these states can be deleted because the jobs are no longer
 active and will not be resumed.
 """
-
-
-@routes.view("/samples")
-class SamplesView(PydanticView):
-    async def get(
-        self,
-        find: constr(strip_whitespace=True) = "",
-        label: list[int] = Field(default_factory=list),
-        page: conint(gt=0) = 1,
-        per_page: conint(ge=1, le=100) = 25,
-        user: list[int] = Field(default_factory=list),
-        workflows: list[str] = Field(default_factory=list),
-    ) -> r200[SampleSearchResult] | r400:
-        """Find samples.
-
-        Lists samples, filtering by data passed as URL parameters.
-
-        The ``find`` parameter matches a substring of the sample name. Use ``user`` to
-        filter by owner instead: it may be repeated to match samples owned by any of
-        several users. Results are always limited to samples the requesting client may
-        read, so filtering by another user cannot reveal their private samples.
-
-        Status Codes:
-            200: Successful operation
-            400: Invalid query
-        """
-        search_result = await get_data_from_req(self.request).samples.find(
-            labels=label,
-            page=page,
-            per_page=per_page,
-            term=find,
-            users=user,
-            workflows=workflows,
-            client=self.request["client"],
-        )
-
-        return json_response(search_result)
-
-    @policy(PermissionRoutePolicy(LegacyPermission.CREATE_SAMPLE))
-    async def post(
-        self,
-        data: CreateSampleRequest,
-    ) -> r201[Sample] | r400 | r403:
-        """Create a sample.
-
-        Creates a new sample with the given name, labels and subtractions.
-
-        Status Codes:
-            201: Operation successful
-            400: File does not exist
-            400: Group does not exist
-            400: Group value required for sample creation
-            400: Sample name already in use
-            400: Subtraction does not exist
-            403: Not permitted
-            400: Invalid input
-        """
-        try:
-            sample = await get_data_from_req(self.request).samples.create(
-                data,
-                self.request["client"].user_id,
-            )
-        except ResourceConflictError as err:
-            raise APIBadRequest(str(err))
-
-        return json_response(
-            sample,
-            status=201,
-            headers={"Location": f"/samples/{sample.id}"},
-        )
-
-
-@routes.view("/samples/{sample_id}")
-class SampleView(PydanticView):
-    async def get(self, sample_id: int, /) -> r200[Sample] | r403 | r404:
-        """Get a sample.
-
-        Fetches the details for a sample.
-
-        Status Codes:
-            200: Successful operation
-            400: Invalid query
-        """
-        if not await get_data_from_req(self.request).samples.has_right(
-            sample_id,
-            self.request["client"],
-            SampleRight.read,
-        ):
-            raise APIInsufficientRights()
-
-        try:
-            sample = await get_data_from_req(self.request).samples.get(sample_id)
-
-        except ResourceNotFoundError:
-            raise APINotFound()
-
-        return json_response(sample)
-
-    async def patch(
-        self,
-        sample_id: int,
-        /,
-        data: UpdateSampleRequest,
-    ) -> r200[Sample] | r400 | r403 | r404:
-        """Update a sample.
-
-        Updates a sample using its 'sample id'.
-
-        Status Codes:
-            200: Successful operation
-            400: Invalid input
-            400: Sample name is already in use
-            403: Insufficient rights
-            404: Not found
-        """
-        if not await get_data_from_req(self.request).samples.has_right(
-            sample_id,
-            self.request["client"],
-            SampleRight.write,
-        ):
-            raise APIInsufficientRights()
-
-        try:
-            sample = await get_data_from_req(self.request).samples.update(
-                sample_id,
-                data,
-            )
-        except ResourceConflictError as err:
-            raise APIBadRequest(str(err))
-        except ResourceNotFoundError:
-            raise APINotFound()
-
-        return json_response(sample)
-
-    async def delete(self, sample_id: int, /) -> r204 | r403 | r404:
-        """Delete a sample.
-
-        Removes a sample document and all associated analyses.
-
-        Status Codes:
-            204: Operation successful
-            400: Sample with active job cannot be deleted
-            403: Insufficient rights
-            404: Not found
-        """
-        samples = get_data_from_req(self.request).samples
-
-        if not await samples.has_right(
-            sample_id,
-            self.request["client"],
-            SampleRight.write,
-        ):
-            raise APIInsufficientRights()
-
-        try:
-            sample = await samples.get(sample_id)
-        except ResourceNotFoundError:
-            raise APINotFound()
-
-        if not sample.ready:
-            job_id = sample.job.id if sample.job else None
-
-            if not job_id:
-                raise APIBadRequest(
-                    "Unfinalized samples without jobs cannot be deleted"
-                )
-
-            try:
-                job = await get_data_from_req(self.request).jobs.get(job_id)
-            except ResourceNotFoundError:
-                job = None
-
-            if job is not None and job.state.value not in DELETABLE_JOB_STATES:
-                raise APIBadRequest(
-                    f"Cannot delete sample with active job (current state: {job.state.value})"
-                )
-
-        try:
-            await samples.delete(sample_id)
-        except ResourceNotFoundError:
-            raise APINotFound()
-
-        raise APINoContent()
 
 
 @routes.jobs_api.get("/samples/{sample_id}")
@@ -281,53 +88,6 @@ async def finalize(req):
         raise APINotFound()
 
     return json_response(sample)
-
-
-@routes.view("/samples/{sample_id}/rights")
-class RightsView(PydanticView):
-    async def patch(
-        self,
-        sample_id: int,
-        /,
-        data: UpdateRightsRequest,
-    ) -> r200[Sample] | r400 | r403 | r404:
-        """Update rights settings.
-
-        Updates the rights settings for the specified sample document.
-
-        Status Codes:
-            200: Successful operation
-            400: Invalid input
-            400: Group does not exist
-            403: Must be administrator or sample owner
-            404: Not found
-        """
-        client: UserClient = self.request["client"]
-
-        owner_id = await get_data_from_req(self.request).samples.get_owner_id(
-            sample_id,
-        )
-
-        if owner_id is None:
-            raise APINotFound()
-
-        if (
-            client.administrator_role != AdministratorRole.FULL
-            and client.user_id != owner_id
-        ):
-            raise APIInsufficientRights("Must be administrator or sample owner")
-
-        try:
-            sample = await get_data_from_req(self.request).samples.update_rights(
-                sample_id,
-                data.dict(exclude_unset=True),
-            )
-        except ResourceConflictError as err:
-            raise APIBadRequest(str(err))
-        except ResourceNotFoundError:
-            raise APINotFound()
-
-        return json_response(sample)
 
 
 @routes.jobs_api.delete("/samples/{sample_id}")

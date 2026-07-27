@@ -23,6 +23,7 @@ from virtool.models.enums import AnalysisWorkflow
 from virtool.models.roles import AdministratorRole
 from virtool.pg.utils import get_row, get_row_by_id
 from virtool.samples.oas import CreateAnalysisRequest
+from virtool.samples.sql import SQLLegacySample
 from virtool.subtractions.pg import SQLSubtraction
 from virtool.users.models import User
 from virtool.utils import timestamp
@@ -90,10 +91,13 @@ async def setup_sample(
 
     sample = await fake.samples.create(user, ready=True)
 
-    await data_layer.samples.update_rights(
-        sample.id,
-        {"all_read": True, "all_write": True},
-    )
+    async with AsyncSession(data_layer.samples._pg) as session:
+        await session.execute(
+            update(SQLLegacySample)
+            .where(SQLLegacySample.id == sample.id)
+            .values(all_read=True, all_write=True),
+        )
+        await session.commit()
 
     index = await fake.indexes.create(reference, user, version=11, ready=True)
 
