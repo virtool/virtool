@@ -8,7 +8,7 @@ from syrupy.assertion import SnapshotAssertion
 from tests.fixtures.client import JobClientSpawner
 from virtool.data.layer import DataLayer
 from virtool.fake.next import DataFaker
-from virtool.samples.oas import UpdateSampleRequest
+from virtool.samples.oas import CreateSampleRequest
 from virtool.subtractions.pg import SQLSubtractionFile
 from virtool.uploads.sql import UploadType
 
@@ -270,11 +270,13 @@ class TestRemoveAsJob:
 
         client = await spawn_job_client(authenticated=True)
 
-        linked_sample = await fake.samples.create(user)
-
-        await data_layer.samples.update(
-            linked_sample.id,
-            UpdateSampleRequest(subtractions=[subtraction.id]),
+        await data_layer.samples.create(
+            CreateSampleRequest(
+                files=[(await fake.uploads.create(user=user)).id],
+                name="Linked Sample",
+                subtractions=[subtraction.id],
+            ),
+            user.id,
         )
 
         resp = await client.delete(f"/subtractions/{subtraction.id}")
@@ -300,11 +302,13 @@ class TestRemoveAsJob:
             finalized=False,
         )
 
-        linked_sample = await fake.samples.create(user)
-
-        await data_layer.samples.update(
-            linked_sample.id,
-            UpdateSampleRequest(subtractions=[subtraction.id]),
+        await data_layer.samples.create(
+            CreateSampleRequest(
+                files=[(await fake.uploads.create(user=user)).id],
+                name="Linked Sample",
+                subtractions=[subtraction.id],
+            ),
+            user.id,
         )
 
         client = await spawn_job_client(authenticated=True)

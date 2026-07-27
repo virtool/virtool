@@ -61,7 +61,7 @@ class TestAPIKeyAuthentication:
             PermissionsUpdate(create_sample=True, modify_subtraction=True),
         )
 
-        resp = await client.get("/samples")
+        resp = await client.get("/analyses")
 
         assert resp.status == HTTPStatus.OK
 
@@ -69,7 +69,7 @@ class TestAPIKeyAuthentication:
         """Test authentication fails with invalid API key."""
         client = await spawn_client(auth=BasicAuth(self.user.handle, "invalid_key"))
 
-        resp = await client.get("/samples")
+        resp = await client.get("/analyses")
 
         assert resp.status == HTTPStatus.UNAUTHORIZED
 
@@ -91,7 +91,7 @@ class TestAPIKeyAuthentication:
 
         client = await spawn_client(auth=BasicAuth(self.user.handle, raw_key))
 
-        resp = await client.get("/samples")
+        resp = await client.get("/analyses")
 
         assert resp.status == HTTPStatus.UNAUTHORIZED
 
@@ -99,7 +99,7 @@ class TestAPIKeyAuthentication:
         """Test authentication fails with malformed Authorization header."""
         client = await spawn_client()
 
-        resp = await client.get("/samples", headers={"AUTHORIZATION": "malformed"})
+        resp = await client.get("/analyses", headers={"AUTHORIZATION": "malformed"})
 
         assert resp.status == HTTPStatus.UNAUTHORIZED
         assert (await resp.json())["id"] == "malformed_authorization_header"
@@ -116,7 +116,7 @@ class TestAPIKeyAuthentication:
             PermissionsUpdate(create_sample=True, modify_hmm=True),
         )
 
-        resp = await client.get("/samples")
+        resp = await client.get("/analyses")
 
         assert resp.status == HTTPStatus.OK
 
@@ -126,7 +126,7 @@ class TestAPIKeyAuthentication:
             auth=BasicAuth("nonexistent_handle", "some_key"),
         )
 
-        resp = await client.get("/samples")
+        resp = await client.get("/analyses")
 
         assert resp.status == HTTPStatus.UNAUTHORIZED
 
@@ -281,7 +281,7 @@ class TestJobAuthentication:
         self,
         spawn_client: ClientSpawner,
     ):
-        """Check that a request against GET /samples using job authentication fails.
+        """Check that a request against GET /analyses using job authentication fails.
 
         This path is not accessible to jobs.
 
@@ -294,6 +294,6 @@ class TestJobAuthentication:
             UpdateSettingsRequest(minimum_password_length=8),
         )
 
-        resp = await client.get("/samples")
+        resp = await client.get("/analyses")
 
         assert resp.status == 401

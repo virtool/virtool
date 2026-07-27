@@ -6,9 +6,7 @@ from typing import Any
 from sqlalchemy import (
     ColumnExpressionArgument,
     and_,
-    exists,
     func,
-    not_,
     or_,
     select,
     true,
@@ -18,7 +16,6 @@ from yarl import URL
 
 import virtool.samples.utils
 from virtool.analyses.sql import SQLAnalysis
-from virtool.analyses.utils import WORKFLOW_NAMES
 from virtool.data.topg import (
     compose_legacy_id_subquery,
 )
@@ -249,89 +246,6 @@ def compose_sample_rights_filter(client) -> ColumnExpressionArgument[bool]:
         )
 
     return or_(*rights_filter)
-
-
-WORKFLOW_CONDITIONS = ("none", "pending", "ready")
-
-
-def _exists_analysis(workflow: str, ready: bool | None = None):
-    """Build a correlated ``EXISTS`` on analyses for the current sample row.
-
-    Restricts to ``workflow`` and, when ``ready`` is given, to analyses in that
-    ready state. Correlates against the enclosing ``SQLLegacySample`` query.
-    """
-    conditions = [
-        SQLAnalysis.sample_id == SQLLegacySample.id,
-        SQLAnalysis.workflow == workflow,
-    ]
-
-    if ready is not None:
-        conditions.append(SQLAnalysis.ready.is_(ready))
-
-    return exists().where(and_(*conditions))
-
-
-def _compose_workflow_condition_filter(workflow: str, condition: str):
-    """Translate a single ``workflow:condition`` pair into a semi-join predicate.
-
-    Mirrors the legacy tag encoding: ``ready`` matches a completed analysis,
-    ``pending`` matches an unfinished analysis with none completed, and ``none``
-    matches a workflow with no analyses.
-    """
-    if condition == "ready":
-        return _exists_analysis(workflow, ready=True)
-
-    if condition == "pending":
-        return and_(
-            _exists_analysis(workflow),
-            not_(_exists_analysis(workflow, ready=True)),
-        )
-
-    return not_(_exists_analysis(workflow))
-
-
-def compose_sample_workflow_filter(workflows: list[str]):
-    """Compose a Postgres predicate for filtering samples by workflow tag.
-
-    Each ``workflow:condition`` pair becomes a correlated ``EXISTS`` semi-join on
-    the analyses table. Conditions for the same workflow are ORed; different
-    workflows are ANDed. The predicate is applied before ``LIMIT`` and the count so
-    ``found_count`` is correct. Returns ``None`` when nothing parses.
-
-    Pairs with an unknown workflow name or condition are ignored, matching the
-    "unrecognised filter is dropped" behaviour of the old Mongo query. This also
-    avoids the ``none`` condition on a bogus workflow compiling to a ``NOT EXISTS``
-    that matches almost every sample.
-
-    :param workflows: the raw ``?workflows=`` query values
-    :return: a SQLAlchemy predicate, or ``None``
-    """
-    conditions_by_workflow = defaultdict(set)
-
-    for workflow_query_string in workflows:
-        for pair in workflow_query_string.split(" "):
-            parts = pair.split(":")
-
-            if len(parts) == 2:
-                workflow, condition = parts
-
-                if workflow in WORKFLOW_NAMES and condition in WORKFLOW_CONDITIONS:
-                    conditions_by_workflow[workflow].add(condition)
-
-    if not conditions_by_workflow:
-        return None
-
-    return and_(
-        *[
-            or_(
-                *[
-                    _compose_workflow_condition_filter(workflow, condition)
-                    for condition in conditions
-                ],
-            )
-            for workflow, conditions in conditions_by_workflow.items()
-        ],
-    )
 
 
 async def validate_force_choice_group(pg: AsyncEngine, data: dict) -> str | None:

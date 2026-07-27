@@ -1,8 +1,12 @@
 """Helpers for seeding samples with explicit rights."""
 
+from sqlalchemy import update
+from sqlalchemy.ext.asyncio import AsyncSession
+
 from virtool.data.layer import DataLayer
 from virtool.fake.next import DataFaker
 from virtool.samples.models import Sample
+from virtool.samples.sql import SQLLegacySample
 from virtool.users.models import User
 
 
@@ -24,15 +28,18 @@ async def create_rights_sample(
     """
     sample = await fake.samples.create(owner, ready=ready)
 
-    await data_layer.samples.update_rights(
-        sample.id,
-        {
-            "all_read": all_read,
-            "all_write": all_write,
-            "group_read": group_read,
-            "group_write": group_write,
-            "group": group,
-        },
-    )
+    async with AsyncSession(data_layer.samples._pg) as session:
+        await session.execute(
+            update(SQLLegacySample)
+            .where(SQLLegacySample.id == sample.id)
+            .values(
+                all_read=all_read,
+                all_write=all_write,
+                group_read=group_read,
+                group_write=group_write,
+                group_id=group,
+            ),
+        )
+        await session.commit()
 
-    return sample
+    return await data_layer.samples.get(sample.id)

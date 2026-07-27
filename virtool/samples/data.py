@@ -1,15 +1,12 @@
 """The sample data layer domain."""
 
-import math
 from asyncio import CancelledError, gather
-from collections import defaultdict
 from collections.abc import AsyncGenerator, AsyncIterator
 from typing import Any
 
 from sqlalchemy import (
     delete,
     exc,
-    func,
     or_,
     select,
     update,
@@ -46,15 +43,13 @@ from virtool.samples.db import (
     AttachArtifactsAndReadsTransform,
     AttachUploadsTransform,
     DeriveWorkflowTagsTransform,
-    compose_sample_rights_filter,
-    compose_sample_workflow_filter,
 )
 from virtool.samples.files import (
     create_artifact_file,
     create_reads_file,
 )
-from virtool.samples.models import Sample, SampleSearchResult
-from virtool.samples.oas import CreateSampleRequest, UpdateSampleRequest
+from virtool.samples.models import Sample
+from virtool.samples.oas import CreateSampleRequest
 from virtool.samples.sql import (
     ArtifactType,
     SQLLegacySample,
@@ -133,30 +128,6 @@ def _map_sample_row(
     }
 
 
-async def _get_labels_by_sample(
-    session: AsyncSession,
-    sample_ids: list[int],
-) -> dict[int, list[int]]:
-    """Map each sample's integer PK to its ordered list of label ids."""
-    if not sample_ids:
-        return {}
-
-    rows = (
-        await session.execute(
-            select(SQLLegacySampleLabel.sample_id, SQLLegacySampleLabel.label_id)
-            .where(SQLLegacySampleLabel.sample_id.in_(sample_ids))
-            .order_by(SQLLegacySampleLabel.label_id),
-        )
-    ).all()
-
-    labels_by_sample: dict[int, list[int]] = defaultdict(list)
-
-    for sample_id, label_id in rows:
-        labels_by_sample[sample_id].append(label_id)
-
-    return labels_by_sample
-
-
 class SamplesData(DataLayerDomain):
     name = "samples"
 
@@ -188,101 +159,6 @@ class SamplesData(DataLayerDomain):
                     ),
                 )
             ).one_or_none()
-
-    async def find(
-        self,
-        labels: list[int],
-        page: int,
-        per_page: int,
-        term: str,
-        users: list[int],
-        workflows: list[str],
-        client,
-    ) -> SampleSearchResult:
-        """Find and filter samples.
-
-        Samples are always limited to those the ``client`` may read. The ``users``
-        filter narrows that set to samples owned by the given users; it can never
-        widen it.
-        """
-        filters = [compose_sample_rights_filter(client)]
-
-        if term:
-            # Escape LIKE wildcards so the term matches literally.
-            escaped = term.replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_")
-            filters.append(SQLLegacySample.name.ilike(f"%{escaped}%", escape="\\"))
-
-        if users:
-            filters.append(SQLLegacySample.user_id.in_(users))
-
-        if labels:
-            filters.append(
-                SQLLegacySample.id.in_(
-                    select(SQLLegacySampleLabel.sample_id).where(
-                        SQLLegacySampleLabel.label_id.in_(labels),
-                    ),
-                ),
-            )
-
-        if workflows:
-            workflow_filter = compose_sample_workflow_filter(workflows)
-
-            if workflow_filter is not None:
-                filters.append(workflow_filter)
-
-        async with AsyncSession(self._pg) as session:
-            total_count = await session.scalar(
-                select(func.count()).select_from(SQLLegacySample),
-            )
-            found_count = await session.scalar(
-                select(func.count()).select_from(SQLLegacySample).where(*filters),
-            )
-
-            rows = (
-                (
-                    await session.execute(
-                        select(SQLLegacySample)
-                        .where(*filters)
-                        .order_by(
-                            SQLLegacySample.created_at.desc(),
-                            SQLLegacySample.id,
-                        )
-                        .offset(per_page * (page - 1))
-                        .limit(per_page),
-                    )
-                )
-                .scalars()
-                .all()
-            )
-
-            labels_by_sample = await _get_labels_by_sample(
-                session,
-                [row.id for row in rows],
-            )
-
-        documents = await apply_transforms(
-            [
-                _map_sample_minimal_row(row, labels_by_sample.get(row.id, []))
-                for row in rows
-            ],
-            [
-                DeriveWorkflowTagsTransform(),
-                AttachJobTransform(self._pg),
-                AttachLabelsTransform(self._pg),
-                AttachUploadsTransform(self._pg),
-                AttachUserTransform(self._pg),
-            ],
-            self._pg,
-        )
-
-        return SampleSearchResult(
-            documents=documents,
-            found_count=found_count,
-            total_count=total_count,
-            page=page,
-            page_count=int(math.ceil(found_count / per_page)),
-            per_page=per_page,
-        )
 
     async def get(self, sample_id: int | str) -> Sample:
         """Get a sample by its id.
@@ -667,81 +543,6 @@ class SamplesData(DataLayerDomain):
 
         return await self.get(sample_id)
 
-    @emits(Operation.UPDATE)
-    async def update(self, sample_id: int | str, data: UpdateSampleRequest) -> Sample:
-        """Update the sample identified by ``sample_id``.
-
-        :param sample_id: the id of the sample to update
-        :param data: the update data
-        :return: the updated sample
-
-        """
-        resolved = await self._resolve_ids(sample_id)
-
-        if resolved is None:
-            raise ResourceNotFoundError
-
-        sample_pk, _ = resolved
-
-        data = data.dict(exclude_unset=True)
-
-        aws = []
-
-        if "name" in data:
-            aws.append(
-                check_name_is_in_use(self._pg, data["name"], sample_id=sample_pk),
-            )
-
-        if "labels" in data:
-            aws.append(check_labels_do_not_exist(self._pg, data["labels"]))
-
-        if "subtractions" in data:
-            aws.append(
-                check_subtractions_do_not_exist(self._pg, data["subtractions"]),
-            )
-
-        await wait_for_checks(*aws)
-
-        scalars = {
-            key: data[key]
-            for key in ("name", "host", "isolate", "locale", "notes")
-            if key in data
-        }
-
-        async with AsyncSession(self._pg) as pg_session:
-            if scalars:
-                await pg_session.execute(
-                    update(SQLLegacySample)
-                    .where(SQLLegacySample.id == sample_pk)
-                    .values(**scalars),
-                )
-
-            if "labels" in data or "subtractions" in data:
-                if "labels" in data:
-                    await pg_session.execute(
-                        delete(SQLLegacySampleLabel).where(
-                            SQLLegacySampleLabel.sample_id == sample_pk,
-                        ),
-                    )
-
-                if "subtractions" in data:
-                    await pg_session.execute(
-                        delete(SQLLegacySampleSubtraction).where(
-                            SQLLegacySampleSubtraction.sample_id == sample_pk,
-                        ),
-                    )
-
-                self._add_legacy_sample_join_rows(
-                    pg_session,
-                    sample_pk,
-                    data.get("labels", []),
-                    data.get("subtractions", []),
-                )
-
-            await pg_session.commit()
-
-        return await self.get(sample_id)
-
     async def get_owner_id(self, sample_id: int | str) -> int | None:
         """Return the owner user id of a sample, or ``None`` if it does not exist.
 
@@ -756,60 +557,6 @@ class SamplesData(DataLayerDomain):
                     ),
                 )
             ).scalar_one_or_none()
-
-    async def update_rights(self, sample_id: int | str, data: dict[str, Any]) -> Sample:
-        """Update the rights settings of the sample identified by ``sample_id``.
-
-        :param sample_id: the id of the sample to update
-        :param data: the rights fields to update
-        :return: the updated sample
-        """
-        resolved = await self._resolve_ids(sample_id)
-
-        if resolved is None:
-            raise ResourceNotFoundError
-
-        sample_pk, _ = resolved
-
-        group_id = None
-
-        if "group" in data and data["group"] is not None:
-            group = data["group"]
-
-            async with AsyncSession(self._pg) as session:
-                group_id = (
-                    await session.execute(
-                        select(SQLGroup.id).where(
-                            SQLGroup.id == group
-                            if isinstance(group, int)
-                            else SQLGroup.legacy_id == group,
-                        ),
-                    )
-                ).scalar_one_or_none()
-
-            if group_id is None:
-                raise ResourceConflictError("Group does not exist")
-
-        scalars = {
-            key: data[key]
-            for key in ("all_read", "all_write", "group_read", "group_write")
-            if key in data
-        }
-
-        if "group" in data:
-            scalars["group_id"] = group_id
-
-        if scalars:
-            async with AsyncSession(self._pg) as pg_session:
-                await pg_session.execute(
-                    update(SQLLegacySample)
-                    .where(SQLLegacySample.id == sample_pk)
-                    .values(**scalars),
-                )
-
-                await pg_session.commit()
-
-        return await self.get(sample_id)
 
     async def has_right(
         self,
