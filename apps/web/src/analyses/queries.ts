@@ -19,7 +19,6 @@ import type {
 	AnalysisSearchResult,
 	WorkflowName,
 } from "@virtool/contracts";
-import { formatData } from "./utils";
 
 /**
  * Fetch a page of a sample's analyses
@@ -74,10 +73,7 @@ export function analysisQueryOptions(analysisId: number) {
 }
 
 export function useGetAnalysis(analysisId: number) {
-	return useQuery({
-		...analysisQueryOptions(analysisId),
-		select: formatData,
-	});
+	return useQuery(analysisQueryOptions(analysisId));
 }
 
 export type CreateAnalysisParams = {

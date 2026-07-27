@@ -1,7 +1,0 @@
-/*
-  This is used to set a pixel padding for the ORF label so it lines up with the D3
-  offset.
- */
-.nuvs-orf {
-	padding-left: 15px;
-}

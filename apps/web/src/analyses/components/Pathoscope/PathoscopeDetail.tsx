@@ -1,12 +1,12 @@
 import { useAnalysisSearch } from "@analyses/components/AnalysisSearchContext";
-import type { FormattedPathoscopeHit } from "@analyses/types";
 import ScrollSyncContainer from "@base/ScrollSyncContainer";
+import type { PathoscopeHit } from "@virtool/contracts";
 import { maxBy } from "es-toolkit";
 import PathoscopeIsolate from "./PathoscopeIsolate";
 
 type PathoscopeDetailProps = {
 	/** Complete information for a pathoscope hit */
-	hit: FormattedPathoscopeHit;
+	hit: PathoscopeHit;
 
 	/** The total number of reads mapped to any OTU during the analysis*/
 	mappedCount: number;
@@ -26,8 +26,7 @@ export default function PathoscopeDetail({
 		(isolate) => !filterIsolates || isolate.pi >= 0.03 * pi,
 	);
 
-	const maxGenomeLength = maxBy(filtered, (item) => item.filled.length)?.filled
-		.length;
+	const maxGenomeLength = maxBy(filtered, (item) => item.length)?.length;
 
 	const isolateComponents = filtered.map((isolate) => {
 		return (

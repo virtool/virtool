@@ -51,8 +51,10 @@ export function createFakeFormattedNuVsAnalysis(
 	const defaultAnalysis: FormattedNuvsAnalysis = {
 		...createFakeAnalysisMinimal(),
 		files: [],
-		maxSequenceLength: faker.number.int({ min: 800, max: 20000 }),
-		results: { hits: [createFakeFormattedNuVsHit()] },
+		results: {
+			hits: [createFakeFormattedNuVsHit()],
+			maxSequenceLength: faker.number.int({ min: 800, max: 20000 }),
+		},
 		workflow: "nuvs",
 	};
 
@@ -77,7 +79,7 @@ export function createFakeFormattedNuVsHit(overrides?: FakeFormattedNuVsHit) {
 		families: [],
 		id: faker.number.int(),
 		index: faker.number.int(),
-		name: [faker.word.noun({ strategy: "any-length" })],
+		names: [faker.word.noun({ strategy: "any-length" })],
 		orfs: [
 			{
 				frame: faker.number.int(),

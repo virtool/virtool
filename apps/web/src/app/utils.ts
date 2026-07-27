@@ -43,9 +43,9 @@ export function followDynamicDownload(filename: string, text: string) {
  *
  * This is the canonical name from `@virtool/contracts` with one deviation: a
  * source type of `"unknown"` — the value the add-isolate form submits when none
- * is given — renders as `"Unnamed"` rather than being named literally. Callers
- * that must agree with Python, such as the analysis exports, use the canonical
- * helper directly.
+ * is given — renders as `"Unnamed"` rather than being named literally. This is
+ * the OTU pages' spelling alone; analyses are named by the server formatter,
+ * which uses the canonical helper so the views and the exports agree.
  *
  * Accepts either spelling of the two fields, because a form's values reach this
  * in camelCase while a stored isolate carries snake_case.

@@ -1,12 +1,13 @@
 import { pluralize } from "@app/format";
 import { labelSvg } from "@samples/charting";
+import type { Coordinate } from "@virtool/contracts";
 import { area, axisBottom, axisLeft, format, scaleLinear, select } from "d3";
 import { useEffect, useRef } from "react";
 import "./area.css";
 
 type DrawParams = {
 	element: HTMLElement;
-	data: [number, number][];
+	data: Coordinate[] | null;
 	label: string;
 	length: number;
 	yMax: number;
@@ -53,7 +54,7 @@ function draw({
 	const svg = svgRoot.append("g").attr("transform", `translate(${margin},5)`);
 
 	if (data) {
-		const areaDrawer = area<[number, number]>()
+		const areaDrawer = area<Coordinate>()
 			.x((d) => x(d[0]))
 			.y0((d) => y(d[1]))
 			.y1(height);
@@ -85,7 +86,7 @@ function draw({
 
 type CoverageChartProps = {
 	accession: string;
-	data: [number, number][];
+	data: Coordinate[] | null;
 	definition: string;
 	id: string;
 	length: number;

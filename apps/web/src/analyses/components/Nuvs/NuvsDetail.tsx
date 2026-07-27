@@ -1,7 +1,7 @@
 import { useActiveHit } from "@analyses/hooks";
-import type { FormattedNuvsHit, NuvsOrf as NuvsOrfType } from "@analyses/types";
-import { calculateAnnotatedOrfCount } from "@analyses/utils";
+import type { FormattedNuvsHit } from "@analyses/types";
 import Badge from "@base/Badge";
+import type { NuvsOrf as NuvsOrfType } from "@virtool/contracts";
 import { sortBy } from "es-toolkit";
 import type { ReactNode } from "react";
 import NuvsBlast from "./NuvsBlast";
@@ -52,7 +52,7 @@ export default function NuvsDetail({
 		return <NuvsDetailContainer>No Hits</NuvsDetailContainer>;
 	}
 
-	const { e, families, orfs, sequence, index } = hit;
+	const { annotatedOrfCount, e, families, orfs, sequence, index } = hit;
 
 	let filtered: NuvsOrfType[] = orfs;
 
@@ -77,7 +77,7 @@ export default function NuvsDetail({
 					Sequence {index}
 					<Badge className="text-base py-2 px-3">{sequence.length} bp</Badge>
 				</h3>
-				<NuvsValues e={e} orfCount={calculateAnnotatedOrfCount(orfs)} />
+				<NuvsValues e={e} orfCount={annotatedOrfCount} />
 				<NuvsFamilies families={families} />
 			</div>
 			<div className="border border-gray-300 mb-4 [&>div:nth-child(even)]:bg-gray-100">

@@ -1,12 +1,57 @@
 import { useAnalysisSearch } from "@analyses/components/AnalysisSearchContext";
 import NuvsDetail from "@analyses/components/Nuvs/NuvsDetail";
-import NuvsItem from "@analyses/components/Nuvs/NuvsItem";
+import NuvsValues from "@analyses/components/Nuvs/NuvsValues";
 import { useKeyNavigation } from "@analyses/components/Viewer/hooks";
 import { useActiveHit, useSortAndFilterNuVsHits } from "@analyses/hooks";
-import type { FormattedNuvsAnalysis } from "@analyses/types";
+import type { FormattedNuvsAnalysis, FormattedNuvsHit } from "@analyses/types";
+import { cn } from "@app/cn";
+import Badge from "@base/Badge";
+import Box from "@base/Box";
 import Key from "@base/Key";
 import { useVirtualizer } from "@tanstack/react-virtual";
 import { useRef } from "react";
+
+/**
+ * The height of a row, in pixels.
+ *
+ * The virtualizer positions rows by this figure, so a row that renders any
+ * other height detaches the list from its own scroll geometry. One constant
+ * feeds both the estimate and the row itself.
+ */
+const ROW_HEIGHT = 75;
+
+type NuvsListItemProps = {
+	activeHit?: string;
+	hit: FormattedNuvsHit;
+	setActiveHit: (id: string) => void;
+};
+
+/** A condensed contig, as it appears in the list beside the detail view. */
+function NuvsListItem({ activeHit, hit, setActiveHit }: NuvsListItemProps) {
+	const { annotatedOrfCount, e, id, index, sequence } = hit;
+
+	const isActive = activeHit !== undefined && Number(activeHit) === id;
+
+	return (
+		<Box
+			className={cn(
+				{ "bg-slate-100": isActive },
+				"border-none",
+				"h-full",
+				"rounded-none",
+				"m-0",
+			)}
+			onClick={() => setActiveHit(String(id))}
+		>
+			<div className="flex items-center justify-between">
+				<span className="font-medium">Sequence {index}</span>
+				<Badge>{sequence.length}</Badge>
+			</div>
+
+			<NuvsValues e={e} orfCount={annotatedOrfCount} />
+		</Box>
+	);
+}
 
 type NuVsListProps = {
 	/** Complete Nuvs analysis details */
@@ -59,7 +104,7 @@ export default function NuvsList({ detail }: NuVsListProps) {
 	const virtualizer = useVirtualizer({
 		count: shown,
 		getScrollElement: () => parentRef.current,
-		estimateSize: () => 75,
+		estimateSize: () => ROW_HEIGHT,
 		overscan: 5,
 	});
 
@@ -73,7 +118,7 @@ export default function NuvsList({ detail }: NuVsListProps) {
 	);
 
 	const hitComponents = sortedHits.map((hit) => (
-		<NuvsItem
+		<NuvsListItem
 			key={hit.id}
 			activeHit={activeHit}
 			hit={hit}
@@ -123,7 +168,7 @@ export default function NuvsList({ detail }: NuVsListProps) {
 				analysisId={detail.id}
 				filterORFs={search.filterOrfs ?? true}
 				matches={sortedHits}
-				maxSequenceLength={detail.maxSequenceLength}
+				maxSequenceLength={detail.results.maxSequenceLength}
 			/>
 		</div>
 	);

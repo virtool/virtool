@@ -1,16 +1,16 @@
 import { useAnalysisSearch } from "@analyses/components/AnalysisSearchContext";
 import AnalysisValue from "@analyses/components/AnalysisValue";
-import type { FormattedPathoscopeHit } from "@analyses/types";
 import { toScientificNotation } from "@app/format";
 import AccordionContent from "@base/AccordionContent";
 import AccordionScrollingItem from "@base/AccordionScrollingItem";
 import AccordionTrigger from "@base/AccordionTrigger";
+import type { PathoscopeHit } from "@virtool/contracts";
 import PathoscopeDetail from "./PathoscopeDetail";
 import PathoscopeOtuCoverage from "./PathoscopeOtuCoverage";
 
 type PathoscopeItemProps = {
 	/** Complete information for a pathoscope hit */
-	hit: FormattedPathoscopeHit;
+	hit: PathoscopeHit;
 
 	/** The total number of reads mapped to any OTU during the analysis*/
 	mappedCount: number;
@@ -18,7 +18,16 @@ type PathoscopeItemProps = {
 
 /** Results for a single pathoscope analysis hit  */
 export function PathoscopeItem({ mappedCount, hit }: PathoscopeItemProps) {
-	const { abbreviation, coverage, depth, filled, name, pi, id } = hit;
+	const {
+		abbreviation,
+		align,
+		coverage,
+		depth,
+		maxGenomeLength,
+		name,
+		pi,
+		id,
+	} = hit;
 	const { search } = useAnalysisSearch();
 	const showReads = search.reads ?? false;
 
@@ -51,7 +60,7 @@ export function PathoscopeItem({ mappedCount, hit }: PathoscopeItemProps) {
 					</div>
 				</div>
 
-				<PathoscopeOtuCoverage filled={filled} />
+				<PathoscopeOtuCoverage align={align} length={maxGenomeLength} />
 			</AccordionTrigger>
 			<AccordionContent>
 				<PathoscopeDetail hit={hit} mappedCount={mappedCount} />

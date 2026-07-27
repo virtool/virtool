@@ -1,12 +1,25 @@
-// Shape a workflow's raw `results` blob for presentation. Ported from
-// `../../../../../virtool/virtool/analyses/format.py`.
+// Shape a workflow's `results` blob for presentation. Ported from
+// `../../../../../virtool/virtool/analyses/format.py`, then extended to derive
+// the display metrics the client used to compute for itself.
 //
 // This is business logic, not a join simplification. Pathoscope results record
 // only per-sequence hit metrics; every OTU, isolate and sequence name,
 // accession and length is recovered by taking each detected OTU back to the
-// version the analysis saw. NuVs results reference HMM annotations by id and
-// have them merged in.
+// version the analysis saw, and every coverage and depth figure is derived from
+// the raw alignments before they are reduced to drawable polylines. NuVs results
+// reference HMM annotations by id and have them merged in.
 
+import {
+	formatIsolateName,
+	type NuvsHit,
+	type NuvsOrf,
+	type NuvsOrfHit,
+	type NuvsResults,
+	type PathoscopeHit,
+	type PathoscopeIsolate,
+	type PathoscopeResults,
+	type PathoscopeSequence,
+} from "@virtool/contracts";
 import { inArray, or } from "drizzle-orm";
 import type { DbOrTx } from "../db/pg";
 import { hmms } from "../db/schema/hmms";
@@ -16,8 +29,15 @@ import {
 	otuSpecifierKey,
 	patchOtusToVersions,
 } from "../history/data";
-import { asArray, asNumber, asRecord, asString } from "./json";
-import { type Coordinate, transformCoverageToCoordinates } from "./simplify";
+import { asArray, asNumber, asRecord, asString, asText } from "./json";
+import {
+	coverageOf,
+	maxDepthOf,
+	medianDepth,
+	mergeDepths,
+	toDepths,
+} from "./metrics";
+import { transformCoverageToCoordinates } from "./simplify";
 
 /** Thrown when an analysis's stored results cannot be shaped for presentation. */
 export class AnalysisResultsError extends AppError {}
@@ -26,17 +46,19 @@ export class AnalysisResultsError extends AppError {}
 // wrote them, so it is read structurally rather than through a declared shape.
 type RawResults = Record<string, unknown>;
 
-/** A pathoscope sequence, shaped for presentation. */
-export type FormattedSequence = {
-	id: string;
-	accession: unknown;
-	align: Coordinate[] | null;
-	best: number;
-	coverage: number;
-	definition: unknown;
-	length: number;
-	pi: number;
-	reads: number;
+// A formatted sequence carried alongside the raw per-position depths it was
+// derived from. The depths themselves never reach the wire: every metric that
+// needs them is computed here, and only the drawn polyline is sent.
+type MeasuredSequence = {
+	depths: number[];
+	sequence: PathoscopeSequence;
+};
+
+// The same pairing one level up, so an OTU can merge its isolates' curves.
+type MeasuredIsolate = {
+	depths: number[];
+	isolate: PathoscopeIsolate;
+	maxDepth: number;
 };
 
 // The hits a single detected OTU accounts for, keyed by the sequence they hit.
@@ -59,8 +81,8 @@ function indexHitsBySequence(
 function formatSequences(
 	sequences: unknown[],
 	hitsBySequenceId: Map<string, Record<string, unknown>>,
-): FormattedSequence[] {
-	const formatted: FormattedSequence[] = [];
+): MeasuredSequence[] {
+	const measured: MeasuredSequence[] = [];
 
 	for (const entry of sequences) {
 		const sequence = asRecord(entry);
@@ -81,30 +103,37 @@ function formatSequences(
 
 		const final = asRecord(hit.final) ?? {};
 		const align = hit.align;
+		const length = asText(sequence.sequence).length;
 
-		formatted.push({
-			id: sequenceId,
-			accession: sequence.accession,
-			align: Array.isArray(align)
-				? transformCoverageToCoordinates(align as number[])
-				: null,
-			best: asNumber(final.best, 0),
-			coverage: asNumber(hit.coverage, 0),
-			definition: sequence.definition,
-			length: asString(sequence.sequence ?? "").length,
-			pi: asNumber(final.pi, 0),
-			reads: asNumber(final.reads, 0),
+		measured.push({
+			depths: toDepths(align, length),
+			sequence: {
+				id: sequenceId,
+				accession: asText(sequence.accession),
+				align: Array.isArray(align)
+					? transformCoverageToCoordinates(align as number[])
+					: null,
+				best: asNumber(final.best, 0),
+				coverage: asNumber(hit.coverage, 0),
+				definition: asText(sequence.definition),
+				length,
+				pi: asNumber(final.pi, 0),
+				reads: asNumber(final.reads, 0),
+			},
 		});
 	}
 
-	return formatted;
+	// Shortest first. The order is what the per-isolate charts are laid out in,
+	// and it fixes how the depth arrays concatenate — which the OTU's merged
+	// curve reads positionally.
+	return measured.sort((a, b) => a.sequence.length - b.sequence.length);
 }
 
 function formatIsolates(
 	isolates: unknown[],
 	hitsBySequenceId: Map<string, Record<string, unknown>>,
-): Record<string, unknown>[] {
-	const formatted: Record<string, unknown>[] = [];
+): MeasuredIsolate[] {
+	const measured: MeasuredIsolate[] = [];
 
 	for (const entry of isolates) {
 		const isolate = asRecord(entry);
@@ -121,26 +150,44 @@ function formatIsolates(
 		// Python gates this on any formatted sequence carrying a `pi` or `final`
 		// key. Every sequence it yields always carries `pi`, so the test reduces to
 		// "the isolate matched at least one hit" — which is what is written here.
-		if (sequences.length > 0) {
-			formatted.push({ ...isolate, sequences });
+		if (sequences.length === 0) {
+			continue;
 		}
+
+		// The isolate is measured across its sequences laid end to end, so a
+		// multi-segment genome is one curve rather than several.
+		const depths = sequences.flatMap((entry) => entry.depths);
+
+		measured.push({
+			depths,
+			maxDepth: maxDepthOf(depths),
+			isolate: {
+				coverage: coverageOf(depths),
+				depth: medianDepth(depths),
+				id: asString(isolate.id),
+				length: depths.length,
+				name: formatIsolateName(isolate),
+				pi: sequences.reduce((sum, entry) => sum + entry.sequence.pi, 0),
+				sequences: sequences.map((entry) => entry.sequence),
+			},
+		});
 	}
 
-	return formatted;
+	return measured;
 }
 
 function formatHits(
 	otuId: string,
 	patchedOtu: OtuDocument,
 	hits: unknown[],
-): Record<string, unknown> {
+): PathoscopeHit {
 	const isolates = asArray(patchedOtu.isolates);
 
 	let maxSequenceLength = 0;
 
 	for (const entry of isolates) {
 		for (const sequenceEntry of asArray(asRecord(entry)?.sequences)) {
-			const length = asString(asRecord(sequenceEntry)?.sequence ?? "").length;
+			const length = asText(asRecord(sequenceEntry)?.sequence).length;
 
 			if (length > maxSequenceLength) {
 				maxSequenceLength = length;
@@ -148,20 +195,39 @@ function formatHits(
 		}
 	}
 
+	const measured = formatIsolates(isolates, indexHitsBySequence(hits));
+
+	const merged = mergeDepths(measured.map((entry) => entry.depths));
+
 	return {
 		id: otuId,
-		abbreviation: patchedOtu.abbreviation,
-		name: patchedOtu.name,
-		isolates: formatIsolates(isolates, indexHitsBySequence(hits)),
+		abbreviation: asText(patchedOtu.abbreviation),
+		align: transformCoverageToCoordinates(merged),
+		coverage: measured.reduce(
+			(greatest, entry) => Math.max(greatest, entry.isolate.coverage),
+			0,
+		),
+		depth: medianDepth(merged),
+		// Highest coverage first, which is the order the detail view reads down.
+		isolates: measured
+			.map((entry) => entry.isolate)
+			.sort((a, b) => b.coverage - a.coverage),
 		length: maxSequenceLength,
-		version: patchedOtu.version,
+		maxDepth: measured.reduce(
+			(greatest, entry) => Math.max(greatest, entry.maxDepth),
+			0,
+		),
+		maxGenomeLength: merged.length,
+		name: asText(patchedOtu.name),
+		pi: measured.reduce((sum, entry) => sum + entry.isolate.pi, 0),
+		version: asNumber(patchedOtu.version, 0),
 	};
 }
 
 async function formatPathoscope(
 	db: DbOrTx,
 	results: RawResults,
-): Promise<RawResults> {
+): Promise<PathoscopeResults> {
 	const hitsByOtu = new Map<
 		string,
 		{ otuId: string; version: number; hits: unknown[] }
@@ -213,15 +279,103 @@ async function formatPathoscope(
 		return formatHits(otuId, patchedOtu, hits);
 	});
 
-	return { ...results, hits: formattedHits };
+	// The raw blob's keys are the worker's contract, but this envelope is ours, so
+	// the two totals are emitted in the casing the rest of the API uses rather
+	// than being renamed by every reader.
+	return {
+		hits: formattedHits,
+		readCount: asNumber(results.read_count, 0),
+		subtractedCount: asNumber(results.subtracted_count, 0),
+	};
 }
 
-async function formatNuvs(
-	db: DbOrTx,
-	results: RawResults,
-): Promise<RawResults> {
-	const sequences = asArray(results.hits);
+/** The ORFs of a NuVs contig, read structurally out of the raw blob. */
+function asOrfs(value: unknown): NuvsOrf[] {
+	return asArray(value).filter((orf): orf is NuvsOrf => asRecord(orf) !== null);
+}
 
+function orfHits(orfs: NuvsOrf[]): NuvsOrfHit[] {
+	return orfs.flatMap((orf) => asArray(orf.hits) as NuvsOrfHit[]);
+}
+
+/**
+ * The lowest e-value across a contig's ORF hits.
+ *
+ * An ORF that matched no annotation contributes zero, which is Python's
+ * behaviour and the client's before it. A contig with no ORFs at all has no
+ * e-value, and the NuVs list offers a filter that hides exactly those.
+ */
+function minimumE(orfs: NuvsOrf[]): number | null {
+	if (orfs.length === 0) {
+		return null;
+	}
+
+	return orfs.reduce((lowest, orf) => {
+		const hits = asArray(orf.hits) as NuvsOrfHit[];
+
+		const e = hits.reduce(
+			(best, hit) => Math.min(best, asNumber(hit.full_e, 0)),
+			hits.length > 0 ? Number.POSITIVE_INFINITY : 0,
+		);
+
+		return Math.min(lowest, e);
+	}, Number.POSITIVE_INFINITY);
+}
+
+// The annotations merged onto the ORF hits, gathered back up so the contig can
+// be searched and grouped by them. `None` is the HMM data's way of saying a
+// cluster has no family, not a family in its own right.
+function familiesOf(orfs: NuvsOrf[]): string[] {
+	const families = new Set<string>();
+
+	for (const hit of orfHits(orfs)) {
+		for (const family of Object.keys(asRecord(hit.families) ?? {})) {
+			if (family !== "None") {
+				families.add(family);
+			}
+		}
+	}
+
+	return [...families];
+}
+
+function namesOf(orfs: NuvsOrf[]): string[] {
+	const names = new Set<string>();
+
+	for (const hit of orfHits(orfs)) {
+		for (const name of asArray(hit.names)) {
+			names.add(asString(name));
+		}
+	}
+
+	return [...names];
+}
+
+// The contig, with the metrics derived from the ORFs the annotations were just
+// merged onto. The record is spread rather than rebuilt field by field: what it
+// carries beyond `index`, `sequence` and `orfs` is the workflow's to decide.
+function measureNuvsHit(record: Record<string, unknown>): NuvsHit {
+	const orfs = asOrfs(record.orfs);
+
+	return {
+		...record,
+		annotatedOrfCount: orfs.filter((orf) => asArray(orf.hits).length > 0)
+			.length,
+		blast: null,
+		e: minimumE(orfs),
+		families: familiesOf(orfs),
+		id: asNumber(record.index, 0),
+		index: asNumber(record.index, 0),
+		names: namesOf(orfs),
+		orfs,
+		sequence: asText(record.sequence),
+	};
+}
+
+async function annotateNuvsOrfs(
+	db: DbOrTx,
+	sequences: unknown[],
+): Promise<unknown[]> {
 	const hitIds = new Set<string>();
 
 	for (const sequence of sequences) {
@@ -237,7 +391,7 @@ async function formatNuvs(
 	}
 
 	if (hitIds.size === 0) {
-		return results;
+		return sequences;
 	}
 
 	// An annotation written before the Postgres migration is referenced by its
@@ -291,50 +445,67 @@ async function formatNuvs(
 		annotations.set(String(row.id), annotationOf(row));
 	}
 
+	return sequences.map((sequence) => {
+		const record = asRecord(sequence);
+
+		if (!record) {
+			return sequence;
+		}
+
+		return {
+			...record,
+			orfs: asArray(record.orfs).map((orf) => {
+				const orfRecord = asRecord(orf);
+
+				if (!orfRecord) {
+					return orf;
+				}
+
+				return {
+					...orfRecord,
+					hits: asArray(orfRecord.hits).map((hit) => {
+						const hitRecord = asRecord(hit);
+
+						if (!hitRecord) {
+							return hit;
+						}
+
+						const annotation = annotations.get(asString(hitRecord.hit));
+
+						// A hit naming an annotation that no longer exists means the HMM
+						// data was replaced under a stored analysis. Surface it rather
+						// than rendering an ORF with no families or names.
+						if (!annotation) {
+							throw new AnalysisResultsError(
+								`HMM annotation ${asString(hitRecord.hit)} not found`,
+							);
+						}
+
+						return { ...hitRecord, ...annotation };
+					}),
+				};
+			}),
+		};
+	});
+}
+
+async function formatNuvs(
+	db: DbOrTx,
+	results: RawResults,
+): Promise<NuvsResults> {
+	const annotated = await annotateNuvsOrfs(db, asArray(results.hits));
+
+	const hits = annotated
+		.map(asRecord)
+		.filter((record) => record !== null)
+		.map(measureNuvsHit);
+
 	return {
-		...results,
-		hits: sequences.map((sequence) => {
-			const record = asRecord(sequence);
-
-			if (!record) {
-				return sequence;
-			}
-
-			return {
-				...record,
-				orfs: asArray(record.orfs).map((orf) => {
-					const orfRecord = asRecord(orf);
-
-					if (!orfRecord) {
-						return orf;
-					}
-
-					return {
-						...orfRecord,
-						hits: asArray(orfRecord.hits).map((hit) => {
-							const hitRecord = asRecord(hit);
-
-							if (!hitRecord) {
-								return hit;
-							}
-
-							const annotation = annotations.get(asString(hitRecord.hit));
-
-							// A hit naming an annotation that no longer exists means the HMM
-							// data was replaced under a stored analysis. Surface it rather
-							// than rendering an ORF with no families or names.
-							if (!annotation) {
-								throw new AnalysisResultsError(
-									`HMM annotation ${asString(hitRecord.hit)} not found`,
-								);
-							}
-
-							return { ...hitRecord, ...annotation };
-						}),
-					};
-				}),
-			};
-		}),
+		hits,
+		maxSequenceLength: hits.reduce(
+			(longest, hit) => Math.max(longest, hit.sequence.length),
+			0,
+		),
 	};
 }
 

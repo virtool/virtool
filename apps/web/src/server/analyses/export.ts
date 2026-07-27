@@ -2,7 +2,7 @@
 // `format_analysis_to_csv` and `format_analysis_to_excel` in
 // `../../../../../virtool/virtool/analyses/format.py`.
 
-import { formatIsolateName, type JsonObject } from "@virtool/contracts";
+import type { JsonObject } from "@virtool/contracts";
 import { median } from "es-toolkit";
 import type { DbOrTx } from "../db/pg";
 import { formatAnalysis } from "./format";
@@ -76,7 +76,9 @@ async function composeRows(
 
 				rows.push([
 					asText(otu.name),
-					formatIsolateName(isolate),
+					// Composed by the formatter, so the spreadsheet and the analysis
+					// view cannot disagree about what an isolate is called.
+					asText(isolate.name),
 					asText(sequence.accession),
 					asNumber(sequence.length),
 					asNumber(sequence.pi),

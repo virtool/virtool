@@ -1,3 +1,4 @@
+import type { PathoscopeHit, PathoscopeResults } from "@virtool/contracts";
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
 import type { Db, DbOrTx } from "../db/pg";
 import { takeFirstOrThrow } from "../db/rows";
@@ -205,20 +206,103 @@ describe("formatAnalysis for nuvs", () => {
 		).rejects.toBeInstanceOf(AnalysisResultsError);
 	});
 
-	it("passes results with no hits through without querying", async () => {
-		const results = { hits: [], read_count: 12 };
-
-		await expect(formatAnalysis(unusableDb, "nuvs", results)).resolves.toEqual(
-			results,
-		);
+	it("shapes results with no hits without querying", async () => {
+		await expect(
+			formatAnalysis(unusableDb, "nuvs", { hits: [], read_count: 12 }),
+		).resolves.toEqual({ hits: [], maxSequenceLength: 0 });
 	});
 
-	it("passes hits with no annotated orfs through without querying", async () => {
-		const results = { hits: [{ index: 0, sequence: "ATGC", orfs: [] }] };
+	it("shapes hits with no annotated orfs without querying", async () => {
+		const results = await formatAnalysis(unusableDb, "nuvs", {
+			hits: [{ index: 0, sequence: "ATGC", orfs: [] }],
+		});
 
-		await expect(formatAnalysis(unusableDb, "nuvs", results)).resolves.toEqual(
-			results,
-		);
+		expect(results).toEqual({
+			hits: [
+				{
+					annotatedOrfCount: 0,
+					blast: null,
+					e: null,
+					families: [],
+					id: 0,
+					index: 0,
+					names: [],
+					orfs: [],
+					sequence: "ATGC",
+				},
+			],
+			maxSequenceLength: 4,
+		});
+	});
+
+	it("derives the contig metrics from its annotated orfs", async () => {
+		const hmmId = await seedHmm({
+			cluster: 3,
+			families: { Bromoviridae: 4, None: 1 },
+			names: ["Capsid protein", "CP"],
+		});
+
+		const results = await formatAnalysis(db, "nuvs", {
+			hits: [
+				{
+					index: 2,
+					sequence: "ATGCATGC",
+					orfs: [
+						{ hits: [{ hit: hmmId, full_e: 4e-10 }] },
+						{ hits: [{ hit: hmmId, full_e: 1.2e-20 }] },
+					],
+				},
+			],
+		});
+
+		expect(results.hits).toMatchObject([
+			{
+				annotatedOrfCount: 2,
+				// The lowest e-value across every orf hit.
+				e: 1.2e-20,
+				// `None` is the annotation data's way of saying "no family".
+				families: ["Bromoviridae"],
+				// A contig is identified by its index.
+				id: 2,
+				index: 2,
+				names: ["Capsid protein", "CP"],
+			},
+		]);
+	});
+
+	it("counts an orf that matched nothing as an e-value of zero", async () => {
+		const hmmId = await seedHmm({
+			cluster: 3,
+			families: {},
+			names: ["Capsid protein"],
+		});
+
+		const results = await formatAnalysis(db, "nuvs", {
+			hits: [
+				{
+					index: 0,
+					sequence: "ATGCATGC",
+					orfs: [{ hits: [{ hit: hmmId, full_e: 1.2e-20 }] }, { hits: [] }],
+				},
+			],
+		});
+
+		// Python scores an unmatched orf as zero and takes the minimum across all
+		// of them, so one drags the whole contig down. Preserved deliberately: the
+		// NuVs list sorts and filters on this figure.
+		expect(results.hits).toMatchObject([{ annotatedOrfCount: 1, e: 0 }]);
+	});
+
+	it("reports the longest contig as the maximum sequence length", async () => {
+		const results = await formatAnalysis(unusableDb, "nuvs", {
+			hits: [
+				{ index: 0, sequence: "ATGC", orfs: [] },
+				{ index: 1, sequence: "ATGCATGCAT", orfs: [] },
+				{ index: 2, sequence: "ATG", orfs: [] },
+			],
+		});
+
+		expect(results.maxSequenceLength).toBe(10);
 	});
 });
 
@@ -326,6 +410,7 @@ async function seedDetectedOtu(): Promise<void> {
 function pathoscopeResults() {
 	return {
 		read_count: 1024,
+		subtracted_count: 96,
 		hits: [
 			{
 				id: "seq_a0",
@@ -338,24 +423,21 @@ function pathoscopeResults() {
 	};
 }
 
-type FormattedOtu = {
-	id: string;
-	abbreviation: unknown;
-	name: unknown;
-	version: unknown;
-	length: number;
-	isolates: { id: string; sequences: Record<string, unknown>[] }[];
-};
-
 async function formatPathoscope(
 	workflow = "pathoscope",
-): Promise<FormattedOtu> {
-	const results = await formatAnalysis(db, workflow, pathoscopeResults());
-	const [otu] = results.hits as FormattedOtu[];
+	results: Record<string, unknown> = pathoscopeResults(),
+): Promise<PathoscopeHit> {
+	const formatted = (await formatAnalysis(
+		db,
+		workflow,
+		results,
+	)) as PathoscopeResults;
+
+	const [otu] = formatted.hits;
 
 	expect(otu).toBeTruthy();
 
-	return otu as FormattedOtu;
+	return otu as PathoscopeHit;
 }
 
 describe("formatAnalysis for pathoscope", () => {
@@ -374,10 +456,23 @@ describe("formatAnalysis for pathoscope", () => {
 		expect(otu.abbreviation).not.toBe(CURRENT_ABBREVIATION);
 	});
 
-	it("preserves the keys the workflow wrote alongside the hits", async () => {
+	it("emits the workflow's totals in the casing the rest of the API uses", async () => {
+		// The raw blob's `read_count` and `subtracted_count` are the worker's
+		// contract, but this envelope is ours.
 		const results = await formatAnalysis(db, "pathoscope", pathoscopeResults());
 
-		expect(results.read_count).toBe(1024);
+		expect(results).toMatchObject({ readCount: 1024, subtractedCount: 96 });
+		expect(results).not.toHaveProperty("read_count");
+	});
+
+	it("reads a missing subtracted count as zero", async () => {
+		const { subtracted_count, ...results } = pathoscopeResults();
+
+		expect(subtracted_count).toBeDefined();
+
+		await expect(
+			formatAnalysis(db, "pathoscope", results),
+		).resolves.toMatchObject({ subtractedCount: 0 });
 	});
 
 	it("drops an isolate with no matching hit", async () => {
@@ -387,6 +482,12 @@ describe("formatAnalysis for pathoscope", () => {
 		expect(otu.isolates[0]?.sequences.map((sequence) => sequence.id)).toEqual([
 			"seq_a0",
 		]);
+	});
+
+	it("names each isolate the way the exports do", async () => {
+		const otu = await formatPathoscope();
+
+		expect(otu.isolates[0]?.name).toBe("Isolate A");
 	});
 
 	it("reports the longest sequence in the OTU as its length", async () => {
@@ -417,7 +518,7 @@ describe("formatAnalysis for pathoscope", () => {
 	});
 
 	it("leaves align null when the hit recorded none", async () => {
-		const results = await formatAnalysis(db, "pathoscope", {
+		const otu = await formatPathoscope("pathoscope", {
 			hits: [
 				{
 					id: "seq_a0",
@@ -428,13 +529,108 @@ describe("formatAnalysis for pathoscope", () => {
 			],
 		});
 
-		const [otu] = results.hits as FormattedOtu[];
-		const sequence = otu?.isolates[0]?.sequences[0];
+		const sequence = otu.isolates[0]?.sequences[0];
 
 		expect(sequence?.align).toBeNull();
 		expect(sequence?.best).toBe(0);
 		expect(sequence?.pi).toBe(0);
 		expect(sequence?.reads).toBe(0);
+
+		// A hit with no alignment covers nothing, rather than being absent from
+		// the isolate it belongs to.
+		expect(otu.isolates[0]).toMatchObject({
+			coverage: 0,
+			depth: 0,
+			length: 10,
+		});
+	});
+
+	it("derives the isolate metrics from the raw alignment", async () => {
+		const otu = await formatPathoscope();
+
+		// `align` is [1, 1, 1, 5] against a ten-base sequence, so the six
+		// positions the workflow did not record are uncovered.
+		expect(otu.isolates[0]).toMatchObject({
+			coverage: 0.4,
+			depth: 0,
+			length: 10,
+			pi: 0.5,
+		});
+	});
+
+	it("derives the otu metrics from its isolates", async () => {
+		const otu = await formatPathoscope();
+
+		expect(otu).toMatchObject({
+			coverage: 0.4,
+			depth: 0,
+			maxDepth: 5,
+			maxGenomeLength: 10,
+			pi: 0.5,
+		});
+	});
+
+	it("merges the isolate curves into one polyline for the otu", async () => {
+		const otu = await formatPathoscope();
+
+		// One isolate, so the merged curve is that isolate's — zero-padded to the
+		// full length of the sequence the alignment fell short of.
+		expect(otu.align).toEqual([
+			[0, 1],
+			[2, 1],
+			[3, 5],
+			[4, 0],
+			[9, 0],
+		]);
+	});
+
+	it("aggregates an otu over every isolate that was hit", async () => {
+		// `seq_b0` is two bases and fully covered; `seq_a0` is ten and covered at
+		// four, so the two isolates disagree on every metric.
+		const otu = await formatPathoscope("pathoscope", {
+			read_count: 1024,
+			hits: [
+				{
+					id: "seq_a0",
+					otu: { id: "otu_one", version: 2 },
+					align: [1, 1, 1, 5],
+					coverage: 0.4,
+					final: { best: 12, pi: 0.5, reads: 30 },
+				},
+				{
+					id: "seq_b0",
+					otu: { id: "otu_one", version: 2 },
+					align: [2, 2],
+					coverage: 1,
+					final: { best: 4, pi: 0.25, reads: 10 },
+				},
+			],
+		});
+
+		// Highest coverage first, which is the order the detail view reads down.
+		expect(otu.isolates.map((isolate) => isolate.id)).toEqual([
+			"iso_b",
+			"iso_a",
+		]);
+
+		expect(otu).toMatchObject({
+			// The best any isolate managed, not the average.
+			coverage: 1,
+			maxDepth: 5,
+			// The merged curve spans the longest isolate.
+			maxGenomeLength: 10,
+			pi: 0.75,
+		});
+
+		// Each position takes the greatest depth any isolate recorded there.
+		expect(otu.align).toEqual([
+			[0, 2],
+			[1, 2],
+			[2, 1],
+			[3, 5],
+			[4, 0],
+			[9, 0],
+		]);
 	});
 
 	it("throws when a hit is missing its OTU", async () => {

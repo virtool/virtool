@@ -6,14 +6,13 @@
  * package are reproduced deliberately rather than corrected.
  */
 
+import type { Coordinate } from "@virtool/contracts";
+
 /** The proportion of points Visvalingam-Whyatt retains, matching Python's `ratio=0.4`. */
 const RATIO = 0.4;
 
 /** The coordinate count above which Python simplifies the polyline. */
 const SIMPLIFY_ABOVE = 100;
-
-/** An `[x, y]` point in a coverage polyline. */
-export type Coordinate = [number, number];
 
 /**
  * Read an array position that has already been shown to be in range.

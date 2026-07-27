@@ -119,45 +119,6 @@ export type AnalysisSearchResult = SearchResultV2 & {
 	items: AnalysisMinimal[];
 };
 
-/**
- * A BLAST request against one NuVs contig.
- *
- * The envelope is ours; `result` is NCBI's response, stored and returned
- * verbatim, so it stays an uninterpreted JSON object at this boundary. A caller
- * that renders it narrows `result` to its own shape.
- */
-export type NuvsBlast = {
-	/** When the request was made */
-	createdAt: string;
-
-	/** Why the request failed, or null if it has not */
-	error: string | null;
-
-	/** The unique identifier */
-	id: number;
-
-	/** Seconds to wait before polling NCBI again */
-	interval: number | null;
-
-	/** When the request was last polled against NCBI */
-	lastCheckedAt: string;
-
-	/** Whether NCBI has returned a result */
-	ready: boolean;
-
-	/** NCBI's response, stored verbatim */
-	result: JsonObject | null;
-
-	/** NCBI's request id, absent until the request is accepted */
-	rid: string | null;
-
-	/** The index of the NuVs contig the request was made for */
-	sequenceIndex: number;
-
-	/** When the request was last updated */
-	updatedAt: string;
-};
-
 /** Body for the single-call `POST /analyses/{id}/results` write. */
 export const AnalysisFinalize = z.object({
 	results: z.unknown(),

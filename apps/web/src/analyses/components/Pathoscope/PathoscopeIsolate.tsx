@@ -1,7 +1,7 @@
 import { useAnalysisSearch } from "@analyses/components/AnalysisSearchContext";
-import type { FormattedPathoscopeSequence } from "@analyses/types";
 import { toScientificNotation } from "@app/format";
 import ScrollSync from "@base/ScrollSync";
+import type { PathoscopeSequence as PathoscopeSequenceData } from "@virtool/contracts";
 import PathoscopeSequence from "./PathoscopeSequence";
 
 type PathoscopeIsolateProps = {
@@ -12,7 +12,7 @@ type PathoscopeIsolateProps = {
 	name: string;
 	pi: number;
 	reads: number;
-	sequences: FormattedPathoscopeSequence[];
+	sequences: PathoscopeSequenceData[];
 };
 
 export default function PathoscopeIsolate({
@@ -28,16 +28,13 @@ export default function PathoscopeIsolate({
 	const { search } = useAnalysisSearch();
 	const showReads = search.reads ?? false;
 
-	const totalLength = sequences.reduce(
-		(acc, hit) => acc + hit.filled.length,
-		0,
-	);
+	const totalLength = sequences.reduce((acc, hit) => acc + hit.length, 0);
 
 	const sequenceComponents = sequences.map((hit) => {
 		let ratio = 1;
 
 		if (sequences.length > 1) {
-			ratio = hit.filled.length / totalLength;
+			ratio = hit.length / totalLength;
 		}
 
 		return (
@@ -48,7 +45,7 @@ export default function PathoscopeIsolate({
 				definition={hit.definition}
 				maxGenomeLength={maxGenomeLength}
 				id={hit.id}
-				length={hit.filled.length}
+				length={hit.length}
 				ratio={ratio}
 				yMax={maxDepth}
 			/>

@@ -54,16 +54,21 @@ export default function AnalysisDetail() {
 
 	let content: ReactNode;
 
+	// The server shapes `results` per workflow but types it as an opaque
+	// `JsonObject`, so the workflow check is what narrows it here.
 	if (analysis.workflow === "pathoscope") {
 		content = (
 			<PathoscopeViewer
-				analysis={analysis as FormattedPathoscopeAnalysis}
+				analysis={analysis as unknown as FormattedPathoscopeAnalysis}
 				sample={sample}
 			/>
 		);
 	} else if (analysis.workflow === "nuvs") {
 		content = (
-			<NuvsViewer detail={analysis as FormattedNuvsAnalysis} sample={sample} />
+			<NuvsViewer
+				detail={analysis as unknown as FormattedNuvsAnalysis}
+				sample={sample}
+			/>
 		);
 	} else {
 		return (

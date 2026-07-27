@@ -1,12 +1,36 @@
-import type { NuvsOrf as NuvsOrfType } from "@analyses/types";
 import Badge from "@base/Badge";
 import { labelSvg } from "@samples/charting";
+import { Link } from "@tanstack/react-router";
+import type { NuvsOrfHit, NuvsOrf as NuvsOrfType } from "@virtool/contracts";
 import { scaleLinear, select } from "d3";
 import { useEffect, useRef } from "react";
-import "./NuvsOrf.css";
-import NuvsOrfLabel from "./NuvsOrfLabel";
 
 const HEIGHT = 8;
+
+/**
+ * The horizontal inset the chart is drawn at, in pixels.
+ *
+ * The label above the chart is padded by the same amount so the two line up, so
+ * this is a chart geometry constant rather than a design value — hence a literal
+ * shared with the d3 transform rather than a spacing token.
+ */
+const INSET = 15;
+
+function OrfLabel({ hmm }: { hmm?: NuvsOrfHit }) {
+	if (hmm) {
+		return (
+			<Link
+				className="capitalize"
+				to="/hmms/$hmmId"
+				params={{ hmmId: String(hmm.hit) }}
+			>
+				{hmm.names[0]}
+			</Link>
+		);
+	}
+
+	return <span>Unannotated</span>;
+}
 
 function draw(
 	element: HTMLElement,
@@ -16,7 +40,7 @@ function draw(
 ) {
 	element.innerHTML = "";
 
-	const width = element.offsetWidth - 30;
+	const width = element.offsetWidth - INSET * 2;
 
 	const [first = 0, second = 0] = pos;
 
@@ -27,13 +51,13 @@ function draw(
 	// Construct the SVG canvas.
 	const svg = select(element)
 		.append("svg")
-		.attr("width", width + 30)
+		.attr("width", width + INSET * 2)
 		.attr("height", HEIGHT);
 
 	labelSvg(svg, label);
 
 	// Create a mother group that will hold all chart elements.
-	const group = svg.append("g").attr("transform", "translate(15,0)");
+	const group = svg.append("g").attr("transform", `translate(${INSET},0)`);
 
 	// Set up a y-axis that will appear at the top of the chart.
 	const x = scaleLinear().range([0, width]).domain([0, maxLength]);
@@ -77,8 +101,11 @@ export default function NuvsOrf({
 
 	return (
 		<div className="pb-3">
-			<div className="flex font-medium items-center gap-4 nuvs-orf py-3">
-				<NuvsOrfLabel hmm={hmm} />
+			<div
+				className="flex font-medium items-center gap-4 py-3"
+				style={{ paddingLeft: INSET }}
+			>
+				<OrfLabel hmm={hmm} />
 				<span className="flex gap-2">
 					<Badge>{(pos[1] ?? 0) - (pos[0] ?? 0)}</Badge>
 					<span className="text-emerald-700">{hmm ? hmm.full_e : null}</span>
