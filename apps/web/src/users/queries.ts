@@ -1,12 +1,12 @@
 import type { AdministratorRoleName } from "@administration/types";
 import {
-	createUser,
-	findUsers,
-	getUser,
-	listUsers,
-	searchUsers,
-	setAdministratorRole,
-	updateUser,
+	createUserFn,
+	findUsersFn,
+	getUserFn,
+	listUsersFn,
+	searchUsersFn,
+	setAdministratorRoleFn,
+	updateUserFn,
 } from "@server/users/functions";
 import {
 	keepPreviousData,
@@ -28,7 +28,7 @@ import type { UserNested } from "./types";
 export function useListUsers() {
 	return useQuery<UserNested[]>({
 		queryKey: userQueryKeys.nested(),
-		queryFn: () => listUsers(),
+		queryFn: () => listUsersFn(),
 	});
 }
 
@@ -43,7 +43,7 @@ export function useInfiniteFindUsers(perPage: number, term: string) {
 	return useInfiniteQuery({
 		queryKey: userQueryKeys.infiniteList([perPage, term]),
 		queryFn: ({ pageParam }) =>
-			searchUsers({ data: { page: pageParam as number, perPage, term } }),
+			searchUsersFn({ data: { page: pageParam as number, perPage, term } }),
 		initialPageParam: 1,
 		getNextPageParam: (lastPage) => {
 			if (lastPage.page >= lastPage.pageCount) {
@@ -74,7 +74,7 @@ export function usersQueryOptions(
 	return queryOptions({
 		queryKey: userQueryKeys.list([page, perPage, term, administrator, active]),
 		queryFn: () =>
-			findUsers({
+			findUsersFn({
 				data: { page, perPage, term, administrator, active },
 			}),
 	});
@@ -109,7 +109,7 @@ export function useSuspenseUsers(
 export function useCreateUser() {
 	const queryClient = useQueryClient();
 	return useMutation<
-		Awaited<ReturnType<typeof createUser>>,
+		Awaited<ReturnType<typeof createUserFn>>,
 		Error,
 		{
 			handle: string;
@@ -118,7 +118,7 @@ export function useCreateUser() {
 		}
 	>({
 		mutationFn: ({ handle, password, forceReset }) =>
-			createUser({ data: { handle, password, forceReset } }),
+			createUserFn({ data: { handle, password, forceReset } }),
 		onSuccess: () => {
 			queryClient.invalidateQueries({ queryKey: userQueryKeys.lists() });
 		},
@@ -133,7 +133,7 @@ export function useCreateUser() {
 export function userQueryOptions(userId: number) {
 	return queryOptions({
 		queryKey: userQueryKeys.detail(userId),
-		queryFn: () => getUser({ data: { userId } }),
+		queryFn: () => getUserFn({ data: { userId } }),
 	});
 }
 
@@ -168,12 +168,12 @@ export type UserUpdate = {
 export function useUpdateUser() {
 	const queryClient = useQueryClient();
 	return useMutation<
-		Awaited<ReturnType<typeof updateUser>>,
+		Awaited<ReturnType<typeof updateUserFn>>,
 		Error,
 		{ userId: number; update: UserUpdate }
 	>({
 		mutationFn: ({ userId, update }) =>
-			updateUser({ data: { userId, ...update } }),
+			updateUserFn({ data: { userId, ...update } }),
 		onSuccess: (result) => {
 			if (result) {
 				queryClient.setQueryData(userQueryKeys.detail(result.id), result);
@@ -191,12 +191,12 @@ export function useUpdateUser() {
 export function useSetAdministratorRole() {
 	const queryClient = useQueryClient();
 	return useMutation<
-		Awaited<ReturnType<typeof setAdministratorRole>>,
+		Awaited<ReturnType<typeof setAdministratorRoleFn>>,
 		Error,
 		{ role: AdministratorRoleName | null; user_id: number }
 	>({
 		mutationFn: ({ role, user_id }) =>
-			setAdministratorRole({ data: { userId: user_id, role } }),
+			setAdministratorRoleFn({ data: { userId: user_id, role } }),
 		onSuccess: () => {
 			queryClient.invalidateQueries({ queryKey: userQueryKeys.all() });
 		},

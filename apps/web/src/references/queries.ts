@@ -2,20 +2,20 @@ import { settingsQueryKeys } from "@administration/keys";
 import type { Settings } from "@administration/types";
 import { referenceQueryKeys } from "@references/keys";
 import {
-	addReferenceGroup,
-	addReferenceUser,
-	archiveReference,
-	createReference,
-	findReferences,
-	getReference,
-	removeReferenceGroup,
-	removeReferenceUser,
-	unarchiveReference,
-	updateReference,
-	updateReferenceGroup,
-	updateReferenceUser,
+	addReferenceGroupFn,
+	addReferenceUserFn,
+	archiveReferenceFn,
+	createReferenceFn,
+	findReferencesFn,
+	getReferenceFn,
+	removeReferenceGroupFn,
+	removeReferenceUserFn,
+	unarchiveReferenceFn,
+	updateReferenceFn,
+	updateReferenceGroupFn,
+	updateReferenceUserFn,
 } from "@server/references/functions";
-import { updateSettings } from "@server/settings/functions";
+import { updateSettingsFn } from "@server/settings/functions";
 import {
 	queryOptions,
 	useMutation,
@@ -24,8 +24,6 @@ import {
 	useSuspenseQuery,
 } from "@tanstack/react-query";
 import { postUpload } from "@uploads/uploader";
-import { useState } from "react";
-import type { ErrorResponse } from "@/types/api";
 import type {
 	Reference,
 	ReferenceGroup,
@@ -33,7 +31,9 @@ import type {
 	ReferenceSearchResult,
 	ReferenceUpdateRequest,
 	ReferenceUser,
-} from "./types";
+} from "@virtool/contracts";
+import { useState } from "react";
+import type { ErrorResponse } from "@/types/api";
 
 /** A reference member is either a user or a group. */
 export type ReferenceMemberNoun = "user" | "group";
@@ -55,7 +55,7 @@ export function referencesQueryOptions(
 	return queryOptions<ReferenceSearchResult, Error>({
 		queryKey: referenceQueryKeys.list([page, per_page, term, archived]),
 		queryFn: () =>
-			findReferences({
+			findReferencesFn({
 				data: { page, per_page, term, archived },
 			}) as Promise<ReferenceSearchResult>,
 	});
@@ -93,7 +93,7 @@ export function useCloneReference() {
 		{ name: string; description: string; refId: number }
 	>({
 		mutationFn: ({ name, description, refId }) =>
-			createReference({
+			createReferenceFn({
 				data: { name, description, cloneFrom: refId },
 			}) as Promise<Reference>,
 	});
@@ -111,7 +111,7 @@ export function useImportReference() {
 		{ name: string; description: string; importFrom: number }
 	>({
 		mutationFn: ({ name, description, importFrom }) =>
-			createReference({
+			createReferenceFn({
 				data: { name, description, importFrom },
 			}) as Promise<Reference>,
 	});
@@ -157,7 +157,7 @@ export function useCreateReference() {
 		{ name: string; description: string; organism: string }
 	>({
 		mutationFn: ({ name, description, organism }) =>
-			createReference({
+			createReferenceFn({
 				data: { name, description, organism },
 			}) as Promise<Reference>,
 	});
@@ -173,7 +173,7 @@ export function useUpdateReference(refId: number, onSuccess?: () => void) {
 
 	const mutation = useMutation<Reference, Error, ReferenceUpdateRequest>({
 		mutationFn: (data) =>
-			updateReference({
+			updateReferenceFn({
 				data: { referenceId: refId, ...data },
 			}) as Promise<Reference>,
 		onSuccess: () => {
@@ -199,7 +199,7 @@ export function useUpdateReferenceSourceTypes(refId: number) {
 
 	return useMutation<Reference, Error, string[]>({
 		mutationFn: (sourceTypes) =>
-			updateReference({
+			updateReferenceFn({
 				data: { referenceId: refId, sourceTypes },
 			}) as Promise<Reference>,
 		onSuccess: () => {
@@ -220,7 +220,7 @@ export function useUpdateDefaultSourceTypes() {
 
 	return useMutation<Settings, ErrorResponse, string[]>({
 		mutationFn: (sourceTypes) =>
-			updateSettings({ data: { defaultSourceTypes: sourceTypes } }),
+			updateSettingsFn({ data: { defaultSourceTypes: sourceTypes } }),
 		onSuccess: () => {
 			queryClient.invalidateQueries({ queryKey: settingsQueryKeys.all() });
 		},
@@ -243,10 +243,10 @@ export function useAddReferenceMember(
 	return useMutation<ReferenceUser | ReferenceGroup, Error, { id: number }>({
 		mutationFn: ({ id }) =>
 			noun === "user"
-				? (addReferenceUser({
+				? (addReferenceUserFn({
 						data: { referenceId: refId, userId: id },
 					}) as Promise<ReferenceUser>)
-				: (addReferenceGroup({
+				: (addReferenceGroupFn({
 						data: { referenceId: refId, groupId: id },
 					}) as Promise<ReferenceGroup>),
 		onSuccess: () => {
@@ -271,10 +271,10 @@ export function useUpdateReferenceMember(noun: ReferenceMemberNoun) {
 	>({
 		mutationFn: ({ refId, id, update }) =>
 			noun === "user"
-				? (updateReferenceUser({
+				? (updateReferenceUserFn({
 						data: { referenceId: refId, userId: id, ...update },
 					}) as Promise<ReferenceUser>)
-				: (updateReferenceGroup({
+				: (updateReferenceGroupFn({
 						data: { referenceId: refId, groupId: id, ...update },
 					}) as Promise<ReferenceGroup>),
 	});
@@ -296,10 +296,10 @@ export function useRemoveReferenceUser(
 	return useMutation<null, Error, { id: number }>({
 		mutationFn: ({ id }) =>
 			noun === "user"
-				? (removeReferenceUser({
+				? (removeReferenceUserFn({
 						data: { referenceId: refId, userId: id },
 					}) as Promise<null>)
-				: (removeReferenceGroup({
+				: (removeReferenceGroupFn({
 						data: { referenceId: refId, groupId: id },
 					}) as Promise<null>),
 		onSuccess: () => {
@@ -314,7 +314,7 @@ export function referenceQueryOptions(refId: number) {
 	return queryOptions<Reference, Error>({
 		queryKey: referenceQueryKeys.detail(refId),
 		queryFn: () =>
-			getReference({ data: { referenceId: refId } }) as Promise<Reference>,
+			getReferenceFn({ data: { referenceId: refId } }) as Promise<Reference>,
 	});
 }
 
@@ -352,7 +352,7 @@ export function useArchiveReference(refId: number) {
 
 	return useMutation<Reference, Error, void>({
 		mutationFn: () =>
-			archiveReference({
+			archiveReferenceFn({
 				data: { referenceId: refId },
 			}) as Promise<Reference>,
 		onSuccess: () => {
@@ -377,7 +377,7 @@ export function useUnarchiveReference(refId: number) {
 
 	return useMutation<Reference, Error, void>({
 		mutationFn: () =>
-			unarchiveReference({
+			unarchiveReferenceFn({
 				data: { referenceId: refId },
 			}) as Promise<Reference>,
 		onSuccess: () => {

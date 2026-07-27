@@ -1,6 +1,5 @@
 import { faker } from "@faker-js/faker";
-import type { Quality, Read, Sample, SampleMinimal } from "@samples/types";
-import { createFakeServerJobNested } from "./jobs";
+import type { Quality, Read, Sample, SampleMinimal } from "@virtool/contracts";
 import { createFakeLabelNested } from "./labels";
 import { createFakeSubtractionNested } from "./subtractions";
 import { createFakeUserNested } from "./user";
@@ -16,12 +15,19 @@ export function createFakeSampleMinimal(
 	const defaultSampleMinimal: SampleMinimal = {
 		id: faker.number.int(),
 		name: `${faker.word.noun({ strategy: "any-length" })} ${faker.number.int()}`,
-		created_at: faker.date.past().toISOString(),
+		createdAt: faker.date.past().toISOString(),
 		host: faker.word.noun({ strategy: "any-length" }),
 		isolate: faker.word.noun({ strategy: "any-length" }),
-		job: createFakeServerJobNested({ workflow: "create_sample" }),
+		job: {
+			createdAt: faker.date.past().toISOString(),
+			id: faker.number.int(),
+			progress: 100,
+			state: "succeeded",
+			user: createFakeUserNested(),
+			workflow: "create_sample",
+		},
 		labels: [createFakeLabelNested()],
-		library_type: "normal",
+		libraryType: "normal",
 		notes: faker.lorem.lines(5),
 		nuvs: faker.datatype.boolean(),
 		pathoscope: faker.datatype.boolean(),
@@ -41,13 +47,13 @@ export function createFakeSampleMinimal(
  */
 export function createFakeSampleRead(overrides?: Partial<Read>): Read {
 	const defaultRead = {
-		download_url: faker.word.noun({ strategy: "any-length" }),
+		downloadUrl: faker.word.noun({ strategy: "any-length" }),
 		id: faker.number.int(),
 		name: faker.word.noun({ strategy: "any-length" }),
-		name_on_disk: faker.word.noun({ strategy: "any-length" }),
+		nameOnDisk: faker.word.noun({ strategy: "any-length" }),
 		sample: faker.number.int(),
 		size: faker.number.int(),
-		uploaded_at: faker.date.past().toISOString(),
+		uploadedAt: faker.date.past().toISOString(),
 	};
 
 	return { ...defaultRead, ...overrides };
@@ -71,15 +77,15 @@ export function createFakeSampleQuality(): Quality {
 export function createFakeSample(overrides?: Partial<Sample>): Sample {
 	const defaultSample = {
 		...createFakeSampleMinimal(),
-		all_read: faker.datatype.boolean(),
-		all_write: faker.datatype.boolean(),
+		allRead: faker.datatype.boolean(),
+		allWrite: faker.datatype.boolean(),
 		artifacts: [],
 		format: "fastq",
 		group: null,
-		group_read: faker.datatype.boolean(),
-		group_write: faker.datatype.boolean(),
+		groupRead: faker.datatype.boolean(),
+		groupWrite: faker.datatype.boolean(),
 		hold: faker.datatype.boolean(),
-		is_legacy: faker.datatype.boolean(),
+		isLegacy: faker.datatype.boolean(),
 		locale: faker.location.country(),
 		paired: faker.datatype.boolean(),
 		quality: createFakeSampleQuality(),

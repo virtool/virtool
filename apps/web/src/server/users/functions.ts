@@ -114,17 +114,17 @@ const rethrowAsHttp = createServerOnlyFn((err: unknown): never => {
 	throw err;
 });
 
-export const listAdministratorRoles = createServerFn({ method: "GET" })
+export const listAdministratorRolesFn = createServerFn({ method: "GET" })
 	.middleware([adminRole("base")])
 	.handler(async () => listAdministratorRolesImpl());
 
 // Any authenticated user can see who else exists — the handles are already
 // visible on samples, jobs, and analyses they can read.
-export const listUsers = createServerFn({ method: "GET" })
+export const listUsersFn = createServerFn({ method: "GET" })
 	.middleware([authenticated()])
 	.handler(async () => listUsersImpl(db));
 
-export const findUsers = createServerFn({ method: "GET" })
+export const findUsersFn = createServerFn({ method: "GET" })
 	.middleware([adminRole("users")])
 	.validator(findUsersSchema)
 	.handler(async ({ data }) => {
@@ -140,9 +140,9 @@ export const findUsers = createServerFn({ method: "GET" })
 // A paginated user search any signed-in user may run, mirroring Python's
 // `GET /users` (authenticated, no administrator filter). Backs the reference
 // member picker, where a non-admin who holds `modify` on a reference searches
-// users to add. `findUsers` above is the stricter administrator-only variant
+// users to add. `findUsersFn` above is the stricter administrator-only variant
 // used by the user administration views.
-export const searchUsers = createServerFn({ method: "GET" })
+export const searchUsersFn = createServerFn({ method: "GET" })
 	.middleware([authenticated()])
 	.validator(searchUsersSchema)
 	.handler(async ({ data }) =>
@@ -156,11 +156,11 @@ export const searchUsers = createServerFn({ method: "GET" })
 // Not on the authentication exception list, so an anonymous call gets a 401.
 // The login wall and the authenticated route guard both rely on that: a
 // rejected call is how they learn there is no session.
-export const getAccount = createServerFn({ method: "GET" })
+export const getAccountFn = createServerFn({ method: "GET" })
 	.middleware([authenticated()])
 	.handler(async ({ context }) => getAccountImpl(db, context.session.userId));
 
-export const getUser = createServerFn({ method: "GET" })
+export const getUserFn = createServerFn({ method: "GET" })
 	.middleware([adminRole("users")])
 	.validator(userIdSchema)
 	.handler(async ({ data }) => {
@@ -173,7 +173,7 @@ export const getUser = createServerFn({ method: "GET" })
 		}
 	});
 
-export const createUser = createServerFn({ method: "POST" })
+export const createUserFn = createServerFn({ method: "POST" })
 	.middleware([adminRole("users")])
 	.validator(createUserSchema)
 	.handler(async ({ data }) => {
@@ -194,7 +194,7 @@ export const createUser = createServerFn({ method: "POST" })
 		}
 	});
 
-export const updateUser = createServerFn({ method: "POST" })
+export const updateUserFn = createServerFn({ method: "POST" })
 	.middleware([adminRole("users")])
 	.validator(updateUserSchema)
 	.handler(async ({ context, data }) => {
@@ -220,7 +220,7 @@ export const updateUser = createServerFn({ method: "POST" })
 		}
 	});
 
-export const updateAccountHandle = createServerFn({ method: "POST" })
+export const updateAccountHandleFn = createServerFn({ method: "POST" })
 	.middleware([authenticated()])
 	.validator(accountHandleSchema)
 	.handler(async ({ context, data }) => {
@@ -235,7 +235,7 @@ export const updateAccountHandle = createServerFn({ method: "POST" })
 		}
 	});
 
-export const setAdministratorRole = createServerFn({ method: "POST" })
+export const setAdministratorRoleFn = createServerFn({ method: "POST" })
 	.middleware([adminRole("full")])
 	.validator(setAdministratorRoleSchema)
 	.handler(async ({ context, data }) => {

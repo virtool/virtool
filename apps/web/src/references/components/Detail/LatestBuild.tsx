@@ -2,7 +2,7 @@ import BoxGroupSection from "@base/BoxGroupSection";
 import { Empty, EmptyDescription, EmptyMedia, EmptyTitle } from "@base/Empty";
 import Link from "@base/Link";
 import RelativeTime from "@base/RelativeTime";
-import type { ReferenceBuild } from "@references/types";
+import type { ReferenceBuild } from "@virtool/contracts";
 import { Boxes } from "lucide-react";
 
 type LatestBuildProps = {

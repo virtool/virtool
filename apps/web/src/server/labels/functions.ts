@@ -58,12 +58,12 @@ const rethrowAsHttp = createServerOnlyFn((err: unknown): never => {
 	throw err;
 });
 
-export const findLabels = createServerFn({ method: "GET" })
+export const findLabelsFn = createServerFn({ method: "GET" })
 	.middleware([authenticated()])
 	.validator(findLabelsSchema)
 	.handler(async ({ data }) => findLabelsImpl(db, data?.term ?? ""));
 
-export const getLabel = createServerFn({ method: "GET" })
+export const getLabelFn = createServerFn({ method: "GET" })
 	.middleware([authenticated()])
 	.validator(labelIdSchema)
 	.handler(async ({ data }) => {
@@ -74,7 +74,7 @@ export const getLabel = createServerFn({ method: "GET" })
 		}
 	});
 
-export const createLabel = createServerFn({ method: "POST" })
+export const createLabelFn = createServerFn({ method: "POST" })
 	.middleware([authenticated()])
 	.validator(labelValuesSchema)
 	.handler(async ({ data }) => {
@@ -87,7 +87,7 @@ export const createLabel = createServerFn({ method: "POST" })
 		}
 	});
 
-export const updateLabel = createServerFn({ method: "POST" })
+export const updateLabelFn = createServerFn({ method: "POST" })
 	.middleware([authenticated()])
 	.validator(labelIdSchema.extend(labelValuesSchema.partial().shape))
 	.handler(async ({ data }) => {
@@ -99,7 +99,7 @@ export const updateLabel = createServerFn({ method: "POST" })
 		}
 	});
 
-export const deleteLabel = createServerFn({ method: "POST" })
+export const deleteLabelFn = createServerFn({ method: "POST" })
 	.middleware([authenticated()])
 	.validator(labelIdSchema)
 	.handler(async ({ data }) => {

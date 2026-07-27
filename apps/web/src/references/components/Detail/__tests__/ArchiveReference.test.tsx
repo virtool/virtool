@@ -32,7 +32,7 @@ describe("<ArchiveReference />", () => {
 			expect(getDialogTitle("Archive", detail.name)).toBeNull();
 		});
 
-		expect(referenceServerFnMocks.archiveReference).toHaveBeenCalledWith({
+		expect(referenceServerFnMocks.archiveReferenceFn).toHaveBeenCalledWith({
 			data: { referenceId: detail.id },
 		});
 	});
@@ -52,14 +52,14 @@ describe("<ArchiveReference />", () => {
 			expect(getDialogTitle("Unarchive", detail.name)).toBeNull();
 		});
 
-		expect(referenceServerFnMocks.unarchiveReference).toHaveBeenCalledWith({
+		expect(referenceServerFnMocks.unarchiveReferenceFn).toHaveBeenCalledWith({
 			data: { referenceId: detail.id },
 		});
 	});
 
 	it("should surface the server error message when the mutation fails", async () => {
 		const detail = createFakeReference({ archived: false });
-		referenceServerFnMocks.archiveReference.mockRejectedValue(
+		referenceServerFnMocks.archiveReferenceFn.mockRejectedValue(
 			new Error("Reference not found."),
 		);
 
@@ -74,7 +74,7 @@ describe("<ArchiveReference />", () => {
 
 	it("should fall back to a generic message when the error has none", async () => {
 		const detail = createFakeReference({ archived: false });
-		referenceServerFnMocks.archiveReference.mockRejectedValue(new Error(""));
+		referenceServerFnMocks.archiveReferenceFn.mockRejectedValue(new Error(""));
 
 		await renderWithRouter(<ArchiveReference detail={detail} />);
 
@@ -98,6 +98,6 @@ describe("<ArchiveReference />", () => {
 		await waitFor(() => {
 			expect(getDialogTitle("Archive", detail.name)).toBeNull();
 		});
-		expect(referenceServerFnMocks.archiveReference).not.toHaveBeenCalled();
+		expect(referenceServerFnMocks.archiveReferenceFn).not.toHaveBeenCalled();
 	});
 });

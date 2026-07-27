@@ -1,5 +1,5 @@
 import { useFetchAccount } from "@account/account";
-import type { ReferenceRight } from "@references/types";
+import type { ReferenceRight } from "@virtool/contracts";
 import { useFetchReference } from "./queries";
 
 /**

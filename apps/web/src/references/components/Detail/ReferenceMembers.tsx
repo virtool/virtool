@@ -8,7 +8,7 @@ import {
 	type ReferenceMemberNoun,
 	useRemoveReferenceUser,
 } from "@references/queries";
-import type { ReferenceGroup, ReferenceUser } from "@references/types";
+import type { ReferenceGroup, ReferenceUser } from "@virtool/contracts";
 import { Users } from "lucide-react";
 import AddReferenceGroup from "./AddReferenceGroup";
 import AddReferenceUser from "./AddReferenceUser";

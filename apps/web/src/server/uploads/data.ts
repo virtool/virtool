@@ -1,4 +1,4 @@
-import { and, count, desc, eq } from "drizzle-orm";
+import { and, count, desc, eq, inArray } from "drizzle-orm";
 import type { DbOrTx } from "../db/pg";
 import { takeFirstOrThrow } from "../db/rows";
 import { type UploadRow, uploads as uploadsTable } from "../db/schema/uploads";
@@ -188,6 +188,62 @@ export async function createUpload(
 	await emit("uploads", row.id, "create");
 
 	return toUpload(row, await fetchUser(db, row.userId));
+}
+
+/**
+ * Reserve the given uploads so they cannot be used for another sample.
+ *
+ * Only a visible reads upload is a valid sample input, so every id must resolve
+ * to a `reads` upload that is `ready` and not `removed`; any id that does not —
+ * a `reference`/`subtraction` upload, an unfinished one, or a removed one — is
+ * rejected with {@link UploadNotFoundError}, exactly as a missing id is. This
+ * runs before any reservation, so a bad batch reserves none.
+ *
+ * If one is already reserved a {@link UploadReservedError} is thrown. The final
+ * update is conditional on `reserved = false` and its row count checked, so a
+ * request that loses a race to reserve one of these uploads fails rather than
+ * double-reserving. Takes `DbOrTx` to run inside the caller's transaction; the
+ * caller commits.
+ */
+export async function reserveUploads(
+	db: DbOrTx,
+	uploadIds: number[],
+): Promise<void> {
+	const ids = [...new Set(uploadIds)];
+
+	if (ids.length === 0) {
+		return;
+	}
+
+	const existing = await db
+		.select({ id: uploadsTable.id, reserved: uploadsTable.reserved })
+		.from(uploadsTable)
+		.where(
+			and(
+				inArray(uploadsTable.id, ids),
+				eq(uploadsTable.type, "reads"),
+				eq(uploadsTable.ready, true),
+				eq(uploadsTable.removed, false),
+			),
+		);
+
+	if (existing.length !== ids.length) {
+		throw new UploadNotFoundError();
+	}
+
+	if (existing.some((row) => row.reserved)) {
+		throw new UploadReservedError();
+	}
+
+	const reserved = await db
+		.update(uploadsTable)
+		.set({ reserved: true })
+		.where(and(inArray(uploadsTable.id, ids), eq(uploadsTable.reserved, false)))
+		.returning({ id: uploadsTable.id });
+
+	if (reserved.length !== ids.length) {
+		throw new UploadReservedError();
+	}
 }
 
 export async function deleteUpload(

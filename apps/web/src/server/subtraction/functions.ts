@@ -52,7 +52,7 @@ const rethrowAsHttp = createServerOnlyFn((err: unknown): never => {
 	throw err;
 });
 
-export const findSubtractions = createServerFn({ method: "GET" })
+export const findSubtractionsFn = createServerFn({ method: "GET" })
 	.middleware([authenticated()])
 	.validator(findSubtractionsSchema)
 	.handler(async ({ data }) =>
@@ -64,11 +64,11 @@ export const findSubtractions = createServerFn({ method: "GET" })
 		}),
 	);
 
-export const listSubtractionsShortlist = createServerFn({ method: "GET" })
+export const listSubtractionsShortlistFn = createServerFn({ method: "GET" })
 	.middleware([authenticated()])
 	.handler(async () => listSubtractionsShortlistImpl(db));
 
-export const getSubtraction = createServerFn({ method: "GET" })
+export const getSubtractionFn = createServerFn({ method: "GET" })
 	.middleware([authenticated()])
 	.validator(subtractionIdSchema)
 	.handler(async ({ data }) => {
@@ -79,7 +79,7 @@ export const getSubtraction = createServerFn({ method: "GET" })
 		}
 	});
 
-export const createSubtraction = createServerFn({ method: "POST" })
+export const createSubtractionFn = createServerFn({ method: "POST" })
 	.middleware([permission("modify_subtraction")])
 	.validator(createSubtractionSchema)
 	.handler(async ({ context, data }) => {
@@ -97,7 +97,7 @@ export const createSubtraction = createServerFn({ method: "POST" })
 		}
 	});
 
-export const updateSubtraction = createServerFn({ method: "POST" })
+export const updateSubtractionFn = createServerFn({ method: "POST" })
 	.middleware([permission("modify_subtraction")])
 	.validator(updateSubtractionSchema)
 	.handler(async ({ data }) => {
@@ -109,7 +109,7 @@ export const updateSubtraction = createServerFn({ method: "POST" })
 		}
 	});
 
-export const deleteSubtraction = createServerFn({ method: "POST" })
+export const deleteSubtractionFn = createServerFn({ method: "POST" })
 	.middleware([permission("modify_subtraction")])
 	.validator(subtractionIdSchema)
 	.handler(async ({ data }) => {

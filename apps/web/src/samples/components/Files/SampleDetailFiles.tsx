@@ -17,7 +17,7 @@ export default function SampleDetailFiles() {
 	return (
 		<ContainerNarrow>
 			<SampleFileSizeWarning reads={data.reads} sampleId={data.id} />
-			<SampleFilesMessage showLegacy={data.is_legacy} />
+			<SampleFilesMessage showLegacy={data.isLegacy} />
 			<SampleReads reads={data.reads} sampleName={data.name} />
 		</ContainerNarrow>
 	);

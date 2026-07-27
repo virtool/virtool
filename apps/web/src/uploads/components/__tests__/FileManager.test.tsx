@@ -121,7 +121,7 @@ describe("<FileManager>", () => {
 
 			mockGetAccount(createFakeAccount({ administrator_role: "full" }));
 			mockFindUploads(files);
-			uploadServerFnMocks.deleteUpload.mockResolvedValue(null);
+			uploadServerFnMocks.deleteUploadFn.mockResolvedValue(null);
 
 			await renderWithRouter(<FileManager {...props} />, path);
 
@@ -139,15 +139,15 @@ describe("<FileManager>", () => {
 			await userEvent.click(screen.getByRole("button", { name: "Delete" }));
 
 			await waitFor(() => {
-				expect(uploadServerFnMocks.deleteUpload).toHaveBeenCalledWith({
+				expect(uploadServerFnMocks.deleteUploadFn).toHaveBeenCalledWith({
 					data: { id: first.id },
 				});
-				expect(uploadServerFnMocks.deleteUpload).toHaveBeenCalledWith({
+				expect(uploadServerFnMocks.deleteUploadFn).toHaveBeenCalledWith({
 					data: { id: second.id },
 				});
 			});
 
-			expect(uploadServerFnMocks.deleteUpload).not.toHaveBeenCalledWith({
+			expect(uploadServerFnMocks.deleteUploadFn).not.toHaveBeenCalledWith({
 				data: { id: unselected.id },
 			});
 		});

@@ -11,7 +11,7 @@ import {
 	useArchiveReference,
 	useUnarchiveReference,
 } from "@references/queries";
-import type { Reference } from "@references/types";
+import type { Reference } from "@virtool/contracts";
 import { AlertCircle, Archive, ArchiveRestore } from "lucide-react";
 import { useState } from "react";
 

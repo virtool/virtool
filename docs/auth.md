@@ -177,7 +177,7 @@ may do*. That second question is answered by a policy, declared as
 middleware on the function itself, from `server/auth/policy.ts`:
 
 ```ts
-export const deleteGroup = createServerFn({ method: "POST" })
+export const deleteGroupFn = createServerFn({ method: "POST" })
 	.middleware([adminRole("base")])
 	.validator(groupIdSchema)
 	.handler(async ({ context, data }) => { ... });
@@ -210,7 +210,7 @@ A policy states the **floor**. A rule that depends on the row being
 touched cannot be expressed at the door — an administrator editing
 another administrator needs the `full` role, and that is only knowable
 after the target user is read. Those checks stay in the handler, after
-the read, with `requireAdminRole`. `updateUser` is the worked example.
+the read, with `requireAdminRole`. `updateUserFn` is the worked example.
 `data.ts` remains a pure persistence layer that assumes its caller has
 already been authorized — never put a role check there.
 
@@ -396,8 +396,8 @@ zod rule.
 
 `checkConfiguredPasswordLength(db, password)` (`server/auth/service.ts`)
 is the single enforcement point. Every path that **sets** a password
-calls it: `createFirstUserFn`, `resetPasswordFn`, `createUser`, and
-`updateUser`. It reads the setting, applies the pure
+calls it: `createFirstUserFn`, `resetPasswordFn`, `createUserFn`, and
+`updateUserFn`. It reads the setting, applies the pure
 `checkPasswordLength` from `passwordPolicy.ts`, and throws
 `PasswordTooShortError`; each handler maps that to a 400 carrying the
 error's message.

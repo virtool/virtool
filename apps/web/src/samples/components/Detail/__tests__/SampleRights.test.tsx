@@ -1,18 +1,17 @@
 import SampleRights from "@samples/components/Detail/SampleRights";
-import { screen } from "@testing-library/react";
+import { screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import {
-	mockApiGetSampleDetail,
-	mockApiUpdateSampleRights,
-} from "@tests/api/samples";
 import { createFakeAccount } from "@tests/fake/account";
 import { createFakeGroup } from "@tests/fake/groups";
 import { createFakeSample } from "@tests/fake/samples";
 import { mockListGroups } from "@tests/server-fn/groups";
+import {
+	mockGetSample,
+	mockUpdateSampleRights,
+} from "@tests/server-fn/samples";
 import { mockGetAccount } from "@tests/server-fn/users";
 import { renderWithProviders } from "@tests/setup";
-import nock from "nock";
-import { afterEach, beforeEach, describe, expect, it } from "vitest";
+import { beforeEach, describe, expect, it } from "vitest";
 
 describe("<SampleRights />", () => {
 	let sample: ReturnType<typeof createFakeSample>;
@@ -20,17 +19,15 @@ describe("<SampleRights />", () => {
 
 	beforeEach(() => {
 		sample = createFakeSample({
-			all_read: false,
-			all_write: false,
-			group_read: false,
-			group_write: false,
+			allRead: false,
+			allWrite: false,
+			groupRead: false,
+			groupWrite: false,
 		});
 		group = createFakeGroup();
-		mockApiGetSampleDetail(sample);
+		mockGetSample(sample);
 		mockListGroups([group]);
 	});
-
-	afterEach(() => nock.cleanAll());
 
 	it("should render", async () => {
 		mockGetAccount(createFakeAccount({ administrator_role: "full" }));
@@ -51,43 +48,49 @@ describe("<SampleRights />", () => {
 
 	it("should handle group change when input is changed", async () => {
 		mockGetAccount(createFakeAccount({ administrator_role: "full" }));
-		const scope = mockApiUpdateSampleRights(sample, { group: group.id });
+		const updateSampleRights = mockUpdateSampleRights(sample);
 		renderWithProviders(<SampleRights sampleId={sample.id} />);
 
 		expect(await screen.findByText("Sample Rights")).toBeInTheDocument();
 		await userEvent.click(screen.getByLabelText("Group"));
 		await userEvent.click(screen.getByRole("option", { name: group.name }));
 
-		await scope.done();
+		await waitFor(() =>
+			expect(updateSampleRights).toHaveBeenCalledWith({
+				data: expect.objectContaining({ group: group.id }),
+			}),
+		);
 	});
 
 	it("should handle group rights change when input is changed", async () => {
 		mockGetAccount(createFakeAccount({ administrator_role: "full" }));
-		const scope = mockApiUpdateSampleRights(sample, {
-			group_read: true,
-			group_write: true,
-		});
+		const updateSampleRights = mockUpdateSampleRights(sample);
 		renderWithProviders(<SampleRights sampleId={sample.id} />);
 
 		expect(await screen.findByText("Sample Rights")).toBeInTheDocument();
 		await userEvent.click(screen.getByLabelText("Group Rights"));
 		await userEvent.click(screen.getByRole("option", { name: "Read & write" }));
 
-		await scope.done();
+		await waitFor(() =>
+			expect(updateSampleRights).toHaveBeenCalledWith({
+				data: expect.objectContaining({ groupRead: true, groupWrite: true }),
+			}),
+		);
 	});
 
 	it("should handle all users' rights change when input is changed", async () => {
 		mockGetAccount(createFakeAccount({ administrator_role: "full" }));
-		const scope = mockApiUpdateSampleRights(sample, {
-			all_read: true,
-			all_write: true,
-		});
+		const updateSampleRights = mockUpdateSampleRights(sample);
 		renderWithProviders(<SampleRights sampleId={sample.id} />);
 
 		expect(await screen.findByText("Sample Rights")).toBeInTheDocument();
 		await userEvent.click(screen.getByLabelText("All Users' Rights"));
 		await userEvent.click(screen.getByRole("option", { name: "Read & write" }));
 
-		await scope.done();
+		await waitFor(() =>
+			expect(updateSampleRights).toHaveBeenCalledWith({
+				data: expect.objectContaining({ allRead: true, allWrite: true }),
+			}),
+		);
 	});
 });

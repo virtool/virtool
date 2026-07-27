@@ -30,9 +30,9 @@ export function useCheckCanEditSample(sampleId: number) {
 
 	const hasPermission =
 		hasSufficientAdminRole("full", account.administrator_role) ||
-		sample.all_write ||
+		sample.allWrite ||
 		sample.user.id === account.id ||
-		(sample.group_write &&
+		(sample.groupWrite &&
 			account.groups.some((g) => g.id === sample.group?.id));
 
 	return { hasPermission, isPending: false };

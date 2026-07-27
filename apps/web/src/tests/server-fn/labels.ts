@@ -7,15 +7,15 @@ import { type Mock, vi } from "vitest";
  * labels can stub them without per-file `vi.mock` boilerplate.
  */
 export const labelServerFnMocks = {
-	createLabel: vi.fn(),
-	deleteLabel: vi.fn(),
-	findLabels: vi.fn(),
-	getLabel: vi.fn(),
-	updateLabel: vi.fn(),
+	createLabelFn: vi.fn(),
+	deleteLabelFn: vi.fn(),
+	findLabelsFn: vi.fn(),
+	getLabelFn: vi.fn(),
+	updateLabelFn: vi.fn(),
 };
 
 /** Sets up findLabels to resolve with the given labels. */
 export function mockFindLabels(labels: Label[]): Mock {
-	labelServerFnMocks.findLabels.mockResolvedValue(labels);
-	return labelServerFnMocks.findLabels;
+	labelServerFnMocks.findLabelsFn.mockResolvedValue(labels);
+	return labelServerFnMocks.findLabelsFn;
 }

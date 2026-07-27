@@ -187,7 +187,7 @@ application's own doing.
 Jobs are the only domain that emits an update frame per running job per
 progress wave, and every job on screen holds its own `detail(id)` query
 (see the nested-job sites below). Invalidating each frame's detail
-therefore cost one `getJob` request per running job per tick — 25 rows,
+therefore cost one `getJobFn` request per running job per tick — 25 rows,
 25 requests.
 
 So `jobs`/`update` frames do not go through `selectQueryKey`. They go to
@@ -200,12 +200,12 @@ a queue built by `createJobRefreshQueue` (`jobs/refresh.ts`), one per
    drift no matter how many details are refreshed. This is a no-op on
    pages that cache no jobs list.
 3. Drops ids whose `detail(id)` has no **active** observer, then reads
-   the rest through the `getJobs` server function — one request per
-   wave, chunked at the 100-id cap `getJobs` validates. This is what
+   the rest through the `getJobsFn` server function — one request per
+   wave, chunked at the 100-id cap `getJobsFn` validates. This is what
    keeps the jobs list page, whose rows render from the list query, from
    fetching a detail per row.
-4. Writes each result straight into its `detail(id)` cache. `getJobs`
-   returns the full `Job`, the same shape `getJob` returns, so
+4. Writes each result straight into its `detail(id)` cache. `getJobsFn`
+   returns the full `Job`, the same shape `getJobFn` returns, so
    `detail(id)` stays one canonical shape and `JobDetail` — which
    renders `args` and `steps` — reads the same entry as a sample row
    rendering only `progress`.
@@ -250,7 +250,7 @@ undo by accident:
   seeded with the nested object, so a `jobs` update frame refreshes
   `jobQueryKeys.detail(id)`. The round-trip fan-out that used to cost is
   gone — see "Job updates are batched" above — but the payload is
-  unchanged: `getJobs` returns the full `Job` (args, claim, steps) for
+  unchanged: `getJobsFn` returns the full `Job` (args, claim, steps) for
   every row, where a nested view renders two fields. Trimming it means
   a second cache shape for `detail(id)`, which `JobDetail` also reads,
   so it needs its own key rather than a narrower read. Not worth it
@@ -261,7 +261,7 @@ undo by accident:
   `hmm/components/HmmInstall.tsx`) now keep live task `progress`/`step`
   fresh by mounting `useFetchTask(id)` seeded with the nested task, so
   a `tasks` update frame invalidates `taskQueryKeys.detail(id)` and
-  refetches through the `getTask` server function. `hmm` itself is not
+  refetches through the `getTaskFn` server function. `hmm` itself is not
   an `SseDomain` and has no `/hmms` refetch trigger; `HmmInstall`
   bridges that gap by watching the live task's `complete` and
   invalidating `hmmQueryKeys.lists()` from a `useEffect`. If HMM gains

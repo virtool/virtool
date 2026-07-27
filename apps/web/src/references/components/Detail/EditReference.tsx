@@ -2,7 +2,7 @@ import { Dialog, DialogContent, DialogFooter, DialogTitle } from "@base/Dialog";
 import IconButton from "@base/IconButton";
 import SaveButton from "@base/SaveButton";
 import { useUpdateReference } from "@references/queries";
-import type { Reference } from "@references/types";
+import type { Reference } from "@virtool/contracts";
 import { Pencil } from "lucide-react";
 import { useState } from "react";
 import { useForm } from "react-hook-form";

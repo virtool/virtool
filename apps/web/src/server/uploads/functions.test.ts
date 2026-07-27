@@ -123,7 +123,7 @@ describe("findUploads", () => {
 		const userId = await signIn(null);
 		await seedUpload(userId, { name: "reads.fq.gz" });
 
-		const result = (await call("findUploads", {
+		const result = (await call("findUploadsFn", {
 			page: 1,
 			per_page: 25,
 		})) as { items: { name: string }[] };
@@ -138,7 +138,7 @@ describe("deleteUpload", () => {
 		const upload = await seedUpload(userId);
 
 		await expect(
-			call("deleteUpload", { id: upload.id }),
+			call("deleteUploadFn", { id: upload.id }),
 		).rejects.toBeInstanceOf(ForbiddenError);
 		expect(setResponseStatus).toHaveBeenCalledWith(403);
 	});
@@ -147,7 +147,7 @@ describe("deleteUpload", () => {
 		const userId = await signIn("full");
 		const upload = await seedUpload(userId);
 
-		await call("deleteUpload", { id: upload.id });
+		await call("deleteUploadFn", { id: upload.id });
 
 		const [row] = await db.select().from(uploadsTable);
 		expect(row?.removed).toBe(true);
@@ -157,7 +157,7 @@ describe("deleteUpload", () => {
 	it("maps a missing upload to a 404", async () => {
 		await signIn("full");
 
-		await expect(call("deleteUpload", { id: 404 })).rejects.toThrow(
+		await expect(call("deleteUploadFn", { id: 404 })).rejects.toThrow(
 			"Upload not found.",
 		);
 		expect(setResponseStatus).toHaveBeenCalledWith(404);
@@ -167,7 +167,7 @@ describe("deleteUpload", () => {
 		const userId = await signIn("full");
 		const upload = await seedUpload(userId, { reserved: true });
 
-		await expect(call("deleteUpload", { id: upload.id })).rejects.toThrow(
+		await expect(call("deleteUploadFn", { id: upload.id })).rejects.toThrow(
 			"Upload is reserved and in use.",
 		);
 		expect(setResponseStatus).toHaveBeenCalledWith(409);

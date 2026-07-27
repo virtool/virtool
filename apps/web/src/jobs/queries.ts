@@ -1,5 +1,5 @@
 import { jobQueryKeys } from "@jobs/keys";
-import { findJobs, getJob } from "@server/jobs/functions";
+import { findJobsFn, getJobFn } from "@server/jobs/functions";
 import {
 	queryOptions,
 	useQuery,
@@ -27,7 +27,7 @@ export function jobsQueryOptions(
 ) {
 	return queryOptions({
 		queryKey: jobQueryKeys.list([page, per_page, ...states]),
-		queryFn: () => findJobs({ data: { page, perPage: per_page, states } }),
+		queryFn: () => findJobsFn({ data: { page, perPage: per_page, states } }),
 		select: JobSearchResultSchema.parse,
 	});
 }
@@ -82,7 +82,7 @@ function getJobSeed(job: ServerJobNested): ServerJob {
 export function useFetchJob(jobId: number, seed?: ServerJobNested) {
 	return useQuery({
 		queryKey: jobQueryKeys.detail(jobId),
-		queryFn: () => getJob({ data: { jobId } }),
+		queryFn: () => getJobFn({ data: { jobId } }),
 		select: JobSchema.parse,
 		enabled: Number.isInteger(jobId),
 		initialData: seed ? getJobSeed(seed) : undefined,

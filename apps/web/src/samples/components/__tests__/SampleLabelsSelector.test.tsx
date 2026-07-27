@@ -1,27 +1,18 @@
 import { screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { createFakeSampleMinimal } from "@tests/fake/samples";
+import { sampleServerFnMocks } from "@tests/server-fn/samples";
 import { renderWithRouter } from "@tests/setup";
-import nock from "nock";
 import type { ComponentProps } from "react";
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import SampleLabelsSelector from "../SampleLabelsSelector";
 
-/**
- * Mocks the sample-update endpoint and captures the request body so tests can
- * assert which labels were sent for each selected sample.
- */
-function mockApiUpdateSampleLabels(sampleId: number) {
-	const captured: { body?: { labels: number[] } } = {};
-
-	nock("http://localhost")
-		.patch(`/api/samples/${sampleId}`)
-		.reply(200, (_uri, body: { labels: number[] }) => {
-			captured.body = body;
-			return {};
-		});
-
-	return captured;
+/** The labels sent to `updateSample` for the given sample, if it was called. */
+function labelsSentFor(sampleId: number): number[] | undefined {
+	const call = sampleServerFnMocks.updateSampleFn.mock.calls.find(
+		([arg]) => arg?.data?.sampleId === sampleId,
+	);
+	return call?.[0]?.data?.labels;
 }
 
 describe("<SampleLabelsSelector>", () => {
@@ -85,9 +76,11 @@ describe("<SampleLabelsSelector>", () => {
 	});
 
 	describe("toggling a label with mixed labels across the selection", () => {
-		afterEach(() => nock.cleanAll());
-
 		beforeEach(() => {
+			// The bulk toggle patches each sample through the updateSample server
+			// function; let it resolve so the mutation settles.
+			sampleServerFnMocks.updateSampleFn.mockResolvedValue({});
+
 			// "test" (id 1) is on both samples, "label" (id 2) is on one only, so
 			// the selection has labels in mixed states.
 			props.selectedSamples = [
@@ -137,38 +130,29 @@ describe("<SampleLabelsSelector>", () => {
 		});
 
 		it("removes a fully-applied label from every sample", async () => {
-			const foo = mockApiUpdateSampleLabels(1);
-			const bar = mockApiUpdateSampleLabels(2);
-
 			await openSelectorAndClick("test");
 
 			await waitFor(() => {
-				expect(foo.body?.labels).toEqual([2]);
-				expect(bar.body?.labels).toEqual([]);
+				expect(labelsSentFor(1)).toEqual([2]);
+				expect(labelsSentFor(2)).toEqual([]);
 			});
 		});
 
 		it("adds a partially-applied label to every sample", async () => {
-			const foo = mockApiUpdateSampleLabels(1);
-			const bar = mockApiUpdateSampleLabels(2);
-
 			await openSelectorAndClick("label");
 
 			await waitFor(() => {
-				expect(foo.body?.labels).toEqual([1, 2]);
-				expect(bar.body?.labels).toEqual([1, 2]);
+				expect(labelsSentFor(1)).toEqual([1, 2]);
+				expect(labelsSentFor(2)).toEqual([1, 2]);
 			});
 		});
 
 		it("adds an unapplied label to every sample", async () => {
-			const foo = mockApiUpdateSampleLabels(1);
-			const bar = mockApiUpdateSampleLabels(2);
-
 			await openSelectorAndClick("bar");
 
 			await waitFor(() => {
-				expect(foo.body?.labels).toEqual([1, 2, 3]);
-				expect(bar.body?.labels).toEqual([1, 3]);
+				expect(labelsSentFor(1)).toEqual([1, 2, 3]);
+				expect(labelsSentFor(2)).toEqual([1, 3]);
 			});
 		});
 	});

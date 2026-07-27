@@ -8,9 +8,9 @@ import InitialIcon from "@base/InitialIcon";
 import QueryError from "@base/QueryError";
 import SearchToolbar from "@base/SearchToolbar";
 import { useAddReferenceMember } from "@references/queries";
-import type { ReferenceUser } from "@references/types";
 import { useInfiniteFindUsers } from "@users/queries";
 import type { User } from "@users/types";
+import type { ReferenceUser } from "@virtool/contracts";
 import { Users } from "lucide-react";
 import { useState } from "react";
 

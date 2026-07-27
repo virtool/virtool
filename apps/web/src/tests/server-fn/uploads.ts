@@ -11,13 +11,13 @@ import { type Mock, vi } from "vitest";
  * exercise uploading mock `@uploads/uploader` directly.
  */
 export const uploadServerFnMocks = {
-	deleteUpload: vi.fn(),
-	findUploads: vi.fn(),
+	deleteUploadFn: vi.fn(),
+	findUploadsFn: vi.fn(),
 };
 
 /** Sets up findUploads to resolve with a single page of the given uploads. */
 export function mockFindUploads(files: Upload[]): Mock {
-	uploadServerFnMocks.findUploads.mockResolvedValue({
+	uploadServerFnMocks.findUploadsFn.mockResolvedValue({
 		items: files,
 		found_count: files.length,
 		total_count: files.length,
@@ -25,5 +25,5 @@ export function mockFindUploads(files: Upload[]): Mock {
 		page_count: 1,
 		per_page: 25,
 	});
-	return uploadServerFnMocks.findUploads;
+	return uploadServerFnMocks.findUploadsFn;
 }

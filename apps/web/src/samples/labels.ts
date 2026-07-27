@@ -1,5 +1,5 @@
 import type { SampleLabel } from "@samples/queries";
-import type { SampleMinimal } from "@samples/types";
+import type { SampleMinimal } from "@virtool/contracts";
 import { groupBy } from "es-toolkit";
 
 /**

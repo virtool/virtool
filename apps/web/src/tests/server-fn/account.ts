@@ -9,16 +9,16 @@ import { createFakeApiKey } from "../fake/account";
  * view can stub them without per-file `vi.mock` boilerplate.
  */
 export const accountServerFnMocks = {
-	findApiKeys: vi.fn(),
-	createApiKey: vi.fn(),
-	updateApiKey: vi.fn(),
-	deleteApiKey: vi.fn(),
+	findApiKeysFn: vi.fn(),
+	createApiKeyFn: vi.fn(),
+	updateApiKeyFn: vi.fn(),
+	deleteApiKeyFn: vi.fn(),
 };
 
 /** Sets up findApiKeys to resolve with the given API keys. */
 export function mockFindApiKeys(apiKeys: ApiKey[]): Mock {
-	accountServerFnMocks.findApiKeys.mockResolvedValue(apiKeys);
-	return accountServerFnMocks.findApiKeys;
+	accountServerFnMocks.findApiKeysFn.mockResolvedValue(apiKeys);
+	return accountServerFnMocks.findApiKeysFn;
 }
 
 /**
@@ -30,9 +30,9 @@ export function mockCreateApiKey(
 	permissions: Permissions,
 	overrides?: Partial<ApiKey>,
 ): Mock {
-	accountServerFnMocks.createApiKey.mockResolvedValue({
+	accountServerFnMocks.createApiKeyFn.mockResolvedValue({
 		...createFakeApiKey({ permissions, ...overrides }),
 		key,
 	});
-	return accountServerFnMocks.createApiKey;
+	return accountServerFnMocks.createApiKeyFn;
 }

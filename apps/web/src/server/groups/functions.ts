@@ -56,18 +56,18 @@ const rethrowAsHttp = createServerOnlyFn((err: unknown): never => {
 
 // Ordinary users need the group list to set sample rights and to pick a primary
 // group, so the reads are open to any signed-in user.
-export const listGroups = createServerFn({ method: "GET" })
+export const listGroupsFn = createServerFn({ method: "GET" })
 	.middleware([authenticated()])
 	.handler(async () => listGroupsImpl(db));
 
-export const findGroups = createServerFn({ method: "GET" })
+export const findGroupsFn = createServerFn({ method: "GET" })
 	.middleware([authenticated()])
 	.validator(findGroupsSchema)
 	.handler(async ({ data }) =>
 		findGroupsImpl(db, data?.term ?? "", data?.page ?? 1, data?.per_page ?? 25),
 	);
 
-export const getGroup = createServerFn({ method: "GET" })
+export const getGroupFn = createServerFn({ method: "GET" })
 	.middleware([authenticated()])
 	.validator(groupIdSchema)
 	.handler(async ({ data }) => {
@@ -81,7 +81,7 @@ export const getGroup = createServerFn({ method: "GET" })
 // A group's permissions are unioned into every member's, so anyone who can
 // write a group can grant themselves any permission. All three mutations are
 // administrator-only, as they were in the Python service they replaced.
-export const createGroup = createServerFn({ method: "POST" })
+export const createGroupFn = createServerFn({ method: "POST" })
 	.middleware([adminRole("base")])
 	.validator(createGroupSchema)
 	.handler(async ({ data }) => {
@@ -94,7 +94,7 @@ export const createGroup = createServerFn({ method: "POST" })
 		}
 	});
 
-export const updateGroup = createServerFn({ method: "POST" })
+export const updateGroupFn = createServerFn({ method: "POST" })
 	.middleware([adminRole("base")])
 	.validator(updateGroupSchema)
 	.handler(async ({ data }) => {
@@ -106,7 +106,7 @@ export const updateGroup = createServerFn({ method: "POST" })
 		}
 	});
 
-export const deleteGroup = createServerFn({ method: "POST" })
+export const deleteGroupFn = createServerFn({ method: "POST" })
 	.middleware([adminRole("base")])
 	.validator(groupIdSchema)
 	.handler(async ({ data }) => {

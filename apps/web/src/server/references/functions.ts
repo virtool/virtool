@@ -126,7 +126,7 @@ const authorizeReference = createServerOnlyFn(
 	},
 );
 
-export const findReferences = createServerFn({ method: "GET" })
+export const findReferencesFn = createServerFn({ method: "GET" })
 	.middleware([authenticated()])
 	.validator(findReferencesSchema)
 	.handler(async ({ context, data }) => {
@@ -144,7 +144,7 @@ export const findReferences = createServerFn({ method: "GET" })
 		);
 	});
 
-export const getReference = createServerFn({ method: "GET" })
+export const getReferenceFn = createServerFn({ method: "GET" })
 	.middleware([authenticated()])
 	.validator(referenceIdSchema)
 	.handler(async ({ context, data }) => {
@@ -162,7 +162,7 @@ export const getReference = createServerFn({ method: "GET" })
 		}
 	});
 
-export const createReference = createServerFn({ method: "POST" })
+export const createReferenceFn = createServerFn({ method: "POST" })
 	.middleware([permission("create_ref")])
 	.validator(createReferenceSchema)
 	.handler(async ({ context, data }) => {
@@ -182,7 +182,7 @@ export const createReference = createServerFn({ method: "POST" })
 		}
 	});
 
-export const updateReference = createServerFn({ method: "POST" })
+export const updateReferenceFn = createServerFn({ method: "POST" })
 	.middleware([authenticated()])
 	.validator(updateReferenceSchema)
 	.handler(async ({ context, data }) => {
@@ -195,7 +195,7 @@ export const updateReference = createServerFn({ method: "POST" })
 		}
 	});
 
-export const archiveReference = createServerFn({ method: "POST" })
+export const archiveReferenceFn = createServerFn({ method: "POST" })
 	.middleware([authenticated()])
 	.validator(referenceIdSchema)
 	.handler(async ({ context, data }) => {
@@ -211,7 +211,7 @@ export const archiveReference = createServerFn({ method: "POST" })
 		}
 	});
 
-export const unarchiveReference = createServerFn({ method: "POST" })
+export const unarchiveReferenceFn = createServerFn({ method: "POST" })
 	.middleware([authenticated()])
 	.validator(referenceIdSchema)
 	.handler(async ({ context, data }) => {
@@ -227,7 +227,7 @@ export const unarchiveReference = createServerFn({ method: "POST" })
 		}
 	});
 
-export const addReferenceUser = createServerFn({ method: "POST" })
+export const addReferenceUserFn = createServerFn({ method: "POST" })
 	.middleware([authenticated()])
 	.validator(addReferenceUserSchema)
 	.handler(async ({ context, data }) => {
@@ -247,7 +247,7 @@ export const addReferenceUser = createServerFn({ method: "POST" })
 		}
 	});
 
-export const addReferenceGroup = createServerFn({ method: "POST" })
+export const addReferenceGroupFn = createServerFn({ method: "POST" })
 	.middleware([authenticated()])
 	.validator(addReferenceGroupSchema)
 	.handler(async ({ context, data }) => {
@@ -269,7 +269,7 @@ export const addReferenceGroup = createServerFn({ method: "POST" })
 		}
 	});
 
-export const updateReferenceUser = createServerFn({ method: "POST" })
+export const updateReferenceUserFn = createServerFn({ method: "POST" })
 	.middleware([authenticated()])
 	.validator(updateReferenceUserSchema)
 	.handler(async ({ context, data }) => {
@@ -282,7 +282,7 @@ export const updateReferenceUser = createServerFn({ method: "POST" })
 		}
 	});
 
-export const updateReferenceGroup = createServerFn({ method: "POST" })
+export const updateReferenceGroupFn = createServerFn({ method: "POST" })
 	.middleware([authenticated()])
 	.validator(updateReferenceGroupSchema)
 	.handler(async ({ context, data }) => {
@@ -295,7 +295,7 @@ export const updateReferenceGroup = createServerFn({ method: "POST" })
 		}
 	});
 
-export const removeReferenceUser = createServerFn({ method: "POST" })
+export const removeReferenceUserFn = createServerFn({ method: "POST" })
 	.middleware([authenticated()])
 	.validator(referenceUserSchema)
 	.handler(async ({ context, data }) => {
@@ -313,7 +313,7 @@ export const removeReferenceUser = createServerFn({ method: "POST" })
 		}
 	});
 
-export const removeReferenceGroup = createServerFn({ method: "POST" })
+export const removeReferenceGroupFn = createServerFn({ method: "POST" })
 	.middleware([authenticated()])
 	.validator(referenceGroupSchema)
 	.handler(async ({ context, data }) => {

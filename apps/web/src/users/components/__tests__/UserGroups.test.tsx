@@ -112,7 +112,7 @@ describe("<UserGroups />", () => {
 		await userEvent.click(screen.getByRole("option", { name: "bar" }));
 
 		await waitFor(() =>
-			expect(userServerFnMocks.updateUser).toHaveBeenCalledWith({
+			expect(userServerFnMocks.updateUserFn).toHaveBeenCalledWith({
 				data: { userId, groups: [1, 2] },
 			}),
 		);
@@ -138,7 +138,7 @@ describe("<UserGroups />", () => {
 		await userEvent.keyboard("{ArrowDown}{Enter}");
 
 		await waitFor(() =>
-			expect(userServerFnMocks.updateUser).toHaveBeenCalledWith({
+			expect(userServerFnMocks.updateUserFn).toHaveBeenCalledWith({
 				data: { userId, groups: [1, 2] },
 			}),
 		);
@@ -163,7 +163,7 @@ describe("<UserGroups />", () => {
 		await userEvent.click(await screen.findByRole("option", { name: "bar" }));
 
 		await waitFor(() =>
-			expect(userServerFnMocks.updateUser).toHaveBeenCalledWith({
+			expect(userServerFnMocks.updateUserFn).toHaveBeenCalledWith({
 				data: { userId, groups: [1, 2] },
 			}),
 		);
@@ -223,7 +223,7 @@ describe("<UserGroups />", () => {
 		await userEvent.click(await screen.findByRole("radio", { name: "bar" }));
 
 		await waitFor(() =>
-			expect(userServerFnMocks.updateUser).toHaveBeenCalledWith({
+			expect(userServerFnMocks.updateUserFn).toHaveBeenCalledWith({
 				data: { userId, primary_group: 2 },
 			}),
 		);
@@ -246,7 +246,7 @@ describe("<UserGroups />", () => {
 		);
 
 		await waitFor(() =>
-			expect(userServerFnMocks.updateUser).toHaveBeenCalledWith({
+			expect(userServerFnMocks.updateUserFn).toHaveBeenCalledWith({
 				data: { userId, primary_group: null },
 			}),
 		);
@@ -269,7 +269,7 @@ describe("<UserGroups />", () => {
 		);
 
 		await waitFor(() =>
-			expect(userServerFnMocks.updateUser).toHaveBeenCalledWith({
+			expect(userServerFnMocks.updateUserFn).toHaveBeenCalledWith({
 				data: { userId, groups: [2], primary_group: null },
 			}),
 		);
@@ -292,7 +292,7 @@ describe("<UserGroups />", () => {
 		);
 
 		await waitFor(() =>
-			expect(userServerFnMocks.updateUser).toHaveBeenCalledWith({
+			expect(userServerFnMocks.updateUserFn).toHaveBeenCalledWith({
 				data: { userId, groups: [1] },
 			}),
 		);

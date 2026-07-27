@@ -6,3 +6,12 @@ export const Subtraction = z.object({
 });
 
 export type Subtraction = z.infer<typeof Subtraction>;
+
+/** A subtraction reduced to the fields embedded in other resources. */
+export type SubtractionNested = {
+	/** The unique identifier */
+	id: number;
+
+	/** The display name */
+	name: string;
+};

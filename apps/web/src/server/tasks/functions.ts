@@ -23,7 +23,7 @@ const rethrowAsHttp = createServerOnlyFn((err: unknown): never => {
 	throw err;
 });
 
-export const getTask = createServerFn({ method: "GET" })
+export const getTaskFn = createServerFn({ method: "GET" })
 	.middleware([authenticated()])
 	.validator(taskIdSchema)
 	.handler(async ({ data }) => {

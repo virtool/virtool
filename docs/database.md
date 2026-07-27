@@ -78,7 +78,7 @@ states:
 | API keys     | `api_keys`                                           | Built          |
 | Analyses     | `analyses`                                           | Partial mirror |
 | Indexes      | `indexes`                                            | Partial mirror |
-| Samples      | `legacy_samples`                                     | Partial mirror |
+| Samples      | `legacy_samples`, `legacy_sample_*`, `sample_*`      | Built          |
 | Subtractions | `subtractions`, `subtraction_files`                  | Built          |
 | References   | `legacy_references`, `legacy_reference_*`            | Built          |
 | Uploads      | `uploads`                                            | Not started    |
@@ -96,9 +96,13 @@ reverse `job_id` foreign keys on `analyses`, `indexes`, and
 read path adds three more: `legacy_otus` (an OTU count and the clone
 manifest), `legacy_history` (contributors and the unbuilt-change count),
 and the extra `indexes` columns that resolve a reference's latest build.
-Each partial mirror declares just the columns its consumer needs. The
-`subtractions` mirror is now full — the subtraction domain is served
-from this repo — but jobs still reaches it through the same reverse
+The samples read path adds three columns to the `analyses` mirror —
+`sample_id`, `workflow`, and `ready` — to derive a sample's workflow tags
+(a `GROUP BY workflow, bool_or(ready)`) and to power the `workflows=`
+filter (a correlated `EXISTS`); the analyses domain itself is still only a
+partial mirror. Each partial mirror declares just the columns its consumer
+needs. The `subtractions` mirror is now full — the subtraction domain is
+served from this repo — but jobs still reaches it through the same reverse
 `job_id` foreign key.
 
 A `legacy_` table prefix marks a table that carries the Mongo-era row

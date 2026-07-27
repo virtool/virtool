@@ -94,14 +94,16 @@ function call(name: string, data?: unknown) {
 
 describe("findApiKeys", () => {
 	it("refuses an unauthenticated caller", async () => {
-		await expect(call("findApiKeys")).rejects.toBeInstanceOf(UnauthorizedError);
+		await expect(call("findApiKeysFn")).rejects.toBeInstanceOf(
+			UnauthorizedError,
+		);
 	});
 
 	it("returns only the signed-in user's keys", async () => {
 		await signIn();
-		await call("createApiKey", { name: "Robot", permissions: {} });
+		await call("createApiKeyFn", { name: "Robot", permissions: {} });
 
-		const keys = (await call("findApiKeys")) as { name: string }[];
+		const keys = (await call("findApiKeysFn")) as { name: string }[];
 
 		expect(keys).toHaveLength(1);
 		expect(keys[0]?.name).toBe("Robot");
@@ -112,7 +114,7 @@ describe("createApiKey", () => {
 	it("returns the raw secret and a 201", async () => {
 		await signIn();
 
-		const created = (await call("createApiKey", {
+		const created = (await call("createApiKeyFn", {
 			name: "Robot",
 			permissions: { create_ref: true },
 		})) as { key: string; name: string };
@@ -126,7 +128,7 @@ describe("createApiKey", () => {
 describe("updateApiKey", () => {
 	it("responds with 404 for a key the user does not own", async () => {
 		const owner = await signIn("owner");
-		const created = (await call("createApiKey", {
+		const created = (await call("createApiKeyFn", {
 			name: "Robot",
 			permissions: {},
 		})) as { id: number };
@@ -134,7 +136,7 @@ describe("updateApiKey", () => {
 		await signIn("intruder");
 
 		await expect(
-			call("updateApiKey", {
+			call("updateApiKeyFn", {
 				keyId: created.id,
 				permissions: { create_ref: true },
 			}),
@@ -150,12 +152,12 @@ describe("updateApiKey", () => {
 describe("deleteApiKey", () => {
 	it("removes the signed-in user's key with a 204", async () => {
 		await signIn();
-		const created = (await call("createApiKey", {
+		const created = (await call("createApiKeyFn", {
 			name: "Robot",
 			permissions: {},
 		})) as { id: number };
 
-		await call("deleteApiKey", { keyId: created.id });
+		await call("deleteApiKeyFn", { keyId: created.id });
 
 		expect(setResponseStatus).toHaveBeenCalledWith(204);
 		expect(await db.select().from(apiKeys)).toHaveLength(0);
@@ -164,7 +166,7 @@ describe("deleteApiKey", () => {
 	it("responds with 404 when the key does not exist", async () => {
 		await signIn();
 
-		await expect(call("deleteApiKey", { keyId: 404 })).rejects.toThrow(
+		await expect(call("deleteApiKeyFn", { keyId: 404 })).rejects.toThrow(
 			"API key not found.",
 		);
 		expect(setResponseStatus).toHaveBeenCalledWith(404);

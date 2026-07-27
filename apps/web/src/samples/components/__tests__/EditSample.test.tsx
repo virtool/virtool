@@ -1,7 +1,7 @@
-import { screen } from "@testing-library/react";
+import { screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { mockApiEditSample } from "@tests/api/samples";
 import { createFakeSample } from "@tests/fake/samples";
+import { mockUpdateSample } from "@tests/server-fn/samples";
 import { renderWithRouter } from "@tests/setup";
 import type { ComponentProps } from "react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
@@ -60,14 +60,13 @@ describe("<Editsample />", () => {
 	});
 
 	it("should update sample when form is submitted", async () => {
-		const scope = mockApiEditSample(
-			sample,
-			"newName",
-			"newIsolate",
-			"newHost",
-			"newLocale",
-			"newNotes",
-		);
+		const updateSample = mockUpdateSample(sample, {
+			name: "newName",
+			isolate: "newIsolate",
+			host: "newHost",
+			locale: "newLocale",
+			notes: "newNotes",
+		});
 		await renderWithRouter(<EditSample {...props} />);
 
 		const nameInput = screen.getByLabelText("Name");
@@ -91,6 +90,6 @@ describe("<Editsample />", () => {
 		await userEvent.type(notesInput, "newNotes");
 
 		await userEvent.click(screen.getByText("Save"));
-		scope.done();
+		await waitFor(() => expect(updateSample).toHaveBeenCalled());
 	});
 });

@@ -1,30 +1,17 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { renderHook, waitFor } from "@testing-library/react";
-import { mockApiCreateSample } from "@tests/api/samples";
+import { mockCreateSample } from "@tests/server-fn/samples";
 import { fileQueryKeys } from "@uploads/keys";
-import nock from "nock";
 import type { ReactNode } from "react";
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import { useCreateSample } from "../queries";
 
 describe("useCreateSample()", () => {
-	afterEach(() => nock.cleanAll());
-
 	it("invalidates the reads selector on success so reserved files leave it", async () => {
 		const queryClient = new QueryClient();
 		const invalidateQueries = vi.spyOn(queryClient, "invalidateQueries");
 
-		const scope = mockApiCreateSample(
-			"Sample A",
-			"",
-			"",
-			"",
-			"normal",
-			[1],
-			[],
-			[],
-			null,
-		);
+		mockCreateSample();
 
 		function wrapper({ children }: { children: ReactNode }) {
 			return (
@@ -53,7 +40,5 @@ describe("useCreateSample()", () => {
 		expect(invalidateQueries).toHaveBeenCalledWith({
 			queryKey: [...fileQueryKeys.infiniteLists(), "reads"],
 		});
-
-		scope.done();
 	});
 });

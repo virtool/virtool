@@ -1,7 +1,7 @@
 import Alert from "@base/Alert";
 import Link from "@base/Link";
-import type { Read } from "@samples/types";
 import { useLocation } from "@tanstack/react-router";
+import type { Read } from "@virtool/contracts";
 import { AlertTriangle } from "lucide-react";
 
 type SampleFileSizeWarningProps = {

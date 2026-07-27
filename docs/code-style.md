@@ -82,25 +82,29 @@ is not an `is` or `has`.
 Prepositional names like `lifetimeFor` or `dataFor` are not in the
 rule — prefer `getLifetime` / `getData`.
 
-## Naming: do not suffix functions with their layer or mechanism
+## Naming: a server function gets an `Fn` suffix; the domain function it wraps does not
 
-Exported function names should describe the domain action or returned
-value, not the file, framework, or implementation layer that contains
-them. Avoid suffixes like `Fn`, `Core`, `Handler`, or `Impl` in
-exported names. Let the module path carry the layer:
+A `createServerFn`-wrapped export is not a plain function call — every
+call site crosses the network, goes through validation and auth
+middleware, and returns whatever the RPC layer's plumbing returns
+(`loginFn` isn't `login`'s return type, it's a callable RPC handle with
+its own `.url`, for instance). That's a real behavioral difference from
+the domain function underneath it, worth naming, not hiding:
 
-- `server/auth/core.ts` exports pure domain helpers (`login`, `logout`,
-  `getAuthState`).
+- `server/auth/core.ts` exports the pure domain helpers (`login`,
+  `logout`, `getAuthState`) — no suffix, since these never cross the
+  RPC boundary.
 - `server/auth/functions.ts` exports the TanStack Start server
-  functions that wrap them.
+  functions that wrap them, suffixed `Fn` (`loginFn`, `logoutFn`) —
+  every call site, client or test, sees at a glance that the call is a
+  server round-trip rather than a local one.
 - React Query hooks living next to the feature's `api.ts` wrap those
   server calls as `useLoginMutation`, `useAuth`, etc.
 
-When two imported functions with the same domain name meet in one
-file, use a local-only alias such as `login as loginImpl` at the
-import site. The alias is allowed because it is wiring glue, not
-exported API. Framework option names that the library dictates (e.g.
-React Query's `queryFn` and `mutationFn`) keep their upstream names.
+Because the wrapper and the domain function it wraps now have
+different names, no import aliasing is needed for the common case. Only
+alias an import (`as` at the import site) for an unrelated, incidental
+name collision that isn't this domain-function/server-function pair.
 
 Import these model constants by their exported names. Do not alias
 them with `as` to avoid collisions; instead name other imports

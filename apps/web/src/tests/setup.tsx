@@ -30,6 +30,7 @@ import { jobServerFnMocks } from "./server-fn/jobs";
 import { labelServerFnMocks } from "./server-fn/labels";
 import { referenceServerFnMocks } from "./server-fn/references";
 import { rootServerFnMocks } from "./server-fn/root";
+import { sampleServerFnMocks } from "./server-fn/samples";
 import {
 	mockGetPasswordPolicy,
 	settingsServerFnMocks,
@@ -89,6 +90,11 @@ vi.mock("@server/references/functions", async () => {
 	return referenceServerFnMocks;
 });
 
+vi.mock("@server/samples/functions", async () => {
+	const { sampleServerFnMocks } = await import("./server-fn/samples");
+	return sampleServerFnMocks;
+});
+
 beforeEach(() => {
 	for (const fn of Object.values(groupServerFnMocks)) {
 		fn.mockReset();
@@ -101,14 +107,16 @@ beforeEach(() => {
 		...Object.values(authServerFnMocks),
 		...Object.values(labelServerFnMocks),
 		...Object.values(rootServerFnMocks),
-		uploadServerFnMocks.findUploads,
-		uploadServerFnMocks.deleteUpload,
-		subtractionServerFnMocks.findSubtractions,
-		subtractionServerFnMocks.getSubtraction,
-		subtractionServerFnMocks.listSubtractionsShortlist,
-		referenceServerFnMocks.findReferences,
-		referenceServerFnMocks.getReference,
-		settingsServerFnMocks.getSettings,
+		uploadServerFnMocks.findUploadsFn,
+		uploadServerFnMocks.deleteUploadFn,
+		subtractionServerFnMocks.findSubtractionsFn,
+		subtractionServerFnMocks.getSubtractionFn,
+		subtractionServerFnMocks.listSubtractionsShortlistFn,
+		referenceServerFnMocks.findReferencesFn,
+		referenceServerFnMocks.getReferenceFn,
+		sampleServerFnMocks.findSamplesFn,
+		sampleServerFnMocks.getSampleFn,
+		settingsServerFnMocks.getSettingsFn,
 	]) {
 		fn.mockReset();
 		// Default to a pending promise so an un-stubbed query renders its loading
@@ -117,20 +125,24 @@ beforeEach(() => {
 	}
 
 	for (const fn of [
-		subtractionServerFnMocks.createSubtraction,
-		subtractionServerFnMocks.updateSubtraction,
-		subtractionServerFnMocks.deleteSubtraction,
-		referenceServerFnMocks.createReference,
-		referenceServerFnMocks.updateReference,
-		referenceServerFnMocks.archiveReference,
-		referenceServerFnMocks.unarchiveReference,
-		referenceServerFnMocks.addReferenceUser,
-		referenceServerFnMocks.addReferenceGroup,
-		referenceServerFnMocks.updateReferenceUser,
-		referenceServerFnMocks.updateReferenceGroup,
-		referenceServerFnMocks.removeReferenceUser,
-		referenceServerFnMocks.removeReferenceGroup,
-		settingsServerFnMocks.updateSettings,
+		subtractionServerFnMocks.createSubtractionFn,
+		subtractionServerFnMocks.updateSubtractionFn,
+		subtractionServerFnMocks.deleteSubtractionFn,
+		referenceServerFnMocks.createReferenceFn,
+		referenceServerFnMocks.updateReferenceFn,
+		referenceServerFnMocks.archiveReferenceFn,
+		referenceServerFnMocks.unarchiveReferenceFn,
+		referenceServerFnMocks.addReferenceUserFn,
+		referenceServerFnMocks.addReferenceGroupFn,
+		referenceServerFnMocks.updateReferenceUserFn,
+		referenceServerFnMocks.updateReferenceGroupFn,
+		referenceServerFnMocks.removeReferenceUserFn,
+		referenceServerFnMocks.removeReferenceGroupFn,
+		sampleServerFnMocks.createSampleFn,
+		sampleServerFnMocks.updateSampleFn,
+		sampleServerFnMocks.deleteSampleFn,
+		sampleServerFnMocks.updateSampleRightsFn,
+		settingsServerFnMocks.updateSettingsFn,
 	]) {
 		fn.mockReset();
 	}

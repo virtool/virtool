@@ -370,7 +370,7 @@ Use the split deliberately:
 export function useUpdateSample(sampleId: string) {
   const queryClient = useQueryClient();
   return useMutation<Sample, ErrorResponse, { update: SampleUpdate }>({
-    mutationFn: ({ update }) => updateSample(sampleId, update),
+    mutationFn: ({ update }) => updateSampleFn(sampleId, update),
     onSuccess: () => {
       queryClient.invalidateQueries({
         queryKey: samplesQueryKeys.detail(sampleId),

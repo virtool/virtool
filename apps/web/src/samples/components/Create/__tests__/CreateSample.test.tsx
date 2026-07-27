@@ -1,11 +1,11 @@
-import { screen, within } from "@testing-library/react";
+import { screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { mockApiCreateSample } from "@tests/api/samples";
 import { createFakeAccount } from "@tests/fake/account";
 import { createFakeFile } from "@tests/fake/files";
 import { createFakeLabel } from "@tests/fake/labels";
 import { createFakeShortlistSubtraction } from "@tests/fake/subtractions";
 import { mockListGroups } from "@tests/server-fn/groups";
+import { mockCreateSample } from "@tests/server-fn/samples";
 import { mockListSubtractionsShortlist } from "@tests/server-fn/subtractions";
 import { mockFindUploads, uploadServerFnMocks } from "@tests/server-fn/uploads";
 import { mockGetAccount } from "@tests/server-fn/users";
@@ -69,7 +69,7 @@ describe("<CreateSample>", () => {
 	});
 
 	it("should show an error when the read files fail to load", async () => {
-		uploadServerFnMocks.findUploads.mockRejectedValue(new Error("failed"));
+		uploadServerFnMocks.findUploadsFn.mockRejectedValue(new Error("failed"));
 
 		await renderWithRouter(<CreateSample labels={labels} />);
 		expect(
@@ -107,17 +107,7 @@ describe("<CreateSample>", () => {
 		mockFindUploads([file]);
 		mockListSubtractionsShortlist([]);
 
-		const scope = mockApiCreateSample(
-			"Sample A",
-			"",
-			"",
-			"",
-			"normal",
-			[file.id],
-			[],
-			[],
-			null,
-		);
+		const createSample = mockCreateSample();
 
 		await renderPage();
 
@@ -130,7 +120,18 @@ describe("<CreateSample>", () => {
 
 		await submitForm();
 
-		scope.done();
+		await waitFor(() =>
+			expect(createSample).toHaveBeenCalledWith({
+				data: expect.objectContaining({
+					name: "Sample A",
+					libraryType: "normal",
+					files: [file.id],
+					labels: [],
+					subtractions: [],
+					group: null,
+				}),
+			}),
+		);
 	});
 
 	it("should submit when all form fields complete", async () => {
@@ -141,17 +142,7 @@ describe("<CreateSample>", () => {
 		mockFindUploads(files);
 		mockListSubtractionsShortlist([subtractionShortlist]);
 
-		const scope = mockApiCreateSample(
-			"Sample T",
-			"Clone AB",
-			"Apple",
-			"Earth",
-			"normal",
-			[firstFile.id, secondFile.id],
-			[firstLabel.id],
-			[subtractionShortlist.id],
-			null,
-		);
+		const createSample = mockCreateSample();
 
 		await renderPage();
 
@@ -194,7 +185,21 @@ describe("<CreateSample>", () => {
 		// Submit.
 		await submitForm();
 
-		scope.done();
+		await waitFor(() =>
+			expect(createSample).toHaveBeenCalledWith({
+				data: expect.objectContaining({
+					name: "Sample T",
+					isolate: "Clone AB",
+					host: "Apple",
+					locale: "Earth",
+					libraryType: "normal",
+					files: [firstFile.id, secondFile.id],
+					labels: [firstLabel.id],
+					subtractions: [subtractionShortlist.id],
+					group: null,
+				}),
+			}),
+		);
 	});
 
 	it("should show and hide the metadata fields", async () => {
@@ -349,17 +354,7 @@ describe("<CreateSample>", () => {
 		mockFindUploads([file]);
 		mockListSubtractionsShortlist([]);
 
-		const scope = mockApiCreateSample(
-			"Sample A",
-			"",
-			"",
-			"",
-			"normal",
-			[file.id],
-			[],
-			[],
-			null,
-		);
+		mockCreateSample();
 
 		await renderPage();
 
@@ -372,8 +367,6 @@ describe("<CreateSample>", () => {
 
 		expect(await screen.findByText("Sample created")).toBeInTheDocument();
 		expect(screen.getByLabelText("Name")).toHaveValue("");
-
-		scope.done();
 	});
 
 	it("should be able to swap read orientation", async () => {

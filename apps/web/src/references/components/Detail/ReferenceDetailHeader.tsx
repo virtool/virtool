@@ -4,8 +4,8 @@ import ViewHeaderAttribution from "@base/ViewHeaderAttribution";
 import ViewHeaderIcons from "@base/ViewHeaderIcons";
 import ViewHeaderTitle from "@base/ViewHeaderTitle";
 import { useCheckReferenceRight } from "@references/hooks";
-import type { Reference } from "@references/types";
 import { useLocation } from "@tanstack/react-router";
+import type { Reference } from "@virtool/contracts";
 import ArchiveReference from "./ArchiveReference";
 import EditReference from "./EditReference";
 

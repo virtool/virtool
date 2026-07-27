@@ -43,12 +43,12 @@ const rethrowAsHttp = createServerOnlyFn((err: unknown): never => {
 	throw err;
 });
 
-export const findHmms = createServerFn({ method: "GET" })
+export const findHmmsFn = createServerFn({ method: "GET" })
 	.middleware([authenticated()])
 	.validator(findHmmsSchema)
 	.handler(async ({ data }) => findHmmsImpl(db, data));
 
-export const getHmm = createServerFn({ method: "GET" })
+export const getHmmFn = createServerFn({ method: "GET" })
 	.middleware([authenticated()])
 	.validator(hmmIdSchema)
 	.handler(async ({ data }) => {
@@ -59,7 +59,7 @@ export const getHmm = createServerFn({ method: "GET" })
 		}
 	});
 
-export const installHmm = createServerFn({ method: "POST" })
+export const installHmmFn = createServerFn({ method: "POST" })
 	.middleware([permission("modify_hmm")])
 	.handler(async ({ context }) => {
 		try {

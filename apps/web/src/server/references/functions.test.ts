@@ -159,7 +159,7 @@ describe("findReferences", () => {
 		await seedReference(ownerId);
 		await seedReference(otherId);
 
-		const result = (await call("findReferences", {
+		const result = (await call("findReferencesFn", {
 			page: 1,
 			per_page: 25,
 		})) as {
@@ -181,7 +181,7 @@ describe("findReferences", () => {
 		await seedReference(adminId);
 		await seedReference(otherId);
 
-		const result = (await call("findReferences", {
+		const result = (await call("findReferencesFn", {
 			page: 1,
 			per_page: 25,
 		})) as {
@@ -197,7 +197,7 @@ describe("getReference", () => {
 		await signIn(null);
 
 		await expect(
-			call("getReference", { referenceId: 999_999 }),
+			call("getReferenceFn", { referenceId: 999_999 }),
 		).rejects.toThrow("Reference not found.");
 		expect(setResponseStatus).toHaveBeenCalledWith(404);
 	});
@@ -206,7 +206,7 @@ describe("getReference", () => {
 		const ownerId = await signIn(null);
 		const referenceId = await seedReference(ownerId);
 
-		const reference = (await call("getReference", { referenceId })) as {
+		const reference = (await call("getReferenceFn", { referenceId })) as {
 			users: { id: number; modifyOtu: boolean }[];
 			sourceTypes: string[];
 		};
@@ -224,7 +224,7 @@ describe("getReference", () => {
 		await signIn(null);
 		const referenceId = await seedReference(ownerId);
 
-		await expect(call("getReference", { referenceId })).rejects.toThrow(
+		await expect(call("getReferenceFn", { referenceId })).rejects.toThrow(
 			"Reference not found.",
 		);
 		expect(setResponseStatus).toHaveBeenCalledWith(404);
@@ -238,7 +238,7 @@ describe("getReference", () => {
 		await signIn("full");
 		const referenceId = await seedReference(ownerId);
 
-		const reference = (await call("getReference", { referenceId })) as {
+		const reference = (await call("getReferenceFn", { referenceId })) as {
 			id: number;
 		};
 
@@ -268,7 +268,7 @@ describe("getReference", () => {
 			modify_otu: false,
 		});
 
-		const reference = (await call("getReference", { referenceId })) as {
+		const reference = (await call("getReferenceFn", { referenceId })) as {
 			id: number;
 		};
 
@@ -281,14 +281,14 @@ describe("createReference", () => {
 		await signIn(null);
 
 		await expect(
-			call("createReference", { name: "New", description: "", organism: "" }),
+			call("createReferenceFn", { name: "New", description: "", organism: "" }),
 		).rejects.toBeInstanceOf(ForbiddenError);
 	});
 
 	it("creates an empty reference and seeds the creator with all rights", async () => {
 		const userId = await signIn("full");
 
-		const reference = (await call("createReference", {
+		const reference = (await call("createReferenceFn", {
 			name: "Empty",
 			description: "desc",
 			organism: "virus",
@@ -304,7 +304,7 @@ describe("createReference", () => {
 		const userId = await signIn("full");
 		const sourceId = await seedReference(userId);
 
-		const reference = (await call("createReference", {
+		const reference = (await call("createReferenceFn", {
 			name: "",
 			description: "",
 			organism: "",
@@ -322,7 +322,7 @@ describe("createReference", () => {
 		await signIn("full");
 
 		await expect(
-			call("createReference", {
+			call("createReferenceFn", {
 				name: "Imported",
 				description: "",
 				organism: "",
@@ -336,7 +336,7 @@ describe("createReference", () => {
 		const userId = await signIn("full");
 		const uploadId = await seedUpload(userId);
 
-		const reference = (await call("createReference", {
+		const reference = (await call("createReferenceFn", {
 			name: "Imported",
 			description: "",
 			organism: "",
@@ -358,7 +358,7 @@ describe("updateReference", () => {
 		const referenceId = await seedReference(ownerId);
 
 		await expect(
-			call("updateReference", { referenceId, name: "Renamed" }),
+			call("updateReferenceFn", { referenceId, name: "Renamed" }),
 		).rejects.toBeInstanceOf(ForbiddenError);
 	});
 
@@ -366,7 +366,7 @@ describe("updateReference", () => {
 		const ownerId = await signIn(null);
 		const referenceId = await seedReference(ownerId);
 
-		const reference = (await call("updateReference", {
+		const reference = (await call("updateReferenceFn", {
 			referenceId,
 			name: "Renamed",
 			restrictSourceTypes: true,
@@ -381,7 +381,7 @@ describe("updateReference", () => {
 		const referenceId = await seedReference(ownerId, { archived: true });
 
 		await expect(
-			call("updateReference", { referenceId, name: "Renamed" }),
+			call("updateReferenceFn", { referenceId, name: "Renamed" }),
 		).rejects.toThrow("Reference is archived.");
 		expect(setResponseStatus).toHaveBeenCalledWith(409);
 	});
@@ -392,7 +392,7 @@ describe("archiveReference", () => {
 		const ownerId = await signIn(null);
 		const referenceId = await seedReference(ownerId);
 
-		const reference = (await call("archiveReference", { referenceId })) as {
+		const reference = (await call("archiveReferenceFn", { referenceId })) as {
 			archived: boolean;
 		};
 
@@ -411,7 +411,7 @@ describe("reference membership", () => {
 				.returning({ id: groups.id }),
 		);
 
-		const member = (await call("addReferenceGroup", {
+		const member = (await call("addReferenceGroupFn", {
 			referenceId,
 			groupId: group.id,
 			modify: true,
@@ -437,7 +437,7 @@ describe("reference membership", () => {
 		);
 
 		await expect(
-			call("addReferenceGroup", { referenceId, groupId: group.id }),
+			call("addReferenceGroupFn", { referenceId, groupId: group.id }),
 		).rejects.toBeInstanceOf(ForbiddenError);
 	});
 
@@ -445,7 +445,7 @@ describe("reference membership", () => {
 		const ownerId = await signIn(null);
 		const referenceId = await seedReference(ownerId);
 
-		const member = (await call("updateReferenceUser", {
+		const member = (await call("updateReferenceUserFn", {
 			referenceId,
 			userId: ownerId,
 			modify: false,
@@ -462,7 +462,7 @@ describe("reference membership", () => {
 		const referenceId = await seedReference(ownerId);
 
 		await expect(
-			call("removeReferenceUser", { referenceId, userId: 999_999 }),
+			call("removeReferenceUserFn", { referenceId, userId: 999_999 }),
 		).rejects.toThrow("Member not found.");
 		expect(setResponseStatus).toHaveBeenCalledWith(404);
 	});

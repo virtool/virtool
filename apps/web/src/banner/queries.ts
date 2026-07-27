@@ -1,12 +1,12 @@
 import { bannerQueryKeys } from "@banner/keys";
 import {
-	clearActiveMessage,
-	createMessage,
-	deleteMessage,
-	findMessage,
-	findMessages,
-	setActiveMessage,
-	updateMessage,
+	clearActiveMessageFn,
+	createMessageFn,
+	deleteMessageFn,
+	findMessageFn,
+	findMessagesFn,
+	setActiveMessageFn,
+	updateMessageFn,
 } from "@server/messages/functions";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import type { Banner, BannerColor } from "./types";
@@ -17,7 +17,7 @@ import type { Banner, BannerColor } from "./types";
 export function useFetchBanner() {
 	return useQuery<Banner | null>({
 		queryKey: bannerQueryKeys.active(),
-		queryFn: () => findMessage(),
+		queryFn: () => findMessageFn(),
 	});
 }
 
@@ -27,7 +27,7 @@ export function useFetchBanner() {
 export function useFetchBanners() {
 	return useQuery<Banner[]>({
 		queryKey: bannerQueryKeys.lists(),
-		queryFn: () => findMessages(),
+		queryFn: () => findMessagesFn(),
 	});
 }
 
@@ -38,7 +38,7 @@ export function useCreateBanner() {
 	const queryClient = useQueryClient();
 	return useMutation<Banner, Error, { message: string; color: BannerColor }>({
 		mutationFn: ({ message, color }) =>
-			createMessage({ data: { message, color } }),
+			createMessageFn({ data: { message, color } }),
 		onSuccess: () => {
 			queryClient.invalidateQueries({ queryKey: bannerQueryKeys.all() });
 		},
@@ -56,7 +56,7 @@ export function useUpdateBanner() {
 		{ id: number; message?: string; color?: BannerColor }
 	>({
 		mutationFn: async ({ id, message, color }) => {
-			const banner = await updateMessage({ data: { id, message, color } });
+			const banner = await updateMessageFn({ data: { id, message, color } });
 			if (!banner) {
 				throw new Error("Failed to update banner");
 			}
@@ -75,7 +75,7 @@ export function useDeleteBanner() {
 	const queryClient = useQueryClient();
 	return useMutation<null, Error, { id: number }>({
 		mutationFn: async ({ id }) => {
-			await deleteMessage({ data: { id } });
+			await deleteMessageFn({ data: { id } });
 			return null;
 		},
 		onSuccess: () => {
@@ -92,7 +92,7 @@ export function useSetActiveBanner() {
 	const queryClient = useQueryClient();
 	return useMutation<Banner, Error, { id: number }>({
 		mutationFn: async ({ id }) => {
-			const banner = await setActiveMessage({ data: { id } });
+			const banner = await setActiveMessageFn({ data: { id } });
 			if (!banner) {
 				throw new Error("Failed to activate banner");
 			}
@@ -110,7 +110,7 @@ export function useSetActiveBanner() {
 export function useClearActiveBanner() {
 	const queryClient = useQueryClient();
 	return useMutation<null, Error, void>({
-		mutationFn: () => clearActiveMessage(),
+		mutationFn: () => clearActiveMessageFn(),
 		onSuccess: () => {
 			queryClient.invalidateQueries({ queryKey: bannerQueryKeys.all() });
 		},

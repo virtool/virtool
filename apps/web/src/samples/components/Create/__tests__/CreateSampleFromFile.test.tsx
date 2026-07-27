@@ -1,11 +1,11 @@
-import { screen } from "@testing-library/react";
+import { screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { mockApiCreateSample } from "@tests/api/samples";
 import { createFakeAccount } from "@tests/fake/account";
 import { createFakeFile } from "@tests/fake/files";
 import { createFakeLabel } from "@tests/fake/labels";
 import { createFakeShortlistSubtraction } from "@tests/fake/subtractions";
 import { mockListGroups } from "@tests/server-fn/groups";
+import { mockCreateSample } from "@tests/server-fn/samples";
 import { mockListSubtractionsShortlist } from "@tests/server-fn/subtractions";
 import { mockGetAccount } from "@tests/server-fn/users";
 import { renderWithRouter } from "@tests/setup";
@@ -80,17 +80,7 @@ describe("<CreateSampleFromFile>", () => {
 		const left = createFakeFile({ name: "sample_one_R1.fastq.gz" });
 		const right = createFakeFile({ name: "sample_one_R2.fastq.gz" });
 
-		const scope = mockApiCreateSample(
-			"sample_one",
-			"",
-			"",
-			"",
-			"normal",
-			[left.id, right.id],
-			[],
-			[],
-			null,
-		);
+		const createSample = mockCreateSample();
 
 		await renderDialog(right, [left, right]);
 
@@ -103,23 +93,20 @@ describe("<CreateSampleFromFile>", () => {
 
 		await submitForm();
 
-		scope.done();
+		await waitFor(() =>
+			expect(createSample).toHaveBeenCalledWith({
+				data: expect.objectContaining({
+					name: "sample_one",
+					files: [left.id, right.id],
+				}),
+			}),
+		);
 	});
 
 	it("should submit with labels and subtractions", async () => {
 		const file = createFakeFile({ name: "sample_one.fastq.gz" });
 
-		const scope = mockApiCreateSample(
-			"Sample A",
-			"Clone AB",
-			"Apple",
-			"Earth",
-			"normal",
-			[file.id],
-			[label.id],
-			[subtractionShortlist.id],
-			null,
-		);
+		const createSample = mockCreateSample();
 
 		await renderDialog(file, [file]);
 
@@ -148,6 +135,18 @@ describe("<CreateSampleFromFile>", () => {
 
 		await submitForm();
 
-		scope.done();
+		await waitFor(() =>
+			expect(createSample).toHaveBeenCalledWith({
+				data: expect.objectContaining({
+					name: "Sample A",
+					isolate: "Clone AB",
+					host: "Apple",
+					locale: "Earth",
+					files: [file.id],
+					labels: [label.id],
+					subtractions: [subtractionShortlist.id],
+				}),
+			}),
+		);
 	});
 });

@@ -1,6 +1,6 @@
 import BoxGroup from "@base/BoxGroup";
 import BoxGroupHeader from "@base/BoxGroupHeader";
-import type { Read } from "@samples/types";
+import type { Read } from "@virtool/contracts";
 import ReadItem from "./ReadItem";
 
 type SampleReadsProps = {
@@ -25,7 +25,7 @@ export default function SampleReads({ reads, sampleName }: SampleReadsProps) {
 	const fileComponents = reads.map((file) => (
 		<ReadItem
 			key={file.name}
-			download_url={file.download_url}
+			downloadUrl={file.downloadUrl}
 			sampleName={sampleName}
 			side={extractReadSide(file.name)}
 			size={file.size}

@@ -3,7 +3,8 @@ import Box from "@base/Box";
 import Checkbox from "@base/Checkbox";
 import Link from "@base/Link";
 import { useFetchJob } from "@jobs/queries";
-import type { SampleMinimal } from "@samples/types";
+import { toServerJobNested } from "@samples/utils";
+import type { SampleMinimal } from "@virtool/contracts";
 import type { MouseEvent } from "react";
 import SampleLabel from "../Label/SampleLabel";
 import SampleLibraryTypeLabel from "../Label/SampleLibraryTypeLabel";
@@ -33,7 +34,10 @@ export default function SampleItem({
 	handleSelect,
 	onQuickAnalyze,
 }: SampleItemProps) {
-	const { data: job } = useFetchJob(sample.job?.id ?? Number.NaN, sample.job);
+	const { data: job } = useFetchJob(
+		sample.job?.id ?? Number.NaN,
+		sample.job && toServerJobNested(sample.job),
+	);
 
 	return (
 		<Box
@@ -53,7 +57,7 @@ export default function SampleItem({
 			>
 				{sample.name}
 			</Link>
-			<Attribution time={sample.created_at} user={sample.user.handle} />
+			<Attribution time={sample.createdAt} user={sample.user.handle} />
 			<div className="flex justify-end items-center gap-2">
 				{sample.ready && (
 					<WorkflowTags id={sample.id} workflows={sample.workflows} />
@@ -67,7 +71,7 @@ export default function SampleItem({
 				/>
 			</div>
 			<div className="col-start-2 col-span-3 flex gap-1">
-				<SampleLibraryTypeLabel libraryType={sample.library_type} />
+				<SampleLibraryTypeLabel libraryType={sample.libraryType} />
 				{sample.labels.map((label) => (
 					<SampleLabel {...label} key={label.id} size="sm" />
 				))}

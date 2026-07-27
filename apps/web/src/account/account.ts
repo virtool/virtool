@@ -1,6 +1,6 @@
 import { accountQueryKeys } from "@account/keys";
 import type { Account } from "@account/types";
-import { getAccount } from "@server/users/functions";
+import { getAccountFn } from "@server/users/functions";
 import { queryOptions, useQuery } from "@tanstack/react-query";
 
 /**
@@ -21,7 +21,7 @@ import { queryOptions, useQuery } from "@tanstack/react-query";
 export function accountQueryOptions() {
 	return queryOptions<Account>({
 		queryKey: accountQueryKeys.all(),
-		queryFn: () => getAccount(),
+		queryFn: () => getAccountFn(),
 	});
 }
 

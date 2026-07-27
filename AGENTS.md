@@ -441,14 +441,16 @@ re-exports them so its own call sites are undisturbed.
 
 **A domain's wire shapes belong in `@virtool/contracts`, not in
 `data.ts`.** What a server function returns is read by both sides, so
-`data.ts` imports those types from the package and the client feature's
-`types.ts` re-exports them (`references/types.ts` is the worked example).
-A client `types.ts` must never `import type ... from "@server/*"` — that
-points the client at the server's emitted declarations for a shape the
-server does not own, and drags a data-layer module into the browser's
-type graph to get it. `data.ts` still owns what only it uses: its
-`*Values` and `*Options` argument types, its `AppError` subclasses, and
-its row mappers.
+`data.ts` imports those types from the package and components import the
+same names straight from `@virtool/contracts` — no feature `types.ts`
+re-export (`references/types.ts` and `samples/types.ts` are the worked
+examples; each keeps only its genuinely client-only shapes). A client
+`types.ts` must never `import type ... from "@server/*"` — that points
+the client at the server's emitted declarations for a shape the server
+does not own, and drags a data-layer module into the browser's type
+graph to get it. `data.ts` still owns what only it uses: its `*Values`
+and `*Options` argument types, its `AppError` subclasses, and its row
+mappers.
 
 ### Every server function declares an authorization policy
 
@@ -456,7 +458,7 @@ Every server function names who may call it, as middleware, from
 `@server/auth/policy`:
 
 ```ts
-export const deleteGroup = createServerFn({ method: "POST" })
+export const deleteGroupFn = createServerFn({ method: "POST" })
 	.middleware([adminRole("base")])
 	.validator(groupIdSchema)
 	.handler(async ({ context, data }) => { ... });
@@ -632,8 +634,11 @@ The basics:
   string literal unions over `enum`.
 - **JSDoc:** Every exported `type` gets a one-line `/** ... */`.
 - **Naming:** `is`/`has`/`get` for pure reads; `check`/`validate`/
-  `assert` for may-throw. Don't suffix exports with their layer
-  (`Fn`, `Core`, `Handler`, `Impl`).
+  `assert` for may-throw. A `createServerFn` export gets an `Fn` suffix
+  (`loginFn`, `getSampleFn`) — it's an RPC call, not a plain function,
+  and the suffix marks that at every call site. The domain function it
+  wraps keeps the plain name (`login`, `getSample`) and never crosses
+  the network.
 - **Comments:** Default to none. Document *why* when non-obvious, not
   *what*.
 - **Concurrency:** Independent awaits go in `Promise.all` — don't pay

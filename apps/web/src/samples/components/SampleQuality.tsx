@@ -14,7 +14,7 @@ export default function SampleQuality() {
 
 	return (
 		<div className="flex flex-col">
-			<LegacyAlert className="mb-5" showLegacy={data.is_legacy} />
+			<LegacyAlert className="mb-5" showLegacy={data.isLegacy} />
 			{data.quality && (
 				<Quality
 					bases={data.quality.bases}

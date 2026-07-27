@@ -1,4 +1,4 @@
-import type { Reference, ReferenceMinimal } from "@references/types";
+import type { Reference, ReferenceMinimal } from "@virtool/contracts";
 import { type Mock, vi } from "vitest";
 
 /**
@@ -7,18 +7,18 @@ import { type Mock, vi } from "vitest";
  * or mutates references can stub them without per-file `vi.mock` boilerplate.
  */
 export const referenceServerFnMocks = {
-	findReferences: vi.fn(),
-	getReference: vi.fn(),
-	createReference: vi.fn(),
-	updateReference: vi.fn(),
-	archiveReference: vi.fn(),
-	unarchiveReference: vi.fn(),
-	addReferenceUser: vi.fn(),
-	addReferenceGroup: vi.fn(),
-	updateReferenceUser: vi.fn(),
-	updateReferenceGroup: vi.fn(),
-	removeReferenceUser: vi.fn(),
-	removeReferenceGroup: vi.fn(),
+	findReferencesFn: vi.fn(),
+	getReferenceFn: vi.fn(),
+	createReferenceFn: vi.fn(),
+	updateReferenceFn: vi.fn(),
+	archiveReferenceFn: vi.fn(),
+	unarchiveReferenceFn: vi.fn(),
+	addReferenceUserFn: vi.fn(),
+	addReferenceGroupFn: vi.fn(),
+	updateReferenceUserFn: vi.fn(),
+	updateReferenceGroupFn: vi.fn(),
+	removeReferenceUserFn: vi.fn(),
+	removeReferenceGroupFn: vi.fn(),
 };
 
 /** Sets up findReferences to resolve with a single page of the given items. */
@@ -26,7 +26,7 @@ export function mockFindReferences(
 	items: ReferenceMinimal[],
 	overrides?: Partial<{ foundCount: number; totalCount: number }>,
 ): Mock {
-	referenceServerFnMocks.findReferences.mockResolvedValue({
+	referenceServerFnMocks.findReferencesFn.mockResolvedValue({
 		foundCount: items.length,
 		totalCount: items.length,
 		page: 1,
@@ -35,12 +35,12 @@ export function mockFindReferences(
 		items,
 		...overrides,
 	});
-	return referenceServerFnMocks.findReferences;
+	return referenceServerFnMocks.findReferencesFn;
 }
 
 /** Sets up getReference to resolve with the given reference when matched. */
 export function mockGetReference(reference: Reference): Mock {
-	referenceServerFnMocks.getReference.mockImplementation(
+	referenceServerFnMocks.getReferenceFn.mockImplementation(
 		async ({ data }: { data: { referenceId: number } }) => {
 			if (data.referenceId === reference.id) {
 				return reference;
@@ -50,23 +50,23 @@ export function mockGetReference(reference: Reference): Mock {
 			);
 		},
 	);
-	return referenceServerFnMocks.getReference;
+	return referenceServerFnMocks.getReferenceFn;
 }
 
 /** Sets up createReference to resolve with the given reference. */
 export function mockCreateReference(reference: Reference): Mock {
-	referenceServerFnMocks.createReference.mockResolvedValue(reference);
-	return referenceServerFnMocks.createReference;
+	referenceServerFnMocks.createReferenceFn.mockResolvedValue(reference);
+	return referenceServerFnMocks.createReferenceFn;
 }
 
 /** Sets up archiveReference to resolve with the given reference. */
 export function mockArchiveReference(reference: Reference): Mock {
-	referenceServerFnMocks.archiveReference.mockResolvedValue(reference);
-	return referenceServerFnMocks.archiveReference;
+	referenceServerFnMocks.archiveReferenceFn.mockResolvedValue(reference);
+	return referenceServerFnMocks.archiveReferenceFn;
 }
 
 /** Sets up unarchiveReference to resolve with the given reference. */
 export function mockUnarchiveReference(reference: Reference): Mock {
-	referenceServerFnMocks.unarchiveReference.mockResolvedValue(reference);
-	return referenceServerFnMocks.unarchiveReference;
+	referenceServerFnMocks.unarchiveReferenceFn.mockResolvedValue(reference);
+	return referenceServerFnMocks.unarchiveReferenceFn;
 }

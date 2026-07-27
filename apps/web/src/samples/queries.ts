@@ -1,6 +1,13 @@
-import { apiClient } from "@app/api";
 import type { LabelNested } from "@labels/types";
 import { samplesQueryKeys } from "@samples/keys";
+import {
+	createSampleFn,
+	deleteSampleFn,
+	findSamplesFn,
+	getSampleFn,
+	updateSampleFn,
+	updateSampleRightsFn,
+} from "@server/samples/functions";
 import {
 	keepPreviousData,
 	queryOptions,
@@ -10,35 +17,21 @@ import {
 	useSuspenseQuery,
 } from "@tanstack/react-query";
 import { fileQueryKeys } from "@uploads/keys";
-import { union } from "es-toolkit";
-import type { ErrorResponse } from "@/types/api";
 import type {
-	CreateSampleRequest,
+	LibraryType,
 	Sample,
 	SampleMinimal,
 	SampleRightsUpdate,
-	SampleRightsUpdateReturn,
 	SampleSearchResult,
-	SampleUpdate,
-} from "./types";
+} from "@virtool/contracts";
+import { union } from "es-toolkit";
+import type { CreateSampleRequest, SampleUpdate } from "./types";
 
 /** A label carried by at least one of the selected samples */
 export type SampleLabel = LabelNested & {
 	/** Whether all selected samples contain the label */
 	allLabeled: boolean;
 };
-
-/**
- * Updates the data for a sample.
- *
- * Shared by the single-sample update hook and the bulk label-update hook.
- */
-function updateSample(sampleId: number, update: SampleUpdate): Promise<Sample> {
-	return apiClient
-		.patch(`/samples/${sampleId}`)
-		.send(update)
-		.then((response) => response.body);
-}
 
 /**
  * Fetch a page of samples from the API
@@ -58,7 +51,7 @@ export function useListSamples(
 	workflows?: string[],
 	users?: number[],
 ) {
-	return useQuery<SampleSearchResult, ErrorResponse>({
+	return useQuery<SampleSearchResult, Error>({
 		queryKey: samplesQueryKeys.list([
 			page,
 			per_page,
@@ -68,29 +61,24 @@ export function useListSamples(
 			users,
 		]),
 		queryFn: () =>
-			apiClient
-				.get("/samples")
-				.query({
+			findSamplesFn({
+				data: {
 					page,
-					per_page,
-					find: term,
-					label: labels,
-					workflows,
-					user: users,
-				})
-				.then((res) => {
-					const { documents, ...rest } = res.body;
-					return { ...rest, items: documents };
-				}),
+					perPage: per_page,
+					term: term ?? "",
+					labels: labels ?? [],
+					workflows: workflows ?? [],
+					users: users ?? [],
+				},
+			}) as Promise<SampleSearchResult>,
 		placeholderData: keepPreviousData,
 	});
 }
 
 export function sampleQueryOptions(sampleId: number) {
-	return queryOptions<Sample, ErrorResponse>({
+	return queryOptions<Sample, Error>({
 		queryKey: samplesQueryKeys.detail(sampleId),
-		queryFn: () =>
-			apiClient.get(`/samples/${sampleId}`).then((res) => res.body),
+		queryFn: () => getSampleFn({ data: { sampleId } }) as Promise<Sample>,
 	});
 }
 
@@ -115,38 +103,6 @@ export function useSuspenseSample(sampleId: number) {
 }
 
 /**
- * Creates a sample.
- *
- * Shared by the single-sample create hook and the bulk create hook.
- */
-function createSample({
-	name,
-	isolate,
-	host,
-	locale,
-	libraryType,
-	subtractions,
-	files,
-	labels,
-	group,
-}: CreateSampleRequest): Promise<Sample> {
-	return apiClient
-		.post("/samples")
-		.send({
-			name,
-			isolate,
-			host,
-			locale,
-			subtractions,
-			files,
-			library_type: libraryType,
-			labels,
-			group,
-		})
-		.then((res) => res.body);
-}
-
-/**
  * Initialize a mutator for creating a sample
  *
  * @returns A mutator for creating a sample
@@ -154,8 +110,31 @@ function createSample({
 export function useCreateSample() {
 	const queryClient = useQueryClient();
 
-	return useMutation<Sample, ErrorResponse, CreateSampleRequest>({
-		mutationFn: createSample,
+	return useMutation<Sample, Error, CreateSampleRequest>({
+		mutationFn: ({
+			name,
+			isolate,
+			host,
+			locale,
+			libraryType,
+			subtractions,
+			files,
+			labels,
+			group,
+		}) =>
+			createSampleFn({
+				data: {
+					name,
+					isolate,
+					host,
+					locale,
+					libraryType: libraryType as LibraryType,
+					subtractions,
+					files,
+					labels,
+					group,
+				},
+			}) as Promise<Sample>,
 		onSuccess: () => {
 			// The created sample reserves its read files, so the server stops
 			// returning them. Only the reads selector shows them — an infinite
@@ -175,8 +154,11 @@ export function useCreateSample() {
 export function useUpdateSample(sampleId: number) {
 	const queryClient = useQueryClient();
 
-	return useMutation<Sample, ErrorResponse, { update: SampleUpdate }>({
-		mutationFn: ({ update }) => updateSample(sampleId, update),
+	return useMutation<Sample, Error, { update: SampleUpdate }>({
+		mutationFn: ({ update }) =>
+			updateSampleFn({
+				data: { sampleId, ...update },
+			}) as Promise<Sample>,
 		onSuccess: () => {
 			queryClient.invalidateQueries({
 				queryKey: samplesQueryKeys.detail(sampleId),
@@ -191,11 +173,9 @@ export function useUpdateSample(sampleId: number) {
  * @returns A mutator for removing a sample
  */
 export function useRemoveSample() {
-	return useMutation<null, unknown, { sampleId: number }>({
+	return useMutation<null, Error, { sampleId: number }>({
 		mutationFn: ({ sampleId }) =>
-			apiClient
-				.delete(`/samples/${sampleId}`)
-				.then((response) => response.body),
+			deleteSampleFn({ data: { sampleId } }) as Promise<null>,
 	});
 }
 
@@ -205,16 +185,11 @@ export function useRemoveSample() {
  * @returns A mutator for updating a samples rights
  */
 export function useUpdateSampleRights(sampleId: number) {
-	return useMutation<
-		SampleRightsUpdateReturn,
-		unknown,
-		{ update: SampleRightsUpdate }
-	>({
+	return useMutation<Sample, Error, { update: SampleRightsUpdate }>({
 		mutationFn: ({ update }) =>
-			apiClient
-				.patch(`/samples/${sampleId}/rights`)
-				.send(update)
-				.then((response) => response.body),
+			updateSampleRightsFn({
+				data: { sampleId, ...update },
+			}) as Promise<Sample>,
 	});
 }
 
@@ -235,7 +210,7 @@ export function useUpdateLabel(
 ) {
 	const queryClient = useQueryClient();
 
-	return useMutation<Sample[], ErrorResponse, number>({
+	return useMutation<Sample[], Error, number>({
 		mutationFn: (labelId) => {
 			const clicked = selectedLabels.find((label) => label.id === labelId);
 			const allLabeled = clicked?.allLabeled === true;
@@ -244,11 +219,14 @@ export function useUpdateLabel(
 				selectedSamples.map((sample) => {
 					const labelIds = sample.labels.map((label) => label.id);
 
-					return updateSample(sample.id, {
-						labels: allLabeled
-							? labelIds.filter((id) => id !== labelId)
-							: union(labelIds, [labelId]),
-					});
+					return updateSampleFn({
+						data: {
+							sampleId: sample.id,
+							labels: allLabeled
+								? labelIds.filter((id) => id !== labelId)
+								: union(labelIds, [labelId]),
+						},
+					}) as Promise<Sample>;
 				}),
 			);
 		},

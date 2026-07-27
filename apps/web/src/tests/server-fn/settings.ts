@@ -9,8 +9,8 @@ import { type Mock, vi } from "vitest";
  */
 export const settingsServerFnMocks = {
 	getPasswordPolicyFn: vi.fn(),
-	getSettings: vi.fn(),
-	updateSettings: vi.fn(),
+	getSettingsFn: vi.fn(),
+	updateSettingsFn: vi.fn(),
 };
 
 /** Set the minimum password length the password forms will validate against. */
@@ -25,14 +25,14 @@ export function mockGetPasswordPolicy(
 
 /** Resolve the settings query with the given settings. */
 export function mockGetSettings(settings: Settings): Mock {
-	settingsServerFnMocks.getSettings.mockResolvedValue(settings);
-	return settingsServerFnMocks.getSettings;
+	settingsServerFnMocks.getSettingsFn.mockResolvedValue(settings);
+	return settingsServerFnMocks.getSettingsFn;
 }
 
 /** Resolve the settings update, echoing the given settings back to the caller. */
 export function mockUpdateSettings(settings: Settings): Mock {
-	settingsServerFnMocks.updateSettings.mockResolvedValue(settings);
-	return settingsServerFnMocks.updateSettings;
+	settingsServerFnMocks.updateSettingsFn.mockResolvedValue(settings);
+	return settingsServerFnMocks.updateSettingsFn;
 }
 
 /**
@@ -48,8 +48,8 @@ export function mockSettingsStore(initial: Settings): {
 } {
 	let current = initial;
 
-	settingsServerFnMocks.getSettings.mockImplementation(async () => current);
-	settingsServerFnMocks.updateSettings.mockImplementation(
+	settingsServerFnMocks.getSettingsFn.mockImplementation(async () => current);
+	settingsServerFnMocks.updateSettingsFn.mockImplementation(
 		async ({ data }: { data: Partial<Settings> }) => {
 			current = { ...current, ...data };
 			return current;
@@ -57,7 +57,7 @@ export function mockSettingsStore(initial: Settings): {
 	);
 
 	return {
-		getSettings: settingsServerFnMocks.getSettings,
-		updateSettings: settingsServerFnMocks.updateSettings,
+		getSettings: settingsServerFnMocks.getSettingsFn,
+		updateSettings: settingsServerFnMocks.updateSettingsFn,
 	};
 }

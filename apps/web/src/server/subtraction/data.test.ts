@@ -226,7 +226,11 @@ describe("getSubtraction", () => {
 		const sampleId = takeFirstOrThrow(
 			await db
 				.insert(legacySamples)
-				.values({ name: "Sample A" })
+				.values({
+					name: "Sample A",
+					library_type: "normal",
+					created_at: new Date(),
+				})
 				.returning({ id: legacySamples.id }),
 		).id;
 
@@ -336,7 +340,11 @@ describe("deleteSubtraction", () => {
 		const sampleId = takeFirstOrThrow(
 			await db
 				.insert(legacySamples)
-				.values({ name: "Sample A" })
+				.values({
+					name: "Sample A",
+					library_type: "normal",
+					created_at: new Date(),
+				})
 				.returning({ id: legacySamples.id }),
 		).id;
 

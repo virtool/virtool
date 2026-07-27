@@ -5,13 +5,13 @@ import { resetClient } from "@app/utils";
 import type { Permissions } from "@groups/types";
 import * as Sentry from "@sentry/tanstackstart-react";
 import {
-	createApiKey,
-	deleteApiKey,
-	findApiKeys,
-	updateApiKey,
+	createApiKeyFn,
+	deleteApiKeyFn,
+	findApiKeysFn,
+	updateApiKeyFn,
 } from "@server/account/functions";
 import { logoutFn } from "@server/auth/functions";
-import { updateAccountHandle } from "@server/users/functions";
+import { updateAccountHandleFn } from "@server/users/functions";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import type { User } from "@users/types";
 import type { ErrorResponse } from "@/types/api";
@@ -50,11 +50,11 @@ export function useUpdateHandle() {
 	const queryClient = useQueryClient();
 
 	return useMutation<
-		Awaited<ReturnType<typeof updateAccountHandle>>,
+		Awaited<ReturnType<typeof updateAccountHandleFn>>,
 		Error,
 		{ handle: string }
 	>({
-		mutationFn: ({ handle }) => updateAccountHandle({ data: { handle } }),
+		mutationFn: ({ handle }) => updateAccountHandleFn({ data: { handle } }),
 		onSuccess: () => {
 			queryClient.invalidateQueries({ queryKey: accountQueryKeys.all() });
 		},
@@ -93,7 +93,7 @@ export function useChangePassword() {
 export function useFetchApiKeys() {
 	return useQuery<ApiKey[]>({
 		queryKey: accountQueryKeys.apiKeys(),
-		queryFn: () => findApiKeys(),
+		queryFn: () => findApiKeysFn(),
 	});
 }
 
@@ -106,12 +106,12 @@ export function useCreateApiKey() {
 	const queryClient = useQueryClient();
 
 	return useMutation<
-		Awaited<ReturnType<typeof createApiKey>>,
+		Awaited<ReturnType<typeof createApiKeyFn>>,
 		Error,
 		{ name: string; permissions: Permissions }
 	>({
 		mutationFn: ({ name, permissions }) =>
-			createApiKey({ data: { name, permissions } }),
+			createApiKeyFn({ data: { name, permissions } }),
 		onSuccess: () => {
 			queryClient.invalidateQueries({ queryKey: accountQueryKeys.apiKeys() });
 		},
@@ -127,12 +127,12 @@ export function useUpdateApiKey() {
 	const queryClient = useQueryClient();
 
 	return useMutation<
-		Awaited<ReturnType<typeof updateApiKey>>,
+		Awaited<ReturnType<typeof updateApiKeyFn>>,
 		Error,
 		{ keyId: number; permissions: Permissions }
 	>({
 		mutationFn: ({ keyId, permissions }) =>
-			updateApiKey({ data: { keyId, permissions } }),
+			updateApiKeyFn({ data: { keyId, permissions } }),
 		onSuccess: () => {
 			queryClient.invalidateQueries({ queryKey: accountQueryKeys.apiKeys() });
 		},
@@ -148,7 +148,7 @@ export function useRemoveApiKey() {
 	const queryClient = useQueryClient();
 
 	return useMutation<null, Error, { keyId: number }>({
-		mutationFn: ({ keyId }) => deleteApiKey({ data: { keyId } }),
+		mutationFn: ({ keyId }) => deleteApiKeyFn({ data: { keyId } }),
 		onSuccess: () => {
 			queryClient.invalidateQueries({ queryKey: accountQueryKeys.apiKeys() });
 		},

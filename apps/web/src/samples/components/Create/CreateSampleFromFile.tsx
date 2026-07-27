@@ -145,7 +145,7 @@ function CreateSampleFromFileForm({
 			<DialogTitle>Create Sample</DialogTitle>
 
 			<InputError className="text-left">
-				{mutation.isError && mutation.error.response?.body.message}
+				{mutation.isError && mutation.error.message}
 			</InputError>
 
 			{(isErrorGroups && !groups) || (isErrorAccount && !account) ? (

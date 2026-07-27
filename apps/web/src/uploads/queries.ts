@@ -1,4 +1,4 @@
-import { deleteUpload, findUploads } from "@server/uploads/functions";
+import { deleteUploadFn, findUploadsFn } from "@server/uploads/functions";
 import {
 	keepPreviousData,
 	useInfiniteQuery,
@@ -12,7 +12,8 @@ import type { FileResponse, UploadType } from "./types";
 export function useListFiles(type: UploadType, page: number, per_page: number) {
 	return useQuery<FileResponse>({
 		queryKey: fileQueryKeys.list([type, page, per_page]),
-		queryFn: () => findUploads({ data: { upload_type: type, page, per_page } }),
+		queryFn: () =>
+			findUploadsFn({ data: { upload_type: type, page, per_page } }),
 		placeholderData: keepPreviousData,
 	});
 }
@@ -21,7 +22,7 @@ export function useInfiniteFindFiles(type: UploadType, per_page: number) {
 	return useInfiniteQuery<FileResponse>({
 		queryKey: fileQueryKeys.infiniteList([type, per_page]),
 		queryFn: ({ pageParam }) =>
-			findUploads({
+			findUploadsFn({
 				data: { upload_type: type, page: pageParam as number, per_page },
 			}),
 		initialPageParam: 1,
@@ -41,7 +42,7 @@ export function useInfiniteFindFiles(type: UploadType, per_page: number) {
  */
 export function useDeleteFile() {
 	return useMutation<null, unknown, { id: number }>({
-		mutationFn: ({ id }) => deleteUpload({ data: { id } }),
+		mutationFn: ({ id }) => deleteUploadFn({ data: { id } }),
 	});
 }
 
@@ -59,7 +60,7 @@ export function useDeleteFiles() {
 			// the first failure would let the list refetch while the rest are still
 			// in flight, so files that did get deleted would linger in the list.
 			const results = await Promise.allSettled(
-				ids.map((id) => deleteUpload({ data: { id } })),
+				ids.map((id) => deleteUploadFn({ data: { id } })),
 			);
 
 			const failure = results.find((result) => result.status === "rejected");

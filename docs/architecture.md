@@ -157,18 +157,21 @@ written by `data.ts` and rendered by components, so neither owns it:
 `@virtool/contracts` does. `references.ts` there defines `Reference`,
 `ReferenceMinimal`, the rights and membership shapes, and the
 `ReferenceSearchResult` page; `server/references/data.ts` imports them
-to annotate its returns, and `src/references/types.ts` re-exports them
-so components import from `@references/types` as before.
+to annotate its returns, and components import the same names straight
+from `@virtool/contracts`. Don't add a feature `types.ts` re-export for
+these — unlike `@server/*` below, importing `@virtool/contracts`
+directly crosses no project boundary, so the re-export bought nothing
+but a second place a type must be kept listed. `references/types.ts`
+and `samples/types.ts` hold only genuinely client-only shapes
+(`ReferenceNested`, `CreateSampleRequest`, `SampleUpdate`, and friends).
 
-The failure mode this replaces is a client `types.ts` that does
+The failure mode to avoid is a client `types.ts` that does
 `import type { Reference } from "@server/references/data"`. It
 type-checks — the arrow client → `@server/*` is legal — but it makes the
 browser's view of a shape depend on a *data-layer* module's emitted
-declarations, so the shape is only nameable if that module's whole
-inferred surface stays portable, and a `data.ts` refactor becomes a
-client type break. The `.d.ts` remap also has to succeed for the client
-to see a plain object type. Both problems disappear when the type has a
-home neither side reaches through the other.
+declarations, so a `data.ts` refactor becomes a client type break. That
+problem disappears when the type has a home neither side reaches
+through the other — `@virtool/contracts`, imported directly.
 
 Two shapes generalised out of that move and now live in the package
 alongside the reference contracts: `UserNested` (`{ id, handle }`, the

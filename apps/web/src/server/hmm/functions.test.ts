@@ -145,7 +145,7 @@ describe("installHmm", () => {
 		await seedStatus();
 		mockManifest([RELEASE]);
 
-		const installed = (await call("installHmm")) as {
+		const installed = (await call("installHmmFn")) as {
 			name: string;
 			ready: boolean;
 			user: { id: number; handle: string };
@@ -187,7 +187,7 @@ describe("installHmm", () => {
 		await seedStatus();
 		mockManifest([RELEASE]);
 
-		const installed = (await call("installHmm")) as {
+		const installed = (await call("installHmmFn")) as {
 			user: { id: number };
 		};
 
@@ -200,7 +200,7 @@ describe("installHmm", () => {
 		await seedStatus({ updates: [{ ready: false } as HmmUpdate] });
 		const fetchSpy = vi.spyOn(globalThis, "fetch");
 
-		await expect(call("installHmm")).rejects.toThrow();
+		await expect(call("installHmmFn")).rejects.toThrow();
 		expect(setResponseStatus).toHaveBeenCalledWith(409);
 		expect(fetchSpy).not.toHaveBeenCalled();
 		expect(await db.select().from(tasks)).toHaveLength(0);
@@ -211,7 +211,7 @@ describe("installHmm", () => {
 		await seedStatus();
 		mockManifest([]);
 
-		await expect(call("installHmm")).rejects.toThrow();
+		await expect(call("installHmmFn")).rejects.toThrow();
 		expect(setResponseStatus).toHaveBeenCalledWith(502);
 		expect(await db.select().from(tasks)).toHaveLength(0);
 	});
@@ -221,7 +221,7 @@ describe("getHmm", () => {
 	it("responds 404 when the HMM is absent", async () => {
 		await signIn("base");
 
-		await expect(call("getHmm", { hmmId: 5000 })).rejects.toThrow();
+		await expect(call("getHmmFn", { hmmId: 5000 })).rejects.toThrow();
 		expect(setResponseStatus).toHaveBeenCalledWith(404);
 	});
 });

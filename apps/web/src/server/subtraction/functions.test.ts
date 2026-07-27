@@ -114,7 +114,7 @@ describe("createSubtraction", () => {
 		const uploadId = await seedUpload(userId);
 
 		await expect(
-			call("createSubtraction", {
+			call("createSubtractionFn", {
 				name: "Arabidopsis",
 				nickname: "",
 				uploadId,
@@ -125,7 +125,7 @@ describe("createSubtraction", () => {
 
 	it("refuses an unauthenticated caller", async () => {
 		await expect(
-			call("createSubtraction", {
+			call("createSubtractionFn", {
 				name: "Arabidopsis",
 				nickname: "",
 				uploadId: 1,
@@ -137,7 +137,7 @@ describe("createSubtraction", () => {
 		const userId = await signIn("full");
 		const uploadId = await seedUpload(userId);
 
-		const subtraction = (await call("createSubtraction", {
+		const subtraction = (await call("createSubtractionFn", {
 			name: "Arabidopsis",
 			nickname: "plant",
 			uploadId,
@@ -152,7 +152,7 @@ describe("createSubtraction", () => {
 		await signIn("full");
 
 		await expect(
-			call("createSubtraction", {
+			call("createSubtractionFn", {
 				name: "Arabidopsis",
 				nickname: "",
 				uploadId: 999_999,
@@ -167,7 +167,7 @@ describe("getSubtraction", () => {
 		await signIn(null);
 
 		await expect(
-			call("getSubtraction", { subtractionId: 999_999 }),
+			call("getSubtractionFn", { subtractionId: 999_999 }),
 		).rejects.toThrow("Subtraction not found.");
 		expect(setResponseStatus).toHaveBeenCalledWith(404);
 	});
@@ -178,7 +178,7 @@ describe("deleteSubtraction", () => {
 		await signIn(null);
 
 		await expect(
-			call("deleteSubtraction", { subtractionId: 1 }),
+			call("deleteSubtractionFn", { subtractionId: 1 }),
 		).rejects.toBeInstanceOf(ForbiddenError);
 	});
 });

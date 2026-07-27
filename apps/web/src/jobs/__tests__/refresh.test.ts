@@ -89,7 +89,7 @@ describe("createJobRefreshQueue", () => {
 
 		await vi.advanceTimersByTimeAsync(FLUSH_MS);
 
-		expect(jobServerFnMocks.getJobs).toHaveBeenCalledExactlyOnceWith({
+		expect(jobServerFnMocks.getJobsFn).toHaveBeenCalledExactlyOnceWith({
 			data: { jobIds: [1, 2, 3] },
 		});
 	});
@@ -126,7 +126,7 @@ describe("createJobRefreshQueue", () => {
 
 		await vi.advanceTimersByTimeAsync(FLUSH_MS);
 
-		expect(jobServerFnMocks.getJobs).not.toHaveBeenCalled();
+		expect(jobServerFnMocks.getJobsFn).not.toHaveBeenCalled();
 	});
 
 	// React Query holds a detail's data for the whole gcTime after its row
@@ -141,7 +141,7 @@ describe("createJobRefreshQueue", () => {
 
 		await vi.advanceTimersByTimeAsync(FLUSH_MS);
 
-		expect(jobServerFnMocks.getJobs).not.toHaveBeenCalled();
+		expect(jobServerFnMocks.getJobsFn).not.toHaveBeenCalled();
 	});
 
 	it("marks a cached jobs list stale so its counts and ordering catch up", async () => {
@@ -168,16 +168,16 @@ describe("createJobRefreshQueue", () => {
 
 		await vi.advanceTimersByTimeAsync(FLUSH_MS);
 
-		expect(jobServerFnMocks.getJobs).toHaveBeenCalledTimes(2);
+		expect(jobServerFnMocks.getJobsFn).toHaveBeenCalledTimes(2);
 		expect(
-			jobServerFnMocks.getJobs.mock.calls.map(
+			jobServerFnMocks.getJobsFn.mock.calls.map(
 				([{ data }]) => data.jobIds.length,
 			),
 		).toEqual([100, 50]);
 	});
 
 	it("falls back to refetching each job when the batch fails", async () => {
-		jobServerFnMocks.getJobs.mockRejectedValue(new Error("boom"));
+		jobServerFnMocks.getJobsFn.mockRejectedValue(new Error("boom"));
 		watch(1, 2);
 
 		const queue = createJobRefreshQueue(queryClient);
@@ -198,7 +198,7 @@ describe("createJobRefreshQueue", () => {
 		watch(1);
 
 		let resolveFirst: (jobs: ServerJob[]) => void = () => undefined;
-		jobServerFnMocks.getJobs
+		jobServerFnMocks.getJobsFn
 			.mockImplementationOnce(
 				() =>
 					new Promise<ServerJob[]>((resolve) => {
@@ -211,17 +211,17 @@ describe("createJobRefreshQueue", () => {
 
 		queue(1);
 		await vi.advanceTimersByTimeAsync(FLUSH_MS);
-		expect(jobServerFnMocks.getJobs).toHaveBeenCalledTimes(1);
+		expect(jobServerFnMocks.getJobsFn).toHaveBeenCalledTimes(1);
 
 		queue(1);
 		await vi.advanceTimersByTimeAsync(FLUSH_MS * 3);
 
-		expect(jobServerFnMocks.getJobs).toHaveBeenCalledTimes(1);
+		expect(jobServerFnMocks.getJobsFn).toHaveBeenCalledTimes(1);
 
 		resolveFirst([createJob(1, { progress: 10 })]);
 		await vi.advanceTimersByTimeAsync(0);
 
-		expect(jobServerFnMocks.getJobs).toHaveBeenCalledTimes(2);
+		expect(jobServerFnMocks.getJobsFn).toHaveBeenCalledTimes(2);
 		expect(queryClient.getQueryData(jobQueryKeys.detail(1))).toMatchObject({
 			progress: 90,
 		});
@@ -239,8 +239,8 @@ describe("createJobRefreshQueue", () => {
 		queue(2);
 		await vi.advanceTimersByTimeAsync(FLUSH_MS);
 
-		expect(jobServerFnMocks.getJobs).toHaveBeenCalledTimes(2);
-		expect(jobServerFnMocks.getJobs).toHaveBeenNthCalledWith(2, {
+		expect(jobServerFnMocks.getJobsFn).toHaveBeenCalledTimes(2);
+		expect(jobServerFnMocks.getJobsFn).toHaveBeenNthCalledWith(2, {
 			data: { jobIds: [2] },
 		});
 	});
@@ -256,7 +256,7 @@ describe("createJobRefreshQueue", () => {
 		queue(2);
 		await vi.advanceTimersByTimeAsync(FLUSH_MS / 2);
 
-		expect(jobServerFnMocks.getJobs).toHaveBeenCalledExactlyOnceWith({
+		expect(jobServerFnMocks.getJobsFn).toHaveBeenCalledExactlyOnceWith({
 			data: { jobIds: [1, 2] },
 		});
 	});

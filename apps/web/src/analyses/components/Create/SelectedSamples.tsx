@@ -1,7 +1,7 @@
 import { cn } from "@app/cn";
 import Badge from "@base/Badge";
 import BoxGroupSection from "@base/BoxGroupSection";
-import type { SampleMinimal } from "@samples/types";
+import type { SampleMinimal } from "@virtool/contracts";
 import CreateAnalysisFieldTitle from "./CreateAnalysisFieldTitle";
 
 type SelectedSamplesProps = {

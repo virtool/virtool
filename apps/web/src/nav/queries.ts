@@ -1,11 +1,11 @@
-import { getRoot } from "@server/root/functions";
+import { getRootFn } from "@server/root/functions";
 import { queryOptions, useQuery } from "@tanstack/react-query";
 import { rootQueryKeys } from "@wall/keys";
 
 /**
  * Query options for the instance root document.
  *
- * Backed by the `getRoot` server function, so this module imports no
+ * Backed by the `getRootFn` server function, so this module imports no
  * `@app/api`. The `_authenticated` guard reads it before any session exists to
  * decide first-user setup, and the whole module must stay HTTP-client-free to
  * keep superagent off the login wall.
@@ -13,7 +13,7 @@ import { rootQueryKeys } from "@wall/keys";
 export function rootQueryOptions() {
 	return queryOptions({
 		queryKey: rootQueryKeys.all(),
-		queryFn: () => getRoot(),
+		queryFn: () => getRootFn(),
 	});
 }
 

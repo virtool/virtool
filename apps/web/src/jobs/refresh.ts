@@ -1,6 +1,6 @@
 import { jobQueryKeys } from "@jobs/keys";
 import * as Sentry from "@sentry/tanstackstart-react";
-import { getJobs } from "@server/jobs/functions";
+import { getJobsFn } from "@server/jobs/functions";
 import type { QueryClient } from "@tanstack/react-query";
 
 /**
@@ -13,7 +13,7 @@ import type { QueryClient } from "@tanstack/react-query";
  */
 const FLUSH_MS = 500;
 
-/** Ids per request, matching the cap `getJobs` validates. */
+/** Ids per request, matching the cap `getJobsFn` validates. */
 const BATCH_SIZE = 100;
 
 function chunk(ids: number[], size: number): number[][] {
@@ -31,7 +31,7 @@ function chunk(ids: number[], size: number): number[][] {
  *
  * Every on-screen job mounts its own `detail(id)` query, so invalidating each
  * frame's detail fires one request per running job per progress wave. The queue
- * collects the ids instead and reads them in a single `getJobs` call, writing
+ * collects the ids instead and reads them in a single `getJobsFn` call, writing
  * each result straight into its detail cache.
  *
  * The queue holds its own buffer, so callers get one per `QueryClient`.
@@ -45,7 +45,7 @@ export function createJobRefreshQueue(
 
 	async function refreshBatch(jobIds: number[]): Promise<void> {
 		try {
-			const jobs = await getJobs({ data: { jobIds } });
+			const jobs = await getJobsFn({ data: { jobIds } });
 
 			for (const job of jobs) {
 				queryClient.setQueryData(jobQueryKeys.detail(job.id), job);

@@ -8,7 +8,7 @@ import InputLabel from "@base/InputLabel";
 import InputSimple from "@base/InputSimple";
 import SaveButton from "@base/SaveButton";
 import { useCloneReference } from "@references/queries";
-import type { ReferenceMinimal } from "@references/types";
+import type { ReferenceMinimal } from "@virtool/contracts";
 import { useForm } from "react-hook-form";
 
 type FormValues = {

@@ -1,9 +1,6 @@
 import { faker } from "@faker-js/faker";
-import type {
-	Reference,
-	ReferenceMinimal,
-	ReferenceNested,
-} from "@references/types";
+import type { ReferenceNested } from "@references/types";
+import type { Reference, ReferenceMinimal } from "@virtool/contracts";
 import { createFakeUserNested } from "./user";
 
 /**

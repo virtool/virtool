@@ -45,15 +45,15 @@ const rethrowAsHttp = createServerOnlyFn((err: unknown): never => {
 	throw err;
 });
 
-export const findMessage = createServerFn({ method: "GET" })
+export const findMessageFn = createServerFn({ method: "GET" })
 	.middleware([authenticated()])
 	.handler(async () => findMessageImpl(db));
 
-export const findMessages = createServerFn({ method: "GET" })
+export const findMessagesFn = createServerFn({ method: "GET" })
 	.middleware([adminRole("settings")])
 	.handler(async () => findMessagesImpl(db));
 
-export const createMessage = createServerFn({ method: "POST" })
+export const createMessageFn = createServerFn({ method: "POST" })
 	.middleware([adminRole("settings")])
 	.validator(createMessageSchema)
 	.handler(async ({ context, data }) => {
@@ -67,7 +67,7 @@ export const createMessage = createServerFn({ method: "POST" })
 		return message;
 	});
 
-export const updateMessage = createServerFn({ method: "POST" })
+export const updateMessageFn = createServerFn({ method: "POST" })
 	.middleware([adminRole("settings")])
 	.validator(updateMessageSchema)
 	.handler(async ({ context, data }) => {
@@ -83,7 +83,7 @@ export const updateMessage = createServerFn({ method: "POST" })
 		}
 	});
 
-export const deleteMessage = createServerFn({ method: "POST" })
+export const deleteMessageFn = createServerFn({ method: "POST" })
 	.middleware([adminRole("settings")])
 	.validator(idSchema)
 	.handler(async ({ data }) => {
@@ -96,7 +96,7 @@ export const deleteMessage = createServerFn({ method: "POST" })
 		}
 	});
 
-export const setActiveMessage = createServerFn({ method: "POST" })
+export const setActiveMessageFn = createServerFn({ method: "POST" })
 	.middleware([adminRole("settings")])
 	.validator(idSchema)
 	.handler(async ({ data }) => {
@@ -107,7 +107,7 @@ export const setActiveMessage = createServerFn({ method: "POST" })
 		}
 	});
 
-export const clearActiveMessage = createServerFn({ method: "POST" })
+export const clearActiveMessageFn = createServerFn({ method: "POST" })
 	.middleware([adminRole("settings")])
 	.handler(async () => {
 		await clearActiveMessageImpl(db);

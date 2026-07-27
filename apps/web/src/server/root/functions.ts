@@ -7,7 +7,7 @@ import { getUserCount } from "../users/data";
 // before any session exists to decide whether to redirect to first-user setup,
 // so this cannot require a session. `version` is the running deployment's build
 // version, injected by Vite's `define` (see appVersion.d.ts).
-export const getRoot = createServerFn({ method: "GET" })
+export const getRootFn = createServerFn({ method: "GET" })
 	.middleware([open()])
 	.handler(async () => ({
 		firstUser: (await getUserCount(db)) === 0,

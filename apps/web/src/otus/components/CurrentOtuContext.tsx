@@ -3,7 +3,7 @@ import QueryError from "@base/QueryError";
 import { useFetchOtu } from "@otus/queries";
 import type { Otu } from "@otus/types";
 import { useFetchReference } from "@references/queries";
-import type { Reference } from "@references/types";
+import type { Reference } from "@virtool/contracts";
 import { createContext, type ReactNode, useContext } from "react";
 
 type CurrentOtuContextValue = {

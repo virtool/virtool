@@ -1,7 +1,7 @@
 import NuvsList from "@analyses/components/Nuvs/NuvsList";
 import NuvsToolbar from "@analyses/components/Nuvs/NuvsToolbar";
 import type { FormattedNuvsAnalysis } from "@analyses/types";
-import type { Sample } from "@samples/types";
+import type { Sample } from "@virtool/contracts";
 
 type NuVsViewerProps = {
 	/** Complete Nuvs analysis details */

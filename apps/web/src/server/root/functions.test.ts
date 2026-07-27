@@ -62,7 +62,7 @@ beforeEach(() => {
 
 describe("getRoot", () => {
 	it("reports firstUser when the instance has no users", async () => {
-		const root = (await callServerFn(handlers, "getRoot", undefined)) as {
+		const root = (await callServerFn(handlers, "getRootFn", undefined)) as {
 			firstUser: boolean;
 			version: string;
 		};
@@ -74,7 +74,7 @@ describe("getRoot", () => {
 	it("reports no firstUser once a user exists", async () => {
 		await seedUser(db);
 
-		const root = (await callServerFn(handlers, "getRoot", undefined)) as {
+		const root = (await callServerFn(handlers, "getRootFn", undefined)) as {
 			firstUser: boolean;
 		};
 

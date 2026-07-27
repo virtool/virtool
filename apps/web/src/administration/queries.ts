@@ -3,8 +3,8 @@ import {
 	roleQueryKeys,
 	settingsQueryKeys,
 } from "@administration/keys";
-import { getSettings, updateSettings } from "@server/settings/functions";
-import { listAdministratorRoles } from "@server/users/functions";
+import { getSettingsFn, updateSettingsFn } from "@server/settings/functions";
+import { listAdministratorRolesFn } from "@server/users/functions";
 import {
 	queryOptions,
 	useMutation,
@@ -34,7 +34,7 @@ export type SettingsUpdate = {
 export function settingsQueryOptions() {
 	return queryOptions<Settings>({
 		queryKey: settingsQueryKeys.all(),
-		queryFn: () => getSettings(),
+		queryFn: () => getSettingsFn(),
 	});
 }
 
@@ -67,7 +67,7 @@ export function useUpdateSettings() {
 	const queryClient = useQueryClient();
 
 	return useMutation<Settings, ErrorResponse, SettingsUpdate>({
-		mutationFn: (update) => updateSettings({ data: update }),
+		mutationFn: (update) => updateSettingsFn({ data: update }),
 		onSuccess: () => {
 			queryClient.invalidateQueries({
 				queryKey: settingsQueryKeys.all(),
@@ -87,7 +87,7 @@ export function useUpdateSettings() {
 export function administratorRolesQueryOptions() {
 	return queryOptions({
 		queryKey: roleQueryKeys.all(),
-		queryFn: () => listAdministratorRoles(),
+		queryFn: () => listAdministratorRolesFn(),
 	});
 }
 

@@ -47,7 +47,7 @@ const rethrowAsHttp = createServerOnlyFn((err: unknown): never => {
 	throw err;
 });
 
-export const findUploads = createServerFn({ method: "GET" })
+export const findUploadsFn = createServerFn({ method: "GET" })
 	.middleware([authenticated()])
 	.validator(findUploadsSchema)
 	.handler(async ({ data }) =>
@@ -60,7 +60,7 @@ export const findUploads = createServerFn({ method: "GET" })
 		),
 	);
 
-export const deleteUpload = createServerFn({ method: "POST" })
+export const deleteUploadFn = createServerFn({ method: "POST" })
 	.middleware([permission("remove_file")])
 	.validator(uploadIdSchema)
 	.handler(async ({ data }) => {

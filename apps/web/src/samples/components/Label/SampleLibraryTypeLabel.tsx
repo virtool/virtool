@@ -1,6 +1,6 @@
 import Icon from "@base/Icon";
-import type { LibraryType } from "@samples/types";
 import { getLibraryTypeDisplayName } from "@samples/utils";
+import type { LibraryType } from "@virtool/contracts";
 import { Dna } from "lucide-react";
 import { BaseSampleLabel } from "./BaseSampleLabel";
 

@@ -108,7 +108,7 @@ describe("<ReferenceList />", () => {
 		});
 
 		it("should refetch with archived=true when the Archived toggle is clicked", async () => {
-			referenceServerFnMocks.findReferences.mockImplementation(
+			referenceServerFnMocks.findReferencesFn.mockImplementation(
 				async ({ data }: { data: { archived?: boolean } }) =>
 					data.archived
 						? {

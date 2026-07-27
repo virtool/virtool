@@ -12,13 +12,13 @@ const updateMessage = vi.fn();
 const deleteMessage = vi.fn();
 
 vi.mock("@server/messages/functions", () => ({
-	findMessage: vi.fn(),
-	findMessages: (...args: unknown[]) => findMessages(...args),
-	setActiveMessage: (...args: unknown[]) => setActiveMessage(...args),
-	clearActiveMessage: (...args: unknown[]) => clearActiveMessage(...args),
-	createMessage: (...args: unknown[]) => createMessage(...args),
-	updateMessage: (...args: unknown[]) => updateMessage(...args),
-	deleteMessage: (...args: unknown[]) => deleteMessage(...args),
+	findMessageFn: vi.fn(),
+	findMessagesFn: (...args: unknown[]) => findMessages(...args),
+	setActiveMessageFn: (...args: unknown[]) => setActiveMessage(...args),
+	clearActiveMessageFn: (...args: unknown[]) => clearActiveMessage(...args),
+	createMessageFn: (...args: unknown[]) => createMessage(...args),
+	updateMessageFn: (...args: unknown[]) => updateMessage(...args),
+	deleteMessageFn: (...args: unknown[]) => deleteMessage(...args),
 }));
 
 const { default: Banners } = await import("../Banners");

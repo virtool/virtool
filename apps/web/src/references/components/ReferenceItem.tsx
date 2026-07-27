@@ -5,8 +5,8 @@ import BoxGroupSection from "@base/BoxGroupSection";
 import IconButton from "@base/IconButton";
 import Link from "@base/Link";
 import ProgressCircle from "@base/ProgressCircle";
-import type { ReferenceMinimal } from "@references/types";
 import { useFetchTask } from "@tasks/queries";
+import type { ReferenceMinimal } from "@virtool/contracts";
 import { Copy } from "lucide-react";
 import type { ReactNode } from "react";
 

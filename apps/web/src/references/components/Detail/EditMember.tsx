@@ -4,12 +4,12 @@ import {
 	type ReferenceMemberNoun,
 	useUpdateReferenceMember,
 } from "@references/queries";
+import { useQueryClient } from "@tanstack/react-query";
 import type {
 	ReferenceGroup,
 	ReferenceRights,
 	ReferenceUser,
-} from "@references/types";
-import { useQueryClient } from "@tanstack/react-query";
+} from "@virtool/contracts";
 import { ReferenceRight } from "./ReferenceRight";
 
 const rights: (keyof ReferenceRights)[] = ["modifyOtu", "build", "modify"];

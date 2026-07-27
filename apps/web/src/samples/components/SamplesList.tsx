@@ -10,7 +10,7 @@ import ViewHeader from "@base/ViewHeader";
 import ViewHeaderTitle from "@base/ViewHeaderTitle";
 import { useFetchLabels } from "@labels/queries";
 import { useListSamples } from "@samples/queries";
-import type { Sample, SampleMinimal } from "@samples/types";
+import type { Sample, SampleMinimal } from "@virtool/contracts";
 import { xor } from "es-toolkit/array";
 import { FlaskConical, SearchX } from "lucide-react";
 import { type MouseEvent, useState } from "react";
@@ -124,7 +124,7 @@ export default function SamplesList({
 		return <LoadingPlaceholder />;
 	}
 
-	const { found_count, items, page, page_count } = samples;
+	const { foundCount, items, page, pageCount } = samples;
 
 	// An empty list means "nothing created yet" only when nothing is narrowing
 	// it. Otherwise the samples exist and the filters are hiding them.
@@ -242,13 +242,13 @@ export default function SamplesList({
 					<Pagination
 						storedPage={page}
 						currentPage={urlPage}
-						pageCount={page_count}
+						pageCount={pageCount}
 						onPageChange={(page) => setSearch({ page })}
 						rowsClassName="pb-0 rounded-sm border-1 border-gray-300 overflow-hidden [&>*:not(:first-child)]:border-t-1 [&>*:not(:first-child)]:border-gray-300"
 					>
 						<SampleListHeader
 							checked={selection.getVisibleState(items)}
-							found={found_count}
+							found={foundCount}
 							labels={labels}
 							onLabelsUpdated={handleLabelsUpdated}
 							onSelectAll={() => selection.toggleVisible(items)}

@@ -1,9 +1,9 @@
 import { labelQueryKeys } from "@labels/keys";
 import {
-	createLabel,
-	deleteLabel,
-	findLabels,
-	updateLabel,
+	createLabelFn,
+	deleteLabelFn,
+	findLabelsFn,
+	updateLabelFn,
 } from "@server/labels/functions";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import type { Label } from "./types";
@@ -16,7 +16,7 @@ import type { Label } from "./types";
 export function useFetchLabels() {
 	return useQuery<Label[]>({
 		queryKey: labelQueryKeys.lists(),
-		queryFn: () => findLabels(),
+		queryFn: () => findLabelsFn(),
 	});
 }
 
@@ -34,7 +34,7 @@ export function useCreateLabel() {
 		{ name: string; description: string; color: string }
 	>({
 		mutationFn: ({ name, description, color }) =>
-			createLabel({ data: { color, description, name } }),
+			createLabelFn({ data: { color, description, name } }),
 		onSuccess: () => {
 			queryClient.invalidateQueries({ queryKey: labelQueryKeys.lists() });
 		},
@@ -55,7 +55,7 @@ export function useUpdateLabel() {
 		{ labelId: number; name: string; description: string; color: string }
 	>({
 		mutationFn: ({ labelId, name, description, color }) =>
-			updateLabel({ data: { color, description, labelId, name } }),
+			updateLabelFn({ data: { color, description, labelId, name } }),
 		onSuccess: () => {
 			queryClient.invalidateQueries({ queryKey: labelQueryKeys.lists() });
 		},
@@ -71,7 +71,7 @@ export function useRemoveLabel() {
 	const queryClient = useQueryClient();
 
 	return useMutation<null, Error, { labelId: number }>({
-		mutationFn: ({ labelId }) => deleteLabel({ data: { labelId } }),
+		mutationFn: ({ labelId }) => deleteLabelFn({ data: { labelId } }),
 		onSuccess: () => {
 			queryClient.invalidateQueries({ queryKey: labelQueryKeys.lists() });
 		},

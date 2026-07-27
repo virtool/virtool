@@ -1,6 +1,6 @@
 import { getWorkflowDisplayName } from "@app/utils";
 import Link from "@base/Link";
-import type { SampleWorkflows } from "@samples/types";
+import type { SampleWorkflows } from "@virtool/contracts";
 import { BaseWorkflowTag } from "./BaseWorkflowTag";
 import WorkflowTag from "./WorkflowTag";
 

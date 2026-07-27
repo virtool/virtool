@@ -1,7 +1,7 @@
 import { useAnalysisSearch } from "@analyses/components/AnalysisSearchContext";
 import type { FormattedPathoscopeAnalysis } from "@analyses/types";
 import Alert from "@base/Alert";
-import type { Sample } from "@samples/types";
+import type { Sample } from "@virtool/contracts";
 import { PathoscopeList } from "./PathoscopeList";
 import { AnalysisMapping } from "./PathoscopeMapping";
 import { PathoscopeToolbar } from "./PathoscopeToolbar";

@@ -1,5 +1,5 @@
 import { count, desc, eq, inArray } from "drizzle-orm";
-import type { Db } from "../db/pg";
+import type { Db, DbOrTx } from "../db/pg";
 import { takeFirstOrThrow } from "../db/rows";
 import { analyses } from "../db/schema/analyses";
 import { indexes } from "../db/schema/indexes";
@@ -270,4 +270,38 @@ export async function getJob(db: Db, jobId: number): Promise<Job> {
 	}
 
 	return job;
+}
+
+/**
+ * Create a new job in the `pending` state and return its id.
+ *
+ * A pending job in Postgres is claimable by any workflow runner, so this is all
+ * that is needed to schedule work — no key, claim, or steps are set here; the
+ * runner writes those when it claims the job. A job's arguments are not stored:
+ * they are recomposed on read from the owning resource's reverse `job_id`
+ * foreign key, so the caller must create the owning row (e.g. the sample) in the
+ * same transaction, before the job becomes visible to a runner.
+ *
+ * Takes `DbOrTx` so it can participate in the caller's transaction; the caller
+ * commits.
+ */
+export async function createJob(
+	db: DbOrTx,
+	workflow: string,
+	userId: number,
+): Promise<number> {
+	const row = takeFirstOrThrow(
+		await db
+			.insert(jobs)
+			.values({
+				acquired: false,
+				created_at: new Date(),
+				state: "pending",
+				user_id: userId,
+				workflow,
+			})
+			.returning({ id: jobs.id }),
+	);
+
+	return row.id;
 }

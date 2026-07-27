@@ -7,9 +7,9 @@ import { type Mock, vi } from "vitest";
  * the jobs server functions without per-file `vi.mock` boilerplate.
  */
 export const jobServerFnMocks = {
-	findJobs: vi.fn(),
-	getJob: vi.fn(),
-	getJobs: vi.fn(),
+	findJobsFn: vi.fn(),
+	getJobFn: vi.fn(),
+	getJobsFn: vi.fn(),
 };
 
 /** Sets up findJobs to resolve with a single page containing the given jobs. */
@@ -17,7 +17,7 @@ export function mockFindJobs(
 	jobs: ServerJobMinimal[],
 	found_count?: number,
 ): Mock {
-	jobServerFnMocks.findJobs.mockResolvedValue({
+	jobServerFnMocks.findJobsFn.mockResolvedValue({
 		counts: {},
 		found_count: found_count ?? jobs.length,
 		items: jobs,
@@ -26,7 +26,7 @@ export function mockFindJobs(
 		per_page: 25,
 		total_count: jobs.length,
 	});
-	return jobServerFnMocks.findJobs;
+	return jobServerFnMocks.findJobsFn;
 }
 
 /**
@@ -36,16 +36,16 @@ export function mockFindJobs(
  * the result rather than an error.
  */
 export function mockGetJobs(jobs: ServerJob[]): Mock {
-	jobServerFnMocks.getJobs.mockImplementation(
+	jobServerFnMocks.getJobsFn.mockImplementation(
 		async ({ data }: { data: { jobIds: number[] } }) =>
 			jobs.filter((job) => data.jobIds.includes(job.id)),
 	);
-	return jobServerFnMocks.getJobs;
+	return jobServerFnMocks.getJobsFn;
 }
 
 /** Sets up getJob to resolve with the given job when matched by id. */
 export function mockGetJob(jobId: number, job: ServerJob): Mock {
-	jobServerFnMocks.getJob.mockImplementation(
+	jobServerFnMocks.getJobFn.mockImplementation(
 		async ({ data }: { data: { jobId: number } }) => {
 			if (data.jobId === jobId) {
 				return job;
@@ -53,5 +53,5 @@ export function mockGetJob(jobId: number, job: ServerJob): Mock {
 			throw new Error(`unexpected jobId in mockGetJob: ${data.jobId}`);
 		},
 	);
-	return jobServerFnMocks.getJob;
+	return jobServerFnMocks.getJobFn;
 }

@@ -1,5 +1,5 @@
 import Icon from "@base/Icon";
-import type { WorkflowState } from "@samples/types";
+import type { WorkflowState } from "@virtool/contracts";
 import { workflowStateIcons } from "../Filter/workflowStateIcons";
 import { BaseWorkflowTag } from "./BaseWorkflowTag";
 

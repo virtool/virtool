@@ -1,5 +1,32 @@
 import { z } from "zod";
+import type { UserNested } from "./users";
 import { WorkflowName } from "./workflowName";
+
+/** A job's lifecycle state. Shared by every resource that embeds a job. */
+export type JobState =
+	| "cancelled"
+	| "failed"
+	| "pending"
+	| "running"
+	| "succeeded";
+
+/** A workflow a job can run. */
+export type JobWorkflow =
+	| "build_index"
+	| "create_sample"
+	| "create_subtraction"
+	| "nuvs"
+	| "pathoscope";
+
+/** A job embedded in another resource, e.g. a sample's creation job. */
+export type JobNested = {
+	createdAt: string;
+	id: number;
+	progress: number;
+	state: JobState;
+	user: UserNested;
+	workflow: JobWorkflow;
+};
 
 /** Job row returned by the lifecycle endpoints. Provisional shape. */
 export const Job = z.object({

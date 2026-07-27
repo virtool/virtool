@@ -54,11 +54,11 @@ const updateSettingsSchema = z
 		message: "At least one setting must be provided.",
 	});
 
-export const getSettings = createServerFn({ method: "GET" })
+export const getSettingsFn = createServerFn({ method: "GET" })
 	.middleware([adminRole("settings")])
 	.handler(async (): Promise<Settings> => getSettingsImpl(db));
 
-export const updateSettings = createServerFn({ method: "POST" })
+export const updateSettingsFn = createServerFn({ method: "POST" })
 	.middleware([adminRole("settings")])
 	.validator(updateSettingsSchema)
 	.handler(async ({ data }): Promise<Settings> => updateSettingsImpl(db, data));

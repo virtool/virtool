@@ -95,12 +95,14 @@ function call(name: string, data?: unknown) {
 
 describe("getSettings", () => {
 	it("refuses an unauthenticated caller", async () => {
-		await expect(call("getSettings")).rejects.toBeInstanceOf(UnauthorizedError);
+		await expect(call("getSettingsFn")).rejects.toBeInstanceOf(
+			UnauthorizedError,
+		);
 	});
 
 	it("refuses a caller without the settings role", async () => {
 		await signIn("base");
-		await expect(call("getSettings")).rejects.toBeInstanceOf(ForbiddenError);
+		await expect(call("getSettingsFn")).rejects.toBeInstanceOf(ForbiddenError);
 	});
 
 	it("returns the settings for a settings administrator", async () => {
@@ -112,7 +114,7 @@ describe("getSettings", () => {
 			sampleGroup: "force_choice",
 		});
 
-		await expect(call("getSettings")).resolves.toMatchObject({
+		await expect(call("getSettingsFn")).resolves.toMatchObject({
 			defaultSourceTypes: ["genotype"],
 			enableApi: true,
 			minimumPasswordLength: 12,
@@ -124,14 +126,14 @@ describe("getSettings", () => {
 describe("updateSettings", () => {
 	it("refuses an unauthenticated caller", async () => {
 		await expect(
-			call("updateSettings", { enableApi: true }),
+			call("updateSettingsFn", { enableApi: true }),
 		).rejects.toBeInstanceOf(UnauthorizedError);
 	});
 
 	it("refuses a caller without the settings role", async () => {
 		await signIn("base");
 		await expect(
-			call("updateSettings", { enableApi: true }),
+			call("updateSettingsFn", { enableApi: true }),
 		).rejects.toBeInstanceOf(ForbiddenError);
 	});
 
@@ -140,7 +142,7 @@ describe("updateSettings", () => {
 		await seedSettings(db, { enableApi: false });
 
 		await expect(
-			call("updateSettings", {
+			call("updateSettingsFn", {
 				enableApi: true,
 				defaultSourceTypes: ["strain"],
 			}),
@@ -159,12 +161,12 @@ describe("updateSettings", () => {
 	it("rejects an invalid sample group", async () => {
 		await signIn("settings");
 		await expect(
-			call("updateSettings", { sampleGroup: "everyone" }),
+			call("updateSettingsFn", { sampleGroup: "everyone" }),
 		).rejects.toThrow();
 	});
 
 	it("rejects an empty patch", async () => {
 		await signIn("settings");
-		await expect(call("updateSettings", {})).rejects.toThrow();
+		await expect(call("updateSettingsFn", {})).rejects.toThrow();
 	});
 });

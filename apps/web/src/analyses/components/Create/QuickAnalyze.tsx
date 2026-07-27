@@ -1,7 +1,7 @@
 import { Dialog, DialogTitle } from "@base/Dialog";
 import QueryError from "@base/QueryError";
 import { useListHmms } from "@hmm/queries";
-import type { SampleMinimal } from "@samples/types";
+import type { SampleMinimal } from "@virtool/contracts";
 import HmmAlert from "../HmmAlert";
 import CreateAnalysisDialogContent from "./CreateAnalysisDialogContent";
 import CreateAnalysisForm from "./CreateAnalysisForm";

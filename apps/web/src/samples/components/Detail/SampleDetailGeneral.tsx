@@ -8,7 +8,7 @@ import JobItem from "@jobs/components/JobItem";
 import { useFetchJob } from "@jobs/queries";
 import type { Label } from "@labels/types";
 import { useSuspenseSample } from "@samples/queries";
-import { getLibraryTypeDisplayName } from "@samples/utils";
+import { getLibraryTypeDisplayName, toServerJobNested } from "@samples/utils";
 /**
  * The general view in sample details
  */
@@ -34,7 +34,10 @@ export default function SampleDetailGeneral({
 }: SampleDetailGeneralProps) {
 	const sampleId = Number(routeApi.useParams().sampleId);
 	const { data } = useSuspenseSample(sampleId);
-	const { data: job } = useFetchJob(data.job?.id ?? Number.NaN, data.job);
+	const { data: job } = useFetchJob(
+		data.job?.id ?? Number.NaN,
+		data.job && toServerJobNested(data.job),
+	);
 
 	const { quality } = data;
 
@@ -97,7 +100,7 @@ export default function SampleDetailGeneral({
 								</tr>
 								<tr>
 									<th scope="row">Library Type</th>
-									<td>{getLibraryTypeDisplayName(data.library_type)}</td>
+									<td>{getLibraryTypeDisplayName(data.libraryType)}</td>
 								</tr>
 								<tr>
 									<th scope="row">Length Range</th>

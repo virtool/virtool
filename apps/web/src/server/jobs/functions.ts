@@ -44,17 +44,17 @@ const rethrowAsHttp = createServerOnlyFn((err: unknown): never => {
 	throw err;
 });
 
-export const findJobs = createServerFn({ method: "GET" })
+export const findJobsFn = createServerFn({ method: "GET" })
 	.middleware([authenticated()])
 	.validator(findJobsSchema)
 	.handler(async ({ data }) => findJobsImpl(db, data));
 
-export const getJobs = createServerFn({ method: "GET" })
+export const getJobsFn = createServerFn({ method: "GET" })
 	.middleware([authenticated()])
 	.validator(jobIdsSchema)
 	.handler(async ({ data }) => getJobsImpl(db, data.jobIds));
 
-export const getJob = createServerFn({ method: "GET" })
+export const getJobFn = createServerFn({ method: "GET" })
 	.middleware([authenticated()])
 	.validator(jobIdSchema)
 	.handler(async ({ data }) => {

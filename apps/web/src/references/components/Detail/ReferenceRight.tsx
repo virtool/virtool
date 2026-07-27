@@ -1,5 +1,5 @@
 import Checkbox from "@base/Checkbox";
-import type { ReferenceRights } from "@references/types";
+import type { ReferenceRights } from "@virtool/contracts";
 
 const descriptions: Record<keyof ReferenceRights, string> = {
 	build: "Can build new indexes for the reference.",

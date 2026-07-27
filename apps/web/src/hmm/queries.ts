@@ -1,5 +1,5 @@
 import { hmmQueryKeys } from "@hmm/keys";
-import { findHmms, getHmm, installHmm } from "@server/hmm/functions";
+import { findHmmsFn, getHmmFn, installHmmFn } from "@server/hmm/functions";
 import {
 	queryOptions,
 	useMutation,
@@ -25,7 +25,7 @@ export function hmmsQueryOptions(
 	return queryOptions<HmmSearchResults, ErrorResponse>({
 		queryKey: hmmQueryKeys.list([page, per_page, term]),
 		queryFn: () =>
-			findHmms({ data: { page, perPage: per_page, term: term ?? "" } }).then(
+			findHmmsFn({ data: { page, perPage: per_page, term: term ?? "" } }).then(
 				({ documents, ...rest }) => ({ ...rest, items: documents }),
 			),
 	});
@@ -68,7 +68,7 @@ export function useSuspenseHmms(page: number, per_page: number, term?: string) {
 export function useFetchHmm(hmmId: number) {
 	return useQuery({
 		queryKey: hmmQueryKeys.detail(hmmId),
-		queryFn: () => getHmm({ data: { hmmId } }),
+		queryFn: () => getHmmFn({ data: { hmmId } }),
 	});
 }
 
@@ -81,7 +81,7 @@ export function useInstallHmm() {
 	const queryClient = useQueryClient();
 
 	return useMutation({
-		mutationFn: () => installHmm(),
+		mutationFn: () => installHmmFn(),
 		onSuccess: () => {
 			queryClient.invalidateQueries({ queryKey: hmmQueryKeys.lists() });
 		},

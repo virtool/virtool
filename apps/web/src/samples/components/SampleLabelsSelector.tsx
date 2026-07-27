@@ -9,7 +9,7 @@ import Input from "@base/Input";
 import type { Label } from "@labels/types";
 import { getHexColor, getSelectedLabels } from "@samples/labels";
 import { useUpdateLabel } from "@samples/queries";
-import type { Sample, SampleMinimal } from "@samples/types";
+import type { Sample, SampleMinimal } from "@virtool/contracts";
 import { Tag } from "lucide-react";
 import { useState } from "react";
 

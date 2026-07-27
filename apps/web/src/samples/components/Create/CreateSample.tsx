@@ -29,10 +29,10 @@ import ViewHeaderTitle from "@base/ViewHeaderTitle";
 import { useListGroups } from "@groups/queries";
 import type { Label } from "@labels/types";
 import { useCreateSample } from "@samples/queries";
-import type { Sample } from "@samples/types";
 import { getCreateSampleRequest, getSampleNameFromReads } from "@samples/utils";
 import { useNavigate } from "@tanstack/react-router";
 import { useInfiniteFindFiles } from "@uploads/queries";
+import type { Sample } from "@virtool/contracts";
 import { WandSparkles } from "lucide-react";
 import { useEffect, useState } from "react";
 import { Controller, useForm } from "react-hook-form";
@@ -174,7 +174,7 @@ export default function CreateSample({ labels }: CreateSampleProps) {
 				<ViewHeader title="Create Sample">
 					<ViewHeaderTitle>Create Sample</ViewHeaderTitle>
 					<InputError className="text-left">
-						{mutation.isError && mutation.error.response?.body.message}
+						{mutation.isError && mutation.error.message}
 					</InputError>
 				</ViewHeader>
 

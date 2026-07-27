@@ -1,7 +1,7 @@
-import { screen } from "@testing-library/react";
+import { screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { mockApiRemoveSample } from "@tests/api/samples";
 import { createFakeJobNested } from "@tests/fake/jobs";
+import { mockDeleteSample } from "@tests/server-fn/samples";
 import { renderWithRouter } from "@tests/setup";
 import type { ComponentProps } from "react";
 import { beforeEach, describe, expect, it } from "vitest";
@@ -49,7 +49,7 @@ describe("<DeleteSample />", () => {
 	});
 
 	it("should handle submit when confirm button is clicked", async () => {
-		const scope = mockApiRemoveSample(props.id);
+		const deleteSample = mockDeleteSample();
 		await renderWithRouter(<DeleteSample {...props} />);
 
 		await userEvent.click(screen.getByRole("button"));
@@ -57,6 +57,6 @@ describe("<DeleteSample />", () => {
 
 		await userEvent.click(screen.getByText("Confirm"));
 
-		scope.done();
+		await waitFor(() => expect(deleteSample).toHaveBeenCalled());
 	});
 });

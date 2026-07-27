@@ -2,10 +2,10 @@ import { screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { mockApiCreateAnalysis } from "@tests/api/analyses";
 import { mockApiListIndexes } from "@tests/api/indexes";
-import { mockApiGetSampleDetail } from "@tests/api/samples";
 import { createFakeAnalysisMinimal } from "@tests/fake/analyses";
 import { createFakeIndexMinimal } from "@tests/fake/indexes";
 import { createFakeSample } from "@tests/fake/samples";
+import { mockGetSample } from "@tests/server-fn/samples";
 import { mockListSubtractionsShortlist } from "@tests/server-fn/subtractions";
 import { renderWithRouter } from "@tests/setup";
 import { describe, expect, it, vi } from "vitest";
@@ -23,7 +23,7 @@ async function renderForm(indexId?: number) {
 
 	mockApiListIndexes([index]);
 	mockListSubtractionsShortlist([]);
-	mockApiGetSampleDetail(sample);
+	mockGetSample(sample);
 
 	await renderWithRouter(
 		<CreateAnalysisForm

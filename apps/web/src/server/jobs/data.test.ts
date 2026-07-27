@@ -109,7 +109,7 @@ describe("getJob", () => {
 
 		const [analysis] = await db
 			.insert(analyses)
-			.values({ job_id: jobId })
+			.values({ job_id: jobId, workflow: "nuvs", ready: false })
 			.returning({ id: analyses.id });
 		if (!analysis) {
 			throw new Error("failed to seed analysis");
@@ -128,7 +128,12 @@ describe("getJob", () => {
 
 		const [sample] = await db
 			.insert(legacySamples)
-			.values({ job_id: jobId })
+			.values({
+				job_id: jobId,
+				name: "Sample A",
+				library_type: "normal",
+				created_at: new Date(),
+			})
 			.returning({ id: legacySamples.id });
 		if (!sample) {
 			throw new Error("failed to seed sample");

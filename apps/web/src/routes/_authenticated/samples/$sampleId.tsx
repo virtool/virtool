@@ -12,6 +12,7 @@ import DeleteSample from "@samples/components/Detail/DeleteSample";
 import EditSample from "@samples/components/EditSample";
 import { useCheckCanEditSample } from "@samples/hooks";
 import { useSuspenseSample } from "@samples/queries";
+import { toServerJobNested } from "@samples/utils";
 import {
 	createFileRoute,
 	notFound,
@@ -54,8 +55,8 @@ function SampleDetailLayout() {
 	const { hasPermission: canModify } = useCheckCanEditSample(numericSampleId);
 	const [editOpen, setEditOpen] = useState(false);
 
-	const { created_at, name, user } = data;
-	const job = data.job && JobNestedSchema.parse(data.job);
+	const { createdAt, name, user } = data;
+	const job = data.job && JobNestedSchema.parse(toServerJobNested(data.job));
 
 	return (
 		<>
@@ -81,7 +82,7 @@ function SampleDetailLayout() {
 						)}
 					</ViewHeaderIcons>
 				</ViewHeaderTitle>
-				<ViewHeaderAttribution time={created_at} user={user.handle} />
+				<ViewHeaderAttribution time={createdAt} user={user.handle} />
 			</ViewHeader>
 
 			<NavTabs>

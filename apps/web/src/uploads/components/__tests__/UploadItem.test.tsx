@@ -43,13 +43,13 @@ describe("<UploadItem />", () => {
 	});
 
 	it("should have [props.onRemove] called when trash icon clicked", async () => {
-		uploadServerFnMocks.deleteUpload.mockResolvedValue(null);
+		uploadServerFnMocks.deleteUploadFn.mockResolvedValue(null);
 		renderWithProviders(<UploadItem {...props} />);
 
 		await userEvent.click(screen.getByRole("button", { name: "remove" }));
 
 		await waitFor(() => {
-			expect(uploadServerFnMocks.deleteUpload).toHaveBeenCalledWith({
+			expect(uploadServerFnMocks.deleteUploadFn).toHaveBeenCalledWith({
 				data: { id: props.id },
 			});
 		});

@@ -78,7 +78,7 @@ const handlers = (await import(
 )) as SplitServerFnModule;
 
 await expect(
-    callServerFn(handlers, "deleteGroup", { groupId }),
+    callServerFn(handlers, "deleteGroupFn", { groupId }),
 ).rejects.toBeInstanceOf(ForbiddenError);
 ```
 
@@ -268,7 +268,7 @@ exists to prevent — `mockApiGetAccount` never touched HTTP.
 
 Each `server-fn/` file mirrors the server module it mocks, not the
 client feature, because one file maps to one `vi.mock` target. So the
-account mocks live in `server-fn/users.ts` — `getAccount` is exported
+account mocks live in `server-fn/users.ts` — `getAccountFn` is exported
 from `@server/users/functions` — and there is no `server-fn/account.ts`.
 
 ### Asserting a server function was called

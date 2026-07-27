@@ -1,11 +1,11 @@
 import { groupQueryKeys } from "@groups/keys";
 import {
-	createGroup,
-	deleteGroup,
-	findGroups,
-	getGroup,
-	listGroups,
-	updateGroup,
+	createGroupFn,
+	deleteGroupFn,
+	findGroupsFn,
+	getGroupFn,
+	listGroupsFn,
+	updateGroupFn,
 } from "@server/groups/functions";
 import {
 	keepPreviousData,
@@ -33,7 +33,7 @@ export function useInfiniteFindGroups(per_page: number, term: string) {
 	return useInfiniteQuery<GroupSearchResults>({
 		queryKey: groupQueryKeys.infiniteList([per_page, term]),
 		queryFn: ({ pageParam }) =>
-			findGroups({
+			findGroupsFn({
 				data: { term, page: pageParam as number, per_page },
 			}) as Promise<GroupSearchResults>,
 		initialPageParam: 1,
@@ -55,7 +55,7 @@ export function useInfiniteFindGroups(per_page: number, term: string) {
 export function useListGroups() {
 	return useQuery<GroupMinimal[]>({
 		queryKey: groupQueryKeys.lists(),
-		queryFn: () => listGroups() as Promise<GroupMinimal[]>,
+		queryFn: () => listGroupsFn() as Promise<GroupMinimal[]>,
 	});
 }
 
@@ -69,7 +69,7 @@ export function useFetchGroup(id: string | number) {
 	return useQuery<Group>({
 		queryKey: groupQueryKeys.detail(id),
 		queryFn: () =>
-			getGroup({ data: { groupId: Number(id) } }) as Promise<Group>,
+			getGroupFn({ data: { groupId: Number(id) } }) as Promise<Group>,
 		enabled: Boolean(id),
 		placeholderData: keepPreviousData,
 	});
@@ -92,7 +92,7 @@ export function useUpdateGroup() {
 		}
 	>({
 		mutationFn: ({ id, name, permissions }) =>
-			updateGroup({
+			updateGroupFn({
 				data: { groupId: Number(id), name, permissions },
 			}) as Promise<Group>,
 		onSuccess: (data) => {
@@ -111,7 +111,7 @@ export function useRemoveGroup() {
 	const queryClient = useQueryClient();
 	return useMutation<null, ErrorResponse, { id: string | number }>({
 		mutationFn: ({ id }) =>
-			deleteGroup({ data: { groupId: Number(id) } }) as Promise<null>,
+			deleteGroupFn({ data: { groupId: Number(id) } }) as Promise<null>,
 		onSuccess: () => {
 			queryClient.invalidateQueries({ queryKey: groupQueryKeys.all() });
 		},
@@ -126,7 +126,8 @@ export function useRemoveGroup() {
 export function useCreateGroup() {
 	const queryClient = useQueryClient();
 	return useMutation<Group, Error, { name: string }>({
-		mutationFn: ({ name }) => createGroup({ data: { name } }) as Promise<Group>,
+		mutationFn: ({ name }) =>
+			createGroupFn({ data: { name } }) as Promise<Group>,
 		onSuccess: () => {
 			queryClient.invalidateQueries({ queryKey: groupQueryKeys.lists() });
 		},

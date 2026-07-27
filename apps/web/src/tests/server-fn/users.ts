@@ -9,21 +9,21 @@ import { expect, type Mock, vi } from "vitest";
  * the users server functions without per-file `vi.mock` boilerplate.
  */
 export const userServerFnMocks = {
-	findUsers: vi.fn(),
-	searchUsers: vi.fn(),
-	listUsers: vi.fn(),
-	getAccount: vi.fn(),
-	getUser: vi.fn(),
-	createUser: vi.fn(),
-	updateUser: vi.fn(),
-	updateAccountHandle: vi.fn(),
-	setAdministratorRole: vi.fn(),
-	listAdministratorRoles: vi.fn(),
+	findUsersFn: vi.fn(),
+	searchUsersFn: vi.fn(),
+	listUsersFn: vi.fn(),
+	getAccountFn: vi.fn(),
+	getUserFn: vi.fn(),
+	createUserFn: vi.fn(),
+	updateUserFn: vi.fn(),
+	updateAccountHandleFn: vi.fn(),
+	setAdministratorRoleFn: vi.fn(),
+	listAdministratorRolesFn: vi.fn(),
 };
 
 /** Sets up findUsers to resolve with a single page containing the given users. */
 export function mockFindUsers(users: User[]): Mock {
-	userServerFnMocks.findUsers.mockResolvedValue({
+	userServerFnMocks.findUsersFn.mockResolvedValue({
 		items: users,
 		foundCount: users.length,
 		page: 1,
@@ -31,12 +31,12 @@ export function mockFindUsers(users: User[]): Mock {
 		perPage: 25,
 		totalCount: users.length,
 	});
-	return userServerFnMocks.findUsers;
+	return userServerFnMocks.findUsersFn;
 }
 
 /** Sets up searchUsers to resolve with a single page containing the given users. */
 export function mockSearchUsers(users: User[]): Mock {
-	userServerFnMocks.searchUsers.mockResolvedValue({
+	userServerFnMocks.searchUsersFn.mockResolvedValue({
 		items: users,
 		foundCount: users.length,
 		page: 1,
@@ -44,21 +44,21 @@ export function mockSearchUsers(users: User[]): Mock {
 		perPage: 25,
 		totalCount: users.length,
 	});
-	return userServerFnMocks.searchUsers;
+	return userServerFnMocks.searchUsersFn;
 }
 
 /** Sets up listUsers to resolve with the given users, reduced to id and handle. */
 export function mockListUsers(users: UserNested[]): Mock {
-	userServerFnMocks.listUsers.mockResolvedValue(
+	userServerFnMocks.listUsersFn.mockResolvedValue(
 		users.map(({ handle, id }) => ({ handle, id })),
 	);
-	return userServerFnMocks.listUsers;
+	return userServerFnMocks.listUsersFn;
 }
 
 /** Sets up getAccount to resolve with the given account. */
 export function mockGetAccount(account: Account): Mock {
-	userServerFnMocks.getAccount.mockResolvedValue(account);
-	return userServerFnMocks.getAccount;
+	userServerFnMocks.getAccountFn.mockResolvedValue(account);
+	return userServerFnMocks.getAccountFn;
 }
 
 /**
@@ -72,14 +72,14 @@ export function mockGetAccountUnauthorized(): Mock {
 	const error = new Error("Unauthorized");
 	error.name = "UnauthorizedError";
 
-	userServerFnMocks.getAccount.mockRejectedValue(error);
+	userServerFnMocks.getAccountFn.mockRejectedValue(error);
 
-	return userServerFnMocks.getAccount;
+	return userServerFnMocks.getAccountFn;
 }
 
 /** Sets up getUser to resolve with the given user when matched by id. */
 export function mockGetUser(userId: number, user: User): Mock {
-	userServerFnMocks.getUser.mockImplementation(
+	userServerFnMocks.getUserFn.mockImplementation(
 		async ({ data }: { data: { userId: number } }) => {
 			if (data.userId === userId) {
 				return user;
@@ -87,7 +87,7 @@ export function mockGetUser(userId: number, user: User): Mock {
 			throw new Error(`unexpected userId in mockGetUser: ${data.userId}`);
 		},
 	);
-	return userServerFnMocks.getUser;
+	return userServerFnMocks.getUserFn;
 }
 
 /** Sets up createUser to resolve with the given user (or reject on a 4xx code). */
@@ -97,11 +97,11 @@ export function mockCreateUser(
 	message = "User already exists.",
 ): Mock {
 	if (statusCode >= 400) {
-		userServerFnMocks.createUser.mockRejectedValue(new Error(message));
+		userServerFnMocks.createUserFn.mockRejectedValue(new Error(message));
 	} else {
-		userServerFnMocks.createUser.mockResolvedValue(user ?? {});
+		userServerFnMocks.createUserFn.mockResolvedValue(user ?? {});
 	}
-	return userServerFnMocks.createUser;
+	return userServerFnMocks.createUserFn;
 }
 
 /** Sets up updateUser to resolve with the merged user (or reject on a 4xx code). */
@@ -114,11 +114,11 @@ export function mockUpdateUser(
 	if (statusCode >= 400) {
 		const message =
 			typeof update.message === "string" ? update.message : "Bad request.";
-		userServerFnMocks.updateUser.mockRejectedValue(new Error(message));
+		userServerFnMocks.updateUserFn.mockRejectedValue(new Error(message));
 	} else {
-		userServerFnMocks.updateUser.mockResolvedValue({ ...user, ...update });
+		userServerFnMocks.updateUserFn.mockResolvedValue({ ...user, ...update });
 	}
-	return userServerFnMocks.updateUser;
+	return userServerFnMocks.updateUserFn;
 }
 
 /**
@@ -135,9 +135,11 @@ export function mockUpdateAccountHandle(
 	expectedHandle?: string,
 ): Mock {
 	if (statusCode >= 400) {
-		userServerFnMocks.updateAccountHandle.mockRejectedValue(new Error(message));
+		userServerFnMocks.updateAccountHandleFn.mockRejectedValue(
+			new Error(message),
+		);
 	} else {
-		userServerFnMocks.updateAccountHandle.mockImplementation(
+		userServerFnMocks.updateAccountHandleFn.mockImplementation(
 			async ({ data }: { data: { handle: string } }) => {
 				if (expectedHandle !== undefined) {
 					expect(data.handle).toBe(expectedHandle);
@@ -146,17 +148,17 @@ export function mockUpdateAccountHandle(
 			},
 		);
 	}
-	return userServerFnMocks.updateAccountHandle;
+	return userServerFnMocks.updateAccountHandleFn;
 }
 
 /** Sets up listAdministratorRoles to resolve with the given roles. */
 export function mockListAdministratorRoles(roles: AdministratorRole[]): Mock {
-	userServerFnMocks.listAdministratorRoles.mockResolvedValue(roles);
-	return userServerFnMocks.listAdministratorRoles;
+	userServerFnMocks.listAdministratorRolesFn.mockResolvedValue(roles);
+	return userServerFnMocks.listAdministratorRolesFn;
 }
 
 /** Sets up setAdministratorRole to resolve with the given user. */
 export function mockSetAdministratorRole(user: User): Mock {
-	userServerFnMocks.setAdministratorRole.mockResolvedValue(user);
-	return userServerFnMocks.setAdministratorRole;
+	userServerFnMocks.setAdministratorRoleFn.mockResolvedValue(user);
+	return userServerFnMocks.setAdministratorRoleFn;
 }

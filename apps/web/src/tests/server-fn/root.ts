@@ -6,7 +6,7 @@ import { type Mock, vi } from "vitest";
  * unauthenticated root document without per-file `vi.mock` boilerplate.
  */
 export const rootServerFnMocks = {
-	getRoot: vi.fn(),
+	getRootFn: vi.fn(),
 };
 
 /**
@@ -17,9 +17,9 @@ export function mockGetRoot(root: {
 	firstUser: boolean;
 	version?: string;
 }): Mock {
-	rootServerFnMocks.getRoot.mockResolvedValue({
+	rootServerFnMocks.getRootFn.mockResolvedValue({
 		version: __APP_VERSION__,
 		...root,
 	});
-	return rootServerFnMocks.getRoot;
+	return rootServerFnMocks.getRootFn;
 }

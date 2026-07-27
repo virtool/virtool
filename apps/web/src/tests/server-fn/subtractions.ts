@@ -11,17 +11,17 @@ import { type Mock, vi } from "vitest";
  * reads subtractions can stub them without per-file `vi.mock` boilerplate.
  */
 export const subtractionServerFnMocks = {
-	createSubtraction: vi.fn(),
-	deleteSubtraction: vi.fn(),
-	findSubtractions: vi.fn(),
-	getSubtraction: vi.fn(),
-	listSubtractionsShortlist: vi.fn(),
-	updateSubtraction: vi.fn(),
+	createSubtractionFn: vi.fn(),
+	deleteSubtractionFn: vi.fn(),
+	findSubtractionsFn: vi.fn(),
+	getSubtractionFn: vi.fn(),
+	listSubtractionsShortlistFn: vi.fn(),
+	updateSubtractionFn: vi.fn(),
 };
 
 /** Sets up findSubtractions to resolve with a single page of the given items. */
 export function mockFindSubtractions(items: SubtractionMinimal[]): Mock {
-	subtractionServerFnMocks.findSubtractions.mockResolvedValue({
+	subtractionServerFnMocks.findSubtractionsFn.mockResolvedValue({
 		found_count: items.length,
 		total_count: items.length,
 		ready_count: items.filter((item) => item.ready).length,
@@ -30,12 +30,12 @@ export function mockFindSubtractions(items: SubtractionMinimal[]): Mock {
 		per_page: 25,
 		items,
 	});
-	return subtractionServerFnMocks.findSubtractions;
+	return subtractionServerFnMocks.findSubtractionsFn;
 }
 
 /** Sets up getSubtraction to resolve with the given subtraction when matched. */
 export function mockGetSubtraction(subtraction: Subtraction): Mock {
-	subtractionServerFnMocks.getSubtraction.mockImplementation(
+	subtractionServerFnMocks.getSubtractionFn.mockImplementation(
 		async ({ data }: { data: { subtractionId: number } }) => {
 			if (data.subtractionId === subtraction.id) {
 				return subtraction;
@@ -45,13 +45,13 @@ export function mockGetSubtraction(subtraction: Subtraction): Mock {
 			);
 		},
 	);
-	return subtractionServerFnMocks.getSubtraction;
+	return subtractionServerFnMocks.getSubtractionFn;
 }
 
 /** Sets up createSubtraction to resolve with the given subtraction. */
 export function mockCreateSubtraction(subtraction: Subtraction): Mock {
-	subtractionServerFnMocks.createSubtraction.mockResolvedValue(subtraction);
-	return subtractionServerFnMocks.createSubtraction;
+	subtractionServerFnMocks.createSubtractionFn.mockResolvedValue(subtraction);
+	return subtractionServerFnMocks.createSubtractionFn;
 }
 
 /**
@@ -59,7 +59,7 @@ export function mockCreateSubtraction(subtraction: Subtraction): Mock {
  * whatever name and nickname the caller submitted.
  */
 export function mockUpdateSubtraction(subtraction: Subtraction): Mock {
-	subtractionServerFnMocks.updateSubtraction.mockImplementation(
+	subtractionServerFnMocks.updateSubtractionFn.mockImplementation(
 		async ({
 			data,
 		}: {
@@ -70,21 +70,21 @@ export function mockUpdateSubtraction(subtraction: Subtraction): Mock {
 			nickname: data.nickname ?? subtraction.nickname,
 		}),
 	);
-	return subtractionServerFnMocks.updateSubtraction;
+	return subtractionServerFnMocks.updateSubtractionFn;
 }
 
 /** Sets up deleteSubtraction to resolve. */
 export function mockDeleteSubtraction(): Mock {
-	subtractionServerFnMocks.deleteSubtraction.mockResolvedValue(null);
-	return subtractionServerFnMocks.deleteSubtraction;
+	subtractionServerFnMocks.deleteSubtractionFn.mockResolvedValue(null);
+	return subtractionServerFnMocks.deleteSubtractionFn;
 }
 
 /** Sets up listSubtractionsShortlist to resolve with the given options. */
 export function mockListSubtractionsShortlist(
 	subtractions: SubtractionOption[],
 ): Mock {
-	subtractionServerFnMocks.listSubtractionsShortlist.mockResolvedValue(
+	subtractionServerFnMocks.listSubtractionsShortlistFn.mockResolvedValue(
 		subtractions,
 	);
-	return subtractionServerFnMocks.listSubtractionsShortlist;
+	return subtractionServerFnMocks.listSubtractionsShortlistFn;
 }

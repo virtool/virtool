@@ -1,10 +1,10 @@
 import {
-	createSubtraction,
-	deleteSubtraction,
-	findSubtractions,
-	getSubtraction,
-	listSubtractionsShortlist,
-	updateSubtraction,
+	createSubtractionFn,
+	deleteSubtractionFn,
+	findSubtractionsFn,
+	getSubtractionFn,
+	listSubtractionsShortlistFn,
+	updateSubtractionFn,
 } from "@server/subtraction/functions";
 import { subtractionQueryKeys } from "@subtraction/keys";
 import {
@@ -35,7 +35,7 @@ export function useCreateSubtraction() {
 		{ name: string; nickname: string; uploadId: number }
 	>({
 		mutationFn: ({ name, nickname, uploadId }) =>
-			createSubtraction({
+			createSubtractionFn({
 				data: { name, nickname, uploadId },
 			}) as Promise<Subtraction>,
 		onSuccess: () => {
@@ -61,7 +61,7 @@ export function subtractionsQueryOptions(
 	return queryOptions<SubtractionSearchResult, ErrorResponse>({
 		queryKey: subtractionQueryKeys.list([page, per_page, term]),
 		queryFn: () =>
-			findSubtractions({
+			findSubtractionsFn({
 				data: { page, per_page, term },
 			}) as Promise<SubtractionSearchResult>,
 	});
@@ -94,7 +94,7 @@ export function useFetchSubtraction(subtractionId: number) {
 	return useQuery<Subtraction, ErrorResponse>({
 		queryKey: subtractionQueryKeys.detail(subtractionId),
 		queryFn: () =>
-			getSubtraction({
+			getSubtractionFn({
 				data: { subtractionId },
 			}) as Promise<Subtraction>,
 	});
@@ -114,7 +114,7 @@ export function useUpdateSubtraction(subtractionId: number) {
 		{ name: string; nickname: string }
 	>({
 		mutationFn: ({ name, nickname }) =>
-			updateSubtraction({
+			updateSubtractionFn({
 				data: { subtractionId, name, nickname },
 			}) as Promise<Subtraction>,
 		onSuccess: () => {
@@ -133,7 +133,7 @@ export function useUpdateSubtraction(subtractionId: number) {
 export function useDeleteSubtraction() {
 	return useMutation<null, ErrorResponse, { subtractionId: number }>({
 		mutationFn: ({ subtractionId }) =>
-			deleteSubtraction({
+			deleteSubtractionFn({
 				data: { subtractionId },
 			}) as Promise<null>,
 	});
@@ -150,6 +150,7 @@ export function useDeleteSubtraction() {
 export function useFetchSubtractionsShortlist() {
 	return useQuery<SubtractionOption[]>({
 		queryKey: subtractionQueryKeys.shortlist(),
-		queryFn: () => listSubtractionsShortlist() as Promise<SubtractionOption[]>,
+		queryFn: () =>
+			listSubtractionsShortlistFn() as Promise<SubtractionOption[]>,
 	});
 }

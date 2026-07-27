@@ -110,7 +110,7 @@ describe("createGroup", () => {
 		await signIn(null);
 
 		await expect(
-			call("createGroup", { name: "hackers" }),
+			call("createGroupFn", { name: "hackers" }),
 		).rejects.toBeInstanceOf(ForbiddenError);
 		expect(setResponseStatus).toHaveBeenCalledWith(403);
 		expect(await db.select().from(groups)).toHaveLength(0);
@@ -118,7 +118,7 @@ describe("createGroup", () => {
 
 	it("refuses an unauthenticated caller", async () => {
 		await expect(
-			call("createGroup", { name: "hackers" }),
+			call("createGroupFn", { name: "hackers" }),
 		).rejects.toBeInstanceOf(UnauthorizedError);
 		expect(setResponseStatus).toHaveBeenCalledWith(401);
 	});
@@ -126,7 +126,7 @@ describe("createGroup", () => {
 	it("allows an administrator", async () => {
 		await signIn("base");
 
-		const group = (await call("createGroup", { name: "technicians" })) as {
+		const group = (await call("createGroupFn", { name: "technicians" })) as {
 			name: string;
 		};
 
@@ -140,7 +140,7 @@ describe("updateGroup", () => {
 		await signIn(null);
 
 		await expect(
-			call("updateGroup", { groupId, name: "renamed" }),
+			call("updateGroupFn", { groupId, name: "renamed" }),
 		).rejects.toBeInstanceOf(ForbiddenError);
 		expect(setResponseStatus).toHaveBeenCalledWith(403);
 	});
@@ -153,7 +153,7 @@ describe("updateGroup", () => {
 		await signIn(null);
 
 		await expect(
-			call("updateGroup", {
+			call("updateGroupFn", {
 				groupId,
 				permissions: { create_ref: true, upload_file: true },
 			}),
@@ -169,7 +169,7 @@ describe("updateGroup", () => {
 		const groupId = await seedGroup();
 		await signIn("base");
 
-		const group = (await call("updateGroup", {
+		const group = (await call("updateGroupFn", {
 			groupId,
 			permissions: { create_ref: true },
 		})) as { permissions: Permissions };
@@ -183,7 +183,7 @@ describe("deleteGroup", () => {
 		const groupId = await seedGroup();
 		await signIn(null);
 
-		await expect(call("deleteGroup", { groupId })).rejects.toBeInstanceOf(
+		await expect(call("deleteGroupFn", { groupId })).rejects.toBeInstanceOf(
 			ForbiddenError,
 		);
 		expect(setResponseStatus).toHaveBeenCalledWith(403);
@@ -194,7 +194,7 @@ describe("deleteGroup", () => {
 		const groupId = await seedGroup();
 		await signIn("base");
 
-		await call("deleteGroup", { groupId });
+		await call("deleteGroupFn", { groupId });
 
 		expect(await db.select().from(groups)).toHaveLength(0);
 	});

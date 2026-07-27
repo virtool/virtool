@@ -170,7 +170,7 @@ describe("<AccountProfile />", () => {
 		expect(
 			await screen.findByText("Please specify a username"),
 		).toBeInTheDocument();
-		expect(userServerFnMocks.updateAccountHandle).not.toHaveBeenCalled();
+		expect(userServerFnMocks.updateAccountHandleFn).not.toHaveBeenCalled();
 	});
 
 	it("should handle password changes", async () => {

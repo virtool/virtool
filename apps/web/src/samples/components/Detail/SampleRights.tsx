@@ -75,7 +75,7 @@ export default function SampleRights({ sampleId }: SampleRightsProps) {
 
 	const canModifyRights = hasPermission || sample.user.id === account.id;
 
-	const { group, group_read, group_write, all_read, all_write } = sample;
+	const { group, groupRead, groupWrite, allRead, allWrite } = sample;
 
 	function handleChangeGroup(value: string) {
 		const group = value === "" ? null : parseInt(value, 10);
@@ -95,8 +95,8 @@ export default function SampleRights({ sampleId }: SampleRightsProps) {
 		mutation.mutate(
 			{
 				update: {
-					[`${scope}_read`]: value.includes("r"),
-					[`${scope}_write`]: value.includes("w"),
+					[`${scope}Read`]: value.includes("r"),
+					[`${scope}Write`]: value.includes("w"),
 				},
 			},
 			{
@@ -113,8 +113,8 @@ export default function SampleRights({ sampleId }: SampleRightsProps) {
 		return <Box>Not allowed</Box>;
 	}
 
-	const groupRights = (group_read ? "r" : "") + (group_write ? "w" : "");
-	const allRights = (all_read ? "r" : "") + (all_write ? "w" : "");
+	const groupRights = (groupRead ? "r" : "") + (groupWrite ? "w" : "");
+	const allRights = (allRead ? "r" : "") + (allWrite ? "w" : "");
 
 	const selectedGroupId: string = group ? group.id.toString() : "";
 

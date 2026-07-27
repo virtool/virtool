@@ -1,7 +1,25 @@
-import type { JobNested } from "@jobs/types";
+import type { JobNested, ServerJobNested } from "@jobs/types";
 import { stripMateToken } from "@uploads/pairing";
 import type { Upload } from "@uploads/types";
-import type { CreateSampleRequest, LibraryType } from "./types";
+import type { LibraryType, SampleJobNested } from "@virtool/contracts";
+import type { CreateSampleRequest } from "./types";
+
+/**
+ * Adapt a sample's embedded job to the snake_case shape the jobs feature's
+ * schema parses. The samples wire shape is camelCase, but the jobs feature is
+ * still served from the Python API, so its `useFetchJob` seed and
+ * `JobNestedSchema` expect the snake_case job.
+ */
+export function toServerJobNested(job: SampleJobNested): ServerJobNested {
+	return {
+		created_at: job.createdAt,
+		id: job.id,
+		progress: job.progress,
+		state: job.state,
+		user: job.user,
+		workflow: job.workflow,
+	};
+}
 
 /** The workflows that samples can be filtered by. */
 export const filterableWorkflows = ["pathoscope", "nuvs"];

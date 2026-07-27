@@ -39,11 +39,11 @@ const rethrowAsHttp = createServerOnlyFn((err: unknown): never => {
 	throw err;
 });
 
-export const findApiKeys = createServerFn({ method: "GET" })
+export const findApiKeysFn = createServerFn({ method: "GET" })
 	.middleware([authenticated()])
 	.handler(async ({ context }) => findApiKeysImpl(db, context.session.userId));
 
-export const createApiKey = createServerFn({ method: "POST" })
+export const createApiKeyFn = createServerFn({ method: "POST" })
 	.middleware([authenticated()])
 	.validator(createApiKeySchema)
 	.handler(async ({ context, data }) => {
@@ -55,7 +55,7 @@ export const createApiKey = createServerFn({ method: "POST" })
 		return { ...apiKey, key };
 	});
 
-export const updateApiKey = createServerFn({ method: "POST" })
+export const updateApiKeyFn = createServerFn({ method: "POST" })
 	.middleware([authenticated()])
 	.validator(updateApiKeySchema)
 	.handler(async ({ context, data }) => {
@@ -71,7 +71,7 @@ export const updateApiKey = createServerFn({ method: "POST" })
 		}
 	});
 
-export const deleteApiKey = createServerFn({ method: "POST" })
+export const deleteApiKeyFn = createServerFn({ method: "POST" })
 	.middleware([authenticated()])
 	.validator(keyIdSchema)
 	.handler(async ({ context, data }) => {

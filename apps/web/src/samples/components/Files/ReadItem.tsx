@@ -10,7 +10,7 @@ function sanitizeFileName(name: string): string {
 }
 
 type ReadItemProps = {
-	download_url: string;
+	downloadUrl: string;
 	sampleName: string;
 	side: number;
 	/** The size of the read file in bytes */
@@ -21,7 +21,7 @@ type ReadItemProps = {
  * A condensed read item for use in a list of reads
  */
 export default function ReadItem({
-	download_url,
+	downloadUrl,
 	sampleName,
 	side,
 	size,
@@ -32,7 +32,7 @@ export default function ReadItem({
 		<BoxGroupSection className="flex items-start font-medium justify-between">
 			<div className="flex items-center">
 				<div>
-					<a href={`/api/${download_url}`} download={downloadName}>
+					<a href={`/api/${downloadUrl}`} download={downloadName}>
 						{downloadName}
 					</a>
 				</div>

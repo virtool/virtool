@@ -7,21 +7,21 @@ import { type Mock, vi } from "vitest";
  * these without per-file `vi.mock` boilerplate.
  */
 export const hmmServerFnMocks = {
-	findHmms: vi.fn(),
-	getHmm: vi.fn(),
-	installHmm: vi.fn(),
+	findHmmsFn: vi.fn(),
+	getHmmFn: vi.fn(),
+	installHmmFn: vi.fn(),
 };
 
 /** Sets up findHmms to resolve with the given search results. */
 export function mockFindHmms(searchResults: HmmSearchResult): Mock {
-	hmmServerFnMocks.findHmms.mockResolvedValue(searchResults);
-	return hmmServerFnMocks.findHmms;
+	hmmServerFnMocks.findHmmsFn.mockResolvedValue(searchResults);
+	return hmmServerFnMocks.findHmmsFn;
 }
 
 /** Sets up getHmm to resolve with the given HMM. */
 export function mockGetHmm(hmm: Hmm): Mock {
-	hmmServerFnMocks.getHmm.mockResolvedValue(hmm);
-	return hmmServerFnMocks.getHmm;
+	hmmServerFnMocks.getHmmFn.mockResolvedValue(hmm);
+	return hmmServerFnMocks.getHmmFn;
 }
 
 /**
@@ -29,8 +29,8 @@ export function mockGetHmm(hmm: Hmm): Mock {
  * a server function surfaces a 404 to the client.
  */
 export function mockGetHmmError(status: number): Mock {
-	hmmServerFnMocks.getHmm.mockRejectedValue(
+	hmmServerFnMocks.getHmmFn.mockRejectedValue(
 		Object.assign(new Error("HMM not found."), { status }),
 	);
-	return hmmServerFnMocks.getHmm;
+	return hmmServerFnMocks.getHmmFn;
 }
