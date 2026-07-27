@@ -24,7 +24,7 @@
     "micromark": "^4.0.2",
     "micromark-extension-gfm": "^3.0.0",
     "node-cache": "^5.1.2",
-    "prettier": "^3.8.3",
+    "prettier": "^3.9.6",
     "prismjs": "^1.30.0",
     "rehype-rewrite": "^4.0.4",
     "sharp": "^0.34.5",
