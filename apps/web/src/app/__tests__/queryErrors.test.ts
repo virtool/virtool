@@ -76,28 +76,30 @@ describe("getErrorStatus", () => {
 });
 
 describe("shouldRetryQuery", () => {
-	it.each([
-		401, 403, 404,
-	])("gives up immediately on a %i from the Python API", (status) => {
-		expect(shouldRetryQuery(0, superagentError(status))).toBe(false);
-	});
+	it.each([401, 403, 404])(
+		"gives up immediately on a %i from the Python API",
+		(status) => {
+			expect(shouldRetryQuery(0, superagentError(status))).toBe(false);
+		},
+	);
 
 	it("retries a Python API failure that may yet succeed", () => {
 		expect(shouldRetryQuery(0, superagentError(500))).toBe(true);
 	});
 
-	it.each([
-		401, 403, 404,
-	])("gives up immediately on a %i from a server function", (status) => {
-		expect(shouldRetryQuery(0, clientError(status))).toBe(false);
-	});
+	it.each([401, 403, 404])(
+		"gives up immediately on a %i from a server function",
+		(status) => {
+			expect(shouldRetryQuery(0, clientError(status))).toBe(false);
+		},
+	);
 
-	it.each([
-		UNAUTHORIZED_ERROR_NAME,
-		FORBIDDEN_ERROR_NAME,
-	])("gives up immediately on a server function's %s", (name) => {
-		expect(shouldRetryQuery(0, serializedAuthError(name, name))).toBe(false);
-	});
+	it.each([UNAUTHORIZED_ERROR_NAME, FORBIDDEN_ERROR_NAME])(
+		"gives up immediately on a server function's %s",
+		(name) => {
+			expect(shouldRetryQuery(0, serializedAuthError(name, name))).toBe(false);
+		},
+	);
 
 	it("keeps retrying an auth error whose name was lost in serialization", () => {
 		// Guards the adapter's whole reason for existing: without `name`, an

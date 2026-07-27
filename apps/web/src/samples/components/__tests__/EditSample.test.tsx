@@ -33,31 +33,28 @@ describe("<Editsample />", () => {
 		expect(screen.queryByText("Save")).toBeNull();
 	});
 
-	it.each([
-		"Name",
-		"Isolate",
-		"Host",
-		"Locale",
-		"Notes",
-	])("should render changed data for", async (inputLabel) => {
-		await renderWithRouter(<EditSample {...props} />);
+	it.each(["Name", "Isolate", "Host", "Locale", "Notes"])(
+		"should render changed data for",
+		async (inputLabel) => {
+			await renderWithRouter(<EditSample {...props} />);
 
-		const inputBox = screen.getByLabelText(inputLabel);
-		expect(inputBox).toBeInTheDocument();
-		const field = inputLabel.toLowerCase() as
-			| "name"
-			| "isolate"
-			| "host"
-			| "locale"
-			| "notes";
-		expect(inputBox).toHaveValue(sample[field]);
+			const inputBox = screen.getByLabelText(inputLabel);
+			expect(inputBox).toBeInTheDocument();
+			const field = inputLabel.toLowerCase() as
+				| "name"
+				| "isolate"
+				| "host"
+				| "locale"
+				| "notes";
+			expect(inputBox).toHaveValue(sample[field]);
 
-		await userEvent.clear(inputBox);
-		expect(inputBox).toHaveValue("");
+			await userEvent.clear(inputBox);
+			expect(inputBox).toHaveValue("");
 
-		await userEvent.type(inputBox, "test");
-		expect(inputBox).toHaveValue("test");
-	});
+			await userEvent.type(inputBox, "test");
+			expect(inputBox).toHaveValue("test");
+		},
+	);
 
 	it("should update sample when form is submitted", async () => {
 		const updateSample = mockUpdateSample(sample, {

@@ -55,23 +55,25 @@ describe("<JobArgs />", () => {
 		).toBeInTheDocument();
 	});
 
-	it.each(workflows)("should render $workflow jobs correctly", async ({
-		workflow,
-		args,
-		links,
-	}) => {
-		await renderWithRouter(
-			<JobArgs
-				workflow={workflow}
-				args={{ ...args, extra_param: "extra_param" }}
-			/>,
-		);
+	it.each(workflows)(
+		"should render $workflow jobs correctly",
+		async ({ workflow, args, links }) => {
+			await renderWithRouter(
+				<JobArgs
+					workflow={workflow}
+					args={{ ...args, extra_param: "extra_param" }}
+				/>,
+			);
 
-		for (const { name, href } of links) {
-			expect(screen.getByRole("link", { name })).toHaveAttribute("href", href);
-		}
-		expect(screen.queryByText("extra_param")).not.toBeInTheDocument();
-	});
+			for (const { name, href } of links) {
+				expect(screen.getByRole("link", { name })).toHaveAttribute(
+					"href",
+					href,
+				);
+			}
+			expect(screen.queryByText("extra_param")).not.toBeInTheDocument();
+		},
+	);
 
 	it("should render unknown workflows", async () => {
 		await renderWithRouter(

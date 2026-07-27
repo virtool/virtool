@@ -222,13 +222,14 @@ describe("server function coverage", () => {
 describe("every server function refuses an anonymous caller", () => {
 	const guarded = endpoints.filter((endpoint) => !endpoint.isOpen);
 
-	it.each(
-		guarded.map((endpoint) => [endpoint.name, endpoint] as const),
-	)("%s rejects a call with no session", async (_name, endpoint) => {
-		await expect(
-			callServerFn(endpoint.handlers, endpoint.name, undefined),
-		).rejects.toBeInstanceOf(UnauthorizedError);
-	});
+	it.each(guarded.map((endpoint) => [endpoint.name, endpoint] as const))(
+		"%s rejects a call with no session",
+		async (_name, endpoint) => {
+			await expect(
+				callServerFn(endpoint.handlers, endpoint.name, undefined),
+			).rejects.toBeInstanceOf(UnauthorizedError);
+		},
+	);
 });
 
 describe("the open endpoints are reachable without a session", () => {
@@ -247,18 +248,19 @@ describe("the open endpoints are reachable without a session", () => {
 
 	// They may fail on validation or on missing data — they must not fail on
 	// authentication, which is the whole reason they are exempt.
-	it.each(
-		open.map((endpoint) => [endpoint.name, endpoint] as const),
-	)("%s is not refused for want of a session", async (_name, endpoint) => {
-		const error = await callServerFn(
-			endpoint.handlers,
-			endpoint.name,
-			undefined,
-		).then(
-			() => null,
-			(err: unknown) => err,
-		);
+	it.each(open.map((endpoint) => [endpoint.name, endpoint] as const))(
+		"%s is not refused for want of a session",
+		async (_name, endpoint) => {
+			const error = await callServerFn(
+				endpoint.handlers,
+				endpoint.name,
+				undefined,
+			).then(
+				() => null,
+				(err: unknown) => err,
+			);
 
-		expect(error).not.toBeInstanceOf(UnauthorizedError);
-	});
+			expect(error).not.toBeInstanceOf(UnauthorizedError);
+		},
+	);
 });

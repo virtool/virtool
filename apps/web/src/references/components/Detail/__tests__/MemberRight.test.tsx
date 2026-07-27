@@ -46,14 +46,14 @@ describe("<ReferenceRight />", () => {
 		);
 	});
 
-	it.each([
-		true,
-		false,
-	])("should have onToggle called on Checkbox click when [enabled=%p]", async (enabled) => {
-		props.enabled = enabled;
-		renderWithProviders(<ReferenceRight {...props} />);
+	it.each([true, false])(
+		"should have onToggle called on Checkbox click when [enabled=%p]",
+		async (enabled) => {
+			props.enabled = enabled;
+			renderWithProviders(<ReferenceRight {...props} />);
 
-		await userEvent.click(screen.getByRole("checkbox"));
-		expect(props.onToggle).toHaveBeenCalledWith(props.right, !enabled);
-	});
+			await userEvent.click(screen.getByRole("checkbox"));
+			expect(props.onToggle).toHaveBeenCalledWith(props.right, !enabled);
+		},
+	);
 });

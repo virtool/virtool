@@ -16,25 +16,23 @@ describe("formatMinimumPasswordLengthMessage", () => {
 });
 
 describe("checkPasswordLength", () => {
-	it.each([
-		DEFAULT_MINIMUM_PASSWORD_LENGTH,
-		12,
-		20,
-	])("rejects a password one character short of a minimum of %i", (minimum) => {
-		expect(() => checkPasswordLength("a".repeat(minimum - 1), minimum)).toThrow(
-			new PasswordTooShortError(minimum),
-		);
-	});
+	it.each([DEFAULT_MINIMUM_PASSWORD_LENGTH, 12, 20])(
+		"rejects a password one character short of a minimum of %i",
+		(minimum) => {
+			expect(() =>
+				checkPasswordLength("a".repeat(minimum - 1), minimum),
+			).toThrow(new PasswordTooShortError(minimum));
+		},
+	);
 
-	it.each([
-		DEFAULT_MINIMUM_PASSWORD_LENGTH,
-		12,
-		20,
-	])("accepts a password of exactly a minimum of %i", (minimum) => {
-		expect(() =>
-			checkPasswordLength("a".repeat(minimum), minimum),
-		).not.toThrow();
-	});
+	it.each([DEFAULT_MINIMUM_PASSWORD_LENGTH, 12, 20])(
+		"accepts a password of exactly a minimum of %i",
+		(minimum) => {
+			expect(() =>
+				checkPasswordLength("a".repeat(minimum), minimum),
+			).not.toThrow();
+		},
+	);
 
 	it("rejects an empty password", () => {
 		expect(() => checkPasswordLength("", 12)).toThrow(PasswordTooShortError);

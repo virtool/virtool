@@ -155,20 +155,20 @@ describe("createResetSession", () => {
 	// `resetPassword` reads `resetRemember` back to carry the flag into the
 	// authenticated session it mints. If it were not persisted, a user who ticked
 	// "remember me" would silently get a sixty minute session after a reset.
-	it.each([
-		true,
-		false,
-	])("persists remember=%s across the reset", async (remember) => {
-		const userId = await seedUser(db);
+	it.each([true, false])(
+		"persists remember=%s across the reset",
+		async (remember) => {
+			const userId = await seedUser(db);
 
-		const { row } = await createResetSession(db, {
-			userId,
-			ip: "127.0.0.1",
-			remember,
-		});
+			const { row } = await createResetSession(db, {
+				userId,
+				ip: "127.0.0.1",
+				remember,
+			});
 
-		expect(row.resetRemember).toBe(remember);
-	});
+			expect(row.resetRemember).toBe(remember);
+		},
+	);
 
 	it("is not accepted as an authenticated session", async () => {
 		const userId = await seedUser(db);

@@ -3,29 +3,28 @@ import { describe, expect, it } from "vitest";
 import { getCreateSampleRequest, getSampleNameFromReads } from "../utils";
 
 describe("getSampleNameFromReads", () => {
-	it.each([
-		"fq",
-		"fastq",
-		"fa",
-		"fasta",
-		"fq.gz",
-		"fastq.gz",
-	])("drops the .%s extension", (extension) => {
-		const file = createFakeFile({ name: `sample_one.${extension}` });
+	it.each(["fq", "fastq", "fa", "fasta", "fq.gz", "fastq.gz"])(
+		"drops the .%s extension",
+		(extension) => {
+			const file = createFakeFile({ name: `sample_one.${extension}` });
 
-		expect(getSampleNameFromReads([file])).toBe("sample_one");
-	});
+			expect(getSampleNameFromReads([file])).toBe("sample_one");
+		},
+	);
 
 	it.each([
 		["_R", "sample_one_R1.fastq.gz", "sample_one_R2.fastq.gz"],
 		["_", "sample_one_1.fastq.gz", "sample_one_2.fastq.gz"],
 		["dotted", "sample_one.1.fastq.gz", "sample_one.2.fastq.gz"],
-	])("drops the %s mate token so both mates of a pair yield one name", (_convention, left, right) => {
-		const r1 = createFakeFile({ name: left });
-		const r2 = createFakeFile({ name: right });
+	])(
+		"drops the %s mate token so both mates of a pair yield one name",
+		(_convention, left, right) => {
+			const r1 = createFakeFile({ name: left });
+			const r2 = createFakeFile({ name: right });
 
-		expect(getSampleNameFromReads([r1, r2])).toBe("sample_one");
-	});
+			expect(getSampleNameFromReads([r1, r2])).toBe("sample_one");
+		},
+	);
 
 	it("keeps the mate token when the file is unpaired", () => {
 		const r1 = createFakeFile({ name: "sample_one_R1.fastq.gz" });

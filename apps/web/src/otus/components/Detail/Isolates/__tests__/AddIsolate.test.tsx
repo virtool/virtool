@@ -60,27 +60,30 @@ describe("<AddIsolate />", () => {
 		it.each([
 			["Genotype", "A"],
 			["unknown", ""],
-		])("should handle submit when source type changes to %p", async (sourceType, sourceName) => {
-			const scope = mockApiCreateIsolate(props.otuId, sourceName, sourceType);
-			renderWithProviders(<AddIsolate {...props} />);
+		])(
+			"should handle submit when source type changes to %p",
+			async (sourceType, sourceName) => {
+				const scope = mockApiCreateIsolate(props.otuId, sourceName, sourceType);
+				renderWithProviders(<AddIsolate {...props} />);
 
-			await userEvent.click(screen.getByLabelText("Source Type"));
-			await userEvent.click(
-				screen.getByRole("option", {
-					name: new RegExp(`^${sourceType}$`, "i"),
-				}),
-			);
-
-			if (sourceName) {
-				await userEvent.type(
-					screen.getByRole("textbox", { name: "Source Name" }),
-					`${sourceName}`,
+				await userEvent.click(screen.getByLabelText("Source Type"));
+				await userEvent.click(
+					screen.getByRole("option", {
+						name: new RegExp(`^${sourceType}$`, "i"),
+					}),
 				);
-			}
 
-			await userEvent.click(screen.getByRole("button", { name: "Save" }));
-			scope.done();
-		});
+				if (sourceName) {
+					await userEvent.type(
+						screen.getByRole("textbox", { name: "Source Name" }),
+						`${sourceName}`,
+					);
+				}
+
+				await userEvent.click(screen.getByRole("button", { name: "Save" }));
+				scope.done();
+			},
+		);
 
 		it("should handle submit with unrestricted source types", async () => {
 			props.restrictSourceTypes = false;

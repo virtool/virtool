@@ -42,18 +42,17 @@ describe("<SubtractionItem />", () => {
 		expect(screen.getByRole("progressbar")).toHaveAttribute("data-value", "50");
 	});
 
-	it.each([
-		"pending",
-		"running",
-		"failed",
-	] as const)("should render progress bar for ", async (state) => {
-		if (props.job) {
-			props.job.state = state;
-		}
+	it.each(["pending", "running", "failed"] as const)(
+		"should render progress bar for ",
+		async (state) => {
+			if (props.job) {
+				props.job.state = state;
+			}
 
-		await renderWithRouter(<SubtractionItem {...props} />);
-		expect(screen.getByRole("progressbar")).toBeInTheDocument();
-	});
+			await renderWithRouter(<SubtractionItem {...props} />);
+			expect(screen.getByRole("progressbar")).toBeInTheDocument();
+		},
+	);
 
 	it("should not render progress bar if job is ready", async () => {
 		props.ready = true;

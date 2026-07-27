@@ -328,19 +328,16 @@ describe("requireAdminRole", () => {
 		).rejects.toBeInstanceOf(ForbiddenError);
 	});
 
-	it.each([
-		"full",
-		"settings",
-		"spaces",
-		"users",
-		"base",
-	] as const)("allows a full administrator to satisfy a %s requirement", async (requiredRole) => {
-		const userId = await seedUser(db, { administratorRole: "full" });
+	it.each(["full", "settings", "spaces", "users", "base"] as const)(
+		"allows a full administrator to satisfy a %s requirement",
+		async (requiredRole) => {
+			const userId = await seedUser(db, { administratorRole: "full" });
 
-		await expect(
-			requireAdminRole({ userId }, requiredRole),
-		).resolves.toBeUndefined();
-	});
+			await expect(
+				requireAdminRole({ userId }, requiredRole),
+			).resolves.toBeUndefined();
+		},
+	);
 
 	// `full` is the strongest role and `base` the weakest, so a role satisfies a
 	// requirement it outranks. Easy to invert; pin both directions.
