@@ -1,86 +1,16 @@
 from http import HTTPStatus
 from pathlib import Path
 
-import pytest
 from sqlalchemy import delete
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 from syrupy.assertion import SnapshotAssertion
 
-from tests.fixtures.client import ClientSpawner, JobClientSpawner
+from tests.fixtures.client import JobClientSpawner
 from virtool.data.layer import DataLayer
 from virtool.fake.next import DataFaker
-from virtool.models.enums import Permission
 from virtool.samples.oas import UpdateSampleRequest
 from virtool.subtractions.pg import SQLSubtractionFile
 from virtool.uploads.sql import UploadType
-
-
-async def test_find_empty_subtractions(
-    snapshot,
-    spawn_client: ClientSpawner,
-):
-    client = await spawn_client(authenticated=True)
-
-    resp = await client.get("/subtractions")
-
-    assert resp.status == HTTPStatus.OK
-    assert await resp.json() == snapshot
-
-
-@pytest.mark.parametrize(("per_page", "page"), [(None, None), (2, 1), (2, 2)])
-async def test_find(
-    page: int | None,
-    per_page: int | None,
-    fake: DataFaker,
-    snapshot_recent: SnapshotAssertion,
-    spawn_client: ClientSpawner,
-):
-    client = await spawn_client(authenticated=True)
-
-    user = await fake.users.create()
-    upload = await fake.uploads.create(
-        user=user,
-        upload_type=UploadType.subtraction,
-    )
-
-    for _ in range(5):
-        await fake.subtractions.create(user=user, upload=upload)
-
-    query = []
-    path = "/subtractions"
-
-    if per_page is not None:
-        query.append(f"per_page={per_page}")
-
-    if page is not None:
-        query.append(f"page={page}")
-        path += f"?{'&'.join(query)}"
-
-    resp = await client.get(path)
-
-    assert resp.status == HTTPStatus.OK
-    assert await resp.json() == snapshot_recent
-
-
-async def test_get(
-    fake: DataFaker,
-    spawn_client: ClientSpawner,
-    snapshot_recent: SnapshotAssertion,
-):
-    client = await spawn_client(authenticated=True)
-
-    user = await fake.users.create()
-    upload = await fake.uploads.create(
-        user=user,
-        upload_type=UploadType.subtraction,
-    )
-
-    subtraction = await fake.subtractions.create(user=user, upload=upload)
-
-    resp = await client.get(f"/subtractions/{subtraction.id}")
-
-    assert resp.status == HTTPStatus.OK
-    assert await resp.json() == snapshot_recent
 
 
 async def test_get_from_job(fake: DataFaker, spawn_job_client, snapshot_recent):
@@ -97,80 +27,6 @@ async def test_get_from_job(fake: DataFaker, spawn_job_client, snapshot_recent):
 
     assert resp.status == HTTPStatus.OK
     assert await resp.json() == snapshot_recent
-
-
-@pytest.mark.parametrize(
-    "data",
-    [
-        {"name": "Bar"},
-        {"nickname": "Bar Subtraction"},
-        {"nickname": ""},
-        {"name": "Bar", "nickname": "Bar Subtraction"},
-    ],
-)
-async def test_edit(
-    data: dict,
-    data_layer: DataLayer,
-    fake: DataFaker,
-    snapshot_recent: SnapshotAssertion,
-    spawn_client: ClientSpawner,
-):
-    user = await fake.users.create()
-    upload = await fake.uploads.create(
-        user=user,
-        upload_type=UploadType.subtraction,
-    )
-
-    subtraction = await fake.subtractions.create(user=user, upload=upload)
-
-    for _ in range(2):
-        linked_sample = await fake.samples.create(user)
-
-        await data_layer.samples.update(
-            linked_sample.id,
-            UpdateSampleRequest(subtractions=[subtraction.id]),
-        )
-
-    client = await spawn_client(
-        authenticated=True,
-        permissions=[Permission.modify_subtraction],
-    )
-
-    resp = await client.patch(f"/subtractions/{subtraction.id}", data)
-
-    assert resp.status == HTTPStatus.OK
-    assert await resp.json() == snapshot_recent
-
-
-@pytest.mark.parametrize("exists", [True, False])
-async def test_delete_as_user(
-    exists: bool,
-    fake: DataFaker,
-    spawn_client: ClientSpawner,
-):
-    client = await spawn_client(
-        authenticated=True,
-        permissions=[Permission.modify_subtraction],
-    )
-
-    if exists:
-        user = await fake.users.create()
-        upload = await fake.uploads.create(
-            user=user,
-            upload_type=UploadType.subtraction,
-        )
-        subtraction = await fake.subtractions.create(
-            user=user,
-            upload=upload,
-            finalized=True,
-        )
-
-        resp = await client.delete(f"subtractions/{subtraction.id}")
-
-        assert resp.status == 204
-    else:
-        resp = await client.delete("subtractions/999999")
-        assert resp.status == 404
 
 
 class TestUploadSubtractionFileAsJob:
@@ -617,29 +473,3 @@ class TestDownloadSubtractionFile:
 
         assert bowtie_resp.status == 500
         assert fasta_resp.status == 500
-
-
-async def test_create(
-    fake: DataFaker,
-    spawn_client: ClientSpawner,
-    snapshot_recent: SnapshotAssertion,
-):
-    user = await fake.users.create()
-    upload = await fake.uploads.create(
-        user=user,
-        upload_type=UploadType.subtraction,
-    )
-
-    client = await spawn_client(
-        authenticated=True,
-        base_url="https://virtool.example.com",
-        permissions=[Permission.modify_subtraction],
-    )
-
-    resp = await client.post(
-        "/subtractions",
-        {"name": "Calamus", "nickname": "Rim Palm", "upload_id": upload.id},
-    )
-
-    assert resp.status == 201
-    assert await resp.json() == snapshot_recent(name="resp")

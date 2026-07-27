@@ -1,7 +1,6 @@
 from datetime import datetime
 
 from virtool.jobs.models import JobMinimal
-from virtool.models import SearchResult
 from virtool.models.base import BaseModel
 from virtool.samples.models_base import SampleNested
 from virtool.uploads.models import UploadMinimal
@@ -35,45 +34,20 @@ class SubtractionNested(BaseModel):
     name: str
 
 
-class SubtractionMinimal(SubtractionNested):
-    """Minimal Subtraction model used for websocket messages and resource listings."""
+class Subtraction(SubtractionNested):
+    """Complete Subtraction model."""
 
     count: int | None
     created_at: datetime
     file: SubtractionUpload
-    job: JobMinimal | None
-    nickname: str
-    ready: bool
-    user: UserNested | None
-
-    class Config:
-        schema_extra = {
-            "example": [
-                {
-                    "count": 9,
-                    "created_at": "2021-12-21T23:52:13.185000Z",
-                    "file": {"id": 58, "name": "arabidopsis_thaliana_+_plastids.fa.gz"},
-                    "id": 5,
-                    "name": "Arabidopsis thaliana",
-                    "nickname": "",
-                    "ready": True,
-                    "user": {
-                        "administrator": True,
-                        "handle": "igboyes",
-                        "id": "igboyes",
-                    },
-                }
-            ]
-        }
-
-
-class Subtraction(SubtractionMinimal):
-    """Complete Subtraction model."""
-
     files: list[SubtractionFile]
     gc: NucleotideComposition | None
+    job: JobMinimal | None
     linked_samples: list[SampleNested]
+    nickname: str
+    ready: bool
     upload: UploadMinimal | None = None
+    user: UserNested | None
 
     class Config:
         schema_extra = {
@@ -154,8 +128,3 @@ class Subtraction(SubtractionMinimal):
                 "user": {"administrator": True, "handle": "igboyes", "id": "igboyes"},
             }
         }
-
-
-class SubtractionSearchResult(SearchResult):
-    ready_count: int
-    documents: list[SubtractionMinimal]
