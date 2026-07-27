@@ -1,11 +1,25 @@
+import { hostname } from "node:os";
 import { drizzle } from "drizzle-orm/postgres-js";
 import postgres from "postgres";
 import { config } from "../config";
 import { logger } from "../logger";
+import { buildApplicationName } from "./applicationName";
 import * as schema from "./schema";
+
+/**
+ * Identifies this process's backends in `pg_stat_activity`, which is the only
+ * way to observe pool occupancy: postgres.js keeps its connection queues in a
+ * closure and exposes no pool statistics.
+ *
+ * The hostname is part of it so each replica counts its own pool rather than
+ * every Virtool process sharing the database. Without it, every replica would
+ * report the same cluster-wide total and summing the series would multiply it.
+ */
+export const applicationName = buildApplicationName(hostname());
 
 export const client = postgres(config.postgresUrl, {
 	max: config.postgresPoolMax,
+	connection: { application_name: applicationName },
 });
 
 export const db = drizzle(client, { schema });

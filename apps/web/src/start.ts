@@ -5,6 +5,7 @@ import {
 } from "@sentry/tanstackstart-react";
 import { createAuthenticationMiddleware } from "@server/auth/middleware";
 import { errorLoggingMiddleware } from "@server/error-logging";
+import { metricsMiddleware } from "@server/metrics/middleware";
 import {
 	createCsrfMiddleware,
 	createMiddleware,
@@ -128,8 +129,12 @@ export const startInstance = createStart(() => ({
 	// errors' `name` intact so the query retry guard can recognize a 401/403,
 	// and a ClientError's `status` so a route loader can map a 404 to notFound.
 	serializationAdapters: [serverErrorSerializationAdapter],
+	// The metrics middleware sits directly inside Sentry's so its timing covers
+	// everything the request actually pays for, including the CSRF check and the
+	// document-header rewrite below it.
 	requestMiddleware: [
 		sentryGlobalRequestMiddleware,
+		metricsMiddleware,
 		csrfMiddleware,
 		documentHeadersMiddleware,
 	],

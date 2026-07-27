@@ -524,6 +524,12 @@ produce. Its `$document` param is the `{id}.{extension}` segment. It too
 enforces its own floor — `requireAuthenticatedRequest`, then the **read** right
 on the analysis's parent sample.
 
+The Prometheus scrape endpoint (`routes/metrics.ts` → `@server/metrics/handler`)
+is a raw route for the same reason as the upload: Prometheus speaks plain HTTP,
+not the generated RPC client. It enforces its own floor too — a bearer token
+compared against `VT_METRICS_TOKEN`, with an unset token reporting 404 rather
+than serving openly.
+
 Raw routes are also the only endpoints reachable with an **API key**.
 `requireAuthenticatedRequest` accepts either the session cookie pair or an HTTP
 Basic `Authorization` header carrying `handle:key`; server functions stay
@@ -713,6 +719,49 @@ forward.
 See [docs/logging.md](docs/logging.md) for the redaction
 defaults, `VT_LOG_LEVEL` resolution, where the logger singleton lives, and
 the Sentry forwarding wiring.
+
+## Metrics
+
+Prometheus scrapes `GET /metrics`, gated by a bearer token
+(`VT_METRICS_TOKEN`). With the variable unset the route reports 404, so
+metrics are off until a deployment opts in.
+
+`server/metrics/registry.ts` owns the one process-wide `Registry`.
+Default process metrics keep prom-client's standard unprefixed names
+(`process_*`, `nodejs_*`) so off-the-shelf dashboards match; everything
+we define is prefixed `virtool_`.
+
+Request rate and latency come from `metricsMiddleware`, a global
+`requestMiddleware` in `start.ts` that sees every request — server
+function, raw route, and rendered page alike.
+
+**No label may be unbounded.** The request path is deliberately not a
+label: pathnames carry ids. Server functions are identified by
+`serverFnMeta.name` instead, which is bounded by the number of functions
+in the codebase.
+
+**postgres.js exposes no pool statistics** — its connection queues live
+in a closure, and `onclose` has no `onopen` counterpart. Pool occupancy
+is read from Postgres itself, filtering `pg_stat_activity` on the
+`applicationName` set in `db/pg.ts`, which carries the hostname so each
+replica counts only its own pool. Client-side queue depth remains
+unavailable and needs per-query instrumentation.
+
+That name is built by `db/applicationName.ts` and bounded to 63 bytes —
+Postgres truncates a longer one silently, and the filter would then match
+nothing and report every bucket as zero. The probe itself is bounded too:
+it queries the very pool it measures, so a saturated pool queues it
+client-side where nothing rejects, and an unbounded read would cost the
+whole scrape rather than just the pool gauges.
+
+Anything reached from `start.ts` is in the browser program, so
+`metricsMiddleware` loads the registry through `createServerOnlyFn` and
+a dynamic import — never a static one, which would drag prom-client and
+its `node:*` reads into the client graph.
+
+See [docs/metrics.md](docs/metrics.md) for the exported series, the
+token check, cardinality rules, and what deeper instrumentation would
+take.
 
 ## Git
 

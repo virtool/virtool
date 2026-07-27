@@ -25,6 +25,7 @@ const DEFAULT_POSTGRES_POOL_MAX = 10;
 export type ServerConfig = {
 	postgresUrl: string;
 	postgresPoolMax: number;
+	metricsToken: string | undefined;
 	storage: StorageConfig;
 };
 
@@ -36,6 +37,13 @@ const ServerEnv = z.object({
 	VT_POSTGRES_POOL_MAX: z.preprocess(
 		(value) => (value === "" ? undefined : value),
 		z.coerce.number().int().positive().optional(),
+	),
+	// Gates the Prometheus scrape endpoint. Unset — or empty, which deployment
+	// tooling injects for a value it has nothing to put in — leaves `/metrics`
+	// returning 404, so upgrading never starts exposing internals by surprise.
+	VT_METRICS_TOKEN: z.preprocess(
+		(value) => (value === "" ? undefined : value),
+		z.string().optional(),
 	),
 	VT_STORAGE_BACKEND: z.enum(["s3", "azure"]),
 	VT_STORAGE_S3_BUCKET: z.string().optional(),
@@ -54,6 +62,7 @@ type StorageEnv = z.infer<typeof ServerEnv>;
 const ServerEnvSchema = ServerEnv.transform((raw, ctx) => ({
 	postgresUrl: raw.VT_POSTGRES_URL,
 	postgresPoolMax: raw.VT_POSTGRES_POOL_MAX ?? DEFAULT_POSTGRES_POOL_MAX,
+	metricsToken: raw.VT_METRICS_TOKEN,
 	storage: buildStorage(raw, ctx),
 }));
 
