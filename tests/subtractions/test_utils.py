@@ -1,11 +1,8 @@
-import os
-
 import pytest
 
 from virtool.subtractions.utils import (
     check_subtraction_file_type,
     get_subtraction_files,
-    rename_bowtie_files,
     subtraction_file_key,
     subtraction_prefix,
 )
@@ -35,23 +32,6 @@ def test_subtraction_prefix_with_spaces():
 
 async def test_get_subtraction_files(snapshot, pg, test_subtraction_files):
     assert await get_subtraction_files(pg, test_subtraction_files) == snapshot
-
-
-async def test_rename_bowtie_files(tmp_path):
-    test_dir = tmp_path / "subtractions"
-    test_dir.mkdir()
-
-    test_dir.joinpath("reference.1.bt2").write_text("Bowtie2 file")
-    test_dir.joinpath("reference.2.bt2").write_text("Bowtie2 file")
-    test_dir.joinpath("reference.3.bt2").write_text("Bowtie2 file")
-
-    await rename_bowtie_files(test_dir)
-
-    assert set(os.listdir(test_dir)) == {
-        "subtraction.1.bt2",
-        "subtraction.2.bt2",
-        "subtraction.3.bt2",
-    }
 
 
 @pytest.mark.parametrize("file_type", ["fasta", "bowtie2"])

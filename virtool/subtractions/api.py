@@ -1,92 +1,21 @@
 import aiohttp.web
 from aiohttp.web import Response, StreamResponse
 from aiohttp_pydantic import PydanticView
-from aiohttp_pydantic.oas.typing import r200, r201, r204, r400, r403, r404, r409
+from aiohttp_pydantic.oas.typing import r200, r400, r404
 
 from virtool.api.custom_json import json_response
-from virtool.api.errors import APIBadRequest, APIConflict, APINoContent, APINotFound
-from virtool.api.pagination import Page, PerPage
-from virtool.api.policy import PermissionRoutePolicy, policy
+from virtool.api.errors import APIConflict, APINoContent, APINotFound
 from virtool.api.routes import Routes
 from virtool.api.schema import schema
-from virtool.authorization.permissions import LegacyPermission
 from virtool.data.errors import ResourceConflictError, ResourceNotFoundError
 from virtool.data.utils import get_data_from_req
-from virtool.subtractions.models import Subtraction, SubtractionSearchResult
-from virtool.subtractions.oas import (
-    CreateSubtractionRequest,
-    FinalizeSubtractionRequest,
-    UpdateSubtractionRequest,
-)
+from virtool.subtractions.models import Subtraction
+from virtool.subtractions.oas import FinalizeSubtractionRequest
 from virtool.uploads.utils import multipart_file_chunker
 
 routes = Routes()
 
 
-@routes.view("/subtractions")
-class SubtractionsView(PydanticView):
-    async def get(
-        self,
-        find: str | None,
-        short: bool = False,
-        ready: bool = False,
-        page: Page = 1,
-        per_page: PerPage = 25,
-    ) -> r200[SubtractionSearchResult] | r400:
-        """Find subtractions.
-
-        Lists subtractions by their `name` or `nickname` by providing a `term` as a
-        query parameter. Partial matches are supported.
-
-        Supports pagination unless the `short` query parameter is set. In this case, an
-        array of objects containing the `id` and `name` of every subtraction is
-        returned.
-
-        Status Codes:
-            200: Successful operation
-            400: Invalid query
-        """
-        search_result = await get_data_from_req(self.request).subtractions.find(
-            find, short, ready, page, per_page
-        )
-
-        return json_response(search_result)
-
-    @policy(PermissionRoutePolicy(LegacyPermission.MODIFY_SUBTRACTION))
-    async def post(
-        self, data: CreateSubtractionRequest
-    ) -> r201[Subtraction] | r400 | r403:
-        """Create a subtraction.
-
-        Creates a new subtraction.
-
-        A job is started to build the data necessary to make the subtraction usable in
-        analyses. The subtraction is usable when the `ready` property is `true`.
-
-        Status Codes:
-            201: Created
-            400: Upload does not exist
-            403: Not permitted
-
-        """
-        try:
-            subtraction = await get_data_from_req(self.request).subtractions.create(
-                data, self.request["client"].user_id
-            )
-        except ResourceNotFoundError as err:
-            if "Upload does not exist" in str(err):
-                raise APIBadRequest(str(err))
-
-            raise APINotFound()
-
-        return json_response(
-            subtraction,
-            headers={"Location": f"/subtraction/{subtraction.id}"},
-            status=201,
-        )
-
-
-@routes.view("/subtractions/{subtraction_id:\\d+}")
 @routes.jobs_api.get("/subtractions/{subtraction_id:\\d+}")
 class SubtractionView(PydanticView):
     async def get(self, subtraction_id: int, /) -> r200[Subtraction] | r404:
@@ -107,49 +36,6 @@ class SubtractionView(PydanticView):
             raise APINotFound()
 
         return json_response(subtraction)
-
-    @policy(PermissionRoutePolicy(LegacyPermission.MODIFY_SUBTRACTION))
-    async def patch(
-        self, subtraction_id: int, /, data: UpdateSubtractionRequest
-    ) -> r200[Subtraction] | r400 | r403 | r404:
-        """Update a subtraction.
-
-        Updates the name or nickname of an existing subtraction.
-
-        Status Codes:
-            200: Operation successful
-            400: Invalid input
-            403: Not permitted
-            404: Not found
-
-        """
-        try:
-            subtraction = await get_data_from_req(self.request).subtractions.update(
-                subtraction_id, data
-            )
-        except ResourceNotFoundError:
-            raise APINotFound()
-
-        return json_response(subtraction)
-
-    @policy(PermissionRoutePolicy(LegacyPermission.MODIFY_SUBTRACTION))
-    async def delete(self, subtraction_id: int, /) -> r204 | r403 | r404 | r409:
-        """Delete a subtraction.
-
-        Deletes an existing subtraction.
-
-        Status Codes:
-            204: No content
-            403: Not permitted
-            404: Not found
-            409: Has linked samples
-        """
-        try:
-            await get_data_from_req(self.request).subtractions.delete(subtraction_id)
-        except ResourceNotFoundError:
-            raise APINotFound()
-
-        raise APINoContent()
 
 
 @routes.jobs_api.put("/subtractions/{subtraction_id:\\d+}/files/{filename}")

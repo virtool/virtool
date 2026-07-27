@@ -1,7 +1,3 @@
-import os
-from asyncio import to_thread
-from pathlib import Path
-
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 
@@ -57,16 +53,3 @@ def subtraction_file_key(subtraction_id: str, filename: str) -> str:
 
 def subtraction_prefix(subtraction_id: str) -> str:
     return f"subtractions/{subtraction_id.replace(' ', '_')}/"
-
-
-async def rename_bowtie_files(path: Path) -> None:
-    """Rename all Bowtie2 index files from 'reference' to 'subtraction'.
-
-    :param path: the subtraction_id path
-
-    """
-    for file_path in await to_thread(path.iterdir):
-        if file_path.suffix == ".bt2":
-            await to_thread(
-                os.rename, file_path, str(file_path).replace("reference", "subtraction")
-            )

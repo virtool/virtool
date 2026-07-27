@@ -1,8 +1,7 @@
-import math
 from asyncio import CancelledError
 from collections.abc import AsyncGenerator
 
-from sqlalchemy import delete, func, or_, select, update
+from sqlalchemy import delete, select, update
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 from structlog import get_logger
@@ -21,15 +20,10 @@ from virtool.subtractions.db import (
     attach_computed,
     map_subtraction_row,
 )
-from virtool.subtractions.models import (
-    Subtraction,
-    SubtractionFile,
-    SubtractionSearchResult,
-)
+from virtool.subtractions.models import Subtraction, SubtractionFile
 from virtool.subtractions.oas import (
     CreateSubtractionRequest,
     FinalizeSubtractionRequest,
-    UpdateSubtractionRequest,
 )
 from virtool.subtractions.pg import SQLSubtraction, SQLSubtractionFile
 from virtool.subtractions.utils import (
@@ -45,22 +39,6 @@ from virtool.users.transforms import AttachUserTransform
 logger = get_logger("subtractions")
 
 
-def _compose_subtraction_search_filter(term: str):
-    """Compose a case-insensitive substring match on ``name`` and ``nickname``.
-
-    Mirrors the Mongo ``compose_regex_query`` behaviour the find endpoint used
-    before reading from Postgres: the term is matched literally, so SQL ``LIKE``
-    wildcards in the term are escaped rather than interpreted.
-    """
-    escaped = term.replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_")
-    pattern = f"%{escaped}%"
-
-    return or_(
-        SQLSubtraction.name.ilike(pattern, escape="\\"),
-        SQLSubtraction.nickname.ilike(pattern, escape="\\"),
-    )
-
-
 class SubtractionsData(DataLayerDomain):
     name = "subtractions"
 
@@ -73,83 +51,6 @@ class SubtractionsData(DataLayerDomain):
         self._base_url = base_url
         self._pg = pg
         self._storage = storage
-
-    async def find(
-        self,
-        find: str | None,
-        short: bool,
-        ready: bool,
-        page: int,
-        per_page: int,
-    ):
-        not_deleted = SQLSubtraction.deleted.is_(False)
-
-        filters = [not_deleted]
-
-        if find:
-            filters.append(_compose_subtraction_search_filter(find))
-
-        if ready:
-            filters.append(SQLSubtraction.ready.is_(True))
-
-        if short:
-            async with AsyncSession(self._pg) as session:
-                rows = (
-                    await session.execute(
-                        select(
-                            SQLSubtraction.id,
-                            SQLSubtraction.name,
-                            SQLSubtraction.ready,
-                        )
-                        .where(*filters)
-                        .order_by(SQLSubtraction.name, SQLSubtraction.id),
-                    )
-                ).all()
-
-            return [
-                {"id": id_, "name": name, "ready": is_ready}
-                for id_, name, is_ready in rows
-            ]
-
-        async with AsyncSession(self._pg) as session:
-            total_count = await session.scalar(
-                select(func.count()).select_from(SQLSubtraction).where(not_deleted),
-            )
-            ready_count = await session.scalar(
-                select(func.count())
-                .select_from(SQLSubtraction)
-                .where(not_deleted, SQLSubtraction.ready.is_(True)),
-            )
-            found_count = await session.scalar(
-                select(func.count()).select_from(SQLSubtraction).where(*filters),
-            )
-
-            rows = (
-                await session.execute(
-                    select(SQLSubtraction, SQLUpload)
-                    .outerjoin(SQLUpload, SQLSubtraction.upload_id == SQLUpload.id)
-                    .where(*filters)
-                    .order_by(SQLSubtraction.name, SQLSubtraction.id)
-                    .offset(per_page * (page - 1))
-                    .limit(per_page),
-                )
-            ).all()
-
-        documents = await apply_transforms(
-            [map_subtraction_row(subtraction, upload) for subtraction, upload in rows],
-            [AttachJobTransform(self._pg), AttachUserTransform(self._pg)],
-            self._pg,
-        )
-
-        return SubtractionSearchResult(
-            documents=documents,
-            found_count=found_count,
-            total_count=total_count,
-            ready_count=ready_count,
-            page=page,
-            per_page=per_page,
-            page_count=math.ceil(found_count / per_page),
-        )
 
     @emits(Operation.CREATE)
     async def create(
@@ -261,38 +162,6 @@ class SubtractionsData(DataLayerDomain):
         )
 
         return Subtraction(**document)
-
-    @emits(Operation.UPDATE)
-    async def update(
-        self,
-        subtraction_id: int,
-        data: UpdateSubtractionRequest,
-    ) -> Subtraction:
-        data = data.dict(exclude_unset=True)
-
-        values = {}
-
-        if "name" in data:
-            values["name"] = data["name"]
-
-        if "nickname" in data:
-            values["nickname"] = data["nickname"]
-
-        if not values:
-            return await self.get(subtraction_id)
-
-        async with AsyncSession(self._pg) as session:
-            await session.execute(
-                update(SQLSubtraction)
-                .where(
-                    SQLSubtraction.id == subtraction_id,
-                    SQLSubtraction.deleted.is_(False),
-                )
-                .values(**values),
-            )
-            await session.commit()
-
-        return await self.get(subtraction_id)
 
     async def delete(self, subtraction_id: int):
         async with AsyncSession(self._pg) as pg_session:
