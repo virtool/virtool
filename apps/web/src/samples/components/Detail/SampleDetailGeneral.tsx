@@ -6,9 +6,10 @@ import ContainerNarrow from "@base/ContainerNarrow";
 import ContainerSide from "@base/ContainerSide";
 import JobItem from "@jobs/components/JobItem";
 import { useFetchJob } from "@jobs/queries";
+import { toServerJobNested } from "@jobs/utils";
 import type { Label } from "@labels/types";
 import { useSuspenseSample } from "@samples/queries";
-import { getLibraryTypeDisplayName, toServerJobNested } from "@samples/utils";
+import { getLibraryTypeDisplayName } from "@samples/utils";
 /**
  * The general view in sample details
  */

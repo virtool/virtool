@@ -1,4 +1,5 @@
 import { SelectBox, SelectBoxItem } from "@base/SelectBox";
+import type { WorkflowName } from "@virtool/contracts";
 import type { workflow } from "./workflows";
 
 type WorkflowSelectorProps = {
@@ -6,10 +7,10 @@ type WorkflowSelectorProps = {
 	workflows: workflow[];
 
 	/** The id of the currently selected workflow */
-	selected: string;
+	selected: WorkflowName;
 
 	/** Called with the id of the newly selected workflow */
-	onChange: (value: string) => void;
+	onChange: (value: WorkflowName) => void;
 };
 
 /**
@@ -25,7 +26,9 @@ export default function WorkflowSelector({
 			<SelectBox
 				className="grid-cols-2"
 				label="Workflow"
-				onValueChange={onChange}
+				// Radix reports the value of the item that was picked, and every
+				// item rendered below is one of the given workflows' ids.
+				onValueChange={(value) => onChange(value as WorkflowName)}
 				value={selected}
 			>
 				{workflows.map(({ description, id, name }) => (

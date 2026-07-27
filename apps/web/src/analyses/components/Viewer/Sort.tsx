@@ -3,10 +3,10 @@ import DropdownButton from "@base/DropdownButton";
 import DropdownMenuContent from "@base/DropdownMenuContent";
 import DropdownMenuRadioGroup from "@base/DropdownMenuRadioGroup";
 import DropdownMenuRadioItem from "@base/DropdownMenuRadioItem";
+import type { WorkflowName } from "@virtool/contracts";
 import { ArrowUpDown, ChevronDown } from "lucide-react";
-import type { AnalysisWorkflow } from "../../types";
 
-const sortKeys: Record<AnalysisWorkflow, string[]> = {
+const sortKeys: Record<WorkflowName, string[]> = {
 	pathoscope: ["coverage", "depth", "weight"],
 	nuvs: ["length", "e", "orfs"],
 };
@@ -23,7 +23,7 @@ const sortTitles: Record<string, string> = {
 };
 
 type AnalysisViewerSortProps = {
-	workflow: AnalysisWorkflow;
+	workflow: WorkflowName;
 	sortKey: string;
 	onSelect: (key: string) => void;
 };
@@ -43,7 +43,7 @@ export function AnalysisViewerSort({
 			</DropdownButton>
 			<DropdownMenuContent>
 				<DropdownMenuRadioGroup value={sortKey} onValueChange={onSelect}>
-					{sortKeys[workflow].map((key) => (
+					{(sortKeys[workflow] ?? []).map((key) => (
 						<DropdownMenuRadioItem key={key} value={key}>
 							{sortTitles[key]}
 						</DropdownMenuRadioItem>

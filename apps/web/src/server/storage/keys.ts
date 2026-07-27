@@ -36,6 +36,19 @@ export function samplePrefix(storageId: string): string {
 	return `samples/${storageId}/`;
 }
 
+/**
+ * Prefix holding the stored result objects of a Mongo-migrated analysis, nested
+ * under its parent sample. Only analyses migrated from Mongo have one:
+ * Postgres-native analyses keep their results in the `results` column and write
+ * nothing to storage.
+ */
+export function analysisPrefix(
+	sampleStorageId: string,
+	analysisLegacyId: string,
+): string {
+	return `samples/${sampleStorageId}/analysis/${analysisLegacyId}/`;
+}
+
 // Subtraction ids may contain spaces. Python substitutes underscores when
 // composing the key, so the same subtraction resolves to the same key here.
 function normalizeSubtractionId(subtractionId: string): string {

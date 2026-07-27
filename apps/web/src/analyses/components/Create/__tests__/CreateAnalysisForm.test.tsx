@@ -1,10 +1,10 @@
 import { screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { mockApiCreateAnalysis } from "@tests/api/analyses";
 import { mockApiListIndexes } from "@tests/api/indexes";
 import { createFakeAnalysisMinimal } from "@tests/fake/analyses";
 import { createFakeIndexMinimal } from "@tests/fake/indexes";
 import { createFakeSample } from "@tests/fake/samples";
+import { mockCreateAnalysis } from "@tests/server-fn/analyses";
 import { mockGetSample } from "@tests/server-fn/samples";
 import { mockListSubtractionsShortlist } from "@tests/server-fn/subtractions";
 import { renderWithRouter } from "@tests/setup";
@@ -52,7 +52,7 @@ describe("<CreateAnalysisForm>", () => {
 	it("closes the dialog after creating when 'Create more' is off", async () => {
 		const { onClose, sample } = await renderForm();
 
-		const scope = mockApiCreateAnalysis(
+		const createAnalysis = mockCreateAnalysis(
 			createFakeAnalysisMinimal({ sample: { id: sample.id } }),
 		);
 
@@ -60,7 +60,7 @@ describe("<CreateAnalysisForm>", () => {
 		await userEvent.click(screen.getByRole("button", { name: "Create" }));
 
 		await waitFor(() => expect(onClose).toHaveBeenCalled());
-		scope.done();
+		expect(createAnalysis).toHaveBeenCalled();
 	});
 
 	it("registers the selection when the server sends an integer index id", async () => {
@@ -69,7 +69,7 @@ describe("<CreateAnalysisForm>", () => {
 		// register the pick and the form submits nothing.
 		const { onClose, sample } = await renderForm(42);
 
-		const scope = mockApiCreateAnalysis(
+		const createAnalysis = mockCreateAnalysis(
 			createFakeAnalysisMinimal({ sample: { id: sample.id } }),
 		);
 
@@ -83,13 +83,13 @@ describe("<CreateAnalysisForm>", () => {
 		await userEvent.click(screen.getByRole("button", { name: "Create" }));
 
 		await waitFor(() => expect(onClose).toHaveBeenCalled());
-		scope.done();
+		expect(createAnalysis).toHaveBeenCalled();
 	});
 
 	it("keeps the dialog open and shows a toast when 'Create more' is on", async () => {
 		const { onClose, sample } = await renderForm();
 
-		const scope = mockApiCreateAnalysis(
+		const createAnalysis = mockCreateAnalysis(
 			createFakeAnalysisMinimal({ sample: { id: sample.id } }),
 		);
 
@@ -100,6 +100,6 @@ describe("<CreateAnalysisForm>", () => {
 		expect(await screen.findByText("Analysis created")).toBeInTheDocument();
 		expect(onClose).not.toHaveBeenCalled();
 		expect(screen.getByText("Select a reference")).toBeInTheDocument();
-		scope.done();
+		expect(createAnalysis).toHaveBeenCalled();
 	});
 });

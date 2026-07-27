@@ -35,4 +35,24 @@ describe("formatIsolateName()", () => {
 
 		expect(result).toEqual("Unnamed");
 	});
+
+	it("should return the canonical sentinel when a source field is empty", () => {
+		const result = formatIsolateName({
+			id: "testid",
+			sequences: [],
+			source_name: "EFGH",
+			source_type: "",
+		});
+
+		expect(result).toEqual("Unnamed Isolate");
+	});
+
+	it("should accept camelCase source fields", () => {
+		const result = formatIsolateName({
+			sourceName: "ABCD",
+			sourceType: "isolate",
+		});
+
+		expect(result).toEqual("Isolate ABCD");
+	});
 });

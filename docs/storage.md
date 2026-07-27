@@ -57,6 +57,7 @@ orphans whatever it writes.
 | `analysisFileKey(nameOnDisk)` | `analyses/{nameOnDisk}` |
 | `sampleFileKey(storageId, filename)` | `samples/{storageId}/{filename}` |
 | `samplePrefix(storageId)` | `samples/{storageId}/` |
+| `analysisPrefix(sampleStorageId, analysisLegacyId)` | `samples/{sampleStorageId}/analysis/{analysisLegacyId}/` |
 | `subtractionFileKey(id, filename)` | `subtractions/{id}/{filename}` |
 | `subtractionPrefix(id)` | `subtractions/{id}/` |
 | `indexFileKey(indexId, filename)` | `indexes/{indexId}/{filename}` |

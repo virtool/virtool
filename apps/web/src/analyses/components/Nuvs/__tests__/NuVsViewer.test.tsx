@@ -1,11 +1,11 @@
 import { AnalysisSearchProvider } from "@analyses/components/AnalysisSearchContext";
 import NuvsViewer from "@analyses/components/Nuvs/NuvsViewer";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { render, screen } from "@testing-library/react";
+import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { mockApiBlastNuVs } from "@tests/api/analyses";
 import { createFakeFormattedNuVsAnalysis } from "@tests/fake/analyses";
 import { createFakeSample } from "@tests/fake/samples";
+import { mockBlastNuvs } from "@tests/server-fn/analyses";
 import { at, MemoryRouter } from "@tests/setup";
 import nock from "nock";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
@@ -75,7 +75,7 @@ describe("<NuvsViewer />", () => {
 		});
 
 		it("should render blast when clicked", async () => {
-			const scope = mockApiBlastNuVs(nuvs.id, String(firstHit.index));
+			const blastNuvs = mockBlastNuvs(firstHit.index);
 			renderWithAnalysisSearch(<NuvsViewer {...props} />, {
 				activeHit: String(firstHit.id),
 			});
@@ -83,7 +83,7 @@ describe("<NuvsViewer />", () => {
 			await userEvent.click(
 				await screen.findByRole("button", { name: "BLAST at NCBI" }),
 			);
-			scope.done();
+			await waitFor(() => expect(blastNuvs).toHaveBeenCalled());
 		});
 	});
 

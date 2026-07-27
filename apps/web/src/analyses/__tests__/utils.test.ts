@@ -10,7 +10,7 @@ import {
 	fillAlign,
 	formatPathoscopeData,
 	formatSequence,
-	median,
+	medianDepth,
 	mergeCoverage,
 } from "../utils";
 
@@ -87,23 +87,27 @@ describe("formatPathoscopeData()", () => {
 	});
 });
 
-describe("median()", () => {
-	it("should return median for odd-length list", () => {
+describe("medianDepth()", () => {
+	it("should return the middle value for an odd-length list", () => {
 		const values = [17, 18, 5, 7, 41, 52, 67, 22, 3];
-		const result = median(values);
+		const result = medianDepth(values);
 		expect(result).toBe(18);
 	});
 
-	it("should return median for even-length list", () => {
+	it("should return the mean of the middle two for an even-length list", () => {
 		const values = [17, 18, 5, 7, 41, 52, 67, 22];
-		const result = median(values);
+		const result = medianDepth(values);
 		expect(result).toBe(20);
 	});
 
-	it("should return median for even-length list with rounding", () => {
+	it("should round a half-value up to a whole number of reads", () => {
 		const values = [17, 18, 5, 7, 41, 52, 67, 21];
-		const result = median(values);
+		const result = medianDepth(values);
 		expect(result).toBe(20);
+	});
+
+	it("should return zero for an empty list", () => {
+		expect(medianDepth([])).toBe(0);
 	});
 });
 

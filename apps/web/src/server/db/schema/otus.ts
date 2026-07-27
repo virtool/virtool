@@ -1,18 +1,62 @@
-// Partial read-only mirror of the `legacy_otus` table managed by the upstream
-// Python service via Alembic. Only the columns needed to count a reference's
-// OTUs and to build a clone manifest (`{otu_id: version}`) are declared here —
-// the OTU domain is not otherwise served from this side yet. Keep in sync with
+// Partial read-only mirror of the `legacy_otus` and `legacy_sequences` tables
+// managed by the upstream Python service via Alembic. Keep in sync with
 // `../../../../../../virtool/virtool/otus/sql.py`.
+//
+// These are hybrid tables: the verbatim Mongo document lives in `data` and the
+// remaining columns are promoted from it for querying. `data` is the source of
+// truth for reconstruction, because the promoted columns are a lossy projection
+// — they carry nothing of `lower_name`, an isolate's fields, or a sequence's
+// `reference`, and normalise `abbreviation` and `segment` on the way in. A
+// joined OTU feeds diffs that address the document as it was written, so
+// anything the projection drops would corrupt a patch.
+//
+// Only the OTU read path an analysis needs is served from this side; the OTU
+// domain proper is not.
 
-import { bigint, integer, pgTable, text } from "drizzle-orm/pg-core";
+import {
+	bigint,
+	boolean,
+	integer,
+	jsonb,
+	pgTable,
+	text,
+} from "drizzle-orm/pg-core";
 
 export const legacyOtus = pgTable("legacy_otus", {
 	// The upstream primary key is the 8-character Mongo id, a plain string with
 	// no identity sequence.
 	id: text("id").primaryKey(),
+	data: jsonb("data").$type<Record<string, unknown>>().notNull(),
+	name: text("name").notNull(),
+	abbreviation: text("abbreviation")
+		.$defaultFn(() => "")
+		.notNull(),
+	last_indexed_version: integer("last_indexed_version"),
 	reference_id: bigint("reference_id", { mode: "number" }).notNull(),
+	verified: boolean("verified").notNull(),
 	version: integer("version").notNull(),
+});
+
+// A sequence belonging to an isolate embedded in an OTU. `isolate_id` is not a
+// foreign key: isolates are not a table upstream, they live in
+// `legacy_otus.data`.
+//
+// `position` is load-bearing. It records insertion order within the OTU, which
+// is the order the Mongo cursor returned sequences in, and historical diffs
+// encode changes to an isolate's sequence list by index. A joined OTU must
+// present its sequences in this order or a patch lands on the wrong sequence.
+// Deletes leave gaps rather than renumbering, so only relative order matters.
+export const legacySequences = pgTable("legacy_sequences", {
+	id: text("id").primaryKey(),
+	data: jsonb("data").$type<Record<string, unknown>>().notNull(),
+	otu_id: text("otu_id").notNull(),
+	isolate_id: text("isolate_id").notNull(),
+	segment: text("segment"),
+	position: bigint("position", { mode: "number" }),
 });
 
 /** A row from the `legacy_otus` table. */
 export type OtuRow = typeof legacyOtus.$inferSelect;
+
+/** A row from the `legacy_sequences` table. */
+export type SequenceRow = typeof legacySequences.$inferSelect;

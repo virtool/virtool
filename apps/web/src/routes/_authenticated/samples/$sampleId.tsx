@@ -8,11 +8,11 @@ import ViewHeaderAttribution from "@base/ViewHeaderAttribution";
 import ViewHeaderIcons from "@base/ViewHeaderIcons";
 import ViewHeaderTitle from "@base/ViewHeaderTitle";
 import { JobNestedSchema } from "@jobs/types";
+import { toServerJobNested } from "@jobs/utils";
 import DeleteSample from "@samples/components/Detail/DeleteSample";
 import EditSample from "@samples/components/EditSample";
 import { useCheckCanEditSample } from "@samples/hooks";
 import { useSuspenseSample } from "@samples/queries";
-import { toServerJobNested } from "@samples/utils";
 import {
 	createFileRoute,
 	notFound,

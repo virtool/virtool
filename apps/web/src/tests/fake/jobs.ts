@@ -3,7 +3,6 @@ import type {
 	JobNested,
 	JobState,
 	ServerJobMinimal,
-	ServerJobNested,
 	Workflow,
 } from "@jobs/types";
 import { createFakeUserNested } from "./user";
@@ -18,30 +17,6 @@ export function createFakeServerJobMinimal(
 	return {
 		id: faker.number.int(),
 		created_at: faker.date.past().toISOString(),
-		progress: faker.number.int({ min: 0, max: 100 }),
-		state: faker.helpers.arrayElement<JobState>([
-			"cancelled",
-			"failed",
-			"pending",
-			"running",
-			"succeeded",
-		]),
-		user: createFakeUserNested(),
-		workflow: "pathoscope",
-		...overrides,
-	};
-}
-
-/**
- * Creates a fake nested job object in server response shape.
- * Use this for HTTP mocks of resources with nested jobs (samples, analyses, etc).
- */
-export function createFakeServerJobNested(
-	overrides?: Partial<ServerJobNested>,
-): ServerJobNested {
-	return {
-		created_at: faker.date.past().toISOString(),
-		id: faker.number.int(),
 		progress: faker.number.int({ min: 0, max: 100 }),
 		state: faker.helpers.arrayElement<JobState>([
 			"cancelled",

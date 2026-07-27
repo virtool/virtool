@@ -83,11 +83,11 @@ export default function AnalysesList({
 					</button>
 				)}
 			</div>
-			{analyses.found_count ? (
+			{analyses.foundCount ? (
 				<Pagination
 					storedPage={analyses.page}
 					currentPage={page}
-					pageCount={analyses.page_count}
+					pageCount={analyses.pageCount}
 					onPageChange={onPageChange}
 				>
 					<ul className="list-none">

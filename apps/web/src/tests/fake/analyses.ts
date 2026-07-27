@@ -1,12 +1,6 @@
-import type {
-	AnalysisMinimal,
-	Blast,
-	FormattedNuvsAnalysis,
-} from "@analyses/types";
+import type { Blast, FormattedNuvsAnalysis } from "@analyses/types";
 import { faker } from "@faker-js/faker";
-import { createFakeIndexNested } from "./indexes";
-import { createFakeServerJobNested } from "./jobs";
-import { createFakeReferenceNested } from "./references";
+import type { AnalysisMinimal } from "@virtool/contracts";
 import { createFakeSubtractionNested } from "./subtractions";
 import { createFakeUserNested } from "./user";
 
@@ -20,16 +14,26 @@ export function createFakeAnalysisMinimal(
 ): AnalysisMinimal {
 	return {
 		id: faker.number.int(),
-		created_at: faker.date.past().toISOString(),
-		index: createFakeIndexNested(),
-		job: createFakeServerJobNested(),
+		createdAt: faker.date.past().toISOString(),
+		index: {
+			id: faker.number.int(),
+			version: faker.number.int({ min: 1, max: 20 }),
+		},
+		job: {
+			createdAt: faker.date.past().toISOString(),
+			id: faker.number.int(),
+			progress: 100,
+			state: "succeeded",
+			user: createFakeUserNested(),
+			workflow: "pathoscope",
+		},
 		ready: true,
-		reference: createFakeReferenceNested(),
+		reference: { id: faker.number.int(), name: faker.lorem.words(2) },
 		sample: {
 			id: faker.number.int(),
 		},
 		subtractions: [createFakeSubtractionNested()],
-		updated_at: faker.date.past().toISOString(),
+		updatedAt: faker.date.past().toISOString(),
 		user: createFakeUserNested(),
 		workflow: "pathoscope",
 		...overrides,

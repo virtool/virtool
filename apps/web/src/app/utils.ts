@@ -1,8 +1,8 @@
 /**
  * General utility constants and functions.
  */
+import { formatIsolateName as formatCanonicalIsolateName } from "@virtool/contracts";
 import { get, sampleSize, startCase } from "es-toolkit/compat";
-import { capitalize } from "./common";
 
 export { formatRoundedDuration } from "./date";
 
@@ -39,15 +39,28 @@ export function followDynamicDownload(filename: string, text: string) {
 }
 
 /**
- * Return a formatted isolate name given an ``isolate`` object.
+ * An isolate's name as the OTU pages show it.
+ *
+ * This is the canonical name from `@virtool/contracts` with one deviation: a
+ * source type of `"unknown"` — the value the add-isolate form submits when none
+ * is given — renders as `"Unnamed"` rather than being named literally. Callers
+ * that must agree with Python, such as the analysis exports, use the canonical
+ * helper directly.
+ *
+ * Accepts either spelling of the two fields, because a form's values reach this
+ * in camelCase while a stored isolate carries snake_case.
  */
 export function formatIsolateName(isolate: object): string {
 	const sourceType = get(isolate, "source_type") || get(isolate, "sourceType");
-	const sourceName = get(isolate, "source_name") || get(isolate, "sourceName");
 
-	return sourceType === "unknown"
-		? "Unnamed"
-		: `${capitalize(sourceType || "")} ${sourceName || ""}`;
+	if (sourceType === "unknown") {
+		return "Unnamed";
+	}
+
+	return formatCanonicalIsolateName({
+		source_name: get(isolate, "source_name") || get(isolate, "sourceName"),
+		source_type: sourceType,
+	});
 }
 
 /**

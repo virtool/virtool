@@ -107,9 +107,18 @@ describe("getJob", () => {
 	it("exposes a linked analysis's integer id as a string arg", async () => {
 		const jobId = await seedJob("succeeded", { started: 0, of: 1 });
 
+		const now = new Date();
 		const [analysis] = await db
 			.insert(analyses)
-			.values({ job_id: jobId, workflow: "nuvs", ready: false })
+			.values({
+				created_at: now,
+				updated_at: now,
+				sample: "0",
+				user_id: 1,
+				job_id: jobId,
+				workflow: "nuvs",
+				ready: false,
+			})
 			.returning({ id: analyses.id });
 		if (!analysis) {
 			throw new Error("failed to seed analysis");

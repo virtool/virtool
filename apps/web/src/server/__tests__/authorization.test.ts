@@ -51,6 +51,13 @@ const { authenticationExceptions } = await import("../auth/exceptions");
  */
 const MODULES = [
 	{
+		path: "../analyses/functions.ts",
+		fns: await import("../analyses/functions"),
+		handlers: (await import(
+			"../analyses/functions.ts?tss-serverfn-split"
+		)) as SplitServerFnModule,
+	},
+	{
 		path: "../account/functions.ts",
 		fns: await import("../account/functions"),
 		handlers: (await import(

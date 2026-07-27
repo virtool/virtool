@@ -31,7 +31,7 @@ export default function NuvsBlast({ analysisId, hit }: NuVsBLASTProps) {
 		}
 
 		if (blast.ready) {
-			if (blast.result.hits.length) {
+			if (blast.result?.hits.length) {
 				return (
 					<NuvsBlastResults hits={blast.result.hits} onBlast={handleBlast} />
 				);
@@ -47,9 +47,9 @@ export default function NuvsBlast({ analysisId, hit }: NuVsBLASTProps) {
 
 		return (
 			<NuvsBlastPending
-				interval={blast.interval}
-				lastCheckedAt={blast.last_checked_at}
-				rid={blast.rid}
+				interval={blast.interval ?? 0}
+				lastCheckedAt={blast.lastCheckedAt}
+				rid={blast.rid ?? ""}
 			/>
 		);
 	}

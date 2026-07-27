@@ -23,6 +23,7 @@ import { createContext, type ReactNode, useContext, useState } from "react";
 import { beforeEach, vi } from "vitest";
 import { createFakeAccount } from "./fake/account";
 import { accountServerFnMocks } from "./server-fn/account";
+import { analysisServerFnMocks } from "./server-fn/analyses";
 import { authServerFnMocks } from "./server-fn/auth";
 import { groupServerFnMocks } from "./server-fn/groups";
 import { hmmServerFnMocks } from "./server-fn/hmm";
@@ -40,6 +41,10 @@ import { uploadServerFnMocks } from "./server-fn/uploads";
 import { userServerFnMocks } from "./server-fn/users";
 
 vi.mock("@server/groups/functions", () => groupServerFnMocks);
+vi.mock("@server/analyses/functions", async () => {
+	const { analysisServerFnMocks } = await import("./server-fn/analyses");
+	return analysisServerFnMocks;
+});
 vi.mock("@server/account/functions", async () => {
 	const { accountServerFnMocks } = await import("./server-fn/account");
 	return accountServerFnMocks;
@@ -116,6 +121,8 @@ beforeEach(() => {
 		referenceServerFnMocks.getReferenceFn,
 		sampleServerFnMocks.findSamplesFn,
 		sampleServerFnMocks.getSampleFn,
+		analysisServerFnMocks.findAnalysesFn,
+		analysisServerFnMocks.getAnalysisFn,
 		settingsServerFnMocks.getSettingsFn,
 	]) {
 		fn.mockReset();
@@ -142,6 +149,9 @@ beforeEach(() => {
 		sampleServerFnMocks.updateSampleFn,
 		sampleServerFnMocks.deleteSampleFn,
 		sampleServerFnMocks.updateSampleRightsFn,
+		analysisServerFnMocks.createAnalysisFn,
+		analysisServerFnMocks.deleteAnalysisFn,
+		analysisServerFnMocks.blastNuvsFn,
 		settingsServerFnMocks.updateSettingsFn,
 	]) {
 		fn.mockReset();

@@ -14,6 +14,7 @@ import {
 	ToastViewport,
 } from "@base/Toast";
 import SubtractionSelector from "@subtraction/components/SubtractionSelector";
+import type { WorkflowName } from "@virtool/contracts";
 import { useState } from "react";
 import { Controller, useForm } from "react-hook-form";
 import { CreateAnalysisSummary } from "./CreateAnalysisSummary";
@@ -24,7 +25,7 @@ import type { workflow } from "./workflows";
 type CreateAnalysisFormValues = {
 	indexId: string;
 	subtractionIds: number[];
-	workflow: string;
+	workflow: WorkflowName;
 };
 
 /** A dismissible confirmation shown after analyses are created with "Create more" on. */

@@ -82,7 +82,7 @@ export default function AnalysisDetail() {
 				</SubviewHeaderTitle>
 				<SubviewHeaderAttribution>
 					{analysis.user.handle} started{" "}
-					<RelativeTime time={analysis.created_at} />
+					<RelativeTime time={analysis.createdAt} />
 				</SubviewHeaderAttribution>
 			</SubviewHeader>
 

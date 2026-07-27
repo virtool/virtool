@@ -1,0 +1,431 @@
+import { eq } from "drizzle-orm";
+import {
+	afterAll,
+	beforeAll,
+	beforeEach,
+	describe,
+	expect,
+	it,
+	vi,
+} from "vitest";
+import type { Db } from "../db/pg";
+import { takeFirstOrThrow } from "../db/rows";
+import {
+	analyses,
+	analysisSubtractions,
+	nuvsBlast,
+} from "../db/schema/analyses";
+import { indexes } from "../db/schema/indexes";
+import { jobs } from "../db/schema/jobs";
+import { legacyReferences } from "../db/schema/references";
+import { legacySamples } from "../db/schema/samples";
+import { sessions } from "../db/schema/sessions";
+import { users } from "../db/schema/users";
+import { createTestDatabase, type TestDatabase } from "../db/test/fixtures";
+import { callServerFn, type SplitServerFnModule } from "../test/serverFn";
+
+const getRequest = vi.fn();
+const setResponseStatus = vi.fn();
+
+vi.mock("@tanstack/react-start/server", () => ({
+	deleteCookie: vi.fn(),
+	getCookie: vi.fn(),
+	getRequest,
+	setCookie: vi.fn(),
+	setResponseStatus,
+}));
+
+vi.mock("@sentry/tanstackstart-react", () => ({
+	captureException: vi.fn(),
+	setUser: vi.fn(),
+}));
+
+// The handlers read the `db` singleton at module scope. A getter defers the
+// read until a handler actually runs, by which point beforeAll has pointed it
+// at this file's isolated database.
+let db: Db;
+vi.mock("../db/pg", () => ({
+	client: {},
+	get db() {
+		return db;
+	},
+}));
+
+vi.mock("../events/emit", () => ({ emit: vi.fn() }));
+
+const handlers = (await import(
+	"./functions.ts?tss-serverfn-split"
+)) as SplitServerFnModule;
+const { ForbiddenError } = await import("../auth/middleware");
+const { ClientError } = await import("../errors");
+const { SESSION_ID_COOKIE, SESSION_TOKEN_COOKIE } = await import(
+	"../auth/cookies"
+);
+const { seedSession, seedUser } = await import("../auth/test/fixtures");
+
+let database: TestDatabase;
+let ownerId: number;
+let referenceId: number;
+let indexId: number;
+
+beforeAll(async () => {
+	database = await createTestDatabase();
+	db = database.db;
+}, 60_000);
+
+afterAll(async () => {
+	await database.drop();
+});
+
+beforeEach(async () => {
+	vi.clearAllMocks();
+
+	await db.delete(nuvsBlast);
+	await db.delete(analysisSubtractions);
+	await db.delete(analyses);
+	await db.delete(indexes);
+	await db.delete(legacyReferences);
+	await db.delete(legacySamples);
+	await db.delete(jobs);
+	await db.delete(sessions);
+	await db.delete(users);
+
+	getRequest.mockReturnValue(
+		new Request("https://virtool.test/_serverFn/test"),
+	);
+
+	ownerId = await seedUser(db, { handle: "owner" });
+	referenceId = await seedReference();
+	indexId = await seedIndex({ referenceId, ready: true });
+});
+
+/** Authenticate the next call as a new user with no administrator role. */
+async function signIn(): Promise<number> {
+	const userId = await seedUser(db, {
+		handle: `caller-${Math.random()}`,
+		administratorRole: null,
+	});
+	const { sessionId, token } = await seedSession(db, userId);
+
+	getRequest.mockReturnValue(
+		new Request("https://virtool.test/_serverFn/test", {
+			headers: {
+				cookie: `${SESSION_ID_COOKIE}=${sessionId}; ${SESSION_TOKEN_COOKIE}=${token}`,
+			},
+		}),
+	);
+
+	return userId;
+}
+
+async function seedReference(
+	overrides: Partial<typeof legacyReferences.$inferInsert> = {},
+): Promise<number> {
+	return takeFirstOrThrow(
+		await db
+			.insert(legacyReferences)
+			.values({ name: `Reference ${Math.random()}`, ...overrides })
+			.returning({ id: legacyReferences.id }),
+	).id;
+}
+
+async function seedIndex(values: {
+	referenceId: number;
+	ready: boolean;
+}): Promise<number> {
+	return takeFirstOrThrow(
+		await db
+			.insert(indexes)
+			.values({
+				created_at: new Date(),
+				ready: values.ready,
+				reference_id: values.referenceId,
+				version: 1,
+			})
+			.returning({ id: indexes.id }),
+	).id;
+}
+
+async function seedSample(
+	overrides: Partial<typeof legacySamples.$inferInsert> = {},
+): Promise<number> {
+	return takeFirstOrThrow(
+		await db
+			.insert(legacySamples)
+			.values({
+				name: `Sample ${Math.random()}`,
+				library_type: "normal",
+				created_at: new Date(),
+				user_id: ownerId,
+				...overrides,
+			})
+			.returning({ id: legacySamples.id }),
+	).id;
+}
+
+async function seedAnalysis(
+	overrides: Partial<typeof analyses.$inferInsert> = {},
+): Promise<number> {
+	const now = new Date();
+
+	return takeFirstOrThrow(
+		await db
+			.insert(analyses)
+			.values({
+				created_at: now,
+				updated_at: now,
+				workflow: "nuvs",
+				ready: true,
+				results: null,
+				sample: String(overrides.sample_id ?? 0),
+				// A Postgres-native analysis: no legacy id, so a delete never reaches
+				// object storage.
+				legacy_id: null,
+				reference_id: referenceId,
+				index_id: indexId,
+				user_id: ownerId,
+				...overrides,
+			})
+			.returning({ id: analyses.id }),
+	).id;
+}
+
+/** An analysis on a sample the caller may read but not write. */
+async function seedReadOnlyAnalysis(
+	overrides: Partial<typeof analyses.$inferInsert> = {},
+): Promise<number> {
+	const sampleId = await seedSample({ all_read: true, all_write: false });
+
+	return seedAnalysis({ sample_id: sampleId, ...overrides });
+}
+
+function call(name: string, data?: unknown) {
+	return callServerFn(handlers, name, data);
+}
+
+describe("getAnalysis", () => {
+	it("returns 404 for an analysis that does not exist", async () => {
+		await signIn();
+
+		await expect(
+			call("getAnalysisFn", { analysisId: 123456 }),
+		).rejects.toBeInstanceOf(ClientError);
+		expect(setResponseStatus).toHaveBeenCalledWith(404);
+		expect(setResponseStatus).not.toHaveBeenCalledWith(403);
+	});
+
+	it("returns 403 when the caller may not read the parent sample", async () => {
+		const sampleId = await seedSample({ all_read: false });
+		const analysisId = await seedAnalysis({ sample_id: sampleId });
+
+		await signIn();
+
+		await expect(call("getAnalysisFn", { analysisId })).rejects.toBeInstanceOf(
+			ForbiddenError,
+		);
+		expect(setResponseStatus).toHaveBeenCalledWith(403);
+	});
+
+	it("allows a caller holding only the sample's read right", async () => {
+		const analysisId = await seedReadOnlyAnalysis();
+
+		await signIn();
+
+		const analysis = (await call("getAnalysisFn", { analysisId })) as {
+			id: number;
+		};
+
+		expect(analysis.id).toBe(analysisId);
+	});
+});
+
+describe("createAnalysis", () => {
+	function values(sampleId: number, overrides: Record<string, unknown> = {}) {
+		return {
+			sampleId,
+			refId: referenceId,
+			subtractionIds: [],
+			workflow: "nuvs",
+			...overrides,
+		};
+	}
+
+	it("returns 404 for a sample that does not exist", async () => {
+		await signIn();
+
+		await expect(
+			call("createAnalysisFn", values(123456)),
+		).rejects.toBeInstanceOf(ClientError);
+		expect(setResponseStatus).toHaveBeenCalledWith(404);
+		expect(setResponseStatus).not.toHaveBeenCalledWith(403);
+	});
+
+	it("refuses a caller holding only the sample's read right", async () => {
+		const sampleId = await seedSample({ all_read: true, all_write: false });
+
+		await signIn();
+
+		await expect(
+			call("createAnalysisFn", values(sampleId)),
+		).rejects.toBeInstanceOf(ForbiddenError);
+		expect(setResponseStatus).toHaveBeenCalledWith(403);
+		expect(await db.select().from(analyses)).toHaveLength(0);
+	});
+
+	it("returns 409 for an archived reference", async () => {
+		const sampleId = await seedSample({ all_write: true });
+		const archived = await seedReference({ archived: true });
+		await seedIndex({ referenceId: archived, ready: true });
+
+		await signIn();
+
+		await expect(
+			call("createAnalysisFn", values(sampleId, { refId: archived })),
+		).rejects.toBeInstanceOf(ClientError);
+		expect(setResponseStatus).toHaveBeenCalledWith(409);
+	});
+
+	it("returns 409 when the reference has no ready index", async () => {
+		const sampleId = await seedSample({ all_write: true });
+		const unbuilt = await seedReference();
+		await seedIndex({ referenceId: unbuilt, ready: false });
+
+		await signIn();
+
+		await expect(
+			call("createAnalysisFn", values(sampleId, { refId: unbuilt })),
+		).rejects.toBeInstanceOf(ClientError);
+		expect(setResponseStatus).toHaveBeenCalledWith(409);
+	});
+
+	it("returns 201 and the new analysis for a caller with write rights", async () => {
+		const userId = await signIn();
+		const sampleId = await seedSample({ user_id: userId });
+
+		const analysis = (await call("createAnalysisFn", values(sampleId))) as {
+			id: number;
+			ready: boolean;
+			workflow: string;
+		};
+
+		expect(analysis.workflow).toBe("nuvs");
+		expect(analysis.ready).toBe(false);
+		expect(setResponseStatus).toHaveBeenCalledWith(201);
+
+		const [row] = await db
+			.select({ user_id: analyses.user_id })
+			.from(analyses)
+			.where(eq(analyses.id, analysis.id));
+		expect(row?.user_id).toBe(userId);
+	});
+});
+
+describe("deleteAnalysis", () => {
+	it("returns 404 for an analysis that does not exist", async () => {
+		await signIn();
+
+		await expect(
+			call("deleteAnalysisFn", { analysisId: 123456 }),
+		).rejects.toBeInstanceOf(ClientError);
+		expect(setResponseStatus).toHaveBeenCalledWith(404);
+	});
+
+	it("refuses a caller holding only the sample's read right", async () => {
+		const analysisId = await seedReadOnlyAnalysis();
+
+		await signIn();
+
+		await expect(
+			call("deleteAnalysisFn", { analysisId }),
+		).rejects.toBeInstanceOf(ForbiddenError);
+		expect(setResponseStatus).toHaveBeenCalledWith(403);
+		expect(await db.select().from(analyses)).toHaveLength(1);
+	});
+
+	it("returns 409 for an analysis that is still running", async () => {
+		const userId = await signIn();
+		const sampleId = await seedSample({ user_id: userId });
+		const analysisId = await seedAnalysis({
+			sample_id: sampleId,
+			ready: false,
+		});
+
+		await expect(
+			call("deleteAnalysisFn", { analysisId }),
+		).rejects.toBeInstanceOf(ClientError);
+		expect(setResponseStatus).toHaveBeenCalledWith(409);
+
+		// The analysis must survive the rejected delete.
+		expect(
+			await db.select().from(analyses).where(eq(analyses.id, analysisId)),
+		).toHaveLength(1);
+	});
+
+	it("returns 204 for a caller with write rights", async () => {
+		const userId = await signIn();
+		const sampleId = await seedSample({ user_id: userId });
+		const analysisId = await seedAnalysis({ sample_id: sampleId });
+
+		await expect(call("deleteAnalysisFn", { analysisId })).resolves.toBeNull();
+		expect(setResponseStatus).toHaveBeenCalledWith(204);
+		expect(await db.select().from(analyses)).toHaveLength(0);
+	});
+});
+
+describe("blastNuvs", () => {
+	const results = { hits: [{ index: 0, sequence: "ATGCATGC", orfs: [] }] };
+
+	it("refuses a caller holding only the sample's read right", async () => {
+		const analysisId = await seedReadOnlyAnalysis({ results });
+
+		await signIn();
+
+		await expect(
+			call("blastNuvsFn", { analysisId, sequenceIndex: 0 }),
+		).rejects.toBeInstanceOf(ForbiddenError);
+		expect(setResponseStatus).toHaveBeenCalledWith(403);
+		expect(await db.select().from(nuvsBlast)).toHaveLength(0);
+	});
+
+	it("returns 409 for an analysis that is not NuVs", async () => {
+		const userId = await signIn();
+		const sampleId = await seedSample({ user_id: userId });
+		const analysisId = await seedAnalysis({
+			sample_id: sampleId,
+			workflow: "pathoscope",
+			results,
+		});
+
+		await expect(
+			call("blastNuvsFn", { analysisId, sequenceIndex: 0 }),
+		).rejects.toBeInstanceOf(ClientError);
+		expect(setResponseStatus).toHaveBeenCalledWith(409);
+	});
+
+	it("returns 404 when there is no contig at the sequence index", async () => {
+		const userId = await signIn();
+		const sampleId = await seedSample({ user_id: userId });
+		const analysisId = await seedAnalysis({ sample_id: sampleId, results });
+
+		await expect(
+			call("blastNuvsFn", { analysisId, sequenceIndex: 4 }),
+		).rejects.toBeInstanceOf(ClientError);
+		expect(setResponseStatus).toHaveBeenCalledWith(404);
+	});
+
+	it("returns 201 and the pending BLAST record for a caller with write rights", async () => {
+		const userId = await signIn();
+		const sampleId = await seedSample({ user_id: userId });
+		const analysisId = await seedAnalysis({ sample_id: sampleId, results });
+
+		const blast = (await call("blastNuvsFn", {
+			analysisId,
+			sequenceIndex: 0,
+		})) as { ready: boolean; sequenceIndex: number };
+
+		expect(blast.ready).toBe(false);
+		expect(blast.sequenceIndex).toBe(0);
+		expect(setResponseStatus).toHaveBeenCalledWith(201);
+		expect(await db.select().from(nuvsBlast)).toHaveLength(1);
+	});
+});

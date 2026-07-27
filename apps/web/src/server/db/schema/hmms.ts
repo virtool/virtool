@@ -3,8 +3,10 @@
 // this side. Keep the columns in sync with
 // `../../../../../../virtool/virtool/hmm/sql.py`.
 //
-// The `hmms.legacy_id` column (the old Mongo `_id`) still exists in the database
-// but is dead — Drizzle ignores columns it does not declare, so it is omitted.
+// `hmms.legacy_id` holds the old Mongo `_id`. The HMM endpoints address rows by
+// their integer id and never need it, but a NuVs analysis stored before the
+// migration references its HMM annotations by that string, so the analysis
+// formatter resolves them through this column.
 
 import {
 	bigint,
@@ -13,6 +15,7 @@ import {
 	integer,
 	jsonb,
 	pgTable,
+	text,
 } from "drizzle-orm/pg-core";
 import { tasks } from "./tasks";
 
@@ -62,6 +65,7 @@ export type HmmUpdate = {
 
 export const hmms = pgTable("hmms", {
 	id: bigint("id", { mode: "number" }).primaryKey().generatedAlwaysAsIdentity(),
+	legacy_id: text("legacy_id").unique(),
 	cluster: integer("cluster").notNull(),
 	count: integer("count").notNull(),
 	length: integer("length").notNull(),

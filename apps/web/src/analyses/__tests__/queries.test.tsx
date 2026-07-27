@@ -2,21 +2,20 @@ import { analysesQueryKeys } from "@analyses/keys";
 import { samplesQueryKeys } from "@samples/keys";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { renderHook, waitFor } from "@testing-library/react";
-import nock from "nock";
+import { createFakeAnalysisMinimal } from "@tests/fake/analyses";
+import { mockCreateAnalysis } from "@tests/server-fn/analyses";
 import type { ReactNode } from "react";
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import { useCreateAnalysis } from "../queries";
 
 describe("useCreateAnalysis()", () => {
-	afterEach(() => nock.cleanAll());
-
 	it("narrows the analyses invalidation to the analysed sample", async () => {
 		const queryClient = new QueryClient();
 		const invalidateQueries = vi.spyOn(queryClient, "invalidateQueries");
 
-		const scope = nock("http://localhost")
-			.post("/api/samples/1/analyses")
-			.reply(201, { id: 1 });
+		const createAnalysis = mockCreateAnalysis(
+			createFakeAnalysisMinimal({ sample: { id: 1 } }),
+		);
 
 		function wrapper({ children }: { children: ReactNode }) {
 			return (
@@ -30,12 +29,21 @@ describe("useCreateAnalysis()", () => {
 
 		result.current.mutate({
 			sampleId: 1,
-			workflow: "pathoscope_bowtie",
+			workflow: "pathoscope",
 			refId: 1,
 			subtractionIds: [],
 		});
 
 		await waitFor(() => expect(result.current.isSuccess).toBe(true));
+
+		expect(createAnalysis).toHaveBeenCalledWith({
+			data: {
+				sampleId: 1,
+				refId: 1,
+				subtractionIds: [],
+				workflow: "pathoscope",
+			},
+		});
 
 		expect(invalidateQueries).toHaveBeenCalledWith({
 			queryKey: [...analysesQueryKeys.lists(), 1],
@@ -52,7 +60,5 @@ describe("useCreateAnalysis()", () => {
 		expect(invalidateQueries).not.toHaveBeenCalledWith({
 			queryKey: samplesQueryKeys.detail(1),
 		});
-
-		scope.done();
 	});
 });

@@ -1,93 +1,24 @@
-import type { IndexNested } from "@indexes/types";
-import type { ServerJobNested } from "@jobs/types";
-import type { ReferenceNested } from "@references/types";
-import type { SubtractionNested } from "@subtraction/types";
-import type { UserNested } from "@users/types";
-import type { SearchResult } from "@/types/api";
+// The analysis wire shapes — `Analysis`, `AnalysisMinimal`, `AnalysisFile` and
+// the search result — are served by `@server/analyses/functions` and live in
+// `@virtool/contracts`. What stays here is the client's own reading of the
+// opaque `results` blob: the shapes `utils.ts` derives for rendering, which the
+// server has no notion of.
 
-/** The sample associated with the analysis */
-export type AnalysisSample = {
-	id: number;
-};
+import type {
+	Analysis,
+	AnalysisFile,
+	AnalysisMinimal,
+	NuvsBlast,
+} from "@virtool/contracts";
 
-/** Minimal Analysis used for resource listings */
-export type AnalysisMinimal = {
-	/** When the analysis was created */
-	created_at: string;
-
-	/** The unique identifier for the analysis */
-	id: number;
-
-	/** The reference index used in the analysis */
-	index: IndexNested;
-
-	/** The job that ran the analysis workflow */
-	job?: ServerJobNested;
-
-	/** Whether the analysis is complete and ready to view */
-	ready: boolean;
-
-	/** The reference used for the analysis */
-	reference: ReferenceNested;
-
-	/** The parent sample for the analysis */
-	sample: AnalysisSample;
-
-	/** Subtractions used in the analysis */
-	subtractions: Array<SubtractionNested>;
-
-	/** When the analysis was last updated */
-	updated_at: string;
-
-	/** The user who created the analysis */
-	user: UserNested;
-
-	/** Workflow used to generate the analysis */
-	workflow: AnalysisWorkflow;
-};
-
-/** An analysis file */
-export type AnalysisFile = {
-	/** The analysis ID */
-	analysis: string;
-
-	/** The file description */
-	description?: string | null;
-
-	/** The format of the file */
-	format: string;
-
-	/** The unique identifier */
-	id: number;
-
-	/** The file name */
-	name: string;
-
-	/** The disk name of the file */
-	name_on_disk: string;
-
-	/** The size of the file in bytes */
-	size?: number;
-
-	/** When the analysis file was uploaded */
-	uploaded_at?: Date;
-};
-
-/** A complete Analysis */
-export type GenericAnalysis = AnalysisMinimal & {
-	/** Files generated during the analysis that are available for download */
-	files: Array<AnalysisFile>;
-
-	/** The results of the analysis that will be presented to the user */
-	results?: { [key: string]: unknown };
-
-	workflow: AnalysisWorkflow;
-};
-
-export type Analysis =
+/**
+ * An analysis narrowed to the workflow-specific shape its `results` blob takes
+ * once `formatData` has derived the rendering metrics.
+ */
+export type FormattedAnalysis =
 	| FormattedPathoscopeAnalysis
 	| FormattedNuvsAnalysis
-	| GenericAnalysis;
+	| Analysis;
 
 export type FormattedPathoscopeAnalysis = AnalysisMinimal & {
 	files: AnalysisFile[];
@@ -219,16 +150,13 @@ export type FormattedNuvsHit = {
 	sequence: string;
 };
 
-export type Blast = {
-	created_at: string;
-	error?: string;
-	id: number;
-	interval: number;
-	last_checked_at: string;
-	ready: boolean;
-	result: BlastResults;
-	rid: string;
-	updated_at: string;
+/**
+ * A BLAST request, with NCBI's verbatim `result` narrowed to the shape this side
+ * renders. The envelope itself is the wire shape from `@virtool/contracts`,
+ * which leaves `result` an uninterpreted JSON object.
+ */
+export type Blast = Omit<NuvsBlast, "result"> & {
+	result: BlastResults | null;
 };
 
 export type BlastResults = {
@@ -283,13 +211,6 @@ export type NuvsOrf = {
 	pro: string;
 	strand: number;
 };
-
-/** Analysis search results from the API */
-export type AnalysisSearchResult = SearchResult & {
-	items: AnalysisMinimal[];
-};
-
-export type AnalysisWorkflow = "pathoscope" | "nuvs";
 
 /** Read depths of a sequence mapped by position to an array */
 export type PositionMappedReadDepths = number[];

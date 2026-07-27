@@ -7,9 +7,10 @@ import Link from "@base/Link";
 import ProgressCircle from "@base/ProgressCircle";
 import SlashList from "@base/SlashList";
 import { useFetchJob } from "@jobs/queries";
+import { toServerJobNested } from "@jobs/utils";
+import type { AnalysisMinimal } from "@virtool/contracts";
 import { Equal, EqualNot } from "lucide-react";
 import { useRemoveAnalysis } from "../queries";
-import type { AnalysisMinimal } from "../types";
 import { checkSupportedWorkflow } from "../utils";
 import { AnalysisItemRightIcon } from "./AnalysisItemRightIcon";
 
@@ -29,7 +30,7 @@ export default function AnalysisItem({ analysis }: AnalysisItemProps) {
 		reference,
 		index,
 		subtractions,
-		created_at,
+		createdAt,
 	} = analysis;
 	const { hasPermission: canModify } = useCheckAdminRole("users");
 	const onRemove = useRemoveAnalysis(id);
@@ -55,7 +56,7 @@ export default function AnalysisItem({ analysis }: AnalysisItemProps) {
 
 	const { data: job } = useFetchJob(
 		analysis.job?.id ?? Number.NaN,
-		analysis.job,
+		analysis.job ? toServerJobNested(analysis.job) : undefined,
 	);
 
 	return (
@@ -65,7 +66,7 @@ export default function AnalysisItem({ analysis }: AnalysisItemProps) {
 				<Attribution
 					className="col-span-2 text-sm font-normal"
 					user={user.handle}
-					time={created_at}
+					time={createdAt}
 				/>
 				<div className="flex justify-end">
 					{ready ? (

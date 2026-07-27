@@ -1,16 +1,18 @@
+import type { WorkflowName } from "@virtool/contracts";
+
 export type workflow = {
 	description: string;
-	id: string;
+	id: WorkflowName;
 	name: string;
 };
 
-export const pathoscopeWorkflow = {
+export const pathoscopeWorkflow: workflow = {
 	description: "Find known viruses.",
 	id: "pathoscope",
 	name: "Pathoscope",
 };
 
-export const nuvsWorkflow = {
+export const nuvsWorkflow: workflow = {
 	description: "Find novel viruses.",
 	id: "nuvs",
 	name: "NuVs",

@@ -92,6 +92,29 @@ async function seedSample(
 	).id;
 }
 
+async function seedAnalysis(
+	overrides: Partial<typeof analyses.$inferInsert> = {},
+): Promise<number> {
+	const now = new Date();
+
+	return takeFirstOrThrow(
+		await db
+			.insert(analyses)
+			.values({
+				created_at: now,
+				updated_at: now,
+				// The legacy storage slug. Irrelevant to workflow tagging, but the
+				// column is NOT NULL upstream.
+				sample: String(overrides.sample_id ?? 0),
+				user_id: ownerId,
+				workflow: "nuvs",
+				ready: false,
+				...overrides,
+			})
+			.returning({ id: analyses.id }),
+	).id;
+}
+
 async function seedLabel(name: string): Promise<number> {
 	return takeFirstOrThrow(
 		await db
@@ -295,12 +318,10 @@ describe("findSamples", () => {
 describe("workflow tags and filtering", () => {
 	it("derives tags from a sample's analyses", async () => {
 		const readyNuvs = await seedSample({ name: "Ready" });
-		await db
-			.insert(analyses)
-			.values({ sample_id: readyNuvs, workflow: "nuvs", ready: true });
+		await seedAnalysis({ sample_id: readyNuvs, workflow: "nuvs", ready: true });
 
 		const pendingPatho = await seedSample({ name: "Pending" });
-		await db.insert(analyses).values({
+		await seedAnalysis({
 			sample_id: pendingPatho,
 			workflow: "pathoscope",
 			ready: false,
@@ -325,9 +346,7 @@ describe("workflow tags and filtering", () => {
 
 	it("filters by a workflow:condition pair", async () => {
 		const ready = await seedSample({ name: "Ready" });
-		await db
-			.insert(analyses)
-			.values({ sample_id: ready, workflow: "nuvs", ready: true });
+		await seedAnalysis({ sample_id: ready, workflow: "nuvs", ready: true });
 		await seedSample({ name: "NoAnalyses" });
 
 		const result = await findSamples(
@@ -651,9 +670,7 @@ describe("deleteSample", () => {
 			name: "a.json",
 			type: "json",
 		});
-		await db
-			.insert(analyses)
-			.values({ sample_id: sampleId, workflow: "nuvs", ready: true });
+		await seedAnalysis({ sample_id: sampleId, workflow: "nuvs", ready: true });
 
 		const deleted = await deleteSample(db, new MemoryStorage(), sampleId);
 		expect(deleted.id).toBe(sampleId);

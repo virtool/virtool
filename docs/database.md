@@ -76,14 +76,14 @@ states:
 | Settings     | `settings`                                           | Built          |
 | HMMs         | `hmms`, `legacy_hmm_status`                          | Built          |
 | API keys     | `api_keys`                                           | Built          |
-| Analyses     | `analyses`                                           | Partial mirror |
+| Analyses     | `analyses`, `analysis_*`, `nuvs_blast`               | Built          |
 | Indexes      | `indexes`                                            | Partial mirror |
 | Samples      | `legacy_samples`, `legacy_sample_*`, `sample_*`      | Built          |
 | Subtractions | `subtractions`, `subtraction_files`                  | Built          |
 | References   | `legacy_references`, `legacy_reference_*`            | Built          |
 | Uploads      | `uploads`                                            | Not started    |
 | OTUs         | `legacy_otus`                                        | Partial mirror |
-| Sequences    | `legacy_sequences`                                   | Not started    |
+| Sequences    | `legacy_sequences`                                   | Partial mirror |
 | History      | `legacy_history`, `legacy_history_diff`, `revisions` | Partial mirror |
 
 The Postgres table(s) column lists the single mirrored table for the
@@ -96,12 +96,21 @@ reverse `job_id` foreign keys on `analyses`, `indexes`, and
 read path adds three more: `legacy_otus` (an OTU count and the clone
 manifest), `legacy_history` (contributors and the unbuilt-change count),
 and the extra `indexes` columns that resolve a reference's latest build.
-The samples read path adds three columns to the `analyses` mirror —
-`sample_id`, `workflow`, and `ready` — to derive a sample's workflow tags
-(a `GROUP BY workflow, bool_or(ready)`) and to power the `workflows=`
-filter (a correlated `EXISTS`); the analyses domain itself is still only a
-partial mirror. Each partial mirror declares just the columns its consumer
-needs. The `subtractions` mirror is now full — the subtraction domain is
+The samples read path leans on the `analyses` mirror's `sample_id`,
+`workflow`, and `ready` columns to derive a sample's workflow tags (a
+`GROUP BY workflow, bool_or(ready)`) and to power the `workflows=` filter
+(a correlated `EXISTS`). Each partial mirror declares just the columns its
+consumer needs.
+
+The `legacy_otus`, `legacy_sequences`, `legacy_history` and
+`legacy_history_diff` mirrors exist for the analyses read path, which is
+their only consumer. Rendering a pathoscope analysis means taking every
+detected OTU back to the version the analysis saw — a joined OTU document
+rebuilt from the `data` JSONB, then history diffs reverted over it
+(`@server/otus/data`, `@server/history/data`). They mirror the shape Python
+defines today, isolates-in-JSONB and side diff table and all; the OTU domain
+proper is not served from here, and when it lands it is expected to
+renormalize these tables rather than build on this shape. The `subtractions` mirror is now full — the subtraction domain is
 served from this repo — but jobs still reaches it through the same reverse
 `job_id` foreign key.
 

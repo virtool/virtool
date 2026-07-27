@@ -3,7 +3,7 @@ import Box from "@base/Box";
 import Checkbox from "@base/Checkbox";
 import Link from "@base/Link";
 import { useFetchJob } from "@jobs/queries";
-import { toServerJobNested } from "@samples/utils";
+import { toServerJobNested } from "@jobs/utils";
 import type { SampleMinimal } from "@virtool/contracts";
 import type { MouseEvent } from "react";
 import SampleLabel from "../Label/SampleLabel";

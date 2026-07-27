@@ -1,4 +1,5 @@
 import { formatIsolateName } from "@app/utils";
+import type { Analysis } from "@virtool/contracts";
 import { compact, uniq } from "es-toolkit/array";
 import {
 	flatMap,
@@ -11,9 +12,9 @@ import {
 	sortBy,
 	sumBy,
 } from "es-toolkit/compat";
+import { median } from "es-toolkit/math";
 import type {
-	Analysis,
-	AnalysisWorkflow,
+	FormattedAnalysis,
 	FormattedNuvsAnalysis,
 	FormattedPathoscopeAnalysis,
 	FormattedPathoscopeIsolate,
@@ -96,10 +97,10 @@ export function formatNuvsData(detail: FormattedNuvsAnalysis) {
 		hit.sequence.length > (longest?.sequence?.length ?? 0) ? hit : longest,
 	);
 
-	const { created_at, id, ready, user, workflow } = detail;
+	const { createdAt, id, ready, user, workflow } = detail;
 
 	return {
-		created_at,
+		createdAt,
 		id,
 		ready,
 		results: {
@@ -113,29 +114,15 @@ export function formatNuvsData(detail: FormattedNuvsAnalysis) {
 }
 
 /**
- * Calculate the median of an Array of numbers.
+ * The median read depth across `values`, rounded to a whole number of reads.
  *
- * @param values - an array of numbers
+ * Depth is displayed as a read count, so the half-value an even-length list
+ * produces is rounded away here rather than in the shared `median` — the CSV and
+ * XLSX exports report the unrounded figure, matching Python. An empty list has no
+ * depth, which reads as zero rather than `NaN`.
  */
-export function median(values: number[]): number {
-	if (values.length === 0) {
-		return 0;
-	}
-
-	const sorted = values.slice().sort((a, b) => a - b);
-
-	const midIndex = (sorted.length - 1) / 2;
-
-	if (midIndex % 1 === 0) {
-		// midIndex is an in-range integer index because the array is non-empty.
-		return sorted[midIndex] ?? 0;
-	}
-
-	// floor and ceil of midIndex are both in-range indices of the non-empty array.
-	const lower = sorted[Math.floor(midIndex)] ?? 0;
-	const upper = sorted[Math.ceil(midIndex)] ?? 0;
-
-	return Math.round((lower + upper) / 2);
+export function medianDepth(values: number[]): number {
+	return values.length === 0 ? 0 : Math.round(median(values));
 }
 
 /**
@@ -213,7 +200,7 @@ export function formatPathoscopeData(
 	}
 
 	const {
-		created_at,
+		createdAt,
 		results,
 		id,
 		index,
@@ -264,7 +251,7 @@ export function formatPathoscopeData(
 				sequences,
 				maxDepth: max(filled),
 				pi: sumBy(sequences, (seq) => seq.pi),
-				depth: median(filled),
+				depth: medianDepth(filled),
 			};
 		});
 
@@ -287,7 +274,7 @@ export function formatPathoscopeData(
 			pi,
 			isolates: sortBy(isolates, (i) => i.coverage).reverse(),
 			coverage: maxCoverageIsolate.coverage,
-			depth: median(filled),
+			depth: medianDepth(filled),
 			isolateNames: reject(
 				uniq(isolateNames),
 				(name) => name === "Unnamed Isolate",
@@ -300,7 +287,7 @@ export function formatPathoscopeData(
 
 	return {
 		...detail,
-		created_at,
+		createdAt,
 		id,
 		index,
 		reference,
@@ -316,13 +303,17 @@ export function formatPathoscopeData(
 	};
 }
 
-export function formatData(detail: Analysis): Analysis {
+export function formatData(detail: Analysis): FormattedAnalysis {
 	if (detail?.workflow === "pathoscope") {
-		return formatPathoscopeData(detail as FormattedPathoscopeAnalysis);
+		return formatPathoscopeData(
+			detail as unknown as FormattedPathoscopeAnalysis,
+		);
 	}
 
 	if (detail?.workflow === "nuvs") {
-		return formatNuvsData(detail as FormattedNuvsAnalysis) as Analysis;
+		return formatNuvsData(
+			detail as unknown as FormattedNuvsAnalysis,
+		) as FormattedAnalysis;
 	}
 
 	return detail;
@@ -330,6 +321,6 @@ export function formatData(detail: Analysis): Analysis {
 
 const supportedWorkflows: string[] = ["pathoscope", "nuvs"];
 
-export function checkSupportedWorkflow(workflow: AnalysisWorkflow) {
+export function checkSupportedWorkflow(workflow: string) {
 	return supportedWorkflows.includes(workflow);
 }

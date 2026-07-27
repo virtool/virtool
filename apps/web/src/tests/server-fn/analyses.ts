@@ -1,0 +1,62 @@
+import type { AnalysisMinimal } from "@virtool/contracts";
+import { type Mock, vi } from "vitest";
+
+/**
+ * Mock handles for the `@server/analyses/functions` server-fn module. Wired in
+ * globally from `tests/setup.tsx` so any test importing this helper can stub the
+ * analysis server functions without per-file `vi.mock` boilerplate.
+ */
+export const analysisServerFnMocks = {
+	findAnalysesFn: vi.fn(),
+	getAnalysisFn: vi.fn(),
+	createAnalysisFn: vi.fn(),
+	deleteAnalysisFn: vi.fn(),
+	blastNuvsFn: vi.fn(),
+};
+
+/**
+ * Sets up findAnalyses to resolve with a single page of the given analyses.
+ *
+ * @param analyses - the analyses on the page
+ */
+export function mockFindAnalyses(analyses: AnalysisMinimal[]): Mock {
+	analysisServerFnMocks.findAnalysesFn.mockResolvedValue({
+		page: 1,
+		pageCount: 1,
+		perPage: 25,
+		totalCount: analyses.length,
+		foundCount: analyses.length,
+		items: analyses,
+	});
+
+	return analysisServerFnMocks.findAnalysesFn;
+}
+
+/**
+ * Sets up createAnalysis to resolve with the given analysis.
+ *
+ * @param analysis - the analysis the mutation returns
+ */
+export function mockCreateAnalysis(analysis: AnalysisMinimal): Mock {
+	analysisServerFnMocks.createAnalysisFn.mockResolvedValue(analysis);
+
+	return analysisServerFnMocks.createAnalysisFn;
+}
+
+/** Sets up blastNuvs to resolve with a freshly created, unfinished BLAST. */
+export function mockBlastNuvs(sequenceIndex: number): Mock {
+	analysisServerFnMocks.blastNuvsFn.mockResolvedValue({
+		id: 1,
+		createdAt: new Date().toISOString(),
+		updatedAt: new Date().toISOString(),
+		lastCheckedAt: new Date().toISOString(),
+		error: null,
+		interval: 3,
+		ready: false,
+		rid: null,
+		result: null,
+		sequenceIndex,
+	});
+
+	return analysisServerFnMocks.blastNuvsFn;
+}

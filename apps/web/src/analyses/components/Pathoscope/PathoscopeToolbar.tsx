@@ -79,14 +79,10 @@ export function PathoscopeToolbar({ analysisId }: PathoscopeToolbarProps) {
 					</span>
 				</DropdownButton>
 				<DropdownMenuContent>
-					<DropdownMenuDownload
-						href={`/api/analyses/documents/${analysisId}.csv`}
-					>
+					<DropdownMenuDownload href={`/analyses/documents/${analysisId}.csv`}>
 						<Icon icon={File} /> CSV
 					</DropdownMenuDownload>
-					<DropdownMenuDownload
-						href={`/api/analyses/documents/${analysisId}.xlsx`}
-					>
+					<DropdownMenuDownload href={`/analyses/documents/${analysisId}.xlsx`}>
 						<Icon icon={File} /> Excel
 					</DropdownMenuDownload>
 				</DropdownMenuContent>

@@ -3,9 +3,11 @@ import { toThousand } from "@app/format";
 import Box from "@base/Box";
 import Label from "@base/Label";
 import Link from "@base/Link";
-import type { IndexNested } from "@indexes/types";
-import type { ReferenceNested } from "@references/types";
 import type { SubtractionNested } from "@subtraction/types";
+import type {
+	AnalysisIndexNested,
+	AnalysisReferenceNested,
+} from "@virtool/contracts";
 import { Bars, type BarsItem } from "../Viewer/Bars";
 
 const percentFormatter = new Intl.NumberFormat("en-US", {
@@ -15,8 +17,8 @@ const percentFormatter = new Intl.NumberFormat("en-US", {
 });
 
 type AnalysisMappingReferenceTitleProps = {
-	index: IndexNested;
-	reference: ReferenceNested;
+	index: AnalysisIndexNested;
+	reference: AnalysisReferenceNested;
 };
 
 export function AnalysisMappingReferenceTitle({

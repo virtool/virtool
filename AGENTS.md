@@ -192,6 +192,9 @@ alias and are reached through the catch-all `@/*`, which maps to
 - **Radix UI** primitives for accessible components
 - **CVA** (`class-variance-authority`) for component variants
 - **Lucide React** for icons
+- **exceljs** for the analysis XLSX export — server-only, and reached through a
+  dynamic `import()` inside `@server/analyses/export` so it stays out of every
+  other bundle
 
 ### The React Compiler memoizes render, so render must be pure
 
@@ -393,6 +396,14 @@ A `functions.ts` validator builds on the shared primitives in
 already has a schema for extends that schema
 (`referenceIdSchema.extend({ ... })`) instead of re-declaring the field.
 
+A server function's return type is checked for serializability, and
+`unknown` fails that check — so a payload this side does not interpret (a
+workflow's `results` blob, a BLAST response) is typed `JsonObject` /
+`JsonValue` from `@virtool/contracts`, not `Record<string, unknown>`. The
+values genuinely come out of a JSONB column, so the narrowing is honest;
+assert it once at the boundary rather than threading the type through
+every internal helper.
+
 A handler maps an expected outcome to an HTTP status with
 `setResponseStatus`, then throws `ClientError` (`@server/errors`) — never
 a plain `Error` — for any deliberate 4xx (a bad login, a missing record,
@@ -504,6 +515,14 @@ middleware runs on a route, the handler enforces the floor itself:
 `requireAuthenticatedRequest` then a `hasPermission(session, "upload_file")`
 check. Don't fold it back into a server function — the RPC client uses `fetch`
 and would lose progress.
+
+The analysis CSV/XLSX export (`routes/analyses.documents.$document.ts` →
+`@server/analyses/download`) is a raw route for the mirror-image reason: the
+client reaches it with a plain `<a href>`, so the browser has to receive a real
+response carrying a `Content-Disposition` header, which an RPC call cannot
+produce. Its `$document` param is the `{id}.{extension}` segment. It too
+enforces its own floor — `requireAuthenticatedRequest`, then the **read** right
+on the analysis's parent sample.
 
 Raw routes are also the only endpoints reachable with an **API key**.
 `requireAuthenticatedRequest` accepts either the session cookie pair or an HTTP

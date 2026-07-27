@@ -9,86 +9,71 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
-import { Route as UploadsRouteImport } from './routes/uploads'
-import { Route as SetupRouteImport } from './routes/setup'
-import { Route as MonitoringRouteImport } from './routes/monitoring'
-import { Route as LoginRouteImport } from './routes/login'
-import { Route as EventsRouteImport } from './routes/events'
 import { Route as AuthenticatedRouteImport } from './routes/_authenticated'
+import { Route as EventsRouteImport } from './routes/events'
+import { Route as LoginRouteImport } from './routes/login'
+import { Route as MonitoringRouteImport } from './routes/monitoring'
+import { Route as SetupRouteImport } from './routes/setup'
+import { Route as UploadsRouteImport } from './routes/uploads'
 import { Route as AuthenticatedIndexRouteImport } from './routes/_authenticated/index'
-import { Route as HealthReadyRouteImport } from './routes/health/ready'
-import { Route as HealthLiveRouteImport } from './routes/health/live'
-import { Route as AuthenticatedSubtractionsRouteImport } from './routes/_authenticated/subtractions'
-import { Route as AuthenticatedSamplesRouteImport } from './routes/_authenticated/samples'
-import { Route as AuthenticatedJobsRouteImport } from './routes/_authenticated/jobs'
-import { Route as AuthenticatedHmmsRouteImport } from './routes/_authenticated/hmms'
 import { Route as AuthenticatedAccountRouteImport } from './routes/_authenticated/account'
-import { Route as AuthenticatedRefsRouteRouteImport } from './routes/_authenticated/refs/route'
 import { Route as AuthenticatedAdministrationRouteRouteImport } from './routes/_authenticated/administration/route'
-import { Route as AuthenticatedSubtractionsIndexRouteImport } from './routes/_authenticated/subtractions/index'
-import { Route as AuthenticatedSamplesIndexRouteImport } from './routes/_authenticated/samples/index'
-import { Route as AuthenticatedRefsIndexRouteImport } from './routes/_authenticated/refs/index'
-import { Route as AuthenticatedJobsIndexRouteImport } from './routes/_authenticated/jobs/index'
-import { Route as AuthenticatedHmmsIndexRouteImport } from './routes/_authenticated/hmms/index'
-import { Route as AuthenticatedAdministrationIndexRouteImport } from './routes/_authenticated/administration/index'
+import { Route as AuthenticatedHmmsRouteImport } from './routes/_authenticated/hmms'
+import { Route as AuthenticatedJobsRouteImport } from './routes/_authenticated/jobs'
+import { Route as AuthenticatedRefsRouteRouteImport } from './routes/_authenticated/refs/route'
+import { Route as AuthenticatedSamplesRouteImport } from './routes/_authenticated/samples'
+import { Route as AuthenticatedSubtractionsRouteImport } from './routes/_authenticated/subtractions'
+import { Route as HealthLiveRouteImport } from './routes/health/live'
+import { Route as HealthReadyRouteImport } from './routes/health/ready'
 import { Route as AuthenticatedAccountIndexRouteImport } from './routes/_authenticated/account/index'
-import { Route as AuthenticatedSubtractionsFilesRouteImport } from './routes/_authenticated/subtractions/files'
-import { Route as AuthenticatedSubtractionsSubtractionIdRouteImport } from './routes/_authenticated/subtractions/$subtractionId'
-import { Route as AuthenticatedSamplesSettingsRouteImport } from './routes/_authenticated/samples/settings'
-import { Route as AuthenticatedSamplesLabelsRouteImport } from './routes/_authenticated/samples/labels'
-import { Route as AuthenticatedSamplesFilesRouteImport } from './routes/_authenticated/samples/files'
-import { Route as AuthenticatedSamplesCreateRouteImport } from './routes/_authenticated/samples/create'
-import { Route as AuthenticatedSamplesSampleIdRouteImport } from './routes/_authenticated/samples/$sampleId'
-import { Route as AuthenticatedRefsSettingsRouteImport } from './routes/_authenticated/refs/settings'
-import { Route as AuthenticatedJobsJobIdRouteImport } from './routes/_authenticated/jobs/$jobId'
-import { Route as AuthenticatedHmmsHmmIdRouteImport } from './routes/_authenticated/hmms/$hmmId'
-import { Route as AuthenticatedAdministrationSettingsRouteImport } from './routes/_authenticated/administration/settings'
-import { Route as AuthenticatedAdministrationGroupsRouteImport } from './routes/_authenticated/administration/groups'
-import { Route as AuthenticatedAccountProfileRouteImport } from './routes/_authenticated/account/profile'
 import { Route as AuthenticatedAccountApiRouteImport } from './routes/_authenticated/account/api'
+import { Route as AuthenticatedAccountProfileRouteImport } from './routes/_authenticated/account/profile'
+import { Route as AuthenticatedAdministrationIndexRouteImport } from './routes/_authenticated/administration/index'
+import { Route as AuthenticatedAdministrationGroupsRouteImport } from './routes/_authenticated/administration/groups'
+import { Route as AuthenticatedAdministrationSettingsRouteImport } from './routes/_authenticated/administration/settings'
+import { Route as AuthenticatedHmmsIndexRouteImport } from './routes/_authenticated/hmms/index'
+import { Route as AuthenticatedHmmsHmmIdRouteImport } from './routes/_authenticated/hmms/$hmmId'
+import { Route as AuthenticatedJobsIndexRouteImport } from './routes/_authenticated/jobs/index'
+import { Route as AuthenticatedJobsJobIdRouteImport } from './routes/_authenticated/jobs/$jobId'
+import { Route as AuthenticatedRefsIndexRouteImport } from './routes/_authenticated/refs/index'
 import { Route as AuthenticatedRefsRefIdRouteRouteImport } from './routes/_authenticated/refs/$refId/route'
-import { Route as AuthenticatedSamplesSampleIdIndexRouteImport } from './routes/_authenticated/samples/$sampleId/index'
-import { Route as AuthenticatedRefsRefIdIndexRouteImport } from './routes/_authenticated/refs/$refId/index'
+import { Route as AuthenticatedRefsSettingsRouteImport } from './routes/_authenticated/refs/settings'
+import { Route as AuthenticatedSamplesIndexRouteImport } from './routes/_authenticated/samples/index'
+import { Route as AuthenticatedSamplesSampleIdRouteImport } from './routes/_authenticated/samples/$sampleId'
+import { Route as AuthenticatedSamplesCreateRouteImport } from './routes/_authenticated/samples/create'
+import { Route as AuthenticatedSamplesFilesRouteImport } from './routes/_authenticated/samples/files'
+import { Route as AuthenticatedSamplesLabelsRouteImport } from './routes/_authenticated/samples/labels'
+import { Route as AuthenticatedSamplesSettingsRouteImport } from './routes/_authenticated/samples/settings'
+import { Route as AuthenticatedSubtractionsIndexRouteImport } from './routes/_authenticated/subtractions/index'
+import { Route as AuthenticatedSubtractionsSubtractionIdRouteImport } from './routes/_authenticated/subtractions/$subtractionId'
+import { Route as AuthenticatedSubtractionsFilesRouteImport } from './routes/_authenticated/subtractions/files'
+import { Route as AnalysesDocumentsDocumentRouteImport } from './routes/analyses.documents.$document'
 import { Route as AuthenticatedAdministrationUsersIndexRouteImport } from './routes/_authenticated/administration/users/index'
-import { Route as AuthenticatedSamplesSampleIdRightsRouteImport } from './routes/_authenticated/samples/$sampleId/rights'
-import { Route as AuthenticatedSamplesSampleIdQualityRouteImport } from './routes/_authenticated/samples/$sampleId/quality'
-import { Route as AuthenticatedSamplesSampleIdGeneralRouteImport } from './routes/_authenticated/samples/$sampleId/general'
-import { Route as AuthenticatedSamplesSampleIdFilesRouteImport } from './routes/_authenticated/samples/$sampleId/files'
-import { Route as AuthenticatedSamplesSampleIdAnalysesRouteImport } from './routes/_authenticated/samples/$sampleId/analyses'
-import { Route as AuthenticatedRefsRefIdSettingsRouteImport } from './routes/_authenticated/refs/$refId/settings'
-import { Route as AuthenticatedRefsRefIdManageRouteImport } from './routes/_authenticated/refs/$refId/manage'
 import { Route as AuthenticatedAdministrationUsersUserIdRouteImport } from './routes/_authenticated/administration/users/$userId'
-import { Route as AuthenticatedSamplesSampleIdAnalysesIndexRouteImport } from './routes/_authenticated/samples/$sampleId/analyses/index'
-import { Route as AuthenticatedRefsRefIdOtusIndexRouteImport } from './routes/_authenticated/refs/$refId/otus/index'
+import { Route as AuthenticatedRefsRefIdIndexRouteImport } from './routes/_authenticated/refs/$refId/index'
+import { Route as AuthenticatedRefsRefIdManageRouteImport } from './routes/_authenticated/refs/$refId/manage'
+import { Route as AuthenticatedRefsRefIdSettingsRouteImport } from './routes/_authenticated/refs/$refId/settings'
+import { Route as AuthenticatedSamplesSampleIdIndexRouteImport } from './routes/_authenticated/samples/$sampleId/index'
+import { Route as AuthenticatedSamplesSampleIdAnalysesRouteImport } from './routes/_authenticated/samples/$sampleId/analyses'
+import { Route as AuthenticatedSamplesSampleIdFilesRouteImport } from './routes/_authenticated/samples/$sampleId/files'
+import { Route as AuthenticatedSamplesSampleIdGeneralRouteImport } from './routes/_authenticated/samples/$sampleId/general'
+import { Route as AuthenticatedSamplesSampleIdQualityRouteImport } from './routes/_authenticated/samples/$sampleId/quality'
+import { Route as AuthenticatedSamplesSampleIdRightsRouteImport } from './routes/_authenticated/samples/$sampleId/rights'
 import { Route as AuthenticatedRefsRefIdIndexesIndexRouteImport } from './routes/_authenticated/refs/$refId/indexes/index'
-import { Route as AuthenticatedSamplesSampleIdAnalysesAnalysisIdRouteImport } from './routes/_authenticated/samples/$sampleId/analyses/$analysisId'
 import { Route as AuthenticatedRefsRefIdIndexesIndexIdRouteImport } from './routes/_authenticated/refs/$refId/indexes/$indexId'
+import { Route as AuthenticatedRefsRefIdOtusIndexRouteImport } from './routes/_authenticated/refs/$refId/otus/index'
 import { Route as AuthenticatedRefsRefIdOtusOtuIdRouteRouteImport } from './routes/_authenticated/refs/$refId/otus/$otuId/route'
+import { Route as AuthenticatedSamplesSampleIdAnalysesIndexRouteImport } from './routes/_authenticated/samples/$sampleId/analyses/index'
+import { Route as AuthenticatedSamplesSampleIdAnalysesAnalysisIdRouteImport } from './routes/_authenticated/samples/$sampleId/analyses/$analysisId'
 import { Route as AuthenticatedRefsRefIdOtusOtuIdIndexRouteImport } from './routes/_authenticated/refs/$refId/otus/$otuId/index'
-import { Route as AuthenticatedRefsRefIdOtusOtuIdSegmentsRouteImport } from './routes/_authenticated/refs/$refId/otus/$otuId/segments'
 import { Route as AuthenticatedRefsRefIdOtusOtuIdHistoryRouteImport } from './routes/_authenticated/refs/$refId/otus/$otuId/history'
 import { Route as AuthenticatedRefsRefIdOtusOtuIdIsolatesRouteRouteImport } from './routes/_authenticated/refs/$refId/otus/$otuId/isolates/route'
+import { Route as AuthenticatedRefsRefIdOtusOtuIdSegmentsRouteImport } from './routes/_authenticated/refs/$refId/otus/$otuId/segments'
 import { Route as AuthenticatedRefsRefIdOtusOtuIdIsolatesIndexRouteImport } from './routes/_authenticated/refs/$refId/otus/$otuId/isolates/index'
 import { Route as AuthenticatedRefsRefIdOtusOtuIdIsolatesIsolateIdRouteImport } from './routes/_authenticated/refs/$refId/otus/$otuId/isolates/$isolateId'
 
-const UploadsRoute = UploadsRouteImport.update({
-  id: '/uploads',
-  path: '/uploads',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const SetupRoute = SetupRouteImport.update({
-  id: '/setup',
-  path: '/setup',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const MonitoringRoute = MonitoringRouteImport.update({
-  id: '/monitoring',
-  path: '/monitoring',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const LoginRoute = LoginRouteImport.update({
-  id: '/login',
-  path: '/login',
+const AuthenticatedRoute = AuthenticatedRouteImport.update({
+  id: '/_authenticated',
   getParentRoute: () => rootRouteImport,
 } as any)
 const EventsRoute = EventsRouteImport.update({
@@ -96,8 +81,24 @@ const EventsRoute = EventsRouteImport.update({
   path: '/events',
   getParentRoute: () => rootRouteImport,
 } as any)
-const AuthenticatedRoute = AuthenticatedRouteImport.update({
-  id: '/_authenticated',
+const LoginRoute = LoginRouteImport.update({
+  id: '/login',
+  path: '/login',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const MonitoringRoute = MonitoringRouteImport.update({
+  id: '/monitoring',
+  path: '/monitoring',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SetupRoute = SetupRouteImport.update({
+  id: '/setup',
+  path: '/setup',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const UploadsRoute = UploadsRouteImport.update({
+  id: '/uploads',
+  path: '/uploads',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AuthenticatedIndexRoute = AuthenticatedIndexRouteImport.update({
@@ -105,45 +106,9 @@ const AuthenticatedIndexRoute = AuthenticatedIndexRouteImport.update({
   path: '/',
   getParentRoute: () => AuthenticatedRoute,
 } as any)
-const HealthReadyRoute = HealthReadyRouteImport.update({
-  id: '/health/ready',
-  path: '/health/ready',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const HealthLiveRoute = HealthLiveRouteImport.update({
-  id: '/health/live',
-  path: '/health/live',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const AuthenticatedSubtractionsRoute =
-  AuthenticatedSubtractionsRouteImport.update({
-    id: '/subtractions',
-    path: '/subtractions',
-    getParentRoute: () => AuthenticatedRoute,
-  } as any)
-const AuthenticatedSamplesRoute = AuthenticatedSamplesRouteImport.update({
-  id: '/samples',
-  path: '/samples',
-  getParentRoute: () => AuthenticatedRoute,
-} as any)
-const AuthenticatedJobsRoute = AuthenticatedJobsRouteImport.update({
-  id: '/jobs',
-  path: '/jobs',
-  getParentRoute: () => AuthenticatedRoute,
-} as any)
-const AuthenticatedHmmsRoute = AuthenticatedHmmsRouteImport.update({
-  id: '/hmms',
-  path: '/hmms',
-  getParentRoute: () => AuthenticatedRoute,
-} as any)
 const AuthenticatedAccountRoute = AuthenticatedAccountRouteImport.update({
   id: '/account',
   path: '/account',
-  getParentRoute: () => AuthenticatedRoute,
-} as any)
-const AuthenticatedRefsRouteRoute = AuthenticatedRefsRouteRouteImport.update({
-  id: '/refs',
-  path: '/refs',
   getParentRoute: () => AuthenticatedRoute,
 } as any)
 const AuthenticatedAdministrationRouteRoute =
@@ -152,107 +117,63 @@ const AuthenticatedAdministrationRouteRoute =
     path: '/administration',
     getParentRoute: () => AuthenticatedRoute,
   } as any)
-const AuthenticatedSubtractionsIndexRoute =
-  AuthenticatedSubtractionsIndexRouteImport.update({
-    id: '/',
-    path: '/',
-    getParentRoute: () => AuthenticatedSubtractionsRoute,
-  } as any)
-const AuthenticatedSamplesIndexRoute =
-  AuthenticatedSamplesIndexRouteImport.update({
-    id: '/',
-    path: '/',
-    getParentRoute: () => AuthenticatedSamplesRoute,
-  } as any)
-const AuthenticatedRefsIndexRoute = AuthenticatedRefsIndexRouteImport.update({
-  id: '/',
-  path: '/',
-  getParentRoute: () => AuthenticatedRefsRouteRoute,
+const AuthenticatedHmmsRoute = AuthenticatedHmmsRouteImport.update({
+  id: '/hmms',
+  path: '/hmms',
+  getParentRoute: () => AuthenticatedRoute,
 } as any)
-const AuthenticatedJobsIndexRoute = AuthenticatedJobsIndexRouteImport.update({
-  id: '/',
-  path: '/',
-  getParentRoute: () => AuthenticatedJobsRoute,
+const AuthenticatedJobsRoute = AuthenticatedJobsRouteImport.update({
+  id: '/jobs',
+  path: '/jobs',
+  getParentRoute: () => AuthenticatedRoute,
 } as any)
-const AuthenticatedHmmsIndexRoute = AuthenticatedHmmsIndexRouteImport.update({
-  id: '/',
-  path: '/',
-  getParentRoute: () => AuthenticatedHmmsRoute,
+const AuthenticatedRefsRouteRoute = AuthenticatedRefsRouteRouteImport.update({
+  id: '/refs',
+  path: '/refs',
+  getParentRoute: () => AuthenticatedRoute,
 } as any)
-const AuthenticatedAdministrationIndexRoute =
-  AuthenticatedAdministrationIndexRouteImport.update({
-    id: '/',
-    path: '/',
-    getParentRoute: () => AuthenticatedAdministrationRouteRoute,
+const AuthenticatedSamplesRoute = AuthenticatedSamplesRouteImport.update({
+  id: '/samples',
+  path: '/samples',
+  getParentRoute: () => AuthenticatedRoute,
+} as any)
+const AuthenticatedSubtractionsRoute =
+  AuthenticatedSubtractionsRouteImport.update({
+    id: '/subtractions',
+    path: '/subtractions',
+    getParentRoute: () => AuthenticatedRoute,
   } as any)
+const HealthLiveRoute = HealthLiveRouteImport.update({
+  id: '/health/live',
+  path: '/health/live',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const HealthReadyRoute = HealthReadyRouteImport.update({
+  id: '/health/ready',
+  path: '/health/ready',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AuthenticatedAccountIndexRoute =
   AuthenticatedAccountIndexRouteImport.update({
     id: '/',
     path: '/',
     getParentRoute: () => AuthenticatedAccountRoute,
   } as any)
-const AuthenticatedSubtractionsFilesRoute =
-  AuthenticatedSubtractionsFilesRouteImport.update({
-    id: '/files',
-    path: '/files',
-    getParentRoute: () => AuthenticatedSubtractionsRoute,
-  } as any)
-const AuthenticatedSubtractionsSubtractionIdRoute =
-  AuthenticatedSubtractionsSubtractionIdRouteImport.update({
-    id: '/$subtractionId',
-    path: '/$subtractionId',
-    getParentRoute: () => AuthenticatedSubtractionsRoute,
-  } as any)
-const AuthenticatedSamplesSettingsRoute =
-  AuthenticatedSamplesSettingsRouteImport.update({
-    id: '/settings',
-    path: '/settings',
-    getParentRoute: () => AuthenticatedSamplesRoute,
-  } as any)
-const AuthenticatedSamplesLabelsRoute =
-  AuthenticatedSamplesLabelsRouteImport.update({
-    id: '/labels',
-    path: '/labels',
-    getParentRoute: () => AuthenticatedSamplesRoute,
-  } as any)
-const AuthenticatedSamplesFilesRoute =
-  AuthenticatedSamplesFilesRouteImport.update({
-    id: '/files',
-    path: '/files',
-    getParentRoute: () => AuthenticatedSamplesRoute,
-  } as any)
-const AuthenticatedSamplesCreateRoute =
-  AuthenticatedSamplesCreateRouteImport.update({
-    id: '/create',
-    path: '/create',
-    getParentRoute: () => AuthenticatedSamplesRoute,
-  } as any)
-const AuthenticatedSamplesSampleIdRoute =
-  AuthenticatedSamplesSampleIdRouteImport.update({
-    id: '/$sampleId',
-    path: '/$sampleId',
-    getParentRoute: () => AuthenticatedSamplesRoute,
-  } as any)
-const AuthenticatedRefsSettingsRoute =
-  AuthenticatedRefsSettingsRouteImport.update({
-    id: '/settings',
-    path: '/settings',
-    getParentRoute: () => AuthenticatedRefsRouteRoute,
-  } as any)
-const AuthenticatedJobsJobIdRoute = AuthenticatedJobsJobIdRouteImport.update({
-  id: '/$jobId',
-  path: '/$jobId',
-  getParentRoute: () => AuthenticatedJobsRoute,
+const AuthenticatedAccountApiRoute = AuthenticatedAccountApiRouteImport.update({
+  id: '/api',
+  path: '/api',
+  getParentRoute: () => AuthenticatedAccountRoute,
 } as any)
-const AuthenticatedHmmsHmmIdRoute = AuthenticatedHmmsHmmIdRouteImport.update({
-  id: '/$hmmId',
-  path: '/$hmmId',
-  getParentRoute: () => AuthenticatedHmmsRoute,
-} as any)
-const AuthenticatedAdministrationSettingsRoute =
-  AuthenticatedAdministrationSettingsRouteImport.update({
-    id: '/settings',
-    path: '/settings',
+const AuthenticatedAccountProfileRoute =
+  AuthenticatedAccountProfileRouteImport.update({
+    id: '/profile',
+    path: '/profile',
+    getParentRoute: () => AuthenticatedAccountRoute,
+  } as any)
+const AuthenticatedAdministrationIndexRoute =
+  AuthenticatedAdministrationIndexRouteImport.update({
+    id: '/',
+    path: '/',
     getParentRoute: () => AuthenticatedAdministrationRouteRoute,
   } as any)
 const AuthenticatedAdministrationGroupsRoute =
@@ -261,16 +182,36 @@ const AuthenticatedAdministrationGroupsRoute =
     path: '/groups',
     getParentRoute: () => AuthenticatedAdministrationRouteRoute,
   } as any)
-const AuthenticatedAccountProfileRoute =
-  AuthenticatedAccountProfileRouteImport.update({
-    id: '/profile',
-    path: '/profile',
-    getParentRoute: () => AuthenticatedAccountRoute,
+const AuthenticatedAdministrationSettingsRoute =
+  AuthenticatedAdministrationSettingsRouteImport.update({
+    id: '/settings',
+    path: '/settings',
+    getParentRoute: () => AuthenticatedAdministrationRouteRoute,
   } as any)
-const AuthenticatedAccountApiRoute = AuthenticatedAccountApiRouteImport.update({
-  id: '/api',
-  path: '/api',
-  getParentRoute: () => AuthenticatedAccountRoute,
+const AuthenticatedHmmsIndexRoute = AuthenticatedHmmsIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => AuthenticatedHmmsRoute,
+} as any)
+const AuthenticatedHmmsHmmIdRoute = AuthenticatedHmmsHmmIdRouteImport.update({
+  id: '/$hmmId',
+  path: '/$hmmId',
+  getParentRoute: () => AuthenticatedHmmsRoute,
+} as any)
+const AuthenticatedJobsIndexRoute = AuthenticatedJobsIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => AuthenticatedJobsRoute,
+} as any)
+const AuthenticatedJobsJobIdRoute = AuthenticatedJobsJobIdRouteImport.update({
+  id: '/$jobId',
+  path: '/$jobId',
+  getParentRoute: () => AuthenticatedJobsRoute,
+} as any)
+const AuthenticatedRefsIndexRoute = AuthenticatedRefsIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => AuthenticatedRefsRouteRoute,
 } as any)
 const AuthenticatedRefsRefIdRouteRoute =
   AuthenticatedRefsRefIdRouteRouteImport.update({
@@ -278,17 +219,71 @@ const AuthenticatedRefsRefIdRouteRoute =
     path: '/$refId',
     getParentRoute: () => AuthenticatedRefsRouteRoute,
   } as any)
-const AuthenticatedSamplesSampleIdIndexRoute =
-  AuthenticatedSamplesSampleIdIndexRouteImport.update({
-    id: '/',
-    path: '/',
-    getParentRoute: () => AuthenticatedSamplesSampleIdRoute,
+const AuthenticatedRefsSettingsRoute =
+  AuthenticatedRefsSettingsRouteImport.update({
+    id: '/settings',
+    path: '/settings',
+    getParentRoute: () => AuthenticatedRefsRouteRoute,
   } as any)
-const AuthenticatedRefsRefIdIndexRoute =
-  AuthenticatedRefsRefIdIndexRouteImport.update({
+const AuthenticatedSamplesIndexRoute =
+  AuthenticatedSamplesIndexRouteImport.update({
     id: '/',
     path: '/',
-    getParentRoute: () => AuthenticatedRefsRefIdRouteRoute,
+    getParentRoute: () => AuthenticatedSamplesRoute,
+  } as any)
+const AuthenticatedSamplesSampleIdRoute =
+  AuthenticatedSamplesSampleIdRouteImport.update({
+    id: '/$sampleId',
+    path: '/$sampleId',
+    getParentRoute: () => AuthenticatedSamplesRoute,
+  } as any)
+const AuthenticatedSamplesCreateRoute =
+  AuthenticatedSamplesCreateRouteImport.update({
+    id: '/create',
+    path: '/create',
+    getParentRoute: () => AuthenticatedSamplesRoute,
+  } as any)
+const AuthenticatedSamplesFilesRoute =
+  AuthenticatedSamplesFilesRouteImport.update({
+    id: '/files',
+    path: '/files',
+    getParentRoute: () => AuthenticatedSamplesRoute,
+  } as any)
+const AuthenticatedSamplesLabelsRoute =
+  AuthenticatedSamplesLabelsRouteImport.update({
+    id: '/labels',
+    path: '/labels',
+    getParentRoute: () => AuthenticatedSamplesRoute,
+  } as any)
+const AuthenticatedSamplesSettingsRoute =
+  AuthenticatedSamplesSettingsRouteImport.update({
+    id: '/settings',
+    path: '/settings',
+    getParentRoute: () => AuthenticatedSamplesRoute,
+  } as any)
+const AuthenticatedSubtractionsIndexRoute =
+  AuthenticatedSubtractionsIndexRouteImport.update({
+    id: '/',
+    path: '/',
+    getParentRoute: () => AuthenticatedSubtractionsRoute,
+  } as any)
+const AuthenticatedSubtractionsSubtractionIdRoute =
+  AuthenticatedSubtractionsSubtractionIdRouteImport.update({
+    id: '/$subtractionId',
+    path: '/$subtractionId',
+    getParentRoute: () => AuthenticatedSubtractionsRoute,
+  } as any)
+const AuthenticatedSubtractionsFilesRoute =
+  AuthenticatedSubtractionsFilesRouteImport.update({
+    id: '/files',
+    path: '/files',
+    getParentRoute: () => AuthenticatedSubtractionsRoute,
+  } as any)
+const AnalysesDocumentsDocumentRoute =
+  AnalysesDocumentsDocumentRouteImport.update({
+    id: '/analyses/documents/$document',
+    path: '/analyses/documents/$document',
+    getParentRoute: () => rootRouteImport,
   } as any)
 const AuthenticatedAdministrationUsersIndexRoute =
   AuthenticatedAdministrationUsersIndexRouteImport.update({
@@ -296,40 +291,16 @@ const AuthenticatedAdministrationUsersIndexRoute =
     path: '/users/',
     getParentRoute: () => AuthenticatedAdministrationRouteRoute,
   } as any)
-const AuthenticatedSamplesSampleIdRightsRoute =
-  AuthenticatedSamplesSampleIdRightsRouteImport.update({
-    id: '/rights',
-    path: '/rights',
-    getParentRoute: () => AuthenticatedSamplesSampleIdRoute,
+const AuthenticatedAdministrationUsersUserIdRoute =
+  AuthenticatedAdministrationUsersUserIdRouteImport.update({
+    id: '/users/$userId',
+    path: '/users/$userId',
+    getParentRoute: () => AuthenticatedAdministrationRouteRoute,
   } as any)
-const AuthenticatedSamplesSampleIdQualityRoute =
-  AuthenticatedSamplesSampleIdQualityRouteImport.update({
-    id: '/quality',
-    path: '/quality',
-    getParentRoute: () => AuthenticatedSamplesSampleIdRoute,
-  } as any)
-const AuthenticatedSamplesSampleIdGeneralRoute =
-  AuthenticatedSamplesSampleIdGeneralRouteImport.update({
-    id: '/general',
-    path: '/general',
-    getParentRoute: () => AuthenticatedSamplesSampleIdRoute,
-  } as any)
-const AuthenticatedSamplesSampleIdFilesRoute =
-  AuthenticatedSamplesSampleIdFilesRouteImport.update({
-    id: '/files',
-    path: '/files',
-    getParentRoute: () => AuthenticatedSamplesSampleIdRoute,
-  } as any)
-const AuthenticatedSamplesSampleIdAnalysesRoute =
-  AuthenticatedSamplesSampleIdAnalysesRouteImport.update({
-    id: '/analyses',
-    path: '/analyses',
-    getParentRoute: () => AuthenticatedSamplesSampleIdRoute,
-  } as any)
-const AuthenticatedRefsRefIdSettingsRoute =
-  AuthenticatedRefsRefIdSettingsRouteImport.update({
-    id: '/settings',
-    path: '/settings',
+const AuthenticatedRefsRefIdIndexRoute =
+  AuthenticatedRefsRefIdIndexRouteImport.update({
+    id: '/',
+    path: '/',
     getParentRoute: () => AuthenticatedRefsRefIdRouteRoute,
   } as any)
 const AuthenticatedRefsRefIdManageRoute =
@@ -338,23 +309,47 @@ const AuthenticatedRefsRefIdManageRoute =
     path: '/manage',
     getParentRoute: () => AuthenticatedRefsRefIdRouteRoute,
   } as any)
-const AuthenticatedAdministrationUsersUserIdRoute =
-  AuthenticatedAdministrationUsersUserIdRouteImport.update({
-    id: '/users/$userId',
-    path: '/users/$userId',
-    getParentRoute: () => AuthenticatedAdministrationRouteRoute,
+const AuthenticatedRefsRefIdSettingsRoute =
+  AuthenticatedRefsRefIdSettingsRouteImport.update({
+    id: '/settings',
+    path: '/settings',
+    getParentRoute: () => AuthenticatedRefsRefIdRouteRoute,
   } as any)
-const AuthenticatedSamplesSampleIdAnalysesIndexRoute =
-  AuthenticatedSamplesSampleIdAnalysesIndexRouteImport.update({
+const AuthenticatedSamplesSampleIdIndexRoute =
+  AuthenticatedSamplesSampleIdIndexRouteImport.update({
     id: '/',
     path: '/',
-    getParentRoute: () => AuthenticatedSamplesSampleIdAnalysesRoute,
+    getParentRoute: () => AuthenticatedSamplesSampleIdRoute,
   } as any)
-const AuthenticatedRefsRefIdOtusIndexRoute =
-  AuthenticatedRefsRefIdOtusIndexRouteImport.update({
-    id: '/otus/',
-    path: '/otus/',
-    getParentRoute: () => AuthenticatedRefsRefIdRouteRoute,
+const AuthenticatedSamplesSampleIdAnalysesRoute =
+  AuthenticatedSamplesSampleIdAnalysesRouteImport.update({
+    id: '/analyses',
+    path: '/analyses',
+    getParentRoute: () => AuthenticatedSamplesSampleIdRoute,
+  } as any)
+const AuthenticatedSamplesSampleIdFilesRoute =
+  AuthenticatedSamplesSampleIdFilesRouteImport.update({
+    id: '/files',
+    path: '/files',
+    getParentRoute: () => AuthenticatedSamplesSampleIdRoute,
+  } as any)
+const AuthenticatedSamplesSampleIdGeneralRoute =
+  AuthenticatedSamplesSampleIdGeneralRouteImport.update({
+    id: '/general',
+    path: '/general',
+    getParentRoute: () => AuthenticatedSamplesSampleIdRoute,
+  } as any)
+const AuthenticatedSamplesSampleIdQualityRoute =
+  AuthenticatedSamplesSampleIdQualityRouteImport.update({
+    id: '/quality',
+    path: '/quality',
+    getParentRoute: () => AuthenticatedSamplesSampleIdRoute,
+  } as any)
+const AuthenticatedSamplesSampleIdRightsRoute =
+  AuthenticatedSamplesSampleIdRightsRouteImport.update({
+    id: '/rights',
+    path: '/rights',
+    getParentRoute: () => AuthenticatedSamplesSampleIdRoute,
   } as any)
 const AuthenticatedRefsRefIdIndexesIndexRoute =
   AuthenticatedRefsRefIdIndexesIndexRouteImport.update({
@@ -362,16 +357,16 @@ const AuthenticatedRefsRefIdIndexesIndexRoute =
     path: '/indexes/',
     getParentRoute: () => AuthenticatedRefsRefIdRouteRoute,
   } as any)
-const AuthenticatedSamplesSampleIdAnalysesAnalysisIdRoute =
-  AuthenticatedSamplesSampleIdAnalysesAnalysisIdRouteImport.update({
-    id: '/$analysisId',
-    path: '/$analysisId',
-    getParentRoute: () => AuthenticatedSamplesSampleIdAnalysesRoute,
-  } as any)
 const AuthenticatedRefsRefIdIndexesIndexIdRoute =
   AuthenticatedRefsRefIdIndexesIndexIdRouteImport.update({
     id: '/indexes/$indexId',
     path: '/indexes/$indexId',
+    getParentRoute: () => AuthenticatedRefsRefIdRouteRoute,
+  } as any)
+const AuthenticatedRefsRefIdOtusIndexRoute =
+  AuthenticatedRefsRefIdOtusIndexRouteImport.update({
+    id: '/otus/',
+    path: '/otus/',
     getParentRoute: () => AuthenticatedRefsRefIdRouteRoute,
   } as any)
 const AuthenticatedRefsRefIdOtusOtuIdRouteRoute =
@@ -380,16 +375,22 @@ const AuthenticatedRefsRefIdOtusOtuIdRouteRoute =
     path: '/otus/$otuId',
     getParentRoute: () => AuthenticatedRefsRefIdRouteRoute,
   } as any)
+const AuthenticatedSamplesSampleIdAnalysesIndexRoute =
+  AuthenticatedSamplesSampleIdAnalysesIndexRouteImport.update({
+    id: '/',
+    path: '/',
+    getParentRoute: () => AuthenticatedSamplesSampleIdAnalysesRoute,
+  } as any)
+const AuthenticatedSamplesSampleIdAnalysesAnalysisIdRoute =
+  AuthenticatedSamplesSampleIdAnalysesAnalysisIdRouteImport.update({
+    id: '/$analysisId',
+    path: '/$analysisId',
+    getParentRoute: () => AuthenticatedSamplesSampleIdAnalysesRoute,
+  } as any)
 const AuthenticatedRefsRefIdOtusOtuIdIndexRoute =
   AuthenticatedRefsRefIdOtusOtuIdIndexRouteImport.update({
     id: '/',
     path: '/',
-    getParentRoute: () => AuthenticatedRefsRefIdOtusOtuIdRouteRoute,
-  } as any)
-const AuthenticatedRefsRefIdOtusOtuIdSegmentsRoute =
-  AuthenticatedRefsRefIdOtusOtuIdSegmentsRouteImport.update({
-    id: '/segments',
-    path: '/segments',
     getParentRoute: () => AuthenticatedRefsRefIdOtusOtuIdRouteRoute,
   } as any)
 const AuthenticatedRefsRefIdOtusOtuIdHistoryRoute =
@@ -402,6 +403,12 @@ const AuthenticatedRefsRefIdOtusOtuIdIsolatesRouteRoute =
   AuthenticatedRefsRefIdOtusOtuIdIsolatesRouteRouteImport.update({
     id: '/isolates',
     path: '/isolates',
+    getParentRoute: () => AuthenticatedRefsRefIdOtusOtuIdRouteRoute,
+  } as any)
+const AuthenticatedRefsRefIdOtusOtuIdSegmentsRoute =
+  AuthenticatedRefsRefIdOtusOtuIdSegmentsRouteImport.update({
+    id: '/segments',
+    path: '/segments',
     getParentRoute: () => AuthenticatedRefsRefIdOtusOtuIdRouteRoute,
   } as any)
 const AuthenticatedRefsRefIdOtusOtuIdIsolatesIndexRoute =
@@ -448,6 +455,7 @@ export interface FileRoutesByFullPath {
   '/samples/settings': typeof AuthenticatedSamplesSettingsRoute
   '/subtractions/$subtractionId': typeof AuthenticatedSubtractionsSubtractionIdRoute
   '/subtractions/files': typeof AuthenticatedSubtractionsFilesRoute
+  '/analyses/documents/$document': typeof AnalysesDocumentsDocumentRoute
   '/account/': typeof AuthenticatedAccountIndexRoute
   '/administration/': typeof AuthenticatedAdministrationIndexRoute
   '/hmms/': typeof AuthenticatedHmmsIndexRoute
@@ -501,6 +509,7 @@ export interface FileRoutesByTo {
   '/samples/settings': typeof AuthenticatedSamplesSettingsRoute
   '/subtractions/$subtractionId': typeof AuthenticatedSubtractionsSubtractionIdRoute
   '/subtractions/files': typeof AuthenticatedSubtractionsFilesRoute
+  '/analyses/documents/$document': typeof AnalysesDocumentsDocumentRoute
   '/account': typeof AuthenticatedAccountIndexRoute
   '/administration': typeof AuthenticatedAdministrationIndexRoute
   '/hmms': typeof AuthenticatedHmmsIndexRoute
@@ -562,6 +571,7 @@ export interface FileRoutesById {
   '/_authenticated/samples/settings': typeof AuthenticatedSamplesSettingsRoute
   '/_authenticated/subtractions/$subtractionId': typeof AuthenticatedSubtractionsSubtractionIdRoute
   '/_authenticated/subtractions/files': typeof AuthenticatedSubtractionsFilesRoute
+  '/analyses/documents/$document': typeof AnalysesDocumentsDocumentRoute
   '/_authenticated/account/': typeof AuthenticatedAccountIndexRoute
   '/_authenticated/administration/': typeof AuthenticatedAdministrationIndexRoute
   '/_authenticated/hmms/': typeof AuthenticatedHmmsIndexRoute
@@ -626,6 +636,7 @@ export interface FileRouteTypes {
     | '/samples/settings'
     | '/subtractions/$subtractionId'
     | '/subtractions/files'
+    | '/analyses/documents/$document'
     | '/account/'
     | '/administration/'
     | '/hmms/'
@@ -679,6 +690,7 @@ export interface FileRouteTypes {
     | '/samples/settings'
     | '/subtractions/$subtractionId'
     | '/subtractions/files'
+    | '/analyses/documents/$document'
     | '/account'
     | '/administration'
     | '/hmms'
@@ -739,6 +751,7 @@ export interface FileRouteTypes {
     | '/_authenticated/samples/settings'
     | '/_authenticated/subtractions/$subtractionId'
     | '/_authenticated/subtractions/files'
+    | '/analyses/documents/$document'
     | '/_authenticated/account/'
     | '/_authenticated/administration/'
     | '/_authenticated/hmms/'
@@ -780,36 +793,16 @@ export interface RootRouteChildren {
   UploadsRoute: typeof UploadsRoute
   HealthLiveRoute: typeof HealthLiveRoute
   HealthReadyRoute: typeof HealthReadyRoute
+  AnalysesDocumentsDocumentRoute: typeof AnalysesDocumentsDocumentRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
-    '/uploads': {
-      id: '/uploads'
-      path: '/uploads'
-      fullPath: '/uploads'
-      preLoaderRoute: typeof UploadsRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/setup': {
-      id: '/setup'
-      path: '/setup'
-      fullPath: '/setup'
-      preLoaderRoute: typeof SetupRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/monitoring': {
-      id: '/monitoring'
-      path: '/monitoring'
-      fullPath: '/monitoring'
-      preLoaderRoute: typeof MonitoringRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/login': {
-      id: '/login'
-      path: '/login'
-      fullPath: '/login'
-      preLoaderRoute: typeof LoginRouteImport
+    '/_authenticated': {
+      id: '/_authenticated'
+      path: ''
+      fullPath: '/'
+      preLoaderRoute: typeof AuthenticatedRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/events': {
@@ -819,11 +812,32 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof EventsRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/_authenticated': {
-      id: '/_authenticated'
-      path: ''
-      fullPath: '/'
-      preLoaderRoute: typeof AuthenticatedRouteImport
+    '/login': {
+      id: '/login'
+      path: '/login'
+      fullPath: '/login'
+      preLoaderRoute: typeof LoginRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/monitoring': {
+      id: '/monitoring'
+      path: '/monitoring'
+      fullPath: '/monitoring'
+      preLoaderRoute: typeof MonitoringRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/setup': {
+      id: '/setup'
+      path: '/setup'
+      fullPath: '/setup'
+      preLoaderRoute: typeof SetupRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/uploads': {
+      id: '/uploads'
+      path: '/uploads'
+      fullPath: '/uploads'
+      preLoaderRoute: typeof UploadsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/_authenticated/': {
@@ -833,60 +847,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedIndexRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
-    '/health/ready': {
-      id: '/health/ready'
-      path: '/health/ready'
-      fullPath: '/health/ready'
-      preLoaderRoute: typeof HealthReadyRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/health/live': {
-      id: '/health/live'
-      path: '/health/live'
-      fullPath: '/health/live'
-      preLoaderRoute: typeof HealthLiveRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/_authenticated/subtractions': {
-      id: '/_authenticated/subtractions'
-      path: '/subtractions'
-      fullPath: '/subtractions'
-      preLoaderRoute: typeof AuthenticatedSubtractionsRouteImport
-      parentRoute: typeof AuthenticatedRoute
-    }
-    '/_authenticated/samples': {
-      id: '/_authenticated/samples'
-      path: '/samples'
-      fullPath: '/samples'
-      preLoaderRoute: typeof AuthenticatedSamplesRouteImport
-      parentRoute: typeof AuthenticatedRoute
-    }
-    '/_authenticated/jobs': {
-      id: '/_authenticated/jobs'
-      path: '/jobs'
-      fullPath: '/jobs'
-      preLoaderRoute: typeof AuthenticatedJobsRouteImport
-      parentRoute: typeof AuthenticatedRoute
-    }
-    '/_authenticated/hmms': {
-      id: '/_authenticated/hmms'
-      path: '/hmms'
-      fullPath: '/hmms'
-      preLoaderRoute: typeof AuthenticatedHmmsRouteImport
-      parentRoute: typeof AuthenticatedRoute
-    }
     '/_authenticated/account': {
       id: '/_authenticated/account'
       path: '/account'
       fullPath: '/account'
       preLoaderRoute: typeof AuthenticatedAccountRouteImport
-      parentRoute: typeof AuthenticatedRoute
-    }
-    '/_authenticated/refs': {
-      id: '/_authenticated/refs'
-      path: '/refs'
-      fullPath: '/refs'
-      preLoaderRoute: typeof AuthenticatedRefsRouteRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
     '/_authenticated/administration': {
@@ -896,144 +861,60 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAdministrationRouteRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
-    '/_authenticated/subtractions/': {
-      id: '/_authenticated/subtractions/'
-      path: '/'
-      fullPath: '/subtractions/'
-      preLoaderRoute: typeof AuthenticatedSubtractionsIndexRouteImport
-      parentRoute: typeof AuthenticatedSubtractionsRoute
+    '/_authenticated/hmms': {
+      id: '/_authenticated/hmms'
+      path: '/hmms'
+      fullPath: '/hmms'
+      preLoaderRoute: typeof AuthenticatedHmmsRouteImport
+      parentRoute: typeof AuthenticatedRoute
     }
-    '/_authenticated/samples/': {
-      id: '/_authenticated/samples/'
-      path: '/'
-      fullPath: '/samples/'
-      preLoaderRoute: typeof AuthenticatedSamplesIndexRouteImport
-      parentRoute: typeof AuthenticatedSamplesRoute
+    '/_authenticated/jobs': {
+      id: '/_authenticated/jobs'
+      path: '/jobs'
+      fullPath: '/jobs'
+      preLoaderRoute: typeof AuthenticatedJobsRouteImport
+      parentRoute: typeof AuthenticatedRoute
     }
-    '/_authenticated/refs/': {
-      id: '/_authenticated/refs/'
-      path: '/'
-      fullPath: '/refs/'
-      preLoaderRoute: typeof AuthenticatedRefsIndexRouteImport
-      parentRoute: typeof AuthenticatedRefsRouteRoute
+    '/_authenticated/refs': {
+      id: '/_authenticated/refs'
+      path: '/refs'
+      fullPath: '/refs'
+      preLoaderRoute: typeof AuthenticatedRefsRouteRouteImport
+      parentRoute: typeof AuthenticatedRoute
     }
-    '/_authenticated/jobs/': {
-      id: '/_authenticated/jobs/'
-      path: '/'
-      fullPath: '/jobs/'
-      preLoaderRoute: typeof AuthenticatedJobsIndexRouteImport
-      parentRoute: typeof AuthenticatedJobsRoute
+    '/_authenticated/samples': {
+      id: '/_authenticated/samples'
+      path: '/samples'
+      fullPath: '/samples'
+      preLoaderRoute: typeof AuthenticatedSamplesRouteImport
+      parentRoute: typeof AuthenticatedRoute
     }
-    '/_authenticated/hmms/': {
-      id: '/_authenticated/hmms/'
-      path: '/'
-      fullPath: '/hmms/'
-      preLoaderRoute: typeof AuthenticatedHmmsIndexRouteImport
-      parentRoute: typeof AuthenticatedHmmsRoute
+    '/_authenticated/subtractions': {
+      id: '/_authenticated/subtractions'
+      path: '/subtractions'
+      fullPath: '/subtractions'
+      preLoaderRoute: typeof AuthenticatedSubtractionsRouteImport
+      parentRoute: typeof AuthenticatedRoute
     }
-    '/_authenticated/administration/': {
-      id: '/_authenticated/administration/'
-      path: '/'
-      fullPath: '/administration/'
-      preLoaderRoute: typeof AuthenticatedAdministrationIndexRouteImport
-      parentRoute: typeof AuthenticatedAdministrationRouteRoute
+    '/health/live': {
+      id: '/health/live'
+      path: '/health/live'
+      fullPath: '/health/live'
+      preLoaderRoute: typeof HealthLiveRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/health/ready': {
+      id: '/health/ready'
+      path: '/health/ready'
+      fullPath: '/health/ready'
+      preLoaderRoute: typeof HealthReadyRouteImport
+      parentRoute: typeof rootRouteImport
     }
     '/_authenticated/account/': {
       id: '/_authenticated/account/'
       path: '/'
       fullPath: '/account/'
       preLoaderRoute: typeof AuthenticatedAccountIndexRouteImport
-      parentRoute: typeof AuthenticatedAccountRoute
-    }
-    '/_authenticated/subtractions/files': {
-      id: '/_authenticated/subtractions/files'
-      path: '/files'
-      fullPath: '/subtractions/files'
-      preLoaderRoute: typeof AuthenticatedSubtractionsFilesRouteImport
-      parentRoute: typeof AuthenticatedSubtractionsRoute
-    }
-    '/_authenticated/subtractions/$subtractionId': {
-      id: '/_authenticated/subtractions/$subtractionId'
-      path: '/$subtractionId'
-      fullPath: '/subtractions/$subtractionId'
-      preLoaderRoute: typeof AuthenticatedSubtractionsSubtractionIdRouteImport
-      parentRoute: typeof AuthenticatedSubtractionsRoute
-    }
-    '/_authenticated/samples/settings': {
-      id: '/_authenticated/samples/settings'
-      path: '/settings'
-      fullPath: '/samples/settings'
-      preLoaderRoute: typeof AuthenticatedSamplesSettingsRouteImport
-      parentRoute: typeof AuthenticatedSamplesRoute
-    }
-    '/_authenticated/samples/labels': {
-      id: '/_authenticated/samples/labels'
-      path: '/labels'
-      fullPath: '/samples/labels'
-      preLoaderRoute: typeof AuthenticatedSamplesLabelsRouteImport
-      parentRoute: typeof AuthenticatedSamplesRoute
-    }
-    '/_authenticated/samples/files': {
-      id: '/_authenticated/samples/files'
-      path: '/files'
-      fullPath: '/samples/files'
-      preLoaderRoute: typeof AuthenticatedSamplesFilesRouteImport
-      parentRoute: typeof AuthenticatedSamplesRoute
-    }
-    '/_authenticated/samples/create': {
-      id: '/_authenticated/samples/create'
-      path: '/create'
-      fullPath: '/samples/create'
-      preLoaderRoute: typeof AuthenticatedSamplesCreateRouteImport
-      parentRoute: typeof AuthenticatedSamplesRoute
-    }
-    '/_authenticated/samples/$sampleId': {
-      id: '/_authenticated/samples/$sampleId'
-      path: '/$sampleId'
-      fullPath: '/samples/$sampleId'
-      preLoaderRoute: typeof AuthenticatedSamplesSampleIdRouteImport
-      parentRoute: typeof AuthenticatedSamplesRoute
-    }
-    '/_authenticated/refs/settings': {
-      id: '/_authenticated/refs/settings'
-      path: '/settings'
-      fullPath: '/refs/settings'
-      preLoaderRoute: typeof AuthenticatedRefsSettingsRouteImport
-      parentRoute: typeof AuthenticatedRefsRouteRoute
-    }
-    '/_authenticated/jobs/$jobId': {
-      id: '/_authenticated/jobs/$jobId'
-      path: '/$jobId'
-      fullPath: '/jobs/$jobId'
-      preLoaderRoute: typeof AuthenticatedJobsJobIdRouteImport
-      parentRoute: typeof AuthenticatedJobsRoute
-    }
-    '/_authenticated/hmms/$hmmId': {
-      id: '/_authenticated/hmms/$hmmId'
-      path: '/$hmmId'
-      fullPath: '/hmms/$hmmId'
-      preLoaderRoute: typeof AuthenticatedHmmsHmmIdRouteImport
-      parentRoute: typeof AuthenticatedHmmsRoute
-    }
-    '/_authenticated/administration/settings': {
-      id: '/_authenticated/administration/settings'
-      path: '/settings'
-      fullPath: '/administration/settings'
-      preLoaderRoute: typeof AuthenticatedAdministrationSettingsRouteImport
-      parentRoute: typeof AuthenticatedAdministrationRouteRoute
-    }
-    '/_authenticated/administration/groups': {
-      id: '/_authenticated/administration/groups'
-      path: '/groups'
-      fullPath: '/administration/groups'
-      preLoaderRoute: typeof AuthenticatedAdministrationGroupsRouteImport
-      parentRoute: typeof AuthenticatedAdministrationRouteRoute
-    }
-    '/_authenticated/account/profile': {
-      id: '/_authenticated/account/profile'
-      path: '/profile'
-      fullPath: '/account/profile'
-      preLoaderRoute: typeof AuthenticatedAccountProfileRouteImport
       parentRoute: typeof AuthenticatedAccountRoute
     }
     '/_authenticated/account/api': {
@@ -1043,6 +924,69 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAccountApiRouteImport
       parentRoute: typeof AuthenticatedAccountRoute
     }
+    '/_authenticated/account/profile': {
+      id: '/_authenticated/account/profile'
+      path: '/profile'
+      fullPath: '/account/profile'
+      preLoaderRoute: typeof AuthenticatedAccountProfileRouteImport
+      parentRoute: typeof AuthenticatedAccountRoute
+    }
+    '/_authenticated/administration/': {
+      id: '/_authenticated/administration/'
+      path: '/'
+      fullPath: '/administration/'
+      preLoaderRoute: typeof AuthenticatedAdministrationIndexRouteImport
+      parentRoute: typeof AuthenticatedAdministrationRouteRoute
+    }
+    '/_authenticated/administration/groups': {
+      id: '/_authenticated/administration/groups'
+      path: '/groups'
+      fullPath: '/administration/groups'
+      preLoaderRoute: typeof AuthenticatedAdministrationGroupsRouteImport
+      parentRoute: typeof AuthenticatedAdministrationRouteRoute
+    }
+    '/_authenticated/administration/settings': {
+      id: '/_authenticated/administration/settings'
+      path: '/settings'
+      fullPath: '/administration/settings'
+      preLoaderRoute: typeof AuthenticatedAdministrationSettingsRouteImport
+      parentRoute: typeof AuthenticatedAdministrationRouteRoute
+    }
+    '/_authenticated/hmms/': {
+      id: '/_authenticated/hmms/'
+      path: '/'
+      fullPath: '/hmms/'
+      preLoaderRoute: typeof AuthenticatedHmmsIndexRouteImport
+      parentRoute: typeof AuthenticatedHmmsRoute
+    }
+    '/_authenticated/hmms/$hmmId': {
+      id: '/_authenticated/hmms/$hmmId'
+      path: '/$hmmId'
+      fullPath: '/hmms/$hmmId'
+      preLoaderRoute: typeof AuthenticatedHmmsHmmIdRouteImport
+      parentRoute: typeof AuthenticatedHmmsRoute
+    }
+    '/_authenticated/jobs/': {
+      id: '/_authenticated/jobs/'
+      path: '/'
+      fullPath: '/jobs/'
+      preLoaderRoute: typeof AuthenticatedJobsIndexRouteImport
+      parentRoute: typeof AuthenticatedJobsRoute
+    }
+    '/_authenticated/jobs/$jobId': {
+      id: '/_authenticated/jobs/$jobId'
+      path: '/$jobId'
+      fullPath: '/jobs/$jobId'
+      preLoaderRoute: typeof AuthenticatedJobsJobIdRouteImport
+      parentRoute: typeof AuthenticatedJobsRoute
+    }
+    '/_authenticated/refs/': {
+      id: '/_authenticated/refs/'
+      path: '/'
+      fullPath: '/refs/'
+      preLoaderRoute: typeof AuthenticatedRefsIndexRouteImport
+      parentRoute: typeof AuthenticatedRefsRouteRoute
+    }
     '/_authenticated/refs/$refId': {
       id: '/_authenticated/refs/$refId'
       path: '/$refId'
@@ -1050,19 +994,82 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedRefsRefIdRouteRouteImport
       parentRoute: typeof AuthenticatedRefsRouteRoute
     }
-    '/_authenticated/samples/$sampleId/': {
-      id: '/_authenticated/samples/$sampleId/'
-      path: '/'
-      fullPath: '/samples/$sampleId/'
-      preLoaderRoute: typeof AuthenticatedSamplesSampleIdIndexRouteImport
-      parentRoute: typeof AuthenticatedSamplesSampleIdRoute
+    '/_authenticated/refs/settings': {
+      id: '/_authenticated/refs/settings'
+      path: '/settings'
+      fullPath: '/refs/settings'
+      preLoaderRoute: typeof AuthenticatedRefsSettingsRouteImport
+      parentRoute: typeof AuthenticatedRefsRouteRoute
     }
-    '/_authenticated/refs/$refId/': {
-      id: '/_authenticated/refs/$refId/'
+    '/_authenticated/samples/': {
+      id: '/_authenticated/samples/'
       path: '/'
-      fullPath: '/refs/$refId/'
-      preLoaderRoute: typeof AuthenticatedRefsRefIdIndexRouteImport
-      parentRoute: typeof AuthenticatedRefsRefIdRouteRoute
+      fullPath: '/samples/'
+      preLoaderRoute: typeof AuthenticatedSamplesIndexRouteImport
+      parentRoute: typeof AuthenticatedSamplesRoute
+    }
+    '/_authenticated/samples/$sampleId': {
+      id: '/_authenticated/samples/$sampleId'
+      path: '/$sampleId'
+      fullPath: '/samples/$sampleId'
+      preLoaderRoute: typeof AuthenticatedSamplesSampleIdRouteImport
+      parentRoute: typeof AuthenticatedSamplesRoute
+    }
+    '/_authenticated/samples/create': {
+      id: '/_authenticated/samples/create'
+      path: '/create'
+      fullPath: '/samples/create'
+      preLoaderRoute: typeof AuthenticatedSamplesCreateRouteImport
+      parentRoute: typeof AuthenticatedSamplesRoute
+    }
+    '/_authenticated/samples/files': {
+      id: '/_authenticated/samples/files'
+      path: '/files'
+      fullPath: '/samples/files'
+      preLoaderRoute: typeof AuthenticatedSamplesFilesRouteImport
+      parentRoute: typeof AuthenticatedSamplesRoute
+    }
+    '/_authenticated/samples/labels': {
+      id: '/_authenticated/samples/labels'
+      path: '/labels'
+      fullPath: '/samples/labels'
+      preLoaderRoute: typeof AuthenticatedSamplesLabelsRouteImport
+      parentRoute: typeof AuthenticatedSamplesRoute
+    }
+    '/_authenticated/samples/settings': {
+      id: '/_authenticated/samples/settings'
+      path: '/settings'
+      fullPath: '/samples/settings'
+      preLoaderRoute: typeof AuthenticatedSamplesSettingsRouteImport
+      parentRoute: typeof AuthenticatedSamplesRoute
+    }
+    '/_authenticated/subtractions/': {
+      id: '/_authenticated/subtractions/'
+      path: '/'
+      fullPath: '/subtractions/'
+      preLoaderRoute: typeof AuthenticatedSubtractionsIndexRouteImport
+      parentRoute: typeof AuthenticatedSubtractionsRoute
+    }
+    '/_authenticated/subtractions/$subtractionId': {
+      id: '/_authenticated/subtractions/$subtractionId'
+      path: '/$subtractionId'
+      fullPath: '/subtractions/$subtractionId'
+      preLoaderRoute: typeof AuthenticatedSubtractionsSubtractionIdRouteImport
+      parentRoute: typeof AuthenticatedSubtractionsRoute
+    }
+    '/_authenticated/subtractions/files': {
+      id: '/_authenticated/subtractions/files'
+      path: '/files'
+      fullPath: '/subtractions/files'
+      preLoaderRoute: typeof AuthenticatedSubtractionsFilesRouteImport
+      parentRoute: typeof AuthenticatedSubtractionsRoute
+    }
+    '/analyses/documents/$document': {
+      id: '/analyses/documents/$document'
+      path: '/analyses/documents/$document'
+      fullPath: '/analyses/documents/$document'
+      preLoaderRoute: typeof AnalysesDocumentsDocumentRouteImport
+      parentRoute: typeof rootRouteImport
     }
     '/_authenticated/administration/users/': {
       id: '/_authenticated/administration/users/'
@@ -1071,46 +1078,18 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAdministrationUsersIndexRouteImport
       parentRoute: typeof AuthenticatedAdministrationRouteRoute
     }
-    '/_authenticated/samples/$sampleId/rights': {
-      id: '/_authenticated/samples/$sampleId/rights'
-      path: '/rights'
-      fullPath: '/samples/$sampleId/rights'
-      preLoaderRoute: typeof AuthenticatedSamplesSampleIdRightsRouteImport
-      parentRoute: typeof AuthenticatedSamplesSampleIdRoute
+    '/_authenticated/administration/users/$userId': {
+      id: '/_authenticated/administration/users/$userId'
+      path: '/users/$userId'
+      fullPath: '/administration/users/$userId'
+      preLoaderRoute: typeof AuthenticatedAdministrationUsersUserIdRouteImport
+      parentRoute: typeof AuthenticatedAdministrationRouteRoute
     }
-    '/_authenticated/samples/$sampleId/quality': {
-      id: '/_authenticated/samples/$sampleId/quality'
-      path: '/quality'
-      fullPath: '/samples/$sampleId/quality'
-      preLoaderRoute: typeof AuthenticatedSamplesSampleIdQualityRouteImport
-      parentRoute: typeof AuthenticatedSamplesSampleIdRoute
-    }
-    '/_authenticated/samples/$sampleId/general': {
-      id: '/_authenticated/samples/$sampleId/general'
-      path: '/general'
-      fullPath: '/samples/$sampleId/general'
-      preLoaderRoute: typeof AuthenticatedSamplesSampleIdGeneralRouteImport
-      parentRoute: typeof AuthenticatedSamplesSampleIdRoute
-    }
-    '/_authenticated/samples/$sampleId/files': {
-      id: '/_authenticated/samples/$sampleId/files'
-      path: '/files'
-      fullPath: '/samples/$sampleId/files'
-      preLoaderRoute: typeof AuthenticatedSamplesSampleIdFilesRouteImport
-      parentRoute: typeof AuthenticatedSamplesSampleIdRoute
-    }
-    '/_authenticated/samples/$sampleId/analyses': {
-      id: '/_authenticated/samples/$sampleId/analyses'
-      path: '/analyses'
-      fullPath: '/samples/$sampleId/analyses'
-      preLoaderRoute: typeof AuthenticatedSamplesSampleIdAnalysesRouteImport
-      parentRoute: typeof AuthenticatedSamplesSampleIdRoute
-    }
-    '/_authenticated/refs/$refId/settings': {
-      id: '/_authenticated/refs/$refId/settings'
-      path: '/settings'
-      fullPath: '/refs/$refId/settings'
-      preLoaderRoute: typeof AuthenticatedRefsRefIdSettingsRouteImport
+    '/_authenticated/refs/$refId/': {
+      id: '/_authenticated/refs/$refId/'
+      path: '/'
+      fullPath: '/refs/$refId/'
+      preLoaderRoute: typeof AuthenticatedRefsRefIdIndexRouteImport
       parentRoute: typeof AuthenticatedRefsRefIdRouteRoute
     }
     '/_authenticated/refs/$refId/manage': {
@@ -1120,26 +1099,54 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedRefsRefIdManageRouteImport
       parentRoute: typeof AuthenticatedRefsRefIdRouteRoute
     }
-    '/_authenticated/administration/users/$userId': {
-      id: '/_authenticated/administration/users/$userId'
-      path: '/users/$userId'
-      fullPath: '/administration/users/$userId'
-      preLoaderRoute: typeof AuthenticatedAdministrationUsersUserIdRouteImport
-      parentRoute: typeof AuthenticatedAdministrationRouteRoute
-    }
-    '/_authenticated/samples/$sampleId/analyses/': {
-      id: '/_authenticated/samples/$sampleId/analyses/'
-      path: '/'
-      fullPath: '/samples/$sampleId/analyses/'
-      preLoaderRoute: typeof AuthenticatedSamplesSampleIdAnalysesIndexRouteImport
-      parentRoute: typeof AuthenticatedSamplesSampleIdAnalysesRoute
-    }
-    '/_authenticated/refs/$refId/otus/': {
-      id: '/_authenticated/refs/$refId/otus/'
-      path: '/otus'
-      fullPath: '/refs/$refId/otus/'
-      preLoaderRoute: typeof AuthenticatedRefsRefIdOtusIndexRouteImport
+    '/_authenticated/refs/$refId/settings': {
+      id: '/_authenticated/refs/$refId/settings'
+      path: '/settings'
+      fullPath: '/refs/$refId/settings'
+      preLoaderRoute: typeof AuthenticatedRefsRefIdSettingsRouteImport
       parentRoute: typeof AuthenticatedRefsRefIdRouteRoute
+    }
+    '/_authenticated/samples/$sampleId/': {
+      id: '/_authenticated/samples/$sampleId/'
+      path: '/'
+      fullPath: '/samples/$sampleId/'
+      preLoaderRoute: typeof AuthenticatedSamplesSampleIdIndexRouteImport
+      parentRoute: typeof AuthenticatedSamplesSampleIdRoute
+    }
+    '/_authenticated/samples/$sampleId/analyses': {
+      id: '/_authenticated/samples/$sampleId/analyses'
+      path: '/analyses'
+      fullPath: '/samples/$sampleId/analyses'
+      preLoaderRoute: typeof AuthenticatedSamplesSampleIdAnalysesRouteImport
+      parentRoute: typeof AuthenticatedSamplesSampleIdRoute
+    }
+    '/_authenticated/samples/$sampleId/files': {
+      id: '/_authenticated/samples/$sampleId/files'
+      path: '/files'
+      fullPath: '/samples/$sampleId/files'
+      preLoaderRoute: typeof AuthenticatedSamplesSampleIdFilesRouteImport
+      parentRoute: typeof AuthenticatedSamplesSampleIdRoute
+    }
+    '/_authenticated/samples/$sampleId/general': {
+      id: '/_authenticated/samples/$sampleId/general'
+      path: '/general'
+      fullPath: '/samples/$sampleId/general'
+      preLoaderRoute: typeof AuthenticatedSamplesSampleIdGeneralRouteImport
+      parentRoute: typeof AuthenticatedSamplesSampleIdRoute
+    }
+    '/_authenticated/samples/$sampleId/quality': {
+      id: '/_authenticated/samples/$sampleId/quality'
+      path: '/quality'
+      fullPath: '/samples/$sampleId/quality'
+      preLoaderRoute: typeof AuthenticatedSamplesSampleIdQualityRouteImport
+      parentRoute: typeof AuthenticatedSamplesSampleIdRoute
+    }
+    '/_authenticated/samples/$sampleId/rights': {
+      id: '/_authenticated/samples/$sampleId/rights'
+      path: '/rights'
+      fullPath: '/samples/$sampleId/rights'
+      preLoaderRoute: typeof AuthenticatedSamplesSampleIdRightsRouteImport
+      parentRoute: typeof AuthenticatedSamplesSampleIdRoute
     }
     '/_authenticated/refs/$refId/indexes/': {
       id: '/_authenticated/refs/$refId/indexes/'
@@ -1148,18 +1155,18 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedRefsRefIdIndexesIndexRouteImport
       parentRoute: typeof AuthenticatedRefsRefIdRouteRoute
     }
-    '/_authenticated/samples/$sampleId/analyses/$analysisId': {
-      id: '/_authenticated/samples/$sampleId/analyses/$analysisId'
-      path: '/$analysisId'
-      fullPath: '/samples/$sampleId/analyses/$analysisId'
-      preLoaderRoute: typeof AuthenticatedSamplesSampleIdAnalysesAnalysisIdRouteImport
-      parentRoute: typeof AuthenticatedSamplesSampleIdAnalysesRoute
-    }
     '/_authenticated/refs/$refId/indexes/$indexId': {
       id: '/_authenticated/refs/$refId/indexes/$indexId'
       path: '/indexes/$indexId'
       fullPath: '/refs/$refId/indexes/$indexId'
       preLoaderRoute: typeof AuthenticatedRefsRefIdIndexesIndexIdRouteImport
+      parentRoute: typeof AuthenticatedRefsRefIdRouteRoute
+    }
+    '/_authenticated/refs/$refId/otus/': {
+      id: '/_authenticated/refs/$refId/otus/'
+      path: '/otus'
+      fullPath: '/refs/$refId/otus/'
+      preLoaderRoute: typeof AuthenticatedRefsRefIdOtusIndexRouteImport
       parentRoute: typeof AuthenticatedRefsRefIdRouteRoute
     }
     '/_authenticated/refs/$refId/otus/$otuId': {
@@ -1169,18 +1176,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedRefsRefIdOtusOtuIdRouteRouteImport
       parentRoute: typeof AuthenticatedRefsRefIdRouteRoute
     }
+    '/_authenticated/samples/$sampleId/analyses/': {
+      id: '/_authenticated/samples/$sampleId/analyses/'
+      path: '/'
+      fullPath: '/samples/$sampleId/analyses/'
+      preLoaderRoute: typeof AuthenticatedSamplesSampleIdAnalysesIndexRouteImport
+      parentRoute: typeof AuthenticatedSamplesSampleIdAnalysesRoute
+    }
+    '/_authenticated/samples/$sampleId/analyses/$analysisId': {
+      id: '/_authenticated/samples/$sampleId/analyses/$analysisId'
+      path: '/$analysisId'
+      fullPath: '/samples/$sampleId/analyses/$analysisId'
+      preLoaderRoute: typeof AuthenticatedSamplesSampleIdAnalysesAnalysisIdRouteImport
+      parentRoute: typeof AuthenticatedSamplesSampleIdAnalysesRoute
+    }
     '/_authenticated/refs/$refId/otus/$otuId/': {
       id: '/_authenticated/refs/$refId/otus/$otuId/'
       path: '/'
       fullPath: '/refs/$refId/otus/$otuId/'
       preLoaderRoute: typeof AuthenticatedRefsRefIdOtusOtuIdIndexRouteImport
-      parentRoute: typeof AuthenticatedRefsRefIdOtusOtuIdRouteRoute
-    }
-    '/_authenticated/refs/$refId/otus/$otuId/segments': {
-      id: '/_authenticated/refs/$refId/otus/$otuId/segments'
-      path: '/segments'
-      fullPath: '/refs/$refId/otus/$otuId/segments'
-      preLoaderRoute: typeof AuthenticatedRefsRefIdOtusOtuIdSegmentsRouteImport
       parentRoute: typeof AuthenticatedRefsRefIdOtusOtuIdRouteRoute
     }
     '/_authenticated/refs/$refId/otus/$otuId/history': {
@@ -1195,6 +1209,13 @@ declare module '@tanstack/react-router' {
       path: '/isolates'
       fullPath: '/refs/$refId/otus/$otuId/isolates'
       preLoaderRoute: typeof AuthenticatedRefsRefIdOtusOtuIdIsolatesRouteRouteImport
+      parentRoute: typeof AuthenticatedRefsRefIdOtusOtuIdRouteRoute
+    }
+    '/_authenticated/refs/$refId/otus/$otuId/segments': {
+      id: '/_authenticated/refs/$refId/otus/$otuId/segments'
+      path: '/segments'
+      fullPath: '/refs/$refId/otus/$otuId/segments'
+      preLoaderRoute: typeof AuthenticatedRefsRefIdOtusOtuIdSegmentsRouteImport
       parentRoute: typeof AuthenticatedRefsRefIdOtusOtuIdRouteRoute
     }
     '/_authenticated/refs/$refId/otus/$otuId/isolates/': {
@@ -1497,6 +1518,7 @@ const rootRouteChildren: RootRouteChildren = {
   UploadsRoute: UploadsRoute,
   HealthLiveRoute: HealthLiveRoute,
   HealthReadyRoute: HealthReadyRoute,
+  AnalysesDocumentsDocumentRoute: AnalysesDocumentsDocumentRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

@@ -1,10 +1,10 @@
 import AnalysesList from "@analyses/components/AnalysisList";
 import { screen } from "@testing-library/react";
-import { mockApiGetAnalyses } from "@tests/api/analyses";
 import { createFakeAccount } from "@tests/fake/account";
 import { createFakeAnalysisMinimal } from "@tests/fake/analyses";
 import { createFakeHmmSearchResults } from "@tests/fake/hmm";
 import { createFakeSample } from "@tests/fake/samples";
+import { mockFindAnalyses } from "@tests/server-fn/analyses";
 import { mockFindHmms } from "@tests/server-fn/hmm";
 import { mockGetSample } from "@tests/server-fn/samples";
 import { mockGetAccount } from "@tests/server-fn/users";
@@ -17,7 +17,7 @@ describe("<AnalysesToolbar />", () => {
 
 	beforeEach(() => {
 		sample = createFakeSample();
-		mockApiGetAnalyses([
+		mockFindAnalyses([
 			createFakeAnalysisMinimal({ sample: { id: sample.id } }),
 		]);
 		mockFindHmms(createFakeHmmSearchResults());
