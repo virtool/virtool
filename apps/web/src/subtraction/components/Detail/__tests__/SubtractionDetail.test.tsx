@@ -44,7 +44,7 @@ describe("<SubtractionDetail />", () => {
 		const download = await screen.findByRole("link", { name: fastaName });
 		expect(download).toHaveAttribute(
 			"href",
-			`/api${subtraction.files[0]?.download_url}`,
+			subtraction.files[0]?.download_url,
 		);
 		expect(download).toHaveAttribute("download", fastaName);
 

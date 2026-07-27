@@ -524,6 +524,15 @@ produce. Its `$document` param is the `{id}.{extension}` segment. It too
 enforces its own floor — `requireAuthenticatedRequest`, then the **read** right
 on the analysis's parent sample.
 
+Subtraction file downloads
+(`routes/subtractions.$subtractionId.files.$filename.ts` →
+`@server/subtraction/download`) are a raw route for the same reason, and stream
+the bytes out of storage rather than buffering a multi-GB Bowtie2 index. Their
+floor is `requireAuthenticatedRequest` alone — subtractions carry no per-row
+rights. The filename is only ever composed into a storage key *after* it has
+matched a `subtraction_files` row, which is what keeps a URL param from
+traversing out of the prefix.
+
 The Prometheus scrape endpoint (`routes/metrics.ts` → `@server/metrics/handler`)
 is a raw route for the same reason as the upload: Prometheus speaks plain HTTP,
 not the generated RPC client. It enforces its own floor too — a bearer token

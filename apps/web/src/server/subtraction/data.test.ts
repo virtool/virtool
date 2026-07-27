@@ -363,6 +363,28 @@ describe("deleteSubtraction", () => {
 		expect(await db.select().from(legacySampleSubtractions)).toHaveLength(0);
 	});
 
+	// A subtraction migrated out of Mongo keeps its legacy slug as its storage
+	// prefix, so cleaning up under the integer id would orphan every byte.
+	it("clears storage under a migrated subtraction's legacy prefix", async () => {
+		const storage = new MemoryStorage();
+		const subtractionId = await seedSubtraction({ legacy_id: "arabidopsis 1" });
+
+		await storage.write(
+			"subtractions/arabidopsis_1/subtraction.fa.gz",
+			(async function* () {
+				yield new TextEncoder().encode("hello");
+			})(),
+		);
+
+		await deleteSubtraction(db, storage, subtractionId);
+
+		const remaining = [];
+		for await (const object of storage.list("subtractions/")) {
+			remaining.push(object.key);
+		}
+		expect(remaining).toEqual([]);
+	});
+
 	it("throws when the subtraction is already deleted", async () => {
 		const storage = new MemoryStorage();
 		const subtractionId = await seedSubtraction({ deleted: true });

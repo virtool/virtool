@@ -55,6 +55,18 @@ function normalizeSubtractionId(subtractionId: string): string {
 	return subtractionId.replaceAll(" ", "_");
 }
 
+/**
+ * The prefix segment a subtraction's files live under, fixed for its life.
+ * Mongo-migrated subtractions keep their legacy id; Postgres-native ones use
+ * the integer primary key.
+ */
+export function subtractionStorageId(
+	subtractionId: number,
+	legacyId: string | null,
+): string {
+	return legacyId || String(subtractionId);
+}
+
 /** Key for a subtraction file. */
 export function subtractionFileKey(
 	subtractionId: string,

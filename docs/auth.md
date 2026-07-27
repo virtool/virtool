@@ -153,7 +153,9 @@ Python's `authentication_middleware` branches the same way.
 **Only raw routes accept a key.** Server functions stay cookie-only:
 they are the app's own RPC transport, not a public API, and the
 generated client always sends cookies. The raw routes — `POST
-/uploads` and `/events` — are what a script can actually reach.
+/uploads`, `/events`, `GET /analyses/documents/{id}.{extension}` and
+`GET /subtractions/{id}/files/{filename}` — are what a script can
+actually reach.
 
 ### The key's permissions are a cap
 

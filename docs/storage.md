@@ -58,8 +58,8 @@ orphans whatever it writes.
 | `sampleFileKey(storageId, filename)` | `samples/{storageId}/{filename}` |
 | `samplePrefix(storageId)` | `samples/{storageId}/` |
 | `analysisPrefix(sampleStorageId, analysisLegacyId)` | `samples/{sampleStorageId}/analysis/{analysisLegacyId}/` |
-| `subtractionFileKey(id, filename)` | `subtractions/{id}/{filename}` |
-| `subtractionPrefix(id)` | `subtractions/{id}/` |
+| `subtractionFileKey(storageId, filename)` | `subtractions/{storageId}/{filename}` |
+| `subtractionPrefix(storageId)` | `subtractions/{storageId}/` |
 | `indexFileKey(indexId, filename)` | `indexes/{indexId}/{filename}` |
 | `indexPrefix(indexId)` | `indexes/{indexId}/` |
 | `cacheKey(uuid)` | `caches/v1/{uuid}` |
@@ -72,6 +72,11 @@ Two subtleties are load-bearing:
   `sampleStorageId(sampleId, legacyId)`, which returns the legacy Mongo id when
   the sample has one and the integer primary key otherwise. A sample keeps one
   prefix for life.
+- **Neither is a subtraction's.** `subtractionStorageId(subtractionId,
+  legacyId)` follows the same rule, and mirrors Python's
+  `_resolve_storage_id`. A subtraction is addressed by its integer id
+  everywhere else, so it is easy to reach for `String(id)` and silently orphan
+  every migrated subtraction's files.
 - **Subtraction ids may contain spaces**, and Python substitutes underscores
   when composing the key. `subtractionFileKey` and `subtractionPrefix` do the
   same. Never build a subtraction key by hand.

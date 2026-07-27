@@ -89,7 +89,7 @@ export default function SubtractionDetail() {
 						<a
 							className="font-medium"
 							download={fastaName}
-							href={`/api${fastaFile.download_url}`}
+							href={fastaFile.download_url}
 						>
 							{fastaName}
 						</a>

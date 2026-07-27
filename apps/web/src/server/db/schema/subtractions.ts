@@ -3,9 +3,9 @@
 // migrations from this side. Keep the columns in sync with
 // `../../../../../../virtool/virtool/subtractions/pg.py`.
 //
-// The `legacy_id` column (the Mongo `_id`) is intentionally omitted: every
-// subtraction served from this side is Postgres-native and keyed by its integer
-// id, so nothing here reads or writes it.
+// `legacy_id` (the Mongo `_id`) is null for Postgres-native subtractions. Every
+// endpoint addresses a subtraction by its integer id, but its files live under
+// the legacy id when it has one — see `subtractionStorageId`.
 
 import {
 	bigint,
@@ -31,6 +31,7 @@ export type SubtractionFileType = "fasta" | "bowtie2";
 
 export const subtractions = pgTable("subtractions", {
 	id: bigint("id", { mode: "number" }).primaryKey().generatedAlwaysAsIdentity(),
+	legacy_id: text("legacy_id").unique(),
 	name: text("name").notNull(),
 	nickname: text("nickname")
 		.$defaultFn(() => "")
