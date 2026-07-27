@@ -1,8 +1,6 @@
 import { endSession } from "@app/session";
 import Superagent, { type Request, type Response } from "superagent";
 
-export type { Response as ApiResponse } from "superagent";
-
 const agent = Superagent.agent();
 
 function prefixRequestUrl(request: Request) {
