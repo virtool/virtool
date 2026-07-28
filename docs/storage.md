@@ -103,12 +103,23 @@ it is `s3` or `azure`. There is no filesystem backend; Python dropped it.
 | `VT_STORAGE_AZURE_ACCESS_KEY` | azure | Optional; managed identity if unset. |
 | `VT_STORAGE_AZURE_ENDPOINT` | azure | Optional. |
 
+Every variable in the table also has a `_FILE` variant naming a file to read
+the value from — `VT_STORAGE_S3_SECRET_ACCESS_KEY_FILE=/mnt/secrets-store/s3-secret-key`.
+`config.ts` reads and trims that file before validating, so the credentials can
+arrive on a secrets-store CSI mount instead of a Kubernetes `Secret`, which goes
+stale when a key is added to the `SecretProviderClass`. The file wins over a
+plain variable of the same name, an unreadable path throws at startup, and an
+empty file counts as unset.
+
 The **S3 credentials are both-or-neither**. Setting both authenticates with
 them; setting neither falls through to the AWS credential chain and an IAM
 role. Setting exactly one is rejected at startup rather than quietly ignored,
 because the failure mode is a process running in production as the wrong
 principal. Empty strings count as unset — deployment tooling routinely injects
 an empty value for something it has nothing to put in.
+
+Both-or-neither is judged **after** the files are read, so an S3 access key id
+supplied by env and a secret access key supplied by a mount are a valid pair.
 
 The backend is built once at startup. `src/server/storage/index.ts` exports the
 `storage` singleton; **pass it into `data.ts` functions the way `db` is

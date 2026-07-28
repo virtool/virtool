@@ -699,6 +699,22 @@ Bad: `WORKER_MODE`, `POSTGRES_URL`.
 The only exception is upstream-defined names (e.g. `SENTRY_AUTH_TOKEN`,
 `NODE_OPTIONS`) — leave those as the third party expects.
 
+### Every config key also reads from a `_FILE` variant
+
+`parseServerConfig` resolves `<KEY>_FILE` before zod parses: the named
+file is read, trimmed, and used as `<KEY>`'s value. It applies to every
+key in the schema — add one and it gets the behaviour for free — so
+secrets reach a pod through the secrets-store CSI driver's file mount
+(`VT_METRICS_TOKEN_FILE=/mnt/secrets-store/metrics-token`) instead of a
+Kubernetes `Secret`, which goes stale when a key is added to the
+`SecretProviderClass`. Plain variables still work for local dev.
+
+**The file wins over a plain variable of the same name.** A rollout
+moving to the mount can still carry the stale env var from the `Secret`
+it replaces, and erroring on the overlap would crashloop the rollout
+that fixes it. An unreadable path throws at startup; an empty file is an
+unset value.
+
 ## Logging
 
 Server code logs through `@virtool/logger`, not `console.*`. Biome's

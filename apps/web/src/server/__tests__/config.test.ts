@@ -1,4 +1,7 @@
-import { describe, expect, it } from "vitest";
+import { mkdtempSync, rmSync, writeFileSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
+import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { parseServerConfig } from "../config";
 
 const postgresUrl = "postgres://virtool:virtool@localhost:5432/virtool";
@@ -195,6 +198,130 @@ describe("parseServerConfig", () => {
 					VT_STORAGE_AZURE_ACCOUNT: "devstoreaccount1",
 				} as NodeJS.ProcessEnv),
 			).toThrow(/VT_STORAGE_AZURE_CONTAINER/);
+		});
+	});
+
+	describe("metrics token", () => {
+		it("reads the token from the environment", () => {
+			const config = parseServerConfig({
+				...minimalS3,
+				VT_METRICS_TOKEN: "secret",
+			} as NodeJS.ProcessEnv);
+
+			expect(config.metricsToken).toBe("secret");
+		});
+
+		it("treats a blank token as unset", () => {
+			const config = parseServerConfig({
+				...minimalS3,
+				VT_METRICS_TOKEN: "",
+			} as NodeJS.ProcessEnv);
+
+			expect(config.metricsToken).toBeUndefined();
+		});
+	});
+
+	describe("file-backed values", () => {
+		let directory: string;
+
+		function write(name: string, contents: string): string {
+			const path = join(directory, name);
+			writeFileSync(path, contents);
+
+			return path;
+		}
+
+		beforeAll(() => {
+			directory = mkdtempSync(join(tmpdir(), "vt-config-"));
+		});
+
+		afterAll(() => {
+			rmSync(directory, { force: true, recursive: true });
+		});
+
+		it("reads a value from the file the _FILE variant names", () => {
+			const config = parseServerConfig({
+				...minimalS3,
+				VT_METRICS_TOKEN_FILE: write("metrics-token", "from-file"),
+			} as NodeJS.ProcessEnv);
+
+			expect(config.metricsToken).toBe("from-file");
+		});
+
+		it("strips the trailing newline a mounted secret carries", () => {
+			const config = parseServerConfig({
+				...minimalS3,
+				VT_METRICS_TOKEN_FILE: write("trailing-newline", "  from-file\n"),
+			} as NodeJS.ProcessEnv);
+
+			expect(config.metricsToken).toBe("from-file");
+		});
+
+		it("prefers the file over a stale plain variable", () => {
+			const config = parseServerConfig({
+				...minimalS3,
+				VT_METRICS_TOKEN: "stale",
+				VT_METRICS_TOKEN_FILE: write("preferred", "fresh"),
+			} as NodeJS.ProcessEnv);
+
+			expect(config.metricsToken).toBe("fresh");
+		});
+
+		it("treats an empty file as an unset value", () => {
+			const config = parseServerConfig({
+				...minimalS3,
+				VT_METRICS_TOKEN: "stale",
+				VT_METRICS_TOKEN_FILE: write("empty", "\n"),
+			} as NodeJS.ProcessEnv);
+
+			expect(config.metricsToken).toBeUndefined();
+		});
+
+		it("ignores a blank _FILE variant", () => {
+			const config = parseServerConfig({
+				...minimalS3,
+				VT_METRICS_TOKEN: "from-env",
+				VT_METRICS_TOKEN_FILE: "",
+			} as NodeJS.ProcessEnv);
+
+			expect(config.metricsToken).toBe("from-env");
+		});
+
+		it("applies to every key, not only the metrics token", () => {
+			const config = parseServerConfig({
+				VT_POSTGRES_URL: postgresUrl,
+				VT_STORAGE_BACKEND: "s3",
+				VT_STORAGE_S3_BUCKET: "virtool",
+				VT_STORAGE_S3_ACCESS_KEY_ID_FILE: write("access-key-id", "ak\n"),
+				VT_STORAGE_S3_SECRET_ACCESS_KEY_FILE: write("secret-key", "sk\n"),
+			} as NodeJS.ProcessEnv);
+
+			expect(config.storage).toMatchObject({
+				accessKeyId: "ak",
+				secretAccessKey: "sk",
+			});
+		});
+
+		it("pairs a file-backed credential with a plain one", () => {
+			const config = parseServerConfig({
+				...minimalS3,
+				VT_STORAGE_S3_ACCESS_KEY_ID: "ak",
+				VT_STORAGE_S3_SECRET_ACCESS_KEY_FILE: write("mixed-pair", "sk\n"),
+			} as NodeJS.ProcessEnv);
+
+			expect(config.storage).toMatchObject({
+				accessKeyId: "ak",
+				secretAccessKey: "sk",
+			});
+		});
+
+		it("errors when the file cannot be read", () => {
+			expect(() =>
+				parseServerConfig({
+					...minimalS3,
+					VT_METRICS_TOKEN_FILE: join(directory, "missing"),
+				} as NodeJS.ProcessEnv),
+			).toThrow(/VT_METRICS_TOKEN_FILE/);
 		});
 	});
 });

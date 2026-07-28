@@ -1,3 +1,4 @@
+import { readFileSync } from "node:fs";
 import { z } from "zod";
 
 /** Object storage backend configuration resolved from the environment. */
@@ -159,10 +160,44 @@ function buildStorage(raw: StorageEnv, ctx: z.RefinementCtx): StorageConfig {
 	};
 }
 
+const FILE_SUFFIX = "_FILE";
+
+// Every key also accepts a `<KEY>_FILE` variant naming a file to read the value
+// from — the convention Prometheus and Docker use. A Kubernetes `Secret`
+// populated by the secrets-store CSI driver goes stale when a key is added to
+// the SecretProviderClass, so a pod can start with an env var the cluster
+// believes it has updated; the driver's file mount has no such staleness.
+//
+// The file wins over the plain variable deliberately. A rollout that moves to
+// the mount can still carry the stale env var from the `Secret` it replaces,
+// and failing on the overlap would crashloop the very rollout that fixes it.
+function resolveFileBacked(env: NodeJS.ProcessEnv): NodeJS.ProcessEnv {
+	const resolved = { ...env };
+
+	for (const key of Object.keys(ServerEnv.shape)) {
+		const path = env[`${key}${FILE_SUFFIX}`];
+
+		if (!path) {
+			continue;
+		}
+
+		try {
+			resolved[key] = readFileSync(path, "utf8").trim();
+		} catch (error) {
+			throw new Error(
+				`${key}${FILE_SUFFIX} points at ${path}, which could not be read`,
+				{ cause: error },
+			);
+		}
+	}
+
+	return resolved;
+}
+
 export function parseServerConfig(
 	env: NodeJS.ProcessEnv = process.env,
 ): ServerConfig {
-	return ServerEnvSchema.parse(env);
+	return ServerEnvSchema.parse(resolveFileBacked(env));
 }
 
 export const config: ServerConfig = parseServerConfig();

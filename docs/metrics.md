@@ -34,6 +34,12 @@ authorization floor — see below.
 - **Set** — the request must carry `Authorization: Bearer <token>`.
   Anything else gets `401` with a `WWW-Authenticate: Bearer` header.
 
+In a cluster the token comes from a mounted file rather than the
+variable: `VT_METRICS_TOKEN_FILE=/mnt/secrets-store/metrics-token`. That
+is the general `_FILE` convention `config.ts` applies to every key, and
+the file wins over a plain variable of the same name. The handler is
+unaware of either — it reads `config.metricsToken`.
+
 The comparison uses `timingSafeEqual`, screening for a length mismatch
 first because it throws on unequal lengths. That screen reveals the
 configured token's length; an attacker learns nothing from it that
