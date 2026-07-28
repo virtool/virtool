@@ -4,6 +4,7 @@ import InputHeader from "@base/InputHeader";
 import LoadingPlaceholder from "@base/LoadingPlaceholder";
 import QueryError from "@base/QueryError";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@base/Tabs";
+import type { GroupMinimal } from "@virtool/contracts";
 import { sortBy } from "es-toolkit/compat";
 import { useState } from "react";
 import {
@@ -12,7 +13,6 @@ import {
 	useRemoveGroup,
 	useUpdateGroup,
 } from "../queries";
-import type { GroupMinimal } from "../types";
 import Create from "./CreateGroup";
 import { GroupMembers } from "./GroupMembers";
 import { GroupPermissions } from "./GroupPermissions";

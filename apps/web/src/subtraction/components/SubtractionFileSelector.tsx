@@ -17,7 +17,7 @@ import type {
 	InfiniteQueryObserverResult,
 } from "@tanstack/react-query/";
 import { useValidateFiles } from "@uploads/hooks";
-import type { FileResponse, Upload } from "@uploads/types";
+import type { Upload, UploadSearchResult } from "@virtool/contracts";
 import { Files } from "lucide-react";
 import { SubtractionFileItem } from "./SubtractionFileItem";
 
@@ -26,7 +26,7 @@ type SubtractionFileSelectorProps = {
 	"aria-labelledby"?: string;
 
 	/** The subtraction uploads */
-	files: InfiniteData<FileResponse>;
+	files: InfiniteData<UploadSearchResult>;
 
 	/** The number of subtraction uploads */
 	foundCount: number;

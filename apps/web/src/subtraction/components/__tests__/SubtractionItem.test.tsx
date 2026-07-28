@@ -1,7 +1,7 @@
-import type { SubtractionMinimal } from "@subtraction/types";
 import { screen } from "@testing-library/react";
 import { createFakeUserNested } from "@tests/fake/user";
 import { renderWithRouter } from "@tests/setup";
+import type { SubtractionMinimal } from "@virtool/contracts";
 import { beforeEach, describe, expect, it } from "vitest";
 import { SubtractionItem } from "../SubtractionItem";
 
@@ -15,6 +15,7 @@ describe("<SubtractionItem />", () => {
 
 		props = {
 			id: 1,
+			count: 12,
 			created_at: createdAt.toISOString(),
 			file: {
 				id: 23,
@@ -68,7 +69,7 @@ describe("<SubtractionItem />", () => {
 	});
 
 	it("should correctly render subtractions where job is absent", async () => {
-		props.job = undefined;
+		props.job = null;
 		props.ready = false;
 
 		await renderWithRouter(<SubtractionItem {...props} />);

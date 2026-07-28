@@ -91,9 +91,9 @@ describe("findSubtractions", () => {
 			ready: false,
 		});
 
-		expect(result.total_count).toBe(2);
-		expect(result.ready_count).toBe(1);
-		expect(result.found_count).toBe(2);
+		expect(result.totalCount).toBe(2);
+		expect(result.readyCount).toBe(1);
+		expect(result.foundCount).toBe(2);
 		expect(result.items.map((item) => item.name)).toEqual([
 			"Arabidopsis",
 			"Human",
@@ -111,7 +111,7 @@ describe("findSubtractions", () => {
 			ready: false,
 		});
 
-		expect(result.total_count).toBe(1);
+		expect(result.totalCount).toBe(1);
 		expect(result.items.map((item) => item.name)).toEqual(["Kept"]);
 	});
 
@@ -136,7 +136,7 @@ describe("findSubtractions", () => {
 		expect(byNickname.items.map((item) => item.name)).toEqual(["Human"]);
 	});
 
-	it("filters to ready subtractions when asked, leaving total_count whole", async () => {
+	it("filters to ready subtractions when asked, leaving totalCount whole", async () => {
 		await seedSubtraction({ name: "Ready", ready: true });
 		await seedSubtraction({ name: "Pending", ready: false });
 
@@ -147,8 +147,8 @@ describe("findSubtractions", () => {
 			ready: true,
 		});
 
-		expect(result.found_count).toBe(1);
-		expect(result.total_count).toBe(2);
+		expect(result.foundCount).toBe(1);
+		expect(result.totalCount).toBe(2);
 		expect(result.items.map((item) => item.name)).toEqual(["Ready"]);
 	});
 

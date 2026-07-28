@@ -1,16 +1,26 @@
 import { cn } from "@app/cn";
+import { CLIENT_ERROR_NAME } from "@virtool/contracts";
 import { AlertDialog as AlertDialogPrimitive } from "radix-ui";
 import { type ReactNode, useState } from "react";
 import Button from "./Button";
 
-/** Pull a server-provided message off a rejected deletion, if there is one. */
+/**
+ * Pull a server-provided message off a rejected deletion, if there is one.
+ *
+ * Only a `ClientError` is shown. It is the deliberate refusal — a name
+ * conflict, a missing row — written to be read by the user. Anything else is
+ * unexpected, and `ShallowErrorPlugin` carries its `message` across the
+ * boundary verbatim, so rendering it would put a database or storage
+ * diagnostic on screen.
+ */
 function getDeleteErrorMessage(error: unknown): string {
-	const message = (error as { response?: { body?: { message?: unknown } } })
-		?.response?.body?.message;
+	const fallback = "Something went wrong. Please try again.";
 
-	return typeof message === "string"
-		? message
-		: "Something went wrong. Please try again.";
+	if (!(error instanceof Error) || error.name !== CLIENT_ERROR_NAME) {
+		return fallback;
+	}
+
+	return error.message || fallback;
 }
 
 type DeleteDialogProps = {

@@ -10,8 +10,7 @@ import { mockListSubtractionsShortlist } from "@tests/server-fn/subtractions";
 import { mockFindUploads, uploadServerFnMocks } from "@tests/server-fn/uploads";
 import { mockGetAccount } from "@tests/server-fn/users";
 import { renderWithRouter } from "@tests/setup";
-import nock from "nock";
-import { afterEach, beforeEach, describe, expect, it } from "vitest";
+import { beforeEach, describe, expect, it } from "vitest";
 import CreateSample from "../CreateSample";
 
 function escapeRegExp(value: string): string {
@@ -45,8 +44,6 @@ describe("<CreateSample>", () => {
 		mockGetAccount(createFakeAccount({ primary_group: null }));
 		mockListGroups([]);
 	});
-
-	afterEach(() => nock.cleanAll());
 
 	/**
 	 * Renders the page and waits for its fields to replace the loading state.

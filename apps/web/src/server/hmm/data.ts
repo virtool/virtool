@@ -1,9 +1,15 @@
+import type {
+	Hmm,
+	HmmMinimal,
+	HmmSearchResult,
+	HmmStatus,
+	HmmStatusTask,
+} from "@virtool/contracts";
 import { and, asc, count, eq, sql } from "drizzle-orm";
 import type { Db, DbOrTx } from "../db/pg";
 import { takeFirstOrThrow } from "../db/rows";
 import {
 	HMM_STATUS_ID,
-	type HmmEntry,
 	type HmmRelease,
 	type HmmRow,
 	type HmmUpdate,
@@ -18,53 +24,6 @@ import { AppError } from "../errors";
 export const HMM_INSTALL_TASK_TYPE = "install_hmms";
 
 const MANIFEST_URL = "https://www.virtool.ca/releases/hmms.json";
-
-/** An HMM as it appears in a search-result list. */
-export type HmmMinimal = {
-	id: number;
-	cluster: number;
-	count: number;
-	families: Record<string, number>;
-	names: string[];
-};
-
-/** A full HMM annotation, as returned by the detail endpoint. */
-export type Hmm = HmmMinimal & {
-	entries: HmmEntry[];
-	genera: Record<string, number>;
-	length: number;
-	mean_entropy: number;
-	total_entropy: number;
-};
-
-/** The task attached to the HMM status, in the wire shape the client parses. */
-export type HmmStatusTask = {
-	complete: boolean;
-	created_at: Date;
-	error: string | null;
-	id: number;
-	progress: number;
-	step: string;
-	type: string;
-};
-
-/** The HMM install status carried alongside a search result. */
-export type HmmStatus = {
-	errors: string[];
-	installed: { ready: boolean } | null;
-	task: HmmStatusTask | null;
-};
-
-/** A page of HMM search results with the install status attached. */
-export type HmmSearchResult = {
-	documents: HmmMinimal[];
-	found_count: number;
-	page: number;
-	page_count: number;
-	per_page: number;
-	status: HmmStatus;
-	total_count: number;
-};
 
 /** The record returned when an install is started. */
 export type HmmInstalled = {
@@ -194,13 +153,13 @@ export async function findHmms(
 	const foundCount = takeFirstOrThrow(foundRows).value;
 
 	return {
-		documents: rows.map(hmmMinimal),
-		found_count: foundCount,
+		items: rows.map(hmmMinimal),
+		foundCount,
 		page,
-		page_count: foundCount ? Math.ceil(foundCount / perPage) : 0,
-		per_page: perPage,
+		pageCount: foundCount ? Math.ceil(foundCount / perPage) : 0,
+		perPage,
 		status,
-		total_count: takeFirstOrThrow(totalRows).value,
+		totalCount: takeFirstOrThrow(totalRows).value,
 	};
 }
 

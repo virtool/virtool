@@ -1,26 +1,6 @@
-import type { UserNested } from "@users/types";
-import type { SearchResult } from "@/types/api";
+import type { UploadType } from "@virtool/contracts";
 
-export type UploadType = "reference" | "reads" | "subtraction";
-
-export type FileResponse = SearchResult & {
-	items: Upload[];
-};
-
-export type Upload = {
-	id: number;
-	created_at: string;
-	name: string;
-	ready: boolean;
-	removed: boolean;
-	removed_at: string | null;
-	reserved: boolean;
-	size: number;
-	type: string;
-	uploaded_at: string;
-	user: UserNested | null;
-};
-
+/** A file being uploaded from this browser, tracked until the request settles. */
 export type UploadInProgress = {
 	/* Whether the upload failed */
 	failed: boolean;

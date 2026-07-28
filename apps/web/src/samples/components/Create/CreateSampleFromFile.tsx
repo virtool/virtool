@@ -24,7 +24,7 @@ import type { Label } from "@labels/types";
 import { useCreateSample } from "@samples/queries";
 import { getCreateSampleRequest, getSampleNameFromReads } from "@samples/utils";
 import { getReadsForUpload } from "@uploads/pairing";
-import type { Upload } from "@uploads/types";
+import type { Upload } from "@virtool/contracts";
 import { CirclePlus } from "lucide-react";
 import { useEffect, useState } from "react";
 import { Controller, useForm } from "react-hook-form";

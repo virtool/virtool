@@ -7,7 +7,7 @@ import {
 } from "@base/Dialog";
 import IconButton from "@base/IconButton";
 import SaveButton from "@base/SaveButton";
-import type { Permissions } from "@groups/types";
+import type { Permissions } from "@virtool/contracts";
 import { Pencil } from "lucide-react";
 import { Controller, useForm } from "react-hook-form";
 import { useUpdateApiKey } from "../queries";

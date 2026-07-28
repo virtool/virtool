@@ -33,7 +33,6 @@ import type {
 	ReferenceUser,
 } from "@virtool/contracts";
 import { useState } from "react";
-import type { ErrorResponse } from "@/types/api";
 
 /** A reference member is either a user or a group. */
 export type ReferenceMemberNoun = "user" | "group";
@@ -218,7 +217,7 @@ export function useUpdateReferenceSourceTypes(refId: number) {
 export function useUpdateDefaultSourceTypes() {
 	const queryClient = useQueryClient();
 
-	return useMutation<Settings, ErrorResponse, string[]>({
+	return useMutation<Settings, Error, string[]>({
 		mutationFn: (sourceTypes) =>
 			updateSettingsFn({ data: { defaultSourceTypes: sourceTypes } }),
 		onSuccess: () => {

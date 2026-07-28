@@ -1,4 +1,4 @@
-import type { Upload } from "@uploads/types";
+import type { Upload } from "@virtool/contracts";
 import { type Mock, vi } from "vitest";
 
 /**
@@ -19,11 +19,11 @@ export const uploadServerFnMocks = {
 export function mockFindUploads(files: Upload[]): Mock {
 	uploadServerFnMocks.findUploadsFn.mockResolvedValue({
 		items: files,
-		found_count: files.length,
-		total_count: files.length,
+		foundCount: files.length,
+		totalCount: files.length,
 		page: 1,
-		page_count: 1,
-		per_page: 25,
+		pageCount: 1,
+		perPage: 25,
 	});
 	return uploadServerFnMocks.findUploadsFn;
 }

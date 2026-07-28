@@ -1,3 +1,4 @@
+import type { UploadType } from "@virtool/contracts";
 import { eq } from "drizzle-orm";
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
 
@@ -13,7 +14,6 @@ import {
 	findUploads,
 	UploadNotFoundError,
 	UploadReservedError,
-	type UploadType,
 } from "./data";
 
 let database: TestDatabase;
@@ -128,8 +128,8 @@ describe("findUploads", () => {
 			newer.id,
 			older.id,
 		]);
-		expect(result.found_count).toBe(2);
-		expect(result.total_count).toBe(2);
+		expect(result.foundCount).toBe(2);
+		expect(result.totalCount).toBe(2);
 		expect(result.items[0]?.user).toEqual({ id: userId, handle: "bob" });
 	});
 
@@ -142,8 +142,8 @@ describe("findUploads", () => {
 
 		expect(result.items).toHaveLength(1);
 		expect(result.items[0]?.type).toBe("reference");
-		expect(result.found_count).toBe(1);
-		expect(result.total_count).toBe(2);
+		expect(result.foundCount).toBe(1);
+		expect(result.totalCount).toBe(2);
 	});
 
 	it("filters by user", async () => {

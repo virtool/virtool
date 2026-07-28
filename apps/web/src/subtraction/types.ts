@@ -1,97 +1,11 @@
-import type { ServerJobNested } from "@jobs/types";
-import type { SampleNested } from "@samples/types";
-import type { UserNested } from "@users/types";
-import type { SearchResult } from "@/types/api";
-
-/** The measurements of individual nucleotides (percentage) */
-export type NucleotideComposition = {
-	a: number;
-	c: number;
-	g: number;
-	t: number;
-	/** Unknown nucleotide */
-	n: number;
-};
-
-/** A Subtraction file */
-export type SubtractionFile = {
-	/** The URL the file can be downloaded at. */
-	download_url: string;
-
-	/** The unique ID for the file. */
-	id: number;
-
-	/** The display name. */
-	name: string;
-
-	/** The size in (bytes) */
-	size: number;
-
-	/** The subtraction ID */
-	subtraction: number;
-
-	type: string;
-};
-
-/** A Subtraction with essential information  */
-export type SubtractionNested = {
+/** A subtraction as an option for analysis */
+export type SubtractionOption = {
 	/** The unique identifier for the subtraction */
 	id: number;
 
 	/** The name of the subtraction */
 	name: string;
-};
 
-/** Subtraction file being uploaded */
-export type SubtractionUpload = {
-	id: number;
-	name: string;
-};
-
-/** Minimal Subtraction used for resource listings */
-export type SubtractionMinimal = SubtractionNested & {
-	/** The number of sequences in the subtraction */
-	count?: number;
-
-	/** When the subtraction was created */
-	created_at: string;
-
-	/** The uploaded file */
-	file: SubtractionUpload;
-
-	/** The job associated with the subtraction */
-	job?: ServerJobNested;
-
-	/** The subtraction nickname */
-	nickname: string;
-
-	/**  Whether the subtraction is complete and ready to view */
-	ready: boolean;
-
-	/** The user who created the subtraction */
-	user?: UserNested;
-};
-
-/** A complete Subtraction */
-export type Subtraction = SubtractionMinimal & {
-	/** Data uploads available to for download */
-	files: Array<SubtractionFile>;
-
-	/** The ATGC ratios in the subtraction genome */
-	gc?: NucleotideComposition;
-
-	/** Samples linked to subtraction */
-	linked_samples: Array<SampleNested>;
-};
-
-/** A subtraction as an option for analysis */
-export type SubtractionOption = SubtractionNested & {
 	isDefault?: boolean;
 	ready: boolean;
-};
-
-/** Subtraction search results from the API */
-export type SubtractionSearchResult = SearchResult & {
-	ready_count: number;
-	items: Array<SubtractionMinimal>;
 };

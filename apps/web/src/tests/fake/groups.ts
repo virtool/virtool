@@ -1,5 +1,5 @@
 import { faker } from "@faker-js/faker";
-import type { Group, GroupMinimal } from "@groups/types";
+import type { Group, GroupMinimal } from "@virtool/contracts";
 import { createFakePermissions } from "./permissions";
 
 /**

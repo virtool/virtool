@@ -1,5 +1,5 @@
 import { z } from "zod";
-import type { SearchResultV2 } from "./search";
+import type { SearchResult } from "./search";
 import type { Task } from "./tasks";
 import type { UserNested } from "./users";
 
@@ -77,7 +77,7 @@ export type Reference = ReferenceMinimal & {
 };
 
 /** A page of references. */
-export type ReferenceSearchResult = SearchResultV2 & {
+export type ReferenceSearchResult = SearchResult & {
 	items: ReferenceMinimal[];
 };
 

@@ -1,8 +1,8 @@
 import DeleteDialog from "@base/DeleteDialog";
 import IconButton from "@base/IconButton";
 import { useDeleteSubtraction } from "@subtraction/queries";
-import type { Subtraction } from "@subtraction/types";
 import { useNavigate } from "@tanstack/react-router";
+import type { Subtraction } from "@virtool/contracts";
 import { Trash } from "lucide-react";
 
 export type DeleteSubtractionProps = {

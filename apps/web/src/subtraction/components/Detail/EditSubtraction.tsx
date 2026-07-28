@@ -12,7 +12,7 @@ import InputLabel from "@base/InputLabel";
 import InputSimple from "@base/InputSimple";
 import SaveButton from "@base/SaveButton";
 import { useUpdateSubtraction } from "@subtraction/queries";
-import type { Subtraction } from "@subtraction/types";
+import type { Subtraction } from "@virtool/contracts";
 import { Pencil } from "lucide-react";
 import { useState } from "react";
 import { useForm } from "react-hook-form";

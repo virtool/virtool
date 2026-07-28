@@ -1,6 +1,6 @@
 import { cn } from "@app/cn";
 import Icon from "@base/Icon";
-import type { Upload } from "@uploads/types";
+import type { Upload } from "@virtool/contracts";
 import { TriangleAlert } from "lucide-react";
 
 type ReadSlotProps = {

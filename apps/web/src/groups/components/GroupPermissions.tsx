@@ -1,8 +1,8 @@
 import BoxGroup from "@base/BoxGroup";
 import BoxGroupHeader from "@base/BoxGroupHeader";
 import Checkbox from "@base/Checkbox";
+import type { Group } from "@virtool/contracts";
 import { useUpdateGroup } from "../queries";
-import type { Group } from "../types";
 
 export function GroupPermissions({ selectedGroup }: { selectedGroup: Group }) {
 	const updateGroupMutator = useUpdateGroup();

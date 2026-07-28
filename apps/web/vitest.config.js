@@ -91,10 +91,11 @@ export default defineConfig({
 					// files in headless Chromium through Playwright so those rules can
 					// actually run (VIR-2693 / VIR-2746).
 					name: "a11y",
-					// `setup.tsx` pulls in nock, which is Node-only and throws in the
-					// browser, so the browser project gets its own lean setup that only
-					// loads the app stylesheet — without it, Tailwind classes resolve to
-					// no colour and contrast checks are meaningless.
+					// `setup.tsx` wires in the global server-function mocks and
+					// jsdom-oriented providers these tests never need, so the browser
+					// project gets its own lean setup that only loads the app stylesheet
+					// — without it, Tailwind classes resolve to no colour and contrast
+					// checks are meaningless.
 					setupFiles: ["./src/tests/setupA11y.ts"],
 					include: ["src/**/*.a11y.test.{ts,tsx}"],
 					browser: {

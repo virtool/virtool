@@ -1,8 +1,16 @@
 import { screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { renderWithProviders } from "@tests/setup";
+import { CLIENT_ERROR_NAME } from "@virtool/contracts";
 import { describe, expect, it, vi } from "vitest";
 import DeleteDialog from "../DeleteDialog";
+
+// A ClientError as it arrives rebuilt by `serverErrorSerializationAdapter`.
+function clientError(message: string): Error {
+	const error = new Error(message);
+	error.name = CLIENT_ERROR_NAME;
+	return error;
+}
 
 describe("<DeleteDialog />", () => {
 	it("titles the dialog and prompts with the item name", () => {
@@ -54,9 +62,9 @@ describe("<DeleteDialog />", () => {
 	});
 
 	it("renders the error and stays open when onConfirm rejects", async () => {
-		const onConfirm = vi.fn().mockRejectedValue({
-			response: { body: { message: "Cannot delete this." } },
-		});
+		const onConfirm = vi
+			.fn()
+			.mockRejectedValue(clientError("Cannot delete this."));
 		renderWithProviders(
 			<DeleteDialog name="Foo" noun="Sample" onConfirm={onConfirm} open />,
 		);
@@ -67,6 +75,38 @@ describe("<DeleteDialog />", () => {
 			"Cannot delete this.",
 		);
 		expect(screen.getByText("Delete Sample")).toBeInTheDocument();
+	});
+
+	it("falls back to a generic message when the ClientError carries none", async () => {
+		const onConfirm = vi.fn().mockRejectedValue(clientError(""));
+		renderWithProviders(
+			<DeleteDialog name="Foo" noun="Sample" onConfirm={onConfirm} open />,
+		);
+
+		await userEvent.click(screen.getByRole("button", { name: "Confirm" }));
+
+		expect(await screen.findByRole("alert")).toHaveTextContent(
+			"Something went wrong. Please try again.",
+		);
+	});
+
+	it("hides an unexpected error's message rather than leaking it", async () => {
+		const onConfirm = vi
+			.fn()
+			.mockRejectedValue(
+				new Error(
+					'duplicate key value violates unique constraint "samples_pkey"',
+				),
+			);
+		renderWithProviders(
+			<DeleteDialog name="Foo" noun="Sample" onConfirm={onConfirm} open />,
+		);
+
+		await userEvent.click(screen.getByRole("button", { name: "Confirm" }));
+
+		expect(await screen.findByRole("alert")).toHaveTextContent(
+			"Something went wrong. Please try again.",
+		);
 	});
 
 	it("closes without confirming when cancelled", async () => {

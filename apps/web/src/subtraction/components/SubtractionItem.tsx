@@ -2,7 +2,7 @@ import BoxGroupSection from "@base/BoxGroupSection";
 import Link from "@base/Link";
 import ProgressCircle from "@base/ProgressCircle";
 import { useFetchJob } from "@jobs/queries";
-import type { SubtractionMinimal } from "../types";
+import type { SubtractionMinimal } from "@virtool/contracts";
 import { SubtractionAttribution } from "./Attribution";
 
 /**
@@ -16,7 +16,12 @@ export function SubtractionItem({
 	ready,
 	user,
 }: SubtractionMinimal) {
-	const { data: fetchedJob } = useFetchJob(job?.id ?? Number.NaN, job);
+	// The seed needs a user, and a job whose creator was removed has none — fall
+	// back to fetching rather than priming the cache with a half-built job.
+	const { data: fetchedJob } = useFetchJob(
+		job?.id ?? Number.NaN,
+		job?.user ? { ...job, user: job.user } : undefined,
+	);
 
 	return (
 		<BoxGroupSection as="li" className="grid grid-cols-5 items-center">

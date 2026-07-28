@@ -9,8 +9,7 @@ import { mockFindHmms } from "@tests/server-fn/hmm";
 import { mockGetSample } from "@tests/server-fn/samples";
 import { mockGetAccount } from "@tests/server-fn/users";
 import { at, MemoryRouter, renderWithProviders } from "@tests/setup";
-import nock from "nock";
-import { afterEach, beforeEach, describe, expect, it } from "vitest";
+import { beforeEach, describe, expect, it } from "vitest";
 
 describe("<AnalysesToolbar />", () => {
 	let sample: ReturnType<typeof createFakeSample>;
@@ -22,8 +21,6 @@ describe("<AnalysesToolbar />", () => {
 		]);
 		mockFindHmms(createFakeHmmSearchResults());
 	});
-
-	afterEach(() => nock.cleanAll());
 
 	function renderList() {
 		renderWithProviders(

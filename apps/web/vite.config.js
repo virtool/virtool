@@ -151,7 +151,6 @@ export default defineConfig(({ command, mode }) => ({
 			"radix-ui",
 			"react-dropzone",
 			"react-hook-form",
-			"superagent",
 			"tailwind-merge",
 			"zod",
 			"zod/v4",
@@ -164,7 +163,7 @@ export default defineConfig(({ command, mode }) => ({
 		warmup: {
 			// Pre-transform the app shell so the first navigation is warm. The `!`
 			// patterns keep the globs off `__tests__` files — those import
-			// `@tests/setup` (nock, vitest, faker) and testing-library, and warming
+			// `@tests/setup` (vitest, faker) and testing-library, and warming
 			// them registers those test-only packages as client optimize deps,
 			// forcing a reoptimize and a full page reload on cold start.
 			clientFiles: [

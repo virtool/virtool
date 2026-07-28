@@ -1,9 +1,3 @@
-/* A Sample with essential information */
-export type SampleNested = {
-	id: number;
-	name: string;
-};
-
 /** The fields sent to the API to create a sample */
 export type CreateSampleRequest = {
 	files: number[];

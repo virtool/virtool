@@ -1,4 +1,11 @@
-import { emptyPermissions, type Permissions } from "@virtool/contracts";
+import {
+	emptyPermissions,
+	type Group,
+	type GroupMinimal,
+	type GroupSearchResults,
+	type Permissions,
+	type UserNested,
+} from "@virtool/contracts";
 import { asc, count, eq, ilike } from "drizzle-orm";
 import type { PostgresError } from "postgres";
 import type { Db } from "../db/pg";
@@ -11,35 +18,6 @@ import {
 import { users as usersTable } from "../db/schema/users";
 import { AppError } from "../errors";
 import { emit } from "../events/emit";
-
-/** A user reference attached to a group, matching the legacy wire shape. */
-export type GroupUserNested = {
-	id: number;
-	handle: string;
-};
-
-/** A minimal group record used in lists and selectors. */
-export type GroupMinimal = {
-	id: number;
-	legacy_id: string | null;
-	name: string;
-};
-
-/** A full group record including permissions and member users. */
-export type Group = GroupMinimal & {
-	permissions: Permissions;
-	users: GroupUserNested[];
-};
-
-/** A page of group search results. */
-export type GroupSearchResults = {
-	items: GroupMinimal[];
-	found_count: number;
-	total_count: number;
-	page: number;
-	page_count: number;
-	per_page: number;
-};
 
 /** Partial values accepted when updating a group. */
 export type GroupUpdateValues = {
@@ -74,10 +52,7 @@ function toGroupMinimal(row: GroupRow): GroupMinimal {
 	};
 }
 
-async function fetchGroupUsers(
-	db: Db,
-	groupId: number,
-): Promise<GroupUserNested[]> {
+async function fetchGroupUsers(db: Db, groupId: number): Promise<UserNested[]> {
 	const rows = await db
 		.select({ id: usersTable.id, handle: usersTable.handle })
 		.from(usersTable)
@@ -122,11 +97,11 @@ export async function findGroups(
 
 	return {
 		items: rows.map(toGroupMinimal),
-		found_count: foundCount,
-		total_count: totalRow?.value ?? 0,
+		foundCount,
+		totalCount: totalRow?.value ?? 0,
 		page,
-		page_count: perPage > 0 ? Math.ceil(foundCount / perPage) : 0,
-		per_page: perPage,
+		pageCount: perPage > 0 ? Math.ceil(foundCount / perPage) : 0,
+		perPage,
 	};
 }
 

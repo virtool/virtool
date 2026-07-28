@@ -40,14 +40,8 @@ function serializedAuthError(name: string, message: string): Error {
 	return error;
 }
 
-function superagentError(status: number): QueryError {
-	return Object.assign(new Error(`Request failed: ${status}`), {
-		response: { status },
-	});
-}
-
-// A ClientError as it arrives rebuilt by `serverErrorSerializationAdapter`: the
-// status is an own property, not on a superagent-style `response`.
+// A ClientError as it arrives rebuilt by `serverErrorSerializationAdapter`,
+// with the status as an own property.
 function clientError(status: number): QueryError {
 	const error = Object.assign(new Error(`Request failed: ${status}`), {
 		status,
@@ -61,10 +55,6 @@ describe("getErrorStatus", () => {
 		expect(getErrorStatus(clientError(404))).toBe(404);
 	});
 
-	it("reads the status superagent puts on the response", () => {
-		expect(getErrorStatus(superagentError(404))).toBe(404);
-	});
-
 	it.each([
 		["an error carrying no status", new Error("network down")],
 		["a non-object", "boom"],
@@ -76,15 +66,8 @@ describe("getErrorStatus", () => {
 });
 
 describe("shouldRetryQuery", () => {
-	it.each([401, 403, 404])(
-		"gives up immediately on a %i from the Python API",
-		(status) => {
-			expect(shouldRetryQuery(0, superagentError(status))).toBe(false);
-		},
-	);
-
-	it("retries a Python API failure that may yet succeed", () => {
-		expect(shouldRetryQuery(0, superagentError(500))).toBe(true);
+	it("retries a server function failure that may yet succeed", () => {
+		expect(shouldRetryQuery(0, clientError(500))).toBe(true);
 	});
 
 	it.each([401, 403, 404])(

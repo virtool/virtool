@@ -3,7 +3,7 @@ import BoxGroup from "@base/BoxGroup";
 import BoxGroupHeader from "@base/BoxGroupHeader";
 import BoxGroupSection from "@base/BoxGroupSection";
 import { Empty, EmptyDescription, EmptyMedia, EmptyTitle } from "@base/Empty";
-import type { GroupMinimal } from "@groups/types";
+import type { GroupMinimal } from "@virtool/contracts";
 import { Users } from "lucide-react";
 
 type AccountGroupsProps = {

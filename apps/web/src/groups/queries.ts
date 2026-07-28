@@ -14,13 +14,12 @@ import {
 	useQuery,
 	useQueryClient,
 } from "@tanstack/react-query";
-import type { ErrorResponse } from "@/types/api";
 import type {
 	Group,
 	GroupMinimal,
 	GroupSearchResults,
-	PermissionsUpdate,
-} from "./types";
+} from "@virtool/contracts";
+import type { PermissionsUpdate } from "./types";
 
 /**
  * Setup query for fetching group search results for infinite scrolling view
@@ -35,10 +34,10 @@ export function useInfiniteFindGroups(per_page: number, term: string) {
 		queryFn: ({ pageParam }) =>
 			findGroupsFn({
 				data: { term, page: pageParam as number, per_page },
-			}) as Promise<GroupSearchResults>,
+			}),
 		initialPageParam: 1,
 		getNextPageParam: (lastPage) => {
-			if (lastPage.page >= lastPage.page_count) {
+			if (lastPage.page >= lastPage.pageCount) {
 				return undefined;
 			}
 			return (lastPage.page || 1) + 1;
@@ -84,7 +83,7 @@ export function useUpdateGroup() {
 	const queryClient = useQueryClient();
 	return useMutation<
 		Group,
-		ErrorResponse,
+		Error,
 		{
 			id: string | number;
 			name?: string;
@@ -109,7 +108,7 @@ export function useUpdateGroup() {
  */
 export function useRemoveGroup() {
 	const queryClient = useQueryClient();
-	return useMutation<null, ErrorResponse, { id: string | number }>({
+	return useMutation<null, Error, { id: string | number }>({
 		mutationFn: ({ id }) =>
 			deleteGroupFn({ data: { groupId: Number(id) } }) as Promise<null>,
 		onSuccess: () => {

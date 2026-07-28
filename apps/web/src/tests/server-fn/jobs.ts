@@ -15,16 +15,16 @@ export const jobServerFnMocks = {
 /** Sets up findJobs to resolve with a single page containing the given jobs. */
 export function mockFindJobs(
 	jobs: ServerJobMinimal[],
-	found_count?: number,
+	foundCount?: number,
 ): Mock {
 	jobServerFnMocks.findJobsFn.mockResolvedValue({
 		counts: {},
-		found_count: found_count ?? jobs.length,
+		foundCount: foundCount ?? jobs.length,
 		items: jobs,
 		page: 1,
-		page_count: 1,
-		per_page: 25,
-		total_count: jobs.length,
+		pageCount: 1,
+		perPage: 25,
+		totalCount: jobs.length,
 	});
 	return jobServerFnMocks.findJobsFn;
 }

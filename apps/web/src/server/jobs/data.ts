@@ -1,3 +1,4 @@
+import type { SearchResult } from "@virtool/contracts";
 import { count, desc, eq, inArray } from "drizzle-orm";
 import type { Db, DbOrTx } from "../db/pg";
 import { takeFirstOrThrow } from "../db/rows";
@@ -46,15 +47,10 @@ export type Job = {
 	workflow: string;
 };
 
-/** A page of jobs with per-state/workflow counts and pagination metadata. */
-export type JobSearchResult = {
+/** A page of jobs, with per-state/workflow counts attached. */
+export type JobSearchResult = SearchResult & {
 	counts: Record<string, Record<string, number>>;
-	found_count: number;
 	items: JobMinimal[];
-	page: number;
-	page_count: number;
-	per_page: number;
-	total_count: number;
 };
 
 /** Filters and pagination accepted by {@link findJobs}. */
@@ -159,12 +155,12 @@ export async function findJobs(
 
 	return {
 		counts: buildCounts(countRows),
-		found_count: foundCount,
+		foundCount,
 		items,
 		page,
-		page_count: foundCount ? Math.ceil(foundCount / perPage) : 0,
-		per_page: perPage,
-		total_count: totalCount,
+		pageCount: foundCount ? Math.ceil(foundCount / perPage) : 0,
+		perPage,
+		totalCount,
 	};
 }
 

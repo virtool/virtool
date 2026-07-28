@@ -8,8 +8,8 @@ import LoadingPlaceholder from "@base/LoadingPlaceholder";
 import QueryError from "@base/QueryError";
 import { RadioGroup, RadioGroupItem } from "@base/RadioGroup";
 import { useListGroups } from "@groups/queries";
-import type { GroupMinimal } from "@groups/types";
 import { useUpdateUser } from "@users/queries";
+import type { GroupMinimal } from "@virtool/contracts";
 import { X } from "lucide-react";
 
 /** A stable empty fallback so `useFuse` doesn't reset its term while loading */

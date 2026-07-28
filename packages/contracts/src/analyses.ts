@@ -1,7 +1,7 @@
 import { z } from "zod";
 import type { JobNested } from "./jobs";
 import type { JsonObject } from "./json";
-import type { SearchResultV2 } from "./search";
+import type { SearchResult } from "./search";
 import type { SubtractionNested } from "./subtractions";
 import type { UserNested } from "./users";
 import type { WorkflowName } from "./workflowName";
@@ -115,7 +115,7 @@ export type Analysis = AnalysisMinimal & {
 };
 
 /** A page of analyses. */
-export type AnalysisSearchResult = SearchResultV2 & {
+export type AnalysisSearchResult = SearchResult & {
 	items: AnalysisMinimal[];
 };
 

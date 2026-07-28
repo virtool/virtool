@@ -3,10 +3,10 @@ import { toThousand } from "@app/format";
 import Box from "@base/Box";
 import Label from "@base/Label";
 import Link from "@base/Link";
-import type { SubtractionNested } from "@subtraction/types";
 import type {
 	AnalysisIndexNested,
 	AnalysisReferenceNested,
+	SubtractionNested,
 } from "@virtool/contracts";
 import { Bars, type BarsItem } from "../Viewer/Bars";
 

@@ -1,37 +1,28 @@
+import { getErrorStatus } from "@app/queryErrors";
 import { useQueryErrorResetBoundary } from "@tanstack/react-query";
 import { type ErrorComponentProps, useRouter } from "@tanstack/react-router";
+import {
+	FORBIDDEN_ERROR_NAME,
+	UNAUTHORIZED_ERROR_NAME,
+} from "@virtool/contracts";
 import { useEffect } from "react";
 import Button from "./Button";
 import ErrorState from "./ErrorState";
 import NotFound from "./NotFound";
 
 function getStatus(error: unknown): number | undefined {
-	// TanStack Start server-function errors cross the boundary as plain
-	// `Error`s with only `name`/`message` — the status set via
-	// `setResponseStatus` is dropped — so match the auth errors by name, as
-	// the query retry logic in `router.tsx` does.
+	// The auth errors cross the boundary carrying `name` but no `status`, so
+	// they are matched by name, as the query retry logic in `router.tsx` does.
 	if (error instanceof Error) {
-		if (error.name === "ForbiddenError") {
+		if (error.name === FORBIDDEN_ERROR_NAME) {
 			return 403;
 		}
-		if (error.name === "UnauthorizedError") {
+		if (error.name === UNAUTHORIZED_ERROR_NAME) {
 			return 401;
 		}
 	}
 
-	// Superagent (legacy Python API) errors carry the HTTP status here.
-	if (
-		error != null &&
-		typeof error === "object" &&
-		"response" in error &&
-		typeof (error as { response?: unknown }).response === "object" &&
-		(error as { response: unknown }).response != null
-	) {
-		const { status } = (error as { response: { status?: unknown } }).response;
-		return typeof status === "number" ? status : undefined;
-	}
-
-	return undefined;
+	return getErrorStatus(error);
 }
 
 /**

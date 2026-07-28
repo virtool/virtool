@@ -1,7 +1,7 @@
 import { cn } from "@app/cn";
 import BoxGroup from "@base/BoxGroup";
 import BoxGroupSection from "@base/BoxGroupSection";
-import type { Permissions } from "@groups/types";
+import type { Permissions } from "@virtool/contracts";
 import { Check, X } from "lucide-react";
 
 const permissionDescriptions: Record<keyof Permissions, string> = {

@@ -57,7 +57,6 @@ this file. It does if you have:
 - added or removed a top-level feature directory under `apps/web/src/`;
 - changed a command in the **Commands** table, or changed what one does;
 - added, removed, or changed a lint rule this file describes as enforced;
-- completed or abandoned a project listed under **Projects**;
 - changed the shape of an API this file tells agents to call.
 
 "I'll update the docs afterwards" is how a doc goes stale. There is no
@@ -166,9 +165,8 @@ module:
 - `src/nav/`, `src/banner/`, `src/wall/` - Navigation, banners, and the
   unauthenticated wall
 - `src/server/` - TanStack Start server features (server functions,
-  middleware, db, auth) — the new path for backend responsibility
-  migrating into this repo
-- `src/tests/` - Test setup, fakes, REST mocks, and server-function mocks
+  middleware, db, auth) — every request the SPA makes is served from here
+- `src/tests/` - Test setup, fakes, and server-function mocks
 - `src/types/` - Shared type definitions
 
 ### Path aliases
@@ -187,7 +185,6 @@ alias and are reached through the catch-all `@/*`, which maps to
 - **React Query** (`@tanstack/react-query`) for server state
 - **zustand** for client state
 - **react-hook-form** + **zod v4** for forms and validation
-- **superagent** for API calls (via `@app/api.ts` client)
 - **Tailwind CSS v4** for all styling
 - **Radix UI** primitives for accessible components
 - **CVA** (`class-variance-authority`) for component variants
@@ -243,11 +240,12 @@ bundle that **every** page load pays for, including `/login`. Only the
 
 So, in a route's critical exports:
 
-- **Never statically import `queries.ts` or `@app/api`.** Pull the
+- **Never statically import a feature's `queries.ts`.** Pull the
   `queryOptions` factory in from inside the loader body instead:
   `const { sampleQueryOptions } = await import("@samples/queries");`. A static
-  import drags superagent and the feature's whole request layer into the eager
-  bundle. Importing them in the `component` half is fine — that half is lazy.
+  import drags the feature's whole request layer — every server-function stub
+  and the zod schemas they carry — into the eager bundle. Importing them in the
+  `component` half is fine — that half is lazy.
 - **Never use zod in `validateSearch`.** It is synchronous and cannot be
   deferred, so a zod schema pins all ~108 KB of zod eagerly. Use the
   dependency-free coercion helpers in `@app/searchParams` and type the function
@@ -263,35 +261,30 @@ So, in a route's critical exports:
 same rule applies there: reach server-function modules through
 `createServerOnlyFn` (see `auth/middleware.ts`), never a top-level import.
 
-### What a route guard reaches must not import `@app/api`
+### What a route guard reaches gets its own module
 
 A `beforeLoad` that resolves an account, or a loader on `/login` or `/setup`,
 runs for unauthenticated visitors. Anything it reaches — even *dynamically* —
 is downloaded on the login wall.
 
 **Tree-shaking will not save you here: the chunk is the unit of loading, not
-the export.** A `queries.ts` that calls `apiClient` anywhere — `indexes/queries.ts`
-is the last one — has superagent in its chunk, so importing that chunk for one
-server-function-backed export still drags superagent in. Marking `@app/api`
-side-effect-free does nothing about this.
+the export.** Importing a feature's `queries.ts` for one `queryOptions` factory
+pulls that module's whole chunk — every other request it defines, and the zod
+schemas those carry. Marking a module side-effect-free does nothing about this.
 
-So the queryOptions the guards need live in modules with no `@app/api` import
-at all:
+So the queryOptions the guards need live apart from their feature's
+`queries.ts`, each importing one server function and nothing else:
 
 - `@account/account` — `accountQueryOptions` / `useFetchAccount`, backed by the
   `getAccount` server function.
 - `@administration/passwordPolicy` — `passwordPolicyQueryOptions`, backed by
   `getPasswordPolicyFn`.
 - `@nav/queries` — `rootQueryOptions` / `useRootQuery`, backed by the `getRoot`
-  server function. The guard reads `firstUser` from it before a session
-  exists; the whole module is `@app/api`-free.
+  server function. The guard reads `firstUser` from it before a session exists.
 
-All three are server-function-backed and need no HTTP client. Keep them out of
-their feature's `queries.ts` even when that module is `@app/api`-free today — as
-`account/queries.ts` now is — because a single `apiClient` call added there later
-would put superagent back on the login wall with nothing to catch it. Don't add
-an `apiClient` call to any of them either. Prefer a server function over a Python
-REST call for anything a guard reads.
+Keep them out of their feature's `queries.ts` even when that module looks light
+today — the next request added there rides along onto the login wall with
+nothing to catch it.
 
 ### Heavy dependencies get their own module
 
@@ -311,12 +304,15 @@ internal route triggers a full page reload. For query strings, use `search` on
 
 ### API calls
 
-Use the superagent-based client in `apps/web/src/app/api.ts`. API errors have
-the shape `error.response?.body.message`.
+There is no HTTP client. The SPA reaches the backend through TanStack Start
+server functions, and the handful of endpoints that must be raw routes (uploads,
+downloads, SSE) are called with `XMLHttpRequest`, a plain `<a href>`, or
+`EventSource`. A failed server function arrives as a plain `Error` — read its
+`message`, and its HTTP status via `getErrorStatus` (`@app/queryErrors`).
 
 Each feature owns a `queries.ts` module that folds its request logic directly
 into React Query hooks and `queryOptions` factories — there is no separate
-per-feature `api.ts` layer. Inline each `apiClient` call into the hook's
+per-feature `api.ts` layer. Inline each server-function call into the hook's
 `queryFn`/`mutationFn`; keep a module-private helper only when a request is
 shared across hooks or branches. Route loaders prefetch via the same
 `queryOptions` factories where appropriate.
@@ -332,8 +328,8 @@ inside the hierarchy.
 Keys live in the feature's own `keys.ts`, which imports `@app/queryKeys` and
 nothing else, and `queries.ts` does **not** re-export them. Anything that only
 needs to invalidate a cache — the SSE handler, a route's `beforeLoad` — imports
-`@<feature>/keys` and so pays for none of the request layer (superagent, zod,
-the server-function stubs) that `queries.ts` pulls in.
+`@<feature>/keys` and so pays for none of the request layer (zod, the
+server-function stubs) that `queries.ts` pulls in.
 
 Loading and error states come in two tiers: primary route data uses
 `useSuspenseQuery` (loading via the route's `<Suspense>`, errors via the
@@ -387,9 +383,6 @@ any function that might be called inside a `db.transaction(...)`.
 Drizzle's transaction handle is not assignable to `Db`, so a helper
 typed `Db` cannot be reused inside a transaction without being widened
 first.
-
-Legacy features that still call the Python API through their
-client-side `api.ts` are not subject to this layering.
 
 A `functions.ts` validator builds on the shared primitives in
 `@server/validation` — `rowIdSchema` for any row id, `pageSchema` and
@@ -448,7 +441,7 @@ browser feature tree — a Biome `noRestrictedImports` override blocks
 a server file reaching into a DOM-typed module breaks the server project
 at a distance. Shapes and helpers both sides need live *down* in
 `@virtool/contracts` (roles, permissions, banner colors, the SSE schema,
-the reference wire shapes, `UserNested`, `Task`, `SearchResultV2`);
+the reference wire shapes, `UserNested`, `Task`, `SearchResult`);
 the server imports them from the package, and the client feature module
 re-exports them so its own call sites are undisturbed.
 
@@ -655,15 +648,6 @@ add a `detail(id)` invalidation back for jobs.
 
 See [docs/server-push.md](docs/server-push.md) for the wire format,
 auth on the SSE side, the job-batching queue, and the follow-up TODOs.
-
-## Projects
-
-Ongoing projects are documented in `docs/projects/`. These correspond to Linear
-projects. If your task relates to a project, check that directory for
-constraints, mappings, or decisions that apply to your work.
-
-- **Auth handoff** (login moves from Python to TanStack Start):
-  `docs/projects/auth-handoff.md`
 
 ## Linear
 
@@ -905,26 +889,24 @@ and make commits easier to find later.
 - **Imports:** Use explicit vitest imports (`import { describe, it,
   expect, vi } from "vitest"`).
 - **Setup:** `apps/web/src/tests/setup.tsx` provides
-  `renderWithProviders()`, `renderWithRouter()`, and `MemoryRouter`. It
-  also calls `nock.disableNetConnect()` (an unmocked request fails
-  instead of hitting the network) and gives the test `QueryClient`
-  `retry: false` (a failed query surfaces its error immediately), so
-  error paths are testable and under-mocked tests fail loudly.
-- **Test doubles** split three ways by what they do, and a helper lives
+  `renderWithProviders()`, `renderWithRouter()`, and `MemoryRouter`, and
+  gives the test `QueryClient` `retry: false` (a failed query surfaces
+  its error immediately), so error paths are testable and under-mocked
+  tests fail loudly rather than sitting through retries.
+- **Test doubles** split two ways by what they do, and a helper lives
   in exactly one of them:
   - `src/tests/fake/` — `createFake*` data generators. No mocking.
-  - `src/tests/api/` — nock interceptors for Python REST endpoints,
-    named `mockApi<Thing>`. Returns a nock scope; `scope.done()`
-    asserts the request fired.
   - `src/tests/server-fn/` — `vi.fn()` stubs over the TanStack Start
     server functions, named `mock<ServerFnName>` after the function
     they stub. Returns the `vi.fn()` itself, so assert with
     `expect(getUser).toHaveBeenCalled()`.
 
-  A domain moving from the Python API to a server function moves its
-  helper from `api/` to `server-fn/`. Files under `server-fn/` mirror
-  the mocked `@server/<feature>/functions` module, not the client
-  feature — `getAccount` is stubbed from `server-fn/users.ts`.
+  Files under `server-fn/` mirror the mocked
+  `@server/<feature>/functions` module, not the client feature —
+  `getAccount` is stubbed from `server-fn/users.ts`. The SPA has no HTTP
+  client, so there is no HTTP mocking library either: stub the module
+  that would make the call, never an interceptor. Nothing blocks an
+  outbound request, so a test that reaches the network really will.
 - **Database tests:** `createTestDatabase()` from
   `@server/db/test/fixtures` gives a suite its own isolated Postgres
   database with the schema applied. Test files run in parallel, so
@@ -948,6 +930,5 @@ and make commits easier to find later.
   `expectNoViolations(el, { rules: { "color-contrast": { enabled: true } } })`.
 
 See [docs/testing.md](docs/testing.md) for the unit / integration
-layer split, where to mock depending on migration state, snapshot
-guidance, the axe-core accessibility helper, and the shared-fixtures
-rule.
+layer split, where to mock the network boundary, snapshot guidance, the
+axe-core accessibility helper, and the shared-fixtures rule.

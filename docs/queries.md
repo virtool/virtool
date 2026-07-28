@@ -1,26 +1,28 @@
 # Queries and caching
 
 Data fetching in the SPA goes through
-[TanStack Query](https://tanstack.com/query) (React Query, v5) regardless of
-the underlying transport. Two transports coexist while the backend migrates:
+[TanStack Query](https://tanstack.com/query) (React Query, v5). There is one
+transport: TanStack Start server functions under
+`apps/web/src/server/<feature>/`, called from the SPA via React Query hooks.
+There is no HTTP client — the endpoints that must be raw routes (uploads,
+downloads, SSE) are reached with `XMLHttpRequest`, a plain `<a href>`, or
+`EventSource`, not through React Query.
 
-- **Legacy path** — superagent calls the Python API through the shared
-  `apiClient` in `apps/web/src/app/api.ts`. Error shape is
-  `error.response?.body.message`.
-- **New path** — TanStack Start server functions under
-  `apps/web/src/server/<feature>/`, called from the SPA via React Query
-  hooks.
+A failed server function arrives on the client as a plain `Error`, rebuilt by
+`serverErrorSerializationAdapter`. Its `message` is the reason the call was
+refused; its HTTP status is an own `status` property, read through
+`getErrorStatus` (`@app/queryErrors`) rather than off the error directly.
+Type a hook's error generic as `Error`.
 
-Either way, the cache surface is the same. A feature splits it across two
-modules:
+A feature splits its cache surface across two modules:
 
 - `keys.ts` — the `*QueryKeys` factory, and nothing else.
 - `queries.ts` — `queryOptions`-based helpers and `use*` hooks.
 
 There is no separate per-feature `api.ts` — the request logic lives directly
 inside the hook's `queryFn`/`mutationFn` (or a `queryOptions` factory).
-Inline the `apiClient` call; reach for a module-private helper only when the
-same request is shared by more than one hook or selected between branches.
+Inline the server-function call; reach for a module-private helper only when
+the same request is shared by more than one hook or selected between branches.
 
 ## Query keys come from `createQueryKeys`
 
@@ -73,8 +75,8 @@ of the collection.
 ### `keys.ts` imports nothing but `@app/queryKeys`
 
 Keys live apart from the hooks because a key is a pure function over
-primitives, while the hooks around it drag in the whole request layer:
-superagent, zod, and the TanStack Start server-function stubs. Anything that
+primitives, while the hooks around it drag in the whole request layer: zod and
+the TanStack Start server-function stubs. Anything that
 only needs to *invalidate* a cache — the SSE handler, a route's `beforeLoad`,
 a mutation in a neighbouring feature — imports `@<feature>/keys` and pays
 none of that.
@@ -154,22 +156,21 @@ Declare a query's key and fetcher once with the `queryOptions()` helper, then
 reuse the same options from hooks and route loaders:
 
 ```ts
-export function sampleQueryOptions(sampleId: string) {
-  return queryOptions<Sample, ErrorResponse>({
+export function sampleQueryOptions(sampleId: number) {
+  return queryOptions<Sample, Error>({
     queryKey: samplesQueryKeys.detail(sampleId),
-    queryFn: () =>
-      apiClient.get(`/samples/${sampleId}`).then((res) => res.body),
+    queryFn: () => getSampleFn({ data: { sampleId } }),
   });
 }
 
-export function useFetchSample(sampleId: string) {
+export function useFetchSample(sampleId: number) {
   return useQuery(sampleQueryOptions(sampleId));
 }
 ```
 
-Annotate the `queryOptions` generic (`<Sample, ErrorResponse>`) when the
-fetcher is inlined — `apiClient` responses are untyped, so without it the
-cached data type degrades to `any`.
+Annotate the `queryOptions` generic (`<Sample, Error>`) when the fetcher is
+inlined. The error half is always `Error` — that is what
+`serverErrorSerializationAdapter` rebuilds on the client.
 
 The same options object can be passed to `queryClient.ensureQueryData` from
 a route loader without duplicating the key or fetcher.
@@ -197,8 +198,9 @@ export const Route = createFileRoute("/_authenticated/samples/$sampleId")({
 
 `loader` is a *critical* route export: `routeTree.gen.ts` imports it
 statically, so a top-level `import { sampleQueryOptions } from
-"@samples/queries"` puts that module — and through it `@app/api`, superagent,
-and the feature's whole request layer — into the eager bundle every page load
+"@samples/queries"` puts that module — and through it the feature's whole
+request layer, every server-function stub and the zod schemas they carry —
+into the eager bundle every page load
 pays for, `/login` included. The dynamic import moves it into a chunk the
 loader fetches only when the route is actually visited. The route's
 `component` half is already lazy, so importing hooks like `useSuspenseSample`
@@ -331,16 +333,12 @@ the next one fetches, instead of flashing a spinner. Apply it to any
 paginated list:
 
 ```ts
-return useQuery<SampleSearchResult, ErrorResponse>({
+return useQuery<SampleSearchResult, Error>({
   queryKey: samplesQueryKeys.list([page, per_page, term, labels, workflows]),
   queryFn: () =>
-    apiClient
-      .get("/samples")
-      .query({ page, per_page, find: term, label: labels, workflows })
-      .then((res) => {
-        const { documents, ...rest } = res.body;
-        return { ...rest, items: documents };
-      }),
+    findSamplesFn({
+      data: { page, perPage: per_page, term, labels, workflows },
+    }).then(({ documents, ...rest }) => ({ ...rest, items: documents })),
   placeholderData: keepPreviousData,
 });
 ```
@@ -369,7 +367,7 @@ Use the split deliberately:
 ```ts
 export function useUpdateSample(sampleId: string) {
   const queryClient = useQueryClient();
-  return useMutation<Sample, ErrorResponse, { update: SampleUpdate }>({
+  return useMutation<Sample, Error, { update: SampleUpdate }>({
     mutationFn: ({ update }) => updateSampleFn(sampleId, update),
     onSuccess: () => {
       queryClient.invalidateQueries({

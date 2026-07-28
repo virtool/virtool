@@ -9,14 +9,12 @@ import { queryOptions, useQuery } from "@tanstack/react-query";
  * Apart from `queries.ts` because the route guards on `/login`, `/_authenticated`
  * and `/administration` all resolve an account in `beforeLoad`, and `beforeLoad`
  * is a critical route export. Anything it reaches is in the eager bundle every
- * page load pays for — so it must not reach `@app/api`. `queries.ts` no longer
- * does, but the split stays: tree-shaking cannot save us here, because the chunk
- * is the unit of loading, so one `apiClient` call added to `queries.ts` later
- * would drag superagent onto the login wall with nothing to catch it.
+ * page load pays for. Tree-shaking cannot save us here — the chunk is the unit
+ * of loading, so importing `queries.ts` for this one export would put every
+ * other account request, and the zod schemas they carry, on the login wall.
  *
- * The account is served by a server function, so this module needs no HTTP
- * client at all. An anonymous call rejects with `UnauthorizedError` — that
- * rejection is how the guards learn nobody is signed in.
+ * An anonymous call rejects with `UnauthorizedError` — that rejection is how
+ * the guards learn nobody is signed in.
  */
 export function accountQueryOptions() {
 	return queryOptions<Account>({

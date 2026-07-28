@@ -28,14 +28,13 @@ export default function SubtractionList({
 }: SubtractionListProps) {
 	const { data } = useSuspenseSubtractions(page, 25, term);
 
-	const { items, total_count, page: storedPage, page_count } = data;
+	const { items, totalCount, page: storedPage, pageCount } = data;
 
 	return (
 		<>
 			<ViewHeader title="Subtractions">
 				<ViewHeaderTitle>
-					Subtractions{" "}
-					<ViewHeaderTitleBadge>{total_count}</ViewHeaderTitleBadge>
+					Subtractions <ViewHeaderTitleBadge>{totalCount}</ViewHeaderTitleBadge>
 				</ViewHeaderTitle>
 			</ViewHeader>
 
@@ -54,7 +53,7 @@ export default function SubtractionList({
 				<Pagination
 					storedPage={storedPage}
 					currentPage={page}
-					pageCount={page_count}
+					pageCount={pageCount}
 					onPageChange={(page) => setSearch({ page })}
 				>
 					<BoxGroup as="ul">

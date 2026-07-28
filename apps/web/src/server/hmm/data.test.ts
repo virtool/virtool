@@ -92,10 +92,10 @@ describe("findHmms", () => {
 
 		const result = await findHmms(db, { page: 1, perPage: 25, term: "" });
 
-		expect(result.documents.map((doc) => doc.cluster)).toEqual([1, 2]);
-		expect(result.total_count).toBe(2);
-		expect(result.found_count).toBe(2);
-		expect(result.page_count).toBe(1);
+		expect(result.items.map((doc) => doc.cluster)).toEqual([1, 2]);
+		expect(result.totalCount).toBe(2);
+		expect(result.foundCount).toBe(2);
+		expect(result.pageCount).toBe(1);
 	});
 
 	it("matches the search term against any element of the names array", async () => {
@@ -104,10 +104,10 @@ describe("findHmms", () => {
 
 		const result = await findHmms(db, { page: 1, perPage: 25, term: "flu" });
 
-		expect(result.documents).toHaveLength(1);
-		expect(result.found_count).toBe(1);
-		expect(result.total_count).toBe(2);
-		expect(result.documents[0]?.cluster).toBe(1);
+		expect(result.items).toHaveLength(1);
+		expect(result.foundCount).toBe(1);
+		expect(result.totalCount).toBe(2);
+		expect(result.items[0]?.cluster).toBe(1);
 	});
 
 	it("paginates the result set", async () => {
@@ -117,10 +117,10 @@ describe("findHmms", () => {
 
 		const result = await findHmms(db, { page: 2, perPage: 2, term: "" });
 
-		expect(result.documents).toHaveLength(1);
-		expect(result.documents[0]?.cluster).toBe(3);
+		expect(result.items).toHaveLength(1);
+		expect(result.items[0]?.cluster).toBe(3);
 		expect(result.page).toBe(2);
-		expect(result.page_count).toBe(2);
+		expect(result.pageCount).toBe(2);
 	});
 });
 

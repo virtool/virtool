@@ -14,7 +14,7 @@ import InputGroup from "@base/InputGroup";
 import InputLabel from "@base/InputLabel";
 import InputSimple from "@base/InputSimple";
 import SaveButton from "@base/SaveButton";
-import type { Permissions } from "@groups/types";
+import type { Permissions } from "@virtool/contracts";
 import { emptyPermissions } from "@virtool/contracts";
 import { useId, useState } from "react";
 import { Controller, useForm } from "react-hook-form";

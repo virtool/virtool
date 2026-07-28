@@ -28,9 +28,9 @@ export default function HmmList({ term, page, setSearch }: HmmListProps) {
 	const {
 		items,
 		page: storedPage,
-		page_count,
-		found_count,
-		total_count,
+		pageCount,
+		foundCount,
+		totalCount,
 		status,
 	} = data;
 
@@ -40,12 +40,12 @@ export default function HmmList({ term, page, setSearch }: HmmListProps) {
 				<ViewHeaderTitle>
 					HMMs{" "}
 					{status.task?.complete && (
-						<ViewHeaderTitleBadge>{found_count}</ViewHeaderTitleBadge>
+						<ViewHeaderTitleBadge>{foundCount}</ViewHeaderTitleBadge>
 					)}
 				</ViewHeaderTitle>
 			</ViewHeader>
 
-			{total_count ? (
+			{totalCount ? (
 				<>
 					<SearchToolbar
 						aria-label="Search HMMs"
@@ -57,7 +57,7 @@ export default function HmmList({ term, page, setSearch }: HmmListProps) {
 						<Pagination
 							storedPage={storedPage}
 							currentPage={page}
-							pageCount={page_count}
+							pageCount={pageCount}
 							onPageChange={(page) => setSearch({ page })}
 						>
 							<BoxGroup as="ul">

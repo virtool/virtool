@@ -1,10 +1,9 @@
 /**
- * The camelCase paginated search-result envelope returned by every
- * server-function-backed list. The forward-looking replacement for the
- * snake_case envelope the Python API still returns: once every domain is served
- * from TypeScript this becomes the single envelope and the `V2` drops away.
+ * The paginated search-result envelope returned by every server-function-backed
+ * list. A domain carrying extra summary fields — a ready count, per-state job
+ * counts — intersects this rather than restating the five.
  */
-export type SearchResultV2 = {
+export type SearchResult = {
 	/** The number of items found */
 	foundCount: number;
 

@@ -76,8 +76,8 @@ describe("findGroups", () => {
 		const result = await findGroups(db, "tech", 1, 25);
 
 		expect(result.items.map((group) => group.name)).toEqual(["Technicians"]);
-		expect(result.found_count).toBe(1);
-		expect(result.total_count).toBe(2);
+		expect(result.foundCount).toBe(1);
+		expect(result.totalCount).toBe(2);
 	});
 
 	it("paginates the matches", async () => {
@@ -93,8 +93,8 @@ describe("findGroups", () => {
 			"group-b",
 		]);
 		expect(page2.items.map((group) => group.name)).toEqual(["group-c"]);
-		expect(page1.page_count).toBe(2);
-		expect(page1.per_page).toBe(2);
+		expect(page1.pageCount).toBe(2);
+		expect(page1.perPage).toBe(2);
 	});
 });
 

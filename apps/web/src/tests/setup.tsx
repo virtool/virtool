@@ -18,7 +18,6 @@ import {
 	render as rtlRender,
 } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import nock from "nock";
 import { createContext, type ReactNode, useContext, useState } from "react";
 import { beforeEach, vi } from "vitest";
 import { createFakeAccount } from "./fake/account";
@@ -197,11 +196,6 @@ beforeEach(() => {
 });
 
 process.env.TZ = "UTC";
-
-// Fail loudly when a request escapes its nock mock instead of falling through to
-// the real network, where it would pass or hang silently. Every superagent call
-// in a component test must have a matching interceptor.
-nock.disableNetConnect();
 
 faker.seed(1);
 

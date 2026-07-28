@@ -3,8 +3,8 @@ import userEvent from "@testing-library/user-event";
 import { createFakeReference } from "@tests/fake/references";
 import { mockCreateReference } from "@tests/server-fn/references";
 import { renderWithRouter } from "@tests/setup";
-import type { Upload } from "@uploads/types";
 import { postUpload } from "@uploads/uploader";
+import type { Upload } from "@virtool/contracts";
 import { describe, expect, it, vi } from "vitest";
 import { CreateReferenceForm } from "../CreateReferenceForm";
 

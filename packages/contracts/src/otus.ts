@@ -1,5 +1,5 @@
 import { z } from "zod";
-import type { SearchResultV2 } from "./search";
+import type { SearchResult } from "./search";
 import type { UserNested } from "./users";
 
 /**
@@ -269,7 +269,7 @@ export type Otu = OtuMinimal & {
 };
 
 /** A page of OTUs. */
-export type OtuSearchResult = SearchResultV2 & {
+export type OtuSearchResult = SearchResult & {
 	items: OtuMinimal[];
 
 	/** The number of OTUs changed since the reference was last built */

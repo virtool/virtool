@@ -1,5 +1,5 @@
 import type { OtuHistory } from "./otus";
-import type { SearchResultV2 } from "./search";
+import type { SearchResult } from "./search";
 import type { UserNested } from "./users";
 
 /** The reference an index was built from, reduced to the fields listings show. */
@@ -105,7 +105,7 @@ export type Index = IndexMinimal & {
  * would include — not a summary of the page. They are what a list view needs in
  * order to decide whether to offer a rebuild.
  */
-export type IndexSearchResult = SearchResultV2 & {
+export type IndexSearchResult = SearchResult & {
 	/** The indexes on this page */
 	items: IndexMinimal[];
 
@@ -120,7 +120,7 @@ export type IndexSearchResult = SearchResultV2 & {
 };
 
 /** A page of changes awaiting the next index build. */
-export type UnbuiltChangesSearchResult = SearchResultV2 & {
+export type UnbuiltChangesSearchResult = SearchResult & {
 	/** The unbuilt changes on this page */
 	items: OtuHistory[];
 };

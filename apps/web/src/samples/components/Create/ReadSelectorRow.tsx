@@ -2,7 +2,7 @@ import { cn } from "@app/cn";
 import { byteSize } from "@app/format";
 import Icon from "@base/Icon";
 import type { ReadRow } from "@uploads/pairing";
-import type { Upload } from "@uploads/types";
+import type { Upload } from "@virtool/contracts";
 import { File, Files } from "lucide-react";
 
 type SlotLabel = "LEFT" | "RIGHT";

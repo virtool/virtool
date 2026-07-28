@@ -1,3 +1,15 @@
+import type {
+	JobState,
+	JobWorkflow,
+	Subtraction,
+	SubtractionFile,
+	SubtractionJobMinimal,
+	SubtractionMinimal,
+	SubtractionSampleNested,
+	SubtractionSearchResult,
+	SubtractionShortlistItem,
+	SubtractionUpload,
+} from "@virtool/contracts";
 import { and, asc, count, eq, ilike, or } from "drizzle-orm";
 import { alias } from "drizzle-orm/pg-core";
 import type { Db, DbOrTx } from "../db/pg";
@@ -5,7 +17,6 @@ import { takeFirstOrThrow } from "../db/rows";
 import { type JobStep, jobs } from "../db/schema/jobs";
 import { legacySampleSubtractions, legacySamples } from "../db/schema/samples";
 import {
-	type NucleotideComposition,
 	type SubtractionFileType,
 	subtractionFiles,
 	subtractions,
@@ -21,73 +32,6 @@ import {
 	subtractionPrefix,
 	subtractionStorageId,
 } from "../storage";
-
-/** A user reduced to the fields shown alongside a resource. */
-export type UserNested = { id: number; handle: string };
-
-/** The compact upload snapshot attached to a subtraction as `file`. */
-export type SubtractionUpload = { id: number; name: string };
-
-/** A subtraction's create job, reduced to the fields the list and detail show. */
-export type JobMinimal = {
-	id: number;
-	created_at: string;
-	progress: number;
-	state: string;
-	user: UserNested | null;
-	workflow: string;
-};
-
-/** A downloadable file belonging to a subtraction. */
-export type SubtractionFile = {
-	download_url: string;
-	id: number;
-	name: string;
-	size: number;
-	subtraction: number;
-	type: string;
-};
-
-/** A sample linked to a subtraction through the default-subtraction join. */
-export type SampleNested = { id: number; name: string };
-
-/** A subtraction as it appears in a search-result list. */
-export type SubtractionMinimal = {
-	id: number;
-	name: string;
-	count: number | null;
-	created_at: string;
-	file: SubtractionUpload | null;
-	job: JobMinimal | null;
-	nickname: string;
-	ready: boolean;
-	user: UserNested | null;
-};
-
-/** A full subtraction, as returned by the detail endpoint. */
-export type Subtraction = SubtractionMinimal & {
-	files: SubtractionFile[];
-	gc: NucleotideComposition | null;
-	linked_samples: SampleNested[];
-};
-
-/** A subtraction reduced to the fields the analysis picker needs. */
-export type SubtractionShortlistItem = {
-	id: number;
-	name: string;
-	ready: boolean;
-};
-
-/** A page of subtractions with pagination metadata and a ready count. */
-export type SubtractionSearchResult = {
-	found_count: number;
-	total_count: number;
-	ready_count: number;
-	page: number;
-	page_count: number;
-	per_page: number;
-	items: SubtractionMinimal[];
-};
 
 /** Fields accepted when creating a subtraction. */
 export type CreateSubtractionValues = {
@@ -179,19 +123,22 @@ function toMinimal(row: SubtractionResourceRow): SubtractionMinimal {
 			? null
 			: { id: row.uploadId, name: row.uploadName ?? "" };
 
-	const job: JobMinimal | null =
+	const job: SubtractionJobMinimal | null =
 		row.jobId == null
 			? null
 			: {
 					id: row.jobId,
 					created_at: (row.jobCreatedAt ?? new Date()).toISOString(),
 					progress: computeProgress(row.jobState, row.jobSteps),
-					state: row.jobState ?? "",
+					// `state` and `workflow` are plain text columns; Python only ever
+					// writes the union members, so assert here rather than widening the
+					// wire shape to `string` for every reader.
+					state: (row.jobState ?? "pending") as JobState,
 					user:
 						row.jobUserId == null
 							? null
 							: { id: row.jobUserId, handle: row.jobUserHandle ?? "" },
-					workflow: row.jobWorkflow ?? "",
+					workflow: (row.jobWorkflow ?? "create_subtraction") as JobWorkflow,
 				};
 
 	return {
@@ -259,12 +206,12 @@ export async function findSubtractions(
 		: totalCount;
 
 	return {
-		found_count: foundCount,
-		total_count: totalCount,
-		ready_count: takeFirstOrThrow(readyCountRows).value,
+		foundCount,
+		totalCount,
+		readyCount: takeFirstOrThrow(readyCountRows).value,
 		page,
-		page_count: foundCount ? Math.ceil(foundCount / perPage) : 0,
-		per_page: perPage,
+		pageCount: foundCount ? Math.ceil(foundCount / perPage) : 0,
+		perPage,
 		items: rows.map(toMinimal),
 	};
 }
@@ -311,7 +258,7 @@ async function getSubtractionFiles(
 async function getLinkedSamples(
 	db: DbOrTx,
 	subtractionId: number,
-): Promise<SampleNested[]> {
+): Promise<SubtractionSampleNested[]> {
 	return db
 		.select({ id: legacySamples.id, name: legacySamples.name })
 		.from(legacySamples)

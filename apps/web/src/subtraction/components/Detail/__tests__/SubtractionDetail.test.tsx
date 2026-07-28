@@ -1,4 +1,3 @@
-import type { SubtractionMinimal } from "@subtraction/types";
 import { getSubtractionFastaName } from "@subtraction/utils";
 import { screen } from "@testing-library/react";
 import { createFakeAccount } from "@tests/fake/account";
@@ -6,6 +5,7 @@ import { createFakePermissions } from "@tests/fake/permissions";
 import { createFakeSubtraction } from "@tests/fake/subtractions";
 import { mockGetSubtraction } from "@tests/server-fn/subtractions";
 import { renderRoute } from "@tests/setup";
+import type { SubtractionMinimal } from "@virtool/contracts";
 import { beforeEach, describe, expect, it } from "vitest";
 
 function formatSubtractionPath(subtraction: SubtractionMinimal) {

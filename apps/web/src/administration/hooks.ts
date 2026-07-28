@@ -1,5 +1,5 @@
 import { useFetchAccount } from "@account/account";
-import type { Permission } from "@groups/types";
+import type { Permission } from "@virtool/contracts";
 import type { AdministratorRoleName } from "./types";
 import {
 	checkAdminRoleOrPermissionsFromAccount,

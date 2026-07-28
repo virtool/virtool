@@ -5,10 +5,10 @@ import { rootQueryKeys } from "@wall/keys";
 /**
  * Query options for the instance root document.
  *
- * Backed by the `getRootFn` server function, so this module imports no
- * `@app/api`. The `_authenticated` guard reads it before any session exists to
- * decide first-user setup, and the whole module must stay HTTP-client-free to
- * keep superagent off the login wall.
+ * The `_authenticated` guard reads it before any session exists to decide
+ * first-user setup, so it is in the eager bundle every page load pays for. The
+ * module imports one server function and nothing else, keeping the rest of the
+ * request layer off the login wall.
  */
 export function rootQueryOptions() {
 	return queryOptions({

@@ -4,7 +4,7 @@ import Select from "@base/Select";
 import SelectButton from "@base/SelectButton";
 import SelectContent from "@base/SelectContent";
 import SelectItem from "@base/SelectItem";
-import type { GroupMinimal } from "@groups/types";
+import type { GroupMinimal } from "@virtool/contracts";
 import { ChevronDown } from "lucide-react";
 
 /**

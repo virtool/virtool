@@ -1,6 +1,5 @@
 import type { AdministratorRoleName } from "@administration/types";
-import type { GroupMinimal, Permissions } from "@groups/types";
-import type { UserNested } from "@virtool/contracts";
+import type { GroupMinimal, Permissions, UserNested } from "@virtool/contracts";
 
 export type { UserNested } from "@virtool/contracts";
 

@@ -274,9 +274,9 @@ describe("reactQueryHandler", () => {
 	});
 
 	// The handler needs keys, not hooks. Importing a feature's `queries` module
-	// for a key drags its `queryFn` bodies — superagent, zod, the server function
-	// stubs — into the chunk every authenticated page loads, and nothing else
-	// would fail if it did.
+	// for a key drags its `queryFn` bodies — zod, the server function stubs —
+	// into the chunk every authenticated page loads, and nothing else would fail
+	// if it did.
 	it("imports keys only, never a feature's queries module", () => {
 		const specifiers = [...handlerSource.matchAll(/from\s+"([^"]+)"/g)].map(
 			([, specifier]) => specifier,

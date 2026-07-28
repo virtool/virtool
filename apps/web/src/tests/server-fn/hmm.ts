@@ -1,4 +1,4 @@
-import type { Hmm, HmmSearchResult } from "@hmm/types";
+import type { Hmm, HmmSearchResult } from "@virtool/contracts";
 import { type Mock, vi } from "vitest";
 
 /**

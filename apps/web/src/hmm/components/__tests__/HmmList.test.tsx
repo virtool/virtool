@@ -21,7 +21,7 @@ describe("<HmmList />", () => {
 
 		expect(await screen.findByPlaceholderText("Name")).toBeInTheDocument();
 
-		const document = at(fakeHMMData.documents, 0);
+		const document = at(fakeHMMData.items, 0);
 		const name = at(document.names, 0);
 
 		expect(screen.getByText(document.cluster)).toBeInTheDocument();
@@ -29,7 +29,7 @@ describe("<HmmList />", () => {
 	});
 
 	it("should render correctly when no items exist", async () => {
-		const fakeHMMData = createFakeHmmSearchResults({ documents: [] });
+		const fakeHMMData = createFakeHmmSearchResults({ items: [] });
 		mockFindHmms(fakeHMMData);
 		await renderRoute(path);
 
@@ -39,8 +39,8 @@ describe("<HmmList />", () => {
 	describe("<HmmInstall />", () => {
 		it("should render correctly when installed = false and user has permission to install", async () => {
 			const fakeHMMData = createFakeHmmSearchResults({
-				documents: [],
-				total_count: 0,
+				items: [],
+				totalCount: 0,
 			});
 			mockFindHmms(fakeHMMData);
 			const account = createFakeAccount({
@@ -62,8 +62,8 @@ describe("<HmmList />", () => {
 
 		it("should render correctly when installed = false and user does not have permission to install", async () => {
 			const fakeHMMData = createFakeHmmSearchResults({
-				documents: [],
-				total_count: 0,
+				items: [],
+				totalCount: 0,
 			});
 			mockFindHmms(fakeHMMData);
 			const account = createFakeAccount({ administrator_role: null });
@@ -80,8 +80,8 @@ describe("<HmmList />", () => {
 
 		it("should render correctly when installed = false, user has permission to install and task !== undefined", async () => {
 			const fakeHMMData = createFakeHmmSearchResults({
-				documents: [],
-				total_count: 0,
+				items: [],
+				totalCount: 0,
 				status: {
 					errors: [],
 					installed: null,

@@ -1,8 +1,8 @@
-import type { GroupMinimal } from "@groups/types";
 import { screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { createFakeGroupMinimal } from "@tests/fake/groups";
 import { renderWithProviders } from "@tests/setup";
+import type { GroupMinimal } from "@virtool/contracts";
 import type { ComponentProps } from "react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import SampleUserGroup from "../SampleUserGroup";

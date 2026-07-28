@@ -8,9 +8,8 @@ import InitialIcon from "@base/InitialIcon";
 import QueryError from "@base/QueryError";
 import SearchToolbar from "@base/SearchToolbar";
 import { useInfiniteFindGroups } from "@groups/queries";
-import type { GroupMinimal } from "@groups/types";
 import { useAddReferenceMember } from "@references/queries";
-import type { ReferenceGroup } from "@virtool/contracts";
+import type { GroupMinimal, ReferenceGroup } from "@virtool/contracts";
 import { Users } from "lucide-react";
 import { useState } from "react";
 

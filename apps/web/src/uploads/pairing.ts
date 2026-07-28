@@ -1,4 +1,4 @@
-import type { Upload } from "./types";
+import type { Upload } from "@virtool/contracts";
 
 /**
  * A row in the read selector list: either a single file or a detected mate

@@ -45,7 +45,7 @@ export default function QuickAnalyze({
 		return null;
 	}
 
-	const compatibleWorkflows = getCompatibleWorkflows(hmms.total_count > 0);
+	const compatibleWorkflows = getCompatibleWorkflows(hmms.totalCount > 0);
 
 	const sampleIds = samples.map((sample) => sample.id);
 

@@ -1,6 +1,6 @@
 import { cn } from "@app/cn";
 import Icon from "@base/Icon";
-import type { Upload } from "@uploads/types";
+import type { Upload } from "@virtool/contracts";
 import { ArrowLeftRight } from "lucide-react";
 import ReadSlot from "./ReadSlot";
 

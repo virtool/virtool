@@ -1,7 +1,7 @@
 import BoxGroupSection from "@base/BoxGroupSection";
 import Label from "@base/Label";
 import Link from "@base/Link";
-import type { HmmMinimal } from "../types";
+import type { HmmMinimal } from "@virtool/contracts";
 
 type HmmItemProps = {
 	/** Minimal hmm data */

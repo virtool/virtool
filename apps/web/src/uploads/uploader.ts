@@ -2,9 +2,10 @@
  * Initiate and track uploads using Zustand.
  */
 import { createRandomString } from "@app/utils";
+import type { Upload, UploadType } from "@virtool/contracts";
 import { create } from "zustand";
 import { subscribeWithSelector } from "zustand/middleware";
-import type { Upload, UploadInProgress, UploadType } from "./types";
+import type { UploadInProgress } from "./types";
 
 type UploaderState = {
 	/** The ID of the interval that tracks the upload progress. */

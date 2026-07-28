@@ -98,8 +98,8 @@ the domain function underneath it, worth naming, not hiding:
   functions that wrap them, suffixed `Fn` (`loginFn`, `logoutFn`) —
   every call site, client or test, sees at a glance that the call is a
   server round-trip rather than a local one.
-- React Query hooks living next to the feature's `api.ts` wrap those
-  server calls as `useLoginMutation`, `useAuth`, etc.
+- React Query hooks in the feature's `queries.ts` wrap those server
+  calls as `useLoginMutation`, `useAuth`, etc.
 
 Because the wrapper and the domain function it wraps now have
 different names, no import aliasing is needed for the common case. Only

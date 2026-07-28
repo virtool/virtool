@@ -1,6 +1,6 @@
+import type { UploadType } from "@virtool/contracts";
 import { useEffect } from "react";
 import { useInfiniteFindFiles } from "./queries";
-import type { UploadType } from "./types";
 
 /**
  * Hook for validating selected uploads from paginated data

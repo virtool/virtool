@@ -1,9 +1,10 @@
+import { UPLOAD_TYPES, type UploadType } from "@virtool/contracts";
 import { requireAuthenticatedRequest } from "../auth/middleware";
 import { hasPermission } from "../auth/policy";
 import { db } from "../db/pg";
 import { logger } from "../logger";
 import { storage } from "../storage";
-import { createUpload, UPLOAD_TYPES, type UploadType } from "./data";
+import { createUpload } from "./data";
 
 function jsonResponse(body: unknown, status: number): Response {
 	return new Response(JSON.stringify(body), {

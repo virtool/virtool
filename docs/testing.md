@@ -96,41 +96,36 @@ example.
 
 ## Where to mock the network boundary
 
-The right boundary depends on whether the feature has migrated from
-the legacy Python API to TanStack Start server functions.
+There is no HTTP boundary from the SPA's perspective — a server
+function is a typed call. Component tests stub it with the `vi.fn()`
+handles in `src/tests/server-fn/`; server tests exercise the real
+handler against the test database, mocking at the `data.ts` interface
+or stubbing the db handle. Don't reintroduce an HTTP mock just to keep
+a test shape familiar.
 
-**Legacy AJAX features** — most of the SPA today. The browser calls
-Python through `@app/api.ts` and per-module `api.ts` (superagent).
-Mock at the HTTP boundary using the fakes and API mocks in
-`apps/web/src/tests/`.
+The raw routes — uploads, downloads, SSE — are the exception: the
+browser reaches those over real HTTP, so they are the only places a
+test has an HTTP boundary at all. No test mocks one; the components
+that call them are tested with their caller stubbed
+(`vi.mock("@uploads/uploader")`) instead.
 
-**Migrated server-function features.** There is no HTTP boundary from
-the SPA's perspective — the server function is a typed call. Mock at
-the `data.ts` interface or stub the db handle. Don't reintroduce an
-HTTP mock just to keep the test shape familiar.
+There is therefore no HTTP mocking library in the repo. Nothing blocks
+an outbound request either, so a test that reaches the network will
+attempt it for real — reach for `vi.mock` on the module that would make
+the call, not for an interceptor.
 
-If a feature is half-migrated, mock at whichever boundary the code
-path under test actually crosses.
-
-### The harness fails loudly, so error paths are testable
-
-`setup.tsx` calls `nock.disableNetConnect()` once per test file: any
-superagent request without a matching interceptor errors instead of
-falling through to the real network, where it would pass or hang
-silently. A test that types into a search box or pages through a list
-fires one request per resulting refetch, and each needs its own
-interceptor (nock interceptors are single-use unless `.persist()`).
+### Retries are off, so error paths are testable
 
 The test `QueryClient` (`createTestQueryClient`, used by
 `wrapWithProviders`, `renderWithProviders`, and `renderRoute`) sets
 `retry: false`, so a failed query surfaces its error immediately rather
 than after three retries with backoff. This is what makes error-state
-assertions practical — mock a `500`, render, and assert the error UI
-without waiting out the retries.
+assertions practical — reject the server-function mock, render, and
+assert the error UI without waiting out the retries.
 
-The two together mean a request the test forgot to mock now shows the
-error state right away instead of masking it behind retries — so
-under-mocked tests fail where they used to pass by accident.
+It also means a call the test forgot to stub shows its error state right
+away instead of masking it behind retries, so an under-mocked test fails
+where it would otherwise pass by accident.
 
 ## Don't snapshot response shapes
 
@@ -213,8 +208,9 @@ await expectNoViolations(baseElement, withContrast);
 ```
 
 They run in `src/tests/setupA11y.ts`, not the jsdom `setup.tsx` — that
-setup imports nock, which is Node-only and throws in the browser. The
-browser setup only loads `@app/style.css`, because axe computes contrast
+setup wires in the global server-function mocks and jsdom-oriented
+providers these tests never need. The browser setup only loads
+`@app/style.css`, because axe computes contrast
 from *rendered* colours: without the real Tailwind theme, classes resolve
 to no colour and every check passes vacuously. For the same reason these
 tests render lean, provider-free subtrees with real theme classes rather
@@ -238,43 +234,40 @@ top-level `test/` directory — so it travels with the code under test.
 Cross-cutting fakes for the SPA are the exception; those already live
 in `apps/web/src/tests/fake/`.
 
-## Test doubles: fake, api, server-fn
+## Test doubles: fake and server-fn
 
 The SPA's shared test doubles are split by *what they do to the system
-under test*, because the three have different failure modes and a
-reader needs to know which one they are looking at:
+under test*, because the two have different failure modes and a reader
+needs to know which one they are looking at:
 
 - **`src/tests/fake/`** — `createFake*` factories returning plain data.
   They mock nothing and assert nothing.
-- **`src/tests/api/`** — nock interceptors standing in for Python REST
-  endpoints, named `mockApi<Thing>`. They return a nock scope, and
-  `scope.done()` asserts every interceptor was consumed — so an
-  unfired request fails the test.
 - **`src/tests/server-fn/`** — `vi.fn()` stubs over the TanStack Start
   server functions. `setup.tsx` wires each module in globally with
   `vi.mock("@server/<feature>/functions", ...)`, so a test only has to
   set a return value.
 
-A helper belongs to exactly one of the three. Don't put a nock
-interceptor in `fake/` because the generator it uses lives there —
-import the generator from `api/` instead.
+A helper belongs to exactly one of the two. Don't put a stub in `fake/`
+because the generator it uses lives there — import the generator from
+`fake/` into `server-fn/` instead.
 
 ### Naming
 
 A server-function mock is named `mock<ServerFnName>` after the function
 it stubs, with no `Api` in the name: `mockGetAccount`, `mockFindJobs`,
-`mockUpdateUser`. The name lying about the transport is what this split
-exists to prevent — `mockApiGetAccount` never touched HTTP.
+`mockUpdateUser`. A name that implies an HTTP transport is a name that
+lies — nothing here touches HTTP.
 
 Each `server-fn/` file mirrors the server module it mocks, not the
-client feature, because one file maps to one `vi.mock` target. So the
-account mocks live in `server-fn/users.ts` — `getAccountFn` is exported
-from `@server/users/functions` — and there is no `server-fn/account.ts`.
+client feature, because one file maps to one `vi.mock` target. So
+`mockGetAccount` lives in `server-fn/users.ts`, because `getAccountFn`
+is exported from `@server/users/functions`; `server-fn/account.ts`
+exists but mirrors `@server/account/functions`, which owns API keys.
 
 ### Asserting a server function was called
 
 A server-function mock returns the underlying `vi.fn()`, so assert on
-it directly rather than through a nock-style scope object:
+it directly:
 
 ```ts
 const getUser = mockGetUser(user.id, user);
@@ -283,14 +276,6 @@ renderWithProviders(<UserDetail userId={user.id} />);
 
 await waitFor(() => expect(getUser).toHaveBeenCalled());
 ```
-
-### When a domain migrates off the Python API
-
-Python is handing domains over to the TS server one at a time. When a
-feature's reads move from a REST endpoint to a server function, its
-helper moves from `api/` to `server-fn/` and is renamed after the new
-server function. The directory a mock lives in is therefore a live
-record of which backend currently serves that domain.
 
 Before creating a fixture, check whether one already exists. Look for
 a sibling `test/` directory next to the code under test, and grep for

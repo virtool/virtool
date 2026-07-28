@@ -1,3 +1,9 @@
+import type {
+	Upload,
+	UploadSearchResult,
+	UploadType,
+	UserNested,
+} from "@virtool/contracts";
 import { and, count, desc, eq, inArray } from "drizzle-orm";
 import type { DbOrTx } from "../db/pg";
 import { takeFirstOrThrow } from "../db/rows";
@@ -8,51 +14,6 @@ import { emit } from "../events/emit";
 import { logger } from "../logger";
 import type { StorageBackend } from "../storage";
 import { uploadFileKey } from "../storage";
-
-/** The upload types Python's `ck_uploads_type` constraint permits. */
-export const UPLOAD_TYPES = ["reference", "reads", "subtraction"] as const;
-
-/** One of the allowed upload types. */
-export type UploadType = (typeof UPLOAD_TYPES)[number];
-
-/** The uploading user, matching the legacy `UserNested` wire shape. */
-export type UploadUserNested = {
-	id: number;
-	handle: string;
-};
-
-/**
- * An upload as returned to the client. Mirrors Python's `UploadMinimal`:
- * `name_on_disk` and `space` are internal and never exposed.
- *
- * Every field but `removed_at` and `user` is non-null: the columns are nullable
- * at the database level, but Python sets them all when it creates a row and
- * `findUploads` only ever returns `ready` rows, so a listed or created upload
- * always carries them.
- */
-export type Upload = {
-	id: number;
-	created_at: string;
-	name: string;
-	ready: boolean;
-	removed: boolean;
-	removed_at: string | null;
-	reserved: boolean;
-	size: number;
-	type: string;
-	uploaded_at: string;
-	user: UploadUserNested | null;
-};
-
-/** A page of upload search results. */
-export type UploadSearchResults = {
-	items: Upload[];
-	found_count: number;
-	total_count: number;
-	page: number;
-	page_count: number;
-	per_page: number;
-};
 
 /** Fields needed to create an upload; `body` streams straight to storage. */
 export type UploadCreateValues = {
@@ -68,7 +29,7 @@ export class UploadNotFoundError extends AppError {}
 /** Thrown when a reserved upload is deleted while still in use. */
 export class UploadReservedError extends AppError {}
 
-function toUpload(row: UploadRow, user: UploadUserNested | null): Upload {
+function toUpload(row: UploadRow, user: UserNested | null): Upload {
 	return {
 		id: row.id,
 		created_at: row.createdAt?.toISOString() ?? "",
@@ -87,7 +48,7 @@ function toUpload(row: UploadRow, user: UploadUserNested | null): Upload {
 async function fetchUser(
 	db: DbOrTx,
 	userId: number,
-): Promise<UploadUserNested | null> {
+): Promise<UserNested | null> {
 	const [row] = await db
 		.select({ id: usersTable.id, handle: usersTable.handle })
 		.from(usersTable)
@@ -102,7 +63,7 @@ export async function findUploads(
 	page: number,
 	perPage: number,
 	userId?: number,
-): Promise<UploadSearchResults> {
+): Promise<UploadSearchResult> {
 	// A visible upload is finished, not deleted, and not held for a sample that
 	// is mid-creation. Python applies the same three base filters unconditionally.
 	const baseFilters = [
@@ -149,11 +110,11 @@ export async function findUploads(
 		items: rows.map((row) =>
 			toUpload(row.upload, row.user?.id != null ? row.user : null),
 		),
-		found_count: foundCount,
-		total_count: totalRow?.value ?? 0,
+		foundCount,
+		totalCount: totalRow?.value ?? 0,
 		page,
-		page_count: perPage > 0 ? Math.ceil(foundCount / perPage) : 0,
-		per_page: perPage,
+		pageCount: perPage > 0 ? Math.ceil(foundCount / perPage) : 0,
+		perPage,
 	};
 }
 

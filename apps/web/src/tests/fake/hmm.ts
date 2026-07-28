@@ -1,6 +1,6 @@
 import { faker } from "@faker-js/faker";
-import type { HmmSearchResult } from "@hmm/types";
 import { createFakeTask } from "@tests/fake/tasks";
+import type { HmmSearchResult } from "@virtool/contracts";
 
 /**
  * Create a fake HMM minimal
@@ -56,7 +56,7 @@ export function createFakeHmmSearchResults(
 	overrides?: Partial<HmmSearchResult>,
 ): HmmSearchResult {
 	return {
-		documents: Array.from({ length: 5 }, createFakeHmmMinimal),
+		items: Array.from({ length: 5 }, createFakeHmmMinimal),
 		status: {
 			errors: [faker.internet.httpStatusCode().toString()],
 			installed: {
@@ -64,11 +64,11 @@ export function createFakeHmmSearchResults(
 			},
 			task: createFakeTask({ complete: true }),
 		},
-		found_count: faker.number.int(),
+		foundCount: faker.number.int(),
 		page: faker.number.int(),
-		page_count: faker.number.int(),
-		per_page: faker.number.int(),
-		total_count: faker.number.int(),
+		pageCount: faker.number.int(),
+		perPage: faker.number.int(),
+		totalCount: faker.number.int(),
 		...overrides,
 	};
 }

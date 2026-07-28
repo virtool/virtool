@@ -12,7 +12,6 @@ import {
 	useQueryClient,
 	useSuspenseQuery,
 } from "@tanstack/react-query";
-import type { ErrorResponse } from "@/types/api";
 import type { Settings } from "./types";
 
 /** Fields that can be changed when updating the server settings */
@@ -66,7 +65,7 @@ export function useSuspenseSettings() {
 export function useUpdateSettings() {
 	const queryClient = useQueryClient();
 
-	return useMutation<Settings, ErrorResponse, SettingsUpdate>({
+	return useMutation<Settings, Error, SettingsUpdate>({
 		mutationFn: (update) => updateSettingsFn({ data: update }),
 		onSuccess: () => {
 			queryClient.invalidateQueries({

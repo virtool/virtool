@@ -1,5 +1,5 @@
 import type { Account } from "@account/types";
-import type { Permission } from "@groups/types";
+import type { Permission } from "@virtool/contracts";
 import {
 	AdministratorPermissions,
 	hasSufficientAdminRole,

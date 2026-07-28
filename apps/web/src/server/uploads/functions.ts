@@ -1,5 +1,6 @@
 import { createServerFn, createServerOnlyFn } from "@tanstack/react-start";
 import { setResponseStatus } from "@tanstack/react-start/server";
+import { UPLOAD_TYPES } from "@virtool/contracts";
 import { z } from "zod";
 import { authenticated, permission } from "../auth/policy";
 import { db } from "../db/pg";
@@ -9,7 +10,6 @@ import { pageSchema, perPageSchema, rowIdSchema } from "../validation";
 import {
 	deleteUpload,
 	findUploads,
-	UPLOAD_TYPES,
 	UploadNotFoundError,
 	UploadReservedError,
 } from "./data";

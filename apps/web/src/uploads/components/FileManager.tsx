@@ -11,12 +11,12 @@ import { useListSelection } from "@base/useListSelection";
 import ViewHeader from "@base/ViewHeader";
 import ViewHeaderTitle from "@base/ViewHeaderTitle";
 import ViewHeaderTitleBadge from "@base/ViewHeaderTitleBadge";
+import type { Upload, UploadType } from "@virtool/contracts";
 import { capitalize } from "es-toolkit";
 import { AlertCircle, FileUp } from "lucide-react";
 import type { MouseEvent, ReactNode } from "react";
 import type { Accept } from "react-dropzone";
 import { useDeleteFiles, useListFiles } from "../queries";
-import type { Upload, UploadType } from "../types";
 import { upload } from "../uploader";
 import { UploadBar } from "./UploadBar";
 import UploadItem from "./UploadItem";
@@ -111,7 +111,7 @@ export function FileManager({
 			<ViewHeader title={title}>
 				<ViewHeaderTitle>
 					{title}{" "}
-					<ViewHeaderTitleBadge>{files.found_count}</ViewHeaderTitleBadge>
+					<ViewHeaderTitleBadge>{files.foundCount}</ViewHeaderTitleBadge>
 				</ViewHeaderTitle>
 			</ViewHeader>
 
@@ -131,7 +131,7 @@ export function FileManager({
 				</Alert>
 			)}
 
-			{files.found_count === 0 ? (
+			{files.foundCount === 0 ? (
 				<Box>
 					<Empty className="h-72">
 						<EmptyMedia className="text-gray-400">
@@ -149,7 +149,7 @@ export function FileManager({
 				<Pagination
 					storedPage={files.page}
 					currentPage={page}
-					pageCount={files.page_count}
+					pageCount={files.pageCount}
 					onPageChange={setPage}
 				>
 					<BoxGroup>
@@ -157,7 +157,7 @@ export function FileManager({
 							<UploadListHeader
 								canDelete={canDelete}
 								checked={selection.getVisibleState(files.items)}
-								found={files.found_count}
+								found={files.foundCount}
 								onDelete={handleDelete}
 								onSelectAll={() => selection.toggleVisible(files.items)}
 								selectedCount={selection.selected.length}

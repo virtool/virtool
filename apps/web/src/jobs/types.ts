@@ -148,32 +148,12 @@ const JobCountsSchema = z
 
 export type JobCounts = z.infer<typeof JobCountsSchema>;
 
-export const JobSearchResultSchema = z
-	.object({
-		counts: JobCountsSchema,
-		found_count: z.number(),
-		items: z.array(JobMinimalSchema),
-		page: z.number(),
-		page_count: z.number(),
-		per_page: z.number(),
-		total_count: z.number(),
-	})
-	.transform(
-		({
-			counts,
-			found_count,
-			items,
-			page,
-			page_count,
-			per_page,
-			total_count,
-		}) => ({
-			counts,
-			foundCount: found_count,
-			items,
-			page,
-			pageCount: page_count,
-			perPage: per_page,
-			totalCount: total_count,
-		}),
-	);
+export const JobSearchResultSchema = z.object({
+	counts: JobCountsSchema,
+	foundCount: z.number(),
+	items: z.array(JobMinimalSchema),
+	page: z.number(),
+	pageCount: z.number(),
+	perPage: z.number(),
+	totalCount: z.number(),
+});

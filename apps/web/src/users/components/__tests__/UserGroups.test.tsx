@@ -1,4 +1,3 @@
-import type { Group } from "@groups/types";
 import { screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { createFakeGroup } from "@tests/fake/groups";
@@ -6,6 +5,7 @@ import { createFakeUser } from "@tests/fake/user";
 import { mockListGroups } from "@tests/server-fn/groups";
 import { mockUpdateUser, userServerFnMocks } from "@tests/server-fn/users";
 import { renderWithProviders, renderWithRouter } from "@tests/setup";
+import type { Group } from "@virtool/contracts";
 import { beforeEach, describe, expect, it } from "vitest";
 import UserGroups from "../UserGroups";
 

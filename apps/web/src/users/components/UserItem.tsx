@@ -4,7 +4,7 @@ import BoxGroupSection from "@base/BoxGroupSection";
 import InitialIcon from "@base/InitialIcon";
 import Label from "@base/Label";
 import Link from "@base/Link";
-import type { GroupMinimal } from "@groups/types";
+import type { GroupMinimal } from "@virtool/contracts";
 import type { ReactElement } from "react";
 
 type UserItemProps = {

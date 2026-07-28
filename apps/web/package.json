@@ -52,7 +52,6 @@
 		"react-hook-form": "^7.82.0",
 		"react-markdown": "^10.1.0",
 		"remark-gfm": "^4.0.1",
-		"superagent": "^8.0.9",
 		"tailwind-merge": "^3.5.0",
 		"zod": "^4.3.5",
 		"zustand": "^5.0.14"
@@ -72,7 +71,6 @@
 		"@types/d3": "^7.4.3",
 		"@types/react": "^19.2.17",
 		"@types/react-dom": "^19.2.3",
-		"@types/superagent": "^8.1.9",
 		"@vitejs/plugin-react": "^6.0.4",
 		"@vitest/browser-playwright": "^4.1.10",
 		"axe-core": "^4.12.1",
@@ -80,7 +78,6 @@
 		"drizzle-kit": "^0.31.10",
 		"jsdom": "^29.1.0",
 		"nitro": "3.0.260429-beta",
-		"nock": "^13.5.5",
 		"playwright": "^1.61.1",
 		"tailwindcss": "^4.3.3",
 		"testcontainers": "^12.0.4",

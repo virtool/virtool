@@ -1,25 +1,25 @@
 # Architecture
 
-## Two backend surfaces during the migration
+## Two backend surfaces
 
-Virtool's backend lives in two places while we incrementally move
-responsibility into this repo:
+Virtool's backend lives in two processes. The SPA talks to only one of
+them:
 
-- **Legacy path** — the SPA calls the existing Python backend through
-  each feature's client-side `api.ts` (superagent). Error shape is
-  `error.response?.body.message`. No layering rules apply to these
-  modules; they are thin HTTP wrappers and will stay that way until
-  the corresponding endpoint moves.
-- **New path** — TanStack Start server functions under
+- **This repo** — TanStack Start server functions under
   `apps/web/src/server/<feature>/`, called from the SPA via the React
-  Query hooks that wrap them. This is where new backend code lands and
-  where Python endpoints land when they migrate.
+  Query hooks that wrap them, plus a few raw routes for what a server
+  function cannot do (uploads, downloads, SSE, metrics). Every read and
+  write the browser makes goes through here; there is no HTTP client in
+  the SPA and no direct call to Python.
+- **The Python service** — still runs the job runner and owns the
+  Postgres schema and its Alembic migration history. It reaches the same
+  database and the same object storage bucket this repo does, so the two
+  processes cooperate through shared state rather than through the
+  browser.
 
 There is no Express SSR layer anymore — `src/server/` is exclusively
 TanStack Start, served by Nitro in production. Page rendering goes
-through the TanStack Start / TanStack Router pipeline, with most data
-still fetched via the legacy `api.ts` superagent client until the
-corresponding endpoint migrates.
+through the TanStack Start / TanStack Router pipeline.
 
 **Schema and migrations stay in Python.** The Python repo owns the
 Alembic migration history and is the only process that applies schema
@@ -29,21 +29,17 @@ migrations. When a migrating endpoint needs a schema change, the
 change lands in Python's Alembic tree first and the TS code follows.
 
 Everything below — the three-file layering, the import-direction
-invariant, the auth carve-out — applies to the **new path** only.
-Don't retrofit it onto a feature whose backend still lives in Python;
-wait until the migration of that endpoint and shape the new
-`src/server/<feature>/` directory then.
+invariant, the auth carve-out — governs `src/server/<feature>/`.
 
-### Type ownership shifts per feature as it migrates
+### Types are inferred from the schema, not hand-copied
 
-Legacy features keep manually maintained types in their module's
-`types.ts`; the Python Pydantic models are the source of truth and the
-SPA copies match by convention. As a feature's backend lands in
-`server/<feature>/data.ts`, prefer Drizzle inference (`InferSelectModel`,
-`InferInsertModel`) over re-declaring the row shape, and re-export the
-inferred types from `data.ts` so `functions.ts`, hooks, and components
-share one definition. This is per-feature work — don't bulk-convert
-`types.ts` files ahead of their backend migrating.
+Older feature modules kept manually maintained types in their `types.ts`,
+matching the Python Pydantic models by convention. Where a feature's
+backend lives in `server/<feature>/data.ts`, prefer Drizzle inference
+(`InferSelectModel`, `InferInsertModel`) over re-declaring the row shape,
+and re-export the inferred types from `data.ts` so `functions.ts`, hooks,
+and components share one definition. This is per-feature work — don't
+bulk-convert the `types.ts` files that remain.
 
 ## Server modules
 
@@ -180,10 +176,11 @@ Two shapes generalised out of that move and now live in the package
 alongside the reference contracts: `UserNested` (`{ id, handle }`, the
 user reduced to what is shown beside another resource) and `Task` (the
 background-task progress record embedded in resources a task acts on),
-plus `SearchResultV2`, the camelCase pagination envelope every
-server-function-backed list returns. `src/server/references/data.ts`
-used to carry a private copy of that envelope with a comment explaining
-that the server could not import the client's; that copy is gone.
+plus `SearchResult`, the camelCase pagination envelope every
+server-function-backed list returns. Every domain is on it: the
+snake_case envelope the Python API returned is gone, along with the
+`apps/web/src/types/api.ts` that declared it and the per-domain copies
+that restated it on both sides of the boundary.
 
 What stays in `data.ts` is what only `data.ts` uses: the `*Values` and
 `*Options` argument types its functions accept, its `AppError`

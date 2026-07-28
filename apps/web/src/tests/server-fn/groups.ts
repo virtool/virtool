@@ -1,4 +1,4 @@
-import type { Group } from "@groups/types";
+import type { Group } from "@virtool/contracts";
 import { type Mock, vi } from "vitest";
 
 /**

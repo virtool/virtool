@@ -118,7 +118,7 @@ export default function SubtractionCreate() {
 									isFetchingNextPage={isFetchingNextPage}
 									fetchNextPage={fetchNextPage}
 									isPending={isPending}
-									foundCount={files.pages[0]?.found_count ?? 0}
+									foundCount={files.pages[0]?.foundCount ?? 0}
 									selected={value}
 								/>
 							)}

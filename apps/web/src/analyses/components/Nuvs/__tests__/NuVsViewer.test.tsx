@@ -7,8 +7,7 @@ import { createFakeFormattedNuVsAnalysis } from "@tests/fake/analyses";
 import { createFakeSample } from "@tests/fake/samples";
 import { mockBlastNuvs } from "@tests/server-fn/analyses";
 import { at, MemoryRouter } from "@tests/setup";
-import nock from "nock";
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 
 function renderWithAnalysisSearch(
 	ui: React.ReactElement,
@@ -42,8 +41,6 @@ describe("<NuvsViewer />", () => {
 			sample: sample,
 		};
 	});
-
-	afterEach(() => nock.cleanAll());
 
 	describe("<NuVsDetail />", () => {
 		it("should default to the first hit when no active hit is set", async () => {

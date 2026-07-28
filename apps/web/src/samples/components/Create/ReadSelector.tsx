@@ -30,7 +30,7 @@ import type {
 } from "@tanstack/react-query/";
 import { useValidateFiles } from "@uploads/hooks";
 import { buildReadRows, detectMate, type ReadRow } from "@uploads/pairing";
-import type { FileResponse, Upload } from "@uploads/types";
+import type { Upload, UploadSearchResult } from "@virtool/contracts";
 import { ChevronDown, Files, TriangleAlert, Undo } from "lucide-react";
 import { useCallback, useState } from "react";
 import ReadPairBadge from "./ReadPairBadge";
@@ -62,7 +62,7 @@ const selectorModes: {
 
 type ReadSelectorProps = {
 	/** Samples uploads on current page */
-	data: InfiniteData<FileResponse>;
+	data: InfiniteData<UploadSearchResult>;
 	/** Whether the next page is being fetched */
 	isFetchingNextPage: boolean;
 	/** Fetches the next page of data */
@@ -118,7 +118,7 @@ export default function ReadSelector({
 
 	useValidateFiles("reads", selected, onSelect, handleCleared);
 
-	const total_count = data.pages[0]?.total_count;
+	const totalCount = data.pages[0]?.totalCount;
 	const items = data.pages.flatMap((page) => page.items);
 
 	const loweredFilter = term.toLowerCase();
@@ -194,7 +194,7 @@ export default function ReadSelector({
 		);
 	}
 
-	const noneFound = total_count === 0 && (
+	const noneFound = totalCount === 0 && (
 		<BoxGroup>
 			<BoxGroupSection>
 				<Empty className="py-12">

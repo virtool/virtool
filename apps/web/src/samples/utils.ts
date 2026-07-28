@@ -1,7 +1,6 @@
 import type { JobNested } from "@jobs/types";
 import { stripMateToken } from "@uploads/pairing";
-import type { Upload } from "@uploads/types";
-import type { LibraryType } from "@virtool/contracts";
+import type { LibraryType, Upload } from "@virtool/contracts";
 import type { CreateSampleRequest } from "./types";
 
 /** The workflows that samples can be filtered by. */

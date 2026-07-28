@@ -2,12 +2,9 @@ import { accountQueryKeys } from "@account/keys";
 import { screen, waitFor } from "@testing-library/react";
 import { mockGetAccountUnauthorized } from "@tests/server-fn/users";
 import { renderRoute } from "@tests/setup";
-import nock from "nock";
-import { afterEach, describe, expect, it } from "vitest";
+import { describe, expect, it } from "vitest";
 
 describe("<LoginWall />", () => {
-	afterEach(() => nock.cleanAll());
-
 	async function renderWall(path: string) {
 		// Nobody is logged in, so the route guard's account fetch fails and the
 		// wall renders instead of redirecting away.

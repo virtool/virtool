@@ -2,7 +2,7 @@ import { z } from "zod";
 import type { GroupMinimal } from "./groups";
 import type { JobNested } from "./jobs";
 import type { LabelNested } from "./labels";
-import type { SearchResultV2 } from "./search";
+import type { SearchResult } from "./search";
 import type { SubtractionNested } from "./subtractions";
 import type { UserNested } from "./users";
 
@@ -117,7 +117,7 @@ export type Sample = SampleMinimal & {
 };
 
 /** A page of samples with pagination metadata. */
-export type SampleSearchResult = SearchResultV2 & {
+export type SampleSearchResult = SearchResult & {
 	items: SampleMinimal[];
 };
 

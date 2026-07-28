@@ -7,10 +7,10 @@ import {
 	useQueryClient,
 } from "@tanstack/react-query";
 import { fileQueryKeys } from "@uploads/keys";
-import type { FileResponse, UploadType } from "./types";
+import type { UploadSearchResult, UploadType } from "@virtool/contracts";
 
 export function useListFiles(type: UploadType, page: number, per_page: number) {
-	return useQuery<FileResponse>({
+	return useQuery<UploadSearchResult>({
 		queryKey: fileQueryKeys.list([type, page, per_page]),
 		queryFn: () =>
 			findUploadsFn({ data: { upload_type: type, page, per_page } }),
@@ -19,7 +19,7 @@ export function useListFiles(type: UploadType, page: number, per_page: number) {
 }
 
 export function useInfiniteFindFiles(type: UploadType, per_page: number) {
-	return useInfiniteQuery<FileResponse>({
+	return useInfiniteQuery<UploadSearchResult>({
 		queryKey: fileQueryKeys.infiniteList([type, per_page]),
 		queryFn: ({ pageParam }) =>
 			findUploadsFn({
@@ -27,7 +27,7 @@ export function useInfiniteFindFiles(type: UploadType, per_page: number) {
 			}),
 		initialPageParam: 1,
 		getNextPageParam: (lastPage) => {
-			if (lastPage.page >= lastPage.page_count) {
+			if (lastPage.page >= lastPage.pageCount) {
 				return undefined;
 			}
 			return (lastPage.page || 1) + 1;

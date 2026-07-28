@@ -6,26 +6,21 @@ import {
 } from "@virtool/contracts";
 
 /**
- * A failed query's error. Superagent puts the HTTP status on `response.status`;
- * a server function's `ClientError` arrives with it on `status`, carried across
- * the boundary by `serverErrorSerializationAdapter`.
+ * A failed query's error. A server function's `ClientError` arrives with the
+ * HTTP status on `status`, carried across the boundary by
+ * `serverErrorSerializationAdapter`.
  */
 export type QueryError = Error & {
-	response?: { status?: number };
 	status?: number;
 };
 
 const NON_RETRYABLE_STATUSES = new Set([401, 403, 404]);
 
 /**
- * The HTTP status behind a failed query, whichever transport raised it.
+ * The HTTP status behind a failed query.
  *
- * The two carry it differently and there is no unifying them at the source: a
- * server function's `ClientError` arrives as a plain `Error` with `status` as an
- * own property (put there by `serverErrorSerializationAdapter`), while
- * superagent attaches its whole `response`. Callers should not have to know
- * which transport a feature is on — that changes as domains move off the Python
- * API, and the superagent branch here goes away with the last of them.
+ * A server function's `ClientError` arrives as a plain `Error` with `status` as
+ * an own property, put there by `serverErrorSerializationAdapter`.
  *
  * Returns `undefined` for an error that carries no status at all — a network
  * failure, a thrown `ZodError`, a bug.
@@ -34,8 +29,7 @@ export function getErrorStatus(error: unknown): number | undefined {
 	if (error === null || typeof error !== "object") {
 		return undefined;
 	}
-	const { status, response } = error as QueryError;
-	return status ?? response?.status;
+	return (error as QueryError).status;
 }
 
 /**
@@ -75,8 +69,7 @@ function reportContractDrift(error: Error): void {
  */
 // Server-function errors reach the client with their `name` preserved only
 // because `serverErrorSerializationAdapter` (start.ts) carries it past Router's
-// ShallowErrorPlugin, so a 401 is matched by name here. Superagent calls are
-// covered by the interceptor in `app/api.ts` instead.
+// ShallowErrorPlugin, so a 401 is matched by name here.
 //
 // A 403 is deliberately not handled: the session is valid, the user just lacks
 // the role, so bouncing them to the login wall would be wrong.
