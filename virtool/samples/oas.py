@@ -3,8 +3,7 @@ from typing import Any
 from pydantic import Field, conlist, constr, root_validator
 
 from virtool.models import BaseModel
-from virtool.models.enums import AnalysisWorkflow, LibraryType
-from virtool.models.validators import prevent_none
+from virtool.models.enums import LibraryType
 
 
 class CreateSampleRequest(BaseModel):
@@ -27,13 +26,3 @@ class CreateSampleRequest(BaseModel):
             values["group"] = None
 
         return values
-
-
-class CreateAnalysisRequest(BaseModel):
-    """Request body for creating a new analysis."""
-
-    ref_id: str
-    subtractions: list[int] = Field(default_factory=list)
-    workflow: AnalysisWorkflow
-
-    _prevent_none = prevent_none("subtractions")

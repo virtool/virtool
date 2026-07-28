@@ -4,13 +4,9 @@ Formatted results are destined for API responses or CSV/Excel formatted file
 downloads.
 """
 
-import csv
-import io
-import statistics
 from collections import defaultdict
 from typing import Any
 
-import openpyxl.styles
 import visvalingamwyatt as vw
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
@@ -19,7 +15,6 @@ from virtool.data.topg import compose_legacy_id_multi_expression
 from virtool.history.db import patch_otus_to_versions
 from virtool.hmm.sql import SQLHMM
 from virtool.models.enums import AnalysisWorkflow
-from virtool.otus.utils import format_isolate_name
 
 CSV_HEADERS = (
     "OTU",
@@ -30,17 +25,6 @@ CSV_HEADERS = (
     "Median Depth",
     "Coverage",
 )
-
-
-def calculate_median_depths(hits: list[dict]) -> dict[str, int]:
-    """Calculate the median depth for all hits (sequences) in a Pathoscope result
-    document.
-
-    :param hits: the pathoscope analysis document to calculate depths for
-    :return: a dict of median depths keyed by hit (sequence) ids
-
-    """
-    return {hit["id"]: statistics.median(hit["align"]) for hit in hits}
 
 
 async def format_pathoscope(
@@ -206,120 +190,6 @@ async def format_nuvs(
                 hit.update(hmms[str(hit["hit"])])
 
     return results
-
-
-async def format_analysis_to_excel(
-    pg: AsyncEngine,
-    *,
-    results: dict[str, Any],
-    workflow: str,
-    sample_id: str,
-) -> bytes:
-    """Convert pathoscope analysis results to byte-encoded Excel format for download.
-
-    :param mongo: the database object
-    :param pg: the application PostgreSQL database object
-    :param results: the results to format
-    :param workflow: the analysis workflow
-    :param sample_id: the id of the parent sample
-    :return: the formatted Excel workbook
-
-    """
-    depths = calculate_median_depths(results["hits"])
-
-    formatted = await format_analysis(
-        pg,
-        workflow=workflow,
-        results=results,
-    )
-
-    output = io.BytesIO()
-
-    wb = openpyxl.Workbook()
-    ws = wb.active
-
-    ws.title = f"Pathoscope for {sample_id}"
-
-    header_font = openpyxl.styles.Font(name="Calibri", bold=True)
-
-    for index, header in enumerate(CSV_HEADERS):
-        col = index + 1
-        cell = ws.cell(column=col, row=1, value=header)
-        cell.font = header_font
-
-    rows = []
-
-    for otu in formatted["hits"]:
-        for isolate in otu["isolates"]:
-            for sequence in isolate["sequences"]:
-                row = [
-                    otu["name"],
-                    format_isolate_name(isolate),
-                    sequence["accession"],
-                    sequence["length"],
-                    sequence["pi"],
-                    depths.get(sequence["id"], 0),
-                    sequence["coverage"],
-                ]
-
-                assert len(row) == len(CSV_HEADERS)
-
-                rows.append(row)
-
-    for row_index, row in enumerate(rows):
-        row_number = row_index + 2
-        for col_index, value in enumerate(row):
-            ws.cell(column=col_index + 1, row=row_number, value=value)
-
-    wb.save(output)
-
-    return output.getvalue()
-
-
-async def format_analysis_to_csv(
-    pg: AsyncEngine,
-    *,
-    results: dict[str, Any],
-    workflow: str,
-) -> str:
-    """Convert pathoscope analysis results to CSV format for download.
-
-    :param pg: the application PostgreSQL database object
-    :param results: the results to format
-    :param workflow: the analysis workflow
-    :return: the formatted CSV data
-
-    """
-    depths = calculate_median_depths(results["hits"])
-
-    formatted = await format_analysis(
-        pg,
-        workflow=workflow,
-        results=results,
-    )
-
-    output = io.StringIO()
-
-    writer = csv.writer(output, quoting=csv.QUOTE_NONNUMERIC)
-
-    writer.writerow(CSV_HEADERS)
-
-    for otu in formatted["hits"]:
-        for isolate in otu["isolates"]:
-            for sequence in isolate["sequences"]:
-                row = [
-                    otu["name"],
-                    format_isolate_name(isolate),
-                    sequence["accession"],
-                    sequence["length"],
-                    sequence["pi"],
-                    depths.get(sequence["id"], 0),
-                    sequence["coverage"],
-                ]
-
-                writer.writerow(row)
-
-    return output.getvalue()
 
 
 async def format_analysis(

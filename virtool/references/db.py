@@ -1,6 +1,5 @@
 """Work with references in the database"""
 
-import asyncio
 import datetime
 
 from sqlalchemy import delete, func, select
@@ -9,7 +8,7 @@ from sqlalchemy.ext.asyncio.engine import AsyncEngine
 
 import virtool.history.db
 import virtool.utils
-from virtool.data.errors import ResourceError, ResourceNotFoundError
+from virtool.data.errors import ResourceError
 from virtool.data.topg import (
     compose_legacy_id_single_expression,
     compose_legacy_id_subquery,
@@ -163,33 +162,6 @@ async def get_cloned_from_lookup(
     )
 
     return {id_: {"id": id_, "name": name} for id_, name in result}
-
-
-async def processor(
-    pg: AsyncEngine,
-    row: SQLReference,
-    cloned_from: Document | None,
-    latest_build: Document | None,
-) -> Document:
-    """Process a reference row into the ``ReferenceMinimal`` document shape.
-
-    :param pg: the application PostgreSQL engine
-    :param row: the ``legacy_references`` row to process
-    :param cloned_from: the resolved nested cloned-from doc, or ``None``
-    :param latest_build: the reference's latest ready build, or ``None``
-    :return: the processed document
-    """
-    otu_count, unbuilt_count = await asyncio.gather(
-        get_otu_count(pg, row.id),
-        get_unbuilt_count(pg, row.id),
-    )
-
-    return {
-        **map_reference_minimal(row, cloned_from),
-        "latest_build": latest_build,
-        "otu_count": otu_count,
-        "unbuilt_change_count": unbuilt_count,
-    }
 
 
 async def get_reference_groups(
@@ -454,43 +426,6 @@ async def get_unbuilt_count(pg: AsyncEngine, ref_id: int | str) -> int:
         )
 
 
-async def create_clone(
-    pg: AsyncEngine,
-    settings: Settings,
-    name: str,
-    clone_from: int | str,
-    description: str,
-    user_id: int,
-) -> Document:
-    async with AsyncSession(pg) as session:
-        source = (
-            await session.execute(
-                select(SQLReference.name, SQLReference.organism).where(
-                    compose_legacy_id_single_expression(SQLReference, clone_from),
-                ),
-            )
-        ).one_or_none()
-
-    if source is None:
-        raise ResourceNotFoundError
-
-    name = name or "Clone of " + source.name
-
-    document = await create_document(
-        settings,
-        name,
-        source.organism,
-        description,
-        "genome",
-        created_at=virtool.utils.timestamp(),
-        user_id=user_id,
-    )
-
-    document["cloned_from"] = {"id": clone_from, "name": source.name}
-
-    return document
-
-
 async def create_document(
     settings: Settings,
     name: str,
@@ -540,44 +475,6 @@ async def create_document(
 
     if ref_id is not None:
         document["_id"] = ref_id
-
-    return document
-
-
-async def create_import(
-    settings: Settings,
-    name: str,
-    description: str,
-    upload_id: int,
-    user_id: int,
-    data_type: str,
-    organism: str,
-) -> dict:
-    """Import a previously exported Virtool reference.
-
-    :param settings: the application settings object
-    :param name: the name for the new reference
-    :param description: a description for the new reference
-    :param upload_id: the id of the uploaded file to import from
-    :param user_id: the id of the creating user
-    :param data_type: the data type of the reference
-    :param organism: the organism
-    :return: a reference document
-
-    """
-    created_at = virtool.utils.timestamp()
-
-    document = await create_document(
-        settings,
-        name or "Unnamed Import",
-        organism,
-        description,
-        data_type,
-        created_at=created_at,
-        user_id=user_id,
-    )
-
-    document["imported_from"] = {"id": upload_id}
 
     return document
 

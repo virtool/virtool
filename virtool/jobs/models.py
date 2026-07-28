@@ -2,7 +2,7 @@ from datetime import datetime
 from enum import Enum
 from typing import Any
 
-from virtool.models import BaseModel, SearchResult
+from virtool.models import BaseModel
 from virtool.users.models_base import UserNested
 
 
@@ -119,11 +119,6 @@ class JobMinimal(BaseModel):
     state: JobState
     user: UserNested
     workflow: Workflow
-
-
-class JobSearchResult(SearchResult):
-    counts: JobCounts
-    items: list[JobMinimal]
 
 
 class Job(BaseModel):

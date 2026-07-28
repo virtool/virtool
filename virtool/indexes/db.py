@@ -1,7 +1,6 @@
 """Work with indexes in the database."""
 
 import asyncio
-import math
 import uuid
 from collections.abc import AsyncIterator
 from typing import Any
@@ -27,14 +26,12 @@ from virtool.data.topg import (
     compose_legacy_id_subquery,
     resolve_legacy_id,
 )
-from virtool.data.transforms import AbstractTransform, apply_transforms
+from virtool.data.transforms import AbstractTransform
 from virtool.history.sql import SQLLegacyHistory
 from virtool.indexes.sql import SQLIndex, SQLIndexFile
 from virtool.otus.sql import SQLOTU
 from virtool.references.sql import SQLReference
-from virtool.references.transforms import AttachReferenceTransform
 from virtool.types import Document
-from virtool.users.transforms import AttachUserTransform
 
 OTU_ID_CHUNK_SIZE = 500
 """The number of OTU ids bound into a single ``last_indexed_version`` update.
@@ -211,102 +208,6 @@ def _row_to_document(row: SQLIndex, *, include_manifest: bool = False) -> dict:
     return document
 
 
-async def find(
-    pg: AsyncEngine,
-    page: int,
-    per_page: int,
-    ref_id: str | None = None,
-    archived: bool | None = None,
-) -> dict:
-    """Find index documents.
-
-    When ``ref_id`` is given, ``archived`` is ignored — the reference is
-    already chosen, so its lifecycle state is fixed — and indexes are ordered by
-    ``version`` descending. Both ``total_count`` and ``found_count`` are scoped to
-    that reference's indexes.
-
-    Otherwise indexes are ordered by ``created_at`` then primary key, both
-    descending, for stable pagination. Every index row references an existing
-    reference through a non-null foreign key, so ``total_count`` covers all indexes
-    while ``found_count`` narrows to the requested lifecycle.
-
-    :param pg: the application PostgreSQL engine
-    :param page: the one-indexed page number to return
-    :param per_page: the number of documents to return per page
-    :param ref_id: the id of the reference
-    :param archived: lifecycle filter on the index's reference
-    :return: the index document
-
-    """
-    base_filters = []
-    search_filters = []
-
-    if ref_id is not None:
-        reference_filter = SQLIndex.reference_id == compose_legacy_id_subquery(
-            SQLReference,
-            ref_id,
-        )
-        base_filters.append(reference_filter)
-        search_filters.append(reference_filter)
-        order_by = [SQLIndex.version.desc()]
-    else:
-        if archived is not None:
-            search_filters.append(
-                SQLIndex.reference_id.in_(
-                    select(SQLReference.id).where(SQLReference.archived == archived),
-                ),
-            )
-        order_by = [SQLIndex.created_at.desc(), SQLIndex.id.desc()]
-
-    # ``search_filters`` is always ``base_filters`` plus, at most, the archived
-    # constraint, so the found count is a filtered aggregate over the same scan the
-    # total count reads. Computing both in one query removes a duplicate round-trip.
-    found_count_column = (
-        func.count().filter(*search_filters) if search_filters else func.count()
-    )
-
-    async with AsyncSession(pg) as session:
-        total_count, found_count = (
-            await session.execute(
-                select(func.count(), found_count_column)
-                .select_from(SQLIndex)
-                .where(*base_filters),
-            )
-        ).one()
-        rows = (
-            (
-                await session.execute(
-                    select(SQLIndex)
-                    .where(*search_filters)
-                    .order_by(*order_by)
-                    .offset(per_page * (page - 1))
-                    .limit(per_page),
-                )
-            )
-            .scalars()
-            .all()
-        )
-
-    unbuilt_stats = await get_unbuilt_stats(pg, ref_id)
-
-    documents = [_row_to_document(row) for row in rows]
-    transforms = [
-        AttachReferenceTransform(pg),
-        AttachUserTransform(pg),
-        IndexCountsTransform(),
-    ]
-
-    return {
-        "documents": await apply_transforms(documents, transforms, pg),
-        "total_count": total_count,
-        "found_count": found_count,
-        "page": page,
-        "page_count": int(math.ceil(found_count / per_page)),
-        "per_page": per_page,
-        **unbuilt_stats,
-    }
-
-
 async def get_otus(pg: AsyncEngine, index_id: str) -> list[dict]:
     """Return a list of otus and number of changes for a specific index.
 
@@ -350,76 +251,6 @@ async def get_otus(pg: AsyncEngine, index_id: str) -> list[dict]:
         ),
         key=lambda otu: otu["name"],
     )
-
-
-async def get_next_version(session: AsyncSession, ref_id: int | str) -> int:
-    """Allocate the version number for the next index build.
-
-    Runs on the caller's session so allocation participates in the surrounding
-    transaction. The version is ``MAX(version) + 1`` over the reference's indexes,
-    which is monotonic: unlike a ready-count, a build assigned version ``N`` keeps
-    ``N`` reserved even if a lower-versioned index is later deleted, so no two builds
-    are ever handed the same number.
-
-    :param session: the caller-owned PostgreSQL session
-    :param ref_id: the id of the reference to get the next version for
-
-    :return: the next version number, ``0`` when the reference has no indexes
-
-    """
-    return await session.scalar(
-        select(func.coalesce(func.max(SQLIndex.version), -1) + 1).where(
-            SQLIndex.reference_id == compose_legacy_id_subquery(SQLReference, ref_id),
-        ),
-    )
-
-
-async def get_unbuilt_stats(
-    pg: AsyncEngine,
-    ref_id: str | None = None,
-) -> dict:
-    """Get the number of unbuilt changes and number of OTUs affected by those changes.
-
-    Used to populate the metadata for an index find request. Can search against a
-    specific reference or all references.
-
-    :param pg: the application PostgreSQL database object
-    :param ref_id: the ref id to search unbuilt changes for
-
-    :return: the change count and modified OTU count
-
-    """
-    history_filters = [SQLLegacyHistory.index_id.is_(None)]
-    otu_filters = []
-
-    if ref_id:
-        history_filters.append(
-            SQLLegacyHistory.reference_id
-            == compose_legacy_id_subquery(SQLReference, ref_id),
-        )
-        otu_filters.append(
-            SQLOTU.reference_id == compose_legacy_id_subquery(SQLReference, ref_id),
-        )
-
-    async with AsyncSession(pg) as session:
-        change_count, modified_otu_count = (
-            await session.execute(
-                select(
-                    func.count(),
-                    func.count(distinct(SQLLegacyHistory.otu)),
-                ).where(*history_filters),
-            )
-        ).one()
-
-        total_otu_count = await session.scalar(
-            select(func.count()).select_from(SQLOTU).where(*otu_filters),
-        )
-
-    return {
-        "total_otu_count": total_otu_count,
-        "change_count": change_count,
-        "modified_otu_count": modified_otu_count,
-    }
 
 
 async def iter_patched_otus(

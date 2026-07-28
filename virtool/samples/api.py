@@ -4,17 +4,12 @@ from aiohttp.web import (
     Request,
     Response,
 )
-from aiohttp_pydantic import PydanticView
-from aiohttp_pydantic.oas.typing import r200, r201, r400, r403, r404, r409
-from pydantic import conint
 from structlog import get_logger
 
-from virtool.analyses.models import AnalysisMinimal
 from virtool.api.custom_json import json_response
 from virtool.api.errors import (
     APIBadRequest,
     APIConflict,
-    APIInsufficientRights,
     APIInvalidQuery,
     APINoContent,
     APINotFound,
@@ -24,13 +19,10 @@ from virtool.api.schema import schema
 from virtool.api.streaming import stream_storage_response
 from virtool.data.errors import (
     ResourceConflictError,
-    ResourceError,
     ResourceNotFoundError,
 )
 from virtool.data.utils import get_data_from_req
 from virtool.jobs.models import TERMINAL_JOB_STATES
-from virtool.samples.oas import CreateAnalysisRequest
-from virtool.samples.utils import SampleRight
 from virtool.uploads.utils import (
     multipart_file_chunker,
     naive_validator,
@@ -120,86 +112,6 @@ async def job_remove(req):
         raise APINotFound()
 
     raise APINoContent()
-
-
-@routes.view("/samples/{sample_id}/analyses")
-class AnalysesView(PydanticView):
-    async def get(
-        self,
-        sample_id: int,
-        page: conint(ge=1) = 1,
-        per_page: conint(ge=1, le=100) = 25,
-        /,
-    ) -> r200[list[AnalysisMinimal]] | r403 | r404:
-        """Get analyses.
-
-        Lists the analyses associated with the given `sample_id`.
-
-        Status Codes:
-            200: Successful operation
-            403: Insufficient rights
-            404: Not found
-        """
-        search_result = await get_data_from_req(self.request).analyses.find(
-            page,
-            per_page,
-            self.request["client"],
-            sample_id,
-        )
-
-        return json_response(search_result)
-
-    async def post(
-        self,
-        sample_id: int,
-        /,
-        data: CreateAnalysisRequest,
-    ) -> r201[AnalysisMinimal] | r400 | r403 | r404 | r409:
-        """Start analysis job.
-
-        Starts an analysis job for a given sample.
-
-        Status Codes:
-            201: Successful operation
-            400: Invalid input
-            403: Insufficient rights
-            404: Not found
-            409: Reference does not exist
-            409: Reference is archived
-            409: No index is ready for the reference
-            409: Subtractions do not exist
-        """
-        samples = get_data_from_req(self.request).samples
-
-        if await samples.get_owner_id(sample_id) is None:
-            raise APINotFound()
-
-        if not await samples.has_right(
-            sample_id,
-            self.request["client"],
-            SampleRight.write,
-        ):
-            raise APIInsufficientRights()
-
-        try:
-            await samples.has_resources_for_analysis_job(
-                data.ref_id,
-                data.subtractions,
-            )
-        except ResourceError as err:
-            raise APIConflict(str(err))
-
-        analysis = await get_data_from_req(self.request).analyses.create(
-            data,
-            sample_id,
-            self.request["client"].user_id,
-        )
-
-        return json_response(
-            analysis,
-            status=201,
-            headers={"Location": f"/analyses/{analysis.id}"},
-        )
 
 
 @routes.jobs_api.post("/samples/{sample_id}/artifacts")

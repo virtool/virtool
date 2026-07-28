@@ -4,125 +4,20 @@ from http import HTTPStatus
 
 import pytest
 
-from tests.fixtures.client import ClientSpawner, JobClientSpawner
-from virtool.fake.next import DataFaker
-
-
-@pytest.fixture
-async def fake_hmm_status(seed_hmm_status, fake: DataFaker, static_time):
-    user = await fake.users.create()
-
-    document = {
-        "_id": "hmm",
-        "updating": False,
-        "updates": [
-            {
-                "body": "- remove some annotations that didn't have corresponding profiles",
-                "created_at": static_time.datetime,
-                "filename": "vthmm.tar.gz",
-                "html_url": "https://github.com/virtool/virtool-hmm/releases/tag/v0.2.1",
-                "id": 1230982,
-                "name": "v0.2.1",
-                "newer": False,
-                "published_at": static_time.datetime,
-                "ready": True,
-                "size": 85904451,
-                "user": {"id": user.id},
-            },
-        ],
-        "installed": {
-            "body": "- remove some annotations that didn't have corresponding profiles",
-            "created_at": static_time.datetime,
-            "filename": "vthmm.tar.gz",
-            "html_url": "https://github.com/virtool/virtool-hmm/releases/tag/v0.2.1",
-            "id": 8472569,
-            "name": "v0.2.1",
-            "newer": True,
-            "published_at": "2017-11-10T19:12:43Z",
-            "ready": True,
-            "size": 85904451,
-            "user": {"id": user.id},
-        },
-        "release": {
-            "body": "- remove some annotations that didn't have corresponding profiles",
-            "content_type": "application/gzip",
-            "download_url": "https://github.com/virtool/virtool-hmm/releases/download/v0.2.1/vthmm.tar.gz",
-            "filename": "vthmm.tar.gz",
-            "html_url": "https://github.com/virtool/virtool-hmm/releases/tag/v0.2.1",
-            "id": 1230982,
-            "name": "v0.2.1",
-            "newer": False,
-            "published_at": static_time.datetime,
-            "retrieved_at": static_time.datetime,
-            "size": 85904451,
-        },
-        "errors": [],
-    }
-
-    await seed_hmm_status(document)
-
-    return user
-
-
-async def test_find(
-    fake_hmm_status,
-    snapshot,
-    seed_pg_hmm,
-    spawn_client: ClientSpawner,
-    hmm_document,
-):
-    """Check that a request with no URL parameters returns a list of HMM annotation documents read from Postgres."""
-    client = await spawn_client(authenticated=True)
-
-    await seed_pg_hmm({**hmm_document, "hidden": False})
-
-    resp = await client.get("/hmms")
-
-    assert resp.status == HTTPStatus.OK
-    assert await resp.json() == snapshot
-
-
-async def test_get_status(fake_hmm_status, snapshot, spawn_client, static_time):
-    client = await spawn_client(authenticated=True)
-    resp = await client.get("/hmms/status")
-
-    assert resp.status == HTTPStatus.OK
-    assert await resp.json() == snapshot(name="json")
-
-
-async def test_get_release(fake_hmm_status, spawn_client, snapshot):
-    """Test that the endpoint returns the latest HMM release. Check that error responses are sent in all expected
-    situations.
-
-    """
-    client = await spawn_client(authenticated=True)
-
-    resp = await client.get("/hmms/status/release")
-
-    assert resp.status == HTTPStatus.OK
-    assert await resp.json() == snapshot(name="json")
-
-
-async def test_list_updates(fake_hmm_status, spawn_client, snapshot):
-    """The endpoint lists the status updates newest-first from Postgres."""
-    client = await spawn_client(authenticated=True)
-
-    resp = await client.get("/hmms/status/updates")
-
-    assert resp.status == HTTPStatus.OK
-    assert await resp.json() == snapshot(name="json")
+from tests.fixtures.client import JobClientSpawner
+from tests.fixtures.response import RespIs
 
 
 async def test_get(
     snapshot,
     seed_pg_hmm,
-    spawn_client: ClientSpawner,
+    spawn_job_client: JobClientSpawner,
     hmm_document,
 ):
     """A ``GET`` for an annotation by its integer id returns the complete document read
     from Postgres.
     """
-    client = await spawn_client(authenticated=True)
+    client = await spawn_job_client(authenticated=True)
 
     await seed_pg_hmm(hmm_document)
 
@@ -132,9 +27,9 @@ async def test_get(
     assert await resp.json() == snapshot(name="json")
 
 
-async def test_get_not_found(spawn_client: ClientSpawner, resp_is):
+async def test_get_not_found(spawn_job_client: JobClientSpawner, resp_is: RespIs):
     """A ``GET`` for an id with no matching annotation returns ``404``."""
-    client = await spawn_client(authenticated=True)
+    client = await spawn_job_client(authenticated=True)
 
     resp = await client.get("/hmms/999999")
 

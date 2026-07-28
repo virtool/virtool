@@ -6,19 +6,12 @@ from aiohttp.web import (
     Request,
     Response,
 )
-from aiohttp.web_response import StreamResponse
-from aiohttp_pydantic import PydanticView
-from aiohttp_pydantic.oas.typing import r200, r204, r400, r403, r404, r409
-from pydantic import conint
 
-from virtool.analyses.models import Analysis
-from virtool.analyses.oas import FindAnalysesResponse
 from virtool.analyses.sql import AnalysisFormat
 from virtool.api.custom_json import datetime_to_isoformat, json_response
 from virtool.api.errors import (
     APIBadRequest,
     APIConflict,
-    APIInsufficientRights,
     APIInvalidQuery,
     APINoContent,
     APINotFound,
@@ -35,118 +28,6 @@ from virtool.data.utils import get_data_from_req
 from virtool.uploads.utils import multipart_file_chunker, naive_validator
 
 routes = Routes()
-
-
-@routes.view("/analyses")
-class AnalysesView(PydanticView):
-    async def get(
-        self,
-        page: conint(ge=1) = 1,
-        per_page: conint(ge=1, le=100) = 25,
-    ) -> r200[FindAnalysesResponse]:
-        """Find analyses.
-
-        Lists analyses based on a search `term`.
-
-        The response will only list analyses on which the user agent has read rights.
-
-        Status Codes:
-            200: Successful operation
-        """
-        search_result = await get_data_from_req(self.request).analyses.find(
-            page,
-            per_page,
-            self.request["client"],
-        )
-
-        return json_response(FindAnalysesResponse.parse_obj(search_result))
-
-
-@routes.view("/analyses/{analysis_id}")
-class AnalysisView(PydanticView):
-    async def get(
-        self,
-        analysis_id: str,
-        /,
-    ) -> r200[Analysis] | r400 | r403 | r404:
-        """Get an analysis.
-
-        Fetches the details of an analysis.
-
-        The analysis is identified by its integer `id`. The legacy Mongo string id is
-        still accepted transitionally and resolved to the same analysis; support for it
-        will be removed once the `legacy_id` bridge is dropped.
-
-        Status Codes:
-            200: Successful operation
-            304: Not modified
-            400: Parent sample does not exist
-            403: Insufficient rights
-            404: Not found
-        """
-        try:
-            if not await get_data_from_req(self.request).analyses.has_right(
-                analysis_id,
-                self.request["client"],
-                "read",
-            ):
-                raise APIInsufficientRights()
-        except ResourceNotFoundError:
-            raise APINotFound()
-
-        if_modified_since = self.request.headers.get("If-Modified-Since")
-
-        if if_modified_since:
-            if_modified_since = arrow.get(if_modified_since).naive
-
-        try:
-            analysis = await get_data_from_req(self.request).analyses.get(
-                analysis_id,
-                if_modified_since,
-            )
-        except ResourceNotFoundError:
-            raise APINotFound()
-        except ResourceNotModifiedError:
-            raise HTTPNotModified()
-
-        return json_response(
-            analysis,
-            headers={
-                "Cache-Control": "no-cache",
-                "Last-Modified": datetime_to_isoformat(analysis.created_at),
-            },
-        )
-
-    async def delete(self, analysis_id: str, /) -> r204 | r403 | r404 | r409:
-        """Delete an analysis.
-
-        Permanently deletes an analysis.
-
-        Status Codes:
-            204: Successful operation
-            403: Insufficient rights
-            404: Not found
-            409: Analysis is still running
-        """
-        for right in ["read", "write"]:
-            try:
-                if not await get_data_from_req(self.request).analyses.has_right(
-                    analysis_id,
-                    self.request["client"],
-                    right,
-                ):
-                    raise APIInsufficientRights()
-            except ResourceNotFoundError:
-                raise APINotFound()
-
-        try:
-            await get_data_from_req(self.request).analyses.delete(analysis_id, False)
-        except ResourceNotFoundError:
-            raise APINotFound()
-        except ResourceConflictError:
-            raise APIConflict("Analysis is still running")
-
-        raise APINoContent()
 
 
 @routes.jobs_api.get("/analyses/{analysis_id}")
@@ -244,129 +125,6 @@ async def upload(req: Request) -> Response:
         status=201,
         headers={"Location": f"/analyses/{analysis_id}/files/{analysis_file.id}"},
     )
-
-
-@routes.view("/analyses/{analysis_id}/files/{upload_id}")
-class AnalysisFileView(PydanticView):
-    async def get(self, upload_id: int, /) -> r200[Response] | r404:
-        """Download an analysis file.
-
-        Downloads a file associated with an analysis. Some workflows retain key files
-        after the complete.
-
-        Status Codes:
-            200: Successful operation
-            404: Not found
-        """
-        try:
-            stream, size, name = await get_data_from_req(
-                self.request,
-            ).analyses.download_file(upload_id)
-        except ResourceNotFoundError:
-            raise APINotFound()
-
-        response = StreamResponse(
-            headers={
-                "Content-Disposition": f"attachment; filename={name}",
-                "Content-Length": str(size),
-                "Content-Type": "application/octet-stream",
-            },
-        )
-
-        if size > 0:
-            try:
-                first_chunk = await stream.__anext__()
-            except StopAsyncIteration:
-                raise APINotFound()
-
-            await response.prepare(self.request)
-            await response.write(first_chunk)
-
-            async for chunk in stream:
-                await response.write(chunk)
-        else:
-            await response.prepare(self.request)
-
-        return response
-
-
-@routes.view("/analyses/documents/{analysis_id}.{extension}")
-class DocumentDownloadView(PydanticView):
-    async def get(self, analysis_id: str, extension: str, /) -> r200[Response] | r404:
-        """Download an analysis.
-
-        Downloads analysis data in CSV or XSLX format. The returned format depends on
-        the extension included in the request path.
-
-        Status Codes:
-            200: Operation successful
-            400: Invalid extension
-            404: Not found
-        """
-        if extension not in ["xlsx", "csv"]:
-            raise APIBadRequest(f"Invalid extension: {extension}")
-
-        try:
-            formatted, content_type = await get_data_from_req(
-                self.request,
-            ).analyses.download(analysis_id, extension)
-        except ResourceNotFoundError:
-            raise APINotFound()
-
-        return Response(
-            body=formatted,
-            headers={
-                "Content-Disposition": f"attachment; filename={analysis_id}.{extension}",
-                "Content-Type": content_type,
-            },
-        )
-
-
-@routes.view("/analyses/{analysis_id}/{sequence_index}/blast")
-class BlastView(PydanticView):
-    async def put(
-        self,
-        analysis_id: str,
-        sequence_index: int,
-        /,
-    ) -> r200[Response] | r400 | r403 | r404 | r409:
-        """BLAST a NuVs contig.
-
-        BLASTs a sequence that is part of a NuVs result record. The resulting BLAST data
-        will be attached to that sequence.
-
-        Status Codes:
-            200: Operation successful
-            400: Parent sample does not exist
-            403: Insufficient rights
-            404: Analysis not found
-            404: Sequence not found
-            409: Not a NuVs analysis
-            409: Analysis is still running
-        """
-        try:
-            if not await get_data_from_req(self.request).analyses.has_right(
-                analysis_id,
-                self.request["client"],
-                "write",
-            ):
-                raise APIInsufficientRights()
-        except ResourceNotFoundError:
-            raise APINotFound()
-
-        try:
-            document = await get_data_from_req(self.request).analyses.blast(
-                analysis_id,
-                sequence_index,
-            )
-        except ResourceConflictError as err:
-            raise APIConflict(str(err))
-        except ResourceNotFoundError:
-            raise APINotFound("Sequence not found")
-
-        headers = {"Location": f"/analyses/{analysis_id}/{sequence_index}/blast"}
-
-        return json_response(document, headers=headers, status=201)
 
 
 @routes.jobs_api.patch("/analyses/{analysis_id}")

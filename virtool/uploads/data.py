@@ -1,9 +1,8 @@
-import math
 import uuid
 from collections.abc import AsyncIterator
 from datetime import timedelta
 
-from sqlalchemy import func, select, update
+from sqlalchemy import select, update
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 
 import virtool.utils
@@ -13,7 +12,7 @@ from virtool.data.events import Operation, emits
 from virtool.data.transforms import apply_transforms
 from virtool.samples.sql import SQLSampleReads
 from virtool.storage.protocol import StorageBackend
-from virtool.uploads.models import Upload, UploadSearchResult
+from virtool.uploads.models import Upload
 from virtool.uploads.sql import SQLUpload, UploadType
 from virtool.uploads.utils import upload_file_key
 from virtool.users.transforms import AttachUserTransform
@@ -43,79 +42,6 @@ class UploadsData(DataLayerDomain):
     def __init__(self, pg: AsyncEngine, storage: StorageBackend):
         self._pg: AsyncEngine = pg
         self._storage = storage
-
-    async def find(
-        self,
-        user_id: int | None,
-        page: int,
-        per_page: int,
-        upload_type,
-    ) -> UploadSearchResult:
-        """Find and filter uploads."""
-        base_filters = [
-            SQLUpload.ready == True,  # skipcq: PTC-W0068,PYL-R1714
-            SQLUpload.removed == False,  # skipcq: PTC-W0068,PYL-R1714
-            SQLUpload.reserved == False,  # skipcq: PTC-W0068,PYL-R1714
-        ]
-
-        filters = []
-
-        if user_id is not None:
-            filters.append(SQLUpload.user_id == user_id)  # skipcq: PTC-W0068,PYL-R1714
-
-        if upload_type:
-            filters.append(SQLUpload.type == upload_type)  # skipcq: PTC-W0068,PYL-R1714
-
-        found_query = (
-            select(func.count(SQLUpload.id))
-            .where(*base_filters, *filters)
-            .label("found")
-        )
-
-        total_query = (
-            select(func.count(SQLUpload.id)).where(*base_filters).label("total")
-        )
-
-        skip = 0
-
-        if page > 1:
-            skip = (page - 1) * per_page
-
-        async with AsyncSession(self._pg) as session:
-            count_result = await session.execute(
-                select(
-                    found_query,
-                    total_query,
-                ),
-            )
-
-            found_count, total_count = count_result.fetchone()
-
-            query = (
-                select(SQLUpload)
-                .where(*base_filters, *filters)
-                .order_by(SQLUpload.created_at.desc())
-                .offset(skip)
-                .limit(per_page)
-            )
-
-            uploads = [
-                serialize(row)
-                for row in (await session.execute(query)).unique().scalars()
-            ]
-
-        uploads = await apply_transforms(
-            uploads, [AttachUserTransform(self._pg)], self._pg
-        )
-
-        return UploadSearchResult(
-            items=uploads,
-            found_count=found_count,
-            total_count=total_count,
-            page=page,
-            page_count=int(math.ceil(found_count / per_page)),
-            per_page=per_page,
-        )
 
     @emits(Operation.CREATE)
     async def create(

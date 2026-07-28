@@ -1,7 +1,7 @@
 import enum
 from datetime import datetime
 
-from virtool.models import BaseModel, SearchResult
+from virtool.models import BaseModel
 from virtool.tasks.models import TaskDetailedNested
 from virtool.uploads.models import UploadMinimal
 from virtool.users.models_base import UserNested
@@ -158,62 +158,5 @@ class Reference(ReferenceMinimal):
                         "modify_otu": True,
                     },
                 ],
-            },
-        }
-
-
-class ReferenceSearchResult(SearchResult):
-    documents: list[ReferenceMinimal]
-
-    class Config:
-        schema_extra = {
-            "example": {
-                "documents": [
-                    {
-                        "archived": False,
-                        "cloned_from": {"id": 12, "name": "Plant Viruses"},
-                        "created_at": "2022-01-28T23:42:48.321000Z",
-                        "data_type": "genome",
-                        "groups": [
-                            {
-                                "build": False,
-                                "created_at": "2022-06-10T20:00:34.129000Z",
-                                "id": "sidney",
-                                "modify": False,
-                                "modify_otu": False,
-                            },
-                        ],
-                        "id": 25,
-                        "latest_build": {
-                            "created_at": "2022-07-05T17:41:51.857000Z",
-                            "id": 14,
-                            "user": {
-                                "administrator": True,
-                                "handle": "mrott",
-                                "id": "ihvze2u9",
-                            },
-                            "version": 14,
-                        },
-                        "name": "New Plant Viruses",
-                        "organism": "virus",
-                        "otu_count": 2102,
-                        "task": {"id": 331},
-                        "unbuilt_change_count": 4,
-                        "user": {"id": "igboyes"},
-                        "users": [
-                            {
-                                "build": True,
-                                "id": "igboyes",
-                                "modify": True,
-                                "modify_otu": True,
-                            },
-                        ],
-                    },
-                ],
-                "found_count": 2,
-                "page": 1,
-                "page_count": 1,
-                "per_page": 25,
-                "total_count": 2,
             },
         }

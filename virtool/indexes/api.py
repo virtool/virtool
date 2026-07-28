@@ -1,7 +1,6 @@
 from aiohttp.web import Request
 from aiohttp_pydantic import PydanticView
-from aiohttp_pydantic.oas.typing import r200, r400, r404
-from pydantic import Field
+from aiohttp_pydantic.oas.typing import r200, r404
 
 from virtool.api.custom_json import json_response
 from virtool.api.errors import (
@@ -10,18 +9,11 @@ from virtool.api.errors import (
     APINoContent,
     APINotFound,
 )
-from virtool.api.pagination import Page, PerPage
 from virtool.api.routes import Routes
 from virtool.api.streaming import stream_storage_response
 from virtool.data.errors import ResourceConflictError, ResourceNotFoundError
 from virtool.data.utils import get_data_from_req
-from virtool.history.models import HistorySearchResult
 from virtool.indexes.db import INDEX_FILE_NAMES
-from virtool.indexes.models import Index, IndexSearchResult
-from virtool.indexes.oas import (
-    ListIndexesResponse,
-    ReadyIndexesResponse,
-)
 from virtool.models.roles import AdministratorRole
 
 routes = Routes()
@@ -39,66 +31,6 @@ def _parse_index_id(raw: str) -> int:
         return int(raw)
     except ValueError:
         raise APINotFound()
-
-
-@routes.view("/indexes")
-class IndexesView(PydanticView):
-    async def get(
-        self,
-        ready: bool | None = Field(
-            default=False,
-            description="Return only indexes that are ready for use in analysis.",
-        ),
-        page: Page = 1,
-        per_page: PerPage = 25,
-        archived: bool | None = Field(
-            default=None,
-            description=(
-                "Lifecycle filter on the index's reference. Omit to return "
-                "indexes for both active and archived references; `true` to "
-                "return only indexes whose reference is archived; `false` to "
-                "return only indexes whose reference is active."
-            ),
-        ),
-    ) -> r200[ListIndexesResponse] | r200[list[ReadyIndexesResponse]] | r400:
-        """Find indexes.
-
-        Lists all existing indexes.
-
-        Status Codes:
-            200: Successful operation
-            400: Invalid query
-        """
-        data = await get_data_from_req(self.request).index.find(
-            ready, page, per_page, archived=archived
-        )
-
-        if isinstance(data, IndexSearchResult):
-            return json_response(ListIndexesResponse.parse_obj(data))
-
-        return json_response([ReadyIndexesResponse.parse_obj(index) for index in data])
-
-
-@routes.view("/indexes/{index_id}")
-class IndexView(PydanticView):
-    async def get(self, index_id: str, /) -> r200[Index] | r404:
-        """Get an index.
-
-        Fetches the details for an index.
-
-        Status Codes:
-            200: Successful operation
-            404: Not found
-
-        """
-        try:
-            index = await get_data_from_req(self.request).index.get(
-                _parse_index_id(index_id),
-            )
-        except ResourceNotFoundError:
-            raise APINotFound()
-
-        return json_response(index)
 
 
 @routes.jobs_api.get("/indexes/{index_id}")
@@ -220,36 +152,6 @@ async def download_index_file_for_jobs(req: Request):
             "Content-Type": "application/octet-stream",
         },
     )
-
-
-@routes.view("/indexes/{index_id}/history")
-class IndexHistoryView(PydanticView):
-    async def get(
-        self,
-        index_id: str,
-        /,
-        term: str | None = None,
-        page: Page = 1,
-        per_page: PerPage = 25,
-    ) -> r200[HistorySearchResult] | r400 | r404:
-        """List history.
-
-        Lists history changes for a specific index.
-
-        Status Codes:
-            200: Successful operation
-            400: Invalid query
-            404: Not found
-
-        """
-        try:
-            data = await get_data_from_req(self.request).index.find_changes(
-                _parse_index_id(index_id), page, per_page, term
-            )
-        except ResourceNotFoundError:
-            raise APINotFound()
-
-        return json_response(data)
 
 
 @routes.jobs_api.delete("/indexes/{index_id}")

@@ -120,7 +120,6 @@ async def job_delete(req: aiohttp.web.Request):
     raise APINoContent()
 
 
-@routes.view("/subtractions/{subtraction_id:\\d+}/files/{filename}")
 @routes.jobs_api.get("/subtractions/{subtraction_id:\\d+}/files/{filename}")
 class SubtractionFileView(PydanticView):
     async def get(self, subtraction_id: int, filename: str, /) -> r200 | r400 | r404:

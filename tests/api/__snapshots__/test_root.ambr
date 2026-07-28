@@ -3,14 +3,6 @@
   dict({
     'dev': True,
     'endpoints': dict({
-      'account': dict({
-        'doc': 'https://www.virtool.ca/docs/api/account',
-        'url': '/account',
-      }),
-      'analyses': dict({
-        'doc': 'https://www.virtool.ca/docs/api/analyses',
-        'url': '/analyses',
-      }),
       'authentication': dict({
         'doc': 'https://www.virtool.ca/docs/api/overview/authentication',
         'url': '/overview/authentication',
@@ -19,53 +11,13 @@
         'doc': 'https://www.virtool.ca/docs/api/overview/errors',
         'url': '/overview/errors',
       }),
-      'history': dict({
-        'doc': 'https://www.virtool.ca/docs/api/history',
-        'url': '/history',
-      }),
-      'hmms': dict({
-        'doc': 'https://www.virtool.ca/docs/api/hmms',
-        'url': '/hmms',
-      }),
       'indexes': dict({
         'doc': 'https://www.virtool.ca/docs/api/indexes',
         'url': '/indexes',
       }),
-      'jobs': dict({
-        'doc': 'https://www.virtool.ca/docs/api/jobs',
-        'url': '/jobs',
-      }),
-      'otus': dict({
-        'doc': 'https://www.virtool.ca/docs/api/otus',
-        'url': '/otus',
-      }),
-      'references': dict({
-        'doc': 'https://www.virtool.ca/docs/api/refs',
-        'url': '/references',
-      }),
       'samples': dict({
         'doc': 'https://www.virtool.ca/docs/api/samples',
         'url': '/samples',
-      }),
-      'settings': dict({
-        'doc': 'https://www.virtool.ca/docs/api/settings',
-        'url': '/settings',
-      }),
-      'subtraction': dict({
-        'doc': 'https://www.virtool.ca/docs/api/subtraction',
-        'url': '/subtraction',
-      }),
-      'tasks': dict({
-        'doc': 'https://www.virtool.ca/docs/api/tasks',
-        'url': '/tasks',
-      }),
-      'uploads': dict({
-        'doc': 'https://www.virtool.ca/docs/api/uploads',
-        'url': '/uploads',
-      }),
-      'users': dict({
-        'doc': 'https://www.virtool.ca/docs/api/users',
-        'url': '/users',
       }),
     }),
     'first_user': True,
@@ -76,14 +28,6 @@
   dict({
     'dev': False,
     'endpoints': dict({
-      'account': dict({
-        'doc': 'https://www.virtool.ca/docs/api/account',
-        'url': '/account',
-      }),
-      'analyses': dict({
-        'doc': 'https://www.virtool.ca/docs/api/analyses',
-        'url': '/analyses',
-      }),
       'authentication': dict({
         'doc': 'https://www.virtool.ca/docs/api/overview/authentication',
         'url': '/overview/authentication',
@@ -92,53 +36,13 @@
         'doc': 'https://www.virtool.ca/docs/api/overview/errors',
         'url': '/overview/errors',
       }),
-      'history': dict({
-        'doc': 'https://www.virtool.ca/docs/api/history',
-        'url': '/history',
-      }),
-      'hmms': dict({
-        'doc': 'https://www.virtool.ca/docs/api/hmms',
-        'url': '/hmms',
-      }),
       'indexes': dict({
         'doc': 'https://www.virtool.ca/docs/api/indexes',
         'url': '/indexes',
       }),
-      'jobs': dict({
-        'doc': 'https://www.virtool.ca/docs/api/jobs',
-        'url': '/jobs',
-      }),
-      'otus': dict({
-        'doc': 'https://www.virtool.ca/docs/api/otus',
-        'url': '/otus',
-      }),
-      'references': dict({
-        'doc': 'https://www.virtool.ca/docs/api/refs',
-        'url': '/references',
-      }),
       'samples': dict({
         'doc': 'https://www.virtool.ca/docs/api/samples',
         'url': '/samples',
-      }),
-      'settings': dict({
-        'doc': 'https://www.virtool.ca/docs/api/settings',
-        'url': '/settings',
-      }),
-      'subtraction': dict({
-        'doc': 'https://www.virtool.ca/docs/api/subtraction',
-        'url': '/subtraction',
-      }),
-      'tasks': dict({
-        'doc': 'https://www.virtool.ca/docs/api/tasks',
-        'url': '/tasks',
-      }),
-      'uploads': dict({
-        'doc': 'https://www.virtool.ca/docs/api/uploads',
-        'url': '/uploads',
-      }),
-      'users': dict({
-        'doc': 'https://www.virtool.ca/docs/api/users',
-        'url': '/users',
       }),
     }),
     'first_user': False,
@@ -149,14 +53,6 @@
   dict({
     'dev': False,
     'endpoints': dict({
-      'account': dict({
-        'doc': 'https://www.virtool.ca/docs/api/account',
-        'url': '/account',
-      }),
-      'analyses': dict({
-        'doc': 'https://www.virtool.ca/docs/api/analyses',
-        'url': '/analyses',
-      }),
       'authentication': dict({
         'doc': 'https://www.virtool.ca/docs/api/overview/authentication',
         'url': '/overview/authentication',
@@ -165,53 +61,13 @@
         'doc': 'https://www.virtool.ca/docs/api/overview/errors',
         'url': '/overview/errors',
       }),
-      'history': dict({
-        'doc': 'https://www.virtool.ca/docs/api/history',
-        'url': '/history',
-      }),
-      'hmms': dict({
-        'doc': 'https://www.virtool.ca/docs/api/hmms',
-        'url': '/hmms',
-      }),
       'indexes': dict({
         'doc': 'https://www.virtool.ca/docs/api/indexes',
         'url': '/indexes',
       }),
-      'jobs': dict({
-        'doc': 'https://www.virtool.ca/docs/api/jobs',
-        'url': '/jobs',
-      }),
-      'otus': dict({
-        'doc': 'https://www.virtool.ca/docs/api/otus',
-        'url': '/otus',
-      }),
-      'references': dict({
-        'doc': 'https://www.virtool.ca/docs/api/refs',
-        'url': '/references',
-      }),
       'samples': dict({
         'doc': 'https://www.virtool.ca/docs/api/samples',
         'url': '/samples',
-      }),
-      'settings': dict({
-        'doc': 'https://www.virtool.ca/docs/api/settings',
-        'url': '/settings',
-      }),
-      'subtraction': dict({
-        'doc': 'https://www.virtool.ca/docs/api/subtraction',
-        'url': '/subtraction',
-      }),
-      'tasks': dict({
-        'doc': 'https://www.virtool.ca/docs/api/tasks',
-        'url': '/tasks',
-      }),
-      'uploads': dict({
-        'doc': 'https://www.virtool.ca/docs/api/uploads',
-        'url': '/uploads',
-      }),
-      'users': dict({
-        'doc': 'https://www.virtool.ca/docs/api/users',
-        'url': '/users',
       }),
     }),
     'first_user': True,

@@ -17,7 +17,6 @@ from structlog import get_logger
 import virtool.uploads.db
 import virtool.utils
 from virtool.analyses.sql import SQLAnalysis
-from virtool.api.client import UserClient
 from virtool.config.cls import Config
 from virtool.data.domain import DataLayerDomain
 from virtool.data.errors import ResourceConflictError, ResourceNotFoundError
@@ -29,11 +28,9 @@ from virtool.data.topg import (
 from virtool.data.transforms import apply_transforms
 from virtool.groups.models import GroupMinimal
 from virtool.groups.pg import SQLGroup
-from virtool.indexes.sql import SQLIndex
 from virtool.jobs.transforms import AttachJobTransform
 from virtool.labels.transforms import AttachLabelsTransform
 from virtool.pg.utils import delete_row
-from virtool.references.sql import SQLReference
 from virtool.samples.checks import (
     check_labels_do_not_exist,
     check_name_is_in_use,
@@ -60,9 +57,6 @@ from virtool.samples.sql import (
     SQLSampleUpload,
 )
 from virtool.samples.utils import (
-    SAMPLE_RIGHTS_COLUMNS,
-    SampleRight,
-    has_sample_right,
     sample_file_key,
     sample_prefix,
     sample_storage_id,
@@ -71,7 +65,6 @@ from virtool.storage.cleanup import delete_prefix
 from virtool.storage.protocol import StorageBackend
 from virtool.subtractions.db import (
     AttachSubtractionsTransform,
-    get_missing_subtraction_ids,
 )
 from virtool.uploads.sql import SQLUpload
 from virtool.uploads.utils import is_gzip_compressed, upload_file_key
@@ -542,92 +535,6 @@ class SamplesData(DataLayerDomain):
         )
 
         return await self.get(sample_id)
-
-    async def get_owner_id(self, sample_id: int | str) -> int | None:
-        """Return the owner user id of a sample, or ``None`` if it does not exist.
-
-        :param sample_id: the id of the sample
-        :return: the owner user id
-        """
-        async with AsyncSession(self._pg) as session:
-            return (
-                await session.execute(
-                    select(SQLLegacySample.user_id).where(
-                        compose_legacy_id_single_expression(SQLLegacySample, sample_id),
-                    ),
-                )
-            ).scalar_one_or_none()
-
-    async def has_right(
-        self,
-        sample_id: int | str,
-        client: UserClient,
-        right: SampleRight,
-    ) -> bool:
-        async with AsyncSession(self._pg) as session:
-            row = (
-                await session.execute(
-                    select(*SAMPLE_RIGHTS_COLUMNS).where(
-                        compose_legacy_id_single_expression(
-                            SQLLegacySample,
-                            sample_id,
-                        ),
-                    ),
-                )
-            ).first()
-
-        if row is None:
-            return True
-
-        return has_sample_right(row, client, right)
-
-    async def has_resources_for_analysis_job(self, ref_id, subtractions) -> None:
-        """Checks that resources for analysis job exist.
-        :param ref_id: the reference id
-        :param subtractions: list of subtractions
-        """
-        async with AsyncSession(self._pg) as session:
-            reference = (
-                await session.execute(
-                    select(SQLReference.archived).where(
-                        compose_legacy_id_single_expression(SQLReference, ref_id),
-                    ),
-                )
-            ).first()
-
-        if reference is None:
-            raise ResourceConflictError("Reference does not exist")
-
-        if reference.archived:
-            raise ResourceConflictError("Reference is archived")
-
-        async with AsyncSession(self._pg) as session:
-            has_ready_index = await session.scalar(
-                select(
-                    select(SQLIndex.id)
-                    .where(
-                        SQLIndex.reference_id
-                        == compose_legacy_id_subquery(SQLReference, ref_id),
-                        SQLIndex.ready.is_(True),
-                    )
-                    .exists(),
-                ),
-            )
-
-        if not has_ready_index:
-            raise ResourceConflictError("No ready index")
-
-        if subtractions is not None:
-            non_existent_subtractions = await get_missing_subtraction_ids(
-                self._pg,
-                subtractions,
-            )
-
-            if non_existent_subtractions:
-                raise ResourceConflictError(
-                    f"Subtractions do not exist: "
-                    f"{','.join(str(s) for s in non_existent_subtractions)}",
-                )
 
     async def upload_artifact(
         self,

@@ -5,34 +5,32 @@ from sqlalchemy import delete, select
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 from syrupy import SnapshotAssertion
 
+from tests.fixtures.analysis import seed_analysis
 from tests.fixtures.client import ClientSpawner
-from tests.fixtures.samples import create_rights_sample
 from virtool.analyses.sql import SQLAnalysis
-from virtool.api.client import JobClient, UserClient
 from virtool.data.errors import ResourceConflictError, ResourceNotFoundError
 from virtool.data.layer import DataLayer
 from virtool.data.transforms import apply_transforms
 from virtool.fake.next import DataFaker, fake_file_chunker
-from virtool.models.enums import AnalysisWorkflow, Permission
-from virtool.models.roles import AdministratorRole
+from virtool.models.enums import Permission
 from virtool.pg.utils import get_row, get_row_by_id
 from virtool.samples.data import SamplesData
 from virtool.samples.db import AttachUploadsTransform
-from virtool.samples.models import Sample
-from virtool.samples.oas import CreateAnalysisRequest, CreateSampleRequest
+from virtool.samples.oas import CreateSampleRequest
 from virtool.samples.sql import (
     SQLLegacySample,
     SQLLegacySampleLabel,
     SQLLegacySampleSubtraction,
     SQLSampleUpload,
 )
-from virtool.samples.utils import SampleRight, sample_file_key, sample_prefix
+from virtool.samples.utils import sample_file_key, sample_prefix
 from virtool.settings.oas import UpdateSettingsRequest
 from virtool.storage.errors import StorageKeyNotFoundError
 from virtool.storage.protocol import StorageBackend
-from virtool.uploads.sql import SQLUpload, UploadType
+from virtool.uploads.sql import SQLUpload
 from virtool.uploads.utils import upload_file_key
 from virtool.users.oas import UpdateUserRequest
+from virtool.utils import timestamp
 
 QUALITY = {
     "bases": [[1543]],
@@ -399,342 +397,8 @@ class TestFinalize:
             await data_layer.samples.finalize(999999, {})
 
 
-class TestHasRight:
-    async def test_ok(
-        self,
-        data_layer: DataLayer,
-        fake: DataFaker,
-    ):
-        """Test group member can write when group_write is True."""
-        group = await fake.groups.create()
-        user = await fake.users.create(groups=[group])
-        sample_owner = await fake.users.create()
-
-        client = UserClient(
-            administrator_role=user.administrator_role,
-            authenticated=True,
-            force_reset=False,
-            groups=[group.id for group in user.groups],
-            permissions=user.permissions.dict(),
-            user_id=user.id,
-        )
-
-        sample = await create_rights_sample(
-            data_layer,
-            fake,
-            sample_owner,
-            group=group.id,
-            group_read=True,
-            group_write=True,
-        )
-
-        assert await data_layer.samples.has_right(sample.id, client, SampleRight.write)
-
-    async def test_read_permission(
-        self,
-        data_layer: DataLayer,
-        fake: DataFaker,
-    ):
-        """Test group member can read when group_read is True."""
-        group = await fake.groups.create()
-        user = await fake.users.create(groups=[group])
-        sample_owner = await fake.users.create()
-
-        client = UserClient(
-            administrator_role=user.administrator_role,
-            authenticated=True,
-            force_reset=False,
-            groups=[group.id for group in user.groups],
-            permissions=user.permissions.dict(),
-            user_id=user.id,
-        )
-
-        sample = await create_rights_sample(
-            data_layer,
-            fake,
-            sample_owner,
-            group=group.id,
-            group_read=True,
-        )
-
-        assert await data_layer.samples.has_right(sample.id, client, SampleRight.read)
-
-    async def test_missing_sample(
-        self,
-        data_layer: DataLayer,
-        fake: DataFaker,
-    ):
-        """Test returns True when sample doesn't exist."""
-        user = await fake.users.create()
-
-        client = UserClient(
-            administrator_role=user.administrator_role,
-            authenticated=True,
-            force_reset=False,
-            groups=[group.id for group in user.groups],
-            permissions=user.permissions.dict(),
-            user_id=user.id,
-        )
-
-        assert await data_layer.samples.has_right(
-            "nonexistent",
-            client,
-            SampleRight.write,
-        )
-
-    async def test_admin_full_access(
-        self,
-        data_layer: DataLayer,
-        fake: DataFaker,
-    ):
-        """Test full administrator has access regardless of permissions."""
-        user = await fake.users.create(administrator_role=AdministratorRole.FULL)
-        sample_owner = await fake.users.create()
-
-        client = UserClient(
-            administrator_role=AdministratorRole.FULL,
-            authenticated=True,
-            force_reset=False,
-            groups=[group.id for group in user.groups],
-            permissions=user.permissions.dict(),
-            user_id=user.id,
-        )
-
-        sample = await create_rights_sample(data_layer, fake, sample_owner)
-
-        assert await data_layer.samples.has_right(sample.id, client, SampleRight.write)
-
-    async def test_owner_full_access(
-        self,
-        data_layer: DataLayer,
-        fake: DataFaker,
-    ):
-        """Test sample owner has full access."""
-        user = await fake.users.create()
-
-        client = UserClient(
-            administrator_role=user.administrator_role,
-            authenticated=True,
-            force_reset=False,
-            groups=[group.id for group in user.groups],
-            permissions=user.permissions.dict(),
-            user_id=user.id,
-        )
-
-        sample = await create_rights_sample(data_layer, fake, user)
-
-        assert await data_layer.samples.has_right(sample.id, client, SampleRight.write)
-
-    async def test_job_client_full_access(
-        self,
-        data_layer: DataLayer,
-        fake: DataFaker,
-    ):
-        """A job-authenticated client holds every right regardless of ownership or
-        sharing, since a job's identity is neither a user nor an administrator.
-        """
-        sample_owner = await fake.users.create()
-
-        sample = await create_rights_sample(
-            data_layer,
-            fake,
-            sample_owner,
-            all_read=False,
-            all_write=False,
-        )
-
-        client = JobClient(job_id=1)
-
-        assert await data_layer.samples.has_right(
-            sample.id,
-            client,
-            SampleRight.read,
-        )
-        assert await data_layer.samples.has_right(
-            sample.id,
-            client,
-            SampleRight.write,
-        )
-
-    async def test_non_group_member_denied(
-        self,
-        data_layer: DataLayer,
-        fake: DataFaker,
-    ):
-        """Test non-group member is denied when all_write is False."""
-        group = await fake.groups.create()
-        user = await fake.users.create()
-        sample_owner = await fake.users.create()
-
-        client = UserClient(
-            administrator_role=user.administrator_role,
-            authenticated=True,
-            force_reset=False,
-            groups=[group.id for group in user.groups],
-            permissions=user.permissions.dict(),
-            user_id=user.id,
-        )
-
-        sample = await create_rights_sample(
-            data_layer,
-            fake,
-            sample_owner,
-            group=group.id,
-            group_write=True,
-        )
-
-        assert not await data_layer.samples.has_right(
-            sample.id,
-            client,
-            SampleRight.write,
-        )
-
-
-class TestHasResourcesForAnalysisJob:
-    @staticmethod
-    async def _seed(
-        data_layer: DataLayer,
-        fake: DataFaker,
-        *,
-        archived: bool = False,
-    ) -> str:
-        user = await fake.users.create()
-        upload = await fake.uploads.create(
-            user=user,
-            upload_type=UploadType.subtraction,
-        )
-
-        reference = await fake.references.create(user=user, id_="test_ref")
-
-        if archived:
-            await data_layer.references.archive(reference.id)
-
-        await fake.indexes.create(reference, user, version=1, ready=True)
-
-        subtraction = await fake.subtractions.create(user=user, upload=upload)
-
-        return subtraction.id
-
-    async def test_ok(self, data_layer: DataLayer, fake: DataFaker):
-        """A reference addressed by its legacy string id resolves to its ready index."""
-        subtraction_id = await self._seed(data_layer, fake)
-
-        assert (
-            await data_layer.samples.has_resources_for_analysis_job(
-                "test_ref",
-                [subtraction_id],
-            )
-            is None
-        )
-
-    async def test_ok_reference_by_primary_key(
-        self,
-        data_layer: DataLayer,
-        fake: DataFaker,
-    ):
-        """A reference addressed by its integer primary key resolves to its ready
-        index just as its legacy string id does.
-        """
-        user = await fake.users.create()
-        upload = await fake.uploads.create(
-            user=user,
-            upload_type=UploadType.subtraction,
-        )
-
-        reference = await fake.references.create(user=user, id_="test_ref")
-
-        await fake.indexes.create(reference, user, version=1, ready=True)
-
-        subtraction = await fake.subtractions.create(user=user, upload=upload)
-
-        assert (
-            await data_layer.samples.has_resources_for_analysis_job(
-                reference.id,
-                [subtraction.id],
-            )
-            is None
-        )
-
-    async def test_missing_reference(self, data_layer: DataLayer):
-        with pytest.raises(ResourceConflictError, match=r"Reference does not exist"):
-            await data_layer.samples.has_resources_for_analysis_job(
-                "test_ref",
-                [1],
-            )
-
-    async def test_archived_reference(
-        self,
-        data_layer: DataLayer,
-        fake: DataFaker,
-    ):
-        subtraction_id = await self._seed(data_layer, fake, archived=True)
-
-        with pytest.raises(ResourceConflictError, match=r"Reference is archived"):
-            await data_layer.samples.has_resources_for_analysis_job(
-                "test_ref",
-                [subtraction_id],
-            )
-
-    async def test_missing_subtraction(
-        self,
-        data_layer: DataLayer,
-        fake: DataFaker,
-    ):
-        subtraction_id = await self._seed(data_layer, fake)
-
-        with pytest.raises(
-            ResourceConflictError,
-            match=r"^Subtractions do not exist: 999$",
-        ):
-            await data_layer.samples.has_resources_for_analysis_job(
-                "test_ref",
-                [subtraction_id, 999],
-            )
-
-
-class TestGetOwnerId:
-    async def test_ok(
-        self,
-        data_layer: DataLayer,
-        fake: DataFaker,
-        spawn_client: ClientSpawner,
-    ):
-        """The owner user id is returned for an existing sample."""
-        client = await spawn_client(
-            authenticated=True,
-            permissions=[Permission.create_sample],
-        )
-
-        upload = await fake.uploads.create(user=await fake.users.create())
-        sample = await data_layer.samples.create(
-            CreateSampleRequest(files=[upload.id], name="Owned"),
-            client.user.id,
-        )
-
-        assert await data_layer.samples.get_owner_id(sample.id) == client.user.id
-
-    async def test_missing(self, data_layer: DataLayer):
-        """``None`` is returned when the sample does not exist."""
-        assert await data_layer.samples.get_owner_id("nonexistent") is None
-
-
 class TestDelete:
     """Deleting a sample cascades to its analyses in both Mongo and Postgres."""
-
-    async def _setup(
-        self,
-        fake: DataFaker,
-    ) -> tuple[Sample, int, str]:
-        """Create a finalized sample and a reference with a ready index to analyse it
-        against.
-        """
-        user = await fake.users.create()
-        reference = await fake.references.create(user=user, name="Test Reference")
-        sample = await fake.samples.create(user, ready=True)
-
-        await fake.indexes.create(reference, user, version=11, ready=True)
-
-        return sample, user.id, reference.id
 
     async def test_deletes_analysis_pg_rows(
         self,
@@ -744,25 +408,34 @@ class TestDelete:
         pg: AsyncEngine,
     ):
         """Deleting a sample removes its analyses' Postgres rows."""
-        sample, user_id, ref_id = await self._setup(fake)
+        user = await fake.users.create()
+        reference = await fake.references.create(user=user, name="Test Reference")
+        sample = await fake.samples.create(user, ready=True)
 
-        analysis = await data_layer.analyses.create(
-            CreateAnalysisRequest(
-                ref_id=ref_id,
-                subtractions=[],
-                workflow=AnalysisWorkflow.nuvs,
-            ),
-            sample.id,
-            user_id,
+        index = await fake.indexes.create(reference, user, version=11, ready=True)
+
+        analysis_id = await seed_analysis(
+            pg,
+            {
+                "_id": None,
+                "created_at": timestamp(),
+                "index": {"id": index.id, "version": 11},
+                "job": None,
+                "ready": True,
+                "reference": {"id": reference.id},
+                "results": {"hits": []},
+                "sample": {"id": sample.id},
+                "subtractions": [],
+                "user": {"id": user.id},
+                "workflow": "nuvs",
+            },
         )
 
-        await data_layer.analyses.finalize(analysis.id, {"hits": []})
-
-        assert await get_row(pg, SQLAnalysis, ("id", analysis.id)) is not None
+        assert await get_row(pg, SQLAnalysis, ("id", analysis_id)) is not None
 
         await data_layer.samples.delete(sample.id)
 
-        assert await get_row(pg, SQLAnalysis, ("id", analysis.id)) is None
+        assert await get_row(pg, SQLAnalysis, ("id", analysis_id)) is None
 
     async def test_releases_reserved_uploads(
         self,

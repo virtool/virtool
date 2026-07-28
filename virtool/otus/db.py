@@ -1,6 +1,5 @@
 """Work with OTUs in the database."""
 
-import math
 from collections import Counter, defaultdict
 from collections.abc import Collection
 from datetime import datetime
@@ -8,10 +7,8 @@ from typing import Any
 
 from sqlalchemy import (
     delete,
-    distinct,
     false,
     func,
-    or_,
     select,
     true,
     update,
@@ -23,194 +20,11 @@ import virtool.history.db
 import virtool.otus.utils
 from virtool.api.custom_json import isoformat_to_datetime
 from virtool.data.topg import (
-    compose_legacy_id_subquery,
     resolve_legacy_id,
 )
-from virtool.data.transforms import apply_transforms
-from virtool.history.sql import SQLLegacyHistory
 from virtool.otus.sql import SQLOTU, SQLSequence
 from virtool.references.sql import SQLReference
-from virtool.references.transforms import AttachReferenceTransform
 from virtool.types import Document
-
-
-def compose_otu_search_filter(term: str):
-    """Compose a case-insensitive substring match on ``name`` and ``abbreviation``.
-
-    Mirrors the Mongo ``compose_regex_query`` behaviour the find endpoint used before
-    reading from Postgres: the term is matched literally, so SQL ``LIKE`` wildcards in
-    the term are escaped rather than interpreted.
-    """
-    escaped = term.replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_")
-    pattern = f"%{escaped}%"
-
-    return or_(
-        SQLOTU.name.ilike(pattern, escape="\\"),
-        SQLOTU.abbreviation.ilike(pattern, escape="\\"),
-    )
-
-
-async def check_name_and_abbreviation(
-    pg: AsyncEngine,
-    ref_id: int | str,
-    name: str | None = None,
-    abbreviation: str | None = None,
-) -> str | None:
-    """Check of an OTU name and abbreviation are already in use.
-
-    Returns an error message if the ``name`` or ``abbreviation`` are already in use.
-
-    The name is matched on ``lower(name)`` rather than the ``lower_name`` field the
-    Mongo query used. The ``legacy_otus_name_lower`` index makes that expression a
-    lookup rather than a scan, so the denormalised field does not need promoting to a
-    column of its own.
-
-    :param pg: the application PostgreSQL engine
-    :param ref_id: the id of the reference to check in
-    :param name: an OTU name
-    :param abbreviation: an OTU abbreviation
-
-    """
-    reference_id = compose_legacy_id_subquery(SQLReference, ref_id)
-
-    async with AsyncSession(pg) as session:
-        name_exists = bool(name) and await session.scalar(
-            select(
-                select(SQLOTU.id)
-                .where(
-                    func.lower(SQLOTU.name) == name.lower(),
-                    SQLOTU.reference_id == reference_id,
-                )
-                .exists(),
-            ),
-        )
-
-        abbreviation_exists = bool(abbreviation) and await session.scalar(
-            select(
-                select(SQLOTU.id)
-                .where(
-                    SQLOTU.abbreviation == abbreviation,
-                    SQLOTU.reference_id == reference_id,
-                )
-                .exists(),
-            ),
-        )
-
-    if name_exists and abbreviation_exists:
-        return "Name and abbreviation already exist"
-
-    if name_exists:
-        return "Name already exists"
-
-    if abbreviation_exists:
-        return "Abbreviation already exists"
-
-    return None
-
-
-async def find(
-    pg: AsyncEngine,
-    term: str | None,
-    page: int,
-    per_page: int,
-    verified: bool | None,
-    ref_id: int | str | None = None,
-) -> dict[str, Any]:
-    """Find OTUs matching a search term, in ``paginate``'s result shape.
-
-    ``ref_id`` scopes both counts, so ``total_count`` is the size of the reference
-    rather than of every OTU, exactly as the ``base_query`` it replaces did.
-
-    Only the promoted columns behind :class:`virtool.otus.models.OTUMinimal` are
-    selected, standing in for the projection the Mongo query passed. Selecting whole
-    rows would drag the entire ``data`` JSONB -- every isolate of every OTU on the page
-    -- over the wire to build a response that names none of it.
-
-    Rows are ordered by ``lower(name)`` then ``id``, which the ``legacy_otus_name_lower``
-    index covers. This is a deliberate change of order rather than a port of the Mongo
-    one: ``sort="name"`` collated by byte value, so it filed every capitalised name ahead
-    of every lowercase one, and it had no tiebreaker, so OTUs sharing a name could swap
-    places between pages of one walk. Case-folding gives the alphabetical order the
-    endpoint has always appeared to promise, and ``id`` makes paging stable.
-    """
-    base_filters = []
-
-    if ref_id is not None:
-        base_filters.append(
-            SQLOTU.reference_id == compose_legacy_id_subquery(SQLReference, ref_id),
-        )
-
-    search_filters = list(base_filters)
-
-    if term:
-        search_filters.append(compose_otu_search_filter(term))
-
-    if verified is not None:
-        search_filters.append(SQLOTU.verified.is_(verified))
-
-    history_filters = [SQLLegacyHistory.index_id.is_(None)]
-
-    if ref_id:
-        history_filters.append(
-            SQLLegacyHistory.reference_id
-            == compose_legacy_id_subquery(SQLReference, ref_id),
-        )
-
-    async with AsyncSession(pg) as session:
-        total_count = await session.scalar(
-            select(func.count()).select_from(SQLOTU).where(*base_filters),
-        )
-
-        found_count = await session.scalar(
-            select(func.count()).select_from(SQLOTU).where(*search_filters),
-        )
-
-        rows = (
-            await session.execute(
-                select(
-                    SQLOTU.id,
-                    SQLOTU.abbreviation,
-                    SQLOTU.name,
-                    SQLOTU.reference_id,
-                    SQLOTU.verified,
-                    SQLOTU.version,
-                )
-                .where(*search_filters)
-                .order_by(func.lower(SQLOTU.name), SQLOTU.id)
-                .offset(per_page * (page - 1))
-                .limit(per_page),
-            )
-        ).all()
-
-        modified_count = await session.scalar(
-            select(func.count(distinct(SQLLegacyHistory.otu))).where(*history_filters),
-        )
-
-    documents = await apply_transforms(
-        [
-            {
-                "id": row.id,
-                "abbreviation": row.abbreviation,
-                "name": row.name,
-                "reference": {"id": row.reference_id},
-                "verified": row.verified,
-                "version": row.version,
-            }
-            for row in rows
-        ],
-        [AttachReferenceTransform(pg)],
-        pg,
-    )
-
-    return {
-        "documents": documents,
-        "total_count": total_count,
-        "found_count": found_count,
-        "page_count": int(math.ceil(found_count / per_page)),
-        "per_page": per_page,
-        "page": page,
-        "modified_count": modified_count,
-    }
 
 
 async def join_and_format(
@@ -490,24 +304,6 @@ async def get_legacy_otu_reference_id(
         return await session.scalar(select(SQLOTU.reference_id).where(*filters))
 
 
-async def legacy_isolate_exists(pg: AsyncEngine, otu_id: str, isolate_id: str) -> bool:
-    """Return whether an OTU exists and carries the isolate identified by ``isolate_id``.
-
-    The Postgres counterpart of the ``count_documents({"_id": otu_id, "isolates.id":
-    isolate_id})`` guard the sequence reads use. Only the ``id`` column is selected, so
-    the check never reads the ``data`` JSONB it matches against.
-    """
-    async with AsyncSession(pg) as session:
-        return (
-            await session.scalar(
-                select(SQLOTU.id).where(
-                    SQLOTU.id == otu_id,
-                    compose_isolate_match(isolate_id),
-                ),
-            )
-        ) is not None
-
-
 async def get_legacy_otu_fields(
     pg: AsyncEngine,
     otu_id: str,
@@ -563,167 +359,6 @@ async def get_legacy_otu_fields(
         for field, value, is_present in zip(fields, values, present, strict=True)
         if is_present
     }
-
-
-async def get_legacy_sequence(
-    pg: AsyncEngine,
-    otu_id: str,
-    isolate_id: str,
-    sequence_id: str,
-) -> Document | None:
-    """Fetch one sequence document from Postgres, scoped to its OTU and isolate.
-
-    The Postgres counterpart of the ``mongo.sequences.find_one`` single-sequence read.
-    Returns ``None`` when no sequence with that id belongs to the given OTU and isolate,
-    exactly as the Mongo query matches nothing when any of the three ids disagree. The
-    ``otu_id`` and ``isolate_id`` filters run on the promoted, indexed columns rather
-    than casting them out of the ``data`` JSONB; the document itself is recovered
-    verbatim from that column via :func:`sequence_document_from_row`.
-    """
-    async with AsyncSession(pg) as session:
-        row = await session.scalar(
-            select(SQLSequence).where(
-                SQLSequence.id == sequence_id,
-                SQLSequence.otu_id == otu_id,
-                SQLSequence.isolate_id == isolate_id,
-            ),
-        )
-
-    return sequence_document_from_row(row) if row is not None else None
-
-
-async def get_legacy_sequence_in_session(
-    pg_session: AsyncSession,
-    sequence_id: str,
-) -> Document | None:
-    """Fetch one sequence document from Postgres within ``pg_session``, by id alone.
-
-    The session-aware counterpart of :func:`get_legacy_sequence`, and the sequence
-    equivalent of :func:`join_legacy_otu_in_session`: it reads through the caller's
-    session, so a sequence written earlier in the caller's transaction comes back as it
-    now stands. ``populate_existing`` refreshes a row already in the identity map, for
-    the reason :func:`join_legacy_otu_in_session` documents.
-
-    Scoped to the id only, with no ``otu_id`` or ``isolate_id`` filter, because the
-    sequence update path it backs addresses a sequence by id alone.
-    """
-    row = await pg_session.get(SQLSequence, sequence_id, populate_existing=True)
-
-    return sequence_document_from_row(row) if row is not None else None
-
-
-async def list_legacy_isolate_sequences(
-    pg: AsyncEngine,
-    otu_id: str,
-    isolate_id: str,
-) -> list[Document]:
-    """List an isolate's sequence documents from Postgres in Mongo natural order.
-
-    The Postgres counterpart of ``mongo.sequences.find({"otu_id": ..., "isolate_id":
-    ...})``. The rows are ordered by ``position`` so they arrive in the order Mongo's
-    unsorted cursor returns them, and the filters run on the indexed ``otu_id`` and
-    ``isolate_id`` columns. Each document is recovered verbatim from the ``data`` JSONB
-    column.
-    """
-    async with AsyncSession(pg) as session:
-        rows = await session.scalars(
-            select(SQLSequence)
-            .where(
-                SQLSequence.otu_id == otu_id,
-                SQLSequence.isolate_id == isolate_id,
-            )
-            .order_by(SQLSequence.position),
-        )
-
-        return [sequence_document_from_row(row) for row in rows]
-
-
-async def legacy_sequence_exists(pg: AsyncEngine, sequence_id: str) -> bool:
-    """Return whether a ``legacy_sequences`` row exists, without reading its ``data``.
-
-    Backs the existence guards on the sequence update and delete handlers. Only the
-    ``id`` column is selected so the check never de-TOASTs the large ``sequence`` body
-    it does not need.
-    """
-    async with AsyncSession(pg) as session:
-        return (
-            await session.scalar(
-                select(SQLSequence.id).where(SQLSequence.id == sequence_id),
-            )
-        ) is not None
-
-
-async def list_legacy_otu_sequence_bodies(
-    pg: AsyncEngine,
-    otu_id: str,
-) -> list[tuple[str, str, str]]:
-    """Return an OTU's sequences as ``(isolate_id, sequence_id, sequence)`` tuples.
-
-    Ordered by ``position`` -- Mongo natural order -- so an OTU-wide read can be
-    bucketed back into its isolates without losing the order a FASTA export presents
-    them in. Only the sequence body is read out of the ``data`` JSONB; the metadata
-    fields a FASTA export does not use are left in the column rather than pulled over
-    the wire.
-    """
-    async with AsyncSession(pg) as session:
-        result = await session.execute(
-            select(
-                SQLSequence.isolate_id,
-                SQLSequence.id,
-                SQLSequence.data["sequence"].astext,
-            )
-            .where(SQLSequence.otu_id == otu_id)
-            .order_by(SQLSequence.position),
-        )
-
-    return [tuple(row) for row in result.all()]
-
-
-async def list_legacy_isolate_sequence_bodies(
-    pg: AsyncEngine,
-    otu_id: str,
-    isolate_id: str,
-) -> list[tuple[str, str]]:
-    """Return an isolate's sequences as ``(sequence_id, sequence)`` tuples.
-
-    Ordered by ``position`` and filtered on the indexed ``otu_id`` and ``isolate_id``
-    columns. Only the sequence body is read out of the ``data`` JSONB.
-    """
-    async with AsyncSession(pg) as session:
-        result = await session.execute(
-            select(SQLSequence.id, SQLSequence.data["sequence"].astext)
-            .where(
-                SQLSequence.otu_id == otu_id,
-                SQLSequence.isolate_id == isolate_id,
-            )
-            .order_by(SQLSequence.position),
-        )
-
-    return [tuple(row) for row in result.all()]
-
-
-async def get_legacy_sequence_body(
-    pg: AsyncEngine,
-    sequence_id: str,
-) -> tuple[str, str, str] | None:
-    """Return ``(otu_id, isolate_id, sequence)`` for one sequence, or ``None``.
-
-    Backs the single-sequence FASTA export. ``otu_id`` and ``isolate_id`` come from the
-    promoted columns and only the sequence body is read out of the ``data`` JSONB, so
-    the small metadata fields the export does not use are never pulled over the wire.
-    """
-    async with AsyncSession(pg) as session:
-        row = (
-            await session.execute(
-                select(
-                    SQLSequence.otu_id,
-                    SQLSequence.isolate_id,
-                    SQLSequence.data["sequence"].astext,
-                ).where(SQLSequence.id == sequence_id),
-            )
-        ).first()
-
-    return tuple(row) if row is not None else None
 
 
 def otu_row_values(document: Document, reference_id: int) -> dict[str, Any]:
@@ -1167,68 +802,6 @@ async def update_legacy_otu_verification(
     return None
 
 
-async def update_legacy_sequence_segments(
-    pg_session: AsyncSession,
-    old: Document | None,
-    new: Document | None,
-) -> None:
-    """Unset ``segment`` on sequences naming a segment ``new`` no longer defines.
-
-    Takes the same joined OTU before and after an edit. An OTU that gained a schema for
-    the first time has no ``old`` names to drop, so it is left alone -- the ``"schema"
-    not in old`` guard.
-
-    The segment is *removed* from ``data`` with the JSONB ``-`` operator rather than set
-    to null, because ``data`` must stay a faithful lift of the document the OTU was
-    written from, where an unset segment is an absent field. The two are not
-    interchangeable: a joined OTU feeds ``dictdiffer`` diffs, so a lingering
-    ``"segment": null`` would diff as a changed field where an absent one diffs as a
-    removed field, and every patch built on it would disagree. The promoted column has no
-    such distinction to preserve and simply goes null, which is what an absent
-    ``segment`` renders as in :func:`sequence_row_values`.
-    """
-    if old is None or new is None or "schema" not in old:
-        return
-
-    dropped = {segment["name"] for segment in old["schema"]} - {
-        segment["name"] for segment in new["schema"]
-    }
-
-    if not dropped:
-        return
-
-    await pg_session.execute(
-        update(SQLSequence)
-        .where(
-            SQLSequence.otu_id == old["_id"],
-            SQLSequence.segment.in_(dropped),
-        )
-        .values(
-            segment=None,
-            data=SQLSequence.data.op("-")("segment"),
-        ),
-    )
-
-
-async def delete_legacy_otu(pg_session: AsyncSession, otu_id: str) -> int:
-    """Delete an OTU's ``legacy_otus`` row; its ``legacy_sequences`` rows cascade.
-
-    Returns how many rows were deleted: one, or zero if the OTU had no row to begin
-    with.
-
-    The row is deleted without committing, so it goes or comes back together with the
-    caller's surrounding transaction.
-    """
-    result = await pg_session.execute(delete(SQLOTU).where(SQLOTU.id == otu_id))
-
-    return result.rowcount
-
-
-async def delete_legacy_sequence(pg_session: AsyncSession, sequence_id: str) -> None:
-    """Delete a single ``legacy_sequences`` row by id."""
-    await pg_session.execute(delete(SQLSequence).where(SQLSequence.id == sequence_id))
-
-
 async def delete_legacy_sequences(
     pg_session: AsyncSession,
     sequence_ids: Collection[str],
@@ -1256,20 +829,6 @@ async def delete_legacy_sequences(
         deleted += result.rowcount
 
     return deleted
-
-
-async def delete_legacy_isolate_sequences(
-    pg_session: AsyncSession,
-    otu_id: str,
-    isolate_id: str,
-) -> None:
-    """Delete every ``legacy_sequences`` row belonging to an isolate."""
-    await pg_session.execute(
-        delete(SQLSequence).where(
-            SQLSequence.otu_id == otu_id,
-            SQLSequence.isolate_id == isolate_id,
-        ),
-    )
 
 
 async def check_sequence_segment(

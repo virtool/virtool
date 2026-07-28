@@ -1,14 +1,10 @@
-from aiohttp.web_response import StreamResponse
 from aiohttp_pydantic import PydanticView
-from aiohttp_pydantic.injectors import CONTEXT
-from aiohttp_pydantic.oas.typing import r200, r400, r403, r404, r409
-from pydantic import Field, ValidationError, conint
+from aiohttp_pydantic.oas.typing import r200, r404, r409
 
 from virtool.api.custom_json import json_response
 from virtool.api.errors import APIConflict, APINotFound
-from virtool.api.policy import PermissionRoutePolicy, PublicRoutePolicy, policy
+from virtool.api.policy import PublicRoutePolicy, policy
 from virtool.api.routes import Routes
-from virtool.authorization.permissions import LegacyPermission
 from virtool.data.errors import (
     ResourceConflictError,
     ResourceNotFoundError,
@@ -20,8 +16,6 @@ from virtool.jobs.models import (
     JobClaimed,
     JobCounts,
     JobPing,
-    JobSearchResult,
-    JobState,
     JobStepStarted,
     Workflow,
 )
@@ -29,53 +23,6 @@ from virtool.jobs.models import (
 routes = Routes()
 
 
-@routes.view("/jobs")
-class JobsView(PydanticView):
-    async def get(
-        self,
-        page: conint(ge=1) = 1,
-        per_page: conint(ge=1, le=100) = 25,
-        state: list[JobState] = Field(default_factory=list),
-        user: list[str] = Field(default_factory=list),
-    ) -> r200[JobSearchResult] | r400:
-        """Find jobs.
-
-        Lists jobs on the instance.
-
-        Jobs can be filtered by their current ``state`` by providing desired states as
-        query parameters.
-
-        **Archived jobs are not currently returned from the API**.
-
-        Status Codes:
-            200: Successful operation
-            400: Invalid query
-        """
-        return json_response(
-            await get_data_from_req(self.request).jobs.find(page, per_page, state, user)
-        )
-
-    async def on_validation_error(
-        self, exception: ValidationError, context: CONTEXT
-    ) -> StreamResponse:
-        """This method is a hook to intercept ValidationError.
-
-        This hook can be redefined to return a custom HTTP response error.
-        The exception is a pydantic.ValidationError and the context is "body",
-        "headers", "path" or "query string"
-        """
-        errors = exception.errors()
-
-        for error in errors:
-            error["in"] = context
-
-            if "ctx" in error:
-                del error["ctx"]
-
-        return json_response(data=errors, status=400)
-
-
-@routes.view("/jobs/counts")
 @routes.jobs_api.view("/jobs/counts")
 class JobsCountsView(PydanticView):
     @policy(PublicRoutePolicy)
@@ -88,25 +35,6 @@ class JobsCountsView(PydanticView):
             200: Successful operation
         """
         return json_response(await get_data_from_req(self.request).jobs.get_counts())
-
-
-@routes.view("/jobs/{job_id}")
-class JobView(PydanticView):
-    async def get(self, job_id: int, /) -> r200[Job] | r404:
-        """Get a job.
-
-        Fetches the details for a job.
-
-        Status Codes:
-            200: Successful operation
-            404: Not found
-        """
-        try:
-            document = await get_data_from_req(self.request).jobs.get(job_id)
-        except ResourceNotFoundError:
-            raise APINotFound()
-
-        return json_response(document)
 
 
 @routes.jobs_api.view("/jobs/{job_id}")
@@ -179,30 +107,6 @@ class StartJobStepView(PydanticView):
             raise APIConflict(str(e))
 
         return json_response(step_status)
-
-
-@routes.view("/jobs/{job_id}/cancel")
-class CancelJobView(PydanticView):
-    @policy(PermissionRoutePolicy(LegacyPermission.CANCEL_JOB))
-    async def put(self, job_id: int, /) -> r200[Job] | r403 | r404 | r409:
-        """Cancel a job.
-
-        Cancels a job using its 'job id'.
-
-        Status Codes:
-            200: Successful operation
-            403: Not permitted
-            404: Not found
-            409: Not cancellable
-        """
-        try:
-            document = await get_data_from_req(self.request).jobs.cancel(job_id)
-        except ResourceNotFoundError:
-            raise APINotFound()
-        except ResourceConflictError:
-            raise APIConflict("Job cannot be cancelled in its current state")
-
-        return json_response(document)
 
 
 @routes.jobs_api.view("/jobs/{job_id}/finish")

@@ -1,7 +1,6 @@
 from datetime import datetime
 
 from virtool.groups.models import GroupMinimal, Permissions
-from virtool.models import SearchResult
 from virtool.models.roles import AdministratorRole
 from virtool.users.models_base import UserNested
 
@@ -17,7 +16,3 @@ class User(UserMinimal):
     last_password_change: datetime
     permissions: Permissions
     primary_group: GroupMinimal | None
-
-
-class UserSearchResult(SearchResult):
-    items: list[User]

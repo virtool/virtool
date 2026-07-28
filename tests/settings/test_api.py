@@ -2,31 +2,18 @@ from http import HTTPStatus
 
 from syrupy import SnapshotAssertion
 
-from tests.fixtures.client import ClientSpawner
+from tests.fixtures.client import JobClientSpawner
 
 
 async def test_get(
-    snapshot: SnapshotAssertion, spawn_client: ClientSpawner, test_settings
-):
-    client = await spawn_client(authenticated=True)
-
-    resp = await client.get("/settings")
-
-    assert resp.status == HTTPStatus.OK
-    assert await resp.json() == snapshot
-
-
-async def test_update(
     snapshot: SnapshotAssertion,
-    spawn_client: ClientSpawner,
+    spawn_job_client: JobClientSpawner,
     test_settings,
 ):
-    client = await spawn_client(administrator=True, authenticated=True)
+    """Test that the jobs API serves the complete application settings."""
+    client = await spawn_job_client(authenticated=True)
 
-    resp = await client.patch(
-        "/settings",
-        {"enable_api": False, "enable_sentry": False, "minimum_password_length": 10},
-    )
+    resp = await client.get("/settings")
 
     assert resp.status == HTTPStatus.OK
     assert await resp.json() == snapshot
