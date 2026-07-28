@@ -1,6 +1,6 @@
 import * as Sentry from "@sentry/tanstackstart-react";
-import { createServerFn, createServerOnlyFn } from "@tanstack/react-start";
-import { getRequest, setResponseStatus } from "@tanstack/react-start/server";
+import { createServerFn } from "@tanstack/react-start";
+import { setResponseStatus } from "@tanstack/react-start/server";
 import { z } from "zod";
 import { db } from "../db/pg";
 import { ClientError } from "../errors";
@@ -15,6 +15,7 @@ import {
 	PasswordReuseError,
 	resetPassword,
 } from "./core";
+import { getClientIp } from "./ip";
 import { PasswordTooShortError } from "./passwordPolicy";
 import { open } from "./policy";
 import { checkConfiguredPasswordLength } from "./service";
@@ -38,18 +39,6 @@ const resetPasswordSchema = z.object({
 const createFirstUserSchema = z.object({
 	handle: z.string().trim().min(1),
 	password: z.string(),
-});
-
-// Wrapped in createServerOnlyFn so the compiler strips this body and its
-// getRequest import from the client bundle. A plain top-level helper would
-// keep @tanstack/react-start/server in the client module graph.
-const getClientIp = createServerOnlyFn((): string => {
-	const request = getRequest();
-	return (
-		request.headers.get("cf-connecting-ip") ??
-		request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ??
-		""
-	);
 });
 
 /** Login server function. Unauthenticated by necessity — this *creates* the session. */

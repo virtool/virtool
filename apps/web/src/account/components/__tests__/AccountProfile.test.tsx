@@ -1,10 +1,11 @@
 import AccountProfile from "@account/components/AccountProfile";
 import { screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { mockApiChangePassword } from "@tests/api/account";
 import { createFakeAccount } from "@tests/fake/account";
 import {
+	mockChangePassword,
 	mockGetAccount,
+	mockUpdateAccountEmail,
 	mockUpdateAccountHandle,
 	userServerFnMocks,
 } from "@tests/server-fn/users";
@@ -56,6 +57,12 @@ describe("<AccountProfile />", () => {
 		});
 
 		mockGetAccount(account);
+		const updateAccountEmail = mockUpdateAccountEmail(
+			account,
+			200,
+			undefined,
+			"virtool.devs@gmail.com",
+		);
 		renderWithProviders(<AccountProfile />);
 
 		await screen.findByText("Email Address");
@@ -72,10 +79,13 @@ describe("<AccountProfile />", () => {
 		expect(
 			screen.getByText("Please provide a valid email address"),
 		).toBeInTheDocument();
+		expect(updateAccountEmail).not.toHaveBeenCalled();
 
 		await userEvent.clear(input);
 		await userEvent.type(input, "virtool.devs@gmail.com");
 		await userEvent.click(button);
+
+		await waitFor(() => expect(updateAccountEmail).toHaveBeenCalled());
 	});
 
 	it("should render with the current handle", async () => {
@@ -214,7 +224,7 @@ describe("<AccountProfile />", () => {
 		});
 
 		mockGetAccount(account);
-		mockApiChangePassword(account);
+		const changePassword = mockChangePassword(account);
 
 		renderWithProviders(<AccountProfile />);
 
@@ -235,7 +245,35 @@ describe("<AccountProfile />", () => {
 			).toBeInTheDocument();
 		});
 
+		expect(changePassword).toHaveBeenCalledWith({
+			data: { oldPassword: "old_password_123", password: "new_password_123" },
+		});
 		expect(oldPasswordInput).toHaveValue("");
 		expect(newPasswordInput).toHaveValue("");
+	});
+
+	it("shows the server's message when the old password is wrong", async () => {
+		const account = createFakeAccount({ administrator_role: "full" });
+
+		mockGetAccount(account);
+		mockChangePassword(undefined, 400);
+
+		renderWithProviders(<AccountProfile />);
+
+		await screen.findByText("Password");
+
+		const oldPasswordInput = screen.getByLabelText("Old Password");
+		const form = oldPasswordInput.closest("form") as HTMLElement;
+
+		await userEvent.type(oldPasswordInput, "wrong_password_123");
+		await userEvent.type(
+			screen.getByLabelText("New Password"),
+			"new_password_123",
+		);
+		await userEvent.click(within(form).getByRole("button", { name: "Change" }));
+
+		await waitFor(() =>
+			expect(screen.getByText("Invalid credentials")).toBeInTheDocument(),
+		);
 	});
 });

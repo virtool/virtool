@@ -53,7 +53,7 @@ export default function AccountPassword({
 	}, [mutation.isSuccess, reset, mutation.reset]);
 
 	function onSubmit({ oldPassword, newPassword }: FormValues) {
-		mutation.mutate({ old_password: oldPassword, password: newPassword });
+		mutation.mutate({ oldPassword, password: newPassword });
 	}
 
 	return (
@@ -88,7 +88,7 @@ export default function AccountPassword({
 							/>
 							<InputError id="oldPassword-error">
 								{errors.oldPassword?.message ||
-									(mutation.isError && mutation.error.response.body?.message)}
+									(mutation.isError && mutation.error.message)}
 							</InputError>
 						</InputContainer>
 					</InputGroup>

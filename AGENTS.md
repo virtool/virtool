@@ -270,9 +270,9 @@ runs for unauthenticated visitors. Anything it reaches — even *dynamically* �
 is downloaded on the login wall.
 
 **Tree-shaking will not save you here: the chunk is the unit of loading, not
-the export.** `account/queries.ts` genuinely uses `apiClient` for its API-key
-and password hooks, so its chunk contains superagent; importing that chunk for
-one server-function-backed export still drags superagent in. Marking `@app/api`
+the export.** A `queries.ts` that calls `apiClient` anywhere — `indexes/queries.ts`
+is the last one — has superagent in its chunk, so importing that chunk for one
+server-function-backed export still drags superagent in. Marking `@app/api`
 side-effect-free does nothing about this.
 
 So the queryOptions the guards need live in modules with no `@app/api` import
@@ -286,10 +286,12 @@ at all:
   server function. The guard reads `firstUser` from it before a session
   exists; the whole module is `@app/api`-free.
 
-All three are server-function-backed and need no HTTP client. Don't fold them
-back into a feature's `queries.ts` that also imports `@app/api`, and don't add
-an `apiClient` call to any of them. Prefer a server function over a Python REST
-call for anything a guard reads.
+All three are server-function-backed and need no HTTP client. Keep them out of
+their feature's `queries.ts` even when that module is `@app/api`-free today — as
+`account/queries.ts` now is — because a single `apiClient` call added there later
+would put superagent back on the login wall with nothing to catch it. Don't add
+an `apiClient` call to any of them either. Prefer a server function over a Python
+REST call for anything a guard reads.
 
 ### Heavy dependencies get their own module
 

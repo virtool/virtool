@@ -30,7 +30,7 @@ export default function AccountEmail({ email }: EmailProps) {
 	const mutation = useUpdateAccount();
 
 	function onSubmit({ email }: FormValues) {
-		mutation.mutate({ update: { email } });
+		mutation.mutate({ email });
 	}
 
 	return (

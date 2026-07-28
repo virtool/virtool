@@ -1,6 +1,5 @@
 import { accountQueryKeys } from "@account/keys";
 import type { ApiKey } from "@account/types";
-import { apiClient } from "@app/api";
 import { resetClient } from "@app/utils";
 import type { Permissions } from "@groups/types";
 import * as Sentry from "@sentry/tanstackstart-react";
@@ -11,30 +10,28 @@ import {
 	updateApiKeyFn,
 } from "@server/account/functions";
 import { logoutFn } from "@server/auth/functions";
-import { updateAccountHandleFn } from "@server/users/functions";
+import {
+	changePasswordFn,
+	updateAccountEmailFn,
+	updateAccountHandleFn,
+} from "@server/users/functions";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import type { User } from "@users/types";
 import type { ErrorResponse } from "@/types/api";
 
-/** Fields that can be changed when updating the current account */
-export type AccountUpdate = {
-	email?: string;
-};
-
 /**
- * Initializes a mutator for updating a user
+ * Initializes a mutator for updating the current account's email address
  *
- * @returns A mutator for updating a user
+ * @returns A mutator for updating the account email
  */
 export function useUpdateAccount() {
 	const queryClient = useQueryClient();
 
-	return useMutation<User, ErrorResponse, { update: AccountUpdate }>({
-		mutationFn: ({ update }) =>
-			apiClient
-				.patch("/account")
-				.send({ update })
-				.then((res) => res.body),
+	return useMutation<
+		Awaited<ReturnType<typeof updateAccountEmailFn>>,
+		Error,
+		{ email: string }
+	>({
+		mutationFn: ({ email }) => updateAccountEmailFn({ data: { email } }),
 		onSuccess: () => {
 			queryClient.invalidateQueries({ queryKey: accountQueryKeys.all() });
 		},
@@ -62,23 +59,20 @@ export function useUpdateHandle() {
 }
 
 /**
- * Initializes a mutator for updating a user
+ * Initializes a mutator for changing the current account's password
  *
- * @returns A mutator for updating a user
+ * @returns A mutator for changing the account password
  */
 export function useChangePassword() {
 	const queryClient = useQueryClient();
 
 	return useMutation<
-		User,
-		ErrorResponse,
-		{ old_password: string; password: string }
+		Awaited<ReturnType<typeof changePasswordFn>>,
+		Error,
+		{ oldPassword: string; password: string }
 	>({
-		mutationFn: ({ old_password, password }) =>
-			apiClient
-				.patch("/account")
-				.send({ old_password, password })
-				.then((res) => res.body),
+		mutationFn: ({ oldPassword, password }) =>
+			changePasswordFn({ data: { oldPassword, password } }),
 		onSuccess: () => {
 			queryClient.invalidateQueries({ queryKey: accountQueryKeys.all() });
 		},

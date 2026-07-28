@@ -16,7 +16,9 @@ export const userServerFnMocks = {
 	getUserFn: vi.fn(),
 	createUserFn: vi.fn(),
 	updateUserFn: vi.fn(),
+	updateAccountEmailFn: vi.fn(),
 	updateAccountHandleFn: vi.fn(),
+	changePasswordFn: vi.fn(),
 	setAdministratorRoleFn: vi.fn(),
 	listAdministratorRolesFn: vi.fn(),
 };
@@ -149,6 +151,53 @@ export function mockUpdateAccountHandle(
 		);
 	}
 	return userServerFnMocks.updateAccountHandleFn;
+}
+
+/**
+ * Sets up updateAccountEmail to resolve with the account carrying the new
+ * address (or reject on a 4xx code, e.g. 400 for a malformed address).
+ *
+ * When `expectedEmail` is given, the resolved variant also asserts the payload
+ * carried the expected address so callers can verify the value actually sent.
+ */
+export function mockUpdateAccountEmail(
+	account: Account,
+	statusCode = 200,
+	message = "The format of the email is invalid",
+	expectedEmail?: string,
+): Mock {
+	if (statusCode >= 400) {
+		userServerFnMocks.updateAccountEmailFn.mockRejectedValue(
+			new Error(message),
+		);
+	} else {
+		userServerFnMocks.updateAccountEmailFn.mockImplementation(
+			async ({ data }: { data: { email: string } }) => {
+				if (expectedEmail !== undefined) {
+					expect(data.email).toBe(expectedEmail);
+				}
+				return { ...account, email: data.email };
+			},
+		);
+	}
+	return userServerFnMocks.updateAccountEmailFn;
+}
+
+/**
+ * Sets up changePassword to resolve with the given account (or reject on a 4xx
+ * code, e.g. 400 for a wrong old password).
+ */
+export function mockChangePassword(
+	account?: Account,
+	statusCode = 200,
+	message = "Invalid credentials",
+): Mock {
+	if (statusCode >= 400) {
+		userServerFnMocks.changePasswordFn.mockRejectedValue(new Error(message));
+	} else {
+		userServerFnMocks.changePasswordFn.mockResolvedValue(account ?? {});
+	}
+	return userServerFnMocks.changePasswordFn;
 }
 
 /** Sets up listAdministratorRoles to resolve with the given roles. */

@@ -17,8 +17,11 @@ import {
 	sql,
 } from "drizzle-orm";
 import type { PostgresError } from "postgres";
-import { hashPassword } from "../auth/password";
-import { invalidateUserSessions } from "../auth/session";
+import { hashPassword, verifyPassword } from "../auth/password";
+import {
+	createAuthenticatedSession,
+	invalidateUserSessions,
+} from "../auth/session";
 import type { Db } from "../db/pg";
 import { takeFirstOrThrow } from "../db/rows";
 import {
@@ -111,6 +114,24 @@ export type UserUpdateValues = {
 	primary_group?: number | null;
 };
 
+/** Inputs to change the signed-in user's own password. */
+export type ChangePasswordValues = {
+	userId: number;
+	oldPassword: string;
+	password: string;
+	ip: string;
+};
+
+/**
+ * A completed password change, with the session credentials that replace the
+ * ones the change revoked.
+ */
+export type ChangePasswordResult = {
+	account: Account;
+	sessionId: string;
+	token: string;
+};
+
 /** A selectable administrator role with its human-readable name and description. */
 export type AdministratorRole = {
 	id: AdministratorRoleName;
@@ -120,6 +141,9 @@ export type AdministratorRole = {
 
 /** Thrown when a requested user does not exist. */
 export class UserNotFoundError extends AppError {}
+
+/** Thrown when a supplied password does not match the user's stored one. */
+export class InvalidPasswordError extends AppError {}
 
 /** Thrown when a user handle conflicts with an existing user. */
 export class UserConflictError extends AppError {}
@@ -370,6 +394,113 @@ export async function getAccount(db: Db, userId: number): Promise<Account> {
 		email: row.email,
 		settings: row.settings as AccountSettings,
 	};
+}
+
+/**
+ * Set the signed-in user's email address.
+ *
+ * An empty string clears it, which is what Python's `check_email` allows and
+ * what a user who wants no address on file submits.
+ */
+export async function updateAccountEmail(
+	db: Db,
+	userId: number,
+	email: string,
+): Promise<Account> {
+	const [row] = await db
+		.update(usersTable)
+		.set({ email })
+		.where(eq(usersTable.id, userId))
+		.returning({ id: usersTable.id });
+
+	if (!row) {
+		throw new UserNotFoundError();
+	}
+
+	return getAccount(db, userId);
+}
+
+/**
+ * Change the signed-in user's own password, after verifying the one they
+ * already hold.
+ *
+ * Mirrors `AccountData.update` in `virtool/account/data.py`: the change clears
+ * `force_reset`, revokes every session the user has, and mints a replacement so
+ * the browser that submitted the form is not signed out by its own request. The
+ * replacement never remembers — Python passes `remember=False` here too, so a
+ * password change downgrades a 30-day session to the 60-minute one.
+ *
+ * The caller writes the returned credentials to the response cookies. Unlike
+ * login and reset, which set different cookies depending on how they resolve,
+ * this has no branch to make, so the transport stays out of the data layer.
+ */
+export async function changePassword(
+	db: Db,
+	{ userId, oldPassword, password, ip }: ChangePasswordValues,
+): Promise<ChangePasswordResult> {
+	const [existing] = await db
+		.select({ password: usersTable.password })
+		.from(usersTable)
+		.where(eq(usersTable.id, userId))
+		.limit(1);
+
+	if (!existing) {
+		throw new UserNotFoundError();
+	}
+
+	if (!(await verifyPassword(oldPassword, existing.password))) {
+		throw new InvalidPasswordError();
+	}
+
+	// Hashing is CPU-bound and slow by design, so it happens before the
+	// transaction opens rather than holding one idle for the duration.
+	const hashed = await hashPassword(password);
+
+	// One unit: a failure partway through must not leave the password changed
+	// with no session to show for it. The order keeps Python's — update the user,
+	// revoke the old sessions, then create the replacement, which has to come
+	// last or the revocation would take it with the rest.
+	//
+	// The update matches on the hash we verified, not just the id. Nothing held a
+	// lock across the read, the bcrypt verify, and the bcrypt hash above, and at
+	// cost 12 that gap is hundreds of milliseconds — long enough for an
+	// administrator responding to a compromise to reset this password or set
+	// force_reset in between. Without the guard we would overwrite their newer
+	// credential, clear the flag they just set, and hand the attacker a fresh
+	// session. Matching on the old hash makes the loser of that race update
+	// nothing, and an unchanged password is exactly the case the caller already
+	// reports as bad credentials.
+	const { sessionId, token } = await db.transaction(async (tx) => {
+		const updated = await tx
+			.update(usersTable)
+			.set({
+				password: hashed,
+				forceReset: false,
+				lastPasswordChange: new Date(),
+			})
+			.where(
+				and(
+					eq(usersTable.id, userId),
+					eq(usersTable.password, existing.password),
+				),
+			)
+			.returning({ id: usersTable.id });
+
+		if (updated.length === 0) {
+			throw new InvalidPasswordError();
+		}
+
+		await invalidateUserSessions(tx, userId);
+
+		return createAuthenticatedSession(tx, { userId, ip, remember: false });
+	});
+
+	// An administrator with this user's detail open sees last_password_change and
+	// force_reset, both of which just moved, so the change is published the way
+	// updateUser publishes its own.
+	await emit("users", userId, "update");
+
+	return { account: await getAccount(db, userId), sessionId, token };
 }
 
 /** Read a user's administrator role without assembling the full user. */

@@ -1,6 +1,8 @@
 import { createServerFn, createServerOnlyFn } from "@tanstack/react-start";
 import { setResponseStatus } from "@tanstack/react-start/server";
 import { z } from "zod";
+import { realCookies } from "../auth/cookies";
+import { getClientIp } from "../auth/ip";
 import { requireAdminRole } from "../auth/middleware";
 import { PasswordTooShortError } from "../auth/passwordPolicy";
 import { adminRole, authenticated } from "../auth/policy";
@@ -9,17 +11,20 @@ import { db } from "../db/pg";
 import { ClientError } from "../errors";
 import { pageSchema, perPageSchema, rowIdSchema } from "../validation";
 import {
+	changePassword as changePasswordImpl,
 	createUser as createUserImpl,
 	findUsers as findUsersImpl,
 	GroupMembershipError,
 	getAccount as getAccountImpl,
 	getAdministratorRole as getAdministratorRoleImpl,
 	getUser as getUserImpl,
+	InvalidPasswordError,
 	listAdministratorRoles as listAdministratorRolesImpl,
 	listUsers as listUsersImpl,
 	setAdministratorRole as setAdministratorRoleImpl,
 	UserConflictError,
 	UserNotFoundError,
+	updateAccountEmail as updateAccountEmailImpl,
 	updateUser as updateUserImpl,
 } from "./data";
 
@@ -75,6 +80,31 @@ const accountHandleSchema = z.object({
 	handle: z.string().trim().min(1),
 });
 
+const accountEmailSchema = z.object({
+	email: z.string().trim(),
+});
+
+// Password length is enforced by checkConfiguredPasswordLength in the handler,
+// not here. `oldPassword` carries no length rule at all: it authenticates the
+// password the user already has, and if the minimum were raised, checking it
+// here would lock a user with a shorter existing password out of the very form
+// that would replace it.
+const changePasswordSchema = z.object({
+	oldPassword: z.string().min(1),
+	password: z.string(),
+});
+
+// Mirrors `check_email` in virtool/account/models.py: an empty string clears the
+// address, anything else has to parse. Checked here rather than in the validator
+// because a zod rejection surfaces as a 500 carrying the issue list, which is
+// not something a form can put in front of a user.
+function checkEmail(email: string): void {
+	if (email !== "" && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+		setResponseStatus(400);
+		throw new ClientError("The format of the email is invalid");
+	}
+}
+
 // Reserved handle the Python service forbids; rejected before hitting the
 // database so we return a clear message rather than a unique-constraint error.
 // Trim defensively so whitespace-padded variants like " virtool" can't slip
@@ -98,6 +128,10 @@ const rethrowAsHttp = createServerOnlyFn((err: unknown): never => {
 	if (err instanceof PasswordTooShortError) {
 		setResponseStatus(400);
 		throw new ClientError(err.message);
+	}
+	if (err instanceof InvalidPasswordError) {
+		setResponseStatus(400);
+		throw new ClientError("Invalid credentials");
 	}
 	if (err instanceof UserNotFoundError) {
 		setResponseStatus(404);
@@ -230,6 +264,49 @@ export const updateAccountHandleFn = createServerFn({ method: "POST" })
 			return await updateUserImpl(db, context.session.userId, {
 				handle: data.handle,
 			});
+		} catch (err) {
+			throw rethrowAsHttp(err);
+		}
+	});
+
+export const updateAccountEmailFn = createServerFn({ method: "POST" })
+	.middleware([authenticated()])
+	.validator(accountEmailSchema)
+	.handler(async ({ context, data }) => {
+		checkEmail(data.email);
+
+		try {
+			return await updateAccountEmailImpl(
+				db,
+				context.session.userId,
+				data.email,
+			);
+		} catch (err) {
+			throw rethrowAsHttp(err);
+		}
+	});
+
+export const changePasswordFn = createServerFn({ method: "POST" })
+	.middleware([authenticated()])
+	.validator(changePasswordSchema)
+	.handler(async ({ context, data }) => {
+		try {
+			await checkConfiguredPasswordLength(db, data.password);
+
+			const { account, sessionId, token } = await changePasswordImpl(db, {
+				userId: context.session.userId,
+				oldPassword: data.oldPassword,
+				password: data.password,
+				ip: getClientIp(),
+			});
+
+			// The change revoked every session the user held, including the one that
+			// authenticated this request. Handing back the replacement is what keeps
+			// the browser signed in, the way Python's `AccountView.patch` does.
+			realCookies.setSessionId(sessionId);
+			realCookies.setSessionToken(token);
+
+			return account;
 		} catch (err) {
 			throw rethrowAsHttp(err);
 		}

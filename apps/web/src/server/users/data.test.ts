@@ -1,8 +1,9 @@
 import { eq } from "drizzle-orm";
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
 
-import { verifyPassword } from "../auth/password";
+import { hashPassword, verifyPassword } from "../auth/password";
 import { seedSession, seedUser } from "../auth/test/fixtures";
+import { hashToken } from "../auth/tokens";
 import type { Db } from "../db/pg";
 import { groups, userGroups } from "../db/schema/groups";
 import { sessions } from "../db/schema/sessions";
@@ -10,6 +11,7 @@ import { users } from "../db/schema/users";
 import { createTestDatabase, type TestDatabase } from "../db/test/fixtures";
 import { addToGroup, seedGroup } from "../groups/test/fixtures";
 import {
+	changePassword,
 	createUser,
 	findUsers,
 	GroupMembershipError,
@@ -17,11 +19,13 @@ import {
 	getAdministratorRole,
 	getUser,
 	getUserCount,
+	InvalidPasswordError,
 	listAdministratorRoles,
 	listUsers,
 	setAdministratorRole,
 	UserConflictError,
 	UserNotFoundError,
+	updateAccountEmail,
 	updateUser,
 } from "./data";
 
@@ -254,6 +258,178 @@ describe("updateUser", () => {
 		await expect(
 			updateUser(db, 404, { handle: "ghost" }),
 		).rejects.toBeInstanceOf(UserNotFoundError);
+	});
+});
+
+describe("updateAccountEmail", () => {
+	it("sets the address and returns the updated account", async () => {
+		const userId = await seedUser(db, { email: "" });
+
+		const account = await updateAccountEmail(db, userId, "alice@example.com");
+
+		expect(account.email).toBe("alice@example.com");
+		expect((await readUser(userId))?.email).toBe("alice@example.com");
+	});
+
+	it("clears the address when given an empty string", async () => {
+		const userId = await seedUser(db, { email: "alice@example.com" });
+
+		const account = await updateAccountEmail(db, userId, "");
+
+		expect(account.email).toBe("");
+	});
+
+	it("throws when the user does not exist", async () => {
+		await expect(
+			updateAccountEmail(db, 404, "alice@example.com"),
+		).rejects.toBeInstanceOf(UserNotFoundError);
+	});
+});
+
+describe("changePassword", () => {
+	async function seedUserWithPassword(password: string): Promise<number> {
+		return seedUser(db, { password: await hashPassword(password) });
+	}
+
+	it("replaces the password and clears force_reset", async () => {
+		const userId = await seedUserWithPassword("old_password_123");
+		const before = await readUser(userId);
+
+		await db
+			.update(users)
+			.set({ forceReset: true })
+			.where(eq(users.id, userId));
+
+		const { account } = await changePassword(db, {
+			userId,
+			oldPassword: "old_password_123",
+			password: "new_password_123",
+			ip: "127.0.0.1",
+		});
+
+		const after = await readUser(userId);
+		expect(
+			await verifyPassword("new_password_123", after?.password as Buffer),
+		).toBe(true);
+		expect(after?.forceReset).toBe(false);
+		expect(after?.lastPasswordChange.getTime()).toBeGreaterThanOrEqual(
+			before?.lastPasswordChange.getTime() ?? 0,
+		);
+		expect(account.id).toBe(userId);
+	});
+
+	it("revokes every existing session and returns the replacement", async () => {
+		const userId = await seedUserWithPassword("old_password_123");
+		const stale = await seedSession(db, userId);
+		await seedSession(db, userId);
+
+		const { sessionId, token } = await changePassword(db, {
+			userId,
+			oldPassword: "old_password_123",
+			password: "new_password_123",
+			ip: "10.0.0.1",
+		});
+
+		const rows = await db
+			.select()
+			.from(sessions)
+			.where(eq(sessions.userId, userId));
+
+		expect(rows).toHaveLength(1);
+		expect(rows[0]?.sessionId).toBe(sessionId);
+		expect(rows[0]?.sessionId).not.toBe(stale.sessionId);
+		expect(rows[0]?.tokenHash).toBe(hashToken(token));
+		expect(rows[0]?.sessionType).toBe("authenticated");
+		expect(rows[0]?.ip).toBe("10.0.0.1");
+	});
+
+	// Python passes `remember=False`, so the replacement gets the 60-minute
+	// lifetime even if the session it replaces was a 30-day one.
+	it("never remembers the replacement session", async () => {
+		const userId = await seedUserWithPassword("old_password_123");
+
+		await changePassword(db, {
+			userId,
+			oldPassword: "old_password_123",
+			password: "new_password_123",
+			ip: "127.0.0.1",
+		});
+
+		const [row] = await db
+			.select()
+			.from(sessions)
+			.where(eq(sessions.userId, userId));
+
+		const lifetime =
+			(row?.expiresAt.getTime() ?? 0) - (row?.createdAt.getTime() ?? 0);
+		expect(lifetime).toBe(60 * 60 * 1000);
+	});
+
+	it("rejects a wrong old password and leaves everything alone", async () => {
+		const userId = await seedUserWithPassword("old_password_123");
+		await seedSession(db, userId);
+
+		await expect(
+			changePassword(db, {
+				userId,
+				oldPassword: "wrong_password_123",
+				password: "new_password_123",
+				ip: "127.0.0.1",
+			}),
+		).rejects.toBeInstanceOf(InvalidPasswordError);
+
+		expect(await countSessions(userId)).toBe(1);
+		expect(
+			await verifyPassword(
+				"old_password_123",
+				(await readUser(userId))?.password as Buffer,
+			),
+		).toBe(true);
+	});
+
+	it("throws when the user does not exist", async () => {
+		await expect(
+			changePassword(db, {
+				userId: 404,
+				oldPassword: "old_password_123",
+				password: "new_password_123",
+				ip: "127.0.0.1",
+			}),
+		).rejects.toBeInstanceOf(UserNotFoundError);
+	});
+
+	// Nothing holds a lock across the read, the verify, and the bcrypt hash, and at
+	// cost 12 that gap is hundreds of milliseconds — long enough for an
+	// administrator responding to a compromise to reset the password in between.
+	// The admin's hash is computed up front so the interleaving write itself is a
+	// fast statement landing well inside that window.
+	it("refuses when the password changed after it was verified", async () => {
+		const userId = await seedUserWithPassword("old_password_123");
+		await seedSession(db, userId);
+		const adminHash = await hashPassword("admin_reset_123");
+
+		const pending = changePassword(db, {
+			userId,
+			oldPassword: "old_password_123",
+			password: "new_password_123",
+			ip: "127.0.0.1",
+		});
+
+		await db
+			.update(users)
+			.set({ password: adminHash, forceReset: true })
+			.where(eq(users.id, userId));
+
+		await expect(pending).rejects.toBeInstanceOf(InvalidPasswordError);
+
+		// The administrator's credential and flag survive, and the rolled-back
+		// transaction took its session revocation with it.
+		const after = await readUser(userId);
+		expect(
+			await verifyPassword("admin_reset_123", after?.password as Buffer),
+		).toBe(true);
+		expect(after?.forceReset).toBe(true);
+		expect(await countSessions(userId)).toBe(1);
 	});
 });
 
