@@ -6,8 +6,12 @@ import { apiKeys } from "../db/schema/apiKeys";
 import { sessions } from "../db/schema/sessions";
 import { users } from "../db/schema/users";
 import { createTestDatabase, type TestDatabase } from "../db/test/fixtures";
-import { SESSION_ID_COOKIE, SESSION_TOKEN_COOKIE } from "./cookies";
-import { seedApiKey, seedSession, seedUser } from "./test/fixtures";
+import {
+	seedApiKey,
+	seedSession,
+	seedUser,
+	sessionCookie,
+} from "./test/fixtures";
 import { newSessionToken } from "./tokens";
 import {
 	parseBasicAuthHeader,
@@ -321,9 +325,7 @@ describe("verifyRequest", () => {
 
 		const session = await verifyRequest(
 			db,
-			request(
-				`${SESSION_ID_COOKIE}=${sessionId}; ${SESSION_TOKEN_COOKIE}=${token}`,
-			),
+			request(sessionCookie({ sessionId, token })),
 		);
 
 		expect(session).toEqual({ userId });
@@ -335,9 +337,7 @@ describe("verifyRequest", () => {
 
 		const session = await verifyRequest(
 			db,
-			request(
-				`${SESSION_ID_COOKIE}=${sessionId}; ${SESSION_TOKEN_COOKIE}=${token}`,
-			),
+			request(sessionCookie({ sessionId, token })),
 		);
 
 		expect(session).toBeNull();

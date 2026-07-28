@@ -1,7 +1,7 @@
 import Badge from "@base/Badge";
 import BoxGroup from "@base/BoxGroup";
 import BoxGroupHeader from "@base/BoxGroupHeader";
-import type { IndexFile } from "../types";
+import type { IndexFile } from "@virtool/contracts";
 import { IndexFileItem } from "./IndexFileItem";
 
 type IndexFilesProps = {
@@ -24,7 +24,7 @@ export default function IndexFiles({ files }: IndexFilesProps) {
 			{files.map((file: IndexFile) => (
 				<IndexFileItem
 					key={file.id}
-					downloadUrl={file.download_url}
+					downloadUrl={file.downloadUrl}
 					name={file.name}
 					size={file.size ?? 0}
 				/>

@@ -456,8 +456,9 @@ re-exports them so its own call sites are undisturbed.
 `data.ts`.** What a server function returns is read by both sides, so
 `data.ts` imports those types from the package and components import the
 same names straight from `@virtool/contracts` — no feature `types.ts`
-re-export (`references/types.ts` and `samples/types.ts` are the worked
-examples; each keeps only its genuinely client-only shapes). A client
+re-export (`samples/types.ts` is the worked example, keeping only its
+genuinely client-only shapes; `references/` and `indexes/` have no
+`types.ts` left at all, because every shape they had was a wire shape). A client
 `types.ts` must never `import type ... from "@server/*"` — that points
 the client at the server's emitted declarations for a shape the server
 does not own, and drags a data-layer module into the browser's type
@@ -581,6 +582,17 @@ embedded, `_id` keys — because history diffs address that document
 positionally and Python still writes the same tables. Reshaping it from
 this side misapplies every diff already recorded and corrupts the
 analyses read path. Renormalizing is a Python-side migration.
+
+**An index build is started here and finished by Python.**
+`createIndex` (`@server/indexes/data`) inserts the pending `indexes` row,
+mints its `storage_key`, stamps every unbuilt `legacy_history` row with
+it, and creates the `create_index` task the Python runner claims — that
+task writes the artifact and flips `ready`. The insert runs under
+`pg_try_advisory_xact_lock(hashtext('index_build:{referenceId}'))`, the
+same key Python takes, so a build started from either service excludes
+one started from the other. Don't drop the lock, and don't derive
+`storage_key` from the row id — a migrated index keys on its old Mongo
+id instead.
 
 See [docs/database.md](docs/database.md) for which domains the TS
 server can reach today, why the OTU tables keep their legacy shape and

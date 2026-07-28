@@ -57,10 +57,8 @@ const { createFirstUserFn, loginFn, logoutFn, resetPasswordFn } = await import(
 );
 const { getPasswordPolicyFn } = await import("../settings/functions");
 const { getRootFn } = await import("../root/functions");
-const { SESSION_ID_COOKIE, SESSION_TOKEN_COOKIE } = await import("./cookies");
-const { basicAuthHeader, seedApiKey, seedSession, seedUser } = await import(
-	"./test/fixtures"
-);
+const { basicAuthHeader, seedApiKey, seedSession, seedUser, sessionCookie } =
+	await import("./test/fixtures");
 
 let database: TestDatabase;
 
@@ -92,7 +90,7 @@ function serverHandler(exceptions: ReadonlyArray<{ url: string }>) {
 }
 
 function cookieHeader(sessionId: string, token: string): string {
-	return `${SESSION_ID_COOKIE}=${sessionId}; ${SESSION_TOKEN_COOKIE}=${token}`;
+	return sessionCookie({ sessionId, token });
 }
 
 function requestFor(url: string, cookie?: string) {

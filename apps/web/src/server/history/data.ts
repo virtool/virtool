@@ -5,9 +5,14 @@
 // to the patched document. Python returns a `(current, patched)` pair per
 // specifier and our only caller reads `patched`.
 
-import type { HistoryNested, OtuHistory } from "@virtool/contracts";
-import { and, desc, eq, inArray, isNull, or, sql } from "drizzle-orm";
+import type {
+	HistoryNested,
+	OtuHistory,
+	UnbuiltChangesSearchResult,
+} from "@virtool/contracts";
+import { and, count, desc, eq, inArray, isNull, or, sql } from "drizzle-orm";
 import type { DbOrTx } from "../db/pg";
+import { takeFirstOrThrow } from "../db/rows";
 import {
 	type HistoryRow,
 	legacyHistory,
@@ -90,6 +95,56 @@ function changeId(row: { legacy_id: string | null; id: number }): string {
 	return row.legacy_id ?? String(row.id);
 }
 
+// One joined history row, as both change listings select it.
+type JoinedHistoryRow = {
+	id: number;
+	legacy_id: string | null;
+	createdAt: Date;
+	description: string;
+	methodName: string;
+	otu: string;
+	otuName: string;
+	otuVersion: string | null;
+	indexId: number | null;
+	indexVersion: number | null;
+	referenceId: number | null;
+	referenceName: string | null;
+	userId: number;
+	userHandle: string;
+};
+
+function mapOtuHistory(row: JoinedHistoryRow): OtuHistory {
+	if (row.referenceId === null || row.referenceName === null) {
+		throw new MalformedHistoryRowError(
+			`Change ${changeId(row)} names no reference`,
+		);
+	}
+
+	if (row.indexId !== null && row.indexVersion === null) {
+		throw new MalformedHistoryRowError(
+			`Change ${changeId(row)} was built into index ${row.indexId}, which has no version`,
+		);
+	}
+
+	return {
+		id: changeId(row),
+		createdAt: row.createdAt,
+		description: row.description,
+		methodName: row.methodName as OtuHistory["methodName"],
+		index:
+			row.indexId === null
+				? null
+				: { id: row.indexId, version: row.indexVersion as number },
+		otu: {
+			id: row.otu,
+			name: row.otuName,
+			version: coerceOtuVersion(row.otuVersion),
+		},
+		reference: { id: row.referenceId, name: row.referenceName },
+		user: { id: row.userId, handle: row.userHandle },
+	};
+}
+
 /**
  * List every change made to an OTU, newest first.
  *
@@ -144,37 +199,76 @@ export async function listByOtu(
 			desc(legacyHistory.id),
 		);
 
-	return rows.map((row) => {
-		if (row.referenceId === null || row.referenceName === null) {
-			throw new MalformedHistoryRowError(
-				`Change ${changeId(row)} names no reference`,
-			);
-		}
+	return rows.map(mapOtuHistory);
+}
 
-		if (row.indexId !== null && row.indexVersion === null) {
-			throw new MalformedHistoryRowError(
-				`Change ${changeId(row)} was built into index ${row.indexId}, which has no version`,
-			);
-		}
+/**
+ * List a reference's changes that no index build covers yet, newest first.
+ *
+ * `totalCount` counts every change in the reference, built or not, so a caller
+ * can tell "nothing unbuilt" from "no history at all"; `foundCount` counts only
+ * the unbuilt ones. Python scopes the two the same way.
+ *
+ * The join is the one {@link listByOtu} uses. An unbuilt change has no index by
+ * definition, so the index columns come back null and `index` is always `null` —
+ * the join is kept so the row mapping stays a single shape.
+ */
+export async function findUnbuiltByReference(
+	db: DbOrTx,
+	referenceId: number,
+	page: number,
+	perPage: number,
+): Promise<UnbuiltChangesSearchResult> {
+	const scoped = eq(legacyHistory.reference_id, referenceId);
+	const unbuilt = and(scoped, isNull(legacyHistory.index_id));
 
-		return {
-			id: changeId(row),
-			createdAt: row.createdAt,
-			description: row.description,
-			methodName: row.methodName as OtuHistory["methodName"],
-			index:
-				row.indexId === null
-					? null
-					: { id: row.indexId, version: row.indexVersion as number },
-			otu: {
-				id: row.otu,
-				name: row.otuName,
-				version: coerceOtuVersion(row.otuVersion),
-			},
-			reference: { id: row.referenceId, name: row.referenceName },
-			user: { id: row.userId, handle: row.userHandle },
-		};
-	});
+	const [totalRows, foundRows, rows] = await Promise.all([
+		db.select({ value: count() }).from(legacyHistory).where(scoped),
+		db.select({ value: count() }).from(legacyHistory).where(unbuilt),
+		db
+			.select({
+				id: legacyHistory.id,
+				legacy_id: legacyHistory.legacy_id,
+				createdAt: legacyHistory.created_at,
+				description: legacyHistory.description,
+				methodName: legacyHistory.method_name,
+				otu: legacyHistory.otu,
+				otuName: legacyHistory.otu_name,
+				otuVersion: legacyHistory.otu_version,
+				indexId: legacyHistory.index_id,
+				indexVersion: indexes.version,
+				referenceId: legacyHistory.reference_id,
+				referenceName: legacyReferences.name,
+				userId: users.id,
+				userHandle: users.handle,
+			})
+			.from(legacyHistory)
+			.innerJoin(users, eq(legacyHistory.user_id, users.id))
+			.leftJoin(indexes, eq(legacyHistory.index_id, indexes.id))
+			.leftJoin(
+				legacyReferences,
+				eq(legacyHistory.reference_id, legacyReferences.id),
+			)
+			.where(unbuilt)
+			.orderBy(
+				sql`${legacyHistory.otu_version}::integer desc nulls first`,
+				desc(legacyHistory.id),
+			)
+			.offset((page - 1) * perPage)
+			.limit(perPage),
+	]);
+
+	const totalCount = takeFirstOrThrow(totalRows).value;
+	const foundCount = takeFirstOrThrow(foundRows).value;
+
+	return {
+		foundCount,
+		totalCount,
+		page,
+		pageCount: foundCount ? Math.ceil(foundCount / perPage) : 0,
+		perPage,
+		items: rows.map(mapOtuHistory),
+	};
 }
 
 /**

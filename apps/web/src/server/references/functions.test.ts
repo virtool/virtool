@@ -50,10 +50,7 @@ const handlers = (await import(
 	"./functions.ts?tss-serverfn-split"
 )) as SplitServerFnModule;
 const { ForbiddenError } = await import("../auth/middleware");
-const { SESSION_ID_COOKIE, SESSION_TOKEN_COOKIE } = await import(
-	"../auth/cookies"
-);
-const { seedSession, seedUser } = await import("../auth/test/fixtures");
+const { seedUser, signIn } = await import("../auth/test/fixtures");
 
 let database: TestDatabase;
 
@@ -84,20 +81,6 @@ beforeEach(async () => {
 
 // `create_ref` is a "base"-role permission, so any administrator holds it; a
 // role-less user does not.
-async function signIn(administratorRole: "full" | null): Promise<number> {
-	const userId = await seedUser(db, { administratorRole });
-	const { sessionId, token } = await seedSession(db, userId);
-
-	getRequest.mockReturnValue(
-		new Request("https://virtool.test/_serverFn/test", {
-			headers: {
-				cookie: `${SESSION_ID_COOKIE}=${sessionId}; ${SESSION_TOKEN_COOKIE}=${token}`,
-			},
-		}),
-	);
-
-	return userId;
-}
 
 async function seedReference(
 	ownerId: number,
@@ -151,7 +134,7 @@ function call(name: string, data?: unknown) {
 
 describe("findReferences", () => {
 	it("returns only references the caller can see", async () => {
-		const ownerId = await signIn(null);
+		const ownerId = await signIn(db, getRequest, { administratorRole: null });
 		const otherId = await seedUser(db, {
 			administratorRole: null,
 			handle: "bob",
@@ -173,7 +156,7 @@ describe("findReferences", () => {
 	});
 
 	it("returns every reference for a full administrator", async () => {
-		const adminId = await signIn("full");
+		const adminId = await signIn(db, getRequest, { administratorRole: "full" });
 		const otherId = await seedUser(db, {
 			administratorRole: null,
 			handle: "bob",
@@ -194,7 +177,7 @@ describe("findReferences", () => {
 
 describe("getReference", () => {
 	it("maps a missing reference to a 404", async () => {
-		await signIn(null);
+		await signIn(db, getRequest, { administratorRole: null });
 
 		await expect(
 			call("getReferenceFn", { referenceId: 999_999 }),
@@ -203,7 +186,7 @@ describe("getReference", () => {
 	});
 
 	it("returns the detail with its seeded owner membership", async () => {
-		const ownerId = await signIn(null);
+		const ownerId = await signIn(db, getRequest, { administratorRole: null });
 		const referenceId = await seedReference(ownerId);
 
 		const reference = (await call("getReferenceFn", { referenceId })) as {
@@ -221,7 +204,7 @@ describe("getReference", () => {
 			administratorRole: null,
 			handle: "bob",
 		});
-		await signIn(null);
+		await signIn(db, getRequest, { administratorRole: null });
 		const referenceId = await seedReference(ownerId);
 
 		await expect(call("getReferenceFn", { referenceId })).rejects.toThrow(
@@ -235,7 +218,7 @@ describe("getReference", () => {
 			administratorRole: null,
 			handle: "bob",
 		});
-		await signIn("full");
+		await signIn(db, getRequest, { administratorRole: "full" });
 		const referenceId = await seedReference(ownerId);
 
 		const reference = (await call("getReferenceFn", { referenceId })) as {
@@ -250,7 +233,7 @@ describe("getReference", () => {
 			administratorRole: null,
 			handle: "bob",
 		});
-		const userId = await signIn(null);
+		const userId = await signIn(db, getRequest, { administratorRole: null });
 		const referenceId = await seedReference(ownerId);
 		const group = takeFirstOrThrow(
 			await db
@@ -278,7 +261,7 @@ describe("getReference", () => {
 
 describe("createReference", () => {
 	it("refuses a caller without create_ref", async () => {
-		await signIn(null);
+		await signIn(db, getRequest, { administratorRole: null });
 
 		await expect(
 			call("createReferenceFn", { name: "New", description: "", organism: "" }),
@@ -286,7 +269,7 @@ describe("createReference", () => {
 	});
 
 	it("creates an empty reference and seeds the creator with all rights", async () => {
-		const userId = await signIn("full");
+		const userId = await signIn(db, getRequest, { administratorRole: "full" });
 
 		const reference = (await call("createReferenceFn", {
 			name: "Empty",
@@ -301,7 +284,7 @@ describe("createReference", () => {
 	});
 
 	it("schedules a clone task and records the source", async () => {
-		const userId = await signIn("full");
+		const userId = await signIn(db, getRequest, { administratorRole: "full" });
 		const sourceId = await seedReference(userId);
 
 		const reference = (await call("createReferenceFn", {
@@ -319,7 +302,7 @@ describe("createReference", () => {
 	});
 
 	it("maps a missing import upload to a 400", async () => {
-		await signIn("full");
+		await signIn(db, getRequest, { administratorRole: "full" });
 
 		await expect(
 			call("createReferenceFn", {
@@ -333,7 +316,7 @@ describe("createReference", () => {
 	});
 
 	it("imports from an existing upload", async () => {
-		const userId = await signIn("full");
+		const userId = await signIn(db, getRequest, { administratorRole: "full" });
 		const uploadId = await seedUpload(userId);
 
 		const reference = (await call("createReferenceFn", {
@@ -354,7 +337,7 @@ describe("updateReference", () => {
 			administratorRole: null,
 			handle: "bob",
 		});
-		await signIn(null);
+		await signIn(db, getRequest, { administratorRole: null });
 		const referenceId = await seedReference(ownerId);
 
 		await expect(
@@ -363,7 +346,7 @@ describe("updateReference", () => {
 	});
 
 	it("updates only allow-listed fields for a member with modify", async () => {
-		const ownerId = await signIn(null);
+		const ownerId = await signIn(db, getRequest, { administratorRole: null });
 		const referenceId = await seedReference(ownerId);
 
 		const reference = (await call("updateReferenceFn", {
@@ -377,7 +360,7 @@ describe("updateReference", () => {
 	});
 
 	it("rejects an update to an archived reference with a 409", async () => {
-		const ownerId = await signIn(null);
+		const ownerId = await signIn(db, getRequest, { administratorRole: null });
 		const referenceId = await seedReference(ownerId, { archived: true });
 
 		await expect(
@@ -389,7 +372,7 @@ describe("updateReference", () => {
 
 describe("archiveReference", () => {
 	it("archives a reference for a member with modify", async () => {
-		const ownerId = await signIn(null);
+		const ownerId = await signIn(db, getRequest, { administratorRole: null });
 		const referenceId = await seedReference(ownerId);
 
 		const reference = (await call("archiveReferenceFn", { referenceId })) as {
@@ -402,7 +385,7 @@ describe("archiveReference", () => {
 
 describe("reference membership", () => {
 	it("adds a group member only when the caller has modify", async () => {
-		const ownerId = await signIn(null);
+		const ownerId = await signIn(db, getRequest, { administratorRole: null });
 		const referenceId = await seedReference(ownerId);
 		const group = takeFirstOrThrow(
 			await db
@@ -427,7 +410,7 @@ describe("reference membership", () => {
 			administratorRole: null,
 			handle: "bob",
 		});
-		await signIn(null);
+		await signIn(db, getRequest, { administratorRole: null });
 		const referenceId = await seedReference(ownerId);
 		const group = takeFirstOrThrow(
 			await db
@@ -442,7 +425,7 @@ describe("reference membership", () => {
 	});
 
 	it("partially merges a member's rights on update", async () => {
-		const ownerId = await signIn(null);
+		const ownerId = await signIn(db, getRequest, { administratorRole: null });
 		const referenceId = await seedReference(ownerId);
 
 		const member = (await call("updateReferenceUserFn", {
@@ -458,7 +441,7 @@ describe("reference membership", () => {
 	});
 
 	it("maps removing a non-existent member to a 404", async () => {
-		const ownerId = await signIn(null);
+		const ownerId = await signIn(db, getRequest, { administratorRole: null });
 		const referenceId = await seedReference(ownerId);
 
 		await expect(

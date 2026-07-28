@@ -52,13 +52,12 @@ const handlers = (await import(
 	"./functions.ts?tss-serverfn-split"
 )) as SplitServerFnModule;
 const { ForbiddenError } = await import("../auth/middleware");
-const { SESSION_ID_COOKIE, SESSION_TOKEN_COOKIE } = await import(
-	"../auth/cookies"
+const { seedSession, seedUser, sessionCookie } = await import(
+	"../auth/test/fixtures"
 );
-const { seedSession, seedUser } = await import("../auth/test/fixtures");
 
 let database: TestDatabase;
-let sessionCookie = "";
+let cookieHeader = "";
 
 beforeAll(async () => {
 	database = await createTestDatabase();
@@ -71,14 +70,14 @@ afterAll(async () => {
 
 beforeEach(async () => {
 	vi.clearAllMocks();
-	sessionCookie = "";
+	cookieHeader = "";
 	await db.delete(uploadsTable);
 	await db.delete(sessions);
 	await db.delete(users);
 	getRequest.mockImplementation(
 		() =>
 			new Request("https://virtool.test/_serverFn/test", {
-				headers: sessionCookie ? { cookie: sessionCookie } : {},
+				headers: cookieHeader ? { cookie: cookieHeader } : {},
 			}),
 	);
 });
@@ -87,7 +86,7 @@ beforeEach(async () => {
 async function signIn(administratorRole: "full" | null): Promise<number> {
 	const userId = await seedUser(db, { administratorRole });
 	const { sessionId, token } = await seedSession(db, userId);
-	sessionCookie = `${SESSION_ID_COOKIE}=${sessionId}; ${SESSION_TOKEN_COOKIE}=${token}`;
+	cookieHeader = sessionCookie({ sessionId, token });
 	return userId;
 }
 

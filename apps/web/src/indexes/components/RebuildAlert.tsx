@@ -1,3 +1,4 @@
+import { DEFAULT_PER_PAGE } from "@app/pagination";
 import Alert from "@base/Alert";
 import Link from "@base/Link";
 import {
@@ -9,15 +10,18 @@ import { useFindIndexes } from "../queries";
 
 type RebuildAlertProps = {
 	page: number;
-	refId: string;
+	referenceId: number;
 };
 
 /**
  * An alert that appears when the reference has unbuilt changes.
  */
-export default function RebuildAlert({ page, refId }: RebuildAlertProps) {
-	const referenceId = Number(refId);
-	const { data, isPending, isError } = useFindIndexes(page, 25, refId);
+export default function RebuildAlert({ page, referenceId }: RebuildAlertProps) {
+	const { data, isPending, isError } = useFindIndexes(
+		referenceId,
+		page,
+		DEFAULT_PER_PAGE,
+	);
 	const { hasPermission: hasRights } = useCheckReferenceRight(
 		referenceId,
 		"build",
@@ -30,14 +34,17 @@ export default function RebuildAlert({ page, refId }: RebuildAlertProps) {
 		return null;
 	}
 
-	const { change_count } = data;
+	const { changeCount } = data;
 
-	if (change_count && hasRights) {
+	if (changeCount && hasRights) {
 		return (
 			<Alert color="orange" level icon={Info}>
 				<span>
 					<span>There are unbuilt changes. </span>
-					<Link to="/refs/$refId/indexes" params={{ refId }}>
+					<Link
+						to="/refs/$refId/indexes"
+						params={{ refId: String(referenceId) }}
+					>
 						Rebuild the index
 					</Link>
 					<span> to use the changes in future analyses.</span>

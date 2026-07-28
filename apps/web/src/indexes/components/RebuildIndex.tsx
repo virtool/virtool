@@ -15,21 +15,21 @@ import RebuildHistory from "./History";
 import RebuildIndexError from "./RebuildIndexError";
 
 type RebuildIndexProps = {
-	refId: string;
+	referenceId: number;
 };
 
 /**
  * A "Create" button that opens a dialog for rebuilding the reference index.
  */
-export default function RebuildIndex({ refId }: RebuildIndexProps) {
+export default function RebuildIndex({ referenceId }: RebuildIndexProps) {
 	const [open, setOpen] = useState(false);
-	const { data, isError, isPending } = useFetchUnbuiltChanges(refId);
+	const { data, isError, isPending } = useFetchUnbuiltChanges(referenceId);
 	const mutation = useCreateIndex();
 
 	function handleSubmit(e: FormEvent<HTMLFormElement>) {
 		e.preventDefault();
 		mutation.mutate(
-			{ refId },
+			{ referenceId },
 			{
 				onSuccess: () => {
 					setOpen(false);
@@ -51,9 +51,7 @@ export default function RebuildIndex({ refId }: RebuildIndexProps) {
 					<LoadingPlaceholder />
 				) : (
 					<form onSubmit={handleSubmit}>
-						<RebuildIndexError
-							error={mutation.error?.response?.body?.message}
-						/>
+						<RebuildIndexError error={mutation.error?.message} />
 						<RebuildHistory unbuilt={data} />
 						<DialogFooter>
 							<Button type="submit" color="blue" disabled={mutation.isPending}>

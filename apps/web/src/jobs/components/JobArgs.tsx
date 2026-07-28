@@ -56,7 +56,7 @@ function AnalysisRows({ sample_id, analysis_id }: AnalysisRowsProps) {
 
 type BuildIndexRowsProps = {
 	/** The unique identifier of the index being built */
-	index_id: number;
+	index_id: string;
 
 	/** The unique identifier of the reference the index is based on */
 	ref_id: string;
@@ -74,7 +74,7 @@ function BuildIndexRows({ index_id, ref_id }: BuildIndexRowsProps) {
 			<JobArgsRow title="Index">
 				<Link
 					to="/refs/$refId/indexes/$indexId"
-					params={{ refId: ref_id, indexId: String(index_id) }}
+					params={{ refId: ref_id, indexId: index_id }}
 				>
 					{index_id}
 				</Link>

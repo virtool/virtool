@@ -10,10 +10,13 @@ export class TaskNotFoundError extends AppError {}
 
 /**
  * A task type the TS server can spawn. The runner supports every Python task
- * name, but this union only lists the ones we create from here — for now, the
- * HMM install.
+ * name, but this union only lists the ones we create from here.
  */
-export type TaskType = "clone_reference" | "import_reference" | "install_hmms";
+export type TaskType =
+	| "clone_reference"
+	| "create_index"
+	| "import_reference"
+	| "install_hmms";
 
 /**
  * Insert a pending task of `type` and return its id.

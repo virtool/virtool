@@ -77,7 +77,7 @@ states:
 | HMMs         | `hmms`, `legacy_hmm_status`                          | Built          |
 | API keys     | `api_keys`                                           | Built          |
 | Analyses     | `analyses`, `analysis_*`, `nuvs_blast`               | Built          |
-| Indexes      | `indexes`                                            | Partial mirror |
+| Indexes      | `indexes`, `index_files`                             | Built          |
 | Samples      | `legacy_samples`, `legacy_sample_*`, `sample_*`      | Built          |
 | Subtractions | `subtractions`, `subtraction_files`                  | Built          |
 | References   | `legacy_references`, `legacy_reference_*`            | Built          |
@@ -95,7 +95,7 @@ reverse `job_id` foreign keys on `analyses`, `indexes`, and
 `legacy_samples` (there are no `job_*` junction tables). The references
 read path adds three more: `legacy_otus` (an OTU count and the clone
 manifest), `legacy_history` (contributors and the unbuilt-change count),
-and the extra `indexes` columns that resolve a reference's latest build.
+and `indexes`, which resolves a reference's latest build.
 The samples read path leans on the `analyses` mirror's `sample_id`,
 `workflow`, and `ready` columns to derive a sample's workflow tags (a
 `GROUP BY workflow, bool_or(ready)`) and to power the `workflows=` filter
@@ -187,6 +187,56 @@ export async function invalidateUserSessions(
 `DbOrTx` covers the shared query-builder surface, which is everything a
 `data.ts` function normally touches. Reach for `Db` only when the function
 genuinely needs something a transaction cannot give it.
+
+### Advisory locks, and the half-owned index build
+
+Starting an index build is the one write that takes a Postgres advisory
+lock, and the reason is that Python still performs the second half of it.
+
+`createIndex` (`@server/indexes/data`) inserts the pending `indexes` row,
+mints its `storage_key`, stamps every `legacy_history` row whose
+`index_id` is `NULL` with the new build, and creates a `create_index`
+task. The Python task runner claims that task, patches every OTU in the
+manifest back to the version the build was pinned to, gzips the artifact
+into `indexes/{storage_key}/reference-v2.json.gz`, records the
+`index_files` row, promotes `legacy_otus.last_indexed_version`, and only
+then sets `ready = true`. Nothing on this side finishes a build.
+
+Two builds of one reference would each stamp the other's changes and then
+collide on the `(reference_id, version)` unique constraint, so the insert
+runs inside a transaction that first takes
+
+```sql
+select pg_try_advisory_xact_lock(hashtext('index_build:' || :referenceId))
+```
+
+The `try` variant does not block — a caller that loses the race is told a
+build is already in progress rather than waiting on one. The lock is
+transaction-scoped (`_xact_`), so it releases on commit or rollback with
+no unlock call to forget. The key is `hashtext` of that literal string
+with the **integer** reference id, byte-for-byte what Python composes, so
+a build started from either service excludes one started from the other.
+A divergent key would silently stop excluding anything.
+
+The in-progress check runs twice on purpose: once before the lock, as a
+cheap rejection that avoids reading the manifest, and once inside it,
+which is the one that is actually race-free. Both raise the same error,
+so a caller cannot tell which fired.
+
+Two columns are load-bearing for the handoff:
+
+- **`storage_key`** is `NOT NULL`, unique, and **not derivable from the
+  row id** — an index migrated from Mongo keys its files on the old
+  string id, and one created here on a minted UUID. Writing the row
+  without it fails; deriving it from `id` orphans the files the Python
+  task writes.
+- **`manifest`** is `{otuId: otuVersion}` captured at the moment the
+  build starts. It is what pins the artifact to a point in time, so it is
+  read before the lock is taken rather than inside the transaction.
+
+`indexes` carries a `num_nonnulls(job_id, task_id) <= 1` check upstream:
+a build is backed by at most one of a legacy workflow job or a task. A
+build started from here always sets `task_id` and leaves `job_id` null.
 
 ### Stubbed-out cross-domain reads
 

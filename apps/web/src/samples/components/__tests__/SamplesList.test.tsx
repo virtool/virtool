@@ -1,6 +1,5 @@
 import { screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { mockApiListIndexes } from "@tests/api/indexes";
 import { createFakeAccount } from "@tests/fake/account";
 import { createFakeHmmSearchResults } from "@tests/fake/hmm";
 import { createFakeIndexMinimal } from "@tests/fake/indexes";
@@ -9,6 +8,7 @@ import { createFakeSampleMinimal } from "@tests/fake/samples";
 import { createFakeShortlistSubtraction } from "@tests/fake/subtractions";
 import { createFakeUserNested } from "@tests/fake/user";
 import { mockFindHmms } from "@tests/server-fn/hmm";
+import { mockListReadyIndexes } from "@tests/server-fn/indexes";
 import { mockFindLabels } from "@tests/server-fn/labels";
 import { mockFindSamplePages, mockFindSamples } from "@tests/server-fn/samples";
 import { mockListSubtractionsShortlist } from "@tests/server-fn/subtractions";
@@ -68,7 +68,7 @@ function mockApiGetSamplePages() {
 	mockFindSamplePages(samples.map((sample) => [sample]));
 
 	mockFindHmms(createFakeHmmSearchResults());
-	mockApiListIndexes([createFakeIndexMinimal()]);
+	mockListReadyIndexes([createFakeIndexMinimal()]);
 	mockListSubtractionsShortlist([createFakeShortlistSubtraction()]);
 
 	return samples;
@@ -86,7 +86,7 @@ function mockApiGetSampleRange(names: string[]) {
 	const documents = names.map((name) => createFakeSampleMinimal({ name }));
 
 	mockFindHmms(createFakeHmmSearchResults());
-	mockApiListIndexes([createFakeIndexMinimal()]);
+	mockListReadyIndexes([createFakeIndexMinimal()]);
 	mockListSubtractionsShortlist([createFakeShortlistSubtraction()]);
 	mockFindSamples(documents);
 
@@ -112,7 +112,7 @@ describe("<SamplesList />", () => {
 		mockFindLabels(labels);
 		mockFindSamples(samples);
 		mockFindHmms(createFakeHmmSearchResults());
-		mockApiListIndexes([createFakeIndexMinimal()]);
+		mockListReadyIndexes([createFakeIndexMinimal()]);
 		mockListSubtractionsShortlist([createFakeShortlistSubtraction()]);
 	});
 
@@ -428,7 +428,7 @@ describe("<SamplesList />", () => {
 			nock.cleanAll();
 			mockListUsers(users);
 			mockFindHmms(createFakeHmmSearchResults());
-			mockApiListIndexes([createFakeIndexMinimal()]);
+			mockListReadyIndexes([createFakeIndexMinimal()]);
 			mockListSubtractionsShortlist([createFakeShortlistSubtraction()]);
 			mockFindSamples(samples, { foundCount: 2, totalCount: 17 });
 
@@ -827,7 +827,7 @@ describe("<SamplesList />", () => {
 			nock.cleanAll();
 			mockFindSamples([]);
 			mockFindHmms(createFakeHmmSearchResults());
-			mockApiListIndexes([createFakeIndexMinimal()]);
+			mockListReadyIndexes([createFakeIndexMinimal()]);
 			mockListSubtractionsShortlist([createFakeShortlistSubtraction()]);
 		});
 

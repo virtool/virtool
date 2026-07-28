@@ -7,7 +7,7 @@ import SelectButton from "@base/SelectButton";
 import SelectContent from "@base/SelectContent";
 import { SelectItemIndicator } from "@base/SelectItem";
 import { selectItemStateClasses } from "@base/styles";
-import type { IndexMinimal } from "@indexes/types";
+import type { IndexMinimal } from "@virtool/contracts";
 import { sortBy } from "es-toolkit";
 import { ChevronDown, Library } from "lucide-react";
 import { Select as SelectPrimitive } from "radix-ui";

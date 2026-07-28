@@ -1,5 +1,5 @@
 type IndexItemDescriptionProps = {
-	changeCount: number | null;
+	changeCount: number;
 	modifiedCount: number;
 };
 
@@ -14,10 +14,6 @@ export function IndexItemDescription({
 	changeCount,
 	modifiedCount,
 }: IndexItemDescriptionProps) {
-	if (changeCount === null) {
-		return null;
-	}
-
 	if (changeCount === 0) {
 		return <>No changes</>;
 	}

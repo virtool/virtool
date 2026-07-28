@@ -53,10 +53,7 @@ const handlers = (await import(
 const { ForbiddenError, UnauthorizedError } = await import(
 	"../auth/middleware"
 );
-const { SESSION_ID_COOKIE, SESSION_TOKEN_COOKIE } = await import(
-	"../auth/cookies"
-);
-const { seedSession, seedUser } = await import("../auth/test/fixtures");
+const { signIn } = await import("../auth/test/fixtures");
 
 let database: TestDatabase;
 
@@ -80,22 +77,6 @@ beforeEach(async () => {
 });
 
 /** Authenticate the next call as a user with the given administrator role. */
-async function signIn(
-	administratorRole: "full" | "base" | null,
-): Promise<number> {
-	const userId = await seedUser(db, { administratorRole });
-	const { sessionId, token } = await seedSession(db, userId);
-
-	getRequest.mockReturnValue(
-		new Request("https://virtool.test/_serverFn/test", {
-			headers: {
-				cookie: `${SESSION_ID_COOKIE}=${sessionId}; ${SESSION_TOKEN_COOKIE}=${token}`,
-			},
-		}),
-	);
-
-	return userId;
-}
 
 function seedGroup(): Promise<number> {
 	return seedGroupImpl(db);
@@ -107,7 +88,7 @@ function call(name: string, data?: unknown) {
 
 describe("createGroup", () => {
 	it("refuses a user with no administrator role", async () => {
-		await signIn(null);
+		await signIn(db, getRequest, { administratorRole: null });
 
 		await expect(
 			call("createGroupFn", { name: "hackers" }),
@@ -124,7 +105,7 @@ describe("createGroup", () => {
 	});
 
 	it("allows an administrator", async () => {
-		await signIn("base");
+		await signIn(db, getRequest, { administratorRole: "base" });
 
 		const group = (await call("createGroupFn", { name: "technicians" })) as {
 			name: string;
@@ -137,7 +118,7 @@ describe("createGroup", () => {
 describe("updateGroup", () => {
 	it("refuses a user with no administrator role", async () => {
 		const groupId = await seedGroup();
-		await signIn(null);
+		await signIn(db, getRequest, { administratorRole: null });
 
 		await expect(
 			call("updateGroupFn", { groupId, name: "renamed" }),
@@ -150,7 +131,7 @@ describe("updateGroup", () => {
 	// just the status code.
 	it("does not let a permissionless user grant themselves permissions", async () => {
 		const groupId = await seedGroup();
-		await signIn(null);
+		await signIn(db, getRequest, { administratorRole: null });
 
 		await expect(
 			call("updateGroupFn", {
@@ -167,7 +148,7 @@ describe("updateGroup", () => {
 
 	it("allows an administrator", async () => {
 		const groupId = await seedGroup();
-		await signIn("base");
+		await signIn(db, getRequest, { administratorRole: "base" });
 
 		const group = (await call("updateGroupFn", {
 			groupId,
@@ -181,7 +162,7 @@ describe("updateGroup", () => {
 describe("deleteGroup", () => {
 	it("refuses a user with no administrator role", async () => {
 		const groupId = await seedGroup();
-		await signIn(null);
+		await signIn(db, getRequest, { administratorRole: null });
 
 		await expect(call("deleteGroupFn", { groupId })).rejects.toBeInstanceOf(
 			ForbiddenError,
@@ -192,7 +173,7 @@ describe("deleteGroup", () => {
 
 	it("allows an administrator", async () => {
 		const groupId = await seedGroup();
-		await signIn("base");
+		await signIn(db, getRequest, { administratorRole: "base" });
 
 		await call("deleteGroupFn", { groupId });
 

@@ -19,7 +19,7 @@ export const Route = createFileRoute("/_authenticated/refs/$refId/indexes/")({
 	}) => {
 		const { indexesQueryOptions } = await import("@indexes/queries");
 		await queryClient.ensureQueryData(
-			indexesQueryOptions(page, DEFAULT_PER_PAGE, refId),
+			indexesQueryOptions(Number(refId), page, DEFAULT_PER_PAGE),
 		);
 	},
 	component: IndexesRoute,

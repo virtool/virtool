@@ -46,12 +46,8 @@ vi.mock("../storage", () => ({
 }));
 
 const { handleUpload } = await import("./upload");
-const { SESSION_ID_COOKIE, SESSION_TOKEN_COOKIE } = await import(
-	"../auth/cookies"
-);
-const { basicAuthHeader, seedApiKey, seedSession, seedUser } = await import(
-	"../auth/test/fixtures"
-);
+const { basicAuthHeader, seedApiKey, seedSession, seedUser, sessionCookie } =
+	await import("../auth/test/fixtures");
 
 let database: TestDatabase;
 
@@ -81,7 +77,7 @@ async function request(
 	const headers: Record<string, string> = {};
 	if (userId !== null) {
 		const { sessionId, token } = await seedSession(db, userId);
-		headers.cookie = `${SESSION_ID_COOKIE}=${sessionId}; ${SESSION_TOKEN_COOKIE}=${token}`;
+		headers.cookie = sessionCookie({ sessionId, token });
 	}
 	return new Request(`https://virtool.test/uploads${query}`, {
 		method: "POST",

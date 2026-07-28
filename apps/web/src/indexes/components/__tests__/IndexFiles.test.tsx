@@ -8,12 +8,12 @@ describe("<IndexFiles />", () => {
 	it("should render", () => {
 		const files = [
 			createFakeIndexFile({
-				download_url: "/testUrl/foo",
+				downloadUrl: "/testUrl/foo",
 				name: "foo",
 				size: 1024,
 			}),
 			createFakeIndexFile({
-				download_url: "/testUrl/bar",
+				downloadUrl: "/testUrl/bar",
 				name: "bar",
 				size: 2048,
 			}),

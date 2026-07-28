@@ -45,14 +45,17 @@ describe("emit", () => {
 		);
 	});
 
+	// `roles` is the only domain keyed by a string — an administrator role name.
+	// Every other domain is keyed by a Postgres integer, and typing one as a
+	// string here would have the client reject every frame it emits.
 	it("accepts string resource ids", async () => {
-		await emit("references", "ref123", "update");
+		await emit("roles", "full", "update");
 
 		expect(notify).toHaveBeenCalledWith(
 			"client_events",
 			JSON.stringify({
-				domain: "references",
-				resource_id: "ref123",
+				domain: "roles",
+				resource_id: "full",
 				operation: "update",
 			}),
 		);

@@ -36,10 +36,9 @@ vi.mock("../db/pg", () => ({
 
 const { handleIsolateFasta, handleOtuFasta, handleSequenceFasta } =
 	await import("./fasta");
-const { SESSION_ID_COOKIE, SESSION_TOKEN_COOKIE } = await import(
-	"../auth/cookies"
+const { seedSession, seedUser, sessionCookie } = await import(
+	"../auth/test/fixtures"
 );
-const { seedSession, seedUser } = await import("../auth/test/fixtures");
 
 let database: TestDatabase;
 let cookie: string;
@@ -63,7 +62,7 @@ beforeEach(async () => {
 	const userId = await seedUser(db);
 	const { sessionId, token } = await seedSession(db, userId);
 
-	cookie = `${SESSION_ID_COOKIE}=${sessionId}; ${SESSION_TOKEN_COOKIE}=${token}`;
+	cookie = sessionCookie({ sessionId, token });
 });
 
 function signedIn(): Request {

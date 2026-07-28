@@ -46,10 +46,7 @@ const handlers = (await import(
 const { ForbiddenError, UnauthorizedError } = await import(
 	"../auth/middleware"
 );
-const { SESSION_ID_COOKIE, SESSION_TOKEN_COOKIE } = await import(
-	"../auth/cookies"
-);
-const { seedSession, seedUser } = await import("../auth/test/fixtures");
+const { signIn } = await import("../auth/test/fixtures");
 
 let database: TestDatabase;
 
@@ -75,20 +72,6 @@ beforeEach(async () => {
 
 // `modify_subtraction` is a "full"-role permission, so a full administrator
 // holds it; a role-less user does not.
-async function signIn(administratorRole: "full" | null): Promise<number> {
-	const userId = await seedUser(db, { administratorRole });
-	const { sessionId, token } = await seedSession(db, userId);
-
-	getRequest.mockReturnValue(
-		new Request("https://virtool.test/_serverFn/test", {
-			headers: {
-				cookie: `${SESSION_ID_COOKIE}=${sessionId}; ${SESSION_TOKEN_COOKIE}=${token}`,
-			},
-		}),
-	);
-
-	return userId;
-}
 
 async function seedUpload(userId: number): Promise<number> {
 	return takeFirstOrThrow(
@@ -110,7 +93,7 @@ function call(name: string, data?: unknown) {
 
 describe("createSubtraction", () => {
 	it("refuses a caller without modify_subtraction", async () => {
-		const userId = await signIn(null);
+		const userId = await signIn(db, getRequest, { administratorRole: null });
 		const uploadId = await seedUpload(userId);
 
 		await expect(
@@ -134,7 +117,7 @@ describe("createSubtraction", () => {
 	});
 
 	it("creates a subtraction for a permitted caller", async () => {
-		const userId = await signIn("full");
+		const userId = await signIn(db, getRequest, { administratorRole: "full" });
 		const uploadId = await seedUpload(userId);
 
 		const subtraction = (await call("createSubtractionFn", {
@@ -149,7 +132,7 @@ describe("createSubtraction", () => {
 	});
 
 	it("maps a missing upload to a 400", async () => {
-		await signIn("full");
+		await signIn(db, getRequest, { administratorRole: "full" });
 
 		await expect(
 			call("createSubtractionFn", {
@@ -164,7 +147,7 @@ describe("createSubtraction", () => {
 
 describe("getSubtraction", () => {
 	it("maps a missing subtraction to a 404", async () => {
-		await signIn(null);
+		await signIn(db, getRequest, { administratorRole: null });
 
 		await expect(
 			call("getSubtractionFn", { subtractionId: 999_999 }),
@@ -175,7 +158,7 @@ describe("getSubtraction", () => {
 
 describe("deleteSubtraction", () => {
 	it("refuses a caller without modify_subtraction", async () => {
-		await signIn(null);
+		await signIn(db, getRequest, { administratorRole: null });
 
 		await expect(
 			call("deleteSubtractionFn", { subtractionId: 1 }),

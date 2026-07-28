@@ -1,3 +1,4 @@
+import { DEFAULT_PER_PAGE } from "@app/pagination";
 import BoxGroup from "@base/BoxGroup";
 import ListEmpty from "@base/ListEmpty";
 import Pagination from "@base/Pagination";
@@ -25,30 +26,30 @@ type IndexesProps = {
 export default function Indexes({ page, setSearch }: IndexesProps) {
 	const { refId } = routeApi.useParams();
 	const referenceId = Number(refId);
-	const { data } = useSuspenseIndexes(page, 25, refId);
+	const { data } = useSuspenseIndexes(referenceId, page, DEFAULT_PER_PAGE);
 	const { hasPermission: canBuild } = useCheckReferenceRight(
 		referenceId,
 		"build",
 	);
 	const archived = useReferenceIsArchived(referenceId);
 
-	const { items, change_count, page: storedPage, page_count } = data;
+	const { items, changeCount, page: storedPage, pageCount } = data;
 
-	const canBuildIndex = !archived && canBuild && change_count > 0;
+	const canBuildIndex = !archived && canBuild && changeCount > 0;
 
 	return (
 		<>
 			{items.length > 0 && canBuildIndex && (
 				<Toolbar>
 					<div className="flex-grow" />
-					<RebuildIndex refId={refId} />
+					<RebuildIndex referenceId={referenceId} />
 				</Toolbar>
 			)}
 			{items.length ? (
 				<Pagination
 					storedPage={storedPage}
 					currentPage={page}
-					pageCount={page_count}
+					pageCount={pageCount}
 					onPageChange={(page) => setSearch({ page })}
 				>
 					<BoxGroup as="ul">
@@ -67,12 +68,12 @@ export default function Indexes({ page, setSearch }: IndexesProps) {
 					icon={Inbox}
 					title="No indexes found"
 					description={
-						change_count > 0
+						changeCount > 0
 							? "This reference has unbuilt changes."
 							: "This reference has no indexes yet."
 					}
 				>
-					{canBuildIndex && <RebuildIndex refId={refId} />}
+					{canBuildIndex && <RebuildIndex referenceId={referenceId} />}
 				</ListEmpty>
 			)}
 		</>

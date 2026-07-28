@@ -1,7 +1,7 @@
 import Badge from "@base/Badge";
 import BoxGroup from "@base/BoxGroup";
 import BoxGroupHeader from "@base/BoxGroupHeader";
-import type { IndexOTU as OTU } from "../types";
+import type { IndexOtu as OTU } from "@virtool/contracts";
 import IndexOTU from "./IndexOTU";
 
 type IndexOTUsProps = {
@@ -19,7 +19,7 @@ export default function IndexOTUs({ otus, refId }: IndexOTUsProps) {
 			refId={refId}
 			name={otu.name}
 			id={otu.id}
-			changeCount={otu.change_count}
+			changeCount={otu.changeCount}
 		/>
 	));
 

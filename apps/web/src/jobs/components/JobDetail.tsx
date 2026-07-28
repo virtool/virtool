@@ -57,15 +57,11 @@ export default function JobDetail() {
 
 	// build_index jobs reference an index but not its reference, so the
 	// reference id is resolved from the index alongside the job — keeping both
-	// fetches under the same loading gate.
+	// fetches under the same loading gate. Job args are a string map, so the
+	// index id is converted rather than asserted.
 	const indexId =
-		data?.workflow === "build_index"
-			? (data.args.index_id as number)
-			: undefined;
-	const { data: index, isPending: isIndexPending } = useFetchIndex(
-		indexId === undefined ? "" : String(indexId),
-		indexId !== undefined,
-	);
+		data?.workflow === "build_index" ? Number(data.args.index_id) : undefined;
+	const { data: index, isPending: isIndexPending } = useFetchIndex(indexId);
 
 	if (!Number.isInteger(numericJobId)) {
 		return <NotFound />;
@@ -84,7 +80,9 @@ export default function JobDetail() {
 
 	const color = getAlertColor(data.state);
 	const workflow = getWorkflowDisplayName(data.workflow);
-	const args = index ? { ...data.args, ref_id: index.reference.id } : data.args;
+	const args = index
+		? { ...data.args, ref_id: String(index.reference.id) }
+		: data.args;
 
 	return (
 		<ContainerNarrow>

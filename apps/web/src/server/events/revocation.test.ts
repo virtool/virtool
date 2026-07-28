@@ -34,10 +34,9 @@ vi.mock("../db/pg", () => ({
 }));
 
 const { watchForRevocation } = await import("./revocation");
-const { SESSION_ID_COOKIE, SESSION_TOKEN_COOKIE } = await import(
-	"../auth/cookies"
+const { seedSession, seedUser, sessionCookie } = await import(
+	"../auth/test/fixtures"
 );
-const { seedSession, seedUser } = await import("../auth/test/fixtures");
 
 // Short enough that a test does not wait on it, long enough not to hammer the
 // database while a negative case proves nothing happened.
@@ -65,7 +64,7 @@ async function connectedRequest(): Promise<Request> {
 
 	return new Request("https://virtool.test/events", {
 		headers: {
-			cookie: `${SESSION_ID_COOKIE}=${sessionId}; ${SESSION_TOKEN_COOKIE}=${token}`,
+			cookie: sessionCookie({ sessionId, token }),
 		},
 	});
 }

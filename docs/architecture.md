@@ -161,9 +161,12 @@ to annotate its returns, and components import the same names straight
 from `@virtool/contracts`. Don't add a feature `types.ts` re-export for
 these — unlike `@server/*` below, importing `@virtool/contracts`
 directly crosses no project boundary, so the re-export bought nothing
-but a second place a type must be kept listed. `references/types.ts`
-and `samples/types.ts` hold only genuinely client-only shapes
-(`ReferenceNested`, `CreateSampleRequest`, `SampleUpdate`, and friends).
+but a second place a type must be kept listed. `samples/types.ts` holds
+only genuinely client-only shapes (`CreateSampleRequest`,
+`SampleUpdate`, and friends). `references/` and `indexes/` have no
+`types.ts` at all any more: once both domains moved onto server
+functions, every shape they declared turned out to be a wire shape and
+moved into the package.
 
 The failure mode to avoid is a client `types.ts` that does
 `import type { Reference } from "@server/references/data"`. It

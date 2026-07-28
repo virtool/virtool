@@ -27,6 +27,7 @@ import { analysisServerFnMocks } from "./server-fn/analyses";
 import { authServerFnMocks } from "./server-fn/auth";
 import { groupServerFnMocks } from "./server-fn/groups";
 import { hmmServerFnMocks } from "./server-fn/hmm";
+import { indexServerFnMocks } from "./server-fn/indexes";
 import { jobServerFnMocks } from "./server-fn/jobs";
 import { labelServerFnMocks } from "./server-fn/labels";
 import { genbankServerFnMocks, otuServerFnMocks } from "./server-fn/otus";
@@ -111,6 +112,11 @@ vi.mock("@server/genbank/functions", async () => {
 	return genbankServerFnMocks;
 });
 
+vi.mock("@server/indexes/functions", async () => {
+	const { indexServerFnMocks } = await import("./server-fn/indexes");
+	return indexServerFnMocks;
+});
+
 beforeEach(() => {
 	for (const fn of Object.values(groupServerFnMocks)) {
 		fn.mockReset();
@@ -135,6 +141,7 @@ beforeEach(() => {
 		analysisServerFnMocks.findAnalysesFn,
 		analysisServerFnMocks.getAnalysisFn,
 		settingsServerFnMocks.getSettingsFn,
+		...Object.values(indexServerFnMocks),
 		otuServerFnMocks.findOtusFn,
 		otuServerFnMocks.getOtuFn,
 		otuServerFnMocks.listOtuHistoryFn,

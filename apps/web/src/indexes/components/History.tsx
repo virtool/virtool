@@ -2,12 +2,12 @@ import BoxGroup from "@base/BoxGroup";
 import BoxGroupHeader from "@base/BoxGroupHeader";
 import BoxGroupSection from "@base/BoxGroupSection";
 import LoadingPlaceholder from "@base/LoadingPlaceholder";
+import type { UnbuiltChangesSearchResult } from "@virtool/contracts";
 import { sortBy } from "es-toolkit";
 import type { ReactNode } from "react";
-import type { UnbuiltChangesSearchResults } from "../types";
 
 type RebuildHistoryEllipsisProps = {
-	unbuilt: UnbuiltChangesSearchResults;
+	unbuilt: UnbuiltChangesSearchResult;
 };
 
 type RebuildHistoryItemProps = {
@@ -16,14 +16,14 @@ type RebuildHistoryItemProps = {
 };
 
 type RebuildHistoryProps = {
-	unbuilt: UnbuiltChangesSearchResults | null;
+	unbuilt: UnbuiltChangesSearchResult | null;
 };
 
 function RebuildHistoryEllipsis({ unbuilt }: RebuildHistoryEllipsisProps) {
-	if (unbuilt.page_count > 1) {
+	if (unbuilt.pageCount > 1) {
 		return (
 			<BoxGroupSection className="text-right" key="last-item">
-				+ {unbuilt.total_count - unbuilt.per_page} more changes
+				+ {unbuilt.foundCount - unbuilt.perPage} more changes
 			</BoxGroupSection>
 		);
 	}

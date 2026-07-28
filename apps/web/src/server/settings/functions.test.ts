@@ -1,4 +1,3 @@
-import type { AdministratorRoleName } from "@virtool/contracts";
 import {
 	afterAll,
 	beforeAll,
@@ -45,10 +44,7 @@ const handlers = (await import(
 const { ForbiddenError, UnauthorizedError } = await import(
 	"../auth/middleware"
 );
-const { SESSION_ID_COOKIE, SESSION_TOKEN_COOKIE } = await import(
-	"../auth/cookies"
-);
-const { seedSession, seedUser } = await import("../auth/test/fixtures");
+const { signIn } = await import("../auth/test/fixtures");
 const { seedSettings } = await import("./test/fixtures");
 
 let database: TestDatabase;
@@ -72,23 +68,6 @@ beforeEach(async () => {
 	);
 });
 
-async function signIn(
-	administratorRole: AdministratorRoleName | null,
-): Promise<number> {
-	const userId = await seedUser(db, { administratorRole });
-	const { sessionId, token } = await seedSession(db, userId);
-
-	getRequest.mockReturnValue(
-		new Request("https://virtool.test/_serverFn/test", {
-			headers: {
-				cookie: `${SESSION_ID_COOKIE}=${sessionId}; ${SESSION_TOKEN_COOKIE}=${token}`,
-			},
-		}),
-	);
-
-	return userId;
-}
-
 function call(name: string, data?: unknown) {
 	return callServerFn(handlers, name, data);
 }
@@ -101,12 +80,12 @@ describe("getSettings", () => {
 	});
 
 	it("refuses a caller without the settings role", async () => {
-		await signIn("base");
+		await signIn(db, getRequest, { administratorRole: "base" });
 		await expect(call("getSettingsFn")).rejects.toBeInstanceOf(ForbiddenError);
 	});
 
 	it("returns the settings for a settings administrator", async () => {
-		await signIn("settings");
+		await signIn(db, getRequest, { administratorRole: "settings" });
 		await seedSettings(db, {
 			defaultSourceTypes: ["genotype"],
 			enableApi: true,
@@ -131,14 +110,14 @@ describe("updateSettings", () => {
 	});
 
 	it("refuses a caller without the settings role", async () => {
-		await signIn("base");
+		await signIn(db, getRequest, { administratorRole: "base" });
 		await expect(
 			call("updateSettingsFn", { enableApi: true }),
 		).rejects.toBeInstanceOf(ForbiddenError);
 	});
 
 	it("applies the patch and returns the updated settings", async () => {
-		await signIn("settings");
+		await signIn(db, getRequest, { administratorRole: "settings" });
 		await seedSettings(db, { enableApi: false });
 
 		await expect(
@@ -159,14 +138,14 @@ describe("updateSettings", () => {
 	});
 
 	it("rejects an invalid sample group", async () => {
-		await signIn("settings");
+		await signIn(db, getRequest, { administratorRole: "settings" });
 		await expect(
 			call("updateSettingsFn", { sampleGroup: "everyone" }),
 		).rejects.toThrow();
 	});
 
 	it("rejects an empty patch", async () => {
-		await signIn("settings");
+		await signIn(db, getRequest, { administratorRole: "settings" });
 		await expect(call("updateSettingsFn", {})).rejects.toThrow();
 	});
 });

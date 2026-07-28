@@ -46,10 +46,7 @@ const handlers = (await import(
 	"./functions.ts?tss-serverfn-split"
 )) as SplitServerFnModule;
 const { UnauthorizedError } = await import("../auth/middleware");
-const { SESSION_ID_COOKIE, SESSION_TOKEN_COOKIE } = await import(
-	"../auth/cookies"
-);
-const { seedSession, seedUser } = await import("../auth/test/fixtures");
+const { signIn } = await import("../auth/test/fixtures");
 
 let database: TestDatabase;
 
@@ -73,20 +70,6 @@ beforeEach(async () => {
 });
 
 /** Authenticate the next call as a freshly seeded user and return its id. */
-async function signIn(handle = "alice"): Promise<number> {
-	const userId = await seedUser(db, { handle });
-	const { sessionId, token } = await seedSession(db, userId);
-
-	getRequest.mockReturnValue(
-		new Request("https://virtool.test/_serverFn/test", {
-			headers: {
-				cookie: `${SESSION_ID_COOKIE}=${sessionId}; ${SESSION_TOKEN_COOKIE}=${token}`,
-			},
-		}),
-	);
-
-	return userId;
-}
 
 function call(name: string, data?: unknown) {
 	return callServerFn(handlers, name, data);
@@ -100,7 +83,7 @@ describe("findApiKeys", () => {
 	});
 
 	it("returns only the signed-in user's keys", async () => {
-		await signIn();
+		await signIn(db, getRequest);
 		await call("createApiKeyFn", { name: "Robot", permissions: {} });
 
 		const keys = (await call("findApiKeysFn")) as { name: string }[];
@@ -112,7 +95,7 @@ describe("findApiKeys", () => {
 
 describe("createApiKey", () => {
 	it("returns the raw secret and a 201", async () => {
-		await signIn();
+		await signIn(db, getRequest);
 
 		const created = (await call("createApiKeyFn", {
 			name: "Robot",
@@ -127,13 +110,13 @@ describe("createApiKey", () => {
 
 describe("updateApiKey", () => {
 	it("responds with 404 for a key the user does not own", async () => {
-		const owner = await signIn("owner");
+		const owner = await signIn(db, getRequest, { handle: "owner" });
 		const created = (await call("createApiKeyFn", {
 			name: "Robot",
 			permissions: {},
 		})) as { id: number };
 
-		await signIn("intruder");
+		await signIn(db, getRequest, { handle: "intruder" });
 
 		await expect(
 			call("updateApiKeyFn", {
@@ -151,7 +134,7 @@ describe("updateApiKey", () => {
 
 describe("deleteApiKey", () => {
 	it("removes the signed-in user's key with a 204", async () => {
-		await signIn();
+		await signIn(db, getRequest);
 		const created = (await call("createApiKeyFn", {
 			name: "Robot",
 			permissions: {},
@@ -164,7 +147,7 @@ describe("deleteApiKey", () => {
 	});
 
 	it("responds with 404 when the key does not exist", async () => {
-		await signIn();
+		await signIn(db, getRequest);
 
 		await expect(call("deleteApiKeyFn", { keyId: 404 })).rejects.toThrow(
 			"API key not found.",

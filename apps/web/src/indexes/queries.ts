@@ -1,5 +1,11 @@
-import { apiClient } from "@app/api";
 import { indexQueryKeys } from "@indexes/keys";
+import {
+	createIndexFn,
+	findIndexesFn,
+	findUnbuiltChangesFn,
+	getIndexFn,
+	listReadyIndexesFn,
+} from "@server/indexes/functions";
 import {
 	queryOptions,
 	useMutation,
@@ -7,66 +13,51 @@ import {
 	useQueryClient,
 	useSuspenseQuery,
 } from "@tanstack/react-query";
-import { z } from "zod";
-import type { ErrorResponse } from "@/types/api";
-import {
-	type Index,
-	type IndexMinimal,
-	type IndexSearchResult,
-	indexMinimalSchema,
-	indexSchema,
-	type UnbuiltChangesSearchResults,
-} from "./types";
+import type {
+	Index,
+	IndexMinimal,
+	IndexSearchResult,
+	UnbuiltChangesSearchResult,
+} from "@virtool/contracts";
 
 /**
- * Query options for a paginated list of indexes.
+ * Query options for a paginated list of a reference's indexes.
  *
+ * @param referenceId - The reference to list the indexes of
  * @param page - The page to fetch
  * @param per_page - The number of indexes to fetch per page
- * @param refId - The reference id to fetch the indexes of
- * @param term - The search term to filter indexes by
  */
 export function indexesQueryOptions(
+	referenceId: number,
 	page: number,
 	per_page: number,
-	refId: string,
-	term?: string,
 ) {
-	return queryOptions<IndexSearchResult, ErrorResponse>({
-		queryKey: indexQueryKeys.list([page, per_page, refId, term]),
+	return queryOptions<IndexSearchResult, Error>({
+		queryKey: indexQueryKeys.list([referenceId, page, per_page]),
 		queryFn: () =>
-			apiClient
-				.get(`/refs/${refId}/indexes`)
-				.query({ find: term, page, per_page })
-				.then((res) => {
-					const { documents, ...rest } = res.body;
-					return {
-						...rest,
-						items: z.array(indexMinimalSchema).parse(documents),
-					};
-				}),
+			findIndexesFn({
+				data: { referenceId, page, per_page },
+			}) as Promise<IndexSearchResult>,
 	});
 }
 
 /**
- * Gets a paginated list of indexes.
+ * Gets a paginated list of a reference's indexes.
  *
  * For secondary data — the unbuilt-changes alert beside a list. Primary list
  * data uses {@link useSuspenseIndexes}.
  *
+ * @param referenceId - The reference to list the indexes of
  * @param page - The page to fetch
  * @param per_page - The number of indexes to fetch per page
- * @param refId - The reference id to fetch the indexes of
- * @param term - The search term to filter indexes by
  * @returns The paginated list of indexes
  */
 export function useFindIndexes(
+	referenceId: number,
 	page: number,
 	per_page: number,
-	refId: string,
-	term?: string,
 ) {
-	return useQuery(indexesQueryOptions(page, per_page, refId, term));
+	return useQuery(indexesQueryOptions(referenceId, page, per_page));
 }
 
 /**
@@ -79,38 +70,28 @@ export function useFindIndexes(
  * rather than inline.
  */
 export function useSuspenseIndexes(
+	referenceId: number,
 	page: number,
 	per_page: number,
-	refId: string,
-	term?: string,
 ) {
-	return useSuspenseQuery(indexesQueryOptions(page, per_page, refId, term));
+	return useSuspenseQuery(indexesQueryOptions(referenceId, page, per_page));
 }
 
-type ListIndexesOptions = {
-	/** Only return ready indexes */
-	ready: boolean;
-
-	/** Filter indexes by their reference's archived status */
-	archived?: boolean;
-};
-
 /**
- * Gets a list of ready indexes
+ * Gets every index that has finished building.
  *
- * @param options - The ready and archived filters to apply
- * @returns A list of ready indexes
+ * Unpaginated: the caller offers these as the indexes an analysis can run
+ * against, and picks the newest of each reference, so a page boundary would
+ * silently drop candidates.
+ *
+ * @param archived - Filter indexes by their reference's archived status
+ * @returns The list of ready indexes
  */
-export function useListIndexes({ ready, archived }: ListIndexesOptions) {
-	const params = archived === undefined ? { ready } : { ready, archived };
-
-	return useQuery<IndexMinimal[]>({
-		queryKey: indexQueryKeys.list(Object.values(params)),
+export function useListReadyIndexes(archived?: boolean) {
+	return useQuery<IndexMinimal[], Error>({
+		queryKey: indexQueryKeys.list([archived]),
 		queryFn: () =>
-			apiClient
-				.get("/indexes")
-				.query(params)
-				.then((res) => z.array(indexMinimalSchema).parse(res.body)),
+			listReadyIndexesFn({ data: { archived } }) as Promise<IndexMinimal[]>,
 	});
 }
 
@@ -121,44 +102,44 @@ export function useListIndexes({ ready, archived }: ListIndexesOptions) {
  * @param enabled - Whether the query should run
  * @returns A single index
  */
-export function useFetchIndex(indexId: string, enabled = true) {
-	return useQuery<Index, ErrorResponse>({
-		queryKey: indexQueryKeys.detail(indexId),
+export function useFetchIndex(indexId: number | undefined, enabled = true) {
+	return useQuery<Index, Error>({
+		queryKey: indexQueryKeys.detail(indexId ?? 0),
 		queryFn: () =>
-			apiClient
-				.get(`/indexes/${indexId}`)
-				.then((res) => indexSchema.parse(res.body)),
-		enabled: enabled && Boolean(indexId),
+			getIndexFn({
+				data: { indexId: indexId as number },
+			}) as Promise<Index>,
+		enabled: enabled && indexId !== undefined,
 	});
 }
 
 /**
- * Get a list of unbuilt changes for a reference
+ * Get the changes a reference has accumulated since its last index build
  *
- * @param refId - The id of the reference to fetch unbuilt changes for
- * @returns A list of unbuilt changes for a reference
+ * @param referenceId - The reference to fetch unbuilt changes for
+ * @returns The reference's unbuilt changes
  */
-export function useFetchUnbuiltChanges(refId: string) {
-	return useQuery<UnbuiltChangesSearchResults>({
+export function useFetchUnbuiltChanges(referenceId: number) {
+	return useQuery<UnbuiltChangesSearchResult, Error>({
+		queryKey: indexQueryKeys.unbuilt(referenceId),
 		queryFn: () =>
-			apiClient.get(`/refs/${refId}/history?unbuilt=true`).then((res) => {
-				const { documents, ...rest } = res.body;
-				return { ...rest, items: documents };
-			}),
-		queryKey: indexQueryKeys.unbuilt(refId),
+			findUnbuiltChangesFn({
+				data: { referenceId },
+			}) as Promise<UnbuiltChangesSearchResult>,
 	});
 }
 
 /**
- * Initializes a mutator for creating an index
+ * Initializes a mutator for building an index
  *
- * @returns A mutator for creating an index
+ * @returns A mutator for building an index
  */
 export function useCreateIndex() {
 	const queryClient = useQueryClient();
-	return useMutation<Index, ErrorResponse, { refId: string }>({
-		mutationFn: ({ refId }) =>
-			apiClient.post(`/refs/${refId}/indexes`).then((res) => res.body),
+
+	return useMutation<Index, Error, { referenceId: number }>({
+		mutationFn: ({ referenceId }) =>
+			createIndexFn({ data: { referenceId } }) as Promise<Index>,
 		onSuccess: () => {
 			queryClient.invalidateQueries({
 				queryKey: indexQueryKeys.all(),

@@ -3,9 +3,9 @@ import BoxGroup from "@base/BoxGroup";
 import BoxGroupHeader from "@base/BoxGroupHeader";
 import BoxGroupSection from "@base/BoxGroupSection";
 import { Empty, EmptyDescription, EmptyMedia, EmptyTitle } from "@base/Empty";
+import type { IndexContributor } from "@virtool/contracts";
 import { sortBy } from "es-toolkit";
 import { Users } from "lucide-react";
-import type { IndexContributor } from "../types";
 import Contributor from "./Contributor";
 
 type ContributorsProps = {

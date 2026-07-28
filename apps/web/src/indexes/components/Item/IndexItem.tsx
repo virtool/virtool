@@ -1,7 +1,7 @@
 import Attribution from "@base/Attribution";
 import BoxGroupSection from "@base/BoxGroupSection";
 import Link from "@base/Link";
-import type { IndexMinimal } from "@indexes/types";
+import type { IndexMinimal } from "@virtool/contracts";
 import { IndexItemDescription } from "./IndexItemDescription";
 import { IndexItemIcon } from "./IndexItemIcon";
 
@@ -32,12 +32,12 @@ export function IndexItem({ activeId, index, refId }: IndexItemProps) {
 					Version {index.version}
 				</Link>
 				<IndexItemDescription
-					changeCount={index.change_count}
-					modifiedCount={index.modified_otu_count}
+					changeCount={index.changeCount}
+					modifiedCount={index.modifiedOtuCount}
 				/>
 				<IndexItemIcon activeId={activeId} id={index.id} ready={index.ready} />
 			</h3>
-			<Attribution time={index.created_at} user={index.user.handle} />
+			<Attribution time={index.createdAt} user={index.user.handle} />
 		</BoxGroupSection>
 	);
 }

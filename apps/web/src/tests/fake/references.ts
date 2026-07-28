@@ -1,22 +1,6 @@
 import { faker } from "@faker-js/faker";
-import type { ReferenceNested } from "@references/types";
 import type { Reference, ReferenceMinimal } from "@virtool/contracts";
 import { createFakeUserNested } from "./user";
-
-/**
- * Create a fake nested reference as it is embedded in OTUs, indexes, and
- * analyses — these still come from the Python API and keep snake_case.
- */
-export function createFakeReferenceNested(
-	overrides?: Partial<ReferenceNested>,
-): ReferenceNested {
-	return {
-		id: faker.number.int(),
-		data_type: "genome",
-		name: faker.word.noun({ strategy: "any-length" }),
-		...overrides,
-	};
-}
 
 /**
  * Create a fake reference minimal

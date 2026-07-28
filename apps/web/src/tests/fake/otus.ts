@@ -2,6 +2,7 @@ import { faker } from "@faker-js/faker";
 import type {
 	HistoryNested,
 	Otu,
+	OtuHistory,
 	OtuIsolate,
 	OtuMinimal,
 	OtuReferenceNested,
@@ -21,6 +22,30 @@ export function createFakeHistoryNested(): HistoryNested {
 		methodName: "create",
 		user: createFakeUserNested(),
 	};
+}
+
+/**
+ * Create a fake change to an OTU, as an OTU's history or a reference's unbuilt
+ * changes list it.
+ *
+ * `index` defaults to null — the state of a change no build covers yet.
+ * `otu` and `reference` are replaced wholesale by an override, not merged.
+ */
+export function createFakeOtuHistory(
+	overrides?: Partial<OtuHistory>,
+): OtuHistory {
+	const defaultOtuHistory = {
+		...createFakeHistoryNested(),
+		index: null,
+		otu: {
+			id: faker.string.alphanumeric({ casing: "lower", length: 8 }),
+			name: faker.word.noun({ strategy: "any-length" }),
+			version: faker.number.int({ min: 1, max: 10 }),
+		},
+		reference: createFakeOtuReferenceNested(),
+	};
+
+	return { ...defaultOtuHistory, ...overrides };
 }
 
 /**

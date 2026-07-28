@@ -51,10 +51,9 @@ vi.mock("../db/pg", () => ({
 const handlers = (await import(
 	"./functions.ts?tss-serverfn-split"
 )) as SplitServerFnModule;
-const { SESSION_ID_COOKIE, SESSION_TOKEN_COOKIE } = await import(
-	"../auth/cookies"
+const { authenticateAs, seedUser, signIn } = await import(
+	"../auth/test/fixtures"
 );
-const { seedSession, seedUser } = await import("../auth/test/fixtures");
 const { addToGroup, seedGroup } = await import("../groups/test/fixtures");
 
 let database: TestDatabase;
@@ -86,25 +85,7 @@ afterEach(() => {
 	vi.restoreAllMocks();
 });
 
-/** Authenticate the next call as the given already-seeded user. */
-async function authenticateAs(userId: number): Promise<void> {
-	const { sessionId, token } = await seedSession(db, userId);
-
-	getRequest.mockReturnValue(
-		new Request("https://virtool.test/_serverFn/test", {
-			headers: {
-				cookie: `${SESSION_ID_COOKIE}=${sessionId}; ${SESSION_TOKEN_COOKIE}=${token}`,
-			},
-		}),
-	);
-}
-
 /** Authenticate the next call as a user with the given administrator role. */
-async function signIn(role: "full" | "base" | null): Promise<number> {
-	const userId = await seedUser(db, { administratorRole: role });
-	await authenticateAs(userId);
-	return userId;
-}
 
 function seedStatus(
 	values: { updates?: HmmUpdate[]; release?: unknown } = {},
@@ -141,7 +122,7 @@ function call(name: string, data?: unknown) {
 
 describe("installHmm", () => {
 	it("creates a pending install task and points the status at it", async () => {
-		const userId = await signIn("base");
+		const userId = await signIn(db, getRequest, { administratorRole: "base" });
 		await seedStatus();
 		mockManifest([RELEASE]);
 
@@ -182,7 +163,7 @@ describe("installHmm", () => {
 			permissions: { modify_hmm: true },
 		});
 		await addToGroup(db, userId, groupId);
-		await authenticateAs(userId);
+		await authenticateAs(db, getRequest, userId);
 
 		await seedStatus();
 		mockManifest([RELEASE]);
@@ -196,7 +177,7 @@ describe("installHmm", () => {
 	});
 
 	it("refuses when an install is already in progress", async () => {
-		await signIn("base");
+		await signIn(db, getRequest, { administratorRole: "base" });
 		await seedStatus({ updates: [{ ready: false } as HmmUpdate] });
 		const fetchSpy = vi.spyOn(globalThis, "fetch");
 
@@ -207,7 +188,7 @@ describe("installHmm", () => {
 	});
 
 	it("returns a bad gateway when no release is available", async () => {
-		await signIn("base");
+		await signIn(db, getRequest, { administratorRole: "base" });
 		await seedStatus();
 		mockManifest([]);
 
@@ -219,7 +200,7 @@ describe("installHmm", () => {
 
 describe("getHmm", () => {
 	it("responds 404 when the HMM is absent", async () => {
-		await signIn("base");
+		await signIn(db, getRequest, { administratorRole: "base" });
 
 		await expect(call("getHmmFn", { hmmId: 5000 })).rejects.toThrow();
 		expect(setResponseStatus).toHaveBeenCalledWith(404);

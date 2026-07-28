@@ -1,11 +1,10 @@
 import { useAnalysisSearch } from "@analyses/components/AnalysisSearchContext";
 import { createFuse } from "@app/fuse";
-import { useListIndexes } from "@indexes/queries";
-import type { IndexMinimal } from "@indexes/types";
+import { useListReadyIndexes } from "@indexes/queries";
 import { useFetchSample } from "@samples/queries";
 import { useFetchSubtractionsShortlist } from "@subtraction/queries";
 import type { SubtractionOption } from "@subtraction/types";
-import type { PathoscopeHit } from "@virtool/contracts";
+import type { IndexMinimal, PathoscopeHit } from "@virtool/contracts";
 import { groupBy, maxBy, sortBy } from "es-toolkit";
 import type {
 	FormattedNuvsAnalysis,
@@ -111,10 +110,7 @@ type UseCompatibleIndexesResult = {
 };
 
 export function useCompatibleIndexes(): UseCompatibleIndexesResult {
-	const { data, isPending, isError } = useListIndexes({
-		ready: true,
-		archived: false,
-	});
+	const { data, isPending, isError } = useListReadyIndexes(false);
 
 	const indexes = Object.values(
 		groupBy(data ?? [], (item) => item.reference.id),

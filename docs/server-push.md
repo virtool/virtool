@@ -59,11 +59,21 @@ The SSE handler emits one `data:` frame per event:
   Sentry.
 - `operation` — `"insert"`, `"update"`, or `"delete"`. `create` events
   map to `insert`; the other two pass through.
-- `id` — per-domain primary key type. Domains not yet migrated off
-  Mongo on the Python side (`indexes`, `references`, `roles`) use
-  string ids; the others use number ids. A frame whose
-  `id` type doesn't match its `domain` is rejected at the parse
-  boundary.
+- `id` — per-domain primary key type. `roles` is the only domain keyed
+  by a string (an administrator role name); every other domain is keyed
+  by a Postgres integer. A frame whose `id` type doesn't match its
+  `domain` is rejected at the parse boundary.
+
+  **A domain typed as a string here that Python emits as a number loses
+  every one of its frames.** Python's `EventPublisher` sends
+  `event.data.id` — the pydantic model's field — so the wire type is
+  whatever that model declares, and the Mongo-to-Postgres cutover turned
+  those into `int` domain by domain while this schema kept saying
+  `string`. The parse fails, the cache invalidation is dropped, and the
+  view silently stops updating. It is reported to Sentry (tag
+  `sse: message-validation`), which is how it was caught for `samples`
+  (VIR-2794) and then for `indexes` and `references`. When a domain's
+  Python id type changes, this schema changes in the same breath.
 
 The handler also sends `: connected` on open and `: keepalive` every
 25 s to keep proxies and the browser's `EventSource` happy.

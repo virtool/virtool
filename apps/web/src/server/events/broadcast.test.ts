@@ -47,14 +47,14 @@ describe("eventToSseMessage", () => {
 	it("preserves string resource ids", () => {
 		expect(
 			eventToSseMessage({
-				domain: "references",
-				resource_id: "abc",
+				domain: "roles",
+				resource_id: "full",
 				operation: "create",
 			}),
 		).toEqual({
-			domain: "references",
+			domain: "roles",
 			operation: "insert",
-			id: "abc",
+			id: "full",
 		});
 	});
 });

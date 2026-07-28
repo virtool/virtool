@@ -58,10 +58,7 @@ const handlers = (await import(
 )) as SplitServerFnModule;
 const { ForbiddenError } = await import("../auth/middleware");
 const { ClientError } = await import("../errors");
-const { SESSION_ID_COOKIE, SESSION_TOKEN_COOKIE } = await import(
-	"../auth/cookies"
-);
-const { seedSession, seedUser } = await import("../auth/test/fixtures");
+const { seedUser, signIn } = await import("../auth/test/fixtures");
 
 let database: TestDatabase;
 let ownerId: number;
@@ -100,22 +97,8 @@ beforeEach(async () => {
 });
 
 /** Authenticate the next call as a new user with no administrator role. */
-async function signIn(): Promise<number> {
-	const userId = await seedUser(db, {
-		handle: `caller-${Math.random()}`,
-		administratorRole: null,
-	});
-	const { sessionId, token } = await seedSession(db, userId);
-
-	getRequest.mockReturnValue(
-		new Request("https://virtool.test/_serverFn/test", {
-			headers: {
-				cookie: `${SESSION_ID_COOKIE}=${sessionId}; ${SESSION_TOKEN_COOKIE}=${token}`,
-			},
-		}),
-	);
-
-	return userId;
+function signInAsNewUser(): Promise<number> {
+	return signIn(db, getRequest, { handle: `caller-${Math.random()}` });
 }
 
 async function seedReference(
@@ -138,8 +121,11 @@ async function seedIndex(values: {
 			.insert(indexes)
 			.values({
 				created_at: new Date(),
+				manifest: {},
 				ready: values.ready,
 				reference_id: values.referenceId,
+				storage_key: `index-${values.referenceId}-${Math.random()}`,
+				user_id: 1,
 				version: 1,
 			})
 			.returning({ id: indexes.id }),
@@ -205,7 +191,7 @@ function call(name: string, data?: unknown) {
 
 describe("getAnalysis", () => {
 	it("returns 404 for an analysis that does not exist", async () => {
-		await signIn();
+		await signInAsNewUser();
 
 		await expect(
 			call("getAnalysisFn", { analysisId: 123456 }),
@@ -218,7 +204,7 @@ describe("getAnalysis", () => {
 		const sampleId = await seedSample({ all_read: false });
 		const analysisId = await seedAnalysis({ sample_id: sampleId });
 
-		await signIn();
+		await signInAsNewUser();
 
 		await expect(call("getAnalysisFn", { analysisId })).rejects.toBeInstanceOf(
 			ForbiddenError,
@@ -229,7 +215,7 @@ describe("getAnalysis", () => {
 	it("allows a caller holding only the sample's read right", async () => {
 		const analysisId = await seedReadOnlyAnalysis();
 
-		await signIn();
+		await signInAsNewUser();
 
 		const analysis = (await call("getAnalysisFn", { analysisId })) as {
 			id: number;
@@ -251,7 +237,7 @@ describe("createAnalysis", () => {
 	}
 
 	it("returns 404 for a sample that does not exist", async () => {
-		await signIn();
+		await signInAsNewUser();
 
 		await expect(
 			call("createAnalysisFn", values(123456)),
@@ -263,7 +249,7 @@ describe("createAnalysis", () => {
 	it("refuses a caller holding only the sample's read right", async () => {
 		const sampleId = await seedSample({ all_read: true, all_write: false });
 
-		await signIn();
+		await signInAsNewUser();
 
 		await expect(
 			call("createAnalysisFn", values(sampleId)),
@@ -277,7 +263,7 @@ describe("createAnalysis", () => {
 		const archived = await seedReference({ archived: true });
 		await seedIndex({ referenceId: archived, ready: true });
 
-		await signIn();
+		await signInAsNewUser();
 
 		await expect(
 			call("createAnalysisFn", values(sampleId, { refId: archived })),
@@ -290,7 +276,7 @@ describe("createAnalysis", () => {
 		const unbuilt = await seedReference();
 		await seedIndex({ referenceId: unbuilt, ready: false });
 
-		await signIn();
+		await signInAsNewUser();
 
 		await expect(
 			call("createAnalysisFn", values(sampleId, { refId: unbuilt })),
@@ -299,7 +285,7 @@ describe("createAnalysis", () => {
 	});
 
 	it("returns 201 and the new analysis for a caller with write rights", async () => {
-		const userId = await signIn();
+		const userId = await signInAsNewUser();
 		const sampleId = await seedSample({ user_id: userId });
 
 		const analysis = (await call("createAnalysisFn", values(sampleId))) as {
@@ -322,7 +308,7 @@ describe("createAnalysis", () => {
 
 describe("deleteAnalysis", () => {
 	it("returns 404 for an analysis that does not exist", async () => {
-		await signIn();
+		await signInAsNewUser();
 
 		await expect(
 			call("deleteAnalysisFn", { analysisId: 123456 }),
@@ -333,7 +319,7 @@ describe("deleteAnalysis", () => {
 	it("refuses a caller holding only the sample's read right", async () => {
 		const analysisId = await seedReadOnlyAnalysis();
 
-		await signIn();
+		await signInAsNewUser();
 
 		await expect(
 			call("deleteAnalysisFn", { analysisId }),
@@ -343,7 +329,7 @@ describe("deleteAnalysis", () => {
 	});
 
 	it("returns 409 for an analysis that is still running", async () => {
-		const userId = await signIn();
+		const userId = await signInAsNewUser();
 		const sampleId = await seedSample({ user_id: userId });
 		const analysisId = await seedAnalysis({
 			sample_id: sampleId,
@@ -362,7 +348,7 @@ describe("deleteAnalysis", () => {
 	});
 
 	it("returns 204 for a caller with write rights", async () => {
-		const userId = await signIn();
+		const userId = await signInAsNewUser();
 		const sampleId = await seedSample({ user_id: userId });
 		const analysisId = await seedAnalysis({ sample_id: sampleId });
 
@@ -378,7 +364,7 @@ describe("blastNuvs", () => {
 	it("refuses a caller holding only the sample's read right", async () => {
 		const analysisId = await seedReadOnlyAnalysis({ results });
 
-		await signIn();
+		await signInAsNewUser();
 
 		await expect(
 			call("blastNuvsFn", { analysisId, sequenceIndex: 0 }),
@@ -388,7 +374,7 @@ describe("blastNuvs", () => {
 	});
 
 	it("returns 409 for an analysis that is not NuVs", async () => {
-		const userId = await signIn();
+		const userId = await signInAsNewUser();
 		const sampleId = await seedSample({ user_id: userId });
 		const analysisId = await seedAnalysis({
 			sample_id: sampleId,
@@ -403,7 +389,7 @@ describe("blastNuvs", () => {
 	});
 
 	it("returns 404 when there is no contig at the sequence index", async () => {
-		const userId = await signIn();
+		const userId = await signInAsNewUser();
 		const sampleId = await seedSample({ user_id: userId });
 		const analysisId = await seedAnalysis({ sample_id: sampleId, results });
 
@@ -414,7 +400,7 @@ describe("blastNuvs", () => {
 	});
 
 	it("returns 201 and the pending BLAST record for a caller with write rights", async () => {
-		const userId = await signIn();
+		const userId = await signInAsNewUser();
 		const sampleId = await seedSample({ user_id: userId });
 		const analysisId = await seedAnalysis({ sample_id: sampleId, results });
 

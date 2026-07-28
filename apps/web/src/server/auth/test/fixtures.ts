@@ -6,11 +6,24 @@ import {
 	type Permissions,
 } from "@virtool/contracts";
 
+import type { Mock } from "vitest";
 import type { Db } from "../../db/pg";
 import { apiKeys } from "../../db/schema/apiKeys";
 import { sessions } from "../../db/schema/sessions";
 import { users } from "../../db/schema/users";
+import { SESSION_ID_COOKIE, SESSION_TOKEN_COOKIE } from "../cookies";
 import { hashToken, newSessionId, newSessionToken } from "../tokens";
+
+/** What {@link seedUser} accepts, and {@link signIn} forwards to it. */
+export type SeedUserOptions = {
+	active?: boolean;
+	administratorRole?: AdministratorRoleName | null;
+	email?: string;
+	forceReset?: boolean;
+	handle?: string;
+	password?: Buffer;
+	settings?: Record<string, unknown>;
+};
 
 /** A seeded session and the plaintext token that authenticates it. */
 export type SeededSession = {
@@ -40,15 +53,7 @@ export async function seedUser(
 		handle = "alice",
 		password = Buffer.from("not-a-real-hash"),
 		settings = {},
-	}: {
-		active?: boolean;
-		administratorRole?: AdministratorRoleName | null;
-		email?: string;
-		forceReset?: boolean;
-		handle?: string;
-		password?: Buffer;
-		settings?: Record<string, unknown>;
-	} = {},
+	}: SeedUserOptions = {},
 ): Promise<number> {
 	const [user] = await db
 		.insert(users)
@@ -129,6 +134,57 @@ export async function seedApiKey(
 	});
 
 	return key;
+}
+
+/**
+ * Encode a seeded session as the `Cookie` header value that authenticates it.
+ *
+ * Server functions are cookie-only; a raw route accepts either this or
+ * {@link basicAuthHeader}.
+ */
+export function sessionCookie({
+	sessionId,
+	token,
+}: Pick<SeededSession, "sessionId" | "token">): string {
+	return `${SESSION_ID_COOKIE}=${sessionId}; ${SESSION_TOKEN_COOKIE}=${token}`;
+}
+
+/**
+ * Open a session for an already-seeded user and point `getRequest` at a request
+ * carrying its cookies.
+ *
+ * `getRequest` is the suite's own `vi.fn()` standing in for
+ * `@tanstack/react-start/server`'s, which is why it is passed in rather than
+ * reached for — the mock is installed per test file.
+ */
+export async function authenticateAs(
+	db: Db,
+	getRequest: Mock,
+	userId: number,
+): Promise<void> {
+	const session = await seedSession(db, userId);
+
+	getRequest.mockReturnValue(
+		new Request("https://virtool.test/_serverFn/test", {
+			headers: { cookie: sessionCookie(session) },
+		}),
+	);
+}
+
+/**
+ * Seed a user and authenticate the next call as them. Returns the new user's id.
+ *
+ * `handle` is unique case-insensitively, so a suite signing in more than one
+ * user must pass a distinct one.
+ */
+export async function signIn(
+	db: Db,
+	getRequest: Mock,
+	options: SeedUserOptions = {},
+): Promise<number> {
+	const userId = await seedUser(db, options);
+	await authenticateAs(db, getRequest, userId);
+	return userId;
 }
 
 /** Encode `handle` and `key` as an HTTP Basic `Authorization` header value. */

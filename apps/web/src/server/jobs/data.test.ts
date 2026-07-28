@@ -161,7 +161,15 @@ describe("getJob", () => {
 
 		const [index] = await db
 			.insert(indexes)
-			.values({ job_id: jobId })
+			.values({
+				created_at: new Date(),
+				job_id: jobId,
+				manifest: {},
+				reference_id: 1,
+				storage_key: "job-linked-index",
+				user_id: 1,
+				version: 0,
+			})
 			.returning({ id: indexes.id });
 		if (!index) {
 			throw new Error("failed to seed index");

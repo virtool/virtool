@@ -1,10 +1,10 @@
 import { screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { mockApiListIndexes } from "@tests/api/indexes";
 import { createFakeAnalysisMinimal } from "@tests/fake/analyses";
 import { createFakeIndexMinimal } from "@tests/fake/indexes";
 import { createFakeSample } from "@tests/fake/samples";
 import { mockCreateAnalysis } from "@tests/server-fn/analyses";
+import { mockListReadyIndexes } from "@tests/server-fn/indexes";
 import { mockGetSample } from "@tests/server-fn/samples";
 import { mockListSubtractionsShortlist } from "@tests/server-fn/subtractions";
 import { renderWithRouter } from "@tests/setup";
@@ -18,10 +18,10 @@ async function renderForm(indexId?: number) {
 	const index = createFakeIndexMinimal({
 		...(indexId === undefined ? {} : { id: indexId }),
 		ready: true,
-		reference: { id: 1, name: "Plant Viruses", data_type: "genome" },
+		reference: { id: 1, name: "Plant Viruses" },
 	});
 
-	mockApiListIndexes([index]);
+	mockListReadyIndexes([index]);
 	mockListSubtractionsShortlist([]);
 	mockGetSample(sample);
 

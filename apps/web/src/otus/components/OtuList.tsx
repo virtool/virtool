@@ -54,7 +54,7 @@ export default function OtuList({ term, page, setSearch }: OtuListProps) {
 
 	return (
 		<ContainerNarrow>
-			<RebuildAlert page={page} refId={refId} />
+			<RebuildAlert page={page} referenceId={referenceId} />
 			{!isUnfilteredEmpty && (
 				<OtuToolbar
 					term={term}

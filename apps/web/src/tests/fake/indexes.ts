@@ -4,8 +4,7 @@ import type {
 	IndexFile,
 	IndexMinimal,
 	IndexNested,
-} from "@indexes/types";
-import { createFakeReferenceNested } from "./references";
+} from "@virtool/contracts";
 import { createFakeUserNested } from "./user";
 
 export function createFakeIndexNested(
@@ -24,10 +23,13 @@ export function createFakeIndexMinimal(
 ): IndexMinimal {
 	const defaultIndexMinimal = {
 		...createFakeIndexNested(),
-		change_count: faker.number.int({ min: 2, max: 10 }),
-		created_at: faker.date.past().toISOString(),
-		modified_otu_count: faker.number.int({ min: 2, max: 10 }),
-		reference: createFakeReferenceNested(),
+		changeCount: faker.number.int({ min: 2, max: 10 }),
+		createdAt: faker.date.past(),
+		modifiedOtuCount: faker.number.int({ min: 2, max: 10 }),
+		reference: {
+			id: faker.number.int(),
+			name: faker.word.noun({ strategy: "any-length" }),
+		},
 		user: createFakeUserNested(),
 		ready: faker.datatype.boolean(),
 	};
@@ -48,7 +50,7 @@ export function createFakeIndex(overrides?: Partial<Index>): Index {
 		manifest: {},
 		otus: [
 			{
-				change_count: faker.number.int({ min: 1, max: 10 }),
+				changeCount: faker.number.int({ min: 1, max: 10 }),
 				id: faker.string.alphanumeric({ casing: "lower", length: 8 }),
 				name: faker.word.noun({ strategy: "any-length" }),
 			},
@@ -60,7 +62,7 @@ export function createFakeIndex(overrides?: Partial<Index>): Index {
 
 export function createFakeIndexFile(overrides?: Partial<IndexFile>): IndexFile {
 	const defaultIndexFile = {
-		download_url: `/testUrl/${faker.word.noun({ strategy: "any-length" })}`,
+		downloadUrl: `/testUrl/${faker.word.noun({ strategy: "any-length" })}`,
 		id: faker.number.int(),
 		index: faker.number.int(),
 		name: faker.word.noun({ strategy: "any-length" }),

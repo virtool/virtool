@@ -92,8 +92,11 @@ async function seedIndex(values: {
 			.insert(indexes)
 			.values({
 				created_at: new Date(),
+				manifest: {},
 				ready: values.ready,
 				reference_id: values.referenceId,
+				storage_key: `index-${values.referenceId}-${values.version}`,
+				user_id: 1,
 				version: values.version,
 			})
 			.returning({ id: indexes.id }),

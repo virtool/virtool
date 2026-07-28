@@ -48,10 +48,7 @@ vi.mock("../db/pg", () => ({
 const handlers = (await import(
 	"./functions.ts?tss-serverfn-split"
 )) as SplitServerFnModule;
-const { SESSION_ID_COOKIE, SESSION_TOKEN_COOKIE } = await import(
-	"../auth/cookies"
-);
-const { seedSession, seedUser } = await import("../auth/test/fixtures");
+const { signIn } = await import("../auth/test/fixtures");
 const { createIsolate, createOtu } = await import("./data");
 
 let database: TestDatabase;
@@ -76,21 +73,6 @@ beforeEach(async () => {
 	await db.delete(legacyReferences);
 	await db.delete(users);
 });
-
-async function signIn(): Promise<number> {
-	const userId = await seedUser(db);
-	const { sessionId, token } = await seedSession(db, userId);
-
-	getRequest.mockReturnValue(
-		new Request("https://virtool.test/_serverFn/test", {
-			headers: {
-				cookie: `${SESSION_ID_COOKIE}=${sessionId}; ${SESSION_TOKEN_COOKIE}=${token}`,
-			},
-		}),
-	);
-
-	return userId;
-}
 
 async function seedReference(
 	ownerId: number,
@@ -136,7 +118,7 @@ function call(name: string, data?: unknown) {
 
 describe("authorizeOtu", () => {
 	it("maps a missing OTU to a 404", async () => {
-		await signIn();
+		await signIn(db, getRequest);
 
 		await expect(
 			call("updateOtuFn", { otuId: "nope", name: "X" }),
@@ -145,7 +127,7 @@ describe("authorizeOtu", () => {
 	});
 
 	it("maps an isolate the OTU does not carry to a 404", async () => {
-		const userId = await signIn();
+		const userId = await signIn(db, getRequest);
 		const referenceId = await seedReference(userId);
 		const otu = await createOtu(
 			db,
@@ -161,7 +143,7 @@ describe("authorizeOtu", () => {
 	});
 
 	it("refuses a caller without modify_otu with a 403", async () => {
-		const userId = await signIn();
+		const userId = await signIn(db, getRequest);
 		const referenceId = await seedReference(userId, { modifyOtu: false });
 		const otu = await createOtu(
 			db,
@@ -177,7 +159,7 @@ describe("authorizeOtu", () => {
 	});
 
 	it("updates an OTU in an active reference", async () => {
-		const userId = await signIn();
+		const userId = await signIn(db, getRequest);
 		const referenceId = await seedReference(userId);
 		const otu = await createOtu(
 			db,
@@ -197,7 +179,7 @@ describe("authorizeOtu", () => {
 	// An archived reference is read-only. The UI hides every edit control, but
 	// the floor has to hold for a direct or stale RPC call too.
 	it("refuses an OTU update in an archived reference with a 409", async () => {
-		const userId = await signIn();
+		const userId = await signIn(db, getRequest);
 		const referenceId = await seedReference(userId);
 		const otu = await createOtu(
 			db,
@@ -215,7 +197,7 @@ describe("authorizeOtu", () => {
 	});
 
 	it("refuses a sequence write in an archived reference with a 409", async () => {
-		const userId = await signIn();
+		const userId = await signIn(db, getRequest);
 		const referenceId = await seedReference(userId);
 		const otu = await createOtu(
 			db,
@@ -248,7 +230,7 @@ describe("authorizeOtu", () => {
 	});
 
 	it("refuses an isolate delete in an archived reference with a 409", async () => {
-		const userId = await signIn();
+		const userId = await signIn(db, getRequest);
 		const referenceId = await seedReference(userId);
 		const otu = await createOtu(
 			db,

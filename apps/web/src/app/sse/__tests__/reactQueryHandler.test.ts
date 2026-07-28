@@ -41,11 +41,11 @@ describe("reactQueryHandler", () => {
 				queryKey: groupQueryKeys.lists(),
 			},
 			{
-				message: { domain: "indexes", operation: "update", id: "idx" },
-				queryKey: indexQueryKeys.detail("idx"),
+				message: { domain: "indexes", operation: "update", id: 8 },
+				queryKey: indexQueryKeys.detail(8),
 			},
 			{
-				message: { domain: "indexes", operation: "delete", id: "idx" },
+				message: { domain: "indexes", operation: "delete", id: 8 },
 				queryKey: indexQueryKeys.lists(),
 			},
 			{
@@ -53,11 +53,11 @@ describe("reactQueryHandler", () => {
 				queryKey: jobQueryKeys.lists(),
 			},
 			{
-				message: { domain: "references", operation: "update", id: "ref" },
-				queryKey: referenceQueryKeys.detail("ref"),
+				message: { domain: "references", operation: "update", id: 9 },
+				queryKey: referenceQueryKeys.detail(9),
 			},
 			{
-				message: { domain: "references", operation: "delete", id: "ref" },
+				message: { domain: "references", operation: "delete", id: 9 },
 				queryKey: referenceQueryKeys.lists(),
 			},
 			{

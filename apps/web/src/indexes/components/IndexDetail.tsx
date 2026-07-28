@@ -23,7 +23,7 @@ export default function IndexDetail() {
 		data: index,
 		isPending: isPendingIndex,
 		isError,
-	} = useFetchIndex(indexId);
+	} = useFetchIndex(Number(indexId));
 	const {
 		data: reference,
 		isPending: isPendingReference,
@@ -37,7 +37,7 @@ export default function IndexDetail() {
 		return <LoadingPlaceholder />;
 	}
 
-	const { contributors, created_at, files, otus, user, version } = index;
+	const { contributors, createdAt, files, otus, user, version } = index;
 
 	return (
 		<>
@@ -45,7 +45,7 @@ export default function IndexDetail() {
 				<SubviewHeaderTitle>Index {version}</SubviewHeaderTitle>
 				<div className="flex items-center">
 					<SubviewHeaderAttribution>
-						{user.handle} built <RelativeTime time={created_at} />
+						{user.handle} built <RelativeTime time={createdAt} />
 					</SubviewHeaderAttribution>
 				</div>
 			</SubviewHeader>

@@ -47,10 +47,7 @@ const handlers = (await import(
 	"./functions.ts?tss-serverfn-split"
 )) as SplitServerFnModule;
 const { ForbiddenError } = await import("../auth/middleware");
-const { SESSION_ID_COOKIE, SESSION_TOKEN_COOKIE } = await import(
-	"../auth/cookies"
-);
-const { seedSession, seedUser } = await import("../auth/test/fixtures");
+const { seedUser, signIn } = await import("../auth/test/fixtures");
 
 let database: TestDatabase;
 
@@ -75,22 +72,6 @@ beforeEach(async () => {
 });
 
 /** Authenticate the next call as a user with the given administrator role. */
-async function signIn(
-	administratorRole: "full" | "base" | null = null,
-): Promise<number> {
-	const userId = await seedUser(db, { administratorRole });
-	const { sessionId, token } = await seedSession(db, userId);
-
-	getRequest.mockReturnValue(
-		new Request("https://virtool.test/_serverFn/test", {
-			headers: {
-				cookie: `${SESSION_ID_COOKIE}=${sessionId}; ${SESSION_TOKEN_COOKIE}=${token}`,
-			},
-		}),
-	);
-
-	return userId;
-}
 
 async function seedSampleRow(
 	overrides: Partial<typeof legacySamples.$inferInsert> = {},
@@ -117,7 +98,7 @@ describe("getSample", () => {
 		const owner = await seedUser(db, { handle: "owner" });
 		const sampleId = await seedSampleRow({ user_id: owner, all_read: false });
 
-		await signIn(null);
+		await signIn(db, getRequest, { administratorRole: null });
 
 		await expect(call("getSampleFn", { sampleId })).rejects.toBeInstanceOf(
 			ForbiddenError,
@@ -126,7 +107,7 @@ describe("getSample", () => {
 	});
 
 	it("returns 404, not 403, for a sample that does not exist", async () => {
-		await signIn(null);
+		await signIn(db, getRequest, { administratorRole: null });
 
 		await expect(call("getSampleFn", { sampleId: 123456 })).rejects.toThrow();
 		expect(setResponseStatus).toHaveBeenCalledWith(404);
@@ -134,7 +115,7 @@ describe("getSample", () => {
 	});
 
 	it("returns the sample the owner may read", async () => {
-		const userId = await signIn(null);
+		const userId = await signIn(db, getRequest, { administratorRole: null });
 		const sampleId = await seedSampleRow({ user_id: userId });
 
 		const sample = (await call("getSampleFn", { sampleId })) as { id: number };
@@ -144,7 +125,7 @@ describe("getSample", () => {
 
 describe("updateSampleRights", () => {
 	it("returns 404 for a sample that does not exist", async () => {
-		await signIn("full");
+		await signIn(db, getRequest, { administratorRole: "full" });
 
 		await expect(
 			call("updateSampleRightsFn", { sampleId: 123456, allRead: true }),
@@ -156,7 +137,7 @@ describe("updateSampleRights", () => {
 		const owner = await seedUser(db, { handle: "owner" });
 		const sampleId = await seedSampleRow({ user_id: owner });
 
-		await signIn(null);
+		await signIn(db, getRequest, { administratorRole: null });
 
 		await expect(
 			call("updateSampleRightsFn", { sampleId, allRead: true }),
@@ -165,7 +146,7 @@ describe("updateSampleRights", () => {
 	});
 
 	it("allows the sample owner", async () => {
-		const userId = await signIn(null);
+		const userId = await signIn(db, getRequest, { administratorRole: null });
 		const sampleId = await seedSampleRow({ user_id: userId });
 
 		const sample = (await call("updateSampleRightsFn", {
@@ -179,7 +160,7 @@ describe("updateSampleRights", () => {
 		const owner = await seedUser(db, { handle: "owner" });
 		const sampleId = await seedSampleRow({ user_id: owner });
 
-		await signIn("full");
+		await signIn(db, getRequest, { administratorRole: "full" });
 
 		const sample = (await call("updateSampleRightsFn", {
 			sampleId,
@@ -194,7 +175,7 @@ describe("deleteSample", () => {
 		const owner = await seedUser(db, { handle: "owner" });
 		const sampleId = await seedSampleRow({ user_id: owner, all_write: false });
 
-		await signIn(null);
+		await signIn(db, getRequest, { administratorRole: null });
 
 		await expect(call("deleteSampleFn", { sampleId })).rejects.toBeInstanceOf(
 			ForbiddenError,
@@ -203,7 +184,7 @@ describe("deleteSample", () => {
 	});
 
 	it("returns 400 when an unfinished sample's job is still running", async () => {
-		const userId = await signIn(null);
+		const userId = await signIn(db, getRequest, { administratorRole: null });
 
 		const jobId = takeFirstOrThrow(
 			await db

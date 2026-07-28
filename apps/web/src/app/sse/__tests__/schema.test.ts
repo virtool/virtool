@@ -18,16 +18,16 @@ describe("SseMessageSchema", () => {
 
 	it("accepts a frame for a string-id domain", () => {
 		const result = SseMessageSchema.safeParse({
-			domain: "indexes",
+			domain: "roles",
 			operation: "insert",
-			id: "abc123",
+			id: "full",
 		});
 		expect(result.success).toBe(true);
 	});
 
 	it("accepts a frame for every domain in the enum", () => {
 		for (const domain of SseDomainSchema.options) {
-			const stringId = ["indexes", "references", "roles"].includes(domain);
+			const stringId = domain === "roles";
 			const result = SseMessageSchema.safeParse({
 				domain,
 				operation: "update",
@@ -54,11 +54,26 @@ describe("SseMessageSchema", () => {
 
 	it("rejects a number id for a string-id domain", () => {
 		const result = SseMessageSchema.safeParse({
-			domain: "indexes",
+			domain: "roles",
 			operation: "update",
 			id: 7,
 		});
 		expect(result.success).toBe(false);
+	});
+
+	// Every domain but `roles` is keyed by a Postgres integer. Typing one as a
+	// string rejects every frame Python sends for it and drops the invalidation
+	// it carried — which is what happened to `samples` (VIR-2794), and to
+	// `indexes` and `references` until the same cutover caught up with them.
+	it("accepts the integer ids Python emits for indexes and references", () => {
+		for (const domain of ["indexes", "references"]) {
+			const result = SseMessageSchema.safeParse({
+				domain,
+				operation: "update",
+				id: 7,
+			});
+			expect(result.success).toBe(true);
+		}
 	});
 
 	it("rejects a string id for a number-id domain", () => {
