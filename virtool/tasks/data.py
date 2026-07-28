@@ -2,7 +2,7 @@
 
 from datetime import timedelta
 
-from sqlalchemy import desc, func, select, text, update
+from sqlalchemy import func, select, text, update
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 from structlog import get_logger
 
@@ -23,24 +23,6 @@ class TasksData:
 
     def __init__(self, pg: AsyncEngine):
         self._pg = pg
-
-    async def find(self) -> list[Task]:
-        """Get a list of all tasks.
-
-        :return: a list of task records
-
-        """
-        async with AsyncSession(self._pg) as session:
-            return [
-                Task(**task.to_dict())
-                for task in (
-                    await session.execute(
-                        select(SQLTask).order_by(desc(SQLTask.created_at)),
-                    )
-                )
-                .scalars()
-                .all()
-            ]
 
     async def get_counts(self) -> TaskCounts:
         """Get counts of active tasks for autoscaling.

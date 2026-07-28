@@ -1,6 +1,5 @@
 from datetime import datetime
 
-from virtool.models import SearchResult
 from virtool.models.base import BaseModel
 from virtool.users.models_base import UserNested
 
@@ -46,7 +45,3 @@ class UploadMinimal(BaseModel):
 
 Upload = UploadMinimal
 """Complete Upload model with all fields."""
-
-
-class UploadSearchResult(SearchResult):
-    items: list[UploadMinimal]

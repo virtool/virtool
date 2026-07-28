@@ -1,9 +1,7 @@
 from datetime import datetime
 
-from virtool.analyses.utils import find_nuvs_sequence_by_index
 from virtool.data.errors import (
     ResourceConflictError,
-    ResourceNotFoundError,
     ResourceNotModifiedError,
 )
 
@@ -30,22 +28,3 @@ async def check_if_analysis_modified(
 async def check_if_analysis_ready(jobs_api_flag: bool, ready: bool) -> None:
     if (jobs_api_flag and ready) or not ready:
         raise ResourceConflictError()
-
-
-async def check_if_analysis_is_nuvs(workflow: str) -> None:
-    if workflow != "nuvs":
-        raise ResourceConflictError("Not a NuVs analysis")
-
-
-async def check_if_analysis_is_running(ready: bool) -> None:
-    """Raise a `ResourceConflictError` if the analysis is ready."""
-    if not ready:
-        raise ResourceConflictError("Analysis is still running")
-
-
-async def check_analysis_nuvs_sequence(
-    results: dict,
-    sequence_index: int,
-) -> None:
-    if find_nuvs_sequence_by_index(results, sequence_index) is None:
-        raise ResourceNotFoundError()

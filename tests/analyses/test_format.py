@@ -1,7 +1,3 @@
-import csv
-import io
-
-import openpyxl
 import pytest
 from pytest_mock import MockerFixture
 from sqlalchemy import event
@@ -10,7 +6,6 @@ from syrupy import SnapshotAssertion
 
 import virtool.analyses
 from virtool.analyses.format import (
-    CSV_HEADERS,
     format_nuvs,
     format_pathoscope,
     transform_coverage_to_coordinates,
@@ -399,71 +394,3 @@ class TestFormatNuvs:
         results = {"hits": []}
 
         assert await format_nuvs(pg, results=results) == {"hits": []}
-
-
-class TestDownloadResults:
-    """Downloading an analysis to CSV or Excel.
-
-    Median depths are calculated from the raw results before formatting, then the
-    formatted hits drive the rendered rows.
-    """
-
-    results = {"hits": [{"id": "sequence", "align": [1, 2, 3]}]}
-
-    @staticmethod
-    def _patch_format_analysis(mocker: MockerFixture) -> None:
-        mocker.patch(
-            "virtool.analyses.format.format_analysis",
-            return_value={
-                "hits": [
-                    {
-                        "name": "OTU",
-                        "isolates": [
-                            {
-                                "source_type": "isolate",
-                                "source_name": "A",
-                                "sequences": [
-                                    {
-                                        "id": "sequence",
-                                        "accession": "AB000",
-                                        "length": 3,
-                                        "pi": 0.5,
-                                        "coverage": 1.0,
-                                    },
-                                ],
-                            },
-                        ],
-                    },
-                ],
-            },
-        )
-
-    async def test_csv(self, mocker: MockerFixture):
-        self._patch_format_analysis(mocker)
-
-        csv_data = await virtool.analyses.format.format_analysis_to_csv(
-            mocker.Mock(),
-            results=self.results,
-            workflow="pathoscope",
-        )
-
-        rows = list(csv.reader(io.StringIO(csv_data)))
-
-        assert rows[0] == list(CSV_HEADERS)
-        assert rows[1] == ["OTU", "Isolate A", "AB000", "3", "0.5", "2", "1.0"]
-
-    async def test_excel(self, mocker: MockerFixture):
-        self._patch_format_analysis(mocker)
-
-        excel_data = await virtool.analyses.format.format_analysis_to_excel(
-            mocker.Mock(),
-            results=self.results,
-            workflow="pathoscope",
-            sample_id="sample",
-        )
-
-        worksheet = openpyxl.load_workbook(io.BytesIO(excel_data)).active
-
-        median_depth_column = CSV_HEADERS.index("Median Depth") + 1
-
-        assert worksheet.cell(row=2, column=median_depth_column).value == 2

@@ -566,19 +566,17 @@ class TestGetMostRecentChange:
         assert await virtool.history.db.get_most_recent_change(pg, "6116cba1") is None
 
 
-@pytest.mark.parametrize("remove", [True, False])
 async def test_patch_to_version(
-    remove: bool,
     build_otu_history,
     pg: AsyncEngine,
     snapshot: SnapshotAssertion,
 ):
-    otu_id = await build_otu_history(remove=remove)
+    otu_id = await build_otu_history()
 
     current, patched = await virtool.history.db.patch_to_version(
         pg,
         otu_id,
-        1,
+        0,
     )
 
     assert current == snapshot(name="current")
@@ -622,12 +620,12 @@ async def test_patch_to_version_intermediate(
     """Patching to an intermediate version unwinds only the changes above it, stopping
     at the first change at or below the target version.
     """
-    otu_id = await build_otu_history(remove=False)
+    otu_id = await build_otu_history()
 
     current, patched = await virtool.history.db.patch_to_version(
         pg,
         otu_id,
-        2,
+        1,
     )
 
     assert current == snapshot(name="current")
@@ -642,10 +640,8 @@ class TestPatchOTUsToVersions:
     resolves to alone.
     """
 
-    @pytest.mark.parametrize("remove", [True, False])
     async def test_same_otu_at_two_versions(
         self,
-        remove: bool,
         build_otu_history,
         pg: AsyncEngine,
     ):
@@ -655,9 +651,9 @@ class TestPatchOTUsToVersions:
         its OTUs is being patched to, so the specifier bound for the higher version is
         handed rows reaching past its own target that it must not revert.
         """
-        otu_id = await build_otu_history(remove=remove)
+        otu_id = await build_otu_history()
 
-        specifiers = [(otu_id, 1), (otu_id, 2)]
+        specifiers = [(otu_id, 0), (otu_id, 1)]
 
         patched_otus = await virtool.history.db.patch_otus_to_versions(pg, specifiers)
 

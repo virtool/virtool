@@ -1,6 +1,5 @@
 from datetime import datetime
 
-from virtool.models import SearchResult
 from virtool.models.base import BaseModel
 from virtool.references.models import ReferenceNested
 from virtool.users.models_base import UserNested
@@ -100,10 +99,3 @@ class Index(IndexMinimal):
                 "manifest": [],
             },
         }
-
-
-class IndexSearchResult(SearchResult):
-    documents: list[IndexMinimal]
-    modified_otu_count: int
-    total_otu_count: int
-    change_count: int

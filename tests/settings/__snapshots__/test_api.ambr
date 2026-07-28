@@ -15,19 +15,3 @@
     'sample_group_write': False,
   })
 # ---
-# name: test_update
-  dict({
-    'default_source_types': list([
-      'isolate',
-      'strain',
-    ]),
-    'enable_api': False,
-    'enable_sentry': False,
-    'minimum_password_length': 10,
-    'sample_all_read': True,
-    'sample_all_write': False,
-    'sample_group': 'none',
-    'sample_group_read': True,
-    'sample_group_write': False,
-  })
-# ---

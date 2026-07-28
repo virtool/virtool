@@ -150,17 +150,6 @@ class SessionData(DataLayerDomain):
             )
             await session.commit()
 
-    async def delete_by_user(self, user_id: int) -> None:
-        """Delete all sessions for a user.
-
-        :param user_id: the user ID whose sessions should be deleted
-        """
-        async with AsyncSession(self._pg) as session:
-            await session.execute(
-                delete(SQLSession).where(SQLSession.user_id == user_id)
-            )
-            await session.commit()
-
     async def _create_session_id(self) -> str:
         """Create a unique session ID.
 

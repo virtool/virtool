@@ -9,12 +9,10 @@ from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 from syrupy import SnapshotAssertion
 from syrupy.matchers import path_type
 
-from tests.fixtures.client import ClientSpawner, JobClientSpawner
-from tests.fixtures.response import RespIs
+from tests.fixtures.client import JobClientSpawner
 from virtool.fake.next import DataFaker
 from virtool.jobs.models import JobState
 from virtool.jobs.pg import SQLJob
-from virtool.models.enums import Permission
 
 _job_response_matcher = path_type(
     {
@@ -29,149 +27,8 @@ _job_response_matcher = path_type(
 )
 
 
-class TestFind:
-    async def test_basic(
-        self,
-        fake: DataFaker,
-        snapshot: SnapshotAssertion,
-        spawn_client: ClientSpawner,
-    ):
-        client = await spawn_client(authenticated=True)
-
-        user_1 = await fake.users.create()
-        user_2 = await fake.users.create()
-
-        for _ in range(4):
-            await fake.jobs.create(user=user_1)
-
-        for _ in range(7):
-            await fake.jobs.create(user=user_2)
-
-        resp = await client.get("/jobs?per_page=5")
-
-        assert resp.status == HTTPStatus.OK
-        assert await resp.json() == snapshot(matcher=_job_response_matcher)
-
-    async def test_user(self, fake: DataFaker, spawn_client: ClientSpawner):
-        """Test that jobs are filtered correctly when user id(s) are provided."""
-        client = await spawn_client(authenticated=True)
-
-        user_1 = await fake.users.create()
-        user_2 = await fake.users.create()
-        user_3 = await fake.users.create()
-
-        await fake.jobs.create(user=user_1)
-        await fake.jobs.create(user=user_2)
-        await fake.jobs.create(user=user_1)
-        await fake.jobs.create(user=user_2)
-        await fake.jobs.create(user=user_1)
-        await fake.jobs.create(user=user_3)
-
-        resp_1 = await client.get(f"/jobs?user={user_1.id}")
-        body_1 = await resp_1.json()
-
-        assert resp_1.status == HTTPStatus.OK
-        assert all(job["user"]["id"] == user_1.id for job in body_1["items"])
-
-        resp_2 = await client.get(f"/jobs?user={user_2.id}")
-        body_2 = await resp_2.json()
-
-        assert resp_2.status == HTTPStatus.OK
-        assert all(job["user"]["id"] == user_2.id for job in body_2["items"])
-
-        resp_3 = await client.get(f"/jobs?user={user_1.id}&user={user_2.id}")
-        body_3 = await resp_3.json()
-
-        assert resp_3.status == HTTPStatus.OK
-        assert all(
-            job["user"]["id"] in [user_1.id, user_2.id] for job in body_3["items"]
-        )
-
-    @pytest.mark.parametrize(
-        "state",
-        [
-            "cancelled",
-            "failed",
-            "pending",
-            "running",
-            "succeeded",
-        ],
-    )
-    async def test_state(
-        self,
-        state: str,
-        fake: DataFaker,
-        snapshot,
-        spawn_client: ClientSpawner,
-    ):
-        client = await spawn_client(authenticated=True)
-
-        user_1 = await fake.users.create()
-        user_2 = await fake.users.create()
-
-        await fake.jobs.create(user=user_1, state=JobState.PENDING)
-        await fake.jobs.create(user=user_2, state=JobState.RUNNING)
-        await fake.jobs.create(user=user_2, state=JobState.RUNNING)
-        await fake.jobs.create(user=user_1, state=JobState.PENDING)
-        await fake.jobs.create(user=user_2, state=JobState.FAILED)
-        await fake.jobs.create(user=user_1, state=JobState.CANCELLED)
-        await fake.jobs.create(user=user_1, state=JobState.SUCCEEDED)
-        await fake.jobs.create(user=user_2, state=JobState.FAILED)
-        await fake.jobs.create(user=user_1, state=JobState.SUCCEEDED)
-
-        resp = await client.get(f"/jobs?state={state}")
-        body = await resp.json()
-
-        assert resp.status == HTTPStatus.OK
-        assert all(job["state"] == state for job in body["items"])
-
-    async def test_state_invalid(self, snapshot, spawn_client: ClientSpawner):
-        """Test that a 400 error with a detailed message is returned when an invalid state
-        value is provided.
-        """
-        client = await spawn_client(authenticated=True)
-
-        resp = await client.get("/jobs?state=bad")
-
-        assert resp.status == 400
-        assert await resp.json() == snapshot
-
-
 class TestGetCounts:
-    async def test_ok(self, fake: DataFaker, spawn_client: ClientSpawner):
-        client = await spawn_client(authenticated=True)
-
-        user = await fake.users.create()
-
-        await fake.jobs.create(user=user, state=JobState.PENDING, workflow="nuvs")
-        await fake.jobs.create(user=user, state=JobState.PENDING, workflow="nuvs")
-        await fake.jobs.create(user=user, state=JobState.RUNNING, workflow="pathoscope")
-        await fake.jobs.create(user=user, state=JobState.SUCCEEDED, workflow="nuvs")
-
-        resp = await client.get("/jobs/counts")
-
-        assert resp.status == HTTPStatus.OK
-
-        body = await resp.json()
-
-        assert body["pending"]["nuvs"] == 2
-        assert body["running"]["pathoscope"] == 1
-        assert body["succeeded"]["nuvs"] == 1
-
-        assert sum(c for counts in body.values() for c in counts.values()) == 4
-
-    async def test_empty(self, spawn_client: ClientSpawner):
-        client = await spawn_client(authenticated=True)
-
-        resp = await client.get("/jobs/counts")
-
-        assert resp.status == HTTPStatus.OK
-
-        body = await resp.json()
-
-        assert sum(c for counts in body.values() for c in counts.values()) == 0
-
-    async def test_jobs_api(self, fake: DataFaker, spawn_job_client: JobClientSpawner):
+    async def test_ok(self, fake: DataFaker, spawn_job_client: JobClientSpawner):
         client = await spawn_job_client(authenticated=False)
 
         user = await fake.users.create()
@@ -193,15 +50,29 @@ class TestGetCounts:
 
         assert sum(c for counts in body.values() for c in counts.values()) == 4
 
+    async def test_empty(self, spawn_job_client: JobClientSpawner):
+        client = await spawn_job_client(authenticated=False)
 
-@pytest.mark.parametrize("error", [None, "404"])
-async def test_get(error, fake: DataFaker, snapshot, spawn_client):
-    client = await spawn_client(authenticated=True)
+        resp = await client.get("/jobs/counts")
 
-    user = await fake.users.create()
+        assert resp.status == HTTPStatus.OK
 
-    if error is None:
-        job = await fake.jobs.create(user=user)
+        body = await resp.json()
+
+        assert sum(c for counts in body.values() for c in counts.values()) == 0
+
+
+class TestGet:
+    async def test_ok(
+        self,
+        fake: DataFaker,
+        snapshot: SnapshotAssertion,
+        spawn_job_client: JobClientSpawner,
+    ):
+        client = await spawn_job_client(authenticated=True)
+
+        job = await fake.jobs.create(user=await fake.users.create())
+
         resp = await client.get(f"/jobs/{job.id}")
         body = await resp.json()
 
@@ -210,12 +81,14 @@ async def test_get(error, fake: DataFaker, snapshot, spawn_client):
 
         # Explicitly ensure the secret API key is not returned in the response.
         assert "key" not in body
-    else:
-        resp = await client.get("/jobs/999999")
-        body = await resp.json()
 
-        assert resp.status == 404
-        assert body == {
+    async def test_not_found(self, spawn_job_client: JobClientSpawner):
+        client = await spawn_job_client(authenticated=True)
+
+        resp = await client.get("/jobs/999999")
+
+        assert resp.status == HTTPStatus.NOT_FOUND
+        assert await resp.json() == {
             "id": "not_found",
             "message": "Not found",
         }
@@ -264,63 +137,6 @@ class TestPing:
 
         assert resp.status == HTTPStatus.OK
         assert body["cancelled"] is True
-
-
-@pytest.mark.parametrize(
-    "error",
-    [None, 404, "409_succeeded", "409_failed", "409_cancelled"],
-)
-async def test_cancel(
-    error,
-    fake: DataFaker,
-    resp_is: RespIs,
-    snapshot: SnapshotAssertion,
-    spawn_client: ClientSpawner,
-):
-    client = await spawn_client(authenticated=True, permissions=[Permission.cancel_job])
-
-    user = await fake.users.create()
-
-    if error == 404:
-        resp = await client.put("/jobs/999999/cancel", {})
-        await resp_is.not_found(resp)
-        return
-
-    if error == "409_succeeded":
-        job = await fake.jobs.create(user, state=JobState.SUCCEEDED)
-    elif error == "409_failed":
-        job = await fake.jobs.create(user, state=JobState.FAILED)
-    elif error == "409_cancelled":
-        job = await fake.jobs.create(user, state=JobState.CANCELLED)
-    else:
-        job = await fake.jobs.create(user, state=JobState.RUNNING)
-
-    resp = await client.put(f"/jobs/{job.id}/cancel", {})
-
-    if str(error).startswith("409"):
-        await resp_is.conflict(resp, "Job cannot be cancelled in its current state")
-        return
-
-    assert resp.status == HTTPStatus.OK
-
-    body = await resp.json()
-    assert body == snapshot(matcher=_job_response_matcher)
-
-    assert "key" not in body
-
-
-async def test_status_route_removed(fake: DataFaker, spawn_client: ClientSpawner):
-    client = await spawn_client(authenticated=True)
-
-    user = await fake.users.create()
-    job = await fake.jobs.create(user, state=JobState.RUNNING)
-
-    resp = await client.post(
-        f"/jobs/{job.id}/status",
-        {"state": "failed", "progress": 100},
-    )
-
-    assert resp.status == HTTPStatus.NOT_FOUND
 
 
 class TestClaim:

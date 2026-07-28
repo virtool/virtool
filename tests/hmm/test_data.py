@@ -6,145 +6,11 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from virtool.data.errors import ResourceNotFoundError
-from virtool.fake.next import DataFaker
 from virtool.hmm.data import HMM_ANNOTATIONS_KEY, HMM_PROFILES_KEY, HmmsData
 from virtool.hmm.releases import GetReleaseError
 from virtool.hmm.sql import SQLHMM, SQLHMMStatus
 from virtool.storage.object import ObjectProvider
 from virtool.tasks.progress import AbstractProgressHandler
-
-
-async def test_get_status(
-    config,
-    data_layer,
-    fake: DataFaker,
-    seed_hmm_status,
-    snapshot,
-    static_time,
-):
-    """Test that function works when the HMM data are being updated and when they are not."""
-    user = await fake.users.create()
-
-    document = {
-        "_id": "hmm",
-        "updating": False,
-        "updates": [
-            {
-                "body": "- remove some annotations that didn't have corresponding profiles",
-                "created_at": static_time.datetime,
-                "filename": "vthmm.tar.gz",
-                "html_url": "https://github.com/virtool/virtool-hmm/releases/tag/v0.2.1",
-                "id": 1230982,
-                "name": "v0.2.1",
-                "newer": False,
-                "published_at": static_time.datetime,
-                "ready": True,
-                "size": 85904451,
-                "user": {"id": user.id},
-            },
-        ],
-        "installed": {
-            "body": "- remove some annotations that didn't have corresponding profiles",
-            "created_at": static_time.datetime,
-            "filename": "vthmm.tar.gz",
-            "html_url": "https://github.com/virtool/virtool-hmm/releases/tag/v0.2.1",
-            "id": 8472569,
-            "name": "v0.2.1",
-            "newer": True,
-            "published_at": "2017-11-10T19:12:43Z",
-            "ready": True,
-            "size": 85904451,
-            "user": {"id": user.id},
-        },
-        "release": {
-            "body": "- remove some annotations that didn't have corresponding profiles",
-            "content_type": "application/gzip",
-            "download_url": "https://github.com/virtool/virtool-hmm/releases/download/v0.2.1/vthmm.tar.gz",
-            "filename": "vthmm.tar.gz",
-            "html_url": "https://github.com/virtool/virtool-hmm/releases/tag/v0.2.1",
-            "id": 1230982,
-            "name": "v0.2.1",
-            "newer": False,
-            "published_at": static_time.datetime,
-            "retrieved_at": static_time.datetime,
-            "size": 85904451,
-        },
-        "errors": [],
-    }
-
-    await seed_hmm_status(document)
-
-    assert await data_layer.hmms.get_status() == snapshot
-
-
-class TestGetStatusUpdatingFlag:
-    """``updating`` is derived from the latest entry in ``updates``.
-
-    It is ``True`` exactly when ``updates`` is non-empty and the latest entry
-    has ``ready: False`` — matching the install lock in ``install_update`` that
-    refuses to start when any ``updates.ready`` is ``False``. The pre-fix
-    derivation ignored the first install and inverted the ``ready`` check
-    (VIR-2445).
-    """
-
-    async def test_single_in_progress_update(self, data_layer, seed_hmm_status):
-        """A lone unfinished update reports ``updating: True``."""
-        await seed_hmm_status({"updates": [{"id": 1, "ready": False}]})
-
-        status = await data_layer.hmms.get_status()
-
-        assert status.updating is True
-
-    async def test_latest_in_progress_update(self, data_layer, seed_hmm_status):
-        """A finished update followed by an unfinished one reports ``True``."""
-        await seed_hmm_status(
-            {"updates": [{"id": 1, "ready": True}, {"id": 2, "ready": False}]},
-        )
-
-        status = await data_layer.hmms.get_status()
-
-        assert status.updating is True
-
-    async def test_latest_completed_update(self, data_layer, seed_hmm_status):
-        """A latest finished update reports ``updating: False``."""
-        await seed_hmm_status({"updates": [{"id": 1, "ready": True}]})
-
-        status = await data_layer.hmms.get_status()
-
-        assert status.updating is False
-
-    async def test_no_updates(self, data_layer, seed_hmm_status):
-        """An empty ``updates`` list reports ``updating: False``."""
-        await seed_hmm_status({"updates": []})
-
-        status = await data_layer.hmms.get_status()
-
-        assert status.updating is False
-
-
-class TestGetUpdates:
-    """``get_updates`` reads ``updates`` from Postgres, newest-first."""
-
-    async def test_returns_updates_newest_first(self, data_layer, seed_hmm_status):
-        """Stored updates are returned in reverse insertion order."""
-        await seed_hmm_status(
-            {
-                "updates": [
-                    {"id": 1, "name": "v0.1.0", "ready": True},
-                    {"id": 2, "name": "v0.2.0", "ready": True},
-                ],
-            },
-        )
-
-        updates = await data_layer.hmms.get_updates()
-
-        assert [update_["id"] for update_ in updates] == [2, 1]
-
-    async def test_returns_empty_when_no_updates(self, data_layer, seed_hmm_status):
-        """A singleton with no updates yields an empty list."""
-        await seed_hmm_status({"updates": []})
-
-        assert await data_layer.hmms.get_updates() == []
 
 
 async def _drain(stream) -> bytes:
@@ -326,51 +192,6 @@ class TestGet:
             await data_layer.hmms.get(999999)
 
 
-class TestFind:
-    """``find`` lists annotations from Postgres, excluding hidden ones."""
-
-    async def test_reads_from_postgres(
-        self, data_layer, seed_hmm_status, seed_pg_hmm, hmm_document
-    ):
-        await seed_hmm_status({})
-        await seed_pg_hmm({**hmm_document, "hidden": False})
-
-        result = await data_layer.hmms.find(1, 25)
-
-        assert result.found_count == 1
-        assert result.total_count == 1
-        assert [document.id for document in result.documents] == [1]
-
-    async def test_excludes_hidden(
-        self, data_layer, seed_hmm_status, seed_pg_hmm, hmm_document
-    ):
-        await seed_hmm_status({})
-        await seed_pg_hmm({**hmm_document, "_id": "visible", "hidden": False})
-        await seed_pg_hmm({**hmm_document, "_id": "concealed", "hidden": True})
-
-        result = await data_layer.hmms.find(1, 25)
-
-        assert result.total_count == 1
-        assert [document.id for document in result.documents] == [1]
-
-    async def test_search_filters_by_name(
-        self, data_layer, seed_hmm_status, seed_pg_hmm, hmm_document
-    ):
-        await seed_hmm_status({})
-        await seed_pg_hmm(
-            {**hmm_document, "_id": "polymerase", "names": ["RNA polymerase"]},
-        )
-        await seed_pg_hmm(
-            {**hmm_document, "_id": "capsid", "names": ["capsid protein"]},
-        )
-
-        result = await data_layer.hmms.find(1, 25, "polymerase")
-
-        assert result.found_count == 1
-        assert result.total_count == 2
-        assert [document.id for document in result.documents] == [1]
-
-
 class TestInstall:
     """``install`` writes annotations and status to Postgres."""
 
@@ -547,25 +368,3 @@ class TestUpdateRelease:
 
         with pytest.raises(GetReleaseError):
             await data_layer.hmms.update_release()
-
-
-class TestInstallUpdate:
-    """``install_update`` writes the queued update to Postgres."""
-
-    async def test_pushes_update(self, data_layer, fake, mocker, pg):
-        mocker.patch(
-            "virtool.hmm.db.fetch_release_manifest_from_virtool",
-            mocker.AsyncMock(return_value=None),
-        )
-
-        user = await fake.users.create()
-
-        await _seed_status(pg)
-
-        await data_layer.hmms.install_update(user.id)
-
-        pg_status = await _read_pg_status(pg)
-
-        assert len(pg_status["updates"]) == 1
-        assert pg_status["updates"][0]["ready"] is False
-        assert pg_status["task_id"] is not None

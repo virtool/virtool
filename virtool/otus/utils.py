@@ -66,23 +66,6 @@ def find_isolate(isolates: list[dict], isolate_id: str) -> dict:
     return next((isolate for isolate in isolates if isolate["id"] == isolate_id), None)
 
 
-def strip_sequence_references(isolate: Document) -> Document:
-    """Drop the parent-reference field from an isolate's nested sequences.
-
-    A sequence inherits its reference from the parent OTU, so the OTU isolate and
-    sequence resource shapes omit it (see ``OTUSequence``). Joined isolates carry the
-    reference embedded in each Mongo sequence document; strip it before returning an
-    isolate resource so the embedded ``reference.id`` is never surfaced directly.
-    """
-    return {
-        **isolate,
-        "sequences": [
-            {key: value for key, value in sequence.items() if key != "reference"}
-            for sequence in isolate.get("sequences", [])
-        ],
-    }
-
-
 def format_otu(
     joined: Document | None,
     issues: Document | bool | None = False,
@@ -248,39 +231,3 @@ def verify(joined: Document) -> bool | Document | None:
         return errors
 
     return None
-
-
-def format_fasta_entry(
-    otu_name: str,
-    isolate_name: str,
-    sequence_id: str,
-    sequence: str,
-) -> str:
-    """Create a FASTA header and sequence block for an OTU sequence.
-
-    :param otu_name: the otu name to include in the header
-    :param isolate_name: the isolate name to include in the header
-    :param sequence_id: the sequence id to include in the header
-    :param sequence: the sequence for the FASTA entry
-    :return: a FASTA entry
-
-    """
-    return f">{otu_name}|{isolate_name}|{sequence_id}|{len(sequence)}\n{sequence}"
-
-
-def format_fasta_filename(*parts: str) -> str:
-    """Format a FASTA filename of the form "otu.isolate.sequence_id.fa".
-
-    :param parts: the filename parts
-    :return: a compound FASTA filename
-
-    """
-    if len(parts) > 3:
-        raise ValueError("Unexpected number of filename parts")
-
-    if len(parts) == 0:
-        raise ValueError("At least one filename part required")
-
-    filename = ".".join(parts).replace(" ", "_") + ".fa"
-
-    return filename.lower()

@@ -2,7 +2,7 @@ import asyncio
 
 import pytest
 from pytest_mock import MockerFixture
-from sqlalchemy import delete, select
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 
 import virtool.indexes.db
@@ -11,12 +11,10 @@ from virtool.history.sql import SQLLegacyHistory
 from virtool.indexes.db import (
     IndexCountsTransform,
     attach_files,
-    get_next_version,
     iter_patched_otus,
     update_last_indexed_versions,
     upsert_index_file,
 )
-from virtool.indexes.models import Index
 from virtool.indexes.sql import SQLIndex, SQLIndexFile
 from virtool.otus.sql import SQLOTU
 from virtool.utils import timestamp
@@ -242,65 +240,6 @@ async def test_create_rolls_back_on_failure(
 
     assert row.index_id is None
     assert index_row is None
-
-
-async def _seed_index_series(
-    fake: DataFaker,
-    *,
-    ready: bool,
-) -> list[Index]:
-    """Seed four successive indexes for the ``indexed_ref`` reference."""
-    user = await fake.users.create()
-    reference = await fake.references.create(user=user, id_="indexed_ref")
-
-    return [
-        await fake.indexes.create(reference, user, version=version, ready=ready)
-        for version in range(4)
-    ]
-
-
-class TestGetNextVersion:
-    async def test_follows_highest_version(self, fake: DataFaker, pg: AsyncEngine):
-        """The next version is one past the highest existing version."""
-        await _seed_index_series(fake, ready=True)
-
-        async with AsyncSession(pg) as session:
-            assert await get_next_version(session, "indexed_ref") == 4
-
-    async def test_no_indexes(self, fake: DataFaker, pg: AsyncEngine):
-        """A reference with no indexes at all starts at version 0."""
-        user = await fake.users.create()
-        await fake.references.create(user=user, id_="indexed_ref")
-
-        async with AsyncSession(pg) as session:
-            assert await get_next_version(session, "indexed_ref") == 0
-
-    async def test_unknown_reference(self, fake: DataFaker, pg: AsyncEngine):
-        """Indexes belonging to another reference are not counted."""
-        await _seed_index_series(fake, ready=True)
-
-        async with AsyncSession(pg) as session:
-            assert await get_next_version(session, "other_ref") == 0
-
-    async def test_version_not_reused_after_delete(
-        self, fake: DataFaker, pg: AsyncEngine
-    ):
-        """Deleting a lower-versioned index does not free its number for reuse.
-
-        ``MAX(version) + 1`` is monotonic, so a build assigned version ``N`` keeps
-        ``N`` reserved even after a lower index is deleted. Ready-count allocation
-        would drop to ``1`` here and collide with the surviving version-1 index.
-        """
-        indexes = await _seed_index_series(fake, ready=True)
-
-        async with AsyncSession(pg) as session:
-            await session.execute(
-                delete(SQLIndex).where(SQLIndex.id == indexes[0].id),
-            )
-            await session.commit()
-
-        async with AsyncSession(pg) as session:
-            assert await get_next_version(session, "indexed_ref") == 4
 
 
 async def test_iter_patched_otus_starts_when_consumed(

@@ -1,6 +1,6 @@
 import pytest
 
-from virtool.otus.oas import CreateOTURequest, UpdateOTURequest
+from virtool.otus.oas import CreateOTURequest
 
 
 @pytest.fixture
@@ -76,20 +76,17 @@ def build_otu_history(data_layer, fake):
 
     The change records come from the same producer production uses, so they can drift
     from real behaviour no more than the OTU data layer itself does. The OTU passes
-    through five versions:
+    through three versions:
 
     * ``0`` -- created
     * ``1`` -- an isolate added
     * ``2`` -- a sequence added to the isolate
-    * ``3`` -- renamed
-    * ``4`` -- the isolate removed
-    * ``removed`` -- the OTU removed (only when ``remove`` is ``True``)
 
     Returns the id of the OTU the mutations created so callers address it rather than a
     hand-picked literal id.
     """
 
-    async def func(remove: bool) -> str:
+    async def func() -> str:
         user = await fake.users.create()
         reference = await fake.references.create(user=user)
 
@@ -115,17 +112,6 @@ def build_otu_history(data_layer, fake):
             user.id,
             host="sweet cherry",
         )
-
-        await data_layer.otus.update(
-            otu.id,
-            UpdateOTURequest(name="Test Virus"),
-            user.id,
-        )
-
-        await data_layer.otus.remove_isolate(otu.id, isolate.id, user.id)
-
-        if remove:
-            await data_layer.otus.remove(otu.id, user.id)
 
         return otu.id
 

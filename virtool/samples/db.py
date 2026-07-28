@@ -4,12 +4,8 @@ from collections import defaultdict
 from typing import Any
 
 from sqlalchemy import (
-    ColumnExpressionArgument,
-    and_,
     func,
-    or_,
     select,
-    true,
 )
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 from yarl import URL
@@ -21,7 +17,6 @@ from virtool.data.topg import (
 )
 from virtool.data.transforms import AbstractTransform, apply_transforms
 from virtool.groups.pg import SQLGroup
-from virtool.models.roles import AdministratorRole
 from virtool.samples.sql import (
     SQLLegacySample,
     SQLSampleArtifact,
@@ -220,32 +215,6 @@ class DeriveWorkflowTagsTransform(AbstractTransform):
             )
             for document in documents
         }
-
-
-def compose_sample_rights_filter(client) -> ColumnExpressionArgument[bool]:
-    """Compose the Postgres predicate scoping samples to those ``client`` can read.
-
-    The requesting user owns the sample, the sample is world-readable, or the sample is
-    readable by a group the user belongs to. A full administrator sees every sample,
-    matching the single-resource bypass in :func:`has_sample_right`.
-    """
-    if client.administrator_role == AdministratorRole.FULL:
-        return true()
-
-    rights_filter = [
-        SQLLegacySample.all_read.is_(True),
-        SQLLegacySample.user_id == client.user_id,
-    ]
-
-    if client.groups:
-        rights_filter.append(
-            and_(
-                SQLLegacySample.group_read.is_(True),
-                SQLLegacySample.group_id.in_(client.groups),
-            ),
-        )
-
-    return or_(*rights_filter)
 
 
 async def validate_force_choice_group(pg: AsyncEngine, data: dict) -> str | None:

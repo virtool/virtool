@@ -5,7 +5,6 @@ from pydantic import root_validator
 
 from virtool.indexes.models import IndexNested
 from virtool.jobs.models import JobMinimal
-from virtool.models import SearchResult
 from virtool.models.base import BaseModel
 from virtool.references.models import ReferenceNested
 from virtool.subtractions.models import SubtractionNested
@@ -125,7 +124,3 @@ class Analysis(AnalysisMinimal):
                 "workflow": "pathoscope",
             }
         }
-
-
-class AnalysisSearchResult(SearchResult):
-    documents: list[AnalysisMinimal]

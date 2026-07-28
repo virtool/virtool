@@ -1,160 +1,14 @@
 """API request handlers for managing and querying HMM data."""
 
-from aiohttp.web import Response
 from aiohttp.web_response import StreamResponse
-from aiohttp_pydantic import PydanticView
-from aiohttp_pydantic.oas.typing import r200, r201, r400, r403, r404, r502
 
 from virtool.api.custom_json import json_response
-from virtool.api.errors import APIBadGateway, APIConflict, APINotFound
-from virtool.api.pagination import Page, PerPage
-from virtool.api.policy import AdministratorRoutePolicy, policy
+from virtool.api.errors import APINotFound
 from virtool.api.routes import Routes
-from virtool.data.errors import (
-    ResourceConflictError,
-    ResourceError,
-    ResourceNotFoundError,
-    ResourceRemoteError,
-)
+from virtool.data.errors import ResourceNotFoundError
 from virtool.data.utils import get_data_from_req
-from virtool.hmm.models import HMM, HMMInstalled, HMMSearchResult
-from virtool.models.roles import AdministratorRole
 
 routes = Routes()
-
-
-@routes.view("/hmms")
-class HMMsView(PydanticView):
-    async def get(
-        self,
-        find: str | None = None,
-        page: Page = 1,
-        per_page: PerPage = 25,
-    ) -> r200[HMMSearchResult] | r400:
-        """Find HMMs.
-
-        Lists profile hidden Markov model (HMM) annotations that are used in Virtool for
-        novel virus prediction.
-
-        Providing a search term will return HMMs with full or partial matches in the
-        `names` attribute.
-
-        Each HMM annotation is generated from numerous public viral protein sequences.
-        The top three most common names in the protein records are combined into the
-        `names` attribute.
-
-        Status Codes:
-            200: Successful operation
-            400: Invalid query
-        """
-        search_results = await get_data_from_req(self.request).hmms.find(
-            page, per_page, find
-        )
-
-        return json_response(search_results)
-
-
-@routes.view("/hmms/status")
-class StatusView(PydanticView):
-    async def get(self) -> r200[Response]:
-        """Get HMM status.
-
-        Lists the installation status of the HMM data. Contains the following
-        fields:
-
-        | Field      | Type          | Description                                               |
-        | :--------- | :------------ | :-------------------------------------------------------- |
-        | `errors`   | array[string] | An array of any errors in the HMM data                    |
-        | `installed`| object        | A description of the currently installed HMM release      |
-        | `task.id`  | integer       | The `id` the task responsible for installing the HMM data |
-        | `release`  | object        | A description of the latest available release             |
-
-        **Installed HMM data cannot currently be updated**.
-
-        Status Codes:
-            200: Successful operation
-        """
-        status = await get_data_from_req(self.request).hmms.get_status()
-
-        return json_response(status)
-
-
-@routes.view("/hmms/status/release")
-class ReleaseView(PydanticView):
-    async def get(self) -> r200[Response] | r502:
-        """Get the latest HMM release.
-
-        Fetches the latest release for the HMM data.
-
-        Status Codes:
-            200: Successful operation
-            502: Repository does not exist
-            502: Cannot reach GitHub
-        """
-        try:
-            status = await get_data_from_req(self.request).hmms.get_status()
-        except ResourceNotFoundError:
-            raise APINotFound()
-        except ResourceRemoteError as err:
-            raise APIBadGateway(str(err))
-
-        return json_response(status.release)
-
-
-@routes.view("/hmms/status/updates")
-class UpdatesView(PydanticView):
-    async def get(self) -> r200[Response]:
-        """List updates.
-
-        Lists all updates applied to the HMM collection.
-
-        Status Codes:
-            200: Successful operation
-        """
-        updates = await get_data_from_req(self.request).hmms.get_updates()
-
-        return json_response(updates)
-
-    @policy(AdministratorRoutePolicy(AdministratorRole.BASE))
-    async def post(self) -> r201[HMMInstalled] | r400 | r403:
-        """Install HMMs.
-
-        Installs the latest official HMM database from GitHub.
-
-        Status Codes:
-            201: Successful operation
-            400: Target release does not exist
-            403: Not permitted
-        """
-        try:
-            update = await get_data_from_req(self.request).hmms.install_update(
-                self.request["client"].user_id,
-            )
-        except ResourceConflictError as err:
-            raise APIConflict(str(err))
-        except ResourceError as err:
-            raise APIBadGateway(str(err))
-
-        return json_response(update)
-
-
-@routes.view("/hmms/{hmm_id}")
-class HMMView(PydanticView):
-    async def get(self, hmm_id: int, /) -> r200[HMM] | r404:
-        """Get an HMM.
-
-        Fetches the details for an HMM annotation.
-
-        Status Codes:
-            200: Successful operation
-            404: Not found
-        """
-        try:
-            hmm = await get_data_from_req(self.request).hmms.get(hmm_id)
-        except ResourceNotFoundError:
-            raise APINotFound()
-
-        return json_response(hmm)
 
 
 @routes.jobs_api.get("/hmms/{hmm_id}")
@@ -177,7 +31,6 @@ async def get(req):
 
 
 @routes.jobs_api.get("/hmms/files/annotations.json.gz")
-@routes.get("/hmms/files/annotations.json.gz")
 async def get_hmm_annotations(req):
     """Get HMM annotations.
 

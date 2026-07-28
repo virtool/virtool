@@ -3,11 +3,9 @@ import virtool.api.root
 import virtool.caches.api
 import virtool.dev.api
 import virtool.health.api
-import virtool.history.api
 import virtool.hmm.api
 import virtool.indexes.api
 import virtool.jobs.api
-import virtool.otus.api
 import virtool.references.api
 import virtool.samples.api
 import virtool.settings.api
@@ -19,12 +17,10 @@ ROUTES = (
     virtool.analyses.api.routes,
     virtool.caches.api.routes,
     virtool.health.api.routes,
-    virtool.history.api.routes,
     virtool.hmm.api.routes,
     virtool.indexes.api.routes,
     virtool.api.root.routes,
     virtool.jobs.api.routes,
-    virtool.otus.api.routes,
     virtool.references.api.routes,
     virtool.samples.api.routes,
     virtool.settings.api.routes,

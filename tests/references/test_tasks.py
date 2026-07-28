@@ -14,13 +14,14 @@ from virtool.history.sql import SQLLegacyHistory, SQLLegacyHistoryDiff
 from virtool.otus.db import otu_document_from_row, sequence_document_from_row
 from virtool.otus.sql import SQLOTU, SQLSequence
 from virtool.references.db import get_manifest
-from virtool.references.oas import CreateReferenceRequest
+from virtool.references.models import Reference
 from virtool.references.sql import SQLReference
 from virtool.references.tasks import (
     CloneReferenceTask,
     ImportReferenceTask,
 )
-from virtool.uploads.sql import UploadType
+from virtool.tasks.models import Task
+from virtool.uploads.sql import SQLUpload, UploadType
 from virtool.workflow.pytest_plugin.utils import StaticTime
 
 
@@ -125,79 +126,101 @@ def assert_reference_created(
     return func
 
 
-@pytest.mark.flaky(reruns=2)
-async def test_import_reference_task(
-    assert_reference_created,
+@pytest.fixture
+def spawn_import_task(
     data_layer: DataLayer,
     example_path: Path,
     fake: DataFaker,
-    static_time: StaticTime,
+    pg: AsyncEngine,
 ):
-    user = await fake.users.create()
+    """Seed a reference and the ``ImportReferenceTask`` that populates it.
 
-    upload = await data_layer.uploads.create(
-        fake_file_chunker(example_path / "indexes/reference.json.gz"),
-        "import.json.gz",
-        UploadType.reference,
-        user.id,
-    )
+    The task is spawned directly, mirroring production where the TypeScript server
+    creates the reference and queues the task.
+    """
 
-    reference = await data_layer.references.create(
-        CreateReferenceRequest(name="Test", import_from=upload.id),
-        user.id,
-    )
+    async def func(name: str = "Test") -> tuple[Reference, Task]:
+        user = await fake.users.create()
+        reference = await fake.references.create(user=user, name=name)
 
-    task = await ImportReferenceTask.from_task_id(data_layer, reference.task.id)
+        upload = await data_layer.uploads.create(
+            fake_file_chunker(example_path / "indexes/reference.json.gz"),
+            "import.json.gz",
+            UploadType.reference,
+            user.id,
+        )
 
-    await task.run()
-    await assert_reference_created()
+        async with AsyncSession(pg) as session:
+            name_on_disk = await session.scalar(
+                select(SQLUpload.name_on_disk).where(SQLUpload.id == upload.id),
+            )
+
+        task = await fake.tasks.create_with_class(
+            ImportReferenceTask,
+            {
+                "name_on_disk": name_on_disk,
+                "ref_id": reference.id,
+                "user_id": user.id,
+            },
+        )
+
+        return reference, task
+
+    return func
 
 
 @pytest.fixture
-async def create_reference(
-    example_path: Path,
-    fake: DataFaker,
+async def imported_reference(
     data_layer: DataLayer,
+    spawn_import_task,
 ) -> int:
-    user = await fake.users.create()
+    """The id of a reference populated by a completed ``ImportReferenceTask``."""
+    reference, task = await spawn_import_task()
 
-    upload = await data_layer.uploads.create(
-        fake_file_chunker(example_path / "indexes/reference.json.gz"),
-        "import.json.gz",
-        UploadType.reference,
-        user.id,
-    )
-
-    reference = await data_layer.references.create(
-        CreateReferenceRequest(
-            name="Test",
-            description="This is a test reference.",
-            import_from=upload.id,
-        ),
-        user.id,
-    )
-
-    task = await ImportReferenceTask.from_task_id(data_layer, reference.task.id)
-    await task.run()
+    await (await ImportReferenceTask.from_task_id(data_layer, task.id)).run()
 
     return reference.id
 
 
+async def _reference_row(pg: AsyncEngine, reference_id: int) -> SQLReference | None:
+    async with AsyncSession(pg) as session:
+        return (
+            await session.execute(
+                select(SQLReference).where(SQLReference.id == reference_id),
+            )
+        ).scalar_one_or_none()
+
+
+@pytest.mark.flaky(reruns=2)
+async def test_import_reference_task(
+    assert_reference_created,
+    data_layer: DataLayer,
+    spawn_import_task,
+    static_time: StaticTime,
+):
+    _, task = await spawn_import_task()
+
+    await (await ImportReferenceTask.from_task_id(data_layer, task.id)).run()
+
+    await assert_reference_created()
+
+
 async def test_clone_reference_task(
-    create_reference: int,
     data_layer: DataLayer,
     fake: DataFaker,
+    imported_reference: int,
     pg: AsyncEngine,
 ):
-    manifest = await get_manifest(pg, create_reference)
+    manifest = await get_manifest(pg, imported_reference)
 
     assert len(manifest) == 20
 
     user = await fake.users.create()
+    clone = await fake.references.create(user=user, name="Clone")
 
-    clone_reference = await data_layer.references.create(
-        CreateReferenceRequest(name="Clone", clone_from=create_reference),
-        user.id,
+    clone_task = await fake.tasks.create_with_class(
+        CloneReferenceTask,
+        {"manifest": manifest, "ref_id": clone.id, "user_id": user.id},
     )
 
     async def count_history(reference: int | None = None) -> int:
@@ -219,13 +242,9 @@ async def test_clone_reference_task(
     assert await count_history() == 20
     assert await count_otus() == 20
 
-    task_instance = await CloneReferenceTask.from_task_id(
-        data_layer,
-        clone_reference.task.id,
-    )
-    await task_instance.run()
+    await (await CloneReferenceTask.from_task_id(data_layer, clone_task.id)).run()
 
-    task = await data_layer.tasks.get(clone_reference.task.id)
+    task = await data_layer.tasks.get(clone_task.id)
 
     assert task.complete is True
     assert task.progress == 100
@@ -234,79 +253,45 @@ async def test_clone_reference_task(
     assert await count_otus() == 40
 
     assert await count_history() == 40
-    assert await count_history(clone_reference.id) == 20
-
-
-async def _reference_row(pg: AsyncEngine, reference_id: int) -> SQLReference | None:
-    async with AsyncSession(pg) as session:
-        return (
-            await session.execute(
-                select(SQLReference).where(SQLReference.id == reference_id),
-            )
-        ).scalar_one_or_none()
+    assert await count_history(clone.id) == 20
 
 
 class TestImportReferencePopulation:
     """The import population task writes and rolls back the Postgres reference."""
 
-    @pytest.fixture
-    async def run_import(
+    @pytest.mark.flaky(reruns=2)
+    async def test_writes_organism(
         self,
         data_layer: DataLayer,
-        example_path: Path,
-        fake: DataFaker,
+        pg: AsyncEngine,
+        spawn_import_task,
     ):
-        async def setup():
-            user = await fake.users.create()
-
-            upload = await data_layer.uploads.create(
-                fake_file_chunker(example_path / "indexes/reference.json.gz"),
-                "import.json.gz",
-                UploadType.reference,
-                user.id,
-            )
-
-            reference = await data_layer.references.create(
-                CreateReferenceRequest(
-                    name="Test",
-                    description="A test reference",
-                    import_from=upload.id,
-                ),
-                user.id,
-            )
-
-            return data_layer, reference
-
-        return setup
-
-    @pytest.mark.flaky(reruns=2)
-    async def test_writes_organism(self, run_import, pg: AsyncEngine):
         """The imported organism is written to Postgres."""
-        data_layer, reference = await run_import()
+        reference, task = await spawn_import_task()
 
-        task = await ImportReferenceTask.from_task_id(data_layer, reference.task.id)
-        await task.run()
+        await (await ImportReferenceTask.from_task_id(data_layer, task.id)).run()
 
         row = await _reference_row(pg, reference.id)
+
         assert row is not None
         assert row.organism == "virus"
 
     async def test_rollback_deletes_postgres_row(
         self,
-        run_import,
+        data_layer: DataLayer,
         mocker,
         pg: AsyncEngine,
+        spawn_import_task,
     ):
         """A failed insertion rolls back the Postgres reference row."""
-        data_layer, reference = await run_import()
+        reference, task = await spawn_import_task()
 
         mocker.patch(
             "virtool.references.db.bulk_insert_otu_rows",
             side_effect=RuntimeError("boom"),
         )
 
-        task = await ImportReferenceTask.from_task_id(data_layer, reference.task.id)
-        await task.run()
+        await (await ImportReferenceTask.from_task_id(data_layer, task.id)).run()
 
         assert await _reference_row(pg, reference.id) is None
 
@@ -316,18 +301,23 @@ class TestCloneReferencePopulation:
 
     async def test_rollback_deletes_postgres_row(
         self,
-        create_reference: int,
         data_layer: DataLayer,
         fake: DataFaker,
+        imported_reference: int,
         mocker,
         pg: AsyncEngine,
     ):
         """A failed clone insertion rolls back the Postgres reference row."""
         user = await fake.users.create()
+        clone = await fake.references.create(user=user, name="Clone")
 
-        clone_reference = await data_layer.references.create(
-            CreateReferenceRequest(name="Clone", clone_from=create_reference),
-            user.id,
+        clone_task = await fake.tasks.create_with_class(
+            CloneReferenceTask,
+            {
+                "manifest": await get_manifest(pg, imported_reference),
+                "ref_id": clone.id,
+                "user_id": user.id,
+            },
         )
 
         mocker.patch(
@@ -335,10 +325,6 @@ class TestCloneReferencePopulation:
             side_effect=RuntimeError("boom"),
         )
 
-        task = await CloneReferenceTask.from_task_id(
-            data_layer,
-            clone_reference.task.id,
-        )
-        await task.run()
+        await (await CloneReferenceTask.from_task_id(data_layer, clone_task.id)).run()
 
-        assert await _reference_row(pg, clone_reference.id) is None
+        assert await _reference_row(pg, clone.id) is None

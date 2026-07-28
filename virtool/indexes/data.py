@@ -20,7 +20,6 @@ from virtool.data.topg import (
     compose_legacy_id_subquery,
 )
 from virtool.data.transforms import apply_transforms
-from virtool.history.models import HistorySearchResult
 from virtool.history.sql import SQLLegacyHistory
 from virtool.indexes.db import (
     INDEX_FILE_NAMES,
@@ -29,7 +28,7 @@ from virtool.indexes.db import (
     _row_to_document,
     update_last_indexed_versions,
 )
-from virtool.indexes.models import Index, IndexMinimal, IndexSearchResult
+from virtool.indexes.models import Index
 from virtool.indexes.sql import SQLIndex, SQLIndexFile
 from virtool.indexes.utils import (
     compose_index_file_key,
@@ -92,61 +91,6 @@ class IndexData:
             raise ResourceNotFoundError
 
         return storage_key
-
-    async def find(
-        self,
-        ready: bool,
-        page: int,
-        per_page: int,
-        archived: bool | None = None,
-    ) -> list[IndexMinimal] | IndexSearchResult:
-        """List all indexes.
-
-        :param ready: return only indexes that are ready for use in analysis
-        :param page: the one-indexed page number to return
-        :param per_page: the number of documents to return per page
-        :param archived: lifecycle filter on the index's reference
-        :return: a list of all index documents
-        """
-        if not ready:
-            data = await virtool.indexes.db.find(
-                self._pg, page, per_page, archived=archived
-            )
-            return IndexSearchResult(**data)
-
-        filters = [SQLIndex.ready.is_(True)]
-
-        if archived is not None:
-            filters.append(
-                SQLIndex.reference_id.in_(
-                    select(SQLReference.id).where(SQLReference.archived == archived),
-                ),
-            )
-
-        async with AsyncSession(self._pg) as session:
-            rows = (
-                (
-                    await session.execute(
-                        select(SQLIndex).where(*filters).order_by(SQLIndex.created_at),
-                    )
-                )
-                .scalars()
-                .all()
-            )
-
-        items = [_row_to_document(row) for row in rows]
-
-        items = await apply_transforms(
-            items,
-            [
-                AttachReferenceTransform(self._pg),
-                AttachUserTransform(self._pg),
-                IndexCountsTransform(),
-            ],
-            self._pg,
-        )
-
-        return [IndexMinimal(**item) for item in items]
 
     async def get(self, index_id: int) -> Index:
         """Get a single index by its ID.
@@ -412,43 +356,6 @@ class IndexData:
             raise
 
         return await self.get(index_id)
-
-    async def find_changes(
-        self,
-        index_id: int,
-        page: int,
-        per_page: int,
-        term: str | None = None,
-    ) -> HistorySearchResult:
-        """Find the virus changes that are included in a given index build.
-
-        :param index_id: the index ID
-        :param page: the one-indexed page number to return
-        :param per_page: the number of documents to return per page
-        :param term: an optional term matched against the OTU name
-        :return: the changes
-        """
-        async with AsyncSession(self._pg) as session:
-            exists = await session.scalar(
-                select(
-                    select(SQLIndex.id)
-                    .where(compose_legacy_id_single_expression(SQLIndex, index_id))
-                    .exists(),
-                ),
-            )
-
-        if not exists:
-            raise ResourceNotFoundError()
-
-        data = await virtool.history.db.find_by_index(
-            self._pg,
-            index_id,
-            page,
-            per_page,
-            term,
-        )
-
-        return HistorySearchResult(**data)
 
     async def delete(self, index_id: int) -> None:
         """Delete an index given it's id.

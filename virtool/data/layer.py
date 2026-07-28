@@ -10,7 +10,6 @@ from virtool.caches.data import CachesData
 from virtool.config import Config
 from virtool.groups.data import GroupsData
 from virtool.health.data import HealthData
-from virtool.history.data import HistoryData
 from virtool.hmm.data import HmmsData
 from virtool.identifier import AbstractIdProvider
 from virtool.indexes.data import IndexData
@@ -38,7 +37,6 @@ class DataLayer:
     caches: CachesData
     groups: GroupsData
     health: HealthData
-    history: HistoryData
     hmms: HmmsData
     index: IndexData
     jobs: JobsData
@@ -87,7 +85,6 @@ def create_data_layer(
         CachesData(pg, storage, config.cache_storage_budget),
         GroupsData(pg),
         HealthData(pg),
-        HistoryData(pg),
         HmmsData(client, pg, storage),
         IndexData(config, pg, storage),
         JobsData(pg),

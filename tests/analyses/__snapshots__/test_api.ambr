@@ -65,14 +65,14 @@
     }),
     'job': dict({
       'created_at': '2015-10-06T20:00:00Z',
-      'id': 1,
+      'id': 2,
       'progress': 100,
       'state': 'succeeded',
       'user': dict({
-        'handle': 'myersmitchell',
+        'handle': 'leeashley',
         'id': 2,
       }),
-      'workflow': 'pathoscope',
+      'workflow': 'nuvs',
     }),
     'ready': True,
     'reference': dict({
@@ -99,139 +99,10 @@
     ]),
     'updated_at': '2015-10-06T20:00:00Z',
     'user': dict({
-      'handle': 'myersmitchell',
+      'handle': 'leeashley',
       'id': 2,
     }),
     'workflow': 'pathoscope',
-  })
-# ---
-# name: test_blast[None]
-  dict({
-    'analysis_id': 1,
-    'created_at': '2015-10-06T20:00:00Z',
-    'error': None,
-    'id': 2,
-    'interval': 3,
-    'last_checked_at': '2015-10-06T20:00:00Z',
-    'ready': False,
-    'result': None,
-    'rid': None,
-    'sequence_index': 5,
-    'task_id': None,
-    'updated_at': '2015-10-06T20:00:00Z',
-  })
-# ---
-# name: test_find
-  dict({
-    'documents': list([
-      dict({
-        'created_at': '2015-10-06T20:00:00Z',
-        'id': 3,
-        'index': dict({
-          'id': 1,
-          'version': 2,
-        }),
-        'job': None,
-        'ready': True,
-        'reference': dict({
-          'data_type': 'genome',
-          'id': 2,
-          'name': 'Reference',
-        }),
-        'sample': dict({
-          'id': 1,
-        }),
-        'subtractions': list([
-        ]),
-        'updated_at': '2015-10-06T20:00:00Z',
-        'user': dict({
-          'handle': 'myersmitchell',
-          'id': 2,
-        }),
-        'workflow': 'pathoscope',
-      }),
-      dict({
-        'created_at': '2015-10-06T20:00:00Z',
-        'id': 2,
-        'index': dict({
-          'id': 1,
-          'version': 2,
-        }),
-        'job': dict({
-          'created_at': '2015-10-06T20:00:00Z',
-          'id': 1,
-          'progress': 0,
-          'state': 'running',
-          'user': dict({
-            'handle': 'modonnell',
-            'id': 3,
-          }),
-          'workflow': 'pathoscope',
-        }),
-        'ready': True,
-        'reference': dict({
-          'data_type': 'genome',
-          'id': 1,
-          'name': 'Reference',
-        }),
-        'sample': dict({
-          'id': 1,
-        }),
-        'subtractions': list([
-          dict({
-            'id': 1,
-            'name': 'Malus domestica',
-          }),
-        ]),
-        'updated_at': '2015-10-06T20:00:00Z',
-        'user': dict({
-          'handle': 'myersmitchell',
-          'id': 2,
-        }),
-        'workflow': 'pathoscope',
-      }),
-      dict({
-        'created_at': '2015-10-06T20:00:00Z',
-        'id': 1,
-        'index': dict({
-          'id': 1,
-          'version': 2,
-        }),
-        'job': dict({
-          'created_at': '2015-10-06T20:00:00Z',
-          'id': 1,
-          'progress': 0,
-          'state': 'running',
-          'user': dict({
-            'handle': 'modonnell',
-            'id': 3,
-          }),
-          'workflow': 'pathoscope',
-        }),
-        'ready': True,
-        'reference': dict({
-          'data_type': 'genome',
-          'id': 1,
-          'name': 'Reference',
-        }),
-        'sample': dict({
-          'id': 1,
-        }),
-        'subtractions': list([
-        ]),
-        'updated_at': '2015-10-06T20:00:00Z',
-        'user': dict({
-          'handle': 'myersmitchell',
-          'id': 2,
-        }),
-        'workflow': 'pathoscope',
-      }),
-    ]),
-    'found_count': 3,
-    'page': 1,
-    'page_count': 1,
-    'per_page': 25,
-    'total_count': 3,
   })
 # ---
 # name: test_upload_file[None]

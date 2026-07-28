@@ -1,8 +1,7 @@
-import math
 from collections import defaultdict
 
 import arrow
-from sqlalchemy import delete, func, or_, select
+from sqlalchemy import delete, func, select
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 from structlog import get_logger
 
@@ -18,9 +17,7 @@ from virtool.jobs.models import (
     JobClaim,
     JobClaimed,
     JobCounts,
-    JobMinimal,
     JobPing,
-    JobSearchResult,
     JobState,
     JobStep,
     JobStepStarted,
@@ -69,114 +66,6 @@ class JobsData:
             counts[state][workflow] = count
 
         return JobCounts.parse_obj(counts)
-
-    async def find(
-        self,
-        page: int,
-        per_page: int,
-        states: list[JobState],
-        users: list[str],
-    ) -> JobSearchResult:
-        """Find jobs."""
-        filters = []
-
-        if states:
-            filters.append(SQLJob.state.in_([s.value for s in states]))
-
-        async with AsyncSession(self._pg) as session:
-            if users:
-                modern_ids: list[int] = []
-                handles_or_legacy: list[str] = []
-
-                for user in users:
-                    if isinstance(user, int):
-                        modern_ids.append(user)
-                    elif user.isdigit():
-                        modern_ids.append(int(user))
-                    else:
-                        handles_or_legacy.append(user)
-
-                user_clauses = []
-
-                if modern_ids:
-                    user_clauses.append(SQLUser.id.in_(modern_ids))
-
-                if handles_or_legacy:
-                    user_clauses.append(SQLUser.legacy_id.in_(handles_or_legacy))
-                    user_clauses.append(SQLUser.handle.in_(handles_or_legacy))
-
-                resolved = await session.execute(
-                    select(SQLUser.id).where(or_(*user_clauses)),
-                )
-                resolved_user_ids = [row[0] for row in resolved.all()]
-
-                if not resolved_user_ids:
-                    total_count = (
-                        await session.execute(
-                            select(func.count()).select_from(SQLJob),
-                        )
-                    ).scalar_one()
-
-                    return JobSearchResult(
-                        counts=await self._query_counts(session),
-                        items=[],
-                        total_count=total_count,
-                        found_count=0,
-                        page_count=0,
-                        per_page=per_page,
-                        page=page,
-                    )
-
-                filters.append(SQLJob.user_id.in_(resolved_user_ids))
-
-            skip_count = (page - 1) * per_page if page > 1 else 0
-
-            total_count = (
-                await session.execute(select(func.count()).select_from(SQLJob))
-            ).scalar_one()
-
-            found_count_query = select(func.count()).select_from(SQLJob)
-            if filters:
-                found_count_query = found_count_query.where(*filters)
-            found_count = (await session.execute(found_count_query)).scalar_one()
-
-            data_query = (
-                select(SQLJob, SQLUser)
-                .join(SQLUser, SQLJob.user_id == SQLUser.id)
-                .order_by(SQLJob.created_at.desc())
-                .offset(skip_count)
-                .limit(per_page)
-            )
-            if filters:
-                data_query = data_query.where(*filters)
-
-            rows = (await session.execute(data_query)).unique().all()
-
-            counts = await self._query_counts(session)
-
-        page_count = int(math.ceil(found_count / per_page)) if found_count else 0
-
-        items = [
-            JobMinimal(
-                id=sql_job.id,
-                created_at=sql_job.created_at,
-                progress=compute_progress(sql_job.state, sql_job.steps),
-                state=JobState(sql_job.state),
-                user=UserNested(id=sql_user.id, handle=sql_user.handle),
-                workflow=Workflow(sql_job.workflow),
-            )
-            for sql_job, sql_user in rows
-        ]
-
-        return JobSearchResult(
-            counts=counts,
-            items=items,
-            total_count=total_count,
-            found_count=found_count,
-            page_count=page_count,
-            per_page=per_page,
-            page=page,
-        )
 
     async def create_in_session(
         self,
