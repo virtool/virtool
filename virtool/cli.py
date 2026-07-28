@@ -68,7 +68,6 @@ def server() -> None:
 @cache_storage_budget_option
 @dev_option
 @flags_option
-@no_periodic_tasks_option
 @no_revision_check_option
 @postgres_connection_string_option
 @real_ip_header_option
@@ -79,7 +78,7 @@ def start_api_server(**kwargs) -> None:
     configure_logging(bool(kwargs["sentry_dsn"]))
     logger.info("starting the public api service")
 
-    run_api_server(ServerConfig(**kwargs))
+    run_api_server(ServerConfig(**kwargs, no_periodic_tasks=True))
 
 
 @server.command("jobs")

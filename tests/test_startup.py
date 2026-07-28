@@ -2,7 +2,16 @@ import pytest
 from aiohttp.client import ClientSession, ClientTimeout
 
 from tests.config.test_cls import build_server_config
-from virtool.startup import startup_http_client_session, startup_storage
+from virtool.blast.task import BLASTSweepTask
+from virtool.caches.tasks import LRUCacheEvictionTask
+from virtool.hmm.tasks import HMMRefreshTask
+from virtool.jobs.tasks import JobsTimeoutTask
+from virtool.startup import (
+    startup_http_client_session,
+    startup_periodic_tasks,
+    startup_storage,
+)
+from virtool.uploads.tasks import ReapOrphanedUploadsTask
 
 
 @pytest.fixture
@@ -50,3 +59,35 @@ async def test_startup_storage(fake_app, mocker):
     await startup_storage(fake_app)
 
     assert fake_app["storage"] is backend
+
+
+class TestStartupPeriodicTasks:
+    async def test_spawner_started(self, fake_app, mocker):
+        fake_app["config"] = build_server_config(no_periodic_tasks=False)
+        fake_app["data"] = mocker.Mock()
+
+        spawner = mocker.patch("virtool.startup.PeriodicTaskSpawner").return_value
+        spawner.run = mocker.AsyncMock()
+
+        await startup_periodic_tasks(fake_app)
+
+        await fake_app["background_tasks"][0]
+
+        assert [task_class for task_class, _ in spawner.run.call_args.args[0]] == [
+            BLASTSweepTask,
+            HMMRefreshTask,
+            JobsTimeoutTask,
+            LRUCacheEvictionTask,
+            ReapOrphanedUploadsTask,
+        ]
+
+    async def test_disabled(self, fake_app, mocker):
+        fake_app["config"] = build_server_config(no_periodic_tasks=True)
+        fake_app["data"] = mocker.Mock()
+
+        spawner = mocker.patch("virtool.startup.PeriodicTaskSpawner")
+
+        await startup_periodic_tasks(fake_app)
+
+        spawner.assert_not_called()
+        assert "background_tasks" not in fake_app

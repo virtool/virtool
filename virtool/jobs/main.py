@@ -9,12 +9,18 @@ from virtool.caches.utils import CACHE_MAX_SIZE
 from virtool.config.cls import ServerConfig
 from virtool.flags import FeatureFlags, feature_flag_middleware
 from virtool.jobs.routes import startup_routes
+from virtool.shutdown import (
+    shutdown_executors,
+    shutdown_http_client,
+    shutdown_scheduler,
+)
 from virtool.startup import (
     startup_data,
     startup_databases,
     startup_events,
     startup_executors,
     startup_http_client_session,
+    startup_periodic_tasks,
     startup_sentry,
     startup_settings,
     startup_storage,
@@ -51,6 +57,15 @@ async def create_app(config: ServerConfig):
             startup_routes,
             startup_settings,
             startup_sentry,
+            startup_periodic_tasks,
+        ],
+    )
+
+    app.on_shutdown.extend(
+        [
+            shutdown_scheduler,
+            shutdown_http_client,
+            shutdown_executors,
         ],
     )
 

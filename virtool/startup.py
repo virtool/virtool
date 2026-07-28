@@ -150,7 +150,11 @@ async def startup_task_runner(app: App) -> None:
 
 
 async def startup_periodic_tasks(app: App) -> None:
-    """Start the periodic task spawner for API servers.
+    """Start the periodic task spawner for the jobs API server.
+
+    Spawning is deduplicated across replicas by a Postgres advisory lock in
+    :meth:`~virtool.tasks.data.TasksData.create_periodic`, so every jobs API
+    replica can safely run a spawner.
 
     :param app: the app object
     """
