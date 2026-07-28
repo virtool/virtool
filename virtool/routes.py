@@ -1,4 +1,3 @@
-import virtool.account.api
 import virtool.analyses.api
 import virtool.api.root
 import virtool.caches.api
@@ -18,7 +17,6 @@ import virtool.uploads.api
 import virtool.users.api
 
 ROUTES = (
-    virtool.account.api.routes,
     virtool.analyses.api.routes,
     virtool.caches.api.routes,
     virtool.health.api.routes,

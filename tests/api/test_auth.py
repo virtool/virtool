@@ -8,22 +8,42 @@ from aiohttp.web_response import json_response
 from aiohttp_pydantic import PydanticView
 
 from tests.fixtures.client import ClientSpawner, JobClientSpawner, VirtoolTestClient
-from virtool.account.oas import CreateKeyRequest
-from virtool.api.policy import PermissionRoutePolicy, PublicRoutePolicy, policy
+from virtool.api.policy import (
+    AdministratorRoutePolicy,
+    PermissionRoutePolicy,
+    PublicRoutePolicy,
+    policy,
+)
 from virtool.api.routes import Routes
 from virtool.data.layer import DataLayer
-from virtool.data.utils import get_data_from_app
 from virtool.fake.next import DataFaker
 from virtool.groups.oas import PermissionsUpdate
 from virtool.models.enums import Permission
 from virtool.models.roles import AdministratorRole
-from virtool.settings.oas import UpdateSettingsRequest
 from virtool.users.oas import UpdateUserRequest
+
+authenticated_routes = Routes()
+"""Routes that stand in for any authenticated endpoint.
+
+Authentication is a cross-cutting concern, so these tests own their own routes
+rather than probing a domain endpoint that may later be dropped.
+"""
+
+
+@authenticated_routes.get("/test_authenticated")
+async def get_authenticated(req):
+    return json_response({"user_id": req["client"].user_id}, status=200)
+
+
+@authenticated_routes.get("/test_administrator")
+@policy(AdministratorRoutePolicy(AdministratorRole.BASE))
+async def get_administrator(_):
+    return json_response({"administrator": True}, status=200)
 
 
 class TestAPIKeyAuthentication:
     @pytest.fixture(autouse=True)
-    async def setup(self, data_layer: DataLayer, fake: DataFaker):
+    async def setup(self, fake: DataFaker):
         """Set up a test user with groups and permissions for API key tests."""
         self.group = await fake.groups.create(
             PermissionsUpdate(
@@ -38,19 +58,24 @@ class TestAPIKeyAuthentication:
     @pytest.fixture(autouse=True)
     def spawn_authenticated_client(
         self,
-        data_layer: DataLayer,
+        fake: DataFaker,
         spawn_client: ClientSpawner,
     ) -> Callable[..., Awaitable[VirtoolTestClient]]:
         """Fixture that returns a function to create API key authenticated clients."""
 
         async def func(
-            user, permissions: PermissionsUpdate, **kwargs
+            user,
+            permissions: PermissionsUpdate,
+            addon_route_table: Routes = authenticated_routes,
+            **kwargs,
         ) -> VirtoolTestClient:
-            raw_key, _ = await data_layer.account.create_key(
-                CreateKeyRequest(name="Test Key", permissions=permissions),
-                user.id,
+            raw_key, _ = await fake.api_keys.create(user, permissions)
+
+            return await spawn_client(
+                auth=BasicAuth(user.handle, raw_key),
+                addon_route_table=addon_route_table,
+                **kwargs,
             )
-            return await spawn_client(auth=BasicAuth(user.handle, raw_key), **kwargs)
 
         return func
 
@@ -61,45 +86,52 @@ class TestAPIKeyAuthentication:
             PermissionsUpdate(create_sample=True, modify_subtraction=True),
         )
 
-        resp = await client.get("/analyses")
+        resp = await client.get("/test_authenticated")
 
         assert resp.status == HTTPStatus.OK
 
     async def test_invalid_key(self, spawn_client: ClientSpawner):
         """Test authentication fails with invalid API key."""
-        client = await spawn_client(auth=BasicAuth(self.user.handle, "invalid_key"))
+        client = await spawn_client(
+            auth=BasicAuth(self.user.handle, "invalid_key"),
+            addon_route_table=authenticated_routes,
+        )
 
-        resp = await client.get("/analyses")
+        resp = await client.get("/test_authenticated")
 
         assert resp.status == HTTPStatus.UNAUTHORIZED
 
     async def test_inactive_user(
         self,
         data_layer: DataLayer,
+        fake: DataFaker,
         spawn_client: ClientSpawner,
     ):
         """Test authentication fails when user is inactive."""
-        raw_key, _ = await data_layer.account.create_key(
-            CreateKeyRequest(
-                name="Test Key",
-                permissions=PermissionsUpdate(create_sample=True),
-            ),
-            self.user.id,
+        raw_key, _ = await fake.api_keys.create(
+            self.user,
+            PermissionsUpdate(create_sample=True),
         )
 
         await data_layer.users.update(self.user.id, UpdateUserRequest(active=False))
 
-        client = await spawn_client(auth=BasicAuth(self.user.handle, raw_key))
+        client = await spawn_client(
+            auth=BasicAuth(self.user.handle, raw_key),
+            addon_route_table=authenticated_routes,
+        )
 
-        resp = await client.get("/analyses")
+        resp = await client.get("/test_authenticated")
 
         assert resp.status == HTTPStatus.UNAUTHORIZED
 
     async def test_malformed_header(self, spawn_client: ClientSpawner):
         """Test authentication fails with malformed Authorization header."""
-        client = await spawn_client()
+        client = await spawn_client(addon_route_table=authenticated_routes)
 
-        resp = await client.get("/analyses", headers={"AUTHORIZATION": "malformed"})
+        resp = await client.get(
+            "/test_authenticated",
+            headers={"AUTHORIZATION": "malformed"},
+        )
 
         assert resp.status == HTTPStatus.UNAUTHORIZED
         assert (await resp.json())["id"] == "malformed_authorization_header"
@@ -116,7 +148,7 @@ class TestAPIKeyAuthentication:
             PermissionsUpdate(create_sample=True, modify_hmm=True),
         )
 
-        resp = await client.get("/analyses")
+        resp = await client.get("/test_authenticated")
 
         assert resp.status == HTTPStatus.OK
 
@@ -124,9 +156,10 @@ class TestAPIKeyAuthentication:
         """Test authentication fails with non-existent user handle."""
         client = await spawn_client(
             auth=BasicAuth("nonexistent_handle", "some_key"),
+            addon_route_table=authenticated_routes,
         )
 
-        resp = await client.get("/analyses")
+        resp = await client.get("/test_authenticated")
 
         assert resp.status == HTTPStatus.UNAUTHORIZED
 
@@ -145,7 +178,7 @@ class TestAPIKeyAuthentication:
             PermissionsUpdate(create_sample=True),
         )
 
-        resp = await client.get("/users")
+        resp = await client.get("/test_administrator")
 
         assert resp.status == HTTPStatus.OK
 
@@ -232,7 +265,6 @@ class TestAPIKeyAuthentication:
 
     async def test_authorization_header_precedence(
         self,
-        data_layer: DataLayer,
         fake: DataFaker,
         spawn_client: ClientSpawner,
     ):
@@ -243,29 +275,30 @@ class TestAPIKeyAuthentication:
 
         api_key_user = await fake.users.create(groups=[api_key_group])
 
-        raw_key, _ = await data_layer.account.create_key(
-            CreateKeyRequest(
-                name="Precedence Key",
-                permissions=PermissionsUpdate(create_sample=True),
-            ),
-            api_key_user.id,
+        raw_key, _ = await fake.api_keys.create(
+            api_key_user,
+            PermissionsUpdate(create_sample=True),
+            name="Precedence Key",
         )
 
-        session_client = await spawn_client(authenticated=True)
+        session_client = await spawn_client(
+            authenticated=True,
+            addon_route_table=authenticated_routes,
+        )
 
         session_user_id = session_client.user.id
 
         auth_header = BasicAuth(api_key_user.handle, raw_key).encode()
 
         resp = await session_client.get(
-            "/account",
+            "/test_authenticated",
             headers={"Authorization": auth_header},
         )
 
         assert resp.status == HTTPStatus.OK
-        account = await resp.json()
-        assert account["id"] == api_key_user.id
-        assert account["id"] != session_user_id
+        body = await resp.json()
+        assert body["user_id"] == api_key_user.id
+        assert body["user_id"] != session_user_id
 
 
 class TestJobAuthentication:
@@ -277,23 +310,16 @@ class TestJobAuthentication:
 
         assert resp.status == HTTPStatus.OK
 
-    async def test_protected_fails(
-        self,
-        spawn_client: ClientSpawner,
-    ):
-        """Check that a request against GET /analyses using job authentication fails.
+    async def test_protected_fails(self, spawn_client: ClientSpawner):
+        """Check that a request against a protected path using job authentication fails.
 
-        This path is not accessible to jobs.
-
+        Job credentials are not accepted on the public API.
         """
-        key = "bar"
-
-        client = await spawn_client(auth=BasicAuth("job-foo", key))
-
-        await get_data_from_app(client.app).settings.update(
-            UpdateSettingsRequest(minimum_password_length=8),
+        client = await spawn_client(
+            auth=BasicAuth("job-foo", "bar"),
+            addon_route_table=authenticated_routes,
         )
 
-        resp = await client.get("/analyses")
+        resp = await client.get("/test_authenticated")
 
-        assert resp.status == 401
+        assert resp.status == HTTPStatus.UNAUTHORIZED

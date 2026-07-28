@@ -22,6 +22,8 @@ from sqlalchemy import func, select, update
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 
 import virtool.utils
+from virtool.account.models import APIKey
+from virtool.account.sql import SQLAPIKey
 from virtool.data.layer import DataLayer
 from virtool.example import example_path
 from virtool.fake.providers import OrganismProvider, SegmentProvider, SequenceProvider
@@ -194,6 +196,7 @@ class DataFaker:
         self.faker.add_provider(SegmentProvider)
         self.faker.add_provider(SequenceProvider)
 
+        self.api_keys = APIKeysFakerDomain(self)
         self.groups = GroupsFakerDomain(self)
         self.hmm = HMMFakerDomain(self)
         self.indexes = IndexesFakerDomain(self)
@@ -283,6 +286,54 @@ class JobsFakerDomain(DataFakerDomain):
             await session.commit()
 
         return await self._layer.jobs.get(job.id)
+
+
+class APIKeysFakerDomain(DataFakerDomain):
+    model = APIKey
+
+    async def create(
+        self,
+        user: User,
+        permissions: PermissionsUpdate | None = None,
+        name: str = "Test Key",
+    ) -> tuple[str, APIKey]:
+        """Create a fake API key for ``user``.
+
+        API keys are created by the TypeScript server, so there is no data layer
+        method to hijack. The row is written directly.
+
+        :param user: the user the key belongs to
+        :param permissions: the permissions granted to the key
+        :param name: the name of the key
+        :return: the raw key and the created API key
+        """
+        raw, hashed = virtool.utils.generate_key()
+
+        async with AsyncSession(self._pg) as session:
+            sql_key = SQLAPIKey(
+                created_at=virtool.utils.timestamp(),
+                hashed=hashed,
+                name=name,
+                permissions=(permissions or PermissionsUpdate()).dict(
+                    exclude_unset=True,
+                ),
+                user_id=user.id,
+            )
+
+            session.add(sql_key)
+            await session.flush()
+
+            key = APIKey(
+                id=sql_key.id,
+                created_at=sql_key.created_at,
+                groups=sorted(user.groups, key=lambda group: group.name),
+                name=sql_key.name,
+                permissions=sql_key.permissions,
+            )
+
+            await session.commit()
+
+        return raw, key
 
 
 class GroupsFakerDomain(DataFakerDomain):
