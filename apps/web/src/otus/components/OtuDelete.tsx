@@ -1,29 +1,29 @@
 import DeleteDialog from "@base/DeleteDialog";
-import { useRemoveOtu } from "../queries";
+import { useDeleteOtu } from "../queries";
 
-type RemoveOtuProps = {
+type OtuDeleteProps = {
 	id: string;
 	name: string;
 	open?: boolean;
-	onRemoved: () => void;
+	onDeleted: () => void;
 	setOpen?: (open: boolean) => void;
 };
 
 /**
- * Displays a dialog for removing an OTU
+ * Displays a dialog for deleting an OTU
  */
-export default function OtuRemove({
+export default function OtuDelete({
 	id,
 	name,
 	open = false,
-	onRemoved,
+	onDeleted,
 	setOpen = () => {},
-}: RemoveOtuProps) {
-	const mutation = useRemoveOtu();
+}: OtuDeleteProps) {
+	const mutation = useDeleteOtu();
 
 	async function handleConfirm() {
 		await mutation.mutateAsync({ otuId: id });
-		onRemoved();
+		onDeleted();
 	}
 
 	return (

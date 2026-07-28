@@ -4,10 +4,10 @@ import type {
 	Otu,
 	OtuIsolate,
 	OtuMinimal,
+	OtuReferenceNested,
 	OtuSegment,
 	OtuSequence,
-} from "@otus/types";
-import { createFakeReferenceNested } from "./references";
+} from "@virtool/contracts";
 import { createFakeUserNested } from "./user";
 
 /**
@@ -15,11 +15,21 @@ import { createFakeUserNested } from "./user";
  */
 export function createFakeHistoryNested(): HistoryNested {
 	return {
-		created_at: faker.date.past().toISOString(),
+		createdAt: faker.date.past(),
 		description: faker.lorem.lines(1),
 		id: faker.string.alphanumeric({ casing: "lower", length: 8 }),
-		method_name: "create",
+		methodName: "create",
 		user: createFakeUserNested(),
+	};
+}
+
+/**
+ * Create a fake nested reference as an OTU carries it
+ */
+function createFakeOtuReferenceNested(): OtuReferenceNested {
+	return {
+		id: faker.number.int({ min: 1, max: 100 }),
+		name: faker.word.noun({ strategy: "any-length" }),
 	};
 }
 
@@ -34,6 +44,7 @@ export function createFakeOtuSequence(
 		definition: faker.word.noun({ strategy: "any-length" }),
 		host: faker.word.noun({ strategy: "any-length" }),
 		id: faker.string.alphanumeric({ casing: "lower", length: 8 }),
+		remote: null,
 		segment: null,
 		sequence: faker.word.noun({ strategy: "any-length" }),
 	};
@@ -44,14 +55,18 @@ export function createFakeOtuSequence(
 /**
  * Create a fake OTU isolate
  */
-export function createFakeOtuIsolate(): OtuIsolate {
-	return {
+export function createFakeOtuIsolate(
+	overrides?: Partial<OtuIsolate>,
+): OtuIsolate {
+	const isolate = {
 		default: false,
 		id: faker.string.alphanumeric({ casing: "lower", length: 8 }),
 		sequences: [createFakeOtuSequence()],
-		source_name: faker.word.noun({ strategy: "any-length" }),
-		source_type: faker.word.noun({ strategy: "any-length" }),
+		sourceName: faker.word.noun({ strategy: "any-length" }),
+		sourceType: faker.word.noun({ strategy: "any-length" }),
 	};
+
+	return { ...isolate, ...overrides };
 }
 
 /**
@@ -75,7 +90,7 @@ export function createFakeOtuMinimal(
 		abbreviation: `${faker.string.fromCharacters("AHJKYUIQWE", { min: 2, max: 4 })}V`,
 		id: faker.string.alphanumeric({ casing: "lower", length: 8 }),
 		name: faker.word.noun({ strategy: "any-length" }),
-		reference: createFakeReferenceNested(),
+		reference: createFakeOtuReferenceNested(),
 		verified: true,
 		version: faker.number.int({ max: 10 }),
 	};
@@ -88,13 +103,14 @@ export function createFakeOtuMinimal(
  */
 export function createFakeOtu(overrides?: Partial<Otu>): Otu {
 	const { isolates, issues, remote, ...props } = overrides || {};
+
 	return {
 		...createFakeOtuMinimal(props),
 		isolates: isolates || [createFakeOtuIsolate()],
-		issues: issues || null,
-		last_indexed_version: null,
-		most_recent_change: createFakeHistoryNested(),
+		issues: issues ?? null,
+		lastIndexedVersion: null,
+		mostRecentChange: createFakeHistoryNested(),
 		schema: Array.from({ length: 2 }, createFakeOtuSegment),
-		remote,
+		remote: remote ?? null,
 	};
 }

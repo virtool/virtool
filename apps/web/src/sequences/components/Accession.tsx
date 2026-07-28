@@ -1,3 +1,4 @@
+import { getErrorStatus } from "@app/queryErrors";
 import InputContainer from "@base/InputContainer";
 import InputError from "@base/InputError";
 import InputGroup from "@base/InputGroup";
@@ -29,7 +30,7 @@ export default function Accession() {
 		setValue,
 	} = useFormContext<FormValues>();
 
-	const notFound = error?.response?.status === 404;
+	const notFound = getErrorStatus(error) === 404;
 
 	function handleAutoFill() {
 		mutate(getValues("accession"), {

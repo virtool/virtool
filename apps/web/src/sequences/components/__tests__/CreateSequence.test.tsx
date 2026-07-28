@@ -1,10 +1,9 @@
 import { cleanup, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { mockApiAddSequence } from "@tests/api/otus";
 import { createFakeOtu } from "@tests/fake/otus";
 import { createFakeReference } from "@tests/fake/references";
+import { mockCreateSequence } from "@tests/server-fn/otus";
 import { at, renderWithProviders } from "@tests/setup";
-import nock from "nock";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import CreateSequence from "../CreateSequence";
 
@@ -34,22 +33,19 @@ describe("<CreateSequence>", () => {
 
 	afterEach(() => {
 		window.sessionStorage.clear();
-		nock.cleanAll();
 	});
 
 	it("should update fields on typing", async () => {
 		const isolate = at(otu.isolates, 0);
 		const segment = at(otu.schema, 0);
 
-		const scope = mockApiAddSequence(
-			otu.id,
-			isolate.id,
-			"user_typed_accession",
-			"user_typed_host",
-			"user_typed_definition",
-			"ATGRYKM",
-			segment.name,
-		);
+		const createSequence = mockCreateSequence({
+			accession: "user_typed_accession",
+			definition: "user_typed_definition",
+			host: "user_typed_host",
+			segment: segment.name,
+			sequence: "ATGRYKM",
+		});
 
 		renderCreateSequence();
 
@@ -88,7 +84,19 @@ describe("<CreateSequence>", () => {
 		);
 		await userEvent.click(screen.getByRole("button", { name: "Save" }));
 
-		await waitFor(() => scope.done());
+		await waitFor(() =>
+			expect(createSequence).toHaveBeenCalledWith({
+				data: {
+					otuId: otu.id,
+					isolateId: isolate.id,
+					accession: "user_typed_accession",
+					definition: "user_typed_definition",
+					host: "user_typed_host",
+					segment: segment.name,
+					sequence: "ATGRYKM",
+				},
+			}),
+		);
 	});
 
 	it("should display errors when accession, definition, or sequence not defined", async () => {
@@ -119,15 +127,13 @@ describe("<CreateSequence>", () => {
 		const isolate = at(otu.isolates, 0);
 		const segment = at(otu.schema, 0);
 
-		const scope = mockApiAddSequence(
-			otu.id,
-			isolate.id,
-			"user_typed_accession",
-			"user_typed_host",
-			"user_typed_definition",
-			"ATGRYKM",
-			segment.name,
-		);
+		const createSequence = mockCreateSequence({
+			accession: "user_typed_accession",
+			definition: "user_typed_definition",
+			host: "user_typed_host",
+			segment: segment.name,
+			sequence: "ATGRYKM",
+		});
 
 		renderCreateSequence();
 
@@ -153,7 +159,19 @@ describe("<CreateSequence>", () => {
 		);
 		await userEvent.click(screen.getByRole("button", { name: "Save" }));
 
-		await waitFor(() => scope.done());
+		await waitFor(() =>
+			expect(createSequence).toHaveBeenCalledWith({
+				data: {
+					otuId: otu.id,
+					isolateId: isolate.id,
+					accession: "user_typed_accession",
+					definition: "user_typed_definition",
+					host: "user_typed_host",
+					segment: segment.name,
+					sequence: "ATGRYKM",
+				},
+			}),
+		);
 
 		window.sessionStorage.clear();
 		cleanup();

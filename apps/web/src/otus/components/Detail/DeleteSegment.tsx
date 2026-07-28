@@ -1,8 +1,8 @@
 import DeleteDialog from "@base/DeleteDialog";
 import { useUpdateOtu } from "@otus/queries";
-import type { OtuSegment } from "@otus/types";
+import type { OtuSegment } from "@virtool/contracts";
 
-type RemoveSegmentProps = {
+type DeleteSegmentProps = {
 	abbreviation: string;
 	name: string;
 	open?: boolean;
@@ -13,9 +13,9 @@ type RemoveSegmentProps = {
 };
 
 /**
- * Displays a dialog for removing a segment
+ * Displays a dialog for deleting a segment
  */
-export default function RemoveSegment({
+export default function DeleteSegment({
 	abbreviation,
 	name,
 	open = false,
@@ -23,7 +23,7 @@ export default function RemoveSegment({
 	schema,
 	segmentName,
 	setOpen = () => {},
-}: RemoveSegmentProps) {
+}: DeleteSegmentProps) {
 	const mutation = useUpdateOtu(otuId);
 
 	function handleConfirm() {

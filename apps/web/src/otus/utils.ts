@@ -1,5 +1,5 @@
+import type { OtuSegment, OtuSequence } from "@virtool/contracts";
 import { sortBy } from "es-toolkit";
-import type { OtuSegment, OtuSequence } from "./types";
 
 /**
  * A hook for sorting the sequences for the active isolate

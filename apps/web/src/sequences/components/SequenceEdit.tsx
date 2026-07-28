@@ -1,6 +1,6 @@
 import { Dialog, DialogContent, DialogTitle } from "@base/Dialog";
 import { useEditSequence } from "@otus/queries";
-import type { OtuSegment, OtuSequence } from "@otus/types";
+import type { OtuSegment, OtuSequence } from "@virtool/contracts";
 import { compact } from "es-toolkit";
 import SequenceForm from "./SequenceForm";
 

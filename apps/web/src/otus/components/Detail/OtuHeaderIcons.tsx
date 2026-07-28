@@ -2,29 +2,29 @@ import IconButton from "@base/IconButton";
 import { useCheckReferenceRight } from "@references/hooks";
 import { Pencil, Trash } from "lucide-react";
 import { useState } from "react";
+import OtuDelete from "../OtuDelete";
 import OtuEdit from "../OtuEdit";
-import OtuRemove from "../OtuRemove";
 
 type OtuHeaderIconsProps = {
 	id: string;
 	name: string;
 	referenceId: number;
 	abbreviation: string;
-	onRemoved: () => void;
+	onDeleted: () => void;
 };
 
 /**
- * Displays end icons to edit or remove an OTU
+ * Displays end icons to edit or delete an OTU
  */
 export function OtuHeaderIcons({
 	id,
 	name,
 	referenceId,
 	abbreviation,
-	onRemoved,
+	onDeleted,
 }: OtuHeaderIconsProps) {
 	const [openEdit, setOpenEdit] = useState(false);
-	const [openRemove, setOpenRemove] = useState(false);
+	const [openDelete, setOpenDelete] = useState(false);
 	const { hasPermission: canModify } = useCheckReferenceRight(
 		referenceId,
 		"modifyOtu",
@@ -44,11 +44,11 @@ export function OtuHeaderIcons({
 				onClick={() => setOpenEdit(true)}
 			/>
 			<IconButton
-				key="remove-icon"
+				key="delete-icon"
 				color="red"
 				IconComponent={Trash}
-				tip="remove OTU"
-				onClick={() => setOpenRemove(true)}
+				tip="delete OTU"
+				onClick={() => setOpenDelete(true)}
 			/>
 
 			<OtuEdit
@@ -58,12 +58,12 @@ export function OtuHeaderIcons({
 				open={openEdit}
 				setOpen={setOpenEdit}
 			/>
-			<OtuRemove
+			<OtuDelete
 				id={id}
 				name={name}
-				open={openRemove}
-				setOpen={setOpenRemove}
-				onRemoved={onRemoved}
+				open={openDelete}
+				setOpen={setOpenDelete}
+				onDeleted={onDeleted}
 			/>
 		</>
 	);

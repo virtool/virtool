@@ -13,8 +13,8 @@ import Sequences from "@sequences/components/Sequences";
 import { getRouteApi, Navigate } from "@tanstack/react-router";
 import { Pencil, Star, Trash } from "lucide-react";
 import { useState } from "react";
+import DeleteIsolate from "./DeleteIsolate";
 import EditIsolate from "./EditIsolate";
-import RemoveIsolate from "./RemoveIsolate";
 
 const routeApi = getRouteApi(
 	"/_authenticated/refs/$refId/otus/$otuId/isolates/$isolateId",
@@ -27,7 +27,7 @@ export default function IsolateDetail() {
 	const { refId, otuId, isolateId } = routeApi.useParams();
 	const { otu, reference } = useCurrentOtuContext();
 	const [openEdit, setOpenEdit] = useState(false);
-	const [openRemove, setOpenRemove] = useState(false);
+	const [openDelete, setOpenDelete] = useState(false);
 	const [openCreateSequence, setOpenCreateSequence] = useState(false);
 	const mutation = useSetIsolateAsDefault();
 	const { hasPermission: canModify } = useCheckReferenceRight(
@@ -57,20 +57,20 @@ export default function IsolateDetail() {
 				key={activeIsolate.id}
 				otuId={otuId}
 				isolateId={activeIsolate.id}
-				sourceType={activeIsolate.source_type}
-				sourceName={activeIsolate.source_name}
+				sourceType={activeIsolate.sourceType}
+				sourceName={activeIsolate.sourceName}
 				allowedSourceTypes={reference.sourceTypes}
 				restrictSourceTypes={reference.restrictSourceTypes}
 				show={openEdit}
 				onHide={() => setOpenEdit(false)}
 			/>
 
-			<RemoveIsolate
+			<DeleteIsolate
 				id={activeIsolate.id}
 				name={formatIsolateName(activeIsolate)}
-				onHide={() => setOpenRemove(false)}
+				onHide={() => setOpenDelete(false)}
 				otuId={otuId}
-				show={openRemove}
+				show={openDelete}
 			/>
 
 			<div className="flex items-center justify-between gap-3 mb-4">
@@ -103,12 +103,12 @@ export default function IsolateDetail() {
 								IconComponent={Trash}
 								color="red"
 								tip="delete"
-								onClick={() => setOpenRemove(true)}
+								onClick={() => setOpenDelete(true)}
 							/>
 						</>
 					)}
 					<DownloadLink
-						href={`/api/otus/${otuId}/isolates/${activeIsolate.id}.fa`}
+						href={`/otus/${otuId}/isolates/${activeIsolate.id}/fasta`}
 					>
 						FASTA
 					</DownloadLink>

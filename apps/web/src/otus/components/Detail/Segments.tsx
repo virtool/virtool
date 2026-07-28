@@ -22,15 +22,15 @@ import {
 	verticalListSortingStrategy,
 } from "@dnd-kit/sortable";
 import { useFetchOtu, useUpdateOtu } from "@otus/queries";
-import type { OtuSegment } from "@otus/types";
 import {
 	useCheckReferenceRight,
 	useReferenceIsArchived,
 } from "@references/hooks";
 import { getRouteApi } from "@tanstack/react-router";
+import type { OtuSegment } from "@virtool/contracts";
 import { Component } from "lucide-react";
 import { useState } from "react";
-import RemoveSegment from "./RemoveSegment";
+import DeleteSegment from "./DeleteSegment";
 import Segment, { SegmentItem } from "./Segment";
 import SegmentCreate from "./SegmentCreate";
 import SegmentEdit from "./SegmentEdit";
@@ -51,7 +51,7 @@ export default function Segments() {
 	const mutation = useUpdateOtu(otuId);
 	const [openAddSegment, setOpenAddSegment] = useState(false);
 	const [segmentToEdit, setSegmentToEdit] = useState<string | undefined>();
-	const [segmentToRemove, setSegmentToRemove] = useState<string | undefined>();
+	const [segmentToDelete, setSegmentToDelete] = useState<string | undefined>();
 	const [activeSegmentName, setActiveSegmentName] = useState<string | null>(
 		null,
 	);
@@ -138,7 +138,7 @@ export default function Segments() {
 									key={segment.name}
 									canModify={canModify && !archived}
 									segment={segment}
-									onRemove={() => setSegmentToRemove(segment.name)}
+									onDelete={() => setSegmentToDelete(segment.name)}
 									setEditSegmentName={setSegmentToEdit}
 								/>
 							))}
@@ -150,7 +150,7 @@ export default function Segments() {
 								<SegmentItem
 									canModify={canModify && !archived}
 									segment={activeSegment}
-									onRemove={() => undefined}
+									onDelete={() => undefined}
 									setEditSegmentName={() => undefined}
 								/>
 							</BoxGroup>
@@ -187,16 +187,16 @@ export default function Segments() {
 				schema={schema}
 				unsetEditSegmentName={() => setSegmentToEdit(undefined)}
 			/>
-			<RemoveSegment
+			<DeleteSegment
 				abbreviation={abbreviation}
 				name={name}
-				open={Boolean(segmentToRemove)}
+				open={Boolean(segmentToDelete)}
 				otuId={otuId}
 				schema={schema}
-				segmentName={segmentToRemove}
+				segmentName={segmentToDelete}
 				setOpen={(open) => {
 					if (!open) {
-						setSegmentToRemove(undefined);
+						setSegmentToDelete(undefined);
 					}
 				}}
 			/>

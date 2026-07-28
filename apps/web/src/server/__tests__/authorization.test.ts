@@ -79,6 +79,13 @@ const MODULES = [
 		)) as SplitServerFnModule,
 	},
 	{
+		path: "../genbank/functions.ts",
+		fns: await import("../genbank/functions"),
+		handlers: (await import(
+			"../genbank/functions.ts?tss-serverfn-split"
+		)) as SplitServerFnModule,
+	},
+	{
 		path: "../hmm/functions.ts",
 		fns: await import("../hmm/functions"),
 		handlers: (await import(
@@ -104,6 +111,13 @@ const MODULES = [
 		fns: await import("../messages/functions"),
 		handlers: (await import(
 			"../messages/functions.ts?tss-serverfn-split"
+		)) as SplitServerFnModule,
+	},
+	{
+		path: "../otus/functions.ts",
+		fns: await import("../otus/functions"),
+		handlers: (await import(
+			"../otus/functions.ts?tss-serverfn-split"
 		)) as SplitServerFnModule,
 	},
 	{

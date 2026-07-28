@@ -50,7 +50,7 @@ export default function OtuEdit({
 				<OtuForm
 					name={name}
 					abbreviation={abbreviation}
-					error={mutation.error?.response?.body?.message}
+					error={mutation.error?.message}
 					onSubmit={handleSubmit}
 				/>
 			</DialogContent>

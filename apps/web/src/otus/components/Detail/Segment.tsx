@@ -5,7 +5,7 @@ import Label from "@base/Label";
 import Tooltip from "@base/Tooltip";
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
-import type { OtuSegment } from "@otus/types";
+import type { OtuSegment } from "@virtool/contracts";
 import { GripVertical, Pencil, Trash } from "lucide-react";
 import type { ComponentProps, CSSProperties, Ref } from "react";
 
@@ -16,7 +16,7 @@ type SegmentItemProps = {
 	/** Props spread onto the drag handle; omitted renders a static handle */
 	dragHandleProps?: ComponentProps<"button">;
 	/** A callback fired when the user requests segment removal */
-	onRemove: () => void;
+	onDelete: () => void;
 	ref?: Ref<HTMLDivElement>;
 	segment: OtuSegment;
 	setEditSegmentName: (name: string) => void;
@@ -31,7 +31,7 @@ export function SegmentItem({
 	canModify,
 	className,
 	dragHandleProps,
-	onRemove,
+	onDelete,
 	ref,
 	segment,
 	setEditSegmentName,
@@ -77,8 +77,8 @@ export function SegmentItem({
 					<IconButton
 						IconComponent={Trash}
 						color="red"
-						tip="remove segment"
-						onClick={onRemove}
+						tip="delete segment"
+						onClick={onDelete}
 					/>
 				</div>
 			)}
@@ -90,7 +90,7 @@ type SegmentProps = {
 	/** Whether the user has permission to modify the otu */
 	canModify: boolean;
 	/** A callback fired when the user requests segment removal */
-	onRemove: () => void;
+	onDelete: () => void;
 	segment: OtuSegment;
 	setEditSegmentName: (name: string) => void;
 };
@@ -100,7 +100,7 @@ type SegmentProps = {
  */
 export default function Segment({
 	canModify,
-	onRemove,
+	onDelete,
 	segment,
 	setEditSegmentName,
 }: SegmentProps) {
@@ -119,7 +119,7 @@ export default function Segment({
 			canModify={canModify}
 			className={cn(isDragging && "opacity-40")}
 			dragHandleProps={{ ...attributes, ...listeners }}
-			onRemove={onRemove}
+			onDelete={onDelete}
 			segment={segment}
 			setEditSegmentName={setEditSegmentName}
 			style={{ transform: CSS.Transform.toString(transform), transition }}

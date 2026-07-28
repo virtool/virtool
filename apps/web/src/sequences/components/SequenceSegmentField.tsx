@@ -9,7 +9,7 @@ import SelectButton from "@base/SelectButton";
 import SelectContent from "@base/SelectContent";
 import SelectItem, { SelectItemIndicator } from "@base/SelectItem";
 import { selectItemStateClasses } from "@base/styles";
-import type { OtuSegment } from "@otus/types";
+import type { OtuSegment } from "@virtool/contracts";
 import { ChevronDown, CircleAlert } from "lucide-react";
 import { Select as SelectPrimitive } from "radix-ui";
 import { Controller, useFormContext } from "react-hook-form";

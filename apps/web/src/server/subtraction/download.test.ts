@@ -143,7 +143,7 @@ describe("handleSubtractionFile", () => {
 
 		expect(response.status).toBe(200);
 		expect(response.headers.get("content-disposition")).toBe(
-			"attachment; filename=subtraction.fa.gz",
+			'attachment; filename="subtraction.fa.gz"',
 		);
 		expect(response.headers.get("content-length")).toBe("5");
 		expect(response.headers.get("content-type")).toBe(

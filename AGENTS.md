@@ -524,6 +524,14 @@ produce. Its `$document` param is the `{id}.{extension}` segment. It too
 enforces its own floor — `requireAuthenticatedRequest`, then the **read** right
 on the analysis's parent sample.
 
+The FASTA downloads (`routes/otus.$otuId.fasta.ts` and its isolate and sequence
+siblings → `@server/otus/fasta`) are raw routes for the same reason. Each ends
+in a literal `fasta` segment rather than carrying a `.fa` suffix on the resource
+URL: Python sniffs that suffix inside its OTU and sequence *read* handlers and
+branches, which puts two representations on one URL. Give a download its own
+route and let `Content-Disposition` carry the filename. They enforce
+`requireAuthenticatedRequest` and nothing more, matching the OTU read endpoints.
+
 Subtraction file downloads
 (`routes/subtractions.$subtractionId.files.$filename.ts` →
 `@server/subtraction/download`) are a raw route for the same reason, and stream
@@ -565,8 +573,16 @@ Mongoose / Mongo-driver layer here. A domain not yet reachable from the
 TS server is missing only its Drizzle mirror and server functions, not
 its data — build those against the tables Python already defines.
 
+**Serve a legacy-shaped table on its own shape; do not renormalize it.**
+The OTU domain writes `legacy_otus.data` as verbatim Mongo — isolates
+embedded, `_id` keys — because history diffs address that document
+positionally and Python still writes the same tables. Reshaping it from
+this side misapplies every diff already recorded and corrupts the
+analyses read path. Renormalizing is a Python-side migration.
+
 See [docs/database.md](docs/database.md) for which domains the TS
-server can reach today, the `legacy_id` resolution rules, and the
+server can reach today, why the OTU tables keep their legacy shape and
+what that costs a writer, the `legacy_id` resolution rules, and the
 column-default convention.
 
 ### Files live in object storage, shared with Python

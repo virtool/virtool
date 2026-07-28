@@ -1,13 +1,12 @@
 import { screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { mockApiEditOtu } from "@tests/api/otus";
 import { createFakeOtu } from "@tests/fake/otus";
+import { mockUpdateOtu } from "@tests/server-fn/otus";
 import { at, renderWithProviders } from "@tests/setup";
-import nock from "nock";
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import RemoveSegment from "../RemoveSegment";
+import { beforeEach, describe, expect, it, vi } from "vitest";
+import DeleteSegment from "../DeleteSegment";
 
-describe("<RemoveSegment />", () => {
+describe("<DeleteSegment />", () => {
 	let otu: ReturnType<typeof createFakeOtu>;
 	let segmentName: string;
 
@@ -16,11 +15,9 @@ describe("<RemoveSegment />", () => {
 		segmentName = at(otu.schema, 0).name;
 	});
 
-	afterEach(() => nock.cleanAll());
-
 	it("should render when [open=true]", () => {
 		renderWithProviders(
-			<RemoveSegment
+			<DeleteSegment
 				abbreviation={otu.abbreviation}
 				name={otu.name}
 				open
@@ -41,7 +38,7 @@ describe("<RemoveSegment />", () => {
 
 	it("should not render when [open=false]", () => {
 		renderWithProviders(
-			<RemoveSegment
+			<DeleteSegment
 				abbreviation={otu.abbreviation}
 				name={otu.name}
 				otuId={otu.id}
@@ -56,17 +53,13 @@ describe("<RemoveSegment />", () => {
 		expect(screen.queryByRole("button", { name: "Confirm" })).toBeNull();
 	});
 
-	it("should call API and close dialog when Confirm is clicked", async () => {
-		const scope = mockApiEditOtu(otu, {
-			abbreviation: otu.abbreviation,
-			name: otu.name,
-			otuId: otu.id,
-			schema: otu.schema.filter((s) => s.name !== segmentName),
-		});
+	it("should call the server and close the dialog when Confirm is clicked", async () => {
+		const schema = otu.schema.filter((s) => s.name !== segmentName);
+		const updateOtu = mockUpdateOtu({ ...otu, schema });
 		const setOpen = vi.fn();
 
 		renderWithProviders(
-			<RemoveSegment
+			<DeleteSegment
 				abbreviation={otu.abbreviation}
 				name={otu.name}
 				open
@@ -80,14 +73,21 @@ describe("<RemoveSegment />", () => {
 		await userEvent.click(screen.getByRole("button", { name: "Confirm" }));
 
 		await waitFor(() => expect(setOpen).toHaveBeenCalledWith(false));
-		scope.done();
+		expect(updateOtu).toHaveBeenCalledWith({
+			data: {
+				otuId: otu.id,
+				name: otu.name,
+				abbreviation: otu.abbreviation,
+				schema,
+			},
+		});
 	});
 
 	it("should call setOpen(false) when dialog is dismissed", async () => {
 		const setOpen = vi.fn();
 
 		renderWithProviders(
-			<RemoveSegment
+			<DeleteSegment
 				abbreviation={otu.abbreviation}
 				name={otu.name}
 				open

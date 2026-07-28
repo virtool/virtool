@@ -1,5 +1,5 @@
 import { getRouteApi } from "@tanstack/react-router";
-import type { Otu } from "./types";
+import type { Otu } from "@virtool/contracts";
 
 const routeApi = getRouteApi(
 	"/_authenticated/refs/$refId/otus/$otuId/isolates/$isolateId",

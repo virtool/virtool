@@ -1,4 +1,20 @@
-import { apiClient } from "@app/api";
+import { getErrorStatus } from "@app/queryErrors";
+import { getGenbankFn } from "@server/genbank/functions";
+import {
+	createIsolateFn,
+	createOtuFn,
+	createSequenceFn,
+	deleteIsolateFn,
+	deleteOtuFn,
+	deleteSequenceFn,
+	findOtusFn,
+	getOtuFn,
+	listOtuHistoryFn,
+	setIsolateAsDefaultFn,
+	updateIsolateFn,
+	updateOtuFn,
+	updateSequenceFn,
+} from "@server/otus/functions";
 import {
 	queryOptions,
 	useMutation,
@@ -6,8 +22,6 @@ import {
 	useQueryClient,
 	useSuspenseQuery,
 } from "@tanstack/react-query";
-import type { ErrorResponse } from "@/types/api";
-import { otuQueryKeys } from "./keys";
 import type {
 	Genbank,
 	Otu,
@@ -16,7 +30,8 @@ import type {
 	OtuSearchResult,
 	OtuSegment,
 	OtuSequence,
-} from "./types";
+} from "@virtool/contracts";
+import { otuQueryKeys } from "./keys";
 
 /**
  * Initializes a mutator for looking up a sequence in Genbank by accession
@@ -28,9 +43,9 @@ import type {
  * @returns A mutator that takes the accession identifying the sequence
  */
 export function useGetGenbank() {
-	return useMutation<Genbank, ErrorResponse, string>({
+	return useMutation<Genbank, Error, string>({
 		mutationFn: (accession) =>
-			apiClient.get(`/genbank/${accession}`).then((res) => res.body),
+			getGenbankFn({ data: { accession } }) as Promise<Genbank>,
 	});
 }
 
@@ -43,21 +58,17 @@ export function useGetGenbank() {
  * @param term - The search term to filter the OTUs by
  */
 export function otusQueryOptions(
-	refId: string,
+	refId: number,
 	page: number,
 	per_page: number,
 	term: string,
 ) {
-	return queryOptions<OtuSearchResult, ErrorResponse>({
+	return queryOptions<OtuSearchResult, Error>({
 		queryKey: otuQueryKeys.list([refId, page, per_page, term]),
 		queryFn: () =>
-			apiClient
-				.get(`/refs/${refId}/otus`)
-				.query({ find: term, page, per_page })
-				.then((res) => {
-					const { documents, ...rest } = res.body;
-					return { ...rest, items: documents };
-				}),
+			findOtusFn({
+				data: { referenceId: refId, page, per_page, term },
+			}) as Promise<OtuSearchResult>,
 	});
 }
 
@@ -71,7 +82,7 @@ export function otusQueryOptions(
  * rather than inline.
  */
 export function useSuspenseOtus(
-	refId: string,
+	refId: number,
 	page: number,
 	per_page: number,
 	term: string,
@@ -80,9 +91,9 @@ export function useSuspenseOtus(
 }
 
 export function otuQueryOptions(otuId: string) {
-	return queryOptions<Otu, ErrorResponse>({
+	return queryOptions<Otu, Error>({
 		queryKey: otuQueryKeys.detail(otuId),
-		queryFn: () => apiClient.get(`/otus/${otuId}`).then((res) => res.body),
+		queryFn: () => getOtuFn({ data: { otuId } }) as Promise<Otu>,
 	});
 }
 
@@ -93,10 +104,10 @@ export function otuQueryOptions(otuId: string) {
  * @returns A single OTU
  */
 export function useFetchOtu(otuId: string) {
-	return useQuery<Otu, ErrorResponse>({
+	return useQuery<Otu, Error>({
 		...otuQueryOptions(otuId),
 		retry: (failureCount, error) => {
-			if (error.response?.status === 404) {
+			if (getErrorStatus(error) === 404) {
 				return false;
 			}
 			return failureCount <= 3;
@@ -105,10 +116,10 @@ export function useFetchOtu(otuId: string) {
 }
 
 export function otuHistoryQueryOptions(otuId: string) {
-	return queryOptions<OtuHistory[], ErrorResponse>({
+	return queryOptions<OtuHistory[], Error>({
 		queryKey: otuQueryKeys.history(otuId),
 		queryFn: () =>
-			apiClient.get(`/otus/${otuId}/history`).then((res) => res.body),
+			listOtuHistoryFn({ data: { otuId } }) as Promise<OtuHistory[]>,
 	});
 }
 
@@ -127,25 +138,21 @@ export function useSuspenseOtuHistory(otuId: string) {
  *
  * @returns A mutator for creating an OTU
  */
-export function useCreateOtu(refId: string) {
+export function useCreateOtu(refId: number) {
 	const queryClient = useQueryClient();
 
-	return useMutation<
-		Otu,
-		ErrorResponse,
-		{ name: string; abbreviation: string }
-	>({
+	return useMutation<Otu, Error, { name: string; abbreviation: string }>({
 		mutationFn: ({ name, abbreviation }) =>
-			apiClient
-				.post(`/refs/${refId}/otus`)
-				.send({ name, abbreviation })
-				.then((res) => res.body),
+			createOtuFn({
+				data: { referenceId: refId, name, abbreviation, schema: [] },
+			}) as Promise<Otu>,
 		onSuccess: () => {
 			queryClient.invalidateQueries({ queryKey: otuQueryKeys.lists() });
 		},
 	});
 }
 
+/** The fields an OTU update may change, alongside the OTU to change them on. */
 export type UpdateOtuProps = {
 	otuId: string;
 	name?: string;
@@ -161,59 +168,56 @@ export type UpdateOtuProps = {
 export function useUpdateOtu(otuId: string) {
 	const queryClient = useQueryClient();
 
-	return useMutation<Otu, ErrorResponse, UpdateOtuProps, { previousOtu?: Otu }>(
-		{
-			mutationFn: ({ otuId, name, abbreviation, schema }) =>
-				apiClient
-					.patch(`/otus/${otuId}`)
-					.send({ name, abbreviation, schema })
-					.then((res) => res.body),
-			onMutate: async ({ name, abbreviation, schema }) => {
-				await queryClient.cancelQueries({
-					queryKey: otuQueryKeys.detail(otuId),
+	return useMutation<Otu, Error, UpdateOtuProps, { previousOtu?: Otu }>({
+		mutationFn: ({ otuId, name, abbreviation, schema }) =>
+			updateOtuFn({
+				data: { otuId, name, abbreviation, schema },
+			}) as Promise<Otu>,
+		onMutate: async ({ name, abbreviation, schema }) => {
+			await queryClient.cancelQueries({
+				queryKey: otuQueryKeys.detail(otuId),
+			});
+
+			const previousOtu = queryClient.getQueryData<Otu>(
+				otuQueryKeys.detail(otuId),
+			);
+
+			if (previousOtu) {
+				queryClient.setQueryData<Otu>(otuQueryKeys.detail(otuId), {
+					...previousOtu,
+					...(name !== undefined && { name }),
+					...(abbreviation !== undefined && { abbreviation }),
+					...(schema !== undefined && { schema }),
 				});
+			}
 
-				const previousOtu = queryClient.getQueryData<Otu>(
-					otuQueryKeys.detail(otuId),
-				);
-
-				if (previousOtu) {
-					queryClient.setQueryData<Otu>(otuQueryKeys.detail(otuId), {
-						...previousOtu,
-						...(name !== undefined && { name }),
-						...(abbreviation !== undefined && { abbreviation }),
-						...(schema !== undefined && { schema }),
-					});
-				}
-
-				return { previousOtu };
-			},
-			onError: (_error, _variables, context) => {
-				if (context?.previousOtu) {
-					queryClient.setQueryData(
-						otuQueryKeys.detail(otuId),
-						context.previousOtu,
-					);
-				}
-			},
-			onSettled: () => {
-				queryClient.invalidateQueries({
-					queryKey: otuQueryKeys.detail(otuId),
-				});
-			},
+			return { previousOtu };
 		},
-	);
+		onError: (_error, _variables, context) => {
+			if (context?.previousOtu) {
+				queryClient.setQueryData(
+					otuQueryKeys.detail(otuId),
+					context.previousOtu,
+				);
+			}
+		},
+		onSettled: () => {
+			queryClient.invalidateQueries({
+				queryKey: otuQueryKeys.detail(otuId),
+			});
+		},
+	});
 }
 
 /**
- * Initializes a mutator for removing an OTU isolate
+ * Initializes a mutator for deleting an OTU isolate
  *
- * @returns A mutator for removing an OTU isolate
+ * @returns A mutator for deleting an OTU isolate
  */
-export function useRemoveOtu() {
-	return useMutation<null, ErrorResponse, { otuId: string }>({
+export function useDeleteOtu() {
+	return useMutation<null, Error, { otuId: string }>({
 		mutationFn: ({ otuId }) =>
-			apiClient.delete(`/otus/${otuId}`).then((res) => res.body),
+			deleteOtuFn({ data: { otuId } }) as Promise<null>,
 	});
 }
 
@@ -227,14 +231,13 @@ export function useCreateIsolate(otuId: string) {
 
 	return useMutation<
 		OtuIsolate,
-		unknown,
+		Error,
 		{ otuId: string; sourceType: string; sourceName: string }
 	>({
 		mutationFn: ({ otuId, sourceType, sourceName }) =>
-			apiClient
-				.post(`/otus/${otuId}/isolates`)
-				.send({ source_type: sourceType, source_name: sourceName })
-				.then((res) => res.body),
+			createIsolateFn({
+				data: { otuId, default: false, sourceType, sourceName },
+			}) as Promise<OtuIsolate>,
 		onSuccess: () => {
 			queryClient.invalidateQueries({
 				queryKey: otuQueryKeys.detail(otuId),
@@ -251,15 +254,11 @@ export function useCreateIsolate(otuId: string) {
 export function useSetIsolateAsDefault() {
 	const queryClient = useQueryClient();
 
-	return useMutation<
-		OtuIsolate,
-		ErrorResponse,
-		{ otuId: string; isolateId: string }
-	>({
+	return useMutation<OtuIsolate, Error, { otuId: string; isolateId: string }>({
 		mutationFn: ({ otuId, isolateId }) =>
-			apiClient
-				.put(`/otus/${otuId}/isolates/${isolateId}/default`)
-				.then((res) => res.body),
+			setIsolateAsDefaultFn({
+				data: { otuId, isolateId },
+			}) as Promise<OtuIsolate>,
 		onSuccess: (_, { otuId }) => {
 			queryClient.invalidateQueries({
 				queryKey: otuQueryKeys.detail(otuId),
@@ -278,7 +277,7 @@ export function useUpdateIsolate() {
 
 	return useMutation<
 		OtuIsolate,
-		unknown,
+		Error,
 		{
 			otuId: string;
 			isolateId: string;
@@ -287,10 +286,9 @@ export function useUpdateIsolate() {
 		}
 	>({
 		mutationFn: ({ otuId, isolateId, sourceType, sourceName }) =>
-			apiClient
-				.patch(`/otus/${otuId}/isolates/${isolateId}`)
-				.send({ source_type: sourceType, source_name: sourceName })
-				.then((res) => res.body),
+			updateIsolateFn({
+				data: { otuId, isolateId, sourceType, sourceName },
+			}) as Promise<OtuIsolate>,
 		onSuccess: (_, { otuId }) => {
 			queryClient.invalidateQueries({
 				queryKey: otuQueryKeys.detail(otuId),
@@ -300,26 +298,22 @@ export function useUpdateIsolate() {
 }
 
 /**
- * Initializes a mutator for removing an OTU isolate
+ * Initializes a mutator for deleting an OTU isolate
  *
- * @returns A mutator for removing an OTU isolate
+ * @returns A mutator for deleting an OTU isolate
  */
-export function useRemoveIsolate() {
+export function useDeleteIsolate() {
 	const queryClient = useQueryClient();
 
-	return useMutation<null, ErrorResponse, { otuId: string; isolateId: string }>(
-		{
-			mutationFn: ({ otuId, isolateId }) =>
-				apiClient
-					.delete(`/otus/${otuId}/isolates/${isolateId}`)
-					.then((res) => res.body),
-			onSuccess: (_, { otuId }) => {
-				queryClient.invalidateQueries({
-					queryKey: otuQueryKeys.detail(otuId),
-				});
-			},
+	return useMutation<null, Error, { otuId: string; isolateId: string }>({
+		mutationFn: ({ otuId, isolateId }) =>
+			deleteIsolateFn({ data: { otuId, isolateId } }) as Promise<null>,
+		onSuccess: (_, { otuId }) => {
+			queryClient.invalidateQueries({
+				queryKey: otuQueryKeys.detail(otuId),
+			});
 		},
-	);
+	});
 }
 
 /**
@@ -332,7 +326,7 @@ export function useCreateSequence(otuId: string) {
 
 	return useMutation<
 		OtuSequence,
-		unknown,
+		Error,
 		{
 			isolateId: string;
 			accession: string;
@@ -350,11 +344,17 @@ export function useCreateSequence(otuId: string) {
 			sequence,
 			segment,
 		}) =>
-			apiClient
-				.post(`/otus/${otuId}/isolates/${isolateId}/sequences`)
-				.send({ accession, definition, host, sequence, segment })
-				.then((res) => res.body),
-
+			createSequenceFn({
+				data: {
+					otuId,
+					isolateId,
+					accession,
+					definition,
+					host,
+					segment: segment ?? null,
+					sequence,
+				},
+			}) as Promise<OtuSequence>,
 		onSuccess: () => {
 			queryClient.invalidateQueries({
 				queryKey: otuQueryKeys.detail(otuId),
@@ -373,7 +373,7 @@ export function useEditSequence(otuId: string) {
 
 	return useMutation<
 		OtuSequence,
-		unknown,
+		Error,
 		{
 			sequenceId: string;
 			isolateId: string;
@@ -393,10 +393,18 @@ export function useEditSequence(otuId: string) {
 			sequence,
 			segment,
 		}) =>
-			apiClient
-				.patch(`/otus/${otuId}/isolates/${isolateId}/sequences/${sequenceId}`)
-				.send({ accession, definition, host, sequence, segment })
-				.then((res) => res.body),
+			updateSequenceFn({
+				data: {
+					otuId,
+					isolateId,
+					sequenceId,
+					accession,
+					definition,
+					host,
+					segment: segment ?? null,
+					sequence,
+				},
+			}) as Promise<OtuSequence>,
 		onSuccess: () => {
 			queryClient.invalidateQueries({
 				queryKey: otuQueryKeys.detail(otuId),
@@ -406,22 +414,22 @@ export function useEditSequence(otuId: string) {
 }
 
 /**
- * Initializes a mutator for removing a sequence
+ * Initializes a mutator for deleting a sequence
  *
- * @returns A mutator for removing a sequence
+ * @returns A mutator for deleting a sequence
  */
-export function useRemoveSequence(otuId: string) {
+export function useDeleteSequence(otuId: string) {
 	const queryClient = useQueryClient();
 
 	return useMutation<
 		null,
-		ErrorResponse,
+		Error,
 		{ otuId: string; isolateId: string; sequenceId: string }
 	>({
 		mutationFn: ({ otuId, isolateId, sequenceId }) =>
-			apiClient
-				.delete(`/otus/${otuId}/isolates/${isolateId}/sequences/${sequenceId}`)
-				.then((res) => res.body),
+			deleteSequenceFn({
+				data: { otuId, isolateId, sequenceId },
+			}) as Promise<null>,
 		onSuccess: () => {
 			queryClient.invalidateQueries({
 				queryKey: otuQueryKeys.detail(otuId),

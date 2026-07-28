@@ -21,7 +21,7 @@ type GenomeSequenceProps = {
 	host: string;
 	id: string;
 	onEdit: () => void;
-	onRemove: () => void;
+	onDelete: () => void;
 	segment?: string | null;
 	sequence: string;
 };
@@ -35,7 +35,7 @@ export default function Sequence({
 	host,
 	id,
 	onEdit,
-	onRemove,
+	onDelete,
 	segment,
 	sequence,
 }: GenomeSequenceProps) {
@@ -75,7 +75,7 @@ export default function Sequence({
 				</CollapsiblePrimitive.Trigger>
 				<CollapsibleContent className="px-6 pb-3">
 					<div className="mt-2.5 overflow-hidden rounded-md border border-gray-200 bg-white">
-						<SequenceButtons id={id} onEdit={onEdit} onRemove={onRemove} />
+						<SequenceButtons id={id} onEdit={onEdit} onDelete={onDelete} />
 						<div className="flex gap-3 border-b border-gray-200 px-3 py-2">
 							<span className="w-20 shrink-0 font-semibold">Host</span>
 							<span className="min-w-0 truncate">{host}</span>

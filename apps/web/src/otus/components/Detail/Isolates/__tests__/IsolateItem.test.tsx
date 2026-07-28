@@ -15,8 +15,8 @@ describe("<IsolateItem />", () => {
 				isolate={isolate}
 				refId="ref-1"
 				otuId="otu-1"
-				canRemove
-				onRemove={vi.fn()}
+				canDelete
+				onDelete={vi.fn()}
 			/>,
 		);
 
@@ -31,8 +31,8 @@ describe("<IsolateItem />", () => {
 				isolate={isolate}
 				refId="ref-1"
 				otuId="otu-1"
-				canRemove
-				onRemove={vi.fn()}
+				canDelete
+				onDelete={vi.fn()}
 			/>,
 		);
 
@@ -49,8 +49,8 @@ describe("<IsolateItem />", () => {
 				isolate={isolate}
 				refId="ref-1"
 				otuId="otu-1"
-				canRemove
-				onRemove={vi.fn()}
+				canDelete
+				onDelete={vi.fn()}
 			/>,
 		);
 
@@ -65,36 +65,36 @@ describe("<IsolateItem />", () => {
 				isolate={isolate}
 				refId="ref-1"
 				otuId="otu-1"
-				canRemove
-				onRemove={vi.fn()}
+				canDelete
+				onDelete={vi.fn()}
 			/>,
 		);
 
 		expect(container.querySelector(".lucide-star")).toBeNull();
 	});
 
-	it("should call onRemove with the isolate when the remove button is clicked", async () => {
+	it("should call onDelete with the isolate when the delete button is clicked", async () => {
 		const isolate = createFakeOtuIsolate();
-		const onRemove = vi.fn();
+		const onDelete = vi.fn();
 
 		await renderWithRouter(
 			<IsolateItem
 				isolate={isolate}
 				refId="ref-1"
 				otuId="otu-1"
-				canRemove
-				onRemove={onRemove}
+				canDelete
+				onDelete={onDelete}
 			/>,
 		);
 
 		await userEvent.click(
-			screen.getByRole("button", { name: "remove isolate" }),
+			screen.getByRole("button", { name: "delete isolate" }),
 		);
 
-		expect(onRemove).toHaveBeenCalledWith(isolate);
+		expect(onDelete).toHaveBeenCalledWith(isolate);
 	});
 
-	it("should not render a remove button when [canRemove=false]", async () => {
+	it("should not render a delete button when [canDelete=false]", async () => {
 		const isolate = createFakeOtuIsolate();
 
 		await renderWithRouter(
@@ -102,8 +102,8 @@ describe("<IsolateItem />", () => {
 				isolate={isolate}
 				refId="ref-1"
 				otuId="otu-1"
-				canRemove={false}
-				onRemove={vi.fn()}
+				canDelete={false}
+				onDelete={vi.fn()}
 			/>,
 		);
 

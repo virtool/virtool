@@ -1,9 +1,8 @@
 import { cleanup, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { mockApiEditSequence } from "@tests/api/otus";
 import { createFakeOtuSequence } from "@tests/fake/otus";
+import { mockUpdateSequence } from "@tests/server-fn/otus";
 import { renderWithProviders } from "@tests/setup";
-import nock from "nock";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import SequenceEdit from "../SequenceEdit";
 
@@ -39,7 +38,6 @@ describe("<SequenceEdit>", () => {
 
 	afterEach(() => {
 		window.sessionStorage.clear();
-		nock.cleanAll();
 	});
 
 	it("should render all fields with current sequence data", async () => {
@@ -62,16 +60,13 @@ describe("<SequenceEdit>", () => {
 	});
 
 	it("should submit correct data when all fields changed", async () => {
-		const scope = mockApiEditSequence(
-			otuId,
-			isolateId,
-			activeSequence.id,
-			"user_typed_accession",
-			"user_typed_definition",
-			"user_typed_host",
-			"ACGRYKM",
-			null,
-		);
+		const updateSequence = mockUpdateSequence({
+			accession: "user_typed_accession",
+			definition: "user_typed_definition",
+			host: "user_typed_host",
+			segment: null,
+			sequence: "ACGRYKM",
+		});
 
 		renderSequenceEdit();
 
@@ -104,7 +99,20 @@ describe("<SequenceEdit>", () => {
 
 		await userEvent.click(screen.getByRole("button", { name: "Save" }));
 
-		await waitFor(() => scope.done());
+		await waitFor(() =>
+			expect(updateSequence).toHaveBeenCalledWith({
+				data: {
+					otuId,
+					isolateId,
+					sequenceId: activeSequence.id,
+					accession: "user_typed_accession",
+					definition: "user_typed_definition",
+					host: "user_typed_host",
+					segment: null,
+					sequence: "ACGRYKM",
+				},
+			}),
+		);
 	});
 
 	it("should display errors when accession, definition, or sequence not defined", async () => {
@@ -139,16 +147,13 @@ describe("<SequenceEdit>", () => {
 	});
 
 	it("should clear form cache submitting", async () => {
-		const scope = mockApiEditSequence(
-			otuId,
-			isolateId,
-			activeSequence.id,
-			"user_typed_accession",
-			"user_typed_definition",
-			"user_typed_host",
-			"ACGRYKM",
-			null,
-		);
+		const updateSequence = mockUpdateSequence({
+			accession: "user_typed_accession",
+			definition: "user_typed_definition",
+			host: "user_typed_host",
+			segment: null,
+			sequence: "ACGRYKM",
+		});
 
 		renderSequenceEdit();
 
@@ -181,7 +186,20 @@ describe("<SequenceEdit>", () => {
 
 		await userEvent.click(screen.getByRole("button", { name: "Save" }));
 
-		await waitFor(() => scope.done());
+		await waitFor(() =>
+			expect(updateSequence).toHaveBeenCalledWith({
+				data: {
+					otuId,
+					isolateId,
+					sequenceId: activeSequence.id,
+					accession: "user_typed_accession",
+					definition: "user_typed_definition",
+					host: "user_typed_host",
+					segment: null,
+					sequence: "ACGRYKM",
+				},
+			}),
+		);
 
 		window.sessionStorage.clear();
 		cleanup();

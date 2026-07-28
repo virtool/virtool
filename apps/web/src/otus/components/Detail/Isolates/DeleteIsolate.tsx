@@ -1,7 +1,7 @@
 import DeleteDialog from "@base/DeleteDialog";
-import { useRemoveIsolate } from "@otus/queries";
+import { useDeleteIsolate } from "@otus/queries";
 
-type RemoveIsolateProps = {
+type DeleteIsolateProps = {
 	/** The id of the isolate being deleted */
 	id: string;
 	/** The name of the isolate being deleted */
@@ -10,21 +10,21 @@ type RemoveIsolateProps = {
 	onHide: () => void;
 	/** The id of the otu in which the isolate belongs to */
 	otuId: string;
-	/** Whether the dialog to remove the isolate is visible */
+	/** Whether the dialog to delete the isolate is visible */
 	show: boolean;
 };
 
 /**
- * Displays a dialog for removing an OTU isolate
+ * Displays a dialog for deleting an OTU isolate
  */
-export default function RemoveIsolate({
+export default function DeleteIsolate({
 	id,
 	name,
 	onHide,
 	otuId,
 	show,
-}: RemoveIsolateProps) {
-	const mutation = useRemoveIsolate();
+}: DeleteIsolateProps) {
+	const mutation = useDeleteIsolate();
 
 	return (
 		<DeleteDialog

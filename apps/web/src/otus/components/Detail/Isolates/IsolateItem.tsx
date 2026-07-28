@@ -2,7 +2,7 @@ import { formatIsolateName } from "@app/utils";
 import Icon from "@base/Icon";
 import IconButton from "@base/IconButton";
 import Link from "@base/Link";
-import type { OtuIsolate } from "@otus/types";
+import type { OtuIsolate } from "@virtool/contracts";
 import { Star, Trash } from "lucide-react";
 
 type IsolateItemProps = {
@@ -12,10 +12,10 @@ type IsolateItemProps = {
 	refId: string;
 	/** The parent OTU id */
 	otuId: string;
-	/** Whether the remove control should be shown */
-	canRemove: boolean;
-	/** Called with the isolate when its remove control is clicked */
-	onRemove: (isolate: OtuIsolate) => void;
+	/** Whether the delete control should be shown */
+	canDelete: boolean;
+	/** Called with the isolate when its delete control is clicked */
+	onDelete: (isolate: OtuIsolate) => void;
 };
 
 /**
@@ -25,8 +25,8 @@ export default function IsolateItem({
 	isolate,
 	refId,
 	otuId,
-	canRemove,
-	onRemove,
+	canDelete,
+	onDelete,
 }: IsolateItemProps) {
 	return (
 		<div className="flex items-center h-full border-b border-gray-100 pr-2 hover:bg-gray-50">
@@ -40,12 +40,12 @@ export default function IsolateItem({
 				</span>
 				{isolate.default && <Icon icon={Star} className="ml-2" />}
 			</Link>
-			{canRemove && (
+			{canDelete && (
 				<IconButton
 					IconComponent={Trash}
 					color="red"
-					tip="remove isolate"
-					onClick={() => onRemove(isolate)}
+					tip="delete isolate"
+					onClick={() => onDelete(isolate)}
 				/>
 			)}
 		</div>

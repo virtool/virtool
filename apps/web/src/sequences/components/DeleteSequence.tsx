@@ -1,8 +1,8 @@
 import DeleteDialog from "@base/DeleteDialog";
-import { useRemoveSequence } from "@otus/queries";
-import type { OtuSequence } from "@otus/types";
+import { useDeleteSequence } from "@otus/queries";
+import type { OtuSequence } from "@virtool/contracts";
 
-type RemoveSequenceProps = {
+type DeleteSequenceProps = {
 	isolateId: string;
 	isolateName: string;
 	otuId: string;
@@ -12,17 +12,17 @@ type RemoveSequenceProps = {
 };
 
 /**
- * Displays a dialog for removing a sequence
+ * Displays a dialog for deleting a sequence
  */
-export default function RemoveSequence({
+export default function DeleteSequence({
 	isolateId,
 	isolateName,
 	otuId,
 	open = false,
 	sequence,
 	setOpen = () => {},
-}: RemoveSequenceProps) {
-	const mutation = useRemoveSequence(otuId);
+}: DeleteSequenceProps) {
+	const mutation = useDeleteSequence(otuId);
 
 	function handleConfirm() {
 		if (!sequence) {

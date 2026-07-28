@@ -29,6 +29,7 @@ import { groupServerFnMocks } from "./server-fn/groups";
 import { hmmServerFnMocks } from "./server-fn/hmm";
 import { jobServerFnMocks } from "./server-fn/jobs";
 import { labelServerFnMocks } from "./server-fn/labels";
+import { genbankServerFnMocks, otuServerFnMocks } from "./server-fn/otus";
 import { referenceServerFnMocks } from "./server-fn/references";
 import { rootServerFnMocks } from "./server-fn/root";
 import { sampleServerFnMocks } from "./server-fn/samples";
@@ -100,6 +101,16 @@ vi.mock("@server/samples/functions", async () => {
 	return sampleServerFnMocks;
 });
 
+vi.mock("@server/otus/functions", async () => {
+	const { otuServerFnMocks } = await import("./server-fn/otus");
+	return otuServerFnMocks;
+});
+
+vi.mock("@server/genbank/functions", async () => {
+	const { genbankServerFnMocks } = await import("./server-fn/otus");
+	return genbankServerFnMocks;
+});
+
 beforeEach(() => {
 	for (const fn of Object.values(groupServerFnMocks)) {
 		fn.mockReset();
@@ -124,6 +135,9 @@ beforeEach(() => {
 		analysisServerFnMocks.findAnalysesFn,
 		analysisServerFnMocks.getAnalysisFn,
 		settingsServerFnMocks.getSettingsFn,
+		otuServerFnMocks.findOtusFn,
+		otuServerFnMocks.getOtuFn,
+		otuServerFnMocks.listOtuHistoryFn,
 	]) {
 		fn.mockReset();
 		// Default to a pending promise so an un-stubbed query renders its loading
@@ -153,6 +167,17 @@ beforeEach(() => {
 		analysisServerFnMocks.deleteAnalysisFn,
 		analysisServerFnMocks.blastNuvsFn,
 		settingsServerFnMocks.updateSettingsFn,
+		otuServerFnMocks.createOtuFn,
+		otuServerFnMocks.updateOtuFn,
+		otuServerFnMocks.deleteOtuFn,
+		otuServerFnMocks.createIsolateFn,
+		otuServerFnMocks.updateIsolateFn,
+		otuServerFnMocks.setIsolateAsDefaultFn,
+		otuServerFnMocks.deleteIsolateFn,
+		otuServerFnMocks.createSequenceFn,
+		otuServerFnMocks.updateSequenceFn,
+		otuServerFnMocks.deleteSequenceFn,
+		genbankServerFnMocks.getGenbankFn,
 	]) {
 		fn.mockReset();
 	}

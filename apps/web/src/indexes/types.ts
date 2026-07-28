@@ -1,4 +1,3 @@
-import type { HistoryNested, OtuNested } from "@otus/types";
 import type { ReferenceNested } from "@references/types";
 import { z } from "zod";
 import type { SearchResult } from "@/types/api";
@@ -74,10 +73,43 @@ export const indexSchema = indexMinimalSchema.extend({
 /** Reference index for use in workflows */
 export type Index = z.infer<typeof indexSchema>;
 
+// Indexes are still served by the Python API, so `GET /refs/{refId}/history`
+// answers in snake_case. The equivalent OTU shapes now live in
+// `@virtool/contracts` as the camelCase wire shape the TypeScript server
+// returns, so reusing them here would silently mistype every field. These stay
+// declared locally until indexes move off Python too.
+type UnbuiltHistoryNested = {
+	/** When the change was made */
+	created_at: string;
+
+	/** A human-readable description of the change */
+	description: string;
+
+	/** The unique identifier */
+	id: string;
+
+	/** The name of the method that made the change (eg. edit_sequence) */
+	method_name: string;
+
+	/** The user who made the change */
+	user: z.infer<typeof userNestedSchema>;
+};
+
+type UnbuiltOtuNested = {
+	/** The unique identifier */
+	id: string;
+
+	/** The display name */
+	name: string;
+
+	/** The revision number, incremented on every change */
+	version: number;
+};
+
 /** An unbuilt change awaiting the next index build */
-export type UnbuiltChanges = HistoryNested & {
+export type UnbuiltChanges = UnbuiltHistoryNested & {
 	index: IndexNested | null;
-	otu: OtuNested;
+	otu: UnbuiltOtuNested;
 	reference: ReferenceNested;
 };
 

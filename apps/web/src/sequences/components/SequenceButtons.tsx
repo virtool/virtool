@@ -11,16 +11,16 @@ import { Pencil, Trash } from "lucide-react";
 type SequenceButtonsProps = {
 	id: string;
 	onEdit: () => void;
-	onRemove: () => void;
+	onDelete: () => void;
 };
 
 /**
- * A strip of actions for a sequence: edit, remove, and FASTA download
+ * A strip of actions for a sequence: edit, delete, and FASTA download
  */
 export default function SequenceButtons({
 	id,
 	onEdit,
-	onRemove,
+	onDelete,
 }: SequenceButtonsProps) {
 	const { otu, reference } = useCurrentOtuContext();
 
@@ -31,7 +31,7 @@ export default function SequenceButtons({
 	const archived = useReferenceIsArchived(reference.id);
 	const isolateId = useGetActiveIsolateId(otu);
 
-	const href = `/api/otus/${otu.id}/isolates/${isolateId}/sequences/${id}.fa`;
+	const href = `/otus/${otu.id}/isolates/${isolateId}/sequences/${id}/fasta`;
 
 	return (
 		<div className="flex items-center justify-end gap-1.5 px-2 py-1">
@@ -48,8 +48,8 @@ export default function SequenceButtons({
 						IconComponent={Trash}
 						color="red"
 						size={14}
-						tip="Remove"
-						onClick={onRemove}
+						tip="Delete"
+						onClick={onDelete}
 					/>
 				</>
 			)}

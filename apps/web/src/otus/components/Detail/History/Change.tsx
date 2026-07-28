@@ -2,8 +2,11 @@ import Attribution from "@base/Attribution";
 import BoxGroupSection from "@base/BoxGroupSection";
 import Icon, { type IconProps } from "@base/Icon";
 import Label from "@base/Label";
-import type { HistoryMethod, OtuNested } from "@otus/types";
-import type { UserNested } from "@users/types";
+import type {
+	HistoryMethod,
+	HistoryOtuNested,
+	UserNested,
+} from "@virtool/contracts";
 import {
 	AlertTriangle,
 	ArrowUpCircle,
@@ -87,10 +90,10 @@ function getMethodIcon(methodName: string) {
 }
 
 type ChangeProps = {
-	createdAt: string;
+	createdAt: Date;
 	description: string;
 	methodName: string;
-	otu: OtuNested;
+	otu: HistoryOtuNested;
 	user: UserNested;
 };
 

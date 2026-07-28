@@ -3,13 +3,13 @@ import BoxGroup from "@base/BoxGroup";
 import BoxGroupSection from "@base/BoxGroupSection";
 import { Empty, EmptyDescription, EmptyMedia, EmptyTitle } from "@base/Empty";
 import { useCurrentOtuContext } from "@otus/components/CurrentOtuContext";
-import type { OtuIsolate, OtuSequence } from "@otus/types";
 import sortSequencesBySegment from "@otus/utils";
 import { useReferenceIsArchived } from "@references/hooks";
+import type { OtuIsolate, OtuSequence } from "@virtool/contracts";
 import { Dna } from "lucide-react";
 import { useState } from "react";
 import CreateSequence from "./CreateSequence";
-import RemoveSequence from "./RemoveSequence";
+import DeleteSequence from "./DeleteSequence";
 import Sequence from "./Sequence";
 import SequenceEdit from "./SequenceEdit";
 import {
@@ -57,7 +57,7 @@ export default function Sequences({
 	const [sequenceToEdit, setSequenceToEdit] = useState<
 		OtuSequence | undefined
 	>();
-	const [sequenceToRemove, setSequenceToRemove] = useState<
+	const [sequenceToDelete, setSequenceToDelete] = useState<
 		OtuSequence | undefined
 	>();
 
@@ -68,11 +68,11 @@ export default function Sequences({
 			key={sequence.id}
 			{...sequence}
 			onEdit={() => setSequenceToEdit(sequence)}
-			onRemove={() => setSequenceToRemove(sequence)}
+			onDelete={() => setSequenceToDelete(sequence)}
 		/>
 	));
 
-	let isolateName = `${activeIsolate.source_type} ${activeIsolate.source_name}`;
+	let isolateName = `${activeIsolate.sourceType} ${activeIsolate.sourceName}`;
 	isolateName = (isolateName[0] ?? "").toUpperCase() + isolateName.slice(1);
 
 	const hasSequences = sequenceComponents.length > 0;
@@ -129,15 +129,15 @@ export default function Sequences({
 					}
 				}}
 			/>
-			<RemoveSequence
+			<DeleteSequence
 				isolateId={activeIsolate.id}
 				isolateName={isolateName}
 				otuId={otuId}
-				open={Boolean(sequenceToRemove) && !archived}
-				sequence={sequenceToRemove}
+				open={Boolean(sequenceToDelete) && !archived}
+				sequence={sequenceToDelete}
 				setOpen={(open) => {
 					if (!open) {
-						setSequenceToRemove(undefined);
+						setSequenceToDelete(undefined);
 					}
 				}}
 			/>

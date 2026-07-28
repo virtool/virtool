@@ -3,7 +3,7 @@ import InputGroup from "@base/InputGroup";
 import InputLabel from "@base/InputLabel";
 import InputSimple from "@base/InputSimple";
 import SaveButton from "@base/SaveButton";
-import type { OtuSegment, OtuSequence } from "@otus/types";
+import type { OtuSegment, OtuSequence } from "@virtool/contracts";
 import { FormProvider, useForm } from "react-hook-form";
 import Accession from "./Accession";
 import SequenceField from "./SequenceField";

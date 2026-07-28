@@ -12,6 +12,16 @@ export type TestDatabase = {
 	drop: () => Promise<void>;
 };
 
+/** Options for {@link createTestDatabase}. */
+export type TestDatabaseOptions = {
+	/**
+	 * Called with every statement the connection sends, so a test can count the
+	 * round trips an operation costs. Off unless a test asks for it — it fires on
+	 * the driver's hot path.
+	 */
+	onQuery?: (query: string) => void;
+};
+
 /**
  * The DDL for the whole schema, derived by diffing an empty schema against
  * ours. Cached because generating it costs more than running it, and every
@@ -42,7 +52,9 @@ function getDdl(): Promise<string[]> {
  * database rather than sharing `public`, so that seeding in one file cannot be
  * seen — or truncated — by another.
  */
-export async function createTestDatabase(): Promise<TestDatabase> {
+export async function createTestDatabase(
+	options: TestDatabaseOptions = {},
+): Promise<TestDatabase> {
 	const statements = await getDdl();
 
 	const url = new URL(process.env.VT_POSTGRES_URL as string);
@@ -52,7 +64,12 @@ export async function createTestDatabase(): Promise<TestDatabase> {
 	await admin.unsafe(`create database "${name}"`);
 
 	url.pathname = `/${name}`;
-	const client = postgres(url.toString(), { max: 1 });
+	const client = postgres(url.toString(), {
+		max: 1,
+		...(options.onQuery && {
+			debug: (_connection, query) => options.onQuery?.(query),
+		}),
+	});
 
 	for (const statement of statements) {
 		await client.unsafe(statement);

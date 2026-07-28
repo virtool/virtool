@@ -155,3 +155,135 @@ export function patch<T>(diff: DiffEntry[], destination: T): T {
 
 	return patched;
 }
+
+function isRecord(value: unknown): value is Container {
+	return typeof value === "object" && value !== null && !Array.isArray(value);
+}
+
+function isNumeric(value: unknown): value is number | boolean {
+	// Python's `num_types` is `(int, float)`, and `bool` subclasses `int`, so
+	// `True == 1` there.
+	return typeof value === "number" || typeof value === "boolean";
+}
+
+function areDifferent(first: unknown, second: unknown): boolean {
+	if (first === second) {
+		return false;
+	}
+
+	if (isNumeric(first) && isNumeric(second)) {
+		// `math.isclose(a, b, rel_tol=sys.float_info.epsilon, abs_tol=0)`, the
+		// default `tolerance` dictdiffer is called with.
+		const a = Number(first);
+		const b = Number(second);
+
+		return (
+			Math.abs(a - b) > Number.EPSILON * Math.max(Math.abs(a), Math.abs(b))
+		);
+	}
+
+	// Python also counts two NaNs as equal and compares sets, numpy arrays and
+	// Decimals. None of those survives a JSONB round trip, so none is ported.
+	return true;
+}
+
+function toPath(node: Array<string | number>): DiffPath {
+	// `dot_notation=True`, dictdiffer's default and the only way Virtool calls
+	// it. A path is only dot-joined when every key is a string that has no dot
+	// of its own to be confused with the separator.
+	if (node.every((key) => typeof key === "string" && !key.includes("."))) {
+		return node.join(".");
+	}
+
+	return [...node];
+}
+
+function range(start: number, end: number): number[] {
+	return Array.from({ length: Math.max(end - start, 0) }, (_, i) => start + i);
+}
+
+function diffRecursive(
+	first: unknown,
+	second: unknown,
+	node: Array<string | number>,
+	entries: DiffEntry[],
+): void {
+	const path = toPath(node);
+
+	let intersection: Array<string | number>;
+	let addition: Array<string | number>;
+	let deletion: Array<string | number>;
+
+	if (isRecord(first) && isRecord(second)) {
+		intersection = Object.keys(first).filter((key) =>
+			Object.hasOwn(second, key),
+		);
+		addition = Object.keys(second).filter((key) => !Object.hasOwn(first, key));
+		deletion = Object.keys(first).filter((key) => !Object.hasOwn(second, key));
+	} else if (Array.isArray(first) && Array.isArray(second)) {
+		const shared = Math.min(first.length, second.length);
+
+		intersection = range(0, shared);
+		addition = range(shared, second.length);
+		// Reversed so that a patch removes the highest index first and never
+		// shifts an index it has yet to reach.
+		deletion = range(shared, first.length).reverse();
+	} else {
+		// Either a scalar pair, or a container whose type changed — dictdiffer
+		// does not recurse into a type change, it reports the whole value.
+		if (areDifferent(first, second)) {
+			entries.push([
+				"change",
+				path,
+				[structuredClone(first), structuredClone(second)],
+			]);
+		}
+
+		return;
+	}
+
+	const firstContainer = first as Container;
+	const secondContainer = second as Container;
+
+	for (const key of intersection) {
+		diffRecursive(
+			firstContainer[key],
+			secondContainer[key],
+			[...node, key],
+			entries,
+		);
+	}
+
+	if (addition.length > 0) {
+		const changes: PairChanges = addition.map((key) => [
+			key,
+			structuredClone(secondContainer[key]),
+		]);
+
+		entries.push(["add", path, changes]);
+	}
+
+	if (deletion.length > 0) {
+		const changes: PairChanges = deletion.map((key) => [
+			key,
+			structuredClone(firstContainer[key]),
+		]);
+
+		entries.push(["remove", path, changes]);
+	}
+}
+
+/**
+ * Compare two documents, returning the diff that turns the first into the second.
+ *
+ * Python's generator is materialised as an array, since Virtool only ever
+ * consumes it as `list(dictdiffer.diff(old, new))`. The `ignore`, `path_limit`
+ * and `expand` options are not ported — every call site takes the defaults.
+ */
+export function diff(first: unknown, second: unknown): DiffEntry[] {
+	const entries: DiffEntry[] = [];
+
+	diffRecursive(first, second, [], entries);
+
+	return entries;
+}

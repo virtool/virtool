@@ -28,7 +28,7 @@ export const Route = createFileRoute("/_authenticated/refs/$refId/otus/")({
 	}) => {
 		const { otusQueryOptions } = await import("@otus/queries");
 		await queryClient.ensureQueryData(
-			otusQueryOptions(refId, page, DEFAULT_PER_PAGE, term),
+			otusQueryOptions(Number(refId), page, DEFAULT_PER_PAGE, term),
 		);
 	},
 	component: OtusRoute,

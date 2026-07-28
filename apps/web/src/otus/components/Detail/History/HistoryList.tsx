@@ -1,7 +1,7 @@
 import Badge from "@base/Badge";
 import BoxGroup from "@base/BoxGroup";
 import BoxGroupHeader from "@base/BoxGroupHeader";
-import type { OtuHistory } from "@otus/types";
+import type { OtuHistory } from "@virtool/contracts";
 import { sortBy } from "es-toolkit";
 import Change from "./Change";
 
@@ -24,11 +24,11 @@ export default function HistoryList({
 	const changeComponents = changes.map((change) => (
 		<Change
 			key={change.id}
-			methodName={change.method_name}
+			methodName={change.methodName}
 			otu={change.otu}
 			user={change.user}
 			description={change.description}
-			createdAt={change.created_at}
+			createdAt={change.createdAt}
 		/>
 	));
 

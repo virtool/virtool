@@ -9,7 +9,7 @@ type FormValues = {
 
 type CreateOtuProps = {
 	open: boolean;
-	refId: string;
+	refId: number;
 	setOpen: (open: boolean) => void;
 };
 
@@ -39,10 +39,7 @@ export default function OtuCreate({ open, refId, setOpen }: CreateOtuProps) {
 		<Dialog open={open} onOpenChange={onHide}>
 			<DialogContent>
 				<DialogTitle>Create OTU</DialogTitle>
-				<OtuForm
-					onSubmit={handleSubmit}
-					error={mutation.error?.response?.body?.message}
-				/>
+				<OtuForm onSubmit={handleSubmit} error={mutation.error?.message} />
 			</DialogContent>
 		</Dialog>
 	);

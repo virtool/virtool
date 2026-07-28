@@ -1,28 +1,25 @@
 import { screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { mockApiRemoveOtu } from "@tests/api/otus";
 import { createFakeOtu } from "@tests/fake/otus";
+import { mockDeleteOtu } from "@tests/server-fn/otus";
 import { renderWithProviders } from "@tests/setup";
-import nock from "nock";
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import OtuRemove from "../OtuRemove";
+import { beforeEach, describe, expect, it, vi } from "vitest";
+import OtuDelete from "../OtuDelete";
 
-describe("<OtuRemove />", () => {
+describe("<OtuDelete />", () => {
 	let otu: ReturnType<typeof createFakeOtu>;
 
 	beforeEach(() => {
 		otu = createFakeOtu();
 	});
 
-	afterEach(() => nock.cleanAll());
-
 	it("should render when [open=true]", () => {
 		renderWithProviders(
-			<OtuRemove
+			<OtuDelete
 				id={otu.id}
 				name={otu.name}
 				open
-				onRemoved={vi.fn()}
+				onDeleted={vi.fn()}
 				setOpen={vi.fn()}
 			/>,
 		);
@@ -36,10 +33,10 @@ describe("<OtuRemove />", () => {
 
 	it("should not render when [open=false]", () => {
 		renderWithProviders(
-			<OtuRemove
+			<OtuDelete
 				id={otu.id}
 				name={otu.name}
-				onRemoved={vi.fn()}
+				onDeleted={vi.fn()}
 				setOpen={vi.fn()}
 			/>,
 		);
@@ -49,23 +46,23 @@ describe("<OtuRemove />", () => {
 		expect(screen.queryByRole("button", { name: "Confirm" })).toBeNull();
 	});
 
-	it("should call onRemoved after successful removal", async () => {
-		const scope = mockApiRemoveOtu(otu.id);
-		const onRemoved = vi.fn();
+	it("should call onDeleted after successful removal", async () => {
+		const deleteOtu = mockDeleteOtu();
+		const onDeleted = vi.fn();
 
 		renderWithProviders(
-			<OtuRemove
+			<OtuDelete
 				id={otu.id}
 				name={otu.name}
 				open
-				onRemoved={onRemoved}
+				onDeleted={onDeleted}
 				setOpen={vi.fn()}
 			/>,
 		);
 
 		await userEvent.click(screen.getByRole("button", { name: "Confirm" }));
 
-		await waitFor(() => expect(onRemoved).toHaveBeenCalledOnce());
-		scope.done();
+		await waitFor(() => expect(onDeleted).toHaveBeenCalledOnce());
+		expect(deleteOtu).toHaveBeenCalledWith({ data: { otuId: otu.id } });
 	});
 });

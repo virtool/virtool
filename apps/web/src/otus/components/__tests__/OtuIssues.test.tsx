@@ -8,10 +8,10 @@ describe("<OtuIssues />", () => {
 	it("renders correctly without issues", () => {
 		const props: ComponentProps<typeof OtuIssues> = {
 			issues: {
-				empty_otu: false,
-				isolate_inconsistency: false,
-				empty_isolate: false,
-				empty_sequence: false,
+				emptyOtu: false,
+				isolateInconsistency: false,
+				emptyIsolate: false,
+				emptySequence: false,
 			},
 			isolates: [],
 		};
@@ -27,13 +27,13 @@ describe("<OtuIssues />", () => {
 	it("renders correctly with issues", () => {
 		const props: ComponentProps<typeof OtuIssues> = {
 			issues: {
-				empty_otu: true,
-				isolate_inconsistency: true,
-				empty_isolate: ["test-isolate"],
-				empty_sequence: [
+				emptyOtu: true,
+				isolateInconsistency: true,
+				emptyIsolate: ["test-isolate"],
+				emptySequence: [
 					{
-						_id: "test-sequence",
-						isolate_id: "test-isolate",
+						id: "test-sequence",
+						isolateId: "test-isolate",
 					},
 				],
 			},
@@ -42,8 +42,8 @@ describe("<OtuIssues />", () => {
 					default: false,
 					id: "test-isolate",
 					sequences: [],
-					source_type: "isolate",
-					source_name: "test",
+					sourceType: "isolate",
+					sourceName: "test",
 				},
 			],
 		};

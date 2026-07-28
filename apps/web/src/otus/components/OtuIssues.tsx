@@ -1,13 +1,13 @@
 import { formatIsolateName } from "@app/utils";
 import Alert from "@base/Alert";
+import type { OtuIsolate, OtuIssueReport } from "@virtool/contracts";
 import type { ReactNode } from "react";
-import type { OtuIsolate, OtuIssueReport } from "../types";
 
 type OtuIssuesProps = {
 	/** The isolates associated with the OTU */
 	isolates: OtuIsolate[];
 	/** The issues that occurred */
-	issues: OtuIssueReport | boolean | null;
+	issues: OtuIssueReport;
 };
 
 /**
@@ -17,14 +17,14 @@ export default function OtuIssues({ isolates, issues }: OtuIssuesProps) {
 	const errors: ReactNode[] = [];
 
 	// The OTU has no isolates associated with it.
-	if (issues && typeof issues === "object" && issues.empty_otu) {
+	if (issues.emptyOtu) {
 		errors.push(
 			<li key="emptyOtu">There are no isolates associated with this OTU</li>,
 		);
 	}
 
 	// The OTU has an inconsistent number of sequences between isolates.
-	if (issues && typeof issues === "object" && issues.isolate_inconsistency) {
+	if (issues.isolateInconsistency) {
 		errors.push(
 			<li key="isolateInconsistency">
 				Some isolates have different numbers of sequences than other isolates
@@ -33,10 +33,8 @@ export default function OtuIssues({ isolates, issues }: OtuIssuesProps) {
 	}
 
 	// One or more isolates have no sequences associated with them.
-	if (issues && typeof issues === "object" && issues.empty_isolate) {
-		// The empty_isolate property is an array of isolate_ids of empty isolates.
-		const emptyIsolates = issues.empty_isolate.map((isolateId) => {
-			// Get the entire isolate identified by isolate_id from the detail data.
+	if (issues.emptyIsolate) {
+		const emptyIsolates = issues.emptyIsolate.map((isolateId) => {
 			const isolate = isolates.find((i) => i.id === isolateId);
 
 			return (
@@ -55,15 +53,14 @@ export default function OtuIssues({ isolates, issues }: OtuIssuesProps) {
 	}
 
 	// One or more sequence documents have no sequence field.
-	if (issues && typeof issues === "object" && issues.empty_sequence) {
-		// Make a list of sequences that have no defined sequence field.
-		const emptySequences = issues.empty_sequence.map((errorObject) => {
-			// Get the entire isolate object identified by the isolate_id.
-			const isolate = isolates.find((i) => i.id === errorObject.isolate_id);
+	if (issues.emptySequence) {
+		const emptySequences = issues.emptySequence.map((emptySequence) => {
+			const isolate = isolates.find((i) => i.id === emptySequence.isolateId);
+
 			return (
-				<li key={errorObject._id}>
+				<li key={emptySequence.id}>
 					<span>
-						<em>{errorObject._id}</em> in isolate{" "}
+						<em>{emptySequence.id}</em> in isolate{" "}
 						<em>{isolate ? formatIsolateName(isolate) : "Unknown isolate"}</em>
 					</span>
 				</li>

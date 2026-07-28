@@ -1,13 +1,12 @@
 import { screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { mockApiRemoveSequence } from "@tests/api/otus";
 import { createFakeOtu } from "@tests/fake/otus";
+import { mockDeleteSequence } from "@tests/server-fn/otus";
 import { at, renderWithProviders } from "@tests/setup";
-import nock from "nock";
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import RemoveSequence from "../RemoveSequence";
+import { beforeEach, describe, expect, it, vi } from "vitest";
+import DeleteSequence from "../DeleteSequence";
 
-describe("<RemoveSequence />", () => {
+describe("<DeleteSequence />", () => {
 	let otu: ReturnType<typeof createFakeOtu>;
 	let isolate: ReturnType<typeof createFakeOtu>["isolates"][number];
 	let sequence: (typeof isolate)["sequences"][number];
@@ -18,16 +17,13 @@ describe("<RemoveSequence />", () => {
 		isolate = at(otu.isolates, 0);
 		sequence = at(isolate.sequences, 0);
 		const sourceType =
-			isolate.source_type.charAt(0).toUpperCase() +
-			isolate.source_type.slice(1);
-		isolateName = `${sourceType} ${isolate.source_name}`;
+			isolate.sourceType.charAt(0).toUpperCase() + isolate.sourceType.slice(1);
+		isolateName = `${sourceType} ${isolate.sourceName}`;
 	});
-
-	afterEach(() => nock.cleanAll());
 
 	it("should render when [open=true]", () => {
 		renderWithProviders(
-			<RemoveSequence
+			<DeleteSequence
 				isolateId={isolate.id}
 				isolateName={isolateName}
 				otuId={otu.id}
@@ -48,7 +44,7 @@ describe("<RemoveSequence />", () => {
 
 	it("should not render when [open=false]", () => {
 		renderWithProviders(
-			<RemoveSequence
+			<DeleteSequence
 				isolateId={isolate.id}
 				isolateName={isolateName}
 				otuId={otu.id}
@@ -61,12 +57,12 @@ describe("<RemoveSequence />", () => {
 		expect(screen.queryByRole("button", { name: "Confirm" })).toBeNull();
 	});
 
-	it("should call API and close dialog when Confirm is clicked", async () => {
-		const scope = mockApiRemoveSequence(otu.id, isolate.id, sequence.id);
+	it("should call the server and close the dialog when Confirm is clicked", async () => {
+		const deleteSequence = mockDeleteSequence();
 		const setOpen = vi.fn();
 
 		renderWithProviders(
-			<RemoveSequence
+			<DeleteSequence
 				isolateId={isolate.id}
 				isolateName={isolateName}
 				otuId={otu.id}
@@ -79,6 +75,12 @@ describe("<RemoveSequence />", () => {
 		await userEvent.click(screen.getByRole("button", { name: "Confirm" }));
 
 		await waitFor(() => expect(setOpen).toHaveBeenCalledWith(false));
-		scope.done();
+		expect(deleteSequence).toHaveBeenCalledWith({
+			data: {
+				otuId: otu.id,
+				isolateId: isolate.id,
+				sequenceId: sequence.id,
+			},
+		});
 	});
 });

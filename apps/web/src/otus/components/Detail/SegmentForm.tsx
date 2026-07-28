@@ -9,7 +9,7 @@ import Select from "@base/Select";
 import SelectButton from "@base/SelectButton";
 import SelectContent from "@base/SelectContent";
 import SelectItem from "@base/SelectItem";
-import { Molecule, type OtuSegment } from "@otus/types";
+import { Molecule, type OtuSegment } from "@virtool/contracts";
 import { ChevronDown } from "lucide-react";
 import { Controller, useForm } from "react-hook-form";
 

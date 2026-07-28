@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { type DiffEntry, patch, swap } from "./dictdiffer";
+import { type DiffEntry, diff, patch, swap } from "./dictdiffer";
 
 /**
  * The shape this module actually patches: an OTU document as Python stores it,
@@ -320,5 +320,159 @@ describe("patch(swap(diff))", () => {
 		patch(swap(otuDiff), otuAfter);
 
 		expect(otuAfter).toEqual(clone);
+	});
+});
+
+describe("diff", () => {
+	describe("change", () => {
+		it("reports a changed scalar at the root", () => {
+			expect(diff({ a: "b" }, { a: "c" })).toEqual([
+				["change", "a", ["b", "c"]],
+			]);
+		});
+
+		it("reports nothing when the documents are equal", () => {
+			expect(diff({ a: { b: [1, 2] } }, { a: { b: [1, 2] } })).toEqual([]);
+		});
+
+		it("reports a changed scalar at a list index", () => {
+			expect(diff({ a: [1, 2] }, { a: [1, 9] })).toEqual([
+				["change", ["a", 1], [2, 9]],
+			]);
+		});
+
+		it("reports the whole value when a container changes type", () => {
+			expect(diff({ a: { b: 1 } }, { a: [1] })).toEqual([
+				["change", "a", [{ b: 1 }, [1]]],
+			]);
+		});
+
+		it("reports a change against null", () => {
+			expect(diff({ a: null }, { a: 1 })).toEqual([["change", "a", [null, 1]]]);
+		});
+	});
+
+	describe("add and remove", () => {
+		it("reports an added key at the root", () => {
+			expect(diff({}, { a: { b: "c" } })).toEqual([
+				["add", "", [["a", { b: "c" }]]],
+			]);
+		});
+
+		it("reports a removed key", () => {
+			expect(diff({ a: 1, b: 2 }, { a: 1 })).toEqual([
+				["remove", "", [["b", 2]]],
+			]);
+		});
+
+		it("groups every appended list item into one entry", () => {
+			expect(diff({ fruits: [] }, { fruits: ["apple", "mango"] })).toEqual([
+				[
+					"add",
+					"fruits",
+					[
+						[0, "apple"],
+						[1, "mango"],
+					],
+				],
+			]);
+		});
+
+		it("reports truncated list items highest index first", () => {
+			expect(diff({ a: [1, 2, 3] }, { a: [1] })).toEqual([
+				[
+					"remove",
+					"a",
+					[
+						[2, 3],
+						[1, 2],
+					],
+				],
+			]);
+		});
+	});
+
+	describe("paths", () => {
+		it("dot-joins a path of plain string keys", () => {
+			expect(diff({ a: { x: 1 } }, { a: { x: 2 } })).toEqual([
+				["change", "a.x", [1, 2]],
+			]);
+		});
+
+		it("keeps a list path when any key is an index", () => {
+			expect(diff({ a: [{ b: 1 }] }, { a: [{ b: 2 }] })).toEqual([
+				["change", ["a", 0, "b"], [1, 2]],
+			]);
+		});
+
+		it("keeps a list path when a key contains a dot", () => {
+			expect(diff({ "a.b": 1 }, { "a.b": 2 })).toEqual([
+				["change", ["a.b"], [1, 2]],
+			]);
+		});
+	});
+
+	it("deep-copies the values it reports", () => {
+		const first = { a: { b: 1 } };
+		const second = { a: { b: 1 }, c: { d: 2 } };
+		const result = diff(first, second);
+
+		second.c.d = 3;
+
+		expect(result).toEqual([["add", "", [["c", { d: 2 }]]]]);
+	});
+
+	it("matches the diff Python wrote for an OTU edit", () => {
+		expect(diff(otuBefore, otuAfter)).toEqual(otuDiff);
+	});
+});
+
+describe("round trip", () => {
+	function expectRoundTrip(before: unknown, after: unknown): void {
+		const result = diff(before, after);
+
+		expect(patch(result, before)).toEqual(after);
+		expect(patch(swap(result), after)).toEqual(before);
+	}
+
+	it("round trips a nested object", () => {
+		expectRoundTrip(
+			{ a: { b: { c: 1, d: "x" } }, e: true },
+			{ a: { b: { c: 2, d: "x" } }, e: false },
+		);
+	});
+
+	it("round trips an added object key", () => {
+		expectRoundTrip({ a: { b: 1 } }, { a: { b: 1, c: 2 } });
+	});
+
+	it("round trips a removed object key", () => {
+		expectRoundTrip({ a: { b: 1, c: 2 } }, { a: { b: 1 } });
+	});
+
+	it("round trips a value change", () => {
+		expectRoundTrip({ a: "before" }, { a: "after" });
+	});
+
+	it("round trips an appended list of objects", () => {
+		expectRoundTrip(
+			{ sequences: [{ id: "seq1" }] },
+			{ sequences: [{ id: "seq1" }, { id: "seq2" }, { id: "seq3" }] },
+		);
+	});
+
+	it("round trips a truncated list of objects", () => {
+		expectRoundTrip(
+			{ sequences: [{ id: "seq1" }, { id: "seq2" }, { id: "seq3" }] },
+			{ sequences: [{ id: "seq1" }] },
+		);
+	});
+
+	it("round trips an OTU edit", () => {
+		expectRoundTrip(otuBefore, otuAfter);
+	});
+
+	it("round trips an OTU revert", () => {
+		expectRoundTrip(otuAfter, otuBefore);
 	});
 });

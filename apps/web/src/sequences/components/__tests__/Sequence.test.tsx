@@ -17,7 +17,7 @@ describe("<Sequence />", () => {
 		host: "Test host",
 		id: "test_sequence",
 		onEdit: vi.fn(),
-		onRemove: vi.fn(),
+		onDelete: vi.fn(),
 		segment: null,
 		sequence: "ATGC",
 	};

@@ -1,5 +1,6 @@
-// Partial read-only mirror of the `legacy_otus` and `legacy_sequences` tables
-// managed by the upstream Python service via Alembic. Keep in sync with
+// Mirror of the `legacy_otus` and `legacy_sequences` tables. Python owns the
+// schema and its Alembic migrations; do not generate or push migrations from
+// this side. Keep in sync with
 // `../../../../../../virtool/virtool/otus/sql.py`.
 //
 // These are hybrid tables: the verbatim Mongo document lives in `data` and the
@@ -10,8 +11,10 @@
 // joined OTU feeds diffs that address the document as it was written, so
 // anything the projection drops would corrupt a patch.
 //
-// Only the OTU read path an analysis needs is served from this side; the OTU
-// domain proper is not.
+// That constraint governs writes from this side too. Python still writes these
+// tables — reference import, clone, remote update, and index build all do — so
+// a write from here must produce the same document shape, `data` included, or
+// the diffs already recorded against it stop applying.
 
 import {
 	bigint,

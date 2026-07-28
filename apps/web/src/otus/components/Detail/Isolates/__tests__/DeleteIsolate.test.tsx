@@ -1,13 +1,13 @@
 import { screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { mockApiRemoveIsolate } from "@tests/api/otus";
+import { mockDeleteIsolate } from "@tests/server-fn/otus";
 import { renderWithProviders } from "@tests/setup";
 import type { ComponentProps } from "react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import RemoveIsolate from "../RemoveIsolate";
+import DeleteIsolate from "../DeleteIsolate";
 
-describe("<RemoveIsolate />", () => {
-	let props: ComponentProps<typeof RemoveIsolate>;
+describe("<DeleteIsolate />", () => {
+	let props: ComponentProps<typeof DeleteIsolate>;
 
 	beforeEach(() => {
 		props = {
@@ -20,7 +20,7 @@ describe("<RemoveIsolate />", () => {
 	});
 
 	it("should render with [show=true]", () => {
-		renderWithProviders(<RemoveIsolate {...props} />);
+		renderWithProviders(<DeleteIsolate {...props} />);
 
 		expect(screen.getByText("Delete Isolate")).toBeInTheDocument();
 		expect(
@@ -32,7 +32,7 @@ describe("<RemoveIsolate />", () => {
 
 	it("should render with [show=false]", () => {
 		props.show = false;
-		renderWithProviders(<RemoveIsolate {...props} />);
+		renderWithProviders(<DeleteIsolate {...props} />);
 
 		expect(screen.queryByText("Delete Isolate")).toBeNull();
 		expect(screen.queryByText(/Are you sure you want to delete/)).toBeNull();
@@ -41,12 +41,14 @@ describe("<RemoveIsolate />", () => {
 	});
 
 	it("should handle submit when the confirm button is clicked", async () => {
-		const scope = mockApiRemoveIsolate(props.otuId, props.id);
-		renderWithProviders(<RemoveIsolate {...props} />);
+		const deleteIsolate = mockDeleteIsolate();
+		renderWithProviders(<DeleteIsolate {...props} />);
 
 		await userEvent.click(screen.getByRole("button", { name: "Confirm" }));
 		await waitFor(() => expect(props.onHide).toHaveBeenCalled());
 
-		scope.done();
+		expect(deleteIsolate).toHaveBeenCalledWith({
+			data: { otuId: props.otuId, isolateId: props.id },
+		});
 	});
 });

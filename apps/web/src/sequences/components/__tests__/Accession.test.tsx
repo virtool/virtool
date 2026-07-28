@@ -1,10 +1,9 @@
 import { screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { mockApiGetGenbank } from "@tests/api/otus";
 import { createFakeOtu } from "@tests/fake/otus";
 import { createFakeReference } from "@tests/fake/references";
+import { mockGetGenbank } from "@tests/server-fn/otus";
 import { at, renderWithProviders } from "@tests/setup";
-import nock from "nock";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import CreateSequence from "../CreateSequence";
 
@@ -34,11 +33,10 @@ describe("<Accession> auto fill", () => {
 
 	afterEach(() => {
 		window.sessionStorage.clear();
-		nock.cleanAll();
 	});
 
 	it("should fill the form from the Genbank record", async () => {
-		const scope = mockApiGetGenbank("NC_010317", {
+		const getGenbank = mockGetGenbank("NC_010317", {
 			accession: "NC_010317",
 			definition: "Abaca bunchy top virus DNA-R",
 			host: "Musa textilis",
@@ -53,7 +51,7 @@ describe("<Accession> auto fill", () => {
 		);
 		await userEvent.click(screen.getByRole("button", { name: "Auto Fill" }));
 
-		await waitFor(() => scope.done());
+		await waitFor(() => expect(getGenbank).toHaveBeenCalled());
 
 		expect(screen.getByRole("textbox", { name: "Host" })).toHaveValue(
 			"Musa textilis",
@@ -67,7 +65,7 @@ describe("<Accession> auto fill", () => {
 	});
 
 	it("should report an unknown accession and clear the error on retyping", async () => {
-		const scope = mockApiGetGenbank("NC_000000", null);
+		const getGenbank = mockGetGenbank("NC_000000", null);
 
 		renderAccession();
 
@@ -77,7 +75,7 @@ describe("<Accession> auto fill", () => {
 		);
 		await userEvent.click(screen.getByRole("button", { name: "Auto Fill" }));
 
-		await waitFor(() => scope.done());
+		await waitFor(() => expect(getGenbank).toHaveBeenCalled());
 
 		expect(await screen.findByText("Accession not found")).toBeInTheDocument();
 

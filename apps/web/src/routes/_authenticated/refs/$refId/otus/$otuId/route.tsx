@@ -28,9 +28,6 @@ export const Route = createFileRoute("/_authenticated/refs/$refId/otus/$otuId")(
 					queryClient.ensureQueryData(otuQueryOptions(otuId)),
 				]);
 			} catch (error) {
-				// Either request can be the one that 404s, and they are on different
-				// transports — the reference on a server function, the OTU still on the
-				// Python API. `getErrorStatus` covers both.
 				if (getErrorStatus(error) === 404) {
 					throw notFound();
 				}
@@ -69,14 +66,14 @@ function OtuDetailLayout() {
 						</Badge>
 					)}
 					<ViewHeaderIcons>
-						<DownloadLink href={`/api/otus/${id}.fa`}>FASTA</DownloadLink>
+						<DownloadLink href={`/otus/${id}/fasta`}>FASTA</DownloadLink>
 						{!archived && (
 							<OtuHeaderIcons
 								id={id}
 								referenceId={referenceId}
 								name={name}
 								abbreviation={abbreviation}
-								onRemoved={() => navigate({ to: `/refs/${refId}/otus` })}
+								onDeleted={() => navigate({ to: `/refs/${refId}/otus` })}
 							/>
 						)}
 					</ViewHeaderIcons>

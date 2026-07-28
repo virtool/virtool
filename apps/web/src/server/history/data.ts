@@ -1,11 +1,11 @@
-// Taking OTUs back to the versions an analysis saw, by reverting the history
-// diffs written since. Read-only; Python owns every write to `legacy_history`
-// and `legacy_history_diff`.
+// Reading an OTU's history, and taking OTUs back to the versions an analysis saw
+// by reverting the diffs written since. Changes are recorded by `./add.ts`.
 //
-// This is a port of `virtool.history.db.patch_otus_to_versions`, narrowed to the
-// patched document. Python returns a `(current, patched)` pair per specifier and
-// our only caller reads `patched`.
+// The patching is a port of `virtool.history.db.patch_otus_to_versions`, narrowed
+// to the patched document. Python returns a `(current, patched)` pair per
+// specifier and our only caller reads `patched`.
 
+import type { HistoryNested, OtuHistory } from "@virtool/contracts";
 import { and, desc, eq, inArray, isNull, or, sql } from "drizzle-orm";
 import type { DbOrTx } from "../db/pg";
 import {
@@ -13,8 +13,16 @@ import {
 	legacyHistory,
 	legacyHistoryDiff,
 } from "../db/schema/history";
+import { indexes } from "../db/schema/indexes";
+import { legacyOtus } from "../db/schema/otus";
+import { legacyReferences } from "../db/schema/references";
+import { users } from "../db/schema/users";
 import { AppError } from "../errors";
-import { joinLegacyOtus, type OtuDocument } from "../otus/data";
+import {
+	joinLegacyOtus,
+	type OtuDocument,
+	OtuNotFoundError,
+} from "../otus/data";
 import { type DiffEntry, patch, swap } from "./dictdiffer";
 
 // Re-exported so a caller of `patchOtusToVersions` can name what it gets back
@@ -63,6 +71,153 @@ function coerceOtuVersion(otuVersion: string | null): number | typeof REMOVED {
 	}
 
 	return Number(otuVersion);
+}
+
+/**
+ * Thrown when a history row is missing something every row must carry: the
+ * reference it belongs to, or the version of the index it was built into.
+ *
+ * Both columns are nullable in the schema for reasons that predate the foreign
+ * keys, but a row written by either service always fills them. Python raises on
+ * the same condition rather than serving a change with a hole in it.
+ */
+export class MalformedHistoryRowError extends AppError {}
+
+// The public change id. `legacy_id` carries it on every row either service has
+// written; the integer primary key stands in for a row old enough to predate it,
+// so a history list renders rather than failing on one unidentifiable change.
+function changeId(row: { legacy_id: string | null; id: number }): string {
+	return row.legacy_id ?? String(row.id);
+}
+
+/**
+ * List every change made to an OTU, newest first.
+ *
+ * The change that removed the OTU sorts above every numbered version — its
+ * `otu_version` is `NULL`, and the sort takes nulls first.
+ *
+ * The user, index, and reference each resolve in the same query. Python attaches
+ * the reference with `AttachReferenceTransform`, a second round trip to nest two
+ * columns behind a foreign key this query is already positioned to join.
+ */
+export async function listByOtu(
+	db: DbOrTx,
+	otuId: string,
+): Promise<OtuHistory[]> {
+	const [otu] = await db
+		.select({ id: legacyOtus.id })
+		.from(legacyOtus)
+		.where(eq(legacyOtus.id, otuId))
+		.limit(1);
+
+	if (otu === undefined) {
+		throw new OtuNotFoundError(`OTU ${otuId} not found`);
+	}
+
+	const rows = await db
+		.select({
+			id: legacyHistory.id,
+			legacy_id: legacyHistory.legacy_id,
+			createdAt: legacyHistory.created_at,
+			description: legacyHistory.description,
+			methodName: legacyHistory.method_name,
+			otu: legacyHistory.otu,
+			otuName: legacyHistory.otu_name,
+			otuVersion: legacyHistory.otu_version,
+			indexId: legacyHistory.index_id,
+			indexVersion: indexes.version,
+			referenceId: legacyHistory.reference_id,
+			referenceName: legacyReferences.name,
+			userId: users.id,
+			userHandle: users.handle,
+		})
+		.from(legacyHistory)
+		.innerJoin(users, eq(legacyHistory.user_id, users.id))
+		.leftJoin(indexes, eq(legacyHistory.index_id, indexes.id))
+		.leftJoin(
+			legacyReferences,
+			eq(legacyHistory.reference_id, legacyReferences.id),
+		)
+		.where(eq(legacyHistory.otu, otuId))
+		.orderBy(
+			sql`${legacyHistory.otu_version}::integer desc nulls first`,
+			desc(legacyHistory.id),
+		);
+
+	return rows.map((row) => {
+		if (row.referenceId === null || row.referenceName === null) {
+			throw new MalformedHistoryRowError(
+				`Change ${changeId(row)} names no reference`,
+			);
+		}
+
+		if (row.indexId !== null && row.indexVersion === null) {
+			throw new MalformedHistoryRowError(
+				`Change ${changeId(row)} was built into index ${row.indexId}, which has no version`,
+			);
+		}
+
+		return {
+			id: changeId(row),
+			createdAt: row.createdAt,
+			description: row.description,
+			methodName: row.methodName as OtuHistory["methodName"],
+			index:
+				row.indexId === null
+					? null
+					: { id: row.indexId, version: row.indexVersion as number },
+			otu: {
+				id: row.otu,
+				name: row.otuName,
+				version: coerceOtuVersion(row.otuVersion),
+			},
+			reference: { id: row.referenceId, name: row.referenceName },
+			user: { id: row.userId, handle: row.userHandle },
+		};
+	});
+}
+
+/**
+ * The most recent change made to an OTU, for embedding in the OTU itself, or
+ * `null` when it has no history.
+ *
+ * Ordered the same way as {@link listByOtu}, so a removed OTU's final change
+ * wins despite having no numbered version.
+ */
+export async function getMostRecentChange(
+	db: DbOrTx,
+	otuId: string,
+): Promise<HistoryNested | null> {
+	const [row] = await db
+		.select({
+			id: legacyHistory.id,
+			legacy_id: legacyHistory.legacy_id,
+			createdAt: legacyHistory.created_at,
+			description: legacyHistory.description,
+			methodName: legacyHistory.method_name,
+			userId: users.id,
+			userHandle: users.handle,
+		})
+		.from(legacyHistory)
+		.innerJoin(users, eq(legacyHistory.user_id, users.id))
+		.where(eq(legacyHistory.otu, otuId))
+		.orderBy(
+			sql`${legacyHistory.otu_version}::integer desc nulls first`,
+			desc(legacyHistory.id),
+		)
+		.limit(1);
+
+	if (row === undefined) {
+		return null;
+	}
+
+	return {
+		id: changeId(row),
+		createdAt: row.createdAt,
+		description: row.description,
+		methodName: row.methodName as HistoryNested["methodName"],
+		user: { id: row.userId, handle: row.userHandle },
+	};
 }
 
 /**

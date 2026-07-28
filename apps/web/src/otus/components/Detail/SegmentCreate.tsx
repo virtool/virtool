@@ -1,6 +1,6 @@
 import { Dialog, DialogContent, DialogTitle } from "@base/Dialog";
 import { useUpdateOtu } from "@otus/queries";
-import type { Molecule, OtuSegment } from "@otus/types";
+import type { Molecule, OtuSegment } from "@virtool/contracts";
 import SegmentForm from "./SegmentForm";
 
 type FormValues = {

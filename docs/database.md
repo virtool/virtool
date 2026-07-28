@@ -82,9 +82,9 @@ states:
 | Subtractions | `subtractions`, `subtraction_files`                  | Built          |
 | References   | `legacy_references`, `legacy_reference_*`            | Built          |
 | Uploads      | `uploads`                                            | Not started    |
-| OTUs         | `legacy_otus`                                        | Partial mirror |
-| Sequences    | `legacy_sequences`                                   | Partial mirror |
-| History      | `legacy_history`, `legacy_history_diff`, `revisions` | Partial mirror |
+| OTUs         | `legacy_otus`                                        | Built          |
+| Sequences    | `legacy_sequences`                                   | Built          |
+| History      | `legacy_history`, `legacy_history_diff`, `revisions` | Built          |
 
 The Postgres table(s) column lists the single mirrored table for the
 **partial mirror** rows and the principal Python-defined table(s) for
@@ -103,14 +103,28 @@ The samples read path leans on the `analyses` mirror's `sample_id`,
 consumer needs.
 
 The `legacy_otus`, `legacy_sequences`, `legacy_history` and
-`legacy_history_diff` mirrors exist for the analyses read path, which is
-their only consumer. Rendering a pathoscope analysis means taking every
-detected OTU back to the version the analysis saw — a joined OTU document
-rebuilt from the `data` JSONB, then history diffs reverted over it
-(`@server/otus/data`, `@server/history/data`). They mirror the shape Python
-defines today, isolates-in-JSONB and side diff table and all; the OTU domain
-proper is not served from here, and when it lands it is expected to
-renormalize these tables rather than build on this shape. The `subtractions` mirror is now full — the subtraction domain is
+`legacy_history_diff` tables carry the Mongo-era shape — isolates embedded
+in `legacy_otus.data`, the diff in a side table — and the OTU domain is
+served from this repo **on that shape**, not on a renormalized one.
+
+That is a decision, not an omission. `data` is the source of truth rather
+than decoration: history diffs are `dictdiffer` triples that address the
+joined document exactly as it was written, and index the sequence lists
+inside it positionally. Anything that changed the document's shape would
+misapply every diff already recorded against it, which is what
+`patchOtusToVersions` reverts to render a pathoscope analysis at the version
+it saw. Python also still writes these tables — reference import, clone,
+remote update and index build all do — so a second writer with a different
+shape would corrupt them outright. Renormalizing is a Python-side migration,
+not something this repo can do on its own.
+
+The consequences for anything written here: a write must reproduce the whole
+document, `data` included (`writeLegacyOtu`); `legacy_sequences.position` is
+load-bearing and a delete leaves a gap rather than renumbering; and the
+`otu_version` `NULL` that stands for `"removed"` is reversed at the boundary
+rather than stored. See `@server/otus/data` and `@server/history/data`.
+
+The `subtractions` mirror is now full — the subtraction domain is
 served from this repo — but jobs still reaches it through the same reverse
 `job_id` foreign key.
 

@@ -1,11 +1,8 @@
 import { requireAuthenticatedRequest } from "../auth/middleware";
 import { db } from "../db/pg";
+import { contentDisposition, textResponse } from "../http";
 import { StorageKeyNotFoundError, storage } from "../storage";
 import { getSubtractionFileKey } from "./data";
-
-function textResponse(message: string, status: number): Response {
-	return new Response(message, { status });
-}
 
 // `ReadableStream.from` would do this in one line, but it is absent from the DOM
 // lib the app project type-checks against.
@@ -87,7 +84,7 @@ export async function handleSubtractionFile(
 
 	return new Response(toStream(storage.read(key)), {
 		headers: {
-			"content-disposition": `attachment; filename=${filename}`,
+			"content-disposition": contentDisposition(filename),
 			"content-length": String(size),
 			"content-type": "application/octet-stream",
 		},
