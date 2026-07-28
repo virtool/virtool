@@ -7,8 +7,8 @@ import { ClientError } from "../errors";
 import { storage } from "../storage";
 import { pageSchema, perPageSchema, rowIdSchema } from "../validation";
 import {
-	deleteUpload as deleteUploadImpl,
-	findUploads as findUploadsImpl,
+	deleteUpload,
+	findUploads,
 	UPLOAD_TYPES,
 	UploadNotFoundError,
 	UploadReservedError,
@@ -51,7 +51,7 @@ export const findUploadsFn = createServerFn({ method: "GET" })
 	.middleware([authenticated()])
 	.validator(findUploadsSchema)
 	.handler(async ({ data }) =>
-		findUploadsImpl(
+		findUploads(
 			db,
 			data?.upload_type,
 			data?.page ?? 1,
@@ -65,7 +65,7 @@ export const deleteUploadFn = createServerFn({ method: "POST" })
 	.validator(uploadIdSchema)
 	.handler(async ({ data }) => {
 		try {
-			await deleteUploadImpl(db, storage, data.id);
+			await deleteUpload(db, storage, data.id);
 			setResponseStatus(204);
 			return null;
 		} catch (err) {

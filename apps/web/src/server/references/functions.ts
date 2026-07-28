@@ -12,26 +12,26 @@ import { db } from "../db/pg";
 import { ClientError } from "../errors";
 import { pageSchema, perPageSchema, rowIdSchema } from "../validation";
 import {
-	addReferenceGroup as addReferenceGroupImpl,
-	addReferenceUser as addReferenceUserImpl,
+	addReferenceGroup,
+	addReferenceUser,
 	checkReferenceRight,
 	checkReferenceVisibility,
-	createReference as createReferenceImpl,
-	findReferences as findReferencesImpl,
-	getReference as getReferenceImpl,
+	createReference,
+	findReferences,
+	getReference,
 	ReferenceArchivedError,
 	ReferenceCloneSourceNotFoundError,
 	ReferenceImportUploadNotFoundError,
 	ReferenceMemberConflictError,
 	ReferenceMemberNotFoundError,
 	ReferenceNotFoundError,
-	removeReferenceGroup as removeReferenceGroupImpl,
-	removeReferenceUser as removeReferenceUserImpl,
+	removeReferenceGroup,
+	removeReferenceUser,
 	resolveReferenceActor,
-	setReferenceArchived as setReferenceArchivedImpl,
-	updateReferenceGroup as updateReferenceGroupImpl,
-	updateReference as updateReferenceImpl,
-	updateReferenceUser as updateReferenceUserImpl,
+	setReferenceArchived,
+	updateReference,
+	updateReferenceGroup,
+	updateReferenceUser,
 } from "./data";
 
 const referenceIdSchema = z.object({
@@ -132,7 +132,7 @@ export const findReferencesFn = createServerFn({ method: "GET" })
 	.handler(async ({ context, data }) => {
 		const actor = await resolveReferenceActor(db, context.session.userId);
 
-		return findReferencesImpl(
+		return findReferences(
 			db,
 			{
 				page: data.page,
@@ -156,7 +156,7 @@ export const getReferenceFn = createServerFn({ method: "GET" })
 			if (!(await checkReferenceVisibility(db, data.referenceId, actor))) {
 				throw new ReferenceNotFoundError();
 			}
-			return await getReferenceImpl(db, data.referenceId);
+			return await getReference(db, data.referenceId);
 		} catch (err) {
 			return rethrowAsHttp(err);
 		}
@@ -167,7 +167,7 @@ export const createReferenceFn = createServerFn({ method: "POST" })
 	.validator(createReferenceSchema)
 	.handler(async ({ context, data }) => {
 		try {
-			const reference = await createReferenceImpl(db, {
+			const reference = await createReference(db, {
 				name: data.name,
 				description: data.description,
 				organism: data.organism,
@@ -189,7 +189,7 @@ export const updateReferenceFn = createServerFn({ method: "POST" })
 		const { referenceId, ...values } = data;
 		try {
 			await authorizeReference(referenceId, context.session.userId, "modify");
-			return await updateReferenceImpl(db, referenceId, values);
+			return await updateReference(db, referenceId, values);
 		} catch (err) {
 			return rethrowAsHttp(err);
 		}
@@ -205,7 +205,7 @@ export const archiveReferenceFn = createServerFn({ method: "POST" })
 				context.session.userId,
 				"modify",
 			);
-			return await setReferenceArchivedImpl(db, data.referenceId, true);
+			return await setReferenceArchived(db, data.referenceId, true);
 		} catch (err) {
 			return rethrowAsHttp(err);
 		}
@@ -221,7 +221,7 @@ export const unarchiveReferenceFn = createServerFn({ method: "POST" })
 				context.session.userId,
 				"modify",
 			);
-			return await setReferenceArchivedImpl(db, data.referenceId, false);
+			return await setReferenceArchived(db, data.referenceId, false);
 		} catch (err) {
 			return rethrowAsHttp(err);
 		}
@@ -234,12 +234,7 @@ export const addReferenceUserFn = createServerFn({ method: "POST" })
 		const { referenceId, userId, ...rights } = data;
 		try {
 			await authorizeReference(referenceId, context.session.userId, "modify");
-			const member = await addReferenceUserImpl(
-				db,
-				referenceId,
-				userId,
-				rights,
-			);
+			const member = await addReferenceUser(db, referenceId, userId, rights);
 			setResponseStatus(201);
 			return member;
 		} catch (err) {
@@ -256,12 +251,7 @@ export const addReferenceGroupFn = createServerFn({ method: "POST" })
 			// The user-membership add checks `modify`; this closes the asymmetry with
 			// the Python service, which left group-add unguarded.
 			await authorizeReference(referenceId, context.session.userId, "modify");
-			const member = await addReferenceGroupImpl(
-				db,
-				referenceId,
-				groupId,
-				rights,
-			);
+			const member = await addReferenceGroup(db, referenceId, groupId, rights);
 			setResponseStatus(201);
 			return member;
 		} catch (err) {
@@ -276,7 +266,7 @@ export const updateReferenceUserFn = createServerFn({ method: "POST" })
 		const { referenceId, userId, ...rights } = data;
 		try {
 			await authorizeReference(referenceId, context.session.userId, "modify");
-			return await updateReferenceUserImpl(db, referenceId, userId, rights);
+			return await updateReferenceUser(db, referenceId, userId, rights);
 		} catch (err) {
 			return rethrowAsHttp(err);
 		}
@@ -289,7 +279,7 @@ export const updateReferenceGroupFn = createServerFn({ method: "POST" })
 		const { referenceId, groupId, ...rights } = data;
 		try {
 			await authorizeReference(referenceId, context.session.userId, "modify");
-			return await updateReferenceGroupImpl(db, referenceId, groupId, rights);
+			return await updateReferenceGroup(db, referenceId, groupId, rights);
 		} catch (err) {
 			return rethrowAsHttp(err);
 		}
@@ -305,7 +295,7 @@ export const removeReferenceUserFn = createServerFn({ method: "POST" })
 				context.session.userId,
 				"modify",
 			);
-			await removeReferenceUserImpl(db, data.referenceId, data.userId);
+			await removeReferenceUser(db, data.referenceId, data.userId);
 			setResponseStatus(204);
 			return null;
 		} catch (err) {
@@ -323,7 +313,7 @@ export const removeReferenceGroupFn = createServerFn({ method: "POST" })
 				context.session.userId,
 				"modify",
 			);
-			await removeReferenceGroupImpl(db, data.referenceId, data.groupId);
+			await removeReferenceGroup(db, data.referenceId, data.groupId);
 			setResponseStatus(204);
 			return null;
 		} catch (err) {

@@ -8,10 +8,10 @@ import { ClientError } from "../errors";
 import { rowIdSchema } from "../validation";
 import {
 	ApiKeyNotFoundError,
-	createApiKey as createApiKeyImpl,
-	deleteApiKey as deleteApiKeyImpl,
-	findApiKeys as findApiKeysImpl,
-	updateApiKey as updateApiKeyImpl,
+	createApiKey,
+	deleteApiKey,
+	findApiKeys,
+	updateApiKey,
 } from "./data";
 
 const createApiKeySchema = z.object({
@@ -41,13 +41,13 @@ const rethrowAsHttp = createServerOnlyFn((err: unknown): never => {
 
 export const findApiKeysFn = createServerFn({ method: "GET" })
 	.middleware([authenticated()])
-	.handler(async ({ context }) => findApiKeysImpl(db, context.session.userId));
+	.handler(async ({ context }) => findApiKeys(db, context.session.userId));
 
 export const createApiKeyFn = createServerFn({ method: "POST" })
 	.middleware([authenticated()])
 	.validator(createApiKeySchema)
 	.handler(async ({ context, data }) => {
-		const { key, apiKey } = await createApiKeyImpl(db, context.session.userId, {
+		const { key, apiKey } = await createApiKey(db, context.session.userId, {
 			name: data.name,
 			permissions: data.permissions,
 		});
@@ -60,7 +60,7 @@ export const updateApiKeyFn = createServerFn({ method: "POST" })
 	.validator(updateApiKeySchema)
 	.handler(async ({ context, data }) => {
 		try {
-			return await updateApiKeyImpl(
+			return await updateApiKey(
 				db,
 				context.session.userId,
 				data.keyId,
@@ -76,7 +76,7 @@ export const deleteApiKeyFn = createServerFn({ method: "POST" })
 	.validator(keyIdSchema)
 	.handler(async ({ context, data }) => {
 		try {
-			await deleteApiKeyImpl(db, context.session.userId, data.keyId);
+			await deleteApiKey(db, context.session.userId, data.keyId);
 			setResponseStatus(204);
 			return null;
 		} catch (err) {

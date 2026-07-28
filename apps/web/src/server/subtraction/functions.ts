@@ -6,14 +6,14 @@ import { db } from "../db/pg";
 import { storage } from "../storage";
 import { pageSchema, perPageSchema, rowIdSchema } from "../validation";
 import {
-	createSubtraction as createSubtractionImpl,
-	deleteSubtraction as deleteSubtractionImpl,
-	findSubtractions as findSubtractionsImpl,
-	getSubtraction as getSubtractionImpl,
-	listSubtractionsShortlist as listSubtractionsShortlistImpl,
+	createSubtraction,
+	deleteSubtraction,
+	findSubtractions,
+	getSubtraction,
+	listSubtractionsShortlist,
 	SubtractionNotFoundError,
 	SubtractionUploadNotFoundError,
-	updateSubtraction as updateSubtractionImpl,
+	updateSubtraction,
 } from "./data";
 
 const findSubtractionsSchema = z.object({
@@ -56,7 +56,7 @@ export const findSubtractionsFn = createServerFn({ method: "GET" })
 	.middleware([authenticated()])
 	.validator(findSubtractionsSchema)
 	.handler(async ({ data }) =>
-		findSubtractionsImpl(db, {
+		findSubtractions(db, {
 			page: data.page,
 			perPage: data.per_page,
 			term: data.term,
@@ -66,14 +66,14 @@ export const findSubtractionsFn = createServerFn({ method: "GET" })
 
 export const listSubtractionsShortlistFn = createServerFn({ method: "GET" })
 	.middleware([authenticated()])
-	.handler(async () => listSubtractionsShortlistImpl(db));
+	.handler(async () => listSubtractionsShortlist(db));
 
 export const getSubtractionFn = createServerFn({ method: "GET" })
 	.middleware([authenticated()])
 	.validator(subtractionIdSchema)
 	.handler(async ({ data }) => {
 		try {
-			return await getSubtractionImpl(db, data.subtractionId);
+			return await getSubtraction(db, data.subtractionId);
 		} catch (err) {
 			return rethrowAsHttp(err);
 		}
@@ -84,7 +84,7 @@ export const createSubtractionFn = createServerFn({ method: "POST" })
 	.validator(createSubtractionSchema)
 	.handler(async ({ context, data }) => {
 		try {
-			const subtraction = await createSubtractionImpl(db, {
+			const subtraction = await createSubtraction(db, {
 				name: data.name,
 				nickname: data.nickname,
 				uploadId: data.uploadId,
@@ -103,7 +103,7 @@ export const updateSubtractionFn = createServerFn({ method: "POST" })
 	.handler(async ({ data }) => {
 		const { subtractionId, ...values } = data;
 		try {
-			return await updateSubtractionImpl(db, subtractionId, values);
+			return await updateSubtraction(db, subtractionId, values);
 		} catch (err) {
 			return rethrowAsHttp(err);
 		}
@@ -114,7 +114,7 @@ export const deleteSubtractionFn = createServerFn({ method: "POST" })
 	.validator(subtractionIdSchema)
 	.handler(async ({ data }) => {
 		try {
-			await deleteSubtractionImpl(db, storage, data.subtractionId);
+			await deleteSubtraction(db, storage, data.subtractionId);
 			setResponseStatus(204);
 			return null;
 		} catch (err) {

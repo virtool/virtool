@@ -11,21 +11,21 @@ import { db } from "../db/pg";
 import { ClientError } from "../errors";
 import { pageSchema, perPageSchema, rowIdSchema } from "../validation";
 import {
-	changePassword as changePasswordImpl,
-	createUser as createUserImpl,
-	findUsers as findUsersImpl,
+	changePassword,
+	createUser,
+	findUsers,
 	GroupMembershipError,
-	getAccount as getAccountImpl,
-	getAdministratorRole as getAdministratorRoleImpl,
-	getUser as getUserImpl,
+	getAccount,
+	getAdministratorRole,
+	getUser,
 	InvalidPasswordError,
-	listAdministratorRoles as listAdministratorRolesImpl,
-	listUsers as listUsersImpl,
-	setAdministratorRole as setAdministratorRoleImpl,
+	listAdministratorRoles,
+	listUsers,
+	setAdministratorRole,
 	UserConflictError,
 	UserNotFoundError,
-	updateAccountEmail as updateAccountEmailImpl,
-	updateUser as updateUserImpl,
+	updateAccountEmail,
+	updateUser,
 } from "./data";
 
 const administratorRoleSchema = z.enum([
@@ -150,19 +150,19 @@ const rethrowAsHttp = createServerOnlyFn((err: unknown): never => {
 
 export const listAdministratorRolesFn = createServerFn({ method: "GET" })
 	.middleware([adminRole("base")])
-	.handler(async () => listAdministratorRolesImpl());
+	.handler(async () => listAdministratorRoles());
 
 // Any authenticated user can see who else exists — the handles are already
 // visible on samples, jobs, and analyses they can read.
 export const listUsersFn = createServerFn({ method: "GET" })
 	.middleware([authenticated()])
-	.handler(async () => listUsersImpl(db));
+	.handler(async () => listUsers(db));
 
 export const findUsersFn = createServerFn({ method: "GET" })
 	.middleware([adminRole("users")])
 	.validator(findUsersSchema)
 	.handler(async ({ data }) => {
-		return findUsersImpl(db, {
+		return findUsers(db, {
 			term: data?.term ?? "",
 			page: data?.page ?? 1,
 			perPage: data?.perPage ?? 25,
@@ -180,7 +180,7 @@ export const searchUsersFn = createServerFn({ method: "GET" })
 	.middleware([authenticated()])
 	.validator(searchUsersSchema)
 	.handler(async ({ data }) =>
-		findUsersImpl(db, {
+		findUsers(db, {
 			term: data?.term ?? "",
 			page: data?.page ?? 1,
 			perPage: data?.perPage ?? 25,
@@ -192,14 +192,14 @@ export const searchUsersFn = createServerFn({ method: "GET" })
 // rejected call is how they learn there is no session.
 export const getAccountFn = createServerFn({ method: "GET" })
 	.middleware([authenticated()])
-	.handler(async ({ context }) => getAccountImpl(db, context.session.userId));
+	.handler(async ({ context }) => getAccount(db, context.session.userId));
 
 export const getUserFn = createServerFn({ method: "GET" })
 	.middleware([adminRole("users")])
 	.validator(userIdSchema)
 	.handler(async ({ data }) => {
 		try {
-			return await getUserImpl(db, data.userId);
+			return await getUser(db, data.userId);
 		} catch (err) {
 			// `throw` keeps the handler's inferred return type `User` rather than
 			// `User | undefined`, so suspense consumers get a non-nullable user.
@@ -216,7 +216,7 @@ export const createUserFn = createServerFn({ method: "POST" })
 		try {
 			await checkConfiguredPasswordLength(db, data.password);
 
-			const user = await createUserImpl(db, {
+			const user = await createUser(db, {
 				handle: data.handle,
 				password: data.password,
 				forceReset: data.forceReset,
@@ -235,7 +235,7 @@ export const updateUserFn = createServerFn({ method: "POST" })
 		// A policy states the floor. This one depends on the target row, so it can
 		// only be checked here: editing a user who is themselves an administrator
 		// requires the full role, mirroring the Python service.
-		const targetRole = await getAdministratorRoleImpl(db, data.userId);
+		const targetRole = await getAdministratorRole(db, data.userId);
 		if (targetRole !== null) {
 			await requireAdminRole(context.session, "full");
 		}
@@ -248,7 +248,7 @@ export const updateUserFn = createServerFn({ method: "POST" })
 			if (values.password !== undefined) {
 				await checkConfiguredPasswordLength(db, values.password);
 			}
-			return await updateUserImpl(db, userId, values);
+			return await updateUser(db, userId, values);
 		} catch (err) {
 			throw rethrowAsHttp(err);
 		}
@@ -261,7 +261,7 @@ export const updateAccountHandleFn = createServerFn({ method: "POST" })
 		checkReservedHandle(data.handle);
 
 		try {
-			return await updateUserImpl(db, context.session.userId, {
+			return await updateUser(db, context.session.userId, {
 				handle: data.handle,
 			});
 		} catch (err) {
@@ -276,11 +276,7 @@ export const updateAccountEmailFn = createServerFn({ method: "POST" })
 		checkEmail(data.email);
 
 		try {
-			return await updateAccountEmailImpl(
-				db,
-				context.session.userId,
-				data.email,
-			);
+			return await updateAccountEmail(db, context.session.userId, data.email);
 		} catch (err) {
 			throw rethrowAsHttp(err);
 		}
@@ -293,7 +289,7 @@ export const changePasswordFn = createServerFn({ method: "POST" })
 		try {
 			await checkConfiguredPasswordLength(db, data.password);
 
-			const { account, sessionId, token } = await changePasswordImpl(db, {
+			const { account, sessionId, token } = await changePassword(db, {
 				userId: context.session.userId,
 				oldPassword: data.oldPassword,
 				password: data.password,
@@ -322,7 +318,7 @@ export const setAdministratorRoleFn = createServerFn({ method: "POST" })
 		}
 
 		try {
-			return await setAdministratorRoleImpl(db, data.userId, data.role);
+			return await setAdministratorRole(db, data.userId, data.role);
 		} catch (err) {
 			throw rethrowAsHttp(err);
 		}

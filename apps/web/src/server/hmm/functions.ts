@@ -5,8 +5,8 @@ import { authenticated, permission } from "../auth/policy";
 import { db } from "../db/pg";
 import { rowIdSchema } from "../validation";
 import {
-	findHmms as findHmmsImpl,
-	getHmm as getHmmImpl,
+	findHmms,
+	getHmm,
 	HmmInstallConflictError,
 	HmmNotFoundError,
 	HmmReleaseError,
@@ -46,14 +46,14 @@ const rethrowAsHttp = createServerOnlyFn((err: unknown): never => {
 export const findHmmsFn = createServerFn({ method: "GET" })
 	.middleware([authenticated()])
 	.validator(findHmmsSchema)
-	.handler(async ({ data }) => findHmmsImpl(db, data));
+	.handler(async ({ data }) => findHmms(db, data));
 
 export const getHmmFn = createServerFn({ method: "GET" })
 	.middleware([authenticated()])
 	.validator(hmmIdSchema)
 	.handler(async ({ data }) => {
 		try {
-			return await getHmmImpl(db, data.hmmId);
+			return await getHmm(db, data.hmmId);
 		} catch (err) {
 			return rethrowAsHttp(err);
 		}

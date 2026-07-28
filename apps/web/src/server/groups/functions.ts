@@ -7,14 +7,14 @@ import { db } from "../db/pg";
 import { ClientError } from "../errors";
 import { pageSchema, perPageSchema, rowIdSchema } from "../validation";
 import {
-	createGroup as createGroupImpl,
-	deleteGroup as deleteGroupImpl,
-	findGroups as findGroupsImpl,
+	createGroup,
+	deleteGroup,
+	findGroups,
 	GroupConflictError,
 	GroupNotFoundError,
-	getGroup as getGroupImpl,
-	listGroups as listGroupsImpl,
-	updateGroup as updateGroupImpl,
+	getGroup,
+	listGroups,
+	updateGroup,
 } from "./data";
 
 const groupIdSchema = z.object({
@@ -58,13 +58,13 @@ const rethrowAsHttp = createServerOnlyFn((err: unknown): never => {
 // group, so the reads are open to any signed-in user.
 export const listGroupsFn = createServerFn({ method: "GET" })
 	.middleware([authenticated()])
-	.handler(async () => listGroupsImpl(db));
+	.handler(async () => listGroups(db));
 
 export const findGroupsFn = createServerFn({ method: "GET" })
 	.middleware([authenticated()])
 	.validator(findGroupsSchema)
 	.handler(async ({ data }) =>
-		findGroupsImpl(db, data?.term ?? "", data?.page ?? 1, data?.per_page ?? 25),
+		findGroups(db, data?.term ?? "", data?.page ?? 1, data?.per_page ?? 25),
 	);
 
 export const getGroupFn = createServerFn({ method: "GET" })
@@ -72,7 +72,7 @@ export const getGroupFn = createServerFn({ method: "GET" })
 	.validator(groupIdSchema)
 	.handler(async ({ data }) => {
 		try {
-			return await getGroupImpl(db, data.groupId);
+			return await getGroup(db, data.groupId);
 		} catch (err) {
 			rethrowAsHttp(err);
 		}
@@ -86,7 +86,7 @@ export const createGroupFn = createServerFn({ method: "POST" })
 	.validator(createGroupSchema)
 	.handler(async ({ data }) => {
 		try {
-			const group = await createGroupImpl(db, data.name);
+			const group = await createGroup(db, data.name);
 			setResponseStatus(201);
 			return group;
 		} catch (err) {
@@ -100,7 +100,7 @@ export const updateGroupFn = createServerFn({ method: "POST" })
 	.handler(async ({ data }) => {
 		const { groupId, ...values } = data;
 		try {
-			return await updateGroupImpl(db, groupId, values);
+			return await updateGroup(db, groupId, values);
 		} catch (err) {
 			rethrowAsHttp(err);
 		}
@@ -111,7 +111,7 @@ export const deleteGroupFn = createServerFn({ method: "POST" })
 	.validator(groupIdSchema)
 	.handler(async ({ data }) => {
 		try {
-			await deleteGroupImpl(db, data.groupId);
+			await deleteGroup(db, data.groupId);
 			setResponseStatus(204);
 			return null;
 		} catch (err) {

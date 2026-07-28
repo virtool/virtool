@@ -23,11 +23,11 @@ import {
 	AnalysisRelationNotFoundError,
 	AnalysisRunningError,
 	AnalysisSequenceNotFoundError,
-	blastNuvs as blastNuvsImpl,
-	createAnalysis as createAnalysisImpl,
-	deleteAnalysis as deleteAnalysisImpl,
-	findAnalyses as findAnalysesImpl,
-	getAnalysis as getAnalysisImpl,
+	blastNuvs,
+	createAnalysis,
+	deleteAnalysis,
+	findAnalyses,
+	getAnalysis,
 	getAnalysisSampleRights,
 } from "./data";
 
@@ -119,7 +119,7 @@ export const findAnalysesFn = createServerFn({ method: "GET" })
 	.handler(async ({ context, data }) => {
 		const actor = await resolveSampleActor(db, context.session.userId);
 
-		return findAnalysesImpl(
+		return findAnalyses(
 			db,
 			{ page: data.page, perPage: data.perPage, sampleId: data.sampleId },
 			actor,
@@ -134,7 +134,7 @@ export const getAnalysisFn = createServerFn({ method: "GET" })
 			await authorizeAnalysis(data.analysisId, context.session.userId, [
 				"read",
 			]);
-			return await getAnalysisImpl(db, data.analysisId);
+			return await getAnalysis(db, data.analysisId);
 		} catch (err) {
 			return rethrowAsHttp(err);
 		}
@@ -160,7 +160,7 @@ export const createAnalysisFn = createServerFn({ method: "POST" })
 				throw new ForbiddenError();
 			}
 
-			const analysis = await createAnalysisImpl(db, {
+			const analysis = await createAnalysis(db, {
 				sampleId: data.sampleId,
 				referenceId: data.refId,
 				subtractionIds: data.subtractionIds,
@@ -185,7 +185,7 @@ export const deleteAnalysisFn = createServerFn({ method: "POST" })
 				"read",
 				"write",
 			]);
-			await deleteAnalysisImpl(db, storage, data.analysisId);
+			await deleteAnalysis(db, storage, data.analysisId);
 			setResponseStatus(204);
 
 			return null;
@@ -203,11 +203,7 @@ export const blastNuvsFn = createServerFn({ method: "POST" })
 				"write",
 			]);
 
-			const blast = await blastNuvsImpl(
-				db,
-				data.analysisId,
-				data.sequenceIndex,
-			);
+			const blast = await blastNuvs(db, data.analysisId, data.sequenceIndex);
 
 			setResponseStatus(201);
 

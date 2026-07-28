@@ -7,14 +7,14 @@ import { db } from "../db/pg";
 import { ClientError } from "../errors";
 import { rowIdSchema } from "../validation";
 import {
-	clearActiveMessage as clearActiveMessageImpl,
-	createMessage as createMessageImpl,
-	deleteMessage as deleteMessageImpl,
-	findMessage as findMessageImpl,
-	findMessages as findMessagesImpl,
+	clearActiveMessage,
+	createMessage,
+	deleteMessage,
+	findMessage,
+	findMessages,
 	MessageNotFoundError,
-	setActiveMessage as setActiveMessageImpl,
-	updateMessage as updateMessageImpl,
+	setActiveMessage,
+	updateMessage,
 } from "./data";
 
 const colorSchema = z.enum(bannerColors);
@@ -47,17 +47,17 @@ const rethrowAsHttp = createServerOnlyFn((err: unknown): never => {
 
 export const findMessageFn = createServerFn({ method: "GET" })
 	.middleware([authenticated()])
-	.handler(async () => findMessageImpl(db));
+	.handler(async () => findMessage(db));
 
 export const findMessagesFn = createServerFn({ method: "GET" })
 	.middleware([adminRole("settings")])
-	.handler(async () => findMessagesImpl(db));
+	.handler(async () => findMessages(db));
 
 export const createMessageFn = createServerFn({ method: "POST" })
 	.middleware([adminRole("settings")])
 	.validator(createMessageSchema)
 	.handler(async ({ context, data }) => {
-		const message = await createMessageImpl(
+		const message = await createMessage(
 			db,
 			data.message,
 			data.color,
@@ -72,7 +72,7 @@ export const updateMessageFn = createServerFn({ method: "POST" })
 	.validator(updateMessageSchema)
 	.handler(async ({ context, data }) => {
 		try {
-			return await updateMessageImpl(
+			return await updateMessage(
 				db,
 				data.id,
 				{ message: data.message, color: data.color },
@@ -88,7 +88,7 @@ export const deleteMessageFn = createServerFn({ method: "POST" })
 	.validator(idSchema)
 	.handler(async ({ data }) => {
 		try {
-			await deleteMessageImpl(db, data.id);
+			await deleteMessage(db, data.id);
 			setResponseStatus(204);
 			return null;
 		} catch (err) {
@@ -101,7 +101,7 @@ export const setActiveMessageFn = createServerFn({ method: "POST" })
 	.validator(idSchema)
 	.handler(async ({ data }) => {
 		try {
-			return await setActiveMessageImpl(db, data.id);
+			return await setActiveMessage(db, data.id);
 		} catch (err) {
 			rethrowAsHttp(err);
 		}
@@ -110,6 +110,6 @@ export const setActiveMessageFn = createServerFn({ method: "POST" })
 export const clearActiveMessageFn = createServerFn({ method: "POST" })
 	.middleware([adminRole("settings")])
 	.handler(async () => {
-		await clearActiveMessageImpl(db);
+		await clearActiveMessage(db);
 		return null;
 	});

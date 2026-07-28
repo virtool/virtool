@@ -22,14 +22,14 @@ import {
 } from "../references/data";
 import { pageSchema, perPageSchema, rowIdSchema } from "../validation";
 import {
-	createIsolate as createIsolateImpl,
-	createOtu as createOtuImpl,
-	createSequence as createSequenceImpl,
-	deleteIsolate as deleteIsolateImpl,
-	deleteOtu as deleteOtuImpl,
-	deleteSequence as deleteSequenceImpl,
-	findOtus as findOtusImpl,
-	getOtu as getOtuImpl,
+	createIsolate,
+	createOtu,
+	createSequence,
+	deleteIsolate,
+	deleteOtu,
+	deleteSequence,
+	findOtus,
+	getOtu,
 	getOtuReference,
 	IsolateNotFoundError,
 	OtuNameConflictError,
@@ -38,10 +38,10 @@ import {
 	SequenceNotFoundError,
 	SourceTypeNotAllowedError,
 	sequenceExists,
-	setIsolateAsDefault as setIsolateAsDefaultImpl,
-	updateIsolate as updateIsolateImpl,
-	updateOtu as updateOtuImpl,
-	updateSequence as updateSequenceImpl,
+	setIsolateAsDefault,
+	updateIsolate,
+	updateOtu,
+	updateSequence,
 } from "./data";
 
 // An OTU, isolate, or sequence id is the 8-character string Mongo's `_id` held,
@@ -169,7 +169,7 @@ export const findOtusFn = createServerFn({ method: "GET" })
 	.validator(findOtusSchema)
 	.handler(async ({ data }) => {
 		try {
-			return await findOtusImpl(db, data.referenceId, {
+			return await findOtus(db, data.referenceId, {
 				page: data.page,
 				perPage: data.per_page,
 				term: data.term,
@@ -184,7 +184,7 @@ export const getOtuFn = createServerFn({ method: "GET" })
 	.validator(otuIdSchema)
 	.handler(async ({ data }) => {
 		try {
-			return await getOtuImpl(db, data.otuId);
+			return await getOtu(db, data.otuId);
 		} catch (err) {
 			return rethrowAsHttp(err);
 		}
@@ -217,7 +217,7 @@ export const createOtuFn = createServerFn({ method: "POST" })
 				throw new ForbiddenError();
 			}
 
-			const otu = await createOtuImpl(
+			const otu = await createOtu(
 				db,
 				referenceId,
 				values,
@@ -241,7 +241,7 @@ export const updateOtuFn = createServerFn({ method: "POST" })
 		try {
 			await authorizeOtu(otuId, context.session.userId);
 
-			return await updateOtuImpl(db, otuId, values, context.session.userId);
+			return await updateOtu(db, otuId, values, context.session.userId);
 		} catch (err) {
 			return rethrowAsHttp(err);
 		}
@@ -254,7 +254,7 @@ export const deleteOtuFn = createServerFn({ method: "POST" })
 		try {
 			await authorizeOtu(data.otuId, context.session.userId);
 
-			await deleteOtuImpl(db, data.otuId, context.session.userId);
+			await deleteOtu(db, data.otuId, context.session.userId);
 
 			setResponseStatus(204);
 
@@ -273,7 +273,7 @@ export const createIsolateFn = createServerFn({ method: "POST" })
 		try {
 			await authorizeOtu(otuId, context.session.userId);
 
-			const isolate = await createIsolateImpl(
+			const isolate = await createIsolate(
 				db,
 				otuId,
 				values,
@@ -297,7 +297,7 @@ export const updateIsolateFn = createServerFn({ method: "POST" })
 		try {
 			await authorizeOtu(otuId, context.session.userId, isolateId);
 
-			return await updateIsolateImpl(
+			return await updateIsolate(
 				db,
 				otuId,
 				isolateId,
@@ -316,7 +316,7 @@ export const setIsolateAsDefaultFn = createServerFn({ method: "POST" })
 		try {
 			await authorizeOtu(data.otuId, context.session.userId, data.isolateId);
 
-			return await setIsolateAsDefaultImpl(
+			return await setIsolateAsDefault(
 				db,
 				data.otuId,
 				data.isolateId,
@@ -334,7 +334,7 @@ export const deleteIsolateFn = createServerFn({ method: "POST" })
 		try {
 			await authorizeOtu(data.otuId, context.session.userId, data.isolateId);
 
-			await deleteIsolateImpl(
+			await deleteIsolate(
 				db,
 				data.otuId,
 				data.isolateId,
@@ -358,7 +358,7 @@ export const createSequenceFn = createServerFn({ method: "POST" })
 		try {
 			await authorizeOtu(otuId, context.session.userId, isolateId);
 
-			const sequence = await createSequenceImpl(
+			const sequence = await createSequence(
 				db,
 				otuId,
 				isolateId,
@@ -390,7 +390,7 @@ export const updateSequenceFn = createServerFn({ method: "POST" })
 
 			await authorizeOtu(otuId, context.session.userId, isolateId);
 
-			return await updateSequenceImpl(
+			return await updateSequence(
 				db,
 				otuId,
 				isolateId,
@@ -416,7 +416,7 @@ export const deleteSequenceFn = createServerFn({ method: "POST" })
 
 			await authorizeOtu(data.otuId, context.session.userId, data.isolateId);
 
-			await deleteSequenceImpl(
+			await deleteSequence(
 				db,
 				data.otuId,
 				data.isolateId,

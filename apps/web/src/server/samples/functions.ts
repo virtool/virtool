@@ -11,10 +11,10 @@ import { UploadNotFoundError, UploadReservedError } from "../uploads/data";
 import { pageSchema, perPageSchema, rowIdSchema } from "../validation";
 import {
 	checkSampleRight,
-	createSample as createSampleImpl,
-	deleteSample as deleteSampleImpl,
-	findSamples as findSamplesImpl,
-	getSample as getSampleImpl,
+	createSample,
+	deleteSample,
+	findSamples,
+	getSample,
 	getSampleOwnerId,
 	resolveSampleActor,
 	SampleFileDuplicateError,
@@ -25,8 +25,8 @@ import {
 	SampleNotFoundError,
 	type SampleRight,
 	SampleSubtractionsNotFoundError,
-	updateSample as updateSampleImpl,
-	updateSampleRights as updateSampleRightsImpl,
+	updateSample,
+	updateSampleRights,
 } from "./data";
 
 const sampleIdSchema = z.object({
@@ -126,7 +126,7 @@ export const findSamplesFn = createServerFn({ method: "GET" })
 	.handler(async ({ context, data }) => {
 		const actor = await resolveSampleActor(db, context.session.userId);
 
-		return findSamplesImpl(
+		return findSamples(
 			db,
 			{
 				page: data.page,
@@ -146,7 +146,7 @@ export const getSampleFn = createServerFn({ method: "GET" })
 	.handler(async ({ context, data }) => {
 		try {
 			await authorizeSample(data.sampleId, context.session.userId, "read");
-			return await getSampleImpl(db, data.sampleId);
+			return await getSample(db, data.sampleId);
 		} catch (err) {
 			return rethrowAsHttp(err);
 		}
@@ -157,7 +157,7 @@ export const createSampleFn = createServerFn({ method: "POST" })
 	.validator(SampleCreateRequest)
 	.handler(async ({ context, data }) => {
 		try {
-			const sample = await createSampleImpl(db, {
+			const sample = await createSample(db, {
 				name: data.name,
 				host: data.host,
 				isolate: data.isolate,
@@ -184,7 +184,7 @@ export const updateSampleFn = createServerFn({ method: "POST" })
 		const { sampleId, ...values } = data;
 		try {
 			await authorizeSample(sampleId, context.session.userId, "write");
-			return await updateSampleImpl(db, sampleId, values);
+			return await updateSample(db, sampleId, values);
 		} catch (err) {
 			return rethrowAsHttp(err);
 		}
@@ -197,7 +197,7 @@ export const deleteSampleFn = createServerFn({ method: "POST" })
 		try {
 			await authorizeSample(data.sampleId, context.session.userId, "write");
 
-			const sample = await getSampleImpl(db, data.sampleId);
+			const sample = await getSample(db, data.sampleId);
 
 			// A sample whose creation job is still running cannot be deleted.
 			if (!sample.ready) {
@@ -217,7 +217,7 @@ export const deleteSampleFn = createServerFn({ method: "POST" })
 				}
 			}
 
-			await deleteSampleImpl(db, storage, data.sampleId);
+			await deleteSample(db, storage, data.sampleId);
 			setResponseStatus(204);
 			return null;
 		} catch (err) {
@@ -250,7 +250,7 @@ export const updateSampleRightsFn = createServerFn({ method: "POST" })
 		}
 
 		try {
-			return await updateSampleRightsImpl(db, sampleId, values);
+			return await updateSampleRights(db, sampleId, values);
 		} catch (err) {
 			return rethrowAsHttp(err);
 		}

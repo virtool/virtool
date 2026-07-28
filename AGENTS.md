@@ -702,7 +702,9 @@ The basics:
   (`loginFn`, `getSampleFn`) — it's an RPC call, not a plain function,
   and the suffix marks that at every call site. The domain function it
   wraps keeps the plain name (`login`, `getSample`) and never crosses
-  the network.
+  the network. `functions.ts` imports that data function under its own
+  name — the `Fn` suffix already keeps the two apart, so don't alias it
+  to `...Impl` on the way in.
 - **Comments:** Default to none. Document *why* when non-obvious, not
   *what*.
 - **Concurrency:** Independent awaits go in `Promise.all` — don't pay

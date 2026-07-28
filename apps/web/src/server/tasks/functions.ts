@@ -5,7 +5,7 @@ import { authenticated } from "../auth/policy";
 import { db } from "../db/pg";
 import { ClientError } from "../errors";
 import { rowIdSchema } from "../validation";
-import { getTask as getTaskImpl, TaskNotFoundError } from "./data";
+import { getTask, TaskNotFoundError } from "./data";
 
 const taskIdSchema = z.object({
 	taskId: rowIdSchema,
@@ -28,7 +28,7 @@ export const getTaskFn = createServerFn({ method: "GET" })
 	.validator(taskIdSchema)
 	.handler(async ({ data }) => {
 		try {
-			return await getTaskImpl(db, data.taskId);
+			return await getTask(db, data.taskId);
 		} catch (err) {
 			rethrowAsHttp(err);
 		}

@@ -6,13 +6,13 @@ import { db } from "../db/pg";
 import { ClientError } from "../errors";
 import { rowIdSchema } from "../validation";
 import {
-	createLabel as createLabelImpl,
-	deleteLabel as deleteLabelImpl,
-	findLabels as findLabelsImpl,
-	getLabel as getLabelImpl,
+	createLabel,
+	deleteLabel,
+	findLabels,
+	getLabel,
 	LabelConflictError,
 	LabelNotFoundError,
-	updateLabel as updateLabelImpl,
+	updateLabel,
 } from "./data";
 
 const colorSchema = z
@@ -61,14 +61,14 @@ const rethrowAsHttp = createServerOnlyFn((err: unknown): never => {
 export const findLabelsFn = createServerFn({ method: "GET" })
 	.middleware([authenticated()])
 	.validator(findLabelsSchema)
-	.handler(async ({ data }) => findLabelsImpl(db, data?.term ?? ""));
+	.handler(async ({ data }) => findLabels(db, data?.term ?? ""));
 
 export const getLabelFn = createServerFn({ method: "GET" })
 	.middleware([authenticated()])
 	.validator(labelIdSchema)
 	.handler(async ({ data }) => {
 		try {
-			return await getLabelImpl(db, data.labelId);
+			return await getLabel(db, data.labelId);
 		} catch (err) {
 			return rethrowAsHttp(err);
 		}
@@ -79,7 +79,7 @@ export const createLabelFn = createServerFn({ method: "POST" })
 	.validator(labelValuesSchema)
 	.handler(async ({ data }) => {
 		try {
-			const label = await createLabelImpl(db, normalizeValues(data));
+			const label = await createLabel(db, normalizeValues(data));
 			setResponseStatus(201);
 			return label;
 		} catch (err) {
@@ -93,7 +93,7 @@ export const updateLabelFn = createServerFn({ method: "POST" })
 	.handler(async ({ data }) => {
 		const { labelId, ...values } = data;
 		try {
-			return await updateLabelImpl(db, labelId, normalizeValues(values));
+			return await updateLabel(db, labelId, normalizeValues(values));
 		} catch (err) {
 			return rethrowAsHttp(err);
 		}
@@ -104,7 +104,7 @@ export const deleteLabelFn = createServerFn({ method: "POST" })
 	.validator(labelIdSchema)
 	.handler(async ({ data }) => {
 		try {
-			await deleteLabelImpl(db, data.labelId);
+			await deleteLabel(db, data.labelId);
 			setResponseStatus(204);
 			return null;
 		} catch (err) {

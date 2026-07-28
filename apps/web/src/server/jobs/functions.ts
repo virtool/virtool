@@ -6,9 +6,9 @@ import { db } from "../db/pg";
 import { ClientError } from "../errors";
 import { rowIdSchema } from "../validation";
 import {
-	findJobs as findJobsImpl,
-	getJob as getJobImpl,
-	getJobs as getJobsImpl,
+	findJobs,
+	getJob,
+	getJobs,
 	JOB_STATES,
 	JobNotFoundError,
 } from "./data";
@@ -47,19 +47,19 @@ const rethrowAsHttp = createServerOnlyFn((err: unknown): never => {
 export const findJobsFn = createServerFn({ method: "GET" })
 	.middleware([authenticated()])
 	.validator(findJobsSchema)
-	.handler(async ({ data }) => findJobsImpl(db, data));
+	.handler(async ({ data }) => findJobs(db, data));
 
 export const getJobsFn = createServerFn({ method: "GET" })
 	.middleware([authenticated()])
 	.validator(jobIdsSchema)
-	.handler(async ({ data }) => getJobsImpl(db, data.jobIds));
+	.handler(async ({ data }) => getJobs(db, data.jobIds));
 
 export const getJobFn = createServerFn({ method: "GET" })
 	.middleware([authenticated()])
 	.validator(jobIdSchema)
 	.handler(async ({ data }) => {
 		try {
-			return await getJobImpl(db, data.jobId);
+			return await getJob(db, data.jobId);
 		} catch (err) {
 			await rethrowAsHttp(err);
 		}
