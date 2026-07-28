@@ -1,5 +1,3 @@
-import math
-
 from sqlalchemy import delete, func, insert, select, update
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
@@ -16,7 +14,7 @@ from virtool.data.errors import (
 from virtool.data.events import Operation, emits
 from virtool.groups.pg import merge_group_permissions
 from virtool.models.roles import AdministratorRole
-from virtool.users.models import User, UserSearchResult
+from virtool.users.models import User
 from virtool.users.oas import UpdateUserRequest
 from virtool.users.pg import SQLUser, SQLUserGroup
 from virtool.users.settings import DEFAULT_USER_SETTINGS
@@ -32,91 +30,6 @@ class UsersData(DataLayerDomain):
         pg: AsyncEngine,
     ):
         self._pg = pg
-
-    async def find(
-        self,
-        page: int,
-        per_page: int,
-        active: bool,
-        administrator: bool | None,
-        term: str,
-    ) -> UserSearchResult:
-        """Find users.
-
-        Optionally filter by a partial match to the users' handles or the active or
-        administrator status.
-
-        :param page: the page number
-        :param per_page: the number of items per page
-        :param active: whether to filter by active status
-        :param administrator: whether to filter by administrator status
-        :param term: a search term to filter by user handle
-        """
-        async with AsyncSession(self._pg) as session:
-            # Build base query with eager loading
-            query = (
-                select(SQLUser)
-                .options(
-                    selectinload(SQLUser.user_group_associations).selectinload(
-                        SQLUserGroup.group
-                    )
-                )
-                .where(SQLUser.active == active)
-            )
-
-            if administrator is not None:
-                if administrator:
-                    query = query.where(SQLUser.administrator_role.isnot(None))
-                else:
-                    query = query.where(SQLUser.administrator_role.is_(None))
-
-            if term:
-                query = query.where(SQLUser.handle.ilike(f"%{term}%"))
-
-            query = query.order_by(func.lower(SQLUser.handle))
-
-            total_count = await session.scalar(
-                select(func.count()).select_from(SQLUser)
-            )
-
-            filtered_count = await session.scalar(
-                select(func.count()).select_from(query.subquery())
-            )
-
-            offset = (page - 1) * per_page if page > 1 else 0
-            paginated_query = query.offset(offset).limit(per_page)
-
-            result = await session.execute(paginated_query)
-            sql_users = result.unique().scalars().all()
-
-            items = []
-            for sql_user in sql_users:
-                user_dict = sql_user.to_dict()
-                groups_dicts = [group.to_dict() for group in user_dict["groups"]]
-
-                items.append(
-                    User(
-                        **{
-                            k: v
-                            for k, v in user_dict.items()
-                            if k not in ["groups", "primary_group"]
-                        },
-                        groups=groups_dicts,
-                        primary_group=user_dict["primary_group"].to_dict()
-                        if user_dict["primary_group"]
-                        else None,
-                        permissions=merge_group_permissions(groups_dicts),
-                    )
-                )
-
-            return UserSearchResult(
-                items=items,
-                found_count=filtered_count,
-                page=page,
-                page_count=math.ceil(filtered_count / per_page),
-                per_page=per_page,
-                total_count=total_count,
-            )
 
     async def get(self, user_id: int) -> User:
         """Get a user by their ``user_id``.
