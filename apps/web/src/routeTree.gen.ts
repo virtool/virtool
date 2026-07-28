@@ -26,6 +26,7 @@ import { Route as AuthenticatedSamplesRouteImport } from './routes/_authenticate
 import { Route as AuthenticatedSubtractionsRouteImport } from './routes/_authenticated/subtractions'
 import { Route as HealthLiveRouteImport } from './routes/health/live'
 import { Route as HealthReadyRouteImport } from './routes/health/ready'
+import { Route as UploadsUploadIdRouteImport } from './routes/uploads_.$uploadId'
 import { Route as AuthenticatedAccountIndexRouteImport } from './routes/_authenticated/account/index'
 import { Route as AuthenticatedAccountApiRouteImport } from './routes/_authenticated/account/api'
 import { Route as AuthenticatedAccountProfileRouteImport } from './routes/_authenticated/account/profile'
@@ -161,6 +162,11 @@ const HealthLiveRoute = HealthLiveRouteImport.update({
 const HealthReadyRoute = HealthReadyRouteImport.update({
   id: '/health/ready',
   path: '/health/ready',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const UploadsUploadIdRoute = UploadsUploadIdRouteImport.update({
+  id: '/uploads_/$uploadId',
+  path: '/uploads/$uploadId',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AuthenticatedAccountIndexRoute =
@@ -474,6 +480,7 @@ export interface FileRoutesByFullPath {
   '/subtractions': typeof AuthenticatedSubtractionsRouteWithChildren
   '/health/live': typeof HealthLiveRoute
   '/health/ready': typeof HealthReadyRoute
+  '/uploads/$uploadId': typeof UploadsUploadIdRoute
   '/refs/$refId': typeof AuthenticatedRefsRefIdRouteRouteWithChildren
   '/account/api': typeof AuthenticatedAccountApiRoute
   '/account/profile': typeof AuthenticatedAccountProfileRoute
@@ -534,6 +541,7 @@ export interface FileRoutesByTo {
   '/uploads': typeof UploadsRoute
   '/health/live': typeof HealthLiveRoute
   '/health/ready': typeof HealthReadyRoute
+  '/uploads/$uploadId': typeof UploadsUploadIdRoute
   '/': typeof AuthenticatedIndexRoute
   '/account/api': typeof AuthenticatedAccountApiRoute
   '/account/profile': typeof AuthenticatedAccountProfileRoute
@@ -599,6 +607,7 @@ export interface FileRoutesById {
   '/_authenticated/subtractions': typeof AuthenticatedSubtractionsRouteWithChildren
   '/health/live': typeof HealthLiveRoute
   '/health/ready': typeof HealthReadyRoute
+  '/uploads_/$uploadId': typeof UploadsUploadIdRoute
   '/_authenticated/': typeof AuthenticatedIndexRoute
   '/_authenticated/refs/$refId': typeof AuthenticatedRefsRefIdRouteRouteWithChildren
   '/_authenticated/account/api': typeof AuthenticatedAccountApiRoute
@@ -670,6 +679,7 @@ export interface FileRouteTypes {
     | '/subtractions'
     | '/health/live'
     | '/health/ready'
+    | '/uploads/$uploadId'
     | '/refs/$refId'
     | '/account/api'
     | '/account/profile'
@@ -730,6 +740,7 @@ export interface FileRouteTypes {
     | '/uploads'
     | '/health/live'
     | '/health/ready'
+    | '/uploads/$uploadId'
     | '/'
     | '/account/api'
     | '/account/profile'
@@ -794,6 +805,7 @@ export interface FileRouteTypes {
     | '/_authenticated/subtractions'
     | '/health/live'
     | '/health/ready'
+    | '/uploads_/$uploadId'
     | '/_authenticated/'
     | '/_authenticated/refs/$refId'
     | '/_authenticated/account/api'
@@ -857,6 +869,7 @@ export interface RootRouteChildren {
   UploadsRoute: typeof UploadsRoute
   HealthLiveRoute: typeof HealthLiveRoute
   HealthReadyRoute: typeof HealthReadyRoute
+  UploadsUploadIdRoute: typeof UploadsUploadIdRoute
   AnalysesDocumentsDocumentRoute: typeof AnalysesDocumentsDocumentRoute
   OtusOtuIdFastaRoute: typeof OtusOtuIdFastaRoute
   SubtractionsSubtractionIdFilesFilenameRoute: typeof SubtractionsSubtractionIdFilesFilenameRoute
@@ -983,6 +996,13 @@ declare module '@tanstack/react-router' {
       path: '/health/ready'
       fullPath: '/health/ready'
       preLoaderRoute: typeof HealthReadyRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/uploads_/$uploadId': {
+      id: '/uploads_/$uploadId'
+      path: '/uploads/$uploadId'
+      fullPath: '/uploads/$uploadId'
+      preLoaderRoute: typeof UploadsUploadIdRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/_authenticated/account/': {
@@ -1622,6 +1642,7 @@ const rootRouteChildren: RootRouteChildren = {
   UploadsRoute: UploadsRoute,
   HealthLiveRoute: HealthLiveRoute,
   HealthReadyRoute: HealthReadyRoute,
+  UploadsUploadIdRoute: UploadsUploadIdRoute,
   AnalysesDocumentsDocumentRoute: AnalysesDocumentsDocumentRoute,
   OtusOtuIdFastaRoute: OtusOtuIdFastaRoute,
   SubtractionsSubtractionIdFilesFilenameRoute:

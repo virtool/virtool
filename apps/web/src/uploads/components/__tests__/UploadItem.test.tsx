@@ -42,6 +42,30 @@ describe("<UploadItem />", () => {
 		expect(screen.getByRole("button", { name: "remove" })).toBeInTheDocument();
 	});
 
+	it("should link to the download route, named after the file", () => {
+		renderWithProviders(<UploadItem {...props} />);
+
+		const link = screen.getByRole("link", { name: `Download ${props.name}` });
+
+		expect(link).toHaveAttribute("href", `/uploads/${props.id}`);
+		expect(link).toHaveAttribute("download", props.name);
+	});
+
+	// Downloading is not gated on the delete permission — every signed-in user
+	// can already list the files.
+	it("should render the download link when [canDelete=false]", () => {
+		props.canDelete = false;
+
+		renderWithProviders(<UploadItem {...props} />);
+
+		expect(
+			screen.getByRole("link", { name: `Download ${props.name}` }),
+		).toBeInTheDocument();
+		expect(
+			screen.queryByRole("button", { name: "remove" }),
+		).not.toBeInTheDocument();
+	});
+
 	it("should have [props.onRemove] called when trash icon clicked", async () => {
 		uploadServerFnMocks.deleteUploadFn.mockResolvedValue(null);
 		renderWithProviders(<UploadItem {...props} />);

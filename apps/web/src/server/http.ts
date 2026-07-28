@@ -45,3 +45,34 @@ export function contentDisposition(filename: string): string {
 
 	return `attachment; filename="${fallback}"; filename*=UTF-8''${encodeRfc5987(filename)}`;
 }
+
+/**
+ * Adapt a storage read into the `ReadableStream` a `Response` body takes, so a
+ * multi-GB object never sits in the Node heap.
+ *
+ * `ReadableStream.from` would do this in one line, but it is absent from the
+ * DOM lib the app project type-checks against.
+ */
+export function toStream(
+	chunks: AsyncIterable<Uint8Array>,
+): ReadableStream<Uint8Array> {
+	const iterator = chunks[Symbol.asyncIterator]();
+
+	return new ReadableStream<Uint8Array>({
+		async pull(controller) {
+			const { done, value } = await iterator.next();
+
+			if (done) {
+				controller.close();
+				return;
+			}
+
+			controller.enqueue(value);
+		},
+		async cancel(reason) {
+			// A client that aborts the download mid-stream leaves the backend's
+			// request open otherwise.
+			await iterator.return?.(reason);
+		},
+	});
+}

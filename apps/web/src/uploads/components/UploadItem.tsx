@@ -3,9 +3,10 @@ import Attribution from "@base/Attribution";
 import BoxGroupSection from "@base/BoxGroupSection";
 import Checkbox from "@base/Checkbox";
 import IconButton from "@base/IconButton";
+import IconLink from "@base/IconLink";
 import RelativeTime from "@base/RelativeTime";
 import type { UserNested } from "@users/types";
-import { Trash } from "lucide-react";
+import { Download, Trash } from "lucide-react";
 import type { MouseEvent, ReactNode } from "react";
 import { useDeleteFile } from "../queries";
 
@@ -67,6 +68,14 @@ export default function UploadItem({
 						<div>{byteSize(size, true)}</div>
 						<span className="flex items-center gap-1">
 							{action}
+							<IconLink
+								ariaLabel={`Download ${name}`}
+								color="gray"
+								download={name}
+								href={`/uploads/${id}`}
+								IconComponent={Download}
+								tip="download"
+							/>
 							{canDelete && (
 								<IconButton
 									color="red"

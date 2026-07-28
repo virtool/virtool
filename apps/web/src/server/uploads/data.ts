@@ -190,6 +190,42 @@ export async function createUpload(
 	return toUpload(row, await fetchUser(db, row.userId));
 }
 
+/** The storage key of an upload's bytes, with the name to download them as. */
+export type UploadFile = {
+	key: string;
+	name: string;
+};
+
+/**
+ * Resolve an upload to the storage key holding its bytes and the name it was
+ * uploaded under, or `null` if there is nothing to download.
+ *
+ * `name_on_disk` is what the object is keyed by — a UUID-prefixed name that
+ * keeps two uploads of `reads.fq.gz` apart — while `name` is what the user
+ * chose and what the download is named. Both columns are nullable at the
+ * database level, so a row missing either has no downloadable file.
+ *
+ * A removed upload is excluded, matching Python. `ready` is deliberately not
+ * filtered on: Python does not either, and an upload created from this side is
+ * only inserted once its bytes are written.
+ */
+export async function getUploadFile(
+	db: DbOrTx,
+	uploadId: number,
+): Promise<UploadFile | null> {
+	const [row] = await db
+		.select({ name: uploadsTable.name, nameOnDisk: uploadsTable.nameOnDisk })
+		.from(uploadsTable)
+		.where(and(eq(uploadsTable.id, uploadId), eq(uploadsTable.removed, false)))
+		.limit(1);
+
+	if (!row?.name || !row.nameOnDisk) {
+		return null;
+	}
+
+	return { key: uploadFileKey(row.nameOnDisk), name: row.name };
+}
+
 /**
  * Reserve the given uploads so they cannot be used for another sample.
  *
