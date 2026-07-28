@@ -240,103 +240,25 @@
     }),
   })
 # ---
-# name: test_patch_to_version[current]
-  dict({
-    '_id': 'bf1b993c',
-    'abbreviation': 'PVF',
-    'isolates': list([
-      dict({
-        'default': True,
-        'id': 'fb085f7f',
-        'sequences': list([
-          dict({
-            '_id': '7cf872dc',
-            'accession': 'KX269872',
-            'definition': 'Prunus virus F isolate 8816-s2 segment RNA2 polyprotein 2 gene',
-            'host': 'sweet cherry',
-            'isolate_id': 'fb085f7f',
-            'otu_id': 'bf1b993c',
-            'reference': dict({
-              'id': 1,
-            }),
-            'segment': None,
-            'sequence': 'TGTTTAAGAGATTAAACAACCGCTTTC',
-          }),
-        ]),
-        'source_name': '8816-v2',
-        'source_type': 'isolate',
-      }),
-    ]),
-    'last_indexed_version': None,
-    'lower_name': 'prunus virus f',
-    'name': 'Prunus virus F',
-    'reference': dict({
-      'id': 1,
-    }),
-    'schema': list([
-    ]),
-    'verified': True,
-    'version': 2,
-  })
-# ---
-# name: test_patch_to_version[patched]
+# name: test_patch_to_version[False][current]
   dict({
     '_id': 'bf1b993c',
     'abbreviation': 'PVF',
     'isolates': list([
     ]),
     'last_indexed_version': None,
-    'lower_name': 'prunus virus f',
-    'name': 'Prunus virus F',
+    'lower_name': 'test virus',
+    'name': 'Test Virus',
     'reference': dict({
       'id': 1,
     }),
     'schema': list([
     ]),
     'verified': False,
-    'version': 0,
+    'version': 4,
   })
 # ---
-# name: test_patch_to_version_intermediate[current]
-  dict({
-    '_id': 'bf1b993c',
-    'abbreviation': 'PVF',
-    'isolates': list([
-      dict({
-        'default': True,
-        'id': 'fb085f7f',
-        'sequences': list([
-          dict({
-            '_id': '7cf872dc',
-            'accession': 'KX269872',
-            'definition': 'Prunus virus F isolate 8816-s2 segment RNA2 polyprotein 2 gene',
-            'host': 'sweet cherry',
-            'isolate_id': 'fb085f7f',
-            'otu_id': 'bf1b993c',
-            'reference': dict({
-              'id': 1,
-            }),
-            'segment': None,
-            'sequence': 'TGTTTAAGAGATTAAACAACCGCTTTC',
-          }),
-        ]),
-        'source_name': '8816-v2',
-        'source_type': 'isolate',
-      }),
-    ]),
-    'last_indexed_version': None,
-    'lower_name': 'prunus virus f',
-    'name': 'Prunus virus F',
-    'reference': dict({
-      'id': 1,
-    }),
-    'schema': list([
-    ]),
-    'verified': True,
-    'version': 2,
-  })
-# ---
-# name: test_patch_to_version_intermediate[patched]
+# name: test_patch_to_version[False][patched]
   dict({
     '_id': 'bf1b993c',
     'abbreviation': 'PVF',
@@ -360,5 +282,91 @@
     ]),
     'verified': False,
     'version': 1,
+  })
+# ---
+# name: test_patch_to_version[True][current]
+  None
+# ---
+# name: test_patch_to_version[True][patched]
+  dict({
+    '_id': 'bf1b993c',
+    'abbreviation': 'PVF',
+    'isolates': list([
+      dict({
+        'default': True,
+        'id': 'fb085f7f',
+        'sequences': list([
+        ]),
+        'source_name': '8816-v2',
+        'source_type': 'isolate',
+      }),
+    ]),
+    'last_indexed_version': None,
+    'lower_name': 'prunus virus f',
+    'name': 'Prunus virus F',
+    'reference': dict({
+      'id': 1,
+    }),
+    'schema': list([
+    ]),
+    'verified': False,
+    'version': 1,
+  })
+# ---
+# name: test_patch_to_version_intermediate[current]
+  dict({
+    '_id': 'bf1b993c',
+    'abbreviation': 'PVF',
+    'isolates': list([
+    ]),
+    'last_indexed_version': None,
+    'lower_name': 'test virus',
+    'name': 'Test Virus',
+    'reference': dict({
+      'id': 1,
+    }),
+    'schema': list([
+    ]),
+    'verified': False,
+    'version': 4,
+  })
+# ---
+# name: test_patch_to_version_intermediate[patched]
+  dict({
+    '_id': 'bf1b993c',
+    'abbreviation': 'PVF',
+    'isolates': list([
+      dict({
+        'default': True,
+        'id': 'fb085f7f',
+        'sequences': list([
+          dict({
+            '_id': '7cf872dc',
+            'accession': 'KX269872',
+            'definition': 'Prunus virus F isolate 8816-s2 segment RNA2 polyprotein 2 gene',
+            'host': 'sweet cherry',
+            'isolate_id': 'fb085f7f',
+            'otu_id': 'bf1b993c',
+            'reference': dict({
+              'id': 1,
+            }),
+            'segment': None,
+            'sequence': 'TGTTTAAGAGATTAAACAACCGCTTTC',
+          }),
+        ]),
+        'source_name': '8816-v2',
+        'source_type': 'isolate',
+      }),
+    ]),
+    'last_indexed_version': None,
+    'lower_name': 'prunus virus f',
+    'name': 'Prunus virus F',
+    'reference': dict({
+      'id': 1,
+    }),
+    'schema': list([
+    ]),
+    'verified': True,
+    'version': 2,
   })
 # ---
