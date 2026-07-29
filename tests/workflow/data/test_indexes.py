@@ -8,6 +8,7 @@ from virtool.indexes.db import REFERENCE_JSON_V2_FILE_NAME
 from virtool.indexes.models import IndexFile
 from virtool.references.sqlite import REFERENCE_SQLITE_FILE_NAME, SQLiteReference
 from virtool.workflow.data.indexes import (
+    INDEX_SQLITE_FILE_NAME,
     WFIndex,
     _read_json,
     _shape_reference_json_metadata,
@@ -213,11 +214,14 @@ def test_shape_reference_json_metadata_returns_none_without_id():
 
 
 class TestWFIndex:
+    def test_file_name_is_versioned(self):
+        assert INDEX_SQLITE_FILE_NAME == "index.v1.sqlite"
+
     async def test_create(self, tmp_path: Path):
         def iter_otus():
             yield _get_sqlite_otu()
 
-        sqlite_path = tmp_path / REFERENCE_SQLITE_FILE_NAME
+        sqlite_path = tmp_path / INDEX_SQLITE_FILE_NAME
 
         index = await WFIndex.create(
             "test_index",
@@ -244,7 +248,7 @@ class TestWFIndex:
 
         index = await WFIndex.create(
             "test_index",
-            tmp_path / REFERENCE_SQLITE_FILE_NAME,
+            tmp_path / INDEX_SQLITE_FILE_NAME,
             None,
             iter_otus(),
         )
@@ -296,7 +300,7 @@ class TestWFIndex:
 
         index = await WFIndex.create(
             "test_index",
-            tmp_path / REFERENCE_SQLITE_FILE_NAME,
+            tmp_path / INDEX_SQLITE_FILE_NAME,
             None,
             iter_otus(),
         )
@@ -332,7 +336,7 @@ class TestWFIndex:
         assert second_otu_sequences[0]["otu_id"] == "second_otu"
 
     async def test_load(self, tmp_path: Path):
-        sqlite_path = tmp_path / REFERENCE_SQLITE_FILE_NAME
+        sqlite_path = tmp_path / INDEX_SQLITE_FILE_NAME
         sqlite_path.write_bytes(b"SQLite file")
 
         index = WFIndex.load("test_index", sqlite_path)
@@ -341,7 +345,7 @@ class TestWFIndex:
         assert index.path == sqlite_path
 
     def test_load_raises_for_missing_file(self, tmp_path: Path):
-        sqlite_path = tmp_path / REFERENCE_SQLITE_FILE_NAME
+        sqlite_path = tmp_path / INDEX_SQLITE_FILE_NAME
 
         with pytest.raises(FileNotFoundError):
             WFIndex.load("test_index", sqlite_path)
@@ -354,7 +358,7 @@ class TestWFIndex:
 
         index = await WFIndex.create(
             "test_index",
-            tmp_path / REFERENCE_SQLITE_FILE_NAME,
+            tmp_path / INDEX_SQLITE_FILE_NAME,
             _get_sqlite_reference(),
             iter_otus(),
         )
@@ -373,7 +377,7 @@ class TestWFIndex:
 
         index = await WFIndex.create(
             "test_index",
-            tmp_path / REFERENCE_SQLITE_FILE_NAME,
+            tmp_path / INDEX_SQLITE_FILE_NAME,
             _get_sqlite_reference(),
             iter_otus(),
         )
@@ -413,7 +417,7 @@ class TestIndex:
         index_path = work_path / "indexes" / str(workflow_data.analysis.index.id)
 
         assert {p.name for p in index_path.iterdir()} == {
-            REFERENCE_SQLITE_FILE_NAME,
+            INDEX_SQLITE_FILE_NAME,
             "otus.json",
             "otus.json.gz",
         }
@@ -457,7 +461,7 @@ class TestIndex:
         index_path = work_path / "indexes" / str(workflow_data.analysis.index.id)
 
         assert {p.name for p in index_path.iterdir()} == {
-            REFERENCE_SQLITE_FILE_NAME,
+            INDEX_SQLITE_FILE_NAME,
             REFERENCE_JSON_V2_FILE_NAME.removesuffix(".gz"),
             REFERENCE_JSON_V2_FILE_NAME,
         }

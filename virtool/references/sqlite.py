@@ -43,7 +43,7 @@ from sqlalchemy.pool import ConnectionPoolEntry
 from sqlalchemy.sql import Select
 from sqlalchemy.sql.elements import ColumnElement
 
-REFERENCE_SQLITE_FILE_NAME = "virtool-reference.v1.sqlite"
+REFERENCE_SQLITE_FILE_NAME = "reference-snapshot.v1.sqlite"
 REFERENCE_SQLITE_FORMAT = "virtool-reference-sqlite"
 REFERENCE_SQLITE_FORMAT_VERSION = "1"
 

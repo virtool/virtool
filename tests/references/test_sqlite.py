@@ -23,7 +23,7 @@ OTU_VERSION = 3
 
 
 def test_reference_sqlite_file_name_is_versioned():
-    assert REFERENCE_SQLITE_FILE_NAME == "virtool-reference.v1.sqlite"
+    assert REFERENCE_SQLITE_FILE_NAME == "reference-snapshot.v1.sqlite"
 
 
 def _reference() -> dict:

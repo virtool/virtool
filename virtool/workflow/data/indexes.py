@@ -33,6 +33,7 @@ from virtool.workflow.client import WorkflowAPIClient
 logger = get_logger("api")
 
 _SQLITE_SEQUENCE_BATCH_SIZE = 500
+INDEX_SQLITE_FILE_NAME = "index.v1.sqlite"
 
 
 class WFIndexOTURef(TypedDict):
@@ -360,7 +361,7 @@ async def index(
 
     return await WFIndex.create(
         id_,
-        index_work_path / REFERENCE_SQLITE_FILE_NAME,
+        index_work_path / INDEX_SQLITE_FILE_NAME,
         reference,
         otus,
     )
