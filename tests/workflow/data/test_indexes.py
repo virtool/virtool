@@ -4,9 +4,9 @@ from threading import get_ident
 import pytest
 from pyfixtures import FixtureScope
 
+from virtool.indexes.constants import INDEX_SQLITE_FILE_NAME
 from virtool.indexes.db import REFERENCE_JSON_V2_FILE_NAME
 from virtool.indexes.models import IndexFile
-from virtool.workflow.data.index_sqlite import INDEX_SQLITE_FILE_NAME
 from virtool.workflow.data.indexes import (
     WFIndex,
     _read_json,
@@ -162,6 +162,22 @@ def _set_reference_json_v2_index_data(workflow_data: WorkflowData) -> None:
             type="json",
         )
     ]
+
+
+def _set_sqlite_index_data(workflow_data: WorkflowData) -> None:
+    _set_reference_json_v2_index_data(workflow_data)
+    workflow_data.index.files.append(
+        IndexFile(
+            download_url=(
+                f"/indexes/{workflow_data.index.id}/files/{INDEX_SQLITE_FILE_NAME}"
+            ),
+            id=2,
+            index=workflow_data.index.id,
+            name=INDEX_SQLITE_FILE_NAME,
+            size=100,
+            type="sqlite",
+        )
+    )
 
 
 def test_shape_reference_json_metadata_preserves_required_values():
@@ -556,6 +572,33 @@ class TestIndex:
             "8f6riell",
             "ixnaodb8",
         }
+
+    async def test_sqlite_ok(
+        self,
+        mocker,
+        scope: FixtureScope,
+        work_path: Path,
+        workflow_data: WorkflowData,
+    ):
+        """Server SQLite is downloaded and loaded without JSON conversion."""
+        _set_sqlite_index_data(workflow_data)
+        create_index_sqlite = mocker.patch(
+            "virtool.workflow.data.indexes.create_index_sqlite"
+        )
+
+        index: WFIndex = await scope.instantiate_by_key("index")
+
+        index_path = work_path / "indexes" / str(workflow_data.analysis.index.id)
+
+        assert {path.name for path in index_path.iterdir()} == {INDEX_SQLITE_FILE_NAME}
+        assert index.id == workflow_data.analysis.index.id
+        assert (await index.get_reference_metadata())["id"] == str(
+            workflow_data.index.reference.id
+        )
+        assert sorted([otu["version"] async for otu in index.iter_otus()]) == sorted(
+            workflow_data.index.manifest.values()
+        )
+        create_index_sqlite.assert_not_called()
 
     async def test_write_fasta(
         self,

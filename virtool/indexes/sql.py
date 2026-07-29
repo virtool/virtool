@@ -6,7 +6,6 @@ from sqlalchemy import (
     CheckConstraint,
     Column,
     DateTime,
-    Enum,
     ForeignKey,
     Identity,
     Integer,
@@ -72,6 +71,10 @@ class IndexType(str, SQLEnum):
     json = "json"
     fasta = "fasta"
     bowtie2 = "bowtie2"
+    sqlite = "sqlite"
+
+
+_ALLOWED_INDEX_TYPES = ", ".join(repr(value) for value in IndexType.to_list())
 
 
 class SQLIndexFile(Base):
@@ -91,6 +94,10 @@ class SQLIndexFile(Base):
     __tablename__ = "index_files"
     __table_args__ = (
         UniqueConstraint("index_id", "name", name="index_files_index_id_name_key"),
+        CheckConstraint(
+            f"type IN ({_ALLOWED_INDEX_TYPES})",
+            name="ck_index_files_type",
+        ),
     )
 
     id = Column(Integer, primary_key=True)
@@ -101,5 +108,5 @@ class SQLIndexFile(Base):
         ForeignKey("indexes.id", ondelete="CASCADE"),
         nullable=False,
     )
-    type = Column(Enum(IndexType))
+    type = Column(String)
     size = Column(BigInteger)

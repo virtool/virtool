@@ -8,16 +8,19 @@ from tests.fixtures.workflow_api.utils import (
     custom_dumps,
     generate_not_found,
 )
+from virtool.indexes.constants import INDEX_SQLITE_FILE_NAME
 from virtool.indexes.db import (
     JOB_INDEX_FILE_NAMES,
     REFERENCE_JSON_V2_FILE_NAME,
 )
+from virtool.workflow.data.index_sqlite import create_index_sqlite
 from virtool.workflow.pytest_plugin.data import WorkflowData
 
 
 def create_indexes_routes(
     data: WorkflowData,
     example_path: Path,
+    index_sqlite_path: Path,
 ) -> RouteTableDef:
     with gzip.open(
         example_path / "indexes" / "reference.json.gz",
@@ -27,7 +30,7 @@ def create_indexes_routes(
 
     reference_json_v2["_id"] = data.index.reference.id
     reference_json_v2["name"] = data.index.reference.name
-    reference_json_v2 = gzip.compress(json.dumps(reference_json_v2).encode())
+    compressed_reference_json_v2 = gzip.compress(json.dumps(reference_json_v2).encode())
 
     routes = RouteTableDef()
 
@@ -67,7 +70,35 @@ def create_indexes_routes(
 
                 if filename == REFERENCE_JSON_V2_FILE_NAME:
                     return Response(
-                        body=reference_json_v2,
+                        body=compressed_reference_json_v2,
+                        headers={
+                            "Content-Disposition": (
+                                f"attachment; filename='{filename}'"
+                            ),
+                            "Content-Type": "application/octet-stream",
+                        },
+                    )
+
+                if filename == INDEX_SQLITE_FILE_NAME:
+                    reference = {
+                        "_id": data.index.reference.id,
+                        "created_at": reference_json_v2["created_at"],
+                        "data_type": reference_json_v2["data_type"],
+                        "name": data.index.reference.name,
+                        "organism": reference_json_v2["organism"],
+                    }
+                    otus = [
+                        {
+                            **otu,
+                            "version": data.index.manifest[otu["_id"]],
+                        }
+                        for otu in reference_json_v2["otus"]
+                    ]
+
+                    await create_index_sqlite(index_sqlite_path, reference, otus)
+
+                    return FileResponse(
+                        index_sqlite_path,
                         headers={
                             "Content-Disposition": (
                                 f"attachment; filename='{filename}'"

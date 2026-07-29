@@ -5,8 +5,8 @@ from threading import get_ident
 
 from sqlalchemy import select
 
+from virtool.indexes.constants import INDEX_SQLITE_FILE_NAME
 from virtool.workflow.data.index_sqlite import (
-    INDEX_SQLITE_FILE_NAME,
     connect_index_sqlite,
     create_index_sqlite,
     isolates_table,
