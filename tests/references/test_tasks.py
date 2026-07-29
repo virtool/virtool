@@ -13,25 +13,24 @@ from virtool.data.layer import DataLayer
 from virtool.data.topg import compose_legacy_id_subquery
 from virtool.fake.next import DataFaker, fake_file_chunker
 from virtool.history.sql import SQLLegacyHistory, SQLLegacyHistoryDiff
-from virtool.indexes.constants import INDEX_SQLITE_FILE_NAME
 from virtool.otus.db import otu_document_from_row, sequence_document_from_row
 from virtool.otus.sql import SQLOTU, SQLSequence
 from virtool.references.db import get_manifest
 from virtool.references.models import Reference
 from virtool.references.sql import SQLReference
+from virtool.references.sqlite import (
+    REFERENCE_SQLITE_FILE_NAME,
+    SQLiteReference,
+    otus_table,
+    reference_table,
+    sequences_table,
+)
 from virtool.references.tasks import (
     CloneReferenceTask,
     ImportReferenceTask,
 )
 from virtool.tasks.models import Task
 from virtool.uploads.sql import SQLUpload, UploadType
-from virtool.workflow.data.index_sqlite import (
-    connect_index_sqlite,
-    create_index_sqlite,
-    otus_table,
-    reference_table,
-    sequences_table,
-)
 from virtool.workflow.pytest_plugin.utils import StaticTime
 
 
@@ -192,8 +191,8 @@ async def reference_sqlite_path(example_path: Path, tmp_path: Path) -> Path:
     for otu in data["otus"]:
         otu["version"] = 0
 
-    sqlite_path = tmp_path / INDEX_SQLITE_FILE_NAME
-    await create_index_sqlite(
+    sqlite_path = tmp_path / REFERENCE_SQLITE_FILE_NAME
+    await SQLiteReference.create(
         sqlite_path,
         {
             "id": "source_reference",
@@ -292,7 +291,7 @@ async def test_import_reference_task_from_canonical_sqlite(
 ):
     _, task = await spawn_import_task(
         upload_path=reference_sqlite_path,
-        upload_name=INDEX_SQLITE_FILE_NAME,
+        upload_name=REFERENCE_SQLITE_FILE_NAME,
     )
 
     await (await ImportReferenceTask.from_task_id(data_layer, task.id)).run()
@@ -343,7 +342,7 @@ async def test_import_reference_task_streams_sqlite_to_scratch_space(
         for chunk in chunks:
             yield chunk
             observed_sizes.append(
-                (import_task.temp_path / "reference.v1.sqlite").stat().st_size
+                (import_task.temp_path / REFERENCE_SQLITE_FILE_NAME).stat().st_size
             )
 
     mocker.patch.object(
@@ -431,8 +430,8 @@ async def test_import_reference_task_rejects_corrupt_sqlite(
 
     completed_task = await data_layer.tasks.get(task.id)
     assert completed_task.error is not None
-    assert "Invalid index SQLite file" in completed_task.error
-    assert "Could not read index SQLite database" in completed_task.error
+    assert "Invalid SQLite reference file" in completed_task.error
+    assert "Could not read SQLite reference database" in completed_task.error
     await assert_reference_not_populated()
 
 
@@ -442,7 +441,10 @@ async def test_import_reference_task_rejects_missing_reference_metadata(
     reference_sqlite_path: Path,
     spawn_import_task,
 ):
-    with connect_index_sqlite(reference_sqlite_path) as connection, connection.begin():
+    with (
+        SQLiteReference.load(reference_sqlite_path).connect() as connection,
+        connection.begin(),
+    ):
         connection.execute(otus_table.update().values(reference_id=None))
         connection.execute(reference_table.delete())
 
@@ -465,7 +467,10 @@ async def test_import_reference_task_rejects_invalid_source_data(
     reference_sqlite_path: Path,
     spawn_import_task,
 ):
-    with connect_index_sqlite(reference_sqlite_path) as connection, connection.begin():
+    with (
+        SQLiteReference.load(reference_sqlite_path).connect() as connection,
+        connection.begin(),
+    ):
         connection.execute(sequences_table.update().values(sequence="ACGT"))
 
     _, task = await spawn_import_task(

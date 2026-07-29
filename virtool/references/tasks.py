@@ -6,14 +6,13 @@ import aiofiles
 from pydantic import ValidationError
 from sqlalchemy.exc import SQLAlchemyError
 
+from virtool.references.sqlite import REFERENCE_SQLITE_FILE_NAME, SQLiteReference
 from virtool.references.utils import (
     ReferenceSourceData,
     load_reference_from_storage,
 )
 from virtool.tasks.task import BaseTask
 from virtool.uploads.utils import upload_file_key
-from virtool.workflow.data.index_sqlite import validate_index_sqlite
-from virtool.workflow.data.indexes import WFIndex
 
 if TYPE_CHECKING:
     from virtool.data.layer import DataLayer
@@ -94,7 +93,7 @@ class ImportReferenceTask(BaseTask):
         return None
 
     async def _load_sqlite(self, key: str) -> dict | None:
-        sqlite_path = self.temp_path / "reference.v1.sqlite"
+        sqlite_path = self.temp_path / REFERENCE_SQLITE_FILE_NAME
 
         try:
             async with aiofiles.open(sqlite_path, "wb") as handle:
@@ -102,13 +101,12 @@ class ImportReferenceTask(BaseTask):
                     await handle.write(chunk)
                     await handle.flush()
 
-            await validate_index_sqlite(sqlite_path)
-
-            index = WFIndex.load(0, sqlite_path)
-            reference = await index.get_reference_metadata()
-            otus = [otu async for otu in index.iter_otus()]
+            sqlite_reference = SQLiteReference.load(sqlite_path)
+            await sqlite_reference.validate()
+            reference = await sqlite_reference.get_metadata()
+            otus = [otu async for otu in sqlite_reference.iter_otus()]
         except (OSError, SQLAlchemyError, ValueError) as err:
-            await self._set_error(f"Invalid index SQLite file: {err}")
+            await self._set_error(f"Invalid SQLite reference file: {err}")
             return None
 
         return {**reference, "otus": otus}

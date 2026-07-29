@@ -28,10 +28,10 @@ from virtool.data.topg import (
 )
 from virtool.data.transforms import AbstractTransform
 from virtool.history.sql import SQLLegacyHistory
-from virtool.indexes.constants import INDEX_SQLITE_FILE_NAME
 from virtool.indexes.sql import SQLIndex, SQLIndexFile
 from virtool.otus.sql import SQLOTU
 from virtool.references.sql import SQLReference
+from virtool.references.sqlite import REFERENCE_SQLITE_FILE_NAME
 from virtool.types import Document
 
 OTU_ID_CHUNK_SIZE = 500
@@ -58,7 +58,7 @@ JOB_INDEX_FILE_NAMES = (
 INDEX_FILE_NAMES = (
     *JOB_INDEX_FILE_NAMES,
     REFERENCE_JSON_V2_FILE_NAME,
-    INDEX_SQLITE_FILE_NAME,
+    REFERENCE_SQLITE_FILE_NAME,
 )
 
 

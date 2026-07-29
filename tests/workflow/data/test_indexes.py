@@ -4,9 +4,9 @@ from threading import get_ident
 import pytest
 from pyfixtures import FixtureScope
 
-from virtool.indexes.constants import INDEX_SQLITE_FILE_NAME
 from virtool.indexes.db import REFERENCE_JSON_V2_FILE_NAME
 from virtool.indexes.models import IndexFile
+from virtool.references.sqlite import REFERENCE_SQLITE_FILE_NAME, SQLiteReference
 from virtool.workflow.data.indexes import (
     WFIndex,
     _read_json,
@@ -164,16 +164,16 @@ def _set_reference_json_v2_index_data(workflow_data: WorkflowData) -> None:
     ]
 
 
-def _set_sqlite_index_data(workflow_data: WorkflowData) -> None:
+def _set_sqlite_reference_data(workflow_data: WorkflowData) -> None:
     _set_reference_json_v2_index_data(workflow_data)
     workflow_data.index.files.append(
         IndexFile(
             download_url=(
-                f"/indexes/{workflow_data.index.id}/files/{INDEX_SQLITE_FILE_NAME}"
+                f"/indexes/{workflow_data.index.id}/files/{REFERENCE_SQLITE_FILE_NAME}"
             ),
             id=2,
             index=workflow_data.index.id,
-            name=INDEX_SQLITE_FILE_NAME,
+            name=REFERENCE_SQLITE_FILE_NAME,
             size=100,
             type="sqlite",
         )
@@ -217,7 +217,7 @@ class TestWFIndex:
         def iter_otus():
             yield _get_sqlite_otu()
 
-        sqlite_path = tmp_path / INDEX_SQLITE_FILE_NAME
+        sqlite_path = tmp_path / REFERENCE_SQLITE_FILE_NAME
 
         index = await WFIndex.create(
             "test_index",
@@ -226,6 +226,7 @@ class TestWFIndex:
             iter_otus(),
         )
 
+        assert isinstance(index, SQLiteReference)
         assert index.path == sqlite_path
         assert sqlite_path.exists()
         assert await index.get_reference_metadata() == {
@@ -243,7 +244,7 @@ class TestWFIndex:
 
         index = await WFIndex.create(
             "test_index",
-            tmp_path / INDEX_SQLITE_FILE_NAME,
+            tmp_path / REFERENCE_SQLITE_FILE_NAME,
             None,
             iter_otus(),
         )
@@ -252,7 +253,7 @@ class TestWFIndex:
 
         with pytest.raises(
             ValueError,
-            match="Reference metadata does not exist in the index",
+            match="Reference metadata does not exist in the SQLite reference",
         ):
             await index.get_reference_metadata()
 
@@ -295,7 +296,7 @@ class TestWFIndex:
 
         index = await WFIndex.create(
             "test_index",
-            tmp_path / INDEX_SQLITE_FILE_NAME,
+            tmp_path / REFERENCE_SQLITE_FILE_NAME,
             None,
             iter_otus(),
         )
@@ -331,96 +332,16 @@ class TestWFIndex:
         assert second_otu_sequences[0]["otu_id"] == "second_otu"
 
     async def test_load(self, tmp_path: Path):
-        sqlite_path = tmp_path / INDEX_SQLITE_FILE_NAME
+        sqlite_path = tmp_path / REFERENCE_SQLITE_FILE_NAME
         sqlite_path.write_bytes(b"SQLite file")
 
         index = WFIndex.load("test_index", sqlite_path)
 
+        assert isinstance(index, SQLiteReference)
         assert index.path == sqlite_path
 
-    async def test_iter_otus_preserves_json_shape(self, tmp_path: Path):
-        otu = _get_sqlite_otu()
-
-        def iter_otus():
-            yield otu
-
-        otu["schema"] = [
-            {
-                "molecule": "ssRNA",
-                "name": "genome",
-                "required": True,
-            },
-        ]
-
-        for isolate in otu["isolates"]:
-            for sequence in isolate["sequences"]:
-                sequence["segment"] = "genome"
-
-        index = await WFIndex.create(
-            "test_index",
-            tmp_path / INDEX_SQLITE_FILE_NAME,
-            _get_sqlite_reference(),
-            iter_otus(),
-        )
-        loaded_otus = [loaded_otu async for loaded_otu in index.iter_otus()]
-
-        expected_otu = _get_source_otu()
-        expected_otu["schema"] = [
-            {
-                "molecule": "ssRNA",
-                "name": "genome",
-                "required": True,
-            },
-        ]
-
-        for isolate in expected_otu["isolates"]:
-            for sequence in isolate["sequences"]:
-                sequence["segment"] = "genome"
-
-        assert loaded_otus == [expected_otu]
-        assert loaded_otus[0]["schema"][0]["required"] is True
-        assert loaded_otus[0]["isolates"][0]["default"] is True
-        assert loaded_otus[0]["isolates"][1]["default"] is False
-
-    async def test_iter_otus_raises_when_otu_has_no_isolates(self, tmp_path: Path):
-        def iter_otus():
-            otu = _get_sqlite_otu()
-            otu["isolates"] = []
-
-            yield otu
-
-        index = await WFIndex.create(
-            "test_index",
-            tmp_path / INDEX_SQLITE_FILE_NAME,
-            _get_sqlite_reference(),
-            iter_otus(),
-        )
-
-        with pytest.raises(ValueError, match="has no isolates"):
-            [otu async for otu in index.iter_otus()]
-
-    async def test_iter_otus_raises_when_isolate_has_no_sequences(
-        self,
-        tmp_path: Path,
-    ):
-        def iter_otus():
-            otu = _get_sqlite_otu()
-            otu["isolates"][0]["sequences"] = []
-
-            yield otu
-
-        index = await WFIndex.create(
-            "test_index",
-            tmp_path / INDEX_SQLITE_FILE_NAME,
-            _get_sqlite_reference(),
-            iter_otus(),
-        )
-
-        with pytest.raises(ValueError, match="has no sequences"):
-            [otu async for otu in index.iter_otus()]
-
     def test_load_raises_for_missing_file(self, tmp_path: Path):
-        sqlite_path = tmp_path / INDEX_SQLITE_FILE_NAME
+        sqlite_path = tmp_path / REFERENCE_SQLITE_FILE_NAME
 
         with pytest.raises(FileNotFoundError):
             WFIndex.load("test_index", sqlite_path)
@@ -433,7 +354,7 @@ class TestWFIndex:
 
         index = await WFIndex.create(
             "test_index",
-            tmp_path / INDEX_SQLITE_FILE_NAME,
+            tmp_path / REFERENCE_SQLITE_FILE_NAME,
             _get_sqlite_reference(),
             iter_otus(),
         )
@@ -452,7 +373,7 @@ class TestWFIndex:
 
         index = await WFIndex.create(
             "test_index",
-            tmp_path / INDEX_SQLITE_FILE_NAME,
+            tmp_path / REFERENCE_SQLITE_FILE_NAME,
             _get_sqlite_reference(),
             iter_otus(),
         )
@@ -492,7 +413,7 @@ class TestIndex:
         index_path = work_path / "indexes" / str(workflow_data.analysis.index.id)
 
         assert {p.name for p in index_path.iterdir()} == {
-            INDEX_SQLITE_FILE_NAME,
+            REFERENCE_SQLITE_FILE_NAME,
             "otus.json",
             "otus.json.gz",
         }
@@ -508,7 +429,7 @@ class TestIndex:
 
         with pytest.raises(
             ValueError,
-            match="Reference metadata does not exist in the index",
+            match="Reference metadata does not exist in the SQLite reference",
         ):
             await index.get_reference_metadata()
 
@@ -536,7 +457,7 @@ class TestIndex:
         index_path = work_path / "indexes" / str(workflow_data.analysis.index.id)
 
         assert {p.name for p in index_path.iterdir()} == {
-            INDEX_SQLITE_FILE_NAME,
+            REFERENCE_SQLITE_FILE_NAME,
             REFERENCE_JSON_V2_FILE_NAME.removesuffix(".gz"),
             REFERENCE_JSON_V2_FILE_NAME,
         }
@@ -573,24 +494,27 @@ class TestIndex:
             "ixnaodb8",
         }
 
-    async def test_sqlite_ok(
+    async def test_sqlite_reference_ok(
         self,
         mocker,
         scope: FixtureScope,
         work_path: Path,
         workflow_data: WorkflowData,
     ):
-        """Server SQLite is downloaded and loaded without JSON conversion."""
-        _set_sqlite_index_data(workflow_data)
-        create_index_sqlite = mocker.patch(
-            "virtool.workflow.data.indexes.create_index_sqlite"
+        """A server SQLite reference is loaded without JSON conversion."""
+        _set_sqlite_reference_data(workflow_data)
+        create_workflow_index = mocker.patch.object(
+            WFIndex,
+            "create",
         )
 
         index: WFIndex = await scope.instantiate_by_key("index")
 
         index_path = work_path / "indexes" / str(workflow_data.analysis.index.id)
 
-        assert {path.name for path in index_path.iterdir()} == {INDEX_SQLITE_FILE_NAME}
+        assert {path.name for path in index_path.iterdir()} == {
+            REFERENCE_SQLITE_FILE_NAME
+        }
         assert index.id == workflow_data.analysis.index.id
         assert (await index.get_reference_metadata())["id"] == str(
             workflow_data.index.reference.id
@@ -598,7 +522,7 @@ class TestIndex:
         assert sorted([otu["version"] async for otu in index.iter_otus()]) == sorted(
             workflow_data.index.manifest.values()
         )
-        create_index_sqlite.assert_not_called()
+        create_workflow_index.assert_not_called()
 
     async def test_write_fasta(
         self,

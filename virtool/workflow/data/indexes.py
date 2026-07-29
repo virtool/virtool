@@ -3,45 +3,36 @@ import json
 from collections.abc import (
     AsyncIterable,
     AsyncIterator,
-    Callable,
-    Generator,
     Iterable,
     Iterator,
     Mapping,
 )
-from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Literal, TypedDict
+from typing import Any, TypedDict
 
 import aiofiles
 from pyfixtures import fixture
-from sqlalchemy import JSON, case, func, literal, select, type_coerce
+from sqlalchemy import select
 from sqlalchemy.sql import Select
-from sqlalchemy.sql.elements import ColumnElement
 from structlog import get_logger
 
 from virtool.analyses.models import Analysis
-from virtool.indexes.constants import INDEX_SQLITE_FILE_NAME
 from virtool.indexes.db import REFERENCE_JSON_V2_FILE_NAME
 from virtool.indexes.models import Index
-from virtool.utils import decompress_file
-from virtool.workflow.client import WorkflowAPIClient
-from virtool.workflow.data.index_sqlite import (
-    _get_id,
-    connect_index_sqlite,
-    create_index_sqlite,
+from virtool.references.sqlite import (
+    REFERENCE_SQLITE_FILE_NAME,
+    SQLiteReference,
     isolates_table,
-    otu_schema_table,
     otus_table,
-    reference_table,
     sequences_table,
 )
+from virtool.utils import decompress_file
+from virtool.workflow.client import WorkflowAPIClient
 
 logger = get_logger("api")
 
 _SQLITE_SEQUENCE_BATCH_SIZE = 500
-_SQLITE_OTU_BATCH_SIZE = 1
 
 
 class WFIndexOTURef(TypedDict):
@@ -54,15 +45,12 @@ class WFIndexOTURef(TypedDict):
     version: int
 
 
-@dataclass
-class WFIndex:
+@dataclass(frozen=True)
+class WFIndex(SQLiteReference):
     """Represents a Virtool reference index for use in analysis workflows."""
 
     id: int
     """The ID of the index."""
-
-    path: Path
-    """The path to the SQLite index artifact."""
 
     @classmethod
     async def create(
@@ -72,30 +60,19 @@ class WFIndex:
         reference: Mapping[str, Any] | None,
         otus: Iterable[Mapping[str, Any]],
     ) -> "WFIndex":
-        """Create a SQLite index artifact and return a workflow index for it."""
-        await create_index_sqlite(path, reference, otus)
+        """Create a SQLite reference and return a workflow index for it."""
+        index = cls(path=path, id=id_)
+        await index._create(reference, otus)
 
-        return cls(id_, path)
+        return index
 
     @classmethod
     def load(cls, id_: int, path: Path) -> "WFIndex":
-        """Load an existing SQLite index artifact."""
+        """Load an existing SQLite reference as a workflow index."""
         if not path.exists():
             raise FileNotFoundError(path)
 
-        return cls(id_, path)
-
-    async def iter_otus(self) -> AsyncIterator[dict[str, Any]]:
-        """Iterate indexed OTUs."""
-        async for otus in _iter_sqlite_query_batches(
-            self.path,
-            _select_sqlite_otus(),
-            _SQLITE_OTU_BATCH_SIZE,
-            "scalar",
-            _validate_sqlite_otu,
-        ):
-            for otu in otus:
-                yield otu
+        return cls(path=path, id=id_)
 
     async def iter_sequences(self) -> AsyncIterator[dict[str, Any]]:
         """Iterate indexed sequences."""
@@ -155,15 +132,14 @@ class WFIndex:
         )
 
     async def get_reference_metadata(self) -> dict[str, Any]:
-        """Get indexed reference metadata excluding OTUs."""
-        return await asyncio.to_thread(self._get_reference_metadata)
+        """Get reference metadata excluding OTUs."""
+        return await self.get_metadata()
 
     async def _iter_sequence_query(
         self,
         query: Select,
     ) -> AsyncIterator[dict[str, Any]]:
-        async for sequences in _iter_sqlite_query_batches(
-            self.path,
+        async for sequences in self.iter_query_batches(
             query,
             _SQLITE_SEQUENCE_BATCH_SIZE,
             "mapping",
@@ -172,16 +148,6 @@ class WFIndex:
             for sequence in sequences:
                 yield sequence
 
-    def _get_reference_metadata(self) -> dict[str, Any]:
-        with connect_index_sqlite(self.path) as connection:
-            row = connection.execute(select(reference_table)).mappings().one_or_none()
-
-        if row is None:
-            msg = "Reference metadata does not exist in the index"
-            raise ValueError(msg)
-
-        return dict(row)
-
     def _get_otu_refs_by_sequence_ids(
         self,
         sequence_ids: set[str],
@@ -189,7 +155,7 @@ class WFIndex:
         if not sequence_ids:
             return {}
 
-        with connect_index_sqlite(self.path) as connection:
+        with self.connect() as connection:
             rows = list(
                 connection.execute(
                     select(
@@ -229,65 +195,8 @@ class WFIndex:
         return otu_ref_by_sequence_id
 
 
-def _identity[T](value: T) -> T:
-    return value
-
-
-async def _iter_sqlite_query_batches[T](
-    path: Path,
-    query: Select,
-    batch_size: int,
-    row_mode: Literal["mapping", "scalar"],
-    shape_row: Callable[[Any], T] = _identity,
-) -> AsyncIterator[list[T]]:
-    def iter_batches() -> Generator[list[T]]:
-        with (
-            connect_index_sqlite(path) as connection,
-            connection.execute(query) as result,
-        ):
-            rows = result.scalars() if row_mode == "scalar" else result.mappings()
-
-            for partition in rows.partitions(batch_size):
-                yield [shape_row(row) for row in partition]
-
-    batch_iterator = iter_batches()
-    event_loop = asyncio.get_running_loop()
-
-    # Resume the SQLite-backed generator on one stable thread for cursor affinity.
-    with ThreadPoolExecutor(max_workers=1) as executor:
-        try:
-            while (
-                batch := await event_loop.run_in_executor(
-                    executor,
-                    next,
-                    batch_iterator,
-                    None,
-                )
-            ) is not None:
-                yield batch
-        finally:
-            await event_loop.run_in_executor(executor, batch_iterator.close)
-
-
 def _get_sequence_id(sequence: Mapping[str, Any]) -> str:
     return sequence["id"]
-
-
-def _validate_sqlite_otu(otu: dict[str, Any]) -> dict[str, Any]:
-    otu_id = otu["id"]
-
-    if not otu["isolates"]:
-        msg = f"OTU {otu_id} has no isolates in the index"
-        raise ValueError(msg)
-
-    for isolate in otu["isolates"]:
-        if not isolate["sequences"]:
-            msg = (
-                f"Isolate {isolate['id']} in OTU {otu_id} has no sequences in the index"
-            )
-            raise ValueError(msg)
-
-    return otu
 
 
 def _normalize_otu_ids(otu_ids: str | Iterable[str]) -> set[str]:
@@ -295,124 +204,6 @@ def _normalize_otu_ids(otu_ids: str | Iterable[str]) -> set[str]:
         return {otu_ids}
 
     return set(otu_ids)
-
-
-def _select_sqlite_otus() -> Select:
-    return select(
-        type_coerce(
-            func.json_object(
-                "id",
-                otus_table.c.id,
-                "abbreviation",
-                otus_table.c.abbreviation,
-                "isolates",
-                func.json(_select_sqlite_isolates(otus_table.c.id)),
-                "name",
-                otus_table.c.name,
-                "schema",
-                func.json(_select_sqlite_otu_schema(otus_table.c.id)),
-                "taxid",
-                otus_table.c.taxid,
-                "version",
-                otus_table.c.version,
-            ),
-            JSON,
-        )
-    ).order_by(otus_table.c.id)
-
-
-def _select_sqlite_otu_schema(otu_id: ColumnElement[str]) -> Select:
-    return (
-        select(
-            func.coalesce(
-                func.json_group_array(
-                    func.json_object(
-                        "molecule",
-                        otu_schema_table.c.molecule,
-                        "name",
-                        otu_schema_table.c.name,
-                        "required",
-                        _json_bool(otu_schema_table.c.required),
-                    )
-                ),
-                func.json(literal("[]")),
-            )
-        )
-        .where(otu_schema_table.c.otu_id == otu_id)
-        .order_by(otu_schema_table.c.name)
-        .scalar_subquery()
-    )
-
-
-def _select_sqlite_isolates(otu_id: ColumnElement[str]) -> Select:
-    return (
-        select(
-            func.coalesce(
-                func.json_group_array(
-                    func.json_object(
-                        "default",
-                        _json_bool(isolates_table.c.is_default),
-                        "id",
-                        isolates_table.c.virtool_id,
-                        "sequences",
-                        func.json(
-                            _select_sqlite_isolate_sequences(
-                                isolates_table.c.id,
-                            )
-                        ),
-                        "source_name",
-                        isolates_table.c.source_name,
-                        "source_type",
-                        isolates_table.c.source_type,
-                    )
-                ),
-                func.json(literal("[]")),
-            )
-        )
-        .where(isolates_table.c.otu_id == otu_id)
-        .order_by(isolates_table.c.virtool_id)
-        .scalar_subquery()
-    )
-
-
-def _select_sqlite_isolate_sequences(
-    isolate_id: ColumnElement[int],
-) -> Select:
-    return (
-        select(
-            func.coalesce(
-                func.json_group_array(
-                    func.json_object(
-                        "id",
-                        sequences_table.c.id,
-                        "accession",
-                        sequences_table.c.accession,
-                        "definition",
-                        sequences_table.c.definition,
-                        "host",
-                        sequences_table.c.host,
-                        "segment",
-                        sequences_table.c.segment,
-                        "sequence",
-                        sequences_table.c.sequence,
-                    )
-                ),
-                func.json(literal("[]")),
-            )
-        )
-        .where(sequences_table.c.isolate_id == isolate_id)
-        .order_by(sequences_table.c.id)
-        .scalar_subquery()
-    )
-
-
-def _json_bool(value: ColumnElement[int]) -> ColumnElement[bool]:
-    return func.json(
-        case(
-            (value == 1, literal("true")),
-            else_=literal("false"),
-        )
-    )
 
 
 def _select_sqlite_sequences_with_isolates() -> Select:
@@ -465,7 +256,7 @@ def _shape_reference_json_metadata(
         return None
 
     return {
-        "id": _get_id(data),
+        "id": data["_id"] if "_id" in data else data["id"],
         "created_at": data["created_at"],
         "data_type": data["data_type"],
         "name": data["name"],
@@ -508,17 +299,17 @@ async def index(
 
     log.info("created index directory")
 
-    if any(file.name == INDEX_SQLITE_FILE_NAME for file in index_.files):
-        index_sqlite_path = index_work_path / INDEX_SQLITE_FILE_NAME
+    if any(file.name == REFERENCE_SQLITE_FILE_NAME for file in index_.files):
+        reference_sqlite_path = index_work_path / REFERENCE_SQLITE_FILE_NAME
 
         await _api.get_file(
-            f"/indexes/{id_}/files/{INDEX_SQLITE_FILE_NAME}",
-            index_sqlite_path,
+            f"/indexes/{id_}/files/{REFERENCE_SQLITE_FILE_NAME}",
+            reference_sqlite_path,
         )
 
-        log.info("loaded server index sqlite")
+        log.info("loaded server SQLite reference")
 
-        return WFIndex.load(id_, index_sqlite_path)
+        return WFIndex.load(id_, reference_sqlite_path)
 
     if any(file.name == REFERENCE_JSON_V2_FILE_NAME for file in index_.files):
         compressed_reference_json_path = index_work_path / REFERENCE_JSON_V2_FILE_NAME
@@ -540,7 +331,7 @@ async def index(
         reference = _shape_reference_json_metadata(reference_json)
         otus = _iter_reference_json_otus(reference_json, index_.manifest)
 
-        log.info("creating local index sqlite from reference json")
+        log.info("creating local SQLite reference from reference json")
     else:
         otus_json_path = index_work_path / "otus.json"
         compressed_otus_json_path = index_work_path / "otus.json.gz"
@@ -565,11 +356,11 @@ async def index(
         reference = None
         otus = otus_json
 
-        log.info("creating local index sqlite from otus json")
+        log.info("creating local SQLite reference from otus json")
 
     return await WFIndex.create(
         id_,
-        index_work_path / INDEX_SQLITE_FILE_NAME,
+        index_work_path / REFERENCE_SQLITE_FILE_NAME,
         reference,
         otus,
     )
