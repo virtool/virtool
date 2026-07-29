@@ -22,12 +22,12 @@ from sqlalchemy.sql.elements import ColumnElement
 from structlog import get_logger
 
 from virtool.analyses.models import Analysis
+from virtool.indexes.constants import INDEX_SQLITE_FILE_NAME
 from virtool.indexes.db import REFERENCE_JSON_V2_FILE_NAME
 from virtool.indexes.models import Index
 from virtool.utils import decompress_file
 from virtool.workflow.client import WorkflowAPIClient
 from virtool.workflow.data.index_sqlite import (
-    INDEX_SQLITE_FILE_NAME,
     _get_id,
     connect_index_sqlite,
     create_index_sqlite,
@@ -507,6 +507,18 @@ async def index(
     await asyncio.to_thread(index_work_path.mkdir, parents=True, exist_ok=True)
 
     log.info("created index directory")
+
+    if any(file.name == INDEX_SQLITE_FILE_NAME for file in index_.files):
+        index_sqlite_path = index_work_path / INDEX_SQLITE_FILE_NAME
+
+        await _api.get_file(
+            f"/indexes/{id_}/files/{INDEX_SQLITE_FILE_NAME}",
+            index_sqlite_path,
+        )
+
+        log.info("loaded server index sqlite")
+
+        return WFIndex.load(id_, index_sqlite_path)
 
     if any(file.name == REFERENCE_JSON_V2_FILE_NAME for file in index_.files):
         compressed_reference_json_path = index_work_path / REFERENCE_JSON_V2_FILE_NAME

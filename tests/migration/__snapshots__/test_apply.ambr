@@ -897,5 +897,12 @@
       'name': 'cascade sample label and subtraction links',
       'revision': '06d0b71c37c3',
     }),
+    dict({
+      'applied_at': datetime,
+      'created_at': datetime,
+      'id': 129,
+      'name': 'replace indextype enum with text check',
+      'revision': 'af827765c1d5',
+    }),
   ])
 # ---

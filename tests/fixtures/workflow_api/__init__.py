@@ -19,6 +19,7 @@ async def api_server(
     aiohttp_server,
     example_path: Path,
     read_file_from_multipart,
+    tmp_path: Path,
     workflow_data: WorkflowData,
 ) -> TestServer:
     app = Application()
@@ -26,7 +27,11 @@ async def api_server(
     for route in (
         create_analyses_routes(workflow_data, example_path, read_file_from_multipart),
         create_hmms_routes(workflow_data, example_path),
-        create_indexes_routes(workflow_data, example_path),
+        create_indexes_routes(
+            workflow_data,
+            example_path,
+            tmp_path / "workflow-api-index.sqlite",
+        ),
         create_jobs_routes(workflow_data),
         create_samples_routes(workflow_data, example_path, read_file_from_multipart),
         create_subtractions_routes(

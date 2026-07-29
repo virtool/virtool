@@ -28,7 +28,6 @@ from virtool.api.custom_json import datetime_to_isoformat
 
 INDEX_SQLITE_FORMAT = "virtool-index-sqlite"
 INDEX_SQLITE_FORMAT_VERSION = "1"
-INDEX_SQLITE_FILE_NAME = f"{INDEX_SQLITE_FORMAT}-v{INDEX_SQLITE_FORMAT_VERSION}.sqlite"
 
 index_sqlite_metadata = MetaData()
 
