@@ -27,7 +27,6 @@ RUN --mount=type=secret,id=sentry_auth_token \
 FROM node:24-alpine AS dist
 WORKDIR /ui
 COPY --from=build /repo/apps/web/.output ./.output
-COPY --from=build /repo/apps/web/scripts ./scripts
 COPY --from=build /repo/apps/web/package.json ./package.json
 EXPOSE 9900
 ENV HOST="0.0.0.0"

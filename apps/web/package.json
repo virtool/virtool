@@ -5,9 +5,8 @@
 	"type": "module",
 	"scripts": {
 		"build": "vite build",
-		"check-api": "node scripts/check-api.mjs",
 		"develop": "vite",
-		"start": "node scripts/check-api.mjs && node .output/server/index.mjs",
+		"start": "node .output/server/index.mjs",
 		"test": "TZ=UTC vitest run",
 		"test:watch": "TZ=UTC vitest",
 		"typecheck": "tsc -p tsconfig.server.json && tsc -p tsconfig.app.json"
@@ -86,8 +85,5 @@
 	},
 	"optionalDependencies": {
 		"fsevents": "^2.3.3"
-	},
-	"virtool": {
-		"minApiVersion": "33.3.0"
 	}
 }
