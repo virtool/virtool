@@ -32,7 +32,7 @@ export default function ReadItem({
 		<BoxGroupSection className="flex items-start font-medium justify-between">
 			<div className="flex items-center">
 				<div>
-					<a href={`/api/${downloadUrl}`} download={downloadName}>
+					<a href={downloadUrl} download={downloadName}>
 						{downloadName}
 					</a>
 				</div>

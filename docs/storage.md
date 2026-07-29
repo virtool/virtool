@@ -60,8 +60,8 @@ orphans whatever it writes.
 | `analysisPrefix(sampleStorageId, analysisLegacyId)` | `samples/{sampleStorageId}/analysis/{analysisLegacyId}/` |
 | `subtractionFileKey(storageId, filename)` | `subtractions/{storageId}/{filename}` |
 | `subtractionPrefix(storageId)` | `subtractions/{storageId}/` |
-| `indexFileKey(indexId, filename)` | `indexes/{indexId}/{filename}` |
-| `indexPrefix(indexId)` | `indexes/{indexId}/` |
+| `indexFileKey(storageKey, filename)` | `indexes/{storageKey}/{filename}` |
+| `indexPrefix(storageKey)` | `indexes/{storageKey}/` |
 | `cacheKey(uuid)` | `caches/v1/{uuid}` |
 | `HMM_PROFILES_KEY` | `hmm/profiles.hmm` |
 | `HMM_ANNOTATIONS_KEY` | `hmm/annotations.json.gz` |
@@ -77,6 +77,10 @@ Two subtleties are load-bearing:
   `_resolve_storage_id`. A subtraction is addressed by its integer id
   everywhere else, so it is easy to reach for `String(id)` and silently orphan
   every migrated subtraction's files.
+- **An index's prefix is neither.** It is the `indexes.storage_key` column,
+  persisted because it cannot be derived from the row id at all — a migrated
+  index keys on its old Mongo id and a natively-created one on a minted UUID.
+  Read the column; never pass the index id.
 - **Subtraction ids may contain spaces**, and Python substitutes underscores
   when composing the key. `subtractionFileKey` and `subtractionPrefix` do the
   same. Never build a subtraction key by hand.

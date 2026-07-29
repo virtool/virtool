@@ -10,7 +10,7 @@ export type IndexFileItemProps = {
 export function IndexFileItem({ downloadUrl, name, size }: IndexFileItemProps) {
 	return (
 		<BoxGroupSection className="flex items-center">
-			<a className="mr-auto font-medium" href={`/api${downloadUrl}`}>
+			<a className="mr-auto font-medium" href={downloadUrl}>
 				{name}
 			</a>
 			<strong>{byteSize(size)}</strong>

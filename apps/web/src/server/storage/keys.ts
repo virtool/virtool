@@ -80,14 +80,20 @@ export function subtractionPrefix(subtractionId: string): string {
 	return `subtractions/${normalizeSubtractionId(subtractionId)}/`;
 }
 
-/** Key for an index file. */
-export function indexFileKey(indexId: string, filename: string): string {
-	return `indexes/${indexId}/${filename}`;
+/**
+ * Key for an index file.
+ *
+ * The segment is the index's `storage_key` column, not its row id — a migrated
+ * index keys on its old Mongo id and a natively-created one on a minted UUID,
+ * so neither can be derived from the id.
+ */
+export function indexFileKey(storageKey: string, filename: string): string {
+	return `indexes/${storageKey}/${filename}`;
 }
 
 /** Prefix holding every file for an index. */
-export function indexPrefix(indexId: string): string {
-	return `indexes/${indexId}/`;
+export function indexPrefix(storageKey: string): string {
+	return `indexes/${storageKey}/`;
 }
 
 /** Key for a cache. Persisted on the cache row rather than recomputed. */

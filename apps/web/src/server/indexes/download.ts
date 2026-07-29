@@ -1,12 +1,16 @@
 import { requireAuthenticatedRequest } from "../auth/middleware";
 import { db } from "../db/pg";
 import { streamStorageObject, textResponse } from "../http";
+import {
+	checkReferenceVisibility,
+	resolveReferenceActor,
+} from "../references/data";
 import { storage } from "../storage";
-import { getSubtractionFileKey } from "./data";
+import { getIndexFileKey, getIndexReferenceId } from "./data";
 
 /**
- * Serve a subtraction's FASTA or Bowtie2 file, backing
- * `GET /subtractions/{id}/files/{filename}`.
+ * Serve one of a build's artifacts, backing
+ * `GET /indexes/{indexId}/files/{filename}`.
  *
  * This is a raw route rather than a server function because the client reaches
  * it with a plain `<a href>` — the browser has to see a real response with a
@@ -15,12 +19,14 @@ import { getSubtractionFileKey } from "./data";
  * the Node heap.
  *
  * Being a route means no policy middleware runs, so the authorization floor is
- * enforced here. It is a valid session and nothing more: subtractions carry no
- * per-row rights, and every signed-in user can already read them.
+ * enforced here, and it is more than a valid session: an index is only as
+ * visible as the reference it was built from, so the caller must be able to see
+ * that reference. Without this any signed-in user could read every reference's
+ * builds.
  */
-export async function handleSubtractionFile(
+export async function handleIndexFile(
 	request: Request,
-	subtractionId: string,
+	indexId: string,
 	filename: string,
 ): Promise<Response> {
 	const session = await requireAuthenticatedRequest(request);
@@ -28,13 +34,25 @@ export async function handleSubtractionFile(
 		return session;
 	}
 
-	const id = Number(subtractionId);
+	const id = Number(indexId);
 
 	if (!Number.isInteger(id) || id <= 0) {
-		return textResponse("Invalid subtraction id", 400);
+		return textResponse("Invalid index id", 400);
 	}
 
-	const key = await getSubtractionFileKey(db, id, filename);
+	const referenceId = await getIndexReferenceId(db, id);
+
+	if (referenceId === null) {
+		return textResponse("Not found", 404);
+	}
+
+	const actor = await resolveReferenceActor(db, session.userId);
+
+	if (!(await checkReferenceVisibility(db, referenceId, actor))) {
+		return textResponse("Forbidden", 403);
+	}
+
+	const key = await getIndexFileKey(db, id, filename);
 
 	if (key === null) {
 		return textResponse("Not found", 404);

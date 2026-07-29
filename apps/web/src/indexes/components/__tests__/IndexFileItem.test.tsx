@@ -8,7 +8,7 @@ describe("<IndexFileItem />", () => {
 
 	beforeEach(() => {
 		props = {
-			downloadUrl: "/api/subtractions/xl8faqqz/uploads/subtraction.fa.gz",
+			downloadUrl: "/indexes/7/files/reference.fa.gz",
 			name: "foo",
 			size: 36461731,
 		};

@@ -547,6 +547,23 @@ rights. The filename is only ever composed into a storage key *after* it has
 matched a `subtraction_files` row, which is what keeps a URL param from
 traversing out of the prefix.
 
+Index file downloads (`routes/indexes.$indexId.files.$filename.ts` →
+`@server/indexes/download`) are a raw route for the same reason. Their floor is
+`requireAuthenticatedRequest` **and** the caller being able to see the index's
+parent reference (`checkReferenceVisibility`), which is the TypeScript spelling
+of Python's reference `read` right — an index is only as visible as the
+reference it was built from, and without the check every signed-in user could
+read every reference's builds. The filename is matched against a whitelist of
+the names a build produces before it is looked up, and the storage key is
+composed from the `index_files` row's own `name` and the index's `storage_key`
+column, never the row id.
+
+Sample reads downloads (`routes/samples.$sampleId.reads.$filename.ts` →
+`@server/samples/download`) are a raw route for the same reason. Their floor is
+`requireAuthenticatedRequest` then the **read** right on the sample, matching
+the analysis export. The Python endpoint this replaced checked only the session;
+that gap was deliberately not carried over.
+
 The Prometheus scrape endpoint (`routes/metrics.ts` → `@server/metrics/handler`)
 is a raw route for the same reason as the upload: Prometheus speaks plain HTTP,
 not the generated RPC client. It enforces its own floor too — a bearer token

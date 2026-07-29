@@ -35,11 +35,10 @@ describe("<IndexDetail />", () => {
 		expect(screen.getByText("alice")).toBeInTheDocument();
 		expect(screen.getByText("Tobacco mosaic virus")).toBeInTheDocument();
 
-		// Index files are still served by the Python API, so the download URL keeps
-		// the `/api` prefix.
+		// The download URL is the raw route's own path, linked to unmodified.
 		expect(screen.getByText("reference.fa.gz").closest("a")).toHaveAttribute(
 			"href",
-			"/api/indexes/7/files/reference.fa.gz",
+			"/indexes/7/files/reference.fa.gz",
 		);
 	});
 

@@ -32,12 +32,12 @@ describe("<IndexFiles />", () => {
 
 		expect(foo.closest("div")).toHaveTextContent("1.0KB");
 		expect(foo.closest("div")).toHaveTextContent("foo");
-		expect(foo.closest("a")).toHaveAttribute("href", "/api/testUrl/foo");
+		expect(foo.closest("a")).toHaveAttribute("href", "/testUrl/foo");
 
 		const bar = screen.getByText("bar");
 
 		expect(bar.closest("div")).toHaveTextContent("2.0KB");
 		expect(bar.closest("div")).toHaveTextContent("bar");
-		expect(bar.closest("a")).toHaveAttribute("href", "/api/testUrl/bar");
+		expect(bar.closest("a")).toHaveAttribute("href", "/testUrl/bar");
 	});
 });

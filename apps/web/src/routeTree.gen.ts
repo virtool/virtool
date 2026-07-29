@@ -62,6 +62,8 @@ import { Route as AuthenticatedSamplesSampleIdFilesRouteImport } from './routes/
 import { Route as AuthenticatedSamplesSampleIdGeneralRouteImport } from './routes/_authenticated/samples/$sampleId/general'
 import { Route as AuthenticatedSamplesSampleIdQualityRouteImport } from './routes/_authenticated/samples/$sampleId/quality'
 import { Route as AuthenticatedSamplesSampleIdRightsRouteImport } from './routes/_authenticated/samples/$sampleId/rights'
+import { Route as IndexesIndexIdFilesFilenameRouteImport } from './routes/indexes.$indexId.files.$filename'
+import { Route as SamplesSampleIdReadsFilenameRouteImport } from './routes/samples.$sampleId.reads.$filename'
 import { Route as SubtractionsSubtractionIdFilesFilenameRouteImport } from './routes/subtractions.$subtractionId.files.$filename'
 import { Route as AuthenticatedRefsRefIdIndexesIndexRouteImport } from './routes/_authenticated/refs/$refId/indexes/index'
 import { Route as AuthenticatedRefsRefIdIndexesIndexIdRouteImport } from './routes/_authenticated/refs/$refId/indexes/$indexId'
@@ -372,6 +374,18 @@ const AuthenticatedSamplesSampleIdRightsRoute =
     path: '/rights',
     getParentRoute: () => AuthenticatedSamplesSampleIdRoute,
   } as any)
+const IndexesIndexIdFilesFilenameRoute =
+  IndexesIndexIdFilesFilenameRouteImport.update({
+    id: '/indexes/$indexId/files/$filename',
+    path: '/indexes/$indexId/files/$filename',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const SamplesSampleIdReadsFilenameRoute =
+  SamplesSampleIdReadsFilenameRouteImport.update({
+    id: '/samples/$sampleId/reads/$filename',
+    path: '/samples/$sampleId/reads/$filename',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const SubtractionsSubtractionIdFilesFilenameRoute =
   SubtractionsSubtractionIdFilesFilenameRouteImport.update({
     id: '/subtractions/$subtractionId/files/$filename',
@@ -513,6 +527,8 @@ export interface FileRoutesByFullPath {
   '/samples/$sampleId/general': typeof AuthenticatedSamplesSampleIdGeneralRoute
   '/samples/$sampleId/quality': typeof AuthenticatedSamplesSampleIdQualityRoute
   '/samples/$sampleId/rights': typeof AuthenticatedSamplesSampleIdRightsRoute
+  '/indexes/$indexId/files/$filename': typeof IndexesIndexIdFilesFilenameRoute
+  '/samples/$sampleId/reads/$filename': typeof SamplesSampleIdReadsFilenameRoute
   '/subtractions/$subtractionId/files/$filename': typeof SubtractionsSubtractionIdFilesFilenameRoute
   '/administration/users/': typeof AuthenticatedAdministrationUsersIndexRoute
   '/refs/$refId/': typeof AuthenticatedRefsRefIdIndexRoute
@@ -572,6 +588,8 @@ export interface FileRoutesByTo {
   '/samples/$sampleId/general': typeof AuthenticatedSamplesSampleIdGeneralRoute
   '/samples/$sampleId/quality': typeof AuthenticatedSamplesSampleIdQualityRoute
   '/samples/$sampleId/rights': typeof AuthenticatedSamplesSampleIdRightsRoute
+  '/indexes/$indexId/files/$filename': typeof IndexesIndexIdFilesFilenameRoute
+  '/samples/$sampleId/reads/$filename': typeof SamplesSampleIdReadsFilenameRoute
   '/subtractions/$subtractionId/files/$filename': typeof SubtractionsSubtractionIdFilesFilenameRoute
   '/administration/users': typeof AuthenticatedAdministrationUsersIndexRoute
   '/refs/$refId': typeof AuthenticatedRefsRefIdIndexRoute
@@ -641,6 +659,8 @@ export interface FileRoutesById {
   '/_authenticated/samples/$sampleId/general': typeof AuthenticatedSamplesSampleIdGeneralRoute
   '/_authenticated/samples/$sampleId/quality': typeof AuthenticatedSamplesSampleIdQualityRoute
   '/_authenticated/samples/$sampleId/rights': typeof AuthenticatedSamplesSampleIdRightsRoute
+  '/indexes/$indexId/files/$filename': typeof IndexesIndexIdFilesFilenameRoute
+  '/samples/$sampleId/reads/$filename': typeof SamplesSampleIdReadsFilenameRoute
   '/subtractions/$subtractionId/files/$filename': typeof SubtractionsSubtractionIdFilesFilenameRoute
   '/_authenticated/administration/users/': typeof AuthenticatedAdministrationUsersIndexRoute
   '/_authenticated/refs/$refId/': typeof AuthenticatedRefsRefIdIndexRoute
@@ -712,6 +732,8 @@ export interface FileRouteTypes {
     | '/samples/$sampleId/general'
     | '/samples/$sampleId/quality'
     | '/samples/$sampleId/rights'
+    | '/indexes/$indexId/files/$filename'
+    | '/samples/$sampleId/reads/$filename'
     | '/subtractions/$subtractionId/files/$filename'
     | '/administration/users/'
     | '/refs/$refId/'
@@ -771,6 +793,8 @@ export interface FileRouteTypes {
     | '/samples/$sampleId/general'
     | '/samples/$sampleId/quality'
     | '/samples/$sampleId/rights'
+    | '/indexes/$indexId/files/$filename'
+    | '/samples/$sampleId/reads/$filename'
     | '/subtractions/$subtractionId/files/$filename'
     | '/administration/users'
     | '/refs/$refId'
@@ -839,6 +863,8 @@ export interface FileRouteTypes {
     | '/_authenticated/samples/$sampleId/general'
     | '/_authenticated/samples/$sampleId/quality'
     | '/_authenticated/samples/$sampleId/rights'
+    | '/indexes/$indexId/files/$filename'
+    | '/samples/$sampleId/reads/$filename'
     | '/subtractions/$subtractionId/files/$filename'
     | '/_authenticated/administration/users/'
     | '/_authenticated/refs/$refId/'
@@ -872,6 +898,8 @@ export interface RootRouteChildren {
   UploadsUploadIdRoute: typeof UploadsUploadIdRoute
   AnalysesDocumentsDocumentRoute: typeof AnalysesDocumentsDocumentRoute
   OtusOtuIdFastaRoute: typeof OtusOtuIdFastaRoute
+  IndexesIndexIdFilesFilenameRoute: typeof IndexesIndexIdFilesFilenameRoute
+  SamplesSampleIdReadsFilenameRoute: typeof SamplesSampleIdReadsFilenameRoute
   SubtractionsSubtractionIdFilesFilenameRoute: typeof SubtractionsSubtractionIdFilesFilenameRoute
   OtusOtuIdIsolatesIsolateIdFastaRoute: typeof OtusOtuIdIsolatesIsolateIdFastaRoute
   OtusOtuIdIsolatesIsolateIdSequencesSequenceIdFastaRoute: typeof OtusOtuIdIsolatesIsolateIdSequencesSequenceIdFastaRoute
@@ -1249,6 +1277,20 @@ declare module '@tanstack/react-router' {
       fullPath: '/samples/$sampleId/rights'
       preLoaderRoute: typeof AuthenticatedSamplesSampleIdRightsRouteImport
       parentRoute: typeof AuthenticatedSamplesSampleIdRoute
+    }
+    '/indexes/$indexId/files/$filename': {
+      id: '/indexes/$indexId/files/$filename'
+      path: '/indexes/$indexId/files/$filename'
+      fullPath: '/indexes/$indexId/files/$filename'
+      preLoaderRoute: typeof IndexesIndexIdFilesFilenameRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/samples/$sampleId/reads/$filename': {
+      id: '/samples/$sampleId/reads/$filename'
+      path: '/samples/$sampleId/reads/$filename'
+      fullPath: '/samples/$sampleId/reads/$filename'
+      preLoaderRoute: typeof SamplesSampleIdReadsFilenameRouteImport
+      parentRoute: typeof rootRouteImport
     }
     '/subtractions/$subtractionId/files/$filename': {
       id: '/subtractions/$subtractionId/files/$filename'
@@ -1645,6 +1687,8 @@ const rootRouteChildren: RootRouteChildren = {
   UploadsUploadIdRoute: UploadsUploadIdRoute,
   AnalysesDocumentsDocumentRoute: AnalysesDocumentsDocumentRoute,
   OtusOtuIdFastaRoute: OtusOtuIdFastaRoute,
+  IndexesIndexIdFilesFilenameRoute: IndexesIndexIdFilesFilenameRoute,
+  SamplesSampleIdReadsFilenameRoute: SamplesSampleIdReadsFilenameRoute,
   SubtractionsSubtractionIdFilesFilenameRoute:
     SubtractionsSubtractionIdFilesFilenameRoute,
   OtusOtuIdIsolatesIsolateIdFastaRoute: OtusOtuIdIsolatesIsolateIdFastaRoute,

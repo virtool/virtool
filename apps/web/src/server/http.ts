@@ -2,6 +2,9 @@
 // themselves rather than returning a value through the server-function RPC
 // layer, because the browser has to see real headers.
 
+import { StorageKeyNotFoundError } from "./storage/errors";
+import type { StorageBackend } from "./storage/types";
+
 /**
  * A plain-text response, for the statuses a raw route answers with directly.
  *
@@ -73,6 +76,47 @@ export function toStream(
 			// A client that aborts the download mid-stream leaves the backend's
 			// request open otherwise.
 			await iterator.return?.(reason);
+		},
+	});
+}
+
+/**
+ * Stream the object at `key` as a download named `filename`, or a 404 when it
+ * has no bytes in storage.
+ *
+ * Every file download ends this way, so the rule that makes it correct lives
+ * here rather than in each handler: `Content-Length` comes from the object and
+ * never from the row's size column, which is nullable everywhere and records
+ * only what the writing job reported — a stale or null value would truncate the
+ * download client-side. Sizing first also settles existence before any header
+ * is committed, so a row whose bytes are missing becomes a 404 rather than a
+ * 200 that dies mid-stream.
+ *
+ * The backend is passed in the way `db` is, so this stays testable against
+ * `MemoryStorage` without reaching for the process-wide singleton.
+ */
+export async function streamStorageObject(
+	storage: StorageBackend,
+	key: string,
+	filename: string,
+	contentType: string,
+): Promise<Response> {
+	let size: number;
+
+	try {
+		size = await storage.size(key);
+	} catch (err) {
+		if (err instanceof StorageKeyNotFoundError) {
+			return textResponse("Not found", 404);
+		}
+		throw err;
+	}
+
+	return new Response(toStream(storage.read(key)), {
+		headers: {
+			"content-disposition": contentDisposition(filename),
+			"content-length": String(size),
+			"content-type": contentType,
 		},
 	});
 }

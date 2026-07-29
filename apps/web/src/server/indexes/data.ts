@@ -39,6 +39,7 @@ import {
 	ReferenceArchivedError,
 	ReferenceNotFoundError,
 } from "../references/data";
+import { indexFileKey } from "../storage/keys";
 import { createTask } from "../tasks/data";
 
 /** Thrown when a requested index does not exist. */
@@ -343,8 +344,9 @@ async function getIndexOtus(db: DbOrTx, indexId: number): Promise<IndexOtu[]> {
 	return rows.sort((a, b) => a.name.localeCompare(b.name));
 }
 
-// The files a finished build produced. They are still served by the Python API,
-// so the download URL is the path its route answers on, relative to the API root.
+// The files a finished build produced. The download URL is the path the raw
+// route in `./download` answers on, so it is site-relative and the client links
+// to it unmodified.
 async function getIndexFiles(
 	db: DbOrTx,
 	indexId: number,
@@ -390,6 +392,70 @@ export async function getIndex(db: Db, indexId: number): Promise<Index> {
 		manifest: row.manifest,
 		otus,
 	};
+}
+
+// The files a finished build produces, and so the only names the download route
+// will serve. Mirrors Python's `INDEX_FILE_NAMES`; a build's other artifacts
+// stay unreachable even once a row exists for them.
+const INDEX_FILE_NAMES = new Set([
+	"reference.fa.gz",
+	"reference.json.gz",
+	"reference.1.bt2",
+	"reference.2.bt2",
+	"reference.3.bt2",
+	"reference.4.bt2",
+	"reference.rev.1.bt2",
+	"reference.rev.2.bt2",
+	"reference-v2.json.gz",
+]);
+
+/**
+ * The reference a build belongs to, or `null` when the build does not exist.
+ *
+ * The download route resolves it to decide who may read the build's files: an
+ * index is only as visible as the reference it was built from.
+ */
+export async function getIndexReferenceId(
+	db: DbOrTx,
+	indexId: number,
+): Promise<number | null> {
+	const [row] = await db
+		.select({ referenceId: indexes.reference_id })
+		.from(indexes)
+		.where(eq(indexes.id, indexId))
+		.limit(1);
+
+	return row?.referenceId ?? null;
+}
+
+/**
+ * The storage key of one of a build's files, or `null` when the build has no
+ * such file.
+ *
+ * The key is composed from the row's own `name`, never the caller's, so a
+ * filename carrying path segments cannot traverse out of the index's prefix.
+ */
+export async function getIndexFileKey(
+	db: DbOrTx,
+	indexId: number,
+	filename: string,
+): Promise<string | null> {
+	if (!INDEX_FILE_NAMES.has(filename)) {
+		return null;
+	}
+
+	const [row] = await db
+		.select({ name: indexFiles.name, storageKey: indexes.storage_key })
+		.from(indexFiles)
+		.innerJoin(indexes, eq(indexes.id, indexFiles.index_id))
+		.where(and(eq(indexFiles.index_id, indexId), eq(indexFiles.name, filename)))
+		.limit(1);
+
+	if (!row) {
+		return null;
+	}
+
+	return indexFileKey(row.storageKey, row.name);
 }
 
 // Whether the reference has a build that has not finished.

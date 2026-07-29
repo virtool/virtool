@@ -56,6 +56,7 @@ import { getSettings } from "../settings/data";
 import {
 	deletePrefix,
 	type StorageBackend,
+	sampleFileKey,
 	samplePrefix,
 	sampleStorageId,
 } from "../storage";
@@ -330,6 +331,8 @@ async function getReads(
 		)
 		.orderBy(asc(sampleReads.id));
 
+	// The download URL is the path the raw route in `./download` answers on, so
+	// it is site-relative and the client links to it unmodified.
 	return rows.map(({ read, upload, uploadUser }) => ({
 		downloadUrl: `/samples/${sampleId}/reads/${read.name}`,
 		id: read.id,
@@ -782,6 +785,62 @@ export async function checkSampleRight(
 	}
 
 	return hasSampleRight(row, actor, right);
+}
+
+/**
+ * The storage key of one of a sample's read files, or `null` when the sample
+ * has no read by that name.
+ *
+ * The row is matched on `name`, which is what the URL carries, but the key is
+ * composed from `name_on_disk`, which is what the object was written under.
+ * `upload_reads` sets the two from the same argument, so they agree on every
+ * row today; keying on the column that means "the name on disk" is what keeps
+ * that an implementation detail rather than a load-bearing assumption.
+ *
+ * Neither comes from the caller, so a filename carrying path segments cannot
+ * traverse out of the sample's prefix. `sample` is the prefix the file was
+ * written under, which for a Mongo-migrated sample is its legacy id rather than
+ * its integer one.
+ */
+export async function getSampleReadsFileKey(
+	db: DbOrTx,
+	sampleId: number,
+	filename: string,
+): Promise<string | null> {
+	const [sample] = await db
+		.select({ legacy_id: legacySamples.legacy_id })
+		.from(legacySamples)
+		.where(eq(legacySamples.id, sampleId))
+		.limit(1);
+
+	if (!sample) {
+		return null;
+	}
+
+	const storageId = sampleStorageId(sampleId, sample.legacy_id);
+
+	const [read] = await db
+		.select({
+			nameOnDisk: sampleReads.name_on_disk,
+			sample: sampleReads.sample,
+		})
+		.from(sampleReads)
+		.where(
+			and(
+				or(
+					eq(sampleReads.sample_id, sampleId),
+					eq(sampleReads.sample, storageId),
+				),
+				eq(sampleReads.name, filename),
+			),
+		)
+		.limit(1);
+
+	if (!read) {
+		return null;
+	}
+
+	return sampleFileKey(read.sample, read.nameOnDisk);
 }
 
 async function checkNameInUse(

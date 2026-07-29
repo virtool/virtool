@@ -1,7 +1,7 @@
 import { requireAuthenticatedRequest } from "../auth/middleware";
 import { db } from "../db/pg";
-import { contentDisposition, textResponse, toStream } from "../http";
-import { StorageKeyNotFoundError, storage } from "../storage";
+import { streamStorageObject, textResponse } from "../http";
+import { storage } from "../storage";
 import { getUploadFile } from "./data";
 
 /**
@@ -39,27 +39,10 @@ export async function handleUploadDownload(
 		return textResponse("Not found", 404);
 	}
 
-	// `Content-Length` comes from the object rather than the `uploads.size`
-	// column: the column is nullable and records what the writer reported, so a
-	// stale or null value would truncate the download client-side. Sizing first
-	// also settles existence before any header is committed — a row whose bytes
-	// are missing becomes a 404 rather than a 200 that dies mid-stream.
-	let size: number;
-
-	try {
-		size = await storage.size(file.key);
-	} catch (err) {
-		if (err instanceof StorageKeyNotFoundError) {
-			return textResponse("Not found", 404);
-		}
-		throw err;
-	}
-
-	return new Response(toStream(storage.read(file.key)), {
-		headers: {
-			"content-disposition": contentDisposition(file.name),
-			"content-length": String(size),
-			"content-type": "application/octet-stream",
-		},
-	});
+	return streamStorageObject(
+		storage,
+		file.key,
+		file.name,
+		"application/octet-stream",
+	);
 }
