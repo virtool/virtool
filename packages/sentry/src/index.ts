@@ -11,7 +11,8 @@ export type CommonSentryOptions = {
 	environment: string;
 	sendDefaultPii: boolean;
 	tracesSampleRate: number;
-	profilesSampleRate: number;
+	profileSessionSampleRate: number;
+	profileLifecycle: "trace";
 	enableLogs: boolean;
 };
 
@@ -23,9 +24,16 @@ export function getCommonOptions(): CommonSentryOptions {
 		environment,
 		sendDefaultPii: true,
 		tracesSampleRate: isProd ? 0.1 : 1.0,
-		// Relative to traced transactions, so the effective profiling rate is
-		// tracesSampleRate * profilesSampleRate.
-		profilesSampleRate: isProd ? 0.5 : 1.0,
+		// Decided once per `Sentry.init` — that is, once per server process, not
+		// per transaction the way the deprecated `profilesSampleRate` was. Half
+		// the replicas therefore profile and half do not, which is what bounds
+		// the cost: `profileLifecycle: "trace"` runs the profiler for as long as
+		// any sampled root span is in flight, and on a busy server that is close
+		// to continuously. Do not set both this and `profilesSampleRate` — the
+		// SDK takes the legacy path whenever the latter is present and ignores
+		// this one entirely.
+		profileSessionSampleRate: isProd ? 0.5 : 1.0,
+		profileLifecycle: "trace",
 		enableLogs: true,
 	};
 }
