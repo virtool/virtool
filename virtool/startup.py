@@ -15,7 +15,6 @@ from virtool.identifier import RandomIdProvider
 from virtool.jobs.tasks import JobsTimeoutTask
 from virtool.migration.pg import check_data_revision_version
 from virtool.pg.utils import connect_pg
-from virtool.routes import setup_routes
 from virtool.sentry import configure_sentry
 from virtool.storage.factory import create_storage_backend
 from virtool.tasks.periodic import PeriodicTaskSpawner
@@ -100,10 +99,6 @@ async def startup_http_client_session(app: App) -> None:
         headers={"User-Agent": f"virtool/{get_version_from_app(app)}"},
         timeout=timeout,
     )
-
-
-async def startup_routes(app: App) -> None:
-    setup_routes(app, dev=get_config_from_app(app).dev)
 
 
 async def startup_sentry(app: App) -> None:

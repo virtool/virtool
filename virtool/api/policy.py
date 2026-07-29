@@ -4,18 +4,11 @@ from collections.abc import Callable
 from inspect import isclass
 from typing import Any
 
-from aiohttp import web
 from aiohttp.web import Request
 from aiohttp_pydantic import PydanticView
 
-from virtool.api.client import UserClient
-from virtool.api.errors import APIForbidden, APIUnauthorized
-from virtool.authorization.permissions import (
-    LegacyPermission,
-)
-from virtool.data.utils import get_data_from_req
+from virtool.api.errors import APIUnauthorized
 from virtool.errors import PolicyError
-from virtool.models.roles import AdministratorRole
 
 
 class DefaultRoutePolicy:
@@ -44,38 +37,6 @@ class DefaultRoutePolicy:
             raise APIUnauthorized("Requires authorization")
 
         await self.check(req, handler, client)
-
-
-class AdministratorRoutePolicy(DefaultRoutePolicy):
-    """Only authenticated clients that are administrators can access the route."""
-
-    def __init__(self, role: AdministratorRole):
-        self.role = role
-
-    async def check(self, req, handler, client: UserClient) -> None:
-        if not await get_data_from_req(req).users.check_administrator_role(
-            client.user_id, self.role
-        ):
-            raise APIForbidden("Requires administrative privilege")
-
-
-class PermissionRoutePolicy(DefaultRoutePolicy):
-    def __init__(self, permission: LegacyPermission):
-        self.permission = permission
-
-    async def check(self, _: Request, __: Callable, client: UserClient) -> None:
-        """Check if the client has the required permission for the object.
-
-        Raises ``HTTPForbidden`` if the client does not have the required permission.
-
-        The check will pass if:
-        * The user is an administrator.
-        * The user has the required permission in their legacy MongoDB-based
-          permissions.
-
-        """
-        if not (client.administrator_role or client.permissions[self.permission.value]):
-            raise APIForbidden("Not permitted")
 
 
 class PublicRoutePolicy(DefaultRoutePolicy):
@@ -144,17 +105,3 @@ def get_handler_policy(handler: Callable, method: str) -> DefaultRoutePolicy:
         return cls_or_obj()
 
     return cls_or_obj
-
-
-@web.middleware
-async def route_policy_middleware(req: Request, handler: Callable):
-    """Apply route policies to incoming requests.
-
-    Policy check methods must raise aiohttp HTTP exceptions to interrupt the request.
-    The default policy rejects any requests from unauthenticated clients.
-
-    """
-    route_policy = get_handler_policy(handler, req.method)
-    await route_policy.run_checks(req, handler, req["client"])
-
-    return await handler(req)

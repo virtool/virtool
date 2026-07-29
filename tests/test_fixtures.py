@@ -5,7 +5,7 @@ import pytest
 from sqlalchemy.ext.asyncio import AsyncEngine
 from syrupy import SnapshotAssertion
 
-from tests.fixtures.client import ClientSpawner
+from tests.fixtures.client import JobClientSpawner
 from tests.fixtures.snapshot_date import validate_time
 
 
@@ -58,9 +58,9 @@ def test_nested_timestamps(snapshot_recent):
 
 async def test_data_and_client_databases(
     pg: AsyncEngine,
-    spawn_client: ClientSpawner,
+    spawn_job_client: JobClientSpawner,
 ):
     """Test that data layer, database, and client fixtures refer to the same clients."""
-    client = await spawn_client()
+    client = await spawn_job_client()
 
     assert pg is client.app["pg"]

@@ -1,6 +1,6 @@
 from http import HTTPStatus
 
-from tests.fixtures.client import ClientSpawner, JobClientSpawner
+from tests.fixtures.client import JobClientSpawner
 from virtool.data.layer import DataLayer
 from virtool.fake.next import DataFaker
 from virtool.tasks.oas import UpdateTaskRequest
@@ -57,11 +57,3 @@ class TestGetCounts:
 
         assert resp.status == HTTPStatus.OK
         assert await resp.json() == {"queued": 1, "running": 0}
-
-    async def test_not_on_public_api(self, spawn_client: ClientSpawner):
-        """Test that the endpoint is not served by the public API."""
-        client = await spawn_client(authenticated=True)
-
-        resp = await client.get("/tasks/counts")
-
-        assert resp.status == HTTPStatus.NOT_FOUND

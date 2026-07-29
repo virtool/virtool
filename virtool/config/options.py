@@ -42,13 +42,6 @@ def address_options(func):
     return func
 
 
-base_url_option = click.option(
-    "--base-url",
-    default=get_from_environment("base_url", ""),
-    help="The URL used to prefix Location headers and redirects",
-    type=str,
-)
-
 cache_storage_budget_option = click.option(
     "--cache-storage-budget",
     default=get_from_environment(

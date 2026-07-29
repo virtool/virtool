@@ -10,7 +10,6 @@ from virtool.health.models import Liveness, Readiness
 routes = Routes()
 
 
-@routes.view("/health/live")
 @routes.jobs_api.view("/health/live")
 class LivenessView(PydanticView):
     @policy(PublicRoutePolicy)
@@ -27,7 +26,6 @@ class LivenessView(PydanticView):
         return json_response(Liveness(status="alive"))
 
 
-@routes.view("/health/ready")
 @routes.jobs_api.view("/health/ready")
 class ReadinessView(PydanticView):
     @policy(PublicRoutePolicy)

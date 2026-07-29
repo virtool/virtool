@@ -10,7 +10,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 from syrupy import SnapshotAssertion
 
-from tests.fixtures.client import ClientSpawner, JobClientSpawner
+from tests.fixtures.client import JobClientSpawner
 from tests.fixtures.response import RespIs
 from virtool.fake.next import DataFaker
 from virtool.history.sql import SQLLegacyHistory
@@ -325,22 +325,6 @@ async def test_download_sqlite_for_jobs(
 ):
     """The jobs download route serves a recorded SQLite index file."""
     client = await spawn_job_client(authenticated=True)
-    index_id, expected = await _seed_downloadable_sqlite(fake, memory_storage, pg)
-
-    response = await client.get(f"/indexes/{index_id}/files/{INDEX_SQLITE_FILE_NAME}")
-
-    assert response.status == HTTPStatus.OK
-    assert await response.read() == expected
-
-
-async def test_download_sqlite_for_authenticated_user(
-    fake: DataFaker,
-    memory_storage: StorageBackend,
-    pg: AsyncEngine,
-    spawn_client: ClientSpawner,
-):
-    """The authenticated route serves a recorded SQLite index file."""
-    client = await spawn_client(authenticated=True, administrator=True)
     index_id, expected = await _seed_downloadable_sqlite(fake, memory_storage, pg)
 
     response = await client.get(f"/indexes/{index_id}/files/{INDEX_SQLITE_FILE_NAME}")

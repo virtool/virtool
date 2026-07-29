@@ -7,7 +7,6 @@ from pathlib import Path
 import click
 from structlog import get_logger
 
-from virtool.app import run_api_server
 from virtool.config.cls import (
     MigrationConfig,
     ServerConfig,
@@ -16,7 +15,6 @@ from virtool.config.cls import (
 )
 from virtool.config.options import (
     address_options,
-    base_url_option,
     cache_storage_budget_option,
     dev_option,
     flags_option,
@@ -60,25 +58,6 @@ def cli() -> None: ...
 @cli.group("server")
 def server() -> None:
     """Run Virtool HTTP services."""
-
-
-@server.command("api")
-@address_options
-@base_url_option
-@cache_storage_budget_option
-@dev_option
-@flags_option
-@no_revision_check_option
-@postgres_connection_string_option
-@real_ip_header_option
-@sentry_dsn_option
-@storage_options
-def start_api_server(**kwargs) -> None:
-    """Start a Virtool public API server."""
-    configure_logging(bool(kwargs["sentry_dsn"]))
-    logger.info("starting the public api service")
-
-    run_api_server(ServerConfig(**kwargs, no_periodic_tasks=True))
 
 
 @server.command("jobs")

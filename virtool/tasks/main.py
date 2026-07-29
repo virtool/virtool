@@ -36,7 +36,7 @@ async def create_app(config: TaskRunnerConfig) -> Application:
     app["mode"] = "task_runner"
 
     app.add_routes([aiohttp.web.view("/", TaskServicesRootView)])
-    app.add_routes(virtool.health.api.routes)
+    app.add_routes(virtool.health.api.routes.jobs_api)
 
     app.on_startup.extend(
         [
