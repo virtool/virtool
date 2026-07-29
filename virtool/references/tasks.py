@@ -5,8 +5,13 @@ from typing import TYPE_CHECKING
 import aiofiles
 from pydantic import ValidationError
 from sqlalchemy.exc import SQLAlchemyError
+from structlog import get_logger
 
-from virtool.references.sqlite import REFERENCE_SQLITE_FILE_NAME, SQLiteReference
+from virtool.references.sqlite import (
+    REFERENCE_SQLITE_FILE_NAME,
+    SQLiteReference,
+    SQLiteReferenceReadError,
+)
 from virtool.references.utils import (
     ReferenceSourceData,
     load_reference_from_storage,
@@ -16,6 +21,8 @@ from virtool.uploads.utils import upload_file_key
 
 if TYPE_CHECKING:
     from virtool.data.layer import DataLayer
+
+logger = get_logger("references.tasks")
 
 
 class CloneReferenceTask(BaseTask):
@@ -99,13 +106,28 @@ class ImportReferenceTask(BaseTask):
             async with aiofiles.open(sqlite_path, "wb") as handle:
                 async for chunk in self.data.references._storage.read(key):
                     await handle.write(chunk)
-                    await handle.flush()
 
             sqlite_reference = SQLiteReference.load(sqlite_path)
             await sqlite_reference.validate()
             reference = await sqlite_reference.get_metadata()
             otus = [otu async for otu in sqlite_reference.iter_otus()]
-        except (OSError, SQLAlchemyError, ValueError) as err:
+        except (SQLiteReferenceReadError, SQLAlchemyError):
+            logger.exception(
+                "could not read SQLite reference database",
+                task_id=self.task_id,
+            )
+            await self._set_error(
+                "Invalid SQLite reference file: could not read the database"
+            )
+            return None
+        except OSError:
+            logger.exception(
+                "could not read uploaded SQLite reference file",
+                task_id=self.task_id,
+            )
+            await self._set_error("Could not read uploaded SQLite reference file")
+            return None
+        except ValueError as err:
             await self._set_error(f"Invalid SQLite reference file: {err}")
             return None
 

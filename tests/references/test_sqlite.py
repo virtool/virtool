@@ -11,6 +11,7 @@ from virtool.references.sqlite import (
     REFERENCE_SQLITE_FORMAT,
     REFERENCE_SQLITE_FORMAT_VERSION,
     SQLiteReference,
+    SQLiteReferenceReadError,
     isolates_table,
     metadata_table,
     otu_schema_table,
@@ -355,10 +356,12 @@ class TestValidateSQLiteReference:
         sqlite_path = tmp_path / REFERENCE_SQLITE_FILE_NAME
         sqlite_path.write_bytes(b"not a sqlite database")
 
-        with pytest.raises(
-            ValueError, match="Could not read SQLite reference database"
-        ):
+        with pytest.raises(SQLiteReferenceReadError) as exc_info:
             await SQLiteReference.load(sqlite_path).validate()
+
+        assert str(exc_info.value) == "Could not read SQLite reference database"
+        assert isinstance(exc_info.value, ValueError)
+        assert exc_info.value.__cause__ is not None
 
     async def test_rejects_missing_required_table(self, tmp_path: Path):
         sqlite_path = tmp_path / REFERENCE_SQLITE_FILE_NAME

@@ -49,6 +49,11 @@ REFERENCE_SQLITE_FORMAT_VERSION = "1"
 
 reference_sqlite_metadata = MetaData()
 
+
+class SQLiteReferenceReadError(ValueError):
+    """Raised when a SQLite reference database cannot be read."""
+
+
 metadata_table = Table(
     "metadata",
     reference_sqlite_metadata,
@@ -229,8 +234,8 @@ def _validate_reference_sqlite(sqlite_reference: SQLiteReference) -> None:
     except ValueError:
         raise
     except SQLAlchemyError as err:
-        msg = f"Could not read SQLite reference database: {err}"
-        raise ValueError(msg) from err
+        msg = "Could not read SQLite reference database"
+        raise SQLiteReferenceReadError(msg) from err
 
 
 def _validate_reference_sqlite_schema(connection: Connection) -> None:
