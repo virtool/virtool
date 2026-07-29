@@ -3,24 +3,27 @@
 from pathlib import Path
 from threading import get_ident
 
-from sqlalchemy import select
+import pytest
+from sqlalchemy import delete, insert, select, update
 
 from virtool.indexes.constants import INDEX_SQLITE_FILE_NAME
 from virtool.workflow.data.index_sqlite import (
     connect_index_sqlite,
     create_index_sqlite,
     isolates_table,
+    metadata_table,
     otu_schema_table,
     otus_table,
     reference_table,
     sequences_table,
+    validate_index_sqlite,
 )
 
 OTU_VERSION = 3
 
 
 def test_index_sqlite_file_name_is_versioned():
-    assert INDEX_SQLITE_FILE_NAME == "virtool-index-sqlite-v1.sqlite"
+    assert INDEX_SQLITE_FILE_NAME == "virtool-index-sqlite.v1.sqlite"
 
 
 def _reference() -> dict:
@@ -261,3 +264,114 @@ async def test_create_index_sqlite_allows_legacy_otu_without_schema_or_abbreviat
 
     assert otu_row["abbreviation"] == ""
     assert schema_rows == []
+
+
+class TestValidateIndexSQLite:
+    async def test_accepts_compatible_v1_database_with_extra_table_and_column(
+        self,
+        tmp_path: Path,
+    ):
+        sqlite_path = tmp_path / INDEX_SQLITE_FILE_NAME
+        await create_index_sqlite(sqlite_path, _reference(), [_otu()])
+
+        with connect_index_sqlite(sqlite_path) as connection, connection.begin():
+            connection.exec_driver_sql("ALTER TABLE reference ADD COLUMN notes TEXT")
+            connection.exec_driver_sql("CREATE TABLE producer_metadata (value TEXT)")
+
+        await validate_index_sqlite(sqlite_path)
+
+    async def test_rejects_corrupt_database(self, tmp_path: Path):
+        sqlite_path = tmp_path / INDEX_SQLITE_FILE_NAME
+        sqlite_path.write_bytes(b"not a sqlite database")
+
+        with pytest.raises(ValueError, match="Could not read index SQLite database"):
+            await validate_index_sqlite(sqlite_path)
+
+    async def test_rejects_missing_required_table(self, tmp_path: Path):
+        sqlite_path = tmp_path / INDEX_SQLITE_FILE_NAME
+        await create_index_sqlite(sqlite_path, _reference(), [_otu()])
+
+        with connect_index_sqlite(sqlite_path) as connection, connection.begin():
+            connection.exec_driver_sql("DROP TABLE otu_schema")
+
+        with pytest.raises(ValueError, match="missing required tables: otu_schema"):
+            await validate_index_sqlite(sqlite_path)
+
+    async def test_rejects_missing_required_column(self, tmp_path: Path):
+        sqlite_path = tmp_path / INDEX_SQLITE_FILE_NAME
+        await create_index_sqlite(sqlite_path, _reference(), [_otu()])
+
+        with connect_index_sqlite(sqlite_path) as connection, connection.begin():
+            connection.exec_driver_sql(
+                "ALTER TABLE sequences RENAME COLUMN host TO source_host"
+            )
+
+        with pytest.raises(ValueError, match=r"sequences.*columns: host"):
+            await validate_index_sqlite(sqlite_path)
+
+    async def test_rejects_missing_format_metadata(self, tmp_path: Path):
+        sqlite_path = tmp_path / INDEX_SQLITE_FILE_NAME
+        await create_index_sqlite(sqlite_path, _reference(), [_otu()])
+
+        with connect_index_sqlite(sqlite_path) as connection, connection.begin():
+            connection.execute(
+                delete(metadata_table).where(metadata_table.c.key == "format")
+            )
+
+        with pytest.raises(ValueError, match="metadata is missing 'format'"):
+            await validate_index_sqlite(sqlite_path)
+
+    async def test_rejects_wrong_format(self, tmp_path: Path):
+        sqlite_path = tmp_path / INDEX_SQLITE_FILE_NAME
+        await create_index_sqlite(sqlite_path, _reference(), [_otu()])
+
+        with connect_index_sqlite(sqlite_path) as connection, connection.begin():
+            connection.execute(
+                update(metadata_table)
+                .where(metadata_table.c.key == "format")
+                .values(value="external-index")
+            )
+
+        with pytest.raises(ValueError, match="Unsupported index SQLite format"):
+            await validate_index_sqlite(sqlite_path)
+
+    async def test_rejects_unsupported_format_version(self, tmp_path: Path):
+        sqlite_path = tmp_path / INDEX_SQLITE_FILE_NAME
+        await create_index_sqlite(sqlite_path, _reference(), [_otu()])
+
+        with connect_index_sqlite(sqlite_path) as connection, connection.begin():
+            connection.execute(
+                update(metadata_table)
+                .where(metadata_table.c.key == "format_version")
+                .values(value="2")
+            )
+
+        with pytest.raises(ValueError, match="format version: '2'"):
+            await validate_index_sqlite(sqlite_path)
+
+    async def test_rejects_missing_reference_metadata(self, tmp_path: Path):
+        sqlite_path = tmp_path / INDEX_SQLITE_FILE_NAME
+        await create_index_sqlite(sqlite_path, None, [_otu()])
+
+        with pytest.raises(ValueError, match=r"exactly one.*found 0"):
+            await validate_index_sqlite(sqlite_path)
+
+    async def test_rejects_multiple_reference_metadata_rows(self, tmp_path: Path):
+        sqlite_path = tmp_path / INDEX_SQLITE_FILE_NAME
+        await create_index_sqlite(sqlite_path, _reference(), [_otu()])
+        second_reference = {**_reference(), "_id": "second_reference"}
+
+        with connect_index_sqlite(sqlite_path) as connection, connection.begin():
+            connection.execute(
+                insert(reference_table),
+                {
+                    "id": second_reference["_id"],
+                    "created_at": second_reference["created_at"],
+                    "data_type": second_reference["data_type"],
+                    "name": second_reference["name"],
+                    "organism": second_reference["organism"],
+                },
+            )
+
+        with pytest.raises(ValueError, match=r"exactly one.*found 2"):
+            await validate_index_sqlite(sqlite_path)

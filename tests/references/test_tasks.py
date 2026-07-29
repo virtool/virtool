@@ -1,4 +1,6 @@
 import datetime
+import gzip
+import json
 from pathlib import Path
 
 import pytest
@@ -11,6 +13,7 @@ from virtool.data.layer import DataLayer
 from virtool.data.topg import compose_legacy_id_subquery
 from virtool.fake.next import DataFaker, fake_file_chunker
 from virtool.history.sql import SQLLegacyHistory, SQLLegacyHistoryDiff
+from virtool.indexes.constants import INDEX_SQLITE_FILE_NAME
 from virtool.otus.db import otu_document_from_row, sequence_document_from_row
 from virtool.otus.sql import SQLOTU, SQLSequence
 from virtool.references.db import get_manifest
@@ -22,6 +25,13 @@ from virtool.references.tasks import (
 )
 from virtool.tasks.models import Task
 from virtool.uploads.sql import SQLUpload, UploadType
+from virtool.workflow.data.index_sqlite import (
+    connect_index_sqlite,
+    create_index_sqlite,
+    otus_table,
+    reference_table,
+    sequences_table,
+)
 from virtool.workflow.pytest_plugin.utils import StaticTime
 
 
@@ -139,13 +149,18 @@ def spawn_import_task(
     creates the reference and queues the task.
     """
 
-    async def func(name: str = "Test") -> tuple[Reference, Task]:
+    async def func(
+        name: str = "Test",
+        upload_path: Path | None = None,
+        upload_name: str = "import.json.gz",
+    ) -> tuple[Reference, Task]:
         user = await fake.users.create()
         reference = await fake.references.create(user=user, name=name)
+        upload_path = upload_path or example_path / "indexes/reference.json.gz"
 
         upload = await data_layer.uploads.create(
-            fake_file_chunker(example_path / "indexes/reference.json.gz"),
-            "import.json.gz",
+            fake_file_chunker(upload_path),
+            upload_name,
             UploadType.reference,
             user.id,
         )
@@ -167,6 +182,68 @@ def spawn_import_task(
         return reference, task
 
     return func
+
+
+@pytest.fixture
+async def reference_sqlite_path(example_path: Path, tmp_path: Path) -> Path:
+    with gzip.open(example_path / "indexes/reference.json.gz", "rt") as handle:
+        data = json.load(handle)
+
+    for otu in data["otus"]:
+        otu["version"] = 0
+
+    sqlite_path = tmp_path / INDEX_SQLITE_FILE_NAME
+    await create_index_sqlite(
+        sqlite_path,
+        {
+            "id": "source_reference",
+            "created_at": data["created_at"],
+            "data_type": data["data_type"],
+            "name": "Source Reference",
+            "organism": data["organism"],
+        },
+        data["otus"],
+    )
+
+    return sqlite_path
+
+
+@pytest.fixture
+def assert_reference_not_populated(pg: AsyncEngine):
+    async def assert_not_populated() -> None:
+        async with AsyncSession(pg) as session:
+            otu_count = await session.scalar(select(func.count()).select_from(SQLOTU))
+            sequence_count = await session.scalar(
+                select(func.count()).select_from(SQLSequence)
+            )
+            history_count = await session.scalar(
+                select(func.count()).select_from(SQLLegacyHistory)
+            )
+
+        assert otu_count == 0
+        assert sequence_count == 0
+        assert history_count == 0
+
+    return assert_not_populated
+
+
+@pytest.fixture
+def assert_reference_populated(pg: AsyncEngine):
+    async def assert_populated() -> None:
+        async with AsyncSession(pg) as session:
+            otu_count = await session.scalar(select(func.count()).select_from(SQLOTU))
+            sequence_count = await session.scalar(
+                select(func.count()).select_from(SQLSequence)
+            )
+            history_count = await session.scalar(
+                select(func.count()).select_from(SQLLegacyHistory)
+            )
+
+        assert otu_count == 20
+        assert sequence_count == 26
+        assert history_count == 20
+
+    return assert_populated
 
 
 @pytest.fixture
@@ -203,6 +280,206 @@ async def test_import_reference_task(
     await (await ImportReferenceTask.from_task_id(data_layer, task.id)).run()
 
     await assert_reference_created()
+
+
+@pytest.mark.flaky(reruns=2)
+async def test_import_reference_task_from_canonical_sqlite(
+    assert_reference_populated,
+    data_layer: DataLayer,
+    reference_sqlite_path: Path,
+    spawn_import_task,
+    static_time: StaticTime,
+):
+    _, task = await spawn_import_task(
+        upload_path=reference_sqlite_path,
+        upload_name=INDEX_SQLITE_FILE_NAME,
+    )
+
+    await (await ImportReferenceTask.from_task_id(data_layer, task.id)).run()
+
+    completed_task = await data_layer.tasks.get(task.id)
+    assert completed_task.complete is True
+    assert completed_task.error is None
+    await assert_reference_populated()
+
+
+@pytest.mark.flaky(reruns=2)
+async def test_import_reference_task_from_producer_named_sqlite(
+    assert_reference_populated,
+    data_layer: DataLayer,
+    reference_sqlite_path: Path,
+    spawn_import_task,
+    static_time: StaticTime,
+):
+    _, task = await spawn_import_task(
+        upload_path=reference_sqlite_path,
+        upload_name="external-reference.v1.sqlite",
+    )
+
+    await (await ImportReferenceTask.from_task_id(data_layer, task.id)).run()
+
+    completed_task = await data_layer.tasks.get(task.id)
+    assert completed_task.complete is True
+    assert completed_task.error is None
+    await assert_reference_populated()
+
+
+async def test_import_reference_task_streams_sqlite_to_scratch_space(
+    data_layer: DataLayer,
+    mocker,
+    reference_sqlite_path: Path,
+    spawn_import_task,
+):
+    _, task = await spawn_import_task(
+        upload_path=reference_sqlite_path,
+        upload_name="external-reference.v1.sqlite",
+    )
+    import_task = await ImportReferenceTask.from_task_id(data_layer, task.id)
+    sqlite_data = reference_sqlite_path.read_bytes()
+    chunks = [sqlite_data[:100], sqlite_data[100:1000], sqlite_data[1000:]]
+    observed_sizes = []
+
+    async def read_in_chunks(_key: str):
+        for chunk in chunks:
+            yield chunk
+            observed_sizes.append(
+                (import_task.temp_path / "reference.v1.sqlite").stat().st_size
+            )
+
+    mocker.patch.object(
+        data_layer.references._storage,
+        "read",
+        new=read_in_chunks,
+    )
+
+    await import_task.run()
+
+    assert observed_sizes == [100, 1000, len(sqlite_data)]
+
+
+async def test_import_reference_task_rejects_unsupported_filename(
+    assert_reference_not_populated,
+    data_layer: DataLayer,
+    example_path: Path,
+    spawn_import_task,
+):
+    _, task = await spawn_import_task(
+        upload_path=example_path / "indexes/reference.json.gz",
+        upload_name="reference.sqlite",
+    )
+
+    await (await ImportReferenceTask.from_task_id(data_layer, task.id)).run()
+
+    completed_task = await data_layer.tasks.get(task.id)
+    assert completed_task.error == (
+        "Unsupported reference file name; expected a .json.gz or .v1.sqlite suffix"
+    )
+    await assert_reference_not_populated()
+
+
+async def test_import_reference_task_rejects_invalid_gzip(
+    assert_reference_not_populated,
+    data_layer: DataLayer,
+    spawn_import_task,
+    tmp_path: Path,
+):
+    invalid_gzip_path = tmp_path / "invalid.json.gz"
+    invalid_gzip_path.write_bytes(b"not gzip")
+    _, task = await spawn_import_task(upload_path=invalid_gzip_path)
+
+    await (await ImportReferenceTask.from_task_id(data_layer, task.id)).run()
+
+    completed_task = await data_layer.tasks.get(task.id)
+    assert completed_task.error == "Not a gzipped file"
+    await assert_reference_not_populated()
+
+
+async def test_import_reference_task_rejects_invalid_json(
+    assert_reference_not_populated,
+    data_layer: DataLayer,
+    spawn_import_task,
+    tmp_path: Path,
+):
+    invalid_json_path = tmp_path / "invalid.json.gz"
+    with gzip.open(invalid_json_path, "wt") as handle:
+        handle.write("{")
+
+    _, task = await spawn_import_task(upload_path=invalid_json_path)
+
+    await (await ImportReferenceTask.from_task_id(data_layer, task.id)).run()
+
+    completed_task = await data_layer.tasks.get(task.id)
+    assert completed_task.error is not None
+    assert "Expecting property name" in completed_task.error
+    await assert_reference_not_populated()
+
+
+async def test_import_reference_task_rejects_corrupt_sqlite(
+    assert_reference_not_populated,
+    data_layer: DataLayer,
+    spawn_import_task,
+    tmp_path: Path,
+):
+    corrupt_sqlite_path = tmp_path / "corrupt.v1.sqlite"
+    corrupt_sqlite_path.write_bytes(b"not a sqlite database")
+    _, task = await spawn_import_task(
+        upload_path=corrupt_sqlite_path,
+        upload_name="corrupt.v1.sqlite",
+    )
+
+    await (await ImportReferenceTask.from_task_id(data_layer, task.id)).run()
+
+    completed_task = await data_layer.tasks.get(task.id)
+    assert completed_task.error is not None
+    assert "Invalid index SQLite file" in completed_task.error
+    assert "Could not read index SQLite database" in completed_task.error
+    await assert_reference_not_populated()
+
+
+async def test_import_reference_task_rejects_missing_reference_metadata(
+    assert_reference_not_populated,
+    data_layer: DataLayer,
+    reference_sqlite_path: Path,
+    spawn_import_task,
+):
+    with connect_index_sqlite(reference_sqlite_path) as connection, connection.begin():
+        connection.execute(otus_table.update().values(reference_id=None))
+        connection.execute(reference_table.delete())
+
+    _, task = await spawn_import_task(
+        upload_path=reference_sqlite_path,
+        upload_name="missing-reference.v1.sqlite",
+    )
+
+    await (await ImportReferenceTask.from_task_id(data_layer, task.id)).run()
+
+    completed_task = await data_layer.tasks.get(task.id)
+    assert completed_task.error is not None
+    assert "exactly one reference metadata row; found 0" in completed_task.error
+    await assert_reference_not_populated()
+
+
+async def test_import_reference_task_rejects_invalid_source_data(
+    assert_reference_not_populated,
+    data_layer: DataLayer,
+    reference_sqlite_path: Path,
+    spawn_import_task,
+):
+    with connect_index_sqlite(reference_sqlite_path) as connection, connection.begin():
+        connection.execute(sequences_table.update().values(sequence="ACGT"))
+
+    _, task = await spawn_import_task(
+        upload_path=reference_sqlite_path,
+        upload_name="invalid-source.v1.sqlite",
+    )
+
+    await (await ImportReferenceTask.from_task_id(data_layer, task.id)).run()
+
+    completed_task = await data_layer.tasks.get(task.id)
+    assert completed_task.error is not None
+    assert completed_task.error.startswith("Invalid reference data:")
+    assert "ensure this value has at least 10 characters" in completed_task.error
+    await assert_reference_not_populated()
 
 
 async def test_clone_reference_task(

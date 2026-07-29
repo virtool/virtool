@@ -19,9 +19,13 @@ from sqlalchemy import (
     UniqueConstraint,
     create_engine,
     event,
+    func,
     insert,
+    inspect,
+    select,
 )
 from sqlalchemy.engine import URL, Connection, Engine
+from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.pool import ConnectionPoolEntry
 
 from virtool.api.custom_json import datetime_to_isoformat
@@ -136,6 +140,78 @@ async def create_index_sqlite(
 ) -> None:
     """Create a SQLite structured index artifact at ``path``."""
     await asyncio.to_thread(_create_index_sqlite, path, reference, otus)
+
+
+async def validate_index_sqlite(path: Path) -> None:
+    """Validate that an index SQLite artifact is compatible with format v1."""
+    await asyncio.to_thread(_validate_index_sqlite, path)
+
+
+def _validate_index_sqlite(path: Path) -> None:
+    try:
+        with connect_index_sqlite(path) as connection:
+            _validate_index_sqlite_schema(connection)
+            _validate_index_sqlite_metadata(connection)
+    except ValueError:
+        raise
+    except SQLAlchemyError as err:
+        msg = f"Could not read index SQLite database: {err}"
+        raise ValueError(msg) from err
+
+
+def _validate_index_sqlite_schema(connection: Connection) -> None:
+    inspector = inspect(connection)
+    table_names = set(inspector.get_table_names())
+    required_table_names = set(index_sqlite_metadata.tables)
+    missing_table_names = sorted(required_table_names - table_names)
+
+    if missing_table_names:
+        missing = ", ".join(missing_table_names)
+        msg = f"Index SQLite schema is missing required tables: {missing}"
+        raise ValueError(msg)
+
+    for table_name, table in index_sqlite_metadata.tables.items():
+        column_names = {column["name"] for column in inspector.get_columns(table_name)}
+        missing_column_names = sorted(set(table.c.keys()) - column_names)
+
+        if missing_column_names:
+            missing = ", ".join(missing_column_names)
+            msg = (
+                f"Index SQLite table {table_name!r} is missing required "
+                f"columns: {missing}"
+            )
+            raise ValueError(msg)
+
+
+def _validate_index_sqlite_metadata(connection: Connection) -> None:
+    metadata = dict(connection.execute(select(metadata_table)).all())
+
+    if "format" not in metadata:
+        msg = "Index SQLite metadata is missing 'format'"
+        raise ValueError(msg)
+
+    if metadata["format"] != INDEX_SQLITE_FORMAT:
+        msg = f"Unsupported index SQLite format: {metadata['format']!r}"
+        raise ValueError(msg)
+
+    if "format_version" not in metadata:
+        msg = "Index SQLite metadata is missing 'format_version'"
+        raise ValueError(msg)
+
+    if metadata["format_version"] != INDEX_SQLITE_FORMAT_VERSION:
+        msg = f"Unsupported index SQLite format version: {metadata['format_version']!r}"
+        raise ValueError(msg)
+
+    reference_count = connection.scalar(
+        select(func.count()).select_from(reference_table)
+    )
+
+    if reference_count != 1:
+        msg = (
+            "Index SQLite must contain exactly one reference metadata row; "
+            f"found {reference_count}"
+        )
+        raise ValueError(msg)
 
 
 def _create_index_sqlite(
