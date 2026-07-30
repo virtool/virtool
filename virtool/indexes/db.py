@@ -418,11 +418,10 @@ async def update_last_indexed_versions(
             )
 
 
-async def attach_files(pg: AsyncEngine, base_url: str, document: dict) -> dict:
+async def attach_files(pg: AsyncEngine, document: dict) -> dict:
     """Attach a list of index files under `files` field.
 
     :param pg: the application Postgres client
-    :param base_url: the application base URL
     :param document: an index document
 
     :return: Index document with updated `files` entry containing a list of index files.
@@ -453,7 +452,7 @@ async def attach_files(pg: AsyncEngine, base_url: str, document: dict) -> dict:
             {
                 **index_file,
                 "index": index_id,
-                "download_url": str(base_url) + location,
+                "download_url": location,
             },
         )
 

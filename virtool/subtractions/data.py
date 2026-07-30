@@ -44,11 +44,9 @@ class SubtractionsData(DataLayerDomain):
 
     def __init__(
         self,
-        base_url: str,
         pg: AsyncEngine,
         storage: StorageBackend,
     ):
-        self._base_url = base_url
         self._pg = pg
         self._storage = storage
 
@@ -146,7 +144,6 @@ class SubtractionsData(DataLayerDomain):
 
         document = await attach_computed(
             self._pg,
-            self._base_url,
             subtraction.id,
             map_subtraction_row(subtraction, upload),
         )
@@ -314,7 +311,7 @@ class SubtractionsData(DataLayerDomain):
 
         return SubtractionFile(
             **{**subtraction_file_dict, "subtraction": subtraction_id},
-            download_url=f"{self._base_url}/subtractions/{subtraction_id}/files/{filename}",
+            download_url=f"/subtractions/{subtraction_id}/files/{filename}",
         )
 
     async def get_file(self, subtraction_id: int, filename: str):

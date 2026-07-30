@@ -85,7 +85,7 @@ def create_data_layer(
         OTUData(pg, id_provider),
         ReferencesData(pg, config, client, storage),
         SamplesData(config, pg, storage),
-        SubtractionsData(config.base_url, pg, storage),
+        SubtractionsData(pg, storage),
         SettingsData(pg),
         TasksData(pg),
         UploadsData(pg, storage),

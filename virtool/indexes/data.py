@@ -121,7 +121,6 @@ class IndexData:
 
         document = await virtool.indexes.db.attach_files(
             self._pg,
-            self._config.base_url,
             document,
         )
 

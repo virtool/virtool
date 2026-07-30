@@ -78,10 +78,7 @@ def start_jobs_api(**kwargs) -> None:
     logger.info("starting the jobs api service")
 
     run_jobs_server(
-        ServerConfig(
-            **kwargs,
-            base_url="",
-        ),
+        ServerConfig(**kwargs),
     )
 
 
@@ -140,7 +137,7 @@ def start_task_runner(dev: bool, **kwargs) -> None:
 
     logger.info("starting tasks runner")
 
-    run_task_runner(TaskRunnerConfig(**kwargs, base_url=""))
+    run_task_runner(TaskRunnerConfig(**kwargs))
 
 
 @cli.group("workflow")

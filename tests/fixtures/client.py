@@ -31,7 +31,6 @@ class JobClientSpawner(Protocol):
         add_route_table: RouteTableDef | None = None,
         auth: BasicAuth | None = None,
         authenticated: bool = False,
-        base_url: str = "",
         dev: bool = False,
         flags: list[FlagName] | None = None,
     ) -> TestClient:
@@ -61,7 +60,6 @@ def spawn_job_client(
     async def func(
         add_route_table: RouteTableDef = None,
         authenticated: bool = False,
-        base_url: str = "",
         dev: bool = False,
         flags: list[FlagName] | None = None,
     ):
@@ -104,7 +102,6 @@ def spawn_job_client(
 
         app = await virtool.jobs.main.create_app(
             ServerConfig(
-                base_url=base_url,
                 dev=dev,
                 flags=[],
                 host="localhost",
@@ -166,7 +163,6 @@ def spawn_task_runner_client(
 
         app = await virtool.tasks.main.create_app(
             TaskRunnerConfig(
-                base_url="",
                 host="localhost",
                 no_revision_check=True,
                 port=9950,

@@ -93,7 +93,6 @@ class MigrationConfig:
 
 @dataclass
 class ServerConfig:
-    base_url: str
     dev: bool
     flags: list[FlagName]
     host: str
@@ -129,7 +128,6 @@ class ServerConfig:
 class TaskRunnerConfig:
     """Configuration for the task runner service."""
 
-    base_url: str
     host: str
     no_revision_check: bool
     port: int

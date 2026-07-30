@@ -9,7 +9,6 @@ from virtool.config.cls import (
 
 def build_server_config(**overrides) -> ServerConfig:
     defaults = {
-        "base_url": "",
         "dev": False,
         "flags": [],
         "host": "localhost",
@@ -28,7 +27,6 @@ def build_server_config(**overrides) -> ServerConfig:
 
 def build_task_runner_config(**overrides) -> TaskRunnerConfig:
     defaults = {
-        "base_url": "",
         "host": "localhost",
         "no_revision_check": True,
         "port": 9950,
@@ -57,7 +55,6 @@ class TestStorageBackendRequired:
     def test_missing_raises(self):
         with pytest.raises(TypeError, match="storage_backend"):
             ServerConfig(
-                base_url="",
                 dev=False,
                 flags=[],
                 host="localhost",
