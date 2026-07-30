@@ -1,9 +1,9 @@
-from sqlalchemy import delete, select
+from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 
 from virtool.data.errors import ResourceConflictError, ResourceNotFoundError
-from virtool.data.events import Operation, emit, emits
+from virtool.data.events import Operation, emits
 from virtool.groups.models import Group
 from virtool.groups.oas import UpdateGroupRequest
 from virtool.groups.pg import SQLGroup
@@ -111,24 +111,3 @@ class GroupsData:
             raise ResourceConflictError("Group already exists")
 
         return await self.get(group_id)
-
-    async def delete(self, group_id: int) -> None:
-        """Delete a group by its id.
-
-        :param group_id: the id of the group to delete
-        :raises ResourceNotFoundError: if the group is not found
-
-        """
-        group = await self.get(group_id)
-
-        async with AsyncSession(self._pg) as session:
-            result = await session.execute(
-                delete(SQLGroup).where(SQLGroup.id == group_id),
-            )
-
-            if not result.rowcount:
-                raise ResourceNotFoundError
-
-            await session.commit()
-
-        emit(group, "groups", "delete", Operation.DELETE)
