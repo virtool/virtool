@@ -1,7 +1,9 @@
 import asyncio
 from datetime import datetime
+from pathlib import Path
 
 from aiohttp import ClientSession
+from pydantic import ValidationError
 from sqlalchemy import select, update
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 
@@ -30,6 +32,7 @@ from virtool.references.db import (
     map_reference_minimal,
     populate_insert_only_reference,
 )
+from virtool.references.imports import load_json_import, load_sqlite_import
 from virtool.references.models import (
     Reference,
 )
@@ -42,10 +45,12 @@ from virtool.references.transforms import AttachImportedFromTransform
 from virtool.references.utils import ReferenceSourceData
 from virtool.storage.protocol import StorageBackend
 from virtool.tasks.progress import (
+    AbstractProgressHandler,
     AccumulatingProgressHandlerWrapper,
     TaskProgressHandler,
 )
 from virtool.tasks.transforms import AttachTaskTransform
+from virtool.uploads.utils import upload_file_key
 from virtool.users.transforms import AttachUserTransform
 
 
@@ -301,10 +306,10 @@ class ReferencesData(DataLayerDomain):
 
     async def populate_imported_reference(
         self,
-        ref_id: str,
+        ref_id: int,
         user_id: int,
         data: ReferenceSourceData,
-        progress_handler: TaskProgressHandler,
+        progress_handler: AbstractProgressHandler,
     ) -> None:
         created_at = await self._get_created_at(ref_id)
 
@@ -339,4 +344,52 @@ class ReferencesData(DataLayerDomain):
             "references",
             "populate_imported_reference",
             Operation.UPDATE,
+        )
+
+    async def import_reference(
+        self,
+        name_on_disk: str,
+        ref_id: int,
+        user_id: int,
+        temp_path: Path,
+        progress_handler: AbstractProgressHandler,
+    ) -> None:
+        """Import a reference from an uploaded JSON or SQLite artifact."""
+        key = upload_file_key(name_on_disk)
+
+        if name_on_disk.endswith(".json.gz"):
+            import_data = await load_json_import(
+                self._storage,
+                key,
+                progress_handler,
+            )
+        elif name_on_disk.endswith(".v1.sqlite"):
+            import_data = await load_sqlite_import(
+                self._storage,
+                key,
+                temp_path,
+                progress_handler,
+                ref_id,
+            )
+        else:
+            await progress_handler.set_error(
+                "Unsupported reference file name; expected a .json.gz or "
+                ".v1.sqlite suffix"
+            )
+            return
+
+        if import_data is None:
+            return
+
+        try:
+            data = ReferenceSourceData.parse_obj(import_data)
+        except ValidationError as err:
+            await progress_handler.set_error(f"Invalid reference data: {err}")
+            return
+
+        await self.populate_imported_reference(
+            ref_id,
+            user_id,
+            data,
+            progress_handler,
         )

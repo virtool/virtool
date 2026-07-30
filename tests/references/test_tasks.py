@@ -29,6 +29,7 @@ from virtool.references.tasks import (
     CloneReferenceTask,
     ImportReferenceTask,
 )
+from virtool.storage.protocol import StorageBackend
 from virtool.tasks.models import Task
 from virtool.uploads.sql import SQLUpload, UploadType
 from virtool.workflow.pytest_plugin.utils import StaticTime
@@ -325,6 +326,7 @@ async def test_import_reference_task_from_producer_named_sqlite(
 
 async def test_import_reference_task_streams_sqlite_to_scratch_space(
     data_layer: DataLayer,
+    memory_storage: StorageBackend,
     mocker,
     reference_sqlite_path: Path,
     spawn_import_task,
@@ -344,7 +346,7 @@ async def test_import_reference_task_streams_sqlite_to_scratch_space(
             yield chunk
 
     mocker.patch.object(
-        data_layer.references._storage,
+        memory_storage,
         "read",
         new=read_in_chunks,
     )
@@ -423,11 +425,11 @@ async def test_import_reference_task_rejects_corrupt_sqlite(
 ):
     corrupt_sqlite_path = tmp_path / "corrupt.v1.sqlite"
     corrupt_sqlite_path.write_bytes(b"not a sqlite database")
-    _, task = await spawn_import_task(
+    reference, task = await spawn_import_task(
         upload_path=corrupt_sqlite_path,
         upload_name="corrupt.v1.sqlite",
     )
-    logger_exception = mocker.patch("virtool.references.tasks.logger.exception")
+    logger_exception = mocker.patch("virtool.references.imports.logger.exception")
 
     await (await ImportReferenceTask.from_task_id(data_layer, task.id)).run()
 
@@ -437,7 +439,7 @@ async def test_import_reference_task_rejects_corrupt_sqlite(
     )
     logger_exception.assert_called_once_with(
         "could not read SQLite reference database",
-        task_id=task.id,
+        ref_id=reference.id,
     )
     await assert_reference_not_populated()
 
@@ -445,21 +447,20 @@ async def test_import_reference_task_rejects_corrupt_sqlite(
 async def test_import_reference_task_handles_sqlite_read_error(
     assert_reference_not_populated,
     data_layer: DataLayer,
+    memory_storage: StorageBackend,
     mocker,
-    reference_sqlite_path: Path,
     spawn_import_task,
 ):
-    _, task = await spawn_import_task(
-        upload_path=reference_sqlite_path,
+    reference, task = await spawn_import_task(
         upload_name="unreadable.v1.sqlite",
     )
     error_detail = "sensitive path: /internal/reference.v1.sqlite"
     mocker.patch.object(
-        data_layer.references._storage,
+        memory_storage,
         "read",
         side_effect=OSError(error_detail),
     )
-    logger_exception = mocker.patch("virtool.references.tasks.logger.exception")
+    logger_exception = mocker.patch("virtool.references.imports.logger.exception")
 
     await (await ImportReferenceTask.from_task_id(data_layer, task.id)).run()
 
@@ -468,7 +469,7 @@ async def test_import_reference_task_handles_sqlite_read_error(
     assert error_detail not in completed_task.error
     logger_exception.assert_called_once_with(
         "could not read uploaded SQLite reference file",
-        task_id=task.id,
+        ref_id=reference.id,
     )
     await assert_reference_not_populated()
 
