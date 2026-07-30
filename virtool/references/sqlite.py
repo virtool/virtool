@@ -11,7 +11,6 @@ from collections.abc import (
 )
 from concurrent.futures import ThreadPoolExecutor
 from contextlib import contextmanager
-from dataclasses import dataclass
 from datetime import UTC, datetime
 from pathlib import Path
 from sqlite3 import Connection as SQLiteConnection
@@ -120,11 +119,13 @@ Index("sequences_isolate_id_idx", sequences_table.c.isolate_id)
 Index("sequences_segment_idx", sequences_table.c.segment)
 
 
-@dataclass(frozen=True)
 class SQLiteReference:
     """A portable reference stored in SQLite."""
 
     path: Path
+
+    def __init__(self, path: Path) -> None:
+        self.path = path
 
     @classmethod
     async def create(

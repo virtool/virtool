@@ -7,7 +7,6 @@ from collections.abc import (
     Iterator,
     Mapping,
 )
-from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, TypedDict
 
@@ -46,12 +45,15 @@ class WFIndexOTURef(TypedDict):
     version: int
 
 
-@dataclass(frozen=True)
 class WFIndex(SQLiteReference):
     """Represents a Virtool reference index for use in analysis workflows."""
 
     id: int
     """The ID of the index."""
+
+    def __init__(self, id_: int, path: Path) -> None:
+        super().__init__(path)
+        self.id = id_
 
     @classmethod
     async def create(
@@ -62,7 +64,7 @@ class WFIndex(SQLiteReference):
         otus: Iterable[Mapping[str, Any]],
     ) -> "WFIndex":
         """Create a SQLite reference and return a workflow index for it."""
-        index = cls(path=path, id=id_)
+        index = cls(id_, path)
         await index._create(reference, otus)
 
         return index
@@ -73,7 +75,7 @@ class WFIndex(SQLiteReference):
         if not path.exists():
             raise FileNotFoundError(path)
 
-        return cls(path=path, id=id_)
+        return cls(id_, path)
 
     async def iter_sequences(self) -> AsyncIterator[dict[str, Any]]:
         """Iterate indexed sequences."""
