@@ -22,7 +22,6 @@ from virtool.config.options import (
     no_periodic_tasks_option,
     no_revision_check_option,
     postgres_connection_string_option,
-    real_ip_header_option,
     sentry_dsn_option,
     storage_options,
 )
@@ -68,7 +67,6 @@ def server() -> None:
 @no_periodic_tasks_option
 @no_revision_check_option
 @postgres_connection_string_option
-@real_ip_header_option
 @sentry_dsn_option
 @storage_options
 def start_jobs_api(**kwargs) -> None:

@@ -100,7 +100,6 @@ class ServerConfig:
     no_revision_check: bool
     port: int
     postgres_connection_string: str
-    real_ip_header: str
     sentry_dsn: str | None
     storage_backend: StorageBackendName
     cache_storage_budget: int = CACHE_STORAGE_BUDGET

@@ -109,7 +109,6 @@ def spawn_job_client(
                 no_revision_check=True,
                 port=9950,
                 postgres_connection_string=pg_connection_string,
-                real_ip_header="",
                 sentry_dsn="",
                 storage_backend="s3",
                 storage_s3_bucket="test-bucket",

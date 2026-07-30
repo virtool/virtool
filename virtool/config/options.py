@@ -82,13 +82,6 @@ no_periodic_tasks_option = click.option(
     is_flag=True,
 )
 
-real_ip_header_option = click.option(
-    "--real-ip-header",
-    default=get_from_environment("real_ip_header", ""),
-    help="The request header containing the original client's IP address",
-    type=str,
-)
-
 postgres_connection_string_option = click.option(
     "--postgres-connection-string",
     default=get_from_environment(

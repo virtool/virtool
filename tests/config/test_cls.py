@@ -16,7 +16,6 @@ def build_server_config(**overrides) -> ServerConfig:
         "no_revision_check": True,
         "port": 9950,
         "postgres_connection_string": "postgresql://virtool:virtool@localhost/virtool",
-        "real_ip_header": "",
         "sentry_dsn": "",
         "storage_backend": "s3",
         "storage_s3_bucket": "test-bucket",
@@ -62,7 +61,6 @@ class TestStorageBackendRequired:
                 no_revision_check=True,
                 port=9950,
                 postgres_connection_string="postgresql://virtool:virtool@localhost/virtool",
-                real_ip_header="",
                 sentry_dsn="",
             )
 
