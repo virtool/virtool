@@ -1,10 +1,13 @@
 import datetime
 import gzip
 import json
+from collections.abc import Iterator
+from contextlib import contextmanager
 from pathlib import Path
 
 import pytest
-from sqlalchemy import func, select
+from sqlalchemy import create_engine, func, select
+from sqlalchemy.engine import URL, Connection
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 from syrupy import SnapshotAssertion
 from syrupy.matchers import path_type
@@ -33,6 +36,17 @@ from virtool.storage.protocol import StorageBackend
 from virtool.tasks.models import Task
 from virtool.uploads.sql import SQLUpload, UploadType
 from virtool.workflow.pytest_plugin.utils import StaticTime
+
+
+@contextmanager
+def _connect_sqlite(path: Path) -> Iterator[Connection]:
+    engine = create_engine(URL.create("sqlite", database=str(path)))
+
+    try:
+        with engine.connect() as connection:
+            yield connection
+    finally:
+        engine.dispose()
 
 
 @pytest.fixture
@@ -481,7 +495,7 @@ async def test_import_reference_task_rejects_missing_reference_metadata(
     spawn_import_task,
 ):
     with (
-        SQLiteReference.load(reference_sqlite_path).connect() as connection,
+        _connect_sqlite(reference_sqlite_path) as connection,
         connection.begin(),
     ):
         connection.execute(otus_table.update().values(reference_id=None))
@@ -507,7 +521,7 @@ async def test_import_reference_task_rejects_invalid_source_data(
     spawn_import_task,
 ):
     with (
-        SQLiteReference.load(reference_sqlite_path).connect() as connection,
+        _connect_sqlite(reference_sqlite_path) as connection,
         connection.begin(),
     ):
         connection.execute(sequences_table.update().values(sequence="ACGT"))

@@ -14,7 +14,7 @@ from contextlib import contextmanager
 from datetime import UTC, datetime
 from pathlib import Path
 from sqlite3 import Connection as SQLiteConnection
-from typing import Any, Literal
+from typing import Any, Literal, TypedDict
 
 from sqlalchemy import (
     JSON,
@@ -46,11 +46,27 @@ REFERENCE_SQLITE_FILE_NAME = "reference-snapshot.v1.sqlite"
 REFERENCE_SQLITE_FORMAT = "virtool-reference-sqlite"
 REFERENCE_SQLITE_FORMAT_VERSION = "1"
 
+_SQLITE_SEQUENCE_BATCH_SIZE = 500
+
 reference_sqlite_metadata = MetaData()
 
 
 class SQLiteReferenceReadError(ValueError):
     """Raised when a SQLite reference database cannot be read."""
+
+
+class SQLiteReferenceWriteError(ValueError):
+    """Raised when a SQLite reference database cannot be written."""
+
+
+class OTUSummary(TypedDict):
+    """Top-level OTU information excluding isolates and schema."""
+
+    id: str
+    abbreviation: str
+    name: str
+    taxid: int | None
+    version: int
 
 
 metadata_table = Table(
@@ -145,12 +161,16 @@ class SQLiteReference:
         reference: Mapping[str, Any] | None,
         otus: Iterable[Mapping[str, Any]],
     ) -> None:
-        await asyncio.to_thread(
-            _create_reference_sqlite,
-            self,
-            reference,
-            otus,
-        )
+        try:
+            await asyncio.to_thread(
+                _create_reference_sqlite,
+                self,
+                reference,
+                otus,
+            )
+        except SQLAlchemyError as err:
+            msg = "Could not write SQLite reference database"
+            raise SQLiteReferenceWriteError(msg) from err
 
     @classmethod
     def load(cls, path: Path) -> "SQLiteReference":
@@ -161,7 +181,7 @@ class SQLiteReference:
         return cls(path)
 
     @contextmanager
-    def connect(self) -> Iterator[Connection]:
+    def _connect(self) -> Iterator[Connection]:
         """Yield a configured connection to the SQLite reference."""
         engine = _create_reference_sqlite_engine(self.path)
 
@@ -181,7 +201,7 @@ class SQLiteReference:
 
     async def iter_otus(self) -> AsyncIterator[dict[str, Any]]:
         """Iterate complete OTUs in the reference."""
-        async for otus in self.iter_query_batches(
+        async for otus in self._iter_query_batches(
             _select_otus(),
             1,
             "scalar",
@@ -190,7 +210,65 @@ class SQLiteReference:
             for otu in otus:
                 yield otu
 
-    async def iter_query_batches[T](
+    async def iter_sequences(self) -> AsyncIterator[dict[str, Any]]:
+        """Iterate sequences ordered by sequence ID."""
+        async for sequence in self._iter_sequence_query(
+            _select_sequences_with_isolates()
+            .order_by(None)
+            .order_by(sequences_table.c.id),
+        ):
+            yield sequence
+
+    async def iter_default_sequences(self) -> AsyncIterator[dict[str, Any]]:
+        """Iterate sequences belonging to default isolates."""
+        async for sequence in self._iter_sequence_query(
+            _select_sequences_with_isolates().where(
+                isolates_table.c.is_default == 1,
+            ),
+        ):
+            yield sequence
+
+    async def iter_otu_sequences(
+        self,
+        otu_ids: str | Iterable[str],
+    ) -> AsyncIterator[dict[str, Any]]:
+        """Iterate sequences belonging to the given OTU IDs."""
+        otu_id_set = _normalize_otu_ids(otu_ids)
+
+        if not otu_id_set:
+            return
+
+        async for sequence in self._iter_sequence_query(
+            _select_sequences_with_isolates().where(
+                isolates_table.c.otu_id.in_(otu_id_set),
+            ),
+        ):
+            yield sequence
+
+    async def get_otu_summaries_by_sequence_ids(
+        self,
+        sequence_ids: Iterable[str],
+    ) -> dict[str, OTUSummary]:
+        """Get top-level OTU information keyed by the given sequence IDs."""
+        return await asyncio.to_thread(
+            self._get_otu_summaries_by_sequence_ids,
+            set(sequence_ids),
+        )
+
+    async def _iter_sequence_query(
+        self,
+        query: Select,
+    ) -> AsyncIterator[dict[str, Any]]:
+        async for sequences in self._iter_query_batches(
+            query,
+            _SQLITE_SEQUENCE_BATCH_SIZE,
+            "mapping",
+            _shape_sequence,
+        ):
+            for sequence in sequences:
+                yield sequence
+
+    async def _iter_query_batches[T](
         self,
         query: Select,
         batch_size: int,
@@ -206,6 +284,56 @@ class SQLiteReference:
             shape_row,
         ):
             yield batch
+
+    def _get_otu_summaries_by_sequence_ids(
+        self,
+        sequence_ids: set[str],
+    ) -> dict[str, OTUSummary]:
+        if not sequence_ids:
+            return {}
+
+        try:
+            with self._connect() as connection:
+                rows = list(
+                    connection.execute(
+                        select(
+                            sequences_table.c.id.label("sequence_id"),
+                            otus_table.c.id.label("otu_id"),
+                            otus_table.c.abbreviation,
+                            otus_table.c.name,
+                            otus_table.c.taxid,
+                            otus_table.c.version,
+                        )
+                        .join(
+                            isolates_table,
+                            sequences_table.c.isolate_id == isolates_table.c.id,
+                        )
+                        .join(otus_table, isolates_table.c.otu_id == otus_table.c.id)
+                        .where(sequences_table.c.id.in_(sequence_ids)),
+                    ).mappings()
+                )
+        except SQLAlchemyError as err:
+            msg = "Could not read SQLite reference database"
+            raise SQLiteReferenceReadError(msg) from err
+
+        otu_ref_by_sequence_id = {
+            row["sequence_id"]: {
+                "id": row["otu_id"],
+                "abbreviation": row["abbreviation"],
+                "name": row["name"],
+                "taxid": row["taxid"],
+                "version": row["version"],
+            }
+            for row in rows
+        }
+
+        missing_sequence_ids = sequence_ids - otu_ref_by_sequence_id.keys()
+
+        if missing_sequence_ids:
+            msg = "The sequence_id does not exist in the reference"
+            raise ValueError(msg)
+
+        return otu_ref_by_sequence_id
 
 
 def _create_reference_sqlite_engine(path: Path) -> Engine:
@@ -229,7 +357,7 @@ def _enable_reference_sqlite_foreign_keys(
 
 def _validate_reference_sqlite(sqlite_reference: SQLiteReference) -> None:
     try:
-        with sqlite_reference.connect() as connection:
+        with sqlite_reference._connect() as connection:
             _validate_reference_sqlite_schema(connection)
             _validate_reference_sqlite_metadata(connection)
     except ValueError:
@@ -308,7 +436,7 @@ def _create_reference_sqlite(
     if path.exists():
         raise FileExistsError(path)
 
-    with sqlite_reference.connect() as connection, connection.begin():
+    with sqlite_reference._connect() as connection, connection.begin():
         reference_sqlite_metadata.create_all(connection)
         _insert_metadata(connection)
         reference_id = (
@@ -441,8 +569,12 @@ def _get_id(document: Mapping[str, Any]) -> str:
 
 
 def _get_reference_metadata(sqlite_reference: SQLiteReference) -> dict[str, Any]:
-    with sqlite_reference.connect() as connection:
-        row = connection.execute(select(reference_table)).mappings().one_or_none()
+    try:
+        with sqlite_reference._connect() as connection:
+            row = connection.execute(select(reference_table)).mappings().one_or_none()
+    except SQLAlchemyError as err:
+        msg = "Could not read SQLite reference database"
+        raise SQLiteReferenceReadError(msg) from err
 
     if row is None:
         msg = "Reference metadata does not exist in the SQLite reference"
@@ -460,7 +592,7 @@ async def _iter_query_batches[T](
 ) -> AsyncIterator[list[T]]:
     def iter_batches() -> Generator[list[T]]:
         with (
-            sqlite_reference.connect() as connection,
+            sqlite_reference._connect() as connection,
             connection.execute(query) as result,
         ):
             rows = result.scalars() if row_mode == "scalar" else result.mappings()
@@ -471,19 +603,23 @@ async def _iter_query_batches[T](
     batch_iterator = iter_batches()
     event_loop = asyncio.get_running_loop()
 
-    with ThreadPoolExecutor(max_workers=1) as executor:
-        try:
-            while (
-                batch := await event_loop.run_in_executor(
-                    executor,
-                    next,
-                    batch_iterator,
-                    None,
-                )
-            ) is not None:
-                yield batch
-        finally:
-            await event_loop.run_in_executor(executor, batch_iterator.close)
+    try:
+        with ThreadPoolExecutor(max_workers=1) as executor:
+            try:
+                while (
+                    batch := await event_loop.run_in_executor(
+                        executor,
+                        next,
+                        batch_iterator,
+                        None,
+                    )
+                ) is not None:
+                    yield batch
+            finally:
+                await event_loop.run_in_executor(executor, batch_iterator.close)
+    except SQLAlchemyError as err:
+        msg = "Could not read SQLite reference database"
+        raise SQLiteReferenceReadError(msg) from err
 
 
 def _validate_otu(otu: dict[str, Any]) -> dict[str, Any]:
@@ -526,6 +662,51 @@ def _select_otus() -> Select:
             JSON,
         )
     ).order_by(otus_table.c.id)
+
+
+def _normalize_otu_ids(otu_ids: str | Iterable[str]) -> set[str]:
+    if isinstance(otu_ids, str):
+        return {otu_ids}
+
+    return set(otu_ids)
+
+
+def _select_sequences_with_isolates() -> Select:
+    return (
+        select(
+            sequences_table.c.id,
+            sequences_table.c.isolate_id.label("isolate_internal_id"),
+            sequences_table.c.accession,
+            sequences_table.c.definition,
+            sequences_table.c.host,
+            isolates_table.c.virtool_id.label("isolate_virtool_id"),
+            isolates_table.c.otu_id,
+            sequences_table.c.segment,
+            sequences_table.c.sequence,
+        )
+        .join(
+            isolates_table,
+            sequences_table.c.isolate_id == isolates_table.c.id,
+        )
+        .order_by(
+            isolates_table.c.otu_id,
+            isolates_table.c.virtool_id,
+            sequences_table.c.id,
+        )
+    )
+
+
+def _shape_sequence(sequence: Mapping[str, Any]) -> dict[str, Any]:
+    return {
+        "id": sequence["id"],
+        "accession": sequence["accession"],
+        "definition": sequence["definition"],
+        "host": sequence["host"],
+        "isolate_id": sequence["isolate_virtool_id"],
+        "otu_id": sequence["otu_id"],
+        "segment": sequence["segment"],
+        "sequence": sequence["sequence"],
+    }
 
 
 def _select_otu_schema(otu_id: ColumnElement[str]) -> Select:

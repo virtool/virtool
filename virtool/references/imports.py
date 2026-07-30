@@ -4,7 +4,6 @@ import json
 from pathlib import Path
 
 import aiofiles
-from sqlalchemy.exc import SQLAlchemyError
 from structlog import get_logger
 
 from virtool.references.sqlite import (
@@ -57,7 +56,7 @@ async def load_sqlite_import(
         await sqlite_reference.validate()
         reference = await sqlite_reference.get_metadata()
         otus = [otu async for otu in sqlite_reference.iter_otus()]
-    except (SQLiteReferenceReadError, SQLAlchemyError):
+    except SQLiteReferenceReadError:
         logger.exception(
             "could not read SQLite reference database",
             ref_id=ref_id,

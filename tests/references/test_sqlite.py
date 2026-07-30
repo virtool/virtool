@@ -1,10 +1,13 @@
 """Tests for SQLite reference artifacts."""
 
+from collections.abc import Iterator
+from contextlib import contextmanager
 from pathlib import Path
 from threading import get_ident
 
 import pytest
-from sqlalchemy import delete, insert, select, update
+from sqlalchemy import create_engine, delete, insert, select, update
+from sqlalchemy.engine import URL, Connection
 
 from virtool.references.sqlite import (
     REFERENCE_SQLITE_FILE_NAME,
@@ -21,6 +24,17 @@ from virtool.references.sqlite import (
 )
 
 OTU_VERSION = 3
+
+
+@contextmanager
+def _connect_sqlite(path: Path) -> Iterator[Connection]:
+    engine = create_engine(URL.create("sqlite", database=str(path)))
+
+    try:
+        with engine.connect() as connection:
+            yield connection
+    finally:
+        engine.dispose()
 
 
 def test_reference_sqlite_file_name_is_versioned():
@@ -83,6 +97,20 @@ def _otu(
     }
 
 
+def _other_otu(*, default: bool = False) -> dict:
+    otu = _otu()
+    otu["_id"] = "other_otu"
+    otu["abbreviation"] = "OTH"
+    otu["name"] = "Other virus"
+    otu["isolates"][0]["id"] = "other_isolate"
+    otu["isolates"][0]["default"] = default
+
+    for sequence in otu["isolates"][0]["sequences"]:
+        sequence["_id"] = f"other_{sequence['_id']}"
+
+    return otu
+
+
 async def test_create_sqlite_reference_writes_schema_and_sequences(tmp_path: Path):
     """It writes normalized schema and sequence rows."""
 
@@ -93,7 +121,7 @@ async def test_create_sqlite_reference_writes_schema_and_sequences(tmp_path: Pat
 
     await SQLiteReference.create(sqlite_path, _reference(), iter_otus())
 
-    with SQLiteReference.load(sqlite_path).connect() as connection:
+    with _connect_sqlite(sqlite_path) as connection:
         metadata = dict(connection.execute(select(metadata_table)).all())
         otu_row = connection.execute(select(otus_table)).mappings().one()
         isolate_row = connection.execute(select(isolates_table)).mappings().one()
@@ -152,6 +180,161 @@ async def test_sqlite_reference_round_trip(tmp_path: Path):
         "sequence_dna_b",
     ]
     assert [item["required"] for item in otus[0]["schema"]] == [True, True]
+
+
+class TestSQLiteReferenceSequences:
+    async def test_iter_sequences_reads_multiple_batches(self, mocker, tmp_path: Path):
+        mocker.patch("virtool.references.sqlite._SQLITE_SEQUENCE_BATCH_SIZE", 1)
+        sqlite_reference = await SQLiteReference.create(
+            tmp_path / REFERENCE_SQLITE_FILE_NAME,
+            _reference(),
+            [_otu()],
+        )
+
+        sequences = [sequence async for sequence in sqlite_reference.iter_sequences()]
+
+        assert [sequence["id"] for sequence in sequences] == [
+            "sequence_dna_a",
+            "sequence_dna_b",
+        ]
+
+    async def test_iter_sequences_orders_and_shapes_sequences(self, tmp_path: Path):
+        sqlite_reference = await SQLiteReference.create(
+            tmp_path / REFERENCE_SQLITE_FILE_NAME,
+            _reference(),
+            [_other_otu(), _otu()],
+        )
+
+        sequences = [sequence async for sequence in sqlite_reference.iter_sequences()]
+
+        assert [sequence["id"] for sequence in sequences] == [
+            "other_sequence_dna_a",
+            "other_sequence_dna_b",
+            "sequence_dna_a",
+            "sequence_dna_b",
+        ]
+        assert sequences[0] == {
+            "id": "other_sequence_dna_a",
+            "accession": "NC_010317",
+            "definition": "Abaca bunchy top virus DNA A",
+            "host": "Musa sp.",
+            "isolate_id": "other_isolate",
+            "otu_id": "other_otu",
+            "segment": "DNA A",
+            "sequence": "ACGT",
+        }
+
+    async def test_iter_default_sequences_filters_non_default_isolates(
+        self,
+        tmp_path: Path,
+    ):
+        sqlite_reference = await SQLiteReference.create(
+            tmp_path / REFERENCE_SQLITE_FILE_NAME,
+            _reference(),
+            [_otu(), _other_otu()],
+        )
+
+        sequences = [
+            sequence async for sequence in sqlite_reference.iter_default_sequences()
+        ]
+
+        assert [sequence["id"] for sequence in sequences] == [
+            "sequence_dna_a",
+            "sequence_dna_b",
+        ]
+
+    async def test_iter_otu_sequences_filters_by_one_or_more_otu_ids(
+        self,
+        tmp_path: Path,
+    ):
+        sqlite_reference = await SQLiteReference.create(
+            tmp_path / REFERENCE_SQLITE_FILE_NAME,
+            _reference(),
+            [_otu(), _other_otu()],
+        )
+
+        one_otu = [
+            sequence
+            async for sequence in sqlite_reference.iter_otu_sequences("other_otu")
+        ]
+        both_otus = [
+            sequence
+            async for sequence in sqlite_reference.iter_otu_sequences(
+                ["otu", "other_otu"]
+            )
+        ]
+        no_otus = [
+            sequence async for sequence in sqlite_reference.iter_otu_sequences([])
+        ]
+
+        assert {sequence["otu_id"] for sequence in one_otu} == {"other_otu"}
+        assert {sequence["otu_id"] for sequence in both_otus} == {
+            "otu",
+            "other_otu",
+        }
+        assert no_otus == []
+
+    async def test_get_otu_summaries_by_sequence_ids(self, tmp_path: Path):
+        sqlite_reference = await SQLiteReference.create(
+            tmp_path / REFERENCE_SQLITE_FILE_NAME,
+            _reference(),
+            [_otu(), _other_otu()],
+        )
+
+        otu_summaries = await sqlite_reference.get_otu_summaries_by_sequence_ids(
+            ["sequence_dna_a", "other_sequence_dna_b"],
+        )
+
+        assert otu_summaries == {
+            "sequence_dna_a": {
+                "id": "otu",
+                "abbreviation": "ABTV",
+                "name": "Abaca bunchy top virus",
+                "taxid": 1,
+                "version": OTU_VERSION,
+            },
+            "other_sequence_dna_b": {
+                "id": "other_otu",
+                "abbreviation": "OTH",
+                "name": "Other virus",
+                "taxid": 1,
+                "version": OTU_VERSION,
+            },
+        }
+
+    async def test_get_otu_summaries_by_sequence_ids_rejects_missing_sequence(
+        self,
+        tmp_path: Path,
+    ):
+        sqlite_reference = await SQLiteReference.create(
+            tmp_path / REFERENCE_SQLITE_FILE_NAME,
+            _reference(),
+            [_otu()],
+        )
+
+        with pytest.raises(ValueError, match="does not exist in the reference"):
+            await sqlite_reference.get_otu_summaries_by_sequence_ids(
+                ["missing_sequence"]
+            )
+
+    async def test_allows_isolate_ids_reused_across_otus(self, tmp_path: Path):
+        other_otu = _other_otu()
+        other_otu["isolates"][0]["id"] = "isolate"
+        sqlite_reference = await SQLiteReference.create(
+            tmp_path / REFERENCE_SQLITE_FILE_NAME,
+            _reference(),
+            [_otu(), other_otu],
+        )
+
+        otus = {otu["id"]: otu async for otu in sqlite_reference.iter_otus()}
+        otu_summaries = await sqlite_reference.get_otu_summaries_by_sequence_ids(
+            ["sequence_dna_a", "other_sequence_dna_a"],
+        )
+
+        assert otus["otu"]["isolates"][0]["id"] == "isolate"
+        assert otus["other_otu"]["isolates"][0]["id"] == "isolate"
+        assert otu_summaries["sequence_dna_a"]["id"] == "otu"
+        assert otu_summaries["other_sequence_dna_a"]["id"] == "other_otu"
 
 
 def test_load_sqlite_reference_rejects_missing_file(tmp_path: Path):
@@ -216,7 +399,7 @@ async def test_create_sqlite_reference_without_reference(tmp_path: Path):
 
     await SQLiteReference.create(sqlite_path, None, iter_otus())
 
-    with SQLiteReference.load(sqlite_path).connect() as connection:
+    with _connect_sqlite(sqlite_path) as connection:
         reference_rows = connection.execute(select(reference_table)).all()
         otu_row = connection.execute(select(otus_table)).mappings().one()
         sequence_ids = (
@@ -232,20 +415,6 @@ async def test_create_sqlite_reference_without_reference(tmp_path: Path):
     assert sequence_ids == ["sequence_dna_a", "sequence_dna_b"]
 
 
-async def test_connect_sqlite_reference_enables_foreign_keys(tmp_path: Path):
-    """It enables foreign key enforcement on new connections."""
-
-    def iter_otus():
-        yield _otu()
-
-    sqlite_path = tmp_path / REFERENCE_SQLITE_FILE_NAME
-
-    await SQLiteReference.create(sqlite_path, _reference(), iter_otus())
-
-    with SQLiteReference.load(sqlite_path).connect() as connection:
-        assert connection.exec_driver_sql("PRAGMA foreign_keys").scalar() == 1
-
-
 async def test_create_sqlite_reference_allows_sequence_segment_outside_otu_schema(
     tmp_path: Path,
 ):
@@ -258,7 +427,7 @@ async def test_create_sqlite_reference_allows_sequence_segment_outside_otu_schem
 
     await SQLiteReference.create(sqlite_path, _reference(), iter_otus())
 
-    with SQLiteReference.load(sqlite_path).connect() as connection:
+    with _connect_sqlite(sqlite_path) as connection:
         sequence_segments = (
             connection.execute(
                 select(sequences_table.c.segment).order_by(sequences_table.c.segment),
@@ -282,7 +451,7 @@ async def test_create_sqlite_reference_allows_missing_required_isolate_segment(
 
     await SQLiteReference.create(sqlite_path, _reference(), iter_otus())
 
-    with SQLiteReference.load(sqlite_path).connect() as connection:
+    with _connect_sqlite(sqlite_path) as connection:
         sequence_segments = connection.execute(select(sequences_table.c.segment)).all()
 
     assert [row.segment for row in sequence_segments] == ["DNA A"]
@@ -302,7 +471,7 @@ async def test_create_sqlite_reference_allows_null_segment_for_schema_otu(
 
     await SQLiteReference.create(sqlite_path, _reference(), iter_otus())
 
-    with SQLiteReference.load(sqlite_path).connect() as connection:
+    with _connect_sqlite(sqlite_path) as connection:
         segment = connection.execute(select(sequences_table.c.segment)).scalar_one()
 
     assert segment is None
@@ -327,7 +496,7 @@ async def test_create_sqlite_reference_allows_legacy_otu_without_schema_or_abbre
         iter_otus(),
     )
 
-    with SQLiteReference.load(sqlite_path).connect() as connection:
+    with _connect_sqlite(sqlite_path) as connection:
         otu_row = connection.execute(select(otus_table)).mappings().one()
         schema_rows = connection.execute(select(otu_schema_table)).all()
 
@@ -344,7 +513,7 @@ class TestValidateSQLiteReference:
         await SQLiteReference.create(sqlite_path, _reference(), [_otu()])
 
         with (
-            SQLiteReference.load(sqlite_path).connect() as connection,
+            _connect_sqlite(sqlite_path) as connection,
             connection.begin(),
         ):
             connection.exec_driver_sql("ALTER TABLE reference ADD COLUMN notes TEXT")
@@ -368,7 +537,7 @@ class TestValidateSQLiteReference:
         await SQLiteReference.create(sqlite_path, _reference(), [_otu()])
 
         with (
-            SQLiteReference.load(sqlite_path).connect() as connection,
+            _connect_sqlite(sqlite_path) as connection,
             connection.begin(),
         ):
             connection.exec_driver_sql("DROP TABLE otu_schema")
@@ -381,7 +550,7 @@ class TestValidateSQLiteReference:
         await SQLiteReference.create(sqlite_path, _reference(), [_otu()])
 
         with (
-            SQLiteReference.load(sqlite_path).connect() as connection,
+            _connect_sqlite(sqlite_path) as connection,
             connection.begin(),
         ):
             connection.exec_driver_sql(
@@ -396,7 +565,7 @@ class TestValidateSQLiteReference:
         await SQLiteReference.create(sqlite_path, _reference(), [_otu()])
 
         with (
-            SQLiteReference.load(sqlite_path).connect() as connection,
+            _connect_sqlite(sqlite_path) as connection,
             connection.begin(),
         ):
             connection.execute(
@@ -411,7 +580,7 @@ class TestValidateSQLiteReference:
         await SQLiteReference.create(sqlite_path, _reference(), [_otu()])
 
         with (
-            SQLiteReference.load(sqlite_path).connect() as connection,
+            _connect_sqlite(sqlite_path) as connection,
             connection.begin(),
         ):
             connection.execute(
@@ -428,7 +597,7 @@ class TestValidateSQLiteReference:
         await SQLiteReference.create(sqlite_path, _reference(), [_otu()])
 
         with (
-            SQLiteReference.load(sqlite_path).connect() as connection,
+            _connect_sqlite(sqlite_path) as connection,
             connection.begin(),
         ):
             connection.execute(
@@ -453,7 +622,7 @@ class TestValidateSQLiteReference:
         second_reference = {**_reference(), "_id": "second_reference"}
 
         with (
-            SQLiteReference.load(sqlite_path).connect() as connection,
+            _connect_sqlite(sqlite_path) as connection,
             connection.begin(),
         ):
             connection.execute(

@@ -8,12 +8,10 @@ from collections.abc import (
     Mapping,
 )
 from pathlib import Path
-from typing import Any, TypedDict
+from typing import Any
 
 import aiofiles
 from pyfixtures import fixture
-from sqlalchemy import select
-from sqlalchemy.sql import Select
 from structlog import get_logger
 
 from virtool.analyses.models import Analysis
@@ -21,39 +19,31 @@ from virtool.indexes.db import REFERENCE_JSON_V2_FILE_NAME
 from virtool.indexes.models import Index
 from virtool.references.sqlite import (
     REFERENCE_SQLITE_FILE_NAME,
+    OTUSummary,
     SQLiteReference,
-    isolates_table,
-    otus_table,
-    sequences_table,
 )
 from virtool.utils import decompress_file
 from virtool.workflow.client import WorkflowAPIClient
 
 logger = get_logger("api")
 
-_SQLITE_SEQUENCE_BATCH_SIZE = 500
 INDEX_SQLITE_FILE_NAME = "index.v1.sqlite"
 
 
-class WFIndexOTURef(TypedDict):
-    """Reduced OTU reference data."""
-
-    id: str
-    abbreviation: str
-    name: str
-    taxid: int | None
-    version: int
-
-
-class WFIndex(SQLiteReference):
+class WFIndex:
     """Represents a Virtool reference index for use in analysis workflows."""
 
     id: int
     """The ID of the index."""
 
-    def __init__(self, id_: int, path: Path) -> None:
-        super().__init__(path)
+    def __init__(self, id_: int, reference: SQLiteReference) -> None:
         self.id = id_
+        self._reference = reference
+
+    @property
+    def path(self) -> Path:
+        """The path to the underlying portable reference."""
+        return self._reference.path
 
     @classmethod
     async def create(
@@ -64,35 +54,29 @@ class WFIndex(SQLiteReference):
         otus: Iterable[Mapping[str, Any]],
     ) -> "WFIndex":
         """Create a SQLite reference and return a workflow index for it."""
-        index = cls(id_, path)
-        await index._create(reference, otus)
-
-        return index
+        return cls(
+            id_,
+            await SQLiteReference.create(path, reference, otus),
+        )
 
     @classmethod
     def load(cls, id_: int, path: Path) -> "WFIndex":
         """Load an existing SQLite reference as a workflow index."""
-        if not path.exists():
-            raise FileNotFoundError(path)
+        return cls(id_, SQLiteReference.load(path))
 
-        return cls(id_, path)
+    async def iter_otus(self) -> AsyncIterator[dict[str, Any]]:
+        """Iterate complete OTUs in the index reference."""
+        async for otu in self._reference.iter_otus():
+            yield otu
 
     async def iter_sequences(self) -> AsyncIterator[dict[str, Any]]:
         """Iterate indexed sequences."""
-        async for sequence in self._iter_sequence_query(
-            _select_sqlite_sequences_with_isolates()
-            .order_by(None)
-            .order_by(sequences_table.c.id),
-        ):
+        async for sequence in self._reference.iter_sequences():
             yield sequence
 
     async def iter_default_sequences(self) -> AsyncIterator[dict[str, Any]]:
         """Iterate indexed sequences that belong to default isolates."""
-        async for sequence in self._iter_sequence_query(
-            _select_sqlite_sequences_with_isolates().where(
-                isolates_table.c.is_default == 1,
-            ),
-        ):
+        async for sequence in self._reference.iter_default_sequences():
             yield sequence
 
     async def iter_otu_sequences(
@@ -100,16 +84,7 @@ class WFIndex(SQLiteReference):
         otu_ids: str | Iterable[str],
     ) -> AsyncIterator[dict[str, Any]]:
         """Iterate indexed sequences belonging to the given OTU IDs."""
-        otu_id_set = _normalize_otu_ids(otu_ids)
-
-        if not otu_id_set:
-            return
-
-        async for sequence in self._iter_sequence_query(
-            _select_sqlite_sequences_with_isolates().where(
-                isolates_table.c.otu_id.in_(otu_id_set),
-            ),
-        ):
+        async for sequence in self._reference.iter_otu_sequences(otu_ids):
             yield sequence
 
     async def write_fasta(
@@ -124,127 +99,20 @@ class WFIndex(SQLiteReference):
                     f">{_get_sequence_id(sequence)}\n{sequence['sequence']}\n"
                 )
 
-    async def get_otu_refs_by_sequence_ids(
+    async def get_otu_summaries_by_sequence_ids(
         self,
         sequence_ids: Iterable[str],
-    ) -> dict[str, WFIndexOTURef]:
-        """Get reduced OTU reference data keyed by the given sequence IDs."""
-        return await asyncio.to_thread(
-            self._get_otu_refs_by_sequence_ids,
-            set(sequence_ids),
-        )
+    ) -> dict[str, OTUSummary]:
+        """Get top-level OTU information keyed by the given sequence IDs."""
+        return await self._reference.get_otu_summaries_by_sequence_ids(sequence_ids)
 
     async def get_reference_metadata(self) -> dict[str, Any]:
         """Get reference metadata excluding OTUs."""
-        return await self.get_metadata()
-
-    async def _iter_sequence_query(
-        self,
-        query: Select,
-    ) -> AsyncIterator[dict[str, Any]]:
-        async for sequences in self.iter_query_batches(
-            query,
-            _SQLITE_SEQUENCE_BATCH_SIZE,
-            "mapping",
-            _shape_sqlite_sequence,
-        ):
-            for sequence in sequences:
-                yield sequence
-
-    def _get_otu_refs_by_sequence_ids(
-        self,
-        sequence_ids: set[str],
-    ) -> dict[str, WFIndexOTURef]:
-        if not sequence_ids:
-            return {}
-
-        with self.connect() as connection:
-            rows = list(
-                connection.execute(
-                    select(
-                        sequences_table.c.id.label("sequence_id"),
-                        otus_table.c.id.label("otu_id"),
-                        otus_table.c.abbreviation,
-                        otus_table.c.name,
-                        otus_table.c.taxid,
-                        otus_table.c.version,
-                    )
-                    .join(
-                        isolates_table,
-                        sequences_table.c.isolate_id == isolates_table.c.id,
-                    )
-                    .join(otus_table, isolates_table.c.otu_id == otus_table.c.id)
-                    .where(sequences_table.c.id.in_(sequence_ids)),
-                ).mappings()
-            )
-
-        otu_ref_by_sequence_id = {
-            row["sequence_id"]: {
-                "id": row["otu_id"],
-                "abbreviation": row["abbreviation"],
-                "name": row["name"],
-                "taxid": row["taxid"],
-                "version": row["version"],
-            }
-            for row in rows
-        }
-
-        missing_sequence_ids = sequence_ids - otu_ref_by_sequence_id.keys()
-
-        if missing_sequence_ids:
-            msg = "The sequence_id does not exist in the index"
-            raise ValueError(msg)
-
-        return otu_ref_by_sequence_id
+        return await self._reference.get_metadata()
 
 
 def _get_sequence_id(sequence: Mapping[str, Any]) -> str:
     return sequence["id"]
-
-
-def _normalize_otu_ids(otu_ids: str | Iterable[str]) -> set[str]:
-    if isinstance(otu_ids, str):
-        return {otu_ids}
-
-    return set(otu_ids)
-
-
-def _select_sqlite_sequences_with_isolates() -> Select:
-    return (
-        select(
-            sequences_table.c.id,
-            sequences_table.c.isolate_id.label("isolate_internal_id"),
-            sequences_table.c.accession,
-            sequences_table.c.definition,
-            sequences_table.c.host,
-            isolates_table.c.virtool_id.label("isolate_virtool_id"),
-            isolates_table.c.otu_id,
-            sequences_table.c.segment,
-            sequences_table.c.sequence,
-        )
-        .join(
-            isolates_table,
-            sequences_table.c.isolate_id == isolates_table.c.id,
-        )
-        .order_by(
-            isolates_table.c.otu_id,
-            isolates_table.c.virtool_id,
-            sequences_table.c.id,
-        )
-    )
-
-
-def _shape_sqlite_sequence(sequence: Mapping[str, Any]) -> dict[str, Any]:
-    return {
-        "id": sequence["id"],
-        "accession": sequence["accession"],
-        "definition": sequence["definition"],
-        "host": sequence["host"],
-        "isolate_id": sequence["isolate_virtool_id"],
-        "otu_id": sequence["otu_id"],
-        "segment": sequence["segment"],
-        "sequence": sequence["sequence"],
-    }
 
 
 async def _read_json(path: Path) -> dict[str, Any] | list[dict[str, Any]]:
