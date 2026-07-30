@@ -146,22 +146,20 @@ IDs — let alembic generate them so the chain stays consistent.
 
 - `virtool/` - Main package
   - `api/` - API middleware and route handlers
-  - `data/` - Unified data layer abstracting SQL and Mongo (`layer.py`)
+  - `data/` - Unified data layer (`layer.py`)
   - `pg/` - PostgreSQL models and utilities (SQLAlchemy 2.0+, asyncpg)
-  - `mongo/` - MongoDB utilities (motor)
   - `migration/` - Database migrations (Alembic)
   - `config/` - Configuration system
   - `jobs/` - Job queue and processing
   - `workflow/` - Workflow execution engine with pytest plugin
-  - `authorization/` - Permission and policy system
-  - `sessions/` - Session management
+  - `sessions/` - `SQLSession` schema only; sessions are owned by the
+    TypeScript server
 - `tests/` - Test suite (mirrors `virtool/` structure)
   - `fixtures/` - Shared pytest fixtures
 
 ### Entry Points
 
-- `virtool server api` - Main API server (port 9950)
-- `virtool server jobs` - Jobs API server
+- `virtool server jobs` - Jobs API server (port 9950)
 - `virtool tasks runner` - Task runner
 
 ### Data Layer
