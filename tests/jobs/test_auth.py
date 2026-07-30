@@ -42,26 +42,68 @@ def non_public_test_route(request: Request):
     return Response(status=200)
 
 
-async def test_public_routes_are_public(fake, spawn_job_client):
-    """Test that the claim endpoint is public and doesn't require authentication."""
-    client = await spawn_job_client(
-        authenticated=False,
-    )
+class TestPolicyResolution:
+    """Test that policies resolve for both shapes of handler the jobs API serves.
 
-    user = await fake.users.create()
-    await fake.jobs.create(user=user, state=JobState.PENDING, workflow="nuvs")
+    Policies are declared on plain request handler functions (``virtool/api/root.py``)
+    and on methods of ``PydanticView`` subclasses (``virtool/jobs/api.py``). If
+    resolution regresses for either shape, protected routes silently become public or
+    live workflows start getting rejected.
+    """
 
-    response = await client.post("/jobs/claim?workflow=nuvs", json=CLAIM_BODY)
+    async def test_public_function_handler(self, spawn_job_client):
+        """A public plain function handler is reachable without a job key."""
+        client = await spawn_job_client(authenticated=False)
 
-    assert response.status == HTTPStatus.OK
+        response = await client.get("/")
 
+        assert response.status == HTTPStatus.OK
 
-async def test_unauthorized_when_header_missing(spawn_job_client):
-    client = await spawn_job_client(authenticated=False, add_route_table=test_routes)
+    async def test_non_public_function_handler(self, spawn_job_client):
+        """A plain function handler without a policy requires a job key."""
+        client = await spawn_job_client(
+            authenticated=False,
+            add_route_table=test_routes,
+        )
 
-    response = await client.get("/not_public")
+        response = await client.get("/not_public")
 
-    assert response.status == 401
+        assert response.status == HTTPStatus.UNAUTHORIZED
+
+    async def test_public_view_method(self, fake, spawn_job_client):
+        """A public ``PydanticView`` method is reachable without a job key."""
+        client = await spawn_job_client(authenticated=False)
+
+        user = await fake.users.create()
+        await fake.jobs.create(user=user, state=JobState.PENDING, workflow="nuvs")
+
+        response = await client.post("/jobs/claim?workflow=nuvs", json=CLAIM_BODY)
+
+        assert response.status == HTTPStatus.OK
+
+    async def test_non_public_view_method(self, fake, spawn_job_client):
+        """A ``PydanticView`` method without a policy requires a job key."""
+        client = await spawn_job_client(authenticated=False)
+
+        job = await fake.jobs.create(user=await fake.users.create())
+
+        response = await client.get(f"/jobs/{job.id}")
+
+        assert response.status == HTTPStatus.UNAUTHORIZED
+
+    async def test_non_public_view_method_when_authenticated(
+        self,
+        fake,
+        spawn_job_client,
+    ):
+        """A ``PydanticView`` method without a policy is reachable with a job key."""
+        client = await spawn_job_client(authenticated=True)
+
+        job = await fake.jobs.create(user=await fake.users.create())
+
+        response = await client.get(f"/jobs/{job.id}")
+
+        assert response.status == HTTPStatus.OK
 
 
 async def test_unauthorized_when_header_invalid(spawn_job_client):
