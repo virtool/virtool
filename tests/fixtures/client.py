@@ -13,10 +13,21 @@ from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 import virtool.jobs.main
 import virtool.tasks.main
 from virtool.config.cls import ServerConfig, TaskRunnerConfig
+from virtool.fake.next import FAKE_JOB_KEY
 from virtool.flags import FeatureFlags, FlagName
 from virtool.jobs.pg import SQLJob
 from virtool.users.pg import SQLUser
 from virtool.utils import hash_key
+
+
+def job_auth(job_id: int) -> BasicAuth:
+    """Build credentials for authenticating as a job created by ``DataFaker``.
+
+    Every claimed fake job is given the same key, so a test can authenticate as the
+    job it is exercising. Routes that take a ``job_id`` reject keys belonging to
+    another job.
+    """
+    return BasicAuth(login=f"job-{job_id}", password=FAKE_JOB_KEY)
 
 
 class JobClientSpawner(Protocol):
@@ -37,6 +48,8 @@ class JobClientSpawner(Protocol):
         """Spawn a test job client.
 
         :param add_route_table: a route table that will be added to the app
+        :param auth: credentials to authenticate with, for authenticating as a
+            specific job
         :param authenticated: whether the client should be authenticated
         :param dev: whether the client should be in development mode
         :return: the test client
@@ -59,10 +72,14 @@ def spawn_job_client(
 
     async def func(
         add_route_table: RouteTableDef = None,
+        auth: BasicAuth | None = None,
         authenticated: bool = False,
         dev: bool = False,
         flags: list[FlagName] | None = None,
     ):
+        if authenticated and auth is not None:
+            raise ValueError("Pass either authenticated or auth, not both")
+
         if authenticated:
             key = "test_key"
 
@@ -91,8 +108,6 @@ def spawn_job_client(
                 await session.commit()
 
             auth = BasicAuth(login=f"job-{job_id}", password=key)
-        else:
-            auth = None
 
         mocker.patch("virtool.startup.connect_pg", return_value=pg)
         mocker.patch(

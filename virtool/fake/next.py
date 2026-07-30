@@ -66,6 +66,12 @@ from virtool.uploads.utils import CHUNK_SIZE
 from virtool.users.models import User
 from virtool.users.oas import UpdateUserRequest
 
+FAKE_JOB_KEY = "fake-job-key"
+"""The key given to every claimed fake job.
+
+Tests authenticate against the jobs API as a fake job using this key.
+"""
+
 
 async def fake_file_chunker(path: Path) -> AsyncGenerator[bytearray]:
     """Read a chunk of size `CHUNK_SIZE` from a file.
@@ -268,7 +274,7 @@ class JobsFakerDomain(DataFakerDomain):
                     "workflow_version": "0.0.0",
                 },
                 "claimed_at": virtool.utils.timestamp(),
-                "key": virtool.utils.hash_key("fake-job-key"),
+                "key": virtool.utils.hash_key(FAKE_JOB_KEY),
                 "pinged_at": pinged_at,
                 "state": JobState.RUNNING.value,
                 "steps": [],

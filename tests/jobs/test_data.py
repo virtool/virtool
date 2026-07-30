@@ -398,6 +398,33 @@ class TestStartStepPostgres:
         )
         assert updated_job.steps[1].started_at is None
 
+    @pytest.mark.parametrize(
+        "state",
+        [JobState.CANCELLED, JobState.FAILED, JobState.SUCCEEDED],
+    )
+    async def test_terminal_state(
+        self,
+        state: JobState,
+        data_layer: DataLayer,
+        fake: DataFaker,
+        pg: AsyncEngine,
+    ):
+        """A step of a job in a terminal state cannot be started."""
+        user = await fake.users.create()
+        job = await fake.jobs.create(user, state=state)
+
+        async with AsyncSession(pg) as session:
+            sql_job = (
+                await session.execute(select(SQLJob).where(SQLJob.id == job.id))
+            ).scalar()
+            sql_job.steps = [
+                {"id": "step_1", "name": "Step 1", "description": "First step"},
+            ]
+            await session.commit()
+
+        with pytest.raises(ResourceConflictError):
+            await data_layer.jobs.start_step(job.id, "step_1")
+
     async def test_emits_job_update_event(
         self,
         data_layer: DataLayer,
@@ -585,6 +612,19 @@ class TestPingPostgres:
             sql_job = result.scalar()
 
         assert sql_job.pinged_at == static_time.datetime
+
+    async def test_cancelled(self, data_layer: DataLayer, fake: DataFaker):
+        """A ping reports that the job has been cancelled.
+
+        Nothing can reach this through the API: authentication rejects a cancelled
+        job before it can ping.
+        """
+        user = await fake.users.create()
+        job = await fake.jobs.create(user, state=JobState.CANCELLED)
+
+        job_ping = await data_layer.jobs.ping(job.id)
+
+        assert job_ping.cancelled is True
 
 
 class TestTimeoutStalledJobsPostgres:

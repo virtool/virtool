@@ -3,7 +3,7 @@ from aiohttp.web import Request
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from virtool.api.errors import APIUnauthorized
+from virtool.api.errors import APIForbidden, APIUnauthorized
 from virtool.api.policy import PublicRoutePolicy, get_handler_policy
 from virtool.jobs.models import TERMINAL_JOB_STATES
 from virtool.jobs.pg import SQLJob
@@ -66,6 +66,14 @@ async def middleware(request: Request, handler: RouteHandler):
         raise APIUnauthorized(
             "Job is no longer active",
             error_id="malformed_authorization_header",
+        )
+
+    requested_job_id = request.match_info.get("job_id")
+
+    if requested_job_id is not None and requested_job_id != str(job_id):
+        raise APIForbidden(
+            "Job key does not match the requested job",
+            error_id="job_id_mismatch",
         )
 
     return await handler(request)

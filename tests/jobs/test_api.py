@@ -3,16 +3,44 @@ from http import HTTPStatus
 from types import NoneType
 
 import arrow
-import pytest
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 from syrupy import SnapshotAssertion
 from syrupy.matchers import path_type
 
-from tests.fixtures.client import JobClientSpawner
-from virtool.fake.next import DataFaker
+from tests.fixtures.client import JobClientSpawner, job_auth
+from virtool.fake.next import FAKE_JOB_KEY, DataFaker
 from virtool.jobs.models import JobState
 from virtool.jobs.pg import SQLJob
+from virtool.utils import hash_key
+
+
+async def create_job_with_steps(
+    pg: AsyncEngine,
+    user_id: int,
+    steps: list[dict],
+) -> int:
+    """Create a running job with ``steps`` that can authenticate as itself."""
+    async with AsyncSession(pg) as session:
+        job = SQLJob(
+            acquired=True,
+            created_at=arrow.utcnow().naive,
+            key=hash_key(FAKE_JOB_KEY),
+            state="running",
+            user_id=user_id,
+            workflow="nuvs",
+            steps=steps,
+        )
+
+        session.add(job)
+        await session.flush()
+
+        job_id = job.id
+
+        await session.commit()
+
+    return job_id
+
 
 _job_response_matcher = path_type(
     {
@@ -69,9 +97,12 @@ class TestGet:
         snapshot: SnapshotAssertion,
         spawn_job_client: JobClientSpawner,
     ):
-        client = await spawn_job_client(authenticated=True)
+        job = await fake.jobs.create(
+            user=await fake.users.create(),
+            state=JobState.RUNNING,
+        )
 
-        job = await fake.jobs.create(user=await fake.users.create())
+        client = await spawn_job_client(auth=job_auth(job.id))
 
         resp = await client.get(f"/jobs/{job.id}")
         body = await resp.json()
@@ -82,27 +113,16 @@ class TestGet:
         # Explicitly ensure the secret API key is not returned in the response.
         assert "key" not in body
 
-    async def test_not_found(self, spawn_job_client: JobClientSpawner):
-        client = await spawn_job_client(authenticated=True)
-
-        resp = await client.get("/jobs/999999")
-
-        assert resp.status == HTTPStatus.NOT_FOUND
-        assert await resp.json() == {
-            "id": "not_found",
-            "message": "Not found",
-        }
-
 
 class TestPing:
     async def test_ok(self, fake: DataFaker, spawn_job_client):
         """Test that a job can be pinged."""
-        client = await spawn_job_client(authenticated=True)
-
         job = await fake.jobs.create(
             await fake.users.create(),
             state=JobState.RUNNING,
         )
+
+        client = await spawn_job_client(auth=job_auth(job.id))
 
         resp = await client.put(f"/jobs/{job.id}/ping")
         body = await resp.json()
@@ -113,30 +133,26 @@ class TestPing:
             seconds=1,
         )
 
-    async def test_not_found(self, spawn_job_client):
-        """Test that a 404 is returned when the job doesn't exist."""
-        client = await spawn_job_client(authenticated=True)
-
-        resp = await client.put("/jobs/999999/ping", data={})
-
-        assert resp.status == 404
-
-    async def test_cancelled_true_when_cancelled(
+    async def test_cancelled_job_cannot_ping(
         self,
         fake: DataFaker,
         spawn_job_client,
     ):
-        """Test that cancelled is True when the job state is cancelled."""
-        client = await spawn_job_client(authenticated=True)
-        user = await fake.users.create()
+        """Test that a cancelled job is rejected before it can ping.
 
-        job = await fake.jobs.create(user, state=JobState.CANCELLED)
+        A cancelled job is in a terminal state, so authentication rejects it. It
+        never reaches the handler that would report the cancellation to it.
+        """
+        job = await fake.jobs.create(
+            await fake.users.create(),
+            state=JobState.CANCELLED,
+        )
+
+        client = await spawn_job_client(auth=job_auth(job.id))
 
         resp = await client.put(f"/jobs/{job.id}/ping")
-        body = await resp.json()
 
-        assert resp.status == HTTPStatus.OK
-        assert body["cancelled"] is True
+        assert resp.status == HTTPStatus.UNAUTHORIZED
 
 
 class TestClaim:
@@ -364,11 +380,11 @@ class TestFinish:
         pg: AsyncEngine,
         spawn_job_client: JobClientSpawner,
     ):
-        """Test that a running job can be finished."""
-        client = await spawn_job_client(authenticated=False)
-
+        """Test that a running job can finish itself."""
         user = await fake.users.create()
         job = await fake.jobs.create(user, state=JobState.RUNNING)
+
+        client = await spawn_job_client(auth=job_auth(job.id))
 
         resp = await client.post(f"/jobs/{job.id}/finish")
 
@@ -386,34 +402,6 @@ class TestFinish:
         assert sql_job.state == "succeeded"
         assert sql_job.finished_at is not None
 
-    async def test_not_found(self, spawn_job_client: JobClientSpawner):
-        """Test that 404 is returned when the job doesn't exist."""
-        client = await spawn_job_client(authenticated=False)
-
-        resp = await client.post("/jobs/999999/finish")
-
-        assert resp.status == HTTPStatus.NOT_FOUND
-
-    @pytest.mark.parametrize(
-        "state",
-        [JobState.PENDING, JobState.SUCCEEDED, JobState.FAILED, JobState.CANCELLED],
-    )
-    async def test_not_running(
-        self,
-        state: JobState,
-        fake: DataFaker,
-        spawn_job_client: JobClientSpawner,
-    ):
-        """Test that 409 is returned when the job isn't running."""
-        client = await spawn_job_client(authenticated=False)
-
-        user = await fake.users.create()
-        job = await fake.jobs.create(user, state=state)
-
-        resp = await client.post(f"/jobs/{job.id}/finish")
-
-        assert resp.status == HTTPStatus.CONFLICT
-
 
 class TestStartStep:
     """Tests for POST /jobs/{job_id}/steps/{step_id}/start endpoint."""
@@ -425,28 +413,18 @@ class TestStartStep:
         spawn_job_client: JobClientSpawner,
     ):
         """Test that a step can be started successfully."""
-        client = await spawn_job_client(
-            authenticated=False,
-        )
-
         user = await fake.users.create()
 
-        async with AsyncSession(pg) as session:
-            job = SQLJob(
-                acquired=True,
-                created_at=arrow.utcnow().naive,
-                state="running",
-                user_id=user.id,
-                workflow="nuvs",
-                steps=[
-                    {"id": "step_1", "name": "Step 1", "description": "First step"},
-                    {"id": "step_2", "name": "Step 2", "description": "Second step"},
-                ],
-            )
-            session.add(job)
-            await session.flush()
-            job_id = job.id
-            await session.commit()
+        job_id = await create_job_with_steps(
+            pg,
+            user.id,
+            [
+                {"id": "step_1", "name": "Step 1", "description": "First step"},
+                {"id": "step_2", "name": "Step 2", "description": "Second step"},
+            ],
+        )
+
+        client = await spawn_job_client(auth=job_auth(job_id))
 
         resp = await client.post(f"/jobs/{job_id}/steps/step_1/start")
 
@@ -466,16 +444,6 @@ class TestStartStep:
 
         assert sql_job.steps[0]["started_at"] is not None
 
-    async def test_not_found(self, spawn_job_client: JobClientSpawner):
-        """Test that 404 is returned when job doesn't exist."""
-        client = await spawn_job_client(
-            authenticated=False,
-        )
-
-        resp = await client.post("/jobs/99999/steps/step_1/start")
-
-        assert resp.status == HTTPStatus.NOT_FOUND
-
     async def test_step_not_found(
         self,
         fake: DataFaker,
@@ -483,27 +451,15 @@ class TestStartStep:
         spawn_job_client: JobClientSpawner,
     ):
         """Test that 404 is returned when step doesn't exist."""
-        client = await spawn_job_client(
-            authenticated=False,
-        )
-
         user = await fake.users.create()
 
-        async with AsyncSession(pg) as session:
-            job = SQLJob(
-                acquired=True,
-                created_at=arrow.utcnow().naive,
-                state="running",
-                user_id=user.id,
-                workflow="nuvs",
-                steps=[
-                    {"id": "step_1", "name": "Step 1", "description": "First step"},
-                ],
-            )
-            session.add(job)
-            await session.flush()
-            job_id = job.id
-            await session.commit()
+        job_id = await create_job_with_steps(
+            pg,
+            user.id,
+            [{"id": "step_1", "name": "Step 1", "description": "First step"}],
+        )
+
+        client = await spawn_job_client(auth=job_auth(job_id))
 
         resp = await client.post(f"/jobs/{job_id}/steps/nonexistent/start")
 
@@ -516,32 +472,22 @@ class TestStartStep:
         spawn_job_client: JobClientSpawner,
     ):
         """Test that 409 is returned when step is already started."""
-        client = await spawn_job_client(
-            authenticated=False,
-        )
-
         user = await fake.users.create()
 
-        async with AsyncSession(pg) as session:
-            job = SQLJob(
-                acquired=True,
-                created_at=arrow.utcnow().naive,
-                state="running",
-                user_id=user.id,
-                workflow="nuvs",
-                steps=[
-                    {
-                        "id": "step_1",
-                        "name": "Step 1",
-                        "description": "First step",
-                        "started_at": arrow.utcnow().naive.isoformat(),
-                    },
-                ],
-            )
-            session.add(job)
-            await session.flush()
-            job_id = job.id
-            await session.commit()
+        job_id = await create_job_with_steps(
+            pg,
+            user.id,
+            [
+                {
+                    "id": "step_1",
+                    "name": "Step 1",
+                    "description": "First step",
+                    "started_at": arrow.utcnow().naive.isoformat(),
+                },
+            ],
+        )
+
+        client = await spawn_job_client(auth=job_auth(job_id))
 
         resp = await client.post(f"/jobs/{job_id}/steps/step_1/start")
 
@@ -550,49 +496,3 @@ class TestStartStep:
             "id": "conflict",
             "message": "Step already started",
         }
-
-    @pytest.mark.parametrize("state", ["cancelled", "failed", "succeeded"])
-    async def test_terminal_state(
-        self,
-        state: str,
-        fake: DataFaker,
-        pg: AsyncEngine,
-        spawn_job_client: JobClientSpawner,
-    ):
-        """Test that 409 is returned when job is in a terminal state."""
-        client = await spawn_job_client(
-            authenticated=False,
-        )
-
-        user = await fake.users.create()
-
-        async with AsyncSession(pg) as session:
-            job = SQLJob(
-                acquired=True,
-                created_at=arrow.utcnow().naive,
-                state=state,
-                user_id=user.id,
-                workflow="nuvs",
-                steps=[
-                    {"id": "step_1", "name": "Step 1", "description": "First step"},
-                ],
-            )
-            session.add(job)
-            await session.flush()
-            job_id = job.id
-            await session.commit()
-
-        resp = await client.post(f"/jobs/{job_id}/steps/step_1/start")
-
-        assert resp.status == HTTPStatus.CONFLICT
-
-    async def test_feature_flag_disabled(
-        self,
-        spawn_job_client: JobClientSpawner,
-    ):
-        """Test that 404 is returned when feature flag is disabled."""
-        client = await spawn_job_client(authenticated=False)
-
-        resp = await client.post("/jobs/1/steps/step_1/start")
-
-        assert resp.status == HTTPStatus.NOT_FOUND

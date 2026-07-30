@@ -84,7 +84,6 @@ class ClaimJobView(PydanticView):
 
 @routes.jobs_api.view("/jobs/{job_id}/steps/{step_id}/start")
 class StartJobStepView(PydanticView):
-    @policy(PublicRoutePolicy)
     async def post(
         self, job_id: int, step_id: str, /
     ) -> r200[JobStepStarted] | r404 | r409:
@@ -111,7 +110,6 @@ class StartJobStepView(PydanticView):
 
 @routes.jobs_api.view("/jobs/{job_id}/finish")
 class FinishJobView(PydanticView):
-    @policy(PublicRoutePolicy)
     async def post(self, job_id: int, /) -> r200[Job] | r404 | r409:
         """Finish a job.
 
