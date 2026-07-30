@@ -38,6 +38,10 @@ async def _ping_periodically(
                 retries += 1
                 continue
             except JobsAPIUnauthorizedError:
+                if events.completed.is_set():
+                    logger.info("stopped pinging finished job")
+                    break
+
                 logger.info("job is no longer active")
                 events.cancelled.set()
                 parent_task.cancel()
@@ -62,6 +66,10 @@ async def ping_periodically(
     A job that is cancelled, or otherwise no longer active, is rejected when it pings.
     The events object is updated and the parent task is cancelled when that happens,
     ending the workflow.
+
+    A workflow that has already completed its steps finishes the job itself, which
+    makes the job terminal. Pings rejected after that point mean the job is over, not
+    cancelled, and must leave the remaining hooks alone.
 
     The ping request is retried up to 5 times before the task is cancelled.
 

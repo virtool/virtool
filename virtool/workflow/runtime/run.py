@@ -134,6 +134,8 @@ async def execute(
         scope["_state"] = JobState.SUCCEEDED
         scope["_step"] = None
 
+        events.completed.set()
+
         if "results" in scope:
             await on_result.trigger(scope)
 
