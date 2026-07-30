@@ -109,6 +109,18 @@ class TestPolicyResolution:
 
         assert response.status == HTTPStatus.OK
 
+    async def test_unsupported_view_method(self, spawn_job_client):
+        """A method a view doesn't implement is rejected, not a server error.
+
+        Views are routed for every method, so the request reaches policy resolution
+        with a method the view has no handler for.
+        """
+        client = await spawn_job_client(authenticated=True)
+
+        response = await client.delete("/jobs/counts")
+
+        assert response.status == HTTPStatus.METHOD_NOT_ALLOWED
+
 
 class TestJobOwnership:
     """Test that a job key only grants access to the job it belongs to.

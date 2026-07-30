@@ -43,6 +43,10 @@ def get_handler_policy(handler: Callable, method: str) -> DefaultRoutePolicy:
     matches the request method. Both shapes must resolve here. If they don't, protected
     routes become public or live workflows start getting rejected.
 
+    Views are routed for every method, so a request can reach one that the view has no
+    method for. The default policy applies in that case, leaving the view to reject the
+    method itself.
+
     :param handler: the handler the request resolved to
     :param method: the HTTP method of the request
     :return: the policy for the handler
@@ -59,13 +63,10 @@ def get_handler_policy(handler: Callable, method: str) -> DefaultRoutePolicy:
         depth += 1
 
     if isclass(h) and issubclass(h, PydanticView):
-        method_name = method.lower()
-        view = h(None)
+        h = getattr(h(None), method.lower(), None)
 
-        try:
-            h = getattr(view, method_name)
-        except AttributeError:
-            raise AttributeError(f"No such method on view: {method_name}")
+        if h is None:
+            return DefaultRoutePolicy()
 
     cls_or_obj = getattr(h, "policy", DefaultRoutePolicy)
 
