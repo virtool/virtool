@@ -305,7 +305,7 @@ def _create_reference_sqlite(
     path.parent.mkdir(parents=True, exist_ok=True)
 
     if path.exists():
-        path.unlink()
+        raise FileExistsError(path)
 
     with sqlite_reference.connect() as connection, connection.begin():
         reference_sqlite_metadata.create_all(connection)
