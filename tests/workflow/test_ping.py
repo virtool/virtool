@@ -16,8 +16,10 @@ async def test_cancellation_from_ping(
     workflow_config: WorkflowConfig,
     workflow_data: WorkflowData,
 ):
-    """Test that the runner exits with a cancelled status when the ping response
-    indicates cancellation.
+    """Test that the runner exits with a cancelled status when its ping is rejected.
+
+    A cancelled job is no longer active, so the jobs API rejects its ping. That
+    rejection is how the runner learns that it should stop.
     """
     workflow_data.job.workflow = "pathoscope"
 
@@ -48,4 +50,4 @@ async def test_cancellation_from_ping(
 
     assert [update["id"] for update in workflow_data.step_start_updates] == ["first"]
 
-    assert log.has("received cancellation signal from ping response", level="info")
+    assert log.has("job is no longer active", level="info")

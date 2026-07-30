@@ -613,19 +613,6 @@ class TestPingPostgres:
 
         assert sql_job.pinged_at == static_time.datetime
 
-    async def test_cancelled(self, data_layer: DataLayer, fake: DataFaker):
-        """A ping reports that the job has been cancelled.
-
-        Nothing can reach this through the API: authentication rejects a cancelled
-        job before it can ping.
-        """
-        user = await fake.users.create()
-        job = await fake.jobs.create(user, state=JobState.CANCELLED)
-
-        job_ping = await data_layer.jobs.ping(job.id)
-
-        assert job_ping.cancelled is True
-
 
 class TestTimeoutStalledJobsPostgres:
     """Test that timeout_stalled_jobs() writes to Postgres."""

@@ -128,7 +128,6 @@ class TestPing:
         body = await resp.json()
 
         assert resp.status == HTTPStatus.OK
-        assert body["cancelled"] is False
         assert arrow.get(body["pinged_at"]) - arrow.utcnow() < datetime.timedelta(
             seconds=1,
         )

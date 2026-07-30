@@ -14,6 +14,7 @@ from virtool.workflow.errors import (
     JobsAPIForbiddenError,
     JobsAPINotFoundError,
     JobsAPIServerError,
+    JobsAPIUnauthorizedError,
 )
 
 logger = get_logger("api")
@@ -108,6 +109,7 @@ async def raise_exception_by_status_code(resp: ClientResponse) -> None:
 
     :param resp: the response to check
     :raise JobsAPIBadRequest: the response status code is 400
+    :raise JobsAPIUnauthorized: the response status code is 401
     :raise JobsAPIForbidden: the response status code is 403
     :raise JobsAPINotFound: the response status code is 404
     :raise JobsAPIConflict: the response status code is 409
@@ -115,6 +117,7 @@ async def raise_exception_by_status_code(resp: ClientResponse) -> None:
     """
     status_exception_map = {
         400: JobsAPIBadRequestError,
+        401: JobsAPIUnauthorizedError,
         403: JobsAPIForbiddenError,
         404: JobsAPINotFoundError,
         409: JobsAPIConflictError,

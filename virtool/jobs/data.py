@@ -314,6 +314,10 @@ class JobsData:
     async def ping(self, job_id: int) -> JobPing:
         """Update the pinged_at timestamp on a job.
 
+        Only an active job can ping. A cancelled or otherwise finished job is
+        rejected during authentication, which is how a running workflow learns that
+        it should stop.
+
         :param job_id: the ID of the job to ping
         :return: the ping response
         """
@@ -329,14 +333,10 @@ class JobsData:
                 raise ResourceNotFoundError("Job not found")
 
             sql_job.pinged_at = now
-            cancelled = sql_job.state == "cancelled"
 
             await session.commit()
 
-        return JobPing(
-            cancelled=cancelled,
-            pinged_at=now,
-        )
+        return JobPing(pinged_at=now)
 
     @emits(Operation.UPDATE)
     async def finish(self, job_id: int) -> Job:

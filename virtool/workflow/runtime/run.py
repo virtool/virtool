@@ -208,8 +208,9 @@ async def start_runtime(
     The runtime loads the workflow and fixtures. It then polls the jobs API to
     claim a job via ``POST /jobs/claim``.
 
-    When a job is claimed, the runtime runs the workflow and listens for
-    cancellation signals sent back on the periodic ping response.
+    When a job is claimed, the runtime runs the workflow and pings periodically. The
+    workflow ends when a ping is rejected, which is how the runtime learns that the
+    job is no longer active.
     """
     configure_logging(bool(config.sentry_dsn))
 

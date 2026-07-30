@@ -30,6 +30,17 @@ def generate_not_found():
     return json_response({"id": "not_found", "message": "Not found"}, status=404)
 
 
+def generate_unauthorized():
+    """Reject a request the way the jobs API rejects a job that is no longer active."""
+    return json_response(
+        {
+            "id": "malformed_authorization_header",
+            "message": "Job is no longer active",
+        },
+        status=401,
+    )
+
+
 async def read_file_from_request(request, name, fmt) -> dict:
     reader = await request.multipart()
     file = await reader.next()
