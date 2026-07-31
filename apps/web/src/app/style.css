@@ -152,14 +152,3 @@ html {
 		fill: var(--color-green-100);
 	}
 }
-
-.coverage-chart {
-	path.untrustworthy-range {
-		stroke: var(--color-red-600);
-		stroke-width: 1;
-	}
-
-	path.depth-area {
-		fill: var(--color-blue-600);
-	}
-}

@@ -4,7 +4,15 @@ import type { ReactNode } from "react";
 
 type PopoverProps = {
 	align?: "center" | "start" | "end";
+
+	/** How far the content is shifted along the trigger's edge */
+	alignOffset?: number;
+
 	children: ReactNode;
+
+	/** How far the content sits from the trigger */
+	sideOffset?: number;
+
 	trigger: ReactNode;
 };
 
@@ -13,7 +21,9 @@ type PopoverProps = {
  */
 export default function Popover({
 	align = "end",
+	alignOffset = -20,
 	children,
+	sideOffset = 15,
 	trigger,
 }: PopoverProps) {
 	return (
@@ -27,13 +37,13 @@ export default function Popover({
 						"border",
 						"border-gray-300",
 						"shadow-lg",
-						"m-1.5",
 						"w-[320px]",
 						"z-popover",
 					)}
-					sideOffset={15}
+					sideOffset={sideOffset}
 					align={align}
-					alignOffset={-20}
+					alignOffset={alignOffset}
+					collisionPadding={6}
 				>
 					{children}
 				</PopoverPrimitive.Content>

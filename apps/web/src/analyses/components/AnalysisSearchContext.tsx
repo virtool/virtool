@@ -1,16 +1,5 @@
+import type { AnalysisSearch } from "@analyses/search";
 import { createContext, type ReactNode, useContext } from "react";
-
-type AnalysisSearch = {
-	activeHit?: string;
-	filterIsolates?: boolean;
-	filterOrfs?: boolean;
-	filterOtus?: boolean;
-	filterSequences?: boolean;
-	find?: string;
-	reads?: boolean;
-	sort?: string;
-	sortDesc?: boolean;
-};
 
 type AnalysisSearchContextValue = {
 	search: AnalysisSearch;

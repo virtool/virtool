@@ -1,95 +1,63 @@
-import { useElementSize } from "@app/hooks";
-import type { Coordinate } from "@virtool/contracts";
-import { area, max, scaleLinear } from "d3";
+import { toThousand } from "@app/format";
+import type { PathoscopeSegmentCoverage } from "@virtool/contracts";
+import PathoscopeCoverageChart, {
+	type CoveragePanel,
+} from "./PathoscopeCoverageChart";
 
-const height = 60;
+const height = 80;
 
-/**
- * Reduce the polyline to at most one point per pixel, keeping the deepest point
- * in each column.
- *
- * The server simplifies a curve to a proportion of its points rather than to a
- * point count, so a high-variance profile over a long genome still arrives as
- * thousands of coordinates. Every hit draws this overview in its accordion
- * trigger, so an analysis with many OTUs would otherwise put hundreds of
- * thousands of segments in the document while all of them are still collapsed.
- *
- * A column reports its deepest point, so peaks survive at the position they
- * were recorded at.
- */
-function downsample(
-	align: Coordinate[],
-	length: number,
-	width: number,
-): Coordinate[] {
-	if (align.length <= width) {
-		return align;
+// A named segment is labelled with its name; one matched to its neighbours by
+// length has nothing to be called, and its length — now in the caption's own
+// right — is identity enough.
+//
+// A segment nothing mapped to draws no curve, so its label has to carry the
+// reason. An empty panel on its own reads as a gap in the layout.
+function labelOf(segment: PathoscopeSegmentCoverage): string {
+	if (segment.detected) {
+		return segment.name ?? "";
 	}
 
-	const columns = new Map<number, Coordinate>();
-
-	for (const point of align) {
-		const column = Math.min(Math.floor((point[0] / length) * width), width - 1);
-		const peak = columns.get(column);
-
-		if (peak === undefined || point[1] > peak[1]) {
-			columns.set(column, point);
-		}
-	}
-
-	// The points arrive in ascending x, and replacing a column's peak keeps that
-	// column's insertion position, so the values are already in order.
-	return [...columns.values()];
-}
-
-function buildDepthPath(
-	align: Coordinate[],
-	length: number,
-	width: number,
-): string {
-	const points = downsample(align, length, width);
-
-	const x = scaleLinear().range([0, width]).domain([0, length]);
-	const y = scaleLinear()
-		.range([height, 0])
-		.domain([0, max(points, (point) => point[1]) || 1]);
-
-	const path = area<Coordinate>()
-		.x((point) => x(point[0]))
-		.y0(height)
-		.y1((point) => y(point[1]));
-
-	return path(points) ?? "";
+	return segment.name ? `${segment.name} · no reads` : "No reads";
 }
 
 type OtuCoverageProps = {
-	/** The OTU's isolate curves merged into one polyline */
-	align: Coordinate[];
+	/** The greatest depth recorded on any nucleotide of the OTU */
+	maxDepth: number;
 
-	/** The genome length the polyline spans, which fixes the horizontal scale */
-	length: number;
+	/** The OTU's genome segments, in the order they should be drawn */
+	segments: PathoscopeSegmentCoverage[];
 };
 
 export default function PathoscopeOtuCoverage({
-	align,
-	length,
+	maxDepth,
+	segments,
 }: OtuCoverageProps) {
-	const [ref, { width }] = useElementSize<HTMLDivElement>();
+	// A single-segment OTU is the unsegmented case, where a name would only repeat
+	// what the accordion already says — but its length still gets drawn. An
+	// undetected segment is named whatever the count, because it draws nothing and
+	// a blank panel needs its reason.
+	const labelled =
+		segments.length > 1 || segments.some((segment) => !segment.detected);
 
-	const drawable = width > 0 && align.length > 0 && length > 0;
-	const d = drawable ? buildDepthPath(align, length, width) : "";
+	const description =
+		segments.length > 1
+			? `Read depth across each of the ${segments.length} segments of the reference genome`
+			: "Read depth across the reference genome";
+
+	const panels: CoveragePanel[] = segments.map((segment) => ({
+		align: segment.align,
+		key: segment.key,
+		label: labelled ? labelOf(segment) : "",
+		length: segment.length,
+		lengthLabel: `${toThousand(segment.length)} nt`,
+	}));
 
 	return (
-		<div className="bg-blue-50 pt-2" ref={ref}>
-			<svg
-				width={width}
-				height={height}
-				role="img"
-				aria-label="Read depth across the reference genome"
-			>
-				<title>Read depth across the reference genome</title>
-				{d && <path className="fill-blue-500" d={d} />}
-			</svg>
-		</div>
+		<PathoscopeCoverageChart
+			description={description}
+			height={height}
+			maxDepth={maxDepth}
+			panels={panels}
+		/>
 	);
 }

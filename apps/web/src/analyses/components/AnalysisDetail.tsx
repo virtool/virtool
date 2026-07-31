@@ -9,9 +9,10 @@ import SubviewHeaderAttribution from "@base/SubviewHeaderAttribution";
 import SubviewHeaderTitle from "@base/SubviewHeaderTitle";
 import { useFetchSample } from "@samples/queries";
 import { getRouteApi } from "@tanstack/react-router";
+import type { Analysis, Sample } from "@virtool/contracts";
 import { CircleAlert } from "lucide-react";
-import type { ReactNode } from "react";
-import { useGetAnalysis } from "../queries";
+import { Suspense } from "react";
+import { useGetAnalysis, useSuspenseAnalysisResults } from "../queries";
 import type {
 	FormattedNuvsAnalysis,
 	FormattedPathoscopeAnalysis,
@@ -52,25 +53,7 @@ export default function AnalysisDetail() {
 		);
 	}
 
-	let content: ReactNode;
-
-	// The server shapes `results` per workflow but types it as an opaque
-	// `JsonObject`, so the workflow check is what narrows it here.
-	if (analysis.workflow === "pathoscope") {
-		content = (
-			<PathoscopeViewer
-				analysis={analysis as unknown as FormattedPathoscopeAnalysis}
-				sample={sample}
-			/>
-		);
-	} else if (analysis.workflow === "nuvs") {
-		content = (
-			<NuvsViewer
-				detail={analysis as unknown as FormattedNuvsAnalysis}
-				sample={sample}
-			/>
-		);
-	} else {
+	if (analysis.workflow !== "pathoscope" && analysis.workflow !== "nuvs") {
 		return (
 			<Box className="flex justify-center items-center">
 				<CircleAlert className="mr-1" />
@@ -91,7 +74,48 @@ export default function AnalysisDetail() {
 				</SubviewHeaderAttribution>
 			</SubviewHeader>
 
-			{content}
+			<Suspense fallback={<LoadingPlaceholder />}>
+				<AnalysisResults analysis={analysis} sample={sample} />
+			</Suspense>
 		</div>
+	);
+}
+
+type AnalysisResultsProps = {
+	/** A finished analysis, without its results. */
+	analysis: Analysis & { workflow: "nuvs" | "pathoscope" };
+
+	/** The sample the analysis was run on. */
+	sample: Sample;
+};
+
+/**
+ * The workflow's viewer, rendered once the analysis's results have loaded.
+ *
+ * Suspends on the results rather than the route blocking on them, so the header
+ * above renders as soon as the analysis metadata arrives instead of waiting on
+ * the whole document.
+ */
+function AnalysisResults({ analysis, sample }: AnalysisResultsProps) {
+	const { data: results } = useSuspenseAnalysisResults(analysis.id);
+
+	// The server shapes `results` per workflow but types it as an opaque
+	// `JsonObject`, so the workflow check is what narrows it here.
+	if (analysis.workflow === "pathoscope") {
+		return (
+			<PathoscopeViewer
+				analysis={
+					{ ...analysis, results } as unknown as FormattedPathoscopeAnalysis
+				}
+				sample={sample}
+			/>
+		);
+	}
+
+	return (
+		<NuvsViewer
+			detail={{ ...analysis, results } as unknown as FormattedNuvsAnalysis}
+			sample={sample}
+		/>
 	);
 }

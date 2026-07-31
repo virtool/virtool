@@ -1,4 +1,5 @@
 import { useAnalysisSearch } from "@analyses/components/AnalysisSearchContext";
+import { DEFAULT_SORT_KEY } from "@analyses/search";
 import ButtonToggle from "@base/ButtonToggle";
 import SearchToolbar from "@base/SearchToolbar";
 import Tooltip from "@base/Tooltip";
@@ -14,10 +15,8 @@ export default function NuvsToolbar({
 	sampleName,
 }: NuvsExportProps) {
 	const { search, setSearch } = useAnalysisSearch();
-	const filterORFs = search.filterOrfs ?? true;
-	const filterSequences = search.filterSequences ?? true;
-	const find = search.find ?? "";
-	const sortKey = search.sort ?? "length";
+	const { find, showUnhitOrfs, showUnhitSequences } = search;
+	const sortKey = search.sort ?? DEFAULT_SORT_KEY.nuvs;
 
 	return (
 		<SearchToolbar
@@ -33,16 +32,18 @@ export default function NuvsToolbar({
 			/>
 			<Tooltip tip="Hide sequences that have no HMM hits">
 				<ButtonToggle
-					onPressedChange={(filterSequences) => setSearch({ filterSequences })}
-					pressed={filterSequences}
+					onPressedChange={(pressed) =>
+						setSearch({ showUnhitSequences: !pressed })
+					}
+					pressed={!showUnhitSequences}
 				>
 					Filter Sequences
 				</ButtonToggle>
 			</Tooltip>
 			<Tooltip tip="Hide ORFs that have no HMM hits">
 				<ButtonToggle
-					pressed={filterORFs}
-					onPressedChange={(filterOrfs) => setSearch({ filterOrfs })}
+					pressed={!showUnhitOrfs}
+					onPressedChange={(pressed) => setSearch({ showUnhitOrfs: !pressed })}
 				>
 					Filter ORFs
 				</ButtonToggle>

@@ -333,6 +333,14 @@ export async function findAnalyses(
 	};
 }
 
+/**
+ * An analysis's metadata and its result files.
+ *
+ * The `results` blob is deliberately not read here — see
+ * {@link getAnalysisResults}. This is a single indexed row and three batched
+ * reads, so it answers in about the time a list row does however large the
+ * analysis is.
+ */
 export async function getAnalysis(
 	db: Db,
 	analysisId: number,
@@ -340,7 +348,6 @@ export async function getAnalysis(
 	const [row] = await db
 		.select({
 			...minimalColumns,
-			results: analyses.results,
 			indexVersion: indexes.version,
 			referenceName: legacyReferences.name,
 			userHandle: users.handle,
@@ -368,21 +375,51 @@ export async function getAnalysis(
 		row.job_id != null ? (jobsById.get(row.job_id) ?? null) : null,
 	);
 
-	// Only a finished analysis is shaped. An unfinished one is returned with
-	// whatever it holds — normally null, and never formatted — as Python does.
-	let results = row.results;
+	return { ...minimal, files };
+}
 
-	if (row.ready && results) {
-		results = await formatAnalysis(db, row.workflow, results);
+/**
+ * An analysis's results, shaped for presentation.
+ *
+ * Split from {@link getAnalysis} because this is the expensive half by a wide
+ * margin: it reads the TOASTed `results` column — the largest thing in the row —
+ * and then walks the whole blob, patching every OTU the analysis hit back to the
+ * version it saw. Fetching it separately is what lets the viewer's header and
+ * its in-progress state render without waiting for any of that.
+ */
+export async function getAnalysisResults(
+	db: Db,
+	analysisId: number,
+): Promise<JsonObject | null> {
+	const [row] = await db
+		.select({
+			ready: analyses.ready,
+			results: analyses.results,
+			workflow: analyses.workflow,
+		})
+		.from(analyses)
+		.where(eq(analyses.id, analysisId))
+		.limit(1);
 
-		if (row.workflow === "nuvs") {
-			results = await attachBlasts(db, analysisId, results);
-		}
+	if (!row) {
+		throw new AnalysisNotFoundError();
+	}
+
+	// Only a finished analysis is shaped. An unfinished one holds whatever it
+	// holds — normally null, and never formatted — as Python does.
+	if (!row.ready || !row.results) {
+		return (row.results ?? null) as JsonObject | null;
+	}
+
+	let results = await formatAnalysis(db, row.workflow, row.results);
+
+	if (row.workflow === "nuvs") {
+		results = await attachBlasts(db, analysisId, results);
 	}
 
 	// Built from a JSONB column by pure object rebuilding, so it is JSON by
 	// construction — the assertion is what lets it cross the RPC boundary.
-	return { ...minimal, files, results: (results ?? null) as JsonObject | null };
+	return results as JsonObject;
 }
 
 // BLAST records live in their own table, keyed to the contig they were requested

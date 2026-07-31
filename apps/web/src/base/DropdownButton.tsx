@@ -1,19 +1,15 @@
 import { DropdownMenu } from "radix-ui";
-import type { ReactNode } from "react";
-import Button from "./Button";
+import Button, { type ButtonProps } from "./Button";
 
-type DropdownButtonProps = {
-	children: ReactNode;
-	className?: string;
-};
+/**
+ * Props for a dropdown's trigger.
+ *
+ * Everything `Button` accepts flows through the rest spread, so a `Tooltip`
+ * wrapping the trigger can hand its behaviour down. `as` is fixed — being the
+ * menu's trigger is what makes this a dropdown button.
+ */
+type DropdownButtonProps = Omit<ButtonProps, "as">;
 
-export default function DropdownButton({
-	children,
-	className,
-}: DropdownButtonProps) {
-	return (
-		<Button as={DropdownMenu.Trigger} className={className}>
-			{children}
-		</Button>
-	);
+export default function DropdownButton(props: DropdownButtonProps) {
+	return <Button as={DropdownMenu.Trigger} {...props} />;
 }

@@ -9,6 +9,7 @@ import { type Mock, vi } from "vitest";
 export const analysisServerFnMocks = {
 	findAnalysesFn: vi.fn(),
 	getAnalysisFn: vi.fn(),
+	getAnalysisResultsFn: vi.fn(),
 	createAnalysisFn: vi.fn(),
 	deleteAnalysisFn: vi.fn(),
 	blastNuvsFn: vi.fn(),

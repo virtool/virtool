@@ -6,6 +6,7 @@ import {
 	deleteAnalysisFn,
 	findAnalysesFn,
 	getAnalysisFn,
+	getAnalysisResultsFn,
 } from "@server/analyses/functions";
 import {
 	keepPreviousData,
@@ -13,9 +14,11 @@ import {
 	useMutation,
 	useQuery,
 	useQueryClient,
+	useSuspenseQuery,
 } from "@tanstack/react-query";
 import type {
 	Analysis,
+	AnalysisResults,
 	AnalysisSearchResult,
 	AnalysisWorkflow,
 } from "@virtool/contracts";
@@ -74,6 +77,30 @@ export function analysisQueryOptions(analysisId: number) {
 
 export function useGetAnalysis(analysisId: number) {
 	return useQuery(analysisQueryOptions(analysisId));
+}
+
+/**
+ * The results of an analysis, cached apart from the analysis itself.
+ *
+ * This is the slow half — the server reads the whole results blob and patches
+ * every OTU the analysis hit back to the version it saw — so it is deliberately
+ * not part of {@link analysisQueryOptions}. The route fires it off without
+ * awaiting it and the viewer suspends on it, leaving the header free to render
+ * as soon as the metadata lands.
+ */
+export function analysisResultsQueryOptions(analysisId: number) {
+	return queryOptions<AnalysisResults, Error>({
+		queryKey: analysesQueryKeys.results(analysisId),
+		queryFn: () => getAnalysisResultsFn({ data: { analysisId } }),
+	});
+}
+
+/**
+ * Fetch an analysis's results, suspending until they arrive — loading is handled
+ * by the viewer's `<Suspense>` and errors by the route's `errorComponent`.
+ */
+export function useSuspenseAnalysisResults(analysisId: number) {
+	return useSuspenseQuery(analysisResultsQueryOptions(analysisId));
 }
 
 export type CreateAnalysisParams = {

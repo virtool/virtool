@@ -24,12 +24,28 @@ export function num(value: unknown, fallback: number): number {
 	return typeof value === "number" && Number.isFinite(value) ? value : fallback;
 }
 
-export function bool(value: unknown, fallback: boolean): boolean {
-	return typeof value === "boolean" ? value : fallback;
+/**
+ * Coerce a number, discarding one outside `[min, max]`.
+ *
+ * A cutoff a hand-edited URL puts out of range would silently filter a list to
+ * nothing, so it reads as absent and the fallback stands.
+ */
+export function numInRange(
+	value: unknown,
+	min: number,
+	max: number,
+	fallback: number,
+): number {
+	return typeof value === "number" &&
+		Number.isFinite(value) &&
+		value >= min &&
+		value <= max
+		? value
+		: fallback;
 }
 
-export function boolOptional(value: unknown): boolean | undefined {
-	return typeof value === "boolean" ? value : undefined;
+export function bool(value: unknown, fallback: boolean): boolean {
+	return typeof value === "boolean" ? value : fallback;
 }
 
 export function numberArray(value: unknown, fallback: number[]): number[] {
@@ -43,6 +59,14 @@ export function stringArray(value: unknown, fallback: string[]): string[] {
 	return Array.isArray(value) && value.every((item) => typeof item === "string")
 		? (value as string[])
 		: fallback;
+}
+
+export function oneOf<T extends string>(
+	value: unknown,
+	allowed: ReadonlyArray<T>,
+	fallback: T,
+): T {
+	return allowed.includes(value as T) ? (value as T) : fallback;
 }
 
 export function oneOfOptional<T extends string>(

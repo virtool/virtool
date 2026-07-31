@@ -225,6 +225,46 @@ describe("getAnalysis", () => {
 	});
 });
 
+describe("getAnalysisResults", () => {
+	it("returns 404 for an analysis that does not exist", async () => {
+		await signInAsNewUser();
+
+		await expect(
+			call("getAnalysisResultsFn", { analysisId: 123456 }),
+		).rejects.toBeInstanceOf(ClientError);
+		expect(setResponseStatus).toHaveBeenCalledWith(404);
+		expect(setResponseStatus).not.toHaveBeenCalledWith(403);
+	});
+
+	it("returns 403 when the caller may not read the parent sample", async () => {
+		const sampleId = await seedSample({ all_read: false });
+		const analysisId = await seedAnalysis({ sample_id: sampleId });
+
+		await signInAsNewUser();
+
+		await expect(
+			call("getAnalysisResultsFn", { analysisId }),
+		).rejects.toBeInstanceOf(ForbiddenError);
+		expect(setResponseStatus).toHaveBeenCalledWith(403);
+	});
+
+	it("allows a caller holding only the sample's read right", async () => {
+		const analysisId = await seedReadOnlyAnalysis({
+			ready: true,
+			results: { hits: [], read_count: 12, subtracted_count: 0 },
+			workflow: "pathoscope",
+		});
+
+		await signInAsNewUser();
+
+		expect(await call("getAnalysisResultsFn", { analysisId })).toEqual({
+			hits: [],
+			readCount: 12,
+			subtractedCount: 0,
+		});
+	});
+});
+
 describe("createAnalysis", () => {
 	function values(sampleId: number, overrides: Record<string, unknown> = {}) {
 		return {

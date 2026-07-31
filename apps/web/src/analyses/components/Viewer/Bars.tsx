@@ -1,6 +1,4 @@
 import { cn } from "@app/cn";
-import type { ReactNode } from "react";
-import { BarsLegendItem } from "./BarsLegendItem";
 import { type BarColor, bgColorClasses } from "./colors";
 
 type BarItemProps = {
@@ -20,37 +18,35 @@ function BarItem({ color, empty, size }: BarItemProps) {
 	);
 }
 
-/** A single coloured segment and legend entry in a {@link Bars} chart */
+/** A single coloured segment in a {@link Bars} chart */
 export type BarsItem = {
 	color: BarColor;
 	count: number;
-	title: ReactNode;
 };
 
 type BarsProps = {
+	/** The count left uncoloured at the end of the bar. */
 	empty?: number;
+
 	items: BarsItem[];
+
+	/** Describes the bar to readers who can't see it. */
+	label: string;
 };
 
-export function Bars({ empty, items }: BarsProps) {
+export function Bars({ empty = 0, items, label }: BarsProps) {
+	const emptySize = Math.max(0, empty);
+
 	return (
-		<div className="relative mb-2.5">
-			<div className="flex h-8 mb-4 overflow-hidden border border-gray-300 rounded-md z-10">
-				{items.map(({ color, count }) => (
-					<BarItem key={color} color={color} size={count} />
-				))}
-				{empty && <BarItem key="empty" empty size={empty} />}
-			</div>
-			<div>
-				{items.map(({ color, count, title }) => (
-					<BarsLegendItem
-						key={color}
-						color={color}
-						count={count}
-						title={title}
-					/>
-				))}
-			</div>
+		<div
+			aria-label={label}
+			className="flex h-6 overflow-hidden border border-gray-300 rounded-md"
+			role="img"
+		>
+			{items.map(({ color, count }) => (
+				<BarItem key={color} color={color} size={count} />
+			))}
+			{emptySize > 0 && <BarItem empty size={emptySize} />}
 		</div>
 	);
 }

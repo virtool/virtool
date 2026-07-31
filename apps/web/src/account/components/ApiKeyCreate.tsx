@@ -1,3 +1,4 @@
+import { writeToClipboard } from "@app/clipboard";
 import { cn } from "@app/cn";
 import Button from "@base/Button";
 import { buttonVariants } from "@base/buttonVariants";
@@ -71,7 +72,7 @@ export default function ApiKeyCreate() {
 	}
 
 	function copyToClipboard() {
-		navigator.clipboard.writeText(newKey).then(() => setCopied(true));
+		writeToClipboard(newKey).then(() => setCopied(true));
 	}
 
 	return (

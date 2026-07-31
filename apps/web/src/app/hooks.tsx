@@ -84,17 +84,35 @@ export function useElementSize<T extends HTMLElement>(): [
 	const [size, setSize] = useState<Size>({ height: 0, width: 0 });
 
 	useEffect(() => {
-		function handleResize() {
-			const element = ref.current;
-			setSize({
-				height: element?.offsetHeight ?? 0,
-				width: element?.offsetWidth ?? 0,
-			});
+		const element = ref.current;
+
+		function measure() {
+			const height = element?.offsetHeight ?? 0;
+			const width = element?.offsetWidth ?? 0;
+
+			setSize((current) =>
+				current.height === height && current.width === width
+					? current
+					: { height, width },
+			);
 		}
 
-		handleResize();
-		window.addEventListener("resize", handleResize);
-		return () => window.removeEventListener("resize", handleResize);
+		measure();
+
+		if (!element) {
+			return;
+		}
+
+		// The element is observed rather than the window, because it resizes
+		// without the window doing so: a list growing past the viewport takes a
+		// scrollbar and narrows everything beside it. Measured once, a chart stays
+		// laid out to a width it no longer has, and leaves a strip of its container
+		// undrawn down the right-hand side.
+		const observer = new ResizeObserver(measure);
+
+		observer.observe(element);
+
+		return () => observer.disconnect();
 	}, []);
 
 	return [ref, size];

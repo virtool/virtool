@@ -130,19 +130,26 @@ export type AnalysisFile = {
 };
 
 /**
- * A complete analysis, as returned by the detail endpoint.
+ * An analysis, as returned by the detail endpoint.
  *
- * `results` is the workflow's own output. Its internals are the worker's
- * contract — the keys inside stay exactly as the workflow emitted them, and are
- * not renamed to this package's camelCase convention.
+ * The results are not part of this shape. They are the expensive half of an
+ * analysis and are fetched on their own, so that what a viewer can draw
+ * immediately does not wait on what it cannot.
  */
 export type Analysis = AnalysisMinimal & {
 	/** Files generated during the analysis that are available for download */
 	files: AnalysisFile[];
-
-	/** The results of the analysis, shaped for presentation */
-	results: JsonObject | null;
 };
+
+/**
+ * The results of an analysis, shaped for presentation, or null if it has not
+ * finished.
+ *
+ * The internals are the worker's contract — the keys inside stay exactly as the
+ * workflow emitted them, and are not renamed to this package's camelCase
+ * convention.
+ */
+export type AnalysisResults = JsonObject | null;
 
 /** A page of analyses. */
 export type AnalysisSearchResult = SearchResult & {

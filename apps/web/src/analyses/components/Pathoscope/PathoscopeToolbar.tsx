@@ -1,35 +1,44 @@
 import { useAnalysisSearch } from "@analyses/components/AnalysisSearchContext";
+import { DEFAULT_SORT_KEY } from "@analyses/search";
+import type { FormattedPathoscopeAnalysis } from "@analyses/types";
+import Button from "@base/Button";
+import ButtonGroup from "@base/ButtonGroup";
 import ButtonToggle from "@base/ButtonToggle";
-import Dropdown from "@base/Dropdown";
-import DropdownButton from "@base/DropdownButton";
-import DropdownMenuContent from "@base/DropdownMenuContent";
-import DropdownMenuDownload from "@base/DropdownMenuDownload";
 import Icon from "@base/Icon";
 import SearchToolbar from "@base/SearchToolbar";
+import ToggleGroup from "@base/ToggleGroup";
+import ToggleGroupItem from "@base/ToggleGroupItem";
 import Tooltip from "@base/Tooltip";
 import {
+	ArrowDownAZ,
 	ArrowDownWideNarrow,
+	ArrowUpAZ,
 	ArrowUpWideNarrow,
-	ChevronDown,
-	File,
-	FileDown,
+	ChartArea,
+	Hash,
+	Table,
 } from "lucide-react";
 import { AnalysisViewerSort } from "../Viewer/Sort";
+import { collapsingLabel } from "./collapsingLabel";
+import PathoscopeExport from "./PathoscopeExport";
+import PathoscopeFilter from "./PathoscopeFilter";
 
 type PathoscopeToolbarProps = {
-	/** The unique identifier the analysis being viewed */
-	analysisId: number;
+	/** The analysis being viewed */
+	analysis: FormattedPathoscopeAnalysis;
 };
 
 /** A selection of filters and toggles for pathoscope data presentation */
-export function PathoscopeToolbar({ analysisId }: PathoscopeToolbarProps) {
+export function PathoscopeToolbar({ analysis }: PathoscopeToolbarProps) {
 	const { search, setSearch } = useAnalysisSearch();
-	const filterOtus = search.filterOtus ?? true;
-	const filterIsolates = search.filterIsolates ?? true;
-	const find = search.find ?? "";
-	const showReads = search.reads ?? false;
-	const sortKey = search.sort ?? "coverage";
-	const sortDesc = search.sortDesc ?? true;
+	const { dir, find, reads, table } = search;
+	const sortKey = search.sort ?? DEFAULT_SORT_KEY.pathoscope;
+
+	// The wide-to-narrow arrows read as magnitude, which a name sort is not.
+	const directionIcons =
+		sortKey === "name"
+			? { asc: ArrowUpAZ, desc: ArrowDownAZ }
+			: { asc: ArrowUpWideNarrow, desc: ArrowDownWideNarrow };
 
 	return (
 		<SearchToolbar
@@ -37,56 +46,50 @@ export function PathoscopeToolbar({ analysisId }: PathoscopeToolbarProps) {
 			onChange={(find) => setSearch({ find })}
 			value={find}
 		>
-			<AnalysisViewerSort
-				workflow="pathoscope"
-				sortKey={sortKey}
-				onSelect={(sort) => setSearch({ sort })}
-			/>
-			<ButtonToggle
-				onPressedChange={(sortDesc) => setSearch({ sortDesc })}
-				pressed={Boolean(sortDesc)}
+			<ButtonGroup>
+				<AnalysisViewerSort
+					workflow="pathoscope"
+					sortKey={sortKey}
+					onSelect={(sort) => setSearch({ sort })}
+				/>
+				<Button
+					aria-label={dir === "desc" ? "Sort ascending" : "Sort descending"}
+					onClick={() => setSearch({ dir: dir === "desc" ? "asc" : "desc" })}
+				>
+					<Icon
+						icon={dir === "desc" ? directionIcons.desc : directionIcons.asc}
+					/>
+				</Button>
+			</ButtonGroup>
+			<ToggleGroup
+				onValueChange={(value) => setSearch({ table: value === "table" })}
+				value={table ? "table" : "charts"}
 			>
-				<Icon icon={sortDesc ? ArrowDownWideNarrow : ArrowUpWideNarrow} />
-			</ButtonToggle>
+				<Tooltip tip="Chart view">
+					<ToggleGroupItem aria-label="Charts" value="charts">
+						<Icon icon={ChartArea} />
+						<span className={collapsingLabel}>Charts</span>
+					</ToggleGroupItem>
+				</Tooltip>
+				<Tooltip tip="Table view">
+					<ToggleGroupItem aria-label="Table" value="table">
+						<Icon icon={Table} />
+						<span className={collapsingLabel}>Table</span>
+					</ToggleGroupItem>
+				</Tooltip>
+			</ToggleGroup>
 			<Tooltip tip="Show read pseudo-counts instead of weight">
 				<ButtonToggle
+					aria-label="Show Reads"
 					onPressedChange={(reads) => setSearch({ reads })}
-					pressed={Boolean(showReads)}
+					pressed={reads}
 				>
-					Show Reads
+					<Icon icon={Hash} />
+					<span className={collapsingLabel}>Show Reads</span>
 				</ButtonToggle>
 			</Tooltip>
-			<Tooltip tip="Hide OTUs with low coverage support">
-				<ButtonToggle
-					onPressedChange={(filterOtus) => setSearch({ filterOtus })}
-					pressed={Boolean(filterOtus)}
-				>
-					Filter OTUs
-				</ButtonToggle>
-			</Tooltip>
-			<Tooltip tip="Hide isolates with low coverage support">
-				<ButtonToggle
-					onPressedChange={(filterIsolates) => setSearch({ filterIsolates })}
-					pressed={Boolean(filterIsolates)}
-				>
-					Filter Isolates
-				</ButtonToggle>
-			</Tooltip>
-			<Dropdown>
-				<DropdownButton>
-					<span>
-						<Icon icon={FileDown} /> Export <Icon icon={ChevronDown} />
-					</span>
-				</DropdownButton>
-				<DropdownMenuContent>
-					<DropdownMenuDownload href={`/analyses/documents/${analysisId}.csv`}>
-						<Icon icon={File} /> CSV
-					</DropdownMenuDownload>
-					<DropdownMenuDownload href={`/analyses/documents/${analysisId}.xlsx`}>
-						<Icon icon={File} /> Excel
-					</DropdownMenuDownload>
-				</DropdownMenuContent>
-			</Dropdown>
+			<PathoscopeFilter />
+			<PathoscopeExport analysis={analysis} />
 		</SearchToolbar>
 	);
 }

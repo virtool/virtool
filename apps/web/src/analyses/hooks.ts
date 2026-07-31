@@ -1,4 +1,5 @@
 import { useAnalysisSearch } from "@analyses/components/AnalysisSearchContext";
+import { DEFAULT_SORT_KEY } from "@analyses/search";
 import { createFuse } from "@app/fuse";
 import { useListReadyIndexes } from "@indexes/queries";
 import { useFetchSample } from "@samples/queries";
@@ -13,48 +14,84 @@ import type {
 } from "./types";
 
 /**
- * The hit field a pathoscope sort key names.
+ * The value a pathoscope sort key ranks a hit by.
  *
  * The toolbar calls `pi` "Weight", because that is the term the results are
  * described in and nobody outside the workflow knows what pi is. The key it puts
  * in the URL is therefore not a field name, and sorting by it read `undefined`
  * off every hit — leaving the list in whatever order it already had.
+ *
+ * Names are compared lower-cased, so an OTU named "adenovirus" is not ranked
+ * behind every capitalised name by the codepoint order a raw comparison gives.
  */
-function pathoscopeSortField(sort: string | undefined): keyof PathoscopeHit {
-	if (sort === "weight") {
-		return "pi";
+function pathoscopeSortValue(
+	hit: PathoscopeHit,
+	sortKey: string,
+): number | string {
+	switch (sortKey) {
+		case "name":
+			return hit.name.toLowerCase();
+		case "weight":
+			return hit.pi;
+		case "depth":
+			return hit.depth;
+		default:
+			return hit.coverage;
 	}
+}
 
-	return sort === "depth" ? "depth" : "coverage";
+/**
+ * The value a NuVs sort key ranks a contig by.
+ *
+ * "Length" is the length of the contig's own sequence. A `NuvsHit` carries no
+ * `length` field — reading the key off the hit gave `undefined` for every one of
+ * them, so the list stayed in the workflow's output order while the toolbar
+ * reported it was sorted by length.
+ *
+ * A contig with no ORF hits has no e-value. It ranks last rather than first,
+ * where `null` would otherwise put it: it is the absence of a hit, not the
+ * strongest one.
+ */
+function nuvsSortValue(hit: FormattedNuvsHit, sortKey: string): number {
+	switch (sortKey) {
+		case "e":
+			return hit.e ?? Number.POSITIVE_INFINITY;
+		case "orfs":
+			return hit.annotatedOrfCount;
+		default:
+			return hit.sequence.length;
+	}
 }
 
 /** Sort and filter a list of pathoscope hits  */
 export function useSortAndFilterPathoscopeHits(
 	detail: FormattedPathoscopeAnalysis,
-	maxReadLength: number,
 ) {
 	let hits = detail.results.hits;
 
 	const {
-		search: { find, filterOtus, sort, sortDesc },
+		search: { dir, find, minCoverage, showLowOtus, sort },
 	} = useAnalysisSearch();
 
 	const fuse = createFuse(hits, ["name", "abbreviation"]);
 
 	if (find) {
-		hits = fuse.search(String(find)).map((result) => result.item);
+		hits = fuse.search(find).map((result) => result.item);
 	}
 
-	if (filterOtus) {
-		hits = hits.filter(
-			(hit) =>
-				hit.pi * detail.results.readCount >= (hit.length * 0.8) / maxReadLength,
-		);
+	// Measured breadth, not a read budget: reads piled onto one conserved locus
+	// buy an OTU the reads to tile its genome without covering any more of it.
+	if (!showLowOtus) {
+		hits = hits.filter((hit) => hit.coverage >= minCoverage);
 	}
 
-	const sortedHits = sortBy(hits, [(hit) => hit[pathoscopeSortField(sort)]]);
+	const sortedHits = sortBy(hits, [
+		(hit) => pathoscopeSortValue(hit, sort ?? DEFAULT_SORT_KEY.pathoscope),
+	]);
 
-	if (sortDesc) {
+	// Descending is the default: a freshly-opened analysis should lead with its
+	// strongest hits, not its weakest.
+	if (dir === "desc") {
 		sortedHits.reverse();
 	}
 
@@ -66,37 +103,39 @@ export function useSortAndFilterNuVsHits(detail: FormattedNuvsAnalysis) {
 	let hits = detail.results.hits;
 
 	const {
-		search: { find, filterSequences, sort },
+		search: { find, showUnhitSequences, sort },
 	} = useAnalysisSearch();
 
 	const fuse = createFuse(hits, ["names", "families"]);
 
 	if (find) {
-		hits = fuse.search(String(find)).map((result) => result.item);
+		hits = fuse.search(find).map((result) => result.item);
 	}
 
-	if (filterSequences) {
+	if (!showUnhitSequences) {
 		hits = hits.filter((hit) => hit.e !== null);
 	}
 
-	const sortedHits =
-		sort === "orfs"
-			? sortBy(hits, [(hit) => hit.annotatedOrfCount]).reverse()
-			: sortBy(hits, [(hit) => hit[sort as keyof FormattedNuvsHit]]);
+	const sortKey = sort ?? DEFAULT_SORT_KEY.nuvs;
+
+	const sortedHits = sortBy(hits, [(hit) => nuvsSortValue(hit, sortKey)]);
+
+	// The lowest e-value is the strongest hit, so that key alone reads upward.
+	if (sortKey !== "e") {
+		sortedHits.reverse();
+	}
 
 	return sortedHits;
 }
 
 export function useActiveHit(matches: FormattedNuvsHit[]) {
 	const {
-		search: { activeHit },
+		search: { hit },
 	} = useAnalysisSearch();
 
-	if (activeHit) {
+	if (hit) {
 		return (
-			matches.find((match) => match.id === Number(activeHit)) ??
-			matches[0] ??
-			null
+			matches.find((match) => match.id === Number(hit)) ?? matches[0] ?? null
 		);
 	}
 

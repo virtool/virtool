@@ -35,6 +35,7 @@ import {
 	findAnalyses,
 	findNuvsSequenceByIndex,
 	getAnalysis,
+	getAnalysisResults,
 } from "./data";
 
 let database: TestDatabase;
@@ -412,10 +413,30 @@ describe("getAnalysis", () => {
 		);
 	});
 
-	it("returns null results for an unfinished analysis", async () => {
+	it("does not carry the results", async () => {
+		const analysisId = await seedAnalysisOnNewSample({
+			workflow: "pathoscope",
+			ready: true,
+			results: { hits: [] },
+		});
+
+		// Not merely null — absent. Reading the TOASTed column is the expense this
+		// split exists to keep off the metadata request.
+		expect("results" in (await getAnalysis(db, analysisId))).toBe(false);
+	});
+});
+
+describe("getAnalysisResults", () => {
+	it("throws when the analysis does not exist", async () => {
+		await expect(getAnalysisResults(db, 123456)).rejects.toBeInstanceOf(
+			AnalysisNotFoundError,
+		);
+	});
+
+	it("returns null for an unfinished analysis", async () => {
 		const analysisId = await seedAnalysisOnNewSample({ ready: false });
 
-		expect((await getAnalysis(db, analysisId)).results).toBeNull();
+		expect(await getAnalysisResults(db, analysisId)).toBeNull();
 	});
 
 	it("leaves an unfinished analysis's results unformatted", async () => {
@@ -429,7 +450,7 @@ describe("getAnalysis", () => {
 			results,
 		});
 
-		expect((await getAnalysis(db, analysisId)).results).toEqual(results);
+		expect(await getAnalysisResults(db, analysisId)).toEqual(results);
 	});
 
 	it("merges NuVs BLAST records onto the hit with the matching index", async () => {
@@ -457,7 +478,7 @@ describe("getAnalysis", () => {
 			updated_at: timestamp,
 		});
 
-		const results = (await getAnalysis(db, analysisId)).results as {
+		const results = (await getAnalysisResults(db, analysisId)) as unknown as {
 			hits: { index: number; blast: Record<string, unknown> | null }[];
 		};
 
@@ -493,7 +514,6 @@ describe("createAnalysis", () => {
 
 		expect(analysis.workflow).toBe("nuvs");
 		expect(analysis.ready).toBe(false);
-		expect(analysis.results).toBeNull();
 		expect(analysis.sample).toEqual({ id: sampleId });
 		expect(analysis.index).toEqual({ id: indexId, version: 1 });
 		expect(analysis.subtractions.map((subtraction) => subtraction.id)).toEqual([

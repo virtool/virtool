@@ -42,4 +42,22 @@ describe("<AnalysisViewerSort />", () => {
 
 		expect(onSelect).toHaveBeenCalledWith("weight");
 	});
+
+	it("should offer sorting pathoscope hits by name", async () => {
+		const onSelect = vi.fn();
+
+		renderWithProviders(
+			<AnalysisViewerSort
+				workflow="pathoscope"
+				sortKey="name"
+				onSelect={onSelect}
+			/>,
+		);
+
+		await userEvent.click(screen.getByRole("button", { name: "Sort by Name" }));
+
+		expect(
+			await screen.findByRole("menuitemradio", { name: "Name" }),
+		).toBeChecked();
+	});
 });

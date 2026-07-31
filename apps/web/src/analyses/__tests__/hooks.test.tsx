@@ -3,6 +3,7 @@ import {
 	useSortAndFilterNuVsHits,
 	useSortAndFilterPathoscopeHits,
 } from "@analyses/hooks";
+import { type AnalysisSearch, DEFAULT_ANALYSIS_SEARCH } from "@analyses/search";
 import type {
 	FormattedNuvsAnalysis,
 	FormattedNuvsHit,
@@ -16,56 +17,78 @@ import { describe, expect, it, vi } from "vitest";
 function createHit(overrides: Partial<PathoscopeHit>): PathoscopeHit {
 	return {
 		abbreviation: "",
-		align: [],
 		coverage: 0,
 		depth: 0,
 		id: "otu",
 		isolates: [],
 		length: 100,
 		maxDepth: 0,
-		maxGenomeLength: 100,
 		name: "OTU",
 		pi: 0,
+		segments: [],
 		version: 1,
 		...overrides,
 	};
 }
 
-// Three hits whose coverage, depth and weight each rank them differently, so a
-// sort that reads the wrong field cannot accidentally produce the right order.
+// Three hits whose name, coverage, depth and weight each rank them differently,
+// so a sort that reads the wrong field cannot accidentally produce the right
+// order. Only one name is capitalised out of alphabetical order, so a raw
+// codepoint comparison ranks them differently again.
 const hits = [
-	createHit({ id: "a", name: "A", coverage: 0.1, depth: 30, pi: 0.5 }),
-	createHit({ id: "b", name: "B", coverage: 0.9, depth: 10, pi: 0.2 }),
-	createHit({ id: "c", name: "C", coverage: 0.5, depth: 20, pi: 0.9 }),
+	createHit({
+		id: "a",
+		name: "adenovirus",
+		coverage: 0.1,
+		depth: 30,
+		pi: 0.5,
+	}),
+	createHit({
+		id: "b",
+		name: "Betaflexivirus",
+		coverage: 0.9,
+		depth: 10,
+		pi: 0.2,
+	}),
+	createHit({
+		id: "c",
+		name: "Cucumovirus",
+		coverage: 0.5,
+		depth: 20,
+		pi: 0.9,
+	}),
 ];
 
-type Search = {
-	filterSequences?: boolean;
-	find?: string;
-	sort?: string;
-	sortDesc?: boolean;
-};
-
-function createWrapper(search: Search) {
+function createWrapper(search: Partial<AnalysisSearch>) {
 	return function wrapper({ children }: { children: ReactNode }) {
 		return (
-			<AnalysisSearchProvider search={search} setSearch={vi.fn()}>
+			<AnalysisSearchProvider
+				search={{ ...DEFAULT_ANALYSIS_SEARCH, ...search }}
+				setSearch={vi.fn()}
+			>
 				{children}
 			</AnalysisSearchProvider>
 		);
 	};
 }
 
-function renderSort(sort?: string, sortDesc?: boolean) {
+// `dir` always has a value on a real route — the URL only ever narrows the
+// default — so passing none here means the default, not `undefined`.
+function renderSort(
+	sort?: string,
+	dir: "asc" | "desc" = DEFAULT_ANALYSIS_SEARCH.dir,
+) {
 	const analysis = {
 		results: { hits, readCount: 1000, subtractedCount: 0 },
 	} as FormattedPathoscopeAnalysis;
 
-	// A read length of zero would make the OTU filter's threshold infinite, so
-	// pass a realistic one. `filterOtus` is off here regardless.
 	const { result } = renderHook(
-		() => useSortAndFilterPathoscopeHits(analysis, 150),
-		{ wrapper: createWrapper({ sort, sortDesc }) },
+		() => useSortAndFilterPathoscopeHits(analysis),
+		{
+			// Sorting only, so nothing is held back by the coverage filter the
+			// viewer opens with.
+			wrapper: createWrapper({ sort, dir, showLowOtus: true }),
+		},
 	);
 
 	return result.current.map((hit) => hit.id);
@@ -75,22 +98,45 @@ describe("useSortAndFilterPathoscopeHits()", () => {
 	it("should sort by weight, which is the hit's pi", () => {
 		// The toolbar labels `pi` "Weight" and puts that word in the URL, so the
 		// key it emits is not a field on the hit.
-		expect(renderSort("weight")).toEqual(["b", "a", "c"]);
-		expect(renderSort("weight", true)).toEqual(["c", "a", "b"]);
+		expect(renderSort("weight", "asc")).toEqual(["b", "a", "c"]);
+		expect(renderSort("weight", "desc")).toEqual(["c", "a", "b"]);
 	});
 
 	it("should sort by coverage", () => {
-		expect(renderSort("coverage")).toEqual(["a", "c", "b"]);
+		expect(renderSort("coverage", "asc")).toEqual(["a", "c", "b"]);
 	});
 
 	it("should sort by depth", () => {
-		expect(renderSort("depth")).toEqual(["b", "c", "a"]);
+		expect(renderSort("depth", "asc")).toEqual(["b", "c", "a"]);
 	});
 
-	it("should sort by coverage when no key has been chosen", () => {
-		// The toolbar shows Coverage as the default, so an untouched list has to be
-		// in the order it claims.
-		expect(renderSort(undefined, true)).toEqual(["b", "c", "a"]);
+	it("should sort by name, ignoring case", () => {
+		// A raw codepoint comparison would rank "adenovirus" behind every
+		// capitalised name, giving ["b", "c", "a"] ascending.
+		expect(renderSort("name", "asc")).toEqual(["a", "b", "c"]);
+		expect(renderSort("name", "desc")).toEqual(["c", "b", "a"]);
+	});
+
+	it("should default to coverage, descending, when nothing has been chosen", () => {
+		// A freshly-opened analysis should lead with its strongest hits.
+		expect(renderSort()).toEqual(["b", "c", "a"]);
+	});
+
+	// The switch that turns this off draws itself pressed on an untouched URL,
+	// so an untouched URL has to filter — the two read one resolved param now
+	// rather than defaulting apart.
+	it("should hold hits to the cutoff when the URL says nothing", () => {
+		const analysis = {
+			results: { hits, readCount: 1000, subtractedCount: 0 },
+		} as FormattedPathoscopeAnalysis;
+
+		const { result } = renderHook(
+			() => useSortAndFilterPathoscopeHits(analysis),
+			{ wrapper: createWrapper({}) },
+		);
+
+		// Only "a", at 0.1 coverage, is under the 0.5 default.
+		expect(result.current.map((hit) => hit.id)).toEqual(["b", "c"]);
 	});
 });
 
@@ -135,9 +181,12 @@ const nuvsHits = [
 	}),
 ];
 
-function renderNuvs(search: Search) {
+function renderNuvs(
+	search: Partial<AnalysisSearch>,
+	hits: FormattedNuvsHit[] = nuvsHits,
+) {
 	const analysis = {
-		results: { hits: nuvsHits, maxSequenceLength: 4 },
+		results: { hits, maxSequenceLength: 4 },
 	} as FormattedNuvsAnalysis;
 
 	const { result } = renderHook(() => useSortAndFilterNuVsHits(analysis), {
@@ -161,20 +210,53 @@ describe("useSortAndFilterNuVsHits()", () => {
 	it("should hide only the contigs with no e-value when filtering", () => {
 		// An e-value of zero is the strongest hit there is, so a filter that tests
 		// for truthiness rather than for null would drop the best contig.
-		expect(renderNuvs({ filterSequences: true }).toSorted()).toEqual([1, 2]);
+		expect(renderNuvs({}).toSorted()).toEqual([1, 2]);
 	});
 
 	it("should keep unannotated contigs when not filtering", () => {
-		expect(renderNuvs({ filterSequences: false }).toSorted()).toEqual([
+		expect(renderNuvs({ showUnhitSequences: true }).toSorted()).toEqual([
 			1, 2, 3,
 		]);
 	});
 
 	it("should sort by e-value, lowest first", () => {
-		expect(renderNuvs({ filterSequences: true, sort: "e" })).toEqual([2, 1]);
+		expect(renderNuvs({ sort: "e" })).toEqual([2, 1]);
 	});
 
 	it("should sort by annotated ORF count, highest first", () => {
-		expect(renderNuvs({ sort: "orfs" })).toEqual([2, 3, 1]);
+		expect(renderNuvs({ showUnhitSequences: true, sort: "orfs" })).toEqual([
+			2, 3, 1,
+		]);
+	});
+
+	// A contig's length is the length of its own sequence. A hit carries no
+	// `length` field, so reading the key off the hit ranked every contig by
+	// `undefined` and left the list in the workflow's output order — while the
+	// toolbar reported it was sorted by length.
+	it("should sort by contig length, longest first", () => {
+		const byLength = [
+			createNuvsHit({ id: 1, e: 0.5, sequence: "AT" }),
+			createNuvsHit({ id: 2, e: 0.5, sequence: "ATGCAT" }),
+			createNuvsHit({ id: 3, e: 0.5, sequence: "ATGC" }),
+		];
+
+		expect(renderNuvs({ sort: "length" }, byLength)).toEqual([2, 3, 1]);
+	});
+
+	it("should sort by contig length by default", () => {
+		const byLength = [
+			createNuvsHit({ id: 1, e: 0.5, sequence: "AT" }),
+			createNuvsHit({ id: 2, e: 0.5, sequence: "ATGCAT" }),
+		];
+
+		expect(renderNuvs({}, byLength)).toEqual([2, 1]);
+	});
+
+	// The absence of a hit, not the strongest one — `null` would otherwise lead
+	// the list it belongs at the end of.
+	it("should rank a contig with no e-value last", () => {
+		expect(renderNuvs({ showUnhitSequences: true, sort: "e" })).toEqual([
+			2, 1, 3,
+		]);
 	});
 });

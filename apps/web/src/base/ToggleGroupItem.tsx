@@ -1,29 +1,39 @@
 import { cn } from "@app/cn";
 import { ToggleGroup as ToggleGroupPrimitive } from "radix-ui";
-import type { ReactNode } from "react";
+import type { ComponentPropsWithRef } from "react";
 import { buttonVariants } from "./buttonVariants";
 
-type ToggleGroupItemProps = {
-	children: ReactNode;
-	value: string;
+/**
+ * Props for one member of a toggle group.
+ *
+ * Everything Radix's `ToggleGroup.Item` accepts flows through the rest spread,
+ * so a `Tooltip` wrapping a member can hand its behaviour down.
+ */
+type ToggleGroupItemProps = ComponentPropsWithRef<
+	typeof ToggleGroupPrimitive.Item
+> & {
+	/** Written by a wrapping tooltip trigger. Dropped — see below. */
+	"data-state"?: string;
 };
 
 export default function ToggleGroupItem({
-	children,
-	value,
+	className,
+	// A tooltip trigger publishes its open state on whatever it wraps. Forwarded,
+	// it would overwrite the on/off state the group sets here, so hovering a
+	// member would read as deselecting it.
+	"data-state": _tooltipState,
+	...props
 }: ToggleGroupItemProps) {
 	return (
 		<ToggleGroupPrimitive.Item
 			className={cn(
 				buttonVariants(),
 				"rounded-none",
-				"aria-checked:bg-gray-300",
 				"first:rounded-l-md",
 				"last:rounded-r-md",
+				className,
 			)}
-			value={value}
-		>
-			{children}
-		</ToggleGroupPrimitive.Item>
+			{...props}
+		/>
 	);
 }

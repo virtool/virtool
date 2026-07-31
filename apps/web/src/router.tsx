@@ -1,5 +1,6 @@
 import { handleQueryError, shouldRetryQuery } from "@app/queryErrors";
 import { readSentryDsn } from "@app/sentryDsn";
+import LoadingPlaceholder from "@base/LoadingPlaceholder";
 import RouteError from "@base/RouteError";
 import * as Sentry from "@sentry/tanstackstart-react";
 import { MutationCache, QueryCache, QueryClient } from "@tanstack/react-query";
@@ -29,6 +30,14 @@ export function getRouter() {
 		// from `useSuspenseQuery` during render, so a failed query surfaces a
 		// real error state instead of an indefinite loading placeholder.
 		defaultErrorComponent: RouteError,
+		// Without a pending component, a route's loader gets no loading state at
+		// all on a soft navigation: `setupPendingTimeout` only arms the
+		// `defaultPendingMs` timer when `pendingComponent ?? defaultPendingComponent`
+		// is set, so `onReady` never fires early and the router leaves the
+		// *previous* page on screen for however long the loader runs. Routes whose
+		// loader is instant are unaffected — the timer never elapses — so this only
+		// shows up where the wait is real (a pathoscope analysis document).
+		defaultPendingComponent: LoadingPlaceholder,
 		// `defaultPendingMinMs` is deliberately left at the router's default. Do
 		// not set it to 0: on a hard load, `hydrate()` only arms `_forcePending`
 		// when it is truthy, and that flag is what makes `loadMatches` commit the

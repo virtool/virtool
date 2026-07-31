@@ -114,7 +114,7 @@ export default function NuvsList({ detail }: NuVsListProps) {
 		nextIndex,
 		previousId,
 		previousIndex,
-		(activeHit) => setSearch({ activeHit }),
+		(id) => setSearch({ hit: id }),
 	);
 
 	const hitComponents = sortedHits.map((hit) => (
@@ -122,7 +122,7 @@ export default function NuvsList({ detail }: NuVsListProps) {
 			key={hit.id}
 			activeHit={activeHit}
 			hit={hit}
-			setActiveHit={(activeHit) => setSearch({ activeHit })}
+			setActiveHit={(id) => setSearch({ hit: id })}
 		/>
 	));
 
@@ -166,7 +166,7 @@ export default function NuvsList({ detail }: NuVsListProps) {
 			</div>
 			<NuvsDetail
 				analysisId={detail.id}
-				filterORFs={search.filterOrfs ?? true}
+				filterORFs={!search.showUnhitOrfs}
 				matches={sortedHits}
 				maxSequenceLength={detail.results.maxSequenceLength}
 			/>

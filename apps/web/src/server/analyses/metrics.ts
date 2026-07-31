@@ -2,11 +2,11 @@
 // per-position alignments.
 //
 // These are computed here, before `transformCoverageToCoordinates` reduces an
-// alignment to the handful of points a chart draws. Deriving them from the
-// simplified polyline instead — which is what the client used to do — reads a
-// lossy reconstruction: Visvalingam-Whyatt drops points, and re-expanding
-// carries the previous depth forward across each gap, so a discarded
-// return-to-zero overstates coverage and depth.
+// alignment to the points a chart draws. Deriving them from the reduced polyline
+// instead — which is what the client used to do — reads a lossy reconstruction:
+// the reduction keeps one point per column, and re-expanding carries the
+// previous depth forward across each gap, so a dropped return-to-zero overstates
+// coverage and depth.
 
 import { median } from "es-toolkit";
 

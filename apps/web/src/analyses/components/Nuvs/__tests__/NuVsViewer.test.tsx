@@ -1,5 +1,6 @@
 import { AnalysisSearchProvider } from "@analyses/components/AnalysisSearchContext";
 import NuvsViewer from "@analyses/components/Nuvs/NuvsViewer";
+import { type AnalysisSearch, DEFAULT_ANALYSIS_SEARCH } from "@analyses/search";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
@@ -11,13 +12,16 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 function renderWithAnalysisSearch(
 	ui: React.ReactElement,
-	search: { activeHit?: string } = {},
+	search: Partial<AnalysisSearch> = {},
 ) {
 	const queryClient = new QueryClient();
 
 	return render(
 		<QueryClientProvider client={queryClient}>
-			<AnalysisSearchProvider search={search} setSearch={vi.fn()}>
+			<AnalysisSearchProvider
+				search={{ ...DEFAULT_ANALYSIS_SEARCH, ...search }}
+				setSearch={vi.fn()}
+			>
 				<MemoryRouter>{ui}</MemoryRouter>
 			</AnalysisSearchProvider>
 		</QueryClientProvider>,
@@ -57,7 +61,7 @@ describe("<NuvsViewer />", () => {
 
 		it("should render correctly", async () => {
 			renderWithAnalysisSearch(<NuvsViewer {...props} />, {
-				activeHit: String(firstHit.id),
+				hit: String(firstHit.id),
 			});
 
 			expect(
@@ -74,7 +78,7 @@ describe("<NuvsViewer />", () => {
 		it("should render blast when clicked", async () => {
 			const blastNuvs = mockBlastNuvs(firstHit.index);
 			renderWithAnalysisSearch(<NuvsViewer {...props} />, {
-				activeHit: String(firstHit.id),
+				hit: String(firstHit.id),
 			});
 
 			await userEvent.click(
@@ -87,7 +91,7 @@ describe("<NuvsViewer />", () => {
 	describe("<NuVsExport />", () => {
 		it("should render export dialog when exporting", async () => {
 			renderWithAnalysisSearch(<NuvsViewer {...props} />, {
-				activeHit: String(firstHit.id),
+				hit: String(firstHit.id),
 			});
 
 			await userEvent.click(

@@ -1,10 +1,10 @@
 import { describe, expect, it } from "vitest";
-import { simplify, transformCoverageToCoordinates } from "./simplify";
+import { transformCoverageToCoordinates } from "./simplify";
 
 /**
  * A quasi-random depth profile. Every position differs from both its
- * neighbours, so it survives the pre-simplification point selection intact and
- * yields one coordinate per depth.
+ * neighbours, so it survives the change-point pass intact and yields one
+ * coordinate per depth.
  */
 function depthProfile(length: number): number[] {
 	return Array.from({ length }, (_, x) => (x * 37) % 53);
@@ -15,7 +15,7 @@ describe("transformCoverageToCoordinates", () => {
 		expect(transformCoverageToCoordinates([])).toEqual([]);
 	});
 
-	it("emits a single depth twice, as python does", () => {
+	it("emits a single depth twice", () => {
 		expect(transformCoverageToCoordinates([5])).toEqual([
 			[0, 5],
 			[0, 5],
@@ -58,130 +58,78 @@ describe("transformCoverageToCoordinates", () => {
 		]);
 	});
 
-	it("passes a short profile through unsimplified", () => {
-		const depths = depthProfile(40);
+	it("passes a profile under the cap through untouched", () => {
+		const depths = depthProfile(2000);
 		const coordinates = transformCoverageToCoordinates(depths);
 
-		expect(coordinates).toHaveLength(40);
 		expect(coordinates).toEqual(depths.map((depth, x) => [x, depth]));
 	});
 
-	it("passes exactly 100 coordinates through unsimplified", () => {
-		expect(transformCoverageToCoordinates(depthProfile(100))).toHaveLength(100);
+	it("caps a profile above the cap at one point per column", () => {
+		expect(
+			transformCoverageToCoordinates(depthProfile(2001)).length,
+		).toBeLessThanOrEqual(2000);
+		expect(
+			transformCoverageToCoordinates(depthProfile(50_000)).length,
+		).toBeLessThanOrEqual(2000);
 	});
 
-	it("simplifies above 100 coordinates, retaining trunc(0.4 * count)", () => {
-		// 0.4 * 101 is 40.4, which the ratio path truncates rather than rounds.
-		expect(transformCoverageToCoordinates(depthProfile(101))).toHaveLength(40);
-		expect(transformCoverageToCoordinates(depthProfile(300))).toHaveLength(120);
-		expect(transformCoverageToCoordinates(depthProfile(1000))).toHaveLength(
-			400,
-		);
+	it("emits coordinates in ascending position", () => {
+		const coordinates = transformCoverageToCoordinates(depthProfile(50_000));
+
+		for (let index = 1; index < coordinates.length; index++) {
+			expect(coordinates[index]?.[0]).toBeGreaterThan(
+				coordinates[index - 1]?.[0] as number,
+			);
+		}
 	});
 
-	it("retains the first point when simplifying", () => {
-		const depths = depthProfile(300);
+	it("keeps a narrow spike at the position it was recorded at", () => {
+		const depths = depthProfile(50_000);
+		depths[31_337] = 9999;
 
-		expect(transformCoverageToCoordinates(depths)[0]).toEqual([0, depths[0]]);
+		expect(transformCoverageToCoordinates(depths)).toContainEqual([
+			31_337, 9999,
+		]);
 	});
 
-	it("does not retain the last point when simplifying", () => {
-		// Python's ratio path selects every point clearing the threshold — always
-		// at least one more than asked for — then truncates from the front, so the
-		// final point is always cut. The charts have always been drawn this way.
-		const coordinates = transformCoverageToCoordinates(depthProfile(300));
+	it("keeps the deepest point of each column, not the first", () => {
+		// A flat genome with one deeper position per 100-position block. The change
+		// -point pass keeps far more than the cap, so every surviving coordinate is
+		// its column's peak.
+		const depths = new Array<number>(500_000).fill(1);
 
-		expect(coordinates.at(-1)).toEqual([196, 44]);
-	});
-
-	it("retains a narrow spike", () => {
-		const depths = depthProfile(300);
-		depths[150] = 9999;
+		for (let x = 50; x < depths.length; x += 100) {
+			depths[x] = 100 + (x % 7);
+		}
 
 		const coordinates = transformCoverageToCoordinates(depths);
 
-		expect(coordinates).toHaveLength(120);
-		expect(coordinates).toContainEqual([150, 9999]);
+		expect(coordinates.length).toBeLessThanOrEqual(2000);
+		expect(coordinates.every(([, depth]) => depth >= 100)).toBe(true);
 	});
 
-	it("matches the python implementation", () => {
-		// Captured from `virtool.analyses.format.transform_coverage_to_coordinates`
-		// running against visvalingamwyatt 0.3.0.
-		expect(transformCoverageToCoordinates(depthProfile(120))).toEqual([
-			[0, 0],
-			[1, 37],
-			[3, 5],
-			[4, 42],
-			[6, 10],
-			[7, 47],
-			[9, 15],
-			[10, 52],
-			[13, 4],
-			[14, 41],
-			[16, 9],
-			[17, 46],
-			[19, 14],
-			[20, 51],
-			[23, 3],
-			[24, 40],
-			[26, 8],
-			[27, 45],
-			[29, 13],
-			[30, 50],
-			[33, 2],
-			[34, 39],
-			[36, 7],
-			[37, 44],
-			[39, 12],
-			[40, 49],
-			[43, 1],
-			[44, 38],
-			[46, 6],
-			[47, 43],
-			[49, 11],
-			[50, 48],
-			[53, 0],
-			[54, 37],
-			[56, 5],
-			[57, 42],
-			[59, 10],
-			[60, 47],
-			[62, 15],
-			[63, 52],
-			[66, 4],
-			[67, 41],
-			[69, 9],
-			[70, 46],
-			[72, 14],
-			[73, 51],
-			[76, 3],
-			[77, 40],
-		]);
-	});
-});
+	it("spans the full width of the genome", () => {
+		const coordinates = transformCoverageToCoordinates(depthProfile(50_000));
 
-describe("simplify", () => {
-	it("returns the points unchanged when the ratio asks for all of them", () => {
-		const points = depthProfile(20).map(
-			(depth, x) => [x, depth] as [number, number],
-		);
+		// The first and last columns are not pinned, so the curve is allowed to
+		// start and stop short — but only by the width of one column.
+		const columnWidth = 50_000 / 2000;
 
-		expect(simplify(points, 1)).toEqual(points);
+		expect(coordinates[0]?.[0]).toBeLessThan(columnWidth);
+		expect(coordinates.at(-1)?.[0]).toBeGreaterThan(49_999 - columnWidth);
 	});
 
-	it("takes the front of the selection when every area ties", () => {
-		const points = Array.from(
-			{ length: 10 },
-			(_, x) => [x, x * 2] as [number, number],
-		);
+	it("reduces a long high-variance profile in linear time", () => {
+		const depths = depthProfile(1_000_000);
 
-		// Every interior point of a straight line has zero area, so the threshold
-		// falls to zero and the selection is taken from the front.
-		expect(simplify(points, 0.4)).toEqual([
-			[0, 0],
-			[1, 2],
-			[2, 4],
-			[3, 6],
-		]);
+		const start = performance.now();
+		transformCoverageToCoordinates(depths);
+		const elapsed = performance.now() - start;
+
+		// The Visvalingam-Whyatt reduction this replaced was quadratic and took
+		// over eight seconds on 30 kb. A generous ceiling here still fails by
+		// orders of magnitude if a quadratic pass is reintroduced.
+		expect(elapsed).toBeLessThan(2000);
 	});
 });

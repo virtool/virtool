@@ -251,6 +251,16 @@ So, in a route's critical exports:
   dependency-free coercion helpers in `@app/searchParams` and type the function
   as `(input: Partial<T> & SearchSchemaInput) => T` — the `SearchSchemaInput`
   tag is what keeps `<Link search={{ page: 2 }}>` partial.
+- **`validateSearch` resolves every default; nothing downstream repeats one.**
+  A param with a default is required on the search type and coerced with a
+  fallback (`bool(input.reads, false)`), never left optional for components to
+  fill in with `search.reads ?? false` — a second copy of a default is free to
+  disagree with the first, which is how the analysis viewer came to draw its
+  coverage filters as on while filtering nothing. Keep the defaults in one
+  exported object and hand it to `stripSearchParams` in the route's
+  `search.middlewares`, so a resolved default costs nothing in the URL and a
+  shared link carries only what its sender changed
+  (`analyses/search.ts` and the analysis route are the worked example).
 - **Paginated list routes share `@app/pagination`.** Spread `paginated(input)`
   into the returned object and intersect the route's search type with
   `Paginated` (`type FooSearch = Paginated & { term: string }`) rather than
