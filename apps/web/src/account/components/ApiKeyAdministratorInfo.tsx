@@ -1,6 +1,6 @@
-import { hasSufficientAdminRole } from "@administration/utils";
 import Alert from "@base/Alert";
 import QueryError from "@base/QueryError";
+import { hasSufficientAdminRole } from "@virtool/contracts";
 import { useFetchAccount } from "../account";
 
 /**

@@ -2,10 +2,10 @@ import { useFetchAccount } from "@account/account";
 import AdministratorRoleSelect from "@administration/components/AdministratorRoleSelect";
 import { useCheckAdminRole } from "@administration/hooks";
 import { useGetAdministratorRoles } from "@administration/queries";
-import type { AdministratorRoleName } from "@administration/types";
 import IconButton from "@base/IconButton";
 import InputLabel from "@base/InputLabel";
 import { useSetAdministratorRole } from "@users/queries";
+import type { AdministratorRoleName } from "@virtool/contracts";
 import { Trash } from "lucide-react";
 
 type UserAdministratorRoleProps = {

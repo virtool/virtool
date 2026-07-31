@@ -5,7 +5,7 @@ import Checkbox from "@base/Checkbox";
 import IconButton from "@base/IconButton";
 import IconLink from "@base/IconLink";
 import RelativeTime from "@base/RelativeTime";
-import type { UserNested } from "@users/types";
+import type { UserNested } from "@virtool/contracts";
 import { Download, Trash } from "lucide-react";
 import type { MouseEvent, ReactNode } from "react";
 import { useDeleteFile } from "../queries";

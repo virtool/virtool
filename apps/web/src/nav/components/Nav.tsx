@@ -1,6 +1,4 @@
 import { useLogout } from "@account/queries";
-import type { AdministratorRoleName } from "@administration/types";
-import { hasSufficientAdminRole } from "@administration/utils";
 import Dropdown from "@base/Dropdown";
 import DropdownMenuContent from "@base/DropdownMenuContent";
 import DropdownMenuItem from "@base/DropdownMenuItem";
@@ -10,6 +8,8 @@ import DropdownMenuTrigger from "@base/DropdownMenuTrigger";
 import IconButton from "@base/IconButton";
 import InitialIcon from "@base/InitialIcon";
 import Logo from "@base/Logo";
+import type { AdministratorRoleName } from "@virtool/contracts";
+import { hasSufficientAdminRole } from "@virtool/contracts";
 import { Info } from "lucide-react";
 import { useState } from "react";
 import AboutDialog from "./AboutDialog";

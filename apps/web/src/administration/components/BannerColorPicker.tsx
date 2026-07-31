@@ -1,9 +1,6 @@
 import { cn } from "@app/cn";
-import {
-	type BannerColor,
-	bannerColorClasses,
-	bannerColors,
-} from "@banner/types";
+import { bannerColorClasses } from "@banner/types";
+import { type BannerColor, bannerColors } from "@virtool/contracts";
 
 const labels: Record<BannerColor, string> = {
 	red: "Red",

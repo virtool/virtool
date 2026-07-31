@@ -1,8 +1,8 @@
 import NavTab from "@base/NavTab";
 import NavTabs from "@base/NavTabs";
+import type { AdministratorRoleName } from "@virtool/contracts";
+import { hasSufficientAdminRole } from "@virtool/contracts";
 import type { ReactNode } from "react";
-import type { AdministratorRoleName } from "../types";
-import { hasSufficientAdminRole } from "../utils";
 
 type AdministratorTabsProps = {
 	administratorRole: AdministratorRoleName | null;

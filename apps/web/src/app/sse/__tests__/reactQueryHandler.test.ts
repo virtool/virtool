@@ -12,10 +12,10 @@ import { QueryClient } from "@tanstack/react-query";
 import { taskQueryKeys } from "@tasks/keys";
 import { fileQueryKeys } from "@uploads/keys";
 import { userQueryKeys } from "@users/keys";
+import type { SseMessage } from "@virtool/contracts";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { reactQueryHandler } from "../reactQueryHandler";
 import handlerSource from "../reactQueryHandler.ts?raw";
-import type { SseMessage } from "../schema";
 
 describe("reactQueryHandler", () => {
 	let queryClient: QueryClient;

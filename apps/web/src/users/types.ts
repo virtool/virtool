@@ -1,7 +1,9 @@
-import type { AdministratorRoleName } from "@administration/types";
-import type { GroupMinimal, Permissions, UserNested } from "@virtool/contracts";
-
-export type { UserNested } from "@virtool/contracts";
+import type {
+	AdministratorRoleName,
+	GroupMinimal,
+	Permissions,
+	UserNested,
+} from "@virtool/contracts";
 
 /** A Virtool user */
 export type User = UserNested & {

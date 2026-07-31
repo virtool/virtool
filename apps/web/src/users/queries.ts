@@ -1,4 +1,3 @@
-import type { AdministratorRoleName } from "@administration/types";
 import {
 	createUserFn,
 	findUsersFn,
@@ -18,7 +17,7 @@ import {
 	useSuspenseQuery,
 } from "@tanstack/react-query";
 import { userQueryKeys } from "@users/keys";
-import type { UserNested } from "./types";
+import type { AdministratorRoleName, UserNested } from "@virtool/contracts";
 
 /**
  * Fetch every active user, for populating selectors and filters

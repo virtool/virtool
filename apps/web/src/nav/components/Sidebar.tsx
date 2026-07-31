@@ -1,6 +1,6 @@
-import type { AdministratorRoleName } from "@administration/types";
-import { hasSufficientAdminRole } from "@administration/utils";
 import { useLocation } from "@tanstack/react-router";
+import type { AdministratorRoleName } from "@virtool/contracts";
+import { hasSufficientAdminRole } from "@virtool/contracts";
 import { FolderOpen, List, Settings, Tag } from "lucide-react";
 import type { ReactNode } from "react";
 import SidebarLink from "./SidebarLink";

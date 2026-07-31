@@ -14,7 +14,7 @@ import type { QueryClient } from "@tanstack/react-query";
 import { taskQueryKeys } from "@tasks/keys";
 import { fileQueryKeys } from "@uploads/keys";
 import { userQueryKeys } from "@users/keys";
-import type { SseDomain, SseMessage } from "./schema";
+import type { SseDomain, SseMessage } from "@virtool/contracts";
 
 /**
  * What a domain caches, and therefore how narrowly its frames can be

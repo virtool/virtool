@@ -174,11 +174,11 @@ application's own doing.
   frames NOTIFYed while the stream was down — including a server-side
   queue-overflow drop — never arrived; the initial connect skips this
   because the route loaders just populated the cache.
-- `app/sse/schema.ts` defines `SseMessageSchema`, which validates the
-  wire frame and strips unknown fields. `SseConnection` runs it on every
-  frame: a frame for an unrecognised `domain` is dropped silently, while
-  a frame for a known domain that fails validation is reported to Sentry
-  (`sse: message-validation`).
+- `SseMessageSchema`, imported straight from `@virtool/contracts`,
+  validates the wire frame and strips unknown fields. `SseConnection`
+  runs it on every frame: a frame for an unrecognised `domain` is
+  dropped silently, while a frame for a known domain that fails
+  validation is reported to Sentry (`sse: message-validation`).
 - `app/sse/reactQueryHandler.ts` maps `message.domain` to a query-key
   factory and invalidates the narrowest key the domain actually caches
   under. `update` prefers `detail(id)`, falling to `lists()` for a

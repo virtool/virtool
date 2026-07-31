@@ -1,5 +1,5 @@
-import { hasSufficientAdminRole } from "@administration/utils";
 import { createFileRoute, redirect } from "@tanstack/react-router";
+import { hasSufficientAdminRole } from "@virtool/contracts";
 
 export const Route = createFileRoute("/_authenticated/administration/")({
 	beforeLoad: async ({ context }) => {

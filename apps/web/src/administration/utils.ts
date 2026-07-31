@@ -5,8 +5,6 @@ import {
 	hasSufficientAdminRole,
 } from "@virtool/contracts";
 
-export { AdministratorPermissions, hasSufficientAdminRole };
-
 /**
  * Check if a user has a sufficient admin role or legacy permissions to perform an action
  *

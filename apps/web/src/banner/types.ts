@@ -1,7 +1,4 @@
-import type { UserNested } from "@users/types";
-import { type BannerColor, bannerColors } from "@virtool/contracts";
-
-export { type BannerColor, bannerColors };
+import type { BannerColor, UserNested } from "@virtool/contracts";
 
 /** Tailwind background-color class for each banner color. */
 export const bannerColorClasses: Record<BannerColor, string> = {

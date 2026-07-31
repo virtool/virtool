@@ -1,6 +1,6 @@
 import Attribution from "@base/Attribution";
 import SelectBoxGroupSection from "@base/SelectBoxGroupSection";
-import type { UserNested } from "@users/types";
+import type { UserNested } from "@virtool/contracts";
 
 type SubtractionFileItemProps = {
 	/** Whether the file is selected */

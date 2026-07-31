@@ -1,14 +1,14 @@
 import { useFetchAccount } from "@account/account";
-import {
-	AdministratorPermissions,
-	hasSufficientAdminRole,
-} from "@administration/utils";
 import BoxGroup from "@base/BoxGroup";
 import BoxGroupSection from "@base/BoxGroupSection";
 import Checkbox from "@base/Checkbox";
 import LoadingPlaceholder from "@base/LoadingPlaceholder";
 import QueryError from "@base/QueryError";
 import type { Permission, Permissions } from "@virtool/contracts";
+import {
+	AdministratorPermissions,
+	hasSufficientAdminRole,
+} from "@virtool/contracts";
 import { sortBy } from "es-toolkit";
 
 type ApiPermissionsProps = {

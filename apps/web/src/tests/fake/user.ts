@@ -1,5 +1,6 @@
 import { faker } from "@faker-js/faker";
-import type { User, UserNested } from "@users/types";
+import type { User } from "@users/types";
+import type { UserNested } from "@virtool/contracts";
 import { createFakeGroupMinimal } from "./groups";
 import { createFakePermissions } from "./permissions";
 

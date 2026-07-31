@@ -1,7 +1,7 @@
-import type { AdministratorRoleName } from "@administration/types";
 import { screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { renderWithRouter } from "@tests/setup";
+import type { AdministratorRoleName } from "@virtool/contracts";
 import { describe, expect, it } from "vitest";
 import Nav from "../Nav";
 

@@ -1,10 +1,9 @@
 import { useCheckAdminRole } from "@administration/hooks";
-import type { AdministratorRoleName } from "@administration/types";
 import BoxGroupSection from "@base/BoxGroupSection";
 import InitialIcon from "@base/InitialIcon";
 import Label from "@base/Label";
 import Link from "@base/Link";
-import type { GroupMinimal } from "@virtool/contracts";
+import type { AdministratorRoleName, GroupMinimal } from "@virtool/contracts";
 import type { ReactElement } from "react";
 
 type UserItemProps = {

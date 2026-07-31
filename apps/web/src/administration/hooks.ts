@@ -1,10 +1,10 @@
 import { useFetchAccount } from "@account/account";
-import type { Permission } from "@virtool/contracts";
-import type { AdministratorRoleName } from "./types";
 import {
-	checkAdminRoleOrPermissionsFromAccount,
+	type AdministratorRoleName,
 	hasSufficientAdminRole,
-} from "./utils";
+	type Permission,
+} from "@virtool/contracts";
+import { checkAdminRoleOrPermissionsFromAccount } from "./utils";
 
 export type PermissionQueryResult = {
 	hasPermission: boolean | null;

@@ -2,7 +2,7 @@ import BoxGroup from "@base/BoxGroup";
 import BoxGroupHeader from "@base/BoxGroupHeader";
 import BoxGroupSection from "@base/BoxGroupSection";
 import InitialIcon from "@base/InitialIcon";
-import type { UserNested } from "@users/types";
+import type { UserNested } from "@virtool/contracts";
 
 type MemberProps = {
 	members: UserNested[];

@@ -1,10 +1,10 @@
-import type { BannerColor } from "@banner/types";
 import Button from "@base/Button";
 import { DialogFooter } from "@base/Dialog";
 import InputError from "@base/InputError";
 import InputGroup from "@base/InputGroup";
 import InputLabel from "@base/InputLabel";
 import InputSimple from "@base/InputSimple";
+import type { BannerColor } from "@virtool/contracts";
 import { Controller, useForm } from "react-hook-form";
 import BannerColorPicker from "./BannerColorPicker";
 

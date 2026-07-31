@@ -5,7 +5,7 @@ import Link from "@base/Link";
 import ProgressCircle from "@base/ProgressCircle";
 import JobStateIcon from "@jobs/components/JobStateIcon";
 import type { JobState, Workflow } from "@jobs/types";
-import type { UserNested } from "@users/types";
+import type { UserNested } from "@virtool/contracts";
 import type { ElementType } from "react";
 
 export type JobItemProps = {

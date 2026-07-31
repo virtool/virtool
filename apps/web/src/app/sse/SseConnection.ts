@@ -2,8 +2,8 @@ import { useServerVersionStore } from "@app/serverVersion";
 import { endSession } from "@app/session";
 import * as Sentry from "@sentry/tanstackstart-react";
 import type { QueryClient } from "@tanstack/react-query";
+import { SseDomainSchema, SseMessageSchema } from "@virtool/contracts";
 import { reactQueryHandler } from "./reactQueryHandler";
-import { SseDomainSchema, SseMessageSchema } from "./schema";
 
 type ConnectionStatus =
 	| "initializing"

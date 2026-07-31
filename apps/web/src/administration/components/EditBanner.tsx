@@ -1,6 +1,6 @@
-import type { BannerColor } from "@banner/types";
 import { Dialog, DialogContent, DialogTitle } from "@base/Dialog";
 import IconButton from "@base/IconButton";
+import type { BannerColor } from "@virtool/contracts";
 import { Pen } from "lucide-react";
 import { useState } from "react";
 import BannerForm, { type BannerFormValues } from "./BannerForm";

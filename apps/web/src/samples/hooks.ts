@@ -1,5 +1,5 @@
 import { useFetchAccount } from "@account/account";
-import { hasSufficientAdminRole } from "@administration/utils";
+import { hasSufficientAdminRole } from "@virtool/contracts";
 import { useFetchSample } from "./queries";
 
 /**

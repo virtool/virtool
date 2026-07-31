@@ -1,5 +1,5 @@
+import { SseDomainSchema, SseMessageSchema } from "@virtool/contracts";
 import { describe, expect, it } from "vitest";
-import { SseDomainSchema, SseMessageSchema } from "../schema";
 
 describe("SseMessageSchema", () => {
 	it("accepts a frame for a number-id domain", () => {

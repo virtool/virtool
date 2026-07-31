@@ -9,7 +9,8 @@ import {
 	updateMessageFn,
 } from "@server/messages/functions";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import type { Banner, BannerColor } from "./types";
+import type { BannerColor } from "@virtool/contracts";
+import type { Banner } from "./types";
 
 /**
  * Fetch the active banner from the API.

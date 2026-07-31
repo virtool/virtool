@@ -1,7 +1,8 @@
 import { cn } from "@app/cn";
-import { type BannerColor, bannerColorClasses } from "@banner/types";
+import { bannerColorClasses } from "@banner/types";
 import BoxGroupSection from "@base/BoxGroupSection";
 import { RadioGroupItem } from "@base/RadioGroup";
+import type { BannerColor } from "@virtool/contracts";
 import type { BannerFormValues } from "./BannerForm";
 import DeleteBanner from "./DeleteBanner";
 import EditBanner from "./EditBanner";

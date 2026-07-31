@@ -6,7 +6,7 @@ import DropdownMenuSeparator from "@base/DropdownMenuSeparator";
 import Input from "@base/Input";
 import QueryError from "@base/QueryError";
 import { useListUsers } from "@users/queries";
-import type { UserNested } from "@users/types";
+import type { UserNested } from "@virtool/contracts";
 import { useState } from "react";
 
 type UserFilterMenuProps = {

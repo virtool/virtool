@@ -4,8 +4,6 @@
 
 import type { AdministratorRoleName } from "@virtool/contracts";
 
-export type { AdministratorRoleName };
-
 /**
  * Full model of an administrator role
  */

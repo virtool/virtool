@@ -1,11 +1,9 @@
-import type {
-	AdministratorRole,
-	AdministratorRoleName,
-} from "@administration/types";
+import type { AdministratorRole } from "@administration/types";
 import Select from "@base/Select";
 import SelectButton from "@base/SelectButton";
 import SelectContent from "@base/SelectContent";
 import SelectItem from "@base/SelectItem";
+import type { AdministratorRoleName } from "@virtool/contracts";
 import { ChevronDown } from "lucide-react";
 
 type RoleSelectProps = {
