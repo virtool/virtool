@@ -147,22 +147,13 @@ class SQLiteReference:
     ) -> "SQLiteReference":
         """Create a SQLite reference and return its path-backed representation."""
         sqlite_reference = cls(path)
-        await sqlite_reference._create(reference, otus)
+        sqlite_reference.path.parent.mkdir(parents=True, exist_ok=True)
 
-        return sqlite_reference
-
-    async def _create(
-        self,
-        reference: Mapping[str, Any] | None,
-        otus: Iterable[Mapping[str, Any]],
-    ) -> None:
-        self.path.parent.mkdir(parents=True, exist_ok=True)
-
-        if self.path.exists():
-            raise FileExistsError(self.path)
+        if sqlite_reference.path.exists():
+            raise FileExistsError(sqlite_reference.path)
 
         try:
-            async with self._connect() as connection, connection.begin():
+            async with sqlite_reference._connect() as connection, connection.begin():
                 await connection.run_sync(reference_sqlite_metadata.create_all)
                 await _insert_metadata(connection)
                 reference_id = (
@@ -176,6 +167,8 @@ class SQLiteReference:
         except SQLAlchemyError as err:
             msg = "Could not write SQLite reference database"
             raise SQLiteReferenceWriteError(msg) from err
+
+        return sqlite_reference
 
     @classmethod
     def load(cls, path: Path) -> "SQLiteReference":
