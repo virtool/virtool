@@ -904,5 +904,12 @@
       'name': 'replace indextype enum with text check',
       'revision': 'af827765c1d5',
     }),
+    dict({
+      'applied_at': datetime,
+      'created_at': datetime,
+      'id': 130,
+      'name': 'make legacy analyses and index_files columns nullable',
+      'revision': '9cea546d2cd3',
+    }),
   ])
 # ---

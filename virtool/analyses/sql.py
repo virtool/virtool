@@ -38,7 +38,10 @@ class SQLAnalysis(Base):
     - ``sample``, ``reference`` and ``index`` are mid-migration: the legacy Mongo
       string is retained alongside the new
       ``sample_id``/``reference_id``/``index_id`` foreign key while readers move
-      over. The bare columns are dropped in a later cleanup revision.
+      over. ``reference`` and ``index`` are nullable because writers that key off
+      the foreign keys omit them; ``reference`` is still read as a fallback on
+      rows the ``reference_id`` backfill has not reached. The bare columns are
+      dropped in a later cleanup revision.
 
     The Mongo ``space`` field is intentionally dropped.
     """
@@ -58,13 +61,13 @@ class SQLAnalysis(Base):
         ForeignKey("legacy_samples.id"),
         nullable=True,
     )
-    reference: Mapped[str]
+    reference: Mapped[str | None]
     reference_id: Mapped[int | None] = mapped_column(
         BigInteger,
         ForeignKey("legacy_references.id"),
         nullable=True,
     )
-    index: Mapped[str]
+    index: Mapped[str | None]
     index_id: Mapped[int | None] = mapped_column(
         BigInteger,
         ForeignKey("indexes.id"),

@@ -53,7 +53,6 @@ FIND_COLUMNS = (
     SQLAnalysis.sample_id,
     SQLAnalysis.reference,
     SQLAnalysis.reference_id,
-    SQLAnalysis.index,
     SQLAnalysis.index_id,
     SQLAnalysis.user_id,
     SQLAnalysis.job_id,
@@ -95,7 +94,7 @@ def _row_to_document(row, *, include_results: bool) -> dict:
     that must surface loudly.
     """
     if row.index_pg_id is None:
-        raise ValueError(f"Index not found for analysis {row.id}: {row.index}")
+        raise ValueError(f"Index not found for analysis {row.id}: {row.index_id}")
 
     document = {
         "id": row.id,

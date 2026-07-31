@@ -260,6 +260,42 @@ async def test_get_not_modified(
         await data_layer.analyses.get(analysis_id, row.updated_at)
 
 
+async def test_get_analysis_written_without_legacy_columns(
+    data_layer: DataLayer,
+    pg: AsyncEngine,
+    setup_sample: SampleSetup,
+):
+    """An analysis inserted with only the integer foreign keys — the shape written by
+    writers that have moved off the legacy Mongo strings — is accepted by Postgres and
+    reads back with its reference and index resolved.
+    """
+    async with AsyncSession(pg) as session:
+        analysis = SQLAnalysis(
+            created_at=timestamp(),
+            updated_at=timestamp(),
+            workflow="nuvs",
+            ready=False,
+            sample=str(setup_sample.sample_id),
+            sample_id=setup_sample.sample_id,
+            reference_id=setup_sample.reference_id,
+            index_id=setup_sample.index_id,
+            user_id=setup_sample.user_id,
+        )
+
+        session.add(analysis)
+        await session.flush()
+
+        analysis_id = analysis.id
+
+        await session.commit()
+
+    fetched = await data_layer.analyses.get(analysis_id)
+
+    assert fetched.id == analysis_id
+    assert fetched.reference.id == setup_sample.reference_id
+    assert fetched.index.id == setup_sample.index_id
+
+
 async def test_get_raises_on_unresolvable_index(
     data_layer: DataLayer,
     pg: AsyncEngine,
