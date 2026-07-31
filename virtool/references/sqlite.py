@@ -1,19 +1,14 @@
 """Build and query portable SQLite reference artifacts."""
 
-import asyncio
 from collections.abc import (
     AsyncIterator,
     Callable,
-    Generator,
     Iterable,
-    Iterator,
     Mapping,
 )
-from concurrent.futures import ThreadPoolExecutor
-from contextlib import contextmanager
+from contextlib import asynccontextmanager
 from datetime import UTC, datetime
 from pathlib import Path
-from sqlite3 import Connection as SQLiteConnection
 from typing import Any, Literal, TypedDict
 
 from sqlalchemy import (
@@ -27,7 +22,6 @@ from sqlalchemy import (
     Text,
     UniqueConstraint,
     case,
-    create_engine,
     event,
     func,
     insert,
@@ -36,8 +30,9 @@ from sqlalchemy import (
     select,
     type_coerce,
 )
-from sqlalchemy.engine import URL, Connection, Engine
+from sqlalchemy.engine import URL, AdaptedConnection, Connection
 from sqlalchemy.exc import SQLAlchemyError
+from sqlalchemy.ext.asyncio import AsyncConnection, AsyncEngine, create_async_engine
 from sqlalchemy.pool import ConnectionPoolEntry
 from sqlalchemy.sql import Select
 from sqlalchemy.sql.elements import ColumnElement
@@ -161,13 +156,23 @@ class SQLiteReference:
         reference: Mapping[str, Any] | None,
         otus: Iterable[Mapping[str, Any]],
     ) -> None:
+        self.path.parent.mkdir(parents=True, exist_ok=True)
+
+        if self.path.exists():
+            raise FileExistsError(self.path)
+
         try:
-            await asyncio.to_thread(
-                _create_reference_sqlite,
-                self,
-                reference,
-                otus,
-            )
+            async with self._connect() as connection, connection.begin():
+                await connection.run_sync(reference_sqlite_metadata.create_all)
+                await _insert_metadata(connection)
+                reference_id = (
+                    await _insert_reference(connection, reference)
+                    if reference is not None
+                    else None
+                )
+
+                for otu in otus:
+                    await _insert_otu(connection, reference_id, otu)
         except SQLAlchemyError as err:
             msg = "Could not write SQLite reference database"
             raise SQLiteReferenceWriteError(msg) from err
@@ -180,24 +185,47 @@ class SQLiteReference:
 
         return cls(path)
 
-    @contextmanager
-    def _connect(self) -> Iterator[Connection]:
+    @asynccontextmanager
+    async def _connect(self) -> AsyncIterator[AsyncConnection]:
         """Yield a configured connection to the SQLite reference."""
         engine = _create_reference_sqlite_engine(self.path)
 
         try:
-            with engine.connect() as connection:
+            async with engine.connect() as connection:
                 yield connection
         finally:
-            engine.dispose()
+            await engine.dispose()
 
     async def validate(self) -> None:
         """Validate that this is a complete, compatible v1 SQLite reference."""
-        await asyncio.to_thread(_validate_reference_sqlite, self)
+        try:
+            async with self._connect() as connection:
+                await connection.run_sync(_validate_reference_sqlite_schema)
+                await _validate_reference_sqlite_metadata(connection)
+        except ValueError:
+            raise
+        except SQLAlchemyError as err:
+            msg = "Could not read SQLite reference database"
+            raise SQLiteReferenceReadError(msg) from err
 
     async def get_metadata(self) -> dict[str, Any]:
         """Get reference metadata excluding OTUs."""
-        return await asyncio.to_thread(_get_reference_metadata, self)
+        try:
+            async with self._connect() as connection:
+                row = (
+                    (await connection.execute(select(reference_table)))
+                    .mappings()
+                    .one_or_none()
+                )
+        except SQLAlchemyError as err:
+            msg = "Could not read SQLite reference database"
+            raise SQLiteReferenceReadError(msg) from err
+
+        if row is None:
+            msg = "Reference metadata does not exist in the SQLite reference"
+            raise ValueError(msg)
+
+        return dict(row)
 
     async def iter_otus(self) -> AsyncIterator[dict[str, Any]]:
         """Iterate complete OTUs in the reference."""
@@ -250,10 +278,53 @@ class SQLiteReference:
         sequence_ids: Iterable[str],
     ) -> dict[str, OTUSummary]:
         """Get top-level OTU information keyed by the given sequence IDs."""
-        return await asyncio.to_thread(
-            self._get_otu_summaries_by_sequence_ids,
-            set(sequence_ids),
-        )
+        sequence_id_set = set(sequence_ids)
+
+        if not sequence_id_set:
+            return {}
+
+        try:
+            async with self._connect() as connection:
+                rows = (
+                    await connection.execute(
+                        select(
+                            sequences_table.c.id.label("sequence_id"),
+                            otus_table.c.id.label("otu_id"),
+                            otus_table.c.abbreviation,
+                            otus_table.c.name,
+                            otus_table.c.taxid,
+                            otus_table.c.version,
+                        )
+                        .join(
+                            isolates_table,
+                            sequences_table.c.isolate_id == isolates_table.c.id,
+                        )
+                        .join(otus_table, isolates_table.c.otu_id == otus_table.c.id)
+                        .where(sequences_table.c.id.in_(sequence_id_set)),
+                    )
+                ).mappings()
+        except SQLAlchemyError as err:
+            msg = "Could not read SQLite reference database"
+            raise SQLiteReferenceReadError(msg) from err
+
+        otu_ref_by_sequence_id = {
+            row["sequence_id"]: {
+                "id": row["otu_id"],
+                "abbreviation": row["abbreviation"],
+                "name": row["name"],
+                "taxid": row["taxid"],
+                "version": row["version"],
+            }
+            for row in rows
+        }
+
+        missing_sequence_ids = sequence_id_set - otu_ref_by_sequence_id.keys()
+
+        if missing_sequence_ids:
+            msg = "The sequence_id does not exist in the reference"
+            raise ValueError(msg)
+
+        return otu_ref_by_sequence_id
 
     async def _iter_sequence_query(
         self,
@@ -276,75 +347,35 @@ class SQLiteReference:
         shape_row: Callable[[Any], T],
     ) -> AsyncIterator[list[T]]:
         """Iterate query results without blocking the event loop."""
-        async for batch in _iter_query_batches(
-            self,
-            query,
-            batch_size,
-            row_mode,
-            shape_row,
-        ):
-            yield batch
-
-    def _get_otu_summaries_by_sequence_ids(
-        self,
-        sequence_ids: set[str],
-    ) -> dict[str, OTUSummary]:
-        if not sequence_ids:
-            return {}
-
         try:
-            with self._connect() as connection:
-                rows = list(
-                    connection.execute(
-                        select(
-                            sequences_table.c.id.label("sequence_id"),
-                            otus_table.c.id.label("otu_id"),
-                            otus_table.c.abbreviation,
-                            otus_table.c.name,
-                            otus_table.c.taxid,
-                            otus_table.c.version,
-                        )
-                        .join(
-                            isolates_table,
-                            sequences_table.c.isolate_id == isolates_table.c.id,
-                        )
-                        .join(otus_table, isolates_table.c.otu_id == otus_table.c.id)
-                        .where(sequences_table.c.id.in_(sequence_ids)),
-                    ).mappings()
-                )
+            async with (
+                self._connect() as connection,
+                connection.stream(query) as result,
+            ):
+                if row_mode == "scalar":
+                    async for partition in result.scalars().partitions(batch_size):
+                        yield [shape_row(row) for row in partition]
+                else:
+                    async for partition in result.mappings().partitions(batch_size):
+                        yield [shape_row(row) for row in partition]
         except SQLAlchemyError as err:
             msg = "Could not read SQLite reference database"
             raise SQLiteReferenceReadError(msg) from err
 
-        otu_ref_by_sequence_id = {
-            row["sequence_id"]: {
-                "id": row["otu_id"],
-                "abbreviation": row["abbreviation"],
-                "name": row["name"],
-                "taxid": row["taxid"],
-                "version": row["version"],
-            }
-            for row in rows
-        }
 
-        missing_sequence_ids = sequence_ids - otu_ref_by_sequence_id.keys()
-
-        if missing_sequence_ids:
-            msg = "The sequence_id does not exist in the reference"
-            raise ValueError(msg)
-
-        return otu_ref_by_sequence_id
-
-
-def _create_reference_sqlite_engine(path: Path) -> Engine:
-    engine = create_engine(URL.create("sqlite", database=str(path)))
-    event.listen(engine, "connect", _enable_reference_sqlite_foreign_keys)
+def _create_reference_sqlite_engine(path: Path) -> AsyncEngine:
+    engine = create_async_engine(URL.create("sqlite+aiosqlite", database=str(path)))
+    event.listen(
+        engine.sync_engine,
+        "connect",
+        _enable_reference_sqlite_foreign_keys,
+    )
 
     return engine
 
 
 def _enable_reference_sqlite_foreign_keys(
-    dbapi_connection: SQLiteConnection,
+    dbapi_connection: AdaptedConnection,
     _connection_record: ConnectionPoolEntry,
 ) -> None:
     cursor = dbapi_connection.cursor()
@@ -353,18 +384,6 @@ def _enable_reference_sqlite_foreign_keys(
         cursor.execute("PRAGMA foreign_keys = ON")
     finally:
         cursor.close()
-
-
-def _validate_reference_sqlite(sqlite_reference: SQLiteReference) -> None:
-    try:
-        with sqlite_reference._connect() as connection:
-            _validate_reference_sqlite_schema(connection)
-            _validate_reference_sqlite_metadata(connection)
-    except ValueError:
-        raise
-    except SQLAlchemyError as err:
-        msg = "Could not read SQLite reference database"
-        raise SQLiteReferenceReadError(msg) from err
 
 
 def _validate_reference_sqlite_schema(connection: Connection) -> None:
@@ -391,8 +410,8 @@ def _validate_reference_sqlite_schema(connection: Connection) -> None:
             raise ValueError(msg)
 
 
-def _validate_reference_sqlite_metadata(connection: Connection) -> None:
-    metadata = dict(connection.execute(select(metadata_table)).all())
+async def _validate_reference_sqlite_metadata(connection: AsyncConnection) -> None:
+    metadata = dict((await connection.execute(select(metadata_table))).all())
 
     if "format" not in metadata:
         msg = "SQLite reference metadata is missing 'format'"
@@ -413,8 +432,8 @@ def _validate_reference_sqlite_metadata(connection: Connection) -> None:
         )
         raise ValueError(msg)
 
-    reference_count = connection.scalar(
-        select(func.count()).select_from(reference_table)
+    reference_count = await connection.scalar(
+        select(func.count()).select_from(reference_table),
     )
 
     if reference_count != 1:
@@ -425,30 +444,8 @@ def _validate_reference_sqlite_metadata(connection: Connection) -> None:
         raise ValueError(msg)
 
 
-def _create_reference_sqlite(
-    sqlite_reference: SQLiteReference,
-    reference: Mapping[str, Any] | None,
-    otus: Iterable[Mapping[str, Any]],
-) -> None:
-    path = sqlite_reference.path
-    path.parent.mkdir(parents=True, exist_ok=True)
-
-    if path.exists():
-        raise FileExistsError(path)
-
-    with sqlite_reference._connect() as connection, connection.begin():
-        reference_sqlite_metadata.create_all(connection)
-        _insert_metadata(connection)
-        reference_id = (
-            _insert_reference(connection, reference) if reference is not None else None
-        )
-
-        for otu in otus:
-            _insert_otu(connection, reference_id, otu)
-
-
-def _insert_metadata(connection: Connection) -> None:
-    connection.execute(
+async def _insert_metadata(connection: AsyncConnection) -> None:
+    await connection.execute(
         insert(metadata_table),
         [
             {"key": "format", "value": REFERENCE_SQLITE_FORMAT},
@@ -461,14 +458,17 @@ def _insert_metadata(connection: Connection) -> None:
     )
 
 
-def _insert_reference(connection: Connection, reference: Mapping[str, Any]) -> str:
+async def _insert_reference(
+    connection: AsyncConnection,
+    reference: Mapping[str, Any],
+) -> str:
     reference_id = _get_id(reference)
     created_at = reference["created_at"]
 
     if isinstance(created_at, datetime):
         created_at = created_at.replace(tzinfo=UTC).isoformat().replace("+00:00", "Z")
 
-    connection.execute(
+    await connection.execute(
         insert(reference_table),
         {
             "id": reference_id,
@@ -482,15 +482,15 @@ def _insert_reference(connection: Connection, reference: Mapping[str, Any]) -> s
     return reference_id
 
 
-def _insert_otu(
-    connection: Connection,
+async def _insert_otu(
+    connection: AsyncConnection,
     reference_id: str | None,
     otu: Mapping[str, Any],
 ) -> None:
     otu_id = _get_id(otu)
     schema = otu.get("schema", [])
 
-    connection.execute(
+    await connection.execute(
         insert(otus_table),
         {
             "id": otu_id,
@@ -503,7 +503,7 @@ def _insert_otu(
     )
 
     if schema:
-        connection.execute(
+        await connection.execute(
             insert(otu_schema_table),
             [
                 {
@@ -517,109 +517,51 @@ def _insert_otu(
         )
 
     for isolate in otu["isolates"]:
-        _insert_isolate(connection, otu_id, isolate)
+        await _insert_isolate(connection, otu_id, isolate)
 
 
-def _insert_isolate(
-    connection: Connection,
+async def _insert_isolate(
+    connection: AsyncConnection,
     otu_id: str,
     isolate: Mapping[str, Any],
 ) -> None:
     virtool_id = _get_id(isolate)
 
-    isolate_id = connection.execute(
-        insert(isolates_table).returning(isolates_table.c.id),
-        {
-            "virtool_id": virtool_id,
-            "otu_id": otu_id,
-            "source_type": isolate["source_type"],
-            "source_name": isolate["source_name"],
-            "is_default": int(isolate["default"]),
-        },
+    isolate_id = (
+        await connection.execute(
+            insert(isolates_table).returning(isolates_table.c.id),
+            {
+                "virtool_id": virtool_id,
+                "otu_id": otu_id,
+                "source_type": isolate["source_type"],
+                "source_name": isolate["source_name"],
+                "is_default": int(isolate["default"]),
+            },
+        )
     ).scalar_one()
 
-    for sequence in isolate["sequences"]:
-        _insert_sequence(connection, isolate_id, sequence)
+    sequences = isolate["sequences"]
 
-
-def _insert_sequence(
-    connection: Connection,
-    isolate_id: int,
-    sequence: Mapping[str, Any],
-) -> None:
-    sequence_id = _get_id(sequence)
-    segment = sequence.get("segment")
-
-    connection.execute(
-        insert(sequences_table),
-        {
-            "id": sequence_id,
-            "isolate_id": isolate_id,
-            "accession": sequence["accession"],
-            "definition": sequence["definition"],
-            "host": sequence["host"],
-            "segment": segment,
-            "sequence": sequence["sequence"],
-        },
-    )
+    if sequences:
+        await connection.execute(
+            insert(sequences_table),
+            [
+                {
+                    "id": _get_id(sequence),
+                    "isolate_id": isolate_id,
+                    "accession": sequence["accession"],
+                    "definition": sequence["definition"],
+                    "host": sequence["host"],
+                    "segment": sequence.get("segment"),
+                    "sequence": sequence["sequence"],
+                }
+                for sequence in sequences
+            ],
+        )
 
 
 def _get_id(document: Mapping[str, Any]) -> str:
     return document["_id"] if "_id" in document else document["id"]
-
-
-def _get_reference_metadata(sqlite_reference: SQLiteReference) -> dict[str, Any]:
-    try:
-        with sqlite_reference._connect() as connection:
-            row = connection.execute(select(reference_table)).mappings().one_or_none()
-    except SQLAlchemyError as err:
-        msg = "Could not read SQLite reference database"
-        raise SQLiteReferenceReadError(msg) from err
-
-    if row is None:
-        msg = "Reference metadata does not exist in the SQLite reference"
-        raise ValueError(msg)
-
-    return dict(row)
-
-
-async def _iter_query_batches[T](
-    sqlite_reference: SQLiteReference,
-    query: Select,
-    batch_size: int,
-    row_mode: Literal["mapping", "scalar"],
-    shape_row: Callable[[Any], T],
-) -> AsyncIterator[list[T]]:
-    def iter_batches() -> Generator[list[T]]:
-        with (
-            sqlite_reference._connect() as connection,
-            connection.execute(query) as result,
-        ):
-            rows = result.scalars() if row_mode == "scalar" else result.mappings()
-
-            for partition in rows.partitions(batch_size):
-                yield [shape_row(row) for row in partition]
-
-    batch_iterator = iter_batches()
-    event_loop = asyncio.get_running_loop()
-
-    try:
-        with ThreadPoolExecutor(max_workers=1) as executor:
-            try:
-                while (
-                    batch := await event_loop.run_in_executor(
-                        executor,
-                        next,
-                        batch_iterator,
-                        None,
-                    )
-                ) is not None:
-                    yield batch
-            finally:
-                await event_loop.run_in_executor(executor, batch_iterator.close)
-    except SQLAlchemyError as err:
-        msg = "Could not read SQLite reference database"
-        raise SQLiteReferenceReadError(msg) from err
 
 
 def _validate_otu(otu: dict[str, Any]) -> dict[str, Any]:

@@ -3,7 +3,6 @@
 from collections.abc import Iterator
 from contextlib import contextmanager
 from pathlib import Path
-from threading import get_ident
 
 import pytest
 from sqlalchemy import create_engine, delete, insert, select, update
@@ -366,27 +365,6 @@ async def test_iter_otus_rejects_isolate_without_sequences(tmp_path: Path):
 
     with pytest.raises(ValueError, match="has no sequences"):
         [otu async for otu in sqlite_reference.iter_otus()]
-
-
-async def test_create_sqlite_reference_consumes_otus_off_event_loop_thread(
-    tmp_path: Path,
-):
-    """It consumes and writes OTUs without blocking the event loop thread."""
-    event_loop_thread_id = get_ident()
-    iteration_thread_ids = []
-
-    def iter_otus():
-        iteration_thread_ids.append(get_ident())
-        yield _otu()
-
-    await SQLiteReference.create(
-        tmp_path / REFERENCE_SQLITE_FILE_NAME,
-        _reference(),
-        iter_otus(),
-    )
-
-    assert len(iteration_thread_ids) == 1
-    assert iteration_thread_ids[0] != event_loop_thread_id
 
 
 async def test_create_sqlite_reference_without_reference(tmp_path: Path):
