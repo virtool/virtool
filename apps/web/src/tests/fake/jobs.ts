@@ -1,10 +1,6 @@
 import { faker } from "@faker-js/faker";
-import type {
-	JobNested,
-	JobState,
-	ServerJobMinimal,
-	Workflow,
-} from "@jobs/types";
+import type { JobNested, ServerJobMinimal } from "@jobs/types";
+import type { JobState, JobWorkflow } from "@virtool/contracts";
 import { createFakeUserNested } from "./user";
 
 /**
@@ -51,7 +47,7 @@ export function createFakeJobNested(overrides?: Partial<JobNested>): JobNested {
 			handle: faker.internet.username(),
 			id: faker.number.int(),
 		},
-		workflow: faker.helpers.arrayElement<Workflow>([
+		workflow: faker.helpers.arrayElement<JobWorkflow>([
 			"build_index",
 			"create_sample",
 			"create_subtraction",

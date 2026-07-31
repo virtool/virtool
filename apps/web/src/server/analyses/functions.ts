@@ -1,6 +1,6 @@
 import { createServerFn, createServerOnlyFn } from "@tanstack/react-start";
 import { setResponseStatus } from "@tanstack/react-start/server";
-import { WorkflowName } from "@virtool/contracts";
+import { AnalysisWorkflow } from "@virtool/contracts";
 import { z } from "zod";
 import { ForbiddenError } from "../auth/middleware";
 import { authenticated } from "../auth/policy";
@@ -45,7 +45,7 @@ const createAnalysisSchema = z.object({
 	sampleId: rowIdSchema,
 	refId: rowIdSchema,
 	subtractionIds: z.array(rowIdSchema).default([]),
-	workflow: WorkflowName,
+	workflow: AnalysisWorkflow,
 });
 
 const blastSchema = analysisIdSchema.extend({

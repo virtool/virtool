@@ -2,8 +2,9 @@ import { formatDate, formatTime } from "@app/date";
 import Badge from "@base/Badge";
 import BoxGroupSection from "@base/BoxGroupSection";
 import Markdown from "@base/Markdown";
+import type { JobState } from "@virtool/contracts";
 import { Calendar, Clock } from "lucide-react";
-import type { JobState, JobStep } from "../types";
+import type { JobStep } from "../types";
 import JobStateIcon from "./JobStateIcon";
 
 type JobStepProps = {

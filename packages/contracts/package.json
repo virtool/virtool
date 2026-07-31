@@ -8,9 +8,14 @@
 		".": "./src/index.ts"
 	},
 	"scripts": {
+		"test": "vitest run",
+		"test:watch": "vitest",
 		"typecheck": "tsc --noEmit"
 	},
 	"dependencies": {
 		"zod": "^4.3.6"
+	},
+	"devDependencies": {
+		"vitest": "^4.1.10"
 	}
 }

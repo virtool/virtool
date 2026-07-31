@@ -4,7 +4,37 @@ import type { JsonObject } from "./json";
 import type { SearchResult } from "./search";
 import type { SubtractionNested } from "./subtractions";
 import type { UserNested } from "./users";
-import type { WorkflowName } from "./workflowName";
+
+/**
+ * A workflow that produces an analysis.
+ *
+ * Strictly narrower than `JobWorkflow`: an analysis is only ever the output of
+ * Pathoscope or NuVs. The wider union would let a caller ask for an analysis
+ * run by `create_sample`, which has no meaning and no result shape.
+ */
+export const AnalysisWorkflow = z.enum(["pathoscope", "nuvs"]);
+
+export type AnalysisWorkflow = z.infer<typeof AnalysisWorkflow>;
+
+/**
+ * A format an analysis result file can be stored in.
+ *
+ * Mirrors Python's `AnalysisFormat`, a real Postgres enum (`analysisformat`)
+ * behind `analysis_files.format`. Distinct from a sample artifact's `type` even
+ * though the two share their members today — they are separate upstream enums
+ * and are free to diverge.
+ */
+export const AnalysisFormat = z.enum([
+	"sam",
+	"bam",
+	"fasta",
+	"fastq",
+	"csv",
+	"tsv",
+	"json",
+]);
+
+export type AnalysisFormat = z.infer<typeof AnalysisFormat>;
 
 /** The parent sample of an analysis, reduced to its id. */
 export type AnalysisSampleNested = {
@@ -34,7 +64,7 @@ export type AnalysisIndexNested = {
 };
 
 /** The job that ran an analysis workflow. */
-export type AnalysisJobNested = JobNested & { workflow: WorkflowName };
+export type AnalysisJobNested = JobNested & { workflow: AnalysisWorkflow };
 
 /** An analysis as it appears in a search-result list. */
 export type AnalysisMinimal = {
@@ -69,7 +99,7 @@ export type AnalysisMinimal = {
 	user: UserNested;
 
 	/** The workflow used to generate the analysis */
-	workflow: WorkflowName;
+	workflow: AnalysisWorkflow;
 };
 
 /** A result file retained by a workflow and offered for download. */
@@ -118,10 +148,3 @@ export type Analysis = AnalysisMinimal & {
 export type AnalysisSearchResult = SearchResult & {
 	items: AnalysisMinimal[];
 };
-
-/** Body for the single-call `POST /analyses/{id}/results` write. */
-export const AnalysisFinalize = z.object({
-	results: z.unknown(),
-});
-
-export type AnalysisFinalize = z.infer<typeof AnalysisFinalize>;

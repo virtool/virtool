@@ -22,6 +22,9 @@
 		"packages/bio": {
 			"entry": ["src/**/*.test.ts"]
 		},
+		"packages/contracts": {
+			"entry": ["src/**/*.test.ts"]
+		},
 		"packages/logger": {
 			"entry": ["src/**/*.test.ts"]
 		}

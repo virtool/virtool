@@ -1,5 +1,5 @@
 import { cn } from "@app/cn";
-import type { JobState } from "@jobs/types";
+import type { JobState } from "@virtool/contracts";
 import { Progress } from "radix-ui";
 
 const colorToVar: Record<string, string> = {

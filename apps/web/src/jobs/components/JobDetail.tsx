@@ -10,8 +10,8 @@ import ViewHeaderAttribution from "@base/ViewHeaderAttribution";
 import ViewHeaderTitle from "@base/ViewHeaderTitle";
 import { useFetchIndex } from "@indexes/queries";
 import { getRouteApi } from "@tanstack/react-router";
+import type { JobState } from "@virtool/contracts";
 import { useFetchJob } from "../queries";
-import type { JobState } from "../types";
 import JobArgs from "./JobArgs";
 import JobSteps from "./JobSteps";
 

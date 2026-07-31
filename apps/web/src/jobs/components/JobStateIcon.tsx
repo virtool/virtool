@@ -1,5 +1,5 @@
+import type { JobState } from "@virtool/contracts";
 import { Ban, CircleCheck, Clock, Play, TriangleAlert } from "lucide-react";
-import type { JobState } from "../types";
 
 type JobStateIconProps = {
 	state: JobState;

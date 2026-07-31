@@ -1,9 +1,9 @@
 import { DEFAULT_PER_PAGE, type Paginated, paginated } from "@app/pagination";
 import { oneOfArray } from "@app/searchParams";
 import JobsList from "@jobs/components/JobList";
-import type { JobState } from "@jobs/types";
 import type { SearchSchemaInput } from "@tanstack/react-router";
 import { createFileRoute } from "@tanstack/react-router";
+import type { JobState } from "@virtool/contracts";
 
 const jobStates = [
 	"cancelled",

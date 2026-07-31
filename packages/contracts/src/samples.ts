@@ -56,29 +56,57 @@ export type Read = {
 	uploadedAt: string;
 };
 
-/** The FastQC quality charts associated with a sample. */
-export type Quality = {
+/**
+ * The FastQC quality charts associated with a sample.
+ *
+ * A schema rather than a plain type because the control plane validates an
+ * incoming quality blob at sample finalize; `@virtool/bio`'s FastQC parser is
+ * what produces it.
+ */
+export const Quality = z.object({
 	/** Data for the per-base quality chart */
-	bases: number[][];
+	bases: z.array(z.array(z.number())),
 
 	/** Data for the composition chart */
-	composition: number[][];
+	composition: z.array(z.array(z.number())),
 
 	/** The read count of the sample */
-	count: number;
+	count: z.number().int().nonnegative(),
 
 	/** The quality-score encoding */
-	encoding: string;
+	encoding: z.string(),
 
 	/** The GC content of the sample as a percentage */
-	gc: number;
+	gc: z.number(),
 
 	/** The read-length range */
-	length: number[];
+	length: z.array(z.number()),
 
 	/** Data for the sequences chart */
-	sequences: number[];
-};
+	sequences: z.array(z.number()),
+});
+
+export type Quality = z.infer<typeof Quality>;
+
+/**
+ * A format a sample artifact can be stored in.
+ *
+ * Mirrors Python's `ArtifactType`, a real Postgres enum (`artifacttype`) behind
+ * `sample_artifacts.type`. Distinct from `AnalysisFormat` even though the two
+ * share their members today — they are separate upstream enums and are free to
+ * diverge.
+ */
+export const SampleArtifactType = z.enum([
+	"sam",
+	"bam",
+	"fasta",
+	"fastq",
+	"csv",
+	"tsv",
+	"json",
+]);
+
+export type SampleArtifactType = z.infer<typeof SampleArtifactType>;
 
 /** A sample reduced to the fields shown in resource listings. */
 export type SampleMinimal = {

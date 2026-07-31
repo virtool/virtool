@@ -17,6 +17,7 @@ import type {
 	UserNested,
 	WorkflowState,
 } from "@virtool/contracts";
+import { AnalysisWorkflow } from "@virtool/contracts";
 import {
 	and,
 	asc,
@@ -123,10 +124,7 @@ export class SampleFileDuplicateError extends AppError {}
  */
 export class SampleOwnerlessError extends AppError {}
 
-const WORKFLOW_NAMES = ["nuvs", "pathoscope"] as const;
 const WORKFLOW_CONDITIONS = ["none", "pending", "ready"] as const;
-
-type WorkflowName = (typeof WORKFLOW_NAMES)[number];
 
 /** A sample's derived workflow tags, keyed as the client consumes them. */
 type WorkflowTags = {
@@ -152,7 +150,7 @@ function encodeTag(ready: boolean | undefined): boolean | string {
 function encodeWorkflows(readyByWorkflow: Map<string, boolean>): WorkflowTags {
 	const workflows: SampleWorkflows = { nuvs: "none", pathoscope: "none" };
 
-	for (const name of WORKFLOW_NAMES) {
+	for (const name of AnalysisWorkflow.options) {
 		const ready = readyByWorkflow.get(name);
 		if (ready !== undefined) {
 			workflows[name] = ready ? "complete" : ("pending" as WorkflowState);
@@ -525,7 +523,7 @@ function composeWorkflowConditionFilter(
 // Conditions for one workflow are ORed, different workflows ANDed. Pairs with an
 // unknown workflow or condition are dropped, matching the old Mongo query.
 function composeWorkflowFilter(db: Db, workflows: string[]): SQL | undefined {
-	const conditionsByWorkflow = new Map<WorkflowName, Set<string>>();
+	const conditionsByWorkflow = new Map<AnalysisWorkflow, Set<string>>();
 
 	for (const value of workflows) {
 		for (const pair of value.split(" ")) {
@@ -534,10 +532,10 @@ function composeWorkflowFilter(db: Db, workflows: string[]): SQL | undefined {
 			if (
 				workflow !== undefined &&
 				condition !== undefined &&
-				(WORKFLOW_NAMES as readonly string[]).includes(workflow) &&
+				(AnalysisWorkflow.options as readonly string[]).includes(workflow) &&
 				(WORKFLOW_CONDITIONS as readonly string[]).includes(condition)
 			) {
-				const key = workflow as WorkflowName;
+				const key = workflow as AnalysisWorkflow;
 				const set = conditionsByWorkflow.get(key) ?? new Set();
 				set.add(condition);
 				conditionsByWorkflow.set(key, set);

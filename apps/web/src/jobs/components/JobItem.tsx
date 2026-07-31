@@ -4,8 +4,7 @@ import BoxGroupSection from "@base/BoxGroupSection";
 import Link from "@base/Link";
 import ProgressCircle from "@base/ProgressCircle";
 import JobStateIcon from "@jobs/components/JobStateIcon";
-import type { JobState, Workflow } from "@jobs/types";
-import type { UserNested } from "@virtool/contracts";
+import type { JobState, JobWorkflow, UserNested } from "@virtool/contracts";
 import type { ElementType } from "react";
 
 export type JobItemProps = {
@@ -28,7 +27,7 @@ export type JobItemProps = {
 	user: UserNested;
 
 	/** The workflow of the job */
-	workflow: Workflow;
+	workflow: JobWorkflow;
 };
 
 /**

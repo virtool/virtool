@@ -1,3 +1,4 @@
+import { z } from "zod";
 import type { JobState, JobWorkflow } from "./jobs";
 import type { SearchResult } from "./search";
 import type { UserNested } from "./users";
@@ -11,15 +12,38 @@ export type SubtractionNested = {
 	name: string;
 };
 
-/** The percentage of the genome made up by each nucleotide. */
-export type NucleotideComposition = {
-	a: number;
-	c: number;
-	g: number;
-	t: number;
+/**
+ * The fraction of the genome made up by each nucleotide.
+ *
+ * Each value is in `[0, 1]`, **not** a percentage — `toGcContent` formats it as
+ * one for display. The bound is what catches a workflow that finalizes with
+ * percentages by mistake, which is the plausible unit error here; a per-nucleotide
+ * `count / total` can never exceed 1, so it costs a correct payload nothing.
+ *
+ * A schema rather than a plain type because the control plane validates it at
+ * subtraction finalize.
+ */
+const nucleotideFraction = z.number().min(0).max(1);
+
+export const NucleotideComposition = z.object({
+	a: nucleotideFraction,
+	c: nucleotideFraction,
+	g: nucleotideFraction,
+	t: nucleotideFraction,
 	/** Unknown nucleotide */
-	n: number;
-};
+	n: nucleotideFraction,
+});
+
+export type NucleotideComposition = z.infer<typeof NucleotideComposition>;
+
+/**
+ * One of the file types a subtraction can hold.
+ *
+ * `fasta` is the source genome; `bowtie2` is one shard of the built index.
+ */
+export const SubtractionFileType = z.enum(["fasta", "bowtie2"]);
+
+export type SubtractionFileType = z.infer<typeof SubtractionFileType>;
 
 /** The compact upload snapshot attached to a subtraction as `file`. */
 export type SubtractionUpload = {

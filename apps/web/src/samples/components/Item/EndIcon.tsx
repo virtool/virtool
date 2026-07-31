@@ -1,7 +1,7 @@
 import { cn } from "@app/cn";
 import IconButton from "@base/IconButton";
 import ProgressCircle from "@base/ProgressCircle";
-import type { JobState } from "@jobs/types";
+import type { JobState } from "@virtool/contracts";
 import { ChartArea } from "lucide-react";
 
 type SampleItemEndIconProps = {

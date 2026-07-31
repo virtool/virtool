@@ -1,5 +1,6 @@
 import BoxGroup from "@base/BoxGroup";
-import type { JobState, JobStep } from "../types";
+import type { JobState } from "@virtool/contracts";
+import type { JobStep } from "../types";
 import JobStepItem from "./JobStep";
 
 type JobStepsProps = {

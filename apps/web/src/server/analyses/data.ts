@@ -4,11 +4,11 @@ import type {
 	AnalysisJobNested,
 	AnalysisMinimal,
 	AnalysisSearchResult,
+	AnalysisWorkflow,
 	JsonObject,
 	NuvsBlast,
 	SubtractionNested,
 	UserNested,
-	WorkflowName,
 } from "@virtool/contracts";
 import { and, asc, count, desc, eq, inArray, type SQL } from "drizzle-orm";
 import type { Db, DbOrTx } from "../db/pg";
@@ -50,7 +50,7 @@ export type CreateAnalysisValues = {
 	sampleId: number;
 	referenceId: number;
 	subtractionIds: number[];
-	workflow: WorkflowName;
+	workflow: AnalysisWorkflow;
 	userId: number;
 };
 
@@ -171,7 +171,7 @@ async function getAnalysisJobs(
 				// job that ran its own workflow.
 				state: job.state as AnalysisJobNested["state"],
 				user: job.user,
-				workflow: job.workflow as WorkflowName,
+				workflow: job.workflow as AnalysisWorkflow,
 			},
 		]),
 	);
@@ -234,7 +234,7 @@ function mapMinimal(
 		subtractions: analysisSubtractionList,
 		updatedAt: row.updated_at.toISOString(),
 		user,
-		workflow: row.workflow as WorkflowName,
+		workflow: row.workflow as AnalysisWorkflow,
 	};
 }
 

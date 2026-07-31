@@ -17,7 +17,7 @@ import {
 import type {
 	Analysis,
 	AnalysisSearchResult,
-	WorkflowName,
+	AnalysisWorkflow,
 } from "@virtool/contracts";
 
 /**
@@ -80,7 +80,7 @@ export type CreateAnalysisParams = {
 	refId: number;
 	sampleId: number;
 	subtractionIds?: number[];
-	workflow: WorkflowName;
+	workflow: AnalysisWorkflow;
 };
 
 export function useCreateAnalysis() {

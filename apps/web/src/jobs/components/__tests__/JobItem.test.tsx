@@ -1,7 +1,7 @@
-import type { JobState } from "@jobs/types";
 import { screen } from "@testing-library/react";
 import { createFakeUserNested } from "@tests/fake/user";
 import { renderWithRouter } from "@tests/setup";
+import type { JobState } from "@virtool/contracts";
 import { beforeEach, describe, expect, it } from "vitest";
 import JobItem, { type JobItemProps } from "../JobItem";
 

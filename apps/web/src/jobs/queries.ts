@@ -5,10 +5,10 @@ import {
 	useQuery,
 	useSuspenseQuery,
 } from "@tanstack/react-query";
+import type { JobState } from "@virtool/contracts";
 import {
 	JobSchema,
 	JobSearchResultSchema,
-	type JobState,
 	type ServerJob,
 	type ServerJobNested,
 } from "./types";

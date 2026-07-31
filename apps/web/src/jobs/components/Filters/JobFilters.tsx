@@ -1,4 +1,5 @@
-import type { JobCounts, JobState } from "@jobs/types";
+import type { JobCounts } from "@jobs/types";
+import type { JobState } from "@virtool/contracts";
 import StateFilter from "./StateFilter";
 
 type StateFilterProps = {

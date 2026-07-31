@@ -4,9 +4,9 @@ import ListEmpty from "@base/ListEmpty";
 import Pagination from "@base/Pagination";
 import ViewHeader from "@base/ViewHeader";
 import ViewHeaderTitle from "@base/ViewHeaderTitle";
+import type { JobState } from "@virtool/contracts";
 import { Cog, SearchX } from "lucide-react";
 import { useSuspenseJobs } from "../queries";
-import type { JobState } from "../types";
 import { JobFilters } from "./Filters/JobFilters";
 import JobItem from "./JobItem";
 

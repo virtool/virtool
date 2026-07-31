@@ -1,34 +1,17 @@
+import { JobState, JobWorkflow } from "@virtool/contracts";
 import z from "zod";
-
-const JobStateSchema = z.enum([
-	"cancelled",
-	"failed",
-	"pending",
-	"running",
-	"succeeded",
-]);
-export type JobState = z.infer<typeof JobStateSchema>;
-
-export const Workflow = z.literal([
-	"build_index",
-	"create_sample",
-	"create_subtraction",
-	"nuvs",
-	"pathoscope",
-]);
-export type Workflow = z.infer<typeof Workflow>;
 
 export const JobNestedSchema = z
 	.object({
 		created_at: z.coerce.date(),
 		id: z.int(),
 		progress: z.int(),
-		state: JobStateSchema,
+		state: JobState,
 		user: z.object({
 			handle: z.string(),
 			id: z.int(),
 		}),
-		workflow: Workflow,
+		workflow: JobWorkflow,
 	})
 	.transform(({ created_at, id, progress, state, user, workflow }) => ({
 		createdAt: created_at,
@@ -46,12 +29,12 @@ export const JobMinimalSchema = z
 		id: z.int(),
 		created_at: z.coerce.date(),
 		progress: z.int(),
-		state: JobStateSchema,
+		state: JobState,
 		user: z.object({
 			id: z.int(),
 			handle: z.string(),
 		}),
-		workflow: Workflow,
+		workflow: JobWorkflow,
 	})
 	.transform(({ created_at, id, progress, state, user, workflow }) => ({
 		createdAt: created_at,
@@ -117,12 +100,12 @@ export const JobSchema = z
 		),
 		progress: z.int(),
 		steps: z.array(JobStepSchema).nullable(),
-		state: JobStateSchema,
+		state: JobState,
 		user: z.object({
 			id: z.int(),
 			handle: z.string(),
 		}),
-		workflow: Workflow,
+		workflow: JobWorkflow,
 	})
 	.transform(({ claimed_at, created_at, finished_at, state, ...rest }) => ({
 		...rest,

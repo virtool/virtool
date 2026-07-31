@@ -1,8 +1,8 @@
-import type { WorkflowName } from "@virtool/contracts";
+import type { AnalysisWorkflow } from "@virtool/contracts";
 
 export type workflow = {
 	description: string;
-	id: WorkflowName;
+	id: AnalysisWorkflow;
 	name: string;
 };
 
