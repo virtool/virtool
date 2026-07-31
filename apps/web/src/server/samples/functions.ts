@@ -218,7 +218,6 @@ export const deleteSampleFn = createServerFn({ method: "POST" })
 			}
 
 			await deleteSample(db, storage, data.sampleId);
-			setResponseStatus(204);
 			return null;
 		} catch (err) {
 			return rethrowAsHttp(err);

@@ -296,7 +296,6 @@ export const removeReferenceUserFn = createServerFn({ method: "POST" })
 				"modify",
 			);
 			await removeReferenceUser(db, data.referenceId, data.userId);
-			setResponseStatus(204);
 			return null;
 		} catch (err) {
 			return rethrowAsHttp(err);
@@ -314,7 +313,6 @@ export const removeReferenceGroupFn = createServerFn({ method: "POST" })
 				"modify",
 			);
 			await removeReferenceGroup(db, data.referenceId, data.groupId);
-			setResponseStatus(204);
 			return null;
 		} catch (err) {
 			return rethrowAsHttp(err);

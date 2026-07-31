@@ -256,8 +256,6 @@ export const deleteOtuFn = createServerFn({ method: "POST" })
 
 			await deleteOtu(db, data.otuId, context.session.userId);
 
-			setResponseStatus(204);
-
 			return null;
 		} catch (err) {
 			return rethrowAsHttp(err);
@@ -341,8 +339,6 @@ export const deleteIsolateFn = createServerFn({ method: "POST" })
 				context.session.userId,
 			);
 
-			setResponseStatus(204);
-
 			return null;
 		} catch (err) {
 			return rethrowAsHttp(err);
@@ -423,8 +419,6 @@ export const deleteSequenceFn = createServerFn({ method: "POST" })
 				data.sequenceId,
 				context.session.userId,
 			);
-
-			setResponseStatus(204);
 
 			return null;
 		} catch (err) {

@@ -105,7 +105,6 @@ export const deleteLabelFn = createServerFn({ method: "POST" })
 	.handler(async ({ data }) => {
 		try {
 			await deleteLabel(db, data.labelId);
-			setResponseStatus(204);
 			return null;
 		} catch (err) {
 			return rethrowAsHttp(err);

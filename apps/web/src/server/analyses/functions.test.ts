@@ -347,13 +347,12 @@ describe("deleteAnalysis", () => {
 		).toHaveLength(1);
 	});
 
-	it("returns 204 for a caller with write rights", async () => {
+	it("deletes the analysis for a caller with write rights", async () => {
 		const userId = await signInAsNewUser();
 		const sampleId = await seedSample({ user_id: userId });
 		const analysisId = await seedAnalysis({ sample_id: sampleId });
 
 		await expect(call("deleteAnalysisFn", { analysisId })).resolves.toBeNull();
-		expect(setResponseStatus).toHaveBeenCalledWith(204);
 		expect(await db.select().from(analyses)).toHaveLength(0);
 	});
 });

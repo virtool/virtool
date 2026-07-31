@@ -150,7 +150,6 @@ describe("deleteUpload", () => {
 
 		const [row] = await db.select().from(uploadsTable);
 		expect(row?.removed).toBe(true);
-		expect(setResponseStatus).toHaveBeenCalledWith(204);
 	});
 
 	it("maps a missing upload to a 404", async () => {

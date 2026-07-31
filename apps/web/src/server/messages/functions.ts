@@ -89,7 +89,6 @@ export const deleteMessageFn = createServerFn({ method: "POST" })
 	.handler(async ({ data }) => {
 		try {
 			await deleteMessage(db, data.id);
-			setResponseStatus(204);
 			return null;
 		} catch (err) {
 			rethrowAsHttp(err);

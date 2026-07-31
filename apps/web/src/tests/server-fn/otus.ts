@@ -45,7 +45,7 @@ export function mockUpdateOtu(otu: Otu): Mock {
 	return otuServerFnMocks.updateOtuFn;
 }
 
-/** Sets up deleteOtu to resolve, as the 204 it answers with carries no body. */
+/** Sets up deleteOtu to resolve, as the deletion answers with no content. */
 export function mockDeleteOtu(): Mock {
 	otuServerFnMocks.deleteOtuFn.mockResolvedValue(null);
 	return otuServerFnMocks.deleteOtuFn;
@@ -59,7 +59,7 @@ export function mockCreateIsolate(overrides?: Partial<OtuIsolate>): Mock {
 	return otuServerFnMocks.createIsolateFn;
 }
 
-/** Sets up deleteIsolate to resolve, as the 204 it answers with carries no body. */
+/** Sets up deleteIsolate to resolve, as the deletion answers with no content. */
 export function mockDeleteIsolate(): Mock {
 	otuServerFnMocks.deleteIsolateFn.mockResolvedValue(null);
 	return otuServerFnMocks.deleteIsolateFn;
@@ -81,7 +81,7 @@ export function mockUpdateSequence(overrides?: Partial<OtuSequence>): Mock {
 	return otuServerFnMocks.updateSequenceFn;
 }
 
-/** Sets up deleteSequence to resolve, as the 204 it answers with carries no body. */
+/** Sets up deleteSequence to resolve, as the deletion answers with no content. */
 export function mockDeleteSequence(): Mock {
 	otuServerFnMocks.deleteSequenceFn.mockResolvedValue(null);
 	return otuServerFnMocks.deleteSequenceFn;

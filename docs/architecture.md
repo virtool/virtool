@@ -75,6 +75,22 @@ import-direction invariant stays enforceable.
   logic — if a handler grows a multi-step orchestration with rollbacks
   or branching, that is the signal to extract a `service.ts`.
 
+  The status a handler sets is always a 4xx or a 2xx that carries a
+  body. **A null-body status — 204, 205, or 304 — is not available
+  here.** Start's server-function handler serializes the `{ result,
+  error }` wrapper into a body unconditionally, and the fetch spec
+  forbids a body on those three, so `new Response(body, { status: 204
+  })` throws — *after* the handler has done its work. The handler's own
+  catch then rebuilds the error response with the status still set and
+  throws a second time, with nothing left to catch it, so the caller
+  sees a failed request for an operation that succeeded. A deletion
+  returns `null` and answers 200; the RPC client deserializes the body
+  and never reads the code, so nothing observes the difference.
+  `server/__tests__/responseStatus.test.ts` scans every `functions.ts`
+  and fails the build on all three statuses. A raw route is unaffected —
+  it builds its own `Response`, and `new Response(null, { status: 204 })`
+  is fine.
+
 ### The underlying principle: keep policy logic pure
 
 The three-file layering is the structural form of a broader rule:

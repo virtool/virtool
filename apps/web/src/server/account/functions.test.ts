@@ -133,7 +133,7 @@ describe("updateApiKey", () => {
 });
 
 describe("deleteApiKey", () => {
-	it("removes the signed-in user's key with a 204", async () => {
+	it("removes the signed-in user's key", async () => {
 		await signIn(db, getRequest);
 		const created = (await call("createApiKeyFn", {
 			name: "Robot",
@@ -142,7 +142,6 @@ describe("deleteApiKey", () => {
 
 		await call("deleteApiKeyFn", { keyId: created.id });
 
-		expect(setResponseStatus).toHaveBeenCalledWith(204);
 		expect(await db.select().from(apiKeys)).toHaveLength(0);
 	});
 

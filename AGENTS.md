@@ -407,6 +407,14 @@ a name conflict). The Sentry `beforeSend` filter drops `ClientError`
 `Error` is reported as a false incident. A bare `throw` stays reserved
 for the genuinely unexpected.
 
+**Never set a null-body status — 204, 205, or 304 — from a server
+function.** Start always serializes a body for an RPC call, so the
+`Response` constructor rejects the pair and the operation reports a
+failure it already completed. A deletion returns `null` and answers 200;
+the RPC client reads the body and never the status.
+`server/__tests__/responseStatus.test.ts` fails the build on any of the
+three.
+
 See [docs/architecture.md](docs/architecture.md) for the import-direction
 invariant in full, the labels (minimal) and auth (carve-out) shapes,
 the pure-policy-vs-framework-shell principle, and when to introduce

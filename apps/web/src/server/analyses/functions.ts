@@ -186,8 +186,6 @@ export const deleteAnalysisFn = createServerFn({ method: "POST" })
 				"write",
 			]);
 			await deleteAnalysis(db, storage, data.analysisId);
-			setResponseStatus(204);
-
 			return null;
 		} catch (err) {
 			return rethrowAsHttp(err);

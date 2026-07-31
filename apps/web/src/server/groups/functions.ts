@@ -112,7 +112,6 @@ export const deleteGroupFn = createServerFn({ method: "POST" })
 	.handler(async ({ data }) => {
 		try {
 			await deleteGroup(db, data.groupId);
-			setResponseStatus(204);
 			return null;
 		} catch (err) {
 			rethrowAsHttp(err);

@@ -66,7 +66,6 @@ export const deleteUploadFn = createServerFn({ method: "POST" })
 	.handler(async ({ data }) => {
 		try {
 			await deleteUpload(db, storage, data.id);
-			setResponseStatus(204);
 			return null;
 		} catch (err) {
 			return rethrowAsHttp(err);

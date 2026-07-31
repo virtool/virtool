@@ -115,7 +115,6 @@ export const deleteSubtractionFn = createServerFn({ method: "POST" })
 	.handler(async ({ data }) => {
 		try {
 			await deleteSubtraction(db, storage, data.subtractionId);
-			setResponseStatus(204);
 			return null;
 		} catch (err) {
 			return rethrowAsHttp(err);

@@ -77,7 +77,6 @@ export const deleteApiKeyFn = createServerFn({ method: "POST" })
 	.handler(async ({ context, data }) => {
 		try {
 			await deleteApiKey(db, context.session.userId, data.keyId);
-			setResponseStatus(204);
 			return null;
 		} catch (err) {
 			return rethrowAsHttp(err);
