@@ -3,6 +3,7 @@ import pytest
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 
+from tests.fixtures.analysis import seed_index
 from virtool.analyses.sql import SQLAnalysis
 from virtool.data.errors import ResourceConflictError, ResourceNotFoundError
 from virtool.data.events import (
@@ -351,6 +352,7 @@ class TestCreatePostgres:
                 sample="sample_abc",
                 reference="ref_abc",
                 index="index_abc",
+                index_id=await seed_index(session, user.id, "index_abc"),
                 user_id=user.id,
                 job_id=job.id,
             )

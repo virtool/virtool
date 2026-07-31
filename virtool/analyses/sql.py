@@ -2,6 +2,7 @@ from datetime import datetime
 
 from sqlalchemy import (
     BigInteger,
+    CheckConstraint,
     Column,
     DateTime,
     Enum,
@@ -43,10 +44,23 @@ class SQLAnalysis(Base):
       rows the ``reference_id`` backfill has not reached. The bare columns are
       dropped in a later cleanup revision.
 
+    ``index_id`` is ``NOT NULL``, so an analysis's index is always resolvable
+    through the foreign key. ``reference_id`` cannot be tightened the same way
+    until it is backfilled, so ``ck_analyses_reference_present`` holds the weaker
+    invariant that a reference is named either by the legacy string or by the
+    foreign key. Without it a writer that omits both would insert a row that
+    cannot be read back.
+
     The Mongo ``space`` field is intentionally dropped.
     """
 
     __tablename__ = "analyses"
+    __table_args__ = (
+        CheckConstraint(
+            "num_nonnulls(reference, reference_id) >= 1",
+            name="ck_analyses_reference_present",
+        ),
+    )
 
     id: Mapped[int] = mapped_column(BigInteger, Identity(always=True), primary_key=True)
     legacy_id: Mapped[str | None] = mapped_column(unique=True)
@@ -68,11 +82,7 @@ class SQLAnalysis(Base):
         nullable=True,
     )
     index: Mapped[str | None]
-    index_id: Mapped[int | None] = mapped_column(
-        BigInteger,
-        ForeignKey("indexes.id"),
-        nullable=True,
-    )
+    index_id: Mapped[int] = mapped_column(BigInteger, ForeignKey("indexes.id"))
     user_id: Mapped[int] = mapped_column(ForeignKey("users.id"))
     job_id: Mapped[int | None] = mapped_column(ForeignKey("jobs.id"), nullable=True)
 

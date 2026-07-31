@@ -3,7 +3,7 @@ from typing import NamedTuple
 from unittest.mock import ANY, AsyncMock
 
 import pytest
-from sqlalchemy import update
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 from syrupy import SnapshotAssertion
 
@@ -289,6 +289,11 @@ async def test_get_analysis_written_without_legacy_columns(
 
         await session.commit()
 
+    row = await get_row(pg, SQLAnalysis, ("id", analysis_id))
+
+    assert row.reference is None
+    assert row.index is None
+
     fetched = await data_layer.analyses.get(analysis_id)
 
     assert fetched.id == analysis_id
@@ -296,31 +301,54 @@ async def test_get_analysis_written_without_legacy_columns(
     assert fetched.index.id == setup_sample.index_id
 
 
-async def test_get_raises_on_unresolvable_index(
-    data_layer: DataLayer,
+async def test_analysis_without_reference_or_reference_id_is_rejected(
     pg: AsyncEngine,
     setup_sample: SampleSetup,
-    subtraction_ids: dict[str, int],
 ):
-    """An analysis whose ``index_id`` does not resolve to a build raises loudly instead
-    of returning a versionless index.
+    """An analysis naming its reference neither by the legacy string nor by the foreign
+    key is rejected, rather than stored as a row that cannot be read back.
     """
-    analysis_id = await seed_setup_analysis(
-        pg,
-        setup_sample,
-        [subtraction_ids["subtraction_1"]],
-    )
-
     async with AsyncSession(pg) as session:
-        await session.execute(
-            update(SQLAnalysis)
-            .where(SQLAnalysis.id == analysis_id)
-            .values(index_id=None),
+        session.add(
+            SQLAnalysis(
+                created_at=timestamp(),
+                updated_at=timestamp(),
+                workflow="nuvs",
+                ready=False,
+                sample=str(setup_sample.sample_id),
+                sample_id=setup_sample.sample_id,
+                index_id=setup_sample.index_id,
+                user_id=setup_sample.user_id,
+            ),
         )
-        await session.commit()
 
-    with pytest.raises(ValueError, match="Index not found for analysis"):
-        await data_layer.analyses.get(analysis_id)
+        with pytest.raises(IntegrityError, match="ck_analyses_reference_present"):
+            await session.commit()
+
+
+async def test_analysis_without_index_id_is_rejected(
+    pg: AsyncEngine,
+    setup_sample: SampleSetup,
+):
+    """An analysis that does not name its index by the foreign key is rejected, rather
+    than stored as a row whose index cannot be resolved.
+    """
+    async with AsyncSession(pg) as session:
+        session.add(
+            SQLAnalysis(
+                created_at=timestamp(),
+                updated_at=timestamp(),
+                workflow="nuvs",
+                ready=False,
+                sample=str(setup_sample.sample_id),
+                sample_id=setup_sample.sample_id,
+                reference_id=setup_sample.reference_id,
+                user_id=setup_sample.user_id,
+            ),
+        )
+
+        with pytest.raises(IntegrityError, match="index_id"):
+            await session.commit()
 
 
 async def test_upload_file(
