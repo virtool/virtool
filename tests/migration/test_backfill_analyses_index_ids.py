@@ -111,16 +111,25 @@ async def _fetch_index_id(ctx: MigrationContext, analysis_id: int) -> int | None
         ).scalar_one()
 
 
+NULLABLE_INDEX_ID_REVISION = "af827765c1d5"
+"""The last Alembic revision at which ``analyses.index_id`` is still nullable.
+
+``9cea546d2cd3`` sets it ``NOT NULL``, so from that point on there is no row for this
+backfill to fill. Any deployment where it still has work to do is at or below this
+revision, which makes it the schema to exercise the backfill against.
+"""
+
+
 @pytest.fixture
-async def _at_head(apply_alembic: Callable) -> None:
-    await asyncio.to_thread(apply_alembic, "head")
+async def _nullable_index_id(apply_alembic: Callable) -> None:
+    await asyncio.to_thread(apply_alembic, NULLABLE_INDEX_ID_REVISION)
 
 
 class TestBackfill:
     async def test_index_id_resolved_from_legacy_string(
         self,
         ctx: MigrationContext,
-        _at_head: None,
+        _nullable_index_id: None,
     ):
         """The backfill fills ``index_id`` from ``indexes.legacy_id``."""
         async with AsyncSession(ctx.pg) as session:
@@ -137,7 +146,7 @@ class TestBackfill:
     async def test_idempotent(
         self,
         ctx: MigrationContext,
-        _at_head: None,
+        _nullable_index_id: None,
     ):
         """A second run matches no rows and leaves ``index_id`` unchanged."""
         async with AsyncSession(ctx.pg) as session:
@@ -155,7 +164,7 @@ class TestBackfill:
     async def test_tripwire_raises_on_unresolved_index(
         self,
         ctx: MigrationContext,
-        _at_head: None,
+        _nullable_index_id: None,
     ):
         """An ``index`` string that matches no ``indexes`` row raises loudly, naming
         the unresolved value, rather than leaving ``index_id`` NULL.

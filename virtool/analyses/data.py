@@ -53,7 +53,6 @@ FIND_COLUMNS = (
     SQLAnalysis.sample_id,
     SQLAnalysis.reference,
     SQLAnalysis.reference_id,
-    SQLAnalysis.index,
     SQLAnalysis.index_id,
     SQLAnalysis.user_id,
     SQLAnalysis.job_id,
@@ -70,9 +69,9 @@ INDEX_COLUMNS = (
 """The joined ``SQLIndex`` columns that supply the nested ``{id, version}``.
 
 The version is not stored on ``analyses``, so it is read from ``indexes`` via the
-``analyses.index_id`` foreign key. Selected through an outer join so an analysis whose
-index cannot be resolved survives the query and raises loudly in ``_row_to_document``
-rather than silently dropping from a list.
+``analyses.index_id`` foreign key. An inner join is safe: ``index_id`` is ``NOT NULL``
+and a foreign key, so every analysis has exactly one matching build and none can be
+dropped from a result by the join.
 """
 
 
@@ -90,13 +89,8 @@ def _row_to_document(row, *, include_results: bool) -> dict:
     ``AttachReferenceTransform`` resolves either form.
 
     The nested index is read from the joined ``SQLIndex`` columns. Its outward id is the
-    integer primary key: indexes are addressed publicly by their Postgres id. A ``NULL``
-    join means ``index_id`` did not resolve to a build, which is a data-integrity failure
-    that must surface loudly.
+    integer primary key: indexes are addressed publicly by their Postgres id.
     """
-    if row.index_pg_id is None:
-        raise ValueError(f"Index not found for analysis {row.id}: {row.index}")
-
     document = {
         "id": row.id,
         "legacy_id": row.legacy_id,
@@ -162,7 +156,7 @@ class AnalysisData(DataLayerDomain):
             row = (
                 await session.execute(
                     select(*FIND_COLUMNS, SQLAnalysis.results, *INDEX_COLUMNS)
-                    .outerjoin(SQLIndex, SQLAnalysis.index_id == SQLIndex.id)
+                    .join(SQLIndex, SQLAnalysis.index_id == SQLIndex.id)
                     .where(
                         compose_legacy_id_single_expression(SQLAnalysis, analysis_id),
                     ),

@@ -4,6 +4,7 @@ from syrupy import SnapshotAssertion
 
 import virtool.analyses.files
 import virtool.analyses.utils
+from tests.fixtures.analysis import seed_index
 from virtool.analyses.sql import SQLAnalysis
 from virtool.analyses.utils import analysis_file_key
 from virtool.users.pg import SQLUser
@@ -38,6 +39,7 @@ async def test_attach_analysis_files(
             sample="sample",
             reference="reference",
             index="index",
+            index_id=await seed_index(session, 1),
             user_id=1,
         )
 

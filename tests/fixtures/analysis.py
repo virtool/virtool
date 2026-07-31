@@ -10,6 +10,47 @@ from virtool.indexes.sql import SQLIndex
 from virtool.references.sql import SQLReference
 from virtool.samples.sql import SQLLegacySample
 from virtool.subtractions.pg import SQLSubtraction
+from virtool.utils import timestamp
+
+
+async def seed_index(
+    session: AsyncSession,
+    user_id: int,
+    legacy_id: str = "index",
+) -> int:
+    """Seed an ``indexes`` row and its ``legacy_references`` parent, returning its id.
+
+    Every analysis must name a resolvable index through the ``index_id`` foreign key.
+    Tests whose subject is not the index itself use this to satisfy that key without
+    restating the reference and index setup.
+
+    The caller is responsible for flushing or committing.
+    """
+    reference = SQLReference(
+        legacy_id=f"ref_{legacy_id}",
+        name="Plant Viruses",
+        description="",
+        created_at=timestamp(),
+        source_types=[],
+        user_id=user_id,
+    )
+    session.add(reference)
+    await session.flush()
+
+    index = SQLIndex(
+        legacy_id=legacy_id,
+        version=0,
+        created_at=timestamp(),
+        manifest={},
+        ready=True,
+        storage_key=legacy_id,
+        reference_id=reference.id,
+        user_id=user_id,
+    )
+    session.add(index)
+    await session.flush()
+
+    return index.id
 
 
 async def seed_analysis(pg: AsyncEngine, document: dict) -> int:

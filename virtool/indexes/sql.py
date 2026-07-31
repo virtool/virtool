@@ -81,10 +81,11 @@ class SQLIndexFile(Base):
     """SQL model to store new index files.
 
     ``index`` is mid-migration: the legacy Mongo string is retained alongside the
-    new ``index_id`` foreign key while readers move over. The bare ``index``
-    column is dropped in a later cleanup revision. Uniqueness is now keyed on the
-    integer ``(index_id, name)``; the legacy ``(index, name)`` constraint is
-    dropped by the finalize revision.
+    new ``index_id`` foreign key while readers move over. It is nullable because
+    writers that key off ``index_id`` omit it, and nothing reads it. The bare
+    ``index`` column is dropped in a later cleanup revision. Uniqueness is now
+    keyed on the integer ``(index_id, name)``; the legacy ``(index, name)``
+    constraint is dropped by the finalize revision.
 
     ``index_id`` cascades on delete: files belong to their index, so deleting the
     index (a hard delete, unlike the subtraction soft delete) removes its file
@@ -102,7 +103,7 @@ class SQLIndexFile(Base):
 
     id = Column(Integer, primary_key=True)
     name = Column(String, nullable=False)
-    index = Column(String, nullable=False)
+    index = Column(String, nullable=True)
     index_id = Column(
         BigInteger,
         ForeignKey("indexes.id", ondelete="CASCADE"),

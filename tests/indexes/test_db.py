@@ -551,6 +551,31 @@ async def test_upsert_index_file_updates_existing_row(fake: DataFaker, pg: Async
     assert len(rows) == 1
 
 
+async def test_index_file_row_omitting_legacy_index(fake: DataFaker, pg: AsyncEngine):
+    """An index file inserted with only ``index_id`` — the shape written by writers that
+    have moved off the legacy Mongo string — is accepted by Postgres.
+    """
+    index_pk = await _seed_index(pg, fake, "migrated")
+
+    async with AsyncSession(pg) as session:
+        session.add(
+            SQLIndexFile(
+                index_id=index_pk,
+                name="reference.json.gz",
+                size=9000,
+                type="json",
+            ),
+        )
+        await session.commit()
+
+    async with AsyncSession(pg) as session:
+        row = (
+            await session.execute(select(SQLIndexFile).filter_by(index_id=index_pk))
+        ).scalar_one()
+
+    assert row.index is None
+
+
 class TestUpdateLastIndexedVersions:
     async def test_stamps_postgres(
         self,
