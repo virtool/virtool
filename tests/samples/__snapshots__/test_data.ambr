@@ -8,9 +8,9 @@
     'created_at': 'approximately_now_datetime',
     'format': 'fastq',
     'group': dict({
-      'id': 2,
+      'id': 1,
       'legacy_id': None,
-      'name': 'gaffers',
+      'name': 'haematologists',
     }),
     'group_read': True,
     'group_write': True,
@@ -32,10 +32,10 @@
     }),
     'labels': list([
       dict({
-        'color': '#11af93',
-        'description': 'Quickly candidate change although.',
+        'color': '#7e1eaa',
+        'description': 'Bank party main picture suddenly drug.',
         'id': 1,
-        'name': 'Maybe',
+        'name': 'Little',
       }),
     ]),
     'library_type': <LibraryType.normal: 'normal'>,
@@ -68,7 +68,7 @@
         'type': 'reads',
         'uploaded_at': 'approximately_now_datetime',
         'user': dict({
-          'handle': 'johnsoncynthia',
+          'handle': 'huffchad',
           'id': 2,
         }),
       }),
@@ -113,10 +113,10 @@
     }),
     'labels': list([
       dict({
-        'color': '#11af93',
-        'description': 'Quickly candidate change although.',
+        'color': '#7e1eaa',
+        'description': 'Bank party main picture suddenly drug.',
         'id': 1,
-        'name': 'Maybe',
+        'name': 'Little',
       }),
     ]),
     'library_type': <LibraryType.normal: 'normal'>,
@@ -149,7 +149,7 @@
         'type': 'reads',
         'uploaded_at': 'approximately_now_datetime',
         'user': dict({
-          'handle': 'johnsoncynthia',
+          'handle': 'huffchad',
           'id': 2,
         }),
       }),
@@ -174,9 +174,9 @@
     'created_at': 'approximately_now_datetime',
     'format': 'fastq',
     'group': dict({
-      'id': 2,
+      'id': 1,
       'legacy_id': None,
-      'name': 'gaffers',
+      'name': 'haematologists',
     }),
     'group_read': True,
     'group_write': True,
@@ -198,10 +198,10 @@
     }),
     'labels': list([
       dict({
-        'color': '#11af93',
-        'description': 'Quickly candidate change although.',
+        'color': '#7e1eaa',
+        'description': 'Bank party main picture suddenly drug.',
         'id': 1,
-        'name': 'Maybe',
+        'name': 'Little',
       }),
     ]),
     'library_type': <LibraryType.normal: 'normal'>,
@@ -234,7 +234,7 @@
         'type': 'reads',
         'uploaded_at': 'approximately_now_datetime',
         'user': dict({
-          'handle': 'johnsoncynthia',
+          'handle': 'huffchad',
           'id': 2,
         }),
       }),

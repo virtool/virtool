@@ -93,7 +93,6 @@ class MigrationConfig:
 
 @dataclass
 class ServerConfig:
-    base_url: str
     dev: bool
     flags: list[FlagName]
     host: str
@@ -101,7 +100,6 @@ class ServerConfig:
     no_revision_check: bool
     port: int
     postgres_connection_string: str
-    real_ip_header: str
     sentry_dsn: str | None
     storage_backend: StorageBackendName
     cache_storage_budget: int = CACHE_STORAGE_BUDGET
@@ -129,7 +127,6 @@ class ServerConfig:
 class TaskRunnerConfig:
     """Configuration for the task runner service."""
 
-    base_url: str
     host: str
     no_revision_check: bool
     port: int

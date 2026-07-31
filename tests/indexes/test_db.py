@@ -804,6 +804,4 @@ async def test_attach_files(snapshot, fake: DataFaker, pg: AsyncEngine):
 
     document = {"id": "foo", "reference": {"id": "bar"}}
 
-    assert (
-        await attach_files(pg, "https://virtool.example.com/api", document) == snapshot
-    )
+    assert await attach_files(pg, document) == snapshot

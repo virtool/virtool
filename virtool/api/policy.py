@@ -2,86 +2,21 @@
 
 from collections.abc import Callable
 from inspect import isclass
-from typing import Any
 
-from aiohttp import web
-from aiohttp.web import Request
 from aiohttp_pydantic import PydanticView
 
-from virtool.api.client import UserClient
-from virtool.api.errors import APIForbidden, APIUnauthorized
-from virtool.authorization.permissions import (
-    LegacyPermission,
-)
-from virtool.data.utils import get_data_from_req
 from virtool.errors import PolicyError
-from virtool.models.roles import AdministratorRole
 
 
 class DefaultRoutePolicy:
-    """Any authenticated client can access the route."""
+    """Only authenticated clients can access the route.
 
-    allow_unauthenticated: bool = False
+    This policy applies to any route that doesn't declare one with :func:`.policy`.
     """
-    Allow unauthenticated clients to access the route that this policy applies to.
-
-    Policies that subclass the default policy must explicitly opt-in to allowing
-    unauthenticated clients to access the route.
-    """
-
-    async def check(self, req: Request, handler, client) -> None:
-        """This method is a no-op for the default policy.
-
-        A check for client authentication is built in to the policy. It can be disabled
-        by setting the ``allow_authenticated`` attribute ``False``.
-
-        Redefine this method in a subclass to build additional checks into a policy.
-
-        """
-
-    async def run_checks(self, req, handler, client) -> None:
-        if not self.allow_unauthenticated and not client.authenticated:
-            raise APIUnauthorized("Requires authorization")
-
-        await self.check(req, handler, client)
-
-
-class AdministratorRoutePolicy(DefaultRoutePolicy):
-    """Only authenticated clients that are administrators can access the route."""
-
-    def __init__(self, role: AdministratorRole):
-        self.role = role
-
-    async def check(self, req, handler, client: UserClient) -> None:
-        if not await get_data_from_req(req).users.check_administrator_role(
-            client.user_id, self.role
-        ):
-            raise APIForbidden("Requires administrative privilege")
-
-
-class PermissionRoutePolicy(DefaultRoutePolicy):
-    def __init__(self, permission: LegacyPermission):
-        self.permission = permission
-
-    async def check(self, _: Request, __: Callable, client: UserClient) -> None:
-        """Check if the client has the required permission for the object.
-
-        Raises ``HTTPForbidden`` if the client does not have the required permission.
-
-        The check will pass if:
-        * The user is an administrator.
-        * The user has the required permission in their legacy MongoDB-based
-          permissions.
-
-        """
-        if not (client.administrator_role or client.permissions[self.permission.value]):
-            raise APIForbidden("Not permitted")
 
 
 class PublicRoutePolicy(DefaultRoutePolicy):
     """Any client can access the route."""
-
-    allow_unauthenticated = True
 
 
 def policy(route_policy: DefaultRoutePolicy | type[DefaultRoutePolicy]):
@@ -100,16 +35,21 @@ def policy(route_policy: DefaultRoutePolicy | type[DefaultRoutePolicy]):
     return decorator
 
 
-def get_handler_flag(handler: Callable, method: str, name: str, default: Any):
-    """Given a middleware handler and flag name, return the flag value.
+def get_handler_policy(handler: Callable, method: str) -> DefaultRoutePolicy:
+    """Return the policy that applies to a request handler.
 
-    Returns ``None`` if the flag doesn't exist unless a ``default`` value is set.
+    The jobs API serves two shapes of handler: plain request handler functions and
+    :class:`PydanticView` subclasses, where the policy is declared on the method that
+    matches the request method. Both shapes must resolve here. If they don't, protected
+    routes become public or live workflows start getting rejected.
 
-    :param handler: the handler
-    :param name: the flag attribute name
-    :param method: the http method being used
-    :param default: an optional default value to return if no flag is found
-    :return: the flag value
+    Views are routed for every method, so a request can reach one that the view has no
+    method for. The default policy applies in that case, leaving the view to reject the
+    method itself.
+
+    :param handler: the handler the request resolved to
+    :param method: the HTTP method of the request
+    :return: the policy for the handler
     """
     depth = 0
     h = handler
@@ -123,38 +63,14 @@ def get_handler_flag(handler: Callable, method: str, name: str, default: Any):
         depth += 1
 
     if isclass(h) and issubclass(h, PydanticView):
-        method_name = method.lower()
-        view = h(None)
+        h = getattr(h(None), method.lower(), None)
 
-        try:
-            h = getattr(view, method_name)
-        except AttributeError:
-            raise AttributeError(f"No such method on view: {method_name}")
+        if h is None:
+            return DefaultRoutePolicy()
 
-    try:
-        return getattr(h, name)
-    except AttributeError:
-        return default
-
-
-def get_handler_policy(handler: Callable, method: str) -> DefaultRoutePolicy:
-    cls_or_obj = get_handler_flag(handler, method, "policy", DefaultRoutePolicy())
+    cls_or_obj = getattr(h, "policy", DefaultRoutePolicy)
 
     if isclass(cls_or_obj):
         return cls_or_obj()
 
     return cls_or_obj
-
-
-@web.middleware
-async def route_policy_middleware(req: Request, handler: Callable):
-    """Apply route policies to incoming requests.
-
-    Policy check methods must raise aiohttp HTTP exceptions to interrupt the request.
-    The default policy rejects any requests from unauthenticated clients.
-
-    """
-    route_policy = get_handler_policy(handler, req.method)
-    await route_policy.run_checks(req, handler, req["client"])
-
-    return await handler(req)

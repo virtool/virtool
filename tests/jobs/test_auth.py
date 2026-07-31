@@ -8,6 +8,7 @@ from aiohttp.web_routedef import RouteTableDef
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 
+from tests.fixtures.client import job_auth
 from virtool.jobs.models import JobState
 from virtool.jobs.pg import SQLJob
 
@@ -42,26 +43,160 @@ def non_public_test_route(request: Request):
     return Response(status=200)
 
 
-async def test_public_routes_are_public(fake, spawn_job_client):
-    """Test that the claim endpoint is public and doesn't require authentication."""
-    client = await spawn_job_client(
-        authenticated=False,
-    )
+class TestPolicyResolution:
+    """Test that policies resolve for both shapes of handler the jobs API serves.
 
-    user = await fake.users.create()
-    await fake.jobs.create(user=user, state=JobState.PENDING, workflow="nuvs")
+    Policies are declared on plain request handler functions (``virtool/api/root.py``)
+    and on methods of ``PydanticView`` subclasses (``virtool/jobs/api.py``). If
+    resolution regresses for either shape, protected routes silently become public or
+    live workflows start getting rejected.
+    """
 
-    response = await client.post("/jobs/claim?workflow=nuvs", json=CLAIM_BODY)
+    async def test_public_function_handler(self, spawn_job_client):
+        """A public plain function handler is reachable without a job key."""
+        client = await spawn_job_client(authenticated=False)
 
-    assert response.status == HTTPStatus.OK
+        response = await client.get("/")
+
+        assert response.status == HTTPStatus.OK
+
+    async def test_non_public_function_handler(self, spawn_job_client):
+        """A plain function handler without a policy requires a job key."""
+        client = await spawn_job_client(
+            authenticated=False,
+            add_route_table=test_routes,
+        )
+
+        response = await client.get("/not_public")
+
+        assert response.status == HTTPStatus.UNAUTHORIZED
+
+    async def test_public_view_method(self, fake, spawn_job_client):
+        """A public ``PydanticView`` method is reachable without a job key."""
+        client = await spawn_job_client(authenticated=False)
+
+        user = await fake.users.create()
+        await fake.jobs.create(user=user, state=JobState.PENDING, workflow="nuvs")
+
+        response = await client.post("/jobs/claim?workflow=nuvs", json=CLAIM_BODY)
+
+        assert response.status == HTTPStatus.OK
+
+    async def test_non_public_view_method(self, fake, spawn_job_client):
+        """A ``PydanticView`` method without a policy requires a job key."""
+        client = await spawn_job_client(authenticated=False)
+
+        job = await fake.jobs.create(user=await fake.users.create())
+
+        response = await client.get(f"/jobs/{job.id}")
+
+        assert response.status == HTTPStatus.UNAUTHORIZED
+
+    async def test_non_public_view_method_when_authenticated(
+        self,
+        fake,
+        spawn_job_client,
+    ):
+        """A ``PydanticView`` method without a policy is reachable with a job key."""
+        job = await fake.jobs.create(
+            user=await fake.users.create(),
+            state=JobState.RUNNING,
+        )
+
+        client = await spawn_job_client(auth=job_auth(job.id))
+
+        response = await client.get(f"/jobs/{job.id}")
+
+        assert response.status == HTTPStatus.OK
+
+    async def test_unsupported_view_method(self, spawn_job_client):
+        """A method a view doesn't implement is rejected, not a server error.
+
+        Views are routed for every method, so the request reaches policy resolution
+        with a method the view has no handler for.
+        """
+        client = await spawn_job_client(authenticated=True)
+
+        response = await client.delete("/jobs/counts")
+
+        assert response.status == HTTPStatus.METHOD_NOT_ALLOWED
 
 
-async def test_unauthorized_when_header_missing(spawn_job_client):
-    client = await spawn_job_client(authenticated=False, add_route_table=test_routes)
+class TestJobOwnership:
+    """Test that a job key only grants access to the job it belongs to.
 
-    response = await client.get("/not_public")
+    Every route with a ``job_id`` path parameter is called by a workflow with the id
+    of the job it is running as. A key must not be usable against another job.
+    """
 
-    assert response.status == 401
+    async def test_own_job(self, fake, spawn_job_client):
+        """A job can read itself."""
+        job = await fake.jobs.create(
+            user=await fake.users.create(),
+            state=JobState.RUNNING,
+        )
+
+        client = await spawn_job_client(auth=job_auth(job.id))
+
+        response = await client.get(f"/jobs/{job.id}")
+
+        assert response.status == HTTPStatus.OK
+
+    async def test_other_job(self, fake, spawn_job_client):
+        """A job cannot read another job."""
+        user = await fake.users.create()
+
+        job = await fake.jobs.create(user=user, state=JobState.RUNNING)
+        other_job = await fake.jobs.create(user=user, state=JobState.RUNNING)
+
+        client = await spawn_job_client(auth=job_auth(job.id))
+
+        response = await client.get(f"/jobs/{other_job.id}")
+
+        assert response.status == HTTPStatus.FORBIDDEN
+        assert await response.json() == {
+            "id": "job_id_mismatch",
+            "message": "Job key does not match the requested job",
+        }
+
+    async def test_finish_other_job(self, fake, spawn_job_client):
+        """A job cannot finish another job."""
+        user = await fake.users.create()
+
+        job = await fake.jobs.create(user=user, state=JobState.RUNNING)
+        other_job = await fake.jobs.create(user=user, state=JobState.RUNNING)
+
+        client = await spawn_job_client(auth=job_auth(job.id))
+
+        response = await client.post(f"/jobs/{other_job.id}/finish")
+
+        assert response.status == HTTPStatus.FORBIDDEN
+
+    async def test_finish_requires_a_key(self, fake, spawn_job_client):
+        """A job cannot be finished without a key."""
+        job = await fake.jobs.create(
+            user=await fake.users.create(),
+            state=JobState.RUNNING,
+        )
+
+        client = await spawn_job_client(authenticated=False)
+
+        response = await client.post(f"/jobs/{job.id}/finish")
+
+        assert response.status == HTTPStatus.UNAUTHORIZED
+
+    async def test_start_step_requires_a_key(self, fake, spawn_job_client):
+        """A job step cannot be started without a key."""
+        job = await fake.jobs.create(
+            user=await fake.users.create(),
+            state=JobState.RUNNING,
+        )
+
+        client = await spawn_job_client(authenticated=False)
+
+        response = await client.post(f"/jobs/{job.id}/steps/step_1/start")
+
+        assert response.status == HTTPStatus.UNAUTHORIZED
 
 
 async def test_unauthorized_when_header_invalid(spawn_job_client):

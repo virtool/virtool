@@ -13,14 +13,14 @@
     }),
     'claimed_at': str,
     'created_at': str,
-    'id': 2,
+    'id': 1,
     'pinged_at': str,
-    'progress': 100,
-    'state': 'succeeded',
+    'progress': 0,
+    'state': 'running',
     'steps': None,
     'user': dict({
       'handle': 'leeashley',
-      'id': 2,
+      'id': 1,
     }),
     'workflow': 'nuvs',
   })

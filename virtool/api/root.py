@@ -9,7 +9,6 @@ API_URL_ROOT = "https://www.virtool.ca/docs/api"
 routes = Routes()
 
 
-@routes.get("/")
 @routes.jobs_api.get("/")
 @policy(PublicRoutePolicy)
 async def get(req):

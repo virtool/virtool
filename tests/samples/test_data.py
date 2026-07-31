@@ -6,13 +6,11 @@ from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 from syrupy import SnapshotAssertion
 
 from tests.fixtures.analysis import seed_analysis
-from tests.fixtures.client import ClientSpawner
 from virtool.analyses.sql import SQLAnalysis
 from virtool.data.errors import ResourceConflictError, ResourceNotFoundError
 from virtool.data.layer import DataLayer
 from virtool.data.transforms import apply_transforms
 from virtool.fake.next import DataFaker, fake_file_chunker
-from virtool.models.enums import Permission
 from virtool.pg.utils import get_row, get_row_by_id
 from virtool.samples.data import SamplesData
 from virtool.samples.db import AttachUploadsTransform
@@ -60,12 +58,8 @@ class TestCreate:
         fake: DataFaker,
         pg: AsyncEngine,
         snapshot_recent,
-        spawn_client: ClientSpawner,
     ):
-        client = await spawn_client(
-            authenticated=True,
-            permissions=[Permission.create_sample],
-        )
+        actor = await fake.users.create()
 
         group = await fake.groups.create()
 
@@ -77,12 +71,12 @@ class TestCreate:
             ),
         )
         await data_layer.users.update(
-            client.user.id,
-            UpdateUserRequest(groups=[*[g.id for g in client.user.groups], group.id]),
+            actor.id,
+            UpdateUserRequest(groups=[*[g.id for g in actor.groups], group.id]),
         )
 
         await data_layer.users.update(
-            client.user.id,
+            actor.id,
             UpdateUserRequest(primary_group=group.id),
         )
 
@@ -106,7 +100,7 @@ class TestCreate:
 
         sample = await data_layer.samples.create(
             CreateSampleRequest(**data),
-            client.user.id,
+            actor.id,
         )
 
         assert sample == snapshot_recent(name="sample")
@@ -166,7 +160,7 @@ class TestCreate:
 
         assert legacy.name == "Foobar"
         assert legacy.library_type == sample.library_type
-        assert legacy.user_id == client.user.id
+        assert legacy.user_id == actor.id
         assert legacy.job_id == sample.job.id
         assert legacy.ready is False
         assert legacy.hold is True
@@ -183,13 +177,9 @@ class TestCreate:
         data_layer: DataLayer,
         fake: DataFaker,
         pg: AsyncEngine,
-        spawn_client: ClientSpawner,
     ):
         """A reserved file cannot be used to create a sample."""
-        client = await spawn_client(
-            authenticated=True,
-            permissions=[Permission.create_sample],
-        )
+        actor = await fake.users.create()
 
         upload = await fake.uploads.create(
             user=await fake.users.create(),
@@ -199,7 +189,7 @@ class TestCreate:
         with pytest.raises(ResourceConflictError, match=r"File is already reserved"):
             await data_layer.samples.create(
                 CreateSampleRequest(files=[upload.id], name="Foobar"),
-                client.user.id,
+                actor.id,
             )
 
         assert await _count_legacy_samples(pg) == 0
@@ -210,13 +200,9 @@ class TestCreate:
         fake: DataFaker,
         mocker,
         pg: AsyncEngine,
-        spawn_client: ClientSpawner,
     ):
         """A failed sample insert leaves no reserved upload and no sample behind."""
-        client = await spawn_client(
-            authenticated=True,
-            permissions=[Permission.create_sample],
-        )
+        actor = await fake.users.create()
 
         upload = await fake.uploads.create(user=await fake.users.create())
 
@@ -229,7 +215,7 @@ class TestCreate:
         with pytest.raises(RuntimeError, match=r"boom"):
             await data_layer.samples.create(
                 CreateSampleRequest(files=[upload.id], name="Foobar"),
-                client.user.id,
+                actor.id,
             )
 
         row = await get_row_by_id(pg, SQLUpload, upload.id)
@@ -464,14 +450,8 @@ class TestDelete:
         data_layer: DataLayer,
         fake: DataFaker,
         pg: AsyncEngine,
-        spawn_client: ClientSpawner,
     ):
         """Deleting a sample removes its ``legacy_samples`` row and join rows."""
-        client = await spawn_client(
-            authenticated=True,
-            permissions=[Permission.create_sample],
-        )
-
         label = await fake.labels.create()
         user = await fake.users.create()
         upload = await fake.uploads.create(user=user)
@@ -490,7 +470,7 @@ class TestDelete:
                 name="Foobar",
                 subtractions=[apple.id],
             ),
-            client.user.id,
+            user.id,
         )
 
         async with AsyncSession(pg) as session:

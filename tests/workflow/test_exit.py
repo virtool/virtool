@@ -79,7 +79,7 @@ async def test_cancellation(
         "third",
     ]
 
-    assert log.has("received cancellation signal from ping response", level="info")
+    assert log.has("job is no longer active", level="info")
 
 
 async def test_timeout(

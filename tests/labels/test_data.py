@@ -2,12 +2,10 @@ import pytest
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 
-from tests.fixtures.client import ClientSpawner
 from virtool.data.errors import ResourceNotFoundError
 from virtool.data.layer import DataLayer
 from virtool.fake.next import DataFaker
 from virtool.labels.sql import SQLLabel
-from virtool.models.enums import Permission
 from virtool.samples.oas import CreateSampleRequest
 from virtool.samples.sql import SQLLegacySample, SQLLegacySampleLabel
 
@@ -33,14 +31,8 @@ class TestDelete:
         data_layer: DataLayer,
         fake: DataFaker,
         pg: AsyncEngine,
-        spawn_client: ClientSpawner,
     ):
         """Deleting a label removes its ``legacy_sample_labels`` join rows."""
-        client = await spawn_client(
-            authenticated=True,
-            permissions=[Permission.create_sample],
-        )
-
         label = await fake.labels.create()
         user = await fake.users.create()
         upload = await fake.uploads.create(user=user)
@@ -51,7 +43,7 @@ class TestDelete:
                 labels=[label.id],
                 name="Labelled",
             ),
-            client.user.id,
+            user.id,
         )
 
         async with AsyncSession(pg) as session:

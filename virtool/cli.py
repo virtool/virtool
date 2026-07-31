@@ -7,7 +7,6 @@ from pathlib import Path
 import click
 from structlog import get_logger
 
-from virtool.app import run_api_server
 from virtool.config.cls import (
     MigrationConfig,
     ServerConfig,
@@ -16,7 +15,6 @@ from virtool.config.cls import (
 )
 from virtool.config.options import (
     address_options,
-    base_url_option,
     cache_storage_budget_option,
     dev_option,
     flags_option,
@@ -24,7 +22,6 @@ from virtool.config.options import (
     no_periodic_tasks_option,
     no_revision_check_option,
     postgres_connection_string_option,
-    real_ip_header_option,
     sentry_dsn_option,
     storage_options,
 )
@@ -62,25 +59,6 @@ def server() -> None:
     """Run Virtool HTTP services."""
 
 
-@server.command("api")
-@address_options
-@base_url_option
-@cache_storage_budget_option
-@dev_option
-@flags_option
-@no_revision_check_option
-@postgres_connection_string_option
-@real_ip_header_option
-@sentry_dsn_option
-@storage_options
-def start_api_server(**kwargs) -> None:
-    """Start a Virtool public API server."""
-    configure_logging(bool(kwargs["sentry_dsn"]))
-    logger.info("starting the public api service")
-
-    run_api_server(ServerConfig(**kwargs, no_periodic_tasks=True))
-
-
 @server.command("jobs")
 @address_options
 @cache_storage_budget_option
@@ -89,7 +67,6 @@ def start_api_server(**kwargs) -> None:
 @no_periodic_tasks_option
 @no_revision_check_option
 @postgres_connection_string_option
-@real_ip_header_option
 @sentry_dsn_option
 @storage_options
 def start_jobs_api(**kwargs) -> None:
@@ -99,10 +76,7 @@ def start_jobs_api(**kwargs) -> None:
     logger.info("starting the jobs api service")
 
     run_jobs_server(
-        ServerConfig(
-            **kwargs,
-            base_url="",
-        ),
+        ServerConfig(**kwargs),
     )
 
 
@@ -161,7 +135,7 @@ def start_task_runner(dev: bool, **kwargs) -> None:
 
     logger.info("starting tasks runner")
 
-    run_task_runner(TaskRunnerConfig(**kwargs, base_url=""))
+    run_task_runner(TaskRunnerConfig(**kwargs))
 
 
 @cli.group("workflow")

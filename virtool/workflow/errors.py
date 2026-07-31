@@ -13,6 +13,15 @@ class JobsAPIBadRequestError(JobsAPIError):
     status = 400
 
 
+class JobsAPIUnauthorizedError(JobsAPIError):
+    """A ``401 Unauthorized`` response was received from the jobs API.
+
+    The job is no longer active, or its key is no longer accepted.
+    """
+
+    status = 401
+
+
 class JobsAPIForbiddenError(JobsAPIError):
     """A ``403 Forbidden`` response was received from the jobs API."""
 

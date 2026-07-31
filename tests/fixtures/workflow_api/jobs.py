@@ -4,8 +4,9 @@ from aiohttp.web import RouteTableDef, View, json_response
 from tests.fixtures.workflow_api.utils import (
     custom_dumps,
     generate_not_found,
+    generate_unauthorized,
 )
-from virtool.jobs.models import JobState, JobStep
+from virtool.jobs.models import TERMINAL_JOB_STATES, JobState, JobStep
 from virtool.workflow.pytest_plugin.data import WorkflowData
 
 
@@ -79,13 +80,13 @@ def create_jobs_routes(data: WorkflowData):
             if job_id != data.job.id:
                 return generate_not_found()
 
+            if data.job.state in TERMINAL_JOB_STATES:
+                return generate_unauthorized()
+
             data.job.pinged_at = arrow.utcnow().naive
 
             return json_response(
-                {
-                    "pinged_at": data.job.pinged_at.isoformat(),
-                    "cancelled": data.job.state == JobState.CANCELLED,
-                },
+                {"pinged_at": data.job.pinged_at.isoformat()},
                 status=200,
                 dumps=custom_dumps,
             )

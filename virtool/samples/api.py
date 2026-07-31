@@ -198,7 +198,6 @@ async def upload_reads(req):
     )
 
 
-@routes.get("/samples/{sample_id}/reads/reads_{suffix}.fq.gz")
 @routes.jobs_api.get("/samples/{sample_id}/reads/reads_{suffix}.fq.gz")
 async def download_reads(req: Request):
     """Download reads.

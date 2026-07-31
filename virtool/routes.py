@@ -1,7 +1,6 @@
 import virtool.analyses.api
 import virtool.api.root
 import virtool.caches.api
-import virtool.dev.api
 import virtool.health.api
 import virtool.hmm.api
 import virtool.indexes.api
@@ -28,11 +27,3 @@ ROUTES = (
     virtool.tasks.api.routes,
     virtool.uploads.api.routes,
 )
-
-
-def setup_routes(app, dev: bool = False) -> None:
-    if dev:
-        app.router.add_routes(virtool.dev.api.routes)
-
-    for routes in ROUTES:
-        app.router.add_routes(routes)

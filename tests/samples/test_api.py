@@ -4,12 +4,13 @@ from http import HTTPStatus
 from pathlib import Path
 
 import pytest
+from aiohttp.test_utils import TestClient
 from sqlalchemy import update
 from sqlalchemy.ext.asyncio import AsyncSession
 from syrupy import SnapshotAssertion
 
 import virtool.utils
-from tests.fixtures.client import ClientSpawner, JobClientSpawner, VirtoolTestClient
+from tests.fixtures.client import JobClientSpawner
 from virtool.data.utils import get_data_from_app
 from virtool.fake.next import DataFaker
 from virtool.jobs.models import CreateJobClaimRequest, JobState, Workflow
@@ -119,7 +120,7 @@ class TestUploadArtifact:
 
     @staticmethod
     async def _post(
-        client: VirtoolTestClient,
+        client: TestClient,
         path: Path,
         artifact_type: str,
         sample_id: int,
@@ -337,7 +338,7 @@ class TestJobRemove:
         spawn_job_client: JobClientSpawner,
         finalized: bool,
         job_state: JobState,
-    ) -> tuple[VirtoolTestClient, int]:
+    ) -> tuple[TestClient, int]:
         """Create a sample with a creation job in ``job_state`` and return its id.
 
         When ``finalized`` is ``True`` the sample is ready and deletion is blocked by
@@ -426,61 +427,50 @@ class TestDownloadReads:
         self,
         suffix: str,
         fake: DataFaker,
-        spawn_client: ClientSpawner,
         spawn_job_client: JobClientSpawner,
     ):
-        """Reads on a ready sample download over both the public and jobs APIs."""
+        """Reads on a ready sample download over the jobs API."""
         user = await fake.users.create()
         sample = await fake.samples.create(user, paired=True, ready=True)
 
-        client = await spawn_client(authenticated=True)
         job_client = await spawn_job_client(authenticated=True)
 
         file_name = f"reads_{suffix}.fq.gz"
 
-        resp = await client.get(f"/samples/{sample.id}/reads/{file_name}")
         job_resp = await job_client.get(f"/samples/{sample.id}/reads/{file_name}")
 
-        assert resp.status == job_resp.status == HTTPStatus.OK
-        assert await resp.content.read()
+        assert job_resp.status == HTTPStatus.OK
         assert await job_resp.content.read()
 
     async def test_404_sample(
         self,
-        spawn_client: ClientSpawner,
         spawn_job_client: JobClientSpawner,
     ):
-        client = await spawn_client(authenticated=True)
         job_client = await spawn_job_client(authenticated=True)
 
-        resp = await client.get("/samples/999999/reads/reads_1.fq.gz")
         job_resp = await job_client.get("/samples/999999/reads/reads_1.fq.gz")
 
-        assert resp.status == job_resp.status == 404
+        assert job_resp.status == 404
 
     async def test_404_reads(
         self,
         fake: DataFaker,
-        spawn_client: ClientSpawner,
         spawn_job_client: JobClientSpawner,
     ):
         """Downloading a reads file that was never uploaded returns 404."""
         user = await fake.users.create()
         sample = await fake.samples.create(user, ready=False)
 
-        client = await spawn_client(authenticated=True)
         job_client = await spawn_job_client(authenticated=True)
 
-        resp = await client.get(f"/samples/{sample.id}/reads/reads_1.fq.gz")
         job_resp = await job_client.get(f"/samples/{sample.id}/reads/reads_1.fq.gz")
 
-        assert resp.status == job_resp.status == 404
+        assert job_resp.status == 404
 
     async def test_missing_blob_is_server_error(
         self,
         fake: DataFaker,
         memory_storage,
-        spawn_client: ClientSpawner,
         spawn_job_client: JobClientSpawner,
     ):
         """A reads row that resolves but whose blob is missing is a server-side
@@ -497,19 +487,17 @@ class TestDownloadReads:
             sample_file_key(sample_storage_id(sample.id, None), file_name),
         )
 
-        client = await spawn_client(authenticated=True)
         job_client = await spawn_job_client(authenticated=True)
 
-        resp = await client.get(f"/samples/{sample.id}/reads/{file_name}")
         job_resp = await job_client.get(f"/samples/{sample.id}/reads/{file_name}")
 
-        assert resp.status == job_resp.status == 500
+        assert job_resp.status == 500
 
 
 class TestDownloadArtifact:
     @staticmethod
     async def _upload_artifact(
-        client: VirtoolTestClient,
+        client: TestClient,
         example_path: Path,
         sample_id: int,
     ) -> bytes:

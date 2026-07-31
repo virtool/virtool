@@ -1,20 +1,21 @@
 from syrupy.assertion import SnapshotAssertion
 from syrupy.matchers import path_type
 
-from tests.fixtures.client import ClientSpawner
+from tests.fixtures.client import JobClientSpawner
 from virtool.config import get_config_from_app
+from virtool.fake.next import DataFaker
 
 
 class TestGet:
-    """Test the root request handler at /."""
+    """Test the root request handler at /, served by the jobs API."""
 
     async def test_no_users(
         self,
-        spawn_client: ClientSpawner,
+        spawn_job_client: JobClientSpawner,
         snapshot: SnapshotAssertion,
     ):
         """Test when no users exist (first_user should be True)."""
-        client = await spawn_client()
+        client = await spawn_job_client()
 
         resp = await client.get("/")
         body = await resp.json()
@@ -25,11 +26,14 @@ class TestGet:
 
     async def test_has_users(
         self,
-        spawn_client: ClientSpawner,
+        fake: DataFaker,
+        spawn_job_client: JobClientSpawner,
         snapshot: SnapshotAssertion,
     ):
         """Test when users exist (first_user should be False)."""
-        client = await spawn_client(authenticated=True)
+        await fake.users.create()
+
+        client = await spawn_job_client()
 
         resp = await client.get("/")
         body = await resp.json()
@@ -40,11 +44,11 @@ class TestGet:
 
     async def test_dev_mode(
         self,
-        spawn_client: ClientSpawner,
+        spawn_job_client: JobClientSpawner,
         snapshot: SnapshotAssertion,
     ):
         """Test dev mode flag is set correctly."""
-        client = await spawn_client()
+        client = await spawn_job_client()
         get_config_from_app(client.app).dev = True
 
         resp = await client.get("/")
