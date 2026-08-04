@@ -4,32 +4,23 @@ import type { FormattedPathoscopeAnalysis } from "@analyses/types";
 import { screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { expectNoViolations } from "@tests/axe";
-import { createFakeAnalysisMinimal } from "@tests/fake/analyses";
+import {
+	createFakeAnalysisMinimal,
+	createFakePathoscopeHit,
+} from "@tests/fake/analyses";
 import { renderWithProviders } from "@tests/setup";
 import type { PathoscopeHit } from "@virtool/contracts";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { PathoscopeList } from "../PathoscopeList";
 
-function createHit(overrides: Partial<PathoscopeHit>): PathoscopeHit {
-	return {
-		abbreviation: "TMV",
-		coverage: 0.5,
-		depth: 12,
-		id: "hit",
-		isolates: [],
-		length: 6000,
-		maxDepth: 20,
-		name: "Tobacco mosaic virus",
-		pi: 0.25,
-		segments: [],
-		version: 3,
-		...overrides,
-	};
-}
-
 const hits = [
-	createHit({ id: "a", name: "Alpha virus" }),
-	createHit({ coverage: 0.25, depth: 7, id: "b", name: "Beta virus" }),
+	createFakePathoscopeHit({ id: "a", name: "Alpha virus" }),
+	createFakePathoscopeHit({
+		coverage: 0.25,
+		depth: 7,
+		id: "b",
+		name: "Beta virus",
+	}),
 ];
 
 const analysis: FormattedPathoscopeAnalysis = {
@@ -224,7 +215,7 @@ describe("<PathoscopeList />", () => {
 
 	// Nothing fills the column, so a heading would sit over empty space.
 	it("should not label the abbreviation column when no hit has one", () => {
-		renderList({}, [createHit({ abbreviation: "", id: "a" })]);
+		renderList({}, [createFakePathoscopeHit({ abbreviation: "", id: "a" })]);
 
 		expect(headerLabels().queryByText("Abbreviation")).not.toBeInTheDocument();
 		expect(headerLabels().getByText("Coverage")).toBeInTheDocument();

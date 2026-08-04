@@ -1,33 +1,17 @@
-import type { PathoscopeHit, PathoscopeIsolate } from "@virtool/contracts";
+import { createFakePathoscopeHit } from "@tests/fake/analyses";
+import type { PathoscopeIsolate } from "@virtool/contracts";
 import { describe, expect, it } from "vitest";
 import {
 	formatPathoscopeHitsAsTsv,
 	formatPathoscopeIsolatesAsTsv,
 } from "../table";
 
-function createHit(overrides: Partial<PathoscopeHit>): PathoscopeHit {
-	return {
-		abbreviation: "TMV",
-		coverage: 0.5,
-		depth: 12,
-		id: "hit",
-		isolates: [],
-		length: 6000,
-		maxDepth: 20,
-		name: "Tobacco mosaic virus",
-		pi: 0.25,
-		segments: [],
-		version: 3,
-		...overrides,
-	};
-}
-
 describe("formatPathoscopeHitsAsTsv()", () => {
 	it("should render a header row and one tab-separated row per hit", () => {
 		const table = formatPathoscopeHitsAsTsv(
 			[
-				createHit({ id: "a", name: "Alpha virus" }),
-				createHit({
+				createFakePathoscopeHit({ id: "a", name: "Alpha virus" }),
+				createFakePathoscopeHit({
 					coverage: 0.123456,
 					depth: 7,
 					id: "b",
@@ -49,7 +33,7 @@ describe("formatPathoscopeHitsAsTsv()", () => {
 
 	it("should render read pseudo-counts when reads are shown", () => {
 		const table = formatPathoscopeHitsAsTsv(
-			[createHit({ name: "Alpha virus", pi: 0.25 })],
+			[createFakePathoscopeHit({ name: "Alpha virus", pi: 0.25 })],
 			{ headers: true, mappedCount: 1000, showReads: true },
 		);
 
@@ -63,7 +47,7 @@ describe("formatPathoscopeHitsAsTsv()", () => {
 	// A table pasted under one that already has headers must not repeat them.
 	it("should render the rows alone when headers are not wanted", () => {
 		const table = formatPathoscopeHitsAsTsv(
-			[createHit({ name: "Alpha virus" })],
+			[createFakePathoscopeHit({ name: "Alpha virus" })],
 			{ headers: false, mappedCount: 1000, showReads: false },
 		);
 
@@ -84,7 +68,7 @@ describe("formatPathoscopeHitsAsTsv()", () => {
 	// of its own and shift every field after it out of line.
 	it("should collapse tabs and newlines in a name", () => {
 		const table = formatPathoscopeHitsAsTsv(
-			[createHit({ name: "Alpha\tvirus\nstrain" })],
+			[createFakePathoscopeHit({ name: "Alpha\tvirus\nstrain" })],
 			{ headers: false, mappedCount: 1000, showReads: false },
 		);
 
@@ -112,7 +96,7 @@ describe("formatPathoscopeIsolatesAsTsv()", () => {
 	it("should render one row per isolate, each naming its OTU", () => {
 		const table = formatPathoscopeIsolatesAsTsv(
 			[
-				createHit({
+				createFakePathoscopeHit({
 					id: "a",
 					isolates: [
 						createIsolate({ id: "a1", name: "Isolate A" }),
@@ -126,7 +110,7 @@ describe("formatPathoscopeIsolatesAsTsv()", () => {
 					],
 					name: "Alpha virus",
 				}),
-				createHit({
+				createFakePathoscopeHit({
 					id: "b",
 					isolates: [createIsolate({ id: "b1", name: "Isolate C" })],
 					name: "Beta virus",
@@ -148,7 +132,7 @@ describe("formatPathoscopeIsolatesAsTsv()", () => {
 	it("should render read pseudo-counts when reads are shown", () => {
 		const table = formatPathoscopeIsolatesAsTsv(
 			[
-				createHit({
+				createFakePathoscopeHit({
 					isolates: [createIsolate({ pi: 0.25 })],
 					name: "Alpha virus",
 				}),
@@ -163,11 +147,14 @@ describe("formatPathoscopeIsolatesAsTsv()", () => {
 	// an empty row.
 	it("should render nothing for a hit with no isolates", () => {
 		expect(
-			formatPathoscopeIsolatesAsTsv([createHit({ isolates: [] })], {
-				headers: false,
-				mappedCount: 1000,
-				showReads: false,
-			}),
+			formatPathoscopeIsolatesAsTsv(
+				[createFakePathoscopeHit({ isolates: [] })],
+				{
+					headers: false,
+					mappedCount: 1000,
+					showReads: false,
+				},
+			),
 		).toBe("");
 	});
 });

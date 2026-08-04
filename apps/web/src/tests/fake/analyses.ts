@@ -1,6 +1,6 @@
 import type { Blast, FormattedNuvsAnalysis } from "@analyses/types";
 import { faker } from "@faker-js/faker";
-import type { AnalysisMinimal } from "@virtool/contracts";
+import type { AnalysisMinimal, PathoscopeHit } from "@virtool/contracts";
 import { createFakeSubtractionNested } from "./subtractions";
 import { createFakeUserNested } from "./user";
 
@@ -65,6 +65,34 @@ type FakeFormattedNuVsHit = {
 	blast?: Blast;
 	index?: number;
 };
+
+/**
+ * Create a fake pathoscope hit object
+ *
+ * Its defaults are fixed rather than faked: the export tests assert the exact
+ * TSV a hit renders to, and every column of that string comes from a default
+ * left unoverridden.
+ *
+ * @param overrides - optional properties for creating a pathoscope hit with specific values
+ */
+export function createFakePathoscopeHit(
+	overrides?: Partial<PathoscopeHit>,
+): PathoscopeHit {
+	return {
+		abbreviation: "TMV",
+		coverage: 0.5,
+		depth: 12,
+		id: "hit",
+		isolates: [],
+		length: 6000,
+		maxDepth: 20,
+		name: "Tobacco mosaic virus",
+		pi: 0.25,
+		segments: [],
+		version: 3,
+		...overrides,
+	};
+}
 
 /**
  * Create a fake nuvs hit object

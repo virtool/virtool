@@ -10,47 +10,30 @@ import type {
 	FormattedPathoscopeAnalysis,
 } from "@analyses/types";
 import { renderHook } from "@testing-library/react";
-import type { PathoscopeHit } from "@virtool/contracts";
+import { createFakePathoscopeHit } from "@tests/fake/analyses";
 import type { ReactNode } from "react";
 import { describe, expect, it, vi } from "vitest";
-
-function createHit(overrides: Partial<PathoscopeHit>): PathoscopeHit {
-	return {
-		abbreviation: "",
-		coverage: 0,
-		depth: 0,
-		id: "otu",
-		isolates: [],
-		length: 100,
-		maxDepth: 0,
-		name: "OTU",
-		pi: 0,
-		segments: [],
-		version: 1,
-		...overrides,
-	};
-}
 
 // Three hits whose name, coverage, depth and weight each rank them differently,
 // so a sort that reads the wrong field cannot accidentally produce the right
 // order. Only one name is capitalised out of alphabetical order, so a raw
 // codepoint comparison ranks them differently again.
 const hits = [
-	createHit({
+	createFakePathoscopeHit({
 		id: "a",
 		name: "adenovirus",
 		coverage: 0.1,
 		depth: 30,
 		pi: 0.5,
 	}),
-	createHit({
+	createFakePathoscopeHit({
 		id: "b",
 		name: "Betaflexivirus",
 		coverage: 0.9,
 		depth: 10,
 		pi: 0.2,
 	}),
-	createHit({
+	createFakePathoscopeHit({
 		id: "c",
 		name: "Cucumovirus",
 		coverage: 0.5,

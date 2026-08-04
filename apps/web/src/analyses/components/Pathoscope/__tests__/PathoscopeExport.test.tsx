@@ -3,9 +3,12 @@ import { type AnalysisSearch, DEFAULT_ANALYSIS_SEARCH } from "@analyses/search";
 import type { FormattedPathoscopeAnalysis } from "@analyses/types";
 import { screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { createFakeAnalysisMinimal } from "@tests/fake/analyses";
+import {
+	createFakeAnalysisMinimal,
+	createFakePathoscopeHit,
+} from "@tests/fake/analyses";
 import { renderWithProviders } from "@tests/setup";
-import type { PathoscopeHit, PathoscopeIsolate } from "@virtool/contracts";
+import type { PathoscopeIsolate } from "@virtool/contracts";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import PathoscopeExport from "../PathoscopeExport";
 
@@ -25,29 +28,12 @@ function createIsolate(
 	};
 }
 
-function createHit(overrides: Partial<PathoscopeHit>): PathoscopeHit {
-	return {
-		abbreviation: "TMV",
-		coverage: 0.5,
-		depth: 12,
-		id: "hit",
-		isolates: [],
-		length: 6000,
-		maxDepth: 20,
-		name: "Tobacco mosaic virus",
-		pi: 0.25,
-		segments: [],
-		version: 3,
-		...overrides,
-	};
-}
-
 const analysis: FormattedPathoscopeAnalysis = {
 	...createFakeAnalysisMinimal({ id: 5, workflow: "pathoscope" }),
 	files: [],
 	results: {
 		hits: [
-			createHit({
+			createFakePathoscopeHit({
 				id: "a",
 				isolates: [
 					createIsolate({ id: "a1", name: "Isolate A" }),
@@ -61,7 +47,7 @@ const analysis: FormattedPathoscopeAnalysis = {
 				],
 				name: "Alpha virus",
 			}),
-			createHit({
+			createFakePathoscopeHit({
 				coverage: 0.25,
 				depth: 7,
 				id: "b",
