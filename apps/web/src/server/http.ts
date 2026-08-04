@@ -2,8 +2,8 @@
 // themselves rather than returning a value through the server-function RPC
 // layer, because the browser has to see real headers.
 
-import { StorageKeyNotFoundError } from "./storage/errors";
-import type { StorageBackend } from "./storage/types";
+import type { StorageBackend } from "@virtool/storage";
+import { StorageKeyNotFoundError } from "@virtool/storage";
 
 /**
  * A plain-text response, for the statuses a raw route answers with directly.

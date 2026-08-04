@@ -1,3 +1,13 @@
+import type { Db } from "@virtool/data/db/pg";
+import { takeFirstOrThrow } from "@virtool/data/db/rows";
+import { sessions } from "@virtool/data/db/schema/sessions";
+import { subtractions } from "@virtool/data/db/schema/subtractions";
+import { uploads } from "@virtool/data/db/schema/uploads";
+import { users } from "@virtool/data/db/schema/users";
+import {
+	createTestDatabase,
+	type TestDatabase,
+} from "@virtool/data/db/test/fixtures";
 import {
 	afterAll,
 	beforeAll,
@@ -7,13 +17,6 @@ import {
 	it,
 	vi,
 } from "vitest";
-import type { Db } from "../db/pg";
-import { takeFirstOrThrow } from "../db/rows";
-import { sessions } from "../db/schema/sessions";
-import { subtractions } from "../db/schema/subtractions";
-import { uploads } from "../db/schema/uploads";
-import { users } from "../db/schema/users";
-import { createTestDatabase, type TestDatabase } from "../db/test/fixtures";
 import { callServerFn, type SplitServerFnModule } from "../test/serverFn";
 
 const getRequest = vi.fn();
@@ -33,7 +36,7 @@ vi.mock("@sentry/tanstackstart-react", () => ({
 }));
 
 let db: Db;
-vi.mock("../db/pg", () => ({
+vi.mock("../composition", () => ({
 	client: {},
 	get db() {
 		return db;

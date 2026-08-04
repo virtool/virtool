@@ -1,13 +1,16 @@
-import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
-
-import type { Db } from "../db/pg";
-import { settings } from "../db/schema/settings";
-import { createTestDatabase, type TestDatabase } from "../db/test/fixtures";
-import { seedSettings } from "../settings/test/fixtures";
 import {
 	DEFAULT_MINIMUM_PASSWORD_LENGTH,
 	PasswordTooShortError,
-} from "./passwordPolicy";
+} from "@virtool/contracts";
+
+import type { Db } from "@virtool/data/db/pg";
+import { settings } from "@virtool/data/db/schema/settings";
+import {
+	createTestDatabase,
+	type TestDatabase,
+} from "@virtool/data/db/test/fixtures";
+import { seedSettings } from "@virtool/data/settings/test/fixtures";
+import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
 import { checkConfiguredPasswordLength } from "./service";
 
 let database: TestDatabase;

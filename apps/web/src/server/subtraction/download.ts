@@ -1,8 +1,7 @@
+import { getSubtractionFileKey } from "@virtool/data/subtraction/data";
 import { requireAuthenticatedRequest } from "../auth/middleware";
-import { db } from "../db/pg";
+import { db, storage } from "../composition";
 import { streamStorageObject, textResponse } from "../http";
-import { storage } from "../storage";
-import { getSubtractionFileKey } from "./data";
 
 /**
  * Serve a subtraction's FASTA or Bowtie2 file, backing

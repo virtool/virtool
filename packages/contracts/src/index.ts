@@ -1,5 +1,6 @@
 export * from "./administrators";
 export * from "./analyses";
+export * from "./apiKeys";
 export * from "./artifacts";
 export * from "./auth";
 export * from "./banners";
@@ -13,6 +14,7 @@ export * from "./json";
 export * from "./labels";
 export * from "./nuvs";
 export * from "./otus";
+export * from "./passwordPolicy";
 export * from "./pathoscope";
 export * from "./permissions";
 export * from "./permissionsSchema";

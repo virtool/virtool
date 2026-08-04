@@ -1,5 +1,4 @@
-import type { ApiKey } from "@account/types";
-import type { Permissions } from "@virtool/contracts";
+import type { ApiKey, Permissions } from "@virtool/contracts";
 import { type Mock, vi } from "vitest";
 import { createFakeApiKey } from "../fake/account";
 

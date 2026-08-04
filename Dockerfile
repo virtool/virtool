@@ -6,8 +6,10 @@ COPY apps/web/package.json ./apps/web/
 COPY apps/site/package.json ./apps/site/
 COPY packages/bio/package.json ./packages/bio/
 COPY packages/contracts/package.json ./packages/contracts/
+COPY packages/data/package.json ./packages/data/
 COPY packages/logger/package.json ./packages/logger/
 COPY packages/sentry/package.json ./packages/sentry/
+COPY packages/storage/package.json ./packages/storage/
 RUN pnpm install --frozen-lockfile
 COPY biome.json ./
 COPY packages ./packages

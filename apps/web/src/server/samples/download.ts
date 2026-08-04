@@ -1,12 +1,11 @@
-import { requireAuthenticatedRequest } from "../auth/middleware";
-import { db } from "../db/pg";
-import { streamStorageObject, textResponse } from "../http";
-import { storage } from "../storage";
 import {
 	checkSampleRight,
 	getSampleReadsFileKey,
 	resolveSampleActor,
-} from "./data";
+} from "@virtool/data/samples/data";
+import { requireAuthenticatedRequest } from "../auth/middleware";
+import { db, storage } from "../composition";
+import { streamStorageObject, textResponse } from "../http";
 
 /**
  * Serve one of a sample's read files, backing

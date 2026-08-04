@@ -1,9 +1,13 @@
 import { createServerFn, createServerOnlyFn } from "@tanstack/react-start";
 import { setResponseStatus } from "@tanstack/react-start/server";
+import {
+	GenbankUnreachableError,
+	getGenbank,
+} from "@virtool/data/genbank/data";
 import { z } from "zod";
 import { authenticated } from "../auth/policy";
 import { ClientError } from "../errors";
-import { GenbankUnreachableError, getGenbank } from "./data";
+import { logger } from "../logger";
 
 // NCBI accessions are alphanumeric with dots and underscores (`NC_004452.3`).
 // The value is interpolated into an outbound query string, so it is constrained
@@ -38,7 +42,9 @@ export const getGenbankFn = createServerFn({ method: "GET" })
 	.middleware([authenticated()])
 	.validator(accessionSchema)
 	.handler(async ({ data }) => {
-		const record = await getGenbank(data.accession).catch(rethrowAsHttp);
+		const record = await getGenbank(logger, data.accession).catch(
+			rethrowAsHttp,
+		);
 
 		if (record === null) {
 			setResponseStatus(404);

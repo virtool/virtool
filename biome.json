@@ -88,6 +88,26 @@
 	},
 	"overrides": [
 		{
+			"includes": ["apps/web/src/**", "!apps/web/src/server/**"],
+			"linter": {
+				"rules": {
+					"style": {
+						"noRestrictedImports": {
+							"level": "error",
+							"options": {
+								"patterns": [
+									{
+										"group": ["@virtool/data/**", "@virtool/storage", "@virtool/storage/**"],
+										"message": "@virtool/data and @virtool/storage are server-only: they open Postgres and object storage, and reach node:* APIs the browser has none of. Reach them through src/server/**, which the client transform strips."
+									}
+								]
+							}
+						}
+					}
+				}
+			}
+		},
+		{
 			"includes": ["apps/web/src/server/**"],
 			"linter": {
 				"rules": {
@@ -98,12 +118,33 @@
 								"patterns": [
 									{
 										"group": [
+											"@/**",
+											"@account/**",
 											"@administration/**",
+											"@analyses/**",
 											"@app/**",
 											"@banner/**",
-											"@users/**"
+											"@base/**",
+											"@forms/**",
+											"@groups/**",
+											"@hmm/**",
+											"@indexes/**",
+											"@jobs/**",
+											"@labels/**",
+											"@nav/**",
+											"@otus/**",
+											"@quality/**",
+											"@references/**",
+											"@samples/**",
+											"@sequences/**",
+											"@subtraction/**",
+											"@tasks/**",
+											"@tests/**",
+											"@uploads/**",
+											"@users/**",
+											"@wall/**"
 										],
-										"message": "src/server must not import from browser feature modules. The dependency arrow runs client -> @server/*; shared types and helpers belong in @virtool/contracts, which both sides import down into."
+										"message": "src/server must not import from browser feature modules. The dependency arrow runs client -> @server/*; shared types and helpers belong in @virtool/contracts, which both sides import down into. Every feature alias is listed, plus the @/* catch-all that would otherwise reach the same modules by another name."
 									}
 								]
 							}

@@ -30,6 +30,24 @@ This is a **pnpm monorepo**:
     boundary parses them
   - `@virtool/sentry` — shared Sentry option helpers (node + browser entry
     points)
+  - `@virtool/storage` — object storage: the S3 and Azure backends, the
+    key builders, and `MemoryStorage`
+  - `@virtool/data` — the database and domain data layer: the Drizzle schema,
+    `createDb`, every domain's `data.ts`, the `client_events` emitter, the
+    bcrypt/session/token primitives, and `AppError`
+
+  `@virtool/data` and `@virtool/storage` are server-side only. Browser code
+  must never import them; they reach `apps/web` through `src/server/**`. A
+  Biome `noRestrictedImports` override outside `apps/web/src/server/**`
+  enforces that, and the `web` Vitest project aliases the pool-opening modules
+  to a guard that throws.
+
+  Neither package constructs anything at import time — both take their
+  dependencies as arguments — which is what lets the jobs API and the workflow
+  ports reuse them. `apps/web/src/server/composition.ts` is where the web app
+  does the construction: it builds `storage`, calls `createDb(config)` to get
+  `client` and `db`, and calls `createEmitter({ client, logger })`. Every
+  `db`, `client`, and `storage` import in `apps/web` comes from there.
 
 Use `pnpm` for all install, run, and exec commands — not `npm` or `bun`.
 
@@ -447,16 +465,24 @@ either honor it across the board or drop the prop for that variant.
 
 ### Server modules layer as `data.ts` → `service.ts` → `functions.ts`
 
-New TanStack Start server features under `apps/web/src/server/<feature>/`
-use a three-file layering: `data.ts` (pure domain + persistence /
+A server feature layers as `data.ts` (pure domain + persistence /
 external IO), optional `service.ts` (cross-`data` orchestration), and
 `functions.ts` (TanStack Start shell, zod validation, error mapping).
-Imports flow `functions → service → data` and never the reverse. The
-db handle is injected as the first argument to `data.ts` functions,
-not imported.
+Imports flow `functions → service → data` and never the reverse.
 
-Type that first argument `DbOrTx` (from `@server/db/pg`), not `Db`, for
-any function that might be called inside a `db.transaction(...)`.
+`data.ts` lives in `@virtool/data` — `packages/data/src/<feature>/` —
+because it carries no framework surface and the jobs API and workflow
+ports need it. `service.ts` and `functions.ts` stay in
+`apps/web/src/server/<feature>/`: `functions.ts` because `createServerFn`
+is the web app's, and `service.ts` alongside it because the orchestration
+it does is this app's, not a shared contract.
+
+Every dependency a `data.ts` function needs is injected as an argument,
+never imported: the db handle first, then `storage`, then `logger`. The
+web app's `functions.ts` reads all three from `@server/composition`.
+
+Type that first argument `DbOrTx` (from `@virtool/data/db/pg`), not `Db`,
+for any function that might be called inside a `db.transaction(...)`.
 Drizzle's transaction handle is not assignable to `Db`, so a helper
 typed `Db` cannot be reused inside a transaction without being widened
 first.
@@ -520,14 +546,43 @@ type re-exported from the direct dependency — as `src/server/logger.ts`
 does with `Logger` from `@virtool/logger` rather than letting the type be
 inferred as pino's.
 
-The arrow runs one way. `src/server/**` must **not** import from the
-browser feature tree — a Biome `noRestrictedImports` override blocks
-`@administration/*`, `@app/*`, `@banner/*`, and `@users/*` there, because
-a server file reaching into a DOM-typed module breaks the server project
-at a distance. Shapes and helpers both sides need live *down* in
-`@virtool/contracts` (roles, permissions, banner colors, the SSE schema,
-the reference wire shapes, `UserNested`, `Task`, `SearchResult`);
-both sides import them straight from the package.
+**That trap is scoped to `apps/web/src/server/**`** — `functions.ts`,
+`service.ts`, `auth/`, `config.ts`, and the raw-route handlers. It is
+created by the declaration emit itself, and the workspace packages have
+none: their `exports` maps point at `./src/*.ts`, there is no build step
+and no `dist`, and `packages/tsconfig.base.json` sets `noEmit`. A
+`@virtool/data` or `@virtool/storage` export can infer whatever type it
+likes.
+
+The arrow runs one way, and two Biome `noRestrictedImports` overrides
+hold it there:
+
+- `apps/web/src/**` outside `src/server/**` may not import
+  `@virtool/data/**` or `@virtool/storage`. Without it those packages
+  are resolvable from any React component — the workspace makes them so
+  — and nothing else in the toolchain would say a word before Drizzle
+  and postgres.js landed in the client bundle. The `web` Vitest project
+  aliases `@server/composition`, `@server/config`, and
+  `@virtool/data/db/pg` to a guard that throws, covering the same ground
+  at runtime.
+- `apps/web/src/server/**` may not import from the browser feature tree,
+  because a server file reaching into a DOM-typed module breaks the
+  server project at a distance. **Every** feature alias is listed, plus
+  the `@/*` catch-all that would otherwise reach the same modules under
+  another name. It used to enumerate four, and was already leaking:
+  `labels/data.ts` read `DEFAULT_LABEL_COLOR` from `@labels/constants`
+  and nothing caught it. Add the alias when you add a feature directory.
+
+The packages need no rule of their own for the second: `packages/**` has
+no `@<feature>/*` path mapping at all, so a browser feature module is not
+resolvable from there. That is what forced `DEFAULT_LABEL_COLOR` and the
+password policy down into `@virtool/contracts` when `labels/data.ts` and
+`settings/data.ts` moved.
+
+Shapes and helpers both sides need live *down* in `@virtool/contracts`
+(roles, permissions, banner colors, the SSE schema, the reference wire
+shapes, `UserNested`, `Task`, `SearchResult`, `ApiKey`); both sides
+import them straight from the package.
 
 **A domain's wire shapes belong in `@virtool/contracts`, not in
 `data.ts`.** What a server function returns is read by both sides, so
@@ -536,12 +591,11 @@ same names straight from `@virtool/contracts` — no feature `types.ts`
 re-export (`samples/types.ts` is the worked example, keeping only its
 genuinely client-only shapes; `references/` and `indexes/` have no
 `types.ts` left at all, because every shape they had was a wire shape). A client
-`types.ts` must never `import type ... from "@server/*"` — that points
-the client at the server's emitted declarations for a shape the server
-does not own, and drags a data-layer module into the browser's type
-graph to get it. `data.ts` still owns what only it uses: its `*Values`
-and `*Options` argument types, its `AppError` subclasses, and its row
-mappers.
+`types.ts` must never import a shape from `@virtool/data` — the Biome
+override rejects it, and it would point the client at a module the server
+does not own the shape of. `data.ts` still owns what only it uses: its
+`*Values` and `*Options` argument types, its `AppError` subclasses, and
+its row mappers.
 
 **A feature module must never re-export a name that originates in
 `@virtool/contracts`.** Consumers import it from the package directly.
@@ -681,11 +735,14 @@ flows.
 ### Data store: Postgres-first
 
 The TypeScript server reads and writes **Postgres only** (via
-Drizzle). Python is the sole owner of schema and migrations — TS code
-reads and writes against the schema Python defines. Mirror Python-side
-column defaults with Drizzle `.$defaultFn()`, never `.default()` —
-the real columns have no `server_default`, so `.default()` inserts
-`null`.
+Drizzle), through `@virtool/data`: the schema mirror is
+`packages/data/src/db/schema/`, the pool comes from `createDb`
+(`@virtool/data/db/pg`), and every query lives in a
+`packages/data/src/<feature>/data.ts`. Python is the sole owner of schema
+and migrations — TS code reads and writes against the schema Python
+defines. Mirror Python-side column defaults with Drizzle `.$defaultFn()`,
+never `.default()` — the real columns have no `server_default`, so
+`.default()` inserts `null`.
 
 Postgres is now Virtool's sole data store — Python removed MongoDB
 entirely, so every domain's records live in Postgres and there is no
@@ -701,7 +758,7 @@ this side misapplies every diff already recorded and corrupts the
 analyses read path. Renormalizing is a Python-side migration.
 
 **An index build is started here and finished by Python.**
-`createIndex` (`@server/indexes/data`) inserts the pending `indexes` row,
+`createIndex` (`@virtool/data/indexes/data`) inserts the pending `indexes` row,
 mints its `storage_key`, stamps every unbuilt `legacy_history` row with
 it, and creates the `create_index` task the Python runner claims — that
 task writes the artifact and flips `ready`. The insert runs under
@@ -720,11 +777,15 @@ column-default convention.
 
 Uploads, reads, analysis results, indexes, subtractions, HMM profiles,
 and caches live in S3 or Azure Blob — **the same bucket Python uses**.
-`src/server/storage/` exposes a five-method streaming interface
+`@virtool/storage` exposes a five-method streaming interface
 (`read`, `write`, `delete`, `list`, `size`); there are no paths, file
-handles, or presigned URLs. Keys are built by `keys.ts` and must stay
-byte-for-byte identical to Python's — a divergence silently reads
-nothing and orphans what it writes. There is no filesystem backend.
+handles, or presigned URLs. Keys are built by `@virtool/storage/keys` and
+must stay byte-for-byte identical to Python's — a divergence silently
+reads nothing and orphans what it writes. There is no filesystem backend.
+
+`StorageError` and `StorageKeyNotFoundError` come from
+`@virtool/storage/errors` and extend plain `Error`, not the data layer's
+`AppError`, so the storage package carries no dependency on the data layer.
 
 The backend is built once at startup and **passed into `data.ts`
 functions as an argument, the way `db` is**. `deletePrefix` never
@@ -737,7 +798,7 @@ keys instead; `src/app/__tests__/clientEnv.test.ts` enforces this.
 
 Unit-test anything that stores files against `MemoryStorage`. The
 backends themselves are tested against real Garage and Azurite
-containers in the `storage` Vitest project.
+containers in `@virtool/storage`'s `integration` Vitest project.
 
 See [docs/storage.md](docs/storage.md) for the interface, the key
 layout, the backend configuration and its both-or-neither credential
@@ -868,6 +929,12 @@ Import the `logger` singleton from `@server/logger` and call it directly:
 logger.warn({ err }, "postgres health check failed");
 ```
 
+`@virtool/data` cannot reach that singleton — it carries the Sentry
+forwarding stream, which is the app's. The six data functions that log
+take a `Logger` as an argument instead, after `db` and `storage`, and the
+web app's `functions.ts` passes `@server/logger` in. `emit` is the one
+exception: its logger is bound once by `createEmitter`.
+
 Pass structured fields as the first arg and the message as the second —
 never interpolate values into the message string, that defeats the
 redaction list and makes records ungreppable.
@@ -908,11 +975,12 @@ in the codebase.
 **postgres.js exposes no pool statistics** — its connection queues live
 in a closure, and `onclose` has no `onopen` counterpart. Pool occupancy
 is read from Postgres itself, filtering `pg_stat_activity` on the
-`applicationName` set in `db/pg.ts`, which carries the hostname so each
+`applicationName` that `createDb` (`@virtool/data/db/pg`) sets and
+`@server/composition` re-exports, which carries the hostname so each
 replica counts only its own pool. Client-side queue depth remains
 unavailable and needs per-query instrumentation.
 
-That name is built by `db/applicationName.ts` and bounded to 63 bytes —
+That name is built by `@virtool/data/db/applicationName` and bounded to 63 bytes —
 Postgres truncates a longer one silently, and the filter would then match
 nothing and report every bucket as zero. The probe itself is bounded too:
 it queries the very pool it measures, so a saturated pool queues it
@@ -992,11 +1060,18 @@ and make commits easier to find later.
   `server` runs `src/server/**` under **node** — server code runs on
   Node in production, and under jsdom its typed arrays come from a
   different realm, so bytes compare unequal to identical bytes.
-  `storage` runs the storage backends against real Garage and Azurite
-  containers. `a11y` runs `*.a11y.test.tsx` under headless Chromium
+  `a11y` runs `*.a11y.test.tsx` under headless Chromium
   (Playwright) so axe's layout-dependent rules — `color-contrast` above
   all — can actually run; it needs `playwright install chromium`. `pnpm
-  test` runs all four; use `--project <name>` to narrow.
+  test` runs all three; use `--project <name>` to narrow.
+- **Projects (`@virtool/storage`):** `unit` covers everything testable
+  against `MemoryStorage`; `integration` runs the S3 and Azure backends
+  against real Garage and Azurite containers and has its own CI job.
+- **`@virtool/data`** runs one node project against a Postgres
+  testcontainer, with its own CI job for the same reason storage has
+  one — a container pull does not belong in the fast package loop. Its
+  globalSetup matches the web app's byte for byte, so `withReuse()`
+  finds the same container locally.
 - **Test location:** `__tests__/` directories alongside source files
   (web), or sibling `*.test.ts` files (packages).
 - **Test files:** `ComponentName.test.tsx` or `functionName.test.ts`.
@@ -1022,9 +1097,12 @@ and make commits easier to find later.
   that would make the call, never an interceptor. Nothing blocks an
   outbound request, so a test that reaches the network really will.
 - **Database tests:** `createTestDatabase()` from
-  `@server/db/test/fixtures` gives a suite its own isolated Postgres
-  database with the schema applied. Test files run in parallel, so
-  never share one database between them.
+  `@virtool/data/db/test/fixtures` gives a suite its own isolated
+  Postgres database with the schema applied, and installs the
+  `client_events` emitter on it. Test files run in parallel, so never
+  share one database between them. A test that stubs
+  `@virtool/data/events/emit` must stub `createEmitter` alongside `emit`,
+  or the fixture's install call finds nothing to call.
 - **Server functions:** a test cannot call a server function by
   importing it — the Vite plugin moves the handler body into a virtual
   `?tss-serverfn-split` module, so invoking the import runs none of your

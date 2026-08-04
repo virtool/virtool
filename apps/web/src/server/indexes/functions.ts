@@ -1,19 +1,7 @@
 import { createServerFn, createServerOnlyFn } from "@tanstack/react-start";
 import { setResponseStatus } from "@tanstack/react-start/server";
-import { z } from "zod";
-import { ForbiddenError } from "../auth/middleware";
-import { authenticated } from "../auth/policy";
-import { db } from "../db/pg";
-import { ClientError } from "../errors";
-import { emit } from "../events/emit";
-import { findUnbuiltByReference } from "../history/data";
-import {
-	checkReferenceRight,
-	ReferenceArchivedError,
-	ReferenceNotFoundError,
-	resolveReferenceActor,
-} from "../references/data";
-import { pageSchema, perPageSchema, rowIdSchema } from "../validation";
+import { emit } from "@virtool/data/events/emit";
+import { findUnbuiltByReference } from "@virtool/data/history/data";
 import {
 	createIndex,
 	findIndexes,
@@ -23,7 +11,19 @@ import {
 	listReadyIndexes,
 	NoUnbuiltChangesError,
 	UnverifiedOtusError,
-} from "./data";
+} from "@virtool/data/indexes/data";
+import {
+	checkReferenceRight,
+	ReferenceArchivedError,
+	ReferenceNotFoundError,
+	resolveReferenceActor,
+} from "@virtool/data/references/data";
+import { z } from "zod";
+import { ForbiddenError } from "../auth/middleware";
+import { authenticated } from "../auth/policy";
+import { db } from "../composition";
+import { ClientError } from "../errors";
+import { pageSchema, perPageSchema, rowIdSchema } from "../validation";
 
 const indexIdSchema = z.object({ indexId: rowIdSchema });
 

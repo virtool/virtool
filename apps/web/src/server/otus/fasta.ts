@@ -10,11 +10,11 @@
 // filename lives in the `Content-Disposition` where it belongs.
 
 import { formatIsolateName } from "@virtool/contracts";
+import type { DbOrTx } from "@virtool/data/db/pg";
+import { legacyOtus, legacySequences } from "@virtool/data/db/schema/otus";
 import { and, eq, sql } from "drizzle-orm";
 import { requireAuthenticatedRequest } from "../auth/middleware";
-import type { DbOrTx } from "../db/pg";
-import { db } from "../db/pg";
-import { legacyOtus, legacySequences } from "../db/schema/otus";
+import { db } from "../composition";
 import { contentDisposition, textResponse } from "../http";
 
 const CONTENT_TYPE = "text/plain; charset=utf-8";

@@ -1,3 +1,4 @@
+import type { ConnectionCounts } from "@virtool/data/metrics/data";
 import {
 	Counter,
 	collectDefaultMetrics,
@@ -6,7 +7,6 @@ import {
 	Registry,
 } from "prom-client";
 import { config } from "../config";
-import type { ConnectionCounts } from "./data";
 
 /**
  * The process-wide Prometheus registry.

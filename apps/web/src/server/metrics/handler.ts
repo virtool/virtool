@@ -1,8 +1,8 @@
 import { timingSafeEqual } from "node:crypto";
+import { readConnectionCounts } from "@virtool/data/metrics/data";
+import { applicationName, client } from "../composition";
 import { config } from "../config";
-import { applicationName, client } from "../db/pg";
 import { logger } from "../logger";
-import { readConnectionCounts } from "./data";
 import {
 	metricsContentType,
 	renderMetrics,

@@ -1,3 +1,17 @@
+import type { Db } from "@virtool/data/db/pg";
+import { takeFirstOrThrow } from "@virtool/data/db/rows";
+import { apiKeys } from "@virtool/data/db/schema/apiKeys";
+import { sessions } from "@virtool/data/db/schema/sessions";
+import {
+	subtractionFiles,
+	subtractions,
+} from "@virtool/data/db/schema/subtractions";
+import { users } from "@virtool/data/db/schema/users";
+import {
+	createTestDatabase,
+	type TestDatabase,
+} from "@virtool/data/db/test/fixtures";
+import { MemoryStorage } from "@virtool/storage";
 import { eq } from "drizzle-orm";
 import {
 	afterAll,
@@ -8,15 +22,6 @@ import {
 	it,
 	vi,
 } from "vitest";
-
-import type { Db } from "../db/pg";
-import { takeFirstOrThrow } from "../db/rows";
-import { apiKeys } from "../db/schema/apiKeys";
-import { sessions } from "../db/schema/sessions";
-import { subtractionFiles, subtractions } from "../db/schema/subtractions";
-import { users } from "../db/schema/users";
-import { createTestDatabase, type TestDatabase } from "../db/test/fixtures";
-import { MemoryStorage } from "../storage/memory";
 
 vi.mock("@tanstack/react-start/server", () => ({
 	deleteCookie: vi.fn(),
@@ -32,22 +37,23 @@ vi.mock("@sentry/tanstackstart-react", () => ({
 }));
 
 let db: Db;
-vi.mock("../db/pg", () => ({
+vi.mock("../composition", () => ({
 	client: {},
 	get db() {
 		return db;
 	},
-}));
-
-const storage = new MemoryStorage();
-vi.mock("../storage", async (importOriginal) => ({
-	...(await importOriginal<typeof import("../storage")>()),
 	storage,
 }));
 
+const storage = new MemoryStorage();
+
 const { handleSubtractionFile } = await import("./download");
-const { basicAuthHeader, seedApiKey, seedSession, seedUser, sessionCookie } =
-	await import("../auth/test/fixtures");
+const { seedApiKey, seedSession, seedUser } = await import(
+	"@virtool/data/auth/test/fixtures"
+);
+const { basicAuthHeader, sessionCookie } = await import(
+	"../auth/test/fixtures"
+);
 
 let database: TestDatabase;
 let userId: number;

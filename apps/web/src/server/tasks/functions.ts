@@ -1,11 +1,11 @@
 import { createServerFn, createServerOnlyFn } from "@tanstack/react-start";
 import { setResponseStatus } from "@tanstack/react-start/server";
+import { getTask, TaskNotFoundError } from "@virtool/data/tasks/data";
 import { z } from "zod";
 import { authenticated } from "../auth/policy";
-import { db } from "../db/pg";
+import { db } from "../composition";
 import { ClientError } from "../errors";
 import { rowIdSchema } from "../validation";
-import { getTask, TaskNotFoundError } from "./data";
 
 const taskIdSchema = z.object({
 	taskId: rowIdSchema,

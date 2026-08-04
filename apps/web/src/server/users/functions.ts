@@ -1,15 +1,6 @@
 import { createServerFn, createServerOnlyFn } from "@tanstack/react-start";
 import { setResponseStatus } from "@tanstack/react-start/server";
-import { z } from "zod";
-import { realCookies } from "../auth/cookies";
-import { getClientIp } from "../auth/ip";
-import { requireAdminRole } from "../auth/middleware";
-import { PasswordTooShortError } from "../auth/passwordPolicy";
-import { adminRole, authenticated } from "../auth/policy";
-import { checkConfiguredPasswordLength } from "../auth/service";
-import { db } from "../db/pg";
-import { ClientError } from "../errors";
-import { pageSchema, perPageSchema, rowIdSchema } from "../validation";
+import { PasswordTooShortError } from "@virtool/contracts";
 import {
 	changePassword,
 	createUser,
@@ -26,7 +17,16 @@ import {
 	UserNotFoundError,
 	updateAccountEmail,
 	updateUser,
-} from "./data";
+} from "@virtool/data/users/data";
+import { z } from "zod";
+import { realCookies } from "../auth/cookies";
+import { getClientIp } from "../auth/ip";
+import { requireAdminRole } from "../auth/middleware";
+import { adminRole, authenticated } from "../auth/policy";
+import { checkConfiguredPasswordLength } from "../auth/service";
+import { db } from "../composition";
+import { ClientError } from "../errors";
+import { pageSchema, perPageSchema, rowIdSchema } from "../validation";
 
 const administratorRoleSchema = z.enum([
 	"full",

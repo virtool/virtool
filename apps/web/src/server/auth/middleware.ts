@@ -7,10 +7,9 @@ import {
 	hasSufficientAdminRole,
 	UNAUTHORIZED_ERROR_NAME,
 } from "@virtool/contracts";
+import { users } from "@virtool/data/db/schema/users";
 import { eq } from "drizzle-orm";
-
-import { db } from "../db/pg";
-import { users } from "../db/schema/users";
+import { db } from "../composition";
 import {
 	type AuthenticatedSession,
 	parseBasicAuthHeader,

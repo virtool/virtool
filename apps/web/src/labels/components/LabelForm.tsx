@@ -6,8 +6,8 @@ import InputError from "@base/InputError";
 import InputGroup from "@base/InputGroup";
 import InputLabel from "@base/InputLabel";
 import InputSimple from "@base/InputSimple";
-import { DEFAULT_LABEL_COLOR } from "@labels/constants";
 import SampleLabel from "@samples/components/Label/SampleLabel";
+import { DEFAULT_LABEL_COLOR } from "@virtool/contracts";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 

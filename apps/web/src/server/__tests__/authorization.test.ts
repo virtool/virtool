@@ -2,6 +2,11 @@
 // The server tsconfig carries Node types, not Vite's, so `import.meta.glob` —
 // used below to prove this file covers every functions.ts — needs the reference.
 
+import type { Db } from "@virtool/data/db/pg";
+import {
+	createTestDatabase,
+	type TestDatabase,
+} from "@virtool/data/db/test/fixtures";
 import {
 	afterAll,
 	beforeAll,
@@ -11,9 +16,6 @@ import {
 	it,
 	vi,
 } from "vitest";
-
-import type { Db } from "../db/pg";
-import { createTestDatabase, type TestDatabase } from "../db/test/fixtures";
 import { callServerFn, type SplitServerFnModule } from "../test/serverFn";
 
 const getRequest = vi.fn();
@@ -32,14 +34,17 @@ vi.mock("@sentry/tanstackstart-react", () => ({
 }));
 
 let db: Db;
-vi.mock("../db/pg", () => ({
+vi.mock("../composition", () => ({
 	client: {},
 	get db() {
 		return db;
 	},
 }));
 
-vi.mock("../events/emit", () => ({ emit: vi.fn() }));
+vi.mock("@virtool/data/events/emit", () => ({
+	createEmitter: vi.fn(),
+	emit: vi.fn(),
+}));
 
 const { UnauthorizedError } = await import("../auth/middleware");
 const { authenticationExceptions } = await import("../auth/exceptions");

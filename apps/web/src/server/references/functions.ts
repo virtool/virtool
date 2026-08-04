@@ -5,12 +5,6 @@ import {
 	type ReferenceRight,
 	ReferenceUpdateRequest,
 } from "@virtool/contracts";
-import { z } from "zod";
-import { ForbiddenError } from "../auth/middleware";
-import { authenticated, permission } from "../auth/policy";
-import { db } from "../db/pg";
-import { ClientError } from "../errors";
-import { pageSchema, perPageSchema, rowIdSchema } from "../validation";
 import {
 	addReferenceGroup,
 	addReferenceUser,
@@ -32,7 +26,13 @@ import {
 	updateReference,
 	updateReferenceGroup,
 	updateReferenceUser,
-} from "./data";
+} from "@virtool/data/references/data";
+import { z } from "zod";
+import { ForbiddenError } from "../auth/middleware";
+import { authenticated, permission } from "../auth/policy";
+import { db } from "../composition";
+import { ClientError } from "../errors";
+import { pageSchema, perPageSchema, rowIdSchema } from "../validation";
 
 const referenceIdSchema = z.object({
 	referenceId: rowIdSchema,

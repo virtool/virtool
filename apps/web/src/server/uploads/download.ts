@@ -1,8 +1,7 @@
+import { getUploadFile } from "@virtool/data/uploads/data";
 import { requireAuthenticatedRequest } from "../auth/middleware";
-import { db } from "../db/pg";
+import { db, storage } from "../composition";
 import { streamStorageObject, textResponse } from "../http";
-import { storage } from "../storage";
-import { getUploadFile } from "./data";
 
 /**
  * Serve an upload's bytes, backing `GET /uploads/{uploadId}`.

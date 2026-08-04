@@ -1,5 +1,4 @@
-import type { Db } from "../db/pg";
-import { createTask } from "../tasks/data";
+import type { Db } from "@virtool/data/db/pg";
 import {
 	attachInstallTask,
 	fetchAndUpdateRelease,
@@ -9,7 +8,8 @@ import {
 	type HmmInstalled,
 	HmmReleaseError,
 	isInstallInProgress,
-} from "./data";
+} from "@virtool/data/hmm/data";
+import { createTask } from "@virtool/data/tasks/data";
 
 /**
  * Start an HMM install and return the pending install record.

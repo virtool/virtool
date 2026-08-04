@@ -1,16 +1,16 @@
 import { createServerFn, createServerOnlyFn } from "@tanstack/react-start";
 import { setResponseStatus } from "@tanstack/react-start/server";
-import { z } from "zod";
-import { authenticated, permission } from "../auth/policy";
-import { db } from "../db/pg";
-import { rowIdSchema } from "../validation";
 import {
 	findHmms,
 	getHmm,
 	HmmInstallConflictError,
 	HmmNotFoundError,
 	HmmReleaseError,
-} from "./data";
+} from "@virtool/data/hmm/data";
+import { z } from "zod";
+import { authenticated, permission } from "../auth/policy";
+import { db } from "../composition";
+import { rowIdSchema } from "../validation";
 import { installUpdate } from "./service";
 
 const findHmmsSchema = z.object({

@@ -1,12 +1,14 @@
-import { requireAuthenticatedRequest } from "../auth/middleware";
-import { db } from "../db/pg";
-import { streamStorageObject, textResponse } from "../http";
+import {
+	getIndexFileKey,
+	getIndexReferenceId,
+} from "@virtool/data/indexes/data";
 import {
 	checkReferenceVisibility,
 	resolveReferenceActor,
-} from "../references/data";
-import { storage } from "../storage";
-import { getIndexFileKey, getIndexReferenceId } from "./data";
+} from "@virtool/data/references/data";
+import { requireAuthenticatedRequest } from "../auth/middleware";
+import { db, storage } from "../composition";
+import { streamStorageObject, textResponse } from "../http";
 
 /**
  * Serve one of a build's artifacts, backing

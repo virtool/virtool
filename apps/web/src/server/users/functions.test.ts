@@ -1,3 +1,10 @@
+import type { Db } from "@virtool/data/db/pg";
+import { sessions } from "@virtool/data/db/schema/sessions";
+import { users } from "@virtool/data/db/schema/users";
+import {
+	createTestDatabase,
+	type TestDatabase,
+} from "@virtool/data/db/test/fixtures";
 import { eq } from "drizzle-orm";
 import {
 	afterAll,
@@ -8,11 +15,6 @@ import {
 	it,
 	vi,
 } from "vitest";
-
-import type { Db } from "../db/pg";
-import { sessions } from "../db/schema/sessions";
-import { users } from "../db/schema/users";
-import { createTestDatabase, type TestDatabase } from "../db/test/fixtures";
 import { callServerFn, type SplitServerFnModule } from "../test/serverFn";
 
 const getRequest = vi.fn();
@@ -32,14 +34,19 @@ vi.mock("@sentry/tanstackstart-react", () => ({
 	setUser: vi.fn(),
 }));
 
-const emit = vi.fn();
-vi.mock("../events/emit", () => ({ emit }));
+// `createTestDatabase` imports this module, so the factory runs during the
+// import phase — before a plain `const` would be initialised.
+const emit = vi.hoisted(() => vi.fn());
+vi.mock("@virtool/data/events/emit", () => ({
+	createEmitter: vi.fn(),
+	emit,
+}));
 
 // The handlers read the `db` singleton at module scope. A getter defers the
 // read until a handler actually runs, by which point beforeAll has pointed it
 // at this file's isolated database.
 let db: Db;
-vi.mock("../db/pg", () => ({
+vi.mock("../composition", () => ({
 	client: {},
 	get db() {
 		return db;
@@ -52,9 +59,13 @@ const handlers = (await import(
 const { SESSION_ID_COOKIE, SESSION_TOKEN_COOKIE } = await import(
 	"../auth/cookies"
 );
-const { hashPassword, verifyPassword } = await import("../auth/password");
-const { seedSession, seedUser } = await import("../auth/test/fixtures");
-const { hashToken } = await import("../auth/tokens");
+const { hashPassword, verifyPassword } = await import(
+	"@virtool/data/auth/password"
+);
+const { seedSession, seedUser } = await import(
+	"@virtool/data/auth/test/fixtures"
+);
+const { hashToken } = await import("@virtool/data/auth/tokens");
 
 let database: TestDatabase;
 

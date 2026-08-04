@@ -1,3 +1,13 @@
+import type { Db } from "@virtool/data/db/pg";
+import { apiKeys } from "@virtool/data/db/schema/apiKeys";
+import { sessions } from "@virtool/data/db/schema/sessions";
+import { uploads as uploadsTable } from "@virtool/data/db/schema/uploads";
+import { users } from "@virtool/data/db/schema/users";
+import {
+	createTestDatabase,
+	type TestDatabase,
+} from "@virtool/data/db/test/fixtures";
+import { MemoryStorage } from "@virtool/storage";
 import {
 	afterAll,
 	beforeAll,
@@ -7,14 +17,6 @@ import {
 	it,
 	vi,
 } from "vitest";
-
-import type { Db } from "../db/pg";
-import { apiKeys } from "../db/schema/apiKeys";
-import { sessions } from "../db/schema/sessions";
-import { uploads as uploadsTable } from "../db/schema/uploads";
-import { users } from "../db/schema/users";
-import { createTestDatabase, type TestDatabase } from "../db/test/fixtures";
-import { MemoryStorage } from "../storage/memory";
 
 vi.mock("@tanstack/react-start/server", () => ({
 	deleteCookie: vi.fn(),
@@ -30,24 +32,28 @@ vi.mock("@sentry/tanstackstart-react", () => ({
 }));
 
 let db: Db;
-vi.mock("../db/pg", () => ({
+vi.mock("../composition", () => ({
 	client: {},
 	get db() {
 		return db;
 	},
+	storage,
 }));
 
-vi.mock("../events/emit", () => ({ emit: vi.fn() }));
+vi.mock("@virtool/data/events/emit", () => ({
+	createEmitter: vi.fn(),
+	emit: vi.fn(),
+}));
 
 const storage = new MemoryStorage();
-vi.mock("../storage", () => ({
-	storage,
-	uploadFileKey: (nameOnDisk: string) => `files/${nameOnDisk}`,
-}));
 
 const { handleUpload } = await import("./upload");
-const { basicAuthHeader, seedApiKey, seedSession, seedUser, sessionCookie } =
-	await import("../auth/test/fixtures");
+const { seedApiKey, seedSession, seedUser } = await import(
+	"@virtool/data/auth/test/fixtures"
+);
+const { basicAuthHeader, sessionCookie } = await import(
+	"../auth/test/fixtures"
+);
 
 let database: TestDatabase;
 

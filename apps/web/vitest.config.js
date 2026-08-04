@@ -41,14 +41,17 @@ export default defineConfig({
 					// match them and run them a second time under jsdom, where the
 					// colour-contrast checks they exist for cannot run.
 					exclude: ["src/server/**", "src/**/*.a11y.test.{ts,tsx}"],
-					// Pin the assumption above. These are the two modules that open
-					// Postgres at import; if one ever survives the client transform into
-					// the browser program, the guard throws instead of quietly making
-					// Docker a prerequisite again. Listed before the `@server` prefix
-					// alias so they win.
+					// Pin the assumption above. `@server/composition` is where the pool
+					// is opened, and `@server/config` is what it reads to do so; if
+					// either survives the client transform into the browser program, the
+					// guard throws instead of quietly making Docker a prerequisite
+					// again. `@virtool/data/db/pg` is listed too — it opens nothing at
+					// import any more, but a browser module reaching the data layer's
+					// pool constructor is the same bug one step earlier. Listed before
+					// the `@server` prefix alias so they win.
 					alias: [
 						{
-							find: /^@server\/(config|db\/pg)$/,
+							find: /^(@server\/(config|composition)|@virtool\/data\/db\/pg)$/,
 							replacement: path.resolve("src/tests/postgresGuard.ts"),
 						},
 					],
@@ -64,22 +67,6 @@ export default defineConfig({
 					environment: "node",
 					globalSetup: ["./src/tests/globalSetup.ts"],
 					include: ["src/server/**/*.test.ts"],
-					exclude: ["src/server/storage/__tests__/integration.test.ts"],
-				},
-			},
-			{
-				extends: true,
-				test: {
-					// The storage backends against the same services Python tests with:
-					// Garage for S3 and Azurite for Azure Blob. Everything else fakes
-					// storage with MemoryStorage and never starts these containers.
-					name: "storage",
-					environment: "node",
-					globalSetup: ["./src/server/storage/test/globalSetup.ts"],
-					include: ["src/server/storage/__tests__/integration.test.ts"],
-					// Garage has to lay out a cluster before it serves any S3 traffic.
-					testTimeout: 30_000,
-					hookTimeout: 120_000,
 				},
 			},
 			{

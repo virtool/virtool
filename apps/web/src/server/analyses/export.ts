@@ -3,10 +3,15 @@
 // `../../../../../virtool/virtool/analyses/format.py`.
 
 import type { JsonObject } from "@virtool/contracts";
+import { formatAnalysis } from "@virtool/data/analyses/format";
+import {
+	asArray,
+	asNumber,
+	asRecord,
+	asText,
+} from "@virtool/data/analyses/json";
+import type { DbOrTx } from "@virtool/data/db/pg";
 import { median } from "es-toolkit";
-import type { DbOrTx } from "../db/pg";
-import { formatAnalysis } from "./format";
-import { asArray, asNumber, asRecord, asText } from "./json";
 
 const HEADERS = [
 	"OTU",

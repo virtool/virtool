@@ -1,10 +1,5 @@
 import { createServerFn, createServerOnlyFn } from "@tanstack/react-start";
 import { setResponseStatus } from "@tanstack/react-start/server";
-import { z } from "zod";
-import { authenticated } from "../auth/policy";
-import { db } from "../db/pg";
-import { ClientError } from "../errors";
-import { rowIdSchema } from "../validation";
 import {
 	createLabel,
 	deleteLabel,
@@ -13,7 +8,12 @@ import {
 	LabelConflictError,
 	LabelNotFoundError,
 	updateLabel,
-} from "./data";
+} from "@virtool/data/labels/data";
+import { z } from "zod";
+import { authenticated } from "../auth/policy";
+import { db } from "../composition";
+import { ClientError } from "../errors";
+import { rowIdSchema } from "../validation";
 
 const colorSchema = z
 	.string()

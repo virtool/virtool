@@ -1,25 +1,23 @@
 import { timingSafeEqual } from "node:crypto";
-
-import { and, eq, sql } from "drizzle-orm";
-
-import type { Db } from "../db/pg";
-import { sessions } from "../db/schema/sessions";
-import { users } from "../db/schema/users";
-import {
-	createUser,
-	getUserCount,
-	type User,
-	UserConflictError,
-} from "../users/data";
-import type { CookieAdapter } from "./cookies";
-import { hashPassword, verifyPassword } from "./password";
+import { hashPassword, verifyPassword } from "@virtool/data/auth/password";
 import {
 	consumeResetSession,
 	createAuthenticatedSession,
 	createResetSession,
 	invalidateSession,
 	invalidateUserSessions,
-} from "./session";
+} from "@virtool/data/auth/session";
+import type { Db } from "@virtool/data/db/pg";
+import { sessions } from "@virtool/data/db/schema/sessions";
+import { users } from "@virtool/data/db/schema/users";
+import {
+	createUser,
+	getUserCount,
+	type User,
+	UserConflictError,
+} from "@virtool/data/users/data";
+import { and, eq, sql } from "drizzle-orm";
+import type { CookieAdapter } from "./cookies";
 
 // A real bcrypt hash used to equalize timing when no user is found. Keeps the
 // missing-handle and wrong-password code paths indistinguishable to a timing

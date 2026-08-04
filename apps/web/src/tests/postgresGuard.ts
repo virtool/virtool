@@ -1,7 +1,9 @@
 // Reaching this module means a client-reachable file imported a server module
-// that opens Postgres. The `web` Vitest project aliases `@server/config` and
-// `@server/db/pg` here, so such an import fails loudly instead of silently
-// dragging a database — and a Docker daemon — back into the component tests.
+// that opens Postgres. The `web` Vitest project aliases `@server/composition`
+// (which builds the pool), `@server/config` (which it reads to do so), and
+// `@virtool/data/db/pg` (which exposes the constructor) here, so such an import
+// fails loudly instead of silently dragging a database — and a Docker daemon —
+// back into the component tests.
 //
 // Server functions are fine to import from client code: the client transform
 // strips the `createServerFn` handler and the server-only imports behind it, so

@@ -1,4 +1,16 @@
 import { emptyPermissions, type Permissions } from "@virtool/contracts";
+import type { Db } from "@virtool/data/db/pg";
+import { groups, userGroups } from "@virtool/data/db/schema/groups";
+import { sessions } from "@virtool/data/db/schema/sessions";
+import { users } from "@virtool/data/db/schema/users";
+import {
+	createTestDatabase,
+	type TestDatabase,
+} from "@virtool/data/db/test/fixtures";
+import {
+	addToGroup as addToGroupImpl,
+	seedGroup as seedGroupImpl,
+} from "@virtool/data/groups/test/fixtures";
 import {
 	afterAll,
 	beforeAll,
@@ -8,15 +20,6 @@ import {
 	it,
 	vi,
 } from "vitest";
-import type { Db } from "../db/pg";
-import { groups, userGroups } from "../db/schema/groups";
-import { sessions } from "../db/schema/sessions";
-import { users } from "../db/schema/users";
-import { createTestDatabase, type TestDatabase } from "../db/test/fixtures";
-import {
-	addToGroup as addToGroupImpl,
-	seedGroup as seedGroupImpl,
-} from "../groups/test/fixtures";
 
 vi.mock("@tanstack/react-start/server", () => ({
 	deleteCookie: vi.fn(),
@@ -27,7 +30,7 @@ vi.mock("@tanstack/react-start/server", () => ({
 }));
 
 let db: Db;
-vi.mock("../db/pg", () => ({
+vi.mock("../composition", () => ({
 	client: {},
 	get db() {
 		return db;
@@ -35,7 +38,7 @@ vi.mock("../db/pg", () => ({
 }));
 
 const { hasPermission } = await import("./policy");
-const { seedUser } = await import("./test/fixtures");
+const { seedUser } = await import("@virtool/data/auth/test/fixtures");
 
 let database: TestDatabase;
 

@@ -1,3 +1,11 @@
+import type { Db } from "@virtool/data/db/pg";
+import { sessions } from "@virtool/data/db/schema/sessions";
+import { settings } from "@virtool/data/db/schema/settings";
+import { users } from "@virtool/data/db/schema/users";
+import {
+	createTestDatabase,
+	type TestDatabase,
+} from "@virtool/data/db/test/fixtures";
 import {
 	afterAll,
 	beforeAll,
@@ -7,11 +15,6 @@ import {
 	it,
 	vi,
 } from "vitest";
-import type { Db } from "../db/pg";
-import { sessions } from "../db/schema/sessions";
-import { settings } from "../db/schema/settings";
-import { users } from "../db/schema/users";
-import { createTestDatabase, type TestDatabase } from "../db/test/fixtures";
 import { callServerFn, type SplitServerFnModule } from "../test/serverFn";
 
 const getRequest = vi.fn();
@@ -31,7 +34,7 @@ vi.mock("@sentry/tanstackstart-react", () => ({
 }));
 
 let db: Db;
-vi.mock("../db/pg", () => ({
+vi.mock("../composition", () => ({
 	client: {},
 	get db() {
 		return db;
@@ -45,7 +48,7 @@ const { ForbiddenError, UnauthorizedError } = await import(
 	"../auth/middleware"
 );
 const { signIn } = await import("../auth/test/fixtures");
-const { seedSettings } = await import("./test/fixtures");
+const { seedSettings } = await import("@virtool/data/settings/test/fixtures");
 
 let database: TestDatabase;
 

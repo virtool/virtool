@@ -1,8 +1,9 @@
 import * as Sentry from "@sentry/tanstackstart-react";
 import { createServerFn } from "@tanstack/react-start";
 import { setResponseStatus } from "@tanstack/react-start/server";
+import { PasswordTooShortError } from "@virtool/contracts";
 import { z } from "zod";
-import { db } from "../db/pg";
+import { db } from "../composition";
 import { ClientError } from "../errors";
 import { realCookies } from "./cookies";
 import {
@@ -16,7 +17,6 @@ import {
 	resetPassword,
 } from "./core";
 import { getClientIp } from "./ip";
-import { PasswordTooShortError } from "./passwordPolicy";
 import { open } from "./policy";
 import { checkConfiguredPasswordLength } from "./service";
 

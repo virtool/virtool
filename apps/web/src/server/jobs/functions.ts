@@ -1,17 +1,17 @@
 import { createServerFn, createServerOnlyFn } from "@tanstack/react-start";
 import { setResponseStatus } from "@tanstack/react-start/server";
-import { z } from "zod";
-import { authenticated } from "../auth/policy";
-import { db } from "../db/pg";
-import { ClientError } from "../errors";
-import { rowIdSchema } from "../validation";
 import {
 	findJobs,
 	getJob,
 	getJobs,
 	JOB_STATES,
 	JobNotFoundError,
-} from "./data";
+} from "@virtool/data/jobs/data";
+import { z } from "zod";
+import { authenticated } from "../auth/policy";
+import { db } from "../composition";
+import { ClientError } from "../errors";
+import { rowIdSchema } from "../validation";
 
 const jobStateSchema = z.enum(JOB_STATES);
 

@@ -1,14 +1,14 @@
 import { timingSafeEqual } from "node:crypto";
 
 import { emptyPermissions, type Permissions } from "@virtool/contracts";
-import { and, eq, sql } from "drizzle-orm";
+import { hashToken } from "@virtool/data/auth/tokens";
 
-import type { Db } from "../db/pg";
-import { apiKeys } from "../db/schema/apiKeys";
-import { sessions } from "../db/schema/sessions";
-import { users } from "../db/schema/users";
+import type { Db } from "@virtool/data/db/pg";
+import { apiKeys } from "@virtool/data/db/schema/apiKeys";
+import { sessions } from "@virtool/data/db/schema/sessions";
+import { users } from "@virtool/data/db/schema/users";
+import { and, eq, sql } from "drizzle-orm";
 import { SESSION_ID_COOKIE, SESSION_TOKEN_COOKIE } from "./cookies";
-import { hashToken } from "./tokens";
 
 /** Authenticated identity resolved from a session cookie pair or an API key. */
 export type AuthenticatedSession = {

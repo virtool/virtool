@@ -1,10 +1,5 @@
 import { createServerFn, createServerOnlyFn } from "@tanstack/react-start";
 import { setResponseStatus } from "@tanstack/react-start/server";
-import { z } from "zod";
-import { authenticated, permission } from "../auth/policy";
-import { db } from "../db/pg";
-import { storage } from "../storage";
-import { pageSchema, perPageSchema, rowIdSchema } from "../validation";
 import {
 	createSubtraction,
 	deleteSubtraction,
@@ -14,7 +9,12 @@ import {
 	SubtractionNotFoundError,
 	SubtractionUploadNotFoundError,
 	updateSubtraction,
-} from "./data";
+} from "@virtool/data/subtraction/data";
+import { z } from "zod";
+import { authenticated, permission } from "../auth/policy";
+import { db, storage } from "../composition";
+import { logger } from "../logger";
+import { pageSchema, perPageSchema, rowIdSchema } from "../validation";
 
 const findSubtractionsSchema = z.object({
 	page: pageSchema,
@@ -114,7 +114,7 @@ export const deleteSubtractionFn = createServerFn({ method: "POST" })
 	.validator(subtractionIdSchema)
 	.handler(async ({ data }) => {
 		try {
-			await deleteSubtraction(db, storage, data.subtractionId);
+			await deleteSubtraction(db, storage, logger, data.subtractionId);
 			return null;
 		} catch (err) {
 			return rethrowAsHttp(err);

@@ -1,12 +1,12 @@
-import { requireAuthenticatedRequest } from "../auth/middleware";
-import { db } from "../db/pg";
-import { contentDisposition, textResponse } from "../http";
-import { hasSampleRight, resolveSampleActor } from "../samples/data";
 import {
 	AnalysisNotFoundError,
 	getAnalysisForExport,
 	getAnalysisSampleRights,
-} from "./data";
+} from "@virtool/data/analyses/data";
+import { hasSampleRight, resolveSampleActor } from "@virtool/data/samples/data";
+import { requireAuthenticatedRequest } from "../auth/middleware";
+import { db } from "../composition";
+import { contentDisposition, textResponse } from "../http";
 import { formatAnalysisToCsv, formatAnalysisToExcel } from "./export";
 
 const CONTENT_TYPES = {

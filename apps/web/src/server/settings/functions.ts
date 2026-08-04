@@ -1,10 +1,16 @@
 import { createServerFn } from "@tanstack/react-start";
+import {
+	type SampleGroup,
+	sampleGroups,
+} from "@virtool/data/db/schema/settings";
+import {
+	getSettings,
+	type Settings,
+	updateSettings,
+} from "@virtool/data/settings/data";
 import { z } from "zod";
 import { adminRole, open } from "../auth/policy";
-
-import { db } from "../db/pg";
-import { type SampleGroup, sampleGroups } from "../db/schema/settings";
-import { getSettings, type Settings, updateSettings } from "./data";
+import { db } from "../composition";
 
 /** The password rules a client needs to validate a new password before submitting it. */
 export type PasswordPolicy = {

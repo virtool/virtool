@@ -87,7 +87,43 @@ jobs:
                   node-version: ${{ env.NODE_VERSION }}
                   pnpm-version: ${{ env.PNPM_VERSION }}
             - name: Test
-              run: pnpm --filter @virtool/bio --filter @virtool/logger --filter @virtool/site test
+              run: pnpm --filter @virtool/bio --filter @virtool/contracts --filter @virtool/logger --filter @virtool/site test
+    test-data:
+        name: Test / Data
+        runs-on: ubuntu-24.04
+        timeout-minutes: 15
+        steps:
+            - name: Checkout
+              uses: actions/checkout@v7
+            - name: Setup
+              uses: ./.github/actions/setup
+              with:
+                  node-version: ${{ env.NODE_VERSION }}
+                  pnpm-version: ${{ env.PNPM_VERSION }}
+            # Its own job rather than part of Test / Packages, for the same
+            # reason as Test / Storage: it starts a Postgres testcontainer, and
+            # pulling that image does not belong in the fast package loop.
+            - name: Test
+              run: pnpm --filter @virtool/data test
+              env:
+                  TZ: UTC
+    test-storage:
+        name: Test / Storage
+        runs-on: ubuntu-24.04
+        timeout-minutes: 15
+        steps:
+            - name: Checkout
+              uses: actions/checkout@v7
+            - name: Setup
+              uses: ./.github/actions/setup
+              with:
+                  node-version: ${{ env.NODE_VERSION }}
+                  pnpm-version: ${{ env.PNPM_VERSION }}
+            # Its own job rather than part of Test / Packages: the integration
+            # project starts Garage and Azurite in testcontainers, and pulling
+            # those images does not belong in the fast package loop.
+            - name: Test
+              run: pnpm --filter @virtool/storage test
     test-web:
         name: Test / Web
         runs-on: ubuntu-24.04
@@ -118,7 +154,7 @@ jobs:
                   node-version: ${{ env.NODE_VERSION }}
                   pnpm-version: ${{ env.PNPM_VERSION }}
             - name: Test
-              run: VT_TEST_WORKERS=$(nproc) pnpm --filter @virtool/web exec vitest run --project server --project storage
+              run: VT_TEST_WORKERS=$(nproc) pnpm --filter @virtool/web exec vitest run --project server
               env:
                   TZ: UTC
                   VT_TEST_REACT_COMPILER: "1"
@@ -168,6 +204,8 @@ jobs:
                 check-knip,
                 check-typescript,
                 test-packages,
+                test-data,
+                test-storage,
                 test-web,
                 test-server,
                 test-a11y,

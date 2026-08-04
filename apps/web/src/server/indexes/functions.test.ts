@@ -1,3 +1,24 @@
+import type { Db } from "@virtool/data/db/pg";
+import { legacyHistory } from "@virtool/data/db/schema/history";
+import { indexes, indexFiles } from "@virtool/data/db/schema/indexes";
+import { legacyOtus } from "@virtool/data/db/schema/otus";
+import {
+	legacyReferences,
+	legacyReferenceUsers,
+} from "@virtool/data/db/schema/references";
+import { sessions } from "@virtool/data/db/schema/sessions";
+import { tasks } from "@virtool/data/db/schema/tasks";
+import { users } from "@virtool/data/db/schema/users";
+import {
+	createTestDatabase,
+	type TestDatabase,
+} from "@virtool/data/db/test/fixtures";
+import {
+	seedChange,
+	seedIndex,
+	seedOtu,
+	seedReference,
+} from "@virtool/data/indexes/test/fixtures";
 import {
 	afterAll,
 	beforeAll,
@@ -7,20 +28,7 @@ import {
 	it,
 	vi,
 } from "vitest";
-import type { Db } from "../db/pg";
-import { legacyHistory } from "../db/schema/history";
-import { indexes, indexFiles } from "../db/schema/indexes";
-import { legacyOtus } from "../db/schema/otus";
-import {
-	legacyReferences,
-	legacyReferenceUsers,
-} from "../db/schema/references";
-import { sessions } from "../db/schema/sessions";
-import { tasks } from "../db/schema/tasks";
-import { users } from "../db/schema/users";
-import { createTestDatabase, type TestDatabase } from "../db/test/fixtures";
 import { callServerFn, type SplitServerFnModule } from "../test/serverFn";
-import { seedChange, seedIndex, seedOtu, seedReference } from "./test/fixtures";
 
 const getRequest = vi.fn();
 const setResponseStatus = vi.fn();
@@ -39,7 +47,7 @@ vi.mock("@sentry/tanstackstart-react", () => ({
 }));
 
 let db: Db;
-vi.mock("../db/pg", () => ({
+vi.mock("../composition", () => ({
 	client: {},
 	get db() {
 		return db;
@@ -47,7 +55,8 @@ vi.mock("../db/pg", () => ({
 }));
 
 const emit = vi.fn();
-vi.mock("../events/emit", () => ({
+vi.mock("@virtool/data/events/emit", () => ({
+	createEmitter: vi.fn(),
 	emit: (...args: unknown[]) => emit(...args),
 }));
 

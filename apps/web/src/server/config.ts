@@ -1,23 +1,6 @@
 import { readFileSync } from "node:fs";
+import type { StorageConfig } from "@virtool/storage";
 import { z } from "zod";
-
-/** Object storage backend configuration resolved from the environment. */
-export type StorageConfig =
-	| {
-			kind: "s3";
-			bucket: string;
-			region?: string;
-			endpoint?: string;
-			accessKeyId?: string;
-			secretAccessKey?: string;
-	  }
-	| {
-			kind: "azure";
-			account: string;
-			container: string;
-			accessKey?: string;
-			endpoint?: string;
-	  };
 
 /** postgres-js pool size when `VT_POSTGRES_POOL_MAX` is unset. */
 const DEFAULT_POSTGRES_POOL_MAX = 10;

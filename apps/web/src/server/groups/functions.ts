@@ -1,11 +1,6 @@
 import { createServerFn, createServerOnlyFn } from "@tanstack/react-start";
 import { setResponseStatus } from "@tanstack/react-start/server";
 import { permissionsSchema } from "@virtool/contracts";
-import { z } from "zod";
-import { adminRole, authenticated } from "../auth/policy";
-import { db } from "../db/pg";
-import { ClientError } from "../errors";
-import { pageSchema, perPageSchema, rowIdSchema } from "../validation";
 import {
 	createGroup,
 	deleteGroup,
@@ -15,7 +10,12 @@ import {
 	getGroup,
 	listGroups,
 	updateGroup,
-} from "./data";
+} from "@virtool/data/groups/data";
+import { z } from "zod";
+import { adminRole, authenticated } from "../auth/policy";
+import { db } from "../composition";
+import { ClientError } from "../errors";
+import { pageSchema, perPageSchema, rowIdSchema } from "../validation";
 
 const groupIdSchema = z.object({
 	groupId: rowIdSchema,

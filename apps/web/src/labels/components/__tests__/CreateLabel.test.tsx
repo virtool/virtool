@@ -1,7 +1,7 @@
-import { DEFAULT_LABEL_COLOR } from "@labels/constants";
 import { screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { renderWithProviders } from "@tests/setup";
+import { DEFAULT_LABEL_COLOR } from "@virtool/contracts";
 import { describe, expect, it, vi } from "vitest";
 import { CreateLabel } from "../CreateLabel";
 

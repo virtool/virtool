@@ -1,13 +1,5 @@
 import { CLIENT_ERROR_NAME } from "@virtool/contracts";
 
-/** Base class for domain errors raised by the server data layer. */
-export class AppError extends Error {
-	constructor(message?: string) {
-		super(message);
-		this.name = new.target.name;
-	}
-}
-
 /**
  * An expected, client-facing failure a server-function handler surfaces as a
  * 4xx: a bad login, a missing record, a name conflict. Thrown alongside

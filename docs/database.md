@@ -14,15 +14,15 @@ feature has to respect.
 ## Python owns schema and migrations
 
 The Python repo (`../virtool`) is the only process that applies schema
-changes — Alembic migrations against Postgres. TS server features under
-`apps/web/src/server/<feature>/` read and write through Drizzle against
-the Postgres schema Python defines; they don't ship their own
-migrations.
+changes — Alembic migrations against Postgres. The TypeScript data layer
+in `@virtool/data` (`packages/data/src/`) reads and writes through
+Drizzle against the Postgres schema Python defines; it doesn't ship its
+own migrations.
 
 When a migrating endpoint needs a schema change:
 
 1. Land the schema change in Python's Alembic tree first. Deploy it.
-2. Update the Drizzle schema in `apps/web/src/server/db/schema/` to
+2. Update the Drizzle schema in `packages/data/src/db/schema/` to
    match.
 3. Then migrate the endpoint.
 
@@ -53,9 +53,10 @@ a TS server feature is no longer "has this migrated to Postgres" — it's
 how much of it this repo has mirrored into Drizzle and wired up. Three
 states:
 
-- **Built** — a Drizzle mirror in `apps/web/src/server/db/schema/` plus
-  a `data.ts` / `functions.ts` in `apps/web/src/server/<feature>/`. The
-  domain is served from this repo; ready to use.
+- **Built** — a Drizzle mirror in `packages/data/src/db/schema/` plus a
+  `packages/data/src/<feature>/data.ts` and an
+  `apps/web/src/server/<feature>/functions.ts`. The domain is served from
+  this repo; ready to use.
 - **Partial mirror** — a read-only Drizzle mirror of only the few
   columns the **jobs** feature needs to reconstruct a job's `args`. The
   domain itself is not served yet; building it out means mirroring the
@@ -122,7 +123,7 @@ The consequences for anything written here: a write must reproduce the whole
 document, `data` included (`writeLegacyOtu`); `legacy_sequences.position` is
 load-bearing and a delete leaves a gap rather than renumbering; and the
 `otu_version` `NULL` that stands for `"removed"` is reversed at the boundary
-rather than stored. See `@server/otus/data` and `@server/history/data`.
+rather than stored. See `@virtool/data/otus/data` and `@virtool/data/history/data`.
 
 The `subtractions` mirror is now full — the subtraction domain is
 served from this repo — but jobs still reaches it through the same reverse
@@ -138,8 +139,9 @@ joining across those tables.
 With every domain in Postgres, building a TS server feature for a
 partial-mirror or not-started domain is ordinary Drizzle work: mirror
 the tables (and, for a partial mirror, the remaining columns) Python
-defines into `apps/web/src/server/db/schema/`, then write the feature's
-`data.ts` / `functions.ts`. Two things carry over from the migration:
+defines into `packages/data/src/db/schema/`, then write the feature's
+`data.ts` there and its `functions.ts` in `apps/web/src/server/`. Two
+things carry over from the migration:
 
 - **Legacy-shaped tables.** Domains imported from Mongo (`legacy_otus`,
   `legacy_references`, `legacy_samples`, `legacy_sequences`,
@@ -193,7 +195,7 @@ genuinely needs something a transaction cannot give it.
 Starting an index build is the one write that takes a Postgres advisory
 lock, and the reason is that Python still performs the second half of it.
 
-`createIndex` (`@server/indexes/data`) inserts the pending `indexes` row,
+`createIndex` (`@virtool/data/indexes/data`) inserts the pending `indexes` row,
 mints its `storage_key`, stamps every `legacy_history` row whose
 `index_id` is `NULL` with the new build, and creates a `create_index`
 task. The Python task runner claims that task, patches every OTU in the
@@ -275,8 +277,8 @@ Python code does this with helpers in `virtool/data/topg.py`:
   side.
 
 TS port plan: when a server feature first needs legacy-id resolution,
-port these into `apps/web/src/server/db/legacy_id.ts` (or similar) and
-use them everywhere a `legacy_id` column is touched. Don't reinvent
+port these into `packages/data/src/db/legacyId.ts` (or similar) and use
+them everywhere a `legacy_id` column is touched. Don't reinvent
 per-feature.
 
 These helpers stay relevant until the backfills are complete and the
@@ -285,7 +287,7 @@ These helpers stay relevant until the backfills are complete and the
 ## If we ever own Postgres migrations from TS
 
 Today Python owns the Postgres schema via Alembic and the TS side
-mirrors it by hand (`apps/web/src/server/db/schema/`). Eventually,
+mirrors it by hand (`packages/data/src/db/schema/`). Eventually,
 once enough domains have migrated, the TS side will take over schema
 ownership. Notes for that day:
 

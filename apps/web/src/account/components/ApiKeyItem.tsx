@@ -1,9 +1,9 @@
 import Attribution from "@base/Attribution";
 import BoxGroupSection from "@base/BoxGroupSection";
 import IconButton from "@base/IconButton";
+import type { ApiKey } from "@virtool/contracts";
 import { Trash } from "lucide-react";
 import { useRemoveApiKey } from "../queries";
-import type { ApiKey } from "../types";
 import ApiKeyEdit from "./ApiKeyEdit";
 
 type ApiKeyItemProps = {

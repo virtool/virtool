@@ -11,7 +11,7 @@ through the normal REST API.
 ```
 ┌────────────────────────┐                ┌──────────────────────────┐
 │ Python                 │                │ Node (this repo)         │
-│  data layer @emits     │                │  server/events/emit.ts   │
+│  data layer @emits     │                │  data layer emit()       │
 │       │                │                │       │                  │
 │       ▼                │                │       ▼                  │
 │  pg_notify             │                │  client.notify           │
@@ -35,7 +35,7 @@ through the normal REST API.
 
 Both Python and Node publish `{ domain, resource_id, operation }`
 payloads on the Postgres `client_events` channel (see
-`server/events/channel.ts`). The Node SSE route is the only consumer:
+`@virtool/data/events/channel`). The Node SSE route is the only consumer:
 it converts each event into the wire shape and forwards it. No
 resource resolution happens on the server side.
 
@@ -154,8 +154,18 @@ application's own doing.
 
 ## Pure / wired split
 
-- `server/events/channel.ts` — channel name + payload type. Pure.
-- `server/events/emit.ts` — publishes a `ClientEvent` via `NOTIFY`.
+- `@virtool/data/events/channel` — channel name + payload type. Pure.
+- `@virtool/data/events/emit` — publishes a `ClientEvent` via `NOTIFY`.
+  `createEmitter({ client, logger })` builds the emitter and installs it
+  behind the exported `emit`; `apps/web/src/server/composition.ts` makes
+  that call once at startup, and `createTestDatabase` makes it per test
+  file. The module-scoped handle is the deliberate exception to the
+  data layer's everything-is-an-argument rule: `emit` is called from more
+  than two dozen plain mutations that do not otherwise log or reach the
+  pool, and threading a client and a logger through every one of them to
+  keep a single failure line visible is poor value per call site. Calling
+  `emit` before `createEmitter` throws rather than silently dropping the
+  frame.
 - `server/events/listen.ts` — `LISTEN`-backed async iterable. Its
   per-connection buffer is capped (`MAX_QUEUE`); a consumer that falls
   that far behind has its stream dropped rather than buffered without

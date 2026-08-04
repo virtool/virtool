@@ -1,6 +1,5 @@
+import type { ConnectionCounts } from "@virtool/data/metrics/data";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-
-import type { ConnectionCounts } from "../data";
 
 const { configMock, readConnectionCounts } = vi.hoisted(() => ({
 	configMock: {
@@ -11,11 +10,11 @@ const { configMock, readConnectionCounts } = vi.hoisted(() => ({
 }));
 
 vi.mock("../../config", () => ({ config: configMock }));
-vi.mock("../../db/pg", () => ({
+vi.mock("../../composition", () => ({
 	client: {},
 	applicationName: "virtool-ts@test",
 }));
-vi.mock("../data", () => ({ readConnectionCounts }));
+vi.mock("@virtool/data/metrics/data", () => ({ readConnectionCounts }));
 vi.mock("../../logger", () => ({
 	logger: { warn: vi.fn(), info: vi.fn(), error: vi.fn(), debug: vi.fn() },
 }));

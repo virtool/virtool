@@ -8,19 +8,7 @@ import {
 	SequenceCreateRequest,
 	SequenceUpdateRequest,
 } from "@virtool/contracts";
-import { z } from "zod";
-import { ForbiddenError } from "../auth/middleware";
-import { authenticated } from "../auth/policy";
-import { db } from "../db/pg";
-import { ClientError } from "../errors";
-import { listByOtu } from "../history/data";
-import {
-	checkReferenceRight,
-	ReferenceArchivedError,
-	ReferenceNotFoundError,
-	resolveReferenceActor,
-} from "../references/data";
-import { pageSchema, perPageSchema, rowIdSchema } from "../validation";
+import { listByOtu } from "@virtool/data/history/data";
 import {
 	createIsolate,
 	createOtu,
@@ -42,7 +30,19 @@ import {
 	updateIsolate,
 	updateOtu,
 	updateSequence,
-} from "./data";
+} from "@virtool/data/otus/data";
+import {
+	checkReferenceRight,
+	ReferenceArchivedError,
+	ReferenceNotFoundError,
+	resolveReferenceActor,
+} from "@virtool/data/references/data";
+import { z } from "zod";
+import { ForbiddenError } from "../auth/middleware";
+import { authenticated } from "../auth/policy";
+import { db } from "../composition";
+import { ClientError } from "../errors";
+import { pageSchema, perPageSchema, rowIdSchema } from "../validation";
 
 // An OTU, isolate, or sequence id is the 8-character string Mongo's `_id` held,
 // not a Postgres serial, so `rowIdSchema` does not apply.

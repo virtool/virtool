@@ -1,4 +1,17 @@
 import type { Permissions } from "@virtool/contracts";
+import type { Db } from "@virtool/data/db/pg";
+import { takeFirstOrThrow } from "@virtool/data/db/rows";
+import { groups } from "@virtool/data/db/schema/groups";
+import { sessions } from "@virtool/data/db/schema/sessions";
+import { users } from "@virtool/data/db/schema/users";
+import {
+	createTestDatabase,
+	type TestDatabase,
+} from "@virtool/data/db/test/fixtures";
+import {
+	NO_PERMISSIONS,
+	seedGroup as seedGroupImpl,
+} from "@virtool/data/groups/test/fixtures";
 import { eq } from "drizzle-orm";
 import {
 	afterAll,
@@ -9,14 +22,7 @@ import {
 	it,
 	vi,
 } from "vitest";
-import type { Db } from "../db/pg";
-import { takeFirstOrThrow } from "../db/rows";
-import { groups } from "../db/schema/groups";
-import { sessions } from "../db/schema/sessions";
-import { users } from "../db/schema/users";
-import { createTestDatabase, type TestDatabase } from "../db/test/fixtures";
 import { callServerFn, type SplitServerFnModule } from "../test/serverFn";
-import { NO_PERMISSIONS, seedGroup as seedGroupImpl } from "./test/fixtures";
 
 const getRequest = vi.fn();
 const setResponseStatus = vi.fn();
@@ -38,14 +44,17 @@ vi.mock("@sentry/tanstackstart-react", () => ({
 // read until a handler actually runs, by which point beforeAll has pointed it
 // at this file's isolated database.
 let db: Db;
-vi.mock("../db/pg", () => ({
+vi.mock("../composition", () => ({
 	client: {},
 	get db() {
 		return db;
 	},
 }));
 
-vi.mock("../events/emit", () => ({ emit: vi.fn() }));
+vi.mock("@virtool/data/events/emit", () => ({
+	createEmitter: vi.fn(),
+	emit: vi.fn(),
+}));
 
 const handlers = (await import(
 	"./functions.ts?tss-serverfn-split"

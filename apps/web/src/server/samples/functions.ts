@@ -1,14 +1,6 @@
 import { createServerFn, createServerOnlyFn } from "@tanstack/react-start";
 import { setResponseStatus } from "@tanstack/react-start/server";
 import { SampleCreateRequest, SampleUpdateRequest } from "@virtool/contracts";
-import { z } from "zod";
-import { ForbiddenError } from "../auth/middleware";
-import { authenticated, permission } from "../auth/policy";
-import { db } from "../db/pg";
-import { ClientError } from "../errors";
-import { storage } from "../storage";
-import { UploadNotFoundError, UploadReservedError } from "../uploads/data";
-import { pageSchema, perPageSchema, rowIdSchema } from "../validation";
 import {
 	checkSampleRight,
 	createSample,
@@ -27,7 +19,18 @@ import {
 	SampleSubtractionsNotFoundError,
 	updateSample,
 	updateSampleRights,
-} from "./data";
+} from "@virtool/data/samples/data";
+import {
+	UploadNotFoundError,
+	UploadReservedError,
+} from "@virtool/data/uploads/data";
+import { z } from "zod";
+import { ForbiddenError } from "../auth/middleware";
+import { authenticated, permission } from "../auth/policy";
+import { db, storage } from "../composition";
+import { ClientError } from "../errors";
+import { logger } from "../logger";
+import { pageSchema, perPageSchema, rowIdSchema } from "../validation";
 
 const sampleIdSchema = z.object({
 	sampleId: rowIdSchema,
@@ -217,7 +220,7 @@ export const deleteSampleFn = createServerFn({ method: "POST" })
 				}
 			}
 
-			await deleteSample(db, storage, data.sampleId);
+			await deleteSample(db, storage, logger, data.sampleId);
 			return null;
 		} catch (err) {
 			return rethrowAsHttp(err);

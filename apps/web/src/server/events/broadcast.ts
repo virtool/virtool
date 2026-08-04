@@ -1,5 +1,5 @@
 import type { SseMessage } from "@virtool/contracts";
-import type { ClientEvent } from "./channel";
+import type { ClientEvent } from "@virtool/data/events/channel";
 
 /**
  * Convert a Postgres-published client event into the id-only message shape

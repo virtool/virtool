@@ -1,5 +1,6 @@
-import type { Account, AccountSettings, ApiKey } from "@account/types";
+import type { Account, AccountSettings } from "@account/types";
 import { faker } from "@faker-js/faker";
+import type { ApiKey } from "@virtool/contracts";
 import { createFakePermissions } from "./permissions";
 import { createFakeUser } from "./user";
 

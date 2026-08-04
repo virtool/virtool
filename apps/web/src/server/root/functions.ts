@@ -1,7 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
+import { getUserCount } from "@virtool/data/users/data";
 import { open } from "../auth/policy";
-import { db } from "../db/pg";
-import { getUserCount } from "../users/data";
+import { db } from "../composition";
 
 // Public, like Python's `GET /`: the `_authenticated` guard reads `firstUser`
 // before any session exists to decide whether to redirect to first-user setup,

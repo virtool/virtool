@@ -1,6 +1,9 @@
-import { client } from "../db/pg";
+import {
+	CLIENT_EVENTS_CHANNEL,
+	type ClientEvent,
+} from "@virtool/data/events/channel";
+import { client } from "../composition";
 import { logger } from "../logger";
-import { CLIENT_EVENTS_CHANNEL, type ClientEvent } from "./channel";
 
 /**
  * Cap on events buffered for a consumer that has fallen behind. On overflow the

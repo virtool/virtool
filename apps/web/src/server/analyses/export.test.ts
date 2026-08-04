@@ -1,8 +1,11 @@
 import type { JsonObject } from "@virtool/contracts";
+import type { Db } from "@virtool/data/db/pg";
+import { legacyOtus, legacySequences } from "@virtool/data/db/schema/otus";
+import {
+	createTestDatabase,
+	type TestDatabase,
+} from "@virtool/data/db/test/fixtures";
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
-import type { Db } from "../db/pg";
-import { legacyOtus, legacySequences } from "../db/schema/otus";
-import { createTestDatabase, type TestDatabase } from "../db/test/fixtures";
 import { formatAnalysisToCsv, formatAnalysisToExcel } from "./export";
 
 let database: TestDatabase;

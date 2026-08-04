@@ -24,6 +24,30 @@ Pass structured fields as the first arg, message as the second — never
 interpolate values into the message string, that defeats the redaction
 list and makes records ungreppable.
 
+## The data layer takes a logger, it does not import one
+
+`@virtool/data` cannot import that singleton — it is the web app's, and it
+carries the Sentry forwarding stream configured from the web app's DSN.
+The six data functions that log take a `Logger` argument instead, after
+`db` and `storage`:
+
+```ts
+export async function checkPostgres(
+	client: PgClient,
+	logger: Logger,
+): Promise<StoreCheck> { ... }
+```
+
+`apps/web/src/server/<feature>/functions.ts` passes `@server/logger` in
+at the call site; a test passes the silent `testLogger` from
+`@virtool/data/test/logger`, so a suite that deliberately drives a
+warning path does not print the record it provoked.
+
+`emit` is the one exception. It is called from more than two dozen plain
+mutations that do not otherwise log, so its logger is bound once, by
+`createEmitter({ client, logger })` at the composition root, rather than
+threaded through each of them.
+
 There is no request-scoped logger and no `context.logger`. `logger.child({...})`
 exists — it is pino's — and is the right tool if you ever need to bind
 repeated context (a request id, a job id) across several call sites, but

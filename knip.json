@@ -12,7 +12,6 @@
 				"src/router.tsx",
 				"src/instrument.server.ts",
 				"src/routes/**/*.{ts,tsx}",
-				"src/server/storage/index.ts",
 				"src/types/window.ts",
 				"src/tests/postgresGuard.ts"
 			],
@@ -23,6 +22,12 @@
 			"entry": ["src/**/*.test.ts"]
 		},
 		"packages/contracts": {
+			"entry": ["src/**/*.test.ts"]
+		},
+		"packages/data": {
+			"entry": ["src/**/*.test.ts"]
+		},
+		"packages/storage": {
 			"entry": ["src/**/*.test.ts"]
 		},
 		"packages/logger": {

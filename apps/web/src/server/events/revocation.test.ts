@@ -1,3 +1,10 @@
+import type { Db } from "@virtool/data/db/pg";
+import { sessions } from "@virtool/data/db/schema/sessions";
+import { users } from "@virtool/data/db/schema/users";
+import {
+	createTestDatabase,
+	type TestDatabase,
+} from "@virtool/data/db/test/fixtures";
 import {
 	afterAll,
 	beforeAll,
@@ -7,11 +14,6 @@ import {
 	it,
 	vi,
 } from "vitest";
-
-import type { Db } from "../db/pg";
-import { sessions } from "../db/schema/sessions";
-import { users } from "../db/schema/users";
-import { createTestDatabase, type TestDatabase } from "../db/test/fixtures";
 
 vi.mock("@sentry/tanstackstart-react", () => ({
 	captureException: vi.fn(),
@@ -26,7 +28,7 @@ vi.mock("../logger", () => ({
 // read until a check actually runs, by which point beforeAll has pointed it at
 // this file's isolated database.
 let db: Db;
-vi.mock("../db/pg", () => ({
+vi.mock("../composition", () => ({
 	client: {},
 	get db() {
 		return db;
@@ -34,9 +36,10 @@ vi.mock("../db/pg", () => ({
 }));
 
 const { watchForRevocation } = await import("./revocation");
-const { seedSession, seedUser, sessionCookie } = await import(
-	"../auth/test/fixtures"
+const { seedSession, seedUser } = await import(
+	"@virtool/data/auth/test/fixtures"
 );
+const { sessionCookie } = await import("../auth/test/fixtures");
 
 // Short enough that a test does not wait on it, long enough not to hammer the
 // database while a negative case proves nothing happened.

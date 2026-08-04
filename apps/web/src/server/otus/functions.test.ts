@@ -1,3 +1,20 @@
+import type { Db } from "@virtool/data/db/pg";
+import { takeFirstOrThrow } from "@virtool/data/db/rows";
+import {
+	legacyHistory,
+	legacyHistoryDiff,
+} from "@virtool/data/db/schema/history";
+import { legacyOtus, legacySequences } from "@virtool/data/db/schema/otus";
+import {
+	legacyReferences,
+	legacyReferenceUsers,
+} from "@virtool/data/db/schema/references";
+import { sessions } from "@virtool/data/db/schema/sessions";
+import { users } from "@virtool/data/db/schema/users";
+import {
+	createTestDatabase,
+	type TestDatabase,
+} from "@virtool/data/db/test/fixtures";
 import { eq } from "drizzle-orm";
 import {
 	afterAll,
@@ -8,17 +25,6 @@ import {
 	it,
 	vi,
 } from "vitest";
-import type { Db } from "../db/pg";
-import { takeFirstOrThrow } from "../db/rows";
-import { legacyHistory, legacyHistoryDiff } from "../db/schema/history";
-import { legacyOtus, legacySequences } from "../db/schema/otus";
-import {
-	legacyReferences,
-	legacyReferenceUsers,
-} from "../db/schema/references";
-import { sessions } from "../db/schema/sessions";
-import { users } from "../db/schema/users";
-import { createTestDatabase, type TestDatabase } from "../db/test/fixtures";
 import { callServerFn, type SplitServerFnModule } from "../test/serverFn";
 
 const getRequest = vi.fn();
@@ -38,7 +44,7 @@ vi.mock("@sentry/tanstackstart-react", () => ({
 }));
 
 let db: Db;
-vi.mock("../db/pg", () => ({
+vi.mock("../composition", () => ({
 	client: {},
 	get db() {
 		return db;
@@ -49,7 +55,7 @@ const handlers = (await import(
 	"./functions.ts?tss-serverfn-split"
 )) as SplitServerFnModule;
 const { signIn } = await import("../auth/test/fixtures");
-const { createIsolate, createOtu } = await import("./data");
+const { createIsolate, createOtu } = await import("@virtool/data/otus/data");
 
 let database: TestDatabase;
 

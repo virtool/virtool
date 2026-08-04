@@ -1,3 +1,11 @@
+import type { Db } from "@virtool/data/db/pg";
+import { legacyOtus, legacySequences } from "@virtool/data/db/schema/otus";
+import { sessions } from "@virtool/data/db/schema/sessions";
+import { users } from "@virtool/data/db/schema/users";
+import {
+	createTestDatabase,
+	type TestDatabase,
+} from "@virtool/data/db/test/fixtures";
 import {
 	afterAll,
 	beforeAll,
@@ -7,11 +15,6 @@ import {
 	it,
 	vi,
 } from "vitest";
-import type { Db } from "../db/pg";
-import { legacyOtus, legacySequences } from "../db/schema/otus";
-import { sessions } from "../db/schema/sessions";
-import { users } from "../db/schema/users";
-import { createTestDatabase, type TestDatabase } from "../db/test/fixtures";
 
 vi.mock("@tanstack/react-start/server", () => ({
 	deleteCookie: vi.fn(),
@@ -27,7 +30,7 @@ vi.mock("@sentry/tanstackstart-react", () => ({
 }));
 
 let db: Db;
-vi.mock("../db/pg", () => ({
+vi.mock("../composition", () => ({
 	client: {},
 	get db() {
 		return db;
@@ -36,9 +39,10 @@ vi.mock("../db/pg", () => ({
 
 const { handleIsolateFasta, handleOtuFasta, handleSequenceFasta } =
 	await import("./fasta");
-const { seedSession, seedUser, sessionCookie } = await import(
-	"../auth/test/fixtures"
+const { seedSession, seedUser } = await import(
+	"@virtool/data/auth/test/fixtures"
 );
+const { sessionCookie } = await import("../auth/test/fixtures");
 
 let database: TestDatabase;
 let cookie: string;

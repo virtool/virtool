@@ -1,6 +1,6 @@
-import type { Db } from "../db/pg";
-import { getSettings } from "../settings/data";
-import { checkPasswordLength } from "./passwordPolicy";
+import { checkPasswordLength } from "@virtool/contracts";
+import type { Db } from "@virtool/data/db/pg";
+import { getSettings } from "@virtool/data/settings/data";
 
 /**
  * Check a password being set against the instance's configured minimum length,

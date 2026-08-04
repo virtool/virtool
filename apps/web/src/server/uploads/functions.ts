@@ -1,18 +1,18 @@
 import { createServerFn, createServerOnlyFn } from "@tanstack/react-start";
 import { setResponseStatus } from "@tanstack/react-start/server";
 import { UPLOAD_TYPES } from "@virtool/contracts";
-import { z } from "zod";
-import { authenticated, permission } from "../auth/policy";
-import { db } from "../db/pg";
-import { ClientError } from "../errors";
-import { storage } from "../storage";
-import { pageSchema, perPageSchema, rowIdSchema } from "../validation";
 import {
 	deleteUpload,
 	findUploads,
 	UploadNotFoundError,
 	UploadReservedError,
-} from "./data";
+} from "@virtool/data/uploads/data";
+import { z } from "zod";
+import { authenticated, permission } from "../auth/policy";
+import { db, storage } from "../composition";
+import { ClientError } from "../errors";
+import { logger } from "../logger";
+import { pageSchema, perPageSchema, rowIdSchema } from "../validation";
 
 // The upload endpoint itself is not a server function — it streams a multi-GB
 // request body and is posted to with XMLHttpRequest so the client can report
@@ -65,7 +65,7 @@ export const deleteUploadFn = createServerFn({ method: "POST" })
 	.validator(uploadIdSchema)
 	.handler(async ({ data }) => {
 		try {
-			await deleteUpload(db, storage, data.id);
+			await deleteUpload(db, storage, logger, data.id);
 			return null;
 		} catch (err) {
 			return rethrowAsHttp(err);

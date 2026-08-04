@@ -1,7 +1,5 @@
 import type { User } from "@users/types";
 
-export type { ApiKey } from "@server/account/data";
-
 export type QuickAnalyzeWorkflow = "nuvs" | "pathoscope";
 
 export type AccountSettings = {

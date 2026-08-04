@@ -1,8 +1,9 @@
 # Authentication
 
-Authentication owns its own subtree under
-`apps/web/src/server/auth/` and a global function middleware wired
-into `apps/web/src/start.ts`. This doc covers the whole picture: the
+Authentication owns two subtrees — `packages/data/src/auth/` for the
+primitives and `apps/web/src/server/auth/` for everything that touches
+the framework — plus a global function middleware wired into
+`apps/web/src/start.ts`. This doc covers the whole picture: the
 code layout (a documented exception to the three-file
 `data.ts`/`service.ts`/`functions.ts` layering used by other server
 features), how requests are gated, the session model, and the
@@ -11,18 +12,29 @@ login / reset / logout flows.
 ## Code layout
 
 The pure layer is split by primitive rather than collapsed into one
-`data.ts`:
+`data.ts`, and the split runs across the package boundary rather than
+along it.
 
-- `core.ts` — login / logout / password-reset domain logic
+In `@virtool/data/auth/`, because they are bcrypt, `node:crypto`, and
+plain Drizzle access on the `sessions` table:
+
 - `session.ts` — session row CRUD
 - `tokens.ts` — session id and token generation, hashing
 - `password.ts` — bcrypt wrappers
-- `passwordPolicy.ts` — the minimum-length rule and its message. Pure,
-  and deliberately free of bcrypt, the db, and the TanStack shell, so
-  the browser can import it (see "Minimum password length" below)
+
+In `apps/web/src/server/auth/`, because `cookies.ts` imports
+`@tanstack/react-start` and the other two reach it:
+
+- `core.ts` — login / logout / password-reset domain logic
 - `cookies.ts` — `CookieAdapter` type (framework-agnostic cookie I/O)
 - `verify.ts` — request verification, by session cookie pair or API key
   (pure, given a cookie adapter and db handle)
+
+The minimum-length rule is in neither: it lives in
+`@virtool/contracts`'s `passwordPolicy.ts`, because the browser's forms
+need the same rule and the same message the server enforces, and the
+browser cannot import `@virtool/data` (see "Minimum password length"
+below).
 
 The wired layer is split too:
 
@@ -237,11 +249,13 @@ another administrator needs the `full` role, and that is only knowable
 after the target user is read. Those checks stay in the handler, after
 the read, with `requireAdminRole`. `updateUserFn` is the worked example.
 `data.ts` remains a pure persistence layer that assumes its caller has
-already been authorized — never put a role check there.
+already been authorized — never put a role check there. It is in
+`@virtool/data`, which has no notion of a session at all.
 
 ### What makes a policy non-optional
 
-Nothing in the type system forces one. `server/__tests__/authorization.test.ts`
+Nothing in the type system forces one.
+`apps/web/src/server/__tests__/authorization.test.ts`
 does: it calls **every** exported server function with no session and
 fails on any that does not refuse. A function built without a policy has
 no guard of its own, so an anonymous call reaches its handler instead of
@@ -279,7 +293,7 @@ and reverted; the middleware form above is what the framework supports.
 ## Session model
 
 Sessions are rows in the Postgres `sessions` table
-(`apps/web/src/server/db/schema/sessions.ts`). Each row carries a
+(`packages/data/src/db/schema/sessions.ts`). Each row carries a
 `sessionType` discriminator: `"authenticated"` or `"reset"`. The client
 identifies itself with two cookies set by `server/auth/cookies.ts`:
 
@@ -289,7 +303,7 @@ identifies itself with two cookies set by `server/auth/cookies.ts`:
 - **`session_token`** — proves the `session_id` belongs to an
   authenticated session. Only set on the authenticated branch of
   login and after a successful reset. The server stores the bcrypt-ish
-  hash via `hashToken` in `server/auth/tokens.ts`; only the client
+  hash via `hashToken` in `@virtool/data/auth/tokens`; only the client
   ever holds the unhashed value. Treat it as equivalent to the user's
   password for the token's validity.
 
@@ -314,7 +328,7 @@ rather than trusted at login.
 
 **An admin's change to a user's `active`, `password`, or `force_reset`
 deletes that user's sessions outright.** `updateUser`
-(`server/users/data.ts`) calls `invalidateUserSessions` inside the same
+(`@virtool/data/users/data`) calls `invalidateUserSessions` inside the same
 transaction as the change, so revocation is atomic with the change that
 triggered it — there is no window where the old password still
 authenticates. The self-service reset path does the same
@@ -322,7 +336,7 @@ authenticates. The self-service reset path does the same
 
 **A user changing their own password from the account page revokes every
 session too, including the one that made the request.** `changePassword`
-(`server/users/data.ts`) updates the row, calls `invalidateUserSessions`,
+(`@virtool/data/users/data`) updates the row, calls `invalidateUserSessions`,
 and mints a replacement in one transaction; `changePasswordFn` writes that
 replacement to the response cookies. Skipping the cookie write would sign
 the user out of the form they just submitted. The replacement is always
@@ -341,7 +355,7 @@ why `consumeResetSession` exists in `core.ts`.
 
 ## Session lifetimes
 
-Defined in `server/auth/session.ts:15-17`:
+Defined in `@virtool/data/auth/session`:
 
 | Kind                          | Lifetime   |
 | ----------------------------- | ---------- |
@@ -455,7 +469,7 @@ zod rule.
 is the single enforcement point. Every path that **sets** a password
 calls it: `createFirstUserFn`, `resetPasswordFn`, `createUserFn`, and
 `updateUserFn`. It reads the setting, applies the pure
-`checkPasswordLength` from `passwordPolicy.ts`, and throws
+`checkPasswordLength` from `@virtool/contracts`, and throws
 `PasswordTooShortError`; each handler maps that to a 400 carrying the
 error's message.
 

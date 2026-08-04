@@ -1,3 +1,19 @@
+import type { Db } from "@virtool/data/db/pg";
+import { takeFirstOrThrow } from "@virtool/data/db/rows";
+import { groups, userGroups } from "@virtool/data/db/schema/groups";
+import {
+	legacyReferenceGroups,
+	legacyReferences,
+	legacyReferenceUsers,
+} from "@virtool/data/db/schema/references";
+import { sessions } from "@virtool/data/db/schema/sessions";
+import { tasks } from "@virtool/data/db/schema/tasks";
+import { uploads } from "@virtool/data/db/schema/uploads";
+import { users } from "@virtool/data/db/schema/users";
+import {
+	createTestDatabase,
+	type TestDatabase,
+} from "@virtool/data/db/test/fixtures";
 import {
 	afterAll,
 	beforeAll,
@@ -7,19 +23,6 @@ import {
 	it,
 	vi,
 } from "vitest";
-import type { Db } from "../db/pg";
-import { takeFirstOrThrow } from "../db/rows";
-import { groups, userGroups } from "../db/schema/groups";
-import {
-	legacyReferenceGroups,
-	legacyReferences,
-	legacyReferenceUsers,
-} from "../db/schema/references";
-import { sessions } from "../db/schema/sessions";
-import { tasks } from "../db/schema/tasks";
-import { uploads } from "../db/schema/uploads";
-import { users } from "../db/schema/users";
-import { createTestDatabase, type TestDatabase } from "../db/test/fixtures";
 import { callServerFn, type SplitServerFnModule } from "../test/serverFn";
 
 const getRequest = vi.fn();
@@ -39,7 +42,7 @@ vi.mock("@sentry/tanstackstart-react", () => ({
 }));
 
 let db: Db;
-vi.mock("../db/pg", () => ({
+vi.mock("../composition", () => ({
 	client: {},
 	get db() {
 		return db;
@@ -50,7 +53,8 @@ const handlers = (await import(
 	"./functions.ts?tss-serverfn-split"
 )) as SplitServerFnModule;
 const { ForbiddenError } = await import("../auth/middleware");
-const { seedUser, signIn } = await import("../auth/test/fixtures");
+const { seedUser } = await import("@virtool/data/auth/test/fixtures");
+const { signIn } = await import("../auth/test/fixtures");
 
 let database: TestDatabase;
 

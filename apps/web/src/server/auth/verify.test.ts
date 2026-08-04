@@ -1,18 +1,24 @@
 import { emptyPermissions, type Permissions } from "@virtool/contracts";
-import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
-
-import type { Db } from "../db/pg";
-import { apiKeys } from "../db/schema/apiKeys";
-import { sessions } from "../db/schema/sessions";
-import { users } from "../db/schema/users";
-import { createTestDatabase, type TestDatabase } from "../db/test/fixtures";
+import {
+	createAuthenticatedSession,
+	createResetSession,
+} from "@virtool/data/auth/session";
 import {
 	seedApiKey,
 	seedSession,
 	seedUser,
-	sessionCookie,
-} from "./test/fixtures";
-import { newSessionToken } from "./tokens";
+} from "@virtool/data/auth/test/fixtures";
+import { newSessionToken } from "@virtool/data/auth/tokens";
+import type { Db } from "@virtool/data/db/pg";
+import { apiKeys } from "@virtool/data/db/schema/apiKeys";
+import { sessions } from "@virtool/data/db/schema/sessions";
+import { users } from "@virtool/data/db/schema/users";
+import {
+	createTestDatabase,
+	type TestDatabase,
+} from "@virtool/data/db/test/fixtures";
+import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
+import { sessionCookie } from "./test/fixtures";
 import {
 	parseBasicAuthHeader,
 	parseCookieHeader,
@@ -118,6 +124,37 @@ describe("verifyAuthenticatedSession", () => {
 
 		expect(
 			await verifyAuthenticatedSession(db, sessionId, newSessionToken()),
+		).toBeNull();
+	});
+
+	// The two below pair `createAuthenticatedSession` and `createResetSession`
+	// with the verifier rather than with the fixture, which is the only way to
+	// catch the two drifting on what a session row has to look like.
+	it("accepts a session minted by createAuthenticatedSession", async () => {
+		const userId = await seedUser(db);
+
+		const { sessionId, token } = await createAuthenticatedSession(db, {
+			userId,
+			ip: "127.0.0.1",
+			remember: false,
+		});
+
+		expect(await verifyAuthenticatedSession(db, sessionId, token)).toEqual({
+			userId,
+		});
+	});
+
+	it("rejects a reset session presented as an authenticated one", async () => {
+		const userId = await seedUser(db);
+
+		const { sessionId, resetCode } = await createResetSession(db, {
+			userId,
+			ip: "127.0.0.1",
+			remember: false,
+		});
+
+		expect(
+			await verifyAuthenticatedSession(db, sessionId, resetCode),
 		).toBeNull();
 	});
 });

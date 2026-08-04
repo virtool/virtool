@@ -1,6 +1,6 @@
 import { passwordPolicyQueryOptions } from "@administration/passwordPolicy";
-import { formatMinimumPasswordLengthMessage } from "@server/auth/passwordPolicy";
 import { useQuery } from "@tanstack/react-query";
+import { formatMinimumPasswordLengthMessage } from "@virtool/contracts";
 
 /** react-hook-form rules for a field that sets a new password. */
 export type PasswordRules = {

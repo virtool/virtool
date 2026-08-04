@@ -6,11 +6,10 @@ import {
 	hasSufficientAdminRole,
 	type Permission,
 } from "@virtool/contracts";
+import { groups, userGroups } from "@virtool/data/db/schema/groups";
+import { users } from "@virtool/data/db/schema/users";
 import { eq } from "drizzle-orm";
-
-import { db } from "../db/pg";
-import { groups, userGroups } from "../db/schema/groups";
-import { users } from "../db/schema/users";
+import { db } from "../composition";
 import { ForbiddenError, requireSession } from "./middleware";
 import type { AuthenticatedSession } from "./verify";
 

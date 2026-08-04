@@ -1,3 +1,13 @@
+import { hashPassword, verifyPassword } from "@virtool/data/auth/password";
+import * as sessionModule from "@virtool/data/auth/session";
+import { seedSession, seedUser } from "@virtool/data/auth/test/fixtures";
+import type { Db } from "@virtool/data/db/pg";
+import { sessions } from "@virtool/data/db/schema/sessions";
+import { users } from "@virtool/data/db/schema/users";
+import {
+	createTestDatabase,
+	type TestDatabase,
+} from "@virtool/data/db/test/fixtures";
 import { eq } from "drizzle-orm";
 import {
 	afterAll,
@@ -8,11 +18,6 @@ import {
 	it,
 	vi,
 } from "vitest";
-
-import type { Db } from "../db/pg";
-import { sessions } from "../db/schema/sessions";
-import { users } from "../db/schema/users";
-import { createTestDatabase, type TestDatabase } from "../db/test/fixtures";
 import type { CookieAdapter } from "./cookies";
 import {
 	createFirstUser,
@@ -24,16 +29,14 @@ import {
 	PasswordReuseError,
 	resetPassword,
 } from "./core";
-import { hashPassword, verifyPassword } from "./password";
-import * as sessionModule from "./session";
-import { seedSession, seedUser } from "./test/fixtures";
 
 // `createAuthenticatedSession` is the third and last write in the reset. Making
 // it fail is how we drive the partial failure the transaction has to undo. The
 // rest of the module keeps its real behaviour — the other two writes must
 // actually hit the database for a rollback to be worth asserting.
-vi.mock("./session", async (importOriginal) => {
-	const actual = await importOriginal<typeof import("./session")>();
+vi.mock("@virtool/data/auth/session", async (importOriginal) => {
+	const actual =
+		await importOriginal<typeof import("@virtool/data/auth/session")>();
 	return {
 		...actual,
 		createAuthenticatedSession: vi.fn(actual.createAuthenticatedSession),

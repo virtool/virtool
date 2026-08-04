@@ -1,0 +1,30 @@
+{
+	"name": "@virtool/data",
+	"version": "0.0.0",
+	"private": true,
+	"type": "module",
+	"sideEffects": false,
+	"exports": {
+		"./*": "./src/*.ts"
+	},
+	"scripts": {
+		"test": "vitest run",
+		"test:watch": "vitest",
+		"typecheck": "tsc --noEmit"
+	},
+	"dependencies": {
+		"@virtool/contracts": "workspace:*",
+		"@virtool/logger": "workspace:*",
+		"@virtool/storage": "workspace:*",
+		"bcrypt": "^6.0.0",
+		"drizzle-orm": "^0.45.2",
+		"es-toolkit": "^1.50.0",
+		"postgres": "^3.4.9"
+	},
+	"devDependencies": {
+		"@testcontainers/postgresql": "^12.0.4",
+		"@types/bcrypt": "^6.0.0",
+		"drizzle-kit": "^0.31.10",
+		"vitest": "^4.1.10"
+	}
+}

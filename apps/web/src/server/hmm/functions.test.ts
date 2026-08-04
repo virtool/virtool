@@ -1,3 +1,18 @@
+import type { Db } from "@virtool/data/db/pg";
+import { groups, userGroups } from "@virtool/data/db/schema/groups";
+import {
+	HMM_STATUS_ID,
+	type HmmUpdate,
+	hmms,
+	legacyHmmStatus,
+} from "@virtool/data/db/schema/hmms";
+import { sessions } from "@virtool/data/db/schema/sessions";
+import { tasks } from "@virtool/data/db/schema/tasks";
+import { users } from "@virtool/data/db/schema/users";
+import {
+	createTestDatabase,
+	type TestDatabase,
+} from "@virtool/data/db/test/fixtures";
 import { eq } from "drizzle-orm";
 import {
 	afterAll,
@@ -9,19 +24,6 @@ import {
 	it,
 	vi,
 } from "vitest";
-
-import type { Db } from "../db/pg";
-import { groups, userGroups } from "../db/schema/groups";
-import {
-	HMM_STATUS_ID,
-	type HmmUpdate,
-	hmms,
-	legacyHmmStatus,
-} from "../db/schema/hmms";
-import { sessions } from "../db/schema/sessions";
-import { tasks } from "../db/schema/tasks";
-import { users } from "../db/schema/users";
-import { createTestDatabase, type TestDatabase } from "../db/test/fixtures";
 import { callServerFn, type SplitServerFnModule } from "../test/serverFn";
 
 const getRequest = vi.fn();
@@ -41,7 +43,7 @@ vi.mock("@sentry/tanstackstart-react", () => ({
 }));
 
 let db: Db;
-vi.mock("../db/pg", () => ({
+vi.mock("../composition", () => ({
 	client: {},
 	get db() {
 		return db;
@@ -51,10 +53,11 @@ vi.mock("../db/pg", () => ({
 const handlers = (await import(
 	"./functions.ts?tss-serverfn-split"
 )) as SplitServerFnModule;
-const { authenticateAs, seedUser, signIn } = await import(
-	"../auth/test/fixtures"
+const { seedUser } = await import("@virtool/data/auth/test/fixtures");
+const { authenticateAs, signIn } = await import("../auth/test/fixtures");
+const { addToGroup, seedGroup } = await import(
+	"@virtool/data/groups/test/fixtures"
 );
-const { addToGroup, seedGroup } = await import("../groups/test/fixtures");
 
 let database: TestDatabase;
 

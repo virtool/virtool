@@ -1,4 +1,12 @@
 import { emptyPermissions } from "@virtool/contracts";
+import type { Db } from "@virtool/data/db/pg";
+import { apiKeys } from "@virtool/data/db/schema/apiKeys";
+import { sessions } from "@virtool/data/db/schema/sessions";
+import { users } from "@virtool/data/db/schema/users";
+import {
+	createTestDatabase,
+	type TestDatabase,
+} from "@virtool/data/db/test/fixtures";
 import {
 	afterAll,
 	beforeAll,
@@ -8,12 +16,6 @@ import {
 	it,
 	vi,
 } from "vitest";
-
-import type { Db } from "../db/pg";
-import { apiKeys } from "../db/schema/apiKeys";
-import { sessions } from "../db/schema/sessions";
-import { users } from "../db/schema/users";
-import { createTestDatabase, type TestDatabase } from "../db/test/fixtures";
 
 const getRequest = vi.fn();
 const setResponseStatus = vi.fn();
@@ -36,7 +38,7 @@ vi.mock("@sentry/tanstackstart-react", () => ({
 // read until a handler actually runs, by which point beforeAll has pointed it
 // at this file's isolated database.
 let db: Db;
-vi.mock("../db/pg", () => ({
+vi.mock("../composition", () => ({
 	client: {},
 	get db() {
 		return db;
@@ -57,8 +59,10 @@ const { createFirstUserFn, loginFn, logoutFn, resetPasswordFn } = await import(
 );
 const { getPasswordPolicyFn } = await import("../settings/functions");
 const { getRootFn } = await import("../root/functions");
-const { basicAuthHeader, seedApiKey, seedSession, seedUser, sessionCookie } =
-	await import("./test/fixtures");
+const { seedApiKey, seedSession, seedUser } = await import(
+	"@virtool/data/auth/test/fixtures"
+);
+const { basicAuthHeader, sessionCookie } = await import("./test/fixtures");
 
 let database: TestDatabase;
 
