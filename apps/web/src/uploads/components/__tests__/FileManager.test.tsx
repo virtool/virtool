@@ -1,4 +1,3 @@
-import { formatPath } from "@app/hooks";
 import { screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { createFakeAccount } from "@tests/fake/account";
@@ -25,7 +24,7 @@ describe("<FileManager>", () => {
 			},
 			fileType: "reads",
 		};
-		path = formatPath("/samples/uploads", { page: 1 });
+		path = "/samples/uploads?page=1";
 	});
 
 	it("should upload with validation based on passed regex", async () => {

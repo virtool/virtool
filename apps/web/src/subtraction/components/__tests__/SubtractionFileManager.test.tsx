@@ -1,4 +1,3 @@
-import { formatPath } from "@app/hooks";
 import { screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { createFakeAccount } from "@tests/fake/account";
@@ -17,7 +16,7 @@ function createFiles(fileNames: string[]) {
 }
 
 describe("<SubtractionFileManager />", () => {
-	const path = formatPath("/subtractions/uploads", { page: 1 });
+	const path = "/subtractions/uploads?page=1";
 
 	it("should reject uploads that don't pass validation", async () => {
 		mockGetAccount(

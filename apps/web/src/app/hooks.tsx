@@ -259,34 +259,3 @@ export function useElementSize<T extends HTMLElement>(): [
 
 	return [ref, size];
 }
-
-function formatSearchParams(
-	params: Record<
-		string,
-		string | number | boolean | null | Array<string | number | boolean>
-	>,
-) {
-	const searchParams = new URLSearchParams();
-
-	Object.entries(params).forEach(([key, value]) => {
-		if (Array.isArray(value)) {
-			value.forEach((arrayValue) => {
-				searchParams.append(key, String(arrayValue));
-			});
-		} else {
-			searchParams.set(key, String(value));
-		}
-	});
-
-	return `?${searchParams.toString()}`;
-}
-
-export function formatPath(
-	basePath: string,
-	searchParams: Record<
-		string,
-		string | number | boolean | null | Array<string | number | boolean>
-	>,
-) {
-	return basePath + formatSearchParams(searchParams);
-}
