@@ -1,4 +1,5 @@
 import { useAnalysisSearch } from "@analyses/components/AnalysisSearchContext";
+import { useIsSecureContext } from "@app/hooks";
 import Button from "@base/Button";
 import Checkbox from "@base/Checkbox";
 import Icon from "@base/Icon";
@@ -65,6 +66,7 @@ export default function PathoscopeListHeader({
 }: PathoscopeListHeaderProps) {
 	const { search } = useAnalysisSearch();
 	const [copied, setCopied] = useState(false);
+	const isSecureContext = useIsSecureContext();
 
 	useEffect(() => {
 		if (!copied) {
@@ -125,7 +127,7 @@ export default function PathoscopeListHeader({
 				{/* Pushed to the right edge, beside the column labels it precedes: the
 				    clipboard API is unavailable outside a secure context. */}
 				<div className="ml-auto flex items-center gap-4 shrink-0">
-					{selectedCount > 0 && window.isSecureContext && (
+					{selectedCount > 0 && isSecureContext && (
 						<Button size="small" onClick={handleCopy}>
 							<Icon icon={copied ? Check : ClipboardCopy} />{" "}
 							{copied ? "Copied" : "Copy"}

@@ -4,6 +4,7 @@ import {
 	sentryGlobalRequestMiddleware,
 } from "@sentry/tanstackstart-react";
 import { createAuthenticationMiddleware } from "@server/auth/middleware";
+import { buildContentSecurityPolicy, getRequestNonce } from "@server/csp";
 import { errorLoggingMiddleware } from "@server/error-logging";
 import { metricsMiddleware } from "@server/metrics/middleware";
 import {
@@ -14,36 +15,14 @@ import {
 
 const authenticationMiddleware = createAuthenticationMiddleware();
 
-const cspDirectives = [
-	"default-src 'self'",
-	"base-uri 'self'",
-	"object-src 'none'",
-	"form-action 'self'",
-	"frame-ancestors 'none'",
-	"font-src 'self'",
-	"img-src 'self' data:",
-	// No third-party Sentry host is allow-listed: browser envelopes are tunnelled
-	// through the same-origin `/monitoring` route (see `routes/monitoring.ts`).
-	"connect-src 'self'",
-	"style-src 'self' 'unsafe-inline'",
-	// Without this, `script-src` is the fallback and its nonce cannot be carried
-	// by a blob URL, so every blob-backed worker is blocked. Vite's HMR client
-	// spawns one to poll for the dev server after a dropped socket, and Sentry's
-	// replay compression worker is blob-backed too.
-	"worker-src 'self' blob:",
-];
-
 // Builds one response header for served HTML documents. Each builder receives
 // the per-response CSP nonce; those that don't need it ignore the argument.
 type DocumentHeader = (nonce: string) => [name: string, value: string];
 
-function buildContentSecurityPolicy(
+function buildContentSecurityPolicyHeader(
 	nonce: string,
 ): [name: string, value: string] {
-	return [
-		"Content-Security-Policy",
-		[...cspDirectives, `script-src 'self' 'nonce-${nonce}'`].join("; "),
-	];
+	return ["Content-Security-Policy", buildContentSecurityPolicy(nonce)];
 }
 
 // Opt the document into the JS Self-Profiling API so Sentry's browser profiling
@@ -62,21 +41,16 @@ function buildCacheControl(): [name: string, value: string] {
 // Adding a document header is a new entry here, not another edit to the
 // middleware body.
 const documentHeaders: DocumentHeader[] = [
-	buildContentSecurityPolicy,
+	buildContentSecurityPolicyHeader,
 	buildDocumentPolicy,
 	buildCacheControl,
 ];
 
-// Per-request CSP nonce. Deliberately uses the Web Crypto and `btoa` globals
-// rather than node:crypto/Buffer: this file is reachable from the browser
-// program (routeTree.gen.ts imports it) and must type-check without Node types.
-// Both globals exist in our Node runtime, so the server middleware is safe.
-function generateNonce(): string {
-	return btoa(
-		String.fromCharCode(...crypto.getRandomValues(new Uint8Array(16))),
-	);
-}
-
+// Headers only — the body streams straight through. Every script in the
+// document already carries the nonce, because Router stamps it on from
+// `router.options.ssr.nonce` (see `router.tsx`). Rewriting `<script` tags here
+// instead would mean reading the body, which buffers the whole stream and gives
+// up progressive rendering to re-do what the markup already has.
 const documentHeadersMiddleware = createMiddleware().server(
 	async ({ next }) => {
 		const result = await next();
@@ -86,24 +60,16 @@ const documentHeadersMiddleware = createMiddleware().server(
 			return result;
 		}
 
-		const html = await response.text();
-		const nonce = generateNonce();
-		const body = html.replace(/<script(?=[\s>])/g, `<script nonce="${nonce}"`);
+		const nonce = getRequestNonce();
 		const headers = new Headers(response.headers);
 		for (const build of documentHeaders) {
 			const [name, value] = build(nonce);
 			headers.set(name, value);
 		}
-		// `response.text()` already decoded the body, so the length and any
-		// encoding headers from the original response no longer describe it.
-		// Leaving them would make clients try to decode an already-decoded body.
-		headers.delete("content-length");
-		headers.delete("content-encoding");
-		headers.delete("transfer-encoding");
 
 		return {
 			...result,
-			response: new Response(body, {
+			response: new Response(response.body, {
 				status: response.status,
 				statusText: response.statusText,
 				headers,
@@ -123,7 +89,6 @@ const csrfMiddleware = createCsrfMiddleware({
 // csrf/header request middleware and the function span wraps the auth function
 // middleware, rather than nesting inside them.
 export const startInstance = createStart(() => ({
-	defaultSsr: false,
 	// Runs before TanStack Router's ShallowErrorPlugin, which would otherwise
 	// flatten every server-function Error to its message alone. Keeps the auth
 	// errors' `name` intact so the query retry guard can recognize a 401/403,

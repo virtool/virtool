@@ -12,11 +12,11 @@ import {
 	useCheckReferenceRight,
 	useReferenceIsArchived,
 } from "@references/hooks";
-import { getRouteApi } from "@tanstack/react-router";
+import { ClientOnly, getRouteApi } from "@tanstack/react-router";
 import { useVirtualizer } from "@tanstack/react-virtual";
 import type { OtuIsolate } from "@virtool/contracts";
 import { TestTubes } from "lucide-react";
-import { useLayoutEffect, useRef, useState } from "react";
+import { useCallback, useState } from "react";
 import CreateIsolate from "./CreateIsolate";
 import DeleteIsolate from "./DeleteIsolate";
 import IsolateItem from "./IsolateItem";
@@ -59,14 +59,16 @@ export default function IsolateList() {
 		ISOLATE_SEARCH_KEYS,
 	);
 
-	const listRef = useRef<HTMLDivElement>(null);
 	const [scrollMargin, setScrollMargin] = useState(0);
 
-	useLayoutEffect(() => {
+	// A ref callback, not a mount effect: ClientOnly swaps in this element
+	// after hydration, on a render the initial mount effect would not rerun
+	// for, so the measurement has to fire off the element's own attachment.
+	const listRef = useCallback((node: HTMLDivElement | null) => {
 		const scrollElement = getContentScrollElement();
-		if (listRef.current && scrollElement) {
+		if (node && scrollElement) {
 			const top =
-				listRef.current.getBoundingClientRect().top -
+				node.getBoundingClientRect().top -
 				scrollElement.getBoundingClientRect().top +
 				scrollElement.scrollTop;
 			setScrollMargin(top);
@@ -106,38 +108,52 @@ export default function IsolateList() {
 							Showing {results.length} of {isolates.length}
 						</p>
 					)}
-					<div className="border border-gray-300 rounded overflow-hidden">
-						<div
-							ref={listRef}
-							className="relative w-full"
-							style={{ height: virtualizer.getTotalSize() }}
-						>
-							{virtualizer.getVirtualItems().map((virtualRow) => {
-								const isolate = results[virtualRow.index];
-								if (!isolate) {
-									return null;
-								}
-								return (
-									<div
-										key={isolate.id}
-										className="absolute left-0 top-0 w-full"
-										style={{
-											height: virtualRow.size,
-											transform: `translateY(${virtualRow.start - scrollMargin}px)`,
-										}}
-									>
-										<IsolateItem
-											isolate={isolate}
-											refId={refId}
-											otuId={otuId}
-											canDelete={canModifyIsolates}
-											onDelete={setIsolateToDelete}
-										/>
-									</div>
-								);
-							})}
+					{/* Which rows are virtualized depends on measuring the page's scroll
+					    container, which does not exist while rendering on the server — so
+					    the server would emit an empty list and hydration would find a full
+					    one. The fallback holds the same height, so the rows land without
+					    moving anything below them. */}
+					<ClientOnly
+						fallback={
+							<div
+								className="border border-gray-300 rounded overflow-hidden"
+								style={{ height: results.length * ROW_HEIGHT }}
+							/>
+						}
+					>
+						<div className="border border-gray-300 rounded overflow-hidden">
+							<div
+								ref={listRef}
+								className="relative w-full"
+								style={{ height: virtualizer.getTotalSize() }}
+							>
+								{virtualizer.getVirtualItems().map((virtualRow) => {
+									const isolate = results[virtualRow.index];
+									if (!isolate) {
+										return null;
+									}
+									return (
+										<div
+											key={isolate.id}
+											className="absolute left-0 top-0 w-full"
+											style={{
+												height: virtualRow.size,
+												transform: `translateY(${virtualRow.start - scrollMargin}px)`,
+											}}
+										>
+											<IsolateItem
+												isolate={isolate}
+												refId={refId}
+												otuId={otuId}
+												canDelete={canModifyIsolates}
+												onDelete={setIsolateToDelete}
+											/>
+										</div>
+									);
+								})}
+							</div>
 						</div>
-					</div>
+					</ClientOnly>
 				</>
 			) : (
 				<Box>

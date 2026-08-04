@@ -3,8 +3,10 @@ import { readSentryDsn } from "@app/sentryDsn";
 import LoadingPlaceholder from "@base/LoadingPlaceholder";
 import RouteError from "@base/RouteError";
 import * as Sentry from "@sentry/tanstackstart-react";
+import { getRequestNonce } from "@server/csp";
 import { MutationCache, QueryCache, QueryClient } from "@tanstack/react-query";
 import { createRouter } from "@tanstack/react-router";
+import { setupRouterSsrQueryIntegration } from "@tanstack/react-router-ssr-query";
 import { getCommonOptions } from "@virtool/sentry/browser";
 import { CONTENT_SCROLL_ID } from "./app/scroll";
 import { scheduleReplay } from "./app/sentryReplay";
@@ -68,6 +70,31 @@ export function getRouter() {
 		scrollRestoration: true,
 		scrollToTopSelectors: [`#${CONTENT_SCROLL_ID}`],
 	});
+
+	// Carries the server's query cache to the browser. Without it every query a
+	// loader or `useSuspenseQuery` resolved server-side would be refetched
+	// immediately after hydration, so SSR would cost a round trip rather than
+	// save one. Queries that resolve while the document is still streaming are
+	// dehydrated as they land, which is what lets a slow one (the pathoscope
+	// results) arrive after the shell has already painted.
+	//
+	// `wrapQueryClient` is off because the root route renders its own
+	// `QueryClientProvider`; leaving it on would nest a second one.
+	setupRouterSsrQueryIntegration({
+		router,
+		queryClient,
+		wrapQueryClient: false,
+	});
+
+	// Router and React stamp this nonce onto every script they emit, including
+	// the inline ones a CSP's `script-src 'self'` cannot cover: the dehydration
+	// payload and React's suspense-resolution frames. Router only ever reads
+	// this option, so supplying the value is ours to do. `getRouter` runs once
+	// per request, so this is the request's own nonce — the same one the
+	// document-header middleware names in `script-src`.
+	if (import.meta.env.SSR) {
+		router.options.ssr = { nonce: getRequestNonce() };
+	}
 
 	// `import.meta.env.SSR` is a compile-time constant, so the whole block is
 	// dead-code-eliminated from the server bundle. `browserProfilingIntegration`

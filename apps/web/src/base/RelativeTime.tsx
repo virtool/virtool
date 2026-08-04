@@ -1,4 +1,5 @@
 import { formatDistanceStrict } from "@app/date";
+import { readServerNow } from "@app/serverNow";
 import { useSyncExternalStore } from "react";
 
 type RelativeTimeOptions = {
@@ -43,12 +44,11 @@ function subscribe(listener: () => void) {
 	};
 }
 
-// Also serves as the server snapshot. `start.ts` sets `defaultSsr: false` and no
-// route opts back in, so route components — and every relative time inside them
-// — render on the client, never on the server. `now` is therefore the browser's
-// page-load time, not a long-lived Node process's start time. A route that opts
-// into `ssr: true` would break that: the snapshot would be the server's module
-// import time, so timestamps would render stale and disagree with hydration.
+// The browser's clock, and only ever the browser's: `subscribe` does not run on
+// the server, so `now` is the page-load time of a document rather than the
+// import time of a process that may have been up for days. The server render
+// and the hydration render that has to match it both read `readServerNow`
+// instead, and React switches to this one on the pass after hydration.
 function getNow() {
 	return now;
 }
@@ -94,7 +94,7 @@ export function useRelativeTime(
 	time: string | Date,
 	{ addSuffix = true }: RelativeTimeOptions = {},
 ) {
-	const now = useSyncExternalStore(subscribe, getNow, getNow);
+	const now = useSyncExternalStore(subscribe, getNow, readServerNow);
 
 	return createTimeString(time, now, { addSuffix });
 }
@@ -109,5 +109,9 @@ type RelativeTimeProps = {
  */
 export default function RelativeTime({ time }: RelativeTimeProps) {
 	const timeString = useRelativeTime(time);
-	return <span>{timeString}</span>;
+
+	// The rendered text is approximate and drifts as the ticker advances;
+	// `dateTime` carries the exact instant, so assistive technology and anything
+	// parsing the page get the real value rather than "3 days ago".
+	return <time dateTime={new Date(time).toISOString()}>{timeString}</time>;
 }

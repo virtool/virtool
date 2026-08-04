@@ -2,6 +2,7 @@ import { useAnalysisSearch } from "@analyses/components/AnalysisSearchContext";
 import { useSortAndFilterPathoscopeHits } from "@analyses/hooks";
 import type { FormattedPathoscopeAnalysis } from "@analyses/types";
 import { writeToClipboard } from "@app/clipboard";
+import { useIsSecureContext } from "@app/hooks";
 import Dropdown from "@base/Dropdown";
 import DropdownButton from "@base/DropdownButton";
 import DropdownMenuContent from "@base/DropdownMenuContent";
@@ -60,6 +61,7 @@ export default function PathoscopeExport({ analysis }: PathoscopeExportProps) {
 	const hits = useSortAndFilterPathoscopeHits(analysis);
 	const { search } = useAnalysisSearch();
 	const showReads = search.reads;
+	const isSecureContext = useIsSecureContext();
 
 	const [copied, setCopied] = useState(false);
 
@@ -105,7 +107,7 @@ export default function PathoscopeExport({ analysis }: PathoscopeExportProps) {
 			    menu aligned to its start edge runs into the scrollbar. */}
 			<DropdownMenuContent align="end">
 				{/* The clipboard API is unavailable outside a secure context. */}
-				{window.isSecureContext && (
+				{isSecureContext && (
 					<>
 						<DropdownMenuGroup aria-labelledby="PathoscopeExportCopy">
 							<DropdownMenuLabel id="PathoscopeExportCopy">

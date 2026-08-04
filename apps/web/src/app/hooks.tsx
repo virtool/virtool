@@ -1,3 +1,4 @@
+import { readServerNow } from "@app/serverNow";
 import type { RefObject } from "react";
 import {
 	useEffect,
@@ -7,13 +8,66 @@ import {
 	useSyncExternalStore,
 } from "react";
 
+// Advanced only on a tick. `Date.now` cannot be the snapshot itself: React
+// calls it repeatedly to decide whether the store changed, and a value that
+// differs on every call never settles — it warns that the result should be
+// cached, and re-renders until it does.
+let now = Date.now();
+
 function subscribeToTime(callback: () => void) {
-	const interval = setInterval(callback, 1000);
+	const interval = setInterval(() => {
+		now = Date.now();
+		callback();
+	}, 1000);
+
 	return () => clearInterval(interval);
 }
 
-export function useNow() {
-	return useSyncExternalStore(subscribeToTime, Date.now, Date.now);
+function getNow() {
+	return now;
+}
+
+/**
+ * The current time in epoch milliseconds, refreshed every second.
+ *
+ * Subscribed to rather than read during render, so render stays a pure function
+ * of its inputs — the React Compiler would otherwise cache the first reading
+ * and never recompute it.
+ */
+export function useNow(): number {
+	return useSyncExternalStore(subscribeToTime, getNow, readServerNow);
+}
+
+// Whether a document is secure is fixed for its lifetime, so there is nothing
+// to subscribe to.
+function subscribeToNothing() {
+	return () => {};
+}
+
+function readIsSecureContext() {
+	return window.isSecureContext;
+}
+
+function readIsSecureContextOnServer() {
+	return false;
+}
+
+/**
+ * Whether the document is in a secure context, and with it whether the
+ * clipboard API can be reached.
+ *
+ * Read through a store rather than straight off `window`, which does not exist
+ * while rendering on the server. A `typeof window` guard would only convert
+ * that crash into a hydration mismatch; React uses the server snapshot for both
+ * the server render and the hydration render that has to match it, then swaps
+ * in the real value on the pass immediately after.
+ */
+export function useIsSecureContext(): boolean {
+	return useSyncExternalStore(
+		subscribeToNothing,
+		readIsSecureContext,
+		readIsSecureContextOnServer,
+	);
 }
 
 /**

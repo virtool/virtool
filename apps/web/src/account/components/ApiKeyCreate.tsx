@@ -1,5 +1,6 @@
 import { writeToClipboard } from "@app/clipboard";
 import { cn } from "@app/cn";
+import { useIsSecureContext } from "@app/hooks";
 import Button from "@base/Button";
 import { buttonVariants } from "@base/buttonVariants";
 import {
@@ -36,6 +37,7 @@ export default function ApiKeyCreate() {
 	const [newKey, setNewKey] = useState("");
 	const mutation = useCreateApiKey();
 	const permissionsLabelId = useId();
+	const isSecureContext = useIsSecureContext();
 
 	const {
 		formState: { errors },
@@ -95,7 +97,7 @@ export default function ApiKeyCreate() {
 
 						<div className="flex items-stretch mb-2 w-full">
 							<InputSimple className="w-full" value={newKey} readOnly />
-							{window.isSecureContext && (
+							{isSecureContext && (
 								<Button className="ml-2" color="blue" onClick={copyToClipboard}>
 									Copy
 								</Button>

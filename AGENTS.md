@@ -197,6 +197,38 @@ alias and are reached through the catch-all `@/*`, which maps to
   dynamic `import()` inside `@server/analyses/export` so it stays out of every
   other bundle
 
+### Every route renders on the server
+
+`createStart` sets no `defaultSsr`, so it defaults to `true`: a hard load
+runs a route's `beforeLoad`, `loader` and `component` in Node and ships
+finished HTML. So render must not reach a browser global — `window`,
+`document`, `localStorage`, a viewport measurement — and must not read
+anything the server cannot know, above all the clock, the timezone and the
+locale. The first crashes the render; the second is a hydration mismatch,
+and a `typeof window` guard only converts one into the other.
+
+Read those through `useSyncExternalStore` with a **cached** server
+snapshot, which covers the server render and the hydration render that
+must match it (`useIsSecureContext` in `@app/hooks` is the worked
+example). Anything measuring elapsed time reads `@app/serverNow` rather
+than the clock; a module-level `let now = Date.now()` is the deploy time
+on a long-lived process, not page load. Wrap a genuinely browser-only
+subtree — a virtualizer, which decides its rows by measuring — in
+`ClientOnly` with a fallback of the same dimensions, in preference to
+`ssr: false` on the whole route.
+
+An `ssr` setting can only be made **more restrictive** down the tree, and
+`defaultSsr` fills in for the root as well, so `defaultSsr: false` turns
+SSR off everywhere and no leaf can opt back in. Turn a single page off
+with `ssr: false` on that route.
+
+Module-scope mutable state in client code is now shared by every
+concurrent request, not per-tab. Keep per-user state out of it.
+
+See [docs/ssr.md](docs/ssr.md) for the per-route settings and their
+inheritance, the time rules, which queries participate in SSR and
+streaming, and the CSP nonce.
+
 ### The React Compiler memoizes render, so render must be pure
 
 The compiler is a Babel pass, wired up in `apps/web/vite.config.js` as
