@@ -12,6 +12,7 @@ import { referenceQueryKeys } from "@references/keys";
 import { samplesQueryKeys } from "@samples/keys";
 import type { QueryClient } from "@tanstack/react-query";
 import { taskQueryKeys } from "@tasks/keys";
+import { createTaskRefreshQueue } from "@tasks/refresh";
 import { fileQueryKeys } from "@uploads/keys";
 import { userQueryKeys } from "@users/keys";
 import type { SseDomain, SseMessage } from "@virtool/contracts";
@@ -101,6 +102,7 @@ function selectQueryKey(
 
 export function reactQueryHandler(queryClient: QueryClient) {
 	const queueJobRefresh = createJobRefreshQueue(queryClient);
+	const queueTaskRefresh = createTaskRefreshQueue(queryClient);
 
 	return (message: SseMessage) => {
 		const domain = domains[message.domain];
@@ -108,12 +110,17 @@ export function reactQueryHandler(queryClient: QueryClient) {
 			return;
 		}
 
-		// Jobs are the one domain where an update frame arrives per running job
-		// per progress wave, and every on-screen job holds its own detail query.
-		// Invalidating each one fans out to a request per row, so these frames go
-		// through a queue that batches the reads instead.
+		// Jobs and tasks are the two domains where an update frame arrives per
+		// running record per progress step, and every one on screen holds its own
+		// detail query. Invalidating each one fans out to a request per row, so
+		// these frames go through a queue that batches the reads instead.
 		if (message.domain === "jobs" && message.operation === "update") {
 			queueJobRefresh(message.id);
+			return;
+		}
+
+		if (message.domain === "tasks" && message.operation === "update") {
+			queueTaskRefresh(message.id);
 			return;
 		}
 

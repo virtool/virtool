@@ -814,15 +814,16 @@ enforced on the refetch instead of in a fanout broadcast. Both
 Python and Node publish onto the Postgres `client_events` channel;
 `routes/events.ts` is the sole consumer.
 
-`jobs` update frames are the one exception: a running job emits one per
-progress wave and every job on screen holds its own `detail(id)` query,
-so invalidating per frame cost a request per running job. They route
-through `createJobRefreshQueue` (`jobs/refresh.ts`), which buffers ids
-and reads them with the batched `getJobs` server function instead. Don't
-add a `detail(id)` invalidation back for jobs.
+`jobs` and `tasks` update frames are the exceptions: a running job or
+task emits one per progress step and every one on screen holds its own
+`detail(id)` query, so invalidating per frame cost a request per record.
+They route through `createJobRefreshQueue` (`jobs/refresh.ts`) and
+`createTaskRefreshQueue` (`tasks/refresh.ts`), which buffer ids and read
+them with the batched `getJobs`/`getTasks` server functions instead.
+Don't add a `detail(id)` invalidation back for either.
 
 See [docs/server-push.md](docs/server-push.md) for the wire format,
-auth on the SSE side, the job-batching queue, and the follow-up TODOs.
+auth on the SSE side, the batching queues, and the follow-up TODOs.
 
 ## Linear
 

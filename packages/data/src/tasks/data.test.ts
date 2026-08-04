@@ -4,7 +4,7 @@ import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
 import type { Db } from "../db/pg";
 import { tasks } from "../db/schema/tasks";
 import { createTestDatabase, type TestDatabase } from "../db/test/fixtures";
-import { createTask, getTask, TaskNotFoundError } from "./data";
+import { createTask, getTask, getTasks, TaskNotFoundError } from "./data";
 
 let database: TestDatabase;
 let db: Db;
@@ -62,5 +62,28 @@ describe("getTask", () => {
 
 	it("throws TaskNotFoundError when the task is absent", async () => {
 		await expect(getTask(db, 404_404)).rejects.toThrow(TaskNotFoundError);
+	});
+});
+
+describe("getTasks", () => {
+	it("returns every requested task", async () => {
+		const first = await createTask(db, "install_hmms");
+		const second = await createTask(db, "clone_reference");
+
+		const found = await getTasks(db, [first, second]);
+
+		expect(found.map((task) => task.id).sort()).toEqual([first, second].sort());
+	});
+
+	it("omits ids with no row rather than throwing", async () => {
+		const taskId = await createTask(db, "install_hmms");
+
+		await expect(getTasks(db, [taskId, 404_404])).resolves.toMatchObject([
+			{ id: taskId },
+		]);
+	});
+
+	it("returns an empty array for empty input", async () => {
+		await expect(getTasks(db, [])).resolves.toEqual([]);
 	});
 });

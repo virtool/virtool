@@ -38,6 +38,7 @@ import {
 	settingsServerFnMocks,
 } from "./server-fn/settings";
 import { subtractionServerFnMocks } from "./server-fn/subtractions";
+import { taskServerFnMocks } from "./server-fn/tasks";
 import { uploadServerFnMocks } from "./server-fn/uploads";
 import { userServerFnMocks } from "./server-fn/users";
 
@@ -73,6 +74,10 @@ vi.mock("@server/hmm/functions", async () => {
 vi.mock("@server/jobs/functions", async () => {
 	const { jobServerFnMocks } = await import("./server-fn/jobs");
 	return jobServerFnMocks;
+});
+vi.mock("@server/tasks/functions", async () => {
+	const { taskServerFnMocks } = await import("./server-fn/tasks");
+	return taskServerFnMocks;
 });
 vi.mock("@server/settings/functions", async () => {
 	const { settingsServerFnMocks } = await import("./server-fn/settings");
@@ -124,6 +129,7 @@ beforeEach(() => {
 		...Object.values(userServerFnMocks),
 		...Object.values(accountServerFnMocks),
 		...Object.values(jobServerFnMocks),
+		...Object.values(taskServerFnMocks),
 		...Object.values(hmmServerFnMocks),
 		...Object.values(authServerFnMocks),
 		...Object.values(labelServerFnMocks),

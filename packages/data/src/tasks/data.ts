@@ -1,5 +1,5 @@
 import type { Task } from "@virtool/contracts";
-import { eq } from "drizzle-orm";
+import { inArray } from "drizzle-orm";
 import type { Db, DbOrTx } from "../db/pg";
 import { takeFirstOrThrow } from "../db/rows";
 import { tasks as tasksTable } from "../db/schema/tasks";
@@ -47,8 +47,19 @@ export async function createTask(
 	return takeFirstOrThrow(rows).id;
 }
 
-export async function getTask(db: Db, taskId: number): Promise<Task> {
-	const [row] = await db
+/**
+ * Read the tasks matching `taskIds`.
+ *
+ * An id with no row is absent from the result rather than an error — the
+ * batched read exists to refresh whatever a client is watching, and a task
+ * deleted between the frame and the read is not a failure.
+ */
+export async function getTasks(db: Db, taskIds: number[]): Promise<Task[]> {
+	if (taskIds.length === 0) {
+		return [];
+	}
+
+	const rows = await db
 		.select({
 			complete: tasksTable.complete,
 			created_at: tasksTable.created_at,
@@ -59,13 +70,9 @@ export async function getTask(db: Db, taskId: number): Promise<Task> {
 			type: tasksTable.type,
 		})
 		.from(tasksTable)
-		.where(eq(tasksTable.id, taskId));
+		.where(inArray(tasksTable.id, taskIds));
 
-	if (!row) {
-		throw new TaskNotFoundError();
-	}
-
-	return {
+	return rows.map((row) => ({
 		complete: row.complete ?? false,
 		created_at: row.created_at,
 		error: row.error,
@@ -73,5 +80,15 @@ export async function getTask(db: Db, taskId: number): Promise<Task> {
 		progress: row.progress ?? 0,
 		step: row.step ?? "",
 		type: row.type,
-	};
+	}));
+}
+
+export async function getTask(db: Db, taskId: number): Promise<Task> {
+	const [task] = await getTasks(db, [taskId]);
+
+	if (!task) {
+		throw new TaskNotFoundError();
+	}
+
+	return task;
 }

@@ -1,6 +1,6 @@
 import { createServerFn, createServerOnlyFn } from "@tanstack/react-start";
 import { setResponseStatus } from "@tanstack/react-start/server";
-import { getTask, TaskNotFoundError } from "@virtool/data/tasks/data";
+import { getTask, getTasks, TaskNotFoundError } from "@virtool/data/tasks/data";
 import { z } from "zod";
 import { authenticated } from "../auth/policy";
 import { db } from "../composition";
@@ -9,6 +9,13 @@ import { rowIdSchema } from "../validation";
 
 const taskIdSchema = z.object({
 	taskId: rowIdSchema,
+});
+
+// Capped at 100, matching `getJobsFn`: the batch exists to collapse one refetch
+// per on-screen task into one request, and no view shows more than a page of
+// task-bearing rows at once.
+const taskIdsSchema = z.object({
+	taskIds: z.array(rowIdSchema).min(1).max(100),
 });
 
 // Wrapped in createServerOnlyFn so the compiler can strip this body — and the
@@ -22,6 +29,11 @@ const rethrowAsHttp = createServerOnlyFn((err: unknown): never => {
 	}
 	throw err;
 });
+
+export const getTasksFn = createServerFn({ method: "GET" })
+	.middleware([authenticated()])
+	.validator(taskIdsSchema)
+	.handler(async ({ data }) => getTasks(db, data.taskIds));
 
 export const getTaskFn = createServerFn({ method: "GET" })
 	.middleware([authenticated()])
