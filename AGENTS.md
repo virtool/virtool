@@ -386,6 +386,19 @@ route or query errors — those belong in the two tiers above.
   `apps/web/src/app/style.css` under `@theme`, with keyframes in
   `apps/web/src/app/animations.css`. Check there before inventing a color or
   spacing value, and add a token rather than hardcoding a hex.
+- The root font size is `100%` — the reader's browser preference. Never put a
+  length back on `html`; `body` carries the app's base size.
+- Every rem-valued token Tailwind ships is overridden in `@theme` at 0.875, so
+  a class does **not** render its documented px figure: `text-sm` is 12.25px,
+  `md:` breaks at 672px.
+- Size anything that holds text in `rem`; keep px for graphics that hold none.
+  Where a size has to be a number — a threshold compared against a measured
+  width — write it as a rem multiple and resolve it with `useRootFontSize`
+  (`@app/hooks`), never as a px constant.
+
+See [docs/type-scale.md](docs/type-scale.md) for which token families are
+overridden and why they move together, the class-to-px table, and the px
+holdouts that still need fixing.
 
 ### Base component color props
 

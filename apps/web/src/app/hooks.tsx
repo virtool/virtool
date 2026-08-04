@@ -71,6 +71,94 @@ export function useDebounce<T>(
 	return [draft, setDraft];
 }
 
+const defaultRootFontSize = 16;
+
+const rootFontSizeListeners = new Set<() => void>();
+
+let rootFontSizeProbe: HTMLDivElement | null = null;
+let rootFontSizeObserver: ResizeObserver | null = null;
+let rootFontSize = defaultRootFontSize;
+
+function measureRootFontSize(): number {
+	const size = Number.parseFloat(
+		getComputedStyle(document.documentElement).fontSize,
+	);
+
+	// A document that has resolved no size of its own reports a keyword, and a
+	// font size cannot be zero, so neither answer is one to divide a layout by.
+	return size > 0 ? size : defaultRootFontSize;
+}
+
+function subscribeToRootFontSize(callback: () => void) {
+	rootFontSizeListeners.add(callback);
+
+	if (!rootFontSizeProbe) {
+		// Changing the preference fires no event, and the root's own box need not
+		// resize when it does — but a 1rem-wide element always does. One is kept
+		// off-screen and watched, once for the page rather than once per caller.
+		rootFontSizeProbe = document.createElement("div");
+		rootFontSizeProbe.setAttribute("aria-hidden", "true");
+		rootFontSizeProbe.style.cssText =
+			"height:0;position:absolute;visibility:hidden;width:1rem";
+
+		document.body.appendChild(rootFontSizeProbe);
+
+		rootFontSize = measureRootFontSize();
+
+		rootFontSizeObserver = new ResizeObserver(() => {
+			const next = measureRootFontSize();
+
+			if (next !== rootFontSize) {
+				rootFontSize = next;
+				for (const listener of rootFontSizeListeners) {
+					listener();
+				}
+			}
+		});
+
+		rootFontSizeObserver.observe(rootFontSizeProbe);
+	}
+
+	return () => {
+		rootFontSizeListeners.delete(callback);
+
+		if (rootFontSizeListeners.size === 0) {
+			rootFontSizeObserver?.disconnect();
+			rootFontSizeObserver = null;
+			rootFontSizeProbe?.remove();
+			rootFontSizeProbe = null;
+			rootFontSize = defaultRootFontSize;
+		}
+	};
+}
+
+function getRootFontSize(): number {
+	return rootFontSize;
+}
+
+function getDefaultRootFontSize(): number {
+	return defaultRootFontSize;
+}
+
+/**
+ * The reader's font-size preference, in CSS pixels.
+ *
+ * Sizes belong in rem, where the browser scales them without being asked. This
+ * is for the few that cannot be a CSS length and have to be a number — a
+ * threshold compared against a measured width, a virtualizer's row height.
+ *
+ * It is subscribed to rather than read during render. The compiler caches
+ * render against its inputs, and a figure read out of the document is not one
+ * of them, so a preference that changed would never reach the screen.
+ */
+export function useRootFontSize(): number {
+	return useSyncExternalStore(
+		subscribeToRootFontSize,
+		getRootFontSize,
+		getDefaultRootFontSize,
+	);
+}
+
 type Size = {
 	height: number;
 	width: number;

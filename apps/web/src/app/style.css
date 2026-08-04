@@ -24,10 +24,65 @@
 	--z-dropdown: 60; /* dropdown menus, selects, comboboxes */
 	--z-popover: 70; /* tooltips and popovers — above dialog content */
 	--z-toast: 80; /* toasts and upload progress — topmost */
+
+	/* Every rem-valued token Tailwind ships is scaled to 0.875 of its stock
+	   value, which is what the app got from the 14px root this replaced. Holding
+	   the shrink on the scale rather than the root is what lets it be walked back
+	   a token at a time.
+
+	   Line heights are unitless ratios and letter spacing is in em, so both
+	   follow their font size untouched. */
+
+	--text-xs: 0.65625rem;
+	--text-sm: 0.765625rem;
+	--text-base: 0.875rem;
+	--text-lg: 0.984375rem;
+	--text-xl: 1.09375rem;
+	--text-2xl: 1.3125rem;
+	--text-3xl: 1.640625rem;
+	--text-4xl: 1.96875rem;
+	--text-5xl: 2.625rem;
+	--text-6xl: 3.28125rem;
+	--text-7xl: 3.9375rem;
+	--text-8xl: 5.25rem;
+	--text-9xl: 7rem;
+
+	--spacing: 0.21875rem;
+
+	--breakpoint-sm: 35rem;
+	--breakpoint-md: 42rem;
+	--breakpoint-lg: 56rem;
+	--breakpoint-xl: 70rem;
+	--breakpoint-2xl: 84rem;
+
+	--container-3xs: 14rem;
+	--container-2xs: 15.75rem;
+	--container-xs: 17.5rem;
+	--container-sm: 21rem;
+	--container-md: 24.5rem;
+	--container-lg: 28rem;
+	--container-xl: 31.5rem;
+	--container-2xl: 36.75rem;
+	--container-3xl: 42rem;
+	--container-4xl: 49rem;
+	--container-5xl: 56rem;
+	--container-6xl: 63rem;
+	--container-7xl: 70rem;
+
+	--radius-xs: 0.109375rem;
+	--radius-sm: 0.21875rem;
+	--radius-md: 0.328125rem;
+	--radius-lg: 0.4375rem;
+	--radius-xl: 0.65625rem;
+	--radius-2xl: 0.875rem;
+	--radius-3xl: 1.3125rem;
+	--radius-4xl: 1.75rem;
 }
 
+/* The reader's font-size preference is an accessibility setting; a px root
+   discards it. */
 html {
-	font-size: 14px;
+	font-size: 100%;
 }
 
 @utility scrollbar-gutter-stable {
@@ -73,6 +128,12 @@ html {
 }
 
 @layer base {
+	/* The app's own base size, which came from the root before the root became
+	   the reader's. */
+	body {
+		font-size: var(--text-base);
+	}
+
 	h1 {
 		font-size: var(--text-4xl);
 	}
@@ -85,11 +146,11 @@ html {
 	h5 {
 		font-size: var(--text-base);
 		font-weight: var(--font-weight-medium);
-		margin: 5px 0 10px;
+		margin: 0.3125rem 0 0.625rem;
 	}
 
 	p {
-		margin: 0 0 10px;
+		margin: 0 0 0.625rem;
 	}
 
 	a {
