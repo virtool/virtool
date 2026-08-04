@@ -312,6 +312,14 @@ internal route triggers a full page reload. For query strings, use `search` on
 
 `<a>` is only for external URLs and deliberate full reloads.
 
+`routes/index.tsx` — the `/` to `/samples` redirect — stays **outside**
+`_authenticated`, and its `beforeLoad` stays synchronous. Nested, resolving `/`
+ran that layout's async guard before throwing a second redirect, so signing in
+navigated `/login` to `/` to `/samples` with the layout match re-rendering
+mid-chain — the window the router throws `undefined` in. Moving it back under
+the guard reintroduces that. Nothing is exposed by leaving it unguarded: it
+renders nothing, and `/samples` carries the guard.
+
 ### API calls
 
 There is no HTTP client. The SPA reaches the backend through TanStack Start
@@ -352,6 +360,16 @@ initial-load failure spins forever. See
 [docs/queries.md](docs/queries.md) for the query-key, `queryOptions`,
 route-loader prefetch, the two-tier error/loading policy, and mutation
 patterns.
+
+Below both tiers sits `@base/ShellErrorBoundary`, mounted in the root route's
+shell inside `<body>`. It catches what the router's own boundaries cannot: a
+falsy thrown value. `MatchInner` throws a match's `loadPromise` to suspend, a
+chained redirect can clear that promise first, and TanStack's `CatchBoundary`
+tests the thrown value for truthiness — so `undefined` escapes every boundary
+and unmounts the app to a blank page (TanStack/router#7753, open). The shell
+boundary remounts the router once the race settles, and falls back to a reload
+prompt. It is a backstop for that upstream bug, not a place to route ordinary
+route or query errors — those belong in the two tiers above.
 
 ### Styling
 

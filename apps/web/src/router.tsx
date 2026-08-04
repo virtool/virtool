@@ -49,6 +49,12 @@ export function getRouter() {
 		// page. The window stays open for as long as the slowest loader in the
 		// chain runs, which is why only routes with a slow loader (a pathoscope
 		// analysis document) hit it. See TanStack/router#7753.
+		//
+		// Keeping the default only narrows that window; it does not close it. A
+		// chained redirect clears the same promise on a match the router is still
+		// rendering, which is how signing in could land on a blank page. The
+		// unmount itself is caught by `@base/ShellErrorBoundary` — this option is
+		// what keeps it rare, not what makes it survivable.
 		// Preload routes on hover/touch/focus. Loaders back onto React Query via
 		// `ensureQueryData`, so a 0 preload stale time hands freshness decisions
 		// entirely to React Query's own `staleTime`/`gcTime` instead of letting

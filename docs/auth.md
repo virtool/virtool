@@ -393,8 +393,9 @@ The client mutation (`useCreateFirstUser` in `wall/queries.ts`) drops
 the cached `root` and `account` documents on success so the guard
 refetches them fresh instead of reusing the pre-setup snapshot (which
 still says `first_user: true` and would bounce the user back to
-`/setup`). It then navigates to `/`; the now-authenticated guard admits
-the user.
+`/setup`). It then navigates to `/`, which is an unguarded route that
+redirects straight to `/samples`; the now-authenticated guard admits the
+user there.
 
 ## Forced password reset
 

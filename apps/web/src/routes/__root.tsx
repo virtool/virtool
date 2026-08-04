@@ -3,6 +3,7 @@ import { readSentryDsn, SENTRY_DSN_META_NAME } from "@app/sentryDsn";
 import LoadingPlaceholder from "@base/LoadingPlaceholder";
 import NotFound from "@base/NotFound";
 import RouteError from "@base/RouteError";
+import ShellErrorBoundary from "@base/ShellErrorBoundary";
 import interLatin from "@fontsource-variable/inter/files/inter-latin-wght-normal.woff2?url";
 import { type QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import {
@@ -74,7 +75,10 @@ function RootShell({ children }: { children: ReactNode }) {
 				<HeadContent />
 			</head>
 			<body>
-				{children}
+				{/* Above every route match, so a value the router's own boundaries
+				    cannot catch stops here instead of unmounting the page. `Scripts`
+				    stays outside it — the reload prompt is worthless without them. */}
+				<ShellErrorBoundary>{children}</ShellErrorBoundary>
 				<Scripts />
 			</body>
 		</html>
