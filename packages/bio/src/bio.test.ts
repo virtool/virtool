@@ -108,39 +108,175 @@ describe("findOrfs", () => {
 		expect(forward0.nuc).toBe(`ATG${"AAA".repeat(99)}TAA`);
 	});
 
-	it("reports correct positions and nucleotide spans on the reverse strand", () => {
-		// Forward: M + 99K + stop. Reverse complement frame 0 has no stop and 101 codons.
-		const seq = `ATG${"AAA".repeat(99)}TAAGG`;
+	/**
+	 * `pos` on the reverse strand is a correct pair of *forward* coordinates,
+	 * but Python then slices `nuc` out of the reverse-complement using them —
+	 * so `nuc` is offset by the stop codon's three bases, holding the stop that
+	 * opens the ORF instead of the one that closes it. The protein is taken
+	 * from the translation and is unaffected.
+	 *
+	 * This one is reproduced for completeness only: NuVs pops `nuc` before the
+	 * ORFs reach the stored document, so nothing downstream observes it.
+	 */
+	it("reports forward coordinates but an offset nuc on the reverse strand", () => {
+		const reverseOriented = `TAA${"GCT".repeat(100)}TAA`;
+		const seq = reverseComplement(reverseOriented);
 
 		const reverse0 = findOrfs(seq).find(
 			(o) => o.strand === -1 && o.frame === 0,
 		);
-		expect(reverse0).toBeDefined();
 		if (reverse0 === undefined) {
 			throw new Error("expected reverse ORF");
 		}
-		expect(reverse0.pos[0]).toBeGreaterThanOrEqual(0);
-		expect(reverse0.pos[1]).toBeLessThanOrEqual(seq.length);
 
-		// The nuc on a reverse-strand ORF is the reverse-complement of the original slice.
-		const slice = seq.slice(reverse0.pos[0], reverse0.pos[1]);
-		expect(reverseComplement(slice)).toBe(reverse0.nuc);
+		expect(reverse0.pro).toBe("A".repeat(100));
+		expect(reverse0.pos).toStrictEqual([0, 303]);
 
-		// And the protein matches translating that nuc.
-		expect(translate(reverse0.nuc.slice(reverse0.frame))).toContain(
-			reverse0.pro,
+		// The strand-oriented span of the ORF, which is what `nuc` ought to hold.
+		expect(reverseComplement(seq.slice(0, 303))).toBe(
+			`${"GCT".repeat(100)}TAA`,
 		);
+
+		// What Python actually stores: the same window taken from the other end.
+		expect(reverse0.nuc).toBe(`TAA${"GCT".repeat(100)}`);
+		expect(translate(reverse0.nuc.slice(3))).toBe(reverse0.pro);
 	});
 
-	it("produces non-negative positions for reverse-strand ORFs that run to the end", () => {
-		// 301 bp of G means the reverse-complement is 301 bp of C: P*100 in frames 0 and 1, no stop.
+	/**
+	 * Python adds the stop codon's three bases unconditionally and then clamps
+	 * to the sequence length, so an ORF with no stop reports `end` at the
+	 * sequence length rather than at the end of its last full codon — 301 here,
+	 * not 300. Reproduced deliberately; `pos` is stored in the analysis blob.
+	 */
+	it("clamps the forward-strand end to the sequence length when there is no stop", () => {
+		const orfs = findOrfs("G".repeat(301)).filter((o) => o.strand === 1);
+
+		expect(orfs.map((o) => o.pos)).toStrictEqual([
+			[0, 301],
+			[1, 301],
+		]);
+	});
+
+	/**
+	 * The mirror-image quirk: Python subtracts three unconditionally on the
+	 * reverse strand and never clamps, so an ORF with no stop reports a negative
+	 * start. `nuc` inherits it — a negative index makes Python's slice wrap to
+	 * the end of the string, yielding two bases rather than the ORF's 300. NuVs
+	 * drops `nuc` before storage, but `pos` is kept and rendered.
+	 */
+	it("reports negative reverse-strand starts when there is no stop", () => {
 		const orfs = findOrfs("G".repeat(301)).filter((o) => o.strand === -1);
-		expect(orfs).toHaveLength(2);
-		for (const orf of orfs) {
-			expect(orf.pos[0]).toBeGreaterThanOrEqual(0);
-			expect(orf.pos[1]).toBeLessThanOrEqual(301);
-			expect(orf.nuc).toBe("C".repeat(300));
-		}
+
+		expect(orfs.map((o) => o.pos)).toStrictEqual([
+			[-2, 301],
+			[-3, 300],
+		]);
+		expect(orfs.map((o) => o.pro)).toStrictEqual([
+			"P".repeat(100),
+			"P".repeat(100),
+		]);
+		expect(orfs.map((o) => o.nuc)).toStrictEqual(["CC", "CC"]);
+	});
+
+	/**
+	 * The trailing remainder decides which frame gets which negative start, so
+	 * all three are pinned. Every entry runs off the end of the sequence without
+	 * a stop, which is the only situation where either coordinate quirk shows.
+	 */
+	it("assigns positions by trailing remainder when no frame has a stop", () => {
+		const positions = (sequence: string) =>
+			findOrfs(sequence).map((o) => o.pos);
+
+		// 420 bp: no partial codon in frame 0.
+		expect(positions("GCT".repeat(140))).toStrictEqual([
+			[0, 420],
+			[1, 420],
+			[2, 420],
+			[-3, 420],
+			[-1, 419],
+			[-2, 418],
+		]);
+
+		// 421 bp: one trailing base.
+		expect(positions(`${"GCT".repeat(140)}A`)).toStrictEqual([
+			[0, 421],
+			[1, 421],
+			[2, 421],
+			[-2, 418],
+			[-3, 420],
+			[-1, 419],
+		]);
+
+		// 422 bp: two trailing bases.
+		expect(positions(`${"GCT".repeat(140)}AA`)).toStrictEqual([
+			[0, 422],
+			[1, 422],
+			[2, 422],
+			[-1, 422],
+			[-2, 418],
+			[-3, 420],
+		]);
+	});
+
+	it("translates codons containing N to X", () => {
+		const orfs = findOrfs("GCTNGA".repeat(100));
+
+		expect(orfs).toHaveLength(6);
+		expect(orfs[0].pro.slice(0, 6)).toBe("AXAXAX");
+		expect(orfs[0].pos).toStrictEqual([0, 600]);
+	});
+
+	/**
+	 * `translate` uppercases, but Python slices `nuc` straight out of the input,
+	 * so a lowercase sequence keeps its case on the forward strand and gains
+	 * uppercase on the reverse — `reverseComplement` uppercases as it goes.
+	 */
+	it("uppercases the protein but leaves the forward nuc as given", () => {
+		const lower = "gct".repeat(140);
+		const orfs = findOrfs(lower);
+
+		expect(orfs.map((o) => o.pos)).toStrictEqual(
+			findOrfs(lower.toUpperCase()).map((o) => o.pos),
+		);
+		expect(orfs[0].pro).toBe("A".repeat(140));
+		expect(orfs[0].nuc.startsWith("gct")).toBe(true);
+		expect(orfs[3].nuc).toBe("AGC");
+	});
+
+	it("orders ORFs by strand then frame, in discovery order", () => {
+		const orfs = findOrfs(`ATG${"AAA".repeat(99)}TAAGG`);
+
+		expect(orfs.map((o) => [o.strand, o.frame])).toStrictEqual([
+			[1, 0],
+			[1, 1],
+			[1, 2],
+			[-1, 0],
+			[-1, 1],
+			[-1, 2],
+		]);
+	});
+
+	it("drops a trailing partial codon", () => {
+		// 301 and 302 bp both translate to the same 100 codons in frame 0.
+		expect(findOrfs("G".repeat(302))[0].pro).toBe("G".repeat(100));
+		expect(findOrfs("G".repeat(301))[0].pro).toBe("G".repeat(100));
+	});
+
+	it("applies the residue gate at exactly 100", () => {
+		const polyAlanine = (residues: number) =>
+			findOrfs(`TAA${"GCT".repeat(residues)}TAA`).filter(
+				(o) => o.pro === "A".repeat(residues),
+			);
+
+		expect(polyAlanine(99)).toHaveLength(0);
+		expect(polyAlanine(100)).not.toHaveLength(0);
+		expect(polyAlanine(101)).not.toHaveLength(0);
+	});
+
+	it("applies the length gate at exactly 300 bp", () => {
+		expect(findOrfs("G".repeat(299))).toStrictEqual([]);
+		expect(findOrfs("G".repeat(300))).toStrictEqual([]);
+		expect(findOrfs("G".repeat(301))).not.toStrictEqual([]);
 	});
 });
 

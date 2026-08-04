@@ -298,6 +298,10 @@ importers:
         version: 2.3.3
 
   packages/bio:
+    dependencies:
+      '@virtool/contracts':
+        specifier: workspace:*
+        version: link:../contracts
     devDependencies:
       vitest:
         specifier: ^4.1.10

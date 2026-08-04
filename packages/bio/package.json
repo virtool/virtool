@@ -3,13 +3,20 @@
 	"version": "0.0.0",
 	"private": true,
 	"type": "module",
+	"sideEffects": false,
 	"exports": {
-		".": "./src/bio.ts"
+		".": "./src/index.ts",
+		"./bio": "./src/bio.ts",
+		"./fastqc": "./src/fastqc.ts",
+		"./hmmer": "./src/hmmer.ts"
 	},
 	"scripts": {
 		"test": "vitest run",
 		"test:watch": "vitest",
 		"typecheck": "tsc --noEmit"
+	},
+	"dependencies": {
+		"@virtool/contracts": "workspace:*"
 	},
 	"devDependencies": {
 		"vitest": "^4.1.10"

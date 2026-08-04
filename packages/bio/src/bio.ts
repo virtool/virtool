@@ -114,6 +114,41 @@ export type Orf = {
 	pos: [number, number];
 };
 
+/**
+ * Slice with Python's semantics: a negative bound counts back from the end and
+ * an inverted range yields the empty string.
+ *
+ * `findOrfs` needs this because Python's ORF coordinates can go negative — see
+ * the note there.
+ */
+function pythonSlice(text: string, start: number, end: number): string {
+	const length = text.length;
+	const from =
+		start < 0 ? Math.max(length + start, 0) : Math.min(start, length);
+	const to = end < 0 ? Math.max(length + end, 0) : Math.min(end, length);
+
+	return to > from ? text.slice(from, to) : "";
+}
+
+/**
+ * Find every ORF of at least 100 residues in a nucleotide sequence.
+ *
+ * This is a transliteration of Python's `find_orfs`, quirks included, because
+ * `pos` is stored positionally in the NuVs analysis `results` blob and rendered
+ * by the UI. Two of those quirks are visible in the output:
+ *
+ * - The forward-strand `end` adds the stop codon's three bases unconditionally
+ *   and then clamps to the sequence length, so an ORF that runs off the end
+ *   reports `end` at the sequence length rather than at the last full codon.
+ * - The reverse-strand `start` subtracts three unconditionally and is never
+ *   clamped, so an ORF with no stop codon reports a **negative** start — `-3`,
+ *   `-2` or `-1`, depending on the trailing remainder.
+ *
+ * `nuc` inherits both, and is sliced with Python's negative-index semantics.
+ * The NuVs workflow drops `nuc` before the ORFs reach the stored document, so
+ * only `pos` is observable downstream, but it is reproduced here so the whole
+ * record matches Python.
+ */
 export function findOrfs(sequence: string): Orf[] {
 	const orfs: Orf[] = [];
 	const length = sequence.length;
@@ -128,25 +163,28 @@ export function findOrfs(sequence: string): Orf[] {
 	for (const [strand, nuc] of strands) {
 		for (let frame = 0; frame < 3; frame++) {
 			const translation = translate(nuc.slice(frame));
-			const tLen = translation.length;
+			const translationLength = translation.length;
 			let aaStart = 0;
 
-			while (aaStart < tLen) {
+			while (aaStart < translationLength) {
 				const stopIndex = translation.indexOf("*", aaStart);
-				const hasStop = stopIndex !== -1;
-				const aaEnd = hasStop ? stopIndex : tLen;
+				const aaEnd = stopIndex === -1 ? translationLength : stopIndex;
 
 				if (aaEnd - aaStart >= 100) {
-					// Span on the strand-oriented `nuc` string. Includes the stop codon when present.
-					const codonStart = frame + aaStart * 3;
-					const codonEnd = frame + aaEnd * 3 + (hasStop ? 3 : 0);
+					let start: number;
+					let end: number;
 
-					const start = strand === 1 ? codonStart : length - codonEnd;
-					const end = strand === 1 ? codonEnd : length - codonStart;
+					if (strand === 1) {
+						start = frame + aaStart * 3;
+						end = Math.min(length, frame + aaEnd * 3 + 3);
+					} else {
+						start = length - frame - aaEnd * 3 - 3;
+						end = length - frame - aaStart * 3;
+					}
 
 					orfs.push({
 						pro: translation.slice(aaStart, aaEnd),
-						nuc: nuc.slice(codonStart, codonEnd),
+						nuc: pythonSlice(nuc, start, end),
 						frame,
 						strand,
 						pos: [start, end],

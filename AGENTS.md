@@ -21,7 +21,11 @@ This is a **pnpm monorepo**:
   packages:
   - `@virtool/logger` — pino wrapper, server-side log defaults and
     `child({...})` pattern
-  - `@virtool/bio` — sequence utilities (complement, translation, etc.)
+  - `@virtool/bio` — sequence utilities (complement, translation, ORF
+    finding, FASTA/FASTQ) and the pure text parsers the ported workflows
+    need: FastQC `fastqc_data.txt` (`./fastqc`) and `hmmscan --tblout`
+    (`./hmmer`). Its output is pinned byte-for-byte against Python's —
+    see [docs/bio.md](docs/bio.md) before changing a parser.
   - `@virtool/contracts` — cross-process data shapes, zod-validated where a
     boundary parses them
   - `@virtool/sentry` — shared Sentry option helpers (node + browser entry
