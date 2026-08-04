@@ -490,6 +490,17 @@ describe("formatAnalysis for pathoscope", () => {
 		expect(otu.isolates[0]?.name).toBe("Isolate A");
 	});
 
+	it("reports no isolate as lacking a length-inferred segment", async () => {
+		const otu = await formatPathoscope();
+
+		// The OTU declares no schema, so its one segment is a bin over the sequences
+		// that were hit. `seq_a1` was not, so nothing can say which bin it would have
+		// fallen in — and the isolate is claimed neither to carry the segment nor to
+		// lack it.
+		expect(otu.segments.map((segment) => segment.key)).toEqual(["len:0"]);
+		expect(otu.isolates[0]?.absentSegmentKeys).toEqual([]);
+	});
+
 	it("reports the longest sequence in the OTU as its length", async () => {
 		const otu = await formatPathoscope();
 
@@ -877,6 +888,40 @@ describe("formatAnalysis for a segmented pathoscope hit", () => {
 		// The isolate with no S sequence names only L, so the detail view can leave
 		// the S column empty rather than sliding L into it.
 		expect(keys.get("Isolate D")).toEqual(["seg:L"]);
+	});
+
+	it("reports the segments each isolate declares no sequence for", async () => {
+		const otu = await formatPathoscope("pathoscope", segmentedResults());
+
+		const absent = new Map(
+			otu.isolates.map((isolate) => [isolate.name, isolate.absentSegmentKeys]),
+		);
+
+		// `iso_c` declares all three. Its M sequence recorded no hit, so it is missing
+		// from `sequences` — but the isolate carries it, and saying otherwise is the
+		// claim this list exists to stop.
+		expect(absent.get("Isolate C")).toEqual([]);
+
+		// `iso_d` declares L alone, so M and S really are not in it.
+		expect(absent.get("Isolate D")).toEqual(["seg:M", "seg:S"]);
+	});
+
+	it("reads the declared segments at the analysed version, not from the hits", async () => {
+		const results = segmentedResults();
+
+		// Drop `iso_c`'s S hit, leaving it detected on L alone. Its S sequence is
+		// still declared, so the isolate must not be reported as lacking it — a rule
+		// reading the hits would have no way to tell.
+		results.hits = results.hits.filter((hit) => hit.id !== "seq_c_s");
+
+		const otu = await formatPathoscope("pathoscope", results);
+
+		const isolate = otu.isolates.find((entry) => entry.name === "Isolate C");
+
+		expect(isolate?.sequences.map((sequence) => sequence.segmentKey)).toEqual([
+			"seg:L",
+		]);
+		expect(isolate?.absentSegmentKeys).toEqual([]);
 	});
 });
 

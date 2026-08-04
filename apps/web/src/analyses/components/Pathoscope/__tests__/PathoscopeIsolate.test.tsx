@@ -67,9 +67,13 @@ function render(children: ReactNode) {
 	);
 }
 
-function renderIsolate(sequences: PathoscopeSequence[]) {
+function renderIsolate(
+	sequences: PathoscopeSequence[],
+	absentSegmentKeys: string[] = [],
+) {
 	render(
 		<PathoscopeIsolate
+			absentSegmentKeys={absentSegmentKeys}
 			coverage={0.9}
 			depth={12}
 			maxDepth={20}
@@ -121,10 +125,10 @@ describe("<PathoscopeIsolate />", () => {
 	it("should give no length to a panel the isolate has no sequence for", () => {
 		mockElementWidth(1200);
 
-		renderIsolate([
-			sequence("seg:L", "NC_L", 8900),
-			sequence("seg:S", "NC_S", 2900),
-		]);
+		renderIsolate(
+			[sequence("seg:L", "NC_L", 8900), sequence("seg:S", "NC_S", 2900)],
+			["seg:M"],
+		);
 
 		expect(screen.getByText("M · not in this isolate")).toBeVisible();
 		expect(screen.queryByText("4,800 nt")).toBeNull();
@@ -135,6 +139,7 @@ describe("<PathoscopeIsolate />", () => {
 
 		render(
 			<PathoscopeIsolate
+				absentSegmentKeys={[]}
 				coverage={0.9}
 				depth={12}
 				maxDepth={20}
@@ -154,12 +159,27 @@ describe("<PathoscopeIsolate />", () => {
 
 		// No M sequence. The panel has to stay in place, or L and S would read as
 		// though they were the isolate's first two segments.
-		renderIsolate([
-			sequence("seg:L", "NC_L", 8900),
-			sequence("seg:S", "NC_S", 2900),
-		]);
+		renderIsolate(
+			[sequence("seg:L", "NC_L", 8900), sequence("seg:S", "NC_S", 2900)],
+			["seg:M"],
+		);
 
 		expect(screen.getByText("M · not in this isolate")).toBeVisible();
+	});
+
+	it("should not claim the isolate lacks a segment it carries but nothing mapped to", () => {
+		mockElementWidth(400);
+
+		// M is missing from `sequences` because it took no reads, not because the
+		// isolate lacks it — the two are indistinguishable from the hits alone, and
+		// the server says which by leaving M off `absentSegmentKeys`. Another isolate
+		// having mapped to M is no evidence either way, so `detected` must not decide
+		// this.
+		renderIsolate([sequence("seg:L", "NC_L", 8900)], ["seg:S"]);
+
+		expect(screen.getByText("M · no reads")).toBeVisible();
+		expect(screen.queryByText("M · not in this isolate")).toBeNull();
+		expect(screen.getByText("S · not in this isolate")).toBeVisible();
 	});
 
 	it("should not claim the isolate lacks a segment nothing mapped to", () => {
@@ -170,6 +190,7 @@ describe("<PathoscopeIsolate />", () => {
 		// this isolate does not carry it.
 		render(
 			<PathoscopeIsolate
+				absentSegmentKeys={[]}
 				coverage={0.9}
 				depth={12}
 				maxDepth={20}
@@ -186,6 +207,30 @@ describe("<PathoscopeIsolate />", () => {
 
 		expect(screen.getByText("M · no reads")).toBeVisible();
 		expect(screen.queryByText("M · not in this isolate")).toBeNull();
+	});
+
+	it("should not claim the isolate lacks a length-inferred segment", () => {
+		mockElementWidth(400);
+
+		// A bin is derived from the sequences that were hit, so an unhit sequence has
+		// no bin to fall in and the server can place no isolate in or out of one. The
+		// label has to hold whichever it is.
+		render(
+			<PathoscopeIsolate
+				absentSegmentKeys={[]}
+				coverage={0.9}
+				depth={12}
+				maxDepth={20}
+				name="Isolate A"
+				pi={0.5}
+				reads={30}
+				segments={[segment("len:0", 8900, null), segment("len:1", 2900, null)]}
+				sequences={[sequence("len:0", "NC_X", 8900)]}
+			/>,
+		);
+
+		expect(screen.getByText("Segment · no reads")).toBeVisible();
+		expect(screen.queryByText(/not in this isolate/)).toBeNull();
 	});
 
 	it("should reveal a sequence's figures in a popover when its panel is clicked", async () => {
@@ -241,6 +286,7 @@ describe("<PathoscopeIsolate />", () => {
 	it("should render nothing but the heading for an isolate with no segments", () => {
 		render(
 			<PathoscopeIsolate
+				absentSegmentKeys={[]}
 				coverage={0}
 				depth={0}
 				maxDepth={0}

@@ -58,6 +58,22 @@ export type PathoscopeSequence = {
 
 /** A detected isolate, with the metrics derived from the sequences it owns. */
 export type PathoscopeIsolate = {
+	/**
+	 * The keys of the OTU's segments the isolate declares no sequence for.
+	 *
+	 * Read against the OTU version the analysis saw, over every sequence it
+	 * declares rather than only the ones that were hit — so it separates an
+	 * isolate that does not carry a segment from one that carries it and was
+	 * assigned no reads. The two are indistinguishable from {@link sequences},
+	 * which holds only the hits.
+	 *
+	 * Only named segments can appear. A length-inferred segment is a bin over the
+	 * sequences that *were* hit, so an unhit sequence has no bin to fall in and
+	 * the isolate's membership is not knowable; those are absent from this list
+	 * whether the isolate carries them or not.
+	 */
+	absentSegmentKeys: string[];
+
 	/** The proportion of the isolate's positions with mapped read coverage */
 	coverage: number;
 

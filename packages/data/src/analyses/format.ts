@@ -69,9 +69,15 @@ type MeasuredSequence = {
 
 // The same pairing one level up, so an OTU can match its isolates' sequences up
 // segment by segment.
+//
+// `declaredSegments` is read from the isolate's sequences before the unhit ones
+// are dropped, and is the only record of them that survives. The OTU turns it
+// into the segment keys the isolate is missing once it knows what its segments
+// are.
 type MeasuredIsolate = {
+	declaredSegments: Set<string>;
 	depths: number[];
-	isolate: Omit<PathoscopeIsolate, "sequences">;
+	isolate: Omit<PathoscopeIsolate, "absentSegmentKeys" | "sequences">;
 	sequences: MeasuredSequence[];
 };
 
@@ -153,6 +159,23 @@ function formatSequences(
 	return measured.sort((a, b) => compareBySegment(a, b, schemaNames));
 }
 
+// The schema segments an isolate declares a sequence for, hit or not. It is what
+// makes an isolate's silence on a segment readable: one that never declared the
+// segment does not carry it, where one that declared it was assigned no reads.
+function readDeclaredSegments(sequences: unknown[]): Set<string> {
+	const declared = new Set<string>();
+
+	for (const entry of sequences) {
+		const segment = asRecord(entry)?.segment;
+
+		if (typeof segment === "string" && segment !== "") {
+			declared.add(segment);
+		}
+	}
+
+	return declared;
+}
+
 function formatIsolates(
 	isolates: unknown[],
 	hitsBySequenceId: Map<string, Record<string, unknown>>,
@@ -185,6 +208,7 @@ function formatIsolates(
 		const depths = sequences.flatMap((entry) => entry.depths);
 
 		measured.push({
+			declaredSegments: readDeclaredSegments(asArray(isolate.sequences)),
 			depths,
 			sequences,
 			isolate: {
@@ -266,6 +290,13 @@ function formatHits(
 		}
 	}
 
+	// Only a named segment can be reported missing from an isolate. A
+	// length-inferred one is a bin over the sequences that were hit, so an unhit
+	// sequence has no bin to fall in and nothing here could place it.
+	const namedGroups = groups.flatMap((group) =>
+		group.name === null ? [] : [{ key: group.key, name: group.name }],
+	);
+
 	const merged = groups.map((group) => {
 		const depths = mergeDepths(segmentDepths(group));
 
@@ -306,6 +337,9 @@ function formatHits(
 		isolates: measured
 			.map((entry, index) => ({
 				...entry.isolate,
+				absentSegmentKeys: namedGroups
+					.filter((group) => !entry.declaredSegments.has(group.name))
+					.map((group) => group.key),
 				sequences: sequencesByIsolate[index] ?? [],
 			}))
 			.sort((a, b) => b.coverage - a.coverage),

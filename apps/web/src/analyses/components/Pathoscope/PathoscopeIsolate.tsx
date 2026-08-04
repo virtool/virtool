@@ -17,12 +17,18 @@ const height = 60;
 // is declared — the accession and definition move into a popover instead,
 // alongside every other detail the row doesn't have room for. A segment the
 // schema left unnamed has nothing to label it with but the accession itself.
-// An unmatched segment names the reason: distinct from the OTU-wide "no
-// reads", so this isolate reads as lacking the segment rather than the
-// segment being absent everywhere.
+//
+// An unmatched segment names the reason, and only the server can tell the two
+// apart: `sequences` holds the hits alone, so an isolate that does not carry a
+// segment looks exactly like one that carries it and was assigned no reads.
+// `absentSegmentKeys` is the isolate's reference read against the OTU version
+// the analysis saw. Anything not on it falls to "no reads", which holds whether
+// or not the isolate carries the segment — so a length-inferred segment, whose
+// membership is not knowable at all, is never claimed either way.
 function labelOf(
 	segment: PathoscopeSegmentCoverage,
 	sequence: PathoscopeSequenceData | undefined,
+	absentSegmentKeys: string[],
 ): string {
 	if (sequence) {
 		return segment.name ?? sequence.accession;
@@ -30,12 +36,15 @@ function labelOf(
 
 	const name = segment.name ?? "Segment";
 
-	return segment.detected
+	return absentSegmentKeys.includes(segment.key)
 		? `${name} · not in this isolate`
 		: `${name} · no reads`;
 }
 
 type PathoscopeIsolateProps = {
+	/** The OTU segments the isolate declares no sequence for, hit or not */
+	absentSegmentKeys: string[];
+
 	coverage: number;
 	depth: number;
 	maxDepth: number;
@@ -50,6 +59,7 @@ type PathoscopeIsolateProps = {
 };
 
 export default function PathoscopeIsolate({
+	absentSegmentKeys,
 	coverage,
 	depth,
 	maxDepth,
@@ -76,7 +86,7 @@ export default function PathoscopeIsolate({
 				<PathoscopeSequenceDetail sequence={sequence} />
 			) : undefined,
 			key: segment.key,
-			label: labelOf(segment, sequence),
+			label: labelOf(segment, sequence, absentSegmentKeys),
 			length: segment.length,
 			// The sequence's own length, not the segment's — which is the longest any
 			// isolate gave it, and would attribute a length to a sequence that is not

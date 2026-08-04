@@ -96,6 +96,7 @@ function createIsolate(
 	overrides: Partial<PathoscopeIsolate>,
 ): PathoscopeIsolate {
 	return {
+		absentSegmentKeys: [],
 		coverage: 0.5,
 		depth: 12,
 		id: "isolate",
