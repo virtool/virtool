@@ -38,7 +38,7 @@
 		"d3-transition": "^3.0.1",
 		"downshift": "^9.4.0",
 		"drizzle-orm": "^0.45.2",
-		"es-toolkit": "^1.49.0",
+		"es-toolkit": "^1.50.0",
 		"exceljs": "^4.4.0",
 		"fuse.js": "^7.5.0",
 		"lucide-react": "^1.24.0",
