@@ -358,6 +358,32 @@ every bundle that wants *any* of its exports. `cn()` (`@app/cn`) is split out
 of `@app/utils` for exactly this reason — it keeps `tailwind-merge` out of every
 bundle that only wants a plain utility. Don't merge it back.
 
+### A native dependency must never be bundled
+
+A package that loads a `.node` addon finds it relative to `__dirname`, which
+has no value in an ES module — so bundling one produces a server that builds
+cleanly and throws `ReferenceError: __dirname is not defined` the first time
+anything imports it. `bcrypt` shipped that way and took the whole auth path
+down with it.
+
+Nitro knows the common native packages and traces them out of its own bundle
+automatically, copying each into `.output/server/node_modules` — the dist
+image ships only `.output`, so nothing else puts them there. Reach for
+`traceDeps` on the `nitro()` plugin only for one it does not already know.
+What it cannot do is reclaim a package the **Vite** stage inlined first, and
+Nitro bundles the server in two stages. So a native package needs:
+
+- `environments.ssr.resolve.external` in `apps/web/vite.config.js`, so the Vite
+  stage leaves the import alone;
+- an entry in `apps/web/package.json` dependencies, even when no file in
+  `apps/web` imports it. Nitro resolves the external from the app root, and a
+  package reached only through a workspace package is not there under pnpm.
+  Add it to `ignoreDependencies` for `apps/web` in `knip.json` alongside.
+
+Check the built output rather than trusting a green build:
+`grep -rn "__dirname" apps/web/.output/server/_ssr/` should turn up no bare
+read — only lines that define one first.
+
 ### Routing: in-app navigation uses `<Link>`
 
 Internal links use `<Link>` from `@tanstack/react-router`. A plain `<a>` to an

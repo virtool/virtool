@@ -141,6 +141,9 @@ importers:
       '@virtool/storage':
         specifier: workspace:*
         version: link:../../packages/storage
+      bcrypt:
+        specifier: ^6.0.0
+        version: 6.0.0
       class-variance-authority:
         specifier: ^0.7.1
         version: 0.7.1

@@ -16,7 +16,7 @@
 				"src/tests/postgresGuard.ts"
 			],
 			"project": ["src/**/*.{ts,tsx}"],
-			"ignoreDependencies": ["tailwindcss", "@tanstack/router-cli"]
+			"ignoreDependencies": ["bcrypt", "tailwindcss", "@tanstack/router-cli"]
 		},
 		"packages/bio": {
 			"entry": ["src/**/*.test.ts"]

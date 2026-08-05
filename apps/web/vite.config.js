@@ -47,6 +47,24 @@ export default defineConfig(({ command, mode }) => ({
 	define: {
 		__APP_VERSION__: JSON.stringify(pkg.version),
 	},
+	environments: {
+		ssr: {
+			resolve: {
+				// `bcrypt` loads its prebuilt binary through
+				// `node-gyp-build(path.resolve(__dirname))`. Bundled, that `__dirname`
+				// has no value in ES module scope and the first import of the module
+				// throws, taking the whole auth path down with it.
+				//
+				// Nitro already knows `bcrypt` is native and traces it out of its own
+				// bundle — but it bundles the server in two stages and cannot reclaim
+				// what the Vite stage inlined first, so the import has to survive this
+				// stage untouched. That in turn is why `bcrypt` is a dependency of this
+				// app: Nitro resolves the external from the app root, and pnpm does not
+				// hoist a package reached only through `@virtool/data`.
+				external: ["bcrypt"],
+			},
+		},
+	},
 	envPrefix: ["VITE_", "VT_"],
 	resolve: {
 		alias: {
@@ -89,9 +107,10 @@ export default defineConfig(({ command, mode }) => ({
 		mode !== "test" &&
 			nitro({
 				// `@sentry/profiling-node` ships native `.node` addons the bundler can't
-				// inline. Tracing it (and its native helper) keeps the packages external
-				// and copies them into the server output, so the build doesn't choke on
-				// the binaries and the runtime import resolves. The dist image ships only
+				// inline, and Nitro's builtin native-package list does not cover it.
+				// Tracing it (and its native helper) keeps the packages external and
+				// copies them into the server output, so the build doesn't choke on the
+				// binaries and the runtime import resolves. The dist image ships only
 				// `.output`, so the trace is what makes the package available at runtime.
 				traceDeps: ["@sentry/profiling-node*", "@sentry/node-cpu-profiler*"],
 			}),
