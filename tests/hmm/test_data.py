@@ -265,6 +265,46 @@ class TestInstall:
         with pytest.raises(StorageKeyNotFoundError):
             await data_layer.hmms._storage.size(HMM_ANNOTATIONS_KEY)
 
+    async def test_failed_install_keeps_cached_annotations(
+        self, data_layer, mocker, pg
+    ):
+        """A failed install leaves the cached annotations blob in place.
+
+        The rows it describes are rolled back, so it is still accurate. The
+        invalidation is tied to a successful commit rather than to the attempt.
+        """
+        await _seed_status(
+            pg,
+            updates=[{"id": 1, "ready": False, "name": "v0.2.1"}],
+        )
+
+        async def _previous_annotations():
+            yield b"PREVIOUS-ANNOTATIONS"
+
+        await data_layer.hmms._storage.write(
+            HMM_ANNOTATIONS_KEY,
+            _previous_annotations(),
+        )
+
+        mocker.patch.object(
+            data_layer.hmms._storage,
+            "write",
+            side_effect=RuntimeError("storage is down"),
+        )
+
+        with pytest.raises(RuntimeError):
+            await data_layer.hmms.install(
+                [ANNOTATION],
+                RELEASE,
+                7,
+                _NullProgressHandler(),
+                _profile_bytes(),
+            )
+
+        assert await _drain(
+            data_layer.hmms._storage.read(HMM_ANNOTATIONS_KEY),
+        ) == (b"PREVIOUS-ANNOTATIONS")
+
     async def test_profile_write_failure_rolls_back(self, data_layer, mocker, pg):
         """A storage failure rolls back the Postgres writes."""
         await _seed_status(
