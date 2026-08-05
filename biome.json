@@ -9,6 +9,7 @@
 		"includes": [
 			"**",
 			"!packages/pathoscope-core",
+			"!apps/site/**",
 			"!**/routeTree.gen.ts",
 			"!**/node_modules",
 			"!**/dist",
@@ -146,6 +147,56 @@
 											"@wall/**"
 										],
 										"message": "src/server must not import from browser feature modules. The dependency arrow runs client -> @server/*; shared types and helpers belong in @virtool/contracts, which both sides import down into. Every feature alias is listed, plus the @/* catch-all that would otherwise reach the same modules by another name."
+									}
+								]
+							}
+						}
+					}
+				}
+			}
+		},
+		{
+			"includes": ["apps/*/src/**", "!apps/web/src/**"],
+			"linter": {
+				"rules": {
+					"style": {
+						"noRestrictedImports": {
+							"level": "error",
+							"options": {
+								"patterns": [
+									{
+										"group": [
+											"@/**",
+											"@account/**",
+											"@administration/**",
+											"@analyses/**",
+											"@app/**",
+											"@banner/**",
+											"@base/**",
+											"@forms/**",
+											"@groups/**",
+											"@hmm/**",
+											"@indexes/**",
+											"@jobs/**",
+											"@labels/**",
+											"@nav/**",
+											"@otus/**",
+											"@quality/**",
+											"@references/**",
+											"@samples/**",
+											"@sequences/**",
+											"@server/**",
+											"@subtraction/**",
+											"@tasks/**",
+											"@tests/**",
+											"@uploads/**",
+											"@users/**",
+											"@virtool/web",
+											"@wall/**",
+											"**/apps/web/**",
+											"**/web/src/**"
+										],
+										"message": "A non-Vite app must not import from apps/web, in either direction. apps/jobs-api is the likeliest offender because it does work src/server also does, so copying an import from there is an easy mistake. Shared shapes and helpers belong in @virtool/contracts, @virtool/data or @virtool/storage, which both sides import down into."
 									}
 								]
 							}

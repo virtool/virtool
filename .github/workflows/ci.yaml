@@ -22,9 +22,26 @@ env:
 
 jobs:
     build:
-        name: Build
+        name: Build / ${{ matrix.image }}
         runs-on: ubuntu-24.04
         timeout-minutes: 20
+        strategy:
+            fail-fast: false
+            # The runtime base differs per image, so it belongs here rather than
+            # being branched on inside a step. Adding an app needs a Dockerfile
+            # stage and an entry here; everything else about a new app is
+            # generic. Keep this list and the one in publish-ghcr in step.
+            matrix:
+                include:
+                    - image: ui
+                      target: dist
+                      workspace: apps/web
+                    - image: jobs-api
+                      target: jobs-api
+                      workspace: apps/jobs-api
+                    - image: ts-create-subtraction
+                      target: create-subtraction
+                      workspace: apps/create-subtraction
         steps:
             - name: Checkout
               uses: actions/checkout@v7
@@ -32,12 +49,15 @@ jobs:
             # gha cache below needs a docker-container builder.
             - name: Setup Buildx
               uses: docker/setup-buildx-action@v3
-            - name: Build and Push
+            - name: Build
               uses: docker/build-push-action@v7
               with:
-                  target: dist
-                  cache-from: type=gha
-                  cache-to: type=gha,mode=max
+                  target: ${{ matrix.target }}
+                  # Scoped per image. The images share the `base` stage but
+                  # diverge after it, and an unscoped `mode=max` export would
+                  # have each matrix leg overwrite the last one's cache.
+                  cache-from: type=gha,scope=${{ matrix.image }}
+                  cache-to: type=gha,mode=max,scope=${{ matrix.image }}
     build-pathoscope:
         name: Build / Pathoscope
         runs-on: ubuntu-24.04
@@ -146,8 +166,11 @@ jobs:
               with:
                   node-version: ${{ env.NODE_VERSION }}
                   pnpm-version: ${{ env.PNPM_VERSION }}
+            # Exclusions rather than an inclusion list, so a new workspace that
+            # declares `test` is covered without editing this job. The three
+            # excluded here have their own jobs.
             - name: Test
-              run: pnpm --filter @virtool/bio --filter @virtool/contracts --filter @virtool/logger --filter @virtool/site test
+              run: pnpm -r --filter "!@virtool/web" --filter "!@virtool/data" --filter "!@virtool/storage" test
     test-data:
         name: Test / Data
         runs-on: ubuntu-24.04
@@ -291,7 +314,7 @@ jobs:
                   GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
               run: pnpm exec semantic-release
     publish-ghcr:
-        name: Publish / GHCR
+        name: Publish / GHCR / ${{ matrix.image }}
         runs-on: ubuntu-24.04
         timeout-minutes: 20
         if: github.repository_owner == 'Virtool' && github.event_name == 'push' && needs.release.outputs.git-tag != ''
@@ -299,6 +322,21 @@ jobs:
         permissions:
             contents: read
             packages: write
+        strategy:
+            fail-fast: false
+            # Every image shares the repo version and is published every
+            # release. Keep in step with the matrix in the build job.
+            matrix:
+                include:
+                    - image: ui
+                      target: dist
+                      workspace: apps/web
+                    - image: jobs-api
+                      target: jobs-api
+                      workspace: apps/jobs-api
+                    - image: ts-create-subtraction
+                      target: create-subtraction
+                      workspace: apps/create-subtraction
         steps:
             - name: Checkout
               uses: actions/checkout@v7
@@ -310,8 +348,8 @@ jobs:
               uses: pnpm/action-setup@v6
               with:
                   version: ${{ env.PNPM_VERSION }}
-            - name: Set web app version from release tag
-              run: pnpm -C apps/web version "${{ needs.release.outputs.git-tag }}" --no-git-tag-version
+            - name: Set app version from release tag
+              run: pnpm -C ${{ matrix.workspace }} version "${{ needs.release.outputs.git-tag }}" --no-git-tag-version
             - name: Login
               uses: docker/login-action@v4
               with:
@@ -323,17 +361,17 @@ jobs:
               uses: docker/metadata-action@v6
               with:
                   context: git
-                  images: ${{ env.REGISTRY }}/virtool/ui
+                  images: ${{ env.REGISTRY }}/virtool/${{ matrix.image }}
             - name: Build & Push
               uses: docker/build-push-action@v7
               with:
                   context: .
                   push: true
                   tags: ${{ steps.meta.outputs.tags }}
-                  target: dist
+                  target: ${{ matrix.target }}
                   labels: ${{ steps.meta.outputs.labels }}
-                  cache-from: type=gha
-                  cache-to: type=gha,mode=max
+                  cache-from: type=gha,scope=${{ matrix.image }}
+                  cache-to: type=gha,mode=max,scope=${{ matrix.image }}
                   secrets: |
                       sentry_auth_token=${{ secrets.SENTRY_AUTH_TOKEN }}
     publish-pathoscope:

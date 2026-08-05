@@ -1,0 +1,26 @@
+{
+	"name": "@virtool/create-subtraction",
+	"version": "0.0.0",
+	"private": true,
+	"type": "module",
+	"files": [
+		"dist"
+	],
+	"scripts": {
+		"build": "tsdown",
+		"start": "node dist/index.mjs",
+		"typecheck": "tsc --noEmit"
+	},
+	"dependencies": {
+		"@aws-sdk/client-s3": "^3.1085.0",
+		"@aws-sdk/lib-storage": "^3.1094.0",
+		"@azure/identity": "^4.13.1",
+		"@azure/storage-blob": "^12.33.0",
+		"@virtool/logger": "workspace:*",
+		"@virtool/storage": "workspace:*",
+		"pino": "^10.1.0"
+	},
+	"devDependencies": {
+		"tsdown": "^0.22.14"
+	}
+}

@@ -17,6 +17,18 @@ This is a **pnpm monorepo**:
   gates — Astro is not linted by biome and is opaque to knip — so its own
   Vite build (a `build-site` CI job) and Vitest suite are its gate. Deploy is
   manual: `pnpm --filter @virtool/site deploy`.
+- `apps/jobs-api/` — `@virtool/jobs-api`, the jobs control plane. A plain Node
+  HTTP service on port 9950, mirroring Python's `virtool/jobs/main.py`
+  (`api-jobs-service`, ClusterIP, no ingress). Serves `/health/live` and
+  `/health/ready` today. Image: `ghcr.io/virtool/jobs-api`, Alpine.
+- `apps/create-subtraction/` — `@virtool/create-subtraction`, the first workflow
+  executor: a one-shot process that starts, works, exits. Only its object
+  storage half is wired so far. Image: `ghcr.io/virtool/ts-create-subtraction`,
+  **Debian** — it copies binaries from `ghcr.io/virtool/tools`, which are built
+  against `python:3.13-bookworm` and cannot load under musl. It also installs
+  `perl` and `python3`, because `bowtie2` and `bowtie2-build` are interpreter
+  scripts wrapping the real binaries. The other three workflow executors get a
+  directory, a Dockerfile stage and a CI matrix entry when their port lands.
 - `apps/workflow-pathoscope/` — the pathoscope workflow image
   (`ghcr.io/virtool/ts-pathoscope`). Holds only a `Dockerfile` today: it
   compiles `packages/pathoscope-core` and layers the `ghcr.io/virtool/tools`
@@ -40,6 +52,12 @@ This is a **pnpm monorepo**:
   - `@virtool/data` — the database and domain data layer: the Drizzle schema,
     `createDb`, every domain's `data.ts`, the `client_events` emitter, the
     bcrypt/session/token primitives, and `AppError`
+  - `pathoscope-core` — **Rust, not TypeScript.** Pathoscope's EM core as a
+    standalone CLI, invoked as a subprocess. It is not a pnpm workspace (it
+    has no `package.json`) and is excluded from biome and knip by name —
+    see [docs/pathoscope-core.md](docs/pathoscope-core.md) before touching
+    it. Its results are pinned byte-for-byte against the Python extension
+    module it replaced.
 
   `@virtool/data` and `@virtool/storage` are server-side only. Browser code
   must never import them; they reach `apps/web` through `src/server/**`. A
@@ -54,12 +72,28 @@ This is a **pnpm monorepo**:
   `client` and `db`, and calls `createEmitter({ client, logger })`. Every
   `db`, `client`, and `storage` import in `apps/web` comes from there.
 
-  - `pathoscope-core` — **Rust, not TypeScript.** Pathoscope's EM core as a
-    standalone CLI, invoked as a subprocess. It is not a pnpm workspace (it
-    has no `package.json`) and is excluded from biome and knip by name —
-    see [docs/pathoscope-core.md](docs/pathoscope-core.md) before touching
-    it. Its results are pinned byte-for-byte against the Python extension
-    module it replaced.
+**Apps bundle; packages stay source.** Every package under `packages/` is
+unbuilt TypeScript — no `build` script, no `dist`, `noEmit: true`, and an
+`exports` map pointing at `./src/*.ts`. A plain `node` process cannot import a
+`.ts` file, so the non-Vite apps are where compilation happens: each bundles to
+a single `dist/index.mjs` with every `@virtool/*` inlined from source, via
+**tsdown**. Do not give a package a `dist` build to sidestep this — the apps
+bundling *is* the design. A new app is `apps/<name>/` with a `package.json`, a
+`tsconfig.json` extending `apps/tsconfig.node.json`, a `tsdown.config.ts` and
+`src/index.ts`; that is enough for `pnpm build`, `check`, `typecheck`, `test`
+and `knip` to cover it with no edits to root scripts, `knip.json`, `biome.json`
+or the Dockerfile install layer. A new *image* still needs a Dockerfile stage
+and a CI matrix entry.
+
+A non-Vite app must **never import from `apps/web`**, in either direction. A
+`biome.json` override over `apps/*/src/**` (excluding `apps/web/src/**`) bans
+every feature alias, `@server/**`, the `@/*` catch-all and relative reaches into
+`apps/web`. Shared shapes go down into `@virtool/contracts`.
+
+See [docs/apps.md](docs/apps.md) for the bundler rationale, the
+bundled-vs-external rule and why externals must be string literals, the
+`pnpm deploy` / `injectWorkspacePackages` mechanism, and the Alpine-vs-Debian
+image split.
 
 Use `pnpm` for all install, run, and exec commands — not `npm` or `bun`.
 
@@ -144,6 +178,12 @@ pnpm check                        # biome check (whole repo)
 workspace. Run `cargo` there directly; a `test-rust` CI job gates it.
 Building the crate needs `libclang-dev` installed, because `hts-sys` runs
 bindgen against htslib's headers.
+
+`pnpm build` builds **every app but `apps/site`**, which is gated by its own
+`build-site` CI job. `pnpm check` and `pnpm format` run biome over `apps` and
+`packages` rather than a literal `apps/web/src`, so a new app's source is linted
+without an edit; `apps/site` is excluded once, in `biome.json`'s
+`files.includes`.
 
 Don't use the dev server. Live development is done using Tilt and Minikube and is
 currently configured in another repository.
@@ -961,6 +1001,12 @@ moving to the mount can still carry the stale env var from the `Secret`
 it replaces, and erroring on the overlap would crashloop the rollout
 that fixes it. An unreadable path throws at startup; an empty file is an
 unset value.
+
+The non-Vite apps carry their own copy of the resolver in their
+`src/config.ts` — they cannot reach `apps/web/src/server`, and they parse
+a much smaller set of keys than the web app's zod schema. Keep the
+`<KEY>_FILE` behaviour in any new one; do not add a plain
+`process.env` read that skips it.
 
 ## Logging
 

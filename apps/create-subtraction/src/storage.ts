@@ -1,0 +1,28 @@
+import type { Logger } from "@virtool/logger";
+import { type StorageBackend, subtractionPrefix } from "@virtool/storage";
+
+/**
+ * Confirm the pod can actually reach the bucket, before it does any work.
+ *
+ * A workflow pod gets its own object storage identity, and a misconfigured one
+ * fails at the first read — which for these workflows is after the reads have
+ * already been downloaded and an aligner has run for an hour. Listing a prefix
+ * is the cheapest call that exercises credentials, endpoint and bucket name
+ * together, so it is worth paying at startup. It reads a single entry and stops:
+ * a real subtraction prefix holds a full Bowtie2 index, and draining the listing
+ * would cost a page of requests to learn nothing more.
+ */
+export async function checkStorageAccess(
+	storage: StorageBackend,
+	logger: Logger,
+	subtractionId: string,
+): Promise<void> {
+	const prefix = subtractionPrefix(subtractionId);
+
+	for await (const object of storage.list(prefix)) {
+		logger.info({ prefix, key: object.key }, "reached object storage");
+		return;
+	}
+
+	logger.info({ prefix }, "reached object storage");
+}

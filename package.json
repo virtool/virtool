@@ -4,10 +4,10 @@
 	"type": "module",
 	"packageManager": "pnpm@11.1.3",
 	"scripts": {
-		"build": "pnpm --filter @virtool/web build",
-		"check": "biome check --error-on-warnings apps/web/src packages",
+		"build": "pnpm -r --filter \"./apps/*\" --filter \"!@virtool/site\" build",
+		"check": "biome check --error-on-warnings apps packages",
 		"develop": "pnpm --filter @virtool/web develop",
-		"format": "biome check --write apps/web/src packages",
+		"format": "biome check --write apps packages",
 		"knip": "knip",
 		"test": "pnpm -r test",
 		"typecheck": "pnpm -r typecheck"
