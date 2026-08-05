@@ -30,18 +30,15 @@ from virtool.indexes.db import (
 )
 from virtool.indexes.models import Index
 from virtool.indexes.sql import SQLIndex, SQLIndexFile
-from virtool.indexes.utils import (
-    compose_index_file_key,
-    compose_index_prefix,
-)
 from virtool.references.models import ReferenceNested
 from virtool.references.sql import SQLReference
 from virtool.references.transforms import (
     AttachReferenceTransform,
     shape_nested_reference,
 )
-from virtool.storage.cleanup import delete_prefix
+from virtool.storage.cleanup import delete_keys
 from virtool.storage.errors import StorageKeyNotFoundError
+from virtool.storage.keys import mint_storage_key
 from virtool.storage.protocol import StorageBackend
 from virtool.users.transforms import AttachUserTransform
 
@@ -69,28 +66,6 @@ class IndexData:
         self._config = config
         self._pg = pg
         self._storage = storage
-
-    async def _resolve_storage_key(self, index_id: int) -> str:
-        """Return the object-storage key slug for an index.
-
-        Migrated indexes store their files under the legacy Mongo id; indexes
-        created natively in Postgres store under a minted UUID. Both live in the
-        load-bearing ``storage_key`` column, which cannot be derived from the
-        public index id. Raises ResourceNotFoundError if no index matches.
-        """
-        async with AsyncSession(self._pg) as session:
-            storage_key = (
-                await session.execute(
-                    select(SQLIndex.storage_key).where(
-                        compose_legacy_id_single_expression(SQLIndex, index_id),
-                    ),
-                )
-            ).scalar_one_or_none()
-
-        if storage_key is None:
-            raise ResourceNotFoundError
-
-        return storage_key
 
     async def get(self, index_id: int) -> Index:
         """Get a single index by its ID.
@@ -168,7 +143,11 @@ class IndexData:
         async with AsyncSession(self._pg) as session:
             row = (
                 await session.execute(
-                    select(SQLIndex.manifest, SQLIndex.storage_key).where(
+                    select(
+                        SQLIndex.id,
+                        SQLIndex.manifest,
+                        SQLIndex.otus_json_storage_key,
+                    ).where(
                         compose_legacy_id_single_expression(SQLIndex, index_id),
                     ),
                 )
@@ -178,28 +157,40 @@ class IndexData:
             raise ResourceNotFoundError()
 
         manifest = row.manifest
+        key = row.otus_json_storage_key
 
-        key = compose_index_file_key(row.storage_key, "otus.json.gz")
+        if key is not None:
+            try:
+                return self._storage.read(key), await self._storage.size(key)
+            except StorageKeyNotFoundError:
+                pass
+        else:
+            key = mint_storage_key("indexes", row.id)
 
-        try:
-            size = await self._storage.size(key)
-        except StorageKeyNotFoundError:
-            patched_otus = [
-                otu
-                async for otu in virtool.indexes.db.iter_patched_otus(
-                    self._pg,
-                    manifest,
-                )
-            ]
-
-            compressed = await asyncio.to_thread(
-                gzip.compress, dump_bytes(patched_otus)
+        patched_otus = [
+            otu
+            async for otu in virtool.indexes.db.iter_patched_otus(
+                self._pg,
+                manifest,
             )
+        ]
 
-            async def stream():
-                yield compressed
+        compressed = await asyncio.to_thread(gzip.compress, dump_bytes(patched_otus))
 
-            size = await self._storage.write(key, stream())
+        async def stream():
+            yield compressed
+
+        size = await self._storage.write(key, stream())
+
+        # Recorded only after the write succeeds, so a failed materialization
+        # never leaves the index pointing at an object that does not exist.
+        async with AsyncSession(self._pg) as session:
+            await session.execute(
+                update(SQLIndex)
+                .where(SQLIndex.id == row.id)
+                .values(otus_json_storage_key=key),
+            )
+            await session.commit()
 
         return self._storage.read(key), size
 
@@ -220,7 +211,7 @@ class IndexData:
         async with AsyncSession(self._pg) as session:
             row = (
                 await session.execute(
-                    select(SQLIndexFile.size, SQLIndex.storage_key)
+                    select(SQLIndexFile.size, SQLIndexFile.storage_key)
                     .join(SQLIndex, SQLIndexFile.index_id == SQLIndex.id)
                     .where(
                         compose_legacy_id_single_expression(SQLIndex, index_id),
@@ -232,9 +223,7 @@ class IndexData:
         if row is None:
             raise ResourceNotFoundError
 
-        key = compose_index_file_key(row.storage_key, filename)
-
-        return self._storage.read(key), row.size
+        return self._storage.read(row.storage_key), row.size
 
     @emits(Operation.UPDATE)
     async def generate_task_index(self, index_id: int | str) -> Index:
@@ -249,6 +238,7 @@ class IndexData:
             index_row = (
                 await session.execute(
                     select(
+                        SQLIndex.id,
                         SQLIndex.manifest,
                         SQLIndex.reference_id,
                         SQLIndex.job_id,
@@ -301,28 +291,27 @@ class IndexData:
             dump_bytes({**reference, "otus": patched_otus}),
         )
 
-        storage_key = await self._resolve_storage_key(index_id)
-
-        key = compose_index_file_key(storage_key, file_name)
+        key = mint_storage_key("indexes", index_row.id)
 
         async def stream():
             yield compressed
 
         try:
             # Storage cannot participate in the database transactions. A hard process
-            # exit can leave an unready object, but a retried build overwrites it.
+            # exit can leave an object no row names, which the orphan sweep collects.
             size = await self._storage.write(
                 key,
                 stream(),
             )
 
             async with AsyncSession(self._pg) as session:
-                await virtool.indexes.db.upsert_index_file(
+                index_file = await virtool.indexes.db.upsert_index_file(
                     session,
                     index_id,
                     "json",
                     file_name,
                     size,
+                    key,
                 )
 
                 await update_last_indexed_versions(reference_id, session)
@@ -354,6 +343,20 @@ class IndexData:
 
             raise
 
+        # The new row is committed, so the superseded object is already an orphan.
+        # Cleaning it up must not fail a build that otherwise succeeded.
+        if index_file["replaced_storage_key"] is not None:
+            for orphan_key, exc in await delete_keys(
+                self._storage,
+                [index_file["replaced_storage_key"]],
+            ):
+                logger.error(
+                    "storage cleanup failed; file orphaned",
+                    index_id=index_id,
+                    key=orphan_key,
+                    error=repr(exc),
+                )
+
         return await self.get(index_id)
 
     async def delete(self, index_id: int) -> None:
@@ -375,8 +378,6 @@ class IndexData:
         if index.ready:
             raise ResourceConflictError("Ready indexes cannot be deleted")
 
-        storage_key = await self._resolve_storage_key(index_id)
-
         async with AsyncSession(self._pg) as session:
             # Re-check readiness inside the transaction under a row lock. The guard
             # above races a concurrent ``finalize``: it can read ``ready=False``
@@ -385,7 +386,11 @@ class IndexData:
             # the committed ready state instead of erasing a freshly built index.
             row = (
                 await session.execute(
-                    select(SQLIndex.id, SQLIndex.ready)
+                    select(
+                        SQLIndex.id,
+                        SQLIndex.ready,
+                        SQLIndex.otus_json_storage_key,
+                    )
                     .where(compose_legacy_id_single_expression(SQLIndex, index_id))
                     .with_for_update(),
                 )
@@ -396,6 +401,20 @@ class IndexData:
 
             if row.ready:
                 raise ResourceConflictError("Ready indexes cannot be deleted")
+
+            # Read before the delete: index_files cascades on indexes.id.
+            storage_keys = list(
+                (
+                    await session.execute(
+                        select(SQLIndexFile.storage_key).where(
+                            SQLIndexFile.index_id == row.id,
+                        ),
+                    )
+                ).scalars(),
+            )
+
+            if row.otus_json_storage_key is not None:
+                storage_keys.append(row.otus_json_storage_key)
 
             await session.execute(
                 update(SQLLegacyHistory)
@@ -409,9 +428,7 @@ class IndexData:
 
             await session.commit()
 
-        for key, exc in await delete_prefix(
-            self._storage, compose_index_prefix(storage_key)
-        ):
+        for key, exc in await delete_keys(self._storage, storage_keys):
             logger.error(
                 "storage cleanup failed; file orphaned",
                 index_id=index_id,

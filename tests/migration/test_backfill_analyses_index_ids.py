@@ -10,7 +10,6 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from assets.revisions.rev_bn8b4pzfvokk_backfill_analyses_index_ids_to_integers import (
     upgrade,
 )
-from virtool.indexes.sql import SQLIndex
 from virtool.migration.ctx import MigrationContext
 from virtool.users.pg import SQLUser
 from virtool.utils import timestamp
@@ -50,20 +49,30 @@ async def _seed_index(session: AsyncSession, user_id: int, legacy_id: str) -> in
         )
     ).scalar_one()
 
-    index = SQLIndex(
-        legacy_id=legacy_id,
-        version=0,
-        created_at=timestamp(),
-        manifest={},
-        ready=True,
-        storage_key=legacy_id,
-        reference_id=reference_id,
-        user_id=user_id,
-    )
-    session.add(index)
-    await session.flush()
-
-    return index.id
+    # Raw SQL, like the inserts above: these tests pin an older revision, so the
+    # current ORM model carries columns the schema does not have yet.
+    return (
+        await session.execute(
+            text("""
+                INSERT INTO indexes (
+                    legacy_id, version, created_at, manifest, ready,
+                    storage_key, reference_id, user_id
+                )
+                VALUES (
+                    :legacy_id, 0, :now, '{}'::jsonb, true,
+                    :storage_key, :reference_id, :user_id
+                )
+                RETURNING id
+            """),
+            {
+                "legacy_id": legacy_id,
+                "now": timestamp(),
+                "storage_key": legacy_id,
+                "reference_id": reference_id,
+                "user_id": user_id,
+            },
+        )
+    ).scalar_one()
 
 
 async def _insert_analysis(ctx: MigrationContext, index: str) -> int:

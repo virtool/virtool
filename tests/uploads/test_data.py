@@ -11,16 +11,16 @@ from virtool.data.layer import DataLayer
 from virtool.fake.next import DataFaker, fake_file_chunker
 from virtool.pg.utils import get_row_by_id
 from virtool.samples.sql import SQLSampleReads
+from virtool.storage.keys import mint_storage_key
 from virtool.storage.protocol import StorageBackend
 from virtool.uploads.sql import SQLUpload, UploadType
-from virtool.uploads.utils import upload_file_key
 from virtool.utils import timestamp
 
 
 async def _is_stored(storage: StorageBackend, pg: AsyncEngine, upload_id: int) -> bool:
     """Check whether an upload's file is still present in storage."""
     row = await get_row_by_id(pg, SQLUpload, upload_id)
-    key = upload_file_key(row.name_on_disk)
+    key = row.storage_key
     async for info in storage.list(key):
         if info.key == key:
             return True
@@ -56,7 +56,7 @@ async def test_create(
     assert row.name == "sample_1.fq.gz"
     assert row.name_on_disk.endswith("-sample_1.fq.gz")
 
-    key = upload_file_key(row.name_on_disk)
+    key = row.storage_key
 
     assert (
         b"".join([chunk async for chunk in memory_storage.read(key)])
@@ -73,7 +73,7 @@ async def test_delete(
     before = await fake.uploads.create(user=await fake.users.create())
 
     row = await get_row_by_id(pg, SQLUpload, before.id)
-    key = upload_file_key(row.name_on_disk)
+    key = row.storage_key
 
     found = False
     async for info in memory_storage.list(key):
@@ -112,7 +112,7 @@ async def test_delete_reserved(
     before = await fake.uploads.create(user=await fake.users.create(), reserved=True)
 
     row = await get_row_by_id(pg, SQLUpload, before.id)
-    key = upload_file_key(row.name_on_disk)
+    key = row.storage_key
 
     with pytest.raises(ResourceConflictError):
         await data_layer.uploads.delete(before.id)
@@ -170,6 +170,7 @@ async def _link_to_sample(pg: AsyncEngine, upload_id: int, sample_id: str) -> No
                 name="reads_1.fq.gz",
                 name_on_disk="reads_1.fq.gz",
                 size=1,
+                storage_key=mint_storage_key("samples", upload_id),
                 upload=upload_id,
                 uploaded_at=timestamp(),
             ),

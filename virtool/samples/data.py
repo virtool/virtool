@@ -16,7 +16,7 @@ from structlog import get_logger
 
 import virtool.uploads.db
 import virtool.utils
-from virtool.analyses.sql import SQLAnalysis
+from virtool.analyses.sql import SQLAnalysis, SQLAnalysisFile
 from virtool.config.cls import Config
 from virtool.data.domain import DataLayerDomain
 from virtool.data.errors import ResourceConflictError, ResourceNotFoundError
@@ -56,18 +56,14 @@ from virtool.samples.sql import (
     SQLSampleReads,
     SQLSampleUpload,
 )
-from virtool.samples.utils import (
-    sample_file_key,
-    sample_prefix,
-    sample_storage_id,
-)
-from virtool.storage.cleanup import delete_prefix
+from virtool.storage.cleanup import delete_keys
+from virtool.storage.keys import mint_storage_key
 from virtool.storage.protocol import StorageBackend
 from virtool.subtractions.db import (
     AttachSubtractionsTransform,
 )
 from virtool.uploads.sql import SQLUpload
-from virtool.uploads.utils import is_gzip_compressed, upload_file_key
+from virtool.uploads.utils import is_gzip_compressed
 from virtool.users.pg import SQLUser
 from virtool.users.transforms import AttachUserTransform
 from virtool.utils import wait_for_checks
@@ -368,7 +364,7 @@ class SamplesData(DataLayerDomain):
             for index, upload in enumerate(uploads):
                 pg_session.add(
                     SQLSampleUpload(
-                        sample=sample_storage_id(sample_pk, None),
+                        sample=str(sample_pk),
                         sample_id=sample_pk,
                         upload_id=upload["id"],
                         index=index,
@@ -407,6 +403,31 @@ class SamplesData(DataLayerDomain):
                     .where(SQLUpload.id.in_(upload_ids))
                     .values(reserved=False),
                 )
+
+            # Every key must be read before its row is deleted. Analysis files
+            # are reached through the sample's analyses, whose rows cascade them
+            # away, so they are collected here rather than by AnalysisData.
+            storage_keys = [
+                key
+                for key in (
+                    await pg_session.execute(
+                        select(SQLSampleArtifact.storage_key)
+                        .where(SQLSampleArtifact.sample_id == sample_pk)
+                        .union_all(
+                            select(SQLSampleReads.storage_key).where(
+                                SQLSampleReads.sample_id == sample_pk,
+                            ),
+                            select(SQLAnalysisFile.storage_key)
+                            .join(
+                                SQLAnalysis,
+                                SQLAnalysis.id == SQLAnalysisFile.analysis_id,
+                            )
+                            .where(SQLAnalysis.sample_id == sample_pk),
+                        ),
+                    )
+                ).scalars()
+                if key is not None
+            ]
 
             await pg_session.execute(
                 delete(SQLAnalysis).where(
@@ -449,9 +470,7 @@ class SamplesData(DataLayerDomain):
 
             await pg_session.commit()
 
-        for key, failure in await delete_prefix(
-            self._storage, sample_prefix(sample_storage_id(sample_pk, legacy_id))
-        ):
+        for key, failure in await delete_keys(self._storage, storage_keys):
             logger.error(
                 "storage cleanup failed; file orphaned",
                 sample_id=sample_pk,
@@ -503,7 +522,7 @@ class SamplesData(DataLayerDomain):
 
             await pg_session.commit()
 
-        names_on_disk = []
+        storage_keys = []
 
         async with AsyncSession(self._pg) as session:
             rows = (
@@ -522,7 +541,8 @@ class SamplesData(DataLayerDomain):
             )
 
             for row in rows:
-                names_on_disk.append(row.name_on_disk)
+                if row.storage_key is not None:
+                    storage_keys.append(row.storage_key)
 
                 row.removed = True
                 row.removed_at = virtool.utils.timestamp()
@@ -530,9 +550,7 @@ class SamplesData(DataLayerDomain):
 
             await session.commit()
 
-        await gather(
-            *[self._storage.delete(upload_file_key(name)) for name in names_on_disk],
-        )
+        await gather(*[self._storage.delete(key) for key in storage_keys])
 
         return await self.get(sample_id)
 
@@ -552,7 +570,7 @@ class SamplesData(DataLayerDomain):
             raise ResourceConflictError("Unsupported sample artifact type")
 
         sample_pk, legacy_id = resolved
-        storage_id = sample_storage_id(sample_pk, legacy_id)
+        key = mint_storage_key("samples", sample_pk)
 
         try:
             artifact = await create_artifact_file(
@@ -560,15 +578,13 @@ class SamplesData(DataLayerDomain):
                 filename,
                 filename,
                 sample_pk,
-                storage_id,
+                key,
                 artifact_type,
             )
         except exc.IntegrityError:
             raise ResourceConflictError(
                 "Artifact file has already been uploaded for this sample",
             )
-
-        key = sample_file_key(storage_id, filename)
 
         try:
             size = await self._storage.write(key, chunker)
@@ -597,9 +613,7 @@ class SamplesData(DataLayerDomain):
             raise ResourceNotFoundError
 
         sample_pk, legacy_id = resolved
-        storage_id = sample_storage_id(sample_pk, legacy_id)
-
-        key = sample_file_key(storage_id, filename)
+        key = mint_storage_key("samples", sample_pk)
 
         first = await anext(chunker, None)
 
@@ -622,7 +636,7 @@ class SamplesData(DataLayerDomain):
                 filename,
                 filename,
                 sample_pk,
-                storage_id,
+                key,
                 upload_id=upload_id,
             )
         except exc.IntegrityError:
@@ -650,9 +664,7 @@ class SamplesData(DataLayerDomain):
         if row is None:
             raise ResourceNotFoundError
 
-        key = sample_file_key(row.sample, filename)
-
-        return self._storage.read(key), row.size, filename
+        return self._storage.read(row.storage_key), row.size, filename
 
     async def get_artifact_file(
         self,
@@ -670,10 +682,7 @@ class SamplesData(DataLayerDomain):
                 )
             ).scalar()
 
-        if not result:
+        if not result or result.storage_key is None:
             raise ResourceNotFoundError
 
-        artifact = result.to_dict()
-        key = sample_file_key(result.sample, artifact["name_on_disk"])
-
-        return self._storage.read(key), result.size
+        return self._storage.read(result.storage_key), result.size

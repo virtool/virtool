@@ -6,7 +6,6 @@ import virtool.analyses.files
 import virtool.analyses.utils
 from tests.fixtures.analysis import seed_index
 from virtool.analyses.sql import SQLAnalysis
-from virtool.analyses.utils import analysis_file_key
 from virtool.users.pg import SQLUser
 
 
@@ -64,7 +63,3 @@ async def test_attach_analysis_files(
         await virtool.analyses.utils.attach_analysis_files(pg, analysis_id, document)
         == snapshot
     )
-
-
-def test_analysis_file_key():
-    assert analysis_file_key("1-output.fasta") == "analyses/1-output.fasta"

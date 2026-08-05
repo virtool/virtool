@@ -10,6 +10,7 @@ from sqlalchemy import (
     Identity,
     Integer,
     String,
+    UniqueConstraint,
 )
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import Mapped, mapped_column
@@ -126,9 +127,17 @@ class SQLAnalysisResult(Base):
 
 
 class SQLAnalysisFile(Base):
-    """SQL model to store new analysis files"""
+    """SQL model to store new analysis files.
+
+    ``storage_key`` holds the file's complete object-storage key. It is nullable
+    because it is derived from ``name_on_disk``, which is itself nullable: a row
+    without one names no retrievable object.
+    """
 
     __tablename__ = "analysis_files"
+    __table_args__ = (
+        UniqueConstraint("storage_key", name="uq_analysis_files_storage_key"),
+    )
 
     id = Column(Integer, primary_key=True)
     analysis_id = Column(
@@ -141,4 +150,5 @@ class SQLAnalysisFile(Base):
     name = Column(String)
     name_on_disk = Column(String, unique=True)
     size = Column(BigInteger)
+    storage_key = Column(String)
     uploaded_at = Column(DateTime)

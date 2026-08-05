@@ -41,8 +41,3 @@ async def multipart_file_chunker(
             break
 
         yield chunk
-
-
-def upload_file_key(name_on_disk: str) -> str:
-    """Derive the storage key for an uploaded file."""
-    return f"files/{name_on_disk}"

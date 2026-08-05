@@ -64,6 +64,7 @@ async def test_delete_row(fake: DataFaker, pg: AsyncEngine):
                 index_id=index_pk,
                 type="bowtie2",
                 size=1234567,
+                storage_key="indexes/1/reference-1-bt2",
             )
         )
         await session.commit()
@@ -86,6 +87,7 @@ async def test_get_row(snapshot, fake: DataFaker, pg: AsyncEngine):
                 index_id=index_pk,
                 type="bowtie2",
                 size=1234567,
+                storage_key="indexes/1/reference-1-bt2",
             )
         )
         await session.commit()
@@ -104,6 +106,7 @@ async def test_get_rows(snapshot, fake: DataFaker, pg: AsyncEngine):
         index_id=index_pk,
         type="bowtie2",
         size=1234567,
+        storage_key="indexes/1/reference-1-bt2",
     )
 
     index_2 = SQLIndexFile(
@@ -113,6 +116,7 @@ async def test_get_rows(snapshot, fake: DataFaker, pg: AsyncEngine):
         index_id=index_pk,
         type="bowtie2",
         size=1234567,
+        storage_key="indexes/1/reference-2-bt2",
     )
     index_3 = SQLIndexFile(
         id=3,
@@ -121,6 +125,7 @@ async def test_get_rows(snapshot, fake: DataFaker, pg: AsyncEngine):
         index_id=index_pk,
         type="bowtie2",
         size=1234567,
+        storage_key="indexes/1/reference-3-bt2",
     )
 
     async with AsyncSession(pg) as session:

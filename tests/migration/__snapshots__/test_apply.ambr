@@ -918,5 +918,12 @@
       'name': 'drop spaces table and columns',
       'revision': 'cb89fbb68f58',
     }),
+    dict({
+      'applied_at': datetime,
+      'created_at': datetime,
+      'id': 132,
+      'name': 'add storage keys to file tables',
+      'revision': '0cbbc3b23245',
+    }),
   ])
 # ---

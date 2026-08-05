@@ -93,10 +93,10 @@ async def seed_analysis(pg: AsyncEngine, document: dict) -> int:
 
         if sample_row is None:
             sample_pg_id = None
-            sample_storage_id = str(sample["id"])
+            sample_legacy_ref = str(sample["id"])
         else:
             sample_pg_id = sample_row.id
-            sample_storage_id = sample_row.legacy_id or str(sample_row.id)
+            sample_legacy_ref = sample_row.legacy_id or str(sample_row.id)
 
         reference_row = (
             await session.execute(
@@ -161,7 +161,7 @@ async def seed_analysis(pg: AsyncEngine, document: dict) -> int:
             workflow=document["workflow"],
             ready=document["ready"],
             results=results if isinstance(results, dict) else None,
-            sample=sample_storage_id,
+            sample=sample_legacy_ref,
             sample_id=sample_pg_id,
             reference=reference_legacy_id or str(reference_pg_id),
             reference_id=reference_pg_id,

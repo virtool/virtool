@@ -35,9 +35,20 @@ class SQLIndex(Base):
       ``legacy_references.id``.
 
     ``legacy_id`` holds the Mongo ``_id`` and is nullable so indexes created
-    natively in Postgres can omit it. ``storage_key`` is load-bearing and
-    cannot be derived from ``legacy_id``: it holds the legacy id slug for
-    migrated rows and a UUID for native rows.
+    natively in Postgres can omit it.
+
+    ``storage_key`` is dead. Keys were once composed from it as
+    ``indexes/{storage_key}/{file name}``; each file now records its own
+    complete key in ``SQLIndexFile.storage_key``. The column is retained until a
+    later cleanup revision so a rolling deploy never has readers of a dropped
+    column.
+
+    ``otus_json_storage_key`` is the exception to files recording their own
+    keys. The compressed OTU JSON is materialized on demand by
+    ``IndexData.get_otus_json`` and deliberately has no ``index_files`` row,
+    because such a row would publish it in the index's file listing. Its key
+    lives here instead. It is nullable: an index that has never been asked for
+    its OTU JSON has not written one, and the key is minted on first write.
     """
 
     __tablename__ = "indexes"
@@ -57,6 +68,7 @@ class SQLIndex(Base):
     manifest: Mapped[dict] = mapped_column(JSONB)
     ready: Mapped[bool] = mapped_column(Boolean, default=False)
     storage_key: Mapped[str] = mapped_column(unique=True)
+    otus_json_storage_key: Mapped[str | None] = mapped_column(unique=True)
     reference_id: Mapped[int] = mapped_column(
         BigInteger, ForeignKey("legacy_references.id")
     )
@@ -89,12 +101,18 @@ class SQLIndexFile(Base):
 
     ``index_id`` cascades on delete: files belong to their index, so deleting the
     index (a hard delete, unlike the subtraction soft delete) removes its file
-    rows. The object-storage files are cleaned separately by ``IndexData.delete``.
+    rows. The object-storage files are cleaned separately by ``IndexData.delete``,
+    which reads their ``storage_key`` values before the cascade removes them.
+
+    ``storage_key`` holds the file's complete object-storage key, superseding the
+    per-index ``SQLIndex.storage_key`` slug that keys were previously composed
+    from.
     """
 
     __tablename__ = "index_files"
     __table_args__ = (
         UniqueConstraint("index_id", "name", name="index_files_index_id_name_key"),
+        UniqueConstraint("storage_key", name="uq_index_files_storage_key"),
         CheckConstraint(
             f"type IN ({_ALLOWED_INDEX_TYPES})",
             name="ck_index_files_type",
@@ -111,3 +129,4 @@ class SQLIndexFile(Base):
     )
     type = Column(String)
     size = Column(BigInteger)
+    storage_key = Column(String, nullable=False)

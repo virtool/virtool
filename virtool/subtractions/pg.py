@@ -59,13 +59,19 @@ class SQLSubtraction(Base):
 
 
 class SQLSubtractionFile(Base):
-    """SQL model to store new subtraction files"""
+    """SQL model to store new subtraction files.
+
+    ``storage_key`` holds the file's complete object-storage key. It is nullable
+    because it is derived from ``name``, which is itself nullable: a row without
+    one names no retrievable object.
+    """
 
     __tablename__ = "subtraction_files"
     __table_args__ = (
         UniqueConstraint(
             "subtraction_id", "name", name="subtraction_files_subtraction_id_name_key"
         ),
+        UniqueConstraint("storage_key", name="uq_subtraction_files_storage_key"),
     )
 
     id = Column(Integer, primary_key=True)
@@ -73,3 +79,4 @@ class SQLSubtractionFile(Base):
     subtraction_id = Column(BigInteger, ForeignKey("subtractions.id"), nullable=False)
     type = Column(Enum(SubtractionType))
     size = Column(BigInteger)
+    storage_key = Column(String)
