@@ -1,10 +1,6 @@
 // Read-only mirror of the `uploads` table managed by the upstream Python
 // service via Alembic. Do not generate or push migrations from this side. Keep
 // the columns in sync with `../../../../../../virtool/virtool/uploads/sql.py`.
-//
-// The legacy `space` column is a multi-tenant remnant that is never read or
-// written from this side and never appears in a response, so it is left out of
-// the mirror.
 
 import {
 	bigint,

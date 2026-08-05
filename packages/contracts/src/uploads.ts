@@ -9,7 +9,7 @@ export type UploadType = (typeof UPLOAD_TYPES)[number];
 
 /**
  * An upload as returned to the client. Mirrors Python's `UploadMinimal`:
- * `name_on_disk` and `space` are internal and never exposed.
+ * `name_on_disk` is internal and never exposed.
  *
  * Every field but `removed_at` and `user` is non-null: the columns are nullable
  * at the database level, but Python sets them all when it creates a row and

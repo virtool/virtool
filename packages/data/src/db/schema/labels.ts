@@ -9,7 +9,6 @@ export const labels = pgTable("labels", {
 	color: varchar("color", { length: 7 }),
 	description: text("description").$defaultFn(() => ""),
 	name: text("name").unique(),
-	space: integer("space"),
 });
 
 /** A row from the `labels` table. */
