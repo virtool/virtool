@@ -21,3 +21,25 @@ allowBuilds:
   sharp: true
   ssh2: true
   workerd: true
+
+# Transitive dependencies with known advisories that the direct packages
+# pulling them in haven't picked up yet (verified with `pnpm audit`). Each
+# entry is scoped to the vulnerable range rather than the bare package name
+# so it stops matching, and can be deleted, once `pnpm audit` no longer
+# flags it — either because the parent bumped past the range itself or a
+# fresh advisory needs a new entry. brace-expansion and undici each need two
+# entries because two incompatible major lines are both in the vulnerable
+# range (minimatch@3 pins brace-expansion@1.x, minimatch@5/9 pin @2.x); one
+# entry can't cover both without forcing a consumer onto a major version it
+# never asked for.
+overrides:
+  'brace-expansion@<1.1.18': ^1.1.18
+  'brace-expansion@>=2.0.0 <2.1.4': ^2.1.4
+  'undici@>=7.0.0 <7.29.0': ^7.29.0
+  'undici@>=8.0.0 <8.9.0': ^8.9.0
+  'sharp@<0.35.0': ^0.35.3
+  'fast-xml-parser@>=5.9.3 <5.10.1': ^5.10.1
+  'esbuild@<=0.24.2': ^0.25.0
+  'uuid@<11.1.1': ^11.1.1
+  'protobufjs@>=7.5.0 <=7.6.4': ^7.6.5
+  'postcss@<=8.5.22': ^8.5.23

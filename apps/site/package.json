@@ -27,7 +27,7 @@
     "prettier": "^3.9.6",
     "prismjs": "^1.30.0",
     "rehype-rewrite": "^4.0.4",
-    "sharp": "^0.34.5",
+    "sharp": "^0.35.3",
     "tailwindcss": "^4.2.2"
   },
   "devDependencies": {
