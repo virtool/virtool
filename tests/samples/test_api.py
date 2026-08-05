@@ -5,8 +5,8 @@ from pathlib import Path
 
 import pytest
 from aiohttp.test_utils import TestClient
-from sqlalchemy import update
-from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy import select, update
+from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 from syrupy import SnapshotAssertion
 
 import virtool.utils
@@ -16,7 +16,7 @@ from virtool.fake.next import DataFaker
 from virtool.jobs.models import CreateJobClaimRequest, JobState, Workflow
 from virtool.jobs.pg import SQLJob
 from virtool.samples.models import Sample
-from virtool.samples.utils import sample_file_key, sample_storage_id
+from virtool.samples.sql import SQLSampleArtifact, SQLSampleReads
 
 
 class TestFinalize:
@@ -471,6 +471,7 @@ class TestDownloadReads:
         self,
         fake: DataFaker,
         memory_storage,
+        pg: AsyncEngine,
         spawn_job_client: JobClientSpawner,
     ):
         """A reads row that resolves but whose blob is missing is a server-side
@@ -483,9 +484,16 @@ class TestDownloadReads:
         sample = await fake.samples.create(user, ready=True)
 
         file_name = "reads_1.fq.gz"
-        await memory_storage.delete(
-            sample_file_key(sample_storage_id(sample.id, None), file_name),
-        )
+
+        async with AsyncSession(pg) as session:
+            key = await session.scalar(
+                select(SQLSampleReads.storage_key).where(
+                    SQLSampleReads.sample_id == sample.id,
+                    SQLSampleReads.name == file_name,
+                ),
+            )
+
+        await memory_storage.delete(key)
 
         job_client = await spawn_job_client(authenticated=True)
 
@@ -561,6 +569,7 @@ class TestDownloadArtifact:
         example_path: Path,
         fake: DataFaker,
         memory_storage,
+        pg: AsyncEngine,
         spawn_job_client: JobClientSpawner,
     ):
         """An artifact row that resolves but whose blob is missing is a server-side
@@ -575,9 +584,15 @@ class TestDownloadArtifact:
         client = await spawn_job_client(authenticated=True)
         await self._upload_artifact(client, example_path, sample.id)
 
-        await memory_storage.delete(
-            sample_file_key(sample_storage_id(sample.id, None), "fastqc.txt"),
-        )
+        async with AsyncSession(pg) as session:
+            key = await session.scalar(
+                select(SQLSampleArtifact.storage_key).where(
+                    SQLSampleArtifact.sample_id == sample.id,
+                    SQLSampleArtifact.name == "fastqc.txt",
+                ),
+            )
+
+        await memory_storage.delete(key)
 
         resp = await client.get(f"/samples/{sample.id}/artifacts/fastqc.txt")
 

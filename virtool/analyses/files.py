@@ -1,6 +1,7 @@
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 
 from virtool.analyses.sql import SQLAnalysisFile
+from virtool.storage.keys import mint_storage_key
 
 
 async def create_analysis_file(
@@ -26,6 +27,7 @@ async def create_analysis_file(
             analysis_id=analysis_id,
             format=analysis_format,
             size=size,
+            storage_key=mint_storage_key("analyses", analysis_id),
         )
 
         session.add(analysis_file)

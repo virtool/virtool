@@ -19,14 +19,13 @@ from virtool.samples.sql import (
     SQLLegacySample,
     SQLLegacySampleLabel,
     SQLLegacySampleSubtraction,
+    SQLSampleReads,
     SQLSampleUpload,
 )
-from virtool.samples.utils import sample_file_key, sample_prefix
 from virtool.settings.oas import UpdateSettingsRequest
 from virtool.storage.errors import StorageKeyNotFoundError
 from virtool.storage.protocol import StorageBackend
 from virtool.uploads.sql import SQLUpload
-from virtool.uploads.utils import upload_file_key
 from virtool.users.oas import UpdateUserRequest
 from virtool.utils import timestamp
 
@@ -325,7 +324,7 @@ class TestFinalize:
 
         for upload in sample.uploads:
             row = await get_row_by_id(pg, SQLUpload, upload.id)
-            key = upload_file_key(row.name_on_disk)
+            key = row.storage_key
 
             assert await memory_storage.size(key) > 0
 
@@ -543,12 +542,23 @@ class TestDelete:
 
         assert (await get_row_by_id(pg, SQLLegacySample, sample.id)).legacy_id is None
 
-        prefix = sample_prefix(str(sample.id))
+        prefix = f"samples/{sample.id}/"
 
-        assert [obj.key async for obj in memory_storage.list(prefix)] == [
-            sample_file_key(str(sample.id), "reads_1.fq.gz"),
-            sample_file_key(str(sample.id), "reads_2.fq.gz"),
-        ]
+        async with AsyncSession(pg) as session:
+            reads_keys = sorted(
+                (
+                    await session.execute(
+                        select(SQLSampleReads.storage_key).where(
+                            SQLSampleReads.sample_id == sample.id,
+                        ),
+                    )
+                ).scalars(),
+            )
+
+        assert len(reads_keys) == 2
+        assert sorted([obj.key async for obj in memory_storage.list(prefix)]) == (
+            reads_keys
+        )
 
         await data_layer.samples.delete(sample.id)
 

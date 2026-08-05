@@ -7,7 +7,6 @@ from virtool.references.utils import (
     load_reference_from_storage,
 )
 from virtool.tasks.task import BaseTask
-from virtool.uploads.utils import upload_file_key
 
 if TYPE_CHECKING:
     from virtool.data.layer import DataLayer
@@ -49,7 +48,9 @@ class ImportReferenceTask(BaseTask):
         self.import_data: ReferenceSourceData | None = None
 
     async def load_file(self) -> None:
-        key = upload_file_key(self.context["name_on_disk"])
+        key = await self.data.uploads.get_storage_key_by_name_on_disk(
+            self.context["name_on_disk"],
+        )
 
         try:
             import_data = await load_reference_from_storage(

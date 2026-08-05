@@ -14,8 +14,9 @@ from virtool.fake.next import DataFaker
 from virtool.indexes.db import REFERENCE_JSON_V2_FILE_NAME
 from virtool.indexes.sql import SQLIndex, SQLIndexFile
 from virtool.indexes.tasks import CreateIndexTask
-from virtool.indexes.utils import compose_index_file_key
 from virtool.otus.sql import SQLOTU
+from virtool.storage.errors import StorageKeyNotFoundError
+from virtool.storage.keys import mint_storage_key
 from virtool.storage.protocol import StorageBackend
 from virtool.tasks.sql import SQLTask
 from virtool.workflow.pytest_plugin.utils import StaticTime
@@ -62,17 +63,21 @@ class TestCreateIndexTask:
         self.index_id = index.id
 
         async with AsyncSession(self.pg) as session:
-            row = (
-                await session.execute(
-                    select(SQLIndex.task_id, SQLIndex.storage_key).where(
-                        SQLIndex.id == index.id,
-                    ),
-                )
-            ).one()
+            task_id = await session.scalar(
+                select(SQLIndex.task_id).where(SQLIndex.id == index.id),
+            )
 
-        self.storage_key = row.storage_key
+        return task_id
 
-        return row.task_id
+    async def reference_json_key(self) -> str:
+        """The key recorded on the reference JSON v2 file row."""
+        async with AsyncSession(self.pg) as session:
+            return await session.scalar(
+                select(SQLIndexFile.storage_key).where(
+                    SQLIndexFile.index_id == self.index_id,
+                    SQLIndexFile.name == REFERENCE_JSON_V2_FILE_NAME,
+                ),
+            )
 
     async def test_writes_only_compressed_reference_json_v2_and_finalizes(
         self,
@@ -81,11 +86,11 @@ class TestCreateIndexTask:
         """The task writes reference JSON v2 and marks the index ready."""
         await (await CreateIndexTask.from_task_id(self.data_layer, task_id)).run()
 
-        key = compose_index_file_key(self.storage_key, REFERENCE_JSON_V2_FILE_NAME)
+        key = await self.reference_json_key()
 
         keys = [
             info.key
-            async for info in self.memory_storage.list(f"indexes/{self.storage_key}/")
+            async for info in self.memory_storage.list(f"indexes/{self.index_id}/")
         ]
         assert keys == [key]
 
@@ -169,8 +174,8 @@ class TestCreateIndexTask:
         assert (await self.data_layer.index.get(self.index_id)).ready is True
         assert [
             info.key
-            async for info in self.memory_storage.list(f"indexes/{self.storage_key}/")
-        ] == [compose_index_file_key(self.storage_key, REFERENCE_JSON_V2_FILE_NAME)]
+            async for info in self.memory_storage.list(f"indexes/{self.index_id}/")
+        ] == [await self.reference_json_key()]
 
     async def test_runs_with_stringified_integer_index_id(self, task_id: int) -> None:
         """A task whose context stores the index id as a stringified integer still runs.
@@ -196,17 +201,27 @@ class TestCreateIndexTask:
         assert (await self.data_layer.index.get(self.index_id)).ready is True
 
     async def test_updates_existing_index_file_row(self, task_id: int) -> None:
-        """An existing reference JSON file row is updated instead of duplicated."""
+        """An existing reference JSON file row is updated instead of duplicated.
+
+        Keys are minted per write, so the rebuild writes a new object rather than
+        overwriting the old one. The superseded object must be deleted or every
+        retried build leaks one.
+        """
+        superseded_key = mint_storage_key("indexes", self.index_id)
+
+        async def _stream():
+            yield b"stale"
+
+        await self.memory_storage.write(superseded_key, _stream())
+
         async with AsyncSession(self.pg) as session:
-            index_pk = await session.scalar(
-                select(SQLIndex.id).where(SQLIndex.id == self.index_id),
-            )
             session.add(
                 SQLIndexFile(
                     index=str(self.index_id),
-                    index_id=index_pk,
+                    index_id=self.index_id,
                     name=REFERENCE_JSON_V2_FILE_NAME,
                     size=1,
+                    storage_key=superseded_key,
                     type="json",
                 ),
             )
@@ -230,18 +245,19 @@ class TestCreateIndexTask:
         assert rows[0].type == "json"
         assert rows[0].size > 1
 
-        assert (
-            await self.memory_storage.size(
-                compose_index_file_key(self.storage_key, REFERENCE_JSON_V2_FILE_NAME),
-            )
-            == rows[0].size
-        )
+        key = await self.reference_json_key()
+
+        assert key != superseded_key
+        assert await self.memory_storage.size(key) == rows[0].size
+
+        with pytest.raises(StorageKeyNotFoundError):
+            await self.memory_storage.size(superseded_key)
 
     async def test_rejects_regenerating_ready_index(self, task_id: int) -> None:
         """A completed task-backed index cannot be regenerated."""
         await (await CreateIndexTask.from_task_id(self.data_layer, task_id)).run()
 
-        key = compose_index_file_key(self.storage_key, REFERENCE_JSON_V2_FILE_NAME)
+        key = await self.reference_json_key()
         artifact = b"".join(
             [chunk async for chunk in self.memory_storage.read(key)],
         )
@@ -297,7 +313,7 @@ class TestCreateIndexTask:
 
         keys = [
             info.key
-            async for info in self.memory_storage.list(f"indexes/{self.storage_key}/")
+            async for info in self.memory_storage.list(f"indexes/{self.index_id}/")
         ]
         assert keys == []
 
@@ -346,7 +362,7 @@ class TestCreateIndexTask:
 
         keys = [
             info.key
-            async for info in self.memory_storage.list(f"indexes/{self.storage_key}/")
+            async for info in self.memory_storage.list(f"indexes/{self.index_id}/")
         ]
         assert keys == []
 

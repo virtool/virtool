@@ -6,7 +6,7 @@ from pathlib import Path
 
 import pytest
 from pytest_mock import MockerFixture
-from sqlalchemy import select
+from sqlalchemy import select, update
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 from syrupy import SnapshotAssertion
 
@@ -16,7 +16,7 @@ from virtool.fake.next import DataFaker
 from virtool.history.sql import SQLLegacyHistory
 from virtool.indexes.constants import INDEX_SQLITE_FILE_NAME
 from virtool.indexes.sql import SQLIndex, SQLIndexFile
-from virtool.indexes.utils import compose_index_file_key
+from virtool.storage.keys import mint_storage_key
 from virtool.storage.protocol import StorageBackend
 from virtool.workflow.pytest_plugin.utils import StaticTime
 
@@ -136,12 +136,15 @@ async def test_download_otus_json(
     index = await fake.indexes.create(reference, user, manifest=manifest)
 
     if file_exists:
-        async with AsyncSession(client.app["pg"]) as session:
-            storage_key = await session.scalar(
-                select(SQLIndex.storage_key).where(SQLIndex.id == index.id),
-            )
+        key = mint_storage_key("indexes", index.id)
 
-        key = compose_index_file_key(storage_key, "otus.json.gz")
+        async with AsyncSession(client.app["pg"]) as session:
+            await session.execute(
+                update(SQLIndex)
+                .where(SQLIndex.id == index.id)
+                .values(otus_json_storage_key=key),
+            )
+            await session.commit()
 
         async def _stream():
             yield otus_json_path.read_bytes()
@@ -243,12 +246,7 @@ async def test_download(
     path = example_path / "indexes" / "reference.1.bt2"
     expected_bytes = path.read_bytes()
 
-    async with AsyncSession(pg) as session:
-        storage_key = await session.scalar(
-            select(SQLIndex.storage_key).where(SQLIndex.id == index.id),
-        )
-
-    key = compose_index_file_key(storage_key, "reference.1.bt2")
+    key = mint_storage_key("indexes", index.id)
 
     async def _stream():
         yield expected_bytes
@@ -263,6 +261,7 @@ async def test_download(
                 index_id=index.id,
                 type="bowtie2",
                 size=len(expected_bytes),
+                storage_key=key,
             ),
         )
         await session.commit()
@@ -290,11 +289,9 @@ async def _seed_downloadable_sqlite(
     index = await fake.indexes.create(reference, user)
     expected = b"server-produced SQLite index"
 
-    async with AsyncSession(pg) as session:
-        storage_key = await session.scalar(
-            select(SQLIndex.storage_key).where(SQLIndex.id == index.id),
-        )
+    storage_key = mint_storage_key("indexes", index.id)
 
+    async with AsyncSession(pg) as session:
         session.add(
             SQLIndexFile(
                 name=INDEX_SQLITE_FILE_NAME,
@@ -302,6 +299,7 @@ async def _seed_downloadable_sqlite(
                 index_id=index.id,
                 type="sqlite",
                 size=len(expected),
+                storage_key=storage_key,
             ),
         )
         await session.commit()
@@ -309,10 +307,7 @@ async def _seed_downloadable_sqlite(
     async def stream():
         yield expected
 
-    await memory_storage.write(
-        compose_index_file_key(storage_key, INDEX_SQLITE_FILE_NAME),
-        stream(),
-    )
+    await memory_storage.write(storage_key, stream())
 
     return index.id, expected
 

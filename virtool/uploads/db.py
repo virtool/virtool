@@ -98,4 +98,7 @@ async def finalize(pg, size: int, id_: int, model: type[Base]) -> dict | None:
 
         await session.commit()
 
+    # Where an object lives is internal; clients address files by name.
+    upload.pop("storage_key", None)
+
     return upload

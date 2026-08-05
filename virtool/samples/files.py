@@ -30,16 +30,19 @@ async def create_artifact_file(
     name: str,
     name_on_disk: str,
     sample_id: int,
-    storage_id: str,
+    storage_key: str,
     artifact_type: str,
 ) -> dict[str, any]:
     """Create a row in an SQL table that represents uploaded sample artifact file.
+
+    ``sample`` is the dead legacy prefix column, still ``NOT NULL`` until it is
+    dropped, so it is filled with the sample's primary key. Nothing reads it.
 
     :param pg: PostgreSQL AsyncEngine object
     :param name: Name of the sample artifact file
     :param name_on_disk: Name of the sample artifact file as it appears on disk
     :param sample_id: Primary key of the parent sample
-    :param storage_id: Identifier the parent sample's storage objects are keyed under
+    :param storage_key: Complete object-storage key the artifact is written to
     :param artifact_type: Type of artifact to be uploaded
     :return: A dictionary representation of the newly created row
     """
@@ -47,8 +50,9 @@ async def create_artifact_file(
         artifact = SQLSampleArtifact(
             name=name,
             name_on_disk=name_on_disk,
-            sample=storage_id,
+            sample=str(sample_id),
             sample_id=sample_id,
+            storage_key=storage_key,
             type=artifact_type,
             uploaded_at=virtool.utils.timestamp(),
         )
@@ -69,28 +73,32 @@ async def create_reads_file(
     name: str,
     name_on_disk: str,
     sample_id: int,
-    storage_id: str,
+    storage_key: str,
     upload_id: int | None = None,
 ) -> dict[str, any]:
     """Create a row in a SQL table that represents uploaded sample reads files.
+
+    ``sample`` is the dead legacy prefix column, still ``NOT NULL`` until it is
+    dropped, so it is filled with the sample's primary key. Nothing reads it.
 
     :param pg: PostgreSQL AsyncEngine object
     :param size: Size of a newly uploaded file in bytes
     :param name: Name of the file (either `reads_1.fq.gz` or `reads_2.fq.gz`)
     :param name_on_disk: Name of the newly uploaded file on disk
     :param sample_id: Primary key of the parent sample
-    :param storage_id: Identifier the parent sample's storage objects are keyed under
+    :param storage_key: Complete object-storage key the reads file is written to
     :param upload_id: ID for a row in the `uploads` table to pair with
     :return: List of dictionary representations of the newly created row(s)
 
     """
     async with AsyncSession(pg) as session:
         reads = SQLSampleReads(
-            sample=storage_id,
+            sample=str(sample_id),
             sample_id=sample_id,
             name=name,
             name_on_disk=name_on_disk,
             size=size,
+            storage_key=storage_key,
             uploaded_at=virtool.utils.timestamp(),
         )
 

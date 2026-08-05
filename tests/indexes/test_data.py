@@ -10,7 +10,8 @@ from virtool.data.layer import DataLayer
 from virtool.fake.next import DataFaker
 from virtool.history.sql import SQLLegacyHistory
 from virtool.indexes.sql import SQLIndex, SQLIndexFile
-from virtool.indexes.utils import compose_index_file_key
+from virtool.storage.keys import mint_storage_key
+from virtool.storage.protocol import StorageBackend
 
 
 async def add_index_files(pg: AsyncEngine, index_id: int) -> None:
@@ -35,6 +36,7 @@ async def add_index_files(pg: AsyncEngine, index_id: int) -> None:
                     index_id=index_id,
                     type=type_,
                     size=1234567,
+                    storage_key=mint_storage_key("indexes", index_id),
                 )
                 for id_, (name, type_) in enumerate(names, start=1)
             ],
@@ -212,42 +214,16 @@ class TestDelete:
             )
 
 
-class TestResolveStorageKey:
-    async def test_matches_legacy_id_at_landing(
+class TestGetOtusJson:
+    async def test_mints_and_records_key(
         self,
         data_layer: DataLayer,
         fake: DataFaker,
+        memory_storage: StorageBackend,
         pg: AsyncEngine,
     ):
-        """At landing every migrated index carries ``storage_key == legacy_id``, so the
-        composed object path stays keyed by the legacy slug even though the public id is
-        now the integer primary key.
-        """
-        user = await fake.users.create()
-        reference = await fake.references.create(user=user)
-        index = await fake.indexes.create(reference, user, manifest={}, version=2)
-
-        async with AsyncSession(pg) as session:
-            legacy_id = await session.scalar(
-                select(SQLIndex.legacy_id).where(SQLIndex.id == index.id),
-            )
-
-        storage_key = await data_layer.index._resolve_storage_key(index.id)
-
-        assert storage_key == legacy_id
-        assert (
-            compose_index_file_key(storage_key, "otus.json.gz")
-            == f"indexes/{legacy_id}/otus.json.gz"
-        )
-
-    async def test_uses_storage_key_column(
-        self,
-        data_layer: DataLayer,
-        fake: DataFaker,
-        pg: AsyncEngine,
-    ):
-        """The resolver reads ``storage_key``, so a native UUID key addresses storage
-        independently of the public index id.
+        """An index that has never served its OTU JSON gets a key minted, the object
+        written, and the key recorded so later reads never recompose it.
         """
         user = await fake.users.create()
         reference = await fake.references.create(user=user)
@@ -257,14 +233,54 @@ class TestResolveStorageKey:
             await session.execute(
                 update(SQLIndex)
                 .where(SQLIndex.id == index.id)
-                .values(storage_key="a-native-uuid-key"),
+                .values(otus_json_storage_key=None),
             )
             await session.commit()
 
-        assert (
-            await data_layer.index._resolve_storage_key(index.id) == "a-native-uuid-key"
-        )
+        _, size = await data_layer.index.get_otus_json(index.id)
+
+        async with AsyncSession(pg) as session:
+            key = await session.scalar(
+                select(SQLIndex.otus_json_storage_key).where(
+                    SQLIndex.id == index.id,
+                ),
+            )
+
+        assert key is not None
+        assert key.startswith(f"indexes/{index.id}/")
+        assert await memory_storage.size(key) == size
+
+    async def test_reuses_recorded_key(
+        self,
+        data_layer: DataLayer,
+        fake: DataFaker,
+        pg: AsyncEngine,
+    ):
+        """A second read serves the recorded key rather than minting a new one."""
+        user = await fake.users.create()
+        reference = await fake.references.create(user=user)
+        index = await fake.indexes.create(reference, user, manifest={}, version=2)
+
+        await data_layer.index.get_otus_json(index.id)
+
+        async with AsyncSession(pg) as session:
+            first = await session.scalar(
+                select(SQLIndex.otus_json_storage_key).where(
+                    SQLIndex.id == index.id,
+                ),
+            )
+
+        await data_layer.index.get_otus_json(index.id)
+
+        async with AsyncSession(pg) as session:
+            second = await session.scalar(
+                select(SQLIndex.otus_json_storage_key).where(
+                    SQLIndex.id == index.id,
+                ),
+            )
+
+        assert first == second
 
     async def test_not_found(self, data_layer: DataLayer):
         with pytest.raises(ResourceNotFoundError):
-            await data_layer.index._resolve_storage_key(999999)
+            await data_layer.index.get_otus_json(999999)

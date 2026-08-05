@@ -1,8 +1,9 @@
 from pathlib import Path
 from typing import NamedTuple
-from unittest.mock import ANY, AsyncMock
+from unittest.mock import ANY
 
 import pytest
+from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 from syrupy import SnapshotAssertion
@@ -13,6 +14,8 @@ from virtool.data.errors import ResourceNotModifiedError
 from virtool.data.layer import DataLayer
 from virtool.fake.next import DataFaker, fake_file_chunker
 from virtool.pg.utils import get_row, get_row_by_id
+from virtool.storage.errors import StorageKeyNotFoundError
+from virtool.storage.protocol import StorageBackend
 from virtool.users.models import User
 from virtool.utils import timestamp
 
@@ -170,21 +173,14 @@ class TestDelete:
 
         assert await get_row(pg, SQLAnalysis, ("id", analysis_id)) is None
 
-    async def test_native_analysis_skips_storage_cleanup(
+    async def test_deletes_recorded_file_objects(
         self,
         data_layer: DataLayer,
-        mocker,
+        memory_storage: StorageBackend,
         pg: AsyncEngine,
         setup_sample: SampleSetup,
     ):
-        """A Postgres-native analysis has a NULL legacy id, so no slug-prefixed
-        storage objects exist to clean up.
-        """
-        delete_prefix = mocker.patch(
-            "virtool.analyses.data.delete_prefix",
-            new=AsyncMock(return_value=[]),
-        )
-
+        """Deleting an analysis removes every object its file rows name."""
         analysis_id = await seed_setup_analysis(
             pg,
             setup_sample,
@@ -192,23 +188,40 @@ class TestDelete:
             results={"hits": []},
         )
 
+        async def _chunks():
+            yield bytearray(b"results")
+
+        await data_layer.analyses.upload_file(
+            _chunks(), analysis_id, "fasta", "results.fa"
+        )
+
+        async with AsyncSession(pg) as session:
+            key = await session.scalar(
+                select(SQLAnalysisFile.storage_key).where(
+                    SQLAnalysisFile.analysis_id == analysis_id,
+                ),
+            )
+
+        assert await memory_storage.size(key) > 0
+
         await data_layer.analyses.delete(analysis_id, jobs_api_flag=True)
 
-        delete_prefix.assert_not_awaited()
+        with pytest.raises(StorageKeyNotFoundError):
+            await memory_storage.size(key)
 
-    async def test_legacy_analysis_cleans_storage(
+    async def test_leaves_objects_no_row_names(
         self,
         data_layer: DataLayer,
-        mocker,
+        memory_storage: StorageBackend,
         pg: AsyncEngine,
         setup_sample: SampleSetup,
     ):
-        """A Mongo-migrated analysis still removes its slug-prefixed storage objects."""
-        delete_prefix = mocker.patch(
-            "virtool.analyses.data.delete_prefix",
-            new=AsyncMock(return_value=[]),
-        )
+        """Objects written under a migrated analysis' old slug prefix survive deletion.
 
+        Those objects predate keys being recorded, so no row names them and the
+        delete path cannot reach them. Collecting them is the orphan sweep's job,
+        not this delete's -- guessing at a prefix is what this change removes.
+        """
         analysis_id = await seed_setup_analysis(
             pg,
             setup_sample,
@@ -217,13 +230,16 @@ class TestDelete:
             results={"hits": []},
         )
 
+        legacy_key = f"samples/{setup_sample.sample_id}/analysis/oldslug/hits.fa"
+
+        async def _stream():
+            yield b"legacy"
+
+        await memory_storage.write(legacy_key, _stream())
+
         await data_layer.analyses.delete(analysis_id, jobs_api_flag=True)
 
-        delete_prefix.assert_awaited_once()
-        assert (
-            delete_prefix.await_args.args[1]
-            == f"samples/{setup_sample.sample_id}/analysis/oldslug/"
-        )
+        assert await memory_storage.size(legacy_key) > 0
 
 
 async def test_get_without_if_modified_since(

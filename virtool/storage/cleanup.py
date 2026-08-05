@@ -1,30 +1,31 @@
 """Best-effort cleanup helpers for orphaned storage objects."""
 
 import asyncio
+from collections.abc import Iterable
 
 from virtool.storage.protocol import StorageBackend
 
 
-async def delete_prefix(
+async def delete_keys(
     storage: StorageBackend,
-    prefix: str,
+    keys: Iterable[str],
 ) -> list[tuple[str, BaseException]]:
-    """Best-effort delete every object under ``prefix``.
+    """Best-effort delete every object named by ``keys``.
 
     Attempts every delete concurrently and never raises: when this runs the
     caller has typically already committed a database write that makes these
     objects orphans, so propagating one failure would skip the rest of the
     cleanup while telling the API client the whole operation failed.
 
+    Callers pass the keys recorded on the rows they are deleting, which must be
+    read before those rows go, and only objects named by a row are removed.
+    Objects written before keys were recorded are not reachable this way and are
+    left for a separate sweep.
+
     Returns a list of ``(key, exception)`` pairs for failures. Callers must log
-    these so orphans remain observable. If the initial list call fails the
-    prefix itself is reported in place of a key, since no per-object keys are
-    known at that point.
+    these so orphans remain observable.
     """
-    try:
-        keys = [obj.key async for obj in storage.list(prefix)]
-    except Exception as exc:
-        return [(prefix, exc)]
+    keys = list(keys)
 
     results = await asyncio.gather(
         *(storage.delete(key) for key in keys),
