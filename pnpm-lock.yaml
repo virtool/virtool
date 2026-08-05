@@ -474,6 +474,9 @@ importers:
       '@virtool/storage':
         specifier: workspace:*
         version: link:../storage
+      execa:
+        specifier: ^9.6.1
+        version: 9.6.1
       tar-stream:
         specifier: ^3.2.0
         version: 3.2.0

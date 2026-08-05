@@ -1,19 +1,20 @@
 # The workflow runtime
 
 `@virtool/workflow` (`packages/workflow`) is the runtime a workflow executor
-runs on: the step model, the run loop, the work directory, the seam that
-builds a run's context, and the job lifecycle loop that talks to the jobs
-API. It is the port of Python's `virtool/workflow/` — `workflow.py`,
-`decorators.py`, `runtime/run.py`, `runtime/path.py`, `client.py`,
-`api/utils.py`, `acquire.py` and `runtime/ping.py` — minus the three
-mechanisms this side deliberately does not have: dependency injection,
-teardown, and lifecycle hooks.
+runs on: the step model, the run loop, the work directory, the subprocess
+runner, the seam that builds a run's context, and the job lifecycle loop
+that talks to the jobs API. It is the port of Python's `virtool/workflow/` —
+`workflow.py`, `decorators.py`, `runtime/run.py`, `runtime/path.py`,
+`runtime/run_subprocess.py`, `client.py`, `api/utils.py`, `acquire.py` and
+`runtime/ping.py` — minus the three mechanisms this side deliberately does
+not have: dependency injection, teardown, and lifecycle hooks.
 
 The two halves are kept strictly apart. `runWorkflow` is the run loop: it
 **returns** an outcome and never touches the network, `process.exit`, or a
 signal handler. `runWorkflowApp` is the lifecycle loop that owns all of
 that — claiming, heartbeating, reporting, and the exit code. It knows
-nothing about object storage or subprocesses.
+nothing about object storage, and touches subprocesses only to build the
+runner it puts on the context.
 
 ## The step model
 
@@ -75,6 +76,8 @@ type WorkflowContext<TData, TState> = {
 	readonly mem: number;
 	readonly logger: Logger;
 	readonly signal: AbortSignal;
+	readonly client: JobsApiClient;
+	readonly runSubprocess: RunSubprocess;
 };
 ```
 
@@ -110,11 +113,12 @@ optional field would then have to fight the type system to satisfy it.
 fixture, and is **not** serializable-constrained. It holds whatever a
 workflow needs between steps.
 
-`WorkflowContext` carries the run's `client` — built before `buildContext`
-runs, so a step that needs a metadata read reaches it without a second
-construction path — and grows two more members, each added by its own issue:
-`runSubprocess` and `storage`. Only `data` is serializable-constrained;
-those three carry live handles by design.
+Everything on `BuildContextInput` is spread onto the context, so a member
+added there is a member a step sees. The run's `client` and `runSubprocess`
+are both built before `buildContext` runs — a step that needs a metadata
+read or a tool reaches either without a second construction path — and
+`storage` lands the same way with its own issue. Only `data` is
+serializable-constrained; the live handles are so by design.
 
 ## There is no teardown
 
@@ -217,6 +221,125 @@ and lose the cancellation entirely, so a rejection arriving while
 response reported `cancelled: true`) and `terminate()` (SIGTERM) abort the
 same signal; the flags are what tells the two apart afterwards.
 
+## The subprocess runner
+
+Every bioinformatics tool a workflow runs — bowtie2, samtools, cd-hit-est,
+SPAdes, HMMER, `pathoscope-core` — goes through `context.runSubprocess`, the
+port of Python's `runtime/run_subprocess.py`. `runWorkflowApp` builds it once
+per run with `createRunSubprocess({ signal, logger })` and puts it on
+`BuildContextInput`, so the run's `AbortSignal` is already bound and a step
+cannot forget to forward cancellation to a forty-minute alignment.
+
+```ts
+await context.runSubprocess({
+	command: ["bowtie2-build", fastaPath, indexPath],
+	cwd: context.workPath,
+	stderr: async (line) => { ... },
+});
+```
+
+`RunSubprocess` is a plain function type, not a class, so a step test hands
+in a `vi.fn()` and asserts on the commands it was asked to run.
+`createFakeRunSubprocess` in `testFixtures` is the recording stand-in.
+
+The command is always an array of arguments and `shell: false`. There is no
+shell string form and no `cwd`-relative executable lookup beyond `PATH`.
+`env` is **merged** into the process' own, never a replacement — a tool that
+loses `PATH` cannot find the interpreter its own wrapper script is written
+in, and `bowtie2` is one of those wrappers.
+
+### stdout is not piped unless something reads it
+
+Without a `stdout` handler the child's stdout is opened on `/dev/null`.
+An unread pipe is a buffer that fills, and a tool told to write a SAM
+stream to stdout fills it fast; piping output nobody consumes is how a
+workflow pod dies of a tool doing exactly what it was asked to.
+
+stderr is always piped, because every line of it is logged as
+`logger.info({ line }, "stderr")` and the last twenty are kept to attach to
+a failure.
+
+Handlers are awaited before the next line is read, so a slow handler applies
+backpressure to the tool rather than queueing its output in this process.
+
+### Lines are split with a byte ceiling
+
+`node:readline` would do the splitting and has no length ceiling at all: a
+tool that writes a gigabyte with no newline in it grows the heap until the
+process dies, and the failure names the workflow rather than the tool. So
+the runner splits lines itself and refuses to buffer one past
+`maxLineBytes`, which defaults to **128 MiB** — the same `limit` Python
+passes to `asyncio.create_subprocess_exec`. Overrunning it throws
+`SubprocessLineLimitError` and kills the process tree, because the reader
+giving up is otherwise a subprocess blocked forever on its next write.
+
+Splitting happens on the newline **byte** before any decoding, which is safe
+because every byte of a multi-byte UTF-8 sequence has its high bit set.
+Each line is then decoded on its own with invalid sequences replaced by
+U+FFFD; Python uses `backslashreplace`, but nothing reads these lines back
+as bytes. Only the newline is stripped — Python's `rstrip()` takes every
+trailing whitespace character with it, which would reflow the aligned
+columns tools write to stderr.
+
+### Descendants are killed, which execa cannot do on its own
+
+The runner spawns with **`detached: true`** and signals **`-pid`**.
+
+execa has no option for this. `subprocess.kill()` and `cancelSignal` signal
+the direct child only, and for `bowtie2` and `bowtie2-build` that child is a
+perl script whose real binary would go on running; SPAdes has the same shape
+in python. `detached` calls `setsid`, making the child a process-group
+leader, and a signal sent to the negated pid reaches the whole group.
+
+Cancellation therefore does not use execa's `cancelSignal`. Aborting the
+run's signal sends **SIGTERM** to the group and **SIGKILL** after
+`forceKillAfterDelay` (5s). `detached` also turns off execa's own
+cleanup-on-exit, so the runner registers a `process.once("exit")` group kill
+in its place — without it a crash in the parent strands a running aligner.
+
+**Once a kill has gone out, both of those deliberately outlive the call.**
+Everything the runner awaits can settle while the group is still alive: the
+direct child dies on the SIGTERM, and a descendant that ignores it and holds
+none of the piped stdio leaves nothing left to wait on. Clearing the timer
+when the call returns is exactly what would strand that descendant, so the
+teardown only runs on the path where no kill was ever sent.
+
+`ESRCH` from a kill that lands after the subprocess has already exited, and
+`EPIPE` from the same race seen from the other end, are logged at `debug`
+and never surfaced. A cancellation racing an exit is ordinary.
+
+### How a subprocess ends
+
+The runner awaits **both** the process promise and the line readers before
+deciding anything. A subprocess can exit before its stdio has drained, and
+deciding on the process promise alone loses the tail of stderr that says why
+it failed.
+
+| Outcome | Result |
+| --- | --- |
+| Exit 0 | resolves, `cancelled: false` |
+| Killed by the run's cancellation (SIGTERM/SIGKILL, run signal aborted) | resolves, `cancelled: true` |
+| Any other non-zero exit, **15 included** | throws `SubprocessFailedError` |
+| Never started (`ENOENT`, `EACCES`) | throws `SubprocessSpawnError` |
+| A line past `maxLineBytes` | throws `SubprocessLineLimitError` |
+
+**Exit code 15 is a failure here and a success in Python.** Python treats
+`15` and `-15` as expected, on the reasoning that the run was already
+failing for some other reason and the tool was terminated as a consequence.
+That reasoning does not survive a tool choosing 15 as an ordinary error
+code, and the cancellation row above is what it was really reaching for.
+
+`SubprocessFailedError` carries `command`, `exitCode`, `signal` and
+`stderrTail`, and its message puts the tail under a `stderr:` heading:
+
+```
+Subprocess failed with exit code 1: bowtie2-build ref.fa index
+stderr:
+Error: Reference file does not seem to be a FASTA file
+```
+
+All three extend `WorkflowError`, so a workflow app can tell a runtime
+failure from anything else that went wrong inside a step.
 ## The job lifecycle
 
 `runWorkflowApp` is what a workflow app's `main.ts` calls. It is the half

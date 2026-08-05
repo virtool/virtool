@@ -14,4 +14,7 @@ export * from "./lifecycle/ping";
 export * from "./run";
 export * from "./serializable";
 export * from "./step";
+export * from "./subprocess/execa";
+export * from "./subprocess/lines";
+export * from "./subprocess/types";
 export * from "./workPath";

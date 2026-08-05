@@ -9,6 +9,7 @@ import { claimJob } from "./lifecycle/claim";
 import { startPingLoop } from "./lifecycle/ping";
 import { createRunSignals, type RunSignals, runWorkflow } from "./run";
 import type { Workflow } from "./step";
+import { createRunSubprocess } from "./subprocess/execa";
 import { createWorkPath } from "./workPath";
 
 /**
@@ -249,6 +250,12 @@ async function claimAndRun<TData, TState>({
 				logger,
 				signal: signals.signal,
 				client,
+				// Built once, here, so every step shares one runner already bound
+				// to the run's signal and cannot forget to forward cancellation.
+				runSubprocess: createRunSubprocess({
+					signal: signals.signal,
+					logger,
+				}),
 			});
 		} catch (err) {
 			// Preparation reaches the network and the filesystem with the run's

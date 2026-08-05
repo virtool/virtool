@@ -69,11 +69,13 @@ This is a **pnpm monorepo**:
     `createDb`, every domain's `data.ts`, the `client_events` emitter, the
     bcrypt/session/token primitives, and `AppError`
   - `@virtool/workflow` — the workflow runtime every executor runs on: the
-    step model, the run loop, the work path, the eager `buildContext` seam,
-    the job lifecycle loop that claims, heartbeats and reports over the jobs
-    API, and the file layer — streaming transfer, gzip, tar and cache-key
-    derivation. It takes a `StorageBackend` as an argument and knows nothing
-    about subprocesses or a database — see the section below.
+    step model, the run loop, the work path, the subprocess runner, the eager
+    `buildContext` seam, the job lifecycle loop that claims, heartbeats and
+    reports over the jobs API, and the file layer — streaming transfer, gzip,
+    tar and cache-key derivation. It takes a `StorageBackend` as an argument
+    and knows nothing about a database — see the section below. It is the
+    only place in the repo that spawns a process, and so the only one
+    depending on `execa`.
   - `pathoscope-core` — **Rust, not TypeScript.** Pathoscope's EM core as a
     standalone CLI, invoked as a subprocess. It is not a pnpm workspace (it
     has no `package.json`) and is excluded from biome and knip by name —
@@ -966,9 +968,9 @@ auth on the SSE side, the batching queues, and the follow-up TODOs.
 ### The runtime is `@virtool/workflow`: no injection, no teardown, no hooks
 
 Every workflow executor runs on `@virtool/workflow`: `defineWorkflow`,
-`runWorkflow`, `createWorkPath`, `parseWorkflowRunConfig`, and
-`runWorkflowApp`. It is the port of Python's `virtool/workflow/`, and it
-knows nothing about subprocesses or a database.
+`runWorkflow`, `createWorkPath`, `createRunSubprocess`,
+`parseWorkflowRunConfig`, and `runWorkflowApp`. It is the port of Python's
+`virtool/workflow/`, and it knows nothing about a database.
 
 **The run loop and the job lifecycle are strictly apart.** `runWorkflow`
 **returns** an outcome and never touches the network, `process.exit`, or a
@@ -1014,6 +1016,28 @@ in-flight step against the signal and abandons it rather than waiting,
 leaving a `catch` attached so its later rejection cannot take the process
 down mid-report.
 
+Every bioinformatics tool runs through `context.runSubprocess`, which
+`runWorkflowApp` builds once per run with
+`createRunSubprocess({ signal, logger })`. Four rules it carries,
+each of which is a departure from Python or from execa's defaults:
+
+- **stdout is opened on `/dev/null` unless a `stdout` handler is given.** An
+  unread pipe is a buffer that fills, and a tool writing a SAM stream fills
+  it fast. stderr is always piped, logged line by line, and its last twenty
+  lines ride on `SubprocessFailedError`.
+- **Lines are split with a byte ceiling**, 128 MiB by default — the same
+  `limit` Python passes to `asyncio.create_subprocess_exec`. `node:readline`
+  has no ceiling at all. Overrunning it throws `SubprocessLineLimitError`
+  and kills the tree.
+- **Descendants are killed, and execa cannot do it.** There is no
+  `killDescendants` option; `kill()` and `cancelSignal` reach the direct
+  child only, which for `bowtie2` is a perl wrapper. So the runner spawns
+  `detached: true` and signals `-pid` — SIGTERM, then SIGKILL after 5s.
+  `ESRCH` and `EPIPE` from a kill racing an exit are logged at `debug` and
+  never surfaced.
+- **Exit code 15 is a failure here and a success in Python.** Only a
+  cancellation-driven kill resolves, as `cancelled: true`.
+
 `VT_JOBS_API_URL` and `VT_WORK_PATH` have **no defaults**, unlike Python —
 its defaults point at nothing and at a relative path `createWorkPath` would
 delete. The former is also a rename; Python calls it
@@ -1046,8 +1070,8 @@ The lifecycle half — `createJobsApiClient`, `claimJob`, `startPingLoop`,
 
 See [docs/workflow-runtime.md](docs/workflow-runtime.md) for the step
 model, the eager-context rationale, the hook survey behind dropping them,
-the terminal-state table, the cancellation race, and the full config
-table.
+the terminal-state table, the cancellation race, the subprocess runner's
+outcome table and process-group kill, and the full config table.
 
 ### Workflow files stream, and keys are never composed
 

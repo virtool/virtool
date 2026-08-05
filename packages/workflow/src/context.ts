@@ -3,6 +3,7 @@ import type { Logger } from "@virtool/logger";
 import type { JobsApiClient } from "./client/client";
 import { assertSerializableData } from "./serializable";
 import type { Workflow } from "./step";
+import type { RunSubprocess } from "./subprocess/types";
 
 /** The claimed job, as steps see it. */
 export type RunJob = {
@@ -24,6 +25,7 @@ export type BuildContextInput = {
 	 * `buildContext` runs so a metadata read needs no second construction path.
 	 */
 	client: JobsApiClient;
+	runSubprocess: RunSubprocess;
 };
 
 /**
@@ -55,11 +57,15 @@ export type WorkflowContext<TData, TState> = {
 	readonly signal: AbortSignal;
 	/** The run's authenticated jobs API client. */
 	readonly client: JobsApiClient;
+	/**
+	 * Runs a bioinformatics tool. Already bound to `signal`, so a step does not
+	 * forward cancellation itself.
+	 */
+	readonly runSubprocess: RunSubprocess;
 
-	// Two more members land here, each added by its own issue: `runSubprocess`
-	// (the subprocess runner) and `storage` (direct object storage access). Only
-	// `data` is serializable-constrained; those two and `client` carry live
-	// handles by design.
+	// One more member lands here with its own issue: `storage`, for direct
+	// object storage access. Only `data` is serializable-constrained; the live
+	// handles are so by design.
 };
 
 /**
