@@ -925,5 +925,12 @@
       'name': 'add storage keys to file tables',
       'revision': '0cbbc3b23245',
     }),
+    dict({
+      'applied_at': datetime,
+      'created_at': datetime,
+      'id': 133,
+      'name': 'delete stale hmm annotations blob',
+      'revision': '8kt397kdecbe',
+    }),
   ])
 # ---
