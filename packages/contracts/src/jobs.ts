@@ -13,6 +13,18 @@ export const JobState = z.enum([
 export type JobState = z.infer<typeof JobState>;
 
 /**
+ * Whether a state is one a job never leaves.
+ *
+ * Mirrors Python's `TERMINAL_JOB_STATES`. Takes a plain `string` because
+ * `jobs.state` is a `text` column, not an enum — a row written by a future
+ * Python release can hold a state this union has never heard of, and such a
+ * state is not terminal until it is named here.
+ */
+export function isJobStateTerminal(state: string): boolean {
+	return state === "cancelled" || state === "failed" || state === "succeeded";
+}
+
+/**
  * A workflow a job can run.
  *
  * This is the job *read* path and carries every member of Python's `Workflow`

@@ -187,6 +187,24 @@ async function seedAnalysis(
 	).id;
 }
 
+async function seedJob(
+	overrides: Partial<typeof jobs.$inferInsert> = {},
+): Promise<number> {
+	return takeFirstOrThrow(
+		await db
+			.insert(jobs)
+			.values({
+				acquired: false,
+				created_at: new Date(),
+				state: "pending",
+				user_id: ownerId,
+				workflow: "nuvs",
+				...overrides,
+			})
+			.returning({ id: jobs.id }),
+	).id;
+}
+
 /** An analysis on a sample the caller may read but not write. */
 async function seedReadOnlyAnalysis(
 	overrides: Partial<typeof analyses.$inferInsert> = {},
@@ -379,12 +397,13 @@ describe("deleteAnalysis", () => {
 		expect(await db.select().from(analyses)).toHaveLength(1);
 	});
 
-	it("returns 409 for an analysis that is still running", async () => {
+	it("returns 409 for an analysis whose job is still running", async () => {
 		const userId = await signInAsNewUser();
 		const sampleId = await seedSample({ user_id: userId });
 		const analysisId = await seedAnalysis({
 			sample_id: sampleId,
 			ready: false,
+			job_id: await seedJob({ state: "running", user_id: userId }),
 		});
 
 		await expect(
@@ -396,6 +415,19 @@ describe("deleteAnalysis", () => {
 		expect(
 			await db.select().from(analyses).where(eq(analyses.id, analysisId)),
 		).toHaveLength(1);
+	});
+
+	it("deletes an unready analysis whose job failed", async () => {
+		const userId = await signInAsNewUser();
+		const sampleId = await seedSample({ user_id: userId });
+		const analysisId = await seedAnalysis({
+			sample_id: sampleId,
+			ready: false,
+			job_id: await seedJob({ state: "failed", user_id: userId }),
+		});
+
+		await expect(call("deleteAnalysisFn", { analysisId })).resolves.toBeNull();
+		expect(await db.select().from(analyses)).toHaveLength(0);
 	});
 
 	it("deletes the analysis for a caller with write rights", async () => {

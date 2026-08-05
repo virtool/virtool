@@ -10,6 +10,7 @@ import type {
 	SubtractionNested,
 	UserNested,
 } from "@virtool/contracts";
+import { isJobStateTerminal } from "@virtool/contracts";
 import type { Logger } from "@virtool/logger";
 import { deleteKeys, type StorageBackend } from "@virtool/storage";
 import { and, asc, count, desc, eq, inArray, type SQL } from "drizzle-orm";
@@ -22,6 +23,7 @@ import {
 	nuvsBlast,
 } from "../db/schema/analyses";
 import { indexes } from "../db/schema/indexes";
+import { jobs } from "../db/schema/jobs";
 import { legacyReferences } from "../db/schema/references";
 import { legacySamples } from "../db/schema/samples";
 import { subtractions } from "../db/schema/subtractions";
@@ -629,10 +631,11 @@ export async function deleteAnalysis(
 	const [row] = await db
 		.select({
 			id: analyses.id,
-			ready: analyses.ready,
 			sample_id: analyses.sample_id,
+			jobState: jobs.state,
 		})
 		.from(analyses)
+		.leftJoin(jobs, eq(jobs.id, analyses.job_id))
 		.where(eq(analyses.id, analysisId))
 		.limit(1);
 
@@ -640,7 +643,13 @@ export async function deleteAnalysis(
 		throw new AnalysisNotFoundError();
 	}
 
-	if (!row.ready) {
+	// The guard asks whether a job is actually working on this analysis, not
+	// whether the analysis finished. `ready` cannot tell "still running" from
+	// "failed and never will be": a workflow pod that is OOM-killed or evicted
+	// leaves the row unready forever, and refusing on `ready` alone made that
+	// analysis undeletable by anyone. A job that reached a terminal state, or an
+	// analysis with no job row at all, cannot be in flight.
+	if (row.jobState !== null && !isJobStateTerminal(row.jobState)) {
 		throw new AnalysisRunningError("Analysis is still running");
 	}
 

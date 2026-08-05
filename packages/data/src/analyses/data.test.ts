@@ -687,16 +687,54 @@ describe("deleteAnalysis", () => {
 		).rejects.toBeInstanceOf(AnalysisNotFoundError);
 	});
 
-	it("refuses an analysis that is still running", async () => {
-		const analysisId = await seedAnalysisOnNewSample({ ready: false });
+	it.each(["pending", "running"])(
+		"refuses an analysis whose job is %s",
+		async (state) => {
+			const analysisId = await seedAnalysisOnNewSample({
+				ready: false,
+				job_id: await seedJob({ state }),
+			});
 
-		await expect(
-			deleteAnalysis(db, new MemoryStorage(), testLogger, analysisId),
-		).rejects.toBeInstanceOf(AnalysisRunningError);
+			await expect(
+				deleteAnalysis(db, new MemoryStorage(), testLogger, analysisId),
+			).rejects.toBeInstanceOf(AnalysisRunningError);
+
+			expect(
+				await db.select().from(analyses).where(eq(analyses.id, analysisId)),
+			).toHaveLength(1);
+		},
+	);
+
+	// A workflow pod that is OOM-killed or evicted never finalizes its analysis,
+	// so the row stays unready forever. Deletion has to follow the job, not
+	// `ready`, or nothing can ever clean these up.
+	it.each(["cancelled", "failed", "succeeded"])(
+		"deletes an unready analysis whose job is %s",
+		async (state) => {
+			const analysisId = await seedAnalysisOnNewSample({
+				ready: false,
+				job_id: await seedJob({ state }),
+			});
+
+			await deleteAnalysis(db, new MemoryStorage(), testLogger, analysisId);
+
+			expect(
+				await db.select().from(analyses).where(eq(analyses.id, analysisId)),
+			).toHaveLength(0);
+		},
+	);
+
+	it("deletes an unready analysis with no job row", async () => {
+		const analysisId = await seedAnalysisOnNewSample({
+			ready: false,
+			job_id: null,
+		});
+
+		await deleteAnalysis(db, new MemoryStorage(), testLogger, analysisId);
 
 		expect(
 			await db.select().from(analyses).where(eq(analyses.id, analysisId)),
-		).toHaveLength(1);
+		).toHaveLength(0);
 	});
 
 	it("deletes the objects its file rows name", async () => {

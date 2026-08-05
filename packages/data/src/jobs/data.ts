@@ -1,4 +1,4 @@
-import type { SearchResult } from "@virtool/contracts";
+import { isJobStateTerminal, type SearchResult } from "@virtool/contracts";
 import { count, desc, eq, inArray } from "drizzle-orm";
 import type { Db, DbOrTx } from "../db/pg";
 import { takeFirstOrThrow } from "../db/rows";
@@ -67,7 +67,7 @@ export class JobNotFoundError extends AppError {}
 // running job is the fraction of its steps that have started, everything else
 // is 0%.
 function computeProgress(state: string, steps: JobStep[] | null): number {
-	if (state === "succeeded" || state === "failed" || state === "cancelled") {
+	if (isJobStateTerminal(state)) {
 		return 100;
 	}
 

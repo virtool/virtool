@@ -5,7 +5,7 @@ import { describe, expect, it, vi } from "vitest";
 import { AnalysisItemRightIcon } from "../AnalysisItemRightIcon";
 
 describe("<AnalysisItemRightIcon />", () => {
-	it("should render remove icon when [ready=true] and [canModify=true]", async () => {
+	it("should render remove icon when [canModify=true]", async () => {
 		const onRemove = vi.fn();
 
 		const { rerender } = renderWithProviders(
