@@ -911,5 +911,12 @@
       'name': 'make legacy analyses and index_files columns nullable',
       'revision': '9cea546d2cd3',
     }),
+    dict({
+      'applied_at': datetime,
+      'created_at': datetime,
+      'id': 131,
+      'name': 'drop spaces table and columns',
+      'revision': 'cb89fbb68f58',
+    }),
   ])
 # ---

@@ -112,14 +112,12 @@ class JobsData:
         workflow: str,
         job_args: Document,
         user_id: int,
-        space_id: int = 1,
     ) -> Job:
         """Create a job record.
 
         :param workflow: the name of the workflow to run
         :param job_args: the arguments required to run the job
         :param user_id: the user that started the job
-        :param space_id: the space that the job belongs to
         """
         async with AsyncSession(self._pg) as session:
             new_id = await self.create_in_session(session, workflow, job_args, user_id)

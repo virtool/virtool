@@ -23,7 +23,6 @@ from virtool.references.sql import (
 from virtool.samples.sql import SQLSampleArtifact, SQLSampleReads
 from virtool.sessions.models import SQLSession
 from virtool.settings.sql import SQLSettings
-from virtool.spaces.sql import SQLSpace
 from virtool.subtractions.pg import SQLSubtractionFile
 from virtool.uploads.sql import SQLUpload
 from virtool.users.pg import SQLUser, SQLUserGroup
@@ -60,7 +59,6 @@ __models__ = (
     SQLSequence,
     SQLSession,
     SQLSettings,
-    SQLSpace,
     SQLSubtractionFile,
     SQLUpload,
     SQLUser,
