@@ -21,11 +21,17 @@ This is a **pnpm monorepo**:
   mirroring Python's `virtool/jobs/main.py` (`api-jobs-service`, ClusterIP,
   **no ingress** — that absence is the security boundary). Serves
   `/health/live`, `/health/ready` and a token-gated `/metrics` today. Image:
-  `ghcr.io/virtool/jobs-api`, Alpine. Two rules: it is **always "the jobs
+  `ghcr.io/virtool/jobs-api`, Alpine. Three rules: it is **always "the jobs
   API"**, never "the control plane" — that names its role, not the service;
-  and **every route must refuse an unauthenticated caller or be named in
-  `PUBLIC_ROUTES`**, which `src/__tests__/authorization.test.ts` enforces.
-  See [docs/jobs-api.md](docs/jobs-api.md).
+  **every route must refuse an unauthenticated caller or be named in
+  `PUBLIC_ROUTES`**, which `src/__tests__/authorization.test.ts` enforces;
+  and a handler's floor is `requireJobRequest` (`src/auth/guard.ts`), which
+  authenticates a workflow pod as `job-{id}:{key}` over HTTP Basic and
+  **returns** an opaque 401 rather than throwing one. It resolves to a
+  `JobPrincipal` of `{ jobId }` — no user, no permissions — and there is no
+  cookie fallback; this service has no session model. Reaching a terminal
+  state (`cancelled`, `failed`, `succeeded`) is the only thing that revokes
+  a job key. See [docs/jobs-api.md](docs/jobs-api.md).
 - `apps/create-subtraction/` — `@virtool/create-subtraction`, the first workflow
   executor: a one-shot process that starts, works, exits. Only its object
   storage half is wired so far. Image: `ghcr.io/virtool/ts-create-subtraction`,
@@ -988,15 +994,16 @@ naming, comments, and concurrency rules with examples.
 - **Projects (`@virtool/storage`):** `unit` covers everything testable
   against `MemoryStorage`; `integration` runs the S3 and Azure backends
   against real Garage and Azurite containers and has its own CI job.
-- **`@virtool/data`** runs one node project against a Postgres
-  testcontainer, with its own CI job for the same reason storage has
-  one — a container pull does not belong in the fast package loop.
+- **`@virtool/data`** and **`@virtool/jobs-api`** each run one node
+  project against a Postgres testcontainer, and each has its own CI job
+  for the same reason storage does — a container pull does not belong in
+  the fast package loop. Both are excluded from `Test / Packages`.
 - **The Postgres container is described once**, in
-  `packages/data/src/db/test/globalSetup.ts`. Both the `@virtool/data`
-  project and the web app's `server` project name that module as their
-  `globalSetup` — the web app through the
+  `packages/data/src/db/test/globalSetup.ts`. The `@virtool/data`
+  project, the web app's `server` project and `@virtool/jobs-api` all
+  name that module as their `globalSetup` — the latter two through the
   `@virtool/data/db/test/globalSetup` subpath — so the options cannot
-  drift and `withReuse()` boots one container for the two suites
+  drift and `withReuse()` boots one container for the three suites
   locally. There is no teardown; `docker rm -f` it when done. Don't add
   a second copy of the container options.
 - **Test location:** `__tests__/` directories alongside source files

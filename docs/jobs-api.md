@@ -40,6 +40,9 @@ process:
 | `src/config.ts` | Environment parsing, including every `<KEY>_FILE` variant |
 | `src/instrument.ts` | Sentry initialisation and the `SERVICE` constant |
 | `src/logger.ts` | The pino logger singleton |
+| `src/auth/verify.ts` | `verifyJobRequest` — the job credential check |
+| `src/auth/guard.ts` | `requireJobRequest` — the guard every handler starts with |
+| `src/auth/test/fixtures.ts` | `seedJob` — a job row and the plaintext key for it |
 | `src/metrics/registry.ts` | `createMetrics` — this process's Prometheus registry |
 | `src/metrics/handler.ts` | Token check, pre-scrape pool read, response |
 | `src/__tests__/authorization.test.ts` | The route-enumerating authorization floor |
@@ -102,6 +105,108 @@ The test also asserts the reverse: every `PUBLIC_ROUTES` entry names a
 route that actually exists. A stale exception is as much a bug as a
 missing one — it reads as a deliberate decision about a route that is no
 longer there.
+
+## The job credential
+
+A workflow pod authenticates as the job it claimed, over HTTP Basic:
+
+```
+Authorization: Basic base64(job-{jobId}:{key})
+```
+
+`verifyJobRequest` (`src/auth/verify.ts`) resolves that to a
+`JobPrincipal` — `{ jobId }`, and nothing else. There is deliberately no
+`userId` and no permission set on it. A pod acts as its job, not as the
+user who created the job, and every rule this service enforces is a rule
+about which job may touch which row; carrying the owner would invite a
+handler to authorize against them instead.
+
+The sequence, in order:
+
+1. Read the `Authorization` header. Missing is a failure.
+2. Parse it as Basic. A non-Basic scheme, undecodable base64, a missing
+   `:`, or an empty login is a failure.
+3. Match the login against `/^job-(\d+)$/` — **anchored and
+   case-sensitive**.
+4. Screen the id: at least 1, and no larger than a Postgres `integer`.
+5. Read `key` and `state` for that id, in **one** query.
+6. Fail if `key` is null — that job was never claimed.
+7. Compare `hashToken(key)` to the stored digest with `timingSafeEqual`,
+   behind a length screen.
+8. Fail if `state` is terminal.
+
+**There is no cookie fallback, ever.** This service has no session
+model, and nothing that reaches it holds a browser session.
+
+`requireJobRequest` (`src/auth/guard.ts`) wraps it and is what a handler
+calls. On failure it **returns** `401 Unauthorized` rather than throwing
+— a thrown refusal would have to be caught somewhere, and that somewhere
+also catches genuine bugs, so a handler crashing halfway through would
+answer 401 and read as a credential problem to the runner and to Sentry
+alike. The 401 carries **no `WWW-Authenticate` header**: that header
+exists to make a browser prompt, and a runner's key is minted once, at
+claim time, so there is nothing an interactive retry could supply.
+
+Every failure returns an identical, opaque 401. Nothing distinguishes an
+unknown job from a wrong key from a finished one — the most useful thing
+a caller could otherwise learn is which job ids exist.
+
+### Terminal state is the whole of key revocation
+
+A key has no expiry, no revocation list and no rotation: `jobs.key` holds
+one digest for the life of the row. Reaching `cancelled`, `failed` or
+`succeeded` is the **only** thing that stops it authenticating, which is
+why the state is re-read on every request rather than trusted at claim
+time. A runner pod that outlives the job it claimed still holds a
+syntactically valid credential, and that check is what stops it being
+accepted.
+
+### The two local copies
+
+`hashToken` and `parseBasicAuthHeader` are reimplemented in
+`src/auth/verify.ts` rather than shared, each with a comment naming its
+counterpart, and each pinned by fixed-vector tests.
+
+`parseBasicAuthHeader` has no choice: its counterpart is in
+`apps/web/src/server/auth/verify.ts`, which this service must not reach
+into. `hashToken`'s counterpart is `@virtool/data/auth/tokens`, and both
+mirror Python's `hash_key` at `virtool/utils.py:98-99`. All three must
+produce the same digest forever — Python writes the column this side
+reads — so the test pins fixed digests rather than comparing the two
+TypeScript copies, which would pass just as happily if both drifted away
+from Python together.
+
+The `seedJob` fixture hashes with **`@virtool/data`'s** `hashToken`,
+deliberately. Seeding with the copy under test would make the verifier
+agree with itself no matter what either did; going through the shared one
+means a test that authenticates successfully has also shown the two agree.
+
+### Differences from Python
+
+`virtool/jobs/auth.py` is the counterpart middleware. Two deliberate
+divergences, both stricter:
+
+- The login is matched against an anchored pattern rather than
+  `holder_id.split("-")`, which checks only the first part. `job-1-2`
+  reaches Python's `int()` and raises; here it is simply not a login.
+- The key comparison is timing-safe. Python's is a plain `!=`.
+
+Python also answers 403 when the authenticated job id does not match a
+`job_id` path parameter. That is a per-route rule, not a property of the
+credential, so it belongs in the handlers rather than here — which is
+what `JobPrincipal` carrying `jobId` is for.
+
+### Tests need Postgres
+
+`verify.test.ts` and `guard.test.ts` run against `createTestDatabase()`,
+so `apps/jobs-api/vitest.config.ts` names
+`@virtool/data/db/test/globalSetup` — the same module `@virtool/data`'s
+project and `apps/web`'s `server` project name, so one `withReuse()` hash
+covers all three and a local run of them boots a single container.
+
+That is also why this workspace has its own `Test / Jobs API` CI job and
+is excluded from `Test / Packages`: pulling a Postgres image does not
+belong in the fast package loop.
 
 ## Health
 
