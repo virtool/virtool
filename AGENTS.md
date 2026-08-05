@@ -17,8 +17,13 @@ This is a **pnpm monorepo**:
   gates — Astro is not linted by biome and is opaque to knip — so its own
   Vite build (a `build-site` CI job) and Vitest suite are its gate. Deploy is
   manual: `pnpm --filter @virtool/site deploy`.
+- `apps/workflow-pathoscope/` — the pathoscope workflow image
+  (`ghcr.io/virtool/ts-pathoscope`). Holds only a `Dockerfile` today: it
+  compiles `packages/pathoscope-core` and layers the `ghcr.io/virtool/tools`
+  binaries on a Debian Node base. Built from the **repo root**
+  (`docker build -f apps/workflow-pathoscope/Dockerfile .`).
 - `packages/` — shared, framework-agnostic libraries published as workspace
-  packages:
+  packages, plus one Rust crate:
   - `@virtool/logger` — pino wrapper, server-side log defaults and
     `child({...})` pattern
   - `@virtool/bio` — sequence utilities (complement, translation, ORF
@@ -48,6 +53,13 @@ This is a **pnpm monorepo**:
   does the construction: it builds `storage`, calls `createDb(config)` to get
   `client` and `db`, and calls `createEmitter({ client, logger })`. Every
   `db`, `client`, and `storage` import in `apps/web` comes from there.
+
+  - `pathoscope-core` — **Rust, not TypeScript.** Pathoscope's EM core as a
+    standalone CLI, invoked as a subprocess. It is not a pnpm workspace (it
+    has no `package.json`) and is excluded from biome and knip by name —
+    see [docs/pathoscope-core.md](docs/pathoscope-core.md) before touching
+    it. Its results are pinned byte-for-byte against the Python extension
+    module it replaced.
 
 Use `pnpm` for all install, run, and exec commands — not `npm` or `bun`.
 
@@ -125,6 +137,13 @@ pnpm check                        # biome check (whole repo)
 | Test (watch, web app) | `pnpm --filter @virtool/web test:watch` |
 | Test (filtered) | `pnpm --filter @virtool/web exec vitest run src/path/to/file` |
 | Build | `pnpm build` |
+| Test the Rust crate | `cargo test` (in `packages/pathoscope-core`) |
+| Format the Rust crate | `cargo fmt` (in `packages/pathoscope-core`) |
+
+`pnpm test` does **not** reach `packages/pathoscope-core` — it is not a pnpm
+workspace. Run `cargo` there directly; a `test-rust` CI job gates it.
+Building the crate needs `libclang-dev` installed, because `hts-sys` runs
+bindgen against htslib's headers.
 
 Don't use the dev server. Live development is done using Tilt and Minikube and is
 currently configured in another repository.

@@ -1,0 +1,6 @@
+@HD	VN:1.6	SO:unsorted
+@SQ	SN:sub_ref1	LN:1000
+@PG	ID:test	PN:test	VN:1.0
+read_eliminate	0	sub_ref1	150	60	10M	*	0	0	AAAAAAAAAA	IIIIIIIIII	AS:i:70
+read_keep	0	sub_ref1	250	60	10M	*	0	0	CCCCCCCCCC	IIIIIIIIII	AS:i:60
+read_equal	0	sub_ref1	350	60	10M	*	0	0	GGGGGGGGGG	IIIIIIIIII	AS:i:40

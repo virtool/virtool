@@ -1,0 +1,10 @@
+@HD	VN:1.6	SO:unsorted
+@SQ	SN:ref1	LN:1000
+@SQ	SN:ref2	LN:2000
+@PG	ID:test	PN:test	VN:1.0
+@CO	Test comment line
+read_eliminate	0	ref1	100	60	10M	*	0	0	AAAAAAAAAA	IIIIIIIIII	AS:i:50
+read_keep	0	ref1	200	60	10M	*	0	0	CCCCCCCCCC	IIIIIIIIII	AS:i:80
+read_equal	0	ref2	300	60	10M	*	0	0	GGGGGGGGGG	IIIIIIIIII	AS:i:40
+read_unknown	0	ref2	400	60	10M	*	0	0	TTTTTTTTTT	IIIIIIIIII	AS:i:70
+read_unmapped	4	*	0	0	*	*	0	0	AAAAAAAAAA	IIIIIIIIII	AS:i:0

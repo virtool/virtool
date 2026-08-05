@@ -8,6 +8,7 @@
 	"files": {
 		"includes": [
 			"**",
+			"!packages/pathoscope-core",
 			"!**/routeTree.gen.ts",
 			"!**/node_modules",
 			"!**/dist",

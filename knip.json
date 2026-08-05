@@ -3,6 +3,7 @@
 	"ignoreExportsUsedInFile": true,
 	"ignoreDependencies": ["conventional-changelog-conventionalcommits"],
 	"ignoreWorkspaces": ["apps/site"],
+	"ignore": ["packages/pathoscope-core/**"],
 	"workspaces": {
 		"apps/web": {
 			"entry": [
