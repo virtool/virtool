@@ -69,8 +69,9 @@ This is a **pnpm monorepo**:
     `createDb`, every domain's `data.ts`, the `client_events` emitter, the
     bcrypt/session/token primitives, and `AppError`
   - `@virtool/workflow` — the workflow runtime every executor runs on: the
-    step model, the run loop, the work path, and the eager `buildContext`
-    seam. It knows nothing about HTTP, storage or job claiming — see the
+    step model, the run loop, the work path, the eager `buildContext` seam,
+    and the job lifecycle loop that claims, heartbeats and reports over the
+    jobs API. It knows nothing about storage or subprocesses — see the
     section below.
   - `pathoscope-core` — **Rust, not TypeScript.** Pathoscope's EM core as a
     standalone CLI, invoked as a subprocess. It is not a pnpm workspace (it
@@ -964,10 +965,14 @@ auth on the SSE side, the batching queues, and the follow-up TODOs.
 ### The runtime is `@virtool/workflow`: no injection, no teardown, no hooks
 
 Every workflow executor runs on `@virtool/workflow`: `defineWorkflow`,
-`runWorkflow`, `createWorkPath`, and `parseWorkflowRunConfig`. It is the
-port of Python's `virtool/workflow/`, and it knows nothing about HTTP,
-object storage, subprocesses, or job claiming — `runWorkflow` **returns** an outcome and never touches the
-network, `process.exit`, or a signal handler.
+`runWorkflow`, `createWorkPath`, `parseWorkflowRunConfig`, and
+`runWorkflowApp`. It is the port of Python's `virtool/workflow/`, and it
+knows nothing about object storage or subprocesses.
+
+**The run loop and the job lifecycle are strictly apart.** `runWorkflow`
+**returns** an outcome and never touches the network, `process.exit`, or a
+signal handler; `runWorkflowApp` — the entrypoint a workflow app's `main.ts`
+calls — owns all of that.
 
 Three decisions shape it and are not up for re-litigation:
 
@@ -995,7 +1000,7 @@ Three decisions shape it and are not up for re-litigation:
 
 Steps are an **explicit ordered array**, never a scanned module. A step's
 `id` is authored in `snake_case` and **must match the Python function name
-it was ported from** — the control plane stores it, so a slugified display
+it was ported from** — the jobs API stores it, so a slugified display
 name changes the shape of a job's step list at cutover.
 
 Cancellation is **cooperative** and is the one real divergence from Python:
@@ -1007,7 +1012,32 @@ down mid-report.
 `VT_JOBS_API_URL` and `VT_WORK_PATH` have **no defaults**, unlike Python —
 its defaults point at nothing and at a relative path `createWorkPath` would
 delete. The former is also a rename; Python calls it
-`VT_JOBS_API_CONNECTION_STRING`.
+`VT_JOBS_API_CONNECTION_STRING`. `VT_TIMEOUT` is in **seconds**.
+
+The lifecycle half — `createJobsApiClient`, `claimJob`, `startPingLoop`,
+`runWorkflowApp` — carries five rules:
+
+- **Paths are unprefixed and every wire field is camelCase.** The jobs API
+  serves no SPA, so `/jobs/claim` and `/jobs/{id}/ping` match Python's byte
+  for byte. `baseUrl` is the cluster-internal jobs API service, **never**
+  the public web origin. Shapes come from `@virtool/contracts`; don't
+  redeclare one.
+- **A pod learns its job id from the claim and nowhere else.** `claimJob`
+  polls unauthenticated — the key comes back *from* the claim — and returns
+  `null` when its signal aborts, which is how a claim timeout and a SIGTERM
+  both arrive.
+- **Retries are five, at a flat 5 s, on transport failures only.** Not
+  exponential — that is Python's observed behaviour and the ping-timeout
+  sweep is calibrated against it. Never retry a status the jobs API chose.
+- **The ping loop is the cancellation channel**, and owns its retry policy
+  (pings are issued with retries disabled). It gives up after five
+  *consecutive* failures — resetting on success, which Python does not —
+  logging at `warn`, and lets the run continue. Its ~20 s give-up window
+  must stay well inside the jobs API's **five-minute** stalled-job sweep.
+- **A failed workflow exits 0.** Failure is an API-side transition and a
+  non-zero exit makes the `ScaledJob` retry the pod. Only a broken pod exits
+  1; only SIGTERM exits 124. There is deliberately no failure call to make —
+  the wire contract has no "fail" endpoint.
 
 See [docs/workflow-runtime.md](docs/workflow-runtime.md) for the step
 model, the eager-context rationale, the hook survey behind dropping them,

@@ -1,7 +1,7 @@
 /**
  * Base class for every error this package throws.
  *
- * The subprocess runner and the control-plane client extend this rather than
+ * The subprocess runner and the jobs API client extend this rather than
  * `Error`, so a workflow app can tell a runtime failure from anything else that
  * went wrong inside a step.
  */

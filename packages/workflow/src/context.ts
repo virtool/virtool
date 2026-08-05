@@ -1,5 +1,6 @@
 import type { JobWorkflow, JsonObject } from "@virtool/contracts";
 import type { Logger } from "@virtool/logger";
+import type { JobsApiClient } from "./client/client";
 import { assertSerializableData } from "./serializable";
 import type { Workflow } from "./step";
 
@@ -18,6 +19,11 @@ export type BuildContextInput = {
 	mem: number;
 	logger: Logger;
 	signal: AbortSignal;
+	/**
+	 * The run's authenticated jobs API client, already built by the time
+	 * `buildContext` runs so a metadata read needs no second construction path.
+	 */
+	client: JobsApiClient;
 };
 
 /**
@@ -47,11 +53,13 @@ export type WorkflowContext<TData, TState> = {
 	readonly logger: Logger;
 	/** Aborts on cancellation or SIGTERM. Forward it to anything long-running. */
 	readonly signal: AbortSignal;
+	/** The run's authenticated jobs API client. */
+	readonly client: JobsApiClient;
 
-	// Three more members land here, each added by its own issue: `runSubprocess`
-	// (the subprocess runner), `storage` (direct object storage access), and
-	// `client` (the control-plane client). Only `data` is serializable-
-	// constrained; those three carry live handles by design.
+	// Two more members land here, each added by its own issue: `runSubprocess`
+	// (the subprocess runner) and `storage` (direct object storage access). Only
+	// `data` is serializable-constrained; those two and `client` carry live
+	// handles by design.
 };
 
 /**

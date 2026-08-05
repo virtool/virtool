@@ -215,10 +215,10 @@ describe("runWorkflow", () => {
 		expect(order).toEqual(["reported", "ran"]);
 	});
 
-	// The control plane not knowing which step is executing is not something to
+	// The jobs API not knowing which step is executing is not something to
 	// continue past, so it ends the run rather than propagating or being ignored.
 	it("fails the run when onStepStart rejects, without running the step", async () => {
-		const failure = new Error("control plane unreachable");
+		const failure = new Error("jobs API unreachable");
 		const harness = setup(
 			createRunSignals(),
 			[visitStep("first"), visitStep("second")],

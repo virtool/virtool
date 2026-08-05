@@ -13,8 +13,11 @@
 		"typecheck": "tsc --noEmit"
 	},
 	"dependencies": {
+		"@sentry/node": "^10.69.0",
 		"@virtool/contracts": "workspace:*",
 		"@virtool/logger": "workspace:*",
+		"@virtool/sentry": "workspace:*",
+		"undici": "^7.29.0",
 		"zod": "^4.3.6"
 	},
 	"devDependencies": {

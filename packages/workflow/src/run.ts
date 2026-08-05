@@ -30,12 +30,12 @@ export type RunWorkflowOptions<TData, TState> = {
 	signals: RunSignals;
 	logger: Logger;
 	/**
-	 * Reports a step to the control plane immediately before it runs.
+	 * Reports a step to the jobs API immediately before it runs.
 	 *
 	 * The only seam the run loop needs into the job lifecycle, and the reason it
 	 * is a callback rather than a return value: it fires mid-run, where every
 	 * other outcome this function reports is terminal and rides back on
-	 * {@link RunOutcome}. A rejection is a failed run — the control plane not
+	 * {@link RunOutcome}. A rejection is a failed run — the jobs API not
 	 * knowing which step is executing is not something to continue past.
 	 */
 	onStepStart?: (step: WorkflowStepMetadata) => Promise<void>;

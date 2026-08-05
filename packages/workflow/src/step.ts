@@ -6,14 +6,14 @@ import { WorkflowDefinitionError } from "./errors";
  * The shape a step id must take.
  *
  * `snake_case`, because the id is the Python function name a ported step is
- * carried over from, and the control plane stores it verbatim.
+ * carried over from, and the jobs API stores it verbatim.
  */
 const STEP_ID_PATTERN = /^[a-z][a-z0-9_]*$/;
 
 /**
  * A step's metadata, without the function that runs it.
  *
- * The three fields the control plane is told about at claim time, matching
+ * The three fields the jobs API is told about at claim time, matching
  * `JobStepDefinition` on the wire. Hook payloads carry this rather than the
  * step itself so the hook registry does not have to be generic over a
  * workflow's data and state.
@@ -27,7 +27,7 @@ export type WorkflowStepMetadata = {
 /** A single step in a workflow. */
 export type WorkflowStep<TData, TState> = {
 	/**
-	 * Stable `snake_case` id reported to the control plane. Matches the ported
+	 * Stable `snake_case` id reported to the jobs API. Matches the ported
 	 * Python function name.
 	 *
 	 * Authored explicitly and never derived from the display name: it is what
