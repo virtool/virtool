@@ -1161,9 +1161,15 @@ and make commits easier to find later.
   against real Garage and Azurite containers and has its own CI job.
 - **`@virtool/data`** runs one node project against a Postgres
   testcontainer, with its own CI job for the same reason storage has
-  one — a container pull does not belong in the fast package loop. Its
-  globalSetup matches the web app's byte for byte, so `withReuse()`
-  finds the same container locally.
+  one — a container pull does not belong in the fast package loop.
+- **The Postgres container is described once**, in
+  `packages/data/src/db/test/globalSetup.ts`. Both the `@virtool/data`
+  project and the web app's `server` project name that module as their
+  `globalSetup` — the web app through the
+  `@virtool/data/db/test/globalSetup` subpath — so the options cannot
+  drift and `withReuse()` boots one container for the two suites
+  locally. There is no teardown; `docker rm -f` it when done. Don't add
+  a second copy of the container options.
 - **Test location:** `__tests__/` directories alongside source files
   (web), or sibling `*.test.ts` files (packages).
 - **Test files:** `ComponentName.test.tsx` or `functionName.test.ts`.

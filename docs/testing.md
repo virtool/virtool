@@ -22,14 +22,32 @@ semantics against a real Postgres, since mocks hide bugs that real DBs
 catch. A session check that forgets to filter on `users.active` passes
 against a stubbed query builder and fails against Postgres.
 
-`src/tests/globalSetup.ts` starts one Postgres container for the
-`server` project and exports `VT_POSTGRES_URL`. It is wired only into
-that project: the `web` project's jsdom tests never reach Postgres,
-because the client transform strips server function bodies along with
-the server-only imports behind them. Component tests therefore run
-without Docker. `@virtool/data` has its own globalSetup with byte-for-byte
-identical container options, so `withReuse()` matches the same container
-locally; CI runs the two suites as separate jobs and so boots two.
+`packages/data/src/db/test/globalSetup.ts` starts the Postgres
+container and exports `VT_POSTGRES_URL`. It is the **only** description
+of that container in the repo: `@virtool/data`'s Vitest project and
+`apps/web`'s `server` project both name it as their `globalSetup`, the
+web app reaching it through the package's `@virtool/data/db/test/globalSetup`
+subpath. One definition means one set of container options, so
+`withReuse()` hashes both runs to the same container and running the two
+suites locally boots a single Postgres between them. Nothing has to be
+started by hand — the first suite to run brings it up.
+
+The container is deliberately **not** torn down. `stop()` would remove
+it, so the next run would find nothing to reuse and pay a fresh boot;
+remove it with `docker rm -f` when it is no longer wanted.
+
+CI still pays for a container per job. `Test / Data` and `Test / Server`
+run on separate runners with no daemon between them, so there is nothing
+there to reuse, and keeping them independent is the point — a job
+waiting on another job's container would serialize the two for no
+wall-clock gain.
+
+Postgres is wired only into those two projects. The `web` project's
+jsdom tests never reach it, because the client transform strips server
+function bodies along with the server-only imports behind them.
+Component tests therefore run without Docker, and the `web` project
+aliases `@server/composition`, `@server/config`, and `@virtool/data/db/pg`
+to a guard that throws if one ever survives the transform.
 
 Call `createTestDatabase()` from `@virtool/data/db/test/fixtures` in
 `beforeAll` to get an isolated database with the schema already applied,

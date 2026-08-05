@@ -65,7 +65,19 @@ export default defineConfig({
 					// read back from storage compare unequal to the bytes written.
 					name: "server",
 					environment: "node",
-					globalSetup: ["./src/tests/globalSetup.ts"],
+					// The Postgres container is described once, in the package that
+					// owns the schema, and this project and `@virtool/data`'s both
+					// name that module. One definition means one `withReuse()` hash,
+					// so a local run of the two suites boots a single Postgres.
+					globalSetup: ["@virtool/data/db/test/globalSetup"],
+					// `src/server/config.ts` parses the environment when it is
+					// imported, so these have to be satisfiable for any test that
+					// reaches a server module. Server tests exercise storage through
+					// MemoryStorage and never reach a real bucket.
+					env: {
+						VT_STORAGE_BACKEND: "s3",
+						VT_STORAGE_S3_BUCKET: "virtool-test",
+					},
 					include: ["src/server/**/*.test.ts"],
 				},
 			},
