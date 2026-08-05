@@ -104,11 +104,18 @@ def migration_config(
     """A :class:`MigrationConfig` instance that plugs into test instances of backing
     services.
 
+    The storage fields point at the Garage service from ``docker-compose.yml`` so
+    that revisions applied through :func:`virtool.migration.apply.apply`, which
+    builds its own backend from this config, reach a real bucket.
     """
     return MigrationConfig(
         postgres_connection_string=migration_pg_connection_string,
         storage_backend="s3",
-        storage_s3_bucket="test",
+        storage_s3_bucket=os.environ["VT_TEST_S3_BUCKET"],
+        storage_s3_endpoint=os.environ["VT_TEST_S3_ENDPOINT"],
+        storage_s3_region=os.environ["VT_TEST_S3_REGION"],
+        storage_s3_access_key_id=os.environ["VT_TEST_S3_ACCESS_KEY_ID"],
+        storage_s3_secret_access_key=os.environ["VT_TEST_S3_SECRET_ACCESS_KEY"],
     )
 
 

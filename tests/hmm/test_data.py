@@ -9,6 +9,7 @@ from virtool.data.errors import ResourceNotFoundError
 from virtool.hmm.data import HMM_ANNOTATIONS_KEY, HMM_PROFILES_KEY, HmmsData
 from virtool.hmm.releases import GetReleaseError
 from virtool.hmm.sql import SQLHMM, SQLHMMStatus
+from virtool.storage.errors import StorageKeyNotFoundError
 from virtool.storage.object import ObjectProvider
 from virtool.tasks.progress import AbstractProgressHandler
 
@@ -233,6 +234,36 @@ class TestInstall:
         assert await _drain(data_layer.hmms._storage.read(HMM_PROFILES_KEY)) == (
             b"PROFILE-BYTES"
         )
+
+    async def test_clears_cached_annotations(self, data_layer, pg):
+        """An install drops the cached annotations blob it invalidates.
+
+        The blob is derived from the annotation rows. Serving one generated
+        before an install would describe the previous HMM dataset.
+        """
+        await _seed_status(
+            pg,
+            updates=[{"id": 1, "ready": False, "name": "v0.2.1"}],
+        )
+
+        async def _previous_annotations():
+            yield b"PREVIOUS-ANNOTATIONS"
+
+        await data_layer.hmms._storage.write(
+            HMM_ANNOTATIONS_KEY,
+            _previous_annotations(),
+        )
+
+        await data_layer.hmms.install(
+            [ANNOTATION],
+            RELEASE,
+            7,
+            _NullProgressHandler(),
+            _profile_bytes(),
+        )
+
+        with pytest.raises(StorageKeyNotFoundError):
+            await data_layer.hmms._storage.size(HMM_ANNOTATIONS_KEY)
 
     async def test_profile_write_failure_rolls_back(self, data_layer, mocker, pg):
         """A storage failure rolls back the Postgres writes."""

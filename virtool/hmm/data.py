@@ -128,6 +128,11 @@ class HmmsData(DataLayerDomain):
                 wrote_profiles = True
                 await self._storage.write(HMM_PROFILES_KEY, profile_data)
 
+                # The cached annotations blob describes the annotation rows this
+                # install replaces. Drop it before the commit so it can never
+                # outlive them; a rollback only costs a regeneration.
+                await self._storage.delete(HMM_ANNOTATIONS_KEY)
+
                 await session.commit()
         except Exception:
             # Clean up the profiles blob on any failure from the write attempt
