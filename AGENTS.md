@@ -67,6 +67,10 @@ This is a **pnpm monorepo**:
   - `@virtool/data` — the database and domain data layer: the Drizzle schema,
     `createDb`, every domain's `data.ts`, the `client_events` emitter, the
     bcrypt/session/token primitives, and `AppError`
+  - `@virtool/workflow` — the workflow runtime every executor runs on: the
+    step model, the run loop, the work path, and the eager `buildContext`
+    seam. It knows nothing about HTTP, storage or job claiming — see the
+    section below.
   - `pathoscope-core` — **Rust, not TypeScript.** Pathoscope's EM core as a
     standalone CLI, invoked as a subprocess. It is not a pnpm workspace (it
     has no `package.json`) and is excluded from biome and knip by name —
@@ -937,6 +941,61 @@ Don't add a `detail(id)` invalidation back for either.
 
 See [docs/server-push.md](docs/server-push.md) for the wire format,
 auth on the SSE side, the batching queues, and the follow-up TODOs.
+
+## Workflows
+
+### The runtime is `@virtool/workflow`: no injection, no teardown, no hooks
+
+Every workflow executor runs on `@virtool/workflow`: `defineWorkflow`,
+`runWorkflow`, `createWorkPath`, and `parseWorkflowRunConfig`. It is the
+port of Python's `virtool/workflow/`, and it knows nothing about HTTP,
+object storage, subprocesses, or job claiming — `runWorkflow` **returns** an outcome and never touches the
+network, `process.exit`, or a signal handler.
+
+Three decisions shape it and are not up for re-litigation:
+
+- **No dependency injection.** Python resolves fixtures by introspecting a
+  step's parameter names against a `ContextVar` registry. Here a run's
+  context is an ordinary object built once, before the first step, by a
+  per-workflow `buildContext`. Its `data` half must survive a JSON round
+  trip — no class instances, no closures, no live handles — because the
+  deferred end-to-end test bed expresses a run as files plus a JSON blob.
+  `createWorkflowContext` asserts that on every run, not only under test.
+  `state` is the mutable cross-step scratch and carries no such constraint.
+  Lazy or memoized accessors were rejected; per-workflow construction is
+  how one workflow fetches HMMs and another does not.
+- **No teardown.** The container is ephemeral and process exit reclaims
+  everything. Do not port `AsyncExitStack` or add a `dispose` /
+  `Symbol.asyncDispose` layer.
+- **No lifecycle hooks.** Python's ten hooks carried three callbacks in all
+  of production: four `on_failure` deletions, plus `on_step_start` and
+  `on_success` used internally by its own runtime. The deletions are gone by
+  decision — a failed run leaves its half-built resource for the user to
+  delete — `on_success` is redundant against the returned `RunOutcome`, and
+  `on_step_start` survives as a single optional `onStepStart` on
+  `RunWorkflowOptions`. Don't reintroduce a registry to give a workflow
+  somewhere to put teardown; that is the previous rule again.
+
+Steps are an **explicit ordered array**, never a scanned module. A step's
+`id` is authored in `snake_case` and **must match the Python function name
+it was ported from** — the control plane stores it, so a slugified display
+name changes the shape of a job's step list at cutover.
+
+Cancellation is **cooperative** and is the one real divergence from Python:
+aborting an `AbortSignal` interrupts nothing, so `runWorkflow` races the
+in-flight step against the signal and abandons it rather than waiting,
+leaving a `catch` attached so its later rejection cannot take the process
+down mid-report.
+
+`VT_JOBS_API_URL` and `VT_WORK_PATH` have **no defaults**, unlike Python —
+its defaults point at nothing and at a relative path `createWorkPath` would
+delete. The former is also a rename; Python calls it
+`VT_JOBS_API_CONNECTION_STRING`.
+
+See [docs/workflow-runtime.md](docs/workflow-runtime.md) for the step
+model, the eager-context rationale, the hook survey behind dropping them,
+the terminal-state table, the cancellation race, and the full config
+table.
 
 ## Code style
 

@@ -1,0 +1,10 @@
+{
+	// Every module here runs in a workflow executor, which is a plain Node
+	// process. There is no browser half to keep `node:*` out of, so unlike
+	// `@virtool/contracts` this package typechecks as one project.
+	"extends": "../tsconfig.base.json",
+	"compilerOptions": {
+		"types": ["node"]
+	},
+	"include": ["src"]
+}
