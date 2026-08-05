@@ -7,17 +7,13 @@
 	"workspaces": {
 		"apps/web": {
 			"entry": [
-				"src/client.tsx",
-				"src/server.ts",
-				"src/start.ts",
-				"src/router.tsx",
 				"src/instrument.server.ts",
 				"src/routes/**/*.{ts,tsx}",
 				"src/types/window.ts",
 				"src/tests/postgresGuard.ts"
 			],
-			"project": ["src/**/*.{ts,tsx}"],
-			"ignoreDependencies": ["bcrypt", "tailwindcss", "@tanstack/router-cli"]
+			"project": ["src/**/*.{ts,tsx,css}"],
+			"ignoreDependencies": ["bcrypt", "@tanstack/router-cli"]
 		},
 		"packages/bio": {
 			"entry": ["src/**/*.test.ts"]

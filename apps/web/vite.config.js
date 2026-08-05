@@ -116,15 +116,8 @@ export default defineConfig(({ command, mode }) => ({
 			}),
 		react(),
 		// The React Compiler is a Babel plugin; oxc has no native equivalent yet.
-		// `reactCompilerPreset` confines Babel to the client environment and to
-		// files whose source looks like a component or hook, so the server graph
-		// never reaches it.
-		//
-		// The compiler is a production render optimization, so tests skip it by
-		// default — the Babel pass is pure per-transform overhead there, and it
-		// thrashes CPU when several worktrees test in parallel. CI opts back in
-		// with `VT_TEST_REACT_COMPILER=1` so the suite still catches the
-		// compiler-introduced footguns (spread form methods, clock-in-render).
+		// Tests skip it: per-transform overhead that thrashes CPU across parallel
+		// worktrees. CI sets `VT_TEST_REACT_COMPILER=1` to keep its footguns tested.
 		(mode !== "test" || process.env.VT_TEST_REACT_COMPILER === "1") &&
 			babel({
 				presets: [reactCompilerPreset()],
@@ -157,7 +150,6 @@ export default defineConfig(({ command, mode }) => ({
 			"class-variance-authority",
 			"clsx",
 			"d3",
-			"d3-transition",
 			"downshift",
 			"es-toolkit",
 			"es-toolkit/array",

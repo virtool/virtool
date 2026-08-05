@@ -9,8 +9,7 @@ React + TypeScript single-page application for Virtool, a bioinformatics platfor
 
 This is a **pnpm monorepo**:
 
-- `apps/web/` — the Vite SPA (formerly the top-level repo). All UI code lives
-  here.
+- `apps/web/` — the Vite SPA. All UI code lives here.
 - `apps/site/` — `@virtool/site`, the product website at
   [virtool.ca](https://www.virtool.ca) (Astro + Tailwind, deployed to
   Cloudflare Workers). Kept out of the repo-wide `pnpm check`/`pnpm knip`
@@ -97,82 +96,25 @@ image split.
 
 Use `pnpm` for all install, run, and exec commands — not `npm` or `bun`.
 
-## Documentation
-
-`AGENTS.md` is the index. It carries the rules an agent needs to
-start work — terse statements with pointers into `docs/` for the
-full treatment. Detailed explanations, examples, and rationale live
-in `docs/`.
-
-**`docs/` files are self-contained leaves.** Each doc covers one
-topic end-to-end and does not link to or reference other docs.
-Routing between topics is `AGENTS.md`'s job, not the docs'. If you
-find yourself wanting to write "see other-doc.md", either the detail
-belongs in `AGENTS.md` as the routing layer, or the two docs need to
-be reorganised so each is complete on its own.
-
-**`AGENTS.md` is updated in the same commit as the change that
-invalidates it.** It is the first file every agent and contributor
-reads. A stale line does not merely fail to help — it actively
-misleads, sending readers to deleted files and dead APIs.
-
-Before committing, check whether your change contradicts anything in
-this file. It does if you have:
-
-- removed, added, or replaced a dependency listed under **Key libraries**;
-- deleted, moved, or renamed a file or directory named anywhere in this
-  document;
-- added or removed a top-level feature directory under `apps/web/src/`;
-- changed a command in the **Commands** table, or changed what one does;
-- added, removed, or changed a lint rule this file describes as enforced;
-- changed the shape of an API this file tells agents to call.
-
-"I'll update the docs afterwards" is how a doc goes stale. There is no
-afterwards — the commit that removes the last `styled.` call site is the
-commit that removes styled-components from this file.
-
-**When to update what:**
-
-- New behavioural rule or convention → add a one-line statement in
-  the right `AGENTS.md` section and put the detail in the matching
-  `docs/<topic>.md`. Create a new doc only when no existing one
-  covers the area.
-- Change to behaviour described in a doc → update the doc in the
-  same commit. `docs/` goes stale the moment the code it describes
-  changes.
-- A section in `AGENTS.md` keeps growing → move the detail into a
-  doc and leave a one-or-two-line pointer behind.
-- A doc grows past one cohesive topic, or starts pulling in
-  unrelated material to stay self-contained → split it along the
-  mixed-concerns line so each half is again a leaf.
-
-## Package manager
-
-This repo uses **pnpm**. Common commands:
-
-```bash
-pnpm install                      # install everything (root + apps + packages)
-pnpm -r test                      # run every package's tests
-pnpm -r typecheck                 # typecheck every package
-pnpm check                        # biome check (whole repo)
-```
-
 ## Tooling
 
 ### Commands (from repo root)
 
 | Task | Command |
 | --- | --- |
+| Install | `pnpm install` |
 | Typecheck | `pnpm typecheck` |
 | Lint + format | `pnpm check` |
 | Format only | `pnpm format` |
 | Dead-code scan | `pnpm knip` |
-| Test (single run, all packages) | `pnpm test` |
-| Test (watch, web app) | `pnpm --filter @virtool/web test:watch` |
-| Test (filtered) | `pnpm --filter @virtool/web exec vitest run src/path/to/file` |
 | Build | `pnpm build` |
-| Test the Rust crate | `cargo test` (in `packages/pathoscope-core`) |
-| Format the Rust crate | `cargo fmt` (in `packages/pathoscope-core`) |
+| Test (all packages) | `pnpm test` |
+| Test (watch, web app) | `pnpm --filter @virtool/web test:watch` |
+| Test (one file) | `TZ=UTC pnpm --filter @virtool/web exec vitest run <path>` |
+| Rust crate | `cargo test` / `cargo fmt` (in `packages/pathoscope-core`) |
+
+`TZ=UTC` matches the `test` script and every CI test job — drop it and that
+command becomes the only unpinned way to run the suite.
 
 `pnpm test` does **not** reach `packages/pathoscope-core` — it is not a pnpm
 workspace. Run `cargo` there directly; a `test-rust` CI job gates it.
@@ -190,8 +132,6 @@ currently configured in another repository.
 
 ### When to run checks
 
-- After changing behavior covered by a `docs/` file: update that file
-  in the same commit (see Documentation above).
 - After changing route files in `apps/web/src/routes/`: run
   `pnpm --filter @virtool/web exec tsr generate` (or the equivalent
   `@tanstack/router-cli generate`) to regenerate
@@ -223,7 +163,7 @@ currently configured in another repository.
   main looks like" — that risks dropping uncommitted work. Just trust that
   main is green and debug your own changes.
 
-## Architecture
+## Client
 
 ### Web app (`apps/web/`)
 
@@ -250,13 +190,10 @@ module:
 - `src/tests/` - Test setup, fakes, and server-function mocks
 - `src/types/` - Shared type definitions
 
-### Path aliases
-
-Feature directories have a `@name` alias (e.g., `@app/utils`, `@base/Button`,
-`@samples/queries`) — see `paths` in `apps/web/tsconfig.json` for the
-authoritative list. A few directories (`src/types/`, `src/routes/`) have no
-alias and are reached through the catch-all `@/*`, which maps to
-`apps/web/src/*`. Prefer specific aliases over `@/`.
+Each has a `@name` alias (`@app/utils`, `@base/Button`, `@samples/queries`) —
+`paths` in `apps/web/tsconfig.json` is the authoritative list. `src/types/` and
+`src/routes/` have none and are reached through the catch-all `@/*`, which maps
+to `apps/web/src/*`. Prefer a specific alias over `@/`.
 
 ### Key libraries
 
@@ -270,6 +207,8 @@ alias and are reached through the catch-all `@/*`, which maps to
 - **Radix UI** primitives for accessible components
 - **CVA** (`class-variance-authority`) for component variants
 - **Lucide React** for icons
+- **d3** for the quality, coverage, and NuVs charts — imperative SVG, not a
+  React charting wrapper
 - **exceljs** for the analysis XLSX export — server-only, and reached through a
   dynamic `import()` inside `@server/analyses/export` so it stays out of every
   other bundle
@@ -339,109 +278,13 @@ worked by accident under un-memoized render will now break:
 - **Sync props into a form with `useForm({ values })`, not a `reset()` effect.**
   `values` deep-compares, so an unrelated re-render cannot wipe a validation
   error the way a re-fired `reset()` does.
+- **Never use `useMatchRoute`.** It breaks React Compiler reactivity, so a
+  component using it stops updating on navigation (TanStack Router #4499).
+  Use `useMatchPartialPath` (`@app/useMatchPartialPath`), which subscribes
+  through `useLocation`. A Biome `noRestrictedImports` rule blocks the import.
 
 Opt a single function out with a `"use no memo"` directive — useful for
 bisecting a suspected compiler interaction, but a fix, not a resting place.
-
-### Nothing heavy in a route's critical exports
-
-`autoCodeSplitting` splits each route file in two. The **critical** half —
-`loader`, `beforeLoad`, `validateSearch`, `loaderDeps` — is imported
-*statically* by `routeTree.gen.ts`, so whatever it reaches lands in the eager
-bundle that **every** page load pays for, including `/login`. Only the
-`component` half is lazy.
-
-So, in a route's critical exports:
-
-- **Never statically import a feature's `queries.ts`.** Pull the
-  `queryOptions` factory in from inside the loader body instead:
-  `const { sampleQueryOptions } = await import("@samples/queries");`. A static
-  import drags the feature's whole request layer — every server-function stub
-  and the zod schemas they carry — into the eager bundle. Importing them in the
-  `component` half is fine — that half is lazy.
-- **Never use zod in `validateSearch`.** It is synchronous and cannot be
-  deferred, so a zod schema pins all ~108 KB of zod eagerly. Use the
-  dependency-free coercion helpers in `@app/searchParams` and type the function
-  as `(input: Partial<T> & SearchSchemaInput) => T` — the `SearchSchemaInput`
-  tag is what keeps `<Link search={{ page: 2 }}>` partial.
-- **`validateSearch` resolves every default; nothing downstream repeats one.**
-  A param with a default is required on the search type and coerced with a
-  fallback (`bool(input.reads, false)`), never left optional for components to
-  fill in with `search.reads ?? false` — a second copy of a default is free to
-  disagree with the first, which is how the analysis viewer came to draw its
-  coverage filters as on while filtering nothing. Keep the defaults in one
-  exported object and hand it to `stripSearchParams` in the route's
-  `search.middlewares`, so a resolved default costs nothing in the URL and a
-  shared link carries only what its sender changed
-  (`analyses/search.ts` and the analysis route are the worked example).
-- **Paginated list routes share `@app/pagination`.** Spread `paginated(input)`
-  into the returned object and intersect the route's search type with
-  `Paginated` (`type FooSearch = Paginated & { term: string }`) rather than
-  re-declaring `page: num(input.page, 1)`. Loaders pass `DEFAULT_PER_PAGE` from
-  the same module, not a literal `25`.
-
-`src/server/**` is reachable from the browser program via `start.ts`, so the
-same rule applies there: reach server-function modules through
-`createServerOnlyFn` (see `auth/middleware.ts`), never a top-level import.
-
-### What a route guard reaches gets its own module
-
-A `beforeLoad` that resolves an account, or a loader on `/login` or `/setup`,
-runs for unauthenticated visitors. Anything it reaches — even *dynamically* —
-is downloaded on the login wall.
-
-**Tree-shaking will not save you here: the chunk is the unit of loading, not
-the export.** Importing a feature's `queries.ts` for one `queryOptions` factory
-pulls that module's whole chunk — every other request it defines, and the zod
-schemas those carry. Marking a module side-effect-free does nothing about this.
-
-So the queryOptions the guards need live apart from their feature's
-`queries.ts`, each importing one server function and nothing else:
-
-- `@account/account` — `accountQueryOptions` / `useFetchAccount`, backed by the
-  `getAccount` server function.
-- `@administration/passwordPolicy` — `passwordPolicyQueryOptions`, backed by
-  `getPasswordPolicyFn`.
-- `@nav/queries` — `rootQueryOptions` / `useRootQuery`, backed by the `getRoot`
-  server function. The guard reads `firstUser` from it before a session exists.
-
-Keep them out of their feature's `queries.ts` even when that module looks light
-today — the next request added there rides along onto the login wall with
-nothing to catch it.
-
-### Heavy dependencies get their own module
-
-A module's imports survive tree-shaking if the package does not declare
-`sideEffects: false` — so a grab-bag module leaks its heaviest dependency into
-every bundle that wants *any* of its exports. `cn()` (`@app/cn`) is split out
-of `@app/utils` for exactly this reason — it keeps `tailwind-merge` out of every
-bundle that only wants a plain utility. Don't merge it back.
-
-### A native dependency must never be bundled
-
-A package that loads a `.node` addon finds it relative to `__dirname`, which
-has no value in an ES module — so bundling one produces a server that builds
-cleanly and throws `ReferenceError: __dirname is not defined` the first time
-anything imports it. `bcrypt` shipped that way and took the whole auth path
-down with it.
-
-Nitro knows the common native packages and traces them out of its own bundle
-automatically, copying each into `.output/server/node_modules` — the dist
-image ships only `.output`, so nothing else puts them there. Reach for
-`traceDeps` on the `nitro()` plugin only for one it does not already know.
-What it cannot do is reclaim a package the **Vite** stage inlined first, and
-Nitro bundles the server in two stages. So a native package needs:
-
-- `environments.ssr.resolve.external` in `apps/web/vite.config.js`, so the Vite
-  stage leaves the import alone;
-- an entry in `apps/web/package.json` dependencies, even when no file in
-  `apps/web` imports it. Nitro resolves the external from the app root, and a
-  package reached only through a workspace package is not there under pnpm.
-  Add it to `ignoreDependencies` for `apps/web` in `knip.json` alongside.
-
-Check the built output rather than trusting a green build:
-`grep -rn "__dirname" apps/web/.output/server/_ssr/` should turn up no bare
-read — only lines that define one first.
 
 ### Routing: in-app navigation uses `<Link>`
 
@@ -458,6 +301,26 @@ navigated `/login` to `/` to `/samples` with the layout match re-rendering
 mid-chain — the window the router throws `undefined` in. Moving it back under
 the guard reintroduces that. Nothing is exposed by leaving it unguarded: it
 renders nothing, and `/samples` carries the guard.
+
+### Route search params
+
+`validateSearch` resolves every default; nothing downstream repeats one. A
+param with a default is required on the search type and coerced with a fallback
+(`bool(input.reads, false)`), never left optional for a component to fill in
+with `search.reads ?? false` — a second copy of a default is free to disagree
+with the first, which is how the analysis viewer came to draw its coverage
+filters as on while filtering nothing.
+
+Keep the defaults in one exported object and hand it to `stripSearchParams` in
+the route's `search.middlewares`, so a resolved default costs nothing in the URL
+and a shared link carries only what its sender changed. `analyses/search.ts`
+and the analysis route are the worked example.
+
+Paginated list routes share `@app/pagination`. Spread `paginated(input)` into
+the returned object and intersect the route's search type with `Paginated`
+(`type FooSearch = Paginated & { term: string }`) rather than re-declaring
+`page: num(input.page, 1)`. Loaders pass `DEFAULT_PER_PAGE` from the same
+module, not a literal `25`.
 
 ### API calls
 
@@ -514,8 +377,8 @@ route or query errors — those belong in the two tiers above.
 
 - Styling is Tailwind utility classes. There is no CSS-in-JS; styled-components
   has been removed from the repo.
-- Use the `cn()` function from `@app/utils` for conditional classes (combines
-  `clsx` + `tailwind-merge`).
+- Use `cn()` from `@app/cn` for conditional classes (combines `clsx` +
+  `tailwind-merge`).
 - Don't use arbitrary Tailwind classes like `max-h-[210px]`.
 - Design tokens — colors, spacing, fonts — are defined in
   `apps/web/src/app/style.css` under `@theme`, with keyframes in
@@ -530,23 +393,54 @@ route or query errors — those belong in the two tiers above.
   Where a size has to be a number — a threshold compared against a measured
   width — write it as a rem multiple and resolve it with `useRootFontSize`
   (`@app/hooks`), never as a px constant.
+- A `color` prop on a `src/base/` component takes the shared `PaletteColor`
+  from `@base/types` (`blue`, `green`, `gray`, `orange`, `purple`, `red`), or
+  `IconColor` — `PaletteColor | "black"` — for the icon-based ones (`Icon`,
+  `IconButton`, `Circle`). Don't redeclare the union locally, add a one-off
+  color, or trim the set per component.
+- Where a component has variants (`solid` / `soft`), `color` works in every
+  one. A variant that silently ignores it is a footgun: honor it across the
+  board or drop the prop for that variant.
 
 See [docs/type-scale.md](docs/type-scale.md) for which token families are
 overridden and why they move together, the class-to-px table, and the px
 holdouts that still need fixing.
 
-### Base component color props
+## Bundling: the chunk is the unit of loading, not the export
 
-Base components in `src/base/` that expose a `color` prop should accept the
-shared `PaletteColor` type from `@base/types`
-(`"blue" | "green" | "gray" | "orange" | "purple" | "red"`). Don't redeclare the
-union locally, add one-off colors, or trim the set per component — keep the
-surface uniform. Icon-based components (`Icon`, `IconButton`, `Circle`) use
-`IconColor`, which is `PaletteColor | "black"`.
+Tree-shaking removes unused code *within* a chunk; it does not decide which
+chunks a page fetches. So importing one symbol pulls the whole module's chunk,
+and `sideEffects: false` does nothing about it. Five rules follow:
 
-If a component has multiple variants (e.g. `solid` / `soft`), `color` should
-work in every variant. A variant that silently ignores `color` is a footgun;
-either honor it across the board or drop the prop for that variant.
+- **Nothing heavy in a route's critical exports.** `autoCodeSplitting` makes
+  `loader`, `beforeLoad`, `validateSearch` and `loaderDeps` a statically
+  imported half that every page load pays for, `/login` included; only
+  `component` is lazy. Never statically import a feature's `queries.ts` — pull
+  the `queryOptions` factory in from inside the loader body — and never use zod
+  in `validateSearch`, which is synchronous and so pins ~108 KB eagerly. Use
+  `@app/searchParams` there instead.
+- **What a route guard reaches is downloaded on the login wall**, dynamic
+  imports included. The `queryOptions` the guards need therefore live apart
+  from their feature's `queries.ts`, one server function each:
+  `@account/account`, `@administration/passwordPolicy`, `@nav/queries`. Keep
+  them there even when the feature module looks light today.
+- **Heavy dependencies get their own module.** `cn()` is in `@app/cn`, not
+  `@app/utils`, to keep `tailwind-merge` out of every bundle that wants a plain
+  utility. Don't merge it back.
+- **Reach `src/server/**` through `createServerOnlyFn`**, never a top-level
+  import — `start.ts` puts it in the browser program (`auth/middleware.ts` and
+  `metricsMiddleware` are the worked examples).
+- **A native dependency must never be bundled.** It resolves its `.node` addon
+  against `__dirname`, which an ES module has none of, so it builds clean and
+  throws at first import. It needs both `environments.ssr.resolve.external` in
+  `apps/web/vite.config.js` and an `apps/web` dependency entry.
+
+See [docs/bundling.md](docs/bundling.md) for the eager/lazy split in full, why
+the login wall is reachability rather than timing, Nitro's two bundling stages
+and what `traceDeps` can and cannot reclaim, and how to verify the built output
+rather than trusting a green build.
+
+## Server
 
 ### Server modules layer as `data.ts` → `service.ts` → `functions.ts`
 
@@ -654,9 +548,10 @@ hold it there:
   because a server file reaching into a DOM-typed module breaks the
   server project at a distance. **Every** feature alias is listed, plus
   the `@/*` catch-all that would otherwise reach the same modules under
-  another name. It used to enumerate four, and was already leaking:
-  `labels/data.ts` read `DEFAULT_LABEL_COLOR` from `@labels/constants`
-  and nothing caught it. Add the alias when you add a feature directory.
+  another name — not merely the aliases something imports today. A
+  partial list let `labels/data.ts` read `DEFAULT_LABEL_COLOR` from
+  `@labels/constants` with nothing to catch it. Add the alias when you
+  add a feature directory.
 
 The packages need no rule of their own for the second: `packages/**` has
 no `@<feature>/*` path mapping at all, so a browser feature module is not
@@ -730,81 +625,55 @@ Do not try to wrap `createServerFn` in a factory that takes the policy
 as an argument. The Vite plugin matches that call syntactically at the
 definition site; behind a factory it stops treating the function as a
 server function at all — no RPC endpoint, and the handler body ships to
-the browser. This was tried and reverted.
+the browser.
 
-Raw `Request` handlers in `createFileRoute` (e.g. SSE routes) run
-outside the server-function context and call
-`requireAuthenticatedRequest(request)` instead.
+Raw `Request` handlers in `createFileRoute` run outside the server-function
+context, so **no policy middleware runs on them** and each enforces its own
+floor — nearly always `requireAuthenticatedRequest(request)`, which is the raw
+spelling of `authenticated()`. This table is the whole inventory:
 
-File uploads are a raw route (`routes/uploads.ts` → `@server/uploads/upload`),
-**not** a server function. `uploads/uploader.ts`'s `postUpload` posts the raw
-`File` to `POST /uploads` with `XMLHttpRequest`, because only XHR reports upload
-progress — `fetch` cannot — and read files can run to many gigabytes. The handler
-reads `name`/`type` from the query string and streams `request.body` to storage
-(never `request.formData()`, which buffers the whole file in the Node heap), and
-returns a plain-JSON `Response` the XHR can `JSON.parse`. Because no policy
-middleware runs on a route, the handler enforces the floor itself:
-`requireAuthenticatedRequest` then a `hasPermission(session, "upload_file")`
-check. Don't fold it back into a server function — the RPC client uses `fetch`
-and would lose progress.
+| Route | Handler | Floor |
+| --- | --- | --- |
+| `events.ts` | `@server/events/*` | authenticated |
+| `uploads.ts` | `@server/uploads/upload` | authenticated + `upload_file` |
+| `uploads_.$uploadId.ts` | `@server/uploads/download` | authenticated |
+| `analyses.documents.$document.ts` | `@server/analyses/download` | authenticated + sample `read` |
+| `otus.$otuId.fasta.ts` (+ isolate, sequence siblings) | `@server/otus/fasta` | authenticated |
+| `subtractions.$subtractionId.files.$filename.ts` | `@server/subtraction/download` | authenticated |
+| `indexes.$indexId.files.$filename.ts` | `@server/indexes/download` | authenticated + `checkReferenceVisibility` |
+| `samples.$sampleId.reads.$filename.ts` | `@server/samples/download` | authenticated + sample `read` |
+| `metrics.ts` | `@server/metrics/handler` | `VT_METRICS_TOKEN` bearer; 404 when unset |
+| `monitoring.ts` | `Sentry.createSentryTunnelRoute` | **none**, deliberately |
+| `health/live.ts`, `health/ready.ts` | `@server/health/ready` | **none**, deliberately |
 
-Reading an upload back is a separate raw route
-(`routes/uploads_.$uploadId.ts` → `@server/uploads/download`), reached from the
-uploads list with a plain `<a href>` and streamed out of storage. Its floor is
-`requireAuthenticatedRequest` alone — uploads carry no per-row rights, and
-`upload_file` gates *writing* one, not reading it back. The trailing underscore
-in the filename keeps it from nesting under `routes/uploads.ts` merely because
-the two share a URL segment; the URL is `/uploads/{uploadId}` either way. The
-`Content-Disposition` is built from the row's `name`, never the UUID-prefixed
-`name_on_disk` that keys the object.
+A route is raw only where RPC cannot do the job: `XMLHttpRequest` for upload
+progress, a plain `<a href>` that needs a real `Content-Disposition`,
+`EventSource`, or a non-RPC client like Prometheus. The two unauthenticated
+entries are considered exceptions rather than oversights — Sentry's tunnel
+exists to capture errors thrown *on the login wall* and is bounded by its DSN
+check instead, and kubelet probes cannot hold a session. Don't add a floor to
+either.
 
-The analysis CSV/XLSX export (`routes/analyses.documents.$document.ts` →
-`@server/analyses/download`) is a raw route for the mirror-image reason: the
-client reaches it with a plain `<a href>`, so the browser has to receive a real
-response carrying a `Content-Disposition` header, which an RPC call cannot
-produce. Its `$document` param is the `{id}.{extension}` segment. It too
-enforces its own floor — `requireAuthenticatedRequest`, then the **read** right
-on the analysis's parent sample.
+Constraints these handlers carry, each of which has been a bug:
 
-The FASTA downloads (`routes/otus.$otuId.fasta.ts` and its isolate and sequence
-siblings → `@server/otus/fasta`) are raw routes for the same reason. Each ends
-in a literal `fasta` segment rather than carrying a `.fa` suffix on the resource
-URL: Python sniffs that suffix inside its OTU and sequence *read* handlers and
-branches, which puts two representations on one URL. Give a download its own
-route and let `Content-Disposition` carry the filename. They enforce
-`requireAuthenticatedRequest` and nothing more, matching the OTU read endpoints.
-
-Subtraction file downloads
-(`routes/subtractions.$subtractionId.files.$filename.ts` →
-`@server/subtraction/download`) are a raw route for the same reason, and stream
-the bytes out of storage rather than buffering a multi-GB Bowtie2 index. Their
-floor is `requireAuthenticatedRequest` alone — subtractions carry no per-row
-rights. The filename is only ever composed into a storage key *after* it has
-matched a `subtraction_files` row, which is what keeps a URL param from
-traversing out of the prefix.
-
-Index file downloads (`routes/indexes.$indexId.files.$filename.ts` →
-`@server/indexes/download`) are a raw route for the same reason. Their floor is
-`requireAuthenticatedRequest` **and** the caller being able to see the index's
-parent reference (`checkReferenceVisibility`), which is the TypeScript spelling
-of Python's reference `read` right — an index is only as visible as the
-reference it was built from, and without the check every signed-in user could
-read every reference's builds. The filename is matched against a whitelist of
-the names a build produces before it is looked up, and the storage key is
-composed from the `index_files` row's own `name` and the index's `storage_key`
-column, never the row id.
-
-Sample reads downloads (`routes/samples.$sampleId.reads.$filename.ts` →
-`@server/samples/download`) are a raw route for the same reason. Their floor is
-`requireAuthenticatedRequest` then the **read** right on the sample, matching
-the analysis export. The Python endpoint this replaced checked only the session;
-that gap was deliberately not carried over.
-
-The Prometheus scrape endpoint (`routes/metrics.ts` → `@server/metrics/handler`)
-is a raw route for the same reason as the upload: Prometheus speaks plain HTTP,
-not the generated RPC client. It enforces its own floor too — a bearer token
-compared against `VT_METRICS_TOKEN`, with an unset token reporting 404 rather
-than serving openly.
+- **Stream, never buffer.** `request.body` to storage on the way in, storage to
+  the response on the way out. `request.formData()` puts a multi-gigabyte read
+  file in the Node heap. For the same reason the upload must not become a server
+  function: the RPC client uses `fetch`, which cannot report progress.
+- **Compose a storage key only from a row already matched.** A `$filename` param
+  is looked up first — against `subtraction_files`, or a whitelist of the names
+  an index build produces — and the key is then built from that row's own `name`
+  and `storage_key`. Never from the URL param, which is how a param traverses
+  out of the prefix, and never from the row id.
+- **`Content-Disposition` carries the row's `name`**, never the UUID-prefixed
+  `name_on_disk` that keys the object.
+- **A download gets its own URL.** The FASTA routes end in a literal `fasta`
+  segment rather than a `.fa` suffix on the resource URL — sniffing a suffix
+  inside a read handler is what puts two representations on one path.
+- **`uploads_.$uploadId.ts` keeps its trailing underscore**, which stops it
+  nesting under `routes/uploads.ts`. The URL is `/uploads/{uploadId}` regardless.
+- **The sample reads floor is deliberately stricter than the endpoint it
+  replaced**, which checked only the session. Don't relax it to match.
 
 Raw routes are also the only endpoints reachable with an **API key**.
 `requireAuthenticatedRequest` accepts either the session cookie pair or an HTTP
@@ -816,6 +685,125 @@ administrators too.
 See [docs/auth.md](docs/auth.md) for the middleware composition, the
 session model, cookies, lifetimes, and the login / reset / logout
 flows.
+
+### Environment variables are prefixed with `VT_`
+
+Every Virtool-owned env var must start with `VT_`. The prefix keeps our
+variables clearly separated from third-party ones (`SENTRY_*`, `NODE_*`,
+cloud-provider injected vars) and matches the `envPrefix` Vite is configured
+to expose. This applies to the zod schema keys in
+`apps/web/src/server/config.ts`, `apps/web/.env.example`, and any
+`process.env.*` reads anywhere in the app.
+
+Good: `VT_WORKER_MODE`, `VT_WORKER_CONCURRENCY`, `VT_POSTGRES_URL`.
+
+Bad: `WORKER_MODE`, `POSTGRES_URL`.
+
+The only exception is upstream-defined names (e.g. `SENTRY_AUTH_TOKEN`,
+`NODE_OPTIONS`) — leave those as the third party expects.
+
+### Every config key also reads from a `_FILE` variant
+
+`parseServerConfig` resolves `<KEY>_FILE` before zod parses: the named
+file is read, trimmed, and used as `<KEY>`'s value. It applies to every
+key in the schema — add one and it gets the behaviour for free — so
+secrets reach a pod through the secrets-store CSI driver's file mount
+(`VT_METRICS_TOKEN_FILE=/mnt/secrets-store/metrics-token`) instead of a
+Kubernetes `Secret`, which goes stale when a key is added to the
+`SecretProviderClass`. Plain variables still work for local dev.
+
+**The file wins over a plain variable of the same name.** A rollout
+moving to the mount can still carry the stale env var from the `Secret`
+it replaces, and erroring on the overlap would crashloop the rollout
+that fixes it. An unreadable path throws at startup; an empty file is an
+unset value.
+
+The non-Vite apps carry their own copy of the resolver in their
+`src/config.ts` — they cannot reach `apps/web/src/server`, and they parse
+a much smaller set of keys than the web app's zod schema. Keep the
+`<KEY>_FILE` behaviour in any new one; do not add a plain
+`process.env` read that skips it.
+
+### Logging
+
+Server code logs through `@virtool/logger`, not `console.*`. Biome's
+`noConsole` bans `console.*` across the whole repo; on the client, report
+unexpected conditions to Sentry (`Sentry.captureException`) rather than the
+user's console, which no one can read.
+
+Import the `logger` singleton from `@server/logger` and call it directly:
+
+```ts
+logger.warn({ err }, "postgres health check failed");
+```
+
+`@virtool/data` cannot reach that singleton — it carries the Sentry
+forwarding stream, which is the app's. The six data functions that log
+take a `Logger` as an argument instead, after `db` and `storage`, and the
+web app's `functions.ts` passes `@server/logger` in. `emit` is the one
+exception: its logger is bound once by `createEmitter`.
+
+Pass structured fields as the first arg and the message as the second —
+never interpolate values into the message string, that defeats the
+redaction list and makes records ungreppable.
+
+There is no request-scoped logger. `logger.child({...})` is available for
+attaching scoped context, but nothing in the server currently uses it and
+no `context.logger` exists — don't write code that assumes one.
+
+When `VT_SENTRY_DSN` is set, server logs at `info` and above are
+forwarded to Sentry automatically (via a pino destination stream, not
+`Sentry.pinoIntegration()`); redaction still applies and dev does not
+forward.
+
+See [docs/logging.md](docs/logging.md) for the redaction
+defaults, `VT_LOG_LEVEL` resolution, where the logger singleton lives, and
+the Sentry forwarding wiring.
+
+### Metrics
+
+Prometheus scrapes `GET /metrics`, gated by a bearer token
+(`VT_METRICS_TOKEN`). With the variable unset the route reports 404, so
+metrics are off until a deployment opts in.
+
+`server/metrics/registry.ts` owns the one process-wide `Registry`.
+Default process metrics keep prom-client's standard unprefixed names
+(`process_*`, `nodejs_*`) so off-the-shelf dashboards match; everything
+we define is prefixed `virtool_`.
+
+Request rate and latency come from `metricsMiddleware`, a global
+`requestMiddleware` in `start.ts` that sees every request — server
+function, raw route, and rendered page alike.
+
+**No label may be unbounded.** The request path is deliberately not a
+label: pathnames carry ids. Server functions are identified by
+`serverFnMeta.name` instead, which is bounded by the number of functions
+in the codebase.
+
+**postgres.js exposes no pool statistics** — its connection queues live
+in a closure, and `onclose` has no `onopen` counterpart. Pool occupancy
+is read from Postgres itself, filtering `pg_stat_activity` on the
+`applicationName` that `createDb` (`@virtool/data/db/pg`) sets and
+`@server/composition` re-exports, which carries the hostname so each
+replica counts only its own pool. Client-side queue depth remains
+unavailable and needs per-query instrumentation.
+
+That name is built by `@virtool/data/db/applicationName` and bounded to 63 bytes —
+Postgres truncates a longer one silently, and the filter would then match
+nothing and report every bucket as zero. The probe itself is bounded too:
+it queries the very pool it measures, so a saturated pool queues it
+client-side where nothing rejects, and an unbounded read would cost the
+whole scrape rather than just the pool gauges.
+
+`metricsMiddleware` loads the registry through `createServerOnlyFn`
+because a static import would drag prom-client and its `node:*` reads
+into the client graph.
+
+See [docs/metrics.md](docs/metrics.md) for the exported series, the
+token check, cardinality rules, and what deeper instrumentation would
+take.
+
+## Data
 
 ### Data store: Postgres-first
 
@@ -910,25 +898,6 @@ Don't add a `detail(id)` invalidation back for either.
 See [docs/server-push.md](docs/server-push.md) for the wire format,
 auth on the SSE side, the batching queues, and the follow-up TODOs.
 
-## Linear
-
-- **Team**: Virtool
-- **Team ID**: `76cf3c46-c5d9-4df4-b457-0fc053d402f7`
-- **Issue prefix**: `VIR`
-- **Default label**: Frontend
-
-### Issue conventions
-
-- Capitalize issue titles.
-- Place issues in **Todo** by default; use **Backlog** only when explicitly
-  asked. If an issue seems like it should be Backlog, say so and ask.
-- Never assign issues to anyone.
-- **Never change an issue's status.** Status is managed automatically from
-  branch and PR activity. Move an issue by hand only when explicitly told to.
-  The Todo-by-default rule above governs issues you create, not ones already
-  in flight.
-- Label bugs as **Bug** in addition to any other labels.
-
 ## Code style
 
 The basics:
@@ -961,189 +930,15 @@ The basics:
   name — the `Fn` suffix already keeps the two apart, so don't alias it
   to `...Impl` on the way in.
 - **Comments:** Default to none. Document *why* when non-obvious, not
-  *what*.
+  *what*. Never narrate history ("this used to do X, now it does Y") —
+  that's git blame's job, and it just accretes stale layers; write a
+  comment about a past change only if reverting it would silently
+  reintroduce a bug, phrased as a standing warning, not a changelog.
 - **Concurrency:** Independent awaits go in `Promise.all` — don't pay
   the sum of latencies.
 
 See [docs/code-style.md](docs/code-style.md) for the full TypeScript,
 naming, comments, and concurrency rules with examples.
-
-## Configuration
-
-### Environment variables are prefixed with `VT_`
-
-Every Virtool-owned env var must start with `VT_`. The prefix keeps our
-variables clearly separated from third-party ones (`SENTRY_*`, `NODE_*`,
-cloud-provider injected vars) and matches the `envPrefix` Vite is configured
-to expose. This applies to the zod schema keys in
-`apps/web/src/server/config.ts`, `apps/web/.env.example`, and any
-`process.env.*` reads anywhere in the app.
-
-Good: `VT_WORKER_MODE`, `VT_WORKER_CONCURRENCY`, `VT_POSTGRES_URL`.
-
-Bad: `WORKER_MODE`, `POSTGRES_URL`.
-
-The only exception is upstream-defined names (e.g. `SENTRY_AUTH_TOKEN`,
-`NODE_OPTIONS`) — leave those as the third party expects.
-
-### Every config key also reads from a `_FILE` variant
-
-`parseServerConfig` resolves `<KEY>_FILE` before zod parses: the named
-file is read, trimmed, and used as `<KEY>`'s value. It applies to every
-key in the schema — add one and it gets the behaviour for free — so
-secrets reach a pod through the secrets-store CSI driver's file mount
-(`VT_METRICS_TOKEN_FILE=/mnt/secrets-store/metrics-token`) instead of a
-Kubernetes `Secret`, which goes stale when a key is added to the
-`SecretProviderClass`. Plain variables still work for local dev.
-
-**The file wins over a plain variable of the same name.** A rollout
-moving to the mount can still carry the stale env var from the `Secret`
-it replaces, and erroring on the overlap would crashloop the rollout
-that fixes it. An unreadable path throws at startup; an empty file is an
-unset value.
-
-The non-Vite apps carry their own copy of the resolver in their
-`src/config.ts` — they cannot reach `apps/web/src/server`, and they parse
-a much smaller set of keys than the web app's zod schema. Keep the
-`<KEY>_FILE` behaviour in any new one; do not add a plain
-`process.env` read that skips it.
-
-## Logging
-
-Server code logs through `@virtool/logger`, not `console.*`. Biome's
-`noConsole` bans `console.*` across the whole repo; on the client, report
-unexpected conditions to Sentry (`Sentry.captureException`) rather than the
-user's console, which no one can read.
-
-Import the `logger` singleton from `@server/logger` and call it directly:
-
-```ts
-logger.warn({ err }, "postgres health check failed");
-```
-
-`@virtool/data` cannot reach that singleton — it carries the Sentry
-forwarding stream, which is the app's. The six data functions that log
-take a `Logger` as an argument instead, after `db` and `storage`, and the
-web app's `functions.ts` passes `@server/logger` in. `emit` is the one
-exception: its logger is bound once by `createEmitter`.
-
-Pass structured fields as the first arg and the message as the second —
-never interpolate values into the message string, that defeats the
-redaction list and makes records ungreppable.
-
-There is no request-scoped logger. `logger.child({...})` is available for
-attaching scoped context, but nothing in the server currently uses it and
-no `context.logger` exists — don't write code that assumes one.
-
-When `VT_SENTRY_DSN` is set, server logs at `info` and above are
-forwarded to Sentry automatically (via a pino destination stream, not
-`Sentry.pinoIntegration()`); redaction still applies and dev does not
-forward.
-
-See [docs/logging.md](docs/logging.md) for the redaction
-defaults, `VT_LOG_LEVEL` resolution, where the logger singleton lives, and
-the Sentry forwarding wiring.
-
-## Metrics
-
-Prometheus scrapes `GET /metrics`, gated by a bearer token
-(`VT_METRICS_TOKEN`). With the variable unset the route reports 404, so
-metrics are off until a deployment opts in.
-
-`server/metrics/registry.ts` owns the one process-wide `Registry`.
-Default process metrics keep prom-client's standard unprefixed names
-(`process_*`, `nodejs_*`) so off-the-shelf dashboards match; everything
-we define is prefixed `virtool_`.
-
-Request rate and latency come from `metricsMiddleware`, a global
-`requestMiddleware` in `start.ts` that sees every request — server
-function, raw route, and rendered page alike.
-
-**No label may be unbounded.** The request path is deliberately not a
-label: pathnames carry ids. Server functions are identified by
-`serverFnMeta.name` instead, which is bounded by the number of functions
-in the codebase.
-
-**postgres.js exposes no pool statistics** — its connection queues live
-in a closure, and `onclose` has no `onopen` counterpart. Pool occupancy
-is read from Postgres itself, filtering `pg_stat_activity` on the
-`applicationName` that `createDb` (`@virtool/data/db/pg`) sets and
-`@server/composition` re-exports, which carries the hostname so each
-replica counts only its own pool. Client-side queue depth remains
-unavailable and needs per-query instrumentation.
-
-That name is built by `@virtool/data/db/applicationName` and bounded to 63 bytes —
-Postgres truncates a longer one silently, and the filter would then match
-nothing and report every bucket as zero. The probe itself is bounded too:
-it queries the very pool it measures, so a saturated pool queues it
-client-side where nothing rejects, and an unbounded read would cost the
-whole scrape rather than just the pool gauges.
-
-Anything reached from `start.ts` is in the browser program, so
-`metricsMiddleware` loads the registry through `createServerOnlyFn` and
-a dynamic import — never a static one, which would drag prom-client and
-its `node:*` reads into the client graph.
-
-See [docs/metrics.md](docs/metrics.md) for the exported series, the
-token check, cardinality rules, and what deeper instrumentation would
-take.
-
-## Git
-
-Commit messages use **Conventional Commits**. Releases are automated with
-semantic-release: only `feat` (minor) and `fix` (patch) trigger a release.
-Anything user-visible must be one of those — never `refactor` or `chore`.
-
-```
-type(scope): description
-```
-
-### Types
-
-- `feat`: new user-facing feature or capability
-- `fix`: bug fix or correcting wrong behavior (includes UI adjustments and
-  performance improvements)
-- `chore`: internal code not yet exposed to users (e.g., new hook, data model),
-  configs, dependencies, file moves/renames, build scripts
-- `refactor`: restructuring code without changing behavior (e.g., extracting
-  functions, renaming variables, reorganizing modules)
-- `style`: formatting only — no logic changes
-- `docs`: documentation changes only
-- `test`: adding or updating tests
-- `ci`: CI/CD pipeline changes
-
-### Titles
-
-`feat` and `fix` titles are user-facing. Describe the outcome for the user,
-not the code change. Implementation details go in the body, not the title.
-
-- Bad: `fix: use shared Button component with corrected label`
-- Good: `fix: correct submit button label`
-- Bad: `feat: wrap save handler in a transaction`
-- Good: `fix: prevent rare data loss when saving`
-
-All other types are developer-facing — implementation details are helpful
-and make commits easier to find later.
-
-- Good: `refactor: extract form helpers into src/forms/`
-- Good: `chore: add csv parser`
-- Good: `test: add tests for table components and hooks`
-
-### Other rules
-
-- Title: lowercase, no period, under 72 characters.
-- Scope is optional. Allowed scope: `deps` (dependency changes). Do not scope
-  by domain.
-- Don't push or create PRs unless asked.
-- Don't include a Test plan section in pull request descriptions or comments.
-- Don't use `git -C <path>` unless necessary. It triggers permission prompts
-  that aren't worth the trouble. Run git commands from the working directory
-  instead.
-
-### GitHub
-
-- PR titles must follow Conventional Commits format so they can be cleanly
-  squash-merged into a single well-formed commit.
 
 ## Testing
 
@@ -1222,3 +1017,128 @@ and make commits easier to find later.
 See [docs/testing.md](docs/testing.md) for the unit / integration
 layer split, where to mock the network boundary, snapshot guidance, the
 axe-core accessibility helper, and the shared-fixtures rule.
+## Process
+
+### Documentation
+
+`AGENTS.md` is the index. It carries the rules an agent needs to
+start work — terse statements with pointers into `docs/` for the
+full treatment. Detailed explanations, examples, and rationale live
+in `docs/`.
+
+**`docs/` files are self-contained leaves.** Each doc covers one
+topic end-to-end and does not link to or reference other docs.
+Routing between topics is `AGENTS.md`'s job, not the docs'. If you
+find yourself wanting to write "see other-doc.md", either the detail
+belongs in `AGENTS.md` as the routing layer, or the two docs need to
+be reorganised so each is complete on its own.
+
+**`AGENTS.md` is updated in the same commit as the change that
+invalidates it.** It is the first file every agent and contributor
+reads. A stale line does not merely fail to help — it actively
+misleads, sending readers to deleted files and dead APIs.
+
+Before committing, check whether your change contradicts anything in
+this file. It does if you have:
+
+- removed, added, or replaced a dependency listed under **Key libraries**;
+- deleted, moved, or renamed a file or directory named anywhere in this
+  document;
+- added or removed a top-level feature directory under `apps/web/src/`;
+- changed a command in the **Commands** table, or changed what one does;
+- added, removed, or changed a lint rule this file describes as enforced;
+- changed the shape of an API this file tells agents to call.
+
+"I'll update the docs afterwards" is how a doc goes stale. There is no
+afterwards — the commit that removes the last `styled.` call site is the
+commit that removes styled-components from this file.
+
+**When to update what:**
+
+- New behavioural rule or convention → add a one-line statement in
+  the right `AGENTS.md` section and put the detail in the matching
+  `docs/<topic>.md`. Create a new doc only when no existing one
+  covers the area.
+- Change to behaviour described in a doc → update the doc in the
+  same commit. `docs/` goes stale the moment the code it describes
+  changes.
+- A section in `AGENTS.md` keeps growing → move the detail into a
+  doc and leave a one-or-two-line pointer behind.
+- A doc grows past one cohesive topic, or starts pulling in
+  unrelated material to stay self-contained → split it along the
+  mixed-concerns line so each half is again a leaf.
+
+### Git
+
+Commit messages use **Conventional Commits**. Releases are automated with
+semantic-release: only `feat` (minor) and `fix` (patch) trigger a release.
+Anything user-visible must be one of those — never `refactor` or `chore`.
+
+```
+type(scope): description
+```
+
+#### Types
+
+- `feat`: new user-facing feature or capability
+- `fix`: bug fix or correcting wrong behavior (includes UI adjustments and
+  performance improvements)
+- `chore`: internal code not yet exposed to users (e.g., new hook, data model),
+  configs, dependencies, file moves/renames, build scripts
+- `refactor`: restructuring code without changing behavior (e.g., extracting
+  functions, renaming variables, reorganizing modules)
+- `style`: formatting only — no logic changes
+- `docs`: documentation changes only
+- `test`: adding or updating tests
+- `ci`: CI/CD pipeline changes
+
+#### Titles
+
+`feat` and `fix` titles are user-facing. Describe the outcome for the user,
+not the code change. Implementation details go in the body, not the title.
+
+- Bad: `fix: use shared Button component with corrected label`
+- Good: `fix: correct submit button label`
+- Bad: `feat: wrap save handler in a transaction`
+- Good: `fix: prevent rare data loss when saving`
+
+All other types are developer-facing — implementation details are helpful
+and make commits easier to find later.
+
+- Good: `refactor: extract form helpers into src/forms/`
+- Good: `chore: add csv parser`
+- Good: `test: add tests for table components and hooks`
+
+#### Other rules
+
+- Title: lowercase, no period, under 72 characters.
+- Scope is optional. Allowed scope: `deps` (dependency changes). Do not scope
+  by domain.
+- Don't push or create PRs unless asked.
+- Don't include a Test plan section in pull request descriptions or comments.
+- Don't use `git -C <path>` unless necessary. It triggers permission prompts
+  that aren't worth the trouble. Run git commands from the working directory
+  instead.
+
+#### GitHub
+
+- PR titles must follow Conventional Commits format so they can be cleanly
+  squash-merged into a single well-formed commit.
+
+### Linear
+
+- **Team**: Virtool
+- **Team ID**: `76cf3c46-c5d9-4df4-b457-0fc053d402f7`
+- **Issue prefix**: `VIR`
+
+#### Issue conventions
+
+- Capitalize issue titles.
+- Place issues in **Todo** by default; use **Backlog** only when explicitly
+  asked. If an issue seems like it should be Backlog, say so and ask.
+- Never assign issues to anyone.
+- **Never change an issue's status.** Status is managed automatically from
+  branch and PR activity. Move an issue by hand only when explicitly told to.
+  The Todo-by-default rule above governs issues you create, not ones already
+  in flight.
+- Label bugs as **Bug** in addition to any other labels.

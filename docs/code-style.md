@@ -153,6 +153,26 @@ What not to write:
 - Multi-paragraph essays — if a comment grows past two or three lines,
   consider whether it belongs in a doc, a commit message, or a better
   function name instead
+- **A history of the change** (`// previously this used X, now we do Y
+  because...`, `// this used to be a class component`, `// no longer
+  needed since we removed Z`). Git blame and the commit message already
+  hold that history — a before/after comment just repeats it in a place
+  that never gets pruned, and every subsequent change adds another
+  layer, so the file accretes a stack of stale "this changed" notes
+  that no one deletes. Write about the change only when the *old*
+  behavior is a footgun someone could reintroduce — say so as a
+  standing warning, not a narrative:
+
+  ```ts
+  // Do not fall back to `req.ip` here: it read the LB's address before
+  // the trust-proxy fix and silently rate-limited the wrong client.
+  const ip = getClientIp(req);
+  ```
+
+  That is a warning about a failure mode, phrased as a present-tense
+  invariant — not "this used to use req.ip directly, but we changed it
+  to getClientIp because...". If nothing would go wrong from reverting
+  it accidentally, the history isn't worth a comment at all.
 
 ## Concurrency: run independent awaits in parallel
 

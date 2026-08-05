@@ -1,4 +1,3 @@
-import "d3-transition";
 import { useEffect, useRef } from "react";
 
 type QualityChartProps<T> = {

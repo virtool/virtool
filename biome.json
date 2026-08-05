@@ -41,7 +41,7 @@
 						"paths": {
 							"@tanstack/react-router": {
 								"importNames": ["useMatchRoute"],
-								"message": "useMatchRoute breaks React Compiler reactivity (TanStack Router #4499). Use useMatchPartialPath from @app/useMatchPartialPath.tanstack instead."
+								"message": "useMatchRoute breaks React Compiler reactivity (TanStack Router #4499). Use useMatchPartialPath from @app/useMatchPartialPath instead."
 							}
 						}
 					}

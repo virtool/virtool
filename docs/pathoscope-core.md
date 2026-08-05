@@ -129,7 +129,11 @@ stay:
 - **knip** — `packages/pathoscope-core/**` in `knip.json`'s `ignore`. `hts-sys`
   vendors htslib's C source into `target/`, and that tree carries a
   `htscodecs/javascript/` directory which knip reports as unused files after any
-  local `cargo build`.
+  local `cargo build`. knip itself emits a configuration hint asking for this
+  ignore to be removed, because in a checkout where the crate has never been
+  built `target/` does not exist and the pattern matches nothing. Do not act on
+  that hint: it is right about the clean checkout and wrong about every machine
+  that has run `cargo build`.
 
 The root `Dockerfile` copies `packages/` **per package**, not as a blanket
 `COPY packages ./packages`. The UI image has no use for the crate, and a blanket
