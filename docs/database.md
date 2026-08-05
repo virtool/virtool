@@ -86,6 +86,7 @@ states:
 | OTUs         | `legacy_otus`                                        | Built          |
 | Sequences    | `legacy_sequences`                                   | Built          |
 | History      | `legacy_history`, `legacy_history_diff`, `revisions` | Built          |
+| Caches       | `caches`                                             | Built          |
 
 The Postgres table(s) column lists the single mirrored table for the
 **partial mirror** rows and the principal Python-defined table(s) for
@@ -124,6 +125,15 @@ document, `data` included (`writeLegacyOtu`); `legacy_sequences.position` is
 load-bearing and a delete leaves a gap rather than renumbering; and the
 `otu_version` `NULL` that stands for `"removed"` is reversed at the boundary
 rather than stored. See `@virtool/data/otus/data` and `@virtool/data/history/data`.
+
+Caches are the one **Built** domain with no `functions.ts` in
+`apps/web`. Nothing in the SPA reads a cache — only workflows do — so
+the mirror and `packages/data/src/caches/data.ts` are served by
+`apps/jobs-api/src/caches/handlers.ts` instead. Its unique constraint on
+`key` is declared by its real name, `cache_key`, because
+`createTestDatabase()` derives its DDL from these mirrors: an undeclared
+constraint is simply absent from a test database, and the duplicate-key
+race the registration path is built around would never be exercised.
 
 The `subtractions` mirror is now full — the subtraction domain is
 served from this repo — but jobs still reaches it through the same reverse

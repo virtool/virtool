@@ -1,4 +1,5 @@
 import { resolveFileBacked } from "@virtool/contracts/env";
+import type { StorageConfig } from "@virtool/storage";
 
 /** Everything this process reads from the environment at startup. */
 export type Config = {
@@ -6,6 +7,12 @@ export type Config = {
 	port: number;
 	postgresUrl: string;
 	postgresPoolMax: number;
+	/**
+	 * The same bucket Python and `apps/web` use. Cache registration reads an
+	 * object's size from it before writing a row, so this service cannot start
+	 * without it.
+	 */
+	storage: StorageConfig;
 	/**
 	 * Gates the Prometheus scrape endpoint. Unset leaves `/metrics` reporting
 	 * 404, so a deployment never starts exposing internals on upgrade.
@@ -33,6 +40,16 @@ const KEYS = [
 	"VT_POSTGRES_POOL_MAX",
 	"VT_METRICS_TOKEN",
 	"VT_SENTRY_DSN",
+	"VT_STORAGE_BACKEND",
+	"VT_STORAGE_S3_BUCKET",
+	"VT_STORAGE_S3_REGION",
+	"VT_STORAGE_S3_ENDPOINT",
+	"VT_STORAGE_S3_ACCESS_KEY_ID",
+	"VT_STORAGE_S3_SECRET_ACCESS_KEY",
+	"VT_STORAGE_AZURE_ACCOUNT",
+	"VT_STORAGE_AZURE_CONTAINER",
+	"VT_STORAGE_AZURE_ACCESS_KEY",
+	"VT_STORAGE_AZURE_ENDPOINT",
 ] as const;
 
 // Deployment tooling routinely injects an empty string for a value it has
@@ -76,6 +93,56 @@ function readNumber(
 }
 
 /**
+ * Build the storage configuration this process hands to
+ * `createStorageBackend`.
+ *
+ * `@virtool/storage` owns the shape but reads no environment of its own, so
+ * each host application resolves it. This is a hand-rolled counterpart to the
+ * zod schema in `apps/web/src/server/config.ts` rather than a shared parser:
+ * this service deliberately carries no zod, and the two only have to agree on
+ * the variable names, which are the deployment's contract either way.
+ */
+function buildStorage(resolved: NodeJS.ProcessEnv): StorageConfig {
+	const backend = present(resolved.VT_STORAGE_BACKEND);
+
+	if (backend !== "s3" && backend !== "azure") {
+		throw new Error("VT_STORAGE_BACKEND must be one of: s3, azure");
+	}
+
+	if (backend === "s3") {
+		const accessKeyId = present(resolved.VT_STORAGE_S3_ACCESS_KEY_ID);
+		const secretAccessKey = present(resolved.VT_STORAGE_S3_SECRET_ACCESS_KEY);
+
+		// Both or neither. One alone is a half-configured deployment that would
+		// otherwise fall back to instance credentials and fail later, at the first
+		// request, rather than at startup.
+		if (Boolean(accessKeyId) !== Boolean(secretAccessKey)) {
+			throw new Error(
+				"VT_STORAGE_S3_ACCESS_KEY_ID and VT_STORAGE_S3_SECRET_ACCESS_KEY must be set together, or both left empty to use IAM role credentials",
+			);
+		}
+
+		return {
+			kind: "s3",
+			bucket: requireValue(resolved, "VT_STORAGE_S3_BUCKET"),
+			region: present(resolved.VT_STORAGE_S3_REGION),
+			// Left unset for real AWS, which the SDK resolves from the region.
+			endpoint: present(resolved.VT_STORAGE_S3_ENDPOINT),
+			accessKeyId,
+			secretAccessKey,
+		};
+	}
+
+	return {
+		kind: "azure",
+		account: requireValue(resolved, "VT_STORAGE_AZURE_ACCOUNT"),
+		container: requireValue(resolved, "VT_STORAGE_AZURE_CONTAINER"),
+		accessKey: present(resolved.VT_STORAGE_AZURE_ACCESS_KEY),
+		endpoint: present(resolved.VT_STORAGE_AZURE_ENDPOINT),
+	};
+}
+
+/**
  * Resolve configuration from the environment.
  *
  * Every key also accepts a `<KEY>_FILE` variant naming a file to read the value
@@ -94,6 +161,7 @@ export function parseConfig(env: NodeJS.ProcessEnv = process.env): Config {
 		port: readNumber(resolved, "VT_JOBS_API_PORT", 9950),
 		postgresUrl: requireValue(resolved, "VT_POSTGRES_URL"),
 		postgresPoolMax: readNumber(resolved, "VT_POSTGRES_POOL_MAX", 10),
+		storage: buildStorage(resolved),
 		metricsToken: present(resolved.VT_METRICS_TOKEN),
 		sentryDsn: present(resolved.VT_SENTRY_DSN),
 	};

@@ -1,5 +1,6 @@
 import { serve } from "@hono/node-server";
 import { createDb, logPostgresVersion } from "@virtool/data/db/pg";
+import { createStorageBackend } from "@virtool/storage";
 import { createApp } from "./app";
 import { parseConfig } from "./config";
 import { initSentry, SERVICE } from "./instrument";
@@ -12,10 +13,12 @@ const config = parseConfig();
 // auto-instrumentation can install its import hooks ahead of what it patches.
 initSentry(config.sentryDsn);
 
-const { client, applicationName } = createDb(config, SERVICE);
+const { client, db, applicationName } = createDb(config, SERVICE);
 
 const app = createApp({
 	client,
+	db,
+	storage: createStorageBackend(config.storage),
 	logger,
 	metrics: createMetrics(config.postgresPoolMax),
 	applicationName,

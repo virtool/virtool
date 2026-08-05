@@ -43,6 +43,7 @@ process:
 | `src/auth/verify.ts` | `verifyJobRequest` — the job credential check |
 | `src/auth/guard.ts` | `requireJobRequest` — the guard every handler starts with |
 | `src/auth/test/fixtures.ts` | `seedJob` — a job row and the plaintext key for it |
+| `src/caches/handlers.ts` | Cache lookup and registration |
 | `src/metrics/registry.ts` | `createMetrics` — this process's Prometheus registry |
 | `src/metrics/handler.ts` | Token check, pre-scrape pool read, response |
 | `src/__tests__/authorization.test.ts` | The route-enumerating authorization floor |
@@ -221,6 +222,100 @@ services' probes cannot drift. Neither requires the metrics token: a
 probe that needed a credential would be one more thing to get wrong
 during a rollout.
 
+## Caches
+
+Workflows reuse expensive derived artifacts — trimmed reads, mapping
+indexes, collapsed references — through the `caches` table, which Python
+owns at `virtool/caches/pg.py` and `@virtool/data` mirrors read-only.
+
+| Route | Meaning |
+| --- | --- |
+| `GET /caches/{key}` | Resolve a logical key to its row. `404` on a miss. |
+| `POST /caches` | Register a row for a blob the caller has already written. |
+
+Both paths match Python's, with no prefix — a separate app has no SPA to
+collide with. Each handler calls `requireJobRequest` itself; nothing
+runs middleware on its behalf.
+
+**Neither endpoint carries cache bytes.** Workflows have direct
+object-storage access, so the writer puts its blob at `caches/v1/<uuid>`
+and then registers the row, and the reader takes `storageKey` to the
+bucket. Python streamed payloads through its jobs API; this does not.
+
+**Lookup is not optional garnish.** A row's `storageKey` is a per-write
+UUID and is not derivable from the cache key, so a workflow holding a
+derived key cannot read the blob at all until this server resolves one
+to the other. It is on the hot path of every workflow start, which is
+why `getCache` refreshes `last_accessed_at` only when it is older than
+five minutes — Python's `LAST_ACCESSED_REFRESH_INTERVAL`, and the same
+threshold on both sides because both read the same rows. An
+unconditional `UPDATE` would turn every read into a write.
+
+### The wire carries a UUID, never a storage key
+
+`POST /caches` takes `{ key, uuid, params }`, and the server composes
+the storage key with `cacheKey(uuid)` from `@virtool/storage`. The uuid
+is validated as 32 lowercase hex characters.
+
+This is not stylistic. A caller-supplied `storageKey` would let a
+job-authenticated caller register a cache row pointing at a sample,
+index or subtraction object — and Python's LRU eviction deletes by
+`storage_key`, so that is a route to having another domain's files
+destroyed. Composing the key from a validated uuid makes it
+unrepresentable.
+
+The uuid must also be **fresh per write attempt**, never derived from
+the cache key, so that the loser of a race can delete its own orphan
+without touching the winner's object.
+
+### Verify, then transact
+
+`registerCache` calls `storage.size(cacheKey(uuid))` **before** any
+database work, and stores the size it read. A caller declaring a blob it
+never wrote gets `400` and leaves no row behind; a caller sending a size
+is simply ignored — the field is not on the contract. No storage call
+happens inside a transaction.
+
+### Losing the race is success
+
+Two workflows can legitimately derive the same cache key at once, and
+both blobs hold the same bytes, so **"already existed" is a 2xx** — 201
+when the call created the row, 200 when it did not, plus a `created`
+flag in the body for logging.
+
+The insert uses `onConflictDoNothing({ target: caches.key })`, targeting
+the `cache_key` constraint **specifically**. A bare
+`onConflictDoNothing()` would also swallow a `storage_key` collision,
+which can only mean a reused uuid — a bug, and one that would leave two
+logical caches sharing one object.
+
+When the insert takes no row, the loser re-selects by `key` and returns
+the **winner's** row, so it reads the blob that actually survived. It
+then deletes its own orphan, after the write has committed, logging a
+failure rather than throwing. That is necessary because an orphan has no
+row, so Python's LRU eviction, which walks rows, will never reclaim it.
+
+**The delete is guarded on the winner's `storage_key` differing from the
+one this call composed.** A retry — a lost response, an ordinary client
+retry — arrives with the *same* uuid, so it re-selects its own row and
+the object it would delete is the live one that row names. Deleting
+there leaves a row pointing at nothing: unreadable to every later
+lookup, and unrepairable by eviction, which walks rows and would find
+this one perfectly intact. The guard is what makes `POST /caches`
+idempotent rather than merely conflict-tolerant.
+
+This deliberately diverges from Python, which raises
+`CacheAlreadyExistsError` on the same race. The divergence is the reason
+the loser path is handled explicitly rather than left to an error
+handler.
+
+### Eviction stays in Python
+
+No eviction, storage-budget accounting or scheduled cleanup lives here.
+`CACHE_EVICTION_GRACE_PERIOD`, `select_eviction_candidates` and the
+periodic task in `virtool/caches/` remain Python's. The only deletion
+this service performs is the loser's own orphan.
+
 ## Metrics
 
 `GET /metrics` serves the Prometheus text exposition from this process's
@@ -330,6 +425,26 @@ throwing for an expected outcome — and prefer not to.
 | `VT_JOBS_API_PORT` | `9950` | Listen port, matching Python's jobs API |
 | `VT_METRICS_TOKEN` | unset | Bearer token for `/metrics`; unset means `404` |
 | `VT_SENTRY_DSN` | unset | Unset disables Sentry |
+| `VT_STORAGE_BACKEND` | *required* | `s3` or `azure` |
+| `VT_STORAGE_S3_BUCKET` | *required for `s3`* | Bucket name |
+| `VT_STORAGE_S3_REGION` | unset | Region |
+| `VT_STORAGE_S3_ENDPOINT` | unset | Left unset for real AWS |
+| `VT_STORAGE_S3_ACCESS_KEY_ID` | unset | With the secret, or neither |
+| `VT_STORAGE_S3_SECRET_ACCESS_KEY` | unset | With the id, or neither |
+| `VT_STORAGE_AZURE_ACCOUNT` | *required for `azure`* | Storage account |
+| `VT_STORAGE_AZURE_CONTAINER` | *required for `azure`* | Container name |
+| `VT_STORAGE_AZURE_ACCESS_KEY` | unset | Unset uses the pod's identity |
+| `VT_STORAGE_AZURE_ENDPOINT` | unset | Left unset for real Azure |
+
+The storage variables are the **same bucket** `apps/web` and Python use,
+and the same variable names. `@virtool/storage` owns the config shape but
+reads no environment itself, so each host application resolves it — this
+service with a hand-rolled parser in `config.ts` rather than the zod
+schema `apps/web` uses, because it deliberately carries no zod. The two
+only have to agree on the variable names, which are the deployment's
+contract either way. The S3 credential pair is **both or neither**: one
+alone is a half-configured deployment that would otherwise fall back to
+instance credentials and fail at the first request instead of at startup.
 
 Every one also accepts a `<KEY>_FILE` variant naming a file to read the
 value from, so a secret reaches a pod through the secrets-store CSI
@@ -372,6 +487,9 @@ is also how knip sees them as used. `hono`, `@hono/node-server`,
 `@sentry/node` and `prom-client` are externalised by default and are
 imported directly by this app's source, so knip finds them without help.
 
+`@virtool/storage`'s S3 and Azure SDKs ride along inlined, like every
+other `@virtool/*` dependency.
+
 ## Deployment
 
 The Kubernetes manifests live in a **different repository** — this one
@@ -385,17 +503,16 @@ for this service:
   ingress rule is the security boundary this whole service is built
   around.
 - The `virtool` ServiceAccount, which carries the object-storage access
-  the finalize endpoints will need to verify what a workflow wrote.
+  cache registration uses to verify what a workflow wrote, and which the
+  finalize endpoints will need for the same reason.
 - A second, **authenticated** Prometheus scrape job carrying the bearer
   token, since the web app's scrape job cannot cover an endpoint on a
   different service with a different credential.
 
 ## What is not here yet
 
-Only health and metrics. Every runner-facing endpoint — claim, ping,
+This service serves health, metrics and the two cache endpoints, and
+nothing else yet. Every remaining runner-facing endpoint — claim, ping,
 step start, finish, and the three finalize routes — lands in its own
 issue, against the wire contract already written in
-`packages/contracts/src/jobsApi.ts`. `@virtool/storage` is deliberately
-**not** yet a dependency: nothing here writes or reads an object, and
-declaring it early would fail `pnpm knip` as an unused dependency. Add
-it with the first endpoint that needs it.
+`packages/contracts/src/jobsApi.ts`.

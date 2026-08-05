@@ -5,6 +5,7 @@
 // the `export *` list as it lands.
 export * from "./analyses";
 export * from "./apiKeys";
+export * from "./caches";
 export * from "./groups";
 export * from "./history";
 export * from "./hmms";

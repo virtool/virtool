@@ -1,8 +1,10 @@
-import type { PgClient } from "@virtool/data/db/pg";
+import type { Db, PgClient } from "@virtool/data/db/pg";
 import { checkPostgres, summarizeReadiness } from "@virtool/data/health/data";
 import type { Logger } from "@virtool/logger";
+import type { StorageBackend } from "@virtool/storage";
 import { Hono } from "hono";
 import { routePath } from "hono/route";
+import { handleGetCache, handleRegisterCache } from "./caches/handlers";
 import { handleMetrics } from "./metrics/handler";
 import type { Metrics } from "./metrics/registry";
 
@@ -28,6 +30,8 @@ export const PUBLIC_ROUTES = ["/health/live", "/health/ready"] as const;
 /** What {@link createApp} needs to serve. */
 export type AppDeps = {
 	client: PgClient;
+	db: Db;
+	storage: StorageBackend;
 	logger: Logger;
 	metrics: Metrics;
 	applicationName: string;
@@ -81,6 +85,15 @@ export function createApp(deps: AppDeps): Hono {
 			report.statusCode,
 		);
 	});
+
+	// Python serves these at the same paths, with no prefix — a separate app has
+	// no SPA to collide with. Each handler calls the job-auth guard itself;
+	// nothing here runs middleware on its behalf.
+	app.get("/caches/:key", (c) =>
+		handleGetCache(deps, c.req.raw, c.req.param("key")),
+	);
+
+	app.post("/caches", (c) => handleRegisterCache(deps, c.req.raw));
 
 	app.get("/metrics", (c) =>
 		handleMetrics(c, {

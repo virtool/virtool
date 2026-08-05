@@ -19,6 +19,7 @@
 		"@virtool/data": "workspace:*",
 		"@virtool/logger": "workspace:*",
 		"@virtool/sentry": "workspace:*",
+		"@virtool/storage": "workspace:*",
 		"drizzle-orm": "^0.45.2",
 		"hono": "^4.13.0",
 		"pino": "^10.1.0",

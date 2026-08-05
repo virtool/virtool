@@ -38,6 +38,12 @@
 //   PATCH  /samples/{id}                       FinalizeSampleRequest      -> Sample
 //   PATCH  /subtractions/{id}                  FinalizeSubtractionRequest -> Subtraction
 //   PATCH  /analyses/{id}                      FinalizeAnalysisRequest    -> Analysis
+//   GET    /caches/{key}                       -                     -> Cache           (200 | 404)
+//   POST   /caches                             RegisterCacheRequest  -> CacheRegistered (201 | 200)
+//
+// The cache shapes live in `./caches` rather than here, because they are the one
+// part of this surface a workflow reaches on its own behalf rather than on
+// behalf of a job it is finishing.
 //
 // The workflow to claim is a query parameter on `POST /jobs/claim`, not a body
 // field, matching Python's `ClaimJobView`.

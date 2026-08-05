@@ -1,5 +1,6 @@
-import type { PgClient } from "@virtool/data/db/pg";
+import type { Db, PgClient } from "@virtool/data/db/pg";
 import type { Logger } from "@virtool/logger";
+import { MemoryStorage } from "@virtool/storage";
 import { describe, expect, it } from "vitest";
 import { type AppDeps, createApp, PUBLIC_ROUTES } from "../app";
 import { createMetrics } from "../metrics/registry";
@@ -26,6 +27,24 @@ function fakeClient(): PgClient {
 	return (() => Promise.resolve([])) as unknown as PgClient;
 }
 
+/**
+ * A Drizzle handle stand-in.
+ *
+ * Nothing here should reach it either: an unauthenticated request is turned
+ * away by the guard before it reads a job row, so a handler that queries
+ * through this throws rather than quietly passing the test.
+ */
+function fakeDb(): Db {
+	return new Proxy(
+		{},
+		{
+			get() {
+				throw new Error("a refused request must not query the database");
+			},
+		},
+	) as Db;
+}
+
 function fakeLogger(): Logger {
 	const noop = () => undefined;
 	return {
@@ -39,6 +58,8 @@ function fakeLogger(): Logger {
 function deps(overrides: Partial<AppDeps> = {}): AppDeps {
 	return {
 		client: fakeClient(),
+		db: fakeDb(),
+		storage: new MemoryStorage(),
 		logger: fakeLogger(),
 		metrics: createMetrics(10),
 		applicationName: "virtool-ts-jobs-api@test",

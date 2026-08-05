@@ -20,7 +20,8 @@ This is a **pnpm monorepo**:
   runners call to claim, run and finish jobs. A Hono app on port 9950,
   mirroring Python's `virtool/jobs/main.py` (`api-jobs-service`, ClusterIP,
   **no ingress** — that absence is the security boundary). Serves
-  `/health/live`, `/health/ready` and a token-gated `/metrics` today. Image:
+  `/health/live`, `/health/ready`, a token-gated `/metrics`, and the two
+  cache endpoints — `GET /caches/{key}` and `POST /caches` — today. Image:
   `ghcr.io/virtool/jobs-api`, Alpine. Three rules: it is **always "the jobs
   API"**, never "the control plane" — that names its role, not the service;
   **every route must refuse an unauthenticated caller or be named in
