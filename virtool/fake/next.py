@@ -243,7 +243,6 @@ class JobsFakerDomain(DataFakerDomain):
             (workflow or self._faker.workflow()).replace("jobs_", ""),
             self._faker.pydict(nb_elements=6, value_types=[str, int, float]),
             user.id,
-            0,
         )
 
         target_state = state or self._faker.random_element(

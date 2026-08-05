@@ -92,7 +92,6 @@ class SubtractionsData(DataLayerDomain):
                 "create_subtraction",
                 {"subtraction_id": new_subtraction_id},
                 user_id,
-                0,
             )
 
             subtraction.job_id = job.id

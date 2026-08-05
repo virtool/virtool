@@ -40,7 +40,7 @@ async def jobs_data(pg: AsyncEngine) -> JobsData:
 async def test_cancel(fake: DataFaker, jobs_data: JobsData, snapshot, static_time):
     user = await fake.users.create()
 
-    job = await jobs_data.create("build_index", {}, user.id, 0)
+    job = await jobs_data.create("build_index", {}, user.id)
 
     assert await jobs_data.cancel(job.id) == snapshot
 
@@ -56,7 +56,7 @@ async def test_create(
 
     user = await fake.users.create()
 
-    job = await jobs_data.create("build_index", {}, user.id, 0)
+    job = await jobs_data.create("build_index", {}, user.id)
 
     assert job == snapshot
 
@@ -123,7 +123,6 @@ class TestCreatePostgres:
             "create_sample",
             {"sample_id": "foo"},
             user.id,
-            0,
         )
 
         async with AsyncSession(pg) as session:
@@ -157,7 +156,6 @@ class TestCreatePostgres:
             "create_sample",
             {"sample_id": "sample_123"},
             user.id,
-            0,
         )
 
         assert (await jobs_data.get(job.id)).args == {}
@@ -209,7 +207,6 @@ class TestCreatePostgres:
             "create_sample",
             {"sample_id": "sample_123"},
             user.id,
-            0,
         )
 
         async with AsyncSession(pg) as session:
@@ -265,7 +262,7 @@ class TestCreatePostgres:
         user = await fake.users.create()
         reference = await fake.references.create(user)
 
-        job = await jobs_data.create("build_index", {}, user.id, 0)
+        job = await jobs_data.create("build_index", {}, user.id)
 
         index = await fake.indexes.create(reference, user, job=job)
 
@@ -295,7 +292,7 @@ class TestCreatePostgres:
         """
         user = await fake.users.create()
 
-        job = await jobs_data.create("build_index", {}, user.id, 0)
+        job = await jobs_data.create("build_index", {}, user.id)
 
         fetched_job = await jobs_data.get(job.id)
 
@@ -310,7 +307,7 @@ class TestCreatePostgres:
         """``get`` resolves the subtraction id from the subtraction linked by job_id."""
         user = await fake.users.create()
 
-        job = await jobs_data.create("create_subtraction", {}, user.id, 0)
+        job = await jobs_data.create("create_subtraction", {}, user.id)
 
         async with AsyncSession(pg) as session:
             subtraction = SQLSubtraction(
@@ -341,7 +338,7 @@ class TestCreatePostgres:
         """
         user = await fake.users.create()
 
-        job = await jobs_data.create(workflow, {}, user.id, 0)
+        job = await jobs_data.create(workflow, {}, user.id)
 
         async with AsyncSession(pg) as session:
             analysis = SQLAnalysis(
@@ -578,7 +575,7 @@ class TestCancelPostgres:
     ):
         user = await fake.users.create()
 
-        job = await jobs_data.create("build_index", {}, user.id, 0)
+        job = await jobs_data.create("build_index", {}, user.id)
 
         await jobs_data.cancel(job.id)
 

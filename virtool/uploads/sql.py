@@ -46,7 +46,6 @@ class SQLUpload(Base):
     removed_at: Column = Column(DateTime)
     reserved: Column = Column(Boolean, default=False, nullable=False)
     size: Column = Column(BigInteger)
-    space: Mapped[int] = Column(Integer, ForeignKey("spaces.id"), nullable=True)
     type: Column = Column(String)
     user_id: Mapped[int] = mapped_column(ForeignKey("users.id"), nullable=False)
     uploaded_at: Column = Column(DateTime)

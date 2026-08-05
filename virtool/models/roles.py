@@ -18,7 +18,6 @@ class AdministratorRole(str, Enum):
     BASE = "base"
     """
     Provides ability to:
-    - Create new spaces even if the `Free Spaces` setting is not enabled.
     - Manage HMMs and common references.
     - View all running jobs.
     - Cancel any job.
