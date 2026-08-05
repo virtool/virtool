@@ -1,4 +1,11 @@
 {
+	// The browser-safe half of the package, and the reason `types` stays empty:
+	// most of `@virtool/contracts` is imported by React components, and a Node
+	// global that typechecks here would reach the client bundle unremarked. The
+	// two server-only modules — `env.ts` and `bearer.ts`, each behind its own
+	// subpath export so no barrel import pulls them — are checked separately by
+	// `tsconfig.node.json`.
 	"extends": "../tsconfig.base.json",
-	"include": ["src"]
+	"include": ["src"],
+	"exclude": ["src/bearer.ts", "src/env.ts", "src/env.test.ts"]
 }

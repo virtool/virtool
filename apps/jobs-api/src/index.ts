@@ -1,50 +1,35 @@
-import { createServer, type ServerResponse } from "node:http";
+import { serve } from "@hono/node-server";
 import { createDb, logPostgresVersion } from "@virtool/data/db/pg";
-import { checkPostgres, summarizeReadiness } from "@virtool/data/health/data";
-import { createLogger } from "@virtool/logger";
-import { readConfig } from "./config";
+import { createApp } from "./app";
+import { parseConfig } from "./config";
+import { initSentry, SERVICE } from "./instrument";
+import { logger } from "./logger";
+import { createMetrics } from "./metrics/registry";
 
-const config = readConfig();
-const logger = createLogger({ name: "jobs-api" });
-const { client } = createDb(config);
+const config = parseConfig();
 
-function send(response: ServerResponse, status: number, body: unknown): void {
-	response.writeHead(status, { "content-type": "application/json" });
-	response.end(JSON.stringify(body));
-}
+// Before the pool opens or the server listens, so Sentry's Node
+// auto-instrumentation can install its import hooks ahead of what it patches.
+initSentry(config.sentryDsn);
 
-const server = createServer((request, response) => {
-	const path = new URL(request.url ?? "/", "http://localhost").pathname;
+const { client, applicationName } = createDb(config, SERVICE);
 
-	if (request.method !== "GET") {
-		send(response, 405, { error: "method not allowed" });
-		return;
-	}
-
-	if (path === "/health/live") {
-		send(response, 200, { status: "alive" });
-		return;
-	}
-
-	if (path === "/health/ready") {
-		void checkPostgres(client, logger).then((postgres) => {
-			const report = summarizeReadiness(postgres);
-			send(response, report.statusCode, {
-				status: report.status,
-				checks: report.checks,
-			});
-		});
-		return;
-	}
-
-	send(response, 404, { error: "not found" });
+const app = createApp({
+	client,
+	logger,
+	metrics: createMetrics(config.postgresPoolMax),
+	applicationName,
+	metricsToken: config.metricsToken,
 });
 
 logPostgresVersion(client, logger);
 
-server.listen(config.port, config.host, () => {
-	logger.info({ host: config.host, port: config.port }, "listening");
-});
+const server = serve(
+	{ fetch: app.fetch, hostname: config.host, port: config.port },
+	() => {
+		logger.info({ host: config.host, port: config.port }, "listening");
+	},
+);
 
 // A pod is deleted with SIGTERM. Close the listener and drain the pool so
 // in-flight readiness probes finish rather than being cut off mid-query.

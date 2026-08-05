@@ -13,7 +13,7 @@ import {
 	StoredJobStep,
 	toStoredJobClaim,
 	toStoredJobStep,
-} from "./jobsControlPlane";
+} from "./jobsApi";
 
 const claim: JobClaim = {
 	runnerId: "runner-1",
@@ -210,7 +210,7 @@ describe("file manifest", () => {
 	});
 
 	it("drops a storage key a runner tries to name", () => {
-		// Keys are the control plane's to derive. A runner that sends one gets it
+		// Keys are the jobs API's to derive. A runner that sends one gets it
 		// stripped here rather than having it reach the data layer.
 		const manifest = JobFileManifest.parse({
 			kind: "sampleRead",

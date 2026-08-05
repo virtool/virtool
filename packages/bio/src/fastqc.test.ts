@@ -214,7 +214,7 @@ describe("parseFastqcData", () => {
 	});
 
 	/**
-	 * Why zeros beat reproducing Python's `nan`: the control plane validates
+	 * Why zeros beat reproducing Python's `nan`: the jobs API validates
 	 * this object at sample finalize and the schema rejects NaN, so a run that
 	 * hit an all-N cycle would fail to store its quality at all.
 	 */

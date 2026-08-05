@@ -24,7 +24,7 @@ import { logger } from "./logger";
  */
 export const storage: StorageBackend = createStorageBackend(config.storage);
 
-const handles = createDb(config);
+const handles = createDb(config, "web");
 
 /** The postgres-js connection pool for this process. */
 export const client: PgClient = handles.client;

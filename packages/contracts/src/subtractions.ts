@@ -20,7 +20,7 @@ export type SubtractionNested = {
  * percentages by mistake, which is the plausible unit error here; a per-nucleotide
  * `count / total` can never exceed 1, so it costs a correct payload nothing.
  *
- * A schema rather than a plain type because the control plane validates it at
+ * A schema rather than a plain type because the jobs API validates it at
  * subtraction finalize.
  */
 const nucleotideFraction = z.number().min(0).max(1);

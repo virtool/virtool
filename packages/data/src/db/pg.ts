@@ -35,6 +35,10 @@ export type DbHandles = {
 	 * The hostname is part of it so each replica counts its own pool rather than
 	 * every Virtool process sharing the database. Without it, every replica would
 	 * report the same cluster-wide total and summing the series would multiply it.
+	 *
+	 * The `service` passed to {@link createDb} is the other part, and it is what
+	 * keeps the web app's pool separate from the jobs API's — the two share a
+	 * database, and on a developer machine a hostname as well.
 	 */
 	applicationName: string;
 };
@@ -45,9 +49,14 @@ export type DbHandles = {
  * Call this once, at a composition root. Nothing in this package opens a pool
  * at import time — that is what lets the jobs API and the workflow ports reuse
  * the data layer without inheriting the web app's configuration.
+ *
+ * `service` names the calling process — `"web"`, `"jobs-api"` — and reaches
+ * Postgres as part of `application_name`. It is a second argument rather than a
+ * {@link DbConfig} field because it is a fact about the process, not something
+ * read from the environment.
  */
-export function createDb(config: DbConfig): DbHandles {
-	const applicationName = buildApplicationName(hostname());
+export function createDb(config: DbConfig, service: string): DbHandles {
+	const applicationName = buildApplicationName(service, hostname());
 
 	const client = postgres(config.postgresUrl, {
 		max: config.postgresPoolMax,

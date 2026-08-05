@@ -1,12 +1,12 @@
 import type { ConnectionCounts } from "@virtool/data/metrics/data";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-const { configMock, readConnectionCounts } = vi.hoisted(() => ({
+const { configMock, readConnectionCountsBounded } = vi.hoisted(() => ({
 	configMock: {
 		metricsToken: undefined as string | undefined,
 		postgresPoolMax: 10,
 	},
-	readConnectionCounts: vi.fn(),
+	readConnectionCountsBounded: vi.fn(),
 }));
 
 vi.mock("../../config", () => ({ config: configMock }));
@@ -14,7 +14,7 @@ vi.mock("../../composition", () => ({
 	client: {},
 	applicationName: "virtool-ts@test",
 }));
-vi.mock("@virtool/data/metrics/data", () => ({ readConnectionCounts }));
+vi.mock("@virtool/data/metrics/data", () => ({ readConnectionCountsBounded }));
 vi.mock("../../logger", () => ({
 	logger: { warn: vi.fn(), info: vi.fn(), error: vi.fn(), debug: vi.fn() },
 }));
@@ -36,7 +36,7 @@ function scrape(headers: Record<string, string> = {}): Promise<Response> {
 
 beforeEach(() => {
 	configMock.metricsToken = TOKEN;
-	readConnectionCounts.mockReset().mockResolvedValue(COUNTS);
+	readConnectionCountsBounded.mockReset().mockResolvedValue(COUNTS);
 });
 
 describe("handleMetrics", () => {
@@ -47,7 +47,7 @@ describe("handleMetrics", () => {
 
 		expect(response.status).toBe(404);
 		// The endpoint must not do any work before refusing.
-		expect(readConnectionCounts).not.toHaveBeenCalled();
+		expect(readConnectionCountsBounded).not.toHaveBeenCalled();
 	});
 
 	it("rejects a request carrying no credentials", async () => {
@@ -55,7 +55,7 @@ describe("handleMetrics", () => {
 
 		expect(response.status).toBe(401);
 		expect(response.headers.get("www-authenticate")).toBe("Bearer");
-		expect(readConnectionCounts).not.toHaveBeenCalled();
+		expect(readConnectionCountsBounded).not.toHaveBeenCalled();
 	});
 
 	it.each([
@@ -68,7 +68,7 @@ describe("handleMetrics", () => {
 		const response = await scrape({ authorization });
 
 		expect(response.status).toBe(401);
-		expect(readConnectionCounts).not.toHaveBeenCalled();
+		expect(readConnectionCountsBounded).not.toHaveBeenCalled();
 	});
 
 	// RFC 9110 §11.1: the auth scheme is case-insensitive.
@@ -105,7 +105,9 @@ describe("handleMetrics", () => {
 	});
 
 	it("still serves process metrics when Postgres is unreachable", async () => {
-		readConnectionCounts.mockRejectedValue(new Error("connection refused"));
+		readConnectionCountsBounded.mockRejectedValue(
+			new Error("connection refused"),
+		);
 
 		const response = await scrape({ authorization: `Bearer ${TOKEN}` });
 
@@ -114,18 +116,14 @@ describe("handleMetrics", () => {
 	});
 
 	// A saturated pool queues the probe client-side, where nothing rejects, so
-	// the scrape has to abandon it rather than hang past Prometheus' deadline.
-	it("still serves process metrics when the pool probe never settles", async () => {
-		readConnectionCounts.mockReturnValue(new Promise(() => {}));
+	// the read abandons it and rejects. The deadline itself belongs to
+	// `readConnectionCountsBounded` and is tested in `@virtool/data`; what
+	// matters here is that the handler treats a timeout like any other probe
+	// failure and still serves the rest of the scrape.
+	it("still serves process metrics when the pool probe times out", async () => {
+		readConnectionCountsBounded.mockRejectedValue(new Error("timed out"));
 
-		vi.useFakeTimers();
-
-		const pending = scrape({ authorization: `Bearer ${TOKEN}` });
-
-		await vi.advanceTimersByTimeAsync(5000);
-		vi.useRealTimers();
-
-		const response = await pending;
+		const response = await scrape({ authorization: `Bearer ${TOKEN}` });
 
 		expect(response.status).toBe(200);
 		expect(await response.text()).toContain("process_resident_memory_bytes");

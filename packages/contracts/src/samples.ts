@@ -59,7 +59,7 @@ export type Read = {
 /**
  * The FastQC quality charts associated with a sample.
  *
- * A schema rather than a plain type because the control plane validates an
+ * A schema rather than a plain type because the jobs API validates an
  * incoming quality blob at sample finalize; `@virtool/bio`'s FastQC parser is
  * what produces it.
  */

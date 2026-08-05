@@ -16,10 +16,16 @@ This is a **pnpm monorepo**:
   gates — Astro is not linted by biome and is opaque to knip — so its own
   Vite build (a `build-site` CI job) and Vitest suite are its gate. Deploy is
   manual: `pnpm --filter @virtool/site deploy`.
-- `apps/jobs-api/` — `@virtool/jobs-api`, the jobs control plane. A plain Node
-  HTTP service on port 9950, mirroring Python's `virtool/jobs/main.py`
-  (`api-jobs-service`, ClusterIP, no ingress). Serves `/health/live` and
-  `/health/ready` today. Image: `ghcr.io/virtool/jobs-api`, Alpine.
+- `apps/jobs-api/` — `@virtool/jobs-api`, the jobs API: the service workflow
+  runners call to claim, run and finish jobs. A Hono app on port 9950,
+  mirroring Python's `virtool/jobs/main.py` (`api-jobs-service`, ClusterIP,
+  **no ingress** — that absence is the security boundary). Serves
+  `/health/live`, `/health/ready` and a token-gated `/metrics` today. Image:
+  `ghcr.io/virtool/jobs-api`, Alpine. Two rules: it is **always "the jobs
+  API"**, never "the control plane" — that names its role, not the service;
+  and **every route must refuse an unauthenticated caller or be named in
+  `PUBLIC_ROUTES`**, which `src/__tests__/authorization.test.ts` enforces.
+  See [docs/jobs-api.md](docs/jobs-api.md).
 - `apps/create-subtraction/` — `@virtool/create-subtraction`, the first workflow
   executor: a one-shot process that starts, works, exits. Only its object
   storage half is wired so far. Image: `ghcr.io/virtool/ts-create-subtraction`,
@@ -32,7 +38,11 @@ This is a **pnpm monorepo**:
   (`ghcr.io/virtool/ts-pathoscope`). Holds only a `Dockerfile` today: it
   compiles `packages/pathoscope-core` and layers the `ghcr.io/virtool/tools`
   binaries on a Debian Node base. Built from the **repo root**
-  (`docker build -f apps/workflow-pathoscope/Dockerfile .`).
+  (`docker build -f apps/workflow-pathoscope/Dockerfile .`). **CI builds it but
+  must not publish it** — `virtool/workflow-pathoscope` still releases the
+  pathoscope workflow, and a second pipeline shipping it from here would leave
+  two candidates for what the cluster runs. Don't add a publish job until that
+  repo retires.
 - `packages/` — shared, framework-agnostic libraries published as workspace
   packages, plus one Rust crate:
   - `@virtool/logger` — pino wrapper, server-side log defaults and
@@ -67,8 +77,8 @@ This is a **pnpm monorepo**:
   Neither package constructs anything at import time — both take their
   dependencies as arguments — which is what lets the jobs API and the workflow
   ports reuse them. `apps/web/src/server/composition.ts` is where the web app
-  does the construction: it builds `storage`, calls `createDb(config)` to get
-  `client` and `db`, and calls `createEmitter({ client, logger })`. Every
+  does the construction: it builds `storage`, calls `createDb(config, "web")`
+  to get `client` and `db`, and calls `createEmitter({ client, logger })`. Every
   `db`, `client`, and `storage` import in `apps/web` comes from there.
 
 **Apps bundle; packages stay source.** Every package under `packages/` is
@@ -718,11 +728,24 @@ it replaces, and erroring on the overlap would crashloop the rollout
 that fixes it. An unreadable path throws at startup; an empty file is an
 unset value.
 
-The non-Vite apps carry their own copy of the resolver in their
-`src/config.ts` — they cannot reach `apps/web/src/server`, and they parse
-a much smaller set of keys than the web app's zod schema. Keep the
-`<KEY>_FILE` behaviour in any new one; do not add a plain
-`process.env` read that skips it.
+**The resolver is shared, not copied** — `resolveFileBacked` in
+`@virtool/contracts/env`, called by every service's `config.ts`. Each
+caller passes the keys it wants resolved, so **a key missing from that
+list silently loses its file variant**. Never add a plain `process.env`
+read that skips it (`@virtool/sentry`'s `readDsn` is exactly that trap).
+
+It is one of the server-only helpers `@virtool/contracts` shares across
+services, each behind its own subpath so `node:*` never enters the browser
+graph:
+
+| Helper | Subpath | Purpose |
+| --- | --- | --- |
+| `resolveFileBacked` | `@virtool/contracts/env` | `<KEY>_FILE` resolution |
+| `isBearerTokenValid` | `@virtool/contracts/bearer` | constant-time `/metrics` token check |
+
+Adding one needs a subpath export **and** an entry in
+`packages/contracts/tsconfig.node.json`, which is why that package
+typechecks as two projects. See [docs/jobs-api.md](docs/jobs-api.md).
 
 ### Logging
 
@@ -766,6 +789,15 @@ Prometheus scrapes `GET /metrics`, gated by a bearer token
 (`VT_METRICS_TOKEN`). With the variable unset the route reports 404, so
 metrics are off until a deployment opts in.
 
+**There are two scrape targets, not one** — `apps/web` and `apps/jobs-api`
+are separate processes with separate registries, each needing its own
+Prometheus job. Series names deliberately match so one dashboard covers
+both; they are told apart by the scrape's target labels and by
+`application_name`, **never by renaming a metric**. Both gate the endpoint
+with `isBearerTokenValid` (`@virtool/contracts/bearer`) — constant-time, so
+don't reimplement it or reduce it to `===`. The rest of this section is
+`apps/web`; see [docs/jobs-api.md](docs/jobs-api.md) for the other.
+
 `server/metrics/registry.ts` owns the one process-wide `Registry`.
 Default process metrics keep prom-client's standard unprefixed names
 (`process_*`, `nodejs_*`) so off-the-shelf dashboards match; everything
@@ -790,7 +822,9 @@ unavailable and needs per-query instrumentation.
 
 That name is built by `@virtool/data/db/applicationName` and bounded to 63 bytes —
 Postgres truncates a longer one silently, and the filter would then match
-nothing and report every bucket as zero. The probe itself is bounded too:
+nothing and report every bucket as zero. It takes the **service** as well
+as the hostname (`createDb(config, "web")`), without which the two
+services would count each other's backends. The probe itself is bounded too:
 it queries the very pool it measures, so a saturated pool queues it
 client-side where nothing rejects, and an unbounded read would cost the
 whole scrape rather than just the pool gauges.

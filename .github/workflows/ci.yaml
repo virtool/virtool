@@ -58,6 +58,18 @@ jobs:
                   # have each matrix leg overwrite the last one's cache.
                   cache-from: type=gha,scope=${{ matrix.image }}
                   cache-to: type=gha,mode=max,scope=${{ matrix.image }}
+    # Builds only — there is deliberately no publish counterpart, and adding one
+    # is not a gap to fill. `virtool/workflow-pathoscope` is still the repo that
+    # builds and releases the pathoscope workflow image, so this repo must not
+    # push a pathoscope image on release. That repo publishes
+    # `ghcr.io/virtool/pathoscope`; the Dockerfile here targets
+    # `ghcr.io/virtool/ts-pathoscope`, so nothing would be overwritten today —
+    # but two pipelines shipping the same workflow is the ambiguity to avoid,
+    # and the port is not finished. `apps/workflow-pathoscope` holds only a
+    # Dockerfile.
+    #
+    # Restore a publish job when `virtool/workflow-pathoscope` is retired, and
+    # settle which image name the cluster pulls in the same change.
     build-pathoscope:
         name: Build / Pathoscope
         runs-on: ubuntu-24.04
@@ -374,41 +386,3 @@ jobs:
                   cache-to: type=gha,mode=max,scope=${{ matrix.image }}
                   secrets: |
                       sentry_auth_token=${{ secrets.SENTRY_AUTH_TOKEN }}
-    publish-pathoscope:
-        name: Publish / Pathoscope
-        runs-on: ubuntu-24.04
-        timeout-minutes: 30
-        if: github.repository_owner == 'Virtool' && github.event_name == 'push' && needs.release.outputs.git-tag != ''
-        needs: [release]
-        permissions:
-            contents: read
-            packages: write
-        steps:
-            - name: Checkout
-              uses: actions/checkout@v7
-              with:
-                  ref: ${{ needs.release.outputs.git-tag }}
-            - name: Setup Buildx
-              uses: docker/setup-buildx-action@v3
-            - name: Login
-              uses: docker/login-action@v4
-              with:
-                  registry: ${{ env.REGISTRY }}
-                  username: ${{ github.actor }}
-                  password: ${{ secrets.GITHUB_TOKEN }}
-            - name: Extract Metadata
-              id: meta
-              uses: docker/metadata-action@v6
-              with:
-                  context: git
-                  images: ${{ env.REGISTRY }}/virtool/ts-pathoscope
-            - name: Build & Push
-              uses: docker/build-push-action@v7
-              with:
-                  context: .
-                  file: apps/workflow-pathoscope/Dockerfile
-                  push: true
-                  tags: ${{ steps.meta.outputs.tags }}
-                  labels: ${{ steps.meta.outputs.labels }}
-                  cache-from: type=gha,scope=pathoscope
-                  cache-to: type=gha,mode=max,scope=pathoscope

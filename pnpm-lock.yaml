@@ -73,22 +73,43 @@ importers:
 
   apps/jobs-api:
     dependencies:
+      '@hono/node-server':
+        specifier: ^2.1.0
+        version: 2.1.0(hono@4.13.0)
+      '@sentry/node':
+        specifier: ^10.69.0
+        version: 10.69.0(@opentelemetry/core@2.10.0(@opentelemetry/api@1.9.1))
+      '@virtool/contracts':
+        specifier: workspace:*
+        version: link:../../packages/contracts
       '@virtool/data':
         specifier: workspace:*
         version: link:../../packages/data
       '@virtool/logger':
         specifier: workspace:*
         version: link:../../packages/logger
+      '@virtool/sentry':
+        specifier: workspace:*
+        version: link:../../packages/sentry
+      hono:
+        specifier: ^4.13.0
+        version: 4.13.0
       pino:
         specifier: ^10.1.0
         version: 10.3.1
       postgres:
         specifier: ^3.4.9
         version: 3.4.9
+      prom-client:
+        specifier: ^15.1.3
+        version: 15.1.3
     devDependencies:
       tsdown:
         specifier: ^0.22.14
         version: 0.22.14(oxc-resolver@11.24.2)(tsx@4.23.0)(typescript@7.0.2)
+      vitest:
+        specifier: ^4.1.10
+        version: 4.1.10(@opentelemetry/api@1.9.1)(@types/node@26.1.2)(@vitest/browser-playwright@4.1.10)(jsdom@30.0.1)(vite@8.2.0(@types/node@26.1.2)(esbuild@0.28.1)(jiti@2.7.0)(tsx@4.23.0)(yaml@2.9.0))
 
   apps/site:
     dependencies:
@@ -164,13 +185,13 @@ importers:
         version: 5.5.7(@standard-schema/spec@1.1.0)(react-hook-form@7.83.0(react@19.2.8))(zod@4.4.3)
       '@sentry/profiling-node':
         specifier: 10.69.0
-        version: 10.69.0(@opentelemetry/core@2.10.0(@opentelemetry/api@1.9.1))
+        version: 10.69.0
       '@sentry/replay':
         specifier: 10.69.0
         version: 10.69.0
       '@sentry/tanstackstart-react':
         specifier: ^10.69.0
-        version: 10.69.0(@opentelemetry/core@2.10.0(@opentelemetry/api@1.9.1))(react@19.2.8)
+        version: 10.69.0(react@19.2.8)
       '@tanstack/react-query':
         specifier: ^5.101.4
         version: 5.101.4(react@19.2.8)
@@ -352,6 +373,9 @@ importers:
         specifier: ^4.3.6
         version: 4.4.3
     devDependencies:
+      '@types/node':
+        specifier: ^26.1.2
+        version: 26.1.2
       vitest:
         specifier: ^4.1.10
         version: 4.1.10(@opentelemetry/api@1.9.1)(@types/node@26.1.2)(@vitest/browser-playwright@4.1.10)(jsdom@30.0.1)(vite@8.2.0(@types/node@26.1.2)(esbuild@0.28.1)(jiti@2.7.0)(tsx@4.23.0)(yaml@2.9.0))
@@ -1501,6 +1525,12 @@ packages:
     resolution: {integrity: sha512-wtF6h+DY6M3YaDBPAmvuuA6jV8Sif9MjtOI5euKFWRgCDl5PeDpPsHR9u2l6St5ceY8AZgoNDww5+HvEsXFsGg==}
     engines: {node: '>=6'}
     hasBin: true
+
+  '@hono/node-server@2.1.0':
+    resolution: {integrity: sha512-XovyyCCnBzW+zKu+z/zq8hwNs4KOR5rEMAOxo2f40Q5xoOI37IMm6MIg2COOUtUApo0i6850MTBKH2u4QLGIqg==}
+    engines: {node: '>=20'}
+    peerDependencies:
+      hono: ^4
 
   '@hookform/resolvers@5.5.7':
     resolution: {integrity: sha512-CyPCYV8/KlXfEXLWj8HHHhVsR/IZ6Ckm3b/a4fWtO/lRnRK1huqncb8LlAWrmpPRsse5glF5aVuDRMHEr3UGag==}
@@ -5754,6 +5784,10 @@ packages:
   highlight.js@10.7.3:
     resolution: {integrity: sha512-tzcUFauisWKNHaRkN4Wjl/ZA07gENAjFl3J/c480dprkGTg5EQstgaNFqBfUqCq54kZRIEcreTsAgF/m2quD7A==}
 
+  hono@4.13.0:
+    resolution: {integrity: sha512-jhunvfHWxd7J5EFfSgH4xsYJzSe/lfqbUCxiyyeaQasUsXeEHXtzVid+7EOGByc5JnFa23SSFL3Y2RV/z1T+eQ==}
+    engines: {node: '>=16.9.0'}
+
   hook-std@4.0.0:
     resolution: {integrity: sha512-IHI4bEVOt3vRUDJ+bFA9VUJlo7SzvFARPNLw75pqSmAOP2HmTWfFJtPvLBrDrlgjEYXY9zs7SFdHPQaJShkSCQ==}
     engines: {node: '>=20'}
@@ -9299,7 +9333,7 @@ snapshots:
       '@babel/parser': 8.0.4
       '@babel/template': 8.0.0
       '@babel/types': 8.0.4
-      obug: 2.1.3
+      obug: 2.1.4
 
   '@babel/types@7.29.0':
     dependencies:
@@ -9766,6 +9800,10 @@ snapshots:
       long: 5.3.2
       protobufjs: 7.6.5
       yargs: 17.7.3
+
+  '@hono/node-server@2.1.0(hono@4.13.0)':
+    dependencies:
+      hono: 4.13.0
 
   '@hookform/resolvers@5.5.7(@standard-schema/spec@1.1.0)(react-hook-form@7.83.0(react@19.2.8))(zod@4.4.3)':
     dependencies:
@@ -11405,7 +11443,7 @@ snapshots:
       '@sentry/conventions': 0.16.0
       '@sentry/core': 10.69.0
 
-  '@sentry/profiling-node@10.69.0(@opentelemetry/core@2.10.0(@opentelemetry/api@1.9.1))':
+  '@sentry/profiling-node@10.69.0':
     dependencies:
       '@sentry/core': 10.69.0
       '@sentry/node': 10.69.0(@opentelemetry/core@2.10.0(@opentelemetry/api@1.9.1))
@@ -11442,7 +11480,7 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  '@sentry/tanstackstart-react@10.69.0(@opentelemetry/core@2.10.0(@opentelemetry/api@1.9.1))(react@19.2.8)':
+  '@sentry/tanstackstart-react@10.69.0(react@19.2.8)':
     dependencies:
       '@opentelemetry/api': 1.9.1
       '@sentry/browser-utils': 10.69.0
@@ -14019,6 +14057,8 @@ snapshots:
       space-separated-tokens: 2.0.2
 
   highlight.js@10.7.3: {}
+
+  hono@4.13.0: {}
 
   hook-std@4.0.0: {}
 
@@ -16861,7 +16901,7 @@ snapshots:
       es-module-lexer: 2.3.1
       expect-type: 1.4.0
       magic-string: 0.30.21
-      obug: 2.1.3
+      obug: 2.1.4
       pathe: 2.0.3
       picomatch: 4.0.5
       std-env: 4.2.0

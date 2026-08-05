@@ -1,4 +1,4 @@
-import { readFileSync } from "node:fs";
+import { resolveFileBacked } from "@virtool/contracts/env";
 import type { StorageConfig } from "@virtool/storage";
 import { z } from "zod";
 
@@ -10,6 +10,15 @@ export type ServerConfig = {
 	postgresUrl: string;
 	postgresPoolMax: number;
 	metricsToken: string | undefined;
+	/**
+	 * Server-side Sentry DSN.
+	 *
+	 * Parsed here rather than read by `@virtool/sentry`'s `readDsn`, which goes
+	 * straight to `process.env` and so would miss a `VT_SENTRY_DSN_FILE` mount.
+	 * The browser DSN is a separate value baked in at build time by Vite and
+	 * cannot be file-backed at all.
+	 */
+	sentryDsn: string | undefined;
 	storage: StorageConfig;
 };
 
@@ -26,6 +35,12 @@ const ServerEnv = z.object({
 	// tooling injects for a value it has nothing to put in — leaves `/metrics`
 	// returning 404, so upgrading never starts exposing internals by surprise.
 	VT_METRICS_TOKEN: z.preprocess(
+		(value) => (value === "" ? undefined : value),
+		z.string().optional(),
+	),
+	// Listed here so it picks up the `<KEY>_FILE` resolution every other key
+	// gets. Unset — or empty, which deployment tooling injects — disables Sentry.
+	VT_SENTRY_DSN: z.preprocess(
 		(value) => (value === "" ? undefined : value),
 		z.string().optional(),
 	),
@@ -47,6 +62,7 @@ const ServerEnvSchema = ServerEnv.transform((raw, ctx) => ({
 	postgresUrl: raw.VT_POSTGRES_URL,
 	postgresPoolMax: raw.VT_POSTGRES_POOL_MAX ?? DEFAULT_POSTGRES_POOL_MAX,
 	metricsToken: raw.VT_METRICS_TOKEN,
+	sentryDsn: raw.VT_SENTRY_DSN,
 	storage: buildStorage(raw, ctx),
 }));
 
@@ -143,44 +159,17 @@ function buildStorage(raw: StorageEnv, ctx: z.RefinementCtx): StorageConfig {
 	};
 }
 
-const FILE_SUFFIX = "_FILE";
-
 // Every key also accepts a `<KEY>_FILE` variant naming a file to read the value
-// from — the convention Prometheus and Docker use. A Kubernetes `Secret`
-// populated by the secrets-store CSI driver goes stale when a key is added to
-// the SecretProviderClass, so a pod can start with an env var the cluster
-// believes it has updated; the driver's file mount has no such staleness.
-//
-// The file wins over the plain variable deliberately. A rollout that moves to
-// the mount can still carry the stale env var from the `Secret` it replaces,
-// and failing on the overlap would crashloop the very rollout that fixes it.
-function resolveFileBacked(env: NodeJS.ProcessEnv): NodeJS.ProcessEnv {
-	const resolved = { ...env };
-
-	for (const key of Object.keys(ServerEnv.shape)) {
-		const path = env[`${key}${FILE_SUFFIX}`];
-
-		if (!path) {
-			continue;
-		}
-
-		try {
-			resolved[key] = readFileSync(path, "utf8").trim();
-		} catch (error) {
-			throw new Error(
-				`${key}${FILE_SUFFIX} points at ${path}, which could not be read`,
-				{ cause: error },
-			);
-		}
-	}
-
-	return resolved;
-}
-
+// from. The resolver is shared with `apps/jobs-api` through
+// `@virtool/contracts/env` rather than copied, so the precedence rule — the
+// file wins over a plain variable of the same name — cannot drift between the
+// two services.
 export function parseServerConfig(
 	env: NodeJS.ProcessEnv = process.env,
 ): ServerConfig {
-	return ServerEnvSchema.parse(resolveFileBacked(env));
+	return ServerEnvSchema.parse(
+		resolveFileBacked(Object.keys(ServerEnv.shape), env),
+	);
 }
 
 export const config: ServerConfig = parseServerConfig();

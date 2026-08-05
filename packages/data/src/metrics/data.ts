@@ -30,6 +30,34 @@ function bucketFor(state: string | null): keyof ConnectionCounts {
 }
 
 /**
+ * How long a scrape waits on the pool probe before abandoning it.
+ *
+ * The probe is a query on the very pool it measures, so a saturated pool queues
+ * it *client-side*, where nothing rejects and no statement timeout applies. Left
+ * unbounded it would hang past Prometheus' scrape deadline and lose the whole
+ * response — the process and request metrics included — exactly when saturation
+ * is the thing worth seeing. Two seconds sits well inside a default 10s scrape
+ * timeout.
+ */
+export const POOL_PROBE_TIMEOUT_MS = 2000;
+
+/**
+ * Resolve `promise`, or reject once `ms` have passed.
+ *
+ * The abandoned promise is left to settle on its own; it is a single trivial
+ * query and its result is simply discarded.
+ */
+function withTimeout<T>(promise: Promise<T>, ms: number): Promise<T> {
+	let timer: ReturnType<typeof setTimeout> | undefined;
+
+	const deadline = new Promise<never>((_, reject) => {
+		timer = setTimeout(() => reject(new Error("timed out")), ms);
+	});
+
+	return Promise.race([promise, deadline]).finally(() => clearTimeout(timer));
+}
+
+/**
  * Count this process's open Postgres backends by state.
  *
  * Postgres' own view of the connections is the only one available: postgres.js
@@ -66,4 +94,25 @@ export async function readConnectionCounts(
 	}
 
 	return counts;
+}
+
+/**
+ * {@link readConnectionCounts}, bounded by {@link POOL_PROBE_TIMEOUT_MS}.
+ *
+ * This is what a `/metrics` handler should call. Both services expose pool
+ * gauges and both need the same deadline for the same reason, so the timeout
+ * lives here rather than being spelled out again beside each handler — a second
+ * copy is free to drift to a value that no longer fits inside the scrape
+ * timeout.
+ *
+ * Still throws on timeout or query failure. A caller drops the pool gauges and
+ * logs, rather than failing the whole scrape: a Postgres outage is exactly when
+ * the process and request metrics matter most.
+ */
+export function readConnectionCountsBounded(
+	client: PgClient,
+	applicationName: string,
+	timeoutMs: number = POOL_PROBE_TIMEOUT_MS,
+): Promise<ConnectionCounts> {
+	return withTimeout(readConnectionCounts(client, applicationName), timeoutMs);
 }

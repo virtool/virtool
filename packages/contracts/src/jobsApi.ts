@@ -1,5 +1,6 @@
-// The jobs control-plane wire contract, shared by the control-plane routes in
-// `apps/jobs-api` and the workflow runtime's HTTP client. Both sides import
+// The jobs API's wire contract, shared by the routes in `apps/jobs-api` — the
+// control plane for running jobs — and the workflow runtime's HTTP client,
+// which is the only thing that calls them. Both sides import
 // these schemas: the routes parse incoming bodies with the same shapes the
 // runtime uses to build them, so a contract change is a type error on both
 // sides in the same commit rather than a runtime 422 discovered in a lab.
@@ -25,7 +26,7 @@
 //
 // # Endpoint surface
 //
-// Paths carry no prefix. The control plane is its own app serving no SPA, so
+// Paths carry no prefix. The jobs API is its own app serving no SPA, so
 // nothing collides with the SPA's own `/jobs/{jobId}` route and these match
 // Python's byte for byte.
 //
@@ -76,7 +77,7 @@ export const JobStepDefinition = z.object({
 
 export type JobStepDefinition = z.infer<typeof JobStepDefinition>;
 
-/** A workflow step as the control plane returns it. Persisted with `started_at`. */
+/** A workflow step as the jobs API returns it. Persisted with `started_at`. */
 export const JobStep = z.object({
 	id: z.string(),
 	name: z.string(),
@@ -100,7 +101,7 @@ export type JobStepStarted = z.infer<typeof JobStepStarted>;
  * Body for `POST /jobs/{jobId}/steps/{stepId}/start`.
  *
  * Genuinely empty, and expected to stay that way: the step id comes from the
- * path and the start time is the control plane's to assign, not the runner's.
+ * path and the start time is the jobs API's to assign, not the runner's.
  */
 export const StartJobStepRequest = z.object({});
 
@@ -326,7 +327,7 @@ export type AnalysisFileManifest = z.infer<typeof AnalysisFileManifest>;
  * access and write the bytes themselves, so they declare what they wrote instead.
  *
  * **The manifest carries no storage key.** Keys are built by `@virtool/storage`
- * from ids the control plane already holds and must stay byte-for-byte identical
+ * from ids the jobs API already holds and must stay byte-for-byte identical
  * to Python's. Letting a runner name its own key would put key construction on
  * the untrusted side of the boundary and silently orphan objects; the control
  * plane derives the key and the manifest carries only `nameOnDisk`.

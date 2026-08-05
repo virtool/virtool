@@ -8,16 +8,24 @@
 	],
 	"scripts": {
 		"build": "tsdown",
-		"start": "node dist/index.mjs",
+		"start": "node --import @sentry/node/preload dist/index.mjs",
+		"test": "vitest run",
 		"typecheck": "tsc --noEmit"
 	},
 	"dependencies": {
+		"@hono/node-server": "^2.1.0",
+		"@sentry/node": "^10.69.0",
+		"@virtool/contracts": "workspace:*",
 		"@virtool/data": "workspace:*",
 		"@virtool/logger": "workspace:*",
+		"@virtool/sentry": "workspace:*",
+		"hono": "^4.13.0",
 		"pino": "^10.1.0",
-		"postgres": "^3.4.9"
+		"postgres": "^3.4.9",
+		"prom-client": "^15.1.3"
 	},
 	"devDependencies": {
-		"tsdown": "^0.22.14"
+		"tsdown": "^0.22.14",
+		"vitest": "^4.1.10"
 	}
 }

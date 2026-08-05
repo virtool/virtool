@@ -1,7 +1,12 @@
 # Metrics
 
-The server exposes Prometheus metrics at `GET /metrics`, in the text
+The web app exposes Prometheus metrics at `GET /metrics`, in the text
 exposition format, from a single process-wide registry.
+
+This describes `apps/web`. The jobs API is a separate process with its
+own registry and its own `/metrics`, scraped as a second Prometheus
+target; the series names deliberately match so one dashboard covers
+both.
 
 ## Layout
 
@@ -182,7 +187,7 @@ So occupancy is read from Postgres' own view instead. `createDb`
 connection and hands it back alongside the pool:
 
 ```ts
-const applicationName = buildApplicationName(hostname());
+const applicationName = buildApplicationName(service, hostname());
 
 const client = postgres(config.postgresUrl, {
 	max: config.postgresPoolMax,
@@ -197,6 +202,14 @@ counts its own pool**. Without it every replica would report the same
 cluster-wide total, and summing the series in Grafana would multiply it
 by the replica count.
 
+The `service` — `"web"` or `"jobs-api"`, passed as `createDb`'s second
+argument — is the other part, and it is what keeps **two services'
+pools apart**. They share a database, and on a developer machine a
+hostname as well, so without it each would count the other's backends
+and both would report the sum. It is a separate argument rather than a
+config field because it is a fact about the process, not something read
+from the environment.
+
 ### The name has to survive the round trip
 
 `@virtool/data/db/applicationName` bounds the value at **63 bytes**. Postgres holds
@@ -205,13 +218,20 @@ longer *silently* — connections would then be opened under a clipped
 name while the filter still searched for the full one, and every pool
 gauge would read zero with nothing in the logs to say why.
 
-`virtool-ts@` leaves 52 bytes for the hostname, which a long deployment
-name can overflow. An overflowing hostname is replaced by a truncated
-SHA-256 digest of itself rather than clipped, because orchestrators put
-the part that distinguishes one replica from another — the pod's random
-suffix — at the *end*. Clipping would collapse a deployment's replicas
-onto one name and reintroduce the multiplication the hostname was there
-to prevent.
+The prefix is `virtool-ts-<service>@` — `virtool-ts-web@`,
+`virtool-ts-jobs-api@` — which leaves 48 and 43 bytes respectively for
+the hostname, and a long deployment name can overflow that. An
+overflowing hostname is replaced by a truncated SHA-256 digest of itself
+rather than clipped, because orchestrators put the part that
+distinguishes one replica from another — the pod's random suffix — at
+the *end*. Clipping would collapse a deployment's replicas onto one name
+and reintroduce the multiplication the hostname was there to prevent.
+
+The **service segment is never digested away**, only the hostname is. It
+is short, bounded by the number of services shipped, and it is the
+discriminator worth keeping legible — a digest that swallowed it would
+put the web app and the jobs API back in one bucket for exactly the
+long-hostname deployments most likely to have several replicas.
 
 ### Collection is bounded, and happens in the handler
 

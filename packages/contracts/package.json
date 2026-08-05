@@ -5,17 +5,20 @@
 	"type": "module",
 	"sideEffects": false,
 	"exports": {
-		".": "./src/index.ts"
+		".": "./src/index.ts",
+		"./bearer": "./src/bearer.ts",
+		"./env": "./src/env.ts"
 	},
 	"scripts": {
 		"test": "vitest run",
 		"test:watch": "vitest",
-		"typecheck": "tsc --noEmit"
+		"typecheck": "tsc -p tsconfig.json && tsc -p tsconfig.node.json"
 	},
 	"dependencies": {
 		"zod": "^4.3.6"
 	},
 	"devDependencies": {
+		"@types/node": "^26.1.2",
 		"vitest": "^4.1.10"
 	}
 }

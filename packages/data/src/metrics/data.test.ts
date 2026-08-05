@@ -3,7 +3,11 @@ import postgres from "postgres";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 
 import type { PgClient } from "../db/pg";
-import { readConnectionCounts } from "./data";
+import {
+	POOL_PROBE_TIMEOUT_MS,
+	readConnectionCounts,
+	readConnectionCountsBounded,
+} from "./data";
 
 // `readConnectionCounts` reads `pg_stat_activity` and touches no application
 // table, so it needs a live connection rather than the schema `createTestDatabase`
@@ -76,5 +80,33 @@ describe("readConnectionCounts", () => {
 			idleInTransaction: 0,
 			other: 0,
 		});
+	});
+});
+
+describe("readConnectionCountsBounded", () => {
+	it("returns the counts when the probe answers in time", async () => {
+		const counts = await readConnectionCountsBounded(reader, applicationName);
+
+		expect(counts.active).toBe(1);
+	});
+
+	// A saturated pool queues the probe client-side, inside the postgres.js
+	// closure, where nothing rejects and no statement timeout applies. Without
+	// this deadline a scrape would hang past Prometheus' own timeout and lose the
+	// entire response — process and request metrics included — in exactly the
+	// situation the pool gauges exist to diagnose.
+	it("rejects rather than hanging when the probe never settles", async () => {
+		// postgres.js clients are called as a tagged template, so a function that
+		// returns a forever-pending promise stands in for a query queued behind a
+		// full pool.
+		const never = (() => new Promise(() => {})) as unknown as PgClient;
+
+		await expect(
+			readConnectionCountsBounded(never, applicationName, 10),
+		).rejects.toThrow("timed out");
+	});
+
+	it("defaults to the shared probe timeout", () => {
+		expect(POOL_PROBE_TIMEOUT_MS).toBe(2000);
 	});
 });

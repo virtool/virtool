@@ -19,7 +19,7 @@ export type JobState = z.infer<typeof JobState>;
  * enum, `build_index` included. That workflow stays Python-owned — the TypeScript
  * runtime ports the other four — but `build_index` rows exist in the `jobs`
  * table today, so a narrower union would fail to parse a job that is perfectly
- * valid. The control plane instead refuses to hand out a `build_index` job at
+ * valid. The jobs API instead refuses to hand out a `build_index` job at
  * claim time, which is a rule about who may run what, not about what a row may
  * contain.
  *

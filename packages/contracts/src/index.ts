@@ -9,7 +9,7 @@ export * from "./groups";
 export * from "./hmms";
 export * from "./indexes";
 export * from "./jobs";
-export * from "./jobsControlPlane";
+export * from "./jobsApi";
 export * from "./json";
 export * from "./labels";
 export * from "./nuvs";

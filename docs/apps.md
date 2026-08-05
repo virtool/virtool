@@ -133,13 +133,20 @@ Dockerfile stage and a CI matrix entry — the one deliberate exception.
 
 ## The apps
 
-- **`apps/jobs-api`** — `@virtool/jobs-api`, the jobs control plane. A
-  long-running HTTP service on port 9950, mirroring Python's
+- **`apps/jobs-api`** — `@virtool/jobs-api`, the jobs API: the control
+  plane workflow runners call to claim, run and finish jobs. It is called
+  "the jobs API" everywhere — directory, package, image, Kubernetes
+  service and prose — matching Python and the workflow runtime; "control
+  plane" is its role, not an alternate name. A long-running **Hono** app
+  on `@hono/node-server`, port 9950, mirroring Python's
   `virtool/jobs/main.py`, which serves as `api-jobs-service` behind a
-  ClusterIP with no ingress rule. Serves `/health/live` and
-  `/health/ready`; the readiness probe folds `checkPostgres` through
-  `summarizeReadiness`, the same pair `apps/web` uses. Image:
-  `ghcr.io/virtool/jobs-api`.
+  ClusterIP with no ingress rule. Hono because the handlers it will grow
+  are ported from raw-route handlers already written against Web
+  `Request`/`Response`, so they move across verbatim. Serves
+  `/health/live`, `/health/ready` and a token-gated `/metrics`; the
+  readiness probe folds `checkPostgres` through `summarizeReadiness`, the
+  same pair `apps/web` uses. `postgres` and `pino` are its externals.
+  Image: `ghcr.io/virtool/jobs-api`.
 - **`apps/create-subtraction`** — `@virtool/create-subtraction`, the first
   workflow executor. One-shot: the pod starts, does its work, exits. Only
   its object-storage half is wired; claiming a job arrives with the
