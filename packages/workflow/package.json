@@ -17,11 +17,14 @@
 		"@virtool/contracts": "workspace:*",
 		"@virtool/logger": "workspace:*",
 		"@virtool/sentry": "workspace:*",
+		"@virtool/storage": "workspace:*",
+		"tar-stream": "^3.2.0",
 		"undici": "^7.29.0",
 		"zod": "^4.3.6"
 	},
 	"devDependencies": {
 		"@types/node": "^26.1.2",
+		"@types/tar-stream": "^3.1.4",
 		"vitest": "^4.1.10"
 	}
 }
