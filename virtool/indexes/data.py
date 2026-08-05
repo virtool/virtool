@@ -323,9 +323,6 @@ class IndexData:
                 )
 
                 await session.commit()
-
-            if index_file["replaced_storage_key"] is not None:
-                await self._storage.delete(index_file["replaced_storage_key"])
         except BaseException:
             await self._storage.delete(key)
 
@@ -345,6 +342,20 @@ class IndexData:
                     await session.commit()
 
             raise
+
+        # The new row is committed, so the superseded object is already an orphan.
+        # Cleaning it up must not fail a build that otherwise succeeded.
+        if index_file["replaced_storage_key"] is not None:
+            for orphan_key, exc in await delete_keys(
+                self._storage,
+                [index_file["replaced_storage_key"]],
+            ):
+                logger.error(
+                    "storage cleanup failed; file orphaned",
+                    index_id=index_id,
+                    key=orphan_key,
+                    error=repr(exc),
+                )
 
         return await self.get(index_id)
 
