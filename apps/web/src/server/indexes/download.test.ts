@@ -1,5 +1,4 @@
 import type { Db } from "@virtool/data/db/pg";
-import { takeFirstOrThrow } from "@virtool/data/db/rows";
 import { apiKeys } from "@virtool/data/db/schema/apiKeys";
 import { groups, userGroups } from "@virtool/data/db/schema/groups";
 import { legacyHistory } from "@virtool/data/db/schema/history";
@@ -17,7 +16,7 @@ import {
 	createTestDatabase,
 	type TestDatabase,
 } from "@virtool/data/db/test/fixtures";
-import { MemoryStorage } from "@virtool/storage";
+import { MemoryStorage, mintStorageKey } from "@virtool/storage";
 import { eq } from "drizzle-orm";
 import {
 	afterAll,
@@ -95,27 +94,22 @@ beforeEach(async () => {
 	ownerId = await seedUser(db, { handle: "alice" });
 });
 
+// Returns the key the row records, which is what a test writes its bytes under.
 async function seedFile(
 	indexId: number,
 	name = "reference.fa.gz",
-): Promise<void> {
+): Promise<string> {
+	const storageKey = mintStorageKey("indexes", indexId);
+
 	await db.insert(indexFiles).values({
 		name,
 		index_id: indexId,
 		size: 5,
+		storage_key: storageKey,
 		type: "fasta",
 	});
-}
 
-// `storage_key` is minted by the seeder and cannot be derived from the row id,
-// so the key a test writes under has to be read back.
-async function storageKey(indexId: number): Promise<string> {
-	return takeFirstOrThrow(
-		await db
-			.select({ storageKey: indexes.storage_key })
-			.from(indexes)
-			.where(eq(indexes.id, indexId)),
-	).storageKey;
+	return storageKey;
 }
 
 async function write(key: string, contents: string): Promise<void> {
@@ -140,7 +134,11 @@ async function request(userId: number | null): Promise<Request> {
 }
 
 /** Seed a reference owned by `ownerId` with one finished build and its file. */
-async function seedBuild(): Promise<{ referenceId: number; indexId: number }> {
+async function seedBuild(): Promise<{
+	referenceId: number;
+	indexId: number;
+	storageKey: string;
+}> {
 	const referenceId = await seedReference(db, ownerId);
 	const indexId = await seedIndex(db, {
 		referenceId,
@@ -148,14 +146,14 @@ async function seedBuild(): Promise<{ referenceId: number; indexId: number }> {
 		version: 0,
 	});
 
-	await seedFile(indexId);
-	await write(`indexes/${await storageKey(indexId)}/reference.fa.gz`, "hello");
+	const storageKey = await seedFile(indexId);
+	await write(storageKey, "hello");
 
-	return { referenceId, indexId };
+	return { referenceId, indexId, storageKey };
 }
 
 describe("handleIndexFile", () => {
-	it("streams a build's file from its storage-key prefix", async () => {
+	it("streams a build's file from the key its row records", async () => {
 		const { indexId } = await seedBuild();
 
 		const response = await handleIndexFile(
@@ -178,15 +176,12 @@ describe("handleIndexFile", () => {
 	// `index_files.size` records what the build task wrote and is nullable, so the
 	// header has to come from the object or the client truncates.
 	it("sizes the response from storage, not the row", async () => {
-		const { indexId } = await seedBuild();
+		const { indexId, storageKey } = await seedBuild();
 		await db
 			.update(indexFiles)
 			.set({ size: null })
 			.where(eq(indexFiles.index_id, indexId));
-		await write(
-			`indexes/${await storageKey(indexId)}/reference.fa.gz`,
-			"considerably longer than five bytes",
-		);
+		await write(storageKey, "considerably longer than five bytes");
 
 		const response = await handleIndexFile(
 			await request(ownerId),
@@ -303,8 +298,7 @@ describe("handleIndexFile", () => {
 	// row exists for them.
 	it("returns a 404 for a file the whitelist does not name", async () => {
 		const { indexId } = await seedBuild();
-		await seedFile(indexId, "secret.txt");
-		await write(`indexes/${await storageKey(indexId)}/secret.txt`, "hello");
+		await write(await seedFile(indexId, "secret.txt"), "hello");
 
 		const response = await handleIndexFile(
 			await request(ownerId),
@@ -315,8 +309,8 @@ describe("handleIndexFile", () => {
 		expect(response.status).toBe(404);
 	});
 
-	// The filename only ever reaches a key after it has matched a registered
-	// file, so it cannot escape the index's prefix.
+	// The filename only ever selects a row; the key comes off that row, so a
+	// filename carrying path segments names no object.
 	it("returns a 404 for a filename the index has no row for", async () => {
 		const { indexId } = await seedBuild();
 

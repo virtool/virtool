@@ -699,7 +699,7 @@ describe("deleteAnalysis", () => {
 		).toHaveLength(1);
 	});
 
-	it("touches storage not at all for a Postgres-native analysis", async () => {
+	it("deletes the objects its file rows name", async () => {
 		const storage = new MemoryStorage();
 		const sampleId = await seedSample();
 
@@ -709,31 +709,35 @@ describe("deleteAnalysis", () => {
 			legacy_id: null,
 		});
 
-		// A Postgres-native analysis keeps its results in the `results` column and
-		// wrote nothing to storage. The first key is the prefix a delete that fell
-		// back to the row id instead of the legacy id would clear.
-		const keys = [
-			`samples/${sampleId}/analysis/${analysisId}/results.json`,
-			`samples/${sampleId}/analysis/other/results.json`,
-		];
+		await db.insert(analysisFiles).values([
+			{ analysis_id: analysisId, name: "a.fa", storage_key: "analyses/a" },
+			{ analysis_id: analysisId, name: "b.fa", storage_key: "analyses/b" },
+		]);
 
-		for (const key of keys) {
+		for (const key of ["analyses/a", "analyses/b", "analyses/other"]) {
 			await storage.write(key, oneChunk());
 		}
 
 		await deleteAnalysis(db, storage, testLogger, analysisId);
 
-		expect(await storedKeys(storage)).toEqual(new Set(keys));
+		expect(await storedKeys(storage)).toEqual(new Set(["analyses/other"]));
 	});
 
-	it("deletes a Mongo-migrated analysis's objects under its own prefix", async () => {
+	// A migrated analysis's result blobs were written before keys were recorded,
+	// so no row names them and nothing here can reach them. They are the orphan
+	// sweep's problem, not this delete's.
+	it("leaves a migrated analysis's unrecorded objects", async () => {
 		const storage = new MemoryStorage();
 		const sampleId = await seedSample({ legacy_id: "smpl" });
 
-		await storage.write("samples/smpl/analysis/abc/results.json", oneChunk());
-		await storage.write("samples/smpl/analysis/abc/nuvs.fa", oneChunk());
-		await storage.write("samples/smpl/analysis/other/results.json", oneChunk());
-		await storage.write("samples/smpl/reads_1.fq.gz", oneChunk());
+		const keys = [
+			"samples/smpl/analysis/abc/results.json",
+			"samples/smpl/analysis/abc/nuvs.fa",
+		];
+
+		for (const key of keys) {
+			await storage.write(key, oneChunk());
+		}
 
 		const analysisId = await seedAnalysis({
 			sample_id: sampleId,
@@ -743,12 +747,7 @@ describe("deleteAnalysis", () => {
 
 		await deleteAnalysis(db, storage, testLogger, analysisId);
 
-		expect(await storedKeys(storage)).toEqual(
-			new Set([
-				"samples/smpl/analysis/other/results.json",
-				"samples/smpl/reads_1.fq.gz",
-			]),
-		);
+		expect(await storedKeys(storage)).toEqual(new Set(keys));
 	});
 });
 

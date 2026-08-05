@@ -15,7 +15,6 @@ import type {
 	IndexOtu,
 	IndexSearchResult,
 } from "@virtool/contracts";
-import { indexFileKey } from "@virtool/storage";
 import {
 	and,
 	asc,
@@ -432,8 +431,9 @@ export async function getIndexReferenceId(
  * The storage key of one of a build's files, or `null` when the build has no
  * such file.
  *
- * The key is composed from the row's own `name`, never the caller's, so a
- * filename carrying path segments cannot traverse out of the index's prefix.
+ * The key is read off the row the name matched, never composed from the
+ * caller's input. The `INDEX_FILE_NAMES` guard is kept as a cheap rejection of
+ * anything a build never produces.
  */
 export async function getIndexFileKey(
 	db: DbOrTx,
@@ -445,17 +445,12 @@ export async function getIndexFileKey(
 	}
 
 	const [row] = await db
-		.select({ name: indexFiles.name, storageKey: indexes.storage_key })
+		.select({ storageKey: indexFiles.storage_key })
 		.from(indexFiles)
-		.innerJoin(indexes, eq(indexes.id, indexFiles.index_id))
 		.where(and(eq(indexFiles.index_id, indexId), eq(indexFiles.name, filename)))
 		.limit(1);
 
-	if (!row) {
-		return null;
-	}
-
-	return indexFileKey(row.storageKey, row.name);
+	return row?.storageKey ?? null;
 }
 
 // Whether the reference has a build that has not finished.
@@ -588,9 +583,9 @@ export async function createIndex(
 					// Filled in below, once this build owns its changes.
 					manifest: {},
 					ready: false,
-					// The storage prefix the build's files land under. Python mints a
-					// UUID here rather than deriving it from the id, because a migrated
-					// index keys on its old Mongo id instead.
+					// Dead, but still `NOT NULL` until Python's cleanup revision drops
+					// it. Each of the build's files records its own complete key; this
+					// is no longer a prefix anything is composed from.
 					storage_key: randomUUID().replaceAll("-", ""),
 					reference_id: referenceId,
 					user_id: userId,

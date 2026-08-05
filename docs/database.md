@@ -196,13 +196,13 @@ Starting an index build is the one write that takes a Postgres advisory
 lock, and the reason is that Python still performs the second half of it.
 
 `createIndex` (`@virtool/data/indexes/data`) inserts the pending `indexes` row,
-mints its `storage_key`, stamps every `legacy_history` row whose
-`index_id` is `NULL` with the new build, and creates a `create_index`
-task. The Python task runner claims that task, patches every OTU in the
-manifest back to the version the build was pinned to, gzips the artifact
-into `indexes/{storage_key}/reference-v2.json.gz`, records the
-`index_files` row, promotes `legacy_otus.last_indexed_version`, and only
-then sets `ready = true`. Nothing on this side finishes a build.
+stamps every `legacy_history` row whose `index_id` is `NULL` with the new
+build, and creates a `create_index` task. The Python task runner claims
+that task, patches every OTU in the manifest back to the version the
+build was pinned to, gzips the artifact into a freshly minted key,
+records the `index_files` row **with that key on it**, promotes
+`legacy_otus.last_indexed_version`, and only then sets `ready = true`.
+Nothing on this side finishes a build.
 
 Two builds of one reference would each stamp the other's changes and then
 collide on the `(reference_id, version)` unique constraint, so the insert
@@ -225,16 +225,20 @@ cheap rejection that avoids reading the manifest, and once inside it,
 which is the one that is actually race-free. Both raise the same error,
 so a caller cannot tell which fired.
 
-Two columns are load-bearing for the handoff:
+Two columns matter for the handoff:
 
-- **`storage_key`** is `NOT NULL`, unique, and **not derivable from the
-  row id** — an index migrated from Mongo keys its files on the old
-  string id, and one created here on a minted UUID. Writing the row
-  without it fails; deriving it from `id` orphans the files the Python
-  task writes.
 - **`manifest`** is `{otuId: otuVersion}` captured at the moment the
   build starts. It is what pins the artifact to a point in time, so it is
   read before the lock is taken rather than inside the transaction.
+- **`indexes.storage_key`** is dead. Keys were once composed as
+  `indexes/{storage_key}/{file name}`; each `index_files` row now records
+  its own complete key instead. The column is still `NOT NULL`, so the
+  insert has to fill it — Python retains it until a cleanup revision, so
+  a rolling deploy never has readers of a dropped column — but nothing
+  reads it. `indexes.otus_json_storage_key` is the one key still held on
+  the index itself: the compressed OTU JSON is materialized on demand and
+  deliberately has no `index_files` row, because one would publish it in
+  the index's file listing.
 
 `indexes` carries a `num_nonnulls(job_id, task_id) <= 1` check upstream:
 a build is backed by at most one of a legacy workflow job or a task. A

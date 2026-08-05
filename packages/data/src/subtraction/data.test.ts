@@ -219,6 +219,7 @@ describe("getSubtraction", () => {
 		await db.insert(subtractionFiles).values({
 			name: "subtraction.fa.gz",
 			subtraction_id: subtractionId,
+			storage_key: `subtractions/${subtractionId}/fasta`,
 			type: "fasta",
 			size: 100,
 		});
@@ -363,11 +364,19 @@ describe("deleteSubtraction", () => {
 		expect(await db.select().from(legacySampleSubtractions)).toHaveLength(0);
 	});
 
-	// A subtraction migrated out of Mongo keeps its legacy slug as its storage
-	// prefix, so cleaning up under the integer id would orphan every byte.
-	it("clears storage under a migrated subtraction's legacy prefix", async () => {
+	// Cleanup enumerates the keys the file rows record. A migrated subtraction's
+	// rows carry the legacy key they were backfilled with, which no longer bears
+	// any relation to the id the subtraction is addressed by.
+	it("deletes the objects its file rows name", async () => {
 		const storage = new MemoryStorage();
 		const subtractionId = await seedSubtraction({ legacy_id: "arabidopsis 1" });
+
+		await db.insert(subtractionFiles).values({
+			name: "subtraction.fa.gz",
+			subtraction_id: subtractionId,
+			storage_key: "subtractions/arabidopsis_1/subtraction.fa.gz",
+			type: "fasta",
+		});
 
 		await storage.write(
 			"subtractions/arabidopsis_1/subtraction.fa.gz",
@@ -383,6 +392,30 @@ describe("deleteSubtraction", () => {
 			remaining.push(object.key);
 		}
 		expect(remaining).toEqual([]);
+	});
+
+	// Objects written before keys were recorded are not named by any row, so
+	// nothing can reach them here. They are the orphan sweep's problem.
+	it("leaves an object no file row names", async () => {
+		const storage = new MemoryStorage();
+		const subtractionId = await seedSubtraction();
+
+		await storage.write(
+			`subtractions/${subtractionId}/subtraction.fa.gz`,
+			(async function* () {
+				yield new TextEncoder().encode("hello");
+			})(),
+		);
+
+		await deleteSubtraction(db, storage, testLogger, subtractionId);
+
+		const remaining = [];
+		for await (const object of storage.list("subtractions/")) {
+			remaining.push(object.key);
+		}
+		expect(remaining).toEqual([
+			`subtractions/${subtractionId}/subtraction.fa.gz`,
+		]);
 	});
 
 	it("throws when the subtraction is already deleted", async () => {

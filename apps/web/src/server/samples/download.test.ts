@@ -17,7 +17,7 @@ import {
 	createTestDatabase,
 	type TestDatabase,
 } from "@virtool/data/db/test/fixtures";
-import { MemoryStorage } from "@virtool/storage";
+import { MemoryStorage, mintStorageKey } from "@virtool/storage";
 import {
 	afterAll,
 	beforeAll,
@@ -110,23 +110,34 @@ async function seedSample(
 	).id;
 }
 
-// `sample_reads.sample` is the storage prefix the file was written under, which
-// is the legacy id for a migrated sample and the integer id otherwise.
+// `sample_reads.sample` is the legacy text id the row is matched by, which is
+// the legacy id for a migrated sample and the integer id otherwise. It no longer
+// has anything to do with where the object lives — `storage_key` records that,
+// and the seeder returns it so a test can write its bytes there.
 async function seedRead(
 	sampleId: number,
 	{
 		name = "reads_1.fq.gz",
 		nameOnDisk = name,
 		sample = String(sampleId),
-	}: { name?: string; nameOnDisk?: string; sample?: string } = {},
-): Promise<void> {
+		storageKey = mintStorageKey("samples", sampleId),
+	}: {
+		name?: string;
+		nameOnDisk?: string;
+		sample?: string;
+		storageKey?: string;
+	} = {},
+): Promise<string> {
 	await db.insert(sampleReads).values({
 		name,
 		name_on_disk: nameOnDisk,
 		sample,
 		sample_id: sampleId,
 		size: 5,
+		storage_key: storageKey,
 	});
+
+	return storageKey;
 }
 
 async function write(key: string, contents: string): Promise<void> {
@@ -151,10 +162,9 @@ async function request(userId: number | null): Promise<Request> {
 }
 
 describe("handleSampleReads", () => {
-	it("streams a Postgres-native sample's read from its integer prefix", async () => {
+	it("streams a read from the key its row records", async () => {
 		const sampleId = await seedSample();
-		await seedRead(sampleId);
-		await write(`samples/${sampleId}/reads_1.fq.gz`, "hello");
+		await write(await seedRead(sampleId), "hello");
 
 		const response = await handleSampleReads(
 			await request(ownerId),
@@ -171,11 +181,14 @@ describe("handleSampleReads", () => {
 		expect(await response.text()).toBe("hello");
 	});
 
-	// A sample migrated out of Mongo keeps its legacy id as the storage prefix,
-	// even though it is addressed by its integer id.
-	it("reads a migrated sample's read from its legacy prefix", async () => {
+	// A migrated sample's reads keep the legacy key they were backfilled with,
+	// even though the sample is addressed by its integer id.
+	it("reads a migrated sample's read from its backfilled key", async () => {
 		const sampleId = await seedSample({ legacy_id: "abc123" });
-		await seedRead(sampleId, { sample: "abc123" });
+		await seedRead(sampleId, {
+			sample: "abc123",
+			storageKey: "samples/abc123/reads_1.fq.gz",
+		});
 		await write("samples/abc123/reads_1.fq.gz", "hello");
 
 		const response = await handleSampleReads(
@@ -188,14 +201,12 @@ describe("handleSampleReads", () => {
 		expect(await response.text()).toBe("hello");
 	});
 
-	// `upload_reads` sets `name` and `name_on_disk` from the same argument, so
-	// the two agree on every row today. The URL still carries `name`, so the
-	// match and the key have to come from different columns for that to stay an
-	// implementation detail rather than something the route depends on.
-	it("matches on name but keys the object on name_on_disk", async () => {
+	// The URL carries `name`, which selects the row. Nothing about the object's
+	// location is derived from either name column.
+	it("matches on name and takes the key off the matched row", async () => {
 		const sampleId = await seedSample();
-		await seedRead(sampleId, { nameOnDisk: "stored_1.fq.gz" });
-		await write(`samples/${sampleId}/stored_1.fq.gz`, "hello");
+		const key = await seedRead(sampleId, { nameOnDisk: "stored_1.fq.gz" });
+		await write(key, "hello");
 
 		const response = await handleSampleReads(
 			await request(ownerId),
@@ -215,12 +226,9 @@ describe("handleSampleReads", () => {
 	// the header has to come from the object or the client truncates.
 	it("sizes the response from storage, not the row", async () => {
 		const sampleId = await seedSample();
-		await seedRead(sampleId);
+		const key = await seedRead(sampleId);
 		await db.update(sampleReads).set({ size: null });
-		await write(
-			`samples/${sampleId}/reads_1.fq.gz`,
-			"considerably longer than five bytes",
-		);
+		await write(key, "considerably longer than five bytes");
 
 		const response = await handleSampleReads(
 			await request(ownerId),
@@ -249,8 +257,7 @@ describe("handleSampleReads", () => {
 	it("accepts an api key", async () => {
 		const key = await seedApiKey(db, ownerId, {});
 		const sampleId = await seedSample();
-		await seedRead(sampleId);
-		await write(`samples/${sampleId}/reads_1.fq.gz`, "hello");
+		await write(await seedRead(sampleId), "hello");
 
 		const response = await handleSampleReads(
 			new Request("https://virtool.test/samples/1/reads/x", {
@@ -267,8 +274,7 @@ describe("handleSampleReads", () => {
 	// signed-in caller download the reads of a sample they could not see.
 	it("rejects a user without the read right with a 403", async () => {
 		const sampleId = await seedSample();
-		await seedRead(sampleId);
-		await write(`samples/${sampleId}/reads_1.fq.gz`, "hello");
+		await write(await seedRead(sampleId), "hello");
 
 		const strangerId = await seedUser(db, { handle: "bob" });
 
@@ -284,8 +290,7 @@ describe("handleSampleReads", () => {
 	it("serves a member of the sample's group when it grants group read", async () => {
 		const groupId = await seedGroup(db, { name: "lab" });
 		const sampleId = await seedSample({ group_id: groupId, group_read: true });
-		await seedRead(sampleId);
-		await write(`samples/${sampleId}/reads_1.fq.gz`, "hello");
+		await write(await seedRead(sampleId), "hello");
 
 		const memberId = await seedUser(db, { handle: "bob" });
 		await addToGroup(db, memberId, groupId);
@@ -319,8 +324,8 @@ describe("handleSampleReads", () => {
 		expect(response.status).toBe(404);
 	});
 
-	// The filename only ever reaches a key after it has matched a registered
-	// read, so it cannot escape the sample's prefix.
+	// The filename only ever selects a row; the key comes off that row, so a
+	// filename carrying path segments names no object.
 	it("returns a 404 for a filename the sample has no row for", async () => {
 		const sampleId = await seedSample();
 		await seedRead(sampleId);

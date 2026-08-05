@@ -60,6 +60,10 @@ export const analysisFiles = pgTable("analysis_files", {
 	name: text("name"),
 	name_on_disk: text("name_on_disk").unique(),
 	size: bigint("size", { mode: "number" }),
+	// The file's complete object-storage key. Nullable because it was backfilled
+	// from `name_on_disk`, which is itself nullable: a row without one names no
+	// retrievable object.
+	storage_key: text("storage_key").unique(),
 	uploaded_at: timestamp("uploaded_at"),
 });
 

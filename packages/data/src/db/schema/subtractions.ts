@@ -4,8 +4,8 @@
 // `../../../../../../virtool/virtool/subtractions/pg.py`.
 //
 // `legacy_id` (the Mongo `_id`) is null for Postgres-native subtractions. Every
-// endpoint addresses a subtraction by its integer id, but its files live under
-// the legacy id when it has one — see `subtractionStorageId`.
+// endpoint addresses a subtraction by its integer id. Nothing derives a storage
+// key from either: each file records its own in `subtraction_files.storage_key`.
 
 import {
 	bigint,
@@ -60,6 +60,10 @@ export const subtractionFiles = pgTable("subtraction_files", {
 	// Files routinely exceed 2 GiB, past the range of a 32-bit integer, so this
 	// mirrors Python's BigInteger. `mode: "number"` is safe up to 2^53.
 	size: bigint("size", { mode: "number" }),
+	// The file's complete object-storage key. Nullable because it was backfilled
+	// from `name`, which is itself nullable: a row without one names no
+	// retrievable object.
+	storage_key: text("storage_key").unique(),
 });
 
 /** A row from the `subtractions` table. */

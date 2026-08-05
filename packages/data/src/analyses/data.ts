@@ -11,12 +11,7 @@ import type {
 	UserNested,
 } from "@virtool/contracts";
 import type { Logger } from "@virtool/logger";
-import {
-	analysisPrefix,
-	deletePrefix,
-	type StorageBackend,
-	sampleStorageId,
-} from "@virtool/storage";
+import { deleteKeys, type StorageBackend } from "@virtool/storage";
 import { and, asc, count, desc, eq, inArray, type SQL } from "drizzle-orm";
 import type { Db, DbOrTx } from "../db/pg";
 import { takeFirstOrThrow } from "../db/rows";
@@ -34,7 +29,11 @@ import { users } from "../db/schema/users";
 import { AppError } from "../errors";
 import { emit } from "../events/emit";
 import { createJob, getJobs } from "../jobs/data";
-import { type SampleActor, sampleReadableFilter } from "../samples/data";
+import {
+	type SampleActor,
+	sampleReadableFilter,
+	sampleStorageId,
+} from "../samples/data";
 import { formatAnalysis } from "./format";
 
 /** Filters and pagination accepted by {@link findAnalyses}. */
@@ -630,9 +629,7 @@ export async function deleteAnalysis(
 	const [row] = await db
 		.select({
 			id: analyses.id,
-			legacy_id: analyses.legacy_id,
 			ready: analyses.ready,
-			sample: analyses.sample,
 			sample_id: analyses.sample_id,
 		})
 		.from(analyses)
@@ -650,6 +647,12 @@ export async function deleteAnalysis(
 	// Capture the full analysis for the return value before its rows are removed.
 	const analysis = await getAnalysis(db, analysisId);
 
+	// Read before the delete: `analysis_files` cascades on `analyses.id`.
+	const fileRows = await db
+		.select({ key: analysisFiles.storage_key })
+		.from(analysisFiles)
+		.where(eq(analysisFiles.analysis_id, analysisId));
+
 	const deleted = await db
 		.delete(analyses)
 		.where(eq(analyses.id, analysisId))
@@ -659,19 +662,17 @@ export async function deleteAnalysis(
 		throw new AnalysisNotFoundError();
 	}
 
-	// Only analyses migrated from Mongo have a legacy id and slug-prefixed objects
-	// to clean up. Postgres-native analyses keep their results in the `results`
-	// column and wrote nothing to storage.
-	if (row.legacy_id !== null) {
-		for (const failure of await deletePrefix(
-			storage,
-			analysisPrefix(row.sample, row.legacy_id),
-		)) {
-			logger.error(
-				{ analysisId, key: failure.key, err: failure.error },
-				"storage cleanup failed; file orphaned",
-			);
-		}
+	// Only objects a row named are removed. A migrated analysis's result blobs
+	// have no row and are left for the orphan sweep.
+	const storageKeys = fileRows
+		.map(({ key }) => key)
+		.filter((key) => key !== null);
+
+	for (const failure of await deleteKeys(storage, storageKeys)) {
+		logger.error(
+			{ analysisId, key: failure.key, err: failure.error },
+			"storage cleanup failed; file orphaned",
+		);
 	}
 
 	await emit("analyses", analysisId, "delete");

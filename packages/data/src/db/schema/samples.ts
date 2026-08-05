@@ -100,6 +100,10 @@ export const sampleArtifacts = pgTable("sample_artifacts", {
 	name: text("name").notNull(),
 	name_on_disk: text("name_on_disk"),
 	size: bigint("size", { mode: "number" }),
+	// The artifact's complete object-storage key. Nullable because it was
+	// backfilled from `name_on_disk`, which is itself nullable: a row without one
+	// names no retrievable object.
+	storage_key: text("storage_key").unique(),
 	type: text("type").notNull(),
 	uploaded_at: timestamp("uploaded_at"),
 });
@@ -112,6 +116,8 @@ export const sampleReads = pgTable("sample_reads", {
 	name: text("name").notNull(),
 	name_on_disk: text("name_on_disk").notNull(),
 	size: bigint("size", { mode: "number" }),
+	// The reads file's complete object-storage key.
+	storage_key: text("storage_key").unique().notNull(),
 	upload: integer("upload"),
 	uploaded_at: timestamp("uploaded_at"),
 });

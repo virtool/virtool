@@ -1,5 +1,5 @@
 import type { UploadType } from "@virtool/contracts";
-import { MemoryStorage, uploadFileKey } from "@virtool/storage";
+import { MemoryStorage } from "@virtool/storage";
 import { eq } from "drizzle-orm";
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
 import { seedUser } from "../auth/test/fixtures";
@@ -53,6 +53,7 @@ async function seedUpload(
 			removed: false,
 			reserved: false,
 			size: 10,
+			storageKey: `uploads/${Math.random()}`,
 			type: "reads",
 			uploadedAt: new Date(),
 			userId,
@@ -90,7 +91,8 @@ describe("createUpload", () => {
 			.where(eq(uploadsTable.id, upload.id));
 
 		expect(row?.ready).toBe(true);
-		expect(await storage.size(uploadFileKey(row?.nameOnDisk ?? ""))).toBe(5);
+		expect(row?.storageKey).toMatch(/^uploads\/[0-9a-f]{32}$/);
+		expect(await storage.size(row?.storageKey ?? "")).toBe(5);
 	});
 
 	it("never exposes name_on_disk", async () => {
@@ -173,7 +175,7 @@ describe("deleteUpload", () => {
 			.select()
 			.from(uploadsTable)
 			.where(eq(uploadsTable.id, upload.id));
-		const key = uploadFileKey(before?.nameOnDisk ?? "");
+		const key = before?.storageKey ?? "";
 
 		await deleteUpload(db, storage, testLogger, upload.id);
 

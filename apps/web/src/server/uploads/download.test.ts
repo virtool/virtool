@@ -87,6 +87,7 @@ async function seedUpload(
 				removed: false,
 				reserved: false,
 				size: 5,
+				storageKey: "uploads/abc",
 				type: "reads",
 				uploadedAt: new Date(),
 				userId,
@@ -118,9 +119,9 @@ async function request(userId: number | null): Promise<Request> {
 }
 
 describe("handleUploadDownload", () => {
-	it("streams the upload from its name_on_disk key", async () => {
+	it("streams the upload from the key its row records", async () => {
 		const uploadId = await seedUpload();
-		await write("files/abc-reads.fq.gz", "hello");
+		await write("uploads/abc", "hello");
 
 		const response = await handleUploadDownload(
 			await request(userId),
@@ -138,14 +139,15 @@ describe("handleUploadDownload", () => {
 		expect(await response.text()).toBe("hello");
 	});
 
-	// The object is keyed by the UUID-prefixed `name_on_disk`, but the download
+	// The object's key says nothing about what the file is called; the download
 	// is named after what the user chose.
 	it("names the download after the upload's name, not its key", async () => {
 		const uploadId = await seedUpload({
 			name: "my reads.fq.gz",
 			nameOnDisk: "f0e1-my reads.fq.gz",
+			storageKey: "uploads/f0e1",
 		});
-		await write("files/f0e1-my reads.fq.gz", "hello");
+		await write("uploads/f0e1", "hello");
 
 		const response = await handleUploadDownload(
 			await request(userId),
@@ -162,7 +164,7 @@ describe("handleUploadDownload", () => {
 	// the client truncates.
 	it("sizes the response from storage, not the row", async () => {
 		const uploadId = await seedUpload({ size: null });
-		await write("files/abc-reads.fq.gz", "considerably longer than five bytes");
+		await write("uploads/abc", "considerably longer than five bytes");
 
 		const response = await handleUploadDownload(
 			await request(userId),
@@ -176,7 +178,7 @@ describe("handleUploadDownload", () => {
 
 	it("rejects an anonymous caller with a 401", async () => {
 		const uploadId = await seedUpload();
-		await write("files/abc-reads.fq.gz", "hello");
+		await write("uploads/abc", "hello");
 
 		const response = await handleUploadDownload(
 			await request(null),
@@ -189,7 +191,7 @@ describe("handleUploadDownload", () => {
 	it("accepts an api key", async () => {
 		const key = await seedApiKey(db, userId, {});
 		const uploadId = await seedUpload();
-		await write("files/abc-reads.fq.gz", "hello");
+		await write("uploads/abc", "hello");
 
 		const response = await handleUploadDownload(
 			new Request("https://virtool.test/uploads/1", {
@@ -221,7 +223,7 @@ describe("handleUploadDownload", () => {
 
 	it("returns a 404 when the upload is removed", async () => {
 		const uploadId = await seedUpload({ removed: true, removedAt: new Date() });
-		await write("files/abc-reads.fq.gz", "hello");
+		await write("uploads/abc", "hello");
 
 		const response = await handleUploadDownload(
 			await request(userId),
@@ -231,8 +233,9 @@ describe("handleUploadDownload", () => {
 		expect(response.status).toBe(404);
 	});
 
-	it("returns a 404 when the row has no name_on_disk", async () => {
-		const uploadId = await seedUpload({ nameOnDisk: null });
+	// A row predating recorded keys names no object we can locate.
+	it("returns a 404 when the row has no storage_key", async () => {
+		const uploadId = await seedUpload({ storageKey: null });
 
 		const response = await handleUploadDownload(
 			await request(userId),
@@ -243,7 +246,7 @@ describe("handleUploadDownload", () => {
 	});
 
 	it("returns a 404 when the row exists but its bytes do not", async () => {
-		const uploadId = await seedUpload({ nameOnDisk: "missing-reads.fq.gz" });
+		const uploadId = await seedUpload({ storageKey: "uploads/missing" });
 
 		const response = await handleUploadDownload(
 			await request(userId),

@@ -6,7 +6,7 @@ import type {
 } from "@virtool/contracts";
 import type { Logger } from "@virtool/logger";
 import type { StorageBackend } from "@virtool/storage";
-import { uploadFileKey } from "@virtool/storage";
+import { mintRootStorageKey } from "@virtool/storage";
 import { and, count, desc, eq, inArray } from "drizzle-orm";
 import type { DbOrTx } from "../db/pg";
 import { takeFirstOrThrow } from "../db/rows";
@@ -126,7 +126,12 @@ export async function createUpload(
 	const now = new Date();
 	const nameOnDisk = `${crypto.randomUUID()}-${values.name}`;
 
-	const size = await storage.write(uploadFileKey(nameOnDisk), values.body);
+	// Minted before the write, so the bytes land under a key the row then records
+	// verbatim. `name_on_disk` no longer locates anything; Python still reads it
+	// to identify the upload a reference-import task was queued against.
+	const storageKey = mintRootStorageKey("uploads");
+
+	const size = await storage.write(storageKey, values.body);
 
 	const row = takeFirstOrThrow(
 		await db
@@ -139,6 +144,7 @@ export async function createUpload(
 				removed: false,
 				reserved: false,
 				size,
+				storageKey,
 				type: values.type,
 				uploadedAt: now,
 				userId: values.userId,
@@ -161,10 +167,9 @@ export type UploadFile = {
  * Resolve an upload to the storage key holding its bytes and the name it was
  * uploaded under, or `null` if there is nothing to download.
  *
- * `name_on_disk` is what the object is keyed by — a UUID-prefixed name that
- * keeps two uploads of `reads.fq.gz` apart — while `name` is what the user
- * chose and what the download is named. Both columns are nullable at the
- * database level, so a row missing either has no downloadable file.
+ * `storage_key` locates the object and `name` is what the user chose and what
+ * the download is named. Both columns are nullable at the database level, so a
+ * row missing either has no downloadable file.
  *
  * A removed upload is excluded, matching Python. `ready` is deliberately not
  * filtered on: Python does not either, and an upload created from this side is
@@ -175,16 +180,16 @@ export async function getUploadFile(
 	uploadId: number,
 ): Promise<UploadFile | null> {
 	const [row] = await db
-		.select({ name: uploadsTable.name, nameOnDisk: uploadsTable.nameOnDisk })
+		.select({ name: uploadsTable.name, storageKey: uploadsTable.storageKey })
 		.from(uploadsTable)
 		.where(and(eq(uploadsTable.id, uploadId), eq(uploadsTable.removed, false)))
 		.limit(1);
 
-	if (!row?.name || !row.nameOnDisk) {
+	if (!row?.name || !row.storageKey) {
 		return null;
 	}
 
-	return { key: uploadFileKey(row.nameOnDisk), name: row.name };
+	return { key: row.storageKey, name: row.name };
 }
 
 /**
@@ -267,13 +272,13 @@ export async function deleteUpload(
 		.set({ removed: true, removedAt: new Date() })
 		.where(eq(uploadsTable.id, uploadId));
 
-	// `name_on_disk` is nullable at the database level. A row that somehow lacks
-	// one has no bytes we can locate, so skip the storage delete rather than
-	// deleting the empty `files/` key, which could point at an unintended object.
-	if (row.nameOnDisk) {
-		await storage.delete(uploadFileKey(row.nameOnDisk));
+	// `storage_key` is nullable at the database level. A row that lacks one names
+	// no object we can locate — it predates keys being recorded — so leave its
+	// bytes to the orphan sweep rather than guessing at a key.
+	if (row.storageKey) {
+		await storage.delete(row.storageKey);
 	} else {
-		logger.warn({ uploadId }, "removed upload has no name_on_disk to delete");
+		logger.warn({ uploadId }, "removed upload has no storage_key to delete");
 	}
 
 	await emit("uploads", uploadId, "delete");

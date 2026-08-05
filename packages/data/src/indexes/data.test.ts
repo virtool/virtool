@@ -251,6 +251,7 @@ describe("getIndex", () => {
 			index_id: indexId,
 			name: "reference.fa.gz",
 			size: 2048,
+			storage_key: `indexes/${indexId}/reference`,
 			type: "fasta",
 		});
 

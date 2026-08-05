@@ -19,13 +19,7 @@ import type {
 } from "@virtool/contracts";
 import { AnalysisWorkflow } from "@virtool/contracts";
 import type { Logger } from "@virtool/logger";
-import {
-	deletePrefix,
-	type StorageBackend,
-	sampleFileKey,
-	samplePrefix,
-	sampleStorageId,
-} from "@virtool/storage";
+import { deleteKeys, type StorageBackend } from "@virtool/storage";
 import {
 	and,
 	asc,
@@ -42,7 +36,7 @@ import {
 } from "drizzle-orm";
 import type { Db, DbOrTx } from "../db/pg";
 import { takeFirstOrThrow } from "../db/rows";
-import { analyses } from "../db/schema/analyses";
+import { analyses, analysisFiles } from "../db/schema/analyses";
 import { groups, userGroups } from "../db/schema/groups";
 import { labels } from "../db/schema/labels";
 import {
@@ -123,6 +117,22 @@ export class SampleFileDuplicateError extends AppError {}
  * outcome — reading one surfaces it rather than degrading to a blank owner.
  */
 export class SampleOwnerlessError extends AppError {}
+
+/**
+ * The value a sample's child rows carry in their legacy `sample` text column:
+ * the Mongo `_id` for anything migrated out of Mongo, the integer primary key
+ * for everything since.
+ *
+ * This is row matching, not a storage key. `sample_id` is nullable on rows old
+ * enough to predate it, so a query for a sample's artifacts, reads or uploads
+ * has to accept either column.
+ */
+export function sampleStorageId(
+	sampleId: number,
+	legacyId: string | null,
+): string {
+	return legacyId || String(sampleId);
+}
 
 const WORKFLOW_CONDITIONS = ["none", "pending", "ready"] as const;
 
@@ -789,16 +799,9 @@ export async function checkSampleRight(
  * The storage key of one of a sample's read files, or `null` when the sample
  * has no read by that name.
  *
- * The row is matched on `name`, which is what the URL carries, but the key is
- * composed from `name_on_disk`, which is what the object was written under.
- * `upload_reads` sets the two from the same argument, so they agree on every
- * row today; keying on the column that means "the name on disk" is what keeps
- * that an implementation detail rather than a load-bearing assumption.
- *
- * Neither comes from the caller, so a filename carrying path segments cannot
- * traverse out of the sample's prefix. `sample` is the prefix the file was
- * written under, which for a Mongo-migrated sample is its legacy id rather than
- * its integer one.
+ * The row is matched on `name`, which is what the URL carries, and the key is
+ * then read off that row. Nothing is composed from the caller's input, so a
+ * filename carrying path segments names no object.
  */
 export async function getSampleReadsFileKey(
 	db: DbOrTx,
@@ -818,10 +821,7 @@ export async function getSampleReadsFileKey(
 	const storageId = sampleStorageId(sampleId, sample.legacy_id);
 
 	const [read] = await db
-		.select({
-			nameOnDisk: sampleReads.name_on_disk,
-			sample: sampleReads.sample,
-		})
+		.select({ storageKey: sampleReads.storage_key })
 		.from(sampleReads)
 		.where(
 			and(
@@ -834,11 +834,7 @@ export async function getSampleReadsFileKey(
 		)
 		.limit(1);
 
-	if (!read) {
-		return null;
-	}
-
-	return sampleFileKey(read.sample, read.nameOnDisk);
+	return read?.storageKey ?? null;
 }
 
 async function checkNameInUse(
@@ -1240,7 +1236,41 @@ export async function deleteSample(
 	// The FK cascade only covers two of these relationships, so every table is
 	// deleted explicitly. Rows may be keyed by the integer id or the legacy
 	// storage string depending on when the sample was created.
-	await db.transaction(async (tx) => {
+	const storageKeys = await db.transaction(async (tx) => {
+		// Every key has to be read before its row goes. Analysis files are reached
+		// through the sample's analyses, whose rows cascade them away, so they are
+		// collected here rather than by `deleteAnalysis`.
+		const keyRows = await Promise.all([
+			tx
+				.select({ key: sampleArtifacts.storage_key })
+				.from(sampleArtifacts)
+				.where(
+					or(
+						eq(sampleArtifacts.sample_id, sampleId),
+						eq(sampleArtifacts.sample, storageId),
+					),
+				),
+			tx
+				.select({ key: sampleReads.storage_key })
+				.from(sampleReads)
+				.where(
+					or(
+						eq(sampleReads.sample_id, sampleId),
+						eq(sampleReads.sample, storageId),
+					),
+				),
+			tx
+				.select({ key: analysisFiles.storage_key })
+				.from(analysisFiles)
+				.innerJoin(analyses, eq(analyses.id, analysisFiles.analysis_id))
+				.where(eq(analyses.sample_id, sampleId)),
+		]);
+
+		const keys = keyRows
+			.flat()
+			.map(({ key }) => key)
+			.filter((key) => key !== null);
+
 		if (uploadIds.length > 0) {
 			await tx
 				.update(uploads)
@@ -1282,9 +1312,14 @@ export async function deleteSample(
 		if (deleted.length === 0) {
 			throw new SampleNotFoundError();
 		}
+
+		return keys;
 	});
 
-	for (const failure of await deletePrefix(storage, samplePrefix(storageId))) {
+	// Only objects a row named are removed. Anything written before keys were
+	// recorded — a migrated analysis's result blobs, above all — is unreachable
+	// from here and is left for the orphan sweep.
+	for (const failure of await deleteKeys(storage, storageKeys)) {
 		logger.error(
 			{ sampleId, key: failure.key, err: failure.error },
 			"storage cleanup failed; file orphaned",

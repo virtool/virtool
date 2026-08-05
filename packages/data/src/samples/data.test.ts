@@ -4,7 +4,7 @@ import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
 import { seedUser } from "../auth/test/fixtures";
 import type { Db } from "../db/pg";
 import { takeFirstOrThrow } from "../db/rows";
-import { analyses } from "../db/schema/analyses";
+import { analyses, analysisFiles } from "../db/schema/analyses";
 import { groups, userGroups } from "../db/schema/groups";
 import { jobs } from "../db/schema/jobs";
 import { labels } from "../db/schema/labels";
@@ -410,12 +410,14 @@ describe("getSample", () => {
 				sample_id: sampleId,
 				name: "reads_1.fq.gz",
 				name_on_disk: "reads_1.fq.gz",
+				storage_key: `samples/${sampleId}/reads_1`,
 			},
 			{
 				sample: String(sampleId),
 				sample_id: sampleId,
 				name: "reads_2.fq.gz",
 				name_on_disk: "reads_2.fq.gz",
+				storage_key: `samples/${sampleId}/reads_2`,
 			},
 		]);
 
@@ -440,6 +442,8 @@ describe("getSample", () => {
 			sample_id: null,
 			name: "reads_1.fq.gz",
 			name_on_disk: "reads_1.fq.gz",
+			// Backfilled with the key the row's object already lived under.
+			storage_key: "samples/abc123/reads_1.fq.gz",
 		});
 		await db.insert(sampleArtifacts).values({
 			sample: "abc123",
@@ -664,12 +668,14 @@ describe("deleteSample", () => {
 			sample_id: sampleId,
 			name: "reads_1.fq.gz",
 			name_on_disk: "reads_1.fq.gz",
+			storage_key: `samples/${sampleId}/reads_1`,
 		});
 		await db.insert(sampleArtifacts).values({
 			sample: String(sampleId),
 			sample_id: sampleId,
 			name: "a.json",
 			type: "json",
+			storage_key: `samples/${sampleId}/artifact`,
 		});
 		await seedAnalysis({ sample_id: sampleId, workflow: "nuvs", ready: true });
 
@@ -714,6 +720,65 @@ describe("deleteSample", () => {
 			.from(uploads)
 			.where(eq(uploads.id, uploadId));
 		expect(upload?.reserved).toBe(false);
+	});
+
+	// Analysis files are reached through the sample's analyses, whose rows go in
+	// the same transaction, so their keys have to be collected before the delete
+	// or nothing is left to name them.
+	it("deletes the objects its rows name, analysis files included", async () => {
+		const storage = new MemoryStorage();
+		const sampleId = await seedSample({ name: "Doomed" });
+
+		await db.insert(sampleReads).values({
+			sample: String(sampleId),
+			sample_id: sampleId,
+			name: "reads_1.fq.gz",
+			name_on_disk: "reads_1.fq.gz",
+			storage_key: "samples/reads",
+		});
+		await db.insert(sampleArtifacts).values({
+			sample: String(sampleId),
+			sample_id: sampleId,
+			name: "a.json",
+			type: "json",
+			storage_key: "samples/artifact",
+		});
+
+		const analysisId = await seedAnalysis({
+			sample_id: sampleId,
+			workflow: "nuvs",
+			ready: true,
+		});
+
+		await db.insert(analysisFiles).values({
+			analysis_id: analysisId,
+			name: "nuvs.fa",
+			storage_key: "analyses/nuvs",
+		});
+
+		for (const key of [
+			"samples/reads",
+			"samples/artifact",
+			"analyses/nuvs",
+			"samples/unrecorded",
+		]) {
+			await storage.write(
+				key,
+				(async function* () {
+					yield new TextEncoder().encode("x");
+				})(),
+			);
+		}
+
+		await deleteSample(db, storage, testLogger, sampleId);
+
+		const remaining = [];
+		for await (const object of storage.list("")) {
+			remaining.push(object.key);
+		}
+
+		// Only the object no row named survives.
+		expect(remaining).toEqual(["samples/unrecorded"]);
 	});
 
 	it("throws when the sample does not exist", async () => {

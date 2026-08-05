@@ -680,13 +680,13 @@ Constraints these handlers carry, each of which has been a bug:
   the response on the way out. `request.formData()` puts a multi-gigabyte read
   file in the Node heap. For the same reason the upload must not become a server
   function: the RPC client uses `fetch`, which cannot report progress.
-- **Compose a storage key only from a row already matched.** A `$filename` param
-  is looked up first — against `subtraction_files`, or a whitelist of the names
-  an index build produces — and the key is then built from that row's own `name`
-  and `storage_key`. Never from the URL param, which is how a param traverses
-  out of the prefix, and never from the row id.
-- **`Content-Disposition` carries the row's `name`**, never the UUID-prefixed
-  `name_on_disk` that keys the object.
+- **Take a storage key off a row already matched.** A `$filename` param selects
+  a row first — against `subtraction_files`, or a whitelist of the names an index
+  build produces — and the key is then read from that row's `storage_key`. Never
+  compose one from the URL param, which is how a param traverses out of a prefix,
+  and never from the row id.
+- **`Content-Disposition` carries the row's `name`**, never `name_on_disk` and
+  never the key.
 - **A download gets its own URL.** The FASTA routes end in a literal `fasta`
   segment rather than a `.fa` suffix on the resource URL — sniffing a suffix
   inside a read handler is what puts two representations on one path.
@@ -876,14 +876,15 @@ analyses read path. Renormalizing is a Python-side migration.
 
 **An index build is started here and finished by Python.**
 `createIndex` (`@virtool/data/indexes/data`) inserts the pending `indexes` row,
-mints its `storage_key`, stamps every unbuilt `legacy_history` row with
-it, and creates the `create_index` task the Python runner claims — that
-task writes the artifact and flips `ready`. The insert runs under
+stamps every unbuilt `legacy_history` row with it, and creates the
+`create_index` task the Python runner claims — that task writes the
+artifact, records each file's `storage_key`, and flips `ready`. The
+insert runs under
 `pg_try_advisory_xact_lock(hashtext('index_build:{referenceId}'))`, the
 same key Python takes, so a build started from either service excludes
-one started from the other. Don't drop the lock, and don't derive
-`storage_key` from the row id — a migrated index keys on its old Mongo
-id instead.
+one started from the other. Don't drop the lock. `indexes.storage_key`
+is dead — it is still `NOT NULL`, so the insert fills it, but nothing
+composes a key from it any more.
 
 See [docs/database.md](docs/database.md) for which domains the TS
 server can reach today, why the OTU tables keep their legacy shape and
@@ -896,17 +897,32 @@ Uploads, reads, analysis results, indexes, subtractions, HMM profiles,
 and caches live in S3 or Azure Blob — **the same bucket Python uses**.
 `@virtool/storage` exposes a five-method streaming interface
 (`read`, `write`, `delete`, `list`, `size`); there are no paths, file
-handles, or presigned URLs. Keys are built by `@virtool/storage/keys` and
-must stay byte-for-byte identical to Python's — a divergence silently
-reads nothing and orphans what it writes. There is no filesystem backend.
+handles, or presigned URLs. There is no filesystem backend.
+
+**A key is recorded, not derived.** Every row naming a stored object
+carries its complete key in a `storage_key` column, and every read path
+reads that column — nothing recomposes a key from a row id, a legacy id,
+or a filename. New keys come from `mintStorageKey(domain, parentId)` and
+`mintRootStorageKey(domain)` in `@virtool/storage/keys`, whose UUID leaf
+must stay hyphenless to match Python's `uuid4().hex`. The `parentId`
+segment is for human inspection only; keys in the bucket are
+heterogeneous by design, because a migrated row keeps whatever prefix it
+was written under.
 
 `StorageError` and `StorageKeyNotFoundError` come from
 `@virtool/storage/errors` and extend plain `Error`, not the data layer's
 `AppError`, so the storage package carries no dependency on the data layer.
 
 The backend is built once at startup and **passed into `data.ts`
-functions as an argument, the way `db` is**. `deletePrefix` never
-throws; it returns failures, and callers must log them.
+functions as an argument, the way `db` is**. `deleteKeys` never throws;
+it returns failures, and callers must log them.
+
+**Cleanup enumerates recorded keys; there is no prefix sweep.** Read a
+row's key *before* deleting the row, and where a cascade takes child rows
+with it — a sample's analyses take their `analysis_files`, an index takes
+its `index_files` — collect the children's keys in the parent's delete.
+An object written before keys were recorded is named by no row, survives
+the delete, and is left for an orphan sweep that does not exist yet.
 
 Client code must never reference the whole `import.meta.env` object.
 Vite would serialize every `VT_`-prefixed variable — including

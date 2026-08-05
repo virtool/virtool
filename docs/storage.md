@@ -25,7 +25,7 @@ type StorageBackend = {
 };
 ```
 
-- Keys are `/`-delimited with no leading slash: `samples/abc123/reads_1.fq.gz`.
+- Keys are `/`-delimited with no leading slash: `samples/12/9f2c…`.
 - `read` and `write` stream. Sequencing files are far too large to buffer.
 - `write` creates or overwrites and returns the number of bytes written.
 - `delete` is idempotent — deleting a key that was never there is not an error.
@@ -43,55 +43,72 @@ or rely on it for ordering.
 
 ### Cleanup
 
-`deletePrefix(storage, prefix)` deletes everything under a prefix and **never
-throws**. Callers reach it having already committed the database write that
-orphaned the objects, so failing the whole operation because one delete failed
-would abandon the rest of the cleanup and report failure for work that mostly
-succeeded. It returns `{ key, error }` pairs instead. **Log them** — that is
-the only thing keeping the orphans observable. If the listing itself fails, the
-prefix comes back in place of a key.
+`deleteKeys(storage, keys)` deletes every object named and **never throws**.
+Callers reach it having already committed the database write that orphaned the
+objects, so failing the whole operation because one delete failed would abandon
+the rest of the cleanup and report failure for work that mostly succeeded. It
+returns `{ key, error }` pairs instead. **Log them** — that is the only thing
+keeping the orphans observable.
+
+The keys passed in are the ones the rows being deleted recorded, so they have to
+be read **before** those rows go. Where a cascade removes child rows — a
+sample's analyses take their `analysis_files` with them, an index takes its
+`index_files` — the parent's delete collects the children's keys first.
+
+There is no prefix sweep, in either service. Only an object some row names can
+be reached, so anything written before keys were recorded — a migrated
+analysis's result blobs, above all — survives a delete and is left for a
+separate orphan sweep. That sweep does not exist yet.
 
 ## Keys
 
-Key builders live in `@virtool/storage/keys` and must stay byte-for-byte identical to
-Python's. A divergence does not fail loudly: it silently reads nothing and
-orphans whatever it writes.
+**A key is recorded, not derived.** Every row that names a stored object carries
+its complete key in a `storage_key` column, and every read path reads that
+column. Nothing recomposes a key from a row id, a legacy id, or a filename, so
+changing how keys are chosen cannot force a single object to move.
 
-| Builder | Key |
+The columns, all `UNIQUE`:
+
+| Table | Column | Null? |
+| --- | --- | --- |
+| `sample_reads` | `storage_key` | no |
+| `index_files` | `storage_key` | no |
+| `sample_artifacts` | `storage_key` | yes |
+| `subtraction_files` | `storage_key` | yes |
+| `analysis_files` | `storage_key` | yes |
+| `uploads` | `storage_key` | yes |
+| `indexes` | `otus_json_storage_key` | yes |
+
+A column is nullable exactly where the value it was backfilled from is: the
+backfill derived each key from whatever the old read path composed, and where
+that source column is nullable a row can exist naming no retrievable object. A
+NULL key states that faithfully rather than fabricating one. `indexes` carries
+its OTU JSON key directly because that object is materialized on demand and
+deliberately has no `index_files` row — one would publish it in the index's file
+listing.
+
+New keys come from `@virtool/storage/keys`, and must stay byte-for-byte
+compatible with Python's — the leaf is `uuid4().hex`, so **no hyphens**:
+
+| Minter | Key |
 | --- | --- |
-| `uploadFileKey(nameOnDisk)` | `files/{nameOnDisk}` |
-| `analysisFileKey(nameOnDisk)` | `analyses/{nameOnDisk}` |
-| `sampleFileKey(storageId, filename)` | `samples/{storageId}/{filename}` |
-| `samplePrefix(storageId)` | `samples/{storageId}/` |
-| `analysisPrefix(sampleStorageId, analysisLegacyId)` | `samples/{sampleStorageId}/analysis/{analysisLegacyId}/` |
-| `subtractionFileKey(storageId, filename)` | `subtractions/{storageId}/{filename}` |
-| `subtractionPrefix(storageId)` | `subtractions/{storageId}/` |
-| `indexFileKey(storageKey, filename)` | `indexes/{storageKey}/{filename}` |
-| `indexPrefix(storageKey)` | `indexes/{storageKey}/` |
+| `mintStorageKey(domain, parentId)` | `{domain}/{parentId}/{uuid}` |
+| `mintRootStorageKey(domain)` | `{domain}/{uuid}` |
 | `cacheKey(uuid)` | `caches/v1/{uuid}` |
 | `HMM_PROFILES_KEY` | `hmm/profiles.hmm` |
 | `HMM_ANNOTATIONS_KEY` | `hmm/annotations.json.gz` |
 
-Two subtleties are load-bearing:
+The `{parentId}` segment groups an owning resource's objects for human
+inspection and means nothing to any read path. Uploads have no owning resource —
+they are the resource — so they use `mintRootStorageKey`, which also makes the
+key available before the row exists: the object is written first, and no
+database transaction is held open for the length of the upload stream.
 
-- **A sample's storage id is not always its primary key.** Use
-  `sampleStorageId(sampleId, legacyId)`, which returns the legacy Mongo id when
-  the sample has one and the integer primary key otherwise. A sample keeps one
-  prefix for life.
-- **Neither is a subtraction's.** `subtractionStorageId(subtractionId,
-  legacyId)` follows the same rule, and mirrors Python's
-  `_resolve_storage_id`. A subtraction is addressed by its integer id
-  everywhere else, so it is easy to reach for `String(id)` and silently orphan
-  every migrated subtraction's files.
-- **An index's prefix is neither.** It is the `indexes.storage_key` column,
-  persisted because it cannot be derived from the row id at all — a migrated
-  index keys on its old Mongo id and a natively-created one on a minted UUID.
-  Read the column; never pass the index id.
-- **Subtraction ids may contain spaces**, and Python substitutes underscores
-  when composing the key. `subtractionFileKey` and `subtractionPrefix` do the
-  same. Never build a subtraction key by hand.
+**Keys in the bucket are heterogeneous by design.** A migrated row keeps the
+Mongo slug or integer id it was written under; only rows created since get a
+UUID. Never infer a key's shape from another key.
 
-A cache's key is persisted on its row. Read it from there rather than
+A cache's key is persisted on its row too. Read it from there rather than
 recomputing it.
 
 ## Configuration

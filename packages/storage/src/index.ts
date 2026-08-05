@@ -1,4 +1,4 @@
-export { type DeleteFailure, deletePrefix } from "./cleanup";
+export { type DeleteFailure, deleteKeys } from "./cleanup";
 export type { StorageConfig } from "./config";
 export { StorageError, StorageKeyNotFoundError } from "./errors";
 export { createStorageBackend } from "./factory";

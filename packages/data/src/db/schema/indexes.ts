@@ -30,10 +30,17 @@ export const indexes = pgTable("indexes", {
 	ready: boolean("ready")
 		.$defaultFn(() => false)
 		.notNull(),
-	// The object-storage prefix the build's files live under. A migrated index
-	// keys on its Mongo id and a natively-created one on a minted UUID, so this
-	// cannot be derived from `id` and must be persisted.
+	// Dead. Keys were once composed as `indexes/{storage_key}/{file name}`; each
+	// file now records its own complete key. Python retains the column until a
+	// later cleanup revision so a rolling deploy never has readers of a dropped
+	// column, and still requires it on insert.
 	storage_key: text("storage_key").unique().notNull(),
+	// The exception to files recording their own keys. The compressed OTU JSON is
+	// materialized on demand and deliberately has no `index_files` row, because
+	// such a row would publish it in the index's file listing. Nullable: an index
+	// that has never been asked for its OTU JSON has not written one, and the key
+	// is minted on first write.
+	otus_json_storage_key: text("otus_json_storage_key").unique(),
 	reference_id: bigint("reference_id", { mode: "number" }).notNull(),
 	user_id: integer("user_id").notNull(),
 	// A build is backed by at most one of these: `job_id` for a legacy
@@ -51,6 +58,9 @@ export const indexFiles = pgTable("index_files", {
 	index_id: bigint("index_id", { mode: "number" }).notNull(),
 	type: indexType("type"),
 	size: bigint("size", { mode: "number" }),
+	// The file's complete object-storage key, superseding the per-index
+	// `indexes.storage_key` slug keys were previously composed from.
+	storage_key: text("storage_key").unique().notNull(),
 });
 
 /** A row from the `indexes` table. */

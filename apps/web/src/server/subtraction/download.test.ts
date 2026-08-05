@@ -11,7 +11,7 @@ import {
 	createTestDatabase,
 	type TestDatabase,
 } from "@virtool/data/db/test/fixtures";
-import { MemoryStorage } from "@virtool/storage";
+import { MemoryStorage, mintStorageKey } from "@virtool/storage";
 import { eq } from "drizzle-orm";
 import {
 	afterAll,
@@ -96,16 +96,23 @@ async function seedSubtraction(
 	).id;
 }
 
+// Returns the key the row records, which is what a test writes its bytes under.
 async function seedFile(
 	subtractionId: number,
-	name = "subtraction.fa.gz",
-): Promise<void> {
+	{
+		name = "subtraction.fa.gz",
+		storageKey = mintStorageKey("subtractions", subtractionId),
+	}: { name?: string; storageKey?: string } = {},
+): Promise<string> {
 	await db.insert(subtractionFiles).values({
 		name,
 		subtraction_id: subtractionId,
 		size: 5,
+		storage_key: storageKey,
 		type: "fasta",
 	});
+
+	return storageKey;
 }
 
 async function write(key: string, contents: string): Promise<void> {
@@ -132,10 +139,9 @@ async function request(userId: number | null): Promise<Request> {
 }
 
 describe("handleSubtractionFile", () => {
-	it("streams a Postgres-native subtraction's file from its integer prefix", async () => {
+	it("streams a subtraction's file from the key its row records", async () => {
 		const subtractionId = await seedSubtraction();
-		await seedFile(subtractionId);
-		await write(`subtractions/${subtractionId}/subtraction.fa.gz`, "hello");
+		await write(await seedFile(subtractionId), "hello");
 
 		const response = await handleSubtractionFile(
 			await request(userId),
@@ -154,11 +160,14 @@ describe("handleSubtractionFile", () => {
 		expect(await response.text()).toBe("hello");
 	});
 
-	// A subtraction migrated out of Mongo keeps its legacy slug as the storage
-	// prefix, even though it is addressed by its integer id.
-	it("reads a migrated subtraction's file from its legacy prefix", async () => {
+	// A migrated subtraction's files keep the legacy key they were backfilled
+	// with, spaces already substituted, even though the subtraction is addressed
+	// by its integer id.
+	it("reads a migrated subtraction's file from its backfilled key", async () => {
 		const subtractionId = await seedSubtraction({ legacy_id: "arabidopsis 1" });
-		await seedFile(subtractionId);
+		await seedFile(subtractionId, {
+			storageKey: "subtractions/arabidopsis_1/subtraction.fa.gz",
+		});
 		await write("subtractions/arabidopsis_1/subtraction.fa.gz", "hello");
 
 		const response = await handleSubtractionFile(
@@ -175,15 +184,12 @@ describe("handleSubtractionFile", () => {
 	// so the header has to come from the object or the client truncates.
 	it("sizes the response from storage, not the row", async () => {
 		const subtractionId = await seedSubtraction();
-		await seedFile(subtractionId);
+		const key = await seedFile(subtractionId);
 		await db
 			.update(subtractionFiles)
 			.set({ size: null })
 			.where(eq(subtractionFiles.subtraction_id, subtractionId));
-		await write(
-			`subtractions/${subtractionId}/subtraction.fa.gz`,
-			"considerably longer than five bytes",
-		);
+		await write(key, "considerably longer than five bytes");
 
 		const response = await handleSubtractionFile(
 			await request(userId),
@@ -212,8 +218,7 @@ describe("handleSubtractionFile", () => {
 	it("accepts an api key", async () => {
 		const key = await seedApiKey(db, userId, {});
 		const subtractionId = await seedSubtraction();
-		await seedFile(subtractionId);
-		await write(`subtractions/${subtractionId}/subtraction.fa.gz`, "hello");
+		await write(await seedFile(subtractionId), "hello");
 
 		const response = await handleSubtractionFile(
 			new Request("https://virtool.test/subtractions/1/files/x", {
@@ -248,8 +253,7 @@ describe("handleSubtractionFile", () => {
 
 	it("returns a 404 when the subtraction is deleted", async () => {
 		const subtractionId = await seedSubtraction({ deleted: true });
-		await seedFile(subtractionId);
-		await write(`subtractions/${subtractionId}/subtraction.fa.gz`, "hello");
+		await write(await seedFile(subtractionId), "hello");
 
 		const response = await handleSubtractionFile(
 			await request(userId),
@@ -260,8 +264,8 @@ describe("handleSubtractionFile", () => {
 		expect(response.status).toBe(404);
 	});
 
-	// The filename only ever reaches a key after it has matched a registered
-	// file, so it cannot escape the subtraction's prefix.
+	// The filename only ever selects a row; the key comes off that row, so a
+	// filename carrying path segments names no object.
 	it("returns a 404 for a filename the subtraction has no row for", async () => {
 		const subtractionId = await seedSubtraction();
 		await seedFile(subtractionId);

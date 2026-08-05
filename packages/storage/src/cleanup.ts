@@ -7,7 +7,7 @@ export type DeleteFailure = {
 };
 
 /**
- * Best-effort delete of every object under `prefix`.
+ * Best-effort delete of every object named by `keys`.
  *
  * Never throws. Callers reach this having already committed the database write
  * that orphaned these objects, so propagating one failure would abandon the
@@ -15,25 +15,17 @@ export type DeleteFailure = {
  * Failures come back instead, and callers are expected to log them so the
  * orphans stay observable.
  *
- * If the listing itself fails, no per-object keys are known, so the prefix is
- * reported in place of a key.
+ * Callers pass the keys recorded on the rows they are deleting, which must be
+ * read before those rows go, so only objects a row names are removed. Objects
+ * written before keys were recorded are unreachable this way and are left for a
+ * separate sweep.
  */
-export async function deletePrefix(
+export async function deleteKeys(
 	storage: StorageBackend,
-	prefix: string,
+	keys: Iterable<string>,
 ): Promise<DeleteFailure[]> {
-	const keys: string[] = [];
-
-	try {
-		for await (const object of storage.list(prefix)) {
-			keys.push(object.key);
-		}
-	} catch (error) {
-		return [{ key: prefix, error }];
-	}
-
 	const results = await Promise.all(
-		keys.map(async (key) => {
+		[...keys].map(async (key) => {
 			try {
 				await storage.delete(key);
 				return null;

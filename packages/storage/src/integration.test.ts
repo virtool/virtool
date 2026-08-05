@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it } from "vitest";
-import { deletePrefix } from "./cleanup";
+import { deleteKeys } from "./cleanup";
 import type { StorageConfig } from "./config";
 import { StorageKeyNotFoundError } from "./errors";
 import { createStorageBackend } from "./factory";
@@ -49,6 +49,20 @@ function testPrefix(name: string): string {
 	return `test/${worker}/${name.replaceAll(/[^a-zA-Z0-9]+/g, "_")}/`;
 }
 
+// Sweeping a prefix is a test affordance only. No production path does it: rows
+// record their keys, and cleanup enumerates those.
+async function clearPrefix(
+	storage: StorageBackend,
+	prefix: string,
+): Promise<void> {
+	const objects = await listAll(storage, prefix);
+
+	await deleteKeys(
+		storage,
+		objects.map((object) => object.key),
+	);
+}
+
 describe.each(BACKENDS)("$name storage", ({ config }) => {
 	let storage: StorageBackend;
 	let prefix: string;
@@ -57,10 +71,10 @@ describe.each(BACKENDS)("$name storage", ({ config }) => {
 		storage = createStorageBackend(config);
 		prefix = testPrefix(ctx.task.name);
 
-		await deletePrefix(storage, prefix);
+		await clearPrefix(storage, prefix);
 
 		return async () => {
-			await deletePrefix(storage, prefix);
+			await clearPrefix(storage, prefix);
 		};
 	});
 

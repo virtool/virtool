@@ -12,12 +12,7 @@ import type {
 } from "@virtool/contracts";
 import type { Logger } from "@virtool/logger";
 import type { StorageBackend } from "@virtool/storage";
-import {
-	deletePrefix,
-	subtractionFileKey,
-	subtractionPrefix,
-	subtractionStorageId,
-} from "@virtool/storage";
+import { deleteKeys } from "@virtool/storage";
 import { and, asc, count, eq, ilike, or } from "drizzle-orm";
 import { alias } from "drizzle-orm/pg-core";
 import type { Db, DbOrTx } from "../db/pg";
@@ -296,23 +291,20 @@ export async function getSubtraction(
 	};
 }
 
-// A subtraction's files live under the prefix its storage id names, which is
-// the legacy Mongo id for anything migrated out of Mongo and the integer
-// primary key for everything created since. Mirrors Python's
-// `_resolve_storage_id`.
-async function resolveSubtractionStorageId(
+// Whether a live subtraction has this id. Mirrors Python's `_check_exists`.
+async function checkSubtractionExists(
 	db: DbOrTx,
 	subtractionId: number,
-): Promise<string | null> {
+): Promise<boolean> {
 	const [row] = await db
-		.select({ id: subtractions.id, legacy_id: subtractions.legacy_id })
+		.select({ id: subtractions.id })
 		.from(subtractions)
 		.where(
 			and(eq(subtractions.id, subtractionId), eq(subtractions.deleted, false)),
 		)
 		.limit(1);
 
-	return row ? subtractionStorageId(row.id, row.legacy_id) : null;
+	return row !== undefined;
 }
 
 /**
@@ -320,8 +312,9 @@ async function resolveSubtractionStorageId(
  * under.
  *
  * Returns null when the subtraction, or a file of that name on it, does not
- * exist. The key is composed only from a name that matched a row, so a filename
- * taken from a URL can never traverse out of the subtraction's prefix.
+ * exist, or when the file predates keys being recorded. The key is read off the
+ * matched row rather than composed, so a filename taken from a URL names no
+ * object.
  *
  * The row's `size` is deliberately not returned. It is nullable, and it records
  * what the create job wrote rather than what the bucket currently holds — a
@@ -332,10 +325,10 @@ export async function getSubtractionFileKey(
 	subtractionId: number,
 	filename: string,
 ): Promise<string | null> {
-	const [storageId, [file]] = await Promise.all([
-		resolveSubtractionStorageId(db, subtractionId),
+	const [exists, [file]] = await Promise.all([
+		checkSubtractionExists(db, subtractionId),
 		db
-			.select({ name: subtractionFiles.name })
+			.select({ storageKey: subtractionFiles.storage_key })
 			.from(subtractionFiles)
 			.where(
 				and(
@@ -346,11 +339,11 @@ export async function getSubtractionFileKey(
 			.limit(1),
 	]);
 
-	if (storageId === null || !file?.name) {
+	if (!exists) {
 		return null;
 	}
 
-	return subtractionFileKey(storageId, file.name);
+	return file?.storageKey ?? null;
 }
 
 export async function createSubtraction(
@@ -432,14 +425,17 @@ export async function deleteSubtraction(
 	logger: Logger,
 	subtractionId: number,
 ): Promise<void> {
-	const storageId = await db.transaction(async (tx) => {
-		// Doubles as the existence check: the resolver filters out deleted rows and
-		// returns null when nothing matches.
-		const resolved = await resolveSubtractionStorageId(tx, subtractionId);
-
-		if (resolved === null) {
+	const storageKeys = await db.transaction(async (tx) => {
+		// The check filters out already-deleted rows, so this doubles as the
+		// existence check.
+		if (!(await checkSubtractionExists(tx, subtractionId))) {
 			return null;
 		}
+
+		const fileRows = await tx
+			.select({ key: subtractionFiles.storage_key })
+			.from(subtractionFiles)
+			.where(eq(subtractionFiles.subtraction_id, subtractionId));
 
 		// Soft delete: the row stays so historical analyses that reference it still
 		// resolve. Unlink it from any samples that held it as a default subtraction.
@@ -452,16 +448,18 @@ export async function deleteSubtraction(
 			.delete(legacySampleSubtractions)
 			.where(eq(legacySampleSubtractions.subtraction_id, subtractionId));
 
-		return resolved;
+		return fileRows.map(({ key }) => key).filter((key) => key !== null);
 	});
 
-	if (storageId === null) {
+	if (storageKeys === null) {
 		throw new SubtractionNotFoundError();
 	}
 
 	// The database write has committed, so a storage failure only orphans bytes
 	// rather than failing the delete. Log the orphans so they stay observable.
-	const failures = await deletePrefix(storage, subtractionPrefix(storageId));
+	// Only objects a file row names are removed; anything written before keys
+	// were recorded is left for the orphan sweep.
+	const failures = await deleteKeys(storage, storageKeys);
 
 	for (const failure of failures) {
 		logger.warn(

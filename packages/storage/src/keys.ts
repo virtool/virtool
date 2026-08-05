@@ -1,102 +1,50 @@
 /**
- * Storage keys, which must stay byte-for-byte identical to the ones Python
- * builds. Both processes read and write the same bucket, so a divergence here
- * does not fail loudly — it silently reads nothing and orphans what it writes.
- */
-
-/** Key for an uploaded file. */
-export function uploadFileKey(nameOnDisk: string): string {
-	return `files/${nameOnDisk}`;
-}
-
-/** Key for an analysis file. */
-export function analysisFileKey(nameOnDisk: string): string {
-	return `analyses/${nameOnDisk}`;
-}
-
-/**
- * The prefix segment a sample's files live under, fixed for the sample's life.
- * Mongo-migrated samples keep their legacy id; Postgres-native ones use the
- * integer primary key.
- */
-export function sampleStorageId(
-	sampleId: number,
-	legacyId: string | null,
-): string {
-	return legacyId || String(sampleId);
-}
-
-/** Key for a sample file. */
-export function sampleFileKey(storageId: string, filename: string): string {
-	return `samples/${storageId}/${filename}`;
-}
-
-/** Prefix holding every file for a sample. */
-export function samplePrefix(storageId: string): string {
-	return `samples/${storageId}/`;
-}
-
-/**
- * Prefix holding the stored result objects of a Mongo-migrated analysis, nested
- * under its parent sample. Only analyses migrated from Mongo have one:
- * Postgres-native analyses keep their results in the `results` column and write
- * nothing to storage.
- */
-export function analysisPrefix(
-	sampleStorageId: string,
-	analysisLegacyId: string,
-): string {
-	return `samples/${sampleStorageId}/analysis/${analysisLegacyId}/`;
-}
-
-// Subtraction ids may contain spaces. Python substitutes underscores when
-// composing the key, so the same subtraction resolves to the same key here.
-function normalizeSubtractionId(subtractionId: string): string {
-	return subtractionId.replaceAll(" ", "_");
-}
-
-/**
- * The prefix segment a subtraction's files live under, fixed for its life.
- * Mongo-migrated subtractions keep their legacy id; Postgres-native ones use
- * the integer primary key.
- */
-export function subtractionStorageId(
-	subtractionId: number,
-	legacyId: string | null,
-): string {
-	return legacyId || String(subtractionId);
-}
-
-/** Key for a subtraction file. */
-export function subtractionFileKey(
-	subtractionId: string,
-	filename: string,
-): string {
-	return `subtractions/${normalizeSubtractionId(subtractionId)}/${filename}`;
-}
-
-/** Prefix holding every file for a subtraction. */
-export function subtractionPrefix(subtractionId: string): string {
-	return `subtractions/${normalizeSubtractionId(subtractionId)}/`;
-}
-
-/**
- * Key for an index file.
+ * Minting of object-storage keys, which must stay byte-for-byte compatible with
+ * the ones Python mints. Both processes read and write the same bucket, so a
+ * divergence here does not fail loudly — it silently reads nothing and orphans
+ * what it writes.
  *
- * The segment is the index's `storage_key` column, not its row id — a migrated
- * index keys on its old Mongo id and a natively-created one on a minted UUID,
- * so neither can be derived from the id.
+ * Keys are not derived from database identity. Every row that names a stored
+ * object records its complete key verbatim, so no read path recomposes one and
+ * no change to how keys are chosen can force objects to move. Objects written
+ * before keys were recorded keep whatever prefix they were stored under, so the
+ * keys in the bucket are heterogeneous by design.
  */
-export function indexFileKey(storageKey: string, filename: string): string {
-	return `indexes/${storageKey}/${filename}`;
+
+import { randomUUID } from "node:crypto";
+
+// Python mints the leaf with `uuid4().hex`, which carries no hyphens.
+function uuidHex(): string {
+	return randomUUID().replaceAll("-", "");
 }
 
-/** Prefix holding every file for an index. */
-export function indexPrefix(storageKey: string): string {
-	return `indexes/${storageKey}/`;
+/**
+ * Mint a fresh key for a file belonging to `parentId`.
+ *
+ * The `parentId` segment groups an owning resource's objects for human
+ * inspection and has no meaning to any read path — the row records the whole
+ * key.
+ */
+export function mintStorageKey(domain: string, parentId: number): string {
+	return `${domain}/${parentId}/${uuidHex()}`;
 }
 
-/** Key for a cache. Persisted on the cache row rather than recomputed. */
+/**
+ * Mint a fresh key for a resource that has no owner.
+ *
+ * Uploads are not files belonging to some other resource — they are the
+ * resource — so there is no parent id to group them under.
+ *
+ * Minting without a parent id also means the key is available before the row
+ * exists, so the object can be written first and the row created afterwards.
+ * That keeps a database transaction from being held open for the length of the
+ * upload stream.
+ */
+export function mintRootStorageKey(domain: string): string {
+	return `${domain}/${uuidHex()}`;
+}
+
+/** Key for a cache. Persisted on the cache row rather than recomposed. */
 export function cacheKey(uuid: string): string {
 	return `caches/v1/${uuid}`;
 }
