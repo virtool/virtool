@@ -429,7 +429,7 @@ verification, mention only that specific item.
 Team name: Virtool
 Team ID: `76cf3c46-c5d9-4df4-b457-0fc053d402f7`
 
-New issues should use the "Backend" label. Choose an appropriate status — don't
+New issues should use the "Python" label. Choose an appropriate status — don't
 default to "Backlog". Bugs should go to "Todo".
 
 ### Issue Naming
