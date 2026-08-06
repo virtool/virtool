@@ -40,7 +40,7 @@ describe("<FirstUser />", () => {
 		await userEvent.click(screen.getByRole("button", { name: /Create User/i }));
 
 		await waitFor(() => {
-			expect(router.state.location.pathname).toBe("/samples");
+			expect(router.state.location.pathname).toBe("/");
 		});
 		expect(createFirstUser).toHaveBeenCalled();
 	});

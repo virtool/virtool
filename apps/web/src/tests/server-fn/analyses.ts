@@ -19,14 +19,19 @@ export const analysisServerFnMocks = {
  * Sets up findAnalyses to resolve with a single page of the given analyses.
  *
  * @param analyses - the analyses on the page
+ * @param foundCount - the number matching the filters, which defaults to the
+ *   number on the page. Pass a larger value to model a page of a longer list.
  */
-export function mockFindAnalyses(analyses: AnalysisMinimal[]): Mock {
+export function mockFindAnalyses(
+	analyses: AnalysisMinimal[],
+	foundCount?: number,
+): Mock {
 	analysisServerFnMocks.findAnalysesFn.mockResolvedValue({
 		page: 1,
 		pageCount: 1,
 		perPage: 25,
 		totalCount: analyses.length,
-		foundCount: analyses.length,
+		foundCount: foundCount ?? analyses.length,
 		items: analyses,
 	});
 

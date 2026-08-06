@@ -319,13 +319,15 @@ internal route triggers a full page reload. For query strings, use `search` on
 
 `<a>` is only for external URLs and deliberate full reloads.
 
-`routes/index.tsx` — the `/` to `/samples` redirect — stays **outside**
-`_authenticated`, and its `beforeLoad` stays synchronous. Nested, resolving `/`
-ran that layout's async guard before throwing a second redirect, so signing in
-navigated `/login` to `/` to `/samples` with the layout match re-rendering
-mid-chain — the window the router throws `undefined` in. Moving it back under
-the guard reintroduces that. Nothing is exposed by leaving it unguarded: it
-renders nothing, and `/samples` carries the guard.
+`/` is `routes/_authenticated/index.tsx`, the dashboard, and it must stay a
+**terminal** route — it renders, it never redirects. `/` used to redirect to
+`/samples`, and nesting that under `_authenticated` meant resolving the layout's
+async guard and only then throwing a second redirect, so signing in navigated
+`/login` to `/` to `/samples` with the layout match re-rendering mid-chain — the
+window the router throws `undefined` in (see `@base/ShellErrorBoundary`).
+Reintroducing a redirect at `/` reintroduces that: `/login` and
+`/administration` both redirect *to* `/`, so a second hop out of it is a
+redirect chain by construction.
 
 ### Route search params
 

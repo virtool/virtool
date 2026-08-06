@@ -31,6 +31,7 @@ export function createFakeAnalysisMinimal(
 		reference: { id: faker.number.int(), name: faker.lorem.words(2) },
 		sample: {
 			id: faker.number.int(),
+			name: faker.lorem.words(2),
 		},
 		subtractions: [createFakeSubtractionNested()],
 		updatedAt: faker.date.past().toISOString(),

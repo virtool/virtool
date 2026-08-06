@@ -14,7 +14,7 @@ describe("useCreateAnalysis()", () => {
 		const invalidateQueries = vi.spyOn(queryClient, "invalidateQueries");
 
 		const createAnalysis = mockCreateAnalysis(
-			createFakeAnalysisMinimal({ sample: { id: 1 } }),
+			createFakeAnalysisMinimal({ sample: { id: 1, name: "Sample 1" } }),
 		);
 
 		function wrapper({ children }: { children: ReactNode }) {

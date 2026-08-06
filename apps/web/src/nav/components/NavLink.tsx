@@ -4,6 +4,8 @@ import Link from "@base/Link";
 import type { ReactNode } from "react";
 
 type NavLinkProps = {
+	/** Accessible name, where the children do not read as one — e.g. the logo. */
+	ariaLabel?: string;
 	children: ReactNode;
 	search?: Record<string, string>;
 	to: string;
@@ -35,11 +37,12 @@ const activeClassName = cn(
 	"text-virtool-dark",
 );
 
-export function NavLink({ children, search, to }: NavLinkProps) {
+export function NavLink({ ariaLabel, children, search, to }: NavLinkProps) {
 	const active = useMatchPartialPath(to);
 
 	return (
 		<Link
+			aria-label={ariaLabel}
 			className={active ? activeClassName : baseClassName}
 			search={search}
 			to={to}

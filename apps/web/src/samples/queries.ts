@@ -33,17 +33,7 @@ export type SampleLabel = LabelNested & {
 	allLabeled: boolean;
 };
 
-/**
- * Fetch a page of samples from the API
- *
- * @param page - The page to fetch
- * @param per_page - The number of samples to fetch per page
- * @param term - The search term to filter samples by
- * @param labels - The labels to filter the samples by
- * @param workflows - The workflows to filter the samples by
- * @param users - The ids of the users to filter the samples by
- */
-export function useListSamples(
+function samplesQueryOptions(
 	page: number,
 	per_page: number,
 	term?: string,
@@ -51,7 +41,7 @@ export function useListSamples(
 	workflows?: string[],
 	users?: number[],
 ) {
-	return useQuery<SampleSearchResult, Error>({
+	return queryOptions<SampleSearchResult, Error>({
 		queryKey: samplesQueryKeys.list([
 			page,
 			per_page,
@@ -71,8 +61,55 @@ export function useListSamples(
 					users: users ?? [],
 				},
 			}) as Promise<SampleSearchResult>,
+	});
+}
+
+/**
+ * Fetch a page of samples from the API
+ *
+ * @param page - The page to fetch
+ * @param per_page - The number of samples to fetch per page
+ * @param term - The search term to filter samples by
+ * @param labels - The labels to filter the samples by
+ * @param workflows - The workflows to filter the samples by
+ * @param users - The ids of the users to filter the samples by
+ */
+export function useListSamples(
+	page: number,
+	per_page: number,
+	term?: string,
+	labels?: number[],
+	workflows?: string[],
+	users?: number[],
+) {
+	return useQuery({
+		...samplesQueryOptions(page, per_page, term, labels, workflows, users),
 		placeholderData: keepPreviousData,
 	});
+}
+
+/**
+ * Fetch a page of samples, suspending until it resolves.
+ *
+ * `data` is always defined, and a failed request throws instead of resolving to
+ * `undefined`. Use this where the page is a view's primary data, so loading is
+ * handled by the enclosing `Suspense` rather than an inline placeholder.
+ *
+ * It shares its cache entry with {@link useListSamples} — the same arguments
+ * build the same key — but carries no `placeholderData`, which a suspense query
+ * rejects.
+ */
+export function useSuspenseSamples(
+	page: number,
+	per_page: number,
+	term?: string,
+	labels?: number[],
+	workflows?: string[],
+	users?: number[],
+) {
+	return useSuspenseQuery(
+		samplesQueryOptions(page, per_page, term, labels, workflows, users),
+	);
 }
 
 export function sampleQueryOptions(sampleId: number) {

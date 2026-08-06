@@ -75,6 +75,7 @@ export default defineConfig(({ command, mode }) => ({
 			"@app": path.resolve("src/app"),
 			"@banner": path.resolve("src/banner"),
 			"@base": path.resolve("src/base"),
+			"@dashboard": path.resolve("src/dashboard"),
 			"@forms": path.resolve("src/forms"),
 			"@groups": path.resolve("src/groups"),
 			"@hmm": path.resolve("src/hmm"),

@@ -44,6 +44,8 @@ export type FindAnalysesOptions = {
 	perPage: number;
 	/** Restrict the page to one sample's analyses. */
 	sampleId?: number;
+	/** Restrict the page to the analyses one user started. */
+	userId?: number;
 };
 
 /** The fields an analysis is created from, plus the user starting it. */
@@ -116,6 +118,7 @@ type MinimalRow = {
 	job_id: number | null;
 	indexVersion: number | null;
 	referenceName: string | null;
+	sampleName: string | null;
 	userHandle: string | null;
 };
 
@@ -231,7 +234,7 @@ function mapMinimal(
 		job,
 		ready: row.ready,
 		reference: { id: row.reference_id, name: row.referenceName ?? "" },
-		sample: { id: row.sample_id },
+		sample: { id: row.sample_id, name: row.sampleName ?? "" },
 		subtractions: analysisSubtractionList,
 		updatedAt: row.updated_at.toISOString(),
 		user,
@@ -275,6 +278,10 @@ export async function findAnalyses(
 		filters.push(eq(analyses.sample_id, options.sampleId));
 	}
 
+	if (options.userId !== undefined) {
+		filters.push(eq(analyses.user_id, options.userId));
+	}
+
 	const where = filters.length > 0 ? and(...filters) : undefined;
 
 	const [foundRows, rows] = await Promise.all([
@@ -288,6 +295,7 @@ export async function findAnalyses(
 				...minimalColumns,
 				indexVersion: indexes.version,
 				referenceName: legacyReferences.name,
+				sampleName: legacySamples.name,
 				userHandle: users.handle,
 			})
 			.from(analyses)
@@ -296,6 +304,7 @@ export async function findAnalyses(
 				legacyReferences,
 				eq(legacyReferences.id, analyses.reference_id),
 			)
+			.leftJoin(legacySamples, eq(legacySamples.id, analyses.sample_id))
 			.leftJoin(users, eq(users.id, analyses.user_id))
 			.where(where)
 			.orderBy(desc(analyses.created_at), desc(analyses.id))
@@ -351,11 +360,13 @@ export async function getAnalysis(
 			...minimalColumns,
 			indexVersion: indexes.version,
 			referenceName: legacyReferences.name,
+			sampleName: legacySamples.name,
 			userHandle: users.handle,
 		})
 		.from(analyses)
 		.leftJoin(indexes, eq(indexes.id, analyses.index_id))
 		.leftJoin(legacyReferences, eq(legacyReferences.id, analyses.reference_id))
+		.leftJoin(legacySamples, eq(legacySamples.id, analyses.sample_id))
 		.leftJoin(users, eq(users.id, analyses.user_id))
 		.where(eq(analyses.id, analysisId))
 		.limit(1);

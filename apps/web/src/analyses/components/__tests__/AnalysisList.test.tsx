@@ -17,7 +17,9 @@ describe("<AnalysesToolbar />", () => {
 	beforeEach(() => {
 		sample = createFakeSample();
 		mockFindAnalyses([
-			createFakeAnalysisMinimal({ sample: { id: sample.id } }),
+			createFakeAnalysisMinimal({
+				sample: { id: sample.id, name: sample.name },
+			}),
 		]);
 		mockFindHmms(createFakeHmmSearchResults());
 	});

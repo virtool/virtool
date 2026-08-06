@@ -53,7 +53,9 @@ describe("<CreateAnalysisForm>", () => {
 		const { onClose, sample } = await renderForm();
 
 		const createAnalysis = mockCreateAnalysis(
-			createFakeAnalysisMinimal({ sample: { id: sample.id } }),
+			createFakeAnalysisMinimal({
+				sample: { id: sample.id, name: sample.name },
+			}),
 		);
 
 		await selectReference();
@@ -70,7 +72,9 @@ describe("<CreateAnalysisForm>", () => {
 		const { onClose, sample } = await renderForm(42);
 
 		const createAnalysis = mockCreateAnalysis(
-			createFakeAnalysisMinimal({ sample: { id: sample.id } }),
+			createFakeAnalysisMinimal({
+				sample: { id: sample.id, name: sample.name },
+			}),
 		);
 
 		await selectReference();
@@ -90,7 +94,9 @@ describe("<CreateAnalysisForm>", () => {
 		const { onClose, sample } = await renderForm();
 
 		const createAnalysis = mockCreateAnalysis(
-			createFakeAnalysisMinimal({ sample: { id: sample.id } }),
+			createFakeAnalysisMinimal({
+				sample: { id: sample.id, name: sample.name },
+			}),
 		);
 
 		await selectReference();

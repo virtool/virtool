@@ -1,7 +1,11 @@
 import { accountQueryKeys } from "@account/keys";
 import type { Account } from "@account/types";
 import { getAccountFn } from "@server/users/functions";
-import { queryOptions, useQuery } from "@tanstack/react-query";
+import {
+	queryOptions,
+	useQuery,
+	useSuspenseQuery,
+} from "@tanstack/react-query";
 
 /**
  * Reading the signed-in user's own account.
@@ -30,4 +34,17 @@ export function accountQueryOptions() {
  */
 export function useFetchAccount() {
 	return useQuery(accountQueryOptions());
+}
+
+/**
+ * Fetches account data for the logged-in user, suspending until it resolves.
+ *
+ * `data` is always defined. Use this where the account is the view's primary
+ * data, so that loading is handled by the enclosing `Suspense` rather than an
+ * inline placeholder of its own.
+ *
+ * @returns UseSuspenseQueryResult object containing the account data
+ */
+export function useSuspenseAccount() {
+	return useSuspenseQuery(accountQueryOptions());
 }

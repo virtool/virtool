@@ -38,6 +38,7 @@ const analysisIdSchema = z.object({
 
 const findAnalysesSchema = z.object({
 	sampleId: rowIdSchema.optional(),
+	userId: rowIdSchema.optional(),
 	page: pageSchema,
 	perPage: perPageSchema,
 });
@@ -122,7 +123,12 @@ export const findAnalysesFn = createServerFn({ method: "GET" })
 
 		return findAnalyses(
 			db,
-			{ page: data.page, perPage: data.perPage, sampleId: data.sampleId },
+			{
+				page: data.page,
+				perPage: data.perPage,
+				sampleId: data.sampleId,
+				userId: data.userId,
+			},
 			actor,
 		);
 	});

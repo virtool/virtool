@@ -36,10 +36,13 @@ export const AnalysisFormat = z.enum([
 
 export type AnalysisFormat = z.infer<typeof AnalysisFormat>;
 
-/** The parent sample of an analysis, reduced to its id. */
+/** The parent sample of an analysis, reduced to id and name. */
 export type AnalysisSampleNested = {
 	/** The unique identifier */
 	id: number;
+
+	/** The sample name */
+	name: string;
 };
 
 /** The reference an analysis was run against, reduced to id and name. */

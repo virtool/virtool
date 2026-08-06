@@ -16,6 +16,10 @@ describe("<Nav />", () => {
 
 	it("should render", async () => {
 		await renderWithRouter(<Nav {...props} />);
+		expect(screen.getByRole("link", { name: "Dashboard" })).toHaveAttribute(
+			"href",
+			"/",
+		);
 		expect(screen.getByRole("link", { name: "Jobs" })).toBeInTheDocument();
 		expect(screen.getByRole("link", { name: "Samples" })).toBeInTheDocument();
 		expect(

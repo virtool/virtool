@@ -36,8 +36,12 @@ export default function Nav({ administrator_role, handle }: NavBarProps) {
 			aria-label="Primary"
 			className="bg-virtool flex h-13 items-center justify-between text-white"
 		>
-			<div className="flex gap-3 items-center">
-				<Logo className="mt-0 pl-10 pr-4" color="white" height={28} />
+			<div className="flex gap-3 items-center pl-7">
+				<NavLink ariaLabel="Dashboard" to="/">
+					{/* No `color`, so the logo follows the link's own text colour and
+					    inverts with it when `/` is the active route. */}
+					<Logo className="m-0" height={28} />
+				</NavLink>
 				<NavLink to="/jobs" search={{ state: "running" }}>
 					Jobs
 				</NavLink>
