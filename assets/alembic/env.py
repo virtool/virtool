@@ -20,7 +20,7 @@ from virtool.references.sql import (
     SQLReferenceGroup,
     SQLReferenceUser,
 )
-from virtool.samples.sql import SQLSampleArtifact, SQLSampleReads
+from virtool.samples.sql import SQLSampleReads
 from virtool.sessions.models import SQLSession
 from virtool.settings.sql import SQLSettings
 from virtool.subtractions.pg import SQLSubtractionFile
@@ -54,7 +54,6 @@ __models__ = (
     SQLReference,
     SQLReferenceGroup,
     SQLReferenceUser,
-    SQLSampleArtifact,
     SQLSampleReads,
     SQLSequence,
     SQLSession,

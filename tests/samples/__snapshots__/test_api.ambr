@@ -3,8 +3,6 @@
   dict({
     'all_read': True,
     'all_write': False,
-    'artifacts': list([
-    ]),
     'created_at': '2015-10-06T20:00:00Z',
     'format': 'fastq',
     'group': None,
@@ -88,18 +86,6 @@
       'nuvs': 'none',
       'pathoscope': 'none',
     }),
-  })
-# ---
-# name: TestUploadArtifact.test_ok
-  dict({
-    'id': 1,
-    'name': 'small.fq.gz',
-    'name_on_disk': 'small.fq.gz',
-    'sample': '1',
-    'sample_id': 1,
-    'size': 723988,
-    'type': 'fastq',
-    'uploaded_at': '2015-10-06T20:00:00Z',
   })
 # ---
 # name: TestUploadReads.test[409]

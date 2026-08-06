@@ -13,13 +13,6 @@ from virtool.uploads.models import UploadMinimal
 from virtool.users.models_base import UserNested
 
 
-class SampleArtifact(BaseModel):
-    id: int
-    download_url: str
-    name: str
-    size: int
-
-
 class WorkflowState(Enum):
     """The state of a workflow for a sample."""
 
@@ -107,7 +100,6 @@ class Read(BaseModel):
 class Sample(SampleMinimal):
     all_read: bool
     all_write: bool
-    artifacts: list[SampleArtifact]
     format: str
     group: GroupMinimal | None
     group_read: bool
@@ -125,7 +117,6 @@ class Sample(SampleMinimal):
             "example": {
                 "all_read": False,
                 "all_write": False,
-                "artifacts": [],
                 "created_at": "2022-05-20T23:48:00.901000Z",
                 "format": "fastq",
                 "group": {"id": 4, "name": "Sidney"},
