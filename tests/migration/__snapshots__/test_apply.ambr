@@ -932,5 +932,19 @@
       'name': 'delete stale hmm annotations blob',
       'revision': '8kt397kdecbe',
     }),
+    dict({
+      'applied_at': datetime,
+      'created_at': datetime,
+      'id': 134,
+      'name': 'delete sample artifact objects',
+      'revision': 'kjjrlsltgsml',
+    }),
+    dict({
+      'applied_at': datetime,
+      'created_at': datetime,
+      'id': 135,
+      'name': 'drop dormant sample artifacts table',
+      'revision': 'b253add43d69',
+    }),
   ])
 # ---

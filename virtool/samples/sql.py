@@ -5,7 +5,6 @@ from sqlalchemy import (
     Boolean,
     Column,
     DateTime,
-    Enum,
     Identity,
     Index,
     Integer,
@@ -17,48 +16,6 @@ from sqlalchemy.orm import Mapped, mapped_column
 from sqlalchemy.sql.schema import ForeignKey, UniqueConstraint
 
 from virtool.pg.base import Base
-from virtool.pg.utils import SQLEnum
-
-
-class ArtifactType(str, SQLEnum):
-    """Enumerated type for possible artifact types"""
-
-    sam = "sam"
-    bam = "bam"
-    fasta = "fasta"
-    fastq = "fastq"
-    csv = "csv"
-    tsv = "tsv"
-    json = "json"
-
-
-class SQLSampleArtifact(Base):
-    """SQL model to store sample artifacts.
-
-    ``storage_key`` holds the artifact's complete object-storage key. It is
-    nullable because it is derived from ``name_on_disk``, which is itself
-    nullable: a row without one names no retrievable object.
-
-    ``sample`` is the parent sample's legacy storage prefix and is dead once
-    ``storage_key`` is populated. It is dropped in a later cleanup revision.
-    """
-
-    __tablename__ = "sample_artifacts"
-    __table_args__ = (
-        UniqueConstraint("sample", "name"),
-        UniqueConstraint("sample_id", "name"),
-        UniqueConstraint("storage_key", name="uq_sample_artifacts_storage_key"),
-    )
-
-    id = Column(Integer, primary_key=True)
-    sample = Column(String, nullable=False)
-    sample_id = Column(BigInteger, ForeignKey("legacy_samples.id"))
-    name = Column(String, nullable=False)
-    name_on_disk = Column(String)
-    size = Column(BigInteger)
-    storage_key = Column(String)
-    type = Column(Enum(ArtifactType), nullable=False)
-    uploaded_at = Column(DateTime)
 
 
 class SQLSampleReads(Base):

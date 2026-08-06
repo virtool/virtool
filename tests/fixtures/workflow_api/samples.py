@@ -1,4 +1,3 @@
-import tempfile
 from pathlib import Path
 
 from aiohttp.web import FileResponse, RouteTableDef, View, json_response
@@ -74,39 +73,6 @@ def create_samples_routes(
             data.new_sample = None
 
             return json_response({}, status=204)
-
-    @routes.view("/samples/{sample_id}/artifacts")
-    class SampleArtifactsView(View):
-        async def get(self):
-            sample_id = self.request.match_info["sample_id"]
-            filename = self.request.match_info["filename"]
-            safe_filename = Path(filename).name
-
-            if sample_id != str(data.sample.id):
-                return generate_not_found()
-
-            tempdir = Path(tempfile.mkdtemp())
-
-            file = tempdir / safe_filename
-            file.touch()
-
-            return FileResponse(file)
-
-        async def post(self):
-            sample_id = self.request.match_info["sample_id"]
-
-            if sample_id != str(data.sample.id):
-                return generate_not_found()
-
-            multipart = await self.request.multipart()
-
-            file = await read_file_from_multipart(
-                self.request.query.get("name"),
-                multipart,
-                self.request.query.get("type"),
-            )
-
-            return json_response(file, status=201)
 
     @routes.view("/samples/{sample_id}/reads/{filename}")
     class SampleReadsView(View):

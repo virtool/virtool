@@ -3,8 +3,6 @@
   dict({
     'all_read': True,
     'all_write': True,
-    'artifacts': list([
-    ]),
     'created_at': 'approximately_now_datetime',
     'format': 'fastq',
     'group': dict({
@@ -88,8 +86,6 @@
   dict({
     'all_read': True,
     'all_write': True,
-    'artifacts': list([
-    ]),
     'created_at': 'approximately_now_datetime',
     'format': 'fastq',
     'group': None,
@@ -169,8 +165,6 @@
   dict({
     'all_read': True,
     'all_write': True,
-    'artifacts': list([
-    ]),
     'created_at': 'approximately_now_datetime',
     'format': 'fastq',
     'group': dict({
@@ -254,8 +248,6 @@
   dict({
     'all_read': True,
     'all_write': False,
-    'artifacts': list([
-    ]),
     'created_at': 'approximately_now_datetime',
     'format': 'fastq',
     'group': None,

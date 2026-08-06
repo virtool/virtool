@@ -122,7 +122,6 @@ def workflow_data(
     """A finalized sample to be used for testing analyses."""
     sample = SampleFactory.build()
     sample.job = JobMinimal.parse_obj(job)
-    sample.artifacts = []
     sample.quality = Quality(
         bases=[],
         composition=[],
@@ -140,7 +139,6 @@ def workflow_data(
     new_sample_job = JobFactory.build()
     new_sample_job.args["sample_id"] = new_sample.id
 
-    new_sample.artifacts = []
     new_sample.job = JobMinimal.parse_obj(new_sample_job)
     new_sample.uploads = [
         UploadMinimal(

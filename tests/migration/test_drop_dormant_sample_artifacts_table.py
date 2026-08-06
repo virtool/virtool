@@ -1,4 +1,4 @@
-"""Tests for the drop-dormant-sample-cache-tables migration."""
+"""Tests for the drop-dormant-sample-artifacts-table migration."""
 
 import asyncio
 from collections.abc import Callable
@@ -8,9 +8,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from virtool.migration.ctx import MigrationContext
 
-DOWN_REVISION = "5cb4e85e013f"
-REVISION = "7ea2f370163c"
-CACHE_TABLES = ("sample_artifacts_cache", "sample_reads_cache")
+DOWN_REVISION = "0cbbc3b23245"
+REVISION = "b253add43d69"
 
 
 async def _table_exists(session: AsyncSession, name: str) -> bool:
@@ -38,54 +37,48 @@ async def _enum_exists(session: AsyncSession, name: str) -> bool:
     )
 
 
-class TestDropCacheTables:
-    async def test_tables_are_dropped(
+class TestDropSampleArtifactsTable:
+    async def test_table_and_enum_are_dropped(
         self,
         ctx: MigrationContext,
         apply_alembic: Callable,
     ):
+        """The last user of ``artifacttype`` goes, so the enum goes with it."""
         await asyncio.to_thread(apply_alembic, DOWN_REVISION)
 
         async with AsyncSession(ctx.pg) as session:
-            for table in CACHE_TABLES:
-                assert await _table_exists(session, table)
+            assert await _table_exists(session, "sample_artifacts")
+            assert await _enum_exists(session, "artifacttype")
 
         await asyncio.to_thread(apply_alembic, REVISION)
 
         async with AsyncSession(ctx.pg) as session:
-            for table in CACHE_TABLES:
-                assert not await _table_exists(session, table)
+            assert not await _table_exists(session, "sample_artifacts")
+            assert not await _enum_exists(session, "artifacttype")
 
-    async def test_idempotent_when_tables_absent(
+    async def test_sample_reads_is_untouched(
         self,
         ctx: MigrationContext,
         apply_alembic: Callable,
     ):
-        """The migration runs cleanly when the tables were never created."""
+        """Reads files share the ``samples/`` prefix and must survive the drop."""
         await asyncio.to_thread(apply_alembic, DOWN_REVISION)
 
         async with AsyncSession(ctx.pg) as session:
-            for table in CACHE_TABLES:
-                await session.execute(text(f"DROP TABLE IF EXISTS {table}"))
+            await session.execute(
+                text(
+                    """
+                    INSERT INTO sample_reads (sample, name, name_on_disk, storage_key)
+                    VALUES ('sample_with_reads', 'reads_1.fq.gz', 'reads_1.fq.gz',
+                            'samples/sample_with_reads/reads_1.fq.gz')
+                    """,
+                ),
+            )
             await session.commit()
 
         await asyncio.to_thread(apply_alembic, REVISION)
 
         async with AsyncSession(ctx.pg) as session:
-            for table in CACHE_TABLES:
-                assert not await _table_exists(session, table)
-
-    async def test_artifacttype_enum_is_preserved(
-        self,
-        ctx: MigrationContext,
-        apply_alembic: Callable,
-    ):
-        """Dropping ``sample_artifacts_cache`` must not drop the shared enum.
-
-        At this revision the ``artifacttype`` enum is still used by the
-        ``sample_artifacts`` table, which a later revision drops.
-        """
-        await asyncio.to_thread(apply_alembic, REVISION)
-
-        async with AsyncSession(ctx.pg) as session:
-            assert await _enum_exists(session, "artifacttype")
+            assert (
+                await session.execute(text("SELECT COUNT(*) FROM sample_reads"))
+            ).scalar_one() == 1

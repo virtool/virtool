@@ -3,7 +3,7 @@ from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 
 import virtool.utils
 from virtool.data.topg import compose_legacy_id_subquery
-from virtool.samples.sql import SQLLegacySample, SQLSampleArtifact, SQLSampleReads
+from virtool.samples.sql import SQLLegacySample, SQLSampleReads
 from virtool.uploads.sql import SQLUpload
 
 
@@ -23,48 +23,6 @@ async def get_existing_reads(pg: AsyncEngine, sample_id: str) -> list[str]:
         )
 
     return [row.name for row in result.scalars().all()]
-
-
-async def create_artifact_file(
-    pg: AsyncEngine,
-    name: str,
-    name_on_disk: str,
-    sample_id: int,
-    storage_key: str,
-    artifact_type: str,
-) -> dict[str, any]:
-    """Create a row in an SQL table that represents uploaded sample artifact file.
-
-    ``sample`` is the dead legacy prefix column, still ``NOT NULL`` until it is
-    dropped, so it is filled with the sample's primary key. Nothing reads it.
-
-    :param pg: PostgreSQL AsyncEngine object
-    :param name: Name of the sample artifact file
-    :param name_on_disk: Name of the sample artifact file as it appears on disk
-    :param sample_id: Primary key of the parent sample
-    :param storage_key: Complete object-storage key the artifact is written to
-    :param artifact_type: Type of artifact to be uploaded
-    :return: A dictionary representation of the newly created row
-    """
-    async with AsyncSession(pg) as session:
-        artifact = SQLSampleArtifact(
-            name=name,
-            name_on_disk=name_on_disk,
-            sample=str(sample_id),
-            sample_id=sample_id,
-            storage_key=storage_key,
-            type=artifact_type,
-            uploaded_at=virtool.utils.timestamp(),
-        )
-
-        session.add(artifact)
-        await session.flush()
-
-        artifact = artifact.to_dict()
-
-        await session.commit()
-
-    return artifact
 
 
 async def create_reads_file(

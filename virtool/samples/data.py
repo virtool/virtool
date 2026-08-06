@@ -1,6 +1,6 @@
 """The sample data layer domain."""
 
-from asyncio import CancelledError, gather
+from asyncio import gather
 from collections.abc import AsyncGenerator, AsyncIterator
 from typing import Any
 
@@ -14,7 +14,6 @@ from sqlalchemy import (
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 from structlog import get_logger
 
-import virtool.uploads.db
 import virtool.utils
 from virtool.analyses.sql import SQLAnalysis, SQLAnalysisFile
 from virtool.config.cls import Config
@@ -30,29 +29,23 @@ from virtool.groups.models import GroupMinimal
 from virtool.groups.pg import SQLGroup
 from virtool.jobs.transforms import AttachJobTransform
 from virtool.labels.transforms import AttachLabelsTransform
-from virtool.pg.utils import delete_row
 from virtool.samples.checks import (
     check_labels_do_not_exist,
     check_name_is_in_use,
     check_subtractions_do_not_exist,
 )
 from virtool.samples.db import (
-    AttachArtifactsAndReadsTransform,
+    AttachReadsTransform,
     AttachUploadsTransform,
     DeriveWorkflowTagsTransform,
 )
-from virtool.samples.files import (
-    create_artifact_file,
-    create_reads_file,
-)
+from virtool.samples.files import create_reads_file
 from virtool.samples.models import Sample
 from virtool.samples.oas import CreateSampleRequest
 from virtool.samples.sql import (
-    ArtifactType,
     SQLLegacySample,
     SQLLegacySampleLabel,
     SQLLegacySampleSubtraction,
-    SQLSampleArtifact,
     SQLSampleReads,
     SQLSampleUpload,
 )
@@ -215,7 +208,7 @@ class SamplesData(DataLayerDomain):
             _map_sample_row(row, label_ids, subtraction_ids),
             [
                 DeriveWorkflowTagsTransform(),
-                AttachArtifactsAndReadsTransform(self._pg),
+                AttachReadsTransform(self._pg),
                 AttachJobTransform(self._pg),
                 AttachLabelsTransform(self._pg),
                 AttachSubtractionsTransform(self._pg),
@@ -411,12 +404,9 @@ class SamplesData(DataLayerDomain):
                 key
                 for key in (
                     await pg_session.execute(
-                        select(SQLSampleArtifact.storage_key)
-                        .where(SQLSampleArtifact.sample_id == sample_pk)
+                        select(SQLSampleReads.storage_key)
+                        .where(SQLSampleReads.sample_id == sample_pk)
                         .union_all(
-                            select(SQLSampleReads.storage_key).where(
-                                SQLSampleReads.sample_id == sample_pk,
-                            ),
                             select(SQLAnalysisFile.storage_key)
                             .join(
                                 SQLAnalysis,
@@ -440,14 +430,6 @@ class SamplesData(DataLayerDomain):
                     or_(
                         SQLSampleUpload.sample_id == sample_pk,
                         SQLSampleUpload.sample == legacy_id,
-                    ),
-                ),
-            )
-            await pg_session.execute(
-                delete(SQLSampleArtifact).where(
-                    or_(
-                        SQLSampleArtifact.sample_id == sample_pk,
-                        SQLSampleArtifact.sample == legacy_id,
                     ),
                 ),
             )
@@ -554,52 +536,6 @@ class SamplesData(DataLayerDomain):
 
         return await self.get(sample_id)
 
-    async def upload_artifact(
-        self,
-        sample_id: int | str,
-        artifact_type: str | None,
-        filename: str,
-        chunker: AsyncGenerator[bytearray],
-    ) -> dict:
-        resolved = await self._resolve_ids(sample_id)
-
-        if resolved is None:
-            raise ResourceNotFoundError
-
-        if artifact_type and artifact_type not in ArtifactType.to_list():
-            raise ResourceConflictError("Unsupported sample artifact type")
-
-        sample_pk, legacy_id = resolved
-        key = mint_storage_key("samples", sample_pk)
-
-        try:
-            artifact = await create_artifact_file(
-                self._pg,
-                filename,
-                filename,
-                sample_pk,
-                key,
-                artifact_type,
-            )
-        except exc.IntegrityError:
-            raise ResourceConflictError(
-                "Artifact file has already been uploaded for this sample",
-            )
-
-        try:
-            size = await self._storage.write(key, chunker)
-        except (CancelledError, Exception):
-            await delete_row(self._pg, artifact["id"], SQLSampleArtifact)
-            await self._storage.delete(key)
-            raise
-
-        return await virtool.uploads.db.finalize(
-            self._pg,
-            size,
-            artifact["id"],
-            SQLSampleArtifact,
-        )
-
     async def upload_reads(
         self,
         sample_id: int | str,
@@ -665,24 +601,3 @@ class SamplesData(DataLayerDomain):
             raise ResourceNotFoundError
 
         return self._storage.read(row.storage_key), row.size, filename
-
-    async def get_artifact_file(
-        self,
-        sample_id: int | str,
-        filename: str,
-    ) -> tuple[AsyncIterator[bytes], int]:
-        async with AsyncSession(self._pg) as session:
-            result = (
-                await session.execute(
-                    select(SQLSampleArtifact).where(
-                        SQLSampleArtifact.sample_id
-                        == compose_legacy_id_subquery(SQLLegacySample, sample_id),
-                        SQLSampleArtifact.name == filename,
-                    ),
-                )
-            ).scalar()
-
-        if not result or result.storage_key is None:
-            raise ResourceNotFoundError
-
-        return self._storage.read(result.storage_key), result.size
