@@ -23,6 +23,7 @@ import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
 import { seedJob } from "../auth/test/fixtures";
 import {
 	handleFinalizeSubtraction,
+	handleGetSubtraction,
 	type SubtractionHandlerDeps,
 } from "./handlers";
 
@@ -373,5 +374,150 @@ describe("handleFinalizeSubtraction", () => {
 		expect(sizes).toHaveLength(2);
 		expect(begin).toBeGreaterThan(-1);
 		expect(lastSize).toBeLessThan(begin);
+	});
+});
+
+function get(subtractionId: number | string, authenticated = true): Request {
+	return new Request(
+		`https://jobs.virtool.test/subtractions/${subtractionId}`,
+		{ headers: authenticated ? { authorization: `Basic ${credential}` } : {} },
+	);
+}
+
+describe("handleGetSubtraction", () => {
+	it("serves the subtraction and its files", async () => {
+		const subtractionId = await seedSubtraction({
+			nickname: "Arabidopsis",
+			ready: true,
+			count: 12,
+			gc: GC,
+		});
+
+		await db.insert(subtractionFiles).values({
+			subtraction_id: subtractionId,
+			name: "subtraction.fa.gz",
+			size: 4096,
+			storage_key: "subtractions/1/aaaabbbbccccddddeeeeffff00001111",
+			type: "fasta",
+		});
+
+		const response = await handleGetSubtraction(
+			deps,
+			get(subtractionId),
+			String(subtractionId),
+		);
+
+		expect(response.status).toBe(200);
+		expect(await response.json()).toEqual({
+			id: subtractionId,
+			count: 12,
+			files: [
+				{
+					id: expect.any(Number),
+					name: "subtraction.fa.gz",
+					size: 4096,
+					storageKey: "subtractions/1/aaaabbbbccccddddeeeeffff00001111",
+					type: "fasta",
+				},
+			],
+			gc: GC,
+			name: expect.any(String),
+			nickname: "Arabidopsis",
+			ready: true,
+		});
+	});
+
+	// The workflow reads the bytes itself and has no way to locate them but this
+	// key. A migrated object keeps whatever prefix it was written under, so the
+	// key here matches no pattern that could reconstruct it — if the handler ever
+	// composed one instead of reading the column, this is the test that fails.
+	it("returns a migrated file's recorded key verbatim", async () => {
+		const subtractionId = await seedSubtraction();
+		const legacyKey = "references/legacy-prefix/xyz/subtraction_1.fa.gz";
+
+		await db.insert(subtractionFiles).values({
+			subtraction_id: subtractionId,
+			name: "subtraction.fa.gz",
+			size: 8,
+			storage_key: legacyKey,
+			type: "fasta",
+		});
+
+		const response = await handleGetSubtraction(
+			deps,
+			get(subtractionId),
+			String(subtractionId),
+		);
+		const subtraction = (await response.json()) as {
+			files: { storageKey: string }[];
+		};
+
+		expect(subtraction.files[0]?.storageKey).toBe(legacyKey);
+	});
+
+	// A row written before keys were recorded names no object. The workflow must
+	// see the null and fail rather than be handed something it can guess with.
+	it("reports a null key for a file that predates keys being recorded", async () => {
+		const subtractionId = await seedSubtraction();
+
+		await db.insert(subtractionFiles).values({
+			subtraction_id: subtractionId,
+			name: "subtraction.fa.gz",
+			size: 8,
+			type: "fasta",
+		});
+
+		const response = await handleGetSubtraction(
+			deps,
+			get(subtractionId),
+			String(subtractionId),
+		);
+		const subtraction = (await response.json()) as {
+			files: { storageKey: string | null }[];
+		};
+
+		expect(subtraction.files[0]?.storageKey).toBeNull();
+	});
+
+	// The SPA reads the same data function, which returns snake_case names and a
+	// download URL. Neither belongs on this wire.
+	it("serves camelCase and no download URL", async () => {
+		const subtractionId = await seedSubtraction();
+
+		const response = await handleGetSubtraction(
+			deps,
+			get(subtractionId),
+			String(subtractionId),
+		);
+		const rendered = await response.text();
+
+		expect(rendered).not.toContain("download_url");
+		expect(rendered).not.toContain("created_at");
+		expect(rendered).not.toContain("linked_samples");
+	});
+
+	it("reports 404 for a subtraction that does not exist", async () => {
+		const response = await handleGetSubtraction(deps, get(404_040), "404040");
+
+		expect(response.status).toBe(404);
+		expect(await response.json()).toEqual({ message: "Subtraction not found" });
+	});
+
+	it("reports 404 for an id that is not a positive integer", async () => {
+		const response = await handleGetSubtraction(deps, get("latest"), "latest");
+
+		expect(response.status).toBe(404);
+	});
+
+	it("refuses an unauthenticated request", async () => {
+		const subtractionId = await seedSubtraction();
+
+		const response = await handleGetSubtraction(
+			deps,
+			get(subtractionId, false),
+			String(subtractionId),
+		);
+
+		expect(response.status).toBe(401);
 	});
 });

@@ -355,6 +355,7 @@ async function getIndexFiles(
 			id: indexFiles.id,
 			name: indexFiles.name,
 			size: indexFiles.size,
+			storageKey: indexFiles.storage_key,
 			type: indexFiles.type,
 		})
 		.from(indexFiles)
@@ -366,6 +367,7 @@ async function getIndexFiles(
 		index: indexId,
 		name: row.name,
 		size: row.size,
+		storageKey: row.storageKey,
 		type: row.type ?? "",
 	}));
 }

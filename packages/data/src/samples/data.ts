@@ -344,6 +344,7 @@ async function getReads(
 		nameOnDisk: read.name_on_disk,
 		sample: sampleId,
 		size: read.size ?? 0,
+		storageKey: read.storage_key,
 		upload:
 			upload == null
 				? null

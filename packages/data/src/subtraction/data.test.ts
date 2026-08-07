@@ -255,6 +255,9 @@ describe("getSubtraction", () => {
 				id: expect.any(Number),
 				name: "subtraction.fa.gz",
 				size: 100,
+				// Read off the row, never composed — a migrated file's object keeps
+				// whatever prefix it was written under.
+				storageKey: `subtractions/${subtractionId}/fasta`,
 				subtraction: subtractionId,
 				type: "fasta",
 			},

@@ -4,8 +4,9 @@ import type { Logger } from "@virtool/logger";
 import type { StorageBackend } from "@virtool/storage";
 import { Hono } from "hono";
 import { routePath } from "hono/route";
-import { handleFinalizeAnalysis } from "./analyses/handlers";
+import { handleFinalizeAnalysis, handleGetAnalysis } from "./analyses/handlers";
 import { handleGetCache, handleRegisterCache } from "./caches/handlers";
+import { handleGetIndex } from "./indexes/handlers";
 import {
 	handleClaimJob,
 	handleFinishJob,
@@ -16,8 +17,13 @@ import {
 import { handleMetrics } from "./metrics/handler";
 import { createJobQueueReader } from "./metrics/jobs";
 import type { Metrics } from "./metrics/registry";
-import { handleFinalizeSample } from "./samples/handlers";
-import { handleFinalizeSubtraction } from "./subtraction/handlers";
+import { handleGetReference } from "./references/handlers";
+import { handleFinalizeSample, handleGetSample } from "./samples/handlers";
+import { handleGetSettings } from "./settings/handlers";
+import {
+	handleFinalizeSubtraction,
+	handleGetSubtraction,
+} from "./subtraction/handlers";
 
 /**
  * The routes that answer without a credential, and why each is allowed to.
@@ -167,6 +173,34 @@ export function createApp(deps: AppDeps): Hono {
 	app.patch("/analyses/:id", (c) =>
 		handleFinalizeAnalysis(deps, c.req.raw, c.req.param("id")),
 	);
+
+	// The metadata reads. A running workflow needs the records behind its job —
+	// what to align against, what to subtract, where the reads are — and it needs
+	// them as records only: it holds its own object-storage credentials and
+	// fetches every file itself using the `storageKey` each response carries.
+	// Nothing here writes a row, writes a blob, or builds a derived artifact.
+	app.get("/samples/:id", (c) =>
+		handleGetSample(deps, c.req.raw, c.req.param("id")),
+	);
+
+	app.get("/subtractions/:id", (c) =>
+		handleGetSubtraction(deps, c.req.raw, c.req.param("id")),
+	);
+
+	app.get("/indexes/:id", (c) =>
+		handleGetIndex(deps, c.req.raw, c.req.param("id")),
+	);
+
+	app.get("/analyses/:id", (c) =>
+		handleGetAnalysis(deps, c.req.raw, c.req.param("id")),
+	);
+
+	// `/refs`, not `/references` — Python's resource path for this domain.
+	app.get("/refs/:id", (c) =>
+		handleGetReference(deps, c.req.raw, c.req.param("id")),
+	);
+
+	app.get("/settings", (c) => handleGetSettings(deps, c.req.raw));
 
 	app.get("/metrics", (c) =>
 		handleMetrics(c, {

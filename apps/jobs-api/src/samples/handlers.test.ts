@@ -23,7 +23,11 @@ import { asc, eq } from "drizzle-orm";
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
 
 import { seedJob } from "../auth/test/fixtures";
-import { handleFinalizeSample, type SampleHandlerDeps } from "./handlers";
+import {
+	handleFinalizeSample,
+	handleGetSample,
+	type SampleHandlerDeps,
+} from "./handlers";
 
 let database: TestDatabase;
 let db: Db;
@@ -443,5 +447,168 @@ describe("handleFinalizeSample", () => {
 
 		expect(read?.storage_key).toBe(file.storageKey);
 		expect(read?.upload).toBe(upload?.id);
+	});
+});
+
+function get(sampleId: number | string, authenticated = true): Request {
+	return new Request(`https://jobs.virtool.test/samples/${sampleId}`, {
+		headers: authenticated ? { authorization: `Basic ${credential}` } : {},
+	});
+}
+
+describe("handleGetSample", () => {
+	it("serves the sample and its reads", async () => {
+		const sampleId = await seedSample({
+			name: "Sample 1",
+			library_type: "srna",
+			quality: QUALITY,
+		});
+
+		await db.insert(sampleReads).values({
+			sample: String(sampleId),
+			sample_id: sampleId,
+			name: "reads_1.fq.gz",
+			name_on_disk: "reads_1.fq.gz",
+			size: 1024,
+			storage_key: "samples/3/aaaabbbbccccddddeeeeffff00001111",
+			uploaded_at: new Date(),
+		});
+
+		const response = await handleGetSample(
+			deps,
+			get(sampleId),
+			String(sampleId),
+		);
+
+		expect(response.status).toBe(200);
+		expect(await response.json()).toEqual({
+			id: sampleId,
+			libraryType: "srna",
+			name: "Sample 1",
+			paired: false,
+			quality: QUALITY,
+			reads: [
+				{
+					id: expect.any(Number),
+					name: "reads_1.fq.gz",
+					size: 1024,
+					storageKey: "samples/3/aaaabbbbccccddddeeeeffff00001111",
+				},
+			],
+		});
+	});
+
+	// Derived from the reads rather than stored, and what a workflow branches on
+	// to decide whether it is running one file or two.
+	it("reports paired for a sample with two reads files", async () => {
+		const sampleId = await seedSample();
+
+		await db.insert(sampleReads).values([
+			{
+				sample: String(sampleId),
+				sample_id: sampleId,
+				name: "reads_1.fq.gz",
+				name_on_disk: "reads_1.fq.gz",
+				size: 1,
+				storage_key: "samples/1/a",
+				uploaded_at: new Date(),
+			},
+			{
+				sample: String(sampleId),
+				sample_id: sampleId,
+				name: "reads_2.fq.gz",
+				name_on_disk: "reads_2.fq.gz",
+				size: 1,
+				storage_key: "samples/1/b",
+				uploaded_at: new Date(),
+			},
+		]);
+
+		const response = await handleGetSample(
+			deps,
+			get(sampleId),
+			String(sampleId),
+		);
+		const sample = (await response.json()) as { paired: boolean };
+
+		expect(sample.paired).toBe(true);
+	});
+
+	// A migrated sample's reads sit under whatever prefix they were written with,
+	// which no pattern reconstructs. If the handler ever composed a key rather than
+	// reading the column, this is the test that fails.
+	it("returns a migrated read's recorded key verbatim", async () => {
+		const sampleId = await seedSample();
+		const legacyKey = "samples/abc123def456/reads_1.fq.gz";
+
+		await db.insert(sampleReads).values({
+			sample: String(sampleId),
+			sample_id: sampleId,
+			name: "reads_1.fq.gz",
+			name_on_disk: "reads_1.fq.gz",
+			size: 1,
+			storage_key: legacyKey,
+			uploaded_at: new Date(),
+		});
+
+		const response = await handleGetSample(
+			deps,
+			get(sampleId),
+			String(sampleId),
+		);
+		const sample = (await response.json()) as {
+			reads: { storageKey: string }[];
+		};
+
+		expect(sample.reads[0]?.storageKey).toBe(legacyKey);
+	});
+
+	it("serves no download URL and no name_on_disk", async () => {
+		const sampleId = await seedSample();
+
+		await db.insert(sampleReads).values({
+			sample: String(sampleId),
+			sample_id: sampleId,
+			name: "reads_1.fq.gz",
+			name_on_disk: "reads_1.fq.gz",
+			size: 1,
+			storage_key: "samples/1/a",
+			uploaded_at: new Date(),
+		});
+
+		const response = await handleGetSample(
+			deps,
+			get(sampleId),
+			String(sampleId),
+		);
+		const rendered = await response.text();
+
+		expect(rendered).not.toContain("downloadUrl");
+		expect(rendered).not.toContain("nameOnDisk");
+	});
+
+	it("reports 404 for a sample that does not exist", async () => {
+		const response = await handleGetSample(deps, get(404_040), "404040");
+
+		expect(response.status).toBe(404);
+		expect(await response.json()).toEqual({ message: "Sample not found" });
+	});
+
+	it("reports 404 for an id that is not a positive integer", async () => {
+		const response = await handleGetSample(deps, get("latest"), "latest");
+
+		expect(response.status).toBe(404);
+	});
+
+	it("refuses an unauthenticated request", async () => {
+		const sampleId = await seedSample();
+
+		const response = await handleGetSample(
+			deps,
+			get(sampleId, false),
+			String(sampleId),
+		);
+
+		expect(response.status).toBe(401);
 	});
 });

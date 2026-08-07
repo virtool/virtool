@@ -1,3 +1,15 @@
+import type { Db } from "@virtool/data/db/pg";
+
+/**
+ * What a metadata read needs to serve a request.
+ *
+ * A database handle and nothing else. The reads hand a workflow records, never
+ * bytes — it holds its own object-storage credentials and fetches every file
+ * itself using the recorded key each response carries — so a read that could
+ * reach `storage` would be a read that could write one.
+ */
+export type ReadHandlerDeps = { db: Db };
+
 /**
  * The shape every deliberate 4xx in this service answers with.
  *

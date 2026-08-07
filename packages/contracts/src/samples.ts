@@ -6,8 +6,16 @@ import type { SearchResult } from "./search";
 import type { SubtractionNested } from "./subtractions";
 import type { UserNested } from "./users";
 
-/** The library preparation used to create a sample. */
-export type LibraryType = "amplicon" | "srna" | "other" | "normal";
+/**
+ * The library preparation used to create a sample.
+ *
+ * A schema rather than a plain union because the jobs API serves it to a
+ * workflow, whose client parses the response — and every workflow branches on
+ * it to decide whether it is running paired or amplicon logic.
+ */
+export const LibraryType = z.enum(["amplicon", "srna", "other", "normal"]);
+
+export type LibraryType = z.infer<typeof LibraryType>;
 
 /** The state of a single workflow for a sample. */
 export type WorkflowState = "complete" | "pending" | "none" | "incompatible";
@@ -44,6 +52,17 @@ export type Read = {
 	nameOnDisk: string;
 	sample: number;
 	size: number;
+
+	/**
+	 * The object's complete key in storage, as recorded when it was written, or
+	 * null for a file that predates keys being recorded.
+	 *
+	 * Nothing composes this from the row's identity: a migrated file keeps
+	 * whatever prefix its object was written under, so no pattern reconstructs
+	 * one. A workflow reads the bytes itself and has no other way to locate them.
+	 */
+	storageKey: string | null;
+
 	upload?: SampleReadUpload | null;
 	uploadedAt: string;
 };

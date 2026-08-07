@@ -45,6 +45,13 @@ process:
 | `src/auth/test/fixtures.ts` | `seedJob` — a job row and the plaintext key for it |
 | `src/jobs/handlers.ts` | The five lifecycle routes |
 | `src/caches/handlers.ts` | Cache lookup and registration |
+| `src/http.ts` | `jsonError`, `parseRowId`, and the `ReadHandlerDeps` a read takes |
+| `src/samples/handlers.ts` | Sample read and finalize |
+| `src/subtraction/handlers.ts` | Subtraction read and finalize |
+| `src/analyses/handlers.ts` | Analysis read and finalize |
+| `src/indexes/handlers.ts` | Index build read |
+| `src/references/handlers.ts` | Reference read |
+| `src/settings/handlers.ts` | Instance settings read |
 | `src/metrics/registry.ts` | `createMetrics` — this process's Prometheus registry |
 | `src/metrics/jobs.ts` | `createJobQueueReader` — the memoized job-queue read |
 | `src/metrics/handler.ts` | Token check, pre-scrape reads, response |
@@ -624,6 +631,114 @@ Python publishes free-form domain strings onto `client_events` and has
 been emitting `subtractions` all along; the client was dropping the
 frames because its schema did not accept them.
 
+## Metadata reads
+
+A running workflow needs the records behind its job: what to align
+against, what to subtract, where its reads are. Six endpoints serve
+them, each at Python's own resource path with no prefix.
+
+| Route | Data function | Shape |
+| --- | --- | --- |
+| `GET /samples/{id}` | `getSample` | `WorkflowSample` |
+| `GET /subtractions/{id}` | `getSubtraction` | `WorkflowSubtraction` |
+| `GET /indexes/{id}` | `getIndex` | `WorkflowIndex` |
+| `GET /analyses/{id}` | `getAnalysis` | `WorkflowAnalysis` |
+| `GET /refs/{id}` | `getReference` | `WorkflowReference` |
+| `GET /settings` | `getSettings` | `WorkflowSettings` |
+
+Every one calls the data function `apps/web` already calls. None adds a
+query for a table one of those reads, and none keeps a private copy of
+one. A missing row is a 404 through the handler's own mapping of the
+domain's `NotFoundError`, never a 500, and a path segment that is not a
+positive integer is a 404 before the database is touched. That same
+`parseRowId` is what keeps `GET /jobs/counts` — still Python's, and
+KEDA's scale trigger — from resolving here as a job read: `counts` is
+not a positive integer, so it 404s rather than matching `/jobs/{jobId}`.
+
+The path for a reference is `/refs/{id}`, matching Python, not the
+spelled-out `/references` the package name suggests.
+
+### Records only, never bytes
+
+Under Python a workflow pulled its files through the jobs API. Workflows
+now hold their own credentials for the shared bucket and read it
+directly, so these endpoints owe them *records only*. No handler streams
+a payload, and no handler may call `storage.write` — a read that lazily
+built `index.sqlite` or an HMM annotation blob would put artifact
+generation on a path that is supposed to be a lookup. Python's
+`create_index` task writes a build's artifacts eagerly; this side reports
+the rows that exist and generates nothing, so an unfinished build answers
+with an empty file list rather than producing one.
+
+`ReadHandlerDeps` is `{ db }` and nothing else. A read cannot reach
+`storage` because it is never handed one.
+
+### Every file reference carries its recorded key
+
+**Keys are recorded, not derived.** Each file row holds its object's
+complete key in a `storage_key` column, and these responses pass it
+through verbatim. Nothing reconstructs one: a migrated row keeps whatever
+prefix its object was written under, so keys in the bucket are
+heterogeneous by design and no pattern regenerates them. A response that
+omitted the key would leave the workflow able to see that a file exists
+and reach none of it.
+
+The key is nullable wherever its column is — `sample_reads` and
+`subtraction_files` both predate keys being recorded — and `index_files`
+is `NOT NULL`. A workflow handed a null has nothing to fetch and must
+fail rather than guess.
+
+**This is not a privilege widening.** A workflow pod already holds
+unscoped credentials for the bucket, so the key is a locator, not a
+capability. The asymmetry lives on the write side instead: a manifest a
+workflow *sends* is checked against the resource's own prefix before its
+key is recorded, because a caller-supplied key there would let a
+job-authenticated caller point a row at an arbitrary object.
+
+### camelCase at the handler boundary, and narrower than the SPA's shapes
+
+The data functions are not consistent in case — `subtraction/data.ts`
+returns `created_at`, `linked_samples` and `download_url`, while
+`samples/data.ts` returns `libraryType` — and `apps/web`'s client feature
+modules read those same shapes. So the mapping to camelCase happens
+**in the handler**, and no field is renamed inside a data function.
+Renaming one there would break the web app silently, days later, in a
+different app.
+
+The `Workflow*` shapes are also deliberately narrower than what the SPA
+reads. They carry what a workflow branches on and drop the presentation
+fields — download URLs, contributor lists, linked samples, rights lists —
+which keeps `Date`-valued fields off a wire that only ever carries JSON
+strings, and keeps this contract from having to stay parseable against
+every field the UI grows.
+
+Two consequences worth stating outright:
+
+- **An analysis's `sample` is an object carrying an id, not a bare id.**
+  Python's runtime falls back to reading it when a job's `args` carry no
+  `sample_id`, so flattening it breaks every analysis whose job was
+  created without one.
+- **A sample's `paired` is derived from its reads**, not stored, and is
+  what a workflow branches on to decide whether it is running one file
+  or two.
+
+### Reading an analysis does not format it
+
+`getAnalysis` reads metadata and file rows only. The expensive half —
+reading the TOASTed `results` column and patching every OTU back to the
+version the analysis saw — is `getAnalysisResults`, a separate function
+this path never calls. A workflow needs none of it, and these responses
+carry no results at all.
+
+### The settings read is a write
+
+`GET /settings` has no 404: the row is a singleton, and `getSettings`
+seeds `DEFAULT_SETTINGS` when it is absent, mirroring Python's
+`SettingsData.ensure()`. That makes it the one endpoint here where a
+job-authenticated GET can insert a row. It is deliberate — the
+alternative is failing a workflow because nothing had written the row
+yet — but it is worth knowing rather than discovering.
+
 ## Metrics
 
 `GET /metrics` serves the Prometheus text exposition from this process's
@@ -920,10 +1035,16 @@ for this service:
 ## What is not here yet
 
 This service serves health, metrics, the job lifecycle, the two cache
-endpoints and the three finalize routes — the whole of the surface
-`packages/contracts/src/jobsApi.ts` describes.
+endpoints, the three finalize routes and the six metadata reads — the
+whole of the surface `packages/contracts/src/jobsApi.ts` describes.
 
 What stays Python's: cancelling a job, deleting one, the counts
 endpoint, and the five-minute stalled-job sweep that fails a job whose
 last ping is too old. Nothing here writes `cancelled` or `failed`, which
 is why there is no failure route for a runner to call.
+
+The reads cover the resources the four ported workflows name. Sample
+artifacts are not among them: `sample_artifacts` is touched only by
+`deleteSample`'s cleanup today, and no read path returns one. Add the
+read when a workflow needs it, alongside the key column that row already
+carries.

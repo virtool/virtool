@@ -1,14 +1,16 @@
+import type { Sample, WorkflowSample } from "@virtool/contracts";
 import { FinalizeSampleRequest } from "@virtool/contracts";
 import type { Db } from "@virtool/data/db/pg";
 import {
 	finalizeSample,
+	getSample,
 	SampleAlreadyFinalizedError,
 	SampleNotFoundError,
 } from "@virtool/data/samples/data";
 import type { Logger } from "@virtool/logger";
 import type { StorageBackend } from "@virtool/storage";
 import { requireJobRequest } from "../auth/guard";
-import { jsonError, parseRowId } from "../http";
+import { jsonError, parseRowId, type ReadHandlerDeps } from "../http";
 import { checkManifest, measureManifest } from "../manifest";
 
 /** What the sample handlers need to serve a request. */
@@ -26,6 +28,67 @@ export type SampleHandlerDeps = {
  * exactly, and Python addresses a reads file by `name` in its download URL.
  */
 const FILE_NAMES = ["reads_1.fq.gz", "reads_2.fq.gz"] as const;
+
+/**
+ * Narrow a sample to what a workflow reads.
+ *
+ * The mapping happens here, at the handler boundary, rather than inside
+ * `@virtool/data` — `apps/web`'s client feature modules read the same data
+ * function, so renaming or dropping a field down there would break them at a
+ * distance.
+ *
+ * Each read carries its recorded `storageKey` and no download URL: the workflow
+ * takes the key to the bucket itself.
+ */
+function toWorkflowSample(sample: Sample): WorkflowSample {
+	return {
+		id: sample.id,
+		libraryType: sample.libraryType,
+		name: sample.name,
+		paired: sample.paired,
+		quality: sample.quality,
+		reads: sample.reads.map((read) => ({
+			id: read.id,
+			name: read.name,
+			size: read.size,
+			storageKey: read.storageKey,
+		})),
+	};
+}
+
+/**
+ * Serve a sample's metadata and the reads files that make it up.
+ *
+ * Records only. Nothing here reads or writes an object, and the response
+ * carries no bytes.
+ */
+export async function handleGetSample(
+	deps: ReadHandlerDeps,
+	request: Request,
+	sampleIdParam: string,
+): Promise<Response> {
+	const principal = await requireJobRequest(deps.db, request);
+
+	if (principal instanceof Response) {
+		return principal;
+	}
+
+	const sampleId = parseRowId(sampleIdParam);
+
+	if (sampleId === null) {
+		return jsonError(404, "Sample not found");
+	}
+
+	try {
+		return Response.json(toWorkflowSample(await getSample(deps.db, sampleId)));
+	} catch (err) {
+		if (err instanceof SampleNotFoundError) {
+			return jsonError(404, "Sample not found");
+		}
+
+		throw err;
+	}
+}
 
 /**
  * Finalize a sample: record its quality report and the reads the create_sample

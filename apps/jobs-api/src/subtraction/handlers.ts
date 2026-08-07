@@ -1,15 +1,17 @@
+import type { Subtraction, WorkflowSubtraction } from "@virtool/contracts";
 import { FinalizeSubtractionRequest } from "@virtool/contracts";
 import type { Db } from "@virtool/data/db/pg";
 import type { SubtractionFileType } from "@virtool/data/db/schema/subtractions";
 import {
 	finalizeSubtraction,
+	getSubtraction,
 	SubtractionAlreadyFinalizedError,
 	SubtractionNotFoundError,
 } from "@virtool/data/subtraction/data";
 import type { Logger } from "@virtool/logger";
 import type { StorageBackend } from "@virtool/storage";
 import { requireJobRequest } from "../auth/guard";
-import { jsonError, parseRowId } from "../http";
+import { jsonError, parseRowId, type ReadHandlerDeps } from "../http";
 import { checkManifest, measureManifest } from "../manifest";
 
 /** What the subtraction handlers need to serve a request. */
@@ -18,6 +20,71 @@ export type SubtractionHandlerDeps = {
 	storage: StorageBackend;
 	logger: Logger;
 };
+
+/**
+ * Narrow a subtraction to what a workflow reads.
+ *
+ * The mapping happens here rather than inside `@virtool/data`, which returns
+ * this shape to `apps/web`'s client as well — including the snake_case
+ * `created_at` and `linked_samples` that must not cross this wire, and the
+ * `download_url` that has no meaning to a workflow.
+ *
+ * Each file carries its recorded `storageKey`; the workflow takes it to the
+ * bucket itself.
+ */
+function toWorkflowSubtraction(subtraction: Subtraction): WorkflowSubtraction {
+	return {
+		id: subtraction.id,
+		count: subtraction.count,
+		files: subtraction.files.map((file) => ({
+			id: file.id,
+			name: file.name,
+			size: file.size,
+			storageKey: file.storageKey,
+			type: file.type,
+		})),
+		gc: subtraction.gc,
+		name: subtraction.name,
+		nickname: subtraction.nickname,
+		ready: subtraction.ready,
+	};
+}
+
+/**
+ * Serve a subtraction's metadata and the files that make it up — its source
+ * genome and the shards of its built bowtie2 index.
+ *
+ * Records only. Nothing here reads or writes an object.
+ */
+export async function handleGetSubtraction(
+	deps: ReadHandlerDeps,
+	request: Request,
+	subtractionIdParam: string,
+): Promise<Response> {
+	const principal = await requireJobRequest(deps.db, request);
+
+	if (principal instanceof Response) {
+		return principal;
+	}
+
+	const subtractionId = parseRowId(subtractionIdParam);
+
+	if (subtractionId === null) {
+		return jsonError(404, "Subtraction not found");
+	}
+
+	try {
+		return Response.json(
+			toWorkflowSubtraction(await getSubtraction(deps.db, subtractionId)),
+		);
+	} catch (err) {
+		if (err instanceof SubtractionNotFoundError) {
+			return jsonError(404, "Subtraction not found");
+		}
+
+		throw err;
+	}
+}
 
 /**
  * The only filenames a subtraction accepts, matching Python's

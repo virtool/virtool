@@ -53,6 +53,7 @@ export function createFakeSampleRead(overrides?: Partial<Read>): Read {
 		nameOnDisk: faker.word.noun({ strategy: "any-length" }),
 		sample: faker.number.int(),
 		size: faker.number.int(),
+		storageKey: `samples/${faker.number.int()}/${faker.string.uuid().replaceAll("-", "")}`,
 		uploadedAt: faker.date.past().toISOString(),
 	};
 

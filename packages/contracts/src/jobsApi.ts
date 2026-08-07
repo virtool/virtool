@@ -40,6 +40,20 @@
 //   PATCH  /analyses/{id}                      FinalizeAnalysisRequest    -> Analysis
 //   GET    /caches/{key}                       -                     -> Cache           (200 | 404)
 //   POST   /caches                             RegisterCacheRequest  -> CacheRegistered (201 | 200)
+//   GET    /samples/{id}                       -                     -> WorkflowSample       (200 | 404)
+//   GET    /subtractions/{id}                  -                     -> WorkflowSubtraction  (200 | 404)
+//   GET    /indexes/{id}                       -                     -> WorkflowIndex        (200 | 404)
+//   GET    /analyses/{id}                      -                     -> WorkflowAnalysis     (200 | 404)
+//   GET    /refs/{id}                          -                     -> WorkflowReference    (200 | 404)
+//   GET    /settings                           -                     -> WorkflowSettings     (200)
+//
+// The metadata reads are **records only, never bytes**. A workflow pod holds its
+// own object-storage credentials and fetches every file itself, so each file
+// reference carries the recorded `storageKey` and the response carries no
+// payload and no download URL. The `Workflow*` shapes are deliberately narrower
+// than the ones the SPA reads: they carry what a workflow actually branches on
+// and drop the presentation fields — download URLs, contributor lists, linked
+// samples — that would otherwise have to be kept parseable here forever.
 //
 // The cache shapes live in `./caches` rather than here, because they are the one
 // part of this surface a workflow reaches on its own behalf rather than on
@@ -60,10 +74,10 @@
 // only invite one to.
 
 import { z } from "zod";
-import { AnalysisFormat } from "./analyses";
+import { AnalysisFormat, AnalysisWorkflow } from "./analyses";
 import { JobState, JobWorkflow } from "./jobs";
 import { JsonObject } from "./json";
-import { Quality } from "./samples";
+import { LibraryType, Quality } from "./samples";
 import { NucleotideComposition } from "./subtractions";
 import { UserNested } from "./users";
 
@@ -406,3 +420,152 @@ export const FinalizeAnalysisRequest = z.object({
 });
 
 export type FinalizeAnalysisRequest = z.infer<typeof FinalizeAnalysisRequest>;
+
+/**
+ * A file reference on a metadata read, as a workflow receives it.
+ *
+ * **`storageKey` is what makes the reference usable at all.** Nothing composes
+ * a key from row identity on either side — a migrated object keeps whatever
+ * prefix it was written under, so no pattern reconstructs one — and a workflow
+ * that receives a reference without a key can see that the file exists and
+ * reach none of it.
+ *
+ * The key is nullable wherever its column is, which is every file table but
+ * `index_files`. A workflow handed a null must fail rather than guess: there is
+ * no fallback that finds the object.
+ *
+ * This is the read direction only. A manifest a workflow *sends* never carries
+ * a key it chose — see {@link JobFileManifest}, where the asymmetry is the
+ * point.
+ */
+const workflowFile = {
+	id: z.number().int(),
+	name: z.string(),
+	size: z.number().int().nullable(),
+};
+
+/** A reads file a workflow downloads to run against. */
+export const WorkflowSampleRead = z.object({
+	...workflowFile,
+	storageKey: z.string().nullable(),
+});
+
+export type WorkflowSampleRead = z.infer<typeof WorkflowSampleRead>;
+
+/** A subtraction's source genome or one shard of its built index. */
+export const WorkflowSubtractionFile = z.object({
+	...workflowFile,
+	storageKey: z.string().nullable(),
+	type: z.string(),
+});
+
+export type WorkflowSubtractionFile = z.infer<typeof WorkflowSubtractionFile>;
+
+/** A file an index build produced. `index_files.storage_key` is `NOT NULL`. */
+export const WorkflowIndexFile = z.object({
+	...workflowFile,
+	storageKey: z.string(),
+	type: z.string(),
+});
+
+export type WorkflowIndexFile = z.infer<typeof WorkflowIndexFile>;
+
+/**
+ * A sample, as a workflow reads it.
+ *
+ * `paired` is derived from the reads rather than stored, and is what a workflow
+ * branches on to decide whether it is running one file or two.
+ */
+export const WorkflowSample = z.object({
+	id: z.number().int(),
+	libraryType: LibraryType,
+	name: z.string(),
+	paired: z.boolean(),
+	quality: Quality.nullable(),
+	reads: z.array(WorkflowSampleRead),
+});
+
+export type WorkflowSample = z.infer<typeof WorkflowSample>;
+
+/** A subtraction, as a workflow reads it. */
+export const WorkflowSubtraction = z.object({
+	id: z.number().int(),
+	count: z.number().int().nullable(),
+	files: z.array(WorkflowSubtractionFile),
+	gc: NucleotideComposition.nullable(),
+	name: z.string(),
+	nickname: z.string(),
+	ready: z.boolean(),
+});
+
+export type WorkflowSubtraction = z.infer<typeof WorkflowSubtraction>;
+
+/**
+ * An index build, as a workflow reads it.
+ *
+ * `manifest` is the OTU-id to version map the build is pinned to, straight out
+ * of a JSONB column. Its keys are legacy Mongo OTU ids, so it is a record of
+ * strings rather than anything this side interprets.
+ */
+export const WorkflowIndex = z.object({
+	id: z.number().int(),
+	files: z.array(WorkflowIndexFile),
+	manifest: z.record(z.string(), z.number().int()),
+	ready: z.boolean(),
+	reference: z.object({ id: z.number().int(), name: z.string() }),
+	version: z.number().int(),
+});
+
+export type WorkflowIndex = z.infer<typeof WorkflowIndex>;
+
+/**
+ * An analysis, as a workflow reads it.
+ *
+ * **`sample` is an object carrying an id, not a bare id.** Python's workflow
+ * runtime falls back to reading it when a job's `args` carry no `sample_id`, so
+ * flattening it breaks every analysis whose job was created without one.
+ *
+ * No results and no files: an analysis a workflow is running has neither yet,
+ * and reading them would pull in the formatting layer this read exists to avoid.
+ */
+export const WorkflowAnalysis = z.object({
+	id: z.number().int(),
+	index: z.object({ id: z.number().int(), version: z.number().int() }),
+	ready: z.boolean(),
+	reference: z.object({ id: z.number().int(), name: z.string() }),
+	sample: z.object({ id: z.number().int(), name: z.string() }),
+	subtractions: z.array(z.object({ id: z.number().int(), name: z.string() })),
+	workflow: AnalysisWorkflow,
+});
+
+export type WorkflowAnalysis = z.infer<typeof WorkflowAnalysis>;
+
+/**
+ * A reference, as a workflow reads it.
+ *
+ * Metadata only. The rights lists, contributors and build history the SPA shows
+ * are about who may edit a reference, which is not a question a workflow asks.
+ */
+export const WorkflowReference = z.object({
+	id: z.number().int(),
+	dataType: z.string(),
+	description: z.string(),
+	name: z.string(),
+	organism: z.string(),
+});
+
+export type WorkflowReference = z.infer<typeof WorkflowReference>;
+
+/** The instance settings singleton, as a workflow reads it. */
+export const WorkflowSettings = z.object({
+	defaultSourceTypes: z.array(z.string()),
+	enableSentry: z.boolean(),
+	minimumPasswordLength: z.number().int(),
+	sampleAllRead: z.boolean(),
+	sampleAllWrite: z.boolean(),
+	sampleGroup: z.enum(["none", "force_choice", "users_primary_group"]),
+	sampleGroupRead: z.boolean(),
+	sampleGroupWrite: z.boolean(),
+});
+
+export type WorkflowSettings = z.infer<typeof WorkflowSettings>;

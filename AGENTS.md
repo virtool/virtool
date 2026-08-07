@@ -24,23 +24,32 @@ This is a **pnpm monorepo**:
   lifecycle routes — `POST /jobs/claim`, `GET /jobs/{id}`,
   `PUT /jobs/{id}/ping`, `POST /jobs/{id}/steps/{stepId}/start`,
   `POST /jobs/{id}/finish` — the two cache endpoints —
-  `GET /caches/{key}` and `POST /caches` — and the three finalize routes —
-  `PATCH /subtractions/{id}`, `PATCH /samples/{id}`, `PATCH /analyses/{id}`.
+  `GET /caches/{key}` and `POST /caches` — the three finalize routes —
+  `PATCH /subtractions/{id}`, `PATCH /samples/{id}`, `PATCH /analyses/{id}` —
+  and the six metadata reads — `GET /samples/{id}`, `/subtractions/{id}`,
+  `/indexes/{id}`, `/analyses/{id}`, `/refs/{id}` and `/settings`.
   There is **no delete and no failure route**: cancelling a job, deleting
   one and the five-minute stalled-job sweep all stay Python's. Image:
-  `ghcr.io/virtool/jobs-api`, Alpine. Three rules: it is **always "the jobs
+  `ghcr.io/virtool/jobs-api`, Alpine. Four rules: it is **always "the jobs
   API"**, never "the control plane" — that names its role, not the service;
   **every route must refuse an unauthenticated caller or be named in
   `PUBLIC_ROUTES`**, which `src/__tests__/authorization.test.ts` enforces —
   `POST /jobs/claim` is named there, because the key it returns is the
-  thing a caller would otherwise authenticate with; and a handler's floor
+  thing a caller would otherwise authenticate with; **it serves records,
+  never bytes** — a read hands back the recorded `storageKey` and the
+  workflow fetches the object itself, so no handler streams a payload or
+  builds a derived artifact, and a read is handed a `{ db }` and no
+  `storage`; and a handler's floor
   is `requireJobRequest` (`src/auth/guard.ts`), which authenticates a
   workflow pod as `job-{id}:{key}` over HTTP Basic and **returns** a 401
   rather than throwing one. It resolves to a `JobPrincipal` of `{ jobId }`
   — no user, no permissions — and there is no cookie fallback; this service
-  has no session model. A route with a `{id}` in its path must also check
-  it against `principal.jobId` and answer **403** on a mismatch; that is
-  the handlers' job, not the guard's. Reaching a terminal state
+  has no session model. A route carrying a **job** id in its path must
+  also check it against `principal.jobId` and answer **403** on a
+  mismatch; that is the handlers' job, not the guard's. The resource
+  routes take no such check — a sample id is not a job id, and which jobs
+  may read which rows is not a question this service answers. Reaching a
+  terminal state
   (`cancelled`, `failed`, `succeeded`) is the only thing that revokes a job
   key, and **that refusal is the cancellation channel** — it is the one 401
   that is not opaque, naming the state (`Job is cancelled.`) in a JSON

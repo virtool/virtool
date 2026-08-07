@@ -79,6 +79,15 @@ export type IndexFile = {
 	/** The size in bytes, or null while the build has not recorded one */
 	size: number | null;
 
+	/**
+	 * The object's complete key in storage, as recorded when it was written.
+	 *
+	 * Nothing composes this from the row's identity: a migrated file keeps
+	 * whatever prefix its object was written under, so no pattern reconstructs
+	 * one. A workflow reads the bytes itself and has no other way to locate them.
+	 */
+	storageKey: string;
+
 	/** The kind of artifact the file holds */
 	type: string;
 };

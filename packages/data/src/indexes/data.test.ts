@@ -277,6 +277,9 @@ describe("getIndex", () => {
 				index: indexId,
 				name: "reference.fa.gz",
 				size: 2048,
+				// Read off the row, never composed — a migrated build's object keeps
+				// whatever prefix it was written under.
+				storageKey: `indexes/${indexId}/reference`,
 				type: "fasta",
 			},
 		]);

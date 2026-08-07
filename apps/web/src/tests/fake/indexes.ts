@@ -67,6 +67,7 @@ export function createFakeIndexFile(overrides?: Partial<IndexFile>): IndexFile {
 		index: faker.number.int(),
 		name: faker.word.noun({ strategy: "any-length" }),
 		size: faker.number.int({ min: 20000 }),
+		storageKey: `indexes/${faker.number.int()}/${faker.string.uuid().replaceAll("-", "")}`,
 		type: "fasta",
 	};
 

@@ -17,7 +17,11 @@ import { eq } from "drizzle-orm";
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
 
 import { seedJob } from "../auth/test/fixtures";
-import { type AnalysisHandlerDeps, handleFinalizeAnalysis } from "./handlers";
+import {
+	type AnalysisHandlerDeps,
+	handleFinalizeAnalysis,
+	handleGetAnalysis,
+} from "./handlers";
 
 let database: TestDatabase;
 let db: Db;
@@ -372,5 +376,96 @@ describe("handleFinalizeAnalysis", () => {
 		);
 
 		expect(response.status).toBe(400);
+	});
+});
+
+function get(analysisId: number | string, authenticated = true): Request {
+	return new Request(`https://jobs.virtool.test/analyses/${analysisId}`, {
+		headers: authenticated ? { authorization: `Basic ${credential}` } : {},
+	});
+}
+
+describe("handleGetAnalysis", () => {
+	it("serves the records a workflow runs against", async () => {
+		const analysisId = await seedAnalysis();
+
+		const response = await handleGetAnalysis(
+			deps,
+			get(analysisId),
+			String(analysisId),
+		);
+
+		expect(response.status).toBe(200);
+		expect(await response.json()).toEqual({
+			id: analysisId,
+			index: { id: indexId, version: 1 },
+			ready: false,
+			reference: { id: referenceId, name: "Reference" },
+			sample: { id: expect.any(Number), name: expect.any(String) },
+			subtractions: [],
+			workflow: "pathoscope",
+		});
+	});
+
+	// Python's runtime falls back to reading `sample.id` when a job's args carry
+	// no `sample_id`, so flattening this to a bare id breaks every analysis whose
+	// job was created without one.
+	it("carries the sample as an object, not a bare id", async () => {
+		const analysisId = await seedAnalysis();
+
+		const response = await handleGetAnalysis(
+			deps,
+			get(analysisId),
+			String(analysisId),
+		);
+		const analysis = (await response.json()) as { sample: unknown };
+
+		expect(analysis.sample).toEqual(
+			expect.objectContaining({ id: expect.any(Number) }),
+		);
+	});
+
+	// The results blob is the expensive half of an analysis: reading it runs the
+	// history-patching format step. A workflow needs none of it, and a read that
+	// dragged it in would make every analysis read pay for that machinery.
+	it("does not serve results, even for a finished analysis", async () => {
+		const analysisId = await seedAnalysis({ ready: true, results: RESULTS });
+
+		const response = await handleGetAnalysis(
+			deps,
+			get(analysisId),
+			String(analysisId),
+		);
+		const rendered = await response.text();
+
+		expect(response.status).toBe(200);
+		expect(rendered).not.toContain("results");
+		expect(rendered).not.toContain("best_score");
+	});
+
+	it("reports 404 for an analysis that does not exist", async () => {
+		const response = await handleGetAnalysis(deps, get(404_040), "404040");
+
+		expect(response.status).toBe(404);
+		expect(await response.json()).toEqual({ message: "Analysis not found" });
+	});
+
+	// A non-numeric segment names no row, and must not reach the database as one.
+	it("reports 404 for an id that is not a positive integer", async () => {
+		const response = await handleGetAnalysis(deps, get("counts"), "counts");
+
+		expect(response.status).toBe(404);
+	});
+
+	it("refuses an unauthenticated request", async () => {
+		const analysisId = await seedAnalysis();
+
+		const response = await handleGetAnalysis(
+			deps,
+			get(analysisId, false),
+			String(analysisId),
+		);
+
+		expect(response.status).toBe(401);
 	});
 });

@@ -18,6 +18,7 @@ export function createFakeSubtractionFile(): SubtractionFile {
 		id: faker.number.int(),
 		name: `${faker.word.noun({ strategy: "any-length" })}s.fa`,
 		size: faker.number.int({ min: 20000 }),
+		storageKey: `subtractions/${faker.number.int()}/${faker.string.uuid().replaceAll("-", "")}`,
 		subtraction: faker.number.int(),
 		type: "fasta",
 	};

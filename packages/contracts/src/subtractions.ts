@@ -76,6 +76,17 @@ export type SubtractionFile = {
 	id: number;
 	name: string;
 	size: number;
+
+	/**
+	 * The object's complete key in storage, as recorded when it was written, or
+	 * null for a file that predates keys being recorded.
+	 *
+	 * Nothing composes this from the row's identity: a migrated file keeps
+	 * whatever prefix its object was written under, so no pattern reconstructs
+	 * one. A workflow reads the bytes itself and has no other way to locate them.
+	 */
+	storageKey: string | null;
+
 	subtraction: number;
 	type: string;
 };

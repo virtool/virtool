@@ -269,6 +269,7 @@ async function getSubtractionFiles(
 		id: row.id,
 		name: row.name ?? "",
 		size: row.size ?? 0,
+		storageKey: row.storage_key,
 		subtraction: subtractionId,
 		type: (row.type ?? "fasta") as SubtractionFileType,
 	}));
