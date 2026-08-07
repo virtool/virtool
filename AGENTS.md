@@ -1,13 +1,17 @@
 # Virtool
 
 Viral infection diagnostics using next-generation sequencing. Python 3.13+ async
-API server using aiohttp, with PostgreSQL and MongoDB backends.
+API server using aiohttp, with a PostgreSQL backend. The public-facing web API
+has been removed; the only HTTP services are the internal jobs API and task
+runner, consumed by the workflow runtime and the separate TypeScript web UI
+server.
 
 ## Tooling
 
 ### Testing
 
-Tests run in Docker containers with PostgreSQL and MongoDB services.
+Tests run in Docker containers with a PostgreSQL service, plus S3 (Garage) and
+Azure Blob (Azurite) emulators for storage backend testing.
 
 ```bash
 # Run specific tests, single worker (use for targeted runs)
@@ -82,9 +86,9 @@ asserts the same contract.
 
 All shared fixtures live in `tests/fixtures/` (not conftest.py). Key fixtures:
 
-- `spawn_client` - test HTTP client (`VirtoolTestClient`)
+- `spawn_job_client` - test HTTP client for the jobs API (`JobClientSpawner`)
+- `spawn_task_runner_client` - test HTTP client for the task runner (`TaskRunnerClientSpawner`)
 - `fake` - `DataFaker` for creating test entities (`fake.users.create()`, etc.)
-- `mongo` - function-scoped Motor database (dropped after each test)
 - `pg` / `engine` - session-scoped SQLAlchemy `AsyncEngine`
 - `snapshot_recent` - Syrupy snapshot with timestamp normalization
 
@@ -100,7 +104,7 @@ everything else.
 Tests are async-first via pytest-asyncio. Use `pytest-xdist` (`-n`) for
 parallel runs.
 
-Identifiers in test fixtures (Mongo `_id`s, fake names, etc.) should describe
+Identifiers in test fixtures (row ids, fake names, etc.) should describe
 the role they play. Avoid placeholders like `foo`, `bar`, `baz`, `qux` — they
 make snapshots and `expected_ids` sets opaque to readers. Prefer names like
 `owned_active`, `user_member_active`, `other_archived` that read directly as
@@ -181,122 +185,74 @@ translation from `Resource*` errors to `API*` errors.
 
 Do not reshape a data-layer result into a different application/resource model
 in an API handler to compensate for a missing data-layer operation. Add or adjust
-a data-layer method instead. Legacy handlers that access Mongo/Postgres directly
+a data-layer method instead. Legacy handlers that access Postgres directly
 or reshape domain results are not precedent for new work.
 
-### MongoDB Migration
+### Legacy ID Migration
 
-We are gradually migrating away from MongoDB. New features should use
-PostgreSQL. When migrating an existing collection, follow the 7-step process
-below. Track each step as a separate Linear issue: "Todo" for steps 1–6,
-"Backlog" for step 7 (permanent drops are deferred until the migration is
-proven stable in production).
+MongoDB has been fully removed — there is no Mongo client, no dual-write path,
+and no collections left to migrate from. All domains that were migrated off
+MongoDB now read and write PostgreSQL exclusively. What remains ongoing is
+finishing the transition off the Mongo-era string IDs those domains carried
+over: many tables still have a `legacy_id: String, nullable=True, unique=True`
+column (the old Mongo `_id`) alongside their integer primary key, some are
+still addressed externally by that string ID, and some cross-domain FKs are
+still bare `String` columns pointing at another table's `legacy_id` instead of
+an integer FK. Track this work per domain as separate Linear issues: "Todo" for
+the FK/ID upgrade, "Backlog" for the final column drop (deferred until stable
+in production).
 
-#### Step 1 — Create the PostgreSQL table
+Do not add a `legacy_id` column to a brand-new, Postgres-native table — that
+column only exists to carry forward an identifier from a Mongo document that
+no longer exists.
 
-Generate an Alembic revision (`uv run alembic revision -m "create <name> table"`):
+#### Querying by legacy or modern ID
 
-- Primary key: `BigInteger` with `Identity(always=True)`. Never use `Integer`.
-- Always add `legacy_id: String, nullable=True, unique=True`. It stores the
-  Mongo `_id` and must be nullable so future Postgres-native rows don't need one.
-- FK to an already-migrated table: integer FK column (`user_id`, `job_id`) with
-  a `ForeignKeyConstraint`.
-- FK to a not-yet-migrated collection: bare `String` column (no suffix, no FK).
-  Rename and add the FK later in step 5 when that collection is migrated.
-
-Create the SQLAlchemy model in `virtool/<domain>/sql.py` extending `Base`.
-
-#### Step 2 — Dual-write to Mongo and Postgres; Mongo is the read authority
-
-Wrap all writes (create, update, delete) with `both_transactions` from
-`virtool.data.topg`:
-
-```python
-async with both_transactions(self._mongo, self._pg) as (mongo_session, pg_session):
-    await self._mongo.collection.insert_one({...}, session=mongo_session)
-    pg_session.add(SQLModel(legacy_id=mongo_id, ...))
-```
-
-- Write `legacy_id = mongo_id` on every insert.
-- Locate the PG row by `legacy_id` on updates and deletes.
-- Do not commit the PG session inside the context — `both_transactions` commits
-  on clean exit.
-- Use `retry_both_transactions` on write-heavy paths that may hit transient Mongo
-  transaction errors.
-- Reads still come from Mongo at this stage.
-
-#### Step 3 — Backfill existing documents
-
-Write an idempotent backfill function in `virtool/<domain>/migration.py` and
-register it as a revision in `assets/revisions/`:
-
-- Snapshot document IDs up front with a projection-only query, then fetch each
-  document individually inside the loop to avoid cursor timeouts.
-- Use `ON CONFLICT (legacy_id) DO NOTHING` so the function is safe to re-run.
-- Commit after each document (not in bulk) to bound memory and allow mid-run
-  recovery.
-- Resolve cross-domain FKs (e.g. `user_id`, `job_id`) by querying PG. Cache
-  results in a `dict` to avoid N+1 queries. For **required** relationships (e.g.
-  `user`), raise if the reference cannot be resolved — do not silently store
-  `NULL`. For relationships that are explicitly optional or were historically
-  deletable (e.g. `job`), log a warning and store `NULL`.
-A single backfill revision is enough. Dual-write (step 2) always ships and
-deploys before the backfill runs, so every write is already landing in Postgres
-by the time the backfill executes and there is no gap to catch up. Do not add a
-second "re-backfill" revision.
-
-#### Step 4 — Switch reads to Postgres
-
-Both stores are now consistent. Move all reads to Postgres.
+While a domain still exposes its legacy string ID externally, use the helpers
+in `virtool.data.topg`:
 
 - Single-resource lookups: `compose_legacy_id_single_expression(Model, id_)`.
 - Batch lookups (transforms, validation): `compose_legacy_id_multi_expression(Model, id_list)`.
-- Resources are still addressed externally by their legacy string ID until step 5
-  completes. Keep `legacy_id` as the public identifier.
-- Update transforms that previously queried Mongo to query PG. Build dual-key
-  lookup dicts so both integer and legacy string IDs resolve correctly:
+- Resolving a legacy or modern ID to the integer PK: `resolve_legacy_id(session, Model, id_)`.
+- Joining a not-yet-upgraded string FK column against an already-integer-keyed
+  table: `compose_legacy_id_subquery(Model, id_)`.
 
-  ```python
-  lookup = {
-      **{row.id: shape(row) for row in rows},
-      **{row.legacy_id: shape(row) for row in rows if row.legacy_id},
-  }
-  ```
+Build dual-key lookup dicts so both integer and legacy string IDs resolve
+correctly in transforms:
 
-- Update cross-domain validation helpers (e.g. `get_missing_*_ids`) to query PG.
+```python
+lookup = {
+    **{row.id: shape(row) for row in rows},
+    **{row.legacy_id: shape(row) for row in rows if row.legacy_id},
+}
+```
 
-#### Step 5 — Update cross-domain references to integer FKs
+#### Upgrading cross-domain references to integer FKs
 
-Other domains that hold a string reference to this collection must be upgraded
-to integer FKs.
+Other domains that hold a bare `String` reference to a table (instead of an
+integer FK) must be upgraded:
 
 - Write an Alembic migration that **adds** a nullable integer `*_id` FK column,
-  then backfill the string values to their integer PK equivalents in a downstream
-  revision. Drop the legacy string column in a later cleanup revision after
-  confirming production stability.
-- Update the referencing domain's backfill to write integer IDs.
+  then backfill the string values to their integer PK equivalents in a
+  downstream revision. Drop the legacy string column in a later cleanup
+  revision after confirming production stability.
 - Update any transform or lookup in the referencing domain that previously
   received a string ID.
-- Once all cross-domain string references are gone, the public-facing ID switches
-  to the integer PK.
+- Once all cross-domain string references to a table are gone and its own
+  external API no longer accepts legacy string IDs, drop its `legacy_id`
+  column and remove the `compose_legacy_id_*`/`resolve_legacy_id` calls for
+  it.
 
-#### Step 6 — Remove dead code
+#### Dropping legacy columns (Backlog)
 
-- Replace the `both_transactions` dual-write block with a plain `AsyncSession`
-  PG write.
-- Remove all Mongo collection access for this domain.
-- Remove migration helper functions that were only needed during the transition.
+Deferred until a domain's integer-FK upgrade has been running in production
+long enough to be confident. Leave these issues in "Backlog" for several
+months.
 
-#### Step 7 — Drop dead collections and columns (Backlog)
-
-Deferred until the migration has been running in production long enough to be
-confident. Leave these issues in "Backlog" for several months.
-
-- Drop the MongoDB collection.
-- Drop `legacy_id` columns from PG tables (once every cross-domain reference is
-  an integer FK).
-- Remove any other bridge columns, intermediate tables, or fields that were only
-  needed during the transition.
+- Drop the `legacy_id` column from the table (once every cross-domain
+  reference to it is an integer FK and its public API is integer-only).
+- Remove any other bridge columns or fields that were only needed during the
+  transition.
 
 ### Error Handling
 
@@ -429,7 +385,7 @@ verification, mention only that specific item.
 Team name: Virtool
 Team ID: `76cf3c46-c5d9-4df4-b457-0fc053d402f7`
 
-New issues should use the "Backend" label. Choose an appropriate status — don't
+New issues should use the "Python" label. Choose an appropriate status — don't
 default to "Backlog". Bugs should go to "Todo".
 
 ### Issue Naming
