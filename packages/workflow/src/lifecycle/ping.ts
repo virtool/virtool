@@ -1,5 +1,6 @@
 import type { Logger } from "@virtool/logger";
 import type { JobsApiClient } from "../client/client";
+import { UnauthorizedError } from "../client/errors";
 import { sleep } from "../client/retry";
 import type { RunSignals } from "../run";
 
@@ -37,13 +38,25 @@ export type StartPingLoopOptions = {
 /**
  * Heartbeat the jobs API for as long as the run lasts.
  *
- * This is also the cancellation channel: a ping answered with `cancelled: true`
- * aborts the run's signal, which is what unwinds the run loop. A runner has no
- * other way to learn it should stop.
+ * This is also the cancellation channel, and **a refusal is the signal**. A job
+ * key stops authenticating the moment its job reaches a terminal state, so a
+ * ping answered `401` means the job is over — cancelled by a user, or failed by
+ * the jobs API's stalled-job sweep after this pod lost contact. Either way there
+ * is nothing left for the run to report, so the loop aborts the run's signal and
+ * unwinds it.
  *
- * Failures are counted **consecutively** and reset on success. Python's counter
- * never decrements, so a run long enough to accumulate six scattered blips stops
- * pinging forever and is then failed by the sweep while still working.
+ * A `401` is also what a genuinely broken credential produces, and the loop
+ * cannot tell the two apart. It does not need to — the response is the same
+ * either way — but the jobs API names the state in the body, so the log line
+ * carries the message rather than asserting a cancellation. A pod stopping on
+ * `Invalid credentials` rather than `Job is cancelled.` is a bug that would
+ * otherwise be invisible.
+ *
+ * Every other failure is a transport problem and counts toward the give-up
+ * budget. Failures are counted **consecutively** and reset on success. Python's
+ * counter never decrements, so a run long enough to accumulate six scattered
+ * blips stops pinging forever and is then failed by the sweep while still
+ * working.
  */
 export function startPingLoop({
 	client,
@@ -65,22 +78,29 @@ export function startPingLoop({
 				// hold `stop()` open for the 600 s request budget with the finish call
 				// queued behind it — long enough for the sweep to fail a job whose
 				// work is already done.
-				const { cancelled } = await client.ping(controller.signal);
+				await client.ping(controller.signal);
 
 				failures = 0;
-
-				if (cancelled) {
-					logger.info("jobs API reported the job as cancelled");
-
-					signals.cancel();
-
-					return;
-				}
 			} catch (err) {
 				// The run's own abort races the `stop()` call that follows it, so a
 				// ping already in flight rejects on a signal that means the run is
 				// over rather than that the jobs API is unreachable.
 				if (controller.signal.aborted || signals.signal.aborted) {
+					return;
+				}
+
+				// The job key no longer authenticates, which is only true once the
+				// job has reached a terminal state. Retrying cannot help and the run
+				// has nothing left to report, so stop now rather than working on for
+				// a job that is already over.
+				if (err instanceof UnauthorizedError) {
+					logger.info(
+						{ reason: err.message },
+						"jobs API refused the job key; the job is no longer active",
+					);
+
+					signals.cancel();
+
 					return;
 				}
 

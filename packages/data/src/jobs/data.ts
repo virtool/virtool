@@ -1,5 +1,6 @@
 import { isJobStateTerminal, type SearchResult } from "@virtool/contracts";
-import { count, desc, eq, inArray, sql } from "drizzle-orm";
+import { and, asc, count, desc, eq, inArray, sql } from "drizzle-orm";
+import { hashToken, newJobKey } from "../auth/tokens";
 import type { Db, DbOrTx } from "../db/pg";
 import { takeFirstOrThrow } from "../db/rows";
 import { analyses } from "../db/schema/analyses";
@@ -10,6 +11,7 @@ import { subtractions } from "../db/schema/subtractions";
 import { users } from "../db/schema/users";
 import { withTimeout } from "../db/timeout";
 import { AppError } from "../errors";
+import { emit } from "../events/emit";
 
 /** The canonical list of a job's lifecycle states. */
 export const JOB_STATES = [
@@ -51,6 +53,7 @@ export type Job = {
 	claimed_at: Date | null;
 	created_at: Date;
 	finished_at: Date | null;
+	pinged_at: Date | null;
 	progress: number;
 	state: string;
 	steps: JobStep[] | null;
@@ -73,6 +76,21 @@ export type FindJobsOptions = {
 
 /** Thrown when a requested job does not exist. */
 export class JobNotFoundError extends AppError {}
+
+/** Thrown when no unclaimed job is waiting for the requested workflow. */
+export class NoJobAvailableError extends AppError {}
+
+/** Thrown when a job's step list holds no step with the requested id. */
+export class JobStepNotFoundError extends AppError {}
+
+/** Thrown when a step is started twice. */
+export class JobStepAlreadyStartedError extends AppError {}
+
+/** Thrown when a job is asked to do something it has already finished doing. */
+export class JobTerminalStateError extends AppError {}
+
+/** Thrown when a job that is not running is asked to finish. */
+export class JobNotRunningError extends AppError {}
 
 // Mirror of the Python `compute_progress` helper: terminal jobs are 100%, a
 // running job is the fraction of its steps that have started, everything else
@@ -206,6 +224,7 @@ function toJob(row: JobRowWithResources): Job {
 		claimed_at: row.claimed_at,
 		created_at: row.created_at,
 		finished_at: row.finished_at,
+		pinged_at: row.pinged_at,
 		progress: computeProgress(row.state, row.steps),
 		state: row.state,
 		steps: row.steps,
@@ -222,6 +241,7 @@ function selectJobsWithResources(db: Db) {
 			claimed_at: jobs.claimed_at,
 			created_at: jobs.created_at,
 			finished_at: jobs.finished_at,
+			pinged_at: jobs.pinged_at,
 			state: jobs.state,
 			steps: jobs.steps,
 			workflow: jobs.workflow,
@@ -311,6 +331,256 @@ export async function createJob(
 	);
 
 	return row.id;
+}
+
+/** The runner metadata and step list a claim carries. */
+export type ClaimJobValues = {
+	claim: JobClaim;
+	steps: Omit<JobStep, "started_at">[];
+};
+
+/** A job just claimed, with the plaintext key its runner will authenticate with. */
+export type ClaimedJob = {
+	id: number;
+	claim: JobClaim;
+	claimed_at: Date;
+	created_at: Date;
+	/** Returned once and never stored in the clear. */
+	key: string;
+	steps: JobStep[];
+	user: { id: number; handle: string };
+	workflow: string;
+};
+
+/**
+ * Claim the oldest job waiting on `workflow` for the runner described by
+ * `values`.
+ *
+ * The select takes `FOR UPDATE SKIP LOCKED` over a one-row window, which is
+ * what makes a fleet of runners starting together safe: each locks a different
+ * row rather than queueing on the same one and then finding it taken. Without
+ * `SKIP LOCKED` a wave of pods serialises, and every one but the first wakes to
+ * a row that is no longer pending.
+ *
+ * The key is generated here and only its digest is written, so the plaintext on
+ * the returned object is the one and only copy — nothing can reissue it, and a
+ * runner that loses it cannot finish its job.
+ *
+ * @throws {NoJobAvailableError} when nothing is waiting.
+ */
+export async function claimJob(
+	db: Db,
+	workflow: string,
+	values: ClaimJobValues,
+): Promise<ClaimedJob> {
+	const key = newJobKey();
+	const now = new Date();
+
+	const steps: JobStep[] = values.steps.map((step) => ({
+		description: step.description,
+		id: step.id,
+		name: step.name,
+		started_at: null,
+	}));
+
+	const claimed = await db.transaction(async (tx) => {
+		const [pending] = await tx
+			.select({
+				id: jobs.id,
+				created_at: jobs.created_at,
+				user_id: jobs.user_id,
+			})
+			.from(jobs)
+			.where(
+				and(
+					eq(jobs.workflow, workflow),
+					eq(jobs.acquired, false),
+					eq(jobs.state, "pending"),
+				),
+			)
+			.orderBy(asc(jobs.created_at))
+			.limit(1)
+			.for("update", { skipLocked: true });
+
+		if (!pending) {
+			return null;
+		}
+
+		await tx
+			.update(jobs)
+			.set({
+				acquired: true,
+				claim: values.claim,
+				claimed_at: now,
+				key: hashToken(key),
+				pinged_at: now,
+				state: "running",
+				steps,
+			})
+			.where(eq(jobs.id, pending.id));
+
+		const user = takeFirstOrThrow(
+			await tx
+				.select({ id: users.id, handle: users.handle })
+				.from(users)
+				.where(eq(users.id, pending.user_id))
+				.limit(1),
+		);
+
+		return { id: pending.id, created_at: pending.created_at, user };
+	});
+
+	if (!claimed) {
+		throw new NoJobAvailableError();
+	}
+
+	await emit("jobs", claimed.id, "update");
+
+	return {
+		id: claimed.id,
+		claim: values.claim,
+		claimed_at: now,
+		created_at: claimed.created_at,
+		key,
+		steps,
+		user: claimed.user,
+		workflow,
+	};
+}
+
+/**
+ * Record a heartbeat from the runner holding `jobId`.
+ *
+ * The only lifecycle call that emits nothing. A running job pings every five
+ * seconds and every job on screen holds its own detail query, so a frame per
+ * ping would cost a refetch per job per five seconds for a timestamp no view
+ * displays.
+ *
+ * @throws {JobNotFoundError} when no such job exists.
+ */
+export async function pingJob(db: Db, jobId: number): Promise<Date> {
+	const pingedAt = new Date();
+
+	const updated = await db
+		.update(jobs)
+		.set({ pinged_at: pingedAt })
+		.where(eq(jobs.id, jobId))
+		.returning({ id: jobs.id });
+
+	if (updated.length === 0) {
+		throw new JobNotFoundError();
+	}
+
+	return pingedAt;
+}
+
+/** A step that has just been started, so its `started_at` is set by construction. */
+export type StartedJobStep = JobStep & { started_at: string };
+
+/**
+ * Stamp `started_at` on one step of a job's step list.
+ *
+ * The list is a JSONB array, so there is no way to address one element from
+ * SQL — the whole array is read, one element replaced, and the whole array
+ * written back. That read-modify-write is why the row is locked `FOR UPDATE`
+ * for the length of the transaction: two steps starting at once would otherwise
+ * each write back an array built from the state before the other, and the
+ * loser's timestamp would vanish.
+ *
+ * @throws {JobNotFoundError} when no such job exists.
+ * @throws {JobTerminalStateError} when the job has already finished.
+ * @throws {JobStepNotFoundError} when the job's steps hold no such id.
+ * @throws {JobStepAlreadyStartedError} when the step already has a start time.
+ */
+export async function startJobStep(
+	db: Db,
+	jobId: number,
+	stepId: string,
+): Promise<StartedJobStep> {
+	const startedAt = new Date();
+
+	const step = await db.transaction(async (tx) => {
+		const [job] = await tx
+			.select({ state: jobs.state, steps: jobs.steps })
+			.from(jobs)
+			.where(eq(jobs.id, jobId))
+			.limit(1)
+			.for("update");
+
+		if (!job) {
+			throw new JobNotFoundError();
+		}
+
+		if (isJobStateTerminal(job.state)) {
+			throw new JobTerminalStateError();
+		}
+
+		const found = job.steps?.find((each) => each.id === stepId);
+
+		if (!job.steps || !found) {
+			throw new JobStepNotFoundError();
+		}
+
+		if (found.started_at !== null) {
+			throw new JobStepAlreadyStartedError();
+		}
+
+		const started: StartedJobStep = {
+			...found,
+			started_at: startedAt.toISOString(),
+		};
+
+		const steps = job.steps.map((each) =>
+			each.id === stepId ? started : each,
+		);
+
+		await tx.update(jobs).set({ steps }).where(eq(jobs.id, jobId));
+
+		return started;
+	});
+
+	await emit("jobs", jobId, "update");
+
+	return step;
+}
+
+/**
+ * Move a running job to `succeeded`.
+ *
+ * The success half of the terminal transition, and the only one a runner makes.
+ * There is deliberately no failure counterpart: a job fails by being cancelled
+ * or by the jobs API's stalled-job sweep, neither of which the runner drives.
+ *
+ * @throws {JobNotFoundError} when no such job exists.
+ * @throws {JobNotRunningError} when the job is in any other state, which is
+ *   what makes a second finish a conflict rather than a silent no-op.
+ */
+export async function finishJob(db: Db, jobId: number): Promise<Job> {
+	await db.transaction(async (tx) => {
+		const [job] = await tx
+			.select({ state: jobs.state })
+			.from(jobs)
+			.where(eq(jobs.id, jobId))
+			.limit(1)
+			.for("update");
+
+		if (!job) {
+			throw new JobNotFoundError();
+		}
+
+		if (job.state !== "running") {
+			throw new JobNotRunningError();
+		}
+
+		await tx
+			.update(jobs)
+			.set({ finished_at: new Date(), state: "succeeded" })
+			.where(eq(jobs.id, jobId));
+	});
+
+	await emit("jobs", jobId, "update");
+
+	return getJob(db, jobId);
 }
 
 /** A count of jobs sharing one workflow and state. */

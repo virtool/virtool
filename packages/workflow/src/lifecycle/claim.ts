@@ -1,7 +1,7 @@
 import {
+	type ClaimableJobWorkflow,
 	type CreateJobClaimRequest,
 	JobClaimed,
-	type JobWorkflow,
 } from "@virtool/contracts";
 import type { Logger } from "@virtool/logger";
 import { fetch } from "undici";
@@ -16,7 +16,7 @@ export const CLAIM_POLL_INTERVAL_MS = 2_000;
 export type ClaimJobOptions = {
 	/** Cluster-internal jobs API service URL. Never the public web origin. */
 	baseUrl: string;
-	workflow: JobWorkflow;
+	workflow: ClaimableJobWorkflow;
 	request: CreateJobClaimRequest;
 	logger: Logger;
 	/** Bounds the whole poll. Carries both the claim timeout and SIGTERM. */

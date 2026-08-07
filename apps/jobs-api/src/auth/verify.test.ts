@@ -102,13 +102,22 @@ describe("parseBasicAuthHeader", () => {
 	});
 });
 
+/**
+ * The refusal every check but the terminal-state one produces.
+ *
+ * `terminalMessage` stays null throughout, which is the property that matters:
+ * a caller that has not proved it holds the key learns nothing about the job it
+ * named, including whether that job exists.
+ */
+const REJECTED = { ok: false, terminalMessage: null };
+
 describe("verifyJobRequest", () => {
 	it("resolves the job behind a well-formed credential", async () => {
 		const job = await seedJob(db, userId);
 
 		expect(
 			await verifyJobRequest(db, request(`job-${job.id}`, job.key)),
-		).toEqual({ jobId: job.id });
+		).toEqual({ ok: true, principal: { jobId: job.id } });
 	});
 
 	it("rejects a request carrying no authorization header", async () => {
@@ -116,7 +125,7 @@ describe("verifyJobRequest", () => {
 
 		const bare = new Request("https://jobs.virtool.test/jobs/1/ping");
 
-		expect(await verifyJobRequest(db, bare)).toBeNull();
+		expect(await verifyJobRequest(db, bare)).toEqual(REJECTED);
 	});
 
 	// The header format is shared with the user-facing API, so a cookie is the
@@ -128,7 +137,7 @@ describe("verifyJobRequest", () => {
 			headers: { cookie: `session_id=anything; session_token=${job.key}` },
 		});
 
-		expect(await verifyJobRequest(db, withCookie)).toBeNull();
+		expect(await verifyJobRequest(db, withCookie)).toEqual(REJECTED);
 	});
 
 	it("rejects a malformed authorization header", async () => {
@@ -138,7 +147,7 @@ describe("verifyJobRequest", () => {
 			headers: { authorization: `Bearer ${job.key}` },
 		});
 
-		expect(await verifyJobRequest(db, bearer)).toBeNull();
+		expect(await verifyJobRequest(db, bearer)).toEqual(REJECTED);
 	});
 
 	it("rejects the right key under the wrong job's id", async () => {
@@ -147,7 +156,7 @@ describe("verifyJobRequest", () => {
 
 		expect(
 			await verifyJobRequest(db, request(`job-${second.id}`, first.key)),
-		).toBeNull();
+		).toEqual(REJECTED);
 	});
 
 	it("rejects a wrong key", async () => {
@@ -155,7 +164,7 @@ describe("verifyJobRequest", () => {
 
 		expect(
 			await verifyJobRequest(db, request(`job-${job.id}`, "not-the-key")),
-		).toBeNull();
+		).toEqual(REJECTED);
 	});
 
 	// The stored value is the digest, so a caller who somehow read the column
@@ -165,7 +174,7 @@ describe("verifyJobRequest", () => {
 
 		expect(
 			await verifyJobRequest(db, request(`job-${job.id}`, hashToken(job.key))),
-		).toBeNull();
+		).toEqual(REJECTED);
 	});
 
 	it("rejects a job that has never been claimed", async () => {
@@ -173,7 +182,7 @@ describe("verifyJobRequest", () => {
 
 		expect(
 			await verifyJobRequest(db, request(`job-${job.id}`, job.key)),
-		).toBeNull();
+		).toEqual(REJECTED);
 	});
 
 	it("rejects a job that does not exist", async () => {
@@ -182,29 +191,48 @@ describe("verifyJobRequest", () => {
 
 		expect(
 			await verifyJobRequest(db, request(`job-${job.id}`, job.key)),
-		).toBeNull();
+		).toEqual(REJECTED);
 	});
 
 	// Reaching a terminal state is the only thing that stops a key working —
 	// there is no expiry and no revocation — so this is the whole of key
 	// invalidation, and it has to hold for every one of the three states.
-	it.each(["cancelled", "failed", "succeeded"])(
-		"rejects a valid key for a job that has %s",
-		async (state) => {
+	//
+	// Each names the state, which is how a runner tells a cancellation from a
+	// ping-timeout sweep from a job it already finished. That is only reachable
+	// with the right key; the tests above are what pin the other half.
+	it.each([
+		["cancelled", "Job is cancelled."],
+		["failed", "Job has failed."],
+		["succeeded", "Job has succeeded."],
+	])(
+		"rejects a valid key for a job that has %s, saying so",
+		async (state, terminalMessage) => {
 			const job = await seedJob(db, userId, { state });
 
 			expect(
 				await verifyJobRequest(db, request(`job-${job.id}`, job.key)),
-			).toBeNull();
+			).toEqual({ ok: false, terminalMessage });
 		},
 	);
+
+	// The distinguishing message sits behind the key comparison. A caller
+	// presenting the wrong key for a cancelled job must not learn that the job
+	// is cancelled — or that it exists.
+	it("says nothing about a terminal job to a caller with the wrong key", async () => {
+		const job = await seedJob(db, userId, { state: "cancelled" });
+
+		expect(
+			await verifyJobRequest(db, request(`job-${job.id}`, "not-the-key")),
+		).toEqual(REJECTED);
+	});
 
 	it("accepts a valid key for a job that is still pending", async () => {
 		const job = await seedJob(db, userId, { state: "pending" });
 
 		expect(
 			await verifyJobRequest(db, request(`job-${job.id}`, job.key)),
-		).toEqual({ jobId: job.id });
+		).toEqual({ ok: true, principal: { jobId: job.id } });
 	});
 
 	// `apps/web` folds a handle before refusing a `job` prefix, because it
@@ -217,7 +245,7 @@ describe("verifyJobRequest", () => {
 
 			expect(
 				await verifyJobRequest(db, request(`${prefix}-${job.id}`, job.key)),
-			).toBeNull();
+			).toEqual(REJECTED);
 		},
 	);
 
@@ -239,7 +267,9 @@ describe("verifyJobRequest", () => {
 	])("rejects %j as a login", async (login) => {
 		const job = await seedJob(db, userId);
 
-		expect(await verifyJobRequest(db, request(login, job.key))).toBeNull();
+		expect(await verifyJobRequest(db, request(login, job.key))).toEqual(
+			REJECTED,
+		);
 	});
 
 	// `jobs.id` is a Postgres integer. Without the range screen this reaches the
@@ -250,12 +280,12 @@ describe("verifyJobRequest", () => {
 
 		expect(
 			await verifyJobRequest(db, request("job-99999999999999999999", "k")),
-		).toBeNull();
+		).toEqual(REJECTED);
 	});
 
 	it("rejects a zero id", async () => {
 		await seedJob(db, userId);
 
-		expect(await verifyJobRequest(db, request("job-0", "k"))).toBeNull();
+		expect(await verifyJobRequest(db, request("job-0", "k"))).toEqual(REJECTED);
 	});
 });

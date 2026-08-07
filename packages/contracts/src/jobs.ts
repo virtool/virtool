@@ -47,6 +47,28 @@ export const JobWorkflow = z.enum([
 
 export type JobWorkflow = z.infer<typeof JobWorkflow>;
 
+/**
+ * A workflow a runner may claim a job for.
+ *
+ * {@link JobWorkflow} minus `build_index`, and the difference is the whole
+ * point: `build_index` rows exist in the `jobs` table and must still parse on
+ * the read path, but nothing creates one any more. Python builds indexes
+ * through the `create_index` *task* (`virtool/indexes/tasks.py`), not a job, so
+ * no runner is waiting on this workflow and handing one out would start a pod
+ * that nothing finishes.
+ *
+ * `POST /jobs/claim` validates its `workflow` query parameter against this, so
+ * asking for `build_index` is a `422` rather than a claim that hangs.
+ */
+export const ClaimableJobWorkflow = z.enum([
+	"create_sample",
+	"create_subtraction",
+	"nuvs",
+	"pathoscope",
+]);
+
+export type ClaimableJobWorkflow = z.infer<typeof ClaimableJobWorkflow>;
+
 /** A job embedded in another resource, e.g. a sample's creation job. */
 export type JobNested = {
 	createdAt: string;

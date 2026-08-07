@@ -27,12 +27,16 @@ type State = { visited: string[] };
 /** What the jobs API stand-in should do at each lifecycle point. */
 type ApiBehaviour = {
 	claimStatus?: number;
-	cancelled?: boolean;
+	/**
+	 * Refuse every ping, as the jobs API does once a job reaches a terminal
+	 * state. This is the whole of the cancellation channel.
+	 */
+	pingRefusal?: string;
 };
 
 function createHandler({
 	claimStatus = 200,
-	cancelled = false,
+	pingRefusal,
 }: ApiBehaviour): TestServerHandler {
 	return (request, response) => {
 		if (request.path === "/jobs/claim") {
@@ -65,10 +69,12 @@ function createHandler({
 		}
 
 		if (request.path.endsWith("/ping")) {
-			respondJson(response, 200, {
-				cancelled,
-				pingedAt: "2026-08-05T00:00:00Z",
-			});
+			if (pingRefusal) {
+				respondJson(response, 401, { message: pingRefusal });
+				return;
+			}
+
+			respondJson(response, 200, { pingedAt: "2026-08-05T00:00:00Z" });
 
 			return;
 		}
@@ -243,8 +249,10 @@ describe("a failed run", () => {
 });
 
 describe("cancellation", () => {
-	it("exits 0 when a ping reports the job cancelled", async () => {
-		server = await startTestServer(createHandler({ cancelled: true }));
+	it("exits 0 when a ping is refused because the job is cancelled", async () => {
+		server = await startTestServer(
+			createHandler({ pingRefusal: "Job is cancelled." }),
+		);
 
 		const { code } = await run(
 			createWorkflow([

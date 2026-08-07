@@ -1,6 +1,7 @@
 import type { JobPing } from "@virtool/contracts";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { JobsApiClient } from "../client/client";
+import { UnauthorizedError } from "../client/errors";
 import { createRunSignals } from "../run";
 import {
 	createRecordingLogger,
@@ -13,8 +14,17 @@ import {
 	startPingLoop,
 } from "./ping";
 
-function pong(cancelled = false): JobPing {
-	return { cancelled, pingedAt: "2026-08-05T00:00:00Z" };
+function pong(): JobPing {
+	return { pingedAt: new Date("2026-08-05T00:00:00Z") };
+}
+
+/** What the jobs API answers a ping with once its job has finished. */
+function refused(message: string): UnauthorizedError {
+	return new UnauthorizedError(message, {
+		method: "PUT",
+		path: "/jobs/1/ping",
+		status: 401,
+	});
 }
 
 function clientPinging(ping: JobsApiClient["ping"]): JobsApiClient {
@@ -58,24 +68,59 @@ describe("startPingLoop", () => {
 		]);
 	});
 
-	it("cancels the run and stops when the jobs API reports cancellation", async () => {
-		const signals = createRunSignals();
-		const ping = vi.fn(() => Promise.resolve(pong(true)));
+	// A refused key means the job reached a terminal state, whichever one. The
+	// run has nothing left to report either way, so all three stop it.
+	it.each(["Job is cancelled.", "Job has failed.", "Job has succeeded."])(
+		"cancels the run and stops when a ping is refused with %j",
+		async (message) => {
+			const signals = createRunSignals();
+			const ping = vi.fn(() => Promise.reject(refused(message)));
+
+			const loop = startPingLoop({
+				client: clientPinging(ping),
+				logger: createRecordingLogger().logger,
+				signals,
+			});
+
+			await vi.advanceTimersByTimeAsync(PING_STAGGER_MS + 1);
+
+			expect(signals.isCancelled()).toBe(true);
+			expect(signals.signal.aborted).toBe(true);
+
+			await vi.advanceTimersByTimeAsync(PING_INTERVAL_MS * 3);
+
+			// Not retried, and not counted toward the give-up budget: a revoked key
+			// is a decision the jobs API made, not a blip.
+			expect(ping).toHaveBeenCalledTimes(1);
+
+			await loop.stop();
+		},
+	);
+
+	// The loop cannot tell a cancellation from a credential bug, and does not
+	// try to. What it must not do is assert a cancellation that did not happen —
+	// a pod stopping on `Invalid credentials` is a bug, and swallowing the
+	// jobs API's own words is what would hide it.
+	it("logs the reason the jobs API gave rather than asserting a cancellation", async () => {
+		const { logger, records } = createRecordingLogger();
 
 		const loop = startPingLoop({
-			client: clientPinging(ping),
-			logger: createRecordingLogger().logger,
-			signals,
+			client: clientPinging(() =>
+				Promise.reject(refused("Invalid credentials")),
+			),
+			logger,
+			signals: createRunSignals(),
 		});
 
 		await vi.advanceTimersByTimeAsync(PING_STAGGER_MS + 1);
 
-		expect(signals.isCancelled()).toBe(true);
-		expect(signals.signal.aborted).toBe(true);
+		await loop.stop();
 
-		await vi.advanceTimersByTimeAsync(PING_INTERVAL_MS * 3);
+		const logged = records().find((record) =>
+			String(record.msg).includes("no longer active"),
+		);
 
-		expect(ping).toHaveBeenCalledTimes(1);
+		expect(logged?.reason).toBe("Invalid credentials");
 
 		await loop.stop();
 	});

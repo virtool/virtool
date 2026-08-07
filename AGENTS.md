@@ -20,21 +20,32 @@ This is a **pnpm monorepo**:
   runners call to claim, run and finish jobs. A Hono app on port 9950,
   mirroring Python's `virtool/jobs/main.py` (`api-jobs-service`, ClusterIP,
   **no ingress** — that absence is the security boundary). Serves
-  `/health/live`, `/health/ready`, a token-gated `/metrics`, the two
-  cache endpoints — `GET /caches/{key}` and `POST /caches` — and the three
-  finalize routes — `PATCH /subtractions/{id}`, `PATCH /samples/{id}`,
-  `PATCH /analyses/{id}` — today. Image:
+  `/health/live`, `/health/ready`, a token-gated `/metrics`, the five
+  lifecycle routes — `POST /jobs/claim`, `GET /jobs/{id}`,
+  `PUT /jobs/{id}/ping`, `POST /jobs/{id}/steps/{stepId}/start`,
+  `POST /jobs/{id}/finish` — the two cache endpoints —
+  `GET /caches/{key}` and `POST /caches` — and the three finalize routes —
+  `PATCH /subtractions/{id}`, `PATCH /samples/{id}`, `PATCH /analyses/{id}`.
+  There is **no delete and no failure route**: cancelling a job, deleting
+  one and the five-minute stalled-job sweep all stay Python's. Image:
   `ghcr.io/virtool/jobs-api`, Alpine. Three rules: it is **always "the jobs
   API"**, never "the control plane" — that names its role, not the service;
   **every route must refuse an unauthenticated caller or be named in
-  `PUBLIC_ROUTES`**, which `src/__tests__/authorization.test.ts` enforces;
-  and a handler's floor is `requireJobRequest` (`src/auth/guard.ts`), which
-  authenticates a workflow pod as `job-{id}:{key}` over HTTP Basic and
-  **returns** an opaque 401 rather than throwing one. It resolves to a
-  `JobPrincipal` of `{ jobId }` — no user, no permissions — and there is no
-  cookie fallback; this service has no session model. Reaching a terminal
-  state (`cancelled`, `failed`, `succeeded`) is the only thing that revokes
-  a job key. See [docs/jobs-api.md](docs/jobs-api.md).
+  `PUBLIC_ROUTES`**, which `src/__tests__/authorization.test.ts` enforces —
+  `POST /jobs/claim` is named there, because the key it returns is the
+  thing a caller would otherwise authenticate with; and a handler's floor
+  is `requireJobRequest` (`src/auth/guard.ts`), which authenticates a
+  workflow pod as `job-{id}:{key}` over HTTP Basic and **returns** a 401
+  rather than throwing one. It resolves to a `JobPrincipal` of `{ jobId }`
+  — no user, no permissions — and there is no cookie fallback; this service
+  has no session model. A route with a `{id}` in its path must also check
+  it against `principal.jobId` and answer **403** on a mismatch; that is
+  the handlers' job, not the guard's. Reaching a terminal state
+  (`cancelled`, `failed`, `succeeded`) is the only thing that revokes a job
+  key, and **that refusal is the cancellation channel** — it is the one 401
+  that is not opaque, naming the state (`Job is cancelled.`) in a JSON
+  body, which is safe only because the check sits *after* the key
+  comparison. See [docs/jobs-api.md](docs/jobs-api.md).
 - `apps/tasks/` — `@virtool/tasks`, the task service: **one** long-lived
   process carrying both halves of Virtool's task system, the periodic
   spawner and the runner that claims and executes what it spawns. Image:
@@ -1150,11 +1161,22 @@ The lifecycle half — `createJobsApiClient`, `claimJob`, `startPingLoop`,
 - **Retries are five, at a flat 5 s, on transport failures only.** Not
   exponential — that is Python's observed behaviour and the ping-timeout
   sweep is calibrated against it. Never retry a status the jobs API chose.
-- **The ping loop is the cancellation channel**, and owns its retry policy
-  (pings are issued with retries disabled). It gives up after five
-  *consecutive* failures — resetting on success, which Python does not —
-  logging at `warn`, and lets the run continue. Its ~20 s give-up window
-  must stay well inside the jobs API's **five-minute** stalled-job sweep.
+- **The ping loop is the cancellation channel, and a 401 is the signal.** A
+  job key stops authenticating the moment its job reaches a terminal state,
+  so a refused ping means the job is over — cancelled, or failed by the
+  sweep — and the loop calls `signals.cancel()`. There is deliberately **no
+  `cancelled` flag** on `JobPing`, which carries only `pingedAt`: a flag
+  would have to be readable by a credential the same transition revokes,
+  and it would speak only for `cancelled`. The jobs API names the state in
+  the 401 body and the loop *logs* that message without branching on it —
+  a broken credential produces the same 401, and `Invalid credentials`
+  rather than `Job is cancelled.` in the logs is how that bug is caught.
+- **The ping loop owns its retry policy** (pings are issued with retries
+  disabled). A 401 is neither retried nor counted; every other failure is,
+  and it gives up after five *consecutive* failures — resetting on success,
+  which Python does not — logging at `warn`, and lets the run continue. Its
+  ~20 s give-up window must stay well inside the jobs API's **five-minute**
+  stalled-job sweep.
 - **A failed workflow exits 0.** Failure is an API-side transition and a
   non-zero exit makes the `ScaledJob` retry the pod. Only a broken pod exits
   1; only SIGTERM exits 124. There is deliberately no failure call to make —

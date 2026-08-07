@@ -1,4 +1,5 @@
 import type { Db } from "@virtool/data/db/pg";
+import { jsonError } from "../http";
 import { type JobPrincipal, verifyJobRequest } from "./verify";
 
 /**
@@ -27,19 +28,29 @@ import { type JobPrincipal, verifyJobRequest } from "./verify";
  * browser. Sending it would only invite an interactive retry loop against a
  * service where the credential is minted once, at claim time.
  *
- * The body is a fixed string for the same reason {@link verifyJobRequest}
- * returns a bare `null`: a runner learns that it may not proceed, and nothing
- * about which of the checks turned it away.
+ * The body is a fixed string: a runner learns that it may not proceed, and
+ * nothing about which of the checks turned it away.
+ *
+ * The exception is a job that has finished, which answers a JSON body naming
+ * the state — `Job is cancelled.` A runner has no channel but this one to learn
+ * it should stop, and three indistinguishable 401s would leave a cancellation,
+ * a ping-timeout sweep and its own broken credential looking identical in the
+ * logs. It gives a prober nothing, because it sits behind the key comparison;
+ * see {@link verifyJobRequest}.
  */
 export async function requireJobRequest(
 	db: Db,
 	request: Request,
 ): Promise<JobPrincipal | Response> {
-	const principal = await verifyJobRequest(db, request);
+	const result = await verifyJobRequest(db, request);
 
-	if (!principal) {
-		return new Response("Unauthorized", { status: 401 });
+	if (result.ok) {
+		return result.principal;
 	}
 
-	return principal;
+	if (result.terminalMessage) {
+		return jsonError(401, result.terminalMessage);
+	}
+
+	return new Response("Unauthorized", { status: 401 });
 }

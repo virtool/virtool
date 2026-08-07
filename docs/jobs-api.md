@@ -43,6 +43,7 @@ process:
 | `src/auth/verify.ts` | `verifyJobRequest` — the job credential check |
 | `src/auth/guard.ts` | `requireJobRequest` — the guard every handler starts with |
 | `src/auth/test/fixtures.ts` | `seedJob` — a job row and the plaintext key for it |
+| `src/jobs/handlers.ts` | The five lifecycle routes |
 | `src/caches/handlers.ts` | Cache lookup and registration |
 | `src/metrics/registry.ts` | `createMetrics` — this process's Prometheus registry |
 | `src/metrics/jobs.ts` | `createJobQueueReader` — the memoized job-queue read |
@@ -91,14 +92,24 @@ than shipping open. That test landed with the skeleton and before any
 endpoint, deliberately: a guard added after the endpoints it guards is a
 guard written to match whatever those endpoints already do.
 
-`PUBLIC_ROUTES` holds exactly two entries, both Kubernetes probes:
+`PUBLIC_ROUTES` holds exactly three entries:
 
 - `/health/live`
 - `/health/ready`
+- `/jobs/claim`
 
-The kubelet presents no credential, and a readiness probe that could
-fail closed on an auth problem would take the pod out of service for the
-wrong reason. Neither reveals anything beyond whether Postgres answers.
+The first two are Kubernetes probes. The kubelet presents no credential,
+and a readiness probe that could fail closed on an auth problem would
+take the pod out of service for the wrong reason. Neither reveals
+anything beyond whether Postgres answers.
+
+`POST /jobs/claim` is public because it has to be. The key a runner
+authenticates every later request with is minted by that call and
+returned in its response, so a caller has nothing to present yet — a pod
+started by a KEDA `ScaledJob` knows neither its job id nor its key until
+it claims. Python's `ClaimJobView` carries `PublicRoutePolicy` for the
+same reason. What bounds it is the network: this service has no ingress,
+so reaching the endpoint at all means already being inside the cluster.
 
 `/metrics` is deliberately **not** in that list. It enforces its own
 bearer token and is expected to refuse like everything else.
@@ -149,9 +160,25 @@ alike. The 401 carries **no `WWW-Authenticate` header**: that header
 exists to make a browser prompt, and a runner's key is minted once, at
 claim time, so there is nothing an interactive retry could supply.
 
-Every failure returns an identical, opaque 401. Nothing distinguishes an
-unknown job from a wrong key from a finished one — the most useful thing
-a caller could otherwise learn is which job ids exist.
+Every failure short of a correct key returns an identical, opaque 401
+with the body `Unauthorized`. Nothing distinguishes an unknown job from a
+wrong key — the most useful thing a caller could otherwise learn is which
+job ids exist.
+
+The one refusal that says more is a job that has finished, and it is safe
+because of **where it sits**: the terminal-state check is step 8, after
+the key comparison at step 7, so only a caller already holding that job's
+key can reach it. Its body is JSON naming the state:
+
+| State | Body |
+| --- | --- |
+| `cancelled` | `{"message": "Job is cancelled."}` |
+| `failed` | `{"message": "Job has failed."}` |
+| `succeeded` | `{"message": "Job has succeeded."}` |
+
+The states and their messages are one structure in `verify.ts`, not two,
+so a state cannot be terminal for the purposes of refusing a key and
+unknown for the purposes of saying why.
 
 ### Terminal state is the whole of key revocation
 
@@ -162,6 +189,20 @@ why the state is re-read on every request rather than trusted at claim
 time. A runner pod that outlives the job it claimed still holds a
 syntactically valid credential, and that check is what stops it being
 accepted.
+
+**This is also the cancellation channel, and the whole of it.** A running
+workflow has no other way to learn it should stop: it pings every five
+seconds, and the ping it gets a 401 for is the signal. There is
+deliberately no `cancelled` flag on the ping response — a flag would have
+to be readable by a credential the same transition revokes, and it would
+speak only for `cancelled`, when a job swept up by the ping timeout is
+`failed` and its runner has to stop just as surely.
+
+That is why the refusal names the state. The runner's behaviour is
+identical for all three, so it does not parse the message; it logs it. A
+401 is also what a genuinely broken credential produces, and a pod
+stopping on `Invalid credentials` rather than `Job is cancelled.` is a
+bug that would otherwise be invisible.
 
 ### The two local copies
 
@@ -222,6 +263,126 @@ Both fold `checkPostgres` through `summarizeReadiness` from
 services' probes cannot drift. Neither requires the metrics token: a
 probe that needed a credential would be one more thing to get wrong
 during a rollout.
+
+## The job lifecycle
+
+Five routes carry a run from start to finish. Paths match Python's byte
+for byte, with no prefix — a separate app has no SPA to collide with.
+
+| Route | Meaning | Statuses |
+| --- | --- | --- |
+| `POST /jobs/claim?workflow=` | Take the oldest waiting job | `200`, `404` none waiting, `422` unclaimable workflow |
+| `GET /jobs/{id}` | Read the job, and its `args` | `200`, `403`, `404` |
+| `PUT /jobs/{id}/ping` | Heartbeat | `200`, `401` terminal, `403`, `404` |
+| `POST /jobs/{id}/steps/{stepId}/start` | Stamp a step's start time | `200`, `403`, `404`, `409` |
+| `POST /jobs/{id}/finish` | Move a running job to `succeeded` | `200`, `403`, `404`, `409` |
+
+Every field crossing this wire is camelCase; the `claim` and `steps`
+JSONB columns underneath stay snake_case, because Python reads and writes
+the same bytes. `fromStoredJobClaim` / `fromStoredJobStep` in
+`@virtool/contracts` are the only crossing points, and a route must never
+return a JSONB element straight out of the column.
+
+### Timestamps are `Date`, on both sides
+
+The wire contract types every timestamp as a `Date` — `z.coerce.date()`
+behind the `timestamp` alias in `jobsApi.ts` — so a handler passes the
+`Date` it read out of Postgres straight to `Response.json`, and the
+runtime's client gets a `Date` back rather than a string every caller
+has to remember to parse. **No handler calls `toISOString`.**
+
+The bytes are unchanged. JSON has no date type, so `JSON.stringify`
+calls `Date.prototype.toJSON` and produces exactly the ISO-8601 string
+Python's serialiser does. That is worth pinning rather than assuming,
+which is what the wire-encoding tests in `jobs/handlers.test.ts` and
+`jobsApi.test.ts` are for: a type change here is free to move the bytes
+silently, and Python reads them.
+
+Two things the schema has to do that `z.date()` would not. It accepts
+the *string* the wire actually carries, which is why it is `coerce`; and
+it refuses one it cannot read, which is why it carries a refinement —
+`coerce` runs `new Date(value)`, and that answers `Invalid Date` rather
+than throwing, so without the check a malformed timestamp parses cleanly
+and surfaces as `NaN` much later in a run.
+
+**`steps[].started_at` is the exception and stays a string.** It lives
+inside a JSONB array Python reads and writes, and `jsonb` revives no
+dates on either side. `fromStoredJobStep` / `toStoredJobStep` are where
+the two spellings meet, so nothing else converts by hand.
+
+This is the jobs API's contract only. The other domains in
+`@virtool/contracts` still type their timestamps as strings, and moving
+them is its own change — the SPA-facing shapes drag components in.
+
+There is **no delete and no failure route**. A job fails by being
+cancelled or by Python's stalled-job sweep, neither of which a runner
+drives, so a workflow that fails simply stops calling.
+
+### Claiming is a lock, not a query
+
+`claimJob` (`@virtool/data/jobs/data`) selects the oldest row matching
+the workflow with `acquired = false` and `state = 'pending'`, under
+`FOR UPDATE SKIP LOCKED` over a one-row window, then flips `acquired`,
+`claim`, `claimed_at`, `key`, `pinged_at`, `state` and `steps` in the
+same transaction.
+
+`SKIP LOCKED` is what makes a fleet starting together safe: each runner
+locks a different row rather than queueing on the same one and then
+finding it taken. Without it a wave of pods serialises, and every one but
+the first wakes to a row that is no longer pending.
+
+The key is 32 random bytes as hex (`newJobKey`, matching Python's
+`secrets.token_hex(32)`), and only its SHA-256 is written. The plaintext
+is returned in the claim response and **never again** — no read endpoint
+carries it, and a runner that loses it cannot finish its job.
+
+`build_index` is refused at claim with `422`. The rows exist and must
+still parse on the read path, but Python builds indexes through the
+`create_index` *task* now, not a job, so nothing is waiting on that
+workflow and handing one out would start a pod nothing finishes.
+`ClaimableJobWorkflow` in `@virtool/contracts` is the narrowed enum the
+query parameter is validated against, and `@virtool/workflow`'s
+`VT_WORKFLOW` reads the same one.
+
+### Progress is derived, never stored
+
+There is no `progress` column. A job's progress is the fraction of its
+steps that have started, computed on read by `computeProgress` — terminal
+is 100%, running is `floor(started / total * 100)`, everything else is 0.
+That is what makes starting a step twice a `409` rather than a no-op: a
+silent restamp would move a job's progress without moving its work.
+
+A step's `started_at` lives inside the `steps` JSONB array, which SQL
+cannot address one element of, so the whole array is read, one element
+replaced, and the whole array written back. The row is held `FOR UPDATE`
+across that read-modify-write — two steps starting at once would
+otherwise each write an array built from the state before the other, and
+the loser's timestamp would vanish.
+
+### Which routes emit
+
+`emit("jobs", id, "update")` fires after the transaction commits on
+**claim, step start and finish**. Ping emits nothing: a running job pings
+every five seconds and every job on screen holds its own `detail(id)`
+query, so a frame each would cost a refetch per job per five seconds for
+a timestamp no view displays.
+
+That emitter is installed in `src/index.ts` with
+`createEmitter({ client, logger })`. `emit` throws when nothing has been
+created, so without that call every mutating route in this service —
+finalize included — answers 500 having already committed its work.
+
+### The job in the path must be the job in the credential
+
+A mismatch is **403**, from `requireOwnJob` in `src/jobs/handlers.ts`.
+Python enforces this inside its auth middleware; here it is the handlers'
+job, because it is a rule about a route's path rather than a property of
+the credential — which is what `JobPrincipal` carrying `jobId` is for.
+
+403 rather than 404: the caller authenticated successfully and is asking
+about a job that is simply not its own. Hiding the job's existence would
+buy nothing, because a runner holding a valid key already knows job ids
+are consecutive integers.
 
 ## Caches
 
@@ -758,7 +919,11 @@ for this service:
 
 ## What is not here yet
 
-This service serves health, metrics, the two cache endpoints and the
-three finalize routes. The job lifecycle endpoints — claim, ping, step
-start and finish — each land in their own issue, against the wire
-contract already written in `packages/contracts/src/jobsApi.ts`.
+This service serves health, metrics, the job lifecycle, the two cache
+endpoints and the three finalize routes — the whole of the surface
+`packages/contracts/src/jobsApi.ts` describes.
+
+What stays Python's: cancelling a job, deleting one, the counts
+endpoint, and the five-minute stalled-job sweep that fails a job whose
+last ping is too old. Nothing here writes `cancelled` or `failed`, which
+is why there is no failure route for a runner to call.

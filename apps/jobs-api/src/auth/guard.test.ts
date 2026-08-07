@@ -68,10 +68,11 @@ describe("requireJobRequest", () => {
 		expect(result.headers.get("www-authenticate")).toBeNull();
 	});
 
-	// Every rejection has to look identical from outside. A body or status that
-	// varied would tell a caller which of the checks turned it away, and the
-	// most useful thing to learn that way is whether a given job id exists.
-	it("refuses every failure identically", async () => {
+	// Every rejection short of a correct key has to look identical from outside.
+	// A body or status that varied would tell a caller which of the checks
+	// turned it away, and the most useful thing to learn that way is whether a
+	// given job id exists.
+	it("refuses every unauthenticated failure identically", async () => {
 		const job = await seedJob(db, userId, { state: "succeeded" });
 
 		const responses = await Promise.all(
@@ -80,7 +81,9 @@ describe("requireJobRequest", () => {
 				request("job-1", "not-the-key"),
 				request("job-99999999", "not-the-key"),
 				request("alice", job.key),
-				request(`job-${job.id}`, job.key),
+				// The right job, in a terminal state, but the wrong key. Nothing
+				// about the state may reach a caller who has not proved it holds one.
+				request(`job-${job.id}`, "not-the-key"),
 			].map((each) => requireJobRequest(db, each)),
 		);
 
@@ -89,5 +92,24 @@ describe("requireJobRequest", () => {
 			expect((response as Response).status).toBe(401);
 			expect(await (response as Response).text()).toBe("Unauthorized");
 		}
+	});
+
+	// The runner's only channel. A ping refused with three indistinguishable
+	// 401s leaves a cancellation, a ping-timeout sweep and a broken credential
+	// looking the same in the logs of a pod that has just stopped working.
+	it.each([
+		["cancelled", "Job is cancelled."],
+		["failed", "Job has failed."],
+		["succeeded", "Job has succeeded."],
+	])("tells a key holder its job has %s", async (state, message) => {
+		const job = await seedJob(db, userId, { state });
+
+		const response = (await requireJobRequest(
+			db,
+			request(`job-${job.id}`, job.key),
+		)) as Response;
+
+		expect(response.status).toBe(401);
+		expect(await response.json()).toEqual({ message });
 	});
 });

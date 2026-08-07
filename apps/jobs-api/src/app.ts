@@ -6,6 +6,13 @@ import { Hono } from "hono";
 import { routePath } from "hono/route";
 import { handleFinalizeAnalysis } from "./analyses/handlers";
 import { handleGetCache, handleRegisterCache } from "./caches/handlers";
+import {
+	handleClaimJob,
+	handleFinishJob,
+	handlePingJob,
+	handleReadJob,
+	handleStartJobStep,
+} from "./jobs/handlers";
 import { handleMetrics } from "./metrics/handler";
 import { createJobQueueReader } from "./metrics/jobs";
 import type { Metrics } from "./metrics/registry";
@@ -21,15 +28,27 @@ import { handleFinalizeSubtraction } from "./subtraction/handlers";
  * shipping an open endpoint to a service whose whole premise is that its
  * surface is guarded.
  *
- * Both entries are Kubernetes probes. The kubelet presents no credential, and a
+ * The first two are Kubernetes probes. The kubelet presents no credential, and a
  * readiness probe that could fail closed on an auth problem would take the pod
  * out of service for the wrong reason. Neither reveals anything beyond whether
  * Postgres answers.
  *
+ * `POST /jobs/claim` is public because it **has** to be: the key a runner
+ * authenticates every later request with is minted by that call and returned in
+ * its response, so a caller has nothing to present yet. A pod started by a KEDA
+ * `ScaledJob` knows neither its job id nor its key until it claims. Python's
+ * `ClaimJobView` carries `PublicRoutePolicy` for the same reason. What bounds it
+ * is the network: this service has no ingress, so reaching the endpoint at all
+ * means already being inside the cluster.
+ *
  * `/metrics` is deliberately **not** here: it enforces its own bearer token and
  * is expected to refuse like everything else.
  */
-export const PUBLIC_ROUTES = ["/health/live", "/health/ready"] as const;
+export const PUBLIC_ROUTES = [
+	"/health/live",
+	"/health/ready",
+	"/jobs/claim",
+] as const;
 
 /** What {@link createApp} needs to serve. */
 export type AppDeps = {
@@ -94,6 +113,36 @@ export function createApp(deps: AppDeps): Hono {
 			report.statusCode,
 		);
 	});
+
+	// The job lifecycle: claim, read, heartbeat, step start, finish. There is
+	// deliberately no failure route and no delete — a job fails by being
+	// cancelled or by Python's stalled-job sweep, neither of which a runner
+	// drives.
+	//
+	// `/jobs/claim` cannot collide with `/jobs/:jobId`: nothing serves POST on
+	// the latter, and Hono prefers a static segment over a parameter regardless.
+	app.post("/jobs/claim", (c) => handleClaimJob(deps, c.req.raw));
+
+	app.get("/jobs/:jobId", (c) =>
+		handleReadJob(deps, c.req.raw, c.req.param("jobId")),
+	);
+
+	app.put("/jobs/:jobId/ping", (c) =>
+		handlePingJob(deps, c.req.raw, c.req.param("jobId")),
+	);
+
+	app.post("/jobs/:jobId/steps/:stepId/start", (c) =>
+		handleStartJobStep(
+			deps,
+			c.req.raw,
+			c.req.param("jobId"),
+			c.req.param("stepId"),
+		),
+	);
+
+	app.post("/jobs/:jobId/finish", (c) =>
+		handleFinishJob(deps, c.req.raw, c.req.param("jobId")),
+	);
 
 	// Python serves these at the same paths, with no prefix — a separate app has
 	// no SPA to collide with. Each handler calls the job-auth guard itself;

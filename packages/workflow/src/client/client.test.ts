@@ -102,10 +102,7 @@ describe("paths", () => {
 	it("uses unprefixed paths matching python's", async () => {
 		const client = await setup((request, response) => {
 			if (request.path.endsWith("/ping")) {
-				respondJson(response, 200, {
-					cancelled: false,
-					pingedAt: "2026-08-05T00:00:00Z",
-				});
+				respondJson(response, 200, { pingedAt: "2026-08-05T00:00:00Z" });
 				return;
 			}
 

@@ -2,12 +2,16 @@ import { randomBytes } from "node:crypto";
 
 import { hashToken } from "@virtool/data/auth/tokens";
 import type { Db } from "@virtool/data/db/pg";
-import { jobs } from "@virtool/data/db/schema/jobs";
+import { type JobStep, jobs } from "@virtool/data/db/schema/jobs";
 
 /** What {@link seedJob} accepts. */
 export type SeedJobOptions = {
+	/** Backdates the row, so a test can pin which of several jobs a claim takes. */
+	createdAt?: Date;
 	/** One of the job lifecycle states. `running` unless a test needs another. */
 	state?: string;
+	/** The `steps` JSONB array. Null, as it is before a claim, unless given. */
+	steps?: JobStep[];
 	/** Leave `key` null, as it is on a job nobody has claimed. */
 	withKey?: boolean;
 	workflow?: string;
@@ -39,7 +43,9 @@ export async function seedJob(
 	db: Db,
 	userId: number,
 	{
+		createdAt = new Date(),
 		state = "running",
+		steps,
 		withKey = true,
 		workflow = "pathoscope",
 	}: SeedJobOptions = {},
@@ -49,9 +55,11 @@ export async function seedJob(
 	const [job] = await db
 		.insert(jobs)
 		.values({
-			created_at: new Date(),
+			acquired: withKey,
+			created_at: createdAt,
 			key: withKey ? hashToken(key) : null,
 			state,
+			steps: steps ?? null,
 			user_id: userId,
 			workflow,
 		})

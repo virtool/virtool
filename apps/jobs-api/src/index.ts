@@ -1,5 +1,6 @@
 import { serve } from "@hono/node-server";
 import { createDb, logPostgresVersion } from "@virtool/data/db/pg";
+import { createEmitter } from "@virtool/data/events/emit";
 import { createStorageBackend } from "@virtool/storage";
 import { createApp } from "./app";
 import { parseConfig } from "./config";
@@ -14,6 +15,12 @@ const config = parseConfig();
 initSentry(config.sentryDsn);
 
 const { client, db, applicationName } = createDb(config, SERVICE);
+
+// Installs the process-wide client-event emitter. Every data function that
+// mutates a row calls `emit`, which throws if nothing has been created — so
+// without this the finalize and lifecycle routes answer 500 having already
+// committed their work.
+createEmitter({ client, logger });
 
 const app = createApp({
 	client,

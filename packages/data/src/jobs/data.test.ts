@@ -1,3 +1,4 @@
+import { eq } from "drizzle-orm";
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
 
 import { seedUser } from "../auth/test/fixtures";
@@ -9,11 +10,20 @@ import { legacySamples } from "../db/schema/samples";
 import { users } from "../db/schema/users";
 import { createTestDatabase, type TestDatabase } from "../db/test/fixtures";
 import {
+	claimJob,
+	finishJob,
 	getJob,
 	getJobs,
 	JobNotFoundError,
+	JobNotRunningError,
+	JobStepAlreadyStartedError,
+	JobStepNotFoundError,
+	JobTerminalStateError,
+	NoJobAvailableError,
+	pingJob,
 	readJobCounts,
 	readOldestPendingJobAges,
+	startJobStep,
 } from "./data";
 
 let database: TestDatabase;
@@ -184,6 +194,119 @@ describe("getJob", () => {
 		const job = await getJob(db, jobId);
 
 		expect(job.args.index_id).toBe(String(index.id));
+	});
+});
+
+// The lifecycle transitions the jobs API serves. Most of their behaviour is
+// pinned through the handlers that call them; what is here is the part HTTP
+// cannot reach, because a job key stops authenticating the moment its job
+// reaches a terminal state and the guard turns the request away first.
+describe("the lifecycle transitions", () => {
+	const steps = [
+		{ id: "first", name: "First", description: "the first step" },
+		{ id: "second", name: "Second", description: "the second step" },
+	];
+
+	function claim() {
+		return claimJob(db, "pathoscope", {
+			claim: {
+				runner_id: "runner-1",
+				mem: 4,
+				cpu: 2,
+				image: "image",
+				runtime_version: "1.0.0",
+				workflow_version: "2.0.0",
+			},
+			steps,
+		});
+	}
+
+	/** Put a job in the queue and take it, the way a run starts. */
+	async function claimFresh() {
+		await seedJob("pending", { started: 0, of: 0 });
+
+		return claim();
+	}
+
+	it("refuses to claim when nothing is waiting", async () => {
+		await expect(claim()).rejects.toBeInstanceOf(NoJobAvailableError);
+	});
+
+	// The row is read, one element replaced and the whole array written back,
+	// because a JSONB array has no addressable element in SQL. This pins that
+	// merge: neither call may write back an array built from the state before
+	// the other. It does **not** prove the `FOR UPDATE` — the test fixture opens
+	// a single connection, so these two transactions queue rather than race, and
+	// the lock is what carries the same guarantee against a real pool.
+	it("keeps both steps when they start at the same moment", async () => {
+		const claimed = await claimFresh();
+
+		await Promise.all([
+			startJobStep(db, claimed.id, "first"),
+			startJobStep(db, claimed.id, "second"),
+		]);
+
+		const job = await getJob(db, claimed.id);
+
+		expect(job.steps?.every((step) => step.started_at !== null)).toBe(true);
+		expect(job.progress).toBe(100);
+	});
+
+	// Only reachable as a race: the guard reads the state, and the job is
+	// cancelled before the transaction below takes its lock. Rare, and the
+	// reason the check is here rather than trusted from the guard's read.
+	it("refuses to start a step on a job that has reached a terminal state", async () => {
+		const claimed = await claimFresh();
+
+		await db
+			.update(jobs)
+			.set({ state: "cancelled" })
+			.where(eq(jobs.id, claimed.id));
+
+		await expect(startJobStep(db, claimed.id, "first")).rejects.toBeInstanceOf(
+			JobTerminalStateError,
+		);
+	});
+
+	it("refuses to start a step the job does not have", async () => {
+		const claimed = await claimFresh();
+
+		await expect(startJobStep(db, claimed.id, "third")).rejects.toBeInstanceOf(
+			JobStepNotFoundError,
+		);
+	});
+
+	it("refuses to start a step twice", async () => {
+		const claimed = await claimFresh();
+
+		await startJobStep(db, claimed.id, "first");
+
+		await expect(startJobStep(db, claimed.id, "first")).rejects.toBeInstanceOf(
+			JobStepAlreadyStartedError,
+		);
+	});
+
+	it.each(["pending", "cancelled", "failed", "succeeded"])(
+		"refuses to finish a job that is %s",
+		async (state) => {
+			const claimed = await claimFresh();
+
+			await db.update(jobs).set({ state }).where(eq(jobs.id, claimed.id));
+
+			await expect(finishJob(db, claimed.id)).rejects.toBeInstanceOf(
+				JobNotRunningError,
+			);
+		},
+	);
+
+	it("reports a ping against a job that no longer exists", async () => {
+		const claimed = await claimFresh();
+
+		await db.delete(jobs).where(eq(jobs.id, claimed.id));
+
+		await expect(pingJob(db, claimed.id)).rejects.toBeInstanceOf(
+			JobNotFoundError,
+		);
 	});
 });
 

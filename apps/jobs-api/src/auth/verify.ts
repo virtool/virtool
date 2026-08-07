@@ -5,7 +5,8 @@ import { jobs } from "@virtool/data/db/schema/jobs";
 import { eq } from "drizzle-orm";
 
 /**
- * The states a job never leaves.
+ * The states a job never leaves, and what a runner holding a key for one is
+ * told.
  *
  * Mirrors Python's `TERMINAL_JOB_STATES` in `virtool/jobs/models.py`.
  *
@@ -16,8 +17,22 @@ import { eq } from "drizzle-orm";
  * request rather than trusted at claim time: a runner pod that outlives the job
  * it claimed still holds a syntactically valid credential, and this check is
  * what stops it being accepted.
+ *
+ * The states and their messages are one structure rather than two, so a state
+ * cannot be terminal for the purposes of refusing a key and unknown for the
+ * purposes of saying why. A state absent from it is not terminal.
+ *
+ * **This is the cancellation channel.** A running workflow learns it should
+ * stop by having its next ping refused, so the message is what tells its
+ * operator whether the job was cancelled, swept up by the ping timeout, or
+ * already finished. See {@link verifyJobRequest} for why saying so leaks
+ * nothing.
  */
-const TERMINAL_STATES = new Set(["cancelled", "failed", "succeeded"]);
+const TERMINAL_REFUSALS: Record<string, string> = {
+	cancelled: "Job is cancelled.",
+	failed: "Job has failed.",
+	succeeded: "Job has succeeded.",
+};
 
 /**
  * The `job-{id}` login carried by the Basic credentials.
@@ -111,14 +126,35 @@ export type JobPrincipal = {
 };
 
 /**
+ * The outcome of checking a request's job credential.
+ *
+ * `terminalMessage` is set only when the credential was **correct** and the job
+ * it names has finished. Every other refusal leaves it `null`, so the caller
+ * cannot accidentally tell an anonymous prober anything.
+ */
+export type JobVerification =
+	| { ok: true; principal: JobPrincipal }
+	| { ok: false; terminalMessage: string | null };
+
+const REJECTED: JobVerification = { ok: false, terminalMessage: null };
+
+/**
  * Resolve the job behind a request from its HTTP Basic `Authorization` header,
  * which a runner sends as `job-{id}:{key}`.
  *
- * Returns `null` for every failure — no header, a malformed one, a login that
- * is not a job, an unknown or keyless job, a wrong key, or a job that has
- * finished — so the caller answers one opaque 401 without saying which check
- * failed. There is **no cookie fallback**: this service has no session model
- * and nothing that reaches it holds a browser session.
+ * Refuses on every failure — no header, a malformed one, a login that is not a
+ * job, an unknown or keyless job, a wrong key, or a job that has finished — so
+ * the caller answers 401 without saying which check failed. There is **no
+ * cookie fallback**: this service has no session model and nothing that reaches
+ * it holds a browser session.
+ *
+ * The one refusal that says more is a finished job, and it is safe because of
+ * where it sits: the terminal check runs **after** the key comparison, so only
+ * a caller already holding that job's key can reach it. A prober gets the same
+ * opaque refusal as ever, and the thing opacity is protecting — which job ids
+ * exist — stays hidden. What it buys is a runner that can tell a cancellation
+ * from a ping-timeout sweep from its own broken credential, which is otherwise
+ * three indistinguishable 401s on the one channel it has.
  *
  * Mirrors Python's `virtool/jobs/auth.py` middleware, with two deliberate
  * differences. The login is matched against an anchored pattern rather than
@@ -129,29 +165,29 @@ export type JobPrincipal = {
 export async function verifyJobRequest(
 	db: Db,
 	request: Request,
-): Promise<JobPrincipal | null> {
+): Promise<JobVerification> {
 	const header = request.headers.get("authorization");
 
 	if (!header) {
-		return null;
+		return REJECTED;
 	}
 
 	const credentials = parseBasicAuthHeader(header);
 
 	if (!credentials) {
-		return null;
+		return REJECTED;
 	}
 
 	const digits = JOB_LOGIN.exec(credentials.login)?.[1];
 
 	if (!digits) {
-		return null;
+		return REJECTED;
 	}
 
 	const jobId = Number(digits);
 
 	if (jobId < 1 || jobId > MAX_JOB_ID) {
-		return null;
+		return REJECTED;
 	}
 
 	const [row] = await db
@@ -163,7 +199,7 @@ export async function verifyJobRequest(
 	// A job that has no key was never claimed, so nothing can be authenticating
 	// as it. Guarding here also keeps the comparison below off a null.
 	if (!row?.key) {
-		return null;
+		return REJECTED;
 	}
 
 	const expected = Buffer.from(row.key, "utf8");
@@ -177,12 +213,16 @@ export async function verifyJobRequest(
 		expected.length !== provided.length ||
 		!timingSafeEqual(expected, provided)
 	) {
-		return null;
+		return REJECTED;
 	}
 
-	if (TERMINAL_STATES.has(row.state)) {
-		return null;
+	// Past the key comparison, so everything below is being told to a caller who
+	// has proved it holds this job's key.
+	const terminalMessage = TERMINAL_REFUSALS[row.state];
+
+	if (terminalMessage) {
+		return { ok: false, terminalMessage };
 	}
 
-	return { jobId };
+	return { ok: true, principal: { jobId } };
 }

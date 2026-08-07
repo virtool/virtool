@@ -1,4 +1,4 @@
-import { JobWorkflow } from "@virtool/contracts";
+import { ClaimableJobWorkflow } from "@virtool/contracts";
 import { resolveFileBacked } from "@virtool/contracts/env";
 import { z } from "zod";
 import { WorkflowError } from "./errors";
@@ -34,7 +34,7 @@ const schema = z.object({
 	VT_JOBS_API_URL: z.string().min(1),
 	VT_MEM: positiveInteger.default(4),
 	VT_PROC: positiveInteger.default(2),
-	VT_WORKFLOW: JobWorkflow,
+	VT_WORKFLOW: ClaimableJobWorkflow,
 	// Python defaults this to the relative path `temp`, and `createWorkPath`
 	// deletes whatever it points at. Required here instead.
 	VT_WORK_PATH: z.string().min(1),
@@ -48,7 +48,7 @@ export type WorkflowRunConfig = {
 	jobsApiUrl: string;
 	mem: number;
 	proc: number;
-	workflow: JobWorkflow;
+	workflow: ClaimableJobWorkflow;
 	workPath: string;
 	timeout: number;
 	sentryDsn?: string;

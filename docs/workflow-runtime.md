@@ -217,9 +217,10 @@ that as a step failure would report a cancelled job as `error`/`failure`
 and lose the cancellation entirely, so a rejection arriving while
 `signal.aborted` is set takes the abort path instead.
 
-`createRunSignals` replaces Python's `Events`. Both `cancel()` (a ping
-response reported `cancelled: true`) and `terminate()` (SIGTERM) abort the
-same signal; the flags are what tells the two apart afterwards.
+`createRunSignals` replaces Python's `Events`. Both `cancel()` (the jobs API
+refused a ping, so the job has reached a terminal state) and `terminate()`
+(SIGTERM) abort the same signal; the flags are what tells the two apart
+afterwards.
 
 ## The subprocess runner
 
@@ -452,12 +453,35 @@ stringified JSON, else the response text, else a fixed fallback — mirroring
 `api/utils.py:124-142`. Python raises a bare `ValueError` for an unmapped
 status; a named error carrying the status is the improvement.
 
-### The ping loop is the cancellation channel
+### The ping loop is the cancellation channel, and a refusal is the signal
 
-`startPingLoop` sleeps 100 ms, pings, then sleeps 5 s and repeats. A
-response with `cancelled: true` calls `signals.cancel()`, which aborts the
-run's signal and unwinds the run loop. A runner has no other way to learn it
-should stop.
+`startPingLoop` sleeps 100 ms, pings, then sleeps 5 s and repeats. A ping
+answered **401** calls `signals.cancel()`, which aborts the run's signal and
+unwinds the run loop. A runner has no other way to learn it should stop.
+
+A 401 is the signal because a job key stops authenticating the moment its
+job reaches a terminal state — that is the whole of key revocation on the
+jobs API side. So a refused ping means the job is over: cancelled by a
+user, or failed by the five-minute stalled-job sweep after this pod lost
+contact. The run has nothing left to report either way.
+
+There is deliberately **no `cancelled` flag on the ping response**, and
+`JobPing` carries only `pingedAt`, matching Python's model. A flag would
+have to be readable by a credential the same transition revokes, and it
+would speak only for `cancelled` — a job the sweep failed is `failed`, and
+its runner has to stop just as surely.
+
+A 401 is also what a genuinely broken credential produces, and the loop
+cannot tell the two apart. It does not need to: the response is identical
+either way. But the jobs API names the terminal state in the body
+(`Job is cancelled.`, `Job has failed.`, `Job has succeeded.`), so the loop
+logs that message rather than asserting a cancellation. A pod stopping on
+`Invalid credentials` is a bug, and swallowing the jobs API's own words is
+what would hide it. Nothing parses the message — behaviour does not branch
+on it.
+
+A refusal is **not** counted toward the give-up budget below and is never
+retried. It is a decision the jobs API made, not a blip.
 
 Ping requests are issued with **retries disabled** and bounded by the
 loop's own signal, so the loop owns the policy end to end. The second half
@@ -536,7 +560,7 @@ unset value.
 | --- | --- |
 | `VT_JOBS_API_URL` | **none — required** |
 | `VT_WORK_PATH` | **none — required** |
-| `VT_WORKFLOW` | none — required, parsed as `JobWorkflow` |
+| `VT_WORKFLOW` | none — required, parsed as `ClaimableJobWorkflow` |
 | `VT_MEM` | `4` |
 | `VT_PROC` | `2` |
 | `VT_TIMEOUT` | `1000` — **seconds**, matching Python's `asyncio.timeout` |
