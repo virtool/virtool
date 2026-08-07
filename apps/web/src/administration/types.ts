@@ -18,7 +18,6 @@ export type AdministratorRole = {
  */
 export type Settings = {
 	defaultSourceTypes: string[];
-	enableApi: boolean;
 	enableSentry: boolean;
 	minimumPasswordLength: number;
 	sampleAllRead: boolean;

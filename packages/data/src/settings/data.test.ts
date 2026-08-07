@@ -30,7 +30,7 @@ describe("getSettings", () => {
 	it("returns the stored settings", async () => {
 		await seedSettings(db, {
 			defaultSourceTypes: ["genotype", "serotype"],
-			enableApi: true,
+			enableSentry: false,
 			minimumPasswordLength: 12,
 			sampleGroup: "force_choice",
 		});
@@ -38,7 +38,7 @@ describe("getSettings", () => {
 		await expect(getSettings(db)).resolves.toEqual({
 			...DEFAULT_SETTINGS,
 			defaultSourceTypes: ["genotype", "serotype"],
-			enableApi: true,
+			enableSentry: false,
 			minimumPasswordLength: 12,
 			sampleGroup: "force_choice",
 		});
@@ -87,18 +87,18 @@ describe("getSettings", () => {
 
 describe("updateSettings", () => {
 	it("applies the given values and returns the full settings", async () => {
-		await seedSettings(db, { enableApi: false, minimumPasswordLength: 8 });
+		await seedSettings(db, { enableSentry: true, minimumPasswordLength: 8 });
 
 		await expect(
-			updateSettings(db, { enableApi: true, minimumPasswordLength: 12 }),
+			updateSettings(db, { enableSentry: false, minimumPasswordLength: 12 }),
 		).resolves.toEqual({
 			...DEFAULT_SETTINGS,
-			enableApi: true,
+			enableSentry: false,
 			minimumPasswordLength: 12,
 		});
 
 		await expect(getSettings(db)).resolves.toMatchObject({
-			enableApi: true,
+			enableSentry: false,
 			minimumPasswordLength: 12,
 		});
 	});
@@ -109,19 +109,19 @@ describe("updateSettings", () => {
 			sampleGroup: "force_choice",
 		});
 
-		await updateSettings(db, { enableApi: true });
+		await updateSettings(db, { enableSentry: false });
 
 		await expect(getSettings(db)).resolves.toMatchObject({
 			defaultSourceTypes: ["genotype"],
 			sampleGroup: "force_choice",
-			enableApi: true,
+			enableSentry: false,
 		});
 	});
 
 	it("seeds the defaults when the row is absent", async () => {
-		await expect(updateSettings(db, { enableApi: true })).resolves.toEqual({
+		await expect(updateSettings(db, { enableSentry: false })).resolves.toEqual({
 			...DEFAULT_SETTINGS,
-			enableApi: true,
+			enableSentry: false,
 		});
 
 		await expect(countRows()).resolves.toHaveLength(1);
@@ -143,7 +143,6 @@ describe("DEFAULT_SETTINGS", () => {
 	it("matches the defaults Python seeds", () => {
 		expect(DEFAULT_SETTINGS).toEqual({
 			defaultSourceTypes: ["isolate", "strain"],
-			enableApi: false,
 			enableSentry: true,
 			minimumPasswordLength: 8,
 			sampleAllRead: true,

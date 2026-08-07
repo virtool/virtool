@@ -7,7 +7,7 @@
 // `SettingsData.ensure()`. No column has a server default — the defaults live
 // in Python's `Settings` model and are written into the row on insert, which is
 // why `DEFAULT_SETTINGS` in `../../settings/data.ts` mirrors them rather than
-// this file.
+// this file. `enable_api` is the one exception, for the reason given below.
 
 import { sql } from "drizzle-orm";
 import {
@@ -36,7 +36,14 @@ export const settings = pgTable(
 		defaultSourceTypes: jsonb("default_source_types")
 			.$type<string[]>()
 			.notNull(),
-		enableApi: boolean("enable_api").notNull(),
+		// Virtool no longer exposes a JSON API toggle, so `Settings` does not
+		// carry this and nothing reads it. Python still declares the column
+		// NOT NULL with no server default, so an insert that omits it fails —
+		// hence the client-side default. Drop the column here once Python drops
+		// it from its own schema.
+		enableApi: boolean("enable_api")
+			.notNull()
+			.$defaultFn(() => false),
 		enableSentry: boolean("enable_sentry").notNull(),
 		minimumPasswordLength: integer("minimum_password_length").notNull(),
 		sampleAllRead: boolean("sample_all_read").notNull(),

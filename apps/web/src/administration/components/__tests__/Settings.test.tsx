@@ -1,17 +1,11 @@
 import { bannerQueryKeys } from "@banner/keys";
 import { screen } from "@testing-library/react";
 import { createFakeAccount } from "@tests/fake/account";
-import { createFakeSettings } from "@tests/fake/administrator";
-import { mockGetSettings } from "@tests/server-fn/settings";
 import { renderRoute } from "@tests/setup";
-import { beforeEach, describe, expect, it } from "vitest";
+import { describe, expect, it } from "vitest";
 
 describe("<Settings />", () => {
 	const path = "/administration/settings";
-
-	beforeEach(() => {
-		mockGetSettings(createFakeSettings());
-	});
 
 	it("should render", async () => {
 		const account = createFakeAccount({ administrator_role: "full" });
@@ -25,8 +19,6 @@ describe("<Settings />", () => {
 		expect(await screen.findByText("Banners")).toBeInTheDocument();
 		expect(screen.getByText("Settings")).toBeInTheDocument();
 		expect(screen.getByRole("button", { name: "Create" })).toBeInTheDocument();
-
-		expect(screen.getByText("JSON API")).toBeInTheDocument();
 	});
 
 	it("should render all options for full administrators", async () => {

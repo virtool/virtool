@@ -91,14 +91,14 @@ describe("getSettings", () => {
 		await signIn(db, getRequest, { administratorRole: "settings" });
 		await seedSettings(db, {
 			defaultSourceTypes: ["genotype"],
-			enableApi: true,
+			enableSentry: false,
 			minimumPasswordLength: 12,
 			sampleGroup: "force_choice",
 		});
 
 		await expect(call("getSettingsFn")).resolves.toMatchObject({
 			defaultSourceTypes: ["genotype"],
-			enableApi: true,
+			enableSentry: false,
 			minimumPasswordLength: 12,
 			sampleGroup: "force_choice",
 		});
@@ -108,34 +108,34 @@ describe("getSettings", () => {
 describe("updateSettings", () => {
 	it("refuses an unauthenticated caller", async () => {
 		await expect(
-			call("updateSettingsFn", { enableApi: true }),
+			call("updateSettingsFn", { enableSentry: false }),
 		).rejects.toBeInstanceOf(UnauthorizedError);
 	});
 
 	it("refuses a caller without the settings role", async () => {
 		await signIn(db, getRequest, { administratorRole: "base" });
 		await expect(
-			call("updateSettingsFn", { enableApi: true }),
+			call("updateSettingsFn", { enableSentry: false }),
 		).rejects.toBeInstanceOf(ForbiddenError);
 	});
 
 	it("applies the patch and returns the updated settings", async () => {
 		await signIn(db, getRequest, { administratorRole: "settings" });
-		await seedSettings(db, { enableApi: false });
+		await seedSettings(db, { enableSentry: true });
 
 		await expect(
 			call("updateSettingsFn", {
-				enableApi: true,
+				enableSentry: false,
 				defaultSourceTypes: ["strain"],
 			}),
 		).resolves.toMatchObject({
-			enableApi: true,
+			enableSentry: false,
 			defaultSourceTypes: ["strain"],
 		});
 
 		const [row] = await db.select().from(settings);
 		expect(row).toMatchObject({
-			enableApi: true,
+			enableSentry: false,
 			defaultSourceTypes: ["strain"],
 		});
 	});

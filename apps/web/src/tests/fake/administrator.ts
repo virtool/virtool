@@ -38,7 +38,6 @@ export const administratorRoles: AdministratorRole[] = [
 export function createFakeSettings(overrides?: Partial<Settings>): Settings {
 	const defaultSettings = {
 		defaultSourceTypes: [faker.word.noun({ strategy: "any-length" })],
-		enableApi: faker.datatype.boolean(),
 		enableSentry: faker.datatype.boolean(),
 		minimumPasswordLength: 8,
 		sampleAllRead: faker.datatype.boolean(),

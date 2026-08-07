@@ -17,7 +17,6 @@ import type { Settings } from "./types";
 /** Fields that can be changed when updating the server settings */
 export type SettingsUpdate = {
 	defaultSourceTypes?: string[];
-	enableApi?: boolean;
 	enableSentry?: boolean;
 	minimumPasswordLength?: number;
 	sampleAllRead?: boolean;
@@ -35,15 +34,6 @@ export function settingsQueryOptions() {
 		queryKey: settingsQueryKeys.all(),
 		queryFn: () => getSettingsFn(),
 	});
-}
-
-/**
- * Fetch the API settings.
- *
- * @returns The API settings.
- */
-export function useFetchSettings() {
-	return useQuery(settingsQueryOptions());
 }
 
 /**

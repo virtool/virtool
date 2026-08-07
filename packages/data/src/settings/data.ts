@@ -14,7 +14,6 @@ const SETTINGS_ID = 1;
 /** Instance-wide settings. */
 export type Settings = {
 	defaultSourceTypes: string[];
-	enableApi: boolean;
 	enableSentry: boolean;
 	minimumPasswordLength: number;
 	sampleAllRead: boolean;
@@ -33,7 +32,6 @@ export type Settings = {
  */
 export const DEFAULT_SETTINGS: Settings = {
 	defaultSourceTypes: ["isolate", "strain"],
-	enableApi: false,
 	enableSentry: true,
 	minimumPasswordLength: DEFAULT_MINIMUM_PASSWORD_LENGTH,
 	sampleAllRead: true,
@@ -46,7 +44,6 @@ export const DEFAULT_SETTINGS: Settings = {
 function toSettings(row: SettingsRow): Settings {
 	return {
 		defaultSourceTypes: row.defaultSourceTypes,
-		enableApi: row.enableApi,
 		enableSentry: row.enableSentry,
 		minimumPasswordLength: row.minimumPasswordLength,
 		sampleAllRead: row.sampleAllRead,

@@ -36,7 +36,6 @@ export const getPasswordPolicyFn = createServerFn({ method: "GET" })
 const updateSettingsSchema = z
 	.object({
 		defaultSourceTypes: z.array(z.string()).optional(),
-		enableApi: z.boolean().optional(),
 		enableSentry: z.boolean().optional(),
 		minimumPasswordLength: z.number().int().min(1).optional(),
 		sampleAllRead: z.boolean().optional(),
