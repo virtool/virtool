@@ -111,6 +111,26 @@ UUID. Never infer a key's shape from another key.
 A cache's key is persisted on its row too. Read it from there rather than
 recomputing it.
 
+### A key crossing the wire is validated, not recomposed
+
+The one place a key arrives from outside is a workflow finalizing its outputs
+over the jobs API. The workflow writes the bytes itself, so it is the only party
+that knows where they went — the route records the key it sends verbatim rather
+than composing a second one that is free to disagree.
+
+Verbatim is not unchecked. Every key is required to sit under
+`{domain}/{parentId}/` for the resource named in the route's own path, which is
+exactly what `mintStorageKey` produces, plus structural checks: non-empty, no
+leading `/`, no empty segment, no `..` segment. So a runner cannot register a row
+naming another resource's object, which the delete paths would then destroy on
+its behalf.
+
+The exception is `POST /caches`, which takes a bare uuid and composes
+`cacheKey(uuid)` server-side. That key *is* derivable, so accepting one would
+add a lever without adding information — and Python's LRU eviction deletes by
+`storage_key`, so a cache row aimed at a sample object is a route to having
+another domain's files destroyed.
+
 ## Configuration
 
 Storage is configured through the environment and parsed in

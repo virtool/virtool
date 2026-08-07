@@ -49,7 +49,8 @@ The SSE handler emits one `data:` frame per event:
 
 - `domain` — one of the literals in `SseDomainSchema` (`account`,
   `analyses`, `groups`, `indexes`, `jobs`, `labels`, `messages`,
-  `references`, `roles`, `samples`, `tasks`, `uploads`, `users`). Python
+  `references`, `roles`, `samples`, `subtractions`, `tasks`, `uploads`,
+  `users`). Python
   and Node
   share the one channel and Python emits frames for domains this client
   doesn't handle yet, so a frame for an unrecognised `domain` is dropped
@@ -74,6 +75,14 @@ The SSE handler emits one `data:` frame per event:
   `sse: message-validation`), which is how it was caught for `samples`
   (VIR-2794) and then for `indexes` and `references`. When a domain's
   Python id type changes, this schema changes in the same breath.
+
+  The same silent drop catches a domain that is missing from the schema
+  outright. `subtractions` was one: Python had been emitting those
+  frames all along and the client had no literal to match them against,
+  so a subtraction finishing never refreshed a list. Adding a domain is
+  a change in **three** places — `SseDomainSchema`, `SseMessageSchema`,
+  and `reactQueryHandler`'s `domains` record — and adding it to only the
+  first two leaves every frame parsed and then thrown away.
 
 The handler also sends `: connected` on open and `: keepalive` every
 25 s to keep proxies and the browser's `EventSource` happy.

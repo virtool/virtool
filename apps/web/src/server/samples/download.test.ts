@@ -7,7 +7,6 @@ import {
 	legacySampleLabels,
 	legacySampleSubtractions,
 	legacySamples,
-	sampleArtifacts,
 	sampleReads,
 	sampleUploads,
 } from "@virtool/data/db/schema/samples";
@@ -81,7 +80,6 @@ beforeEach(async () => {
 	await db.delete(legacySampleLabels);
 	await db.delete(legacySampleSubtractions);
 	await db.delete(sampleUploads);
-	await db.delete(sampleArtifacts);
 	await db.delete(sampleReads);
 	await db.delete(legacySamples);
 	await db.delete(apiKeys);

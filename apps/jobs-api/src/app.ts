@@ -4,9 +4,12 @@ import type { Logger } from "@virtool/logger";
 import type { StorageBackend } from "@virtool/storage";
 import { Hono } from "hono";
 import { routePath } from "hono/route";
+import { handleFinalizeAnalysis } from "./analyses/handlers";
 import { handleGetCache, handleRegisterCache } from "./caches/handlers";
 import { handleMetrics } from "./metrics/handler";
 import type { Metrics } from "./metrics/registry";
+import { handleFinalizeSample } from "./samples/handlers";
+import { handleFinalizeSubtraction } from "./subtraction/handlers";
 
 /**
  * The routes that answer without a credential, and why each is allowed to.
@@ -94,6 +97,21 @@ export function createApp(deps: AppDeps): Hono {
 	);
 
 	app.post("/caches", (c) => handleRegisterCache(deps, c.req.raw));
+
+	// The three finalize routes. Each is the single call that ends a workflow:
+	// the resource's own fields and the list of objects it wrote, so a run cannot
+	// end with the parent flipped ready and its file rows missing.
+	app.patch("/subtractions/:id", (c) =>
+		handleFinalizeSubtraction(deps, c.req.raw, c.req.param("id")),
+	);
+
+	app.patch("/samples/:id", (c) =>
+		handleFinalizeSample(deps, c.req.raw, c.req.param("id")),
+	);
+
+	app.patch("/analyses/:id", (c) =>
+		handleFinalizeAnalysis(deps, c.req.raw, c.req.param("id")),
+	);
 
 	app.get("/metrics", (c) =>
 		handleMetrics(c, {

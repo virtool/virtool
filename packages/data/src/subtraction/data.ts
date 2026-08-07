@@ -1,6 +1,7 @@
 import type {
 	JobState,
 	JobWorkflow,
+	NucleotideComposition,
 	Subtraction,
 	SubtractionFile,
 	SubtractionJobMinimal,
@@ -27,6 +28,7 @@ import {
 import { uploads } from "../db/schema/uploads";
 import { users } from "../db/schema/users";
 import { AppError } from "../errors";
+import { emit } from "../events/emit";
 
 /** Fields accepted when creating a subtraction. */
 export type CreateSubtractionValues = {
@@ -44,8 +46,30 @@ export type FindSubtractionsOptions = {
 	ready: boolean;
 };
 
+/** A file a create_subtraction job wrote, as {@link finalizeSubtraction} records it. */
+export type SubtractionFileValues = {
+	name: string;
+	type: SubtractionFileType;
+
+	/** The byte count the caller read back from storage, never a declared one. */
+	size: number;
+
+	/** The complete key the workflow wrote to, recorded verbatim. */
+	storageKey: string;
+};
+
+/** Fields a create_subtraction job supplies when it finishes. */
+export type FinalizeSubtractionValues = {
+	count: number;
+	gc: NucleotideComposition;
+	files: SubtractionFileValues[];
+};
+
 /** Thrown when a requested subtraction does not exist or is deleted. */
 export class SubtractionNotFoundError extends AppError {}
+
+/** Thrown when a subtraction has already been finalized. */
+export class SubtractionAlreadyFinalizedError extends AppError {}
 
 /** Thrown when the upload a subtraction is created from does not exist. */
 export class SubtractionUploadNotFoundError extends AppError {}
@@ -397,6 +421,71 @@ export async function createSubtraction(
 	});
 
 	return getSubtraction(db, newId);
+}
+
+/**
+ * Record what a create_subtraction job produced and flip the subtraction ready.
+ *
+ * The parent update is conditional on `deleted = false AND ready = false` and
+ * its row count checked, so two finalizes racing each other cannot both write a
+ * file set. Losing that race — or arriving second after a retry — is a
+ * {@link SubtractionAlreadyFinalizedError}; a row that is gone or soft-deleted is
+ * a {@link SubtractionNotFoundError}, which is the split Python makes by
+ * re-selecting `deleted` after a zero rowcount.
+ *
+ * Every `size` is the caller's reading of storage and every `storageKey` is what
+ * the workflow wrote to. Nothing here reaches object storage: the caller has
+ * already established that each key names an object, so this transaction holds
+ * only Postgres work.
+ */
+export async function finalizeSubtraction(
+	db: Db,
+	subtractionId: number,
+	values: FinalizeSubtractionValues,
+): Promise<Subtraction> {
+	await db.transaction(async (tx) => {
+		const updated = await tx
+			.update(subtractions)
+			.set({ count: values.count, gc: values.gc, ready: true })
+			.where(
+				and(
+					eq(subtractions.id, subtractionId),
+					eq(subtractions.deleted, false),
+					eq(subtractions.ready, false),
+				),
+			)
+			.returning({ id: subtractions.id });
+
+		if (updated.length === 0) {
+			const [row] = await tx
+				.select({ deleted: subtractions.deleted })
+				.from(subtractions)
+				.where(eq(subtractions.id, subtractionId))
+				.limit(1);
+
+			if (!row || row.deleted) {
+				throw new SubtractionNotFoundError();
+			}
+
+			throw new SubtractionAlreadyFinalizedError();
+		}
+
+		if (values.files.length > 0) {
+			await tx.insert(subtractionFiles).values(
+				values.files.map((file) => ({
+					name: file.name,
+					subtraction_id: subtractionId,
+					type: file.type,
+					size: file.size,
+					storage_key: file.storageKey,
+				})),
+			);
+		}
+	});
+
+	await emit("subtractions", subtractionId, "update");
+
+	return getSubtraction(db, subtractionId);
 }
 
 export async function updateSubtraction(

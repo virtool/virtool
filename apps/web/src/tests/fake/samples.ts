@@ -79,7 +79,6 @@ export function createFakeSample(overrides?: Partial<Sample>): Sample {
 		...createFakeSampleMinimal(),
 		allRead: faker.datatype.boolean(),
 		allWrite: faker.datatype.boolean(),
-		artifacts: [],
 		format: "fastq",
 		group: null,
 		groupRead: faker.datatype.boolean(),

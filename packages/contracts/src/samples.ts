@@ -27,14 +27,6 @@ export type SampleWorkflows = {
  */
 export type SampleJobNested = JobNested & { workflow: "create_sample" };
 
-/** An artifact produced while creating a sample. */
-export type SampleArtifact = {
-	downloadUrl: string;
-	id: number;
-	name: string;
-	size: number;
-};
-
 /** An input upload embedded in a sample reads file. */
 export type SampleReadUpload = {
 	id: number;
@@ -88,26 +80,6 @@ export const Quality = z.object({
 
 export type Quality = z.infer<typeof Quality>;
 
-/**
- * A format a sample artifact can be stored in.
- *
- * Mirrors Python's `ArtifactType`, a real Postgres enum (`artifacttype`) behind
- * `sample_artifacts.type`. Distinct from `AnalysisFormat` even though the two
- * share their members today — they are separate upstream enums and are free to
- * diverge.
- */
-export const SampleArtifactType = z.enum([
-	"sam",
-	"bam",
-	"fasta",
-	"fastq",
-	"csv",
-	"tsv",
-	"json",
-]);
-
-export type SampleArtifactType = z.infer<typeof SampleArtifactType>;
-
 /** A sample reduced to the fields shown in resource listings. */
 export type SampleMinimal = {
 	createdAt: string;
@@ -130,7 +102,6 @@ export type SampleMinimal = {
 export type Sample = SampleMinimal & {
 	allRead: boolean;
 	allWrite: boolean;
-	artifacts: SampleArtifact[];
 	format: string;
 	group: GroupMinimal | null;
 	groupRead: boolean;

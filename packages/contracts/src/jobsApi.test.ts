@@ -188,8 +188,7 @@ describe("file manifest", () => {
 		const manifest = JobFileManifest.parse({
 			kind: "analysisFile",
 			name: "report.tsv",
-			nameOnDisk: "report.tsv",
-			size: 4096,
+			storageKey: "analyses/9/0f1e2d3c4b5a69788796a5b4c3d2e1f0",
 			format: "tsv",
 			description: "The formatted report.",
 		});
@@ -197,29 +196,40 @@ describe("file manifest", () => {
 		expect(manifest.kind).toBe("analysisFile");
 	});
 
-	it("accepts a size past the 32-bit range", () => {
-		// Reads files and Bowtie2 index shards routinely exceed 2 GiB.
+	it("carries the storage key the workflow wrote to", () => {
+		// The route records this verbatim after checking it against the resource's
+		// own prefix, so it has to survive parsing byte for byte.
+		const storageKey = "samples/4/0f1e2d3c4b5a69788796a5b4c3d2e1f0";
+
 		const manifest = JobFileManifest.parse({
 			kind: "sampleRead",
 			name: "reads_1.fq.gz",
-			nameOnDisk: "reads_1.fq.gz",
+			storageKey,
+		});
+
+		expect(manifest.storageKey).toBe(storageKey);
+	});
+
+	it("rejects an entry with no storage key", () => {
+		expect(
+			JobFileManifest.safeParse({
+				kind: "sampleRead",
+				name: "reads_1.fq.gz",
+			}).success,
+		).toBe(false);
+	});
+
+	it("drops a size a runner tries to declare", () => {
+		// The row is written with the byte count the route reads back from storage,
+		// so a declared one is stripped here rather than reaching the data layer
+		// and inviting a reader to wonder which of the two won.
+		const manifest = JobFileManifest.parse({
+			kind: "sampleRead",
+			name: "reads_1.fq.gz",
+			storageKey: "samples/4/0f1e2d3c4b5a69788796a5b4c3d2e1f0",
 			size: 8_589_934_592,
 		});
 
-		expect(manifest.size).toBe(8_589_934_592);
-	});
-
-	it("drops a storage key a runner tries to name", () => {
-		// Keys are the jobs API's to derive. A runner that sends one gets it
-		// stripped here rather than having it reach the data layer.
-		const manifest = JobFileManifest.parse({
-			kind: "sampleRead",
-			name: "reads_1.fq.gz",
-			nameOnDisk: "reads_1.fq.gz",
-			size: 1,
-			key: "samples/4/reads_1.fq.gz",
-		});
-
-		expect(manifest).not.toHaveProperty("key");
+		expect(manifest).not.toHaveProperty("size");
 	});
 });

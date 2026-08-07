@@ -445,17 +445,10 @@ describe("getSample", () => {
 			// Backfilled with the key the row's object already lived under.
 			storage_key: "samples/abc123/reads_1.fq.gz",
 		});
-		await db.insert(sampleArtifacts).values({
-			sample: "abc123",
-			sample_id: null,
-			name: "fastqc.txt",
-			type: "fastqc",
-		});
 
 		const sample = await getSample(db, sampleId);
 
 		expect(sample.reads.map((r) => r.name)).toEqual(["reads_1.fq.gz"]);
-		expect(sample.artifacts.map((a) => a.name)).toEqual(["fastqc.txt"]);
 	});
 
 	it("throws when the sample does not exist", async () => {

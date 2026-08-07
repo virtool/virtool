@@ -316,6 +316,152 @@ No eviction, storage-budget accounting or scheduled cleanup lives here.
 periodic task in `virtool/caches/` remain Python's. The only deletion
 this service performs is the loser's own orphan.
 
+## Finalize
+
+A workflow writes its outputs to object storage itself and then makes
+**one** call per resource, carrying that resource's finalize fields
+alongside a manifest of what it wrote. Python needed roughly twenty
+per-file upload endpoints for the same job.
+
+| Route | Body | Rows written | Parent update |
+| --- | --- | --- | --- |
+| `PATCH /subtractions/{id}` | `FinalizeSubtractionRequest` | `subtraction_files` | `count`, `gc`, `ready` |
+| `PATCH /samples/{id}` | `FinalizeSampleRequest` | `sample_reads` | `quality`, `ready` |
+| `PATCH /analyses/{id}` | `FinalizeAnalysisRequest` | `analysis_files` | `results`, `ready`, `updated_at` |
+
+`index_files` is **not** here. Index builds are still started by
+`createIndex` and finished by Python's `create_index` task runner, which
+writes the artifact and its file rows itself.
+
+The manifest rides along with the finalize call rather than arriving as
+a separate step, so a run cannot end with the parent flipped `ready` and
+its file list missing. Each handler is an ordinary
+`Request → Promise<Response>` in `apps/jobs-api/src/<feature>/handlers.ts`
+that calls `requireJobRequest` first; the row work lives in
+`@virtool/data`, typed `DbOrTx`, because it is the same data layer the
+web app reads through.
+
+### The wire carries a storage key, and the row records it verbatim
+
+This is the opposite of what `POST /caches` does, and the difference is
+deliberate.
+
+The cache rule exists because a cache row's key is *derivable* — it is
+`caches/v1/<uuid>` and nothing else — so composing it server-side costs
+nothing and makes a cross-domain row unrepresentable. A finalize key is
+not derivable: the workflow already wrote the bytes somewhere, and
+composing a second key here would put a second opinion about where they
+went next to the writer's, free to disagree. The size check would then
+surface that disagreement as a confusing `400` rather than as the key
+mismatch it is.
+
+Nor is there a boundary to defend. The principal is a workflow pod
+holding the **same unscoped `VT_STORAGE_*` credentials** as the web app
+and Python — no per-job prefix, no scoped token — issued to the same pod
+at the same time as its job key. A compromised pod deletes objects
+directly; it has no reason to launder a deletion through a manifest.
+
+What remains is a check against buggy key interpolation, and it is a
+prefix check. Every key must sit under `{domain}/{parentId}/` for the
+resource named in the route's **own path** — `subtractions/{id}/`,
+`samples/{id}/`, `analyses/{id}/` — which is exactly what
+`mintStorageKey(domain, parentId)` produces, so both sides stay on one
+builder. Alongside it, structural checks reject an empty key, a leading
+`/`, an empty segment and a `..` segment. `apps/jobs-api/src/manifest.ts`
+holds all of it.
+
+Filenames are checked too, but only as filenames: no `/`, no traversal
+segment, and — for subtractions and samples — against the same
+whitelists Python enforces, because Python's download endpoints address
+those rows by `name`.
+
+| Resource | Accepted names |
+| --- | --- |
+| Subtraction | `subtraction.fa.gz`, `subtraction.{1,2,3,4}.bt2`, `subtraction.rev.{1,2}.bt2` |
+| Sample | `reads_1.fq.gz`, `reads_2.fq.gz` |
+| Analysis | any plain filename — the workflow names its own outputs |
+
+### The manifest declares neither a size nor a name on disk
+
+`size` is not on the contract. Every row is written with the byte count
+the route read back from `storage.size()`, which is what makes "a row
+pointing at nothing" impossible, so a declared size would be a field
+nothing stores and nothing checks.
+
+`name_on_disk` is derived as well. A reads file repeats its `name`,
+matching Python. An analysis file gets `{uuid}-{name}`, following the
+`createUpload` precedent rather than Python's post-flush `{id}-{name}`,
+which needs the row id and so a second write — the column is unique
+across the whole table, so it cannot simply be the workflow's filename.
+A subtraction file's `type` is likewise derived from the extension, as
+Python's `check_subtraction_file_type` does; with the name whitelisted
+there is nothing left to decide, and no way to record a `.bt2` shard as
+the FASTA.
+
+### Verify, then transact
+
+Every `storage.size()` call for a manifest completes **before**
+`db.transaction(...)` opens, and the transaction holds Postgres work
+only. A manifest naming a blob that is not in the bucket answers `400`
+having written no rows and made no parent update.
+
+`subtraction/handlers.test.ts` asserts the ordering rather than assuming
+it: `createTestDatabase({ onQuery })` and a `MemoryStorage` wrapper put
+SQL statements and storage reads on one timeline, and the test requires
+every `size()` to precede the `BEGIN`. Without that, a check that slipped
+inside the transaction would hold a pool connection across a round trip
+to the bucket, and a missing blob would abort a transaction that had
+already written rows.
+
+### 409, not idempotent
+
+Each parent update is conditional — `WHERE id = ? AND ready = false`,
+plus `AND deleted = false` for a subtraction — and its row count is
+checked. A zero row count re-selects the row to tell the two cases apart:
+gone or soft-deleted is `404`, already finalized is `409`. Python makes
+the same split, and a second finalize must not be quietly accepted:
+these calls write file rows, and accepting one twice writes the set
+twice.
+
+### Finalizing a sample destroys its input uploads
+
+Matching Python. The `sample_uploads` rows are marked
+`removed`/`removed_at` **inside** the transaction and their blobs deleted
+**after** it commits, with `deleteKeys` failures logged rather than
+failing a finalize that already happened.
+
+Marking without deleting is the tempting middle ground and it is wrong.
+`removed = true` already means "the bytes are gone" everywhere else —
+`deleteUpload` marks the row and deletes the object in one call — so a
+removed row still naming a live object is invisible to the UI *and* to
+any orphan sweep, because the object is named by a row. Those bytes leak
+permanently, at one full duplicate of every sample's input reads.
+Deleting is safe because `reserveUploads` rejects an already-reserved
+upload, so an upload belongs to exactly one sample and no other row can
+name that blob. `reserved` is deliberately left alone; `removed` gates
+every read path.
+
+A read's source upload is **derived, not declared**:
+`sample_uploads.index` is the position an upload held in the create
+request, and the workflow writes them out in that order as `reads_1` and
+`reads_2`, so the link is by position. There is no wire field with which
+a runner could name another sample's upload.
+
+### Subtractions reach the browser over SSE
+
+`emit(...)` runs after each commit, never inside. Analyses emit a
+`samples` update alongside their own, because a sample's workflow tags
+are derived from its analyses.
+
+Subtractions had no SSE domain at all before these routes existed, so
+one was added: `subtractions` in `SseDomainSchema` **and** a
+`frame("subtractions", NumberId)` in `SseMessageSchema`
+(`packages/contracts/src/sse.ts`), plus the matching entry in
+`reactQueryHandler`'s `domains` record. **No Python change was needed** —
+Python publishes free-form domain strings onto `client_events` and has
+been emitting `subtractions` all along; the client was dropping the
+frames because its schema did not accept them.
+
 ## Metrics
 
 `GET /metrics` serves the Prometheus text exposition from this process's
@@ -511,8 +657,7 @@ for this service:
 
 ## What is not here yet
 
-This service serves health, metrics and the two cache endpoints, and
-nothing else yet. Every remaining runner-facing endpoint — claim, ping,
-step start, finish, and the three finalize routes — lands in its own
-issue, against the wire contract already written in
-`packages/contracts/src/jobsApi.ts`.
+This service serves health, metrics, the two cache endpoints and the
+three finalize routes. The job lifecycle endpoints — claim, ping, step
+start and finish — each land in their own issue, against the wire
+contract already written in `packages/contracts/src/jobsApi.ts`.

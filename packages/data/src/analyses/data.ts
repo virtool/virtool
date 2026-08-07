@@ -1,6 +1,7 @@
 import type {
 	Analysis,
 	AnalysisFile,
+	AnalysisFormat,
 	AnalysisJobNested,
 	AnalysisMinimal,
 	AnalysisSearchResult,
@@ -57,8 +58,31 @@ export type CreateAnalysisValues = {
 	userId: number;
 };
 
+/** A result file a workflow wrote, as {@link finalizeAnalysis} records it. */
+export type AnalysisFileValues = {
+	name: string;
+	format: AnalysisFormat;
+	description: string | null;
+
+	/** The byte count the caller read back from storage, never a declared one. */
+	size: number;
+
+	/** The complete key the workflow wrote to, recorded verbatim. */
+	storageKey: string;
+};
+
+/** Fields a workflow supplies when it finishes an analysis. */
+export type FinalizeAnalysisValues = {
+	/** The workflow's output, opaque here and interpreted by the format layer. */
+	results: JsonObject;
+	files: AnalysisFileValues[];
+};
+
 /** Thrown when a requested analysis does not exist. */
 export class AnalysisNotFoundError extends AppError {}
+
+/** Thrown when an analysis has already been finalized. */
+export class AnalysisAlreadyFinalizedError extends AppError {}
 
 /** Thrown when an operation requires a finished analysis and it is still running. */
 export class AnalysisRunningError extends AppError {}
@@ -629,6 +653,78 @@ export async function createAnalysis(
 	// The sample's workflow tags are derived from its analyses, so the sample it
 	// was started on now renders differently.
 	await emit("samples", values.sampleId, "update");
+
+	return getAnalysis(db, analysisId);
+}
+
+/**
+ * Record an analysis's results and the files a workflow retained, and flip it
+ * ready.
+ *
+ * The update is conditional on `ready = false` and its row count checked, so a
+ * retry or a racing second call is an {@link AnalysisAlreadyFinalizedError}
+ * rather than a duplicated file set. An analysis that does not exist is an
+ * {@link AnalysisNotFoundError}.
+ *
+ * `name_on_disk` is unique across the table and is minted here rather than sent:
+ * a uuid prefix, following the `createUpload` precedent, instead of Python's
+ * post-flush `{id}-{name}`, which needs the row id and so a second write.
+ *
+ * The sample update is emitted alongside the analysis one because a sample's
+ * workflow tags are derived from its analyses — an analysis flipping ready
+ * changes the row every sample list draws.
+ */
+export async function finalizeAnalysis(
+	db: Db,
+	analysisId: number,
+	values: FinalizeAnalysisValues,
+): Promise<Analysis> {
+	const sampleId = await db.transaction(async (tx) => {
+		const now = new Date();
+
+		const [updated] = await tx
+			.update(analyses)
+			.set({ ready: true, results: values.results, updated_at: now })
+			.where(and(eq(analyses.id, analysisId), eq(analyses.ready, false)))
+			.returning({ sampleId: analyses.sample_id });
+
+		if (!updated) {
+			const [row] = await tx
+				.select({ id: analyses.id })
+				.from(analyses)
+				.where(eq(analyses.id, analysisId))
+				.limit(1);
+
+			if (!row) {
+				throw new AnalysisNotFoundError();
+			}
+
+			throw new AnalysisAlreadyFinalizedError();
+		}
+
+		if (values.files.length > 0) {
+			await tx.insert(analysisFiles).values(
+				values.files.map((file) => ({
+					analysis_id: analysisId,
+					description: file.description,
+					format: file.format,
+					name: file.name,
+					name_on_disk: `${crypto.randomUUID()}-${file.name}`,
+					size: file.size,
+					storage_key: file.storageKey,
+					uploaded_at: now,
+				})),
+			);
+		}
+
+		return updated.sampleId;
+	});
+
+	await emit("analyses", analysisId, "update");
+
+	if (sampleId !== null) {
+		await emit("samples", sampleId, "update");
+	}
 
 	return getAnalysis(db, analysisId);
 }

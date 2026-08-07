@@ -20,8 +20,10 @@ This is a **pnpm monorepo**:
   runners call to claim, run and finish jobs. A Hono app on port 9950,
   mirroring Python's `virtool/jobs/main.py` (`api-jobs-service`, ClusterIP,
   **no ingress** — that absence is the security boundary). Serves
-  `/health/live`, `/health/ready`, a token-gated `/metrics`, and the two
-  cache endpoints — `GET /caches/{key}` and `POST /caches` — today. Image:
+  `/health/live`, `/health/ready`, a token-gated `/metrics`, the two
+  cache endpoints — `GET /caches/{key}` and `POST /caches` — and the three
+  finalize routes — `PATCH /subtractions/{id}`, `PATCH /samples/{id}`,
+  `PATCH /analyses/{id}` — today. Image:
   `ghcr.io/virtool/jobs-api`, Alpine. Three rules: it is **always "the jobs
   API"**, never "the control plane" — that names its role, not the service;
   **every route must refuse an unauthenticated caller or be named in
@@ -971,6 +973,15 @@ segment is for human inspection only; keys in the bucket are
 heterogeneous by design, because a migrated row keeps whatever prefix it
 was written under.
 
+**A key arriving over the wire is validated, not recomposed.** A workflow
+finalizing its outputs sends the key it wrote to, and the jobs API records
+it verbatim after checking it sits under `{domain}/{parentId}/` for the
+resource in its own path — plus non-empty, no leading `/`, no empty
+segment, no `..` segment. Composing a second key server-side would put a
+second opinion about where the bytes went next to the writer's. `POST
+/caches` is the exception and takes a bare uuid, because a cache key
+really is derivable.
+
 `StorageError` and `StorageKeyNotFoundError` come from
 `@virtool/storage/errors` and extend plain `Error`, not the data layer's
 `AppError`, so the storage package carries no dependency on the data layer.
@@ -1016,6 +1027,14 @@ They route through `createJobRefreshQueue` (`jobs/refresh.ts`) and
 `createTaskRefreshQueue` (`tasks/refresh.ts`), which buffer ids and read
 them with the batched `getJobs`/`getTasks` server functions instead.
 Don't add a `detail(id)` invalidation back for either.
+
+Adding a domain is a change in **three** places — `SseDomainSchema` and
+`SseMessageSchema` (`packages/contracts/src/sse.ts`), and
+`reactQueryHandler`'s `domains` record — and doing only the first two
+leaves every frame parsed and then dropped. Python needs no change:
+it publishes free-form domain strings, and a domain the schema does not
+name is discarded silently at the client, which is how `subtractions`
+frames went unhandled for as long as they did.
 
 See [docs/server-push.md](docs/server-push.md) for the wire format,
 auth on the SSE side, the batching queues, and the follow-up TODOs.
@@ -1130,17 +1149,29 @@ model, the eager-context rationale, the hook survey behind dropping them,
 the terminal-state table, the cancellation race, the subprocess runner's
 outcome table and process-group kill, and the full config table.
 
-### Workflow files stream, and keys are never composed
+### Workflow files stream, and a key is minted, never composed
 
 Every byte a workflow moves goes through `downloadToPath` / `uploadFromPath`
 (`files/transfer.ts`). Files run to many gigabytes, so **nothing may
 buffer** — `readFile`, `writeFile` and `Buffer.concat` are absent from the
 transfer path by rule, not by accident.
 
-**A workflow composes no storage keys.** Keys are recorded on their owning
-rows, not derived, so a key to read arrives from the control plane and a key
-to write is composed server-side from a uuid the workflow mints. The only
-builders left are the two fixed HMM constants.
+**No key is derived from row identity, on either side.** A key to read
+arrives from the jobs API, off the row that records it. A key to write is
+minted with `mintStorageKey(domain, parentId)` and sent back on the finalize
+manifest, which the route validates against that resource's own
+`{domain}/{parentId}/` prefix and then records verbatim. A cache is the one
+exception in the other direction: `POST /caches` takes a bare uuid and
+composes `cacheKey(uuid)` server-side, because that key genuinely is
+derivable. The only fixed builders left are the two HMM constants.
+
+**Finalize is one call per resource** — `PATCH /subtractions/{id}`,
+`PATCH /samples/{id}`, `PATCH /analyses/{id}` — carrying the resource's own
+fields plus the manifest, so a run cannot end with the parent flipped
+`ready` and its file rows missing. The manifest declares no `size` and no
+`name_on_disk`: the row is written with the byte count the route reads back
+from storage, which is what makes a row pointing at nothing impossible. See
+[docs/jobs-api.md](docs/jobs-api.md).
 
 `tar.ts` is `tar-stream`, not `node-tar`, because it is a pure stream
 parser. It diverges from Python's `tar.py` twice, deliberately: extraction

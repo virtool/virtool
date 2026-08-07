@@ -10,6 +10,7 @@ import { createJobRefreshQueue } from "@jobs/refresh";
 import { labelQueryKeys } from "@labels/keys";
 import { referenceQueryKeys } from "@references/keys";
 import { samplesQueryKeys } from "@samples/keys";
+import { subtractionQueryKeys } from "@subtraction/keys";
 import type { QueryClient } from "@tanstack/react-query";
 import { taskQueryKeys } from "@tasks/keys";
 import { createTaskRefreshQueue } from "@tasks/refresh";
@@ -72,6 +73,7 @@ const domains: Record<SseDomain, CachedShapes> = {
 	references: { keys: referenceQueryKeys, details: true, lists: true },
 	roles: { keys: roleQueryKeys, details: false, lists: false },
 	samples: { keys: samplesQueryKeys, details: true, lists: true },
+	subtractions: { keys: subtractionQueryKeys, details: true, lists: true },
 	tasks: { keys: taskQueryKeys, details: true, lists: false },
 	uploads: { keys: fileQueryKeys, details: false, lists: true },
 	users: { keys: userQueryKeys, details: true, lists: true },
