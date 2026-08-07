@@ -1,0 +1,358 @@
+{
+	"defaultSequences": [
+		{
+			"accession": "NC_010315",
+			"definition": "Abaca bunchy top virus DNA A",
+			"host": "Musa sp.",
+			"id": "seq_a1",
+			"isolate_id": "iso_a",
+			"otu_id": "otu_alpha",
+			"segment": "DNA A",
+			"sequence": "CCCCAAAATT"
+		},
+		{
+			"accession": "NC_010316",
+			"definition": "Abaca bunchy top virus DNA B",
+			"host": "Musa sp.",
+			"id": "seq_a2",
+			"isolate_id": "iso_a",
+			"otu_id": "otu_alpha",
+			"segment": "DNA B",
+			"sequence": "GGGGTTTTAA"
+		},
+		{
+			"accession": "NC_020000",
+			"definition": "Mu virus unplaced contig",
+			"host": null,
+			"id": "seq_m0",
+			"isolate_id": "iso_m",
+			"otu_id": "otu_mu",
+			"segment": null,
+			"sequence": "TACGTACGTA"
+		},
+		{
+			"accession": "NC_020001",
+			"definition": "Mu virus RNA 1",
+			"host": "Solanum sp.",
+			"id": "seq_m1",
+			"isolate_id": "iso_m",
+			"otu_id": "otu_mu",
+			"segment": "RNA 1",
+			"sequence": "GATTACAGAT"
+		},
+		{
+			"accession": "NC_000001",
+			"definition": "Zeta virus complete genome",
+			"host": null,
+			"id": "seq_z1",
+			"isolate_id": "iso_z",
+			"otu_id": "otu_zeta",
+			"segment": null,
+			"sequence": "ACGTACGTAC"
+		}
+	],
+	"otuRefsBySequenceId": {
+		"result": {
+			"seq_a1": {
+				"abbreviation": "ABTV",
+				"id": "otu_alpha",
+				"name": "Abaca bunchy top virus",
+				"taxid": 1,
+				"version": 3
+			},
+			"seq_m1": {
+				"abbreviation": "MU",
+				"id": "otu_mu",
+				"name": "Mu virus",
+				"taxid": 4567,
+				"version": 11
+			},
+			"seq_z1": {
+				"abbreviation": "",
+				"id": "otu_zeta",
+				"name": "Zeta virus",
+				"taxid": null,
+				"version": 0
+			}
+		},
+		"sequenceIds": [
+			"seq_m1",
+			"seq_a1",
+			"seq_z1"
+		]
+	},
+	"otuSequences": {
+		"otuIds": [
+			"otu_zeta",
+			"otu_alpha"
+		],
+		"result": [
+			{
+				"accession": "NC_010315",
+				"definition": "Abaca bunchy top virus DNA A",
+				"host": "Musa sp.",
+				"id": "seq_a1",
+				"isolate_id": "iso_a",
+				"otu_id": "otu_alpha",
+				"segment": "DNA A",
+				"sequence": "CCCCAAAATT"
+			},
+			{
+				"accession": "NC_010316",
+				"definition": "Abaca bunchy top virus DNA B",
+				"host": "Musa sp.",
+				"id": "seq_a2",
+				"isolate_id": "iso_a",
+				"otu_id": "otu_alpha",
+				"segment": "DNA B",
+				"sequence": "GGGGTTTTAA"
+			},
+			{
+				"accession": "NC_010317",
+				"definition": "Abaca bunchy top virus DNA A",
+				"host": "Musa sp.",
+				"id": "seq_b1",
+				"isolate_id": "iso_b",
+				"otu_id": "otu_alpha",
+				"segment": "DNA A",
+				"sequence": "AAAACCCCGG"
+			},
+			{
+				"accession": "NC_010318",
+				"definition": "Abaca bunchy top virus DNA B",
+				"host": "Musa sp.",
+				"id": "seq_b2",
+				"isolate_id": "iso_b",
+				"otu_id": "otu_alpha",
+				"segment": "DNA B",
+				"sequence": "TTTTGGGGCC"
+			},
+			{
+				"accession": "NC_000001",
+				"definition": "Zeta virus complete genome",
+				"host": null,
+				"id": "seq_z1",
+				"isolate_id": "iso_z",
+				"otu_id": "otu_zeta",
+				"segment": null,
+				"sequence": "ACGTACGTAC"
+			}
+		]
+	},
+	"otus": [
+		{
+			"abbreviation": "ABTV",
+			"id": "otu_alpha",
+			"isolates": [
+				{
+					"default": false,
+					"id": "iso_b",
+					"sequences": [
+						{
+							"accession": "NC_010318",
+							"definition": "Abaca bunchy top virus DNA B",
+							"host": "Musa sp.",
+							"id": "seq_b2",
+							"segment": "DNA B",
+							"sequence": "TTTTGGGGCC"
+						},
+						{
+							"accession": "NC_010317",
+							"definition": "Abaca bunchy top virus DNA A",
+							"host": "Musa sp.",
+							"id": "seq_b1",
+							"segment": "DNA A",
+							"sequence": "AAAACCCCGG"
+						}
+					],
+					"source_name": "B1",
+					"source_type": "isolate"
+				},
+				{
+					"default": true,
+					"id": "iso_a",
+					"sequences": [
+						{
+							"accession": "NC_010316",
+							"definition": "Abaca bunchy top virus DNA B",
+							"host": "Musa sp.",
+							"id": "seq_a2",
+							"segment": "DNA B",
+							"sequence": "GGGGTTTTAA"
+						},
+						{
+							"accession": "NC_010315",
+							"definition": "Abaca bunchy top virus DNA A",
+							"host": "Musa sp.",
+							"id": "seq_a1",
+							"segment": "DNA A",
+							"sequence": "CCCCAAAATT"
+						}
+					],
+					"source_name": "A1",
+					"source_type": "isolate"
+				}
+			],
+			"name": "Abaca bunchy top virus",
+			"schema": [
+				{
+					"molecule": "dsDNA",
+					"name": "DNA A",
+					"required": true
+				},
+				{
+					"molecule": null,
+					"name": "DNA B",
+					"required": false
+				}
+			],
+			"taxid": 1,
+			"version": 3
+		},
+		{
+			"abbreviation": "MU",
+			"id": "otu_mu",
+			"isolates": [
+				{
+					"default": true,
+					"id": "iso_m",
+					"sequences": [
+						{
+							"accession": "NC_020001",
+							"definition": "Mu virus RNA 1",
+							"host": "Solanum sp.",
+							"id": "seq_m1",
+							"segment": "RNA 1",
+							"sequence": "GATTACAGAT"
+						},
+						{
+							"accession": "NC_020000",
+							"definition": "Mu virus unplaced contig",
+							"host": null,
+							"id": "seq_m0",
+							"segment": null,
+							"sequence": "TACGTACGTA"
+						}
+					],
+					"source_name": "M1",
+					"source_type": "strain"
+				}
+			],
+			"name": "Mu virus",
+			"schema": [
+				{
+					"molecule": "ssRNA",
+					"name": "RNA 1",
+					"required": true
+				}
+			],
+			"taxid": 4567,
+			"version": 11
+		},
+		{
+			"abbreviation": "",
+			"id": "otu_zeta",
+			"isolates": [
+				{
+					"default": true,
+					"id": "iso_z",
+					"sequences": [
+						{
+							"accession": "NC_000001",
+							"definition": "Zeta virus complete genome",
+							"host": null,
+							"id": "seq_z1",
+							"segment": null,
+							"sequence": "ACGTACGTAC"
+						}
+					],
+					"source_name": "Z1",
+					"source_type": "isolate"
+				}
+			],
+			"name": "Zeta virus",
+			"schema": [],
+			"taxid": null,
+			"version": 0
+		}
+	],
+	"referenceMetadata": {
+		"created_at": "2026-01-15T19:55:34.203324Z",
+		"data_type": "genome",
+		"id": "reference_1",
+		"name": "Plant Viruses",
+		"organism": "virus"
+	},
+	"sequences": [
+		{
+			"accession": "NC_010315",
+			"definition": "Abaca bunchy top virus DNA A",
+			"host": "Musa sp.",
+			"id": "seq_a1",
+			"isolate_id": "iso_a",
+			"otu_id": "otu_alpha",
+			"segment": "DNA A",
+			"sequence": "CCCCAAAATT"
+		},
+		{
+			"accession": "NC_010316",
+			"definition": "Abaca bunchy top virus DNA B",
+			"host": "Musa sp.",
+			"id": "seq_a2",
+			"isolate_id": "iso_a",
+			"otu_id": "otu_alpha",
+			"segment": "DNA B",
+			"sequence": "GGGGTTTTAA"
+		},
+		{
+			"accession": "NC_010317",
+			"definition": "Abaca bunchy top virus DNA A",
+			"host": "Musa sp.",
+			"id": "seq_b1",
+			"isolate_id": "iso_b",
+			"otu_id": "otu_alpha",
+			"segment": "DNA A",
+			"sequence": "AAAACCCCGG"
+		},
+		{
+			"accession": "NC_010318",
+			"definition": "Abaca bunchy top virus DNA B",
+			"host": "Musa sp.",
+			"id": "seq_b2",
+			"isolate_id": "iso_b",
+			"otu_id": "otu_alpha",
+			"segment": "DNA B",
+			"sequence": "TTTTGGGGCC"
+		},
+		{
+			"accession": "NC_020000",
+			"definition": "Mu virus unplaced contig",
+			"host": null,
+			"id": "seq_m0",
+			"isolate_id": "iso_m",
+			"otu_id": "otu_mu",
+			"segment": null,
+			"sequence": "TACGTACGTA"
+		},
+		{
+			"accession": "NC_020001",
+			"definition": "Mu virus RNA 1",
+			"host": "Solanum sp.",
+			"id": "seq_m1",
+			"isolate_id": "iso_m",
+			"otu_id": "otu_mu",
+			"segment": "RNA 1",
+			"sequence": "GATTACAGAT"
+		},
+		{
+			"accession": "NC_000001",
+			"definition": "Zeta virus complete genome",
+			"host": null,
+			"id": "seq_z1",
+			"isolate_id": "iso_z",
+			"otu_id": "otu_zeta",
+			"segment": null,
+			"sequence": "ACGTACGTAC"
+		}
+	]
+}
