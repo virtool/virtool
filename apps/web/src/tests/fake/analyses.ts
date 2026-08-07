@@ -14,13 +14,13 @@ export function createFakeAnalysisMinimal(
 ): AnalysisMinimal {
 	return {
 		id: faker.number.int(),
-		createdAt: faker.date.past().toISOString(),
+		createdAt: faker.date.past(),
 		index: {
 			id: faker.number.int(),
 			version: faker.number.int({ min: 1, max: 20 }),
 		},
 		job: {
-			createdAt: faker.date.past().toISOString(),
+			createdAt: faker.date.past(),
 			id: faker.number.int(),
 			progress: 100,
 			state: "succeeded",
@@ -34,7 +34,7 @@ export function createFakeAnalysisMinimal(
 			name: faker.lorem.words(2),
 		},
 		subtractions: [createFakeSubtractionNested()],
-		updatedAt: faker.date.past().toISOString(),
+		updatedAt: faker.date.past(),
 		user: createFakeUserNested(),
 		workflow: "pathoscope",
 		...overrides,

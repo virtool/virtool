@@ -134,8 +134,8 @@ describe("getHmm", () => {
 			id,
 			cluster: 7,
 			names: ["one", "two"],
-			mean_entropy: 0.5,
-			total_entropy: 50,
+			meanEntropy: 0.5,
+			totalEntropy: 50,
 			length: 100,
 		});
 	});

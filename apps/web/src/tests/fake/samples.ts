@@ -15,11 +15,11 @@ export function createFakeSampleMinimal(
 	const defaultSampleMinimal: SampleMinimal = {
 		id: faker.number.int(),
 		name: `${faker.word.noun({ strategy: "any-length" })} ${faker.number.int()}`,
-		createdAt: faker.date.past().toISOString(),
+		createdAt: faker.date.past(),
 		host: faker.word.noun({ strategy: "any-length" }),
 		isolate: faker.word.noun({ strategy: "any-length" }),
 		job: {
-			createdAt: faker.date.past().toISOString(),
+			createdAt: faker.date.past(),
 			id: faker.number.int(),
 			progress: 100,
 			state: "succeeded",
@@ -54,7 +54,7 @@ export function createFakeSampleRead(overrides?: Partial<Read>): Read {
 		sample: faker.number.int(),
 		size: faker.number.int(),
 		storageKey: `samples/${faker.number.int()}/${faker.string.uuid().replaceAll("-", "")}`,
-		uploadedAt: faker.date.past().toISOString(),
+		uploadedAt: faker.date.past(),
 	};
 
 	return { ...defaultRead, ...overrides };

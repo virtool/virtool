@@ -29,7 +29,7 @@ export function useCheckCanEditSample(sampleId: number) {
 	}
 
 	const hasPermission =
-		hasSufficientAdminRole("full", account.administrator_role) ||
+		hasSufficientAdminRole("full", account.administratorRole) ||
 		sample.allWrite ||
 		sample.user.id === account.id ||
 		(sample.groupWrite &&

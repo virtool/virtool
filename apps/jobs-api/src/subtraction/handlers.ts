@@ -25,9 +25,9 @@ export type SubtractionHandlerDeps = {
  * Narrow a subtraction to what a workflow reads.
  *
  * The mapping happens here rather than inside `@virtool/data`, which returns
- * this shape to `apps/web`'s client as well — including the snake_case
- * `created_at` and `linked_samples` that must not cross this wire, and the
- * `download_url` that has no meaning to a workflow.
+ * this shape to `apps/web`'s client as well — including `createdAt` and
+ * `linkedSamples`, which must not cross this wire, and `downloadUrl`, which
+ * has no meaning to a workflow.
  *
  * Each file carries its recorded `storageKey`; the workflow takes it to the
  * bucket itself.

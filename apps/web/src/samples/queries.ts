@@ -35,7 +35,7 @@ export type SampleLabel = LabelNested & {
 
 function samplesQueryOptions(
 	page: number,
-	per_page: number,
+	perPage: number,
 	term?: string,
 	labels?: number[],
 	workflows?: string[],
@@ -44,7 +44,7 @@ function samplesQueryOptions(
 	return queryOptions<SampleSearchResult, Error>({
 		queryKey: samplesQueryKeys.list([
 			page,
-			per_page,
+			perPage,
 			term,
 			labels,
 			workflows,
@@ -54,7 +54,7 @@ function samplesQueryOptions(
 			findSamplesFn({
 				data: {
 					page,
-					perPage: per_page,
+					perPage,
 					term: term ?? "",
 					labels: labels ?? [],
 					workflows: workflows ?? [],
@@ -68,7 +68,7 @@ function samplesQueryOptions(
  * Fetch a page of samples from the API
  *
  * @param page - The page to fetch
- * @param per_page - The number of samples to fetch per page
+ * @param perPage - The number of samples to fetch per page
  * @param term - The search term to filter samples by
  * @param labels - The labels to filter the samples by
  * @param workflows - The workflows to filter the samples by
@@ -76,14 +76,14 @@ function samplesQueryOptions(
  */
 export function useListSamples(
 	page: number,
-	per_page: number,
+	perPage: number,
 	term?: string,
 	labels?: number[],
 	workflows?: string[],
 	users?: number[],
 ) {
 	return useQuery({
-		...samplesQueryOptions(page, per_page, term, labels, workflows, users),
+		...samplesQueryOptions(page, perPage, term, labels, workflows, users),
 		placeholderData: keepPreviousData,
 	});
 }
@@ -101,14 +101,14 @@ export function useListSamples(
  */
 export function useSuspenseSamples(
 	page: number,
-	per_page: number,
+	perPage: number,
 	term?: string,
 	labels?: number[],
 	workflows?: string[],
 	users?: number[],
 ) {
 	return useSuspenseQuery(
-		samplesQueryOptions(page, per_page, term, labels, workflows, users),
+		samplesQueryOptions(page, perPage, term, labels, workflows, users),
 	);
 }
 

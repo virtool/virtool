@@ -33,7 +33,7 @@ export function useCheckReferenceRight(
 		return { hasPermission: false, isPending: false };
 	}
 
-	if (account.administrator_role === "full") {
+	if (account.administratorRole === "full") {
 		return { hasPermission: true, isPending: false };
 	}
 

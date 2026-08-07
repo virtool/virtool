@@ -177,7 +177,7 @@ describe("changePassword", () => {
 		expect(hashToken(tokenCookie?.[1] as string)).toBe(rows[0]?.tokenHash);
 	});
 
-	// last_password_change and force_reset are both on the administration user
+	// lastPasswordChange and forceReset are both on the administration user
 	// detail, so an admin with it open needs the invalidation.
 	it("publishes a users update so an open administrator view refreshes", async () => {
 		const { userId } = await signIn();

@@ -7,7 +7,6 @@ import Link from "@base/Link";
 import ProgressCircle from "@base/ProgressCircle";
 import SlashList from "@base/SlashList";
 import { useFetchJob } from "@jobs/queries";
-import { toServerJobNested } from "@jobs/utils";
 import { type AnalysisMinimal, isJobStateTerminal } from "@virtool/contracts";
 import { Equal, EqualNot } from "lucide-react";
 import { useRemoveAnalysis } from "../queries";
@@ -56,7 +55,7 @@ export default function AnalysisItem({ analysis }: AnalysisItemProps) {
 
 	const { data: job } = useFetchJob(
 		analysis.job?.id ?? Number.NaN,
-		analysis.job ? toServerJobNested(analysis.job) : undefined,
+		analysis.job ?? undefined,
 	);
 
 	// The same predicate `deleteAnalysis` applies, and deliberately not `ready`.

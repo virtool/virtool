@@ -25,7 +25,7 @@ describe("<ApiKeys />", () => {
 
 		mockGetAccount(
 			createFakeAccount({
-				administrator_role: "full",
+				administratorRole: "full",
 			}),
 		);
 		mockFindApiKeys([]);
@@ -87,7 +87,7 @@ describe("<ApiKeys />", () => {
 	it("should show administrator notice when appropriate", async () => {
 		mockGetAccount(
 			createFakeAccount({
-				administrator_role: "full",
+				administratorRole: "full",
 			}),
 		);
 		mockFindApiKeys([]);

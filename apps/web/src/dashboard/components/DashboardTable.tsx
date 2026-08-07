@@ -90,7 +90,7 @@ export function DashboardTableCell({
 
 type DashboardTableCreatedCellProps = {
 	/** When the record was created. */
-	time: string | Date;
+	time: Date | null;
 };
 
 /**

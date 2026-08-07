@@ -33,14 +33,14 @@ export type Hmm = HmmMinimal & {
 	entries: HmmEntry[];
 	genera: Record<string, number>;
 	length: number;
-	mean_entropy: number;
-	total_entropy: number;
+	meanEntropy: number;
+	totalEntropy: number;
 };
 
 /** The task attached to the HMM status, in the wire shape the client parses. */
 export type HmmStatusTask = {
 	complete: boolean;
-	created_at: Date;
+	createdAt: Date;
 	error: string | null;
 	id: number;
 	progress: number;

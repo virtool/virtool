@@ -63,7 +63,7 @@ export type SubtractionUpload = {
  */
 export type SubtractionJobMinimal = {
 	id: number;
-	created_at: string;
+	createdAt: Date;
 	progress: number;
 	state: JobState;
 	user: UserNested | null;
@@ -72,7 +72,7 @@ export type SubtractionJobMinimal = {
 
 /** A downloadable file belonging to a subtraction. */
 export type SubtractionFile = {
-	download_url: string;
+	downloadUrl: string;
 	id: number;
 	name: string;
 	size: number;
@@ -105,7 +105,7 @@ export type SubtractionMinimal = SubtractionNested & {
 	/** The number of sequences, or null before the create job finishes */
 	count: number | null;
 
-	created_at: string;
+	createdAt: Date;
 
 	/** The upload it was built from, or null once that upload is gone */
 	file: SubtractionUpload | null;
@@ -131,7 +131,7 @@ export type Subtraction = SubtractionMinimal & {
 	gc: NucleotideComposition | null;
 
 	/** Samples that name this subtraction as a default */
-	linked_samples: SubtractionSampleNested[];
+	linkedSamples: SubtractionSampleNested[];
 };
 
 /** A subtraction reduced to the fields the analysis picker needs. */

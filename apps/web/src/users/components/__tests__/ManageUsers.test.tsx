@@ -9,9 +9,9 @@ import { ManageUsers } from "../ManageUsers";
 describe("<ManageUsers />", () => {
 	it("should render correctly with 3 users", async () => {
 		const users = createFakeUsers(3);
-		at(users, 0).administrator_role = "full";
+		at(users, 0).administratorRole = "full";
 		mockFindUsers(users);
-		const account = createFakeAccount({ administrator_role: "full" });
+		const account = createFakeAccount({ administratorRole: "full" });
 
 		await renderRoute("/administration/users", { account });
 
@@ -30,7 +30,7 @@ describe("<ManageUsers />", () => {
 		const users = createFakeUsers(3);
 
 		mockFindUsers(users);
-		mockGetAccount(createFakeAccount({ administrator_role: null }));
+		mockGetAccount(createFakeAccount({ administratorRole: null }));
 
 		await renderWithRouter(<ManageUsers />);
 

@@ -43,14 +43,14 @@ function RidLink({ rid }: { rid: string }) {
 
 type RidTimingProps = {
 	interval: number;
-	lastCheckedAt: string;
+	lastCheckedAt: Date;
 };
 
 function RidTiming({ interval, lastCheckedAt }: RidTimingProps) {
 	const now = useNow();
 
 	if (lastCheckedAt) {
-		const nextCheckAt = addSeconds(new Date(lastCheckedAt), interval);
+		const nextCheckAt = addSeconds(lastCheckedAt, interval);
 		const relativeNext = formatDistanceStrict(new Date(nextCheckAt), now);
 
 		return (
@@ -66,7 +66,7 @@ function RidTiming({ interval, lastCheckedAt }: RidTimingProps) {
 
 type BlastPendingProps = {
 	interval: number;
-	lastCheckedAt: string;
+	lastCheckedAt: Date;
 	rid: string;
 };
 

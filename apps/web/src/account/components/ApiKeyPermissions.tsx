@@ -47,7 +47,7 @@ export default function ApiKeyPermissions({
 			const disabled =
 				!hasSufficientAdminRole(
 					AdministratorPermissions[permission.name],
-					account.administrator_role,
+					account.administratorRole,
 				) && !account.permissions[permission.name];
 
 			return (

@@ -251,7 +251,7 @@ describe("getSubtraction", () => {
 		});
 		expect(subtraction.files).toEqual([
 			{
-				download_url: `/subtractions/${subtractionId}/files/subtraction.fa.gz`,
+				downloadUrl: `/subtractions/${subtractionId}/files/subtraction.fa.gz`,
 				id: expect.any(Number),
 				name: "subtraction.fa.gz",
 				size: 100,
@@ -262,7 +262,7 @@ describe("getSubtraction", () => {
 				type: "fasta",
 			},
 		]);
-		expect(subtraction.linked_samples).toEqual([
+		expect(subtraction.linkedSamples).toEqual([
 			{ id: sampleId, name: "Sample A" },
 		]);
 	});

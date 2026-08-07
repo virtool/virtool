@@ -22,7 +22,7 @@ type UserDetailProps = {
 export default function UserDetail({ userId }: UserDetailProps) {
 	const { data } = useSuspenseUser(userId);
 	const { hasPermission: canEdit } = useCheckAdminRole(
-		data.administrator_role === null ? "users" : "full",
+		data.administratorRole === null ? "users" : "full",
 	);
 
 	const mutation = useUpdateUser();
@@ -41,13 +41,13 @@ export default function UserDetail({ userId }: UserDetailProps) {
 
 	const {
 		handle,
-		administrator_role,
+		administratorRole,
 		id,
 		groups,
-		primary_group,
+		primaryGroup,
 		permissions,
-		last_password_change,
-		force_reset,
+		lastPasswordChange,
+		forceReset,
 	} = data;
 
 	return (
@@ -57,7 +57,7 @@ export default function UserDetail({ userId }: UserDetailProps) {
 					<InitialIcon size="xl" handle={handle} />
 					<span>{handle}</span>
 				</h2>
-				{administrator_role && (
+				{administratorRole && (
 					<Label>
 						<ShieldUserIcon aria-label="Administrator" size={18} />
 						Administrator
@@ -65,15 +65,15 @@ export default function UserDetail({ userId }: UserDetailProps) {
 				)}
 			</header>
 
-			<UserAdministratorRole id={id} role={administrator_role} />
+			<UserAdministratorRole id={id} role={administratorRole} />
 
 			<Handle key={`handle-${id}`} id={id} handle={handle} />
 
 			<Password
 				key={id}
 				id={id}
-				lastPasswordChange={last_password_change}
-				forceReset={force_reset}
+				lastPasswordChange={lastPasswordChange}
+				forceReset={forceReset}
 			/>
 
 			<div className="mb-4 md:grid md:grid-cols-2 md:gap-x-4">
@@ -81,7 +81,7 @@ export default function UserDetail({ userId }: UserDetailProps) {
 					<UserGroups
 						userId={id}
 						memberGroups={groups}
-						primaryGroup={primary_group}
+						primaryGroup={primaryGroup}
 					/>
 				</div>
 				<UserPermissions permissions={permissions} />

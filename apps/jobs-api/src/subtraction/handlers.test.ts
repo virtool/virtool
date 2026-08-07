@@ -479,9 +479,9 @@ describe("handleGetSubtraction", () => {
 		expect(subtraction.files[0]?.storageKey).toBeNull();
 	});
 
-	// The SPA reads the same data function, which returns snake_case names and a
-	// download URL. Neither belongs on this wire.
-	it("serves camelCase and no download URL", async () => {
+	// The SPA reads the same data function, which returns `createdAt`,
+	// `linkedSamples`, and a `downloadUrl`. None of those belong on this wire.
+	it("omits fields that only the SPA needs", async () => {
 		const subtractionId = await seedSubtraction();
 
 		const response = await handleGetSubtraction(
@@ -491,9 +491,9 @@ describe("handleGetSubtraction", () => {
 		);
 		const rendered = await response.text();
 
-		expect(rendered).not.toContain("download_url");
-		expect(rendered).not.toContain("created_at");
-		expect(rendered).not.toContain("linked_samples");
+		expect(rendered).not.toContain("downloadUrl");
+		expect(rendered).not.toContain("createdAt");
+		expect(rendered).not.toContain("linkedSamples");
 	});
 
 	it("reports 404 for a subtraction that does not exist", async () => {

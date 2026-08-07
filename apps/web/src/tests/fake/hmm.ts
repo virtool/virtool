@@ -39,8 +39,8 @@ export function createFakeHmm() {
 			Begomovirus: faker.number.int(),
 		},
 		length: faker.number.int(),
-		mean_entropy: faker.number.float({ min: 0, max: 1 }),
-		total_entropy: faker.number.float({
+		meanEntropy: faker.number.float({ min: 0, max: 1 }),
+		totalEntropy: faker.number.float({
 			min: 100,
 			max: 200,
 		}),

@@ -100,7 +100,7 @@ function AuthenticatedLayout() {
 				<div className="shrink-0 z-nav">
 					<Banner />
 					<Nav
-						administrator_role={data.administrator_role}
+						administratorRole={data.administratorRole}
 						handle={data.handle}
 					/>
 				</div>
@@ -110,7 +110,7 @@ function AuthenticatedLayout() {
 					className="flex flex-1 min-h-0 overflow-y-auto scrollbar-gutter-stable"
 				>
 					<div className="sticky top-0 self-start pt-18">
-						<Sidebar administratorRole={data.administrator_role} />
+						<Sidebar administratorRole={data.administratorRole} />
 					</div>
 					<main id="main-content" tabIndex={-1} className="flex-1 min-w-0 p-18">
 						<Suspense fallback={<LoadingPlaceholder />}>

@@ -19,7 +19,7 @@ export function checkAdminRoleOrPermissionsFromAccount(
 	return (
 		hasSufficientAdminRole(
 			AdministratorPermissions[permission],
-			account.administrator_role,
+			account.administratorRole,
 		) || account.permissions[permission]
 	);
 }

@@ -27,22 +27,22 @@ describe("<UserDetail />", () => {
 			createFakeGroup({ name: `Group ${index}` }),
 		);
 		user = createFakeUser({
-			groups: groups.map(({ id, name, legacy_id }) => ({
+			groups: groups.map(({ id, name, legacyId }) => ({
 				id,
 				name,
-				legacy_id,
+				legacyId,
 			})),
 			active: true,
 		});
-		mockGetAccount(createFakeAccount({ administrator_role: "full" }));
+		mockGetAccount(createFakeAccount({ administratorRole: "full" }));
 	});
 
 	describe("<UserDetail />", () => {
-		it("should render correctly when administrator_role = AdministratorRoles.FULL, canModifyUser=true and 5 groups exist", async () => {
+		it("should render correctly when administratorRole = AdministratorRoles.FULL, canModifyUser=true and 5 groups exist", async () => {
 			mockListGroups(groups);
 
 			const userDetail = createFakeUser({
-				administrator_role: "full",
+				administratorRole: "full",
 				groups,
 			});
 
@@ -89,7 +89,7 @@ describe("<UserDetail />", () => {
 			expect(getUser).toHaveBeenCalled();
 		});
 
-		it("should render correctly when [administrator_role=null] and canModifyUser=false", async () => {
+		it("should render correctly when [administratorRole=null] and canModifyUser=false", async () => {
 			mockListGroups(groups);
 			const getUser = mockGetUser(user.id, user);
 
@@ -105,8 +105,8 @@ describe("<UserDetail />", () => {
 		});
 
 		it("should render correctly when user has insufficient permissions", async () => {
-			mockGetAccount(createFakeAccount({ administrator_role: "users" }));
-			const adminUser = createFakeUser({ administrator_role: "full" });
+			mockGetAccount(createFakeAccount({ administratorRole: "users" }));
+			const adminUser = createFakeUser({ administratorRole: "full" });
 			const getUser = mockGetUser(adminUser.id, adminUser);
 
 			renderWithProviders(<UserDetail userId={adminUser.id} />);
@@ -170,7 +170,7 @@ describe("<UserDetail />", () => {
 			expect(screen.getByLabelText("Group 3")).toBeInTheDocument();
 		});
 		it("should point to group creation when no groups exist", async () => {
-			const user = createFakeUser({ groups: [], primary_group: null });
+			const user = createFakeUser({ groups: [], primaryGroup: null });
 
 			mockListGroups([]);
 
@@ -379,12 +379,12 @@ describe("<UserDetail />", () => {
 	describe("<UserAdministratorRole />", () => {
 		beforeEach(() => {
 			mockListGroups(groups);
-			mockGetAccount(createFakeAccount({ id: 1, administrator_role: "full" }));
+			mockGetAccount(createFakeAccount({ id: 1, administratorRole: "full" }));
 			mockListAdministratorRoles(administratorRoles);
 		});
 
 		it("shows the role selector when managing another user", async () => {
-			const target = createFakeUser({ id: 2, administrator_role: null });
+			const target = createFakeUser({ id: 2, administratorRole: null });
 			mockGetUser(target.id, target);
 
 			renderWithProviders(<UserDetail userId={target.id} />);
@@ -394,7 +394,7 @@ describe("<UserDetail />", () => {
 		});
 
 		it("lets a full administrator remove a user's role", async () => {
-			const target = createFakeUser({ id: 2, administrator_role: "users" });
+			const target = createFakeUser({ id: 2, administratorRole: "users" });
 			mockGetUser(target.id, target);
 			const setAdministratorRole = mockSetAdministratorRole(target);
 
@@ -410,7 +410,7 @@ describe("<UserDetail />", () => {
 		});
 
 		it("is hidden for a full administrator viewing their own account", async () => {
-			const self = createFakeUser({ id: 1, administrator_role: "full" });
+			const self = createFakeUser({ id: 1, administratorRole: "full" });
 			const getUser = mockGetUser(self.id, self);
 
 			renderWithProviders(<UserDetail userId={self.id} />);

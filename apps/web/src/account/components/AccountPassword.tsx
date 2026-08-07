@@ -21,8 +21,8 @@ type FormValues = {
 };
 
 type ChangePasswordProps = {
-	/** The iso formatted date of the most recent password change */
-	lastPasswordChange: string;
+	/** The date of the most recent password change */
+	lastPasswordChange: Date;
 };
 
 /**

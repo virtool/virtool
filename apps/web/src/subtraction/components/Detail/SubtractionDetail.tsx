@@ -64,7 +64,7 @@ export default function SubtractionDetail() {
 				{data.user ? (
 					<SubtractionAttribution
 						handle={data.user.handle}
-						time={data.created_at}
+						time={data.createdAt}
 					/>
 				) : null}
 			</ViewHeader>
@@ -89,7 +89,7 @@ export default function SubtractionDetail() {
 						<a
 							className="font-medium"
 							download={fastaName}
-							href={fastaFile.download_url}
+							href={fastaFile.downloadUrl}
 						>
 							{fastaName}
 						</a>
@@ -122,7 +122,7 @@ export default function SubtractionDetail() {
 							Samples that reference this subtraction
 						</p>
 					</div>
-					<span>{data.linked_samples.length}</span>
+					<span>{data.linkedSamples.length}</span>
 				</BoxGroupSection>
 			</BoxGroup>
 		</>

@@ -1,52 +1,42 @@
 import { JobState, JobWorkflow } from "@virtool/contracts";
 import z from "zod";
 
-export const JobNestedSchema = z
-	.object({
-		created_at: z.coerce.date(),
+export const JobNestedSchema = z.object({
+	createdAt: z.coerce.date(),
+	id: z.int(),
+	progress: z.int(),
+	state: JobState,
+	user: z.object({
+		handle: z.string(),
 		id: z.int(),
-		progress: z.int(),
-		state: JobState,
-		user: z.object({
-			handle: z.string(),
-			id: z.int(),
-		}),
-		workflow: JobWorkflow,
-	})
-	.transform(({ created_at, id, progress, state, user, workflow }) => ({
-		createdAt: created_at,
-		id,
-		progress,
-		state,
-		user,
-		workflow,
-	}));
+	}),
+	workflow: JobWorkflow,
+});
+// `createdAt` coerces from whatever the caller has on hand — a `Date` off the
+// jobs endpoints, or the ISO string an embedded `JobNested` (from
+// `@virtool/contracts`) carries — so the pre-parse and parsed shapes still
+// diverge even with no field renamed.
 export type ServerJobNested = z.input<typeof JobNestedSchema>;
 export type JobNested = z.infer<typeof JobNestedSchema>;
 
-export const JobMinimalSchema = z
-	.object({
+export const JobMinimalSchema = z.object({
+	id: z.int(),
+	createdAt: z.coerce.date(),
+	progress: z.int(),
+	state: JobState,
+	user: z.object({
 		id: z.int(),
-		created_at: z.coerce.date(),
-		progress: z.int(),
-		state: JobState,
-		user: z.object({
-			id: z.int(),
-			handle: z.string(),
-		}),
-		workflow: JobWorkflow,
-	})
-	.transform(({ created_at, id, progress, state, user, workflow }) => ({
-		createdAt: created_at,
-		id,
-		progress,
-		state,
-		user,
-		workflow,
-	}));
+		handle: z.string(),
+	}),
+	workflow: JobWorkflow,
+});
 
 export type ServerJobMinimal = z.input<typeof JobMinimalSchema>;
 
+// `started_at` reads the `jobs.steps` JSONB array, which Python co-writes and
+// stays snake_case forever — see the wire-vs-row split documented on
+// `StoredJobStep` in `@virtool/contracts`. Every other job field moved to
+// camelCase with the data layer; this one and `JobClaimSchema` below cannot.
 const JobStepSchema = z
 	.object({
 		description: z.string(),
@@ -65,6 +55,9 @@ const JobStepSchema = z
 	}));
 export type JobStep = z.infer<typeof JobStepSchema>;
 
+// `runner_id`/`runtime_version`/`workflow_version` read the `jobs.claim`
+// JSONB blob, which Python co-writes and stays snake_case forever — same
+// exception as `JobStepSchema` above.
 const JobClaimSchema = z
 	.object({
 		cpu: z.number(),
@@ -84,36 +77,28 @@ const JobClaimSchema = z
 			workflowVersion: workflow_version,
 		}),
 	);
-export const JobSchema = z
-	.object({
-		args: z.record(z.string(), z.unknown()),
+export const JobSchema = z.object({
+	args: z.record(z.string(), z.unknown()),
+	id: z.int(),
+	claim: JobClaimSchema.nullish(),
+	claimedAt: z.preprocess(
+		(val) => (val ? new Date(val as string) : null),
+		z.date().nullable(),
+	),
+	createdAt: z.coerce.date(),
+	finishedAt: z.preprocess(
+		(val) => (val ? new Date(val as string) : null),
+		z.date().nullable(),
+	),
+	progress: z.int(),
+	steps: z.array(JobStepSchema).nullable(),
+	state: JobState,
+	user: z.object({
 		id: z.int(),
-		claim: JobClaimSchema.nullish(),
-		claimed_at: z.preprocess(
-			(val) => (val ? new Date(val as string) : null),
-			z.date().nullable(),
-		),
-		created_at: z.coerce.date(),
-		finished_at: z.preprocess(
-			(val) => (val ? new Date(val as string) : null),
-			z.date().nullable(),
-		),
-		progress: z.int(),
-		steps: z.array(JobStepSchema).nullable(),
-		state: JobState,
-		user: z.object({
-			id: z.int(),
-			handle: z.string(),
-		}),
-		workflow: JobWorkflow,
-	})
-	.transform(({ claimed_at, created_at, finished_at, state, ...rest }) => ({
-		...rest,
-		claimedAt: claimed_at,
-		createdAt: created_at,
-		finishedAt: finished_at,
-		state,
-	}));
+		handle: z.string(),
+	}),
+	workflow: JobWorkflow,
+});
 export type ServerJob = z.input<typeof JobSchema>;
 
 const JobCountsSchema = z

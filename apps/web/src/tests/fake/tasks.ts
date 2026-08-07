@@ -9,7 +9,7 @@ import type { Task } from "@tasks/types";
 export function createFakeTask(overrides?: Partial<Task>): Task {
 	return {
 		complete: faker.datatype.boolean(),
-		created_at: faker.date.past(),
+		createdAt: faker.date.past(),
 		error: null,
 		id: faker.number.int(),
 		progress: faker.number.int({ min: 0, max: 100 }),

@@ -147,7 +147,7 @@ function toMinimal(row: SubtractionResourceRow): SubtractionMinimal {
 			? null
 			: {
 					id: row.jobId,
-					created_at: (row.jobCreatedAt ?? new Date()).toISOString(),
+					createdAt: row.jobCreatedAt ?? new Date(),
 					progress: computeProgress(row.jobState, row.jobSteps),
 					// `state` and `workflow` are plain text columns; Python only ever
 					// writes the union members, so assert here rather than widening the
@@ -164,7 +164,7 @@ function toMinimal(row: SubtractionResourceRow): SubtractionMinimal {
 		id: row.id,
 		name: row.name,
 		count: row.count,
-		created_at: row.created_at.toISOString(),
+		createdAt: row.created_at,
 		file,
 		job,
 		nickname: row.nickname,
@@ -265,7 +265,7 @@ async function getSubtractionFiles(
 	return rows.map((row) => ({
 		// Served from this server by `routes/subtractions.$subtractionId.files
 		// .$filename.ts`, so the client links to it directly.
-		download_url: `/subtractions/${subtractionId}/files/${row.name ?? ""}`,
+		downloadUrl: `/subtractions/${subtractionId}/files/${row.name ?? ""}`,
 		id: row.id,
 		name: row.name ?? "",
 		size: row.size ?? 0,
@@ -303,7 +303,7 @@ export async function getSubtraction(
 		throw new SubtractionNotFoundError();
 	}
 
-	const [files, linked_samples] = await Promise.all([
+	const [files, linkedSamples] = await Promise.all([
 		getSubtractionFiles(db, subtractionId),
 		getLinkedSamples(db, subtractionId),
 	]);
@@ -312,7 +312,7 @@ export async function getSubtraction(
 		...toMinimal(row),
 		files,
 		gc: row.gc,
-		linked_samples,
+		linkedSamples,
 	};
 }
 

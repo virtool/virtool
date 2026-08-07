@@ -136,7 +136,7 @@ describe("<SamplesList />", () => {
 	it("should render create button when [canModify=true]", async () => {
 		mockGetAccount(
 			createFakeAccount({
-				administrator_role: "full",
+				administratorRole: "full",
 			}),
 		);
 		await renderWithRouter(<SamplesList />, path);
@@ -147,7 +147,7 @@ describe("<SamplesList />", () => {
 	});
 
 	it("should not render create button when [canModify=false]", async () => {
-		mockGetAccount(createFakeAccount({ administrator_role: null }));
+		mockGetAccount(createFakeAccount({ administratorRole: null }));
 		await renderWithRouter(<SamplesList />, path);
 
 		expect(

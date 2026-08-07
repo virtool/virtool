@@ -17,8 +17,8 @@ type SubtractionFileItemProps = {
 	name: string;
 	/** A callback function to handle file selection */
 	onClick: (selected: number[]) => void;
-	/** The iso formatted date of upload */
-	uploaded_at: string;
+	/** When the file was uploaded, or null for a row that predates the column */
+	uploadedAt: Date | null;
 	/** The user who created the file, or null for a retrieved file */
 	user: UserNested | null;
 };
@@ -33,7 +33,7 @@ export function SubtractionFileItem({
 	optionId,
 	name,
 	onClick,
-	uploaded_at,
+	uploadedAt,
 	user,
 }: SubtractionFileItemProps) {
 	return (
@@ -45,7 +45,7 @@ export function SubtractionFileItem({
 			onClick={() => onClick([id])}
 		>
 			<strong>{name}</strong>
-			<Attribution user={user?.handle} time={uploaded_at} />
+			<Attribution user={user?.handle} time={uploadedAt} />
 		</SelectBoxGroupSection>
 	);
 }

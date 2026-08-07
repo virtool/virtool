@@ -3,7 +3,7 @@ import { z } from "zod";
 /** A background task with live progress. */
 export const TaskSchema = z.object({
 	complete: z.boolean(),
-	created_at: z.coerce.date(),
+	createdAt: z.coerce.date(),
 	error: z.string().nullable(),
 	id: z.number().int(),
 	progress: z.number().int(),

@@ -62,7 +62,7 @@ describe("listGroups", () => {
 
 		expect(group).toEqual({
 			id: groupId,
-			legacy_id: null,
+			legacyId: null,
 			name: "technicians",
 		});
 	});
@@ -113,7 +113,7 @@ describe("getGroup", () => {
 
 		expect(group).toMatchObject({
 			id: groupId,
-			legacy_id: null,
+			legacyId: null,
 			name: "technicians",
 			permissions: { ...NO_PERMISSIONS, create_ref: true },
 		});
@@ -135,7 +135,7 @@ describe("createGroup", () => {
 
 		expect(group).toMatchObject({
 			name: "technicians",
-			legacy_id: null,
+			legacyId: null,
 			permissions: NO_PERMISSIONS,
 			users: [],
 		});

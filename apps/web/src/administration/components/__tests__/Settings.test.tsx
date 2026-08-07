@@ -8,7 +8,7 @@ describe("<Settings />", () => {
 	const path = "/administration/settings";
 
 	it("should render", async () => {
-		const account = createFakeAccount({ administrator_role: "full" });
+		const account = createFakeAccount({ administratorRole: "full" });
 		await renderRoute(path, {
 			account,
 			seed: (queryClient) => {
@@ -22,7 +22,7 @@ describe("<Settings />", () => {
 	});
 
 	it("should render all options for full administrators", async () => {
-		const account = createFakeAccount({ administrator_role: "full" });
+		const account = createFakeAccount({ administratorRole: "full" });
 		await renderRoute(path, { account });
 
 		expect(await screen.findByText("Users")).toBeInTheDocument();
@@ -32,7 +32,7 @@ describe("<Settings />", () => {
 	});
 
 	it("should render only groups and users for users administrators", async () => {
-		const account = createFakeAccount({ administrator_role: "users" });
+		const account = createFakeAccount({ administratorRole: "users" });
 		await renderRoute(path, { account });
 
 		expect(await screen.findByText("Users")).toBeInTheDocument();

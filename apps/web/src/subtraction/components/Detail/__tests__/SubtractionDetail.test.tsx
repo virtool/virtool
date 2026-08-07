@@ -17,11 +17,11 @@ describe("<SubtractionDetail />", () => {
 	let path: string;
 
 	beforeEach(() => {
-		// Pin count and linked_samples so neither the sequence-count nor the
+		// Pin count and linkedSamples so neither the sequence-count nor the
 		// linked-samples cell can render the same number as the other.
 		subtraction = createFakeSubtraction({
 			count: 100,
-			linked_samples: [
+			linkedSamples: [
 				{ id: 1, name: "sample-a" },
 				{ id: 2, name: "sample-b" },
 				{ id: 3, name: "sample-c" },
@@ -37,15 +37,12 @@ describe("<SubtractionDetail />", () => {
 		expect(await screen.findByText(subtraction.name)).toBeInTheDocument();
 		expect(await screen.findByText(subtraction.nickname)).toBeInTheDocument();
 		expect(
-			await screen.findByText(subtraction.linked_samples.length),
+			await screen.findByText(subtraction.linkedSamples.length),
 		).toBeInTheDocument();
 
 		const fastaName = getSubtractionFastaName(subtraction.name);
 		const download = await screen.findByRole("link", { name: fastaName });
-		expect(download).toHaveAttribute(
-			"href",
-			subtraction.files[0]?.download_url,
-		);
+		expect(download).toHaveAttribute("href", subtraction.files[0]?.downloadUrl);
 		expect(download).toHaveAttribute("download", fastaName);
 
 		expect(getSubtraction).toHaveBeenCalled();

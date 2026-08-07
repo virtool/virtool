@@ -25,7 +25,7 @@ const findGroupsSchema = z
 	.object({
 		term: z.string().default(""),
 		page: pageSchema,
-		per_page: perPageSchema,
+		perPage: perPageSchema,
 	})
 	.optional();
 
@@ -64,7 +64,7 @@ export const findGroupsFn = createServerFn({ method: "GET" })
 	.middleware([authenticated()])
 	.validator(findGroupsSchema)
 	.handler(async ({ data }) =>
-		findGroups(db, data?.term ?? "", data?.page ?? 1, data?.per_page ?? 25),
+		findGroups(db, data?.term ?? "", data?.page ?? 1, data?.perPage ?? 25),
 	);
 
 export const getGroupFn = createServerFn({ method: "GET" })

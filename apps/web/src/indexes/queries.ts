@@ -25,18 +25,18 @@ import type {
  *
  * @param referenceId - The reference to list the indexes of
  * @param page - The page to fetch
- * @param per_page - The number of indexes to fetch per page
+ * @param perPage - The number of indexes to fetch per page
  */
 export function indexesQueryOptions(
 	referenceId: number,
 	page: number,
-	per_page: number,
+	perPage: number,
 ) {
 	return queryOptions<IndexSearchResult, Error>({
-		queryKey: indexQueryKeys.list([referenceId, page, per_page]),
+		queryKey: indexQueryKeys.list([referenceId, page, perPage]),
 		queryFn: () =>
 			findIndexesFn({
-				data: { referenceId, page, per_page },
+				data: { referenceId, page, perPage },
 			}) as Promise<IndexSearchResult>,
 	});
 }
@@ -49,15 +49,15 @@ export function indexesQueryOptions(
  *
  * @param referenceId - The reference to list the indexes of
  * @param page - The page to fetch
- * @param per_page - The number of indexes to fetch per page
+ * @param perPage - The number of indexes to fetch per page
  * @returns The paginated list of indexes
  */
 export function useFindIndexes(
 	referenceId: number,
 	page: number,
-	per_page: number,
+	perPage: number,
 ) {
-	return useQuery(indexesQueryOptions(referenceId, page, per_page));
+	return useQuery(indexesQueryOptions(referenceId, page, perPage));
 }
 
 /**
@@ -72,9 +72,9 @@ export function useFindIndexes(
 export function useSuspenseIndexes(
 	referenceId: number,
 	page: number,
-	per_page: number,
+	perPage: number,
 ) {
-	return useSuspenseQuery(indexesQueryOptions(referenceId, page, per_page));
+	return useSuspenseQuery(indexesQueryOptions(referenceId, page, perPage));
 }
 
 /**

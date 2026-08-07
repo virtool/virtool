@@ -89,7 +89,7 @@ export default function HmmDetail() {
 							Average variability per position. Lower is more conserved.
 						</p>
 					</div>
-					<HmmEntropyIndicator entropy={data.mean_entropy} />
+					<HmmEntropyIndicator entropy={data.meanEntropy} />
 				</BoxGroupSection>
 			</BoxGroup>
 

@@ -16,7 +16,7 @@ describe("<OtuToolbar />", () => {
 	});
 
 	it("should render Create button when [canCreate=true]", async () => {
-		mockGetAccount(createFakeAccount({ administrator_role: "full" }));
+		mockGetAccount(createFakeAccount({ administratorRole: "full" }));
 
 		renderWithProviders(
 			<OtuToolbar
@@ -33,7 +33,7 @@ describe("<OtuToolbar />", () => {
 	});
 
 	it("should not render Create button when [canCreate=false]", async () => {
-		mockGetAccount(createFakeAccount({ administrator_role: null }));
+		mockGetAccount(createFakeAccount({ administratorRole: null }));
 
 		renderWithProviders(
 			<OtuToolbar

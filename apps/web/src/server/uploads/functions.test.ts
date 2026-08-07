@@ -130,7 +130,7 @@ describe("findUploads", () => {
 
 		const result = (await call("findUploadsFn", {
 			page: 1,
-			per_page: 25,
+			perPage: 25,
 		})) as { items: { name: string }[] };
 
 		expect(result.items.map((upload) => upload.name)).toEqual(["reads.fq.gz"]);

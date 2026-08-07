@@ -17,17 +17,17 @@ import {
  * Query options for a page of job search results.
  *
  * @param page - The page to fetch
- * @param per_page - The number of jobs to fetch per page
+ * @param perPage - The number of jobs to fetch per page
  * @param states - The states to filter jobs by
  */
 export function jobsQueryOptions(
 	page: number,
-	per_page: number,
+	perPage: number,
 	states: JobState[],
 ) {
 	return queryOptions({
-		queryKey: jobQueryKeys.list([page, per_page, ...states]),
-		queryFn: () => findJobsFn({ data: { page, perPage: per_page, states } }),
+		queryKey: jobQueryKeys.list([page, perPage, ...states]),
+		queryFn: () => findJobsFn({ data: { page, perPage, states } }),
 		select: JobSearchResultSchema.parse,
 	});
 }
@@ -43,10 +43,10 @@ export function jobsQueryOptions(
  */
 export function useSuspenseJobs(
 	page: number,
-	per_page: number,
+	perPage: number,
 	states: JobState[],
 ) {
-	return useSuspenseQuery(jobsQueryOptions(page, per_page, states));
+	return useSuspenseQuery(jobsQueryOptions(page, perPage, states));
 }
 
 /**
@@ -62,8 +62,8 @@ function getJobSeed(job: ServerJobNested): ServerJob {
 		...job,
 		args: {},
 		claim: null,
-		claimed_at: null,
-		finished_at: null,
+		claimedAt: null,
+		finishedAt: null,
 		steps: null,
 	};
 }

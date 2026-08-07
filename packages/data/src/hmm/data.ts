@@ -25,7 +25,11 @@ export const HMM_INSTALL_TASK_TYPE = "install_hmms";
 
 const MANIFEST_URL = "https://www.virtool.ca/releases/hmms.json";
 
-/** The record returned when an install is started. */
+/**
+ * The record returned when an install is started. Mirrors the GitHub releases
+ * API payload shape (plus the appended install metadata), so it stays
+ * snake_case rather than following this domain's camelCase convention.
+ */
 export type HmmInstalled = {
 	body: string;
 	created_at: string;
@@ -86,7 +90,7 @@ async function readTask(db: Db, taskId: number): Promise<HmmStatusTask | null> {
 	const [row] = await db
 		.select({
 			complete: tasks.complete,
-			created_at: tasks.created_at,
+			createdAt: tasks.created_at,
 			error: tasks.error,
 			id: tasks.id,
 			progress: tasks.progress,
@@ -102,7 +106,7 @@ async function readTask(db: Db, taskId: number): Promise<HmmStatusTask | null> {
 
 	return {
 		complete: row.complete ?? false,
-		created_at: row.created_at,
+		createdAt: row.createdAt,
 		error: row.error,
 		id: row.id,
 		progress: row.progress ?? 0,
@@ -175,8 +179,8 @@ export async function getHmm(db: Db, hmmId: number): Promise<Hmm> {
 		entries: row.entries,
 		genera: row.genera,
 		length: row.length,
-		mean_entropy: row.mean_entropy,
-		total_entropy: row.total_entropy,
+		meanEntropy: row.mean_entropy,
+		totalEntropy: row.total_entropy,
 	};
 }
 
@@ -200,6 +204,8 @@ export async function isInstallInProgress(
 	return Boolean(row?.updates?.some((update) => !update.ready));
 }
 
+// Mirrors the GitHub releases API payload shape, so it stays snake_case
+// rather than following this domain's camelCase convention.
 type ManifestRelease = {
 	body: string;
 	content_type: string;

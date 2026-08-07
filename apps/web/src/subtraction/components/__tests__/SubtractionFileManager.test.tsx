@@ -21,7 +21,7 @@ describe("<SubtractionFileManager />", () => {
 	it("should reject uploads that don't pass validation", async () => {
 		mockGetAccount(
 			createFakeAccount({
-				administrator_role: "full",
+				administratorRole: "full",
 			}),
 		);
 		mockFindUploads([createFakeFile({ name: "subtraction.fq.gz" })]);

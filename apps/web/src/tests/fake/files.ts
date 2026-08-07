@@ -10,15 +10,15 @@ export function createFakeFile(overrides?: Partial<Upload>): Upload {
 
 	return {
 		id: faker.number.int(),
-		created_at: faker.date.past().toISOString(),
+		createdAt: faker.date.past(),
 		name,
 		ready: true,
 		removed: false,
-		removed_at: null,
+		removedAt: null,
 		reserved: false,
 		size: faker.number.int(),
 		type: "reads",
-		uploaded_at: faker.date.past().toISOString(),
+		uploadedAt: faker.date.past(),
 		user: createFakeUserNested(),
 		...overrides,
 	};

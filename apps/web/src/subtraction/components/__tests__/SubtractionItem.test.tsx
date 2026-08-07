@@ -16,14 +16,14 @@ describe("<SubtractionItem />", () => {
 		props = {
 			id: 1,
 			count: 12,
-			created_at: createdAt.toISOString(),
+			createdAt,
 			file: {
 				id: 23,
 				name: "subtraction.fa.gz",
 			},
 			job: {
 				id: 42,
-				created_at: createdAt.toISOString(),
+				createdAt,
 				progress: 50,
 				state: "running",
 				workflow: "create_subtraction",

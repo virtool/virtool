@@ -60,17 +60,17 @@ function getNow() {
  * it is clamped to `now` — `formatDistanceStrict` would otherwise render it as
  * "in 5 seconds".
  *
- * @param time - the ISO formatted time
+ * @param time - the instant to describe
  * @param now - the instant to measure against
  * @param options.addSuffix - whether to add the "ago" suffix (default: true)
  * @returns a human-readable relative time string
  */
 function createTimeString(
-	time: string | Date,
+	time: Date,
 	now: number,
 	{ addSuffix = true }: RelativeTimeOptions = {},
 ) {
-	const target = new Date(time).getTime();
+	const target = time.getTime();
 
 	const timeString = formatDistanceStrict(
 		new Date(Math.min(target, now)),
@@ -91,16 +91,26 @@ function createTimeString(
  * and the React Compiler would pin its result to the last time `time` changed.
  */
 export function useRelativeTime(
-	time: string | Date,
+	time: Date | null,
 	{ addSuffix = true }: RelativeTimeOptions = {},
 ) {
+	// Subscribed unconditionally, before the null check: a hook cannot be called
+	// behind a branch, and a row whose timestamp is null must not change how many
+	// hooks this component runs.
 	const now = useSyncExternalStore(subscribe, getNow, readServerNow);
 
-	return createTimeString(time, now, { addSuffix });
+	return time === null ? null : createTimeString(time, now, { addSuffix });
 }
 
 type RelativeTimeProps = {
-	time: string | Date;
+	/**
+	 * The instant to describe, or null if the row does not record one.
+	 *
+	 * Nullable because the timestamp columns behind these are nullable in
+	 * Postgres. Absence renders as nothing at all rather than as an epoch date,
+	 * which `new Date(null)` would otherwise present as a real instant in 1970.
+	 */
+	time: Date | null;
 };
 
 /**
@@ -110,8 +120,12 @@ type RelativeTimeProps = {
 export default function RelativeTime({ time }: RelativeTimeProps) {
 	const timeString = useRelativeTime(time);
 
+	if (time === null) {
+		return null;
+	}
+
 	// The rendered text is approximate and drifts as the ticker advances;
 	// `dateTime` carries the exact instant, so assistive technology and anything
 	// parsing the page get the real value rather than "3 days ago".
-	return <time dateTime={new Date(time).toISOString()}>{timeString}</time>;
+	return <time dateTime={time.toISOString()}>{timeString}</time>;
 }

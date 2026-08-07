@@ -71,7 +71,7 @@ export type ClaimableJobWorkflow = z.infer<typeof ClaimableJobWorkflow>;
 
 /** A job embedded in another resource, e.g. a sample's creation job. */
 export type JobNested = {
-	createdAt: string;
+	createdAt: Date;
 	id: number;
 	progress: number;
 	state: JobState;

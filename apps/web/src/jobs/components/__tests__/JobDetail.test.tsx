@@ -11,9 +11,9 @@ function createBuildIndexJob(indexId: number): ServerJob {
 	return {
 		args: { index_id: String(indexId) },
 		id: 123,
-		claimed_at: "2022-12-22T21:37:49.429000Z",
-		created_at: "2022-12-22T21:37:49.429000Z",
-		finished_at: "2022-12-22T21:38:49.429000Z",
+		claimedAt: "2022-12-22T21:37:49.429000Z",
+		createdAt: "2022-12-22T21:37:49.429000Z",
+		finishedAt: "2022-12-22T21:38:49.429000Z",
 		progress: 100,
 		state: "succeeded",
 		steps: null,

@@ -5,10 +5,10 @@ import { createFakePermissions } from "./permissions";
 import { createFakeUser } from "./user";
 
 const defaultSettings: AccountSettings = {
-	quick_analyze_workflow: "pathoscope",
-	show_ids: true,
-	show_versions: true,
-	skip_quick_analyze_dialog: true,
+	quickAnalyzeWorkflow: "pathoscope",
+	showIds: true,
+	showVersions: true,
+	skipQuickAnalyzeDialog: true,
 };
 
 export function createFakeAccount(overrides?: Partial<Account>): Account {

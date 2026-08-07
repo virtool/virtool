@@ -148,7 +148,7 @@ describe("findReferences", () => {
 
 		const result = (await call("findReferencesFn", {
 			page: 1,
-			per_page: 25,
+			perPage: 25,
 		})) as {
 			items: { user: { id: number } | null }[];
 			totalCount: number;
@@ -170,7 +170,7 @@ describe("findReferences", () => {
 
 		const result = (await call("findReferencesFn", {
 			page: 1,
-			per_page: 25,
+			perPage: 25,
 		})) as {
 			totalCount: number;
 		};

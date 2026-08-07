@@ -191,7 +191,7 @@ async function getAnalysisJobs(
 		jobs.map((job) => [
 			job.id,
 			{
-				createdAt: job.created_at.toISOString(),
+				createdAt: job.createdAt,
 				id: job.id,
 				progress: job.progress,
 				// The mirror stores states and workflows as free text; the columns only
@@ -223,7 +223,7 @@ async function getAnalysisFiles(
 		name: row.name ?? "",
 		nameOnDisk: row.name_on_disk ?? "",
 		size: row.size,
-		uploadedAt: row.uploaded_at?.toISOString() ?? null,
+		uploadedAt: row.uploaded_at,
 	}));
 }
 
@@ -252,7 +252,7 @@ function mapMinimal(
 	const user: UserNested = { id: row.user_id, handle: row.userHandle ?? "" };
 
 	return {
-		createdAt: row.created_at.toISOString(),
+		createdAt: row.created_at,
 		id: row.id,
 		index: { id: row.index_id, version: row.indexVersion },
 		job,
@@ -260,7 +260,7 @@ function mapMinimal(
 		reference: { id: row.reference_id, name: row.referenceName ?? "" },
 		sample: { id: row.sample_id, name: row.sampleName ?? "" },
 		subtractions: analysisSubtractionList,
-		updatedAt: row.updated_at.toISOString(),
+		updatedAt: row.updated_at,
 		user,
 		workflow: row.workflow as AnalysisWorkflow,
 	};
@@ -503,9 +503,9 @@ async function attachBlasts(
 function mapBlast(row: typeof nuvsBlast.$inferSelect): NuvsBlast {
 	return {
 		id: row.id,
-		createdAt: row.created_at.toISOString(),
-		updatedAt: row.updated_at.toISOString(),
-		lastCheckedAt: row.last_checked_at.toISOString(),
+		createdAt: row.created_at,
+		updatedAt: row.updated_at,
+		lastCheckedAt: row.last_checked_at,
 		error: row.error,
 		interval: row.interval,
 		ready: row.ready,

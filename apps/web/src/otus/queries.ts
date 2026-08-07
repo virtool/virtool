@@ -54,20 +54,20 @@ export function useGetGenbank() {
  *
  * @param refId - The reference id to fetch the OTUs of
  * @param page - The page to fetch
- * @param per_page - The number of OTUs to fetch per page
+ * @param perPage - The number of OTUs to fetch per page
  * @param term - The search term to filter the OTUs by
  */
 export function otusQueryOptions(
 	refId: number,
 	page: number,
-	per_page: number,
+	perPage: number,
 	term: string,
 ) {
 	return queryOptions<OtuSearchResult, Error>({
-		queryKey: otuQueryKeys.list([refId, page, per_page, term]),
+		queryKey: otuQueryKeys.list([refId, page, perPage, term]),
 		queryFn: () =>
 			findOtusFn({
-				data: { referenceId: refId, page, per_page, term },
+				data: { referenceId: refId, page, perPage, term },
 			}) as Promise<OtuSearchResult>,
 	});
 }
@@ -84,10 +84,10 @@ export function otusQueryOptions(
 export function useSuspenseOtus(
 	refId: number,
 	page: number,
-	per_page: number,
+	perPage: number,
 	term: string,
 ) {
-	return useSuspenseQuery(otusQueryOptions(refId, page, per_page, term));
+	return useSuspenseQuery(otusQueryOptions(refId, page, perPage, term));
 }
 
 export function otuQueryOptions(otuId: string) {

@@ -24,7 +24,7 @@ export function useCheckAdminRole(
 	const { data: account, isError, isPending } = useFetchAccount();
 	return {
 		hasPermission: account
-			? hasSufficientAdminRole(requiredRole, account.administrator_role)
+			? hasSufficientAdminRole(requiredRole, account.administratorRole)
 			: null,
 		isError,
 		isPending,

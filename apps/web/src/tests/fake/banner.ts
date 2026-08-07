@@ -11,10 +11,10 @@ export function createFakeBanner(overrides?: Partial<Banner>): Banner {
 	return {
 		active: true,
 		color: "red",
-		created_at: faker.date.past().toISOString(),
+		createdAt: faker.date.past(),
 		id: faker.number.int(),
 		message: faker.lorem.sentence(),
-		updated_at: faker.date.past().toISOString(),
+		updatedAt: faker.date.past(),
 		user: createFakeUserNested(),
 		...overrides,
 	};

@@ -18,7 +18,7 @@ describe("<ReferenceDetailHeaderIcon />", () => {
 		mockGetReference(reference);
 		mockGetAccount(
 			createFakeAccount({
-				administrator_role: "full",
+				administratorRole: "full",
 			}),
 		);
 		props = {
@@ -48,7 +48,7 @@ describe("<ReferenceDetailHeaderIcon />", () => {
 	});
 
 	it("should render no actions when [canModify=false]", async () => {
-		mockGetAccount(createFakeAccount({ administrator_role: null }));
+		mockGetAccount(createFakeAccount({ administratorRole: null }));
 		await renderWithRouter(<ReferenceDetailHeader {...props} />, path);
 
 		expect(screen.queryByRole("button")).toBeNull();
@@ -64,7 +64,7 @@ describe("<ReferenceDetailHeaderIcon />", () => {
 	});
 
 	it("should not render the archive button when [canModify=false]", async () => {
-		mockGetAccount(createFakeAccount({ administrator_role: null }));
+		mockGetAccount(createFakeAccount({ administratorRole: null }));
 		await renderWithRouter(<ReferenceDetailHeader {...props} />, path);
 
 		expect(screen.queryByRole("button", { name: "archive" })).toBeNull();
@@ -74,7 +74,7 @@ describe("<ReferenceDetailHeaderIcon />", () => {
 		beforeEach(() => {
 			reference = createFakeReference({ archived: true });
 			mockGetReference(reference);
-			mockGetAccount(createFakeAccount({ administrator_role: "full" }));
+			mockGetAccount(createFakeAccount({ administratorRole: "full" }));
 			props = {
 				createdAt: reference.createdAt,
 				detail: reference,
@@ -103,7 +103,7 @@ describe("<ReferenceDetailHeaderIcon />", () => {
 		});
 
 		it("should not render the unarchive button when [canModify=false]", async () => {
-			mockGetAccount(createFakeAccount({ administrator_role: null }));
+			mockGetAccount(createFakeAccount({ administratorRole: null }));
 			await renderWithRouter(<ReferenceDetailHeader {...props} />, path);
 
 			expect(screen.queryByRole("button", { name: "unarchive" })).toBeNull();

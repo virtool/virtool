@@ -31,7 +31,7 @@ const referenceIdSchema = z.object({ referenceId: rowIdSchema });
 
 const findIndexesSchema = referenceIdSchema.extend({
 	page: pageSchema,
-	per_page: perPageSchema,
+	perPage: perPageSchema,
 });
 
 const listReadyIndexesSchema = z.object({
@@ -40,7 +40,7 @@ const listReadyIndexesSchema = z.object({
 
 const findUnbuiltChangesSchema = referenceIdSchema.extend({
 	page: pageSchema,
-	per_page: perPageSchema,
+	perPage: perPageSchema,
 });
 
 // Wrapped in createServerOnlyFn so the compiler can strip these bodies — and the
@@ -93,7 +93,7 @@ export const findIndexesFn = createServerFn({ method: "GET" })
 		findIndexes(db, {
 			referenceId: data.referenceId,
 			page: data.page,
-			perPage: data.per_page,
+			perPage: data.perPage,
 		}),
 	);
 
@@ -117,7 +117,7 @@ export const findUnbuiltChangesFn = createServerFn({ method: "GET" })
 	.middleware([authenticated()])
 	.validator(findUnbuiltChangesSchema)
 	.handler(async ({ data }) =>
-		findUnbuiltByReference(db, data.referenceId, data.page, data.per_page),
+		findUnbuiltByReference(db, data.referenceId, data.page, data.perPage),
 	);
 
 export const createIndexFn = createServerFn({ method: "POST" })

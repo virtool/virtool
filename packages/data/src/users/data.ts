@@ -35,7 +35,7 @@ import { emit } from "../events/emit";
 /** A minimal group reference attached to a user, matching the legacy wire shape. */
 export type UserGroupReference = {
 	id: number;
-	legacy_id: string | null;
+	legacyId: string | null;
 	name: string;
 };
 
@@ -43,22 +43,75 @@ export type UserGroupReference = {
 export type User = {
 	id: number;
 	handle: string;
-	administrator_role: AdministratorRoleName | null;
+	administratorRole: AdministratorRoleName | null;
 	active: boolean;
-	force_reset: boolean;
+	forceReset: boolean;
 	groups: UserGroupReference[];
-	last_password_change: string;
+	lastPasswordChange: Date;
 	permissions: Permissions;
-	primary_group: UserGroupReference | null;
+	primaryGroup: UserGroupReference | null;
 };
 
 /** A signed-in user's client-side preferences. */
 export type AccountSettings = {
+	quickAnalyzeWorkflow: "nuvs" | "pathoscope";
+	showIds: boolean;
+	showVersions: boolean;
+	skipQuickAnalyzeDialog: boolean;
+};
+
+/**
+ * {@link AccountSettings} as it is stored in the `users.settings` JSONB column.
+ *
+ * snake_case, byte-compatible with what Python reads and writes — its
+ * `virtool/users/settings.py` seeds these keys for every account it creates,
+ * which is every account that exists today. **Never returned from a read, and
+ * never written from a model value**: map with {@link fromStoredAccountSettings}
+ * and {@link toStoredAccountSettings} instead.
+ *
+ * The column is typed `Record<string, unknown>` and was previously read with a
+ * blind cast, so nothing but this mapper stands between a rename on this side
+ * and every existing user's preferences silently reading `undefined`.
+ */
+type StoredAccountSettings = {
 	quick_analyze_workflow: "nuvs" | "pathoscope";
 	show_ids: boolean;
 	show_versions: boolean;
 	skip_quick_analyze_dialog: boolean;
 };
+
+/**
+ * Map the stored blob to the camelCase model.
+ *
+ * Every field falls back to its default rather than trusting the column: the
+ * blob is untyped `jsonb`, and a row written by an older Python release may be
+ * missing a key this side now expects.
+ */
+function fromStoredAccountSettings(stored: unknown): AccountSettings {
+	const blob = (stored ?? {}) as Partial<StoredAccountSettings>;
+
+	return {
+		quickAnalyzeWorkflow:
+			blob.quick_analyze_workflow ?? DEFAULT_USER_SETTINGS.quickAnalyzeWorkflow,
+		showIds: blob.show_ids ?? DEFAULT_USER_SETTINGS.showIds,
+		showVersions: blob.show_versions ?? DEFAULT_USER_SETTINGS.showVersions,
+		skipQuickAnalyzeDialog:
+			blob.skip_quick_analyze_dialog ??
+			DEFAULT_USER_SETTINGS.skipQuickAnalyzeDialog,
+	};
+}
+
+/** Map the camelCase model to the shape written to the `settings` column. */
+function toStoredAccountSettings(
+	settings: AccountSettings,
+): StoredAccountSettings {
+	return {
+		quick_analyze_workflow: settings.quickAnalyzeWorkflow,
+		show_ids: settings.showIds,
+		show_versions: settings.showVersions,
+		skip_quick_analyze_dialog: settings.skipQuickAnalyzeDialog,
+	};
+}
 
 /**
  * The signed-in user's own view of themselves.
@@ -107,11 +160,11 @@ export type CreateUserValues = {
 /** Partial values accepted when updating a user. */
 export type UserUpdateValues = {
 	active?: boolean;
-	force_reset?: boolean;
+	forceReset?: boolean;
 	handle?: string;
 	password?: string;
 	groups?: number[];
-	primary_group?: number | null;
+	primaryGroup?: number | null;
 };
 
 /** Inputs to change the signed-in user's own password. */
@@ -154,11 +207,11 @@ export class GroupMembershipError extends AppError {}
 // Mirrors virtool/users/settings.py DEFAULT_USER_SETTINGS. The Python service
 // owns this default for accounts it creates; we keep parity for accounts we
 // create from this side.
-const DEFAULT_USER_SETTINGS = {
-	skip_quick_analyze_dialog: true,
-	show_ids: true,
-	show_versions: true,
-	quick_analyze_workflow: "pathoscope",
+const DEFAULT_USER_SETTINGS: AccountSettings = {
+	skipQuickAnalyzeDialog: true,
+	showIds: true,
+	showVersions: true,
+	quickAnalyzeWorkflow: "pathoscope",
 };
 
 // Mirrors AVAILABLE_ROLES in virtool/administrators/api.py: every member of the
@@ -254,7 +307,7 @@ async function fetchGroupMemberships(
 function buildUser(row: UserRow, memberships: GroupMembershipRow[]): User {
 	const groups = memberships.map((membership) => ({
 		id: membership.id,
-		legacy_id: membership.legacyId,
+		legacyId: membership.legacyId,
 		name: membership.name,
 	}));
 	const primary = memberships.find((membership) => membership.primary);
@@ -262,16 +315,16 @@ function buildUser(row: UserRow, memberships: GroupMembershipRow[]): User {
 	return {
 		id: row.id,
 		handle: row.handle,
-		administrator_role: row.administratorRole,
+		administratorRole: row.administratorRole,
 		active: row.active,
-		force_reset: row.forceReset,
+		forceReset: row.forceReset,
 		groups,
-		last_password_change: row.lastPasswordChange.toISOString(),
+		lastPasswordChange: row.lastPasswordChange,
 		permissions: mergePermissions(
 			memberships.map((membership) => membership.permissions),
 		),
-		primary_group: primary
-			? { id: primary.id, legacy_id: primary.legacyId, name: primary.name }
+		primaryGroup: primary
+			? { id: primary.id, legacyId: primary.legacyId, name: primary.name }
 			: null,
 	};
 }
@@ -392,7 +445,7 @@ export async function getAccount(db: Db, userId: number): Promise<Account> {
 	return {
 		...user,
 		email: row.email,
-		settings: row.settings as AccountSettings,
+		settings: fromStoredAccountSettings(row.settings),
 	};
 }
 
@@ -534,7 +587,7 @@ export async function createUser(
 					administratorRole: values.administratorRole ?? null,
 					lastPasswordChange: new Date(),
 					legacyId: null,
-					settings: DEFAULT_USER_SETTINGS,
+					settings: toStoredAccountSettings(DEFAULT_USER_SETTINGS),
 				})
 				.returning({ id: usersTable.id }),
 		);
@@ -572,8 +625,8 @@ export async function updateUser(
 	if (values.active !== undefined) {
 		patch.active = values.active;
 	}
-	if (values.force_reset !== undefined) {
-		patch.forceReset = values.force_reset;
+	if (values.forceReset !== undefined) {
+		patch.forceReset = values.forceReset;
 	}
 	if (values.handle !== undefined) {
 		patch.handle = values.handle;
@@ -585,7 +638,7 @@ export async function updateUser(
 
 	const revokeSessions =
 		values.active !== undefined ||
-		values.force_reset !== undefined ||
+		values.forceReset !== undefined ||
 		values.password !== undefined;
 
 	await db.transaction(async (tx) => {
@@ -606,7 +659,7 @@ export async function updateUser(
 
 		if (values.groups !== undefined) {
 			// Re-applied to the new membership rows so toggling group membership
-			// without also sending primary_group doesn't silently clear it.
+			// without also sending primaryGroup doesn't silently clear it.
 			const currentPrimary = await tx
 				.select({ groupId: userGroupsTable.groupId })
 				.from(userGroupsTable)
@@ -635,19 +688,19 @@ export async function updateUser(
 			}
 		}
 
-		if (values.primary_group === null) {
+		if (values.primaryGroup === null) {
 			await tx
 				.update(userGroupsTable)
 				.set({ primary: false })
 				.where(eq(userGroupsTable.userId, userId));
-		} else if (values.primary_group !== undefined) {
+		} else if (values.primaryGroup !== undefined) {
 			const promoted = await tx
 				.update(userGroupsTable)
 				.set({ primary: true })
 				.where(
 					and(
 						eq(userGroupsTable.userId, userId),
-						eq(userGroupsTable.groupId, values.primary_group),
+						eq(userGroupsTable.groupId, values.primaryGroup),
 					),
 				)
 				.returning({ groupId: userGroupsTable.groupId });
@@ -662,7 +715,7 @@ export async function updateUser(
 				.where(
 					and(
 						eq(userGroupsTable.userId, userId),
-						ne(userGroupsTable.groupId, values.primary_group),
+						ne(userGroupsTable.groupId, values.primaryGroup),
 					),
 				);
 		}

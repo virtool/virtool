@@ -3,7 +3,6 @@ import Box from "@base/Box";
 import Checkbox from "@base/Checkbox";
 import Link from "@base/Link";
 import { useFetchJob } from "@jobs/queries";
-import { toServerJobNested } from "@jobs/utils";
 import type { SampleMinimal } from "@virtool/contracts";
 import type { MouseEvent } from "react";
 import SampleLabel from "../Label/SampleLabel";
@@ -34,10 +33,7 @@ export default function SampleItem({
 	handleSelect,
 	onQuickAnalyze,
 }: SampleItemProps) {
-	const { data: job } = useFetchJob(
-		sample.job?.id ?? Number.NaN,
-		sample.job && toServerJobNested(sample.job),
-	);
+	const { data: job } = useFetchJob(sample.job?.id ?? Number.NaN, sample.job);
 
 	return (
 		<Box

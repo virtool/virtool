@@ -41,7 +41,7 @@ describe("<HmmDetail />", () => {
 			expect(screen.getByText(hmmDetail.length)).toBeInTheDocument();
 
 			expect(screen.getByText("Mean Entropy")).toBeInTheDocument();
-			expect(screen.getByText(hmmDetail.mean_entropy)).toBeInTheDocument();
+			expect(screen.getByText(hmmDetail.meanEntropy)).toBeInTheDocument();
 		});
 
 		it("should render Cluster table correctly", async () => {

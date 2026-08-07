@@ -19,7 +19,7 @@ describe("<CreateSampleFromFile>", () => {
 	const subtractionShortlist = createFakeShortlistSubtraction();
 
 	beforeEach(() => {
-		mockGetAccount(createFakeAccount({ primary_group: null }));
+		mockGetAccount(createFakeAccount({ primaryGroup: null }));
 		mockListGroups([]);
 		mockListSubtractionsShortlist([subtractionShortlist]);
 	});

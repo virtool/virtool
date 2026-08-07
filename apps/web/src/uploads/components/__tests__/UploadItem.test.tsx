@@ -16,7 +16,7 @@ describe("<UploadItem />", () => {
 			id: 1,
 			name: "foo.fa",
 			size: 10,
-			uploaded_at: "2018-02-14T17:12:00.000000Z",
+			uploadedAt: new Date("2018-02-14T17:12:00.000000Z"),
 			user: { id: 1, handle: "bill" },
 		};
 	});

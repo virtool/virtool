@@ -15,7 +15,7 @@ import { describe, expect, it } from "vitest";
 describe("<AccountProfile />", () => {
 	it("should render when administrator", async () => {
 		const account = createFakeAccount({
-			administrator_role: "full",
+			administratorRole: "full",
 		});
 
 		mockGetAccount(account);
@@ -26,7 +26,7 @@ describe("<AccountProfile />", () => {
 	});
 
 	it("should render when not administrator", async () => {
-		const account = createFakeAccount({ administrator_role: null });
+		const account = createFakeAccount({ administratorRole: null });
 
 		mockGetAccount(account);
 		renderWithProviders(<AccountProfile />);
@@ -36,7 +36,7 @@ describe("<AccountProfile />", () => {
 
 	it("should render with initial email", async () => {
 		const account = createFakeAccount({
-			administrator_role: "full",
+			administratorRole: "full",
 			email: "virtool.devs@gmail.com",
 		});
 
@@ -52,7 +52,7 @@ describe("<AccountProfile />", () => {
 
 	it("should handle email changes", async () => {
 		const account = createFakeAccount({
-			administrator_role: "full",
+			administratorRole: "full",
 			email: "",
 		});
 
@@ -185,7 +185,7 @@ describe("<AccountProfile />", () => {
 
 	it("should handle password changes", async () => {
 		const account = createFakeAccount({
-			administrator_role: "full",
+			administratorRole: "full",
 		});
 		mockGetAccount(account);
 		renderWithProviders(<AccountProfile />);
@@ -220,7 +220,7 @@ describe("<AccountProfile />", () => {
 
 	it("should show success message after password change", async () => {
 		const account = createFakeAccount({
-			administrator_role: "full",
+			administratorRole: "full",
 		});
 
 		mockGetAccount(account);
@@ -253,7 +253,7 @@ describe("<AccountProfile />", () => {
 	});
 
 	it("shows the server's message when the old password is wrong", async () => {
-		const account = createFakeAccount({ administrator_role: "full" });
+		const account = createFakeAccount({ administratorRole: "full" });
 
 		mockGetAccount(account);
 		mockChangePassword(undefined, 400);

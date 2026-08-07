@@ -62,7 +62,7 @@ export async function getTasks(db: Db, taskIds: number[]): Promise<Task[]> {
 	const rows = await db
 		.select({
 			complete: tasksTable.complete,
-			created_at: tasksTable.created_at,
+			createdAt: tasksTable.created_at,
 			error: tasksTable.error,
 			id: tasksTable.id,
 			progress: tasksTable.progress,
@@ -74,7 +74,7 @@ export async function getTasks(db: Db, taskIds: number[]): Promise<Task[]> {
 
 	return rows.map((row) => ({
 		complete: row.complete ?? false,
-		created_at: row.created_at,
+		createdAt: row.createdAt,
 		error: row.error,
 		id: row.id,
 		progress: row.progress ?? 0,

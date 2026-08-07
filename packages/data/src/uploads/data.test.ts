@@ -135,6 +135,21 @@ describe("findUploads", () => {
 		expect(result.items[0]?.user).toEqual({ id: userId, handle: "bob" });
 	});
 
+	// A ready row migrated from before these columns existed carries null. The
+	// mapper must pass that through rather than substitute an epoch date, which
+	// renders as a real instant in 1970 instead of as the absence it is — and
+	// which no type check can catch, because `Date` satisfies `Date | null`.
+	it("passes a null timestamp through rather than defaulting it", async () => {
+		const userId = await seedUser(db);
+
+		await seedUpload(userId, { createdAt: null, uploadedAt: null });
+
+		const result = await findUploads(db, undefined, 1, 25);
+
+		expect(result.items[0]?.createdAt).toBeNull();
+		expect(result.items[0]?.uploadedAt).toBeNull();
+	});
+
 	it("filters by type while counting all visible uploads as the total", async () => {
 		const userId = await seedUser(db);
 		await seedUpload(userId, { type: "reads" });

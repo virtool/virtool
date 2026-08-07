@@ -30,7 +30,7 @@ describe("<FileManager>", () => {
 	it("should upload with validation based on passed regex", async () => {
 		mockGetAccount(
 			createFakeAccount({
-				administrator_role: null,
+				administratorRole: null,
 				permissions: {
 					cancel_job: false,
 					create_ref: false,
@@ -79,7 +79,7 @@ describe("<FileManager>", () => {
 	});
 
 	it("should hide upload bar if user lacks permission", async () => {
-		mockGetAccount(createFakeAccount({ administrator_role: null }));
+		mockGetAccount(createFakeAccount({ administratorRole: null }));
 		mockFindUploads([createFakeFile({ name: "subtraction.fq.gz" })]);
 
 		await renderWithRouter(<FileManager {...props} />, path);
@@ -95,7 +95,7 @@ describe("<FileManager>", () => {
 	it("should show the hint under the upload prompt", async () => {
 		mockGetAccount(
 			createFakeAccount({
-				administrator_role: "full",
+				administratorRole: "full",
 			}),
 		);
 		mockFindUploads([createFakeFile({ name: "subtraction.fq.gz" })]);
@@ -118,7 +118,7 @@ describe("<FileManager>", () => {
 			const unselected = createFakeFile({ name: "three.fq.gz" });
 			const files = [first, second, unselected];
 
-			mockGetAccount(createFakeAccount({ administrator_role: "full" }));
+			mockGetAccount(createFakeAccount({ administratorRole: "full" }));
 			mockFindUploads(files);
 			uploadServerFnMocks.deleteUploadFn.mockResolvedValue(null);
 
@@ -157,7 +157,7 @@ describe("<FileManager>", () => {
 				createFakeFile({ name: "two.fq.gz" }),
 			];
 
-			mockGetAccount(createFakeAccount({ administrator_role: "full" }));
+			mockGetAccount(createFakeAccount({ administratorRole: "full" }));
 			mockFindUploads(files);
 
 			await renderWithRouter(<FileManager {...props} />, path);
@@ -177,7 +177,7 @@ describe("<FileManager>", () => {
 		});
 
 		it("should hide checkboxes when there is nothing to do with a selection", async () => {
-			mockGetAccount(createFakeAccount({ administrator_role: null }));
+			mockGetAccount(createFakeAccount({ administratorRole: null }));
 			mockFindUploads([createFakeFile({ name: "one.fq.gz" })]);
 
 			await renderWithRouter(<FileManager {...props} />, path);

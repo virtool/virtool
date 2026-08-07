@@ -13,7 +13,7 @@ export const Route = createFileRoute("/_authenticated/administration")({
 
 		const account = await queryClient.ensureQueryData(accountQueryOptions());
 
-		if (!hasSufficientAdminRole("users", account.administrator_role)) {
+		if (!hasSufficientAdminRole("users", account.administratorRole)) {
 			throw redirect({ to: "/" });
 		}
 
@@ -30,7 +30,7 @@ function AdministrationLayout() {
 			<ViewHeader title="Administration">
 				<ViewHeaderTitle>Administration</ViewHeaderTitle>
 			</ViewHeader>
-			<AdministrationTabs administratorRole={account.administrator_role} />
+			<AdministrationTabs administratorRole={account.administratorRole} />
 			<ContainerNarrow>
 				<Outlet />
 			</ContainerNarrow>

@@ -38,7 +38,7 @@ export const NON_TERMINAL_JOB_STATES = JOB_STATES.filter(
 /** A job as it appears in a search result list. */
 export type JobMinimal = {
 	id: number;
-	created_at: Date;
+	createdAt: Date;
 	progress: number;
 	state: string;
 	user: { id: number; handle: string };
@@ -50,10 +50,10 @@ export type Job = {
 	args: Record<string, string>;
 	id: number;
 	claim: JobClaim | null;
-	claimed_at: Date | null;
-	created_at: Date;
-	finished_at: Date | null;
-	pinged_at: Date | null;
+	claimedAt: Date | null;
+	createdAt: Date;
+	finishedAt: Date | null;
+	pingedAt: Date | null;
 	progress: number;
 	state: string;
 	steps: JobStep[] | null;
@@ -153,7 +153,7 @@ export async function findJobs(
 		db
 			.select({
 				id: jobs.id,
-				created_at: jobs.created_at,
+				createdAt: jobs.created_at,
 				state: jobs.state,
 				steps: jobs.steps,
 				workflow: jobs.workflow,
@@ -175,7 +175,7 @@ export async function findJobs(
 
 	const items = rows.map((row) => ({
 		id: row.id,
-		created_at: row.created_at,
+		createdAt: row.createdAt,
 		progress: computeProgress(row.state, row.steps),
 		state: row.state,
 		user: { id: row.userId, handle: row.handle },
@@ -221,10 +221,10 @@ function toJob(row: JobRowWithResources): Job {
 		args,
 		id: row.id,
 		claim: row.claim ?? null,
-		claimed_at: row.claimed_at,
-		created_at: row.created_at,
-		finished_at: row.finished_at,
-		pinged_at: row.pinged_at,
+		claimedAt: row.claimedAt,
+		createdAt: row.createdAt,
+		finishedAt: row.finishedAt,
+		pingedAt: row.pingedAt,
 		progress: computeProgress(row.state, row.steps),
 		state: row.state,
 		steps: row.steps,
@@ -238,10 +238,10 @@ function selectJobsWithResources(db: Db) {
 		.select({
 			id: jobs.id,
 			claim: jobs.claim,
-			claimed_at: jobs.claimed_at,
-			created_at: jobs.created_at,
-			finished_at: jobs.finished_at,
-			pinged_at: jobs.pinged_at,
+			claimedAt: jobs.claimed_at,
+			createdAt: jobs.created_at,
+			finishedAt: jobs.finished_at,
+			pingedAt: jobs.pinged_at,
 			state: jobs.state,
 			steps: jobs.steps,
 			workflow: jobs.workflow,
@@ -343,8 +343,8 @@ export type ClaimJobValues = {
 export type ClaimedJob = {
 	id: number;
 	claim: JobClaim;
-	claimed_at: Date;
-	created_at: Date;
+	claimedAt: Date;
+	createdAt: Date;
 	/** Returned once and never stored in the clear. */
 	key: string;
 	steps: JobStep[];
@@ -387,7 +387,7 @@ export async function claimJob(
 		const [pending] = await tx
 			.select({
 				id: jobs.id,
-				created_at: jobs.created_at,
+				createdAt: jobs.created_at,
 				user_id: jobs.user_id,
 			})
 			.from(jobs)
@@ -427,7 +427,7 @@ export async function claimJob(
 				.limit(1),
 		);
 
-		return { id: pending.id, created_at: pending.created_at, user };
+		return { id: pending.id, createdAt: pending.createdAt, user };
 	});
 
 	if (!claimed) {
@@ -439,8 +439,8 @@ export async function claimJob(
 	return {
 		id: claimed.id,
 		claim: values.claim,
-		claimed_at: now,
-		created_at: claimed.created_at,
+		claimedAt: now,
+		createdAt: claimed.createdAt,
 		key,
 		steps,
 		user: claimed.user,

@@ -224,7 +224,7 @@ describe("<UserGroups />", () => {
 
 		await waitFor(() =>
 			expect(userServerFnMocks.updateUserFn).toHaveBeenCalledWith({
-				data: { userId, primary_group: 2 },
+				data: { userId, primaryGroup: 2 },
 			}),
 		);
 	});
@@ -247,7 +247,7 @@ describe("<UserGroups />", () => {
 
 		await waitFor(() =>
 			expect(userServerFnMocks.updateUserFn).toHaveBeenCalledWith({
-				data: { userId, primary_group: null },
+				data: { userId, primaryGroup: null },
 			}),
 		);
 	});
@@ -270,7 +270,7 @@ describe("<UserGroups />", () => {
 
 		await waitFor(() =>
 			expect(userServerFnMocks.updateUserFn).toHaveBeenCalledWith({
-				data: { userId, groups: [2], primary_group: null },
+				data: { userId, groups: [2], primaryGroup: null },
 			}),
 		);
 	});

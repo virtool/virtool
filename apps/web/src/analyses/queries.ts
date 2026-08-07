@@ -28,19 +28,19 @@ import type {
  *
  * @param sampleId - The sample which the analyses are associated with
  * @param page - The page to fetch
- * @param per_page - The number of analyses to fetch per page
+ * @param perPage - The number of analyses to fetch per page
  * @returns A page of analyses search results
  */
 export function useListAnalyses(
 	sampleId: number,
 	page: number,
-	per_page: number,
+	perPage: number,
 ) {
 	return useQuery<AnalysisSearchResult, Error>({
-		queryKey: analysesQueryKeys.list([sampleId, page, per_page]),
+		queryKey: analysesQueryKeys.list([sampleId, page, perPage]),
 		queryFn: () =>
 			findAnalysesFn({
-				data: { sampleId, page, perPage: per_page },
+				data: { sampleId, page, perPage },
 			}),
 		placeholderData: keepPreviousData,
 	});

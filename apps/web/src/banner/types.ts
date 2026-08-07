@@ -14,9 +14,15 @@ export const bannerColorClasses: Record<BannerColor, string> = {
 export type Banner = {
 	active: boolean;
 	color: BannerColor;
-	created_at: string;
+
+	/** When the banner was written, or null if the row does not record it. */
+	createdAt: Date | null;
+
 	id: number;
 	message: string;
-	updated_at: string;
+
+	/** When the banner was last changed, or null if the row does not record it. */
+	updatedAt: Date | null;
+
 	user: UserNested;
 };

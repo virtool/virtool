@@ -22,7 +22,7 @@ describe("<ReferenceItem />", () => {
 		props.reference = createFakeReferenceMinimal({
 			task: {
 				complete: false,
-				created_at: new Date(),
+				createdAt: new Date(),
 				error: null,
 				id: 1,
 				progress: 32,
@@ -40,7 +40,7 @@ describe("<ReferenceItem />", () => {
 		props.reference = createFakeReferenceMinimal({
 			task: {
 				complete: true,
-				created_at: new Date(),
+				createdAt: new Date(),
 				error: null,
 				id: 1,
 				progress: 100,

@@ -8,7 +8,7 @@ export type GroupMinimal = {
 	id: number;
 
 	/** The Mongo-era string id, or null for a Postgres-native group */
-	legacy_id: string | null;
+	legacyId: string | null;
 
 	/** The display name */
 	name: string;

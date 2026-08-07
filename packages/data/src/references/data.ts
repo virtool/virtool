@@ -145,7 +145,7 @@ function mapMinimal(
 			? null
 			: {
 					complete: row.taskComplete ?? false,
-					created_at: row.taskCreatedAt ?? new Date(),
+					createdAt: row.taskCreatedAt ?? new Date(),
 					error: row.taskError,
 					id: row.taskId,
 					progress: row.taskProgress ?? 0,

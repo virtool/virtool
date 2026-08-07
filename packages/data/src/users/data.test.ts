@@ -46,7 +46,12 @@ beforeEach(async () => {
 	await db.delete(groups);
 });
 
-const settings = {
+// The `users.settings` JSONB column as Python writes it. Python's
+// `virtool/users/settings.py` seeds these keys for every account it creates,
+// which is every account that exists today, so the stored blob is snake_case
+// and the model this side returns is not. Seeding the camelCase spelling here
+// would let a read that never maps anything pass.
+const storedSettings = {
 	quick_analyze_workflow: "nuvs",
 	show_ids: false,
 	show_versions: true,
@@ -58,13 +63,37 @@ describe("getAccount", () => {
 		const userId = await seedUser(db, {
 			email: "alice@example.com",
 			handle: "alice",
-			settings,
+			settings: storedSettings,
 		});
 
 		const account = await getAccount(db, userId);
 
 		expect(account.email).toBe("alice@example.com");
-		expect(account.settings).toEqual(settings);
+		expect(account.settings).toEqual({
+			quickAnalyzeWorkflow: "nuvs",
+			showIds: false,
+			showVersions: true,
+			skipQuickAnalyzeDialog: false,
+		});
+	});
+
+	// A blob written by an older Python release can be missing a key this side
+	// now expects. Falling back per field keeps a partial blob readable instead
+	// of handing the client `undefined` for a boolean it renders a toggle from.
+	it("falls back to the defaults for keys the stored blob is missing", async () => {
+		const userId = await seedUser(db, {
+			handle: "bob",
+			settings: { show_ids: false },
+		});
+
+		const account = await getAccount(db, userId);
+
+		expect(account.settings).toEqual({
+			quickAnalyzeWorkflow: "pathoscope",
+			showIds: false,
+			showVersions: true,
+			skipQuickAnalyzeDialog: true,
+		});
 	});
 
 	it("returns the same user fields the administration views see", async () => {
@@ -78,11 +107,11 @@ describe("getAccount", () => {
 		expect(account).toMatchObject({
 			id: userId,
 			handle: "alice",
-			administrator_role: "full",
+			administratorRole: "full",
 			active: true,
-			force_reset: false,
+			forceReset: false,
 			groups: [],
-			primary_group: null,
+			primaryGroup: null,
 		});
 	});
 
@@ -135,11 +164,11 @@ describe("updateUser", () => {
 		);
 	});
 
-	it("deletes the user's sessions when force_reset is set", async () => {
+	it("deletes the user's sessions when forceReset is set", async () => {
 		const userId = await seedUser(db);
 		await seedSession(db, userId);
 
-		await updateUser(db, userId, { force_reset: true });
+		await updateUser(db, userId, { forceReset: true });
 
 		expect(await countSessions(userId)).toBe(0);
 		expect((await readUser(userId))?.forceReset).toBe(true);
@@ -180,10 +209,10 @@ describe("updateUser", () => {
 		const userId = await seedUser(db);
 		await seedSession(db, userId);
 
-		// Pairing the deactivation with a primary_group the user does not belong to
+		// Pairing the deactivation with a primaryGroup the user does not belong to
 		// makes the promote fail inside the same transaction, so nothing commits.
 		await expect(
-			updateUser(db, userId, { active: false, primary_group: 999 }),
+			updateUser(db, userId, { active: false, primaryGroup: 999 }),
 		).rejects.toBeInstanceOf(GroupMembershipError);
 
 		expect(await countSessions(userId)).toBe(1);
@@ -195,7 +224,7 @@ describe("updateUser", () => {
 		const keep = await seedGroup(db, { name: "keep" });
 		const drop = await seedGroup(db, { name: "drop" });
 		const add = await seedGroup(db, { name: "add" });
-		await updateUser(db, userId, { groups: [keep, drop], primary_group: keep });
+		await updateUser(db, userId, { groups: [keep, drop], primaryGroup: keep });
 
 		await updateUser(db, userId, { groups: [keep, add] });
 
@@ -218,8 +247,8 @@ describe("updateUser", () => {
 		await addToGroup(db, userId, first);
 		await addToGroup(db, userId, second);
 
-		await updateUser(db, userId, { primary_group: first });
-		await updateUser(db, userId, { primary_group: second });
+		await updateUser(db, userId, { primaryGroup: first });
+		await updateUser(db, userId, { primaryGroup: second });
 
 		const memberships = await db
 			.select()
@@ -234,9 +263,9 @@ describe("updateUser", () => {
 		const userId = await seedUser(db);
 		const groupId = await seedGroup(db);
 		await addToGroup(db, userId, groupId);
-		await updateUser(db, userId, { primary_group: groupId });
+		await updateUser(db, userId, { primaryGroup: groupId });
 
-		await updateUser(db, userId, { primary_group: null });
+		await updateUser(db, userId, { primaryGroup: null });
 
 		const memberships = await db
 			.select()
@@ -250,7 +279,7 @@ describe("updateUser", () => {
 		const groupId = await seedGroup(db);
 
 		await expect(
-			updateUser(db, userId, { primary_group: groupId }),
+			updateUser(db, userId, { primaryGroup: groupId }),
 		).rejects.toBeInstanceOf(GroupMembershipError);
 	});
 
@@ -291,7 +320,7 @@ describe("changePassword", () => {
 		return seedUser(db, { password: await hashPassword(password) });
 	}
 
-	it("replaces the password and clears force_reset", async () => {
+	it("replaces the password and clears forceReset", async () => {
 		const userId = await seedUserWithPassword("old_password_123");
 		const before = await readUser(userId);
 
@@ -519,7 +548,7 @@ describe("getUser", () => {
 		});
 		await addToGroup(db, userId, refs);
 		await addToGroup(db, userId, samples);
-		await updateUser(db, userId, { primary_group: samples });
+		await updateUser(db, userId, { primaryGroup: samples });
 
 		const user = await getUser(db, userId);
 
@@ -529,7 +558,7 @@ describe("getUser", () => {
 			upload_file: false,
 		});
 		expect(user.groups.map((group) => group.name)).toEqual(["refs", "samples"]);
-		expect(user.primary_group).toMatchObject({ id: samples, name: "samples" });
+		expect(user.primaryGroup).toMatchObject({ id: samples, name: "samples" });
 	});
 
 	it("throws when the user does not exist", async () => {
@@ -547,13 +576,16 @@ describe("createUser", () => {
 
 		expect(user).toMatchObject({
 			handle: "alice",
-			administrator_role: null,
+			administratorRole: null,
 			active: true,
-			force_reset: true,
+			forceReset: true,
 			groups: [],
-			primary_group: null,
+			primaryGroup: null,
 		});
 
+		// Asserted against the raw column, not the returned model: Python reads
+		// this same blob, so a user created from this side has to be written in
+		// the spelling its `virtool/users/settings.py` expects.
 		const [row] = await db.select().from(users).where(eq(users.id, user.id));
 		expect(row?.settings).toEqual({
 			skip_quick_analyze_dialog: true,
@@ -589,10 +621,10 @@ describe("setAdministratorRole", () => {
 		const userId = await seedUser(db);
 
 		const promoted = await setAdministratorRole(db, userId, "full");
-		expect(promoted.administrator_role).toBe("full");
+		expect(promoted.administratorRole).toBe("full");
 
 		const demoted = await setAdministratorRole(db, userId, null);
-		expect(demoted.administrator_role).toBeNull();
+		expect(demoted.administratorRole).toBeNull();
 	});
 
 	it("throws when the user does not exist", async () => {

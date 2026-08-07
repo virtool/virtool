@@ -24,16 +24,16 @@ import type { PermissionsUpdate } from "./types";
 /**
  * Setup query for fetching group search results for infinite scrolling view
  *
- * @param per_page - The number of groups to fetch per page
+ * @param perPage - The number of groups to fetch per page
  * @param term - The search term to filter groups by
  * @returns A paginated list of the group search results
  */
-export function useInfiniteFindGroups(per_page: number, term: string) {
+export function useInfiniteFindGroups(perPage: number, term: string) {
 	return useInfiniteQuery<GroupSearchResults>({
-		queryKey: groupQueryKeys.infiniteList([per_page, term]),
+		queryKey: groupQueryKeys.infiniteList([perPage, term]),
 		queryFn: ({ pageParam }) =>
 			findGroupsFn({
-				data: { term, page: pageParam as number, per_page },
+				data: { term, page: pageParam as number, perPage },
 			}),
 		initialPageParam: 1,
 		getNextPageParam: (lastPage) => {

@@ -136,7 +136,7 @@ function call(name: string, data?: unknown) {
 describe("authorization", () => {
 	it("refuses every function without a session", async () => {
 		await expect(
-			call("findIndexesFn", { referenceId: 1, page: 1, per_page: 25 }),
+			call("findIndexesFn", { referenceId: 1, page: 1, perPage: 25 }),
 		).rejects.toBeInstanceOf(UnauthorizedError);
 		await expect(call("listReadyIndexesFn", {})).rejects.toBeInstanceOf(
 			UnauthorizedError,
@@ -145,7 +145,7 @@ describe("authorization", () => {
 			UnauthorizedError,
 		);
 		await expect(
-			call("findUnbuiltChangesFn", { referenceId: 1, page: 1, per_page: 25 }),
+			call("findUnbuiltChangesFn", { referenceId: 1, page: 1, perPage: 25 }),
 		).rejects.toBeInstanceOf(UnauthorizedError);
 		await expect(
 			call("createIndexFn", { referenceId: 1 }),
@@ -195,7 +195,7 @@ describe("findUnbuiltChangesFn", () => {
 		const result = (await call("findUnbuiltChangesFn", {
 			referenceId,
 			page: 1,
-			per_page: 25,
+			perPage: 25,
 		})) as {
 			items: { description: string; index: unknown }[];
 			foundCount: number;

@@ -33,7 +33,7 @@ const loginSchema = z.object({
 // here — see that function for why the validator is the wrong place for it.
 const resetPasswordSchema = z.object({
 	password: z.string(),
-	reset_code: z.string().min(1),
+	resetCode: z.string().min(1),
 });
 
 const createFirstUserSchema = z.object({
@@ -56,7 +56,7 @@ export const loginFn = createServerFn({ method: "POST" })
 
 			if (result.status === "reset_required") {
 				setResponseStatus(200);
-				return { reset: true as const, reset_code: result.resetCode };
+				return { reset: true as const, resetCode: result.resetCode };
 			}
 
 			setResponseStatus(201);
@@ -120,7 +120,7 @@ export const logoutFn = createServerFn({ method: "POST" })
 /**
  * Reset-password server function. Unauthenticated by necessity — this is the
  * forced-reset flow that runs before the user has a session. Authorization is
- * carried by the `reset_code` returned from `loginFn`.
+ * carried by the `resetCode` returned from `loginFn`.
  */
 export const resetPasswordFn = createServerFn({ method: "POST" })
 	.middleware([open()])
@@ -131,7 +131,7 @@ export const resetPasswordFn = createServerFn({ method: "POST" })
 
 			await resetPassword(db, realCookies, {
 				password: data.password,
-				resetCode: data.reset_code,
+				resetCode: data.resetCode,
 				ip: getClientIp(),
 			});
 			setResponseStatus(200);

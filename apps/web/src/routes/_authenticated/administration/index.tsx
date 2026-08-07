@@ -8,7 +8,7 @@ export const Route = createFileRoute("/_authenticated/administration/")({
 
 		const account = await queryClient.ensureQueryData(accountQueryOptions());
 
-		if (hasSufficientAdminRole("settings", account.administrator_role)) {
+		if (hasSufficientAdminRole("settings", account.administratorRole)) {
 			throw redirect({ to: "/administration/settings" });
 		}
 

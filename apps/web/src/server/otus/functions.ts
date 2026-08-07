@@ -59,7 +59,7 @@ const sequenceIdSchema = isolateIdSchema.extend({
 const findOtusSchema = z.object({
 	referenceId: rowIdSchema,
 	page: pageSchema,
-	per_page: perPageSchema,
+	perPage: perPageSchema,
 	term: z.string().default(""),
 });
 
@@ -171,7 +171,7 @@ export const findOtusFn = createServerFn({ method: "GET" })
 		try {
 			return await findOtus(db, data.referenceId, {
 				page: data.page,
-				perPage: data.per_page,
+				perPage: data.perPage,
 				term: data.term,
 			});
 		} catch (err) {

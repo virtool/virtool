@@ -16,14 +16,14 @@ import AboutDialog from "./AboutDialog";
 import { NavLink } from "./NavLink";
 
 type NavBarProps = {
-	administrator_role: AdministratorRoleName | null;
+	administratorRole: AdministratorRoleName | null;
 	handle: string;
 };
 
 /**
  * Display the main navigation bar with links too root level views.
  */
-export default function Nav({ administrator_role, handle }: NavBarProps) {
+export default function Nav({ administratorRole, handle }: NavBarProps) {
 	const mutation = useLogout();
 	const [aboutOpen, setAboutOpen] = useState(false);
 
@@ -73,7 +73,7 @@ export default function Nav({ administrator_role, handle }: NavBarProps) {
 						<DropdownMenuSeparator />
 
 						<DropdownMenuLink to="/account">Account</DropdownMenuLink>
-						{hasSufficientAdminRole("users", administrator_role) && (
+						{hasSufficientAdminRole("users", administratorRole) && (
 							<DropdownMenuLink to="/administration">
 								Administration{" "}
 							</DropdownMenuLink>

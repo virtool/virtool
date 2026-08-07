@@ -41,21 +41,21 @@ export type ReferenceMemberNoun = "user" | "group";
  * Query options for a paginated list of references.
  *
  * @param page - The page to fetch
- * @param per_page - The number of references to fetch per page
+ * @param perPage - The number of references to fetch per page
  * @param term - The search term to filter references by
  * @param archived - Lifecycle filter; `true` for archived only, `false` for active only
  */
 export function referencesQueryOptions(
 	page: number,
-	per_page: number,
+	perPage: number,
 	term: string,
 	archived?: boolean,
 ) {
 	return queryOptions<ReferenceSearchResult, Error>({
-		queryKey: referenceQueryKeys.list([page, per_page, term, archived]),
+		queryKey: referenceQueryKeys.list([page, perPage, term, archived]),
 		queryFn: () =>
 			findReferencesFn({
-				data: { page, per_page, term, archived },
+				data: { page, perPage, term, archived },
 			}) as Promise<ReferenceSearchResult>,
 	});
 }
@@ -71,12 +71,12 @@ export function referencesQueryOptions(
  */
 export function useSuspenseReferences(
 	page: number,
-	per_page: number,
+	perPage: number,
 	term: string,
 	archived?: boolean,
 ) {
 	return useSuspenseQuery(
-		referencesQueryOptions(page, per_page, term, archived),
+		referencesQueryOptions(page, perPage, term, archived),
 	);
 }
 

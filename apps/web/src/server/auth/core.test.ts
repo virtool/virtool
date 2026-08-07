@@ -306,7 +306,7 @@ describe("createFirstUser", () => {
 		});
 
 		expect(user.handle).toBe("root");
-		expect(user.administrator_role).toBe("full");
+		expect(user.administratorRole).toBe("full");
 
 		// The caller lands in the app: an authenticated session and both cookies.
 		const rows = await db

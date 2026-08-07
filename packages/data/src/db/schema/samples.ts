@@ -86,7 +86,7 @@ export const legacySampleLabels = pgTable("legacy_sample_labels", {
 });
 
 // Join table linking a sample to its default subtractions. Read from the
-// subtraction side to compute a subtraction's `linked_samples`.
+// subtraction side to compute a subtraction's `linkedSamples`.
 export const legacySampleSubtractions = pgTable("legacy_sample_subtractions", {
 	sample_id: bigint("sample_id", { mode: "number" }).notNull(),
 	subtraction_id: bigint("subtraction_id", { mode: "number" }).notNull(),

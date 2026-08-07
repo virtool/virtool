@@ -26,7 +26,7 @@ export function createFakeUser(overrides?: Partial<User>): User {
 	const {
 		groups: overrideGroups,
 		permissions,
-		primary_group,
+		primaryGroup,
 		...rest
 	} = overrides || {};
 	const groups = overrideGroups ?? [createFakeGroupMinimal()];
@@ -34,13 +34,13 @@ export function createFakeUser(overrides?: Partial<User>): User {
 	return {
 		...createFakeUserNested(),
 		active: true,
-		administrator_role: null,
-		force_reset: false,
+		administratorRole: null,
+		forceReset: false,
 		groups,
-		last_password_change: faker.date.past().toISOString(),
+		lastPasswordChange: faker.date.past(),
 		permissions: createFakePermissions(permissions),
-		primary_group:
-			primary_group === undefined ? (groups[0] ?? null) : primary_group,
+		primaryGroup:
+			primaryGroup === undefined ? (groups[0] ?? null) : primaryGroup,
 		...rest,
 	};
 }

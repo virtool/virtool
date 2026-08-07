@@ -23,8 +23,7 @@ export default function AccountProfile() {
 		return <LoadingPlaceholder />;
 	}
 
-	const { administrator_role, email, groups, handle, last_password_change } =
-		data;
+	const { administratorRole, email, groups, handle, lastPasswordChange } = data;
 
 	return (
 		<>
@@ -35,21 +34,21 @@ export default function AccountProfile() {
 				</header>
 
 				<div>
-					{administrator_role && (
+					{administratorRole && (
 						<Label
 							key="administrator"
 							className="capitalize text-base ml-auto"
 							color="purple"
 						>
 							<ShieldUser />
-							{administrator_role} Administrator
+							{administratorRole} Administrator
 						</Label>
 					)}
 				</div>
 			</div>
 
 			<AccountHandle handle={handle} />
-			<AccountPassword lastPasswordChange={last_password_change} />
+			<AccountPassword lastPasswordChange={lastPasswordChange} />
 			<AccountEmail email={email} />
 			<AccountGroups groups={groups} />
 		</>

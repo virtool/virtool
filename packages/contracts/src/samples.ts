@@ -40,7 +40,7 @@ export type SampleReadUpload = {
 	id: number;
 	name: string;
 	size: number | null;
-	uploadedAt: string | null;
+	uploadedAt: Date | null;
 	user: UserNested | null;
 };
 
@@ -64,7 +64,9 @@ export type Read = {
 	storageKey: string | null;
 
 	upload?: SampleReadUpload | null;
-	uploadedAt: string;
+
+	/** When the file was uploaded, or null for a row that predates the column. */
+	uploadedAt: Date | null;
 };
 
 /**
@@ -101,7 +103,7 @@ export type Quality = z.infer<typeof Quality>;
 
 /** A sample reduced to the fields shown in resource listings. */
 export type SampleMinimal = {
-	createdAt: string;
+	createdAt: Date;
 	host: string;
 	id: number;
 	isolate: string;

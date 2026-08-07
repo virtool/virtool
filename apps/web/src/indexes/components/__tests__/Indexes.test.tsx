@@ -8,7 +8,7 @@ import { renderRoute } from "@tests/setup";
 import { beforeEach, describe, expect, it } from "vitest";
 
 describe("<Indexes />", () => {
-	const account = createFakeAccount({ administrator_role: "full" });
+	const account = createFakeAccount({ administratorRole: "full" });
 	let reference: ReturnType<typeof createFakeReference>;
 
 	beforeEach(() => {

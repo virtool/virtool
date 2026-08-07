@@ -49,7 +49,7 @@ describe("<SubtractionList />", () => {
 
 	it("should render create button when [canModify=true]", async () => {
 		const findSubtractions = mockFindSubtractions([subtractions]);
-		const account = createFakeAccount({ administrator_role: "full" });
+		const account = createFakeAccount({ administratorRole: "full" });
 
 		await renderRoute("/subtractions", { account });
 
@@ -62,7 +62,7 @@ describe("<SubtractionList />", () => {
 
 	it("should not render create button when [canModify=false]", async () => {
 		const findSubtractions = mockFindSubtractions([subtractions]);
-		const account = createFakeAccount({ administrator_role: null });
+		const account = createFakeAccount({ administratorRole: null });
 
 		await renderRoute("/subtractions", { account });
 

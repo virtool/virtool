@@ -24,7 +24,7 @@ export function createFakeReferenceMinimal(
 		otuCount: faker.number.int(),
 		task: {
 			complete: true,
-			created_at: faker.date.past(),
+			createdAt: faker.date.past(),
 			error: null,
 			id: faker.number.int(),
 			progress: 100,

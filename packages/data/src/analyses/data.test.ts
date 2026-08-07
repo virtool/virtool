@@ -371,7 +371,7 @@ describe("findAnalyses", () => {
 			{ id: zebra, name: "Zebra" },
 		]);
 		expect(item?.job).toEqual({
-			createdAt: expect.any(String),
+			createdAt: expect.any(Date),
 			id: jobId,
 			progress: 0,
 			state: "running",
@@ -447,11 +447,11 @@ describe("getAnalysis", () => {
 				name: "report.tsv",
 				nameOnDisk: "1-report.tsv",
 				size: 1024,
-				uploadedAt: uploadedAt.toISOString(),
+				uploadedAt,
 			},
 		]);
-		expect(typeof analysis.createdAt).toBe("string");
-		expect(typeof analysis.updatedAt).toBe("string");
+		expect(analysis.createdAt).toBeInstanceOf(Date);
+		expect(analysis.updatedAt).toBeInstanceOf(Date);
 	});
 
 	it("throws when the analysis does not exist", async () => {
@@ -530,16 +530,16 @@ describe("getAnalysisResults", () => {
 		};
 
 		expect(results.hits[0]?.blast).toEqual({
-			createdAt: timestamp.toISOString(),
+			createdAt: timestamp,
 			error: null,
 			id: expect.any(Number),
 			interval: 3,
-			lastCheckedAt: timestamp.toISOString(),
+			lastCheckedAt: timestamp,
 			ready: true,
 			result: { hits: [] },
 			rid: "RID-1",
 			sequenceIndex: 0,
-			updatedAt: timestamp.toISOString(),
+			updatedAt: timestamp,
 		});
 		expect(results.hits[1]?.blast).toBeNull();
 	});
@@ -861,16 +861,16 @@ describe("blastNuvs", () => {
 		const blast = await blastNuvs(db, analysisId, 3);
 
 		expect(blast).toEqual({
-			createdAt: expect.any(String),
+			createdAt: expect.any(Date),
 			error: null,
 			id: expect.any(Number),
 			interval: 3,
-			lastCheckedAt: expect.any(String),
+			lastCheckedAt: expect.any(Date),
 			ready: false,
 			result: null,
 			rid: null,
 			sequenceIndex: 3,
-			updatedAt: expect.any(String),
+			updatedAt: expect.any(Date),
 		});
 
 		const rows = await db

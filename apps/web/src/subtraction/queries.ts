@@ -46,19 +46,19 @@ export function useCreateSubtraction() {
  * Query options for a page of subtraction search results.
  *
  * @param page - The page to fetch
- * @param per_page - The number of subtractions to fetch per page
+ * @param perPage - The number of subtractions to fetch per page
  * @param term - The search term to filter the subtractions by
  */
 export function subtractionsQueryOptions(
 	page: number,
-	per_page: number,
+	perPage: number,
 	term: string,
 ) {
 	return queryOptions<SubtractionSearchResult, Error>({
-		queryKey: subtractionQueryKeys.list([page, per_page, term]),
+		queryKey: subtractionQueryKeys.list([page, perPage, term]),
 		queryFn: () =>
 			findSubtractionsFn({
-				data: { page, per_page, term },
+				data: { page, perPage, term },
 			}),
 	});
 }
@@ -74,10 +74,10 @@ export function subtractionsQueryOptions(
  */
 export function useSuspenseSubtractions(
 	page: number,
-	per_page: number,
+	perPage: number,
 	term: string,
 ) {
-	return useSuspenseQuery(subtractionsQueryOptions(page, per_page, term));
+	return useSuspenseQuery(subtractionsQueryOptions(page, perPage, term));
 }
 
 /**

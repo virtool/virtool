@@ -3,7 +3,7 @@ import Attribution from "./Attribution";
 
 type ViewHeaderAttributionProps = {
 	className?: string;
-	time: string | Date;
+	time: Date | null;
 	user?: string;
 	verb?: string;
 };

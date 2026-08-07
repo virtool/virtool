@@ -41,7 +41,7 @@ describe("<CreateSample>", () => {
 	beforeEach(() => {
 		window.sessionStorage.clear();
 
-		mockGetAccount(createFakeAccount({ primary_group: null }));
+		mockGetAccount(createFakeAccount({ primaryGroup: null }));
 		mockListGroups([]);
 	});
 

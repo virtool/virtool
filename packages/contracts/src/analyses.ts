@@ -72,7 +72,7 @@ export type AnalysisJobNested = JobNested & { workflow: AnalysisWorkflow };
 /** An analysis as it appears in a search-result list. */
 export type AnalysisMinimal = {
 	/** When the analysis was created */
-	createdAt: string;
+	createdAt: Date;
 
 	/** The unique identifier */
 	id: number;
@@ -96,7 +96,7 @@ export type AnalysisMinimal = {
 	subtractions: SubtractionNested[];
 
 	/** When the analysis was last updated */
-	updatedAt: string;
+	updatedAt: Date;
 
 	/** The user who started the analysis */
 	user: UserNested;
@@ -129,7 +129,7 @@ export type AnalysisFile = {
 	size: number | null;
 
 	/** When the file was uploaded */
-	uploadedAt: string | null;
+	uploadedAt: Date | null;
 };
 
 /**

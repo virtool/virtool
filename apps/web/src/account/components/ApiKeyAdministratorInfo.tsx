@@ -16,7 +16,7 @@ export default function ApiKeyAdministratorInfo() {
 	if (
 		!isPending &&
 		data &&
-		hasSufficientAdminRole("base", data.administrator_role)
+		hasSufficientAdminRole("base", data.administratorRole)
 	) {
 		return (
 			<Alert color="purple">

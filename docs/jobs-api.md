@@ -697,13 +697,13 @@ job-authenticated caller point a row at an arbitrary object.
 
 ### camelCase at the handler boundary, and narrower than the SPA's shapes
 
-The data functions are not consistent in case — `subtraction/data.ts`
-returns `created_at`, `linked_samples` and `download_url`, while
-`samples/data.ts` returns `libraryType` — and `apps/web`'s client feature
-modules read those same shapes. So the mapping to camelCase happens
-**in the handler**, and no field is renamed inside a data function.
-Renaming one there would break the web app silently, days later, in a
-different app.
+The data functions are not consistent in case — `hmm/data.ts`'s
+`HmmInstalled` stays snake_case to mirror the GitHub releases API it
+wraps, while `samples/data.ts` returns camelCase (`libraryType`) — and
+`apps/web`'s client feature modules read those same shapes. So the
+mapping to camelCase happens **in the handler**, and no field is
+renamed inside a data function. Renaming one there would break the web
+app silently, days later, in a different app.
 
 The `Workflow*` shapes are also deliberately narrower than what the SPA
 reads. They carry what a workflow branches on and drop the presentation

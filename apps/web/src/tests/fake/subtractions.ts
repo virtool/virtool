@@ -14,7 +14,7 @@ import { createFakeUserNested } from "./user";
  */
 export function createFakeSubtractionFile(): SubtractionFile {
 	return {
-		download_url: faker.internet.url(),
+		downloadUrl: faker.internet.url(),
 		id: faker.number.int(),
 		name: `${faker.word.noun({ strategy: "any-length" })}s.fa`,
 		size: faker.number.int({ min: 20000 }),
@@ -47,7 +47,7 @@ export function createFakeSubtractionMinimal(
 	const defaultSubtractionMinimal: SubtractionMinimal = {
 		...createFakeSubtractionNested(),
 		count: faker.number.int({ max: 15 }),
-		created_at: faker.date.past().toISOString(),
+		createdAt: faker.date.past(),
 		file: {
 			id: faker.number.int(),
 			name: `${faker.word.noun({ strategy: "any-length" })}s.fa`,
@@ -67,12 +67,12 @@ export function createFakeSubtractionMinimal(
 export function createFakeSubtraction(
 	overrides?: Partial<Subtraction>,
 ): Subtraction {
-	const { files, gc, linked_samples, ...props } = overrides || {};
+	const { files, gc, linkedSamples, ...props } = overrides || {};
 	return {
 		...createFakeSubtractionMinimal(props),
 		files: files || [createFakeSubtractionFile()],
 		gc: gc || { a: 1, c: 1, g: 1, n: 1, t: 1 },
-		linked_samples: linked_samples || [],
+		linkedSamples: linkedSamples || [],
 	};
 }
 

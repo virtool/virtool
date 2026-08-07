@@ -13,18 +13,13 @@ import type { HmmSearchResult } from "@virtool/contracts";
  * Query options for a page of HMM search results.
  *
  * @param page - The page to fetch
- * @param per_page - The number of hmms to fetch per page
+ * @param perPage - The number of hmms to fetch per page
  * @param term - The search term to filter the hmms by
  */
-export function hmmsQueryOptions(
-	page: number,
-	per_page: number,
-	term?: string,
-) {
+export function hmmsQueryOptions(page: number, perPage: number, term?: string) {
 	return queryOptions<HmmSearchResult, Error>({
-		queryKey: hmmQueryKeys.list([page, per_page, term]),
-		queryFn: () =>
-			findHmmsFn({ data: { page, perPage: per_page, term: term ?? "" } }),
+		queryKey: hmmQueryKeys.list([page, perPage, term]),
+		queryFn: () => findHmmsFn({ data: { page, perPage, term: term ?? "" } }),
 	});
 }
 
@@ -35,12 +30,12 @@ export function hmmsQueryOptions(
  * compatibility check. Primary list data uses {@link useSuspenseHmms}.
  *
  * @param page - The page to fetch
- * @param per_page - The number of hmms to fetch per page
+ * @param perPage - The number of hmms to fetch per page
  * @param term - The search term to filter the hmms by
  * @returns A page of hmms search results
  */
-export function useListHmms(page: number, per_page: number, term?: string) {
-	return useQuery(hmmsQueryOptions(page, per_page, term));
+export function useListHmms(page: number, perPage: number, term?: string) {
+	return useQuery(hmmsQueryOptions(page, perPage, term));
 }
 
 /**
@@ -52,8 +47,8 @@ export function useListHmms(page: number, per_page: number, term?: string) {
  * loading and errors are handled by the route's Suspense and `errorComponent`
  * rather than inline.
  */
-export function useSuspenseHmms(page: number, per_page: number, term?: string) {
-	return useSuspenseQuery(hmmsQueryOptions(page, per_page, term));
+export function useSuspenseHmms(page: number, perPage: number, term?: string) {
+	return useSuspenseQuery(hmmsQueryOptions(page, perPage, term));
 }
 
 /**

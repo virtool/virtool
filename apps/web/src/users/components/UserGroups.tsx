@@ -60,7 +60,7 @@ export default function UserGroups({
 			userId,
 			update: {
 				groups: [...memberIds].filter((memberId) => memberId !== id),
-				...(primaryGroup?.id === id ? { primary_group: null } : {}),
+				...(primaryGroup?.id === id ? { primaryGroup: null } : {}),
 			},
 		});
 	}
@@ -68,7 +68,7 @@ export default function UserGroups({
 	function setPrimaryGroup(value: string) {
 		mutation.mutate({
 			userId,
-			update: { primary_group: value === "none" ? null : Number(value) },
+			update: { primaryGroup: value === "none" ? null : Number(value) },
 		});
 	}
 

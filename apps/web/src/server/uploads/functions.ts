@@ -20,9 +20,9 @@ import { pageSchema, perPageSchema, rowIdSchema } from "../validation";
 
 const findUploadsSchema = z
 	.object({
-		upload_type: z.enum(UPLOAD_TYPES).optional(),
+		uploadType: z.enum(UPLOAD_TYPES).optional(),
 		page: pageSchema,
-		per_page: perPageSchema,
+		perPage: perPageSchema,
 		user: rowIdSchema.optional(),
 	})
 	.optional();
@@ -53,9 +53,9 @@ export const findUploadsFn = createServerFn({ method: "GET" })
 	.handler(async ({ data }) =>
 		findUploads(
 			db,
-			data?.upload_type,
+			data?.uploadType,
 			data?.page ?? 1,
-			data?.per_page ?? 25,
+			data?.perPage ?? 25,
 			data?.user,
 		),
 	);

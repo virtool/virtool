@@ -17,8 +17,8 @@ type PasswordProps = {
 	id: number;
 	/** Whether the user will be forced to reset their password on next login */
 	forceReset: boolean;
-	/** The iso formatted date of their last password change */
-	lastPasswordChange: string;
+	/** The date of their last password change */
+	lastPasswordChange: Date;
 };
 
 /**
@@ -41,7 +41,7 @@ export default function Password({
 		mutation.mutate({
 			userId: id,
 			update: {
-				force_reset: !forceReset,
+				forceReset: !forceReset,
 			},
 		});
 	}

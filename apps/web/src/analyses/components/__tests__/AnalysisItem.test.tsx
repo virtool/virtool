@@ -9,7 +9,7 @@ import { beforeEach, describe, expect, it } from "vitest";
 
 describe("<AnalysisItem />", () => {
 	beforeEach(() => {
-		mockGetAccount(createFakeAccount({ administrator_role: "full" }));
+		mockGetAccount(createFakeAccount({ administratorRole: "full" }));
 	});
 
 	function renderItem(overrides: Partial<AnalysisMinimal>) {

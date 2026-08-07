@@ -12,7 +12,7 @@ export function createFakeServerJobMinimal(
 ): ServerJobMinimal {
 	return {
 		id: faker.number.int(),
-		created_at: faker.date.past().toISOString(),
+		createdAt: faker.date.past().toISOString(),
 		progress: faker.number.int({ min: 0, max: 100 }),
 		state: faker.helpers.arrayElement<JobState>([
 			"cancelled",

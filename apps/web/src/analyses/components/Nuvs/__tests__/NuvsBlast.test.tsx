@@ -9,16 +9,16 @@ import { describe, expect, it } from "vitest";
 
 function createBlast(overrides: Partial<Blast>): Blast {
 	return {
-		createdAt: "2026-07-01T00:00:00.000Z",
+		createdAt: new Date("2026-07-01T00:00:00.000Z"),
 		error: null,
 		id: 1,
 		interval: 3,
-		lastCheckedAt: "2026-07-01T00:00:00.000Z",
+		lastCheckedAt: new Date("2026-07-01T00:00:00.000Z"),
 		ready: false,
 		result: null,
 		rid: null,
 		sequenceIndex: 0,
-		updatedAt: "2026-07-01T00:00:00.000Z",
+		updatedAt: new Date("2026-07-01T00:00:00.000Z"),
 		...overrides,
 	};
 }

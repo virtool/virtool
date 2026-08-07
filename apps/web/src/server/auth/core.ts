@@ -47,7 +47,7 @@ export class InvalidCredentialsError extends Error {
 	}
 }
 
-/** Reset session is missing, expired, or the supplied reset_code does not match. */
+/** Reset session is missing, expired, or the supplied resetCode does not match. */
 export class InvalidResetSessionError extends Error {
 	constructor() {
 		super("Invalid session");

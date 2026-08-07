@@ -53,9 +53,9 @@ export function mockCreateAnalysis(analysis: AnalysisMinimal): Mock {
 export function mockBlastNuvs(sequenceIndex: number): Mock {
 	analysisServerFnMocks.blastNuvsFn.mockResolvedValue({
 		id: 1,
-		createdAt: new Date().toISOString(),
-		updatedAt: new Date().toISOString(),
-		lastCheckedAt: new Date().toISOString(),
+		createdAt: new Date(),
+		updatedAt: new Date(),
+		lastCheckedAt: new Date(),
 		error: null,
 		interval: 3,
 		ready: false,

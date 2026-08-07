@@ -6,7 +6,6 @@ import ContainerNarrow from "@base/ContainerNarrow";
 import ContainerSide from "@base/ContainerSide";
 import JobItem from "@jobs/components/JobItem";
 import { useFetchJob } from "@jobs/queries";
-import { toServerJobNested } from "@jobs/utils";
 import type { Label } from "@labels/types";
 import { useSuspenseSample } from "@samples/queries";
 import { getLibraryTypeDisplayName } from "@samples/utils";
@@ -35,10 +34,7 @@ export default function SampleDetailGeneral({
 }: SampleDetailGeneralProps) {
 	const sampleId = Number(routeApi.useParams().sampleId);
 	const { data } = useSuspenseSample(sampleId);
-	const { data: job } = useFetchJob(
-		data.job?.id ?? Number.NaN,
-		data.job && toServerJobNested(data.job),
-	);
+	const { data: job } = useFetchJob(data.job?.id ?? Number.NaN, data.job);
 
 	const { quality } = data;
 

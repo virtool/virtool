@@ -9,7 +9,7 @@ import { SubtractionAttribution } from "./Attribution";
  * A condensed subtraction item for use in a list of subtractions
  */
 export function SubtractionItem({
-	created_at,
+	createdAt,
 	id,
 	job,
 	name,
@@ -33,7 +33,7 @@ export function SubtractionItem({
 				{name}
 			</Link>
 			<div className="col-span-2 flex justify-start">
-				<SubtractionAttribution handle={user?.handle ?? ""} time={created_at} />
+				<SubtractionAttribution handle={user?.handle ?? ""} time={createdAt} />
 			</div>
 			{!ready && job && (
 				<span className="flex items-center justify-end gap-1 font-medium">

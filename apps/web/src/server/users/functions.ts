@@ -69,11 +69,11 @@ const createUserSchema = z.object({
 
 const updateUserSchema = userIdSchema.extend({
 	active: z.boolean().optional(),
-	force_reset: z.boolean().optional(),
+	forceReset: z.boolean().optional(),
 	handle: z.string().trim().min(1).optional(),
 	password: z.string().optional(),
 	groups: z.array(rowIdSchema).optional(),
-	primary_group: rowIdSchema.nullable().optional(),
+	primaryGroup: rowIdSchema.nullable().optional(),
 });
 
 const accountHandleSchema = z.object({

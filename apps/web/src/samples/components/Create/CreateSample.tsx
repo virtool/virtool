@@ -111,7 +111,7 @@ export default function CreateSample({ labels }: CreateSampleProps) {
 	const [createdSample, setCreatedSample] = useState<Sample | null>(null);
 
 	useEffect(() => {
-		setValue("group", String(account?.primary_group?.id ?? ""));
+		setValue("group", String(account?.primaryGroup?.id ?? ""));
 	}, [account, setValue]);
 
 	const reads = readsResponse?.pages.flatMap((page) => page.items) ?? [];
@@ -144,7 +144,7 @@ export default function CreateSample({ labels }: CreateSampleProps) {
 	function clearForm() {
 		reset({
 			...emptyValues,
-			group: String(account?.primary_group?.id ?? ""),
+			group: String(account?.primaryGroup?.id ?? ""),
 		});
 	}
 

@@ -7,10 +7,10 @@ import Nav from "../Nav";
 
 describe("<Nav />", () => {
 	const props: {
-		administrator_role: AdministratorRoleName;
+		administratorRole: AdministratorRoleName;
 		handle: string;
 	} = {
-		administrator_role: "full",
+		administratorRole: "full",
 		handle: "Bob",
 	};
 

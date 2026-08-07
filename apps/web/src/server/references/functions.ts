@@ -40,7 +40,7 @@ const referenceIdSchema = z.object({
 
 const findReferencesSchema = z.object({
 	page: pageSchema,
-	per_page: perPageSchema,
+	perPage: perPageSchema,
 	term: z.string().default(""),
 	archived: z.boolean().optional(),
 });
@@ -136,7 +136,7 @@ export const findReferencesFn = createServerFn({ method: "GET" })
 			db,
 			{
 				page: data.page,
-				perPage: data.per_page,
+				perPage: data.perPage,
 				term: data.term,
 				archived: data.archived,
 			},

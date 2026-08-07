@@ -11,22 +11,25 @@ export type UploadType = (typeof UPLOAD_TYPES)[number];
  * An upload as returned to the client. Mirrors Python's `UploadMinimal`:
  * `name_on_disk` is internal and never exposed.
  *
- * Every field but `removed_at` and `user` is non-null: the columns are nullable
- * at the database level, but Python sets them all when it creates a row and
- * `findUploads` only ever returns `ready` rows, so a listed or created upload
- * always carries them.
+ * **Every timestamp is nullable, because its column is.** Python sets them all
+ * when it creates a row, so in practice they are populated — but that is an
+ * invariant another service owns, not one this schema enforces, and a row
+ * migrated from before a column existed carries null regardless. Typing them
+ * non-null previously forced the mapper to substitute an epoch date, which
+ * renders as a plausible-looking timestamp half a century ago rather than as
+ * the absence it is.
  */
 export type Upload = {
 	id: number;
-	created_at: string;
+	createdAt: Date | null;
 	name: string;
 	ready: boolean;
 	removed: boolean;
-	removed_at: string | null;
+	removedAt: Date | null;
 	reserved: boolean;
 	size: number;
 	type: string;
-	uploaded_at: string;
+	uploadedAt: Date | null;
 
 	/** The uploading user, or null if that account was removed */
 	user: UserNested | null;

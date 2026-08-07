@@ -21,7 +21,10 @@ export type UploadItemProps = {
 	/** Selects the file. Omitting it hides the checkbox. */
 	onSelect?: (event: MouseEvent<HTMLButtonElement>) => void;
 	size: number;
-	uploaded_at: string;
+
+	/** When the file was uploaded, or null for a row that predates the column */
+	uploadedAt: Date | null;
+
 	user: UserNested | null;
 };
 
@@ -33,7 +36,7 @@ export default function UploadItem({
 	name,
 	onSelect,
 	size,
-	uploaded_at,
+	uploadedAt,
 	user,
 }: UploadItemProps) {
 	const { mutate: handleRemove } = useDeleteFile();
@@ -54,11 +57,11 @@ export default function UploadItem({
 					<div className="flex">
 						{user === null ? (
 							<span>
-								Retrieved <RelativeTime time={uploaded_at} />
+								Retrieved <RelativeTime time={uploadedAt} />
 							</span>
 						) : (
 							<Attribution
-								time={uploaded_at}
+								time={uploadedAt}
 								user={user.handle}
 								verb="uploaded"
 							/>

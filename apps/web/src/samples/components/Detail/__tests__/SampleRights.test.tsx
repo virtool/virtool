@@ -30,7 +30,7 @@ describe("<SampleRights />", () => {
 	});
 
 	it("should render", async () => {
-		mockGetAccount(createFakeAccount({ administrator_role: "full" }));
+		mockGetAccount(createFakeAccount({ administratorRole: "full" }));
 		renderWithProviders(<SampleRights sampleId={sample.id} />);
 
 		expect(await screen.findByText("Sample Rights")).toBeInTheDocument();
@@ -40,14 +40,14 @@ describe("<SampleRights />", () => {
 	});
 
 	it("should return Not allowed panel when [canModifyRights=false]", async () => {
-		mockGetAccount(createFakeAccount({ administrator_role: null }));
+		mockGetAccount(createFakeAccount({ administratorRole: null }));
 		renderWithProviders(<SampleRights sampleId={sample.id} />);
 
 		expect(await screen.findByText("Not allowed")).toBeInTheDocument();
 	});
 
 	it("should handle group change when input is changed", async () => {
-		mockGetAccount(createFakeAccount({ administrator_role: "full" }));
+		mockGetAccount(createFakeAccount({ administratorRole: "full" }));
 		const updateSampleRights = mockUpdateSampleRights(sample);
 		renderWithProviders(<SampleRights sampleId={sample.id} />);
 
@@ -63,7 +63,7 @@ describe("<SampleRights />", () => {
 	});
 
 	it("should handle group rights change when input is changed", async () => {
-		mockGetAccount(createFakeAccount({ administrator_role: "full" }));
+		mockGetAccount(createFakeAccount({ administratorRole: "full" }));
 		const updateSampleRights = mockUpdateSampleRights(sample);
 		renderWithProviders(<SampleRights sampleId={sample.id} />);
 
@@ -79,7 +79,7 @@ describe("<SampleRights />", () => {
 	});
 
 	it("should handle all users' rights change when input is changed", async () => {
-		mockGetAccount(createFakeAccount({ administrator_role: "full" }));
+		mockGetAccount(createFakeAccount({ administratorRole: "full" }));
 		const updateSampleRights = mockUpdateSampleRights(sample);
 		renderWithProviders(<SampleRights sampleId={sample.id} />);
 

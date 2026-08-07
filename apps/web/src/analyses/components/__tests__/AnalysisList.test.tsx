@@ -33,7 +33,7 @@ describe("<AnalysesToolbar />", () => {
 	}
 
 	it("should show analysis creation when user is full admin", async () => {
-		mockGetAccount(createFakeAccount({ administrator_role: "full" }));
+		mockGetAccount(createFakeAccount({ administratorRole: "full" }));
 		mockGetSample(sample);
 		renderList();
 
@@ -41,7 +41,7 @@ describe("<AnalysesToolbar />", () => {
 	});
 
 	it("should show analysis creation when user is the owner of the sample", async () => {
-		const account = createFakeAccount({ administrator_role: null });
+		const account = createFakeAccount({ administratorRole: null });
 		sample.user.id = account.id;
 		mockGetAccount(account);
 		mockGetSample(sample);
@@ -51,7 +51,7 @@ describe("<AnalysesToolbar />", () => {
 	});
 
 	it("should show analysis creation when user is in the correct group and write is enabled", async () => {
-		const account = createFakeAccount({ administrator_role: null });
+		const account = createFakeAccount({ administratorRole: null });
 		sample.group = at(account.groups, 0);
 		sample.groupWrite = true;
 		mockGetAccount(account);
@@ -62,7 +62,7 @@ describe("<AnalysesToolbar />", () => {
 	});
 
 	it("should show analysis creation when all users editing a sample is permitted", async () => {
-		const account = createFakeAccount({ administrator_role: null });
+		const account = createFakeAccount({ administratorRole: null });
 		sample.allWrite = true;
 		mockGetAccount(account);
 		mockGetSample(sample);
@@ -74,7 +74,7 @@ describe("<AnalysesToolbar />", () => {
 	it("should not render analysis creation option when user has no permissions", async () => {
 		sample.allWrite = false;
 		sample.groupWrite = false;
-		mockGetAccount(createFakeAccount({ administrator_role: null }));
+		mockGetAccount(createFakeAccount({ administratorRole: null }));
 		mockGetSample(sample);
 		renderList();
 

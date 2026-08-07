@@ -18,7 +18,7 @@ import { pageSchema, perPageSchema, rowIdSchema } from "../validation";
 
 const findSubtractionsSchema = z.object({
 	page: pageSchema,
-	per_page: perPageSchema,
+	perPage: perPageSchema,
 	term: z.string().default(""),
 });
 
@@ -58,7 +58,7 @@ export const findSubtractionsFn = createServerFn({ method: "GET" })
 	.handler(async ({ data }) =>
 		findSubtractions(db, {
 			page: data.page,
-			perPage: data.per_page,
+			perPage: data.perPage,
 			term: data.term,
 			ready: false,
 		}),

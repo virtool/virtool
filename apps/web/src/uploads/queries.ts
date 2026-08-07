@@ -9,21 +9,20 @@ import {
 import { fileQueryKeys } from "@uploads/keys";
 import type { UploadSearchResult, UploadType } from "@virtool/contracts";
 
-export function useListFiles(type: UploadType, page: number, per_page: number) {
+export function useListFiles(type: UploadType, page: number, perPage: number) {
 	return useQuery<UploadSearchResult>({
-		queryKey: fileQueryKeys.list([type, page, per_page]),
-		queryFn: () =>
-			findUploadsFn({ data: { upload_type: type, page, per_page } }),
+		queryKey: fileQueryKeys.list([type, page, perPage]),
+		queryFn: () => findUploadsFn({ data: { uploadType: type, page, perPage } }),
 		placeholderData: keepPreviousData,
 	});
 }
 
-export function useInfiniteFindFiles(type: UploadType, per_page: number) {
+export function useInfiniteFindFiles(type: UploadType, perPage: number) {
 	return useInfiniteQuery<UploadSearchResult>({
-		queryKey: fileQueryKeys.infiniteList([type, per_page]),
+		queryKey: fileQueryKeys.infiniteList([type, perPage]),
 		queryFn: ({ pageParam }) =>
 			findUploadsFn({
-				data: { upload_type: type, page: pageParam as number, per_page },
+				data: { uploadType: type, page: pageParam as number, perPage },
 			}),
 		initialPageParam: 1,
 		getNextPageParam: (lastPage) => {

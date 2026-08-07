@@ -6,7 +6,7 @@ type SubtractionAttributionProps = {
 	/* The user handle */
 	handle: string;
 	/* The time of the subtraction */
-	time?: string;
+	time?: Date | null;
 };
 
 /**

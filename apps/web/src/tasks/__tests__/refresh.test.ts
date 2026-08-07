@@ -18,7 +18,7 @@ const FLUSH_MS = 500;
 function createTask(id: number, overrides?: Partial<ServerTask>): ServerTask {
 	return {
 		complete: false,
-		created_at: "2022-12-22T21:37:49.429000Z",
+		createdAt: "2022-12-22T21:37:49.429000Z",
 		error: null,
 		id,
 		progress: 50,

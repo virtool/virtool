@@ -7,24 +7,24 @@ import type { AdministratorRoleName, GroupMinimal } from "@virtool/contracts";
 import type { ReactElement } from "react";
 
 type UserItemProps = {
-	administrator_role: AdministratorRoleName | null;
+	administratorRole: AdministratorRoleName | null;
 	handle: string;
 	id: number;
 	/** The primary group assigned to the user */
-	primary_group: GroupMinimal | null;
+	primaryGroup: GroupMinimal | null;
 };
 
 /**
  * A condensed user item for use in a list of users
  */
 export function UserItem({
-	administrator_role,
+	administratorRole,
 	handle,
 	id,
-	primary_group,
+	primaryGroup,
 }: UserItemProps): ReactElement {
 	const { hasPermission: canEdit } = useCheckAdminRole(
-		administrator_role === null ? "users" : "full",
+		administratorRole === null ? "users" : "full",
 	);
 
 	return (
@@ -44,12 +44,12 @@ export function UserItem({
 				)}
 			</div>
 			<div className="flex items-center text-sm capitalize">
-				{administrator_role && (
-					<Label color="purple">{administrator_role} Administrator</Label>
+				{administratorRole && (
+					<Label color="purple">{administratorRole} Administrator</Label>
 				)}
 			</div>
 			<div className="flex items-center text-sm capitalize">
-				{primary_group && <Label>{primary_group.name}</Label>}
+				{primaryGroup && <Label>{primaryGroup.name}</Label>}
 			</div>
 		</BoxGroupSection>
 	);

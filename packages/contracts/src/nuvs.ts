@@ -18,7 +18,7 @@ import type { JsonObject } from "./json";
  */
 export type NuvsBlast = {
 	/** When the request was made */
-	createdAt: string;
+	createdAt: Date;
 
 	/** Why the request failed, or null if it has not */
 	error: string | null;
@@ -30,7 +30,7 @@ export type NuvsBlast = {
 	interval: number | null;
 
 	/** When the request was last polled against NCBI */
-	lastCheckedAt: string;
+	lastCheckedAt: Date;
 
 	/** Whether NCBI has returned a result */
 	ready: boolean;
@@ -45,7 +45,7 @@ export type NuvsBlast = {
 	sequenceIndex: number;
 
 	/** When the request was last updated */
-	updatedAt: string;
+	updatedAt: Date;
 };
 
 /** An HMM annotation matched against a NuVs open reading frame. */

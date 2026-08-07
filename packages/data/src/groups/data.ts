@@ -47,7 +47,7 @@ function isUniqueViolation(error: unknown): boolean {
 function toGroupMinimal(row: GroupRow): GroupMinimal {
 	return {
 		id: row.id,
-		legacy_id: row.legacyId,
+		legacyId: row.legacyId,
 		name: row.name,
 	};
 }

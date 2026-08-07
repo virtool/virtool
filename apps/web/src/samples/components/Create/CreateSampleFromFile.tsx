@@ -127,7 +127,7 @@ function CreateSampleFromFileForm({
 	const [showMetadata, setShowMetadata] = useState(false);
 
 	useEffect(() => {
-		setValue("group", String(account?.primary_group?.id ?? ""));
+		setValue("group", String(account?.primaryGroup?.id ?? ""));
 	}, [account, setValue]);
 
 	function onSubmit(values: FormValues) {

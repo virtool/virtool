@@ -14,7 +14,7 @@ export function createFakeGroupMinimal(
 	const defaultGroupMinimal = {
 		id: faker.number.int(),
 		name: `${faker.person.jobType()}s`,
-		legacy_id: null,
+		legacyId: null,
 	};
 
 	return { ...defaultGroupMinimal, ...overrides };

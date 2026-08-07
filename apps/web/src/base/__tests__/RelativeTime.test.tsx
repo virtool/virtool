@@ -4,7 +4,7 @@ import { useState } from "react";
 import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
 import RelativeTime from "../RelativeTime";
 
-const fakeTime = "2019-02-10T17:11:00.000000Z";
+const fakeTime = new Date("2019-02-10T17:11:00.000000Z");
 
 let forceDateHarnessRender: () => void;
 
@@ -37,7 +37,7 @@ describe("<RelativeTime />", () => {
 		expect(screen.getByText("2 months ago")).toBeInTheDocument();
 
 		// Add one month to the time prop.
-		rerender(<RelativeTime time="2019-01-10T12:21:00.000000Z" />);
+		rerender(<RelativeTime time={new Date("2019-01-10T12:21:00.000000Z")} />);
 
 		expect(screen.queryByText("2 months ago")).toBeNull();
 		expect(screen.getByText("3 months ago")).toBeInTheDocument();
@@ -47,7 +47,9 @@ describe("<RelativeTime />", () => {
 		vi.useFakeTimers().setSystemTime(new Date("2019-04-22T10:20:30Z"));
 
 		// Render with time that is only 10 seconds before the current (mocked) time.
-		renderWithProviders(<RelativeTime time="2019-04-22T10:20:20Z" />);
+		renderWithProviders(
+			<RelativeTime time={new Date("2019-04-22T10:20:20Z")} />,
+		);
 		expect(screen.getByText("10 seconds ago")).toBeInTheDocument();
 
 		act(() => {
@@ -91,9 +93,9 @@ describe("<RelativeTime />", () => {
 
 		const { unmount } = renderWithProviders(
 			<>
-				<RelativeTime time="2019-04-22T10:20:20Z" />
-				<RelativeTime time="2019-04-22T10:20:20Z" />
-				<RelativeTime time="2019-04-22T10:20:20Z" />
+				<RelativeTime time={new Date("2019-04-22T10:20:20Z")} />
+				<RelativeTime time={new Date("2019-04-22T10:20:20Z")} />
+				<RelativeTime time={new Date("2019-04-22T10:20:20Z")} />
 			</>,
 		);
 
@@ -113,7 +115,9 @@ describe("<RelativeTime />", () => {
 
 		// And starts again for a later mount. Navigating away from a list and back
 		// must not leave the page with a clock that never ticks.
-		renderWithProviders(<RelativeTime time="2019-04-22T10:20:20Z" />);
+		renderWithProviders(
+			<RelativeTime time={new Date("2019-04-22T10:20:20Z")} />,
+		);
 		expect(setInterval).toHaveBeenCalledTimes(2);
 
 		setInterval.mockRestore();

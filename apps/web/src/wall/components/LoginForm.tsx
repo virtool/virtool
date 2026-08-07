@@ -33,8 +33,8 @@ export default function LoginForm({ redirect, setResetCode }: LoginFormProps) {
 			{ handle, password, remember },
 			{
 				onSuccess: (data) => {
-					if (data.reset_code) {
-						setResetCode(data.reset_code);
+					if (data.resetCode) {
+						setResetCode(data.resetCode);
 						return;
 					}
 					navigate({ to: redirect ?? "/" });

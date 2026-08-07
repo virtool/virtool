@@ -44,7 +44,7 @@ describe("<HmmList />", () => {
 			});
 			mockFindHmms(fakeHMMData);
 			const account = createFakeAccount({
-				administrator_role: "full",
+				administratorRole: "full",
 			});
 			await renderRoute(path, { account });
 
@@ -66,7 +66,7 @@ describe("<HmmList />", () => {
 				totalCount: 0,
 			});
 			mockFindHmms(fakeHMMData);
-			const account = createFakeAccount({ administrator_role: null });
+			const account = createFakeAccount({ administratorRole: null });
 			await renderRoute(path, { account });
 
 			expect(
@@ -95,7 +95,7 @@ describe("<HmmList />", () => {
 			});
 			mockFindHmms(fakeHMMData);
 			const account = createFakeAccount({
-				administrator_role: "full",
+				administratorRole: "full",
 			});
 			await renderRoute(path, { account });
 
