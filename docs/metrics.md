@@ -8,6 +8,16 @@ own registry and its own `/metrics`, scraped as a second Prometheus
 target; the series names deliberately match so one dashboard covers
 both.
 
+Two series belong to that second target alone and are **not** exposed
+here: `virtool_jobs{workflow,state}` and
+`virtool_jobs_oldest_pending_age_seconds{workflow}`, the job queue as
+seen from the jobs API. They report on workflow pods, which are
+one-shot Kubernetes Jobs and so cannot be scraped directly — one may run
+for hours and vanish between scrapes, and a pod-name label would be
+unbounded. Adding them here instead would put the same numbers behind a
+second credential for no gain, and behind a pool that has no part in
+running the jobs.
+
 ## Layout
 
 | File | Responsibility |

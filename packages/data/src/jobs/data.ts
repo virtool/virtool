@@ -1,5 +1,5 @@
 import { isJobStateTerminal, type SearchResult } from "@virtool/contracts";
-import { count, desc, eq, inArray } from "drizzle-orm";
+import { count, desc, eq, inArray, sql } from "drizzle-orm";
 import type { Db, DbOrTx } from "../db/pg";
 import { takeFirstOrThrow } from "../db/rows";
 import { analyses } from "../db/schema/analyses";
@@ -8,6 +8,7 @@ import { type JobClaim, type JobStep, jobs } from "../db/schema/jobs";
 import { legacySamples } from "../db/schema/samples";
 import { subtractions } from "../db/schema/subtractions";
 import { users } from "../db/schema/users";
+import { withTimeout } from "../db/timeout";
 import { AppError } from "../errors";
 
 /** The canonical list of a job's lifecycle states. */
@@ -21,6 +22,16 @@ export const JOB_STATES = [
 
 /** One of a job's lifecycle states. */
 export type JobState = (typeof JOB_STATES)[number];
+
+/**
+ * The states a job can still leave — `pending` and `running`.
+ *
+ * Derived rather than written out, so it cannot fall out of step with
+ * {@link JOB_STATES} or with `isJobStateTerminal`.
+ */
+export const NON_TERMINAL_JOB_STATES = JOB_STATES.filter(
+	(state) => !isJobStateTerminal(state),
+);
 
 /** A job as it appears in a search result list. */
 export type JobMinimal = {
@@ -300,4 +311,93 @@ export async function createJob(
 	);
 
 	return row.id;
+}
+
+/** A count of jobs sharing one workflow and state. */
+export type JobCount = { workflow: string; state: string; count: number };
+
+/** How long the oldest job still waiting for a runner has waited. */
+export type OldestPendingJobAge = { workflow: string; ageSeconds: number };
+
+/** The non-terminal job queue as a `/metrics` scrape reports it. */
+export type JobQueueSnapshot = {
+	counts: JobCount[];
+	oldestPendingAges: OldestPendingJobAge[];
+};
+
+/**
+ * How long a scrape waits on the job-queue reads before abandoning them.
+ *
+ * Matched to the pool probe's bound, and for the same reason: these run on the
+ * pool the jobs API serves workflows from, so a saturated pool queues them
+ * client-side where nothing rejects.
+ */
+export const JOB_QUEUE_PROBE_TIMEOUT_MS = 2000;
+
+/**
+ * Count the jobs in each workflow and non-terminal state.
+ *
+ * **Deliberately restricted to `pending` and `running`.** Counting every job
+ * ever run is a scan that grows forever, and the schema is Python-owned — there
+ * is no index to add from this side. Terminal totals are also the wrong
+ * instrument: a gauge over accumulated history is a counter wearing the wrong
+ * hat, and failure rate belongs on a counter incremented when a job finishes.
+ */
+export async function readJobCounts(db: Db): Promise<JobCount[]> {
+	return db
+		.select({
+			workflow: jobs.workflow,
+			state: jobs.state,
+			count: count(),
+		})
+		.from(jobs)
+		.where(inArray(jobs.state, NON_TERMINAL_JOB_STATES))
+		.groupBy(jobs.workflow, jobs.state);
+}
+
+/**
+ * Age the oldest job still waiting for a runner, per workflow.
+ *
+ * Queue depth alone cannot tell a busy fleet from a stuck one; the age of the
+ * oldest waiting job can.
+ *
+ * The subtraction happens in Postgres, and `created_at` is pinned to UTC on the
+ * way into it. The column is a naive `timestamp`, so left to the session's time
+ * zone the age would be wrong by that offset — and both writers, Python and
+ * Drizzle, store UTC.
+ */
+export async function readOldestPendingJobAges(
+	db: Db,
+): Promise<OldestPendingJobAge[]> {
+	return db
+		.select({
+			workflow: jobs.workflow,
+			ageSeconds: sql<number>`
+				extract(epoch from (now() - (min(${jobs.created_at}) at time zone 'UTC')))
+			`.mapWith(Number),
+		})
+		.from(jobs)
+		.where(eq(jobs.state, "pending"))
+		.groupBy(jobs.workflow);
+}
+
+/**
+ * Both job-queue reads at once, bounded by {@link JOB_QUEUE_PROBE_TIMEOUT_MS}.
+ *
+ * This is what a `/metrics` handler should call. The two reads are independent,
+ * so they go out concurrently and share one deadline.
+ *
+ * Still throws on timeout or query failure. A caller drops these series and
+ * logs, rather than failing the whole scrape.
+ */
+export function readJobQueueBounded(
+	db: Db,
+	timeoutMs: number = JOB_QUEUE_PROBE_TIMEOUT_MS,
+): Promise<JobQueueSnapshot> {
+	return withTimeout(
+		Promise.all([readJobCounts(db), readOldestPendingJobAges(db)]).then(
+			([counts, oldestPendingAges]) => ({ counts, oldestPendingAges }),
+		),
+		timeoutMs,
+	);
 }

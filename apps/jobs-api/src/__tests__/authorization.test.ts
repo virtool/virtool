@@ -185,6 +185,26 @@ describe("metrics", () => {
 		expect(response.status).toBe(200);
 		expect(await response.text()).toContain("virtool_postgres_pool_max 10");
 	});
+
+	// A Postgres outage is exactly when the process and request metrics matter
+	// most. `fakeDb` throws on every property access, so this scrape is one where
+	// both database-backed reads fail; the rest of the exposition must survive.
+	it("still renders when the database-backed reads fail", async () => {
+		const app = createApp(deps());
+
+		const response = await app.request("/metrics", {
+			headers: { authorization: `Bearer ${METRICS_TOKEN}` },
+		});
+		const rendered = await response.text();
+
+		expect(response.status).toBe(200);
+		expect(rendered).toContain("process_cpu_seconds_total");
+		expect(rendered).toContain("virtool_http_requests_total");
+
+		// The queue series are dropped rather than served stale, so a scrape
+		// during an outage records no depth at all.
+		expect(rendered).not.toContain("virtool_jobs{");
+	});
 });
 
 describe("request metrics", () => {

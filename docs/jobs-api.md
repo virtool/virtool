@@ -45,7 +45,8 @@ process:
 | `src/auth/test/fixtures.ts` | `seedJob` — a job row and the plaintext key for it |
 | `src/caches/handlers.ts` | Cache lookup and registration |
 | `src/metrics/registry.ts` | `createMetrics` — this process's Prometheus registry |
-| `src/metrics/handler.ts` | Token check, pre-scrape pool read, response |
+| `src/metrics/jobs.ts` | `createJobQueueReader` — the memoized job-queue read |
+| `src/metrics/handler.ts` | Token check, pre-scrape reads, response |
 | `src/__tests__/authorization.test.ts` | The route-enumerating authorization floor |
 
 Nothing is constructed at import time. `createApp` and `createMetrics`
@@ -525,6 +526,106 @@ The deadline lives in `@virtool/data` rather than beside each handler
 because both services expose pool gauges and both need the same bound for
 the same reason; a second copy is free to drift to a value that no longer
 fits inside the scrape timeout.
+
+### The job queue
+
+Two series this service exposes and the web app does not:
+
+```
+virtool_jobs{workflow="pathoscope",state="pending"} 3
+virtool_jobs_oldest_pending_age_seconds{workflow="pathoscope"} 412
+```
+
+Queue depth alone cannot tell a busy fleet from a stuck one, which is
+what the second series is for.
+
+They live here rather than on a workflow pod because a workflow pod is a
+**one-shot Kubernetes Job**, and so a poor Prometheus target three ways
+over. A batch pod may run for hours and vanish between scrapes — nothing
+guarantees one exists when Prometheus comes round, and a short-lived one
+may never be scraped at all, so its counters die with it. Labelling by
+pod name is unbounded cardinality, which this repo forbids outright:
+every job mints a pod name and the series set would never retire.
+cAdvisor already covers per-pod CPU and memory, so the resource
+dimension was never the missing one — the *queue* dimension was. The
+jobs API sees the whole fleet from one place.
+
+#### The labels are bounded, but only because this code makes them so
+
+`jobs.workflow` is a plain `text` column with no enum constraint, so a
+typo or a workflow a future Python release adds would otherwise mint a
+series that never retires. `setJobQueue` folds anything outside
+`JobWorkflow.options` (`@virtool/contracts`) into `other`. That is the
+one definition of the workflow list; `NON_TERMINAL_JOB_STATES`
+(`@virtool/data/jobs/data`) is the one definition of the state list, and
+is derived from `JOB_STATES` rather than written out again.
+
+Folded rows **add** their counts, because several workflows can land on
+`other`. The ages do not add: the folded label takes the oldest of what
+falls into it, which is what "the oldest pending job" means for every
+other label too.
+
+#### A drained queue must report zero
+
+A gauge holds its last value forever. A workflow that drains would
+otherwise report its final backlog indefinitely — the worst possible
+failure for an alert on queue depth. So each refresh writes the full
+`JobWorkflow.options × {pending, running}` cross product as `0` first,
+then overwrites from the rows that came back.
+
+#### Only the non-terminal states, and only every ten seconds
+
+`readJobCounts` covers `pending` and `running` and nothing else.
+Counting every job ever run is a scan that grows forever, and the schema
+is Python-owned — there are no Alembic revisions from this side, so
+there is no index to add to rescue it. Terminal totals are also the
+wrong instrument: a gauge over accumulated history is a counter wearing
+the wrong hat, and failure rate belongs on a `_total` counter
+incremented when a job finishes.
+
+`createJobQueueReader` memoizes the result for ten seconds — well under
+a typical 15–60s scrape interval, so a scrape still sees a fresh queue.
+The bound matters in the other direction: two Prometheus replicas, or a
+human curling the endpoint in a loop, would otherwise multiply an
+unindexed scan across the very pool this service claims jobs from.
+In-flight reads are shared as well as settled ones, so two scrapes
+arriving together cost one query. A **rejection is not cached** — the
+read is bounded already, and holding a failure for the full TTL would
+keep these series dark for ten seconds past a blip that lasted one.
+
+Both reads go out concurrently under one `readJobQueueBounded` deadline,
+matched to the pool probe's two seconds for the same reason. A failure
+logs a warning and leaves the pool gauges and the rest of the scrape
+alone — the two pre-scrape reads are independent, so one failing does
+not take the other's series with it.
+
+#### A failed refresh drops these series, rather than letting them go stale
+
+This is the one place the queue gauges are treated differently from the
+pool gauges beside them, which do go stale at their last value.
+
+A gauge holds its last value forever, and `registry.metrics()` renders
+whatever is standing. So a queue depth left in place after a failed read
+is re-served on **every** scrape of the outage, and Prometheus records
+each one as a fresh sample — a flat line hiding a backlog that grew, or
+an alert held open for a queue that has since drained. `clearJobQueue`
+resets both gauges instead, so the series go absent and `absent()` can
+alert on the gap.
+
+Absent rather than zero: zero asserts an empty queue, which is a
+different claim from not knowing.
+
+A pool occupancy is a property of this process and its last reading is
+still roughly true while the probe fails. A queue depth is only
+meaningful as of a moment, so the same treatment would be a lie.
+
+#### The age is computed in Postgres, pinned to UTC
+
+`created_at` is a naive `timestamp`. `readOldestPendingJobAges`
+subtracts it as `now() - (min(created_at) at time zone 'UTC')`, so the
+age does not depend on the session's time zone or the pod's — and UTC is
+what both writers store, Python and Drizzle alike. Left to the session
+default, the reported age would be wrong by the offset.
 
 ## Sentry
 

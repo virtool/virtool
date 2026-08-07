@@ -1,3 +1,8 @@
+import { JobWorkflow } from "@virtool/contracts";
+import {
+	type JobQueueSnapshot,
+	NON_TERMINAL_JOB_STATES,
+} from "@virtool/data/jobs/data";
 import type { ConnectionCounts } from "@virtool/data/metrics/data";
 import {
 	Counter,
@@ -6,6 +11,34 @@ import {
 	Histogram,
 	Registry,
 } from "prom-client";
+
+/**
+ * The label an unrecognised `jobs.workflow` value is folded into.
+ *
+ * `workflow` is a plain `text` column with no enum constraint, so "bounded by
+ * construction" is only true if this side makes it so. A typo, or a workflow a
+ * future Python release adds, must not mint a series that never retires.
+ */
+const OTHER_WORKFLOW = "other";
+
+/** Every workflow label this process will ever emit. */
+const WORKFLOW_LABELS = [...JobWorkflow.options, OTHER_WORKFLOW];
+
+/**
+ * The workflows that keep their own label.
+ *
+ * Deliberately not {@link WORKFLOW_LABELS}, which is the wider question of what
+ * this process emits — a row whose workflow really is the string `other` is an
+ * unrecognised workflow, not a recognised one.
+ */
+const KNOWN_WORKFLOWS = new Set<string>(JobWorkflow.options);
+
+/** The states a row may be counted under, as a set for the guard below. */
+const COUNTABLE_STATES = new Set<string>(NON_TERMINAL_JOB_STATES);
+
+function workflowLabel(workflow: string): string {
+	return KNOWN_WORKFLOWS.has(workflow) ? workflow : OTHER_WORKFLOW;
+}
 
 /** One handled request, as observed by the metrics middleware. */
 export type RequestSample = {
@@ -26,6 +59,8 @@ export type RequestSample = {
 export type Metrics = {
 	recordHttpRequest: (sample: RequestSample) => void;
 	setPostgresConnections: (counts: ConnectionCounts) => void;
+	setJobQueue: (snapshot: JobQueueSnapshot) => void;
+	clearJobQueue: () => void;
 	contentType: string;
 	render: () => Promise<string>;
 };
@@ -81,6 +116,24 @@ export function createMetrics(poolMax: number): Metrics {
 		registers: [registry],
 	}).set(poolMax);
 
+	// The queue dimension. Workflow pods are one-shot Kubernetes Jobs — a poor
+	// scrape target, since one may run for hours and vanish between scrapes, and
+	// a pod-name label would be unbounded. The jobs API sees the whole fleet from
+	// one place, over two labels that are bounded by construction.
+	const jobsGauge = new Gauge({
+		name: "virtool_jobs",
+		help: "Jobs in a non-terminal state, by workflow and state.",
+		labelNames: ["workflow", "state"],
+		registers: [registry],
+	});
+
+	const oldestPendingJobAge = new Gauge({
+		name: "virtool_jobs_oldest_pending_age_seconds",
+		help: "Age of the oldest pending job, by workflow.",
+		labelNames: ["workflow"],
+		registers: [registry],
+	});
+
 	return {
 		recordHttpRequest(sample) {
 			const { method, route } = sample;
@@ -97,6 +150,66 @@ export function createMetrics(poolMax: number): Metrics {
 				counts.idleInTransaction,
 			);
 			postgresConnections.set({ state: "other" }, counts.other);
+		},
+
+		setJobQueue(snapshot) {
+			// Write the whole cross product as zero first. A gauge holds its last
+			// value forever, so a workflow that drains would otherwise report its
+			// final backlog indefinitely — the worst possible failure for an alert
+			// on queue depth.
+			for (const workflow of WORKFLOW_LABELS) {
+				oldestPendingJobAge.set({ workflow }, 0);
+
+				for (const state of NON_TERMINAL_JOB_STATES) {
+					jobsGauge.set({ workflow, state }, 0);
+				}
+			}
+
+			// Folding several workflows onto `other` puts several rows on one
+			// label, so counts add rather than overwrite. The state guard keeps the
+			// label bounded here rather than relying on the query's `WHERE` to do
+			// it from a distance.
+			for (const row of snapshot.counts) {
+				if (!COUNTABLE_STATES.has(row.state)) {
+					continue;
+				}
+
+				jobsGauge.inc(
+					{ workflow: workflowLabel(row.workflow), state: row.state },
+					row.count,
+				);
+			}
+
+			// An age does not add, so a folded label takes the oldest of what falls
+			// into it — which is what "the oldest pending job" means for every
+			// other label too.
+			const oldest = new Map<string, number>();
+
+			for (const row of snapshot.oldestPendingAges) {
+				const workflow = workflowLabel(row.workflow);
+
+				oldest.set(
+					workflow,
+					Math.max(oldest.get(workflow) ?? 0, row.ageSeconds),
+				);
+			}
+
+			for (const [workflow, ageSeconds] of oldest) {
+				oldestPendingJobAge.set({ workflow }, ageSeconds);
+			}
+		},
+
+		clearJobQueue() {
+			// Drop the series rather than leaving them standing. A gauge holds its
+			// last value forever, so a refresh that failed would otherwise have
+			// every scrape of the outage record a stale backlog as a *fresh*
+			// sample — hiding a queue that grew behind a flat line, or holding an
+			// alert open for one that drained. An absent series says "unknown",
+			// which is the true answer, and `absent()` can alert on it.
+			//
+			// Zeroing would be worse than either: it asserts an empty queue.
+			jobsGauge.reset();
+			oldestPendingJobAge.reset();
 		},
 
 		contentType: registry.contentType,

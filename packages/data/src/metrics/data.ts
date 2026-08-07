@@ -1,4 +1,5 @@
 import type { PgClient } from "../db/pg";
+import { withTimeout } from "../db/timeout";
 
 /** How Postgres reports a backend's state in `pg_stat_activity`. */
 const ACTIVE = "active";
@@ -40,22 +41,6 @@ function bucketFor(state: string | null): keyof ConnectionCounts {
  * timeout.
  */
 export const POOL_PROBE_TIMEOUT_MS = 2000;
-
-/**
- * Resolve `promise`, or reject once `ms` have passed.
- *
- * The abandoned promise is left to settle on its own; it is a single trivial
- * query and its result is simply discarded.
- */
-function withTimeout<T>(promise: Promise<T>, ms: number): Promise<T> {
-	let timer: ReturnType<typeof setTimeout> | undefined;
-
-	const deadline = new Promise<never>((_, reject) => {
-		timer = setTimeout(() => reject(new Error("timed out")), ms);
-	});
-
-	return Promise.race([promise, deadline]).finally(() => clearTimeout(timer));
-}
 
 /**
  * Count this process's open Postgres backends by state.

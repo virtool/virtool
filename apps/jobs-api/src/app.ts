@@ -7,6 +7,7 @@ import { routePath } from "hono/route";
 import { handleFinalizeAnalysis } from "./analyses/handlers";
 import { handleGetCache, handleRegisterCache } from "./caches/handlers";
 import { handleMetrics } from "./metrics/handler";
+import { createJobQueueReader } from "./metrics/jobs";
 import type { Metrics } from "./metrics/registry";
 import { handleFinalizeSample } from "./samples/handlers";
 import { handleFinalizeSubtraction } from "./subtraction/handlers";
@@ -54,6 +55,11 @@ export type AppDeps = {
  */
 export function createApp(deps: AppDeps): Hono {
 	const app = new Hono();
+
+	// Built once per app rather than per scrape: the memo is the whole point, and
+	// one created inside the handler would be discarded before the next scrape
+	// could reuse it.
+	const readJobQueue = createJobQueueReader(deps.db);
 
 	// Every request, including ones that fall through to 404. `routePath` yields
 	// the *registered pattern* — `/jobs/:jobId`, never `/jobs/1234` — which is
@@ -118,6 +124,7 @@ export function createApp(deps: AppDeps): Hono {
 			metrics: deps.metrics,
 			client: deps.client,
 			applicationName: deps.applicationName,
+			readJobQueue,
 			logger: deps.logger,
 			token: deps.metricsToken,
 		}),

@@ -8,7 +8,13 @@ import { jobs } from "../db/schema/jobs";
 import { legacySamples } from "../db/schema/samples";
 import { users } from "../db/schema/users";
 import { createTestDatabase, type TestDatabase } from "../db/test/fixtures";
-import { getJob, getJobs, JobNotFoundError } from "./data";
+import {
+	getJob,
+	getJobs,
+	JobNotFoundError,
+	readJobCounts,
+	readOldestPendingJobAges,
+} from "./data";
 
 let database: TestDatabase;
 let db: Db;
@@ -184,3 +190,88 @@ describe("getJob", () => {
 function byId(a: { id: number }, b: { id: number }) {
 	return a.id - b.id;
 }
+
+/** Insert a bare job, dated `ageSeconds` in the past. */
+async function seedQueuedJob(
+	workflow: string,
+	state: string,
+	ageSeconds = 0,
+): Promise<void> {
+	await db.insert(jobs).values({
+		created_at: new Date(Date.now() - ageSeconds * 1000),
+		state,
+		user_id: userId,
+		workflow,
+	});
+}
+
+function bySeries(
+	a: { workflow: string; state?: string },
+	b: { workflow: string; state?: string },
+) {
+	return (
+		a.workflow.localeCompare(b.workflow) ||
+		(a.state ?? "").localeCompare(b.state ?? "")
+	);
+}
+
+describe("readJobCounts", () => {
+	it("groups by workflow and state", async () => {
+		await seedQueuedJob("pathoscope", "pending");
+		await seedQueuedJob("pathoscope", "pending");
+		await seedQueuedJob("pathoscope", "running");
+		await seedQueuedJob("nuvs", "running");
+
+		expect((await readJobCounts(db)).sort(bySeries)).toEqual([
+			{ workflow: "nuvs", state: "running", count: 1 },
+			{ workflow: "pathoscope", state: "pending", count: 2 },
+			{ workflow: "pathoscope", state: "running", count: 1 },
+		]);
+	});
+
+	// Counting every job ever run is a scan that grows forever against a table
+	// this side cannot index, and a gauge over accumulated history is a counter
+	// wearing the wrong hat.
+	it("excludes terminal states", async () => {
+		await seedQueuedJob("nuvs", "succeeded");
+		await seedQueuedJob("nuvs", "failed");
+		await seedQueuedJob("nuvs", "cancelled");
+		await seedQueuedJob("nuvs", "pending");
+
+		expect(await readJobCounts(db)).toEqual([
+			{ workflow: "nuvs", state: "pending", count: 1 },
+		]);
+	});
+
+	it("reports nothing for an empty queue", async () => {
+		expect(await readJobCounts(db)).toEqual([]);
+	});
+});
+
+describe("readOldestPendingJobAges", () => {
+	it("reports the oldest pending job per workflow", async () => {
+		await seedQueuedJob("nuvs", "pending", 600);
+		await seedQueuedJob("nuvs", "pending", 60);
+		await seedQueuedJob("pathoscope", "pending", 120);
+
+		const ages = (await readOldestPendingJobAges(db)).sort(bySeries);
+
+		expect(ages.map((age) => age.workflow)).toEqual(["nuvs", "pathoscope"]);
+		expect(ages[0]?.ageSeconds).toBeGreaterThanOrEqual(600);
+		expect(ages[0]?.ageSeconds).toBeLessThan(660);
+		expect(ages[1]?.ageSeconds).toBeGreaterThanOrEqual(120);
+		expect(ages[1]?.ageSeconds).toBeLessThan(180);
+	});
+
+	// A running job is no longer waiting, so it says nothing about queue latency.
+	it("ignores jobs that are not pending", async () => {
+		await seedQueuedJob("nuvs", "running", 3600);
+		await seedQueuedJob("nuvs", "succeeded", 7200);
+		await seedQueuedJob("nuvs", "pending", 30);
+
+		const ages = await readOldestPendingJobAges(db);
+
+		expect(ages).toHaveLength(1);
+		expect(ages[0]?.ageSeconds).toBeLessThan(90);
+	});
+});

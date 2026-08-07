@@ -3,6 +3,7 @@ import type { PgClient } from "@virtool/data/db/pg";
 import { readConnectionCountsBounded } from "@virtool/data/metrics/data";
 import type { Logger } from "@virtool/logger";
 import type { Context } from "hono";
+import type { JobQueueReader } from "./jobs";
 import type { Metrics } from "./registry";
 
 /** What {@link handleMetrics} needs to answer a scrape. */
@@ -10,6 +11,7 @@ export type MetricsDeps = {
 	metrics: Metrics;
 	client: PgClient;
 	applicationName: string;
+	readJobQueue: JobQueueReader;
 	logger: Logger;
 	token: string | undefined;
 };
@@ -37,16 +39,34 @@ export async function handleMetrics(
 	}
 
 	// A Postgres outage is exactly when the rest of these metrics matter most, so
-	// a failed or slow read drops the pool gauges rather than the whole scrape.
-	// The series go stale at their last value; `up` and the process metrics carry
-	// on.
-	try {
-		deps.metrics.setPostgresConnections(
-			await readConnectionCountsBounded(deps.client, deps.applicationName),
-		);
-	} catch (err) {
-		deps.logger.warn({ err }, "could not read postgres connection counts");
-	}
+	// a failed or slow read drops only the gauges it feeds rather than the whole
+	// scrape. Those series go stale at their last value; `up` and the process
+	// metrics carry on. The two reads are independent, so one failing does not
+	// take the other's series with it.
+	await Promise.all([
+		(async () => {
+			try {
+				deps.metrics.setPostgresConnections(
+					await readConnectionCountsBounded(deps.client, deps.applicationName),
+				);
+			} catch (err) {
+				deps.logger.warn({ err }, "could not read postgres connection counts");
+			}
+		})(),
+
+		(async () => {
+			try {
+				deps.metrics.setJobQueue(await deps.readJobQueue());
+			} catch (err) {
+				// Unlike the pool gauges above, these are dropped rather than left
+				// to go stale: a queue depth is only meaningful as of a moment, and
+				// re-serving the last one would have Prometheus record it as fresh
+				// on every scrape of the outage.
+				deps.metrics.clearJobQueue();
+				deps.logger.warn({ err }, "could not read job queue counts");
+			}
+		})(),
+	]);
 
 	return c.text(await deps.metrics.render(), 200, {
 		"content-type": deps.metrics.contentType,

@@ -829,6 +829,22 @@ constant-time, so don't reimplement it or reduce it to `===`. The rest of
 this section is `apps/web`; see [docs/jobs-api.md](docs/jobs-api.md) and
 [docs/tasks.md](docs/tasks.md) for the others.
 
+**Job-queue visibility is `apps/jobs-api`'s, not `apps/web`'s.**
+`virtool_jobs{workflow,state}` and
+`virtool_jobs_oldest_pending_age_seconds{workflow}` are registered on
+that service's registry, fed by `readJobQueueBounded`
+(`@virtool/data/jobs/data`). Workflow pods are one-shot Kubernetes Jobs
+and a poor scrape target — one may run for hours and vanish between
+scrapes, and a pod-name label is unbounded — so the jobs API reports
+the queue on their behalf. Three rules hold the bound: the read
+covers only `pending` and `running` (a scan over every job ever run
+grows forever against a table this side cannot index), an unrecognised
+`workflow` folds into `other` (the column is plain `text`), and every
+workflow/state pair is written as `0` on each refresh so a drained queue
+reports zero rather than its last backlog. The workflow list is
+`JobWorkflow.options` from `@virtool/contracts` — the one definition;
+don't mint a second.
+
 `server/metrics/registry.ts` owns the one process-wide `Registry`.
 Default process metrics keep prom-client's standard unprefixed names
 (`process_*`, `nodejs_*`) so off-the-shelf dashboards match; everything
