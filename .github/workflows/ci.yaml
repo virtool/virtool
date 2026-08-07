@@ -39,6 +39,9 @@ jobs:
                     - image: jobs-api
                       target: jobs-api
                       workspace: apps/jobs-api
+                    - image: tasks
+                      target: tasks
+                      workspace: apps/tasks
                     - image: ts-create-subtraction
                       target: create-subtraction
                       workspace: apps/create-subtraction
@@ -179,10 +182,10 @@ jobs:
                   node-version: ${{ env.NODE_VERSION }}
                   pnpm-version: ${{ env.PNPM_VERSION }}
             # Exclusions rather than an inclusion list, so a new workspace that
-            # declares `test` is covered without editing this job. The four
+            # declares `test` is covered without editing this job. The five
             # excluded here have their own jobs.
             - name: Test
-              run: pnpm -r --filter "!@virtool/web" --filter "!@virtool/data" --filter "!@virtool/storage" --filter "!@virtool/jobs-api" test
+              run: pnpm -r --filter "!@virtool/web" --filter "!@virtool/data" --filter "!@virtool/storage" --filter "!@virtool/jobs-api" --filter "!@virtool/tasks" test
     test-jobs-api:
         name: Test / Jobs API
         runs-on: ubuntu-24.04
@@ -201,6 +204,26 @@ jobs:
             # the fast package loop.
             - name: Test
               run: pnpm --filter @virtool/jobs-api test
+              env:
+                  TZ: UTC
+    test-tasks:
+        name: Test / Tasks
+        runs-on: ubuntu-24.04
+        timeout-minutes: 15
+        steps:
+            - name: Checkout
+              uses: actions/checkout@v7
+            - name: Setup
+              uses: ./.github/actions/setup
+              with:
+                  node-version: ${{ env.NODE_VERSION }}
+                  pnpm-version: ${{ env.PNPM_VERSION }}
+            # Its own job rather than part of Test / Packages, for the same
+            # reason as Test / Data: the probes are tested against a real
+            # Postgres testcontainer, and pulling that image does not belong in
+            # the fast package loop.
+            - name: Test
+              run: pnpm --filter @virtool/tasks test
               env:
                   TZ: UTC
     test-data:
@@ -322,6 +345,7 @@ jobs:
                 test-packages,
                 test-data,
                 test-jobs-api,
+                test-tasks,
                 test-rust,
                 test-storage,
                 test-web,
@@ -367,6 +391,9 @@ jobs:
                     - image: jobs-api
                       target: jobs-api
                       workspace: apps/jobs-api
+                    - image: tasks
+                      target: tasks
+                      workspace: apps/tasks
                     - image: ts-create-subtraction
                       target: create-subtraction
                       workspace: apps/create-subtraction

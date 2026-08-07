@@ -1,0 +1,9 @@
+{
+	"extends": "../tsconfig.node.json",
+	"compilerOptions": {
+		// `src/version.ts` reads this app's own `package.json`, which is how the
+		// version reaches `virtool_app_info` without a bundler-injected global.
+		"resolveJsonModule": true
+	},
+	"include": ["src", "tsdown.config.ts"]
+}

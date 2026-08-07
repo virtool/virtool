@@ -33,6 +33,17 @@ This is a **pnpm monorepo**:
   cookie fallback; this service has no session model. Reaching a terminal
   state (`cancelled`, `failed`, `succeeded`) is the only thing that revokes
   a job key. See [docs/jobs-api.md](docs/jobs-api.md).
+- `apps/tasks/` — `@virtool/tasks`, the task service: **one** long-lived
+  process carrying both halves of Virtool's task system, the periodic
+  spawner and the runner that claims and executes what it spawns. Image:
+  `ghcr.io/virtool/tasks`, Alpine, no ingress and **no Service** — its HTTP
+  listener serves only `/health/live`, `/health/ready` and a token-gated
+  `/metrics` on `VT_TASKS_PROBE_PORT` (9900). The two halves are turned off
+  independently with `VT_TASKS_SPAWN_ENABLED` and `VT_TASKS_CLAIM_ENABLED`
+  — both default `true` — which is what decouples their rollouts without a
+  second image. Everything is built inside `bootstrap()`; this app has no
+  module-scope singleton of any kind, not config, not the pool, not the
+  registry. See [docs/tasks.md](docs/tasks.md).
 - `apps/create-subtraction/` — `@virtool/create-subtraction`, the first workflow
   executor: a one-shot process that starts, works, exits. Only its object
   storage half is wired so far. Image: `ghcr.io/virtool/ts-create-subtraction`,
@@ -806,14 +817,15 @@ Prometheus scrapes `GET /metrics`, gated by a bearer token
 (`VT_METRICS_TOKEN`). With the variable unset the route reports 404, so
 metrics are off until a deployment opts in.
 
-**There are two scrape targets, not one** — `apps/web` and `apps/jobs-api`
-are separate processes with separate registries, each needing its own
-Prometheus job. Series names deliberately match so one dashboard covers
-both; they are told apart by the scrape's target labels and by
-`application_name`, **never by renaming a metric**. Both gate the endpoint
-with `isBearerTokenValid` (`@virtool/contracts/bearer`) — constant-time, so
-don't reimplement it or reduce it to `===`. The rest of this section is
-`apps/web`; see [docs/jobs-api.md](docs/jobs-api.md) for the other.
+**There are three scrape targets, not one** — `apps/web`, `apps/jobs-api`
+and `apps/tasks` are separate processes with separate registries, each
+needing its own Prometheus job. Series names deliberately match so one
+dashboard covers them all; they are told apart by the scrape's target
+labels and by `application_name`, **never by renaming a metric**. All three
+gate the endpoint with `isBearerTokenValid` (`@virtool/contracts/bearer`) —
+constant-time, so don't reimplement it or reduce it to `===`. The rest of
+this section is `apps/web`; see [docs/jobs-api.md](docs/jobs-api.md) and
+[docs/tasks.md](docs/tasks.md) for the others.
 
 `server/metrics/registry.ts` owns the one process-wide `Registry`.
 Default process metrics keep prom-client's standard unprefixed names
@@ -853,6 +865,49 @@ into the client graph.
 See [docs/metrics.md](docs/metrics.md) for the exported series, the
 token check, cardinality rules, and what deeper instrumentation would
 take.
+
+### Tasks
+
+`apps/tasks` is **one** process carrying both halves of the task system.
+The periodic spawner inserts scheduled tasks; the runner claims and
+executes them. Each is disabled independently — `VT_TASKS_SPAWN_ENABLED`
+and `VT_TASKS_CLAIM_ENABLED`, both defaulting to `true`, so an omitted key
+fails toward a working fleet rather than a pod that starts, passes every
+probe and does nothing. That is what decouples the two rollouts: the
+cutover from Python is one deployment started with claiming off, then one
+flag flip. Don't reintroduce a second binary to get the same effect.
+
+**Nothing in this app happens at import time.** `bootstrap()`
+(`src/bootstrap.ts`) is the composition root and builds all of it — config,
+logger, pool, emitter, storage, registry, listener — returning an
+`AppContext`. There is no config singleton, no module-scope pool, and no
+`SHOW server_version` fired by an import. A module of this app can be
+imported to read a type without opening anything.
+
+Four rules it carries:
+
+- **Config is the app's own zod schema**, parsed by `parseTasksConfig`,
+  and every key keeps the `<KEY>_FILE` behaviour through the shared
+  `resolveFileBacked`. A boolean is spelled out rather than left to
+  `z.coerce.boolean()`, which reads `"false"` as `true`.
+- **Liveness must never depend on Postgres.** `GET /health/live` is
+  static. A database blip that failed it would restart the whole fleet
+  and kill every task in flight. Readiness still probes Postgres, and
+  reports 503 from the moment shutdown begins.
+- **The version is passed into `bootstrap` explicitly**, from a JSON
+  import of the app's own manifest. `__APP_VERSION__` is a Vite `define`
+  and does not exist here; reading it would render `virtool_app_info`
+  with an empty label and nothing would fail.
+- **Never call `process.exit()`.** Registering a SIGTERM handler removes
+  Node's default exit behaviour, so shutdown is the app's job from that
+  moment: readiness flips, hooks run LIFO, the listener closes, the pool
+  drains, Sentry **flushes** (never `close()`), and `process.exitCode` is
+  set for a natural drain. The backstop timer is `.unref()`'d and its
+  budget must stay under `terminationGracePeriodSeconds`.
+
+See [docs/tasks.md](docs/tasks.md) for the full config table, the
+`AppContext` contract, the shutdown ordering and its guarantees, and the
+probe and metrics surface.
 
 ## Data
 
@@ -1158,18 +1213,19 @@ naming, comments, and concurrency rules with examples.
 - **Projects (`@virtool/storage`):** `unit` covers everything testable
   against `MemoryStorage`; `integration` runs the S3 and Azure backends
   against real Garage and Azurite containers and has its own CI job.
-- **`@virtool/data`** and **`@virtool/jobs-api`** each run one node
-  project against a Postgres testcontainer, and each has its own CI job
-  for the same reason storage does — a container pull does not belong in
-  the fast package loop. Both are excluded from `Test / Packages`.
+- **`@virtool/data`**, **`@virtool/jobs-api`** and **`@virtool/tasks`**
+  each run one node project against a Postgres testcontainer, and each
+  has its own CI job for the same reason storage does — a container pull
+  does not belong in the fast package loop. All three are excluded from
+  `Test / Packages`.
 - **The Postgres container is described once**, in
   `packages/data/src/db/test/globalSetup.ts`. The `@virtool/data`
-  project, the web app's `server` project and `@virtool/jobs-api` all
-  name that module as their `globalSetup` — the latter two through the
-  `@virtool/data/db/test/globalSetup` subpath — so the options cannot
-  drift and `withReuse()` boots one container for the three suites
-  locally. There is no teardown; `docker rm -f` it when done. Don't add
-  a second copy of the container options.
+  project, the web app's `server` project, `@virtool/jobs-api` and
+  `@virtool/tasks` all name that module as their `globalSetup` — the
+  latter three through the `@virtool/data/db/test/globalSetup` subpath —
+  so the options cannot drift and `withReuse()` boots one container for
+  every suite locally. There is no teardown; `docker rm -f` it when done.
+  Don't add a second copy of the container options.
 - **Test location:** `__tests__/` directories alongside source files
   (web), or sibling `*.test.ts` files (packages).
 - **Test files:** `ComponentName.test.tsx` or `functionName.test.ts`.

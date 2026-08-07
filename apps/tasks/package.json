@@ -1,0 +1,31 @@
+{
+	"name": "@virtool/tasks",
+	"version": "0.0.0",
+	"private": true,
+	"type": "module",
+	"files": [
+		"dist"
+	],
+	"scripts": {
+		"build": "tsdown",
+		"start": "node --import @sentry/node/preload dist/index.mjs",
+		"test": "vitest run",
+		"typecheck": "tsc --noEmit"
+	},
+	"dependencies": {
+		"@sentry/node": "^10.69.0",
+		"@virtool/contracts": "workspace:*",
+		"@virtool/data": "workspace:*",
+		"@virtool/logger": "workspace:*",
+		"@virtool/sentry": "workspace:*",
+		"@virtool/storage": "workspace:*",
+		"pino": "^10.1.0",
+		"postgres": "^3.4.9",
+		"prom-client": "^15.1.3",
+		"zod": "^4.3.5"
+	},
+	"devDependencies": {
+		"tsdown": "^0.22.14",
+		"vitest": "^4.1.10"
+	}
+}

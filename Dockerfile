@@ -82,6 +82,30 @@ ENV VT_JOBS_API_PORT="9950"
 # earlier than that; the preload hook is what makes late init safe.
 CMD ["node", "--import", "@sentry/node/preload", "dist/index.mjs"]
 
+FROM base AS build-tasks
+COPY apps/tasks ./apps/tasks
+RUN pnpm --filter @virtool/tasks build \
+    && pnpm deploy --filter @virtool/tasks --prod /prod/tasks
+
+# One binary carries both halves of the task system. The spawner and the runner
+# are turned off independently with VT_TASKS_SPAWN_ENABLED and
+# VT_TASKS_CLAIM_ENABLED, so a staged cutover is a flag on one Deployment rather
+# than a second image. Like the jobs API, this needs no bioinformatics tools and
+# stays on Alpine.
+FROM node:24-alpine AS tasks
+WORKDIR /tasks
+COPY --from=build-tasks /prod/tasks ./
+EXPOSE 9900
+ENV VT_TASKS_PROBE_PORT="9900"
+# Exec form, and `node` directly rather than `npm start`: npm does not forward
+# signals to the process it spawns (npm/rfcs#829, still open), so SIGTERM would
+# never reach the shutdown sequence and every rollout would end in SIGKILL with
+# claims still held. The `--import @sentry/node/preload` flag installs Sentry's
+# module hooks before any application import is evaluated — the DSN comes from
+# `<KEY>_FILE`-backed config and cannot be read any earlier, so late init is
+# safe only because of this.
+CMD ["node", "--import", "@sentry/node/preload", "dist/index.mjs"]
+
 FROM base AS build-create-subtraction
 COPY apps/create-subtraction ./apps/create-subtraction
 RUN pnpm --filter @virtool/create-subtraction build \
