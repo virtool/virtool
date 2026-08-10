@@ -212,6 +212,11 @@ workspace. Run `cargo` there directly; a `pathoscope-test` CI job gates it.
 Building the crate needs `libclang-dev` installed, because `hts-sys` runs
 bindgen against htslib's headers.
 
+`pathoscope-test` and `build-pathoscope` are the only path-filtered jobs in
+`ci.yaml` — on a pull request they run only when the crate, the workflow app,
+`.dockerignore` or `ci.yaml` changes. Extend the `changes` job's filter in the
+same commit as anything that gives either job a new input.
+
 `pnpm build` builds **every app but `apps/site`**, which is gated by its own
 `site-build` CI job. `pnpm check` and `pnpm format` run biome over `apps` and
 `packages` rather than a literal `apps/web/src`, so a new app's source is linted
