@@ -8,19 +8,18 @@ from tests.fixtures.workflow_api.utils import (
     custom_dumps,
     generate_not_found,
 )
-from virtool.indexes.constants import INDEX_SQLITE_FILE_NAME
 from virtool.indexes.db import (
     JOB_INDEX_FILE_NAMES,
     REFERENCE_JSON_V2_FILE_NAME,
 )
-from virtool.workflow.data.index_sqlite import create_index_sqlite
+from virtool.references.sqlite import REFERENCE_SQLITE_FILE_NAME, SQLiteReference
 from virtool.workflow.pytest_plugin.data import WorkflowData
 
 
 def create_indexes_routes(
     data: WorkflowData,
     example_path: Path,
-    index_sqlite_path: Path,
+    reference_sqlite_path: Path,
 ) -> RouteTableDef:
     with gzip.open(
         example_path / "indexes" / "reference.json.gz",
@@ -79,7 +78,7 @@ def create_indexes_routes(
                         },
                     )
 
-                if filename == INDEX_SQLITE_FILE_NAME:
+                if filename == REFERENCE_SQLITE_FILE_NAME:
                     reference = {
                         "_id": data.index.reference.id,
                         "created_at": reference_json_v2["created_at"],
@@ -95,10 +94,18 @@ def create_indexes_routes(
                         for otu in reference_json_v2["otus"]
                     ]
 
-                    await create_index_sqlite(index_sqlite_path, reference, otus)
+                    async def iter_otus():
+                        for otu in otus:
+                            yield otu
+
+                    await SQLiteReference.create(
+                        reference_sqlite_path,
+                        reference,
+                        iter_otus(),
+                    )
 
                     return FileResponse(
-                        index_sqlite_path,
+                        reference_sqlite_path,
                         headers={
                             "Content-Disposition": (
                                 f"attachment; filename='{filename}'"

@@ -1,6 +1,8 @@
 import asyncio
 import gzip
 from collections.abc import AsyncIterator
+from pathlib import Path
+from tempfile import TemporaryDirectory
 
 from sqlalchemy import delete, select, update
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
@@ -32,12 +34,17 @@ from virtool.indexes.models import Index
 from virtool.indexes.sql import SQLIndex, SQLIndexFile
 from virtool.references.models import ReferenceNested
 from virtool.references.sql import SQLReference
+from virtool.references.sqlite import (
+    REFERENCE_SQLITE_FILE_NAME,
+    SQLiteReference,
+)
 from virtool.references.transforms import (
     AttachReferenceTransform,
     shape_nested_reference,
 )
 from virtool.storage.cleanup import delete_keys
 from virtool.storage.errors import StorageKeyNotFoundError
+from virtool.storage.file import read_file_chunks
 from virtool.storage.keys import mint_storage_key
 from virtool.storage.protocol import StorageBackend
 from virtool.users.transforms import AttachUserTransform
@@ -227,7 +234,7 @@ class IndexData:
 
     @emits(Operation.UPDATE)
     async def generate_task_index(self, index_id: int | str) -> Index:
-        """Generate the task-backed index JSON artifact and mark the index ready.
+        """Generate task-backed reference artifacts and mark the index ready.
 
         ``index_id`` accepts both the integer public id and the stringified form: a
         task created before the integer-id cutover carries the string in its context,
@@ -278,7 +285,15 @@ class IndexData:
             "organism": reference_row.organism,
         }
 
-        file_name = REFERENCE_JSON_V2_FILE_NAME
+        file_names = (
+            REFERENCE_JSON_V2_FILE_NAME,
+            REFERENCE_SQLITE_FILE_NAME,
+        )
+        keys = {
+            file_name: mint_storage_key("indexes", index_row.id)
+            for file_name in file_names
+        }
+
         patched_otus = [
             otu
             async for otu in virtool.indexes.db.iter_patched_otus(
@@ -291,28 +306,53 @@ class IndexData:
             dump_bytes({**reference, "otus": patched_otus}),
         )
 
-        key = mint_storage_key("indexes", index_row.id)
-
-        async def stream():
+        async def stream_json() -> AsyncIterator[bytes]:
             yield compressed
 
         try:
             # Storage cannot participate in the database transactions. A hard process
-            # exit can leave an object no row names, which the orphan sweep collects.
-            size = await self._storage.write(
-                key,
-                stream(),
+            # exit can leave objects no row names, which the orphan sweep collects.
+            json_size = await self._storage.write(
+                keys[REFERENCE_JSON_V2_FILE_NAME],
+                stream_json(),
             )
+            with TemporaryDirectory() as temp_dir:
+                sqlite_path = Path(temp_dir) / REFERENCE_SQLITE_FILE_NAME
+
+                # reference-v2.json.gz still requires a materialized list. Pass
+                # iter_patched_otus directly once that compatibility artifact is
+                # removed.
+                async def iter_materialized_otus() -> AsyncIterator[dict]:
+                    for otu in patched_otus:
+                        yield otu
+
+                await SQLiteReference.create(
+                    sqlite_path,
+                    reference,
+                    iter_materialized_otus(),
+                )
+                sqlite_size = await self._storage.write(
+                    keys[REFERENCE_SQLITE_FILE_NAME],
+                    read_file_chunks(sqlite_path),
+                )
 
             async with AsyncSession(self._pg) as session:
-                index_file = await virtool.indexes.db.upsert_index_file(
-                    session,
-                    index_id,
-                    "json",
-                    file_name,
-                    size,
-                    key,
-                )
+                index_files = []
+
+                for type_, file_name, size in (
+                    ("json", REFERENCE_JSON_V2_FILE_NAME, json_size),
+                    ("sqlite", REFERENCE_SQLITE_FILE_NAME, sqlite_size),
+                ):
+                    index_files.append(
+                        await virtool.indexes.db.upsert_index_file(
+                            session,
+                            index_id,
+                            type_,
+                            file_name,
+                            size,
+                            keys[file_name],
+                        )
+                    )
 
                 await update_last_indexed_versions(reference_id, session)
 
@@ -324,31 +364,33 @@ class IndexData:
 
                 await session.commit()
         except BaseException:
-            await self._storage.delete(key)
+            for key in keys.values():
+                await self._storage.delete(key)
 
             async with AsyncSession(self._pg) as session:
-                row = (
-                    await session.execute(
-                        select(SQLIndexFile).where(
-                            SQLIndexFile.index_id
-                            == compose_legacy_id_subquery(SQLIndex, index_id),
-                            SQLIndexFile.name == file_name,
-                        ),
-                    )
-                ).scalar_one_or_none()
-
-                if row is not None:
-                    await session.delete(row)
-                    await session.commit()
+                await session.execute(
+                    delete(SQLIndexFile).where(
+                        SQLIndexFile.index_id
+                        == compose_legacy_id_subquery(SQLIndex, index_id),
+                        SQLIndexFile.name.in_(file_names),
+                    ),
+                )
+                await session.commit()
 
             raise
 
         # The new row is committed, so the superseded object is already an orphan.
         # Cleaning it up must not fail a build that otherwise succeeded.
-        if index_file["replaced_storage_key"] is not None:
+        replaced_storage_keys = [
+            index_file["replaced_storage_key"]
+            for index_file in index_files
+            if index_file["replaced_storage_key"] is not None
+        ]
+
+        if replaced_storage_keys:
             for orphan_key, exc in await delete_keys(
                 self._storage,
-                [index_file["replaced_storage_key"]],
+                replaced_storage_keys,
             ):
                 logger.error(
                     "storage cleanup failed; file orphaned",

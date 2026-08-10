@@ -1,11 +1,6 @@
-import json
 from tempfile import TemporaryDirectory
 from typing import TYPE_CHECKING
 
-from virtool.references.utils import (
-    ReferenceSourceData,
-    load_reference_from_storage,
-)
 from virtool.tasks.task import BaseTask
 
 if TYPE_CHECKING:
@@ -43,41 +38,18 @@ class ImportReferenceTask(BaseTask):
     def __init__(self, task_id: int, data, context, temp_dir):
         super().__init__(task_id, data, context, temp_dir)
 
-        self.steps = [self.load_file, self.import_reference]
+        self.steps = [self.import_reference]
 
-        self.import_data: ReferenceSourceData | None = None
-
-    async def load_file(self) -> None:
-        key = await self.data.uploads.get_storage_key_by_name_on_disk(
+    async def import_reference(self) -> None:
+        storage_key = await self.data.uploads.get_storage_key_by_name_on_disk(
             self.context["name_on_disk"],
         )
 
-        try:
-            import_data = await load_reference_from_storage(
-                self.data.references._storage,
-                key,
-            )
-        except json.decoder.JSONDecodeError as err:
-            return await self._set_error(str(err))
-        except (OSError, EOFError) as err:
-            if "Not a gzipped file" in str(err):
-                await self._set_error("Not a gzipped file")
-            else:
-                await self._set_error(str(err))
-
-            return None
-
-        self.import_data = ReferenceSourceData.parse_obj(import_data)
-
-        return None
-
-    async def import_reference(self) -> None:
-        ref_id = self.context["ref_id"]
-        user_id = self.context["user_id"]
-
-        await self.data.references.populate_imported_reference(
-            ref_id,
-            user_id,
-            self.import_data,
+        await self.data.references.import_reference(
+            self.context["name_on_disk"],
+            self.context["ref_id"],
+            self.context["user_id"],
+            self.temp_path,
             self.create_progress_handler(),
+            storage_key=storage_key,
         )

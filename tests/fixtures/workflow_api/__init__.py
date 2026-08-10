@@ -11,6 +11,7 @@ from tests.fixtures.workflow_api.jobs import create_jobs_routes
 from tests.fixtures.workflow_api.samples import create_samples_routes
 from tests.fixtures.workflow_api.subtractions import create_subtractions_routes
 from tests.fixtures.workflow_api.uploads import create_uploads_routes
+from virtool.references.sqlite import REFERENCE_SQLITE_FILE_NAME
 from virtool.workflow.pytest_plugin.data import WorkflowData
 
 
@@ -30,7 +31,7 @@ async def api_server(
         create_indexes_routes(
             workflow_data,
             example_path,
-            tmp_path / "workflow-api-index.sqlite",
+            tmp_path / REFERENCE_SQLITE_FILE_NAME,
         ),
         create_jobs_routes(workflow_data),
         create_samples_routes(workflow_data, example_path, read_file_from_multipart),

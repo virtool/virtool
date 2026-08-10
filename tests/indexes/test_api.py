@@ -14,8 +14,8 @@ from tests.fixtures.client import JobClientSpawner
 from tests.fixtures.response import RespIs
 from virtool.fake.next import DataFaker
 from virtool.history.sql import SQLLegacyHistory
-from virtool.indexes.constants import INDEX_SQLITE_FILE_NAME
 from virtool.indexes.sql import SQLIndex, SQLIndexFile
+from virtool.references.sqlite import REFERENCE_SQLITE_FILE_NAME
 from virtool.storage.keys import mint_storage_key
 from virtool.storage.protocol import StorageBackend
 from virtool.workflow.pytest_plugin.utils import StaticTime
@@ -279,7 +279,7 @@ async def test_download(
             assert await response.read() == expected_bytes
 
 
-async def _seed_downloadable_sqlite(
+async def _seed_downloadable_sqlite_reference(
     fake: DataFaker,
     memory_storage: StorageBackend,
     pg: AsyncEngine,
@@ -287,14 +287,14 @@ async def _seed_downloadable_sqlite(
     user = await fake.users.create()
     reference = await fake.references.create(user=user)
     index = await fake.indexes.create(reference, user)
-    expected = b"server-produced SQLite index"
+    expected = b"server-produced SQLite reference"
 
     storage_key = mint_storage_key("indexes", index.id)
 
     async with AsyncSession(pg) as session:
         session.add(
             SQLIndexFile(
-                name=INDEX_SQLITE_FILE_NAME,
+                name=REFERENCE_SQLITE_FILE_NAME,
                 index=str(index.id),
                 index_id=index.id,
                 type="sqlite",
@@ -312,17 +312,23 @@ async def _seed_downloadable_sqlite(
     return index.id, expected
 
 
-async def test_download_sqlite_for_jobs(
+async def test_download_sqlite_reference_for_jobs(
     fake: DataFaker,
     memory_storage: StorageBackend,
     pg: AsyncEngine,
     spawn_job_client: JobClientSpawner,
 ):
-    """The jobs download route serves a recorded SQLite index file."""
+    """The jobs download route serves a recorded SQLite reference file."""
     client = await spawn_job_client(authenticated=True)
-    index_id, expected = await _seed_downloadable_sqlite(fake, memory_storage, pg)
+    index_id, expected = await _seed_downloadable_sqlite_reference(
+        fake,
+        memory_storage,
+        pg,
+    )
 
-    response = await client.get(f"/indexes/{index_id}/files/{INDEX_SQLITE_FILE_NAME}")
+    response = await client.get(
+        f"/indexes/{index_id}/files/{REFERENCE_SQLITE_FILE_NAME}"
+    )
 
     assert response.status == HTTPStatus.OK
     assert await response.read() == expected
