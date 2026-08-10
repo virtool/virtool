@@ -1,7 +1,7 @@
 import type { Db, PgClient } from "@virtool/data/db/pg";
 import type { Logger } from "@virtool/logger";
 import { MemoryStorage } from "@virtool/storage";
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import { type AppDeps, createApp, PUBLIC_ROUTES } from "../app";
 import { createMetrics } from "../metrics/registry";
 
@@ -46,12 +46,11 @@ function fakeDb(): Db {
 }
 
 function fakeLogger(): Logger {
-	const noop = () => undefined;
 	return {
-		info: noop,
-		warn: noop,
-		error: noop,
-		debug: noop,
+		info: vi.fn(),
+		warn: vi.fn(),
+		error: vi.fn(),
+		debug: vi.fn(),
 	} as unknown as Logger;
 }
 
@@ -64,6 +63,7 @@ function deps(overrides: Partial<AppDeps> = {}): AppDeps {
 		metrics: createMetrics(10),
 		applicationName: "virtool-ts-jobs-api@test",
 		metricsToken: METRICS_TOKEN,
+		isReady: () => true,
 		...overrides,
 	};
 }
@@ -143,6 +143,34 @@ describe("health", () => {
 			checks: { postgres: { ok: false } },
 		});
 	});
+
+	// The shutdown sequence flips readiness before it closes anything, so this is
+	// the window in which the kubelet has to learn the pod is going away — with
+	// the listener still up to tell it.
+	it("reports unavailable from the moment shutdown begins", async () => {
+		const app = createApp(deps({ isReady: () => false }));
+
+		const response = await app.request("/health/ready");
+
+		expect(response.status).toBe(503);
+		expect(await response.json()).toEqual({
+			status: "unavailable",
+			checks: {},
+		});
+	});
+
+	// Answering has to cost nothing: a pod winding down should not be waiting on
+	// a query it is about to close the pool on. `fakeDb`-style throwing is not
+	// enough here — the check is that the client is never called at all.
+	it("does not query postgres once shutdown has begun", async () => {
+		const client = vi.fn(() => Promise.resolve([])) as unknown as PgClient;
+
+		await createApp(deps({ client, isReady: () => false })).request(
+			"/health/ready",
+		);
+
+		expect(client).not.toHaveBeenCalled();
+	});
 });
 
 describe("metrics", () => {
@@ -207,10 +235,66 @@ describe("metrics", () => {
 	});
 });
 
+describe("unhandled errors", () => {
+	/**
+	 * An app with one route that always throws.
+	 *
+	 * Registered after `createApp` so the failure comes from a real handler
+	 * running under the app's own middleware and error handler, rather than from
+	 * a stubbed Hono.
+	 */
+	function throwingApp(overrides: Partial<AppDeps> = {}) {
+		const app = createApp(deps(overrides));
+
+		app.get("/boom", () => {
+			throw new Error("boom");
+		});
+
+		return app;
+	}
+
+	// Hono's default handler answers plain text. A caller parsing every other
+	// refusal in this service as JSON would then fail on the one response it has
+	// least context for.
+	it("answers a JSON 500", async () => {
+		const response = await throwingApp().request("/boom");
+
+		expect(response.status).toBe(500);
+		expect(await response.json()).toEqual({ message: "Internal server error" });
+	});
+
+	it("logs the failure against a bounded route pattern", async () => {
+		const logger = fakeLogger();
+
+		await throwingApp({ logger }).request("/boom");
+
+		expect(logger.error).toHaveBeenCalledWith(
+			expect.objectContaining({
+				err: expect.objectContaining({ message: "boom" }),
+				method: "GET",
+				route: "/boom",
+			}),
+			"unhandled error",
+		);
+	});
+
+	// Hono catches before the error can reach Node, so this hook is the only way
+	// a bug in a route becomes a Sentry event.
+	it("reports the error through the injected hook", async () => {
+		const captureException = vi.fn();
+
+		await throwingApp({ captureException }).request("/boom");
+
+		expect(captureException).toHaveBeenCalledWith(
+			expect.objectContaining({ message: "boom" }),
+		);
+	});
+});
+
 describe("request metrics", () => {
 	// Ids in a label would grow one time series per job. The registered pattern
 	// is bounded by the number of routes instead.
-	it("labels an unmatched path with a bounded route pattern", async () => {
+	it("labels a matched route with its pattern, not the requested path", async () => {
 		const metrics = createMetrics(10);
 		const app = createApp(deps({ metrics }));
 
@@ -218,8 +302,8 @@ describe("request metrics", () => {
 
 		const rendered = await metrics.render();
 
+		expect(rendered).toContain('route="/jobs/:jobId"');
 		expect(rendered).not.toContain("12345");
-		expect(rendered).toContain("virtool_http_requests_total");
 	});
 
 	it("counts a handled request under its own route", async () => {
@@ -229,5 +313,56 @@ describe("request metrics", () => {
 		await app.request("/health/live");
 
 		expect(await metrics.render()).toContain('route="/health/live"');
+	});
+
+	// A path matching no route falls through to the middleware's own `/*`, which
+	// is a pattern rather than a path and so is bounded like every other label.
+	it("counts a genuinely unmatched path under the middleware's pattern", async () => {
+		const metrics = createMetrics(10);
+		const app = createApp(deps({ metrics }));
+
+		await app.request("/no-such-route");
+
+		const rendered = await metrics.render();
+
+		expect(rendered).toContain('route="/*",method="GET",status="404"');
+		expect(rendered).not.toContain("no-such-route");
+	});
+
+	// `app.onError` turns a thrown `Error` into a real 500, so the counter records
+	// the status the caller actually got. The `"error"` sentinel is for the case
+	// where there is no status at all, below.
+	it("counts a thrown Error under the status onError answered with", async () => {
+		const metrics = createMetrics(10);
+		const app = createApp(deps({ metrics }));
+
+		app.get("/boom", () => {
+			throw new Error("boom");
+		});
+
+		await app.request("/boom");
+
+		expect(await metrics.render()).toContain(
+			'route="/boom",method="GET",status="500"',
+		);
+	});
+
+	// Hono's `compose` rethrows a non-`Error` throw without setting `c.error` and
+	// without reaching `onError`, whose guard is `err instanceof Error`. Nothing
+	// finalizes a response, and `c.res`'s getter would mint an empty 200 — so
+	// without the `finalized` gate a crashed request is counted as a success.
+	it("counts a non-Error throw under the error sentinel", async () => {
+		const metrics = createMetrics(10);
+		const app = createApp(deps({ metrics }));
+
+		app.get("/boom", () => {
+			throw undefined;
+		});
+
+		await expect(app.request("/boom")).rejects.toBeUndefined();
+
+		expect(await metrics.render()).toContain(
+			'route="/boom",method="GET",status="error"',
+		);
 	});
 });

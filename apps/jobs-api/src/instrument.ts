@@ -1,6 +1,6 @@
 import * as Sentry from "@sentry/node";
+import type { Logger } from "@virtool/logger";
 import { getCommonOptions } from "@virtool/sentry";
-import { logger } from "./logger";
 
 /** The name this service reports under, in Sentry and in `application_name`. */
 export const SERVICE = "jobs-api";
@@ -38,8 +38,21 @@ export const SERVICE = "jobs-api";
  * mechanism: a Hono handler returns a 4xx response rather than throwing, so
  * nothing routine reaches Sentry in the first place. Add a filter here only if
  * a route starts throwing for an expected outcome — and prefer not to.
+ *
+ * The logger is passed in because it is built before this call: it carries the
+ * pino destination that forwards `info`-and-above records to Sentry, and that
+ * stream is decided by the same DSN. A record written before `init` returns
+ * goes to stdout alone, which is why the two lines below are the only ones this
+ * function emits.
+ *
+ * What a thrown handler *does* reach Sentry through is `createApp`'s
+ * `app.onError`, which `index.ts` hands `Sentry.captureException`. The SDK's
+ * global handlers see none of it: Hono catches inside its own `compose`, so the
+ * error never becomes an `uncaughtException` and `init` alone would leave this
+ * process reporting nothing at all. Anything that stops calling that hook
+ * silences the service again, with a green build to say so.
  */
-export function initSentry(dsn: string | undefined): void {
+export function initSentry(dsn: string | undefined, logger: Logger): void {
 	const options = getCommonOptions(SERVICE);
 
 	if (!dsn) {

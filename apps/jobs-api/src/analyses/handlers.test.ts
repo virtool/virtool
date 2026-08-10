@@ -28,6 +28,7 @@ let db: Db;
 let storage: MemoryStorage;
 let deps: AnalysisHandlerDeps;
 let credential: string;
+let jobId: number;
 let userId: number;
 let referenceId: number;
 let indexId: number;
@@ -58,6 +59,7 @@ beforeEach(async () => {
 
 	const job = await seedJob(db, userId, { workflow: "pathoscope" });
 
+	jobId = job.id;
 	credential = Buffer.from(`job-${job.id}:${job.key}`).toString("base64");
 	storage = new MemoryStorage();
 	deps = { db, storage, logger };
@@ -122,6 +124,7 @@ async function seedAnalysis(
 			reference_id: referenceId,
 			index_id: indexId,
 			user_id: userId,
+			job_id: jobId,
 			...overrides,
 		})
 		.returning({ id: analyses.id });
@@ -240,6 +243,24 @@ describe("handleFinalizeAnalysis", () => {
 		}
 	});
 
+	// Unlike samples and subtractions, an empty manifest is legitimate here:
+	// pathoscope's entire output is `results` and it retains no files.
+	it("accepts an empty manifest and still flips the analysis ready", async () => {
+		const analysisId = await seedAnalysis();
+
+		const response = await finalize(analysisId, []);
+
+		expect(response.status).toBe(200);
+		expect(await db.select().from(analysisFiles)).toEqual([]);
+
+		const [row] = await db
+			.select({ ready: analyses.ready })
+			.from(analyses)
+			.where(eq(analyses.id, analysisId));
+
+		expect(row?.ready).toBe(true);
+	});
+
 	it("bumps updated_at", async () => {
 		const analysisId = await seedAnalysis({
 			updated_at: new Date("2020-01-01T00:00:00.000Z"),
@@ -338,6 +359,53 @@ describe("handleFinalizeAnalysis", () => {
 
 		expect(second.status).toBe(409);
 		expect(await db.select().from(analysisFiles)).toHaveLength(1);
+	});
+
+	// Every running job holds a valid credential, so without this check any one
+	// of them could write results into any analysis and flip it ready.
+	it("answers 403 for an analysis started for another job", async () => {
+		const other = await seedJob(db, userId, { workflow: "pathoscope" });
+		const analysisId = await seedAnalysis({ job_id: other.id });
+
+		const response = await finalize(analysisId, [
+			await written(analysisId, "report.tsv", "a\tb\tc"),
+		]);
+
+		expect(response.status).toBe(403);
+		expect(await db.select().from(analysisFiles)).toEqual([]);
+
+		const [row] = await db
+			.select({ ready: analyses.ready, results: analyses.results })
+			.from(analyses)
+			.where(eq(analyses.id, analysisId));
+
+		expect(row).toStrictEqual({ ready: false, results: null });
+	});
+
+	// An analysis with no job is owned by nobody — which is not the same as being
+	// owned by whoever asks.
+	it("answers 403 for an analysis no job was started for", async () => {
+		const analysisId = await seedAnalysis({ job_id: null });
+
+		const response = await finalize(analysisId, []);
+
+		expect(response.status).toBe(403);
+	});
+
+	// 403 rather than 409: an analysis a job does not own never reports its
+	// state.
+	it("answers 403, not 409, for a finalized analysis started for another job", async () => {
+		const other = await seedJob(db, userId, { workflow: "pathoscope" });
+
+		const analysisId = await seedAnalysis({
+			job_id: other.id,
+			ready: true,
+			results: RESULTS,
+		});
+
+		const response = await finalize(analysisId, []);
+
+		expect(response.status).toBe(403);
 	});
 
 	it("answers 404 for an analysis that does not exist", async () => {

@@ -49,7 +49,15 @@ export const indexes = pgTable("indexes", {
 	task_id: integer("task_id"),
 });
 
-/** The kind of artifact an index file holds. */
+/**
+ * The kind of artifact an index file holds.
+ *
+ * Not a Postgres enum in the real schema. The `indextype` type was dropped
+ * upstream and `index_files.type` is now `text` closed by the
+ * `ck_index_files_type` CHECK constraint. The declaration is kept because the
+ * values are right and nothing generates migrations from this side, so the
+ * mismatch never reaches a real database.
+ */
 export const indexType = pgEnum("indextype", ["json", "fasta", "bowtie2"]);
 
 export const indexFiles = pgTable("index_files", {

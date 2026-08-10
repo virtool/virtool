@@ -220,6 +220,42 @@ describe("createShutdownController", () => {
 		expect(order).toEqual(["setReady:false", "closeDatabase", "flushSentry"]);
 	});
 
+	// A stuck socket must not take the pool drain and the Sentry flush down with
+	// it: those are what record the failure, so losing them loses the evidence
+	// precisely when there is something to report.
+	it("runs the steps after one that never settles", async () => {
+		const order: string[] = [];
+		const controller = createShutdownController(
+			deps(order, {
+				closeListener: () => new Promise<void>(() => undefined),
+				timeout: 0.06,
+			}),
+		);
+
+		await controller.shutdown("SIGTERM");
+
+		expect(order).toEqual(["setReady:false", "closeDatabase", "flushSentry"]);
+		expect(process.exitCode).toBe(1);
+	});
+
+	// A hook is a step of the sequence like any other, so it gets a share of the
+	// budget rather than unlimited time.
+	it("abandons a hook that never settles", async () => {
+		const order: string[] = [];
+		const controller = createShutdownController(deps(order, { timeout: 0.06 }));
+
+		controller.onShutdown("stuck", () => new Promise<void>(() => undefined));
+
+		await controller.shutdown("SIGTERM");
+
+		expect(order).toEqual([
+			"setReady:false",
+			"closeListener",
+			"closeDatabase",
+			"flushSentry",
+		]);
+	});
+
 	it("reports a non-zero exit code when the sequence overruns", async () => {
 		const controller = createShutdownController(
 			deps([], {

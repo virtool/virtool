@@ -11,8 +11,15 @@ import type { CacheRow } from "@virtool/data/db/schema/caches";
 import type { Logger } from "@virtool/logger";
 import type { StorageBackend } from "@virtool/storage";
 import { requireJobRequest } from "../auth/guard";
+import { jsonError, parseJsonBody, type ReadHandlerDeps } from "../http";
 
-/** What the cache handlers need to serve a request. */
+/**
+ * What {@link handleRegisterCache} needs to serve a request.
+ *
+ * The register route is the only one of the two that touches object storage: it
+ * reads back the size of the blob the caller says it wrote. The lookup takes
+ * {@link ReadHandlerDeps} instead, and so cannot reach a bucket at all.
+ */
 export type CacheHandlerDeps = {
 	db: Db;
 	storage: StorageBackend;
@@ -44,9 +51,13 @@ function toCache(row: CacheRow): Cache {
  * Metadata only. Workflows read object storage directly, so nothing here
  * streams cache bytes — the caller takes `storageKey` to the bucket itself.
  * This diverges from Python, which streamed the payload through its jobs API.
+ *
+ * `ReadHandlerDeps` rather than {@link CacheHandlerDeps}: a read that could
+ * reach `storage` is a read that could write one, so it is handed no backend
+ * to reach.
  */
 export async function handleGetCache(
-	deps: CacheHandlerDeps,
+	deps: ReadHandlerDeps,
 	request: Request,
 	key: string,
 ): Promise<Response> {
@@ -60,7 +71,7 @@ export async function handleGetCache(
 		return Response.json(toCache(await getCache(deps.db, key)));
 	} catch (err) {
 		if (err instanceof CacheNotFoundError) {
-			return Response.json({ message: "Cache not found" }, { status: 404 });
+			return jsonError(404, "Cache not found");
 		}
 
 		throw err;
@@ -89,21 +100,10 @@ export async function handleRegisterCache(
 		return principal;
 	}
 
-	let body: unknown;
+	const parsed = await parseJsonBody(request, RegisterCacheRequest);
 
-	try {
-		body = await request.json();
-	} catch {
-		return Response.json({ message: "Malformed body" }, { status: 400 });
-	}
-
-	const parsed = RegisterCacheRequest.safeParse(body);
-
-	if (!parsed.success) {
-		return Response.json(
-			{ message: "Invalid body", errors: parsed.error.issues },
-			{ status: 400 },
-		);
+	if (parsed instanceof Response) {
+		return parsed;
 	}
 
 	try {
@@ -111,7 +111,7 @@ export async function handleRegisterCache(
 			deps.db,
 			deps.storage,
 			deps.logger,
-			parsed.data,
+			parsed,
 		);
 
 		const registered: CacheRegistered = { ...toCache(row), created };
@@ -124,10 +124,7 @@ export async function handleRegisterCache(
 		return Response.json(registered, { status: created ? 201 : 200 });
 	} catch (err) {
 		if (err instanceof CacheObjectMissingError) {
-			return Response.json(
-				{ message: "No object stored under that uuid" },
-				{ status: 400 },
-			);
+			return jsonError(400, "No object stored under that uuid");
 		}
 
 		throw err;

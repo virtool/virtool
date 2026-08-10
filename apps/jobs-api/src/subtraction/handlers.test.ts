@@ -32,6 +32,8 @@ let db: Db;
 let storage: MemoryStorage;
 let deps: SubtractionHandlerDeps;
 let credential: string;
+let jobId: number;
+let userId: number;
 
 const logger = createLogger({ name: "test", level: "silent" });
 
@@ -61,10 +63,13 @@ beforeEach(async () => {
 	await db.delete(jobs);
 	await db.delete(users);
 
-	const job = await seedJob(db, await seedUser(db), {
+	userId = await seedUser(db);
+
+	const job = await seedJob(db, userId, {
 		workflow: "create_subtraction",
 	});
 
+	jobId = job.id;
 	credential = Buffer.from(`job-${job.id}:${job.key}`).toString("base64");
 	storage = new MemoryStorage();
 	deps = { db, storage: recording(storage), logger };
@@ -94,7 +99,11 @@ async function seedSubtraction(
 ): Promise<number> {
 	const [row] = await db
 		.insert(subtractions)
-		.values({ name: `Subtraction ${Math.random()}`, ...overrides })
+		.values({
+			name: `Subtraction ${Math.random()}`,
+			job_id: jobId,
+			...overrides,
+		})
 		.returning({ id: subtractions.id });
 
 	if (!row) {
@@ -157,7 +166,7 @@ describe("handleFinalizeSubtraction", () => {
 		expect(await db.select().from(subtractionFiles)).toEqual([]);
 	});
 
-	it("records the files and flips the subtraction ready", async () => {
+	it("records the file and flips the subtraction ready", async () => {
 		const subtractionId = await seedSubtraction();
 
 		const fasta = await written(
@@ -165,9 +174,8 @@ describe("handleFinalizeSubtraction", () => {
 			"subtraction.fa.gz",
 			"a genome!",
 		);
-		const shard = await written(subtractionId, "subtraction.1.bt2", "index");
 
-		const response = await finalize(subtractionId, [fasta, shard]);
+		const response = await finalize(subtractionId, [fasta]);
 
 		expect(response.status).toBe(200);
 
@@ -184,29 +192,58 @@ describe("handleFinalizeSubtraction", () => {
 
 		// The key is recorded byte for byte, not recomposed from the row.
 		expect(
-			rows
-				.map((row) => `${row.name}|${row.type}|${row.size}|${row.storage_key}`)
-				.sort(),
-		).toStrictEqual(
-			[
-				`subtraction.fa.gz|fasta|9|${fasta.storageKey}`,
-				`subtraction.1.bt2|bowtie2|5|${shard.storageKey}`,
-			].sort(),
-		);
+			rows.map(
+				(row) => `${row.name}|${row.type}|${row.size}|${row.storage_key}`,
+			),
+		).toStrictEqual([`subtraction.fa.gz|fasta|9|${fasta.storageKey}`]);
 	});
 
-	// The file type follows from the extension rather than the wire, so a `.bt2`
-	// shard cannot be recorded as the FASTA the download page links to.
-	it("derives the file type from the name", async () => {
+	// A subtraction with no source genome is not a usable subtraction, and the
+	// parent must not flip ready over nothing.
+	it("refuses an empty manifest", async () => {
 		const subtractionId = await seedSubtraction();
 
-		await finalize(subtractionId, [
-			await written(subtractionId, "subtraction.rev.2.bt2", "x"),
+		const response = await finalize(subtractionId, []);
+
+		expect(response.status).toBe(400);
+		expect(await db.select().from(subtractionFiles)).toEqual([]);
+
+		const [row] = await db
+			.select({ ready: subtractions.ready })
+			.from(subtractions)
+			.where(eq(subtractions.id, subtractionId));
+
+		expect(row?.ready).toBe(false);
+	});
+
+	// The shards are written by `create_subtraction` and read by nothing: both
+	// analysis workflows build the bowtie2 index locally from the FASTA. The
+	// write path stopped accepting them; the read path still serves the rows
+	// Python left behind.
+	it("refuses a bowtie2 shard", async () => {
+		const subtractionId = await seedSubtraction();
+
+		const response = await finalize(subtractionId, [
+			await written(subtractionId, "subtraction.fa.gz", "a genome!"),
+			await written(subtractionId, "subtraction.1.bt2", "index"),
 		]);
 
-		const [row] = await db.select().from(subtractionFiles);
+		expect(response.status).toBe(400);
+		expect(await db.select().from(subtractionFiles)).toEqual([]);
+	});
 
-		expect(row?.type).toBe("bowtie2");
+	// One whitelisted name plus the duplicate check is what makes the FASTA
+	// exactly-once; nothing else counts the manifest.
+	it("refuses the FASTA declared twice", async () => {
+		const subtractionId = await seedSubtraction();
+
+		const response = await finalize(subtractionId, [
+			await written(subtractionId, "subtraction.fa.gz", "a genome!"),
+			await written(subtractionId, "subtraction.fa.gz", "again"),
+		]);
+
+		expect(response.status).toBe(400);
+		expect(await db.select().from(subtractionFiles)).toEqual([]);
 	});
 
 	it("stores the size it read from storage, not one the caller sent", async () => {
@@ -224,10 +261,9 @@ describe("handleFinalizeSubtraction", () => {
 		const subtractionId = await seedSubtraction();
 
 		const response = await finalize(subtractionId, [
-			await written(subtractionId, "subtraction.fa.gz", "a genome!"),
 			{
 				kind: "subtractionFile",
-				name: "subtraction.1.bt2",
+				name: "subtraction.fa.gz",
 				storageKey: mintStorageKey("subtractions", subtractionId),
 			},
 		]);
@@ -247,7 +283,7 @@ describe("handleFinalizeSubtraction", () => {
 	// only the prefix check stands between this and a row that names them.
 	it("refuses a key belonging to another subtraction", async () => {
 		const subtractionId = await seedSubtraction();
-		const otherId = await seedSubtraction();
+		const otherId = await seedSubtraction({ job_id: null });
 
 		const response = await finalize(subtractionId, [
 			await written(otherId, "subtraction.fa.gz", "not yours"),
@@ -257,7 +293,7 @@ describe("handleFinalizeSubtraction", () => {
 		expect(await db.select().from(subtractionFiles)).toEqual([]);
 	});
 
-	it("refuses a filename outside the seven-name whitelist", async () => {
+	it("refuses a filename outside the whitelist", async () => {
 		const subtractionId = await seedSubtraction();
 
 		for (const name of ["subtraction.5.bt2", "../escape", "a/b.bt2"]) {
@@ -278,15 +314,87 @@ describe("handleFinalizeSubtraction", () => {
 		expect((await finalize(subtractionId, [file])).status).toBe(200);
 
 		const second = await finalize(subtractionId, [
-			await written(subtractionId, "subtraction.1.bt2", "index"),
+			await written(subtractionId, "subtraction.fa.gz", "a genome!"),
 		]);
 
 		expect(second.status).toBe(409);
 		expect(await db.select().from(subtractionFiles)).toHaveLength(1);
 	});
 
+	// Every running job holds a valid credential, so without this check any one
+	// of them could flip any subtraction ready and hang file rows off it.
+	it("answers 403 for a subtraction another job produced", async () => {
+		const other = await seedJob(db, userId, { workflow: "create_subtraction" });
+		const subtractionId = await seedSubtraction({ job_id: other.id });
+
+		const response = await finalize(subtractionId, [
+			await written(subtractionId, "subtraction.fa.gz", "a genome!"),
+		]);
+
+		expect(response.status).toBe(403);
+		expect(await db.select().from(subtractionFiles)).toEqual([]);
+
+		const [row] = await db
+			.select({ ready: subtractions.ready })
+			.from(subtractions)
+			.where(eq(subtractions.id, subtractionId));
+
+		expect(row?.ready).toBe(false);
+	});
+
+	// A subtraction created before jobs, or by hand, is owned by nobody — which
+	// is not the same as being owned by whoever asks.
+	it("answers 403 for a subtraction no job produced", async () => {
+		const subtractionId = await seedSubtraction({ job_id: null });
+
+		const response = await finalize(subtractionId, [
+			await written(subtractionId, "subtraction.fa.gz", "a genome!"),
+		]);
+
+		expect(response.status).toBe(403);
+		expect(await db.select().from(subtractionFiles)).toEqual([]);
+	});
+
+	// 403 rather than 409: a subtraction a job does not own never reports its
+	// state.
+	it("answers 403, not 409, for a finalized subtraction another job produced", async () => {
+		const other = await seedJob(db, userId, { workflow: "create_subtraction" });
+
+		const subtractionId = await seedSubtraction({
+			job_id: other.id,
+			ready: true,
+		});
+
+		const response = await finalize(subtractionId, [
+			await written(subtractionId, "subtraction.fa.gz", "a genome!"),
+		]);
+
+		expect(response.status).toBe(403);
+	});
+
+	// 404 rather than 403: a deleted row is gone, and the ownership check never
+	// gets to speak for it.
+	it("answers 404, not 403, for a deleted subtraction another job produced", async () => {
+		const other = await seedJob(db, userId, { workflow: "create_subtraction" });
+
+		const subtractionId = await seedSubtraction({
+			job_id: other.id,
+			deleted: true,
+		});
+
+		const response = await finalize(subtractionId, [
+			await written(subtractionId, "subtraction.fa.gz", "a genome!"),
+		]);
+
+		expect(response.status).toBe(404);
+	});
+
 	it("answers 404 for a subtraction that does not exist", async () => {
-		expect((await finalize(999_999, [])).status).toBe(404);
+		const response = await finalize(999_999, [
+			await written(999_999, "subtraction.fa.gz", "a genome!"),
+		]);
+
+		expect(response.status).toBe(404);
 	});
 
 	it("answers 404 for a deleted subtraction", async () => {
@@ -357,7 +465,6 @@ describe("handleFinalizeSubtraction", () => {
 
 		const files = [
 			await written(subtractionId, "subtraction.fa.gz", "a genome!"),
-			await written(subtractionId, "subtraction.1.bt2", "index"),
 		];
 
 		// Seeding is not what is under test.
@@ -371,7 +478,7 @@ describe("handleFinalizeSubtraction", () => {
 		);
 		const begin = timeline.findIndex((entry) => /^sql:\s*begin\b/i.test(entry));
 
-		expect(sizes).toHaveLength(2);
+		expect(sizes).toHaveLength(1);
 		expect(begin).toBeGreaterThan(-1);
 		expect(lastSize).toBeLessThan(begin);
 	});
@@ -425,6 +532,46 @@ describe("handleGetSubtraction", () => {
 			nickname: "Arabidopsis",
 			ready: true,
 		});
+	});
+
+	// The write path no longer accepts a bowtie2 shard, but every subtraction
+	// Python finalized has six of them. They keep being served, `type` and all.
+	it("serves the bowtie2 shards of a subtraction Python finalized", async () => {
+		const subtractionId = await seedSubtraction({ ready: true });
+
+		await db.insert(subtractionFiles).values([
+			{
+				subtraction_id: subtractionId,
+				name: "subtraction.fa.gz",
+				size: 4096,
+				storage_key: "subtractions/1/aaaabbbbccccddddeeeeffff00001111",
+				type: "fasta",
+			},
+			{
+				subtraction_id: subtractionId,
+				name: "subtraction.rev.2.bt2",
+				size: 512,
+				storage_key: "subtractions/1/22223333444455556666777788889999",
+				type: "bowtie2",
+			},
+		]);
+
+		const response = await handleGetSubtraction(
+			deps,
+			get(subtractionId),
+			String(subtractionId),
+		);
+		const subtraction = (await response.json()) as {
+			files: { name: string; type: string }[];
+		};
+
+		expect(response.status).toBe(200);
+		expect(
+			subtraction.files.map((file) => `${file.name}|${file.type}`).sort(),
+		).toStrictEqual([
+			"subtraction.fa.gz|fasta",
+			"subtraction.rev.2.bt2|bowtie2",
+		]);
 	});
 
 	// The workflow reads the bytes itself and has no way to locate them but this

@@ -1,19 +1,20 @@
-import type { ServerJob } from "@jobs/types";
 import { screen } from "@testing-library/react";
 import { createFakeIndex } from "@tests/fake/indexes";
 import { mockGetIndex } from "@tests/server-fn/indexes";
 import { mockGetJob } from "@tests/server-fn/jobs";
 import { renderRoute } from "@tests/setup";
+import type { Job } from "@virtool/contracts";
 import { describe, expect, it } from "vitest";
 
 // `toJob` builds `args` as a string map, so the index id arrives stringified.
-function createBuildIndexJob(indexId: number): ServerJob {
+function createBuildIndexJob(indexId: number): Job {
 	return {
 		args: { index_id: String(indexId) },
 		id: 123,
-		claimedAt: "2022-12-22T21:37:49.429000Z",
-		createdAt: "2022-12-22T21:37:49.429000Z",
-		finishedAt: "2022-12-22T21:38:49.429000Z",
+		claim: null,
+		claimedAt: new Date("2022-12-22T21:37:49.429Z"),
+		createdAt: new Date("2022-12-22T21:37:49.429Z"),
+		finishedAt: new Date("2022-12-22T21:38:49.429Z"),
 		progress: 100,
 		state: "succeeded",
 		steps: null,

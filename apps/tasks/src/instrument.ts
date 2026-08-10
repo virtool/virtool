@@ -35,16 +35,10 @@ export type SentryStatus = {
  *
  * The status is returned rather than logged. Nothing in this app builds a
  * logger at module scope, and `bootstrap` initialises Sentry *before* the
- * logger so that anything the logger's own construction reports is already
- * captured — so there is no logger to call at this point.
- *
- * There is deliberately no pino destination forwarding records to Sentry, as
- * `apps/web` has. That stream is written against
- * `@sentry/tanstackstart-react`, so bringing it here means a third copy of it
- * rather than a shared one, and the SDK's own uncaught-exception and
- * unhandled-rejection integrations already report what a crash needs. A task
- * body that wants a handled failure in Sentry calls `Sentry.captureException`
- * explicitly. Lift the stream into `@virtool/sentry` before copying it.
+ * logger — both so that anything the logger's own construction reports is
+ * already captured, and because `enabled` is what decides whether the logger
+ * gets the `@virtool/sentry/log` destination that forwards `info`-and-above
+ * records to Sentry. There is no logger to call at this point.
  */
 export function initSentry(dsn: string | undefined): SentryStatus {
 	const options = getCommonOptions(SERVICE);

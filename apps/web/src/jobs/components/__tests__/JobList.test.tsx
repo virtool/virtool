@@ -1,5 +1,5 @@
 import { screen } from "@testing-library/react";
-import { createFakeServerJobMinimal } from "@tests/fake/jobs";
+import { createFakeJobMinimal } from "@tests/fake/jobs";
 import { mockFindJobs } from "@tests/server-fn/jobs";
 import { renderRoute } from "@tests/setup";
 import { describe, expect, it } from "vitest";
@@ -7,7 +7,7 @@ import { describe, expect, it } from "vitest";
 describe("<JobsList />", () => {
 	it("should render", async () => {
 		const findJobs = mockFindJobs([
-			createFakeServerJobMinimal({
+			createFakeJobMinimal({
 				progress: 100,
 				state: "succeeded",
 				workflow: "create_sample",
@@ -37,7 +37,7 @@ describe("<JobsList />", () => {
 
 	it("should show message when no jobs match filters", async () => {
 		const findJobs = mockFindJobs(
-			[createFakeServerJobMinimal({ progress: 100, state: "succeeded" })],
+			[createFakeJobMinimal({ progress: 100, state: "succeeded" })],
 			0,
 		);
 

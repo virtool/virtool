@@ -1,6 +1,21 @@
-import * as Sentry from "@sentry/tanstackstart-react";
-
 type SentryLogMethod = "trace" | "debug" | "info" | "warn" | "error" | "fatal";
+
+/**
+ * The slice of a Sentry SDK's structured-logging API this stream calls.
+ *
+ * Declared structurally and taken as an argument rather than imported, because
+ * each service initialises a different SDK — `@sentry/tanstackstart-react` in
+ * `apps/web`, `@sentry/node` in `apps/jobs-api` and `apps/tasks` — and only the
+ * one a process actually called `init` on will send anything. Importing one
+ * here would either forward every service's records through an uninitialised
+ * client or drag a second SDK into every bundle.
+ */
+export type SentryLogApi = {
+	[Method in SentryLogMethod]: (
+		message: string,
+		attributes?: Record<string, unknown>,
+	) => void;
+};
 
 // pino serialises levels as numbers; map them onto Sentry's logging methods.
 const LEVEL_METHODS: Record<number, SentryLogMethod> = {
@@ -28,7 +43,9 @@ const ENVELOPE_FIELDS = new Set([
  * The standard pino envelope fields are dropped; everything else rides along as
  * Sentry log attributes.
  */
-export function createSentryLogStream(): { write(line: string): void } {
+export function createSentryLogStream(sentry: SentryLogApi): {
+	write(line: string): void;
+} {
 	return {
 		write(line) {
 			let record: Record<string, unknown>;
@@ -48,7 +65,7 @@ export function createSentryLogStream(): { write(line: string): void } {
 				}
 			}
 
-			Sentry.logger[method](message, attributes);
+			sentry[method](message, attributes);
 		},
 	};
 }

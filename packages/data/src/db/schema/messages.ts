@@ -14,6 +14,11 @@ import {
 } from "drizzle-orm/pg-core";
 import { users } from "./users";
 
+// Not a Postgres enum in the real schema. The `messagecolor` type was dropped
+// upstream and `color` is now `text` closed by the `ck_instance_messages_color`
+// CHECK constraint. The declaration is kept because the values are right and
+// nothing generates migrations from this side, so the mismatch never reaches a
+// real database.
 export const messageColor = pgEnum("messagecolor", [
 	"red",
 	"yellow",

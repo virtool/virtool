@@ -1,8 +1,8 @@
 import { jobQueryKeys } from "@jobs/keys";
 import { createJobRefreshQueue } from "@jobs/refresh";
-import type { ServerJob } from "@jobs/types";
 import { QueryClient, QueryObserver } from "@tanstack/react-query";
 import { jobServerFnMocks, mockGetJobs } from "@tests/server-fn/jobs";
+import type { Job } from "@virtool/contracts";
 import {
 	afterEach,
 	beforeEach,
@@ -15,13 +15,13 @@ import {
 
 const FLUSH_MS = 500;
 
-function createJob(id: number, overrides?: Partial<ServerJob>): ServerJob {
+function createJob(id: number, overrides?: Partial<Job>): Job {
 	return {
 		args: {},
 		id,
 		claim: null,
 		claimedAt: null,
-		createdAt: "2022-12-22T21:37:49.429000Z",
+		createdAt: new Date("2022-12-22T21:37:49.429Z"),
 		finishedAt: null,
 		progress: 50,
 		state: "running",
@@ -197,11 +197,11 @@ describe("createJobRefreshQueue", () => {
 	it("holds a later wave until the batch in flight resolves", async () => {
 		watch(1);
 
-		let resolveFirst: (jobs: ServerJob[]) => void = () => undefined;
+		let resolveFirst: (jobs: Job[]) => void = () => undefined;
 		jobServerFnMocks.getJobsFn
 			.mockImplementationOnce(
 				() =>
-					new Promise<ServerJob[]>((resolve) => {
+					new Promise<Job[]>((resolve) => {
 						resolveFirst = resolve;
 					}),
 			)

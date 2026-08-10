@@ -12,6 +12,7 @@ import { cacheKey, MemoryStorage } from "@virtool/storage";
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
 
 import { seedJob } from "../auth/test/fixtures";
+import type { ReadHandlerDeps } from "../http";
 import {
 	type CacheHandlerDeps,
 	handleGetCache,
@@ -25,6 +26,7 @@ let database: TestDatabase;
 let db: Db;
 let storage: MemoryStorage;
 let deps: CacheHandlerDeps;
+let readDeps: ReadHandlerDeps;
 let credential: string;
 
 const logger = createLogger({ name: "test", level: "silent" });
@@ -48,6 +50,10 @@ beforeEach(async () => {
 	credential = Buffer.from(`job-${job.id}:${job.key}`).toString("base64");
 	storage = new MemoryStorage();
 	deps = { db, storage, logger };
+
+	// The lookup is a read, so it is handed a database handle and no backend.
+	// Passing the register handler's deps here would typecheck and hide that.
+	readDeps = { db };
 });
 
 async function* body(text: string): AsyncIterable<Uint8Array> {
@@ -245,7 +251,7 @@ describe("handleRegisterCache", () => {
 
 		// The whole point: the row the retry returned still resolves to bytes.
 		const lookup = await handleGetCache(
-			deps,
+			readDeps,
 			get("trimmed-reads:abc"),
 			"trimmed-reads:abc",
 		);
@@ -259,7 +265,7 @@ describe("handleRegisterCache", () => {
 describe("handleGetCache", () => {
 	it("refuses an unauthenticated caller", async () => {
 		const response = await handleGetCache(
-			deps,
+			readDeps,
 			get("trimmed-reads:abc", false),
 			"trimmed-reads:abc",
 		);
@@ -269,7 +275,7 @@ describe("handleGetCache", () => {
 
 	it("answers 404 for a key with no row", async () => {
 		const response = await handleGetCache(
-			deps,
+			readDeps,
 			get("nothing-here"),
 			"nothing-here",
 		);
@@ -289,7 +295,7 @@ describe("handleGetCache", () => {
 		);
 
 		const response = await handleGetCache(
-			deps,
+			readDeps,
 			get("trimmed-reads:abc"),
 			"trimmed-reads:abc",
 		);
@@ -317,7 +323,7 @@ describe("handleGetCache", () => {
 		);
 
 		const response = await handleGetCache(
-			deps,
+			readDeps,
 			get("trimmed-reads:abc"),
 			"trimmed-reads:abc",
 		);

@@ -35,17 +35,19 @@ process:
 
 | File | Responsibility |
 | --- | --- |
-| `src/index.ts` | Entry point: config, Sentry, pool, server, graceful shutdown |
+| `src/index.ts` | Entry point: config, Sentry, pool, server, shutdown wiring |
 | `src/app.ts` | `createApp` — the Hono app, its middleware and its routes |
 | `src/config.ts` | Environment parsing, including every `<KEY>_FILE` variant |
 | `src/instrument.ts` | Sentry initialisation and the `SERVICE` constant |
-| `src/logger.ts` | The pino logger singleton |
+| `src/logger.ts` | `createAppLogger` — the pino logger and its Sentry stream |
 | `src/auth/verify.ts` | `verifyJobRequest` — the job credential check |
 | `src/auth/guard.ts` | `requireJobRequest` — the guard every handler starts with |
 | `src/auth/test/fixtures.ts` | `seedJob` — a job row and the plaintext key for it |
 | `src/jobs/handlers.ts` | The five lifecycle routes |
 | `src/caches/handlers.ts` | Cache lookup and registration |
-| `src/http.ts` | `jsonError`, `parseRowId`, and the `ReadHandlerDeps` a read takes |
+| `src/http.ts` | `jsonError`, `parseJsonBody`, `requireRowId`, and the `ReadHandlerDeps` a read takes |
+| `src/manifest.ts` | `checkManifest` and `measureManifest` — the finalize manifest checks |
+| `src/finalize.ts` | `finalizeResource` — the sequence all three finalize routes run |
 | `src/samples/handlers.ts` | Sample read and finalize |
 | `src/subtraction/handlers.ts` | Subtraction read and finalize |
 | `src/analyses/handlers.ts` | Analysis read and finalize |
@@ -146,9 +148,11 @@ The sequence, in order:
 1. Read the `Authorization` header. Missing is a failure.
 2. Parse it as Basic. A non-Basic scheme, undecodable base64, a missing
    `:`, or an empty login is a failure.
-3. Match the login against `/^job-(\d+)$/` — **anchored and
-   case-sensitive**.
-4. Screen the id: at least 1, and no larger than a Postgres `integer`.
+3. Match the login against `/^job-([1-9]\d*)$/` — **anchored and
+   case-sensitive**. The digits are spelled the way `parseRowId` spells
+   them, so a row id has one spelling on both parsers: `job-007` is not
+   a login for job 7, and `job-0` never reaches the range screen.
+4. Screen the id: no larger than a Postgres `integer`.
 5. Read `key` and `state` for that id, in **one** query.
 6. Fail if `key` is null — that job was never claimed.
 7. Compare `hashToken(key)` to the stored digest with `timingSafeEqual`,
@@ -239,6 +243,8 @@ divergences, both stricter:
 - The login is matched against an anchored pattern rather than
   `holder_id.split("-")`, which checks only the first part. `job-1-2`
   reaches Python's `int()` and raises; here it is simply not a login.
+  The pattern also refuses a leading zero, where Python's `int()`
+  accepts `007` as 7.
 - The key comparison is timing-safe. Python's is a plain `!=`.
 
 Python also answers 403 when the authenticated job id does not match a
@@ -265,11 +271,67 @@ belong in the fast package loop.
 | `GET /health/live` | The process is up. Always `200`, no I/O. |
 | `GET /health/ready` | `200` when Postgres answers, `503` when it does not. |
 
-Both fold `checkPostgres` through `summarizeReadiness` from
+Readiness folds `checkPostgres` through `summarizeReadiness` from
 `@virtool/data/health/data` — the same pair `apps/web` uses, so the two
-services' probes cannot drift. Neither requires the metrics token: a
-probe that needed a credential would be one more thing to get wrong
+services' probes cannot drift. Neither route requires the metrics token:
+a probe that needed a credential would be one more thing to get wrong
 during a rollout.
+
+Readiness also answers `503` from the moment shutdown begins, before the
+listener closes and **without querying**, through the `isReady` predicate
+on `AppDeps`. That is what takes the pod out of the Service's endpoints
+while there is still a listener there to say so; a claim arriving after
+that point would be held by a process on its way out.
+
+## Shutdown
+
+Registering a SIGTERM listener **removes Node's default exit behaviour**.
+From that moment, exiting is entirely this process's responsibility.
+
+`createShutdownController` from `@virtool/service/shutdown` discharges
+that, with every dependency injected from `src/index.ts`. It is a shared
+package rather than a module of this app because `apps/tasks` winds down
+the same way, and the two drifting apart is how one of them quietly
+stops flushing Sentry.
+
+On the first SIGTERM or SIGINT, each step awaited before the next:
+
+1. **Readiness flips to unavailable**, so `/health/ready` reports 503
+   with the listener still up to answer.
+2. **Registered hooks run**, in reverse registration order. This service
+   registers **none**, deliberately — it holds no work it must hand
+   back, unlike tasks releasing a claim. A job is held by the workflow
+   pod that claimed it, and a pod outliving this process is exactly what
+   the ping loop and Python's stalled-job sweep already cover.
+3. **The listener closes.** `closeIdleConnections()` runs alongside
+   `close()`: a workflow pod holds its socket open through undici's
+   dispatcher between requests, so a bare `close()` waits out every idle
+   runner's keep-alive rather than the requests actually in flight.
+4. **The pool drains.**
+5. **Sentry flushes.** `flush()`, never `close()`: `close()` flushes
+   *and* disables, so anything raised later in shutdown goes unreported.
+
+No step aborts the ones after it, and each failure is logged on its own —
+a step that hangs included, because the budget is **divided rather than
+pooled**. Every step gets an equal share of the time still left when it
+starts and is abandoned once that share is spent, so one in-flight
+request that will not finish cannot eat the budget and take the pool
+drain and the Sentry flush down with it. An abandoned step is not
+cancelled, so the process may still have to be reaped; what the division
+buys is that everything after it still runs.
+
+`process.exitCode` is then set — `0` only when every step ran, `1` if any
+failed or the backstop fired first — and the loop drains. **Never
+`process.exit()`**, which would force the process down with a pino line
+unwritten and a Sentry envelope unsent.
+
+A second signal is logged and ignored; re-entering would close the pool
+out from under the first pass. The backstop is `.unref()`'d, so a
+shutdown that finishes in 200 ms does not sit out the whole budget.
+`VT_JOBS_API_SHUTDOWN_TIMEOUT` must stay strictly under the
+deployment's `terminationGracePeriodSeconds`, which covers `preStop` and
+shutdown combined, or SIGKILL lands before the backstop can report the
+overrun.
 
 ## The job lifecycle
 
@@ -290,13 +352,50 @@ the same bytes. `fromStoredJobClaim` / `fromStoredJobStep` in
 `@virtool/contracts` are the only crossing points, and a route must never
 return a JSONB element straight out of the column.
 
+Those two mappers, and the `JobStep` / `JobClaim` / `StoredJobStep` /
+`StoredJobClaim` shapes they run between, live in
+`packages/contracts/src/jobs.ts` rather than in `jobsApi.ts`. They are
+not this service's contract: the web app publishes the same two shapes
+to the SPA, off the same JSONB column, through the same mappers, and a
+second implementation of that conversion is exactly the kind of drift
+one definition prevents. `jobsApi.ts` holds only what is genuinely the
+jobs API's — the request bodies, the responses, and the `Workflow*`
+metadata reads.
+
+### The job shapes are parsed on the way out
+
+`jobs.workflow` is a plain `text` column with no CHECK constraint, so the
+data layer types it `string` while the wire types it as a union. `toJob`
+therefore **parses** the response through the `WorkflowJob` schema rather
+than asserting it into shape, and a row that does not fit is thrown:
+`app.onError` logs it, hands it to Sentry and answers
+`jsonError(500, "Internal server error")`. The message names the job id
+and the failing field paths — never the values, because a message is a
+Sentry title and row content does not belong in one.
+
+Failing the read is not new strictness. `@virtool/workflow`'s client
+parses what it receives with the same schema, so an unrecognised
+workflow was already a hard `JobsApiError` — raised at a runner that can
+do nothing about it, on the far side of a retry policy. Parsing here
+puts the failure on the side that owns the data, where it is one Sentry
+issue naming a row rather than a pod that claimed a job and died.
+
+`JobClaimed` needs no parse of its own. `toJobClaimed` takes the
+`workflow` the handler already validated off the query parameter with
+`ClaimableJobWorkflow`, and every other field it builds is a literal or
+already narrow.
+
+**Nothing else in the service validates a response.** A blanket
+outbound-validation layer would tax every route for a looseness that
+exists on one column.
+
 ### Timestamps are `Date`, on both sides
 
 The wire contract types every timestamp as a `Date` — `z.coerce.date()`
-behind the `timestamp` alias in `jobsApi.ts` — so a handler passes the
-`Date` it read out of Postgres straight to `Response.json`, and the
-runtime's client gets a `Date` back rather than a string every caller
-has to remember to parse. **No handler calls `toISOString`.**
+behind `JobTimestamp` in `packages/contracts/src/jobs.ts` — so a handler
+passes the `Date` it read out of Postgres straight to `Response.json`,
+and the runtime's client gets a `Date` back rather than a string every
+caller has to remember to parse. **No handler calls `toISOString`.**
 
 The bytes are unchanged. JSON has no date type, so `JSON.stringify`
 calls `Date.prototype.toJSON` and produces exactly the ISO-8601 string
@@ -317,9 +416,13 @@ inside a JSONB array Python reads and writes, and `jsonb` revives no
 dates on either side. `fromStoredJobStep` / `toStoredJobStep` are where
 the two spellings meet, so nothing else converts by hand.
 
-This is the jobs API's contract only. The other domains in
-`@virtool/contracts` still type their timestamps as strings, and moving
-them is its own change — the SPA-facing shapes drag components in.
+The SPA-facing job shapes type their timestamps as `Date` too, but they
+get there without a schema. Their boundary is a TanStack Start server
+function, which serialises with seroval rather than `JSON.stringify`, and
+seroval revives a `Date` as a `Date` — so `apps/web/src/server/jobs/functions.ts`
+hands back the column value and the client parses nothing. Only
+`steps[].started_at` is converted, by the same `fromStoredJobStep` this
+service uses.
 
 There is **no delete and no failure route**. A job fails by being
 cancelled or by Python's stalled-job sweep, neither of which a runner
@@ -410,6 +513,11 @@ runs middleware on its behalf.
 object-storage access, so the writer puts its blob at `caches/v1/<uuid>`
 and then registers the row, and the reader takes `storageKey` to the
 bucket. Python streamed payloads through its jobs API; this does not.
+
+The lookup is handed `ReadHandlerDeps` — `{ db }` — like every other
+read in the service, so it has no backend to reach even by mistake.
+`CacheHandlerDeps`, with `storage` and a logger, belongs to the register
+route alone, which reads the blob's size back to write the row with it.
 
 **Lookup is not optional garnish.** A row's `storageKey` is a per-write
 UUID and is not derivable from the cache key, so a workflow holding a
@@ -505,10 +613,76 @@ writes the artifact and its file rows itself.
 The manifest rides along with the finalize call rather than arriving as
 a separate step, so a run cannot end with the parent flipped `ready` and
 its file list missing. Each handler is an ordinary
-`Request → Promise<Response>` in `apps/jobs-api/src/<feature>/handlers.ts`
-that calls `requireJobRequest` first; the row work lives in
-`@virtool/data`, typed `DbOrTx`, because it is the same data layer the
-web app reads through.
+`Request → Promise<Response>` in `apps/jobs-api/src/<feature>/handlers.ts`;
+the row work lives in `@virtool/data`, typed `DbOrTx`, because it is the
+same data layer the web app reads through.
+
+All three run one sequence — authenticate the job, resolve the id, parse
+the body, check the manifest against the resource's prefix, measure every
+object it names — and it is written once, as `finalizeResource`
+(`src/finalize.ts`). A route hands in the four things that are its own:
+the prefix, the filenames it accepts, the classes the data layer reports
+its outcomes with, and a `write` callback carrying the rest — the data
+function it calls, the columns it maps each measured entry onto, and the
+line it logs. The statuses are **not** a route's to choose. `notFound` is
+404, `notOwned` 403 and `alreadyFinalized` 409 for all three, because a
+resource picking its own would be a resource whose ownership check said
+something different from the other two's.
+
+### Only the job that produced a resource may finalize it
+
+The metadata reads take no ownership check — which jobs may read which
+rows is not a question this service answers — but the writes do. Without
+it, every running job holds a credential that would flip *any* sample,
+subtraction or analysis ready and hang file rows off it, and there are
+always several running.
+
+The owning job is recorded on the row itself: `legacy_samples.job_id`,
+`subtractions.job_id` (both `UNIQUE` — a create job produces exactly one
+resource) and `analyses.job_id`. Each finalize function in
+`@virtool/data` therefore takes a `jobId` positional after the resource
+id, and the handler passes `principal.jobId`.
+
+**The predicate rides on the `UPDATE`, not a read before it.** The
+`WHERE` already carried `id = ? AND ready = false`; ownership joins it as
+`AND job_id = ?`, so there is no window between checking and writing and
+no extra statement. The fallback `SELECT` that already told a missing row
+from a finalized one reads `job_id` too, so the disambiguation still
+costs one query.
+
+Its checks run in a fixed order — **404, then 403, then 409**:
+
+| Fallback finds | Answer |
+| --- | --- |
+| no row (or, for a subtraction, `deleted`) | `404` |
+| `job_id` is not the caller's, or is null | `403` |
+| otherwise | `409` |
+
+403 last-but-one and 409 last is the whole point: a row a job does not
+own must not report whether it has been finalized. A null `job_id` — a
+resource created before jobs, or by hand — is not owned by whoever asks,
+so it is a 403 as well.
+
+403 rather than 404 matches `requireOwnJob` on the lifecycle routes, and
+for the same reason: the caller authenticated, and hiding the row's
+existence buys nothing against a client that already knows ids are
+consecutive integers.
+
+`POST /caches` is deliberately exempt. A cache row is shared derived
+work; no job owns one.
+
+### A resource that is unusable without its files must carry them
+
+Riding the manifest along with the parent update only prevents "parent
+ready, file rows missing" if the manifest cannot be empty. Two of the
+three refuse an empty array, and the bound lives on the contract in
+`@virtool/contracts` so the workflow runtime cannot build the call:
+
+| Resource | Manifest | Why |
+| --- | --- | --- |
+| Sample | `.min(1).max(2)` | A `create_sample` run writes `reads_1.fq.gz` and, for a paired library, `reads_2.fq.gz`. Zero reads is not a sample; three is not an outcome. |
+| Subtraction | `.min(1)` | One whitelisted name plus the duplicate check makes the source FASTA exactly-once. |
+| Analysis | unbounded | Legitimately empty. Pathoscope's entire output is the `results` blob and it retains no files at all; NuVs is the workflow that writes FASTA and HMM outputs. `results` being required is the guard here. |
 
 ### The wire carries a storage key, and the row records it verbatim
 
@@ -546,9 +720,43 @@ those rows by `name`.
 
 | Resource | Accepted names |
 | --- | --- |
-| Subtraction | `subtraction.fa.gz`, `subtraction.{1,2,3,4}.bt2`, `subtraction.rev.{1,2}.bt2` |
+| Subtraction | `subtraction.fa.gz` |
 | Sample | `reads_1.fq.gz`, `reads_2.fq.gz` |
 | Analysis | any plain filename — the workflow names its own outputs |
+
+#### A subtraction accepts one name, not Python's seven
+
+Python's `virtool/subtractions/utils.py:FILES` names seven — the source
+FASTA plus the six shards of a bowtie2 index — and this route accepted
+all seven until it was narrowed to the FASTA alone.
+
+**Nothing consumes the shards.** Both analysis workflows build a
+subtraction's bowtie2 index locally from the `.fa.gz` and memoize it
+through their own workflow cache — `workflow-pathoscope`'s
+`create_subtraction_index` and `workflow-nuvs`'s
+`create_subtraction_indexes` — and neither touches
+`WFSubtraction.bowtie2_index_path`, which is defined and never read. The
+shards are written by one workflow and read by none. Python's own
+`create_subtraction` compounds it: its upload glob is `*.bt2`, and
+`bowtie2-build` emits `.bt2l` for a large genome, so a large subtraction
+has been uploading nothing but the FASTA for as long as that has been
+true.
+
+There is no parity constraint to hold either. This service has no
+per-file upload route, so Python's `create_subtraction` cannot finalize
+against it at all; `apps/create-subtraction` is the only writer this
+route will ever have.
+
+**This is the write path only.** Every subtraction Python finalized
+carries `bowtie2` rows, `GET /subtractions/{id}` keeps serving them with
+their `type`, and `SubtractionFileType` keeps both members. A read that
+stopped reporting the shards would break nothing on the workflow side
+and would still be a lie about the row.
+
+With one name whitelisted, the duplicate check in `checkManifest` and
+the non-empty manifest the contract requires, the FASTA arrives exactly
+once — so the row's `type` is written `"fasta"` outright rather than
+derived from the extension.
 
 ### The manifest declares neither a size nor a name on disk
 
@@ -562,10 +770,9 @@ matching Python. An analysis file gets `{uuid}-{name}`, following the
 `createUpload` precedent rather than Python's post-flush `{id}-{name}`,
 which needs the row id and so a second write — the column is unique
 across the whole table, so it cannot simply be the workflow's filename.
-A subtraction file's `type` is likewise derived from the extension, as
-Python's `check_subtraction_file_type` does; with the name whitelisted
-there is nothing left to decide, and no way to record a `.bt2` shard as
-the FASTA.
+A subtraction file's `type` is not on the contract either: the whitelist
+admits `subtraction.fa.gz` and nothing else, so the row is written
+`"fasta"` outright.
 
 ### Verify, then transact
 
@@ -584,13 +791,14 @@ already written rows.
 
 ### 409, not idempotent
 
-Each parent update is conditional — `WHERE id = ? AND ready = false`,
-plus `AND deleted = false` for a subtraction — and its row count is
-checked. A zero row count re-selects the row to tell the two cases apart:
-gone or soft-deleted is `404`, already finalized is `409`. Python makes
-the same split, and a second finalize must not be quietly accepted:
-these calls write file rows, and accepting one twice writes the set
-twice.
+Each parent update is conditional — `WHERE id = ? AND job_id = ? AND
+ready = false`, plus `AND deleted = false` for a subtraction — and its
+row count is checked. A zero row count re-selects the row to tell the
+cases apart, in the order given above: gone or soft-deleted is `404`,
+someone else's is `403`, already finalized is `409`. Python makes the
+same not-found/already-finalized split, and a second finalize must not be
+quietly accepted: these calls write file rows, and accepting one twice
+writes the set twice.
 
 ### Finalizing a sample destroys its input uploads
 
@@ -777,9 +985,23 @@ The request middleware labels each observation with the route's
 number of routes rather than by the number of jobs. A request matching
 nothing falls to the middleware's own `/*`, which is bounded too.
 
-A handler that throws leaves no status behind, so those are counted as
-`status="error"` — a bounded sentinel that keeps the counter's total
-honest either way.
+The status label is gated on `c.finalized`, not on `c.error`. Hono's
+`c.res` is a lazy getter that mints an empty 200 when nothing has set a
+response, so reading it unconditionally counts a request that crashed as
+one that succeeded; `c.finalized` is what says a response was actually
+set.
+
+That is the whole gate, because `app.onError` now stands behind a thrown
+`Error`: Hono's `compose` catches it, calls the handler, and finalizes
+its 500 before the middleware's `next()` resolves. Such a request is
+labelled `status="500"` — the status the caller actually got — and the
+crash is reported through the pino line and the Sentry event instead.
+
+What is left for `status="error"` is a request that produced no response
+at all. A **non-`Error` throw** is the one that gets there: `compose`
+rethrows it without setting `c.error` and without reaching `onError`,
+whose guard is `err instanceof Error`. The sentinel is bounded, and it
+keeps the counter's total honest.
 
 ### Pool occupancy
 
@@ -921,6 +1143,17 @@ and would skip the `<KEY>_FILE` resolution that `config.ts` has already
 done. No DSN means no `init`, so dev and unconfigured deploys are
 untouched.
 
+The same DSN decides the logger. `createAppLogger(config.sentryDsn)`
+(`src/logger.ts`) attaches the pino destination from
+`@virtool/sentry/log` when one is present, so `info`-and-above records
+reach Sentry's structured logging API as well as stdout; the stream takes
+`Sentry.logger` as an argument, which is what lets `apps/web`,
+`apps/tasks` and this service share one implementation across two
+different SDKs. `src/index.ts` builds the logger *before* calling
+`initSentry`, because everything below that line logs — so the two lines
+`initSentry` itself writes are the only ones that predate `init` and go
+to stdout alone.
+
 **The process must be started with `node --import @sentry/node/preload`**,
 as the Dockerfile `CMD` and the `start` script both do. Because the DSN
 comes from file-backed config, `Sentry.init` cannot run until config has
@@ -929,6 +1162,18 @@ including `@hono/node-server` and `postgres`. The preload hook installs
 the SDK's module hooks ahead of all of them, which is what makes that late
 init safe. Drop the flag and the service still reports errors while
 recording no HTTP or database spans, with nothing in the logs to say so.
+
+**A thrown handler reaches Sentry only through `app.onError`.** Hono
+catches inside its own `compose`, so a bug in a route never becomes an
+`uncaughtException` and the SDK's global handlers never see it — `init`
+alone leaves the service reporting nothing at all. `createApp` registers
+the handler, which logs the failure with the bounded `routePath(c, -1)`,
+calls the optional `captureException` dep and answers
+`jsonError(500, "Internal server error")` so the body shape matches every
+other refusal here. The hook is **injected**, and `src/index.ts` is the
+only place `Sentry.captureException` is named: `app.ts` then carries no
+dependency on the SDK, its graph stays out of the test path, and "did we
+report it?" is assertable with a `vi.fn()`.
 
 There is **no `beforeSend` filter**, and that asymmetry with `apps/web`
 is deliberate. The web app needs one because a server function signals an
@@ -946,6 +1191,7 @@ throwing for an expected outcome — and prefer not to.
 | `VT_POSTGRES_POOL_MAX` | `10` | postgres-js pool size |
 | `VT_JOBS_API_HOST` | `0.0.0.0` | Listen address |
 | `VT_JOBS_API_PORT` | `9950` | Listen port, matching Python's jobs API |
+| `VT_JOBS_API_SHUTDOWN_TIMEOUT` | `30` | Seconds the shutdown sequence may take |
 | `VT_METRICS_TOKEN` | unset | Bearer token for `/metrics`; unset means `404` |
 | `VT_SENTRY_DSN` | unset | Unset disables Sentry |
 | `VT_STORAGE_BACKEND` | *required* | `s3` or `azure` |
@@ -999,8 +1245,8 @@ image.
 
 The runtime base is **`node:24-alpine`**. This service copies nothing
 from `ghcr.io/virtool/tools` and needs no bioinformatics binaries, so it
-does not pay the Debian base the workflow images pay to satisfy those
-binaries. Do not move it to Debian for uniformity's sake.
+does not pay the Debian base an image carrying those binaries pays. Do
+not move it to Debian for uniformity's sake.
 
 The app bundles to a single `dist/index.mjs` with tsdown, every
 `@virtool/*` inlined from TypeScript source. `postgres` and `pino` stay
@@ -1036,7 +1282,9 @@ for this service:
 
 This service serves health, metrics, the job lifecycle, the two cache
 endpoints, the three finalize routes and the six metadata reads — the
-whole of the surface `packages/contracts/src/jobsApi.ts` describes.
+whole of the surface `packages/contracts/src/jobsApi.ts` describes,
+plus the job element shapes it shares with the web app from
+`packages/contracts/src/jobs.ts`.
 
 What stays Python's: cancelling a job, deleting one, the counts
 endpoint, and the five-minute stalled-job sweep that fails a job whose

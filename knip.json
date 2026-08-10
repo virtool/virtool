@@ -13,7 +13,7 @@
 				"src/tests/postgresGuard.ts"
 			],
 			"project": ["src/**/*.{ts,tsx,css}"],
-			"ignoreDependencies": ["bcrypt", "@tanstack/router-cli"]
+			"ignoreDependencies": ["bcrypt"]
 		},
 		"packages/bio": {
 			"entry": ["src/**/*.test.ts"]
@@ -28,6 +28,12 @@
 			"entry": ["src/**/*.test.ts"]
 		},
 		"packages/logger": {
+			"entry": ["src/**/*.test.ts"]
+		},
+		"packages/sentry": {
+			"entry": ["src/**/*.test.ts"]
+		},
+		"packages/service": {
 			"entry": ["src/**/*.test.ts"]
 		},
 		"packages/workflow": {

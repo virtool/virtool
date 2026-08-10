@@ -209,8 +209,12 @@ app is covered by through its publish-matrix entry.
 Registering a SIGTERM listener **removes Node's default exit behaviour**. From
 that moment, exiting is entirely this app's responsibility.
 
-`src/shutdown.ts` discharges that with `process.exitCode` and a natural drain,
-**never `process.exit()`**. Node's own documentation is explicit that `exit()`
+`createShutdownController` from `@virtool/service/shutdown` discharges that
+with `process.exitCode` and a natural drain, **never `process.exit()`**. It is
+a shared package rather than a module of this app because the jobs API winds
+down the same way; every dependency below — the readiness flip, the listener
+close, the pool drain, the Sentry flush and the budget — is injected by
+`bootstrap`, so the controller itself knows nothing about tasks. Node's own documentation is explicit that `exit()`
 forces the process down "even if there are still asynchronous operations
 pending", writes to `process.stdout` included — which here means a dropped pino
 line, an unsent Sentry envelope, and an uncommitted transaction.
@@ -231,6 +235,16 @@ On the first SIGTERM or SIGINT, each step awaited before the next:
 **No step aborts the ones after it, and none passes unreported.** Each is
 caught and logged on its own, so a listener that will not close still leaves
 the pool to drain and Sentry to flush.
+
+That covers a step that *hangs* as well as one that throws, because the budget
+is **divided rather than pooled**: every step, each hook included, gets an
+equal share of the time still left when it starts, and is abandoned once that
+share is spent. A step that finishes early hands its remainder on. Awaiting the
+whole sequence against a single deadline instead would let one stuck socket eat
+the budget and take the pool drain and the Sentry flush with it — losing the
+record of the failure exactly when there was one to keep. An abandoned step is
+not cancelled, so the process may still have to be reaped; what the division
+buys is that everything after it still runs.
 
 Then `process.exitCode` is set — `0` only when every step ran, `1` if any of
 them failed or the backstop fired first — and the loop drains. A failed
@@ -287,13 +301,14 @@ miss a `VT_SENTRY_DSN_FILE` mount. Events are tagged `service: tasks` and carry
 their own `dist`, both from `getCommonOptions`, so this image's source maps do
 not collide with the others' under the shared release version.
 
-There is deliberately **no pino destination forwarding log records to Sentry**,
-as `apps/web` has. That stream is written against `@sentry/tanstackstart-react`,
-so bringing it here means a third copy rather than a shared one, and the SDK's
-own uncaught-exception and unhandled-rejection integrations already report what
-a crash needs. Code wanting a *handled* failure in Sentry calls
-`Sentry.captureException` explicitly. Lift the stream into `@virtool/sentry`
-before copying it.
+`initSentry` runs **before** the logger is built, and its returned `enabled`
+flag is what decides whether that logger gets the pino destination from
+`@virtool/sentry/log` — the shared stream that forwards `info`-and-above
+records to Sentry's structured logging API. It takes `Sentry.logger` as an
+argument, so the same stream serves this app, `apps/jobs-api` and `apps/web`
+without any of them agreeing on an SDK. Without a DSN no stream is attached at
+all and logs go to stdout only. Code wanting a *handled* failure reported as an
+event rather than a log still calls `Sentry.captureException` explicitly.
 
 ## Testing
 

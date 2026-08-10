@@ -1,5 +1,4 @@
 import type {
-	JobState,
 	JobWorkflow,
 	NucleotideComposition,
 	Subtraction,
@@ -70,6 +69,12 @@ export class SubtractionNotFoundError extends AppError {}
 
 /** Thrown when a subtraction has already been finalized. */
 export class SubtractionAlreadyFinalizedError extends AppError {}
+
+/**
+ * Thrown when a job tries to finalize a subtraction that is not the one it
+ * produced.
+ */
+export class SubtractionNotOwnedError extends AppError {}
 
 /** Thrown when the upload a subtraction is created from does not exist. */
 export class SubtractionUploadNotFoundError extends AppError {}
@@ -149,14 +154,13 @@ function toMinimal(row: SubtractionResourceRow): SubtractionMinimal {
 					id: row.jobId,
 					createdAt: row.jobCreatedAt ?? new Date(),
 					progress: computeProgress(row.jobState, row.jobSteps),
-					// `state` and `workflow` are plain text columns; Python only ever
-					// writes the union members, so assert here rather than widening the
-					// wire shape to `string` for every reader.
-					state: (row.jobState ?? "pending") as JobState,
+					state: row.jobState ?? "pending",
 					user:
 						row.jobUserId == null
 							? null
 							: { id: row.jobUserId, handle: row.jobUserHandle ?? "" },
+					// `jobs.workflow` carries no constraint, so it arrives as free
+					// text; Python only ever writes the union members here.
 					workflow: (row.jobWorkflow ?? "create_subtraction") as JobWorkflow,
 				};
 
@@ -427,12 +431,18 @@ export async function createSubtraction(
 /**
  * Record what a create_subtraction job produced and flip the subtraction ready.
  *
- * The parent update is conditional on `deleted = false AND ready = false` and
- * its row count checked, so two finalizes racing each other cannot both write a
- * file set. Losing that race — or arriving second after a retry — is a
- * {@link SubtractionAlreadyFinalizedError}; a row that is gone or soft-deleted is
- * a {@link SubtractionNotFoundError}, which is the split Python makes by
- * re-selecting `deleted` after a zero rowcount.
+ * The parent update is conditional on `job_id = jobId AND deleted = false AND
+ * ready = false` and its row count checked, so two finalizes racing each other
+ * cannot both write a file set. Losing that race — or arriving second after a
+ * retry — is a {@link SubtractionAlreadyFinalizedError}; a row that is gone or
+ * soft-deleted is a {@link SubtractionNotFoundError}, which is the split Python
+ * makes by re-selecting `deleted` after a zero rowcount; and one produced by
+ * another job — or by no job at all — is a {@link SubtractionNotOwnedError}.
+ *
+ * The ownership predicate rides on the `UPDATE` rather than a read before it, so
+ * there is no window between the check and the write, and the fallback `SELECT`
+ * answers in the order gone, then not yours, then already done — a subtraction a
+ * job does not own never reports its state.
  *
  * Every `size` is the caller's reading of storage and every `storageKey` is what
  * the workflow wrote to. Nothing here reaches object storage: the caller has
@@ -442,6 +452,7 @@ export async function createSubtraction(
 export async function finalizeSubtraction(
 	db: Db,
 	subtractionId: number,
+	jobId: number,
 	values: FinalizeSubtractionValues,
 ): Promise<Subtraction> {
 	await db.transaction(async (tx) => {
@@ -451,6 +462,7 @@ export async function finalizeSubtraction(
 			.where(
 				and(
 					eq(subtractions.id, subtractionId),
+					eq(subtractions.job_id, jobId),
 					eq(subtractions.deleted, false),
 					eq(subtractions.ready, false),
 				),
@@ -459,13 +471,17 @@ export async function finalizeSubtraction(
 
 		if (updated.length === 0) {
 			const [row] = await tx
-				.select({ deleted: subtractions.deleted })
+				.select({ deleted: subtractions.deleted, jobId: subtractions.job_id })
 				.from(subtractions)
 				.where(eq(subtractions.id, subtractionId))
 				.limit(1);
 
 			if (!row || row.deleted) {
 				throw new SubtractionNotFoundError();
+			}
+
+			if (row.jobId !== jobId) {
+				throw new SubtractionNotOwnedError();
 			}
 
 			throw new SubtractionAlreadyFinalizedError();

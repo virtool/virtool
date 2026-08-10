@@ -5,13 +5,7 @@ import {
 	useQuery,
 	useSuspenseQuery,
 } from "@tanstack/react-query";
-import type { JobState } from "@virtool/contracts";
-import {
-	JobSchema,
-	JobSearchResultSchema,
-	type ServerJob,
-	type ServerJobNested,
-} from "./types";
+import type { Job, JobNested, JobState } from "@virtool/contracts";
 
 /**
  * Query options for a page of job search results.
@@ -28,7 +22,6 @@ export function jobsQueryOptions(
 	return queryOptions({
 		queryKey: jobQueryKeys.list([page, perPage, ...states]),
 		queryFn: () => findJobsFn({ data: { page, perPage, states } }),
-		select: JobSearchResultSchema.parse,
 	});
 }
 
@@ -50,14 +43,14 @@ export function useSuspenseJobs(
 }
 
 /**
- * Expand a nested job into a full server-shaped job for seeding the cache.
+ * Expand a nested job into a full job for seeding the cache.
  *
  * A nested job carried on a parent resource (sample, index, etc.) lacks the
  * args, claim, and steps that `/jobs/:id` returns. Filling them with empty
  * values lets the nested data seed `jobQueryKeys.detail` so the first paint is
  * instant; the SSE-triggered refetch later replaces it with the full job.
  */
-function getJobSeed(job: ServerJobNested): ServerJob {
+function getJobSeed(job: JobNested): Job {
 	return {
 		...job,
 		args: {},
@@ -79,11 +72,10 @@ function getJobSeed(job: ServerJobNested): ServerJob {
  * @param seed - Nested job data to seed the cache with
  * @returns Query results containing the job
  */
-export function useFetchJob(jobId: number, seed?: ServerJobNested) {
+export function useFetchJob(jobId: number, seed?: JobNested) {
 	return useQuery({
 		queryKey: jobQueryKeys.detail(jobId),
 		queryFn: () => getJobFn({ data: { jobId } }),
-		select: JobSchema.parse,
 		enabled: Number.isInteger(jobId),
 		initialData: seed ? getJobSeed(seed) : undefined,
 		staleTime: seed ? Number.POSITIVE_INFINITY : undefined,

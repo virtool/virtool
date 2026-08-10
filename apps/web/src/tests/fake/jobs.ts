@@ -1,18 +1,19 @@
 import { faker } from "@faker-js/faker";
-import type { JobNested, ServerJobMinimal } from "@jobs/types";
-import type { JobState, JobWorkflow } from "@virtool/contracts";
+import type {
+	JobMinimal,
+	JobNested,
+	JobState,
+	JobWorkflow,
+} from "@virtool/contracts";
 import { createFakeUserNested } from "./user";
 
-/**
- * Creates a fake job minimal object in server response shape.
- * Use this for HTTP mocks.
- */
-export function createFakeServerJobMinimal(
-	overrides?: Partial<ServerJobMinimal>,
-): ServerJobMinimal {
+/** Creates a fake job as it appears in a page of search results. */
+export function createFakeJobMinimal(
+	overrides?: Partial<JobMinimal>,
+): JobMinimal {
 	return {
 		id: faker.number.int(),
-		createdAt: faker.date.past().toISOString(),
+		createdAt: faker.date.past(),
 		progress: faker.number.int({ min: 0, max: 100 }),
 		state: faker.helpers.arrayElement<JobState>([
 			"cancelled",
@@ -27,10 +28,7 @@ export function createFakeServerJobMinimal(
 	};
 }
 
-/**
- * Creates a fake nested job object in client shape (transformed).
- * Use this for components that expect the transformed JobNested type.
- */
+/** Creates a fake job as a parent resource embeds it. */
 export function createFakeJobNested(overrides?: Partial<JobNested>): JobNested {
 	return {
 		createdAt: faker.date.past(),

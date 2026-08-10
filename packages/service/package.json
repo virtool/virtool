@@ -1,16 +1,16 @@
 {
-	"name": "@virtool/sentry",
+	"name": "@virtool/service",
 	"version": "0.0.0",
 	"private": true,
 	"type": "module",
+	"sideEffects": false,
 	"exports": {
-		".": "./src/index.ts",
-		"./browser": "./src/browser.ts",
-		"./log": "./src/log.ts"
+		"./*": "./src/*.ts"
 	},
 	"scripts": {
 		"test": "vitest run",
-		"typecheck": "tsc -p tsconfig.json && tsc -p tsconfig.browser.json"
+		"test:watch": "vitest",
+		"typecheck": "tsc --noEmit"
 	},
 	"devDependencies": {
 		"@virtool/logger": "workspace:*",

@@ -1,25 +1,18 @@
 import type { Subtraction, WorkflowSubtraction } from "@virtool/contracts";
 import { FinalizeSubtractionRequest } from "@virtool/contracts";
-import type { Db } from "@virtool/data/db/pg";
-import type { SubtractionFileType } from "@virtool/data/db/schema/subtractions";
 import {
 	finalizeSubtraction,
 	getSubtraction,
 	SubtractionAlreadyFinalizedError,
 	SubtractionNotFoundError,
+	SubtractionNotOwnedError,
 } from "@virtool/data/subtraction/data";
-import type { Logger } from "@virtool/logger";
-import type { StorageBackend } from "@virtool/storage";
 import { requireJobRequest } from "../auth/guard";
-import { jsonError, parseRowId, type ReadHandlerDeps } from "../http";
-import { checkManifest, measureManifest } from "../manifest";
+import { type FinalizeHandlerDeps, finalizeResource } from "../finalize";
+import { jsonError, type ReadHandlerDeps, requireRowId } from "../http";
 
-/** What the subtraction handlers need to serve a request. */
-export type SubtractionHandlerDeps = {
-	db: Db;
-	storage: StorageBackend;
-	logger: Logger;
-};
+/** What the subtraction finalize route needs to serve a request. */
+export type SubtractionHandlerDeps = FinalizeHandlerDeps;
 
 /**
  * Narrow a subtraction to what a workflow reads.
@@ -51,8 +44,10 @@ function toWorkflowSubtraction(subtraction: Subtraction): WorkflowSubtraction {
 }
 
 /**
- * Serve a subtraction's metadata and the files that make it up — its source
- * genome and the shards of its built bowtie2 index.
+ * Serve a subtraction's metadata and the files that make it up: its source
+ * genome, plus the bowtie2 shards a subtraction finalized under Python still
+ * carries. Those rows are served as they stand, `type` and all — only the write
+ * path stopped accepting shards.
  *
  * Records only. Nothing here reads or writes an object.
  */
@@ -67,10 +62,13 @@ export async function handleGetSubtraction(
 		return principal;
 	}
 
-	const subtractionId = parseRowId(subtractionIdParam);
+	const subtractionId = requireRowId(
+		subtractionIdParam,
+		"Subtraction not found",
+	);
 
-	if (subtractionId === null) {
-		return jsonError(404, "Subtraction not found");
+	if (subtractionId instanceof Response) {
+		return subtractionId;
 	}
 
 	try {
@@ -87,34 +85,28 @@ export async function handleGetSubtraction(
 }
 
 /**
- * The only filenames a subtraction accepts, matching Python's
- * `virtool/subtractions/utils.py:FILES`.
+ * The only filename a subtraction accepts.
+ *
+ * Python's `virtool/subtractions/utils.py:FILES` names seven — the source FASTA
+ * plus the six shards of a bowtie2 index — but **nothing consumes the shards**.
+ * Both analysis workflows build a subtraction's bowtie2 index locally from the
+ * `.fa.gz` and memoize it through their own workflow cache, so the shards are
+ * written by one workflow and read by none. There is no parity constraint
+ * either: this service has no per-file upload route, so Python's
+ * `create_subtraction` cannot finalize against it at all, and
+ * `apps/create-subtraction` is the only writer this route will ever have.
+ *
+ * This is the **write** path. Subtractions finalized under Python still carry
+ * `bowtie2` rows and {@link handleGetSubtraction} keeps serving them.
  *
  * Python addresses a subtraction file by `name` in the URL of its download
  * endpoint, so this is what keeps that URL space closed. It is no longer doing
  * duty as key safety — the key is checked against the subtraction's own prefix.
+ * With one name whitelisted, the duplicate check in `checkManifest` and the
+ * non-empty manifest `FinalizeSubtractionRequest` requires, the FASTA arrives
+ * exactly once.
  */
-const FILE_NAMES = [
-	"subtraction.fa.gz",
-	"subtraction.1.bt2",
-	"subtraction.2.bt2",
-	"subtraction.3.bt2",
-	"subtraction.4.bt2",
-	"subtraction.rev.1.bt2",
-	"subtraction.rev.2.bt2",
-] as const;
-
-/**
- * The type column follows from the extension, as it does in Python's
- * `check_subtraction_file_type`.
- *
- * Derived rather than declared: with the name whitelisted there is nothing for a
- * caller to decide, and a wire field would only let a `.bt2` shard be recorded
- * as the FASTA.
- */
-function fileType(name: string): SubtractionFileType {
-	return name.endsWith(".fa.gz") ? "fasta" : "bowtie2";
-}
+const FILE_NAMES = ["subtraction.fa.gz"] as const;
 
 /**
  * Finalize a subtraction: record what the create_subtraction job produced and
@@ -122,86 +114,58 @@ function fileType(name: string): SubtractionFileType {
  *
  * Every object the manifest names is measured before any row is written, and the
  * rows carry those measurements rather than anything the caller declared.
+ *
+ * A job may only finalize the subtraction it produced. That check is the
+ * resource counterpart of `requireOwnJob` on the lifecycle routes, and answers
+ * the same 403 — but it is `subtractions.job_id` that decides it, so it happens
+ * inside the same statement that writes, not in a guard here.
  */
 export async function handleFinalizeSubtraction(
 	deps: SubtractionHandlerDeps,
 	request: Request,
 	subtractionIdParam: string,
 ): Promise<Response> {
-	const principal = await requireJobRequest(deps.db, request);
+	return await finalizeResource(deps, request, subtractionIdParam, {
+		body: FinalizeSubtractionRequest,
+		prefix: (subtractionId) => `subtractions/${subtractionId}/`,
+		allowedNames: FILE_NAMES,
+		notFound: {
+			error: SubtractionNotFoundError,
+			message: "Subtraction not found",
+		},
+		notOwned: {
+			error: SubtractionNotOwnedError,
+			message: "Job did not produce this subtraction",
+		},
+		alreadyFinalized: {
+			error: SubtractionAlreadyFinalizedError,
+			message: "Subtraction has already been finalized",
+		},
+		write: async ({ id: subtractionId, jobId, values, files }) => {
+			const subtraction = await finalizeSubtraction(
+				deps.db,
+				subtractionId,
+				jobId,
+				{
+					count: values.count,
+					gc: values.gc,
+					files: files.map((file) => ({
+						name: file.name,
+						// The whitelist admits the FASTA and nothing else, so there is no
+						// type left to derive and no wire field with which to declare one.
+						type: "fasta" as const,
+						size: file.size,
+						storageKey: file.storageKey,
+					})),
+				},
+			);
 
-	if (principal instanceof Response) {
-		return principal;
-	}
+			deps.logger.info(
+				{ jobId, subtractionId, files: files.length },
+				"finalized subtraction",
+			);
 
-	const subtractionId = parseRowId(subtractionIdParam);
-
-	if (subtractionId === null) {
-		return jsonError(404, "Subtraction not found");
-	}
-
-	let body: unknown;
-
-	try {
-		body = await request.json();
-	} catch {
-		return jsonError(400, "Malformed body");
-	}
-
-	const parsed = FinalizeSubtractionRequest.safeParse(body);
-
-	if (!parsed.success) {
-		return Response.json(
-			{ message: "Invalid body", errors: parsed.error.issues },
-			{ status: 400 },
-		);
-	}
-
-	const { count, gc, files } = parsed.data;
-
-	const invalid = checkManifest(
-		files,
-		`subtractions/${subtractionId}/`,
-		FILE_NAMES,
-	);
-
-	if (invalid) {
-		return jsonError(400, invalid);
-	}
-
-	const measured = await measureManifest(deps.storage, files);
-
-	if (measured === null) {
-		return jsonError(400, "A manifest entry names no stored object");
-	}
-
-	try {
-		const subtraction = await finalizeSubtraction(deps.db, subtractionId, {
-			count,
-			gc,
-			files: measured.map((file) => ({
-				name: file.name,
-				type: fileType(file.name),
-				size: file.size,
-				storageKey: file.storageKey,
-			})),
-		});
-
-		deps.logger.info(
-			{ jobId: principal.jobId, subtractionId, files: files.length },
-			"finalized subtraction",
-		);
-
-		return Response.json(subtraction);
-	} catch (err) {
-		if (err instanceof SubtractionNotFoundError) {
-			return jsonError(404, "Subtraction not found");
-		}
-
-		if (err instanceof SubtractionAlreadyFinalizedError) {
-			return jsonError(409, "Subtraction has already been finalized");
-		}
-
-		throw err;
-	}
+			return subtraction;
+		},
+	});
 }

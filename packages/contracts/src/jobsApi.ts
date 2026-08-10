@@ -18,11 +18,12 @@
 // `best_bias`, `best_score` on a NuVs ORF hit). Python reads and writes those
 // same bytes, so they must not be "fixed" into camelCase.
 //
-// `JobStep` and `JobClaim` therefore exist in two spellings: the wire shapes
-// here, and `StoredJobStep` / `StoredJobClaim` below for the JSONB elements,
-// with mappers between them. **A route must never return a JSONB element
-// straight out of the column** — that leaks `started_at` onto the wire and is
-// the single most likely way this rule gets broken in practice.
+// `JobStep` / `JobClaim`, their `StoredJobStep` / `StoredJobClaim` column
+// spellings and the mappers between them live in `./jobs`, not here. They are
+// not this service's contract: the web app publishes the same two shapes to the
+// SPA off the same column through the same mappers. **A route must never return
+// a JSONB element straight out of the column** — that leaks `started_at` onto
+// the wire and is the single most likely way this rule gets broken in practice.
 //
 // # Endpoint surface
 //
@@ -31,10 +32,10 @@
 // Python's byte for byte.
 //
 //   POST   /jobs/claim                         CreateJobClaimRequest -> JobClaimed     (200 | 404 no job available | 422 unclaimable workflow)
-//   GET    /jobs/{jobId}                       -                     -> Job            (200 | 401 | 403 | 404)
+//   GET    /jobs/{jobId}                       -                     -> WorkflowJob    (200 | 401 | 403 | 404)
 //   POST   /jobs/{jobId}/steps/{stepId}/start  StartJobStepRequest   -> JobStepStarted (200 | 401 | 403 | 404 | 409)
 //   PUT    /jobs/{jobId}/ping                  -                     -> JobPing        (200 | 401 terminal | 403 | 404)
-//   POST   /jobs/{jobId}/finish                -                     -> Job            (200 | 401 | 403 | 404 | 409)
+//   POST   /jobs/{jobId}/finish                -                     -> WorkflowJob    (200 | 401 | 403 | 404 | 409)
 //   PATCH  /samples/{id}                       FinalizeSampleRequest      -> Sample
 //   PATCH  /subtractions/{id}                  FinalizeSubtractionRequest -> Subtraction
 //   PATCH  /analyses/{id}                      FinalizeAnalysisRequest    -> Analysis
@@ -75,40 +76,11 @@
 
 import { z } from "zod";
 import { AnalysisFormat, AnalysisWorkflow } from "./analyses";
-import { JobState, JobWorkflow } from "./jobs";
+import { JobClaim, JobState, JobStep, JobTimestamp, JobWorkflow } from "./jobs";
 import { JsonObject } from "./json";
 import { LibraryType, Quality } from "./samples";
 import { NucleotideComposition } from "./subtractions";
 import { UserNested } from "./users";
-
-/**
- * A moment on this wire, as a `Date` on both sides of it.
- *
- * JSON has no date type, so the bytes are an ISO-8601 string either way —
- * `JSON.stringify` calls `Date.prototype.toJSON`, which is `toISOString`, and
- * Python serialises `datetime` to the same shape. What this buys is the type:
- * a handler hands the `Date` it read out of Postgres straight to
- * `Response.json`, and the runtime's client gets a `Date` back rather than a
- * string every caller would have to remember to parse.
- *
- * `z.coerce.date()` rather than `z.date()`, because the value arriving over the
- * wire really is a string; `z.date()` would reject it. It passes a `Date`
- * through unchanged, so the same schema types both directions.
- *
- * The refinement is not decoration. `coerce` runs `new Date(value)`, which
- * answers `Invalid Date` rather than throwing for anything it cannot read — so
- * without it a malformed timestamp parses successfully and surfaces as `NaN`
- * somewhere much later in a run.
- *
- * **This is the wire only.** The `jobs.steps` JSONB array stores `started_at`
- * as a string, because Python reads and writes those same bytes; see
- * {@link StoredJobStep}.
- */
-const timestamp = z.coerce
-	.date()
-	.refine((value) => !Number.isNaN(value.getTime()), {
-		message: "not a readable timestamp",
-	});
 
 /** A workflow step as the runner declares it at claim time. The runner owns its own step list. */
 export const JobStepDefinition = z.object({
@@ -119,22 +91,12 @@ export const JobStepDefinition = z.object({
 
 export type JobStepDefinition = z.infer<typeof JobStepDefinition>;
 
-/** A workflow step as the jobs API returns it. Persisted with `started_at`. */
-export const JobStep = z.object({
-	id: z.string(),
-	name: z.string(),
-	description: z.string(),
-	startedAt: timestamp.nullable(),
-});
-
-export type JobStep = z.infer<typeof JobStep>;
-
 /** Response to `POST /jobs/{jobId}/steps/{stepId}/start` — the step, now started. */
 export const JobStepStarted = z.object({
 	id: z.string(),
 	name: z.string(),
 	description: z.string(),
-	startedAt: timestamp,
+	startedAt: JobTimestamp,
 });
 
 export type JobStepStarted = z.infer<typeof JobStepStarted>;
@@ -149,18 +111,6 @@ export const StartJobStepRequest = z.object({});
 
 export type StartJobStepRequest = z.infer<typeof StartJobStepRequest>;
 
-/** A runner's claim metadata as it crosses the wire. Persisted as {@link StoredJobClaim}. */
-export const JobClaim = z.object({
-	runnerId: z.string(),
-	mem: z.number(),
-	cpu: z.number(),
-	image: z.string(),
-	runtimeVersion: z.string(),
-	workflowVersion: z.string(),
-});
-
-export type JobClaim = z.infer<typeof JobClaim>;
-
 /** Body for `POST /jobs/claim` — the runner's metadata plus the steps it will run. */
 export const CreateJobClaimRequest = JobClaim.extend({
 	steps: z.array(JobStepDefinition),
@@ -173,8 +123,8 @@ export const JobClaimed = z.object({
 	id: z.number().int(),
 	acquired: z.boolean(),
 	claim: JobClaim,
-	claimedAt: timestamp,
-	createdAt: timestamp,
+	claimedAt: JobTimestamp,
+	createdAt: JobTimestamp,
 
 	/**
 	 * The plaintext runner key, used to authenticate every subsequent request for
@@ -194,8 +144,15 @@ export const JobClaimed = z.object({
 
 export type JobClaimed = z.infer<typeof JobClaimed>;
 
-/** A job as the lifecycle endpoints return it. */
-export const Job = z.object({
+/**
+ * A job as the lifecycle endpoints return it, which is to say as a workflow
+ * reads it.
+ *
+ * Narrower than the `Job` the web app publishes to the SPA, in the same way the
+ * `Workflow*` metadata reads below are: it drops `finishedAt`, which a runner
+ * never branches on, and carries `pingedAt`, which no view shows.
+ */
+export const WorkflowJob = z.object({
 	id: z.number().int(),
 
 	/**
@@ -206,9 +163,9 @@ export const Job = z.object({
 	args: JsonObject,
 
 	claim: JobClaim.nullable(),
-	claimedAt: timestamp.nullable(),
-	createdAt: timestamp,
-	pingedAt: timestamp.nullable(),
+	claimedAt: JobTimestamp.nullable(),
+	createdAt: JobTimestamp,
+	pingedAt: JobTimestamp.nullable(),
 	progress: z.number().int(),
 	state: JobState,
 	steps: z.array(JobStep).nullable(),
@@ -216,7 +173,7 @@ export const Job = z.object({
 	workflow: JobWorkflow,
 });
 
-export type Job = z.infer<typeof Job>;
+export type WorkflowJob = z.infer<typeof WorkflowJob>;
 
 /**
  * Response to `PUT /jobs/{jobId}/ping`.
@@ -230,91 +187,10 @@ export type Job = z.infer<typeof Job>;
  * too. See the ping loop in `@virtool/workflow`.
  */
 export const JobPing = z.object({
-	pingedAt: timestamp,
+	pingedAt: JobTimestamp,
 });
 
 export type JobPing = z.infer<typeof JobPing>;
-
-/**
- * A {@link JobClaim} as it is stored in the `jobs.claim` JSONB column.
- *
- * snake_case, byte-compatible with what Python reads and writes. Never returned
- * from a route — map it with {@link fromStoredJobClaim} first.
- */
-export const StoredJobClaim = z.object({
-	runner_id: z.string(),
-	mem: z.number(),
-	cpu: z.number(),
-	image: z.string(),
-	runtime_version: z.string(),
-	workflow_version: z.string(),
-});
-
-export type StoredJobClaim = z.infer<typeof StoredJobClaim>;
-
-/**
- * A {@link JobStep} as it is stored in the `jobs.steps` JSONB array.
- *
- * snake_case, byte-compatible with what Python reads and writes. Never returned
- * from a route — map it with {@link fromStoredJobStep} first.
- */
-export const StoredJobStep = z.object({
-	id: z.string(),
-	name: z.string(),
-	description: z.string(),
-	started_at: z.string().nullable(),
-});
-
-export type StoredJobStep = z.infer<typeof StoredJobStep>;
-
-/** Maps a wire claim to the shape written to the `claim` JSONB column. */
-export function toStoredJobClaim(claim: JobClaim): StoredJobClaim {
-	return {
-		runner_id: claim.runnerId,
-		mem: claim.mem,
-		cpu: claim.cpu,
-		image: claim.image,
-		runtime_version: claim.runtimeVersion,
-		workflow_version: claim.workflowVersion,
-	};
-}
-
-/** Maps a claim read out of the `claim` JSONB column to its wire shape. */
-export function fromStoredJobClaim(stored: StoredJobClaim): JobClaim {
-	return {
-		runnerId: stored.runner_id,
-		mem: stored.mem,
-		cpu: stored.cpu,
-		image: stored.image,
-		runtimeVersion: stored.runtime_version,
-		workflowVersion: stored.workflow_version,
-	};
-}
-
-// These two are where a `Date` becomes column bytes and back. The wire carries
-// `Date`; the column carries the ISO string Python wrote. Keeping the
-// conversion here means no handler does it by hand, and no handler can forget
-// to.
-
-/** Maps a wire step to the shape written to the `steps` JSONB array. */
-export function toStoredJobStep(step: JobStep): StoredJobStep {
-	return {
-		id: step.id,
-		name: step.name,
-		description: step.description,
-		started_at: step.startedAt === null ? null : step.startedAt.toISOString(),
-	};
-}
-
-/** Maps a step read out of the `steps` JSONB array to its wire shape. */
-export function fromStoredJobStep(stored: StoredJobStep): JobStep {
-	return {
-		id: stored.id,
-		name: stored.name,
-		description: stored.description,
-		startedAt: stored.started_at === null ? null : new Date(stored.started_at),
-	};
-}
 
 const fileName = z.string().min(1);
 
@@ -387,20 +263,36 @@ export type JobFileManifest = z.infer<typeof JobFileManifest>;
 // separate step, so a workflow cannot end in a state where the row exists and
 // the file list does not. Each payload narrows the union to the variants its own
 // domain can accept.
+//
+// Where a resource is unusable without its files, the manifest is required to
+// carry them: an empty array would flip the parent `ready` over nothing, which
+// is the state a single finalize call exists to prevent.
 
-/** Body for `PATCH /samples/{id}` — the sample finalize call. */
+/**
+ * Body for `PATCH /samples/{id}` — the sample finalize call.
+ *
+ * A `create_sample` run writes `reads_1.fq.gz` and, for a paired library,
+ * `reads_2.fq.gz`. Neither zero reads nor three is ever a valid outcome, so the
+ * bound is on the contract rather than left to the route.
+ */
 export const FinalizeSampleRequest = z.object({
 	quality: Quality,
-	files: z.array(SampleReadManifest),
+	files: z.array(SampleReadManifest).min(1).max(2),
 });
 
 export type FinalizeSampleRequest = z.infer<typeof FinalizeSampleRequest>;
 
-/** Body for `PATCH /subtractions/{id}` — the subtraction finalize call. */
+/**
+ * Body for `PATCH /subtractions/{id}` — the subtraction finalize call.
+ *
+ * The route's whitelist accepts one filename, `subtraction.fa.gz`, and rejects
+ * a duplicate, so requiring a non-empty manifest here makes the source genome
+ * exactly-once without a second check.
+ */
 export const FinalizeSubtractionRequest = z.object({
 	count: z.number().int().nonnegative(),
 	gc: NucleotideComposition,
-	files: z.array(SubtractionFileManifest),
+	files: z.array(SubtractionFileManifest).min(1),
 });
 
 export type FinalizeSubtractionRequest = z.infer<
@@ -416,6 +308,11 @@ export const FinalizeAnalysisRequest = z.object({
 	 */
 	results: JsonObject,
 
+	/**
+	 * Empty is legitimate here, unlike the other two. Pathoscope's entire output
+	 * is `results` and it retains no files; NuVs is the workflow that writes
+	 * FASTA and HMM outputs. `results` is the guard on an analysis being usable.
+	 */
 	files: z.array(AnalysisFileManifest),
 });
 

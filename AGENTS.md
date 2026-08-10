@@ -46,15 +46,29 @@ This is a **pnpm monorepo**:
   — no user, no permissions — and there is no cookie fallback; this service
   has no session model. A route carrying a **job** id in its path must
   also check it against `principal.jobId` and answer **403** on a
-  mismatch; that is the handlers' job, not the guard's. The resource
-  routes take no such check — a sample id is not a job id, and which jobs
-  may read which rows is not a question this service answers. Reaching a
+  mismatch; that is the handlers' job, not the guard's. On the resource
+  routes, **reads take no ownership check and writes do**: which jobs may
+  read which rows is not a question this service answers, but a finalize
+  may only be issued by the job that produced the row. That predicate
+  rides on the `UPDATE ... WHERE` in `@virtool/data` — each finalize takes
+  a `jobId` after the resource id — so there is no window between checking
+  and writing, and the fallback `SELECT` answers **404 → 403 → 409** in
+  that order, because a row a job does not own must not report its state.
+  `POST /caches` is exempt: a cache row is owned by no job. Reaching a
   terminal state
   (`cancelled`, `failed`, `succeeded`) is the only thing that revokes a job
   key, and **that refusal is the cancellation channel** — it is the one 401
   that is not opaque, naming the state (`Job is cancelled.`) in a JSON
   body, which is safe only because the check sits *after* the key
-  comparison. See [docs/jobs-api.md](docs/jobs-api.md).
+  comparison. The **job read path parses on the way out**: `toJob` runs
+  the response through the `Job` schema, and a row naming a workflow the
+  union does not carry is a 500 with a Sentry event naming the row —
+  the runtime's client parses with the same schema, so the alternative
+  is a `JobsApiError` at a runner that can do nothing about it. Nothing
+  else in the service validates a response. It winds down through `@virtool/service`'s
+  `createShutdownController`, with **no hooks registered** — it holds no
+  work to hand back — and `/health/ready` reports 503 from the moment
+  that flips readiness. See [docs/jobs-api.md](docs/jobs-api.md).
 - `apps/tasks/` — `@virtool/tasks`, the task service: **one** long-lived
   process carrying both halves of Virtool's task system, the periodic
   spawner and the runner that claims and executes what it spawns. Image:
@@ -68,12 +82,18 @@ This is a **pnpm monorepo**:
   registry. See [docs/tasks.md](docs/tasks.md).
 - `apps/create-subtraction/` — `@virtool/create-subtraction`, the first workflow
   executor: a one-shot process that starts, works, exits. Only its object
-  storage half is wired so far. Image: `ghcr.io/virtool/ts-create-subtraction`,
-  **Debian** — it copies binaries from `ghcr.io/virtool/tools`, which are built
-  against `python:3.13-bookworm` and cannot load under musl. It also installs
-  `perl` and `python3`, because `bowtie2` and `bowtie2-build` are interpreter
-  scripts wrapping the real binaries. The other three workflow executors get a
-  directory, a Dockerfile stage and a CI matrix entry when their port lands.
+  storage half is wired so far. It ports Python's `create_subtraction`
+  **without `build_index`**: nothing consumes a subtraction's bowtie2 shards,
+  and the jobs API's finalize route accepts only `subtraction.fa.gz`, so the
+  run decompresses the FASTA, computes `gc`/`count`, compresses and finalizes.
+  Don't port the step or the `*.bt2` upload loop back. That leaves it running
+  no external tool at all — the gzip is `@virtool/workflow`'s, in-process — so
+  the image, `ghcr.io/virtool/ts-create-subtraction`, is **Alpine** and copies
+  nothing from `ghcr.io/virtool/tools`. Reintroducing a tools binary means
+  moving the stage to Debian in the same edit, because they are built against
+  `python:3.13-bookworm` and musl cannot load them. The other three workflow
+  executors get a directory, a Dockerfile stage and a CI matrix entry when
+  their port lands.
 - `apps/workflow-pathoscope/` — the pathoscope workflow image
   (`ghcr.io/virtool/ts-pathoscope`). Holds only a `Dockerfile` today: it
   compiles `packages/pathoscope-core` and layers the `ghcr.io/virtool/tools`
@@ -95,7 +115,15 @@ This is a **pnpm monorepo**:
   - `@virtool/contracts` — cross-process data shapes, zod-validated where a
     boundary parses them
   - `@virtool/sentry` — shared Sentry option helpers (node + browser entry
-    points)
+    points), plus the pino-to-Sentry log destination every server process
+    attaches (`./log`)
+  - `@virtool/service` — the process-lifecycle pieces every long-lived
+    service shares. Today that is `createShutdownController`
+    (`./shutdown`) alone: readiness flip, LIFO hooks, listener, pool,
+    Sentry **flush**, `process.exitCode` and an `.unref()`'d backstop,
+    with every dependency injected. It is **not** a home for the probe
+    server or the metrics registries, however alike those look across
+    the three services.
   - `@virtool/storage` — object storage: the S3 and Azure backends, the
     key builders, and `MemoryStorage`
   - `@virtool/data` — the database and domain data layer: the Drizzle schema,
@@ -191,9 +219,15 @@ currently configured in another repository.
 ### When to run checks
 
 - After changing route files in `apps/web/src/routes/`: run
-  `pnpm --filter @virtool/web exec tsr generate` (or the equivalent
-  `@tanstack/router-cli generate`) to regenerate
-  `apps/web/src/routeTree.gen.ts` before running type checks.
+  `pnpm --filter @virtool/web build` to regenerate
+  `apps/web/src/routeTree.gen.ts` before running type checks. The generator is
+  `@tanstack/router-plugin`, which `tanstackStart()` wires in
+  (`apps/web/vite.config.js`). **Never `tsr generate`.** The standalone
+  `@tanstack/router-cli` has not been published past 1.167.x while the router
+  is on 1.170.x, and that older generator emits no
+  `declare module '@tanstack/react-start'` block — so it silently deletes the
+  app's `Register` types, loosening router typing everywhere with nothing
+  failing.
 - `apps/web/src/routeTree.gen.ts` is checked in. If it shows up in
   `git status` — even when it looks like unrelated drift from a
   regen — commit it alongside your other changes. Never leave it
@@ -541,6 +575,17 @@ values genuinely come out of a JSONB column, so the narrowing is honest;
 assert it once at the boundary rather than threading the type through
 every internal helper.
 
+**A column the database leaves open is narrowed in `functions.ts`, not on
+the client.** `jobs.workflow` is `text` with no CHECK constraint, so
+`data.ts` types it `string` while the SPA reads a closed union;
+`server/jobs/functions.ts` parses it onto that union on the way out and
+**bare-throws** — a 500 and a Sentry event, not a `ClientError` — when a
+row does not fit, because nothing the caller sent is wrong and this side
+owns the data. Declaring the narrow type on the client instead hides the
+disagreement from TypeScript. Annotate the query's `select` parameter
+with the shape the client parses, so what the server publishes is checked
+against it.
+
 A handler maps an expected outcome to an HTTP status with
 `setResponseStatus`, then throws `ClientError` (`@server/errors`) — never
 a plain `Error` — for any deliberate 4xx (a bad login, a missing record,
@@ -629,13 +674,31 @@ import them straight from the package.
 `data.ts` imports those types from the package and components import the
 same names straight from `@virtool/contracts` — no feature `types.ts`
 re-export (`samples/types.ts` is the worked example, keeping only its
-genuinely client-only shapes; `references/` and `indexes/` have no
-`types.ts` left at all, because every shape they had was a wire shape). A client
-`types.ts` must never import a shape from `@virtool/data` — the Biome
+genuinely client-only shapes; `references/`, `indexes/` and `jobs/` have no
+`types.ts` left at all, because every shape they had was a wire shape). A
+client `types.ts` must never import a shape from `@virtool/data` — the Biome
 override rejects it, and it would point the client at a module the server
 does not own the shape of. `data.ts` still owns what only it uses: its
 `*Values` and `*Options` argument types, its `AppError` subclasses, and
 its row mappers.
+
+**Shape the payload in `functions.ts`, and parse nothing on the client.**
+A `select` that runs a zod schema over a server function's result is a
+second declaration of a shape this app owns both ends of, free to
+disagree with the first, and it pays zod at every read. Rename a field,
+fold a nested count, narrow an open column at the boundary that publishes
+it — `server/jobs/functions.ts` is the worked example, mapping the
+`steps` and `claim` JSONB blobs with `@virtool/contracts`' shared
+`fromStoredJobStep` / `fromStoredJobClaim` rather than a second copy of
+that conversion.
+
+**A timestamp crosses as a `Date`.** Server functions serialize with
+seroval, not `JSON.stringify`, and seroval revives a `Date` as a `Date` —
+so a handler hands back the value it read out of Postgres, the contract
+types it `Date`, and no `z.coerce.date()` runs on either side. The
+exception is a timestamp stored *inside* a JSONB blob (`steps[].started_at`),
+which is column bytes Python also writes and is converted by the mappers
+above.
 
 **A feature module must never re-export a name that originates in
 `@virtool/contracts`.** Consumers import it from the package directly.
@@ -824,10 +887,16 @@ There is no request-scoped logger. `logger.child({...})` is available for
 attaching scoped context, but nothing in the server currently uses it and
 no `context.logger` exists — don't write code that assumes one.
 
-When `VT_SENTRY_DSN` is set, server logs at `info` and above are
+When a Sentry DSN is configured, server logs at `info` and above are
 forwarded to Sentry automatically (via a pino destination stream, not
 `Sentry.pinoIntegration()`); redaction still applies and dev does not
-forward.
+forward. That holds for **all three** server processes — `apps/web`,
+`apps/jobs-api` and `apps/tasks` — which share one stream,
+`createSentryLogStream` from `@virtool/sentry/log`. It takes the SDK's
+`logger` as an argument rather than importing one, because each process
+initialises a different SDK and only the one it called `init` on sends
+anything. Attach it only when a DSN is present, so the SDK graph stays
+unloaded in dev and tests.
 
 See [docs/logging.md](docs/logging.md) for the redaction
 defaults, `VT_LOG_LEVEL` resolution, where the logger singleton lives, and
@@ -941,7 +1010,10 @@ Four rules it carries:
   moment: readiness flips, hooks run LIFO, the listener closes, the pool
   drains, Sentry **flushes** (never `close()`), and `process.exitCode` is
   set for a natural drain. The backstop timer is `.unref()`'d and its
-  budget must stay under `terminationGracePeriodSeconds`.
+  budget must stay under `terminationGracePeriodSeconds`. The sequence
+  itself is `createShutdownController` from `@virtool/service/shutdown`,
+  shared with the jobs API; only the hooks and the injected
+  `closeListener` are this app's.
 
 See [docs/tasks.md](docs/tasks.md) for the full config table, the
 `AppContext` contract, the shutdown ordering and its guarantees, and the
@@ -960,6 +1032,25 @@ and migrations — TS code reads and writes against the schema Python
 defines. Mirror Python-side column defaults with Drizzle `.$defaultFn()`,
 never `.default()` — the real columns have no `server_default`, so
 `.default()` inserts `null`.
+
+**Mirror a column's constraint, and only its constraint.** A `text`
+column Python closes with a CHECK constraint is typed
+`text("state").$type<JobState>()`, with the constraint named in a comment
+— `$type` asserts rather than validates, which is exactly right when the
+database is doing the enforcing. A column with **no** constraint stays
+`string` no matter how enumerable its values look: `jobs.workflow` is one,
+Python's `Workflow` being an application-level enum, and that openness is
+what `apps/jobs-api/src/metrics/registry.ts`'s `other` folding and
+`isJobStateTerminal`'s `string` parameter exist for. Never narrow a column
+the database leaves open, and never widen one it closes. The union itself
+lives in `@virtool/contracts` — one definition, imported by the mirror.
+
+Three `pgEnum` declarations (`messagecolor`, `indextype`,
+`session_type_enum`) describe a Postgres enum where the real column is
+`text` plus a CHECK. Each carries a comment saying so. They are inert —
+nothing generates migrations from this side — so leave them alone rather
+than restructuring. `subtraction_files.type` is the opposite case and is
+genuinely backed by the `subtractiontype` enum.
 
 Postgres is now Virtool's sole data store — Python removed MongoDB
 entirely, so every domain's records live in Postgres and there is no
@@ -1217,7 +1308,19 @@ derivable. The only fixed builders left are the two HMM constants.
 fields plus the manifest, so a run cannot end with the parent flipped
 `ready` and its file rows missing. The manifest declares no `size` and no
 `name_on_disk`: the row is written with the byte count the route reads back
-from storage, which is what makes a row pointing at nothing impossible. See
+from storage, which is what makes a row pointing at nothing impossible.
+
+**A resource that is unusable without its files must carry them**, and the
+bound is on the contract in `@virtool/contracts` so the runtime cannot build
+the call: a sample sends one or two reads (`.min(1).max(2)`), a subtraction
+sends its source FASTA (`.min(1)`). An analysis manifest is legitimately
+empty — pathoscope's whole output is the `results` blob — and `results`
+being required is the guard there. A **subtraction accepts one filename,
+`subtraction.fa.gz`**, not Python's seven: nothing consumes the bowtie2
+shards, because both analysis workflows build the index locally from the
+`.fa.gz`. That is the **write** path only — subtractions Python finalized
+still have `bowtie2` rows, `GET /subtractions/{id}` keeps serving them, and
+`SubtractionFileType` keeps both members. See
 [docs/jobs-api.md](docs/jobs-api.md).
 
 `tar.ts` is `tar-stream`, not `node-tar`, because it is a pure stream

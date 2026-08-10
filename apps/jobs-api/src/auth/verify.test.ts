@@ -1,3 +1,4 @@
+import type { JobState } from "@virtool/contracts";
 import { seedUser } from "@virtool/data/auth/test/fixtures";
 import type { Db } from "@virtool/data/db/pg";
 import { jobs } from "@virtool/data/db/schema/jobs";
@@ -201,7 +202,7 @@ describe("verifyJobRequest", () => {
 	// Each names the state, which is how a runner tells a cancellation from a
 	// ping-timeout sweep from a job it already finished. That is only reachable
 	// with the right key; the tests above are what pin the other half.
-	it.each([
+	it.each<[JobState, string]>([
 		["cancelled", "Job is cancelled."],
 		["failed", "Job has failed."],
 		["succeeded", "Job has succeeded."],
@@ -283,9 +284,23 @@ describe("verifyJobRequest", () => {
 		).toEqual(REJECTED);
 	});
 
-	it("rejects a zero id", async () => {
-		await seedJob(db, userId);
+	it.each(["job-0", "job-00", "job-01"])(
+		"rejects %j as a login",
+		async (login) => {
+			await seedJob(db, userId);
 
-		expect(await verifyJobRequest(db, request("job-0", "k"))).toEqual(REJECTED);
+			expect(await verifyJobRequest(db, request(login, "k"))).toEqual(REJECTED);
+		},
+	);
+
+	// A row id has one spelling. `\d+` would let a padded login authenticate as
+	// the job it pads, which is a second, laxer id parser sitting beside
+	// `parseRowId`'s strict one.
+	it("rejects a padded id even with that job's key", async () => {
+		const job = await seedJob(db, userId);
+
+		expect(
+			await verifyJobRequest(db, request(`job-00${job.id}`, job.key)),
+		).toEqual(REJECTED);
 	});
 });

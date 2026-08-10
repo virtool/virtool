@@ -57,7 +57,6 @@
 		"@faker-js/faker": "^10.5.0",
 		"@rolldown/plugin-babel": "^0.2.3",
 		"@tailwindcss/vite": "^4.3.3",
-		"@tanstack/router-cli": "^1.167.21",
 		"@tanstack/start-storage-context": "1.167.17",
 		"@testing-library/jest-dom": "^7.0.0",
 		"@testing-library/react": "^16.3.2",

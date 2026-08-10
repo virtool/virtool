@@ -1,7 +1,7 @@
 import { screen, waitFor, within } from "@testing-library/react";
 import { createFakeAccount } from "@tests/fake/account";
 import { createFakeAnalysisMinimal } from "@tests/fake/analyses";
-import { createFakeServerJobMinimal } from "@tests/fake/jobs";
+import { createFakeJobMinimal } from "@tests/fake/jobs";
 import { createFakeSampleMinimal } from "@tests/fake/samples";
 import { mockFindAnalyses } from "@tests/server-fn/analyses";
 import { mockFindJobs } from "@tests/server-fn/jobs";
@@ -96,7 +96,7 @@ describe("<Dashboard />", () => {
 		mockFindAnalyses([
 			createFakeAnalysisMinimal({ id: 12, workflow: "pathoscope" }),
 		]);
-		mockFindJobs([createFakeServerJobMinimal({ id: 7, workflow: "nuvs" })]);
+		mockFindJobs([createFakeJobMinimal({ id: 7, workflow: "nuvs" })]);
 
 		await renderWithRouter(<Dashboard />);
 
@@ -115,7 +115,7 @@ describe("<Dashboard />", () => {
 	it("names the columns of every card's table", async () => {
 		mockFindSamples([createFakeSampleMinimal()]);
 		mockFindAnalyses([createFakeAnalysisMinimal()]);
-		mockFindJobs([createFakeServerJobMinimal()]);
+		mockFindJobs([createFakeJobMinimal()]);
 
 		await renderWithRouter(<Dashboard />);
 
@@ -138,7 +138,7 @@ describe("<Dashboard />", () => {
 	it("ends every card's table with the created time, and no attribution", async () => {
 		mockFindSamples([createFakeSampleMinimal()]);
 		mockFindAnalyses([createFakeAnalysisMinimal()]);
-		mockFindJobs([createFakeServerJobMinimal()]);
+		mockFindJobs([createFakeJobMinimal()]);
 
 		await renderWithRouter(<Dashboard />);
 
@@ -193,7 +193,7 @@ describe("<Dashboard />", () => {
 	it("accounts for the rows a card has no room for", async () => {
 		mockFindSamples([createFakeSampleMinimal()], { foundCount: 14 });
 		mockFindAnalyses([createFakeAnalysisMinimal()], 3);
-		mockFindJobs([createFakeServerJobMinimal()], 2);
+		mockFindJobs([createFakeJobMinimal()], 2);
 
 		await renderWithRouter(<Dashboard />);
 
@@ -216,7 +216,7 @@ describe("<Dashboard />", () => {
 	it("omits the overflow row when a card is showing everything", async () => {
 		mockFindSamples([createFakeSampleMinimal()]);
 		mockFindAnalyses([createFakeAnalysisMinimal()]);
-		mockFindJobs([createFakeServerJobMinimal()]);
+		mockFindJobs([createFakeJobMinimal()]);
 
 		await renderWithRouter(<Dashboard />);
 

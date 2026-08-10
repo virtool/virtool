@@ -3,13 +3,11 @@ import {
 	CreateJobClaimRequest,
 	fromStoredJobClaim,
 	fromStoredJobStep,
-	type Job,
 	type JobClaimed,
 	type JobPing,
-	type JobState,
 	type JobStepStarted,
-	type JobWorkflow,
 	toStoredJobClaim,
+	WorkflowJob,
 } from "@virtool/contracts";
 import type { Db } from "@virtool/data/db/pg";
 import {
@@ -31,7 +29,7 @@ import {
 import type { Logger } from "@virtool/logger";
 import { requireJobRequest } from "../auth/guard";
 import type { JobPrincipal } from "../auth/verify";
-import { jsonError, parseRowId } from "../http";
+import { jsonError, parseJsonBody, requireRowId } from "../http";
 
 /** What the job lifecycle handlers need to serve a request. */
 export type JobHandlerDeps = {
@@ -39,18 +37,33 @@ export type JobHandlerDeps = {
 	logger: Logger;
 };
 
-// A timestamp crosses as a `Date` and is encoded by `Response.json`, so nothing
-// here calls `toISOString`. A column that already holds a `timestamp` is passed
-// straight through; the one that holds an ISO string — `steps[].started_at`,
-// which Python writes — is converted by `fromStoredJobStep`.
-//
-// `jobs.state` and `jobs.workflow` are `text` columns, so the data layer types
-// them as plain strings and the wire types them as unions. Narrowing here rather
-// than parsing the whole response keeps a row Python wrote under a state or
-// workflow this build has never heard of serving as itself, instead of failing
-// the read with a 500 the runner can do nothing about.
-function toJob(record: JobRecord): Job {
-	return {
+/**
+ * Map a job row onto the wire, refusing to serve one that does not fit.
+ *
+ * A timestamp crosses as a `Date` and is encoded by `Response.json`, so nothing
+ * here calls `toISOString`. A column that already holds a `timestamp` is passed
+ * straight through; the one that holds an ISO string — `steps[].started_at`,
+ * which Python writes — is converted by `fromStoredJobStep`.
+ *
+ * `jobs.workflow` is a `text` column carrying no CHECK constraint, so the data
+ * layer types it as a plain string while the wire types it as a union. The
+ * response is **parsed** rather than asserted into shape, because a row naming a
+ * workflow this build has never heard of cannot be served as itself either way:
+ * the runtime's client parses what it receives with this same schema, so an
+ * unknown value is a `JobsApiError` at a runner that can do nothing about it.
+ * Parsing here puts the failure on the side that owns the data.
+ *
+ * A failure is **thrown**, not returned. `jsonError` is the shape a deliberate
+ * refusal takes, and this is a bug in the data: `app.onError` is the one place
+ * that logs it against a bounded route label, reports it to Sentry and answers
+ * `500`, so the message names the job the row belongs to.
+ *
+ * Only the two job shapes are parsed on the way out. A blanket
+ * response-validation layer would tax every response in the service for a
+ * looseness that exists on this one column.
+ */
+function toJob(record: JobRecord): WorkflowJob {
+	const parsed = WorkflowJob.safeParse({
 		id: record.id,
 		args: record.args,
 		claim: record.claim ? fromStoredJobClaim(record.claim) : null,
@@ -58,14 +71,33 @@ function toJob(record: JobRecord): Job {
 		createdAt: record.createdAt,
 		pingedAt: record.pingedAt,
 		progress: record.progress,
-		state: record.state as JobState,
+		state: record.state,
 		steps: record.steps?.map(fromStoredJobStep) ?? null,
 		user: record.user,
-		workflow: record.workflow as JobWorkflow,
-	};
+		workflow: record.workflow,
+	});
+
+	if (!parsed.success) {
+		// The field paths, never the values: a message is a Sentry title, and row
+		// content does not belong in one.
+		throw new Error(
+			`job ${record.id} does not fit the wire contract: ${parsed.error.issues
+				.map((issue) => issue.path.join("."))
+				.join(", ")}`,
+		);
+	}
+
+	return parsed.data;
 }
 
-function toJobClaimed(claimed: ClaimedJob): JobClaimed {
+// `workflow` is the claim's own parsed query parameter rather than the claimed
+// row's `string`, so nothing here re-narrows a value the handler already holds
+// correctly typed. Every other field is either a literal or already narrow, so
+// this shape needs no parse of its own.
+function toJobClaimed(
+	claimed: ClaimedJob,
+	workflow: ClaimableJobWorkflow,
+): JobClaimed {
 	return {
 		id: claimed.id,
 		acquired: true,
@@ -76,7 +108,7 @@ function toJobClaimed(claimed: ClaimedJob): JobClaimed {
 		state: "running",
 		steps: claimed.steps.map(fromStoredJobStep),
 		user: claimed.user,
-		workflow: claimed.workflow as JobWorkflow,
+		workflow,
 	};
 }
 
@@ -115,10 +147,10 @@ async function requireOwnJob(
 		return principal;
 	}
 
-	const jobId = parseRowId(jobIdParam);
+	const jobId = requireRowId(jobIdParam, "Job not found");
 
-	if (jobId === null) {
-		return jsonError(404, "Job not found");
+	if (jobId instanceof Response) {
+		return jobId;
 	}
 
 	if (jobId !== principal.jobId) {
@@ -153,24 +185,13 @@ export async function handleClaimJob(
 		return jsonError(422, "Unknown or unclaimable workflow");
 	}
 
-	let body: unknown;
+	const parsed = await parseJsonBody(request, CreateJobClaimRequest);
 
-	try {
-		body = await request.json();
-	} catch {
-		return jsonError(400, "Malformed body");
+	if (parsed instanceof Response) {
+		return parsed;
 	}
 
-	const parsed = CreateJobClaimRequest.safeParse(body);
-
-	if (!parsed.success) {
-		return Response.json(
-			{ message: "Invalid body", errors: parsed.error.issues },
-			{ status: 400 },
-		);
-	}
-
-	const { steps, ...claim } = parsed.data;
+	const { steps, ...claim } = parsed;
 
 	try {
 		const claimed = await claimJob(deps.db, workflow.data, {
@@ -183,7 +204,7 @@ export async function handleClaimJob(
 			"claimed a job",
 		);
 
-		return Response.json(toJobClaimed(claimed));
+		return Response.json(toJobClaimed(claimed, workflow.data));
 	} catch (err) {
 		if (err instanceof NoJobAvailableError) {
 			return jsonError(404, "No job available");

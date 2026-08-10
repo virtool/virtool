@@ -1,4 +1,8 @@
-import { isJobStateTerminal, type SearchResult } from "@virtool/contracts";
+import {
+	isJobStateTerminal,
+	JobState,
+	type SearchResult,
+} from "@virtool/contracts";
 import { and, asc, count, desc, eq, inArray, sql } from "drizzle-orm";
 import { hashToken, newJobKey } from "../auth/tokens";
 import type { Db, DbOrTx } from "../db/pg";
@@ -13,25 +17,13 @@ import { withTimeout } from "../db/timeout";
 import { AppError } from "../errors";
 import { emit } from "../events/emit";
 
-/** The canonical list of a job's lifecycle states. */
-export const JOB_STATES = [
-	"cancelled",
-	"failed",
-	"pending",
-	"running",
-	"succeeded",
-] as const;
-
-/** One of a job's lifecycle states. */
-export type JobState = (typeof JOB_STATES)[number];
-
 /**
  * The states a job can still leave — `pending` and `running`.
  *
  * Derived rather than written out, so it cannot fall out of step with
- * {@link JOB_STATES} or with `isJobStateTerminal`.
+ * `JobState` or with `isJobStateTerminal`.
  */
-export const NON_TERMINAL_JOB_STATES = JOB_STATES.filter(
+export const NON_TERMINAL_JOB_STATES = JobState.options.filter(
 	(state) => !isJobStateTerminal(state),
 );
 
@@ -40,8 +32,12 @@ export type JobMinimal = {
 	id: number;
 	createdAt: Date;
 	progress: number;
-	state: string;
+	state: JobState;
 	user: { id: number; handle: string };
+	/**
+	 * Deliberately open. `jobs.workflow` carries no CHECK constraint, so a row
+	 * can name a workflow this build has never heard of.
+	 */
 	workflow: string;
 };
 
@@ -55,15 +51,24 @@ export type Job = {
 	finishedAt: Date | null;
 	pingedAt: Date | null;
 	progress: number;
-	state: string;
+	state: JobState;
 	steps: JobStep[] | null;
 	user: { id: number; handle: string };
+	/** Open for the same reason as {@link JobMinimal.workflow}. */
 	workflow: string;
 };
 
-/** A page of jobs, with per-state/workflow counts attached. */
+/**
+ * A page of jobs, with per-state/workflow counts attached.
+ *
+ * Every {@link JobState} is a key, whether or not anything is queued in it, so
+ * a caller folding these into totals never has to reason about a missing one. A
+ * row naming a state outside the union is dropped rather than adding a sixth
+ * key: `jobs.state` is a `text` column, and no reader has anything to do with a
+ * bucket it cannot name.
+ */
 export type JobSearchResult = SearchResult & {
-	counts: Record<string, Record<string, number>>;
+	counts: Record<JobState, Record<string, number>>;
 	items: JobMinimal[];
 };
 
@@ -110,18 +115,24 @@ function computeProgress(state: string, steps: JobStep[] | null): number {
 
 function buildCounts(
 	rows: { state: string; workflow: string; count: number }[],
-): Record<string, Record<string, number>> {
-	const counts: Record<string, Record<string, number>> = {};
-
-	// Seed every state so empty states report 0 rather than going missing.
-	for (const state of JOB_STATES) {
-		counts[state] = {};
-	}
+): Record<JobState, Record<string, number>> {
+	// Spelled out rather than seeded from `JobState.options`, so the compiler
+	// requires a new state to be added here rather than letting the record go
+	// out with a key missing.
+	const counts: Record<JobState, Record<string, number>> = {
+		cancelled: {},
+		failed: {},
+		pending: {},
+		running: {},
+		succeeded: {},
+	};
 
 	for (const row of rows) {
-		const workflowCounts = counts[row.state] ?? {};
-		counts[row.state] = workflowCounts;
-		workflowCounts[row.workflow] = row.count;
+		const state = JobState.safeParse(row.state);
+
+		if (state.success) {
+			counts[state.data][row.workflow] = row.count;
+		}
 	}
 
 	return counts;

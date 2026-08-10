@@ -1,3 +1,4 @@
+import type { JobState } from "@virtool/contracts";
 import { seedUser } from "@virtool/data/auth/test/fixtures";
 import type { Db } from "@virtool/data/db/pg";
 import { jobs } from "@virtool/data/db/schema/jobs";
@@ -9,6 +10,7 @@ import {
 } from "@virtool/data/db/test/fixtures";
 import { emit } from "@virtool/data/events/emit";
 import { createLogger } from "@virtool/logger";
+import { MemoryStorage } from "@virtool/storage";
 import { eq } from "drizzle-orm";
 import {
 	afterAll,
@@ -20,7 +22,9 @@ import {
 	vi,
 } from "vitest";
 
+import { createApp } from "../app";
 import { type SeededJob, seedJob } from "../auth/test/fixtures";
+import { createMetrics } from "../metrics/registry";
 import {
 	handleClaimJob,
 	handleFinishJob,
@@ -123,11 +127,32 @@ function seedPending(options: { workflow?: string; createdAt?: Date } = {}) {
 }
 
 /** A job mid-run, with a step list a runner can start steps against. */
-function seedRunning(options: { state?: string } = {}) {
+function seedRunning(options: { state?: JobState } = {}) {
 	return seedJob(db, userId, {
 		steps: STEPS.map((step) => ({ ...step, started_at: null })),
 		workflow: "pathoscope",
 		...options,
+	});
+}
+
+/**
+ * The whole app over the test database.
+ *
+ * A row that does not fit the wire contract is a thrown error rather than a
+ * returned refusal, so what it becomes — a JSON 500 and a Sentry event — is only
+ * visible through `app.onError`.
+ */
+function appWith(captureException: (err: unknown) => void) {
+	return createApp({
+		client: database.client,
+		db,
+		storage: new MemoryStorage(),
+		logger,
+		metrics: createMetrics(10),
+		applicationName: "virtool-ts-jobs-api@test",
+		metricsToken: undefined,
+		isReady: () => true,
+		captureException,
 	});
 }
 
@@ -389,6 +414,53 @@ describe("handleReadJob", () => {
 		).json();
 
 		expect(body.args.subtraction_id).toBeDefined();
+	});
+});
+
+// `jobs.workflow` is a `text` column with no CHECK constraint behind it, so a
+// row can name a workflow this build has never heard of. The runner parses the
+// response with the same schema and could do nothing with the failure, so the
+// read fails here instead — where the data is owned and the row can be named.
+describe("the job wire contract", () => {
+	it("serves a row that fits it", async () => {
+		const job = await seedRunning();
+		const captureException = vi.fn();
+
+		const response = await appWith(captureException).request(
+			authorized(job, `/jobs/${job.id}`),
+		);
+
+		expect(response.status).toBe(200);
+		expect((await response.json()).workflow).toBe("pathoscope");
+		expect(captureException).not.toHaveBeenCalled();
+	});
+
+	it("answers 500 and reports the row for one that does not", async () => {
+		const job = await seedRunning();
+
+		await db
+			.update(jobs)
+			.set({ workflow: "not_a_workflow" })
+			.where(eq(jobs.id, job.id));
+
+		const captureException = vi.fn();
+
+		const response = await appWith(captureException).request(
+			authorized(job, `/jobs/${job.id}`),
+		);
+
+		expect(response.status).toBe(500);
+		expect(await response.json()).toEqual({ message: "Internal server error" });
+
+		// The event has to name the job, or an operator has a schema complaint and
+		// no row to go and look at.
+		expect(captureException).toHaveBeenCalledWith(
+			expect.objectContaining({
+				message: expect.stringMatching(
+					new RegExp(`job ${job.id} does not fit the wire contract: workflow`),
+				),
+			}),
+		);
 	});
 });
 

@@ -10,9 +10,10 @@ let forceDateHarnessRender: () => void;
 
 /**
  * Re-renders in place, handing `RelativeTime` a fresh `Date` instance each time,
- * the way jobs data does — `jobs/types.ts` parses timestamps with
- * `z.coerce.date()`. `rerender()` cannot stand in for this: it re-renders the
- * unwrapped element, which remounts the tree rather than re-rendering it.
+ * the way a refetched server function does — every response is deserialized on
+ * its own, so an unchanged timestamp still arrives as a new `Date`.
+ * `rerender()` cannot stand in for this: it re-renders the unwrapped element,
+ * which remounts the tree rather than re-rendering it.
  */
 function DateHarness() {
 	const [, setRenderCount] = useState(0);

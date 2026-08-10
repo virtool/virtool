@@ -18,6 +18,7 @@
 		"@virtool/data": "workspace:*",
 		"@virtool/logger": "workspace:*",
 		"@virtool/sentry": "workspace:*",
+		"@virtool/service": "workspace:*",
 		"@virtool/storage": "workspace:*",
 		"pino": "^10.1.0",
 		"postgres": "^3.4.9",

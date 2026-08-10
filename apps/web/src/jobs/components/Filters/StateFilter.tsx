@@ -1,8 +1,7 @@
 import BoxGroup from "@base/BoxGroup";
 import SideBarSection from "@base/SideBarSection";
 import SidebarHeader from "@base/SidebarHeader";
-import type { JobCounts } from "@jobs/types";
-import type { JobState } from "@virtool/contracts";
+import type { JobCounts, JobState } from "@virtool/contracts";
 import { xor } from "es-toolkit";
 import { StateButton } from "./StateButton";
 

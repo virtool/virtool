@@ -84,6 +84,12 @@ export class AnalysisNotFoundError extends AppError {}
 /** Thrown when an analysis has already been finalized. */
 export class AnalysisAlreadyFinalizedError extends AppError {}
 
+/**
+ * Thrown when a job tries to finalize an analysis that is not the one it was
+ * started for.
+ */
+export class AnalysisNotOwnedError extends AppError {}
+
 /** Thrown when an operation requires a finished analysis and it is still running. */
 export class AnalysisRunningError extends AppError {}
 
@@ -661,10 +667,17 @@ export async function createAnalysis(
  * Record an analysis's results and the files a workflow retained, and flip it
  * ready.
  *
- * The update is conditional on `ready = false` and its row count checked, so a
- * retry or a racing second call is an {@link AnalysisAlreadyFinalizedError}
- * rather than a duplicated file set. An analysis that does not exist is an
- * {@link AnalysisNotFoundError}.
+ * The update is conditional on `job_id = jobId AND ready = false` and its row
+ * count checked, so a retry or a racing second call is an
+ * {@link AnalysisAlreadyFinalizedError} rather than a duplicated file set. An
+ * analysis that does not exist is an {@link AnalysisNotFoundError}, and one
+ * started for another job — or for no job at all — is an
+ * {@link AnalysisNotOwnedError}.
+ *
+ * The ownership predicate rides on the `UPDATE` rather than a read before it, so
+ * there is no window between the check and the write, and the fallback `SELECT`
+ * answers in the order gone, then not yours, then already done — an analysis a
+ * job does not own never reports its state.
  *
  * `name_on_disk` is unique across the table and is minted here rather than sent:
  * a uuid prefix, following the `createUpload` precedent, instead of Python's
@@ -677,6 +690,7 @@ export async function createAnalysis(
 export async function finalizeAnalysis(
 	db: Db,
 	analysisId: number,
+	jobId: number,
 	values: FinalizeAnalysisValues,
 ): Promise<Analysis> {
 	const sampleId = await db.transaction(async (tx) => {
@@ -685,18 +699,28 @@ export async function finalizeAnalysis(
 		const [updated] = await tx
 			.update(analyses)
 			.set({ ready: true, results: values.results, updated_at: now })
-			.where(and(eq(analyses.id, analysisId), eq(analyses.ready, false)))
+			.where(
+				and(
+					eq(analyses.id, analysisId),
+					eq(analyses.job_id, jobId),
+					eq(analyses.ready, false),
+				),
+			)
 			.returning({ sampleId: analyses.sample_id });
 
 		if (!updated) {
 			const [row] = await tx
-				.select({ id: analyses.id })
+				.select({ jobId: analyses.job_id })
 				.from(analyses)
 				.where(eq(analyses.id, analysisId))
 				.limit(1);
 
 			if (!row) {
 				throw new AnalysisNotFoundError();
+			}
+
+			if (row.jobId !== jobId) {
+				throw new AnalysisNotOwnedError();
 			}
 
 			throw new AnalysisAlreadyFinalizedError();

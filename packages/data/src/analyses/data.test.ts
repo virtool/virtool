@@ -1,3 +1,4 @@
+import type { JobState } from "@virtool/contracts";
 import { MemoryStorage, type StorageBackend } from "@virtool/storage";
 import { eq } from "drizzle-orm";
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
@@ -733,7 +734,7 @@ describe("deleteAnalysis", () => {
 		).rejects.toBeInstanceOf(AnalysisNotFoundError);
 	});
 
-	it.each(["pending", "running"])(
+	it.each<JobState>(["pending", "running"])(
 		"refuses an analysis whose job is %s",
 		async (state) => {
 			const analysisId = await seedAnalysisOnNewSample({
@@ -754,7 +755,7 @@ describe("deleteAnalysis", () => {
 	// A workflow pod that is OOM-killed or evicted never finalizes its analysis,
 	// so the row stays unready forever. Deletion has to follow the job, not
 	// `ready`, or nothing can ever clean these up.
-	it.each(["cancelled", "failed", "succeeded"])(
+	it.each<JobState>(["cancelled", "failed", "succeeded"])(
 		"deletes an unready analysis whose job is %s",
 		async (state) => {
 			const analysisId = await seedAnalysisOnNewSample({

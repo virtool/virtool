@@ -2,6 +2,7 @@
 // service via Alembic. Do not generate or push migrations from this side. Keep
 // the columns in sync with `../../../../../../virtool/virtool/uploads/sql.py`.
 
+import type { UploadType } from "@virtool/contracts";
 import {
 	bigint,
 	boolean,
@@ -34,7 +35,11 @@ export const uploads = pgTable("uploads", {
 	// backfilled from `name_on_disk`, which is itself nullable: a row without one
 	// names no retrievable object.
 	storageKey: text("storage_key").unique(),
-	type: text("type"),
+	// `text`, closed by the `ck_uploads_type` CHECK constraint. `$type` asserts
+	// rather than validates, which is what that constraint makes safe. The
+	// `hmm` member the old `uploadtype` enum carried is gone: the migration that
+	// replaced the enum deleted those rows.
+	type: text("type").$type<UploadType>(),
 	uploadedAt: timestamp("uploaded_at"),
 	userId: integer("user_id")
 		.notNull()

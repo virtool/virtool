@@ -6,6 +6,7 @@ import { Hono } from "hono";
 import { routePath } from "hono/route";
 import { handleFinalizeAnalysis, handleGetAnalysis } from "./analyses/handlers";
 import { handleGetCache, handleRegisterCache } from "./caches/handlers";
+import { jsonError } from "./http";
 import { handleGetIndex } from "./indexes/handlers";
 import {
 	handleClaimJob,
@@ -65,6 +66,22 @@ export type AppDeps = {
 	metrics: Metrics;
 	applicationName: string;
 	metricsToken: string | undefined;
+	/**
+	 * Whether this process is still accepting work.
+	 *
+	 * Flipped to `false` the moment shutdown begins, so `/health/ready` reports
+	 * 503 while the listener is still up to say so.
+	 */
+	isReady: () => boolean;
+	/**
+	 * Report an unhandled error to Sentry.
+	 *
+	 * Injected rather than imported so `app.ts` carries no dependency on
+	 * `@sentry/node` — the SDK's graph stays out of the test path, and "did we
+	 * report it?" is assertable with a `vi.fn()`. Optional because a test app
+	 * has nothing to report to.
+	 */
+	captureException?: (err: unknown) => void;
 };
 
 /**
@@ -99,17 +116,55 @@ export function createApp(deps: AppDeps): Hono {
 			deps.metrics.recordHttpRequest({
 				method: c.req.method,
 				route: routePath(c, -1),
-				// A thrown handler leaves no status behind. `"error"` is a bounded
-				// sentinel and keeps the counter's total honest either way.
-				status: c.error ? "error" : String(c.res.status),
+				// `c.res` is a lazy getter that mints an empty 200 when nothing has
+				// set a response, so reading it unconditionally counts a request that
+				// crashed as one that succeeded. `c.finalized` is what says a response
+				// was actually set, and it is the whole gate: a handler that throws an
+				// `Error` is caught by Hono's `compose`, which calls `app.onError` and
+				// finalizes its 500 before `next()` resolves — so that request is
+				// labelled `"500"`, which is what the caller saw.
+				//
+				// What is left for the `"error"` sentinel is a request that produced no
+				// response at all. A non-`Error` throw is the one that gets there:
+				// `compose` rethrows it without setting `c.error` and without reaching
+				// `onError`, whose guard is `err instanceof Error`. The sentinel is
+				// bounded, and it keeps the counter's total honest.
+				status: c.finalized ? String(c.res.status) : "error",
 				durationSeconds: (performance.now() - start) / 1000,
 			});
 		}
 	});
 
+	// Hono catches a thrown handler itself, so the error never reaches Node's
+	// `uncaughtException` and the Sentry SDK's global handlers never see it.
+	// Without this the only trace of a bug in a route is Hono's default
+	// `console.error` and a plain-text 500: no pino line, and nothing in Sentry.
+	//
+	// The route label is `routePath(c, -1)` for the same reason the metrics
+	// middleware uses it — the registered pattern, never the request path, which
+	// carries ids.
+	app.onError((err, c) => {
+		deps.logger.error(
+			{ err, method: c.req.method, route: routePath(c, -1) },
+			"unhandled error",
+		);
+
+		deps.captureException?.(err);
+
+		return jsonError(500, "Internal server error");
+	});
+
 	app.get("/health/live", (c) => c.json({ status: "alive" }));
 
+	// Reports 503 from the moment shutdown begins, before the listener closes and
+	// without querying, so the kubelet takes the pod out of the Service's
+	// endpoints while there is still something there to answer. A claim that
+	// arrived after that would be held by a process on its way out.
 	app.get("/health/ready", async (c) => {
+		if (!deps.isReady()) {
+			return c.json({ status: "unavailable", checks: {} }, 503);
+		}
+
 		const report = summarizeReadiness(
 			await checkPostgres(deps.client, deps.logger),
 		);

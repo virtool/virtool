@@ -1,3 +1,4 @@
+import type { JobState } from "@virtool/contracts";
 import { seedUser } from "@virtool/data/auth/test/fixtures";
 import type { Db } from "@virtool/data/db/pg";
 import { jobs } from "@virtool/data/db/schema/jobs";
@@ -34,7 +35,7 @@ beforeEach(async () => {
 
 async function seedQueuedJob(
 	workflow: string,
-	state: string,
+	state: JobState,
 	ageSeconds = 0,
 ): Promise<void> {
 	await db.insert(jobs).values({

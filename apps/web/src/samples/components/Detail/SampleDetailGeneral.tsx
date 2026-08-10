@@ -41,14 +41,14 @@ export default function SampleDetailGeneral({
 	return (
 		<div className="flex items-stretch">
 			<ContainerNarrow>
-				{!data.ready && data.job && (
+				{!data.ready && job && (
 					<BoxGroup>
 						<JobItem
-							id={data.job.id}
-							workflow={job?.workflow}
-							state={job?.state}
-							progress={job?.progress}
-							createdAt={job?.createdAt}
+							id={job.id}
+							workflow={job.workflow}
+							state={job.state}
+							progress={job.progress}
+							createdAt={job.createdAt}
 							user={data.user}
 						/>
 					</BoxGroup>

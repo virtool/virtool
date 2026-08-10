@@ -1,3 +1,4 @@
+import type { JobState } from "@virtool/contracts";
 import { seedUser } from "@virtool/data/auth/test/fixtures";
 import type { Db } from "@virtool/data/db/pg";
 import { jobs } from "@virtool/data/db/schema/jobs";
@@ -97,7 +98,7 @@ describe("requireJobRequest", () => {
 	// The runner's only channel. A ping refused with three indistinguishable
 	// 401s leaves a cancellation, a ping-timeout sweep and a broken credential
 	// looking the same in the logs of a pod that has just stopped working.
-	it.each([
+	it.each<[JobState, string]>([
 		["cancelled", "Job is cancelled."],
 		["failed", "Job has failed."],
 		["succeeded", "Job has succeeded."],

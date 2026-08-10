@@ -155,6 +155,34 @@ Dockerfile stage and a CI matrix entry — the one deliberate exception.
 The remaining three workflow executors get their directory, Dockerfile
 stage and matrix entry when their port lands.
 
+### `create_subtraction` is ported without `build_index`
+
+Python's workflow has four steps — decompress the source FASTA, compute
+`gc` and `count`, build a bowtie2 index, then compress the FASTA, upload
+it alongside `bowtie_index_path.glob("*.bt2")` and finalize. **The port
+drops the third step and that glob**, and the decision is settled rather
+than pending.
+
+Nothing consumes the shards. Both analysis workflows build a
+subtraction's bowtie2 index locally from the `.fa.gz` and memoize it
+through their own workflow cache, and `WFSubtraction.bowtie2_index_path`
+is defined and never read — so the shards are written by one workflow
+and read by none. The jobs API's `PATCH /subtractions/{id}` whitelists
+`subtraction.fa.gz` and nothing else, so a manifest carrying a shard is
+refused: a port that kept the step could not finalize.
+
+What is left runs **no external process**. `decompressFile`,
+`compressFile` and `isGzipped` in `@virtool/workflow`'s `files/`
+deliberately do not shell out to `pigz` — they are `node:zlib` streams,
+because Python's `pigz` branch exists for parallelism and checksums are
+taken over decompressed content, so the gzip bytes need not match. The
+`gc`/`count` step is a scan over the decompressed FASTA. Transfers are
+`downloadToPath` / `uploadFromPath` against the storage backend.
+
+That is the whole reason this image is Alpine rather than Debian, and it
+is the chain to re-check before reintroducing a step: a workflow that
+runs a tool binary needs the glibc base back.
+
 ## Images
 
 Both kinds of app get a build stage and a runtime stage in the root
@@ -180,33 +208,40 @@ TypeScript package appears.
 `apps/web` then does not invalidate the jobs-api image's cache, and the
 install layer stays untouched when an app is added.
 
-**The runtime base differs by app, and the difference is not cosmetic:**
+**The runtime base is decided by one question: does the app run a
+binary from `ghcr.io/virtool/tools`?**
 
-- `apps/jobs-api` runs on `node:24-alpine`. It needs no bioinformatics
-  tools, so it copies nothing from the tools image and pays none of
-  Debian's size.
-- Workflow apps run on `node:24-bookworm-slim`. They
-  `COPY --from=ghcr.io/virtool/tools`, and those binaries are built
-  against `python:3.13-bookworm` and dynamically linked against glibc.
-  Alpine is musl and could not load them. Do not move a workflow image to
-  Alpine for uniformity, and do not move `apps/jobs-api` to Debian for it
-  either.
+- **No** — `node:24-alpine`. `apps/jobs-api`, `apps/tasks` and
+  `apps/create-subtraction` all copy nothing from the tools image, so
+  none of them pays Debian's size. Do not move one to Debian for
+  uniformity with a workflow image.
+- **Yes** — `node:24-bookworm-slim`. Those binaries are built against
+  `python:3.13-bookworm` and dynamically linked against glibc; Alpine is
+  musl and could not load them. `apps/workflow-pathoscope`, which has its
+  own Dockerfile, is the worked example. Do not move a tools-carrying
+  image to Alpine for uniformity either.
 
-**Not every tool in that image is a binary,** so a workflow image also
-installs `perl` and `python3`. `bowtie2-build` is a python3 script that
-picks between the real `bowtie2-build-s` and `bowtie2-build-l` by index
-size; `bowtie2` is a perl one. Neither package can be trimmed:
+Being a workflow does not by itself answer the question — a workflow
+whose steps are all in-process belongs on Alpine. Adding a
+`COPY --from=ghcr.io/virtool/tools` line to an Alpine stage means moving
+that stage to Debian in the same edit.
+
+**Not every tool in that image is a binary,** so a Debian stage usually
+installs interpreters too. `bowtie2-build` is a python3 script that picks
+between the real `bowtie2-build-s` and `bowtie2-build-l` by index size;
+`bowtie2` is a perl one. Neither package can be trimmed:
 `python3-minimal` omits the stdlib and `bowtie2-build` dies on
-`import gzip`, and the base image's `perl-base` omits `Sys::Hostname`,
-which `bowtie2` needs. The alternative — calling the `-s`/`-l` binaries
+`import gzip`, and a slim base's `perl-base` omits `Sys::Hostname`, which
+`bowtie2` needs. The alternative — calling the `-s`/`-l` binaries
 directly and porting bowtie2's own size heuristic — belongs with a
 workflow, not with the base image every workflow shares.
 
 Check a new tool's entry point rather than assuming it is an ELF:
 `docker run --rm --entrypoint sh <image> -c 'head -1 /tools/<tool>/...'`.
 
-The workflow build stage still runs on the Alpine `base`, which is safe
-only because the deployed tree carries no native addon. Check
+Every build stage runs on the Alpine `base`, including one whose runtime
+stage is Debian, which is safe only because the deployed tree carries no
+native addon. Check
 `find /prod/<app> -name '*.node'` before adding a dependency that might.
 (`bcrypt`, which reaches `apps/jobs-api` through `@virtool/data`, ships
 prebuilds for both libc flavours, so it is not a counterexample.)

@@ -1,5 +1,6 @@
 import { randomBytes } from "node:crypto";
 
+import type { JobState } from "@virtool/contracts";
 import { hashToken } from "@virtool/data/auth/tokens";
 import type { Db } from "@virtool/data/db/pg";
 import { type JobStep, jobs } from "@virtool/data/db/schema/jobs";
@@ -9,7 +10,7 @@ export type SeedJobOptions = {
 	/** Backdates the row, so a test can pin which of several jobs a claim takes. */
 	createdAt?: Date;
 	/** One of the job lifecycle states. `running` unless a test needs another. */
-	state?: string;
+	state?: JobState;
 	/** The `steps` JSONB array. Null, as it is before a claim, unless given. */
 	steps?: JobStep[];
 	/** Leave `key` null, as it is on a job nobody has claimed. */

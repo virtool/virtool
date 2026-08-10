@@ -8,12 +8,13 @@ import {
 } from "@virtool/data/db/pg";
 import { createEmitter } from "@virtool/data/events/emit";
 import { createLogger, type Logger } from "@virtool/logger";
+import { createSentryLogStream } from "@virtool/sentry/log";
+import { createShutdownController } from "@virtool/service/shutdown";
 import { createStorageBackend, type StorageBackend } from "@virtool/storage";
 import { parseTasksConfig, type TasksConfig } from "./config";
 import { initSentry, SERVICE } from "./instrument";
 import { createMetrics } from "./metrics/registry";
 import { createProbeServer } from "./probes";
-import { createShutdownController } from "./shutdown";
 
 /** How long Sentry may spend flushing buffered envelopes, in milliseconds. */
 const SENTRY_FLUSH_TIMEOUT = 2_000;
@@ -96,7 +97,20 @@ export async function bootstrap(
 
 	const sentry = initSentry(config.sentryDsn);
 
-	const logger = createLogger({ name: SERVICE });
+	// With a DSN configured the logger fans `info`-and-above records out to
+	// Sentry's structured logging API as well as stdout. Without one there is no
+	// stream, so an unconfigured deploy pays nothing and logs nowhere but stdout.
+	const logger = createLogger({
+		name: SERVICE,
+		streams: sentry.enabled
+			? [
+					{
+						level: "info" as const,
+						stream: createSentryLogStream(Sentry.logger),
+					},
+				]
+			: undefined,
+	});
 
 	logger.info(
 		{ environment: sentry.environment, foundSentryDsn: sentry.enabled },

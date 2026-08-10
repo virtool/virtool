@@ -20,6 +20,14 @@ import { logger } from "@server/logger";
 logger.info({ userId }, "login");
 ```
 
+The other server processes build theirs the same way but from their own
+config, because their DSN has been through `<KEY>_FILE` resolution:
+`apps/jobs-api/src/logger.ts` exports `createAppLogger(sentryDsn)` and
+`index.ts` calls it once, and `apps/tasks` builds its logger inside
+`bootstrap()` along with everything else that app owns. All three name
+themselves after the service — `web`, `jobs-api`, `tasks` — matching the
+Sentry `service` tag and the Postgres `application_name` segment.
+
 Pass structured fields as the first arg, message as the second — never
 interpolate values into the message string, that defeats the redaction
 list and makes records ungreppable.
@@ -67,37 +75,64 @@ needs to censor additional fields.
 
 ## Sentry forwarding
 
-When `VT_SENTRY_DSN` is set, the server logger fans `info`-and-above
+When a Sentry DSN is configured, a server logger fans `info`-and-above
 records out to Sentry's structured logging API (`Sentry.logger`) in
 addition to stdout. `debug` and `trace` stay stdout-only. The threshold
-is the `level` of the Sentry stream in `apps/web/src/server/logger.ts`.
-There is no per-call-site wiring: every record at or above that
-threshold is forwarded automatically.
+is the `level` of the Sentry stream where the logger is built. There is
+no per-call-site wiring: every record at or above that threshold is
+forwarded automatically.
 
-This is a plain pino destination stream
-(`apps/web/src/server/sentryLog.ts`), **not**
+**All three server processes do this**, off one shared stream —
+`createSentryLogStream` from `@virtool/sentry/log`. Before it was lifted
+into the package it lived in `apps/web` and imported
+`@sentry/tanstackstart-react`, which is why `apps/jobs-api` and
+`apps/tasks` had no forwarding at all and even a deliberate
+`logger.error` in those services went to stdout alone.
+
+The stream **takes the SDK's `logger` as an argument** rather than
+importing one. Each process initialises a different SDK —
+`@sentry/tanstackstart-react` in `apps/web`, `@sentry/node` in the other
+two — and only the one a process actually called `init` on will send
+anything, so importing a fixed SDK here would either forward through an
+uninitialised client or drag a second SDK into every bundle.
+
+This is a plain pino destination stream, **not**
 `Sentry.pinoIntegration()`. The integration patches the `pino` module at
 load time via `import-in-the-middle`, but the production server is bundled
-(Nitro inlines pino into the server chunks), so there is no module
-boundary left to patch. A destination stream needs no patching — pino
-hands it each serialised record directly.
+(Nitro inlines pino into the server chunks, tsdown inlines it into the
+other apps'), so there is no module boundary left to patch. A destination
+stream needs no patching — pino hands it each serialised record directly.
 
-Wiring:
+Wiring, per process:
 
-- `apps/web/src/instrument.server.ts` calls `Sentry.init` (with
-  `enableLogs: true`, from `@virtool/sentry`'s `getCommonOptions`). It is
-  imported for its side effect at the top of `apps/web/src/server.ts`.
-- `apps/web/src/server/logger.ts` adds the Sentry stream to the logger
-  only when a DSN is present, via `@virtool/logger`'s `streams` option.
-  The `@sentry/*` SDK is loaded lazily (dynamic `import`) so it is never
-  pulled in when no DSN is configured.
+- **`apps/web`** — `src/instrument.server.ts` calls `Sentry.init` (with
+  `enableLogs: true`, from `@virtool/sentry`'s `getCommonOptions`), imported
+  for its side effect at the top of `src/server.ts`. `src/server/logger.ts`
+  adds the stream only when `readDsn()` returns one, via `@virtool/logger`'s
+  `streams` option, and pulls in `@sentry/tanstackstart-react` with a dynamic
+  `import` so the SDK is never loaded without a DSN.
+- **`apps/jobs-api`** — `src/index.ts` calls `createAppLogger(config.sentryDsn)`
+  and then `initSentry(config.sentryDsn, logger)`. The DSN comes from
+  `config.ts`, which has already resolved the `<KEY>_FILE` variant that
+  `readDsn` would skip. The logger is built first because everything below it
+  logs; the two lines `initSentry` itself writes are therefore stdout-only.
+- **`apps/tasks`** — `bootstrap()` initialises Sentry first, then builds the
+  logger with the stream attached when `sentry.enabled`. Nothing in that app
+  is constructed at import time, so there is no logger to reconfigure later.
+
+The `@sentry/node` apps do not need the dynamic import the web app uses:
+they are started with `node --import @sentry/node/preload` and the SDK is
+in the graph regardless. Attaching no stream without a DSN still matters —
+records would otherwise be serialised and handed to a client that drops
+them.
 
 Redaction still applies. pino runs `DEFAULT_REDACT_PATHS` redaction before
 writing to any destination, so the records the Sentry stream receives
 already have `password` / `token` / `secret` / `authorization` / `cookie`,
 the session-credential fields (`sessionToken` / `session_token` /
 `tokenHash` / `resetCode`), and the `req.headers.*` / `headers.*` variants
-replaced with `[redacted]`.
+replaced with `[redacted]`. `packages/sentry/src/log.test.ts` pins that by
+driving a real `createLogger` through the stream.
 
-Dev does not forward. The Tilt dev container runs Vite with no DSN, so the
-logger stays stdout-only and the Sentry SDK is never loaded.
+Dev does not forward. The Tilt dev container runs with no DSN, so every
+logger stays stdout-only and the web app's Sentry SDK is never loaded.

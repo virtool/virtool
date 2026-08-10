@@ -42,15 +42,22 @@ const TERMINAL_REFUSALS: Record<string, string> = {
  * would otherwise resolve the very row `job-1` is refused. Nothing here is
  * case-folded — the login is not a handle, it is a literal prefix and an id —
  * so `JOB-1` is simply not a job login and gets the same 401 as anything else.
+ *
+ * The digits are `[1-9]\d*` rather than `\d+`, which is the same spelling
+ * `parseRowId` uses: one row id has one spelling. `\d+` let `job-007`
+ * authenticate as job 7, harmless in itself but a second, laxer id parser
+ * sitting beside the strict one. It also rejects `job-0` before the range
+ * screen ever sees it.
  */
-const JOB_LOGIN = /^job-(\d+)$/;
+const JOB_LOGIN = /^job-([1-9]\d*)$/;
 
 /**
  * The largest value `jobs.id` can hold — it is a Postgres `integer`.
  *
- * `\d+` matches arbitrarily many digits, so without this an unauthenticated
- * caller could send `job-99999999999` and get a range error out of the driver:
- * a 500, and a stack frame in Sentry, for what is only a bad credential.
+ * {@link JOB_LOGIN} matches arbitrarily many digits, so without this an
+ * unauthenticated caller could send `job-99999999999` and get a range error out
+ * of the driver: a 500, and a stack frame in Sentry, for what is only a bad
+ * credential.
  */
 const MAX_JOB_ID = 2_147_483_647;
 
@@ -186,7 +193,10 @@ export async function verifyJobRequest(
 
 	const jobId = Number(digits);
 
-	if (jobId < 1 || jobId > MAX_JOB_ID) {
+	// Only the upper bound is screened here. The lower one is the pattern's:
+	// `[1-9]\d*` cannot match `0` or a leading zero, so anything reaching this
+	// line is already at least 1.
+	if (jobId > MAX_JOB_ID) {
 		return REJECTED;
 	}
 

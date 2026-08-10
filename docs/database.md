@@ -46,6 +46,53 @@ injects the value client-side at insert time (the true analog of
 SQLAlchemy's `default=`) and stays out of the DDL. Reserve `.default()`
 for a column that genuinely has a `server_default` in Python.
 
+### Column constraints: mirror them, and only them
+
+The mirror's one job is fidelity, so a column's TypeScript type has to
+say exactly what the database enforces — no more and no less.
+
+**Closed by a CHECK constraint → `.$type<Union>()`.** Python spells
+several enumerations as a `text` column plus a `CheckConstraint`, so a
+value outside the union cannot reach the column without an Alembic
+migration. `$type` is an *assertion*, not validation, which is precisely
+what the constraint makes safe. Name the constraint in a comment so the
+next reader can check the claim:
+
+```ts
+// `text`, closed by the `ck_jobs_state` CHECK constraint. `$type` asserts
+// rather than validates, which is what that constraint makes safe.
+state: text("state").$type<JobState>().notNull(),
+```
+
+The constrained columns today are `jobs.state` (`ck_jobs_state`),
+`uploads.type` (`ck_uploads_type`), `instance_messages.color`
+(`ck_instance_messages_color`), `index_files.type`
+(`ck_index_files_type`) and `sessions.session_type`
+(`session_type_valid`).
+
+**Unconstrained → `string`.** `jobs.workflow` has no CHECK constraint;
+Python's `Workflow` is an application-level enum only. So a row can name
+a workflow this build has never heard of, and narrowing the column would
+be a lie that reads clean and then hands a runner a `JobsApiError` it can
+do nothing about. That openness is load-bearing: it is why the jobs API's
+metrics registry folds an unrecognised workflow into `other`, and why
+`isJobStateTerminal` takes a plain `string`.
+
+**The union lives in `@virtool/contracts`.** The mirror imports it; it
+does not declare its own copy. `packages/data` previously carried a
+second `JOB_STATES`/`JobState` beside the contracts one — two definitions
+of the same five strings, free to disagree.
+
+**Three `pgEnum` declarations are historical.** `messagecolor`,
+`indextype` and `session_type_enum` describe a Postgres enum type that
+upstream replaced with `text` plus a CHECK constraint. The values are
+still right, and nothing generates migrations from this side, so the
+mismatch never reaches a real database — each carries a comment saying
+so, and none should be restructured. `subtraction_files.type` is the
+opposite case and is easy to mistake for a fourth: the `subtractiontype`
+enum was *never* replaced, so that column really is a native Postgres
+enum and its `$type` is backed.
+
 ## What the TS server can reach today
 
 Every domain's records live in Postgres; MongoDB is gone. So what gates

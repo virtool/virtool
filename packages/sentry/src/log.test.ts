@@ -1,7 +1,8 @@
 import { createLogger } from "@virtool/logger";
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import { createSentryLogStream } from "./log";
 
-const logger = {
+const sentry = {
 	trace: vi.fn(),
 	debug: vi.fn(),
 	info: vi.fn(),
@@ -10,28 +11,24 @@ const logger = {
 	fatal: vi.fn(),
 };
 
-vi.mock("@sentry/tanstackstart-react", () => ({ logger }));
-
-const { createSentryLogStream } = await import("../sentryLog");
-
 describe("createSentryLogStream", () => {
 	beforeEach(() => {
-		for (const fn of Object.values(logger)) {
+		for (const fn of Object.values(sentry)) {
 			fn.mockClear();
 		}
 	});
 
 	it("forwards a record to the Sentry method matching its level", () => {
-		const stream = createSentryLogStream();
+		const stream = createSentryLogStream(sentry);
 
 		stream.write(`${JSON.stringify({ level: 40, msg: "watch out" })}\n`);
 
-		expect(logger.warn).toHaveBeenCalledTimes(1);
-		expect(logger.warn).toHaveBeenCalledWith("watch out", expect.anything());
+		expect(sentry.warn).toHaveBeenCalledTimes(1);
+		expect(sentry.warn).toHaveBeenCalledWith("watch out", expect.anything());
 	});
 
 	it("passes structured fields as attributes and drops the pino envelope", () => {
-		const stream = createSentryLogStream();
+		const stream = createSentryLogStream(sentry);
 
 		stream.write(
 			`${JSON.stringify({
@@ -45,11 +42,11 @@ describe("createSentryLogStream", () => {
 			})}\n`,
 		);
 
-		expect(logger.info).toHaveBeenCalledWith("login", { userId: "u1" });
+		expect(sentry.info).toHaveBeenCalledWith("login", { userId: "u1" });
 	});
 
 	it("forwards already-redacted secret fields from a real logger", () => {
-		const stream = createSentryLogStream();
+		const stream = createSentryLogStream(sentry);
 		const log = createLogger({
 			name: "web",
 			level: "info",
@@ -59,7 +56,7 @@ describe("createSentryLogStream", () => {
 
 		log.info({ password: "hunter2", headers: { cookie: "s=1" } }, "sign in");
 
-		expect(logger.info).toHaveBeenCalledWith(
+		expect(sentry.info).toHaveBeenCalledWith(
 			"sign in",
 			expect.objectContaining({
 				password: "[redacted]",
@@ -69,10 +66,10 @@ describe("createSentryLogStream", () => {
 	});
 
 	it("ignores malformed lines", () => {
-		const stream = createSentryLogStream();
+		const stream = createSentryLogStream(sentry);
 
 		expect(() => stream.write("not json\n")).not.toThrow();
-		for (const fn of Object.values(logger)) {
+		for (const fn of Object.values(sentry)) {
 			expect(fn).not.toHaveBeenCalled();
 		}
 	});

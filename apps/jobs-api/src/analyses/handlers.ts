@@ -3,22 +3,16 @@ import { FinalizeAnalysisRequest } from "@virtool/contracts";
 import {
 	AnalysisAlreadyFinalizedError,
 	AnalysisNotFoundError,
+	AnalysisNotOwnedError,
 	finalizeAnalysis,
 	getAnalysis,
 } from "@virtool/data/analyses/data";
-import type { Db } from "@virtool/data/db/pg";
-import type { Logger } from "@virtool/logger";
-import type { StorageBackend } from "@virtool/storage";
 import { requireJobRequest } from "../auth/guard";
-import { jsonError, parseRowId, type ReadHandlerDeps } from "../http";
-import { checkManifest, measureManifest } from "../manifest";
+import { type FinalizeHandlerDeps, finalizeResource } from "../finalize";
+import { jsonError, type ReadHandlerDeps, requireRowId } from "../http";
 
-/** What the analysis handlers need to serve a request. */
-export type AnalysisHandlerDeps = {
-	db: Db;
-	storage: StorageBackend;
-	logger: Logger;
-};
+/** What the analysis finalize route needs to serve a request. */
+export type AnalysisHandlerDeps = FinalizeHandlerDeps;
 
 /**
  * Narrow an analysis to what a workflow reads.
@@ -67,10 +61,10 @@ export async function handleGetAnalysis(
 		return principal;
 	}
 
-	const analysisId = parseRowId(analysisIdParam);
+	const analysisId = requireRowId(analysisIdParam, "Analysis not found");
 
-	if (analysisId === null) {
-		return jsonError(404, "Analysis not found");
+	if (analysisId instanceof Response) {
+		return analysisId;
 	}
 
 	try {
@@ -94,82 +88,48 @@ export async function handleGetAnalysis(
  * choose — a NuVs run names its own FASTA and HMM outputs — so they are checked
  * for shape rather than against a whitelist. The download route addresses these
  * by row id, not by name.
+ *
+ * A job may only finalize the analysis it was started for. That check is the
+ * resource counterpart of `requireOwnJob` on the lifecycle routes, and answers
+ * the same 403 — but it is `analyses.job_id` that decides it, so it happens
+ * inside the same statement that writes, not in a guard here.
  */
 export async function handleFinalizeAnalysis(
 	deps: AnalysisHandlerDeps,
 	request: Request,
 	analysisIdParam: string,
 ): Promise<Response> {
-	const principal = await requireJobRequest(deps.db, request);
+	return await finalizeResource(deps, request, analysisIdParam, {
+		body: FinalizeAnalysisRequest,
+		prefix: (analysisId) => `analyses/${analysisId}/`,
+		allowedNames: null,
+		notFound: { error: AnalysisNotFoundError, message: "Analysis not found" },
+		notOwned: {
+			error: AnalysisNotOwnedError,
+			message: "Job was not started for this analysis",
+		},
+		alreadyFinalized: {
+			error: AnalysisAlreadyFinalizedError,
+			message: "Analysis has already been finalized",
+		},
+		write: async ({ id: analysisId, jobId, values, files }) => {
+			const analysis = await finalizeAnalysis(deps.db, analysisId, jobId, {
+				results: values.results,
+				files: files.map((file) => ({
+					name: file.name,
+					format: file.format,
+					description: file.description,
+					size: file.size,
+					storageKey: file.storageKey,
+				})),
+			});
 
-	if (principal instanceof Response) {
-		return principal;
-	}
+			deps.logger.info(
+				{ jobId, analysisId, files: files.length },
+				"finalized analysis",
+			);
 
-	const analysisId = parseRowId(analysisIdParam);
-
-	if (analysisId === null) {
-		return jsonError(404, "Analysis not found");
-	}
-
-	let body: unknown;
-
-	try {
-		body = await request.json();
-	} catch {
-		return jsonError(400, "Malformed body");
-	}
-
-	const parsed = FinalizeAnalysisRequest.safeParse(body);
-
-	if (!parsed.success) {
-		return Response.json(
-			{ message: "Invalid body", errors: parsed.error.issues },
-			{ status: 400 },
-		);
-	}
-
-	const { results, files } = parsed.data;
-
-	const invalid = checkManifest(files, `analyses/${analysisId}/`, null);
-
-	if (invalid) {
-		return jsonError(400, invalid);
-	}
-
-	const measured = await measureManifest(deps.storage, files);
-
-	if (measured === null) {
-		return jsonError(400, "A manifest entry names no stored object");
-	}
-
-	try {
-		const analysis = await finalizeAnalysis(deps.db, analysisId, {
-			results,
-			files: measured.map((file) => ({
-				name: file.name,
-				format: file.format,
-				description: file.description,
-				size: file.size,
-				storageKey: file.storageKey,
-			})),
-		});
-
-		deps.logger.info(
-			{ jobId: principal.jobId, analysisId, files: files.length },
-			"finalized analysis",
-		);
-
-		return Response.json(analysis);
-	} catch (err) {
-		if (err instanceof AnalysisNotFoundError) {
-			return jsonError(404, "Analysis not found");
-		}
-
-		if (err instanceof AnalysisAlreadyFinalizedError) {
-			return jsonError(409, "Analysis has already been finalized");
-		}
-
-		throw err;
-	}
+			return analysis;
+		},
+	});
 }

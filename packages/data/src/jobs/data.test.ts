@@ -1,3 +1,4 @@
+import type { JobState } from "@virtool/contracts";
 import { eq } from "drizzle-orm";
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
 
@@ -46,7 +47,10 @@ beforeEach(async () => {
 	userId = await seedUser(db, { handle: "bob" });
 });
 
-async function seedJob(state: string, steps: { started: number; of: number }) {
+async function seedJob(
+	state: JobState,
+	steps: { started: number; of: number },
+) {
 	const [job] = await db
 		.insert(jobs)
 		.values({
@@ -286,7 +290,7 @@ describe("the lifecycle transitions", () => {
 		);
 	});
 
-	it.each(["pending", "cancelled", "failed", "succeeded"])(
+	it.each<JobState>(["pending", "cancelled", "failed", "succeeded"])(
 		"refuses to finish a job that is %s",
 		async (state) => {
 			const claimed = await claimFresh();
@@ -317,7 +321,7 @@ function byId(a: { id: number }, b: { id: number }) {
 /** Insert a bare job, dated `ageSeconds` in the past. */
 async function seedQueuedJob(
 	workflow: string,
-	state: string,
+	state: JobState,
 	ageSeconds = 0,
 ): Promise<void> {
 	await db.insert(jobs).values({

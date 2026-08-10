@@ -1,8 +1,8 @@
 import DeleteDialog from "@base/DeleteDialog";
 import IconButton from "@base/IconButton";
-import type { JobNested } from "@jobs/types";
 import { useRemoveSample } from "@samples/queries";
 import { checkCanDeleteSample } from "@samples/utils";
+import type { JobNested } from "@virtool/contracts";
 import { Trash } from "lucide-react";
 
 type DeleteSampleProps = {

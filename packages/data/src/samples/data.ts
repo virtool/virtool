@@ -1,5 +1,4 @@
 import type {
-	JobState,
 	LabelNested,
 	LibraryType,
 	Quality,
@@ -112,6 +111,9 @@ export class SampleNotFoundError extends AppError {}
 
 /** Thrown when a sample has already been finalized. */
 export class SampleAlreadyFinalizedError extends AppError {}
+
+/** Thrown when a job tries to finalize a sample that is not the one it produced. */
+export class SampleNotOwnedError extends AppError {}
 
 /** Thrown when a sample name is already taken. */
 export class SampleNameConflictError extends AppError {}
@@ -287,11 +289,10 @@ async function getSampleJobs(
 				createdAt: job.createdAt,
 				id: job.id,
 				progress: job.progress,
-				// The mirror stores states and workflows as free text; the columns
-				// only ever hold the enumerated values, and a sample's job is always
-				// the `create_sample` job that built it.
-				state: job.state as JobState,
+				state: job.state,
 				user: job.user,
+				// `jobs.workflow` carries no constraint, so it arrives as free text.
+				// A sample's job is always the `create_sample` job that built it.
 				workflow: job.workflow as "create_sample",
 			},
 		]),
@@ -1193,10 +1194,17 @@ export async function updateSampleRights(
 /**
  * Record the reads a create_sample job produced and flip the sample ready.
  *
- * The parent update is conditional on `ready = false` and its row count checked,
- * so a retry or a racing second call is a {@link SampleAlreadyFinalizedError}
- * rather than a second set of reads rows. A sample that does not exist is a
- * {@link SampleNotFoundError}.
+ * The parent update is conditional on `job_id = jobId AND ready = false` and its
+ * row count checked, so a retry or a racing second call is a
+ * {@link SampleAlreadyFinalizedError} rather than a second set of reads rows. A
+ * sample that does not exist is a {@link SampleNotFoundError}, and one produced
+ * by another job — or by no job at all — is a {@link SampleNotOwnedError}.
+ *
+ * The ownership predicate rides on the `UPDATE` rather than a read before it, so
+ * there is no window between the check and the write. The fallback `SELECT` that
+ * already told a missing row from a finalized one reads `job_id` too and answers
+ * in that order: gone, then not yours, then already done — a sample a job does
+ * not own never reports its state.
  *
  * **A read's source upload is derived, not declared.** `sample_uploads.index` is
  * the position the upload held in the create request, and the workflow writes
@@ -1222,6 +1230,7 @@ export async function finalizeSample(
 	storage: StorageBackend,
 	logger: Logger,
 	sampleId: number,
+	jobId: number,
 	values: FinalizeSampleValues,
 ): Promise<Sample> {
 	const uploadKeys = await db.transaction(async (tx) => {
@@ -1229,19 +1238,27 @@ export async function finalizeSample(
 			.update(legacySamples)
 			.set({ quality: values.quality, ready: true })
 			.where(
-				and(eq(legacySamples.id, sampleId), eq(legacySamples.ready, false)),
+				and(
+					eq(legacySamples.id, sampleId),
+					eq(legacySamples.job_id, jobId),
+					eq(legacySamples.ready, false),
+				),
 			)
 			.returning({ id: legacySamples.id, legacyId: legacySamples.legacy_id });
 
 		if (!updated) {
 			const [row] = await tx
-				.select({ id: legacySamples.id })
+				.select({ jobId: legacySamples.job_id })
 				.from(legacySamples)
 				.where(eq(legacySamples.id, sampleId))
 				.limit(1);
 
 			if (!row) {
 				throw new SampleNotFoundError();
+			}
+
+			if (row.jobId !== jobId) {
+				throw new SampleNotOwnedError();
 			}
 
 			throw new SampleAlreadyFinalizedError();

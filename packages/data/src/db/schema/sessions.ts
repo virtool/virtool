@@ -14,6 +14,10 @@ import {
 
 import { users } from "./users";
 
+// Not a Postgres enum in the real schema. `session_type` is `text` closed by
+// the `session_type_valid` CHECK constraint. The declaration is kept because
+// the values are right and nothing generates migrations from this side, so the
+// mismatch never reaches a real database.
 export const sessionType = pgEnum("session_type_enum", [
 	"anonymous",
 	"authenticated",

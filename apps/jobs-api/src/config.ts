@@ -1,12 +1,24 @@
 import { resolveFileBacked } from "@virtool/contracts/env";
 import type { StorageConfig } from "@virtool/storage";
 
+/**
+ * Seconds the shutdown sequence may take before the backstop gives up, when
+ * `VT_JOBS_API_SHUTDOWN_TIMEOUT` is unset.
+ *
+ * It must sit strictly under `terminationGracePeriodSeconds`, which covers
+ * `preStop` and shutdown combined, or SIGKILL lands before the backstop can
+ * report an overrun.
+ */
+const DEFAULT_SHUTDOWN_TIMEOUT = 30;
+
 /** Everything this process reads from the environment at startup. */
 export type Config = {
 	host: string;
 	port: number;
 	postgresUrl: string;
 	postgresPoolMax: number;
+	/** Seconds the shutdown sequence may run before the backstop gives up. */
+	shutdownTimeout: number;
 	/**
 	 * The same bucket Python and `apps/web` use. Cache registration reads an
 	 * object's size from it before writing a row, so this service cannot start
@@ -36,6 +48,7 @@ export type Config = {
 const KEYS = [
 	"VT_JOBS_API_HOST",
 	"VT_JOBS_API_PORT",
+	"VT_JOBS_API_SHUTDOWN_TIMEOUT",
 	"VT_POSTGRES_URL",
 	"VT_POSTGRES_POOL_MAX",
 	"VT_METRICS_TOKEN",
@@ -161,6 +174,11 @@ export function parseConfig(env: NodeJS.ProcessEnv = process.env): Config {
 		port: readNumber(resolved, "VT_JOBS_API_PORT", 9950),
 		postgresUrl: requireValue(resolved, "VT_POSTGRES_URL"),
 		postgresPoolMax: readNumber(resolved, "VT_POSTGRES_POOL_MAX", 10),
+		shutdownTimeout: readNumber(
+			resolved,
+			"VT_JOBS_API_SHUTDOWN_TIMEOUT",
+			DEFAULT_SHUTDOWN_TIMEOUT,
+		),
 		storage: buildStorage(resolved),
 		metricsToken: present(resolved.VT_METRICS_TOKEN),
 		sentryDsn: present(resolved.VT_SENTRY_DSN),

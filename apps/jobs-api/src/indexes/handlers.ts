@@ -1,7 +1,7 @@
 import type { Index, WorkflowIndex } from "@virtool/contracts";
 import { getIndex, IndexNotFoundError } from "@virtool/data/indexes/data";
 import { requireJobRequest } from "../auth/guard";
-import { jsonError, parseRowId, type ReadHandlerDeps } from "../http";
+import { jsonError, type ReadHandlerDeps, requireRowId } from "../http";
 
 /**
  * Narrow an index build to what a workflow reads.
@@ -50,10 +50,10 @@ export async function handleGetIndex(
 		return principal;
 	}
 
-	const indexId = parseRowId(indexIdParam);
+	const indexId = requireRowId(indexIdParam, "Index not found");
 
-	if (indexId === null) {
-		return jsonError(404, "Index not found");
+	if (indexId instanceof Response) {
+		return indexId;
 	}
 
 	try {

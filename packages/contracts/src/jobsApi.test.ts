@@ -1,18 +1,13 @@
 import { describe, expect, it } from "vitest";
+import type { JobClaim } from "./jobs";
 import {
 	CreateJobClaimRequest,
+	FinalizeAnalysisRequest,
+	FinalizeSampleRequest,
 	FinalizeSubtractionRequest,
-	fromStoredJobClaim,
-	fromStoredJobStep,
-	Job,
-	JobClaim,
 	JobClaimed,
 	JobFileManifest,
-	JobStep,
-	StoredJobClaim,
-	StoredJobStep,
-	toStoredJobClaim,
-	toStoredJobStep,
+	WorkflowJob,
 } from "./jobsApi";
 
 const claim: JobClaim = {
@@ -23,71 +18,6 @@ const claim: JobClaim = {
 	runtimeVersion: "2.0.0",
 	workflowVersion: "1.2.3",
 };
-
-describe("claim round trip", () => {
-	it("keeps camelCase on the wire, snake_case in the column, camelCase back out", () => {
-		const parsed = JobClaim.parse(claim);
-
-		const stored = toStoredJobClaim(parsed);
-
-		expect(Object.keys(stored).sort()).toStrictEqual([
-			"cpu",
-			"image",
-			"mem",
-			"runner_id",
-			"runtime_version",
-			"workflow_version",
-		]);
-
-		// The column content must survive a JSON round trip byte-for-byte, because
-		// Python reads and writes these same keys.
-		const fromColumn = StoredJobClaim.parse(JSON.parse(JSON.stringify(stored)));
-
-		expect(fromStoredJobClaim(fromColumn)).toStrictEqual(claim);
-	});
-
-	it("rejects a stored claim offered as a wire claim", () => {
-		expect(JobClaim.safeParse(toStoredJobClaim(claim)).success).toBe(false);
-	});
-});
-
-describe("step round trip", () => {
-	const STARTED_AT = "2026-07-31T16:38:58.852Z";
-
-	const step: JobStep = {
-		id: "map_subtractions",
-		name: "Map subtractions",
-		description: "Eliminate reads that map to a subtraction.",
-		startedAt: new Date(STARTED_AT),
-	};
-
-	// The wire carries a `Date` and the column carries the ISO string Python
-	// wrote, so this pair is the only place the two spellings meet. Both halves
-	// matter: a `Date` reaching the column would be stored as an object Python
-	// cannot read, and a string reaching the wire would arrive as a string every
-	// caller has to remember to parse.
-	it("persists startedAt as an ISO string under started_at, and back as a Date", () => {
-		const stored = toStoredJobStep(JobStep.parse(step));
-
-		expect(stored.started_at).toBe(STARTED_AT);
-		expect(stored).not.toHaveProperty("startedAt");
-
-		const roundTripped = fromStoredJobStep(
-			StoredJobStep.parse(JSON.parse(JSON.stringify(stored))),
-		);
-
-		expect(roundTripped).toStrictEqual(step);
-		expect(roundTripped.startedAt).toBeInstanceOf(Date);
-	});
-
-	it("carries a null startedAt through unstarted", () => {
-		const unstarted = { ...step, startedAt: null };
-
-		expect(fromStoredJobStep(toStoredJobStep(unstarted))).toStrictEqual(
-			unstarted,
-		);
-	});
-});
 
 // JSON has no date type, so what actually crosses is a string either way. These
 // pin that the encoding is unchanged while the parsed type is not.
@@ -112,7 +42,7 @@ describe("timestamps", () => {
 	}
 
 	it("parses the string the wire carries into a Date", () => {
-		const parsed = Job.parse(job());
+		const parsed = WorkflowJob.parse(job());
 
 		expect(parsed.createdAt).toBeInstanceOf(Date);
 		expect(parsed.createdAt.toISOString()).toBe(CREATED_AT);
@@ -122,13 +52,13 @@ describe("timestamps", () => {
 	// `JSON.stringify` calls `Date.prototype.toJSON`. Python reads these bytes,
 	// so they must not have moved.
 	it("encodes back to the same ISO string it arrived as", () => {
-		const encoded = JSON.parse(JSON.stringify(Job.parse(job())));
+		const encoded = JSON.parse(JSON.stringify(WorkflowJob.parse(job())));
 
 		expect(encoded.createdAt).toBe(CREATED_AT);
 	});
 
 	it("passes a Date through unchanged, so one schema types both directions", () => {
-		const parsed = Job.parse(job({ createdAt: new Date(CREATED_AT) }));
+		const parsed = WorkflowJob.parse(job({ createdAt: new Date(CREATED_AT) }));
 
 		expect(parsed.createdAt.toISOString()).toBe(CREATED_AT);
 	});
@@ -136,7 +66,7 @@ describe("timestamps", () => {
 	it("keeps a null timestamp null rather than coercing it to the epoch", () => {
 		// `new Date(null)` is the epoch, not an invalid date, so a nullable field
 		// that let `coerce` see the null would silently report 1970.
-		expect(Job.parse(job({ pingedAt: null })).pingedAt).toBeNull();
+		expect(WorkflowJob.parse(job({ pingedAt: null })).pingedAt).toBeNull();
 	});
 
 	// `coerce` runs `new Date(value)`, which answers `Invalid Date` rather than
@@ -145,7 +75,9 @@ describe("timestamps", () => {
 	it.each(["not-a-date", "", "2026-13-45T99:99:99Z"])(
 		"rejects %j rather than parsing it as an invalid date",
 		(value) => {
-			expect(Job.safeParse(job({ createdAt: value })).success).toBe(false);
+			expect(WorkflowJob.safeParse(job({ createdAt: value })).success).toBe(
+				false,
+			);
 		},
 	);
 });
@@ -183,7 +115,7 @@ describe("wire shapes", () => {
 		// `build_index` stays Python-owned and is never handed out at claim time,
 		// but its rows exist and must still parse.
 		expect(
-			Job.safeParse({
+			WorkflowJob.safeParse({
 				id: 1,
 				args: { index_id: 7 },
 				claim: null,
@@ -200,7 +132,7 @@ describe("wire shapes", () => {
 	});
 
 	it("treats args as an opaque JSON object", () => {
-		const job = Job.parse({
+		const job = WorkflowJob.parse({
 			id: 1,
 			args: { sample_id: 4, nested: { deep: [1, "two", null] } },
 			claim: null,
@@ -224,9 +156,15 @@ describe("wire shapes", () => {
 describe("subtraction finalize", () => {
 	const gc = { a: 0.25, c: 0.25, g: 0.25, t: 0.24, n: 0.01 };
 
+	const fasta = {
+		kind: "subtractionFile",
+		name: "subtraction.fa.gz",
+		storageKey: "subtractions/7/0f1e2d3c4b5a69788796a5b4c3d2e1f0",
+	};
+
 	it("accepts nucleotide fractions", () => {
 		expect(
-			FinalizeSubtractionRequest.parse({ count: 12, gc, files: [] }).gc,
+			FinalizeSubtractionRequest.parse({ count: 12, gc, files: [fasta] }).gc,
 		).toStrictEqual(gc);
 	});
 
@@ -236,7 +174,7 @@ describe("subtraction finalize", () => {
 			FinalizeSubtractionRequest.safeParse({
 				count: 12,
 				gc: { a: 25, c: 25, g: 25, t: 24, n: 1 },
-				files: [],
+				files: [fasta],
 			}).success,
 		).toBe(false);
 	});
@@ -246,9 +184,84 @@ describe("subtraction finalize", () => {
 			FinalizeSubtractionRequest.safeParse({
 				count: 12,
 				gc: { ...gc, n: -0.01 },
-				files: [],
+				files: [fasta],
 			}).success,
 		).toBe(false);
+	});
+
+	// A subtraction with no source genome is not a subtraction; accepting one
+	// would flip the parent ready with no file rows under it.
+	it("rejects an empty manifest", () => {
+		expect(
+			FinalizeSubtractionRequest.safeParse({ count: 12, gc, files: [] })
+				.success,
+		).toBe(false);
+	});
+});
+
+describe("sample finalize", () => {
+	const quality = {
+		bases: [[30, 31, 32, 33, 34]],
+		composition: [[25, 25, 25, 25]],
+		count: 1000,
+		encoding: "Sanger",
+		gc: 0.42,
+		length: [100, 100],
+		sequences: [1, 2, 3],
+	};
+
+	function read(name: string) {
+		return {
+			kind: "sampleRead",
+			name,
+			storageKey: `samples/7/${name.replace(/\W/g, "")}0f1e2d3c4b5a6978`,
+		};
+	}
+
+	it("accepts one read", () => {
+		expect(
+			FinalizeSampleRequest.parse({ quality, files: [read("reads_1.fq.gz")] })
+				.files,
+		).toHaveLength(1);
+	});
+
+	it("accepts a pair", () => {
+		expect(
+			FinalizeSampleRequest.safeParse({
+				quality,
+				files: [read("reads_1.fq.gz"), read("reads_2.fq.gz")],
+			}).success,
+		).toBe(true);
+	});
+
+	// A sample with no reads is not a usable sample.
+	it("rejects an empty manifest", () => {
+		expect(
+			FinalizeSampleRequest.safeParse({ quality, files: [] }).success,
+		).toBe(false);
+	});
+
+	it("rejects a third read", () => {
+		expect(
+			FinalizeSampleRequest.safeParse({
+				quality,
+				files: [
+					read("reads_1.fq.gz"),
+					read("reads_2.fq.gz"),
+					read("reads_3.fq.gz"),
+				],
+			}).success,
+		).toBe(false);
+	});
+});
+
+describe("analysis finalize", () => {
+	// Pathoscope retains no files at all — its whole output is `results`, which
+	// is the guard here. Requiring a manifest would make that run unfinalizable.
+	it("accepts an empty manifest", () => {
+		expect(
+			FinalizeAnalysisRequest.parse({ results: { hits: [] }, files: [] }).files,
+		).toStrictEqual([]);
 	});
 });
 

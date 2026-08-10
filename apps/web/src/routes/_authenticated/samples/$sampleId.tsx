@@ -7,7 +7,6 @@ import ViewHeader from "@base/ViewHeader";
 import ViewHeaderAttribution from "@base/ViewHeaderAttribution";
 import ViewHeaderIcons from "@base/ViewHeaderIcons";
 import ViewHeaderTitle from "@base/ViewHeaderTitle";
-import { JobNestedSchema } from "@jobs/types";
 import DeleteSample from "@samples/components/Detail/DeleteSample";
 import EditSample from "@samples/components/EditSample";
 import { useCheckCanEditSample } from "@samples/hooks";
@@ -54,8 +53,7 @@ function SampleDetailLayout() {
 	const { hasPermission: canModify } = useCheckCanEditSample(numericSampleId);
 	const [editOpen, setEditOpen] = useState(false);
 
-	const { createdAt, name, user } = data;
-	const job = data.job && JobNestedSchema.parse(data.job);
+	const { createdAt, job, name, user } = data;
 
 	return (
 		<>

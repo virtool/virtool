@@ -4,7 +4,7 @@ import {
 	ReferenceNotFoundError,
 } from "@virtool/data/references/data";
 import { requireJobRequest } from "../auth/guard";
-import { jsonError, parseRowId, type ReadHandlerDeps } from "../http";
+import { jsonError, type ReadHandlerDeps, requireRowId } from "../http";
 
 /**
  * Narrow a reference to what a workflow reads.
@@ -41,10 +41,10 @@ export async function handleGetReference(
 		return principal;
 	}
 
-	const referenceId = parseRowId(referenceIdParam);
+	const referenceId = requireRowId(referenceIdParam, "Reference not found");
 
-	if (referenceId === null) {
-		return jsonError(404, "Reference not found");
+	if (referenceId instanceof Response) {
+		return referenceId;
 	}
 
 	try {

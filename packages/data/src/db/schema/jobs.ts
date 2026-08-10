@@ -9,6 +9,7 @@
 // no `job_samples` / `job_indexes` junction tables: the sample and index are
 // resolved through those reverse foreign keys, not link rows.
 
+import type { JobState } from "@virtool/contracts";
 import {
 	boolean,
 	integer,
@@ -46,9 +47,15 @@ export const jobs = pgTable("jobs", {
 	key: text("key"),
 	legacy_id: text("legacy_id").unique(),
 	pinged_at: timestamp("pinged_at"),
-	state: text("state").notNull(),
+	// `text`, closed by the `ck_jobs_state` CHECK constraint. `$type` asserts
+	// rather than validates, which is what that constraint makes safe: a value
+	// outside the union cannot reach the column without a Python-side migration.
+	state: text("state").$type<JobState>().notNull(),
 	steps: jsonb("steps").$type<JobStep[]>(),
 	user_id: integer("user_id").notNull(),
+	// Deliberately left open. Python's `Workflow` is an application-level enum
+	// with no CHECK constraint behind it, so a row can hold a workflow this
+	// build has never heard of.
 	workflow: text("workflow").notNull(),
 });
 

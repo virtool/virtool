@@ -91,6 +91,9 @@ importers:
       '@virtool/sentry':
         specifier: workspace:*
         version: link:../../packages/sentry
+      '@virtool/service':
+        specifier: workspace:*
+        version: link:../../packages/service
       '@virtool/storage':
         specifier: workspace:*
         version: link:../../packages/storage
@@ -189,6 +192,9 @@ importers:
       '@virtool/sentry':
         specifier: workspace:*
         version: link:../../packages/sentry
+      '@virtool/service':
+        specifier: workspace:*
+        version: link:../../packages/service
       '@virtool/storage':
         specifier: workspace:*
         version: link:../../packages/storage
@@ -344,9 +350,6 @@ importers:
       '@tailwindcss/vite':
         specifier: ^4.3.3
         version: 4.3.3(vite@8.2.1(@types/node@26.1.2)(jiti@2.7.0)(tsx@4.23.0)(yaml@2.9.0))
-      '@tanstack/router-cli':
-        specifier: ^1.167.21
-        version: 1.167.21
       '@tanstack/start-storage-context':
         specifier: 1.167.17
         version: 1.167.17
@@ -473,7 +476,23 @@ importers:
         specifier: ^4.1.10
         version: 4.1.10(@opentelemetry/api@1.9.1)(@types/node@26.1.2)(@vitest/browser-playwright@4.1.10)(jsdom@30.0.1)(vite@8.2.1(@types/node@26.1.2)(esbuild@0.28.1)(jiti@2.7.0)(tsx@4.23.0)(yaml@2.9.0))
 
-  packages/sentry: {}
+  packages/sentry:
+    devDependencies:
+      '@virtool/logger':
+        specifier: workspace:*
+        version: link:../logger
+      vitest:
+        specifier: ^4.1.10
+        version: 4.1.10(@opentelemetry/api@1.9.1)(@types/node@26.1.2)(@vitest/browser-playwright@4.1.10)(jsdom@30.0.1)(vite@8.2.1(@types/node@26.1.2)(esbuild@0.28.1)(jiti@2.7.0)(tsx@4.23.0)(yaml@2.9.0))
+
+  packages/service:
+    devDependencies:
+      '@virtool/logger':
+        specifier: workspace:*
+        version: link:../logger
+      vitest:
+        specifier: ^4.1.10
+        version: 4.1.10(@opentelemetry/api@1.9.1)(@types/node@26.1.2)(@vitest/browser-playwright@4.1.10)(jsdom@30.0.1)(vite@8.2.1(@types/node@26.1.2)(esbuild@0.28.1)(jiti@2.7.0)(tsx@4.23.0)(yaml@2.9.0))
 
   packages/storage:
     dependencies:
@@ -4060,11 +4079,6 @@ packages:
     peerDependencies:
       react: ^16.8.0 || ^17.0.0 || ^18.0.0 || ^19.0.0
       react-dom: ^16.8.0 || ^17.0.0 || ^18.0.0 || ^19.0.0
-
-  '@tanstack/router-cli@1.167.21':
-    resolution: {integrity: sha512-VAWzT0f1XHJx1ORNBDCjgCRHhBck0UDBYx5yldUlZgPyuDw/ip1s9pcn8h8ZE3jdTQ5e/nF4brFE/RhRca7rRQ==}
-    engines: {node: '>=20.19'}
-    hasBin: true
 
   '@tanstack/router-core@1.171.15':
     resolution: {integrity: sha512-IILCDcLaItMZQ2jEmCABHY1Nhjjn5XUvwpQp3e4Nmu+vfg0BgYFuu/QASz2SwE2ZNbVMrvt8X/wxa+Gg5aErxA==}
@@ -12410,14 +12424,6 @@ snapshots:
       '@tanstack/virtual-core': 3.17.7
       react: 19.2.8
       react-dom: 19.2.8(react@19.2.8)
-
-  '@tanstack/router-cli@1.167.21':
-    dependencies:
-      '@tanstack/router-generator': 1.167.21
-      chokidar: 5.0.0
-      yargs: 17.7.3
-    transitivePeerDependencies:
-      - supports-color
 
   '@tanstack/router-core@1.171.15':
     dependencies:

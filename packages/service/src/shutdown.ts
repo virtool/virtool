@@ -9,11 +9,14 @@ const EXIT_UNCLEAN = 1;
 /** How the shutdown sequence ended. */
 type Outcome = "clean" | "failed" | "overran";
 
-/** One registered shutdown callback and the name it is logged under. */
-type Hook = {
+/** One step of the sequence — a registered hook or a fixed step — and its name. */
+type Step = {
 	name: string;
 	run: () => Promise<void>;
 };
+
+/** What a step that never settled resolves to, rather than its own value. */
+const OVERRAN = Symbol("overran");
 
 /** What {@link createShutdownController} needs to wind the process down. */
 export type ShutdownDeps = {
@@ -69,6 +72,36 @@ function withBackstop(promise: Promise<boolean>, ms: number): Promise<Outcome> {
 }
 
 /**
+ * Resolve what `promise` reports, or {@link OVERRAN} once `ms` have passed.
+ *
+ * The abandoned promise is left running — nothing here can cancel a socket
+ * that will not close — but the handlers attached below stay attached, so a
+ * rejection arriving after the deadline is still handled and cannot take the
+ * process down mid-shutdown.
+ */
+function withDeadline<T>(
+	promise: Promise<T>,
+	ms: number,
+): Promise<T | typeof OVERRAN> {
+	return new Promise<T | typeof OVERRAN>((resolve, reject) => {
+		const timer = setTimeout(() => resolve(OVERRAN), ms);
+
+		timer.unref();
+
+		promise.then(
+			(value) => {
+				clearTimeout(timer);
+				resolve(value);
+			},
+			(err) => {
+				clearTimeout(timer);
+				reject(err);
+			},
+		);
+	});
+}
+
+/**
  * Build this process's shutdown sequence.
  *
  * **Registering a SIGTERM listener removes Node's default exit behaviour**, so
@@ -98,8 +131,21 @@ function withBackstop(promise: Promise<boolean>, ms: number): Promise<Outcome> {
  * process exits `1` on, so a shutdown that failed is never indistinguishable
  * from one that did not.
  *
- * The whole sequence is bounded by the backstop, which means a hook cannot
- * assume unlimited time. The budget must stay strictly under
+ * That holds for a step that *hangs* as well as one that throws, which is why
+ * the budget is divided rather than pooled: every step, each hook included,
+ * gets an equal share of the time still left when it starts, and is abandoned
+ * once that share is spent. Awaiting the sequence against a single deadline
+ * would let one stuck socket eat the whole budget and take the pool drain and
+ * the Sentry flush down with it — so the failure would go unrecorded precisely
+ * when there was something to record.
+ *
+ * A step whose share runs out is abandoned, not cancelled — nothing here can
+ * force a socket closed — so the process may still have to be reaped rather
+ * than draining on its own. What the division buys is that everything *after*
+ * the stuck step still runs.
+ *
+ * The whole sequence is bounded by the backstop as well, which should now
+ * never be what ends it. The budget must stay strictly under
  * `terminationGracePeriodSeconds` — which covers `preStop` and shutdown
  * together — or SIGKILL lands first and the process gets neither a clean
  * shutdown nor a controlled failure.
@@ -107,37 +153,21 @@ function withBackstop(promise: Promise<boolean>, ms: number): Promise<Outcome> {
 export function createShutdownController(
 	deps: ShutdownDeps,
 ): ShutdownController {
-	const hooks: Hook[] = [];
+	const hooks: Step[] = [];
 	let started = false;
 
-	async function runHooks(): Promise<boolean> {
-		const results: boolean[] = [];
-
-		// Reverse registration order: a hook registered later may depend on what an
-		// earlier one set up, so it has to come down first.
-		for (const hook of [...hooks].reverse()) {
-			try {
-				await hook.run();
-				deps.logger.debug({ hook: hook.name }, "ran shutdown hook");
-				results.push(true);
-			} catch (err) {
-				deps.logger.error({ err, hook: hook.name }, "shutdown hook failed");
-				results.push(false);
-			}
-		}
-
-		return results.every((ok) => ok);
-	}
-
-	async function runStep(
-		step: string,
-		run: () => Promise<void>,
-	): Promise<boolean> {
+	async function runStep(step: Step, ms: number): Promise<boolean> {
 		try {
-			await run();
+			if ((await withDeadline(step.run(), ms)) === OVERRAN) {
+				deps.logger.error({ ms, step: step.name }, "shutdown step overran");
+				return false;
+			}
+
+			deps.logger.debug({ step: step.name }, "ran shutdown step");
+
 			return true;
 		} catch (err) {
-			deps.logger.error({ err, step }, "shutdown step failed");
+			deps.logger.error({ err, step: step.name }, "shutdown step failed");
 			return false;
 		}
 	}
@@ -145,17 +175,32 @@ export function createShutdownController(
 	async function sequence(): Promise<boolean> {
 		deps.setReady(false);
 
+		const steps: Step[] = [
+			// Reverse registration order: a hook registered later may depend on what
+			// an earlier one set up, so it has to come down first.
+			...[...hooks].reverse(),
+			{ name: "closeListener", run: deps.closeListener },
+			{ name: "closeDatabase", run: deps.closeDatabase },
+			{ name: "flushSentry", run: deps.flushSentry },
+		];
+
+		const deadline = performance.now() + deps.timeout * 1000;
+		const results: boolean[] = [];
+
+		for (const [index, step] of steps.entries()) {
+			// Each step gets an equal share of whatever is left, so one that never
+			// settles is abandoned with time still on the clock for the rest. A step
+			// that finishes early hands the remainder on to the steps behind it.
+			const share =
+				Math.max(0, deadline - performance.now()) / (steps.length - index);
+
+			results.push(await runStep(step, share));
+		}
+
 		// Every step runs and every result is collected, rather than the first
 		// failure aborting the rest: a listener that would not close is no reason
 		// to leave the pool undrained or the Sentry buffer unflushed. The collected
 		// results are what stop a failed shutdown reporting itself as a clean one.
-		const results = [
-			await runHooks(),
-			await runStep("closeListener", deps.closeListener),
-			await runStep("closeDatabase", deps.closeDatabase),
-			await runStep("flushSentry", deps.flushSentry),
-		];
-
 		return results.every((ok) => ok);
 	}
 

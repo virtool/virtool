@@ -22,6 +22,7 @@ COPY packages/contracts ./packages/contracts
 COPY packages/data ./packages/data
 COPY packages/logger ./packages/logger
 COPY packages/sentry ./packages/sentry
+COPY packages/service ./packages/service
 COPY packages/storage ./packages/storage
 
 # The Node-app tsconfig base every non-Vite app extends. A fixed path, so it
@@ -111,28 +112,20 @@ COPY apps/create-subtraction ./apps/create-subtraction
 RUN pnpm --filter @virtool/create-subtraction build \
     && pnpm deploy --filter @virtool/create-subtraction --prod /prod/create-subtraction
 
-# Debian, not Alpine: the tools binaries are built against `python:3.13-bookworm`
-# and are dynamically linked against glibc, which musl cannot load. The deploy
-# tree is built on Alpine above, which is safe only because it carries no native
-# addon — check `find /prod/<app> -name '*.node'` before adding a dependency that
-# does.
-FROM node:24-bookworm-slim AS create-subtraction
-WORKDIR /workflow
-# Not every tool in that image is a binary. `bowtie2-build` is a python3 script
-# wrapping the real `bowtie2-build-s` / `bowtie2-build-l`, choosing between them
-# by index size, and `bowtie2` is a perl one. An interpreter or two in a
-# TypeScript workflow image reads oddly, but the alternative is porting
-# bowtie2's own size heuristic, which belongs with the workflow rather than with
-# its base image.
+# Alpine, like the two services above, because this workflow runs no external
+# tool. It decompresses the source FASTA, counts nucleotides and gzips the
+# result, and all three happen in-process through `@virtool/workflow`'s
+# node:zlib helpers. `build_index` is deliberately not ported — nothing consumes
+# a subtraction's bowtie2 shards — so there is no `bowtie2-build` to satisfy,
+# and with it go the glibc base, `perl`, `python3` and the tools copy. Do not
+# add a `COPY --from=ghcr.io/virtool/tools` line back without moving the base to
+# Debian in the same edit: those binaries are built against
+# `python:3.13-bookworm` and musl cannot load them.
 #
-# Neither can be trimmed. `python3-minimal` omits the stdlib, and
-# `bowtie2-build` dies on `import gzip`; the base's `perl-base` omits
-# `Sys::Hostname`, which `bowtie2` needs. Install the full packages.
-RUN apt-get update \
-    && apt-get install -y --no-install-recommends perl python3 \
-    && rm -rf /var/lib/apt/lists/*
-COPY --from=ghcr.io/virtool/tools /tools/bowtie2/2.5.4 /tools/bowtie2/2.5.4
-COPY --from=ghcr.io/virtool/tools /tools/pigz/2.8 /tools/pigz/2.8
-ENV PATH="/tools/bowtie2/2.5.4:/tools/pigz/2.8:${PATH}"
+# The deploy tree is built on the Alpine `base` above, which is safe only
+# because it carries no native addon — check `find /prod/<app> -name '*.node'`
+# before adding a dependency that might.
+FROM node:24-alpine AS create-subtraction
+WORKDIR /workflow
 COPY --from=build-create-subtraction /prod/create-subtraction ./
 CMD ["node", "dist/index.mjs"]

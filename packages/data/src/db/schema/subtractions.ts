@@ -56,6 +56,11 @@ export const subtractionFiles = pgTable("subtraction_files", {
 	id: integer("id").primaryKey().generatedByDefaultAsIdentity(),
 	name: text("name"),
 	subtraction_id: bigint("subtraction_id", { mode: "number" }).notNull(),
+	// Backed by the `subtractiontype` Postgres enum, which — unlike `indextype`,
+	// `uploadtype` and `messagecolor` — was never replaced upstream with `text`
+	// plus a CHECK constraint. So `$type` asserts what the database enforces,
+	// and a write outside the union is rejected by Postgres rather than
+	// silently stored.
 	type: text("type").$type<SubtractionFileType>(),
 	// Files routinely exceed 2 GiB, past the range of a 32-bit integer, so this
 	// mirrors Python's BigInteger. `mode: "number"` is safe up to 2^53.
