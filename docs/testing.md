@@ -36,7 +36,7 @@ The container is deliberately **not** torn down. `stop()` would remove
 it, so the next run would find nothing to reuse and pay a fresh boot;
 remove it with `docker rm -f` when it is no longer wanted.
 
-CI still pays for a container per job. `Test / Data` and `Test / Server`
+CI still pays for a container per job. `Data / Test` and `Web / Test Server`
 run on separate runners with no daemon between them, so there is nothing
 there to reuse, and keeping them independent is the point — a job
 waiting on another job's container would serialize the two for no

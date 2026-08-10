@@ -149,7 +149,7 @@ consumer, so there is no second release stream to coordinate and no window in
 which the workflow and its core disagree.
 
 **CI builds this image but does not publish it, and that is deliberate.** The
-`Build / Pathoscope` job compiles the Dockerfile on every run — enough to catch
+`Pathoscope / Build` job compiles the Dockerfile on every run — enough to catch
 a break — and there is no publish job to pair with it. `virtool/workflow-pathoscope`
 is still the repo that builds and releases the pathoscope workflow, so a second
 pipeline shipping the same workflow from here would leave two candidates for
@@ -177,7 +177,7 @@ reports `CACHED`.
 against htslib's headers for `x86_64-unknown-linux-gnu` and does not fall back
 to the pre-generated bindings that ship for some targets. Dropping the package
 fails the build with `Unable to find libclang`. This was verified empirically,
-and the same requirement applies to the `test-rust` CI job and to any developer
+and the same requirement applies to the `pathoscope-test` CI job and to any developer
 machine.
 
 The runtime stage installs `libcurl4`, `libgomp1`, `libncursesw6` and `perl`.
@@ -195,5 +195,5 @@ runner's default builder uses the `docker` driver, which cannot export a build
 cache at all — `cache-to` fails the build outright with "Cache export is not
 supported for the docker driver" rather than degrading to an uncached build.
 The action swaps in a `docker-container` builder that can. This applies to
-every job here that sets `cache-to`, the UI image's `build` and `publish-ghcr`
+every job here that sets `cache-to`, the UI image's `build` and `release-ghcr`
 included.

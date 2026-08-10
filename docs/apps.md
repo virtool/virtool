@@ -250,14 +250,14 @@ prebuilds for both libc flavours, so it is not a counterexample.)
 
 - **`pnpm build`** is `pnpm -r --filter "./apps/*" --filter
   "!@virtool/site" build`. Every app but the site, which is deliberately
-  excluded from the repo-wide gates and covered by its own `build-site`
+  excluded from the repo-wide gates and covered by its own `site-build`
   CI job.
 - **`pnpm check` / `pnpm format`** run biome over `apps packages` rather
   than a literal `apps/web/src`. `apps/site` is excluded once, in
   `biome.json`'s `files.includes`, because Astro is not linted by biome.
 - **`pnpm typecheck` and `pnpm test`** were already `pnpm -r`; an app is
   picked up as soon as it declares the script.
-- **CI's `test-packages`** filters by exclusion (`!@virtool/web`,
+- **CI's `packages-test`** filters by exclusion (`!@virtool/web`,
   `!@virtool/data`, `!@virtool/storage` — the three with their own jobs)
   rather than by an inclusion list, so a new workspace that declares
   `test` is covered without editing the job.

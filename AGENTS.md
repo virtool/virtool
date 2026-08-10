@@ -14,7 +14,7 @@ This is a **pnpm monorepo**:
   [virtool.ca](https://www.virtool.ca) (Astro + Tailwind, deployed to
   Cloudflare Workers). Kept out of the repo-wide `pnpm check`/`pnpm knip`
   gates — Astro is not linted by biome and is opaque to knip — so its own
-  Vite build (a `build-site` CI job) and Vitest suite are its gate. Deploy is
+  Vite build (a `site-build` CI job) and Vitest suite are its gate. Deploy is
   manual: `pnpm --filter @virtool/site deploy`.
 - `apps/jobs-api/` — `@virtool/jobs-api`, the jobs API: the service workflow
   runners call to claim, run and finish jobs. A Hono app on port 9950,
@@ -203,12 +203,12 @@ Use `pnpm` for all install, run, and exec commands — not `npm` or `bun`.
 command becomes the only unpinned way to run the suite.
 
 `pnpm test` does **not** reach `packages/pathoscope-core` — it is not a pnpm
-workspace. Run `cargo` there directly; a `test-rust` CI job gates it.
+workspace. Run `cargo` there directly; a `pathoscope-test` CI job gates it.
 Building the crate needs `libclang-dev` installed, because `hts-sys` runs
 bindgen against htslib's headers.
 
 `pnpm build` builds **every app but `apps/site`**, which is gated by its own
-`build-site` CI job. `pnpm check` and `pnpm format` run biome over `apps` and
+`site-build` CI job. `pnpm check` and `pnpm format` run biome over `apps` and
 `packages` rather than a literal `apps/web/src`, so a new app's source is linted
 without an edit; `apps/site` is excluded once, in `biome.json`'s
 `files.includes`.
@@ -237,11 +237,11 @@ currently configured in another repository.
   `pnpm --filter @virtool/web exec vitest run <path>`.
 - Full test suite only when asked or when changes are cross-cutting.
 - Always fix all lint errors. Biome's lint rules are all set to `error` in
-  `biome.json` (there are no warn-level rules), and CI's `check-biome` job runs
+  `biome.json` (there are no warn-level rules), and CI's `checks` job runs
   `pnpm check` — so `pnpm check` must exit 0 before merging. The main branch is
   guaranteed to pass `pnpm check` cleanly, so any issues are caused by your
   changes — never dismiss them as pre-existing.
-- No dead code. CI's `check-knip` job runs `pnpm knip` (config in
+- No dead code. CI's `checks` job also runs `pnpm knip` (config in
   `knip.json`), which fails on unused files, exports, types, and
   dependencies — so `pnpm knip` must exit 0 before merging. If you add an
   export with no caller yet, either wire it up or delete it; keep a
@@ -1503,7 +1503,7 @@ naming, comments, and concurrency rules with examples.
   each run one node project against a Postgres testcontainer, and each
   has its own CI job for the same reason storage does — a container pull
   does not belong in the fast package loop. All three are excluded from
-  `Test / Packages`.
+  `Packages / Test`.
 - **The Postgres container is described once**, in
   `packages/data/src/db/test/globalSetup.ts`. The `@virtool/data`
   project, the web app's `server` project, `@virtool/jobs-api` and

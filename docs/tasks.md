@@ -200,7 +200,7 @@ quietly dropping the gate.
 does not exist in a bundled Node app: the label would render `undefined` with
 nothing failing to say so. A JSON import is a real module value — the bundler
 inlines it, `vitest` resolves it, and no ambient global is involved. It is only
-*correct* in a released image because CI's `publish-ghcr` job runs
+*correct* in a released image because CI's `release-ghcr` job runs
 `pnpm -C ${{ matrix.workspace }} version` before the Docker build, which this
 app is covered by through its publish-matrix entry.
 
@@ -312,10 +312,10 @@ event rather than a log still calls `Sentry.captureException` explicitly.
 
 ## Testing
 
-`apps/tasks` has its own Vitest project and its own CI job (`Test / Tasks`),
+`apps/tasks` has its own Vitest project and its own CI job (`Tasks / Test`),
 for the same reason `@virtool/data` and `@virtool/jobs-api` do: it runs against
 a real Postgres testcontainer, and pulling that image does not belong in the
-fast package loop. It is excluded from `Test / Packages` accordingly.
+fast package loop. It is excluded from `Packages / Test` accordingly.
 
 The container is **not described here**. `globalSetup` names
 `@virtool/data/db/test/globalSetup`, the single definition every database-backed

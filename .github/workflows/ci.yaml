@@ -17,12 +17,33 @@ concurrency:
 
 env:
     REGISTRY: ghcr.io
-    NODE_VERSION: 22
-    PNPM_VERSION: 11.1.3
 
 jobs:
+    # -------------------------------------------------------------------------
+    # Checks (repo-wide)
+    # -------------------------------------------------------------------------
+    checks:
+        name: Checks
+        runs-on: ubuntu-24.04
+        timeout-minutes: 15
+        steps:
+            - name: Checkout
+              uses: actions/checkout@v7
+            - name: Setup
+              uses: ./.github/actions/setup
+            - name: Biome
+              run: pnpm check
+            - name: Knip
+              run: pnpm knip
+            - name: Typescript
+              run: pnpm typecheck
+
+    # -------------------------------------------------------------------------
+    # Docker images (apps/web, apps/jobs-api, apps/tasks, apps/create-subtraction,
+    # apps/workflow-pathoscope)
+    # -------------------------------------------------------------------------
     build:
-        name: Build / ${{ matrix.image }}
+        name: ${{ matrix.area }} / Build
         runs-on: ubuntu-24.04
         timeout-minutes: 20
         strategy:
@@ -30,21 +51,25 @@ jobs:
             # The runtime base differs per image, so it belongs here rather than
             # being branched on inside a step. Adding an app needs a Dockerfile
             # stage and an entry here; everything else about a new app is
-            # generic. Keep this list and the one in publish-ghcr in step.
+            # generic. Keep this list and the one in release-ghcr in step.
             matrix:
                 include:
                     - image: ui
                       target: dist
                       workspace: apps/web
+                      area: Web
                     - image: jobs-api
                       target: jobs-api
                       workspace: apps/jobs-api
+                      area: Jobs API
                     - image: tasks
                       target: tasks
                       workspace: apps/tasks
+                      area: Tasks
                     - image: ts-create-subtraction
                       target: create-subtraction
                       workspace: apps/create-subtraction
+                      area: Create Subtraction
         steps:
             - name: Checkout
               uses: actions/checkout@v7
@@ -74,7 +99,7 @@ jobs:
     # Restore a publish job when `virtool/workflow-pathoscope` is retired, and
     # settle which image name the cluster pulls in the same change.
     build-pathoscope:
-        name: Build / Pathoscope
+        name: Pathoscope / Build
         runs-on: ubuntu-24.04
         timeout-minutes: 30
         steps:
@@ -89,8 +114,101 @@ jobs:
                   file: apps/workflow-pathoscope/Dockerfile
                   cache-from: type=gha,scope=pathoscope
                   cache-to: type=gha,mode=max,scope=pathoscope
-    test-rust:
-        name: Test / Rust
+
+    # -------------------------------------------------------------------------
+    # Web (apps/web)
+    # -------------------------------------------------------------------------
+    web-test:
+        name: Web / Test
+        runs-on: ubuntu-24.04
+        timeout-minutes: 10
+        steps:
+            - name: Checkout
+              uses: actions/checkout@v7
+            - name: Setup
+              uses: ./.github/actions/setup
+            - name: Test
+              run: VT_TEST_WORKERS=$(nproc) pnpm --filter @virtool/web exec vitest run --project web
+              env:
+                  TZ: UTC
+                  VT_TEST_REACT_COMPILER: "1"
+    web-test-server:
+        name: Web / Test Server
+        runs-on: ubuntu-24.04
+        timeout-minutes: 15
+        steps:
+            - name: Checkout
+              uses: actions/checkout@v7
+            - name: Setup
+              uses: ./.github/actions/setup
+            - name: Test
+              run: VT_TEST_WORKERS=$(nproc) pnpm --filter @virtool/web exec vitest run --project server
+              env:
+                  TZ: UTC
+                  VT_TEST_REACT_COMPILER: "1"
+    web-test-a11y:
+        name: Web / Accessibility
+        runs-on: ubuntu-24.04
+        timeout-minutes: 10
+        steps:
+            - name: Checkout
+              uses: actions/checkout@v7
+            - name: Setup
+              uses: ./.github/actions/setup
+            - name: Install Playwright Chromium
+              run: pnpm --filter @virtool/web exec playwright install --with-deps chromium
+            - name: Test
+              run: VT_TEST_WORKERS=$(nproc) pnpm --filter @virtool/web exec vitest run --project a11y
+              env:
+                  TZ: UTC
+
+    # -------------------------------------------------------------------------
+    # Jobs API (apps/jobs-api)
+    # -------------------------------------------------------------------------
+    jobs-api-test:
+        name: Jobs API / Test
+        runs-on: ubuntu-24.04
+        timeout-minutes: 15
+        steps:
+            - name: Checkout
+              uses: actions/checkout@v7
+            - name: Setup
+              uses: ./.github/actions/setup
+            # Its own job rather than part of Packages / Test, for the same
+            # reason as Data / Test: the job guard is tested against a real
+            # Postgres testcontainer, and pulling that image does not belong in
+            # the fast package loop.
+            - name: Test
+              run: pnpm --filter @virtool/jobs-api test
+              env:
+                  TZ: UTC
+
+    # -------------------------------------------------------------------------
+    # Tasks (apps/tasks)
+    # -------------------------------------------------------------------------
+    tasks-test:
+        name: Tasks / Test
+        runs-on: ubuntu-24.04
+        timeout-minutes: 15
+        steps:
+            - name: Checkout
+              uses: actions/checkout@v7
+            - name: Setup
+              uses: ./.github/actions/setup
+            # Its own job rather than part of Packages / Test, for the same
+            # reason as Data / Test: the probes are tested against a real
+            # Postgres testcontainer, and pulling that image does not belong in
+            # the fast package loop.
+            - name: Test
+              run: pnpm --filter @virtool/tasks test
+              env:
+                  TZ: UTC
+
+    # -------------------------------------------------------------------------
+    # Pathoscope (apps/workflow-pathoscope, packages/pathoscope-core)
+    # -------------------------------------------------------------------------
+    pathoscope-test:
+        name: Pathoscope / Test
         runs-on: ubuntu-24.04
         timeout-minutes: 30
         steps:
@@ -127,8 +245,12 @@ jobs:
               working-directory: packages/pathoscope-core
               env:
                   VT_REQUIRE_BOWTIE2: "1"
-    check-biome:
-        name: Biome
+
+    # -------------------------------------------------------------------------
+    # Site (apps/site)
+    # -------------------------------------------------------------------------
+    site-build:
+        name: Site / Build
         runs-on: ubuntu-24.04
         timeout-minutes: 10
         steps:
@@ -136,13 +258,16 @@ jobs:
               uses: actions/checkout@v7
             - name: Setup
               uses: ./.github/actions/setup
-              with:
-                  node-version: ${{ env.NODE_VERSION }}
-                  pnpm-version: ${{ env.PNPM_VERSION }}
-            - name: Run Biome
-              run: pnpm check
-    check-knip:
-        name: Knip
+            - name: Build site
+              run: pnpm --filter @virtool/site build
+              env:
+                  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+    # -------------------------------------------------------------------------
+    # Packages (packages/*, excluding Data and Storage below)
+    # -------------------------------------------------------------------------
+    packages-test:
+        name: Packages / Test
         runs-on: ubuntu-24.04
         timeout-minutes: 10
         steps:
@@ -150,44 +275,17 @@ jobs:
               uses: actions/checkout@v7
             - name: Setup
               uses: ./.github/actions/setup
-              with:
-                  node-version: ${{ env.NODE_VERSION }}
-                  pnpm-version: ${{ env.PNPM_VERSION }}
-            - name: Run Knip
-              run: pnpm knip
-    check-typescript:
-        name: Typescript
-        runs-on: ubuntu-24.04
-        timeout-minutes: 10
-        steps:
-            - name: Checkout
-              uses: actions/checkout@v7
-            - name: Setup
-              uses: ./.github/actions/setup
-              with:
-                  node-version: ${{ env.NODE_VERSION }}
-                  pnpm-version: ${{ env.PNPM_VERSION }}
-            - name: tsc
-              run: pnpm typecheck
-    test-packages:
-        name: Test / Packages
-        runs-on: ubuntu-24.04
-        timeout-minutes: 10
-        steps:
-            - name: Checkout
-              uses: actions/checkout@v7
-            - name: Setup
-              uses: ./.github/actions/setup
-              with:
-                  node-version: ${{ env.NODE_VERSION }}
-                  pnpm-version: ${{ env.PNPM_VERSION }}
             # Exclusions rather than an inclusion list, so a new workspace that
             # declares `test` is covered without editing this job. The five
             # excluded here have their own jobs.
             - name: Test
               run: pnpm -r --filter "!@virtool/web" --filter "!@virtool/data" --filter "!@virtool/storage" --filter "!@virtool/jobs-api" --filter "!@virtool/tasks" test
-    test-jobs-api:
-        name: Test / Jobs API
+
+    # -------------------------------------------------------------------------
+    # Data (packages/data)
+    # -------------------------------------------------------------------------
+    data-test:
+        name: Data / Test
         runs-on: ubuntu-24.04
         timeout-minutes: 15
         steps:
@@ -195,58 +293,19 @@ jobs:
               uses: actions/checkout@v7
             - name: Setup
               uses: ./.github/actions/setup
-              with:
-                  node-version: ${{ env.NODE_VERSION }}
-                  pnpm-version: ${{ env.PNPM_VERSION }}
-            # Its own job rather than part of Test / Packages, for the same
-            # reason as Test / Data: the job guard is tested against a real
-            # Postgres testcontainer, and pulling that image does not belong in
-            # the fast package loop.
-            - name: Test
-              run: pnpm --filter @virtool/jobs-api test
-              env:
-                  TZ: UTC
-    test-tasks:
-        name: Test / Tasks
-        runs-on: ubuntu-24.04
-        timeout-minutes: 15
-        steps:
-            - name: Checkout
-              uses: actions/checkout@v7
-            - name: Setup
-              uses: ./.github/actions/setup
-              with:
-                  node-version: ${{ env.NODE_VERSION }}
-                  pnpm-version: ${{ env.PNPM_VERSION }}
-            # Its own job rather than part of Test / Packages, for the same
-            # reason as Test / Data: the probes are tested against a real
-            # Postgres testcontainer, and pulling that image does not belong in
-            # the fast package loop.
-            - name: Test
-              run: pnpm --filter @virtool/tasks test
-              env:
-                  TZ: UTC
-    test-data:
-        name: Test / Data
-        runs-on: ubuntu-24.04
-        timeout-minutes: 15
-        steps:
-            - name: Checkout
-              uses: actions/checkout@v7
-            - name: Setup
-              uses: ./.github/actions/setup
-              with:
-                  node-version: ${{ env.NODE_VERSION }}
-                  pnpm-version: ${{ env.PNPM_VERSION }}
-            # Its own job rather than part of Test / Packages, for the same
-            # reason as Test / Storage: it starts a Postgres testcontainer, and
+            # Its own job rather than part of Packages / Test, for the same
+            # reason as Storage / Test: it starts a Postgres testcontainer, and
             # pulling that image does not belong in the fast package loop.
             - name: Test
               run: pnpm --filter @virtool/data test
               env:
                   TZ: UTC
-    test-storage:
-        name: Test / Storage
+
+    # -------------------------------------------------------------------------
+    # Storage (packages/storage)
+    # -------------------------------------------------------------------------
+    storage-test:
+        name: Storage / Test
         runs-on: ubuntu-24.04
         timeout-minutes: 15
         steps:
@@ -254,103 +313,34 @@ jobs:
               uses: actions/checkout@v7
             - name: Setup
               uses: ./.github/actions/setup
-              with:
-                  node-version: ${{ env.NODE_VERSION }}
-                  pnpm-version: ${{ env.PNPM_VERSION }}
-            # Its own job rather than part of Test / Packages: the integration
+            # Its own job rather than part of Packages / Test: the integration
             # project starts Garage and Azurite in testcontainers, and pulling
             # those images does not belong in the fast package loop.
             - name: Test
               run: pnpm --filter @virtool/storage test
-    test-web:
-        name: Test / Web
-        runs-on: ubuntu-24.04
-        timeout-minutes: 10
-        steps:
-            - name: Checkout
-              uses: actions/checkout@v7
-            - name: Setup
-              uses: ./.github/actions/setup
-              with:
-                  node-version: ${{ env.NODE_VERSION }}
-                  pnpm-version: ${{ env.PNPM_VERSION }}
-            - name: Test
-              run: VT_TEST_WORKERS=$(nproc) pnpm --filter @virtool/web exec vitest run --project web
-              env:
-                  TZ: UTC
-                  VT_TEST_REACT_COMPILER: "1"
-    test-server:
-        name: Test / Server
-        runs-on: ubuntu-24.04
-        timeout-minutes: 15
-        steps:
-            - name: Checkout
-              uses: actions/checkout@v7
-            - name: Setup
-              uses: ./.github/actions/setup
-              with:
-                  node-version: ${{ env.NODE_VERSION }}
-                  pnpm-version: ${{ env.PNPM_VERSION }}
-            - name: Test
-              run: VT_TEST_WORKERS=$(nproc) pnpm --filter @virtool/web exec vitest run --project server
-              env:
-                  TZ: UTC
-                  VT_TEST_REACT_COMPILER: "1"
-    test-a11y:
-        name: Test / Accessibility
-        runs-on: ubuntu-24.04
-        timeout-minutes: 10
-        steps:
-            - name: Checkout
-              uses: actions/checkout@v7
-            - name: Setup
-              uses: ./.github/actions/setup
-              with:
-                  node-version: ${{ env.NODE_VERSION }}
-                  pnpm-version: ${{ env.PNPM_VERSION }}
-            - name: Install Playwright Chromium
-              run: pnpm --filter @virtool/web exec playwright install --with-deps chromium
-            - name: Test
-              run: VT_TEST_WORKERS=$(nproc) pnpm --filter @virtool/web exec vitest run --project a11y
-              env:
-                  TZ: UTC
-    build-site:
-        name: Build Site
-        runs-on: ubuntu-24.04
-        timeout-minutes: 10
-        steps:
-            - name: Checkout
-              uses: actions/checkout@v7
-            - name: Setup
-              uses: ./.github/actions/setup
-              with:
-                  node-version: ${{ env.NODE_VERSION }}
-                  pnpm-version: ${{ env.PNPM_VERSION }}
-            - name: Build site
-              run: pnpm --filter @virtool/site build
-              env:
-                  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-    release:
-        name: Publish / Release
+
+    # -------------------------------------------------------------------------
+    # Release
+    # -------------------------------------------------------------------------
+    release-tag:
+        name: Release / Tag
         runs-on: ubuntu-24.04
         timeout-minutes: 15
         needs:
             [
                 build,
                 build-pathoscope,
-                build-site,
-                check-biome,
-                check-knip,
-                check-typescript,
-                test-packages,
-                test-data,
-                test-jobs-api,
-                test-tasks,
-                test-rust,
-                test-storage,
-                test-web,
-                test-server,
-                test-a11y,
+                checks,
+                data-test,
+                jobs-api-test,
+                packages-test,
+                pathoscope-test,
+                site-build,
+                storage-test,
+                tasks-test,
+                web-test,
+                web-test-a11y,
+                web-test-server,
             ]
         if: github.event_name == 'push'
         outputs:
@@ -362,20 +352,17 @@ jobs:
               uses: actions/checkout@v7
             - name: Setup
               uses: ./.github/actions/setup
-              with:
-                  node-version: ${{ env.NODE_VERSION }}
-                  pnpm-version: ${{ env.PNPM_VERSION }}
             - name: Run semantic-release
               id: semantic
               env:
                   GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
               run: pnpm exec semantic-release
-    publish-ghcr:
-        name: Publish / GHCR / ${{ matrix.image }}
+    release-ghcr:
+        name: Release / GHCR / ${{ matrix.image }}
         runs-on: ubuntu-24.04
         timeout-minutes: 20
-        if: github.repository_owner == 'Virtool' && github.event_name == 'push' && needs.release.outputs.git-tag != ''
-        needs: [release]
+        if: github.repository_owner == 'Virtool' && github.event_name == 'push' && needs.release-tag.outputs.git-tag != ''
+        needs: [release-tag]
         permissions:
             contents: read
             packages: write
@@ -401,15 +388,13 @@ jobs:
             - name: Checkout
               uses: actions/checkout@v7
               with:
-                  ref: ${{ needs.release.outputs.git-tag }}
+                  ref: ${{ needs.release-tag.outputs.git-tag }}
             - name: Setup Buildx
               uses: docker/setup-buildx-action@v3
             - name: Setup pnpm
               uses: pnpm/action-setup@v6
-              with:
-                  version: ${{ env.PNPM_VERSION }}
             - name: Set app version from release tag
-              run: pnpm -C ${{ matrix.workspace }} version "${{ needs.release.outputs.git-tag }}" --no-git-tag-version
+              run: pnpm -C ${{ matrix.workspace }} version "${{ needs.release-tag.outputs.git-tag }}" --no-git-tag-version
             - name: Login
               uses: docker/login-action@v4
               with:

@@ -260,8 +260,8 @@ so `apps/jobs-api/vitest.config.ts` names
 project and `apps/web`'s `server` project name, so one `withReuse()` hash
 covers all three and a local run of them boots a single container.
 
-That is also why this workspace has its own `Test / Jobs API` CI job and
-is excluded from `Test / Packages`: pulling a Postgres image does not
+That is also why this workspace has its own `Jobs API / Test` CI job and
+is excluded from `Packages / Test`: pulling a Postgres image does not
 belong in the fast package loop.
 
 ## Health
