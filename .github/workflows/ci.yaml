@@ -358,7 +358,12 @@ jobs:
                   GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
               run: pnpm exec semantic-release
     release-ghcr:
-        name: Release / GHCR / ${{ matrix.image }}
+        # No `${{ matrix.image }}` in the name: this job's `if` is false on
+        # every PR (it only runs post-merge, on push to main), and GitHub
+        # skips a job before expanding its matrix — so a matrix-templated
+        # name would render as the literal, unresolved expression on every
+        # PR's checks list instead of a real image name.
+        name: Release / GHCR
         runs-on: ubuntu-24.04
         timeout-minutes: 20
         if: github.repository_owner == 'Virtool' && github.event_name == 'push' && needs.release-tag.outputs.git-tag != ''
