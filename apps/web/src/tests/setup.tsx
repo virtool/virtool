@@ -257,8 +257,6 @@ export function renderWithProviders(ui: ReactNode) {
 }
 
 export async function renderWithRouter(ui: ReactNode, path?: string) {
-	const history: string[] = [];
-
 	const rootRoute = createRootRoute();
 	const catchAllRoute = createRoute({
 		getParentRoute: () => rootRoute,
@@ -277,18 +275,10 @@ export async function renderWithRouter(ui: ReactNode, path?: string) {
 		defaultPendingMinMs: 0,
 	});
 
-	router.history.subscribe(({ action }) => {
-		if (action.type === "REPLACE" && history.length > 0) {
-			history[history.length - 1] = router.state.location.href;
-		} else {
-			history.push(router.state.location.href);
-		}
-	});
-
 	await router.load();
 
 	const result = renderWithProviders(<RouterProvider router={router} />);
-	return { ...result, history, router };
+	return { ...result, router };
 }
 
 const MemoryRouterChildrenContext = createContext<ReactNode>(null);
@@ -364,7 +354,6 @@ export async function renderRoute(path: string, opts?: RenderRouteOptions) {
 	// not every test file that imports this shared setup.
 	const { routeTree } = await import("@/routeTree.gen");
 
-	const history: string[] = [];
 	const queryClient = createTestQueryClient();
 
 	queryClient.setQueryData(rootQueryKeys.all(), { firstUser: false });
@@ -386,14 +375,6 @@ export async function renderRoute(path: string, opts?: RenderRouteOptions) {
 		context: { queryClient },
 	});
 
-	router.history.subscribe(({ action }) => {
-		if (action.type === "REPLACE" && history.length > 0) {
-			history[history.length - 1] = router.state.location.href;
-		} else {
-			history.push(router.state.location.href);
-		}
-	});
-
 	await router.load();
 
 	const result = rtlRender(
@@ -402,7 +383,7 @@ export async function renderRoute(path: string, opts?: RenderRouteOptions) {
 		</QueryClientProvider>,
 	);
 
-	return { ...result, history, router, queryClient };
+	return { ...result, router, queryClient };
 }
 
 // jsdom does not implement EventSource; the SSE bridge constructs one when the
