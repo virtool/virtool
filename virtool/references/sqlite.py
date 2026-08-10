@@ -164,6 +164,7 @@ class SQLiteReference:
                 )
 
                 async for otu in otus:
+                    _validate_otu(otu)
                     await _insert_otu(connection, reference_id, otu)
         except SQLAlchemyError as err:
             msg = "Could not write SQLite reference database"
@@ -227,7 +228,7 @@ class SQLiteReference:
             _select_otus(),
             1,
             "scalar",
-            _validate_otu,
+            dict,
         ):
             for otu in otus:
                 yield otu
@@ -558,8 +559,8 @@ def _get_id(document: Mapping[str, Any]) -> str:
     return document["_id"] if "_id" in document else document["id"]
 
 
-def _validate_otu(otu: dict[str, Any]) -> dict[str, Any]:
-    otu_id = otu["id"]
+def _validate_otu(otu: Mapping[str, Any]) -> None:
+    otu_id = _get_id(otu)
 
     if not otu["isolates"]:
         msg = f"OTU {otu_id} has no isolates in the SQLite reference"
@@ -568,12 +569,10 @@ def _validate_otu(otu: dict[str, Any]) -> dict[str, Any]:
     for isolate in otu["isolates"]:
         if not isolate["sequences"]:
             msg = (
-                f"Isolate {isolate['id']} in OTU {otu_id} has no sequences in the "
+                f"Isolate {_get_id(isolate)} in OTU {otu_id} has no sequences in the "
                 "SQLite reference"
             )
             raise ValueError(msg)
-
-    return otu
 
 
 def _select_otus() -> Select:

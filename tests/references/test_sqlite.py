@@ -346,30 +346,52 @@ def test_load_sqlite_reference_rejects_missing_file(tmp_path: Path):
         SQLiteReference.load(tmp_path / REFERENCE_SQLITE_FILE_NAME)
 
 
-async def test_iter_otus_rejects_otu_without_isolates(tmp_path: Path):
+async def test_create_rejects_otu_without_isolates(tmp_path: Path):
     otu = _otu()
     otu["isolates"] = []
-    sqlite_reference = await SQLiteReference.create(
-        tmp_path / REFERENCE_SQLITE_FILE_NAME,
-        _reference(),
-        _aiter([otu]),
-    )
 
-    with pytest.raises(ValueError, match="has no isolates"):
-        [otu async for otu in sqlite_reference.iter_otus()]
+    with pytest.raises(
+        ValueError,
+        match="OTU otu has no isolates in the SQLite reference",
+    ):
+        await SQLiteReference.create(
+            tmp_path / REFERENCE_SQLITE_FILE_NAME,
+            _reference(),
+            _aiter([otu]),
+        )
 
 
-async def test_iter_otus_rejects_isolate_without_sequences(tmp_path: Path):
+async def test_create_rejects_isolate_without_sequences(tmp_path: Path):
     otu = _otu()
     otu["isolates"][0]["sequences"] = []
+
+    with pytest.raises(
+        ValueError,
+        match=("Isolate isolate in OTU otu has no sequences in the SQLite reference"),
+    ):
+        await SQLiteReference.create(
+            tmp_path / REFERENCE_SQLITE_FILE_NAME,
+            _reference(),
+            _aiter([otu]),
+        )
+
+
+async def test_iter_otus_does_not_validate_content(tmp_path: Path):
+    sqlite_path = tmp_path / REFERENCE_SQLITE_FILE_NAME
     sqlite_reference = await SQLiteReference.create(
-        tmp_path / REFERENCE_SQLITE_FILE_NAME,
+        sqlite_path,
         _reference(),
-        _aiter([otu]),
+        _aiter([_otu()]),
     )
 
-    with pytest.raises(ValueError, match="has no sequences"):
-        [otu async for otu in sqlite_reference.iter_otus()]
+    with _connect_sqlite(sqlite_path) as connection, connection.begin():
+        connection.execute(delete(sequences_table))
+
+    first = [otu async for otu in sqlite_reference.iter_otus()]
+    second = [otu async for otu in sqlite_reference.iter_otus()]
+
+    assert first[0]["isolates"][0]["sequences"] == []
+    assert second == first
 
 
 async def test_create_sqlite_reference_without_reference(tmp_path: Path):
