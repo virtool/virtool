@@ -206,6 +206,10 @@ async def reference_sqlite_path(example_path: Path, tmp_path: Path) -> Path:
     for otu in data["otus"]:
         otu["version"] = 0
 
+    async def iter_otus():
+        for otu in data["otus"]:
+            yield otu
+
     sqlite_path = tmp_path / REFERENCE_SQLITE_FILE_NAME
     await SQLiteReference.create(
         sqlite_path,
@@ -216,7 +220,7 @@ async def reference_sqlite_path(example_path: Path, tmp_path: Path) -> Path:
             "name": "Source Reference",
             "organism": data["organism"],
         },
-        data["otus"],
+        iter_otus(),
     )
 
     return sqlite_path

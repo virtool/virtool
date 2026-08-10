@@ -1,6 +1,7 @@
 """Build and query portable SQLite reference artifacts."""
 
 from collections.abc import (
+    AsyncIterable,
     AsyncIterator,
     Callable,
     Iterable,
@@ -143,7 +144,7 @@ class SQLiteReference:
         cls,
         path: Path,
         reference: Mapping[str, Any] | None,
-        otus: Iterable[Mapping[str, Any]],
+        otus: AsyncIterable[Mapping[str, Any]],
     ) -> "SQLiteReference":
         """Create a SQLite reference and return its path-backed representation."""
         sqlite_reference = cls(path)
@@ -162,7 +163,7 @@ class SQLiteReference:
                     else None
                 )
 
-                for otu in otus:
+                async for otu in otus:
                     await _insert_otu(connection, reference_id, otu)
         except SQLAlchemyError as err:
             msg = "Could not write SQLite reference database"

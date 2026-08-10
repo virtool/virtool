@@ -1,6 +1,6 @@
 """Tests for SQLite reference artifacts."""
 
-from collections.abc import Iterator
+from collections.abc import AsyncIterator, Iterable, Iterator
 from contextlib import contextmanager
 from pathlib import Path
 
@@ -110,6 +110,11 @@ def _other_otu(*, default: bool = False) -> dict:
     return otu
 
 
+async def _aiter(otus: Iterable[dict]) -> AsyncIterator[dict]:
+    for otu in otus:
+        yield otu
+
+
 async def test_create_sqlite_reference_writes_schema_and_sequences(tmp_path: Path):
     """It writes normalized schema and sequence rows."""
 
@@ -118,7 +123,7 @@ async def test_create_sqlite_reference_writes_schema_and_sequences(tmp_path: Pat
 
     sqlite_path = tmp_path / REFERENCE_SQLITE_FILE_NAME
 
-    await SQLiteReference.create(sqlite_path, _reference(), iter_otus())
+    await SQLiteReference.create(sqlite_path, _reference(), _aiter(iter_otus()))
 
     with _connect_sqlite(sqlite_path) as connection:
         metadata = dict(connection.execute(select(metadata_table)).all())
@@ -156,7 +161,7 @@ async def test_sqlite_reference_round_trip(tmp_path: Path):
     sqlite_reference = await SQLiteReference.create(
         tmp_path / REFERENCE_SQLITE_FILE_NAME,
         _reference(),
-        [_otu()],
+        _aiter([_otu()]),
     )
 
     assert sqlite_reference.path.name == REFERENCE_SQLITE_FILE_NAME
@@ -187,7 +192,7 @@ class TestSQLiteReferenceSequences:
         sqlite_reference = await SQLiteReference.create(
             tmp_path / REFERENCE_SQLITE_FILE_NAME,
             _reference(),
-            [_otu()],
+            _aiter([_otu()]),
         )
 
         sequences = [sequence async for sequence in sqlite_reference.iter_sequences()]
@@ -201,7 +206,7 @@ class TestSQLiteReferenceSequences:
         sqlite_reference = await SQLiteReference.create(
             tmp_path / REFERENCE_SQLITE_FILE_NAME,
             _reference(),
-            [_other_otu(), _otu()],
+            _aiter([_other_otu(), _otu()]),
         )
 
         sequences = [sequence async for sequence in sqlite_reference.iter_sequences()]
@@ -230,7 +235,7 @@ class TestSQLiteReferenceSequences:
         sqlite_reference = await SQLiteReference.create(
             tmp_path / REFERENCE_SQLITE_FILE_NAME,
             _reference(),
-            [_otu(), _other_otu()],
+            _aiter([_otu(), _other_otu()]),
         )
 
         sequences = [
@@ -249,7 +254,7 @@ class TestSQLiteReferenceSequences:
         sqlite_reference = await SQLiteReference.create(
             tmp_path / REFERENCE_SQLITE_FILE_NAME,
             _reference(),
-            [_otu(), _other_otu()],
+            _aiter([_otu(), _other_otu()]),
         )
 
         one_otu = [
@@ -277,7 +282,7 @@ class TestSQLiteReferenceSequences:
         sqlite_reference = await SQLiteReference.create(
             tmp_path / REFERENCE_SQLITE_FILE_NAME,
             _reference(),
-            [_otu(), _other_otu()],
+            _aiter([_otu(), _other_otu()]),
         )
 
         otu_summaries = await sqlite_reference.get_otu_summaries_by_sequence_ids(
@@ -308,7 +313,7 @@ class TestSQLiteReferenceSequences:
         sqlite_reference = await SQLiteReference.create(
             tmp_path / REFERENCE_SQLITE_FILE_NAME,
             _reference(),
-            [_otu()],
+            _aiter([_otu()]),
         )
 
         with pytest.raises(ValueError, match="does not exist in the reference"):
@@ -322,7 +327,7 @@ class TestSQLiteReferenceSequences:
         sqlite_reference = await SQLiteReference.create(
             tmp_path / REFERENCE_SQLITE_FILE_NAME,
             _reference(),
-            [_otu(), other_otu],
+            _aiter([_otu(), other_otu]),
         )
 
         otus = {otu["id"]: otu async for otu in sqlite_reference.iter_otus()}
@@ -347,7 +352,7 @@ async def test_iter_otus_rejects_otu_without_isolates(tmp_path: Path):
     sqlite_reference = await SQLiteReference.create(
         tmp_path / REFERENCE_SQLITE_FILE_NAME,
         _reference(),
-        [otu],
+        _aiter([otu]),
     )
 
     with pytest.raises(ValueError, match="has no isolates"):
@@ -360,7 +365,7 @@ async def test_iter_otus_rejects_isolate_without_sequences(tmp_path: Path):
     sqlite_reference = await SQLiteReference.create(
         tmp_path / REFERENCE_SQLITE_FILE_NAME,
         _reference(),
-        [otu],
+        _aiter([otu]),
     )
 
     with pytest.raises(ValueError, match="has no sequences"):
@@ -375,7 +380,7 @@ async def test_create_sqlite_reference_without_reference(tmp_path: Path):
 
     sqlite_path = tmp_path / REFERENCE_SQLITE_FILE_NAME
 
-    await SQLiteReference.create(sqlite_path, None, iter_otus())
+    await SQLiteReference.create(sqlite_path, None, _aiter(iter_otus()))
 
     with _connect_sqlite(sqlite_path) as connection:
         reference_rows = connection.execute(select(reference_table)).all()
@@ -403,7 +408,7 @@ async def test_create_sqlite_reference_allows_sequence_segment_outside_otu_schem
 
     sqlite_path = tmp_path / REFERENCE_SQLITE_FILE_NAME
 
-    await SQLiteReference.create(sqlite_path, _reference(), iter_otus())
+    await SQLiteReference.create(sqlite_path, _reference(), _aiter(iter_otus()))
 
     with _connect_sqlite(sqlite_path) as connection:
         sequence_segments = (
@@ -427,7 +432,7 @@ async def test_create_sqlite_reference_allows_missing_required_isolate_segment(
 
     sqlite_path = tmp_path / REFERENCE_SQLITE_FILE_NAME
 
-    await SQLiteReference.create(sqlite_path, _reference(), iter_otus())
+    await SQLiteReference.create(sqlite_path, _reference(), _aiter(iter_otus()))
 
     with _connect_sqlite(sqlite_path) as connection:
         sequence_segments = connection.execute(select(sequences_table.c.segment)).all()
@@ -447,7 +452,7 @@ async def test_create_sqlite_reference_allows_null_segment_for_schema_otu(
 
     sqlite_path = tmp_path / REFERENCE_SQLITE_FILE_NAME
 
-    await SQLiteReference.create(sqlite_path, _reference(), iter_otus())
+    await SQLiteReference.create(sqlite_path, _reference(), _aiter(iter_otus()))
 
     with _connect_sqlite(sqlite_path) as connection:
         segment = connection.execute(select(sequences_table.c.segment)).scalar_one()
@@ -471,7 +476,7 @@ async def test_create_sqlite_reference_allows_legacy_otu_without_schema_or_abbre
     await SQLiteReference.create(
         sqlite_path,
         _reference(),
-        iter_otus(),
+        _aiter(iter_otus()),
     )
 
     with _connect_sqlite(sqlite_path) as connection:
@@ -488,7 +493,7 @@ class TestValidateSQLiteReference:
         tmp_path: Path,
     ):
         sqlite_path = tmp_path / REFERENCE_SQLITE_FILE_NAME
-        await SQLiteReference.create(sqlite_path, _reference(), [_otu()])
+        await SQLiteReference.create(sqlite_path, _reference(), _aiter([_otu()]))
 
         with (
             _connect_sqlite(sqlite_path) as connection,
@@ -512,7 +517,7 @@ class TestValidateSQLiteReference:
 
     async def test_rejects_missing_required_table(self, tmp_path: Path):
         sqlite_path = tmp_path / REFERENCE_SQLITE_FILE_NAME
-        await SQLiteReference.create(sqlite_path, _reference(), [_otu()])
+        await SQLiteReference.create(sqlite_path, _reference(), _aiter([_otu()]))
 
         with (
             _connect_sqlite(sqlite_path) as connection,
@@ -525,7 +530,7 @@ class TestValidateSQLiteReference:
 
     async def test_rejects_missing_required_column(self, tmp_path: Path):
         sqlite_path = tmp_path / REFERENCE_SQLITE_FILE_NAME
-        await SQLiteReference.create(sqlite_path, _reference(), [_otu()])
+        await SQLiteReference.create(sqlite_path, _reference(), _aiter([_otu()]))
 
         with (
             _connect_sqlite(sqlite_path) as connection,
@@ -540,7 +545,7 @@ class TestValidateSQLiteReference:
 
     async def test_rejects_missing_format_metadata(self, tmp_path: Path):
         sqlite_path = tmp_path / REFERENCE_SQLITE_FILE_NAME
-        await SQLiteReference.create(sqlite_path, _reference(), [_otu()])
+        await SQLiteReference.create(sqlite_path, _reference(), _aiter([_otu()]))
 
         with (
             _connect_sqlite(sqlite_path) as connection,
@@ -555,7 +560,7 @@ class TestValidateSQLiteReference:
 
     async def test_rejects_legacy_index_format(self, tmp_path: Path):
         sqlite_path = tmp_path / REFERENCE_SQLITE_FILE_NAME
-        await SQLiteReference.create(sqlite_path, _reference(), [_otu()])
+        await SQLiteReference.create(sqlite_path, _reference(), _aiter([_otu()]))
 
         with (
             _connect_sqlite(sqlite_path) as connection,
@@ -572,7 +577,7 @@ class TestValidateSQLiteReference:
 
     async def test_rejects_unsupported_format_version(self, tmp_path: Path):
         sqlite_path = tmp_path / REFERENCE_SQLITE_FILE_NAME
-        await SQLiteReference.create(sqlite_path, _reference(), [_otu()])
+        await SQLiteReference.create(sqlite_path, _reference(), _aiter([_otu()]))
 
         with (
             _connect_sqlite(sqlite_path) as connection,
@@ -589,14 +594,14 @@ class TestValidateSQLiteReference:
 
     async def test_rejects_missing_reference_metadata(self, tmp_path: Path):
         sqlite_path = tmp_path / REFERENCE_SQLITE_FILE_NAME
-        await SQLiteReference.create(sqlite_path, None, [_otu()])
+        await SQLiteReference.create(sqlite_path, None, _aiter([_otu()]))
 
         with pytest.raises(ValueError, match=r"exactly one.*found 0"):
             await SQLiteReference.load(sqlite_path).validate()
 
     async def test_rejects_multiple_reference_metadata_rows(self, tmp_path: Path):
         sqlite_path = tmp_path / REFERENCE_SQLITE_FILE_NAME
-        await SQLiteReference.create(sqlite_path, _reference(), [_otu()])
+        await SQLiteReference.create(sqlite_path, _reference(), _aiter([_otu()]))
         second_reference = {**_reference(), "_id": "second_reference"}
 
         with (

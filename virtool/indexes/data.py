@@ -330,7 +330,19 @@ class IndexData:
             )
             with TemporaryDirectory() as temp_dir:
                 sqlite_path = Path(temp_dir) / REFERENCE_SQLITE_FILE_NAME
-                await SQLiteReference.create(sqlite_path, reference, patched_otus)
+
+                # reference-v2.json.gz still requires a materialized list. Pass
+                # iter_patched_otus directly once that compatibility artifact is
+                # removed.
+                async def iter_materialized_otus() -> AsyncIterator[dict]:
+                    for otu in patched_otus:
+                        yield otu
+
+                await SQLiteReference.create(
+                    sqlite_path,
+                    reference,
+                    iter_materialized_otus(),
+                )
                 sqlite_size = await self._storage.write(
                     keys[REFERENCE_SQLITE_FILE_NAME],
                     read_file_chunks(sqlite_path),

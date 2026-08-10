@@ -94,10 +94,14 @@ def create_indexes_routes(
                         for otu in reference_json_v2["otus"]
                     ]
 
+                    async def iter_otus():
+                        for otu in otus:
+                            yield otu
+
                     await SQLiteReference.create(
                         reference_sqlite_path,
                         reference,
-                        otus,
+                        iter_otus(),
                     )
 
                     return FileResponse(

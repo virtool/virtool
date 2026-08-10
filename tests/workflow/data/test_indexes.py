@@ -209,7 +209,7 @@ class TestWFIndex:
         assert INDEX_SQLITE_FILE_NAME == "index.v1.sqlite"
 
     async def test_create(self, tmp_path: Path):
-        def iter_otus():
+        async def iter_otus():
             yield _get_sqlite_otu()
 
         sqlite_path = tmp_path / INDEX_SQLITE_FILE_NAME
@@ -233,7 +233,7 @@ class TestWFIndex:
         assert [otu async for otu in index.iter_otus()] == [_get_source_otu()]
 
     async def test_create_without_reference(self, tmp_path: Path):
-        def iter_otus():
+        async def iter_otus():
             yield _get_sqlite_otu()
 
         index = await WFIndex.create(

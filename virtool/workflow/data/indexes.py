@@ -4,7 +4,6 @@ from collections.abc import (
     AsyncIterable,
     AsyncIterator,
     Iterable,
-    Iterator,
     Mapping,
 )
 from pathlib import Path
@@ -51,7 +50,7 @@ class WFIndex:
         id_: int,
         path: Path,
         reference: Mapping[str, Any] | None,
-        otus: Iterable[Mapping[str, Any]],
+        otus: AsyncIterable[Mapping[str, Any]],
     ) -> "WFIndex":
         """Create a SQLite reference and return a workflow index for it."""
         return cls(
@@ -135,14 +134,21 @@ def _shape_reference_json_metadata(
     }
 
 
-def _iter_reference_json_otus(
+async def _iter_reference_json_otus(
     data: Mapping[str, Any],
     manifest: Mapping[str, int],
-) -> Iterator[dict[str, Any]]:
+) -> AsyncIterator[dict[str, Any]]:
     for otu in data["otus"]:
         otu_id = otu.get("_id") or otu["id"]
         otu["version"] = manifest[otu_id]
 
+        yield otu
+
+
+async def _iter_otus(
+    otus: Iterable[Mapping[str, Any]],
+) -> AsyncIterator[Mapping[str, Any]]:
+    for otu in otus:
         yield otu
 
 
@@ -225,7 +231,7 @@ async def index(
             raise TypeError(msg)
 
         reference = None
-        otus = otus_json
+        otus = _iter_otus(otus_json)
 
         log.info("creating local SQLite reference from otus json")
 
