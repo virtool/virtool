@@ -58,7 +58,7 @@ function and a test suite cannot afford that.
 4. **Open the pool.** `createDb(config, "tasks")`.
 5. **Install the client-event emitter.** `createEmitter({ client, logger })` —
    without it every `emit()` inside `@virtool/data` throws, and the `tasks`
-   frames the framework publishes never reach the SPA.
+   frames the data layer publishes never reach the SPA.
 6. **Build storage.** `createStorageBackend(config.storage)`.
 7. **Register signal handlers**, then **start the probe listener** — *last*, so
    nothing it reports on is still being built when the kubelet's first probe
@@ -328,15 +328,16 @@ one Postgres across all of them locally.
 layer, and the dispatch loops land on top of it, and each fills in its section
 here in its own commit:
 
-- **Framework** — `defineTask`, the step model, the percent/fraction progress
-  seam, and event emission. Lives in `apps/tasks/src/framework/`: it is an
-  execution shell rather than persistence, only this process ever runs a task,
-  and it needs zod, which `@virtool/data` does not depend on and should not
-  start to.
+- **Framework** — `defineTask`, the step model, and the percent/fraction
+  progress seam. Lives in `apps/tasks/src/framework/`: it is an execution shell
+  rather than persistence, only this process ever runs a task, and it needs zod,
+  which `@virtool/data` does not depend on and should not start to. It
+  publishes **no** frames of its own — see below.
 - **Claim, lease and reclaim** — `acquireTask`, `renewLeases`, `completeTask`,
-  `failTask`, `releaseTask`, `releaseRunnerClaims`, `reclaimExpiredLeases`.
-  These are pure persistence over a table both halves write, so they belong in
-  `packages/data/src/tasks/data.ts`, extending the module already there.
+  `failTask`, `releaseTask`, `releaseRunnerClaims`, `reclaimExpiredLeases`,
+  `updateTaskProgress`. These are pure persistence over a table both halves
+  write, so they belong in `packages/data/src/tasks/data.ts`, extending the
+  module already there.
 - **The task bodies** — `apps/tasks/src/tasks/<type>.ts`, registered with the
   runner's registry. The shell lives with its runtime, the way `functions.ts`
   lives with the web app.
@@ -346,3 +347,110 @@ the web app's orchestration layer and stays in `apps/web/src/server/<feature>/`,
 unreachable from here. A body's cross-`data` orchestration goes either into
 `@virtool/data` — when it is persistence plus injected external IO — or into
 the handler module itself. Do not add a `service.ts` under `packages/data/`.
+
+## Claiming, leases and fencing
+
+A claim is a lease with a deadline, and the deadline is encoded on
+`acquired_at` itself: a claim is live while `acquired_at` is within
+`TASK_LEASE_SECONDS` of now, and renewing it is a write to that same column.
+There is no lease column, no expiry column and no DDL — the `tasks` table is
+Python's, owned through Alembic, and Python still writes it.
+
+| Constant | Value | Meaning |
+| --- | --- | --- |
+| `TASK_LEASE_SECONDS` | 300 | How long a claim survives without a heartbeat. |
+| `TASK_HEARTBEAT_SECONDS` | 60 | How often the holder should renew it. |
+
+Five to one is the ratio Solid Queue and Sidekiq both settled on: four
+consecutive heartbeats can be lost — a GC pause, a blocked event loop, a brief
+partition — before live work becomes claimable by someone else.
+
+### Reclaim is part of the claim
+
+`acquireTask` matches a task that is unclaimed **or** whose lease has run out,
+as one disjunction in one statement. That is graphile-worker's shape, and it
+buys three things: no background timer to schedule, nothing to keep alive when
+the fleet is idle, and no window between a sweep marking a row free and a
+claimer taking it. The queue heals as a side effect of ordinary work.
+
+`reclaimExpiredLeases` still ships as its own query. Nothing needs to call it on
+a running fleet; it exists for the cutover, where a deployment may be spawning
+tasks with `VT_TASKS_CLAIM_ENABLED=false` and so never running a claim to heal
+anything.
+
+Two things about the predicate are load-bearing:
+
+- **Python's `progress = 0` term is gone.** It was there to avoid re-running
+  partially-finished work, but a row worth reclaiming has almost always reported
+  progress — so the term excluded precisely the rows a reclaim exists for.
+- **The whole predicate is repeated as the outer `UPDATE`'s guard.** The
+  candidate is chosen by a subquery under `FOR UPDATE SKIP LOCKED`; under Read
+  Committed an updater that blocks on a row re-evaluates only its own `WHERE`
+  when the lock clears, never the subquery that chose the row. Without the
+  repeat, a claimer queued behind the winner overwrites the winner's claim. It
+  has to be the *whole* disjunction — an `acquired_at IS NULL` term alone passes
+  for a row that was reclaimed a moment ago, which is not why it was chosen.
+
+### `ts-` scoping is the drain assumption, enforced
+
+Every query that takes work back off a runner is scoped to a `runner_id`
+beginning `ts-`, which is what `buildRunnerId()` mints (`ts-{hostname}-{pid}`;
+Python uses `{hostname}-{pid}`).
+
+Python never renews `acquired_at`. A task it claimed and has been working for
+longer than the lease is therefore indistinguishable from an abandoned one, and
+a reclaimer that could see it would pull live work out from under the Python
+runner. Scoping at the query level makes the drain assumption enforceable
+rather than a note in a runbook, which is why there is deliberately **no
+configuration flag to widen it**. Widening happens once Python runs no tasks at
+all, as an edit here.
+
+### Every write a runner makes is fenced
+
+`completeTask`, `failTask`, `updateTaskProgress` and `releaseTask` all guard on
+`runner_id` and `complete = false`, and return `false` when they match nothing.
+A runner that stalled past its lease and woke to find the task reassigned can
+therefore write nothing at all — it cannot finish, fail, advance or release a
+task someone else now owns.
+
+`renewLeases` is the channel that tells it so. It renews conditionally and
+returns the ids it actually renewed, so a caller diffs the result against what
+it asked for and abandons the difference. A partial result is the normal
+outcome, not an error, which is why it reports rather than throwing.
+
+Failure is terminal here, and that is a deliberate divergence: `failTask` sets
+`complete` as well as `error`, where Python's failure path writes `error` alone
+and leaves `complete` false — stranding the row outside both halves of its own
+`get_counts`.
+
+Every timestamp write is `timezone('utc', clock_timestamp())`. `now()` is the
+transaction's start time and is frozen for its whole length, which on a
+heartbeat back-dates the lease by however long the transaction has already
+run — the difference between a renewed lease and one another runner is free to
+take. The `timezone('utc', ...)` wrapper is explicit and so immune to the
+session's `TimeZone`, which `localtimestamp` is not.
+
+### The data layer publishes every `tasks` frame
+
+`updateTaskProgress`, `completeTask` and `failTask` each emit one `tasks`
+frame. The framework and the runner emit none — there is one place a `tasks`
+row changes, so there is one place the frame comes from.
+
+Nothing else emits. `acquireTask`, `renewLeases`, `releaseTask`,
+`releaseRunnerClaims` and `reclaimExpiredLeases` are all silent: a claim, a
+release and a reclaim each leave the row in the state a client last saw it in,
+and a heartbeat every minute per running task would cost every connected
+browser a refetch for a timestamp no view renders.
+
+**A guarded write that returns `false` emits nothing.** A frame for a change
+that did not happen costs every browser a refetch and announces a state the row
+is not in.
+
+These functions take `Db` rather than `DbOrTx`, which is what keeps the frame
+honest. `emit` publishes over the emitter's own pooled connection, not the
+caller's, so a call nested in an open transaction would put the frame on the
+wire before the row it describes had committed — the SPA would refetch the old
+state and then get no second frame. Typing them `Db` makes that unrepresentable
+instead of documenting it. If a task body ever genuinely needs a completion
+atomic with a final domain write, widening the parameter is a one-line change
+that has to answer the ordering question at the same time.

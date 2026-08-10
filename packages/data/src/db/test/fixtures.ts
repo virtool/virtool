@@ -8,10 +8,30 @@ import { testLogger } from "../../test/logger";
 import type { Db, PgClient } from "../pg";
 import * as schema from "../schema";
 
+/** A second connection to a {@link TestDatabase}, and the way to close it. */
+export type TestConnection = {
+	db: Db;
+	client: PgClient;
+	close: () => Promise<void>;
+};
+
 /** An isolated Postgres database, seeded with the schema, for one test file. */
 export type TestDatabase = {
 	db: Db;
 	client: PgClient;
+	/**
+	 * Open another connection to the same database.
+	 *
+	 * The fixture's own pool is `max: 1`, so two operations a test awaits
+	 * concurrently do not reach Postgres concurrently — they queue in the driver
+	 * and run one after the other. Anything asserting on what Postgres does when
+	 * two sessions genuinely contend for a row — `FOR UPDATE SKIP LOCKED`, a lock
+	 * wait, an advisory lock — needs a session of its own or it proves nothing.
+	 *
+	 * Hand `close` to `onTestFinished`. `drop` forces the database closed and so
+	 * will take an unclosed one with it, but only at the end of the file.
+	 */
+	connect: () => TestConnection;
 	drop: () => Promise<void>;
 };
 
@@ -83,6 +103,16 @@ export async function createTestDatabase(
 		await client.unsafe(statement);
 	}
 
+	function connect(): TestConnection {
+		const extra = postgres(url.toString(), { max: 1 });
+
+		return {
+			db: drizzle(extra, { schema }),
+			client: extra,
+			close: () => extra.end(),
+		};
+	}
+
 	async function drop(): Promise<void> {
 		await client.end();
 		await admin.unsafe(`drop database if exists "${name}" with (force)`);
@@ -91,5 +121,5 @@ export async function createTestDatabase(
 
 	createEmitter({ client, logger: testLogger });
 
-	return { db: drizzle(client, { schema }), client, drop };
+	return { db: drizzle(client, { schema }), client, connect, drop };
 }

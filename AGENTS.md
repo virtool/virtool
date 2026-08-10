@@ -1020,9 +1020,38 @@ Four rules it carries:
   shared with the jobs API; only the hooks and the injected
   `closeListener` are this app's.
 
+A claim is a **lease encoded on `acquired_at`** — live while that column
+is within `TASK_LEASE_SECONDS` (300) of now, renewed every
+`TASK_HEARTBEAT_SECONDS` (60). No lease column and no DDL. The claim,
+lease and completion queries are `packages/data/src/tasks/data.ts`, and
+four rules hold them:
+
+- **Reclaim is folded into the claim**, as a disjunction in one
+  statement, and the whole predicate is repeated as the outer `UPDATE`'s
+  trailing guard — under Read Committed a blocked updater re-evaluates
+  its own `WHERE` and never the subquery that chose the row. Python's
+  `progress = 0` term is deliberately dropped: it excluded exactly the
+  rows a reclaim exists for.
+- **Anything that takes work back off a runner is scoped to a `ts-`
+  `runner_id`**, which `buildRunnerId()` mints. Python never renews
+  `acquired_at`, so its long-running tasks look abandoned; the scope is
+  what stops a reclaim pulling live work out from under it. Never add a
+  flag to widen it.
+- **Every runner write is fenced** on `runner_id` and `complete = false`
+  and returns `false` when it matches nothing; `renewLeases` reports the
+  ids it renewed so a caller can abandon the rest. `failTask` sets
+  `complete` as well as `error`, which Python does not. Every timestamp
+  write is `timezone('utc', clock_timestamp())`, never `now()`.
+- **The data layer publishes every `tasks` frame** — from
+  `updateTaskProgress`, `completeTask` and `failTask` only, never from a
+  claim, release or reclaim, and never from a guarded write that
+  returned `false`. Those three take `Db` rather than `DbOrTx` so a
+  frame cannot precede the commit of the row it describes.
+
 See [docs/tasks.md](docs/tasks.md) for the full config table, the
-`AppContext` contract, the shutdown ordering and its guarantees, and the
-probe and metrics surface.
+`AppContext` contract, the shutdown ordering and its guarantees, the
+probe and metrics surface, and the lease, fencing and frame rules in
+full.
 
 ## Data
 

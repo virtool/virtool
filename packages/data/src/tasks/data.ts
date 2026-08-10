@@ -1,9 +1,22 @@
-import type { Task } from "@virtool/contracts";
-import { inArray } from "drizzle-orm";
+import { hostname } from "node:os";
+import type { JsonObject, Task } from "@virtool/contracts";
+import {
+	and,
+	asc,
+	eq,
+	inArray,
+	isNull,
+	like,
+	lt,
+	or,
+	type SQL,
+	sql,
+} from "drizzle-orm";
 import type { Db, DbOrTx } from "../db/pg";
 import { takeFirstOrThrow } from "../db/rows";
 import { tasks as tasksTable } from "../db/schema/tasks";
 import { AppError } from "../errors";
+import { emit } from "../events/emit";
 
 /** Thrown when a requested task does not exist. */
 export class TaskNotFoundError extends AppError {}
@@ -91,4 +104,442 @@ export async function getTask(db: Db, taskId: number): Promise<Task> {
 	}
 
 	return task;
+}
+
+/**
+ * How long a claim stays valid without a heartbeat.
+ *
+ * The lease is encoded on `acquired_at` itself — a claim is live while
+ * `acquired_at` is within this many seconds of now — so renewing one is a write
+ * to a column that already exists. There is no lease column and no DDL; the
+ * `tasks` table is Python's.
+ */
+export const TASK_LEASE_SECONDS = 300;
+
+/**
+ * How often the holder of a claim should renew it.
+ *
+ * Five to one against {@link TASK_LEASE_SECONDS}, the ratio Solid Queue and
+ * Sidekiq both settled on: four consecutive heartbeats can be lost — to a
+ * garbage-collection pause, a blocked event loop, a brief partition — before a
+ * live runner's work becomes claimable by someone else.
+ */
+export const TASK_HEARTBEAT_SECONDS = 60;
+
+/**
+ * Marks a `runner_id` as belonging to this service rather than to Python.
+ *
+ * Every query that takes work back off a runner is scoped to this prefix.
+ * Python never renews `acquired_at`, so a row it claimed and has been working
+ * for longer than the lease is indistinguishable from an abandoned one — a
+ * reclaimer that could see it would pull live work out from under the Python
+ * runner. Scoping at the query level is what makes the drain assumption
+ * enforceable rather than a note in a runbook, which is why there is
+ * deliberately no configuration flag to widen it. Widening happens once Python
+ * no longer runs tasks at all, as an edit here.
+ */
+const RUNNER_ID_PREFIX = "ts-";
+
+/** A task just claimed by a runner, with the lease it now holds. */
+export type ClaimedTask = {
+	id: number;
+	type: string;
+	context: JsonObject;
+	step: string | null;
+	progress: number;
+	createdAt: Date;
+	acquiredAt: Date;
+	runnerId: string;
+};
+
+/** What {@link acquireTask} needs to claim a task. */
+export type AcquireTaskOptions = {
+	runnerId: string;
+	allowedTypes: readonly string[];
+	leaseSeconds?: number;
+};
+
+/** New progress, and optionally a new step name, for {@link updateTaskProgress}. */
+export type TaskProgressValues = {
+	progress: number;
+	step?: string;
+};
+
+/**
+ * Identify this process as a task runner.
+ *
+ * `{hostname}-{pid}` is Python's format, prefixed to mark the row as this
+ * service's. The column is `varchar(255)`, which a Kubernetes pod name and a
+ * pid cannot come close to filling — and Postgres raises on overflow rather
+ * than truncating, so a hostname that did would fail the claim loudly instead
+ * of minting an id that collides with another runner's.
+ */
+export function buildRunnerId(): string {
+	return `${RUNNER_ID_PREFIX}${hostname()}-${process.pid}`;
+}
+
+/**
+ * The current UTC wall time, matching the naive `timestamp` columns Python
+ * writes.
+ *
+ * `clock_timestamp()` rather than `now()`, which is the *transaction's* start
+ * time and is frozen for its whole length. On a heartbeat that back-dates the
+ * lease by however long the transaction has already run, which is the
+ * difference between a renewed lease and one another runner is free to take.
+ */
+function nowUtc(): SQL {
+	return sql`timezone('utc', clock_timestamp())`;
+}
+
+/**
+ * Match a task no runner holds — never claimed, or claimed by a runner of ours
+ * whose lease has run out.
+ *
+ * Reclaim is folded in here rather than run from a background timer, which is
+ * graphile-worker's shape: the claim heals the queue as a side effect of doing
+ * its ordinary work, so there is no second loop to schedule, nothing to keep
+ * alive when the fleet is idle, and no window between a sweep marking a row
+ * free and a claimer taking it.
+ *
+ * Python's `progress = 0` term is deliberately absent. It was there to avoid
+ * re-running partially-finished work, but a row worth reclaiming has almost
+ * always reported progress, so the term excluded exactly the rows the reclaim
+ * exists for.
+ */
+function isClaimable(
+	allowedTypes: readonly string[],
+	leaseSeconds: number,
+): SQL | undefined {
+	return and(
+		eq(tasksTable.complete, false),
+		isNull(tasksTable.error),
+		inArray(tasksTable.type, [...allowedTypes]),
+		or(
+			isNull(tasksTable.acquired_at),
+			and(
+				like(tasksTable.runner_id, `${RUNNER_ID_PREFIX}%`),
+				lt(tasksTable.acquired_at, expiredBefore(leaseSeconds)),
+			),
+		),
+	);
+}
+
+/** The `acquired_at` a lease of `leaseSeconds` must be later than to still be live. */
+function expiredBefore(leaseSeconds: number): SQL {
+	return sql`${nowUtc()} - make_interval(secs => ${leaseSeconds}::double precision)`;
+}
+
+/**
+ * Claim the oldest task of an allowed type for `runnerId`, or return `null`
+ * when there is nothing to take.
+ *
+ * The candidate is picked under `FOR UPDATE SKIP LOCKED` over a one-row window,
+ * so a fleet of runners polling together each lock a different row rather than
+ * queueing on the same one and waking to find it taken.
+ *
+ * The predicate is then **repeated** on the outer update. Under Read Committed
+ * an updater blocked on a row re-evaluates only its own `WHERE` when the lock
+ * clears — not the subquery that chose the row — so without the repeat a
+ * claimer that queued behind another would overwrite the winner's claim with
+ * its own. The whole disjunction has to be repeated, not just an
+ * `acquired_at IS NULL` term, or a row reclaimed a moment ago passes a guard
+ * that no longer describes why it was chosen.
+ *
+ * Emits nothing. A claim changes no field any client displays, and a runner
+ * polling an empty queue would otherwise put a frame on every browser each time
+ * it found work.
+ */
+export async function acquireTask(
+	db: Db,
+	options: AcquireTaskOptions,
+): Promise<ClaimedTask | null> {
+	const { runnerId, allowedTypes } = options;
+	const leaseSeconds = options.leaseSeconds ?? TASK_LEASE_SECONDS;
+
+	if (allowedTypes.length === 0) {
+		return null;
+	}
+
+	const candidate = db
+		.select({ id: tasksTable.id })
+		.from(tasksTable)
+		.where(isClaimable(allowedTypes, leaseSeconds))
+		.orderBy(asc(tasksTable.created_at))
+		.limit(1)
+		.for("update", { skipLocked: true });
+
+	const [row] = await db
+		.update(tasksTable)
+		.set({ acquired_at: nowUtc(), runner_id: runnerId })
+		.where(
+			and(
+				eq(tasksTable.id, sql`(${candidate})`),
+				isClaimable(allowedTypes, leaseSeconds),
+			),
+		)
+		.returning({
+			acquiredAt: tasksTable.acquired_at,
+			context: tasksTable.context,
+			createdAt: tasksTable.created_at,
+			id: tasksTable.id,
+			progress: tasksTable.progress,
+			runnerId: tasksTable.runner_id,
+			step: tasksTable.step,
+			type: tasksTable.type,
+		});
+
+	if (!row) {
+		return null;
+	}
+
+	if (row.acquiredAt === null || row.runnerId === null) {
+		// Both columns were written by the statement that returned this row. They
+		// are nullable only because an unclaimed task leaves them empty.
+		throw new Error("claimed task came back without a lease");
+	}
+
+	return {
+		acquiredAt: row.acquiredAt,
+		context: (row.context ?? {}) as JsonObject,
+		createdAt: row.createdAt,
+		id: row.id,
+		progress: row.progress ?? 0,
+		runnerId: row.runnerId,
+		step: row.step,
+		type: row.type,
+	};
+}
+
+/**
+ * Renew the leases `runnerId` holds on `taskIds`, and report which were
+ * actually renewed.
+ *
+ * The renewal is conditional, and the returned ids are how a runner learns it
+ * has been fenced: a task whose lease expired and was reclaimed no longer
+ * carries this runner's id, so it is silently absent from the result. Callers
+ * diff the result against what they asked for and abandon the difference —
+ * which is why this reports rather than throwing, since a partial result is the
+ * normal outcome, not an error.
+ *
+ * Emits nothing, for the reason {@link acquireTask} does not: a heartbeat every
+ * minute per running task would cost every connected browser a refetch for a
+ * timestamp no view displays.
+ */
+export async function renewLeases(
+	db: Db,
+	taskIds: readonly number[],
+	runnerId: string,
+): Promise<number[]> {
+	if (taskIds.length === 0) {
+		return [];
+	}
+
+	const rows = await db
+		.update(tasksTable)
+		.set({ acquired_at: nowUtc() })
+		.where(
+			and(
+				inArray(tasksTable.id, [...taskIds]),
+				eq(tasksTable.runner_id, runnerId),
+				eq(tasksTable.complete, false),
+			),
+		)
+		.returning({ id: tasksTable.id });
+
+	return rows.map((row) => row.id);
+}
+
+/**
+ * Mark the task `runnerId` holds as complete.
+ *
+ * Returns `false` when the write matched nothing — the task is already
+ * finished, or this runner was fenced and no longer holds it. A fenced runner
+ * finishing its work must not be able to report on a task someone else now
+ * owns.
+ */
+export async function completeTask(
+	db: Db,
+	taskId: number,
+	runnerId: string,
+): Promise<boolean> {
+	return writeHeldTask(db, taskId, runnerId, {
+		complete: true,
+		progress: 100,
+	});
+}
+
+/**
+ * Mark the task `runnerId` holds as failed, recording `message`.
+ *
+ * Sets `complete` as well as `error`, which Python does not: its failure path
+ * writes `error` alone and leaves `complete` false, so a failed task stays
+ * forever in the set its own `get_counts` reports as neither queued nor
+ * running. Failure is terminal here.
+ *
+ * Returns `false` under the same fencing rule as {@link completeTask}.
+ */
+export async function failTask(
+	db: Db,
+	taskId: number,
+	runnerId: string,
+	message: string,
+): Promise<boolean> {
+	return writeHeldTask(db, taskId, runnerId, {
+		complete: true,
+		error: message,
+	});
+}
+
+/**
+ * Record progress, and optionally a new step name, for the task `runnerId`
+ * holds.
+ *
+ * Returns `false` under the same fencing rule as {@link completeTask}.
+ */
+export async function updateTaskProgress(
+	db: Db,
+	taskId: number,
+	runnerId: string,
+	values: TaskProgressValues,
+): Promise<boolean> {
+	return writeHeldTask(db, taskId, runnerId, {
+		progress: values.progress,
+		...(values.step !== undefined && { step: values.step }),
+	});
+}
+
+/**
+ * Apply `values` to a task only while `runnerId` still holds it, and emit one
+ * `tasks` frame if it did.
+ *
+ * The guard is what makes every write through here fenced: `runner_id` pins the
+ * row to its current holder and `complete` keeps a finished task from being
+ * written again. A write that matches nothing emits nothing — a frame for a
+ * change that did not happen costs every connected browser a refetch and
+ * reports a state the row is not in.
+ */
+async function writeHeldTask(
+	db: Db,
+	taskId: number,
+	runnerId: string,
+	values: Partial<typeof tasksTable.$inferInsert>,
+): Promise<boolean> {
+	const rows = await db
+		.update(tasksTable)
+		.set(values)
+		.where(
+			and(
+				eq(tasksTable.id, taskId),
+				eq(tasksTable.runner_id, runnerId),
+				eq(tasksTable.complete, false),
+			),
+		)
+		.returning({ id: tasksTable.id });
+
+	if (rows.length === 0) {
+		return false;
+	}
+
+	await emit("tasks", taskId, "update");
+
+	return true;
+}
+
+/**
+ * Give up the claim `runnerId` holds on `taskId`, leaving the task for another
+ * runner.
+ *
+ * This is the shutdown path: a runner draining on SIGTERM hands its work back
+ * rather than letting it sit until the lease expires. Returns `false` when the
+ * runner no longer holds the task.
+ *
+ * Scoped to {@link RUNNER_ID_PREFIX} like every other query that takes work off
+ * a runner, so the scope holds however the id was obtained rather than only
+ * when it came from {@link buildRunnerId}.
+ *
+ * Emits nothing. The task returns to exactly the state a client last saw it
+ * in — nothing about the row that any view renders has changed.
+ */
+export async function releaseTask(
+	db: Db,
+	taskId: number,
+	runnerId: string,
+): Promise<boolean> {
+	const rows = await db
+		.update(tasksTable)
+		.set({ acquired_at: null, runner_id: null })
+		.where(
+			and(
+				eq(tasksTable.id, taskId),
+				eq(tasksTable.runner_id, runnerId),
+				like(tasksTable.runner_id, `${RUNNER_ID_PREFIX}%`),
+				eq(tasksTable.complete, false),
+			),
+		)
+		.returning({ id: tasksTable.id });
+
+	return rows.length > 0;
+}
+
+/**
+ * Give up every unfinished claim `runnerId` holds, and report which.
+ *
+ * The bulk form of {@link releaseTask}, for a runner draining on shutdown or
+ * clearing whatever a previous incarnation left behind at startup. Scoped and
+ * silent for the same reasons.
+ */
+export async function releaseRunnerClaims(
+	db: Db,
+	runnerId: string,
+): Promise<number[]> {
+	const rows = await db
+		.update(tasksTable)
+		.set({ acquired_at: null, runner_id: null })
+		.where(
+			and(
+				eq(tasksTable.runner_id, runnerId),
+				like(tasksTable.runner_id, `${RUNNER_ID_PREFIX}%`),
+				eq(tasksTable.complete, false),
+			),
+		)
+		.returning({ id: tasksTable.id });
+
+	return rows.map((row) => row.id);
+}
+
+/**
+ * Take back every claim held by one of our runners whose lease has run out, and
+ * report which.
+ *
+ * {@link acquireTask} already reclaims as it claims, so nothing needs to call
+ * this on a running fleet. It ships as its own query for the cutover, where a
+ * fleet may be spawning tasks with claiming disabled and so never running a
+ * claim to heal them, and because a reclaim that can be invoked directly is
+ * testable and operable on its own.
+ *
+ * Scoped to {@link RUNNER_ID_PREFIX}: a row Python holds is never touched.
+ *
+ * Emits nothing. A reclaimed task is pending again, which is the state a client
+ * last saw it in.
+ */
+export async function reclaimExpiredLeases(
+	db: Db,
+	options: { leaseSeconds?: number } = {},
+): Promise<number[]> {
+	const leaseSeconds = options.leaseSeconds ?? TASK_LEASE_SECONDS;
+
+	const rows = await db
+		.update(tasksTable)
+		.set({ acquired_at: null, runner_id: null })
+		.where(
+			and(
+				like(tasksTable.runner_id, `${RUNNER_ID_PREFIX}%`),
+				lt(tasksTable.acquired_at, expiredBefore(leaseSeconds)),
+				eq(tasksTable.complete, false),
+				isNull(tasksTable.error),
+			),
+		)
+		.returning({ id: tasksTable.id });
+
+	return rows.map((row) => row.id);
 }
