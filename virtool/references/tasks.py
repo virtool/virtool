@@ -41,10 +41,15 @@ class ImportReferenceTask(BaseTask):
         self.steps = [self.import_reference]
 
     async def import_reference(self) -> None:
+        storage_key = await self.data.uploads.get_storage_key_by_name_on_disk(
+            self.context["name_on_disk"],
+        )
+
         await self.data.references.import_reference(
             self.context["name_on_disk"],
             self.context["ref_id"],
             self.context["user_id"],
             self.temp_path,
             self.create_progress_handler(),
+            storage_key=storage_key,
         )

@@ -44,12 +44,8 @@ async def get_subtraction_files(pg: AsyncEngine, subtraction_id: int) -> list[di
             .all()
         )
 
-    return [file.to_dict() for file in files]
-
-
-def subtraction_file_key(subtraction_id: str, filename: str) -> str:
-    return f"subtractions/{subtraction_id.replace(' ', '_')}/{filename}"
-
-
-def subtraction_prefix(subtraction_id: str) -> str:
-    return f"subtractions/{subtraction_id.replace(' ', '_')}/"
+    # Where an object lives is internal; clients address files by name.
+    return [
+        {k: v for k, v in file.to_dict().items() if k != "storage_key"}
+        for file in files
+    ]

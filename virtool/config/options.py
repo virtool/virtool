@@ -42,13 +42,6 @@ def address_options(func):
     return func
 
 
-base_url_option = click.option(
-    "--base-url",
-    default=get_from_environment("base_url", ""),
-    help="The URL used to prefix Location headers and redirects",
-    type=str,
-)
-
 cache_storage_budget_option = click.option(
     "--cache-storage-budget",
     default=get_from_environment(
@@ -87,13 +80,6 @@ no_periodic_tasks_option = click.option(
     default=get_from_environment("no_periodic_tasks", False),
     help="Don't spawn periodic tasks",
     is_flag=True,
-)
-
-real_ip_header_option = click.option(
-    "--real-ip-header",
-    default=get_from_environment("real_ip_header", ""),
-    help="The request header containing the original client's IP address",
-    type=str,
 )
 
 postgres_connection_string_option = click.option(

@@ -335,12 +335,28 @@ async def upsert_index_file(
     file_type: str,
     name: str,
     size: int,
+    storage_key: str,
 ) -> dict[str, Any]:
-    """Create or update an index file row."""
+    """Create or update an index file row.
+
+    Keys are minted per write rather than derived from the file name, so a
+    rebuild writes a new object instead of overwriting the previous one. The
+    superseded key is returned as ``replaced_storage_key`` so the caller can
+    delete that object; without it every retried build would leak one.
+    """
     index_pg_id = await resolve_legacy_id(session, SQLIndex, index_id)
 
     if index_pg_id is None:
         raise ResourceNotFoundError
+
+    replaced_storage_key = (
+        await session.execute(
+            select(SQLIndexFile.storage_key).where(
+                SQLIndexFile.index_id == index_pg_id,
+                SQLIndexFile.name == name,
+            ),
+        )
+    ).scalar_one_or_none()
 
     index_file_id = (
         await session.execute(
@@ -350,11 +366,12 @@ async def upsert_index_file(
                 index_id=index_pg_id,
                 name=name,
                 size=size,
+                storage_key=storage_key,
                 type=file_type,
             )
             .on_conflict_do_update(
                 index_elements=[SQLIndexFile.index_id, SQLIndexFile.name],
-                set_={"size": size, "type": file_type},
+                set_={"size": size, "storage_key": storage_key, "type": file_type},
             )
             .returning(SQLIndexFile.id),
         )
@@ -366,6 +383,9 @@ async def upsert_index_file(
         "name": name,
         "size": size,
         "type": file_type,
+        "replaced_storage_key": (
+            replaced_storage_key if replaced_storage_key != storage_key else None
+        ),
     }
 
 
@@ -418,11 +438,10 @@ async def update_last_indexed_versions(
             )
 
 
-async def attach_files(pg: AsyncEngine, base_url: str, document: dict) -> dict:
+async def attach_files(pg: AsyncEngine, document: dict) -> dict:
     """Attach a list of index files under `files` field.
 
     :param pg: the application Postgres client
-    :param base_url: the application base URL
     :param document: an index document
 
     :return: Index document with updated `files` entry containing a list of index files.
@@ -449,11 +468,14 @@ async def attach_files(pg: AsyncEngine, base_url: str, document: dict) -> dict:
     for index_file in [row.to_dict() for row in rows]:
         location = f"/indexes/{index_id}/files/{index_file['name']}"
 
+        # Where an object lives is internal; clients address files by name.
+        index_file.pop("storage_key", None)
+
         files.append(
             {
                 **index_file,
                 "index": index_id,
-                "download_url": str(base_url) + location,
+                "download_url": location,
             },
         )
 

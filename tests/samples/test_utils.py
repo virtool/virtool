@@ -4,7 +4,7 @@ from virtool.fake.next import DataFaker
 from virtool.samples.utils import check_labels, encode_workflow_tags
 
 
-async def test_check_labels(fake: DataFaker, spawn_client, pg: AsyncEngine):
+async def test_check_labels(fake: DataFaker, pg: AsyncEngine):
     label_1 = await fake.labels.create()
     label_2 = await fake.labels.create()
 

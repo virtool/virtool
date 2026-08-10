@@ -10,7 +10,6 @@ from virtool.api.custom_json import json_response
 from virtool.api.errors import (
     APIBadRequest,
     APIConflict,
-    APIInvalidQuery,
     APINoContent,
     APINotFound,
 )
@@ -23,10 +22,7 @@ from virtool.data.errors import (
 )
 from virtool.data.utils import get_data_from_req
 from virtool.jobs.models import TERMINAL_JOB_STATES
-from virtool.uploads.utils import (
-    multipart_file_chunker,
-    naive_validator,
-)
+from virtool.uploads.utils import multipart_file_chunker
 
 logger = get_logger("samples")
 
@@ -114,47 +110,6 @@ async def job_remove(req):
     raise APINoContent()
 
 
-@routes.jobs_api.post("/samples/{sample_id}/artifacts")
-async def upload_artifact(req):
-    """Upload an artifact.
-
-    Uploads artifact created during sample creation using the Jobs API.
-    """
-    sample_id = req.match_info["sample_id"]
-    artifact_type = req.query.get("type")
-
-    if errors := naive_validator(req):
-        raise APIInvalidQuery(errors)
-
-    name = req.query.get("name")
-
-    try:
-        artifact = await get_data_from_req(req).samples.upload_artifact(
-            sample_id,
-            artifact_type,
-            name,
-            multipart_file_chunker(await req.multipart()),
-        )
-    except ResourceNotFoundError:
-        raise APINotFound()
-    except ResourceConflictError as err:
-        if "Unsupported" in str(err):
-            raise APIBadRequest(str(err))
-        raise APIConflict(str(err))
-    except asyncio.CancelledError:
-        logger.info(
-            "Sample artifact file upload aborted",
-            sample_id=sample_id,
-        )
-        return Response(status=499)
-
-    return json_response(
-        artifact,
-        status=201,
-        headers={"Location": f"/samples/{sample_id}/artifact/{name}"},
-    )
-
-
 @routes.jobs_api.put("/samples/{sample_id}/reads/{filename}")
 async def upload_reads(req):
     """Upload reads.
@@ -198,7 +153,6 @@ async def upload_reads(req):
     )
 
 
-@routes.get("/samples/{sample_id}/reads/reads_{suffix}.fq.gz")
 @routes.jobs_api.get("/samples/{sample_id}/reads/reads_{suffix}.fq.gz")
 async def download_reads(req: Request):
     """Download reads.
@@ -213,34 +167,6 @@ async def download_reads(req: Request):
         stream, size, name = await get_data_from_req(req).samples.get_reads_file(
             sample_id,
             file_name,
-        )
-    except ResourceNotFoundError:
-        raise APINotFound()
-
-    return await stream_storage_response(
-        req,
-        stream,
-        {
-            "Content-Length": str(size),
-            "Content-Type": "application/gzip",
-        },
-    )
-
-
-@routes.jobs_api.get("/samples/{sample_id}/artifacts/{filename}")
-async def download_artifact(req: Request):
-    """Download artifact.
-
-    Downloads the sample artifact.
-
-    """
-    sample_id = req.match_info["sample_id"]
-    filename = req.match_info["filename"]
-
-    try:
-        stream, size = await get_data_from_req(req).samples.get_artifact_file(
-            sample_id,
-            filename,
         )
     except ResourceNotFoundError:
         raise APINotFound()

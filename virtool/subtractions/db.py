@@ -129,7 +129,6 @@ async def get_missing_subtraction_ids(
 
 async def attach_computed(
     pg: AsyncEngine,
-    base_url: str,
     subtraction_pk: int,
     subtraction: dict[str, Any],
 ) -> dict[str, Any]:
@@ -139,7 +138,6 @@ async def attach_computed(
     Queries Postgres to find the required data. Returns a new document dictionary.
 
     :param pg: the application Postgres engine
-    :param base_url: the base URL the API is being served from
     :param subtraction_pk: the integer id keying the ``subtraction_files`` rows
     :param subtraction: the subtraction document to attach to
     :return: a new subtraction document with new fields attached
@@ -152,9 +150,7 @@ async def attach_computed(
 
     for file in files:
         file["subtraction"] = subtraction_pk
-        file["download_url"] = (
-            f"{base_url}/subtractions/{subtraction_pk}/files/{file['name']}"
-        )
+        file["download_url"] = f"/subtractions/{subtraction_pk}/files/{file['name']}"
 
     return {**subtraction, "files": files, "linked_samples": linked_samples}
 

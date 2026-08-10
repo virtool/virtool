@@ -2,6 +2,7 @@ from datetime import datetime
 
 from sqlalchemy import (
     BigInteger,
+    CheckConstraint,
     Column,
     DateTime,
     Enum,
@@ -9,6 +10,7 @@ from sqlalchemy import (
     Identity,
     Integer,
     String,
+    UniqueConstraint,
 )
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import Mapped, mapped_column
@@ -38,12 +40,28 @@ class SQLAnalysis(Base):
     - ``sample``, ``reference`` and ``index`` are mid-migration: the legacy Mongo
       string is retained alongside the new
       ``sample_id``/``reference_id``/``index_id`` foreign key while readers move
-      over. The bare columns are dropped in a later cleanup revision.
+      over. ``reference`` and ``index`` are nullable because writers that key off
+      the foreign keys omit them; ``reference`` is still read as a fallback on
+      rows the ``reference_id`` backfill has not reached. The bare columns are
+      dropped in a later cleanup revision.
+
+    ``index_id`` is ``NOT NULL``, so an analysis's index is always resolvable
+    through the foreign key. ``reference_id`` cannot be tightened the same way
+    until it is backfilled, so ``ck_analyses_reference_present`` holds the weaker
+    invariant that a reference is named either by the legacy string or by the
+    foreign key. Without it a writer that omits both would insert a row that
+    cannot be read back.
 
     The Mongo ``space`` field is intentionally dropped.
     """
 
     __tablename__ = "analyses"
+    __table_args__ = (
+        CheckConstraint(
+            "num_nonnulls(reference, reference_id) >= 1",
+            name="ck_analyses_reference_present",
+        ),
+    )
 
     id: Mapped[int] = mapped_column(BigInteger, Identity(always=True), primary_key=True)
     legacy_id: Mapped[str | None] = mapped_column(unique=True)
@@ -58,18 +76,14 @@ class SQLAnalysis(Base):
         ForeignKey("legacy_samples.id"),
         nullable=True,
     )
-    reference: Mapped[str]
+    reference: Mapped[str | None]
     reference_id: Mapped[int | None] = mapped_column(
         BigInteger,
         ForeignKey("legacy_references.id"),
         nullable=True,
     )
-    index: Mapped[str]
-    index_id: Mapped[int | None] = mapped_column(
-        BigInteger,
-        ForeignKey("indexes.id"),
-        nullable=True,
-    )
+    index: Mapped[str | None]
+    index_id: Mapped[int] = mapped_column(BigInteger, ForeignKey("indexes.id"))
     user_id: Mapped[int] = mapped_column(ForeignKey("users.id"))
     job_id: Mapped[int | None] = mapped_column(ForeignKey("jobs.id"), nullable=True)
 
@@ -113,9 +127,17 @@ class SQLAnalysisResult(Base):
 
 
 class SQLAnalysisFile(Base):
-    """SQL model to store new analysis files"""
+    """SQL model to store new analysis files.
+
+    ``storage_key`` holds the file's complete object-storage key. It is nullable
+    because it is derived from ``name_on_disk``, which is itself nullable: a row
+    without one names no retrievable object.
+    """
 
     __tablename__ = "analysis_files"
+    __table_args__ = (
+        UniqueConstraint("storage_key", name="uq_analysis_files_storage_key"),
+    )
 
     id = Column(Integer, primary_key=True)
     analysis_id = Column(
@@ -128,4 +150,5 @@ class SQLAnalysisFile(Base):
     name = Column(String)
     name_on_disk = Column(String, unique=True)
     size = Column(BigInteger)
+    storage_key = Column(String)
     uploaded_at = Column(DateTime)

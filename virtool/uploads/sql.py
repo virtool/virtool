@@ -7,6 +7,7 @@ from sqlalchemy import (
     ForeignKey,
     Integer,
     String,
+    UniqueConstraint,
 )
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
@@ -26,7 +27,12 @@ _ALLOWED_UPLOAD_TYPES = ", ".join(repr(value) for value in UploadType.to_list())
 
 
 class SQLUpload(Base):
-    """SQL table to store all new uploads"""
+    """SQL table to store all new uploads.
+
+    ``storage_key`` holds the upload's complete object-storage key. It is
+    nullable because it is derived from ``name_on_disk``, which is itself
+    nullable: a row without one names no retrievable object.
+    """
 
     __tablename__ = "uploads"
     __table_args__ = (
@@ -34,6 +40,7 @@ class SQLUpload(Base):
             f"type IN ({_ALLOWED_UPLOAD_TYPES})",
             name="ck_uploads_type",
         ),
+        UniqueConstraint("storage_key", name="uq_uploads_storage_key"),
     )
 
     id: Column = Column(Integer, primary_key=True)
@@ -46,7 +53,7 @@ class SQLUpload(Base):
     removed_at: Column = Column(DateTime)
     reserved: Column = Column(Boolean, default=False, nullable=False)
     size: Column = Column(BigInteger)
-    space: Mapped[int] = Column(Integer, ForeignKey("spaces.id"), nullable=True)
+    storage_key: Column = Column(String)
     type: Column = Column(String)
     user_id: Mapped[int] = mapped_column(ForeignKey("users.id"), nullable=False)
     uploaded_at: Column = Column(DateTime)

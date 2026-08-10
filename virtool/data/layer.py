@@ -3,7 +3,6 @@ from dataclasses import dataclass
 from aiohttp import ClientSession
 from sqlalchemy.ext.asyncio import AsyncEngine
 
-from virtool.account.data import AccountData
 from virtool.analyses.data import AnalysisData
 from virtool.blast.data import BLASTData
 from virtool.caches.data import CachesData
@@ -18,7 +17,6 @@ from virtool.labels.data import LabelsData
 from virtool.otus.data import OTUData
 from virtool.references.data import ReferencesData
 from virtool.samples.data import SamplesData
-from virtool.sessions.data import SessionData
 from virtool.settings.data import SettingsData
 from virtool.storage.protocol import StorageBackend
 from virtool.subtractions.data import SubtractionsData
@@ -31,7 +29,6 @@ from virtool.users.data import UsersData
 class DataLayer:
     """Provides access to application data."""
 
-    account: AccountData
     analyses: AnalysisData
     blast: BLASTData
     caches: CachesData
@@ -45,7 +42,6 @@ class DataLayer:
     references: ReferencesData
     samples: SamplesData
     subtractions: SubtractionsData
-    sessions: SessionData
     settings: SettingsData
     tasks: TasksData
     uploads: UploadsData
@@ -58,8 +54,6 @@ class DataLayer:
         self.blast.bind_layer(self)
         self.analyses.bind_layer(self)
         self.references.bind_layer(self)
-        self.sessions.bind_layer(self)
-        self.account.bind_layer(self)
 
 
 def create_data_layer(
@@ -79,7 +73,6 @@ def create_data_layer(
     :return: the application data layer
     """
     return DataLayer(
-        AccountData(pg),
         AnalysisData(pg, storage),
         BLASTData(client, pg),
         CachesData(pg, storage, config.cache_storage_budget),
@@ -92,8 +85,7 @@ def create_data_layer(
         OTUData(pg, id_provider),
         ReferencesData(pg, config, client, storage),
         SamplesData(config, pg, storage),
-        SubtractionsData(config.base_url, pg, storage),
-        SessionData(pg),
+        SubtractionsData(pg, storage),
         SettingsData(pg),
         TasksData(pg),
         UploadsData(pg, storage),

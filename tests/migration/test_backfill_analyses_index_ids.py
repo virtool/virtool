@@ -10,7 +10,6 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from assets.revisions.rev_bn8b4pzfvokk_backfill_analyses_index_ids_to_integers import (
     upgrade,
 )
-from virtool.indexes.sql import SQLIndex
 from virtool.migration.ctx import MigrationContext
 from virtool.users.pg import SQLUser
 from virtool.utils import timestamp
@@ -50,20 +49,30 @@ async def _seed_index(session: AsyncSession, user_id: int, legacy_id: str) -> in
         )
     ).scalar_one()
 
-    index = SQLIndex(
-        legacy_id=legacy_id,
-        version=0,
-        created_at=timestamp(),
-        manifest={},
-        ready=True,
-        storage_key=legacy_id,
-        reference_id=reference_id,
-        user_id=user_id,
-    )
-    session.add(index)
-    await session.flush()
-
-    return index.id
+    # Raw SQL, like the inserts above: these tests pin an older revision, so the
+    # current ORM model carries columns the schema does not have yet.
+    return (
+        await session.execute(
+            text("""
+                INSERT INTO indexes (
+                    legacy_id, version, created_at, manifest, ready,
+                    storage_key, reference_id, user_id
+                )
+                VALUES (
+                    :legacy_id, 0, :now, '{}'::jsonb, true,
+                    :storage_key, :reference_id, :user_id
+                )
+                RETURNING id
+            """),
+            {
+                "legacy_id": legacy_id,
+                "now": timestamp(),
+                "storage_key": legacy_id,
+                "reference_id": reference_id,
+                "user_id": user_id,
+            },
+        )
+    ).scalar_one()
 
 
 async def _insert_analysis(ctx: MigrationContext, index: str) -> int:
@@ -111,16 +120,25 @@ async def _fetch_index_id(ctx: MigrationContext, analysis_id: int) -> int | None
         ).scalar_one()
 
 
+NULLABLE_INDEX_ID_REVISION = "af827765c1d5"
+"""The last Alembic revision at which ``analyses.index_id`` is still nullable.
+
+``9cea546d2cd3`` sets it ``NOT NULL``, so from that point on there is no row for this
+backfill to fill. Any deployment where it still has work to do is at or below this
+revision, which makes it the schema to exercise the backfill against.
+"""
+
+
 @pytest.fixture
-async def _at_head(apply_alembic: Callable) -> None:
-    await asyncio.to_thread(apply_alembic, "head")
+async def _nullable_index_id(apply_alembic: Callable) -> None:
+    await asyncio.to_thread(apply_alembic, NULLABLE_INDEX_ID_REVISION)
 
 
 class TestBackfill:
     async def test_index_id_resolved_from_legacy_string(
         self,
         ctx: MigrationContext,
-        _at_head: None,
+        _nullable_index_id: None,
     ):
         """The backfill fills ``index_id`` from ``indexes.legacy_id``."""
         async with AsyncSession(ctx.pg) as session:
@@ -137,7 +155,7 @@ class TestBackfill:
     async def test_idempotent(
         self,
         ctx: MigrationContext,
-        _at_head: None,
+        _nullable_index_id: None,
     ):
         """A second run matches no rows and leaves ``index_id`` unchanged."""
         async with AsyncSession(ctx.pg) as session:
@@ -155,7 +173,7 @@ class TestBackfill:
     async def test_tripwire_raises_on_unresolved_index(
         self,
         ctx: MigrationContext,
-        _at_head: None,
+        _nullable_index_id: None,
     ):
         """An ``index`` string that matches no ``indexes`` row raises loudly, naming
         the unresolved value, rather than leaving ``index_id`` NULL.

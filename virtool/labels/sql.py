@@ -1,5 +1,4 @@
-from sqlalchemy import Column, ForeignKey, Integer, String
-from sqlalchemy.orm import Mapped, mapped_column
+from sqlalchemy import Column, Integer, String
 
 from virtool.pg.base import Base
 
@@ -11,4 +10,3 @@ class SQLLabel(Base):
     color = Column(String(length=7))
     description = Column(String, default="")
     name = Column(String, unique=True)
-    space: Mapped[int] = mapped_column(ForeignKey("spaces.id"), nullable=True)

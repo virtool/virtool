@@ -5,7 +5,6 @@ from sqlalchemy import (
     Boolean,
     Column,
     DateTime,
-    Enum,
     Identity,
     Index,
     Integer,
@@ -17,47 +16,22 @@ from sqlalchemy.orm import Mapped, mapped_column
 from sqlalchemy.sql.schema import ForeignKey, UniqueConstraint
 
 from virtool.pg.base import Base
-from virtool.pg.utils import SQLEnum
-
-
-class ArtifactType(str, SQLEnum):
-    """Enumerated type for possible artifact types"""
-
-    sam = "sam"
-    bam = "bam"
-    fasta = "fasta"
-    fastq = "fastq"
-    csv = "csv"
-    tsv = "tsv"
-    json = "json"
-
-
-class SQLSampleArtifact(Base):
-    """SQL model to store sample artifacts"""
-
-    __tablename__ = "sample_artifacts"
-    __table_args__ = (
-        UniqueConstraint("sample", "name"),
-        UniqueConstraint("sample_id", "name"),
-    )
-
-    id = Column(Integer, primary_key=True)
-    sample = Column(String, nullable=False)
-    sample_id = Column(BigInteger, ForeignKey("legacy_samples.id"))
-    name = Column(String, nullable=False)
-    name_on_disk = Column(String)
-    size = Column(BigInteger)
-    type = Column(Enum(ArtifactType), nullable=False)
-    uploaded_at = Column(DateTime)
 
 
 class SQLSampleReads(Base):
-    """SQL model to store new sample reads files"""
+    """SQL model to store new sample reads files.
+
+    ``storage_key`` holds the reads file's complete object-storage key.
+
+    ``sample`` is the parent sample's legacy storage prefix and is dead once
+    ``storage_key`` is populated. It is dropped in a later cleanup revision.
+    """
 
     __tablename__ = "sample_reads"
     __table_args__ = (
         UniqueConstraint("sample", "name"),
         UniqueConstraint("sample_id", "name"),
+        UniqueConstraint("storage_key", name="uq_sample_reads_storage_key"),
     )
 
     id = Column(Integer, primary_key=True)
@@ -66,6 +40,7 @@ class SQLSampleReads(Base):
     name = Column(String(length=13), nullable=False)
     name_on_disk = Column(String, nullable=False)
     size = Column(BigInteger)
+    storage_key = Column(String, nullable=False)
     upload = Column(Integer, ForeignKey("uploads.id"))
     uploaded_at = Column(DateTime)
 

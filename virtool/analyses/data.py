@@ -16,10 +16,7 @@ from virtool.analyses.db import (
 from virtool.analyses.files import create_analysis_file
 from virtool.analyses.models import Analysis, AnalysisFile
 from virtool.analyses.sql import SQLAnalysis, SQLAnalysisFile
-from virtool.analyses.utils import (
-    analysis_file_key,
-    attach_analysis_files,
-)
+from virtool.analyses.utils import attach_analysis_files
 from virtool.blast.transform import AttachNuVsBLAST
 from virtool.data.domain import DataLayerDomain
 from virtool.data.errors import (
@@ -35,7 +32,7 @@ from virtool.indexes.sql import SQLIndex
 from virtool.jobs.transforms import AttachJobTransform
 from virtool.pg.utils import delete_row
 from virtool.references.transforms import AttachReferenceTransform
-from virtool.storage.cleanup import delete_prefix
+from virtool.storage.cleanup import delete_keys
 from virtool.storage.protocol import StorageBackend
 from virtool.users.transforms import AttachUserTransform
 from virtool.utils import wait_for_checks
@@ -53,7 +50,6 @@ FIND_COLUMNS = (
     SQLAnalysis.sample_id,
     SQLAnalysis.reference,
     SQLAnalysis.reference_id,
-    SQLAnalysis.index,
     SQLAnalysis.index_id,
     SQLAnalysis.user_id,
     SQLAnalysis.job_id,
@@ -70,9 +66,9 @@ INDEX_COLUMNS = (
 """The joined ``SQLIndex`` columns that supply the nested ``{id, version}``.
 
 The version is not stored on ``analyses``, so it is read from ``indexes`` via the
-``analyses.index_id`` foreign key. Selected through an outer join so an analysis whose
-index cannot be resolved survives the query and raises loudly in ``_row_to_document``
-rather than silently dropping from a list.
+``analyses.index_id`` foreign key. An inner join is safe: ``index_id`` is ``NOT NULL``
+and a foreign key, so every analysis has exactly one matching build and none can be
+dropped from a result by the join.
 """
 
 
@@ -90,13 +86,8 @@ def _row_to_document(row, *, include_results: bool) -> dict:
     ``AttachReferenceTransform`` resolves either form.
 
     The nested index is read from the joined ``SQLIndex`` columns. Its outward id is the
-    integer primary key: indexes are addressed publicly by their Postgres id. A ``NULL``
-    join means ``index_id`` did not resolve to a build, which is a data-integrity failure
-    that must surface loudly.
+    integer primary key: indexes are addressed publicly by their Postgres id.
     """
-    if row.index_pg_id is None:
-        raise ValueError(f"Index not found for analysis {row.id}: {row.index}")
-
     document = {
         "id": row.id,
         "legacy_id": row.legacy_id,
@@ -162,7 +153,7 @@ class AnalysisData(DataLayerDomain):
             row = (
                 await session.execute(
                     select(*FIND_COLUMNS, SQLAnalysis.results, *INDEX_COLUMNS)
-                    .outerjoin(SQLIndex, SQLAnalysis.index_id == SQLIndex.id)
+                    .join(SQLIndex, SQLAnalysis.index_id == SQLIndex.id)
                     .where(
                         compose_legacy_id_single_expression(SQLAnalysis, analysis_id),
                     ),
@@ -216,14 +207,19 @@ class AnalysisData(DataLayerDomain):
             # Only the jobs API is allowed to delete incomplete analyses.
             raise ResourceConflictError
 
-        legacy_id = (await self._resolve_ids(analysis.id)).legacy_id
-
         async with AsyncSession(self._pg) as session:
-            sample_legacy_id = (
-                await session.execute(
-                    select(SQLAnalysis.sample).where(SQLAnalysis.id == analysis.id),
-                )
-            ).scalar_one_or_none()
+            # Read before the delete: analysis_files cascades on analyses.id.
+            storage_keys = [
+                key
+                for key in (
+                    await session.execute(
+                        select(SQLAnalysisFile.storage_key).where(
+                            SQLAnalysisFile.analysis_id == analysis.id,
+                        ),
+                    )
+                ).scalars()
+                if key is not None
+            ]
 
             await session.execute(
                 delete(SQLAnalysis).where(SQLAnalysis.id == analysis.id),
@@ -231,21 +227,14 @@ class AnalysisData(DataLayerDomain):
 
             await session.commit()
 
-        # Only analyses migrated from Mongo have a ``legacy_id`` and slug-prefixed
-        # storage objects to clean up. Postgres-native analyses store no results in
-        # object storage, so there is nothing to delete.
-        if legacy_id is not None:
-            for key, exc in await delete_prefix(
-                self._storage,
-                f"samples/{sample_legacy_id}/analysis/{legacy_id}/",
-            ):
-                logger.error(
-                    "storage cleanup failed; file orphaned",
-                    analysis_id=analysis.id,
-                    sample_id=analysis.sample.id,
-                    key=key,
-                    error=repr(exc),
-                )
+        for key, exc in await delete_keys(self._storage, storage_keys):
+            logger.error(
+                "storage cleanup failed; file orphaned",
+                analysis_id=analysis.id,
+                sample_id=analysis.sample.id,
+                key=key,
+                error=repr(exc),
+            )
 
         emit(
             await self.data.samples.get(analysis.sample.id),
@@ -286,7 +275,7 @@ class AnalysisData(DataLayerDomain):
 
         try:
             size = await self._storage.write(
-                analysis_file_key(analysis_file["name_on_disk"]),
+                analysis_file["storage_key"],
                 chunks,
             )
         except asyncio.CancelledError:

@@ -9,6 +9,7 @@ from aiohttp import ClientOSError, ServerDisconnectedError
 from structlog import get_logger
 
 from virtool.workflow.client import WorkflowAPIClient
+from virtool.workflow.errors import JobsAPIUnauthorizedError
 from virtool.workflow.runtime.events import Events
 
 logger = get_logger("api")
@@ -31,14 +32,17 @@ async def _ping_periodically(
             await asyncio.sleep(0.1)
 
             try:
-                response = await api.put_json(f"/jobs/{job_id}/ping", {})
+                await api.put_json(f"/jobs/{job_id}/ping", {})
             except (ClientOSError, ServerDisconnectedError):
                 await asyncio.sleep(0.3)
                 retries += 1
                 continue
+            except JobsAPIUnauthorizedError:
+                if events.completed.is_set():
+                    logger.info("stopped pinging finished job")
+                    break
 
-            if response.get("cancelled"):
-                logger.info("received cancellation signal from ping response")
+                logger.info("job is no longer active")
                 events.cancelled.set()
                 parent_task.cancel()
                 break
@@ -59,8 +63,13 @@ async def ping_periodically(
     While the context manager is open, a task runs that pings the API every 5 seconds.
     When the context manager is closed, the task is cleanly cancelled.
 
-    If the ping response indicates the job has been cancelled, the events object is
-    updated and the parent task is cancelled.
+    A job that is cancelled, or otherwise no longer active, is rejected when it pings.
+    The events object is updated and the parent task is cancelled when that happens,
+    ending the workflow.
+
+    A workflow that has already completed its steps finishes the job itself, which
+    makes the job terminal. Pings rejected after that point mean the job is over, not
+    cancelled, and must leave the remaining hooks alone.
 
     The ping request is retried up to 5 times before the task is cancelled.
 

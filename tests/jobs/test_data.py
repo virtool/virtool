@@ -3,6 +3,7 @@ import pytest
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 
+from tests.fixtures.analysis import seed_index
 from virtool.analyses.sql import SQLAnalysis
 from virtool.data.errors import ResourceConflictError, ResourceNotFoundError
 from virtool.data.events import (
@@ -39,7 +40,7 @@ async def jobs_data(pg: AsyncEngine) -> JobsData:
 async def test_cancel(fake: DataFaker, jobs_data: JobsData, snapshot, static_time):
     user = await fake.users.create()
 
-    job = await jobs_data.create("build_index", {}, user.id, 0)
+    job = await jobs_data.create("build_index", {}, user.id)
 
     assert await jobs_data.cancel(job.id) == snapshot
 
@@ -55,7 +56,7 @@ async def test_create(
 
     user = await fake.users.create()
 
-    job = await jobs_data.create("build_index", {}, user.id, 0)
+    job = await jobs_data.create("build_index", {}, user.id)
 
     assert job == snapshot
 
@@ -122,7 +123,6 @@ class TestCreatePostgres:
             "create_sample",
             {"sample_id": "foo"},
             user.id,
-            0,
         )
 
         async with AsyncSession(pg) as session:
@@ -156,7 +156,6 @@ class TestCreatePostgres:
             "create_sample",
             {"sample_id": "sample_123"},
             user.id,
-            0,
         )
 
         assert (await jobs_data.get(job.id)).args == {}
@@ -208,7 +207,6 @@ class TestCreatePostgres:
             "create_sample",
             {"sample_id": "sample_123"},
             user.id,
-            0,
         )
 
         async with AsyncSession(pg) as session:
@@ -264,7 +262,7 @@ class TestCreatePostgres:
         user = await fake.users.create()
         reference = await fake.references.create(user)
 
-        job = await jobs_data.create("build_index", {}, user.id, 0)
+        job = await jobs_data.create("build_index", {}, user.id)
 
         index = await fake.indexes.create(reference, user, job=job)
 
@@ -294,7 +292,7 @@ class TestCreatePostgres:
         """
         user = await fake.users.create()
 
-        job = await jobs_data.create("build_index", {}, user.id, 0)
+        job = await jobs_data.create("build_index", {}, user.id)
 
         fetched_job = await jobs_data.get(job.id)
 
@@ -309,7 +307,7 @@ class TestCreatePostgres:
         """``get`` resolves the subtraction id from the subtraction linked by job_id."""
         user = await fake.users.create()
 
-        job = await jobs_data.create("create_subtraction", {}, user.id, 0)
+        job = await jobs_data.create("create_subtraction", {}, user.id)
 
         async with AsyncSession(pg) as session:
             subtraction = SQLSubtraction(
@@ -340,7 +338,7 @@ class TestCreatePostgres:
         """
         user = await fake.users.create()
 
-        job = await jobs_data.create(workflow, {}, user.id, 0)
+        job = await jobs_data.create(workflow, {}, user.id)
 
         async with AsyncSession(pg) as session:
             analysis = SQLAnalysis(
@@ -351,6 +349,7 @@ class TestCreatePostgres:
                 sample="sample_abc",
                 reference="ref_abc",
                 index="index_abc",
+                index_id=await seed_index(session, user.id, "index_abc"),
                 user_id=user.id,
                 job_id=job.id,
             )
@@ -397,6 +396,33 @@ class TestStartStepPostgres:
             updated_job.steps[0].started_at.replace(tzinfo=None) == static_time.datetime
         )
         assert updated_job.steps[1].started_at is None
+
+    @pytest.mark.parametrize(
+        "state",
+        [JobState.CANCELLED, JobState.FAILED, JobState.SUCCEEDED],
+    )
+    async def test_terminal_state(
+        self,
+        state: JobState,
+        data_layer: DataLayer,
+        fake: DataFaker,
+        pg: AsyncEngine,
+    ):
+        """A step of a job in a terminal state cannot be started."""
+        user = await fake.users.create()
+        job = await fake.jobs.create(user, state=state)
+
+        async with AsyncSession(pg) as session:
+            sql_job = (
+                await session.execute(select(SQLJob).where(SQLJob.id == job.id))
+            ).scalar()
+            sql_job.steps = [
+                {"id": "step_1", "name": "Step 1", "description": "First step"},
+            ]
+            await session.commit()
+
+        with pytest.raises(ResourceConflictError):
+            await data_layer.jobs.start_step(job.id, "step_1")
 
     async def test_emits_job_update_event(
         self,
@@ -549,7 +575,7 @@ class TestCancelPostgres:
     ):
         user = await fake.users.create()
 
-        job = await jobs_data.create("build_index", {}, user.id, 0)
+        job = await jobs_data.create("build_index", {}, user.id)
 
         await jobs_data.cancel(job.id)
 

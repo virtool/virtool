@@ -467,7 +467,6 @@ async def create_document(
         "organism": organism,
         "restrict_source_types": False,
         "source_types": settings.default_source_types,
-        "space": {"id": 0},
         "groups": [],
         "users": users,
         "user": user,

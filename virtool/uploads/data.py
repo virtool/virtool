@@ -11,10 +11,10 @@ from virtool.data.errors import ResourceConflictError, ResourceNotFoundError
 from virtool.data.events import Operation, emits
 from virtool.data.transforms import apply_transforms
 from virtool.samples.sql import SQLSampleReads
+from virtool.storage.keys import mint_root_storage_key
 from virtool.storage.protocol import StorageBackend
 from virtool.uploads.models import Upload
 from virtool.uploads.sql import SQLUpload, UploadType
-from virtool.uploads.utils import upload_file_key
 from virtool.users.transforms import AttachUserTransform
 
 
@@ -29,7 +29,6 @@ def serialize(upload: SQLUpload) -> dict:
         "removed_at": upload.removed_at,
         "reserved": upload.reserved,
         "size": upload.size,
-        "space": upload.space,
         "type": upload.type,
         "uploaded_at": upload.uploaded_at,
         "user": {"id": upload.user_id},
@@ -54,11 +53,9 @@ class UploadsData(DataLayerDomain):
         """Create an upload."""
         created_at = virtool.utils.timestamp()
         name_on_disk = f"{uuid.uuid4()}-{name}"
+        storage_key = mint_root_storage_key("uploads")
 
-        size = await self._storage.write(
-            upload_file_key(name_on_disk),
-            chunker,
-        )
+        size = await self._storage.write(storage_key, chunker)
 
         async with AsyncSession(self._pg) as session:
             upload = SQLUpload(
@@ -69,6 +66,7 @@ class UploadsData(DataLayerDomain):
                 removed=False,
                 reserved=False,
                 size=size,
+                storage_key=storage_key,
                 type=upload_type,
                 uploaded_at=virtool.utils.timestamp(),
                 user_id=user_id,
@@ -110,6 +108,31 @@ class UploadsData(DataLayerDomain):
             ),
         )
 
+    async def get_storage_key_by_name_on_disk(self, name_on_disk: str) -> str:
+        """Get the storage key of the upload with the given ``name_on_disk``.
+
+        The TypeScript server addresses an upload by ``name_on_disk`` when it
+        queues an import task, so that is the only handle the task has. The
+        column is unique, making the lookup exact.
+
+        :param name_on_disk: the upload's ``name_on_disk``
+        :return: the upload's storage key
+        """
+        async with AsyncSession(self._pg) as session:
+            storage_key = (
+                await session.execute(
+                    select(SQLUpload.storage_key).where(
+                        SQLUpload.name_on_disk == name_on_disk,
+                        SQLUpload.removed.is_(False),
+                    ),
+                )
+            ).scalar_one_or_none()
+
+        if storage_key is None:
+            raise ResourceNotFoundError
+
+        return storage_key
+
     async def get_upload_file_info(
         self, upload_id: int
     ) -> tuple[AsyncIterator[bytes], int, str]:
@@ -122,7 +145,7 @@ class UploadsData(DataLayerDomain):
             upload = (
                 await session.execute(
                     select(
-                        SQLUpload.name_on_disk, SQLUpload.name, SQLUpload.size
+                        SQLUpload.storage_key, SQLUpload.name, SQLUpload.size
                     ).filter_by(id=upload_id, removed=False),
                 )
             ).first()
@@ -130,9 +153,10 @@ class UploadsData(DataLayerDomain):
             if not upload:
                 raise ResourceNotFoundError
 
-        key = upload_file_key(upload.name_on_disk)
+        if upload.storage_key is None:
+            raise ResourceNotFoundError
 
-        return self._storage.read(key), upload.size, upload.name
+        return self._storage.read(upload.storage_key), upload.size, upload.name
 
     @emits(Operation.DELETE)
     async def delete(self, upload_id: int) -> Upload:
@@ -161,7 +185,7 @@ class UploadsData(DataLayerDomain):
             upload.removed = True
             upload.removed_at = virtool.utils.timestamp()
 
-            name_on_disk = upload.name_on_disk
+            storage_key = upload.storage_key
             upload = serialize(upload)
 
             await session.commit()
@@ -170,7 +194,8 @@ class UploadsData(DataLayerDomain):
             **await apply_transforms(upload, [AttachUserTransform(self._pg)], self._pg),
         )
 
-        await self._storage.delete(upload_file_key(name_on_disk))
+        if storage_key is not None:
+            await self._storage.delete(storage_key)
 
         return upload
 

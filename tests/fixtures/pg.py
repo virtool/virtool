@@ -5,12 +5,17 @@ import pytest
 from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession, create_async_engine
 
+# These modules have no app-level importer, so they are imported here to register
+# their tables on ``Base.metadata`` before the session-scoped ``engine`` fixture
+# runs ``create_all``. Dropping one leaves its table uncreated but still in the
+# ``pg`` fixture's TRUNCATE list, which fails every test that touches Postgres.
 import virtool.account.sql
 import virtool.hmm.sql
 import virtool.messages.sql
 import virtool.otus.sql
 import virtool.references.sql
-import virtool.settings.sql  # noqa: F401  schema mirror, no app importer
+import virtool.sessions.models
+import virtool.settings.sql  # noqa: F401
 from virtool.api.custom_json import dump_string
 from virtool.pg.utils import Base, PgOptions, get_sqlalchemy_url
 

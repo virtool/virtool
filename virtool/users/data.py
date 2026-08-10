@@ -1,4 +1,4 @@
-from sqlalchemy import delete, func, insert, select, update
+from sqlalchemy import delete, insert, select, update
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 from sqlalchemy.orm import selectinload
@@ -66,24 +66,6 @@ class UsersData(DataLayerDomain):
                 "permissions": merge_group_permissions(groups_dicts),
             }
         )
-
-    async def get_by_handle(self, handle: str) -> User:
-        """Get a user by their ``handle``.
-
-        :param handle: the user's unique handle
-        :return: the user
-        """
-        async with AsyncSession(self._pg) as session:
-            result = await session.execute(
-                select(SQLUser.id).where(func.lower(SQLUser.handle) == handle.lower())
-            )
-
-            user_id = result.scalar_one_or_none()
-
-            if user_id is None:
-                raise ResourceNotFoundError
-
-        return await self.get(user_id)
 
     @emits(Operation.CREATE)
     async def create(
@@ -249,37 +231,6 @@ class UsersData(DataLayerDomain):
             await session.commit()
 
         return await self.get(user_id)
-
-    async def check_administrator_role(
-        self, user_id: int, required_role: AdministratorRole
-    ) -> bool:
-        """Check if a user has the required administrator role or higher.
-
-        :param user_id: the user's ID
-        :param required_role: the minimum administrator role required
-        :return: True if the user has the required role or higher, False otherwise
-        """
-        async with AsyncSession(self._pg) as session:
-            result = await session.execute(
-                select(SQLUser.administrator_role).where(SQLUser.id == user_id),
-            )
-            user_role = result.scalar_one_or_none()
-
-            if user_role is None:
-                return False
-
-            # Define role hierarchy: FULL has highest privileges
-            role_hierarchy = {
-                AdministratorRole.BASE: 1,
-                AdministratorRole.USERS: 2,
-                AdministratorRole.SETTINGS: 2,
-                AdministratorRole.FULL: 3,
-            }
-
-            user_level = role_hierarchy.get(user_role, 0)
-            required_level = role_hierarchy.get(required_role, 0)
-
-            return user_level >= required_level
 
     async def check_users_exist(self) -> bool:
         """Check that users exist.

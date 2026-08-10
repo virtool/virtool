@@ -82,8 +82,8 @@ class TestDropCacheTables:
     ):
         """Dropping ``sample_artifacts_cache`` must not drop the shared enum.
 
-        The ``artifacttype`` enum is still used by the live ``sample_artifacts``
-        table.
+        At this revision the ``artifacttype`` enum is still used by the
+        ``sample_artifacts`` table, which a later revision drops.
         """
         await asyncio.to_thread(apply_alembic, REVISION)
 

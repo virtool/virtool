@@ -163,7 +163,7 @@ async def test_terminated_by_cancellation(
     assert test_txt_path.is_file() is not cancel
 
     if cancel:
-        assert log.has("received cancellation signal from ping response", level="info")
+        assert log.has("job is no longer active", level="info")
     else:
         assert [update["id"] for update in workflow_data.step_start_updates] == [
             "first",

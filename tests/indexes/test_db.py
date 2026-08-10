@@ -477,12 +477,14 @@ async def test_upsert_index_file_creates_row(fake: DataFaker, pg: AsyncEngine):
             "json",
             "reference.json.gz",
             9000,
+            "indexes/1/newkey",
         ) == {
             "id": 1,
             "index": index_pk,
             "name": "reference.json.gz",
             "size": 9000,
             "type": "json",
+            "replaced_storage_key": None,
         }
         await session.commit()
 
@@ -502,6 +504,7 @@ async def test_upsert_index_file_creates_row(fake: DataFaker, pg: AsyncEngine):
         "index_id": index_pk,
         "name": "reference.json.gz",
         "size": 9000,
+        "storage_key": "indexes/1/newkey",
         "type": "json",
     }
 
@@ -516,6 +519,7 @@ async def test_upsert_index_file_updates_existing_row(fake: DataFaker, pg: Async
                 index_id=index_pk,
                 name="reference.json.gz",
                 size=1,
+                storage_key="indexes/1/superseded",
                 type="json",
             ),
         )
@@ -528,12 +532,14 @@ async def test_upsert_index_file_updates_existing_row(fake: DataFaker, pg: Async
             "json",
             "reference.json.gz",
             9000,
+            "indexes/1/replacement",
         ) == {
             "id": 1,
             "index": index_pk,
             "name": "reference.json.gz",
             "size": 9000,
             "type": "json",
+            "replaced_storage_key": "indexes/1/superseded",
         }
         await session.commit()
 
@@ -549,6 +555,32 @@ async def test_upsert_index_file_updates_existing_row(fake: DataFaker, pg: Async
         )
 
     assert len(rows) == 1
+
+
+async def test_index_file_row_omitting_legacy_index(fake: DataFaker, pg: AsyncEngine):
+    """An index file inserted with only ``index_id`` — the shape written by writers that
+    have moved off the legacy Mongo string — is accepted by Postgres.
+    """
+    index_pk = await _seed_index(pg, fake, "migrated")
+
+    async with AsyncSession(pg) as session:
+        session.add(
+            SQLIndexFile(
+                index_id=index_pk,
+                name="reference.json.gz",
+                size=9000,
+                storage_key="indexes/1/omitted-legacy",
+                type="json",
+            ),
+        )
+        await session.commit()
+
+    async with AsyncSession(pg) as session:
+        row = (
+            await session.execute(select(SQLIndexFile).filter_by(index_id=index_pk))
+        ).scalar_one()
+
+    assert row.index is None
 
 
 class TestUpdateLastIndexedVersions:
@@ -788,6 +820,7 @@ async def test_attach_files(snapshot, fake: DataFaker, pg: AsyncEngine):
         index_id=index_pk,
         type="fasta",
         size=1234567,
+        storage_key="indexes/1/fasta",
     )
     index_2 = SQLIndexFile(
         id=2,
@@ -796,6 +829,7 @@ async def test_attach_files(snapshot, fake: DataFaker, pg: AsyncEngine):
         index_id=index_pk,
         type="json",
         size=1234567,
+        storage_key="indexes/1/json",
     )
 
     async with AsyncSession(pg) as session:
@@ -804,6 +838,4 @@ async def test_attach_files(snapshot, fake: DataFaker, pg: AsyncEngine):
 
     document = {"id": "foo", "reference": {"id": "bar"}}
 
-    assert (
-        await attach_files(pg, "https://virtool.example.com/api", document) == snapshot
-    )
+    assert await attach_files(pg, document) == snapshot

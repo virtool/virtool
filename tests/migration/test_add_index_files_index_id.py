@@ -8,7 +8,6 @@ from sqlalchemy import text
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from virtool.indexes.sql import SQLIndex
 from virtool.jobs.pg import SQLJob
 from virtool.migration.ctx import MigrationContext
 from virtool.utils import timestamp
@@ -74,22 +73,32 @@ async def _seed_index(ctx: MigrationContext, legacy_id: str) -> int:
         session.add(job)
         await session.flush()
 
-        index = SQLIndex(
-            legacy_id=legacy_id,
-            version=0,
-            created_at=timestamp(),
-            manifest={},
-            ready=True,
-            storage_key=legacy_id,
-            reference_id=reference_id,
-            user_id=user_id,
-            job_id=job.id,
-            task_id=None,
-        )
-        session.add(index)
-        await session.flush()
+        # Raw SQL, like the inserts above: these tests pin an older revision, so
+        # the current ORM model carries columns the schema does not have yet.
+        index_pk = (
+            await session.execute(
+                text("""
+                    INSERT INTO indexes (
+                        legacy_id, version, created_at, manifest, ready,
+                        storage_key, reference_id, user_id, job_id
+                    )
+                    VALUES (
+                        :legacy_id, 0, :now, '{}'::jsonb, true,
+                        :storage_key, :reference_id, :user_id, :job_id
+                    )
+                    RETURNING id
+                """),
+                {
+                    "legacy_id": legacy_id,
+                    "now": timestamp(),
+                    "storage_key": legacy_id,
+                    "reference_id": reference_id,
+                    "user_id": user_id,
+                    "job_id": job.id,
+                },
+            )
+        ).scalar_one()
 
-        index_pk = index.id
         await session.commit()
 
     return index_pk

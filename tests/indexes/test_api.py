@@ -6,17 +6,17 @@ from pathlib import Path
 
 import pytest
 from pytest_mock import MockerFixture
-from sqlalchemy import select
+from sqlalchemy import select, update
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 from syrupy import SnapshotAssertion
 
-from tests.fixtures.client import ClientSpawner, JobClientSpawner
+from tests.fixtures.client import JobClientSpawner
 from tests.fixtures.response import RespIs
 from virtool.fake.next import DataFaker
 from virtool.history.sql import SQLLegacyHistory
 from virtool.indexes.sql import SQLIndex, SQLIndexFile
-from virtool.indexes.utils import compose_index_file_key
 from virtool.references.sqlite import REFERENCE_SQLITE_FILE_NAME
+from virtool.storage.keys import mint_storage_key
 from virtool.storage.protocol import StorageBackend
 from virtool.workflow.pytest_plugin.utils import StaticTime
 
@@ -136,12 +136,15 @@ async def test_download_otus_json(
     index = await fake.indexes.create(reference, user, manifest=manifest)
 
     if file_exists:
-        async with AsyncSession(client.app["pg"]) as session:
-            storage_key = await session.scalar(
-                select(SQLIndex.storage_key).where(SQLIndex.id == index.id),
-            )
+        key = mint_storage_key("indexes", index.id)
 
-        key = compose_index_file_key(storage_key, "otus.json.gz")
+        async with AsyncSession(client.app["pg"]) as session:
+            await session.execute(
+                update(SQLIndex)
+                .where(SQLIndex.id == index.id)
+                .values(otus_json_storage_key=key),
+            )
+            await session.commit()
 
         async def _stream():
             yield otus_json_path.read_bytes()
@@ -243,12 +246,7 @@ async def test_download(
     path = example_path / "indexes" / "reference.1.bt2"
     expected_bytes = path.read_bytes()
 
-    async with AsyncSession(pg) as session:
-        storage_key = await session.scalar(
-            select(SQLIndex.storage_key).where(SQLIndex.id == index.id),
-        )
-
-    key = compose_index_file_key(storage_key, "reference.1.bt2")
+    key = mint_storage_key("indexes", index.id)
 
     async def _stream():
         yield expected_bytes
@@ -263,6 +261,7 @@ async def test_download(
                 index_id=index.id,
                 type="bowtie2",
                 size=len(expected_bytes),
+                storage_key=key,
             ),
         )
         await session.commit()
@@ -290,11 +289,9 @@ async def _seed_downloadable_sqlite_reference(
     index = await fake.indexes.create(reference, user)
     expected = b"server-produced SQLite reference"
 
-    async with AsyncSession(pg) as session:
-        storage_key = await session.scalar(
-            select(SQLIndex.storage_key).where(SQLIndex.id == index.id),
-        )
+    storage_key = mint_storage_key("indexes", index.id)
 
+    async with AsyncSession(pg) as session:
         session.add(
             SQLIndexFile(
                 name=REFERENCE_SQLITE_FILE_NAME,
@@ -302,6 +299,7 @@ async def _seed_downloadable_sqlite_reference(
                 index_id=index.id,
                 type="sqlite",
                 size=len(expected),
+                storage_key=storage_key,
             ),
         )
         await session.commit()
@@ -309,10 +307,7 @@ async def _seed_downloadable_sqlite_reference(
     async def stream():
         yield expected
 
-    await memory_storage.write(
-        compose_index_file_key(storage_key, REFERENCE_SQLITE_FILE_NAME),
-        stream(),
-    )
+    await memory_storage.write(storage_key, stream())
 
     return index.id, expected
 
@@ -325,28 +320,6 @@ async def test_download_sqlite_reference_for_jobs(
 ):
     """The jobs download route serves a recorded SQLite reference file."""
     client = await spawn_job_client(authenticated=True)
-    index_id, expected = await _seed_downloadable_sqlite_reference(
-        fake,
-        memory_storage,
-        pg,
-    )
-
-    response = await client.get(
-        f"/indexes/{index_id}/files/{REFERENCE_SQLITE_FILE_NAME}"
-    )
-
-    assert response.status == HTTPStatus.OK
-    assert await response.read() == expected
-
-
-async def test_download_sqlite_reference_for_authenticated_user(
-    fake: DataFaker,
-    memory_storage: StorageBackend,
-    pg: AsyncEngine,
-    spawn_client: ClientSpawner,
-):
-    """The authenticated route serves a recorded SQLite reference file."""
-    client = await spawn_client(authenticated=True, administrator=True)
     index_id, expected = await _seed_downloadable_sqlite_reference(
         fake,
         memory_storage,

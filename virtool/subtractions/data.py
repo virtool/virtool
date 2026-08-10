@@ -14,7 +14,8 @@ from virtool.data.transforms import apply_transforms
 from virtool.jobs.transforms import AttachJobTransform
 from virtool.pg.utils import get_row_by_id
 from virtool.samples.sql import SQLLegacySampleSubtraction
-from virtool.storage.cleanup import delete_prefix
+from virtool.storage.cleanup import delete_keys
+from virtool.storage.keys import mint_storage_key
 from virtool.storage.protocol import StorageBackend
 from virtool.subtractions.db import (
     attach_computed,
@@ -29,8 +30,6 @@ from virtool.subtractions.pg import SQLSubtraction, SQLSubtractionFile
 from virtool.subtractions.utils import (
     FILES,
     check_subtraction_file_type,
-    subtraction_file_key,
-    subtraction_prefix,
 )
 from virtool.uploads.db import AttachUploadTransform
 from virtool.uploads.sql import SQLUpload
@@ -44,11 +43,9 @@ class SubtractionsData(DataLayerDomain):
 
     def __init__(
         self,
-        base_url: str,
         pg: AsyncEngine,
         storage: StorageBackend,
     ):
-        self._base_url = base_url
         self._pg = pg
         self._storage = storage
 
@@ -94,7 +91,6 @@ class SubtractionsData(DataLayerDomain):
                 "create_subtraction",
                 {"subtraction_id": new_subtraction_id},
                 user_id,
-                0,
             )
 
             subtraction.job_id = job.id
@@ -103,27 +99,20 @@ class SubtractionsData(DataLayerDomain):
 
         return await self.get(new_subtraction_id)
 
-    async def _resolve_storage_id(self, subtraction_id: int) -> str:
-        """Return the storage-key identifier for a subtraction.
-
-        Pre-migration subtractions store files under their legacy Mongo slug; ones
-        created natively in Postgres (``legacy_id`` is NULL) store under the integer
-        id. Raises ResourceNotFoundError if no subtraction matches.
-        """
+    async def _check_exists(self, subtraction_id: int) -> None:
+        """Raise ResourceNotFoundError unless a live subtraction has this id."""
         async with AsyncSession(self._pg) as session:
-            row = (
+            exists = (
                 await session.execute(
-                    select(SQLSubtraction.id, SQLSubtraction.legacy_id).where(
+                    select(SQLSubtraction.id).where(
                         SQLSubtraction.id == subtraction_id,
                         SQLSubtraction.deleted.is_(False),
                     ),
                 )
             ).one_or_none()
 
-        if row is None:
+        if exists is None:
             raise ResourceNotFoundError
-
-        return row.legacy_id or str(row.id)
 
     async def get(self, subtraction_id: int) -> Subtraction:
         """Get a subtraction by its id."""
@@ -146,7 +135,6 @@ class SubtractionsData(DataLayerDomain):
 
         document = await attach_computed(
             self._pg,
-            self._base_url,
             subtraction.id,
             map_subtraction_row(subtraction, upload),
         )
@@ -178,7 +166,17 @@ class SubtractionsData(DataLayerDomain):
             if row is None or row.deleted:
                 raise ResourceNotFoundError
 
-            storage_id = row.legacy_id or str(row.id)
+            storage_keys = [
+                key
+                for key in (
+                    await pg_session.execute(
+                        select(SQLSubtractionFile.storage_key).where(
+                            SQLSubtractionFile.subtraction_id == subtraction_id,
+                        ),
+                    )
+                ).scalars()
+                if key is not None
+            ]
 
             result = await pg_session.execute(
                 update(SQLSubtraction)
@@ -197,12 +195,10 @@ class SubtractionsData(DataLayerDomain):
 
             await pg_session.commit()
 
-        failures = await delete_prefix(self._storage, subtraction_prefix(storage_id))
-
-        for key, exc in failures:
+        for key, exc in await delete_keys(self._storage, storage_keys):
             logger.error(
                 "storage cleanup failed; file orphaned",
-                subtraction_id=storage_id,
+                subtraction_id=subtraction_id,
                 key=key,
                 error=repr(exc),
             )
@@ -273,19 +269,20 @@ class SubtractionsData(DataLayerDomain):
         :param chunker: the multipart reader containing the file content
         :return: the subtraction file resource model
         """
-        storage_id = await self._resolve_storage_id(subtraction_id)
+        await self._check_exists(subtraction_id)
 
         if filename not in FILES:
             raise ResourceNotFoundError("Unsupported subtraction file name")
 
         file_type = check_subtraction_file_type(filename)
 
-        key = subtraction_file_key(storage_id, filename)
+        key = mint_storage_key("subtractions", subtraction_id)
 
         async with AsyncSession(self._pg) as session:
             subtraction_file = SQLSubtractionFile(
                 name=filename,
                 subtraction_id=subtraction_id,
+                storage_key=key,
                 type=file_type,
             )
 
@@ -314,11 +311,11 @@ class SubtractionsData(DataLayerDomain):
 
         return SubtractionFile(
             **{**subtraction_file_dict, "subtraction": subtraction_id},
-            download_url=f"{self._base_url}/subtractions/{subtraction_id}/files/{filename}",
+            download_url=f"/subtractions/{subtraction_id}/files/{filename}",
         )
 
     async def get_file(self, subtraction_id: int, filename: str):
-        storage_id = await self._resolve_storage_id(subtraction_id)
+        await self._check_exists(subtraction_id)
 
         if filename not in FILES:
             raise ResourceNotFoundError
@@ -333,11 +330,9 @@ class SubtractionsData(DataLayerDomain):
                 )
             ).scalar()
 
-        if not result:
+        if not result or result.storage_key is None:
             raise ResourceNotFoundError
 
         file = result.to_dict()
 
-        key = subtraction_file_key(storage_id, filename)
-
-        return self._storage.read(key), file["size"]
+        return self._storage.read(result.storage_key), file["size"]

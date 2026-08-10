@@ -50,7 +50,7 @@ from virtool.references.tasks import CloneReferenceTask
 from virtool.samples.files import create_reads_file
 from virtool.samples.models import Sample
 from virtool.samples.oas import CreateSampleRequest
-from virtool.samples.utils import sample_file_key, sample_storage_id
+from virtool.storage.keys import mint_storage_key
 from virtool.storage.protocol import STORAGE_CHUNK_SIZE, StorageBackend
 from virtool.subtractions.models import Subtraction
 from virtool.subtractions.oas import (
@@ -65,6 +65,12 @@ from virtool.uploads.sql import UploadType
 from virtool.uploads.utils import CHUNK_SIZE
 from virtool.users.models import User
 from virtool.users.oas import UpdateUserRequest
+
+FAKE_JOB_KEY = "fake-job-key"
+"""The key given to every claimed fake job.
+
+Tests authenticate against the jobs API as a fake job using this key.
+"""
 
 
 async def fake_file_chunker(path: Path) -> AsyncGenerator[bytearray]:
@@ -112,13 +118,10 @@ async def _stream_reads_file(path: Path) -> AsyncGenerator[bytes]:
 async def copy_reads_file(
     storage: StorageBackend,
     file_path: Path,
-    filename: str,
-    storage_id: str,
+    storage_key: str,
 ) -> None:
-    """Copy a reads file into a sample's storage prefix."""
-    await storage.write(
-        sample_file_key(storage_id, filename), _stream_reads_file(file_path)
-    )
+    """Copy a reads file to its storage key."""
+    await storage.write(storage_key, _stream_reads_file(file_path))
 
 
 def _fake_composition(faker: Faker) -> Generator[int]:
@@ -237,7 +240,6 @@ class JobsFakerDomain(DataFakerDomain):
             (workflow or self._faker.workflow()).replace("jobs_", ""),
             self._faker.pydict(nb_elements=6, value_types=[str, int, float]),
             user.id,
-            0,
         )
 
         target_state = state or self._faker.random_element(
@@ -268,7 +270,7 @@ class JobsFakerDomain(DataFakerDomain):
                     "workflow_version": "0.0.0",
                 },
                 "claimed_at": virtool.utils.timestamp(),
-                "key": virtool.utils.hash_key("fake-job-key"),
+                "key": virtool.utils.hash_key(FAKE_JOB_KEY),
                 "pinged_at": pinged_at,
                 "state": JobState.RUNNING.value,
                 "steps": [],
@@ -807,14 +809,13 @@ class SamplesFakerDomain(DataFakerDomain):
         if not ready:
             return sample
 
-        storage_id = sample_storage_id(sample.id, None)
-
         filenames = ["reads_1.fq.gz", "reads_2.fq.gz"] if paired else ["reads_1.fq.gz"]
 
         for filename in filenames:
             file_path = example_path / "sample" / filename
+            storage_key = mint_storage_key("samples", sample.id)
 
-            await copy_reads_file(self._storage, file_path, filename, storage_id)
+            await copy_reads_file(self._storage, file_path, storage_key)
 
             await create_reads_file(
                 self._pg,
@@ -822,7 +823,7 @@ class SamplesFakerDomain(DataFakerDomain):
                 filename,
                 filename,
                 sample.id,
-                storage_id,
+                storage_key,
             )
 
         # A real finalized sample has a completed creation job. Mark this

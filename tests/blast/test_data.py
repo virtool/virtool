@@ -7,6 +7,7 @@ from aiohttp import ClientSession
 from sqlalchemy import delete, select, update
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 
+from tests.fixtures.analysis import seed_index
 from virtool.analyses.sql import SQLAnalysis
 from virtool.blast.data import TIMEOUT, BLASTData
 from virtool.blast.sql import SQLNuVsBlast
@@ -69,6 +70,8 @@ async def analysis_ids(pg: AsyncEngine, static_time) -> dict[str, int]:
         )
         await session.flush()
 
+        index_id = await seed_index(session, 1)
+
         nuvs = SQLAnalysis(
             legacy_id="analysis",
             created_at=OLD_TIME,
@@ -79,6 +82,7 @@ async def analysis_ids(pg: AsyncEngine, static_time) -> dict[str, int]:
             sample="sample",
             reference="reference",
             index="index",
+            index_id=index_id,
             user_id=1,
         )
         other = SQLAnalysis(
@@ -91,6 +95,7 @@ async def analysis_ids(pg: AsyncEngine, static_time) -> dict[str, int]:
             sample="sample",
             reference="reference",
             index="index",
+            index_id=index_id,
             user_id=1,
         )
 

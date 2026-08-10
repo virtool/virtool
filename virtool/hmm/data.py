@@ -142,6 +142,15 @@ class HmmsData(DataLayerDomain):
                 await self._storage.delete(HMM_PROFILES_KEY)
             raise
 
+        # The cached annotations blob describes the rows this install replaced.
+        # Drop it only once the new rows are committed: deleting any earlier
+        # lets a concurrent ``download_annotations`` regenerate it from the
+        # pre-install rows, leaving a stale blob paired with the new profiles
+        # and no further invalidation to clear it. This runs outside the block
+        # above so a delete failure cannot trip the profiles cleanup, which
+        # would destroy the profiles of an install that already committed.
+        await self._storage.delete(HMM_ANNOTATIONS_KEY)
+
     async def download_profiles(self) -> tuple[AsyncIterator[bytes], int]:
         try:
             size = await self._storage.size(HMM_PROFILES_KEY)

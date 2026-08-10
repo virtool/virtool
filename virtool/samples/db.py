@@ -19,7 +19,6 @@ from virtool.data.transforms import AbstractTransform, apply_transforms
 from virtool.groups.pg import SQLGroup
 from virtool.samples.sql import (
     SQLLegacySample,
-    SQLSampleArtifact,
     SQLSampleReads,
     SQLSampleUpload,
 )
@@ -29,43 +28,26 @@ from virtool.uploads.sql import SQLUpload
 from virtool.users.transforms import AttachUserTransform
 
 
-class AttachArtifactsAndReadsTransform(AbstractTransform):
+class AttachReadsTransform(AbstractTransform):
     def __init__(self, pg: AsyncEngine):
         self._pg = pg
 
     async def attach_one(self, document: Document, prepared: Any) -> Document:
-        return {**document, **prepared}
+        return {**document, "reads": prepared}
 
     async def prepare_one(self, document: Document, session: AsyncSession) -> Any:
         sample_id = document["id"]
-        sample_subquery = compose_legacy_id_subquery(SQLLegacySample, sample_id)
-
-        artifacts = (
-            await session.execute(
-                select(SQLSampleArtifact).where(
-                    SQLSampleArtifact.sample_id == sample_subquery,
-                ),
-            )
-        ).scalars()
 
         reads_files = (
             await session.execute(
                 select(SQLSampleReads).where(
-                    SQLSampleReads.sample_id == sample_subquery,
+                    SQLSampleReads.sample_id
+                    == compose_legacy_id_subquery(SQLLegacySample, sample_id),
                 ),
             )
         ).scalars()
 
-        artifacts = [artifact.to_dict() for artifact in artifacts]
         reads = [reads_file.to_dict() for reads_file in reads_files]
-
-        for artifact in artifacts:
-            artifact["download_url"] = str(
-                URL("/samples")
-                / str(sample_id)
-                / "artifacts"
-                / artifact["name_on_disk"]
-            )
 
         for reads_file in reads:
             reads_file["sample"] = reads_file["sample_id"]
@@ -89,7 +71,7 @@ class AttachArtifactsAndReadsTransform(AbstractTransform):
                 URL("/samples") / str(sample_id) / "reads" / reads_file["name"]
             )
 
-        return {"artifacts": artifacts, "reads": reads}
+        return reads
 
 
 class AttachUploadsTransform(AbstractTransform):

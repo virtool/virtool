@@ -8,11 +8,6 @@ from virtool.analyses.sql import SQLAnalysisFile
 WORKFLOW_NAMES = ("nuvs", "pathoscope")
 
 
-def analysis_file_key(name_on_disk: str) -> str:
-    """Derive the storage key for an uploaded analysis file."""
-    return f"analyses/{name_on_disk}"
-
-
 async def attach_analysis_files(
     pg: AsyncEngine,
     analysis_id: int,
@@ -42,6 +37,8 @@ async def attach_analysis_files(
     for result in results:
         file = result.to_dict()
         file["analysis"] = file.pop("analysis_id")
+        # Where an object lives is internal; clients address files by name.
+        file.pop("storage_key")
         files.append(file)
 
     return {**document, "files": files}

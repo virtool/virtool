@@ -50,7 +50,6 @@ from virtool.tasks.progress import (
     TaskProgressHandler,
 )
 from virtool.tasks.transforms import AttachTaskTransform
-from virtool.uploads.utils import upload_file_key
 from virtool.users.transforms import AttachUserTransform
 
 
@@ -353,20 +352,20 @@ class ReferencesData(DataLayerDomain):
         user_id: int,
         temp_path: Path,
         progress_handler: AbstractProgressHandler,
+        *,
+        storage_key: str,
     ) -> None:
         """Import a reference from an uploaded JSON or SQLite artifact."""
-        key = upload_file_key(name_on_disk)
-
         if name_on_disk.endswith(".json.gz"):
             import_data = await load_json_import(
                 self._storage,
-                key,
+                storage_key,
                 progress_handler,
             )
         elif name_on_disk.endswith(".v1.sqlite"):
             import_data = await load_sqlite_import(
                 self._storage,
-                key,
+                storage_key,
                 temp_path,
                 progress_handler,
                 ref_id,
