@@ -1,6 +1,8 @@
 import asyncio
 import gzip
 from collections.abc import AsyncIterator
+from pathlib import Path
+from tempfile import TemporaryDirectory
 
 from sqlalchemy import delete, select, update
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
@@ -36,12 +38,17 @@ from virtool.indexes.utils import (
 )
 from virtool.references.models import ReferenceNested
 from virtool.references.sql import SQLReference
+from virtool.references.sqlite import (
+    REFERENCE_SQLITE_FILE_NAME,
+    SQLiteReference,
+)
 from virtool.references.transforms import (
     AttachReferenceTransform,
     shape_nested_reference,
 )
 from virtool.storage.cleanup import delete_prefix
 from virtool.storage.errors import StorageKeyNotFoundError
+from virtool.storage.file import read_file_chunks
 from virtool.storage.protocol import StorageBackend
 from virtool.users.transforms import AttachUserTransform
 
@@ -239,7 +246,7 @@ class IndexData:
 
     @emits(Operation.UPDATE)
     async def generate_task_index(self, index_id: int | str) -> Index:
-        """Generate the task-backed index JSON artifact and mark the index ready.
+        """Generate task-backed reference artifacts and mark the index ready.
 
         ``index_id`` accepts both the integer public id and the stringified form: a
         task created before the integer-id cutover carries the string in its context,
@@ -289,42 +296,58 @@ class IndexData:
             "organism": reference_row.organism,
         }
 
-        file_name = REFERENCE_JSON_V2_FILE_NAME
-        patched_otus = [
-            otu
-            async for otu in virtool.indexes.db.iter_patched_otus(
-                self._pg,
-                index_row.manifest,
-            )
-        ]
-        compressed = await asyncio.to_thread(
-            gzip.compress,
-            dump_bytes({**reference, "otus": patched_otus}),
-        )
-
         storage_key = await self._resolve_storage_key(index_id)
-
-        key = compose_index_file_key(storage_key, file_name)
-
-        async def stream():
-            yield compressed
+        file_names = (
+            REFERENCE_JSON_V2_FILE_NAME,
+            REFERENCE_SQLITE_FILE_NAME,
+        )
+        keys = {
+            file_name: compose_index_file_key(storage_key, file_name)
+            for file_name in file_names
+        }
 
         try:
-            # Storage cannot participate in the database transactions. A hard process
-            # exit can leave an unready object, but a retried build overwrites it.
-            size = await self._storage.write(
-                key,
-                stream(),
+            patched_otus = [
+                otu
+                async for otu in virtool.indexes.db.iter_patched_otus(
+                    self._pg,
+                    index_row.manifest,
+                )
+            ]
+            compressed = await asyncio.to_thread(
+                gzip.compress,
+                dump_bytes({**reference, "otus": patched_otus}),
             )
 
-            async with AsyncSession(self._pg) as session:
-                await virtool.indexes.db.upsert_index_file(
-                    session,
-                    index_id,
-                    "json",
-                    file_name,
-                    size,
+            async def stream_json() -> AsyncIterator[bytes]:
+                yield compressed
+
+            # Storage cannot participate in the database transactions. A hard process
+            # exit can leave an unready object, but a retried build overwrites it.
+            json_size = await self._storage.write(
+                keys[REFERENCE_JSON_V2_FILE_NAME],
+                stream_json(),
+            )
+            with TemporaryDirectory() as temp_dir:
+                sqlite_path = Path(temp_dir) / REFERENCE_SQLITE_FILE_NAME
+                await SQLiteReference.create(sqlite_path, reference, patched_otus)
+                sqlite_size = await self._storage.write(
+                    keys[REFERENCE_SQLITE_FILE_NAME],
+                    read_file_chunks(sqlite_path),
                 )
+
+            async with AsyncSession(self._pg) as session:
+                for type_, file_name, size in (
+                    ("json", REFERENCE_JSON_V2_FILE_NAME, json_size),
+                    ("sqlite", REFERENCE_SQLITE_FILE_NAME, sqlite_size),
+                ):
+                    await virtool.indexes.db.upsert_index_file(
+                        session,
+                        index_id,
+                        type_,
+                        file_name,
+                        size,
+                    )
 
                 await update_last_indexed_versions(reference_id, session)
 
@@ -336,22 +359,18 @@ class IndexData:
 
                 await session.commit()
         except BaseException:
-            await self._storage.delete(key)
+            for key in keys.values():
+                await self._storage.delete(key)
 
             async with AsyncSession(self._pg) as session:
-                row = (
-                    await session.execute(
-                        select(SQLIndexFile).where(
-                            SQLIndexFile.index_id
-                            == compose_legacy_id_subquery(SQLIndex, index_id),
-                            SQLIndexFile.name == file_name,
-                        ),
-                    )
-                ).scalar_one_or_none()
-
-                if row is not None:
-                    await session.delete(row)
-                    await session.commit()
+                await session.execute(
+                    delete(SQLIndexFile).where(
+                        SQLIndexFile.index_id
+                        == compose_legacy_id_subquery(SQLIndex, index_id),
+                        SQLIndexFile.name.in_(file_names),
+                    ),
+                )
+                await session.commit()
 
             raise
 
