@@ -86,7 +86,7 @@ function createHandler({
 				claim: null,
 				claimedAt: null,
 				createdAt: "2026-08-05T00:00:00Z",
-				pingedAt: null,
+				finishedAt: null,
 				progress: 0,
 				state: "running",
 				steps: null,

@@ -1,5 +1,5 @@
 import { faker } from "@faker-js/faker";
-import type { Task } from "@tasks/types";
+import type { Task } from "@virtool/contracts";
 
 /**
  * Create a fake task

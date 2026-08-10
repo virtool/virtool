@@ -1,5 +1,5 @@
-import type { Label } from "@labels/types";
 import type { SubtractionOption } from "@subtraction/types";
+import type { Label } from "@virtool/contracts";
 import SampleLabel from "../Label/SampleLabel";
 
 type SampleSidebarListProps = {

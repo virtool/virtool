@@ -1,6 +1,6 @@
 import { z } from "zod";
 import type { SearchResult } from "./search";
-import type { UserNested } from "./users";
+import { UserNested } from "./users";
 
 /** A job's lifecycle state. Shared by every resource that embeds a job. */
 export const JobState = z.enum([
@@ -23,6 +23,19 @@ export type JobState = z.infer<typeof JobState>;
  */
 export function isJobStateTerminal(state: string): boolean {
 	return state === "cancelled" || state === "failed" || state === "succeeded";
+}
+
+/**
+ * Whether a job reached a terminal state without producing anything.
+ *
+ * Deliberately narrower than {@link isJobStateTerminal}: `succeeded` is
+ * terminal and is not this. A subtraction whose create job ends this way is
+ * stuck at `ready: false` with no files, and nothing will ever finish it — the
+ * detail view has to offer deletion in that state, or the row is unreachable
+ * for the rest of its life.
+ */
+export function isJobStateUnsuccessful(state?: string | null): boolean {
+	return state === "cancelled" || state === "failed";
 }
 
 /**
@@ -225,6 +238,34 @@ export function fromStoredJobStep(stored: StoredJobStep): JobStep {
 	};
 }
 
+/**
+ * How far a job has got, as a percentage.
+ *
+ * Mirror of Python's `compute_progress`: a terminal job is 100%, a running job
+ * is the fraction of its steps that have started, and everything else is 0%.
+ *
+ * Reads the stored step shape rather than the wire one, because every caller
+ * derives this from the `jobs.steps` JSONB column. `state` is a plain `string`
+ * and nullable for the same reason {@link isJobStateTerminal} takes one: the
+ * column is `text`, and a resource read through a left join has no job at all.
+ */
+export function computeJobProgress(
+	state: string | null,
+	steps: StoredJobStep[] | null,
+): number {
+	if (state !== null && isJobStateTerminal(state)) {
+		return 100;
+	}
+
+	if (state !== "running" || !steps || steps.length === 0) {
+		return 0;
+	}
+
+	const started = steps.filter((step) => step.started_at != null).length;
+
+	return Math.floor((started / steps.length) * 100);
+}
+
 /** A job embedded in another resource, e.g. a sample's creation job. */
 export type JobNested = {
 	createdAt: Date;
@@ -253,31 +294,39 @@ export type JobMinimal = {
 };
 
 /**
- * A job as the SPA's detail endpoint publishes it.
+ * A job as a boundary publishes it — the SPA's detail endpoint and the jobs
+ * API's lifecycle routes alike.
  *
- * `pingedAt` is deliberately absent: a heartbeat is a fact about a runner, and
- * no view shows it. The jobs API publishes its own narrower shape to workflow
- * runners — see `WorkflowJob` — which drops `finishedAt` for the mirror-image
- * reason.
+ * **One shape, not one per audience.** Don't narrow it into a runner-facing
+ * half and an SPA-facing half: both would be built from the same record, a
+ * field one audience does not read costs it nothing, and zod strips what a
+ * schema does not name, so an added field cannot break an older runner.
+ *
+ * A schema rather than a plain type because the jobs API parses on the way out
+ * and the workflow runtime parses on the way in. The SPA parses nothing and
+ * imports the inferred type.
  */
-export type Job = {
+export const Job = z.object({
 	/**
 	 * The workflow's arguments, recomposed from the resources that reference the
-	 * job rather than read from a column. Every value is an id, stringified.
+	 * job rather than read from a column — `jobs` has no `args`. Every value is
+	 * an id, stringified.
 	 */
-	args: Record<string, string>;
+	args: z.record(z.string(), z.string()),
 
-	claim: JobClaim | null;
-	claimedAt: Date | null;
-	createdAt: Date;
-	finishedAt: Date | null;
-	id: number;
-	progress: number;
-	state: JobState;
-	steps: JobStep[] | null;
-	user: UserNested;
-	workflow: JobWorkflow;
-};
+	claim: JobClaim.nullable(),
+	claimedAt: JobTimestamp.nullable(),
+	createdAt: JobTimestamp,
+	finishedAt: JobTimestamp.nullable(),
+	id: z.number().int(),
+	progress: z.number().int(),
+	state: JobState,
+	steps: z.array(JobStep).nullable(),
+	user: UserNested,
+	workflow: JobWorkflow,
+});
+
+export type Job = z.infer<typeof Job>;
 
 /**
  * How many jobs sit in each state, across every workflow.

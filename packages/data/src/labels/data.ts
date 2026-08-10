@@ -1,4 +1,4 @@
-import { DEFAULT_LABEL_COLOR } from "@virtool/contracts";
+import { DEFAULT_LABEL_COLOR, type Label } from "@virtool/contracts";
 import { asc, eq, ilike } from "drizzle-orm";
 import type { PostgresError } from "postgres";
 import type { Db } from "../db/pg";
@@ -6,15 +6,6 @@ import { takeFirstOrThrow } from "../db/rows";
 import { type LabelRow, labels as labelsTable } from "../db/schema/labels";
 import { AppError } from "../errors";
 import { emit } from "../events/emit";
-
-/** A sample label with the count expected by the label-management UI. */
-export type Label = {
-	id: number;
-	color: string;
-	count: number;
-	description: string;
-	name: string;
-};
 
 /** Label fields accepted by create/update operations. */
 export type LabelValues = {

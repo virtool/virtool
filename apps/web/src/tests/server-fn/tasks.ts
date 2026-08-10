@@ -1,4 +1,4 @@
-import type { ServerTask } from "@tasks/types";
+import type { Task } from "@virtool/contracts";
 import { type Mock, vi } from "vitest";
 
 /**
@@ -17,7 +17,7 @@ export const taskServerFnMocks = {
  * Mirrors the real batch read: ids that match nothing are simply absent from
  * the result rather than an error.
  */
-export function mockGetTasks(tasks: ServerTask[]): Mock {
+export function mockGetTasks(tasks: Task[]): Mock {
 	taskServerFnMocks.getTasksFn.mockImplementation(
 		async ({ data }: { data: { taskIds: number[] } }) =>
 			tasks.filter((task) => data.taskIds.includes(task.id)),

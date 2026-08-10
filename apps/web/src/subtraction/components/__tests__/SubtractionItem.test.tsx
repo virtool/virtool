@@ -32,6 +32,7 @@ describe("<SubtractionItem />", () => {
 			name: "Arabidopsis thaliana",
 			nickname: "Thale cress",
 			ready: false,
+			sampleCount: 0,
 			user: createFakeUserNested(),
 		};
 	});

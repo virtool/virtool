@@ -13,7 +13,7 @@
  * contract does not describe fails here exactly as it would over a wire.
  */
 
-import { JobPing, WorkflowJob } from "@virtool/contracts";
+import { Job, JobPing } from "@virtool/contracts";
 import type { JobsApiClient, RequestOptions } from "../../client/client";
 import { assertOkResponse, JobsApiError } from "../../client/errors";
 import { handleJobsApiRequest } from "./routes";
@@ -95,7 +95,7 @@ export function createFakeJobsApiClient(
 		request,
 
 		getJob: () =>
-			request({ method: "GET", path: `/jobs/${jobId}`, schema: WorkflowJob }),
+			request({ method: "GET", path: `/jobs/${jobId}`, schema: Job }),
 
 		ping: (signal) =>
 			request({

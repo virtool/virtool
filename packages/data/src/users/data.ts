@@ -1,8 +1,13 @@
 import {
+	type Account,
+	type AccountSettings,
 	type AdministratorRoleName,
 	emptyPermissions,
 	PERMISSION_NAMES,
 	type Permissions,
+	type User,
+	type UserNested,
+	type UserSearchResult,
 } from "@virtool/contracts";
 import {
 	and,
@@ -31,34 +36,6 @@ import {
 import { type UserRow, users as usersTable } from "../db/schema/users";
 import { AppError } from "../errors";
 import { emit } from "../events/emit";
-
-/** A minimal group reference attached to a user, matching the legacy wire shape. */
-export type UserGroupReference = {
-	id: number;
-	legacyId: string | null;
-	name: string;
-};
-
-/** A Virtool user as returned to the administration views. */
-export type User = {
-	id: number;
-	handle: string;
-	administratorRole: AdministratorRoleName | null;
-	active: boolean;
-	forceReset: boolean;
-	groups: UserGroupReference[];
-	lastPasswordChange: Date;
-	permissions: Permissions;
-	primaryGroup: UserGroupReference | null;
-};
-
-/** A signed-in user's client-side preferences. */
-export type AccountSettings = {
-	quickAnalyzeWorkflow: "nuvs" | "pathoscope";
-	showIds: boolean;
-	showVersions: boolean;
-	skipQuickAnalyzeDialog: boolean;
-};
 
 /**
  * {@link AccountSettings} as it is stored in the `users.settings` JSONB column.
@@ -112,33 +89,6 @@ function toStoredAccountSettings(
 		skip_quick_analyze_dialog: settings.skipQuickAnalyzeDialog,
 	};
 }
-
-/**
- * The signed-in user's own view of themselves.
- *
- * A `User` plus the two fields only the account holder may read: their email
- * and their client settings.
- */
-export type Account = User & {
-	email: string;
-	settings: AccountSettings;
-};
-
-/** A user reduced to what a selector or filter needs to show. */
-export type UserOption = {
-	id: number;
-	handle: string;
-};
-
-/** A page of user search results. */
-export type UserSearchResults = {
-	items: User[];
-	foundCount: number;
-	totalCount: number;
-	page: number;
-	pageCount: number;
-	perPage: number;
-};
 
 /** Filters accepted when searching users. */
 export type FindUsersFilters = {
@@ -357,7 +307,7 @@ export async function getUserCount(db: Db): Promise<number> {
 }
 
 /** List every active user, for populating selectors and filters. */
-export async function listUsers(db: Db): Promise<UserOption[]> {
+export async function listUsers(db: Db): Promise<UserNested[]> {
 	return db
 		.select({ id: usersTable.id, handle: usersTable.handle })
 		.from(usersTable)
@@ -368,7 +318,7 @@ export async function listUsers(db: Db): Promise<UserOption[]> {
 export async function findUsers(
 	db: Db,
 	filters: FindUsersFilters,
-): Promise<UserSearchResults> {
+): Promise<UserSearchResult> {
 	const {
 		term = "",
 		page = 1,

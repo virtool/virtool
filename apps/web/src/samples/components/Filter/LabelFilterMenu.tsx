@@ -2,8 +2,8 @@ import DropdownMenuCheckboxItem from "@base/DropdownMenuCheckboxItem";
 import DropdownMenuContent from "@base/DropdownMenuContent";
 import DropdownMenuItem from "@base/DropdownMenuItem";
 import DropdownMenuSeparator from "@base/DropdownMenuSeparator";
-import type { Label } from "@labels/types";
 import { getHexColor } from "@samples/labels";
+import type { Label } from "@virtool/contracts";
 
 type LabelFilterMenuProps = {
 	/** All available labels. */

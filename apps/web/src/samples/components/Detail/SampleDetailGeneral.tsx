@@ -6,13 +6,13 @@ import ContainerNarrow from "@base/ContainerNarrow";
 import ContainerSide from "@base/ContainerSide";
 import JobItem from "@jobs/components/JobItem";
 import { useFetchJob } from "@jobs/queries";
-import type { Label } from "@labels/types";
 import { useSuspenseSample } from "@samples/queries";
 import { getLibraryTypeDisplayName } from "@samples/utils";
 /**
  * The general view in sample details
  */
 import { getRouteApi } from "@tanstack/react-router";
+import type { Label } from "@virtool/contracts";
 import SampleFileSizeWarning from "./SampleFileSizeWarning";
 import SampleNotes from "./SampleNotes";
 import Sidebar from "./Sidebar";

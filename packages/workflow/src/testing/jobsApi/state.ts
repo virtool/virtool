@@ -11,10 +11,10 @@ import type {
 	FinalizeAnalysisRequest,
 	FinalizeSampleRequest,
 	FinalizeSubtractionRequest,
+	Job,
 	RegisterCacheRequest,
 	WorkflowAnalysis,
 	WorkflowIndex,
-	WorkflowJob,
 	WorkflowReference,
 	WorkflowSample,
 	WorkflowSettings,
@@ -32,13 +32,22 @@ export type FinalizeCall =
 /** Everything the jobs API harness knows and everything it records. */
 export type JobsApiState = {
 	/** The one job this fixture serves. Flip `state` to drive cancellation. */
-	job: WorkflowJob;
+	job: Job;
 
 	/** The runner key `POST /jobs/claim` hands out and every call authenticates with. */
 	key: string;
 
 	/** Whether the job has been claimed. A second claim is answered 404. */
 	acquired: boolean;
+
+	/**
+	 * When the job was last pinged, or `null` if it never was.
+	 *
+	 * Fixture bookkeeping rather than part of the job: `pinged_at` is a column
+	 * the jobs API writes and no read shape publishes, so a test asserts the
+	 * heartbeat here.
+	 */
+	pingedAt: Date | null;
 
 	/** Step ids `POST /jobs/{id}/steps/{stepId}/start` was called for, in order. */
 	stepStartUpdates: string[];
@@ -94,11 +103,12 @@ export function createJobsApiState({
 		// Unclaimed, so a test that exercises the claim starts where a real pod
 		// does. `POST /jobs/claim` is what moves it to `running`.
 		job: createFakeJob(
-			{ claim: null, claimedAt: null, pingedAt: null, state: "pending" },
+			{ claim: null, claimedAt: null, state: "pending" },
 			seed,
 		),
 		key: random.hex(32),
 		acquired: false,
+		pingedAt: null,
 		stepStartUpdates: [],
 		finishCalled: false,
 		finalizeCalls: [],

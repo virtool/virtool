@@ -256,8 +256,8 @@ is a 500 and a Sentry event rather than routine control flow the
 `beforeSend` filter drops. The message names the job id and never the
 value — it becomes a Sentry title, and an unbounded one buries the
 incident among its own variants. `apps/jobs-api` does the same thing on
-its own read path, parsing outbound jobs through the `WorkflowJob`
-schema.
+its own read path, parsing outbound jobs through the same `Job` schema
+the web app publishes.
 
 The alternative — declaring the narrow union on the client and parsing
 there — moves the failure to a component that can do nothing about it,

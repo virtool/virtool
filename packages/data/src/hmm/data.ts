@@ -3,7 +3,7 @@ import type {
 	HmmMinimal,
 	HmmSearchResult,
 	HmmStatus,
-	HmmStatusTask,
+	Task,
 } from "@virtool/contracts";
 import { and, asc, count, eq, sql } from "drizzle-orm";
 import type { Db, DbOrTx } from "../db/pg";
@@ -86,7 +86,7 @@ function nameMatches(term: string) {
 	return sql`exists (select 1 from jsonb_array_elements_text(${hmms.names}) as element(value) where element.value ilike ${pattern})`;
 }
 
-async function readTask(db: Db, taskId: number): Promise<HmmStatusTask | null> {
+async function readTask(db: Db, taskId: number): Promise<Task | null> {
 	const [row] = await db
 		.select({
 			complete: tasks.complete,

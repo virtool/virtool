@@ -1,4 +1,4 @@
-import { JobPing, type JsonValue, WorkflowJob } from "@virtool/contracts";
+import { Job, JobPing, type JsonValue } from "@virtool/contracts";
 import type { Logger } from "@virtool/logger";
 import { Agent, fetch } from "undici";
 import type { ZodType } from "zod";
@@ -83,7 +83,7 @@ export type JobsApiClient = {
 	 * than each hand-rolling auth, retry and error mapping.
 	 */
 	request: <T>(options: RequestOptions<T>) => Promise<T>;
-	getJob: () => Promise<WorkflowJob>;
+	getJob: () => Promise<Job>;
 	/**
 	 * Heartbeat.
 	 *
@@ -216,7 +216,7 @@ export function createJobsApiClient({
 		request,
 
 		getJob: () =>
-			request({ method: "GET", path: `/jobs/${jobId}`, schema: WorkflowJob }),
+			request({ method: "GET", path: `/jobs/${jobId}`, schema: Job }),
 
 		// Retries are disabled so the ping loop owns the give-up window end to
 		// end. Python's ping goes through `@retry`, so one failure as its loop

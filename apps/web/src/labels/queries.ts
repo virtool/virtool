@@ -6,7 +6,7 @@ import {
 	updateLabelFn,
 } from "@server/labels/functions";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import type { Label } from "./types";
+import type { Label } from "@virtool/contracts";
 
 /**
  * Fetch a list of labels from the API

@@ -3,7 +3,7 @@ import { useFuse } from "@app/fuse";
 import Circle from "@base/Circle";
 import Link from "@base/Link";
 import MultiSelectComboBox from "@base/MultiSelectComboBox";
-import type { Label } from "@labels/types";
+import type { Label } from "@virtool/contracts";
 import { intersectionWith } from "es-toolkit";
 import SampleLabel from "../Label/SampleLabel";
 

@@ -8,8 +8,16 @@
 // `analyses.job_id` — and recombined into `args` when a job is read. There are
 // no `job_samples` / `job_indexes` junction tables: the sample and index are
 // resolved through those reverse foreign keys, not link rows.
+//
+// The two JSONB columns are typed with the `Stored*` shapes from
+// `@virtool/contracts`, which is where the mappers that publish them live. A
+// local copy of either would be free to disagree with the mapper reading it.
 
-import type { JobState } from "@virtool/contracts";
+import type {
+	JobState,
+	StoredJobClaim,
+	StoredJobStep,
+} from "@virtool/contracts";
 import {
 	boolean,
 	integer,
@@ -19,28 +27,10 @@ import {
 	timestamp,
 } from "drizzle-orm/pg-core";
 
-/** A runner claim payload, stored as JSONB on a job. */
-export type JobClaim = {
-	cpu: number;
-	image: string;
-	mem: number;
-	runner_id: string;
-	runtime_version: string;
-	workflow_version: string;
-};
-
-/** A workflow step, stored in the `steps` JSONB array on a job. */
-export type JobStep = {
-	description: string;
-	id: string;
-	name: string;
-	started_at: string | null;
-};
-
 export const jobs = pgTable("jobs", {
 	id: integer("id").primaryKey().generatedAlwaysAsIdentity(),
 	acquired: boolean("acquired").$defaultFn(() => false),
-	claim: jsonb("claim").$type<JobClaim>(),
+	claim: jsonb("claim").$type<StoredJobClaim>(),
 	claimed_at: timestamp("claimed_at"),
 	created_at: timestamp("created_at").notNull(),
 	finished_at: timestamp("finished_at"),
@@ -51,7 +41,7 @@ export const jobs = pgTable("jobs", {
 	// rather than validates, which is what that constraint makes safe: a value
 	// outside the union cannot reach the column without a Python-side migration.
 	state: text("state").$type<JobState>().notNull(),
-	steps: jsonb("steps").$type<JobStep[]>(),
+	steps: jsonb("steps").$type<StoredJobStep[]>(),
 	user_id: integer("user_id").notNull(),
 	// Deliberately left open. Python's `Workflow` is an application-level enum
 	// with no CHECK constraint behind it, so a row can hold a workflow this

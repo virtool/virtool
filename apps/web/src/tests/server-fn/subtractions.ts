@@ -1,5 +1,8 @@
-import type { SubtractionOption } from "@subtraction/types";
-import type { Subtraction, SubtractionMinimal } from "@virtool/contracts";
+import type {
+	Subtraction,
+	SubtractionMinimal,
+	SubtractionNested,
+} from "@virtool/contracts";
 import { type Mock, vi } from "vitest";
 
 /**
@@ -76,9 +79,9 @@ export function mockDeleteSubtraction(): Mock {
 	return subtractionServerFnMocks.deleteSubtractionFn;
 }
 
-/** Sets up listSubtractionsShortlist to resolve with the given options. */
+/** Sets up listSubtractionsShortlist to resolve with the given subtractions. */
 export function mockListSubtractionsShortlist(
-	subtractions: SubtractionOption[],
+	subtractions: SubtractionNested[],
 ): Mock {
 	subtractionServerFnMocks.listSubtractionsShortlistFn.mockResolvedValue(
 		subtractions,

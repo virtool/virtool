@@ -2,8 +2,8 @@ import BoxGroup from "@base/BoxGroup";
 import ListEmpty from "@base/ListEmpty";
 import Pagination from "@base/Pagination";
 import { useSuspenseUsers } from "@users/queries";
+import type { User } from "@virtool/contracts";
 import { Users } from "lucide-react";
-import type { User } from "../types";
 import { UserItem } from "./UserItem";
 
 type UsersListProps = {

@@ -1,7 +1,7 @@
 import { useCheckAdminRoleOrPermission } from "@administration/hooks";
 import ContainerNarrow from "@base/ContainerNarrow";
-import type { Label } from "@labels/types";
 import { FileManager } from "@uploads/components/FileManager";
+import type { Label } from "@virtool/contracts";
 import CreateSampleFromFile from "./Create/CreateSampleFromFile";
 
 type SampleFileManagerProps = {

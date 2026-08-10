@@ -1,8 +1,8 @@
 import { QueryClient, QueryObserver } from "@tanstack/react-query";
 import { taskQueryKeys } from "@tasks/keys";
 import { createTaskRefreshQueue } from "@tasks/refresh";
-import type { ServerTask } from "@tasks/types";
 import { mockGetTasks, taskServerFnMocks } from "@tests/server-fn/tasks";
+import type { Task } from "@virtool/contracts";
 import {
 	afterEach,
 	beforeEach,
@@ -15,10 +15,10 @@ import {
 
 const FLUSH_MS = 500;
 
-function createTask(id: number, overrides?: Partial<ServerTask>): ServerTask {
+function createTask(id: number, overrides?: Partial<Task>): Task {
 	return {
 		complete: false,
-		createdAt: "2022-12-22T21:37:49.429000Z",
+		createdAt: new Date("2022-12-22T21:37:49.429000Z"),
 		error: null,
 		id,
 		progress: 50,
@@ -196,11 +196,11 @@ describe("createTaskRefreshQueue", () => {
 	it("holds a later wave until the batch in flight resolves", async () => {
 		watch(1);
 
-		let resolveFirst: (tasks: ServerTask[]) => void = () => undefined;
+		let resolveFirst: (tasks: Task[]) => void = () => undefined;
 		taskServerFnMocks.getTasksFn
 			.mockImplementationOnce(
 				() =>
-					new Promise<ServerTask[]>((resolve) => {
+					new Promise<Task[]>((resolve) => {
 						resolveFirst = resolve;
 					}),
 			)

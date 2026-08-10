@@ -165,6 +165,7 @@ async function getSubtractionsByAnalysis(
 			analysisId: analysisSubtractions.analysis_id,
 			id: subtractions.id,
 			name: subtractions.name,
+			ready: subtractions.ready,
 		})
 		.from(analysisSubtractions)
 		.innerJoin(
@@ -178,7 +179,7 @@ async function getSubtractionsByAnalysis(
 
 	for (const row of rows) {
 		const list = byAnalysis.get(row.analysisId) ?? [];
-		list.push({ id: row.id, name: row.name });
+		list.push({ id: row.id, name: row.name, ready: row.ready });
 		byAnalysis.set(row.analysisId, list);
 	}
 

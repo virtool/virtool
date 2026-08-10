@@ -9,8 +9,7 @@ import QueryError from "@base/QueryError";
 import SearchToolbar from "@base/SearchToolbar";
 import { useAddReferenceMember } from "@references/queries";
 import { useInfiniteFindUsers } from "@users/queries";
-import type { User } from "@users/types";
-import type { ReferenceUser } from "@virtool/contracts";
+import type { ReferenceUser, User } from "@virtool/contracts";
 import { Users } from "lucide-react";
 import { useState } from "react";
 

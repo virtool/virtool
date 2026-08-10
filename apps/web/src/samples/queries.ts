@@ -1,4 +1,3 @@
-import type { LabelNested } from "@labels/types";
 import { samplesQueryKeys } from "@samples/keys";
 import {
 	createSampleFn,
@@ -18,6 +17,7 @@ import {
 } from "@tanstack/react-query";
 import { fileQueryKeys } from "@uploads/keys";
 import type {
+	LabelNested,
 	LibraryType,
 	Sample,
 	SampleMinimal,

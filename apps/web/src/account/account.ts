@@ -1,11 +1,11 @@
 import { accountQueryKeys } from "@account/keys";
-import type { Account } from "@account/types";
 import { getAccountFn } from "@server/users/functions";
 import {
 	queryOptions,
 	useQuery,
 	useSuspenseQuery,
 } from "@tanstack/react-query";
+import type { Account } from "@virtool/contracts";
 
 /**
  * Reading the signed-in user's own account.

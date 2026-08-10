@@ -14,9 +14,11 @@ import { useFetchSubtraction } from "@subtraction/queries";
 import {
 	getCreateJobStatus,
 	getSubtractionFastaName,
-	isJobStateUnsuccessful,
 } from "@subtraction/utils";
-import type { NucleotideComposition } from "@virtool/contracts";
+import {
+	isJobStateUnsuccessful,
+	type NucleotideComposition,
+} from "@virtool/contracts";
 import { TriangleAlert } from "lucide-react";
 import { SubtractionAttribution } from "../Attribution";
 import DeleteSubtraction from "./DeleteSubtraction";
@@ -182,7 +184,7 @@ export default function SubtractionDetail() {
 							Samples that reference this subtraction
 						</p>
 					</div>
-					<span>{data.linkedSamples.length}</span>
+					<span>{data.sampleCount}</span>
 				</BoxGroupSection>
 			</BoxGroup>
 		</>

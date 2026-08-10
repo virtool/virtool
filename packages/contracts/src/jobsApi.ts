@@ -32,10 +32,10 @@
 // Python's byte for byte.
 //
 //   POST   /jobs/claim                         CreateJobClaimRequest -> JobClaimed     (200 | 404 no job available | 422 unclaimable workflow)
-//   GET    /jobs/{jobId}                       -                     -> WorkflowJob    (200 | 401 | 403 | 404)
+//   GET    /jobs/{jobId}                       -                     -> Job            (200 | 401 | 403 | 404)
 //   POST   /jobs/{jobId}/steps/{stepId}/start  StartJobStepRequest   -> JobStepStarted (200 | 401 | 403 | 404 | 409)
 //   PUT    /jobs/{jobId}/ping                  -                     -> JobPing        (200 | 401 terminal | 403 | 404)
-//   POST   /jobs/{jobId}/finish                -                     -> WorkflowJob    (200 | 401 | 403 | 404 | 409)
+//   POST   /jobs/{jobId}/finish                -                     -> Job            (200 | 401 | 403 | 404 | 409)
 //   PATCH  /samples/{id}                       FinalizeSampleRequest      -> Sample
 //   PATCH  /subtractions/{id}                  FinalizeSubtractionRequest -> Subtraction
 //   PATCH  /analyses/{id}                      FinalizeAnalysisRequest    -> Analysis
@@ -143,37 +143,6 @@ export const JobClaimed = z.object({
 });
 
 export type JobClaimed = z.infer<typeof JobClaimed>;
-
-/**
- * A job as the lifecycle endpoints return it, which is to say as a workflow
- * reads it.
- *
- * Narrower than the `Job` the web app publishes to the SPA, in the same way the
- * `Workflow*` metadata reads below are: it drops `finishedAt`, which a runner
- * never branches on, and carries `pingedAt`, which no view shows.
- */
-export const WorkflowJob = z.object({
-	id: z.number().int(),
-
-	/**
-	 * The workflow's argument blob, straight out of a JSONB column and not
-	 * interpreted at this boundary. Its interior keys are row content — whatever
-	 * Python wrote — and the camelCase rule does not reach inside an opaque blob.
-	 */
-	args: JsonObject,
-
-	claim: JobClaim.nullable(),
-	claimedAt: JobTimestamp.nullable(),
-	createdAt: JobTimestamp,
-	pingedAt: JobTimestamp.nullable(),
-	progress: z.number().int(),
-	state: JobState,
-	steps: z.array(JobStep).nullable(),
-	user: UserNested,
-	workflow: JobWorkflow,
-});
-
-export type WorkflowJob = z.infer<typeof WorkflowJob>;
 
 /**
  * Response to `PUT /jobs/{jobId}/ping`.

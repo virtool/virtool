@@ -1,7 +1,7 @@
 import { getTaskFn } from "@server/tasks/functions";
 import { useQuery } from "@tanstack/react-query";
 import { taskQueryKeys } from "@tasks/keys";
-import { type ServerTask, TaskSchema } from "./types";
+import type { Task } from "@virtool/contracts";
 
 /**
  * Fetch a task by its id
@@ -14,13 +14,12 @@ import { type ServerTask, TaskSchema } from "./types";
  * @param seed - Nested task data to seed the cache with
  * @returns Query results containing the task
  */
-export function useFetchTask(taskId: number, seed?: ServerTask) {
+export function useFetchTask(taskId: number, seed?: Task) {
 	return useQuery({
 		queryKey: taskQueryKeys.detail(taskId),
 		queryFn: () => getTaskFn({ data: { taskId } }),
-		select: TaskSchema.parse,
 		enabled: Number.isInteger(taskId),
-		initialData: seed ? TaskSchema.parse(seed) : undefined,
+		initialData: seed,
 		staleTime: seed ? Number.POSITIVE_INFINITY : undefined,
 	});
 }

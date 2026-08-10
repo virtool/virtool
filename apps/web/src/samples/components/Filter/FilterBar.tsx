@@ -2,7 +2,6 @@ import { cn } from "@app/cn";
 import { getWorkflowDisplayName } from "@app/utils";
 import Dropdown from "@base/Dropdown";
 import DropdownMenuTrigger from "@base/DropdownMenuTrigger";
-import type { Label } from "@labels/types";
 import { getHexColor } from "@samples/labels";
 import {
 	formatWorkflowFilter,
@@ -10,6 +9,7 @@ import {
 	parseWorkflowFilters,
 } from "@samples/utils";
 import { useListUsers } from "@users/queries";
+import type { Label } from "@virtool/contracts";
 import { Search, Tag, Users, Workflow } from "lucide-react";
 import type { ReactNode } from "react";
 import LabelFilterMenu from "./LabelFilterMenu";

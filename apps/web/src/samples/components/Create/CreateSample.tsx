@@ -27,12 +27,11 @@ import {
 import ViewHeader from "@base/ViewHeader";
 import ViewHeaderTitle from "@base/ViewHeaderTitle";
 import { useListGroups } from "@groups/queries";
-import type { Label } from "@labels/types";
 import { useCreateSample } from "@samples/queries";
 import { getCreateSampleRequest, getSampleNameFromReads } from "@samples/utils";
 import { useNavigate } from "@tanstack/react-router";
 import { useInfiniteFindFiles } from "@uploads/queries";
-import type { Sample } from "@virtool/contracts";
+import type { Label, Sample } from "@virtool/contracts";
 import { WandSparkles } from "lucide-react";
 import { useEffect, useState } from "react";
 import { Controller, useForm } from "react-hook-form";

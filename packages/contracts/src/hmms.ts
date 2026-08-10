@@ -1,5 +1,6 @@
 import { z } from "zod";
 import type { SearchResult } from "./search";
+import type { Task } from "./tasks";
 
 /** HMM profile metadata returned by `GET /hmms` (nuvs only). Provisional shape. */
 export const Hmms = z.array(
@@ -37,22 +38,11 @@ export type Hmm = HmmMinimal & {
 	totalEntropy: number;
 };
 
-/** The task attached to the HMM status, in the wire shape the client parses. */
-export type HmmStatusTask = {
-	complete: boolean;
-	createdAt: Date;
-	error: string | null;
-	id: number;
-	progress: number;
-	step: string;
-	type: string;
-};
-
 /** Whether an HMM release is installed, and what the last install did. */
 export type HmmStatus = {
 	errors: string[];
 	installed: { ready: boolean } | null;
-	task: HmmStatusTask | null;
+	task: Task | null;
 };
 
 /** A page of HMMs, with the install status attached. */

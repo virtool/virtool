@@ -1,10 +1,7 @@
+import type { JobStepDefinition } from "@virtool/contracts";
 import type { Logger } from "@virtool/logger";
 import type { WorkflowContext } from "./context";
-import type {
-	ResolvedWorkflowStep,
-	Workflow,
-	WorkflowStepMetadata,
-} from "./step";
+import type { ResolvedWorkflowStep, Workflow } from "./step";
 
 /** Terminal state of a run. Mirrors Python's `JobState`. */
 export type RunState = "succeeded" | "failed" | "cancelled";
@@ -37,8 +34,11 @@ export type RunWorkflowOptions<TData, TState> = {
 	 * other outcome this function reports is terminal and rides back on
 	 * {@link RunOutcome}. A rejection is a failed run — the jobs API not
 	 * knowing which step is executing is not something to continue past.
+	 *
+	 * It takes the wire shape the runner declared its steps in at claim time,
+	 * so the callback cannot be handed a step the jobs API has never heard of.
 	 */
-	onStepStart?: (step: WorkflowStepMetadata) => Promise<void>;
+	onStepStart?: (step: JobStepDefinition) => Promise<void>;
 };
 
 /**

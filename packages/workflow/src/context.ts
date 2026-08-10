@@ -1,4 +1,4 @@
-import type { JobWorkflow, JsonObject } from "@virtool/contracts";
+import type { JobWorkflow } from "@virtool/contracts";
 import type { Logger } from "@virtool/logger";
 import type { JobsApiClient } from "./client/client";
 import { assertSerializableData } from "./serializable";
@@ -9,7 +9,8 @@ import type { RunSubprocess } from "./subprocess/types";
 export type RunJob = {
 	id: number;
 	workflow: JobWorkflow;
-	args: JsonObject;
+	/** Ids of the resources the job acts on, stringified. */
+	args: Record<string, string>;
 };
 
 /** What a per-workflow context builder is handed. */

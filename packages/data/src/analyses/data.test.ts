@@ -368,8 +368,8 @@ describe("findAnalyses", () => {
 		const [item] = result.items;
 
 		expect(item?.subtractions).toEqual([
-			{ id: arabidopsis, name: "Arabidopsis" },
-			{ id: zebra, name: "Zebra" },
+			{ id: arabidopsis, name: "Arabidopsis", ready: false },
+			{ id: zebra, name: "Zebra", ready: false },
 		]);
 		expect(item?.job).toEqual({
 			createdAt: expect.any(Date),
@@ -410,7 +410,9 @@ describe("getAnalysis", () => {
 			ready: false,
 		});
 
-		const subtractionId = await seedSubtraction("Arabidopsis");
+		const subtractionId = await seedSubtraction("Arabidopsis", {
+			ready: true,
+		});
 		await db
 			.insert(analysisSubtractions)
 			.values({ analysis_id: analysisId, subtraction_id: subtractionId });
@@ -436,8 +438,10 @@ describe("getAnalysis", () => {
 		expect(analysis.index).toEqual({ id: indexId, version: 1 });
 		expect(analysis.user).toEqual({ id: ownerId, handle: "owner" });
 		expect(analysis.job?.id).toBe(jobId);
+		// `ready` is read off the row, not defaulted: this subtraction was seeded
+		// built, and the two above were not.
 		expect(analysis.subtractions).toEqual([
-			{ id: subtractionId, name: "Arabidopsis" },
+			{ id: subtractionId, name: "Arabidopsis", ready: true },
 		]);
 		expect(analysis.files).toEqual([
 			{

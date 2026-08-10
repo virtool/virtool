@@ -1,24 +1,24 @@
-import type {
-	JobWorkflow,
-	NucleotideComposition,
-	Subtraction,
-	SubtractionFile,
-	SubtractionJobMinimal,
-	SubtractionMinimal,
-	SubtractionSampleNested,
-	SubtractionSearchResult,
-	SubtractionShortlistItem,
-	SubtractionUpload,
+import {
+	computeJobProgress,
+	type JobWorkflow,
+	type NucleotideComposition,
+	type Subtraction,
+	type SubtractionFile,
+	type SubtractionJobMinimal,
+	type SubtractionMinimal,
+	type SubtractionNested,
+	type SubtractionSearchResult,
+	type SubtractionUpload,
 } from "@virtool/contracts";
 import type { Logger } from "@virtool/logger";
 import type { StorageBackend } from "@virtool/storage";
 import { deleteKeys } from "@virtool/storage";
-import { and, asc, count, eq, ilike, or } from "drizzle-orm";
+import { and, asc, count, eq, ilike, or, sql } from "drizzle-orm";
 import { alias } from "drizzle-orm/pg-core";
 import type { Db, DbOrTx } from "../db/pg";
 import { takeFirstOrThrow } from "../db/rows";
-import { type JobStep, jobs } from "../db/schema/jobs";
-import { legacySampleSubtractions, legacySamples } from "../db/schema/samples";
+import { jobs } from "../db/schema/jobs";
+import { legacySampleSubtractions } from "../db/schema/samples";
 import {
 	type SubtractionFileType,
 	subtractionFiles,
@@ -79,25 +79,6 @@ export class SubtractionNotOwnedError extends AppError {}
 /** Thrown when the upload a subtraction is created from does not exist. */
 export class SubtractionUploadNotFoundError extends AppError {}
 
-// Mirror of the Python `compute_progress` helper: terminal jobs are 100%, a
-// running job is the fraction of its steps that have started, everything else
-// is 0%.
-function computeProgress(
-	state: string | null,
-	steps: JobStep[] | null,
-): number {
-	if (state === "succeeded" || state === "failed" || state === "cancelled") {
-		return 100;
-	}
-
-	if (state !== "running" || !steps || steps.length === 0) {
-		return 0;
-	}
-
-	const started = steps.filter((step) => step.started_at != null).length;
-	return Math.floor((started / steps.length) * 100);
-}
-
 // The Python endpoint escapes LIKE wildcards in the search term so a user's `%`
 // or `_` matches literally rather than acting as a pattern.
 function escapeLike(term: string): string {
@@ -108,6 +89,11 @@ const jobUser = alias(users, "job_user");
 
 // A subtraction row joined to its owning user, its create job, and that job's
 // user — the shape every read maps into a `SubtractionMinimal`.
+//
+// `sampleCount` is a correlated subquery rather than a join: a join to the
+// sample link table would multiply the row out and force every other column
+// into a `group by`. `::int` because `count(*)` is a bigint, which arrives as a
+// string.
 function selectSubtractionsWithResources(db: DbOrTx) {
 	return db
 		.select({
@@ -118,6 +104,10 @@ function selectSubtractionsWithResources(db: DbOrTx) {
 			nickname: subtractions.nickname,
 			ready: subtractions.ready,
 			gc: subtractions.gc,
+			sampleCount: sql<number>`(
+				select count(*)::int from ${legacySampleSubtractions}
+				where ${legacySampleSubtractions.subtraction_id} = ${subtractions.id}
+			)`,
 			uploadId: uploads.id,
 			uploadName: uploads.name,
 			userId: users.id,
@@ -153,7 +143,7 @@ function toMinimal(row: SubtractionResourceRow): SubtractionMinimal {
 			: {
 					id: row.jobId,
 					createdAt: row.jobCreatedAt ?? new Date(),
-					progress: computeProgress(row.jobState, row.jobSteps),
+					progress: computeJobProgress(row.jobState, row.jobSteps),
 					state: row.jobState ?? "pending",
 					user:
 						row.jobUserId == null
@@ -173,6 +163,7 @@ function toMinimal(row: SubtractionResourceRow): SubtractionMinimal {
 		job,
 		nickname: row.nickname,
 		ready: row.ready,
+		sampleCount: row.sampleCount,
 		user:
 			row.userId == null
 				? null
@@ -239,13 +230,13 @@ export async function findSubtractions(
 	};
 }
 
-// Every non-deleted subtraction, reduced to the fields the selectors need. Each
-// item carries its `ready` flag, so a consumer that wants only ready
-// subtractions (analysis creation) filters client-side rather than the server
-// serving a separate ready-only list.
+// Every non-deleted subtraction, reduced to the embedded shape. Each item
+// carries its `ready` flag, so a consumer that wants only ready subtractions
+// (analysis creation) filters client-side rather than the server serving a
+// separate ready-only list.
 export async function listSubtractionsShortlist(
 	db: Db,
-): Promise<SubtractionShortlistItem[]> {
+): Promise<SubtractionNested[]> {
 	return db
 		.select({
 			id: subtractions.id,
@@ -279,22 +270,6 @@ async function getSubtractionFiles(
 	}));
 }
 
-async function getLinkedSamples(
-	db: DbOrTx,
-	subtractionId: number,
-): Promise<SubtractionSampleNested[]> {
-	return db
-		.select({ id: legacySamples.id, name: legacySamples.name })
-		.from(legacySamples)
-		.innerJoin(
-			legacySampleSubtractions,
-			eq(legacySampleSubtractions.sample_id, legacySamples.id),
-		)
-		.where(eq(legacySampleSubtractions.subtraction_id, subtractionId))
-		.orderBy(asc(legacySamples.id))
-		.then((rows) => rows.map((row) => ({ id: row.id, name: row.name ?? "" })));
-}
-
 export async function getSubtraction(
 	db: DbOrTx,
 	subtractionId: number,
@@ -307,16 +282,10 @@ export async function getSubtraction(
 		throw new SubtractionNotFoundError();
 	}
 
-	const [files, linkedSamples] = await Promise.all([
-		getSubtractionFiles(db, subtractionId),
-		getLinkedSamples(db, subtractionId),
-	]);
-
 	return {
 		...toMinimal(row),
-		files,
+		files: await getSubtractionFiles(db, subtractionId),
 		gc: row.gc,
-		linkedSamples,
 	};
 }
 

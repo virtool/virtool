@@ -1,4 +1,4 @@
-import type { User } from "@users/types";
+import type { User } from "@virtool/contracts";
 import { type Mock, vi } from "vitest";
 
 /**

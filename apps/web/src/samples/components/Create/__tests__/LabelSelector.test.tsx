@@ -1,7 +1,7 @@
-import type { Label } from "@labels/types";
 import { screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { renderWithRouter } from "@tests/setup";
+import type { Label } from "@virtool/contracts";
 import { useState } from "react";
 import { describe, expect, it } from "vitest";
 import LabelSelector from "../LabelSelector";

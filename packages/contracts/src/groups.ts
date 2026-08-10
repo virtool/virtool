@@ -24,7 +24,7 @@ export type Group = GroupMinimal & {
 };
 
 /** A page of groups. */
-export type GroupSearchResults = SearchResult & {
+export type GroupSearchResult = SearchResult & {
 	/** The groups on this page */
 	items: GroupMinimal[];
 };

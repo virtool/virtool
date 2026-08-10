@@ -1,4 +1,4 @@
-import type { Label } from "@labels/types";
+import type { Label } from "@virtool/contracts";
 import { type Mock, vi } from "vitest";
 
 /**

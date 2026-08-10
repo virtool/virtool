@@ -12,6 +12,7 @@
  */
 
 import type {
+	Job,
 	JobClaim,
 	JobClaimed,
 	JobStep,
@@ -19,7 +20,6 @@ import type {
 	UserNested,
 	WorkflowAnalysis,
 	WorkflowIndex,
-	WorkflowJob,
 	WorkflowReference,
 	WorkflowSample,
 	WorkflowSampleRead,
@@ -152,9 +152,9 @@ export function createFakeJobSteps(): JobStep[] {
 
 /** A job as the lifecycle endpoints return it. */
 export function createFakeJob(
-	overrides: Partial<WorkflowJob> = {},
+	overrides: Partial<Job> = {},
 	seed: number = DEFAULT_SEED,
-): WorkflowJob {
+): Job {
 	const random = createSeededRandom(seed);
 
 	return {
@@ -163,7 +163,7 @@ export function createFakeJob(
 		claim: createFakeJobClaim({}, seed),
 		claimedAt: staticTime(),
 		createdAt: staticTime(),
-		pingedAt: staticTime(),
+		finishedAt: null,
 		progress: 0,
 		state: "running",
 		steps: createFakeJobSteps(),

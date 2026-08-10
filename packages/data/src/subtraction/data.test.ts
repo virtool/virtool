@@ -61,6 +61,21 @@ async function seedUpload(): Promise<number> {
 	).id;
 }
 
+// A sample naming `subtractionId` as one of its defaults, which is what a
+// subtraction's `sampleCount` counts.
+async function linkSample(name: string, subtractionId: number): Promise<void> {
+	const sampleId = takeFirstOrThrow(
+		await db
+			.insert(legacySamples)
+			.values({ name, library_type: "normal", created_at: new Date() })
+			.returning({ id: legacySamples.id }),
+	).id;
+
+	await db
+		.insert(legacySampleSubtractions)
+		.values({ sample_id: sampleId, subtraction_id: subtractionId });
+}
+
 type SeedOverrides = Partial<typeof subtractions.$inferInsert>;
 
 async function seedSubtraction(overrides: SeedOverrides = {}): Promise<number> {
@@ -210,7 +225,7 @@ describe("listSubtractionsShortlist", () => {
 });
 
 describe("getSubtraction", () => {
-	it("returns the full subtraction with files and linked samples", async () => {
+	it("returns the full subtraction with its files and sample count", async () => {
 		const subtractionId = await seedSubtraction({
 			name: "Arabidopsis",
 			gc: { a: 0.25, c: 0.25, g: 0.25, t: 0.25, n: 0 },
@@ -224,20 +239,8 @@ describe("getSubtraction", () => {
 			size: 100,
 		});
 
-		const sampleId = takeFirstOrThrow(
-			await db
-				.insert(legacySamples)
-				.values({
-					name: "Sample A",
-					library_type: "normal",
-					created_at: new Date(),
-				})
-				.returning({ id: legacySamples.id }),
-		).id;
-
-		await db
-			.insert(legacySampleSubtractions)
-			.values({ sample_id: sampleId, subtraction_id: subtractionId });
+		await linkSample("Sample A", subtractionId);
+		await linkSample("Sample B", subtractionId);
 
 		const subtraction = await getSubtraction(db, subtractionId);
 
@@ -262,9 +265,7 @@ describe("getSubtraction", () => {
 				type: "fasta",
 			},
 		]);
-		expect(subtraction.linkedSamples).toEqual([
-			{ id: sampleId, name: "Sample A" },
-		]);
+		expect(subtraction.sampleCount).toBe(2);
 	});
 
 	it("throws when the subtraction is deleted", async () => {
@@ -341,20 +342,8 @@ describe("deleteSubtraction", () => {
 		const storage = new MemoryStorage();
 		const subtractionId = await seedSubtraction();
 
-		const sampleId = takeFirstOrThrow(
-			await db
-				.insert(legacySamples)
-				.values({
-					name: "Sample A",
-					library_type: "normal",
-					created_at: new Date(),
-				})
-				.returning({ id: legacySamples.id }),
-		).id;
-
-		await db
-			.insert(legacySampleSubtractions)
-			.values({ sample_id: sampleId, subtraction_id: subtractionId });
+		await linkSample("Sample A", subtractionId);
+		await linkSample("Sample B", subtractionId);
 
 		await deleteSubtraction(db, storage, testLogger, subtractionId);
 

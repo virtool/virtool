@@ -1,4 +1,5 @@
 import { timingSafeEqual } from "node:crypto";
+import type { User } from "@virtool/contracts";
 import { hashPassword, verifyPassword } from "@virtool/data/auth/password";
 import {
 	consumeResetSession,
@@ -13,7 +14,6 @@ import { users } from "@virtool/data/db/schema/users";
 import {
 	createUser,
 	getUserCount,
-	type User,
 	UserConflictError,
 } from "@virtool/data/users/data";
 import { and, eq, sql } from "drizzle-orm";

@@ -21,3 +21,9 @@ export type LabelNested = {
 	/** The display name */
 	name: string;
 };
+
+/** A sample label, with the number of samples carrying it. */
+export type Label = LabelNested & {
+	/** The number of samples the label is associated with */
+	count: number;
+};

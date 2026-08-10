@@ -2,7 +2,7 @@ import {
 	emptyPermissions,
 	type Group,
 	type GroupMinimal,
-	type GroupSearchResults,
+	type GroupSearchResult,
 	type Permissions,
 	type UserNested,
 } from "@virtool/contracts";
@@ -77,7 +77,7 @@ export async function findGroups(
 	term: string,
 	page: number,
 	perPage: number,
-): Promise<GroupSearchResults> {
+): Promise<GroupSearchResult> {
 	const filter = term ? ilike(groupsTable.name, `%${term}%`) : undefined;
 	const skip = page > 1 ? (page - 1) * perPage : 0;
 

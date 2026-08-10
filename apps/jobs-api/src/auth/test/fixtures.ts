@@ -1,9 +1,9 @@
 import { randomBytes } from "node:crypto";
 
-import type { JobState } from "@virtool/contracts";
+import type { JobState, StoredJobStep } from "@virtool/contracts";
 import { hashToken } from "@virtool/data/auth/tokens";
 import type { Db } from "@virtool/data/db/pg";
-import { type JobStep, jobs } from "@virtool/data/db/schema/jobs";
+import { jobs } from "@virtool/data/db/schema/jobs";
 
 /** What {@link seedJob} accepts. */
 export type SeedJobOptions = {
@@ -12,7 +12,7 @@ export type SeedJobOptions = {
 	/** One of the job lifecycle states. `running` unless a test needs another. */
 	state?: JobState;
 	/** The `steps` JSONB array. Null, as it is before a claim, unless given. */
-	steps?: JobStep[];
+	steps?: StoredJobStep[];
 	/** Leave `key` null, as it is on a job nobody has claimed. */
 	withKey?: boolean;
 	workflow?: string;

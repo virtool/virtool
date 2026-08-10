@@ -1,9 +1,9 @@
 import {
+	Job,
 	JobClaimed,
 	JobStepStarted,
 	WorkflowAnalysis,
 	WorkflowIndex,
-	WorkflowJob,
 	WorkflowReference,
 	WorkflowSample,
 	WorkflowSettings,
@@ -460,7 +460,7 @@ describe("failure injection", () => {
 			method: "GET",
 			path: `/jobs/${state.job.id}`,
 			retries: 1,
-			schema: WorkflowJob,
+			schema: Job,
 		});
 
 		expect(job.id).toBe(state.job.id);

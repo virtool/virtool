@@ -14,8 +14,8 @@ type FormValues = {
 };
 
 type EmailProps = {
-	/** The users current email address */
-	email?: string;
+	/** The user's current email address, or `""` if they have none on file */
+	email: string;
 };
 
 /**
@@ -26,7 +26,7 @@ export default function AccountEmail({ email }: EmailProps) {
 		formState: { errors },
 		handleSubmit,
 		register,
-	} = useForm<FormValues>({ defaultValues: { email: email || "" } });
+	} = useForm<FormValues>({ defaultValues: { email } });
 	const mutation = useUpdateAccount();
 
 	function onSubmit({ email }: FormValues) {

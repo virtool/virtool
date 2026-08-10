@@ -2,8 +2,11 @@ import BoxGroupSection from "@base/BoxGroupSection";
 import Link from "@base/Link";
 import ProgressCircle from "@base/ProgressCircle";
 import { useFetchJob } from "@jobs/queries";
-import { getCreateJobStatus, isJobStateUnsuccessful } from "@subtraction/utils";
-import type { SubtractionMinimal } from "@virtool/contracts";
+import { getCreateJobStatus } from "@subtraction/utils";
+import {
+	isJobStateUnsuccessful,
+	type SubtractionMinimal,
+} from "@virtool/contracts";
 import { SubtractionAttribution } from "./Attribution";
 
 /**

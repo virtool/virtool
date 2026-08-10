@@ -65,7 +65,12 @@ This is a **pnpm monorepo**:
   union does not carry is a 500 with a Sentry event naming the row —
   the runtime's client parses with the same schema, so the alternative
   is a `JobsApiError` at a runner that can do nothing about it. Nothing
-  else in the service validates a response. It winds down through `@virtool/service`'s
+  else in the service validates a response. That `Job` is **one shape,
+  not one per audience**: this service, the web app and the runtime all
+  publish and parse the same schema. Don't narrow it into a runner-facing
+  half — both halves would be built from the same record, a field one
+  audience ignores costs it nothing, and zod strips what a schema does
+  not name, so an added field cannot break an older runner. It winds down through `@virtool/service`'s
   `createShutdownController`, with **no hooks registered** — it holds no
   work to hand back — and `/health/ready` reports 503 from the moment
   that flips readiness. See [docs/jobs-api.md](docs/jobs-api.md).
@@ -673,9 +678,9 @@ import them straight from the package.
 `data.ts`.** What a server function returns is read by both sides, so
 `data.ts` imports those types from the package and components import the
 same names straight from `@virtool/contracts` — no feature `types.ts`
-re-export (`samples/types.ts` is the worked example, keeping only its
-genuinely client-only shapes; `references/`, `indexes/` and `jobs/` have no
-`types.ts` left at all, because every shape they had was a wire shape). A
+re-export. `samples/types.ts` is the worked example, keeping only the
+shapes that are genuinely client-only; a feature whose every shape is a
+wire shape needs no `types.ts` at all. A
 client `types.ts` must never import a shape from `@virtool/data` — the Biome
 override rejects it, and it would point the client at a module the server
 does not own the shape of. `data.ts` still owns what only it uses: its

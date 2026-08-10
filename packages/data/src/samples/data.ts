@@ -304,7 +304,11 @@ async function getSubtractionsBySample(
 	sampleId: number,
 ): Promise<SubtractionNested[]> {
 	return db
-		.select({ id: subtractions.id, name: subtractions.name })
+		.select({
+			id: subtractions.id,
+			name: subtractions.name,
+			ready: subtractions.ready,
+		})
 		.from(legacySampleSubtractions)
 		.innerJoin(
 			subtractions,

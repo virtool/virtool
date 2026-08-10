@@ -1,8 +1,7 @@
 import Button from "@base/Button";
 import Checkbox from "@base/Checkbox";
 import Icon from "@base/Icon";
-import type { Label } from "@labels/types";
-import type { Sample, SampleMinimal } from "@virtool/contracts";
+import type { Label, Sample, SampleMinimal } from "@virtool/contracts";
 import { AreaChart } from "lucide-react";
 import SampleLabelsSelector from "./SampleLabelsSelector";
 

@@ -18,16 +18,9 @@ describe("<SubtractionDetail />", () => {
 	let path: string;
 
 	beforeEach(() => {
-		// Pin count and linkedSamples so neither the sequence-count nor the
+		// Pin count and sampleCount so neither the sequence-count nor the
 		// linked-samples cell can render the same number as the other.
-		subtraction = createFakeSubtraction({
-			count: 100,
-			linkedSamples: [
-				{ id: 1, name: "sample-a" },
-				{ id: 2, name: "sample-b" },
-				{ id: 3, name: "sample-c" },
-			],
-		});
+		subtraction = createFakeSubtraction({ count: 100, sampleCount: 3 });
 		path = formatSubtractionPath(subtraction);
 	});
 
@@ -38,7 +31,7 @@ describe("<SubtractionDetail />", () => {
 		expect(await screen.findByText(subtraction.name)).toBeInTheDocument();
 		expect(await screen.findByText(subtraction.nickname)).toBeInTheDocument();
 		expect(
-			await screen.findByText(subtraction.linkedSamples.length),
+			await screen.findByText(subtraction.sampleCount),
 		).toBeInTheDocument();
 
 		const fastaName = getSubtractionFastaName(subtraction.name);

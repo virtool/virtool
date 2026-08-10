@@ -5,7 +5,7 @@ import { createFakeHmmSearchResults } from "@tests/fake/hmm";
 import { createFakeIndexMinimal } from "@tests/fake/indexes";
 import { createFakeLabel } from "@tests/fake/labels";
 import { createFakeSampleMinimal } from "@tests/fake/samples";
-import { createFakeShortlistSubtraction } from "@tests/fake/subtractions";
+import { createFakeSubtractionNested } from "@tests/fake/subtractions";
 import { createFakeUserNested } from "@tests/fake/user";
 import { mockFindHmms } from "@tests/server-fn/hmm";
 import { mockListReadyIndexes } from "@tests/server-fn/indexes";
@@ -66,7 +66,7 @@ function mockSamplePages() {
 
 	mockFindHmms(createFakeHmmSearchResults());
 	mockListReadyIndexes([createFakeIndexMinimal()]);
-	mockListSubtractionsShortlist([createFakeShortlistSubtraction()]);
+	mockListSubtractionsShortlist([createFakeSubtractionNested()]);
 
 	return samples;
 }
@@ -82,7 +82,7 @@ function mockSampleRange(names: string[]) {
 
 	mockFindHmms(createFakeHmmSearchResults());
 	mockListReadyIndexes([createFakeIndexMinimal()]);
-	mockListSubtractionsShortlist([createFakeShortlistSubtraction()]);
+	mockListSubtractionsShortlist([createFakeSubtractionNested()]);
 	mockFindSamples(documents);
 
 	return documents;
@@ -108,7 +108,7 @@ describe("<SamplesList />", () => {
 		mockFindSamples(samples);
 		mockFindHmms(createFakeHmmSearchResults());
 		mockListReadyIndexes([createFakeIndexMinimal()]);
-		mockListSubtractionsShortlist([createFakeShortlistSubtraction()]);
+		mockListSubtractionsShortlist([createFakeSubtractionNested()]);
 	});
 
 	it("should render correctly", async () => {
@@ -419,7 +419,7 @@ describe("<SamplesList />", () => {
 			mockListUsers(users);
 			mockFindHmms(createFakeHmmSearchResults());
 			mockListReadyIndexes([createFakeIndexMinimal()]);
-			mockListSubtractionsShortlist([createFakeShortlistSubtraction()]);
+			mockListSubtractionsShortlist([createFakeSubtractionNested()]);
 			mockFindSamples(samples, { foundCount: 2, totalCount: 17 });
 
 			await renderWithRouter(<SamplesList />, path);
@@ -816,7 +816,7 @@ describe("<SamplesList />", () => {
 			mockFindSamples([]);
 			mockFindHmms(createFakeHmmSearchResults());
 			mockListReadyIndexes([createFakeIndexMinimal()]);
-			mockListSubtractionsShortlist([createFakeShortlistSubtraction()]);
+			mockListSubtractionsShortlist([createFakeSubtractionNested()]);
 		});
 
 		it("should say no samples exist when no filters are active", async () => {

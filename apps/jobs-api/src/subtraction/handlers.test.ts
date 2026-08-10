@@ -627,7 +627,7 @@ describe("handleGetSubtraction", () => {
 	});
 
 	// The SPA reads the same data function, which returns `createdAt`,
-	// `linkedSamples`, and a `downloadUrl`. None of those belong on this wire.
+	// `sampleCount`, and a `downloadUrl`. None of those belong on this wire.
 	it("omits fields that only the SPA needs", async () => {
 		const subtractionId = await seedSubtraction();
 
@@ -640,7 +640,7 @@ describe("handleGetSubtraction", () => {
 
 		expect(rendered).not.toContain("downloadUrl");
 		expect(rendered).not.toContain("createdAt");
-		expect(rendered).not.toContain("linkedSamples");
+		expect(rendered).not.toContain("sampleCount");
 	});
 
 	it("reports 404 for a subtraction that does not exist", async () => {

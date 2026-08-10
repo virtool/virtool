@@ -1,6 +1,5 @@
-import type { Label, LabelNested } from "@labels/types";
 import { useUpdateSample } from "@samples/queries";
-import type { SubtractionNested } from "@virtool/contracts";
+import type { Label, LabelNested, SubtractionNested } from "@virtool/contracts";
 import DefaultSubtractions from "../Sidebar/DefaultSubtractions";
 import SampleLabels from "../Sidebar/SampleLabels";
 

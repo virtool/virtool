@@ -14,8 +14,11 @@ import {
 	useQueryClient,
 	useSuspenseQuery,
 } from "@tanstack/react-query";
-import type { Subtraction, SubtractionSearchResult } from "@virtool/contracts";
-import type { SubtractionOption } from "./types";
+import type {
+	Subtraction,
+	SubtractionNested,
+	SubtractionSearchResult,
+} from "@virtool/contracts";
 
 /**
  * Initializes a mutator for creating a subtraction
@@ -140,9 +143,8 @@ export function useDeleteSubtraction() {
  * @returns A list of subtractions
  */
 export function useFetchSubtractionsShortlist() {
-	return useQuery<SubtractionOption[]>({
+	return useQuery<SubtractionNested[]>({
 		queryKey: subtractionQueryKeys.shortlist(),
-		queryFn: () =>
-			listSubtractionsShortlistFn() as Promise<SubtractionOption[]>,
+		queryFn: () => listSubtractionsShortlistFn(),
 	});
 }

@@ -1,7 +1,10 @@
 import {
+	computeJobProgress,
 	isJobStateTerminal,
 	JobState,
 	type SearchResult,
+	type StoredJobClaim,
+	type StoredJobStep,
 } from "@virtool/contracts";
 import { and, asc, count, desc, eq, inArray, sql } from "drizzle-orm";
 import { hashToken, newJobKey } from "../auth/tokens";
@@ -9,7 +12,7 @@ import type { Db, DbOrTx } from "../db/pg";
 import { takeFirstOrThrow } from "../db/rows";
 import { analyses } from "../db/schema/analyses";
 import { indexes } from "../db/schema/indexes";
-import { type JobClaim, type JobStep, jobs } from "../db/schema/jobs";
+import { jobs } from "../db/schema/jobs";
 import { legacySamples } from "../db/schema/samples";
 import { subtractions } from "../db/schema/subtractions";
 import { users } from "../db/schema/users";
@@ -45,14 +48,14 @@ export type JobMinimal = {
 export type Job = {
 	args: Record<string, string>;
 	id: number;
-	claim: JobClaim | null;
+	claim: StoredJobClaim | null;
 	claimedAt: Date | null;
 	createdAt: Date;
 	finishedAt: Date | null;
 	pingedAt: Date | null;
 	progress: number;
 	state: JobState;
-	steps: JobStep[] | null;
+	steps: StoredJobStep[] | null;
 	user: { id: number; handle: string };
 	/** Open for the same reason as {@link JobMinimal.workflow}. */
 	workflow: string;
@@ -96,22 +99,6 @@ export class JobTerminalStateError extends AppError {}
 
 /** Thrown when a job that is not running is asked to finish. */
 export class JobNotRunningError extends AppError {}
-
-// Mirror of the Python `compute_progress` helper: terminal jobs are 100%, a
-// running job is the fraction of its steps that have started, everything else
-// is 0%.
-function computeProgress(state: string, steps: JobStep[] | null): number {
-	if (isJobStateTerminal(state)) {
-		return 100;
-	}
-
-	if (state !== "running" || !steps || steps.length === 0) {
-		return 0;
-	}
-
-	const started = steps.filter((step) => step.started_at != null).length;
-	return Math.floor((started / steps.length) * 100);
-}
 
 function buildCounts(
 	rows: { state: string; workflow: string; count: number }[],
@@ -187,7 +174,7 @@ export async function findJobs(
 	const items = rows.map((row) => ({
 		id: row.id,
 		createdAt: row.createdAt,
-		progress: computeProgress(row.state, row.steps),
+		progress: computeJobProgress(row.state, row.steps),
 		state: row.state,
 		user: { id: row.userId, handle: row.handle },
 		workflow: row.workflow,
@@ -236,7 +223,7 @@ function toJob(row: JobRowWithResources): Job {
 		createdAt: row.createdAt,
 		finishedAt: row.finishedAt,
 		pingedAt: row.pingedAt,
-		progress: computeProgress(row.state, row.steps),
+		progress: computeJobProgress(row.state, row.steps),
 		state: row.state,
 		steps: row.steps,
 		user: { id: row.userId, handle: row.handle },
@@ -346,19 +333,19 @@ export async function createJob(
 
 /** The runner metadata and step list a claim carries. */
 export type ClaimJobValues = {
-	claim: JobClaim;
-	steps: Omit<JobStep, "started_at">[];
+	claim: StoredJobClaim;
+	steps: Omit<StoredJobStep, "started_at">[];
 };
 
 /** A job just claimed, with the plaintext key its runner will authenticate with. */
 export type ClaimedJob = {
 	id: number;
-	claim: JobClaim;
+	claim: StoredJobClaim;
 	claimedAt: Date;
 	createdAt: Date;
 	/** Returned once and never stored in the clear. */
 	key: string;
-	steps: JobStep[];
+	steps: StoredJobStep[];
 	user: { id: number; handle: string };
 	workflow: string;
 };
@@ -387,7 +374,7 @@ export async function claimJob(
 	const key = newJobKey();
 	const now = new Date();
 
-	const steps: JobStep[] = values.steps.map((step) => ({
+	const steps: StoredJobStep[] = values.steps.map((step) => ({
 		description: step.description,
 		id: step.id,
 		name: step.name,
@@ -486,7 +473,7 @@ export async function pingJob(db: Db, jobId: number): Promise<Date> {
 }
 
 /** A step that has just been started, so its `started_at` is set by construction. */
-export type StartedJobStep = JobStep & { started_at: string };
+export type StartedJobStep = StoredJobStep & { started_at: string };
 
 /**
  * Stamp `started_at` on one step of a job's step list.

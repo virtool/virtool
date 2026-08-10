@@ -17,7 +17,7 @@ import {
 import type {
 	Group,
 	GroupMinimal,
-	GroupSearchResults,
+	GroupSearchResult,
 } from "@virtool/contracts";
 import type { PermissionsUpdate } from "./types";
 
@@ -29,7 +29,7 @@ import type { PermissionsUpdate } from "./types";
  * @returns A paginated list of the group search results
  */
 export function useInfiniteFindGroups(perPage: number, term: string) {
-	return useInfiniteQuery<GroupSearchResults>({
+	return useInfiniteQuery<GroupSearchResult>({
 		queryKey: groupQueryKeys.infiniteList([perPage, term]),
 		queryFn: ({ pageParam }) =>
 			findGroupsFn({

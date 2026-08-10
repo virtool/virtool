@@ -18,7 +18,7 @@ function createAnalysis(
 			id: 5,
 			index: { id: 1, version: 3 },
 			reference: { id: 2, name: "Plant Viruses" },
-			subtractions: [{ id: 7, name: "Arabidopsis thaliana" }],
+			subtractions: [{ id: 7, name: "Arabidopsis thaliana", ready: true }],
 			workflow: "pathoscope",
 		}),
 		files: [],

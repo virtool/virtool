@@ -10,20 +10,6 @@ import { WorkflowDefinitionError } from "./errors";
  */
 const STEP_ID_PATTERN = /^[a-z][a-z0-9_]*$/;
 
-/**
- * A step's metadata, without the function that runs it.
- *
- * The three fields the jobs API is told about at claim time, matching
- * `JobStepDefinition` on the wire. Hook payloads carry this rather than the
- * step itself so the hook registry does not have to be generic over a
- * workflow's data and state.
- */
-export type WorkflowStepMetadata = {
-	id: string;
-	name: string;
-	description: string;
-};
-
 /** A single step in a workflow. */
 export type WorkflowStep<TData, TState> = {
 	/**

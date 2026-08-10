@@ -1,7 +1,5 @@
-import type { Account } from "@account/types";
 import type { AdministratorRole } from "@administration/types";
-import type { User } from "@users/types";
-import type { UserNested } from "@virtool/contracts";
+import type { Account, User, UserNested } from "@virtool/contracts";
 import { expect, type Mock, vi } from "vitest";
 
 /**

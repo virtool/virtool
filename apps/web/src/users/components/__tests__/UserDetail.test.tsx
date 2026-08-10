@@ -14,8 +14,7 @@ import {
 } from "@tests/server-fn/users";
 import { renderWithProviders, renderWithRouter } from "@tests/setup";
 import UserDetail from "@users/components/UserDetail";
-import type { User } from "@users/types";
-import type { Group } from "@virtool/contracts";
+import type { Group, User } from "@virtool/contracts";
 import { beforeEach, describe, expect, it } from "vitest";
 
 describe("<UserDetail />", () => {

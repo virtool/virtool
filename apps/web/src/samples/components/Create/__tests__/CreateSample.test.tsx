@@ -3,7 +3,7 @@ import userEvent from "@testing-library/user-event";
 import { createFakeAccount } from "@tests/fake/account";
 import { createFakeFile } from "@tests/fake/files";
 import { createFakeLabel } from "@tests/fake/labels";
-import { createFakeShortlistSubtraction } from "@tests/fake/subtractions";
+import { createFakeSubtractionNested } from "@tests/fake/subtractions";
 import { mockListGroups } from "@tests/server-fn/groups";
 import { mockCreateSample } from "@tests/server-fn/samples";
 import { mockListSubtractionsShortlist } from "@tests/server-fn/subtractions";
@@ -36,7 +36,7 @@ async function setReadSelectorMode(
 describe("<CreateSample>", () => {
 	const firstLabel = createFakeLabel();
 	const labels = [firstLabel];
-	const subtractionShortlist = createFakeShortlistSubtraction();
+	const subtractionShortlist = createFakeSubtractionNested();
 
 	beforeEach(() => {
 		window.sessionStorage.clear();

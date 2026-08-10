@@ -1,5 +1,5 @@
 import { faker } from "@faker-js/faker";
-import type { Label, LabelNested } from "@labels/types";
+import type { Label, LabelNested } from "@virtool/contracts";
 
 export function createFakeLabelNested(): LabelNested {
 	return {

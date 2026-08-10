@@ -3,11 +3,11 @@ import {
 	CreateJobClaimRequest,
 	fromStoredJobClaim,
 	fromStoredJobStep,
+	Job,
 	type JobClaimed,
 	type JobPing,
 	type JobStepStarted,
 	toStoredJobClaim,
-	WorkflowJob,
 } from "@virtool/contracts";
 import type { Db } from "@virtool/data/db/pg";
 import {
@@ -62,14 +62,14 @@ export type JobHandlerDeps = {
  * response-validation layer would tax every response in the service for a
  * looseness that exists on this one column.
  */
-function toJob(record: JobRecord): WorkflowJob {
-	const parsed = WorkflowJob.safeParse({
+function toJob(record: JobRecord): Job {
+	const parsed = Job.safeParse({
 		id: record.id,
 		args: record.args,
 		claim: record.claim ? fromStoredJobClaim(record.claim) : null,
 		claimedAt: record.claimedAt,
 		createdAt: record.createdAt,
-		pingedAt: record.pingedAt,
+		finishedAt: record.finishedAt,
 		progress: record.progress,
 		state: record.state,
 		steps: record.steps?.map(fromStoredJobStep) ?? null,
