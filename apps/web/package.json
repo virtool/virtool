@@ -61,7 +61,7 @@
 		"@tanstack/start-storage-context": "1.167.17",
 		"@testing-library/jest-dom": "^7.0.0",
 		"@testing-library/react": "^16.3.2",
-		"@testing-library/user-event": "^14.5.2",
+		"@testing-library/user-event": "^14.6.3",
 		"@types/d3": "^7.4.3",
 		"@types/react": "^19.2.18",
 		"@types/react-dom": "^19.2.4",
