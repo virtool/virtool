@@ -38,6 +38,11 @@ export type TestServer = {
  * Retry, cancellation and status-to-error mapping all live in the space between
  * `fetch` and the wire, which is exactly what a fetch mock would assert into
  * existence rather than test.
+ *
+ * The handler answers each request itself. `startJobsApiTestServer` is the
+ * stateful fixture built on top of this, and is what a runtime test usually
+ * wants; reach for this one when the test is about a status or a hung socket
+ * rather than about the jobs API's behaviour.
  */
 export async function startTestServer(
 	handler: TestServerHandler,

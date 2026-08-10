@@ -1,13 +1,13 @@
 import type { CreateJobClaimRequest } from "@virtool/contracts";
 import { afterEach, describe, expect, it } from "vitest";
 import { JobsApiError, ServerError } from "../client/errors";
-import { createRecordingLogger } from "../testFixtures";
 import {
+	createRecordingLogger,
 	respondJson,
 	startTestServer,
 	type TestServer,
 	UNREACHABLE_BASE_URL,
-} from "../testServer";
+} from "../testing";
 import { CLAIM_POLL_INTERVAL_MS, claimJob } from "./claim";
 
 const REQUEST: CreateJobClaimRequest = {

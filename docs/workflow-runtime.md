@@ -240,8 +240,11 @@ await context.runSubprocess({
 ```
 
 `RunSubprocess` is a plain function type, not a class, so a step test hands
-in a `vi.fn()` and asserts on the commands it was asked to run.
-`createFakeRunSubprocess` in `testFixtures` is the recording stand-in.
+in a `vi.fn()` and asserts on the commands it was asked to run. The test
+harness's `createFakeSubprocessRunner` is the recording stand-in, and it
+reproduces the outcome table below rather than collapsing it — a spawn
+failure, a non-zero exit carrying its stderr tail, and a cancellation are
+three different events to a step.
 
 The command is always an array of arguments and `shell: false`. There is no
 shell string form and no `cwd`-relative executable lookup beyond `PATH`.

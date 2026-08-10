@@ -6,7 +6,7 @@ import { createRunSignals } from "../run";
 import {
 	createRecordingLogger,
 	createUnreachableJobsApiClient,
-} from "../testFixtures";
+} from "../testing";
 import {
 	MAX_PING_FAILURES,
 	PING_INTERVAL_MS,

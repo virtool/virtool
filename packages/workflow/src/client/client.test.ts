@@ -1,13 +1,13 @@
 import { afterEach, describe, expect, it } from "vitest";
-import { createRecordingLogger } from "../testFixtures";
 import {
+	createRecordingLogger,
 	respondJson,
 	respondText,
 	startTestServer,
 	type TestServer,
 	type TestServerHandler,
 	UNREACHABLE_BASE_URL,
-} from "../testServer";
+} from "../testing";
 import { createJobsApiClient, type JobsApiClient } from "./client";
 import {
 	BadRequestError,

@@ -1375,6 +1375,66 @@ Four rules it carries:
 
 See [docs/index-artifact.md](docs/index-artifact.md).
 
+### Workflow tests stand on `@virtool/workflow/testing`
+
+The harness replaces Python's `virtool/workflow/pytest_plugin/` and
+`tests/fixtures/workflow_api/`. It lives in
+`packages/workflow/src/testing/` and every workflow app's tests import it
+from `@virtool/workflow/testing` — never from `apps/web`, which it does
+not reach.
+
+**Everything is a factory function.** pytest injected fixtures by
+parameter name and resolved a dependency graph between them; Vitest has
+no equivalent and this harness deliberately builds none. Nothing is
+installed by importing it, there is no module-level mutable state — test
+files run in parallel processes — and anything needing cleanup returns
+its disposer for the caller to hand to `onTestFinished`.
+
+Six rules it carries:
+
+- **It splits by what the test is asking.** A *workflow* test gets
+  `createFakeJobsApiClient(state)` and exercises no HTTP — "does nuvs
+  produce the right results" gains nothing from a wire format. A
+  *runtime* test gets `startJobsApiTestServer(state)`, a real
+  `node:http` server, because retry, ping-driven cancellation, Basic
+  credentials and status-to-error mapping only mean something over one.
+  **Both run `handleJobsApiRequest` over the same `JobsApiState`**, so a
+  test moves between them without rewriting its setup and the two halves
+  cannot drift.
+- **The fixture's responses are camelCase and built from
+  `@virtool/contracts`.** The embedded server is what the jobs API
+  client is tested *against*: spelled snake_case on both sides they
+  agree with each other and the mismatch surfaces only against the real
+  `apps/jobs-api`. Cancellation is therefore a **401 naming the state**,
+  not a `cancelled` flag — `JobPing` has none.
+- **Builders are seeded, with a fixed default.** `createFakeJob`,
+  `createFakeSample`, `createFakeSubtraction` and the rest take
+  `(overrides, seed)` and are reproducible, because checksums are the
+  assertion. `STATIC_TIME` is **injected**, never patched onto a global
+  clock, and is an ISO string rather than a shared `Date` — a shared one
+  is module-level mutable state.
+- **`buildTestContext` goes through `createWorkflowContext`**, so
+  `assertSerializableData` runs on every test context. That seam is what
+  the deferred end-to-end bed depends on and it rots silently the first
+  time someone parks a closure on `data`.
+- **Seeding helpers mint their keys and return them.** The caller
+  attaches the returned key to the fake row the fixture will serve, and
+  the code under test reads it back out of that metadata — its only
+  route to the bytes. A minted key is unguessable by construction, so a
+  fixture that composes one from a row id or falls back to a filename
+  finds nothing. `seedHmmFiles` is the exception and keeps the two fixed
+  HMM constants.
+- **`createTestWorkPath` is never a fixed path.** `createWorkPath`
+  unconditionally `rm -rf`s its target, so a shared path means one test
+  deleting another's tree mid-run.
+
+`checksumFile` and `checksumDirectory` hash **decompressed** content —
+gzip embeds an mtime and varies by compressor, so hashing the compressed
+bytes fails every comparison against a Python fixture for reasons that
+are not correctness.
+
+See [docs/workflow-testing.md](docs/workflow-testing.md).
+
 ## Code style
 
 The basics:
@@ -1431,6 +1491,14 @@ naming, comments, and concurrency rules with examples.
 - **Projects (`@virtool/storage`):** `unit` covers everything testable
   against `MemoryStorage`; `integration` runs the S3 and Azure backends
   against real Garage and Azurite containers and has its own CI job.
+- **`@virtool/workflow` runs under node via its own `test` script**,
+  which `pnpm -r test` picks up — the per-package model every
+  `packages/*` follows. **Do not add a project for it to
+  `apps/web/vitest.config.js`**: that file is where `web`, `server` and
+  `a11y` live, and declaring a package's project inside `apps/web` would
+  contradict the harness's own rule that nothing in it reaches the SPA.
+  Its tests are server-shaped and need node for the same reason the
+  `server` project does.
 - **`@virtool/data`**, **`@virtool/jobs-api`** and **`@virtool/tasks`**
   each run one node project against a Postgres testcontainer, and each
   has its own CI job for the same reason storage does — a container pull
@@ -1468,6 +1536,12 @@ naming, comments, and concurrency rules with examples.
   client, so there is no HTTP mocking library either: stub the module
   that would make the call, never an interceptor. Nothing blocks an
   outbound request, so a test that reaches the network really will.
+
+  **Both directories are browser-side only.** Workflow data generators,
+  jobs API fakes and process fakes live in the harness under
+  `packages/workflow/src/testing/` and are imported from
+  `@virtool/workflow/testing`. No test double lives in two places, and
+  `apps/web/src/tests/` gains nothing from a workflow fixture.
 - **Database tests:** `createTestDatabase()` from
   `@virtool/data/db/test/fixtures` gives a suite its own isolated
   Postgres database with the schema applied, and installs the

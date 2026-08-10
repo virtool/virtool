@@ -11,13 +11,13 @@ import {
 import type { WorkflowRunConfig } from "./config";
 import type { WorkflowContext } from "./context";
 import { defineWorkflow, type WorkflowStep } from "./step";
-import { createRecordingLogger } from "./testFixtures";
 import {
+	createRecordingLogger,
 	respondJson,
 	startTestServer,
 	type TestServer,
 	type TestServerHandler,
-} from "./testServer";
+} from "./testing";
 
 const JOB_ID = 9;
 

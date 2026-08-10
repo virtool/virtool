@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { createRecordingLogger } from "../testFixtures";
+import { createRecordingLogger } from "../testing";
 import { ConflictError, TransportError } from "./errors";
 import { MAX_RETRIES, RETRY_DELAY_MS, sleep, withRetry } from "./retry";
 

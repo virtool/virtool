@@ -3,7 +3,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { setTimeout as delay } from "node:timers/promises";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
-import { createRecordingLogger } from "../testFixtures";
+import { createRecordingLogger } from "../testing";
 import { createRunSubprocess } from "./execa";
 import {
 	SubprocessFailedError,

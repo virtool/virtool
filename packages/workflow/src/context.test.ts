@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { createWorkflowContext } from "./context";
 import { WorkflowError } from "./errors";
 import { defineWorkflow, type WorkflowDefinition } from "./step";
-import { createFakeBuildContextInput } from "./testFixtures";
+import { createFakeBuildContextInput } from "./testing";
 
 type Data = { referenceId: string; otuIds: string[] };
 type State = { hits: number };

@@ -6,7 +6,7 @@ import {
 	runWorkflow,
 } from "./run";
 import { defineWorkflow, type WorkflowStep } from "./step";
-import { createFakeContext, createRecordingLogger } from "./testFixtures";
+import { createFakeContext, createRecordingLogger } from "./testing";
 
 type Data = { referenceId: string };
 type State = { visited: string[] };
