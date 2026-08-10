@@ -18,7 +18,7 @@
 		"@virtool/logger": "workspace:*",
 		"@virtool/sentry": "workspace:*",
 		"@virtool/storage": "workspace:*",
-		"execa": "^9.6.1",
+		"execa": "^10.0.1",
 		"tar-stream": "^3.2.0",
 		"undici": "^7.29.0",
 		"zod": "^4.3.6"
