@@ -26,6 +26,7 @@
 		"zod": "^4.3.5"
 	},
 	"devDependencies": {
+		"drizzle-orm": "^0.45.2",
 		"tsdown": "^0.22.14",
 		"vitest": "^4.1.10"
 	}

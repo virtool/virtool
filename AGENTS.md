@@ -1053,10 +1053,57 @@ four rules hold them:
   returned `false`. Those three take `Db` rather than `DbOrTx` so a
   frame cannot precede the commit of the row it describes.
 
+A task body is authored against the framework in
+`apps/tasks/src/framework/` — `defineTask` and the payload/step
+declaration (`define.ts`), the debounced progress writer
+(`progress.ts`), and `runTask` (`run.ts`). Eight rules it carries:
+
+- **A body never persists and `data.ts` never learns about tasks.** The
+  seam between them is a trailing `onProgress?: (percent: number) =>
+  Promise<void>` on the data function — percent at that boundary,
+  **fraction** (0–1) at `runStep`'s `report`, and a body bridges the two
+  with `async (percent) => report(percent / 100)`. A caller rescales a
+  child's full range into its own band.
+- **A step is an equal slice of 0–100**, and rounding is **half-to-even**
+  to match Python's `round` — `Math.round(62.5)` is 63 and Python's is
+  62. Only step *entry* writes immediately; a step writes nothing on the
+  way out, because the next entry carries the same value and an exit
+  write would report a step that threw as finished. Everything between
+  is debounced at `PROGRESS_DEBOUNCE_MS` (250) and flushed before the
+  terminal write, and again after `cleanup`.
+- **A step name absent from the declared `steps` has its progress
+  dropped**, at `warn` — it is a typo, and giving it the whole 0–100
+  range pins the bar at 100 for the rest of the run. A task that
+  declares no steps at all still maps each one onto the whole bar.
+- **A progress decrease is dropped, not raised**, and measured from the
+  claimed row's `progress` rather than from zero — a reclaimed task
+  re-runs from step zero and must not drag the bar back with it. Python
+  raises, which lets a rounding wobble fail an otherwise-healthy task.
+  Any accumulating helper guards `total <= 0` rather than dividing
+  blind, as Python's does.
+- **`cleanup` runs on every outcome but success** — including a handler
+  that sees `signal.aborted` and returns *cleanly*, which a
+  `catch`-only implementation skips silently. Never after a fence:
+  another runner owns the task, and the claim is **renewed and checked**
+  first rather than inferred from whatever progress write happened to be
+  outstanding. A throwing cleanup is logged and never masks the original
+  error.
+- **An error is `` `${err.name}: ${err.message}` ``**, not Python's
+  `"<class 'ValueError'>: boom"`. A payload the schema rejects fails the
+  task before any handler code runs.
+- **`runTask` always returns an outcome**: a terminal write that rejects
+  reports `aborted`, the same as an already-aborted signal at dispatch,
+  because both leave the row claimed and incomplete for the caller to
+  release. `signal.aborted` is sampled once, before the flush that
+  precedes the terminal write.
+- **A reclaimed task re-runs from step zero, so every body must be
+  idempotent.** Nothing records which steps already ran.
+
 See [docs/tasks.md](docs/tasks.md) for the full config table, the
 `AppContext` contract, the shutdown ordering and its guarantees, the
-probe and metrics surface, and the lease, fencing and frame rules in
-full.
+probe and metrics surface, the lease, fencing and frame rules in full,
+and the framework's step model, terminal-outcome table and progress
+seam.
 
 ## Data
 
