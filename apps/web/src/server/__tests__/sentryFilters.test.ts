@@ -19,6 +19,11 @@ function eventWithType(type: string): ErrorEvent {
 	return { exception: { values: [{ type }] } } as ErrorEvent;
 }
 
+/** The shape node's `abortIncoming` produces: a plain `Error` carrying a code. */
+function connResetError(message: string): Error {
+	return Object.assign(new Error(message), { code: "ECONNRESET" });
+}
+
 describe("dropExpectedClientErrors", () => {
 	it("drops an event whose original exception is an UnauthorizedError", () => {
 		const result = dropExpectedClientErrors(
@@ -63,6 +68,30 @@ describe("dropExpectedClientErrors", () => {
 		const event = eventWithType(CLIENT_ERROR_NAME);
 
 		expect(dropExpectedClientErrors(event, {} as EventHint)).toBeNull();
+	});
+
+	it("drops the error node raises when a client goes away mid-request", () => {
+		const result = dropExpectedClientErrors(eventWithType("Error"), {
+			originalException: connResetError("aborted"),
+		} as EventHint);
+
+		expect(result).toBeNull();
+	});
+
+	it("keeps an ECONNRESET from a connection this side opened", () => {
+		const event = eventWithType("Error");
+		const hint = {
+			originalException: connResetError("read ECONNRESET"),
+		} as EventHint;
+
+		expect(dropExpectedClientErrors(event, hint)).toBe(event);
+	});
+
+	it("keeps an aborted error that carries no ECONNRESET code", () => {
+		const event = eventWithType("Error");
+		const hint = { originalException: new Error("aborted") } as EventHint;
+
+		expect(dropExpectedClientErrors(event, hint)).toBe(event);
 	});
 
 	it("keeps an unrelated error event", () => {

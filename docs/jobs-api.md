@@ -1185,6 +1185,14 @@ handler returns a 4xx response rather than throwing, so nothing routine
 reaches Sentry to be filtered. Add a filter only if a route starts
 throwing for an expected outcome — and prefer not to.
 
+The web app's filter also drops the `Error: aborted` a closed client
+socket raises, and that half does not carry over either. It reports
+what `app.onError` is handed, and a socket closing under an in-flight
+request never reaches Hono's `compose` to become one. Should such an
+event ever show up here, port the *paired* `ECONNRESET`-and-`aborted`
+match rather than filtering the code, which this service sees from
+Postgres and object storage as a genuine failure.
+
 ## Configuration
 
 | Variable | Default | Meaning |

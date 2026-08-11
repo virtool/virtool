@@ -629,6 +629,15 @@ a name conflict). The Sentry `beforeSend` filter drops `ClientError`
 `Error` is reported as a false incident. A bare `throw` stays reserved
 for the genuinely unexpected.
 
+That same filter drops the `Error: aborted` Node raises when a client's
+socket closes mid-request — unactionable by construction, and steady
+traffic here because the SSE client probes `HEAD /events` from its
+`onerror` handler, which is exactly when a deploy is tearing the
+connection down. It matches `ECONNRESET` **paired with** the literal
+message `aborted`, never the code alone: `ECONNRESET` also arrives from
+connections this side opens — Postgres, object storage, GenBank — and
+those are real incidents.
+
 **Never set a null-body status — 204, 205, or 304 — from a server
 function.** Start always serializes a body for an RPC call, so the
 `Response` constructor rejects the pair and the operation reports a

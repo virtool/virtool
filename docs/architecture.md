@@ -87,6 +87,19 @@ ports consume it. `service.ts` and `functions.ts` live in
   logic — if a handler grows a multi-step orchestration with rollbacks
   or branching, that is the signal to extract a `service.ts`.
 
+  The same filter drops one thing no handler throws: the `Error:
+  aborted` Node's `abortIncoming` raises when a client's socket closes
+  with a request still in flight. Its stack is pure Node internals —
+  no application frame, because no application code ran — and it is
+  unactionable by construction, the peer having gone. The web app draws
+  a steady stream of them because the SSE client probes `HEAD /events`
+  from its `onerror` handler, which is exactly when a deploy is tearing
+  the connection down, so every connected tab contributes one. The
+  match is `code === "ECONNRESET"` **paired with** the literal message
+  `aborted`. Never widen it to the code alone: `ECONNRESET` also
+  arrives from connections this side opens — Postgres, object storage,
+  GenBank — where it is a real incident.
+
   The status a handler sets is always a 4xx or a 2xx that carries a
   body. **A null-body status — 204, 205, or 304 — is not available
   here.** Start's server-function handler serializes the `{ result,
