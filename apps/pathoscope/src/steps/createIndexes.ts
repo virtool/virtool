@@ -3,13 +3,13 @@ import { join } from "node:path";
 import type { Logger } from "@virtool/logger";
 import {
 	type BuildContextInput,
+	createMappingIndex,
 	downloadToPath,
 	openWorkflowIndex,
 	writeFasta,
 } from "@virtool/workflow";
 import { cacheFor } from "../cache";
-import { REFERENCE_INDEX_EXTRA_PARAMS } from "../cacheParams";
-import { createMappingIndex } from "../mappingIndex";
+import { REFERENCE_INDEX_EXTRA_PARAMS, WORKFLOW_NAME } from "../cacheParams";
 import { workPaths } from "../paths";
 import { APP_VERSION } from "../version";
 import type { PathoscopeStep } from "./types";
@@ -51,6 +51,7 @@ export const createReferenceIndexStep: PathoscopeStep = {
 					}),
 				proc,
 				runSubprocess,
+				workflow: WORKFLOW_NAME,
 				workflowVersion: APP_VERSION,
 			});
 		} finally {
@@ -131,6 +132,7 @@ export const createSubtractionIndexStep: PathoscopeStep = {
 					}),
 				proc,
 				runSubprocess,
+				workflow: WORKFLOW_NAME,
 				workflowVersion: APP_VERSION,
 			});
 		}

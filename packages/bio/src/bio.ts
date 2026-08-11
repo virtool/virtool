@@ -199,36 +199,96 @@ export function findOrfs(sequence: string): Orf[] {
 	return orfs;
 }
 
+/**
+ * The partially-read record a FASTA parse is in the middle of.
+ *
+ * Shared by {@link parseFasta} and {@link parseFastaLines} so the two cannot
+ * drift: one is synchronous over a whole string and the other streams, and every
+ * rule about blank lines, `\r` and a sequence line before any header lives here
+ * rather than in each of them.
+ */
+type FastaAccumulator = { header: string | null; seq: string[] };
+
+/**
+ * Take one line.
+ *
+ * @returns the record the line completed, if it started a new one.
+ */
+function feedFastaLine(
+	accumulator: FastaAccumulator,
+	rawLine: string,
+): [string, string] | null {
+	const line = rawLine.replace(/\r$/, "");
+
+	if (line === "") return null;
+
+	if (line[0] === ">") {
+		const completed: [string, string] | null =
+			accumulator.header === null
+				? null
+				: [accumulator.header, accumulator.seq.join("")];
+
+		accumulator.header = line.slice(1);
+		accumulator.seq = [];
+
+		return completed;
+	}
+
+	if (accumulator.header === null) {
+		throw new Error(`Illegal FASTA line: ${rawLine}`);
+	}
+
+	accumulator.seq.push(line);
+
+	return null;
+}
+
+/** The last record, which no following header ever completed. */
+function finishFasta(accumulator: FastaAccumulator): [string, string] | null {
+	return accumulator.header === null
+		? null
+		: [accumulator.header, accumulator.seq.join("")];
+}
+
 export function parseFasta(content: string): Array<[string, string]> {
 	const records: Array<[string, string]> = [];
-	let header: string | null = null;
-	let seq: string[] = [];
+	const accumulator: FastaAccumulator = { header: null, seq: [] };
 
 	for (const rawLine of content.split("\n")) {
-		const line = rawLine.replace(/\r$/, "");
-		if (line === "") continue;
+		const record = feedFastaLine(accumulator, rawLine);
 
-		if (line[0] === ">") {
-			if (header !== null) {
-				records.push([header, seq.join("")]);
-			}
-			header = line.slice(1);
-			seq = [];
-			continue;
-		}
-
-		if (header === null) {
-			throw new Error(`Illegal FASTA line: ${rawLine}`);
-		}
-
-		seq.push(line);
+		if (record !== null) records.push(record);
 	}
 
-	if (header !== null) {
-		records.push([header, seq.join("")]);
-	}
+	const last = finishFasta(accumulator);
+
+	if (last !== null) records.push(last);
 
 	return records;
+}
+
+/**
+ * Parse FASTA one record at a time, from lines rather than a whole string.
+ *
+ * {@link parseFasta} needs the file in memory, and V8 caps a string at roughly a
+ * gigabyte — so a caller reading an assembly it did not size itself has an upper
+ * bound it cannot do anything about. This yields as it goes, the way
+ * {@link parseFastq} does, and the two agree record for record.
+ */
+export async function* parseFastaLines(
+	lines: AsyncIterable<string> | Iterable<string>,
+): AsyncGenerator<[string, string]> {
+	const accumulator: FastaAccumulator = { header: null, seq: [] };
+
+	for await (const rawLine of lines) {
+		const record = feedFastaLine(accumulator, rawLine);
+
+		if (record !== null) yield record;
+	}
+
+	const last = finishFasta(accumulator);
+
+	if (last !== null) yield last;
 }
 
 export type FastqRecord = {

@@ -217,7 +217,7 @@ binary from `ghcr.io/virtool/tools`?**
   uniformity with a workflow image.
 - **Yes** — `node:24-bookworm-slim`. Those binaries are built against
   `python:3.13-bookworm` and dynamically linked against glibc; Alpine is
-  musl and could not load them. `apps/workflow-pathoscope`, which has its
+  musl and could not load them. `apps/pathoscope`, which has its
   own Dockerfile, is the worked example. Do not move a tools-carrying
   image to Alpine for uniformity either.
 

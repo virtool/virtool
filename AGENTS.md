@@ -96,17 +96,47 @@ This is a **pnpm monorepo**:
   the image, `ghcr.io/virtool/ts-create-subtraction`, is **Alpine** and copies
   nothing from `ghcr.io/virtool/tools`. Reintroducing a tools binary means
   moving the stage to Debian in the same edit, because they are built against
-  `python:3.13-bookworm` and musl cannot load them. The other three workflow
+  `python:3.13-bookworm` and musl cannot load them. The remaining workflow
   executors get a directory, a Dockerfile stage and a CI matrix entry when
   their port lands.
-- `apps/workflow-pathoscope/` — `@virtool/workflow-pathoscope`, the pathoscope
-  workflow executor and its image (`ghcr.io/virtool/ts-pathoscope`). Eight
-  steps, four external tools and `pathoscope-core`, which it drives **as a
-  subprocess** — there is no FFI here and adding one is out of scope by
-  decision. Its Dockerfile carries three halves: a cargo-chef stage compiling
-  `packages/pathoscope-core`, a Node stage bundling the app, and a Debian
-  runtime layering the `ghcr.io/virtool/tools` binaries over both. Built from
-  the **repo root** (`docker build -f apps/workflow-pathoscope/Dockerfile .`).
+- `apps/nuvs/` — `@virtool/nuvs`, the NuVs workflow executor and its image
+  (`ghcr.io/virtool/ts-nuvs`). Ten steps and five external tools — skewer,
+  bowtie2, SPAdes, `hmmpress` and `hmmscan`. It finds viruses the reference
+  does **not** describe, by discarding every read that maps to a known OTU or
+  to a subtraction, assembling what is left and searching the contigs for viral
+  motifs. Built from the **repo root**
+  (`docker build -f apps/nuvs/Dockerfile .`).
+  Five rules it carries: **`SPAdes 4.2.0` is compiled from source** in the
+  image's first stage, because no binary release fits the base — and the
+  runtime installs `python3` for it, since `spades.py` is a Python script
+  driving the compiled binaries; the **raw `results` shape is pinned by
+  `formatNuvs`** (`packages/data/src/analyses/format.ts`), *not* by
+  `packages/contracts/src/nuvs.ts`, which describes the **formatted** envelope
+  — so the workflow writes each ORF hit's `hit` (an annotation id) and never
+  `cluster`, `families` or `names`, which the server merges in from the `hmms`
+  table; **a sample with no quality data fails in `buildContext`**, because
+  `max_length` is `quality.length[1]` and Python instead compares `None` with
+  an `int` two steps in; **Python's `hits.remove(sequence)` branch in `vfam` is
+  unreachable** and is deliberately not ported — porting it as though it fires
+  would renumber the contigs and invalidate every stored index; and **nothing
+  deletes an analysis on failure**, as with pathoscope.
+  It reads `hmm/profiles.hmm` and `hmm/annotations.json.gz` **straight from
+  storage** — there is no jobs API HMM route — and checks both keys before step
+  one. The annotations blob is written **lazily** by Python, on the first
+  request for it, and cleared whenever an HMM install commits, so it is cold on
+  a fresh install and a run says so by name rather than failing at `vfam`.
+  **CI builds it but must not publish it**, exactly as for pathoscope:
+  `virtool/workflow-nuvs` still releases the NuVs workflow, so `APP_VERSION`
+  stays `0.0.0` and the `workflow_version` in all three of its cache keys with
+  it.
+- `apps/pathoscope/` — `@virtool/pathoscope`, the pathoscope workflow executor
+  and its image (`ghcr.io/virtool/ts-pathoscope`). Eight steps, four external
+  tools and `pathoscope-core`, which it drives **as a subprocess** — there is
+  no FFI here and adding one is out of scope by decision. Its Dockerfile
+  carries three halves: a cargo-chef stage compiling `packages/pathoscope-core`,
+  a Node stage bundling the app, and a Debian runtime layering the
+  `ghcr.io/virtool/tools` binaries over both. Built from the **repo root**
+  (`docker build -f apps/pathoscope/Dockerfile .`).
   Two rules it carries: it writes **no result file** — Python uploaded a
   `report.tsv` whose every figure is already in the `results` blob, so the
   finalize manifest is empty and `FinalizeAnalysisRequest.files` allows that
@@ -126,7 +156,12 @@ This is a **pnpm monorepo**:
     finding, FASTA/FASTQ) and the pure text parsers the ported workflows
     need: FastQC `fastqc_data.txt` (`./fastqc`) and `hmmscan --tblout`
     (`./hmmer`). Its output is pinned byte-for-byte against Python's —
-    see [docs/bio.md](docs/bio.md) before changing a parser.
+    `findOrfs` by a **differential golden** Python generated
+    (`src/fixtures/findOrfs.json`, regenerated only to add cases), the rest
+    by explicit assertions. FASTA parses two ways off one state machine:
+    `parseFasta` over a whole string, `parseFastaLines` streaming, because
+    an assembly is not something a caller sized itself. See
+    [docs/bio.md](docs/bio.md) before changing a parser.
   - `@virtool/contracts` — cross-process data shapes, zod-validated where a
     boundary parses them
   - `@virtool/sentry` — shared Sentry option helpers (node + browser entry
@@ -149,11 +184,12 @@ This is a **pnpm monorepo**:
   - `@virtool/workflow` — the workflow runtime every executor runs on: the
     step model, the run loop, the work path, the subprocess runner, the eager
     `buildContext` seam, the job lifecycle loop that claims, heartbeats and
-    reports over the jobs API, and the file layer — streaming transfer, gzip,
-    tar and cache-key derivation. It takes a `StorageBackend` as an argument
-    and knows nothing about a database — see the section below. It is the
-    only place in the repo that spawns a process, and so the only one
-    depending on `execa`.
+    reports over the jobs API, the file layer — streaming transfer, gzip,
+    tar and cache-key derivation — and the bowtie2 mapping index, which is
+    shared between the analysis workflows rather than owned by one. It takes
+    a `StorageBackend` as an argument and knows nothing about a database —
+    see the section below. It is the only place in the repo that spawns a
+    process, and so the only one depending on `execa`.
   - `pathoscope-core` — **Rust, not TypeScript.** Pathoscope's EM core as a
     standalone CLI, invoked as a subprocess. It is not a pnpm workspace (it
     has no `package.json`) and is excluded from biome and knip by name —
@@ -224,16 +260,18 @@ workspace. Run `cargo` there directly; a `pathoscope-test` CI job gates it.
 Building the crate needs `libclang-dev` installed, because `hts-sys` runs
 bindgen against htslib's headers.
 
-`pathoscope-test` and `build-pathoscope` are the only path-filtered jobs in
-`ci.yaml`, and they take **a filter each**, because their inputs differ:
-`pathoscope-test` runs cargo over the crate and reads no TypeScript, while
-`build-pathoscope` bundles the app and so depends on every workspace package
-the Dockerfile copies. One shared filter would run the libclang-and-cargo job
-on any `packages/workflow` change. Extend the `changes` job's filters in the
-same commit as anything that gives either job a new input — in particular,
-**every path the pathoscope Dockerfile `COPY`s must appear under
-`pathoscope-image`**, or the build is skipped on the pull request that breaks
-it and fails on the push to `main`, where nothing gates it.
+`pathoscope-test`, `build-pathoscope` and `build-nuvs` are the only
+path-filtered jobs in `ci.yaml`, and they take **a filter each**, because their
+inputs differ: `pathoscope-test` runs cargo over the crate and reads no
+TypeScript, while each image build bundles its own app and so depends on every
+workspace package its Dockerfile copies. One shared filter would run the
+libclang-and-cargo job on any `packages/workflow` change, and would rebuild
+each image for the other's inputs — `nuvs-image` carries `packages/bio` and
+`pathoscope-image` carries `packages/pathoscope-core`. Extend the `changes`
+job's filters in the same commit as anything that gives a job a new input — in
+particular, **every path a workflow Dockerfile `COPY`s must appear under that
+image's filter**, or the build is skipped on the pull request that breaks it
+and fails on the push to `main`, where nothing gates it.
 
 `pnpm build` builds **every app but `apps/site`**, which is gated by its own
 `site-build` CI job. `pnpm check` and `pnpm format` run biome over `apps` and

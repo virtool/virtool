@@ -1,11 +1,14 @@
-import { deriveCacheKey, type RunSubprocess } from "@virtool/workflow";
+import {
+	buildMappingIndexCacheParams,
+	deriveCacheKey,
+	type RunSubprocess,
+} from "@virtool/workflow";
 import { describe, expect, it, vi } from "vitest";
 import {
 	buildCollapsedReferenceCacheParams,
-	buildMappingIndexCacheParams,
-	getBowtie2BuildVersion,
 	getCdHitEstVersion,
 	REFERENCE_INDEX_EXTRA_PARAMS,
+	WORKFLOW_NAME,
 } from "./cacheParams";
 
 /**
@@ -58,15 +61,18 @@ function subprocessWriting(
 	});
 }
 
-describe("buildMappingIndexCacheParams", () => {
-	// These two namespaces are SHARED with Python: a bowtie2 index one side built
-	// is interchangeable with one the other built.
+// The params themselves are the runtime's — every workflow that builds a bowtie2
+// index derives them the same way. What is pinned here is that *this* workflow's
+// inputs to them land on Python-pathoscope's key, which is what makes the two
+// implementations share the artifact.
+describe("the shared mapping index namespaces", () => {
 	it("derives Python's key for a reference mapping index", () => {
 		const params = buildMappingIndexCacheParams({
 			extra: REFERENCE_INDEX_EXTRA_PARAMS,
 			indexKind: "reference_mapping_index",
 			parentId: 42,
 			toolVersion: TOOL_VERSION,
+			workflow: WORKFLOW_NAME,
 			workflowVersion: WORKFLOW_VERSION,
 		});
 
@@ -78,26 +84,11 @@ describe("buildMappingIndexCacheParams", () => {
 			indexKind: "subtraction_mapping_index",
 			parentId: 7,
 			toolVersion: TOOL_VERSION,
+			workflow: WORKFLOW_NAME,
 			workflowVersion: WORKFLOW_VERSION,
 		});
 
 		expect(deriveCacheKey(params)).toBe(PYTHON_KEYS.subtraction);
-	});
-
-	// Python's type hint says `str` but both call sites pass an `int`, and
-	// `json.dumps` writes `"parent_id":7` where a string gives `"parent_id":"7"`.
-	it("sends parent_id as a number", () => {
-		const params = buildMappingIndexCacheParams({
-			indexKind: "subtraction_mapping_index",
-			parentId: 7,
-			toolVersion: TOOL_VERSION,
-			workflowVersion: WORKFLOW_VERSION,
-		});
-
-		expect(params.parent_id).toBe(7);
-		expect(deriveCacheKey({ ...params, parent_id: "7" })).not.toBe(
-			PYTHON_KEYS.subtraction,
-		);
 	});
 });
 
@@ -127,23 +118,6 @@ describe("buildCollapsedReferenceCacheParams", () => {
 		// Removing it lands back on Python's key, which is what makes the fork the
 		// discriminator's doing rather than an accident of some other field.
 		expect(deriveCacheKey(withoutDiscriminator)).toBe(PYTHON_KEYS.collapsed);
-	});
-});
-
-describe("getBowtie2BuildVersion", () => {
-	it("reads the version from stdout", async () => {
-		const runSubprocess = subprocessWriting([
-			"/usr/local/bin/bowtie2-build-s version 2.5.4",
-			"64-bit",
-		]);
-
-		await expect(getBowtie2BuildVersion(runSubprocess)).resolves.toBe("2.5.4");
-	});
-
-	it("throws when the output carries no version", async () => {
-		await expect(
-			getBowtie2BuildVersion(subprocessWriting(["nothing here"])),
-		).rejects.toThrow("Could not parse bowtie2-build version");
 	});
 });
 

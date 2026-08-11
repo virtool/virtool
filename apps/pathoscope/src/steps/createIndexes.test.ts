@@ -2,6 +2,7 @@ import { mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 import {
+	buildMappingIndexCacheParams,
 	type CacheParams,
 	createIndexArtifact,
 	createWorkflowCache,
@@ -19,10 +20,7 @@ import {
 	createTestWorkPath,
 } from "@virtool/workflow/testing";
 import { describe, expect, it, onTestFinished } from "vitest";
-import {
-	buildMappingIndexCacheParams,
-	REFERENCE_INDEX_EXTRA_PARAMS,
-} from "../cacheParams";
+import { REFERENCE_INDEX_EXTRA_PARAMS, WORKFLOW_NAME } from "../cacheParams";
 import type { PathoscopeData } from "../context";
 import { workPaths } from "../paths";
 import type { PathoscopeState } from "../state";
@@ -89,6 +87,7 @@ function referenceIndexCacheParams(): CacheParams {
 		indexKind: "reference_mapping_index",
 		parentId: INDEX_ID,
 		toolVersion: BOWTIE2_BUILD_VERSION,
+		workflow: WORKFLOW_NAME,
 		workflowVersion: APP_VERSION,
 	});
 }
@@ -98,6 +97,7 @@ function subtractionIndexCacheParams(): CacheParams {
 		indexKind: "subtraction_mapping_index",
 		parentId: SUBTRACTION_ID,
 		toolVersion: BOWTIE2_BUILD_VERSION,
+		workflow: WORKFLOW_NAME,
 		workflowVersion: APP_VERSION,
 	});
 }

@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
 	findOrfs,
 	parseFasta,
+	parseFastaLines,
 	parseFastq,
 	reverseComplement,
 	translate,
@@ -318,6 +319,59 @@ describe("parseFasta", () => {
 		expect(parseFasta(">id description here\nATCG\n")).toStrictEqual([
 			["id description here", "ATCG"],
 		]);
+	});
+});
+
+describe("parseFastaLines", () => {
+	async function collect(content: string): Promise<Array<[string, string]>> {
+		const records: Array<[string, string]> = [];
+
+		for await (const record of parseFastaLines(content.split("\n"))) {
+			records.push(record);
+		}
+
+		return records;
+	}
+
+	// The streaming parser exists so an assembly no caller sized itself is not
+	// read into one string. It is only worth having if it agrees with the
+	// synchronous one record for record, so every case above is replayed through
+	// it rather than restated.
+	it.each([
+		">a\nATCG\n",
+		">a\nATCG\n>b\nGGGG\n",
+		">a\nATCG\nAAAA\nTTTT\n",
+		">a\r\nATCG\r\n",
+		">a\nATCG",
+		"",
+		"\n\n>a\n\nATCG\n\n",
+		">id description here\nATCG\n",
+	])("agrees with parseFasta on %j", async (content) => {
+		expect(await collect(content)).toStrictEqual(parseFasta(content));
+	});
+
+	it("throws when a sequence line precedes any header", async () => {
+		await expect(collect("ATCG\n>a\nGGGG\n")).rejects.toThrow(
+			/Illegal FASTA line/,
+		);
+	});
+
+	it("yields each record before the next one is read", async () => {
+		const read: string[] = [];
+
+		function* lines() {
+			for (const line of [">a", "ATCG", ">b", "GGGG"]) {
+				read.push(line);
+				yield line;
+			}
+		}
+
+		const iterator = parseFastaLines(lines());
+
+		// `>b` is what completes `a`, so four lines have been read by the time the
+		// first record arrives — and the second record's sequence has not.
+		expect((await iterator.next()).value).toStrictEqual(["a", "ATCG"]);
+		expect(read).toStrictEqual([">a", "ATCG", ">b"]);
 	});
 });
 

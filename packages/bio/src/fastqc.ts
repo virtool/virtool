@@ -146,11 +146,16 @@ function splitFields(line: string): string[] {
 function parseIndexRange(base: string): { start: number; end: number } {
 	const positions = base.split("-").map((part) => Number.parseInt(part, 10));
 
+	// `split` always yields at least one element, so `first` is present whatever
+	// `base` held — a non-numeric one parses to NaN, which is what Python's
+	// `int()` would have raised on and what every caller's loop bound rejects.
+	const first = positions[0] ?? Number.NaN;
+
 	if (positions.length > 1) {
-		return { start: positions[0] - 1, end: positions[1] };
+		return { start: first - 1, end: positions[1] ?? Number.NaN };
 	}
 
-	return { start: positions[0] - 1, end: positions[0] };
+	return { start: first - 1, end: first };
 }
 
 type BasicStatistics = {
@@ -175,26 +180,27 @@ function parseBasicStatistics(lines: string[]): BasicStatistics {
 
 		const parts = line.split("\t");
 
-		if (parts.length < 2) {
+		// The guard proves `parts[1]`; `noUncheckedIndexedAccess` cannot see it.
+		const value = parts[1];
+
+		if (value === undefined) {
 			continue;
 		}
 
 		if (line.includes("Total Sequences")) {
-			statistics.count = Number.parseInt(parts[1], 10);
+			statistics.count = Number.parseInt(value, 10);
 		} else if (line.includes("Encoding")) {
-			statistics.encoding = parts[1];
+			statistics.encoding = value;
 		} else if (line.includes("Sequence length")) {
-			if (parts[1].includes("-")) {
-				const range = parts[1]
-					.split("-")
-					.map((part) => Number.parseInt(part, 10));
+			if (value.includes("-")) {
+				const range = value.split("-").map((part) => Number.parseInt(part, 10));
 				statistics.length = [Math.min(...range), Math.max(...range)];
 			} else {
-				const length = Number.parseInt(parts[1], 10);
+				const length = Number.parseInt(value, 10);
 				statistics.length = [length, length];
 			}
 		} else if (line.includes("%GC")) {
-			statistics.gc = Number.parseFloat(parts[1]);
+			statistics.gc = Number.parseFloat(value);
 		}
 	}
 
@@ -219,7 +225,7 @@ function parseBaseQuality(lines: string[]): number[][] {
 		const values = parseRow(parts.slice(1)).map((value) =>
 			roundHalfEven(value, 3),
 		);
-		const range = parseIndexRange(parts[0]);
+		const range = parseIndexRange(parts[0] ?? "");
 
 		for (let index = range.start; index < range.end; index++) {
 			bases.push([...values]);
@@ -258,7 +264,7 @@ function parseNucleotideComposition(lines: string[]): number[][] {
 
 		// FastQC writes these as %G, %A, %T, %C and they are stored in that order.
 		const row = values.map((value) => roundHalfEven(value, 1));
-		const range = parseIndexRange(parts[0]);
+		const range = parseIndexRange(parts[0] ?? "");
 
 		for (let index = range.start; index < range.end; index++) {
 			composition.push([...row]);
@@ -288,7 +294,7 @@ function parseSequenceQuality(lines: string[]): number[] {
 			continue;
 		}
 
-		const quality = Number.parseInt(parts[0], 10);
+		const quality = Number.parseInt(parts[0] ?? "", 10);
 
 		// The lower bound has no counterpart in Python, where a negative index
 		// would assign from the end of the list and a non-numeric score would
@@ -297,7 +303,7 @@ function parseSequenceQuality(lines: string[]): number[] {
 		// `-1` or `NaN` property onto the array and quietly change its shape.
 		if (quality >= 0 && quality < sequences.length) {
 			// Truncation toward zero, not a round — Python does `int(float(...))`.
-			sequences[quality] = Math.trunc(Number.parseFloat(parts[1]));
+			sequences[quality] = Math.trunc(Number.parseFloat(parts[1] ?? ""));
 		}
 	}
 
@@ -322,11 +328,12 @@ export function parseFastqcData(text: string): Quality {
 				current = null;
 			} else {
 				// The text before the first tab; the pass/fail status is dropped.
-				current = line.split("\t")[0];
+				// `split` always yields a first element, so this is never absent.
+				current = line.split("\t")[0] ?? "";
 				sections[current] = [];
 			}
 		} else if (current !== null && line !== "") {
-			sections[current].push(line);
+			sections[current]?.push(line);
 		}
 	}
 
@@ -359,11 +366,18 @@ function meanRows(
 	const rowCount = Math.min(left.length, right.length);
 
 	for (let i = 0; i < rowCount; i++) {
-		const columnCount = Math.min(left[i].length, right[i].length);
+		// Both indices are inside a bound taken from the two lengths, so neither
+		// fallback below is reachable — they are what `noUncheckedIndexedAccess`
+		// asks for in place of a proof it cannot construct.
+		const leftRow = left[i] ?? [];
+		const rightRow = right[i] ?? [];
+		const columnCount = Math.min(leftRow.length, rightRow.length);
 		const row: number[] = [];
 
 		for (let j = 0; j < columnCount; j++) {
-			row.push(roundHalfEven((left[i][j] + right[i][j]) / 2, digits));
+			row.push(
+				roundHalfEven(((leftRow[j] ?? 0) + (rightRow[j] ?? 0)) / 2, digits),
+			);
 		}
 
 		rows.push(row);
@@ -380,7 +394,7 @@ export function compositeQuality(left: Quality, right: Quality): Quality {
 	const sequences: number[] = [];
 
 	for (let i = 0; i < sequenceCount; i++) {
-		sequences.push(left.sequences[i] + right.sequences[i]);
+		sequences.push((left.sequences[i] ?? 0) + (right.sequences[i] ?? 0));
 	}
 
 	// min/max over the concatenation of the two pairs, not element-wise.

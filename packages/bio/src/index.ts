@@ -3,6 +3,7 @@ export {
 	findOrfs,
 	type Orf,
 	parseFasta,
+	parseFastaLines,
 	parseFastq,
 	reverseComplement,
 	translate,

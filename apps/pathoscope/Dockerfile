@@ -11,7 +11,7 @@
 # is compiled here rather than released separately, so the binary and its only
 # consumer share one artifact and one version.
 #
-#     docker build -f apps/workflow-pathoscope/Dockerfile .
+#     docker build -f apps/pathoscope/Dockerfile .
 
 # The base is Debian, and that is settled rather than a choice. The runtime
 # copies binaries from ghcr.io/virtool/tools, which are built against
@@ -68,9 +68,9 @@ COPY packages/workflow ./packages/workflow
 COPY apps/tsconfig.node.json ./apps/
 
 FROM node-base AS build-workflow
-COPY apps/workflow-pathoscope ./apps/workflow-pathoscope
-RUN pnpm --filter @virtool/workflow-pathoscope build \
-    && pnpm deploy --filter @virtool/workflow-pathoscope --prod /prod/workflow-pathoscope
+COPY apps/pathoscope ./apps/pathoscope
+RUN pnpm --filter @virtool/pathoscope build \
+    && pnpm deploy --filter @virtool/pathoscope --prod /prod/pathoscope
 
 FROM node:24-bookworm-slim AS pathoscope
 WORKDIR /workflow
@@ -100,7 +100,7 @@ COPY --from=ghcr.io/virtool/tools:1.2.0 /tools/samtools/1.22.1/bin/samtools /usr
 # Node process. There is no FFI here and adding one is out of scope by decision.
 COPY --from=builder /build/target/release/pathoscope-core /usr/local/bin/
 
-COPY --from=build-workflow /prod/workflow-pathoscope ./
+COPY --from=build-workflow /prod/pathoscope ./
 
 # Exec form, and `node` directly rather than `npm start`: npm does not forward
 # signals to the process it spawns (npm/rfcs#829, still open), so SIGTERM would

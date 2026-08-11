@@ -22,11 +22,12 @@ jobs:
     # -------------------------------------------------------------------------
     # Change detection
     # -------------------------------------------------------------------------
-    # Only the pathoscope jobs are filtered. They are the expensive outliers: a
-    # libclang-dev install, a tools image pull for bowtie2 and a cargo build,
-    # both carrying 30-minute timeouts, on every PR including ones confined to
-    # apps/web. Everything else in this file is cheap enough that gating it
-    # would cost more in review attention than it saves in runner minutes.
+    # Only the workflow-image jobs are filtered. They are the expensive
+    # outliers: a libclang-dev install and a cargo build for pathoscope, a
+    # from-source SPAdes compile for nuvs, and a tools image pull for both, all
+    # carrying long timeouts, on every PR including ones confined to apps/web.
+    # Everything else in this file is cheap enough that gating it would cost
+    # more in review attention than it saves in runner minutes.
     #
     # The filter step is skipped on `push`, so this job needs no checkout and no
     # base-ref handling for that event: dorny/paths-filter reads the changed
@@ -39,6 +40,7 @@ jobs:
         permissions:
             pull-requests: read
         outputs:
+            nuvs-image: ${{ steps.filter.outputs.nuvs-image }}
             pathoscope-crate: ${{ steps.filter.outputs.pathoscope-crate }}
             pathoscope-image: ${{ steps.filter.outputs.pathoscope-image }}
         steps:
@@ -47,20 +49,24 @@ jobs:
               if: github.event_name == 'pull_request'
               uses: dorny/paths-filter@v4
               with:
-                  # Two filters, because the two jobs do not share inputs:
+                  # A filter per job, because they do not share inputs:
                   # pathoscope-test runs cargo over the crate and touches no
-                  # TypeScript, while build-pathoscope bundles the app and so
-                  # takes every workspace package the Dockerfile copies. One
-                  # filter would run the libclang-and-cargo job on any
+                  # TypeScript, while the two image builds bundle their app and
+                  # so take every workspace package their Dockerfile copies. One
+                  # shared filter would run the libclang-and-cargo job on any
                   # packages/workflow change.
                   #
-                  # **Every path the Dockerfile COPYs must appear under
-                  # pathoscope-image.** A missing one skips the build on the PR
+                  # **Every path a Dockerfile COPYs must appear under that
+                  # image's filter.** A missing one skips the build on the PR
                   # that breaks it and fails on the subsequent push to main,
-                  # where nothing gates it.
+                  # where nothing gates it. The two image filters are nearly
+                  # identical and are still written out separately: nuvs copies
+                  # packages/bio and pathoscope copies packages/pathoscope-core,
+                  # and folding them into one would rebuild each image for the
+                  # other's inputs.
                   #
-                  # This file is in both so that a change to the pathoscope jobs
-                  # themselves is still gated by them. Neither job uses
+                  # This file is in all three so that a change to the jobs
+                  # themselves is still gated by them. None uses
                   # ./.github/actions/setup, so that action is not.
                   #
                   # `.dockerignore` is in the image filter: build-pathoscope
@@ -70,13 +76,30 @@ jobs:
                   # a rule that excluded the crate would fail the build on main
                   # with nothing having caught it on the PR.
                   filters: |
+                      nuvs-image:
+                        - '.github/workflows/ci.yaml'
+                        - 'apps/nuvs/**'
+                        - 'packages/bio/**'
+                        - 'packages/contracts/**'
+                        - 'packages/logger/**'
+                        - 'packages/sentry/**'
+                        - 'packages/storage/**'
+                        - 'packages/workflow/**'
+                        - 'packages/tsconfig.base.json'
+                        - 'apps/tsconfig.node.json'
+                        - 'apps/*/package.json'
+                        - 'packages/*/package.json'
+                        - 'package.json'
+                        - 'pnpm-workspace.yaml'
+                        - 'pnpm-lock.yaml'
+                        - '.dockerignore'
                       pathoscope-crate:
                         - 'packages/pathoscope-core/**'
                         - '.github/workflows/ci.yaml'
                       pathoscope-image:
                         - 'packages/pathoscope-core/**'
                         - '.github/workflows/ci.yaml'
-                        - 'apps/workflow-pathoscope/**'
+                        - 'apps/pathoscope/**'
                         - 'packages/contracts/**'
                         - 'packages/logger/**'
                         - 'packages/sentry/**'
@@ -112,7 +135,7 @@ jobs:
 
     # -------------------------------------------------------------------------
     # Docker images (apps/web, apps/jobs-api, apps/tasks, apps/create-subtraction,
-    # apps/workflow-pathoscope)
+    # apps/pathoscope)
     # -------------------------------------------------------------------------
     build:
         name: ${{ matrix.area }} / Build
@@ -191,7 +214,7 @@ jobs:
               uses: docker/build-push-action@v7
               with:
                   context: .
-                  file: apps/workflow-pathoscope/Dockerfile
+                  file: apps/pathoscope/Dockerfile
                   cache-from: type=gha,scope=pathoscope
                   cache-to: type=gha,mode=max,scope=pathoscope
 
@@ -285,7 +308,52 @@ jobs:
                   TZ: UTC
 
     # -------------------------------------------------------------------------
-    # Pathoscope (apps/workflow-pathoscope, packages/pathoscope-core)
+    # NuVs (apps/nuvs)
+    # -------------------------------------------------------------------------
+    # Build only, and no publish counterpart, for the same reason
+    # `build-pathoscope` has none: `virtool/workflow-nuvs` is still the repo that
+    # builds and releases the NuVs workflow image. That repo publishes
+    # `ghcr.io/virtool/nuvs`; the Dockerfile here targets
+    # `ghcr.io/virtool/ts-nuvs`, so nothing would be overwritten today — but two
+    # pipelines shipping the same workflow is the ambiguity to avoid.
+    #
+    # Restore a publish job when `virtool/workflow-nuvs` is retired, and settle
+    # which image name the cluster pulls in the same change. Note that
+    # `publish-ghcr` is also what runs `pnpm -C <workspace> version`, so until
+    # this app has a publish entry its `APP_VERSION` is `0.0.0` in every built
+    # image — and `workflow_version` is a field in all three of the cache keys it
+    # derives.
+    #
+    # The 45-minute timeout is longer than pathoscope's 30: this image compiles
+    # SPAdes from source, which is the single most expensive thing either
+    # workflow build does. It is the first stage in the Dockerfile and depends on
+    # nothing else, so a warm layer cache skips it entirely.
+    build-nuvs:
+        name: NuVs / Build
+        runs-on: ubuntu-24.04
+        timeout-minutes: 45
+        needs: [changes]
+        # Unconditional on `push`, deliberately. `release-tag` lists this job in
+        # `needs`, and running it on every push to main keeps that gate complete
+        # without the skipped-dependency handling
+        # (`if: always() && !contains(needs.*.result, 'failure')`) a filtered
+        # dependency would otherwise force onto it. PRs get the savings.
+        if: github.event_name == 'push' || needs.changes.outputs.nuvs-image == 'true'
+        steps:
+            - name: Checkout
+              uses: actions/checkout@v7
+            - name: Setup Buildx
+              uses: docker/setup-buildx-action@v3
+            - name: Build
+              uses: docker/build-push-action@v7
+              with:
+                  context: .
+                  file: apps/nuvs/Dockerfile
+                  cache-from: type=gha,scope=nuvs
+                  cache-to: type=gha,mode=max,scope=nuvs
+
+    # -------------------------------------------------------------------------
+    # Pathoscope (apps/pathoscope, packages/pathoscope-core)
     # -------------------------------------------------------------------------
     pathoscope-test:
         name: Pathoscope / Test
@@ -413,6 +481,7 @@ jobs:
         needs:
             [
                 build,
+                build-nuvs,
                 build-pathoscope,
                 checks,
                 data-test,

@@ -143,7 +143,7 @@ every Rust edit. Add a line there when a new TypeScript package appears.
 
 ## The image build
 
-`apps/workflow-pathoscope/Dockerfile` builds `ghcr.io/virtool/ts-pathoscope`
+`apps/pathoscope/Dockerfile` builds `ghcr.io/virtool/ts-pathoscope`
 from the repo root. The crate is compiled in the same Dockerfile as its only
 consumer, so there is no second release stream to coordinate and no window in
 which the workflow and its core disagree.

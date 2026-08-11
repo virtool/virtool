@@ -1,6 +1,9 @@
 import { mkdir } from "node:fs/promises";
-import { openWorkflowIndex, writeFasta } from "@virtool/workflow";
-import { buildBowtie2Index } from "../mappingIndex";
+import {
+	buildBowtie2Index,
+	openWorkflowIndex,
+	writeFasta,
+} from "@virtool/workflow";
 import { findCandidateSequenceIds } from "../pathoscopeCore";
 import { workPaths } from "../paths";
 import { pipeline, quote } from "../shell";
