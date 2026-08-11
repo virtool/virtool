@@ -12,7 +12,7 @@ import {
 import type { Db } from "../db/pg";
 import { tasks } from "../db/schema/tasks";
 import { createTestDatabase, type TestDatabase } from "../db/test/fixtures";
-import { CLIENT_EVENTS_CHANNEL, type ClientEvent } from "../events/channel";
+import { collectFrames } from "../test/frames";
 import {
 	acquireTask,
 	buildRunnerId,
@@ -688,63 +688,11 @@ describe("timestamps", () => {
 });
 
 describe("frames", () => {
-	/**
-	 * Collect the `client_events` frames published while `run` executes.
-	 *
-	 * The sentinel at the end is what makes an assertion of *no* frames sound: it
-	 * is published after everything `run` did, over the same connection the
-	 * emitter uses, so its arrival proves any frame `run` published has already
-	 * arrived too. Waiting a fixed interval instead would pass on a slow machine
-	 * for the wrong reason.
-	 */
-	async function collectFrames(
-		run: () => Promise<void>,
-	): Promise<ClientEvent[]> {
-		const received: ClientEvent[] = [];
-		let seal: () => void = () => undefined;
-		const sealed = new Promise<void>((resolve) => {
-			seal = resolve;
-		});
-
-		const subscription = await database.client.listen(
-			CLIENT_EVENTS_CHANNEL,
-			(payload) => {
-				const event = JSON.parse(payload) as ClientEvent;
-
-				if (event.domain === "roles" && event.resource_id === "sentinel") {
-					seal();
-					return;
-				}
-
-				received.push(event);
-			},
-		);
-
-		try {
-			await run();
-
-			await database.client.notify(
-				CLIENT_EVENTS_CHANNEL,
-				JSON.stringify({
-					domain: "roles",
-					resource_id: "sentinel",
-					operation: "update",
-				}),
-			);
-
-			await sealed;
-		} finally {
-			await subscription.unlisten();
-		}
-
-		return received;
-	}
-
 	it("publishes one frame per progress write", async () => {
 		const taskId = await createTask(db, "install_hmms");
 		await holdTask(taskId, RUNNER_A, 10);
 
-		const frames = await collectFrames(async () => {
+		const frames = await collectFrames(database.client, async () => {
 			await updateTaskProgress(db, taskId, RUNNER_A, { progress: 10 });
 			await updateTaskProgress(db, taskId, RUNNER_A, { progress: 20 });
 		});
@@ -759,7 +707,7 @@ describe("frames", () => {
 		const taskId = await createTask(db, "install_hmms");
 		await holdTask(taskId, RUNNER_A, 10);
 
-		const frames = await collectFrames(async () => {
+		const frames = await collectFrames(database.client, async () => {
 			await completeTask(db, taskId, RUNNER_A);
 		});
 
@@ -772,7 +720,7 @@ describe("frames", () => {
 		const taskId = await createTask(db, "install_hmms");
 		await holdTask(taskId, RUNNER_A, 10);
 
-		const frames = await collectFrames(async () => {
+		const frames = await collectFrames(database.client, async () => {
 			await failTask(db, taskId, RUNNER_A, "it broke");
 		});
 
@@ -787,7 +735,7 @@ describe("frames", () => {
 
 		await holdTask(expired, RUNNER_B, TASK_LEASE_SECONDS + 60);
 
-		const frames = await collectFrames(async () => {
+		const frames = await collectFrames(database.client, async () => {
 			await acquireTask(db, {
 				runnerId: RUNNER_A,
 				allowedTypes: ["install_hmms"],
@@ -805,7 +753,7 @@ describe("frames", () => {
 		const taskId = await createTask(db, "install_hmms");
 		await holdTask(taskId, RUNNER_B, 10);
 
-		const frames = await collectFrames(async () => {
+		const frames = await collectFrames(database.client, async () => {
 			await updateTaskProgress(db, taskId, RUNNER_A, { progress: 10 });
 			await completeTask(db, taskId, RUNNER_A);
 			await failTask(db, taskId, RUNNER_A, "it broke");

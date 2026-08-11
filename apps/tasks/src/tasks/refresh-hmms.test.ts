@@ -6,6 +6,7 @@ import {
 	type TestDatabase,
 } from "@virtool/data/db/test/fixtures";
 import { acquireTask, type ClaimedTask } from "@virtool/data/tasks/data";
+import { collectFrames } from "@virtool/data/test/frames";
 import { createLogger, type Logger } from "@virtool/logger";
 import type { StorageBackend } from "@virtool/storage";
 import { MemoryStorage } from "@virtool/storage";
@@ -21,7 +22,6 @@ import {
 	vi,
 } from "vitest";
 import { runTask } from "../framework/run";
-import { collectFrames } from "../testing/frames";
 import { refreshHmmsTask } from "./refresh-hmms";
 import type { TaskContext } from "./registry";
 

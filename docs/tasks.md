@@ -422,8 +422,7 @@ one Postgres across all of them locally.
 ## The framework and the loops
 
 `bootstrap` is the floor. The task framework, the claim/lease/reclaim data
-layer, the runner and the spawn schedule land on top of it, and each fills in
-its section here in its own commit:
+layer, the runner and the spawn schedule sit on top of it:
 
 - **Framework** — `defineTask`, the step model, and the percent/fraction
   progress seam. Lives in `apps/tasks/src/framework/`: it is an execution shell
@@ -435,6 +434,9 @@ its section here in its own commit:
   `updateTaskProgress`. These are pure persistence over a table both halves
   write, so they belong in `packages/data/src/tasks/data.ts`, extending the
   module already there.
+- **The spawner** — `apps/tasks/src/spawner.ts`, the tick loop, over the
+  schedule in `apps/tasks/src/tasks/periodic.ts` and `createPeriodicTask` in
+  the data layer. Its own section follows.
 - **The runner** — `apps/tasks/src/runner.ts`, the claim loop, the dispatcher and
   the heartbeat. Its own section follows.
 - **The task bodies** — `apps/tasks/src/tasks/<type>.ts`, registered in
@@ -946,14 +948,21 @@ session's `TimeZone`, which `localtimestamp` is not.
 ### The data layer publishes every `tasks` frame
 
 `updateTaskProgress`, `completeTask` and `failTask` each emit one `tasks`
-frame. The framework and the runner emit none — there is one place a `tasks`
-row changes, so there is one place the frame comes from.
+frame, and `createPeriodicTask` emits one `create` frame after its transaction
+commits. The framework, the runner and the spawn loop emit none — there is one
+place a `tasks` row changes, so there is one place the frame comes from.
 
 Nothing else emits. `acquireTask`, `renewLeases`, `releaseTask`,
 `releaseRunnerClaims` and `reclaimExpiredLeases` are all silent: a claim, a
 release and a reclaim each leave the row in the state a client last saw it in,
 and a heartbeat every minute per running task would cost every connected
 browser a refetch for a timestamp no view renders.
+
+`createTask` is silent too, and that asymmetry with `createPeriodicTask` is
+Python's: `tasks.db.create` emits nothing, and `create_periodic` emits by hand
+after committing. It costs nothing, because every `createTask` call site is a
+request the SPA is already awaiting a response to; a periodic spawn has no
+client waiting on it.
 
 **A guarded write that returns `false` emits nothing.** A frame for a change
 that did not happen costs every browser a refetch and announces a state the row
@@ -967,6 +976,132 @@ state and then get no second frame. Typing them `Db` makes that unrepresentable
 instead of documenting it. If a task body ever genuinely needs a completion
 atomic with a final domain write, widening the parameter is a one-line change
 that has to answer the ordering question at the same time.
+
+## The spawner
+
+`createTaskSpawner` in `apps/tasks/src/spawner.ts`, over the schedule in
+`apps/tasks/src/tasks/periodic.ts` and `createPeriodicTask` in
+`packages/data/src/tasks/data.ts`.
+
+It **only ever inserts.** It never claims, updates or completes a task; that is
+the runner's half of this process.
+
+### It runs beside Python's spawner, and the lock is the whole design
+
+This is the half that goes to production *first*, while Python's API replicas
+are still running `PeriodicTaskSpawner`. Both insert the same five types into
+the same `tasks` table. There are already several Python spawners racing each
+other across replicas — the advisory lock is what makes that safe, and this
+process joins as one more participant in a protocol that already exists.
+
+Its correctness has one observable definition: **no duplicate rows appear.** If
+the two sides stop excluding each other nothing errors, nothing logs and
+nothing alerts — both simply spawn, and the fleet quietly runs every periodic
+task twice.
+
+So the lock is not an implementation detail to be improved:
+
+- **`pg_try_advisory_xact_lock(hashtext('<task name>'))`, computed in SQL.**
+  Python emits `hashtext($1)` from
+  `func.pg_try_advisory_xact_lock(func.hashtext(task_class.name))`. Hashing in
+  TypeScript and passing a literal `bigint`, namespacing the key
+  (`periodic:sweep_blast`), substituting another hash, or reaching for the
+  two-argument `(int4, int4)` form — which is a *different lock namespace* —
+  each silently stops excluding Python.
+- **Transaction-scoped, never session-level.** `pg_try_advisory_lock` survives
+  rollback, is reentrant so two logical spawners sharing one pooled connection
+  do not exclude each other, and PgBouncer lists it as never supported under
+  transaction pooling.
+- **The lock, the recency check and the insert are one transaction**, and it is
+  one transaction *per task name per tick* — not one spanning all five, which
+  would hold every lock for the length of the whole tick.
+- **`try_` never blocks.** `false` means another spawner is handling this name
+  this tick: record `skipped_locked`, log at debug, move on. No retry, no
+  backoff, no escalation to a blocking lock.
+
+`hashtext` returns a signed **int4**, so the real keyspace is 2³² rather than
+the 2⁶⁴ the advisory-lock signature implies, and the function is undocumented
+by deliberate policy and has changed behaviour across major versions. At
+Virtool's key population — five task names plus one `index_build:{id}` per
+reference, sharing one namespace — a collision is ~10⁻⁵, and every call site is
+a `try_` lock, so it degrades to a spurious skip rather than to corruption.
+Widening the hash would break exclusion with Python, which is the entire point.
+Accept the keyspace.
+
+### The recency check is Python's predicate, not a better one
+
+Any row of the type with `created_at > now - interval` suppresses the spawn,
+**whatever its state** — complete, errored, or neither. Filtering to incomplete
+rows or excluding errored ones is not an improvement: a stricter rule here
+loses to Python's looser one, and the pair then produces exactly the duplicate
+the lock exists to prevent.
+
+The window is `timezone('utc', clock_timestamp()) - make_interval(...)`, and
+the rows are inserted with `timezone('utc', clock_timestamp())` too. The
+columns are naive UTC and nothing sets the session `TimeZone`, so a window
+built from a `timestamptz` — a JavaScript `Date`, or `now()` — is compared
+through whatever zone the session happens to carry, and the result is a silent
+hour-scale offset: the window is either always open (a spawn every tick) or
+never open (the task stops running). `clock_timestamp()` rather than `now()`,
+which freezes at transaction start and back-dates the window by the
+transaction's age.
+
+### The interval is a suppression window; the tick is 30 seconds
+
+| type | interval |
+| --- | --- |
+| `sweep_blast` | 30 s |
+| `refresh_hmms` | 600 s |
+| `timeout_jobs` | 600 s |
+| `evict_caches_lru` | 3600 s |
+| `reap_orphaned_uploads` | 86400 s |
+
+Python walks every registered task and then sleeps a hardcoded 30 s, whatever
+the intervals are. So a type's effective period is `max(30, interval)`,
+quantised to tick boundaries — and matching the *tick* matters as much as
+matching the intervals, because a per-task timer firing exactly on its interval
+opens its window at a different moment than Python's tick and the two then
+disagree about when a window is open.
+
+While both spawners run the shorter of the two intervals sets the effective
+rate, so a divergence changes production cadence rather than failing.
+
+This also puts `sweep_blast` — a 30 s interval on a 30 s tick — right on the
+boundary where a `created_at`-only dedup can admit a concurrent duplicate. That
+is a known, accepted defect of Python's design, and the stricter rule that
+fixes it lands when Python's spawner is deleted. A stricter rule now would lose
+to Python's looser one.
+
+**Do not register a sixth type.** Python's runner is the only runner until the
+cutover, and it *strands* a name it does not recognise — it acquires the row,
+logs a warning and returns, leaving `acquired_at` set with no error and no
+completion, so the row is counted as running forever and nothing can clear it.
+`PERIODIC_TASKS` is pinned by a test to exactly the five, so adding one is a
+deliberate act. New types are registered at cutover.
+
+### The loop
+
+`start()` logs one line naming the schedule and its intervals; each tick walks
+`PERIODIC_TASKS` in registration order, recording `spawned`, `skipped_locked`
+or `not_due` through `recordSpawn` and logging a spawn at info with the row id.
+
+**A failure on one type does not cost the rest of the tick, or the loop.** The
+types are independent — a `sweep_blast` that cannot be inserted is no reason
+for `refresh_hmms` to go unconsidered for another thirty seconds — and a
+crash-looping spawner is strictly worse than a tick that partly failed. A
+failed type records nothing, because the counter has no error outcome.
+
+**A non-positive interval is rejected at construction**, not per tick. Python
+raises inside `create_periodic`, which is per call; checking once means a bad
+schedule fails the process at startup instead of every thirty seconds forever.
+An interval of zero leaves the window permanently open.
+
+**Shutdown is stop-and-finish.** The spawner holds no work — a tick is a lock,
+a read and an insert — so there is nothing to drain and no ceiling to declare:
+it takes the equal share the other shutdown steps do. It is registered
+*after* the runner so it stops *first* (hooks run LIFO), which means the
+runner's drain is not racing a fresh row into the queue. `stop()` is
+idempotent and never rejects.
 
 ## The runner
 

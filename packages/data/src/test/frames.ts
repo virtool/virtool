@@ -1,8 +1,5 @@
-import type { PgClient } from "@virtool/data/db/pg";
-import {
-	CLIENT_EVENTS_CHANNEL,
-	type ClientEvent,
-} from "@virtool/data/events/channel";
+import type { PgClient } from "../db/pg";
+import { CLIENT_EVENTS_CHANNEL, type ClientEvent } from "../events/channel";
 
 /**
  * Collect the `client_events` frames published while `run` executes.

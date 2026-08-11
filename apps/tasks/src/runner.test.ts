@@ -10,6 +10,7 @@ import {
 	createTask,
 	TASK_LEASE_SECONDS,
 } from "@virtool/data/tasks/data";
+import { collectFrames } from "@virtool/data/test/frames";
 import { createLogger, type Logger } from "@virtool/logger";
 import { eq, sql } from "drizzle-orm";
 import {
@@ -25,12 +26,9 @@ import { z } from "zod";
 import { defineTask, type TaskRegistry } from "./framework/define";
 import type { TaskRunSample } from "./metrics/registry";
 import { createTaskRunner, dispatchTask, type TaskRunner } from "./runner";
-import { collectFrames } from "./testing/frames";
+import { waitFor } from "./testing/waitFor";
 
 const RUNNER = "ts-runner-a-1";
-
-/** How long a `waitFor` predicate has to come true before the test fails. */
-const WAIT_TIMEOUT_MS = 10_000;
 
 const logger: Logger = createLogger({ name: "test", level: "silent" });
 
@@ -73,21 +71,6 @@ async function holdTask(
 			runner_id: runnerId,
 		})
 		.where(eq(tasks.id, taskId));
-}
-
-/** Poll `predicate` until it holds, or fail the test. */
-async function waitFor(predicate: () => Promise<boolean>): Promise<void> {
-	const deadline = Date.now() + WAIT_TIMEOUT_MS;
-
-	while (Date.now() < deadline) {
-		if (await predicate()) {
-			return;
-		}
-
-		await new Promise((resolve) => setTimeout(resolve, 5));
-	}
-
-	throw new Error("timed out waiting for the runner");
 }
 
 /** A task type that does nothing, for a test that only cares it was dispatched. */

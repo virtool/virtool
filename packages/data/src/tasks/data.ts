@@ -1,9 +1,15 @@
 import { hostname } from "node:os";
-import type { JsonObject, Task, TaskName } from "@virtool/contracts";
+import type {
+	JsonObject,
+	PeriodicTaskName,
+	Task,
+	TaskName,
+} from "@virtool/contracts";
 import {
 	and,
 	asc,
 	eq,
+	gt,
 	inArray,
 	isNotNull,
 	isNull,
@@ -37,32 +43,174 @@ export type TaskType = Extract<
 >;
 
 /**
- * Insert a pending task of `type` and return its id.
+ * Insert a pending task row of `type` and return it.
  *
- * The row is all the Python task runner needs to pick the work up: it polls
- * Postgres for a task with `acquired_at IS NULL`, `complete = false`,
- * `progress = 0`, and a matching `type`, so no further signal is sent from here.
- * `step` mirrors the Python `create`, which seeds it with the task name.
+ * The row is all a task runner needs to pick the work up: it polls Postgres for
+ * a task with `acquired_at IS NULL`, `complete = false` and a matching `type`,
+ * so no further signal is sent from here. `step` mirrors the Python `create`,
+ * which seeds it with the task name.
+ *
+ * `type` is `string` rather than a union because the two exported wrappers own
+ * that narrowing, and they narrow to different sets.
  */
+async function insertTask(
+	db: DbOrTx,
+	type: string,
+	context: Record<string, unknown>,
+): Promise<Task> {
+	const row = takeFirstOrThrow(
+		await db
+			.insert(tasksTable)
+			.values({
+				complete: false,
+				context,
+				count: 0,
+				// Postgres's clock, not Node's. The periodic spawner's suppression
+				// window is `created_at > clock_timestamp() - interval`, so a row
+				// stamped from a process clock that runs a second fast against the
+				// database's would widen or narrow that window by the skew.
+				created_at: nowUtc(),
+				progress: 0,
+				step: type,
+				type,
+			})
+			.returning({
+				complete: tasksTable.complete,
+				createdAt: tasksTable.created_at,
+				error: tasksTable.error,
+				id: tasksTable.id,
+				progress: tasksTable.progress,
+				step: tasksTable.step,
+				type: tasksTable.type,
+			}),
+	);
+
+	return {
+		complete: row.complete ?? false,
+		createdAt: row.createdAt,
+		error: row.error,
+		id: row.id,
+		progress: row.progress ?? 0,
+		step: row.step ?? "",
+		type: row.type,
+	};
+}
+
+/** Insert a pending task of `type` and return its id. */
 export async function createTask(
 	db: DbOrTx,
 	type: TaskType,
 	context: Record<string, unknown> = {},
 ): Promise<number> {
-	const rows = await db
-		.insert(tasksTable)
-		.values({
-			complete: false,
-			context,
-			count: 0,
-			created_at: new Date(),
-			progress: 0,
-			step: type,
-			type,
-		})
-		.returning({ id: tasksTable.id });
+	const task = await insertTask(db, type, context);
 
-	return takeFirstOrThrow(rows).id;
+	return task.id;
+}
+
+/**
+ * How a spawn attempt for one periodic task type ended.
+ *
+ * `skipped_locked` and `not_due` are told apart rather than folded into one
+ * `null`, because the two say different things about the cutover: the first is
+ * evidence the advisory lock is being contended — that Python's spawner is
+ * still live and the two are excluding each other — and the second is the
+ * ordinary steady state. The metrics registry labels its counter with this
+ * union rather than declaring a second copy of it.
+ */
+export type PeriodicSpawnOutcome = "spawned" | "skipped_locked" | "not_due";
+
+/** What {@link createPeriodicTask} did, and the row if it inserted one. */
+export type PeriodicSpawnResult =
+	| { outcome: "spawned"; task: Task }
+	| { outcome: "skipped_locked"; task: null }
+	| { outcome: "not_due"; task: null };
+
+/**
+ * Spawn a periodic task if one is due, excluding Python's spawner with a
+ * transaction-scoped advisory lock on `hashtext(type)`.
+ *
+ * This runs in production *beside* Python's `PeriodicTaskSpawner`, which spawns
+ * the same five types into this same table. The two are mutually excluded by
+ * nothing but that lock, and the failure mode is silent: diverge on the key and
+ * both spawn, every periodic task runs twice, and nothing errors or logs.
+ *
+ * Three rules make the exclusion hold, and none of them is a preference:
+ *
+ * - **The key is `hashtext` of the bare task name, computed in SQL.** Python
+ *   emits `pg_try_advisory_xact_lock(hashtext($1))` from
+ *   `func.pg_try_advisory_xact_lock(func.hashtext(task_class.name))`. Hashing
+ *   in TypeScript, namespacing the name, or reaching for the two-argument
+ *   `(int4, int4)` form — a *different lock namespace* — each stops excluding
+ *   Python entirely.
+ * - **`pg_try_advisory_xact_lock`, never the session-level form.** The
+ *   transaction-scoped lock is released by the commit and is the only
+ *   pooler-safe one: session locks survive rollback, are reentrant so two
+ *   logical spawners sharing a pooled connection do *not* exclude each other,
+ *   and PgBouncer lists them as never supported under transaction pooling.
+ * - **The recency check matches Python's predicate exactly** — *any* row of the
+ *   type inside the window, complete or errored or neither. A stricter rule
+ *   here loses to Python's looser one and spawns the duplicate this whole
+ *   design exists to prevent.
+ *
+ * `hashtext` returns a signed **int4**, so the real keyspace is 2³² rather than
+ * the 2⁶⁴ the advisory-lock signature implies, and the function is undocumented
+ * by deliberate policy and has changed behaviour across major versions. At
+ * Virtool's key population — five task names plus one `index_build:{id}` per
+ * reference in the same namespace — a collision is ~10⁻⁵ and degrades to a
+ * spurious skip, because every call site is a `try_` lock. Widening the hash
+ * would break exclusion with Python, which is the whole point. Accept it.
+ *
+ * `try_` never blocks: `false` means another spawner is handling this type this
+ * tick, and the caller moves on without retrying or escalating.
+ *
+ * The lock, the check and the insert are one transaction; the event is emitted
+ * after it commits, so a rolled-back insert cannot announce a row that does not
+ * exist. `Db` rather than `DbOrTx` for that reason — this function has to own
+ * the transaction it releases the lock with.
+ *
+ * `intervalSeconds` must be positive. It is validated where the schedule is
+ * registered, at startup, rather than on every tick; zero here would leave the
+ * window permanently open and spawn on every tick forever.
+ */
+export async function createPeriodicTask(
+	db: Db,
+	type: PeriodicTaskName,
+	intervalSeconds: number,
+): Promise<PeriodicSpawnResult> {
+	const result = await db.transaction(
+		async (tx): Promise<PeriodicSpawnResult> => {
+			const lock = await tx.execute<{ locked: boolean }>(
+				sql`select pg_try_advisory_xact_lock(hashtext(${type})) as locked`,
+			);
+
+			if (!lock[0]?.locked) {
+				return { outcome: "skipped_locked", task: null };
+			}
+
+			const [recent] = await tx
+				.select({ id: tasksTable.id })
+				.from(tasksTable)
+				.where(
+					and(
+						eq(tasksTable.type, type),
+						gt(tasksTable.created_at, secondsAgo(intervalSeconds)),
+					),
+				)
+				.limit(1);
+
+			if (recent !== undefined) {
+				return { outcome: "not_due", task: null };
+			}
+
+			return { outcome: "spawned", task: await insertTask(tx, type, {}) };
+		},
+	);
+
+	if (result.outcome === "spawned") {
+		await emit("tasks", result.task.id, "create");
+	}
+
+	return result;
 }
 
 /**
@@ -223,15 +371,20 @@ function isClaimable(
 			isNull(tasksTable.acquired_at),
 			and(
 				like(tasksTable.runner_id, `${RUNNER_ID_PREFIX}%`),
-				lt(tasksTable.acquired_at, expiredBefore(leaseSeconds)),
+				lt(tasksTable.acquired_at, secondsAgo(leaseSeconds)),
 			),
 		),
 	);
 }
 
-/** The `acquired_at` a lease of `leaseSeconds` must be later than to still be live. */
-function expiredBefore(leaseSeconds: number): SQL {
-	return sql`${nowUtc()} - make_interval(secs => ${leaseSeconds}::double precision)`;
+/**
+ * The wall time `seconds` before now, in the naive UTC these columns hold.
+ *
+ * A lease is live while `acquired_at` is later than this, and a periodic task's
+ * spawn is suppressed while a `created_at` of that type is later than it.
+ */
+function secondsAgo(seconds: number): SQL {
+	return sql`${nowUtc()} - make_interval(secs => ${seconds}::double precision)`;
 }
 
 /**
@@ -666,7 +819,7 @@ export async function reclaimExpiredLeases(
 		.where(
 			and(
 				like(tasksTable.runner_id, `${RUNNER_ID_PREFIX}%`),
-				lt(tasksTable.acquired_at, expiredBefore(leaseSeconds)),
+				lt(tasksTable.acquired_at, secondsAgo(leaseSeconds)),
 				eq(tasksTable.complete, false),
 				isNull(tasksTable.error),
 			),

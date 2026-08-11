@@ -1,5 +1,8 @@
 import { PeriodicTaskName, TaskName } from "@virtool/contracts";
-import type { TaskQueueSnapshot } from "@virtool/data/tasks/data";
+import type {
+	PeriodicSpawnOutcome,
+	TaskQueueSnapshot,
+} from "@virtool/data/tasks/data";
 import {
 	Counter,
 	collectDefaultMetrics,
@@ -32,11 +35,18 @@ const TASK_LABELS = [...TaskName.options, OTHER_TASK];
 /** The two halves Python's `get_counts` splits the active queue into. */
 const QUEUE_STATES = ["queued", "running"] as const;
 
-/** How a spawn attempt for a periodic task ended. */
-export type SpawnOutcome = "spawned" | "skipped_locked" | "not_due";
-
-/** Every spawn outcome, for pre-declaring the counter's label set. */
-const SPAWN_OUTCOMES: SpawnOutcome[] = ["spawned", "skipped_locked", "not_due"];
+/**
+ * Every spawn outcome, for pre-declaring the counter's label set.
+ *
+ * The union is `PeriodicSpawnOutcome`, imported rather than restated: it is
+ * what `createPeriodicTask` returns, and a second copy here would be free to
+ * drift from the values actually observed.
+ */
+const SPAWN_OUTCOMES: PeriodicSpawnOutcome[] = [
+	"spawned",
+	"skipped_locked",
+	"not_due",
+];
 
 /** How a claimed task ended. */
 export type RunOutcome = "succeeded" | "failed";
@@ -69,7 +79,7 @@ export type TaskRunSample = {
 
 /** The metrics surface this process exposes, as returned by {@link createMetrics}. */
 export type Metrics = {
-	recordSpawn: (type: PeriodicTaskName, outcome: SpawnOutcome) => void;
+	recordSpawn: (type: PeriodicTaskName, outcome: PeriodicSpawnOutcome) => void;
 	recordRun: (sample: TaskRunSample) => void;
 	setTaskQueue: (snapshot: TaskQueueSnapshot) => void;
 	clearTaskQueue: () => void;

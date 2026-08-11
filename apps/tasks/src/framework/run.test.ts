@@ -10,6 +10,7 @@ import {
 	type ClaimedTask,
 	createTask,
 } from "@virtool/data/tasks/data";
+import { collectFrames as collect } from "@virtool/data/test/frames";
 import { createLogger, type Logger } from "@virtool/logger";
 import { eq } from "drizzle-orm";
 import {
@@ -22,7 +23,6 @@ import {
 	vi,
 } from "vitest";
 import { z } from "zod";
-import { collectFrames as collect } from "../testing/frames";
 import { defineTask, type TaskRegistry } from "./define";
 import { runTask } from "./run";
 

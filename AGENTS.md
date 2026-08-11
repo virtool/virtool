@@ -1105,10 +1105,50 @@ four rules hold them:
   `complete` as well as `error`, which Python does not. Every timestamp
   write is `timezone('utc', clock_timestamp())`, never `now()`.
 - **The data layer publishes every `tasks` frame** — from
-  `updateTaskProgress`, `completeTask` and `failTask` only, never from a
-  claim, release or reclaim, and never from a guarded write that
-  returned `false`. Those three take `Db` rather than `DbOrTx` so a
-  frame cannot precede the commit of the row it describes.
+  `updateTaskProgress`, `completeTask` and `failTask`, plus the `create`
+  `createPeriodicTask` emits after its commit; never from a claim,
+  release or reclaim, never from `createTask` (Python's `create` is
+  silent too), and never from a guarded write that returned `false`.
+  All four take `Db` rather than `DbOrTx` so a frame cannot precede the
+  commit of the row it describes.
+
+The periodic spawner is `createTaskSpawner`
+(`apps/tasks/src/spawner.ts`) over `PERIODIC_TASKS`
+(`apps/tasks/src/tasks/periodic.ts`) and `createPeriodicTask`
+(`@virtool/data/tasks/data`). It **only ever inserts**, and it ships to
+production **beside** Python's `PeriodicTaskSpawner` rather than
+replacing it — both write the same five types into the same table, and
+nothing but a shared advisory lock keeps them from spawning everything
+twice. The failure is silent: no error, no log, no alert. Six rules:
+
+- **The key is `pg_try_advisory_xact_lock(hashtext('<task name>'))`,
+  computed in SQL**, matching what Python's
+  `func.pg_try_advisory_xact_lock(func.hashtext(task_class.name))`
+  emits. Hashing in TypeScript, namespacing the name, substituting
+  another hash, or using the two-argument `(int4, int4)` form — a
+  *different lock namespace* — each stops excluding Python. It is the
+  same shape `createIndex` already takes for `index_build:{id}`, and
+  `hashtext`'s int4 keyspace is accepted, not fixed.
+- **Transaction-scoped, never session-level**, and one transaction per
+  task name per tick — never one spanning all five. `try_` never
+  blocks; `false` is `skipped_locked`, logged at debug, and is never
+  retried or escalated.
+- **The recency predicate is Python's**: any row of the type with
+  `created_at > clock_timestamp() - interval`, **complete and errored
+  rows included**. A stricter rule here loses to Python's looser one
+  and spawns the duplicate the lock exists to prevent.
+- **The tick is a hardcoded 30 s and the interval is only a suppression
+  window**, so a type's effective period is `max(30, interval)`. A
+  per-task timer would open its window at a different moment than
+  Python's tick.
+- **`PERIODIC_TASKS` holds exactly five types**, with Python's
+  intervals, and a test pins the list. Do not register a sixth before
+  the cutover: Python's runner strands a name it does not recognise,
+  leaving a row claimed and incomplete forever.
+- **A failure on one type stops neither the tick nor the loop**, and a
+  non-positive interval is rejected at construction rather than per
+  tick. The spawner holds no work, so its shutdown hook declares no
+  ceiling — and it registers *after* the runner so LIFO stops it first.
 
 The spawn and claim loops report through the `virtool_task_*` and
 `virtool_tasks*` series described under **Metrics** above. `recordSpawn`
