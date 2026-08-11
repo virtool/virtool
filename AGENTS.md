@@ -353,6 +353,13 @@ subtree — a virtualizer, which decides its rows by measuring — in
 `ClientOnly` with a fallback of the same dimensions, in preference to
 `ssr: false` on the whole route.
 
+**A `<title>` takes exactly one string child**, so an interpolated one is
+written `` <title>{`Progress: ${progress}%`}</title> `` and never
+`<title>Progress: {progress}%</title>`. The second form is three
+children, which React's server renderer will not serialize — it emits an
+empty `<title>` and the browser fills it in at hydration, failing the
+match. That holds for an `<svg>`'s `<title>` as much as the document's.
+
 An `ssr` setting can only be made **more restrictive** down the tree, and
 `defaultSsr` fills in for the root as well, so `defaultSsr: false` turns
 SSR off everywhere and no leaf can opt back in. Turn a single page off

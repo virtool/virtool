@@ -63,6 +63,28 @@ store changed, so a reading that differs every call never settles, and
 React warns and re-renders until it does. Advance a module-level value on
 a tick and return that instead.
 
+## `<title>` takes one string child
+
+React's server renderer only serializes a `<title>` whose `children` is a
+single string, number or bigint. Given anything else it writes an empty
+element and warns. The browser has no such restriction, so it renders the
+real text at hydration and the two disagree — and because this is a text
+mismatch inside the page, React discards the server markup for that
+subtree and re-renders it on the client, which is precisely the work SSR
+exists to avoid.
+
+The trap is that the offending form does not look like an array:
+
+```tsx
+<title>Progress: {progress}%</title>        {/* three children */}
+<title>{`Progress: ${progress}%`}</title>   {/* one */}
+```
+
+It applies to `<title>` inside an `<svg>` too, where it is the graphic's
+accessible name — `@base/ProgressCircle` renders one per job, sample,
+subtraction, reference and analysis row, so the empty element cost every
+list page both its accessible name and its server render.
+
 ## Time
 
 Anything measuring elapsed time reads `@app/serverNow`, never the clock

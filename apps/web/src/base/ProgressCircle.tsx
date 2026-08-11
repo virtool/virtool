@@ -78,13 +78,19 @@ export default function ProgressCircle({
 		strokeDasharray: circumference,
 	};
 
+	// One interpolated child, never `Progress: {progress}%`. That form is three
+	// children, and React's server renderer emits an empty `<title>` for
+	// anything but a single string — so the browser fills it in at hydration and
+	// the mismatch throws away this page's server markup.
+	const title = `Progress: ${progress}%`;
+
 	return (
 		<Progress.Root value={progress} asChild>
 			<svg
 				className="-rotate-90 size-6"
 				viewBox={`0 0 ${circleSize} ${circleSize}`}
 			>
-				<title>Progress: {progress}%</title>
+				<title>{title}</title>
 				<circle
 					{...baseCircleStyle}
 					className={cn(
