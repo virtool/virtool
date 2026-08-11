@@ -1202,12 +1202,63 @@ no signal handler and binds no listener; `src/index.ts` builds it from the
   `VT_TASKS_DRAIN_TIMEOUT` ceiling. `stop()` is idempotent — a second
   call returns the first's promise — and never rejects.
 
+A body itself lives in `apps/tasks/src/tasks/`, named for the value in the
+`type` column in skewer case — `refresh-hmms.ts` for `refresh_hmms` —
+exporting one `defineTask` result and registered in
+`apps/tasks/src/tasks/registry.ts`. `refresh_hmms` is the first and the
+worked example for the nine that follow. Five rules on top of the
+framework's:
+
+- **The registry's keys are the runner's allowed-types filter**, handed
+  to `acquireTask`, and that is the whole of how an unrecognised
+  `tasks.type` is rejected — an unregistered row is never claimed, so it
+  stays queued for the Python runner that knows it. Keep it a literal
+  map rather than deriving it from each body's `type`;
+  `registry.test.ts` pins the two against each other and pins every key
+  to `TaskName`.
+- **`ctx` is `{ db, storage }`** — the handles a body cannot construct,
+  injected the way `data.ts` takes them. The logger, the payload and the
+  `taskId` arrive on `TaskHandlerArgs`, being per-run rather than
+  per-process.
+- **A step's name is the Python function name it was ported from**,
+  which `BaseTask` writes to the column as `func.__name__` — both
+  runners write the same name for the same work until the cutover
+  completes.
+- **A body that has nothing intermediate to report declares no
+  `onProgress` seam**, and its bar moves 0 → 100 on step entry and
+  completion alone. Adding one where there is no position worth
+  publishing costs a write and a refetch in every connected browser.
+- **A body forwards its `signal` into anything that waits.** `runTask`
+  awaits the body rather than racing it, so nothing interrupts one on
+  its own: a request left to run its own deadline out holds the drain
+  open for that long, and outlives the release that follows the grace —
+  free to write on behalf of a runner that no longer owns the work. The
+  `tasks` row is fenced on `runner_id`; a domain row is not. Combine it
+  with any deadline of the callee's through `AbortSignal.any`, and
+  **rethrow that abort untranslated, recording nothing** — the process
+  is going away, and the outcome is `aborted`, not `failed`.
+
+`refresh_hmms` can fail, and Python's cannot: Python's `errors` list is
+built by substring-matching an exception's `str()` against strings it
+never contains, so its `raise` is unreachable and a refresh that reached
+nothing finishes as a success against a stale release. This side records
+the message on `legacy_hmm_status.errors` **and** rethrows, marking the
+task failed rather than complete. Neither string is rendered today —
+`HmmInstall` reads the status row for its task's progress and step
+alone, and there is no task list page — so don't justify an error
+message by what a user sees; they are recorded for whoever reads the
+row next.
+Its manifest fetch also carries an `AbortSignal.timeout`, without which
+a hung connection holds the lease until it expires and the reclaim
+starts a second hung fetch behind the first.
+
 See [docs/tasks.md](docs/tasks.md) for the full config table, the
 `AppContext` contract, the shutdown ordering and its guarantees, the
 probe and metrics surface including the five task series and their
 bucket, label and folding rules, the lease, fencing and frame rules in
 full, the framework's step model, terminal-outcome table and progress
-seam, and the runner's loop, heartbeat and drain in full.
+seam, the runner's loop, heartbeat and drain in full, and the
+task-body contracts with `refresh_hmms` worked through.
 
 ## Data
 

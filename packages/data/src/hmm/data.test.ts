@@ -1,4 +1,13 @@
-import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
+import {
+	afterAll,
+	afterEach,
+	beforeAll,
+	beforeEach,
+	describe,
+	expect,
+	it,
+	vi,
+} from "vitest";
 
 import type { Db } from "../db/pg";
 import {
@@ -10,11 +19,13 @@ import {
 import { tasks } from "../db/schema/tasks";
 import { createTestDatabase, type TestDatabase } from "../db/test/fixtures";
 import {
+	fetchAndUpdateRelease,
 	findHmms,
 	getHmm,
 	getHmmStatus,
 	HMM_INSTALL_TASK_TYPE,
 	HmmNotFoundError,
+	HmmReleaseError,
 	HmmStatusNotFoundError,
 	isInstallInProgress,
 } from "./data";
@@ -199,5 +210,203 @@ describe("isInstallInProgress", () => {
 	it("is false when every update is ready", async () => {
 		await seedStatus({ updates: [{ ready: true } as HmmUpdate] });
 		await expect(isInstallInProgress(db)).resolves.toBe(false);
+	});
+});
+
+describe("fetchAndUpdateRelease", () => {
+	const manifestRelease = {
+		body: "notes",
+		content_type: "application/gzip",
+		download_url: "https://www.virtool.ca/hmm.tar.gz",
+		filename: "hmm.tar.gz",
+		html_url: "https://github.com/virtool/virtool-hmm/releases/v2.0.0",
+		id: 45,
+		name: "v2.0.0",
+		published_at: "2026-01-01T00:00:00Z",
+		size: 1024,
+	};
+
+	/** Answer the manifest fetch with `body` under `status`. */
+	function stubFetch(status: number, body: unknown): void {
+		vi.stubGlobal(
+			"fetch",
+			vi.fn(async () => new Response(JSON.stringify(body), { status })),
+		);
+	}
+
+	/**
+	 * Answer nothing until the request's signal aborts.
+	 *
+	 * The already-aborted check is not redundant: `addEventListener("abort")`
+	 * never fires on a signal that aborted before it was attached, and a stub
+	 * without it hangs for whatever `AbortSignal.any` was handed.
+	 */
+	function stubHangingFetch(): void {
+		vi.stubGlobal(
+			"fetch",
+			vi.fn(
+				(_url: string, init?: { signal?: AbortSignal }) =>
+					new Promise<Response>((_resolve, reject) => {
+						const signal = init?.signal;
+
+						if (signal?.aborted) {
+							reject(signal.reason);
+							return;
+						}
+
+						signal?.addEventListener("abort", () => {
+							reject(signal.reason);
+						});
+					}),
+			),
+		);
+	}
+
+	afterEach(() => {
+		vi.unstubAllGlobals();
+	});
+
+	it("stores the newest manifest entry and stamps retrieved_at", async () => {
+		await seedStatus();
+		stubFetch(200, { "virtool-hmm": [manifestRelease] });
+
+		const release = await fetchAndUpdateRelease(db);
+
+		expect(release).toMatchObject({ id: 45, name: "v2.0.0", newer: true });
+		expect(release?.retrieved_at).not.toBe("");
+
+		const [row] = await db.select().from(legacyHmmStatus);
+
+		expect(row?.release).toEqual(release);
+		expect(row?.errors).toEqual([]);
+	});
+
+	it("creates the status row when there is none", async () => {
+		stubFetch(200, { "virtool-hmm": [manifestRelease] });
+
+		await expect(fetchAndUpdateRelease(db)).resolves.toMatchObject({ id: 45 });
+
+		const rows = await db.select().from(legacyHmmStatus);
+
+		expect(rows).toHaveLength(1);
+	});
+
+	// A manifest naming no release and a status row holding none leaves nothing to
+	// stamp `retrieved_at` on. Reading through the absent release rather than
+	// returning early is a `TypeError` that fails the refresh task.
+	it("returns null when the manifest and the status row both name no release", async () => {
+		await seedStatus();
+		stubFetch(200, { "virtool-hmm": [] });
+
+		await expect(fetchAndUpdateRelease(db)).resolves.toBeNull();
+
+		const [row] = await db.select().from(legacyHmmStatus);
+
+		expect(row?.release).toBeNull();
+		expect(row?.errors).toEqual([]);
+	});
+
+	it("keeps the stored release when the manifest names none", async () => {
+		await seedStatus();
+		stubFetch(200, { "virtool-hmm": [manifestRelease] });
+		await fetchAndUpdateRelease(db);
+
+		stubFetch(200, {});
+
+		await expect(fetchAndUpdateRelease(db)).resolves.toMatchObject({ id: 45 });
+	});
+
+	it("records the error and rethrows when virtool.ca cannot be reached", async () => {
+		await seedStatus();
+		vi.stubGlobal(
+			"fetch",
+			vi.fn(async () => {
+				throw new TypeError("fetch failed");
+			}),
+		);
+
+		await expect(fetchAndUpdateRelease(db)).rejects.toBeInstanceOf(
+			HmmReleaseError,
+		);
+
+		const [row] = await db.select().from(legacyHmmStatus);
+
+		expect(row?.errors).toEqual(["Could not reach Virtool.ca"]);
+	});
+
+	it("records the error and rethrows when the manifest is missing", async () => {
+		await seedStatus();
+		stubFetch(404, {});
+
+		await expect(fetchAndUpdateRelease(db)).rejects.toBeInstanceOf(
+			HmmReleaseError,
+		);
+
+		const [row] = await db.select().from(legacyHmmStatus);
+
+		expect(row?.errors).toEqual(["Release does not exist"]);
+	});
+
+	// A 503 reported as a release that does not exist sends whoever reads the HMM
+	// page looking for a release that is in fact sitting there.
+	it("distinguishes a refusal by virtool.ca from a missing manifest", async () => {
+		await seedStatus();
+		stubFetch(503, {});
+
+		await expect(fetchAndUpdateRelease(db)).rejects.toBeInstanceOf(
+			HmmReleaseError,
+		);
+
+		const [row] = await db.select().from(legacyHmmStatus);
+
+		expect(row?.errors).toEqual(["Virtool.ca answered 503"]);
+	});
+
+	it("rethrows the caller's abort without recording an error", async () => {
+		await seedStatus({ errors: [] });
+
+		const controller = new AbortController();
+
+		stubHangingFetch();
+
+		const refresh = fetchAndUpdateRelease(db, controller.signal);
+
+		controller.abort();
+
+		// Not an `HmmReleaseError`: the process is going away, and the release is
+		// neither stale nor unreachable.
+		await expect(refresh).rejects.not.toBeInstanceOf(HmmReleaseError);
+
+		const [row] = await db.select().from(legacyHmmStatus);
+
+		expect(row?.errors).toEqual([]);
+	});
+
+	// The deadline itself is not waited out — ten seconds of wall clock buys
+	// nothing over proving the signal is attached and that firing it is reported
+	// as an unreachable host rather than escaping as a raw `AbortError`.
+	it("abandons a fetch that never answers", async () => {
+		await seedStatus();
+
+		let signal: AbortSignal | undefined;
+
+		vi.stubGlobal(
+			"fetch",
+			vi.fn(async (_url: string, init?: { signal?: AbortSignal }) => {
+				signal = init?.signal;
+
+				throw new DOMException("aborted due to timeout", "TimeoutError");
+			}),
+		);
+
+		await expect(fetchAndUpdateRelease(db)).rejects.toBeInstanceOf(
+			HmmReleaseError,
+		);
+
+		expect(signal).toBeInstanceOf(AbortSignal);
+
+		const [row] = await db.select().from(legacyHmmStatus);
+
+		expect(row?.errors).toEqual(["Could not reach Virtool.ca"]);
 	});
 });
