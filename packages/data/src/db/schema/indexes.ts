@@ -2,11 +2,10 @@
 // Python service via Alembic. Do not generate or push migrations from this side.
 // Keep in sync with `../../../../../../virtool/virtool/indexes/sql.py`.
 //
-// `indexes` is written from here — starting a build inserts the row — so every
-// column the real table requires is declared. `index_files` is read-only from
-// this side: the Python `create_index` task writes it when a build finishes.
-// Its legacy `index` string column is therefore deliberately not declared,
-// following `history.ts`; nothing here inserts a row that would have to fill it.
+// Both tables are written from here — starting a build inserts the `indexes`
+// row and the `create_index` task registers the artifact it produces — so every
+// column the real tables require is declared, the legacy `index` string column
+// on `index_files` included.
 
 import {
 	bigint,
@@ -17,6 +16,7 @@ import {
 	pgTable,
 	text,
 	timestamp,
+	unique,
 } from "drizzle-orm/pg-core";
 
 export const indexes = pgTable("indexes", {
@@ -60,16 +60,30 @@ export const indexes = pgTable("indexes", {
  */
 export const indexType = pgEnum("indextype", ["json", "fasta", "bowtie2"]);
 
-export const indexFiles = pgTable("index_files", {
-	id: integer("id").primaryKey().generatedByDefaultAsIdentity(),
-	name: text("name").notNull(),
-	index_id: bigint("index_id", { mode: "number" }).notNull(),
-	type: indexType("type"),
-	size: bigint("size", { mode: "number" }),
-	// The file's complete object-storage key, superseding the per-index
-	// `indexes.storage_key` slug keys were previously composed from.
-	storage_key: text("storage_key").unique().notNull(),
-});
+export const indexFiles = pgTable(
+	"index_files",
+	{
+		id: integer("id").primaryKey().generatedByDefaultAsIdentity(),
+		name: text("name").notNull(),
+		// The owning build's id as a string, predating `index_id` and dropped by a
+		// later cleanup revision. Nullable, so nothing has to fill it, but Python
+		// writes `str(index_id)` and this side writes the same — a row is then
+		// identical whichever runner built it.
+		index: text("index"),
+		index_id: bigint("index_id", { mode: "number" }).notNull(),
+		type: indexType("type"),
+		size: bigint("size", { mode: "number" }),
+		// The file's complete object-storage key, superseding the per-index
+		// `indexes.storage_key` slug keys were previously composed from.
+		storage_key: text("storage_key").unique().notNull(),
+	},
+	(table) => [
+		// `index_files_index_id_name_key`. Declared because a build's registration
+		// of its artifact upserts on it, and an `ON CONFLICT` naming columns no
+		// constraint covers is an error rather than an insert.
+		unique("index_files_index_id_name_key").on(table.index_id, table.name),
+	],
+);
 
 /** A row from the `indexes` table. */
 export type IndexRow = typeof indexes.$inferSelect;

@@ -823,6 +823,87 @@ task and starts a second hung fetch behind the first. A timeout is reported as
 `Could not reach Virtool.ca`, the same as a refused connection, because to the
 caller it means the same thing.
 
+### `create_index`, the second body
+
+`create_index` finishes a reference index build. Its body is one call to
+`generateTaskIndex` (`@virtool/data/indexes/data`) inside one step,
+`build_index` — Python's method name, so both runners write the same value to
+the `step` column. The domain function patches every OTU in the build's manifest
+back to the version the manifest pins it to, streams the result to object
+storage as `reference-v2.json.gz`, registers the `index_files` row, stamps
+`legacy_otus.last_indexed_version` and flips `ready`.
+
+It is the first body to take the progress seam. Python's task declares no
+progress handler and jumps 0 to 100; this is the longest-running of the ten and
+the chunked patch loop makes its position knowable, so the data function takes a
+trailing `onProgress?: (percent: number) => Promise<void>` and the body bridges
+it with `async (percent) => report(percent / 100)`. Percent at the `data.ts`
+boundary, fraction at `runStep`'s reporter.
+
+Four decisions are worth knowing before changing it.
+
+**An already-ready build is a successful no-op.** Python raises
+`ResourceConflictError("Index is already ready")`. Porting that verbatim would
+fail the task whenever a reclaim re-ran a build whose work had already
+committed — a red error in the UI against an index that is perfectly fine — so
+this side logs at `info` and returns. That is the general shape for any body
+guarding on a terminal-state column.
+
+**Nothing is buffered.** A real reference decompresses to hundreds of megabytes
+of JSON, and Python holds all of it twice: once as a list of documents and again
+as a gzip buffer. Here the manifest is patched 500 OTUs at a time —
+Python's `OTU_ID_CHUNK_SIZE` — and each chunk is serialized straight into a
+`createGzip()` stream handed to `StorageBackend.write`, so peak memory is set by
+the chunk size rather than by the reference. Python's `concurrency=25` /
+`window_size=100` patcher is deliberately not reproduced: `patchOtusToVersions`
+resolves a whole chunk in a fixed handful of queries, so there is nothing for
+that apparatus to do.
+
+The chunk loop also `await setImmediate()`s. The heartbeat that holds the lease
+is a timer, and serializing a whole reference in one synchronous stretch starves
+it — the task is then reclaimed out from under a runner that is still working on
+it.
+
+Two failure modes the streaming introduced, both guarded. `pipe` does not
+forward a source error to its destination, so the encoder's failure is
+explicitly forwarded onto the gzip stream; without it a manifest naming a
+version history cannot produce would end the stream cleanly and publish a
+truncated artifact as a successful build. And a manifest entry that patches to
+`null` throws `IndexManifestError` rather than being serialized — a manifest
+entry is proof the OTU existed at that version, so a null is corruption, not a
+routine miss.
+
+**The OTU order is the manifest's stored order.** It is read back with
+`jsonb_each ... with ordinality`, not from the parsed `manifest` column.
+`JSON.parse` hoists array-index-like keys to the front of an object and sorts
+them numerically; an OTU id is eight characters drawn from digits and lowercase
+letters, so a reference of any size is likely to have one that is all digits.
+Python iterates the dict `json.loads` gives it, which is the JSONB order, and
+the artifact's OTU order decides which isolate `cd-hit-est` keeps as a cluster
+representative — so a divergence here changes analysis results.
+
+`reference.created_at` is rendered in SQL for the same class of reason. Python's
+orjson writes six fractional digits, or none when there are no microseconds;
+`Date.toISOString` always writes exactly three and postgres.js has already
+truncated the other three, having parsed a naive `timestamp` with `new Date(x)`
+— which V8 reads as local time, so a process outside UTC would shift every
+timestamp in the artifact.
+
+**There is no compensating delete on failure.** The storage write happens first
+and outside the transaction, because storage cannot join one. A write that lands
+where the commit does not leaves an object no row names — and so does a hard
+exit between the two, which no `catch` can cover, so the orphan is the sweep's
+either way and a cleanup here would only handle the half where the process
+survives. Python's second, fresh-session delete of the `index_files` row is
+dropped for a different reason: its three writes are one real transaction here,
+so a database failure rolls the row back on its own.
+
+The one delete the body does make is **after** the commit. Keys are minted per
+write rather than composed from the file name, so a rebuild writes a new object
+and the upsert repoints the row at it — leaving the previous artifact orphaned
+on every successful rebuild. That one is deleted immediately and its failures
+logged, never raised, because the build has already succeeded.
+
 ### Frames are the framework's, never a body's
 
 A body never emits. `updateTaskProgress`, `completeTask` and `failTask` publish

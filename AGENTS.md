@@ -1301,6 +1301,33 @@ Its manifest fetch also carries an `AbortSignal.timeout`, without which
 a hung connection holds the lease until it expires and the reclaim
 starts a second hung fetch behind the first.
 
+`create_index` is the second, and the first to take the progress seam
+and the first to write to object storage. Its body is one call to
+`generateTaskIndex`; four rules are its own:
+
+- **An already-ready build is a successful no-op**, where Python raises
+  `"Index is already ready"`. A reclaim re-runs a body from step zero,
+  so a build whose work already committed would otherwise fail its task
+  and show a red error against an index that is fine.
+- **The artifact streams and is never buffered.** A real reference is
+  hundreds of megabytes of JSON, so the manifest is patched 500 OTUs at
+  a time and each chunk is serialized straight into a `createGzip()`
+  stream. The chunk loop also `await setImmediate()`s, because
+  serializing a whole reference in one synchronous stretch starves the
+  heartbeat and gets the task reclaimed out from under itself.
+- **The OTU order is the manifest's stored order**, read back with
+  `jsonb_each ... with ordinality` rather than from a parsed object.
+  `JSON.parse` hoists array-index-like keys to the front, an
+  eight-character OTU id is all digits often enough that a real
+  reference has one, and the artifact's order decides which isolate
+  `cd-hit-est` keeps.
+- **There is no compensating delete on failure.** A write that lands
+  where the commit does not leaves an object no row names, and a hard
+  exit between the two leaves the same one with nothing to catch it —
+  so it is the orphan sweep's, not a `cleanup` hook's. The one delete
+  the body does make is **after** the commit: keys are minted per write,
+  so a rebuild repoints the row and orphans the object it replaced.
+
 See [docs/tasks.md](docs/tasks.md) for the full config table, the
 `AppContext` contract, the shutdown ordering and its guarantees, the
 probe and metrics surface including the five task series and their
@@ -1355,11 +1382,16 @@ positionally and Python still writes the same tables. Reshaping it from
 this side misapplies every diff already recorded and corrupts the
 analyses read path. Renormalizing is a Python-side migration.
 
-**An index build is started here and finished by Python.**
-`createIndex` (`@virtool/data/indexes/data`) inserts the pending `indexes` row,
-stamps every unbuilt `legacy_history` row with it, and creates the
-`create_index` task the Python runner claims — that task writes the
-artifact, records each file's `storage_key`, and flips `ready`. The
+**An index build is two writes with a task between them, and this side
+runs both.** `createIndex` (`@virtool/data/indexes/data`) inserts the
+pending `indexes` row, stamps every unbuilt `legacy_history` row with it,
+and creates a `create_index` task; `generateTaskIndex`, in the same
+module, is what the runner that claims it executes — patching the
+manifest's OTUs, streaming `reference-v2.json.gz` to a minted key,
+recording the `index_files` row with that key, stamping
+`last_indexed_version` and flipping `ready`. Python's `CreateIndexTask`
+does the same work and both runners are live until the cutover, so the
+two must stay interchangeable. The
 insert runs under
 `pg_try_advisory_xact_lock(hashtext('index_build:{referenceId}'))`, the
 same key Python takes, so a build started from either service excludes

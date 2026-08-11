@@ -1,6 +1,7 @@
 import type { Db } from "@virtool/data/db/pg";
 import type { StorageBackend } from "@virtool/storage";
 import type { TaskRegistry } from "../framework/define";
+import { createIndexTask } from "./create-index";
 import { refreshHmmsTask } from "./refresh-hmms";
 
 /**
@@ -30,5 +31,6 @@ export type TaskContext = {
  * another; `registry.test.ts` fails on any that do.
  */
 export const taskRegistry: TaskRegistry<TaskContext> = {
+	create_index: createIndexTask,
 	refresh_hmms: refreshHmmsTask,
 };

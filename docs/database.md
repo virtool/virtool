@@ -247,19 +247,29 @@ export async function invalidateUserSessions(
 `data.ts` function normally touches. Reach for `Db` only when the function
 genuinely needs something a transaction cannot give it.
 
-### Advisory locks, and the half-owned index build
+### Advisory locks, and the two-part index build
 
 Starting an index build is the one write that takes a Postgres advisory
-lock, and the reason is that Python still performs the second half of it.
+lock, and the reason is that a build is two writes with a task between
+them — either service can be running either half.
 
 `createIndex` (`@virtool/data/indexes/data`) inserts the pending `indexes` row,
 stamps every `legacy_history` row whose `index_id` is `NULL` with the new
-build, and creates a `create_index` task. The Python task runner claims
-that task, patches every OTU in the manifest back to the version the
-build was pinned to, gzips the artifact into a freshly minted key,
-records the `index_files` row **with that key on it**, promotes
+build, and creates a `create_index` task. Whichever runner claims that
+task finishes the build: `generateTaskIndex`, in the same module, patches
+every OTU in the manifest back to the version the build was pinned to,
+gzips the artifact into a freshly minted key, records the `index_files`
+row **with that key on it**, promotes
 `legacy_otus.last_indexed_version`, and only then sets `ready = true`.
-Nothing on this side finishes a build.
+
+Python's `CreateIndexTask` does the same thing, and both runners are live
+until the cutover, so the two halves must stay interchangeable. The
+artifact is `reference-v2.json.gz` on both sides, the `index_files` row
+carries the legacy `index` string column on both sides, and the OTUs are
+serialized in the manifest's **stored** order — read back out of the
+JSONB column rather than from a parsed object, because `JSON.parse`
+hoists array-index-like keys and an eight-character OTU id is all digits
+often enough to matter.
 
 Two builds of one reference would each stamp the other's changes and then
 collide on the `(reference_id, version)` unique constraint, so the insert

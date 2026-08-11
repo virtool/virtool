@@ -1,12 +1,13 @@
 // Reading and building reference indexes.
 //
 // A port of `virtool.indexes.db`, `virtool.indexes.data`, and the index half of
-// `virtool.references.data`. Python still owns the *finishing* of a build — the
-// `create_index` task patches every OTU in the manifest, writes the artifact to
-// object storage, and flips `ready` — so everything here stops at inserting the
-// row that task claims.
+// `virtool.references.data`, both halves of a build included: `createIndex`
+// inserts the pending row and creates the task, and `generateTaskIndex` is what
+// that task runs — patching every OTU in the manifest, writing the artifact to
+// object storage, and flipping `ready`.
 
 import { randomUUID } from "node:crypto";
+import { setImmediate } from "node:timers/promises";
 import type {
 	Index,
 	IndexContributor,
@@ -15,6 +16,12 @@ import type {
 	IndexOtu,
 	IndexSearchResult,
 } from "@virtool/contracts";
+import type { Logger } from "@virtool/logger";
+import {
+	deleteKeys,
+	mintStorageKey,
+	type StorageBackend,
+} from "@virtool/storage";
 import {
 	and,
 	asc,
@@ -35,11 +42,18 @@ import { legacyReferences } from "../db/schema/references";
 import { tasks } from "../db/schema/tasks";
 import { users } from "../db/schema/users";
 import { AppError } from "../errors";
+import { emit } from "../events/emit";
+import {
+	type OtuSpecifier,
+	otuSpecifierKey,
+	patchOtusToVersions,
+} from "../history/data";
 import {
 	ReferenceArchivedError,
 	ReferenceNotFoundError,
 } from "../references/data";
 import { createTask } from "../tasks/data";
+import { type OtuChunk, streamArtifact } from "./artifact";
 
 /** Thrown when a requested index does not exist. */
 export class IndexNotFoundError extends AppError {}
@@ -56,6 +70,21 @@ export class UnverifiedOtusError extends AppError {}
 
 /** Thrown when a reference has no changes for a build to include. */
 export class NoUnbuiltChangesError extends AppError {}
+
+/**
+ * Thrown when a build is not one a task may finish — backed by a job, or by
+ * neither a job nor a task.
+ */
+export class IndexBuildTypeError extends AppError {}
+
+/**
+ * Thrown when the manifest names an OTU version history cannot produce.
+ *
+ * A manifest entry is proof the OTU existed at that version, so this is a
+ * corrupted manifest or corrupted history rather than a routine miss, and the
+ * build fails rather than publishing an artifact with a hole in it.
+ */
+export class IndexManifestError extends AppError {}
 
 /** Options accepted by {@link findIndexes}. */
 export type FindIndexesOptions = {
@@ -634,4 +663,299 @@ export async function createIndex(
 	});
 
 	return getIndex(db, indexId);
+}
+
+// Python's `OTU_ID_CHUNK_SIZE`. It bounds both halves of a build: how many OTU
+// documents are held at once while the artifact streams, and how many ids go
+// into one `last_indexed_version` statement.
+const OTU_ID_CHUNK_SIZE = 500;
+
+/** The file a finished build publishes. Python's `REFERENCE_JSON_V2_FILE_NAME`. */
+const REFERENCE_JSON_V2_FILE_NAME = "reference-v2.json.gz";
+
+// The reference envelope, with `created_at` rendered in Postgres rather than
+// from a `Date`.
+//
+// Two things go wrong reading it as a `Date`. postgres.js parses a `timestamp
+// without time zone` with `new Date(x)`, and the wire text carries no offset, so
+// V8's fallback reads it as *local* time and a process outside UTC shifts every
+// timestamp in the artifact by its offset. And `toISOString` always writes
+// exactly three fractional digits, where orjson writes six or, when there are no
+// microseconds at all, none — and a `Date` has already truncated the other three
+// by then. Rendering in SQL sidesteps both, and matches Python byte for byte.
+async function readArtifactReference(db: DbOrTx, referenceId: number) {
+	const [row] = await db
+		.select({
+			id: legacyReferences.id,
+			name: legacyReferences.name,
+			organism: legacyReferences.organism,
+			createdAt: sql<string>`
+				to_char(${legacyReferences.created_at}, 'YYYY-MM-DD"T"HH24:MI:SS')
+				|| case
+					when to_char(${legacyReferences.created_at}, 'US') = '000000' then ''
+					else '.' || to_char(${legacyReferences.created_at}, 'US')
+				end
+				|| 'Z'
+			`,
+		})
+		.from(legacyReferences)
+		.where(eq(legacyReferences.id, referenceId))
+		.limit(1);
+
+	return row;
+}
+
+// The manifest as ordered pairs, in the order Python iterates it.
+//
+// The order is the artifact's OTU order, and so the order of every downstream
+// artifact built from it — including which isolate `cd-hit-est` keeps as a
+// cluster representative. Python gets it from `json.loads`, which preserves the
+// JSONB text order. Reading the column into a JavaScript object would not:
+// `JSON.parse` hoists array-index-like keys to the front and sorts them
+// numerically, and an eight-character OTU id drawn from digits and lowercase
+// letters is all digits often enough that a real reference has one.
+async function readManifestOrder(
+	db: DbOrTx,
+	indexId: number,
+): Promise<OtuSpecifier[]> {
+	return db.execute<OtuSpecifier>(sql`
+		select entry.key as "otuId", (entry.value #>> '{}')::int as version
+		from ${indexes},
+			jsonb_each(${indexes.manifest}) with ordinality as entry(key, value, ord)
+		where ${indexes.id} = ${indexId}
+		order by entry.ord
+	`);
+}
+
+// Stamp `last_indexed_version` on every OTU of the reference whose `version` has
+// moved since the last build.
+//
+// The value lives twice on `legacy_otus` — in the promoted column and in the
+// `data` JSONB the OTU document is recovered from — and both are written by the
+// same statement, so they cannot come out of a stamp disagreeing.
+//
+// `jsonb_set` on the one key is also the only correct write: `data` is verbatim
+// Mongo, and reading the document out, mutating it and writing it back would
+// round-trip the whole shape through this side's JSON handling. The diffs
+// already recorded against it address it as Python wrote it.
+async function stampLastIndexedVersions(
+	tx: DbOrTx,
+	referenceId: number,
+): Promise<void> {
+	const rows = await tx
+		.select({ id: legacyOtus.id, version: legacyOtus.version })
+		.from(legacyOtus)
+		.where(
+			and(
+				eq(legacyOtus.reference_id, referenceId),
+				sql`${legacyOtus.version} is distinct from ${legacyOtus.last_indexed_version}`,
+			),
+		);
+
+	const idsByVersion = new Map<number, string[]>();
+
+	for (const { id, version } of rows) {
+		const ids = idsByVersion.get(version);
+
+		if (ids === undefined) {
+			idsByVersion.set(version, [id]);
+		} else {
+			ids.push(id);
+		}
+	}
+
+	for (const [version, ids] of idsByVersion) {
+		for (let start = 0; start < ids.length; start += OTU_ID_CHUNK_SIZE) {
+			await tx
+				.update(legacyOtus)
+				.set({
+					last_indexed_version: version,
+					data: sql`jsonb_set(${legacyOtus.data}, '{last_indexed_version}', to_jsonb(${version}::int))`,
+				})
+				.where(
+					inArray(legacyOtus.id, ids.slice(start, start + OTU_ID_CHUNK_SIZE)),
+				);
+		}
+	}
+}
+
+/**
+ * Finish a task-backed build: write its artifact and mark it ready.
+ *
+ * The port of Python's `generate_task_index`, and the whole of what the
+ * `create_index` task runs. It patches every OTU in the manifest to the version
+ * the manifest pins it to, streams the result to object storage as
+ * `reference-v2.json.gz`, registers the file and flips `ready`.
+ *
+ * `onProgress` reports percent complete on chunk boundaries. It is the seam a
+ * task body bridges to its step reporter; nothing here knows a task exists.
+ *
+ * Two divergences from Python, both deliberate:
+ *
+ * An **already-ready index is a successful no-op**, where Python raises. A claim
+ * is a lease, so a body may re-run from step zero after its work has already
+ * completed and committed — a reclaim is concurrent rather than successive.
+ * Porting the raise verbatim would fail the task and show a red error against an
+ * index that is perfectly fine.
+ *
+ * Only the **integer** id is accepted, where Python also takes the stringified
+ * legacy form for a task enqueued before the integer-id cutover. Nothing enqueues
+ * one: `createIndex` writes `{ index_id: index.id }`, an integer, and the only
+ * `CreateIndexTask` construction left on Python's side is in `virtool/fake`.
+ */
+export async function generateTaskIndex(
+	db: Db,
+	storage: StorageBackend,
+	logger: Logger,
+	indexId: number,
+	onProgress?: (percent: number) => Promise<void>,
+): Promise<void> {
+	const [row] = await db
+		.select({
+			jobId: indexes.job_id,
+			ready: indexes.ready,
+			referenceId: indexes.reference_id,
+			taskId: indexes.task_id,
+		})
+		.from(indexes)
+		.where(eq(indexes.id, indexId))
+		.limit(1);
+
+	if (row === undefined) {
+		throw new IndexNotFoundError("Index does not exist");
+	}
+
+	// The `ck_indexes_job_or_task` CHECK constraint already makes "both set"
+	// impossible, so only "neither" is reachable — a legacy build whose job was
+	// deleted before the jobs migration. Python's message covers both and the
+	// constraint is not this repo's to rely on, so both are kept.
+	if ((row.jobId === null) === (row.taskId === null)) {
+		throw new IndexBuildTypeError(
+			"Index must be backed by exactly one job or task build",
+		);
+	}
+
+	if (row.jobId !== null) {
+		throw new IndexBuildTypeError("Index must be backed by a task build");
+	}
+
+	if (row.ready) {
+		logger.info({ indexId }, "index is already ready; nothing to build");
+
+		return;
+	}
+
+	const reference = await readArtifactReference(db, row.referenceId);
+
+	if (reference === undefined) {
+		throw new ReferenceNotFoundError("Reference does not exist");
+	}
+
+	const specifiers = await readManifestOrder(db, indexId);
+
+	// Minted, never composed. A rebuild therefore writes a new object rather than
+	// overwriting the previous one, which is what the post-commit delete below is
+	// for.
+	const storageKey = mintStorageKey("indexes", indexId);
+
+	let patched = 0;
+
+	async function* chunks(): AsyncIterable<OtuChunk> {
+		for (let start = 0; start < specifiers.length; start += OTU_ID_CHUNK_SIZE) {
+			const slice = specifiers.slice(start, start + OTU_ID_CHUNK_SIZE);
+
+			// One batched read per chunk. Python patches each OTU on its own behind a
+			// windowed concurrency loop; this resolves a whole chunk in a fixed
+			// handful of queries, so there is nothing for that apparatus to do.
+			const documents = await patchOtusToVersions(db, slice);
+
+			yield slice.map(({ otuId, version }) => {
+				const document = documents.get(otuSpecifierKey(otuId, version));
+
+				if (!document) {
+					throw new IndexManifestError(
+						`OTU ${otuId} could not be patched to the version the manifest pins it to`,
+					);
+				}
+
+				return document;
+			});
+
+			patched += slice.length;
+
+			await onProgress?.((patched / specifiers.length) * 100);
+
+			// Serializing a chunk is a synchronous stretch, and the runner's heartbeat
+			// is a timer. Without a macrotask boundary between chunks a large
+			// reference starves it and the task is reclaimed out from under itself.
+			await setImmediate();
+		}
+	}
+
+	// Storage cannot participate in the transaction below. A write that lands
+	// where the commit does not — a failure here, or a hard exit between the two —
+	// leaves an object no row names, which the orphan sweep collects. Deleting it
+	// here would only cover the half of that where this process survives.
+	const size = await storage.write(
+		storageKey,
+		streamArtifact(
+			{
+				_id: reference.id,
+				created_at: reference.createdAt,
+				name: reference.name,
+				organism: reference.organism,
+			},
+			chunks(),
+		),
+	);
+
+	const replacedKey = await db.transaction(async (tx) => {
+		const [existing] = await tx
+			.select({ storageKey: indexFiles.storage_key })
+			.from(indexFiles)
+			.where(
+				and(
+					eq(indexFiles.index_id, indexId),
+					eq(indexFiles.name, REFERENCE_JSON_V2_FILE_NAME),
+				),
+			)
+			.limit(1);
+
+		await tx
+			.insert(indexFiles)
+			.values({
+				index: String(indexId),
+				index_id: indexId,
+				name: REFERENCE_JSON_V2_FILE_NAME,
+				size,
+				storage_key: storageKey,
+				type: "json",
+			})
+			.onConflictDoUpdate({
+				target: [indexFiles.index_id, indexFiles.name],
+				set: { size, storage_key: storageKey, type: "json" },
+			});
+
+		await stampLastIndexedVersions(tx, row.referenceId);
+
+		await tx
+			.update(indexes)
+			.set({ ready: true })
+			.where(eq(indexes.id, indexId));
+
+		return existing?.storageKey ?? null;
+	});
+
+	// Committed, so the row now names the new object and the one it replaced is an
+	// orphan. Cleaning it up must not fail a build that otherwise succeeded.
+	if (replacedKey !== null) {
+		for (const failure of await deleteKeys(storage, [replacedKey])) {
+			logger.error(
+				{ err: failure.error, indexId, key: failure.key },
+				"index storage cleanup failed; file orphaned",
+			);
+		}
+	}
+
+	await emit("indexes", indexId, "update");
 }
