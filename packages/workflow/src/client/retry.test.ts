@@ -49,7 +49,7 @@ describe("withRetry", () => {
 		await vi.runAllTimersAsync();
 		await promise;
 
-		const gaps = at.slice(1).map((time, index) => time - at[index]);
+		const gaps = at.slice(1).map((time, index) => time - (at[index] ?? 0));
 
 		expect(gaps).toEqual([
 			RETRY_DELAY_MS,

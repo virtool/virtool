@@ -148,6 +148,9 @@ function createConfig(overrides: Partial<WorkflowRunConfig> = {}) {
 		workPath: join(root, "work"),
 		timeout: 30,
 		image: "unknown",
+		// `createStorageBackend` constructs an S3 client but reaches nothing until
+		// a key is read, and these runs read none.
+		storage: { kind: "s3", bucket: "test", region: "us-east-1" },
 		...overrides,
 	} satisfies WorkflowRunConfig;
 }

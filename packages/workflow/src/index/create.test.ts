@@ -167,7 +167,7 @@ describe("createIndexArtifact", () => {
 		const path = join(workPath, INDEX_SQLITE_FILE_NAME);
 
 		await createIndexArtifact(path, REFERENCE, OTUS);
-		await createIndexArtifact(path, REFERENCE, [OTUS[0]]);
+		await createIndexArtifact(path, REFERENCE, OTUS.slice(0, 1));
 
 		const index = openWorkflowIndex({ id: 1, path });
 
@@ -200,7 +200,7 @@ describe("createIndexArtifact", () => {
 	it("rolls back and leaves no partial artifact when a row is bad", async () => {
 		const path = join(workPath, INDEX_SQLITE_FILE_NAME);
 
-		const duplicated = [OTUS[0], OTUS[0]];
+		const duplicated = [...OTUS.slice(0, 1), ...OTUS.slice(0, 1)];
 
 		await expect(
 			createIndexArtifact(path, REFERENCE, duplicated),

@@ -354,11 +354,11 @@ export function openWorkflowIndex(source: IndexArtifactSource): WorkflowIndex {
 			}
 
 			return {
-				created_at: asString(row.created_at),
-				data_type: asString(row.data_type),
-				id: asString(row.id),
-				name: asString(row.name),
-				organism: asString(row.organism),
+				created_at: asString(row, "created_at"),
+				data_type: asString(row, "data_type"),
+				id: asString(row, "id"),
+				name: asString(row, "name"),
+				organism: asString(row, "organism"),
 			};
 		},
 
@@ -390,12 +390,12 @@ export function openWorkflowIndex(source: IndexArtifactSource): WorkflowIndex {
 			const refs: Record<string, IndexOtuRef> = {};
 
 			for (const row of rows) {
-				refs[asString(row.sequence_id)] = {
-					abbreviation: asString(row.abbreviation),
-					id: asString(row.otu_id),
-					name: asString(row.name),
-					taxid: asNumberOrNull(row.taxid),
-					version: asNumber(row.version),
+				refs[asString(row, "sequence_id")] = {
+					abbreviation: asString(row, "abbreviation"),
+					id: asString(row, "otu_id"),
+					name: asString(row, "name"),
+					taxid: asNumberOrNull(row, "taxid"),
+					version: asNumber(row, "version"),
 				};
 			}
 
@@ -420,7 +420,7 @@ export function openWorkflowIndex(source: IndexArtifactSource): WorkflowIndex {
 
 		iterOtus(): AsyncIterableIterator<IndexOtu> {
 			return iterateRows(database, SELECT_OTUS, [], OTU_BATCH_SIZE, (row) =>
-				checkOtu(JSON.parse(asString(row.document)) as IndexOtu),
+				checkOtu(JSON.parse(asString(row, "document")) as IndexOtu),
 			);
 		},
 
@@ -502,14 +502,14 @@ async function* emptyIterator<T>(): AsyncGenerator<T> {}
 
 function shapeSequence(row: Record<string, SQLOutputValue>): IndexSequence {
 	return {
-		accession: asString(row.accession),
-		definition: asString(row.definition),
-		host: asStringOrNull(row.host),
-		id: asString(row.id),
-		isolate_id: asString(row.isolate_id),
-		otu_id: asString(row.otu_id),
-		segment: asStringOrNull(row.segment),
-		sequence: asString(row.sequence),
+		accession: asString(row, "accession"),
+		definition: asString(row, "definition"),
+		host: asStringOrNull(row, "host"),
+		id: asString(row, "id"),
+		isolate_id: asString(row, "isolate_id"),
+		otu_id: asString(row, "otu_id"),
+		segment: asStringOrNull(row, "segment"),
+		sequence: asString(row, "sequence"),
 	};
 }
 
@@ -538,18 +538,49 @@ function checkOtu(otu: IndexOtu): IndexOtu {
 	return otu;
 }
 
-function asString(value: SQLOutputValue): string {
-	return String(value);
+/**
+ * Read one column out of a row, refusing a column the query did not select.
+ *
+ * The alternative is `String(undefined)`, which writes the literal text
+ * `"undefined"` into a FASTA header or a cache key and is discovered as a failed
+ * alignment rather than as a missing column. Every accessor below goes through
+ * this, so a shaper that drifts from its `SELECT` names the column it wanted.
+ */
+function column(
+	row: Record<string, SQLOutputValue>,
+	name: string,
+): SQLOutputValue {
+	const value = row[name];
+
+	if (value === undefined) {
+		throw new IndexOtuIntegrityError(`Index query returned no ${name} column`);
+	}
+
+	return value;
 }
 
-function asStringOrNull(value: SQLOutputValue): string | null {
+function asString(row: Record<string, SQLOutputValue>, name: string): string {
+	return String(column(row, name));
+}
+
+function asStringOrNull(
+	row: Record<string, SQLOutputValue>,
+	name: string,
+): string | null {
+	const value = column(row, name);
+
 	return value === null ? null : String(value);
 }
 
-function asNumber(value: SQLOutputValue): number {
-	return Number(value);
+function asNumber(row: Record<string, SQLOutputValue>, name: string): number {
+	return Number(column(row, name));
 }
 
-function asNumberOrNull(value: SQLOutputValue): number | null {
+function asNumberOrNull(
+	row: Record<string, SQLOutputValue>,
+	name: string,
+): number | null {
+	const value = column(row, name);
+
 	return value === null ? null : Number(value);
 }

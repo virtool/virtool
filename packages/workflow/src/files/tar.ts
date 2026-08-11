@@ -53,7 +53,9 @@ async function pathExists(path: string): Promise<boolean> {
  * Mirrors Python's `member.name.lstrip("/").split("/")[0]`.
  */
 function topLevelNameOf(name: string): string {
-	return name.replace(/^\/+/, "").split("/")[0];
+	// `split` on a non-empty string always yields a first element; the fallback
+	// is for the empty-name case, which `checkMemberIsSafe` rejects anyway.
+	return name.replace(/^\/+/, "").split("/")[0] ?? "";
 }
 
 function checkMemberIsSafe(

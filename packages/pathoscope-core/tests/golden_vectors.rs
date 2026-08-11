@@ -168,13 +168,21 @@ fn check_em(name: &str, vector: &Value, out_dir: &Path) {
         );
     }
 
-    for field in ["refs", "reads"] {
-        assert_eq!(
-            strings(expected, field),
-            strings(&actual, field),
-            "{name}: {field} differs"
-        );
-    }
+    assert_eq!(
+        strings(expected, "refs"),
+        strings(&actual, "refs"),
+        "{name}: refs differs"
+    );
+
+    // The corpus records the read *names* the PyO3 build returned, because that
+    // is what it returned; the results carry only their number now. Comparing
+    // the count against the recorded array's length pins the same figure, so
+    // the corpus stays exactly as Python wrote it.
+    assert_eq!(
+        strings(expected, "reads").len() as u64,
+        actual["read_count"].as_u64().expect("read_count"),
+        "{name}: read_count differs from the number of recorded reads"
+    );
 
     let expected_coverage = expected["coverage"].as_object().expect("coverage");
     let actual_coverage = actual["coverage"].as_object().expect("coverage");

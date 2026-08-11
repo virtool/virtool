@@ -45,6 +45,12 @@ pub type MatrixResult = (UniqueReads, MultiMappingReads, Vec<String>, Vec<String
 /// Serialized to the `em` subcommand's `--output` file. `coverage` is an
 /// `FxHashMap` only as an implementation detail; it serializes as a plain
 /// JSON object keyed by reference id.
+///
+/// **The read names themselves are deliberately not carried.** Only their
+/// number was ever consumed, and a run of ordinary Illumina depth serializes
+/// tens of millions of 20-40 byte names — enough JSON that the consumer, which
+/// reads the file whole, exceeds V8's maximum string length and fails in the
+/// last step of a run that took hours.
 #[derive(Clone, Serialize)]
 pub struct PathoscopeResults {
     pub best_hit_initial_reads: Vec<f64>,
@@ -58,7 +64,10 @@ pub struct PathoscopeResults {
     pub init_pi: Vec<f64>,
     pub pi: Vec<f64>,
     pub refs: Vec<String>,
-    pub reads: Vec<String>,
+
+    /// The number of distinct reads the matrix was built from.
+    pub read_count: usize,
+
     pub coverage: FxHashMap<String, Vec<usize>>,
 }
 
@@ -94,6 +103,8 @@ pub fn run_expectation_maximization(
         p_score_cutoff,
     )?;
 
+    let read_count = matrix.reads.len();
+
     Ok(PathoscopeResults {
         best_hit_initial_reads: initial_best_hit.best_hit_reads,
         best_hit_initial: initial_best_hit.best_hit,
@@ -106,7 +117,7 @@ pub fn run_expectation_maximization(
         init_pi: em_results.init_pi,
         pi: em_results.pi,
         refs: matrix.refs,
-        reads: matrix.reads,
+        read_count,
         coverage,
     })
 }
@@ -166,6 +177,39 @@ mod tests {
     use std::io::BufRead;
     use std::io::BufReader;
     use std::io::Read;
+
+    /// `read_count` is the number of distinct reads the matrix was built from.
+    ///
+    /// The expected figures are the lengths of the `reads` arrays the PyO3
+    /// build wrote into `tests/golden/vectors.json`, so this pins the same
+    /// numbers the corpus does — see the `em_basic_cutoff_0.01`,
+    /// `em_isolates_minimal` and `em_multimapping_cutoff_0.01` vectors.
+    #[test]
+    fn test_read_count_counts_distinct_reads() {
+        for (fixture, expected) in [
+            ("test_basic.sam", 3),
+            ("test_isolates_minimal.sam", 4),
+            ("test_em_with_multimapping.sam", 6),
+        ] {
+            let path =
+                format!("{}/tests/fixtures/{fixture}", env!("CARGO_MANIFEST_DIR"));
+
+            let matrix = matrix::build_matrix(&path, Some(0.01)).unwrap();
+            let results = run_expectation_maximization(&path, 0.01).unwrap();
+
+            assert_eq!(
+                results.read_count, expected,
+                "{fixture}: read_count is {}, expected {expected}",
+                results.read_count
+            );
+
+            assert_eq!(
+                results.read_count,
+                matrix.reads.len(),
+                "{fixture}: read_count disagrees with the matrix it was taken from"
+            );
+        }
+    }
 
     #[test]
     fn test_run_eliminate_subtraction() {

@@ -1,3 +1,10 @@
+# syntax=docker/dockerfile:1-labs
+
+# The parser directive above is what makes `COPY --parents` available, which is
+# how the Node install layer takes every workspace manifest by glob while
+# preserving directory structure. A plain `COPY apps/*/package.json apps/`
+# flattens them onto one path.
+
 # The pathoscope workflow image, published as ghcr.io/virtool/ts-pathoscope.
 #
 # Built from the repo root: the Rust core lives in packages/pathoscope-core and
@@ -43,8 +50,30 @@ RUN cargo chef cook --release --recipe-path recipe.json
 COPY packages/pathoscope-core .
 RUN cargo build --release --bin pathoscope-core
 
-FROM node:24-bookworm-slim AS base
-WORKDIR /app
+# The Node half. Mirrors the install layer in the repo-root Dockerfile rather
+# than sharing it, because that one is Alpine and this image has to be Debian —
+# see the note on the Rust base above.
+FROM node:24-bookworm-slim AS node-base
+RUN corepack enable
+WORKDIR /repo
+COPY pnpm-workspace.yaml package.json pnpm-lock.yaml* ./
+COPY --parents apps/*/package.json packages/*/package.json ./
+RUN pnpm install --frozen-lockfile
+COPY packages/tsconfig.base.json ./packages/
+COPY packages/contracts ./packages/contracts
+COPY packages/logger ./packages/logger
+COPY packages/sentry ./packages/sentry
+COPY packages/storage ./packages/storage
+COPY packages/workflow ./packages/workflow
+COPY apps/tsconfig.node.json ./apps/
+
+FROM node-base AS build-workflow
+COPY apps/workflow-pathoscope ./apps/workflow-pathoscope
+RUN pnpm --filter @virtool/workflow-pathoscope build \
+    && pnpm deploy --filter @virtool/workflow-pathoscope --prod /prod/workflow-pathoscope
+
+FROM node:24-bookworm-slim AS pathoscope
+WORKDIR /workflow
 
 # The tools binaries are built against python:3.13-bookworm, which carries more
 # than this slim base does. Each package here backs a specific `ldd ... => not
@@ -66,5 +95,15 @@ COPY --from=ghcr.io/virtool/tools:1.2.0 /tools/cd-hit/4.8.1/cd-hit-est /usr/loca
 COPY --from=ghcr.io/virtool/tools:1.2.0 /tools/pigz/2.8/pigz /usr/local/bin/
 COPY --from=ghcr.io/virtool/tools:1.2.0 /tools/samtools/1.22.1/bin/samtools /usr/local/bin/
 
-# Exactly one binary out of the whole Rust build.
+# Exactly one binary out of the whole Rust build. It is a fifth subprocess
+# beside bowtie2, bowtie2-build, cd-hit-est and samtools — never loaded into the
+# Node process. There is no FFI here and adding one is out of scope by decision.
 COPY --from=builder /build/target/release/pathoscope-core /usr/local/bin/
+
+COPY --from=build-workflow /prod/workflow-pathoscope ./
+
+# Exec form, and `node` directly rather than `npm start`: npm does not forward
+# signals to the process it spawns (npm/rfcs#829, still open), so SIGTERM would
+# never reach the run's handler and a drained node would SIGKILL a job mid-step
+# instead of reporting 124.
+CMD ["node", "dist/index.mjs"]

@@ -17,6 +17,8 @@ function minimalEnv(overrides: NodeJS.ProcessEnv = {}): NodeJS.ProcessEnv {
 		VT_JOBS_API_URL: "http://api-jobs-service:9950",
 		VT_WORKFLOW: "pathoscope",
 		VT_WORK_PATH: "/work",
+		VT_STORAGE_BACKEND: "s3",
+		VT_STORAGE_S3_BUCKET: "virtool",
 		...overrides,
 	};
 }
@@ -42,6 +44,14 @@ describe("parseWorkflowRunConfig", () => {
 			timeout: 60,
 			sentryDsn: "https://key@sentry.example/1",
 			image: "ghcr.io/virtool/ts-pathoscope:1.2.3",
+			storage: {
+				kind: "s3",
+				bucket: "virtool",
+				region: undefined,
+				endpoint: undefined,
+				accessKeyId: undefined,
+				secretAccessKey: undefined,
+			},
 		});
 	});
 
@@ -90,6 +100,124 @@ describe("parseWorkflowRunConfig", () => {
 
 		expect(parseWorkflowRunConfig(env)[field]).toBe(expected);
 	});
+
+	// The storage keys, whose values land nested under `storage` rather than at
+	// the top level. `VT_STORAGE_S3_SECRET_ACCESS_KEY` is the whole reason the
+	// `_FILE` mechanism exists — it is the one value that reaches a pod through
+	// the secrets-store CSI driver rather than a plain variable.
+	it.each<[string, NodeJS.ProcessEnv, string, Record<string, unknown>]>([
+		["VT_STORAGE_BACKEND", {}, "s3", { kind: "s3", bucket: "virtool" }],
+		[
+			"VT_STORAGE_S3_BUCKET",
+			{},
+			"from-file",
+			{ kind: "s3", bucket: "from-file" },
+		],
+		[
+			"VT_STORAGE_S3_REGION",
+			{},
+			"ca-central-1",
+			{ kind: "s3", region: "ca-central-1" },
+		],
+		[
+			"VT_STORAGE_S3_ENDPOINT",
+			{},
+			"http://garage:3900",
+			{ kind: "s3", endpoint: "http://garage:3900" },
+		],
+		[
+			"VT_STORAGE_S3_ACCESS_KEY_ID",
+			{ VT_STORAGE_S3_SECRET_ACCESS_KEY: "secret" },
+			"key-id",
+			{ kind: "s3", accessKeyId: "key-id", secretAccessKey: "secret" },
+		],
+		[
+			"VT_STORAGE_S3_SECRET_ACCESS_KEY",
+			{ VT_STORAGE_S3_ACCESS_KEY_ID: "key-id" },
+			"secret",
+			{ kind: "s3", accessKeyId: "key-id", secretAccessKey: "secret" },
+		],
+		[
+			"VT_STORAGE_AZURE_ACCOUNT",
+			{
+				VT_STORAGE_BACKEND: "azure",
+				VT_STORAGE_AZURE_CONTAINER: "virtool",
+			},
+			"vtstorage",
+			{ kind: "azure", account: "vtstorage", container: "virtool" },
+		],
+		[
+			"VT_STORAGE_AZURE_CONTAINER",
+			{
+				VT_STORAGE_BACKEND: "azure",
+				VT_STORAGE_AZURE_ACCOUNT: "vtstorage",
+			},
+			"from-file",
+			{ kind: "azure", account: "vtstorage", container: "from-file" },
+		],
+		[
+			"VT_STORAGE_AZURE_ACCESS_KEY",
+			{
+				VT_STORAGE_BACKEND: "azure",
+				VT_STORAGE_AZURE_ACCOUNT: "vtstorage",
+				VT_STORAGE_AZURE_CONTAINER: "virtool",
+			},
+			"secret",
+			{ kind: "azure", accessKey: "secret" },
+		],
+		[
+			"VT_STORAGE_AZURE_ENDPOINT",
+			{
+				VT_STORAGE_BACKEND: "azure",
+				VT_STORAGE_AZURE_ACCOUNT: "vtstorage",
+				VT_STORAGE_AZURE_CONTAINER: "virtool",
+			},
+			"http://azurite:10000",
+			{ kind: "azure", endpoint: "http://azurite:10000" },
+		],
+	])("resolves %s from its _FILE variant", (key, extra, written, expected) => {
+		const env = minimalEnv({
+			...extra,
+			[`${key}_FILE`]: writeSecret(written),
+		});
+
+		delete env[key];
+
+		expect(parseWorkflowRunConfig(env).storage).toMatchObject(expected);
+	});
+
+	it("rejects an S3 credential pair with only one half set", () => {
+		expect(() =>
+			parseWorkflowRunConfig(
+				minimalEnv({ VT_STORAGE_S3_ACCESS_KEY_ID: "key-id" }),
+			),
+		).toThrow(WorkflowError);
+	});
+
+	// Both empty is an IAM role, not a misconfiguration.
+	it("accepts an S3 backend with neither credential set", () => {
+		expect(parseWorkflowRunConfig(minimalEnv()).storage).toMatchObject({
+			kind: "s3",
+			accessKeyId: undefined,
+			secretAccessKey: undefined,
+		});
+	});
+
+	it.each(["VT_STORAGE_S3_BUCKET", "VT_STORAGE_AZURE_ACCOUNT"])(
+		"names %s when the chosen backend is missing it",
+		(key) => {
+			const env = minimalEnv(
+				key === "VT_STORAGE_S3_BUCKET"
+					? {}
+					: { VT_STORAGE_BACKEND: "azure", VT_STORAGE_AZURE_CONTAINER: "c" },
+			);
+
+			delete env[key];
+			delete env.VT_STORAGE_S3_BUCKET;
+
+			expect(() => parseWorkflowRunConfig(env)).toThrow(key);
+		},
+	);
 
 	// A rollout moving to a secrets-store mount can still carry the stale env var
 	// from the `Secret` it replaces.

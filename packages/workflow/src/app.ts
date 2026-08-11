@@ -2,6 +2,7 @@ import { hostname } from "node:os";
 import * as Sentry from "@sentry/node";
 import { createLogger, type Logger } from "@virtool/logger";
 import { getCommonOptions } from "@virtool/sentry";
+import { createStorageBackend } from "@virtool/storage";
 import { createJobsApiClient } from "./client/client";
 import type { WorkflowRunConfig } from "./config";
 import { createWorkflowContext } from "./context";
@@ -256,6 +257,7 @@ async function claimAndRun<TData, TState>({
 					signal: signals.signal,
 					logger,
 				}),
+				storage: createStorageBackend(config.storage),
 			});
 		} catch (err) {
 			// Preparation reaches the network and the filesystem with the run's

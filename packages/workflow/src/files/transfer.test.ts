@@ -75,9 +75,11 @@ describe("downloadToPath", () => {
 
 		await downloadToPath(storage, "k", path);
 
-		expect(observed[0]).toBeGreaterThan(0);
-		expect(observed[1]).toBeGreaterThan(observed[0]);
-		expect(observed[2]).toBeGreaterThan(observed[1]);
+		const [first = 0, second = 0, third = 0] = observed;
+
+		expect(first).toBeGreaterThan(0);
+		expect(second).toBeGreaterThan(first);
+		expect(third).toBeGreaterThan(second);
 		expect(await sizeOf(path)).toBe(chunk.length * 3);
 	});
 

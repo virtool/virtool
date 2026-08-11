@@ -29,6 +29,7 @@
  */
 
 import { createHash } from "node:crypto";
+import type { JsonObject, JsonValue } from "@virtool/contracts";
 import { CacheParamError } from "../errors";
 
 const CACHE_FLOAT = Symbol("cacheFloat");
@@ -202,9 +203,9 @@ function serialize(value: CacheParamValue): string {
 
 	const record = value as { readonly [key: string]: CacheParamValue };
 
-	return `{${Object.keys(record)
-		.sort()
-		.map((key) => `${serializeKey(key)}:${serialize(record[key])}`)
+	return `{${Object.entries(record)
+		.sort(([a], [b]) => (a < b ? -1 : a > b ? 1 : 0))
+		.map(([key, entry]) => `${serializeKey(key)}:${serialize(entry)}`)
 		.join(",")}}`;
 }
 
@@ -224,4 +225,35 @@ export function deriveCacheKey(params: CacheParams): string {
 	return createHash("sha256")
 		.update(canonicalizeCacheParams(params), "utf8")
 		.digest("hex");
+}
+
+/**
+ * Strip the `float()` markers so params can be stored alongside the cache row.
+ *
+ * The marker exists only to make the *key* derivation match Python's, where an
+ * integral float serialises as `1.0` and an int as `1`. The stored params are
+ * diagnostic — nothing looks a cache up by them — so losing that distinction on
+ * the way into JSONB costs nothing, and it is the same thing Python's own row
+ * records.
+ */
+export function toJsonCacheParams(params: CacheParams): JsonObject {
+	return unwrap(params) as JsonObject;
+}
+
+function unwrap(value: CacheParamValue): JsonValue {
+	if (Array.isArray(value)) {
+		return value.map(unwrap);
+	}
+
+	if (typeof value === "object" && value !== null) {
+		if (isCacheFloat(value)) {
+			return value.value;
+		}
+
+		return Object.fromEntries(
+			Object.entries(value).map(([key, entry]) => [key, unwrap(entry)]),
+		);
+	}
+
+	return value;
 }

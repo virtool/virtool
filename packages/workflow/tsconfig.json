@@ -4,7 +4,14 @@
 	// `@virtool/contracts` this package typechecks as one project.
 	"extends": "../tsconfig.base.json",
 	"compilerOptions": {
-		"types": ["node"]
+		"types": ["node"],
+		// On here, though `packages/tsconfig.base.json` leaves it off. Every app
+		// turns it on, and an app bundles this package from source — so a lookup
+		// this project let through is an error in the app that imports it, at a
+		// path that names a file nobody editing that app is looking at. Checking
+		// it here is what keeps the four workflow executors from each rediscovering
+		// the same twenty errors.
+		"noUncheckedIndexedAccess": true
 	},
 	"include": ["src"]
 }

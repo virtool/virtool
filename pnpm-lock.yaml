@@ -409,6 +409,55 @@ importers:
         specifier: ^2.3.3
         version: 2.3.3
 
+  apps/workflow-pathoscope:
+    dependencies:
+      '@aws-sdk/client-s3':
+        specifier: ^3.1085.0
+        version: 3.1085.0
+      '@aws-sdk/lib-storage':
+        specifier: ^3.1094.0
+        version: 3.1094.0(@aws-sdk/client-s3@3.1085.0)
+      '@azure/identity':
+        specifier: ^4.13.1
+        version: 4.13.1
+      '@azure/storage-blob':
+        specifier: ^12.33.0
+        version: 12.33.0
+      '@sentry/node':
+        specifier: ^10.69.0
+        version: 10.69.0(@opentelemetry/core@2.10.0(@opentelemetry/api@1.9.1))
+      '@virtool/contracts':
+        specifier: workspace:*
+        version: link:../../packages/contracts
+      '@virtool/logger':
+        specifier: workspace:*
+        version: link:../../packages/logger
+      '@virtool/workflow':
+        specifier: workspace:*
+        version: link:../../packages/workflow
+      execa:
+        specifier: ^10.0.1
+        version: 10.0.1
+      pino:
+        specifier: ^10.1.0
+        version: 10.3.1
+      tar-stream:
+        specifier: ^3.2.0
+        version: 3.2.0
+      undici:
+        specifier: ^7.29.0
+        version: 7.29.0
+    devDependencies:
+      '@types/node':
+        specifier: ^26.1.2
+        version: 26.1.2
+      tsdown:
+        specifier: ^0.22.14
+        version: 0.22.14(oxc-resolver@11.24.2)(tsx@4.23.0)(typescript@7.0.2)
+      vitest:
+        specifier: ^4.1.10
+        version: 4.1.10(@opentelemetry/api@1.9.1)(@types/node@26.1.2)(@vitest/browser-playwright@4.1.10)(jsdom@30.0.1)(vite@8.2.1(@types/node@26.1.2)(esbuild@0.28.2)(jiti@2.7.0)(tsx@4.23.0)(yaml@2.9.0))
+
   packages/bio:
     dependencies:
       '@virtool/contracts':

@@ -8,6 +8,7 @@
  * harness deliberately does not build one.
  */
 
+import { MemoryStorage } from "@virtool/storage";
 import type { JobsApiClient } from "../client/client";
 import {
 	type BuildContextInput,
@@ -62,6 +63,11 @@ export function createFakeBuildContextInput(
 		signal: new AbortController().signal,
 		client: createUnreachableJobsApiClient(),
 		runSubprocess: createFakeSubprocessRunner(),
+		// An empty bucket rather than a refusing one: storage is faked at the
+		// backend, so a test that reads a key it never seeded gets the
+		// `StorageKeyNotFoundError` production would give it. Pass the
+		// `createTestStorage()` backend to seed.
+		storage: new MemoryStorage(),
 		...overrides,
 	};
 }

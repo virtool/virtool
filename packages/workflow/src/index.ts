@@ -1,4 +1,5 @@
 export * from "./app";
+export * from "./cache/cache";
 export * from "./cache/key";
 export * from "./client/client";
 export * from "./client/errors";

@@ -120,7 +120,7 @@ describe("claimJob", () => {
 		]);
 
 		expect(
-			Object.keys((body.steps as Record<string, unknown>[])[0]).sort(),
+			Object.keys((body.steps as Record<string, unknown>[])[0] ?? {}).sort(),
 		).toEqual(["description", "id", "name"]);
 	});
 

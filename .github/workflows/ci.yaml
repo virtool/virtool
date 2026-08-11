@@ -39,29 +39,57 @@ jobs:
         permissions:
             pull-requests: read
         outputs:
-            pathoscope: ${{ steps.filter.outputs.pathoscope }}
+            pathoscope-crate: ${{ steps.filter.outputs.pathoscope-crate }}
+            pathoscope-image: ${{ steps.filter.outputs.pathoscope-image }}
         steps:
             - name: Filter
               id: filter
               if: github.event_name == 'pull_request'
               uses: dorny/paths-filter@v4
               with:
-                  # This file is in the filter so that a change to the
-                  # pathoscope jobs themselves is still gated by them. Neither
-                  # job uses ./.github/actions/setup, so that action is not.
+                  # Two filters, because the two jobs do not share inputs:
+                  # pathoscope-test runs cargo over the crate and touches no
+                  # TypeScript, while build-pathoscope bundles the app and so
+                  # takes every workspace package the Dockerfile copies. One
+                  # filter would run the libclang-and-cargo job on any
+                  # packages/workflow change.
                   #
-                  # `.dockerignore` is: build-pathoscope builds with
-                  # `context: .`, so a rule there decides what the Dockerfile's
-                  # `COPY packages/pathoscope-core .` can see. It already
-                  # carries `**/target` for that crate specifically, and a rule
-                  # that excluded the crate would fail the build on main with
-                  # nothing having caught it on the PR.
+                  # **Every path the Dockerfile COPYs must appear under
+                  # pathoscope-image.** A missing one skips the build on the PR
+                  # that breaks it and fails on the subsequent push to main,
+                  # where nothing gates it.
+                  #
+                  # This file is in both so that a change to the pathoscope jobs
+                  # themselves is still gated by them. Neither job uses
+                  # ./.github/actions/setup, so that action is not.
+                  #
+                  # `.dockerignore` is in the image filter: build-pathoscope
+                  # builds with `context: .`, so a rule there decides what the
+                  # Dockerfile's `COPY packages/pathoscope-core .` can see. It
+                  # already carries `**/target` for that crate specifically, and
+                  # a rule that excluded the crate would fail the build on main
+                  # with nothing having caught it on the PR.
                   filters: |
-                      pathoscope:
+                      pathoscope-crate:
                         - 'packages/pathoscope-core/**'
-                        - 'apps/workflow-pathoscope/**'
-                        - '.dockerignore'
                         - '.github/workflows/ci.yaml'
+                      pathoscope-image:
+                        - 'packages/pathoscope-core/**'
+                        - '.github/workflows/ci.yaml'
+                        - 'apps/workflow-pathoscope/**'
+                        - 'packages/contracts/**'
+                        - 'packages/logger/**'
+                        - 'packages/sentry/**'
+                        - 'packages/storage/**'
+                        - 'packages/workflow/**'
+                        - 'packages/tsconfig.base.json'
+                        - 'apps/tsconfig.node.json'
+                        - 'apps/*/package.json'
+                        - 'packages/*/package.json'
+                        - 'package.json'
+                        - 'pnpm-workspace.yaml'
+                        - 'pnpm-lock.yaml'
+                        - '.dockerignore'
 
     # -------------------------------------------------------------------------
     # Checks (repo-wide)
@@ -136,12 +164,13 @@ jobs:
     # push a pathoscope image on release. That repo publishes
     # `ghcr.io/virtool/pathoscope`; the Dockerfile here targets
     # `ghcr.io/virtool/ts-pathoscope`, so nothing would be overwritten today —
-    # but two pipelines shipping the same workflow is the ambiguity to avoid,
-    # and the port is not finished. `apps/workflow-pathoscope` holds only a
-    # Dockerfile.
+    # but two pipelines shipping the same workflow is the ambiguity to avoid.
     #
     # Restore a publish job when `virtool/workflow-pathoscope` is retired, and
-    # settle which image name the cluster pulls in the same change.
+    # settle which image name the cluster pulls in the same change. Note that
+    # `publish-ghcr` is also what runs `pnpm -C <workspace> version`, so until
+    # this app has a publish entry its `APP_VERSION` is `0.0.0` in every built
+    # image — and `workflow_version` is part of every cache key it derives.
     build-pathoscope:
         name: Pathoscope / Build
         runs-on: ubuntu-24.04
@@ -152,7 +181,7 @@ jobs:
         # without the skipped-dependency handling
         # (`if: always() && !contains(needs.*.result, 'failure')`) a filtered
         # dependency would otherwise force onto it. PRs get the savings.
-        if: github.event_name == 'push' || needs.changes.outputs.pathoscope == 'true'
+        if: github.event_name == 'push' || needs.changes.outputs.pathoscope-image == 'true'
         steps:
             - name: Checkout
               uses: actions/checkout@v7
@@ -265,7 +294,7 @@ jobs:
         needs: [changes]
         # See the note on `build-pathoscope`: filtered on pull requests,
         # unconditional on `push` so the `release-tag` gate stays complete.
-        if: github.event_name == 'push' || needs.changes.outputs.pathoscope == 'true'
+        if: github.event_name == 'push' || needs.changes.outputs.pathoscope-crate == 'true'
         steps:
             - name: Checkout
               uses: actions/checkout@v7
