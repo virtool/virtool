@@ -3,6 +3,7 @@ import type { PgClient } from "@virtool/data/db/pg";
 import { checkPostgres, summarizeReadiness } from "@virtool/data/health/data";
 import type { Logger } from "@virtool/logger";
 import { handleMetrics } from "./metrics/handler";
+import type { TaskQueueReader } from "./metrics/queue";
 import type { Metrics } from "./metrics/registry";
 
 /** A response the probe listener writes out verbatim. */
@@ -18,6 +19,8 @@ export type ProbeDeps = {
 	logger: Logger;
 	metrics: Metrics;
 	metricsToken: string | undefined;
+	/** Refreshes the queue gauges on scrape; absent when spawning is disabled. */
+	readTaskQueue?: TaskQueueReader;
 	/** Whether this process is currently accepting work. */
 	isReady: () => boolean;
 };
@@ -97,6 +100,8 @@ async function route(
 	if (path === "/metrics") {
 		return handleMetrics({
 			metrics: deps.metrics,
+			logger: deps.logger,
+			readTaskQueue: deps.readTaskQueue,
 			authorization,
 			token: deps.metricsToken,
 		});

@@ -1,10 +1,21 @@
 import { isBearerTokenValid } from "@virtool/contracts/bearer";
+import type { Logger } from "@virtool/logger";
 import type { ProbeResponse } from "../probes";
+import type { TaskQueueReader } from "./queue";
 import type { Metrics } from "./registry";
 
 /** What {@link handleMetrics} needs to answer a scrape. */
 export type MetricsDeps = {
 	metrics: Metrics;
+	logger: Logger;
+	/**
+	 * Refreshes the queue gauges, or absent when this process is not spawning.
+	 *
+	 * The queue series belong to the spawner half. Every replica carries a
+	 * runner, so a reader wired unconditionally would have N replicas each
+	 * scanning the same table on every scrape to publish N copies of one number.
+	 */
+	readTaskQueue: TaskQueueReader | undefined;
 	/** The request's `Authorization` header, verbatim. */
 	authorization: string | undefined;
 	token: string | undefined;
@@ -42,6 +53,21 @@ export async function handleMetrics(deps: MetricsDeps): Promise<ProbeResponse> {
 			body: "Unauthorized",
 			headers: { "www-authenticate": "Bearer" },
 		};
+	}
+
+	if (deps.readTaskQueue) {
+		try {
+			deps.metrics.setTaskQueue(await deps.readTaskQueue());
+		} catch (err) {
+			// A Postgres outage is exactly when the rest of these metrics matter
+			// most, so a failed or slow read drops only the gauges it feeds rather
+			// than failing the scrape. They are dropped rather than left to go
+			// stale: a queue depth is only meaningful as of a moment, and re-serving
+			// the last one would have Prometheus record it as fresh on every scrape
+			// of the outage.
+			deps.metrics.clearTaskQueue();
+			deps.logger.warn({ err }, "could not read task queue counts");
+		}
 	}
 
 	return {

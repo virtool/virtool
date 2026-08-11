@@ -21,6 +21,9 @@ import {
 	failTask,
 	getTask,
 	getTasks,
+	readOldestQueuedTaskAges,
+	readTaskCounts,
+	readTaskQueueBounded,
 	reclaimExpiredLeases,
 	releaseRunnerClaims,
 	releaseTask,
@@ -809,5 +812,115 @@ describe("frames", () => {
 		});
 
 		expect(frames).toEqual([]);
+	});
+});
+
+describe("readTaskCounts", () => {
+	it("splits active tasks into queued and running, by type", async () => {
+		await createTask(db, "install_hmms");
+		const running = await createTask(db, "install_hmms");
+		const other = await createTask(db, "create_index");
+
+		await holdTask(running, RUNNER_A, 10);
+		await holdTask(other, RUNNER_A, 10);
+
+		const counts = await readTaskCounts(db);
+
+		expect([...counts].sort((a, b) => a.type.localeCompare(b.type))).toEqual([
+			{ type: "create_index", queued: 0, running: 1 },
+			{ type: "install_hmms", queued: 1, running: 1 },
+		]);
+	});
+
+	it("counts a type the union does not name", async () => {
+		await db.insert(tasks).values({
+			complete: false,
+			context: {},
+			count: 0,
+			created_at: new Date(),
+			progress: 0,
+			step: "a_python_task",
+			type: "a_python_task",
+		});
+
+		expect(await readTaskCounts(db)).toEqual([
+			{ type: "a_python_task", queued: 1, running: 0 },
+		]);
+	});
+
+	// The predicate is Python's `get_counts`, and the pre/post-cutover comparison
+	// only holds if both sides count the same rows. A failure is the case worth
+	// pinning: `failTask` sets `complete` as well as `error`, but Python's failure
+	// path writes `error` alone, so a row can be failed and incomplete at once.
+	it("excludes complete, failed, and failed-but-incomplete tasks", async () => {
+		const completed = await createTask(db, "install_hmms");
+		await holdTask(completed, RUNNER_A, 1);
+		await completeTask(db, completed, RUNNER_A);
+
+		const failed = await createTask(db, "install_hmms");
+		await holdTask(failed, RUNNER_A, 1);
+		await failTask(db, failed, RUNNER_A, "it broke");
+
+		const pythonStyleFailure = await createTask(db, "install_hmms");
+		await db
+			.update(tasks)
+			.set({ error: "python wrote this" })
+			.where(eq(tasks.id, pythonStyleFailure));
+
+		expect(await readTaskCounts(db)).toEqual([]);
+	});
+
+	it("returns nothing for an empty queue", async () => {
+		expect(await readTaskCounts(db)).toEqual([]);
+	});
+});
+
+describe("readOldestQueuedTaskAges", () => {
+	it("reports the oldest unclaimed task per type", async () => {
+		const older = await createTask(db, "install_hmms");
+		await createTask(db, "install_hmms");
+
+		await db
+			.update(tasks)
+			.set({ created_at: new Date(Date.now() - 600 * 1000) })
+			.where(eq(tasks.id, older));
+
+		const [row] = await readOldestQueuedTaskAges(db);
+
+		expect(row?.type).toBe("install_hmms");
+		// A wide window: the assertion is that the age is measured from the older
+		// row and in UTC, not that the clocks agree to the second.
+		expect(row?.ageSeconds).toBeGreaterThan(550);
+		expect(row?.ageSeconds).toBeLessThan(650);
+	});
+
+	it("ignores a claimed task, however old", async () => {
+		const taskId = await createTask(db, "install_hmms");
+
+		await db
+			.update(tasks)
+			.set({ created_at: new Date(Date.now() - 600 * 1000) })
+			.where(eq(tasks.id, taskId));
+
+		await holdTask(taskId, RUNNER_A, 10);
+
+		expect(await readOldestQueuedTaskAges(db)).toEqual([]);
+	});
+});
+
+describe("readTaskQueueBounded", () => {
+	it("returns both reads together", async () => {
+		await createTask(db, "install_hmms");
+
+		const snapshot = await readTaskQueueBounded(db);
+
+		expect(snapshot.counts).toEqual([
+			{ type: "install_hmms", queued: 1, running: 0 },
+		]);
+		expect(snapshot.oldestQueuedAges).toHaveLength(1);
+	});
+
+	it("rejects rather than hanging when the deadline passes", async () => {
+		await expect(readTaskQueueBounded(db, 0)).rejects.toThrow("timed out");
 	});
 });

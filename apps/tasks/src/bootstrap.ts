@@ -13,6 +13,7 @@ import { createShutdownController } from "@virtool/service/shutdown";
 import { createStorageBackend, type StorageBackend } from "@virtool/storage";
 import { parseTasksConfig, type TasksConfig } from "./config";
 import { initSentry, SERVICE } from "./instrument";
+import { createTaskQueueReader } from "./metrics/queue";
 import { createMetrics } from "./metrics/registry";
 import { createProbeServer } from "./probes";
 
@@ -136,6 +137,11 @@ export async function bootstrap(
 		logger,
 		metrics: createMetrics(options.version),
 		metricsToken: config.metricsToken,
+		// The queue gauges are the spawner half's. A claim-only deployment leaves
+		// this unset and its scrapes touch the database not at all — which is what
+		// keeps N runner replicas from each scanning the same table to publish N
+		// copies of one queue depth.
+		readTaskQueue: config.spawnEnabled ? createTaskQueueReader(db) : undefined,
 		isReady: () => ready,
 	});
 

@@ -944,6 +944,26 @@ reports zero rather than its last backlog. The workflow list is
 `JobWorkflow.options` from `@virtool/contracts` — the one definition;
 don't mint a second.
 
+**Task and queue visibility is `apps/tasks`'s.**
+`virtool_task_spawn_total{type,outcome}`,
+`virtool_task_runs_total{type,outcome}`,
+`virtool_task_duration_seconds{type}`, `virtool_tasks{type,state}` and
+`virtool_tasks_oldest_queued_age_seconds{type}` live on that process's
+registry. Five rules hold them: `type` is bounded by `TaskName` from
+`@virtool/contracts` with an unrecognised value folded into `other`
+(`tasks.type` is plain `text`, so nothing narrows the column itself);
+the histogram's buckets are **task-sized**, 1 s to 2 h, because
+`virtool_http_*`'s top out at 10 s and would put every bioinformatics
+task in `+Inf`; `outcome` labels the counters and never the histogram;
+the **spawn** counter is pre-declared over its whole cross product so
+`skipped_locked` at zero can be told from a counter that was never
+wired, while the run counter is observed-only; and the queue gauges are
+built only when `spawnEnabled`, so N runner replicas don't each scan the
+same table. The queue read reproduces Python's `get_counts` predicate
+term for term — `complete = false AND error IS NULL`, split on
+`acquired_at` — which is what makes the cutover comparison
+apples-to-apples. Don't change it.
+
 `server/metrics/registry.ts` owns the one process-wide `Registry`.
 Default process metrics keep prom-client's standard unprefixed names
 (`process_*`, `nodejs_*`) so off-the-shelf dashboards match; everything
@@ -1053,6 +1073,12 @@ four rules hold them:
   returned `false`. Those three take `Db` rather than `DbOrTx` so a
   frame cannot precede the commit of the row it describes.
 
+The spawn and claim loops report through the `virtool_task_*` and
+`virtool_tasks*` series described under **Metrics** above. `recordSpawn`
+and `recordRun` are the only way a loop writes one — never register a
+metric from a loop, and never read `tasks` from a scrape by any route
+but `readTaskQueueBounded`, whose predicate is Python's.
+
 A task body is authored against the framework in
 `apps/tasks/src/framework/` — `defineTask` and the payload/step
 declaration (`define.ts`), the debounced progress writer
@@ -1101,9 +1127,10 @@ declaration (`define.ts`), the debounced progress writer
 
 See [docs/tasks.md](docs/tasks.md) for the full config table, the
 `AppContext` contract, the shutdown ordering and its guarantees, the
-probe and metrics surface, the lease, fencing and frame rules in full,
-and the framework's step model, terminal-outcome table and progress
-seam.
+probe and metrics surface including the five task series and their
+bucket, label and folding rules, the lease, fencing and frame rules in
+full, and the framework's step model, terminal-outcome table and
+progress seam.
 
 ## Data
 

@@ -1,10 +1,11 @@
 import { hostname } from "node:os";
-import type { JsonObject, Task } from "@virtool/contracts";
+import type { JsonObject, Task, TaskName } from "@virtool/contracts";
 import {
 	and,
 	asc,
 	eq,
 	inArray,
+	isNotNull,
 	isNull,
 	like,
 	lt,
@@ -15,6 +16,7 @@ import {
 import type { Db, DbOrTx } from "../db/pg";
 import { takeFirstOrThrow } from "../db/rows";
 import { tasks as tasksTable } from "../db/schema/tasks";
+import { withTimeout } from "../db/timeout";
 import { AppError } from "../errors";
 import { emit } from "../events/emit";
 
@@ -24,12 +26,15 @@ export class TaskNotFoundError extends AppError {}
 /**
  * A task type the TS server can spawn. The runner supports every Python task
  * name, but this union only lists the ones we create from here.
+ *
+ * Written as a subset of {@link TaskName} rather than as its own list of
+ * strings, so a name that drifts from the one Python's task class carries is a
+ * compile error here instead of a row no runner ever claims.
  */
-export type TaskType =
-	| "clone_reference"
-	| "create_index"
-	| "import_reference"
-	| "install_hmms";
+export type TaskType = Extract<
+	TaskName,
+	"clone_reference" | "create_index" | "import_reference" | "install_hmms"
+>;
 
 /**
  * Insert a pending task of `type` and return its id.
@@ -505,6 +510,133 @@ export async function releaseRunnerClaims(
 		.returning({ id: tasksTable.id });
 
 	return rows.map((row) => row.id);
+}
+
+/**
+ * The predicate Python's `TasksData.get_counts` counts under: a task that is
+ * neither finished nor failed.
+ *
+ * Reproduced term for term, because the pre- and post-cutover comparison is
+ * only apples-to-apples if both sides count the same rows. It is also the
+ * predicate of Python's `idx_tasks_active` partial index, so the reads below
+ * are served by it rather than scanning a table whose completed rows accumulate
+ * without bound.
+ *
+ * Note that `error IS NULL` and `complete = false` are *both* required. A
+ * Python failure writes `error` and leaves `complete` false, so neither term
+ * implies the other on rows Python wrote.
+ */
+function isActive(): SQL | undefined {
+	return and(eq(tasksTable.complete, false), isNull(tasksTable.error));
+}
+
+/** Active tasks of one type, split the way Python's `get_counts` splits them. */
+export type TaskCount = {
+	type: string;
+	/** Active and unclaimed — Python's `queued`. */
+	queued: number;
+	/** Active and claimed — Python's `running`. */
+	running: number;
+};
+
+/** How long the oldest unclaimed task of a type has been waiting. */
+export type OldestQueuedTaskAge = {
+	type: string;
+	ageSeconds: number;
+};
+
+/** The active task queue as a `/metrics` scrape reports it. */
+export type TaskQueueSnapshot = {
+	counts: TaskCount[];
+	oldestQueuedAges: OldestQueuedTaskAge[];
+};
+
+/**
+ * How long a scrape waits on the task-queue reads before abandoning them.
+ *
+ * Matched to the job queue's bound, and for the same reason: these run on the
+ * pool this process claims and heartbeats tasks over, so a saturated pool
+ * queues them *client-side*, where no statement timeout applies.
+ */
+export const TASK_QUEUE_PROBE_TIMEOUT_MS = 2000;
+
+/**
+ * Count the active tasks of each type, queued and running.
+ *
+ * The two counts come from one grouped scan rather than two queries, since they
+ * partition the same predicate — and a queue read split across two statements
+ * can report a task in neither half, or in both, if it is claimed between them.
+ *
+ * The `type` breakdown is additional to Python, which reports two scalars.
+ * Summing over `type` reproduces them exactly, so the breakdown costs the
+ * comparison nothing and is what makes the gauge actionable: "twelve queued"
+ * says nothing about whether anything can drain them.
+ */
+export async function readTaskCounts(db: Db): Promise<TaskCount[]> {
+	return db
+		.select({
+			type: tasksTable.type,
+			queued: sql<number>`
+				count(*) filter (where ${isNull(tasksTable.acquired_at)})
+			`.mapWith(Number),
+			running: sql<number>`
+				count(*) filter (where ${isNotNull(tasksTable.acquired_at)})
+			`.mapWith(Number),
+		})
+		.from(tasksTable)
+		.where(isActive())
+		.groupBy(tasksTable.type);
+}
+
+/**
+ * Age the oldest task still waiting for a runner, per type.
+ *
+ * Depth alone cannot tell a busy fleet from a stalled one — a queue holding at
+ * twelve looks the same whether it is being drained and refilled or not being
+ * drained at all. This is the series that separates them, and during the
+ * cutover it is the one that says the TypeScript runner has actually started
+ * claiming.
+ *
+ * The subtraction happens in Postgres, with `created_at` pinned to UTC on the
+ * way into it. The column is a naive `timestamp`, so left to the session's time
+ * zone the age would be wrong by that offset — and both writers, Python and
+ * Drizzle, store UTC.
+ */
+export async function readOldestQueuedTaskAges(
+	db: Db,
+): Promise<OldestQueuedTaskAge[]> {
+	return db
+		.select({
+			type: tasksTable.type,
+			ageSeconds: sql<number>`
+				extract(epoch from (now() - (min(${tasksTable.created_at}) at time zone 'UTC')))
+			`.mapWith(Number),
+		})
+		.from(tasksTable)
+		.where(and(isActive(), isNull(tasksTable.acquired_at)))
+		.groupBy(tasksTable.type);
+}
+
+/**
+ * Both task-queue reads at once, bounded by
+ * {@link TASK_QUEUE_PROBE_TIMEOUT_MS}.
+ *
+ * This is what a `/metrics` handler should call. The two reads are independent,
+ * so they go out concurrently and share one deadline.
+ *
+ * Still throws on timeout or query failure. A caller drops these series and
+ * logs, rather than failing the whole scrape.
+ */
+export function readTaskQueueBounded(
+	db: Db,
+	timeoutMs: number = TASK_QUEUE_PROBE_TIMEOUT_MS,
+): Promise<TaskQueueSnapshot> {
+	return withTimeout(
+		Promise.all([readTaskCounts(db), readOldestQueuedTaskAges(db)]).then(
+			([counts, oldestQueuedAges]) => ({ counts, oldestQueuedAges }),
+		),
+		timeoutMs,
+	);
 }
 
 /**

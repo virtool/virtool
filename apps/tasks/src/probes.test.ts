@@ -269,6 +269,62 @@ describe("GET /metrics", () => {
 	});
 });
 
+describe("GET /metrics queue gauges", () => {
+	async function scrape(overrides: Partial<ProbeDeps>): Promise<string> {
+		const probe = await serve(overrides);
+
+		try {
+			return await (
+				await probe.get("/metrics", {
+					authorization: `Bearer ${METRICS_TOKEN}`,
+				})
+			).text();
+		} finally {
+			await probe.close();
+		}
+	}
+
+	it("refreshes the queue gauges from the reader", async () => {
+		const body = await scrape({
+			readTaskQueue: async () => ({
+				counts: [{ type: "install_hmms", queued: 4, running: 1 }],
+				oldestQueuedAges: [{ type: "install_hmms", ageSeconds: 120 }],
+			}),
+		});
+
+		expect(body).toContain(
+			'virtool_tasks{type="install_hmms",state="queued"} 4',
+		);
+		expect(body).toContain(
+			'virtool_tasks_oldest_queued_age_seconds{type="install_hmms"} 120',
+		);
+	});
+
+	// The queue gauges are the spawner half's. Every replica carries a runner, so
+	// a reader wired unconditionally would have N replicas each scanning the same
+	// table on every scrape to publish N copies of one number.
+	it("emits no queue series when spawning is disabled", async () => {
+		const body = await scrape({ readTaskQueue: undefined });
+
+		expect(body).not.toContain("virtool_tasks{");
+		expect(body).not.toContain("virtool_tasks_oldest_queued_age_seconds{");
+		expect(body).toContain("process_cpu_seconds_total");
+	});
+
+	// A Postgres outage is when the rest of these metrics matter most, so a
+	// failed read drops only the gauges it feeds. They are dropped rather than
+	// left stale: re-serving the last depth would have Prometheus record it as
+	// fresh on every scrape of the outage.
+	it("drops the queue series and still answers 200 when the read fails", async () => {
+		const body = await scrape({
+			readTaskQueue: () => Promise.reject(new Error("postgres is down")),
+		});
+
+		expect(body).not.toContain("virtool_tasks{");
+		expect(body).toContain("virtool_app_info{");
+	});
+});
+
 describe("anything else", () => {
 	it("answers 404", async () => {
 		const probe = await serve();

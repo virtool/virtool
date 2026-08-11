@@ -173,10 +173,10 @@ difference between a safe rollout and a blind one.
 ### `GET /metrics`
 
 A private `prom-client` `Registry` holding `collectDefaultMetrics` — left
-unprefixed so off-the-shelf Node dashboards match — plus `virtool_app_info`.
-Nothing else yet. The `virtool_http_*` series are web-specific: their buckets
-top out at 10 s, and this process serves nothing but probes. Task and queue
-series belong to the issues that add the loops.
+unprefixed so off-the-shelf Node dashboards match — plus `virtool_app_info` and
+the task series below. The `virtool_http_*` series are deliberately absent:
+they are web-specific, their buckets top out at 10 s, and this process serves
+nothing but probes.
 
 The gate is `isBearerTokenValid` from `@virtool/contracts/bearer`, shared with
 the other two services. It screens the length before `timingSafeEqual`, which
@@ -190,6 +190,92 @@ needs no Service and yields genuine per-pod series, but cannot carry a bearer
 token — under the semantics above that means no metrics at all. If that is the
 route taken, the handler needs a deliberate third state. Do not reach it by
 quietly dropping the gate.
+
+### The task and queue series
+
+Five series beyond the process defaults, built by `createMetrics` in
+`src/metrics/registry.ts`:
+
+| Series | Type | Labels | Written by |
+| --- | --- | --- | --- |
+| `virtool_task_spawn_total` | counter | `type`, `outcome` | the spawn loop, via `recordSpawn` |
+| `virtool_task_runs_total` | counter | `type`, `outcome` | the claim loop, via `recordRun` |
+| `virtool_task_duration_seconds` | histogram | `type` | the claim loop, via `recordRun` |
+| `virtool_tasks` | gauge | `type`, `state` | the scrape, via `setTaskQueue` |
+| `virtool_tasks_oldest_queued_age_seconds` | gauge | `type` | the scrape, via `setTaskQueue` |
+
+`outcome` on the spawn counter is `spawned`, `skipped_locked` or `not_due` —
+the three ways a cycle can end for one scheduled type. On the run counter it is
+`succeeded` or `failed`.
+
+Seven rules hold these together:
+
+- **`type` is bounded here, not by the column.** `tasks.type` is plain `text`
+  with no CHECK constraint on either side, so a row may carry a name from a
+  typo or from a future Python release. `TaskName` (`@virtool/contracts`) is
+  the union of the nine names Virtool runs, and anything outside it folds onto
+  `other` at the moment it becomes a label. Nothing narrows the column itself:
+  a claimed row's `type` stays `string` all the way to `recordRun`.
+- **The spawn counter is pre-declared over its whole cross product; the run
+  counter is not.** A counter's children do not exist until one is incremented,
+  and an absent series cannot be told from a zero one — which matters twice
+  over for `skipped_locked`, since "the advisory lock was never contended" and
+  "the counter was never wired up" must not look alike, and `rate()` needs a
+  prior sample to subtract from. The spawn schedule is fixed at build time
+  (`PeriodicTaskName`) so the cross product is knowable; which types a runner
+  claims is configuration this registry never sees, so the run counter is
+  observed-only.
+- **`outcome` labels the counter and never the histogram.** Duration buckets
+  are a property of the work, not of how it ended, and splitting them would
+  halve the samples behind every quantile to express a dimension the counter
+  already carries.
+- **The buckets are task-sized: 1 s to 2 h.** `virtool_http_*`'s top out at
+  10 s, which would put a reference import and an index build in the same
+  `+Inf` bucket and leave the histogram unable to express a quantile above the
+  median. The low end still resolves a BLAST sweep that finds nothing, which is
+  the common case for the thirty-second schedule.
+- **The queue gauges are the spawner half's.** `bootstrap` builds the reader
+  only when `spawnEnabled`, and the handler skips the refresh when it is
+  absent, so a claim-only deployment's scrapes touch the database not at all.
+  Every replica carries a runner; a reader wired unconditionally would have N
+  replicas each scanning the same table to publish N copies of one number.
+- **The whole `type` × `state` cross product is written as zero on each
+  refresh**, so a type that drains reports zero rather than holding its last
+  backlog forever — the worst possible failure for an alert on queue depth.
+  Counts *add* into a folded label; an age takes the oldest of what falls into
+  it.
+- **A failed refresh drops the queue series rather than zeroing or keeping
+  them.** An absent series says "unknown", which is the true answer during a
+  Postgres outage and which `absent()` can alert on. Leaving them standing
+  would have Prometheus record a stale depth as a fresh sample on every scrape
+  of the outage; zeroing would assert an empty queue. The rest of the scrape is
+  unaffected — a database outage is when the process metrics matter most.
+
+### The queue read is Python's `get_counts`, term for term
+
+`readTaskCounts` and `readOldestQueuedTaskAges` (`@virtool/data/tasks/data`)
+count under `complete = false AND error IS NULL`, splitting on
+`acquired_at IS NULL` for `queued` and `IS NOT NULL` for `running`. That is
+Python's `TasksData.get_counts` exactly, and it is also the predicate of
+Python's `idx_tasks_active` partial index — so the reads are served by it
+rather than scanning a table whose completed rows accumulate without bound.
+Reproducing it is what makes the pre- and post-cutover comparison
+apples-to-apples; changing it silently invalidates that comparison.
+
+Both terms are required, and neither implies the other. A Python failure writes
+`error` and leaves `complete` false, so a row can be failed and incomplete at
+once — which is why `failTask` here sets both.
+
+The `type` breakdown is additional to Python, which reports two scalars.
+Summing over `type` reproduces them exactly, so it costs the comparison
+nothing and is what makes the gauge actionable.
+
+`readTaskQueueBounded` runs both concurrently under one 2-second deadline, for
+the reason every `/metrics` probe carries one: the query runs on the pool this
+process claims and heartbeats over, so a saturated pool queues it *client-side*
+where no statement timeout applies. `createTaskQueueReader`
+(`src/metrics/queue.ts`) memoizes the result for 10 s and shares in-flight
+reads, so two Prometheus replicas cost one query; a rejection is not cached.
 
 ### The version label
 
