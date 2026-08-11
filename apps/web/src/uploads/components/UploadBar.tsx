@@ -40,10 +40,7 @@ export function UploadBar({
 	regex,
 }: UploadBarProps) {
 	function validator(file: File): FileError | null {
-		// The drag-and-drop spec only exposes file data on drop, so during a drag
-		// react-dropzone runs this against DataTransferItems, which carry no name.
-		// Matching the regex against that would reject every drag on sight.
-		if (!regex || typeof file.name !== "string") {
+		if (!regex) {
 			return null;
 		}
 
@@ -63,12 +60,19 @@ export function UploadBar({
 		getInputProps,
 		isDragAccept,
 		isDragReject,
+		isDragUnknown,
 		open,
 	} = useDropzone({
 		accept,
 		onDrop,
 		validator,
 	});
+
+	// The drag-and-drop spec withholds file names until drop, so a dropzone with
+	// a validator reports `isDragUnknown` instead of `isDragAccept` — the regex
+	// cannot run yet. Highlight the bar as a drop target either way; a name that
+	// fails the regex is reported under it once the files land.
+	const isDragWelcome = isDragAccept || isDragUnknown;
 
 	const rootProps = getRootProps({
 		onClick: (e) => e.stopPropagation(),
@@ -78,9 +82,9 @@ export function UploadBar({
 		<div
 			className={cn(
 				{
-					"bg-blue-100": isDragAccept && !isDragReject,
-					"bg-blue-50": !isDragAccept && !isDragReject,
-					"bg-red-100": isDragReject && !isDragAccept,
+					"bg-blue-100": isDragWelcome,
+					"bg-blue-50": !isDragWelcome && !isDragReject,
+					"bg-red-100": isDragReject,
 				},
 				"border",
 				"border-dashed",

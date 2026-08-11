@@ -17,6 +17,24 @@ function dragEnter(element: HTMLElement) {
 	});
 }
 
+/**
+ * Drop files the way a browser does: `dataTransfer` carries both the items and
+ * the files, and react-dropzone reads the file data off the items.
+ */
+function drop(element: HTMLElement, files: File[]) {
+	fireEvent.drop(element, {
+		dataTransfer: {
+			files,
+			items: files.map((file) => ({
+				getAsFile: () => file,
+				kind: "file",
+				type: file.type,
+			})),
+			types: ["Files"],
+		},
+	});
+}
+
 function getBar() {
 	return screen.getByLabelText("Upload file").parentElement as HTMLElement;
 }
@@ -47,9 +65,7 @@ describe("<UploadBar>", () => {
 			type: "application/gzip",
 		});
 
-		fireEvent.drop(getBar(), {
-			dataTransfer: { files: [invalid], types: ["Files"] },
-		});
+		drop(getBar(), [invalid]);
 
 		expect(
 			await screen.findByText("Invalid file names: invalid.gz"),
