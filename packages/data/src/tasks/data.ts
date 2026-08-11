@@ -643,11 +643,11 @@ export function readTaskQueueBounded(
  * Take back every claim held by one of our runners whose lease has run out, and
  * report which.
  *
- * {@link acquireTask} already reclaims as it claims, so nothing needs to call
- * this on a running fleet. It ships as its own query for the cutover, where a
- * fleet may be spawning tasks with claiming disabled and so never running a
- * claim to heal them, and because a reclaim that can be invoked directly is
- * testable and operable on its own.
+ * {@link acquireTask} already reclaims as it claims, so nothing calls this on a
+ * running fleet. It ships as its own query for the cutover, whose last step is
+ * widening the prefix scope below to recover what Python was mid-flight on when
+ * its deployment was deleted — a sweep that has to be invocable on its own,
+ * because by then there is no claim left to fold it into.
  *
  * Scoped to {@link RUNNER_ID_PREFIX}: a row Python holds is never touched.
  *

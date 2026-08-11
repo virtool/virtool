@@ -13,6 +13,32 @@ type Outcome = "clean" | "failed" | "overran";
 type Step = {
 	name: string;
 	run: () => Promise<void>;
+	/**
+	 * A ceiling of its own, in milliseconds, instead of an equal share.
+	 *
+	 * See {@link ShutdownOptions.timeoutMs}.
+	 */
+	timeoutMs?: number;
+};
+
+/** How a registered hook departs from the equal-share budget. */
+export type ShutdownOptions = {
+	/**
+	 * Bound this hook explicitly rather than giving it an equal share.
+	 *
+	 * Equal division suits steps whose duration is a socket close or a buffer
+	 * flush, where a share is always more than enough. It badly under-serves a
+	 * hook that has to wait out *work* — draining a task a runner is mid-way
+	 * through — because the ceiling on any one step is the budget divided by the
+	 * number of steps, however little the others need.
+	 *
+	 * A hook that declares one takes the smaller of it and the time left, and
+	 * that amount is reserved out of what the unbudgeted steps behind it divide,
+	 * so declaring one cannot starve them. Keep the sum comfortably under
+	 * {@link ShutdownDeps.timeout}: the remainder is what closes the listener,
+	 * drains the pool and flushes Sentry.
+	 */
+	timeoutMs?: number;
 };
 
 /** What a step that never settled resolves to, rather than its own value. */
@@ -35,7 +61,11 @@ export type ShutdownDeps = {
 
 /** The shutdown surface {@link createShutdownController} returns. */
 export type ShutdownController = {
-	onShutdown: (name: string, hook: () => Promise<void>) => void;
+	onShutdown: (
+		name: string,
+		hook: () => Promise<void>,
+		options?: ShutdownOptions,
+	) => void;
 	/** Run the sequence. Safe to call more than once; later calls are ignored. */
 	shutdown: (signal: string) => Promise<void>;
 	/** Register SIGTERM and SIGINT handlers. */
@@ -132,12 +162,19 @@ function withDeadline<T>(
  * from one that did not.
  *
  * That holds for a step that *hangs* as well as one that throws, which is why
- * the budget is divided rather than pooled: every step, each hook included,
- * gets an equal share of the time still left when it starts, and is abandoned
- * once that share is spent. Awaiting the sequence against a single deadline
- * would let one stuck socket eat the whole budget and take the pool drain and
- * the Sentry flush down with it — so the failure would go unrecorded precisely
- * when there was something to record.
+ * the budget is divided rather than pooled: every step gets a share of the time
+ * still left when it starts, and is abandoned once that share is spent.
+ * Awaiting the sequence against a single deadline would let one stuck socket eat
+ * the whole budget and take the pool drain and the Sentry flush down with it —
+ * so the failure would go unrecorded precisely when there was something to
+ * record.
+ *
+ * The share is **equal**, except for a hook that declares a
+ * {@link ShutdownOptions.timeoutMs} of its own. Equal division is right for a
+ * socket close or a buffer flush, and wrong for a hook waiting out work: the
+ * ceiling on any one step is the budget over the number of steps, however
+ * little the rest need. A declared ceiling is reserved out of what the
+ * unbudgeted steps divide, so it cannot starve them.
  *
  * A step whose share runs out is abandoned, not cancelled — nothing here can
  * force a socket closed — so the process may still have to be reaped rather
@@ -188,11 +225,26 @@ export function createShutdownController(
 		const results: boolean[] = [];
 
 		for (const [index, step] of steps.entries()) {
-			// Each step gets an equal share of whatever is left, so one that never
-			// settles is abandoned with time still on the clock for the rest. A step
-			// that finishes early hands the remainder on to the steps behind it.
+			// Each step gets a share of whatever is left, so one that never settles is
+			// abandoned with time still on the clock for the rest. A step that
+			// finishes early hands the remainder on to the steps behind it.
+			const remaining = Math.max(0, deadline - performance.now());
+
+			// What the steps behind this one have claimed explicitly is subtracted
+			// before the rest is divided, so a hook that declares a ceiling reserves
+			// its time rather than taking it out of the pool drain's.
+			const reserved = steps
+				.slice(index + 1)
+				.reduce((total, later) => total + (later.timeoutMs ?? 0), 0);
+
+			const unbudgeted = steps
+				.slice(index)
+				.filter((each) => each.timeoutMs === undefined).length;
+
 			const share =
-				Math.max(0, deadline - performance.now()) / (steps.length - index);
+				step.timeoutMs === undefined
+					? Math.max(0, remaining - reserved) / unbudgeted
+					: Math.min(step.timeoutMs, remaining);
 
 			results.push(await runStep(step, share));
 		}
@@ -239,8 +291,14 @@ export function createShutdownController(
 	}
 
 	return {
-		onShutdown(name, run) {
-			hooks.push({ name, run });
+		onShutdown(name, run, options) {
+			hooks.push({
+				name,
+				run,
+				...(options?.timeoutMs !== undefined && {
+					timeoutMs: options.timeoutMs,
+				}),
+			});
 		},
 
 		shutdown,

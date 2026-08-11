@@ -4,10 +4,7 @@ import {
 	createTestDatabase,
 	type TestDatabase,
 } from "@virtool/data/db/test/fixtures";
-import {
-	CLIENT_EVENTS_CHANNEL,
-	type ClientEvent,
-} from "@virtool/data/events/channel";
+import type { ClientEvent } from "@virtool/data/events/channel";
 import {
 	acquireTask,
 	type ClaimedTask,
@@ -25,6 +22,7 @@ import {
 	vi,
 } from "vitest";
 import { z } from "zod";
+import { collectFrames as collect } from "../testing/frames";
 import { defineTask, type TaskRegistry } from "./define";
 import { runTask } from "./run";
 
@@ -80,53 +78,9 @@ async function claim(
 	return claimed;
 }
 
-/**
- * Collect the `client_events` frames published while `run` executes.
- *
- * The sentinel at the end is what makes a count sound: it is published after
- * everything `run` did, over the connection the emitter uses, so its arrival
- * proves every frame `run` published has already arrived. Waiting a fixed
- * interval instead would pass on a slow machine for the wrong reason.
- */
-async function collectFrames(run: () => Promise<void>): Promise<ClientEvent[]> {
-	const received: ClientEvent[] = [];
-	let seal: () => void = () => undefined;
-	const sealed = new Promise<void>((resolve) => {
-		seal = resolve;
-	});
-
-	const subscription = await database.client.listen(
-		CLIENT_EVENTS_CHANNEL,
-		(payload) => {
-			const event = JSON.parse(payload) as ClientEvent;
-
-			if (event.domain === "roles" && event.resource_id === "sentinel") {
-				seal();
-				return;
-			}
-
-			received.push(event);
-		},
-	);
-
-	try {
-		await run();
-
-		await database.client.notify(
-			CLIENT_EVENTS_CHANNEL,
-			JSON.stringify({
-				domain: "roles",
-				resource_id: "sentinel",
-				operation: "update",
-			}),
-		);
-
-		await sealed;
-	} finally {
-		await subscription.unlisten();
-	}
-
-	return received;
+/** Collect the `client_events` frames published while `run` executes. */
+function collectFrames(run: () => Promise<void>): Promise<ClientEvent[]> {
+	return collect(database.client, run);
 }
 
 describe("defineTask", () => {

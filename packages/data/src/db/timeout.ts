@@ -13,7 +13,10 @@
  * this helper and a log line saying only "timed out" cannot be told from any
  * other failure.
  */
-export function withTimeout<T>(promise: Promise<T>, ms: number): Promise<T> {
+export function withTimeout<T>(
+	promise: PromiseLike<T>,
+	ms: number,
+): Promise<T> {
 	let timer: ReturnType<typeof setTimeout> | undefined;
 
 	const deadline = new Promise<never>((_, reject) => {

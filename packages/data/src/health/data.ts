@@ -1,5 +1,6 @@
 import type { Logger } from "@virtool/logger";
 import type { PgClient } from "../db/pg";
+import { withTimeout } from "../db/timeout";
 
 const CHECK_TIMEOUT_MS = 5_000;
 
@@ -24,26 +25,6 @@ export function summarizeReadiness(postgres: StoreCheck): ReadyReport {
 		statusCode: ok ? 200 : 503,
 		checks: { postgres },
 	};
-}
-
-/** Reject if `promise` does not settle within `ms` milliseconds. */
-function withTimeout<T>(promise: PromiseLike<T>, ms: number): Promise<T> {
-	return new Promise<T>((resolve, reject) => {
-		const timer = setTimeout(() => {
-			reject(new Error(`health check timed out after ${ms}ms`));
-		}, ms);
-
-		promise.then(
-			(value) => {
-				clearTimeout(timer);
-				resolve(value);
-			},
-			(err) => {
-				clearTimeout(timer);
-				reject(err);
-			},
-		);
-	});
 }
 
 /** Probe Postgres with a trivial query. Never throws. */

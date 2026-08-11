@@ -920,7 +920,9 @@ describe("readTaskQueueBounded", () => {
 		expect(snapshot.oldestQueuedAges).toHaveLength(1);
 	});
 
-	it("rejects rather than hanging when the deadline passes", async () => {
-		await expect(readTaskQueueBounded(db, 0)).rejects.toThrow("timed out");
-	});
+	// The bound itself is `withTimeout`'s, and `timeout.test.ts` covers it against
+	// a promise that genuinely never settles. Asserting it from here meant racing
+	// two real queries against a zero deadline — which `setTimeout` clamps to 1 ms,
+	// so under load the queries won and the test failed for no reason anyone could
+	// act on.
 });

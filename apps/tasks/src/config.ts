@@ -21,10 +21,27 @@ const DEFAULT_PROBE_PORT = 9900;
  *
  * It must sit strictly under `terminationGracePeriodSeconds`, which covers
  * `preStop` and shutdown combined. The manifests use a 60 s grace period behind
- * a 10 s `preStop` sleep, leaving 50 s; 30 s is comfortably inside that, so an
- * overrun is reported by this process rather than cut short by SIGKILL.
+ * a 10 s `preStop` sleep, leaving 50 s; 40 s is inside that, so an overrun is
+ * reported by this process rather than cut short by SIGKILL.
+ *
+ * It has to cover {@link DEFAULT_DRAIN_TIMEOUT} and leave enough behind for the
+ * listener close, the pool drain and the Sentry flush, which divide the
+ * remainder between them.
  */
-const DEFAULT_SHUTDOWN_TIMEOUT = 30;
+const DEFAULT_SHUTDOWN_TIMEOUT = 40;
+
+/**
+ * Seconds in-flight tasks are given to finish on shutdown, when
+ * `VT_TASKS_DRAIN_TIMEOUT` is unset.
+ *
+ * Draining to completion is not on offer at any grace period we can set — these
+ * tasks run for minutes, and a cluster autoscaler force-removes a pod well
+ * before an hour whatever the field says. So the drain is a window, and what
+ * follows it is a release: a task handed back takes milliseconds to become
+ * claimable again, where one abandoned mid-flight sits out the full
+ * `TASK_LEASE_SECONDS` before any runner can touch it.
+ */
+const DEFAULT_DRAIN_TIMEOUT = 25;
 
 /** Everything this process reads from the environment at startup. */
 export type TasksConfig = {
@@ -34,23 +51,10 @@ export type TasksConfig = {
 	/** Seconds the shutdown sequence may run before the backstop gives up. */
 	shutdownTimeout: number;
 	/**
-	 * Whether this process claims and runs tasks.
-	 *
-	 * Set to `false` to deploy the spawner half alone, which is how the
-	 * TypeScript runner reaches production ahead of the cutover from Python: one
-	 * deployment spawns periodic tasks while Python still runs them, and flipping
-	 * this to `true` is the cutover. Defaults to `true`, so an omitted key fails
-	 * toward a working fleet rather than a silent no-op one.
+	 * Seconds in-flight tasks are given to finish before their claims are
+	 * released. Part of {@link TasksConfig.shutdownTimeout}, not additional to it.
 	 */
-	claimEnabled: boolean;
-	/**
-	 * Whether this process spawns periodic tasks.
-	 *
-	 * Every replica carries the spawner, so this exists to turn it off — during
-	 * the cutover window, when Python is still spawning the same periodic tasks
-	 * and two spawners would duplicate them.
-	 */
-	spawnEnabled: boolean;
+	drainTimeout: number;
 	/**
 	 * Gates the Prometheus scrape endpoint. Unset leaves `/metrics` reporting
 	 * 404, so a deployment never starts exposing internals on upgrade.
@@ -71,26 +75,6 @@ function optional() {
 	);
 }
 
-/**
- * Read a `VT_`-prefixed boolean.
- *
- * Spelled out rather than deferring to `z.coerce.boolean()`, which is a plain
- * truthiness cast: it reads the string `"false"` as `true`, so the one value a
- * deployment is most likely to write in order to turn something off would turn
- * it on instead.
- */
-function boolish(fallback: boolean) {
-	return z.preprocess(
-		(value) => (value === "" || value === undefined ? undefined : value),
-		z
-			.enum(["true", "false", "1", "0"])
-			.optional()
-			.transform((value) =>
-				value === undefined ? fallback : value === "true" || value === "1",
-			),
-	);
-}
-
 const TasksEnv = z.object({
 	VT_POSTGRES_URL: z.string().url(),
 	// Deployment tooling routinely injects an empty string for a value it has
@@ -108,8 +92,10 @@ const TasksEnv = z.object({
 		(value) => (value === "" ? undefined : value),
 		z.coerce.number().int().positive().optional(),
 	),
-	VT_TASKS_CLAIM_ENABLED: boolish(true),
-	VT_TASKS_SPAWN_ENABLED: boolish(true),
+	VT_TASKS_DRAIN_TIMEOUT: z.preprocess(
+		(value) => (value === "" ? undefined : value),
+		z.coerce.number().int().positive().optional(),
+	),
 	VT_METRICS_TOKEN: optional(),
 	// Listed here so it picks up the `<KEY>_FILE` resolution every other key
 	// gets. `@virtool/sentry`'s `readDsn` goes straight to `process.env` and
@@ -218,17 +204,49 @@ function buildStorage(
 	};
 }
 
-const TasksEnvSchema = TasksEnv.transform((raw, ctx) => ({
-	postgresUrl: raw.VT_POSTGRES_URL,
-	postgresPoolMax: raw.VT_POSTGRES_POOL_MAX ?? DEFAULT_POSTGRES_POOL_MAX,
-	probePort: raw.VT_TASKS_PROBE_PORT ?? DEFAULT_PROBE_PORT,
-	shutdownTimeout: raw.VT_TASKS_SHUTDOWN_TIMEOUT ?? DEFAULT_SHUTDOWN_TIMEOUT,
-	claimEnabled: raw.VT_TASKS_CLAIM_ENABLED,
-	spawnEnabled: raw.VT_TASKS_SPAWN_ENABLED,
-	metricsToken: raw.VT_METRICS_TOKEN,
-	sentryDsn: raw.VT_SENTRY_DSN,
-	storage: buildStorage(raw, ctx),
-}));
+/**
+ * Reject a drain window the shutdown budget cannot hold.
+ *
+ * The drain is a share of that budget, not an addition to it, and the shutdown
+ * controller silently takes the smaller of the two — so a drain set past the
+ * budget would quietly become a shorter one, and the operator who raised it
+ * would see no effect and no complaint. The three steps that follow the drain
+ * divide what is left, so the two values cannot be equal either.
+ */
+function checkDrainFits(
+	ctx: z.RefinementCtx,
+	drainTimeout: number,
+	shutdownTimeout: number,
+): void {
+	if (drainTimeout < shutdownTimeout) {
+		return;
+	}
+
+	ctx.addIssue({
+		code: "custom",
+		path: ["VT_TASKS_DRAIN_TIMEOUT"],
+		message: `VT_TASKS_DRAIN_TIMEOUT (${drainTimeout}) must be less than VT_TASKS_SHUTDOWN_TIMEOUT (${shutdownTimeout}), which it is a share of`,
+	});
+}
+
+const TasksEnvSchema = TasksEnv.transform((raw, ctx) => {
+	const shutdownTimeout =
+		raw.VT_TASKS_SHUTDOWN_TIMEOUT ?? DEFAULT_SHUTDOWN_TIMEOUT;
+	const drainTimeout = raw.VT_TASKS_DRAIN_TIMEOUT ?? DEFAULT_DRAIN_TIMEOUT;
+
+	checkDrainFits(ctx, drainTimeout, shutdownTimeout);
+
+	return {
+		postgresUrl: raw.VT_POSTGRES_URL,
+		postgresPoolMax: raw.VT_POSTGRES_POOL_MAX ?? DEFAULT_POSTGRES_POOL_MAX,
+		probePort: raw.VT_TASKS_PROBE_PORT ?? DEFAULT_PROBE_PORT,
+		shutdownTimeout,
+		drainTimeout,
+		metricsToken: raw.VT_METRICS_TOKEN,
+		sentryDsn: raw.VT_SENTRY_DSN,
+		storage: buildStorage(raw, ctx),
+	};
+});
 
 /**
  * Every environment key this process reads.

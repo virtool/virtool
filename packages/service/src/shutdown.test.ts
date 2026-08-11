@@ -256,6 +256,95 @@ describe("createShutdownController", () => {
 		]);
 	});
 
+	describe("a hook with a budget of its own", () => {
+		// Equal division suits a socket close, where a share is always more than
+		// enough. It badly under-serves a hook waiting out work: the ceiling on any
+		// one step is the budget over the number of steps, however little the rest
+		// need. Four steps at a 40 s budget caps a task drain at 10 s.
+		it("gives it more than the equal share would", async () => {
+			const order: string[] = [];
+			let elapsed = 0;
+
+			const controller = createShutdownController(
+				deps(order, { timeout: 0.4 }),
+			);
+
+			controller.onShutdown(
+				"drain",
+				async () => {
+					const startedAt = performance.now();
+
+					await new Promise<void>((resolve) => setTimeout(resolve, 250));
+
+					elapsed = performance.now() - startedAt;
+					order.push("drain");
+				},
+				{ timeoutMs: 300 },
+			);
+
+			await controller.shutdown("SIGTERM");
+
+			// An equal share of a 400 ms budget across four steps is 100 ms, which
+			// would have abandoned this hook well before it settled.
+			expect(elapsed).toBeGreaterThan(200);
+			expect(order).toEqual([
+				"setReady:false",
+				"drain",
+				"closeListener",
+				"closeDatabase",
+				"flushSentry",
+			]);
+			expect(process.exitCode).toBe(0);
+		});
+
+		it("abandons it at its own ceiling", async () => {
+			const order: string[] = [];
+
+			const controller = createShutdownController(deps(order, { timeout: 10 }));
+
+			controller.onShutdown("stuck", () => new Promise<void>(() => undefined), {
+				timeoutMs: 40,
+			});
+
+			await controller.shutdown("SIGTERM");
+
+			// Bounded by its declared ceiling rather than by the whole budget, so the
+			// steps behind it still run — and it is still a failed step.
+			expect(order).toEqual([
+				"setReady:false",
+				"closeListener",
+				"closeDatabase",
+				"flushSentry",
+			]);
+			expect(process.exitCode).toBe(1);
+		});
+
+		// Declaring a ceiling reserves the time rather than taking it out of the
+		// pool drain's share.
+		it("does not starve the steps behind it", async () => {
+			const order: string[] = [];
+
+			const controller = createShutdownController(
+				deps(order, {
+					timeout: 0.4,
+					closeDatabase: async () => {
+						await new Promise<void>((resolve) => setTimeout(resolve, 60));
+						order.push("closeDatabase");
+					},
+				}),
+			);
+
+			controller.onShutdown("stuck", () => new Promise<void>(() => undefined), {
+				timeoutMs: 200,
+			});
+
+			await controller.shutdown("SIGTERM");
+
+			expect(order).toContain("closeDatabase");
+			expect(order).toContain("flushSentry");
+		});
+	});
+
 	it("reports a non-zero exit code when the sequence overruns", async () => {
 		const controller = createShutdownController(
 			deps([], {

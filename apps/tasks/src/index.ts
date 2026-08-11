@@ -1,32 +1,40 @@
 import { createLogger } from "@virtool/logger";
 import { bootstrap } from "./bootstrap";
 import { SERVICE } from "./instrument";
+import { createTaskRunner } from "./runner";
+import { type TaskContext, taskRegistry } from "./tasks/registry";
 import { APP_VERSION } from "./version";
 
 /**
  * The tasks process.
  *
- * One binary carries both halves of Virtool's task system: the periodic
- * spawner, which inserts the scheduled tasks, and the runner, which claims and
- * executes them. Each is turned off independently — `VT_TASKS_SPAWN_ENABLED`
- * and `VT_TASKS_CLAIM_ENABLED`, both defaulting to `true` — which is what
- * decouples their rollouts without needing two images. The cutover from Python
- * is one deployment that starts with claiming off, and one flag flip.
- *
- * Both halves are placeholders here. This build starts, serves its probes and
- * shuts down cleanly; the spawn schedule and the claim loop land with the
- * issues that own them.
+ * One binary carries both halves of Virtool's task system: the periodic spawner,
+ * which inserts the scheduled tasks, and the runner, which claims and executes
+ * them. The runner is here; the spawn schedule lands with the issue that owns it.
  */
 async function main(): Promise<void> {
 	const context = await bootstrap({ version: APP_VERSION });
 
-	if (context.config.spawnEnabled) {
-		context.logger.info("periodic task spawning is enabled");
-	}
+	const ctx: TaskContext = { db: context.db, storage: context.storage };
 
-	if (context.config.claimEnabled) {
-		context.logger.info("task claiming is enabled");
-	}
+	const drainTimeoutMs = context.config.drainTimeout * 1_000;
+
+	const runner = createTaskRunner({
+		ctx,
+		db: context.db,
+		drainTimeoutMs,
+		logger: context.logger,
+		recordRun: context.metrics.recordRun,
+		registry: taskRegistry,
+	});
+
+	// The runner's entire shutdown sequence is this one hook — the controller owns
+	// `process.exitCode`, the listener, the pool and the Sentry flush. It declares
+	// a ceiling of its own because the equal share the other steps take is sized
+	// for a socket close, and this one waits out a task that is mid-flight.
+	context.onShutdown("taskRunner", runner.stop, { timeoutMs: drainTimeoutMs });
+
+	runner.start();
 }
 
 try {

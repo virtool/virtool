@@ -79,10 +79,10 @@ This is a **pnpm monorepo**:
   spawner and the runner that claims and executes what it spawns. Image:
   `ghcr.io/virtool/tasks`, Alpine, no ingress and **no Service** — its HTTP
   listener serves only `/health/live`, `/health/ready` and a token-gated
-  `/metrics` on `VT_TASKS_PROBE_PORT` (9900). The two halves are turned off
-  independently with `VT_TASKS_SPAWN_ENABLED` and `VT_TASKS_CLAIM_ENABLED`
-  — both default `true` — which is what decouples their rollouts without a
-  second image. Everything is built inside `bootstrap()`; this app has no
+  `/metrics` on `VT_TASKS_PROBE_PORT` (9900). Neither half has a flag to
+  turn it off: the cutover from Python is two deployments inside a minute,
+  and a minute of task lag is invisible to a user, so there is nothing for a
+  staged rollout to buy. Everything is built inside `bootstrap()`; this app has no
   module-scope singleton of any kind, not config, not the pool, not the
   registry. See [docs/tasks.md](docs/tasks.md).
 - `apps/create-subtraction/` — `@virtool/create-subtraction`, the first workflow
@@ -126,7 +126,9 @@ This is a **pnpm monorepo**:
     service shares. Today that is `createShutdownController`
     (`./shutdown`) alone: readiness flip, LIFO hooks, listener, pool,
     Sentry **flush**, `process.exitCode` and an `.unref()`'d backstop,
-    with every dependency injected. It is **not** a home for the probe
+    with every dependency injected. Steps take an equal share of the
+    budget unless a hook declares its own `timeoutMs`, which is reserved
+    out of what the rest divide. It is **not** a home for the probe
     server or the metrics registries, however alike those look across
     the three services.
   - `@virtool/storage` — object storage: the S3 and Azure backends, the
@@ -957,9 +959,13 @@ the histogram's buckets are **task-sized**, 1 s to 2 h, because
 task in `+Inf`; `outcome` labels the counters and never the histogram;
 the **spawn** counter is pre-declared over its whole cross product so
 `skipped_locked` at zero can be told from a counter that was never
-wired, while the run counter is observed-only; and the queue gauges are
-built only when `spawnEnabled`, so N runner replicas don't each scan the
-same table. The queue read reproduces Python's `get_counts` predicate
+wired, while the run counter is observed-only; and every replica
+publishes the queue gauges, since there is no flag left to make the
+reader conditional — N replicas scanning one table for one number is
+waste a dashboard picking a single target absorbs. The runner records a
+run through `recordRun` only when it **completed or failed**; an
+`aborted` or `fenced` attempt is counted by whichever attempt ends it.
+The queue read reproduces Python's `get_counts` predicate
 term for term — `complete = false AND error IS NULL`, split on
 `acquired_at` — which is what makes the cutover comparison
 apples-to-apples. Don't change it.
@@ -1007,12 +1013,10 @@ take.
 
 `apps/tasks` is **one** process carrying both halves of the task system.
 The periodic spawner inserts scheduled tasks; the runner claims and
-executes them. Each is disabled independently — `VT_TASKS_SPAWN_ENABLED`
-and `VT_TASKS_CLAIM_ENABLED`, both defaulting to `true`, so an omitted key
-fails toward a working fleet rather than a pod that starts, passes every
-probe and does nothing. That is what decouples the two rollouts: the
-cutover from Python is one deployment started with claiming off, then one
-flag flip. Don't reintroduce a second binary to get the same effect.
+executes them. Neither half has a flag to turn it off — the cutover from
+Python is two deployments inside a minute, and a minute of task lag is
+invisible to a user, so a staged rollout buys nothing. Don't reintroduce a
+mode flag or a second binary to stage it.
 
 **Nothing in this app happens at import time.** `bootstrap()`
 (`src/bootstrap.ts`) is the composition root and builds all of it — config,
@@ -1025,8 +1029,11 @@ Four rules it carries:
 
 - **Config is the app's own zod schema**, parsed by `parseTasksConfig`,
   and every key keeps the `<KEY>_FILE` behaviour through the shared
-  `resolveFileBacked`. A boolean is spelled out rather than left to
-  `z.coerce.boolean()`, which reads `"false"` as `true`.
+  `resolveFileBacked`. `VT_TASKS_DRAIN_TIMEOUT` (25) is a **share** of
+  `VT_TASKS_SHUTDOWN_TIMEOUT` (40) rather than an addition to it, and the
+  parse rejects a drain that is not strictly smaller — the controller
+  silently takes the lesser of the two, so an oversized drain would
+  quietly become a shorter one.
 - **Liveness must never depend on Postgres.** `GET /health/live` is
   static. A database blip that failed it would restart the whole fleet
   and kill every task in flight. Readiness still probes Postgres, and
@@ -1043,7 +1050,11 @@ Four rules it carries:
   budget must stay under `terminationGracePeriodSeconds`. The sequence
   itself is `createShutdownController` from `@virtool/service/shutdown`,
   shared with the jobs API; only the hooks and the injected
-  `closeListener` are this app's.
+  `closeListener` are this app's. Every step takes an **equal share** of
+  the remaining budget unless a hook declares its own `timeoutMs`, which
+  is reserved out of what the rest divide — the runner's drain is the only
+  hook that does, because equal division caps any one step at a quarter of
+  the budget however little the others need.
 
 A claim is a **lease encoded on `acquired_at`** — live while that column
 is within `TASK_LEASE_SECONDS` (300) of now, renewed every
@@ -1061,7 +1072,10 @@ four rules hold them:
   `runner_id`**, which `buildRunnerId()` mints. Python never renews
   `acquired_at`, so its long-running tasks look abandoned; the scope is
   what stops a reclaim pulling live work out from under it. Never add a
-  flag to widen it.
+  flag to widen it. **There is no reclaim timer** — the claim is the
+  reclaim, and a second loop would only repeat it. `reclaimExpiredLeases`
+  has no caller on a running fleet and ships for the cutover's last step,
+  where the scope is widened to recover what Python was mid-flight on.
 - **Every runner write is fenced** on `runner_id` and `complete = false`
   and returns `false` when it matches nothing; `renewLeases` reports the
   ids it renewed so a caller can abandon the rest. `failTask` sets
@@ -1125,12 +1139,52 @@ declaration (`define.ts`), the debounced progress writer
 - **A reclaimed task re-runs from step zero, so every body must be
   idempotent.** Nothing records which steps already ran.
 
+The runner — `createTaskRunner` in `apps/tasks/src/runner.ts` — claims,
+dispatches and holds leases. It reads no config, opens no pool, installs
+no signal handler and binds no listener; `src/index.ts` builds it from the
+`AppContext` and registers `stop` as a shutdown hook. Six rules:
+
+- **One task at a time**, because replica count is the scaling lever and
+  the bodies are heavy enough that in-process concurrency would multiply
+  peak RSS rather than fill idle time. **But the seams are set-shaped** —
+  in-flight tasks are a `Map` and `renewLeases` renews a set — so raising
+  the cap stays a change to that file rather than a redesign of it.
+- **Supported types are read from the registry at claim time**, never
+  snapshotted. Python snapshots `BaseTask.__subclasses__()`, which holds
+  only the classes already imported, so one missing import silently
+  narrows what it can claim. An empty registry claims nothing.
+- **A claimed type with no handler is failed, never released.** Python
+  logs and returns, stranding the row with `acquired_at` set and
+  `error = NULL` — invisible, counted as running forever, and the cause
+  of the HPA's abandoned KEDA trigger. Releasing hot-loops instead, since
+  such a row is claimable by construction. It goes through `failTask` so
+  the frame goes out, and the branch stays even though the claim's
+  type filter should make it unreachable.
+- **A failed claim logs and continues.** A crash-loop on a database blip
+  is worse than a poll that found nothing.
+- **The heartbeat is an `.unref()`'d `setInterval` that measures its own
+  lateness** and logs above a threshold — event-loop starvation is what
+  loses a lease under a live runner, and that tripwire is what would
+  justify a worker thread. The ids `renewLeases` does not return are
+  fenced, and the runner aborts their signals. **Bulk OTU preparation
+  must yield**, or it starves the beat.
+- **Shutdown is drain, then release**: stop claiming, wait out the
+  in-flight task, abort what is left, **wait out a bounded grace for it
+  to actually stop**, stop the heartbeat *after* the drain, then
+  `releaseRunnerClaims`. A release makes a task claimable in
+  milliseconds where abandoning it costs the full lease. The grace is not
+  optional: `runTask` renews the lease to confirm ownership before
+  tearing down, so releasing on top of an abort makes that renewal fail
+  and **skips the body's `cleanup`**. All three phases share the one
+  `VT_TASKS_DRAIN_TIMEOUT` ceiling. `stop()` is idempotent — a second
+  call returns the first's promise — and never rejects.
+
 See [docs/tasks.md](docs/tasks.md) for the full config table, the
 `AppContext` contract, the shutdown ordering and its guarantees, the
 probe and metrics surface including the five task series and their
 bucket, label and folding rules, the lease, fencing and frame rules in
-full, and the framework's step model, terminal-outcome table and
-progress seam.
+full, the framework's step model, terminal-outcome table and progress
+seam, and the runner's loop, heartbeat and drain in full.
 
 ## Data
 

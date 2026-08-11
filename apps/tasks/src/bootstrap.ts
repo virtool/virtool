@@ -9,12 +9,15 @@ import {
 import { createEmitter } from "@virtool/data/events/emit";
 import { createLogger, type Logger } from "@virtool/logger";
 import { createSentryLogStream } from "@virtool/sentry/log";
-import { createShutdownController } from "@virtool/service/shutdown";
+import {
+	createShutdownController,
+	type ShutdownOptions,
+} from "@virtool/service/shutdown";
 import { createStorageBackend, type StorageBackend } from "@virtool/storage";
 import { parseTasksConfig, type TasksConfig } from "./config";
 import { initSentry, SERVICE } from "./instrument";
 import { createTaskQueueReader } from "./metrics/queue";
-import { createMetrics } from "./metrics/registry";
+import { createMetrics, type Metrics } from "./metrics/registry";
 import { createProbeServer } from "./probes";
 
 /** How long Sentry may spend flushing buffered envelopes, in milliseconds. */
@@ -28,6 +31,13 @@ export type AppContext = {
 	client: PgClient;
 	storage: StorageBackend;
 	/**
+	 * The write side of this process's Prometheus registry.
+	 *
+	 * The spawn and claim loops record through it; the read side is already wired
+	 * to `/metrics` by the probe listener.
+	 */
+	metrics: Metrics;
+	/**
 	 * Register a callback to run on SIGTERM or SIGINT.
 	 *
 	 * Guarantees a caller can rely on: hooks run **after** readiness has already
@@ -36,9 +46,15 @@ export type AppContext = {
 	 * reverse registration order; each is awaited; a throwing hook does not
 	 * prevent the others from running, though it does make the process exit
 	 * non-zero; and the whole sequence is bounded by the backstop, so a hook must
-	 * not assume unlimited time.
+	 * not assume unlimited time — one waiting out real work declares its own
+	 * ceiling with `options.timeoutMs` rather than taking the equal share, which
+	 * is sized for a socket close.
 	 */
-	onShutdown: (name: string, hook: () => Promise<void>) => void;
+	onShutdown: (
+		name: string,
+		hook: () => Promise<void>,
+		options?: ShutdownOptions,
+	) => void;
 	/** Flip readiness independently of shutdown — e.g. while draining. */
 	setReady: (ready: boolean) => void;
 };
@@ -132,16 +148,19 @@ export async function bootstrap(
 		ready = value;
 	}
 
+	const metrics = createMetrics(options.version);
+
 	const server = createProbeServer({
 		client,
 		logger,
-		metrics: createMetrics(options.version),
+		metrics,
 		metricsToken: config.metricsToken,
-		// The queue gauges are the spawner half's. A claim-only deployment leaves
-		// this unset and its scrapes touch the database not at all — which is what
-		// keeps N runner replicas from each scanning the same table to publish N
-		// copies of one queue depth.
-		readTaskQueue: config.spawnEnabled ? createTaskQueueReader(db) : undefined,
+		// Every replica carries the spawner, so every replica publishes the queue
+		// gauges — N scrapes each scanning the same table to report N copies of one
+		// queue depth. The scan is served by `idx_tasks_active` and a dashboard
+		// picks one target, so it is waste rather than a problem; there is no
+		// longer a flag to make it conditional on.
+		readTaskQueue: createTaskQueueReader(db),
 		isReady: () => ready,
 	});
 
@@ -176,12 +195,7 @@ export async function bootstrap(
 	}
 
 	logger.info(
-		{
-			port: config.probePort,
-			version: options.version,
-			claimEnabled: config.claimEnabled,
-			spawnEnabled: config.spawnEnabled,
-		},
+		{ port: config.probePort, version: options.version },
 		"listening",
 	);
 
@@ -191,6 +205,7 @@ export async function bootstrap(
 		db,
 		client,
 		storage,
+		metrics,
 		onShutdown: shutdown.onShutdown,
 		setReady,
 	};

@@ -10,31 +10,13 @@ work reaches the outside world through Postgres and object storage.
 
 ## One process, two halves
 
-The spawner and the runner are **one binary**, not two.
+The spawner and the runner are **one binary**, not two. The spawner inserts the
+scheduled tasks; the runner claims and executes them.
 
-The spawner inserts the scheduled tasks; the runner claims and executes them.
-Each is turned off independently:
-
-| Variable | Default | Effect when `false` |
-| --- | --- | --- |
-| `VT_TASKS_SPAWN_ENABLED` | `true` | The process spawns no periodic tasks. |
-| `VT_TASKS_CLAIM_ENABLED` | `true` | The process claims and runs nothing. |
-
-Both default to `true` because an omitted flag has to fail toward a working
-fleet. A default of `false` would make a deployment that never set the key a
-silent no-op — a pod that starts, passes every probe, and does nothing at all.
-
-The two flags are what decouple the halves' rollouts, which is the whole reason
-separate binaries were ever considered. The cutover from Python is:
-
-1. Deploy with `VT_TASKS_CLAIM_ENABLED=false`. The TypeScript spawner runs in
-   production while Python still executes what it spawns.
-2. Stop Python's spawner and runner.
-3. Flip `VT_TASKS_CLAIM_ENABLED` to `true`.
-
-One image and one Deployment carry that whole sequence. Don't reintroduce a
-second binary to get the same effect — a mode flag on one artifact is the same
-decoupling with half the pipeline.
+Neither half has a flag to turn it off. The cutover from Python is two
+deployments inside a minute — delete Python's, create this one — and a minute of
+task lag is invisible to a user, so there is nothing for a staged rollout to buy.
+Don't reintroduce a mode flag or a second binary to stage it.
 
 ## Nothing happens at import time
 
@@ -85,7 +67,12 @@ type AppContext = {
 	db: Db;
 	client: PgClient;
 	storage: StorageBackend;
-	onShutdown: (name: string, hook: () => Promise<void>) => void;
+	metrics: Metrics;
+	onShutdown: (
+		name: string,
+		hook: () => Promise<void>,
+		options?: ShutdownOptions,
+	) => void;
 	setReady: (ready: boolean) => void;
 };
 ```
@@ -93,6 +80,8 @@ type AppContext = {
 `db`, `client` and `storage` are passed into `@virtool/data` and
 `@virtool/storage` functions as arguments, exactly as they are in `apps/web`.
 Nothing imports a module-scope handle, because there is none to import.
+`metrics` is the write side of the registry the probe listener already serves —
+the spawn and claim loops record through it.
 
 ## Configuration
 
@@ -118,9 +107,8 @@ Three of its behaviours are load-bearing and directly tested:
 | `VT_POSTGRES_URL` | — | Required. |
 | `VT_POSTGRES_POOL_MAX` | `10` | |
 | `VT_TASKS_PROBE_PORT` | `9900` | Hardcoded in the manifests; fixed, not arbitrary in practice. |
-| `VT_TASKS_SHUTDOWN_TIMEOUT` | `30` | **Seconds.** Must stay under the grace period — see below. |
-| `VT_TASKS_CLAIM_ENABLED` | `true` | |
-| `VT_TASKS_SPAWN_ENABLED` | `true` | |
+| `VT_TASKS_SHUTDOWN_TIMEOUT` | `40` | **Seconds.** Must stay under the grace period — see below. |
+| `VT_TASKS_DRAIN_TIMEOUT` | `25` | **Seconds.** A share of the shutdown budget, not an addition to it. |
 | `VT_METRICS_TOKEN` | unset | Unset leaves `/metrics` reporting 404. |
 | `VT_SENTRY_DSN` | unset | Unset disables Sentry. |
 | `VT_STORAGE_BACKEND` | — | Required, `s3` or `azure`. |
@@ -130,12 +118,14 @@ The schema is zod, in `src/config.ts`, and `TASKS_ENV_KEYS` is derived from it
 rather than listed by hand — a key missing from that list would silently lose
 its file variant.
 
-Booleans are spelled out as an enum of `true` / `false` / `1` / `0` rather than
-left to `z.coerce.boolean()`, which is a plain truthiness cast: it reads the
-string `"false"` as `true`, so the one value a deployment is most likely to
-write in order to turn something off would turn it on instead. An injected
-empty string reads as unset everywhere, which is what deployment tooling emits
-for a value it has nothing to put in.
+An injected empty string reads as unset everywhere, which is what deployment
+tooling emits for a value it has nothing to put in.
+
+`VT_TASKS_DRAIN_TIMEOUT` must be strictly less than
+`VT_TASKS_SHUTDOWN_TIMEOUT`, and the parse rejects it otherwise. The drain is a
+share of that budget and the shutdown controller silently takes the smaller of
+the two — so a drain set past the budget would quietly become a shorter one, and
+the operator who raised it would see neither an effect nor a complaint.
 
 ## Probes and metrics
 
@@ -234,11 +224,17 @@ Seven rules hold these together:
   `+Inf` bucket and leave the histogram unable to express a quantile above the
   median. The low end still resolves a BLAST sweep that finds nothing, which is
   the common case for the thirty-second schedule.
-- **The queue gauges are the spawner half's.** `bootstrap` builds the reader
-  only when `spawnEnabled`, and the handler skips the refresh when it is
-  absent, so a claim-only deployment's scrapes touch the database not at all.
-  Every replica carries a runner; a reader wired unconditionally would have N
-  replicas each scanning the same table to publish N copies of one number.
+- **Every replica publishes the queue gauges.** There is no flag left to make
+  the reader conditional, so N replicas each scan the same table to report N
+  copies of one number. The scan is served by `idx_tasks_active` and a
+  dashboard picks a single target, so it is waste rather than a problem — but
+  it is the reason the handler still supports an absent reader.
+- **A run is recorded only when it completed or failed.** `aborted` and
+  `fenced` leave the row for another attempt, which is counted when *it* ends;
+  recording them too would put `virtool_task_runs_total` above the number of
+  tasks that actually ran. The duration is measured around the dispatch rather
+  than from the row's `acquired_at`, which is Postgres's clock — mixing the two
+  to save a round trip's accuracy is how a histogram acquires a fixed skew.
 - **The whole `type` × `state` cross product is written as zero on each
   refresh**, so a type that drains reports zero rather than holding its last
   backlog forever — the worst possible failure for an alert on queue depth.
@@ -323,14 +319,24 @@ caught and logged on its own, so a listener that will not close still leaves
 the pool to drain and Sentry to flush.
 
 That covers a step that *hangs* as well as one that throws, because the budget
-is **divided rather than pooled**: every step, each hook included, gets an
-equal share of the time still left when it starts, and is abandoned once that
-share is spent. A step that finishes early hands its remainder on. Awaiting the
-whole sequence against a single deadline instead would let one stuck socket eat
-the budget and take the pool drain and the Sentry flush with it — losing the
-record of the failure exactly when there was one to keep. An abandoned step is
-not cancelled, so the process may still have to be reaped; what the division
-buys is that everything after it still runs.
+is **divided rather than pooled**: every step gets a share of the time still
+left when it starts, and is abandoned once that share is spent. A step that
+finishes early hands its remainder on. Awaiting the whole sequence against a
+single deadline instead would let one stuck socket eat the budget and take the
+pool drain and the Sentry flush with it — losing the record of the failure
+exactly when there was one to keep. An abandoned step is not cancelled, so the
+process may still have to be reaped; what the division buys is that everything
+after it still runs.
+
+The share is **equal, except for a hook that declares a `timeoutMs` of its
+own**. Equal division is right for a socket close or a buffer flush, where a
+share is always more than enough, and wrong for a hook waiting out *work*: the
+ceiling on any one step is the budget over the number of steps, so a task drain
+would get a quarter of it however little the other three needed. A declared
+ceiling is reserved out of what the unbudgeted steps divide, so it cannot starve
+them. The task runner's drain is the only hook in the repo that uses it —
+`VT_TASKS_DRAIN_TIMEOUT` of a `VT_TASKS_SHUTDOWN_TIMEOUT`, 25 s of 40 s by
+default, leaving 5 s each for the listener, the pool and the Sentry flush.
 
 Then `process.exitCode` is set — `0` only when every step ran, `1` if any of
 them failed or the backstop fired first — and the loop drains. A failed
@@ -342,14 +348,19 @@ twice and close the pool out from under the first pass.
 
 The backstop is `.unref()`'d. Without that it holds the event loop open for its
 full budget on an otherwise clean shutdown, so a process that finished winding
-down in 200 ms would still sit there for thirty seconds.
+down in 200 ms would still sit there for the whole forty seconds.
 
 `VT_TASKS_SHUTDOWN_TIMEOUT` must stay strictly under
 `terminationGracePeriodSeconds`, which covers `preStop` *and* shutdown
 combined. The manifests use a 60 s grace period behind a 10 s `preStop` sleep,
-leaving 50 s; the 30 s default is comfortably inside it. Set it too high and
-SIGKILL lands before the backstop fires, and the process gets neither a clean
-shutdown nor a controlled failure.
+leaving 50 s; the 40 s default is inside it. Set it too high and SIGKILL lands
+before the backstop fires, and the process gets neither a clean shutdown nor a
+controlled failure.
+
+That `preStop` is inherited from the API base config and drains endpoints that
+do not exist — this Deployment's Service is `$patch: delete`d — so removing it
+hands the budget back a sixth of the grace period. Removing it belongs to the
+deployment manifests, not here.
 
 ### The image must not use `npm start`
 
@@ -411,8 +422,8 @@ one Postgres across all of them locally.
 ## The framework and the loops
 
 `bootstrap` is the floor. The task framework, the claim/lease/reclaim data
-layer, and the dispatch loops land on top of it, and each fills in its section
-here in its own commit:
+layer, the runner and the spawn schedule land on top of it, and each fills in
+its section here in its own commit:
 
 - **Framework** — `defineTask`, the step model, and the percent/fraction
   progress seam. Lives in `apps/tasks/src/framework/`: it is an execution shell
@@ -424,9 +435,11 @@ here in its own commit:
   `updateTaskProgress`. These are pure persistence over a table both halves
   write, so they belong in `packages/data/src/tasks/data.ts`, extending the
   module already there.
-- **The task bodies** — `apps/tasks/src/tasks/<type>.ts`, registered with the
-  runner's registry. The shell lives with its runtime, the way `functions.ts`
-  lives with the web app.
+- **The runner** — `apps/tasks/src/runner.ts`, the claim loop, the dispatcher and
+  the heartbeat. Its own section follows.
+- **The task bodies** — `apps/tasks/src/tasks/<type>.ts`, registered in
+  `apps/tasks/src/tasks/registry.ts`. The shell lives with its runtime, the way
+  `functions.ts` lives with the web app.
 
 Note there is **no `service.ts` tier available to a task body.** `service.ts` is
 the web app's orchestration layer and stays in `apps/web/src/server/<feature>/`,
@@ -705,10 +718,12 @@ buys three things: no background timer to schedule, nothing to keep alive when
 the fleet is idle, and no window between a sweep marking a row free and a
 claimer taking it. The queue heals as a side effect of ordinary work.
 
-`reclaimExpiredLeases` still ships as its own query. Nothing needs to call it on
-a running fleet; it exists for the cutover, where a deployment may be spawning
-tasks with `VT_TASKS_CLAIM_ENABLED=false` and so never running a claim to heal
-anything.
+**There is no reclaim timer, and adding one would be a second loop doing what
+the claim already does.** `reclaimExpiredLeases` still ships as its own query,
+with nothing calling it on a running fleet: it exists for the cutover, whose last
+step widens the `ts-` scope below to recover what Python was mid-flight on when
+its deployment was deleted. By then there is no claim left to fold that sweep
+into.
 
 Two things about the predicate are load-bearing:
 
@@ -786,3 +801,151 @@ state and then get no second frame. Typing them `Db` makes that unrepresentable
 instead of documenting it. If a task body ever genuinely needs a completion
 atomic with a final domain write, widening the parameter is a one-line change
 that has to answer the ordering question at the same time.
+
+## The runner
+
+`createTaskRunner` in `apps/tasks/src/runner.ts` is the loop that claims tasks,
+dispatches them, and holds their leases while they run. It returns three things
+and no more: `start()`, `stop()`, and `getLastTickAt()`.
+
+It reads no configuration, opens no pool, installs no signal handler and binds
+no listener. All four are the app's — `src/index.ts` builds it from the
+`AppContext` and registers `stop` as a shutdown hook.
+
+### One task at a time, on seams built for many
+
+Replica count is the scaling lever and it already exists. The bodies are heavy
+enough — a reference import parses tens of megabytes of JSON, an HMM install
+decompresses a multi-hundred-megabyte tarball — that in-process concurrency
+would multiply peak memory against a pod limit rather than fill idle time. And
+holding the cap at one means the cutover changes exactly one variable.
+
+The seams for many are built anyway. In-flight tasks are a `Map`, not a nullable
+single slot, and `renewLeases` renews a **set**. Raising the cap is meant to be a
+change to this file, not a redesign of it.
+
+### The claim loop
+
+A poll every `POLL_INTERVAL_MS` (2 000, Python's interval) when idle. An
+async `while` rather than a `setInterval`, so a task that runs for minutes cannot
+have a second poll firing on top of it.
+
+- **Supported types are read from the registry on every poll, never snapshotted.**
+  Python snapshots `BaseTask.__subclasses__()` at construction, which holds only
+  the classes already imported — so one missing import silently narrows what its
+  runner can claim, with nothing anywhere to say so. Reading live costs nothing
+  and removes the class of bug. An **empty** registry claims nothing at all,
+  because `acquireTask` short-circuits on an empty allowed-types list.
+- **A failed claim logs and continues.** A connection blip or a serialization
+  failure does not earn a crash-loop, which is strictly worse than a poll that
+  found nothing.
+- **`getLastTickAt()` is a seam, not a consumer.** It is what a
+  "has the loop ticked recently" liveness check would be built on. Nothing reads
+  it: `GET /health/live` is deliberately static, because a liveness probe that
+  can fail restarts the fleet and kills every task in flight.
+- A poll that resolves **after** the drain has begun releases its claim instead
+  of dispatching it. Starting a body with no time left to finish in is how a task
+  gets killed mid-write.
+
+### A type with no handler is failed, never released
+
+`dispatchTask` looks the claimed row's `type` up in the registry, and **fails the
+task** when it finds nothing — through `failTask`, so `complete` is set beside
+`error` and the `tasks` frame that tells the UI actually goes out.
+
+Python acquires the row, finds no class for the name, logs a warning and
+*returns*. The row keeps `acquired_at` set with `complete = false` and
+`error = NULL`: invisible to every consumer, counted as running forever by
+`get_counts`, and drawn as a progress bar that never moves. It is the documented
+cause of the task runner HPA's abandoned KEDA trigger.
+
+Releasing instead is no better. An unknown row is claimable by construction, so
+it returns on the very next poll and hot-loops for good, still surfacing nothing.
+Failing is the only outcome a user can see.
+
+The claim already filters on the registry's keys, so this branch should be
+unreachable — which is exactly why it is a branch rather than an assumption. It
+lives in its own exported function because a test cannot get a claim of an
+unknown type out of the claim query, and that test is the one worth having.
+
+### The heartbeat
+
+`renewLeases` for every in-flight task every `TASK_HEARTBEAT_SECONDS` against
+the `TASK_LEASE_SECONDS` lease, on a `setInterval` that is **`.unref()`'d** — a
+heartbeat must never be the reason the process stays alive. A beat still in
+flight when the next fires is skipped rather than stacked.
+
+A failed renewal logs at `warn` and retries on the next beat; it never touches
+the running task. Four beats of headroom exist precisely so one blip is
+survivable.
+
+`renewLeases` reports the ids it renewed, and the difference is what has been
+**fenced** — the lease expired and another runner owns the task. The runner
+aborts that task's signal, which is how the body learns to stop working on
+something it no longer holds. `runTask` then renews and checks the claim before
+its cleanup and reports `fenced`, so nothing is written and nothing is released.
+
+**Event-loop starvation is the real hazard.** A synchronous block longer than the
+lease starves the timer, the lease expires, and another runner claims work that
+is still running — Kleppmann's garbage-collection pause in Node form. The work is
+overwhelmingly I/O-bound, so the beat measures how late it ran and logs above
+`HEARTBEAT_LAG_WARN_MS`. That tripwire is what would justify moving the heartbeat
+onto a worker thread, which costs a second Postgres connection per replica and a
+duplicated database handle inside it. **The one genuinely CPU-heavy stretch is
+bulk OTU preparation during reference import and clone, and that loop must
+yield** — chunk it and `await` between chunks. The constraint belongs to those
+task bodies; the consequence lands here.
+
+### Shutdown is drain, then release
+
+`stop()` is the whole sequence, registered as a single shutdown hook. The
+controller owns everything around it — `process.exitCode`, the listener, the
+pool, the Sentry flush, and the guard against a second signal.
+
+1. Stop claiming. The loop observes it and its poll wait is woken rather than
+   waited out.
+2. Wait for the in-flight task, up to `VT_TASKS_DRAIN_TIMEOUT` less the abort
+   grace and the release reserve.
+3. If the window expires, abort what is still running so a cooperative body stops
+   instead of working on past the release.
+4. **Wait for it to actually stop**, up to the abort grace.
+5. Stop the heartbeat — *after* the drain, because a task still working needs its
+   lease held.
+6. `releaseRunnerClaims`, clearing `acquired_at` and `runner_id`.
+
+**Step 4 is not politeness, and skipping it skips the body's `cleanup`.** The
+abort only *signals*. `runTask` renews the lease to confirm it still holds the
+task before tearing anything down, so a release landing on top of the abort
+clears `runner_id` under a body that is still unwinding: the renewal matches
+nothing, the run reports `fenced`, and the cleanup the abort path is supposed to
+run is skipped without a word. Waiting keeps the claim alive long enough for that
+ownership question to be answered truthfully. A cooperative body unwinds in
+milliseconds, so the grace is only ever spent on one that ignores its signal —
+and for that one the release is the correct backstop.
+
+The three phases share the one ceiling the hook declares, and the grace is
+**clamped rather than validated**: a drain window too small to hold it degrades
+to a shorter grace instead of overrunning the ceiling and being abandoned
+mid-release.
+
+Draining to completion is not on offer at any grace period we can set: these
+tasks run for minutes, and a cluster autoscaler force-removes a pod well before
+an hour whatever the field says. So the window is bounded and what follows it is
+a release — which is the point of this shape. A released task is claimable again
+in milliseconds; an abandoned one sits out the full `TASK_LEASE_SECONDS` of dead
+time.
+
+**The reserve is why the drain window is not the whole hook budget.** A drain
+that spent all of it waiting would be abandoned mid-`UPDATE` and leave the claims
+it was handing back exactly where a hard kill would have.
+
+`stop()` is idempotent — a second call returns the first one's promise rather
+than starting a second drain, which would release a claim the first pass is still
+draining — and it **never rejects**. Every failure inside it is logged, because
+the only move left to a caller winding the process down is to carry on winding it
+down, and a throw would take the steps after it with it.
+
+An `aborted` outcome from `runTask` is released for the same reason: the row
+still carries this runner's claim and is not complete, so handing it back beats
+letting it sit out the lease. `fenced` is not this runner's to release, and
+`completed` and `failed` are terminal.

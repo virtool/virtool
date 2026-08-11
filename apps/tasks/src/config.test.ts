@@ -60,7 +60,8 @@ describe("parseTasksConfig", () => {
 
 		expect(config.postgresPoolMax).toBe(10);
 		expect(config.probePort).toBe(9900);
-		expect(config.shutdownTimeout).toBe(30);
+		expect(config.shutdownTimeout).toBe(40);
+		expect(config.drainTimeout).toBe(25);
 		expect(config.metricsToken).toBeUndefined();
 		expect(config.sentryDsn).toBeUndefined();
 	});
@@ -69,52 +70,29 @@ describe("parseTasksConfig", () => {
 		expect(() => parseTasksConfig({ VT_STORAGE_BACKEND: "s3" })).toThrowError();
 	});
 
-	describe("claim and spawn flags", () => {
-		// An omitted flag has to fail toward a working fleet. A default of `false`
-		// would make a deployment that never set it a silent no-op — a pod that
-		// starts, passes every probe, and does nothing at all.
-		it("defaults both to enabled", () => {
-			const config = parseTasksConfig(baseEnv());
-
-			expect(config.claimEnabled).toBe(true);
-			expect(config.spawnEnabled).toBe(true);
-		});
-
-		it("reads false, which is the value a rollout actually writes", () => {
-			const config = parseTasksConfig({
-				...baseEnv(),
-				VT_TASKS_CLAIM_ENABLED: "false",
-				VT_TASKS_SPAWN_ENABLED: "0",
-			});
-
-			expect(config.claimEnabled).toBe(false);
-			expect(config.spawnEnabled).toBe(false);
-		});
-
-		it("reads true", () => {
-			const config = parseTasksConfig({
-				...baseEnv(),
-				VT_TASKS_CLAIM_ENABLED: "true",
-				VT_TASKS_SPAWN_ENABLED: "1",
-			});
-
-			expect(config.claimEnabled).toBe(true);
-			expect(config.spawnEnabled).toBe(true);
-		});
-
-		it("rejects a value that is neither", () => {
+	describe("the drain window", () => {
+		// The drain is a share of the shutdown budget, and the controller silently
+		// takes the smaller of the two — so a drain set past the budget would
+		// quietly become a shorter one with nothing to say so.
+		it("rejects a drain the shutdown budget cannot hold", () => {
 			expect(() =>
-				parseTasksConfig({ ...baseEnv(), VT_TASKS_CLAIM_ENABLED: "yes" }),
-			).toThrowError();
+				parseTasksConfig({
+					...baseEnv(),
+					VT_TASKS_SHUTDOWN_TIMEOUT: "20",
+					VT_TASKS_DRAIN_TIMEOUT: "20",
+				}),
+			).toThrowError(/must be less than VT_TASKS_SHUTDOWN_TIMEOUT/);
 		});
 
-		it("treats an injected empty string as unset", () => {
+		it("accepts a drain inside it", () => {
 			const config = parseTasksConfig({
 				...baseEnv(),
-				VT_TASKS_CLAIM_ENABLED: "",
+				VT_TASKS_SHUTDOWN_TIMEOUT: "20",
+				VT_TASKS_DRAIN_TIMEOUT: "10",
 			});
 
-			expect(config.claimEnabled).toBe(true);
+			expect(config.shutdownTimeout).toBe(20);
+			expect(config.drainTimeout).toBe(10);
 		});
 	});
 
