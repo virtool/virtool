@@ -296,6 +296,15 @@ export function createFakeSubtraction(
 		name: `Subtraction ${id}`,
 		nickname: "",
 		ready: true,
+		upload: {
+			id: random.int(1, 999),
+			name: "genome.fa.gz",
+			size: random.int(1_000, 9_999_999),
+			// An upload is the resource, not a child of one, so its placeholder
+			// key has no parent segment. A test seeding real bytes replaces this
+			// with what `seedUpload` returns.
+			storageKey: `uploads/${random.hex(32)}`,
+		},
 		...overrides,
 	};
 }
@@ -305,6 +314,9 @@ export function createFakeSubtraction(
  *
  * `ready: false` with no counts and no files — the state the workflow reads at
  * its first step, and the one a test asserting on finalize has to start from.
+ *
+ * The upload survives, and is the only file such a subtraction has. A test that
+ * seeds real bytes overwrites its `storageKey` with what `seedUpload` returned.
  */
 export function createFakeNewSubtraction(
 	overrides: Partial<WorkflowSubtraction> = {},

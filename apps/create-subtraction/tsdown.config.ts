@@ -22,7 +22,11 @@ export default defineConfig({
 			"@aws-sdk/lib-storage",
 			"@azure/identity",
 			"@azure/storage-blob",
+			"@sentry/node",
+			"execa",
 			"pino",
+			"tar-stream",
+			"undici",
 		],
 	},
 });

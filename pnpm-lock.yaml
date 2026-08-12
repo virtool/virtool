@@ -57,19 +57,43 @@ importers:
       '@azure/storage-blob':
         specifier: ^12.33.0
         version: 12.33.0
-      '@virtool/logger':
+      '@sentry/node':
+        specifier: ^10.69.0
+        version: 10.69.0(@opentelemetry/core@2.10.0(@opentelemetry/api@1.9.1))
+      '@virtool/bio':
         specifier: workspace:*
-        version: link:../../packages/logger
+        version: link:../../packages/bio
+      '@virtool/contracts':
+        specifier: workspace:*
+        version: link:../../packages/contracts
       '@virtool/storage':
         specifier: workspace:*
         version: link:../../packages/storage
+      '@virtool/workflow':
+        specifier: workspace:*
+        version: link:../../packages/workflow
+      execa:
+        specifier: ^10.0.1
+        version: 10.0.1
       pino:
         specifier: ^10.1.0
         version: 10.3.1
+      tar-stream:
+        specifier: ^3.2.0
+        version: 3.2.0
+      undici:
+        specifier: ^7.29.0
+        version: 7.29.0
     devDependencies:
+      '@types/node':
+        specifier: ^26.1.2
+        version: 26.1.2
       tsdown:
         specifier: ^0.22.14
         version: 0.22.14(oxc-resolver@11.24.2)(tsx@4.23.0)(typescript@7.0.2)
+      vitest:
+        specifier: ^4.1.10
+        version: 4.1.10(@opentelemetry/api@1.9.1)(@types/node@26.1.2)(@vitest/browser-playwright@4.1.10)(jsdom@30.0.1)(vite@8.2.1(@types/node@26.1.2)(esbuild@0.28.2)(jiti@2.7.0)(tsx@4.23.0)(yaml@2.9.0))
 
   apps/jobs-api:
     dependencies:
@@ -17650,7 +17674,7 @@ snapshots:
       picomatch: 4.0.5
       std-env: 4.2.0
       tinybench: 2.9.0
-      tinyexec: 1.2.4
+      tinyexec: 1.3.0
       tinyglobby: 0.2.17
       tinyrainbow: 3.1.0
       vite: 8.2.1(@types/node@26.1.2)(esbuild@0.28.2)(jiti@2.7.0)(tsx@4.23.0)(yaml@2.9.0)
@@ -17680,7 +17704,7 @@ snapshots:
       picomatch: 4.0.5
       std-env: 4.2.0
       tinybench: 2.9.0
-      tinyexec: 1.2.4
+      tinyexec: 1.3.0
       tinyglobby: 0.2.17
       tinyrainbow: 3.1.0
       vite: 8.2.1(@types/node@26.1.2)(esbuild@0.28.2)(jiti@2.7.0)(tsx@4.23.0)(yaml@2.9.0)

@@ -38,10 +38,6 @@ const QUEUE_STATES = ["queued", "running"] as const;
 
 /**
  * Every spawn outcome, for pre-declaring the counter's label set.
- *
- * The union is `PeriodicSpawnOutcome`, imported rather than restated: it is
- * what `createPeriodicTask` returns, and a second copy here would be free to
- * drift from the values actually observed.
  */
 const SPAWN_OUTCOMES: PeriodicSpawnOutcome[] = [
 	"spawned",
@@ -105,9 +101,6 @@ function taskLabel(type: string): string {
  * separate process. Series names deliberately match where they overlap, so one
  * dashboard works across all three; the processes are told apart by the
  * scrape's target labels, not by renaming a metric.
- *
- * The `virtool_http_*` series are deliberately absent: they are web-specific,
- * their buckets top out at 10 s, and this process serves nothing but probes.
  */
 export function createMetrics(version: string, poolMax: number): Metrics {
 	const registry = new Registry();

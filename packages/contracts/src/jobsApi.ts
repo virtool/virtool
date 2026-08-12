@@ -327,6 +327,30 @@ export const WorkflowSubtractionFile = z.object({
 
 export type WorkflowSubtractionFile = z.infer<typeof WorkflowSubtractionFile>;
 
+/**
+ * The upload a subtraction was created from — its source genome.
+ *
+ * It rides on the subtraction rather than being fetched from an uploads route of
+ * its own. `create_subtraction` is the only reader, it has the subtraction id and
+ * nothing else, and an upload read would be a second round trip for one column.
+ *
+ * Every field but the id is nullable because every column behind it is:
+ * `subtractions.upload_id`, `uploads.name` and `uploads.storage_key` are all
+ * open, so a subtraction can name an upload whose bytes nothing locates. The
+ * workflow refuses that rather than guessing — nothing composes a key from row
+ * identity on either side.
+ */
+export const WorkflowSubtractionUpload = z.object({
+	id: z.number().int(),
+	name: z.string().nullable(),
+	size: z.number().int().nullable(),
+	storageKey: z.string().nullable(),
+});
+
+export type WorkflowSubtractionUpload = z.infer<
+	typeof WorkflowSubtractionUpload
+>;
+
 /** A file an index build produced. `index_files.storage_key` is `NOT NULL`. */
 export const WorkflowIndexFile = z.object({
 	...workflowFile,
@@ -353,7 +377,13 @@ export const WorkflowSample = z.object({
 
 export type WorkflowSample = z.infer<typeof WorkflowSample>;
 
-/** A subtraction, as a workflow reads it. */
+/**
+ * A subtraction, as a workflow reads it.
+ *
+ * `files` is what an analysis workflow reads and is empty until finalize;
+ * `upload` is what `create_subtraction` reads and is the only thing on a
+ * subtraction that has not been built yet.
+ */
 export const WorkflowSubtraction = z.object({
 	id: z.number().int(),
 	count: z.number().int().nullable(),
@@ -362,6 +392,7 @@ export const WorkflowSubtraction = z.object({
 	name: z.string(),
 	nickname: z.string(),
 	ready: z.boolean(),
+	upload: WorkflowSubtractionUpload.nullable(),
 });
 
 export type WorkflowSubtraction = z.infer<typeof WorkflowSubtraction>;

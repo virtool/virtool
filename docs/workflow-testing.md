@@ -337,8 +337,9 @@ two fixed HMM constants are all that is left.
 
 A helper therefore writes its bytes under a freshly minted key and **returns that
 key**, and the caller attaches it to the fake row the jobs API fixture will
-serve — `reads[].storageKey`, `files[].storageKey`. The code under test reads the
-key out of that metadata, which is its only route to the object.
+serve — `reads[].storageKey`, `files[].storageKey`, `upload.storageKey`. The code
+under test reads the key out of that metadata, which is its only route to the
+object.
 
 **This is a stronger guarantee than the one it replaces, not a weaker one.**
 Seeding through shared builders only caught a divergence between two builders.

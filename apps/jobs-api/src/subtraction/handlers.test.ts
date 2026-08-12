@@ -6,6 +6,7 @@ import {
 	subtractionFiles,
 	subtractions,
 } from "@virtool/data/db/schema/subtractions";
+import { uploads } from "@virtool/data/db/schema/uploads";
 import { users } from "@virtool/data/db/schema/users";
 import {
 	createTestDatabase,
@@ -60,6 +61,7 @@ afterAll(async () => {
 beforeEach(async () => {
 	await db.delete(subtractionFiles);
 	await db.delete(subtractions);
+	await db.delete(uploads);
 	await db.delete(jobs);
 	await db.delete(users);
 
@@ -108,6 +110,21 @@ async function seedSubtraction(
 
 	if (!row) {
 		throw new Error("failed to seed subtraction");
+	}
+
+	return row.id;
+}
+
+async function seedUpload(
+	overrides: Partial<typeof uploads.$inferInsert> = {},
+): Promise<number> {
+	const [row] = await db
+		.insert(uploads)
+		.values({ userId, ...overrides })
+		.returning({ id: uploads.id });
+
+	if (!row) {
+		throw new Error("failed to seed upload");
 	}
 
 	return row.id;
@@ -531,7 +548,72 @@ describe("handleGetSubtraction", () => {
 			name: expect.any(String),
 			nickname: "Arabidopsis",
 			ready: true,
+			// A finalized subtraction may well still name the upload it was built
+			// from; this one was seeded without one.
+			upload: null,
 		});
+	});
+
+	// This is `create_subtraction`'s only route to its input. A subtraction it is
+	// running has no `subtraction_files` rows yet — it writes the first at
+	// finalize — so the upload is the only file it has, and the key is what makes
+	// it reachable at all.
+	it("serves the upload a subtraction was created from", async () => {
+		const uploadId = await seedUpload({
+			name: "arabidopsis.fa.gz",
+			size: 8192,
+			storageKey: "uploads/aaaabbbbccccddddeeeeffff00001111",
+		});
+
+		const subtractionId = await seedSubtraction({ upload_id: uploadId });
+
+		const response = await handleGetSubtraction(
+			deps,
+			get(subtractionId),
+			String(subtractionId),
+		);
+
+		expect(response.status).toBe(200);
+		expect((await response.json()).upload).toEqual({
+			id: uploadId,
+			name: "arabidopsis.fa.gz",
+			size: 8192,
+			storageKey: "uploads/aaaabbbbccccddddeeeeffff00001111",
+		});
+	});
+
+	// Every column behind the upload is nullable, and there is no fallback that
+	// finds the object. The workflow refuses these rather than composing a key,
+	// so the route has to be able to say so.
+	it("serves an upload that records no storage key as it stands", async () => {
+		const uploadId = await seedUpload({ name: "arabidopsis.fa.gz" });
+		const subtractionId = await seedSubtraction({ upload_id: uploadId });
+
+		const response = await handleGetSubtraction(
+			deps,
+			get(subtractionId),
+			String(subtractionId),
+		);
+
+		expect((await response.json()).upload).toEqual({
+			id: uploadId,
+			name: "arabidopsis.fa.gz",
+			size: null,
+			storageKey: null,
+		});
+	});
+
+	it("serves no upload when the one a subtraction names has been removed", async () => {
+		const uploadId = await seedUpload({ name: "gone.fa.gz", removed: true });
+		const subtractionId = await seedSubtraction({ upload_id: uploadId });
+
+		const response = await handleGetSubtraction(
+			deps,
+			get(subtractionId),
+			String(subtractionId),
+		);
+
+		expect((await response.json()).upload).toBeNull();
 	});
 
 	// The write path no longer accepts a bowtie2 shard, but every subtraction

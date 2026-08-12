@@ -12,18 +12,7 @@ export type MetricsDeps = {
 	logger: Logger;
 	client: PgClient;
 	applicationName: string;
-	/**
-	 * Refreshes the queue gauges on scrape.
-	 *
-	 * Every replica publishes them — N replicas each running this scan against
-	 * the same table on every scrape reports N copies of one number, but the
-	 * table is small and a dashboard picks one target, so it is accepted waste
-	 * rather than a problem; there is no flag to make it conditional. Optional
-	 * here only so a caller with none to give can still exercise the rest of
-	 * the scrape.
-	 */
 	readTaskQueue: TaskQueueReader | undefined;
-	/** The request's `Authorization` header, verbatim. */
 	authorization: string | undefined;
 	token: string | undefined;
 };
@@ -38,21 +27,11 @@ export type MetricsDeps = {
  * upgrade; with a token configured and a wrong one presented it reports
  * **401**.
  *
- * `isBearerTokenValid` is shared with `apps/web` and `apps/jobs-api` rather
- * than reimplemented. It screens the length before `timingSafeEqual`, which
- * throws on a length mismatch — reducing the comparison to `===` reintroduces
- * the timing leak the shared helper exists to close.
- *
  * How these pods actually get scraped is unsettled. A `prometheus.io/scrape`
  * annotation needs no Service and yields genuine per-pod series, but cannot
  * carry a bearer token — under the semantics here that means no metrics at all
  * rather than open metrics. If that is the route taken, this handler needs a
  * deliberate third state; do not reach it by quietly dropping the gate.
- *
- * Postgres pool occupancy is read the same way as `apps/web` and
- * `apps/jobs-api` — `readConnectionCountsBounded`, filtered on this process's
- * `application_name` — because the task runner's claim and heartbeat loops
- * make its pool just as worth watching as either of theirs.
  */
 export async function handleMetrics(deps: MetricsDeps): Promise<ProbeResponse> {
 	if (!deps.token) {

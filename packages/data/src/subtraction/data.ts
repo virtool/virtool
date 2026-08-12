@@ -57,6 +57,20 @@ export type SubtractionFileValues = {
 	storageKey: string;
 };
 
+/**
+ * The upload a subtraction was created from, as {@link getSubtractionUpload}
+ * resolves it.
+ *
+ * Every field but the id mirrors a nullable column. A row without a
+ * `storageKey` names no retrievable object, and nothing recomposes one.
+ */
+export type SubtractionUploadFile = {
+	id: number;
+	name: string | null;
+	size: number | null;
+	storageKey: string | null;
+};
+
 /** Fields a create_subtraction job supplies when it finishes. */
 export type FinalizeSubtractionValues = {
 	count: number;
@@ -303,6 +317,44 @@ async function checkSubtractionExists(
 		.limit(1);
 
 	return row !== undefined;
+}
+
+/**
+ * Resolve the upload a subtraction was created from.
+ *
+ * This is the source genome `create_subtraction` reads, and the only file a
+ * subtraction has before it is finalized. It is not folded into
+ * {@link getSubtraction}: that shape is served to the SPA as well, and an
+ * upload's `storage_key` has no business crossing that wire.
+ *
+ * Returns null when the subtraction does not exist, names no upload, or names a
+ * removed one. Every column here is nullable, so the fields are handed back as
+ * they stand — a caller that needs the bytes checks `storageKey` itself, because
+ * there is no fallback that finds the object.
+ */
+export async function getSubtractionUpload(
+	db: DbOrTx,
+	subtractionId: number,
+): Promise<SubtractionUploadFile | null> {
+	const [row] = await db
+		.select({
+			id: uploads.id,
+			name: uploads.name,
+			size: uploads.size,
+			storageKey: uploads.storageKey,
+		})
+		.from(subtractions)
+		.innerJoin(uploads, eq(subtractions.upload_id, uploads.id))
+		.where(
+			and(
+				eq(subtractions.id, subtractionId),
+				eq(subtractions.deleted, false),
+				eq(uploads.removed, false),
+			),
+		)
+		.limit(1);
+
+	return row ?? null;
 }
 
 /**

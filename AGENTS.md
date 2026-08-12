@@ -45,17 +45,23 @@ This is a **pnpm monorepo**:
   staged rollout to buy. Everything is built inside `bootstrap()`; this app has no
   module-scope singleton of any kind, not config, not the pool, not the
   registry. See [docs/tasks.md](docs/tasks.md).
-- `apps/create-subtraction/` — `@virtool/create-subtraction`, the first workflow
-  executor: a one-shot process that starts, works, exits. Only its object
-  storage half is wired so far. It ports Python's `create_subtraction`
-  **without `build_index`**: nothing consumes a subtraction's bowtie2 shards,
-  and the jobs API's finalize route accepts only `subtraction.fa.gz`, so the
-  run decompresses the FASTA, computes `gc`/`count`, compresses and finalizes.
-  Don't port the step or the `*.bt2` upload loop back. That leaves it running
-  no external tool at all — the gzip is `@virtool/workflow`'s, in-process — so
-  the image, `ghcr.io/virtool/ts-create-subtraction`, copies nothing from
-  `ghcr.io/virtool/tools`. The remaining workflow executor gets a directory,
-  a Dockerfile stage and a CI matrix entry when its port lands.
+- `apps/create-subtraction/` — `@virtool/create-subtraction`, the
+  create-subtraction workflow executor and its image
+  (`ghcr.io/virtool/ts-create-subtraction`), which turns an uploaded genome into
+  a subtraction an analysis can eliminate reads against. Two steps,
+  `compute_gc_and_count` and `finalize`, and one external tool, `seqkit`. Unlike
+  the two analysis workflows it **is** published, so a released image carries a
+  real `APP_VERSION`. Four rules it carries: `build_index` and the `*.bt2`
+  upload loop are **not ported**, because nothing consumes a subtraction's
+  bowtie2 shards and the finalize route whitelists `subtraction.fa.gz` alone;
+  **nothing decompresses the genome to disk**, since `seqkit` reads gzip
+  natively and an already-gzipped upload is stored exactly as it arrived;
+  **`gc` and `count` come from `seqkit fx2tab --base-count`**, whose five flags
+  decide the column order the parser reads; and **nothing deletes a subtraction
+  on failure**, as with the analysis workflows. Its input reaches it as
+  `WorkflowSubtraction.upload` — a subtraction it is running has no
+  `subtraction_files` rows yet, so the upload is the only file it has. See
+  [apps/create-subtraction/README.md](apps/create-subtraction/README.md).
 - `apps/pathoscope/` — `@virtool/pathoscope`, the pathoscope workflow executor
   and its image (`ghcr.io/virtool/ts-pathoscope`). Eight steps, four external
   tools and `pathoscope-core`, which it drives **as a subprocess** — there is

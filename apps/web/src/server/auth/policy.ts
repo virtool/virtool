@@ -128,9 +128,6 @@ export function authenticated() {
 
 /**
  * Callable only by an administrator holding at least `role`.
- *
- * Roles rank `full` (strongest) through `base` (weakest), so `adminRole("base")`
- * means "any administrator". `hasSufficientAdminRole` owns the ranking.
  */
 export function adminRole(role: AdministratorRoleName) {
 	return createMiddleware({ type: "function" }).server(
@@ -154,8 +151,7 @@ export function adminRole(role: AdministratorRoleName) {
 
 /**
  * Callable by a user granted `name` through group membership, or by an
- * administrator whose role covers it. Used by the upload endpoints
- * (`upload_file`, `remove_file`).
+ * administrator whose role covers it.
  */
 export function permission(name: Permission) {
 	return createMiddleware({ type: "function" }).server(

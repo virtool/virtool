@@ -3,9 +3,11 @@ import { FinalizeSubtractionRequest } from "@virtool/contracts";
 import {
 	finalizeSubtraction,
 	getSubtraction,
+	getSubtractionUpload,
 	SubtractionAlreadyFinalizedError,
 	SubtractionNotFoundError,
 	SubtractionNotOwnedError,
+	type SubtractionUploadFile,
 } from "@virtool/data/subtraction/data";
 import { requireJobRequest } from "../auth/guard";
 import { type FinalizeHandlerDeps, finalizeResource } from "../finalize";
@@ -25,7 +27,10 @@ export type SubtractionHandlerDeps = FinalizeHandlerDeps;
  * Each file carries its recorded `storageKey`; the workflow takes it to the
  * bucket itself.
  */
-function toWorkflowSubtraction(subtraction: Subtraction): WorkflowSubtraction {
+function toWorkflowSubtraction(
+	subtraction: Subtraction,
+	upload: SubtractionUploadFile | null,
+): WorkflowSubtraction {
 	return {
 		id: subtraction.id,
 		count: subtraction.count,
@@ -40,6 +45,7 @@ function toWorkflowSubtraction(subtraction: Subtraction): WorkflowSubtraction {
 		name: subtraction.name,
 		nickname: subtraction.nickname,
 		ready: subtraction.ready,
+		upload,
 	};
 }
 
@@ -72,9 +78,14 @@ export async function handleGetSubtraction(
 	}
 
 	try {
-		return Response.json(
-			toWorkflowSubtraction(await getSubtraction(deps.db, subtractionId)),
-		);
+		// The upload is a second statement rather than a join on the subtraction
+		// read, which is shared with the SPA and must not learn a bucket key.
+		const [subtraction, upload] = await Promise.all([
+			getSubtraction(deps.db, subtractionId),
+			getSubtractionUpload(deps.db, subtractionId),
+		]);
+
+		return Response.json(toWorkflowSubtraction(subtraction, upload));
 	} catch (err) {
 		if (err instanceof SubtractionNotFoundError) {
 			return jsonError(404, "Subtraction not found");
