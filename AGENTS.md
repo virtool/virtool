@@ -1366,6 +1366,45 @@ and the first to write to object storage. Its body is one call to
   the body does make is **after** the commit: keys are minted per write,
   so a rebuild repoints the row and orphans the object it replaced.
 
+`evict_caches_lru` is the third, and the first to delete. Its body is one
+call to `evictLruCaches` (`@virtool/data/caches/data`); five rules are its
+own:
+
+- **The budget is a constant, not configuration.**
+  `CACHE_STORAGE_BUDGET_BYTES` is 100 GiB, Python's default, with no
+  `VT_` key behind it — how much of the bucket caching may spend is
+  fleet-wide application state, not a fact about the pod reading it. It
+  is passed in as an argument rather than read inside, so a test can
+  drive the selection at a size it can seed. Making it configurable
+  follows under VIR-2925.
+- **Candidate selection is one statement**, where Python takes two,
+  folding the store's total into a scalar subquery so a concurrent write
+  cannot change the figure between them. Candidates come from
+  `sum(size) OVER (ORDER BY last_accessed_at ASC, id ASC)`, and a row
+  qualifies while the bytes *ahead* of it fall short of what must be
+  freed — which is what admits the last candidate, the one carrying the
+  total past the target. Python's `bytes_to_free <= 0` early return needs
+  no equivalent: no row satisfies that comparison against a non-positive
+  target.
+- **The grace period filters the candidates but not the total**, and the
+  quirk is inherited on purpose. A cache under an hour old is never
+  evicted, but its bytes still count toward the overage, so a store over
+  budget on nothing but fresh entries frees less than it needs, or
+  nothing. Both runners must choose the same rows until the cutover, so
+  the fix is a shorter grace period, never a differently-scoped sum.
+- **Objects go before rows**, eight at a time, and the table is not
+  touched until every object is gone. A failure part-way leaves rows
+  naming objects that are gone — reclaimed by the next run, and
+  detectable meanwhile; the other order leaks objects no row names, and
+  eviction walks rows. Every delete is attempted before the first failure
+  is raised, matching Python's `gather(..., return_exceptions=True)`. The
+  exact `storage_key` is deleted, never a prefix, and the rows then go in
+  one `DELETE ... WHERE id = any($1) RETURNING id` whose returned ids are
+  the only ones logged.
+- **The signal is checked between deletes**, `StorageBackend.delete`
+  taking none, so a run holding hundreds of objects cannot outlive the
+  drain and delete rows for a runner that has already released the claim.
+
 See [docs/tasks.md](docs/tasks.md) for the full config table, the
 `AppContext` contract, the shutdown ordering and its guarantees, the
 probe and metrics surface including the five task series and their

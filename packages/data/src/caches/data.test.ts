@@ -1,5 +1,6 @@
+import type { StorageBackend } from "@virtool/storage";
 import { cacheKey, MemoryStorage } from "@virtool/storage";
-import { eq } from "drizzle-orm";
+import { asc, eq } from "drizzle-orm";
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
 import type { Db } from "../db/pg";
 import { caches } from "../db/schema/caches";
@@ -8,6 +9,7 @@ import { testLogger } from "../test/logger";
 import {
 	CacheNotFoundError,
 	CacheObjectMissingError,
+	evictLruCaches,
 	getCache,
 	registerCache,
 } from "./data";
@@ -278,5 +280,257 @@ describe("registerCache", () => {
 				params: {},
 			}),
 		).rejects.toThrow(/storage_key/);
+	});
+});
+
+describe("evictLruCaches", () => {
+	/** A distinct 32-character storage uuid per seeded entry. */
+	function uuidFor(index: number): string {
+		return index.toString(16).padStart(32, "0");
+	}
+
+	type SeedOptions = {
+		key: string;
+		index: number;
+		size: number;
+		/** How long ago the entry was last read, in seconds. */
+		age: number;
+	};
+
+	/** Write an object and the row that names it, `age` seconds in the past. */
+	async function seedEntry(
+		storage: MemoryStorage,
+		options: SeedOptions,
+	): Promise<{ id: number; storageKey: string }> {
+		const storageKey = cacheKey(uuidFor(options.index));
+
+		await storage.write(storageKey, body("x".repeat(options.size)));
+
+		const accessed = new Date(Date.now() - options.age * 1000);
+
+		const [row] = await db
+			.insert(caches)
+			.values({
+				key: options.key,
+				storage_key: storageKey,
+				params: {},
+				size: options.size,
+				created_at: accessed,
+				last_accessed_at: accessed,
+			})
+			.returning();
+
+		if (!row) {
+			throw new Error("failed to seed cache");
+		}
+
+		return { id: row.id, storageKey };
+	}
+
+	/** The keys still in the table, oldest first. */
+	async function remainingKeys(): Promise<string[]> {
+		const rows = await db
+			.select({ key: caches.key })
+			.from(caches)
+			.orderBy(asc(caches.last_accessed_at), asc(caches.id));
+
+		return rows.map((row) => row.key);
+	}
+
+	const HOUR = 60 * 60;
+
+	it("evicts nothing when the store is under budget", async () => {
+		const storage = new MemoryStorage();
+
+		const a = await seedEntry(storage, {
+			key: "a",
+			index: 1,
+			size: 10,
+			age: 5 * HOUR,
+		});
+
+		await evictLruCaches(db, storage, testLogger, 100);
+
+		expect(await remainingKeys()).toEqual(["a"]);
+		await expect(storage.size(a.storageKey)).resolves.toBe(10);
+	});
+
+	it("evicts nothing when the table is empty", async () => {
+		const storage = new MemoryStorage();
+
+		await evictLruCaches(db, storage, testLogger, 0);
+
+		expect(await remainingKeys()).toEqual([]);
+	});
+
+	it("evicts least recently used first", async () => {
+		const storage = new MemoryStorage();
+
+		const oldest = await seedEntry(storage, {
+			key: "oldest",
+			index: 1,
+			size: 10,
+			age: 10 * HOUR,
+		});
+		await seedEntry(storage, {
+			key: "middle",
+			index: 2,
+			size: 10,
+			age: 5 * HOUR,
+		});
+		await seedEntry(storage, {
+			key: "newest",
+			index: 3,
+			size: 10,
+			age: 2 * HOUR,
+		});
+
+		await evictLruCaches(db, storage, testLogger, 25);
+
+		expect(await remainingKeys()).toEqual(["middle", "newest"]);
+		await expect(storage.size(oldest.storageKey)).rejects.toThrow();
+	});
+
+	// The row that carries the running total past the target is admitted rather
+	// than skipped: leaving it out would end the run still over budget.
+	it("takes the candidate that overshoots the bytes it has to free", async () => {
+		const storage = new MemoryStorage();
+
+		await seedEntry(storage, { key: "a", index: 1, size: 10, age: 10 * HOUR });
+		await seedEntry(storage, { key: "b", index: 2, size: 10, age: 5 * HOUR });
+
+		// 20 bytes stored against a budget of 15, so five have to go — and the
+		// smallest thing that can go is a whole ten-byte entry.
+		await evictLruCaches(db, storage, testLogger, 15);
+
+		expect(await remainingKeys()).toEqual(["b"]);
+	});
+
+	it("leaves entries inside the grace period alone", async () => {
+		const storage = new MemoryStorage();
+
+		await seedEntry(storage, {
+			key: "young",
+			index: 1,
+			size: 10,
+			age: 30 * 60,
+		});
+		await seedEntry(storage, { key: "old", index: 2, size: 10, age: 3 * HOUR });
+
+		await evictLruCaches(db, storage, testLogger, 15);
+
+		expect(await remainingKeys()).toEqual(["young"]);
+	});
+
+	// Python's quirk, inherited on purpose: the grace period filters the
+	// candidates but not the total, so a store over budget on nothing but fresh
+	// entries frees less than it needs, or nothing at all.
+	it("frees nothing when everything over budget is inside the grace period", async () => {
+		const storage = new MemoryStorage();
+
+		await seedEntry(storage, { key: "a", index: 1, size: 10, age: 20 * 60 });
+		await seedEntry(storage, { key: "b", index: 2, size: 10, age: 10 * 60 });
+
+		await evictLruCaches(db, storage, testLogger, 5);
+
+		expect(await remainingKeys()).toEqual(["a", "b"]);
+	});
+
+	it("breaks a last_accessed_at tie on id", async () => {
+		const storage = new MemoryStorage();
+
+		await seedEntry(storage, {
+			key: "first",
+			index: 1,
+			size: 10,
+			age: 5 * HOUR,
+		});
+		await seedEntry(storage, {
+			key: "second",
+			index: 2,
+			size: 10,
+			age: 5 * HOUR,
+		});
+
+		await evictLruCaches(db, storage, testLogger, 15);
+
+		expect(await remainingKeys()).toEqual(["second"]);
+	});
+
+	// Storage goes first so a failure leaves rows naming objects that are gone,
+	// which a later run reclaims — not objects no row names, which nothing would
+	// ever find again.
+	it("deletes no rows when a storage delete fails", async () => {
+		const storage = new MemoryStorage();
+
+		const a = await seedEntry(storage, {
+			key: "a",
+			index: 1,
+			size: 10,
+			age: 10 * HOUR,
+		});
+		const b = await seedEntry(storage, {
+			key: "b",
+			index: 2,
+			size: 10,
+			age: 5 * HOUR,
+		});
+
+		const refusing: StorageBackend = {
+			read: (key) => storage.read(key),
+			write: (key, data) => storage.write(key, data),
+			list: (prefix) => storage.list(prefix),
+			size: (key) => storage.size(key),
+			delete: async (key) => {
+				if (key === b.storageKey) {
+					throw new Error("bucket refused the delete");
+				}
+
+				await storage.delete(key);
+			},
+		};
+
+		await expect(evictLruCaches(db, refusing, testLogger, 5)).rejects.toThrow(
+			"bucket refused the delete",
+		);
+
+		expect(await remainingKeys()).toEqual(["a", "b"]);
+
+		// Every delete is still attempted before the failure is raised.
+		await expect(storage.size(a.storageKey)).rejects.toThrow();
+		await expect(storage.size(b.storageKey)).resolves.toBe(10);
+	});
+
+	it("is a no-op when re-run against what it already evicted", async () => {
+		const storage = new MemoryStorage();
+
+		await seedEntry(storage, { key: "a", index: 1, size: 10, age: 10 * HOUR });
+		await seedEntry(storage, { key: "b", index: 2, size: 10, age: 5 * HOUR });
+
+		await evictLruCaches(db, storage, testLogger, 15);
+		await evictLruCaches(db, storage, testLogger, 15);
+
+		expect(await remainingKeys()).toEqual(["b"]);
+	});
+
+	// The recorded key is deleted, never the prefix it sits under.
+	it("deletes the exact object key and nothing sharing its prefix", async () => {
+		const storage = new MemoryStorage();
+
+		const a = await seedEntry(storage, {
+			key: "a",
+			index: 1,
+			size: 10,
+			age: 10 * HOUR,
+		});
+
+		const neighbour = `${a.storageKey}-part-2`;
+		await storage.write(neighbour, body("keep me"));
+
+		await evictLruCaches(db, storage, testLogger, 5);
+
+		expect(await remainingKeys()).toEqual([]);
+		await expect(storage.size(a.storageKey)).rejects.toThrow();
+		await expect(storage.size(neighbour)).resolves.toBe(7);
 	});
 });

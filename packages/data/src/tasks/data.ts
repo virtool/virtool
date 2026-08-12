@@ -22,6 +22,7 @@ import {
 import type { Db, DbOrTx } from "../db/pg";
 import { takeFirstOrThrow } from "../db/rows";
 import { tasks as tasksTable } from "../db/schema/tasks";
+import { nowUtc, secondsAgo } from "../db/time";
 import { withTimeout } from "../db/timeout";
 import { AppError } from "../errors";
 import { emit } from "../events/emit";
@@ -332,19 +333,6 @@ export function buildRunnerId(): string {
 }
 
 /**
- * The current UTC wall time, matching the naive `timestamp` columns Python
- * writes.
- *
- * `clock_timestamp()` rather than `now()`, which is the *transaction's* start
- * time and is frozen for its whole length. On a heartbeat that back-dates the
- * lease by however long the transaction has already run, which is the
- * difference between a renewed lease and one another runner is free to take.
- */
-function nowUtc(): SQL {
-	return sql`timezone('utc', clock_timestamp())`;
-}
-
-/**
  * Match a task no runner holds — never claimed, or claimed by a runner of ours
  * whose lease has run out.
  *
@@ -375,16 +363,6 @@ function isClaimable(
 			),
 		),
 	);
-}
-
-/**
- * The wall time `seconds` before now, in the naive UTC these columns hold.
- *
- * A lease is live while `acquired_at` is later than this, and a periodic task's
- * spawn is suppressed while a `created_at` of that type is later than it.
- */
-function secondsAgo(seconds: number): SQL {
-	return sql`${nowUtc()} - make_interval(secs => ${seconds}::double precision)`;
 }
 
 /**

@@ -904,6 +904,71 @@ and the upsert repoints the row at it — leaving the previous artifact orphaned
 on every successful rebuild. That one is deleted immediately and its failures
 logged, never raised, because the build has already succeeded.
 
+### `evict_caches_lru`, the third body
+
+`evict_caches_lru` reclaims object storage by deleting the least recently used
+caches until the store is back under budget. Its body is one call to
+`evictLruCaches` (`@virtool/data/caches/data`) inside one step, `evict` —
+Python's method name — and it reports no progress: the candidate count is not
+known until the select returns, and the deletes that follow are a handful of
+round trips, so there is no position worth publishing.
+
+**The budget is a constant, not configuration.** `CACHE_STORAGE_BUDGET_BYTES`
+is 100 GiB, Python's `CACHE_STORAGE_BUDGET` default, and there is no `VT_` key
+behind it. How much of the bucket caching may spend is application state shared
+by the whole fleet, not a fact about the pod reading it, and a per-replica
+environment variable is the wrong shape for that. It is passed into
+`evictLruCaches` as an argument rather than read inside it, so a test can drive
+the selection at a size it can seed.
+
+**Candidate selection is one statement.** Python takes two — a `SELECT
+sum(size)` and then the candidate query — and this side folds the total into a
+scalar subquery, removing the window in which a concurrent write could change
+the figure the second statement selects against. The candidates come from a
+window function, `sum(size) OVER (ORDER BY last_accessed_at ASC, id ASC)`, and a
+row qualifies while the bytes ahead of it fall short of what has to be freed.
+That comparison is what admits the last candidate, the one carrying the total
+past the target: without it the run would stop just short and leave the store
+over budget. Python's `bytes_to_free <= 0` early return needs no equivalent —
+the preceding bytes are never negative, so no row satisfies the comparison
+against a non-positive target, and an under-budget store selects nothing.
+
+**The grace period filters the candidates but not the total**, and that quirk is
+inherited on purpose. A cache younger than an hour is never evicted — it was
+written by one workflow for the next, and the two can be that far apart — but
+its bytes still count toward the overage being solved. A store that is over
+budget on nothing but fresh entries therefore frees less than it needs, or
+nothing at all, and waits for them to age. Both runners have to choose the same
+rows until the cutover completes, so the fix is a shorter grace period, never a
+differently-scoped sum.
+
+**Objects go before rows**, eight deletes at a time, and nothing is deleted from
+the table until every object is gone. A failure part-way through leaves rows
+naming objects that are gone — which a later run reclaims, being still the least
+recently used, and which a reader can at least detect. The other order leaks
+objects no row names, and eviction walks rows, so nothing would ever find them
+again. Every delete is attempted before the first failure is raised, matching
+Python's `gather(..., return_exceptions=True)` and re-raise: a bucket refusing
+one key says nothing about the rest.
+
+The exact `storage_key` recorded on the row is deleted, never a prefix — the key
+is a per-write uuid and a prefix delete would reach another row's object. The
+rows then go in one `DELETE ... WHERE id = any($1) RETURNING id`, over a single
+array parameter rather than an `in` list, and only the ids that come back are
+logged. A row another writer removed between the select and the delete is not
+this run's to report.
+
+The signal is forwarded, and because `StorageBackend.delete` takes none it is
+checked between deletes. That is what keeps a run holding hundreds of objects
+from outliving the drain and deleting rows on behalf of a runner that has
+already released the claim. An abort leaves rows whose objects are gone, which
+is the same state a crash leaves and the state storage-first ordering already
+accepts.
+
+Idempotency comes free: a re-run selects whatever is still over budget, and
+`storage.delete` is idempotent on its own, so an interrupted run is finished by
+the next one rather than repaired by it.
+
 ### Frames are the framework's, never a body's
 
 A body never emits. `updateTaskProgress`, `completeTask` and `failTask` publish
