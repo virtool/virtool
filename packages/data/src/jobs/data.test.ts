@@ -1,6 +1,14 @@
-import type { JobState } from "@virtool/contracts";
-import { eq } from "drizzle-orm";
-import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
+import type { JobState, StoredJobClaim } from "@virtool/contracts";
+import { eq, sql } from "drizzle-orm";
+import {
+	afterAll,
+	beforeAll,
+	beforeEach,
+	describe,
+	expect,
+	it,
+	onTestFinished,
+} from "vitest";
 
 import { seedUser } from "../auth/test/fixtures";
 import type { Db } from "../db/pg";
@@ -10,6 +18,7 @@ import { jobs } from "../db/schema/jobs";
 import { legacySamples } from "../db/schema/samples";
 import { users } from "../db/schema/users";
 import { createTestDatabase, type TestDatabase } from "../db/test/fixtures";
+import { collectFrames } from "../test/frames";
 import {
 	claimJob,
 	finishJob,
@@ -25,6 +34,7 @@ import {
 	readJobCounts,
 	readOldestPendingJobAges,
 	startJobStep,
+	timeoutStalledJobs,
 } from "./data";
 
 let database: TestDatabase;
@@ -400,5 +410,194 @@ describe("readOldestPendingJobAges", () => {
 
 		expect(ages).toHaveLength(1);
 		expect(ages[0]?.ageSeconds).toBeLessThan(90);
+	});
+});
+
+const CLAIM: StoredJobClaim = {
+	runner_id: "dead-runner",
+	mem: 8,
+	cpu: 2,
+	image: "ghcr.io/virtool/ts-nuvs:0.0.0",
+	runtime_version: "1.0.0",
+	workflow_version: "0.0.0",
+};
+
+/** Insert a job last pinged `pingAgeSeconds` ago, or never when that is null. */
+async function seedPingedJob(
+	state: JobState,
+	pingAgeSeconds: number | null,
+): Promise<number> {
+	const [job] = await db
+		.insert(jobs)
+		.values({
+			claim: CLAIM,
+			claimed_at: new Date(Date.now() - 3600 * 1000),
+			created_at: new Date(Date.now() - 3600 * 1000),
+			pinged_at:
+				pingAgeSeconds === null
+					? null
+					: new Date(Date.now() - pingAgeSeconds * 1000),
+			state,
+			user_id: userId,
+			workflow: "nuvs",
+		})
+		.returning({ id: jobs.id });
+
+	if (!job) {
+		throw new Error("failed to seed job");
+	}
+
+	return job.id;
+}
+
+function readJobRow(jobId: number) {
+	return db
+		.select()
+		.from(jobs)
+		.where(eq(jobs.id, jobId))
+		.then(([row]) => row);
+}
+
+describe("timeoutStalledJobs", () => {
+	// Both halves in one test, so an off-by-one in the interval arithmetic cannot
+	// pass by only ever being asked about one side of the cutoff.
+	it("fails a stale running job and leaves a fresh one alone", async () => {
+		const stale = await seedPingedJob("running", 600);
+		const fresh = await seedPingedJob("running", 60);
+
+		expect(await timeoutStalledJobs(db, { thresholdSeconds: 300 })).toEqual([
+			stale,
+		]);
+
+		expect(await readJobRow(stale)).toMatchObject({ state: "failed" });
+		expect((await readJobRow(stale))?.finished_at).toBeInstanceOf(Date);
+
+		expect(await readJobRow(fresh)).toMatchObject({
+			state: "running",
+			finished_at: null,
+		});
+	});
+
+	// `pending` is the one that matters: a queued job is not pinging by
+	// definition, and timing it out would fail work nothing has started.
+	it("leaves a job that is not running alone however stale", async () => {
+		const ids = await Promise.all(
+			(["pending", "succeeded", "failed", "cancelled"] as const).map((state) =>
+				seedPingedJob(state, 86_400),
+			),
+		);
+
+		expect(await timeoutStalledJobs(db, { thresholdSeconds: 300 })).toEqual([]);
+
+		for (const id of ids) {
+			expect(await readJobRow(id)).toMatchObject({ finished_at: null });
+		}
+	});
+
+	// `pinged_at < ...` is NULL for a job that has never been pinged, and so
+	// falsy. Deliberate, and pinned here so it is not "fixed" into a COALESCE.
+	it("never times out a job that has never been pinged", async () => {
+		const running = await seedPingedJob("running", null);
+		const pending = await seedPingedJob("pending", null);
+
+		expect(await timeoutStalledJobs(db, { thresholdSeconds: 0 })).toEqual([]);
+
+		expect(await readJobRow(running)).toMatchObject({ state: "running" });
+		expect(await readJobRow(pending)).toMatchObject({ state: "pending" });
+	});
+
+	it("returns an empty array when there is nothing to time out", async () => {
+		await expect(timeoutStalledJobs(db)).resolves.toEqual([]);
+	});
+
+	// A reclaimed task re-runs its body from step zero, so the second sweep must
+	// be a no-op rather than a second write against the same rows.
+	it("is idempotent across consecutive sweeps", async () => {
+		const stale = await seedPingedJob("running", 600);
+
+		expect(await timeoutStalledJobs(db, { thresholdSeconds: 300 })).toEqual([
+			stale,
+		]);
+
+		const finishedAt = (await readJobRow(stale))?.finished_at;
+
+		expect(await timeoutStalledJobs(db, { thresholdSeconds: 300 })).toEqual([]);
+
+		expect((await readJobRow(stale))?.finished_at).toEqual(finishedAt);
+	});
+
+	// The only way the `timezone('utc', clock_timestamp())` requirement is pinned
+	// rather than passing by accident on a UTC box. Under a session `TimeZone` of
+	// its own, a cutoff read through that zone is hours off, so the stale row
+	// stops matching and the stamp it would have written is wrong by the offset.
+	it("works from a UTC clock whatever the session time zone", async () => {
+		const stale = await seedPingedJob("running", 600);
+
+		const connection = database.connect();
+		onTestFinished(connection.close);
+
+		await connection.db.execute(sql`set time zone 'America/Vancouver'`);
+
+		// Without this the test passes whenever the SET fails to stick, which is
+		// the whole of what it is here to rule out.
+		expect(await connection.db.execute(sql`show timezone`)).toEqual([
+			{ TimeZone: "America/Vancouver" },
+		]);
+
+		expect(
+			await timeoutStalledJobs(connection.db, { thresholdSeconds: 300 }),
+		).toEqual([stale]);
+
+		const finishedAt = (await readJobRow(stale))?.finished_at as Date;
+
+		expect(Math.abs(finishedAt.getTime() - Date.now())).toBeLessThan(60_000);
+	});
+
+	// The assertion that stops someone "tidying up" a dead runner's claim. A
+	// timed-out job has to stay indistinguishable from any other failure.
+	it("leaves claim and claimed_at as the dead runner wrote them", async () => {
+		const stale = await seedPingedJob("running", 600);
+		const before = await readJobRow(stale);
+
+		await timeoutStalledJobs(db, { thresholdSeconds: 300 });
+
+		expect(await readJobRow(stale)).toMatchObject({
+			claim: CLAIM,
+			claimed_at: before?.claimed_at,
+			state: "failed",
+		});
+	});
+
+	// A sweep failing several jobs at once publishes one frame each. The client
+	// coalesces the burst into a batched read; nothing throttles it here.
+	it("publishes one jobs frame per timed-out id", async () => {
+		const first = await seedPingedJob("running", 600);
+		const second = await seedPingedJob("running", 600);
+		const third = await seedPingedJob("running", 600);
+		await seedPingedJob("running", 60);
+
+		const frames = await collectFrames(database.client, async () => {
+			await timeoutStalledJobs(db, { thresholdSeconds: 300 });
+		});
+
+		expect(
+			frames.sort(
+				(a, b) => (a.resource_id as number) - (b.resource_id as number),
+			),
+		).toEqual([
+			{ domain: "jobs", resource_id: first, operation: "update" },
+			{ domain: "jobs", resource_id: second, operation: "update" },
+			{ domain: "jobs", resource_id: third, operation: "update" },
+		]);
+	});
+
+	it("publishes nothing when the sweep matches no job", async () => {
+		await seedPingedJob("running", 60);
+
+		const frames = await collectFrames(database.client, async () => {
+			await timeoutStalledJobs(db, { thresholdSeconds: 300 });
+		});
+
+		expect(frames).toEqual([]);
 	});
 });

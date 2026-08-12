@@ -5,11 +5,7 @@ import {
 	type TestDatabase,
 } from "@virtool/data/db/test/fixtures";
 import type { ClientEvent } from "@virtool/data/events/channel";
-import {
-	acquireTask,
-	type ClaimedTask,
-	createTask,
-} from "@virtool/data/tasks/data";
+import { type ClaimedTask, createTask } from "@virtool/data/tasks/data";
 import { collectFrames as collect } from "@virtool/data/test/frames";
 import { createLogger, type Logger } from "@virtool/logger";
 import { eq } from "drizzle-orm";
@@ -23,10 +19,10 @@ import {
 	vi,
 } from "vitest";
 import { z } from "zod";
+import { acquireOrThrow, readTaskRow } from "../testing/tasks";
 import { defineTask, type TaskRegistry } from "./define";
 import { runTask } from "./run";
 
-const RUNNER = "ts-runner-a-1";
 const OTHER_RUNNER = "ts-runner-b-2";
 
 /** Long enough that no test's debounce window closes on its own. */
@@ -50,32 +46,13 @@ beforeEach(async () => {
 	await db.delete(tasks);
 });
 
-async function readRow(taskId: number) {
-	const [row] = await db.select().from(tasks).where(eq(tasks.id, taskId));
-
-	if (row === undefined) {
-		throw new Error(`no task row with id ${taskId}`);
-	}
-
-	return row;
-}
-
 /** Insert a task and claim it, as the runner loop will. */
 async function claim(
 	context: Record<string, unknown> = {},
 ): Promise<ClaimedTask> {
 	await createTask(db, "install_hmms", context);
 
-	const claimed = await acquireTask(db, {
-		runnerId: RUNNER,
-		allowedTypes: ["install_hmms"],
-	});
-
-	if (claimed === null) {
-		throw new Error("the task under test was not claimable");
-	}
-
-	return claimed;
+	return acquireOrThrow(db, "install_hmms");
 }
 
 /** Collect the `client_events` frames published while `run` executes. */
@@ -126,7 +103,7 @@ describe("runTask", () => {
 
 		expect(outcome).toEqual({ status: "completed" });
 		expect(seen).toEqual([{ payload: { release_id: 7 }, taskId: task.id }]);
-		expect(await readRow(task.id)).toMatchObject({
+		expect(await readTaskRow(db, task.id)).toMatchObject({
 			complete: true,
 			error: null,
 			progress: 100,
@@ -154,7 +131,7 @@ describe("runTask", () => {
 		});
 
 		expect(outcome).toEqual({ status: "failed", error: "TypeError: kaboom" });
-		expect(await readRow(task.id)).toMatchObject({
+		expect(await readTaskRow(db, task.id)).toMatchObject({
 			error: "TypeError: kaboom",
 		});
 	});
@@ -180,7 +157,7 @@ describe("runTask", () => {
 
 		expect(run).not.toHaveBeenCalled();
 		expect(outcome.status).toBe("failed");
-		expect((await readRow(task.id)).error).toContain("Invalid payload");
+		expect((await readTaskRow(db, task.id)).error).toContain("Invalid payload");
 	});
 
 	it("scales progress into an equal slice per declared step", async () => {
@@ -195,14 +172,14 @@ describe("runTask", () => {
 			run: async ({ helpers, taskId }) => {
 				for (const name of steps) {
 					await helpers.runStep(name, async (report) => {
-						const row = await readRow(taskId);
+						const row = await readTaskRow(db, taskId);
 						entries.push({ progress: row.progress, step: row.step });
 
 						if (name === "three") {
 							report(0.5);
 
 							await vi.waitFor(async () => {
-								expect((await readRow(taskId)).progress).toBe(62);
+								expect((await readTaskRow(db, taskId)).progress).toBe(62);
 							});
 						}
 					});
@@ -227,7 +204,7 @@ describe("runTask", () => {
 			{ progress: 50, step: "three" },
 			{ progress: 75, step: "four" },
 		]);
-		expect(await readRow(task.id)).toMatchObject({
+		expect(await readTaskRow(db, task.id)).toMatchObject({
 			progress: 100,
 			step: "four",
 		});
@@ -259,7 +236,7 @@ describe("runTask", () => {
 		});
 
 		expect(outcome).toEqual({ status: "failed", error: "Error: boom" });
-		expect(await readRow(task.id)).toMatchObject({
+		expect(await readTaskRow(db, task.id)).toMatchObject({
 			error: "Error: boom",
 			progress: 25,
 			step: "two",
@@ -289,7 +266,7 @@ describe("runTask", () => {
 				});
 
 				await helpers.runStep("two", async () => {
-					insideSecondStep = (await readRow(taskId)).progress;
+					insideSecondStep = (await readTaskRow(db, taskId)).progress;
 				});
 			},
 		});
@@ -306,7 +283,7 @@ describe("runTask", () => {
 
 		expect(outcome).toEqual({ status: "completed" });
 		expect(insideSecondStep).toBe(87);
-		expect(await readRow(task.id)).toMatchObject({
+		expect(await readTaskRow(db, task.id)).toMatchObject({
 			progress: 100,
 			step: "two",
 		});
@@ -328,7 +305,7 @@ describe("runTask", () => {
 				});
 
 				await helpers.runStep("two", async () => {
-					insideDeclaredStep = (await readRow(taskId)).progress;
+					insideDeclaredStep = (await readTaskRow(db, taskId)).progress;
 				});
 			},
 		});
@@ -355,12 +332,12 @@ describe("runTask", () => {
 			payload: z.object({}),
 			run: async ({ helpers, taskId }) => {
 				await helpers.runStep("downloading", async (report) => {
-					expect((await readRow(taskId)).step).toBe("downloading");
+					expect((await readTaskRow(db, taskId)).step).toBe("downloading");
 
 					report(0.4);
 
 					await vi.waitFor(async () => {
-						expect((await readRow(taskId)).progress).toBe(40);
+						expect((await readTaskRow(db, taskId)).progress).toBe(40);
 					});
 				});
 			},
@@ -376,7 +353,7 @@ describe("runTask", () => {
 			debounceMs: 5,
 		});
 
-		expect(await readRow(task.id)).toMatchObject({
+		expect(await readTaskRow(db, task.id)).toMatchObject({
 			complete: true,
 			progress: 100,
 			step: "downloading",
@@ -454,7 +431,7 @@ describe("runTask", () => {
 		// The step entry, the flushed final value, and the failure — against ten
 		// calls to `report`.
 		expect(frames).toHaveLength(3);
-		expect(await readRow(task.id)).toMatchObject({
+		expect(await readTaskRow(db, task.id)).toMatchObject({
 			error: "Error: boom",
 			progress: 97,
 		});
@@ -486,7 +463,7 @@ describe("runTask", () => {
 		});
 
 		expect(outcome).toEqual({ status: "completed" });
-		expect(await readRow(task.id)).toMatchObject({
+		expect(await readTaskRow(db, task.id)).toMatchObject({
 			error: null,
 			progress: 100,
 		});
@@ -523,7 +500,7 @@ describe("runTask", () => {
 
 		expect(outcome).toEqual({ status: "aborted" });
 		expect(cleanup).toHaveBeenCalledTimes(1);
-		expect(await readRow(task.id)).toMatchObject({
+		expect(await readTaskRow(db, task.id)).toMatchObject({
 			complete: false,
 			error: null,
 		});
@@ -576,7 +553,7 @@ describe("runTask", () => {
 		});
 
 		expect(outcome).toEqual({ status: "failed", error: "TypeError: kaboom" });
-		expect((await readRow(task.id)).error).toBe("TypeError: kaboom");
+		expect((await readTaskRow(db, task.id)).error).toBe("TypeError: kaboom");
 	});
 
 	it("returns without running the handler when the signal is already aborted", async () => {
@@ -606,7 +583,7 @@ describe("runTask", () => {
 		expect(outcome).toEqual({ status: "aborted" });
 		expect(run).not.toHaveBeenCalled();
 		expect(cleanup).not.toHaveBeenCalled();
-		expect(await readRow(task.id)).toMatchObject({
+		expect(await readTaskRow(db, task.id)).toMatchObject({
 			complete: false,
 			error: null,
 			progress: 0,
@@ -645,7 +622,7 @@ describe("runTask", () => {
 
 		expect(outcome).toEqual({ status: "fenced" });
 		expect(cleanup).not.toHaveBeenCalled();
-		expect(await readRow(task.id)).toMatchObject({
+		expect(await readTaskRow(db, task.id)).toMatchObject({
 			complete: false,
 			error: null,
 		});
@@ -682,7 +659,7 @@ describe("runTask", () => {
 
 		expect(outcome).toEqual({ status: "fenced" });
 		expect(cleanup).not.toHaveBeenCalled();
-		expect(await readRow(task.id)).toMatchObject({
+		expect(await readTaskRow(db, task.id)).toMatchObject({
 			complete: false,
 			error: null,
 			progress: 0,

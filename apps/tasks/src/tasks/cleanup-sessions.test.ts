@@ -7,16 +7,14 @@ import {
 	createTestDatabase,
 	type TestDatabase,
 } from "@virtool/data/db/test/fixtures";
-import { acquireTask, type ClaimedTask } from "@virtool/data/tasks/data";
 import { createLogger, type Logger } from "@virtool/logger";
 import { MemoryStorage } from "@virtool/storage";
-import { eq } from "drizzle-orm";
+
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
 import { runTask } from "../framework/run";
+import { claimTask, readTaskRow } from "../testing/tasks";
 import { cleanupSessionsTask } from "./cleanup-sessions";
 import type { TaskContext } from "./registry";
-
-const RUNNER = "ts-runner-a-1";
 
 const logger: Logger = createLogger({ name: "test", level: "silent" });
 
@@ -45,44 +43,6 @@ function minutesFromNow(minutes: number): Date {
 	return new Date(Date.now() + minutes * 60 * 1000);
 }
 
-/**
- * Insert a `cleanup_sessions` row and claim it, as the spawner and the runner
- * will once the cutover registers it.
- *
- * Written directly rather than through `createTask`, whose `TaskType` lists only
- * the four the web app spawns.
- */
-async function claim(): Promise<ClaimedTask> {
-	await db.insert(tasks).values({
-		complete: false,
-		context: {},
-		count: 0,
-		created_at: new Date(),
-		progress: 0,
-		step: cleanupSessionsTask.type,
-		type: cleanupSessionsTask.type,
-	});
-
-	const claimed = await acquireTask(db, {
-		runnerId: RUNNER,
-		allowedTypes: [cleanupSessionsTask.type],
-	});
-
-	if (claimed === null) {
-		throw new Error("the task under test was not claimable");
-	}
-
-	return claimed;
-}
-
-function readRow(taskId: number) {
-	return db
-		.select()
-		.from(tasks)
-		.where(eq(tasks.id, taskId))
-		.then(([row]) => row);
-}
-
 async function remainingSessionIds(): Promise<string[]> {
 	const rows = await db
 		.select({ sessionId: sessions.sessionId })
@@ -102,7 +62,7 @@ describe("cleanupSessionsTask", () => {
 			expiresAt: minutesFromNow(30),
 		});
 
-		const task = await claim();
+		const task = await claimTask(db, cleanupSessionsTask);
 
 		const outcome = await runTask({
 			db,
@@ -115,7 +75,7 @@ describe("cleanupSessionsTask", () => {
 
 		expect(outcome).toEqual({ status: "completed" });
 
-		expect(await readRow(task.id)).toMatchObject({
+		expect(await readTaskRow(db, task.id)).toMatchObject({
 			complete: true,
 			error: null,
 			progress: 100,
@@ -131,7 +91,7 @@ describe("cleanupSessionsTask", () => {
 			expiresAt: minutesFromNow(30),
 		});
 
-		const task = await claim();
+		const task = await claimTask(db, cleanupSessionsTask);
 
 		const outcome = await runTask({
 			db,
@@ -144,7 +104,7 @@ describe("cleanupSessionsTask", () => {
 
 		expect(outcome).toEqual({ status: "completed" });
 
-		expect(await readRow(task.id)).toMatchObject({
+		expect(await readTaskRow(db, task.id)).toMatchObject({
 			complete: true,
 			error: null,
 			progress: 100,

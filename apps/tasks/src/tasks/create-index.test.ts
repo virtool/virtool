@@ -12,16 +12,15 @@ import {
 	type TestDatabase,
 } from "@virtool/data/db/test/fixtures";
 import { seedReference } from "@virtool/data/indexes/test/fixtures";
-import { acquireTask, type ClaimedTask } from "@virtool/data/tasks/data";
+import type { ClaimedTask } from "@virtool/data/tasks/data";
 import { createLogger, type Logger } from "@virtool/logger";
 import { MemoryStorage, type StorageBackend } from "@virtool/storage";
 import { eq } from "drizzle-orm";
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
 import { runTask } from "../framework/run";
+import { acquireOrThrow, readTaskRow, seedTaskRow } from "../testing/tasks";
 import { createIndexTask } from "./create-index";
 import type { TaskContext } from "./registry";
-
-const RUNNER = "ts-runner-a-1";
 
 const logger: Logger = createLogger({ name: "test", level: "silent" });
 
@@ -98,20 +97,7 @@ async function claimBuild(count = 2): Promise<{
 		manifest[otu.id] = otu.version;
 	}
 
-	const [taskRow] = await db
-		.insert(tasks)
-		.values({
-			complete: false,
-			context: {},
-			count: 0,
-			created_at: new Date(),
-			progress: 0,
-			step: createIndexTask.type,
-			type: createIndexTask.type,
-		})
-		.returning({ id: tasks.id });
-
-	const taskId = taskRow?.id as number;
+	const taskId = await seedTaskRow(db, createIndexTask.type);
 
 	const [indexRow] = await db
 		.insert(indexes)
@@ -134,24 +120,9 @@ async function claimBuild(count = 2): Promise<{
 		.set({ context: { index_id: indexId } })
 		.where(eq(tasks.id, taskId));
 
-	const claimed = await acquireTask(db, {
-		runnerId: RUNNER,
-		allowedTypes: [createIndexTask.type],
-	});
-
-	if (claimed === null) {
-		throw new Error("the task under test was not claimable");
-	}
+	const claimed = await acquireOrThrow(db, createIndexTask.type);
 
 	return { task: claimed, indexId, referenceId };
-}
-
-function readRow(taskId: number) {
-	return db
-		.select()
-		.from(tasks)
-		.where(eq(tasks.id, taskId))
-		.then(([row]) => row);
 }
 
 function run(task: ClaimedTask, signal = new AbortController().signal) {
@@ -164,7 +135,7 @@ describe("createIndexTask", () => {
 
 		expect(await run(task)).toEqual({ status: "completed" });
 
-		expect(await readRow(task.id)).toMatchObject({
+		expect(await readTaskRow(db, task.id)).toMatchObject({
 			complete: true,
 			error: null,
 			progress: 100,
@@ -218,13 +189,9 @@ describe("createIndexTask", () => {
 			.set({ complete: false, runner_id: null, acquired_at: null })
 			.where(eq(tasks.id, task.id));
 
-		const second = await acquireTask(db, {
-			runnerId: RUNNER,
-			allowedTypes: [createIndexTask.type],
-		});
+		const second = await acquireOrThrow(db, createIndexTask.type);
 
-		expect(second).not.toBeNull();
-		expect(await run(second as ClaimedTask)).toEqual({ status: "completed" });
+		expect(await run(second)).toEqual({ status: "completed" });
 
 		const rows = await db
 			.select()
@@ -249,7 +216,7 @@ describe("createIndexTask", () => {
 		const outcome = await run(reclaimed);
 
 		expect(outcome.status).toBe("failed");
-		expect(await readRow(task.id)).toMatchObject({ complete: true });
+		expect(await readTaskRow(db, task.id)).toMatchObject({ complete: true });
 	});
 
 	// Nothing is registered and the build stays unfinished, so a rebuild can

@@ -5,7 +5,6 @@ import {
 	createTestDatabase,
 	type TestDatabase,
 } from "@virtool/data/db/test/fixtures";
-import { acquireTask, type ClaimedTask } from "@virtool/data/tasks/data";
 import { collectFrames } from "@virtool/data/test/frames";
 import { createLogger, type Logger } from "@virtool/logger";
 import type { StorageBackend } from "@virtool/storage";
@@ -22,10 +21,9 @@ import {
 	vi,
 } from "vitest";
 import { runTask } from "../framework/run";
+import { claimTask, readTaskRow } from "../testing/tasks";
 import { refreshHmmsTask } from "./refresh-hmms";
 import type { TaskContext } from "./registry";
-
-const RUNNER = "ts-runner-a-1";
 
 const logger: Logger = createLogger({ name: "test", level: "silent" });
 
@@ -74,49 +72,11 @@ function stubFetch(status: number, body: unknown): void {
 	);
 }
 
-/**
- * Insert a `refresh_hmms` row and claim it, as the spawner and the runner will.
- *
- * The row is written directly rather than through `createTask`, whose `TaskType`
- * lists only the four the web app spawns. A periodic task is the spawner's, and
- * that half is not built yet.
- */
-async function claim(): Promise<ClaimedTask> {
-	await db.insert(tasks).values({
-		complete: false,
-		context: {},
-		count: 0,
-		created_at: new Date(),
-		progress: 0,
-		step: refreshHmmsTask.type,
-		type: refreshHmmsTask.type,
-	});
-
-	const claimed = await acquireTask(db, {
-		runnerId: RUNNER,
-		allowedTypes: [refreshHmmsTask.type],
-	});
-
-	if (claimed === null) {
-		throw new Error("the task under test was not claimable");
-	}
-
-	return claimed;
-}
-
-function readRow(taskId: number) {
-	return db
-		.select()
-		.from(tasks)
-		.where(eq(tasks.id, taskId))
-		.then(([row]) => row);
-}
-
 describe("refreshHmmsTask", () => {
 	it("runs a claimed task through to complete and stores the release", async () => {
 		stubFetch(200, { "virtool-hmm": [manifestRelease] });
 
-		const task = await claim();
+		const task = await claimTask(db, refreshHmmsTask);
 
 		const frames = await collectFrames(database.client, async () => {
 			const outcome = await runTask({
@@ -131,7 +91,7 @@ describe("refreshHmmsTask", () => {
 			expect(outcome).toEqual({ status: "completed" });
 		});
 
-		expect(await readRow(task.id)).toMatchObject({
+		expect(await readTaskRow(db, task.id)).toMatchObject({
 			complete: true,
 			error: null,
 			progress: 100,
@@ -165,7 +125,7 @@ describe("refreshHmmsTask", () => {
 			}),
 		);
 
-		const task = await claim();
+		const task = await claimTask(db, refreshHmmsTask);
 
 		const outcome = await runTask({
 			db,
@@ -181,7 +141,7 @@ describe("refreshHmmsTask", () => {
 			error: "HmmReleaseError: Could not reach Virtool.ca",
 		});
 
-		expect(await readRow(task.id)).toMatchObject({
+		expect(await readTaskRow(db, task.id)).toMatchObject({
 			complete: true,
 			error: "HmmReleaseError: Could not reach Virtool.ca",
 		});
@@ -221,7 +181,7 @@ describe("refreshHmmsTask", () => {
 			),
 		);
 
-		const task = await claim();
+		const task = await claimTask(db, refreshHmmsTask);
 
 		const run = runTask({
 			db,
@@ -239,7 +199,7 @@ describe("refreshHmmsTask", () => {
 		// next spawn's refresh for nothing.
 		expect(await run).toEqual({ status: "aborted" });
 
-		expect(await readRow(task.id)).toMatchObject({
+		expect(await readTaskRow(db, task.id)).toMatchObject({
 			complete: false,
 			error: null,
 		});
@@ -252,7 +212,7 @@ describe("refreshHmmsTask", () => {
 	it("is idempotent across a re-run", async () => {
 		stubFetch(200, { "virtool-hmm": [manifestRelease] });
 
-		const first = await claim();
+		const first = await claimTask(db, refreshHmmsTask);
 
 		await runTask({
 			db,
@@ -265,7 +225,7 @@ describe("refreshHmmsTask", () => {
 
 		const [afterFirst] = await db.select().from(legacyHmmStatus);
 
-		const second = await claim();
+		const second = await claimTask(db, refreshHmmsTask);
 
 		await runTask({
 			db,

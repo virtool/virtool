@@ -5,6 +5,7 @@ import { cleanupSessionsTask } from "./cleanup-sessions";
 import { createIndexTask } from "./create-index";
 import { evictCachesLruTask } from "./evict-caches-lru";
 import { refreshHmmsTask } from "./refresh-hmms";
+import { timeoutJobsTask } from "./timeout-jobs";
 
 /**
  * What every task handler is given as `ctx`.
@@ -37,4 +38,5 @@ export const taskRegistry: TaskRegistry<TaskContext> = {
 	create_index: createIndexTask,
 	evict_caches_lru: evictCachesLruTask,
 	refresh_hmms: refreshHmmsTask,
+	timeout_jobs: timeoutJobsTask,
 };

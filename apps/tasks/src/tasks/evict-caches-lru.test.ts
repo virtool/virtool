@@ -5,17 +5,15 @@ import {
 	createTestDatabase,
 	type TestDatabase,
 } from "@virtool/data/db/test/fixtures";
-import { acquireTask, type ClaimedTask } from "@virtool/data/tasks/data";
 import { createLogger, type Logger } from "@virtool/logger";
 import type { StorageBackend } from "@virtool/storage";
 import { cacheKey, MemoryStorage } from "@virtool/storage";
-import { asc, eq } from "drizzle-orm";
+import { asc } from "drizzle-orm";
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
 import { runTask } from "../framework/run";
+import { claimTask, readTaskRow } from "../testing/tasks";
 import { evictCachesLruTask } from "./evict-caches-lru";
 import type { TaskContext } from "./registry";
-
-const RUNNER = "ts-runner-a-1";
 
 const GIB = 1024 ** 3;
 
@@ -82,44 +80,6 @@ async function seedEntries(count: number, size: number): Promise<string[]> {
 	return keys;
 }
 
-/**
- * Insert an `evict_caches_lru` row and claim it, as the spawner and the runner
- * will.
- *
- * Written directly rather than through `createTask`, whose `TaskType` lists only
- * the four the web app spawns. A periodic task is the spawner's.
- */
-async function claim(): Promise<ClaimedTask> {
-	await db.insert(tasks).values({
-		complete: false,
-		context: {},
-		count: 0,
-		created_at: new Date(),
-		progress: 0,
-		step: evictCachesLruTask.type,
-		type: evictCachesLruTask.type,
-	});
-
-	const claimed = await acquireTask(db, {
-		runnerId: RUNNER,
-		allowedTypes: [evictCachesLruTask.type],
-	});
-
-	if (claimed === null) {
-		throw new Error("the task under test was not claimable");
-	}
-
-	return claimed;
-}
-
-function readRow(taskId: number) {
-	return db
-		.select()
-		.from(tasks)
-		.where(eq(tasks.id, taskId))
-		.then(([row]) => row);
-}
-
 async function remainingKeys(): Promise<string[]> {
 	const rows = await db
 		.select({ key: caches.key })
@@ -146,7 +106,7 @@ describe("evictCachesLruTask", () => {
 	it("completes without evicting when the store is under budget", async () => {
 		const keys = await seedEntries(5, 10 * GIB);
 
-		const task = await claim();
+		const task = await claimTask(db, evictCachesLruTask);
 
 		const outcome = await runTask({
 			db,
@@ -159,7 +119,7 @@ describe("evictCachesLruTask", () => {
 
 		expect(outcome).toEqual({ status: "completed" });
 
-		expect(await readRow(task.id)).toMatchObject({
+		expect(await readTaskRow(db, task.id)).toMatchObject({
 			complete: true,
 			error: null,
 			progress: 100,
@@ -174,7 +134,7 @@ describe("evictCachesLruTask", () => {
 	it("evicts the least recently used entries once the store is over budget", async () => {
 		const keys = await seedEntries(15, 10 * GIB);
 
-		const task = await claim();
+		const task = await claimTask(db, evictCachesLruTask);
 
 		const outcome = await runTask({
 			db,
@@ -196,7 +156,7 @@ describe("evictCachesLruTask", () => {
 	it("fails the task and leaves every row when storage refuses a delete", async () => {
 		const keys = await seedEntries(15, 10 * GIB);
 
-		const task = await claim();
+		const task = await claimTask(db, evictCachesLruTask);
 
 		const outcome = await runTask({
 			db,
@@ -212,7 +172,7 @@ describe("evictCachesLruTask", () => {
 			error: "Error: bucket refused the delete",
 		});
 
-		expect(await readRow(task.id)).toMatchObject({
+		expect(await readTaskRow(db, task.id)).toMatchObject({
 			complete: true,
 			error: "Error: bucket refused the delete",
 		});
@@ -251,7 +211,7 @@ describe("evictCachesLruTask", () => {
 			},
 		};
 
-		const task = await claim();
+		const task = await claimTask(db, evictCachesLruTask);
 
 		const outcome = await runTask({
 			db,
@@ -271,7 +231,7 @@ describe("evictCachesLruTask", () => {
 		expect(settled).toBe(started);
 
 		// The row is left exactly as it stands, for the runner to release.
-		expect(await readRow(task.id)).toMatchObject({
+		expect(await readTaskRow(db, task.id)).toMatchObject({
 			complete: false,
 			error: null,
 		});

@@ -581,6 +581,84 @@ export async function finishJob(db: Db, jobId: number): Promise<Job> {
 	return getJob(db, jobId);
 }
 
+/**
+ * How long a running job may go without a ping before it is timed out.
+ *
+ * Not a config key: every sweep has to agree on which rows are stale, so this
+ * is fleet-wide application state rather than a fact about the pod reading it.
+ *
+ * Unrelated to the interval at which the spawner creates a `timeout_jobs` row.
+ * One is how long a job may go silent, the other how often the sweep runs; the
+ * two are not views of one interval and must not be collapsed.
+ */
+export const JOB_TIMEOUT_SECONDS = 300;
+
+/**
+ * Fail every running job whose runner has stopped pinging, stamping
+ * `finished_at`, and return the ids in no particular order.
+ *
+ * A timed-out job is written as an ordinary failure — no distinct state, no
+ * appended step, no error string, and `claim` / `claimed_at` left exactly as
+ * the dead runner wrote them. It is indistinguishable from any other failure
+ * and must stay so: `JobState` is a five-member union consumed on both sides of
+ * the wire, so a sixth member is a change to the client contract rather than a
+ * tidy-up. `computeJobProgress` returns 100 for `failed`, so a timed-out job's
+ * progress bar snaps to full the moment the state flips.
+ *
+ * **Deliberately minimal, and expected to be subsumed.** The jobs control plane
+ * will own job state transitions properly — the runner-side lifecycle, `claim`
+ * / `claimed_at`, ping writes and cancellation — and will absorb this or
+ * replace it outright. Do not grow it into a general `setJobState`, and do not
+ * add a ping writer to it.
+ *
+ * One conditional statement, so a concurrent sweep re-evaluates
+ * `state = 'running'` once the first commits and matches nothing rather than
+ * blocking on its row locks. That leaves no transaction to manage and no lock
+ * reasoning to get wrong.
+ *
+ * The same predicate is what makes it idempotent, as a reclaimed task requires:
+ * a re-run matches only rows still running and still stale, so a body restarted
+ * from step zero neither re-fails a job nor moves a `finished_at` it already
+ * wrote.
+ *
+ * `thresholdSeconds` exists so a test need not wait five real minutes.
+ */
+export async function timeoutStalledJobs(
+	db: Db,
+	options: { thresholdSeconds?: number } = {},
+): Promise<number[]> {
+	const { thresholdSeconds = JOB_TIMEOUT_SECONDS } = options;
+
+	/* `timezone('utc', clock_timestamp())` on both the write and the cutoff.
+	   `finished_at` is a naive `timestamp` holding UTC, so a value read through
+	   the session `TimeZone` is wrong by that offset, and `now()` freezes at
+	   transaction start. The pair has to match: a cutoff and a stamp taken on
+	   different clocks times out either everything or nothing.
+
+	   A job that has never been pinged is never timed out — `pinged_at < ...` is
+	   NULL for it, and so falsy. That is deliberate rather than an oversight: a
+	   queued job is not pinging by definition, so do not COALESCE it. */
+	const timedOut = await db
+		.update(jobs)
+		.set({
+			finished_at: sql`timezone('utc', clock_timestamp())`,
+			state: "failed",
+		})
+		.where(
+			and(
+				eq(jobs.state, "running"),
+				sql`${jobs.pinged_at} < timezone('utc', clock_timestamp()) - make_interval(secs => ${thresholdSeconds}::double precision)`,
+			),
+		)
+		.returning({ id: jobs.id });
+
+	for (const { id } of timedOut) {
+		await emit("jobs", id, "update");
+	}
+
+	return timedOut.map(({ id }) => id);
+}
+
 /** A count of jobs sharing one workflow and state. */
 export type JobCount = { workflow: string; state: string; count: number };
 
