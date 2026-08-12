@@ -3,15 +3,7 @@ from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 
 from virtool.subtractions.pg import SQLSubtractionFile
 
-FILES = (
-    "subtraction.fa.gz",
-    "subtraction.1.bt2",
-    "subtraction.2.bt2",
-    "subtraction.3.bt2",
-    "subtraction.4.bt2",
-    "subtraction.rev.1.bt2",
-    "subtraction.rev.2.bt2",
-)
+FILES = ("subtraction.fa.gz",)
 
 
 def check_subtraction_file_type(file_name: str) -> str:
