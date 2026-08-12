@@ -946,5 +946,12 @@
       'name': 'drop dormant sample artifacts table',
       'revision': 'b253add43d69',
     }),
+    dict({
+      'applied_at': datetime,
+      'created_at': datetime,
+      'id': 136,
+      'name': 'Backfill SQLite artifacts for ready indexes',
+      'revision': '5hnwczwh7skv',
+    }),
   ])
 # ---
