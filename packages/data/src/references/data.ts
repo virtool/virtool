@@ -40,6 +40,7 @@ import { tasks } from "../db/schema/tasks";
 import { uploads } from "../db/schema/uploads";
 import { users } from "../db/schema/users";
 import { AppError } from "../errors";
+import { emit } from "../events/emit";
 import { getSettings } from "../settings/data";
 import { createTask, type TaskType } from "../tasks/data";
 
@@ -709,6 +710,8 @@ export async function createReference(
 		return reference.id;
 	});
 
+	await emit("references", newId, "create");
+
 	return getReference(db, newId);
 }
 
@@ -745,6 +748,8 @@ export async function updateReference(
 			.update(legacyReferences)
 			.set(patch)
 			.where(eq(legacyReferences.id, referenceId));
+
+		await emit("references", referenceId, "update");
 	}
 
 	return getReference(db, referenceId);
@@ -761,6 +766,8 @@ export async function setReferenceArchived(
 		.update(legacyReferences)
 		.set({ archived })
 		.where(eq(legacyReferences.id, referenceId));
+
+	await emit("references", referenceId, "update");
 
 	return getReference(db, referenceId);
 }
@@ -811,6 +818,8 @@ export async function addReferenceUser(
 		modify: resolved.modify,
 		modify_otu: resolved.modifyOtu,
 	});
+
+	await emit("references", referenceId, "update");
 
 	return {
 		id: user.id,
@@ -866,6 +875,8 @@ export async function addReferenceGroup(
 		modify: resolved.modify,
 		modify_otu: resolved.modifyOtu,
 	});
+
+	await emit("references", referenceId, "update");
 
 	return {
 		id: group.id,
@@ -925,6 +936,8 @@ export async function updateReferenceUser(
 			),
 		);
 
+	await emit("references", referenceId, "update");
+
 	return {
 		id: userId,
 		handle: row.handle,
@@ -982,6 +995,8 @@ export async function updateReferenceGroup(
 			),
 		);
 
+	await emit("references", referenceId, "update");
+
 	return {
 		id: groupId,
 		name: row.name,
@@ -1008,6 +1023,8 @@ export async function removeReferenceUser(
 	if (removed.length === 0) {
 		throw new ReferenceMemberNotFoundError();
 	}
+
+	await emit("references", referenceId, "update");
 }
 
 export async function removeReferenceGroup(
@@ -1028,4 +1045,6 @@ export async function removeReferenceGroup(
 	if (removed.length === 0) {
 		throw new ReferenceMemberNotFoundError();
 	}
+
+	await emit("references", referenceId, "update");
 }

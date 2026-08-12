@@ -86,6 +86,8 @@ export function useSuspenseReferences(
  * @returns A mutator for cloning a reference
  */
 export function useCloneReference() {
+	const queryClient = useQueryClient();
+
 	return useMutation<
 		Reference,
 		Error,
@@ -95,6 +97,11 @@ export function useCloneReference() {
 			createReferenceFn({
 				data: { name, description, cloneFrom: refId },
 			}) as Promise<Reference>,
+		onSuccess: () => {
+			queryClient.invalidateQueries({
+				queryKey: referenceQueryKeys.lists(),
+			});
+		},
 	});
 }
 
@@ -104,6 +111,8 @@ export function useCloneReference() {
  * @returns A mutator for importing a reference
  */
 export function useImportReference() {
+	const queryClient = useQueryClient();
+
 	return useMutation<
 		Reference,
 		Error,
@@ -113,6 +122,11 @@ export function useImportReference() {
 			createReferenceFn({
 				data: { name, description, importFrom },
 			}) as Promise<Reference>,
+		onSuccess: () => {
+			queryClient.invalidateQueries({
+				queryKey: referenceQueryKeys.lists(),
+			});
+		},
 	});
 }
 
@@ -150,6 +164,8 @@ export function useUploadReference() {
  * @returns A mutator for creating an empty reference
  */
 export function useCreateReference() {
+	const queryClient = useQueryClient();
+
 	return useMutation<
 		Reference,
 		Error,
@@ -159,6 +175,11 @@ export function useCreateReference() {
 			createReferenceFn({
 				data: { name, description, organism },
 			}) as Promise<Reference>,
+		onSuccess: () => {
+			queryClient.invalidateQueries({
+				queryKey: referenceQueryKeys.lists(),
+			});
+		},
 	});
 }
 
