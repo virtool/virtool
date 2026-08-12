@@ -163,6 +163,10 @@ jobs:
                       target: tasks
                       workspace: apps/tasks
                       area: Tasks
+                    - image: ts-create-sample
+                      target: create-sample
+                      workspace: apps/create-sample
+                      area: Create Sample
                     - image: ts-create-subtraction
                       target: create-subtraction
                       workspace: apps/create-subtraction
@@ -541,6 +545,9 @@ jobs:
                     - image: tasks
                       target: tasks
                       workspace: apps/tasks
+                    - image: ts-create-sample
+                      target: create-sample
+                      workspace: apps/create-sample
                     - image: ts-create-subtraction
                       target: create-subtraction
                       workspace: apps/create-subtraction

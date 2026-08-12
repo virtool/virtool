@@ -239,6 +239,20 @@ genome and all six Bowtie2 shards, an unfinished subtraction with `ready: false`
 and no counts, and an analysis wired to the sample, index, reference and
 subtraction.
 
+`createFakeNewSample` is the one that needs reading before it is used. It is a
+sample `create_sample` has not finished, so it carries **uploads and no reads**,
+and three of its details are load-bearing:
+
+- The uploads are named `sample_R{1,2}.fastq.gz`, deliberately *not*
+  `reads_{1,2}.fq.gz`. An upload keeps whatever the user called it and the
+  workflow is what renames it, so a fixture whose uploads already carried the
+  target names would pass against a port that renamed nothing.
+- Their order is `sample_uploads.index`, which is the only thing linking an
+  upload to the reads file it becomes.
+- **`paired` is `false` even with two uploads**, because `getSample` derives it
+  from the reads rows and those do not exist yet. That is what the jobs API
+  really serves a running job, and a workflow must branch on `uploads.length`.
+
 ## Contexts stay serializable
 
 `buildTestContext(workflow, overrides)` runs a workflow's own `buildContext`

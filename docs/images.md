@@ -10,6 +10,7 @@ manifest.
 | `dist` | `ghcr.io/virtool/ui` | `apps/web` |
 | `jobs-api` | `ghcr.io/virtool/jobs-api` | `apps/jobs-api` |
 | `tasks` | `ghcr.io/virtool/tasks` | `apps/tasks` |
+| `create-sample` | `ghcr.io/virtool/ts-create-sample` | `apps/create-sample` |
 | `create-subtraction` | `ghcr.io/virtool/ts-create-subtraction` | `apps/create-subtraction` |
 | `pathoscope` | `ghcr.io/virtool/ts-pathoscope` | `apps/pathoscope` |
 | `nuvs` | `ghcr.io/virtool/ts-nuvs` | `apps/nuvs` |
@@ -78,9 +79,15 @@ directory` — long after the image passed CI. Which interpreters a given
 image needs is that app's business; `apps/pathoscope/README.md` carries
 the worked example.
 
+**An interpreter being present is not the same as being complete.**
+`fastqc` is a Perl launcher around a Java program, so the create-sample
+image installs a JRE *and* `perl` — the `perl-base` this base already
+carries has no `FindBin`, which is the launcher's first statement, and
+the failure is again at exec rather than at build.
+
 ## Building and publishing
 
-CI builds five of the six in a matrix (`build`), and publishes the same
+CI builds five of the seven in a matrix (`build`), and publishes the same
 five from a second matrix (`release-ghcr`) on a release. **Keep the two
 lists in step** — an app added to one and not the other either goes
 unbuilt on pull requests or unpublished on release, and neither fails

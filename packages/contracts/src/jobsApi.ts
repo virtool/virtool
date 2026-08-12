@@ -318,6 +318,33 @@ export const WorkflowSampleRead = z.object({
 
 export type WorkflowSampleRead = z.infer<typeof WorkflowSampleRead>;
 
+/**
+ * One of the uploads a sample was created from — the raw reads
+ * `create_sample` normalizes.
+ *
+ * It rides on the sample for the same reason {@link WorkflowSubtractionUpload}
+ * rides on the subtraction: `create_sample` is the only reader, its job args
+ * carry `sample_id` and nothing else, and an uploads route of its own would be
+ * a second round trip for two columns.
+ *
+ * The order is `sample_uploads.index` — the position the upload held in the
+ * create request — which is what decides whether it becomes `reads_1.fq.gz` or
+ * `reads_2.fq.gz`. Nothing else links the two, so a run must not reorder them.
+ *
+ * Every field but the id is nullable because every column behind it is:
+ * `uploads.name`, `uploads.size` and `uploads.storage_key` are all open. A
+ * workflow refuses a null name or key rather than guessing — nothing composes a
+ * key from row identity on either side.
+ */
+export const WorkflowSampleUpload = z.object({
+	id: z.number().int(),
+	name: z.string().nullable(),
+	size: z.number().int().nullable(),
+	storageKey: z.string().nullable(),
+});
+
+export type WorkflowSampleUpload = z.infer<typeof WorkflowSampleUpload>;
+
 /** A subtraction's source genome or one shard of its built index. */
 export const WorkflowSubtractionFile = z.object({
 	...workflowFile,
@@ -365,6 +392,10 @@ export type WorkflowIndexFile = z.infer<typeof WorkflowIndexFile>;
  *
  * `paired` is derived from the reads rather than stored, and is what a workflow
  * branches on to decide whether it is running one file or two.
+ *
+ * `reads` is what an analysis workflow reads and is empty until finalize;
+ * `uploads` is what `create_sample` reads and is the only thing on a sample
+ * that has not been built yet.
  */
 export const WorkflowSample = z.object({
 	id: z.number().int(),
@@ -373,6 +404,7 @@ export const WorkflowSample = z.object({
 	paired: z.boolean(),
 	quality: Quality.nullable(),
 	reads: z.array(WorkflowSampleRead),
+	uploads: z.array(WorkflowSampleUpload),
 });
 
 export type WorkflowSample = z.infer<typeof WorkflowSample>;

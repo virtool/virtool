@@ -589,7 +589,127 @@ describe("handleGetSample", () => {
 					storageKey: "samples/3/aaaabbbbccccddddeeeeffff00001111",
 				},
 			],
+			uploads: [],
 		});
+	});
+
+	// The uploads are what `create_sample` reads: a sample it is running has no
+	// `sample_reads` rows yet, so they are the only files it has.
+	it("serves the uploads a sample was created from", async () => {
+		const sampleId = await seedSample();
+
+		await seedInput(sampleId, 0);
+		await seedInput(sampleId, 1);
+
+		const response = await handleGetSample(
+			deps,
+			get(sampleId),
+			String(sampleId),
+		);
+
+		const sample = (await response.json()) as {
+			uploads: { name: string; size: number; storageKey: string }[];
+		};
+
+		expect(sample.uploads).toHaveLength(2);
+		expect(sample.uploads.map((upload) => upload.name)).toStrictEqual([
+			"input_0.fq.gz",
+			"input_1.fq.gz",
+		]);
+
+		for (const upload of sample.uploads) {
+			expect(upload.size).toBe(8);
+			expect(upload.storageKey).toMatch(/^uploads\/[0-9a-f]{32}$/);
+		}
+	});
+
+	// `sample_uploads.index` is the only thing linking an upload to the reads
+	// file it becomes, and `finalizeSample` pairs its rows by the same order.
+	it("serves the uploads in sample_uploads.index order", async () => {
+		const sampleId = await seedSample();
+
+		// Inserted back to front, so a handler relying on insertion order fails.
+		await seedInput(sampleId, 1);
+		await seedInput(sampleId, 0);
+
+		const response = await handleGetSample(
+			deps,
+			get(sampleId),
+			String(sampleId),
+		);
+
+		const sample = (await response.json()) as { uploads: { name: string }[] };
+
+		expect(sample.uploads.map((upload) => upload.name)).toStrictEqual([
+			"input_0.fq.gz",
+			"input_1.fq.gz",
+		]);
+	});
+
+	// Finalize marks them removed, so a finished sample resolves none — which is
+	// what keeps a re-run from downloading bytes that are already gone.
+	it("serves no uploads once they have been removed", async () => {
+		const sampleId = await seedSample();
+		const uploadId = await seedInput(sampleId, 0);
+
+		await db
+			.update(uploads)
+			.set({ removed: true, removedAt: new Date() })
+			.where(eq(uploads.id, uploadId));
+
+		const response = await handleGetSample(
+			deps,
+			get(sampleId),
+			String(sampleId),
+		);
+
+		const sample = (await response.json()) as { uploads: unknown[] };
+
+		expect(sample.uploads).toStrictEqual([]);
+	});
+
+	// A sample migrated out of Mongo has its `sample_uploads` rows keyed by the
+	// legacy storage string rather than the integer id.
+	it("serves the uploads of a sample migrated out of Mongo", async () => {
+		const sampleId = await seedSample({ legacy_id: "abc123" });
+
+		const storageKey = mintRootStorageKey("uploads");
+
+		await storage.write(storageKey, body("input"));
+
+		const [upload] = await db
+			.insert(uploads)
+			.values({
+				createdAt: new Date(),
+				name: "input.fq.gz",
+				ready: true,
+				reserved: true,
+				size: 5,
+				storageKey,
+				type: "reads",
+				userId,
+			})
+			.returning({ id: uploads.id });
+
+		await db.insert(sampleUploads).values({
+			sample: "abc123",
+			sample_id: null,
+			upload_id: upload?.id as number,
+			index: 0,
+		});
+
+		const response = await handleGetSample(
+			deps,
+			get(sampleId),
+			String(sampleId),
+		);
+
+		const sample = (await response.json()) as {
+			uploads: { storageKey: string }[];
+		};
+
+		expect(sample.uploads).toHaveLength(1);
+		expect(sample.uploads[0]?.storageKey).toBe(storageKey);
 	});
 
 	// Derived from the reads rather than stored, and what a workflow branches on

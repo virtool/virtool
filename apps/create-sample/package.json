@@ -1,0 +1,36 @@
+{
+	"name": "@virtool/create-sample",
+	"version": "0.0.0",
+	"private": true,
+	"type": "module",
+	"files": [
+		"dist"
+	],
+	"scripts": {
+		"build": "tsdown",
+		"start": "node dist/index.mjs",
+		"test": "vitest run",
+		"test:watch": "vitest",
+		"typecheck": "tsc --noEmit"
+	},
+	"dependencies": {
+		"@aws-sdk/client-s3": "^3.1085.0",
+		"@aws-sdk/lib-storage": "^3.1094.0",
+		"@azure/identity": "^4.13.1",
+		"@azure/storage-blob": "^12.33.0",
+		"@sentry/node": "^10.69.0",
+		"@virtool/bio": "workspace:*",
+		"@virtool/contracts": "workspace:*",
+		"@virtool/storage": "workspace:*",
+		"@virtool/workflow": "workspace:*",
+		"execa": "^10.0.1",
+		"pino": "^10.1.0",
+		"tar-stream": "^3.2.0",
+		"undici": "^7.29.0"
+	},
+	"devDependencies": {
+		"@types/node": "^26.1.2",
+		"tsdown": "^0.22.14",
+		"vitest": "^4.1.10"
+	}
+}

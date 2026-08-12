@@ -3,9 +3,11 @@ import { FinalizeSampleRequest } from "@virtool/contracts";
 import {
 	finalizeSample,
 	getSample,
+	getSampleUploads,
 	SampleAlreadyFinalizedError,
 	SampleNotFoundError,
 	SampleNotOwnedError,
+	type SampleUploadFile,
 } from "@virtool/data/samples/data";
 import { requireJobRequest } from "../auth/guard";
 import { type FinalizeHandlerDeps, finalizeResource } from "../finalize";
@@ -33,8 +35,15 @@ const FILE_NAMES = ["reads_1.fq.gz", "reads_2.fq.gz"] as const;
  *
  * Each read carries its recorded `storageKey` and no download URL: the workflow
  * takes the key to the bucket itself.
+ *
+ * `uploads` arrives separately and is passed through in the order
+ * `getSampleUploads` resolved it — `sample_uploads.index`, which is what pairs
+ * an upload with the reads file it becomes.
  */
-function toWorkflowSample(sample: Sample): WorkflowSample {
+function toWorkflowSample(
+	sample: Sample,
+	uploads: SampleUploadFile[],
+): WorkflowSample {
 	return {
 		id: sample.id,
 		libraryType: sample.libraryType,
@@ -47,11 +56,13 @@ function toWorkflowSample(sample: Sample): WorkflowSample {
 			size: read.size,
 			storageKey: read.storageKey,
 		})),
+		uploads,
 	};
 }
 
 /**
- * Serve a sample's metadata and the reads files that make it up.
+ * Serve a sample's metadata, the reads files that make it up, and the uploads
+ * it was created from.
  *
  * Records only. Nothing here reads or writes an object, and the response
  * carries no bytes.
@@ -74,7 +85,14 @@ export async function handleGetSample(
 	}
 
 	try {
-		return Response.json(toWorkflowSample(await getSample(deps.db, sampleId)));
+		// The uploads are a second statement rather than a join on the sample
+		// read, which is shared with the SPA and must not learn a bucket key.
+		const [sample, uploads] = await Promise.all([
+			getSample(deps.db, sampleId),
+			getSampleUploads(deps.db, sampleId),
+		]);
+
+		return Response.json(toWorkflowSample(sample, uploads));
 	} catch (err) {
 		if (err instanceof SampleNotFoundError) {
 			return jsonError(404, "Sample not found");

@@ -23,6 +23,7 @@ import type {
 	WorkflowReference,
 	WorkflowSample,
 	WorkflowSampleRead,
+	WorkflowSampleUpload,
 	WorkflowSettings,
 	WorkflowSubtraction,
 	WorkflowSubtractionFile,
@@ -70,6 +71,19 @@ export const SAMPLE_READ_FILENAMES = [
 	"reads_2.fq.gz",
 ] as const;
 
+/**
+ * The names the two uploads a paired sample is created from carry.
+ *
+ * Deliberately *not* `reads_{1,2}.fq.gz`. An upload keeps whatever the user
+ * named it, and `create_sample` is what renames it; a fixture whose uploads
+ * already carried the target names would pass against a port that never
+ * renamed anything.
+ */
+export const SAMPLE_UPLOAD_FILENAMES = [
+	"sample_R1.fastq.gz",
+	"sample_R2.fastq.gz",
+] as const;
+
 const HANDLES = ["bob", "fred", "leeashley", "zclark", "kmiller"];
 
 const ORGANISMS = ["virus", "viroid", "bacteria", "fungus"];
@@ -93,6 +107,15 @@ function seededStorageKey(
 	parentId: number,
 ): string {
 	return `${domain}/${parentId}/${random.hex(32)}`;
+}
+
+/**
+ * The root-key counterpart of {@link seededStorageKey}, in the shape
+ * `mintRootStorageKey` produces. An upload is a resource in its own right
+ * rather than a child of one, so its key has no parent segment.
+ */
+function seededRootStorageKey(random: SeededRandom, domain: string): string {
+	return `${domain}/${random.hex(32)}`;
 }
 
 /** A user embedded in another resource. */
@@ -227,6 +250,10 @@ export function createFakeQuality(
  * The keys are minted rather than composed, so a fixture cannot reach the bytes
  * without reading them out of this metadata — see `createTestStorage`, which
  * seeds the objects and hands back the keys to attach here.
+ *
+ * `uploads` is empty, which is what the jobs API serves for a finished sample:
+ * finalize marks the input uploads removed and `getSampleUploads` excludes
+ * those.
  */
 export function createFakeSample(
 	overrides: Partial<WorkflowSample> = {},
@@ -251,23 +278,45 @@ export function createFakeSample(
 		paired: true,
 		quality: createFakeQuality({}, seed),
 		reads,
+		uploads: [],
 		...overrides,
 	};
 }
 
 /**
- * A sample the `create_sample` workflow has not finished yet.
+ * A sample the `create_sample` workflow has not finished yet: no quality, no
+ * reads, and the one or two uploads it will build them from.
  *
- * No quality, and no reads: the files it will build are still uploads named in
- * the job's `args`, and the sample row carries nothing until finalize. Python's
- * `new_sample` fixture carried the two `reads_{1,2}.fq.gz` uploads on the
- * sample itself, which is not how this side reads them.
+ * The uploads ride on the sample because that is where the jobs API serves
+ * them from — a `create_sample` job's `args` carry `sample_id` and nothing
+ * else. Their order is `sample_uploads.index`, which is what decides which
+ * becomes `reads_1.fq.gz`.
+ *
+ * **`paired` is `false` even for a two-upload sample**, and that is not an
+ * oversight. `getSample` derives it from the reads rows, which do not exist
+ * until finalize, so this is what `GET /samples/{id}` really serves a running
+ * `create_sample` job. A workflow must branch on `uploads.length`.
  */
 export function createFakeNewSample(
 	overrides: Partial<WorkflowSample> = {},
 	seed: number = DEFAULT_SEED,
 ): WorkflowSample {
-	return createFakeSample({ quality: null, reads: [], ...overrides }, seed);
+	const sample = createFakeSample(
+		{ paired: false, quality: null, reads: [] },
+		seed,
+	);
+	const random = createSeededRandom(seed + 1);
+
+	const uploads: WorkflowSampleUpload[] = SAMPLE_UPLOAD_FILENAMES.map(
+		(name, index) => ({
+			id: sample.id * 100 + index,
+			name,
+			size: random.int(1_000_000, 9_999_999),
+			storageKey: seededRootStorageKey(random, "uploads"),
+		}),
+	);
+
+	return { ...sample, uploads, ...overrides };
 }
 
 /** A built subtraction, with its source genome and all six Bowtie2 shards. */

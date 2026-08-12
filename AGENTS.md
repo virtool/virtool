@@ -45,6 +45,30 @@ This is a **pnpm monorepo**:
   staged rollout to buy. Everything is built inside `bootstrap()`; this app has no
   module-scope singleton of any kind, not config, not the pool, not the
   registry. See [docs/tasks.md](docs/tasks.md).
+- `apps/create-sample/` — `@virtool/create-sample`, the create-sample workflow
+  executor and its image (`ghcr.io/virtool/ts-create-sample`), which turns a
+  user's uploaded FASTQ files into a sample an analysis can run against. Two
+  steps, `run_fastqc` and `finalize`, and one external tool, `fastqc` 0.11.9.
+  Like create-subtraction it **is** published, so a released image carries a
+  real `APP_VERSION`. Five rules it carries: its input is
+  **`WorkflowSample.uploads`**, in `sample_uploads.index` order — a sample it is
+  running has no `sample_reads` rows yet, and that order is the only thing
+  linking an upload to the reads file it becomes, `finalizeSample` pairing its
+  rows by the same one; **nothing branches on `sample.paired`**, which
+  `getSample` derives from those absent reads rows and so serves as `false` for
+  every running job — the upload count is what decides one file or two; **an
+  already-gzipped upload is renamed, not re-encoded**, as almost every one is
+  and these files run to gigabytes; the **normalized reads go in
+  `{work_path}/reads/`** rather than beside their uploads as Python's
+  `path.with_name` puts them, because upload names are user-supplied and a
+  second upload called `reads_1.fq.gz` has Python destroy it with the first
+  and finalize the sample with one read stored twice; and **FastQC runs once
+  per read into its own output directory**, where Python runs one invocation
+  and then pairs a report with a read by filesystem order. **Nothing deletes a
+  sample on failure**, as with the other workflows. Its image needs `perl` as
+  well as a JRE — FastQC is a Java program behind a Perl launcher that opens
+  with `use FindBin`. See
+  [apps/create-sample/README.md](apps/create-sample/README.md).
 - `apps/create-subtraction/` — `@virtool/create-subtraction`, the
   create-subtraction workflow executor and its image
   (`ghcr.io/virtool/ts-create-subtraction`), which turns an uploaded genome into

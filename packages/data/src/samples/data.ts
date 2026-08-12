@@ -106,6 +106,20 @@ export type FinalizeSampleValues = {
 	files: SampleReadValues[];
 };
 
+/**
+ * One of the uploads a sample was created from, as {@link getSampleUploads}
+ * resolves it.
+ *
+ * Every field but the id mirrors a nullable column. A row without a
+ * `storageKey` names no retrievable object, and nothing recomposes one.
+ */
+export type SampleUploadFile = {
+	id: number;
+	name: string | null;
+	size: number | null;
+	storageKey: string | null;
+};
+
 /** Thrown when a requested sample does not exist. */
 export class SampleNotFoundError extends AppError {}
 
@@ -729,6 +743,64 @@ export async function getSample(db: Db, sampleId: number): Promise<Sample> {
 		reads,
 		subtractions: sampleSubtractions,
 	};
+}
+
+/**
+ * Resolve the uploads a sample was created from, in the order the create
+ * request named them.
+ *
+ * These are the raw reads `create_sample` normalizes, and the only files a
+ * sample has before it is finalized. It is not folded into {@link getSample}:
+ * that shape is served to the SPA as well, and an upload's `storage_key` has no
+ * business crossing that wire.
+ *
+ * **The order is the link.** `sample_uploads.index` is the position the upload
+ * held in the create request, and {@link finalizeSample} pairs the reads rows it
+ * writes with these by that same order. A caller that reorders them writes
+ * `reads_2.fq.gz` from the first upload.
+ *
+ * Removed uploads are excluded, so a sample finalized once resolves none of
+ * them. Every column here is nullable, so the fields are handed back as they
+ * stand: a row without a `storageKey` names no retrievable object and the
+ * caller must refuse it rather than compose one.
+ */
+export async function getSampleUploads(
+	db: DbOrTx,
+	sampleId: number,
+): Promise<SampleUploadFile[]> {
+	const [sample] = await db
+		.select({ legacyId: legacySamples.legacy_id })
+		.from(legacySamples)
+		.where(eq(legacySamples.id, sampleId))
+		.limit(1);
+
+	if (!sample) {
+		return [];
+	}
+
+	const storageId = sampleStorageId(sampleId, sample.legacyId);
+
+	// Rows may be keyed by the integer id or the legacy storage string depending
+	// on when the sample was created.
+	return await db
+		.select({
+			id: uploads.id,
+			name: uploads.name,
+			size: uploads.size,
+			storageKey: uploads.storageKey,
+		})
+		.from(sampleUploads)
+		.innerJoin(uploads, eq(uploads.id, sampleUploads.upload_id))
+		.where(
+			and(
+				or(
+					eq(sampleUploads.sample_id, sampleId),
+					eq(sampleUploads.sample, storageId),
+				),
+				eq(uploads.removed, false),
+			),
+		)
+		.orderBy(asc(sampleUploads.index));
 }
 
 /**

@@ -92,6 +92,36 @@ COPY --from=ghcr.io/virtool/tools:1.3.0 /tools/seqkit/2.13.0/seqkit /usr/local/b
 COPY --from=build-create-subtraction /prod/create-subtraction ./
 CMD ["node", "dist/index.mjs"]
 
+# The create-sample workflow, published as ghcr.io/virtool/ts-create-sample. It
+# turns a user's uploaded FASTQ files into a sample an analysis can run against.
+FROM base AS build-create-sample
+COPY apps/create-sample ./apps/create-sample
+RUN pnpm --filter @virtool/create-sample build \
+    && pnpm deploy --filter @virtool/create-sample --prod /prod/create-sample
+
+FROM node:24-bookworm-slim AS create-sample
+WORKDIR /workflow
+
+# FastQC 0.11.9 is a Java program behind a Perl launcher, and it needs both.
+# `perl` rather than the `perl-base` this image already carries: the launcher
+# opens with `use FindBin`, which is in `perl-modules-5.36` and so is absent
+# from the base — the failure is at exec, with a message about @INC.
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends \
+        default-jre-headless \
+        perl \
+    && rm -rf /var/lib/apt/lists/* \
+    && apt-get clean
+
+# The whole install directory, not one binary: `fastqc` resolves its jars and
+# its `Configuration/` relative to its own location.
+COPY --from=ghcr.io/virtool/tools:1.3.0 /tools/fastqc/0.11.9/ /opt/fastqc
+RUN chmod ugo+x /opt/fastqc/fastqc
+ENV PATH="/opt/fastqc:${PATH}"
+
+COPY --from=build-create-sample /prod/create-sample ./
+CMD ["node", "dist/index.mjs"]
+
 FROM rust:1.97-bookworm AS chef
 RUN apt-get update \
     && apt-get install -y --no-install-recommends libclang-dev \
