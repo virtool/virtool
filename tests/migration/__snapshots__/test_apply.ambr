@@ -946,5 +946,12 @@
       'name': 'drop dormant sample artifacts table',
       'revision': 'b253add43d69',
     }),
+    dict({
+      'applied_at': datetime,
+      'created_at': datetime,
+      'id': 136,
+      'name': 'delete bowtie2 subtraction files',
+      'revision': '22klaq3y66sm',
+    }),
   ])
 # ---
