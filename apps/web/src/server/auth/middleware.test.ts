@@ -52,6 +52,7 @@ const {
 	requireAdminRole,
 	requireAuthenticatedRequest,
 	requireSession,
+	serverFnIdFromUrl,
 	UnauthorizedError,
 } = await import("./middleware");
 const { createFirstUserFn, loginFn, logoutFn, resetPasswordFn } = await import(
@@ -85,12 +86,20 @@ beforeEach(async () => {
 /** The middleware's server handler, which `createMiddleware` stores verbatim. */
 type ServerHandler = (options: {
 	next: (options?: unknown) => Promise<unknown>;
+	serverFnMeta: { id: string };
 }) => Promise<unknown>;
 
 function serverHandler(exceptions: ReadonlyArray<{ url: string }>) {
 	const middleware = createAuthenticationMiddleware(async () => exceptions);
 	return (middleware as unknown as { options: { server: ServerHandler } })
 		.options.server;
+}
+
+// The metadata Start hands a function middleware. It is not on the public type
+// of a server-function reference, which is why the middleware derives the id
+// from `url` instead — and why the test below pins the two against each other.
+function metaFor(fn: { url: string }): { id: string } {
+	return (fn as unknown as { serverFnMeta: { id: string } }).serverFnMeta;
 }
 
 function cookieHeader(sessionId: string, token: string): string {
@@ -130,6 +139,18 @@ describe("authenticationExceptions", () => {
 	});
 });
 
+// The middleware builds its exception set from each fn's `url`, but matches
+// against the `serverFnMeta.id` Start hands it. Nothing in the type system ties
+// those together, so pin it: if Start changes either, the exceptions silently
+// stop matching and every public endpoint starts refusing anonymous callers.
+describe("serverFnIdFromUrl", () => {
+	it.each(
+		authenticationExceptions.map((fn) => [metaFor(fn).id, fn.url] as const),
+	)("recovers %s from its url", (id, url) => {
+		expect(serverFnIdFromUrl(url)).toBe(id);
+	});
+});
+
 describe("createAuthenticationMiddleware", () => {
 	it.each([
 		["createFirstUserFn", () => createFirstUserFn],
@@ -142,10 +163,29 @@ describe("createAuthenticationMiddleware", () => {
 		getRequest.mockReturnValue(requestFor(get().url));
 		const next = vi.fn().mockResolvedValue("result");
 
-		await serverHandler(authenticationExceptions)({ next });
+		await serverHandler(authenticationExceptions)({
+			next,
+			serverFnMeta: metaFor(get()),
+		});
 
 		expect(next).toHaveBeenCalledWith({ context: { session: null } });
 		expect(setUser).not.toHaveBeenCalled();
+	});
+
+	// A server function invoked during SSR runs in-process, so the incoming
+	// request is the page being rendered, not the function's own URL. Identifying
+	// the call by that URL exempted nothing at all on the SSR path, and a
+	// logged-out hard load rendered a 401 in place of the login wall (VIR-2941).
+	it("exempts a call made while rendering a page", async () => {
+		getRequest.mockReturnValue(requestFor("/"));
+		const next = vi.fn().mockResolvedValue("result");
+
+		await serverHandler(authenticationExceptions)({
+			next,
+			serverFnMeta: metaFor(getRootFn),
+		});
+
+		expect(next).toHaveBeenCalledWith({ context: { session: null } });
 	});
 
 	it("rejects an unauthenticated call to a fn that is not excepted", async () => {
@@ -153,7 +193,10 @@ describe("createAuthenticationMiddleware", () => {
 		const next = vi.fn();
 
 		await expect(
-			serverHandler(authenticationExceptions)({ next }),
+			serverHandler(authenticationExceptions)({
+				next,
+				serverFnMeta: { id: "somethingElse" },
+			}),
 		).rejects.toBeInstanceOf(UnauthorizedError);
 
 		expect(setResponseStatus).toHaveBeenCalledWith(401);
@@ -169,7 +212,10 @@ describe("createAuthenticationMiddleware", () => {
 		);
 		const next = vi.fn().mockResolvedValue("result");
 
-		await serverHandler(authenticationExceptions)({ next });
+		await serverHandler(authenticationExceptions)({
+			next,
+			serverFnMeta: { id: "somethingElse" },
+		});
 
 		expect(next).toHaveBeenCalledWith({ context: { session: { userId } } });
 	});
@@ -184,6 +230,7 @@ describe("createAuthenticationMiddleware", () => {
 
 		await serverHandler(authenticationExceptions)({
 			next: vi.fn().mockResolvedValue("result"),
+			serverFnMeta: { id: "somethingElse" },
 		});
 
 		expect(setUser).toHaveBeenCalledWith({ id: userId });
@@ -198,34 +245,35 @@ describe("createAuthenticationMiddleware", () => {
 		);
 
 		await expect(
-			serverHandler(authenticationExceptions)({ next: vi.fn() }),
+			serverHandler(authenticationExceptions)({
+				next: vi.fn(),
+				serverFnMeta: { id: "somethingElse" },
+			}),
 		).rejects.toBeInstanceOf(UnauthorizedError);
 	});
 
 	it("authenticates every call when there are no exceptions", async () => {
 		getRequest.mockReturnValue(requestFor(loginFn.url));
 
-		await expect(serverHandler([])({ next: vi.fn() })).rejects.toBeInstanceOf(
-			UnauthorizedError,
-		);
+		await expect(
+			serverHandler([])({
+				next: vi.fn(),
+				serverFnMeta: metaFor(loginFn),
+			}),
+		).rejects.toBeInstanceOf(UnauthorizedError);
 	});
 
-	// The path is compared as a pathname, so a query string must not defeat the
-	// match and turn a public endpoint into a 401.
-	it("matches an exception carrying a query string", async () => {
-		getRequest.mockReturnValue(requestFor(`${loginFn.url}?createServerFn`));
-		const next = vi.fn().mockResolvedValue("result");
-
-		await serverHandler(authenticationExceptions)({ next });
-
-		expect(next).toHaveBeenCalledWith({ context: { session: null } });
-	});
-
-	it("does not treat a path that merely extends an exception as excepted", async () => {
-		getRequest.mockReturnValue(requestFor(`${loginFn.url}Extra`));
+	// The id is matched exactly, so an id that merely extends an exempt one — the
+	// shape a compiler-generated id takes when two exports share a prefix — must
+	// not inherit its exemption.
+	it("does not treat an id that merely extends an exception as excepted", async () => {
+		getRequest.mockReturnValue(requestFor(loginFn.url));
 
 		await expect(
-			serverHandler(authenticationExceptions)({ next: vi.fn() }),
+			serverHandler(authenticationExceptions)({
+				next: vi.fn(),
+				serverFnMeta: { id: `${metaFor(loginFn).id}Extra` },
+			}),
 		).rejects.toBeInstanceOf(UnauthorizedError);
 	});
 });

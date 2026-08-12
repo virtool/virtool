@@ -120,6 +120,14 @@ export type LoadAuthenticationExceptions = () => Promise<
 	ReadonlyArray<{ url: string }>
 >;
 
+// A server function's `url` is the server-fn base with its id appended, and an
+// id is base64url, so the last segment is the id `serverFnMeta` carries.
+// `middleware.test.ts` pins that against the metadata Start actually hands the
+// middleware.
+export function serverFnIdFromUrl(url: string): string {
+	return url.slice(url.lastIndexOf("/") + 1);
+}
+
 // The exception list holds server-function references, and reaching them means
 // reaching their modules — which carry zod validators and the auth request
 // layer. `start.ts` is part of the browser program (routeTree.gen.ts imports
@@ -141,31 +149,35 @@ const loadAuthenticationExceptions = createServerOnlyFn(
  * `loadExceptions` exists so tests can supply their own list; production passes
  * nothing and gets the real one.
  */
-// Server fn IDs are unique per fn and each fn binds to exactly one method, so
-// matching on pathname alone is sufficient to identify the call.
+// Never identify the call from `getRequest()`. That is the *incoming* request,
+// which is the function's own URL only for an RPC call from the browser: during
+// SSR a server function is invoked in-process, so the incoming request is the
+// page being rendered and no exception matches. `serverFnMeta` names the
+// function on both paths.
 export function createAuthenticationMiddleware(
 	loadExceptions: LoadAuthenticationExceptions = loadAuthenticationExceptions,
 ) {
-	// Resolved on the first call and cached: the paths never change.
-	let exceptionPaths: Set<string> | null = null;
+	// Resolved on the first call and cached: the ids never change.
+	let exceptionIds: Set<string> | null = null;
 
-	return createMiddleware({ type: "function" }).server(async ({ next }) => {
-		exceptionPaths ??= new Set(
-			(await loadExceptions()).map(
-				(fn) => new URL(fn.url, "http://x").pathname,
-			),
-		);
+	return createMiddleware({ type: "function" }).server(
+		async ({ next, serverFnMeta }) => {
+			exceptionIds ??= new Set(
+				(await loadExceptions()).map((fn) => serverFnIdFromUrl(fn.url)),
+			);
 
-		const pathname = new URL(getRequest().url).pathname;
-		const session: AuthenticatedSession | null = exceptionPaths.has(pathname)
-			? null
-			: await requireSession();
-		// Attach the user to the request's isolation scope so errors and logs
-		// from this handler are tied to the acting user. Id-only here — the
-		// handle isn't on the session and isn't worth a per-request lookup.
-		if (session) {
-			Sentry.setUser({ id: session.userId });
-		}
-		return next({ context: { session } });
-	});
+			const session: AuthenticatedSession | null = exceptionIds.has(
+				serverFnMeta.id,
+			)
+				? null
+				: await requireSession();
+			// Attach the user to the request's isolation scope so errors and logs
+			// from this handler are tied to the acting user. Id-only here — the
+			// handle isn't on the session and isn't worth a per-request lookup.
+			if (session) {
+				Sentry.setUser({ id: session.userId });
+			}
+			return next({ context: { session } });
+		},
+	);
 }

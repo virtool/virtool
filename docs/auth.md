@@ -97,9 +97,17 @@ parameter exists only so tests can supply their own list.
 
 Every server function is gated by default. Public endpoints opt out by
 being listed in the `exceptions` array — passed as **server-function
-references**, not URL strings. The middleware derives the path from
-each fn's bound `url`, so the exception list can't drift out of sync
-with a rename.
+references**, not URL strings, so the list can't drift out of sync with
+a rename.
+
+**A call is identified by the `serverFnMeta` Start hands the
+middleware, never from `getRequest()`.** That is the *incoming*
+request, which is the function's own `/_serverFn/...` URL only for an
+RPC call from the browser: during SSR a server function is invoked
+in-process, so the incoming request is the page being rendered and no
+exception matches. `serverFnIdFromUrl` bridges the two — the exception
+list carries `url`, which is the id with the server-fn base in front —
+and `middleware.test.ts` pins that against the real metadata.
 
 The list is a standalone module rather than an inline array so it can
 be asserted on: `middleware.test.ts` pins its exact contents, and a fn

@@ -18,17 +18,27 @@ import { logger } from "./logger";
  */
 export const errorLoggingMiddleware = createMiddleware({
 	type: "function",
-}).server(async ({ next }) => {
+}).server(async ({ next, serverFnMeta }) => {
 	try {
 		return await next();
 	} catch (err) {
 		const status = getResponseStatus();
+		// `path` is the incoming request, which during SSR is the page being
+		// rendered rather than the function's own URL. `serverFn` is what names the
+		// failing handler on both paths.
 		const path = new URL(getRequest().url).pathname;
+		const serverFn = serverFnMeta.name;
 
 		if (status >= 400 && status < 500) {
-			logger.debug({ err, path, status }, "server function rejected request");
+			logger.debug(
+				{ err, path, serverFn, status },
+				"server function rejected request",
+			);
 		} else {
-			logger.error({ err, path, status }, "unhandled server function error");
+			logger.error(
+				{ err, path, serverFn, status },
+				"unhandled server function error",
+			);
 		}
 
 		throw err;
