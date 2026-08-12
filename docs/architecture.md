@@ -1,38 +1,6 @@
 # Architecture
 
-## Two backend surfaces
 
-Virtool's backend lives in two processes. The SPA talks to only one of
-them:
-
-- **This repo** — TanStack Start server functions under
-  `apps/web/src/server/<feature>/`, called from the SPA via the React
-  Query hooks that wrap them, plus a few raw routes for what a server
-  function cannot do (uploads, downloads, SSE, metrics). They read and
-  write through `@virtool/data`, the workspace package that holds the
-  Drizzle schema and every domain's `data.ts`. Every read and write the
-  browser makes goes through here; there is no HTTP client in the SPA and
-  no direct call to Python.
-- **The Python service** — still runs the job runner and owns the
-  Postgres schema and its Alembic migration history. It reaches the same
-  database and the same object storage bucket this repo does, so the two
-  processes cooperate through shared state rather than through the
-  browser.
-
-There is no Express SSR layer anymore — `src/server/` is exclusively
-TanStack Start, served by Nitro in production. Page rendering goes
-through the TanStack Start / TanStack Router pipeline.
-
-**Schema and migrations stay in Python.** The Python repo owns the
-Alembic migration history and is the only process that applies schema
-changes to Postgres. TS server features read and write through Drizzle
-against the schema Python defines; they don't ship their own
-migrations. When a migrating endpoint needs a schema change, the
-change lands in Python's Alembic tree first and the TS code follows.
-
-Everything below — the three-file layering, the import-direction
-invariant, the auth carve-out — governs a server feature, which spans
-`packages/data/src/<feature>/` and `apps/web/src/server/<feature>/`.
 
 ### Types are inferred from the schema, not hand-copied
 
@@ -200,10 +168,10 @@ Anything both sides genuinely share — the administrator-role model and
 `hasSufficientAdminRole`, the legacy `Permission` union, the banner
 color list, the SSE domain/message schemas — lives *down* in the
 framework-agnostic `@virtool/contracts` package, which neither side's
-type project can break. The server imports these from the package
-directly; each client feature module re-exports its piece from the
-package, so browser call sites keep importing from `@administration/*`,
-`@banner/*`, and friends unchanged.
+type project can break. Both sides import them from the package
+directly — a feature module that re-exports its piece becomes a
+middleman on a shape it does not own, and the real definition site stops
+being greppable.
 
 A domain's **wire shapes** are shared in exactly this sense, and belong
 in the package for the same reason. What a server function returns is
@@ -253,58 +221,6 @@ moved into `@virtool/contracts` when the data layer moved into its own
 package, which cannot reach the app's feature tree at all. The password
 policy went the same way, for the same reason.
 
-### Narrowing an open column happens where the wire shape is published
-
-Some columns are wider than what the client renders. `jobs.workflow` is a
-`text` column carrying no CHECK constraint, so `data.ts` types it
-`string` — a row can name a workflow this build has never heard of, and
-saying otherwise would be an assertion nothing enforces. The SPA turns a
-workflow into a label and a link, so it reads the closed union.
-
-The narrowing belongs in `functions.ts`, the boundary that publishes the
-wire shape. `server/jobs/functions.ts` parses `workflow` onto the union
-on the way out and throws when a row does not fit. The throw is a **bare
-`Error`**, not a `ClientError`: nothing the caller sent is wrong, so it
-is a 500 and a Sentry event rather than routine control flow the
-`beforeSend` filter drops. The message names the job id and never the
-value — it becomes a Sentry title, and an unbounded one buries the
-incident among its own variants. `apps/jobs-api` does the same thing on
-its own read path, parsing outbound jobs through the same `Job` schema
-the web app publishes.
-
-The alternative — declaring the narrow union on the client and parsing
-there — moves the failure to a component that can do nothing about it,
-and hides the disagreement from TypeScript entirely: `Schema.parse`
-accepts `unknown`, so a server function returning `string` for a field
-the client types as a union compiles cleanly and fails at runtime. What
-closes it is the handler's annotated return type: `findJobsFn` and
-`getJobFn` are declared to return `@virtool/contracts`' `Job` shapes, so
-a row field that no longer fits is a type error inside the handler, at
-the only place that can fix it.
-
-**The same argument rules out a client-side re-parse of a shape this
-side already published.** A `select` that runs a zod schema over a
-server function's result is a second declaration of that shape, free to
-disagree with the first, and it pays zod at every read for a value that
-crossed a boundary this app owns both ends of. Do the shaping once, in
-`functions.ts`, and let components consume what it returns.
-
-This is narrowing, not validation. It is worth doing only for a value the
-client branches on; a free-text column the client merely displays stays
-`string` all the way through.
-
-### The labels shape (minimal)
-
-`labels/` is the smallest valid form:
-
-- `data.ts` — defines `Label`, `LabelValues`, `LabelNotFoundError`,
-  `LabelConflictError`, and CRUD functions over the `labels` table.
-- `functions.ts` — wraps each CRUD function in a TanStack Start server
-  function, validates with zod, rethrows `LabelNotFoundError` as a 404
-  `ClientError` and `LabelConflictError` as a 409 `ClientError`.
-
-No `service.ts` — the data layer is enough.
-
 ### The auth carve-out
 
 `auth/` is the documented exception to the three-file layout. Its
@@ -322,21 +238,3 @@ same as labels: pure below, framework wiring above.
 Treat auth as a one-off shape, not a template. New features start with
 the standard three-file layout and only split further if the primitives
 genuinely don't fit in one `data.ts`.
-
-## When to introduce `service.ts`
-
-Add `service.ts` when:
-
-- A single user-facing operation touches multiple feature `data.ts`
-  modules (e.g. deleting a sample also touches analyses, jobs, and
-  uploads).
-- An orchestration has its own invariants — transaction boundaries,
-  ordering, compensating actions — that don't belong in any one feature.
-- The same multi-data-module flow is needed from more than one
-  `functions.ts`.
-
-Don't add `service.ts` for:
-
-- Thin pass-through wrappers around a single `data.ts` function.
-- Code that only exists to be called from one `functions.ts` — that's
-  what `functions.ts` is for.

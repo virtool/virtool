@@ -66,6 +66,12 @@ describe("translate", () => {
 	});
 });
 
+/**
+ * The expected values here are written out rather than captured from a fixture,
+ * because they are what Python's `find_orfs` returns and what is already stored
+ * in analysis documents. A failure is a finding — never re-baseline one of
+ * these to match a change in this implementation.
+ */
 describe("findOrfs", () => {
 	it("returns empty for sequences of 300 bp or less", () => {
 		expect(findOrfs("A".repeat(300))).toStrictEqual([]);

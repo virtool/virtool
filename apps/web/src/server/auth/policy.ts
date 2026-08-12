@@ -14,6 +14,11 @@ import { ForbiddenError, requireSession } from "./middleware";
 import type { AuthenticatedSession } from "./verify";
 
 // Every server function declares one of the policies below with `.middleware()`.
+// A policy answers *what the caller may do*; the global authentication
+// middleware has already answered *who they are*. It states a floor, resolved
+// before the handler runs — a rule that depends on the row being touched stays
+// in the handler, after the read, with `requireAdminRole`.
+//
 // It cannot be a wrapper around `createServerFn` — the Vite plugin matches that
 // call syntactically at the definition site, and behind a factory it stops
 // recognising the function as a server function at all (no RPC endpoint, and the
@@ -121,7 +126,12 @@ export function authenticated() {
 	);
 }
 
-/** Callable only by an administrator holding at least `role`. */
+/**
+ * Callable only by an administrator holding at least `role`.
+ *
+ * Roles rank `full` (strongest) through `base` (weakest), so `adminRole("base")`
+ * means "any administrator". `hasSufficientAdminRole` owns the ranking.
+ */
 export function adminRole(role: AdministratorRoleName) {
 	return createMiddleware({ type: "function" }).server(
 		async ({ context, next }) => {

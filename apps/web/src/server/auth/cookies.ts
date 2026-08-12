@@ -5,14 +5,30 @@ import {
 	setCookie,
 } from "@tanstack/react-start/server";
 
-/** Names of the two cookies the Python backend reads on each request. */
+/**
+ * The opaque identifier of a session. It is set on a
+ * successful login and on a successful reset, and is present *alone* during
+ * a forced-reset flow, where it names a session of type `reset`. A reset
+ * session is not authenticated as far as the middleware is concerned: a
+ * client holding only this cookie gets a 401 from any non-exception server
+ * function.
+ */
 export const SESSION_ID_COOKIE = "session_id";
+
+/**
+ * Proves the paired `session_id` belongs to an authenticated session. It is
+ * only set on the authenticated branch of login and after a successful
+ * reset. Only its hash is stored, so the client is the only holder of the
+ * value — treat it as equivalent to the user's password for as long as it is
+ * valid.
+ */
 export const SESSION_TOKEN_COOKIE = "session_token";
 
-// Python sets `max_age=2_600_000` on both cookies regardless of the row's
-// actual `expires_at`. The browser keeps the cookie alive for ~30 days; the DB
-// row's `expires_at` is the real authority. Match Python so cookies set by
-// either side look identical.
+/**
+ * The `max_age` set on both cookies, regardless of the row's actual
+ * `expires_at`. The browser keeps the cookie alive for ~30 days; the DB
+ * row's `expires_at` is the real authority.
+ */
 const MAX_AGE_SECONDS = 2_600_000;
 
 type Bool = boolean;
@@ -40,10 +56,10 @@ export type CookieAdapter = {
 	clear(): void;
 };
 
-// Each method is wrapped in createServerOnlyFn so the references to
-// getCookie/setCookie/deleteCookie sit behind a server boundary the compiler
-// recognizes — otherwise the object literal at module scope would pin
-// @tanstack/react-start/server in any client-reachable import chain.
+/* Each method is wrapped in createServerOnlyFn so the references to
+   getCookie/setCookie/deleteCookie sit behind a server boundary the compiler
+   recognizes — otherwise the object literal at module scope would pin
+   @tanstack/react-start/server in any client-reachable import chain. */
 export const realCookies: CookieAdapter = {
 	getSessionId: createServerOnlyFn(() => getCookie(SESSION_ID_COOKIE)),
 	getSessionToken: createServerOnlyFn(() => getCookie(SESSION_TOKEN_COOKIE)),

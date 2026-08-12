@@ -9,75 +9,35 @@ React + TypeScript single-page application for Virtool, a bioinformatics platfor
 
 This is a **pnpm monorepo**:
 
-- `apps/web/` — the Vite SPA. All UI code lives here.
-- `apps/site/` — `@virtool/site`, the product website at
-  [virtool.ca](https://www.virtool.ca) (Astro + Tailwind, deployed to
-  Cloudflare Workers). Kept out of the repo-wide `pnpm check`/`pnpm knip`
-  gates — Astro is not linted by biome and is opaque to knip — so its own
-  Vite build (a `site-build` CI job) and Vitest suite are its gate. Deploy is
-  manual: `pnpm --filter @virtool/site deploy`.
-- `apps/jobs-api/` — `@virtool/jobs-api`, the jobs API: the service workflow
-  runners call to claim, run and finish jobs. A Hono app on port 9950,
-  mirroring Python's `virtool/jobs/main.py` (`api-jobs-service`, ClusterIP,
-  **no ingress** — that absence is the security boundary). Serves
-  `/health/live`, `/health/ready`, a token-gated `/metrics`, the five
-  lifecycle routes — `POST /jobs/claim`, `GET /jobs/{id}`,
-  `PUT /jobs/{id}/ping`, `POST /jobs/{id}/steps/{stepId}/start`,
-  `POST /jobs/{id}/finish` — the two cache endpoints —
-  `GET /caches/{key}` and `POST /caches` — the three finalize routes —
-  `PATCH /subtractions/{id}`, `PATCH /samples/{id}`, `PATCH /analyses/{id}` —
-  and the six metadata reads — `GET /samples/{id}`, `/subtractions/{id}`,
-  `/indexes/{id}`, `/analyses/{id}`, `/refs/{id}` and `/settings`.
-  There is **no delete and no failure route**: cancelling a job, deleting
-  one and the five-minute stalled-job sweep all stay Python's. Image:
-  `ghcr.io/virtool/jobs-api`, Alpine. Four rules: it is **always "the jobs
-  API"**, never "the control plane" — that names its role, not the service;
-  **every route must refuse an unauthenticated caller or be named in
-  `PUBLIC_ROUTES`**, which `src/__tests__/authorization.test.ts` enforces —
-  `POST /jobs/claim` is named there, because the key it returns is the
-  thing a caller would otherwise authenticate with; **it serves records,
-  never bytes** — a read hands back the recorded `storageKey` and the
-  workflow fetches the object itself, so no handler streams a payload or
-  builds a derived artifact, and a read is handed a `{ db }` and no
-  `storage`; and a handler's floor
-  is `requireJobRequest` (`src/auth/guard.ts`), which authenticates a
-  workflow pod as `job-{id}:{key}` over HTTP Basic and **returns** a 401
-  rather than throwing one. It resolves to a `JobPrincipal` of `{ jobId }`
-  — no user, no permissions — and there is no cookie fallback; this service
-  has no session model. A route carrying a **job** id in its path must
-  also check it against `principal.jobId` and answer **403** on a
-  mismatch; that is the handlers' job, not the guard's. On the resource
-  routes, **reads take no ownership check and writes do**: which jobs may
-  read which rows is not a question this service answers, but a finalize
-  may only be issued by the job that produced the row. That predicate
-  rides on the `UPDATE ... WHERE` in `@virtool/data` — each finalize takes
-  a `jobId` after the resource id — so there is no window between checking
-  and writing, and the fallback `SELECT` answers **404 → 403 → 409** in
-  that order, because a row a job does not own must not report its state.
-  `POST /caches` is exempt: a cache row is owned by no job. Reaching a
-  terminal state
-  (`cancelled`, `failed`, `succeeded`) is the only thing that revokes a job
-  key, and **that refusal is the cancellation channel** — it is the one 401
-  that is not opaque, naming the state (`Job is cancelled.`) in a JSON
-  body, which is safe only because the check sits *after* the key
-  comparison. The **job read path parses on the way out**: `toJob` runs
-  the response through the `Job` schema, and a row naming a workflow the
-  union does not carry is a 500 with a Sentry event naming the row —
-  the runtime's client parses with the same schema, so the alternative
-  is a `JobsApiError` at a runner that can do nothing about it. Nothing
-  else in the service validates a response. That `Job` is **one shape,
-  not one per audience**: this service, the web app and the runtime all
-  publish and parse the same schema. Don't narrow it into a runner-facing
-  half — both halves would be built from the same record, a field one
-  audience ignores costs it nothing, and zod strips what a schema does
-  not name, so an added field cannot break an older runner. It winds down through `@virtool/service`'s
-  `createShutdownController`, with **no hooks registered** — it holds no
-  work to hand back — and `/health/ready` reports 503 from the moment
-  that flips readiness. See [docs/jobs-api.md](docs/jobs-api.md).
-- `apps/tasks/` — `@virtool/tasks`, the task service: **one** long-lived
+### apps/site
+
+`@virtool/site`
+
+- The product website at [virtool.ca](https://www.virtool.ca), deployed to
+  Cloudflare Workers.
+- Libraries: Astro + Tailwind.
+- Gates: kept out of the repo-wide `pnpm check`/`pnpm knip` gates — Astro is
+  not linted by biome and is opaque to knip — so its own Vite build (a
+  `site-build` CI job) and Vitest suite are its gate.
+- Deploy: manual, `pnpm --filter @virtool/site deploy`.
+
+### apps/jobs-api
+
+`@virtool/jobs-api`
+
+- The jobs API: the service workflow runners call to claim, run and finish
+  jobs. A Hono app on port 9950, mirroring Python's `virtool/jobs/main.py`
+  (`api-jobs-service`, ClusterIP, **no ingress** — that absence is the
+  security boundary). Image: `ghcr.io/virtool/jobs-api`.
+- See [apps/jobs-api/README.md](apps/jobs-api/README.md) for its route
+  surface and commands, and [docs/jobs-api.md](docs/jobs-api.md) for the
+  auth model, ownership rules, caching, finalize, and metrics in full.
+
+### `apps/tasks/` — `@virtool/tasks`, the task service: **one** long-lived
+
   process carrying both halves of Virtool's task system, the periodic
   spawner and the runner that claims and executes what it spawns. Image:
-  `ghcr.io/virtool/tasks`, Alpine, no ingress and **no Service** — its HTTP
+  `ghcr.io/virtool/tasks`, no ingress and **no Service** — its HTTP
   listener serves only `/health/live`, `/health/ready` and a token-gated
   `/metrics` on `VT_TASKS_PROBE_PORT` (9900). Neither half has a flag to
   turn it off: the cutover from Python is two deployments inside a minute,
@@ -93,24 +53,40 @@ This is a **pnpm monorepo**:
   run decompresses the FASTA, computes `gc`/`count`, compresses and finalizes.
   Don't port the step or the `*.bt2` upload loop back. That leaves it running
   no external tool at all — the gzip is `@virtool/workflow`'s, in-process — so
-  the image, `ghcr.io/virtool/ts-create-subtraction`, is **Alpine** and copies
-  nothing from `ghcr.io/virtool/tools`. Reintroducing a tools binary means
-  moving the stage to Debian in the same edit, because they are built against
-  `python:3.13-bookworm` and musl cannot load them. The remaining workflow
-  executors get a directory, a Dockerfile stage and a CI matrix entry when
-  their port lands.
+  the image, `ghcr.io/virtool/ts-create-subtraction`, copies nothing from
+  `ghcr.io/virtool/tools`. The remaining workflow executor gets a directory,
+  a Dockerfile stage and a CI matrix entry when its port lands.
+- `apps/pathoscope/` — `@virtool/pathoscope`, the pathoscope workflow executor
+  and its image (`ghcr.io/virtool/ts-pathoscope`). Eight steps, four external
+  tools and `pathoscope-core`, which it drives **as a subprocess** — there is
+  no FFI here and adding one is out of scope by decision. Its stages in the
+  root `Dockerfile` are a cargo-chef build of `packages/pathoscope-core`, a
+  Node build on the shared `base`, and a runtime layering the
+  `ghcr.io/virtool/tools` binaries over both.
+  Two rules it carries: it writes **no result file** — Python uploaded a
+  `report.tsv` whose every figure is already in the `results` blob, so the
+  finalize manifest is empty and `FinalizeAnalysisRequest.files` allows that
+  for this workflow's sake; and **nothing deletes an analysis on failure** —
+  Python's `on_failure` hook is not ported and the jobs API has no delete route.
+  **CI builds it but must not publish it** — `virtool/workflow-pathoscope` still
+  releases the pathoscope workflow, and a second pipeline shipping it from here
+  would leave two candidates for what the cluster runs. Don't add a publish job
+  until that repo retires; note that `publish-ghcr` is also what stamps a real
+  version, so until then `APP_VERSION` is `0.0.0` in every built image and the
+  `workflow_version` in its cache keys with it.
 - `apps/nuvs/` — `@virtool/nuvs`, the NuVs workflow executor and its image
   (`ghcr.io/virtool/ts-nuvs`). Ten steps and five external tools — skewer,
   bowtie2, SPAdes, `hmmpress` and `hmmscan`. It finds viruses the reference
   does **not** describe, by discarding every read that maps to a known OTU or
   to a subtraction, assembling what is left and searching the contigs for viral
-  motifs. Built from the **repo root**
-  (`docker build -f apps/nuvs/Dockerfile .`).
-  Five rules it carries: **`SPAdes 4.2.0` is compiled from source** in the
-  image's first stage, because no binary release fits the base — and the
-  runtime installs `python3` for it, since `spades.py` is a Python script
-  driving the compiled binaries; the **raw `results` shape is pinned by
-  `formatNuvs`** (`packages/data/src/analyses/format.ts`), *not* by
+  motifs. Its stages in the root `Dockerfile` are a from-source SPAdes compile,
+  a Node build on the shared `base`, and a runtime layering the
+  `ghcr.io/virtool/tools` binaries and the compiled SPAdes over both.
+  Five rules it carries: **`SPAdes 4.2.0` is compiled from source** in its own
+  stage, independent of the rest of the build, because no binary release fits
+  the base — and the runtime installs `python3` for it, since `spades.py` is a
+  Python script driving the compiled binaries; the **raw `results` shape is
+  pinned by `formatNuvs`** (`packages/data/src/analyses/format.ts`), *not* by
   `packages/contracts/src/nuvs.ts`, which describes the **formatted** envelope
   — so the workflow writes each ORF hit's `hit` (an annotation id) and never
   `cluster`, `families` or `names`, which the server merges in from the `hmms`
@@ -129,44 +105,8 @@ This is a **pnpm monorepo**:
   `virtool/workflow-nuvs` still releases the NuVs workflow, so `APP_VERSION`
   stays `0.0.0` and the `workflow_version` in all three of its cache keys with
   it.
-- `apps/pathoscope/` — `@virtool/pathoscope`, the pathoscope workflow executor
-  and its image (`ghcr.io/virtool/ts-pathoscope`). Eight steps, four external
-  tools and `pathoscope-core`, which it drives **as a subprocess** — there is
-  no FFI here and adding one is out of scope by decision. Its Dockerfile
-  carries three halves: a cargo-chef stage compiling `packages/pathoscope-core`,
-  a Node stage bundling the app, and a Debian runtime layering the
-  `ghcr.io/virtool/tools` binaries over both. Built from the **repo root**
-  (`docker build -f apps/pathoscope/Dockerfile .`).
-  Two rules it carries: it writes **no result file** — Python uploaded a
-  `report.tsv` whose every figure is already in the `results` blob, so the
-  finalize manifest is empty and `FinalizeAnalysisRequest.files` allows that
-  for this workflow's sake; and **nothing deletes an analysis on failure** —
-  Python's `on_failure` hook is not ported and the jobs API has no delete route.
-  **CI builds it but must not publish it** — `virtool/workflow-pathoscope` still
-  releases the pathoscope workflow, and a second pipeline shipping it from here
-  would leave two candidates for what the cluster runs. Don't add a publish job
-  until that repo retires; note that `publish-ghcr` is also what stamps a real
-  version, so until then `APP_VERSION` is `0.0.0` in every built image and the
-  `workflow_version` in its cache keys with it.
 - `packages/` — shared, framework-agnostic libraries published as workspace
   packages, plus one Rust crate:
-  - `@virtool/logger` — pino wrapper, server-side log defaults and
-    `child({...})` pattern
-  - `@virtool/bio` — sequence utilities (complement, translation, ORF
-    finding, FASTA/FASTQ) and the pure text parsers the ported workflows
-    need: FastQC `fastqc_data.txt` (`./fastqc`) and `hmmscan --tblout`
-    (`./hmmer`). Its output is pinned byte-for-byte against Python's —
-    `findOrfs` by a **differential golden** Python generated
-    (`src/fixtures/findOrfs.json`, regenerated only to add cases), the rest
-    by explicit assertions. FASTA parses two ways off one state machine:
-    `parseFasta` over a whole string, `parseFastaLines` streaming, because
-    an assembly is not something a caller sized itself. See
-    [docs/bio.md](docs/bio.md) before changing a parser.
-  - `@virtool/contracts` — cross-process data shapes, zod-validated where a
-    boundary parses them
-  - `@virtool/sentry` — shared Sentry option helpers (node + browser entry
-    points), plus the pino-to-Sentry log destination every server process
-    attaches (`./log`)
   - `@virtool/service` — the process-lifecycle pieces every long-lived
     service shares. Today that is `createShutdownController`
     (`./shutdown`) alone: readiness flip, LIFO hooks, listener, pool,
@@ -176,26 +116,6 @@ This is a **pnpm monorepo**:
     out of what the rest divide. It is **not** a home for the probe
     server or the metrics registries, however alike those look across
     the three services.
-  - `@virtool/storage` — object storage: the S3 and Azure backends, the
-    key builders, and `MemoryStorage`
-  - `@virtool/data` — the database and domain data layer: the Drizzle schema,
-    `createDb`, every domain's `data.ts`, the `client_events` emitter, the
-    bcrypt/session/token primitives, and `AppError`
-  - `@virtool/workflow` — the workflow runtime every executor runs on: the
-    step model, the run loop, the work path, the subprocess runner, the eager
-    `buildContext` seam, the job lifecycle loop that claims, heartbeats and
-    reports over the jobs API, the file layer — streaming transfer, gzip,
-    tar and cache-key derivation — and the bowtie2 mapping index, which is
-    shared between the analysis workflows rather than owned by one. It takes
-    a `StorageBackend` as an argument and knows nothing about a database —
-    see the section below. It is the only place in the repo that spawns a
-    process, and so the only one depending on `execa`.
-  - `pathoscope-core` — **Rust, not TypeScript.** Pathoscope's EM core as a
-    standalone CLI, invoked as a subprocess. It is not a pnpm workspace (it
-    has no `package.json`) and is excluded from biome and knip by name —
-    see [docs/pathoscope-core.md](docs/pathoscope-core.md) before touching
-    it. Its results are pinned byte-for-byte against the Python extension
-    module it replaced.
 
   `@virtool/data` and `@virtool/storage` are server-side only. Browser code
   must never import them; they reach `apps/web` through `src/server/**`. A
@@ -210,28 +130,34 @@ This is a **pnpm monorepo**:
   to get `client` and `db`, and calls `createEmitter({ client, logger })`. Every
   `db`, `client`, and `storage` import in `apps/web` comes from there.
 
+
 **Apps bundle; packages stay source.** Every package under `packages/` is
 unbuilt TypeScript — no `build` script, no `dist`, `noEmit: true`, and an
 `exports` map pointing at `./src/*.ts`. A plain `node` process cannot import a
 `.ts` file, so the non-Vite apps are where compilation happens: each bundles to
 a single `dist/index.mjs` with every `@virtool/*` inlined from source, via
 **tsdown**. Do not give a package a `dist` build to sidestep this — the apps
-bundling *is* the design. A new app is `apps/<name>/` with a `package.json`, a
-`tsconfig.json` extending `apps/tsconfig.node.json`, a `tsdown.config.ts` and
-`src/index.ts`; that is enough for `pnpm build`, `check`, `typecheck`, `test`
+bundling *is* the design. A new app is `apps/<name>/` with a `README.md`, a
+`package.json`, a `tsconfig.json` extending `apps/tsconfig.node.json`, a
+`tsdown.config.ts` and `src/index.ts`; that is enough for `pnpm build`,
+`check`, `typecheck`, `test`
 and `knip` to cover it with no edits to root scripts, `knip.json`, `biome.json`
 or the Dockerfile install layer. A new *image* still needs a Dockerfile stage
 and a CI matrix entry.
 
-A non-Vite app must **never import from `apps/web`**, in either direction. A
-`biome.json` override over `apps/*/src/**` (excluding `apps/web/src/**`) bans
-every feature alias, `@server/**`, the `@/*` catch-all and relative reaches into
-`apps/web`. Shared shapes go down into `@virtool/contracts`.
+**No app may import another app's source, in any direction.** Three
+`biome.json` overrides enforce it, one scoped to each of `apps/web/src/**`
+(excluding and then covering `server/**`) and one to every other app's
+`src/**`. Shared code goes *down* into a package instead.
 
 See [docs/apps.md](docs/apps.md) for the bundler rationale, the
 bundled-vs-external rule and why externals must be string literals, the
-`pnpm deploy` / `injectWorkspacePackages` mechanism, and the Alpine-vs-Debian
-image split.
+`pnpm deploy` / `injectWorkspacePackages` mechanism, and the repo-wide
+gates. [docs/images.md](docs/images.md) covers the image side: the
+target inventory, the one-base-for-everything rule, the install and
+source layers, the tools-image interpreters, and what building and
+publishing an image takes. Each app's own `README.md` covers what that
+app is, its port, image and commands.
 
 Use `pnpm` for all install, run, and exec commands — not `npm` or `bun`.
 
@@ -542,17 +468,14 @@ route or query errors — those belong in the two tiers above.
 
 ### Styling
 
-- Styling is Tailwind utility classes. There is no CSS-in-JS; styled-components
-  has been removed from the repo.
-- Use `cn()` from `@app/cn` for conditional classes (combines `clsx` +
-  `tailwind-merge`).
+- Use Tailwind utility classes.
+- Use `cn()` from `@app/cn` for conditional classes.
 - Don't use arbitrary Tailwind classes like `max-h-[210px]`.
 - Design tokens — colors, spacing, fonts — are defined in
   `apps/web/src/app/style.css` under `@theme`, with keyframes in
   `apps/web/src/app/animations.css`. Check there before inventing a color or
   spacing value, and add a token rather than hardcoding a hex.
-- The root font size is `100%` — the reader's browser preference. Never put a
-  length back on `html`; `body` carries the app's base size.
+- The root font size is `100%`. 
 - Every rem-valued token Tailwind ships is overridden in `@theme` at 0.875, so
   a class does **not** render its documented px figure: `text-sm` is 12.25px,
   `md:` breaks at 672px.
@@ -560,14 +483,10 @@ route or query errors — those belong in the two tiers above.
   Where a size has to be a number — a threshold compared against a measured
   width — write it as a rem multiple and resolve it with `useRootFontSize`
   (`@app/hooks`), never as a px constant.
-- A `color` prop on a `src/base/` component takes the shared `PaletteColor`
-  from `@base/types` (`blue`, `green`, `gray`, `orange`, `purple`, `red`), or
-  `IconColor` — `PaletteColor | "black"` — for the icon-based ones (`Icon`,
-  `IconButton`, `Circle`). Don't redeclare the union locally, add a one-off
-  color, or trim the set per component.
+- A `color` prop on a `src/base/` component takes the shared `PaletteColor`.
+  Don't redeclare this.
 - Where a component has variants (`solid` / `soft`), `color` works in every
-  one. A variant that silently ignores it is a footgun: honor it across the
-  board or drop the prop for that variant.
+  one.
 
 See [docs/type-scale.md](docs/type-scale.md) for which token families are
 overridden and why they move together, the class-to-px table, and the px
@@ -684,11 +603,6 @@ the RPC client reads the body and never the status.
 `server/__tests__/responseStatus.test.ts` fails the build on any of the
 three.
 
-See [docs/architecture.md](docs/architecture.md) for the import-direction
-invariant in full, the labels (minimal) and auth (carve-out) shapes,
-the pure-policy-vs-framework-shell principle, and when to introduce
-`service.ts`.
-
 ### Client-reachable files import server modules via `@server/*`
 
 `apps/web` type-checks as two projects (`pnpm typecheck` runs both):
@@ -746,23 +660,37 @@ resolvable from there. That is what forced `DEFAULT_LABEL_COLOR` and the
 password policy down into `@virtool/contracts` when `labels/data.ts` and
 `settings/data.ts` moved.
 
-Shapes and helpers both sides need live *down* in `@virtool/contracts`
-(roles, permissions, banner colors, the SSE schema, the reference wire
-shapes, `UserNested`, `Task`, `SearchResult`, `ApiKey`); both sides
-import them straight from the package.
+### The client boundary: shared shapes live in `@virtool/contracts`
 
-**A domain's wire shapes belong in `@virtool/contracts`, not in
-`data.ts`.** What a server function returns is read by both sides, so
-`data.ts` imports those types from the package and components import the
-same names straight from `@virtool/contracts` — no feature `types.ts`
-re-export. `samples/types.ts` is the worked example, keeping only the
-shapes that are genuinely client-only; a feature whose every shape is a
-wire shape needs no `types.ts` at all. A
-client `types.ts` must never import a shape from `@virtool/data` — the Biome
+**Search the package before you declare a type.** Anything both sides
+need is already there or belongs there — roles, permissions, banner
+colors, the SSE schema, the reference wire shapes, `UserNested`, `Task`,
+`SearchResult`, `ApiKey`. A second declaration of a shape the package
+already owns is free to disagree with it, and nothing in the toolchain
+will say so.
+
+**A domain's wire shapes go in the package, not in `data.ts`.** What a
+server function returns is read by both sides, so `data.ts` imports those
+types to annotate its returns and components import the same names.
+`data.ts` keeps only what it alone uses: its `*Values` and `*Options`
+argument types, its `AppError` subclasses, and its row mappers. A client
+`types.ts` must never import a shape from `@virtool/data` — the Biome
 override rejects it, and it would point the client at a module the server
-does not own the shape of. `data.ts` still owns what only it uses: its
-`*Values` and `*Options` argument types, its `AppError` subclasses, and
-its row mappers.
+does not own the shape of. `samples/types.ts` is the worked example,
+keeping only the genuinely client-only shapes; a feature whose every
+shape is a wire shape needs no `types.ts` at all.
+
+**Never re-export a name that originates in the package.** Consumers
+import it directly. A `types.ts` that re-exports `UserNested`, or a
+`utils.ts` that re-exports `hasSufficientAdminRole`, makes the feature a
+middleman on a shape it does not own: the real definition site stops
+being greppable, and a module that wanted one client-only type now drags
+the feature in to get a package one. Keep the client-only shapes that
+genuinely live there — `administration/types.ts` still owns
+`AdministratorRole` and `Settings`, `banner/types.ts` still owns `Banner`
+and `bannerColorClasses` — and delete only the pass-through lines. The
+rule covers values as well as types, and applies just as much inside
+`src/server/**`.
 
 **Shape the payload in `functions.ts`, and parse nothing on the client.**
 A `select` that runs a zod schema over a server function's result is a
@@ -774,26 +702,22 @@ it — `server/jobs/functions.ts` is the worked example, mapping the
 `fromStoredJobStep` / `fromStoredJobClaim` rather than a second copy of
 that conversion.
 
-**A timestamp crosses as a `Date`.** Server functions serialize with
-seroval, not `JSON.stringify`, and seroval revives a `Date` as a `Date` —
-so a handler hands back the value it read out of Postgres, the contract
-types it `Date`, and no `z.coerce.date()` runs on either side. The
-exception is a timestamp stored *inside* a JSONB blob (`steps[].started_at`),
-which is column bytes Python also writes and is converted by the mappers
-above.
+**A timestamp crosses every wire as a `Date`, never a string — this holds
+across the whole codebase, not just this boundary.** A handler hands back
+the value it read out of Postgres and the receiving side gets a `Date`
+back, with no hand-written parsing on either end. The mechanism follows
+the transport: a TanStack Start server function serializes with seroval,
+which revives a `Date` as a `Date`, so no `z.coerce.date()` runs on either
+side; a raw JSON wire — like the jobs API's HTTP contract — has no such
+codec, so its schema uses `z.coerce.date()` instead, typing both
+directions the same way. No handler on either kind of boundary calls
+`toISOString()` by hand. The one exception is a timestamp stored *inside*
+a JSONB blob (`jobs.steps[].started_at`), which is column bytes Python
+also writes and stays a string at rest; see the mapper comments in
+`packages/contracts/src/jobs.ts` for why.
 
-**A feature module must never re-export a name that originates in
-`@virtool/contracts`.** Consumers import it from the package directly.
-A `types.ts` that re-exports `UserNested`, or a `utils.ts` that
-re-exports `hasSufficientAdminRole`, makes the feature a middleman on a
-shape it does not own: the real definition site stops being greppable,
-and a module that wanted one client-only type now drags the feature in
-to get a package one. Keep the client-only shapes that genuinely live
-there — `administration/types.ts` still owns `AdministratorRole` and
-`Settings`, `banner/types.ts` still owns `Banner` and
-`bannerColorClasses` — and delete only the pass-through lines. The rule
-covers values as well as types, and applies just as much inside
-`src/server/**`.
+See [docs/architecture.md](docs/architecture.md) for the client-boundary
+rationale in full and the history of what moved into the package.
 
 ### Every server function declares an authorization policy
 
@@ -887,10 +811,6 @@ cookie-only. A key-authenticated session carries the key's permissions, and
 `hasPermission` intersects them with the user's own — the key caps
 administrators too.
 
-See [docs/auth.md](docs/auth.md) for the middleware composition, the
-session model, cookies, lifetimes, and the login / reset / logout
-flows.
-
 ### Environment variables are prefixed with `VT_`
 
 Every Virtool-owned env var must start with `VT_`. The prefix keeps our
@@ -956,10 +876,10 @@ logger.warn({ err }, "postgres health check failed");
 ```
 
 `@virtool/data` cannot reach that singleton — it carries the Sentry
-forwarding stream, which is the app's. The six data functions that log
-take a `Logger` as an argument instead, after `db` and `storage`, and the
-web app's `functions.ts` passes `@server/logger` in. `emit` is the one
-exception: its logger is bound once by `createEmitter`.
+forwarding stream, which is the app's. Its data functions that log take a
+`Logger` as an argument instead, after `db`/`storage` where those are
+present, and the web app's `functions.ts` passes `@server/logger` in.
+`emit` is the one exception: its logger is bound once by `createEmitter`.
 
 Pass structured fields as the first arg and the message as the second —
 never interpolate values into the message string, that defeats the
@@ -970,19 +890,14 @@ attaching scoped context, but nothing in the server currently uses it and
 no `context.logger` exists — don't write code that assumes one.
 
 When a Sentry DSN is configured, server logs at `info` and above are
-forwarded to Sentry automatically (via a pino destination stream, not
-`Sentry.pinoIntegration()`); redaction still applies and dev does not
-forward. That holds for **all three** server processes — `apps/web`,
-`apps/jobs-api` and `apps/tasks` — which share one stream,
-`createSentryLogStream` from `@virtool/sentry/log`. It takes the SDK's
-`logger` as an argument rather than importing one, because each process
-initialises a different SDK and only the one it called `init` on sends
-anything. Attach it only when a DSN is present, so the SDK graph stays
-unloaded in dev and tests.
+forwarded to Sentry automatically, through a shared pino destination
+stream — `createSentryLogStream` from `@virtool/sentry/log` — rather than
+`Sentry.pinoIntegration()`. All three server processes (`apps/web`,
+`apps/jobs-api`, `apps/tasks`) attach it only when a DSN is present, so
+the SDK graph stays unloaded in dev and tests.
 
-See [docs/logging.md](docs/logging.md) for the redaction
-defaults, `VT_LOG_LEVEL` resolution, where the logger singleton lives, and
-the Sentry forwarding wiring.
+See [packages/logger/README.md](packages/logger/README.md) for the
+redaction defaults, `VT_LOG_LEVEL` resolution, and usage conventions.
 
 ### Metrics
 
@@ -997,7 +912,8 @@ dashboard covers them all; they are told apart by the scrape's target
 labels and by `application_name`, **never by renaming a metric**. All three
 gate the endpoint with `isBearerTokenValid` (`@virtool/contracts/bearer`) —
 constant-time, so don't reimplement it or reduce it to `===`. The rest of
-this section is `apps/web`; see [docs/jobs-api.md](docs/jobs-api.md) and
+this section is `apps/web`; see
+[apps/jobs-api/README.md](apps/jobs-api/README.md#metrics) and
 [docs/tasks.md](docs/tasks.md) for the others.
 
 **Job-queue visibility is `apps/jobs-api`'s, not `apps/web`'s.**
@@ -1075,9 +991,9 @@ whole scrape rather than just the pool gauges.
 because a static import would drag prom-client and its `node:*` reads
 into the client graph.
 
-See [docs/metrics.md](docs/metrics.md) for the exported series, the
-token check, cardinality rules, and what deeper instrumentation would
-take.
+See [apps/web/README.md](apps/web/README.md#metrics) for the exported
+series, the token check, cardinality rules, and what deeper
+instrumentation would take.
 
 ### Tasks
 
@@ -1876,9 +1792,13 @@ The basics:
   augmenting `Window` or TanStack Router's `Register` requires an
   `interface`; those sites carry a `biome-ignore` explaining why. Prefer
   string literal unions over `enum`.
-- **JSDoc:** Every exported `type` gets a one-line `/** ... */`.
+- **JSDoc:** Every exported `type` gets a one-line `/** ... */`, leading
+  with what the thing *is* rather than a sentence about its behavior — the
+  label is the first thing a hover shows.
 - **Naming:** `is`/`has`/`get` for pure reads; `check`/`validate`/
-  `assert` for may-throw. A `createServerFn` export gets an `Fn` suffix
+  `assert` for may-throw. The `is`/`has` line is loose — don't overthink
+  it. A prepositional name (`lifetimeFor`) isn't part of the rule; prefer
+  `getLifetime`. A `createServerFn` export gets an `Fn` suffix
   (`loginFn`, `getSampleFn`) — it's an RPC call, not a plain function,
   and the suffix marks that at every call site. The domain function it
   wraps keeps the plain name (`login`, `getSample`) and never crosses
@@ -1886,15 +1806,21 @@ The basics:
   name — the `Fn` suffix already keeps the two apart, so don't alias it
   to `...Impl` on the way in.
 - **Comments:** Default to none. Document *why* when non-obvious, not
-  *what*. Never narrate history ("this used to do X, now it does Y") —
-  that's git blame's job, and it just accretes stale layers; write a
-  comment about a past change only if reverting it would silently
-  reintroduce a bug, phrased as a standing warning, not a changelog.
+  *what* — never restate the code, reference the current task, or name
+  the caller (those rot the moment something moves). Never narrate
+  history ("this used to do X, now it does Y") — that's git blame's job,
+  and it just accretes stale layers; write a comment about a past change
+  only if reverting it would silently reintroduce a bug, phrased as a
+  standing warning, not a changelog. Syntax: `/** ... */` for the one-line
+  JSDoc on an exported type (or a label on a function/constant that needs
+  one); `/* ... */` for a multi-line *why*; `//` for one-liners only —
+  never chain `//` lines into a block.
 - **Concurrency:** Independent awaits go in `Promise.all` — don't pay
-  the sum of latencies.
-
-See [docs/code-style.md](docs/code-style.md) for the full TypeScript,
-naming, comments, and concurrency rules with examples.
+  the sum of latencies. Skip it when a later call needs an earlier
+  result, the calls share one Postgres transaction (serialised
+  server-side regardless), or an early failure should short-circuit
+  expensive later work. Use `Promise.allSettled` when every result is
+  needed regardless of failures.
 
 ## Testing
 
@@ -1998,12 +1924,13 @@ start work — terse statements with pointers into `docs/` for the
 full treatment. Detailed explanations, examples, and rationale live
 in `docs/`.
 
-**`docs/` files are self-contained leaves.** Each doc covers one
-topic end-to-end and does not link to or reference other docs.
-Routing between topics is `AGENTS.md`'s job, not the docs'. If you
-find yourself wanting to write "see other-doc.md", either the detail
-belongs in `AGENTS.md` as the routing layer, or the two docs need to
-be reorganised so each is complete on its own.
+**Every app and every package has a `README.md`, and it is the human
+entry point, not a third copy of the rules.** An app's says what the app
+is, its port and image, and its commands; a package's says what it
+exports and where it may be imported from. Both then carry the decisions
+particular to that directory which no shared doc owns, and point at the
+`docs/` leaves — a README is the one place allowed to name a doc,
+because it is an entry point rather than a leaf.
 
 **`AGENTS.md` is updated in the same commit as the change that
 invalidates it.** It is the first file every agent and contributor
@@ -2039,6 +1966,9 @@ commit that removes styled-components from this file.
 - A doc grows past one cohesive topic, or starts pulling in
   unrelated material to stay self-contained → split it along the
   mixed-concerns line so each half is again a leaf.
+- New app or package, or a change to an app's port, image, surface or
+  commands, or to what a package exports → update that directory's
+  `README.md` in the same commit.
 
 ### Git
 

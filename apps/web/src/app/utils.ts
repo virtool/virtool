@@ -86,9 +86,18 @@ export function getWorkflowDisplayName(workflow: string): string {
 }
 
 /**
- *  Clears session storage and reloads the page.
+ * Clear session storage and reload the page.
  *
- *  This is used to clear the session storage when the user logs out or the token expires.
+ * Ends a user-initiated logout. The full-page reload is what wipes everything
+ * held in memory — React state, the React Query cache, zustand stores, the SSE
+ * connection — and clearing `sessionStorage` drops persisted form state. A
+ * session that ends *underneath* a running tab goes through `endSession`
+ * instead, which lands the user on the login wall with an explanation.
+ *
+ * `localStorage` is deliberately not cleared, so anything persisted there
+ * survives a logout. A key whose meaning depends on the logged-in user must
+ * either be cleared here as well or be scoped by user id, or the next user on
+ * the same browser picks up the stale value.
  */
 export function resetClient() {
 	window.sessionStorage.clear();

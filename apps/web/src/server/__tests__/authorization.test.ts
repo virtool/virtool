@@ -244,9 +244,10 @@ describe("server function coverage", () => {
 	});
 });
 
-// This is the check that makes declaring a policy non-optional. A server
-// function built without one has no session guard of its own, so an anonymous
-// call reaches its handler instead of being refused — and it fails here.
+// This is the check that makes declaring a policy non-optional. Nothing in the
+// type system forces one: a server function built without a policy has no
+// session guard of its own, so an anonymous call reaches its handler instead of
+// being refused — and it fails here, by name.
 //
 // It also pins `authenticationExceptions` from the other side: a function
 // declared `open()` but left out of that list is authenticated by the global

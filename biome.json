@@ -102,6 +102,21 @@
 									{
 										"group": ["@virtool/data/**", "@virtool/storage", "@virtool/storage/**"],
 										"message": "@virtool/data and @virtool/storage are server-only: they open Postgres and object storage, and reach node:* APIs the browser has none of. Reach them through src/server/**, which the client transform strips."
+									},
+									{
+										"group": [
+											"**/apps/jobs-api/**",
+											"**/jobs-api/src/**",
+											"**/apps/tasks/**",
+											"**/tasks/src/**",
+											"**/apps/create-subtraction/**",
+											"**/create-subtraction/src/**",
+											"**/apps/pathoscope/**",
+											"**/pathoscope/src/**",
+											"**/apps/nuvs/**",
+											"**/nuvs/src/**"
+										],
+										"message": "No app may import another app's source, in any direction. Shared code goes down into a package instead."
 									}
 								]
 							}
@@ -149,6 +164,21 @@
 											"@wall/**"
 										],
 										"message": "src/server must not import from browser feature modules. The dependency arrow runs client -> @server/*; shared types and helpers belong in @virtool/contracts, which both sides import down into. Every feature alias is listed, plus the @/* catch-all that would otherwise reach the same modules by another name."
+									},
+									{
+										"group": [
+											"**/apps/jobs-api/**",
+											"**/jobs-api/src/**",
+											"**/apps/tasks/**",
+											"**/tasks/src/**",
+											"**/apps/create-subtraction/**",
+											"**/create-subtraction/src/**",
+											"**/apps/pathoscope/**",
+											"**/pathoscope/src/**",
+											"**/apps/nuvs/**",
+											"**/nuvs/src/**"
+										],
+										"message": "No app may import another app's source, in any direction. Shared code goes down into a package instead."
 									}
 								]
 							}
@@ -197,9 +227,19 @@
 											"@virtool/web",
 											"@wall/**",
 											"**/apps/web/**",
-											"**/web/src/**"
+											"**/web/src/**",
+											"**/apps/jobs-api/**",
+											"**/jobs-api/src/**",
+											"**/apps/tasks/**",
+											"**/tasks/src/**",
+											"**/apps/create-subtraction/**",
+											"**/create-subtraction/src/**",
+											"**/apps/pathoscope/**",
+											"**/pathoscope/src/**",
+											"**/apps/nuvs/**",
+											"**/nuvs/src/**"
 										],
-										"message": "A non-Vite app must not import from apps/web, in either direction. apps/jobs-api is the likeliest offender because it does work src/server also does, so copying an import from there is an easy mistake. Shared shapes and helpers belong in @virtool/contracts, @virtool/data or @virtool/storage, which both sides import down into."
+										"message": "No app may import another app's source, in any direction. apps/jobs-api is the likeliest offender against apps/web because it does work src/server also does, so copying an import from there is an easy mistake. Shared shapes and helpers belong in @virtool/contracts, @virtool/data or @virtool/storage, which every app imports down into."
 									}
 								]
 							}

@@ -10,6 +10,7 @@ import { parseConfig } from "./config";
 import { initSentry, SERVICE } from "./instrument";
 import { createAppLogger } from "./logger";
 import { createMetrics } from "./metrics/registry";
+import { APP_VERSION } from "./version";
 
 /** How long Sentry may spend flushing buffered envelopes, in milliseconds. */
 const SENTRY_FLUSH_TIMEOUT = 2_000;
@@ -39,7 +40,7 @@ const app = createApp({
 	db,
 	storage: createStorageBackend(config.storage),
 	logger,
-	metrics: createMetrics(config.postgresPoolMax),
+	metrics: createMetrics(config.postgresPoolMax, APP_VERSION),
 	applicationName,
 	metricsToken: config.metricsToken,
 	isReady: () => ready,

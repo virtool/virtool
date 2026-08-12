@@ -148,7 +148,7 @@ describe("createJobQueueReader", () => {
 
 describe("setJobQueue", () => {
 	function render(snapshot: JobQueueSnapshot): Promise<string> {
-		const metrics = createMetrics(10);
+		const metrics = createMetrics(10, "1.2.3");
 		metrics.setJobQueue(snapshot);
 
 		return metrics.render();
@@ -174,7 +174,7 @@ describe("setJobQueue", () => {
 	// report its final backlog indefinitely — the worst possible failure for an
 	// alert on queue depth.
 	it("writes zero for a workflow that drained", async () => {
-		const metrics = createMetrics(10);
+		const metrics = createMetrics(10, "1.2.3");
 
 		metrics.setJobQueue({
 			counts: [{ workflow: "nuvs", state: "pending", count: 3 }],
@@ -245,7 +245,7 @@ describe("setJobQueue", () => {
 	// or holding an alert open for one that drained. An absent series says
 	// "unknown", which is the true answer.
 	it("drops the series entirely when a refresh fails", async () => {
-		const metrics = createMetrics(10);
+		const metrics = createMetrics(10, "1.2.3");
 
 		metrics.setJobQueue({
 			counts: [{ workflow: "nuvs", state: "pending", count: 47 }],

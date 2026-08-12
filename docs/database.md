@@ -95,96 +95,13 @@ enum and its `$type` is backed.
 
 ## What the TS server can reach today
 
-Every domain's records live in Postgres; MongoDB is gone. So what gates
-a TS server feature is no longer "has this migrated to Postgres" — it's
-how much of it this repo has mirrored into Drizzle and wired up. Three
-states:
-
-- **Built** — a Drizzle mirror in `packages/data/src/db/schema/` plus a
+**Built** — a Drizzle mirror in `packages/data/src/db/schema/` plus a
   `packages/data/src/<feature>/data.ts` and an
   `apps/web/src/server/<feature>/functions.ts`. The domain is served from
   this repo; ready to use.
-- **Partial mirror** — a read-only Drizzle mirror of only the few
-  columns the **jobs** feature needs to reconstruct a job's `args`. The
-  domain itself is not served yet; building it out means mirroring the
-  rest of its tables and columns first.
-- **Not started** — Postgres owns the data, but this repo has no Drizzle
-  mirror at all. Write the mirror first (against the tables Python
-  defines), then the feature.
-
-| Domain       | Postgres table(s)                                    | TS status      |
-| ------------ | ---------------------------------------------------- | -------------- |
-| Users        | `users`, `user_groups`                               | Built          |
-| Groups       | `groups`                                             | Built          |
-| Sessions     | `sessions`                                           | Built          |
-| Messages     | `instance_messages`                                  | Built          |
-| Tasks        | `tasks`                                              | Built          |
-| Labels       | `labels`                                             | Built          |
-| Jobs         | `jobs`                                               | Built          |
-| Settings     | `settings`                                           | Built          |
-| HMMs         | `hmms`, `legacy_hmm_status`                          | Built          |
-| API keys     | `api_keys`                                           | Built          |
-| Analyses     | `analyses`, `analysis_*`, `nuvs_blast`               | Built          |
-| Indexes      | `indexes`, `index_files`                             | Built          |
-| Samples      | `legacy_samples`, `legacy_sample_*`, `sample_*`      | Built          |
-| Subtractions | `subtractions`, `subtraction_files`                  | Built          |
-| References   | `legacy_references`, `legacy_reference_*`            | Built          |
-| Uploads      | `uploads`                                            | Not started    |
-| OTUs         | `legacy_otus`                                        | Built          |
-| Sequences    | `legacy_sequences`                                   | Built          |
-| History      | `legacy_history`, `legacy_history_diff`, `revisions` | Built          |
-| Caches       | `caches`                                             | Built          |
-
-The Postgres table(s) column lists the single mirrored table for the
-**partial mirror** rows and the principal Python-defined table(s) for
-the rest; it is not the domain's full table set. The **partial mirror**
-rows exist to feed other served domains, not themselves. `jobs` has no
-`args` column, so a job's resources are recomposed at read time from
-reverse `job_id` foreign keys on `analyses`, `indexes`, and
-`legacy_samples` (there are no `job_*` junction tables). The references
-read path adds three more: `legacy_otus` (an OTU count and the clone
-manifest), `legacy_history` (contributors and the unbuilt-change count),
-and `indexes`, which resolves a reference's latest build.
-The samples read path leans on the `analyses` mirror's `sample_id`,
-`workflow`, and `ready` columns to derive a sample's workflow tags (a
-`GROUP BY workflow, bool_or(ready)`) and to power the `workflows=` filter
-(a correlated `EXISTS`). Each partial mirror declares just the columns its
-consumer needs.
-
-The `legacy_otus`, `legacy_sequences`, `legacy_history` and
-`legacy_history_diff` tables carry the Mongo-era shape — isolates embedded
-in `legacy_otus.data`, the diff in a side table — and the OTU domain is
-served from this repo **on that shape**, not on a renormalized one.
-
-That is a decision, not an omission. `data` is the source of truth rather
-than decoration: history diffs are `dictdiffer` triples that address the
-joined document exactly as it was written, and index the sequence lists
-inside it positionally. Anything that changed the document's shape would
-misapply every diff already recorded against it, which is what
-`patchOtusToVersions` reverts to render a pathoscope analysis at the version
-it saw. Python also still writes these tables — reference import, clone,
-remote update and index build all do — so a second writer with a different
-shape would corrupt them outright. Renormalizing is a Python-side migration,
-not something this repo can do on its own.
-
-The consequences for anything written here: a write must reproduce the whole
-document, `data` included (`writeLegacyOtu`); `legacy_sequences.position` is
-load-bearing and a delete leaves a gap rather than renumbering; and the
-`otu_version` `NULL` that stands for `"removed"` is reversed at the boundary
-rather than stored. See `@virtool/data/otus/data` and `@virtool/data/history/data`.
 
 Caches are the one **Built** domain with no `functions.ts` in
-`apps/web`. Nothing in the SPA reads a cache — only workflows do — so
-the mirror and `packages/data/src/caches/data.ts` are served by
-`apps/jobs-api/src/caches/handlers.ts` instead. Its unique constraint on
-`key` is declared by its real name, `cache_key`, because
-`createTestDatabase()` derives its DDL from these mirrors: an undeclared
-constraint is simply absent from a test database, and the duplicate-key
-race the registration path is built around would never be exercised.
-
-The `subtractions` mirror is now full — the subtraction domain is
-served from this repo — but jobs still reaches it through the same reverse
-`job_id` foreign key.
+`apps/web`. Nothing in the SPA reads a cache — only workflows do.
 
 A `legacy_` table prefix marks a table that carries the Mongo-era row
 shape and a `legacy_id` column from the import — it is a normal Postgres
@@ -206,11 +123,6 @@ things carry over from the migration:
   column. Joins across them may need legacy-id resolution (below),
   because the backfills that replace legacy string handles with integer
   ids are not complete.
-- **Aggregation lives in Python today.** The Python list endpoints for
-  samples, analyses, OTUs, and references build their responses with SQL
-  aggregation on the server. A TS port re-expresses that in Drizzle
-  against the same tables — there is no Mongo pipeline to translate any
-  more, but there is real query logic to reproduce.
 
 ## Transactions and the `DbOrTx` handle
 
@@ -262,15 +174,6 @@ gzips the artifact into a freshly minted key, records the `index_files`
 row **with that key on it**, promotes
 `legacy_otus.last_indexed_version`, and only then sets `ready = true`.
 
-Python's `CreateIndexTask` does the same thing, and both runners are live
-until the cutover, so the two halves must stay interchangeable. The
-artifact is `reference-v2.json.gz` on both sides, the `index_files` row
-carries the legacy `index` string column on both sides, and the OTUs are
-serialized in the manifest's **stored** order — read back out of the
-JSONB column rather than from a parsed object, because `JSON.parse`
-hoists array-index-like keys and an eight-character OTU id is all digits
-often enough to matter.
-
 Two builds of one reference would each stamp the other's changes and then
 collide on the `(reference_id, version)` unique constraint, so the insert
 runs inside a transaction that first takes
@@ -311,51 +214,7 @@ Two columns matter for the handoff:
 a build is backed by at most one of a legacy workflow job or a task. A
 build started from here always sets `task_id` and leaves `job_id` null.
 
-### Stubbed-out cross-domain reads
-
-A feature occasionally exposes a field that depends on a domain whose TS
-layer hasn't been built yet — e.g. a label's sample count, which needs a
-join against the sample tables. Stub these to a neutral value (`0`,
-empty) until you wire the join up, keeping the field in the response
-shape so the client contract is stable. `labels/data.ts` does this:
-every label reports `count: 0` because the sample-label join isn't wired
-into the TS server yet — the data is in Postgres (`legacy_sample_labels`),
-it just isn't read here.
-
-## Legacy id resolution
-
-User and group rows in Postgres carry a `legacy_id text` column that
-holds the original Mongo `_id` string. Other Postgres tables that
-reference a user or group may still store that reference as the legacy
-string handle in some rows and the new int id in others — backfills
-are not complete.
-
-Concretely, a referencing row's `user_id` (or group reference) may be:
-
-- a Postgres `users.id` integer (post-backfill writes), or
-- a legacy Mongo handle string (pre-backfill writes).
-
-Any query resolving such a reference must accept both forms. The
-Python code does this with helpers in `virtool/data/topg.py`:
-
-- `resolve_user_id(mongo_handle)` — look up the PG int id from a
-  legacy string handle.
-- `get_user_id_single_variants(id)` — given either form, return both
-  forms for matching.
-- `get_user_id_multi_variants(ids)` — same, for bulk queries.
-- `compose_legacy_id_single_expression` /
-  `compose_legacy_id_multi_expression` — build the equivalent SQL
-  side.
-
-TS port plan: when a server feature first needs legacy-id resolution,
-port these into `packages/data/src/db/legacyId.ts` (or similar) and use
-them everywhere a `legacy_id` column is touched. Don't reinvent
-per-feature.
-
-These helpers stay relevant until the backfills are complete and the
-`legacy_id` columns are dropped — likely a long time.
-
-## If we ever own Postgres migrations from TS
+## When we own Postgres migrations from TS
 
 Today Python owns the Postgres schema via Alembic and the TS side
 mirrors it by hand (`packages/data/src/db/schema/`). Eventually,

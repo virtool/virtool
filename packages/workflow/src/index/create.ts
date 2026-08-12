@@ -7,12 +7,6 @@
  * collapsed file has to be one Python's reader accepts too, because the two
  * implementations run side by side during the port.
  *
- * ## Everything goes in one transaction
- *
- * SQLite commits per statement outside a transaction, which on a 200–500 MB
- * index means one fsync per sequence row. Wrapping the load makes it one, and
- * is the whole of the performance story here — see `docs/workflow-runtime.md`
- * for the measurement.
  */
 
 import { unlink } from "node:fs/promises";

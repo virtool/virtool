@@ -7,10 +7,15 @@ import { getSettings } from "@virtool/data/settings/data";
  * throwing `PasswordTooShortError` if it falls short.
  *
  * Every path that sets a password goes through this rather than through the zod
- * validators. A validator runs before its handler with no database handle, so it
- * cannot read the configured minimum — and its rejections surface as a 500
- * carrying a dump of the issue list, which is not something a form can put in
- * front of a user.
+ * validators — `createFirstUserFn`, `resetPasswordFn`, `createUserFn` and
+ * `updateUserFn`. A validator runs before its handler with no database handle,
+ * so it cannot read the configured minimum.
+ * carrying a dump of the issue list.
+ *
+ * Each handler catches `PasswordTooShortError` and maps it to a 400 carrying the
+ * message.
+ *
+ * The minimum is the `minimum_password_length` instance setting.
  */
 export async function checkConfiguredPasswordLength(
 	db: Db,

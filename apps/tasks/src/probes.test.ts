@@ -10,16 +10,17 @@ const METRICS_TOKEN = "a-metrics-token";
 const logger: Logger = createLogger({ name: "test", level: "silent" });
 
 let client: PgClient;
+let applicationName: string;
 
 beforeAll(async () => {
 	// `VT_POSTGRES_URL` comes from the shared testcontainer named as this
 	// project's `globalSetup`. A real pool is what makes the readiness assertions
 	// below mean anything: a fake that resolves would pass whether or not the
 	// handler ever queries.
-	client = createDb(
+	({ client, applicationName } = createDb(
 		{ postgresUrl: process.env.VT_POSTGRES_URL as string, postgresPoolMax: 2 },
 		"tasks-test",
-	).client;
+	));
 }, 60_000);
 
 afterAll(async () => {
@@ -44,8 +45,9 @@ async function serve(overrides: Partial<ProbeDeps> = {}): Promise<{
 }> {
 	const server = createProbeServer({
 		client,
+		applicationName,
 		logger,
-		metrics: createMetrics("1.2.3"),
+		metrics: createMetrics("1.2.3", 2),
 		metricsToken: METRICS_TOKEN,
 		isReady: () => true,
 		...overrides,
@@ -234,6 +236,46 @@ describe("GET /metrics", () => {
 
 			// Left unprefixed on purpose, so off-the-shelf Node dashboards match.
 			expect(body).toContain("process_cpu_seconds_total");
+			expect(body).toContain("virtool_postgres_pool_max 2");
+		} finally {
+			await probe.close();
+		}
+	});
+
+	// The task runner's claim and heartbeat loops make its pool just as worth
+	// watching as the web app's or the jobs API's — read the same way, filtered
+	// on this process's own `application_name`.
+	it("reports this process's own connection as active", async () => {
+		const probe = await serve();
+
+		try {
+			const body = await (
+				await probe.get("/metrics", {
+					authorization: `Bearer ${METRICS_TOKEN}`,
+				})
+			).text();
+
+			expect(body).toContain('virtool_postgres_connections{state="active"} 1');
+		} finally {
+			await probe.close();
+		}
+	});
+
+	// A Postgres outage is exactly when the rest of these metrics matter most, so
+	// a failed pool read drops only the gauges it feeds rather than the whole
+	// scrape.
+	it("still renders when the pool read fails", async () => {
+		const probe = await serve({ client: unreachableClient() });
+
+		try {
+			const response = await probe.get("/metrics", {
+				authorization: `Bearer ${METRICS_TOKEN}`,
+			});
+			const body = await response.text();
+
+			expect(response.status).toBe(200);
+			expect(body).toContain("process_cpu_seconds_total");
+			expect(body).not.toContain("virtool_postgres_connections{");
 		} finally {
 			await probe.close();
 		}

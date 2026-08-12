@@ -1,11 +1,3 @@
-# Non-Vite Node apps
-
-Most of this repo is Vite: `apps/web` is a TanStack Start SPA that Nitro
-builds into `.output/server/index.mjs`, and `apps/site` is Astro on
-Cloudflare Workers. The rest are plain Node processes — the jobs control
-plane and the workflow executors — and this document covers how they are
-built, linted, typechecked, containerised, and how to add another one.
-
 ## Apps bundle, packages stay source
 
 The workspace packages under `packages/` are **unbuilt TypeScript**.
@@ -108,6 +100,7 @@ for that image — but every app has one today.
 
 ```
 apps/<name>/
+  README.md         # what the app is, its port and image, its commands
   package.json      # @virtool/<name>, private, type: module, files: ["dist"]
                     # scripts: build (tsdown), start, typecheck
   tsconfig.json     # extends ../tsconfig.node.json
@@ -131,121 +124,6 @@ edits to root scripts, `knip.json`, `biome.json`, the Dockerfile install
 layer, or `pnpm-workspace.yaml`. Adding a new *image* still needs a
 Dockerfile stage and a CI matrix entry — the one deliberate exception.
 
-## The apps
-
-- **`apps/jobs-api`** — `@virtool/jobs-api`, the jobs API: the control
-  plane workflow runners call to claim, run and finish jobs. It is called
-  "the jobs API" everywhere — directory, package, image, Kubernetes
-  service and prose — matching Python and the workflow runtime; "control
-  plane" is its role, not an alternate name. A long-running **Hono** app
-  on `@hono/node-server`, port 9950, mirroring Python's
-  `virtool/jobs/main.py`, which serves as `api-jobs-service` behind a
-  ClusterIP with no ingress rule. Hono because the handlers it will grow
-  are ported from raw-route handlers already written against Web
-  `Request`/`Response`, so they move across verbatim. Serves
-  `/health/live`, `/health/ready` and a token-gated `/metrics`; the
-  readiness probe folds `checkPostgres` through `summarizeReadiness`, the
-  same pair `apps/web` uses. `postgres` and `pino` are its externals.
-  Image: `ghcr.io/virtool/jobs-api`.
-- **`apps/create-subtraction`** — `@virtool/create-subtraction`, the first
-  workflow executor. One-shot: the pod starts, does its work, exits. Only
-  its object-storage half is wired; claiming a job arrives with the
-  workflow runtime core. Image: `ghcr.io/virtool/ts-create-subtraction`.
-
-The remaining three workflow executors get their directory, Dockerfile
-stage and matrix entry when their port lands.
-
-### `create_subtraction` is ported without `build_index`
-
-Python's workflow has four steps — decompress the source FASTA, compute
-`gc` and `count`, build a bowtie2 index, then compress the FASTA, upload
-it alongside `bowtie_index_path.glob("*.bt2")` and finalize. **The port
-drops the third step and that glob**, and the decision is settled rather
-than pending.
-
-Nothing consumes the shards. Both analysis workflows build a
-subtraction's bowtie2 index locally from the `.fa.gz` and memoize it
-through their own workflow cache, and `WFSubtraction.bowtie2_index_path`
-is defined and never read — so the shards are written by one workflow
-and read by none. The jobs API's `PATCH /subtractions/{id}` whitelists
-`subtraction.fa.gz` and nothing else, so a manifest carrying a shard is
-refused: a port that kept the step could not finalize.
-
-What is left runs **no external process**. `decompressFile`,
-`compressFile` and `isGzipped` in `@virtool/workflow`'s `files/`
-deliberately do not shell out to `pigz` — they are `node:zlib` streams,
-because Python's `pigz` branch exists for parallelism and checksums are
-taken over decompressed content, so the gzip bytes need not match. The
-`gc`/`count` step is a scan over the decompressed FASTA. Transfers are
-`downloadToPath` / `uploadFromPath` against the storage backend.
-
-That is the whole reason this image is Alpine rather than Debian, and it
-is the chain to re-check before reintroducing a step: a workflow that
-runs a tool binary needs the glibc base back.
-
-## Images
-
-Both kinds of app get a build stage and a runtime stage in the root
-`Dockerfile`. The build stages share `base`, which installs once from
-every workspace manifest.
-
-**The install layer takes manifests by glob.** `COPY --parents
-apps/*/package.json packages/*/package.json ./` preserves directory
-structure — a plain `COPY apps/*/package.json apps/` flattens them all
-onto one path. That needs the `# syntax=docker/dockerfile:1-labs` parser
-directive on the first line of the file. Adding a workspace must not mean
-editing a list of `COPY` lines.
-
-**Package *source*, though, is copied one `COPY` per package.** The glob
-above matches manifests only, so it skips `packages/pathoscope-core`,
-which is a Rust crate with no `package.json`. A blanket
-`COPY packages ./packages` would pull that crate's `src/` and
-`Cargo.lock` into the layer and bust its cache on every Rust edit, for a
-tree no TypeScript image has any use for. Add a line when a new
-TypeScript package appears.
-
-**App source is copied per build stage, not in `base`.** A change to
-`apps/web` then does not invalidate the jobs-api image's cache, and the
-install layer stays untouched when an app is added.
-
-**The runtime base is decided by one question: does the app run a
-binary from `ghcr.io/virtool/tools`?**
-
-- **No** — `node:24-alpine`. `apps/jobs-api`, `apps/tasks` and
-  `apps/create-subtraction` all copy nothing from the tools image, so
-  none of them pays Debian's size. Do not move one to Debian for
-  uniformity with a workflow image.
-- **Yes** — `node:24-bookworm-slim`. Those binaries are built against
-  `python:3.13-bookworm` and dynamically linked against glibc; Alpine is
-  musl and could not load them. `apps/pathoscope`, which has its
-  own Dockerfile, is the worked example. Do not move a tools-carrying
-  image to Alpine for uniformity either.
-
-Being a workflow does not by itself answer the question — a workflow
-whose steps are all in-process belongs on Alpine. Adding a
-`COPY --from=ghcr.io/virtool/tools` line to an Alpine stage means moving
-that stage to Debian in the same edit.
-
-**Not every tool in that image is a binary,** so a Debian stage usually
-installs interpreters too. `bowtie2-build` is a python3 script that picks
-between the real `bowtie2-build-s` and `bowtie2-build-l` by index size;
-`bowtie2` is a perl one. Neither package can be trimmed:
-`python3-minimal` omits the stdlib and `bowtie2-build` dies on
-`import gzip`, and a slim base's `perl-base` omits `Sys::Hostname`, which
-`bowtie2` needs. The alternative — calling the `-s`/`-l` binaries
-directly and porting bowtie2's own size heuristic — belongs with a
-workflow, not with the base image every workflow shares.
-
-Check a new tool's entry point rather than assuming it is an ELF:
-`docker run --rm --entrypoint sh <image> -c 'head -1 /tools/<tool>/...'`.
-
-Every build stage runs on the Alpine `base`, including one whose runtime
-stage is Debian, which is safe only because the deployed tree carries no
-native addon. Check
-`find /prod/<app> -name '*.node'` before adding a dependency that might.
-(`bcrypt`, which reaches `apps/jobs-api` through `@virtool/data`, ships
-prebuilds for both libc flavours, so it is not a counterexample.)
-
 ## Repo-wide gates
 
 - **`pnpm build`** is `pnpm -r --filter "./apps/*" --filter
@@ -261,17 +139,3 @@ prebuilds for both libc flavours, so it is not a counterexample.)
   `!@virtool/data`, `!@virtool/storage` — the three with their own jobs)
   rather than by an inclusion list, so a new workspace that declares
   `test` is covered without editing the job.
-
-## No app may import from `apps/web`
-
-A `biome.json` override scoped to `apps/*/src/**` minus `apps/web/src/**`
-bans every browser feature alias, `@server/**`, the `@/*` catch-all, and
-any specifier reaching `apps/web` relatively. `apps/jobs-api` is the
-likeliest offender: it does work `apps/web/src/server` also does, so
-copying an import from there is an easy mistake, and the aliases would
-not even resolve.
-
-The arrow runs down into the packages instead. Shapes both sides need
-live in `@virtool/contracts`; the data and storage layers live in
-`@virtool/data` and `@virtool/storage`, which is exactly why they were
-extracted.

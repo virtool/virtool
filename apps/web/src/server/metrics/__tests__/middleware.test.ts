@@ -18,6 +18,9 @@ type ServerFn = (options: {
 
 // `createMiddleware().server(fn)` parks the handler on `options.server`, which
 // is exactly where `createStartHandler` reads it from to build the chain.
+// `createServerOnlyFn` is the identity function at runtime — only the Vite
+// plugin strips it, client-side, at build time — so the body runs unmodified
+// under Vitest with no need to mock it away.
 const run = metricsMiddleware.options.server as unknown as ServerFn;
 
 function call(
@@ -77,7 +80,10 @@ describe("metricsMiddleware", () => {
 		);
 	});
 
-	it("records a handler that threw, and rethrows it", async () => {
+	// h3's `toResponse` — outside this middleware's visibility — wraps an
+	// escaping `Error` as an `HTTPError` and answers 500 by default, so that is
+	// what the caller actually receives.
+	it("records an Error that escaped the handler as a 500, and rethrows it", async () => {
 		const boom = new Error("boom");
 
 		await expect(
@@ -86,6 +92,22 @@ describe("metricsMiddleware", () => {
 				next: () => Promise.reject(boom),
 			}),
 		).rejects.toBe(boom);
+
+		expect(await renderMetrics()).toContain(
+			'virtool_http_requests_total{handler_type="router",method="DELETE",status="500",server_fn=""} 1',
+		);
+	});
+
+	// h3 treats a non-`Error` throw as a response *body* rather than an error,
+	// so no status this middleware could report would be accurate — the
+	// `"error"` sentinel is reserved for exactly this case.
+	it("records a non-Error throw under the error sentinel, and rethrows it", async () => {
+		await expect(
+			call({
+				method: "DELETE",
+				next: () => Promise.reject("boom"),
+			}),
+		).rejects.toBe("boom");
 
 		expect(await renderMetrics()).toContain(
 			'virtool_http_requests_total{handler_type="router",method="DELETE",status="error",server_fn=""} 1',

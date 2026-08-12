@@ -16,10 +16,12 @@ export type ProbeResponse = {
 /** What {@link createProbeServer} needs to answer a probe. */
 export type ProbeDeps = {
 	client: PgClient;
+	/** This process's `application_name`, for scoping the pool-occupancy read. */
+	applicationName: string;
 	logger: Logger;
 	metrics: Metrics;
 	metricsToken: string | undefined;
-	/** Refreshes the queue gauges on scrape; absent when spawning is disabled. */
+	/** Refreshes the queue gauges on scrape. Every replica publishes them; optional only for a caller that has none to give. */
 	readTaskQueue?: TaskQueueReader;
 	/** Whether this process is currently accepting work. */
 	isReady: () => boolean;
@@ -101,6 +103,8 @@ async function route(
 		return handleMetrics({
 			metrics: deps.metrics,
 			logger: deps.logger,
+			client: deps.client,
+			applicationName: deps.applicationName,
 			readTaskQueue: deps.readTaskQueue,
 			authorization,
 			token: deps.metricsToken,

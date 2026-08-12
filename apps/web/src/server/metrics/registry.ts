@@ -1,4 +1,5 @@
 import type { ConnectionCounts } from "@virtool/data/metrics/data";
+import { HTTP_REQUEST_DURATION_BUCKETS } from "@virtool/data/metrics/httpBuckets";
 import {
 	Counter,
 	collectDefaultMetrics,
@@ -42,7 +43,7 @@ const httpDuration = new Histogram({
 	name: "virtool_http_request_duration_seconds",
 	help: "Time from request receipt to response headers, in seconds.",
 	labelNames: ["handler_type", "method", "server_fn"],
-	buckets: [0.005, 0.01, 0.025, 0.05, 0.1, 0.25, 0.5, 1, 2.5, 5, 10],
+	buckets: HTTP_REQUEST_DURATION_BUCKETS,
 	registers: [registry],
 });
 

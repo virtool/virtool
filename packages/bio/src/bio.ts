@@ -133,6 +133,12 @@ function pythonSlice(text: string, start: number, end: number): string {
 /**
  * Find every ORF of at least 100 residues in a nucleotide sequence.
  *
+ * Both gates are exact: a sequence of 300 bp or shorter yields nothing and 301
+ * can yield ORFs; an ORF of 99 residues is dropped and 100 is kept. Results
+ * come out in discovery order — strand `[+1, -1]` outer, frame `0..2` inner —
+ * and that order is part of the stored output, because the NuVs workflow
+ * indexes ORFs positionally.
+ *
  * This is a transliteration of Python's `find_orfs`, quirks included, because
  * `pos` is stored positionally in the NuVs analysis `results` blob and rendered
  * by the UI. Two of those quirks are visible in the output:

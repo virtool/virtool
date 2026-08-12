@@ -148,7 +148,7 @@ function appWith(captureException: (err: unknown) => void) {
 		db,
 		storage: new MemoryStorage(),
 		logger,
-		metrics: createMetrics(10),
+		metrics: createMetrics(10, "1.2.3"),
 		applicationName: "virtool-ts-jobs-api@test",
 		metricsToken: undefined,
 		isReady: () => true,

@@ -134,7 +134,7 @@ export async function bootstrap(
 		sentry.enabled ? "sentry initialised" : "sentry disabled",
 	);
 
-	const { client, db } = createDb(config, SERVICE);
+	const { client, db, applicationName } = createDb(config, SERVICE);
 
 	createEmitter({ client, logger });
 
@@ -148,10 +148,11 @@ export async function bootstrap(
 		ready = value;
 	}
 
-	const metrics = createMetrics(options.version);
+	const metrics = createMetrics(options.version, config.postgresPoolMax);
 
 	const server = createProbeServer({
 		client,
+		applicationName,
 		logger,
 		metrics,
 		metricsToken: config.metricsToken,

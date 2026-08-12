@@ -1,6 +1,12 @@
 import type { Permission } from "./permissions";
 
-/** All administrator roles, ordered from most to least privileged. */
+/**
+ * All administrator roles, ordered from most to least privileged.
+ *
+ * The five values are the Postgres `administratorrole` enum's. `spaces` is
+ * obsolete in product terms but stays a valid value because Python still writes
+ * it; dropping it needs a Python-side migration first.
+ */
 export type AdministratorRoleName =
 	| "full"
 	| "settings"
@@ -9,7 +15,15 @@ export type AdministratorRoleName =
 	| "base";
 
 /**
- * The permissions level of each administrator role
+ * The permissions level of each administrator role.
+ *
+ * A strict ranking, `full` strongest through `base` weakest, so requiring
+ * `base` means "any administrator". Python's
+ * `virtool/users/data.py::check_administrator_role` is not a total order — it
+ * scores `base` = 1, `users` / `settings` / `spaces` as level-2 **peers**, and
+ * `full` = 3 — so a `users` administrator clears a `settings` requirement there
+ * and not here. Every requirement declared in this repo is `base`, `users`,
+ * `settings` or `full`, and only the `settings` ones sit where the two differ.
  */
 const AdministratorPermissionsLevel: Record<AdministratorRoleName, number> = {
 	full: 0,

@@ -4,9 +4,10 @@ import { describe, expect, it } from "vitest";
 import { createMetrics, type Metrics } from "./registry";
 
 const VERSION = "1.2.3";
+const POOL_MAX = 10;
 
 function build(): Metrics {
-	return createMetrics(VERSION);
+	return createMetrics(VERSION, POOL_MAX);
 }
 
 /** Every sample line for `name`, in render order. */
@@ -59,6 +60,34 @@ describe("createMetrics", () => {
 
 	it("registers no virtool_http_ series", async () => {
 		expect(await build().render()).not.toContain("virtool_http_");
+	});
+
+	it("pins virtool_postgres_pool_max at the configured ceiling", async () => {
+		expect(await sample(build(), "virtool_postgres_pool_max")).toBe(POOL_MAX);
+	});
+});
+
+describe("setPostgresConnections", () => {
+	it("sets each backend state on the connections gauge", async () => {
+		const metrics = build();
+
+		metrics.setPostgresConnections({
+			active: 3,
+			idle: 4,
+			idleInTransaction: 1,
+			other: 0,
+		});
+
+		const rendered = await metrics.render();
+
+		expect(rendered).toContain(
+			'virtool_postgres_connections{state="active"} 3',
+		);
+		expect(rendered).toContain('virtool_postgres_connections{state="idle"} 4');
+		expect(rendered).toContain(
+			'virtool_postgres_connections{state="idle in transaction"} 1',
+		);
+		expect(rendered).toContain('virtool_postgres_connections{state="other"} 0');
 	});
 });
 

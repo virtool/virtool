@@ -42,6 +42,14 @@ const ENVELOPE_FIELDS = new Set([
  * secret-bearing fields in `DEFAULT_REDACT_PATHS` arrive here already censored.
  * The standard pino envelope fields are dropped; everything else rides along as
  * Sentry log attributes.
+ *
+ * This is a plain destination stream rather than `Sentry.pinoIntegration()`,
+ * which patches the `pino` module at load time via `import-in-the-middle`.
+ * Every process this runs in is bundled — Nitro inlines pino into the web
+ * app's server chunks, tsdown inlines it into the other apps' — so by the
+ * time the SDK could patch anything there is no `pino` module boundary left
+ * to find. A destination stream needs no such patching: pino hands it each
+ * serialised record directly.
  */
 export function createSentryLogStream(sentry: SentryLogApi): {
 	write(line: string): void;

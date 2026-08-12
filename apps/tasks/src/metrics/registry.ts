@@ -1,4 +1,5 @@
 import { PeriodicTaskName, TaskName } from "@virtool/contracts";
+import type { ConnectionCounts } from "@virtool/data/metrics/data";
 import type {
 	PeriodicSpawnOutcome,
 	TaskQueueSnapshot,
@@ -83,6 +84,7 @@ export type Metrics = {
 	recordRun: (sample: TaskRunSample) => void;
 	setTaskQueue: (snapshot: TaskQueueSnapshot) => void;
 	clearTaskQueue: () => void;
+	setPostgresConnections: (counts: ConnectionCounts) => void;
 	contentType: string;
 	render: () => Promise<string>;
 };
@@ -96,8 +98,8 @@ function taskLabel(type: string): string {
  *
  * A factory rather than a module-scope singleton, so a test gets its own
  * registry and cannot see what another suite happened to register — and so
- * importing this module does no work. `version` arrives as an argument for the
- * same reason nothing here reads configuration.
+ * importing this module does no work. `version` and `poolMax` arrive as
+ * arguments for the same reason nothing here reads configuration.
  *
  * This is a *separate registry from the web app's and the jobs API's*, in a
  * separate process. Series names deliberately match where they overlap, so one
@@ -107,7 +109,7 @@ function taskLabel(type: string): string {
  * The `virtool_http_*` series are deliberately absent: they are web-specific,
  * their buckets top out at 10 s, and this process serves nothing but probes.
  */
-export function createMetrics(version: string): Metrics {
+export function createMetrics(version: string, poolMax: number): Metrics {
 	const registry = new Registry();
 
 	// Standard `process_*` and `nodejs_*` series: RSS, heap, CPU, GC, open
@@ -171,9 +173,10 @@ export function createMetrics(version: string): Metrics {
 		registers: [registry],
 	});
 
-	// The queue dimension, reported by the spawner half alone — every replica
-	// carries a runner, and N replicas each running this scan against the same
-	// table buys nothing but load. Both labels are bounded by construction.
+	// The queue dimension. Every replica publishes it — N replicas each running
+	// this scan against the same table buys nothing but load, but the table is
+	// small and a dashboard picks one target, so it is accepted waste rather
+	// than a problem. Both labels are bounded by construction.
 	const tasksGauge = new Gauge({
 		name: "virtool_tasks",
 		help: "Active tasks, by type and queue state.",
@@ -187,6 +190,21 @@ export function createMetrics(version: string): Metrics {
 		labelNames: ["type"],
 		registers: [registry],
 	});
+
+	const postgresConnections = new Gauge({
+		name: "virtool_postgres_connections",
+		help: "Open Postgres backends belonging to this process, by backend state.",
+		labelNames: ["state"],
+		registers: [registry],
+	});
+
+	// Static, but it is the denominator: pool saturation is only legible as
+	// `virtool_postgres_connections / virtool_postgres_pool_max`.
+	new Gauge({
+		name: "virtool_postgres_pool_max",
+		help: "Maximum size of this process's Postgres connection pool.",
+		registers: [registry],
+	}).set(poolMax);
 
 	return {
 		recordSpawn(type, outcome) {
@@ -250,6 +268,16 @@ export function createMetrics(version: string): Metrics {
 			// Zeroing would be worse than either: it asserts an empty queue.
 			tasksGauge.reset();
 			oldestQueuedTaskAge.reset();
+		},
+
+		setPostgresConnections(counts) {
+			postgresConnections.set({ state: "active" }, counts.active);
+			postgresConnections.set({ state: "idle" }, counts.idle);
+			postgresConnections.set(
+				{ state: "idle in transaction" },
+				counts.idleInTransaction,
+			);
+			postgresConnections.set({ state: "other" }, counts.other);
 		},
 
 		contentType: registry.contentType,

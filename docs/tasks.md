@@ -2,7 +2,7 @@
 
 `apps/tasks` (`@virtool/tasks`) is Virtool's task service: a long-lived Node
 process that spawns periodic tasks and runs them. It is the TypeScript port of
-Python's `task_runner`, and it ships as `ghcr.io/virtool/tasks` on Alpine.
+Python's `task_runner`, and it ships as `ghcr.io/virtool/tasks`.
 
 It is deliberately small in surface. It serves no API, has no Service and no
 ingress, and the only HTTP it speaks is three routes on a probe listener. Its
@@ -163,10 +163,10 @@ difference between a safe rollout and a blind one.
 ### `GET /metrics`
 
 A private `prom-client` `Registry` holding `collectDefaultMetrics` — left
-unprefixed so off-the-shelf Node dashboards match — plus `virtool_app_info` and
-the task series below. The `virtool_http_*` series are deliberately absent:
-they are web-specific, their buckets top out at 10 s, and this process serves
-nothing but probes.
+unprefixed so off-the-shelf Node dashboards match — plus `virtool_app_info`,
+Postgres pool occupancy, and the task series below. The `virtool_http_*`
+series are deliberately absent: they are web-specific, their buckets top out
+at 10 s, and this process serves nothing but probes.
 
 The gate is `isBearerTokenValid` from `@virtool/contracts/bearer`, shared with
 the other two services. It screens the length before `timingSafeEqual`, which
@@ -247,6 +247,22 @@ Seven rules hold these together:
   of the outage; zeroing would assert an empty queue. The rest of the scrape is
   unaffected — a database outage is when the process metrics matter most.
 
+### Postgres pool occupancy
+
+`virtool_postgres_connections{state}` and `virtool_postgres_pool_max` are
+read and rendered exactly as they are in `apps/web` and `apps/jobs-api`:
+`readConnectionCountsBounded` (`@virtool/data/metrics/data`), filtered on
+this process's own `application_name` — `virtool-ts-tasks@<hostname>`, built
+by the same `buildApplicationName` every service uses — and bounded by the
+same shared `POOL_PROBE_TIMEOUT_MS` (2 s). A failed or slow read logs a
+warning and drops only these two gauges; the rest of the scrape, task series
+included, still serves.
+
+Reusing the shared helper rather than a task-specific check is deliberate:
+the runner's claim and heartbeat loops make this process's pool just as
+worth alerting on as the other two services', and a saturated pool here
+queues the probe client-side in postgres.js exactly the way it does there.
+
 ### The queue read is Python's `get_counts`, term for term
 
 `readTaskCounts` and `readOldestQueuedTaskAges` (`@virtool/data/tasks/data`)
@@ -272,6 +288,9 @@ process claims and heartbeats over, so a saturated pool queues it *client-side*
 where no statement timeout applies. `createTaskQueueReader`
 (`src/metrics/queue.ts`) memoizes the result for 10 s and shares in-flight
 reads, so two Prometheus replicas cost one query; a rejection is not cached.
+The memoization itself is `createMemoizedReader`
+(`@virtool/data/metrics/memoize`), shared with `apps/jobs-api`'s job-queue
+reader rather than reimplemented per service.
 
 ### The version label
 

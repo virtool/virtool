@@ -60,7 +60,7 @@ function deps(overrides: Partial<AppDeps> = {}): AppDeps {
 		db: fakeDb(),
 		storage: new MemoryStorage(),
 		logger: fakeLogger(),
-		metrics: createMetrics(10),
+		metrics: createMetrics(10, "1.2.3"),
 		applicationName: "virtool-ts-jobs-api@test",
 		metricsToken: METRICS_TOKEN,
 		isReady: () => true,
@@ -211,7 +211,11 @@ describe("metrics", () => {
 		});
 
 		expect(response.status).toBe(200);
-		expect(await response.text()).toContain("virtool_postgres_pool_max 10");
+
+		const rendered = await response.text();
+
+		expect(rendered).toContain("virtool_postgres_pool_max 10");
+		expect(rendered).toContain('virtool_app_info{version="1.2.3"} 1');
 	});
 
 	// A Postgres outage is exactly when the process and request metrics matter
@@ -295,7 +299,7 @@ describe("request metrics", () => {
 	// Ids in a label would grow one time series per job. The registered pattern
 	// is bounded by the number of routes instead.
 	it("labels a matched route with its pattern, not the requested path", async () => {
-		const metrics = createMetrics(10);
+		const metrics = createMetrics(10, "1.2.3");
 		const app = createApp(deps({ metrics }));
 
 		await app.request("/jobs/12345");
@@ -307,7 +311,7 @@ describe("request metrics", () => {
 	});
 
 	it("counts a handled request under its own route", async () => {
-		const metrics = createMetrics(10);
+		const metrics = createMetrics(10, "1.2.3");
 		const app = createApp(deps({ metrics }));
 
 		await app.request("/health/live");
@@ -318,7 +322,7 @@ describe("request metrics", () => {
 	// A path matching no route falls through to the middleware's own `/*`, which
 	// is a pattern rather than a path and so is bounded like every other label.
 	it("counts a genuinely unmatched path under the middleware's pattern", async () => {
-		const metrics = createMetrics(10);
+		const metrics = createMetrics(10, "1.2.3");
 		const app = createApp(deps({ metrics }));
 
 		await app.request("/no-such-route");
@@ -333,7 +337,7 @@ describe("request metrics", () => {
 	// the status the caller actually got. The `"error"` sentinel is for the case
 	// where there is no status at all, below.
 	it("counts a thrown Error under the status onError answered with", async () => {
-		const metrics = createMetrics(10);
+		const metrics = createMetrics(10, "1.2.3");
 		const app = createApp(deps({ metrics }));
 
 		app.get("/boom", () => {
@@ -352,7 +356,7 @@ describe("request metrics", () => {
 	// finalizes a response, and `c.res`'s getter would mint an empty 200 — so
 	// without the `finalized` gate a crashed request is counted as a success.
 	it("counts a non-Error throw under the error sentinel", async () => {
-		const metrics = createMetrics(10);
+		const metrics = createMetrics(10, "1.2.3");
 		const app = createApp(deps({ metrics }));
 
 		app.get("/boom", () => {

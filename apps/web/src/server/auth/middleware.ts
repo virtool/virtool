@@ -37,6 +37,13 @@ export class ForbiddenError extends Error {
  * Throw `ForbiddenError` (and 403) if the session user lacks the required
  * administrator role. Reads the user's `administrator_role` from the upstream
  * users table; users with a null role are always rejected.
+ *
+ * A policy states the floor a call has to clear before the handler runs. This is
+ * for the rule that cannot be stated at the door because it depends on the row
+ * being touched — an administrator editing another administrator needs the
+ * `full` role, and that is only knowable after the target user is read.
+ * `updateUserFn` is the worked example. A role check never belongs in `data.ts`,
+ * which is in `@virtool/data` and has no notion of a session at all.
  */
 export const requireAdminRole = createServerOnlyFn(
 	async (
@@ -64,6 +71,10 @@ export const requireAdminRole = createServerOnlyFn(
  * Resolve the session for the active server-function request or reject with
  * 401. Sets the HTTP response status as a side effect so the serialized error
  * reaches the client as a real 401.
+ *
+ * Handlers do **not** call this. They read `context.session`, which their policy
+ * put there; calling this in a handler buys a second Postgres lookup for a
+ * session that has already been resolved.
  */
 // createServerOnlyFn keeps the getRequest / db / verifyRequest references
 // behind a server boundary so import-protection doesn't pin
@@ -145,6 +156,15 @@ const loadAuthenticationExceptions = createServerOnlyFn(
  * Build the global server-function middleware that enforces authentication on
  * every server function except those in `./exceptions`. Resolved sessions are
  * exposed to downstream handlers as `context.session`.
+ *
+ * Authentication is enforced here rather than by a `requireSession()` call in
+ * each handler, because forgetting that call is silent — the function would
+ * simply be publicly callable. Default-on with an explicit opt-out flips the
+ * failure mode: forgetting to list a function in `./exceptions` produces a 401
+ * the moment it is called, not a hole.
+ *
+ * This answers *who is calling*, never *what they may do*. That second question
+ * belongs to a policy declared on the function itself (`./policy`).
  *
  * `loadExceptions` exists so tests can supply their own list; production passes
  * nothing and gets the real one.

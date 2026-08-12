@@ -20,7 +20,14 @@ export function armSessionEnd(): void {
  * Idempotent, and a no-op until `armSessionEnd` has run. The full document load
  * is what clears everything held in memory — the React Query cache, zustand
  * stores, and the SSE connection — the same way `resetClient` ends a
- * user-initiated logout.
+ * user-initiated logout. The `reason` puts a "Your session ended" message on the
+ * wall, and the `redirect` returns the user to where they were once they sign
+ * back in.
+ *
+ * Everything that notices a session has gone converges here: the query and
+ * mutation caches' `onError` (`handleQueryError`), which matches an
+ * `UnauthorizedError` by name, and the SSE connection, on a 401 from the
+ * `/events` handshake.
  */
 export function endSession(): void {
 	if (!armed || ended) {

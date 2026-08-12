@@ -280,6 +280,12 @@ function parseNucleotideComposition(lines: string[]): number[][] {
 	return composition;
 }
 
+/**
+ * Count reads per mean quality score, as a fixed 50-element array.
+ *
+ * The length is Python's, and scores of 50 and above are dropped rather than
+ * growing it.
+ */
 function parseSequenceQuality(lines: string[]): number[] {
 	const sequences = new Array<number>(50).fill(0);
 

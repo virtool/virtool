@@ -65,13 +65,20 @@ export const metricsMiddleware = createMiddleware().server(
 
 			return result;
 		} catch (err) {
-			// A throw that escapes the downstream handler never became a response,
-			// so there is no status to report. `"error"` rather than a fabricated
-			// 500: this is the handler failing to produce a response at all.
+			// An `Error` that escapes the whole request middleware chain still
+			// becomes a response: h3's `toResponse`, at the outermost boundary this
+			// middleware cannot see, wraps it as an `HTTPError` and answers 500 by
+			// default — the only way it would not is a `.status` set on the error
+			// itself, which is a server-function-only pattern (`ClientError`) that
+			// never reaches this catch, since `handleServerAction` resolves those
+			// to a response itself rather than rethrowing. `"error"` is reserved
+			// for a non-`Error` throw, which h3 treats as a response *body*
+			// instead of an error — no status this middleware could report would
+			// be accurate for that case.
 			await observe({
 				handlerType,
 				method,
-				status: "error",
+				status: err instanceof Error ? "500" : "error",
 				serverFn,
 				durationSeconds: elapsedSeconds(),
 			});

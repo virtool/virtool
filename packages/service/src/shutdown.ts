@@ -1,5 +1,9 @@
 import type { Logger } from "@virtool/logger";
 
+// This lives here rather than as a module of `apps/jobs-api` or `apps/tasks`
+// because both processes wind down the same way, and the two drifting apart
+// is how one of them would quietly stop flushing Sentry.
+
 /** Exit code set when every step of the sequence ran within its budget. */
 const EXIT_CLEAN = 0;
 
