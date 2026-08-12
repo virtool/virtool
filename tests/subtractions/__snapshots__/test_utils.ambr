@@ -3,24 +3,10 @@
   list([
     dict({
       'id': 1,
-      'name': 'subtraction.fq.gz',
+      'name': 'subtraction.fa.gz',
       'size': 12345,
       'subtraction_id': 1,
       'type': 'fasta',
-    }),
-    dict({
-      'id': 2,
-      'name': 'subtraction.1.bt2',
-      'size': 56437,
-      'subtraction_id': 1,
-      'type': 'bowtie2',
-    }),
-    dict({
-      'id': 3,
-      'name': 'subtraction.2.bt2',
-      'size': 93845,
-      'subtraction_id': 1,
-      'type': 'bowtie2',
     }),
   ])
 # ---

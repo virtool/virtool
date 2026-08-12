@@ -42,7 +42,8 @@ class SubtractionView(PydanticView):
 async def upload(req) -> Response:
     """Upload subtraction file.
 
-    Uploads a new subtraction file.
+    Uploads a new subtraction file. The only supported filename is
+    `subtraction.fa.gz`.
     """
     subtraction_id = int(req.match_info["subtraction_id"])
     filename = req.match_info["filename"]
@@ -125,7 +126,8 @@ class SubtractionFileView(PydanticView):
     async def get(self, subtraction_id: int, filename: str, /) -> r200 | r400 | r404:
         """Download a subtraction file.
 
-        Downloads a Bowtie2 index or FASTA file for the given subtraction.
+        Downloads the FASTA file for the given subtraction. The only supported
+        filename is `subtraction.fa.gz`.
 
         Files are attached to the subtraction as part of the creation job. They aren't
         available for download until the job has completed and the `ready` field is

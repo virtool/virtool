@@ -880,14 +880,18 @@ class SubtractionFakerDomain(DataFakerDomain):
         )
 
         if upload_files:
-            for path in sorted(
-                (example_path / "subtractions" / "arabidopsis_thaliana").iterdir(),
-            ):
-                await self._layer.subtractions.upload_file(
-                    subtraction.id,
-                    path.name,
-                    fake_file_chunker(path),
-                )
+            path = (
+                example_path
+                / "subtractions"
+                / "arabidopsis_thaliana"
+                / "subtraction.fa.gz"
+            )
+
+            await self._layer.subtractions.upload_file(
+                subtraction.id,
+                path.name,
+                fake_file_chunker(path),
+            )
 
         if not finalized:
             return await self._layer.subtractions.get(subtraction.id)

@@ -8,7 +8,7 @@ from virtool.subtractions.pg import SQLSubtraction, SQLSubtractionFile
 
 @pytest.fixture
 async def test_subtraction_files(pg) -> int:
-    """Insert a subtraction with three files and return its integer id."""
+    """Insert a subtraction with one file and return its integer id."""
     async with AsyncSession(pg) as session:
         subtraction = SQLSubtraction(
             legacy_id="foo",
@@ -19,30 +19,14 @@ async def test_subtraction_files(pg) -> int:
         session.add(subtraction)
         await session.flush()
 
-        session.add_all(
-            [
-                SQLSubtractionFile(
-                    id=1,
-                    name="subtraction.fq.gz",
-                    subtraction_id=subtraction.id,
-                    type="fasta",
-                    size=12345,
-                ),
-                SQLSubtractionFile(
-                    id=2,
-                    name="subtraction.1.bt2",
-                    subtraction_id=subtraction.id,
-                    type="bowtie2",
-                    size=56437,
-                ),
-                SQLSubtractionFile(
-                    id=3,
-                    name="subtraction.2.bt2",
-                    subtraction_id=subtraction.id,
-                    type="bowtie2",
-                    size=93845,
-                ),
-            ]
+        session.add(
+            SQLSubtractionFile(
+                id=1,
+                name="subtraction.fa.gz",
+                subtraction_id=subtraction.id,
+                type="fasta",
+                size=12345,
+            )
         )
 
         subtraction_id = subtraction.id
