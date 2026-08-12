@@ -7,13 +7,20 @@ import type {
 import type { Logger } from "@virtool/logger";
 import type { StorageBackend } from "@virtool/storage";
 import { mintRootStorageKey } from "@virtool/storage";
-import { and, count, desc, eq, inArray } from "drizzle-orm";
-import type { DbOrTx } from "../db/pg";
+import { and, asc, count, desc, eq, inArray, lt, notExists } from "drizzle-orm";
+import type { Db, DbOrTx } from "../db/pg";
 import { takeFirstOrThrow } from "../db/rows";
+import { sampleReads } from "../db/schema/samples";
 import { type UploadRow, uploads as uploadsTable } from "../db/schema/uploads";
 import { users as usersTable } from "../db/schema/users";
+import { nowUtc, secondsAgo } from "../db/time";
 import { AppError } from "../errors";
 import { emit } from "../events/emit";
+
+/**
+ * How old a reserved upload must be before the sweep may reap it.
+ */
+export const ORPHAN_AGE_SECONDS = 30 * 24 * 60 * 60;
 
 /** Fields needed to create an upload; `body` streams straight to storage. */
 export type UploadCreateValues = {
@@ -68,7 +75,7 @@ export async function findUploads(
 	userId?: number,
 ): Promise<UploadSearchResult> {
 	// A visible upload is finished, not deleted, and not held for a sample that
-	// is mid-creation. Python applies the same three base filters unconditionally.
+	// is mid-creation.
 	const baseFilters = [
 		eq(uploadsTable.ready, true),
 		eq(uploadsTable.removed, false),
@@ -130,8 +137,7 @@ export async function createUpload(
 	const nameOnDisk = `${crypto.randomUUID()}-${values.name}`;
 
 	// Minted before the write, so the bytes land under a key the row then records
-	// verbatim. `name_on_disk` no longer locates anything; Python still reads it
-	// to identify the upload a reference-import task was queued against.
+	// verbatim. `name_on_disk` no longer locates anything.
 	const storageKey = mintRootStorageKey("uploads");
 
 	const size = await storage.write(storageKey, values.body);
@@ -173,10 +179,6 @@ export type UploadFile = {
  * `storage_key` locates the object and `name` is what the user chose and what
  * the download is named. Both columns are nullable at the database level, so a
  * row missing either has no downloadable file.
- *
- * A removed upload is excluded, matching Python. `ready` is deliberately not
- * filtered on: Python does not either, and an upload created from this side is
- * only inserted once its bytes are written.
  */
 export async function getUploadFile(
 	db: DbOrTx,
@@ -285,4 +287,110 @@ export async function deleteUpload(
 	}
 
 	await emit("uploads", uploadId, "delete");
+}
+
+/** What one sweep of {@link reapOrphanedUploads} selected and what it removed. */
+export type ReapResult = {
+	/** Orphans the predicate selected. */
+	found: number;
+	/** Orphans this run flipped to `removed`. */
+	deleted: number;
+};
+
+/**
+ * Delete reserved uploads that were never linked to a sample.
+ *
+ * The row goes before the object, unlike cache eviction: this is a soft delete,
+ * so a refused delete leaves a row that still names the bytes. It emits no
+ * frame, where `deleteUpload` does — every row it touches is `reserved`, which
+ * `findUploads` filters out, so no client list held one.
+ */
+export async function reapOrphanedUploads(
+	db: Db,
+	storage: StorageBackend,
+	logger: Logger,
+	olderThanSeconds: number,
+	onProgress?: (percent: number) => Promise<void>,
+	signal?: AbortSignal,
+): Promise<ReapResult> {
+	/* The cutoff is Postgres's clock, not a bound `Date`, so the sweep selects
+	   against the same instant it stamps `removed_at` with. A NULL `created_at`
+	   is never selected, matching Python. */
+	const orphans = await db
+		.select({ id: uploadsTable.id })
+		.from(uploadsTable)
+		.where(
+			and(
+				eq(uploadsTable.reserved, true),
+				eq(uploadsTable.removed, false),
+				lt(uploadsTable.createdAt, secondsAgo(olderThanSeconds)),
+				/* `sample_reads` alone. A `sample_uploads` row is written before any
+				   reads exist, so correlating on it too would exempt exactly the
+				   abandoned creations this sweep is for. */
+				notExists(
+					db
+						.select({ id: sampleReads.id })
+						.from(sampleReads)
+						.where(eq(sampleReads.upload, uploadsTable.id)),
+				),
+			),
+		)
+		.orderBy(asc(uploadsTable.id));
+
+	const found = orphans.length;
+
+	if (found === 0) {
+		return { found, deleted: 0 };
+	}
+
+	let deleted = 0;
+
+	for (const [index, orphan] of orphans.entries()) {
+		signal?.throwIfAborted();
+
+		/* Release and soft-delete in one statement. Never split these: Python
+		   releases the batch and then loops its ordinary delete, so anything
+		   interrupting that loop leaves the rest `reserved = false, removed =
+		   false` — which no later sweep matches, its predicate being
+		   `reserved = true`, and which no list shows. The guard is also what makes
+		   a reclaimed run a no-op against a sweep that committed. */
+		const [reaped] = await db
+			.update(uploadsTable)
+			.set({ reserved: false, removed: true, removedAt: nowUtc() })
+			.where(
+				and(eq(uploadsTable.id, orphan.id), eq(uploadsTable.removed, false)),
+			)
+			.returning({ storageKey: uploadsTable.storageKey });
+
+		// Removed by another writer since the select, so its object is that
+		// writer's to delete.
+		if (reaped === undefined) {
+			await onProgress?.(((index + 1) / found) * 100);
+			continue;
+		}
+
+		deleted += 1;
+
+		if (reaped.storageKey) {
+			try {
+				await storage.delete(reaped.storageKey);
+			} catch (err) {
+				logger.warn(
+					{ err, uploadId: orphan.id, storageKey: reaped.storageKey },
+					"failed to delete reaped upload object; object orphaned",
+				);
+			}
+		} else {
+			// Predates keys being recorded, as in `deleteUpload`. A composed key
+			// could reach another row's bytes.
+			logger.warn(
+				{ uploadId: orphan.id },
+				"reaped upload has no storage_key to delete",
+			);
+		}
+
+		await onProgress?.(((index + 1) / found) * 100);
+	}
+
+	return { found, deleted };
 }
