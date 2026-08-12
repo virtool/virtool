@@ -950,6 +950,13 @@
       'applied_at': datetime,
       'created_at': datetime,
       'id': 136,
+      'name': 'delete bowtie2 subtraction files',
+      'revision': '22klaq3y66sm',
+    }),
+    dict({
+      'applied_at': datetime,
+      'created_at': datetime,
+      'id': 137,
       'name': 'Backfill SQLite artifacts for ready indexes',
       'revision': '5hnwczwh7skv',
     }),

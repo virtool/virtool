@@ -30,8 +30,7 @@ async def test_get_from_job(fake: DataFaker, spawn_job_client, snapshot_recent):
 
 
 class TestUploadSubtractionFileAsJob:
-    VALID_SUBTRACTION_FILE_NAME = "subtraction.1.bt2"
-    INVALID_SUBTRACTION_FILE_NAME = "reference.1.bt2"
+    VALID_SUBTRACTION_FILE_NAME = "subtraction.fa.gz"
 
     async def test_create(
         self,
@@ -101,6 +100,35 @@ class TestUploadSubtractionFileAsJob:
 
         resp = await client.put(
             f"/subtractions/{subtraction.id}/files/invalid_input",
+            data={"file": bytes(1)},
+        )
+
+        await resp_is.not_found(resp, "Unsupported subtraction file name")
+
+    async def test_bowtie2_name_rejected(
+        self,
+        fake: DataFaker,
+        spawn_job_client: JobClientSpawner,
+        resp_is,
+    ):
+        """Ensures Bowtie2 index files can no longer be uploaded."""
+        user = await fake.users.create()
+        upload = await fake.uploads.create(
+            user=user,
+            upload_type=UploadType.subtraction,
+        )
+
+        subtraction = await fake.subtractions.create(
+            user=user,
+            upload=upload,
+            finalized=False,
+            upload_files=False,
+        )
+
+        client = await spawn_job_client(authenticated=True)
+
+        resp = await client.put(
+            f"/subtractions/{subtraction.id}/files/subtraction.1.bt2",
             data={"file": bytes(1)},
         )
 
@@ -334,8 +362,8 @@ class TestDownloadSubtractionFile:
         fake: DataFaker,
         spawn_job_client: JobClientSpawner,
     ):
-        """Test that Bowtie2 and FASTA subtraction files can be downloaded successfully
-        when they are represented in the database and exist in storage.
+        """Test that the FASTA subtraction file can be downloaded successfully when it
+        is represented in the database and exists in storage.
         """
         client = await spawn_job_client(authenticated=True)
 
@@ -348,36 +376,45 @@ class TestDownloadSubtractionFile:
 
         example = Path(__file__).parent.parent.parent / "assets" / "example"
 
-        for name in ["subtraction.1.bt2", "subtraction.fa.gz"]:
-            path = example / "subtractions" / "arabidopsis_thaliana" / name
-
-            async def _data(p=path):
-                yield p.read_bytes()
-
-            await client.app["storage"].write(
-                f"subtractions/{subtraction.id}/{name}",
-                _data(),
-            )
-
-        bowtie_resp = await client.get(
-            f"/subtractions/{subtraction.id}/files/subtraction.1.bt2",
-        )
-        fasta_resp = await client.get(
-            f"/subtractions/{subtraction.id}/files/subtraction.fa.gz",
-        )
-
-        assert bowtie_resp.status == HTTPStatus.OK
-        assert fasta_resp.status == HTTPStatus.OK
-
-        bowtie_path = (
-            example / "subtractions" / "arabidopsis_thaliana" / "subtraction.1.bt2"
-        )
         fasta_path = (
             example / "subtractions" / "arabidopsis_thaliana" / "subtraction.fa.gz"
         )
 
-        assert bowtie_path.read_bytes() == await bowtie_resp.content.read()
+        async def _data():
+            yield fasta_path.read_bytes()
+
+        await client.app["storage"].write(
+            f"subtractions/{subtraction.id}/subtraction.fa.gz",
+            _data(),
+        )
+
+        fasta_resp = await client.get(
+            f"/subtractions/{subtraction.id}/files/subtraction.fa.gz",
+        )
+
+        assert fasta_resp.status == HTTPStatus.OK
         assert fasta_path.read_bytes() == await fasta_resp.content.read()
+
+    async def test_bowtie2_name_rejected(
+        self,
+        fake: DataFaker,
+        spawn_job_client: JobClientSpawner,
+    ):
+        """Test that Bowtie2 index files can no longer be downloaded."""
+        client = await spawn_job_client(authenticated=True)
+
+        user = await fake.users.create()
+        upload = await fake.uploads.create(
+            user=user,
+            upload_type=UploadType.subtraction,
+        )
+        subtraction = await fake.subtractions.create(user=user, upload=upload)
+
+        resp = await client.get(
+            f"/subtractions/{subtraction.id}/files/subtraction.1.bt2",
+        )
+
+        assert resp.status == 404
 
     async def test_not_found_subtraction(
         self,
@@ -399,12 +436,8 @@ class TestDownloadSubtractionFile:
         fasta_resp = await client.get(
             "/subtractions/999999/files/subtraction.fa.gz",
         )
-        bowtie_resp = await client.get(
-            "/subtractions/999999/files/subtraction.1.bt2",
-        )
 
         assert fasta_resp.status == 404
-        assert bowtie_resp.status == 404
 
     async def test_not_found_file(
         self,
@@ -434,14 +467,10 @@ class TestDownloadSubtractionFile:
             )
             await session.commit()
 
-        bowtie_resp = await client.get(
-            f"/subtractions/{subtraction.id}/files/subtraction.1.bt2",
-        )
         fasta_resp = await client.get(
             f"/subtractions/{subtraction.id}/files/subtraction.fa.gz",
         )
 
-        assert bowtie_resp.status == 404
         assert fasta_resp.status == 404
 
     async def test_missing_blob_is_server_error(
@@ -468,12 +497,8 @@ class TestDownloadSubtractionFile:
         async for obj in memory_storage.list(f"subtractions/{subtraction.id}/"):
             await memory_storage.delete(obj.key)
 
-        bowtie_resp = await client.get(
-            f"/subtractions/{subtraction.id}/files/subtraction.1.bt2",
-        )
         fasta_resp = await client.get(
             f"/subtractions/{subtraction.id}/files/subtraction.fa.gz",
         )
 
-        assert bowtie_resp.status == 500
         assert fasta_resp.status == 500

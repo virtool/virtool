@@ -55,8 +55,8 @@ name = "Backfill SQLite artifacts for ready indexes"
 created_at = arrow.get("2026-08-10 21:52:02.121690")
 revision_id = "5hnwczwh7skv"
 
-alembic_down_revision = "b253add43d69"
-virtool_down_revision = None
+alembic_down_revision = None
+virtool_down_revision = "22klaq3y66sm"
 
 # Change this if an Alembic revision is required to run this migration.
 required_alembic_revision = None

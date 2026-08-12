@@ -25,15 +25,19 @@ logger = get_logger("api")
 class WFSubtraction:
     """A Virtool subtraction that has been loaded into the workflow environment.
 
-    The subtraction files are downloaded to the workflow's local work path so they can
-    be used for analysis.
+    The subtraction FASTA is downloaded to the workflow's local work path so it can be
+    used for analysis.
     """
 
     id: int
     """The unique ID for the subtraction."""
 
     files: list[SubtractionFile]
-    """The files associated with the subtraction."""
+    """The files associated with the subtraction.
+
+    Only the FASTA is downloaded into the workflow. Older subtractions still list
+    Bowtie2 index files here, but they are not available in ``path``.
+    """
 
     gc: NucleotideComposition
     """The nucleotide composition of the subtraction."""
@@ -48,30 +52,13 @@ class WFSubtraction:
     """
     The path to the subtraction directory.
 
-    The subtraction directory contains the FASTA and Bowtie2 files for the subtraction.
+    The subtraction directory contains the gzipped FASTA file for the subtraction.
     """
 
     @property
     def fasta_path(self) -> Path:
         """The path to the gzipped FASTA file for the subtraction."""
         return self.path / "subtraction.fa.gz"
-
-    @property
-    def bowtie2_index_path(self) -> Path:
-        """The path to Bowtie2 prefix in the running workflow's work_path
-
-        For example, ``/work/subtractions/<id>/subtraction`` refers to the Bowtie2
-        index that comprises the files:
-
-        - ``/work/subtractions/<id>/subtraction.1.bt2``
-        - ``/work/subtractions/<id>/subtraction.2.bt2``
-        - ``/work/subtractions/<id>/subtraction.3.bt2``
-        - ``/work/subtractions/<id>/subtraction.4.bt2``
-        - ``/work/subtractions/<id>/subtraction.rev.1.bt2``
-        - ``/work/subtractions/<id>/subtraction.rev.2.bt2``
-
-        """
-        return self.path / "subtraction"
 
 
 @dataclass
@@ -148,13 +135,12 @@ async def subtractions(
     # Do this in a separate loop in case fetching the JSON fails. This prevents
     # expensive and unnecessary file downloads.
     for subtraction in subtractions_:
-        logger.info("downloading subtraction files", id=subtraction.id)
+        logger.info("downloading subtraction fasta", id=subtraction.id)
 
-        for subtraction_file in subtraction.files:
-            await _api.get_file(
-                f"/subtractions/{subtraction.id}/files/{subtraction_file.name}",
-                subtraction.path / subtraction_file.name,
-            )
+        await _api.get_file(
+            f"/subtractions/{subtraction.id}/files/subtraction.fa.gz",
+            subtraction.fasta_path,
+        )
 
     return subtractions_
 
@@ -211,14 +197,7 @@ async def new_subtraction(
     async def upload(path: Path):
         """Upload a file relating to this subtraction.
 
-        Filenames must be one of:
-            - subtraction.fa.gz
-            - subtraction.1.bt2
-            - subtraction.2.bt2
-            - subtraction.3.bt2
-            - subtraction.4.bt2
-            - subtraction.rev.1.bt2
-            - subtraction.rev.2.bt2
+        The filename must be ``subtraction.fa.gz``.
 
         :param path: The path to the file
 

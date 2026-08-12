@@ -47,7 +47,7 @@ class TestSubtractions:
         workflow_data: WorkflowData,
     ):
         """Test that the subtractions fixture matches the expected data and writes the
-        subtraction data files to the work path.
+        subtraction FASTA to the work path.
         """
         workflow_data.job.args["analysis_id"] = workflow_data.analysis.id
 
@@ -59,14 +59,35 @@ class TestSubtractions:
 
         subtraction = subtractions[0]
 
-        for subtraction_file in subtraction.files:
-            assert filecmp.cmp(
-                subtraction.path / subtraction_file.name,
-                example_path
-                / "subtractions"
-                / "arabidopsis_thaliana"
-                / subtraction_file.name,
-            )
+        assert filecmp.cmp(
+            subtraction.fasta_path,
+            example_path
+            / "subtractions"
+            / "arabidopsis_thaliana"
+            / "subtraction.fa.gz",
+        )
+
+    async def test_bowtie2_files_not_downloaded(
+        self,
+        scope: FixtureScope,
+        workflow_data: WorkflowData,
+    ):
+        """Test that Bowtie2 index files listed on the subtraction are not pulled into
+        the work path.
+
+        Subtractions created before the Bowtie2 build was dropped still list their index
+        files, so the fixture must filter to the FASTA explicitly.
+        """
+        workflow_data.job.args["analysis_id"] = workflow_data.analysis.id
+
+        subtractions: list[WFSubtraction] = await scope.instantiate_by_key(
+            "subtractions",
+        )
+
+        subtraction = subtractions[0]
+
+        assert [f.name for f in subtraction.files] == list(SUBTRACTION_FILENAMES)
+        assert [p.name for p in subtraction.path.iterdir()] == ["subtraction.fa.gz"]
 
 
 class TestNewSubtraction:
