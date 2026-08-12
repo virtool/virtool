@@ -11,6 +11,13 @@ leave the survivors unreachable. A failed delete raises for the same reason,
 which keeps the revision pending; ``delete`` is idempotent, so a re-run picks up
 where this one stopped.
 
+Deletes are issued in batches. ``delete_keys`` starts every delete in the list
+it is given at once, and an installation with thousands of legacy subtractions
+carries six keys each, so handing it the whole sweep would open thousands of
+simultaneous requests to the object store. The first batch to report a failure
+stops the sweep rather than driving the remaining batches into a store that is
+evidently unhealthy.
+
 The ``fasta`` rows and their objects are left alone.
 
 Revision ID: 22klaq3y66sm
@@ -25,6 +32,7 @@ from structlog import get_logger
 
 from virtool.migration import MigrationContext
 from virtool.storage.cleanup import delete_keys
+from virtool.utils import chunk_list
 
 logger = get_logger("migration")
 
@@ -49,6 +57,9 @@ BOWTIE2_KEYS = text(
 
 DELETE_BOWTIE2_ROWS = text("DELETE FROM subtraction_files WHERE type = 'bowtie2'")
 
+BATCH_SIZE = 100
+"""The number of objects deleted concurrently."""
+
 
 async def upgrade(ctx: MigrationContext) -> None:
     async with AsyncSession(ctx.pg) as session:
@@ -57,21 +68,22 @@ async def upgrade(ctx: MigrationContext) -> None:
     if keys:
         logger.info("deleting bowtie2 subtraction objects", count=len(keys))
 
-        failures = await delete_keys(ctx.storage, keys)
+        for batch in chunk_list(keys, BATCH_SIZE):
+            failures = await delete_keys(ctx.storage, batch)
 
-        if failures:
-            for key, failure in failures:
-                logger.error(
-                    "could not delete bowtie2 subtraction object",
-                    key=key,
-                    error=repr(failure),
+            if failures:
+                for key, failure in failures:
+                    logger.error(
+                        "could not delete bowtie2 subtraction object",
+                        key=key,
+                        error=repr(failure),
+                    )
+
+                raise RuntimeError(
+                    f"Could not delete {len(failures)} of {len(batch)} bowtie2 "
+                    f"subtraction objects in a batch of the {len(keys)} to sweep. "
+                    f"The rows are left in place so the sweep can be retried.",
                 )
-
-            raise RuntimeError(
-                f"Could not delete {len(failures)} of {len(keys)} bowtie2 "
-                f"subtraction objects. The rows are left in place so the sweep "
-                f"can be retried.",
-            )
 
     async with AsyncSession(ctx.pg) as session:
         result = await session.execute(DELETE_BOWTIE2_ROWS)

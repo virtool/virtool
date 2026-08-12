@@ -7,7 +7,10 @@ import pytest
 from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from assets.revisions.rev_22klaq3y66sm_delete_bowtie2_subtraction_files import upgrade
+from assets.revisions.rev_22klaq3y66sm_delete_bowtie2_subtraction_files import (
+    BATCH_SIZE,
+    upgrade,
+)
 from virtool.migration.ctx import MigrationContext
 from virtool.storage.errors import StorageError, StorageKeyNotFoundError
 
@@ -146,6 +149,34 @@ class TestDeleteBowtie2SubtractionFiles:
 
         assert await ctx.storage.size(fasta_key) == len(b"payload")
         assert await _list_file_names(ctx) == ["subtraction.fa.gz"]
+
+    async def test_sweep_spans_batches(
+        self,
+        ctx: MigrationContext,
+        apply_alembic: Callable,
+    ):
+        """A sweep larger than one batch deletes every object and row."""
+        await asyncio.to_thread(apply_alembic, ALEMBIC_REVISION)
+
+        subtraction_id = await _insert_subtraction(ctx, "legacy")
+
+        keys = []
+
+        for i in range(BATCH_SIZE + 10):
+            name = f"subtraction.{i}.bt2"
+            key = f"subtractions/{subtraction_id}/{name}"
+            keys.append(key)
+
+            await _insert_file(ctx, subtraction_id, name, "bowtie2", key)
+            await _write(ctx, key)
+
+        await upgrade(ctx)
+
+        for key in keys:
+            with pytest.raises(StorageKeyNotFoundError):
+                await ctx.storage.size(key)
+
+        assert await _list_file_names(ctx) == []
 
     async def test_null_storage_key_is_skipped(
         self,
