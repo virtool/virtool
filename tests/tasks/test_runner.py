@@ -1,7 +1,7 @@
 import asyncio
 
 from virtool.data.layer import DataLayer
-from virtool.references.tasks import CloneReferenceTask
+from virtool.tasks.registry import get_task_from_name
 from virtool.tasks.runner import TaskRunner
 
 
@@ -9,7 +9,10 @@ async def test_runner_picks_up_task(data_layer: DataLayer):
     """Test that TaskRunner can pick up a task created via TasksData."""
     runner = TaskRunner(data_layer)
 
-    task = await data_layer.tasks.create(CloneReferenceTask, {"user_id": "test_1"})
+    task = await data_layer.tasks.create(
+        get_task_from_name("clone_reference"),
+        {"user_id": "test_1"},
+    )
 
     runner_task = asyncio.create_task(runner.run())
 

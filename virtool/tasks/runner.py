@@ -9,7 +9,8 @@ from structlog import get_logger
 from virtool.data.errors import ResourceError
 from virtool.data.layer import DataLayer
 from virtool.tasks.models import Task
-from virtool.tasks.task import BaseTask, get_available_task_names, get_task_from_name
+from virtool.tasks.registry import get_available_task_names, get_task_from_name
+from virtool.tasks.task import BaseTask
 
 logger = get_logger("tasks")
 
