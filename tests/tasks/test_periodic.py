@@ -1,4 +1,5 @@
 import asyncio
+from contextlib import suppress
 
 from virtool.tasks.periodic import PeriodicTaskSpawner
 from virtool.tasks.task import BaseTask
@@ -40,10 +41,15 @@ class TestPeriodicTaskSpawner:
         transient database error instead of leaving the deployment without
         periodic tasks until the next restart.
         """
+
+        async def create_periodic(task_class, interval):
+            if task_class is SweepTask:
+                raise ConnectionResetError("connection reset")
+
+            return mocker.Mock()
+
         tasks_datalayer = mocker.Mock()
-        tasks_datalayer.create_periodic = mocker.AsyncMock(
-            side_effect=[ConnectionResetError("connection reset"), mocker.Mock()],
-        )
+        tasks_datalayer.create_periodic = mocker.AsyncMock(side_effect=create_periodic)
 
         spawner = PeriodicTaskSpawner(tasks_datalayer)
 
@@ -66,3 +72,30 @@ class TestPeriodicTaskSpawner:
             mocker.call(SweepTask, 30),
             mocker.call(ReapTask, 600),
         ]
+
+    async def test_cancelled_while_spawning(self, mocker, log):
+        """Reach the shutdown path when cancelled mid-spawn.
+
+        ``CancelledError`` inherits from ``BaseException``, so the per-task handler
+        does not intercept it.
+        """
+
+        async def create_periodic(task_class, interval):
+            await asyncio.Event().wait()
+
+        tasks_datalayer = mocker.Mock()
+        tasks_datalayer.create_periodic = mocker.AsyncMock(side_effect=create_periodic)
+
+        spawner = PeriodicTaskSpawner(tasks_datalayer)
+
+        spawner_task = asyncio.create_task(spawner.run([(SweepTask, 30)]))
+
+        await asyncio.sleep(0.1)
+
+        spawner_task.cancel()
+
+        with suppress(asyncio.CancelledError):
+            await spawner_task
+
+        assert log.has("stopped periodic task spawner", level="info")
+        assert not log.has("failed to spawn periodic task")
