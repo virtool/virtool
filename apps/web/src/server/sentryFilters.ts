@@ -20,7 +20,7 @@ const EXPECTED_CLIENT_ERROR_NAMES = new Set<string>([
  * whose name the client's retry guard reads to bounce to the login wall; the
  * handlers' deliberate 4xx `ClientError`s — a bad login, a missing record, a
  * name conflict — which the client renders as a message; and a request whose
- * socket closed before the response was written. Reporting any of them only
+ * client went away before its response finished. Reporting any of them only
  * buries real errors in noise.
  */
 export function dropExpectedClientErrors(
@@ -38,13 +38,23 @@ export function dropExpectedClientErrors(
 }
 
 /**
- * Recognise the error Node raises when a client goes away mid-request.
+ * Recognise a client that went away mid-request, in either shape it arrives in.
  *
- * `abortIncoming` destroys every request still in flight on a socket that
- * closed, and the stack it produces is pure Node internals — no application
- * frame, because no application code ran. It is unactionable by construction:
- * the peer is gone. The web app draws a steady stream of these because the SSE
- * client probes `HEAD /events` from its `onerror` handler, which is exactly
+ * Both are unactionable by construction: the peer is gone before anything this
+ * side could act on. Each is matched as a *pair* of fields, because the halves
+ * on their own are shapes we want reported.
+ */
+function isClientDisconnect(exception: unknown): boolean {
+	return isSocketReset(exception) || isRequestAbort(exception);
+}
+
+/**
+ * Recognise the error Node raises when a socket closes with a request on it.
+ *
+ * `abortIncoming` destroys every request still in flight, and the stack it
+ * produces is pure Node internals — no application frame, because no
+ * application code ran. The web app draws a steady stream of these because the
+ * SSE client probes `HEAD /events` from its `onerror` handler, which is exactly
  * when a deploy is tearing the connection down, so every connected tab
  * contributes one.
  *
@@ -52,11 +62,37 @@ export function dropExpectedClientErrors(
  * connections this side *opens* — Postgres, object storage, GenBank — and those
  * are real incidents. Node's message here is the literal `aborted`.
  */
-function isClientDisconnect(exception: unknown): boolean {
+function isSocketReset(exception: unknown): boolean {
 	return (
 		exception instanceof Error &&
 		exception.message === "aborted" &&
 		(exception as { code?: unknown }).code === "ECONNRESET"
+	);
+}
+
+/**
+ * Recognise the `AbortError` srvx raises when a response outlives its client.
+ *
+ * srvx arms an `AbortController` on every request and fires it from the
+ * response's `close` event whenever the socket goes before the body finished
+ * writing. Aborting without a reason mints node's default
+ * `DOMException("This operation was aborted", "AbortError")`, which surfaces
+ * out of the response pipe and is reported unhandled — with the request's own
+ * status already recorded as a success, because the handler had long since
+ * returned. The steady source is `POST /monitoring`: the browser SDK flushes
+ * its envelopes on unload, so the tab is usually gone before the tunnel has
+ * finished streaming Sentry's reply back to it.
+ *
+ * The message is matched alongside the name, and that pairing is what keeps a
+ * genuine abort reportable: `AbortSignal.timeout` raises a `TimeoutError`, and
+ * an `abort(reason)` carries the reason instead. Nothing in this process aborts
+ * bare — a future caller that does would land here silently.
+ */
+function isRequestAbort(exception: unknown): boolean {
+	return (
+		exception instanceof Error &&
+		exception.name === "AbortError" &&
+		exception.message === "This operation was aborted"
 	);
 }
 

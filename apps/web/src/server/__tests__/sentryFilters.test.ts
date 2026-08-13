@@ -24,6 +24,13 @@ function connResetError(message: string): Error {
 	return Object.assign(new Error(message), { code: "ECONNRESET" });
 }
 
+/** The reason node mints for a bare `abort()`, as srvx fires on a closed socket. */
+function bareAbortReason(): unknown {
+	const controller = new AbortController();
+	controller.abort();
+	return controller.signal.reason;
+}
+
 describe("dropExpectedClientErrors", () => {
 	it("drops an event whose original exception is an UnauthorizedError", () => {
 		const result = dropExpectedClientErrors(
@@ -90,6 +97,35 @@ describe("dropExpectedClientErrors", () => {
 	it("keeps an aborted error that carries no ECONNRESET code", () => {
 		const event = eventWithType("Error");
 		const hint = { originalException: new Error("aborted") } as EventHint;
+
+		expect(dropExpectedClientErrors(event, hint)).toBe(event);
+	});
+
+	it("drops the abort srvx raises when a response outlives its client", () => {
+		const result = dropExpectedClientErrors(eventWithType("AbortError"), {
+			originalException: bareAbortReason(),
+		} as EventHint);
+
+		expect(result).toBeNull();
+	});
+
+	it("keeps the timeout error an AbortSignal deadline raises", async () => {
+		const signal = AbortSignal.timeout(1);
+		await new Promise((resolve) => {
+			signal.addEventListener("abort", resolve, { once: true });
+		});
+
+		const event = eventWithType("TimeoutError");
+		const hint = { originalException: signal.reason } as EventHint;
+
+		expect(dropExpectedClientErrors(event, hint)).toBe(event);
+	});
+
+	it("keeps an AbortError aborted with an explicit reason", () => {
+		const event = eventWithType("AbortError");
+		const hint = {
+			originalException: namedError("AbortError", "the pool is draining"),
+		} as EventHint;
 
 		expect(dropExpectedClientErrors(event, hint)).toBe(event);
 	});
