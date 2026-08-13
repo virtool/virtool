@@ -12,7 +12,6 @@ import {
 	legacySampleLabels,
 	legacySampleSubtractions,
 	legacySamples,
-	sampleArtifacts,
 	sampleReads,
 	sampleUploads,
 } from "../db/schema/samples";
@@ -62,7 +61,6 @@ beforeEach(async () => {
 	await db.delete(legacySampleLabels);
 	await db.delete(legacySampleSubtractions);
 	await db.delete(sampleUploads);
-	await db.delete(sampleArtifacts);
 	await db.delete(sampleReads);
 	await db.delete(legacySamples);
 	await db.delete(jobs);
@@ -104,9 +102,10 @@ async function seedAnalysis(
 			.values({
 				created_at: now,
 				updated_at: now,
-				// The legacy storage slug. Irrelevant to workflow tagging, but the
-				// column is NOT NULL upstream.
+				// The legacy storage slug and the owning build. Both irrelevant to
+				// workflow tagging, but NOT NULL upstream.
 				sample: String(overrides.sample_id ?? 0),
+				index_id: 1,
 				user_id: ownerId,
 				workflow: "nuvs",
 				ready: false,
@@ -663,13 +662,6 @@ describe("deleteSample", () => {
 			name_on_disk: "reads_1.fq.gz",
 			storage_key: `samples/${sampleId}/reads_1`,
 		});
-		await db.insert(sampleArtifacts).values({
-			sample: String(sampleId),
-			sample_id: sampleId,
-			name: "a.json",
-			type: "json",
-			storage_key: `samples/${sampleId}/artifact`,
-		});
 		await seedAnalysis({ sample_id: sampleId, workflow: "nuvs", ready: true });
 
 		const deleted = await deleteSample(
@@ -699,12 +691,6 @@ describe("deleteSample", () => {
 				.where(eq(sampleReads.sample_id, sampleId)),
 		).toHaveLength(0);
 		expect(
-			await db
-				.select()
-				.from(sampleArtifacts)
-				.where(eq(sampleArtifacts.sample_id, sampleId)),
-		).toHaveLength(0);
-		expect(
 			await db.select().from(analyses).where(eq(analyses.sample_id, sampleId)),
 		).toHaveLength(0);
 
@@ -729,13 +715,6 @@ describe("deleteSample", () => {
 			name_on_disk: "reads_1.fq.gz",
 			storage_key: "samples/reads",
 		});
-		await db.insert(sampleArtifacts).values({
-			sample: String(sampleId),
-			sample_id: sampleId,
-			name: "a.json",
-			type: "json",
-			storage_key: "samples/artifact",
-		});
 
 		const analysisId = await seedAnalysis({
 			sample_id: sampleId,
@@ -751,7 +730,6 @@ describe("deleteSample", () => {
 
 		for (const key of [
 			"samples/reads",
-			"samples/artifact",
 			"analyses/nuvs",
 			"samples/unrecorded",
 		]) {

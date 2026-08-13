@@ -5,9 +5,10 @@
 // The legacy Mongo `args` field is not a column. A job's resources are all
 // found on the owning rows via a reverse `job_id` foreign key —
 // `legacy_samples.job_id`, `indexes.job_id`, `subtractions.job_id`, and
-// `analyses.job_id` — and recombined into `args` when a job is read. There are
-// no `job_samples` / `job_indexes` junction tables: the sample and index are
-// resolved through those reverse foreign keys, not link rows.
+// `analyses.job_id` — and recombined into `args` when a job is read. The
+// `job_analyses` and `job_indexes` link tables upstream are vestigial and
+// deliberately unmirrored: the sample and index are resolved through those
+// reverse foreign keys, and nothing on this side reads or writes a link row.
 //
 // The two JSONB columns are typed with the `Stored*` shapes from
 // `@virtool/contracts`, which is where the mappers that publish them live. A
@@ -29,7 +30,10 @@ import {
 
 export const jobs = pgTable("jobs", {
 	id: integer("id").primaryKey().generatedAlwaysAsIdentity(),
-	acquired: boolean("acquired").$defaultFn(() => false),
+	// `.default()`, not `$defaultFn()`: this is the one column here that really
+	// does carry a server default upstream, so the generated test DDL has to
+	// carry it too or a raw insert omitting it fails only under test.
+	acquired: boolean("acquired").default(false).notNull(),
 	claim: jsonb("claim").$type<StoredJobClaim>(),
 	claimed_at: timestamp("claimed_at"),
 	created_at: timestamp("created_at").notNull(),

@@ -145,6 +145,7 @@ describe("getJob", () => {
 				updated_at: now,
 				sample: "0",
 				user_id: 1,
+				index_id: 1,
 				job_id: jobId,
 				workflow: "nuvs",
 				ready: false,

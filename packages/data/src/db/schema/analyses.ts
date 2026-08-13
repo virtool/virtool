@@ -37,7 +37,7 @@ export const analyses = pgTable("analyses", {
 	sample: text("sample").notNull(),
 	sample_id: bigint("sample_id", { mode: "number" }),
 	reference_id: bigint("reference_id", { mode: "number" }),
-	index_id: bigint("index_id", { mode: "number" }),
+	index_id: bigint("index_id", { mode: "number" }).notNull(),
 	user_id: integer("user_id").notNull(),
 	job_id: integer("job_id"),
 });

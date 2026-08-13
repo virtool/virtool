@@ -42,7 +42,6 @@ import {
 	legacySampleLabels,
 	legacySampleSubtractions,
 	legacySamples,
-	sampleArtifacts,
 	sampleReads,
 	sampleUploads,
 } from "../db/schema/samples";
@@ -1452,15 +1451,6 @@ export async function deleteSample(
 		// collected here rather than by `deleteAnalysis`.
 		const keyRows = await Promise.all([
 			tx
-				.select({ key: sampleArtifacts.storage_key })
-				.from(sampleArtifacts)
-				.where(
-					or(
-						eq(sampleArtifacts.sample_id, sampleId),
-						eq(sampleArtifacts.sample, storageId),
-					),
-				),
-			tx
 				.select({ key: sampleReads.storage_key })
 				.from(sampleReads)
 				.where(
@@ -1495,14 +1485,6 @@ export async function deleteSample(
 				or(
 					eq(sampleUploads.sample_id, sampleId),
 					eq(sampleUploads.sample, storageId),
-				),
-			);
-		await tx
-			.delete(sampleArtifacts)
-			.where(
-				or(
-					eq(sampleArtifacts.sample_id, sampleId),
-					eq(sampleArtifacts.sample, storageId),
 				),
 			);
 		await tx

@@ -1,3 +1,4 @@
+import { sql } from "drizzle-orm";
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
 import type { Db, DbOrTx } from "../db/pg";
 import { takeFirstOrThrow } from "../db/rows";
@@ -105,7 +106,11 @@ async function seedChange(values: {
 }
 
 async function seedDiff(historyId: number, diff: unknown): Promise<void> {
-	await db.insert(legacyHistoryDiff).values({ history_id: historyId, diff });
+	// `change_id` duplicates the history row's public id and is NOT NULL
+	// upstream, so a seed has to supply one even though nothing here reads it.
+	await db
+		.insert(legacyHistoryDiff)
+		.values({ change_id: `seed.${historyId}`, history_id: historyId, diff });
 }
 
 // The dictdiffer diff Python's `calculate_diff` writes for a rename, serialized
@@ -378,13 +383,16 @@ describe("patchOtusToVersions", () => {
 	});
 
 	it("throws when a remove change carries no document", async () => {
+		// JSON null, not SQL NULL: the column is NOT NULL upstream, so a row that
+		// carries no document holds a `null` inside the JSONB rather than an
+		// absent value. Both read back as `null` here.
 		await seedDiff(
 			await seedChange({
 				otu: "otu_gone",
 				otuVersion: null,
 				methodName: "remove",
 			}),
-			null,
+			sql`'null'::jsonb`,
 		);
 
 		await expect(

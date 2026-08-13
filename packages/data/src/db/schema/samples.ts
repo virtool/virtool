@@ -92,22 +92,6 @@ export const legacySampleSubtractions = pgTable("legacy_sample_subtractions", {
 	subtraction_id: bigint("subtraction_id", { mode: "number" }).notNull(),
 });
 
-// Artifacts produced during sample creation.
-export const sampleArtifacts = pgTable("sample_artifacts", {
-	id: integer("id").primaryKey().generatedByDefaultAsIdentity(),
-	sample: text("sample").notNull(),
-	sample_id: bigint("sample_id", { mode: "number" }),
-	name: text("name").notNull(),
-	name_on_disk: text("name_on_disk"),
-	size: bigint("size", { mode: "number" }),
-	// The artifact's complete object-storage key. Nullable because it was
-	// backfilled from `name_on_disk`, which is itself nullable: a row without one
-	// names no retrievable object.
-	storage_key: text("storage_key").unique(),
-	type: text("type").notNull(),
-	uploaded_at: timestamp("uploaded_at"),
-});
-
 // Reads files that make up a sample.
 export const sampleReads = pgTable("sample_reads", {
 	id: integer("id").primaryKey().generatedByDefaultAsIdentity(),

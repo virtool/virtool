@@ -80,7 +80,7 @@ async function seedReference(
 	return takeFirstOrThrow(
 		await db
 			.insert(legacyReferences)
-			.values({ name: "Reference", ...overrides })
+			.values({ name: "Reference", user_id: ownerId, ...overrides })
 			.returning({ id: legacyReferences.id }),
 	).id;
 }

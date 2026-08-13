@@ -40,7 +40,7 @@ export const legacyReferences = pgTable("legacy_references", {
 		.$type<string[]>()
 		.$defaultFn(() => [])
 		.notNull(),
-	user_id: integer("user_id"),
+	user_id: integer("user_id").notNull(),
 	upload_id: integer("upload_id"),
 	cloned_from_id: bigint("cloned_from_id", { mode: "number" }),
 	task_id: integer("task_id"),

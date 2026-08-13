@@ -73,7 +73,6 @@ The columns, all `UNIQUE`:
 | --- | --- | --- |
 | `sample_reads` | `storage_key` | no |
 | `index_files` | `storage_key` | no |
-| `sample_artifacts` | `storage_key` | yes |
 | `subtraction_files` | `storage_key` | yes |
 | `analysis_files` | `storage_key` | yes |
 | `uploads` | `storage_key` | yes |

@@ -66,7 +66,7 @@ beforeEach(async () => {
 
 	const [reference] = await db
 		.insert(legacyReferences)
-		.values({ name: "Reference" })
+		.values({ name: "Reference", user_id: userId })
 		.returning({ id: legacyReferences.id });
 
 	referenceId = reference?.id as number;

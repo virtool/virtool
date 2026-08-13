@@ -35,9 +35,10 @@ export const instanceMessages = pgTable("instance_messages", {
 	message: text("message"),
 	createdAt: timestamp("created_at"),
 	updatedAt: timestamp("updated_at"),
-	userId: integer("user_id")
-		.notNull()
-		.references(() => users.id),
+	// Nullable upstream: a row migrated from Mongo carries its author in the
+	// legacy `"user"` column, and a trigger resolves `user_id` from it. Every
+	// read joins on it, so a row that predates the backfill is simply invisible.
+	userId: integer("user_id").references(() => users.id),
 });
 
 /** A row from the `instance_messages` table. */

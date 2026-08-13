@@ -64,7 +64,9 @@ export const hmms = pgTable("hmms", {
 	length: integer("length").notNull(),
 	mean_entropy: doublePrecision("mean_entropy").notNull(),
 	total_entropy: doublePrecision("total_entropy").notNull(),
-	hidden: boolean("hidden").$defaultFn(() => false),
+	hidden: boolean("hidden")
+		.$defaultFn(() => false)
+		.notNull(),
 	names: jsonb("names").$type<string[]>().notNull(),
 	families: jsonb("families").$type<Record<string, number>>().notNull(),
 	genera: jsonb("genera").$type<Record<string, number>>().notNull(),

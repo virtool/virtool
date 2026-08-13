@@ -45,11 +45,11 @@ export const legacyHistoryDiff = pgTable("legacy_history_diff", {
 	// The change's public id, duplicating `legacy_history.legacy_id`. It predates
 	// `history_id` and Python still writes it, so an insert from here must too —
 	// the column is NOT NULL upstream.
-	change_id: text("change_id").unique(),
+	change_id: text("change_id").unique().notNull(),
 	history_id: bigint("history_id", { mode: "number" }).unique(),
 	// A dictdiffer diff: an array of `[action, path, changes]` triples, shaped by
 	// `@server/history/dictdiffer` and opaque to the database.
-	diff: jsonb("diff").$type<unknown>(),
+	diff: jsonb("diff").$type<unknown>().notNull(),
 });
 
 /** A row from the `legacy_history` table. */

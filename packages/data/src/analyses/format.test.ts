@@ -399,6 +399,8 @@ async function seedDetectedOtu(): Promise<void> {
 	);
 
 	await db.insert(legacyHistoryDiff).values({
+		// NOT NULL upstream, and unread here — the diff is what this test asserts.
+		change_id: `seed.${change.id}`,
 		history_id: change.id,
 		diff: [
 			["change", "name", [ANALYSED_NAME, CURRENT_NAME]],
