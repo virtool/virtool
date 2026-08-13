@@ -1,13 +1,16 @@
 # `@virtool/bio`
 
 Sequence utilities (complement, translation, ORF finding, FASTA/FASTQ) and the
-pure text parsers the ported workflows need: FastQC `fastqc_data.txt`
-(`@virtool/bio/fastqc`) and `hmmscan --tblout` (`@virtool/bio/hmmer`).
+pure text parsers the ported workflows need: `hmmscan --tblout`
+(`@virtool/bio/hmmer`) and paired-end quality averaging
+(`@virtool/bio/fastqc`) — `compositeQuality`, which `apps/create-sample` uses
+to reduce two `packages/quality-core` reports into the one blob a sample
+stores, and `roundHalfEven`, the half-to-even rounding both that averaging and
+`quality-core` need to match Python's `round`.
 
 Nothing here touches the filesystem, the network, or the database. Callers read
-the bytes and hand over text — locating a FastQC file, walking a results
-directory, or joining an HMM hit to its annotation belongs to the workflow that
-does the IO.
+the bytes and hand over text — walking a results directory, or joining an HMM
+hit to its annotation, belongs to the workflow that does the IO.
 
 ## Byte-identity with Python is the governing constraint
 
@@ -27,9 +30,7 @@ Python, to the stored documents, and to the UI — and until all three move, a
 correction here is a silent disagreement with every record written so far.
 
 Where a divergence is deliberate it is commented at the site and pinned by a
-test. There is exactly one today: FastQC's all-`NaN` composition row, which this
-package maps to zeros. `resolveUnparseableRow` in `fastqc.ts` explains why that
-is not a byte-identity violation.
+test.
 
 ## Expected values are the reference implementation's output
 

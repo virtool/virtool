@@ -48,7 +48,8 @@ This is a **pnpm monorepo**:
 - `apps/create-sample/` — `@virtool/create-sample`, the create-sample workflow
   executor and its image (`ghcr.io/virtool/ts-create-sample`), which turns a
   user's uploaded FASTQ files into a sample an analysis can run against. Two
-  steps, `run_fastqc` and `finalize`, and one external tool, `fastqc` 0.11.9.
+  steps, `run_fastqc` and `finalize`, and one external binary, `quality-core`
+  (`packages/quality-core`, a Rust crate in this repo).
   Like create-subtraction it **is** published, so a released image carries a
   real `APP_VERSION`. Five rules it carries: its input is
   **`WorkflowSample.uploads`**, in `sample_uploads.index` order — a sample it is
@@ -62,12 +63,12 @@ This is a **pnpm monorepo**:
   `{work_path}/reads/`** rather than beside their uploads as Python's
   `path.with_name` puts them, because upload names are user-supplied and a
   second upload called `reads_1.fq.gz` has Python destroy it with the first
-  and finalize the sample with one read stored twice; and **FastQC runs once
-  per read into its own output directory**, where Python runs one invocation
-  and then pairs a report with a read by filesystem order. **Nothing deletes a
-  sample on failure**, as with the other workflows. Its image needs `perl` as
-  well as a JRE — FastQC is a Java program behind a Perl launcher that opens
-  with `use FindBin`. See
+  and finalize the sample with one read stored twice; and **the quality
+  measurement runs once per read into its own results file**, where Python runs
+  one FastQC invocation and then pairs a report with a read by filesystem
+  order. **Nothing deletes a sample on failure**, as with the other workflows.
+  **The step id stays `run_fastqc`** although FastQC is gone — the jobs API
+  stores it. See
   [apps/create-sample/README.md](apps/create-sample/README.md).
 - `apps/create-subtraction/` — `@virtool/create-subtraction`, the
   create-subtraction workflow executor and its image
@@ -91,8 +92,8 @@ This is a **pnpm monorepo**:
   tools and `pathoscope-core`, which it drives **as a subprocess** — there is
   no FFI here and adding one is out of scope by decision. Its stages in the
   root `Dockerfile` are a cargo-chef build of `packages/pathoscope-core`, a
-  Node build on the shared `base`, and a runtime layering the
-  `ghcr.io/virtool/tools` binaries over both.
+  Node build on the shared `base`, and a runtime layering the `bowtie2`,
+  `cd-hit`, `pigz` and `samtools` tool stages over both.
   Two rules it carries: it writes **no result file** — Python uploaded a
   `report.tsv` whose every figure is already in the `results` blob, so the
   finalize manifest is empty and `FinalizeAnalysisRequest.files` allows that
@@ -110,8 +111,8 @@ This is a **pnpm monorepo**:
   does **not** describe, by discarding every read that maps to a known OTU or
   to a subtraction, assembling what is left and searching the contigs for viral
   motifs. Its stages in the root `Dockerfile` are a from-source SPAdes compile,
-  a Node build on the shared `base`, and a runtime layering the
-  `ghcr.io/virtool/tools` binaries and the compiled SPAdes over both.
+  a Node build on the shared `base`, and a runtime layering the `bowtie2`,
+  `hmmer` and `skewer` tool stages and the compiled SPAdes over both.
   Five rules it carries: **`SPAdes 4.2.0` is compiled from source** in its own
   stage, independent of the rest of the build, because no binary release fits
   the base — and the runtime installs `python3` for it, since `spades.py` is a
@@ -135,7 +136,14 @@ This is a **pnpm monorepo**:
   stays `0.0.0` and the `workflow_version` in all three of its cache keys with
   it.
 - `packages/` — shared, framework-agnostic libraries published as workspace
-  packages, plus one Rust crate:
+  packages, plus two Rust crates — `pathoscope-core` and `quality-core`.
+  Neither is a pnpm workspace member; each is a standalone cargo project a
+  workflow invokes as a subprocess, and each has its own CI job. Only
+  `pathoscope-core` needs `libclang-dev` to build. `quality-core` computes a
+  sample's `Quality` blob from one FASTQ file and replaced FastQC in
+  `apps/create-sample`; see
+  [packages/quality-core/README.md](packages/quality-core/README.md) for
+  where it matches FastQC and where it deliberately does not.
   - `@virtool/archive` — compression and tarball utilities. Anything
     that reads or writes an archive goes through it; never duplicate what
     it exports. See
@@ -188,9 +196,19 @@ bundled-vs-external rule and why externals must be string literals, the
 `pnpm deploy` / `injectWorkspacePackages` mechanism, and the repo-wide
 gates. [docs/images.md](docs/images.md) covers the image side: the
 target inventory, the one-base-for-everything rule, the install and
-source layers, the tools-image interpreters, and what building and
+source layers, the one-stage-per-tool rule for the bioinformatics
+binaries and the interpreters they need, and what building and
 publishing an image takes. Each app's own `README.md` covers what that
 app is, its port, image and commands.
+
+**The bioinformatics tools are built in the root `Dockerfile`, one stage
+per tool** — `bowtie2`, `cd-hit`, `hmmer`, `pigz`, `samtools`, `seqkit`
+and `skewer`, each installing to `/tools/<tool>/<version>/` for a
+workflow runtime stage to copy out of. Never fold them into one stage:
+BuildKit builds only the stages the requested target reaches, which is
+what keeps `--target create-subtraction` from compiling bowtie2. Each
+Rust crate gets its own cargo-chef pair over a shared `chef` for the same
+reason.
 
 Use `pnpm` for all install, run, and exec commands — not `npm` or `bun`.
 
@@ -209,25 +227,25 @@ Use `pnpm` for all install, run, and exec commands — not `npm` or `bun`.
 | Test (all packages) | `pnpm test` |
 | Test (watch, web app) | `pnpm --filter @virtool/web test:watch` |
 | Test (one file) | `TZ=UTC pnpm --filter @virtool/web exec vitest run <path>` |
-| Rust crate | `cargo test` / `cargo fmt` (in `packages/pathoscope-core`) |
+| Rust crates | `cargo test` / `cargo fmt` (in `packages/pathoscope-core` and `packages/quality-core`) |
 
 `TZ=UTC` matches the `test` script and every CI test job — drop it and that
 command becomes the only unpinned way to run the suite.
 
-`pnpm test` does **not** reach `packages/pathoscope-core` — it is not a pnpm
-workspace. Run `cargo` there directly; a `pathoscope-test` CI job gates it.
-Building the crate needs `libclang-dev` installed, because `hts-sys` runs
-bindgen against htslib's headers.
+`pnpm test` reaches **neither Rust crate** — neither is a pnpm workspace. Run
+`cargo` in each directly; `pathoscope-test` and `quality-test` gate them in CI.
+Building `pathoscope-core` needs `libclang-dev` installed, because `hts-sys`
+runs bindgen against htslib's headers; `quality-core` needs nothing.
 
-`pathoscope-test`, `build-pathoscope` and `build-nuvs` are the only
-path-filtered jobs in `ci.yaml`, and they take **a filter each**, because their
-inputs differ: `pathoscope-test` runs cargo over the crate and reads no
-TypeScript, while each image build bundles its own app and so depends on every
-workspace package its Dockerfile copies. One shared filter would run the
-libclang-and-cargo job on any `packages/workflow` change, and would rebuild
-each image for the other's inputs — `nuvs-image` carries `packages/bio` and
-`pathoscope-image` carries `packages/pathoscope-core`. Extend the `changes`
-job's filters in the same commit as anything that gives a job a new input — in
+`pathoscope-test`, `quality-test`, `build-pathoscope` and `build-nuvs` are the
+only path-filtered jobs in `ci.yaml`, and they take **a filter each**, because
+their inputs differ: the crate jobs run cargo and read no TypeScript, while
+each image build bundles its own app and so depends on every workspace package
+its Dockerfile copies. One shared filter would run the libclang-and-cargo job
+on any `packages/workflow` change, and would rebuild each image for the other's
+inputs — `nuvs-image` carries `packages/bio` and `pathoscope-image` carries
+`packages/pathoscope-core`. Extend the `changes` job's filters in the same
+commit as anything that gives a job a new input — in
 particular, **every path a workflow Dockerfile `COPY`s must appear under that
 image's filter**, or the build is skipped on the pull request that breaks it
 and fails on the push to `main`, where nothing gates it.

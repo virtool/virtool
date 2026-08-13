@@ -4,9 +4,9 @@ data
 docker
 docs
 **/node_modules
-# Rust build output. Sending packages/pathoscope-core/target into the build
-# context would be gigabytes and would invalidate the context on every local
-# cargo run; the image builds the crate from source in its own stage.
+# Rust build output. Sending a crate's target/ into the build context would be
+# gigabytes and would invalidate the context on every local cargo run; the
+# images build both crates from source in their own stages.
 **/target
 .git
 .github

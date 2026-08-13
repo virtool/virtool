@@ -30,6 +30,154 @@ COPY packages/storage ./packages/storage
 COPY packages/workflow ./packages/workflow
 COPY apps/tsconfig.node.json ./apps/
 
+# External bioinformatics tools, ported from `ghcr.io/virtool/tools`.
+#
+# One stage per tool, never one combined stage: BuildKit builds only the stages
+# the requested target reaches, so `--target create-subtraction` compiles
+# nothing but seqkit. None of them depends on `base` or on the build context, so
+# a warm cache skips them all whatever changed in the repo.
+
+FROM debian:bookworm AS bowtie2
+WORKDIR /build
+RUN apt-get update \
+    && apt-get install -y build-essential perl wget zlib1g-dev \
+    && rm -rf /var/lib/apt/lists/*
+RUN wget -q https://github.com/BenLangmead/bowtie2/archive/refs/tags/v2.5.4.tar.gz \
+    && tar -xf v2.5.4.tar.gz
+WORKDIR /build/bowtie2-2.5.4
+RUN make -j"$(nproc)" \
+    && mkdir -p /tools/bowtie2/2.5.4 \
+    && cp bowtie2* /tools/bowtie2/2.5.4
+
+FROM debian:bookworm AS cd-hit
+WORKDIR /build
+RUN apt-get update \
+    && apt-get install -y build-essential libz-dev wget \
+    && rm -rf /var/lib/apt/lists/*
+RUN wget -q https://github.com/weizhongli/cdhit/releases/download/V4.8.1/cd-hit-v4.8.1-2019-0228.tar.gz \
+    && tar -xf cd-hit-v4.8.1-2019-0228.tar.gz
+WORKDIR /build/cd-hit-v4.8.1-2019-0228
+# The sed links libgomp statically. Without it the binary needs `libgomp1` in
+# whatever image copies it.
+RUN sed -i 's/LDFLAGS += -lz -o/LDFLAGS += -Wl,-Bstatic -lgomp -Wl,-Bdynamic -lz -o/' Makefile \
+    && make \
+    && mkdir -p /tools/cd-hit/4.8.1 \
+    && cp -r cd-hit* /tools/cd-hit/4.8.1
+
+# There is deliberately no `fastqc` stage. `packages/quality-core` replaced
+# FastQC in the create-sample image and is pinned bit-for-bit against it, so
+# nothing in this repo runs the tool — the fixtures taken from it are frozen
+# and checked in.
+
+FROM debian:bookworm AS hmmer
+WORKDIR /build
+RUN apt-get update \
+    && apt-get install -y bioperl build-essential wget \
+    && rm -rf /var/lib/apt/lists/*
+RUN wget -q http://eddylab.org/software/hmmer/hmmer-3.3.2.tar.gz \
+    && tar -xf hmmer-3.3.2.tar.gz
+WORKDIR /build/hmmer-3.3.2
+RUN ./configure --prefix /tools/hmmer/3.3.2 \
+    && make -j"$(nproc)" \
+    && make install
+
+FROM debian:bookworm AS pigz
+WORKDIR /build
+RUN apt-get update \
+    && apt-get install -y gcc make wget zlib1g-dev \
+    && rm -rf /var/lib/apt/lists/*
+RUN wget -q https://zlib.net/pigz/pigz-2.8.tar.gz \
+    && tar -xzf pigz-2.8.tar.gz
+WORKDIR /build/pigz-2.8
+RUN make \
+    && mkdir -p /tools/pigz/2.8 \
+    && mv pigz /tools/pigz/2.8/pigz
+
+FROM debian:bookworm AS samtools
+WORKDIR /build
+RUN apt-get update \
+    && apt-get install -y \
+        build-essential \
+        libbz2-dev \
+        libcurl4-openssl-dev \
+        liblzma-dev \
+        libncurses5-dev \
+        libncursesw5-dev \
+        wget \
+        zlib1g-dev \
+    && rm -rf /var/lib/apt/lists/*
+RUN wget -q https://github.com/samtools/samtools/releases/download/1.22.1/samtools-1.22.1.tar.bz2 \
+    && tar -xjf samtools-1.22.1.tar.bz2
+WORKDIR /build/samtools-1.22.1
+RUN ./configure --prefix=/tools/samtools/1.22.1 \
+    && make -j"$(nproc)" \
+    && make install
+
+FROM debian:bookworm AS seqkit
+WORKDIR /build
+RUN apt-get update \
+    && apt-get install -y wget \
+    && rm -rf /var/lib/apt/lists/*
+RUN wget -q https://github.com/shenwei356/seqkit/releases/download/v2.13.0/seqkit_linux_amd64.tar.gz \
+    && tar -xf seqkit_linux_amd64.tar.gz \
+    && mkdir -p /tools/seqkit/2.13.0 \
+    && mv seqkit /tools/seqkit/2.13.0/seqkit \
+    && chmod ugo+x /tools/seqkit/2.13.0/seqkit
+
+# Bullseye, alone in this file: skewer 0.2.2's comparator is non-const, which
+# bookworm's GCC 12 rejects outright. The binary is a plain glibc build and runs
+# on the bookworm runtime stages unchanged.
+FROM debian:bullseye AS skewer
+WORKDIR /build
+RUN apt-get update \
+    && apt-get install -y build-essential wget \
+    && rm -rf /var/lib/apt/lists/*
+RUN wget -q https://github.com/relipmoc/skewer/archive/0.2.2.tar.gz \
+    && tar -xf 0.2.2.tar.gz
+WORKDIR /build/skewer-0.2.2
+RUN make \
+    && mkdir -p /tools/skewer/0.2.2 \
+    && mv skewer /tools/skewer/0.2.2/skewer
+
+# The Rust crates, built with cargo-chef so a dependency layer survives a
+# source edit. One planner/builder pair per crate, for the same reason the
+# tools above get a stage each: a build that reaches one must not compile the
+# other.
+#
+# `chef` carries only what both crates need. libclang is pathoscope-core's
+# alone — hts-sys runs bindgen against htslib's headers rather than shipping
+# pre-generated bindings — and quality-core links nothing native at all, so it
+# would be a wasted apt install in every create-sample build.
+FROM rust:1.97-bookworm AS chef
+RUN cargo install cargo-chef --locked
+WORKDIR /build
+
+FROM chef AS chef-pathoscope
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends libclang-dev \
+    && rm -rf /var/lib/apt/lists/* \
+    && apt-get clean
+
+FROM chef-pathoscope AS pathoscope-planner
+COPY packages/pathoscope-core .
+RUN cargo chef prepare --recipe-path recipe.json
+
+FROM chef-pathoscope AS pathoscope-builder
+COPY --from=pathoscope-planner /build/recipe.json recipe.json
+RUN cargo chef cook --release --recipe-path recipe.json
+COPY packages/pathoscope-core .
+RUN cargo build --release --bin pathoscope-core
+
+FROM chef AS quality-planner
+COPY packages/quality-core .
+RUN cargo chef prepare --recipe-path recipe.json
+
+FROM chef AS quality-builder
+COPY --from=quality-planner /build/recipe.json recipe.json
+RUN cargo chef cook --release --recipe-path recipe.json
+COPY packages/quality-core .
+RUN cargo build --release --bin quality-core
+
 # App source is copied by each build stage rather than here, so a change to one
 # app does not invalidate another's cache, and so adding an app never touches
 # the install layer above.
@@ -89,7 +237,7 @@ RUN pnpm --filter @virtool/create-subtraction build \
 
 FROM node:24-bookworm-slim AS create-subtraction
 WORKDIR /workflow
-COPY --from=ghcr.io/virtool/tools:1.3.0 /tools/seqkit/2.13.0/seqkit /usr/local/bin/
+COPY --from=seqkit /tools/seqkit/2.13.0/seqkit /usr/local/bin/
 COPY --from=build-create-subtraction /prod/create-subtraction ./
 CMD ["node", "dist/index.mjs"]
 
@@ -103,43 +251,14 @@ RUN pnpm --filter @virtool/create-sample build \
 FROM node:24-bookworm-slim AS create-sample
 WORKDIR /workflow
 
-# FastQC 0.11.9 is a Java program behind a Perl launcher, and it needs both.
-# `perl` rather than the `perl-base` this image already carries: the launcher
-# opens with `use FindBin`, which is in `perl-modules-5.36` and so is absent
-# from the base — the failure is at exec, with a message about @INC.
-RUN apt-get update \
-    && apt-get install -y --no-install-recommends \
-        default-jre-headless \
-        perl \
-    && rm -rf /var/lib/apt/lists/* \
-    && apt-get clean
-
-# The whole install directory, not one binary: `fastqc` resolves its jars and
-# its `Configuration/` relative to its own location.
-COPY --from=ghcr.io/virtool/tools:1.3.0 /tools/fastqc/0.11.9/ /opt/fastqc
-RUN chmod ugo+x /opt/fastqc/fastqc
-ENV PATH="/opt/fastqc:${PATH}"
+# There is deliberately no apt layer here. FastQC forced a JRE and the full
+# `perl` into this image — it is a Java program behind a Perl launcher that
+# opens with `use FindBin` — and `quality-core` replaced it with one static
+# binary that needs nothing the base does not already carry.
+COPY --from=quality-builder /build/target/release/quality-core /usr/local/bin/
 
 COPY --from=build-create-sample /prod/create-sample ./
 CMD ["node", "dist/index.mjs"]
-
-FROM rust:1.97-bookworm AS chef
-RUN apt-get update \
-    && apt-get install -y --no-install-recommends libclang-dev \
-    && rm -rf /var/lib/apt/lists/* \
-    && apt-get clean
-RUN cargo install cargo-chef --locked
-WORKDIR /build
-
-FROM chef AS planner
-COPY packages/pathoscope-core .
-RUN cargo chef prepare --recipe-path recipe.json
-
-FROM chef AS builder
-COPY --from=planner /build/recipe.json recipe.json
-RUN cargo chef cook --release --recipe-path recipe.json
-COPY packages/pathoscope-core .
-RUN cargo build --release --bin pathoscope-core
 
 FROM base AS build-pathoscope
 COPY apps/pathoscope ./apps/pathoscope
@@ -149,9 +268,9 @@ RUN pnpm --filter @virtool/pathoscope build \
 FROM node:24-bookworm-slim AS pathoscope
 WORKDIR /workflow
 
-# The tools binaries are built against python:3.13-bookworm, which carries more
-# than this slim base does. Each package here backs a specific `ldd ... => not
-# found`: perl and libgomp1 for bowtie2 (a set of Perl wrappers around the
+# The tools binaries are built on debian:bookworm, which carries more than this
+# slim base does. Each package here backs a specific `ldd ... => not found`:
+# perl and libgomp1 for bowtie2 (a set of Perl wrappers around the
 # bowtie2-align-* binaries, compiled with OpenMP), libcurl4 and libncursesw6
 # for samtools. pathoscope-core itself needs none of them — hts-sys links
 # htslib statically.
@@ -164,11 +283,11 @@ RUN apt-get update \
     && rm -rf /var/lib/apt/lists/* \
     && apt-get clean
 
-COPY --from=ghcr.io/virtool/tools:1.2.0 /tools/bowtie2/2.5.4/bowtie* /usr/local/bin/
-COPY --from=ghcr.io/virtool/tools:1.2.0 /tools/cd-hit/4.8.1/cd-hit-est /usr/local/bin/
-COPY --from=ghcr.io/virtool/tools:1.2.0 /tools/pigz/2.8/pigz /usr/local/bin/
-COPY --from=ghcr.io/virtool/tools:1.2.0 /tools/samtools/1.22.1/bin/samtools /usr/local/bin/
-COPY --from=builder /build/target/release/pathoscope-core /usr/local/bin/
+COPY --from=bowtie2 /tools/bowtie2/2.5.4/bowtie* /usr/local/bin/
+COPY --from=cd-hit /tools/cd-hit/4.8.1/cd-hit-est /usr/local/bin/
+COPY --from=pigz /tools/pigz/2.8/pigz /usr/local/bin/
+COPY --from=samtools /tools/samtools/1.22.1/bin/samtools /usr/local/bin/
+COPY --from=pathoscope-builder /build/target/release/pathoscope-core /usr/local/bin/
 COPY --from=build-pathoscope /prod/pathoscope ./
 CMD ["node", "dist/index.mjs"]
 
@@ -223,9 +342,9 @@ RUN apt-get update \
     && rm -rf /var/lib/apt/lists/* \
     && apt-get clean
 
-COPY --from=ghcr.io/virtool/tools:1.2.0 /tools/bowtie2/2.5.4/bowtie* /usr/local/bin/
-COPY --from=ghcr.io/virtool/tools:1.2.0 /tools/skewer/0.2.2/ /usr/local/bin/
-COPY --from=ghcr.io/virtool/tools:1.2.0 /tools/hmmer/3.3.2/ /opt/hmmer/
+COPY --from=bowtie2 /tools/bowtie2/2.5.4/bowtie* /usr/local/bin/
+COPY --from=skewer /tools/skewer/0.2.2/ /usr/local/bin/
+COPY --from=hmmer /tools/hmmer/3.3.2/ /opt/hmmer/
 COPY --from=spades /build/spades /opt/spades
 
 # There is deliberately no pigz. Python shells out to it for every compression;

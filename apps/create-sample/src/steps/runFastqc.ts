@@ -1,18 +1,19 @@
 import { mkdir } from "node:fs/promises";
-import { buildFastqcCommand, readFastqcReport, reduceQuality } from "../fastqc";
+import { dirname } from "node:path";
+import { buildQualityCommand, readQuality, reduceQuality } from "../quality";
 import type { CreateSampleStep } from "./types";
 
 /**
- * Run `fastqc` over the uploaded reads and parse the report.
+ * Measure the quality of the uploaded reads.
  *
- * FastQC reads gzip natively, so this runs against the uploads as they lie and
- * the run never writes a decompressed FASTQ.
+ * `quality-core` reads gzip natively, so this runs against the uploads as they
+ * lie and the run never writes a decompressed FASTQ.
  *
- * Each read gets its own invocation and its own output directory, which is what
- * makes a report's read unambiguous — see `fastqc.ts`. They run in sequence
- * rather than concurrently: FastQC holds roughly 250 MB per file in flight and
- * a workflow pod's memory limit is sized for one, so two at once is the way a
- * paired run gets OOM-killed.
+ * Each read gets its own invocation and its own results file, which is what
+ * makes a blob's read unambiguous — see `quality.ts`. They run in sequence
+ * rather than concurrently: the crate holds one cycle histogram per position
+ * and nothing else, so the memory argument FastQC forced is gone, but there is
+ * no throughput to win either. Both invocations are bound by reading the file.
  *
  * Python guards nothing here; its runner treats termination by SIGTERM as
  * success, so a FastQC killed part way through leaves a truncated report that
@@ -21,21 +22,21 @@ import type { CreateSampleStep } from "./types";
  * kill, and that is what the check below is for.
  */
 export const runFastqcStep: CreateSampleStep = {
+	/* Python's function name, and the jobs API stores it — a rename changes the
+	 * shape of a job's step list at cutover. It outlives the tool it was named
+	 * after; the display name below is the part free to say what now runs. */
 	id: "run_fastqc",
-	// Python's `@step(name="Run FastQC")`. Without it the title-cased default
-	// renders as "Run Fastqc", which is a different label in the job's step list.
-	name: "Run FastQC",
-	description: "Run FastQC on the read files and parse the quality data.",
+	name: "Measure quality",
+	description: "Measure the quality of the read files.",
 	async run({ data, logger, runSubprocess, state }) {
 		const reports = [];
 
 		for (const read of data.paths.reads) {
-			// FastQC refuses to start when `-o` names a directory that is not
-			// already there.
-			await mkdir(read.fastqcOutput, { recursive: true });
+			// The crate creates its results file but not the directory holding it.
+			await mkdir(dirname(read.qualityOutput), { recursive: true });
 
 			const { cancelled } = await runSubprocess({
-				command: buildFastqcCommand(read.upload, read.fastqcOutput),
+				command: buildQualityCommand(read.upload, read.qualityOutput),
 			});
 
 			/* The run is being torn down and this process was killed, so whatever
@@ -50,7 +51,7 @@ export const runFastqcStep: CreateSampleStep = {
 				return;
 			}
 
-			reports.push(await readFastqcReport(read.fastqcOutput));
+			reports.push(await readQuality(read.qualityOutput));
 		}
 
 		const quality = reduceQuality(reports);
@@ -59,7 +60,7 @@ export const runFastqcStep: CreateSampleStep = {
 
 		logger.info(
 			{ count: quality.count, gc: quality.gc, length: quality.length },
-			"parsed quality data",
+			"measured quality",
 		);
 	},
 };

@@ -19,11 +19,12 @@ describe("createSampleWorkflow", () => {
 	});
 
 	/**
-	 * Python's `@step(name="Run FastQC")` overrides the title-cased default,
-	 * which would otherwise render as "Run Fastqc".
+	 * Python's is "Run FastQC". The id above is what the jobs API stores and
+	 * what a step list is keyed by; the display name is free to stop naming a
+	 * tool this image no longer carries.
 	 */
-	it("keeps FastQC's capitalisation in the display name", () => {
-		expect(createSampleWorkflow.steps[0]?.name).toBe("Run FastQC");
+	it("names the step for what it measures rather than the tool", () => {
+		expect(createSampleWorkflow.steps[0]?.name).toBe("Measure quality");
 	});
 
 	/**

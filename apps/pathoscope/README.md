@@ -23,7 +23,7 @@ of scope by decision.
 
 Its stages in the root `Dockerfile` are a cargo-chef build of
 `packages/pathoscope-core`, a Node build on the shared `base`, and a runtime
-layering the `ghcr.io/virtool/tools` binaries over both:
+layering the `bowtie2`, `cd-hit`, `pigz` and `samtools` tool stages over both:
 
 ```
 docker build --target pathoscope .
@@ -49,12 +49,12 @@ bowtie2's OpenMP, `libcurl4` and `libncursesw6` for samtools. `pathoscope-core`
 needs none of them — `hts-sys` links htslib statically.
 
 A missing interpreter does not fail the build; it fails the first time the step
-runs in a pod. Verify a shebang against the pinned tools image, never upstream's
-current source:
+runs in a pod. Verify a shebang against the version the `Dockerfile` pins, never
+upstream's current source:
 
 ```
-docker run --rm --entrypoint sh ghcr.io/virtool/tools:1.2.0 \
-    -c 'head -1 /tools/bowtie2/2.5.4/bowtie2-build'
+docker build --target bowtie2 -t vt-tool-bowtie2 .
+docker run --rm vt-tool-bowtie2 head -1 /tools/bowtie2/2.5.4/bowtie2-build
 ```
 
 ### Publishing

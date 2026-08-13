@@ -43,12 +43,12 @@ describe("workPaths", () => {
 		}
 	});
 
-	it("gives each read its own FastQC output directory", () => {
+	it("gives each read its own quality results file", () => {
 		const { reads } = workPaths("/work", ["left.fq.gz", "right.fq.gz"]);
 
-		expect(reads.map((read) => read.fastqcOutput)).toStrictEqual([
-			"/work/fastqc/1",
-			"/work/fastqc/2",
+		expect(reads.map((read) => read.qualityOutput)).toStrictEqual([
+			"/work/quality/1.json",
+			"/work/quality/2.json",
 		]);
 	});
 

@@ -24,10 +24,11 @@ jobs:
     # -------------------------------------------------------------------------
     # Only the workflow-image jobs are filtered. They are the expensive
     # outliers: a libclang-dev install and a cargo build for pathoscope, a
-    # from-source SPAdes compile for nuvs, and a tools image pull for both, all
-    # carrying long timeouts, on every PR including ones confined to apps/web.
-    # Everything else in this file is cheap enough that gating it would cost
-    # more in review attention than it saves in runner minutes.
+    # from-source SPAdes compile for nuvs, and a from-source bowtie2, HMMER and
+    # samtools build for both, all carrying long timeouts, on every PR including
+    # ones confined to apps/web. Everything else in this file is cheap enough
+    # that gating it would cost more in review attention than it saves in runner
+    # minutes.
     #
     # The filter step is skipped on `push`, so this job needs no checkout and no
     # base-ref handling for that event: dorny/paths-filter reads the changed
@@ -43,6 +44,7 @@ jobs:
             nuvs-image: ${{ steps.filter.outputs.nuvs-image }}
             pathoscope-crate: ${{ steps.filter.outputs.pathoscope-crate }}
             pathoscope-image: ${{ steps.filter.outputs.pathoscope-image }}
+            quality-crate: ${{ steps.filter.outputs.quality-crate }}
         steps:
             - name: Filter
               id: filter
@@ -96,9 +98,12 @@ jobs:
                         - 'pnpm-lock.yaml'
                         - 'Dockerfile'
                         - '.dockerignore'
+                      # `Dockerfile` because pathoscope-test builds bowtie2 out
+                      # of it to run the golden vectors against.
                       pathoscope-crate:
                         - 'packages/pathoscope-core/**'
                         - '.github/workflows/ci.yaml'
+                        - 'Dockerfile'
                       pathoscope-image:
                         - 'packages/pathoscope-core/**'
                         - '.github/workflows/ci.yaml'
@@ -117,6 +122,14 @@ jobs:
                         - 'pnpm-lock.yaml'
                         - 'Dockerfile'
                         - '.dockerignore'
+                        - '.github/workflows/ci.yaml'
+                      # No `Dockerfile` here, unlike pathoscope-crate. That job
+                      # builds bowtie2 out of it to run its goldens against;
+                      # this one builds nothing at all — quality-core's
+                      # goldens are checked in and frozen, and nothing in that
+                      # file is involved in producing them.
+                      quality-crate:
+                        - 'packages/quality-core/**'
                         - '.github/workflows/ci.yaml'
 
     # -------------------------------------------------------------------------
@@ -205,7 +218,7 @@ jobs:
     build-pathoscope:
         name: Pathoscope / Build
         runs-on: ubuntu-24.04
-        timeout-minutes: 30
+        timeout-minutes: 45
         needs: [changes]
         # Unconditional on `push`, deliberately. `release-tag` lists this job in
         # `needs`, and running it on every push to main keeps that gate complete
@@ -339,7 +352,7 @@ jobs:
     build-nuvs:
         name: NuVs / Build
         runs-on: ubuntu-24.04
-        timeout-minutes: 45
+        timeout-minutes: 60
         needs: [changes]
         # Unconditional on `push`, deliberately. `release-tag` lists this job in
         # `needs`, and running it on every push to main keeps that gate complete
@@ -366,7 +379,7 @@ jobs:
     pathoscope-test:
         name: Pathoscope / Test
         runs-on: ubuntu-24.04
-        timeout-minutes: 30
+        timeout-minutes: 45
         needs: [changes]
         # See the note on `build-pathoscope`: filtered on pull requests,
         # unconditional on `push` so the `release-tag` gate stays complete.
@@ -381,12 +394,23 @@ jobs:
               run: sudo apt-get update && sudo apt-get install -y --no-install-recommends libclang-dev
             # The `candidates` golden vectors shell out to bowtie2. Without it
             # the harness skips them; VT_REQUIRE_BOWTIE2 below turns that skip
-            # into a failure so CI can never quietly stop checking them.
+            # into a failure so CI can never quietly stop checking them. It is
+            # built from the root Dockerfile's own target rather than apt, so
+            # this job and the workflow images can only ever run the build the
+            # goldens were generated against.
+            - name: Setup Buildx
+              uses: docker/setup-buildx-action@v3
+            - name: Build bowtie2
+              uses: docker/build-push-action@v7
+              with:
+                  context: .
+                  target: bowtie2
+                  outputs: type=local,dest=/tmp/bowtie2
+                  cache-from: type=gha,scope=bowtie2
+                  cache-to: type=gha,mode=max,scope=bowtie2
             - name: Install bowtie2
               run: |
-                  container=$(docker create ghcr.io/virtool/tools:1.2.0)
-                  sudo docker cp "$container:/tools/bowtie2/2.5.4/." /usr/local/bin/
-                  docker rm "$container"
+                  sudo cp /tmp/bowtie2/tools/bowtie2/2.5.4/* /usr/local/bin/
                   bowtie2 --version | head -1
             - name: Cache cargo
               uses: actions/cache@v4
@@ -405,6 +429,43 @@ jobs:
               working-directory: packages/pathoscope-core
               env:
                   VT_REQUIRE_BOWTIE2: "1"
+
+    # -------------------------------------------------------------------------
+    # Quality (packages/quality-core)
+    # -------------------------------------------------------------------------
+    # Much cheaper than pathoscope-test, and deliberately so: this crate links
+    # nothing native, so there is no libclang install, and its goldens are
+    # FastQC output checked in rather than something a tool has to be built to
+    # produce. Just cargo.
+    quality-test:
+        name: Quality / Test
+        runs-on: ubuntu-24.04
+        timeout-minutes: 15
+        needs: [changes]
+        # See the note on `build-pathoscope`: filtered on pull requests,
+        # unconditional on `push` so the `release-tag` gate stays complete.
+        if: github.event_name == 'push' || needs.changes.outputs.quality-crate == 'true'
+        steps:
+            - name: Checkout
+              uses: actions/checkout@v7
+            - name: Cache cargo
+              uses: actions/cache@v4
+              with:
+                  path: |
+                      ~/.cargo/registry
+                      ~/.cargo/git
+                      packages/quality-core/target
+                  key: cargo-quality-${{ runner.os }}-${{ hashFiles('packages/quality-core/Cargo.lock') }}
+                  restore-keys: cargo-quality-${{ runner.os }}-
+            - name: Format
+              run: cargo fmt --check
+              working-directory: packages/quality-core
+            - name: Clippy
+              run: cargo clippy --all-targets -- -D warnings
+              working-directory: packages/quality-core
+            - name: Test
+              run: cargo test
+              working-directory: packages/quality-core
 
     # -------------------------------------------------------------------------
     # Site (apps/site)
@@ -496,6 +557,7 @@ jobs:
                 jobs-api-test,
                 packages-test,
                 pathoscope-test,
+                quality-test,
                 site-build,
                 storage-test,
                 tasks-test,

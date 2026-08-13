@@ -8,5 +8,5 @@ export {
 	reverseComplement,
 	translate,
 } from "./bio";
-export { compositeQuality, parseFastqcData, roundHalfEven } from "./fastqc";
+export { compositeQuality, roundHalfEven } from "./fastqc";
 export { type HmmerHit, parseHmmerTblout } from "./hmmer";

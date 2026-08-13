@@ -17,10 +17,9 @@
  * so on one filesystem, which is all `rename(2)` requires. Python's constraint
  * was `with_name`'s, not the syscall's.
  *
- * FastQC also gets a directory of its own rather than the bare work path.
- * Python points `-o` at `{work_path}` and then scans it for directories holding
- * a `fastqc_data.txt`, which puts the tool's output in the same directory as
- * `uploads/`; a subdirectory per read keeps each scan bounded to one report.
+ * The quality blobs get a directory of their own rather than the bare work
+ * path, for the same reason: one file per read, named by the read's position,
+ * so nothing has to be matched back to the upload it describes.
  */
 
 import { join } from "node:path";
@@ -33,8 +32,8 @@ export type ReadPaths = {
 	/** `reads_{n}.fq.gz`, in a directory no upload name can reach. */
 	normalized: string;
 
-	/** Where FastQC writes this read's report directory. */
-	fastqcOutput: string;
+	/** Where `quality-core` writes this read's quality blob. */
+	qualityOutput: string;
 };
 
 /** Every path one create_sample run uses. */
@@ -62,7 +61,7 @@ export function workPaths(
 		reads: uploadNames.map((name, index) => ({
 			upload: join(workPath, "uploads", name),
 			normalized: join(workPath, "reads", readsFileName(index)),
-			fastqcOutput: join(workPath, "fastqc", String(index + 1)),
+			qualityOutput: join(workPath, "quality", `${index + 1}.json`),
 		})),
 	};
 }

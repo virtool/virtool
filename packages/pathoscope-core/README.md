@@ -1,9 +1,13 @@
 # pathoscope-core
 
-The only Rust crate in this repo — pathoscope's expectation-maximization
-core, built as a standalone command-line binary that
+Pathoscope's expectation-maximization core, built as a standalone
+command-line binary that
 [`@virtool/pathoscope`](../../apps/pathoscope/README.md) invokes as a
 subprocess.
+
+One of two Rust crates here; the other is
+[`quality-core`](../quality-core/README.md). Neither is a pnpm workspace
+member, so `pnpm test` does not reach them.
 
 ## Results are byte-identical to the Python build, and pinned that way
 
@@ -154,7 +158,7 @@ clash. Add a publish job when that repo is retired, and settle which image name
 the cluster pulls in the same change.
 
 **The crate is built on `rust:1.97-bookworm`.** The runtime copies binaries from
-`ghcr.io/virtool/tools`, which are built against `python:3.13-bookworm`, so the
+the tool stages in the same file, which are built on `debian:bookworm`, so the
 Rust core has to be an ordinary glibc build and `rust-htslib`'s unverified musl
 support never arises. Every other stage in that file is Debian too, so nothing
 here is a special case any more.

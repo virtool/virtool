@@ -19,20 +19,27 @@ manifest.
 targets it. There is also a `dev` stage carrying `apps/web` on the
 install layer, which ships nothing.
 
-## Every stage is `node:24-bookworm-slim`
+## Every runtime stage is `node:24-bookworm-slim`
 
-The workflow images copy binaries from `ghcr.io/virtool/tools`, which are
-built against `python:3.13-bookworm` and dynamically linked against
-glibc, so at least one image has to be glibc. One base shared by
-everything is worth more than the ~70 MB Alpine would save on the images
-that could do without it — and it is what lets `base` be shared rather
-than repeated once per libc. Do not add an Alpine stage.
+The workflow images carry bioinformatics binaries built on
+`debian:bookworm` and dynamically linked against glibc, so at least one
+image has to be glibc. One base shared by everything is worth more than
+the ~70 MB Alpine would save on the images that could do without it — and
+it is what lets `base` be shared rather than repeated once per libc. Do
+not add an Alpine stage.
 
-The pathoscope image additionally compiles `packages/pathoscope-core` on
-`rust:1.97-bookworm`, in cargo-chef stages that cook the dependencies in
-their own layer before `src` is copied. That crate needs `libclang-dev`
-at build time, and exactly one binary out of the whole Rust build reaches
-the runtime stage.
+Two images additionally compile a Rust crate on `rust:1.97-bookworm`, in
+cargo-chef stages that cook the dependencies in their own layer before
+`src` is copied: pathoscope builds `packages/pathoscope-core`, and
+create-sample builds `packages/quality-core`. Exactly one binary out of
+each Rust build reaches a runtime stage.
+
+**Each crate gets its own planner/builder pair, over a shared `chef`.**
+`libclang-dev` goes in a `chef-pathoscope` stage rather than the shared
+one, because only `pathoscope-core` needs it — putting it in the shared
+stage would make every create-sample build pay for an apt install it has
+no use for. This is the one-stage-per-tool rule below, applied to the
+crates.
 
 The nuvs image compiles SPAdes 4.2.0 from source, on `python:3.13-bookworm`,
 because it ships no binary release this base can use — the recipe is
@@ -51,9 +58,9 @@ the file. Adding a workspace must not mean editing a list of `COPY`
 lines.
 
 **Package *source*, though, is copied one `COPY` per package.** The glob
-above matches manifests only, so it skips `packages/pathoscope-core`,
-which is a Rust crate with no `package.json`. A blanket
-`COPY packages ./packages` would pull that crate's `src/` and
+above matches manifests only, so it skips `packages/pathoscope-core` and
+`packages/quality-core`, which are Rust crates with no `package.json`. A
+blanket `COPY packages ./packages` would pull their `src/` and
 `Cargo.lock` into the layer and bust its cache on every Rust edit. Add a
 line when a new TypeScript package appears.
 
@@ -61,16 +68,39 @@ line when a new TypeScript package appears.
 `apps/web` then does not invalidate the jobs-api image's cache, and the
 install layer stays untouched when an app is added.
 
-## Not every tool in the tools image is a binary
+## The bioinformatics tools are built here, one stage each
+
+`bowtie2`, `cd-hit`, `hmmer`, `pigz`, `samtools`, `seqkit` and `skewer`
+each get a stage near the top of the `Dockerfile`, installing to
+`/tools/<tool>/<version>/`, and the workflow runtime stages copy out of
+them. They were `ghcr.io/virtool/tools`, a separate repo; the recipes
+here are that repo's `install_*.sh` scripts verbatim, down to the
+upstream URLs and the layout.
+
+**One stage per tool, never one combined stage.** BuildKit builds only
+the stages the requested target reaches, so `--target create-subtraction`
+compiles nothing but seqkit. A combined stage would have every workflow
+image build every tool. None of these stages depends on `base` or reads
+the build context, so — exactly like the SPAdes stage — a warm layer
+cache skips all of them regardless of what changed in the repo.
+
+Two conventions inside the block differ from the rest of the file and are
+deliberate: recommended packages are *not* suppressed, because these
+stages contribute no bytes to any shipped image and `bioperl`'s
+recommends are part of what makes HMMER's `make` work; and `skewer` is
+built on `debian:bullseye` rather than bookworm, which is what the tools
+repo did.
+
+## Not every tool is a binary
 
 A runtime stage carrying one has to install interpreters as well as
 shared libraries. Check a new tool's entry point rather than assuming it
-is an ELF, and check it against the tools image rather than against
-upstream's current source — the pinned version is what ships:
+is an ELF, and check it against the pinned version this file builds
+rather than against upstream's current source:
 
 ```
-docker run --rm --entrypoint sh ghcr.io/virtool/tools:1.2.0 \
-    -c 'head -1 /tools/<tool>/<version>/<tool>'
+docker build --target <tool> -t vt-tool .
+docker run --rm vt-tool head -1 /tools/<tool>/<version>/<tool>
 ```
 
 A missing interpreter does not fail the build. It fails the first time
@@ -79,11 +109,11 @@ directory` — long after the image passed CI. Which interpreters a given
 image needs is that app's business; `apps/pathoscope/README.md` carries
 the worked example.
 
-**An interpreter being present is not the same as being complete.**
-`fastqc` is a Perl launcher around a Java program, so the create-sample
-image installs a JRE *and* `perl` — the `perl-base` this base already
-carries has no `FindBin`, which is the launcher's first statement, and
-the failure is again at exec rather than at build.
+**An interpreter being present is not the same as being complete.** The
+`perl-base` this base carries has no `FindBin`, and the JRE a Java tool
+needs is not there at all — a launcher script can name several things,
+and each missing one fails at exec rather than at build. `nuvs` is the
+live example, installing `python3` for SPAdes.
 
 ## Building and publishing
 
@@ -108,11 +138,14 @@ stamps a real version, so until then `APP_VERSION` is `0.0.0` in every
 built pathoscope or nuvs image, and the `workflow_version` in their cache
 keys with it.
 
-Both build jobs, plus `pathoscope-test`, are the only path-filtered jobs
-in `ci.yaml`, and they take a filter each because their inputs differ:
-`pathoscope-test` runs cargo over the crate and reads no TypeScript,
+Both build jobs, plus `pathoscope-test` and `quality-test`, are the only
+path-filtered jobs in `ci.yaml`, and they take a filter each because
+their inputs differ: the two crate jobs run cargo and read no TypeScript,
 while `build-pathoscope` and `build-nuvs` bundle their app on the shared
 `base` and so take every workspace package their build stage copies.
+`pathoscope-test` also carries `Dockerfile`, because it builds the
+`bowtie2` target to get the binary its golden vectors shell out to.
+
 **Everything a build stage `COPY`s must appear under that image's
 filter** — a missing path skips the build on the pull request that breaks
 it and fails on the push to `main`, where nothing gates it. The two image
