@@ -9,10 +9,17 @@ from structlog import get_logger
 from virtool.data.errors import ResourceError
 from virtool.data.layer import DataLayer
 from virtool.tasks.models import Task
+from virtool.tasks.oas import UpdateTaskRequest
 from virtool.tasks.registry import get_available_task_names, get_task_from_name
 from virtool.tasks.task import BaseTask
 
 logger = get_logger("tasks")
+
+POLL_DELAY = 2
+"""The number of seconds to wait between polls when the queue is empty."""
+
+MAX_ACQUIRE_DELAY = 60
+"""The longest a runner will wait between retries after failing to acquire a task."""
 
 
 class TaskRunner:
@@ -33,6 +40,15 @@ class TaskRunner:
         The task runner polls PostgreSQL for available tasks and runs them.
         The runner will run until a stop signal is received. When a stop signal is
         received, the runner will wait for the current task to finish before exiting.
+
+        Errors raised outside a task's own steps, such as a failed acquisition or a
+        failure to load the task, are logged and skipped. The runner must keep
+        polling instead of dying and leaving the queue unattended until the next
+        restart. Failed acquisitions back off so a database outage does not spin
+        the loop or flood the logs.
+
+        ``CancelledError`` inherits from ``BaseException``, so it passes through the
+        inner handlers to the shutdown path below.
         """
         logger.info(
             "started task runner",
@@ -40,17 +56,48 @@ class TaskRunner:
             supported_task_types=self._supported_task_types,
         )
 
+        delay = POLL_DELAY
+
         try:
             while True:
-                task = await self._data.tasks.acquire(
-                    self._runner_id, self._supported_task_types
-                )
-                if task is not None:
+                try:
+                    task = await self._data.tasks.acquire(
+                        self._runner_id, self._supported_task_types
+                    )
+                except Exception:
+                    logger.exception("encountered error acquiring task", delay=delay)
+                    await asyncio.sleep(delay)
+                    delay = min(delay * 2, MAX_ACQUIRE_DELAY)
+                    continue
+
+                delay = POLL_DELAY
+
+                if task is None:
+                    await asyncio.sleep(POLL_DELAY)
+                    continue
+
+                try:
                     await self._run_task(task.id)
-                else:
-                    await asyncio.sleep(2)
+                except Exception as e:
+                    logger.exception("encountered error running task", id=task.id)
+                    await self._fail_task(task.id, f"{type(e)}: {e!s}")
         except CancelledError:
             await self._shutdown()
+
+    async def _fail_task(self, task_id: int, error: str) -> None:
+        """Mark an acquired task as errored.
+
+        A task that fails outside its own steps is already acquired, and
+        :meth:`~virtool.tasks.data.TasksData.acquire` only returns unacquired rows.
+        Without this it would sit incomplete and unprocessable forever.
+
+        :param task_id: the ID of the task to mark
+        :param error: the error to record on the task
+        """
+        try:
+            await self._data.tasks.update(task_id, UpdateTaskRequest(error=error))
+        except Exception:
+            logger.exception("failed to mark task as errored", id=task_id)
 
     async def _run_task(self, task_id: int):
         """Run a task given a ``task_id``.
