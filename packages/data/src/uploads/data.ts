@@ -10,7 +10,7 @@ import { mintRootStorageKey } from "@virtool/storage";
 import { and, asc, count, desc, eq, inArray, lt, notExists } from "drizzle-orm";
 import type { Db, DbOrTx } from "../db/pg";
 import { takeFirstOrThrow } from "../db/rows";
-import { sampleReads } from "../db/schema/samples";
+import { sampleReads, sampleUploads } from "../db/schema/samples";
 import { type UploadRow, uploads as uploadsTable } from "../db/schema/uploads";
 import { users as usersTable } from "../db/schema/users";
 import { nowUtc, secondsAgo } from "../db/time";
@@ -298,7 +298,7 @@ export type ReapResult = {
 };
 
 /**
- * Delete reserved uploads that were never linked to a sample.
+ * Delete reserved uploads that no sample claims.
  *
  * The row goes before the object, unlike cache eviction: this is a soft delete,
  * so a refused delete leaves a row that still names the bytes. It emits no
@@ -324,14 +324,31 @@ export async function reapOrphanedUploads(
 				eq(uploadsTable.reserved, true),
 				eq(uploadsTable.removed, false),
 				lt(uploadsTable.createdAt, secondsAgo(olderThanSeconds)),
-				/* `sample_reads` alone. A `sample_uploads` row is written before any
-				   reads exist, so correlating on it too would exempt exactly the
-				   abandoned creations this sweep is for. */
 				notExists(
 					db
 						.select({ id: sampleReads.id })
 						.from(sampleReads)
 						.where(eq(sampleReads.upload, uploadsTable.id)),
+				),
+				/* `sample_reads` alone is not enough: those rows are written at
+				   finalize, so a sample that is still running looks exactly like an
+				   abandoned creation and has its inputs reaped out from under the
+				   workflow. The cutoff cannot rescue it — it measures the age of the
+				   upload rather than of the reservation, so an upload that sat in a
+				   user's list for a month is reapable the moment it is reserved.
+
+				   A `sample_uploads` row means a live sample claims the upload:
+				   `createSample` writes it in the transaction that reserves, and
+				   `deleteSample` clears it in the transaction that releases. What is
+				   left — a reservation no sample row names — is what this sweep is
+				   for. Python's `reap_orphaned` has to carry this term too; while both
+				   runners sweep the same table, the looser predicate is the one that
+				   decides what is reaped. */
+				notExists(
+					db
+						.select({ id: sampleUploads.id })
+						.from(sampleUploads)
+						.where(eq(sampleUploads.upload_id, uploadsTable.id)),
 				),
 			),
 		)

@@ -375,9 +375,34 @@ describe("reapOrphanedUploads", () => {
 		expect((await readRow(linked.id)).removed).toBe(false);
 	});
 
-	// A creation that died between the two rows has a `sample_uploads` row and no
-	// `sample_reads`, which is the orphan this sweep exists for.
-	it("reaps an upload only a sample_uploads row references", async () => {
+	/* A running sample has a `sample_uploads` row and no `sample_reads` row, which
+	   are only written at finalize. Reaping one deletes the reads the job is
+	   working from, and the cutoff is no defence: it is the age of the upload, so
+	   an upload reserved straight out of a user's list can be older than the
+	   window on the day the sample is created. */
+	it("leaves an upload a running sample reserved alone", async () => {
+		const userId = await seedUser(db);
+		const running = await seedStored(userId);
+		const key = running.storageKey ?? "";
+
+		await db.insert(sampleUploads).values({
+			sample: "sample-1",
+			upload_id: running.id,
+			index: 0,
+		});
+
+		await expect(reap()).resolves.toEqual({ found: 0, deleted: 0 });
+
+		const after = await readRow(running.id);
+
+		expect(after.removed).toBe(false);
+		expect(after.reserved).toBe(true);
+		await expect(storage.size(key)).resolves.toBeGreaterThan(0);
+	});
+
+	// `deleteSample` clears the link row in the transaction that releases the
+	// reservation, so a reservation no `sample_uploads` row names is the orphan.
+	it("reaps a reservation once its sample_uploads row is gone", async () => {
 		const userId = await seedUser(db);
 		const orphan = await seedStored(userId);
 
@@ -386,6 +411,12 @@ describe("reapOrphanedUploads", () => {
 			upload_id: orphan.id,
 			index: 0,
 		});
+
+		await expect(reap()).resolves.toEqual({ found: 0, deleted: 0 });
+
+		await db
+			.delete(sampleUploads)
+			.where(eq(sampleUploads.upload_id, orphan.id));
 
 		await expect(reap()).resolves.toEqual({ found: 1, deleted: 1 });
 		expect((await readRow(orphan.id)).removed).toBe(true);

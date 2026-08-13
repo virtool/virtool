@@ -15,7 +15,7 @@ import type { TaskContext } from "./registry";
 const payload = z.object({});
 
 /**
- * Delete reserved uploads that were never linked to a sample.
+ * Delete reserved uploads that no sample claims.
  *
  * The port of Python's `ReapOrphanedUploadsTask`, whose body is likewise one
  * call. Python jumps 0 to 100; the candidate count is known before the loop
