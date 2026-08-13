@@ -1477,13 +1477,37 @@ a `try_` lock, so it degrades to a spurious skip rather than to corruption.
 Widening the hash would break exclusion with Python, which is the entire point.
 Accept the keyspace.
 
-### The recency check is Python's predicate, not a better one
+### A spawn waits on outstanding work as well as on the window
 
-Any row of the type with `created_at > now - interval` suppresses the spawn,
-**whatever its state** — complete, errored, or neither. Filtering to incomplete
-rows or excluding errored ones is not an improvement: a stricter rule here
-loses to Python's looser one, and the pair then produces exactly the duplicate
-the lock exists to prevent.
+Two things suppress a spawn, and a row satisfying either is enough:
+
+- **A row of the type that is still active** — `complete = false AND error IS
+  NULL` — **whatever its age.** This is the gate that bounds the backlog.
+- **Any row of the type with `created_at > now - interval`**, whatever its
+  state: complete, errored, or neither. This is the window, and it paces a type
+  whose runs finish quickly.
+
+The first is a deliberate divergence from Python, which gates on recency alone.
+Python's rule keeps inserting once the last row ages out of the window however
+wedged the runner is — `sweep_blast` alone is a row every thirty seconds — so a
+fleet that comes back from an outage finds a pile of identical periodic tasks
+to drain instead of one. Gating on outstanding work holds it at one row per
+type, and the recovering runner drains one task per type.
+
+**Active, not merely incomplete, is what blocks.** A Python failure writes
+`error` and leaves `complete` false, so a rule reading `complete` alone would
+leave every type Python has ever failed blocked for good, silently — a
+suppressed spawn is the ordinary steady state and looks like nothing at all. A
+stale claim *does* block, because a reclaim will run it and a second row
+alongside would be the duplicate the gate exists to avoid.
+
+**Diverging this way cannot produce a duplicate while Python's spawner is
+live.** The direction is what matters: this side only ever declines a spawn
+Python's rule would have made, so Python's looser predicate sets the effective
+rate until its spawner is deleted, and the pile-up it is responsible for goes
+with it. The reverse — narrowing what counts as suppressing, so this side
+spawns where Python would not — is what produces duplicates, and is why the
+window still counts complete and errored rows.
 
 The window is `timezone('utc', clock_timestamp()) - make_interval(...)`, and
 the rows are inserted with `timezone('utc', clock_timestamp())` too. The
@@ -1516,10 +1540,9 @@ While both spawners run the shorter of the two intervals sets the effective
 rate, so a divergence changes production cadence rather than failing.
 
 This also puts `sweep_blast` — a 30 s interval on a 30 s tick — right on the
-boundary where a `created_at`-only dedup can admit a concurrent duplicate. That
-is a known, accepted defect of Python's design, and the stricter rule that
-fixes it lands when Python's spawner is deleted. A stricter rule now would lose
-to Python's looser one.
+boundary where a `created_at`-only dedup can admit a concurrent duplicate. The
+outstanding-work gate above closes that on this side; Python's spawner keeps
+the defect until it is deleted.
 
 **Do not register a sixth type.** Python's runner is the only runner until the
 cutover, and it *strands* a name it does not recognise — it acquires the row,

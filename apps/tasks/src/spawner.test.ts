@@ -240,7 +240,7 @@ describe("createTaskSpawner", () => {
 		await expect(spawner.stop()).resolves.toBeUndefined();
 	});
 
-	it("spawns again once the window has closed", async () => {
+	it("spawns again once the window has closed and the run has finished", async () => {
 		const { spawner } = build([{ type: "sweep_blast", intervalSeconds: 30 }]);
 
 		spawner.start();
@@ -253,6 +253,16 @@ describe("createTaskSpawner", () => {
 			.set({
 				created_at: sql`timezone('utc', clock_timestamp()) - make_interval(secs => 31)`,
 			})
+			.where(eq(tasks.type, "sweep_blast"));
+
+		// An aged row is not on its own enough: it is still outstanding work, and
+		// respawning alongside it is the backlog this gate exists to bound.
+		await delay(200);
+		expect(await countTasks("sweep_blast")).toBe(1);
+
+		await db
+			.update(tasks)
+			.set({ complete: true })
 			.where(eq(tasks.type, "sweep_blast"));
 
 		await waitFor(async () => (await countTasks("sweep_blast")) === 2);

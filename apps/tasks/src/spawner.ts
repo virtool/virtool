@@ -51,7 +51,8 @@ export type TaskSpawnerOptions = {
  * `create_periodic`, which is per call; this checks once, at construction, so a
  * bad schedule fails the process at startup rather than every thirty seconds
  * forever. An interval of zero would leave the suppression window permanently
- * open and spawn the task on every tick.
+ * open, so nothing but `createPeriodicTask`'s outstanding-work gate would pace
+ * the type and it would respawn the moment each run finished.
  */
 function checkSchedule(schedule: PeriodicTaskRegistration[]): void {
 	for (const { type, intervalSeconds } of schedule) {

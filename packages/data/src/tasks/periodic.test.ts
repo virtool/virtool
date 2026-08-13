@@ -49,11 +49,19 @@ beforeEach(async () => {
 async function seedTask(
 	type: string,
 	ageSeconds: number,
-	values: { complete?: boolean; error?: string } = {},
+	values: {
+		acquiredSecondsAgo?: number;
+		complete?: boolean;
+		error?: string;
+	} = {},
 ): Promise<number> {
 	const [row] = await db
 		.insert(tasks)
 		.values({
+			acquired_at:
+				values.acquiredSecondsAgo === undefined
+					? null
+					: sql`timezone('utc', clock_timestamp()) - make_interval(secs => ${values.acquiredSecondsAgo}::double precision)`,
 			complete: values.complete ?? false,
 			context: {},
 			count: 0,
@@ -195,7 +203,7 @@ describe("the recency window", () => {
 	});
 
 	it("spawns when the newest task of the type is older than it", async () => {
-		await seedTask("sweep_blast", 31);
+		await seedTask("sweep_blast", 31, { complete: true });
 
 		const result = await createPeriodicTask(db, "sweep_blast", 30);
 
@@ -211,9 +219,9 @@ describe("the recency window", () => {
 		expect(result.outcome).toBe("spawned");
 	});
 
-	// Python selects any row of the type inside the window, whatever its state.
-	// A stricter rule here would lose to Python's looser one every time the two
-	// spawners raced, which is the duplicate the advisory lock exists to prevent.
+	// The window is not narrowed to the rows the outstanding-work gate misses.
+	// A run that finished — successfully or not — still paces the type, so a
+	// task that fails in a second does not respawn on every tick.
 	it("counts a completed task inside it", async () => {
 		await seedTask("sweep_blast", 10, { complete: true });
 
@@ -256,11 +264,90 @@ describe("the recency window", () => {
 		});
 
 		await db.delete(tasks);
-		await seedTask("sweep_blast", 31);
+		await seedTask("sweep_blast", 31, { complete: true });
 
 		expect(
 			(await createPeriodicTask(skewed.db, "sweep_blast", 30)).outcome,
 		).toBe("spawned");
+	});
+});
+
+/**
+ * The regression guard for the backlog. Python gates on recency alone, so a
+ * wedged or absent runner leaves it inserting a fresh row every time the last
+ * one ages out of the window, and the fleet comes back to a pile of identical
+ * periodic tasks. Nothing here may depend on how *old* the outstanding row is.
+ */
+describe("the outstanding-work gate", () => {
+	it("suppresses a spawn while a queued task of the type is outstanding", async () => {
+		await seedTask("sweep_blast", 3600);
+
+		expect(await createPeriodicTask(db, "sweep_blast", 30)).toEqual({
+			outcome: "not_due",
+			task: null,
+		});
+
+		expect(await countTasks("sweep_blast")).toBe(1);
+	});
+
+	/**
+	 * A claim whose lease has run out is work a reclaim will pick up and run,
+	 * not work that is gone. Spawning alongside it is the duplicate the gate is
+	 * here to avoid.
+	 */
+	it("suppresses a spawn while a claim of the type has gone stale", async () => {
+		await seedTask("sweep_blast", 3600, { acquiredSecondsAgo: 3600 });
+
+		expect((await createPeriodicTask(db, "sweep_blast", 30)).outcome).toBe(
+			"not_due",
+		);
+	});
+
+	it("holds the backlog at one row however many ticks pass", async () => {
+		await seedTask("sweep_blast", 3600);
+
+		for (let tick = 0; tick < 5; tick++) {
+			expect((await createPeriodicTask(db, "sweep_blast", 30)).outcome).toBe(
+				"not_due",
+			);
+		}
+
+		expect(await countTasks("sweep_blast")).toBe(1);
+	});
+
+	it("re-arms once the outstanding task completes", async () => {
+		const taskId = await seedTask("sweep_blast", 3600);
+
+		expect((await createPeriodicTask(db, "sweep_blast", 30)).outcome).toBe(
+			"not_due",
+		);
+
+		await db.update(tasks).set({ complete: true }).where(eq(tasks.id, taskId));
+
+		expect((await createPeriodicTask(db, "sweep_blast", 30)).outcome).toBe(
+			"spawned",
+		);
+	});
+
+	/**
+	 * A Python failure writes `error` and leaves `complete` false, so gating on
+	 * `complete` alone would leave every type Python has ever failed blocked for
+	 * good — silently, since a suppressed spawn is the ordinary steady state.
+	 */
+	it("re-arms after a failure Python recorded without completing the row", async () => {
+		await seedTask("sweep_blast", 3600, { error: "boom" });
+
+		expect((await createPeriodicTask(db, "sweep_blast", 30)).outcome).toBe(
+			"spawned",
+		);
+	});
+
+	it("ignores outstanding tasks of other types", async () => {
+		await seedTask("refresh_hmms", 3600);
+
+		expect((await createPeriodicTask(db, "sweep_blast", 30)).outcome).toBe(
+			"spawned",
+		);
 	});
 });
 

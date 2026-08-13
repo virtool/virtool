@@ -14,10 +14,11 @@ export type PeriodicTaskRegistration = {
 	 *
 	 * A suppression window, not a schedule: the loop ticks at
 	 * {@link SPAWN_TICK_INTERVAL_MS} regardless, so a type's effective period is
-	 * `max(tick, intervalSeconds)` quantised to tick boundaries. Must match
-	 * Python's interval in `virtool/startup.py` while both spawners run — the
-	 * shorter of the two sets the effective rate, so a divergence silently
-	 * changes production cadence rather than failing.
+	 * `max(tick, intervalSeconds)` quantised to tick boundaries — and a floor
+	 * rather than a period, since a spawn also waits on the last run of the type
+	 * to finish. Must match Python's interval in `virtool/startup.py` while both
+	 * spawners run: the shorter of the two sets the effective rate, so a
+	 * divergence silently changes production cadence rather than failing.
 	 */
 	intervalSeconds: number;
 };

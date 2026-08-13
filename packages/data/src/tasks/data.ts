@@ -109,6 +109,25 @@ export async function createTask(
 }
 
 /**
+ * A task that is neither finished nor failed: outstanding work, whether it is
+ * queued, running, or claimed by a runner that has stopped renewing its lease.
+ *
+ * The two terms are both required and neither implies the other. A Python
+ * failure writes `error` and leaves `complete` false, so `complete = false`
+ * alone would count a row Python has already given up on; `error IS NULL`
+ * alone would count every row that ever succeeded.
+ *
+ * It is Python's `TasksData.get_counts` predicate term for term, which is what
+ * makes the pre- and post-cutover comparison apples-to-apples, and it is the
+ * predicate of Python's `idx_tasks_active` partial index, so a read under it is
+ * served by that index rather than scanning a table whose completed rows
+ * accumulate without bound.
+ */
+function isActive(): SQL | undefined {
+	return and(eq(tasksTable.complete, false), isNull(tasksTable.error));
+}
+
+/**
  * How a spawn attempt for one periodic task type ended.
  *
  * `skipped_locked` and `not_due` are told apart rather than folded into one
@@ -135,7 +154,7 @@ export type PeriodicSpawnResult =
  * nothing but that lock, and the failure mode is silent: diverge on the key and
  * both spawn, every periodic task runs twice, and nothing errors or logs.
  *
- * Three rules make the exclusion hold, and none of them is a preference:
+ * Two rules make the exclusion hold, and neither is a preference:
  *
  * - **The key is `hashtext` of the bare task name, computed in SQL.** Python
  *   emits `pg_try_advisory_xact_lock(hashtext($1))` from
@@ -148,10 +167,6 @@ export type PeriodicSpawnResult =
  *   pooler-safe one: session locks survive rollback, are reentrant so two
  *   logical spawners sharing a pooled connection do *not* exclude each other,
  *   and PgBouncer lists them as never supported under transaction pooling.
- * - **The recency check matches Python's predicate exactly** — *any* row of the
- *   type inside the window, complete or errored or neither. A stricter rule
- *   here loses to Python's looser one and spawns the duplicate this whole
- *   design exists to prevent.
  *
  * `hashtext` returns a signed **int4**, so the real keyspace is 2³² rather than
  * the 2⁶⁴ the advisory-lock signature implies, and the function is undocumented
@@ -164,6 +179,26 @@ export type PeriodicSpawnResult =
  * `try_` never blocks: `false` means another spawner is handling this type this
  * tick, and the caller moves on without retrying or escalating.
  *
+ * **The spawn is gated on outstanding work as well as on recency**, and this is
+ * a deliberate divergence from Python, which gates on recency alone. A row of
+ * the type that is still {@link isActive} suppresses the spawn *whatever its
+ * age*, so a type has at most one outstanding row at a time. Python's rule
+ * keeps inserting once the last row ages out of the window however wedged the
+ * runner is, and a fleet that comes back after an outage finds a pile of
+ * identical periodic tasks to drain rather than one.
+ *
+ * That an active row is what blocks — rather than an incomplete one — is what
+ * keeps a failure from blocking the type forever: a Python failure writes
+ * `error` and leaves `complete` false, and such a row re-arms on the ordinary
+ * interval like any other finished one. A row whose lease has gone stale
+ * *does* block, because a reclaim will run it and a second row would then be
+ * the duplicate this gate exists to avoid.
+ *
+ * Diverging this way cannot produce a duplicate while Python's spawner is
+ * live, because it only ever declines a spawn Python's rule would have made:
+ * Python's looser predicate sets the effective rate until its spawner is
+ * deleted, and the pile-up it is responsible for goes with it.
+ *
  * The lock, the check and the insert are one transaction; the event is emitted
  * after it commits, so a rolled-back insert cannot announce a row that does not
  * exist. `Db` rather than `DbOrTx` for that reason — this function has to own
@@ -171,7 +206,8 @@ export type PeriodicSpawnResult =
  *
  * `intervalSeconds` must be positive. It is validated where the schedule is
  * registered, at startup, rather than on every tick; zero here would leave the
- * window permanently open and spawn on every tick forever.
+ * window permanently open, so nothing but the outstanding-work gate would pace
+ * the type and it would respawn the moment each run finished.
  */
 export async function createPeriodicTask(
 	db: Db,
@@ -188,18 +224,21 @@ export async function createPeriodicTask(
 				return { outcome: "skipped_locked", task: null };
 			}
 
-			const [recent] = await tx
+			const [blocking] = await tx
 				.select({ id: tasksTable.id })
 				.from(tasksTable)
 				.where(
 					and(
 						eq(tasksTable.type, type),
-						gt(tasksTable.created_at, secondsAgo(intervalSeconds)),
+						or(
+							isActive(),
+							gt(tasksTable.created_at, secondsAgo(intervalSeconds)),
+						),
 					),
 				)
 				.limit(1);
 
-			if (recent !== undefined) {
+			if (blocking !== undefined) {
 				return { outcome: "not_due", task: null };
 			}
 
@@ -641,24 +680,6 @@ export async function releaseRunnerClaims(
 		.returning({ id: tasksTable.id });
 
 	return rows.map((row) => row.id);
-}
-
-/**
- * The predicate Python's `TasksData.get_counts` counts under: a task that is
- * neither finished nor failed.
- *
- * Reproduced term for term, because the pre- and post-cutover comparison is
- * only apples-to-apples if both sides count the same rows. It is also the
- * predicate of Python's `idx_tasks_active` partial index, so the reads below
- * are served by it rather than scanning a table whose completed rows accumulate
- * without bound.
- *
- * Note that `error IS NULL` and `complete = false` are *both* required. A
- * Python failure writes `error` and leaves `complete` false, so neither term
- * implies the other on rows Python wrote.
- */
-function isActive(): SQL | undefined {
-	return and(eq(tasksTable.complete, false), isNull(tasksTable.error));
 }
 
 /** Active tasks of one type, split the way Python's `get_counts` splits them. */

@@ -1179,10 +1179,17 @@ twice. The failure is silent: no error, no log, no alert. Six rules:
   task name per tick — never one spanning all five. `try_` never
   blocks; `false` is `skipped_locked`, logged at debug, and is never
   retried or escalated.
-- **The recency predicate is Python's**: any row of the type with
+- **A spawn is gated on outstanding work as well as on the window.** An
+  **active** row of the type — `complete = false AND error IS NULL` —
+  suppresses it whatever its age, which holds the backlog at one row per
+  type when the runner is down; *active* rather than *incomplete*,
+  because a Python failure leaves `complete` false and would block the
+  type forever. Python gates on recency alone, and diverging in this
+  direction cannot duplicate: it only declines spawns Python would have
+  made. The window itself stays Python's — any row with
   `created_at > clock_timestamp() - interval`, **complete and errored
-  rows included**. A stricter rule here loses to Python's looser one
-  and spawns the duplicate the lock exists to prevent.
+  rows included** — because narrowing *that* spawns where Python would
+  not, which is the duplicate the lock exists to prevent.
 - **The tick is a hardcoded 30 s and the interval is only a suppression
   window**, so a type's effective period is `max(30, interval)`. A
   per-task timer would open its window at a different moment than
