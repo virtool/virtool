@@ -19,6 +19,7 @@ COPY biome.json ./
 # bust this layer's cache on every Rust edit. Add a line here when a new
 # TypeScript package appears.
 COPY packages/tsconfig.base.json ./packages/
+COPY packages/archive ./packages/archive
 COPY packages/bio ./packages/bio
 COPY packages/contracts ./packages/contracts
 COPY packages/data ./packages/data

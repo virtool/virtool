@@ -128,15 +128,18 @@ This is a **pnpm monorepo**:
   deletes an analysis on failure**, as with pathoscope.
   It reads `hmm/profiles.hmm` and `hmm/annotations.json.gz` **straight from
   storage** — there is no jobs API HMM route — and checks both keys before step
-  one. The annotations blob is written **lazily** by Python, on the first
-  request for it, and cleared whenever an HMM install commits, so it is cold on
-  a fresh install and a run says so by name rather than failing at `vfam`.
+  one. The `install_hmms` task writes that blob when an install commits, and a
+  run that finds it missing says so by name rather than failing at `vfam`.
   **CI builds it but must not publish it**, exactly as for pathoscope:
   `virtool/workflow-nuvs` still releases the NuVs workflow, so `APP_VERSION`
   stays `0.0.0` and the `workflow_version` in all three of its cache keys with
   it.
 - `packages/` — shared, framework-agnostic libraries published as workspace
   packages, plus one Rust crate:
+  - `@virtool/archive` — compression and tarball utilities. Anything
+    that reads or writes an archive goes through it; never duplicate what
+    it exports. See
+    [packages/archive/README.md](packages/archive/README.md).
   - `@virtool/service` — the process-lifecycle pieces every long-lived
     service shares. Today that is `createShutdownController`
     (`./shutdown`) alone: readiness flip, LIFO hooks, listener, pool,
@@ -1688,11 +1691,8 @@ still have `bowtie2` rows, `GET /subtractions/{id}` keeps serving them, and
 `SubtractionFileType` keeps both members. See
 [docs/jobs-api.md](docs/jobs-api.md).
 
-`tar.ts` is `tar-stream`, not `node-tar`, because it is a pure stream
-parser. It diverges from Python's `tar.py` twice, deliberately: extraction
-stages into a sibling directory and renames on success rather than reading
-the archive twice to pre-validate it, and links and device nodes are
-rejected outright rather than admitted when they stay inside the target.
+Tar and gzip are **`@virtool/archive`**, not this package, and nothing here
+re-exports them.
 
 `deriveCacheKey` (`cache/key.ts`) reproduces `json.dumps(..., sort_keys=True,
 separators=(",", ":"), ensure_ascii=True)`, which `JSON.stringify` does not.

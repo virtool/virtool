@@ -19,6 +19,7 @@
 		"@azure/identity": "^4.13.1",
 		"@azure/storage-blob": "^12.33.0",
 		"@sentry/node": "^10.69.0",
+		"@virtool/archive": "workspace:*",
 		"@virtool/bio": "workspace:*",
 		"@virtool/contracts": "workspace:*",
 		"@virtool/storage": "workspace:*",

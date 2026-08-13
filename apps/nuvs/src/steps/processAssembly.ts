@@ -1,8 +1,8 @@
 import { createWriteStream } from "node:fs";
 import { rename } from "node:fs/promises";
 import { pipeline } from "node:stream/promises";
+import { compressFile } from "@virtool/archive/compression";
 import { findOrfs, parseFastaLines } from "@virtool/bio";
-import { compressFile } from "@virtool/workflow";
 import { workPaths } from "../paths";
 import { readLines } from "../sequences";
 import type { NuvsRawContig } from "../state";

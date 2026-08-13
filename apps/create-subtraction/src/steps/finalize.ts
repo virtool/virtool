@@ -1,9 +1,10 @@
+import { compressFile } from "@virtool/archive/compression";
 import type {
 	FinalizeSubtractionRequest,
 	SubtractionFileManifest,
 } from "@virtool/contracts";
 import { mintStorageKey } from "@virtool/storage";
-import { compressFile, uploadFromPath } from "@virtool/workflow";
+import { uploadFromPath } from "@virtool/workflow";
 import type { CreateSubtractionStep } from "./types";
 
 /**

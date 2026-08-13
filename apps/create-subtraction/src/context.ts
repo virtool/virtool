@@ -11,12 +11,9 @@
  * instance.
  */
 
+import { isGzipped } from "@virtool/archive/compression";
 import { WorkflowSubtraction } from "@virtool/contracts";
-import {
-	type BuildContextInput,
-	downloadToPath,
-	isGzipped,
-} from "@virtool/workflow";
+import { type BuildContextInput, downloadToPath } from "@virtool/workflow";
 import { type CreateSubtractionPaths, workPaths } from "./paths";
 
 /** The eagerly resolved data half of a create_subtraction run's context. */

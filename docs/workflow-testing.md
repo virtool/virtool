@@ -401,7 +401,7 @@ against a Python-produced fixture for reasons that have nothing to do with
 correctness. A file and its gzipped form therefore have the same digest, as do
 the same content gzipped at two different levels.
 
-Detection consumes `isGzipped` from the runtime's own file layer rather than
+Detection consumes `isGzipped` from `@virtool/archive/compression` rather than
 re-reading the magic number here; a second copy of that check is a second thing
 to get wrong. `decompressFile` is deliberately not used — it writes a second
 file, and this only needs a stream. Everything is streamed, because these files

@@ -1,11 +1,12 @@
 import { mkdir, rename } from "node:fs/promises";
 import { dirname } from "node:path";
+import { compressFile } from "@virtool/archive/compression";
 import type {
 	FinalizeSampleRequest,
 	SampleReadManifest,
 } from "@virtool/contracts";
 import { mintStorageKey } from "@virtool/storage";
-import { compressFile, uploadFromPath } from "@virtool/workflow";
+import { uploadFromPath } from "@virtool/workflow";
 import { readsFileName } from "../paths";
 import type { CreateSampleStep } from "./types";
 

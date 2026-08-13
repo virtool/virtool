@@ -12,7 +12,20 @@
 import { createReadStream } from "node:fs";
 import { pipeline } from "node:stream/promises";
 import { createGunzip } from "node:zlib";
+import { HmmAnnotationRecord } from "@virtool/contracts";
 import { WorkflowError } from "@virtool/workflow";
+import { z } from "zod";
+
+/*
+ * Derived from the shared record rather than restated, so this cannot come to
+ * disagree with what writes the blob. `pick` keeps zod's default strip
+ * behaviour, so the fields this workflow does not read are ignored rather than
+ * required — a blob Python wrote, or one written by a later version carrying
+ * more, still reads.
+ */
+const ClusterAnnotations = z.array(
+	HmmAnnotationRecord.pick({ cluster: true, id: true }),
+);
 
 /** The annotations blob is present but is not what this expects. */
 export class HmmAnnotationsMalformedError extends WorkflowError {}
@@ -58,28 +71,20 @@ export async function readHmmClusterMap(
 		);
 	}
 
-	if (!Array.isArray(parsed)) {
+	const result = ClusterAnnotations.safeParse(parsed);
+
+	if (!result.success) {
 		throw new HmmAnnotationsMalformedError(
-			`Expected the HMM annotations blob to be an array, got ${typeof parsed}`,
+			`The HMM annotations blob is not a list of annotations: ${result.error.issues
+				.map((issue) => `${issue.path.join(".") || "(root)"}: ${issue.message}`)
+				.slice(0, 3)
+				.join("; ")}`,
 		);
 	}
 
 	const clusters = new Map<number, number>();
 
-	for (const annotation of parsed) {
-		if (
-			typeof annotation !== "object" ||
-			annotation === null ||
-			typeof (annotation as { cluster?: unknown }).cluster !== "number" ||
-			typeof (annotation as { id?: unknown }).id !== "number"
-		) {
-			throw new HmmAnnotationsMalformedError(
-				"An HMM annotation carries no numeric cluster and id",
-			);
-		}
-
-		const { cluster, id } = annotation as { cluster: number; id: number };
-
+	for (const { cluster, id } of result.data) {
 		clusters.set(cluster, id);
 	}
 

@@ -638,6 +638,20 @@ A throwing `cleanup` is caught and logged and never rethrown. Losing the
 failure that provoked it to a secondary error in the handler meant to tidy up
 after it is how an original cause disappears.
 
+#### `reason` tells the two outcomes apart
+
+`cleanup` receives a `reason` of `"failed"` or `"aborted"`. A failed task is
+over; an aborted one is about to be released and claimed again from step zero.
+**A body that tears down anything its own next attempt reads must branch on
+it** — `install_hmms` is the case that forced the parameter, where a cleanup on
+drain empties the state its re-run needs and the re-run then writes everything
+and records none of it.
+
+**Never read `signal.aborted` inside a cleanup instead.** `runTask` samples the
+signal *before* the flush and lease renewal that precede the hook, and acts on
+what it sampled; an abort landing in that window leaves the live signal and the
+row disagreeing. `reason` carries the sampled value.
+
 ### A reclaimed task re-runs from step zero
 
 The claim query deliberately dropped Python's `progress = 0` filter, so a task

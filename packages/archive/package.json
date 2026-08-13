@@ -1,0 +1,26 @@
+{
+	"name": "@virtool/archive",
+	"version": "0.0.0",
+	"private": true,
+	"type": "module",
+	"sideEffects": false,
+	"exports": {
+		".": "./src/index.ts",
+		"./compression": "./src/compression.ts",
+		"./errors": "./src/errors.ts",
+		"./tar": "./src/tar.ts"
+	},
+	"scripts": {
+		"test": "vitest run",
+		"test:watch": "vitest",
+		"typecheck": "tsc --noEmit"
+	},
+	"dependencies": {
+		"tar-stream": "^3.2.0"
+	},
+	"devDependencies": {
+		"@types/node": "^26.1.2",
+		"@types/tar-stream": "^3.1.4",
+		"vitest": "^4.1.10"
+	}
+}

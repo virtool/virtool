@@ -29,12 +29,12 @@ import { randomUUID } from "node:crypto";
 import { mkdir, mkdtemp, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
+import { extractTarToDir, writePathAsTar } from "@virtool/archive/tar";
 import { Cache, CacheRegistered } from "@virtool/contracts";
 import type { StorageBackend } from "@virtool/storage";
 import { cacheKey } from "@virtool/storage";
 import type { JobsApiClient } from "../client/client";
 import { NotFoundError } from "../client/errors";
-import { extractTarToDir, writePathAsTar } from "../files/tar";
 import { downloadToPath, uploadFromPath } from "../files/transfer";
 import { type CacheParams, toJsonCacheParams } from "./key";
 

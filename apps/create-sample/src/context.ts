@@ -11,13 +11,10 @@
  * instance.
  */
 
+import { isGzipped } from "@virtool/archive/compression";
 import type { WorkflowSampleUpload } from "@virtool/contracts";
 import { WorkflowSample } from "@virtool/contracts";
-import {
-	type BuildContextInput,
-	downloadToPath,
-	isGzipped,
-} from "@virtool/workflow";
+import { type BuildContextInput, downloadToPath } from "@virtool/workflow";
 import { type CreateSamplePaths, workPaths } from "./paths";
 
 /** The eagerly resolved data half of a create_sample run's context. */

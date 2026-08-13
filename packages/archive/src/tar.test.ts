@@ -9,7 +9,7 @@ import {
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
-import { TarArchiveError, TarTargetExistsError } from "../errors";
+import { TarArchiveError, TarTargetExistsError } from "./errors";
 import { extractTarToDir, writePathAsTar } from "./tar";
 
 let workPath: string;

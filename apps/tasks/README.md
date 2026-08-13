@@ -24,6 +24,8 @@ a type without opening anything.
 - `src/framework/` — `defineTask`, the progress writer and `runTask`
 - `src/tasks/` — the task bodies, named for the `type` column in skewer case
   (`refresh-hmms.ts` for `refresh_hmms`), registered in `src/tasks/registry.ts`
+- `src/download.ts` — downloading a release archive to disk, with the bounded
+  retry, idle-stall timeout and status check `install_hmms` needs
 
 A claim is a lease encoded on `acquired_at`, renewed every 60 s and live for
 300. A reclaimed task re-runs from step zero, so **every task body must be

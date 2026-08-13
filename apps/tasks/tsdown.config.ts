@@ -17,6 +17,6 @@ export default defineConfig({
 		// Externals must appear verbatim as strings: knip's tsdown plugin reads
 		// them as declared dependencies, which is what keeps them out of the
 		// unused-dependency report without a knip.json entry.
-		neverBundle: ["pino", "postgres"],
+		neverBundle: ["pino", "postgres", "tar-stream"],
 	},
 });

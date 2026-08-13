@@ -21,7 +21,7 @@ import { readdir } from "node:fs/promises";
 import { join, relative, sep } from "node:path";
 import { pipeline } from "node:stream/promises";
 import { createGunzip } from "node:zlib";
-import { isGzipped } from "../files/compression";
+import { isGzipped } from "@virtool/archive/compression";
 
 /**
  * The digest of a file's decompressed content, as lowercase hex.

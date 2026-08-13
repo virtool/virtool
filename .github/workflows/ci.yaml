@@ -80,6 +80,7 @@ jobs:
                       nuvs-image:
                         - '.github/workflows/ci.yaml'
                         - 'apps/nuvs/**'
+                        - 'packages/archive/**'
                         - 'packages/bio/**'
                         - 'packages/contracts/**'
                         - 'packages/logger/**'
@@ -102,6 +103,7 @@ jobs:
                         - 'packages/pathoscope-core/**'
                         - '.github/workflows/ci.yaml'
                         - 'apps/pathoscope/**'
+                        - 'packages/archive/**'
                         - 'packages/contracts/**'
                         - 'packages/logger/**'
                         - 'packages/sentry/**'

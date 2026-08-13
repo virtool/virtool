@@ -1,4 +1,4 @@
-import { compressFile } from "@virtool/workflow";
+import { compressFile } from "@virtool/archive/compression";
 import { workPaths } from "../paths";
 import type { NuvsStep } from "./types";
 

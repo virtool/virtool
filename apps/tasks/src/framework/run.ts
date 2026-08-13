@@ -9,6 +9,7 @@ import type { Logger } from "@virtool/logger";
 import type {
 	RegisteredTask,
 	StepProgressReporter,
+	TaskCleanupReason,
 	TaskHandlerArgs,
 	TaskHelpers,
 } from "./define";
@@ -153,6 +154,7 @@ async function recordTerminal(
 async function runCleanup<C>(
 	def: RegisteredTask<C>,
 	args: TaskHandlerArgs<unknown, C>,
+	reason: TaskCleanupReason,
 	logger: Logger,
 ): Promise<void> {
 	if (def.cleanup === undefined) {
@@ -160,7 +162,7 @@ async function runCleanup<C>(
 	}
 
 	try {
-		await def.cleanup(args);
+		await def.cleanup({ ...args, reason });
 	} catch (err) {
 		// Never rethrown: the failure that provoked the cleanup is the one worth
 		// recording, and losing it to a secondary error in the handler that was
@@ -185,7 +187,9 @@ async function runCleanup<C>(
  * `cleanup` runs on every outcome but success — including the one that is easy
  * to miss, where a handler notices `signal.aborted` and returns *cleanly*. That
  * path looks exactly like success to a naive `catch`-only implementation, and
- * skips the cleanup silently.
+ * skips the cleanup silently. It is told which of the two it is through
+ * `reason`, carrying the same sampled `aborted` the terminal write uses, so a
+ * body that tears down state its own re-run depends on can hold off on a drain.
  *
  * It runs nothing after a fence. A lease that expired means another runner owns
  * the task and is re-running it, and a cleanup here would be tearing down the
@@ -306,7 +310,10 @@ export async function runTask<C>(
 		return { status: "fenced" };
 	}
 
-	await runCleanup(def, args, logger);
+	// The sampled `aborted`, not `signal.aborted`: it is the value the terminal
+	// write below acts on, and handing the cleanup anything else lets the two
+	// disagree about whether the task is finished or about to be re-run.
+	await runCleanup(def, args, aborted ? "aborted" : "failed", logger);
 
 	// A cleanup reports progress like any other step, and the debounce timer is
 	// `.unref()`'d — without this its write lands after the terminal one, where it

@@ -8,6 +8,7 @@
 // migration references its HMM annotations by that string, so the analysis
 // formatter resolves them through this column.
 
+import type { HmmEntry } from "@virtool/contracts";
 import {
 	bigint,
 	boolean,
@@ -18,14 +19,6 @@ import {
 	text,
 } from "drizzle-orm/pg-core";
 import { tasks } from "./tasks";
-
-/** A single sequence record backing an HMM annotation. */
-export type HmmEntry = {
-	accession: string;
-	gi: string;
-	name: string;
-	organism: string;
-};
 
 /**
  * A stored HMM release description, as written to `legacy_hmm_status.release`

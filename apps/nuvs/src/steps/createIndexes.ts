@@ -1,10 +1,7 @@
 import { mkdtemp, rm } from "node:fs/promises";
 import { join } from "node:path";
-import {
-	createMappingIndex,
-	decompressFile,
-	downloadToPath,
-} from "@virtool/workflow";
+import { decompressFile } from "@virtool/archive/compression";
+import { createMappingIndex, downloadToPath } from "@virtool/workflow";
 import { cacheFor } from "../cache";
 import {
 	REFERENCE_INDEX_EXTRA_PARAMS,

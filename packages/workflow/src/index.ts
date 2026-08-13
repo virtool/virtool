@@ -7,8 +7,6 @@ export * from "./client/retry";
 export * from "./config";
 export * from "./context";
 export * from "./errors";
-export * from "./files/compression";
-export * from "./files/tar";
 export * from "./files/transfer";
 export * from "./index/create";
 export * from "./index/queries";

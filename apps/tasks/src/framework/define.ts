@@ -59,6 +59,28 @@ export type TaskHandlerArgs<P, C> = {
 };
 
 /**
+ * Why a task's `cleanup` was called.
+ *
+ * `failed` is a task that is over: the row is about to carry an error and
+ * nothing will run it again. `aborted` is a task that is going to run again —
+ * the pod is draining, the claim is about to be released, and another runner
+ * picks the row up from step zero.
+ *
+ * The distinction has to be handed down rather than read off `signal.aborted`
+ * inside the handler. `runTask` samples the signal *before* the progress flush
+ * and the lease renewal that precede a cleanup, and acts on the value it
+ * sampled; an abort landing inside that window leaves the two disagreeing, so a
+ * body reading the live signal can skip its teardown on a run that is
+ * nevertheless recorded as failed.
+ */
+export type TaskCleanupReason = "aborted" | "failed";
+
+/** Arguments passed to a task's `cleanup`. */
+export type TaskCleanupArgs<P, C> = TaskHandlerArgs<P, C> & {
+	reason: TaskCleanupReason;
+};
+
+/**
  * A task type, as its author writes it. Construct with {@link defineTask}.
  *
  * `S` is the payload schema, so `run` and `cleanup` receive a payload already
@@ -76,10 +98,15 @@ export type TaskDef<S extends z.ZodType, C = unknown> = {
 	 * Runs on any non-success terminal outcome — thrown or aborted. Never on
 	 * success, and never once another runner has reclaimed the task.
 	 *
+	 * `reason` says which of the two it was, and a body tearing down anything a
+	 * re-run depends on **must** branch on it: an `aborted` task is going to be
+	 * released and claimed again, so teardown there destroys the state its own
+	 * next attempt reads. `install_hmms` is the worked example.
+	 *
 	 * A throwing `cleanup` is caught and logged; it does not mask the failure
 	 * that provoked it or change the error recorded on the row.
 	 */
-	cleanup?: (args: TaskHandlerArgs<z.infer<S>, C>) => Promise<void>;
+	cleanup?: (args: TaskCleanupArgs<z.infer<S>, C>) => Promise<void>;
 	/**
 	 * The body.
 	 *

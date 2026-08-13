@@ -4,6 +4,7 @@ import type { TaskRegistry } from "../framework/define";
 import { cleanupSessionsTask } from "./cleanup-sessions";
 import { createIndexTask } from "./create-index";
 import { evictCachesLruTask } from "./evict-caches-lru";
+import { installHmmsTask } from "./install-hmms";
 import { reapOrphanedUploadsTask } from "./reap-orphaned-uploads";
 import { refreshHmmsTask } from "./refresh-hmms";
 import { timeoutJobsTask } from "./timeout-jobs";
@@ -38,6 +39,7 @@ export const taskRegistry: TaskRegistry<TaskContext> = {
 	cleanup_sessions: cleanupSessionsTask,
 	create_index: createIndexTask,
 	evict_caches_lru: evictCachesLruTask,
+	install_hmms: installHmmsTask,
 	reap_orphaned_uploads: reapOrphanedUploadsTask,
 	refresh_hmms: refreshHmmsTask,
 	timeout_jobs: timeoutJobsTask,

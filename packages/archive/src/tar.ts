@@ -1,29 +1,33 @@
 /**
- * Tar reading and writing, ported from `virtool/workflow/data/tar.py`.
+ * Tar reading and writing.
  *
- * Cache archives cross the runtime boundary in both directions — a TypeScript
- * workflow must read what Python's `tarfile` wrote, and Python must extract what
- * this writes — so the format is a contract, not an implementation detail.
+ * The cache archives {@link extractTarToDir} and {@link writePathAsTar} handle
+ * are also read and written by the Python runtime, so their format is a
+ * contract. They are **uncompressed**, leaving no compressor variance to worry
+ * about. {@link extractTarMembers} is the other shape: named members out of an
+ * archive whose other contents are of no interest, and the one that takes gzip.
  *
- * Archives are **uncompressed** (Python's `mode="w"`), so there is no compressor
- * variance to worry about. `tar-stream` is used rather than `node-tar` because
- * it is a pure stream parser: cache payloads are trimmed reads and Bowtie2
- * indexes, and nothing here may hold one in memory.
+ * `tar-stream` is used rather than `node-tar` because it is a pure stream
+ * parser: payloads here are trimmed reads, Bowtie2 indexes and HMM profile
+ * databases, and nothing may hold one in memory.
  *
- * ## Two deliberate divergences from Python
+ * ## Extraction stages, then renames
  *
- * **Extraction stages, then renames.** Python calls `getmembers()` to validate
- * the whole archive before extracting a byte, which is cheap for it because
- * `tarfile` seeks past data blocks on a seekable file. A stream parser cannot
- * seek, so the equivalent would mean reading a multi-gigabyte archive twice.
- * Entries are extracted into a staging directory alongside the target and
- * renamed into place only once the archive has validated, which gives the same
- * all-or-nothing guarantee in one pass.
+ * A stream parser cannot seek, so validating the whole archive before writing a
+ * byte would mean reading a multi-gigabyte file twice. Entries land in a
+ * staging directory alongside the target and are renamed into place once the
+ * archive has validated, which is all-or-nothing in one pass.
  *
- * **Links and device nodes are rejected outright**, where Python's
- * `filter="data"` admits a symlink that stays inside the destination. Cache
- * payloads are regular files and directories, so the stricter rule costs
- * nothing and cannot silently restore a tree that points somewhere unintended.
+ * ## Links and device nodes are rejected outright
+ *
+ * Payloads here are regular files and directories, so refusing everything else
+ * costs nothing and cannot silently restore a tree that points somewhere
+ * unintended.
+ *
+ * ## Every entry must be drained
+ *
+ * An entry that is neither piped nor `resume()`d **stalls the read forever** —
+ * no error, no exit. Every path through every loop below pipes or resumes.
  */
 
 import { randomUUID } from "node:crypto";
@@ -31,11 +35,16 @@ import { createReadStream, createWriteStream } from "node:fs";
 import { lstat, mkdir, readdir, rename, rm, stat } from "node:fs/promises";
 import { dirname, join, posix, sep } from "node:path";
 import { pipeline } from "node:stream/promises";
+import { createGunzip } from "node:zlib";
 import { extract, pack } from "tar-stream";
-import { TarArchiveError, TarTargetExistsError } from "../errors";
+import {
+	TarArchiveError,
+	TarMemberMissingError,
+	TarTargetExistsError,
+} from "./errors";
 
-// Everything a `filter="data"` extraction refuses, plus the link types Python
-// would admit conditionally. Anything not a file or a directory lands here.
+// Anything that is not a plain file or a directory — links and device nodes
+// included — is refused.
 const ALLOWED_ENTRY_TYPES = new Set(["file", "directory"]);
 
 async function pathExists(path: string): Promise<boolean> {
@@ -159,6 +168,99 @@ export async function extractTarToDir(
 		return restored;
 	} finally {
 		await rm(staging, { recursive: true, force: true });
+	}
+}
+
+/** What {@link extractTarMembers} accepts alongside its member map. */
+export type ExtractTarMembersOptions = {
+	/** Pipe the archive through `createGunzip()` first. For a `.tar.gz`. */
+	gzip?: boolean;
+	/** Aborts the read between entries and destroys the stream. */
+	signal?: AbortSignal;
+	/** Members the archive may omit. Anything else in the map is required. */
+	optional?: readonly string[];
+};
+
+/**
+ * Extract named members of `archivePath` to the paths `members` maps them to.
+ *
+ * `members` is keyed by the member name as it appears in the archive; the caller
+ * chooses every destination, so an archive never decides where a byte lands.
+ * Parent directories are created and an existing destination is overwritten.
+ *
+ * **Every** entry is validated on the way past, wanted or not, matching Python's
+ * `safely_extract_tgz`. Checking only what the caller asked for would let an
+ * archive carry a payload the guard never looked at.
+ *
+ * @throws {TarArchiveError} when any member escapes the archive root or is not
+ *   a plain file or directory.
+ * @throws {TarMemberMissingError} when a required member is not in the archive.
+ */
+export async function extractTarMembers(
+	archivePath: string,
+	members: Readonly<Record<string, string>>,
+	options: ExtractTarMembersOptions = {},
+): Promise<void> {
+	const { gzip = false, optional = [], signal } = options;
+
+	const wanted = new Map(Object.entries(members));
+	const found = new Set<string>();
+
+	const entries = extract();
+	const source = createReadStream(archivePath);
+
+	// `pipe` does not forward a source error, and an unlistened `error` is an
+	// uncaught exception — a missing archive would take the process down rather
+	// than reject this call.
+	source.on("error", (err) => entries.destroy(err));
+
+	if (gzip) {
+		const gunzip = createGunzip();
+		gunzip.on("error", (err) => entries.destroy(err));
+		source.pipe(gunzip).pipe(entries);
+	} else {
+		source.pipe(entries);
+	}
+
+	try {
+		for await (const entry of entries) {
+			// Every iteration, not only the ones that write: `pipeline` observes the
+			// signal for a wanted member, but an archive whose tail is all skipped
+			// entries would otherwise drain to the end and resolve during a drain.
+			signal?.throwIfAborted();
+
+			const { name, type } = entry.header;
+
+			checkMemberIsSafe(name, type);
+
+			const target = wanted.get(name);
+
+			if (target === undefined || type === "directory") {
+				// Resumed, not left alone: an undrained entry stalls the parser.
+				entry.resume();
+				continue;
+			}
+
+			await mkdir(dirname(target), { recursive: true });
+			await pipeline(entry, createWriteStream(target), { signal });
+
+			found.add(name);
+		}
+	} catch (err) {
+		// Otherwise the handle behind `source` stays open until the archive has
+		// been read to its end.
+		source.destroy();
+		entries.destroy();
+
+		throw err;
+	}
+
+	const missing = [...wanted.keys()].filter(
+		(name) => !found.has(name) && !optional.includes(name),
+	);
+
+	if (missing.length > 0) {
+		throw new TarMemberMissingError(missing);
 	}
 }
 
