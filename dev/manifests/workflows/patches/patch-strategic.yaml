@@ -1,0 +1,13 @@
+apiVersion: keda.sh/v1alpha1
+kind: ScaledJob
+metadata:
+  name: ignored
+spec:
+  failedJobsHistoryLimit: 3
+  jobTargetRef:
+    backoffLimit: 1
+    completions: 1
+    parallelism: 1
+  rollout:
+    strategy: gradual
+  successfulJobsHistoryLimit: 1

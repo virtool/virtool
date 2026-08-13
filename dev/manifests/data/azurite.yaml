@@ -1,0 +1,114 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: azurite
+  labels:
+    app: azurite
+spec:
+  serviceName: azurite
+  replicas: 1
+  selector:
+    matchLabels:
+      app: azurite
+  template:
+    metadata:
+      labels:
+        app: azurite
+    spec:
+      initContainers:
+        - name: azurite-init
+          image: mcr.microsoft.com/azure-cli:latest
+          restartPolicy: Always
+          env:
+            - name: AZURE_STORAGE_CONNECTION_STRING
+              value: "DefaultEndpointsProtocol=http;AccountName=devstoreaccount1;AccountKey=Eby8vdM02xNOcqFlqUwJPLlmEtlCDXJ1OUzFT50uSRZ6IFsuFq2UVErCz4I6tq/K1SZFPTOtr/KBHBeksoGMGw==;BlobEndpoint=http://127.0.0.1:10000/devstoreaccount1;"
+          command:
+            - /bin/sh
+            - -c
+            - |
+              set -eu
+              until az storage container create --name virtool --output none 2>/dev/null; do sleep 2; done
+              touch /tmp/ready
+              exec sleep infinity
+          resources:
+            requests:
+              cpu: 50m
+              memory: 64Mi
+            limits:
+              cpu: 200m
+              memory: 256Mi
+          readinessProbe:
+            exec:
+              command: ["test", "-f", "/tmp/ready"]
+            periodSeconds: 2
+      containers:
+        - name: azurite
+          image: mcr.microsoft.com/azure-storage/azurite
+          args:
+            - azurite
+            - --blobHost
+            - 0.0.0.0
+            - --queueHost
+            - 0.0.0.0
+            - --tableHost
+            - 0.0.0.0
+            - --location
+            - /data
+            - --skipApiVersionCheck
+            - --disableProductStyleUrl
+          ports:
+            - containerPort: 10000
+              name: blob
+            - containerPort: 10001
+              name: queue
+            - containerPort: 10002
+              name: table
+          resources:
+            requests:
+              cpu: 100m
+              memory: 128Mi
+            limits:
+              cpu: 250m
+              memory: 256Mi
+          readinessProbe:
+            tcpSocket:
+              port: 10000
+            initialDelaySeconds: 2
+            periodSeconds: 5
+          livenessProbe:
+            tcpSocket:
+              port: 10000
+            initialDelaySeconds: 10
+            periodSeconds: 10
+          volumeMounts:
+            - name: data
+              mountPath: /data
+  volumeClaimTemplates:
+    - metadata:
+        name: data
+      spec:
+        accessModes: ["ReadWriteOnce"]
+        resources:
+          requests:
+            storage: 5Gi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: azurite
+spec:
+  selector:
+    app: azurite
+  ports:
+    - name: blob
+      protocol: TCP
+      port: 10000
+      targetPort: 10000
+    - name: queue
+      protocol: TCP
+      port: 10001
+      targetPort: 10001
+    - name: table
+      protocol: TCP
+      port: 10002
+      targetPort: 10002

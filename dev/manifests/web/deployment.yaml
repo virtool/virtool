@@ -1,0 +1,38 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: web
+spec:
+  template:
+    spec:
+      containers:
+        - image: ghcr.io/virtool/ui:latest
+          name: virtool-web
+          command: ["npm", "start"]
+          env:
+            - name: VT_UI_PORT
+              value: "9900"
+            - name: VT_UI_HOST
+              value: "0.0.0.0"
+            - name: VT_POSTGRES_URL
+              value: "postgres://virtool:virtool@postgres.default.svc.cluster.local:5432/virtool"
+            - name: VT_STORAGE_BACKEND
+              value: "azure"
+            - name: VT_STORAGE_AZURE_ACCOUNT
+              value: "devstoreaccount1"
+            - name: VT_STORAGE_AZURE_CONTAINER
+              value: "virtool"
+            - name: VT_STORAGE_AZURE_ACCESS_KEY
+              value: "Eby8vdM02xNOcqFlqUwJPLlmEtlCDXJ1OUzFT50uSRZ6IFsuFq2UVErCz4I6tq/K1SZFPTOtr/KBHBeksoGMGw=="
+            - name: VT_STORAGE_AZURE_ENDPOINT
+              value: "http://azurite.default.svc.cluster.local:10000/devstoreaccount1"
+          ports:
+            - containerPort: 9900
+              protocol: TCP
+          resources:
+            limits:
+              cpu: 4000m
+              memory: 3200M
+            requests:
+              cpu: 2000m
+              memory: 3200M

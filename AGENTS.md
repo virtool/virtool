@@ -226,6 +226,11 @@ carries `--tries` and `--timeout`** — the defaults are 20 tries at a
 900-second read timeout, so an unreachable mirror hangs the job for
 hours instead of failing it.
 
+**The local Tilt/Minikube cluster is the root `Tiltfile` plus `dev/`**, which
+holds the Kustomize `manifests/` and the cluster `scripts/`. Neither is a
+workspace and neither holds TypeScript; see **The dev cluster is the root
+`Tiltfile` and `dev/`** under **Tooling**, and [dev/README.md](dev/README.md).
+
 Use `pnpm` for all install, run, and exec commands — not `npm` or `bun`.
 
 ## Tooling
@@ -275,8 +280,33 @@ target was requested, so both image filters list all three.
 without an edit; `apps/site` is excluded once, in `biome.json`'s
 `files.includes`.
 
-Don't use the dev server. Live development is done using Tilt and Minikube and is
-currently configured in another repository.
+Don't use the dev server. Live development is done using Tilt and Minikube,
+configured in the root `Tiltfile` — see below.
+
+### The dev cluster is the root `Tiltfile` and `dev/`
+
+The `Tiltfile` is at the repo root, where `tilt up` looks for it. `dev/` holds
+everything it reads: the Kustomize `manifests/` and the `scripts/` that create,
+update and wipe the cluster. Every service and workflow it deploys builds from
+the root `Dockerfile`, at the stage named after the live-edit flag
+(`tilt up -- --web` builds the `dev` stage, `--nuvs` the `nuvs` stage). See
+[dev/README.md](dev/README.md).
+
+Three rules it carries:
+
+- **A `docker_build` context is `'.'`, the repo root.** Everything else the
+  Tiltfile names is relative to the root too, so a manifest is
+  `'dev/manifests/ingress.yaml'` and a script `'dev/scripts/pull.sh'`.
+- **`.dockerignore` excludes both `Tiltfile` and `dev`.** The Tiltfile builds
+  with the repo root as its context and Tilt reads that file to decide what it
+  watches, so without those rules an edit to a manifest rebuilds every
+  live-edited image.
+- **There is no migration target.** Migrations are Python's; the migration Job
+  runs the published `ghcr.io/virtool/virtool` image and nothing builds it here.
+
+It is YAML, Bash and Starlark, so `dev/` is not a pnpm workspace and is
+invisible to `pnpm build`, `pnpm test` and `pnpm knip`. `biome.json`'s
+`files.includes` carves it out the same way it carves out `apps/site`.
 
 ### When to run checks
 

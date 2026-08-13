@@ -1,0 +1,38 @@
+apiVersion: keda.sh/v1alpha1
+kind: ScaledJob
+metadata:
+  labels:
+    app.virtool.ca/workflow-name: create-subtraction
+    app.virtool.ca/workflow-size: small
+  name: create-subtraction
+spec:
+  jobTargetRef:
+    template:
+      metadata:
+        labels:
+          app: workflow-create-subtraction
+      spec:
+        containers:
+          - name: workflow-create-subtraction
+            image: ghcr.io/virtool/create-subtraction:7.79.7
+            env:
+              - name: VT_PROC
+                value: "2"
+              - name: VT_MEM
+                value: "2"
+              - name: VT_WORKFLOW
+                value: create_subtraction
+            resources:
+              limits:
+                cpu: "3"
+                memory: 5Gi
+              requests:
+                cpu: "3"
+                memory: 5Gi
+  triggers:
+    - type: metrics-api
+      metadata:
+        url: "http://virtool-jobs-api-service.default.svc.cluster.local/jobs/counts"
+        valueLocation: "pending.create_subtraction"
+        targetValue: "1"
+        activationTargetValue: "0"

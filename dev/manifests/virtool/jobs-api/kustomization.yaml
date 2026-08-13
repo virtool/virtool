@@ -1,0 +1,14 @@
+images:
+  - name: ghcr.io/virtool/jobs-api
+    newTag: latest
+
+labels:
+  - pairs:
+      component: jobs-api
+      part-of: virtool
+
+namePrefix: virtool-
+
+resources:
+  - deployment.yaml
+  - service.yaml

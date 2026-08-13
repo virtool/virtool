@@ -1,0 +1,47 @@
+- op: add
+  path: /spec/jobTargetRef/template/spec/containers/0/env/-1
+  value:
+    name: VT_JOBS_API_URL
+    value: http://virtool-jobs-api-service.default.svc.cluster.local
+
+- op: add
+  path: /spec/jobTargetRef/template/spec/containers/0/env/-1
+  value:
+    name: VT_TIMEOUT
+    value: "120"
+
+- op: add
+  path: /spec/jobTargetRef/template/spec/containers/0/env/-1
+  value:
+    name: VT_WORK_PATH
+    value: /work
+
+- op: add
+  path: /spec/jobTargetRef/template/spec/containers/0/env/-1
+  value:
+    name: VT_STORAGE_BACKEND
+    value: azure
+
+- op: add
+  path: /spec/jobTargetRef/template/spec/containers/0/env/-1
+  value:
+    name: VT_STORAGE_AZURE_ACCOUNT
+    value: devstoreaccount1
+
+- op: add
+  path: /spec/jobTargetRef/template/spec/containers/0/env/-1
+  value:
+    name: VT_STORAGE_AZURE_CONTAINER
+    value: virtool
+
+- op: add
+  path: /spec/jobTargetRef/template/spec/containers/0/env/-1
+  value:
+    name: VT_STORAGE_AZURE_ACCESS_KEY
+    value: Eby8vdM02xNOcqFlqUwJPLlmEtlCDXJ1OUzFT50uSRZ6IFsuFq2UVErCz4I6tq/K1SZFPTOtr/KBHBeksoGMGw==
+
+- op: add
+  path: /spec/jobTargetRef/template/spec/containers/0/env/-1
+  value:
+    name: VT_STORAGE_AZURE_ENDPOINT
+    value: http://azurite.default.svc.cluster.local:10000/devstoreaccount1

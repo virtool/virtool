@@ -1,0 +1,64 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: ingress
+  annotations:
+    kubernetes.io/ingress.class: nginx
+    nginx.ingress.kubernetes.io/rewrite-target: /$1
+    nginx.ingress.kubernetes.io/proxy-body-size: "10000m"
+    # The Vite HMR socket and the /events SSE stream are long-lived and mostly
+    # idle. nginx's 60s defaults would cut them.
+    nginx.ingress.kubernetes.io/proxy-read-timeout: "3600"
+    nginx.ingress.kubernetes.io/proxy-send-timeout: "3600"
+spec:
+  tls:
+    - hosts:
+        - virtool.local
+      secretName: mkcert
+  rules:
+    - host: virtool.local
+      http:
+        paths:
+          - path: /(.*)
+            pathType: ImplementationSpecific
+            backend:
+              service:
+                name: virtool-web-service
+                port:
+                  number: 80
+---
+# Uploads (POST /uploads) get their own Ingress so request buffering can be
+# turned off just for them. With buffering off, nginx streams the request body
+# straight to the UI instead of absorbing it first, so client-side upload
+# progress reflects the true blob-store write speed rather than jumping to 100%
+# and then stalling on a silent second hop. Buffering stays on everywhere else
+# (see the `ingress` object) so slow clients don't pin connections.
+# ingress-nginx merges this into the same virtool.local server block and orders
+# locations longest-path-first, so this rule wins for /uploads requests.
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: ingress-uploads
+  annotations:
+    kubernetes.io/ingress.class: nginx
+    nginx.ingress.kubernetes.io/rewrite-target: /$1
+    nginx.ingress.kubernetes.io/proxy-body-size: "10000m"
+    nginx.ingress.kubernetes.io/proxy-read-timeout: "3600"
+    nginx.ingress.kubernetes.io/proxy-send-timeout: "3600"
+    nginx.ingress.kubernetes.io/proxy-request-buffering: "off"
+spec:
+  tls:
+    - hosts:
+        - virtool.local
+      secretName: mkcert
+  rules:
+    - host: virtool.local
+      http:
+        paths:
+          - path: /(uploads.*)
+            pathType: ImplementationSpecific
+            backend:
+              service:
+                name: virtool-web-service
+                port:
+                  number: 80

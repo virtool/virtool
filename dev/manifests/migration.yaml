@@ -1,0 +1,45 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: virtool-migration
+  labels:
+    app: virtool-migration
+spec:
+  backoffLimit: 0
+  template:
+    metadata:
+      labels:
+        app: virtool-migration
+    spec:
+      restartPolicy: Never
+      containers:
+        - image: ghcr.io/virtool/virtool:41.19.0
+          name: virtool-migration
+          command: ["virtool", "migration", "apply"]
+          env:
+            - name: VT_DATA_PATH
+              value: "/data"
+            - name: VT_DEV
+              value: "true"
+            - name: VT_HOST
+              value: "0.0.0.0"
+            - name: VT_POSTGRES_CONNECTION_STRING
+              value: "postgresql+asyncpg://virtool@postgres.default.svc.cluster.local?password=virtool"
+            - name: VT_STORAGE_BACKEND
+              value: "azure"
+            - name: VT_STORAGE_AZURE_ACCOUNT
+              value: "devstoreaccount1"
+            - name: VT_STORAGE_AZURE_CONTAINER
+              value: "virtool"
+            - name: VT_STORAGE_AZURE_ACCESS_KEY
+              value: "Eby8vdM02xNOcqFlqUwJPLlmEtlCDXJ1OUzFT50uSRZ6IFsuFq2UVErCz4I6tq/K1SZFPTOtr/KBHBeksoGMGw=="
+            - name: VT_STORAGE_AZURE_ENDPOINT
+              value: "http://azurite.default.svc.cluster.local:10000/devstoreaccount1"
+          imagePullPolicy: Always
+          resources:
+            limits:
+              cpu: 800m
+              memory: 2Gi
+            requests:
+              cpu: 200m
+              memory: 1Gi

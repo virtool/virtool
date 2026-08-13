@@ -1,0 +1,42 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: tasks
+  labels:
+    app: virtool-tasks
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: virtool-tasks
+  template:
+    metadata:
+      labels:
+        app: virtool-tasks
+    spec:
+      containers:
+        - name: tasks
+          image: ghcr.io/virtool/tasks:latest
+          env:
+            - name: VT_POSTGRES_URL
+              value: "postgres://virtool:virtool@postgres.default.svc.cluster.local:5432/virtool"
+            - name: VT_STORAGE_BACKEND
+              value: "azure"
+            - name: VT_STORAGE_AZURE_ACCOUNT
+              value: "devstoreaccount1"
+            - name: VT_STORAGE_AZURE_CONTAINER
+              value: "virtool"
+            - name: VT_STORAGE_AZURE_ACCESS_KEY
+              value: "Eby8vdM02xNOcqFlqUwJPLlmEtlCDXJ1OUzFT50uSRZ6IFsuFq2UVErCz4I6tq/K1SZFPTOtr/KBHBeksoGMGw=="
+            - name: VT_STORAGE_AZURE_ENDPOINT
+              value: "http://azurite.default.svc.cluster.local:10000/devstoreaccount1"
+          ports:
+            - containerPort: 9900
+              protocol: TCP
+          resources:
+            limits:
+              cpu: 1000m
+              memory: 1Gi
+            requests:
+              cpu: 600m
+              memory: 1Gi

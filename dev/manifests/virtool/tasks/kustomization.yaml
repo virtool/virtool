@@ -1,0 +1,13 @@
+images:
+  - name: ghcr.io/virtool/tasks
+    newTag: latest
+
+labels:
+  - pairs:
+      component: tasks
+      part-of: virtool
+
+namePrefix: virtool-
+
+resources:
+  - deployment.yaml

@@ -1,0 +1,22 @@
+namePrefix: virtool-workflow-
+
+labels:
+  - pairs:
+      app.kubernetes.io/component: workflow
+      app.kubernetes.io/part-of: virtool
+    includeSelectors: true
+    includeTemplates: true
+
+patches:
+  - path: patches/patch-strategic.yaml
+    target:
+      kind: ScaledJob
+  - path: patches/patch-json.yaml
+    target:
+      kind: ScaledJob
+
+resources:
+  - create-sample.yaml
+  - create-subtraction.yaml
+  - nuvs.yaml
+  - pathoscope.yaml

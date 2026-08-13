@@ -1,0 +1,35 @@
+apiVersion: keda.sh/v1alpha1
+kind: ScaledJob
+metadata:
+  name: pathoscope
+  labels:
+    app.virtool.ca/workflow-name: pathoscope
+    app.virtool.ca/workflow-size: large
+spec:
+  jobTargetRef:
+    template:
+      spec:
+        containers:
+          - name: workflow-pathoscope
+            image: ghcr.io/virtool/pathoscope:7.79.7
+            env:
+              - name: VT_MEM
+                value: "8"
+              - name: VT_PROC
+                value: "4"
+              - name: VT_WORKFLOW
+                value: pathoscope
+            resources:
+              limits:
+                cpu: "5"
+                memory: 10Gi
+              requests:
+                cpu: "5"
+                memory: 10Gi
+  triggers:
+    - type: metrics-api
+      metadata:
+        url: "http://virtool-jobs-api-service.default.svc.cluster.local/jobs/counts"
+        valueLocation: "pending.pathoscope"
+        targetValue: "1"
+        activationTargetValue: "0"

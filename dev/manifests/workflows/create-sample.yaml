@@ -1,0 +1,38 @@
+apiVersion: keda.sh/v1alpha1
+kind: ScaledJob
+metadata:
+  labels:
+    app.virtool.ca/workflow-name: create-sample
+    app.virtool.ca/workflow-size: small
+  name: create-sample
+spec:
+  jobTargetRef:
+    template:
+      metadata:
+        labels:
+          app: workflow-create-sample
+      spec:
+        containers:
+          - name: workflow-create-sample
+            image: ghcr.io/virtool/create-sample:7.79.7
+            env:
+              - name: VT_PROC
+                value: "2"
+              - name: VT_MEM
+                value: "4"
+              - name: VT_WORKFLOW
+                value: create_sample
+            resources:
+              limits:
+                cpu: 2700m
+                memory: 5Gi
+              requests:
+                cpu: 2700m
+                memory: 5Gi
+  triggers:
+    - type: metrics-api
+      metadata:
+        url: "http://virtool-jobs-api-service.default.svc.cluster.local/jobs/counts"
+        valueLocation: "pending.create_sample"
+        targetValue: "1"
+        activationTargetValue: "0"

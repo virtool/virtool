@@ -1,5 +1,11 @@
 .idea
 data
+# The Tilt/Minikube dev cluster. The Tiltfile builds these images with the repo
+# root as the context, and Tilt reads this file to decide what it watches — so
+# without these rules, editing a manifest or the Tiltfile itself would rebuild
+# every live-edited image.
+Tiltfile
+dev
 **/dist
 docker
 docs

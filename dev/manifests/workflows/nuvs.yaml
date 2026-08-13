@@ -1,0 +1,35 @@
+apiVersion: keda.sh/v1alpha1
+kind: ScaledJob
+metadata:
+  name: nuvs
+  labels:
+    app.virtool.ca/workflow-size: large
+    app.virtool.ca/workflow-name: nuvs
+spec:
+  jobTargetRef:
+    template:
+      spec:
+        containers:
+          - name: workflow-nuvs
+            image: ghcr.io/virtool/nuvs:7.79.7
+            env:
+              - name: VT_PROC
+                value: "4"
+              - name: VT_MEM
+                value: "10"
+              - name: VT_WORKFLOW
+                value: nuvs
+            resources:
+              limits:
+                cpu: "5"
+                memory: 11Gi
+              requests:
+                cpu: "4"
+                memory: 10Gi
+  triggers:
+    - type: metrics-api
+      metadata:
+        url: "http://virtool-jobs-api-service.default.svc.cluster.local/jobs/counts"
+        valueLocation: "pending.nuvs"
+        targetValue: "1"
+        activationTargetValue: "0"
