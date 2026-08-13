@@ -33,6 +33,11 @@ class TaskRunner:
         The task runner polls PostgreSQL for available tasks and runs them.
         The runner will run until a stop signal is received. When a stop signal is
         received, the runner will wait for the current task to finish before exiting.
+
+        Errors raised outside a task's own steps, such as a failed acquisition or a
+        failure to load the task, are logged and skipped. The runner must keep
+        polling instead of dying and leaving the queue unattended until the next
+        restart.
         """
         logger.info(
             "started task runner",
@@ -42,12 +47,16 @@ class TaskRunner:
 
         try:
             while True:
-                task = await self._data.tasks.acquire(
-                    self._runner_id, self._supported_task_types
-                )
-                if task is not None:
-                    await self._run_task(task.id)
-                else:
+                try:
+                    task = await self._data.tasks.acquire(
+                        self._runner_id, self._supported_task_types
+                    )
+                    if task is not None:
+                        await self._run_task(task.id)
+                    else:
+                        await asyncio.sleep(2)
+                except Exception:
+                    logger.exception("encountered error in task runner")
                     await asyncio.sleep(2)
         except CancelledError:
             await self._shutdown()

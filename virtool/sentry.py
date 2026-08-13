@@ -5,6 +5,7 @@ from typing import Any
 
 import sentry_sdk
 from sentry_sdk.integrations.aiohttp import AioHttpIntegration
+from sentry_sdk.integrations.asyncio import AsyncioIntegration
 from sentry_sdk.integrations.logging import LoggingIntegration
 from structlog import get_logger
 
@@ -63,6 +64,7 @@ def configure_sentry(dsn: str, release: str) -> None:
             },
             integrations=[
                 AioHttpIntegration(),
+                AsyncioIntegration(),
                 LoggingIntegration(event_level=logging.WARNING, level=logging.INFO),
             ],
             release=release,

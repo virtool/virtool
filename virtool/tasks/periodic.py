@@ -18,6 +18,11 @@ class PeriodicTaskSpawner:
     async def run(self, tasks: list[tuple[type[BaseTask], int]]) -> None:
         """Run the periodic task spawner.
 
+        A failure to spawn one task is logged and skipped. The spawner is the only
+        thing that puts periodic work in the queue, so it must survive transient
+        database errors instead of leaving the deployment silently without periodic
+        tasks until the next restart.
+
         :param tasks: List of (task_class, interval_seconds) tuples
         """
         try:
@@ -27,9 +32,15 @@ class PeriodicTaskSpawner:
 
             while True:
                 for task_class, interval in tasks:
-                    task = await self._tasks_datalayer.create_periodic(
-                        task_class, interval
-                    )
+                    try:
+                        task = await self._tasks_datalayer.create_periodic(
+                            task_class, interval
+                        )
+                    except Exception:
+                        logger.exception(
+                            "failed to spawn periodic task", name=task_class.name
+                        )
+                        continue
 
                     if task is not None:
                         logger.info("spawned periodic task", name=task_class.name)
