@@ -2,7 +2,6 @@ import { getRepoReleases } from "@utils/releases";
 
 const repoMap = {
   hmms: ["virtool-hmm"],
-  ml: ["ml-plant-viruses"],
   references: ["ref-plant-viruses"],
   virtool: ["virtool"],
 };
@@ -22,7 +21,6 @@ export async function GET({ params }): Promise<Response> {
 export function getStaticPaths() {
   return [
     { params: { id: "hmms" } },
-    { params: { id: "ml" } },
     { params: { id: "references" } },
     { params: { id: "virtool" } },
   ];

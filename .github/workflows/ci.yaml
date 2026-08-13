@@ -602,21 +602,32 @@ jobs:
             # release. Keep in step with the matrix in the build job.
             matrix:
                 include:
+                    # Published under both names while the cluster migrates off
+                    # `ui` — drop the first line once nothing pulls it. Matrix
+                    # values are evaluated before the job's `env` context
+                    # exists, so these are literal `ghcr.io`, not `${{ env.REGISTRY }}`.
                     - image: ui
                       target: dist
                       workspace: apps/web
+                      images: |
+                          ghcr.io/virtool/ui
+                          ghcr.io/virtool/web
                     - image: jobs-api
                       target: jobs-api
                       workspace: apps/jobs-api
+                      images: ghcr.io/virtool/jobs-api
                     - image: tasks
                       target: tasks
                       workspace: apps/tasks
+                      images: ghcr.io/virtool/tasks
                     - image: ts-create-sample
                       target: create-sample
                       workspace: apps/create-sample
+                      images: ghcr.io/virtool/ts-create-sample
                     - image: ts-create-subtraction
                       target: create-subtraction
                       workspace: apps/create-subtraction
+                      images: ghcr.io/virtool/ts-create-subtraction
         steps:
             - name: Checkout
               uses: actions/checkout@v7
@@ -639,7 +650,7 @@ jobs:
               uses: docker/metadata-action@v6
               with:
                   context: git
-                  images: ${{ env.REGISTRY }}/virtool/${{ matrix.image }}
+                  images: ${{ matrix.images }}
             - name: Build & Push
               uses: docker/build-push-action@v7
               with:

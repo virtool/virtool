@@ -7,7 +7,7 @@ manifest.
 
 | Target | Image | App |
 | --- | --- | --- |
-| `dist` | `ghcr.io/virtool/ui` | `apps/web` |
+| `dist` | `ghcr.io/virtool/ui`, `ghcr.io/virtool/web` | `apps/web` |
 | `jobs-api` | `ghcr.io/virtool/jobs-api` | `apps/jobs-api` |
 | `tasks` | `ghcr.io/virtool/tasks` | `apps/tasks` |
 | `create-sample` | `ghcr.io/virtool/ts-create-sample` | `apps/create-sample` |
@@ -18,6 +18,11 @@ manifest.
 `dist` is named that rather than `web` because tooling outside this repo
 targets it. There is also a `dev` stage carrying `apps/web` on the
 install layer, which ships nothing.
+
+`dist` is released under both `ghcr.io/virtool/ui` and
+`ghcr.io/virtool/web` — one build, tagged twice by `release-ghcr`'s
+`docker/metadata-action` step — while the cluster migrates off the
+`ui` name. Drop the `ui` tag once nothing pulls it.
 
 ## Every runtime stage is `node:24-bookworm-slim`
 
