@@ -15,7 +15,6 @@ import type {
 	RegisterCacheRequest,
 	WorkflowAnalysis,
 	WorkflowIndex,
-	WorkflowReference,
 	WorkflowSample,
 	WorkflowSettings,
 	WorkflowSubtraction,
@@ -66,7 +65,6 @@ export type JobsApiState = {
 
 	analyses: Map<number, WorkflowAnalysis>;
 	indexes: Map<number, WorkflowIndex>;
-	references: Map<number, WorkflowReference>;
 	samples: Map<number, WorkflowSample>;
 	subtractions: Map<number, WorkflowSubtraction>;
 
@@ -116,7 +114,6 @@ export function createJobsApiState({
 		caches: new Map(),
 		analyses: new Map(),
 		indexes: new Map(),
-		references: new Map(),
 		samples: new Map(),
 		subtractions: new Map(),
 		settings: createFakeSettings(),

@@ -4,7 +4,6 @@ import {
 	JobStepStarted,
 	WorkflowAnalysis,
 	WorkflowIndex,
-	WorkflowReference,
 	WorkflowSample,
 	WorkflowSettings,
 	WorkflowSubtraction,
@@ -21,7 +20,6 @@ import { claimJob } from "../../lifecycle/claim";
 import {
 	createFakeAnalysis,
 	createFakeIndex,
-	createFakeReference,
 	createFakeSample,
 	createFakeSubtraction,
 } from "../builders";
@@ -251,12 +249,10 @@ describe("the wire contract", () => {
 		const subtraction = createFakeSubtraction();
 		const index = createFakeIndex();
 		const analysis = createFakeAnalysis();
-		const reference = createFakeReference();
 
 		const { state, server } = await setup({
 			analyses: new Map([[analysis.id, analysis]]),
 			indexes: new Map([[index.id, index]]),
-			references: new Map([[reference.id, reference]]),
 			samples: new Map([[sample.id, sample]]),
 			subtractions: new Map([[subtraction.id, subtraction]]),
 		});
@@ -294,15 +290,6 @@ describe("the wire contract", () => {
 				schema: WorkflowAnalysis,
 			}),
 		).resolves.toEqual(analysis);
-
-		// `refs`, not `references` — the jobs API's path, matching Python's.
-		await expect(
-			client.request({
-				method: "GET",
-				path: `/refs/${reference.id}`,
-				schema: WorkflowReference,
-			}),
-		).resolves.toEqual(reference);
 
 		await expect(
 			client.request({

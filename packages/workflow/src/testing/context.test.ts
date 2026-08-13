@@ -2,7 +2,6 @@ import { describe, expect, it } from "vitest";
 import { defineWorkflow } from "../step";
 import {
 	createFakeIndex,
-	createFakeReference,
 	createFakeSample,
 	createFakeSubtraction,
 } from "./builders";
@@ -12,7 +11,6 @@ import { buildTestContext, createFakeContext } from "./context";
 function buildData() {
 	return {
 		index: createFakeIndex(),
-		reference: createFakeReference(),
 		sample: createFakeSample(),
 		subtraction: createFakeSubtraction(),
 	};

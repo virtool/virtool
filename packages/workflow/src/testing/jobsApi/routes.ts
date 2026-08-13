@@ -497,11 +497,9 @@ export function handleJobsApiRequest(
 		}
 
 		if (method === "GET") {
-			// `refs`, not `references` — the jobs API's path, matching Python's.
 			const found = {
 				analyses: state.analyses,
 				indexes: state.indexes,
-				refs: state.references,
 				samples: state.samples,
 				subtractions: state.subtractions,
 			}[head ?? ""]?.get(resourceId);

@@ -19,7 +19,6 @@ import {
 import { handleMetrics } from "./metrics/handler";
 import { createJobQueueReader } from "./metrics/jobs";
 import type { Metrics } from "./metrics/registry";
-import { handleGetReference } from "./references/handlers";
 import { handleFinalizeSample, handleGetSample } from "./samples/handlers";
 import { handleGetSettings } from "./settings/handlers";
 import {
@@ -267,11 +266,6 @@ export function createApp(deps: AppDeps): Hono {
 
 	app.get("/analyses/:id", (c) =>
 		handleGetAnalysis(deps, c.req.raw, c.req.param("id")),
-	);
-
-	// `/refs`, not `/references` — Python's resource path for this domain.
-	app.get("/refs/:id", (c) =>
-		handleGetReference(deps, c.req.raw, c.req.param("id")),
 	);
 
 	app.get("/settings", (c) => handleGetSettings(deps, c.req.raw));

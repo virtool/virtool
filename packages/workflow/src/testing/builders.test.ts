@@ -6,7 +6,6 @@ import {
 	createFakeJobClaimed,
 	createFakeNewSample,
 	createFakeNewSubtraction,
-	createFakeReference,
 	createFakeSample,
 	createFakeSubtraction,
 	SAMPLE_READ_FILENAMES,
@@ -23,7 +22,6 @@ describe("determinism", () => {
 		["createFakeSample", createFakeSample],
 		["createFakeSubtraction", createFakeSubtraction],
 		["createFakeIndex", createFakeIndex],
-		["createFakeReference", createFakeReference],
 		["createFakeAnalysis", createFakeAnalysis],
 	])("%s produces identical values for the same seed", (_name, build) => {
 		expect(build({}, 22)).toEqual(build({}, 22));
@@ -113,7 +111,7 @@ describe("fixture relationships", () => {
 
 		expect(analysis.sample.id).toBe(createFakeSample().id);
 		expect(analysis.index.id).toBe(createFakeIndex().id);
-		expect(analysis.reference.id).toBe(createFakeReference().id);
+		expect(analysis.reference.id).toBe(createFakeIndex().reference.id);
 		expect(analysis.subtractions[0]?.id).toBe(createFakeSubtraction().id);
 	});
 });

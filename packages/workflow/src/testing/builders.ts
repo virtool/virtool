@@ -20,7 +20,6 @@ import type {
 	UserNested,
 	WorkflowAnalysis,
 	WorkflowIndex,
-	WorkflowReference,
 	WorkflowSample,
 	WorkflowSampleRead,
 	WorkflowSampleUpload,
@@ -85,8 +84,6 @@ export const SAMPLE_UPLOAD_FILENAMES = [
 ] as const;
 
 const HANDLES = ["bob", "fred", "leeashley", "zclark", "kmiller"];
-
-const ORGANISMS = ["virus", "viroid", "bacteria", "fungus"];
 
 /**
  * A storage key in the shape `mintStorageKey` produces, drawn from the seed.
@@ -377,24 +374,6 @@ export function createFakeNewSubtraction(
 	);
 }
 
-/** A reference, as a workflow reads it. */
-export function createFakeReference(
-	overrides: Partial<WorkflowReference> = {},
-	seed: number = DEFAULT_SEED,
-): WorkflowReference {
-	const random = createSeededRandom(seed);
-	const id = random.int(1, 999);
-
-	return {
-		id,
-		dataType: "genome",
-		description: "",
-		name: `Reference ${id}`,
-		organism: random.pick(ORGANISMS),
-		...overrides,
-	};
-}
-
 /**
  * A built index, carrying the SQLite artifact a workflow reads its reference
  * out of.
@@ -408,7 +387,6 @@ export function createFakeIndex(
 ): WorkflowIndex {
 	const random = createSeededRandom(seed);
 	const id = random.int(1, 999);
-	const reference = createFakeReference({}, seed);
 
 	return {
 		id,
@@ -424,7 +402,7 @@ export function createFakeIndex(
 		// Keyed by legacy Mongo OTU id, straight out of a JSONB column.
 		manifest: { [random.hex(8)]: 0, [random.hex(8)]: 2 },
 		ready: true,
-		reference: { id: reference.id, name: reference.name },
+		reference: { id, name: `Reference ${id}` },
 		version: random.int(0, 9),
 		...overrides,
 	};
@@ -443,7 +421,6 @@ export function createFakeAnalysis(
 ): WorkflowAnalysis {
 	const random = createSeededRandom(seed);
 	const index = createFakeIndex({}, seed);
-	const reference = createFakeReference({}, seed);
 	const sample = createFakeSample({}, seed);
 	const subtraction = createFakeSubtraction({}, seed);
 
@@ -451,7 +428,7 @@ export function createFakeAnalysis(
 		id: random.int(1, 999),
 		index: { id: index.id, version: index.version },
 		ready: false,
-		reference: { id: reference.id, name: reference.name },
+		reference: index.reference,
 		sample: { id: sample.id, name: sample.name },
 		subtractions: [{ id: subtraction.id, name: subtraction.name }],
 		workflow: "pathoscope",

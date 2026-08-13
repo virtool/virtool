@@ -45,7 +45,6 @@
 //   GET    /subtractions/{id}                  -                     -> WorkflowSubtraction  (200 | 404)
 //   GET    /indexes/{id}                       -                     -> WorkflowIndex        (200 | 404)
 //   GET    /analyses/{id}                      -                     -> WorkflowAnalysis     (200 | 404)
-//   GET    /refs/{id}                          -                     -> WorkflowReference    (200 | 404)
 //   GET    /settings                           -                     -> WorkflowSettings     (200)
 //
 // The metadata reads are **records only, never bytes**. A workflow pod holds its
@@ -468,22 +467,6 @@ export const WorkflowAnalysis = z.object({
 });
 
 export type WorkflowAnalysis = z.infer<typeof WorkflowAnalysis>;
-
-/**
- * A reference, as a workflow reads it.
- *
- * Metadata only. The rights lists, contributors and build history the SPA shows
- * are about who may edit a reference, which is not a question a workflow asks.
- */
-export const WorkflowReference = z.object({
-	id: z.number().int(),
-	dataType: z.string(),
-	description: z.string(),
-	name: z.string(),
-	organism: z.string(),
-});
-
-export type WorkflowReference = z.infer<typeof WorkflowReference>;
 
 /** The instance settings singleton, as a workflow reads it. */
 export const WorkflowSettings = z.object({
