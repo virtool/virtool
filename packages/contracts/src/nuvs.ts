@@ -64,7 +64,11 @@ export type NuvsOrfHit = {
 	full_e: number;
 	full_score: number;
 
-	/** The id of the matched annotation */
+	/**
+	 * The row id of the matched annotation, resolved by the formatter from
+	 * whatever id the stored blob names it by — which for an analysis predating
+	 * the Postgres migration is a legacy Mongo string
+	 */
 	hit: number;
 
 	/** The annotation's names, merged in from the annotation */

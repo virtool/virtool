@@ -21,6 +21,21 @@ describe("<HmmDetail />", () => {
 			expect(screen.getByText("Not found")).toBeInTheDocument();
 		});
 
+		it.each([
+			["a legacy Mongo id", "abc123"],
+			["zero", "0"],
+			["a negative id", "-1"],
+			["an id beyond the safe integer range", "9007199254740993"],
+		])(
+			"should render not found when the path carries %s",
+			async (_label, segment) => {
+				await renderRoute(`/hmms/${segment}`);
+
+				expect(await screen.findByText("404")).toBeInTheDocument();
+				expect(screen.getByText("Not found")).toBeInTheDocument();
+			},
+		);
+
 		it("should render loading when props.detail = null", async () => {
 			await renderRoute(path);
 

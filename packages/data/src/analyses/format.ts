@@ -563,8 +563,19 @@ async function annotateNuvsOrfs(
 
 	const annotations = new Map<string, Record<string, unknown>>();
 
+	/*
+	 * `hit` is rewritten to the row id rather than passed through. The stored
+	 * value may be a legacy Mongo string, and the client links an annotated ORF
+	 * to `/hmms/{hit}`, which addresses a row by its integer id — so a string
+	 * reaching the client sends it to a route that cannot resolve.
+	 */
 	function annotationOf(row: (typeof rows)[number]) {
-		return { cluster: row.cluster, families: row.families, names: row.names };
+		return {
+			cluster: row.cluster,
+			families: row.families,
+			hit: row.id,
+			names: row.names,
+		};
 	}
 
 	// Legacy ids are keyed first so that an all-digit one cannot shadow the

@@ -15,12 +15,8 @@ import { HmmTaxonomy } from "./HmmTaxonomy";
 
 const routeApi = getRouteApi("/_authenticated/hmms/$hmmId");
 
-/**
- * The HMM detailed view
- */
-export default function HmmDetail() {
-	const { hmmId } = routeApi.useParams();
-	const { data, isPending, isError } = useFetchHmm(Number(hmmId));
+function HmmDetailView({ hmmId }: { hmmId: number }) {
+	const { data, isPending, isError } = useFetchHmm(hmmId);
 
 	if (isError) {
 		return <NotFound />;
@@ -129,4 +125,23 @@ export default function HmmDetail() {
 			</section>
 		</div>
 	);
+}
+
+/**
+ * The HMM detailed view
+ */
+export default function HmmDetail() {
+	const { hmmId } = routeApi.useParams();
+	const id = Number(hmmId);
+
+	/*
+	 * The path segment is whatever the URL carried, so it need not be a row id
+	 * at all. Fetching on a `NaN` reaches the server function's validator, which
+	 * rejects it as an unhandled 500 rather than the not-found this is.
+	 */
+	if (!Number.isSafeInteger(id) || id < 1) {
+		return <NotFound />;
+	}
+
+	return <HmmDetailView hmmId={id} />;
 }

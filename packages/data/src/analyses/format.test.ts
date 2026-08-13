@@ -117,7 +117,7 @@ describe("formatAnalysis for nuvs", () => {
 	});
 
 	it("resolves an annotation by its legacy Mongo string id", async () => {
-		await seedHmm({
+		const hmmId = await seedHmm({
 			cluster: 7,
 			families: { Virgaviridae: 2 },
 			legacyId: "abc123",
@@ -126,8 +126,10 @@ describe("formatAnalysis for nuvs", () => {
 
 		const results = await formatAnalysis(db, "nuvs", nuvsResults("abc123"));
 
+		// The published `hit` is the row id, not the legacy string the blob
+		// stores, because the client links an annotated ORF to `/hmms/{hit}`.
 		expect(firstOrfHit(results)).toMatchObject({
-			hit: "abc123",
+			hit: hmmId,
 			cluster: 7,
 			names: ["Movement protein"],
 		});
@@ -166,7 +168,7 @@ describe("formatAnalysis for nuvs", () => {
 	it("resolves a legacy Mongo string id made only of digits", async () => {
 		// A Mongo id is alphanumeric, so it can come out all digits and be
 		// indistinguishable from a modern integer id.
-		await seedHmm({
+		const hmmId = await seedHmm({
 			cluster: 9,
 			families: {},
 			legacyId: "80412357",
@@ -176,7 +178,7 @@ describe("formatAnalysis for nuvs", () => {
 		const results = await formatAnalysis(db, "nuvs", nuvsResults("80412357"));
 
 		expect(firstOrfHit(results)).toMatchObject({
-			hit: "80412357",
+			hit: hmmId,
 			cluster: 9,
 			names: ["All digits"],
 		});
