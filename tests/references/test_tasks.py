@@ -23,6 +23,7 @@ from virtool.references.models import Reference
 from virtool.references.sql import SQLReference
 from virtool.references.sqlite import (
     REFERENCE_SQLITE_FILE_NAME,
+    REFERENCE_SQLITE_GZIP_FILE_NAME,
     SQLiteReference,
     otus_table,
     reference_table,
@@ -227,6 +228,16 @@ async def reference_sqlite_path(example_path: Path, tmp_path: Path) -> Path:
 
 
 @pytest.fixture
+def reference_sqlite_gzip_path(
+    reference_sqlite_path: Path,
+    tmp_path: Path,
+) -> Path:
+    compressed_path = tmp_path / REFERENCE_SQLITE_GZIP_FILE_NAME
+    compressed_path.write_bytes(gzip.compress(reference_sqlite_path.read_bytes()))
+    return compressed_path
+
+
+@pytest.fixture
 def assert_reference_not_populated(pg: AsyncEngine):
     async def assert_not_populated() -> None:
         async with AsyncSession(pg) as session:
@@ -342,6 +353,44 @@ async def test_import_reference_task_from_producer_named_sqlite(
     await assert_reference_populated()
 
 
+@pytest.mark.flaky(reruns=2)
+async def test_import_reference_task_from_compressed_sqlite(
+    assert_reference_populated,
+    data_layer: DataLayer,
+    memory_storage: StorageBackend,
+    mocker,
+    reference_sqlite_gzip_path: Path,
+    spawn_import_task,
+    static_time: StaticTime,
+):
+    _, task = await spawn_import_task(
+        upload_path=reference_sqlite_gzip_path,
+        upload_name="external-reference.v1.sqlite.gz",
+    )
+    compressed_data = reference_sqlite_gzip_path.read_bytes()
+    chunks = [
+        compressed_data[:100],
+        compressed_data[100:1000],
+        compressed_data[1000:],
+    ]
+    observed_sizes = []
+
+    async def read_in_chunks(_key: str):
+        for chunk in chunks:
+            observed_sizes.append(len(chunk))
+            yield chunk
+
+    mocker.patch.object(memory_storage, "read", new=read_in_chunks)
+
+    await (await ImportReferenceTask.from_task_id(data_layer, task.id)).run()
+
+    completed_task = await data_layer.tasks.get(task.id)
+    assert observed_sizes == [100, 900, len(compressed_data) - 1000]
+    assert completed_task.complete is True
+    assert completed_task.error is None
+    await assert_reference_populated()
+
+
 async def test_import_reference_task_streams_sqlite_to_scratch_space(
     data_layer: DataLayer,
     memory_storage: StorageBackend,
@@ -392,7 +441,8 @@ async def test_import_reference_task_rejects_unsupported_filename(
 
     completed_task = await data_layer.tasks.get(task.id)
     assert completed_task.error == (
-        "Unsupported reference file name; expected a .json.gz or .v1.sqlite suffix"
+        "Unsupported reference file name; expected a .json.gz or .v1.sqlite or "
+        ".v1.sqlite.gz suffix"
     )
     await assert_reference_not_populated()
 
@@ -431,6 +481,63 @@ async def test_import_reference_task_rejects_invalid_json(
     completed_task = await data_layer.tasks.get(task.id)
     assert completed_task.error is not None
     assert "Expecting property name" in completed_task.error
+    await assert_reference_not_populated()
+
+
+async def test_import_reference_task_rejects_invalid_sqlite_gzip(
+    assert_reference_not_populated,
+    data_layer: DataLayer,
+    mocker,
+    spawn_import_task,
+    tmp_path: Path,
+):
+    invalid_gzip_path = tmp_path / "invalid.v1.sqlite.gz"
+    invalid_gzip_path.write_bytes(b"not gzip")
+    reference, task = await spawn_import_task(
+        upload_path=invalid_gzip_path,
+        upload_name="invalid.v1.sqlite.gz",
+    )
+    logger_exception = mocker.patch("virtool.references.imports.logger.exception")
+
+    await (await ImportReferenceTask.from_task_id(data_layer, task.id)).run()
+
+    completed_task = await data_layer.tasks.get(task.id)
+    assert completed_task.error == (
+        "Invalid gzip-compressed SQLite reference file: could not decompress the "
+        "archive"
+    )
+    logger_exception.assert_called_once_with(
+        "could not decompress gzip-compressed SQLite reference file",
+        ref_id=reference.id,
+    )
+    await assert_reference_not_populated()
+
+
+async def test_import_reference_task_rejects_gzipped_invalid_sqlite(
+    assert_reference_not_populated,
+    data_layer: DataLayer,
+    mocker,
+    spawn_import_task,
+    tmp_path: Path,
+):
+    invalid_sqlite_path = tmp_path / "invalid.v1.sqlite.gz"
+    invalid_sqlite_path.write_bytes(gzip.compress(b"not a sqlite database"))
+    reference, task = await spawn_import_task(
+        upload_path=invalid_sqlite_path,
+        upload_name="invalid.v1.sqlite.gz",
+    )
+    logger_exception = mocker.patch("virtool.references.imports.logger.exception")
+
+    await (await ImportReferenceTask.from_task_id(data_layer, task.id)).run()
+
+    completed_task = await data_layer.tasks.get(task.id)
+    assert completed_task.error == (
+        "Invalid SQLite reference file: could not read the database"
+    )
+    logger_exception.assert_called_once_with(
+        "could not read SQLite reference database",
+        ref_id=reference.id,
+    )
     await assert_reference_not_populated()
 
 

@@ -15,7 +15,10 @@ from tests.fixtures.response import RespIs
 from virtool.fake.next import DataFaker
 from virtool.history.sql import SQLLegacyHistory
 from virtool.indexes.sql import SQLIndex, SQLIndexFile
-from virtool.references.sqlite import REFERENCE_SQLITE_FILE_NAME
+from virtool.references.sqlite import (
+    REFERENCE_SQLITE_FILE_NAME,
+    REFERENCE_SQLITE_GZIP_FILE_NAME,
+)
 from virtool.storage.keys import mint_storage_key
 from virtool.storage.protocol import StorageBackend
 from virtool.workflow.pytest_plugin.utils import StaticTime
@@ -270,7 +273,7 @@ async def test_download(
 
     if status == HTTPStatus.OK:
         files_url += "reference.1.bt2"
-    elif status == 400:
+    else:
         files_url += "foo.bar"
 
     async with client.get(files_url) as response:
@@ -283,18 +286,19 @@ async def _seed_downloadable_sqlite_reference(
     fake: DataFaker,
     memory_storage: StorageBackend,
     pg: AsyncEngine,
+    filename: str,
 ) -> tuple[int, bytes]:
     user = await fake.users.create()
     reference = await fake.references.create(user=user)
     index = await fake.indexes.create(reference, user)
-    expected = b"server-produced SQLite reference"
+    expected = f"server-produced {filename}".encode()
 
     storage_key = mint_storage_key("indexes", index.id)
 
     async with AsyncSession(pg) as session:
         session.add(
             SQLIndexFile(
-                name=REFERENCE_SQLITE_FILE_NAME,
+                name=filename,
                 index=str(index.id),
                 index_id=index.id,
                 type="sqlite",
@@ -324,10 +328,34 @@ async def test_download_sqlite_reference_for_jobs(
         fake,
         memory_storage,
         pg,
+        REFERENCE_SQLITE_FILE_NAME,
     )
 
     response = await client.get(
         f"/indexes/{index_id}/files/{REFERENCE_SQLITE_FILE_NAME}"
+    )
+
+    assert response.status == HTTPStatus.OK
+    assert await response.read() == expected
+
+
+async def test_download_compressed_sqlite_reference_for_jobs(
+    fake: DataFaker,
+    memory_storage: StorageBackend,
+    pg: AsyncEngine,
+    spawn_job_client: JobClientSpawner,
+):
+    """The jobs route serves a recorded compressed SQLite reference file."""
+    client = await spawn_job_client(authenticated=True)
+    index_id, expected = await _seed_downloadable_sqlite_reference(
+        fake,
+        memory_storage,
+        pg,
+        REFERENCE_SQLITE_GZIP_FILE_NAME,
+    )
+
+    response = await client.get(
+        f"/indexes/{index_id}/files/{REFERENCE_SQLITE_GZIP_FILE_NAME}"
     )
 
     assert response.status == HTTPStatus.OK

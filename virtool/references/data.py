@@ -362,18 +362,19 @@ class ReferencesData(DataLayerDomain):
                 storage_key,
                 progress_handler,
             )
-        elif name_on_disk.endswith(".v1.sqlite"):
+        elif name_on_disk.endswith((".v1.sqlite", ".v1.sqlite.gz")):
             import_data = await load_sqlite_import(
                 self._storage,
                 storage_key,
                 temp_path,
                 progress_handler,
                 ref_id,
+                compressed=name_on_disk.endswith(".v1.sqlite.gz"),
             )
         else:
             await progress_handler.set_error(
                 "Unsupported reference file name; expected a .json.gz or "
-                ".v1.sqlite suffix"
+                ".v1.sqlite or .v1.sqlite.gz suffix"
             )
             return
 

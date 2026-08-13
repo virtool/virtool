@@ -12,7 +12,11 @@ from virtool.indexes.db import (
     JOB_INDEX_FILE_NAMES,
     REFERENCE_JSON_V2_FILE_NAME,
 )
-from virtool.references.sqlite import REFERENCE_SQLITE_FILE_NAME, SQLiteReference
+from virtool.references.sqlite import (
+    REFERENCE_SQLITE_FILE_NAME,
+    REFERENCE_SQLITE_GZIP_FILE_NAME,
+    SQLiteReference,
+)
 from virtool.workflow.pytest_plugin.data import WorkflowData
 
 
@@ -78,7 +82,10 @@ def create_indexes_routes(
                         },
                     )
 
-                if filename == REFERENCE_SQLITE_FILE_NAME:
+                if filename in {
+                    REFERENCE_SQLITE_FILE_NAME,
+                    REFERENCE_SQLITE_GZIP_FILE_NAME,
+                }:
                     reference = {
                         "_id": data.index.reference.id,
                         "created_at": reference_json_v2["created_at"],
@@ -103,6 +110,17 @@ def create_indexes_routes(
                         reference,
                         iter_otus(),
                     )
+
+                    if filename == REFERENCE_SQLITE_GZIP_FILE_NAME:
+                        return Response(
+                            body=gzip.compress(reference_sqlite_path.read_bytes()),
+                            headers={
+                                "Content-Disposition": (
+                                    f"attachment; filename='{filename}'"
+                                ),
+                                "Content-Type": "application/octet-stream",
+                            },
+                        )
 
                     return FileResponse(
                         reference_sqlite_path,

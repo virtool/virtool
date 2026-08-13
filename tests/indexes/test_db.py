@@ -19,7 +19,10 @@ from virtool.indexes.db import (
 )
 from virtool.indexes.sql import SQLIndex, SQLIndexFile
 from virtool.otus.sql import SQLOTU
-from virtool.references.sqlite import REFERENCE_SQLITE_FILE_NAME
+from virtool.references.sqlite import (
+    REFERENCE_SQLITE_FILE_NAME,
+    REFERENCE_SQLITE_GZIP_FILE_NAME,
+)
 from virtool.utils import timestamp
 
 
@@ -27,6 +30,8 @@ def test_sqlite_reference_file_contract():
     """SQLite is downloadable but not classified as a legacy job artifact."""
     assert REFERENCE_SQLITE_FILE_NAME in INDEX_FILE_NAMES
     assert REFERENCE_SQLITE_FILE_NAME not in JOB_INDEX_FILE_NAMES
+    assert REFERENCE_SQLITE_GZIP_FILE_NAME in INDEX_FILE_NAMES
+    assert REFERENCE_SQLITE_GZIP_FILE_NAME not in JOB_INDEX_FILE_NAMES
 
 
 async def _seed_index(pg: AsyncEngine, fake: DataFaker, legacy_id: str) -> int:
