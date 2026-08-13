@@ -5,6 +5,65 @@ export function readDsn(): string | undefined {
 	return value && value.length > 0 ? value : undefined;
 }
 
+/** Request paths whose traces are dropped outright. */
+const UNSAMPLED_PATHS = new Set(["/health/live", "/health/ready"]);
+
+/** Request paths sampled at `COUNTS_SAMPLE_RATE` rather than the usual one. */
+const COUNTS_PATHS = new Set(["/jobs/counts"]);
+
+const COUNTS_SAMPLE_RATE = 0.01;
+
+/**
+ * The slice of Sentry's sampling context the sampler below reads.
+ *
+ * Declared structurally and never imported, for the same reason `SentryLogApi`
+ * is: this package depends on no SDK, and the three services initialise two
+ * different ones.
+ */
+export type SentrySamplingContext = {
+	attributes?: Record<string, unknown>;
+	inheritOrSampleWith: (fallbackSampleRate: number) => number;
+};
+
+/**
+ * Decide a root span's sample rate by request path.
+ *
+ * `url.path` is the query-stripped pathname the SDK attaches when it opens an
+ * incoming server span. `http.route` is deliberately not read: the framework
+ * only knows the matched route once the response is going out, and by then the
+ * sampling decision is long made. Nothing unbounded follows from that — every
+ * path compared here is a literal, so the decision has three outcomes however
+ * many distinct URLs arrive.
+ *
+ * A span with no path — an outgoing request, a workflow's manually-started
+ * span — falls through to the default rate untouched.
+ */
+function createTracesSampler(
+	defaultSampleRate: number,
+): (context: SentrySamplingContext) => number {
+	return function tracesSampler(context) {
+		const path = context.attributes?.["url.path"];
+
+		if (typeof path === "string") {
+			if (UNSAMPLED_PATHS.has(path)) {
+				return 0;
+			}
+
+			if (COUNTS_PATHS.has(path)) {
+				return COUNTS_SAMPLE_RATE;
+			}
+		}
+
+		/*
+		 * A sampler overrides the parent's decision as well as the flat rate, so
+		 * everything not named above has to inherit explicitly to keep a
+		 * distributed trace whole — which is what `tracesSampleRate` alone used
+		 * to do on its own.
+		 */
+		return context.inheritOrSampleWith(defaultSampleRate);
+	};
+}
+
 /** Shared Sentry options for server-side SDK initialisation. */
 export type CommonSentryOptions = {
 	dsn: string | undefined;
@@ -26,7 +85,14 @@ export type CommonSentryOptions = {
 	 */
 	initialScope: { tags: { service: string } };
 	sendDefaultPii: boolean;
-	tracesSampleRate: number;
+	/**
+	 * Decides each root span's rate, in place of a flat `tracesSampleRate`.
+	 *
+	 * The two must never both be set: the SDK takes the sampler and ignores the
+	 * rate entirely, so a `tracesSampleRate` beside this one is a figure nothing
+	 * reads. The default rate lives inside the sampler instead.
+	 */
+	tracesSampler: (context: SentrySamplingContext) => number;
 	profileSessionSampleRate: number;
 	profileLifecycle: "trace";
 	enableLogs: boolean;
@@ -48,7 +114,7 @@ export function getCommonOptions(service: string): CommonSentryOptions {
 		dist: service,
 		initialScope: { tags: { service } },
 		sendDefaultPii: true,
-		tracesSampleRate: isProd ? 0.1 : 1.0,
+		tracesSampler: createTracesSampler(isProd ? 0.1 : 1.0),
 		// Decided once per `Sentry.init` — that is, once per server process, not
 		// per transaction the way the deprecated `profilesSampleRate` was. Half
 		// the replicas therefore profile and half do not, which is what bounds

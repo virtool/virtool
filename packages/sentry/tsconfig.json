@@ -7,5 +7,10 @@
 	"compilerOptions": {
 		"types": ["node"]
 	},
-	"include": ["src/index.ts", "src/log.ts", "src/log.test.ts"]
+	"include": [
+		"src/index.ts",
+		"src/index.test.ts",
+		"src/log.ts",
+		"src/log.test.ts"
+	]
 }
