@@ -264,3 +264,28 @@ class TestWorkflowCachePut:
         assert (result.path / "nested" / "reference.2.bt2").read_bytes() == (
             b"nested-reference"
         )
+
+    async def test_too_large(
+        self,
+        cache_scope: FixtureScope,
+        log: StructuredLogCapture,
+        monkeypatch,
+        tmp_path: Path,
+        work_path: Path,
+    ):
+        """A payload the jobs API rejects as too large is skipped, not fatal."""
+        monkeypatch.setattr("virtool.caches.utils.CACHE_MAX_SIZE", 1)
+
+        key = "workflow-cache-too-large"
+        source = tmp_path / "index.1.bt2"
+        source.write_bytes(b"an index too large to cache")
+
+        workflow_cache: WorkflowCache = await cache_scope.instantiate_by_key("cache")
+        created = await workflow_cache.put(key, source)
+        target = tmp_path / "target"
+        result = await workflow_cache.get(key, target)
+
+        assert created is False
+        assert isinstance(result, CacheMiss)
+        assert not any((work_path / "caches").iterdir())
+        assert log.has("cache put skipped; payload too large", key=key)

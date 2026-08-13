@@ -102,7 +102,10 @@ class TestReadCacheContentLength:
 
         with pytest.raises(
             APIRequestEntityTooLarge,
-            match=f"Cache payload exceeds maximum size of {CACHE_MAX_SIZE} bytes",
+            match=(
+                f"Cache payload of {CACHE_MAX_SIZE + 1} bytes exceeds maximum "
+                f"size of {CACHE_MAX_SIZE} bytes"
+            ),
         ):
             read_cache_content_length(req)
 
@@ -141,6 +144,6 @@ class TestCacheBodyChunker:
 
         with pytest.raises(
             APIRequestEntityTooLarge,
-            match="Cache payload exceeds maximum size of 5 bytes",
+            match="Cache payload of 6 bytes exceeds maximum size of 5 bytes",
         ):
             await anext(chunker)

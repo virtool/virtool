@@ -40,6 +40,15 @@ class JobsAPIConflictError(JobsAPIError):
     status = 409
 
 
+class JobsAPIRequestEntityTooLargeError(JobsAPIError):
+    """A ``413 Content Too Large`` response was received from the jobs API.
+
+    The request body exceeds the size the jobs API is willing to accept.
+    """
+
+    status = 413
+
+
 class JobsAPIServerError(JobsAPIError):
     """A ``500 Internal Server Error`` response was received from the jobs API."""
 

@@ -18,8 +18,14 @@ from aiohttp.web import Request
 from virtool.api.errors import APIBadRequest, APIRequestEntityTooLarge
 from virtool.storage.protocol import STORAGE_CHUNK_SIZE
 
-CACHE_MAX_SIZE = 10 * 1024**3
+CACHE_MAX_SIZE = 30 * 1024**3
 """Maximum cache payload size in bytes."""
+
+
+def _too_large_message(size: int) -> str:
+    return (
+        f"Cache payload of {size} bytes exceeds maximum size of {CACHE_MAX_SIZE} bytes"
+    )
 
 
 def canonicalize_params(params: dict[str, Any]) -> str:
@@ -59,9 +65,7 @@ def read_cache_content_length(req: Request) -> int:
         raise APIBadRequest("Content-Length header is required")
 
     if content_length > CACHE_MAX_SIZE:
-        raise APIRequestEntityTooLarge(
-            f"Cache payload exceeds maximum size of {CACHE_MAX_SIZE} bytes",
-        )
+        raise APIRequestEntityTooLarge(_too_large_message(content_length))
 
     return content_length
 
@@ -79,9 +83,7 @@ async def cache_body_chunker(
             raise APIBadRequest("Request body size exceeds Content-Length")
 
         if size > CACHE_MAX_SIZE:
-            raise APIRequestEntityTooLarge(
-                f"Cache payload exceeds maximum size of {CACHE_MAX_SIZE} bytes",
-            )
+            raise APIRequestEntityTooLarge(_too_large_message(size))
 
         yield chunk
 
