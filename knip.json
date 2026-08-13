@@ -39,6 +39,9 @@
 		"packages/archive": {
 			"entry": ["src/**/*.test.ts"]
 		},
+		"packages/sqlite": {
+			"entry": ["src/**/*.test.ts"]
+		},
 		"packages/workflow": {
 			"entry": ["src/**/*.test.ts"]
 		}

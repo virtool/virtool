@@ -1,0 +1,14 @@
+{
+	// `node:sqlite` and the filesystem are the whole of this package, so it
+	// typechecks as one Node project. Nothing here is reachable from a browser.
+	"extends": "../tsconfig.base.json",
+	"compilerOptions": {
+		"types": ["node"],
+		// On here, though `packages/tsconfig.base.json` leaves it off. Every app
+		// turns it on, and an app bundles this package from source — so a lookup
+		// this project let through is an error in the app that imports it, at a
+		// path that names a file nobody editing that app is looking at.
+		"noUncheckedIndexedAccess": true
+	},
+	"include": ["src"]
+}

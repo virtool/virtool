@@ -1,6 +1,6 @@
 import { readFile } from "node:fs/promises";
 import { join } from "node:path";
-import { INDEX_SQLITE_FILE_NAME } from "@virtool/workflow";
+import { REFERENCE_SQLITE_FILE_NAME } from "@virtool/sqlite";
 import {
 	createFakeAnalysis,
 	createFakeBuildContextInput,
@@ -77,7 +77,7 @@ async function setup({ subtractions = 1 }: { subtractions?: number } = {}) {
 
 	const artifact = await seedIndexArtifact(
 		INDEX_ID,
-		INDEX_SQLITE_FILE_NAME,
+		REFERENCE_SQLITE_FILE_NAME,
 		"sqlite bytes",
 	);
 
@@ -282,7 +282,7 @@ describe("buildPathoscopeContext", () => {
 		}
 
 		await expect(buildPathoscopeContext(input)).rejects.toThrow(
-			INDEX_SQLITE_FILE_NAME,
+			REFERENCE_SQLITE_FILE_NAME,
 		);
 	});
 

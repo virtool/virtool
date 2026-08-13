@@ -1,18 +1,31 @@
 # Indexes 
 
 ## SQLite Artifact
-A reference index reaches a workflow as one SQLite file,
-`virtool-index-sqlite-v1.sqlite`, built by Python's
-`virtool/workflow/data/index_sqlite.py`. `packages/workflow/src/index/` reads it,
-and writes the one case a workflow has to produce itself.
+A reference index reaches a workflow as one SQLite file. `packages/sqlite/`
+reads it and writes it, and both services write it — the port is not finished,
+so an artifact from either has to satisfy the other's reader.
 
-Three modules, all exported from `@virtool/workflow`:
+Two names, one format:
+
+| Name | Written by | Holds |
+| --- | --- | --- |
+| `reference-snapshot.v1.sqlite` | a finished index build | a whole reference |
+| `index.v1.sqlite` | a workflow, locally | whatever survived a step |
+
+The names are deliberately distinct. Pathoscope's collapsed reference is missing
+every isolate `cd-hit-est` dropped, and one name for both is how a partial
+artifact ends up uploaded as a whole reference. Both carry
+`format = virtool-reference-sqlite` and `format_version = 1` in their `metadata`
+table, which `openIndexArtifact` checks before a run reads a row.
+
+Four modules, all exported from `@virtool/sqlite`:
 
 | Module | What it holds |
 | --- | --- |
-| `index/schema.ts` | the schema mirror, the filename and format constants, `openIndexArtifact`, `createIndexArtifactSchema` |
-| `index/queries.ts` | `openWorkflowIndex` and the six reads, plus `writeFasta` |
-| `index/create.ts` | `createIndexArtifact`, the bulk load |
+| `schema.ts` | the schema mirror, the filename and format constants, `openIndexArtifact`, `createIndexArtifactSchema` |
+| `queries.ts` | `openWorkflowIndex` and the six reads, plus `writeFasta` |
+| `create.ts` | `createIndexArtifact`, the bulk load |
+| `errors.ts` | `IndexArtifactError` and the five failures a caller can tell apart |
 
 The rules that shape those modules — why ordering is pinned to Python's, why
 nothing materialises the index, and what each error means — are documented as

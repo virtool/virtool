@@ -1,8 +1,13 @@
+import { mkdtemp, rm, writeFile } from "node:fs/promises";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
 import { gunzipSync } from "node:zlib";
+import { openWorkflowIndex, REFERENCE_SQLITE_FILE_NAME } from "@virtool/sqlite";
 import { MemoryStorage } from "@virtool/storage";
-import { eq, sql } from "drizzle-orm";
+import { and, eq, sql } from "drizzle-orm";
 import {
 	afterAll,
+	afterEach,
 	beforeAll,
 	beforeEach,
 	describe,
@@ -15,7 +20,7 @@ import type { Db } from "../db/pg";
 import { takeFirstOrThrow } from "../db/rows";
 import { legacyHistory } from "../db/schema/history";
 import { indexes, indexFiles } from "../db/schema/indexes";
-import { legacyOtus } from "../db/schema/otus";
+import { legacyOtus, legacySequences } from "../db/schema/otus";
 import { legacyReferences } from "../db/schema/references";
 import { tasks } from "../db/schema/tasks";
 import { users } from "../db/schema/users";
@@ -30,6 +35,7 @@ import {
 import { seedReference } from "./test/fixtures";
 
 const ARTIFACT = "reference-v2.json.gz";
+const SNAPSHOT = REFERENCE_SQLITE_FILE_NAME;
 
 let database: TestDatabase;
 let db: Db;
@@ -46,11 +52,22 @@ afterAll(async () => {
 beforeEach(async () => {
 	await db.delete(indexFiles);
 	await db.delete(legacyHistory);
+	await db.delete(legacySequences);
 	await db.delete(legacyOtus);
 	await db.delete(indexes);
 	await db.delete(legacyReferences);
 	await db.delete(tasks);
 	await db.delete(users);
+});
+
+let workPath: string;
+
+beforeEach(async () => {
+	workPath = await mkdtemp(join(tmpdir(), "vt-index-build-"));
+});
+
+afterEach(async () => {
+	await rm(workPath, { force: true, recursive: true });
 });
 
 let handleCounter = 0;
@@ -79,8 +96,13 @@ async function seedTask(): Promise<number> {
 }
 
 // OTU ids are the 8-character Mongo id, so a seeder mints them. `data` is the
-// verbatim Mongo document the artifact is built from, so it carries `isolates`
-// — a document without one is malformed and never reaches a join.
+// verbatim Mongo document the artifacts are built from, so it carries
+// `isolates` — a document without one is malformed and never reaches a join.
+//
+// Every field the snapshot records is seeded, because the snapshot is where a
+// missing one is a failure: the JSON artifact stores whatever the document
+// happens to carry, while the snapshot has a column per field and a build
+// stops on an OTU that cannot fill them.
 async function seedOtus(
 	referenceId: number,
 	otus: { id: string; version: number }[],
@@ -90,8 +112,18 @@ async function seedOtus(
 			id,
 			data: {
 				_id: id,
+				abbreviation: "",
 				name: `OTU ${id}`,
-				isolates: [{ id: `iso_${id}`, source_type: "isolate" }],
+				isolates: [
+					{
+						id: `iso_${id}`,
+						default: true,
+						source_type: "isolate",
+						source_name: id.toUpperCase(),
+					},
+				],
+				schema: [],
+				taxid: null,
 				version,
 			},
 			name: `OTU ${id}`,
@@ -99,6 +131,27 @@ async function seedOtus(
 			reference_id: referenceId,
 			verified: true,
 			version,
+		})),
+	);
+
+	// Sequences live in their own table and are merged into the isolate they
+	// name, so seeding them on the document would leave every isolate empty.
+	await db.insert(legacySequences).values(
+		otus.map(({ id }) => ({
+			id: `seq_${id}`,
+			otu_id: id,
+			isolate_id: `iso_${id}`,
+			position: 0,
+			segment: null,
+			data: {
+				_id: `seq_${id}`,
+				accession: `NC_${id}`,
+				definition: `OTU ${id} complete genome`,
+				host: null,
+				isolate_id: `iso_${id}`,
+				segment: null,
+				sequence: "ACGTACGTAC",
+			},
 		})),
 	);
 }
@@ -157,23 +210,35 @@ async function seedBuildable(): Promise<{
 	return { referenceId, indexId, otuId: "otualpha" };
 }
 
-async function readFileRow(indexId: number) {
+async function readFileRow(indexId: number, name: string = ARTIFACT) {
 	const [row] = await db
 		.select()
 		.from(indexFiles)
-		.where(eq(indexFiles.index_id, indexId));
+		.where(and(eq(indexFiles.index_id, indexId), eq(indexFiles.name, name)));
 
 	return row;
 }
 
-async function readArtifact(storage: MemoryStorage, key: string) {
+async function readFileRows(indexId: number) {
+	return db
+		.select()
+		.from(indexFiles)
+		.where(eq(indexFiles.index_id, indexId))
+		.orderBy(indexFiles.name);
+}
+
+async function readKey(storage: MemoryStorage, key: string): Promise<Buffer> {
 	const parts: Uint8Array[] = [];
 
 	for await (const part of storage.read(key)) {
 		parts.push(part);
 	}
 
-	return JSON.parse(gunzipSync(Buffer.concat(parts)).toString()) as {
+	return Buffer.concat(parts);
+}
+
+async function readArtifact(storage: MemoryStorage, key: string) {
+	return JSON.parse(gunzipSync(await readKey(storage, key)).toString()) as {
 		_id: number;
 		created_at: string;
 		data_type: string;
@@ -194,7 +259,7 @@ async function listKeys(storage: MemoryStorage): Promise<string[]> {
 }
 
 describe("generateTaskIndex", () => {
-	it("registers the artifact under a minted key and marks the build ready", async () => {
+	it("registers both artifacts under minted keys and marks the build ready", async () => {
 		const storage = new MemoryStorage();
 		const { indexId } = await seedBuildable();
 
@@ -205,24 +270,39 @@ describe("generateTaskIndex", () => {
 
 		await generateTaskIndex(db, storage, testLogger, indexId);
 
-		const file = await readFileRow(indexId);
+		const rows = await readFileRows(indexId);
 
-		expect(file).toMatchObject({
-			index: String(indexId),
-			index_id: indexId,
-			name: ARTIFACT,
-			type: "json",
-		});
-		expect(file?.size).toBeGreaterThan(0);
+		// A build that registered only the gzipped JSON is the failure this
+		// asserts against: every analysis reads the snapshot and nothing else, so
+		// the index would be `ready` and unusable.
+		expect(rows).toMatchObject([
+			{
+				index: String(indexId),
+				index_id: indexId,
+				name: SNAPSHOT,
+				type: "sqlite",
+			},
+			{
+				index: String(indexId),
+				index_id: indexId,
+				name: ARTIFACT,
+				type: "json",
+			},
+		]);
+		expect(rows.every((row) => (row.size ?? 0) > 0)).toBe(true);
 
-		// The key is minted, so it is derived from neither the row id nor the dead
+		// Each key is minted, so it is derived from neither the row id nor the dead
 		// `indexes.storage_key` slug. Both are checked because a helper named for
 		// either would produce a key that reads nothing and orphans what it writes.
-		expect(file?.storage_key).toMatch(/^indexes\/\d+\/[0-9a-f]{32}$/);
-		expect(file?.storage_key).not.toContain(before?.slug);
+		for (const row of rows) {
+			expect(row.storage_key).toMatch(/^indexes\/\d+\/[0-9a-f]{32}$/);
+			expect(row.storage_key).not.toContain(before?.slug);
+		}
 
-		// The whole bucket, so a write to a second key cannot go unnoticed.
-		expect(await listKeys(storage)).toEqual([file?.storage_key]);
+		// The whole bucket, so a write to a third key cannot go unnoticed.
+		expect(await listKeys(storage)).toEqual(
+			rows.map((row) => row.storage_key).sort(),
+		);
 
 		const [row] = await db
 			.select({ ready: indexes.ready })
@@ -230,6 +310,47 @@ describe("generateTaskIndex", () => {
 			.where(eq(indexes.id, indexId));
 
 		expect(row?.ready).toBe(true);
+	});
+
+	// The end a workflow reaches this from: it downloads the key off the row and
+	// opens it. A snapshot that is registered but unopenable, or one missing the
+	// isolates and sequences an analysis maps against, fails the run at its first
+	// step with the index reporting itself ready.
+	it("writes a snapshot a workflow can open and read", async () => {
+		const storage = new MemoryStorage();
+		const { indexId, otuId } = await seedBuildable();
+
+		await generateTaskIndex(db, storage, testLogger, indexId);
+
+		const path = join(workPath, SNAPSHOT);
+		const file = await readFileRow(indexId, SNAPSHOT);
+
+		await writeFile(path, await readKey(storage, file?.storage_key ?? ""));
+
+		const index = openWorkflowIndex({ id: indexId, path });
+
+		try {
+			const otus = [];
+
+			for await (const otu of index.iterOtus()) {
+				otus.push(otu);
+			}
+
+			expect(otus).toHaveLength(1);
+			expect(otus[0]).toMatchObject({
+				id: otuId,
+				isolates: [
+					{
+						default: true,
+						id: `iso_${otuId}`,
+						sequences: [{ id: `seq_${otuId}`, sequence: "ACGTACGTAC" }],
+					},
+				],
+				version: 4,
+			});
+		} finally {
+			index.close();
+		}
 	});
 
 	it("writes the envelope and OTUs Python writes", async () => {
@@ -406,7 +527,14 @@ describe("generateTaskIndex", () => {
 			},
 		);
 
-		expect(reported).toEqual([(500 / 600) * 100, 100]);
+		// Each artifact walks the manifest once, the snapshot taking 0–50 and the
+		// gzipped JSON 50–100, so the bar never goes backwards across the two.
+		expect(reported).toEqual([
+			(500 / 600) * 50,
+			50,
+			50 + (500 / 600) * 50,
+			100,
+		]);
 	});
 
 	// A rebuild mints a new key rather than overwriting, so the row is repointed
@@ -430,15 +558,14 @@ describe("generateTaskIndex", () => {
 
 		const second = await readFileRow(indexId);
 
-		const rows = await db
-			.select()
-			.from(indexFiles)
-			.where(eq(indexFiles.index_id, indexId));
+		const rows = await readFileRows(indexId);
 
-		expect(rows).toHaveLength(1);
+		expect(rows).toHaveLength(2);
 		expect(second?.id).toBe(first?.id);
 		expect(second?.storage_key).not.toBe(first?.storage_key);
-		expect(await listKeys(storage)).toEqual([second?.storage_key]);
+		expect(await listKeys(storage)).toEqual(
+			rows.map((row) => row.storage_key).sort(),
+		);
 	});
 
 	// A claim is a lease, so a body may re-run from step zero after its work has
@@ -450,14 +577,16 @@ describe("generateTaskIndex", () => {
 
 		await generateTaskIndex(db, storage, testLogger, indexId);
 
-		const file = await readFileRow(indexId);
+		const rows = await readFileRows(indexId);
 
 		await expect(
 			generateTaskIndex(db, storage, testLogger, indexId),
 		).resolves.toBeUndefined();
 
-		expect(await readFileRow(indexId)).toEqual(file);
-		expect(await listKeys(storage)).toEqual([file?.storage_key]);
+		expect(await readFileRows(indexId)).toEqual(rows);
+		expect(await listKeys(storage)).toEqual(
+			rows.map((row) => row.storage_key).sort(),
+		);
 	});
 
 	it("refuses a build that does not exist", async () => {
@@ -516,7 +645,7 @@ describe("generateTaskIndex", () => {
 			generateTaskIndex(db, storage, testLogger, indexId),
 		).rejects.toThrow(IndexManifestError);
 
-		expect(await readFileRow(indexId)).toBeUndefined();
+		expect(await readFileRows(indexId)).toEqual([]);
 
 		const [row] = await db
 			.select({ ready: indexes.ready })
@@ -563,10 +692,11 @@ describe("generateTaskIndex", () => {
 			},
 		);
 
-		// Three chunks of 500, 500 and 200 rather than one read of 1200.
-		expect(chunkSizes).toHaveLength(3);
+		// Three chunks of 500, 500 and 200 rather than one read of 1200, per
+		// artifact.
+		expect(chunkSizes).toHaveLength(6);
 
-		const data = write.mock.calls[0]?.[1];
+		const data = write.mock.calls[1]?.[1];
 
 		expect(data).toBeDefined();
 		expect(Symbol.asyncIterator in Object(data)).toBe(true);

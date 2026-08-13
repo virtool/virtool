@@ -1,7 +1,7 @@
 import { readFile } from "node:fs/promises";
 import { join } from "node:path";
+import { REFERENCE_SQLITE_FILE_NAME } from "@virtool/sqlite";
 import { HMM_ANNOTATIONS_KEY, HMM_PROFILES_KEY } from "@virtool/storage";
-import { INDEX_SQLITE_FILE_NAME } from "@virtool/workflow";
 import {
 	buildTestContext,
 	createFakeAnalysis,
@@ -96,7 +96,7 @@ async function setup({
 
 	const artifact = await seedIndexArtifact(
 		INDEX_ID,
-		INDEX_SQLITE_FILE_NAME,
+		REFERENCE_SQLITE_FILE_NAME,
 		"sqlite bytes",
 	);
 
@@ -285,7 +285,7 @@ describe("buildNuvsContext", () => {
 		}
 
 		await expect(buildNuvsContext(input)).rejects.toThrow(
-			INDEX_SQLITE_FILE_NAME,
+			REFERENCE_SQLITE_FILE_NAME,
 		);
 	});
 

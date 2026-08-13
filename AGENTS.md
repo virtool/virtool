@@ -93,7 +93,7 @@ This is a **pnpm monorepo**:
   no FFI here and adding one is out of scope by decision. Its stages in the
   root `Dockerfile` are a cargo-chef build of `packages/pathoscope-core`, a
   Node build on the shared `base`, and a runtime layering the `bowtie2`,
-  `cd-hit`, `pigz` and `samtools` tool stages over both.
+  `cd-hit` and `samtools` tool stages over both, with `pigz` from apt.
   Two rules it carries: it writes **no result file** — Python uploaded a
   `report.tsv` whose every figure is already in the `results` blob, so the
   finalize manifest is empty and `FinalizeAnalysisRequest.files` allows that
@@ -157,6 +157,13 @@ This is a **pnpm monorepo**:
     out of what the rest divide. It is **not** a home for the probe
     server or the metrics registries, however alike those look across
     the three services.
+  - `@virtool/sqlite` — the reference index SQLite artifact: the schema
+    mirror, the reads a workflow makes against one, and the writer that
+    produces one. Depended on by both `@virtool/data`, which writes the
+    snapshot a finished build publishes, and the workflow executors, which
+    read it — that second consumer is why it is not part of
+    `@virtool/workflow`. `node:sqlite` and the filesystem are its whole
+    dependency surface; it has no runtime dependencies at all.
 
   `@virtool/data` and `@virtool/storage` are server-side only. Browser code
   must never import them; they reach `apps/web` through `src/server/**`. A
@@ -202,13 +209,19 @@ publishing an image takes. Each app's own `README.md` covers what that
 app is, its port, image and commands.
 
 **The bioinformatics tools are built in the root `Dockerfile`, one stage
-per tool** — `bowtie2`, `cd-hit`, `hmmer`, `pigz`, `samtools`, `seqkit`
-and `skewer`, each installing to `/tools/<tool>/<version>/` for a
-workflow runtime stage to copy out of. Never fold them into one stage:
-BuildKit builds only the stages the requested target reaches, which is
-what keeps `--target create-subtraction` from compiling bowtie2. Each
-Rust crate gets its own cargo-chef pair over a shared `chef` for the same
-reason.
+per tool** — `bowtie2`, `cd-hit`, `hmmer`, `samtools`, `seqkit` and
+`skewer`, each installing to `/tools/<tool>/<version>/` for a workflow
+runtime stage to copy out of. **`pigz` is the exception and comes from
+apt**, because zlib.net is the only source for its tarball and it is
+down often enough to hang every build queued behind it; nothing depends
+on its exact output bytes, so Debian's older version costs nothing.
+Never fold the rest into one stage: BuildKit builds only the stages the
+requested target reaches, which is what keeps `--target
+create-subtraction` from compiling bowtie2. Each Rust crate gets its own
+cargo-chef pair over a shared `chef` for the same reason. **Every `wget`
+carries `--tries` and `--timeout`** — the defaults are 20 tries at a
+900-second read timeout, so an unreachable mirror hangs the job for
+hours instead of failing it.
 
 Use `pnpm` for all install, run, and exec commands — not `npm` or `bun`.
 
@@ -983,6 +996,25 @@ reports zero rather than its last backlog. The workflow list is
 `JobWorkflow.options` from `@virtool/contracts` — the one definition;
 don't mint a second.
 
+**The same read also serves `GET /jobs/counts`**, which is not a metric
+but the endpoint a KEDA `ScaledJob` scales workflow pods on — Python's
+route, ported to Python's shape (state → workflow → count, every pair
+present, zeros written rather than omitted, because a `metrics-api`
+trigger addresses one figure by a fixed path). It is **public**, listed
+in `PUBLIC_ROUTES`: the scaler holds no job key and could not, a key
+being minted by the very claim it is deciding whether to start a pod to
+make. Two rules are its own: the **three terminal states are always
+zero**, since the bounded read covers `pending` and `running` alone and
+nothing scales on a finished job; and an unrecognised `workflow` is
+**dropped rather than folded onto `other`**, the response shape having
+no such key and Python's carrying none. A failed read is not caught —
+zeros would read as a drained queue and scale the fleet to nothing, so
+it answers 500 and the scaler holds its last decision. Don't remove it
+on the grounds that `/metrics` already carries the figures: before it
+existed, a poll for `/jobs/counts` matched `/jobs/:jobId`, was refused
+by the job guard, and reported to the scaler as `api returned 401` — a
+credential problem where the truth was a missing endpoint.
+
 **Task and queue visibility is `apps/tasks`'s.**
 `virtool_task_spawn_total{type,outcome}`,
 `virtool_task_runs_total{type,outcome}`,
@@ -1431,9 +1463,19 @@ runs both.** `createIndex` (`@virtool/data/indexes/data`) inserts the
 pending `indexes` row, stamps every unbuilt `legacy_history` row with it,
 and creates a `create_index` task; `generateTaskIndex`, in the same
 module, is what the runner that claims it executes — patching the
-manifest's OTUs, streaming `reference-v2.json.gz` to a minted key,
-recording the `index_files` row with that key, stamping
-`last_indexed_version` and flipping `ready`. Python's `CreateIndexTask`
+manifest's OTUs, writing **both** artifacts to minted keys, recording an
+`index_files` row for each, stamping `last_indexed_version` and flipping
+`ready`.
+
+**A build publishes `reference-snapshot.v1.sqlite` and
+`reference-v2.json.gz`, or it publishes neither.** The snapshot is the
+only one an analysis can read — a real reference is past the maximum
+string length `JSON.parse` can return — so a build that registers the
+gzipped JSON alone is `ready` and unusable, and every workflow claimed
+against it dies in `buildContext`. Both rows are written in the
+transaction that flips `ready`. The manifest is walked once per artifact
+rather than held for both: the whole point of the chunked patch loop is
+that no reference is ever in the heap. Python's `CreateIndexTask`
 does the same work and both runners are live until the cutover, so the
 two must stay interchangeable. The
 insert runs under
@@ -1723,11 +1765,20 @@ that converts a caught divergence into a permanent one.
 
 ### The reference index is a SQLite file, read with `node:sqlite` and no ORM
 
-An index reaches a workflow as one file, `virtool-index-sqlite-v1.sqlite`,
-built by Python's `index_sqlite.py`. `packages/workflow/src/index/` mirrors
-that schema (`schema.ts`), reads it (`queries.ts`) and writes the collapsed
-artifact pathoscope produces (`create.ts`). JSON was abandoned because a real
-reference exceeds V8's maximum string length.
+An index reaches a workflow as one file, `reference-snapshot.v1.sqlite`,
+written by a finished build. `@virtool/sqlite` mirrors that schema
+(`schema.ts`), reads it (`queries.ts`) and writes one (`create.ts`) — the
+snapshot itself, and the collapsed artifact pathoscope produces, which is named
+`index.v1.sqlite` because a partial reference must not be mistakable for a whole
+one. Both carry `format = virtool-reference-sqlite` in their `metadata` table.
+JSON was abandoned because a real reference exceeds V8's maximum string
+length.
+
+It is a package rather than part of `@virtool/workflow` because both sides
+need it: making `@virtool/data` depend on the workflow runtime would drag
+execa, undici and tar-stream into `apps/tasks` and the jobs API, and a
+second copy of the DDL would be two opinions about a binary format two
+languages have to agree on.
 
 **There is no Drizzle here**, against the original plan: it ships no
 `node:sqlite` driver, and the three alternatives all fail — `sqlite-proxy`
@@ -1751,12 +1802,12 @@ Four rules it carries:
   generator over `StatementSync.iterate()` that yields to the event loop each
   batch, so the ping loop survives a long scan. Id sets bind through
   `json_each`, never one `?` per id.
-- **The fixture is Python's.** `src/index/fixtures/` holds an artifact Python
-  built plus the golden results of every query; `generate.py` is the
-  provenance record. **Never edit a golden to match this implementation's
-  output.**
+- **The fixture is Python's.** `packages/sqlite/src/fixtures/` holds an
+  artifact Python built plus the golden results of every query; `generate.py`
+  is the provenance record. **Never edit a golden to match this
+  implementation's output.**
 
-See [docs/index-artifact.md](docs/index-artifact.md).
+See [docs/indexes.md](docs/indexes.md).
 
 ### Workflow tests stand on `@virtool/workflow/testing`
 

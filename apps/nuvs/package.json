@@ -22,6 +22,7 @@
 		"@virtool/archive": "workspace:*",
 		"@virtool/bio": "workspace:*",
 		"@virtool/contracts": "workspace:*",
+		"@virtool/sqlite": "workspace:*",
 		"@virtool/storage": "workspace:*",
 		"@virtool/workflow": "workspace:*",
 		"execa": "^10.0.1",

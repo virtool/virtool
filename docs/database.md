@@ -170,9 +170,17 @@ stamps every `legacy_history` row whose `index_id` is `NULL` with the new
 build, and creates a `create_index` task. Whichever runner claims that
 task finishes the build: `generateTaskIndex`, in the same module, patches
 every OTU in the manifest back to the version the build was pinned to,
-gzips the artifact into a freshly minted key, records the `index_files`
-row **with that key on it**, promotes
+writes both artifacts into freshly minted keys, records an `index_files`
+row for each **with its own key on it**, promotes
 `legacy_otus.last_indexed_version`, and only then sets `ready = true`.
+
+A build publishes two files describing the same OTUs:
+`reference-snapshot.v1.sqlite`, which every analysis reads, and
+`reference-v2.json.gz` beside it. Both rows are written in the
+transaction that flips `ready`, because an index that reports itself
+ready without a snapshot cannot be analysed at all — a workflow claimed
+against one fails before its first step, and nothing short of another
+build fixes it.
 
 Two builds of one reference would each stamp the other's changes and then
 collide on the `(reference_id, version)` unique constraint, so the insert

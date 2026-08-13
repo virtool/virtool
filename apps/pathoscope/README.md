@@ -23,7 +23,8 @@ of scope by decision.
 
 Its stages in the root `Dockerfile` are a cargo-chef build of
 `packages/pathoscope-core`, a Node build on the shared `base`, and a runtime
-layering the `bowtie2`, `cd-hit`, `pigz` and `samtools` tool stages over both:
+layering the `bowtie2`, `cd-hit` and `samtools` tool stages over both, with
+`pigz` from apt:
 
 ```
 docker build --target pathoscope .
@@ -85,6 +86,7 @@ The Rust crate is not a pnpm workspace — run `cargo test` in
 
 `docs/workflow-runtime.md` covers the runtime every executor runs on,
 [`packages/pathoscope-core/README.md`](../../packages/pathoscope-core/README.md)
-the Rust crate, `docs/index-artifact.md` the SQLite reference index it reads,
-`docs/apps.md` the bundling and `pnpm deploy` pipeline every non-Vite app
-shares, and `docs/images.md` the image pipeline.
+the Rust crate,
+[`packages/sqlite/README.md`](../../packages/sqlite/README.md) the SQLite
+reference index it reads, `docs/apps.md` the bundling and `pnpm deploy`
+pipeline every non-Vite app shares, and `docs/images.md` the image pipeline.

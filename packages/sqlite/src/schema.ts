@@ -1,11 +1,11 @@
 /**
  * The index artifact's schema, and the only two ways to open one.
  *
- * A reference index is shipped to a workflow as a single SQLite file built by
- * Python's `virtool/workflow/data/index_sqlite.py`. This module mirrors that
- * schema so the write path can produce a file Python's own reader accepts, and
- * validates the `metadata` table so a file that is not what it claims to be is
- * rejected at open rather than halfway through a run.
+ * A reference index is shipped to a workflow as a single SQLite file, written
+ * by this package or by the other implementation still running beside it. This
+ * module mirrors that schema so either side can produce a file the other's
+ * reader accepts, and validates the `metadata` table so a file that is not what
+ * it claims to be is rejected at open rather than halfway through a run.
  *
  * The mirror is of the *schema*, not of SQLAlchemy's DDL text. Python defines
  * its tables explicitly and never reflects them, so only the columns,
@@ -13,25 +13,37 @@
  */
 
 import { DatabaseSync } from "node:sqlite";
-import { IndexArtifactFormatError, IndexArtifactMissingError } from "../errors";
+import { IndexArtifactFormatError, IndexArtifactMissingError } from "./errors";
 
 /**
- * The name Python gives the artifact, both in storage and in the work path.
+ * The name a finished build's snapshot carries, in storage and in the work
+ * path.
  *
  * Versioned in the filename rather than only in the `metadata` table, so an
  * incompatible future artifact cannot be mistaken for this one before it is
- * opened. Mirrors `INDEX_SQLITE_FILE_NAME`.
+ * opened. Mirrors the other implementation's `REFERENCE_SQLITE_FILE_NAME`.
  */
-export const INDEX_SQLITE_FILE_NAME = "virtool-index-sqlite-v1.sqlite";
+export const REFERENCE_SQLITE_FILE_NAME = "reference-snapshot.v1.sqlite";
+
+/**
+ * The name a workflow gives an artifact it builds itself.
+ *
+ * Kept distinct from {@link REFERENCE_SQLITE_FILE_NAME} because the two are not
+ * interchangeable: a snapshot describes a whole reference, where this one holds
+ * whatever survived a step — pathoscope's collapsed reference is missing every
+ * isolate `cd-hit-est` dropped. Naming both the same is how one gets uploaded
+ * as the other. Mirrors the other implementation's `INDEX_SQLITE_FILE_NAME`.
+ */
+export const INDEX_SQLITE_FILE_NAME = "index.v1.sqlite";
 
 /** The `format` value every artifact carries in its `metadata` table. */
-export const INDEX_SQLITE_FORMAT = "virtool-index-sqlite";
+export const REFERENCE_SQLITE_FORMAT = "virtool-reference-sqlite";
 
 /** The `format_version` value this reader understands. */
-export const INDEX_SQLITE_FORMAT_VERSION = "1";
+export const REFERENCE_SQLITE_FORMAT_VERSION = "1";
 
 /** The `created_by` value this package writes. Python writes the same. */
-const INDEX_SQLITE_CREATED_BY = "virtool";
+const REFERENCE_SQLITE_CREATED_BY = "virtool";
 
 const INDEX_SQLITE_DDL = `
 CREATE TABLE metadata (
@@ -168,9 +180,9 @@ export function createIndexArtifactSchema(path: string): DatabaseSync {
 		"INSERT INTO metadata (key, value) VALUES (?, ?)",
 	);
 
-	insert.run("format", INDEX_SQLITE_FORMAT);
-	insert.run("format_version", INDEX_SQLITE_FORMAT_VERSION);
-	insert.run("created_by", INDEX_SQLITE_CREATED_BY);
+	insert.run("format", REFERENCE_SQLITE_FORMAT);
+	insert.run("format_version", REFERENCE_SQLITE_FORMAT_VERSION);
+	insert.run("created_by", REFERENCE_SQLITE_CREATED_BY);
 
 	return database;
 }
@@ -197,8 +209,8 @@ function checkIndexArtifactFormat(
 	);
 
 	const expected = [
-		["format", INDEX_SQLITE_FORMAT],
-		["format_version", INDEX_SQLITE_FORMAT_VERSION],
+		["format", REFERENCE_SQLITE_FORMAT],
+		["format_version", REFERENCE_SQLITE_FORMAT_VERSION],
 	] as const;
 
 	for (const [key, want] of expected) {

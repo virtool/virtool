@@ -1,6 +1,6 @@
 import type { FinalizeAnalysisRequest, JsonObject } from "@virtool/contracts";
+import { openWorkflowIndex } from "@virtool/sqlite";
 import type { JobsApiClient } from "@virtool/workflow";
-import { openWorkflowIndex } from "@virtool/workflow";
 import { runExpectationMaximization } from "../pathoscopeCore";
 import { workPaths } from "../paths";
 import { buildReport } from "../report";

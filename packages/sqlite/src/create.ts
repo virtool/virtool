@@ -1,16 +1,17 @@
 /**
- * The write half of the artifact: the port of Python's `_create_index_sqlite`.
+ * The write half of the artifact.
  *
- * A workflow needs this because pathoscope collapses the reference it was given
- * — `cd-hit-est` drops near-duplicate isolates — and writes the survivors as a
- * second artifact it then reads back through {@link openWorkflowIndex}. The
- * collapsed file has to be one Python's reader accepts too, because the two
- * implementations run side by side during the port.
- *
+ * Two callers need it. A finished index build publishes a snapshot of the whole
+ * reference, and pathoscope collapses the reference it was given — `cd-hit-est`
+ * drops near-duplicate isolates — and writes the survivors as a second artifact
+ * it then reads back through {@link openWorkflowIndex}. Both have to be files
+ * the other implementation's reader accepts, because the two run side by side
+ * during the port.
  */
 
 import { unlink } from "node:fs/promises";
 import type { DatabaseSync } from "node:sqlite";
+import { IndexOtuIntegrityError } from "./errors";
 import type { IndexOtu, IndexReference } from "./queries";
 import { createIndexArtifactSchema } from "./schema";
 
@@ -71,6 +72,8 @@ export async function createIndexArtifact(
 			);
 
 			for await (const otu of otus) {
+				checkOtuIntegrity(otu);
+
 				insertOtu.run(
 					otu.id,
 					referenceId,
@@ -132,6 +135,32 @@ export async function createIndexArtifact(
 		}
 	} finally {
 		database.close();
+	}
+}
+
+/**
+ * Reject an OTU that would make the artifact unusable, as the other
+ * implementation's writer does.
+ *
+ * An OTU with no isolates, or an isolate with no sequences, contributes nothing
+ * to the FASTA every analysis is mapped against, and the reader raises the same
+ * error on the way back out. Writing one produces a file this side accepts and
+ * the other writer would have refused — a divergence that only surfaces as an
+ * analysis missing hits.
+ */
+function checkOtuIntegrity(otu: IndexOtu): void {
+	if (otu.isolates.length === 0) {
+		throw new IndexOtuIntegrityError(
+			`OTU ${otu.id} has no isolates in the SQLite reference`,
+		);
+	}
+
+	for (const isolate of otu.isolates) {
+		if (isolate.sequences.length === 0) {
+			throw new IndexOtuIntegrityError(
+				`Isolate ${isolate.id} of OTU ${otu.id} has no sequences in the SQLite reference`,
+			);
+		}
 	}
 }
 

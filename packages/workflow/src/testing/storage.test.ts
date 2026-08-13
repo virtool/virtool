@@ -98,7 +98,7 @@ describe("minted keys", () => {
 
 		const artifact = await seedIndexArtifact(
 			7,
-			"virtool-index-sqlite-v1.sqlite",
+			"reference-snapshot.v1.sqlite",
 			new Uint8Array([1, 2, 3]),
 		);
 

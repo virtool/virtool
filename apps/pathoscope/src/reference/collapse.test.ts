@@ -5,8 +5,8 @@ import type {
 	IndexOtu,
 	IndexOtuIsolate,
 	IndexOtuSequence,
-	RunSubprocess,
-} from "@virtool/workflow";
+} from "@virtool/sqlite";
+import type { RunSubprocess } from "@virtool/workflow";
 import { describe, expect, it, onTestFinished, vi } from "vitest";
 import {
 	type CollapseSegment,

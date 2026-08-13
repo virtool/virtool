@@ -26,11 +26,8 @@ import {
 	WorkflowSample,
 	WorkflowSubtraction,
 } from "@virtool/contracts";
-import {
-	type BuildContextInput,
-	downloadToPath,
-	INDEX_SQLITE_FILE_NAME,
-} from "@virtool/workflow";
+import { REFERENCE_SQLITE_FILE_NAME } from "@virtool/sqlite";
+import { type BuildContextInput, downloadToPath } from "@virtool/workflow";
 import { type PathoscopePaths, workPaths } from "./paths";
 
 /**
@@ -271,11 +268,13 @@ function checkReadName(name: string): void {
  * and must say so rather than degrade.
  */
 function resolveIndex(index: WorkflowIndex, path: string): PathoscopeIndex {
-	const file = index.files.find(({ name }) => name === INDEX_SQLITE_FILE_NAME);
+	const file = index.files.find(
+		({ name }) => name === REFERENCE_SQLITE_FILE_NAME,
+	);
 
 	if (!file) {
 		throw new Error(
-			`Index ${index.id} has no ${INDEX_SQLITE_FILE_NAME}; rebuild it before analysing against it`,
+			`Index ${index.id} has no ${REFERENCE_SQLITE_FILE_NAME}; rebuild it before analysing against it`,
 		);
 	}
 

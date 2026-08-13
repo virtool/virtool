@@ -58,7 +58,12 @@ export const indexes = pgTable("indexes", {
  * values are right and nothing generates migrations from this side, so the
  * mismatch never reaches a real database.
  */
-export const indexType = pgEnum("indextype", ["json", "fasta", "bowtie2"]);
+export const indexType = pgEnum("indextype", [
+	"json",
+	"fasta",
+	"bowtie2",
+	"sqlite",
+]);
 
 export const indexFiles = pgTable(
 	"index_files",

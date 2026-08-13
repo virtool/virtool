@@ -12,7 +12,10 @@
  */
 
 import { join } from "node:path";
-import { INDEX_SQLITE_FILE_NAME } from "@virtool/workflow";
+import {
+	INDEX_SQLITE_FILE_NAME,
+	REFERENCE_SQLITE_FILE_NAME,
+} from "@virtool/sqlite";
 
 /** Where one subtraction's genome and its bowtie2 index live. */
 export type SubtractionPaths = {
@@ -37,9 +40,10 @@ export type PathoscopePaths = {
 	/**
 	 * The collapsed reference this workflow writes and then reads back.
 	 *
-	 * Named like the source rather than `index.sqlite`: it is an artifact of the
-	 * same format, and the filename is what distinguishes it from an incompatible
-	 * future one before it is opened.
+	 * Named apart from the source it was collapsed from. The two are the same
+	 * format but are not interchangeable — this one is missing every isolate
+	 * `cd-hit-est` dropped — and one filename for both is how a partial artifact
+	 * gets uploaded as a whole reference.
 	 */
 	collapsedReference: string;
 
@@ -104,7 +108,7 @@ export function workPaths(workPath: string): PathoscopePaths {
 		root: workPath,
 
 		sourceIndex: (indexId) =>
-			join(workPath, "indexes", String(indexId), INDEX_SQLITE_FILE_NAME),
+			join(workPath, "indexes", String(indexId), REFERENCE_SQLITE_FILE_NAME),
 
 		read: (name) => join(workPath, "reads", name),
 

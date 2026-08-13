@@ -70,12 +70,26 @@ install layer stays untouched when an app is added.
 
 ## The bioinformatics tools are built here, one stage each
 
-`bowtie2`, `cd-hit`, `hmmer`, `pigz`, `samtools`, `seqkit` and `skewer`
-each get a stage near the top of the `Dockerfile`, installing to
+`bowtie2`, `cd-hit`, `hmmer`, `samtools`, `seqkit` and `skewer` each get
+a stage near the top of the `Dockerfile`, installing to
 `/tools/<tool>/<version>/`, and the workflow runtime stages copy out of
 them. They were `ghcr.io/virtool/tools`, a separate repo; the recipes
 here are that repo's `install_*.sh` scripts verbatim, down to the
 upstream URLs and the layout.
+
+**`pigz` is the one tool without a stage.** The only source for its
+tarball is zlib.net, which has gone down and taken every queued build
+with it — the stage never fails, it hangs, and the runner's six-hour
+ceiling is what ends the job. The pathoscope runtime stage installs
+Debian's `pigz` package instead. Nothing in this repo depends on its
+exact output bytes: `@virtool/workflow`'s gzip helpers are `node:zlib`
+in-process and checksums are taken over decompressed content, so
+bookworm's 2.6 stands in for 2.8 unnoticed. Don't restore the stage.
+
+Every `wget` in the block passes `--tries=3 --timeout=30`. wget defaults
+to 20 tries at a 900-second read timeout, which is what turned one
+unreachable mirror into a job that hung rather than failed; these are
+academic and personal servers, and they do go down.
 
 **One stage per tool, never one combined stage.** BuildKit builds only
 the stages the requested target reaches, so `--target create-subtraction`

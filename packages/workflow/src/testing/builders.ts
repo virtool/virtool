@@ -415,10 +415,10 @@ export function createFakeIndex(
 		files: [
 			{
 				id: id * 10,
-				name: "virtool-index-sqlite-v1.sqlite",
+				name: "reference-snapshot.v1.sqlite",
 				size: random.int(1_000, 999_999),
 				storageKey: seededStorageKey(random, "indexes", id),
-				type: "json",
+				type: "sqlite",
 			},
 		],
 		// Keyed by legacy Mongo OTU id, straight out of a JSONB column.

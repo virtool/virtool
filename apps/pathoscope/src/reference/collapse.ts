@@ -22,9 +22,9 @@ import type {
 	IndexOtu,
 	IndexOtuIsolate,
 	IndexOtuSequence,
-	RunSubprocess,
 	WorkflowIndex,
-} from "@virtool/workflow";
+} from "@virtool/sqlite";
+import type { RunSubprocess } from "@virtool/workflow";
 import { parseCdHitClusters } from "./clusters";
 
 export const CD_HIT_EST_TOOL = "cd-hit-est";

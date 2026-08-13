@@ -1,13 +1,12 @@
 import { mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
+import { createIndexArtifact, type IndexOtu } from "@virtool/sqlite";
 import {
 	buildMappingIndexCacheParams,
 	type CacheParams,
-	createIndexArtifact,
 	createWorkflowCache,
 	deriveCacheKey,
-	type IndexOtu,
 	type RunSubprocess,
 	type RunSubprocessOptions,
 } from "@virtool/workflow";

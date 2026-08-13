@@ -4,14 +4,14 @@ import { dirname, join } from "node:path";
 import { DatabaseSync } from "node:sqlite";
 import { fileURLToPath } from "node:url";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
+import { createIndexArtifact } from "./create";
 import {
 	IndexArtifactFormatError,
 	IndexArtifactMissingError,
 	IndexOtuIntegrityError,
 	IndexReferenceNotFoundError,
 	IndexSequenceNotFoundError,
-} from "../errors";
-import { createIndexArtifact } from "./create";
+} from "./errors";
 import golden from "./fixtures/golden.json" with { type: "json" };
 import {
 	type IndexOtu,
@@ -20,11 +20,14 @@ import {
 	type WorkflowIndex,
 	writeFasta,
 } from "./queries";
-import { INDEX_SQLITE_FILE_NAME } from "./schema";
+import {
+	createIndexArtifactSchema,
+	REFERENCE_SQLITE_FILE_NAME,
+} from "./schema";
 
 const FIXTURES = join(dirname(fileURLToPath(import.meta.url)), "fixtures");
 
-const FIXTURE_PATH = join(FIXTURES, INDEX_SQLITE_FILE_NAME);
+const FIXTURE_PATH = join(FIXTURES, REFERENCE_SQLITE_FILE_NAME);
 
 let workPath: string;
 let index: WorkflowIndex;
@@ -87,7 +90,7 @@ describe("openWorkflowIndex", () => {
 		database.exec("CREATE TABLE metadata (key TEXT PRIMARY KEY, value TEXT)");
 		database
 			.prepare("INSERT INTO metadata VALUES (?, ?), (?, ?)")
-			.run("format", "virtool-index-sqlite", "format_version", "2");
+			.run("format", "virtool-reference-sqlite", "format_version", "2");
 		database.close();
 
 		expect(() => openWorkflowIndex({ id: 1, path })).toThrow(
@@ -184,25 +187,27 @@ describe("iterOtus", () => {
 	it("throws when an isolate has no sequences", async () => {
 		const path = join(workPath, "hollow.sqlite");
 
-		await createIndexArtifact(path, null, [
-			{
-				abbreviation: "",
-				id: "otu_hollow",
-				isolates: [
-					{
-						default: true,
-						id: "iso_hollow",
-						sequences: [],
-						source_name: "H1",
-						source_type: "isolate",
-					},
-				],
-				name: "Hollow virus",
-				schema: [],
-				taxid: null,
-				version: 0,
-			},
-		]);
+		// Written row by row rather than through `createIndexArtifact`, which
+		// refuses to produce this. The guard here is for an artifact that arrived
+		// from somewhere else — the other implementation, or a build predating that
+		// refusal.
+		const database = createIndexArtifactSchema(path);
+
+		database
+			.prepare(
+				`INSERT INTO otus (id, reference_id, abbreviation, name, taxid, version)
+					VALUES (?, ?, ?, ?, ?, ?)`,
+			)
+			.run("otu_hollow", null, "", "Hollow virus", null, 0);
+
+		database
+			.prepare(
+				`INSERT INTO isolates (virtool_id, otu_id, source_type, source_name, is_default)
+					VALUES (?, ?, ?, ?, ?)`,
+			)
+			.run("iso_hollow", "otu_hollow", "isolate", "H1", 1);
+
+		database.close();
 
 		const hollow = openWorkflowIndex({ id: 3, path });
 

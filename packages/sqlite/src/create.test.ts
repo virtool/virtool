@@ -5,6 +5,7 @@ import { DatabaseSync } from "node:sqlite";
 import { fileURLToPath } from "node:url";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { createIndexArtifact } from "./create";
+import { IndexOtuIntegrityError } from "./errors";
 import golden from "./fixtures/golden.json" with { type: "json" };
 import {
 	type IndexOtu,
@@ -14,8 +15,9 @@ import {
 } from "./queries";
 import {
 	INDEX_SQLITE_FILE_NAME,
-	INDEX_SQLITE_FORMAT,
-	INDEX_SQLITE_FORMAT_VERSION,
+	REFERENCE_SQLITE_FILE_NAME,
+	REFERENCE_SQLITE_FORMAT,
+	REFERENCE_SQLITE_FORMAT_VERSION,
 } from "./schema";
 
 const FIXTURES = join(dirname(fileURLToPath(import.meta.url)), "fixtures");
@@ -23,6 +25,16 @@ const FIXTURES = join(dirname(fileURLToPath(import.meta.url)), "fixtures");
 const OTUS = golden.otus as IndexOtu[];
 
 const REFERENCE = golden.referenceMetadata as IndexReference;
+
+function takeOtu(): IndexOtu {
+	const otu = OTUS[0];
+
+	if (otu === undefined) {
+		throw new Error("the fixture holds no OTUs");
+	}
+
+	return otu;
+}
 
 let workPath: string;
 
@@ -90,7 +102,7 @@ describe("createIndexArtifact", () => {
 		await createIndexArtifact(path, REFERENCE, OTUS);
 
 		expect(readSchema(path)).toEqual(
-			readSchema(join(FIXTURES, INDEX_SQLITE_FILE_NAME)),
+			readSchema(join(FIXTURES, REFERENCE_SQLITE_FILE_NAME)),
 		);
 	});
 
@@ -105,8 +117,8 @@ describe("createIndexArtifact", () => {
 		database.close();
 
 		expect(rows).toEqual([
-			{ key: "format", value: INDEX_SQLITE_FORMAT },
-			{ key: "format_version", value: INDEX_SQLITE_FORMAT_VERSION },
+			{ key: "format", value: REFERENCE_SQLITE_FORMAT },
+			{ key: "format_version", value: REFERENCE_SQLITE_FORMAT_VERSION },
 			{ key: "created_by", value: "virtool" },
 		]);
 	});
@@ -212,6 +224,31 @@ describe("createIndexArtifact", () => {
 		database.close();
 
 		expect(rows).toEqual([]);
+	});
+
+	it("refuses an OTU with no isolates", async () => {
+		const path = join(workPath, INDEX_SQLITE_FILE_NAME);
+		const otu = takeOtu();
+
+		await expect(
+			createIndexArtifact(path, REFERENCE, [{ ...otu, isolates: [] }]),
+		).rejects.toThrow(IndexOtuIntegrityError);
+	});
+
+	it("refuses an isolate with no sequences", async () => {
+		const path = join(workPath, INDEX_SQLITE_FILE_NAME);
+		const otu = takeOtu();
+		const isolate = otu.isolates[0];
+
+		if (isolate === undefined) {
+			throw new Error("the fixture's first OTU has no isolates");
+		}
+
+		await expect(
+			createIndexArtifact(path, REFERENCE, [
+				{ ...otu, isolates: [{ ...isolate, sequences: [] }] },
+			]),
+		).rejects.toThrow(IndexOtuIntegrityError);
 	});
 });
 

@@ -1,6 +1,6 @@
 """Generate the index artifact fixture and its golden query results.
 
-This script is the provenance record for `virtool-index-sqlite-v1.sqlite`,
+This script is the provenance record for `reference-snapshot.v1.sqlite`,
 `golden.json` and `default.fa`. It is not run by CI; it exists so the fixture
 can be regenerated and audited against the Python implementation the
 TypeScript reader is pinned to.
@@ -21,7 +21,7 @@ import asyncio
 import json
 from pathlib import Path
 
-from virtool.indexes.constants import INDEX_SQLITE_FILE_NAME
+from virtool.references.sqlite import REFERENCE_SQLITE_FILE_NAME
 from virtool.workflow.data.indexes import WFIndex
 
 HERE = Path(__file__).resolve().parent
@@ -167,13 +167,18 @@ async def collect(iterator):
     return [item async for item in iterator]
 
 
+async def iter_otus(otus):
+    for otu in otus:
+        yield otu
+
+
 async def main() -> None:
-    sqlite_path = HERE / INDEX_SQLITE_FILE_NAME
+    sqlite_path = HERE / REFERENCE_SQLITE_FILE_NAME
 
     if sqlite_path.exists():
         sqlite_path.unlink()
 
-    index = await WFIndex.create(1, sqlite_path, REFERENCE, iter(OTUS))
+    index = await WFIndex.create(1, sqlite_path, REFERENCE, iter_otus(OTUS))
 
     fasta_path = HERE / "default.fa"
     await index.write_fasta(fasta_path, index.iter_default_sequences())
@@ -189,7 +194,9 @@ async def main() -> None:
         },
         "otuRefsBySequenceId": {
             "sequenceIds": OTU_REF_QUERY_IDS,
-            "result": await index.get_otu_refs_by_sequence_ids(OTU_REF_QUERY_IDS),
+            "result": await index.get_otu_summaries_by_sequence_ids(
+                OTU_REF_QUERY_IDS
+            ),
         },
     }
 

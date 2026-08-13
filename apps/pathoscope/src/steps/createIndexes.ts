@@ -1,12 +1,11 @@
 import { mkdtemp, rm } from "node:fs/promises";
 import { join } from "node:path";
 import type { Logger } from "@virtool/logger";
+import { openWorkflowIndex, writeFasta } from "@virtool/sqlite";
 import {
 	type BuildContextInput,
 	createMappingIndex,
 	downloadToPath,
-	openWorkflowIndex,
-	writeFasta,
 } from "@virtool/workflow";
 import { cacheFor } from "../cache";
 import { REFERENCE_INDEX_EXTRA_PARAMS, WORKFLOW_NAME } from "../cacheParams";

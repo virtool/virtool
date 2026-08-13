@@ -3,7 +3,7 @@ import { seedUser } from "@virtool/data/auth/test/fixtures";
 import type { Db } from "@virtool/data/db/pg";
 import { legacyHistory } from "@virtool/data/db/schema/history";
 import { indexes, indexFiles } from "@virtool/data/db/schema/indexes";
-import { legacyOtus } from "@virtool/data/db/schema/otus";
+import { legacyOtus, legacySequences } from "@virtool/data/db/schema/otus";
 import { legacyReferences } from "@virtool/data/db/schema/references";
 import { tasks } from "@virtool/data/db/schema/tasks";
 import { users } from "@virtool/data/db/schema/users";
@@ -41,6 +41,7 @@ afterAll(async () => {
 beforeEach(async () => {
 	await db.delete(indexFiles);
 	await db.delete(legacyHistory);
+	await db.delete(legacySequences);
 	await db.delete(legacyOtus);
 	await db.delete(indexes);
 	await db.delete(legacyReferences);
@@ -78,8 +79,18 @@ async function claimBuild(count = 2): Promise<{
 				id,
 				data: {
 					_id: id,
+					abbreviation: "",
 					name: `OTU ${id}`,
-					isolates: [{ id: `iso_${id}`, source_type: "isolate" }],
+					isolates: [
+						{
+							id: `iso_${id}`,
+							default: true,
+							source_type: "isolate",
+							source_name: id.toUpperCase(),
+						},
+					],
+					schema: [],
+					taxid: null,
 					version,
 				},
 				name: `OTU ${id}`,
@@ -87,6 +98,27 @@ async function claimBuild(count = 2): Promise<{
 				reference_id: referenceId,
 				verified: true,
 				version,
+			})),
+		);
+
+		// Sequences are their own table and are merged into the isolate they name.
+		// Without them every isolate is empty, which the snapshot writer refuses.
+		await db.insert(legacySequences).values(
+			otus.map(({ id }) => ({
+				id: `seq_${id}`,
+				otu_id: id,
+				isolate_id: `iso_${id}`,
+				position: 0,
+				segment: null,
+				data: {
+					_id: `seq_${id}`,
+					accession: `NC_${id}`,
+					definition: `OTU ${id} complete genome`,
+					host: null,
+					isolate_id: `iso_${id}`,
+					segment: null,
+					sequence: "ACGTACGTAC",
+				},
 			})),
 		);
 	}
@@ -149,12 +181,18 @@ describe("createIndexTask", () => {
 
 		expect(index?.ready).toBe(true);
 
-		const [file] = await db
+		const files = await db
 			.select()
 			.from(indexFiles)
-			.where(eq(indexFiles.index_id, indexId));
+			.where(eq(indexFiles.index_id, indexId))
+			.orderBy(indexFiles.name);
 
-		expect(file?.name).toBe("reference-v2.json.gz");
+		expect(files.map((file) => file.name)).toEqual([
+			"reference-snapshot.v1.sqlite",
+			"reference-v2.json.gz",
+		]);
+
+		const file = files.find((row) => row.name === "reference-v2.json.gz");
 
 		const parts: Uint8Array[] = [];
 
@@ -177,10 +215,11 @@ describe("createIndexTask", () => {
 
 		expect(await run(task)).toEqual({ status: "completed" });
 
-		const [afterFirst] = await db
+		const afterFirst = await db
 			.select()
 			.from(indexFiles)
-			.where(eq(indexFiles.index_id, indexId));
+			.where(eq(indexFiles.index_id, indexId))
+			.orderBy(indexFiles.name);
 
 		// Claiming again needs the row back in a claimable state; the build itself
 		// stays ready, which is the condition under test.
@@ -196,9 +235,10 @@ describe("createIndexTask", () => {
 		const rows = await db
 			.select()
 			.from(indexFiles)
-			.where(eq(indexFiles.index_id, indexId));
+			.where(eq(indexFiles.index_id, indexId))
+			.orderBy(indexFiles.name);
 
-		expect(rows).toEqual([afterFirst]);
+		expect(rows).toEqual(afterFirst);
 	});
 
 	// The payload is parsed before any handler code runs, so a row carrying

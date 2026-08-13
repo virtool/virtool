@@ -33,7 +33,7 @@ import {
 	IndexOtuIntegrityError,
 	IndexReferenceNotFoundError,
 	IndexSequenceNotFoundError,
-} from "../errors";
+} from "./errors";
 import { type IndexArtifactSource, openIndexArtifact } from "./schema";
 
 /**

@@ -862,9 +862,11 @@ caller it means the same thing.
 `generateTaskIndex` (`@virtool/data/indexes/data`) inside one step,
 `build_index` — Python's method name, so both runners write the same value to
 the `step` column. The domain function patches every OTU in the build's manifest
-back to the version the manifest pins it to, streams the result to object
-storage as `reference-v2.json.gz`, registers the `index_files` row, stamps
-`legacy_otus.last_indexed_version` and flips `ready`.
+back to the version the manifest pins it to, writes the result to object
+storage as `reference-snapshot.v1.sqlite` and `reference-v2.json.gz`, registers
+an `index_files` row for each, stamps `legacy_otus.last_indexed_version` and
+flips `ready`. The snapshot is the artifact an analysis reads; the gzipped JSON
+is kept because the other implementation still falls back to it.
 
 It is the first body to take the progress seam. Python's task declares no
 progress handler and jumps 0 to 100; this is the longest-running of the ten and
@@ -873,7 +875,15 @@ trailing `onProgress?: (percent: number) => Promise<void>` and the body bridges
 it with `async (percent) => report(percent / 100)`. Percent at the `data.ts`
 boundary, fraction at `runStep`'s reporter.
 
-Four decisions are worth knowing before changing it.
+Five decisions are worth knowing before changing it.
+
+**The manifest is walked once per artifact.** The snapshot's rows go in as they
+arrive and the JSON streams as it is serialized, so neither holds a reference —
+and holding the patched documents for a second consumer would put the whole
+thing in the heap, which is the one outcome the chunk loop exists to prevent. A
+second walk costs a repeat of the patch reads and nothing else. Progress is
+split across the two, the snapshot reporting 0–50 and the JSON 50–100, so the
+bar never goes backwards.
 
 **An already-ready build is a successful no-op.** Python raises
 `ResourceConflictError("Index is already ready")`. Porting that verbatim would

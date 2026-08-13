@@ -18,6 +18,10 @@ import type {
 } from "@virtool/contracts";
 import type { Logger } from "@virtool/logger";
 import {
+	REFERENCE_SQLITE_FILE_NAME,
+	type IndexOtu as SnapshotOtu,
+} from "@virtool/sqlite";
+import {
 	deleteKeys,
 	mintStorageKey,
 	type StorageBackend,
@@ -54,6 +58,7 @@ import {
 } from "../references/data";
 import { createTask } from "../tasks/data";
 import { type OtuChunk, streamArtifact } from "./artifact";
+import { toSnapshotOtu, writeIndexSnapshot } from "./snapshot";
 
 /** Thrown when a requested index does not exist. */
 export class IndexNotFoundError extends AppError {}
@@ -437,6 +442,7 @@ const INDEX_FILE_NAMES = new Set([
 	"reference.rev.1.bt2",
 	"reference.rev.2.bt2",
 	"reference-v2.json.gz",
+	REFERENCE_SQLITE_FILE_NAME,
 ]);
 
 /**
@@ -670,7 +676,7 @@ export async function createIndex(
 // into one `last_indexed_version` statement.
 const OTU_ID_CHUNK_SIZE = 500;
 
-/** The file a finished build publishes. Python's `REFERENCE_JSON_V2_FILE_NAME`. */
+/** The gzipped JSON a finished build publishes, beside its snapshot. */
 const REFERENCE_JSON_V2_FILE_NAME = "reference-v2.json.gz";
 
 // The reference envelope, with `created_at` rendered in Postgres rather than
@@ -780,28 +786,31 @@ async function stampLastIndexedVersions(
 }
 
 /**
- * Finish a task-backed build: write its artifact and mark it ready.
+ * Finish a task-backed build: write its artifacts and mark it ready.
  *
- * The port of Python's `generate_task_index`, and the whole of what the
- * `create_index` task runs. It patches every OTU in the manifest to the version
- * the manifest pins it to, streams the result to object storage as
- * `reference-v2.json.gz`, registers the file and flips `ready`.
+ * The whole of what the `create_index` task runs. It patches every OTU in the
+ * manifest to the version the manifest pins it to, writes both artifacts to
+ * object storage — the `reference-snapshot.v1.sqlite` every analysis reads and
+ * the `reference-v2.json.gz` beside it — registers a row for each and flips
+ * `ready`.
  *
- * `onProgress` reports percent complete on chunk boundaries. It is the seam a
+ * **A build publishes both files or neither.** They are registered in one
+ * transaction with the `ready` flip, so there is no state where an index says it
+ * is analysable and the snapshot is missing. That state is what a workflow
+ * cannot recover from: it fails the run at its first step, and the only fix is
+ * to build the index again.
+ *
+ * `onProgress` reports percent complete on chunk boundaries, the snapshot taking
+ * the first half of the range and the gzipped JSON the second. It is the seam a
  * task body bridges to its step reporter; nothing here knows a task exists.
  *
- * Two divergences from Python, both deliberate:
+ * An **already-ready index is a successful no-op**. A claim is a lease, so a
+ * body may re-run from step zero after its work has already completed and
+ * committed — a reclaim is concurrent rather than successive — and failing it
+ * would show a red error against an index that is perfectly fine.
  *
- * An **already-ready index is a successful no-op**, where Python raises. A claim
- * is a lease, so a body may re-run from step zero after its work has already
- * completed and committed — a reclaim is concurrent rather than successive.
- * Porting the raise verbatim would fail the task and show a red error against an
- * index that is perfectly fine.
- *
- * Only the **integer** id is accepted, where Python also takes the stringified
- * legacy form for a task enqueued before the integer-id cutover. Nothing enqueues
- * one: `createIndex` writes `{ index_id: index.id }`, an integer, and the only
- * `CreateIndexTask` construction left on Python's side is in `virtool/fake`.
+ * Only the **integer** id is accepted. Nothing enqueues the stringified legacy
+ * form: `createIndex` writes `{ index_id: index.id }`.
  */
 export async function generateTaskIndex(
 	db: Db,
@@ -853,20 +862,28 @@ export async function generateTaskIndex(
 
 	const specifiers = await readManifestOrder(db, indexId);
 
-	// Minted, never composed. A rebuild therefore writes a new object rather than
-	// overwriting the previous one, which is what the post-commit delete below is
+	// Minted, never composed. A rebuild therefore writes new objects rather than
+	// overwriting the previous ones, which is what the post-commit delete below is
 	// for.
-	const storageKey = mintStorageKey("indexes", indexId);
+	const artifactKey = mintStorageKey("indexes", indexId);
+	const snapshotKey = mintStorageKey("indexes", indexId);
 
-	let patched = 0;
+	// The manifest is walked once per artifact rather than once in total. Holding
+	// the patched documents for a second consumer would put the whole reference in
+	// the heap, which is the one thing this build refuses to do; teeing the
+	// generator would do the same wherever the two consumers drift apart. The
+	// second walk costs a repeat of the patch reads and nothing else.
+	async function* chunks(
+		reportFrom: number,
+		reportTo: number,
+	): AsyncIterable<OtuChunk> {
+		let patched = 0;
 
-	async function* chunks(): AsyncIterable<OtuChunk> {
 		for (let start = 0; start < specifiers.length; start += OTU_ID_CHUNK_SIZE) {
 			const slice = specifiers.slice(start, start + OTU_ID_CHUNK_SIZE);
 
-			// One batched read per chunk. Python patches each OTU on its own behind a
-			// windowed concurrency loop; this resolves a whole chunk in a fixed
-			// handful of queries, so there is nothing for that apparatus to do.
+			// One batched read per chunk, resolving a whole chunk in a fixed handful
+			// of queries rather than patching each OTU on its own.
 			const documents = await patchOtusToVersions(db, slice);
 
 			yield slice.map(({ otuId, version }) => {
@@ -883,7 +900,9 @@ export async function generateTaskIndex(
 
 			patched += slice.length;
 
-			await onProgress?.((patched / specifiers.length) * 100);
+			await onProgress?.(
+				reportFrom + (patched / specifiers.length) * (reportTo - reportFrom),
+			);
 
 			// Serializing a chunk is a synchronous stretch, and the runner's heartbeat
 			// is a timer. Without a macrotask boundary between chunks a large
@@ -892,12 +911,41 @@ export async function generateTaskIndex(
 		}
 	}
 
+	async function* snapshotOtus(): AsyncIterable<SnapshotOtu> {
+		for await (const chunk of chunks(0, 50)) {
+			for (const document of chunk) {
+				yield toSnapshotOtu(document);
+			}
+		}
+	}
+
 	// Storage cannot participate in the transaction below. A write that lands
 	// where the commit does not — a failure here, or a hard exit between the two —
 	// leaves an object no row names, which the orphan sweep collects. Deleting it
 	// here would only cover the half of that where this process survives.
-	const size = await storage.write(
-		storageKey,
+	//
+	// The snapshot goes first because it is the artifact an analysis needs. A
+	// build that dies between the two writes is unfinished either way — `ready`
+	// is flipped by the commit below and by nothing else — so the order costs
+	// nothing and puts the failure that matters first.
+	const snapshotSize = await writeIndexSnapshot(
+		storage,
+		snapshotKey,
+		{
+			created_at: reference.createdAt,
+			// A wire value rather than a fact about the row: every reference this
+			// side builds an index for is a genome, and the field is one the
+			// analysis workflows read back.
+			data_type: "genome",
+			id: String(reference.id),
+			name: reference.name,
+			organism: reference.organism,
+		},
+		snapshotOtus(),
+	);
+
+	const artifactSize = await storage.write(
+		artifactKey,
 		streamArtifact(
 			{
 				_id: reference.id,
@@ -905,36 +953,55 @@ export async function generateTaskIndex(
 				name: reference.name,
 				organism: reference.organism,
 			},
-			chunks(),
+			chunks(50, 100),
 		),
 	);
 
-	const replacedKey = await db.transaction(async (tx) => {
-		const [existing] = await tx
-			.select({ storageKey: indexFiles.storage_key })
+	const written = [
+		{
+			key: artifactKey,
+			name: REFERENCE_JSON_V2_FILE_NAME,
+			size: artifactSize,
+			type: "json",
+		},
+		{
+			key: snapshotKey,
+			name: REFERENCE_SQLITE_FILE_NAME,
+			size: snapshotSize,
+			type: "sqlite",
+		},
+	] as const;
+
+	const replacedKeys = await db.transaction(async (tx) => {
+		const existing = await tx
+			.select({ name: indexFiles.name, storageKey: indexFiles.storage_key })
 			.from(indexFiles)
 			.where(
 				and(
 					eq(indexFiles.index_id, indexId),
-					eq(indexFiles.name, REFERENCE_JSON_V2_FILE_NAME),
+					inArray(
+						indexFiles.name,
+						written.map(({ name }) => name),
+					),
 				),
-			)
-			.limit(1);
+			);
 
-		await tx
-			.insert(indexFiles)
-			.values({
-				index: String(indexId),
-				index_id: indexId,
-				name: REFERENCE_JSON_V2_FILE_NAME,
-				size,
-				storage_key: storageKey,
-				type: "json",
-			})
-			.onConflictDoUpdate({
-				target: [indexFiles.index_id, indexFiles.name],
-				set: { size, storage_key: storageKey, type: "json" },
-			});
+		for (const { key, name, size, type } of written) {
+			await tx
+				.insert(indexFiles)
+				.values({
+					index: String(indexId),
+					index_id: indexId,
+					name,
+					size,
+					storage_key: key,
+					type,
+				})
+				.onConflictDoUpdate({
+					target: [indexFiles.index_id, indexFiles.name],
+					set: { size, storage_key: key, type },
+				});
+		}
 
 		await stampLastIndexedVersions(tx, row.referenceId);
 
@@ -943,13 +1010,14 @@ export async function generateTaskIndex(
 			.set({ ready: true })
 			.where(eq(indexes.id, indexId));
 
-		return existing?.storageKey ?? null;
+		return existing.map(({ storageKey }) => storageKey);
 	});
 
-	// Committed, so the row now names the new object and the one it replaced is an
-	// orphan. Cleaning it up must not fail a build that otherwise succeeded.
-	if (replacedKey !== null) {
-		for (const failure of await deleteKeys(storage, [replacedKey])) {
+	// Committed, so the rows now name the new objects and the ones they replaced
+	// are orphans. Cleaning them up must not fail a build that otherwise
+	// succeeded.
+	if (replacedKeys.length > 0) {
+		for (const failure of await deleteKeys(storage, replacedKeys)) {
 			logger.error(
 				{ err: failure.error, indexId, key: failure.key },
 				"index storage cleanup failed; file orphaned",

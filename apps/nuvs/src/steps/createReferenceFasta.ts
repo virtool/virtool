@@ -1,6 +1,6 @@
 import { mkdir } from "node:fs/promises";
 import { dirname } from "node:path";
-import { openWorkflowIndex, writeFasta } from "@virtool/workflow";
+import { openWorkflowIndex, writeFasta } from "@virtool/sqlite";
 import { workPaths } from "../paths";
 import type { NuvsStep } from "./types";
 

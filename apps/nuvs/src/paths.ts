@@ -14,7 +14,7 @@
  */
 
 import { join } from "node:path";
-import { INDEX_SQLITE_FILE_NAME } from "@virtool/workflow";
+import { REFERENCE_SQLITE_FILE_NAME } from "@virtool/sqlite";
 
 /** Where one subtraction's genome and its bowtie2 index live. */
 export type SubtractionPaths = {
@@ -137,7 +137,7 @@ export function workPaths(workPath: string): NuvsPaths {
 		root: workPath,
 
 		sourceIndex: (indexId) =>
-			join(workPath, "indexes", String(indexId), INDEX_SQLITE_FILE_NAME),
+			join(workPath, "indexes", String(indexId), REFERENCE_SQLITE_FILE_NAME),
 
 		read: (name) => join(workPath, "reads", name),
 

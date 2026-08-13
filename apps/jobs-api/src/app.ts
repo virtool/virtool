@@ -8,6 +8,7 @@ import { handleFinalizeAnalysis, handleGetAnalysis } from "./analyses/handlers";
 import { handleGetCache, handleRegisterCache } from "./caches/handlers";
 import { jsonError } from "./http";
 import { handleGetIndex } from "./indexes/handlers";
+import { handleReadJobCounts } from "./jobs/counts";
 import {
 	handleClaimJob,
 	handleFinishJob,
@@ -48,6 +49,12 @@ import {
  * is the network: this service has no ingress, so reaching the endpoint at all
  * means already being inside the cluster.
  *
+ * `GET /jobs/counts` is public on the same two grounds. The KEDA scaler that
+ * reads it holds no job key and could not: a key is minted at claim time, which
+ * is the thing it is deciding whether to start a pod to do. Python's
+ * `JobsCountsView` carries `PublicRoutePolicy`, and what it discloses is queue
+ * depth per workflow — nothing about a job, a sample or a user.
+ *
  * `/metrics` is deliberately **not** here: it enforces its own bearer token and
  * is expected to refuse like everything else.
  */
@@ -55,6 +62,7 @@ export const PUBLIC_ROUTES = [
 	"/health/live",
 	"/health/ready",
 	"/jobs/claim",
+	"/jobs/counts",
 ] as const;
 
 /** What {@link createApp} needs to serve. */
@@ -183,6 +191,17 @@ export function createApp(deps: AppDeps): Hono {
 	// `/jobs/claim` cannot collide with `/jobs/:jobId`: nothing serves POST on
 	// the latter, and Hono prefers a static segment over a parameter regardless.
 	app.post("/jobs/claim", (c) => handleClaimJob(deps, c.req.raw));
+
+	// Queue depth, for the KEDA `ScaledJob` that starts workflow pods. Not part
+	// of the lifecycle — nothing a runner calls — but it lives on `/jobs` because
+	// Python serves it there and the scaler's trigger names the path.
+	//
+	// It cannot collide with `/jobs/:jobId` for the reason above, and the
+	// collision is worth naming: before this route existed, a poll for
+	// `/jobs/counts` matched the parameter route, was refused by the job guard,
+	// and reported to the scaler as `api returned 401` — a credential problem
+	// where the truth was a missing endpoint.
+	app.get("/jobs/counts", () => handleReadJobCounts(readJobQueue));
 
 	app.get("/jobs/:jobId", (c) =>
 		handleReadJob(deps, c.req.raw, c.req.param("jobId")),

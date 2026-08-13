@@ -11,7 +11,7 @@
 			"!packages/pathoscope-core",
 			"!packages/quality-core/tests/fixtures/*.json",
 			"!apps/site/**",
-			"!packages/workflow/src/index/fixtures/**",
+			"!packages/sqlite/src/fixtures/**",
 			"!**/routeTree.gen.ts",
 			"!**/node_modules",
 			"!**/dist",

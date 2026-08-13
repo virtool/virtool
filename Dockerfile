@@ -26,6 +26,7 @@ COPY packages/data ./packages/data
 COPY packages/logger ./packages/logger
 COPY packages/sentry ./packages/sentry
 COPY packages/service ./packages/service
+COPY packages/sqlite ./packages/sqlite
 COPY packages/storage ./packages/storage
 COPY packages/workflow ./packages/workflow
 COPY apps/tsconfig.node.json ./apps/
@@ -36,13 +37,19 @@ COPY apps/tsconfig.node.json ./apps/
 # the requested target reaches, so `--target create-subtraction` compiles
 # nothing but seqkit. None of them depends on `base` or on the build context, so
 # a warm cache skips them all whatever changed in the repo.
+#
+# Every download passes `--tries` and `--timeout`. wget defaults to 20 tries at
+# a 900 s read timeout, so an unreachable mirror does not fail the build — it
+# hangs the job until the runner's six-hour ceiling, holding up every other
+# pull request behind it. These sources are academic and personal servers, and
+# they do go down.
 
 FROM debian:bookworm AS bowtie2
 WORKDIR /build
 RUN apt-get update \
     && apt-get install -y build-essential perl wget zlib1g-dev \
     && rm -rf /var/lib/apt/lists/*
-RUN wget -q https://github.com/BenLangmead/bowtie2/archive/refs/tags/v2.5.4.tar.gz \
+RUN wget -q --tries=3 --timeout=30 https://github.com/BenLangmead/bowtie2/archive/refs/tags/v2.5.4.tar.gz \
     && tar -xf v2.5.4.tar.gz
 WORKDIR /build/bowtie2-2.5.4
 RUN make -j"$(nproc)" \
@@ -54,7 +61,7 @@ WORKDIR /build
 RUN apt-get update \
     && apt-get install -y build-essential libz-dev wget \
     && rm -rf /var/lib/apt/lists/*
-RUN wget -q https://github.com/weizhongli/cdhit/releases/download/V4.8.1/cd-hit-v4.8.1-2019-0228.tar.gz \
+RUN wget -q --tries=3 --timeout=30 https://github.com/weizhongli/cdhit/releases/download/V4.8.1/cd-hit-v4.8.1-2019-0228.tar.gz \
     && tar -xf cd-hit-v4.8.1-2019-0228.tar.gz
 WORKDIR /build/cd-hit-v4.8.1-2019-0228
 # The sed links libgomp statically. Without it the binary needs `libgomp1` in
@@ -74,24 +81,18 @@ WORKDIR /build
 RUN apt-get update \
     && apt-get install -y bioperl build-essential wget \
     && rm -rf /var/lib/apt/lists/*
-RUN wget -q http://eddylab.org/software/hmmer/hmmer-3.3.2.tar.gz \
+RUN wget -q --tries=3 --timeout=30 http://eddylab.org/software/hmmer/hmmer-3.3.2.tar.gz \
     && tar -xf hmmer-3.3.2.tar.gz
 WORKDIR /build/hmmer-3.3.2
 RUN ./configure --prefix /tools/hmmer/3.3.2 \
     && make -j"$(nproc)" \
     && make install
 
-FROM debian:bookworm AS pigz
-WORKDIR /build
-RUN apt-get update \
-    && apt-get install -y gcc make wget zlib1g-dev \
-    && rm -rf /var/lib/apt/lists/*
-RUN wget -q https://zlib.net/pigz/pigz-2.8.tar.gz \
-    && tar -xzf pigz-2.8.tar.gz
-WORKDIR /build/pigz-2.8
-RUN make \
-    && mkdir -p /tools/pigz/2.8 \
-    && mv pigz /tools/pigz/2.8/pigz
+# There is deliberately no `pigz` stage. The only source for its tarball is
+# zlib.net, which goes down often enough to hang every build queued behind it,
+# so the stages that want pigz install Debian's package instead. Nothing here
+# depends on its exact output bytes — checksums are taken over decompressed
+# content — so 2.6 rather than 2.8 costs nothing.
 
 FROM debian:bookworm AS samtools
 WORKDIR /build
@@ -106,7 +107,7 @@ RUN apt-get update \
         wget \
         zlib1g-dev \
     && rm -rf /var/lib/apt/lists/*
-RUN wget -q https://github.com/samtools/samtools/releases/download/1.22.1/samtools-1.22.1.tar.bz2 \
+RUN wget -q --tries=3 --timeout=30 https://github.com/samtools/samtools/releases/download/1.22.1/samtools-1.22.1.tar.bz2 \
     && tar -xjf samtools-1.22.1.tar.bz2
 WORKDIR /build/samtools-1.22.1
 RUN ./configure --prefix=/tools/samtools/1.22.1 \
@@ -118,7 +119,7 @@ WORKDIR /build
 RUN apt-get update \
     && apt-get install -y wget \
     && rm -rf /var/lib/apt/lists/*
-RUN wget -q https://github.com/shenwei356/seqkit/releases/download/v2.13.0/seqkit_linux_amd64.tar.gz \
+RUN wget -q --tries=3 --timeout=30 https://github.com/shenwei356/seqkit/releases/download/v2.13.0/seqkit_linux_amd64.tar.gz \
     && tar -xf seqkit_linux_amd64.tar.gz \
     && mkdir -p /tools/seqkit/2.13.0 \
     && mv seqkit /tools/seqkit/2.13.0/seqkit \
@@ -132,7 +133,7 @@ WORKDIR /build
 RUN apt-get update \
     && apt-get install -y build-essential wget \
     && rm -rf /var/lib/apt/lists/*
-RUN wget -q https://github.com/relipmoc/skewer/archive/0.2.2.tar.gz \
+RUN wget -q --tries=3 --timeout=30 https://github.com/relipmoc/skewer/archive/0.2.2.tar.gz \
     && tar -xf 0.2.2.tar.gz
 WORKDIR /build/skewer-0.2.2
 RUN make \
@@ -269,23 +270,28 @@ FROM node:24-bookworm-slim AS pathoscope
 WORKDIR /workflow
 
 # The tools binaries are built on debian:bookworm, which carries more than this
-# slim base does. Each package here backs a specific `ldd ... => not found`:
-# perl and libgomp1 for bowtie2 (a set of Perl wrappers around the
-# bowtie2-align-* binaries, compiled with OpenMP), libcurl4 and libncursesw6
-# for samtools. pathoscope-core itself needs none of them — hts-sys links
-# htslib statically.
+# slim base does. Each package here backs a specific `ldd ... => not found` or
+# shebang: libgomp1 for the OpenMP-compiled bowtie2-align-* binaries, libcurl4
+# and libncursesw6 for samtools, perl for the `bowtie2` wrapper and python3 for
+# the `bowtie2-build` one — both wrappers, different interpreters.
+# pathoscope-core itself needs none of them — hts-sys links htslib statically.
+#
+# pigz is the odd one out: a tool rather than a library something else needs,
+# and installed here rather than copied from a stage. The tools block above
+# says why.
 RUN apt-get update \
     && apt-get install -y --no-install-recommends \
         libcurl4 \
         libgomp1 \
         libncursesw6 \
         perl \
+        pigz \
+        python3 \
     && rm -rf /var/lib/apt/lists/* \
     && apt-get clean
 
 COPY --from=bowtie2 /tools/bowtie2/2.5.4/bowtie* /usr/local/bin/
 COPY --from=cd-hit /tools/cd-hit/4.8.1/cd-hit-est /usr/local/bin/
-COPY --from=pigz /tools/pigz/2.8/pigz /usr/local/bin/
 COPY --from=samtools /tools/samtools/1.22.1/bin/samtools /usr/local/bin/
 COPY --from=pathoscope-builder /build/target/release/pathoscope-core /usr/local/bin/
 COPY --from=build-pathoscope /prod/pathoscope ./
@@ -312,7 +318,7 @@ RUN apt-get update \
         zlib1g-dev \
     && rm -rf /var/lib/apt/lists/* \
     && apt-get clean
-RUN wget -q https://github.com/ablab/spades/releases/download/v4.2.0/SPAdes-4.2.0.tar.gz
+RUN wget -q --tries=3 --timeout=30 https://github.com/ablab/spades/releases/download/v4.2.0/SPAdes-4.2.0.tar.gz
 RUN tar -xzf SPAdes-4.2.0.tar.gz
 WORKDIR /build/SPAdes-4.2.0
 ENV PREFIX=/build/spades
@@ -327,12 +333,14 @@ FROM node:24-bookworm-slim AS nuvs
 WORKDIR /workflow
 
 # Each package here backs a specific runtime dependency of a copied binary.
-# perl and libgomp1 are for bowtie2, a set of Perl wrappers around
-# OpenMP-compiled binaries. libbz2-1.0 is for SPAdes, which links it.
+# libgomp1 is for the OpenMP-compiled bowtie2-align-* binaries and libbz2-1.0
+# for SPAdes, which links it.
 #
-# python3 is for SPAdes, not for us: `spades.py` is a Python script that
-# drives the compiled assembler binaries — dropping it leaves an image whose
-# `assemble` step fails at exec with no clue why.
+# perl and python3 are interpreters rather than libraries, and each is needed
+# twice over: perl runs the `bowtie2` wrapper, python3 runs the
+# `bowtie2-build` one and `spades.py`, which drives the compiled assembler
+# binaries. Dropping either leaves an image whose steps fail at exec with no
+# clue why.
 RUN apt-get update \
     && apt-get install -y --no-install-recommends \
         libbz2-1.0 \
