@@ -6,7 +6,10 @@ from pyfixtures import FixtureScope
 
 from virtool.indexes.db import REFERENCE_JSON_V2_FILE_NAME
 from virtool.indexes.models import IndexFile
-from virtool.references.sqlite import REFERENCE_SQLITE_FILE_NAME
+from virtool.references.sqlite import (
+    REFERENCE_SQLITE_FILE_NAME,
+    REFERENCE_SQLITE_GZIP_FILE_NAME,
+)
 from virtool.workflow.data.indexes import (
     INDEX_SQLITE_FILE_NAME,
     WFIndex,
@@ -166,6 +169,23 @@ def _set_sqlite_reference_data(workflow_data: WorkflowData) -> None:
             id=2,
             index=workflow_data.index.id,
             name=REFERENCE_SQLITE_FILE_NAME,
+            size=100,
+            type="sqlite",
+        )
+    )
+
+
+def _set_compressed_sqlite_reference_data(workflow_data: WorkflowData) -> None:
+    _set_sqlite_reference_data(workflow_data)
+    workflow_data.index.files.append(
+        IndexFile(
+            download_url=(
+                f"/indexes/{workflow_data.index.id}/files/"
+                f"{REFERENCE_SQLITE_GZIP_FILE_NAME}"
+            ),
+            id=3,
+            index=workflow_data.index.id,
+            name=REFERENCE_SQLITE_GZIP_FILE_NAME,
             size=100,
             type="sqlite",
         )
@@ -423,6 +443,38 @@ class TestIndex:
         assert sorted([otu["version"] async for otu in index.iter_otus()]) == sorted(
             workflow_data.index.manifest.values()
         )
+        create_workflow_index.assert_not_called()
+
+    async def test_compressed_sqlite_reference_is_preferred(
+        self,
+        mocker,
+        scope: FixtureScope,
+        tmp_path: Path,
+        work_path: Path,
+        workflow_data: WorkflowData,
+    ):
+        """Compressed SQLite is preferred and exposed decompressed to workflows."""
+        _set_compressed_sqlite_reference_data(workflow_data)
+        create_workflow_index = mocker.patch.object(WFIndex, "create")
+
+        index: WFIndex = await scope.instantiate_by_key("index")
+        fasta_path = tmp_path / "reference.fa"
+        await index.write_fasta(fasta_path, index.iter_default_sequences())
+
+        index_path = work_path / "indexes" / str(workflow_data.analysis.index.id)
+
+        assert {path.name for path in index_path.iterdir()} == {
+            REFERENCE_SQLITE_GZIP_FILE_NAME,
+            REFERENCE_SQLITE_FILE_NAME,
+        }
+        assert index.path == index_path / REFERENCE_SQLITE_FILE_NAME
+        assert (await index.get_reference_metadata())["id"] == str(
+            workflow_data.index.reference.id
+        )
+        assert sorted([otu["version"] async for otu in index.iter_otus()]) == sorted(
+            workflow_data.index.manifest.values()
+        )
+        assert fasta_path.read_text().startswith(">njbw70pe\n")
         create_workflow_index.assert_not_called()
 
     async def test_write_fasta(

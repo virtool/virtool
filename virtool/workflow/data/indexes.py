@@ -18,8 +18,10 @@ from virtool.indexes.db import REFERENCE_JSON_V2_FILE_NAME
 from virtool.indexes.models import Index
 from virtool.references.sqlite import (
     REFERENCE_SQLITE_FILE_NAME,
+    REFERENCE_SQLITE_GZIP_FILE_NAME,
     OTUSummary,
     SQLiteReference,
+    decompress_sqlite_reference,
 )
 from virtool.utils import decompress_file
 from virtool.workflow.client import WorkflowAPIClient
@@ -176,17 +178,40 @@ async def index(
 
     log.info("created index directory")
 
-    if any(file.name == REFERENCE_SQLITE_FILE_NAME for file in index_.files):
+    available_file_names = {file.name for file in index_.files}
+    sqlite_file_name = next(
+        (
+            file_name
+            for file_name in (
+                REFERENCE_SQLITE_GZIP_FILE_NAME,
+                REFERENCE_SQLITE_FILE_NAME,
+            )
+            if file_name in available_file_names
+        ),
+        None,
+    )
+
+    if sqlite_file_name is not None:
         reference_sqlite_path = index_work_path / REFERENCE_SQLITE_FILE_NAME
+        download_path = index_work_path / sqlite_file_name
 
         await _api.get_file(
-            f"/indexes/{id_}/files/{REFERENCE_SQLITE_FILE_NAME}",
-            reference_sqlite_path,
+            f"/indexes/{id_}/files/{sqlite_file_name}",
+            download_path,
         )
 
-        log.info("loaded server SQLite reference")
+        if sqlite_file_name == REFERENCE_SQLITE_GZIP_FILE_NAME:
+            await decompress_sqlite_reference(
+                download_path,
+                reference_sqlite_path,
+            )
 
-        return WFIndex.load(id_, reference_sqlite_path)
+        sqlite_reference = SQLiteReference.load(reference_sqlite_path)
+        await sqlite_reference.validate()
+
+        log.info("loaded server SQLite reference", filename=sqlite_file_name)
+
+        return WFIndex(id_, sqlite_reference)
 
     if any(file.name == REFERENCE_JSON_V2_FILE_NAME for file in index_.files):
         compressed_reference_json_path = index_work_path / REFERENCE_JSON_V2_FILE_NAME

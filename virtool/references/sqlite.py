@@ -1,5 +1,8 @@
 """Build and query portable SQLite reference artifacts."""
 
+import asyncio
+import gzip
+import zlib
 from collections.abc import (
     AsyncIterable,
     AsyncIterator,
@@ -38,7 +41,10 @@ from sqlalchemy.pool import ConnectionPoolEntry
 from sqlalchemy.sql import Select
 from sqlalchemy.sql.elements import ColumnElement
 
+from virtool.utils import decompress_file_with_gzip
+
 REFERENCE_SQLITE_FILE_NAME = "reference-snapshot.v1.sqlite"
+REFERENCE_SQLITE_GZIP_FILE_NAME = f"{REFERENCE_SQLITE_FILE_NAME}.gz"
 REFERENCE_SQLITE_FORMAT = "virtool-reference-sqlite"
 REFERENCE_SQLITE_FORMAT_VERSION = "1"
 
@@ -49,6 +55,10 @@ reference_sqlite_metadata = MetaData()
 
 class SQLiteReferenceReadError(ValueError):
     """Raised when a SQLite reference database cannot be read."""
+
+
+class SQLiteReferenceDecompressionError(ValueError):
+    """Raised when a gzip-compressed SQLite reference cannot be decompressed."""
 
 
 class SQLiteReferenceWriteError(ValueError):
@@ -356,6 +366,26 @@ class SQLiteReference:
         except SQLAlchemyError as err:
             msg = "Could not read SQLite reference database"
             raise SQLiteReferenceReadError(msg) from err
+
+
+async def decompress_sqlite_reference(
+    source_path: Path,
+    target_path: Path,
+) -> None:
+    """Decompress a gzip-wrapped SQLite reference on disk."""
+    await asyncio.to_thread(
+        _decompress_sqlite_reference,
+        source_path,
+        target_path,
+    )
+
+
+def _decompress_sqlite_reference(source_path: Path, target_path: Path) -> None:
+    try:
+        decompress_file_with_gzip(source_path, target_path)
+    except (gzip.BadGzipFile, EOFError, zlib.error) as err:
+        msg = f"Could not decompress SQLite reference gzip: {err}"
+        raise SQLiteReferenceDecompressionError(msg) from err
 
 
 def _create_reference_sqlite_engine(path: Path) -> AsyncEngine:

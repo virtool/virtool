@@ -1,19 +1,25 @@
 """Tests for SQLite reference artifacts."""
 
+import gzip
 from collections.abc import AsyncIterator, Iterable, Iterator
 from contextlib import contextmanager
 from pathlib import Path
+from threading import get_ident
 
 import pytest
 from sqlalchemy import create_engine, delete, insert, select, update
 from sqlalchemy.engine import URL, Connection
 
+from virtool.references import sqlite as sqlite_module
 from virtool.references.sqlite import (
     REFERENCE_SQLITE_FILE_NAME,
     REFERENCE_SQLITE_FORMAT,
     REFERENCE_SQLITE_FORMAT_VERSION,
+    REFERENCE_SQLITE_GZIP_FILE_NAME,
     SQLiteReference,
+    SQLiteReferenceDecompressionError,
     SQLiteReferenceReadError,
+    decompress_sqlite_reference,
     isolates_table,
     metadata_table,
     otu_schema_table,
@@ -38,6 +44,7 @@ def _connect_sqlite(path: Path) -> Iterator[Connection]:
 
 def test_reference_sqlite_file_name_is_versioned():
     assert REFERENCE_SQLITE_FILE_NAME == "reference-snapshot.v1.sqlite"
+    assert REFERENCE_SQLITE_GZIP_FILE_NAME == "reference-snapshot.v1.sqlite.gz"
 
 
 def _reference() -> dict:
@@ -184,6 +191,98 @@ async def test_sqlite_reference_round_trip(tmp_path: Path):
         "sequence_dna_b",
     ]
     assert [item["required"] for item in otus[0]["schema"]] == [True, True]
+
+
+class TestDecompressSQLiteReference:
+    async def test_streams_in_worker_thread_and_validates(
+        self,
+        mocker,
+        tmp_path: Path,
+    ):
+        event_loop_thread_id = get_ident()
+        decompression_thread_ids = []
+        sqlite_path = tmp_path / REFERENCE_SQLITE_FILE_NAME
+        compressed_path = tmp_path / REFERENCE_SQLITE_GZIP_FILE_NAME
+        await SQLiteReference.create(
+            sqlite_path,
+            _reference(),
+            _aiter([_otu()]),
+        )
+        compressed_path.write_bytes(gzip.compress(sqlite_path.read_bytes()))
+        sqlite_path.unlink()
+
+        original_decompress = sqlite_module._decompress_sqlite_reference
+
+        def decompress_in_thread(source_path: Path, target_path: Path) -> None:
+            decompression_thread_ids.append(get_ident())
+            original_decompress(source_path, target_path)
+
+        decompress_file = mocker.patch.object(
+            sqlite_module,
+            "decompress_file_with_gzip",
+            wraps=sqlite_module.decompress_file_with_gzip,
+        )
+        mocker.patch.object(
+            sqlite_module,
+            "_decompress_sqlite_reference",
+            side_effect=decompress_in_thread,
+        )
+
+        await decompress_sqlite_reference(
+            compressed_path,
+            sqlite_path,
+        )
+        sqlite_reference = SQLiteReference.load(sqlite_path)
+        await sqlite_reference.validate()
+
+        assert sqlite_reference.path == sqlite_path
+        assert await sqlite_reference.get_metadata() == {
+            "id": "reference",
+            "created_at": "2026-01-15T19:55:34.203324Z",
+            "data_type": "genome",
+            "name": "0.1.1",
+            "organism": "",
+        }
+        assert len(decompression_thread_ids) == 1
+        assert decompression_thread_ids[0] != event_loop_thread_id
+        decompress_file.assert_called_once_with(compressed_path, sqlite_path)
+
+    async def test_rejects_invalid_gzip(self, tmp_path: Path):
+        compressed_path = tmp_path / REFERENCE_SQLITE_GZIP_FILE_NAME
+        sqlite_path = tmp_path / REFERENCE_SQLITE_FILE_NAME
+        compressed_path.write_bytes(b"not gzip")
+
+        with pytest.raises(
+            SQLiteReferenceDecompressionError,
+            match="Could not decompress SQLite reference gzip",
+        ):
+            await decompress_sqlite_reference(compressed_path, sqlite_path)
+
+    async def test_rejects_truncated_gzip(self, tmp_path: Path):
+        compressed_path = tmp_path / REFERENCE_SQLITE_GZIP_FILE_NAME
+        sqlite_path = tmp_path / REFERENCE_SQLITE_FILE_NAME
+        compressed_path.write_bytes(gzip.compress(b"SQLite data")[:-4])
+
+        with pytest.raises(
+            SQLiteReferenceDecompressionError,
+            match="Could not decompress SQLite reference gzip",
+        ):
+            await decompress_sqlite_reference(compressed_path, sqlite_path)
+
+    async def test_distinguishes_invalid_sqlite_from_invalid_gzip(
+        self,
+        tmp_path: Path,
+    ):
+        compressed_path = tmp_path / REFERENCE_SQLITE_GZIP_FILE_NAME
+        sqlite_path = tmp_path / REFERENCE_SQLITE_FILE_NAME
+        compressed_path.write_bytes(gzip.compress(b"not a sqlite database"))
+
+        await decompress_sqlite_reference(compressed_path, sqlite_path)
+
+        with pytest.raises(SQLiteReferenceReadError):
+            await SQLiteReference.load(sqlite_path).validate()
+
+        assert sqlite_path.read_bytes() == b"not a sqlite database"
 
 
 class TestSQLiteReferenceSequences:
