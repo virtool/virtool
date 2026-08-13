@@ -146,16 +146,46 @@ Adding an app to the repo needs no Dockerfile edit until it needs an
 image; adding an *image* needs a stage here and an entry in both
 matrices.
 
+### The four workflow images
+
+The workflow images are in two states, and the split is deliberate. Which
+one an image is in turns on a single question: does a Python repo still
+release that workflow?
+
+| Image | Built | Published | Blocked on |
+| --- | --- | --- | --- |
+| `ts-create-sample` | ✅ | ✅ | — |
+| `ts-create-subtraction` | ✅ | ✅ | — |
+| `ts-pathoscope` | ✅ | ❌ | `virtool/workflow-pathoscope` retiring |
+| `ts-nuvs` | ✅ | ❌ | `virtool/workflow-nuvs` retiring |
+
+`virtool/workflow-create-sample` and `virtool/workflow-create-subtraction`
+are still live too, but they publish `ghcr.io/virtool/create-sample` and
+`ghcr.io/virtool/create-subtraction` — different names from the `ts-`
+images here, so the cluster picks one by the image it pulls and there is
+no ambiguity to resolve. The same is true of the two unpublished images
+and would be true if they published tomorrow; what stops them is not a
+name collision but that **two pipelines shipping the same workflow leaves
+two candidates for what the cluster runs**, and that has to be settled
+deliberately rather than by whichever released last.
+
 **Pathoscope and nuvs are the odd two, and both are built but
 deliberately not published.** Each has its own build job
-(`build-pathoscope`, `build-nuvs`) with no publish counterpart, because
-`virtool/workflow-pathoscope` and `virtool/workflow-nuvs` still release
-those workflows, and a second pipeline shipping either from here would
-leave two candidates for what the cluster runs. Restore a publish job for
-one when its Python repo retires. Note that `release-ghcr` is also what
-stamps a real version, so until then `APP_VERSION` is `0.0.0` in every
-built pathoscope or nuvs image, and the `workflow_version` in their cache
-keys with it.
+(`build-pathoscope`, `build-nuvs`) with no publish counterpart. Restore a
+publish job for one when its Python repo retires, and settle which image
+name the cluster pulls in the same change. Note that `release-ghcr` is
+also what stamps a real version, so until then `APP_VERSION` is `0.0.0`
+in every built pathoscope or nuvs image, and the `workflow_version` in
+their cache keys with it.
+
+**`ghcr.io/virtool/ts-pathoscope` already exists in the registry, and
+nothing here produced it.** A `publish-pathoscope` job lived in `ci.yaml`
+briefly and was removed once the two-pipeline problem was recognised; it
+left three versions behind, `:latest` among them. They predate the
+workflow port, so that tag is a tools-only image with no workflow code in
+it — a pull of `ts-pathoscope:latest` gets something that cannot run a
+job. Do not treat those tags as evidence the image is published, and do
+not read `:latest` as current.
 
 Both build jobs, plus `pathoscope-test` and `quality-test`, are the only
 path-filtered jobs in `ci.yaml`, and they take a filter each because
@@ -167,11 +197,13 @@ while `build-pathoscope` and `build-nuvs` bundle their app on the shared
 
 **Everything a build stage `COPY`s must appear under that image's
 filter** — a missing path skips the build on the pull request that breaks
-it and fails on the push to `main`, where nothing gates it. The two image
-filters are nearly identical and are kept separate rather than merged,
-because nuvs copies `packages/bio` and pathoscope copies
-`packages/pathoscope-core`, and folding them into one would rebuild each
-image for the other's inputs.
+it and fails on the push to `main`, where nothing gates it. That includes
+everything `base` copies, packages the app does not import among them:
+`base` is shared, so it copies `packages/data`, `packages/service` and
+`packages/bio` whichever target was requested. The two image filters are
+therefore nearly identical, and are kept separate rather than merged
+because pathoscope copies `packages/pathoscope-core` and nuvs does not —
+folding them into one would rebuild each image for the other's inputs.
 
 Build a single image locally by naming its target:
 

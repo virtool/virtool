@@ -104,7 +104,10 @@ This is a **pnpm monorepo**:
   would leave two candidates for what the cluster runs. Don't add a publish job
   until that repo retires; note that `publish-ghcr` is also what stamps a real
   version, so until then `APP_VERSION` is `0.0.0` in every built image and the
-  `workflow_version` in its cache keys with it.
+  `workflow_version` in its cache keys with it. **`ghcr.io/virtool/ts-pathoscope`
+  nonetheless has tags, `:latest` among them** — a short-lived publish job left
+  them behind before the port landed, so they carry the tools and no workflow
+  code. They are not evidence this image is published.
 - `apps/nuvs/` — `@virtool/nuvs`, the NuVs workflow executor and its image
   (`ghcr.io/virtool/ts-nuvs`). Ten steps and five external tools — skewer,
   bowtie2, SPAdes, `hmmpress` and `hmmscan`. It finds viruses the reference
@@ -256,12 +259,15 @@ their inputs differ: the crate jobs run cargo and read no TypeScript, while
 each image build bundles its own app and so depends on every workspace package
 its Dockerfile copies. One shared filter would run the libclang-and-cargo job
 on any `packages/workflow` change, and would rebuild each image for the other's
-inputs — `nuvs-image` carries `packages/bio` and `pathoscope-image` carries
-`packages/pathoscope-core`. Extend the `changes` job's filters in the same
+inputs — `pathoscope-image` carries `packages/pathoscope-core` and `nuvs-image`
+does not. Extend the `changes` job's filters in the same
 commit as anything that gives a job a new input — in
 particular, **every path a workflow Dockerfile `COPY`s must appear under that
 image's filter**, or the build is skipped on the pull request that breaks it
-and fails on the push to `main`, where nothing gates it.
+and fails on the push to `main`, where nothing gates it. That covers everything
+the shared `base` stage copies, packages the app does not import among them:
+`base` copies `packages/data`, `packages/service` and `packages/bio` whichever
+target was requested, so both image filters list all three.
 
 `pnpm build` builds **every app but `apps/site`**, which is gated by its own
 `site-build` CI job. `pnpm check` and `pnpm format` run biome over `apps` and

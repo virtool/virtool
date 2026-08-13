@@ -62,10 +62,13 @@ jobs:
                   # **Every path a build stage COPYs must appear under that
                   # image's filter.** A missing one skips the build on the PR
                   # that breaks it and fails on the subsequent push to main,
-                  # where nothing gates it. The two image filters are nearly
-                  # identical and are still written out separately: nuvs copies
-                  # packages/bio and pathoscope copies packages/pathoscope-core,
-                  # and folding them into one would rebuild each image for the
+                  # where nothing gates it. Both image filters therefore carry
+                  # everything the shared `base` stage copies — including
+                  # packages neither app imports today, because `base` copies
+                  # them regardless of which target is requested. The two are
+                  # still written out separately rather than folded into one:
+                  # pathoscope copies packages/pathoscope-core and nuvs does
+                  # not, and one shared filter would rebuild each image for the
                   # other's inputs.
                   #
                   # This file is in all three so that a change to the jobs
@@ -85,8 +88,10 @@ jobs:
                         - 'packages/archive/**'
                         - 'packages/bio/**'
                         - 'packages/contracts/**'
+                        - 'packages/data/**'
                         - 'packages/logger/**'
                         - 'packages/sentry/**'
+                        - 'packages/service/**'
                         - 'packages/sqlite/**'
                         - 'packages/storage/**'
                         - 'packages/workflow/**'
@@ -94,6 +99,7 @@ jobs:
                         - 'apps/tsconfig.node.json'
                         - 'apps/*/package.json'
                         - 'packages/*/package.json'
+                        - 'biome.json'
                         - 'package.json'
                         - 'pnpm-workspace.yaml'
                         - 'pnpm-lock.yaml'
@@ -106,25 +112,29 @@ jobs:
                         - '.github/workflows/ci.yaml'
                         - 'Dockerfile'
                       pathoscope-image:
-                        - 'packages/pathoscope-core/**'
                         - '.github/workflows/ci.yaml'
                         - 'apps/pathoscope/**'
                         - 'packages/archive/**'
+                        - 'packages/bio/**'
                         - 'packages/contracts/**'
+                        - 'packages/data/**'
                         - 'packages/logger/**'
+                        - 'packages/pathoscope-core/**'
                         - 'packages/sentry/**'
+                        - 'packages/service/**'
                         - 'packages/sqlite/**'
                         - 'packages/storage/**'
                         - 'packages/workflow/**'
                         - 'packages/tsconfig.base.json'
                         - 'apps/tsconfig.node.json'
                         - 'apps/*/package.json'
+                        - 'packages/*/package.json'
+                        - 'biome.json'
                         - 'package.json'
                         - 'pnpm-workspace.yaml'
                         - 'pnpm-lock.yaml'
                         - 'Dockerfile'
                         - '.dockerignore'
-                        - '.github/workflows/ci.yaml'
                       # No `Dockerfile` here, unlike pathoscope-crate. That job
                       # builds bowtie2 out of it to run its goldens against;
                       # this one builds nothing at all — quality-core's
