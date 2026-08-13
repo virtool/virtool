@@ -1163,9 +1163,10 @@ The periodic spawner is `createTaskSpawner`
 (`apps/tasks/src/tasks/periodic.ts`) and `createPeriodicTask`
 (`@virtool/data/tasks/data`). It **only ever inserts**, and it ships to
 production **beside** Python's `PeriodicTaskSpawner` rather than
-replacing it — both write the same five types into the same table, and
-nothing but a shared advisory lock keeps them from spawning everything
-twice. The failure is silent: no error, no log, no alert. Six rules:
+replacing it — both write into the same table, five of the six types in
+common, and nothing but a shared advisory lock keeps them from spawning
+everything twice. The failure is silent: no error, no log, no alert.
+Six rules:
 
 - **The key is `pg_try_advisory_xact_lock(hashtext('<task name>'))`,
   computed in SQL**, matching what Python's
@@ -1176,7 +1177,7 @@ twice. The failure is silent: no error, no log, no alert. Six rules:
   same shape `createIndex` already takes for `index_build:{id}`, and
   `hashtext`'s int4 keyspace is accepted, not fixed.
 - **Transaction-scoped, never session-level**, and one transaction per
-  task name per tick — never one spanning all five. `try_` never
+  task name per tick — never one spanning them all. `try_` never
   blocks; `false` is `skipped_locked`, logged at debug, and is never
   retried or escalated.
 - **A spawn is gated on outstanding work as well as on the window.** An
@@ -1194,10 +1195,13 @@ twice. The failure is silent: no error, no log, no alert. Six rules:
   window**, so a type's effective period is `max(30, interval)`. A
   per-task timer would open its window at a different moment than
   Python's tick.
-- **`PERIODIC_TASKS` holds exactly five types**, with Python's
-  intervals, and a test pins the list. Do not register a sixth before
-  the cutover: Python's runner strands a name it does not recognise,
-  leaving a row claimed and incomplete forever.
+- **`PERIODIC_TASKS` holds exactly six types**, and a test pins the
+  list. Five carry Python's intervals; `cleanup_sessions` is hourly and
+  is the one type Python never spawned. A type belongs there only once
+  `taskRegistry` carries a handler for it — the runner filters its claim
+  on the registry's keys, so a registration without one spawns a row
+  that is never acquired and never fails, and sits queued instead. A
+  test checks the two lists against each other.
 - **A failure on one type stops neither the tick nor the loop**, and a
   non-positive interval is rejected at construction rather than per
   tick. The spawner holds no work, so its shutdown hook declares no

@@ -8,6 +8,7 @@ import { z } from "zod";
  * zero forever and read as a task that never runs.
  */
 export const PeriodicTaskName = z.enum([
+	"cleanup_sessions",
 	"evict_caches_lru",
 	"reap_orphaned_uploads",
 	"refresh_hmms",
@@ -18,12 +19,11 @@ export const PeriodicTaskName = z.enum([
 export type PeriodicTaskName = z.infer<typeof PeriodicTaskName>;
 
 /**
- * Every task name Virtool runs — the five periodic ones, the four created in
- * response to a request, and `cleanup_sessions`.
+ * Every task name Virtool runs — the six periodic ones and the four created in
+ * response to a request.
  */
 export const TaskName = z.enum([
 	...PeriodicTaskName.options,
-	"cleanup_sessions",
 	"clone_reference",
 	"create_index",
 	"import_reference",

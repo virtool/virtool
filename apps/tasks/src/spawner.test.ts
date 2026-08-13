@@ -25,6 +25,7 @@ import {
 	type PeriodicTaskRegistration,
 	SPAWN_TICK_INTERVAL_MS,
 } from "./tasks/periodic";
+import { taskRegistry } from "./tasks/registry";
 import { waitFor } from "./testing/waitFor";
 
 const logger: Logger = createLogger({ name: "test", level: "silent" });
@@ -83,20 +84,33 @@ function build(
 
 describe("PERIODIC_TASKS", () => {
 	/**
-	 * Python's runner is the only runner until the cutover, and it strands a task
-	 * name it does not recognise — the row keeps `acquired_at` with no error and
-	 * no completion, and nothing can ever clear it. Pinning the list means adding
-	 * a sixth type breaks a test and forces that rule to be read.
+	 * Pinning the list means adding a seventh type breaks a test, and so stays a
+	 * deliberate act rather than a line someone appends.
 	 */
-	it("registers exactly the five names Python spawns", () => {
+	it("registers exactly the six periodic names", () => {
 		expect(PERIODIC_TASKS.map(({ type }) => type).toSorted()).toEqual(
 			[...PeriodicTaskName.options].toSorted(),
 		);
 	});
 
-	// Asserted against Python's own figures rather than against the constants
+	/**
+	 * A registration the registry has no handler for spawns a row the runner
+	 * never claims — its claim filters on the registry's keys — so the row is
+	 * never acquired and never fails. It sits queued instead, counted against the
+	 * queue gauges, with nothing logging why.
+	 */
+	it("registers nothing the runner cannot claim", () => {
+		expect(
+			PERIODIC_TASKS.map(({ type }) => type).filter(
+				(type) => !(type in taskRegistry),
+			),
+		).toEqual([]);
+	});
+
+	// Asserted against the intervals themselves rather than against the constants
 	// this module exports, which would only prove the module agrees with itself.
-	// While both spawners run, the shorter of the two intervals sets the rate.
+	// Every figure but `cleanup_sessions` is Python's, so replacing that spawner
+	// does not move the cadence a deployment already sees.
 	it("carries Python's intervals", () => {
 		expect(
 			Object.fromEntries(
@@ -110,6 +124,7 @@ describe("PERIODIC_TASKS", () => {
 			refresh_hmms: 600,
 			timeout_jobs: 600,
 			evict_caches_lru: 3600,
+			cleanup_sessions: 3600,
 			reap_orphaned_uploads: 86400,
 		});
 	});

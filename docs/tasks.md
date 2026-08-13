@@ -1438,8 +1438,10 @@ the runner's half of this process.
 ### It runs beside Python's spawner, and the lock is the whole design
 
 This is the half that goes to production *first*, while Python's API replicas
-are still running `PeriodicTaskSpawner`. Both insert the same five types into
-the same `tasks` table. There are already several Python spawners racing each
+are still running `PeriodicTaskSpawner`. Both insert into the same `tasks`
+table, five of the six types in common — `cleanup_sessions` is this side's
+alone, Python having deleted the class. There are already several Python
+spawners racing each
 other across replicas — the advisory lock is what makes that safe, and this
 process joins as one more participant in a protocol that already exists.
 
@@ -1462,7 +1464,7 @@ So the lock is not an implementation detail to be improved:
   do not exclude each other, and PgBouncer lists it as never supported under
   transaction pooling.
 - **The lock, the recency check and the insert are one transaction**, and it is
-  one transaction *per task name per tick* — not one spanning all five, which
+  one transaction *per task name per tick* — not one spanning them all, which
   would hold every lock for the length of the whole tick.
 - **`try_` never blocks.** `false` means another spawner is handling this name
   this tick: record `skipped_locked`, log at debug, move on. No retry, no
@@ -1471,7 +1473,7 @@ So the lock is not an implementation detail to be improved:
 `hashtext` returns a signed **int4**, so the real keyspace is 2³² rather than
 the 2⁶⁴ the advisory-lock signature implies, and the function is undocumented
 by deliberate policy and has changed behaviour across major versions. At
-Virtool's key population — five task names plus one `index_build:{id}` per
+Virtool's key population — six task names plus one `index_build:{id}` per
 reference, sharing one namespace — a collision is ~10⁻⁵, and every call site is
 a `try_` lock, so it degrades to a spurious skip rather than to corruption.
 Widening the hash would break exclusion with Python, which is the entire point.
@@ -1527,7 +1529,20 @@ transaction's age.
 | `refresh_hmms` | 600 s |
 | `timeout_jobs` | 600 s |
 | `evict_caches_lru` | 3600 s |
+| `cleanup_sessions` | 3600 s |
 | `reap_orphaned_uploads` | 86400 s |
+
+Every figure but `cleanup_sessions` is Python's. That one is the only free
+choice on the list — `SessionCleanupTask` was written, never registered, and
+has since been deleted from the Python repo, so no expired `sessions` row has
+ever been deleted in production and there is no cadence to match. Hourly,
+because correctness never waits on the sweep: `verify.ts` and the reset path in
+`core.ts` both reject an expired row on sight, so a row lingering between
+sweeps is inert and the sweep is harmless when late. That removes the usual
+argument for a short interval, and hourly still keeps the shortest-lived rows —
+10 minute reset sessions, 60 minute no-remember ones — from outliving their
+expiry by much. Daily is the defensible alternative, rejected because a day's
+accumulation makes each run a larger delete for no benefit.
 
 Python walks every registered task and then sleeps a hardcoded 30 s, whatever
 the intervals are. So a type's effective period is `max(30, interval)`,
@@ -1544,12 +1559,17 @@ boundary where a `created_at`-only dedup can admit a concurrent duplicate. The
 outstanding-work gate above closes that on this side; Python's spawner keeps
 the defect until it is deleted.
 
-**Do not register a sixth type.** Python's runner is the only runner until the
-cutover, and it *strands* a name it does not recognise — it acquires the row,
-logs a warning and returns, leaving `acquired_at` set with no error and no
-completion, so the row is counted as running forever and nothing can clear it.
-`PERIODIC_TASKS` is pinned by a test to exactly the five, so adding one is a
-deliberate act. New types are registered at cutover.
+**Register nothing the runner cannot claim.** A type belongs on this list only
+once `taskRegistry` carries a handler for it. The runner filters its claim on
+the registry's keys, so a registration without one spawns a row that is never
+acquired, never fails and never completes: it sits queued, counted against the
+queue gauges, with nothing logging why. The outstanding-work gate holds that at
+one row per type rather than a backlog, which makes the mistake survivable
+rather than invisible — but a test checks the two lists against each other so
+it does not happen at all.
+
+`PERIODIC_TASKS` is pinned by a second test to exactly these six, so a seventh
+is a deliberate act rather than a line someone appends.
 
 ### The loop
 
