@@ -5,6 +5,7 @@ import { cleanupSessionsTask } from "./cleanup-sessions";
 import { cloneReferenceTask } from "./clone-reference";
 import { createIndexTask } from "./create-index";
 import { evictCachesLruTask } from "./evict-caches-lru";
+import { importReferenceTask } from "./import-reference";
 import { installHmmsTask } from "./install-hmms";
 import { reapOrphanedUploadsTask } from "./reap-orphaned-uploads";
 import { refreshHmmsTask } from "./refresh-hmms";
@@ -42,6 +43,7 @@ export const taskRegistry: TaskRegistry<TaskContext> = {
 	clone_reference: cloneReferenceTask,
 	create_index: createIndexTask,
 	evict_caches_lru: evictCachesLruTask,
+	import_reference: importReferenceTask,
 	install_hmms: installHmmsTask,
 	reap_orphaned_uploads: reapOrphanedUploadsTask,
 	refresh_hmms: refreshHmmsTask,

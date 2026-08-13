@@ -198,6 +198,39 @@ export async function getUploadFile(
 }
 
 /**
+ * The same, resolved from `name_on_disk` rather than the row's primary key.
+ *
+ * `createReference` puts `name_on_disk` on an `import_reference` task's context
+ * instead of the upload's id, so that string is the only handle the task has.
+ * The column is unique, which makes the lookup exact, and Python resolves it
+ * the same way for the same reason.
+ *
+ * Nothing else should reach for this: `name_on_disk` does not locate an object
+ * and is kept only because Python's task context is spelled in terms of it.
+ */
+export async function getUploadFileByNameOnDisk(
+	db: DbOrTx,
+	nameOnDisk: string,
+): Promise<UploadFile | null> {
+	const [row] = await db
+		.select({ name: uploadsTable.name, storageKey: uploadsTable.storageKey })
+		.from(uploadsTable)
+		.where(
+			and(
+				eq(uploadsTable.nameOnDisk, nameOnDisk),
+				eq(uploadsTable.removed, false),
+			),
+		)
+		.limit(1);
+
+	if (!row?.name || !row.storageKey) {
+		return null;
+	}
+
+	return { key: row.storageKey, name: row.name };
+}
+
+/**
  * Reserve the given uploads so they cannot be used for another sample.
  *
  * Only a visible reads upload is a valid sample input, so every id must resolve

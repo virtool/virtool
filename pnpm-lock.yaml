@@ -393,6 +393,9 @@ importers:
       '@virtool/service':
         specifier: workspace:*
         version: link:../../packages/service
+      '@virtool/sqlite':
+        specifier: workspace:*
+        version: link:../../packages/sqlite
       '@virtool/storage':
         specifier: workspace:*
         version: link:../../packages/storage

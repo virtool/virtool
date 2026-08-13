@@ -1023,7 +1023,7 @@ a real reference is tens of thousands of them.
 **The work lives beside `references/data.ts`, not in it.** Everything the
 populate does reads OTUs and writes history, and `otus/data.ts` already imports
 this domain's errors, so folding it into `data.ts` would close that arrow into a
-cycle. The module is also the layer `import_reference` (VIR-2898) will stand on:
+cycle. The module is also the layer `import_reference` stands on:
 `prepareOtuInsertion`, the chunked bulk insert and the rollback are the port of
 Python's `alot.py` and `populate_insert_only_reference`, which both tasks share,
 and only the clone-specific driver on top of them is this task's.
@@ -1207,6 +1207,70 @@ sequence twice and discard the loser's RID rather than corrupting the row.
 pending row and emitting the first frame; the sweep is the only thing that
 advances what it inserts.
 
+### `import_reference`, the sixth body
+
+`import_reference` fills a newly created reference with the OTUs of a file the
+user uploaded. Its body is one step, `import_reference` — Python's method name —
+which resolves the upload, parses it, and hands the documents to
+`populateImportedReference` (`@virtool/data/references/populate`). It reports a
+position: the parsed file gives the OTU count up front.
+
+**The body reads the file; the data layer only writes rows.** `install_hmms`
+established this and the import follows it — gzip, SQLite and the two upload
+formats live in `apps/tasks`, and `populateImportedReference` takes an
+already-parsed `ReferenceSourceData`. Pushing the parsing down would put
+`node:sqlite` and a decompression budget inside the package the web server
+imports, for a format only this task reads.
+
+**Two formats, dispatched on the suffix, because Python dispatches on the
+suffix.** A `.json.gz` upload is inflated and `JSON.parse`d; a `.v1.sqlite` one
+is spooled to a temp file and read through `openWorkflowIndex`
+(`@virtool/sqlite`), whose reader and DDL are shared with the workflow index
+artifact. Anything else is refused with Python's sentence rather than guessed
+at — opening a JSON export as SQLite fails with a message about a corrupt
+database, which tells a user nothing.
+
+**An upload is located by `name_on_disk`, and that resolves to a key.**
+`createReference` writes `name_on_disk` onto the task context rather than the
+upload's id, so it is the only handle the task has;
+`getUploadFileByNameOnDisk` turns it into the recorded `storage_key`, filtering
+removed rows exactly as Python's `get_storage_key_by_name_on_disk` does. The
+string does not locate an object and nothing composes a key from it.
+
+**The inflation guard counts decompressed bytes.** `storage.size` reports the
+compressed figure and so says nothing about what a file expands to. The count is
+of bytes leaving the gunzip stream, capped at 512 MiB — twenty times the largest
+reference seen in production, and low enough that a gzip bomb is named as one
+rather than surfacing as `ERR_STRING_TOO_LONG` from a `JSON.parse` that got that
+far.
+
+**Both `_id` and `id` are accepted for an OTU and a sequence.** The JSON export
+spells them `_id`; the SQLite reader yields `id`. Python reconciles the two with
+a pydantic alias plus `allow_population_by_field_name`, and
+`ReferenceSourceDataSchema` (`@virtool/contracts`) reproduces that, normalising
+onto `_id` because the stored document is Mongo-shaped. An isolate's id is
+plain `id` on both sides and needs no alias.
+
+**The four duplicate checks run in one pass, where Python runs four
+validators.** Pydantic stops at the first that raises, so a file with two
+problems is fixed and re-uploaded only to fail on the next; reporting all four
+at once is strictly more useful and changes no predicate. The quirks are
+inherited deliberately — the name check compares case-insensitively but reports
+the name as written, isolate ids collide only within their own OTU, and sequence
+ids collide across the whole file. `data_type` admits `genome` alone, because
+Python's `ReferenceDataType` has one member and the looser side would accept a
+file the other refuses while both runners are live.
+
+**A validation failure is summarised, never dumped.** `tasks.error` is rendered
+into a popover, and a raw `ZodError` over a file with thousands of OTUs is
+unbounded. The message names the first few problems and counts off the rest.
+
+**Nothing is rolled back.** A failed import leaves whatever it committed, and
+the reference with it, as `create_index` and every workflow leave their
+half-built resources. `populateImportedReference` clears the reference's
+contents at the top of every run, which is what makes a reclaimed task's re-run
+from step zero clean, so a rollback would buy nothing the clearing does not
+already give.
 
 ### Frames are the framework's, never a body's
 

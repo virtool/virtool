@@ -1,16 +1,20 @@
 // Bulk-populating a brand new reference with OTUs, sequences and history.
 //
 // A port of `virtool.references.alot` and `populate_insert_only_reference`, plus
-// the `populate_cloned_reference` that drives them for a clone. It is the body
-// of the `clone_reference` task, and the layer the `import_reference` task will
-// stand on.
+// the `populate_cloned_reference` and `populate_imported_reference` that drive
+// them for a clone and an import. It is the layer under both the
+// `clone_reference` and `import_reference` tasks.
+//
+// Neither entry point reads a file. An import's upload is parsed and validated
+// by the task body, which hands the documents down; that keeps gzip, SQLite and
+// the two upload formats out of a module whose job is writing rows.
 //
 // Kept out of `./data.ts` because everything here reads OTUs and writes history,
 // and `otus/data.ts` already imports this domain's errors — folding it in would
 // close that into a cycle.
 
 import { setImmediate } from "node:timers/promises";
-import type { HistoryMethod } from "@virtool/contracts";
+import type { HistoryMethod, ReferenceSourceData } from "@virtool/contracts";
 import type { Logger } from "@virtool/logger";
 import { eq, inArray } from "drizzle-orm";
 import type { Db, DbOrTx } from "../db/pg";
@@ -563,6 +567,104 @@ export async function populateClonedReference(
 	}
 
 	await onProgress?.(100);
+
+	await emit("references", referenceId, "update");
+}
+
+/** The values {@link populateImportedReference} works from. */
+export type PopulateImportedReferenceValues = {
+	/** The parsed contents of the uploaded reference file */
+	data: ReferenceSourceData;
+
+	/** The primary key of the reference being populated */
+	referenceId: number;
+
+	/** The user the imported OTUs and their history are attributed to */
+	userId: number;
+
+	/**
+	 * OTUs prepared and inserted per transaction. Present so a test can drive
+	 * the chunking at a size it can seed; production takes the default.
+	 */
+	chunkSize?: number;
+};
+
+/**
+ * Fill a newly created reference with the OTUs of an uploaded file.
+ *
+ * The file is parsed and validated before it reaches here — this layer takes
+ * documents, never bytes, so neither gzip nor SQLite appears in it. Every OTU
+ * is given fresh ids and written with the history row recording its creation,
+ * stamped with the reference's own `created_at` as Python does.
+ *
+ * It is idempotent, as a reclaimed task requires. A re-run clears whatever a
+ * previous attempt committed before writing anything, because the ids are
+ * minted afresh every time and nothing would otherwise stop a second complete
+ * set of OTUs landing beside the first.
+ *
+ * Nothing is rolled back on failure. A half-populated reference is left for the
+ * user to delete or retry against, the clearing above being what makes the
+ * retry clean.
+ */
+export async function populateImportedReference(
+	db: Db,
+	values: PopulateImportedReferenceValues,
+	onProgress?: (percent: number) => Promise<void>,
+	signal?: AbortSignal,
+): Promise<void> {
+	const { data, referenceId, userId, chunkSize = OTU_CHUNK_SIZE } = values;
+
+	const createdAt = await readReferenceCreatedAt(db, referenceId);
+
+	await db.transaction(async (tx) => {
+		await clearReferenceContents(tx, referenceId);
+
+		/* Python updates `organism` in its own transaction before inserting
+		   anything. Folded into the clearing transaction here so a re-entry
+		   cannot leave the column updated against contents it then fails to
+		   write. */
+		await tx
+			.update(legacyReferences)
+			.set({ organism: data.organism })
+			.where(eq(legacyReferences.id, referenceId));
+	});
+
+	const count = data.otus.length;
+
+	let inserted = 0;
+
+	for (const slice of chunked(data.otus, chunkSize)) {
+		signal?.throwIfAborted();
+
+		const insertions = slice.map((otu) =>
+			prepareOtuInsertion(
+				createdAt,
+				"import",
+				otu as OtuDocument,
+				referenceId,
+				userId,
+			),
+		);
+
+		/* Preparing a chunk is a long synchronous stretch — a deep copy and a
+		   reshape of every document in it — and the runner's heartbeat is a
+		   timer. Without a macrotask boundary here a large reference starves it
+		   and the task is reclaimed out from under itself. */
+		await setImmediate();
+
+		/* Checked again on this side of the yield, and not only at the top of
+		   the loop: the yield is exactly where a lost lease is noticed, and the
+		   last chunk has no next iteration to notice it in. Another runner may
+		   already have cleared the reference and started rebuilding it, and this
+		   insert is fenced on nothing. */
+		signal?.throwIfAborted();
+
+		await insertPreparedOtus(db, referenceId, insertions);
+
+		inserted += slice.length;
+
+		await onProgress?.((inserted / count) * 100);
+	}
 
 	await emit("references", referenceId, "update");
 }
