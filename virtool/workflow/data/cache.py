@@ -12,7 +12,10 @@ from virtool.workflow.data.tar import (
     extract_tar_to_dir,
     write_path_as_tar,
 )
-from virtool.workflow.errors import JobsAPINotFoundError
+from virtool.workflow.errors import (
+    JobsAPINotFoundError,
+    JobsAPIRequestEntityTooLargeError,
+)
 
 logger = get_logger("api")
 
@@ -61,7 +64,16 @@ class WorkflowCache:
         with TemporaryDirectory(dir=self._path) as temp_dir:
             archive_path = Path(temp_dir) / "cache.tar"
             await write_path_as_tar(source, archive_path)
-            created = await self._api.put_cache(key, archive_path, params)
+
+            try:
+                created = await self._api.put_cache(key, archive_path, params)
+            except JobsAPIRequestEntityTooLargeError:
+                logger.warning(
+                    "cache put skipped; payload too large",
+                    key=key,
+                    size=archive_path.stat().st_size,
+                )
+                return False
 
         logger.info("cache put", key=key, created=created)
         return created

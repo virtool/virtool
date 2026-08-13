@@ -13,6 +13,7 @@ from virtool.workflow.errors import (
     JobsAPIConflictError,
     JobsAPIForbiddenError,
     JobsAPINotFoundError,
+    JobsAPIRequestEntityTooLargeError,
     JobsAPIServerError,
     JobsAPIUnauthorizedError,
 )
@@ -113,6 +114,7 @@ async def raise_exception_by_status_code(resp: ClientResponse) -> None:
     :raise JobsAPIForbidden: the response status code is 403
     :raise JobsAPINotFound: the response status code is 404
     :raise JobsAPIConflict: the response status code is 409
+    :raise JobsAPIRequestEntityTooLargeError: the response status code is 413
     :raise JobsAPIServerError: the response status code is 500
     """
     status_exception_map = {
@@ -121,6 +123,7 @@ async def raise_exception_by_status_code(resp: ClientResponse) -> None:
         403: JobsAPIForbiddenError,
         404: JobsAPINotFoundError,
         409: JobsAPIConflictError,
+        413: JobsAPIRequestEntityTooLargeError,
         500: JobsAPIServerError,
     }
 
