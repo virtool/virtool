@@ -615,6 +615,9 @@ importers:
 
   packages/archive:
     dependencies:
+      fflate:
+        specifier: ^0.8.3
+        version: 0.8.3
       tar-stream:
         specifier: ^3.2.0
         version: 3.2.0
@@ -654,6 +657,9 @@ importers:
 
   packages/data:
     dependencies:
+      '@virtool/archive':
+        specifier: workspace:*
+        version: link:../archive
       '@virtool/contracts':
         specifier: workspace:*
         version: link:../contracts
@@ -688,6 +694,9 @@ importers:
       drizzle-kit:
         specifier: ^0.31.10
         version: 0.31.10
+      fflate:
+        specifier: ^0.8.3
+        version: 0.8.3
       vitest:
         specifier: ^4.1.10
         version: 4.1.10(@opentelemetry/api@1.9.1)(@types/node@26.1.2)(@vitest/browser-playwright@4.1.10)(jsdom@30.0.1)(vite@8.2.1(@types/node@26.1.2)(esbuild@0.28.2)(jiti@2.7.0)(tsx@4.23.0)(yaml@2.9.0))
@@ -6114,6 +6123,9 @@ packages:
 
   fetchdts@0.1.7:
     resolution: {integrity: sha512-YoZjBdafyLIop9lSxXVI33oLD5kN31q4Td+CasofLLYeLXRFeOsuOw0Uo+XNRi9PZlbfdlN2GmRtm4tCEQ9/KA==}
+
+  fflate@0.8.3:
+    resolution: {integrity: sha512-tbZNuJrLwGUp3zshBtdy4W+ORxZuIh8a5ilyIEQDC5rY1f3U20JMry0Ll3WBzU58EZKsEuJFXhb5gwv8CsPvgA==}
 
   figures@2.0.0:
     resolution: {integrity: sha512-Oa2M9atig69ZkfwiApY8F2Yy+tzMbazyvqv21R0NsSC8floSOC09BbT1ITWAdoMGQvJ/aZnR1KMwdx9tvHnTNA==}
@@ -14424,6 +14436,8 @@ snapshots:
       picomatch: 4.0.5
 
   fetchdts@0.1.7: {}
+
+  fflate@0.8.3: {}
 
   figures@2.0.0:
     dependencies:

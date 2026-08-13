@@ -8,7 +8,8 @@
 		".": "./src/index.ts",
 		"./compression": "./src/compression.ts",
 		"./errors": "./src/errors.ts",
-		"./tar": "./src/tar.ts"
+		"./tar": "./src/tar.ts",
+		"./zip": "./src/zip.ts"
 	},
 	"scripts": {
 		"test": "vitest run",
@@ -16,6 +17,7 @@
 		"typecheck": "tsc --noEmit"
 	},
 	"dependencies": {
+		"fflate": "^0.8.3",
 		"tar-stream": "^3.2.0"
 	},
 	"devDependencies": {

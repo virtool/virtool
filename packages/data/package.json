@@ -13,6 +13,7 @@
 		"typecheck": "tsc --noEmit"
 	},
 	"dependencies": {
+		"@virtool/archive": "workspace:*",
 		"@virtool/contracts": "workspace:*",
 		"@virtool/logger": "workspace:*",
 		"@virtool/sqlite": "workspace:*",
@@ -26,6 +27,7 @@
 		"@testcontainers/postgresql": "^12.0.4",
 		"@types/bcrypt": "^6.0.0",
 		"drizzle-kit": "^0.31.10",
+		"fflate": "^0.8.3",
 		"vitest": "^4.1.10"
 	}
 }

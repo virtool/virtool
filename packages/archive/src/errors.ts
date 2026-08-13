@@ -34,3 +34,13 @@ export class TarMemberMissingError extends ArchiveError {
 		super(`tar archive is missing ${missing.join(", ")}`);
 	}
 }
+
+/** A zip archive could not be read at all. */
+export class ZipArchiveError extends ArchiveError {}
+
+/** A zip archive was readable but did not carry the member asked for. */
+export class ZipMemberMissingError extends ArchiveError {
+	constructor(missing: string) {
+		super(`zip archive is missing ${missing}`);
+	}
+}

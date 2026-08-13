@@ -1108,6 +1108,106 @@ already emptied of their sequences, which is what Python does; a diff taken from
 the joined document would describe a document no row holds. The rows are paired
 to their diffs by `legacy_id` rather than by the order the insert returned.
 
+### `sweep_blast`, the fifth body
+
+`sweep_blast` advances every outstanding NuVs BLAST search against NCBI. Its
+body is one call to `sweepBlasts` (`@virtool/data/blast/data`) inside one step,
+`sweep` — Python's method name — over the URL API client in
+`@virtool/data/blast/ncbi`. It reports no progress: the row count is not known
+until the select returns and each row takes a single round trip, so there is no
+position worth publishing. What a user watches is the BLAST panel, which the
+sweep's own `analyses` frames drive.
+
+It is the only task on a **thirty-second** period. Every other periodic type
+runs at ten minutes or longer, and the difference is what the row is: a
+`nuvs_blast` row is a button somebody pressed a moment ago and is now watching a
+spinner for.
+
+**The row is the whole state machine.** There is no queue and no per-search
+timer. Each sweep reads every row that is `ready = false AND error IS NULL` and
+decides from the row itself what it needs:
+
+| Row | What the sweep does |
+| --- | --- |
+| `rid IS NULL` | submits the contig's sequence, stores the RID |
+| `rid` set | asks NCBI for the status, stores the result when ready |
+| older than 30 minutes | deletes the row |
+| `interval` not yet elapsed since `last_checked_at` | nothing |
+
+The read is unbounded and deliberately so: it selects the searches users are
+sitting in front of, which is bounded by how many people clicked BLAST in the
+last half hour rather than by how much history the database holds. `task_id` is
+never read or written — the sweep does not filter on it, and neither does
+Python's.
+
+**Two concurrency caps, not one.** NCBI polices new submissions far more
+closely than status checks, so submissions run one at a time and checks three at
+a time, in two pools that run together. A row's kind picks its pool, so the two
+never contend and a slow submission cannot starve the checks. Raising the
+submission cap is a conversation with NCBI, not a tuning exercise.
+
+**A failed advance backs its own row off and nothing else.** A row that throws
+against NCBI is logged and stamped with `interval = min((interval ?? 3) + 5,
+75)` and a fresh `last_checked_at`. Without that stamp the failure would write
+nothing at all, and the next sweep would retry the row thirty seconds later, and
+again, for the whole half hour it has left — turning an NCBI outage into thirty
+minutes of hammering. Both pools drain before either rejection surfaces, so one
+row's failure cannot abandon another mid-write.
+
+**Both writes are guarded against a re-BLAST.** Re-BLASTing a contig deletes its
+row and inserts a replacement, so an answer obtained from NCBI may belong to a
+search nobody is waiting for by the time it arrives. A submission lands only
+`WHERE id = :id AND rid IS NULL`; a result lands only `WHERE id = :id AND rid =
+:the_rid_checked`. A zero row count is logged and dropped rather than forced. For
+the same reason an **expired row is deleted by primary key**, never by
+`(analysis_id, sequence_index)` — that pair is unique, which makes it a
+tempting key and a wrong one: it would destroy the replacement.
+
+**A successful submission does not advance `interval`**, only `last_checked_at`
+and `updated_at`. A submission is not a check, so the first status check lands
+three seconds after it rather than eight.
+
+**Three hardenings diverge from Python, and nothing else does.**
+
+- `Status=FAILED` and `Status=UNKNOWN` set `error`. Python tests only for the
+  absence of `Status=WAITING`, so it treats both as ready, fetches a result that
+  does not exist and stores an empty one — which the SPA draws as "No BLAST hits
+  found", indistinguishable from a real empty answer and with no retry offered.
+- The result fetch checks its HTTP status. Python reads the body whatever the
+  status and hands it to a zip reader, so an NCBI refusal becomes a `BadZipFile`
+  and is recorded as `"Unable to interpret NCBI result"` — a permanent error on
+  the row for what was a transient outage. Here a refusal is a refusal, and the
+  row backs off.
+- Every request carries an `AbortSignal.timeout`. Python passes no deadline at
+  all, so a hung connection holds the lease until it expires and the reclaim
+  opens a second hung connection behind the first.
+
+The RID is still screen-scraped out of an HTML comment, which is the only
+channel NCBI publishes it on. It throws in two places — a body with no
+`QBlastInfoBegin` comment, and a comment with no `RID =` line — and neither is
+defended against, because the per-row back-off is what contains the fragility.
+
+**A frame goes out on a terminal transition only**: RID stored, result stored,
+error set, expired row deleted. Never on an interval bump. A pending search is
+checked as often as every three seconds, and every BLAST panel on screen holds
+its own analysis query, so a frame per bump is a full analysis refetch in every
+connected browser for a change no larger than a countdown.
+`analyses.updated_at` is still bumped on every outcome, matching Python, so the
+two writers agree on the column even where they differ on the frame.
+
+Idempotency comes from the guards. A body restarted from step zero re-reads the
+rows and re-advances them; a submission whose write already committed finds a
+RID in place and discards the one it just obtained, and a result whose write
+already committed finds `ready = true` and never selects the row at all. Two
+sweeps running at once — which a duplicate spawn would produce — submit the same
+sequence twice and discard the loser's RID rather than corrupting the row.
+
+**The row-creating endpoint is not ported.** `blastNuvs`
+(`@virtool/data/analyses/data`) already serves it from this side, inserting the
+pending row and emitting the first frame; the sweep is the only thing that
+advances what it inserts.
+
+
 ### Frames are the framework's, never a body's
 
 A body never emits. `updateTaskProgress`, `completeTask` and `failTask` publish

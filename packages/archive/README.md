@@ -1,11 +1,12 @@
 # @virtool/archive
 
-Tar and gzip, for anything in the monorepo that reads or writes an archive.
+Tar, gzip and zip, for anything in the monorepo that reads or writes an archive.
 
-Framework-agnostic and dependency-light: `tar-stream` plus `node:zlib`, no
-database, no object storage, no logger. It is imported by `@virtool/workflow`
-(cache archives), by the workflow apps (gzipping reads and assemblies), and by
-`@virtool/tasks` (the HMM release archive).
+Framework-agnostic and dependency-light: `tar-stream` and `fflate` plus
+`node:zlib`, no database, no object storage, no logger. It is imported by
+`@virtool/workflow` (cache archives), by the workflow apps (gzipping reads and
+assemblies), by `@virtool/tasks` (the HMM release archive) and by
+`@virtool/data` (the NCBI BLAST result zip).
 
 ## Exports
 
@@ -13,8 +14,9 @@ database, no object storage, no logger. It is imported by `@virtool/workflow`
 | --- | --- |
 | `@virtool/archive` | everything below |
 | `@virtool/archive/tar` | `extractTarToDir`, `extractTarMembers`, `writePathAsTar` |
+| `@virtool/archive/zip` | `readZipMember` |
 | `@virtool/archive/compression` | `compressFile`, `decompressFile`, `isGzipped` |
-| `@virtool/archive/errors` | `ArchiveError`, `TarArchiveError`, `TarMemberMissingError`, `TarTargetExistsError` |
+| `@virtool/archive/errors` | `ArchiveError`, `TarArchiveError`, `TarMemberMissingError`, `TarTargetExistsError`, `ZipArchiveError`, `ZipMemberMissingError` |
 
 Prefer a subpath. `@virtool/workflow` re-exports none of these any more —
 consumers import them from here directly, so the definition site stays
@@ -32,6 +34,15 @@ inverse. Both are uncompressed-only, matching Python's `mode="w"`.
 contents do not matter, to destinations the caller chooses. It takes `gzip:
 true` for a `.tar.gz`. Use it when you want two files out of a release archive,
 not when you want a directory back.
+
+## Zip does not stream, and that is not a gap to fill
+
+`readZipMember` takes the whole archive as a `Uint8Array` and returns one
+member's bytes. It cannot stream: a zip's index is a central directory written
+at the *end* of the file, so nothing can name a member until the last byte has
+arrived. That is acceptable for the one thing here that reads a zip — an NCBI
+BLAST result, a handful of kilobytes — and only for that. Anything a user
+uploaded goes through tar, or nowhere.
 
 ## Two rules the extractors carry so callers cannot get them wrong
 
