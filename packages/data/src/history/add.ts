@@ -37,24 +37,45 @@ export type HistoryValues = {
 	userId: number;
 };
 
-/** The description of a change that created an OTU. */
-export function composeCreateDescription(document: OtuDocument): string {
-	return withAbbreviation(`Created ${String(document.name)}`, document);
-}
-
-/** The description of a change that removed an OTU. */
-export function composeRemoveDescription(document: OtuDocument): string {
-	return withAbbreviation(`Removed ${String(document.name)}`, document);
-}
-
-function withAbbreviation(description: string, document: OtuDocument): string {
-	const abbreviation = document.abbreviation;
+/**
+ * The description of a change, as its past-tense method name applied to the OTU.
+ *
+ * Python appends the `d` and, unless the method already ends in one, the `e`
+ * before it — `clone` becomes `Cloned` and `import` becomes `Imported`. Only the
+ * methods the bulk paths record are described this way; every other method has
+ * its own composer, because the generic phrasing reads badly for them.
+ */
+export function composeHistoryDescription(
+	methodName: HistoryMethod,
+	name: string,
+	abbreviation: unknown,
+): string {
+	const suffix = methodName.endsWith("e") ? "d" : "ed";
+	const description = `${methodName.charAt(0).toUpperCase()}${methodName.slice(1)}${suffix} ${name}`;
 
 	if (typeof abbreviation === "string" && abbreviation) {
 		return `${description} (${abbreviation})`;
 	}
 
 	return description;
+}
+
+/** The description of a change that created an OTU. */
+export function composeCreateDescription(document: OtuDocument): string {
+	return composeHistoryDescription(
+		"create",
+		String(document.name),
+		document.abbreviation,
+	);
+}
+
+/** The description of a change that removed an OTU. */
+export function composeRemoveDescription(document: OtuDocument): string {
+	return composeHistoryDescription(
+		"remove",
+		String(document.name),
+		document.abbreviation,
+	);
 }
 
 /**
@@ -123,9 +144,15 @@ function deriveOtuInformation(
 	};
 }
 
-// A create stores the whole new document and a remove the whole old one; there
-// is no other side to diff against. Everything else stores a dictdiffer diff.
-function composeDiff(values: HistoryValues): unknown {
+/**
+ * The diff a change stores.
+ *
+ * A create stores the whole new document and a remove the whole old one; there
+ * is no other side to diff against. Everything else stores a dictdiffer diff —
+ * including the `clone` and `import` a bulk insertion records, whose `old` is
+ * `null` and whose diff is therefore built against nothing.
+ */
+export function composeDiff(values: HistoryValues): unknown {
 	if (values.methodName === "create") {
 		return values.new;
 	}

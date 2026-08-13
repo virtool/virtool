@@ -1002,6 +1002,102 @@ Idempotency comes free: a re-run selects whatever is still over budget, and
 `storage.delete` is idempotent on its own, so an interrupted run is finished by
 the next one rather than repaired by it.
 
+### `clone_reference`, the fourth body
+
+`clone_reference` fills a newly created reference with the OTUs of the one it
+was cloned from. Its body is one call to `populateClonedReference`
+(`@virtool/data/references/populate`) inside one step, `clone` — Python's method
+name — and it reports a position: the manifest gives the OTU count up front, and
+a real reference is tens of thousands of them.
+
+**The work lives beside `references/data.ts`, not in it.** Everything the
+populate does reads OTUs and writes history, and `otus/data.ts` already imports
+this domain's errors, so folding it into `data.ts` would close that arrow into a
+cycle. The module is also the layer `import_reference` (VIR-2898) will stand on:
+`prepareOtuInsertion`, the chunked bulk insert and the rollback are the port of
+Python's `alot.py` and `populate_insert_only_reference`, which both tasks share,
+and only the clone-specific driver on top of them is this task's.
+
+**The manifest is a snapshot, not a pointer.** `createReference` writes every
+OTU the source held at the moment the clone was requested, mapped to the version
+it stood at, and each OTU is reconstructed to that version through
+`patchOtusToVersions`. Editing the source while the task runs cannot change what
+lands. An OTU the manifest names that history cannot produce is a
+`ReferenceManifestError` and fails the task — the entry is proof the OTU existed
+at that version, so a miss is corrupted history rather than a routine absence,
+and skipping it would publish a reference silently short of an OTU.
+
+**A failure deletes the reference.** Everything the run committed goes in one
+transaction — diffs, history, sequences, OTUs, the membership rows, and the
+`legacy_references` row itself — before the error is rethrown. The user sees the
+clone disappear from the list with nothing to retry. That is Python's
+`_rollback_insert_only_reference`, both runners are live until the cutover, and
+the two must not disagree about what a failed clone leaves behind. It is
+deliberate, not an oversight to be softened into "leave it empty and let them
+retry".
+
+**An abort rolls back nothing.** A drain-time abort means the process is going
+away; the runner releases the claim and another runner re-runs the body from
+step zero. Rolling back there would destroy a user's reference because a pod
+restarted. The signal is checked between chunks and rethrown untranslated.
+
+**A re-run clears before it writes.** The ids are minted fresh on every attempt,
+so a reclaimed run would otherwise land a second complete set of OTUs beside the
+first — silently, since neither set is malformed and nothing links the two. The
+clear is the rollback's deletions minus the reference row. The two paths it has
+to cover fall out of that: a rollback took the reference with it, so a re-run
+after an accepted failure finds nothing to clone into and fails immediately;
+an ungraceful exit left the reference, and the clear is what makes the re-run
+land exactly one copy.
+
+**A chunk is patched, prepared and committed before the next is read**, a
+thousand OTUs at a time, so peak memory is bounded by the chunk rather than by
+the reference. A chunk carries whole OTUs: `position` counts a sequence within
+its OTU, and splitting one across two inserts would start its second half's
+count at zero and reorder it — which misapplies every diff that addresses an
+isolate's sequence list by index. The prepare loop yields the event loop between
+chunks, because a deep copy and reshape of a thousand documents is a synchronous
+stretch long enough to starve the heartbeat and get the task reclaimed out from
+under itself.
+
+**The progress split is Python's.** Patching runs to `1/1.3` of the bar and the
+insert covers the remaining ~23%, which is what Python's `headroom = int(count *
+0.3)` leaves. The two runners' progress is compared during the cutover, so the
+ratio is reproduced rather than rounded off.
+
+**Ids are minted without a collision check**, exactly as Python's are: the unique
+constraints on `legacy_otus.id` and `legacy_sequences.id` are what a collision
+fails the task on, and a check would cost a query per id against a table this
+path is writing tens of thousands of rows into. They stay the mixed-case
+62-character alphabet every id written from this side uses, where Python's
+`random_alphanumeric` defaults to lowercase-only 36. Nothing keys on the case —
+the columns are `VARCHAR` and the ids Mongo held were mixed-case — and the wider
+alphabet is the safer of the two against the collision neither side checks for.
+`randomId(length)` in `otus/data.ts` is the one generator: 8 characters for the
+OTU, 12 for its isolates and sequences.
+
+The reshaping is Python's, term for term. Each cloned OTU takes the reference's
+own `created_at` rather than the instant the task ran, `imported: true`,
+`version: 0`, a `remote.id` naming the OTU it came from, and a `lower_name`
+derived from its name. Each isolate is pruned to `default`, `id`, `sequences`,
+`source_type` and `source_name`, dropping whatever an older Virtool wrote onto
+it. Each sequence keeps its accession, takes a `remote.id` naming its source, and
+the sequences are then lifted out of their isolates — `legacy_otus.data` never
+holds them. `verify` runs while they are still embedded, and its report is stored
+on the document as `issues` alongside `verified`. That stored report is this
+side's camelCase `OtuIssueReport` where Python's is snake_case; nothing on either
+side reads it, both recompute `verify` at read time, so the divergence is inert
+and a second snake_case report would be a second declaration of a shape the
+contract already owns.
+
+The history is one `legacy_history` row per OTU with `method_name = "clone"`,
+`otu_version = "0"` and a NULL `index_id`, and one `legacy_history_diff` row
+holding `diff(null, document)` — a dictdiffer diff against nothing, not the bare
+document. The diff is composed against the OTU as it will be stored, isolates
+already emptied of their sequences, which is what Python does; a diff taken from
+the joined document would describe a document no row holds. The rows are paired
+to their diffs by `legacy_id` rather than by the order the insert returned.
+
 ### Frames are the framework's, never a body's
 
 A body never emits. `updateTaskProgress`, `completeTask` and `failTask` publish

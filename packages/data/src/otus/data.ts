@@ -63,7 +63,7 @@ import {
 export type OtuDocument = Record<string, unknown>;
 
 /** A sequence document, recovered verbatim from the `data` JSONB column. */
-type SequenceDocument = Record<string, unknown>;
+export type SequenceDocument = Record<string, unknown>;
 
 /** Thrown when no OTU holds the requested id. */
 export class OtuNotFoundError extends AppError {}
@@ -99,8 +99,22 @@ const ID_ALPHABET =
 
 const ID_LENGTH = 8;
 
-function randomId(): string {
-	const bytes = crypto.getRandomValues(new Uint8Array(ID_LENGTH));
+/**
+ * Draw a random id of `length` characters.
+ *
+ * Isolate and sequence ids minted by the bulk reference-insertion paths are
+ * twelve characters where an OTU's is eight, which is the only reason the
+ * length is a parameter.
+ *
+ * The alphabet stays the mixed-case 62 characters every id written from this
+ * side uses, where Python's `random_alphanumeric` defaults to lowercase-only 36.
+ * Nothing keys on the case: the columns are `VARCHAR`, and the ids Mongo held
+ * were mixed-case, so a lowercase-only draw here would be the odd one out rather
+ * than the faithful one. The wider alphabet is also the safer of the two against
+ * the collision this path does not check for.
+ */
+export function randomId(length: number = ID_LENGTH): string {
+	const bytes = crypto.getRandomValues(new Uint8Array(length));
 
 	return Array.from(
 		bytes,
@@ -388,7 +402,7 @@ async function readOtuWithReference(
 	};
 }
 
-function isolatesOf(document: OtuDocument): Record<string, unknown>[] {
+export function isolatesOf(document: OtuDocument): Record<string, unknown>[] {
 	const isolates = document.isolates;
 
 	if (!Array.isArray(isolates)) {
@@ -419,7 +433,7 @@ function findIsolate(
 
 // Every promoted column is recomputed from the document, so the same values
 // serve an insert and an update and the row stays in sync on each write.
-function otuRowValues(document: OtuDocument, referenceId: number) {
+export function otuRowValues(document: OtuDocument, referenceId: number) {
 	const abbreviation = document.abbreviation;
 
 	return {
@@ -517,7 +531,7 @@ function nextSequencePosition(otuId: string) {
 	return sql<number>`(select coalesce(max(${legacySequences.position}) + 1, 0) from ${legacySequences} where ${legacySequences.otu_id} = ${otuId})`;
 }
 
-function sequenceRowValues(document: SequenceDocument) {
+export function sequenceRowValues(document: SequenceDocument) {
 	const segment = document.segment;
 
 	return {
@@ -605,7 +619,7 @@ async function updateLegacySequenceSegments(
  * is `false` rather than an empty list — the shape Python's `verify` returns.
  * `verified` on the row is exactly `verify(...) === null`.
  */
-function verify(joined: OtuDocument): OtuIssueReport | null {
+export function verify(joined: OtuDocument): OtuIssueReport | null {
 	const isolates = isolatesOf(joined);
 
 	const emptyIsolate: string[] = [];
