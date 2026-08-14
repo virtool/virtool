@@ -7,6 +7,7 @@ import { sql } from "drizzle-orm";
 import {
 	bigint,
 	boolean,
+	foreignKey,
 	index,
 	integer,
 	jsonb,
@@ -64,7 +65,7 @@ export const legacySamples = pgTable(
 		format: text("format")
 			.$defaultFn(() => "fastq")
 			.notNull(),
-		group_id: integer("group_id").references(() => groups.id),
+		group_id: integer("group_id"),
 		quality: jsonb("quality").$type<SampleQuality>(),
 		created_at: timestamp("created_at").notNull(),
 		paired: boolean("paired")
@@ -91,10 +92,25 @@ export const legacySamples = pgTable(
 		group_write: boolean("group_write")
 			.$defaultFn(() => false)
 			.notNull(),
-		user_id: integer("user_id").references(() => users.id),
-		job_id: integer("job_id").references(() => jobs.id),
+		user_id: integer("user_id"),
+		job_id: integer("job_id"),
 	},
 	(table) => [
+		foreignKey({
+			columns: [table.group_id],
+			foreignColumns: [groups.id],
+			name: "legacy_samples_group_id_fkey",
+		}),
+		foreignKey({
+			columns: [table.user_id],
+			foreignColumns: [users.id],
+			name: "legacy_samples_user_id_fkey",
+		}),
+		foreignKey({
+			columns: [table.job_id],
+			foreignColumns: [jobs.id],
+			name: "legacy_samples_job_id_fkey",
+		}),
 		unique("legacy_samples_legacy_id_key").on(table.legacy_id),
 		unique("legacy_samples_job_id_key").on(table.job_id),
 		index("ix_legacy_samples_all_read")
@@ -115,14 +131,20 @@ export const legacySamples = pgTable(
 export const legacySampleLabels = pgTable(
 	"legacy_sample_labels",
 	{
-		sample_id: bigint("sample_id", { mode: "number" })
-			.notNull()
-			.references(() => legacySamples.id, { onDelete: "cascade" }),
-		label_id: integer("label_id")
-			.notNull()
-			.references(() => labels.id),
+		sample_id: bigint("sample_id", { mode: "number" }).notNull(),
+		label_id: integer("label_id").notNull(),
 	},
 	(table) => [
+		foreignKey({
+			columns: [table.sample_id],
+			foreignColumns: [legacySamples.id],
+			name: "legacy_sample_labels_sample_id_fkey",
+		}).onDelete("cascade"),
+		foreignKey({
+			columns: [table.label_id],
+			foreignColumns: [labels.id],
+			name: "legacy_sample_labels_label_id_fkey",
+		}),
 		primaryKey({
 			name: "legacy_sample_labels_pkey",
 			columns: [table.sample_id, table.label_id],
@@ -135,14 +157,20 @@ export const legacySampleLabels = pgTable(
 export const legacySampleSubtractions = pgTable(
 	"legacy_sample_subtractions",
 	{
-		sample_id: bigint("sample_id", { mode: "number" })
-			.notNull()
-			.references(() => legacySamples.id, { onDelete: "cascade" }),
-		subtraction_id: bigint("subtraction_id", { mode: "number" })
-			.notNull()
-			.references(() => subtractions.id),
+		sample_id: bigint("sample_id", { mode: "number" }).notNull(),
+		subtraction_id: bigint("subtraction_id", { mode: "number" }).notNull(),
 	},
 	(table) => [
+		foreignKey({
+			columns: [table.sample_id],
+			foreignColumns: [legacySamples.id],
+			name: "legacy_sample_subtractions_sample_id_fkey",
+		}).onDelete("cascade"),
+		foreignKey({
+			columns: [table.subtraction_id],
+			foreignColumns: [subtractions.id],
+			name: "legacy_sample_subtractions_subtraction_id_fkey",
+		}),
 		primaryKey({
 			name: "legacy_sample_subtractions_pkey",
 			columns: [table.sample_id, table.subtraction_id],
@@ -156,18 +184,28 @@ export const sampleReads = pgTable(
 	{
 		id: serial("id").primaryKey(),
 		sample: text("sample").notNull(),
-		sample_id: bigint("sample_id", { mode: "number" }).references(
-			() => legacySamples.id,
-		),
+		sample_id: bigint("sample_id", { mode: "number" }),
 		name: varchar("name", { length: 13 }).notNull(),
 		name_on_disk: text("name_on_disk").notNull(),
 		size: bigint("size", { mode: "number" }),
 		// The reads file's complete object-storage key.
 		storage_key: text("storage_key").notNull(),
-		upload: integer("upload").references(() => uploads.id),
+		upload: integer("upload"),
 		uploaded_at: timestamp("uploaded_at"),
 	},
 	(table) => [
+		foreignKey({
+			columns: [table.sample_id],
+			foreignColumns: [legacySamples.id],
+			name: "sample_reads_sample_id_fkey",
+		}),
+		/* `sample_reads_upload_fkey`, not `..._upload_id_fkey`: the column really is
+		   named `upload`, and Postgres named the constraint after it. */
+		foreignKey({
+			columns: [table.upload],
+			foreignColumns: [uploads.id],
+			name: "sample_reads_upload_fkey",
+		}),
 		unique("uq_sample_reads_storage_key").on(table.storage_key),
 		unique("sample_reads_sample_id_name_key").on(table.sample_id, table.name),
 		unique("sample_reads_sample_name_key").on(table.sample, table.name),
@@ -182,15 +220,23 @@ export const sampleUploads = pgTable(
 			.primaryKey()
 			.generatedAlwaysAsIdentity(),
 		sample: text("sample").notNull(),
-		sample_id: bigint("sample_id", { mode: "number" }).references(
-			() => legacySamples.id,
-		),
-		upload_id: integer("upload_id")
-			.notNull()
-			.references(() => uploads.id),
+		sample_id: bigint("sample_id", { mode: "number" }),
+		upload_id: integer("upload_id").notNull(),
 		index: integer("index").notNull(),
 	},
-	(table) => [unique("sample_uploads_upload_id_key").on(table.upload_id)],
+	(table) => [
+		foreignKey({
+			columns: [table.sample_id],
+			foreignColumns: [legacySamples.id],
+			name: "sample_uploads_sample_id_fkey",
+		}),
+		foreignKey({
+			columns: [table.upload_id],
+			foreignColumns: [uploads.id],
+			name: "sample_uploads_upload_id_fkey",
+		}),
+		unique("sample_uploads_upload_id_key").on(table.upload_id),
+	],
 );
 
 /** A row from the `legacy_samples` table. */

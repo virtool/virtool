@@ -11,6 +11,7 @@ import { SubtractionFileType } from "@virtool/contracts";
 import {
 	bigint,
 	boolean,
+	foreignKey,
 	integer,
 	jsonb,
 	pgEnum,
@@ -65,11 +66,26 @@ export const subtractions = pgTable(
 		ready: boolean("ready")
 			.$defaultFn(() => false)
 			.notNull(),
-		user_id: integer("user_id").references(() => users.id),
-		job_id: integer("job_id").references(() => jobs.id),
-		upload_id: integer("upload_id").references(() => uploads.id),
+		user_id: integer("user_id"),
+		job_id: integer("job_id"),
+		upload_id: integer("upload_id"),
 	},
 	(table) => [
+		foreignKey({
+			columns: [table.user_id],
+			foreignColumns: [users.id],
+			name: "subtractions_user_id_fkey",
+		}),
+		foreignKey({
+			columns: [table.job_id],
+			foreignColumns: [jobs.id],
+			name: "subtractions_job_id_fkey",
+		}),
+		foreignKey({
+			columns: [table.upload_id],
+			foreignColumns: [uploads.id],
+			name: "subtractions_upload_id_fkey",
+		}),
 		unique("subtractions_legacy_id_key").on(table.legacy_id),
 		unique("subtractions_job_id_key").on(table.job_id),
 	],
@@ -80,9 +96,7 @@ export const subtractionFiles = pgTable(
 	{
 		id: serial("id").primaryKey(),
 		name: text("name"),
-		subtraction_id: bigint("subtraction_id", { mode: "number" })
-			.notNull()
-			.references(() => subtractions.id),
+		subtraction_id: bigint("subtraction_id", { mode: "number" }).notNull(),
 		type: subtractionType("type"),
 		// Files routinely exceed 2 GiB, past the range of a 32-bit integer, so this
 		// mirrors Python's BigInteger. `mode: "number"` is safe up to 2^53.
@@ -93,6 +107,11 @@ export const subtractionFiles = pgTable(
 		storage_key: text("storage_key"),
 	},
 	(table) => [
+		foreignKey({
+			columns: [table.subtraction_id],
+			foreignColumns: [subtractions.id],
+			name: "subtraction_files_subtraction_id_fkey",
+		}),
 		unique("uq_subtraction_files_storage_key").on(table.storage_key),
 		unique("subtraction_files_subtraction_id_name_key").on(
 			table.subtraction_id,

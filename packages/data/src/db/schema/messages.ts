@@ -7,6 +7,7 @@ import { sql } from "drizzle-orm";
 import {
 	boolean,
 	check,
+	foreignKey,
 	integer,
 	pgTable,
 	serial,
@@ -29,9 +30,14 @@ export const instanceMessages = pgTable(
 		// Nullable upstream: a row migrated from Mongo carries its author in the
 		// legacy `user` column, and a trigger resolves `user_id` from it. Every
 		// read joins on it, so a row that predates the backfill is simply invisible.
-		userId: integer("user_id").references(() => users.id),
+		userId: integer("user_id"),
 	},
 	(table) => [
+		foreignKey({
+			columns: [table.userId],
+			foreignColumns: [users.id],
+			name: "instance_messages_user_id_fkey",
+		}),
 		uniqueIndex("instance_messages_one_active")
 			.on(table.active)
 			.where(sql`${table.active} = true`),

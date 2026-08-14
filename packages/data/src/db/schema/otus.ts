@@ -19,6 +19,7 @@
 import {
 	bigint,
 	boolean,
+	foreignKey,
 	index,
 	integer,
 	jsonb,
@@ -40,13 +41,16 @@ export const legacyOtus = pgTable(
 			.$defaultFn(() => "")
 			.notNull(),
 		last_indexed_version: integer("last_indexed_version"),
-		reference_id: bigint("reference_id", { mode: "number" })
-			.notNull()
-			.references(() => legacyReferences.id),
+		reference_id: bigint("reference_id", { mode: "number" }).notNull(),
 		verified: boolean("verified").notNull(),
 		version: integer("version").notNull(),
 	},
 	(table) => [
+		foreignKey({
+			columns: [table.reference_id],
+			foreignColumns: [legacyReferences.id],
+			name: "legacy_otus_reference_id_fkey",
+		}),
 		index("ix_legacy_otus_reference_id").on(table.reference_id),
 		index("legacy_otus_name_lower").on(lower(table.name), table.id),
 	],
@@ -66,14 +70,17 @@ export const legacySequences = pgTable(
 	{
 		id: text("id").primaryKey(),
 		data: jsonb("data").$type<Record<string, unknown>>().notNull(),
-		otu_id: text("otu_id")
-			.notNull()
-			.references(() => legacyOtus.id, { onDelete: "cascade" }),
+		otu_id: text("otu_id").notNull(),
 		isolate_id: text("isolate_id").notNull(),
 		segment: text("segment"),
 		position: bigint("position", { mode: "number" }),
 	},
 	(table) => [
+		foreignKey({
+			columns: [table.otu_id],
+			foreignColumns: [legacyOtus.id],
+			name: "legacy_sequences_otu_id_fkey",
+		}).onDelete("cascade"),
 		index("ix_legacy_sequences_otu_id").on(table.otu_id),
 		index("ix_legacy_sequences_otu_id_position").on(
 			table.otu_id,

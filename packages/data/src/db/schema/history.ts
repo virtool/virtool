@@ -13,6 +13,7 @@
 
 import {
 	bigint,
+	foreignKey,
 	index,
 	integer,
 	jsonb,
@@ -37,9 +38,7 @@ export const legacyHistory = pgTable(
 		created_at: timestamp("created_at").notNull(),
 		description: text("description").notNull(),
 		method_name: text("method_name").notNull(),
-		user_id: integer("user_id")
-			.notNull()
-			.references(() => users.id),
+		user_id: integer("user_id").notNull(),
 		// A bare string column with no foreign key by design: `legacy_otus` keys on
 		// the 8-character Mongo id and has no `legacy_id`, so this already holds the
 		// OTU's primary key.
@@ -49,15 +48,26 @@ export const legacyHistory = pgTable(
 		// write upstream — the column never stores the sentinel itself.
 		otu_version: text("otu_version"),
 		reference: text("reference"),
-		reference_id: bigint("reference_id", { mode: "number" }).references(
-			() => legacyReferences.id,
-		),
+		reference_id: bigint("reference_id", { mode: "number" }),
 		index: text("index"),
-		index_id: bigint("index_id", { mode: "number" }).references(
-			() => indexes.id,
-		),
+		index_id: bigint("index_id", { mode: "number" }),
 	},
 	(table) => [
+		foreignKey({
+			columns: [table.user_id],
+			foreignColumns: [users.id],
+			name: "legacy_history_user_id_fkey",
+		}),
+		foreignKey({
+			columns: [table.reference_id],
+			foreignColumns: [legacyReferences.id],
+			name: "legacy_history_reference_id_fkey",
+		}),
+		foreignKey({
+			columns: [table.index_id],
+			foreignColumns: [indexes.id],
+			name: "legacy_history_index_id_fkey",
+		}),
 		unique("legacy_history_legacy_id_key").on(table.legacy_id),
 		index("ix_legacy_history_index").on(table.index),
 		index("ix_legacy_history_index_id").on(table.index_id),
@@ -81,14 +91,17 @@ export const legacyHistoryDiff = pgTable(
 		// `history_id` and Python still writes it, so an insert from here must too —
 		// the column is NOT NULL upstream.
 		change_id: text("change_id").notNull(),
-		history_id: bigint("history_id", { mode: "number" }).references(
-			() => legacyHistory.id,
-		),
+		history_id: bigint("history_id", { mode: "number" }),
 		// A dictdiffer diff: an array of `[action, path, changes]` triples, shaped by
 		// `@server/history/dictdiffer` and opaque to the database.
 		diff: jsonb("diff").$type<unknown>().notNull(),
 	},
 	(table) => [
+		foreignKey({
+			columns: [table.history_id],
+			foreignColumns: [legacyHistory.id],
+			name: "legacy_history_diff_history_id_fkey",
+		}),
 		/* `history_diffs_*` rather than `legacy_history_diff_*`: the constraint
 		   predates the table's rename and production never renamed it. The primary
 		   key is named for the same reason — an inferred one would be

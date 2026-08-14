@@ -4,6 +4,7 @@
 
 import type { Permissions } from "@virtool/contracts";
 import {
+	foreignKey,
 	index,
 	integer,
 	jsonb,
@@ -22,12 +23,15 @@ export const apiKeys = pgTable(
 		hashed: text("hashed").notNull(),
 		name: text("name").notNull(),
 		createdAt: timestamp("created_at").notNull(),
-		userId: integer("user_id")
-			.notNull()
-			.references(() => users.id, { onDelete: "cascade" }),
+		userId: integer("user_id").notNull(),
 		permissions: jsonb("permissions").$type<Permissions>().notNull(),
 	},
 	(table) => [
+		foreignKey({
+			columns: [table.userId],
+			foreignColumns: [users.id],
+			name: "api_keys_user_id_fkey",
+		}).onDelete("cascade"),
 		unique("api_keys_hashed_key").on(table.hashed),
 		index("idx_api_keys_user_id").on(table.userId),
 	],

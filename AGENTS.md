@@ -1486,6 +1486,15 @@ what `apps/jobs-api/src/metrics/registry.ts`'s `other` folding and
 the database leaves open, and never widen one it closes. The union itself
 lives in `@virtool/contracts` — one definition, imported by the mirror.
 
+**Declare a foreign key table-level, with an explicit name.** Use
+`foreignKey({ columns, foreignColumns, name })`, never an inline
+`.references()`, and name it `{table}_{column}_fkey` — the name Postgres
+assigned, because Alembic never named these itself. `.references()`
+auto-names a constraint production does not have, and because migration
+`0000` is stamped rather than run, the wrong name is caught by nothing
+until a much later migration emits SQL against a constraint that does not
+exist. `schema/foreignKeys.test.ts` pins all 54.
+
 Three `pgEnum` declarations (`messagecolor`, `indextype`,
 `session_type_enum`) describe a Postgres enum where the real column is
 `text` plus a CHECK. Each carries a comment saying so. They are inert —

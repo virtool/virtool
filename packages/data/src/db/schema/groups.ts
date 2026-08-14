@@ -8,6 +8,7 @@ import type { Permissions } from "@virtool/contracts";
 import { sql } from "drizzle-orm";
 import {
 	boolean,
+	foreignKey,
 	integer,
 	jsonb,
 	pgTable,
@@ -37,17 +38,23 @@ export type GroupRow = typeof groups.$inferSelect;
 export const userGroups = pgTable(
 	"user_groups",
 	{
-		groupId: integer("group_id")
-			.notNull()
-			.references(() => groups.id, { onDelete: "cascade" }),
-		userId: integer("user_id")
-			.notNull()
-			.references(() => users.id, { onDelete: "cascade" }),
+		groupId: integer("group_id").notNull(),
+		userId: integer("user_id").notNull(),
 		primary: boolean("primary")
 			.$defaultFn(() => false)
 			.notNull(),
 	},
 	(table) => [
+		foreignKey({
+			columns: [table.groupId],
+			foreignColumns: [groups.id],
+			name: "user_groups_group_id_fkey",
+		}).onDelete("cascade"),
+		foreignKey({
+			columns: [table.userId],
+			foreignColumns: [users.id],
+			name: "user_groups_user_id_fkey",
+		}).onDelete("cascade"),
 		primaryKey({
 			name: "user_groups_pkey",
 			columns: [table.groupId, table.userId],

@@ -13,6 +13,7 @@ import {
 	bigint,
 	boolean,
 	check,
+	foreignKey,
 	integer,
 	jsonb,
 	pgTable,
@@ -52,18 +53,34 @@ export const indexes = pgTable(
 		// that has never been asked for its OTU JSON has not written one, and the key
 		// is minted on first write.
 		otus_json_storage_key: text("otus_json_storage_key"),
-		reference_id: bigint("reference_id", { mode: "number" })
-			.notNull()
-			.references(() => legacyReferences.id),
-		user_id: integer("user_id")
-			.notNull()
-			.references(() => users.id),
+		reference_id: bigint("reference_id", { mode: "number" }).notNull(),
+		user_id: integer("user_id").notNull(),
 		// A build is backed by at most one of these: `job_id` for a legacy
 		// workflow-run build, `task_id` for one started from either service today.
-		job_id: integer("job_id").references(() => jobs.id),
-		task_id: integer("task_id").references(() => tasks.id),
+		job_id: integer("job_id"),
+		task_id: integer("task_id"),
 	},
 	(table) => [
+		foreignKey({
+			columns: [table.reference_id],
+			foreignColumns: [legacyReferences.id],
+			name: "indexes_reference_id_fkey",
+		}),
+		foreignKey({
+			columns: [table.user_id],
+			foreignColumns: [users.id],
+			name: "indexes_user_id_fkey",
+		}),
+		foreignKey({
+			columns: [table.job_id],
+			foreignColumns: [jobs.id],
+			name: "indexes_job_id_fkey",
+		}),
+		foreignKey({
+			columns: [table.task_id],
+			foreignColumns: [tasks.id],
+			name: "indexes_task_id_fkey",
+		}),
 		unique("indexes_legacy_id_key").on(table.legacy_id),
 		unique("indexes_storage_key_key").on(table.storage_key),
 		unique("uq_indexes_otus_json_storage_key").on(table.otus_json_storage_key),
@@ -88,9 +105,7 @@ export const indexFiles = pgTable(
 		// writes `str(index_id)` and this side writes the same — a row is then
 		// identical whichever runner built it.
 		index: text("index"),
-		index_id: bigint("index_id", { mode: "number" })
-			.notNull()
-			.references(() => indexes.id, { onDelete: "cascade" }),
+		index_id: bigint("index_id", { mode: "number" }).notNull(),
 		type: text("type").$type<IndexFileType>(),
 		size: bigint("size", { mode: "number" }),
 		// The file's complete object-storage key, superseding the per-index
@@ -98,6 +113,11 @@ export const indexFiles = pgTable(
 		storage_key: text("storage_key").notNull(),
 	},
 	(table) => [
+		foreignKey({
+			columns: [table.index_id],
+			foreignColumns: [indexes.id],
+			name: "index_files_index_id_fkey",
+		}).onDelete("cascade"),
 		unique("uq_index_files_storage_key").on(table.storage_key),
 		// `index_files_index_id_name_key`. Declared because a build's registration
 		// of its artifact upserts on it, and an `ON CONFLICT` naming columns no

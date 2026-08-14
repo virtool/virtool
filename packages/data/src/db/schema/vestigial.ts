@@ -15,6 +15,7 @@
 // consumer to share one with.
 
 import {
+	foreignKey,
 	integer,
 	jsonb,
 	pgEnum,
@@ -74,12 +75,15 @@ export const analysisResults = pgTable(
 export const jobAnalyses = pgTable(
 	"job_analyses",
 	{
-		job_id: integer("job_id")
-			.notNull()
-			.references(() => jobs.id),
+		job_id: integer("job_id").notNull(),
 		analysis_id: text("analysis_id").notNull(),
 	},
 	(table) => [
+		foreignKey({
+			columns: [table.job_id],
+			foreignColumns: [jobs.id],
+			name: "job_analyses_job_id_fkey",
+		}),
 		primaryKey({ name: "job_analyses_pkey", columns: [table.job_id] }),
 	],
 );
@@ -88,12 +92,15 @@ export const jobAnalyses = pgTable(
 export const jobIndexes = pgTable(
 	"job_indexes",
 	{
-		job_id: integer("job_id")
-			.notNull()
-			.references(() => jobs.id),
+		job_id: integer("job_id").notNull(),
 		index_id: text("index_id").notNull(),
 	},
 	(table) => [
+		foreignKey({
+			columns: [table.job_id],
+			foreignColumns: [jobs.id],
+			name: "job_indexes_job_id_fkey",
+		}),
 		primaryKey({ name: "job_indexes_pkey", columns: [table.job_id] }),
 	],
 );

@@ -13,6 +13,7 @@
 			"!apps/site/**",
 			"!dev/**",
 			"!packages/sqlite/src/fixtures/**",
+			"!packages/data/drizzle/**",
 			"!**/routeTree.gen.ts",
 			"!**/node_modules",
 			"!**/dist",

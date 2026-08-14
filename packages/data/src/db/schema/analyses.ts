@@ -19,6 +19,7 @@ import {
 	bigint,
 	boolean,
 	check,
+	foreignKey,
 	index,
 	integer,
 	json,
@@ -64,23 +65,40 @@ export const analyses = pgTable(
 		// The legacy `sample` string column is still written by Python and is needed
 		// to locate a migrated analysis's slug-prefixed objects in storage.
 		sample: text("sample").notNull(),
-		sample_id: bigint("sample_id", { mode: "number" }).references(
-			() => legacySamples.id,
-		),
+		sample_id: bigint("sample_id", { mode: "number" }),
 		reference: text("reference"),
-		reference_id: bigint("reference_id", { mode: "number" }).references(
-			() => legacyReferences.id,
-		),
+		reference_id: bigint("reference_id", { mode: "number" }),
 		index: text("index"),
-		index_id: bigint("index_id", { mode: "number" })
-			.notNull()
-			.references(() => indexes.id),
-		user_id: integer("user_id")
-			.notNull()
-			.references(() => users.id),
-		job_id: integer("job_id").references(() => jobs.id),
+		index_id: bigint("index_id", { mode: "number" }).notNull(),
+		user_id: integer("user_id").notNull(),
+		job_id: integer("job_id"),
 	},
 	(table) => [
+		foreignKey({
+			columns: [table.sample_id],
+			foreignColumns: [legacySamples.id],
+			name: "analyses_sample_id_fkey",
+		}),
+		foreignKey({
+			columns: [table.reference_id],
+			foreignColumns: [legacyReferences.id],
+			name: "analyses_reference_id_fkey",
+		}),
+		foreignKey({
+			columns: [table.index_id],
+			foreignColumns: [indexes.id],
+			name: "analyses_index_id_fkey",
+		}),
+		foreignKey({
+			columns: [table.user_id],
+			foreignColumns: [users.id],
+			name: "analyses_user_id_fkey",
+		}),
+		foreignKey({
+			columns: [table.job_id],
+			foreignColumns: [jobs.id],
+			name: "analyses_job_id_fkey",
+		}),
 		unique("analyses_legacy_id_key").on(table.legacy_id),
 		index("ix_analyses_sample").on(table.sample),
 		index("ix_analyses_sample_id_workflow").on(table.sample_id, table.workflow),
@@ -94,14 +112,20 @@ export const analyses = pgTable(
 export const analysisSubtractions = pgTable(
 	"analysis_subtractions",
 	{
-		analysis_id: bigint("analysis_id", { mode: "number" })
-			.notNull()
-			.references(() => analyses.id, { onDelete: "cascade" }),
-		subtraction_id: bigint("subtraction_id", { mode: "number" })
-			.notNull()
-			.references(() => subtractions.id),
+		analysis_id: bigint("analysis_id", { mode: "number" }).notNull(),
+		subtraction_id: bigint("subtraction_id", { mode: "number" }).notNull(),
 	},
 	(table) => [
+		foreignKey({
+			columns: [table.analysis_id],
+			foreignColumns: [analyses.id],
+			name: "analysis_subtractions_analysis_id_fkey",
+		}).onDelete("cascade"),
+		foreignKey({
+			columns: [table.subtraction_id],
+			foreignColumns: [subtractions.id],
+			name: "analysis_subtractions_subtraction_id_fkey",
+		}),
 		primaryKey({
 			name: "analysis_subtractions_pkey",
 			columns: [table.analysis_id, table.subtraction_id],
@@ -116,9 +140,7 @@ export const analysisFiles = pgTable(
 	"analysis_files",
 	{
 		id: serial("id").primaryKey(),
-		analysis_id: bigint("analysis_id", { mode: "number" })
-			.notNull()
-			.references(() => analyses.id, { onDelete: "cascade" }),
+		analysis_id: bigint("analysis_id", { mode: "number" }).notNull(),
 		description: text("description"),
 		format: analysisFormat("format"),
 		name: text("name"),
@@ -131,6 +153,11 @@ export const analysisFiles = pgTable(
 		uploaded_at: timestamp("uploaded_at"),
 	},
 	(table) => [
+		foreignKey({
+			columns: [table.analysis_id],
+			foreignColumns: [analyses.id],
+			name: "analysis_files_analysis_id_fkey",
+		}).onDelete("cascade"),
 		unique("analysis_files_name_on_disk_key").on(table.name_on_disk),
 		unique("uq_analysis_files_storage_key").on(table.storage_key),
 	],
@@ -143,9 +170,7 @@ export const nuvsBlast = pgTable(
 	"nuvs_blast",
 	{
 		id: serial("id").primaryKey(),
-		analysis_id: bigint("analysis_id", { mode: "number" })
-			.notNull()
-			.references(() => analyses.id, { onDelete: "cascade" }),
+		analysis_id: bigint("analysis_id", { mode: "number" }).notNull(),
 		sequence_index: integer("sequence_index").notNull(),
 		created_at: timestamp("created_at").notNull(),
 		updated_at: timestamp("updated_at").notNull(),
@@ -156,9 +181,19 @@ export const nuvsBlast = pgTable(
 		ready: boolean("ready").notNull(),
 		// `json`, not `jsonb` — the upstream column is `JSON`.
 		result: json("result").$type<Record<string, unknown>>(),
-		task_id: integer("task_id").references(() => tasks.id),
+		task_id: integer("task_id"),
 	},
 	(table) => [
+		foreignKey({
+			columns: [table.analysis_id],
+			foreignColumns: [analyses.id],
+			name: "nuvs_blast_analysis_id_fkey",
+		}).onDelete("cascade"),
+		foreignKey({
+			columns: [table.task_id],
+			foreignColumns: [tasks.id],
+			name: "nuvs_blast_task_id_fkey",
+		}),
 		unique("nuvs_blast_analysis_id_sequence_index_key").on(
 			table.analysis_id,
 			table.sequence_index,

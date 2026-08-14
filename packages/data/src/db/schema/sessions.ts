@@ -7,6 +7,7 @@ import { sql } from "drizzle-orm";
 import {
 	boolean,
 	check,
+	foreignKey,
 	index,
 	integer,
 	pgTable,
@@ -24,9 +25,7 @@ export const sessions = pgTable(
 	{
 		id: serial("id").primaryKey(),
 		sessionId: text("session_id").notNull(),
-		userId: integer("user_id").references(() => users.id, {
-			onDelete: "cascade",
-		}),
+		userId: integer("user_id"),
 		ip: text("ip").notNull(),
 		createdAt: timestamp("created_at").notNull(),
 		expiresAt: timestamp("expires_at").notNull(),
@@ -36,6 +35,11 @@ export const sessions = pgTable(
 		sessionType: text("session_type").$type<SessionType>().notNull(),
 	},
 	(table) => [
+		foreignKey({
+			columns: [table.userId],
+			foreignColumns: [users.id],
+			name: "sessions_user_id_fkey",
+		}).onDelete("cascade"),
 		unique("sessions_session_id_key").on(table.sessionId),
 		index("idx_sessions_expires_at").on(table.expiresAt),
 		uniqueIndex("idx_sessions_session_id").on(table.sessionId),

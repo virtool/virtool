@@ -46,6 +46,26 @@ injects the value client-side at insert time (the true analog of
 SQLAlchemy's `default=`) and stays out of the DDL. Reserve `.default()`
 for a column that genuinely has a `server_default` in Python.
 
+### Foreign keys: declare them table-level, with an explicit name
+
+Every foreign key uses the table-level `foreignKey({ columns,
+foreignColumns, name })`, never an inline `.references()`. The name is
+always `{table}_{column}_fkey`, which is the default name Postgres
+assigned because Alembic never named these constraints itself.
+
+Inline `.references()` agrees with production on the columns, the
+referenced table and the referential actions — and disagrees on the
+name, auto-generating `{table}_{column}_{reftable}_{refcolumn}_fk`.
+Nothing catches that at apply time. Migration `0000` is stamped as
+already-applied rather than run, so a wrong name never reaches a
+database; it reaches `meta/0000_snapshot.json`, which every later
+`drizzle-kit generate` diffs against. The first migration to touch a
+foreign key would then emit SQL naming a constraint production does not
+have, and fail long after anything connects it to the cause.
+
+`schema/foreignKeys.test.ts` pins all 54 against that rule, so a new
+table declared with `.references()` fails the suite by name.
+
 ### Column constraints: mirror them, and only them
 
 The mirror's one job is fidelity, so a column's TypeScript type has to
@@ -231,14 +251,17 @@ ownership. Notes for that day:
 
 - **Baseline against production.** The first `drizzle-kit generate`
   against an empty database will not be byte-identical to what Alembic
-  produced. Index naming, default expressions, and enum value
-  ordering all drift. Capture the live shape with `pg_dump
-  --schema-only`, hand-check the generated migration against it, and
-  stamp the live DB as already-applied rather than running the
-  generated migration cold.
-- **`casing: 'snake_case'`** in `drizzle.config.ts`. Our schema files
-  use snake_case columns with camelCase TS identifiers; without this
-  flag the generated migrations will rename every column.
+  produced. Capture the live shape with `pg_dump --schema-only` and
+  hand-check the generated migration against it, then stamp the live DB
+  as already-applied rather than running the generated migration cold.
+  Checked against production, index naming, default expressions and enum
+  value ordering all came out identical; **foreign key names** were the
+  drift, on all 54 of them — see "Foreign keys" above.
+- **`casing: 'snake_case'`** in `drizzle.config.ts`. It is set, but it
+  decides nothing today: every column in the mirror passes its name
+  explicitly, so there is nothing for the flag to infer. It is a
+  guardrail for a column added without one, not a fix for an existing
+  problem.
 - **Pair `drizzle-orm` and `drizzle-kit` versions.** They share
   internals and ship breaking changes together. Bumping one without
   the other has shipped silent schema-generation regressions in the

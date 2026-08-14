@@ -15,6 +15,7 @@ import {
 	boolean,
 	check,
 	doublePrecision,
+	foreignKey,
 	integer,
 	jsonb,
 	pgTable,
@@ -92,10 +93,17 @@ export const legacyHmmStatus = pgTable(
 		errors: jsonb("errors").$type<string[]>().notNull(),
 		release: jsonb("release").$type<HmmRelease>(),
 		installed: jsonb("installed").$type<HmmUpdate>(),
-		task_id: integer("task_id").references(() => tasks.id),
+		task_id: integer("task_id"),
 		updates: jsonb("updates").$type<HmmUpdate[]>().notNull(),
 	},
-	(table) => [check("ck_legacy_hmm_status_singleton", sql`${table.id} = 1`)],
+	(table) => [
+		foreignKey({
+			columns: [table.task_id],
+			foreignColumns: [tasks.id],
+			name: "legacy_hmm_status_task_id_fkey",
+		}),
+		check("ck_legacy_hmm_status_singleton", sql`${table.id} = 1`),
+	],
 );
 
 /** A row from the `legacy_hmm_status` singleton table. */

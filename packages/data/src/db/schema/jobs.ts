@@ -23,6 +23,7 @@ import { sql } from "drizzle-orm";
 import {
 	boolean,
 	check,
+	foreignKey,
 	index,
 	integer,
 	jsonb,
@@ -51,15 +52,18 @@ export const jobs = pgTable(
 		pinged_at: timestamp("pinged_at"),
 		state: text("state").$type<JobState>().notNull(),
 		steps: jsonb("steps").$type<StoredJobStep[]>(),
-		user_id: integer("user_id")
-			.notNull()
-			.references(() => users.id),
+		user_id: integer("user_id").notNull(),
 		// Deliberately left open. Python's `Workflow` is an application-level enum
 		// with no CHECK constraint behind it, so a row can hold a workflow this
 		// build has never heard of.
 		workflow: text("workflow").notNull(),
 	},
 	(table) => [
+		foreignKey({
+			columns: [table.user_id],
+			foreignColumns: [users.id],
+			name: "jobs_user_id_fkey",
+		}),
 		unique("jobs_legacy_id_key").on(table.legacy_id),
 		index("ix_jobs_state_created_at").on(table.state, table.created_at),
 		index("ix_jobs_user_id_state").on(table.user_id, table.state),

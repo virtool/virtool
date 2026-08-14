@@ -8,6 +8,7 @@ import {
 	bigint,
 	boolean,
 	check,
+	foreignKey,
 	integer,
 	pgTable,
 	serial,
@@ -45,11 +46,14 @@ export const uploads = pgTable(
 		// that replaced the enum deleted those rows.
 		type: text("type").$type<UploadType>(),
 		uploadedAt: timestamp("uploaded_at"),
-		userId: integer("user_id")
-			.notNull()
-			.references(() => users.id),
+		userId: integer("user_id").notNull(),
 	},
 	(table) => [
+		foreignKey({
+			columns: [table.userId],
+			foreignColumns: [users.id],
+			name: "uploads_user_id_fkey",
+		}),
 		unique("uploads_name_on_disk_key").on(table.nameOnDisk),
 		unique("uq_uploads_storage_key").on(table.storageKey),
 		check(

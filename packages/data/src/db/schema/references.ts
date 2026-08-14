@@ -4,9 +4,9 @@
 // in sync with `../../../../../../virtool/virtool/references/sql.py`.
 
 import {
-	type AnyPgColumn,
 	bigint,
 	boolean,
+	foreignKey,
 	integer,
 	jsonb,
 	pgTable,
@@ -47,27 +47,41 @@ export const legacyReferences = pgTable(
 			.$type<string[]>()
 			.$defaultFn(() => [])
 			.notNull(),
-		user_id: integer("user_id")
-			.notNull()
-			.references(() => users.id),
-		upload_id: integer("upload_id").references(() => uploads.id),
-		cloned_from_id: bigint("cloned_from_id", { mode: "number" }).references(
-			(): AnyPgColumn => legacyReferences.id,
-		),
-		task_id: integer("task_id").references(() => tasks.id),
+		user_id: integer("user_id").notNull(),
+		upload_id: integer("upload_id"),
+		cloned_from_id: bigint("cloned_from_id", { mode: "number" }),
+		task_id: integer("task_id"),
 	},
-	(table) => [unique("legacy_references_legacy_id_key").on(table.legacy_id)],
+	(table) => [
+		foreignKey({
+			columns: [table.user_id],
+			foreignColumns: [users.id],
+			name: "legacy_references_user_id_fkey",
+		}),
+		foreignKey({
+			columns: [table.upload_id],
+			foreignColumns: [uploads.id],
+			name: "legacy_references_upload_id_fkey",
+		}),
+		foreignKey({
+			columns: [table.cloned_from_id],
+			foreignColumns: [table.id],
+			name: "legacy_references_cloned_from_id_fkey",
+		}),
+		foreignKey({
+			columns: [table.task_id],
+			foreignColumns: [tasks.id],
+			name: "legacy_references_task_id_fkey",
+		}),
+		unique("legacy_references_legacy_id_key").on(table.legacy_id),
+	],
 );
 
 export const legacyReferenceUsers = pgTable(
 	"legacy_reference_users",
 	{
-		reference_id: bigint("reference_id", { mode: "number" })
-			.notNull()
-			.references(() => legacyReferences.id),
-		user_id: integer("user_id")
-			.notNull()
-			.references(() => users.id),
+		reference_id: bigint("reference_id", { mode: "number" }).notNull(),
+		user_id: integer("user_id").notNull(),
 		build: boolean("build")
 			.$defaultFn(() => false)
 			.notNull(),
@@ -79,6 +93,16 @@ export const legacyReferenceUsers = pgTable(
 			.notNull(),
 	},
 	(table) => [
+		foreignKey({
+			columns: [table.reference_id],
+			foreignColumns: [legacyReferences.id],
+			name: "legacy_reference_users_reference_id_fkey",
+		}),
+		foreignKey({
+			columns: [table.user_id],
+			foreignColumns: [users.id],
+			name: "legacy_reference_users_user_id_fkey",
+		}),
 		primaryKey({
 			name: "legacy_reference_users_pkey",
 			columns: [table.reference_id, table.user_id],
@@ -89,12 +113,8 @@ export const legacyReferenceUsers = pgTable(
 export const legacyReferenceGroups = pgTable(
 	"legacy_reference_groups",
 	{
-		reference_id: bigint("reference_id", { mode: "number" })
-			.notNull()
-			.references(() => legacyReferences.id),
-		group_id: integer("group_id")
-			.notNull()
-			.references(() => groups.id),
+		reference_id: bigint("reference_id", { mode: "number" }).notNull(),
+		group_id: integer("group_id").notNull(),
 		build: boolean("build")
 			.$defaultFn(() => false)
 			.notNull(),
@@ -106,6 +126,16 @@ export const legacyReferenceGroups = pgTable(
 			.notNull(),
 	},
 	(table) => [
+		foreignKey({
+			columns: [table.reference_id],
+			foreignColumns: [legacyReferences.id],
+			name: "legacy_reference_groups_reference_id_fkey",
+		}),
+		foreignKey({
+			columns: [table.group_id],
+			foreignColumns: [groups.id],
+			name: "legacy_reference_groups_group_id_fkey",
+		}),
 		primaryKey({
 			name: "legacy_reference_groups_pkey",
 			columns: [table.reference_id, table.group_id],
