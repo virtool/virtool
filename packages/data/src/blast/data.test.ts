@@ -14,14 +14,19 @@ import { seedUser } from "../auth/test/fixtures";
 import type { Db } from "../db/pg";
 import { takeFirstOrThrow } from "../db/rows";
 import { analyses, nuvsBlast } from "../db/schema/analyses";
+import { indexes } from "../db/schema/indexes";
+import { legacyReferences } from "../db/schema/references";
 import { users } from "../db/schema/users";
 import { createTestDatabase, type TestDatabase } from "../db/test/fixtures";
+import { seedIndex, seedReference } from "../indexes/test/fixtures";
 import { testLogger } from "../test/logger";
 import { sweepBlasts } from "./data";
 
 let database: TestDatabase;
 let db: Db;
 let userId: number;
+let referenceId: number;
+let indexId: number;
 
 const SEQUENCE = "ATGCATGCATGC";
 
@@ -77,9 +82,13 @@ afterAll(async () => {
 beforeEach(async () => {
 	await db.delete(nuvsBlast);
 	await db.delete(analyses);
+	await db.delete(indexes);
+	await db.delete(legacyReferences);
 	await db.delete(users);
 
 	userId = await seedUser(db, { handle: "owner" });
+	referenceId = await seedReference(db, userId);
+	indexId = await seedIndex(db, { referenceId, userId, version: 1 });
 });
 
 afterEach(() => {
@@ -114,7 +123,8 @@ async function seedAnalysis(indices: number[] = [0]): Promise<number> {
 				},
 				sample: "0",
 				user_id: userId,
-				index_id: 1,
+				reference_id: referenceId,
+				index_id: indexId,
 			})
 			.returning({ id: analyses.id }),
 	).id;

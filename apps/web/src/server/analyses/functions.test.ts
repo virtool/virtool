@@ -140,7 +140,7 @@ async function seedIndex(values: {
 				ready: values.ready,
 				reference_id: values.referenceId,
 				storage_key: `index-${values.referenceId}-${Math.random()}`,
-				user_id: 1,
+				user_id: ownerId,
 				version: 1,
 			})
 			.returning({ id: indexes.id }),

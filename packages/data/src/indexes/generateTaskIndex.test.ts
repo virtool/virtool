@@ -20,6 +20,7 @@ import type { Db } from "../db/pg";
 import { takeFirstOrThrow } from "../db/rows";
 import { legacyHistory } from "../db/schema/history";
 import { indexes, indexFiles } from "../db/schema/indexes";
+import { jobs } from "../db/schema/jobs";
 import { legacyOtus, legacySequences } from "../db/schema/otus";
 import { legacyReferences } from "../db/schema/references";
 import { tasks } from "../db/schema/tasks";
@@ -57,6 +58,7 @@ beforeEach(async () => {
 	await db.delete(indexes);
 	await db.delete(legacyReferences);
 	await db.delete(tasks);
+	await db.delete(jobs);
 	await db.delete(users);
 });
 
@@ -92,6 +94,20 @@ async function seedTask(): Promise<number> {
 				type: "create_index",
 			})
 			.returning({ id: tasks.id }),
+	).id;
+}
+
+async function seedJob(userId: number): Promise<number> {
+	return takeFirstOrThrow(
+		await db
+			.insert(jobs)
+			.values({
+				created_at: new Date(),
+				state: "pending",
+				user_id: userId,
+				workflow: "build_index",
+			})
+			.returning({ id: jobs.id }),
 	).id;
 }
 
@@ -183,7 +199,7 @@ async function seedBuild(values: {
 				storage_key: `5f9a${slugCounter}legacymongoslug`,
 				user_id: values.userId,
 				version: 0,
-				job_id: backing === "job" ? 4242 : null,
+				job_id: backing === "job" ? await seedJob(values.userId) : null,
 				task_id: backing === "task" ? await seedTask() : null,
 			})
 			.returning({ id: indexes.id }),

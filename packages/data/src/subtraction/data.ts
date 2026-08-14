@@ -4,6 +4,7 @@ import {
 	type NucleotideComposition,
 	type Subtraction,
 	type SubtractionFile,
+	type SubtractionFileType,
 	type SubtractionJobMinimal,
 	type SubtractionMinimal,
 	type SubtractionNested,
@@ -19,11 +20,7 @@ import type { Db, DbOrTx } from "../db/pg";
 import { takeFirstOrThrow } from "../db/rows";
 import { jobs } from "../db/schema/jobs";
 import { legacySampleSubtractions } from "../db/schema/samples";
-import {
-	type SubtractionFileType,
-	subtractionFiles,
-	subtractions,
-} from "../db/schema/subtractions";
+import { subtractionFiles, subtractions } from "../db/schema/subtractions";
 import { uploads } from "../db/schema/uploads";
 import { users } from "../db/schema/users";
 import { AppError } from "../errors";

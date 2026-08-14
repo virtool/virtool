@@ -1,15 +1,20 @@
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
+import { seedUser } from "../auth/test/fixtures";
 import type { Db, DbOrTx } from "../db/pg";
 import { legacyOtus, legacySequences } from "../db/schema/otus";
 import { createTestDatabase, type TestDatabase } from "../db/test/fixtures";
+import { seedReference } from "../indexes/test/fixtures";
 import { joinLegacyOtus, type OtuDocument } from "./data";
 
 let database: TestDatabase;
 let db: Db;
+let referenceId: number;
 
 beforeAll(async () => {
 	database = await createTestDatabase();
 	db = database.db;
+
+	referenceId = await seedReference(db, await seedUser(db));
 }, 60_000);
 
 afterAll(async () => {
@@ -27,7 +32,7 @@ async function seedOtu(document: OtuDocument): Promise<void> {
 		data: document,
 		name: document.name as string,
 		abbreviation: "",
-		reference_id: 5,
+		reference_id: referenceId,
 		verified: true,
 		version: document.version as number,
 	});
@@ -81,7 +86,7 @@ describe("joinLegacyOtus", () => {
 			name: "Alpha",
 			version: 3,
 			lower_name: "alpha",
-			reference: { id: 5 },
+			reference: { id: referenceId },
 			isolates: [
 				{ id: "iso_a", source_type: "isolate", source_name: "A" },
 				{ id: "iso_b", source_type: "isolate", source_name: "B" },
@@ -120,7 +125,7 @@ describe("joinLegacyOtus", () => {
 			_id: "otu_one",
 			name: "Alpha",
 			version: 0,
-			reference: { id: 5 },
+			reference: { id: referenceId },
 			isolates: [{ id: "iso_a" }, { id: "iso_empty" }],
 		});
 
@@ -137,7 +142,7 @@ describe("joinLegacyOtus", () => {
 			_id: "otu_one",
 			name: "Alpha",
 			version: 0,
-			reference: { id: 5 },
+			reference: { id: referenceId },
 			isolates: [],
 		});
 
@@ -152,14 +157,14 @@ describe("joinLegacyOtus", () => {
 			_id: "otu_one",
 			name: "Alpha",
 			version: 0,
-			reference: { id: 5 },
+			reference: { id: referenceId },
 			isolates: [{ id: "iso_a" }],
 		});
 		await seedOtu({
 			_id: "otu_two",
 			name: "Beta",
 			version: 0,
-			reference: { id: 5 },
+			reference: { id: referenceId },
 			isolates: [{ id: "iso_b" }],
 		});
 
@@ -192,7 +197,7 @@ describe("joinLegacyOtus", () => {
 			name: "Alpha",
 			version: 0,
 			created_at: "2023-06-01T12:00:00Z",
-			reference: { id: 5 },
+			reference: { id: referenceId },
 			isolates: [],
 		});
 

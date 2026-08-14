@@ -1,5 +1,6 @@
 import type { Db } from "@virtool/data/db/pg";
 import { legacyOtus, legacySequences } from "@virtool/data/db/schema/otus";
+import { legacyReferences } from "@virtool/data/db/schema/references";
 import { sessions } from "@virtool/data/db/schema/sessions";
 import { users } from "@virtool/data/db/schema/users";
 import {
@@ -42,10 +43,12 @@ const { handleIsolateFasta, handleOtuFasta, handleSequenceFasta } =
 const { seedSession, seedUser } = await import(
 	"@virtool/data/auth/test/fixtures"
 );
+const { seedReference } = await import("@virtool/data/indexes/test/fixtures");
 const { sessionCookie } = await import("../auth/test/fixtures");
 
 let database: TestDatabase;
 let cookie: string;
+let referenceId: number;
 
 beforeAll(async () => {
 	database = await createTestDatabase();
@@ -60,6 +63,7 @@ beforeEach(async () => {
 	vi.clearAllMocks();
 	await db.delete(legacySequences);
 	await db.delete(legacyOtus);
+	await db.delete(legacyReferences);
 	await db.delete(sessions);
 	await db.delete(users);
 
@@ -67,6 +71,7 @@ beforeEach(async () => {
 	const { sessionId, token } = await seedSession(db, userId);
 
 	cookie = sessionCookie({ sessionId, token });
+	referenceId = await seedReference(db, userId);
 });
 
 function signedIn(): Request {
@@ -92,7 +97,7 @@ async function seed(): Promise<void> {
 		},
 		name: "Squash browning spot virus",
 		abbreviation: "SBSV",
-		reference_id: 1,
+		reference_id: referenceId,
 		verified: true,
 		version: 3,
 	});
@@ -175,7 +180,7 @@ describe("handleOtuFasta", () => {
 			data: { _id: "weird", name, isolates: [] },
 			name,
 			abbreviation: "",
-			reference_id: 1,
+			reference_id: referenceId,
 			verified: true,
 			version: 0,
 		});

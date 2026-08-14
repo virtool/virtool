@@ -5,22 +5,31 @@
 // `../../../../../../virtool/virtool/users/pg.py`.
 
 import type { Permissions } from "@virtool/contracts";
+import { sql } from "drizzle-orm";
 import {
 	boolean,
 	integer,
 	jsonb,
 	pgTable,
 	primaryKey,
+	serial,
 	text,
+	unique,
+	uniqueIndex,
+	varchar,
 } from "drizzle-orm/pg-core";
 import { users } from "./users";
 
-export const groups = pgTable("groups", {
-	id: integer("id").primaryKey().generatedAlwaysAsIdentity(),
-	legacyId: text("legacy_id").unique(),
-	name: text("name").unique().notNull(),
-	permissions: jsonb("permissions").$type<Permissions>().notNull(),
-});
+export const groups = pgTable(
+	"groups",
+	{
+		id: serial("id").primaryKey(),
+		legacyId: text("legacy_id"),
+		name: varchar("name", { length: 255 }).unique().notNull(),
+		permissions: jsonb("permissions").$type<Permissions>().notNull(),
+	},
+	(table) => [unique("groups_legacy_id_key").on(table.legacyId)],
+);
 
 /** A row from the `groups` table. */
 export type GroupRow = typeof groups.$inferSelect;
@@ -38,7 +47,18 @@ export const userGroups = pgTable(
 			.$defaultFn(() => false)
 			.notNull(),
 	},
-	(table) => [primaryKey({ columns: [table.groupId, table.userId] })],
+	(table) => [
+		primaryKey({
+			name: "user_groups_pkey",
+			columns: [table.groupId, table.userId],
+		}),
+		/* `WHERE false` indexes no row, so this enforces nothing. It is what
+		   upstream created and is mirrored as-is; narrowing the predicate to what
+		   the name implies would start rejecting rows the real database accepts. */
+		uniqueIndex("primary_group_unique")
+			.on(table.primary, table.userId)
+			.where(sql`false`),
+	],
 );
 
 /** A row from the `user_groups` association table. */

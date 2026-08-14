@@ -1,5 +1,11 @@
-/** Allowed colors for an instance banner. Kept in lockstep with the
- *  `messagecolor` Postgres enum in `server/db/schema/messages.ts`. */
+/**
+ * Allowed colors for an instance banner.
+ *
+ * `instance_messages.color` is a `text` column closed by the
+ * `ck_instance_messages_color` CHECK constraint; this is the one declaration
+ * of what that constraint admits, imported by the schema mirror rather than
+ * restated there.
+ */
 export const bannerColors = [
 	"red",
 	"yellow",

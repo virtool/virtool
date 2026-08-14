@@ -1,12 +1,15 @@
 import { seedUser } from "@virtool/data/auth/test/fixtures";
 import type { Db } from "@virtool/data/db/pg";
 import { analyses, nuvsBlast } from "@virtool/data/db/schema/analyses";
+import { indexes } from "@virtool/data/db/schema/indexes";
+import { legacyReferences } from "@virtool/data/db/schema/references";
 import { tasks } from "@virtool/data/db/schema/tasks";
 import { users } from "@virtool/data/db/schema/users";
 import {
 	createTestDatabase,
 	type TestDatabase,
 } from "@virtool/data/db/test/fixtures";
+import { seedIndex, seedReference } from "@virtool/data/indexes/test/fixtures";
 import type { ClaimedTask } from "@virtool/data/tasks/data";
 import { collectFrames } from "@virtool/data/test/frames";
 import { createLogger, type Logger } from "@virtool/logger";
@@ -35,6 +38,8 @@ let database: TestDatabase;
 let db: Db;
 let ctx: TaskContext;
 let userId: number;
+let referenceId: number;
+let indexId: number;
 
 beforeAll(async () => {
 	database = await createTestDatabase();
@@ -48,11 +53,15 @@ afterAll(async () => {
 beforeEach(async () => {
 	await db.delete(nuvsBlast);
 	await db.delete(analyses);
+	await db.delete(indexes);
+	await db.delete(legacyReferences);
 	await db.delete(users);
 	await db.delete(tasks);
 
 	ctx = { db, storage: new MemoryStorage() };
 	userId = await seedUser(db);
+	referenceId = await seedReference(db, userId);
+	indexId = await seedIndex(db, { referenceId, userId, version: 0 });
 });
 
 afterEach(() => {
@@ -75,7 +84,8 @@ async function seedPendingBlast(): Promise<{
 			results: { hits: [{ index: 0, sequence: "ATGCATGC", orfs: [] }] },
 			sample: "0",
 			user_id: userId,
-			index_id: 1,
+			reference_id: referenceId,
+			index_id: indexId,
 		})
 		.returning({ id: analyses.id });
 

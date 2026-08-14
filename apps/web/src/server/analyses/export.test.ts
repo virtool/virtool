@@ -1,19 +1,24 @@
 import type { JsonObject } from "@virtool/contracts";
+import { seedUser } from "@virtool/data/auth/test/fixtures";
 import type { Db } from "@virtool/data/db/pg";
 import { legacyOtus, legacySequences } from "@virtool/data/db/schema/otus";
 import {
 	createTestDatabase,
 	type TestDatabase,
 } from "@virtool/data/db/test/fixtures";
+import { seedReference } from "@virtool/data/indexes/test/fixtures";
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
 import { formatAnalysisToCsv, formatAnalysisToExcel } from "./export";
 
 let database: TestDatabase;
 let db: Db;
+let referenceId: number;
 
 beforeAll(async () => {
 	database = await createTestDatabase();
 	db = database.db;
+
+	referenceId = await seedReference(db, await seedUser(db));
 }, 60_000);
 
 afterAll(async () => {
@@ -25,8 +30,6 @@ beforeEach(async () => {
 	await db.delete(legacyOtus);
 });
 
-const REFERENCE_ID = 5;
-
 // The OTU is seeded at the version the analysis saw, so patching takes its
 // already-at-target fast path and no history is needed here. The history-aware
 // path is covered in `format.test.ts`.
@@ -37,13 +40,13 @@ async function seedOtu(isolates: Record<string, unknown>[]): Promise<void> {
 			_id: "otu_one",
 			abbreviation: "GLRaV3",
 			name: 'Grapevine "leafroll" virus',
-			reference: { id: REFERENCE_ID },
+			reference: { id: referenceId },
 			version: 2,
 			isolates,
 		},
 		name: 'Grapevine "leafroll" virus',
 		abbreviation: "GLRaV3",
-		reference_id: REFERENCE_ID,
+		reference_id: referenceId,
 		verified: true,
 		version: 2,
 	});

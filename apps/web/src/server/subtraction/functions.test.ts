@@ -1,5 +1,6 @@
 import type { Db } from "@virtool/data/db/pg";
 import { takeFirstOrThrow } from "@virtool/data/db/rows";
+import { jobs } from "@virtool/data/db/schema/jobs";
 import { sessions } from "@virtool/data/db/schema/sessions";
 import { subtractions } from "@virtool/data/db/schema/subtractions";
 import { uploads } from "@virtool/data/db/schema/uploads";
@@ -66,6 +67,7 @@ beforeEach(async () => {
 	vi.clearAllMocks();
 	await db.delete(sessions);
 	await db.delete(subtractions);
+	await db.delete(jobs);
 	await db.delete(uploads);
 	await db.delete(users);
 	getRequest.mockReturnValue(

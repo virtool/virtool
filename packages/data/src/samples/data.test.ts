@@ -6,8 +6,10 @@ import type { Db } from "../db/pg";
 import { takeFirstOrThrow } from "../db/rows";
 import { analyses, analysisFiles } from "../db/schema/analyses";
 import { groups, userGroups } from "../db/schema/groups";
+import { indexes } from "../db/schema/indexes";
 import { jobs } from "../db/schema/jobs";
 import { labels } from "../db/schema/labels";
+import { legacyReferences } from "../db/schema/references";
 import {
 	legacySampleLabels,
 	legacySampleSubtractions,
@@ -20,6 +22,7 @@ import { uploads } from "../db/schema/uploads";
 import { users } from "../db/schema/users";
 import { createTestDatabase, type TestDatabase } from "../db/test/fixtures";
 import { addToGroup, seedGroup } from "../groups/test/fixtures";
+import { seedIndex, seedReference } from "../indexes/test/fixtures";
 import { testLogger } from "../test/logger";
 import { UploadNotFoundError } from "../uploads/data";
 import {
@@ -46,6 +49,8 @@ import {
 let database: TestDatabase;
 let db: Db;
 let ownerId: number;
+let referenceId: number;
+let indexId: number;
 
 beforeAll(async () => {
 	database = await createTestDatabase();
@@ -58,6 +63,8 @@ afterAll(async () => {
 
 beforeEach(async () => {
 	await db.delete(analyses);
+	await db.delete(indexes);
+	await db.delete(legacyReferences);
 	await db.delete(legacySampleLabels);
 	await db.delete(legacySampleSubtractions);
 	await db.delete(sampleUploads);
@@ -72,6 +79,8 @@ beforeEach(async () => {
 	await db.delete(users);
 
 	ownerId = await seedUser(db, { handle: "owner" });
+	referenceId = await seedReference(db, ownerId);
+	indexId = await seedIndex(db, { referenceId, userId: ownerId, version: 1 });
 });
 
 async function seedSample(
@@ -102,10 +111,11 @@ async function seedAnalysis(
 			.values({
 				created_at: now,
 				updated_at: now,
-				// The legacy storage slug and the owning build. Both irrelevant to
-				// workflow tagging, but NOT NULL upstream.
+				// The legacy storage slug, the owning reference and the owning build.
+				// All irrelevant to workflow tagging, but required upstream.
 				sample: String(overrides.sample_id ?? 0),
-				index_id: 1,
+				reference_id: referenceId,
+				index_id: indexId,
 				user_id: ownerId,
 				workflow: "nuvs",
 				ready: false,

@@ -1,7 +1,8 @@
+import type { BannerColor } from "@virtool/contracts";
 import { desc, eq } from "drizzle-orm";
 import type { Db } from "../db/pg";
 import { takeFirstOrThrow } from "../db/rows";
-import { instanceMessages, type MessageColor } from "../db/schema/messages";
+import { instanceMessages } from "../db/schema/messages";
 import { users } from "../db/schema/users";
 import { AppError } from "../errors";
 import { emit } from "../events/emit";
@@ -16,7 +17,7 @@ type MessageUser = {
 export type Message = {
 	id: number;
 	active: boolean;
-	color: MessageColor;
+	color: BannerColor;
 	message: string;
 
 	/** When the message was written, or null if the row does not record it. */
@@ -34,7 +35,7 @@ export class MessageNotFoundError extends AppError {}
 type MessageJoinRow = {
 	id: number;
 	active: boolean | null;
-	color: MessageColor;
+	color: BannerColor;
 	message: string | null;
 	createdAt: Date | null;
 	updatedAt: Date | null;
@@ -108,7 +109,7 @@ async function getMessageById(db: Db, id: number): Promise<Message> {
 export async function createMessage(
 	db: Db,
 	message: string,
-	color: MessageColor,
+	color: BannerColor,
 	userId: number,
 ): Promise<Message> {
 	const now = new Date();
@@ -134,7 +135,7 @@ export async function createMessage(
 export async function updateMessage(
 	db: Db,
 	id: number,
-	values: { message?: string; color?: MessageColor },
+	values: { message?: string; color?: BannerColor },
 	userId: number,
 ): Promise<Message> {
 	const update: Partial<typeof instanceMessages.$inferInsert> = {

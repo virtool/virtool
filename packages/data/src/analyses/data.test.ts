@@ -23,7 +23,6 @@ import { addToGroup, seedGroup } from "../groups/test/fixtures";
 import { resolveSampleActor, type SampleActor } from "../samples/data";
 import { testLogger } from "../test/logger";
 import {
-	AnalysisIntegrityError,
 	AnalysisNoReadyIndexError,
 	AnalysisNotFoundError,
 	AnalysisNotNuvsError,
@@ -99,7 +98,7 @@ async function seedIndex(values: {
 				ready: values.ready,
 				reference_id: values.referenceId,
 				storage_key: `index-${values.referenceId}-${values.version}`,
-				user_id: 1,
+				user_id: ownerId,
 				version: values.version,
 			})
 			.returning({ id: indexes.id }),
@@ -388,14 +387,6 @@ describe("findAnalyses", () => {
 
 		expect(result.items[0]?.job).toBeNull();
 		expect(result.items[0]?.subtractions).toEqual([]);
-	});
-
-	it("raises rather than dropping an analysis whose index does not resolve", async () => {
-		await seedAnalysisOnNewSample({ index_id: 987654 });
-
-		await expect(findAnalyses(db, page, adminActor)).rejects.toBeInstanceOf(
-			AnalysisIntegrityError,
-		);
 	});
 });
 

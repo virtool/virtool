@@ -1,6 +1,18 @@
+import { z } from "zod";
 import type { OtuHistory } from "./otus";
 import type { SearchResult } from "./search";
 import type { UserNested } from "./users";
+
+/**
+ * The kind of artifact an index file holds.
+ *
+ * `index_files.type` is a `text` column closed by the `ck_index_files_type`
+ * CHECK constraint; this is the one declaration of what that constraint
+ * admits, imported by the schema mirror rather than restated there.
+ */
+export const IndexFileType = z.enum(["json", "fasta", "bowtie2", "sqlite"]);
+
+export type IndexFileType = z.infer<typeof IndexFileType>;
 
 /** The reference an index was built from, reduced to the fields listings show. */
 export type IndexReferenceNested = {

@@ -9,14 +9,17 @@
 // formatter resolves them through this column.
 
 import type { HmmEntry } from "@virtool/contracts";
+import { sql } from "drizzle-orm";
 import {
 	bigint,
 	boolean,
+	check,
 	doublePrecision,
 	integer,
 	jsonb,
 	pgTable,
 	text,
+	unique,
 } from "drizzle-orm/pg-core";
 import { tasks } from "./tasks";
 
@@ -56,34 +59,44 @@ export type HmmUpdate = {
 	user: { id: number };
 };
 
-export const hmms = pgTable("hmms", {
-	id: bigint("id", { mode: "number" }).primaryKey().generatedAlwaysAsIdentity(),
-	legacy_id: text("legacy_id").unique(),
-	cluster: integer("cluster").notNull(),
-	count: integer("count").notNull(),
-	length: integer("length").notNull(),
-	mean_entropy: doublePrecision("mean_entropy").notNull(),
-	total_entropy: doublePrecision("total_entropy").notNull(),
-	hidden: boolean("hidden")
-		.$defaultFn(() => false)
-		.notNull(),
-	names: jsonb("names").$type<string[]>().notNull(),
-	families: jsonb("families").$type<Record<string, number>>().notNull(),
-	genera: jsonb("genera").$type<Record<string, number>>().notNull(),
-	entries: jsonb("entries").$type<HmmEntry[]>().notNull(),
-});
+export const hmms = pgTable(
+	"hmms",
+	{
+		id: bigint("id", { mode: "number" })
+			.primaryKey()
+			.generatedAlwaysAsIdentity(),
+		legacy_id: text("legacy_id"),
+		cluster: integer("cluster").notNull(),
+		count: integer("count").notNull(),
+		length: integer("length").notNull(),
+		mean_entropy: doublePrecision("mean_entropy").notNull(),
+		total_entropy: doublePrecision("total_entropy").notNull(),
+		hidden: boolean("hidden")
+			.$defaultFn(() => false)
+			.notNull(),
+		names: jsonb("names").$type<string[]>().notNull(),
+		families: jsonb("families").$type<Record<string, number>>().notNull(),
+		genera: jsonb("genera").$type<Record<string, number>>().notNull(),
+		entries: jsonb("entries").$type<HmmEntry[]>().notNull(),
+	},
+	(table) => [unique("hmms_legacy_id_key").on(table.legacy_id)],
+);
 
 /** A row from the `hmms` table. */
 export type HmmRow = typeof hmms.$inferSelect;
 
-export const legacyHmmStatus = pgTable("legacy_hmm_status", {
-	id: integer("id").primaryKey(),
-	errors: jsonb("errors").$type<string[]>().notNull(),
-	release: jsonb("release").$type<HmmRelease>(),
-	installed: jsonb("installed").$type<HmmUpdate>(),
-	task_id: integer("task_id").references(() => tasks.id),
-	updates: jsonb("updates").$type<HmmUpdate[]>().notNull(),
-});
+export const legacyHmmStatus = pgTable(
+	"legacy_hmm_status",
+	{
+		id: integer("id").primaryKey(),
+		errors: jsonb("errors").$type<string[]>().notNull(),
+		release: jsonb("release").$type<HmmRelease>(),
+		installed: jsonb("installed").$type<HmmUpdate>(),
+		task_id: integer("task_id").references(() => tasks.id),
+		updates: jsonb("updates").$type<HmmUpdate[]>().notNull(),
+	},
+	(table) => [check("ck_legacy_hmm_status_singleton", sql`${table.id} = 1`)],
+);
 
 /** A row from the `legacy_hmm_status` singleton table. */
 export type HmmStatusRow = typeof legacyHmmStatus.$inferSelect;

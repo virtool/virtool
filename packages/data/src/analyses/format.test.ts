@@ -1,19 +1,26 @@
 import type { PathoscopeHit, PathoscopeResults } from "@virtool/contracts";
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
+import { seedUser } from "../auth/test/fixtures";
 import type { Db, DbOrTx } from "../db/pg";
 import { takeFirstOrThrow } from "../db/rows";
 import { legacyHistory, legacyHistoryDiff } from "../db/schema/history";
 import { hmms } from "../db/schema/hmms";
 import { legacyOtus, legacySequences } from "../db/schema/otus";
 import { createTestDatabase, type TestDatabase } from "../db/test/fixtures";
+import { seedReference } from "../indexes/test/fixtures";
 import { AnalysisResultsError, formatAnalysis } from "./format";
 
 let database: TestDatabase;
 let db: Db;
+let ownerId: number;
+let referenceId: number;
 
 beforeAll(async () => {
 	database = await createTestDatabase();
 	db = database.db;
+
+	ownerId = await seedUser(db, { handle: "owner" });
+	referenceId = await seedReference(db, ownerId);
 }, 60_000);
 
 afterAll(async () => {
@@ -37,8 +44,6 @@ const unusableDb = new Proxy({} as DbOrTx, {
 		throw new Error(`unexpected query: db.${String(property)}`);
 	},
 });
-
-const REFERENCE_ID = 5;
 
 async function seedHmm(values: {
 	cluster: number;
@@ -322,7 +327,7 @@ async function seedDetectedOtu(): Promise<void> {
 			_id: "otu_one",
 			abbreviation: CURRENT_ABBREVIATION,
 			name: CURRENT_NAME,
-			reference: { id: REFERENCE_ID },
+			reference: { id: referenceId },
 			version: 3,
 			isolates: [
 				{ id: "iso_a", source_type: "isolate", source_name: "A" },
@@ -331,7 +336,7 @@ async function seedDetectedOtu(): Promise<void> {
 		},
 		name: CURRENT_NAME,
 		abbreviation: CURRENT_ABBREVIATION,
-		reference_id: REFERENCE_ID,
+		reference_id: referenceId,
 		verified: true,
 		version: 3,
 	});
@@ -392,8 +397,8 @@ async function seedDetectedOtu(): Promise<void> {
 				otu: "otu_one",
 				otu_name: CURRENT_NAME,
 				otu_version: "3",
-				reference_id: REFERENCE_ID,
-				user_id: 1,
+				reference_id: referenceId,
+				user_id: ownerId,
 			})
 			.returning({ id: legacyHistory.id }),
 	);
@@ -701,7 +706,7 @@ async function seedSegmentedOtu(): Promise<void> {
 			_id: "otu_two",
 			abbreviation: "TSWV",
 			name,
-			reference: { id: REFERENCE_ID },
+			reference: { id: referenceId },
 			schema: [
 				{ molecule: "ssRNA", name: "L", required: true },
 				{ molecule: "ssRNA", name: "M", required: true },
@@ -715,7 +720,7 @@ async function seedSegmentedOtu(): Promise<void> {
 		},
 		name,
 		abbreviation: "TSWV",
-		reference_id: REFERENCE_ID,
+		reference_id: referenceId,
 		verified: true,
 		version: 1,
 	});

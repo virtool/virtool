@@ -19,26 +19,38 @@
 import {
 	bigint,
 	boolean,
+	index,
 	integer,
 	jsonb,
 	pgTable,
 	text,
 } from "drizzle-orm/pg-core";
+import { legacyReferences } from "./references";
+import { lower } from "./sql";
 
-export const legacyOtus = pgTable("legacy_otus", {
-	// The upstream primary key is the 8-character Mongo id, a plain string with
-	// no identity sequence.
-	id: text("id").primaryKey(),
-	data: jsonb("data").$type<Record<string, unknown>>().notNull(),
-	name: text("name").notNull(),
-	abbreviation: text("abbreviation")
-		.$defaultFn(() => "")
-		.notNull(),
-	last_indexed_version: integer("last_indexed_version"),
-	reference_id: bigint("reference_id", { mode: "number" }).notNull(),
-	verified: boolean("verified").notNull(),
-	version: integer("version").notNull(),
-});
+export const legacyOtus = pgTable(
+	"legacy_otus",
+	{
+		// The upstream primary key is the 8-character Mongo id, a plain string with
+		// no identity sequence.
+		id: text("id").primaryKey(),
+		data: jsonb("data").$type<Record<string, unknown>>().notNull(),
+		name: text("name").notNull(),
+		abbreviation: text("abbreviation")
+			.$defaultFn(() => "")
+			.notNull(),
+		last_indexed_version: integer("last_indexed_version"),
+		reference_id: bigint("reference_id", { mode: "number" })
+			.notNull()
+			.references(() => legacyReferences.id),
+		verified: boolean("verified").notNull(),
+		version: integer("version").notNull(),
+	},
+	(table) => [
+		index("ix_legacy_otus_reference_id").on(table.reference_id),
+		index("legacy_otus_name_lower").on(lower(table.name), table.id),
+	],
+);
 
 // A sequence belonging to an isolate embedded in an OTU. `isolate_id` is not a
 // foreign key: isolates are not a table upstream, they live in
@@ -49,14 +61,26 @@ export const legacyOtus = pgTable("legacy_otus", {
 // encode changes to an isolate's sequence list by index. A joined OTU must
 // present its sequences in this order or a patch lands on the wrong sequence.
 // Deletes leave gaps rather than renumbering, so only relative order matters.
-export const legacySequences = pgTable("legacy_sequences", {
-	id: text("id").primaryKey(),
-	data: jsonb("data").$type<Record<string, unknown>>().notNull(),
-	otu_id: text("otu_id").notNull(),
-	isolate_id: text("isolate_id").notNull(),
-	segment: text("segment"),
-	position: bigint("position", { mode: "number" }),
-});
+export const legacySequences = pgTable(
+	"legacy_sequences",
+	{
+		id: text("id").primaryKey(),
+		data: jsonb("data").$type<Record<string, unknown>>().notNull(),
+		otu_id: text("otu_id")
+			.notNull()
+			.references(() => legacyOtus.id, { onDelete: "cascade" }),
+		isolate_id: text("isolate_id").notNull(),
+		segment: text("segment"),
+		position: bigint("position", { mode: "number" }),
+	},
+	(table) => [
+		index("ix_legacy_sequences_otu_id").on(table.otu_id),
+		index("ix_legacy_sequences_otu_id_position").on(
+			table.otu_id,
+			table.position,
+		),
+	],
+);
 
 /** A row from the `legacy_otus` table. */
 export type OtuRow = typeof legacyOtus.$inferSelect;

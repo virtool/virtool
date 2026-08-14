@@ -5,18 +5,20 @@
 // `../../../../../../virtool/virtool/users/pg.py`.
 
 import type { AdministratorRoleName } from "@virtool/contracts";
-import { type SQL, sql } from "drizzle-orm";
+import { sql } from "drizzle-orm";
 import {
-	type AnyPgColumn,
 	boolean,
+	check,
 	customType,
-	integer,
 	jsonb,
 	pgTable,
+	serial,
 	text,
 	timestamp,
+	unique,
 	uniqueIndex,
 } from "drizzle-orm/pg-core";
+import { lower } from "./sql";
 
 const bytea = customType<{ data: Buffer; default: false }>({
 	dataType() {
@@ -24,21 +26,13 @@ const bytea = customType<{ data: Buffer; default: false }>({
 	},
 });
 
-function lower(column: AnyPgColumn): SQL {
-	return sql`lower(${column})`;
-}
-
 export const users = pgTable(
 	"users",
 	{
-		id: integer("id").primaryKey().generatedAlwaysAsIdentity(),
+		id: serial("id").primaryKey(),
 		active: boolean("active")
 			.$defaultFn(() => true)
 			.notNull(),
-		// `text`, closed by the `administrator_role_valid` CHECK constraint.
-		// `$type` asserts rather than validates, which is what that constraint
-		// makes safe: a value outside the union cannot reach the column without a
-		// Python-side migration.
 		administratorRole:
 			text("administrator_role").$type<AdministratorRoleName>(),
 		email: text("email")
@@ -49,11 +43,18 @@ export const users = pgTable(
 			.notNull(),
 		handle: text("handle").notNull(),
 		lastPasswordChange: timestamp("last_password_change").notNull(),
-		legacyId: text("legacy_id").unique(),
+		legacyId: text("legacy_id"),
 		password: bytea("password").notNull(),
 		settings: jsonb("settings").$type<Record<string, unknown>>().notNull(),
 	},
-	(table) => [uniqueIndex("users_handle_lower_unique").on(lower(table.handle))],
+	(table) => [
+		unique("users_legacy_id_key").on(table.legacyId),
+		uniqueIndex("users_handle_lower_unique").on(lower(table.handle)),
+		check(
+			"administrator_role_valid",
+			sql`${table.administratorRole} in ('full', 'settings', 'users', 'base')`,
+		),
+	],
 );
 
 /** A row from the `users` table. */

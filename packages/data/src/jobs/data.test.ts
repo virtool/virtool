@@ -15,9 +15,11 @@ import type { Db } from "../db/pg";
 import { analyses } from "../db/schema/analyses";
 import { indexes } from "../db/schema/indexes";
 import { jobs } from "../db/schema/jobs";
+import { legacyReferences } from "../db/schema/references";
 import { legacySamples } from "../db/schema/samples";
 import { users } from "../db/schema/users";
 import { createTestDatabase, type TestDatabase } from "../db/test/fixtures";
+import { seedIndex, seedReference } from "../indexes/test/fixtures";
 import { collectFrames } from "../test/frames";
 import {
 	claimJob,
@@ -51,6 +53,10 @@ afterAll(async () => {
 });
 
 beforeEach(async () => {
+	await db.delete(analyses);
+	await db.delete(indexes);
+	await db.delete(legacySamples);
+	await db.delete(legacyReferences);
 	await db.delete(jobs);
 	await db.delete(users);
 
@@ -136,6 +142,8 @@ describe("getJob", () => {
 	// stringified because `args` is a string map.
 	it("exposes a linked analysis's integer id as a string arg", async () => {
 		const jobId = await seedJob("succeeded", { started: 0, of: 1 });
+		const referenceId = await seedReference(db, userId);
+		const indexId = await seedIndex(db, { referenceId, userId, version: 0 });
 
 		const now = new Date();
 		const [analysis] = await db
@@ -144,8 +152,9 @@ describe("getJob", () => {
 				created_at: now,
 				updated_at: now,
 				sample: "0",
-				user_id: 1,
-				index_id: 1,
+				user_id: userId,
+				reference_id: referenceId,
+				index_id: indexId,
 				job_id: jobId,
 				workflow: "nuvs",
 				ready: false,
@@ -189,6 +198,7 @@ describe("getJob", () => {
 	// exposed as the `index_id` arg.
 	it("exposes a linked index's id as a string arg", async () => {
 		const jobId = await seedJob("succeeded", { started: 0, of: 1 });
+		const referenceId = await seedReference(db, userId);
 
 		const [index] = await db
 			.insert(indexes)
@@ -196,9 +206,9 @@ describe("getJob", () => {
 				created_at: new Date(),
 				job_id: jobId,
 				manifest: {},
-				reference_id: 1,
+				reference_id: referenceId,
 				storage_key: "job-linked-index",
-				user_id: 1,
+				user_id: userId,
 				version: 0,
 			})
 			.returning({ id: indexes.id });

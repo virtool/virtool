@@ -1,10 +1,12 @@
 import { sql } from "drizzle-orm";
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
+import { seedUser } from "../auth/test/fixtures";
 import type { Db, DbOrTx } from "../db/pg";
 import { takeFirstOrThrow } from "../db/rows";
 import { legacyHistory, legacyHistoryDiff } from "../db/schema/history";
 import { legacyOtus, legacySequences } from "../db/schema/otus";
 import { createTestDatabase, type TestDatabase } from "../db/test/fixtures";
+import { seedReference } from "../indexes/test/fixtures";
 import type { OtuDocument } from "../otus/data";
 import {
 	MissingHistoryDiffError,
@@ -15,10 +17,19 @@ import {
 
 let database: TestDatabase;
 let db: Db;
+let userId: number;
+let referenceId: number;
+// A second reference, so a change stamped with a reference other than the OTU's
+// can be told apart from one that was never restamped.
+let otherReferenceId: number;
 
 beforeAll(async () => {
 	database = await createTestDatabase();
 	db = database.db;
+
+	userId = await seedUser(db);
+	referenceId = await seedReference(db, userId);
+	otherReferenceId = await seedReference(db, userId, { name: "Other" });
 }, 60_000);
 
 afterAll(async () => {
@@ -48,7 +59,7 @@ async function seedOtu(document: OtuDocument): Promise<void> {
 		data: document,
 		name: document.name as string,
 		abbreviation: "",
-		reference_id: 5,
+		reference_id: referenceId,
 		verified: true,
 		version: document.version as number,
 	});
@@ -92,11 +103,11 @@ async function seedChange(values: {
 				created_at: new Date(),
 				description: "a change",
 				method_name: values.methodName,
-				user_id: 1,
+				user_id: userId,
 				otu: values.otu,
 				otu_name: values.otu,
 				otu_version: values.otuVersion,
-				reference_id: values.referenceId ?? 5,
+				reference_id: values.referenceId ?? referenceId,
 				index_id: null,
 			})
 			.returning({ id: legacyHistory.id }),
@@ -144,7 +155,7 @@ async function seedRenamedOtu(): Promise<void> {
 		_id: "otu_one",
 		name: "Gamma",
 		version: 3,
-		reference: { id: 5 },
+		reference: { id: referenceId },
 		isolates: [{ id: "iso_a", source_type: "isolate", source_name: "A" }],
 	});
 
@@ -172,7 +183,7 @@ describe("patchOtusToVersions", () => {
 			_id: "otu_one",
 			name: "Gamma",
 			version: 3,
-			reference: { id: 5 },
+			reference: { id: referenceId },
 			isolates: [{ id: "iso_a" }],
 		});
 
@@ -204,13 +215,13 @@ describe("patchOtusToVersions", () => {
 
 		expect(otu.name).toBe("Alpha");
 		expect(otu.version).toBe(1);
-		expect(otu.reference).toEqual({ id: 5 });
+		expect(otu.reference).toEqual({ id: referenceId });
 
 		const isolates = otu.isolates as Record<string, unknown>[];
 		const sequences = isolates[0]?.sequences as Record<string, unknown>[];
 
 		expect(sequences).toHaveLength(1);
-		expect(sequences[0]?.reference).toEqual({ id: 5 });
+		expect(sequences[0]?.reference).toEqual({ id: referenceId });
 	});
 
 	it("patches the same OTU to two versions in one call", async () => {
@@ -230,7 +241,7 @@ describe("patchOtusToVersions", () => {
 			otu: "otu_gone",
 			otuVersion: null,
 			methodName: "remove",
-			referenceId: 7,
+			referenceId: otherReferenceId,
 		});
 
 		await seedDiff(removed, {
@@ -258,12 +269,12 @@ describe("patchOtusToVersions", () => {
 		expect(otu.version).toBe(2);
 		// The OTU has no live document, so the parent reference comes from its
 		// latest change.
-		expect(otu.reference).toEqual({ id: 7 });
+		expect(otu.reference).toEqual({ id: otherReferenceId });
 
 		const isolates = otu.isolates as Record<string, unknown>[];
 		const sequences = isolates[0]?.sequences as Record<string, unknown>[];
 
-		expect(sequences[0]?.reference).toEqual({ id: 7 });
+		expect(sequences[0]?.reference).toEqual({ id: otherReferenceId });
 	});
 
 	it("reverts the removed sentinel before any numbered version", async () => {
@@ -271,7 +282,7 @@ describe("patchOtusToVersions", () => {
 			otu: "otu_gone",
 			otuVersion: null,
 			methodName: "remove",
-			referenceId: 7,
+			referenceId: otherReferenceId,
 		});
 
 		await seedDiff(removed, {
@@ -308,7 +319,7 @@ describe("patchOtusToVersions", () => {
 			_id: "otu_one",
 			name: "Beta",
 			version: 1,
-			reference: { id: 5 },
+			reference: { id: referenceId },
 			isolates: [],
 		});
 
@@ -350,7 +361,7 @@ describe("patchOtusToVersions", () => {
 			_id: "otu_one",
 			name: "Beta",
 			version: 2,
-			reference: { id: 5 },
+			reference: { id: referenceId },
 			isolates: [],
 		});
 
@@ -366,7 +377,7 @@ describe("patchOtusToVersions", () => {
 			_id: "otu_one",
 			name: "Beta",
 			version: 2,
-			reference: { id: 5 },
+			reference: { id: referenceId },
 			isolates: [],
 		});
 
