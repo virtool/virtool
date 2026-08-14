@@ -324,6 +324,23 @@ WORKDIR /build/SPAdes-4.2.0
 ENV PREFIX=/build/spades
 RUN ./spades_compile.sh
 
+# spades_compile.sh's install carries three things nuvs never uses: full
+# debug_info on every binary (unstripped, this is most of the stage's
+# size), the coronaSPAdes/biosyntheticSPAdes/sewage HMM and pipeline assets
+# (nuvs runs plain `spades.py` alone), and the --test fixtures. include/ and
+# lib/ are C++ headers for linking against SPAdes as a library, which
+# nothing here does.
+RUN find /build/spades/bin -type f -exec sh -c \
+        'file -b "$1" | grep -q ELF && strip --strip-unneeded "$1"; true' _ {} \; \
+    && rm -rf \
+        /build/spades/include \
+        /build/spades/lib \
+        /build/spades/share/spades/biosynthetic_spades_hmms \
+        /build/spades/share/spades/coronaspades_hmms \
+        /build/spades/share/spades/sewage \
+        /build/spades/share/spades/test_dataset \
+        /build/spades/share/spades/test_dataset_plasmid
+
 FROM base AS build-nuvs
 COPY apps/nuvs ./apps/nuvs
 RUN pnpm --filter @virtool/nuvs build \
