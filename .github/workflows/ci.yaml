@@ -214,19 +214,8 @@ jobs:
                   # have each matrix leg overwrite the last one's cache.
                   cache-from: type=gha,scope=${{ matrix.image }}
                   cache-to: type=gha,mode=max,scope=${{ matrix.image }}
-    # Builds only — there is deliberately no publish counterpart, and adding one
-    # is not a gap to fill. `virtool/workflow-pathoscope` is still the repo that
-    # builds and releases the pathoscope workflow image, so this repo must not
-    # push a pathoscope image on release. That repo publishes
-    # `ghcr.io/virtool/pathoscope`; the Dockerfile here targets
-    # `ghcr.io/virtool/ts-pathoscope`, so nothing would be overwritten today —
-    # but two pipelines shipping the same workflow is the ambiguity to avoid.
-    #
-    # Restore a publish job when `virtool/workflow-pathoscope` is retired, and
-    # settle which image name the cluster pulls in the same change. Note that
-    # `publish-ghcr` is also what runs `pnpm -C <workspace> version`, so until
-    # this app has a publish entry its `APP_VERSION` is `0.0.0` in every built
-    # image — and `workflow_version` is part of every cache key it derives.
+    # Also published by `release-ghcr` as `ghcr.io/virtool/ts-pathoscope`,
+    # alongside `virtool/workflow-pathoscope`'s `ghcr.io/virtool/pathoscope`.
     build-pathoscope:
         name: Pathoscope / Build
         runs-on: ubuntu-24.04
@@ -343,19 +332,8 @@ jobs:
     # -------------------------------------------------------------------------
     # NuVs (apps/nuvs)
     # -------------------------------------------------------------------------
-    # Build only, and no publish counterpart, for the same reason
-    # `build-pathoscope` has none: `virtool/workflow-nuvs` is still the repo that
-    # builds and releases the NuVs workflow image. That repo publishes
-    # `ghcr.io/virtool/nuvs`; the Dockerfile here targets
-    # `ghcr.io/virtool/ts-nuvs`, so nothing would be overwritten today — but two
-    # pipelines shipping the same workflow is the ambiguity to avoid.
-    #
-    # Restore a publish job when `virtool/workflow-nuvs` is retired, and settle
-    # which image name the cluster pulls in the same change. Note that
-    # `publish-ghcr` is also what runs `pnpm -C <workspace> version`, so until
-    # this app has a publish entry its `APP_VERSION` is `0.0.0` in every built
-    # image — and `workflow_version` is a field in all three of the cache keys it
-    # derives.
+    # Also published by `release-ghcr` as `ghcr.io/virtool/ts-nuvs`, alongside
+    # `virtool/workflow-nuvs`'s `ghcr.io/virtool/nuvs`.
     #
     # The 45-minute timeout is longer than pathoscope's 30: this image compiles
     # SPAdes from source, which is the single most expensive thing either
@@ -638,6 +616,25 @@ jobs:
                       target: create-subtraction
                       workspace: apps/create-subtraction
                       images: ghcr.io/virtool/ts-create-subtraction
+                    # cache-scope overrides matrix.image: build-pathoscope and
+                    # build-nuvs write their gha cache under the bare
+                    # `pathoscope` / `nuvs` scope (matching pathoscope-test's
+                    # bowtie2 scope too), not `ts-pathoscope` / `ts-nuvs`. A
+                    # release that read matrix.image here would miss those
+                    # caches and rebuild the Rust crate, the bioinformatics
+                    # tools and SPAdes from scratch inside this job's shared
+                    # 20-minute timeout, instead of reusing what the
+                    # 45/60-minute build jobs already produced.
+                    - image: ts-pathoscope
+                      target: pathoscope
+                      workspace: apps/pathoscope
+                      images: ghcr.io/virtool/ts-pathoscope
+                      cache-scope: pathoscope
+                    - image: ts-nuvs
+                      target: nuvs
+                      workspace: apps/nuvs
+                      images: ghcr.io/virtool/ts-nuvs
+                      cache-scope: nuvs
         steps:
             - name: Checkout
               uses: actions/checkout@v7
@@ -669,7 +666,7 @@ jobs:
                   tags: ${{ steps.meta.outputs.tags }}
                   target: ${{ matrix.target }}
                   labels: ${{ steps.meta.outputs.labels }}
-                  cache-from: type=gha,scope=${{ matrix.image }}
-                  cache-to: type=gha,mode=max,scope=${{ matrix.image }}
+                  cache-from: type=gha,scope=${{ matrix.cache-scope || matrix.image }}
+                  cache-to: type=gha,mode=max,scope=${{ matrix.cache-scope || matrix.image }}
                   secrets: |
                       sentry_auth_token=${{ secrets.SENTRY_AUTH_TOKEN }}
