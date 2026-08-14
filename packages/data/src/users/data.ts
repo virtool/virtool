@@ -164,8 +164,8 @@ const DEFAULT_USER_SETTINGS: AccountSettings = {
 	quickAnalyzeWorkflow: "pathoscope",
 };
 
-// Mirrors AVAILABLE_ROLES in virtool/administrators/api.py: every member of the
-// AdministratorRole enum, with its capitalized name and docstring description.
+// Mirrors virtool/models/roles.py::AdministratorRole: every member of that
+// enum, with its capitalized name and docstring description.
 const ADMINISTRATOR_ROLES: AdministratorRole[] = [
 	{
 		id: "full",
@@ -178,11 +178,6 @@ const ADMINISTRATOR_ROLES: AdministratorRole[] = [
 		description: "Manage instance settings.",
 	},
 	{
-		id: "spaces",
-		name: "Spaces",
-		description: "Manage users in any space. Delete any space.",
-	},
-	{
 		id: "users",
 		name: "Users",
 		description: "Create user accounts. Control activation of user accounts.",
@@ -191,7 +186,7 @@ const ADMINISTRATOR_ROLES: AdministratorRole[] = [
 		id: "base",
 		name: "Base",
 		description:
-			"Provides ability to:\n    - Create new spaces even if the `Free Spaces` setting is not enabled.\n    - Manage HMMs and common references.\n    - View all running jobs.\n    - Cancel any job.",
+			"Provides ability to:\n    - Manage HMMs and common references.\n    - View all running jobs.\n    - Cancel any job.",
 	},
 ];
 

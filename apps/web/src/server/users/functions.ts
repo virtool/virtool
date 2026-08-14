@@ -1,6 +1,9 @@
 import { createServerFn, createServerOnlyFn } from "@tanstack/react-start";
 import { setResponseStatus } from "@tanstack/react-start/server";
-import { PasswordTooShortError } from "@virtool/contracts";
+import {
+	ADMINISTRATOR_ROLE_NAMES,
+	PasswordTooShortError,
+} from "@virtool/contracts";
 import {
 	changePassword,
 	createUser,
@@ -28,13 +31,7 @@ import { db } from "../composition";
 import { ClientError } from "../errors";
 import { pageSchema, perPageSchema, rowIdSchema } from "../validation";
 
-const administratorRoleSchema = z.enum([
-	"full",
-	"settings",
-	"spaces",
-	"users",
-	"base",
-]);
+const administratorRoleSchema = z.enum(ADMINISTRATOR_ROLE_NAMES);
 
 const userIdSchema = z.object({
 	userId: rowIdSchema,

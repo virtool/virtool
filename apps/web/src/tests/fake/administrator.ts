@@ -13,18 +13,13 @@ export const administratorRoles: AdministratorRole[] = [
 		name: "Settings",
 	},
 	{
-		description: "Manage users in any space. Delete any space.",
-		id: "spaces",
-		name: "Spaces",
-	},
-	{
 		description: "Create user accounts. Control activation of user accounts.",
 		id: "users",
 		name: "Users",
 	},
 	{
 		description:
-			"Provides ability to:\n    - Create new spaces even if the `Free Spaces` setting is not enabled.\n    - Manage HMMs and common references.\n    - View all running jobs.\n    - Cancel any job.",
+			"Provides ability to:\n    - Manage HMMs and common references.\n    - View all running jobs.\n    - Cancel any job.",
 		id: "base",
 		name: "Base",
 	},

@@ -654,7 +654,6 @@ describe("listAdministratorRoles", () => {
 		expect(roles.map((role) => role.id)).toEqual([
 			"full",
 			"settings",
-			"spaces",
 			"users",
 			"base",
 		]);

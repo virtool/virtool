@@ -4,6 +4,7 @@
 // `last_password_change`) in sync with
 // `../../../../../../virtool/virtool/users/pg.py`.
 
+import type { AdministratorRoleName } from "@virtool/contracts";
 import { type SQL, sql } from "drizzle-orm";
 import {
 	type AnyPgColumn,
@@ -11,7 +12,6 @@ import {
 	customType,
 	integer,
 	jsonb,
-	pgEnum,
 	pgTable,
 	text,
 	timestamp,
@@ -28,14 +28,6 @@ function lower(column: AnyPgColumn): SQL {
 	return sql`lower(${column})`;
 }
 
-export const administratorRole = pgEnum("administratorrole", [
-	"full",
-	"settings",
-	"spaces",
-	"users",
-	"base",
-]);
-
 export const users = pgTable(
 	"users",
 	{
@@ -43,7 +35,12 @@ export const users = pgTable(
 		active: boolean("active")
 			.$defaultFn(() => true)
 			.notNull(),
-		administratorRole: administratorRole("administrator_role"),
+		// `text`, closed by the `administrator_role_valid` CHECK constraint.
+		// `$type` asserts rather than validates, which is what that constraint
+		// makes safe: a value outside the union cannot reach the column without a
+		// Python-side migration.
+		administratorRole:
+			text("administrator_role").$type<AdministratorRoleName>(),
 		email: text("email")
 			.$defaultFn(() => "")
 			.notNull(),

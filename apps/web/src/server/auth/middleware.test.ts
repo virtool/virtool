@@ -378,7 +378,7 @@ describe("requireAdminRole", () => {
 		).rejects.toBeInstanceOf(ForbiddenError);
 	});
 
-	it.each(["full", "settings", "spaces", "users", "base"] as const)(
+	it.each(["full", "settings", "users", "base"] as const)(
 		"allows a full administrator to satisfy a %s requirement",
 		async (requiredRole) => {
 			const userId = await seedUser(db, { administratorRole: "full" });
