@@ -83,6 +83,16 @@ describe("submitBlast", () => {
 		expect(String(init.body)).toBe("QUERY=ATGCATGC");
 	});
 
+	it("identifies itself to NCBI with a User-Agent", async () => {
+		const fetchMock = stubFetch(textResponse(SUBMISSION_HTML));
+
+		await submitBlast("ATGCATGC");
+
+		const [, init] = fetchMock.mock.calls[0] as unknown as [URL, RequestInit];
+
+		expect(init.headers).toEqual({ "User-Agent": "virtool" });
+	});
+
 	it("throws when NCBI refuses the submission", async () => {
 		stubFetch(textResponse("too many searches", 429));
 
@@ -146,6 +156,16 @@ describe("checkBlastStatus", () => {
 			FORMAT_OBJECT: "SearchInfo",
 			RID: "ZZ7DFGH1013",
 		});
+	});
+
+	it("identifies itself to NCBI with a User-Agent", async () => {
+		const fetchMock = stubFetch(textResponse("Status=READY"));
+
+		await checkBlastStatus("ZZ7DFGH1013");
+
+		const [, init] = fetchMock.mock.calls[0] as unknown as [URL, RequestInit];
+
+		expect(init.headers).toEqual({ "User-Agent": "virtool" });
 	});
 
 	it("throws when NCBI refuses the check", async () => {

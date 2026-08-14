@@ -227,11 +227,14 @@ describe("fetchAndUpdateRelease", () => {
 	};
 
 	/** Answer the manifest fetch with `body` under `status`. */
-	function stubFetch(status: number, body: unknown): void {
-		vi.stubGlobal(
-			"fetch",
-			vi.fn(async () => new Response(JSON.stringify(body), { status })),
+	function stubFetch(status: number, body: unknown) {
+		const fetchMock = vi.fn(
+			async () => new Response(JSON.stringify(body), { status }),
 		);
+
+		vi.stubGlobal("fetch", fetchMock);
+
+		return fetchMock;
 	}
 
 	/**
@@ -279,6 +282,19 @@ describe("fetchAndUpdateRelease", () => {
 
 		expect(row?.release).toEqual(release);
 		expect(row?.errors).toEqual([]);
+	});
+
+	it("identifies itself to virtool.ca with a User-Agent", async () => {
+		const fetchMock = stubFetch(200, { "virtool-hmm": [manifestRelease] });
+
+		await fetchAndUpdateRelease(db);
+
+		const [, init] = fetchMock.mock.calls[0] as unknown as [
+			string,
+			RequestInit,
+		];
+
+		expect(init.headers).toEqual({ "User-Agent": "virtool" });
 	});
 
 	it("creates the status row when there is none", async () => {

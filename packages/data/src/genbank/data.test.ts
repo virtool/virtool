@@ -223,6 +223,16 @@ describe("getGenbank", () => {
 			});
 		});
 
+		it("identifies itself to NCBI with a User-Agent", async () => {
+			const fetchMock = mockFetch(HOST_RECORD);
+
+			await getGenbank(logger, "NC_045512");
+
+			const [, init] = firstCall(fetchMock.mock.calls) as [URL, RequestInit];
+
+			expect(init.headers).toEqual({ "User-Agent": "virtool" });
+		});
+
 		it("encodes an accession that needs escaping", async () => {
 			const fetchMock = mockFetch(HOST_RECORD);
 

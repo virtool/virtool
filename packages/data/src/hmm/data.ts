@@ -30,6 +30,7 @@ import {
 import { tasks } from "../db/schema/tasks";
 import { users } from "../db/schema/users";
 import { AppError } from "../errors";
+import { USER_AGENT } from "../userAgent";
 
 /** The task type the runner matches to run an HMM install. */
 export const HMM_INSTALL_TASK_TYPE = "install_hmms";
@@ -301,6 +302,7 @@ async function fetchManifestRelease(
 	let response: Response;
 	try {
 		response = await fetch(MANIFEST_URL, {
+			headers: { "User-Agent": USER_AGENT },
 			signal: signal
 				? AbortSignal.any([signal, AbortSignal.timeout(MANIFEST_TIMEOUT_MS)])
 				: AbortSignal.timeout(MANIFEST_TIMEOUT_MS),

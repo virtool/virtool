@@ -3,6 +3,7 @@
 import { createWriteStream } from "node:fs";
 import { pipeline } from "node:stream/promises";
 import { setTimeout as delay } from "node:timers/promises";
+import { USER_AGENT } from "@virtool/data/userAgent";
 import type { Logger } from "@virtool/logger";
 
 /**
@@ -76,7 +77,12 @@ async function attemptDownload(
 	arm();
 
 	try {
-		const response = await fetch(url, { signal: composed });
+		const response = await fetch(url, {
+			// The release archive is served from GitHub, which refuses a request
+			// carrying no `User-Agent` at all.
+			headers: { "User-Agent": USER_AGENT },
+			signal: composed,
+		});
 
 		// Before a byte is read, as Python does. An error page fed to gunzip fails
 		// two steps later complaining about compression, not about the 404.

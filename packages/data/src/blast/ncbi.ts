@@ -18,6 +18,7 @@
 import { readZipMember } from "@virtool/archive/zip";
 import type { JsonObject, JsonValue } from "@virtool/contracts";
 import { AppError } from "../errors";
+import { USER_AGENT } from "../userAgent";
 
 /** The one CGI endpoint every BLAST exchange goes through. */
 const BLAST_URL = "https://blast.ncbi.nlm.nih.gov/Blast.cgi";
@@ -85,16 +86,25 @@ function signalWithTimeout(signal?: AbortSignal): AbortSignal {
 	return signal ? AbortSignal.any([signal, deadline]) : deadline;
 }
 
+/**
+ * `init` cannot carry headers or a signal: both are this function's, and a
+ * caller supplying either would silently drop the `User-Agent` NCBI wants or
+ * the deadline it must not run without.
+ */
 async function request(
 	url: URL,
-	init: RequestInit,
+	init: Omit<RequestInit, "headers" | "signal">,
 	signal: AbortSignal | undefined,
 	description: string,
 ): Promise<Response> {
 	let response: Response;
 
 	try {
-		response = await fetch(url, { ...init, signal: signalWithTimeout(signal) });
+		response = await fetch(url, {
+			...init,
+			headers: { "User-Agent": USER_AGENT },
+			signal: signalWithTimeout(signal),
+		});
 	} catch (err) {
 		// The caller's signal is a drain or a fence, not a fault of NCBI's. It
 		// escapes untranslated so the sweep leaves the row alone rather than

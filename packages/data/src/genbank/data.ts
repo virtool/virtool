@@ -1,6 +1,7 @@
 import type { Genbank } from "@virtool/contracts";
 import type { Logger } from "@virtool/logger";
 import { AppError } from "../errors";
+import { USER_AGENT } from "../userAgent";
 
 const FETCH_URL = "https://eutils.ncbi.nlm.nih.gov/entrez/eutils/efetch.fcgi";
 
@@ -283,7 +284,10 @@ export async function getGenbank(
 	let response: Response;
 
 	try {
-		response = await fetch(url, { signal: AbortSignal.timeout(TIMEOUT_MS) });
+		response = await fetch(url, {
+			headers: { "User-Agent": USER_AGENT },
+			signal: AbortSignal.timeout(TIMEOUT_MS),
+		});
 	} catch (err) {
 		// A timeout arrives here too, and means the same thing to the caller as a
 		// refused connection: NCBI did not answer.

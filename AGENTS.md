@@ -1593,6 +1593,27 @@ See [docs/storage.md](docs/storage.md) for the interface, the key
 layout, the backend configuration and its both-or-neither credential
 rule, the three S3 quirks, and the testing setup.
 
+### Every outbound request identifies itself with a `User-Agent`
+
+Anything reaching a third party — NCBI BLAST and GenBank, the virtool.ca
+HMM manifest, the GitHub-hosted release archive — sends
+`User-Agent: virtool`, from the one `USER_AGENT` constant in
+`@virtool/data/userAgent`. NCBI throttles or blocks anonymous traffic and
+BLAST polling is the highest-volume outbound path here; GitHub refuses a
+request carrying no `User-Agent` at all.
+
+**There is no shared HTTP client to hang it off, and adding one is out of
+scope by decision.** Python built a single `aiohttp.ClientSession` at
+startup; here each call site takes its own `AbortSignal.timeout`, which
+works, and a singleton client would be exactly the module-scope
+construction `packages/data` avoids everywhere else.
+
+**The token carries no version**, deliberately: `packages/data` has no
+build-time global to read one from — `apps/web` has `__APP_VERSION__` and
+`apps/tasks` a JSON import of its own manifest, neither visible from
+there — and one token every call site agrees on beats a version on the
+subset that could reach one.
+
 ### Server → client push runs over SSE with id-only frames
 
 Server-pushed cache invalidations are delivered over a single SSE

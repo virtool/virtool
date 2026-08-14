@@ -141,15 +141,16 @@ function releaseArchive(
 }
 
 /** Serve `body` from `fetch`, or fail `failures` times first. */
-function stubFetch(body: Buffer, options: { status?: number } = {}): void {
-	vi.stubGlobal(
-		"fetch",
-		vi.fn(async () => {
-			return new Response(new Uint8Array(body), {
-				status: options.status ?? 200,
-			});
-		}),
-	);
+function stubFetch(body: Buffer, options: { status?: number } = {}) {
+	const fetchMock = vi.fn(async () => {
+		return new Response(new Uint8Array(body), {
+			status: options.status ?? 200,
+		});
+	});
+
+	vi.stubGlobal("fetch", fetchMock);
+
+	return fetchMock;
 }
 
 async function seedPendingStatus(releaseId: number | string = RELEASE_ID) {
@@ -236,6 +237,21 @@ describe("installHmmsTask", () => {
 		expect(row.complete).toBe(true);
 		expect(row.error).toBeNull();
 		expect(row.progress).toBe(100);
+	});
+
+	it("identifies itself to GitHub with a User-Agent", async () => {
+		await seedPendingStatus();
+
+		const fetchMock = stubFetch(await releaseArchive([createAnnotation(1)]));
+
+		await run(await claimInstall());
+
+		const [, init] = fetchMock.mock.calls[0] as unknown as [
+			string,
+			RequestInit,
+		];
+
+		expect(init.headers).toEqual({ "User-Agent": "virtool" });
 	});
 
 	it("leaves no install in progress afterwards", async () => {
