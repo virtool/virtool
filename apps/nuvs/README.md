@@ -5,7 +5,7 @@ describe: it discards every read that maps to a known OTU or to a
 subtraction, assembles what is left with SPAdes, and searches the contigs for
 viral motifs with HMMER.
 
-Image: `ghcr.io/virtool/nuvs`. Ten steps, five external tools — `skewer`,
+Image: `ghcr.io/virtool/ts-nuvs`. Ten steps, five external tools — `skewer`,
 `bowtie2`, SPAdes, `hmmpress` and `hmmscan`.
 
 ## Five rules it carries

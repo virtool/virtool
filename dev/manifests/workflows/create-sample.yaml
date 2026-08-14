@@ -1,20 +1,25 @@
 apiVersion: keda.sh/v1alpha1
 kind: ScaledJob
 metadata:
+  name: create-sample
   labels:
+    app.kubernetes.io/name: create-sample
+    app.kubernetes.io/component: workflow
+    app.kubernetes.io/part-of: virtool
     app.virtool.ca/workflow-name: create-sample
     app.virtool.ca/workflow-size: small
-  name: create-sample
 spec:
   jobTargetRef:
     template:
       metadata:
         labels:
-          app: workflow-create-sample
+          app.kubernetes.io/name: create-sample
+          app.kubernetes.io/component: workflow
+          app.kubernetes.io/part-of: virtool
       spec:
         containers:
           - name: workflow-create-sample
-            image: ghcr.io/virtool/create-sample:7.79.7
+            image: ghcr.io/virtool/ts-create-sample:latest
             env:
               - name: VT_PROC
                 value: "2"
@@ -24,11 +29,11 @@ spec:
                 value: create_sample
             resources:
               limits:
-                cpu: 2700m
+                cpu: 2500m
                 memory: 5Gi
               requests:
-                cpu: 2700m
-                memory: 5Gi
+                cpu: 1500m
+                memory: 4Gi
   triggers:
     - type: metrics-api
       metadata:

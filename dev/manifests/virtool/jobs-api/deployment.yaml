@@ -3,33 +3,28 @@ kind: Deployment
 metadata:
   name: jobs-api
   labels:
-    app: virtool-jobs-api
+    app.kubernetes.io/name: jobs-api
+    app.kubernetes.io/component: api
+    app.kubernetes.io/part-of: virtool
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: virtool-jobs-api
+      app.kubernetes.io/name: jobs-api
+      app.kubernetes.io/part-of: virtool
   template:
     metadata:
       labels:
-        app: virtool-jobs-api
+        app.kubernetes.io/name: jobs-api
+        app.kubernetes.io/component: api
+        app.kubernetes.io/part-of: virtool
     spec:
       containers:
         - name: jobs-api
           image: ghcr.io/virtool/jobs-api:latest
-          env:
-            - name: VT_POSTGRES_URL
-              value: "postgres://virtool:virtool@postgres.default.svc.cluster.local:5432/virtool"
-            - name: VT_STORAGE_BACKEND
-              value: "azure"
-            - name: VT_STORAGE_AZURE_ACCOUNT
-              value: "devstoreaccount1"
-            - name: VT_STORAGE_AZURE_CONTAINER
-              value: "virtool"
-            - name: VT_STORAGE_AZURE_ACCESS_KEY
-              value: "Eby8vdM02xNOcqFlqUwJPLlmEtlCDXJ1OUzFT50uSRZ6IFsuFq2UVErCz4I6tq/K1SZFPTOtr/KBHBeksoGMGw=="
-            - name: VT_STORAGE_AZURE_ENDPOINT
-              value: "http://azurite.default.svc.cluster.local:10000/devstoreaccount1"
+          envFrom:
+            - configMapRef:
+                name: virtool-env
           ports:
             - containerPort: 9950
               protocol: TCP

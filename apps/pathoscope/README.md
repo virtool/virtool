@@ -60,12 +60,20 @@ docker run --rm vt-tool-bowtie2 head -1 /tools/bowtie2/2.5.4/bowtie2-build
 
 ### Publishing
 
-**CI builds it but must not publish it.** `virtool/workflow-pathoscope` still
-releases the pathoscope workflow, and a second pipeline shipping it from here
-would leave two candidates for what the cluster runs. Don't add a publish job
-until that repo retires — note that `publish-ghcr` is also what stamps a real
-version, so until then `APP_VERSION` is `0.0.0` in every built image, and the
-`workflow_version` in its cache keys with it.
+`Pathoscope / Build` compiles the image on every run and `release-ghcr`
+publishes it on release, alongside `virtool/workflow-pathoscope`'s
+`ghcr.io/virtool/pathoscope`. The names differ, so the cluster picks one by the
+image it pulls and neither stream overwrites the other.
+
+Its release-matrix entry carries `cache-scope: pathoscope`, because the build
+job writes its gha cache under that bare scope rather than under the image
+name. Without the override the release would rebuild the Rust crate and every
+tool stage from scratch inside a 20-minute timeout.
+
+**`ghcr.io/virtool/ts-pathoscope`'s older tags predate all this** — a
+short-lived publish job left them behind before the port landed, so `:latest`
+is a tools-only image with no workflow code in it. Don't read it as current
+until a release has run since publishing was restored.
 
 ## Commands
 

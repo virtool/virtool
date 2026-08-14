@@ -2,8 +2,11 @@ apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
   name: ingress
+  labels:
+    app.kubernetes.io/name: ingress
+    app.kubernetes.io/component: ingress
+    app.kubernetes.io/part-of: virtool
   annotations:
-    kubernetes.io/ingress.class: nginx
     nginx.ingress.kubernetes.io/rewrite-target: /$1
     nginx.ingress.kubernetes.io/proxy-body-size: "10000m"
     # The Vite HMR socket and the /events SSE stream are long-lived and mostly
@@ -11,6 +14,7 @@ metadata:
     nginx.ingress.kubernetes.io/proxy-read-timeout: "3600"
     nginx.ingress.kubernetes.io/proxy-send-timeout: "3600"
 spec:
+  ingressClassName: nginx
   tls:
     - hosts:
         - virtool.local
@@ -39,14 +43,18 @@ apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
   name: ingress-uploads
+  labels:
+    app.kubernetes.io/name: ingress-uploads
+    app.kubernetes.io/component: ingress
+    app.kubernetes.io/part-of: virtool
   annotations:
-    kubernetes.io/ingress.class: nginx
     nginx.ingress.kubernetes.io/rewrite-target: /$1
     nginx.ingress.kubernetes.io/proxy-body-size: "10000m"
     nginx.ingress.kubernetes.io/proxy-read-timeout: "3600"
     nginx.ingress.kubernetes.io/proxy-send-timeout: "3600"
     nginx.ingress.kubernetes.io/proxy-request-buffering: "off"
 spec:
+  ingressClassName: nginx
   tls:
     - hosts:
         - virtool.local

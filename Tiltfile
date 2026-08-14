@@ -1,48 +1,44 @@
 local(['bash', 'dev/scripts/ensure-minikube.sh'], quiet=False)
 
-# Configuration
+# Every live-edit target is a bool flag named after its Dockerfile stage, e.g.
+# `tilt up -- --web --jobs-api`. The web target is listed apart because it
+# alone runs a dev server rather than the built artifact, so it needs an
+# entrypoint and sync rules; see its docker_build below.
+WEB_IMAGE = 'ghcr.io/virtool/ui'
+
+SERVICE_TARGETS = [
+    ('jobs-api', 'ghcr.io/virtool/jobs-api'),
+    ('tasks', 'ghcr.io/virtool/tasks'),
+]
+
+# Every workflow is on manual trigger. A ScaledJob's pods are one-shot and only
+# start when something claims work, so nothing is waiting on a rebuild — and an
+# automatic one would rebuild a large image on every edit. Deploy them from the
+# Tilt UI.
 #
-# Each live-edit target is a bool flag with a long and short form (e.g.
-# `--web` / `-w`). Tilt's flag parser only matches on the exact name given to
-# config.define_bool, so the short form has to be defined and checked
-# separately.
-config.define_bool("web", usage="live edit the web app")
-config.define_bool("w")
-config.define_bool("jobs-api", usage="live edit jobs-api")
-config.define_bool("j")
-config.define_bool("tasks", usage="live edit tasks")
-config.define_bool("t")
-config.define_bool("create-sample", usage="live edit the create-sample workflow")
-config.define_bool("m")
-config.define_bool("create-subtraction", usage="live edit the create-subtraction workflow")
-config.define_bool("b")
-config.define_bool("nuvs", usage="live edit the nuvs workflow")
-config.define_bool("n")
-config.define_bool("pathoscope", usage="live edit the pathoscope workflow")
-config.define_bool("p")
+# All four images publish on release, but `ts-nuvs` has no registry package
+# until the first release that carries it and `ts-pathoscope:latest` is a
+# tools-only leftover with no workflow code in it, so build those two locally
+# meanwhile with `tilt up -- --nuvs`.
+WORKFLOW_TARGETS = [
+    ('create-sample', 'ghcr.io/virtool/ts-create-sample'),
+    ('create-subtraction', 'ghcr.io/virtool/ts-create-subtraction'),
+    ('nuvs', 'ghcr.io/virtool/ts-nuvs'),
+    ('pathoscope', 'ghcr.io/virtool/ts-pathoscope'),
+]
+
+config.define_bool('web', usage='live edit web')
+
+for target, image in SERVICE_TARGETS:
+    config.define_bool(target, usage='live edit ' + target)
+
+for target, image in WORKFLOW_TARGETS:
+    config.define_bool(target, usage='live edit the ' + target + ' workflow')
 
 cfg = config.parse()
 
-def flag(long, short=None):
-    return cfg.get(long, False) or (short != None and cfg.get(short, False))
-
-edit_web = flag("web", "w")
-edit_jobs_api = flag("jobs-api", "j")
-edit_tasks = flag("tasks", "t")
-edit_create_sample = flag("create-sample", "m")
-edit_create_subtraction = flag("create-subtraction", "b")
-edit_nuvs = flag("nuvs", "n")
-edit_pathoscope = flag("pathoscope", "p")
-
 load('ext://helm_resource', 'helm_resource', 'helm_repo')
 load('ext://uibutton', 'cmd_button', 'location')
-
-cmd_button('pull',
-    argv=['bash', 'dev/scripts/pull.sh'],
-    icon_name="cloud_download",
-    location=location.NAV,
-    text='Pull',
-)
 
 cmd_button('wipe',
     argv=['bash', 'dev/scripts/wipe.sh'],
@@ -58,7 +54,8 @@ helm_resource(
     'keda',
     'kedacore/keda',
     labels=['k8s'],
-    resource_deps=['kedacore']
+    resource_deps=['kedacore'],
+    flags=['--version=2.20.2']
 )
 
 k8s_yaml('dev/manifests/data/azurite.yaml')
@@ -67,13 +64,13 @@ k8s_yaml('dev/manifests/data/postgres.yaml')
 k8s_resource("azurite", labels=['data'])
 k8s_resource("postgres", labels=['data'])
 
+k8s_yaml('dev/manifests/config.yaml')
+k8s_yaml('dev/manifests/ingress.yaml')
+
 # The migration Job runs the published `ghcr.io/virtool/virtool` image and is
 # never built here. Migrations are Python's, and the repository that used to
 # hold them as a live-edit target no longer exists.
-k8s_yaml('dev/manifests/ingress.yaml')
 k8s_yaml('dev/manifests/migration.yaml')
-
-docker_prune_settings(max_age_mins=1)
 
 # Anything in the build context that no sync below covers forces a full image
 # rebuild, which replaces the pod and costs a cold start. These paths are all
@@ -98,10 +95,13 @@ ui_monorepo_ignore = [
   '*.md',
 ]
 
-# Actual Virtool stuff.
-if edit_web:
+# The web image is the one target that runs a dev server rather than the built
+# artifact, so it carries an entrypoint and sync rules the rest have no use
+# for. Tilt's `entrypoint` takes precedence over the container command in the
+# Deployment, so the manifest's `npm start` does not apply to this build.
+if cfg.get('web', False):
     docker_build(
-      'ghcr.io/virtool/ui',
+      WEB_IMAGE,
       '.',
       entrypoint='pnpm --filter @virtool/web exec vite --host 0.0.0.0 --port 9900',
       target='dev',
@@ -119,31 +119,25 @@ if edit_web:
       ]
     )
 
-if edit_jobs_api:
-    docker_build(
-      'ghcr.io/virtool/jobs-api',
-      '.',
-      target='jobs-api',
-      ignore=ui_monorepo_ignore,
-    )
-
-if edit_tasks:
-    docker_build(
-      'ghcr.io/virtool/tasks',
-      '.',
-      target='tasks',
-      ignore=ui_monorepo_ignore,
-    )
+for target, image in SERVICE_TARGETS:
+    if cfg.get(target, False):
+        docker_build(image, '.', target=target, ignore=ui_monorepo_ignore)
 
 k8s_yaml(kustomize('dev/manifests/web'))
 k8s_yaml(kustomize('dev/manifests/virtool'))
+
+k8s_resource(
+    labels=['data'],
+    new_name='config',
+    objects=['virtool-env:configmap'],
+)
 
 k8s_resource(
     'virtool-jobs-api',
     labels=['virtool'],
     port_forwards=["9960:9950"],
     new_name="jobs-api",
-    resource_deps=["migration"],
+    resource_deps=["config", "migration"],
     trigger_mode=TRIGGER_MODE_MANUAL
 )
 
@@ -167,7 +161,7 @@ k8s_resource(
     labels=['virtool'],
     new_name="tasks",
     port_forwards=["9970:9900"],
-    resource_deps=["migration"],
+    resource_deps=["config", "migration"],
     trigger_mode=TRIGGER_MODE_MANUAL
 )
 
@@ -176,42 +170,10 @@ k8s_resource(
     labels=['virtool'],
     new_name="web",
     port_forwards=[9900],
-    resource_deps=["postgres"]
+    resource_deps=["config", "postgres"]
 )
 
-"""Workflows"""
-if edit_create_sample:
-    docker_build(
-        'ghcr.io/virtool/create-sample',
-        '.',
-        target='create-sample',
-        ignore=ui_monorepo_ignore,
-    )
-
-if edit_create_subtraction:
-    docker_build(
-        'ghcr.io/virtool/create-subtraction',
-        '.',
-        target='create-subtraction',
-        ignore=ui_monorepo_ignore,
-    )
-
-if edit_nuvs:
-    docker_build(
-        'ghcr.io/virtool/nuvs',
-        '.',
-        target='nuvs',
-        ignore=ui_monorepo_ignore,
-    )
-
-if edit_pathoscope:
-    docker_build(
-        'ghcr.io/virtool/pathoscope',
-        '.',
-        target='pathoscope',
-        ignore=ui_monorepo_ignore,
-    )
-
+# Workflows.
 k8s_kind(
     'ScaledJob',
     image_json_path='{.spec.jobTargetRef.template.spec.containers[0].image}'
@@ -219,36 +181,14 @@ k8s_kind(
 
 k8s_yaml(kustomize('dev/manifests/workflows'))
 
-scaled_job_deps = ['keda', 'jobs-api']
+for target, image in WORKFLOW_TARGETS:
+    if cfg.get(target, False):
+        docker_build(image, '.', target=target, ignore=ui_monorepo_ignore)
 
-k8s_resource(
-    'virtool-workflow-create-sample',
-    labels=["workflows"],
-    new_name="create-sample",
-    resource_deps=scaled_job_deps
-)
-
-
-k8s_resource(
-    'virtool-workflow-create-subtraction',
-    labels=["workflows"],
-    new_name="create-subtraction",
-    resource_deps=scaled_job_deps
-)
-
-
-
-k8s_resource(
-    'virtool-workflow-nuvs',
-    labels=["workflows"],
-    new_name="nuvs",
-    resource_deps=scaled_job_deps
-)
-
-k8s_resource(
-    'virtool-workflow-pathoscope',
-    labels=["workflows"],
-    new_name="pathoscope",
-    resource_deps=scaled_job_deps,
-    trigger_mode=TRIGGER_MODE_MANUAL
-)
+    k8s_resource(
+        'virtool-workflow-' + target,
+        labels=["workflows"],
+        new_name=target,
+        resource_deps=['config', 'keda', 'jobs-api'],
+        trigger_mode=TRIGGER_MODE_MANUAL
+    )

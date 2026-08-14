@@ -148,44 +148,41 @@ matrices.
 
 ### The four workflow images
 
-The workflow images are in two states, and the split is deliberate. Which
-one an image is in turns on a single question: does a Python repo still
-release that workflow?
+All four are built on every run and published on every release.
 
-| Image | Built | Published | Blocked on |
-| --- | --- | --- | --- |
-| `ts-create-sample` | ✅ | ✅ | — |
-| `ts-create-subtraction` | ✅ | ✅ | — |
-| `ts-pathoscope` | ✅ | ❌ | `virtool/workflow-pathoscope` retiring |
-| `ts-nuvs` | ✅ | ❌ | `virtool/workflow-nuvs` retiring |
+| Image | Build job | Release matrix entry |
+| --- | --- | --- |
+| `ts-create-sample` | `build-images` | `ts-create-sample` |
+| `ts-create-subtraction` | `build-images` | `ts-create-subtraction` |
+| `ts-pathoscope` | `build-pathoscope` | `ts-pathoscope`, `cache-scope: pathoscope` |
+| `ts-nuvs` | `build-nuvs` | `ts-nuvs`, `cache-scope: nuvs` |
 
-`virtool/workflow-create-sample` and `virtool/workflow-create-subtraction`
-are still live too, but they publish `ghcr.io/virtool/create-sample` and
-`ghcr.io/virtool/create-subtraction` — different names from the `ts-`
-images here, so the cluster picks one by the image it pulls and there is
-no ambiguity to resolve. The same is true of the two unpublished images
-and would be true if they published tomorrow; what stops them is not a
-name collision but that **two pipelines shipping the same workflow leaves
-two candidates for what the cluster runs**, and that has to be settled
-deliberately rather than by whichever released last.
+Each of the four Python repos that still releases the same workflow —
+`virtool/workflow-create-sample`, `virtool/workflow-create-subtraction`,
+`virtool/workflow-pathoscope`, `virtool/workflow-nuvs` — publishes under
+the un-prefixed name (`ghcr.io/virtool/create-sample`,
+`ghcr.io/virtool/pathoscope`, and so on). The `ts-` prefix is what keeps
+the two streams apart: **nothing is ever overwritten, and the cluster
+picks one by the image it pulls**. Two pipelines shipping the same
+workflow is settled by that name, not by whichever released last.
 
-**Pathoscope and nuvs are the odd two, and both are built but
-deliberately not published.** Each has its own build job
-(`build-pathoscope`, `build-nuvs`) with no publish counterpart. Restore a
-publish job for one when its Python repo retires, and settle which image
-name the cluster pulls in the same change. Note that `release-ghcr` is
-also what stamps a real version, so until then `APP_VERSION` is `0.0.0`
-in every built pathoscope or nuvs image, and the `workflow_version` in
-their cache keys with it.
+**Pathoscope and nuvs override the cache scope, and must.**
+`build-pathoscope` and `build-nuvs` write their gha cache under the bare
+`pathoscope` / `nuvs` scope — matching `pathoscope-test`'s bowtie2 scope
+— not under `ts-pathoscope` / `ts-nuvs`. A release leg reading
+`matrix.image` would miss those caches and rebuild the Rust crate, the
+bioinformatics tools and SPAdes from scratch inside `release-ghcr`'s
+shared 20-minute timeout, rather than reusing what the 45- and
+60-minute build jobs already produced. That is what `matrix.cache-scope
+|| matrix.image` in the `cache-from` / `cache-to` lines is for.
 
-**`ghcr.io/virtool/ts-pathoscope` already exists in the registry, and
-nothing here produced it.** A `publish-pathoscope` job lived in `ci.yaml`
-briefly and was removed once the two-pipeline problem was recognised; it
-left three versions behind, `:latest` among them. They predate the
-workflow port, so that tag is a tools-only image with no workflow code in
-it — a pull of `ts-pathoscope:latest` gets something that cannot run a
-job. Do not treat those tags as evidence the image is published, and do
-not read `:latest` as current.
+**`ghcr.io/virtool/ts-pathoscope`'s pre-existing tags did not come from
+that job.** A `publish-pathoscope` job lived in `ci.yaml` briefly and was
+removed; it left three versions behind, `:latest` among them. They
+predate the workflow port, so that tag is a tools-only image with no
+workflow code in it — a pull of `ts-pathoscope:latest` gets something
+that cannot run a job. Don't read `:latest` as current until a release
+has run since `release-ghcr` took the image on.
 
 Both build jobs, plus `pathoscope-test` and `quality-test`, are the only
 path-filtered jobs in `ci.yaml`, and they take a filter each because

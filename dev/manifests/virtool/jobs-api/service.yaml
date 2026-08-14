@@ -2,10 +2,15 @@ apiVersion: v1
 kind: Service
 metadata:
   name: jobs-api-service
+  labels:
+    app.kubernetes.io/name: jobs-api
+    app.kubernetes.io/component: api
+    app.kubernetes.io/part-of: virtool
 spec:
   type: ClusterIP
   selector:
-    app: virtool-jobs-api
+    app.kubernetes.io/name: jobs-api
+    app.kubernetes.io/part-of: virtool
   ports:
     - name: http
       port: 80

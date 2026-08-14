@@ -1,0 +1,25 @@
+# The Postgres URL and Azurite credentials every TypeScript service and
+# workflow shares. Loaded as a plain manifest rather than a
+# `configMapGenerator` because the three kustomizations that consume it
+# (`web`, `virtool`, `workflows`) render independently, so a generator would
+# produce three hash-suffixed copies instead of one shared object.
+#
+# The migration Job deliberately does not use this. It runs Python's image and
+# reads Python's variable names, so it keeps its own inline block.
+#
+# These are Azurite's well-known public dev credentials, not secrets.
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: virtool-env
+  labels:
+    app.kubernetes.io/name: env
+    app.kubernetes.io/component: config
+    app.kubernetes.io/part-of: virtool
+data:
+  VT_POSTGRES_URL: "postgres://virtool:virtool@postgres.default.svc.cluster.local:5432/virtool"
+  VT_STORAGE_BACKEND: "azure"
+  VT_STORAGE_AZURE_ACCOUNT: "devstoreaccount1"
+  VT_STORAGE_AZURE_CONTAINER: "virtool"
+  VT_STORAGE_AZURE_ACCESS_KEY: "Eby8vdM02xNOcqFlqUwJPLlmEtlCDXJ1OUzFT50uSRZ6IFsuFq2UVErCz4I6tq/K1SZFPTOtr/KBHBeksoGMGw=="
+  VT_STORAGE_AZURE_ENDPOINT: "http://azurite.default.svc.cluster.local:10000/devstoreaccount1"

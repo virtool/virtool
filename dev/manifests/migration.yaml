@@ -3,13 +3,17 @@ kind: Job
 metadata:
   name: virtool-migration
   labels:
-    app: virtool-migration
+    app.kubernetes.io/name: migration
+    app.kubernetes.io/component: migration
+    app.kubernetes.io/part-of: virtool
 spec:
   backoffLimit: 0
   template:
     metadata:
       labels:
-        app: virtool-migration
+        app.kubernetes.io/name: migration
+        app.kubernetes.io/component: migration
+        app.kubernetes.io/part-of: virtool
     spec:
       restartPolicy: Never
       containers:

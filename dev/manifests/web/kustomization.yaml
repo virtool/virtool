@@ -1,13 +1,3 @@
-images:
-  - name: ghcr.io/virtool/ui
-    newTag: 7.79.7
-
-labels:
-  - pairs:
-      app: virtool-web
-    includeSelectors: true
-    includeTemplates: true
-
 namePrefix: virtool-
 
 resources:

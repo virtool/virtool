@@ -1,47 +1,31 @@
+# A JSON patch rather than a strategic merge patch because strategic merge
+# matches containers by `name`, and each workflow's container is named after
+# the workflow — a merge patch would append a second container instead of
+# editing the first. Indexing `containers/0` is what makes one patch cover all
+# four.
+#
+# `/env/-` is the RFC 6902 append token. `-1` also renders today but is not a
+# legal array index, so it is a kustomize upgrade away from being rejected.
 - op: add
-  path: /spec/jobTargetRef/template/spec/containers/0/env/-1
+  path: /spec/jobTargetRef/template/spec/containers/0/envFrom
+  value:
+    - configMapRef:
+        name: virtool-env
+
+- op: add
+  path: /spec/jobTargetRef/template/spec/containers/0/env/-
   value:
     name: VT_JOBS_API_URL
     value: http://virtool-jobs-api-service.default.svc.cluster.local
 
 - op: add
-  path: /spec/jobTargetRef/template/spec/containers/0/env/-1
+  path: /spec/jobTargetRef/template/spec/containers/0/env/-
   value:
     name: VT_TIMEOUT
     value: "120"
 
 - op: add
-  path: /spec/jobTargetRef/template/spec/containers/0/env/-1
+  path: /spec/jobTargetRef/template/spec/containers/0/env/-
   value:
     name: VT_WORK_PATH
     value: /work
-
-- op: add
-  path: /spec/jobTargetRef/template/spec/containers/0/env/-1
-  value:
-    name: VT_STORAGE_BACKEND
-    value: azure
-
-- op: add
-  path: /spec/jobTargetRef/template/spec/containers/0/env/-1
-  value:
-    name: VT_STORAGE_AZURE_ACCOUNT
-    value: devstoreaccount1
-
-- op: add
-  path: /spec/jobTargetRef/template/spec/containers/0/env/-1
-  value:
-    name: VT_STORAGE_AZURE_CONTAINER
-    value: virtool
-
-- op: add
-  path: /spec/jobTargetRef/template/spec/containers/0/env/-1
-  value:
-    name: VT_STORAGE_AZURE_ACCESS_KEY
-    value: Eby8vdM02xNOcqFlqUwJPLlmEtlCDXJ1OUzFT50uSRZ6IFsuFq2UVErCz4I6tq/K1SZFPTOtr/KBHBeksoGMGw==
-
-- op: add
-  path: /spec/jobTargetRef/template/spec/containers/0/env/-1
-  value:
-    name: VT_STORAGE_AZURE_ENDPOINT
-    value: http://azurite.default.svc.cluster.local:10000/devstoreaccount1

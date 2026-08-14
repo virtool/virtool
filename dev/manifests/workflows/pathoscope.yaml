@@ -1,31 +1,44 @@
+# `ghcr.io/virtool/ts-pathoscope` is published on release. The `:latest` tag
+# below resolves today regardless, but it is the leftover of a short-lived
+# publish job from before the port landed and carries the tools with no
+# workflow code — so until a release has run since publishing was restored,
+# use `tilt up -- --pathoscope`, which builds the image locally.
 apiVersion: keda.sh/v1alpha1
 kind: ScaledJob
 metadata:
   name: pathoscope
   labels:
+    app.kubernetes.io/name: pathoscope
+    app.kubernetes.io/component: workflow
+    app.kubernetes.io/part-of: virtool
     app.virtool.ca/workflow-name: pathoscope
     app.virtool.ca/workflow-size: large
 spec:
   jobTargetRef:
     template:
+      metadata:
+        labels:
+          app.kubernetes.io/name: pathoscope
+          app.kubernetes.io/component: workflow
+          app.kubernetes.io/part-of: virtool
       spec:
         containers:
           - name: workflow-pathoscope
-            image: ghcr.io/virtool/pathoscope:7.79.7
+            image: ghcr.io/virtool/ts-pathoscope:latest
             env:
               - name: VT_MEM
-                value: "8"
+                value: "6"
               - name: VT_PROC
-                value: "4"
+                value: "2"
               - name: VT_WORKFLOW
                 value: pathoscope
             resources:
               limits:
-                cpu: "5"
-                memory: 10Gi
+                cpu: 3000m
+                memory: 7Gi
               requests:
-                cpu: "5"
-                memory: 10Gi
+                cpu: 2000m
+                memory: 6Gi
   triggers:
     - type: metrics-api
       metadata:

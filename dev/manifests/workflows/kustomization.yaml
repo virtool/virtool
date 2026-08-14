@@ -1,11 +1,9 @@
 namePrefix: virtool-workflow-
 
-labels:
-  - pairs:
-      app.kubernetes.io/component: workflow
-      app.kubernetes.io/part-of: virtool
-    includeSelectors: true
-    includeTemplates: true
+# No kustomize `labels:` block: kustomize only knows the pod-template path for
+# builtin kinds, and a ScaledJob keeps its template at
+# `spec.jobTargetRef.template`, so `includeTemplates` rendered as a no-op here.
+# Each workflow declares its own labels instead.
 
 patches:
   - path: patches/patch-strategic.yaml

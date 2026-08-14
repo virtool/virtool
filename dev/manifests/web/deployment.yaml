@@ -2,37 +2,47 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: web
+  labels:
+    app.kubernetes.io/name: web
+    app.kubernetes.io/component: web
+    app.kubernetes.io/part-of: virtool
 spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: web
+      app.kubernetes.io/part-of: virtool
   template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: web
+        app.kubernetes.io/component: web
+        app.kubernetes.io/part-of: virtool
     spec:
       containers:
         - image: ghcr.io/virtool/ui:latest
           name: virtool-web
           command: ["npm", "start"]
+          envFrom:
+            - configMapRef:
+                name: virtool-env
           env:
             - name: VT_UI_PORT
               value: "9900"
             - name: VT_UI_HOST
               value: "0.0.0.0"
-            - name: VT_POSTGRES_URL
-              value: "postgres://virtool:virtool@postgres.default.svc.cluster.local:5432/virtool"
-            - name: VT_STORAGE_BACKEND
-              value: "azure"
-            - name: VT_STORAGE_AZURE_ACCOUNT
-              value: "devstoreaccount1"
-            - name: VT_STORAGE_AZURE_CONTAINER
-              value: "virtool"
-            - name: VT_STORAGE_AZURE_ACCESS_KEY
-              value: "Eby8vdM02xNOcqFlqUwJPLlmEtlCDXJ1OUzFT50uSRZ6IFsuFq2UVErCz4I6tq/K1SZFPTOtr/KBHBeksoGMGw=="
-            - name: VT_STORAGE_AZURE_ENDPOINT
-              value: "http://azurite.default.svc.cluster.local:10000/devstoreaccount1"
           ports:
             - containerPort: 9900
               protocol: TCP
+          # The request is a reservation held for the whole life of the pod, and
+          # the node has 8 CPU and 16000 MB in total. Reserving production
+          # sizing here left no room for a workflow to schedule beside it, so
+          # the request is dev-sized and the limit keeps the headroom for an
+          # SSR burst or a Vite rebuild.
           resources:
             limits:
               cpu: 4000m
               memory: 3200M
             requests:
-              cpu: 2000m
-              memory: 3200M
+              cpu: 500m
+              memory: 1Gi

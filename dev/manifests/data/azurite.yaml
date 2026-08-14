@@ -3,21 +3,26 @@ kind: StatefulSet
 metadata:
   name: azurite
   labels:
-    app: azurite
+    app.kubernetes.io/name: azurite
+    app.kubernetes.io/component: storage
+    app.kubernetes.io/part-of: virtool
 spec:
   serviceName: azurite
   replicas: 1
   selector:
     matchLabels:
-      app: azurite
+      app.kubernetes.io/name: azurite
+      app.kubernetes.io/part-of: virtool
   template:
     metadata:
       labels:
-        app: azurite
+        app.kubernetes.io/name: azurite
+        app.kubernetes.io/component: storage
+        app.kubernetes.io/part-of: virtool
     spec:
       initContainers:
         - name: azurite-init
-          image: mcr.microsoft.com/azure-cli:latest
+          image: mcr.microsoft.com/azure-cli:2.89.1
           restartPolicy: Always
           env:
             - name: AZURE_STORAGE_CONNECTION_STRING
@@ -43,7 +48,7 @@ spec:
             periodSeconds: 2
       containers:
         - name: azurite
-          image: mcr.microsoft.com/azure-storage/azurite
+          image: mcr.microsoft.com/azure-storage/azurite:3.36.0
           args:
             - azurite
             - --blobHost
@@ -96,9 +101,14 @@ apiVersion: v1
 kind: Service
 metadata:
   name: azurite
+  labels:
+    app.kubernetes.io/name: azurite
+    app.kubernetes.io/component: storage
+    app.kubernetes.io/part-of: virtool
 spec:
   selector:
-    app: azurite
+    app.kubernetes.io/name: azurite
+    app.kubernetes.io/part-of: virtool
   ports:
     - name: blob
       protocol: TCP

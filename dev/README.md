@@ -10,7 +10,7 @@ root.
 
 ## Requirements
 
-Docker Engine, `git`, Helm, `jq`, `kubectl`, `mkcert`, Minikube and Tilt.
+Docker Engine, Helm, `kubectl`, `mkcert`, Minikube and Tilt.
 
 ## Stack
 
@@ -28,6 +28,7 @@ Docker Engine, `git`, Helm, `jq`, `kubectl`, `mkcert`, Minikube and Tilt.
 Tiltfile                  at the repo root: resources, buttons, live-edit flags
 dev/
   manifests/              Kustomize manifests for every cluster resource
+    config.yaml           the Postgres and Azurite env every service shares
     data/                 PostgreSQL, Azurite
     ingress.yaml
     migration.yaml
@@ -37,7 +38,6 @@ dev/
   scripts/
     ensure-minikube.sh    Start the cluster if it is not already running
     init.sh               Create or reset the cluster
-    pull.sh               Point the manifests at the latest released image tags
     wipe.sh               Delete the StatefulSets and their PVCs
 ```
 
@@ -72,36 +72,73 @@ on its own.
 ## Live editing
 
 Every live-edit target builds from this repository's root `Dockerfile`, at the
-stage named after the target. Pass a flag to turn one on. Each has a long form
-and a short, double-dash form — Tilt's flag parser has no single-dash
-shorthand, so `--w` is as short as it gets:
+stage named after the target. Pass a flag to turn one on:
 
-| Flag | Short | Image | Dockerfile stage |
-| --- | --- | --- | --- |
-| `--web` | `--w` | `ghcr.io/virtool/ui` | `dev` |
-| `--jobs-api` | `--j` | `ghcr.io/virtool/jobs-api` | `jobs-api` |
-| `--tasks` | `--t` | `ghcr.io/virtool/tasks` | `tasks` |
-| `--create-sample` | `--m` | `ghcr.io/virtool/create-sample` | `create-sample` |
-| `--create-subtraction` | `--b` | `ghcr.io/virtool/create-subtraction` | `create-subtraction` |
-| `--nuvs` | `--n` | `ghcr.io/virtool/nuvs` | `nuvs` |
-| `--pathoscope` | `--p` | `ghcr.io/virtool/pathoscope` | `pathoscope` |
+| Flag | Image | Dockerfile stage |
+| --- | --- | --- |
+| `--web` | `ghcr.io/virtool/ui` | `dev` |
+| `--jobs-api` | `ghcr.io/virtool/jobs-api` | `jobs-api` |
+| `--tasks` | `ghcr.io/virtool/tasks` | `tasks` |
+| `--create-sample` | `ghcr.io/virtool/ts-create-sample` | `create-sample` |
+| `--create-subtraction` | `ghcr.io/virtool/ts-create-subtraction` | `create-subtraction` |
+| `--nuvs` | `ghcr.io/virtool/ts-nuvs` | `nuvs` |
+| `--pathoscope` | `ghcr.io/virtool/ts-pathoscope` | `pathoscope` |
 
-Flags combine: `tilt up -- --w --j`.
+Flags combine: `tilt up -- --web --jobs-api`.
 
 `--web` runs Vite in the pod and syncs `apps/web/src` and `packages` into it,
 so an edit shows up without a rebuild. The rest rebuild the image on change,
-and `jobs-api` and `tasks` are on manual trigger — update them from the Tilt UI
-when you want the build.
+and `jobs-api`, `tasks` and every workflow are on manual trigger — update them
+from the Tilt UI when you want the build. A workflow's pods are one-shot and
+only start when something claims work, so nothing waits on a rebuild and an
+automatic one would rebuild a large image on every edit.
 
 There is no migration target. Migrations are Python's, and the migration Job
 runs the published `ghcr.io/virtool/virtool` image.
 
-## Updating images
+## Images
 
-`dev/scripts/pull.sh` rewrites the manifests to the latest released tags — the
-`virtool/virtool-ui` release for everything built here, and the
-`virtool/virtool` release for the migration Job. Run it directly or click
-**Pull** in the Tilt UI.
+Every image this repository publishes is pinned to `latest`, so a pod picks up
+the newest release each time it starts and no tag is ever committed. The
+migration Job is the exception and stays pinned to an explicit
+`ghcr.io/virtool/virtool` release: it runs Python's image, which owns the
+schema, so an unrelated Python release must not migrate the dev database
+without someone choosing it.
+
+`ts-nuvs` and `ts-pathoscope` publish on release like the other two, but
+neither has a usable `latest` until the first release that carries them:
+`ts-nuvs` has no registry package at all, and `ts-pathoscope:latest` is the
+leftover of a short-lived publish job and carries the tools with no workflow
+code. Until then, run those two under `--nuvs` / `--pathoscope`, which build
+the image locally.
+
+## Labels
+
+Every object carries the recommended Kubernetes set and nothing else:
+
+| Label | Value |
+| --- | --- |
+| `app.kubernetes.io/name` | the deployable — `web`, `jobs-api`, `tasks`, `postgres`, `nuvs`, … |
+| `app.kubernetes.io/component` | its role — `web`, `api`, `worker`, `database`, `storage`, `workflow`, `ingress`, `config`, `migration` |
+| `app.kubernetes.io/part-of` | always `virtool` |
+
+Selectors match on `name` + `part-of`. The workflows keep two extra namespaced
+labels, `app.virtool.ca/workflow-name` and `app.virtool.ca/workflow-size`,
+because size has no slot in the standard set.
+
+Each manifest declares its own labels rather than having kustomize synthesize
+them, so every file is valid on its own under `kubectl apply -f`. A selector is
+immutable, so changing one of these means Tilt deletes and recreates the
+workload; PVCs are retained, so the Postgres and Azurite data survive it.
+
+## Resource sizing
+
+`init.sh` creates an 8 CPU / 16000 MB node, and the manifests are sized to fit
+it: the always-on services reserve about 1.9 CPU and 3.6 GiB between them,
+which leaves room for any one workflow — or both small ones — to schedule.
+Requests are dev-sized reservations and limits carry the headroom, so a
+workflow's `VT_PROC` and `VT_MEM` track its **limits**; raising either without
+the other is an OOMKill rather than a faster run.
 
 ## Wiping data
 

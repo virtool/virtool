@@ -146,16 +146,12 @@ The root `Dockerfile`'s `pathoscope` target builds
 its only consumer, so there is no second release stream to coordinate and no
 window in which the workflow and its core disagree.
 
-**CI builds this image but does not publish it, and that is deliberate.** The
-`Pathoscope / Build` job compiles the Dockerfile on every run — enough to catch
-a break — and there is no publish job to pair with it. `virtool/workflow-pathoscope`
-is still the repo that builds and releases the pathoscope workflow, so a second
-pipeline shipping the same workflow from here would leave two candidates for
-what the cluster runs. That repo publishes `ghcr.io/virtool/pathoscope` and this
-Dockerfile targets `ghcr.io/virtool/ts-pathoscope`, so nothing is being
-overwritten today; the point is that the port is unfinished, not that the names
-clash. Add a publish job when that repo is retired, and settle which image name
-the cluster pulls in the same change.
+The `Pathoscope / Build` job compiles the Dockerfile on every run and
+`release-ghcr` pushes it on release. `virtool/workflow-pathoscope` still
+releases the pathoscope workflow too, but it publishes
+`ghcr.io/virtool/pathoscope` while this Dockerfile targets
+`ghcr.io/virtool/ts-pathoscope` — the cluster picks one by the image it pulls,
+and neither stream overwrites the other.
 
 **The crate is built on `rust:1.97-bookworm`.** The runtime copies binaries from
 the tool stages in the same file, which are built on `debian:bookworm`, so the

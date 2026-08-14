@@ -3,17 +3,22 @@ kind: StatefulSet
 metadata:
   name: postgres
   labels:
-    app: postgres
+    app.kubernetes.io/name: postgres
+    app.kubernetes.io/component: database
+    app.kubernetes.io/part-of: virtool
 spec:
   serviceName: postgres
   replicas: 1
   selector:
     matchLabels:
-      app: postgres
+      app.kubernetes.io/name: postgres
+      app.kubernetes.io/part-of: virtool
   template:
     metadata:
       labels:
-        app: postgres
+        app.kubernetes.io/name: postgres
+        app.kubernetes.io/component: database
+        app.kubernetes.io/part-of: virtool
     spec:
       containers:
         - image: postgres:18
@@ -65,9 +70,14 @@ apiVersion: v1
 kind: Service
 metadata:
   name: postgres
+  labels:
+    app.kubernetes.io/name: postgres
+    app.kubernetes.io/component: database
+    app.kubernetes.io/part-of: virtool
 spec:
   selector:
-    app: postgres
+    app.kubernetes.io/name: postgres
+    app.kubernetes.io/part-of: virtool
   ports:
     - protocol: TCP
       port: 5432

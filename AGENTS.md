@@ -99,15 +99,16 @@ This is a **pnpm monorepo**:
   finalize manifest is empty and `FinalizeAnalysisRequest.files` allows that
   for this workflow's sake; and **nothing deletes an analysis on failure** —
   Python's `on_failure` hook is not ported and the jobs API has no delete route.
-  **CI builds it but must not publish it** — `virtool/workflow-pathoscope` still
-  releases the pathoscope workflow, and a second pipeline shipping it from here
-  would leave two candidates for what the cluster runs. Don't add a publish job
-  until that repo retires; note that `publish-ghcr` is also what stamps a real
-  version, so until then `APP_VERSION` is `0.0.0` in every built image and the
-  `workflow_version` in its cache keys with it. **`ghcr.io/virtool/ts-pathoscope`
-  nonetheless has tags, `:latest` among them** — a short-lived publish job left
-  them behind before the port landed, so they carry the tools and no workflow
-  code. They are not evidence this image is published.
+  **`release-ghcr` publishes it**, alongside `virtool/workflow-pathoscope`'s own
+  `ghcr.io/virtool/pathoscope` — the names differ, so the cluster picks one by
+  the image it pulls. Its matrix entry carries `cache-scope: pathoscope`,
+  because `build-pathoscope` writes its gha cache under that bare scope rather
+  than under the image name; a release reading `matrix.image` would miss it and
+  rebuild the Rust crate and every tool inside a 20-minute timeout.
+  **`ghcr.io/virtool/ts-pathoscope`'s pre-existing tags, `:latest` among them,
+  are not from that job** — a short-lived publish job left them behind before
+  the port landed, so they carry the tools and no workflow code. Don't read
+  `:latest` as current until a release has run since publishing was restored.
 - `apps/nuvs/` — `@virtool/nuvs`, the NuVs workflow executor and its image
   (`ghcr.io/virtool/ts-nuvs`). Ten steps and five external tools — skewer,
   bowtie2, SPAdes, `hmmpress` and `hmmscan`. It finds viruses the reference
@@ -134,10 +135,10 @@ This is a **pnpm monorepo**:
   storage** — there is no jobs API HMM route — and checks both keys before step
   one. The `install_hmms` task writes that blob when an install commits, and a
   run that finds it missing says so by name rather than failing at `vfam`.
-  **CI builds it but must not publish it**, exactly as for pathoscope:
-  `virtool/workflow-nuvs` still releases the NuVs workflow, so `APP_VERSION`
-  stays `0.0.0` and the `workflow_version` in all three of its cache keys with
-  it.
+  **`release-ghcr` publishes it**, exactly as for pathoscope: alongside
+  `virtool/workflow-nuvs`'s `ghcr.io/virtool/nuvs`, and with
+  `cache-scope: nuvs` so the release reuses what `build-nuvs` already compiled
+  rather than building SPAdes again.
 - `packages/` — shared, framework-agnostic libraries published as workspace
   packages, plus two Rust crates — `pathoscope-core` and `quality-core`.
   Neither is a pnpm workspace member; each is a standalone cargo project a
@@ -296,7 +297,7 @@ Three rules it carries:
 
 - **A `docker_build` context is `'.'`, the repo root.** Everything else the
   Tiltfile names is relative to the root too, so a manifest is
-  `'dev/manifests/ingress.yaml'` and a script `'dev/scripts/pull.sh'`.
+  `'dev/manifests/ingress.yaml'` and a script `'dev/scripts/wipe.sh'`.
 - **`.dockerignore` excludes both `Tiltfile` and `dev`.** The Tiltfile builds
   with the repo root as its context and Tilt reads that file to decide what it
   watches, so without those rules an edit to a manifest rebuilds every
