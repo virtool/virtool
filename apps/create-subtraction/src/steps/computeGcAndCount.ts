@@ -17,6 +17,9 @@ import type { CreateSubtractionStep } from "./types";
  */
 export const computeGcAndCountStep: CreateSubtractionStep = {
 	id: "compute_gc_and_count",
+	// Title-casing the id gives `Compute Gc And Count`, which is not the label
+	// Python shows for this step.
+	name: "Compute GC and Count",
 	description:
 		"Compute the genome's nucleotide composition and sequence count.",
 	async run({ data, logger, proc, runSubprocess, state }) {
