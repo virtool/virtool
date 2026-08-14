@@ -29,26 +29,28 @@ export type DbHandles = {
 	db: Db;
 	/**
 	 * Identifies this process's backends in `pg_stat_activity`, which is the only
-	 * way to observe pool occupancy: postgres.js keeps its connection queues in a
-	 * closure and exposes no pool statistics.
-	 *
-	 * The hostname is part of it so each replica counts its own pool rather than
-	 * every Virtool process sharing the database. Without it, every replica would
-	 * report the same cluster-wide total and summing the series would multiply it.
-	 *
-	 * The `service` passed to {@link createDb} is the other part, and it is what
-	 * keeps the web app's pool separate from the jobs API's — the two share a
-	 * database, and on a developer machine a hostname as well.
+	 * way to observe pool occupancy: postgres.js exposes no pool statistics. It
+	 * carries the hostname and the service so each replica of each service counts
+	 * only its own backends.
 	 */
 	applicationName: string;
 };
 
 /**
+ * Seconds a pooled connection may sit idle before it is closed.
+ *
+ * Comfortably under any common idle-drop window — an NLB's 350, a NAT table's
+ * 300 — so an idle connection is retired here rather than severed elsewhere and
+ * found broken on the next query.
+ */
+const IDLE_TIMEOUT_SECONDS = 60;
+
+/**
  * Open a connection pool and the Drizzle handle over it.
  *
  * Call this once, at a composition root. Nothing in this package opens a pool
- * at import time — that is what lets the jobs API and the workflow ports reuse
- * the data layer without inheriting the web app's configuration.
+ * at import time, which is what lets every service reuse the data layer without
+ * inheriting the web app's configuration.
  *
  * `service` names the calling process — `"web"`, `"jobs-api"` — and reaches
  * Postgres as part of `application_name`. It is a second argument rather than a
@@ -60,6 +62,7 @@ export function createDb(config: DbConfig, service: string): DbHandles {
 
 	const client = postgres(config.postgresUrl, {
 		max: config.postgresPoolMax,
+		idle_timeout: IDLE_TIMEOUT_SECONDS,
 		connection: { application_name: applicationName },
 	});
 
@@ -69,9 +72,7 @@ export function createDb(config: DbConfig, service: string): DbHandles {
 /**
  * Report the version of the connected Postgres, once, at startup.
  *
- * Kept out of {@link createDb} so opening a pool costs no round trip: a caller
- * that only wants a handle — a test, a short-lived script — should not have to
- * wait on, or log, a `SHOW`.
+ * Kept out of {@link createDb} so opening a pool costs no round trip.
  */
 export function logPostgresVersion(client: PgClient, logger: Logger): void {
 	void client`SHOW server_version`.then(

@@ -216,6 +216,7 @@ const applicationName = buildApplicationName(service, hostname());
 
 const client = postgres(config.postgresUrl, {
 	max: config.postgresPoolMax,
+	idle_timeout: IDLE_TIMEOUT_SECONDS,
 	connection: { application_name: applicationName },
 });
 ```
