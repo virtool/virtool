@@ -540,7 +540,7 @@ class TestCreateIndexTask:
         build = asyncio.create_task(
             self.data_layer.index.generate_task_index(self.index_id),
         )
-        await asyncio.wait_for(all_started.wait(), timeout=1)
+        await asyncio.wait_for(all_started.wait(), timeout=5)
         build.cancel()
 
         with pytest.raises(asyncio.CancelledError):

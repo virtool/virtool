@@ -343,7 +343,13 @@ class IndexData:
 
                 await session.commit()
         except BaseException:
-            await self._storage.delete(storage_key)
+            for orphan_key, exc in await delete_keys(self._storage, [storage_key]):
+                logger.error(
+                    "storage cleanup failed; file orphaned",
+                    index_id=index_id,
+                    key=orphan_key,
+                    error=repr(exc),
+                )
 
             async with AsyncSession(self._pg) as session:
                 await session.execute(
