@@ -21,7 +21,7 @@
 		"tar-stream": "^3.2.0"
 	},
 	"devDependencies": {
-		"@types/node": "^26.1.2",
+		"@types/node": "^26.2.0",
 		"@types/tar-stream": "^3.1.4",
 		"vitest": "^4.1.10"
 	}
