@@ -253,21 +253,21 @@ sample which reaches a range in the thousands.
 
 ![Coverage Charts](./pathoscope_isolates_contaminated.png?url)
 
-## Interpret NuVs
+## Interpret Nuvs
 
 1. Navigate to the **Analyses** tab for a sample
 
-   ![Analyses list with NuVs ready](./nuvs_list.png?url)
+   ![Analyses list with Nuvs ready](./nuvs_list.png?url)
 
-2. Click on the NuVs analysis item
+2. Click on the Nuvs analysis item
 
    The list shows assembled sequence fragments (contigs) that may be part of a novel virus.
 
-   ![Filtered NuVs contigs](./nuvs_filtered.png?url)
+   ![Filtered Nuvs contigs](./nuvs_filtered.png?url)
 
-   In the NuVs workflow, sample libraries are assembled into contigs. Open reading frames (ORFs) are calculated from these and potential protein annotations are assigned using profile HMMs.
+   In the Nuvs workflow, sample libraries are assembled into contigs. Open reading frames (ORFs) are calculated from these and potential protein annotations are assigned using profile HMMs.
 
-   ![Expanded NuVs hit](./nuvs_focus.png?url)
+   ![Expanded Nuvs hit](./nuvs_focus.png?url)
 
 3. Click <DummyButton color="grey" icon="filter">Filter ORFs</DummyButton> to show ORFs
    with no HMM annotations
@@ -289,13 +289,13 @@ sample which reaches a range in the thousands.
 
 6. Wait for the BLAST search to complete.
 
-   Part of interpreting NuVs results is BLASTing contigs to make sure they are truly
+   Part of interpreting Nuvs results is BLASTing contigs to make sure they are truly
    unknown. The BLAST results for this sequence show it is likely a contamination from a
    technician.
 
    ![BLAST Results](./nuvs_blast.png?url)
 
-NuVs is a novel workflow used for discovering potential novel viral sequences in a sample
+Nuvs is a novel workflow used for discovering potential novel viral sequences in a sample
 library. The steps in the workflow are:
 
 - Eliminate known viral and subtraction reads
@@ -304,12 +304,12 @@ library. The steps in the workflow are:
 - Scan the translated ORFs for viral protein motifs using a collection of profile hidden
   Markov models (HMMs)
 
-Under the **Analysis** tab click on the NuVs analysis you would like to view. You will
+Under the **Analysis** tab click on the Nuvs analysis you would like to view. You will
 see a result viewer like the one shown below.
 
-![NuVs analysis page](./nuvs.png?url)
+![Nuvs analysis page](./nuvs.png?url)
 
-The NuVs output includes a contig count as a list of numbered sequences. For each sequence
+The Nuvs output includes a contig count as a list of numbered sequences. For each sequence
 there are three values:
 
 | Value   | Description                                                                   |
@@ -347,7 +347,7 @@ This table states the E-value, score, and identity of the viral sequences found 
 The E-values, score, and identities in the BLAST results indicate high quality matches.
 Knowing this we can interpret that these contigs do not represent novel viral genomes.
 However, they do not exist in ourreference database in Virtool because they were not
-eliminated during the initial subtraction step of the NuVs workflow.
+eliminated during the initial subtraction step of the Nuvs workflow.
 
 This sample contains Phaseolus vulgaris endornavirus as an internal control introduced
 during nucleic acid extraction. This explains the identification of Phaseolus vulgaris
@@ -413,9 +413,9 @@ human contamination.
 
 #### Next Steps
 
-If a suspicious result is found during interpretation of NuVs results, it is important to
+If a suspicious result is found during interpretation of Nuvs results, it is important to
 further characterize the sequence using other bioinformatic tools and the help of a
-bioinformatician. NuVs makes a best effort to detect **potential** novel viral sequences
+bioinformatician. Nuvs makes a best effort to detect **potential** novel viral sequences
 in an automated manner. Further manual work is almost always required to produce a
 full-length genome sequence.
 

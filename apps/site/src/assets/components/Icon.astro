@@ -1,27 +1,58 @@
 ---
+import {
+  Ban,
+  ChartArea,
+  Check,
+  CircleArrowUp,
+  CircleCheck,
+  CircleCheckBig,
+  CircleX,
+  Cloud,
+  Copy,
+  Download,
+  Filter,
+  History,
+  Key,
+  Pencil,
+  Play,
+  Plug,
+  Redo2,
+  Save,
+  SquarePen,
+  SquarePlus,
+  Trash2,
+  UserPlus,
+  Users,
+  Wand2,
+  Wrench,
+} from "@lucide/astro";
+
 const iconMap = {
-  key: "fa-key",
-  save: "fa-save",
-  "arrow-alt-circle-up": "fa-arrow-alt-circle-up",
-  download: "fa-download",
-  "check-circle": "fa-check-circle",
-  "times-circle": "fa-times-circle",
-  "plus-square": "fa-plus-square",
-  play: "fa-play",
-  trash: "fa-trash",
-  filter: "fa-filter",
-  cloud: "fa-cloud",
-  history: "fa-history",
-  check: "fa-check",
-  wrench: "fa-wrench",
-  ban: "fa-ban",
-  clone: "fa-clone",
-  "pencil-alt": "fa-pencil-alt",
-  edit: "fa-edit",
-  "user-plus": "fa-user-plus",
-  users: "fa-users",
-  plug: "fa-plug",
-  redo: "fa-redo",
+  key: Key,
+  save: Save,
+  "arrow-alt-circle-up": CircleArrowUp,
+  download: Download,
+  "check-circle": CircleCheckBig,
+  "circle-check": CircleCheck,
+  "times-circle": CircleX,
+  "plus-square": SquarePlus,
+  play: Play,
+  trash: Trash2,
+  filter: Filter,
+  cloud: Cloud,
+  history: History,
+  check: Check,
+  wrench: Wrench,
+  ban: Ban,
+  clone: Copy,
+  "pencil-alt": Pencil,
+  edit: SquarePen,
+  "user-plus": UserPlus,
+  users: Users,
+  plug: Plug,
+  redo: Redo2,
+  "chart-area": ChartArea,
+  magic: Wand2,
 };
 
 const colorMap = {
@@ -32,10 +63,10 @@ const colorMap = {
   red: "text-red-600",
 };
 
-const { color, name } = Astro.props;
+const { color = "black", name } = Astro.props;
 
 const colorClass = colorMap[color];
-const iconClass = iconMap[name];
+const IconComponent = iconMap[name];
 ---
 
-<i class={`fas ${iconClass} ${colorClass}`}></i>
+<IconComponent size={16} class={`inline align-text-bottom ${colorClass}`} />

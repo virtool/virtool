@@ -1,4 +1,40 @@
 ---
+import {
+  Check,
+  Cloud,
+  Download,
+  Filter,
+  Key,
+  Play,
+  Plug,
+  Redo2,
+  Repeat2,
+  Save,
+  SquarePlus,
+  Trash2,
+  UserPlus,
+  Users,
+  Wrench,
+} from "@lucide/astro";
+
+const iconMap = {
+  check: Check,
+  cloud: Cloud,
+  download: Download,
+  filter: Filter,
+  key: Key,
+  play: Play,
+  plug: Plug,
+  "plus-square": SquarePlus,
+  redo: Redo2,
+  retweet: Repeat2,
+  save: Save,
+  trash: Trash2,
+  "user-plus": UserPlus,
+  users: Users,
+  wrench: Wrench,
+};
+
 const { color = "blue", icon = "" } = Astro.props;
 
 const backgroundColorClass = {
@@ -6,11 +42,13 @@ const backgroundColorClass = {
   grey: "bg-slate-500",
   red: "bg-red-500",
 }[color];
+
+const IconComponent = icon ? iconMap[icon] : undefined;
 ---
 
 <span
   class={`inline-flex gap-1.5 h-7 items-center px-2 rounded text-white font-medium ${backgroundColorClass}`}
 >
-  {icon && <i class={`fas fa-${icon} text-sm`} />}
+  {IconComponent && <IconComponent size={14} />}
   <slot />
 </span>

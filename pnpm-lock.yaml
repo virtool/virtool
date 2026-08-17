@@ -326,6 +326,9 @@ importers:
       '@astrojs/sitemap':
         specifier: ^3.7.3
         version: 3.7.3
+      '@lucide/astro':
+        specifier: ^1.31.0
+        version: 1.31.0(astro@7.2.0(@astrojs/markdown-remark@7.2.2)(@azure/identity@4.13.1)(@azure/storage-blob@12.33.0)(@emnapi/core@1.11.2)(@emnapi/runtime@1.11.3)(@types/node@26.2.0)(db0@0.3.4(drizzle-orm@0.45.2(@opentelemetry/api@1.9.1)(postgres@3.4.9)))(jiti@2.7.0)(tsx@4.23.0)(yaml@2.9.0))
       '@tailwindcss/typography':
         specifier: ^0.5.19
         version: 0.5.20(tailwindcss@4.3.3)
@@ -2454,6 +2457,11 @@ packages:
 
   '@kwsites/file-exists@1.1.1':
     resolution: {integrity: sha512-m9/5YGR18lIwxSFDwfE3oA7bWuq9kdau6ugN4H2rJeyhFQZcG9AgSHkQtSD15a8WvTgfz9aikZMrKPHvbpqFiw==}
+
+  '@lucide/astro@1.31.0':
+    resolution: {integrity: sha512-36wUVbnUFk/IVuUzObbPZtjuW4rcK3BdrxpCQQwvI9LXKhXti/m3DVOu9VTJrxxOUkR6vlFwiNyHrIj9F4u8cg==}
+    peerDependencies:
+      astro: ^4 || ^5 || ^6 || ^7
 
   '@mdx-js/mdx@3.1.1':
     resolution: {integrity: sha512-f6ZO2ifpwAQIpzGWaBQT2TXxPv6z3RBzQKpVftEWN78Vl/YweF1uwussDx8ECAXVtr3Rs89fKyG9YlzUs9DyGQ==}
@@ -10702,6 +10710,10 @@ snapshots:
       debug: 4.4.3
     transitivePeerDependencies:
       - supports-color
+
+  '@lucide/astro@1.31.0(astro@7.2.0(@astrojs/markdown-remark@7.2.2)(@azure/identity@4.13.1)(@azure/storage-blob@12.33.0)(@emnapi/core@1.11.2)(@emnapi/runtime@1.11.3)(@types/node@26.2.0)(db0@0.3.4(drizzle-orm@0.45.2(@opentelemetry/api@1.9.1)(postgres@3.4.9)))(jiti@2.7.0)(tsx@4.23.0)(yaml@2.9.0))':
+    dependencies:
+      astro: 7.2.0(@astrojs/markdown-remark@7.2.2)(@azure/identity@4.13.1)(@azure/storage-blob@12.33.0)(@emnapi/core@1.11.2)(@emnapi/runtime@1.11.3)(@types/node@26.2.0)(db0@0.3.4(drizzle-orm@0.45.2(@opentelemetry/api@1.9.1)(postgres@3.4.9)))(jiti@2.7.0)(tsx@4.23.0)(yaml@2.9.0)
 
   '@mdx-js/mdx@3.1.1':
     dependencies:
