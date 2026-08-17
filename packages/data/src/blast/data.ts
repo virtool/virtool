@@ -13,7 +13,8 @@
  *
  * A row is only touched once its own `interval` has elapsed since its
  * `last_checked_at`, which is what spaces requests out per search rather than
- * per sweep, and a row that has outlived {@link SEARCH_TIMEOUT_MS} is deleted.
+ * per sweep, and a row that has outlived {@link SEARCH_TIMEOUT_MS} is recorded
+ * as an error.
  */
 
 import type { Logger } from "@virtool/logger";
@@ -51,6 +52,9 @@ const MAX_INTERVAL_SECONDS = 75;
  */
 const SEARCH_TIMEOUT_MS = 30 * 60 * 1000;
 
+/** {@link SEARCH_TIMEOUT_MS} as the whole minutes a message can quote. */
+const SEARCH_TIMEOUT_MINUTES = SEARCH_TIMEOUT_MS / 60_000;
+
 /**
  * How many searches may have their status checked on NCBI at once.
  *
@@ -77,6 +81,16 @@ const MAX_CONCURRENT_INITIALIZATIONS = 1;
  * nothing here at all — see `checkBlastStatus`.
  */
 const SEARCH_FAILED_MESSAGE = "NCBI could not complete the search";
+
+/**
+ * What a search that outlived {@link SEARCH_TIMEOUT_MS} is recorded as.
+ *
+ * Rendered by the SPA's BLAST panel beside a retry button, which is the whole
+ * point of recording it: Python deletes the row, and a contig whose row is gone
+ * draws as one that was never BLASTed at all, so a user who waited half an hour
+ * is told nothing happened.
+ */
+const SEARCH_TIMEOUT_MESSAGE = `NCBI did not return a result within ${SEARCH_TIMEOUT_MINUTES} minutes`;
 
 /** The columns the sweep needs to decide what a row wants next. */
 type SweepRow = {
@@ -159,26 +173,38 @@ async function backOff(db: Db, row: SweepRow): Promise<void> {
 /**
  * Abandon searches that have outlived {@link SEARCH_TIMEOUT_MS}.
  *
- * **Rows are deleted by primary key.** Re-BLASTing a contig deletes its row and
- * inserts a new one, so deleting by `(analysis_id, sequence_index)` would
- * destroy a fresh search that had replaced the expired one between this sweep's
- * read and its write. The pair is unique and the temptation to use it as the
- * key is real; it is wrong.
+ * The row is kept and stamped with an error rather than deleted, which is what
+ * lets the panel say the search timed out and offer a retry. An errored row is
+ * invisible to the sweep's read, so it is as finished as a deleted one and
+ * costs a row; it is replaced whenever the contig is BLASTed again, and goes
+ * with its analysis otherwise. There is deliberately no cleanup beyond that —
+ * a search NCBI failed already sits on the row forever for the same reasons.
+ *
+ * **`last_checked_at` is not touched.** Nothing was asked of NCBI here, and the
+ * column is what the panel counts down to the next check with — a row that is
+ * never checked again has no next check to report.
+ *
+ * **Rows are addressed by primary key.** Re-BLASTing a contig deletes its row
+ * and inserts a new one, so writing by `(analysis_id, sequence_index)` would
+ * stamp this timeout on a fresh search that had replaced the expired one
+ * between this sweep's read and its write. The pair is unique and the
+ * temptation to use it as the key is real; it is wrong.
  */
-async function deleteExpired(
+async function expireSearches(
 	db: Db,
 	logger: Logger,
 	expired: SweepRow[],
 	now: Date,
 ): Promise<void> {
 	for (const row of expired) {
-		const deleted = await db.transaction(async (tx) => {
-			const removed = await tx
-				.delete(nuvsBlast)
+		const stored = await db.transaction(async (tx) => {
+			const updated = await tx
+				.update(nuvsBlast)
+				.set({ error: SEARCH_TIMEOUT_MESSAGE, updated_at: now })
 				.where(eq(nuvsBlast.id, row.id))
 				.returning({ id: nuvsBlast.id });
 
-			if (removed.length === 0) {
+			if (updated.length === 0) {
 				return false;
 			}
 
@@ -190,8 +216,8 @@ async function deleteExpired(
 			return true;
 		});
 
-		if (deleted) {
-			logger.info({ id: row.id, rid: row.rid }, "deleted timed out blast");
+		if (stored) {
+			logger.warn({ id: row.id, rid: row.rid }, "blast search timed out");
 
 			await emit("analyses", row.analysis_id, "update");
 		}
@@ -420,7 +446,7 @@ export async function sweepBlasts(
 	);
 
 	if (expired.length > 0) {
-		await deleteExpired(db, logger, expired, now);
+		await expireSearches(db, logger, expired, now);
 	}
 
 	const expiredIds = new Set(expired.map((row) => row.id));

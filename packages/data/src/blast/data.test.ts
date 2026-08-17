@@ -508,7 +508,7 @@ describe("sweepBlasts", () => {
 	});
 
 	describe("expiry", () => {
-		it("deletes a search that has outlived the timeout and bumps its analysis", async () => {
+		it("errors a search that has outlived the timeout and bumps its analysis", async () => {
 			const analysisId = await seedAnalysis();
 
 			await db
@@ -516,8 +516,11 @@ describe("sweepBlasts", () => {
 				.set({ updated_at: minutesAgo(120) })
 				.where(eq(analyses.id, analysisId));
 
+			const lastCheckedAt = secondsAgo(90);
+
 			const blastId = await seedBlast(analysisId, {
 				created_at: minutesAgo(31),
+				last_checked_at: lastCheckedAt,
 				rid: "RID001",
 			});
 
@@ -525,11 +528,35 @@ describe("sweepBlasts", () => {
 
 			await sweepBlasts(db, testLogger);
 
-			expect(await readBlast(blastId)).toBeUndefined();
+			expect(await readBlast(blastId)).toMatchObject({
+				error: "NCBI did not return a result within 30 minutes",
+				ready: false,
+				rid: "RID001",
+				// Nothing was asked of NCBI, so there is no check to record.
+				last_checked_at: lastCheckedAt,
+			});
 			expect(fetchMock).not.toHaveBeenCalled();
 			expect(
 				(await readAnalysisUpdatedAt(analysisId)).getTime(),
 			).toBeGreaterThan(minutesAgo(1).getTime());
+		});
+
+		it("leaves an expired search alone once it carries its error", async () => {
+			const analysisId = await seedAnalysis();
+			const blastId = await seedBlast(analysisId, {
+				created_at: minutesAgo(31),
+				rid: "RID001",
+			});
+
+			stubNcbi({});
+
+			await sweepBlasts(db, testLogger);
+
+			const errored = await readBlast(blastId);
+
+			await sweepBlasts(db, testLogger);
+
+			expect(await readBlast(blastId)).toStrictEqual(errored);
 		});
 
 		it("leaves a search that is inside the timeout", async () => {
@@ -543,7 +570,7 @@ describe("sweepBlasts", () => {
 
 			await sweepBlasts(db, testLogger);
 
-			expect(await readBlast(blastId)).toBeDefined();
+			expect(await readBlast(blastId)).toMatchObject({ error: null });
 		});
 	});
 

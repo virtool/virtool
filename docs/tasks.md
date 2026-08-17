@@ -1131,7 +1131,7 @@ decides from the row itself what it needs:
 | --- | --- |
 | `rid IS NULL` | submits the contig's sequence, stores the RID |
 | `rid` set | asks NCBI for the status, stores the result when ready |
-| older than 30 minutes | deletes the row |
+| older than 30 minutes | records a timeout on the row's `error` |
 | `interval` not yet elapsed since `last_checked_at` | nothing |
 
 The read is unbounded and deliberately so: it selects the searches users are
@@ -1159,16 +1159,25 @@ row and inserts a replacement, so an answer obtained from NCBI may belong to a
 search nobody is waiting for by the time it arrives. A submission lands only
 `WHERE id = :id AND rid IS NULL`; a result lands only `WHERE id = :id AND rid =
 :the_rid_checked`. A zero row count is logged and dropped rather than forced. For
-the same reason an **expired row is deleted by primary key**, never by
+the same reason an **expired row is addressed by primary key**, never by
 `(analysis_id, sequence_index)` — that pair is unique, which makes it a
-tempting key and a wrong one: it would destroy the replacement.
+tempting key and a wrong one: it would stamp the timeout on the replacement.
 
 **A successful submission does not advance `interval`**, only `last_checked_at`
 and `updated_at`. A submission is not a check, so the first status check lands
 three seconds after it rather than eight.
 
-**Three hardenings diverge from Python, and nothing else does.**
+**Four hardenings diverge from Python, and nothing else does.**
 
+- An expired search is **kept and stamped with an error**, where Python deletes
+  the row. A contig whose row is gone draws in the SPA as one that was never
+  BLASTed, so a user who waited half an hour is told nothing happened; an
+  errored one draws the message beside a retry button. The two runners disagree
+  on the outcome and neither corrupts the other — an errored row is invisible to
+  both sweeps' reads, and a Python sweep that gets there first only does what
+  this side used to. There is deliberately **no cleanup for errored rows**: they
+  are already permanent for a failed or unreadable search, they cost a row each,
+  re-BLASTing the contig replaces one, and deleting the analysis cascades.
 - `Status=FAILED` and `Status=UNKNOWN` set `error`. Python tests only for the
   absence of `Status=WAITING`, so it treats both as ready, fetches a result that
   does not exist and stores an empty one — which the SPA draws as "No BLAST hits
@@ -1188,7 +1197,7 @@ channel NCBI publishes it on. It throws in two places — a body with no
 defended against, because the per-row back-off is what contains the fragility.
 
 **A frame goes out on a terminal transition only**: RID stored, result stored,
-error set, expired row deleted. Never on an interval bump. A pending search is
+error set — by a failed check or by expiry. Never on an interval bump. A pending search is
 checked as often as every three seconds, and every BLAST panel on screen holds
 its own analysis query, so a frame per bump is a full analysis refetch in every
 connected browser for a change no larger than a countdown.
