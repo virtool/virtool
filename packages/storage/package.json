@@ -20,7 +20,7 @@
 		"@azure/storage-blob": "^12.33.0"
 	},
 	"devDependencies": {
-		"testcontainers": "^12.0.4",
+		"testcontainers": "^12.1.0",
 		"vitest": "^4.1.10"
 	}
 }
