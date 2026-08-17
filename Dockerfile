@@ -227,6 +227,12 @@ RUN pnpm --filter @virtool/tasks build \
 FROM node:24-bookworm-slim AS tasks
 WORKDIR /tasks
 COPY --from=build-tasks /prod/tasks ./
+# The migration SQL, for the `dist/migrate.mjs` entrypoint the migration Job
+# runs. `pnpm deploy` carries only `dist` and `node_modules`, and the migrator
+# reads the journal and the `.sql` files off disk rather than from the bundle,
+# so they have to be copied in. The path matches `DEFAULT_MIGRATIONS_PATH` in
+# `apps/tasks/src/migrate.ts`.
+COPY --from=build-tasks /repo/packages/data/drizzle ./drizzle
 EXPOSE 9900
 ENV VT_TASKS_PROBE_PORT="9900"
 CMD ["node", "--import", "@sentry/node/preload", "dist/index.mjs"]

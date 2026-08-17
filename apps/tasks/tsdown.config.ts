@@ -1,7 +1,11 @@
 import { defineConfig } from "tsdown";
 
 export default defineConfig({
-	entry: { index: "src/index.ts" },
+	// `migrate` is a second binary in the same image rather than an image of its
+	// own: it needs `@virtool/data` and `postgres`, which this app already
+	// bundles, so a Job running `node dist/migrate.mjs` costs no Dockerfile
+	// target and no CI matrix entry.
+	entry: { index: "src/index.ts", migrate: "src/migrate.ts" },
 	format: ["esm"],
 	platform: "node",
 	target: "node24",
