@@ -14,7 +14,7 @@
 	},
 	"dependencies": {
 		"@hono/node-server": "^2.1.0",
-		"@sentry/node": "^10.69.0",
+		"@sentry/node": "^10.70.0",
 		"@virtool/contracts": "workspace:*",
 		"@virtool/data": "workspace:*",
 		"@virtool/logger": "workspace:*",
