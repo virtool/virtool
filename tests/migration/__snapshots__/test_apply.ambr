@@ -960,5 +960,12 @@
       'name': 'Backfill SQLite artifacts for ready indexes',
       'revision': '5hnwczwh7skv',
     }),
+    dict({
+      'applied_at': datetime,
+      'created_at': datetime,
+      'id': 138,
+      'name': 'Backfill gzip compressed SQLite artifacts for ready indexes',
+      'revision': 'y4t8tk7sqsdu',
+    }),
   ])
 # ---
