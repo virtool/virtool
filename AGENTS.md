@@ -32,6 +32,7 @@ never `npm` or `bun`.
 
 - The service workflow runners call to claim, run and finish jobs.
 - Image: `ghcr.io/virtool/jobs-api`.
+- See [apps/jobs-api/README.md](apps/jobs-api/README.md).
 
 ### apps/tasks
 
@@ -52,6 +53,7 @@ never `npm` or `bun`.
 - Turns a user's uploaded FASTQ files into a sample.
 - Two steps, and one external binary, `quality-core` — a Rust crate.
 - Image: `ghcr.io/virtool/ts-create-sample`.
+- See [apps/create-sample/README.md](apps/create-sample/README.md).
 
 ### apps/create-subtraction
 
@@ -62,6 +64,7 @@ never `npm` or `bun`.
 - Two steps, and one external tool, `seqkit`.
 
 - Image: `ghcr.io/virtool/ts-create-subtraction`.
+- See [apps/create-subtraction/README.md](apps/create-subtraction/README.md).
 ### apps/pathoscope
 
 `@virtool/pathoscope`
@@ -70,6 +73,7 @@ never `npm` or `bun`.
   more than one isolate.
 - Eight steps, four external tools, and `pathoscope-core`.
 - Image: `ghcr.io/virtool/ts-pathoscope`.
+- See [apps/pathoscope/README.md](apps/pathoscope/README.md).
 
 ### apps/nuvs
 
@@ -81,6 +85,7 @@ never `npm` or `bun`.
 - Ten steps and five external tools — `skewer`, `bowtie2`, SPAdes, `hmmpress`
   and `hmmscan`.
 - Image: `ghcr.io/virtool/ts-nuvs`.
+- See [apps/nuvs/README.md](apps/nuvs/README.md).
 
 ## Packages
 
@@ -443,9 +448,9 @@ Object storage is reached the way `db` is on the server side: a
 never a module-level singleton. `runWorkflowApp` builds it once from
 `config.storage` and puts it on the run context as `storage`, so a step reaches
 the bucket without constructing anything and a test hands the whole runtime a
-`MemoryStorage`. The `VT_STORAGE_*` keys are part of `parseWorkflowRunConfig`
-and are **required** — a pod with no bucket cannot download the reads it was
-claimed to analyse. See the file layer below.
+`MemoryStorage`. A pod with no bucket cannot download the reads it was claimed
+to analyse. See the workflow app READMEs for environment configuration and the
+file layer below for transfer rules.
 
 **The cache is the workflow's, not the jobs API's.** `createWorkflowCache`
 (`cache/cache.ts`) resolves a logical key through `GET /caches/{key}` and then
@@ -518,11 +523,6 @@ each of which is a departure from Python or from execa's defaults:
   never surfaced.
 - **Exit code 15 is a failure here and a success in Python.** Only a
   cancellation-driven kill resolves, as `cancelled: true`.
-
-`VT_JOBS_API_URL` and `VT_WORK_PATH` have **no defaults**, unlike Python —
-its defaults point at nothing and at a relative path `createWorkPath` would
-delete. The former is also a rename; Python calls it
-`VT_JOBS_API_CONNECTION_STRING`. `VT_TIMEOUT` is in **seconds**.
 
 The lifecycle half — `createJobsApiClient`, `claimJob`, `startPingLoop`,
 `runWorkflowApp` — carries five rules:

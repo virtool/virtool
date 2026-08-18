@@ -42,9 +42,35 @@ Run from the monorepo root.
 | `pnpm --filter @virtool/tasks test` | Run the Vitest suite (needs Docker — Postgres testcontainer) |
 | `pnpm --filter @virtool/tasks typecheck` | `tsc --noEmit` |
 
+## Configuration
+
+All variables are read at startup. Each also accepts a `<VARIABLE>_FILE`
+variant containing the value; the file takes precedence, surrounding
+whitespace is trimmed, and an empty value is treated as unset.
+
+| Variable | Type | Default | Use |
+| --- | --- | --- | --- |
+| `VT_POSTGRES_URL` | URL | Required | Connect to the Virtool Postgres database. |
+| `VT_POSTGRES_POOL_MAX` | Positive integer | `10` | Limit the Postgres connection pool. |
+| `VT_TASKS_PROBE_PORT` | Positive integer | `9900` | Listen for health probes and Prometheus scrapes. |
+| `VT_TASKS_SHUTDOWN_TIMEOUT` | Positive integer (seconds) | `40` | Bound the complete graceful-shutdown sequence. It must remain below the pod termination grace period. |
+| `VT_TASKS_DRAIN_TIMEOUT` | Positive integer (seconds) | `25` | Allow an in-flight task to finish before releasing its claim. This must be less than `VT_TASKS_SHUTDOWN_TIMEOUT` and is part of that budget. |
+| `VT_METRICS_TOKEN` | String | Unset | Enable `/metrics` and authenticate scrapes with a bearer token. When unset, `/metrics` returns 404. |
+| `VT_SENTRY_DSN` | URL string | Unset | Send errors to Sentry. When unset, Sentry is disabled. |
+| `VT_STORAGE_BACKEND` | `s3` \| `azure` | Required | Select the object-storage backend shared with the other Virtool services. |
+| `VT_STORAGE_S3_BUCKET` | String | Required for S3 | Name the S3 bucket. |
+| `VT_STORAGE_S3_REGION` | String | Unset | Set the S3 region. |
+| `VT_STORAGE_S3_ENDPOINT` | URL string | Unset | Override the S3 endpoint; leave unset for AWS. |
+| `VT_STORAGE_S3_ACCESS_KEY_ID` | String | Unset | Set an explicit S3 access key. Set with `VT_STORAGE_S3_SECRET_ACCESS_KEY`, or leave both unset for the AWS credential chain. |
+| `VT_STORAGE_S3_SECRET_ACCESS_KEY` | String | Unset | Set an explicit S3 secret key. Set with `VT_STORAGE_S3_ACCESS_KEY_ID`, or leave both unset for the AWS credential chain. |
+| `VT_STORAGE_AZURE_ACCOUNT` | String | Required for Azure | Name the Azure Storage account. |
+| `VT_STORAGE_AZURE_CONTAINER` | String | Required for Azure | Name the Azure Blob container. |
+| `VT_STORAGE_AZURE_ACCESS_KEY` | String | Unset | Set an Azure account key; leave unset to use managed identity. |
+| `VT_STORAGE_AZURE_ENDPOINT` | URL string | Unset | Override the Azure Blob endpoint. |
+
 ## Documentation
 
-`docs/tasks.md` covers the config table, the `AppContext` contract, shutdown
+`docs/tasks.md` covers the `AppContext` contract, shutdown
 ordering, the lease and fencing rules, the framework's step model, the runner's
 loop and the task-body contracts in full. `docs/apps.md` covers the bundling
 and `pnpm deploy` pipeline every non-Vite app shares, and `docs/images.md` the

@@ -183,11 +183,37 @@ reverse proxy.
 
 ## Configuration
 
-| Option         | Env                | Description                                    |
-| -------------- | ------------------ | ---------------------------------------------- |
-| `-p`, `--port` | `VT_UI_PORT`       | The port the UI server should listen on        |
-| `-H`, `--host` | `VT_UI_HOST`       | The host the UI server should listen on        |
-| `--sentry-dsn` | `VT_SENTRY_DSN`    | The DSN that Sentry will send logged errors to |
+Server variables are read at startup. Each also accepts a `<VARIABLE>_FILE`
+variant containing the value; the file takes precedence, surrounding
+whitespace is trimmed, and an empty value is treated as unset.
+
+| Variable | Type | Default | Use |
+| --- | --- | --- | --- |
+| `VT_POSTGRES_URL` | URL | Required | Connect to the Virtool Postgres database. |
+| `VT_POSTGRES_POOL_MAX` | Positive integer | `10` | Limit the Postgres connection pool. |
+| `VT_METRICS_TOKEN` | String | Unset | Enable `/metrics` and authenticate scrapes with a bearer token. When unset, `/metrics` returns 404. |
+| `VT_SENTRY_DSN` | URL string | Unset | Send server errors to Sentry. Vite also embeds this value in the client at build time; that client value cannot use `_FILE`. |
+| `VT_STORAGE_BACKEND` | `s3` \| `azure` | Required | Select the object-storage backend shared with the other Virtool services. |
+| `VT_STORAGE_S3_BUCKET` | String | Required for S3 | Name the S3 bucket. |
+| `VT_STORAGE_S3_REGION` | String | Unset | Set the S3 region. |
+| `VT_STORAGE_S3_ENDPOINT` | URL string | Unset | Override the S3 endpoint; leave unset for AWS. |
+| `VT_STORAGE_S3_ACCESS_KEY_ID` | String | Unset | Set an explicit S3 access key. Set with `VT_STORAGE_S3_SECRET_ACCESS_KEY`, or leave both unset for the AWS credential chain. |
+| `VT_STORAGE_S3_SECRET_ACCESS_KEY` | String | Unset | Set an explicit S3 secret key. Set with `VT_STORAGE_S3_ACCESS_KEY_ID`, or leave both unset for the AWS credential chain. |
+| `VT_STORAGE_AZURE_ACCOUNT` | String | Required for Azure | Name the Azure Storage account. |
+| `VT_STORAGE_AZURE_CONTAINER` | String | Required for Azure | Name the Azure Blob container. |
+| `VT_STORAGE_AZURE_ACCESS_KEY` | String | Unset | Set an Azure account key; leave unset to use managed identity. |
+| `VT_STORAGE_AZURE_ENDPOINT` | URL string | Unset | Override the Azure Blob endpoint. |
+
+The build and test tooling reads one additional variable. It is not a runtime
+server setting and has no `_FILE` variant.
+
+| Variable | Type | Default | Use |
+| --- | --- | --- | --- |
+| `VT_TEST_REACT_COMPILER` | `1` \| unset | Unset | Enable React Compiler while running tests. CI sets it to `1`; local tests omit it for speed. |
+
+Client code must read individual `import.meta.env` properties. Reading the
+whole object would serialize every `VT_` variable, including storage secrets,
+into the browser bundle.
 
 ## Metrics
 
