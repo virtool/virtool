@@ -2,6 +2,7 @@ import {
 	computeJobProgress,
 	isJobStateTerminal,
 	JobState,
+	NON_TERMINAL_JOB_STATES,
 	type SearchResult,
 	type StoredJobClaim,
 	type StoredJobStep,
@@ -19,16 +20,6 @@ import { users } from "../db/schema/users";
 import { withTimeout } from "../db/timeout";
 import { AppError } from "../errors";
 import { emit } from "../events/emit";
-
-/**
- * The states a job can still leave — `pending` and `running`.
- *
- * Derived rather than written out, so it cannot fall out of step with
- * `JobState` or with `isJobStateTerminal`.
- */
-export const NON_TERMINAL_JOB_STATES = JobState.options.filter(
-	(state) => !isJobStateTerminal(state),
-);
 
 /** A job as it appears in a search result list. */
 export type JobMinimal = {
@@ -683,11 +674,13 @@ export const JOB_QUEUE_PROBE_TIMEOUT_MS = 2000;
 /**
  * Count the jobs in each workflow and non-terminal state.
  *
- * **Deliberately restricted to `pending` and `running`.** Counting every job
- * ever run is a scan that grows forever, and the schema is Python-owned — there
- * is no index to add from this side. Terminal totals are also the wrong
- * instrument: a gauge over accumulated history is a counter wearing the wrong
- * hat, and failure rate belongs on a counter incremented when a job finishes.
+ * **Deliberately restricted to `pending` and `running`.** That predicate is
+ * `idx_jobs_active`'s, so this is an index-only scan sized by the live queue;
+ * widening it drops back onto history, which grows forever.
+ *
+ * Terminal totals are also the wrong instrument: a gauge over accumulated
+ * history is a counter wearing the wrong hat, and failure rate belongs on a
+ * counter incremented when a job finishes.
  */
 export async function readJobCounts(db: Db): Promise<JobCount[]> {
 	return db
