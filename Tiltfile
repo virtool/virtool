@@ -67,9 +67,9 @@ k8s_resource("postgres", labels=['data'])
 k8s_yaml('dev/manifests/config.yaml')
 k8s_yaml('dev/manifests/ingress.yaml')
 
-# The migration Job runs the published `ghcr.io/virtool/virtool` image and is
-# never built here. Migrations are Python's, and the repository that used to
-# hold them as a live-edit target no longer exists.
+# The migration Job temporarily runs the tasks image's Drizzle migrator
+# entrypoint. It stays a separate Job so the long-lived tasks process only
+# starts after schema changes have been applied.
 k8s_yaml('dev/manifests/migration.yaml')
 
 # Anything in the build context that no sync below covers forces a full image
@@ -152,7 +152,7 @@ k8s_resource(
     'virtool-migration',
     labels=['virtool'],
     new_name="migration",
-    resource_deps=["azurite", "postgres"],
+    resource_deps=["azurite", "config", "postgres"],
     trigger_mode=TRIGGER_MODE_MANUAL
 )
 
