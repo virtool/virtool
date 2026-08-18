@@ -51,8 +51,8 @@ describe("<JobSteps />", () => {
 		expect(
 			screen.getByRole("columnheader", { name: "Elapsed" }),
 		).toBeInTheDocument();
-		expect(screen.getByText("1 minute")).toBeInTheDocument();
-		expect(screen.getByText("2 minutes")).toBeInTheDocument();
+		expect(screen.getByText("00:01:00")).toBeInTheDocument();
+		expect(screen.getByText("00:02:00")).toBeInTheDocument();
 		const runningRow = screen.getByText("Build index").closest("tr");
 		expect(runningRow?.querySelector("svg")).toHaveClass(
 			"lucide-loader-circle",

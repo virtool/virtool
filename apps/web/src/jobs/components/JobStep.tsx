@@ -1,5 +1,5 @@
 import { cn } from "@app/cn";
-import { formatDate, formatRoundedDuration, formatTime } from "@app/date";
+import { formatDate, formatElapsed, formatTime } from "@app/date";
 import Markdown from "@base/Markdown";
 import { useHydrated } from "@tanstack/react-router";
 import type { JobState, JobStep } from "@virtool/contracts";
@@ -26,9 +26,7 @@ export default function JobStepItem({ endedAt, step, state }: JobStepProps) {
 	const elapsed =
 		endedAt === null || step.startedAt === null
 			? null
-			: formatRoundedDuration(
-					Math.max(0, endedAt - step.startedAt.getTime()) / 1000,
-				);
+			: formatElapsed(Math.max(0, endedAt - step.startedAt.getTime()) / 1000);
 
 	return (
 		<tr
@@ -62,14 +60,12 @@ export default function JobStepItem({ endedAt, step, state }: JobStepProps) {
 						className={cn({ invisible: !hydrated })}
 					>
 						{hydrated
-							? `${formatDate(step.startedAt)} ${formatTime(step.startedAt)}`
-							: "0000-00-00 00:00:00"}
+							? `${formatDate(step.startedAt)} at ${formatTime(step.startedAt)}`
+							: "0000-00-00 at 00:00:00"}
 					</time>
 				)}
 			</td>
-			<td className="px-4 py-3 align-top tabular-nums text-right text-sm">
-				{elapsed}
-			</td>
+			<td className="px-4 py-3 align-top tabular-nums text-sm">{elapsed}</td>
 		</tr>
 	);
 }

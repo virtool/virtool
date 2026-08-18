@@ -43,8 +43,8 @@ export default function JobSteps({ finishedAt, state, steps }: JobStepsProps) {
 							<span className="sr-only">Status</span>
 						</th>
 						<th className="font-medium px-4 py-3 text-left">Step</th>
-						<th className="font-medium px-4 py-3 text-left w-1/4">Started</th>
-						<th className="font-medium px-4 py-3 text-right w-1/4">Elapsed</th>
+						<th className="font-medium px-4 py-3 text-left w-1/5">Started</th>
+						<th className="font-medium px-4 py-3 text-left w-1/6">Elapsed</th>
 					</tr>
 				</thead>
 				<tbody>
