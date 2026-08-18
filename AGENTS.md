@@ -145,8 +145,9 @@ the storage backend into data functions, log failures returned by `deleteKeys`,
 and use `MemoryStorage` in unit tests. Client code must read named
 `import.meta.env` keys, never the whole object.
 
-See [docs/storage.md](docs/storage.md) for the streaming interface, key and
-cleanup contracts, configuration, backend behavior, and testing.
+See the [`@virtool/data` README](packages/data/README.md#object-storage) for the
+streaming interface, key and cleanup contracts, configuration, backend
+behavior, and testing.
 
 Third-party requests identify themselves with `USER_AGENT` from
 `@virtool/data/userAgent`; see [packages/data/README.md](packages/data/README.md).

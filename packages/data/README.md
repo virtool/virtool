@@ -3,6 +3,152 @@
 The server-only Postgres data layer: the Drizzle schema mirror, database pool,
 test fixtures, and domain queries used by Virtool services.
 
+## Object storage
+
+Virtool stores uploads, sample reads, analysis results, indexes, subtraction
+files, HMM profiles, and caches in object storage. Python and the TypeScript
+services use the same bucket. The TypeScript implementation lives in the
+server-only `@virtool/storage` package and must remain compatible with Python.
+
+### Interface
+
+Callers use `StorageBackend` and stream bytes rather than working with paths,
+file handles, or presigned URLs:
+
+```ts
+type StorageBackend = {
+	read(key: string): AsyncIterable<Uint8Array>;
+	write(key: string, data: AsyncIterable<Uint8Array>): Promise<number>;
+	delete(key: string): Promise<void>;
+	list(prefix: string): AsyncIterable<StorageObjectInfo>;
+	size(key: string): Promise<number>;
+};
+```
+
+Keys are `/`-delimited and have no leading slash. `write` creates or
+overwrites an object and returns the byte count; `delete` is idempotent.
+Missing objects cause `read` and `size` to throw `StorageKeyNotFoundError`.
+Other failures throw `StorageError`. Both errors come from
+`@virtool/storage/errors` and do not depend on the data layer's `AppError`.
+
+`StorageObjectInfo` contains `key`, `size`, and `lastModified`. Do not compare
+`lastModified` across backends or depend on it for ordering because its source
+differs between real buckets and `MemoryStorage`.
+
+### Cleanup
+
+Pass storage into data functions that remove stored objects. The argument
+order is database, storage, logger, then domain arguments.
+
+`deleteKeys(storage, keys)` attempts every deletion and never throws. It
+returns `{ key, error }` pairs for failures; callers must log every returned
+failure so orphaned objects remain observable. Collect recorded keys before
+deleting their rows, including child keys removed by database cascades.
+
+There is no prefix-based cleanup. Objects that were written without a key
+being recorded remain for a future orphan sweep.
+
+### Keys
+
+Storage keys are recorded, never reconstructed. Every read path uses the full
+key stored in the corresponding row:
+
+| Table | Column | Nullable |
+| --- | --- | --- |
+| `sample_reads` | `storage_key` | No |
+| `index_files` | `storage_key` | No |
+| `subtraction_files` | `storage_key` | Yes |
+| `analysis_files` | `storage_key` | Yes |
+| `uploads` | `storage_key` | Yes |
+| `indexes` | `otus_json_storage_key` | Yes |
+
+Nullable columns mirror nullable legacy sources rather than inventing keys
+for objects that cannot be retrieved. The index OTU JSON key is stored on the
+index because the on-demand artifact should not appear in its file listing.
+
+Mint new keys with `@virtool/storage/keys`. UUID leaves match Python's
+`uuid4().hex` representation and therefore contain no hyphens.
+
+| Minter | Shape |
+| --- | --- |
+| `mintStorageKey(domain, parentId)` | `{domain}/{parentId}/{uuid}` |
+| `mintRootStorageKey(domain)` | `{domain}/{uuid}` |
+| `cacheKey(uuid)` | `caches/v1/{uuid}` |
+| `HMM_PROFILES_KEY` | `hmm/profiles.hmm` |
+| `HMM_ANNOTATIONS_KEY` | `hmm/annotations.json.gz` |
+
+The parent segment groups objects for inspection but has no read-time
+meaning. Uploads use `mintRootStorageKey`, allowing their object to be written
+before the database row is created without holding a transaction open.
+Migrated keys may contain Mongo slugs or integer IDs while newer keys contain
+UUIDs; heterogeneous keys are intentional. Cache keys are also persisted and
+must be read from their rows.
+
+Workflow output keys cross the jobs API boundary because the workflow wrote
+the object and knows its location. Record the supplied key verbatim after
+validating that it is beneath `{domain}/{parentId}/`, has no leading slash,
+and contains neither empty nor `..` segments. `POST /caches` is the exception:
+it accepts a bare UUID and constructs `cacheKey(uuid)` server-side.
+
+### Configuration
+
+The web server parses storage configuration in `src/server/config.ts`.
+`VT_STORAGE_BACKEND` is required and must be `s3` or `azure`; there is no
+filesystem backend.
+
+| Variable | Backend | Requirement |
+| --- | --- | --- |
+| `VT_STORAGE_BACKEND` | Both | Required |
+| `VT_STORAGE_S3_BUCKET` | S3 | Required |
+| `VT_STORAGE_S3_REGION` | S3 | Optional |
+| `VT_STORAGE_S3_ENDPOINT` | S3 | Optional; omit for AWS |
+| `VT_STORAGE_S3_ACCESS_KEY_ID` | S3 | Optional as a credential pair |
+| `VT_STORAGE_S3_SECRET_ACCESS_KEY` | S3 | Optional as a credential pair |
+| `VT_STORAGE_AZURE_ACCOUNT` | Azure | Required |
+| `VT_STORAGE_AZURE_CONTAINER` | Azure | Required |
+| `VT_STORAGE_AZURE_ACCESS_KEY` | Azure | Optional; managed identity if unset |
+| `VT_STORAGE_AZURE_ENDPOINT` | Azure | Optional |
+
+Every variable supports a `_FILE` variant. File values are trimmed, take
+precedence over plain environment values, and fail startup when unreadable.
+An empty value is treated as unset. S3 access and secret keys must be supplied
+together after file-backed values are resolved; supplying neither uses the AWS
+credential chain.
+
+The composition root constructs one backend and passes it into data functions.
+The storage package constructs nothing at import time. Use
+`createStorageBackend` when another service needs its own configured instance.
+
+Client code must access named `import.meta.env` properties and must never read
+the environment object as a whole. Vite exposes the `VT_` prefix, so reading
+the whole object could include storage credentials in the browser bundle.
+
+### Backend behavior
+
+For custom S3 endpoints, the backend enables path-style addressing; AWS uses
+virtual-hosted addressing. Multipart parts use S3's 5 MiB minimum rather than
+the smaller streaming chunk size. Response checksum validation is disabled to
+support Garage's multipart checksum representation, while uploads continue to
+send checksums.
+
+S3 and compatible implementations report missing objects inconsistently, so
+the backend normalizes a 404 from `GetObject` or `HeadObject` to
+`StorageKeyNotFoundError`. Azure similarly normalizes `BlobNotFound` and 404.
+Azure upload chunks are wrapped in zero-copy `Buffer` views because its SDK
+expects `Buffer.copy`.
+
+### Storage testing
+
+Use `MemoryStorage` for data and service unit tests. Streaming, draining, and
+listing fixtures are exported from `@virtool/storage/test/fixtures`.
+
+The storage package's integration Vitest project runs the shared backend suite
+against Garage and Azurite. Garage setup applies a single-node layout and
+credentials through its admin API and waits on a log line because the image is
+distroless. Containers are reused; tests isolate and purge their own
+`test/{worker}/{testName}/` prefixes. Run storage server tests in a Node
+environment so typed arrays come from the same JavaScript realm.
+
 ## Schema ownership
 
 The Python `virtool` repository owns the Postgres schema and applies its Alembic
@@ -90,3 +236,6 @@ Run from the monorepo root.
 | `pnpm --filter @virtool/data test` | Run tests against Postgres. |
 | `pnpm --filter @virtool/data test:watch` | Run tests in watch mode. |
 | `pnpm --filter @virtool/data typecheck` | Type-check the package. |
+
+Storage-specific commands are documented in
+[`@virtool/storage`](../storage/README.md#commands).
