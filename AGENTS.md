@@ -8,130 +8,36 @@ never `npm` or `bun`.
 
 ## Apps
 
-### apps/web
-
-`@virtool/web`
-
-- The Virtool single-page application and the TanStack Start server that
-  serves it. Every request the SPA makes is a server function under
-  `src/server/`.
-- See **Client** and **Server** below, and
-  [apps/web/README.md](apps/web/README.md).
-
-### apps/site
-
-`@virtool/site`
-
-- The product website at [virtool.ca](https://www.virtool.ca).
-- Deployed to Cloudflare Workers.
-- See [apps/site/README.md](apps/site/README.md).
-
-### apps/jobs-api
-
-`@virtool/jobs-api`
-
-- The service workflow runners call to claim, run and finish jobs.
-- Image: `ghcr.io/virtool/jobs-api`.
-- See [apps/jobs-api/README.md](apps/jobs-api/README.md).
-
-### apps/tasks
-
-`@virtool/tasks`
-
-- **One** long-lived process carrying both halves of the task system: the
-  periodic spawner that inserts scheduled tasks, and the runner that claims
-  and executes what it spawns.
-- Image: `ghcr.io/virtool/tasks`. No ingress and no Service — its listener
-  serves only the health probes and a token-gated `/metrics`.
-- See [apps/tasks/README.md](apps/tasks/README.md) and
-  [docs/tasks.md](docs/tasks.md).
-
-### apps/create-sample
-
-`@virtool/create-sample`
-
-- Turns a user's uploaded FASTQ files into a sample.
-- Two steps, and one external binary, `quality-core` — a Rust crate.
-- Image: `ghcr.io/virtool/ts-create-sample`.
-- See [apps/create-sample/README.md](apps/create-sample/README.md).
-
-### apps/create-subtraction
-
-`@virtool/create-subtraction`
-
-- Turns an uploaded FASTA into a subtraction an analysis can eliminate reads
-  against.
-- Two steps, and one external tool, `seqkit`.
-
-- Image: `ghcr.io/virtool/ts-create-subtraction`.
-- See [apps/create-subtraction/README.md](apps/create-subtraction/README.md).
-### apps/pathoscope
-
-`@virtool/pathoscope`
-
-- Quantifies known viruses in a sample, reassigning the reads that matched
-  more than one isolate.
-- Eight steps, four external tools, and `pathoscope-core`.
-- Image: `ghcr.io/virtool/ts-pathoscope`.
-- See [apps/pathoscope/README.md](apps/pathoscope/README.md).
-
-### apps/nuvs
-
-`@virtool/nuvs`
-
-- Finds viruses the reference does **not** describe, by discarding every read
-  that maps to a known OTU or to a subtraction, assembling what is left and
-  searching the contigs for viral motifs.
-- Ten steps and five external tools — `skewer`, `bowtie2`, SPAdes, `hmmpress`
-  and `hmmscan`.
-- Image: `ghcr.io/virtool/ts-nuvs`.
-- See [apps/nuvs/README.md](apps/nuvs/README.md).
+| App | Purpose |
+| --- | --- |
+| [`@virtool/web`](apps/web/README.md) | The Virtool SPA and its TanStack Start server. |
+| [`@virtool/site`](apps/site/README.md) | The product website at [virtool.ca](https://www.virtool.ca). |
+| [`@virtool/jobs-api`](apps/jobs-api/README.md) | Lets workflow runners claim, run, and finish jobs. |
+| [`@virtool/tasks`](apps/tasks/README.md) | Runs the periodic task spawner and task runner in one process. |
+| [`@virtool/create-sample`](apps/create-sample/README.md) | Creates a sample from uploaded FASTQ files. |
+| [`@virtool/create-subtraction`](apps/create-subtraction/README.md) | Creates a subtraction from an uploaded FASTA. |
+| [`@virtool/pathoscope`](apps/pathoscope/README.md) | Quantifies known viruses in a sample. |
+| [`@virtool/nuvs`](apps/nuvs/README.md) | Finds viruses absent from the reference. |
 
 ## Packages
 
-`packages/` holds shared, framework-agnostic libraries published as workspace
-packages, plus two Rust crates — `pathoscope-core` and `quality-core`. Neither
-crate is a pnpm workspace member; each is a standalone cargo project a workflow
-invokes as a subprocess, and each has its own CI job. Only `pathoscope-core`
-needs `libclang-dev` to build. `quality-core` computes a sample's `Quality`
-blob from one FASTQ file and replaced FastQC in `apps/create-sample`; see
-[packages/quality-core/README.md](packages/quality-core/README.md) for where it
-matches FastQC and where it deliberately does not.
+`packages/` holds shared workspace libraries and two standalone Rust crates.
+Apps bundle; packages stay source.
 
-**Apps bundle; packages stay source.**
-
-- `@virtool/archive` — tar, gzip and zip, for anything in the monorepo that
-  reads or writes an archive. Never duplicate what it exports. See
-  [packages/archive/README.md](packages/archive/README.md).
-- `@virtool/bio` — sequence utilities (complement, translation, ORF finding,
-  FASTA/FASTQ) and the pure text parsers the ported workflows need. See
-  [packages/bio/README.md](packages/bio/README.md).
-- `@virtool/contracts` — the shapes both sides of a wire share, plus the
-  server-only helpers each behind its own subpath.
-- `@virtool/data` — the Drizzle schema mirror and every Postgres query, as
-  `packages/data/src/<feature>/data.ts`. Server-side only.
-- `@virtool/logger` — a thin wrapper over pino. See
-  [packages/logger/README.md](packages/logger/README.md).
-- `@virtool/sentry` — the shared Sentry wiring, including the pino destination
-  stream server logs are forwarded on.
-- `@virtool/service` — the process-lifecycle pieces every long-lived service
-  shares. Today that is `createShutdownController` (`./shutdown`) alone:
-  readiness flip, LIFO hooks, listener, pool, Sentry **flush**,
-  `process.exitCode` and an `.unref()`'d backstop, with every dependency
-  injected. Steps take an equal share of the budget unless a hook declares its
-  own `timeoutMs`, which is reserved out of what the rest divide. It is **not**
-  a home for the probe server or the metrics registries, however alike those
-  look across the three services.
-- `@virtool/sqlite` — the reference index SQLite artifact: the schema mirror,
-  the reads a workflow makes against one, and the writer that produces one.
-  Depended on by both `@virtool/data`, which writes the snapshot a finished
-  build publishes, and the workflow executors, which read it — that second
-  consumer is why it is not part of `@virtool/workflow`. `node:sqlite` and the
-  filesystem are its whole dependency surface; it has no runtime dependencies
-  at all.
-- `@virtool/storage` — the five-method streaming object-storage interface and
-  its S3 and Azure backends. Server-side only.
-- `@virtool/workflow` — the workflow runtime and testing harness.
+| Package | Purpose |
+| --- | --- |
+| [`@virtool/archive`](packages/archive/README.md) | Tar, gzip, and zip utilities. |
+| [`@virtool/bio`](packages/bio/README.md) | Sequence utilities and workflow text parsers. |
+| [`@virtool/contracts`](packages/contracts/README.md) | Shared wire shapes and isolated server-only helpers. |
+| [`@virtool/data`](packages/data/README.md) | Server-only Drizzle schema mirror and Postgres queries. |
+| [`@virtool/logger`](packages/logger/README.md) | Shared pino configuration. |
+| [`@virtool/sentry`](packages/sentry/README.md) | Shared browser and server Sentry wiring. |
+| [`@virtool/service`](packages/service/README.md) | Shared lifecycle utilities for long-lived services. |
+| [`@virtool/sqlite`](packages/sqlite/README.md) | Reference-index SQLite schema, reader, and writer. |
+| [`@virtool/storage`](packages/storage/README.md) | Server-only streaming object storage. |
+| [`@virtool/workflow`](packages/workflow/README.md) | Workflow runtime and testing harness. |
+| [`pathoscope-core`](packages/pathoscope-core/README.md) | Rust implementation of Pathoscope reassignment. |
+| [`quality-core`](packages/quality-core/README.md) | Rust implementation of sample quality statistics. |
 
 ## Rules
 
