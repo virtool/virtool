@@ -81,7 +81,108 @@ the compiler; CI enables it with `VT_TEST_REACT_COMPILER=1`.
 - Only suspense queries and loader prefetches participate in SSR. Plain
   `useQuery` starts in the browser after hydration.
 
-See [the query guide](../../docs/queries.md) for details.
+#### Query modules and keys
+
+There is one data-fetching transport: TanStack Start server functions called
+through React Query hooks. Raw uploads, downloads, and SSE use their native
+browser transports instead. A feature divides its cache surface between:
+
+- `keys.ts`, containing only a `*QueryKeys` value built with
+  `createQueryKeys(domain)` from `@app/queryKeys`;
+- `queries.ts`, containing `queryOptions` factories, query and mutation hooks,
+  and their inline server-function calls.
+
+Do not add a per-feature `api.ts`, hand-write query keys, or re-export keys from
+`queries.ts`. Keeping keys independent of the request layer lets invalidators
+such as the SSE handler import them without pulling server-function stubs and
+validation schemas into shared browser chunks.
+
+Keys are tuples of primitives and must distinguish every parameter combination
+deterministically. The factory makes them hierarchical: `lists()` invalidates
+all list variants, `details()` invalidates every detail, and `all()` invalidates
+the domain. Derive custom members from the base key whose invalidation should
+reach them:
+
+```ts
+const userKeys = createQueryKeys("users");
+
+export const userQueryKeys = {
+  ...userKeys,
+  nested: () => [...userKeys.lists(), "nested"] as const,
+};
+```
+
+Give a custom variant its own segment. Do not use an empty filter list that
+collapses a cache entry onto an invalidation prefix such as `lists()`.
+
+#### Query options and route prefetching
+
+Declare a reusable query's key and fetcher together with `queryOptions()`, then
+use the same factory from its hooks and route loaders. Type an inlined factory
+as `queryOptions<Result, Error>`; server-function failures are rebuilt as plain
+`Error` values on the client.
+
+Prefetch data needed for a page's first render in its route `loader` with
+`ensureQueryData`. This route-splitting rule is specific to `apps/web`: import
+the feature query module dynamically inside the loader body because loaders are
+eager route exports. A static import puts the request layer in the initial
+bundle, including for unrelated routes.
+
+```ts
+loader: async ({ context: { queryClient }, params: { sampleId } }) => {
+  const { sampleQueryOptions } = await import("@samples/queries");
+  await queryClient.ensureQueryData(sampleQueryOptions(sampleId));
+},
+```
+
+Import independent modules and prefetch independent resources concurrently
+with `Promise.all`. Data that is not needed until an interaction, such as
+dialog content, should be queried where it is consumed instead of in a loader.
+
+#### Loading and error states
+
+Use two tiers based on how central the data is to the view:
+
+1. Primary route data is prefetched in the loader and read with a
+   `useSuspense*` hook. The component uses `data` directly; route Suspense and
+   `RouteError` handle pending and error states. Preserve existing
+   `404` to `notFound()` mappings when the route has a dedicated not-found
+   state.
+2. Secondary data uses `useQuery` and handles its states inline. Check
+   `isError && !data` first and render `QueryError`, then check `isPending`.
+   This keeps stale data visible when a background refetch fails.
+
+Never combine missing data with loading:
+
+```tsx
+if (isError && !data) {
+  return <QueryError noun="samples" />;
+}
+if (isPending) {
+  return <LoadingPlaceholder />;
+}
+```
+
+`if (isPending || !data)` is an error-state bug: an initial failure has no data
+and would render a loading state forever. For multiple queries, show the inline
+error when any query failed and any required result is missing, then handle
+their pending states.
+
+Paginated queries use `placeholderData: keepPreviousData` so the previous page
+remains visible while the next page loads. Do not use the removed
+`keepPreviousData: true` form from React Query v4.
+
+#### Mutations and cache updates
+
+Put cache invalidation in callbacks passed to `useMutation`; definition-time
+callbacks run even if the calling component unmounts. Put navigation, toasts,
+and other view effects in callbacks passed to `mutate`, which run only while
+the caller remains mounted.
+
+Invalidate the narrowest hierarchical key and let the server response refill
+the cache. Reserve `setQueryData` for high-frequency updates where refetch cost
+dominates; manual patches duplicate response-shaping, filtering, and ordering
+logic.
 
 ### Styling
 
