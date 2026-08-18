@@ -2,6 +2,9 @@
 
 The service workflow runners use to claim, update, and finish jobs.
 
+See [Job lifecycle](../../docs/jobs.md) for the protocol shared with
+`@virtool/workflow`, including cancellation, failure, retries, and exit codes.
+
 Image: `ghcr.io/virtool/jobs-api`.
 
 ## Configuration

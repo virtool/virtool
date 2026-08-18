@@ -438,10 +438,9 @@ Every workflow executor runs on `@virtool/workflow`: `defineWorkflow`,
 `parseWorkflowRunConfig`, and `runWorkflowApp`. It is the port of Python's
 `virtool/workflow/`, and it knows nothing about a database.
 
-**The run loop and the job lifecycle are strictly apart.** `runWorkflow`
-**returns** an outcome and never touches the network, `process.exit`, or a
-signal handler; `runWorkflowApp` — the entrypoint a workflow app's `main.ts`
-calls — owns all of that.
+**The run loop and the job lifecycle are strictly apart.** See
+[docs/jobs.md](docs/jobs.md) for the ownership boundary and the claim, ping,
+cancellation, failure, and process-exit contracts.
 
 Object storage is reached the way `db` is on the server side: a
 `StorageBackend` is **passed in as an argument**, never constructed here and
@@ -524,41 +523,10 @@ each of which is a departure from Python or from execa's defaults:
 - **Exit code 15 is a failure here and a success in Python.** Only a
   cancellation-driven kill resolves, as `cancelled: true`.
 
-The lifecycle half — `createJobsApiClient`, `claimJob`, `startPingLoop`,
-`runWorkflowApp` — carries five rules:
-
-- **Paths are unprefixed and every wire field is camelCase.** The jobs API
-  serves no SPA, so `/jobs/claim` and `/jobs/{id}/ping` match Python's byte
-  for byte. `baseUrl` is the cluster-internal jobs API service, **never**
-  the public web origin. Shapes come from `@virtool/contracts`; don't
-  redeclare one.
-- **A pod learns its job id from the claim and nowhere else.** `claimJob`
-  polls unauthenticated — the key comes back *from* the claim — and returns
-  `null` when its signal aborts, which is how a claim timeout and a SIGTERM
-  both arrive.
-- **Retries are five, at a flat 5 s, on transport failures only.** Not
-  exponential — that is Python's observed behaviour and the ping-timeout
-  sweep is calibrated against it. Never retry a status the jobs API chose.
-- **The ping loop is the cancellation channel, and a 401 is the signal.** A
-  job key stops authenticating the moment its job reaches a terminal state,
-  so a refused ping means the job is over — cancelled, or failed by the
-  sweep — and the loop calls `signals.cancel()`. There is deliberately **no
-  `cancelled` flag** on `JobPing`, which carries only `pingedAt`: a flag
-  would have to be readable by a credential the same transition revokes,
-  and it would speak only for `cancelled`. The jobs API names the state in
-  the 401 body and the loop *logs* that message without branching on it —
-  a broken credential produces the same 401, and `Invalid credentials`
-  rather than `Job is cancelled.` in the logs is how that bug is caught.
-- **The ping loop owns its retry policy** (pings are issued with retries
-  disabled). A 401 is neither retried nor counted; every other failure is,
-  and it gives up after five *consecutive* failures — resetting on success,
-  which Python does not — logging at `warn`, and lets the run continue. Its
-  ~20 s give-up window must stay well inside the jobs API's **five-minute**
-  stalled-job sweep.
-- **A failed workflow exits 0.** Failure is an API-side transition and a
-  non-zero exit makes the `ScaledJob` retry the pod. Only a broken pod exits
-  1; only SIGTERM exits 124. There is deliberately no failure call to make —
-  the wire contract has no "fail" endpoint.
+The lifecycle half — `createJobsApiClient`, `claimJob`, `startPingLoop`, and
+`runWorkflowApp` — follows the protocol in [docs/jobs.md](docs/jobs.md). Keep
+the implementation and that document in sync when changing lifecycle paths,
+wire shapes, retry policy, terminal-state handling, or exit codes.
 
 See [packages/workflow/README.md](packages/workflow/README.md) for the runtime
 and environment configuration reference.
