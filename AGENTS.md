@@ -174,52 +174,25 @@ harness.
 
 ## Code style
 
-The basics:
+See [docs/code-style.md](docs/code-style.md) for rationale and examples.
 
-- **Functions:** Use function declarations, not arrow functions. For React
-  components this is enforced by Biome's
-  `useReactFunctionComponentDefinition`. Everywhere else it stays a
-  convention.
-- Refs:** Don't use `forwardRef`. React 19 makes `ref` an ordinary prop:
-  type a wrapper's props with `ComponentPropsWithRef` and let `ref` flow
-  through the `...props` spread. `forwardRef` also trips
-  `useReactFunctionComponentDefinition`, because the component ends up as a
-  function expression rather than a declaration.
+- **Functions:** Use function declarations, not arrow functions.
+- **Refs:** Treat `ref` as an ordinary prop; do not use `forwardRef`.
 - **Imports:** Biome organises imports automatically. Don't manually organise
   or clean up unused imports.
 - **Conditionals:** Always use curly braces with `if`/`else`.
 - **Prefer `const`** over `let`.
-- **Types:** Use `type`, not `interface`. Enforced by Biome's
-  `useConsistentTypeDefinitions`.
-- **JSDoc:** Every exported `type` gets a one-line `/** ... */`, leading
-  with what the thing *is* rather than a sentence about its behavior — the
-  label is the first thing a hover shows.
+- **Types:** Use `type`, not `interface`.
+- **JSDoc:** Give every exported `type` a one-line `/** ... */` that begins
+  with what the type is.
 - **Naming:** `is`/`has`/`get` for pure reads; `check`/`validate`/
-  `assert` for may-throw. The `is`/`has` line is loose — don't overthink
-  it. A prepositional name (`lifetimeFor`) isn't part of the rule; prefer
-  `getLifetime`. A `createServerFn` export gets an `Fn` suffix
-  (`loginFn`, `getSampleFn`) — it's an RPC call, not a plain function,
-  and the suffix marks that at every call site. The domain function it
-  wraps keeps the plain name (`login`, `getSample`) and never crosses
-  the network. `functions.ts` imports that data function under its own
-  name — the `Fn` suffix already keeps the two apart, so don't alias it
-  to `...Impl` on the way in.
-- **Comments:** Default to none. Document *why* when non-obvious, not
-  *what* — never restate the code, reference the current task, or name
-  the caller (those rot the moment something moves). Never narrate
-  history ("this used to do X, now it does Y") — that's git blame's job,
-  and it just accretes stale layers; write a comment about a past change
-  only if reverting it would silently reintroduce a bug, phrased as a
-  standing warning, not a changelog. Syntax: `/** ... */` for the one-line
-  JSDoc on an exported type (or a label on a function/constant that needs
-  one); `/* ... */` for a multi-line *why*; `//` for one-liners only —
-  never chain `//` lines into a block.
-- **Concurrency:** Independent awaits go in `Promise.all` — don't pay
-  the sum of latencies. Skip it when a later call needs an earlier
-  result, the calls share one Postgres transaction (serialised
-  server-side regardless), or an early failure should short-circuit
-  expensive later work. Use `Promise.allSettled` when every result is
-  needed regardless of failures.
+  `assert` for operations that may throw. Suffix `createServerFn` exports with
+  `Fn`; keep wrapped domain-function names unsuffixed.
+- **Comments:** Default to none. Comment only to explain non-obvious reasons;
+  do not restate code, narrate history, reference the current task, or name a
+  caller.
+- **Concurrency:** Put independent awaits in `Promise.all`; use
+  `Promise.allSettled` when every outcome is required.
 
 ## Testing
 

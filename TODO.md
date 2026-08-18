@@ -9,7 +9,7 @@
   `createTestDatabase()`, explicit assertions, and a single owner for each test
   double. Keep container setup, emitter-stubbing details, and rationale with
   their owning package and test helpers.
-- [ ] Move code-style rationale and examples to `docs/code-style.md`. Retain
+- [x] Move code-style rationale and examples to `docs/code-style.md`. Retain
   short imperative rules in `AGENTS.md` for function declarations, React refs,
   types, exported-type JSDoc, comments, naming, and concurrent awaits. Fix the
   malformed `Refs` list label while editing the section.
