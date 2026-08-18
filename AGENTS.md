@@ -1,238 +1,138 @@
-# Virtool UI
+# Virtool
 
-React + TypeScript single-page application for Virtool, a bioinformatics platform.
+`CLAUDE.md` is a symlink to this file. Edit `AGENTS.md` — never write to
+`CLAUDE.md` directly.
 
-> `CLAUDE.md` is a symlink to this file. Edit `AGENTS.md` — never write to
-> `CLAUDE.md` directly.
+This is a pnpm monorepo. Use `pnpm` for all install, run, and exec commands —
+never `npm` or `bun`.
 
-## Repository layout
+## Apps
 
-This is a **pnpm monorepo**:
+### apps/web
+
+`@virtool/web`
+
+- The Virtool single-page application and the TanStack Start server that
+  serves it. Every request the SPA makes is a server function under
+  `src/server/`.
+- See **Client** and **Server** below, and
+  [apps/web/README.md](apps/web/README.md).
 
 ### apps/site
 
 `@virtool/site`
 
-- The product website at [virtool.ca](https://www.virtool.ca), deployed to
-  Cloudflare Workers.
-- Libraries: Astro + Tailwind.
-- Gates: kept out of the repo-wide `pnpm check`/`pnpm knip` gates — Astro is
-  not linted by biome and is opaque to knip — so its own Vite build (a
-  `site-build` CI job) and Vitest suite are its gate.
-- Deploy: manual, `pnpm --filter @virtool/site deploy`.
+- The product website at [virtool.ca](https://www.virtool.ca).
+- Deployed to Cloudflare Workers.
+- See [apps/site/README.md](apps/site/README.md).
 
 ### apps/jobs-api
 
 `@virtool/jobs-api`
 
-- The jobs API: the service workflow runners call to claim, run and finish
-  jobs. A Hono app on port 9950, mirroring Python's `virtool/jobs/main.py`
-  (`api-jobs-service`, ClusterIP, **no ingress** — that absence is the
-  security boundary). Image: `ghcr.io/virtool/jobs-api`.
-- See [apps/jobs-api/README.md](apps/jobs-api/README.md) for its route
-  surface and commands, and [docs/jobs-api.md](docs/jobs-api.md) for the
-  auth model, ownership rules, caching, finalize, and metrics in full.
+- The service workflow runners call to claim, run and finish jobs.
+- Image: `ghcr.io/virtool/jobs-api`.
 
-### `apps/tasks/` — `@virtool/tasks`, the task service: **one** long-lived
+### apps/tasks
 
-  process carrying both halves of Virtool's task system, the periodic
-  spawner and the runner that claims and executes what it spawns. Image:
-  `ghcr.io/virtool/tasks`, no ingress and **no Service** — its HTTP
-  listener serves only `/health/live`, `/health/ready` and a token-gated
-  `/metrics` on `VT_TASKS_PROBE_PORT` (9900). Neither half has a flag to
-  turn it off: the cutover from Python is two deployments inside a minute,
-  and a minute of task lag is invisible to a user, so there is nothing for a
-  staged rollout to buy. Everything is built inside `bootstrap()`; this app has no
-  module-scope singleton of any kind, not config, not the pool, not the
-  registry. See [docs/tasks.md](docs/tasks.md).
-- `apps/create-sample/` — `@virtool/create-sample`, the create-sample workflow
-  executor and its image (`ghcr.io/virtool/ts-create-sample`), which turns a
-  user's uploaded FASTQ files into a sample an analysis can run against. Two
-  steps, `run_fastqc` and `finalize`, and one external binary, `quality-core`
-  (`packages/quality-core`, a Rust crate in this repo).
-  Like create-subtraction it **is** published, so a released image carries a
-  real `APP_VERSION`. Five rules it carries: its input is
-  **`WorkflowSample.uploads`**, in `sample_uploads.index` order — a sample it is
-  running has no `sample_reads` rows yet, and that order is the only thing
-  linking an upload to the reads file it becomes, `finalizeSample` pairing its
-  rows by the same one; **nothing branches on `sample.paired`**, which
-  `getSample` derives from those absent reads rows and so serves as `false` for
-  every running job — the upload count is what decides one file or two; **an
-  already-gzipped upload is renamed, not re-encoded**, as almost every one is
-  and these files run to gigabytes; the **normalized reads go in
-  `{work_path}/reads/`** rather than beside their uploads as Python's
-  `path.with_name` puts them, because upload names are user-supplied and a
-  second upload called `reads_1.fq.gz` has Python destroy it with the first
-  and finalize the sample with one read stored twice; and **the quality
-  measurement runs once per read into its own results file**, where Python runs
-  one FastQC invocation and then pairs a report with a read by filesystem
-  order. **Nothing deletes a sample on failure**, as with the other workflows.
-  **The step id stays `run_fastqc`** although FastQC is gone — the jobs API
-  stores it. See
-  [apps/create-sample/README.md](apps/create-sample/README.md).
-- `apps/create-subtraction/` — `@virtool/create-subtraction`, the
-  create-subtraction workflow executor and its image
-  (`ghcr.io/virtool/ts-create-subtraction`), which turns an uploaded genome into
-  a subtraction an analysis can eliminate reads against. Two steps,
-  `compute_gc_and_count` and `finalize`, and one external tool, `seqkit`. Unlike
-  the two analysis workflows it **is** published, so a released image carries a
-  real `APP_VERSION`. Four rules it carries: `build_index` and the `*.bt2`
-  upload loop are **not ported**, because nothing consumes a subtraction's
-  bowtie2 shards and the finalize route whitelists `subtraction.fa.gz` alone;
-  **nothing decompresses the genome to disk**, since `seqkit` reads gzip
-  natively and an already-gzipped upload is stored exactly as it arrived;
-  **`gc` and `count` come from `seqkit fx2tab --base-count`**, whose five flags
-  decide the column order the parser reads; and **nothing deletes a subtraction
-  on failure**, as with the analysis workflows. Its input reaches it as
-  `WorkflowSubtraction.upload` — a subtraction it is running has no
-  `subtraction_files` rows yet, so the upload is the only file it has. See
-  [apps/create-subtraction/README.md](apps/create-subtraction/README.md).
-- `apps/pathoscope/` — `@virtool/pathoscope`, the pathoscope workflow executor
-  and its image (`ghcr.io/virtool/ts-pathoscope`). Eight steps, four external
-  tools and `pathoscope-core`, which it drives **as a subprocess** — there is
-  no FFI here and adding one is out of scope by decision. Its stages in the
-  root `Dockerfile` are a cargo-chef build of `packages/pathoscope-core`, a
-  Node build on the shared `base`, and a runtime layering the `bowtie2`,
-  `cd-hit` and `samtools` tool stages over both, with `pigz` from apt.
-  Two rules it carries: it writes **no result file** — Python uploaded a
-  `report.tsv` whose every figure is already in the `results` blob, so the
-  finalize manifest is empty and `FinalizeAnalysisRequest.files` allows that
-  for this workflow's sake; and **nothing deletes an analysis on failure** —
-  Python's `on_failure` hook is not ported and the jobs API has no delete route.
-  **`release-ghcr` publishes it**, alongside `virtool/workflow-pathoscope`'s own
-  `ghcr.io/virtool/pathoscope` — the names differ, so the cluster picks one by
-  the image it pulls. Its matrix entry carries `cache-scope: pathoscope`,
-  because `build-pathoscope` writes its gha cache under that bare scope rather
-  than under the image name; a release reading `matrix.image` would miss it and
-  rebuild the Rust crate and every tool inside a 20-minute timeout.
-  **`ghcr.io/virtool/ts-pathoscope`'s pre-existing tags, `:latest` among them,
-  are not from that job** — a short-lived publish job left them behind before
-  the port landed, so they carry the tools and no workflow code. Don't read
-  `:latest` as current until a release has run since publishing was restored.
-- `apps/nuvs/` — `@virtool/nuvs`, the NuVs workflow executor and its image
-  (`ghcr.io/virtool/ts-nuvs`). Ten steps and five external tools — skewer,
-  bowtie2, SPAdes, `hmmpress` and `hmmscan`. It finds viruses the reference
-  does **not** describe, by discarding every read that maps to a known OTU or
-  to a subtraction, assembling what is left and searching the contigs for viral
-  motifs. Its stages in the root `Dockerfile` are a from-source SPAdes compile,
-  a Node build on the shared `base`, and a runtime layering the `bowtie2`,
-  `hmmer` and `skewer` tool stages and the compiled SPAdes over both.
-  Five rules it carries: **`SPAdes 4.2.0` is compiled from source** in its own
-  stage, independent of the rest of the build, because no binary release fits
-  the base — and the runtime installs `python3` for it, since `spades.py` is a
-  Python script driving the compiled binaries; the **raw `results` shape is
-  pinned by `formatNuvs`** (`packages/data/src/analyses/format.ts`), *not* by
-  `packages/contracts/src/nuvs.ts`, which describes the **formatted** envelope
-  — so the workflow writes each ORF hit's `hit` (an annotation id) and never
-  `cluster`, `families` or `names`, which the server merges in from the `hmms`
-  table; **a sample with no quality data fails in `buildContext`**, because
-  `max_length` is `quality.length[1]` and Python instead compares `None` with
-  an `int` two steps in; **Python's `hits.remove(sequence)` branch in `vfam` is
-  unreachable** and is deliberately not ported — porting it as though it fires
-  would renumber the contigs and invalidate every stored index; and **nothing
-  deletes an analysis on failure**, as with pathoscope.
-  It reads `hmm/profiles.hmm` and `hmm/annotations.json.gz` **straight from
-  storage** — there is no jobs API HMM route — and checks both keys before step
-  one. The `install_hmms` task writes that blob when an install commits, and a
-  run that finds it missing says so by name rather than failing at `vfam`.
-  **`release-ghcr` publishes it**, exactly as for pathoscope: alongside
-  `virtool/workflow-nuvs`'s `ghcr.io/virtool/nuvs`, and with
-  `cache-scope: nuvs` so the release reuses what `build-nuvs` already compiled
-  rather than building SPAdes again.
-- `packages/` — shared, framework-agnostic libraries published as workspace
-  packages, plus two Rust crates — `pathoscope-core` and `quality-core`.
-  Neither is a pnpm workspace member; each is a standalone cargo project a
-  workflow invokes as a subprocess, and each has its own CI job. Only
-  `pathoscope-core` needs `libclang-dev` to build. `quality-core` computes a
-  sample's `Quality` blob from one FASTQ file and replaced FastQC in
-  `apps/create-sample`; see
-  [packages/quality-core/README.md](packages/quality-core/README.md) for
-  where it matches FastQC and where it deliberately does not.
-  - `@virtool/archive` — compression and tarball utilities. Anything
-    that reads or writes an archive goes through it; never duplicate what
-    it exports. See
-    [packages/archive/README.md](packages/archive/README.md).
-  - `@virtool/service` — the process-lifecycle pieces every long-lived
-    service shares. Today that is `createShutdownController`
-    (`./shutdown`) alone: readiness flip, LIFO hooks, listener, pool,
-    Sentry **flush**, `process.exitCode` and an `.unref()`'d backstop,
-    with every dependency injected. Steps take an equal share of the
-    budget unless a hook declares its own `timeoutMs`, which is reserved
-    out of what the rest divide. It is **not** a home for the probe
-    server or the metrics registries, however alike those look across
-    the three services.
-  - `@virtool/sqlite` — the reference index SQLite artifact: the schema
-    mirror, the reads a workflow makes against one, and the writer that
-    produces one. Depended on by both `@virtool/data`, which writes the
-    snapshot a finished build publishes, and the workflow executors, which
-    read it — that second consumer is why it is not part of
-    `@virtool/workflow`. `node:sqlite` and the filesystem are its whole
-    dependency surface; it has no runtime dependencies at all.
+`@virtool/tasks`
 
-  `@virtool/data` and `@virtool/storage` are server-side only. Browser code
-  must never import them; they reach `apps/web` through `src/server/**`. A
-  Biome `noRestrictedImports` override outside `apps/web/src/server/**`
-  enforces that, and the `web` Vitest project aliases the pool-opening modules
-  to a guard that throws.
+- **One** long-lived process carrying both halves of the task system: the
+  periodic spawner that inserts scheduled tasks, and the runner that claims
+  and executes what it spawns.
+- Image: `ghcr.io/virtool/tasks`. No ingress and no Service — its listener
+  serves only the health probes and a token-gated `/metrics`.
+- See [apps/tasks/README.md](apps/tasks/README.md) and
+  [docs/tasks.md](docs/tasks.md).
 
-  Neither package constructs anything at import time — both take their
-  dependencies as arguments — which is what lets the jobs API and the workflow
-  ports reuse them. `apps/web/src/server/composition.ts` is where the web app
-  does the construction: it builds `storage`, calls `createDb(config, "web")`
-  to get `client` and `db`, and calls `createEmitter({ client, logger })`. Every
-  `db`, `client`, and `storage` import in `apps/web` comes from there.
+### apps/create-sample
 
+`@virtool/create-sample`
 
-**Apps bundle; packages stay source.** Every package under `packages/` is
-unbuilt TypeScript — no `build` script, no `dist`, `noEmit: true`, and an
-`exports` map pointing at `./src/*.ts`. A plain `node` process cannot import a
-`.ts` file, so the non-Vite apps are where compilation happens: each bundles to
-a single `dist/index.mjs` with every `@virtool/*` inlined from source, via
-**tsdown**. Do not give a package a `dist` build to sidestep this — the apps
-bundling *is* the design. A new app is `apps/<name>/` with a `README.md`, a
-`package.json`, a `tsconfig.json` extending `apps/tsconfig.node.json`, a
-`tsdown.config.ts` and `src/index.ts`; that is enough for `pnpm build`,
-`check`, `typecheck`, `test`
-and `knip` to cover it with no edits to root scripts, `knip.json`, `biome.json`
-or the Dockerfile install layer. A new *image* still needs a Dockerfile stage
-and a CI matrix entry.
+- Turns a user's uploaded FASTQ files into a sample.
+- Two steps, and one external binary, `quality-core` — a Rust crate.
+- Image: `ghcr.io/virtool/ts-create-sample`.
 
-**No app may import another app's source, in any direction.** Three
-`biome.json` overrides enforce it, one scoped to each of `apps/web/src/**`
-(excluding and then covering `server/**`) and one to every other app's
-`src/**`. Shared code goes *down* into a package instead.
+### apps/create-subtraction
 
-See [docs/apps.md](docs/apps.md) for the bundler rationale, the
-bundled-vs-external rule and why externals must be string literals, the
-`pnpm deploy` / `injectWorkspacePackages` mechanism, and the repo-wide
-gates. [docs/images.md](docs/images.md) covers the image side: the
-target inventory, the one-base-for-everything rule, the install and
-source layers, the one-stage-per-tool rule for the bioinformatics
-binaries and the interpreters they need, and what building and
-publishing an image takes. Each app's own `README.md` covers what that
-app is, its port, image and commands.
+`@virtool/create-subtraction`
 
-**The bioinformatics tools are built in the root `Dockerfile`, one stage
-per tool** — `bowtie2`, `cd-hit`, `hmmer`, `samtools`, `seqkit` and
-`skewer`, each installing to `/tools/<tool>/<version>/` for a workflow
-runtime stage to copy out of. **`pigz` is the exception and comes from
-apt**, because zlib.net is the only source for its tarball and it is
-down often enough to hang every build queued behind it; nothing depends
-on its exact output bytes, so Debian's older version costs nothing.
-Never fold the rest into one stage: BuildKit builds only the stages the
-requested target reaches, which is what keeps `--target
-create-subtraction` from compiling bowtie2. Each Rust crate gets its own
-cargo-chef pair over a shared `chef` for the same reason. **Every `wget`
-carries `--tries` and `--timeout`** — the defaults are 20 tries at a
-900-second read timeout, so an unreachable mirror hangs the job for
-hours instead of failing it.
+- Turns an uploaded FASTA into a subtraction an analysis can eliminate reads
+  against.
+- Two steps, and one external tool, `seqkit`.
 
-**The local Tilt/Minikube cluster is the root `Tiltfile` plus `dev/`**, which
-holds the Kustomize `manifests/` and the cluster `scripts/`. Neither is a
-workspace and neither holds TypeScript; see **The dev cluster is the root
-`Tiltfile` and `dev/`** under **Tooling**, and [dev/README.md](dev/README.md).
+- Image: `ghcr.io/virtool/ts-create-subtraction`.
+### apps/pathoscope
 
-Use `pnpm` for all install, run, and exec commands — not `npm` or `bun`.
+`@virtool/pathoscope`
+
+- Quantifies known viruses in a sample, reassigning the reads that matched
+  more than one isolate.
+- Eight steps, four external tools, and `pathoscope-core`.
+- Image: `ghcr.io/virtool/ts-pathoscope`.
+
+### apps/nuvs
+
+`@virtool/nuvs`
+
+- Finds viruses the reference does **not** describe, by discarding every read
+  that maps to a known OTU or to a subtraction, assembling what is left and
+  searching the contigs for viral motifs.
+- Ten steps and five external tools — `skewer`, `bowtie2`, SPAdes, `hmmpress`
+  and `hmmscan`.
+- Image: `ghcr.io/virtool/ts-nuvs`.
+
+## Packages
+
+`packages/` holds shared, framework-agnostic libraries published as workspace
+packages, plus two Rust crates — `pathoscope-core` and `quality-core`. Neither
+crate is a pnpm workspace member; each is a standalone cargo project a workflow
+invokes as a subprocess, and each has its own CI job. Only `pathoscope-core`
+needs `libclang-dev` to build. `quality-core` computes a sample's `Quality`
+blob from one FASTQ file and replaced FastQC in `apps/create-sample`; see
+[packages/quality-core/README.md](packages/quality-core/README.md) for where it
+matches FastQC and where it deliberately does not.
+
+**Apps bundle; packages stay source.**
+
+- `@virtool/archive` — tar, gzip and zip, for anything in the monorepo that
+  reads or writes an archive. Never duplicate what it exports. See
+  [packages/archive/README.md](packages/archive/README.md).
+- `@virtool/bio` — sequence utilities (complement, translation, ORF finding,
+  FASTA/FASTQ) and the pure text parsers the ported workflows need. See
+  [packages/bio/README.md](packages/bio/README.md).
+- `@virtool/contracts` — the shapes both sides of a wire share, plus the
+  server-only helpers each behind its own subpath.
+- `@virtool/data` — the Drizzle schema mirror and every Postgres query, as
+  `packages/data/src/<feature>/data.ts`. Server-side only.
+- `@virtool/logger` — a thin wrapper over pino. See
+  [packages/logger/README.md](packages/logger/README.md).
+- `@virtool/sentry` — the shared Sentry wiring, including the pino destination
+  stream server logs are forwarded on.
+- `@virtool/service` — the process-lifecycle pieces every long-lived service
+  shares. Today that is `createShutdownController` (`./shutdown`) alone:
+  readiness flip, LIFO hooks, listener, pool, Sentry **flush**,
+  `process.exitCode` and an `.unref()`'d backstop, with every dependency
+  injected. Steps take an equal share of the budget unless a hook declares its
+  own `timeoutMs`, which is reserved out of what the rest divide. It is **not**
+  a home for the probe server or the metrics registries, however alike those
+  look across the three services.
+- `@virtool/sqlite` — the reference index SQLite artifact: the schema mirror,
+  the reads a workflow makes against one, and the writer that produces one.
+  Depended on by both `@virtool/data`, which writes the snapshot a finished
+  build publishes, and the workflow executors, which read it — that second
+  consumer is why it is not part of `@virtool/workflow`. `node:sqlite` and the
+  filesystem are its whole dependency surface; it has no runtime dependencies
+  at all.
+- `@virtool/storage` — the five-method streaming object-storage interface and
+  its S3 and Azure backends. Server-side only.
+- `@virtool/workflow` — the workflow runtime and testing harness.
+
+## Rules
+
+- No app may import another app's source.
+- Don't use the dev server. Use Tilt and Minikube via the root `Tiltfile`; see
+  [dev/README.md](dev/README.md).
 
 ## Tooling
 
@@ -254,11 +154,6 @@ Use `pnpm` for all install, run, and exec commands — not `npm` or `bun`.
 `TZ=UTC` matches the `test` script and every CI test job — drop it and that
 command becomes the only unpinned way to run the suite.
 
-`pnpm test` reaches **neither Rust crate** — neither is a pnpm workspace. Run
-`cargo` in each directly; `pathoscope-test` and `quality-test` gate them in CI.
-Building `pathoscope-core` needs `libclang-dev` installed, because `hts-sys`
-runs bindgen against htslib's headers; `quality-core` needs nothing.
-
 `pathoscope-test`, `quality-test`, `build-pathoscope` and `build-nuvs` are the
 only path-filtered jobs in `ci.yaml`, and they take **a filter each**, because
 their inputs differ: the crate jobs run cargo and read no TypeScript, while
@@ -275,110 +170,44 @@ the shared `base` stage copies, packages the app does not import among them:
 `base` copies `packages/data`, `packages/service` and `packages/bio` whichever
 target was requested, so both image filters list all three.
 
-`pnpm build` builds **every app but `apps/site`**, which is gated by its own
-`site-build` CI job. `pnpm check` and `pnpm format` run biome over `apps` and
-`packages` rather than a literal `apps/web/src`, so a new app's source is linted
-without an edit; `apps/site` is excluded once, in `biome.json`'s
-`files.includes`.
-
-Don't use the dev server. Live development is done using Tilt and Minikube,
-configured in the root `Tiltfile` — see below.
-
-### The dev cluster is the root `Tiltfile` and `dev/`
-
-The `Tiltfile` is at the repo root, where `tilt up` looks for it. `dev/` holds
-everything it reads: the Kustomize `manifests/` and the `scripts/` that create,
-update and wipe the cluster. Every service and workflow it deploys builds from
-the root `Dockerfile`, at the stage named after the live-edit flag
-(`tilt up -- --web` builds the `dev` stage, `--nuvs` the `nuvs` stage). See
-[dev/README.md](dev/README.md).
-
-Three rules it carries:
-
-- **A `docker_build` context is `'.'`, the repo root.** Everything else the
-  Tiltfile names is relative to the root too, so a manifest is
-  `'dev/manifests/ingress.yaml'` and a script `'dev/scripts/wipe.sh'`.
-- **`.dockerignore` excludes both `Tiltfile` and `dev`.** The Tiltfile builds
-  with the repo root as its context and Tilt reads that file to decide what it
-  watches, so without those rules an edit to a manifest rebuilds every
-  live-edited image.
-- **There is no migration target.** Migrations are Python's; the migration Job
-  runs the published `ghcr.io/virtool/virtool` image and nothing builds it here.
-
-It is YAML, Bash and Starlark, so `dev/` is not a pnpm workspace and is
-invisible to `pnpm build`, `pnpm test` and `pnpm knip`. `biome.json`'s
-`files.includes` carves it out the same way it carves out `apps/site`.
-
 ### When to run checks
 
-- After changing route files in `apps/web/src/routes/`: run
-  `pnpm --filter @virtool/web build` to regenerate
-  `apps/web/src/routeTree.gen.ts` before running type checks. The generator is
-  `@tanstack/router-plugin`, which `tanstackStart()` wires in
-  (`apps/web/vite.config.js`). **Never `tsr generate`.** The standalone
-  `@tanstack/router-cli` has not been published past 1.167.x while the router
-  is on 1.170.x, and that older generator emits no
-  `declare module '@tanstack/react-start'` block — so it silently deletes the
-  app's `Register` types, loosening router typing everywhere with nothing
-  failing.
-- `apps/web/src/routeTree.gen.ts` is checked in. If it shows up in
-  `git status` — even when it looks like unrelated drift from a
-  regen — commit it alongside your other changes. Never leave it
-  out of a commit.
-- Before committing: `pnpm check`, `pnpm typecheck`, and `pnpm knip`.
-- After changing tests: run the specific test file with
-  `pnpm --filter @virtool/web exec vitest run <path>`.
-- Full test suite only when asked or when changes are cross-cutting.
-- Always fix all lint errors. Biome's lint rules are all set to `error` in
-  `biome.json` (there are no warn-level rules), and CI's `checks` job runs
-  `pnpm check` — so `pnpm check` must exit 0 before merging. The main branch is
-  guaranteed to pass `pnpm check` cleanly, so any issues are caused by your
-  changes — never dismiss them as pre-existing.
-- No dead code. CI's `checks` job also runs `pnpm knip` (config in
-  `knip.json`), which fails on unused files, exports, types, and
-  dependencies — so `pnpm knip` must exit 0 before merging. If you add an
-  export with no caller yet, either wire it up or delete it; keep a
-  deliberately-uncalled public export (e.g. an auth policy) by tagging it
-  `@public`. Exports used only within their own file are fine —
-  `ignoreExportsUsedInFile` is on, so drop the `export` keyword rather than
-  the code.
-- Always assume tests pass on `main` — CI enforces it. Any test failures you
-  see locally are caused by your changes, never pre-existing. Do **not** use
-  `git stash` (or any other working-tree-modifying command) to "check what
-  main looks like" — that risks dropping uncommitted work. Just trust that
-  main is green and debug your own changes.
+- Route changes: run `pnpm --filter @virtool/web build` before type-checking.
+  This regenerates the checked-in `apps/web/src/routeTree.gen.ts`; commit it if
+  changed. Never use `tsr generate`: its outdated router CLI removes required
+  Start type declarations.
+- Test changes: run the affected file with
+  `TZ=UTC pnpm --filter @virtool/web exec vitest run <path>`.
+- Before committing: run `pnpm check`, `pnpm typecheck`, and `pnpm knip`.
+- Run the full test suite only when asked or for cross-cutting changes.
+- All checks must pass. Treat failures as caused by your changes because `main`
+  is green; never modify the working tree to compare against `main`.
+- Keep no dead code. Wire up or delete unused exports; tag intentionally public,
+  uncalled exports with `@public`; remove `export` from file-local symbols.
 
 ## Client
 
-### Web app (`apps/web/`)
+### Path aliases
 
-Source lives in `apps/web/src/`. Each top-level directory is a feature
-module:
+Use path aliases for imports across directories. Prefer an existing specific
+alias (`@app/utils`, `@base/Button`, `@samples/queries`) over a long relative
+path or the catch-all `@/*`. If a directory is imported through long relative
+paths repeatedly, consider giving it an alias, but do not create aliases for
+one-off imports or otherwise fill the namespace with narrowly useful names.
 
-- `src/account/` - User account management
-- `src/administration/` - Admin settings
-- `src/analyses/` - Analysis workflows
-- `src/app/` - App shell, routing, theme, shared utilities
-- `src/base/` - Shared UI components (buttons, dialogs, forms, tables, etc.)
-- `src/forms/` - Form components and patterns
-- `src/groups/`, `src/users/` - User groups and users
-- `src/hmm/`, `src/indexes/` - Bioinformatics features
-- `src/otus/`, `src/sequences/`, `src/references/`, `src/samples/` - Core data
-  models
-- `src/subtraction/` - Subtraction management
-- `src/quality/` - Sequence quality charts
-- `src/labels/`, `src/jobs/`, `src/uploads/`, `src/tasks/` - Supporting features
-- `src/nav/`, `src/banner/`, `src/wall/` - Navigation, banners, and the
-  unauthenticated wall
-- `src/server/` - TanStack Start server features (server functions,
-  middleware, db, auth) — every request the SPA makes is served from here
-- `src/tests/` - Test setup, fakes, and server-function mocks
-- `src/types/` - Shared type definitions
-
-Each has a `@name` alias (`@app/utils`, `@base/Button`, `@samples/queries`) —
 `paths` in `apps/web/tsconfig.json` is the authoritative list. `src/types/` and
-`src/routes/` have none and are reached through the catch-all `@/*`, which maps
-to `apps/web/src/*`. Prefer a specific alias over `@/`.
+`src/routes/` intentionally have no specific aliases and are reached through
+`@/*`, which maps to `apps/web/src/*`.
+
+Client-reachable files must import server modules through `@server/*`, never a
+relative path such as `./server/*`. The alias resolves to the server project's
+emitted declarations; a relative import bypasses that remap and pulls server
+source and Node globals into the browser program.
+
+When adding a feature alias, also add it to the `apps/web/src/server/**`
+`noRestrictedImports` list. That list must contain every client feature alias,
+not only aliases currently imported by server code, so server modules cannot
+reach the browser feature tree through a new name.
 
 ### Key libraries
 
@@ -704,19 +533,12 @@ the RPC client reads the body and never the status.
 `server/__tests__/responseStatus.test.ts` fails the build on any of the
 three.
 
-### Client-reachable files import server modules via `@server/*`
+### Server declaration boundary
 
 `apps/web` type-checks as two projects (`pnpm typecheck` runs both):
 `tsconfig.server.json` (Node types) for `src/server`, and
 `tsconfig.app.json` (DOM lib, no Node types) for browser code, which
 resolves `@server/*` to the server project's emitted declarations.
-
-Any file reachable from the browser program — including framework
-entries pulled in by `routeTree.gen.ts`, like `start.ts` — must import
-server modules through the `@server/*` alias, never a relative
-`./server/*` path. A relative import bypasses the declaration remap and
-drags the server source graph (and `@types/node` globals) back into the
-browser program.
 
 Because the app project consumes emitted declarations, anything exported
 from `src/server` must have a type that can be *named* portably. If an
@@ -748,12 +570,10 @@ hold it there:
   at runtime.
 - `apps/web/src/server/**` may not import from the browser feature tree,
   because a server file reaching into a DOM-typed module breaks the
-  server project at a distance. **Every** feature alias is listed, plus
-  the `@/*` catch-all that would otherwise reach the same modules under
-  another name — not merely the aliases something imports today. A
-  partial list let `labels/data.ts` read `DEFAULT_LABEL_COLOR` from
-  `@labels/constants` with nothing to catch it. Add the alias when you
-  add a feature directory.
+  server project at a distance. The restricted list includes `@/*` so
+  the catch-all cannot reach the same modules under another name. A
+  partial list once let `labels/data.ts` read `DEFAULT_LABEL_COLOR` from
+  `@labels/constants` with nothing to catch it.
 
 The packages need no rule of their own for the second: `packages/**` has
 no `@<feature>/*` path mapping at all, so a browser feature module is not

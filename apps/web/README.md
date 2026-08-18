@@ -285,6 +285,17 @@ counter — real instrumentation, not a read of existing state.
 
 ## Development
 
+### Server-only package imports
+
+`@virtool/data` and `@virtool/storage` may be imported by server-side apps,
+including `apps/jobs-api`, `apps/tasks`, and the workflow apps. Within the web
+app, however, they must not be imported into client-reachable code. A Biome
+`noRestrictedImports` override enforces this in `src/**` outside `src/server/**`.
+
+The `web` Vitest project also aliases `@server/composition`, `@server/config`,
+and `@virtool/data/db/pg` to a guard that throws if one survives the client
+transform.
+
 ### Working on `virtool-ui`
 
 Use this guide to create your environment when you are contributing to `virtool/ui`.
