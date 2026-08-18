@@ -106,6 +106,75 @@ with `useRootFontSize` from `@app/hooks`. Known exceptions are the virtualized
 row heights in `NuvsList` and `IsolateList`, and the avatar text in
 `InitialIcon`.
 
+## Server development
+
+### Layers and dependencies
+
+A feature flows `functions.ts` → optional `service.ts` → `data.ts`:
+
+- `functions.ts` is the TanStack Start boundary. It validates input, applies
+  authorization, shapes the wire payload, and maps expected failures.
+- `service.ts` coordinates multiple data operations when needed.
+- `data.ts` contains framework-free domain and persistence code and lives in
+  `packages/data/src/<feature>/`.
+
+Inject data-layer dependencies in the order `db`, `storage`, `logger`; server
+functions obtain them from `@server/composition`. Use `DbOrTx` for helpers that
+may run in a transaction. Build validators from `@server/validation` primitives
+and extend existing schemas instead of redeclaring their fields.
+
+Expected 4xx outcomes set the response status and throw `ClientError` from
+`@server/errors`; unexpected failures throw normally. Server functions must
+not set 204, 205, or 304 because TanStack Start serializes an RPC body. Return
+`null` with 200 for deletion instead.
+
+### Server and client boundaries
+
+`apps/web` type-checks server and browser code as separate projects. Browser
+code imports server declarations through `@server/*`; server code must not
+import the browser feature tree. Anything exported from `src/server` needs a
+portable, explicitly nameable type when inference would expose a transitive
+dependency.
+
+Shared wire shapes belong in `@virtool/contracts`. Search there before adding
+a type, import its names directly rather than re-exporting them through a
+feature, and keep data-only option/value types in `@virtool/data`. Shape and
+narrow results in `functions.ts`; do not repeat that parsing in React Query
+`select` callbacks. Use `JsonObject` or `JsonValue`, not `unknown`, for opaque
+JSON returned by a server function.
+
+TanStack Start preserves `Date` values through its serializer, so server
+functions return dates directly. Raw JSON contracts use `z.coerce.date()`.
+Do not manually convert timestamps to ISO strings; timestamps embedded in
+legacy JSONB blobs are the documented exception.
+
+See [the architecture guide](../../docs/architecture.md) for the full boundary
+rationale.
+
+### Authorization and raw routes
+
+Every exported server function declares exactly one policy from
+`@server/auth/policy`: `open()`, `authenticated()`, `adminRole(role)`, or
+`permission(name)`. Read the resolved session from `context.session`; do not
+perform a second session lookup. Row-dependent authorization remains in the
+handler. Register each new `functions.ts` module in
+`server/__tests__/authorization.test.ts`.
+
+Keep `createServerFn` at the definition site. The Vite transform recognizes
+the call syntactically and will not recognize a wrapper factory.
+
+Use a raw `createFileRoute` handler only when RPC cannot provide the required
+transport: upload progress, streaming downloads, SSE, health probes, or
+Prometheus. Raw handlers do not receive policy middleware and must enforce
+their own authorization. `requireAuthenticatedRequest` supports sessions and
+API keys; server functions remain session-only. The Sentry tunnel and health
+probes are deliberately public, while `/metrics` uses its bearer-token gate.
+
+Uploads and downloads must stream. Resolve a requested file to a database row
+or explicit whitelist first, then use that row's `storage_key`; never construct
+a key from URL parameters. Use the row's display name for
+`Content-Disposition`.
+
 ## Using in Production
 
 The default CSP configuration expects API requests to be made to the same domain as the
