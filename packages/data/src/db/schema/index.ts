@@ -1,8 +1,8 @@
-// Drizzle table definitions are re-exported from this module. They describe
-// existing tables whose schema is owned by the upstream Python service
-// (Alembic + SQLAlchemy migrations) — Drizzle does not push migrations from
-// here. Each feature owns a sibling file (e.g. `labels.ts`) and is added to
-// the `export *` list as it lands.
+// Drizzle table definitions are re-exported from this module. It is the schema
+// entry point `drizzle.config.ts` names, so a table missing from the `export *`
+// list is missing from the snapshot every migration is generated against. Each
+// feature owns a sibling file (e.g. `labels.ts`) and is added to the list as it
+// lands.
 export * from "./analyses";
 export * from "./apiKeys";
 export * from "./caches";

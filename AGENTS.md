@@ -302,8 +302,9 @@ Three rules it carries:
   with the repo root as its context and Tilt reads that file to decide what it
   watches, so without those rules an edit to a manifest rebuilds every
   live-edited image.
-- **There is no migration target.** Migrations are Python's; the migration Job
-  runs the published `ghcr.io/virtool/virtool` image and nothing builds it here.
+- **There is no separate migration target.** Migrations temporarily live in the
+  `tasks` image, and the migration Job runs its `node dist/migrate.mjs`
+  entrypoint against `packages/data/drizzle`.
 
 It is YAML, Bash and Starlark, so `dev/` is not a pnpm workspace and is
 invisible to `pnpm build`, `pnpm test` and `pnpm knip`. `biome.json`'s
@@ -1468,14 +1469,16 @@ The TypeScript server reads and writes **Postgres only** (via
 Drizzle), through `@virtool/data`: the schema mirror is
 `packages/data/src/db/schema/`, the pool comes from `createDb`
 (`@virtool/data/db/pg`), and every query lives in a
-`packages/data/src/<feature>/data.ts`. Python is the sole owner of schema
-and migrations — TS code reads and writes against the schema Python
-defines. Mirror Python-side column defaults with Drizzle `.$defaultFn()`,
-never `.default()` — the real columns have no `server_default`, so
-`.default()` inserts `null`.
+`packages/data/src/<feature>/data.ts`. **This side owns the schema**:
+`packages/data/drizzle` holds the migrations, `drizzle-kit generate`
+writes them from the mirror, and `apps/tasks`' `migrate` entrypoint
+applies them. Python still runs against the same database, so a schema
+change has to leave it working. Give a column Python defaults on the ORM
+side a Drizzle `.$defaultFn()`, never `.default()` — those columns have
+no `server_default`, so `.default()` inserts `null`.
 
 **Mirror a column's constraint, and only its constraint.** A `text`
-column Python closes with a CHECK constraint is typed
+column closed by a CHECK constraint is typed
 `text("state").$type<JobState>()`, with the constraint named in a comment
 — `$type` asserts rather than validates, which is exactly right when the
 database is doing the enforcing. A column with **no** constraint stays
@@ -1495,25 +1498,31 @@ auto-names a constraint production does not have, and because migration
 until a much later migration emits SQL against a constraint that does not
 exist. `schema/foreignKeys.test.ts` pins all 54.
 
-Three `pgEnum` declarations (`messagecolor`, `indextype`,
-`session_type_enum`) describe a Postgres enum where the real column is
-`text` plus a CHECK. Each carries a comment saying so. They are inert —
-nothing generates migrations from this side — so leave them alone rather
-than restructuring. `subtraction_files.type` is the opposite case and is
-genuinely backed by the `subtractiontype` enum.
+**No closed column is a native Postgres enum.** Every one is `text` plus a
+CHECK, because an enum is the worse mechanism once Drizzle owns
+migrations: adding a member takes `ALTER TYPE ... ADD VALUE`, which
+cannot run inside a transaction block, so the migration carrying it
+cannot roll back with the rest of its batch. Name the constraint
+`ck_{table}_{column}` and spell its members out in the `sql` template —
+the two older CHECKs named `session_type_valid` and
+`administrator_role_valid` are the holdouts, not the pattern. The only
+`pgEnum` declarations left are `action` and `resourcetype` in
+`vestigial.ts`; they serve the dead `permissions` table alone and go with
+it, so do not convert them.
 
 Postgres is now Virtool's sole data store — Python removed MongoDB
 entirely, so every domain's records live in Postgres and there is no
 Mongoose / Mongo-driver layer here. A domain not yet reachable from the
 TS server is missing only its Drizzle mirror and server functions, not
-its data — build those against the tables Python already defines.
+its data — build those against the tables production already carries.
 
 **Serve a legacy-shaped table on its own shape; do not renormalize it.**
 The OTU domain writes `legacy_otus.data` as verbatim Mongo — isolates
 embedded, `_id` keys — because history diffs address that document
 positionally and Python still writes the same tables. Reshaping it from
 this side misapplies every diff already recorded and corrupts the
-analyses read path. Renormalizing is a Python-side migration.
+analyses read path. Renormalizing is a migration of its own, and Python
+has to be ready for the new shape before one lands.
 
 **An index build is two writes with a task between them, and this side
 runs both.** `createIndex` (`@virtool/data/indexes/data`) inserts the

@@ -8,6 +8,13 @@
       "when": 1786744254751,
       "tag": "0000_baseline",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1787081978436,
+      "tag": "0001_enum_check_constraints",
+      "breakpoints": true
     }
   ]
 }

@@ -1,6 +1,4 @@
-// Read-only mirror of the `sessions` table managed by the upstream Python
-// service via Alembic. Do not generate or push migrations from this side. Keep
-// columns in sync with `../../../../../../virtool/virtool/sessions/models.py`.
+// Schema for the `sessions` table.
 
 import type { SessionType } from "@virtool/contracts";
 import { sql } from "drizzle-orm";

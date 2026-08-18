@@ -1,6 +1,4 @@
-// Mirror of the `indexes` and `index_files` tables managed by the upstream
-// Python service via Alembic. Do not generate or push migrations from this side.
-// Keep in sync with `../../../../../../virtool/virtool/indexes/sql.py`.
+// Schema for the `indexes` and `index_files` tables.
 //
 // Both tables are written from here — starting a build inserts the `indexes`
 // row and the `create_index` task registers the artifact it produces — so every

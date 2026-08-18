@@ -1323,8 +1323,9 @@ periodic ones is the spawner's job.
 A claim is a lease with a deadline, and the deadline is encoded on
 `acquired_at` itself: a claim is live while `acquired_at` is within
 `TASK_LEASE_SECONDS` of now, and renewing it is a write to that same column.
-There is no lease column, no expiry column and no DDL — the `tasks` table is
-Python's, owned through Alembic, and Python still writes it.
+There is no lease column, no expiry column and no DDL — Python still writes
+the `tasks` table, so a column this side added for a lease would be one
+Python neither sets nor honours.
 
 | Constant | Value | Meaning |
 | --- | --- | --- |

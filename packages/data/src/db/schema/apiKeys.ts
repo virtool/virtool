@@ -1,6 +1,4 @@
-// Read-only mirror of the `api_keys` table managed by the upstream Python
-// service via Alembic. Do not generate or push migrations from this side. Keep
-// the columns in sync with `../../../../../../virtool/virtool/account/sql.py`.
+// Schema for the `api_keys` table.
 
 import type { Permissions } from "@virtool/contracts";
 import {

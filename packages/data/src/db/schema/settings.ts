@@ -1,13 +1,11 @@
-// Mirror of the `settings` table managed by the upstream Python service via
-// Alembic. Do not generate or push migrations from this side. Keep the columns
-// in sync with `../../../../../../virtool/virtool/settings/sql.py`.
+// Schema for the `settings` table.
 //
-// The table is a singleton: exactly one row, pinned to `id = 1`. Python seeds
-// it in the `d16de6e24788` migration and re-seeds it at startup via
-// `SettingsData.ensure()`. No column has a server default — the defaults live
-// in Python's `Settings` model and are written into the row on insert, which is
-// why `DEFAULT_SETTINGS` in `../../settings/data.ts` mirrors them rather than
-// this file. `enable_api` is the one exception, for the reason given below.
+// The table is a singleton: exactly one row, pinned to `id = 1`. Python seeded
+// it and still re-seeds it at startup via `SettingsData.ensure()`. No column
+// has a server default — every default is written into the row on insert, which
+// is why `DEFAULT_SETTINGS` in `../../settings/data.ts` carries them rather
+// than this file. `enable_api` is the one exception, for the reason given
+// below.
 
 import { sql } from "drizzle-orm";
 import {

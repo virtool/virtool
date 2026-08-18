@@ -1,8 +1,4 @@
-// Read-only mirror of the `groups` and `user_groups` tables managed by the
-// upstream Python service via Alembic. Do not generate or push migrations
-// from this side. Keep the columns in sync with
-// `../../../../../../virtool/virtool/groups/pg.py` and
-// `../../../../../../virtool/virtool/users/pg.py`.
+// Schema for the `groups` and `user_groups` tables.
 
 import type { Permissions } from "@virtool/contracts";
 import { sql } from "drizzle-orm";

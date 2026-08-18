@@ -1,8 +1,4 @@
-// Read-only mirror of the `analyses` table and its join / file tables, managed
-// by the upstream Python service via Alembic. Do not generate or push
-// migrations from this side. Keep the columns in sync with
-// `../../../../../../virtool/virtool/analyses/sql.py` and
-// `../../../../../../virtool/virtool/blast/sql.py`.
+// Schema for the `analyses` table and its join / file tables.
 //
 // Python's `analysis_results` / `SQLAnalysisResult` table is mirrored in
 // `./vestigial.ts` instead — nothing reads it and its own docstring calls it
@@ -13,7 +9,7 @@
 // missing from the migration snapshot, so nothing could generate the migration
 // that drops it.
 
-import { AnalysisFormat } from "@virtool/contracts";
+import type { AnalysisFormat } from "@virtool/contracts";
 import { sql } from "drizzle-orm";
 import {
 	bigint,
@@ -24,7 +20,6 @@ import {
 	integer,
 	json,
 	jsonb,
-	pgEnum,
 	pgTable,
 	primaryKey,
 	serial,
@@ -40,13 +35,6 @@ import { legacySamples } from "./samples";
 import { subtractions } from "./subtractions";
 import { tasks } from "./tasks";
 import { users } from "./users";
-
-// `z.enum().options` widens to an array, losing the non-empty tuple `pgEnum`
-// takes. Cast rather than restate the members, which would be free to disagree.
-export const analysisFormat = pgEnum(
-	"analysisformat",
-	AnalysisFormat.options as [AnalysisFormat, ...AnalysisFormat[]],
-);
 
 export const analyses = pgTable(
 	"analyses",
@@ -142,7 +130,7 @@ export const analysisFiles = pgTable(
 		id: serial("id").primaryKey(),
 		analysis_id: bigint("analysis_id", { mode: "number" }).notNull(),
 		description: text("description"),
-		format: analysisFormat("format"),
+		format: text("format").$type<AnalysisFormat>(),
 		name: text("name"),
 		name_on_disk: text("name_on_disk"),
 		size: bigint("size", { mode: "number" }),
@@ -160,6 +148,10 @@ export const analysisFiles = pgTable(
 		}).onDelete("cascade"),
 		unique("analysis_files_name_on_disk_key").on(table.name_on_disk),
 		unique("uq_analysis_files_storage_key").on(table.storage_key),
+		check(
+			"ck_analysis_files_format",
+			sql`${table.format} in ('sam', 'bam', 'fasta', 'fastq', 'csv', 'tsv', 'json')`,
+		),
 	],
 );
 

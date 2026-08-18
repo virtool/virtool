@@ -1,6 +1,4 @@
-// Read-only mirror of the `uploads` table managed by the upstream Python
-// service via Alembic. Do not generate or push migrations from this side. Keep
-// the columns in sync with `../../../../../../virtool/virtool/uploads/sql.py`.
+// Schema for the `uploads` table.
 
 import type { UploadType } from "@virtool/contracts";
 import { sql } from "drizzle-orm";

@@ -11,24 +11,37 @@ This document is the map: who owns schema changes, which domains the TS
 server can already reach, and the Postgres conventions a TS server
 feature has to respect.
 
-## Python owns schema and migrations
+## This side owns schema and migrations
 
-The Python repo (`../virtool`) is the only process that applies schema
-changes — Alembic migrations against Postgres. The TypeScript data layer
-in `@virtool/data` (`packages/data/src/`) reads and writes through
-Drizzle against the Postgres schema Python defines; it doesn't ship its
-own migrations.
+Schema changes are made here. `packages/data/src/db/schema/` is the
+definition, `pnpm --filter @virtool/data db:generate` writes the
+migration into `packages/data/drizzle/`, and `apps/tasks`' second
+entrypoint (`node dist/migrate.mjs`, `apps/tasks/src/migrate.ts`)
+applies it — in the dev cluster as a Job, and in production as the same
+image. Migration `0000_baseline` was generated from this schema,
+hand-checked against a `pg_dump --schema-only` of production, and
+stamped as already-applied rather than run; every migration after it
+runs for real.
 
-When a migrating endpoint needs a schema change:
+Making a schema change:
 
-1. Land the schema change in Python's Alembic tree first. Deploy it.
-2. Update the Drizzle schema in `packages/data/src/db/schema/` to
-   match.
-3. Then migrate the endpoint.
+1. Edit the table in `packages/data/src/db/schema/`.
+2. Run `db:generate` and **read the SQL it emits**. It is generated from
+   a diff, not from intent, and the ordering of statements within one
+   migration is its own guess.
+3. Apply both to a scratch database — the baseline, then the new
+   migration, against seeded rows — before committing. A migration is
+   applied inside a transaction, so anything that cannot run in one
+   (`ALTER TYPE ... ADD VALUE`, `CREATE INDEX CONCURRENTLY`) has to be
+   reworked rather than merged.
+4. Commit the `.sql`, its `meta/*_snapshot.json` and the updated
+   `meta/_journal.json` together. The snapshot is what the next
+   `db:generate` diffs against; without it the following migration is
+   generated against the wrong starting shape.
 
-This ordering is non-negotiable as long as Python is in production —
-TS code lagging the schema is fine, but Python lagging the schema
-breaks the deployed app.
+**Python is still deployed against the same database**, so a schema
+change has to leave it working. Dropping or narrowing something Python
+still reads breaks the deployed app; adding, and widening, do not.
 
 ### Column defaults: use `.$defaultFn()`, never `.default()`
 
@@ -44,7 +57,9 @@ yields `null` — a not-null violation on required columns, or a silent
 Mirror a Python-side default with `.$defaultFn(() => value)`, which
 injects the value client-side at insert time (the true analog of
 SQLAlchemy's `default=`) and stays out of the DDL. Reserve `.default()`
-for a column that genuinely has a `server_default` in Python.
+for a column that genuinely carries a `server_default` — no existing one
+does, and adding one to a column Python also inserts into would put two
+opinions about the default in play.
 
 ### Foreign keys: declare them table-level, with an explicit name
 
@@ -71,11 +86,11 @@ table declared with `.references()` fails the suite by name.
 The mirror's one job is fidelity, so a column's TypeScript type has to
 say exactly what the database enforces — no more and no less.
 
-**Closed by a CHECK constraint → `.$type<Union>()`.** Python spells
-several enumerations as a `text` column plus a `CheckConstraint`, so a
-value outside the union cannot reach the column without an Alembic
-migration. `$type` is an *assertion*, not validation, which is precisely
-what the constraint makes safe. Name the constraint in a comment so the
+**Closed by a CHECK constraint → `.$type<Union>()`.** Every enumeration
+in the schema is a `text` column plus a CHECK constraint, so a value
+outside the union cannot reach the column without a migration. `$type` is
+an *assertion*, not validation, which is precisely what the constraint
+makes safe. Name the constraint in a comment so the
 next reader can check the claim:
 
 ```ts
@@ -87,8 +102,13 @@ state: text("state").$type<JobState>().notNull(),
 The constrained columns today are `jobs.state` (`ck_jobs_state`),
 `uploads.type` (`ck_uploads_type`), `instance_messages.color`
 (`ck_instance_messages_color`), `index_files.type`
-(`ck_index_files_type`) and `sessions.session_type`
-(`session_type_valid`).
+(`ck_index_files_type`), `analysis_files.format`
+(`ck_analysis_files_format`), `subtraction_files.type`
+(`ck_subtraction_files_type`), `settings.sample_group`
+(`ck_settings_sample_group`), `sessions.session_type`
+(`session_type_valid`) and `users.administrator_role`
+(`administrator_role_valid`). The last two are the holdouts from the
+`ck_{table}_{column}` naming convention, not an alternative to it.
 
 **Unconstrained → `string`.** `jobs.workflow` has no CHECK constraint;
 Python's `Workflow` is an application-level enum only. So a row can name
@@ -103,15 +123,21 @@ does not declare its own copy. `packages/data` previously carried a
 second `JOB_STATES`/`JobState` beside the contracts one — two definitions
 of the same five strings, free to disagree.
 
-**Three `pgEnum` declarations are historical.** `messagecolor`,
-`indextype` and `session_type_enum` describe a Postgres enum type that
-upstream replaced with `text` plus a CHECK constraint. The values are
-still right, and nothing generates migrations from this side, so the
-mismatch never reaches a real database — each carries a comment saying
-so, and none should be restructured. `subtraction_files.type` is the
-opposite case and is easy to mistake for a fourth: the `subtractiontype`
-enum was *never* replaced, so that column really is a native Postgres
-enum and its `$type` is backed.
+**No live column is a native Postgres enum.** `analysis_files.format`
+and `subtraction_files.type` were the last two, backed by the
+`analysisformat` and `subtractiontype` types; `0001_enum_check_constraints`
+altered both columns to `text`, added their CHECKs and dropped the types.
+The reason is the migration mechanism rather than the modelling: adding a
+member to an enum takes `ALTER TYPE ... ADD VALUE`, which Postgres refuses
+inside a transaction block, so a migration carrying one cannot roll back
+with the rest of its batch; removing or renaming one takes a full type
+swap. A CHECK is one `DROP CONSTRAINT` / `ADD CONSTRAINT` pair, and it is
+transactional.
+
+Two `pgEnum` declarations survive, `action` and `resourcetype` in
+`vestigial.ts`. They are reachable only from `permissions`, a table
+nothing reads, and are dropped along with it rather than converted —
+there is no point spending a type swap on a column that is going away.
 
 ## What the TS server can reach today
 
@@ -130,12 +156,11 @@ joining across those tables.
 
 ## Building a feature against a Postgres domain
 
-With every domain in Postgres, building a TS server feature for a
-partial-mirror or not-started domain is ordinary Drizzle work: mirror
-the tables (and, for a partial mirror, the remaining columns) Python
-defines into `packages/data/src/db/schema/`, then write the feature's
-`data.ts` there and its `functions.ts` in `apps/web/src/server/`. Two
-things carry over from the migration:
+With every domain in Postgres and every production table already
+declared in `packages/data/src/db/schema/`, building a TS server feature
+for a domain this side does not serve yet is ordinary Drizzle work: write
+the feature's `data.ts` beside the schema and its `functions.ts` in
+`apps/web/src/server/`. Two things carry over from the migration:
 
 - **Legacy-shaped tables.** Domains imported from Mongo (`legacy_otus`,
   `legacy_references`, `legacy_samples`, `legacy_sequences`,
@@ -232,8 +257,8 @@ Two columns matter for the handoff:
 - **`indexes.storage_key`** is dead. Keys were once composed as
   `indexes/{storage_key}/{file name}`; each `index_files` row now records
   its own complete key instead. The column is still `NOT NULL`, so the
-  insert has to fill it — Python retains it until a cleanup revision, so
-  a rolling deploy never has readers of a dropped column — but nothing
+  insert has to fill it — it stays until a cleanup migration, so a
+  rolling deploy never has readers of a dropped column — but nothing
   reads it. `indexes.otus_json_storage_key` is the one key still held on
   the index itself: the compressed OTU JSON is materialized on demand and
   deliberately has no `index_files` row, because one would publish it in
@@ -243,21 +268,13 @@ Two columns matter for the handoff:
 a build is backed by at most one of a legacy workflow job or a task. A
 build started from here always sets `task_id` and leaves `job_id` null.
 
-## When we own Postgres migrations from TS
+## Migration tooling
 
-Today Python owns the Postgres schema via Alembic and the TS side
-mirrors it by hand (`packages/data/src/db/schema/`). Eventually,
-once enough domains have migrated, the TS side will take over schema
-ownership. Notes for that day:
-
-- **Baseline against production.** The first `drizzle-kit generate`
-  against an empty database will not be byte-identical to what Alembic
-  produced. Capture the live shape with `pg_dump --schema-only` and
-  hand-check the generated migration against it, then stamp the live DB
-  as already-applied rather than running the generated migration cold.
-  Checked against production, index naming, default expressions and enum
-  value ordering all came out identical; **foreign key names** were the
-  drift, on all 54 of them — see "Foreign keys" above.
+- **The baseline is stamped, not run.** `0000_baseline` describes
+  production as it already was. Its foreign key names were the one point
+  of drift from what Drizzle generates by default, on all 54 of them —
+  see "Foreign keys" above; index naming, default expressions and enum
+  value ordering all matched.
 - **`casing: 'snake_case'`** in `drizzle.config.ts`. It is set, but it
   decides nothing today: every column in the mirror passes its name
   explicitly, so there is nothing for the flag to infer. It is a

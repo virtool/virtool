@@ -1,6 +1,4 @@
-// Read-only mirror of the `jobs` table, managed by the upstream Python service
-// via Alembic. Do not generate or push migrations from this side. Keep the
-// columns in sync with `../../../../../../virtool/virtool/jobs/pg.py`.
+// Schema for the `jobs` table.
 //
 // The legacy Mongo `args` field is not a column. A job's resources are all
 // found on the owning rows via a reverse `job_id` foreign key —
