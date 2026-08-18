@@ -1,51 +1,18 @@
 import { getErrorStatus } from "@app/queryErrors";
 import { getWorkflowDisplayName } from "@app/utils";
-import Alert from "@base/Alert";
 import ContainerNarrow from "@base/ContainerNarrow";
 import LoadingPlaceholder from "@base/LoadingPlaceholder";
 import NotFound from "@base/NotFound";
-import RelativeTime, { useRelativeTime } from "@base/RelativeTime";
 import ViewHeader from "@base/ViewHeader";
 import ViewHeaderAttribution from "@base/ViewHeaderAttribution";
 import ViewHeaderTitle from "@base/ViewHeaderTitle";
 import { useFetchIndex } from "@indexes/queries";
 import { getRouteApi } from "@tanstack/react-router";
-import type { JobState } from "@virtool/contracts";
 import { useFetchJob } from "../queries";
 import JobArgs from "./JobArgs";
 import JobSteps from "./JobSteps";
 
 const routeApi = getRouteApi("/_authenticated/jobs/$jobId");
-
-function getAlertColor(
-	state: JobState,
-): "blue" | "green" | "orange" | "red" | "purple" {
-	switch (state) {
-		case "failed":
-			return "red";
-		case "pending":
-			return "purple";
-		case "running":
-			return "green";
-		case "succeeded":
-			return "blue";
-		case "cancelled":
-			return "orange";
-	}
-}
-
-function PendingJobAlert({ createdAt }: { createdAt: Date }) {
-	const pendingTime = useRelativeTime(createdAt, { addSuffix: false });
-
-	return (
-		<Alert color="purple">
-			<div>
-				<div>Job pending for {pendingTime}.</div>
-				<div className="mt-1">The job is waiting for an available runner.</div>
-			</div>
-		</Alert>
-	);
-}
 
 /**
  * The job detailed view
@@ -78,7 +45,6 @@ export default function JobDetail() {
 		return <LoadingPlaceholder />;
 	}
 
-	const color = getAlertColor(data.state);
 	const workflow = getWorkflowDisplayName(data.workflow);
 	const args = index
 		? { ...data.args, ref_id: String(index.reference.id) }
@@ -91,19 +57,6 @@ export default function JobDetail() {
 				<ViewHeaderAttribution time={data.createdAt} user={data.user.handle} />
 			</ViewHeader>
 			<JobArgs workflow={data.workflow} args={args} />
-			{data.state === "pending" ? (
-				<PendingJobAlert createdAt={data.createdAt} />
-			) : (
-				<Alert color={color}>
-					Job {data.state}
-					{data.finishedAt && (
-						<>
-							&nbsp;
-							<RelativeTime time={data.finishedAt} />
-						</>
-					)}
-				</Alert>
-			)}
 			<JobSteps
 				finishedAt={data.finishedAt}
 				state={data.state}

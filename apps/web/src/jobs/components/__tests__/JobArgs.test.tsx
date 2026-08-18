@@ -1,4 +1,6 @@
 import { screen } from "@testing-library/react";
+import { createFakeAnalysisMinimal } from "@tests/fake/analyses";
+import { analysisServerFnMocks } from "@tests/server-fn/analyses";
 import { renderWithRouter } from "@tests/setup";
 import { describe, expect, it } from "vitest";
 import JobArgs from "../JobArgs";
@@ -21,22 +23,6 @@ const workflows = [
 		workflow: "create_subtraction",
 		args: { subtraction_id: "sub1" },
 		links: [{ name: "sub1", href: "/subtractions/sub1" }],
-	},
-	{
-		workflow: "pathoscope",
-		args: { sample_id: "smp1", analysis_id: "9254" },
-		links: [
-			{ name: "smp1", href: "/samples/smp1" },
-			{ name: "9254", href: "/samples/smp1/analyses/9254" },
-		],
-	},
-	{
-		workflow: "nuvs",
-		args: { sample_id: "smp1", analysis_id: "9254" },
-		links: [
-			{ name: "smp1", href: "/samples/smp1" },
-			{ name: "9254", href: "/samples/smp1/analyses/9254" },
-		],
 	},
 ];
 
@@ -72,6 +58,32 @@ describe("<JobArgs />", () => {
 				);
 			}
 			expect(screen.queryByText("extra_param")).not.toBeInTheDocument();
+		},
+	);
+
+	it.each<"pathoscope" | "nuvs">(["pathoscope", "nuvs"])(
+		"should render the analysis item for %s jobs",
+		async (workflow) => {
+			const analysis = createFakeAnalysisMinimal({
+				id: 9254,
+				sample: { id: 123, name: "Sample 123" },
+				workflow,
+			});
+			analysisServerFnMocks.getAnalysisFn.mockResolvedValue(analysis);
+
+			await renderWithRouter(
+				<JobArgs
+					workflow={workflow}
+					args={{ sample_id: "123", analysis_id: "9254" }}
+				/>,
+			);
+
+			expect(
+				await screen.findByRole("link", {
+					name: workflow === "pathoscope" ? "Pathoscope" : "Nuvs",
+				}),
+			).toHaveAttribute("href", "/samples/123/analyses/9254");
+			expect(screen.queryByText("Arguments")).not.toBeInTheDocument();
 		},
 	);
 

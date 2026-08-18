@@ -1,5 +1,6 @@
 import { useNow } from "@app/hooks";
 import BoxGroup from "@base/BoxGroup";
+import BoxGroupSection from "@base/BoxGroupSection";
 import type { JobState, JobStep } from "@virtool/contracts";
 import JobStepItem from "./JobStep";
 
@@ -17,6 +18,19 @@ export default function JobSteps({ finishedAt, state, steps }: JobStepsProps) {
 	);
 
 	if (claimedSteps.length === 0) {
+		if (state === "pending") {
+			return (
+				<BoxGroup>
+					<BoxGroupSection className="py-6">
+						<h2 className="font-medium text-base">Waiting for a runner</h2>
+						<p className="mt-1 mb-0 text-gray-600">
+							This job is queued. Its steps will appear when a runner claims it.
+						</p>
+					</BoxGroupSection>
+				</BoxGroup>
+			);
+		}
+
 		return null;
 	}
 

@@ -4,6 +4,20 @@ import { renderWithProviders } from "@tests/setup";
 import { describe, expect, it } from "vitest";
 
 describe("<JobSteps />", () => {
+	it("renders an informative box before the job is claimed", () => {
+		renderWithProviders(
+			<JobSteps finishedAt={null} state="pending" steps={null} />,
+		);
+
+		expect(screen.getByText("Waiting for a runner")).toBeInTheDocument();
+		expect(
+			screen.getByText(
+				"This job is queued. Its steps will appear when a runner claims it.",
+			),
+		).toBeInTheDocument();
+		expect(screen.queryByRole("table")).not.toBeInTheDocument();
+	});
+
 	it("should render", () => {
 		renderWithProviders(
 			<JobSteps
@@ -39,6 +53,11 @@ describe("<JobSteps />", () => {
 		).toBeInTheDocument();
 		expect(screen.getByText("1 minute")).toBeInTheDocument();
 		expect(screen.getByText("2 minutes")).toBeInTheDocument();
+		const runningRow = screen.getByText("Build index").closest("tr");
+		expect(runningRow?.querySelector("svg")).toHaveClass(
+			"lucide-loader-circle",
+			"animate-spin",
+		);
 	});
 
 	it("renders claimed steps that have not started", () => {

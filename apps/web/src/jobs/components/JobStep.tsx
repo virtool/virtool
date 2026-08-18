@@ -3,7 +3,7 @@ import { formatDate, formatRoundedDuration, formatTime } from "@app/date";
 import Markdown from "@base/Markdown";
 import { useHydrated } from "@tanstack/react-router";
 import type { JobState, JobStep } from "@virtool/contracts";
-import { CircleDashed } from "lucide-react";
+import { CircleDashed, LoaderCircle } from "lucide-react";
 import JobStateIcon from "./JobStateIcon";
 
 type JobStepProps = {
@@ -37,7 +37,12 @@ export default function JobStepItem({ endedAt, step, state }: JobStepProps) {
 			})}
 		>
 			<td className="px-4 py-3 align-top">
-				{state === "pending" ? (
+				{state === "running" ? (
+					<LoaderCircle
+						className="block origin-center animate-spin stroke-blue-600"
+						size={16}
+					/>
+				) : state === "pending" ? (
 					<CircleDashed className="stroke-current" size={16} />
 				) : (
 					<JobStateIcon state={state} />
