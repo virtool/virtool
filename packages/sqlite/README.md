@@ -57,5 +57,5 @@ query, and `generate.py` is the provenance record. **Never edit a golden to
 match this implementation's output** — that converts a caught divergence into a
 permanent one.
 
-See [docs/indexes.md](../../docs/indexes.md) for the measurements
+See [docs/references.md](../../docs/references.md) for the measurements
 behind the streaming and bulk-load decisions.
