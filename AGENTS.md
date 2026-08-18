@@ -360,24 +360,6 @@ axe-core accessibility helper, and the shared-fixtures rule.
 
 ### Documentation
 
-`AGENTS.md` is the index. It carries the rules an agent needs to
-start work — terse statements with pointers into `docs/` for the
-full treatment. Detailed explanations, examples, and rationale live
-in `docs/`.
-
-**Every app and every package has a `README.md`, and it is the human
-entry point, not a third copy of the rules.** An app's says what the app
-is, its port and image, and its commands; a package's says what it
-exports and where it may be imported from. Both then carry the decisions
-particular to that directory which no shared doc owns, and point at the
-`docs/` leaves — a README is the one place allowed to name a doc,
-because it is an entry point rather than a leaf.
-
-**`AGENTS.md` is updated in the same commit as the change that
-invalidates it.** It is the first file every agent and contributor
-reads. A stale line does not merely fail to help — it actively
-misleads, sending readers to deleted files and dead APIs.
-
 Before committing, check whether your change contradicts anything in
 this file. It does if you have:
 
