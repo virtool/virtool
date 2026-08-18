@@ -23,6 +23,6 @@
          }
     ]
   ],
-  "repositoryUrl": "https://github.com/virtool/virtool-ui.git",
+  "repositoryUrl": "https://github.com/virtool/virtool.git",
   "tagFormat": "${version}"
 }
