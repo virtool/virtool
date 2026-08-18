@@ -12,10 +12,11 @@
 // `@virtool/contracts`, which is where the mappers that publish them live. A
 // local copy of either would be free to disagree with the mapper reading it.
 
-import type {
-	JobState,
-	StoredJobClaim,
-	StoredJobStep,
+import {
+	type JobState,
+	NON_TERMINAL_JOB_STATES,
+	type StoredJobClaim,
+	type StoredJobStep,
 } from "@virtool/contracts";
 import { sql } from "drizzle-orm";
 import {
@@ -66,25 +67,18 @@ export const jobs = pgTable(
 		index("ix_jobs_state_created_at").on(table.state, table.created_at),
 		index("ix_jobs_user_id_state").on(table.user_id, table.state),
 		index("ix_jobs_workflow_state").on(table.workflow, table.state),
-		/* The jobs API's queue metrics, served without touching the heap.
-
-		   `readJobCounts` and `readOldestPendingJobAges` restrict to the
-		   non-terminal states so their cost tracks the live queue rather than every
-		   job ever run. The full indexes above bound the rows examined but not the
-		   heap fetches: neither carries `workflow` alongside `state`, so both reads
-		   visit one page per matching row. This carries all three columns behind a
-		   predicate matching their `WHERE` exactly, which makes each an index-only
-		   scan over an index whose size is the queue's, and puts `readJobCounts`'
-		   rows in grouping order and `readOldestPendingJobAges`' in `min` order
-		   with no sort. The claim select reads it too — `(state, workflow,
-		   created_at)` is its filter and its ordering.
-
-		   Terminal rows drop out of it, so it stays cache-resident however much
-		   history accumulates, and `ck_jobs_state` pins the five legal states so
-		   the predicate cannot silently stop matching. */
+		/* Serves the queue metrics and the claim select as an index-only scan.
+		   The indexes above lack `workflow` beside `state`, so those reads fetch a
+		   page per matching row. Terminal rows fall outside the predicate, so its
+		   size tracks the live queue rather than history. */
 		index("idx_jobs_active")
 			.on(table.state, table.workflow, table.created_at)
-			.where(sql`${table.state} in ('pending', 'running')`),
+			// `sql.raw`, since a bound parameter cannot appear in DDL.
+			.where(
+				sql`${table.state} in (${sql.raw(
+					NON_TERMINAL_JOB_STATES.map((state) => `'${state}'`).join(", "),
+				)})`,
+			),
 		check(
 			"ck_jobs_state",
 			sql`${table.state} in ('pending', 'running', 'cancelled', 'failed', 'succeeded')`,

@@ -2,6 +2,7 @@ import {
 	computeJobProgress,
 	isJobStateTerminal,
 	JobState,
+	NON_TERMINAL_JOB_STATES,
 	type SearchResult,
 	type StoredJobClaim,
 	type StoredJobStep,
@@ -19,16 +20,6 @@ import { users } from "../db/schema/users";
 import { withTimeout } from "../db/timeout";
 import { AppError } from "../errors";
 import { emit } from "../events/emit";
-
-/**
- * The states a job can still leave — `pending` and `running`.
- *
- * Derived rather than written out, so it cannot fall out of step with
- * `JobState` or with `isJobStateTerminal`.
- */
-export const NON_TERMINAL_JOB_STATES = JobState.options.filter(
-	(state) => !isJobStateTerminal(state),
-);
 
 /** A job as it appears in a search result list. */
 export type JobMinimal = {
@@ -683,11 +674,9 @@ export const JOB_QUEUE_PROBE_TIMEOUT_MS = 2000;
 /**
  * Count the jobs in each workflow and non-terminal state.
  *
- * **Deliberately restricted to `pending` and `running`.** Counting every job
- * ever run is a scan that grows forever. `idx_jobs_active` is what makes the
- * restriction bite — it holds only the non-terminal rows and carries `workflow`
- * beside `state`, so this is an index-only scan whose cost tracks the live
- * queue. Widening the `WHERE` steps outside that index and back onto history.
+ * **Deliberately restricted to `pending` and `running`.** That predicate is
+ * `idx_jobs_active`'s, so this is an index-only scan sized by the live queue;
+ * widening it drops back onto history, which grows forever.
  *
  * Terminal totals are also the wrong instrument: a gauge over accumulated
  * history is a counter wearing the wrong hat, and failure rate belongs on a
@@ -710,10 +699,6 @@ export async function readJobCounts(db: Db): Promise<JobCount[]> {
  *
  * Queue depth alone cannot tell a busy fleet from a stuck one; the age of the
  * oldest waiting job can.
- *
- * `state = 'pending'` is a prefix of `idx_jobs_active`, which leaves
- * `(workflow, created_at)` ordered underneath it, so each `min` comes off the
- * index without a sort and without a heap fetch.
  *
  * The subtraction happens in Postgres, and `created_at` is pinned to UTC on the
  * way into it. The column is a naive `timestamp`, so left to the session's time
