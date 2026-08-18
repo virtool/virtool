@@ -20,6 +20,92 @@ The web-app frontend for Virtool
   dynamic `import()` inside `@server/analyses/export` so it stays out of every
   other bundle
 
+## Client development
+
+### Imports and bundles
+
+- Use an existing specific path alias across directories; reserve `@/*` for
+  `src/routes` and `src/types`. `tsconfig.json` is authoritative.
+- Client code imports server declarations through `@server/*`, never by a
+  relative path. Add every new feature alias to the server
+  `noRestrictedImports` list.
+- Route `beforeLoad`, `loader`, `loaderDeps`, and `validateSearch` are eager.
+  Dynamically import feature `queryOptions` in loaders and use
+  `@app/searchParams`, not zod, in `validateSearch`.
+- Keep guard queries in their existing lightweight modules. Keep heavy helpers
+  isolated, use `createServerOnlyFn` to reach server code from the browser
+  graph, and externalize native dependencies in Vite.
+
+See [the bundling guide](../../docs/bundling.md) for details.
+
+### Rendering
+
+Routes render on the server by default. Render must be pure and produce the
+same initial result in Node and the browser:
+
+- Do not read browser globals, time, randomness, locale, or mutable module
+  state during render. A `typeof window` branch still causes a mismatch.
+- Subscribe to ambient state with `useSyncExternalStore` and a cached server
+  snapshot. Use `@app/serverNow` for elapsed time and `ClientOnly` for subtrees
+  that must measure the browser.
+- Give `<title>` exactly one string child, including inside SVG.
+- Disable SSR only on the route that requires it; SSR cannot be re-enabled
+  below a disabled parent.
+
+React Compiler covers client `.ts` and `.tsx`. Do not spread a
+`react-hook-form` methods object, sync form props with `useForm({ values })`,
+and use `@app/useMatchPartialPath` instead of `useMatchRoute`. Local tests skip
+the compiler; CI enables it with `VT_TEST_REACT_COMPILER=1`.
+
+See [the SSR guide](../../docs/ssr.md) for details.
+
+### Routing and data
+
+- Use TanStack Router `<Link>` for internal navigation and its `search` prop
+  for query strings. Use `<a>` only for external links or intentional reloads.
+- Keep `/` as a terminal dashboard route; redirecting it recreates a chained
+  redirect race.
+- Resolve search defaults once in `validateSearch`, strip them from URLs with
+  `stripSearchParams`, and use `@app/pagination` for paginated routes.
+- Call the backend through TanStack Start server functions. Raw uploads,
+  downloads, and SSE are the exceptions. Read a failed function's status with
+  `getErrorStatus` from `@app/queryErrors`.
+- Put feature requests and hooks in `queries.ts`. Generate keys with
+  `createQueryKeys` in a separate `keys.ts`; do not re-export them from
+  `queries.ts`.
+- Use suspense queries for primary route data. For secondary data, show
+  `QueryError` when `isError && !data` before checking `isPending`, preserving
+  stale data after a failed refetch.
+
+See [the query guide](../../docs/queries.md) for details.
+
+### Styling
+
+Use Tailwind utilities and `cn()` from `@app/cn`. Reuse or add design tokens in
+`src/app/style.css` and animation tokens in `src/app/animations.css`; do not use
+arbitrary utilities or hard-coded colors. Base component colors use the shared
+`PaletteColor` across all variants.
+
+The root font size stays at `100%` so browser font-size preferences work. To
+preserve the original 14px design at the default 16px root, the `@theme` text,
+spacing, container, breakpoint, and radius tokens are 0.875 of Tailwind's
+defaults. Line height and letter spacing are not scaled. Consequently, classes
+do not render at Tailwind's documented pixel values:
+
+| Class | Tailwind | Here |
+| --- | --- | --- |
+| `text-sm` | 14px | 12.25px |
+| `text-base`, `p-4` | 16px | 14px |
+| `gap-2` | 8px | 7px |
+| `md:` | 768px | 672px |
+| `2xl:` | 1536px | 1344px |
+
+Size anything that holds text in `rem`; reserve pixels for graphics without
+text. If an API requires a number, express it as a rem multiple and resolve it
+with `useRootFontSize` from `@app/hooks`. Known exceptions are the virtualized
+row heights in `NuvsList` and `IsolateList`, and the avatar text in
+`InitialIcon`.
+
 ## Using in Production
 
 The default CSP configuration expects API requests to be made to the same domain as the
