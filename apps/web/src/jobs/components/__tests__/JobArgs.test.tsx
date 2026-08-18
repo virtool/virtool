@@ -1,6 +1,10 @@
 import { screen } from "@testing-library/react";
 import { createFakeAnalysisMinimal } from "@tests/fake/analyses";
+import { createFakeSample } from "@tests/fake/samples";
+import { createFakeSubtraction } from "@tests/fake/subtractions";
 import { analysisServerFnMocks } from "@tests/server-fn/analyses";
+import { mockGetSample } from "@tests/server-fn/samples";
+import { mockGetSubtraction } from "@tests/server-fn/subtractions";
 import { renderWithRouter } from "@tests/setup";
 import { describe, expect, it } from "vitest";
 import JobArgs from "../JobArgs";
@@ -14,24 +18,14 @@ const workflows = [
 			{ name: "ref1", href: "/refs/ref1" },
 		],
 	},
-	{
-		workflow: "create_sample",
-		args: { sample_id: "smp1" },
-		links: [{ name: "smp1", href: "/samples/smp1" }],
-	},
-	{
-		workflow: "create_subtraction",
-		args: { subtraction_id: "sub1" },
-		links: [{ name: "sub1", href: "/subtractions/sub1" }],
-	},
 ];
 
 describe("<JobArgs />", () => {
 	it("should render basics correctly", async () => {
 		await renderWithRouter(
 			<JobArgs
-				workflow="create_sample"
-				args={{ sample_id: "test_sample_id" }}
+				workflow="build_index"
+				args={{ index_id: "41", ref_id: "ref1" }}
 			/>,
 		);
 
@@ -86,6 +80,33 @@ describe("<JobArgs />", () => {
 			expect(screen.queryByText("Arguments")).not.toBeInTheDocument();
 		},
 	);
+
+	it("should render the sample for create_sample jobs", async () => {
+		mockGetSample(createFakeSample({ id: 123, name: "Foo" }));
+
+		await renderWithRouter(
+			<JobArgs workflow="create_sample" args={{ sample_id: "123" }} />,
+		);
+
+		expect(await screen.findByRole("link", { name: "Foo" })).toHaveAttribute(
+			"href",
+			"/samples/123",
+		);
+		expect(screen.queryByText("Arguments")).not.toBeInTheDocument();
+	});
+
+	it("should render the subtraction for create_subtraction jobs", async () => {
+		mockGetSubtraction(createFakeSubtraction({ id: 5, name: "Arabidopsis" }));
+
+		await renderWithRouter(
+			<JobArgs workflow="create_subtraction" args={{ subtraction_id: "5" }} />,
+		);
+
+		expect(
+			await screen.findByRole("link", { name: "Arabidopsis" }),
+		).toHaveAttribute("href", "/subtractions/5");
+		expect(screen.queryByText("Arguments")).not.toBeInTheDocument();
+	});
 
 	it("should render unknown workflows", async () => {
 		await renderWithRouter(

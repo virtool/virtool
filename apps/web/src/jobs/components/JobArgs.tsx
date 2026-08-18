@@ -4,6 +4,8 @@ import BoxGroupSection from "@base/BoxGroupSection";
 import Link from "@base/Link";
 import type { ReactNode } from "react";
 import AnalysisPeek from "./AnalysisPeek";
+import SamplePeek from "./SamplePeek";
+import SubtractionPeek from "./SubtractionPeek";
 
 type JobArgsRowProps = {
 	/** What to display as the value of the argument */
@@ -73,44 +75,6 @@ function BuildIndexRows({ index_id, ref_id }: BuildIndexRowsProps) {
 	);
 }
 
-type CreateSampleRowsProps = {
-	/** the unique identifier of the sample being created*/
-	sample_id: string;
-};
-
-/** Rows showing important arguments when running an "create_sample" workflow. */
-function CreateSampleRows({ sample_id }: CreateSampleRowsProps) {
-	return (
-		<JobArgsRow title="Sample" description="Sample created by this job">
-			<Link to="/samples/$sampleId" params={{ sampleId: sample_id }}>
-				{sample_id}
-			</Link>
-		</JobArgsRow>
-	);
-}
-
-type CreateSubtractionRowsProps = {
-	/** the unique identifier of the created subtraction */
-	subtraction_id: string;
-};
-
-/** Rows showing important arguments when running a "create_subtraction" workflow. */
-function CreateSubtractionRows({ subtraction_id }: CreateSubtractionRowsProps) {
-	return (
-		<JobArgsRow
-			title="Subtraction"
-			description="Subtraction created by this job"
-		>
-			<Link
-				to="/subtractions/$subtractionId"
-				params={{ subtractionId: subtraction_id }}
-			>
-				{subtraction_id}
-			</Link>
-		</JobArgsRow>
-	);
-}
-
 type UnknownJobRows = {
 	/** The list of arguments used to run the job */
 	args: object;
@@ -139,22 +103,13 @@ type GenericJobArgsProps<workflowType, argsType> = {
 	args: argsType;
 };
 
-type JobArgsRowsProps =
-	| GenericJobArgsProps<"build_index", BuildIndexRowsProps>
-	| GenericJobArgsProps<"create_sample", CreateSampleRowsProps>
-	| GenericJobArgsProps<"create_subtraction", CreateSubtractionRowsProps>;
+type JobArgsRowsProps = GenericJobArgsProps<"build_index", BuildIndexRowsProps>;
 
 /**  The table rows containing arguments used to run a job. */
 function JobArgsRows({ workflow, args }: JobArgsRowsProps) {
 	switch (workflow) {
 		case "build_index":
 			return <BuildIndexRows {...args} />;
-
-		case "create_sample":
-			return <CreateSampleRows {...args} />;
-
-		case "create_subtraction":
-			return <CreateSubtractionRows {...args} />;
 
 		default:
 			return <UnknownJobRows args={args} />;
@@ -170,6 +125,14 @@ type JobArgsProps = {
 export default function JobArgs({ workflow, args }: JobArgsProps) {
 	if (workflow === "pathoscope" || workflow === "nuvs") {
 		return <AnalysisPeek analysisId={Number(args.analysis_id)} />;
+	}
+
+	if (workflow === "create_sample") {
+		return <SamplePeek sampleId={Number(args.sample_id)} />;
+	}
+
+	if (workflow === "create_subtraction") {
+		return <SubtractionPeek subtractionId={Number(args.subtraction_id)} />;
 	}
 
 	return (
