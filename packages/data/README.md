@@ -3,6 +3,17 @@
 The server-only Postgres data layer: the Drizzle schema mirror, database pool,
 test fixtures, and domain queries used by Virtool services.
 
+## Type ownership
+
+Infer database row and insert types from the Drizzle schema instead of copying
+them into feature `types.ts` files. Re-export inferred types from the feature's
+`data.ts` when its functions and other server modules share them. Keep function
+option/value types, data-layer errors, and row-to-contract mappers in this
+package; wire shapes shared with clients belong in `@virtool/contracts`.
+
+Apply this convention as features are changed rather than bulk-converting
+legacy `types.ts` files.
+
 ## Object storage
 
 Virtool stores uploads, sample reads, analysis results, indexes, subtraction

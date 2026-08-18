@@ -338,6 +338,17 @@ A feature flows `functions.ts` → optional `service.ts` → `data.ts`:
 - `data.ts` contains framework-free domain and persistence code and lives in
   `packages/data/src/<feature>/`.
 
+Imports follow that same direction and never flow back toward `functions.ts`.
+Skip `service.ts` when the data layer covers the feature without cross-resource
+orchestration.
+
+Keep policy and decision logic separate from framework wiring. Put plain
+functions over plain data in a framework-free module, then have hooks, loaders,
+and handlers delegate to them. If a unit test cannot import its subject without
+loading environment configuration, a database client, or framework code, split
+the module at that dependency boundary instead of mocking the unrelated
+dependency.
+
 Inject data-layer dependencies in the order `db`, `storage`, `logger`; server
 functions obtain them from `@server/composition`. Use `DbOrTx` for helpers that
 may run in a transaction. Build validators from `@server/validation` primitives
@@ -371,9 +382,6 @@ legacy JSONB blobs are the documented exception.
 Server-rendered documents use a per-request CSP nonce for Router dehydration
 and streamed React scripts. Set it through the router SSR options; never add it
 by rewriting the response body, because doing so buffers the HTML stream.
-
-See [the architecture guide](../../docs/architecture.md) for the full boundary
-rationale.
 
 ### Authorization and raw routes
 
