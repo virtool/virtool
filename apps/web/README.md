@@ -214,6 +214,37 @@ ordering, and counts; tasks have no collection query to invalidate.
 | `src/jobs/refresh.ts` | Batched job refresh queue |
 | `src/tasks/refresh.ts` | Batched task refresh queue |
 
+## Testing
+
+Component and hook tests run in the `web` jsdom Vitest project. Use
+`renderWithProviders` or `renderWithRouter` from `src/tests/setup.tsx`; their
+query client disables retries so rejected server-function mocks expose error
+states immediately. Name component tests `ComponentName.test.tsx` and helper
+tests `functionName.test.ts`.
+
+Mock at the typed server-function boundary with the `vi.fn()` stubs in
+`src/tests/server-fn/`. Plain data factories live in `src/tests/fake/`; a helper
+belongs to exactly one of those directories. Raw upload, download, and SSE
+callers are the only HTTP-shaped exceptions, and component tests mock the
+module that initiates those requests rather than installing an HTTP
+interceptor.
+
+Server tests run in the `server` Node project against Postgres. A transformed
+`createServerFn` export is only a client stub, so import its
+`?tss-serverfn-split` module and invoke the handler with `callServerFn` from
+`src/server/test/serverFn.ts`. That helper omits global authentication
+middleware so the test exercises the handler's own authorization guard.
+
+Prefer accessible Testing Library queries and give distinct controls distinct
+accessible names; do not select unrelated controls by array index. Use
+`expectNoViolations(baseElement)` from `src/tests/axe.ts` for opt-in axe checks
+that include portals. Colour contrast runs in the browser-based `a11y` project:
+name those files `*.a11y.test.tsx`, render lean subtrees with real theme
+classes, and explicitly re-enable axe's `color-contrast` rule. Install its
+browser once with `pnpm --filter @virtool/web exec playwright install chromium`
+and run it with
+`pnpm --filter @virtool/web exec vitest run --project a11y`.
+
 ## Using in Production
 
 The default CSP configuration expects API requests to be made to the same domain as the

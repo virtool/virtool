@@ -24,6 +24,16 @@ setup rather than defining another container. The project has its own CI job
 and is excluded from `Packages / Test`. Place tests beside their source as
 `*.test.ts`.
 
+Call `createTestDatabase()` from `@virtool/data/db/test/fixtures` once per test
+file and drop it in `afterAll`. It creates an isolated database, applies the
+schema derived from the Drizzle mirror, and installs the `client_events`
+emitter on its connection. If a test mocks `@virtool/data/events/emit`, mock
+both `emit` and `createEmitter` so fixture setup can still install the emitter.
+
+The shared container uses `withReuse()` and deliberately has no teardown, so
+local suites reuse it. Remove it with `docker rm -f` when it is no longer
+wanted; separate CI jobs still start separate containers.
+
 ## Commands
 
 Run from the monorepo root.

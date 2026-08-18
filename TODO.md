@@ -4,11 +4,11 @@
   `docs/ci.md`. Keep only the rule that every new workflow image or crate input,
   including each Dockerfile `COPY` source, must be added to the corresponding
   filter in `.github/workflows/ci.yaml`.
-- [ ] Reduce the testing section in `AGENTS.md` to the essential conventions:
+- [x] Reduce the testing section in `AGENTS.md` to the essential conventions:
   explicit Vitest imports, one database per test file through
   `createTestDatabase()`, explicit assertions, and a single owner for each test
-  double. Keep container setup, emitter-stubbing details, and rationale in
-  `docs/testing.md`.
+  double. Keep container setup, emitter-stubbing details, and rationale with
+  their owning package and test helpers.
 - [ ] Move code-style rationale and examples to `docs/code-style.md`. Retain
   short imperative rules in `AGENTS.md` for function declarations, React refs,
   types, exported-type JSDoc, comments, naming, and concurrent awaits. Fix the

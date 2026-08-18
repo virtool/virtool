@@ -223,32 +223,12 @@ The basics:
 
 ## Testing
 
-- **The Postgres container is described once**, in
-  `packages/data/src/db/test/globalSetup.ts`. The `@virtool/data`
-  project, the web app's `server` project, `@virtool/jobs-api` and
-  `@virtool/tasks` all name that module as their `globalSetup` — the
-  latter three through the `@virtool/data/db/test/globalSetup` subpath —
-  so the options cannot drift and `withReuse()` boots one container for
-  every suite locally. There is no teardown; `docker rm -f` it when done.
-  Don't add a second copy of the container options.
-- **Test files:** `ComponentName.test.tsx` or `functionName.test.ts`.
-- **Imports:** Use explicit vitest imports (`import { describe, it,
-  expect, vi } from "vitest"`).
-- **Test doubles:** A helper lives in exactly one test harness. Keep app and
-  package fixtures with the code whose boundary they model; do not duplicate
-  them in another app's test utilities.
-- **Database tests:** `createTestDatabase()` from
-  `@virtool/data/db/test/fixtures` gives a suite its own isolated
-  Postgres database with the schema applied, and installs the
-  `client_events` emitter on it. Test files run in parallel, so never
-  share one database between them. A test that stubs
-  `@virtool/data/events/emit` must stub `createEmitter` alongside `emit`,
-  or the fixture's install call finds nothing to call.
-- **Assertions:** Use explicit `expect()` assertions, not snapshots.
+- Import Vitest APIs explicitly from `vitest`.
+- Give each database test file its own `createTestDatabase()` instance.
+- Use explicit `expect()` assertions, not snapshots.
+- Keep each test double in one owning harness, beside the boundary it models.
 
-See [docs/testing.md](docs/testing.md) for the unit / integration
-layer split, where to mock the network boundary, snapshot guidance, the
-axe-core accessibility helper, and the shared-fixtures rule.
+App and package READMEs document their test harnesses and commands.
 
 ## Process
 
