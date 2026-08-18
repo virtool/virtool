@@ -36,6 +36,7 @@ export default function AnalysisItem({ analysis }: AnalysisItemProps) {
 
 	const title = checkSupportedWorkflow(workflow) ? (
 		<Link
+			className="text-lg"
 			to="/samples/$sampleId/analyses/$analysisId"
 			params={{
 				sampleId: String(analysis.sample.id),
@@ -45,7 +46,7 @@ export default function AnalysisItem({ analysis }: AnalysisItemProps) {
 			{getWorkflowDisplayName(workflow)}
 		</Link>
 	) : (
-		<div className="text-black [&_svg]:ml-1">
+		<div className="text-lg [&_svg]:ml-1">
 			{getWorkflowDisplayName(workflow)}
 			<span className="text-gray-500 text-sm ml-1 font-normal">
 				Workflow unavailable
@@ -67,11 +68,11 @@ export default function AnalysisItem({ analysis }: AnalysisItemProps) {
 	const canDelete = state === undefined || isJobStateTerminal(state);
 
 	return (
-		<Box as="li" className="text-gray-600 mb-2.5">
+		<Box as="li" className="mb-2.5">
 			<div className="grid grid-cols-5 items-center text-base font-medium [&_a]:font-medium">
 				<div className="col-span-2">{title}</div>
 				<Attribution
-					className="col-span-2 text-sm font-normal"
+					className="col-span-2 font-normal"
 					user={user.handle}
 					time={createdAt}
 				/>
