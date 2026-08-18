@@ -1,20 +1,18 @@
-// Read-only mirror of the `subtractions` and `subtraction_files` tables managed
-// by the upstream Python service via Alembic. Do not generate or push
-// migrations from this side. Keep the columns in sync with
-// `../../../../../../virtool/virtool/subtractions/pg.py`.
+// Schema for the `subtractions` and `subtraction_files` tables.
 //
 // `legacy_id` (the Mongo `_id`) is null for Postgres-native subtractions. Every
 // endpoint addresses a subtraction by its integer id. Nothing derives a storage
 // key from either: each file records its own in `subtraction_files.storage_key`.
 
-import { SubtractionFileType } from "@virtool/contracts";
+import type { SubtractionFileType } from "@virtool/contracts";
+import { sql } from "drizzle-orm";
 import {
 	bigint,
 	boolean,
+	check,
 	foreignKey,
 	integer,
 	jsonb,
-	pgEnum,
 	pgTable,
 	serial,
 	text,
@@ -24,16 +22,6 @@ import {
 import { jobs } from "./jobs";
 import { uploads } from "./uploads";
 import { users } from "./users";
-
-// `z.enum().options` widens to an array, losing the non-empty tuple `pgEnum`
-// takes. Cast rather than restate the members, which would be free to disagree.
-export const subtractionType = pgEnum(
-	"subtractiontype",
-	SubtractionFileType.options as [
-		SubtractionFileType,
-		...SubtractionFileType[],
-	],
-);
 
 /** The nucleotide composition of a subtraction genome, stored as JSONB. */
 export type NucleotideComposition = {
@@ -97,7 +85,7 @@ export const subtractionFiles = pgTable(
 		id: serial("id").primaryKey(),
 		name: text("name"),
 		subtraction_id: bigint("subtraction_id", { mode: "number" }).notNull(),
-		type: subtractionType("type"),
+		type: text("type").$type<SubtractionFileType>(),
 		// Files routinely exceed 2 GiB, past the range of a 32-bit integer, so this
 		// mirrors Python's BigInteger. `mode: "number"` is safe up to 2^53.
 		size: bigint("size", { mode: "number" }),
@@ -116,6 +104,10 @@ export const subtractionFiles = pgTable(
 		unique("subtraction_files_subtraction_id_name_key").on(
 			table.subtraction_id,
 			table.name,
+		),
+		check(
+			"ck_subtraction_files_type",
+			sql`${table.type} in ('fasta', 'bowtie2')`,
 		),
 	],
 );
