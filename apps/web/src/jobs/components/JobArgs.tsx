@@ -1,12 +1,9 @@
-import AnalysisItem from "@analyses/components/AnalysisItem";
-import { useGetAnalysis } from "@analyses/queries";
 import BoxGroup from "@base/BoxGroup";
 import BoxGroupHeader from "@base/BoxGroupHeader";
 import BoxGroupSection from "@base/BoxGroupSection";
 import Link from "@base/Link";
-import LoadingPlaceholder from "@base/LoadingPlaceholder";
-import QueryError from "@base/QueryError";
 import type { ReactNode } from "react";
+import AnalysisPeek from "./AnalysisPeek";
 
 type JobArgsRowProps = {
 	/** What to display as the value of the argument */
@@ -41,30 +38,6 @@ function JobArgsRow({
 			</div>
 			<div className="text-right">{children}</div>
 		</BoxGroupSection>
-	);
-}
-
-type AnalysisJobArgsProps = {
-	/** The unique identified of the created analysis  */
-	analysis_id: string;
-};
-
-/** The analysis created by a Pathoscope or NuVs job. */
-function AnalysisJobArgs({ analysis_id }: AnalysisJobArgsProps) {
-	const { data, isPending, isError } = useGetAnalysis(Number(analysis_id));
-
-	if (isError && !data) {
-		return <QueryError noun="analysis" />;
-	}
-
-	if (isPending || !data) {
-		return <LoadingPlaceholder className="mt-8 mb-8" />;
-	}
-
-	return (
-		<ul className="list-none">
-			<AnalysisItem analysis={data} />
-		</ul>
 	);
 }
 
@@ -196,7 +169,7 @@ type JobArgsProps = {
 /** A table of arguments used to run a job. */
 export default function JobArgs({ workflow, args }: JobArgsProps) {
 	if (workflow === "pathoscope" || workflow === "nuvs") {
-		return <AnalysisJobArgs {...(args as AnalysisJobArgsProps)} />;
+		return <AnalysisPeek analysisId={Number(args.analysis_id)} />;
 	}
 
 	return (
