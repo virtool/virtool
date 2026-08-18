@@ -85,7 +85,7 @@ export default function JobDetail() {
 		: data.args;
 
 	return (
-		<ContainerNarrow>
+		<ContainerNarrow className="pb-8">
 			<ViewHeader title={workflow}>
 				<ViewHeaderTitle>{workflow}</ViewHeaderTitle>
 				<ViewHeaderAttribution time={data.createdAt} user={data.user.handle} />

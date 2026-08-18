@@ -31,6 +31,47 @@ describe("<JobSteps />", () => {
 		expect(screen.getByText("Building search index")).toBeInTheDocument();
 	});
 
+	it("does not render steps that have not started", () => {
+		const { rerender } = renderWithProviders(
+			<JobSteps
+				state="running"
+				steps={[
+					{
+						id: "download_files",
+						name: "Download files",
+						description: "Downloading reference files",
+						startedAt: new Date("2024-04-12T21:50:19.108000Z"),
+					},
+					{
+						id: "build_index",
+						name: "Build index",
+						description: "Building search index",
+						startedAt: null,
+					},
+				]}
+			/>,
+		);
+
+		expect(screen.getByText("Download files")).toBeInTheDocument();
+		expect(screen.queryByText("Build index")).not.toBeInTheDocument();
+
+		rerender(
+			<JobSteps
+				state="pending"
+				steps={[
+					{
+						id: "download_files",
+						name: "Download files",
+						description: "Downloading reference files",
+						startedAt: null,
+					},
+				]}
+			/>,
+		);
+
+		expect(screen.queryByText("Download files")).not.toBeInTheDocument();
+	});
+
 	it("should escape HTML in a step description", () => {
 		const description = `Downloading <img src="x" onerror="alert(1)"> files`;
 
