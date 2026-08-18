@@ -8,6 +8,15 @@ FASTA to object storage.
 Two steps, `compute_gc_and_count` and `finalize`, and one external tool,
 `seqkit`.
 
+## Building the image
+
+The root Dockerfile builds SeqKit in its own stage and copies its binary into
+this app's runtime stage:
+
+```console
+docker build --target create-subtraction .
+```
+
 ## Configuration
 
 This app uses the shared `@virtool/workflow` runtime configuration. See the

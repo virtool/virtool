@@ -178,11 +178,10 @@ Each backs a specific `ldd ... => not found` against the slim base: perl and
 libgomp1 for bowtie2, libcurl4 and libncursesw6 for samtools. `pathoscope-core`
 itself needs none of them — `hts-sys` links htslib statically.
 
-The `build-pathoscope` CI job sets `cache-from: type=gha` and
-`cache-to: type=gha,mode=max` under a `pathoscope` scope. There is no publish
-counterpart yet; when one is restored it needs the same pair, because dropping
-it means the release path rebuilds htslib from scratch every time, which is the
-trap the old repo fell into.
+The `build-pathoscope` CI job and its release entry use the same `pathoscope`
+GitHub Actions cache scope. See
+[Continuous integration](../../docs/ci.md#images) for the shared image build
+and release pipeline.
 
 **A job that exports a cache must run `docker/setup-buildx-action` first.** The
 runner's default builder uses the `docker` driver, which cannot export a build

@@ -193,6 +193,7 @@ whitespace is trimmed, and an empty value is treated as unset.
 ## Related documentation
 
 [`docs/apps.md`](../../docs/apps.md) covers the bundling and `pnpm deploy`
-pipeline shared by non-Vite apps. [`docs/images.md`](../../docs/images.md)
-covers the image pipeline, and [`docs/metrics.md`](../../docs/metrics.md) the
-metrics conventions shared across services.
+pipeline shared by non-Vite apps. [`docs/ci.md`](../../docs/ci.md#images)
+covers the shared image pipeline, and
+[`docs/metrics.md`](../../docs/metrics.md) the metrics conventions shared
+across services.

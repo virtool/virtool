@@ -1,5 +1,44 @@
 # Continuous integration
 
+## Images
+
+Every image ships from a target in the root `Dockerfile`. Five targets use the
+`build` job matrix; Pathoscope and Nuvs have separate, longer path-filtered
+jobs. `release-ghcr` publishes all seven targets on every release.
+
+| Target | Published image | Build job |
+| --- | --- | --- |
+| `dist` | `ghcr.io/virtool/ui`, `ghcr.io/virtool/web` | `build` |
+| `jobs-api` | `ghcr.io/virtool/jobs-api` | `build` |
+| `tasks` | `ghcr.io/virtool/tasks` | `build` |
+| `create-sample` | `ghcr.io/virtool/ts-create-sample` | `build` |
+| `create-subtraction` | `ghcr.io/virtool/ts-create-subtraction` | `build` |
+| `pathoscope` | `ghcr.io/virtool/ts-pathoscope` | `build-pathoscope` |
+| `nuvs` | `ghcr.io/virtool/ts-nuvs` | `build-nuvs` |
+
+`dist` retains its name because tooling outside this repository targets it.
+The release currently tags the same build as both `ui` and `web` while the
+cluster migrates to `web`; remove `ui` once nothing pulls it.
+
+The `ts-` prefix distinguishes these workflow images from the images still
+published by the Python workflow repositories under unprefixed names such as
+`ghcr.io/virtool/pathoscope`. The two release streams do not overwrite each
+other; the cluster selects one by the image it pulls.
+
+Adding an image requires a Dockerfile target and a release-matrix entry. For
+the five targets in `build`, keep its matrix entry in step with
+`release-ghcr`. Pathoscope and Nuvs instead use the dedicated build jobs above
+and release entries whose `cache-scope` values are `pathoscope` and `nuvs`.
+Those overrides reuse the caches populated by the long build jobs rather than
+rebuilding the Rust crate, bioinformatics tools, or SPAdes inside the shared
+20-minute release timeout.
+
+Build one image locally by naming its target:
+
+```console
+docker build --target pathoscope .
+```
+
 ## Path-filtered jobs
 
 Most CI jobs run for every pull request. Four expensive jobs use the `changes`

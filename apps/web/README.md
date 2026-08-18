@@ -2,6 +2,11 @@
 
 The web-app frontend for Virtool
 
+The root Dockerfile's `dist` target is published as both
+`ghcr.io/virtool/ui` and `ghcr.io/virtool/web` while the cluster migrates to
+the latter name. See [Continuous integration](../../docs/ci.md#images) for the
+shared image build and release pipeline.
+
 ## Key libraries
 
 - **React 19** with React Compiler, run as a Babel pass over `.ts` and `.tsx`

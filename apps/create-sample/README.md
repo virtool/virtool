@@ -10,6 +10,15 @@ Two steps, `run_fastqc` and `finalize`, and one external binary,
 [`quality-core`](../../packages/quality-core/README.md) — a Rust crate in this
 repo rather than a third-party tool.
 
+## Building the image
+
+The root Dockerfile uses cargo-chef to build `quality-core`, then copies its
+single binary into the runtime stage:
+
+```console
+docker build --target create-sample .
+```
+
 ## Configuration
 
 This app uses the shared `@virtool/workflow` runtime configuration. See the

@@ -66,6 +66,14 @@ Add every new workflow image or crate input, including each Dockerfile `COPY`
 source, to the corresponding filter in `.github/workflows/ci.yaml`. See
 [docs/ci.md](docs/ci.md) for the filter boundaries and rationale.
 
+Every shipped image is a target in the root `Dockerfile` and builds from the
+repository root. Keep runtime stages on `node:24-bookworm-slim`; workflow tools
+are glibc-linked, so do not add an Alpine stage. Give each bioinformatics tool
+its own independent build stage so a target builds only the tools it uses.
+When adding a tool, inspect the pinned entry point and install every runtime
+interpreter and shared library it needs; a missing interpreter does not fail
+the image build and surfaces only when the workflow runs.
+
 ### When to run checks
 
 - Route changes: run `pnpm --filter @virtool/web build` before type-checking.

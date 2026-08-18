@@ -8,11 +8,20 @@ viral motifs with HMMER.
 Image: `ghcr.io/virtool/ts-nuvs`. Ten steps, five external tools — `skewer`,
 `bowtie2`, SPAdes, `hmmpress` and `hmmscan`.
 
-## Five rules it carries
+## Building the image
 
-- **SPAdes 4.2.0 is compiled from source**, because no binary release fits the
-  base, and the runtime installs `python3` for it — `spades.py` is a Python
-  script driving the compiled assembler binaries.
+The root Dockerfile builds each external tool in an independent stage. SPAdes
+4.2.0 is compiled from source because it has no binary release suitable for
+the runtime base. The runtime installs Perl for the Bowtie 2 wrapper, Python
+for `bowtie2-build` and `spades.py`, and the shared libraries required by the
+copied binaries.
+
+```console
+docker build --target nuvs .
+```
+
+## Result shape
+
 - **The raw `results` shape is pinned by `formatNuvs`**
   (`packages/data/src/analyses/format.ts`), *not* by
   `packages/contracts/src/nuvs.ts`, which describes the **formatted**
