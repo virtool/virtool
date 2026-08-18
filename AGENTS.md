@@ -560,10 +560,8 @@ The lifecycle half — `createJobsApiClient`, `claimJob`, `startPingLoop`,
   1; only SIGTERM exits 124. There is deliberately no failure call to make —
   the wire contract has no "fail" endpoint.
 
-See [docs/workflow-runtime.md](docs/workflow-runtime.md) for the step
-model, the eager-context rationale, the hook survey behind dropping them,
-the terminal-state table, the cancellation race, the subprocess runner's
-outcome table and process-group kill, and the full config table.
+See [packages/workflow/README.md](packages/workflow/README.md) for the runtime
+and environment configuration reference.
 
 ### Workflow files stream, and a key is minted, never composed
 
