@@ -2,6 +2,24 @@
 
 The web-app frontend for Virtool
 
+## Key libraries
+
+- **React 19** with React Compiler, run as a Babel pass over `.ts` and `.tsx`
+  via `@rolldown/plugin-babel` + `reactCompilerPreset`
+- **TanStack Router** for routing
+- **React Query** (`@tanstack/react-query`) for server state
+- **zustand** for client state
+- **react-hook-form** + **zod v4** for forms and validation
+- **Tailwind CSS v4** for all styling
+- **Radix UI** primitives for accessible components
+- **CVA** (`class-variance-authority`) for component variants
+- **Lucide React** for icons
+- **d3** for the quality, coverage, and NuVs charts — imperative SVG, not a
+  React charting wrapper
+- **exceljs** for the analysis XLSX export — server-only, and reached through a
+  dynamic `import()` inside `@server/analyses/export` so it stays out of every
+  other bundle
+
 ## Using in Production
 
 The default CSP configuration expects API requests to be made to the same domain as the

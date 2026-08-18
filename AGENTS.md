@@ -209,24 +209,6 @@ When adding a feature alias, also add it to the `apps/web/src/server/**`
 not only aliases currently imported by server code, so server modules cannot
 reach the browser feature tree through a new name.
 
-### Key libraries
-
-- **React 19** with React Compiler, run as a Babel pass over `.ts` and `.tsx`
-  via `@rolldown/plugin-babel` + `reactCompilerPreset` (see below)
-- **TanStack Router** for routing
-- **React Query** (`@tanstack/react-query`) for server state
-- **zustand** for client state
-- **react-hook-form** + **zod v4** for forms and validation
-- **Tailwind CSS v4** for all styling
-- **Radix UI** primitives for accessible components
-- **CVA** (`class-variance-authority`) for component variants
-- **Lucide React** for icons
-- **d3** for the quality, coverage, and NuVs charts — imperative SVG, not a
-  React charting wrapper
-- **exceljs** for the analysis XLSX export — server-only, and reached through a
-  dynamic `import()` inside `@server/analyses/export` so it stays out of every
-  other bundle
-
 ### Every route renders on the server
 
 `createStart` sets no `defaultSsr`, so it defaults to `true`: a hard load
@@ -1937,7 +1919,8 @@ misleads, sending readers to deleted files and dead APIs.
 Before committing, check whether your change contradicts anything in
 this file. It does if you have:
 
-- removed, added, or replaced a dependency listed under **Key libraries**;
+- removed, added, or replaced a dependency listed under **Key libraries** in
+  `apps/web/README.md`;
 - deleted, moved, or renamed a file or directory named anywhere in this
   document;
 - added or removed a top-level feature directory under `apps/web/src/`;
