@@ -4,8 +4,8 @@
 # (`web`, `virtool`, `workflows`) render independently, so a generator would
 # produce three hash-suffixed copies instead of one shared object.
 #
-# The migration Job deliberately does not use this. It runs Python's image and
-# reads Python's variable names, so it keeps its own inline block.
+# The migration Job uses this too. Its tasks-image migrator reads
+# `VT_POSTGRES_URL` and ignores the storage settings.
 #
 # These are Azurite's well-known public dev credentials, not secrets.
 apiVersion: v1

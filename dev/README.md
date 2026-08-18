@@ -93,17 +93,17 @@ from the Tilt UI when you want the build. A workflow's pods are one-shot and
 only start when something claims work, so nothing waits on a rebuild and an
 automatic one would rebuild a large image on every edit.
 
-There is no migration target. Migrations are Python's, and the migration Job
-runs the published `ghcr.io/virtool/virtool` image.
+There is no separate migration target. Migrations temporarily live in the
+`tasks` image, and the migration Job runs its `node dist/migrate.mjs`
+entrypoint.
 
 ## Images
 
 Every image this repository publishes is pinned to `latest`, so a pod picks up
-the newest release each time it starts and no tag is ever committed. The
-migration Job is the exception and stays pinned to an explicit
-`ghcr.io/virtool/virtool` release: it runs Python's image, which owns the
-schema, so an unrelated Python release must not migrate the dev database
-without someone choosing it.
+the newest release each time it starts and no tag is ever committed. While
+migrations temporarily live in `ghcr.io/virtool/tasks`, the migration Job runs
+the tasks image's Drizzle migrator and follows the same tag or local Tilt build
+as the tasks Deployment.
 
 `ts-nuvs` and `ts-pathoscope` publish on release like the other two, but
 neither has a usable `latest` until the first release that carries them:
