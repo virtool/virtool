@@ -66,31 +66,18 @@ describe("<AnalysisPeek />", () => {
 		expect(screen.queryByRole("progressbar")).not.toBeInTheDocument();
 	});
 
-	it("offers removal while the analysis is unfinished", async () => {
-		await renderPeek({ ready: false });
+	// The job detail view owns the controls for the run, so the analysis it
+	// produced offers none of its own — not to an administrator, and not while
+	// the analysis is unfinished.
+	it.each([
+		["unfinished", false],
+		["complete", true],
+	])("shows no remove button for an %s analysis", async (_, ready) => {
+		await renderPeek({ ready });
 
+		await screen.findByRole("link", { name: "Pathoscope" });
 		expect(
-			await screen.findByRole("button", { name: "remove" }),
-		).toBeInTheDocument();
-	});
-
-	it("withholds removal once the analysis is complete", async () => {
-		await renderPeek({ ready: true });
-
-		await screen.findByRole("link", { name: "Pathoscope" });
-		await expect(
-			screen.findByRole("button", { name: "remove" }),
-		).rejects.toThrow();
-	});
-
-	it("withholds removal from a user who may not modify analyses", async () => {
-		mockGetAccount(createFakeAccount({ administratorRole: null }));
-
-		await renderPeek({ ready: false });
-
-		await screen.findByRole("link", { name: "Pathoscope" });
-		await expect(
-			screen.findByRole("button", { name: "remove" }),
-		).rejects.toThrow();
+			screen.queryByRole("button", { name: "remove" }),
+		).not.toBeInTheDocument();
 	});
 });
