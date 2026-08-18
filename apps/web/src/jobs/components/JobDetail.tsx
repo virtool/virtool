@@ -104,7 +104,11 @@ export default function JobDetail() {
 					)}
 				</Alert>
 			)}
-			<JobSteps state={data.state} steps={data.steps} />
+			<JobSteps
+				finishedAt={data.finishedAt}
+				state={data.state}
+				steps={data.steps}
+			/>
 		</ContainerNarrow>
 	);
 }

@@ -1,14 +1,13 @@
 import { cn } from "@app/cn";
-import { formatDate, formatTime } from "@app/date";
-import Badge from "@base/Badge";
-import BoxGroupSection from "@base/BoxGroupSection";
+import { formatDate, formatRoundedDuration, formatTime } from "@app/date";
 import Markdown from "@base/Markdown";
 import { useHydrated } from "@tanstack/react-router";
 import type { JobState, JobStep } from "@virtool/contracts";
-import { Calendar, Clock } from "lucide-react";
+import { CircleDashed } from "lucide-react";
 import JobStateIcon from "./JobStateIcon";
 
 type JobStepProps = {
+	endedAt: number | null;
 	state: JobState;
 	step: JobStep;
 };
@@ -16,7 +15,7 @@ type JobStepProps = {
 /**
  * A condensed job step for use in a list of job steps
  */
-export default function JobStepItem({ step, state }: JobStepProps) {
+export default function JobStepItem({ endedAt, step, state }: JobStepProps) {
 	// Both formats read the local timezone, and the server renders in the
 	// container's zone rather than the viewer's, so it cannot produce the string
 	// the browser will. The value is held back until hydration instead of being
@@ -24,40 +23,48 @@ export default function JobStepItem({ step, state }: JobStepProps) {
 	// server's zone would stay on screen for good. The placeholder runs to the
 	// same character count as the real value, so nothing moves when it lands.
 	const hydrated = useHydrated();
+	const elapsed =
+		endedAt === null || step.startedAt === null
+			? null
+			: formatRoundedDuration(
+					Math.max(0, endedAt - step.startedAt.getTime()) / 1000,
+				);
 
 	return (
-		<BoxGroupSection className="flex gap-2 items-start">
-			<div className="items-center flex">
-				<JobStateIcon state={state} />
-			</div>
-
-			<div className="">
-				<h4 className="font-medium text-lg">{step.name}</h4>
-				<Markdown markdown={step.description} />
-
-				{step.startedAt && (
-					<div className="flex gap-4">
-						<Badge className="flex gap-1.5 items-center tabular-nums">
-							<Clock size={16} />
-							<time
-								dateTime={step.startedAt.toISOString()}
-								className={cn({ invisible: !hydrated })}
-							>
-								{hydrated ? formatTime(step.startedAt) : "00:00:00"}
-							</time>
-						</Badge>
-						<Badge className="flex gap-1.5 items-center tabular-nums">
-							<Calendar size={16} />
-							<time
-								dateTime={step.startedAt.toISOString()}
-								className={cn({ invisible: !hydrated })}
-							>
-								{hydrated ? formatDate(step.startedAt) : "0000-00-00"}
-							</time>
-						</Badge>
-					</div>
+		<tr
+			className={cn("border-gray-300 not-last:border-b", {
+				"text-muted": state === "pending",
+			})}
+		>
+			<td className="px-4 py-3 align-top">
+				{state === "pending" ? (
+					<CircleDashed className="stroke-current" size={16} />
+				) : (
+					<JobStateIcon state={state} />
 				)}
-			</div>
-		</BoxGroupSection>
+				<span className="sr-only">{state}</span>
+			</td>
+			<td className="px-4 py-3 align-top">
+				<div className="font-medium">{step.name}</div>
+				<div className="min-w-0">
+					<Markdown markdown={step.description} />
+				</div>
+			</td>
+			<td className="px-4 py-3 align-top tabular-nums text-sm">
+				{step.startedAt && (
+					<time
+						dateTime={step.startedAt.toISOString()}
+						className={cn({ invisible: !hydrated })}
+					>
+						{hydrated
+							? `${formatDate(step.startedAt)} ${formatTime(step.startedAt)}`
+							: "0000-00-00 00:00:00"}
+					</time>
+				)}
+			</td>
+			<td className="px-4 py-3 align-top tabular-nums text-right text-sm">
+				{elapsed}
+			</td>
+		</tr>
 	);
 }

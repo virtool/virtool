@@ -11,6 +11,7 @@
 		"Inter Variable", sans-serif, "Apple Color Emoji", "Segoe UI Emoji";
 	--color-virtool: #387e7d;
 	--color-virtool-dark: #2a5e5d;
+	--color-muted: var(--color-gray-500);
 
 	/* Z-index scale. Portalled and fixed overlays share the root stacking
 	   context, so their order is decided here by named layer rather than
