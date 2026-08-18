@@ -1,0 +1,1 @@
+CREATE INDEX "idx_jobs_active" ON "jobs" USING btree ("state","workflow","created_at") WHERE "jobs"."state" in ('pending', 'running');

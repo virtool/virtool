@@ -66,6 +66,25 @@ export const jobs = pgTable(
 		index("ix_jobs_state_created_at").on(table.state, table.created_at),
 		index("ix_jobs_user_id_state").on(table.user_id, table.state),
 		index("ix_jobs_workflow_state").on(table.workflow, table.state),
+		/* The jobs API's queue metrics, served without touching the heap.
+
+		   `readJobCounts` and `readOldestPendingJobAges` restrict to the
+		   non-terminal states so their cost tracks the live queue rather than every
+		   job ever run. The full indexes above bound the rows examined but not the
+		   heap fetches: neither carries `workflow` alongside `state`, so both reads
+		   visit one page per matching row. This carries all three columns behind a
+		   predicate matching their `WHERE` exactly, which makes each an index-only
+		   scan over an index whose size is the queue's, and puts `readJobCounts`'
+		   rows in grouping order and `readOldestPendingJobAges`' in `min` order
+		   with no sort. The claim select reads it too — `(state, workflow,
+		   created_at)` is its filter and its ordering.
+
+		   Terminal rows drop out of it, so it stays cache-resident however much
+		   history accumulates, and `ck_jobs_state` pins the five legal states so
+		   the predicate cannot silently stop matching. */
+		index("idx_jobs_active")
+			.on(table.state, table.workflow, table.created_at)
+			.where(sql`${table.state} in ('pending', 'running')`),
 		check(
 			"ck_jobs_state",
 			sql`${table.state} in ('pending', 'running', 'cancelled', 'failed', 'succeeded')`,

@@ -1027,10 +1027,10 @@ and a poor scrape target — one may run for hours and vanish between
 scrapes, and a pod-name label is unbounded — so the jobs API reports
 the queue on their behalf. Three rules hold the bound: the read
 covers only `pending` and `running` (a scan over every job ever run
-grows forever against a table this side cannot index), an unrecognised
-`workflow` folds into `other` (the column is plain `text`), and every
-workflow/state pair is written as `0` on each refresh so a drained queue
-reports zero rather than its last backlog. The workflow list is
+grows forever), an unrecognised `workflow` folds into `other` (the
+column is plain `text`), and every workflow/state pair is written as `0`
+on each refresh so a drained queue reports zero rather than its last
+backlog. The workflow list is
 `JobWorkflow.options` from `@virtool/contracts` — the one definition;
 don't mint a second.
 

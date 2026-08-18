@@ -30,9 +30,9 @@ function emptyCounts(): JobCountsByState {
  *
  * **The three terminal states are always zero**, and that is a deliberate
  * divergence from Python, which groups over the whole `jobs` table. That scan
- * grows forever against a table this side cannot index, so `readJobCounts`
- * covers `pending` and `running` alone — see the bound recorded on
- * `readJobQueueBounded`. Nothing scales on how many jobs have already finished,
+ * grows forever, and `idx_jobs_active` covers the non-terminal rows alone, so
+ * `readJobCounts` covers `pending` and `running` alone — see the bound recorded
+ * on `readJobQueueBounded`. Nothing scales on how many jobs have already finished,
  * so the figures a scaler reads are the true ones; a caller wanting lifetime
  * totals is asking a question this endpoint has never been able to afford.
  *

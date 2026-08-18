@@ -684,10 +684,14 @@ export const JOB_QUEUE_PROBE_TIMEOUT_MS = 2000;
  * Count the jobs in each workflow and non-terminal state.
  *
  * **Deliberately restricted to `pending` and `running`.** Counting every job
- * ever run is a scan that grows forever, and the schema is Python-owned — there
- * is no index to add from this side. Terminal totals are also the wrong
- * instrument: a gauge over accumulated history is a counter wearing the wrong
- * hat, and failure rate belongs on a counter incremented when a job finishes.
+ * ever run is a scan that grows forever. `idx_jobs_active` is what makes the
+ * restriction bite — it holds only the non-terminal rows and carries `workflow`
+ * beside `state`, so this is an index-only scan whose cost tracks the live
+ * queue. Widening the `WHERE` steps outside that index and back onto history.
+ *
+ * Terminal totals are also the wrong instrument: a gauge over accumulated
+ * history is a counter wearing the wrong hat, and failure rate belongs on a
+ * counter incremented when a job finishes.
  */
 export async function readJobCounts(db: Db): Promise<JobCount[]> {
 	return db
@@ -706,6 +710,10 @@ export async function readJobCounts(db: Db): Promise<JobCount[]> {
  *
  * Queue depth alone cannot tell a busy fleet from a stuck one; the age of the
  * oldest waiting job can.
+ *
+ * `state = 'pending'` is a prefix of `idx_jobs_active`, which leaves
+ * `(workflow, created_at)` ordered underneath it, so each `min` comes off the
+ * index without a sort and without a heap fetch.
  *
  * The subtraction happens in Postgres, and `created_at` is pinned to UTC on the
  * way into it. The column is a naive `timestamp`, so left to the session's time
