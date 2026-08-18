@@ -184,23 +184,9 @@ workflow code in it — a pull of `ts-pathoscope:latest` gets something
 that cannot run a job. Don't read `:latest` as current until a release
 has run since `release-ghcr` took the image on.
 
-Both build jobs, plus `pathoscope-test` and `quality-test`, are the only
-path-filtered jobs in `ci.yaml`, and they take a filter each because
-their inputs differ: the two crate jobs run cargo and read no TypeScript,
-while `build-pathoscope` and `build-nuvs` bundle their app on the shared
-`base` and so take every workspace package their build stage copies.
-`pathoscope-test` also carries `Dockerfile`, because it builds the
-`bowtie2` target to get the binary its golden vectors shell out to.
-
-**Everything a build stage `COPY`s must appear under that image's
-filter** — a missing path skips the build on the pull request that breaks
-it and fails on the push to `main`, where nothing gates it. That includes
-everything `base` copies, packages the app does not import among them:
-`base` is shared, so it copies `packages/data`, `packages/service` and
-`packages/bio` whichever target was requested. The two image filters are
-therefore nearly identical, and are kept separate rather than merged
-because pathoscope copies `packages/pathoscope-core` and nuvs does not —
-folding them into one would rebuild each image for the other's inputs.
+The Pathoscope and Nuvs build jobs are path-filtered. See
+[Continuous integration](ci.md#path-filtered-jobs) for their input boundaries
+and the rules for maintaining those filters.
 
 Build a single image locally by naming its target:
 

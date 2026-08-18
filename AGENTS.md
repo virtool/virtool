@@ -65,21 +65,9 @@ Apps bundle; packages stay source.
 `TZ=UTC` matches the `test` script and every CI test job — drop it and that
 command becomes the only unpinned way to run the suite.
 
-`pathoscope-test`, `quality-test`, `build-pathoscope` and `build-nuvs` are the
-only path-filtered jobs in `ci.yaml`, and they take **a filter each**, because
-their inputs differ: the crate jobs run cargo and read no TypeScript, while
-each image build bundles its own app and so depends on every workspace package
-its Dockerfile copies. One shared filter would run the libclang-and-cargo job
-on any `packages/workflow` change, and would rebuild each image for the other's
-inputs — `pathoscope-image` carries `packages/pathoscope-core` and `nuvs-image`
-does not. Extend the `changes` job's filters in the same
-commit as anything that gives a job a new input — in
-particular, **every path a workflow Dockerfile `COPY`s must appear under that
-image's filter**, or the build is skipped on the pull request that breaks it
-and fails on the push to `main`, where nothing gates it. That covers everything
-the shared `base` stage copies, packages the app does not import among them:
-`base` copies `packages/data`, `packages/service` and `packages/bio` whichever
-target was requested, so both image filters list all three.
+Add every new workflow image or crate input, including each Dockerfile `COPY`
+source, to the corresponding filter in `.github/workflows/ci.yaml`. See
+[docs/ci.md](docs/ci.md) for the filter boundaries and rationale.
 
 ### When to run checks
 
