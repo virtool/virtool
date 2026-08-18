@@ -62,9 +62,6 @@ Apps bundle; packages stay source.
 | Test (one file) | `TZ=UTC pnpm --filter @virtool/web exec vitest run <path>` |
 | Rust crates | `cargo test` / `cargo fmt` (in `packages/pathoscope-core` and `packages/quality-core`) |
 
-`TZ=UTC` matches the `test` script and every CI test job — drop it and that
-command becomes the only unpinned way to run the suite.
-
 Add every new workflow image or crate input, including each Dockerfile `COPY`
 source, to the corresponding filter in `.github/workflows/ci.yaml`. See
 [docs/ci.md](docs/ci.md) for the filter boundaries and rationale.
@@ -73,14 +70,11 @@ source, to the corresponding filter in `.github/workflows/ci.yaml`. See
 
 - Route changes: run `pnpm --filter @virtool/web build` before type-checking.
   This regenerates the checked-in `apps/web/src/routeTree.gen.ts`; commit it if
-  changed. Never use `tsr generate`: its outdated router CLI removes required
-  Start type declarations.
+  changed. Never use `tsr generate`.
 - Test changes: run the affected file with
   `TZ=UTC pnpm --filter @virtool/web exec vitest run <path>`.
 - Before committing: run `pnpm check`, `pnpm typecheck`, and `pnpm knip`.
 - Run the full test suite only when asked or for cross-cutting changes.
-- All checks must pass. Treat failures as caused by your changes because `main`
-  is green; never modify the working tree to compare against `main`.
 - Keep no dead code. Wire up or delete unused exports; tag intentionally public,
   uncalled exports with `@public`; remove `export` from file-local symbols.
 
@@ -207,96 +201,39 @@ App and package READMEs document their test harnesses and commands.
 
 ### Documentation
 
-Before committing, check whether your change contradicts anything in
-this file. It does if you have:
+Keep repository-wide rules in `AGENTS.md`, detailed rationale in `docs/`, and
+app- or package-specific documentation in that directory's `README.md`. Update
+documentation in the same change as the code it describes.
 
-- removed, added, or replaced a dependency listed under **Key libraries** in
+Check the affected documentation when a change:
+
+- adds, removes, or replaces a dependency listed under **Key libraries** in
   `apps/web/README.md`;
-- deleted, moved, or renamed a file or directory named anywhere in this
-  document;
-- added or removed a top-level feature directory under `apps/web/src/`;
-- changed a command in the **Commands** table, or changed what one does;
-- added, removed, or changed a lint rule this file describes as enforced;
-- changed the shape of an API this file tells agents to call.
-
-"I'll update the docs afterwards" is how a doc goes stale. There is no
-afterwards — the commit that removes the last `styled.` call site is the
-commit that removes styled-components from this file.
-
-**When to update what:**
-
-- New behavioural rule or convention → add a one-line statement in
-  the right `AGENTS.md` section and put the detail in the matching
-  `docs/<topic>.md`. Create a new doc only when no existing one
-  covers the area.
-- Change to behaviour described in a doc → update the doc in the
-  same commit. `docs/` goes stale the moment the code it describes
-  changes.
-- A section in `AGENTS.md` keeps growing → move the detail into a
-  doc and leave a one-or-two-line pointer behind.
-- A doc grows past one cohesive topic, or starts pulling in
-  unrelated material to stay self-contained → split it along the
-  mixed-concerns line so each half is again a leaf.
-- New app or package, or a change to an app's port, image, surface or
-  commands, or to what a package exports → update that directory's
-  `README.md` in the same commit.
+- deletes, moves, or renames a documented file or directory;
+- adds or removes a top-level feature directory under `apps/web/src/`;
+- changes a documented command, lint rule, convention, or API shape;
+- adds an app or package, or changes its port, image, surface, commands, or
+  exports.
 
 ### Git
 
-Commit messages use **Conventional Commits**. Releases are automated with
-semantic-release: only `feat` (minor) and `fix` (patch) trigger a release.
-Anything user-visible must be one of those — never `refactor` or `chore`.
+Commit and PR titles use Conventional Commits. See [CONTRIBUTING.md](CONTRIBUTING.md)
+for the type taxonomy and examples.
 
 ```
 type(scope): description
 ```
 
-#### Types
-
-- `feat`: new user-facing feature or capability
-- `fix`: bug fix or correcting wrong behavior (includes UI adjustments and
-  performance improvements)
-- `chore`: internal code not yet exposed to users (e.g., new hook, data model),
-  configs, dependencies, file moves/renames, build scripts
-- `refactor`: restructuring code without changing behavior (e.g., extracting
-  functions, renaming variables, reorganizing modules)
-- `style`: formatting only — no logic changes
-- `docs`: documentation changes only
-- `test`: adding or updating tests
-- `ci`: CI/CD pipeline changes
-
-#### Titles
-
-`feat` and `fix` titles are user-facing. Describe the outcome for the user,
-not the code change. Implementation details go in the body, not the title.
-
-- Bad: `fix: use shared Button component with corrected label`
-- Good: `fix: correct submit button label`
-- Bad: `feat: wrap save handler in a transaction`
-- Good: `fix: prevent rare data loss when saving`
-
-All other types are developer-facing — implementation details are helpful
-and make commits easier to find later.
-
-- Good: `refactor: extract form helpers into src/forms/`
-- Good: `chore: add csv parser`
-- Good: `test: add tests for table components and hooks`
-
-#### Other rules
-
 - Title: lowercase, no period, under 72 characters.
 - Scope is optional. Allowed scope: `deps` (dependency changes). Do not scope
   by domain.
+- Releases are automated with semantic-release. Only `feat` (minor) and `fix`
+  (patch) trigger a release; use them for every user-visible change.
 - Don't push or create PRs unless asked.
 - Don't include a Test plan section in pull request descriptions or comments.
 - Don't use `git -C <path>` unless necessary. It triggers permission prompts
   that aren't worth the trouble. Run git commands from the working directory
   instead.
-
-#### GitHub
-
-- PR titles must follow Conventional Commits format so they can be cleanly
-  squash-merged into a single well-formed commit.
 
 ### Linear
 
