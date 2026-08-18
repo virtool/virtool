@@ -3,6 +3,33 @@
 The server-only Postgres data layer: the Drizzle schema mirror, database pool,
 test fixtures, and domain queries used by Virtool services.
 
+## Schema ownership
+
+The Python `virtool` repository owns the Postgres schema and applies its Alembic
+migrations. This package mirrors that schema for Drizzle and does not ship
+migrations of its own.
+
+When an endpoint needs a schema change:
+
+1. Add and deploy the Alembic migration from the Python repository.
+2. Update `src/db/schema/` to match it.
+3. Migrate the endpoint to TypeScript.
+
+The TypeScript mirror may temporarily lag the deployed schema, but the Python
+application must never lag it while Python remains in production.
+
+### Taking ownership of migrations
+
+Before moving schema ownership to this package, baseline Drizzle against the
+production schema. Compare the initial generated migration with
+`pg_dump --schema-only`, then stamp production as already migrated instead of
+applying that initial migration. In particular, verify constraint names,
+default expressions, indexes, and enum value ordering.
+
+Keep `drizzle-orm` and `drizzle-kit` on compatible versions. Check both release
+notes when updating either package because their schema-generation internals
+change together.
+
 ## Outbound requests
 
 Third-party requests use `USER_AGENT` from `@virtool/data/userAgent`, which is

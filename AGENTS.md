@@ -134,8 +134,8 @@ exactly, use `.$defaultFn()` for Python-side defaults, and declare explicitly
 named table-level foreign keys. Serve legacy-shaped tables without
 renormalizing them.
 
-See [docs/database.md](docs/database.md) for the schema mirror, available
-domains, legacy data, transactions, and index-build contract.
+See [the data package README](packages/data/README.md) for schema ownership and
+the migration handoff contract.
 
 ### Files live in object storage, shared with Python
 
