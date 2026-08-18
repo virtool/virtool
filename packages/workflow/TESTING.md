@@ -1,4 +1,4 @@
-# The workflow test harness
+# Workflow testing
 
 `@virtool/workflow/testing` is what every workflow test stands on. It replaces
 two pieces of Python scaffolding outright:

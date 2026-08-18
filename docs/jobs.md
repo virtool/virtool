@@ -118,11 +118,42 @@ distinguish intentional termination. If termination occurs after claim, the
 job is eventually handled by the stalled-job sweep because the runner makes no
 terminal transition.
 
+## Testing the lifecycle
+
+The test harness in `@virtool/workflow/testing` exposes the jobs API contract in
+two forms over one `JobsApiState` object:
+
+- workflow tests use `createFakeJobsApiClient(state)` and avoid HTTP;
+- runtime tests use `startJobsApiTestServer(state)` and exercise a real
+  `node:http` server on an ephemeral port.
+
+Both forms route through `handleJobsApiRequest`. Responses are serialized and
+parsed with the same contract schemas as production, so the fake client cannot
+silently accept a wire shape that the real client would reject. The shared state
+records claims, step starts, finish and finalize calls, cache registrations,
+resource metadata, credentials, and the injected clock.
+
+The embedded server preserves the lifecycle behavior described above:
+
+- claims are unauthenticated and filtered by workflow;
+- every later request uses HTTP Basic credentials and verifies route job IDs;
+- terminal jobs reject every authenticated route with `401`;
+- duplicate step starts return `409`;
+- successful finalization updates the resource metadata served by later reads;
+- arbitrary responses, hung responses, and destroyed sockets can be queued to
+  test the distinction between HTTP decisions and retryable transport failures.
+
+This split keeps workflow tests focused on workflow outputs while allowing the
+runtime tests to cover retries, ping-driven cancellation, authentication, and
+status mapping over a real wire. See the package's
+[workflow testing reference](../packages/workflow/TESTING.md) for setup,
+builders, subprocess and storage fakes, work paths, and checksum helpers.
+
 ## Related documentation
 
 - [`@virtool/workflow`](../packages/workflow/README.md) documents the runtime,
   subprocess, file-transfer, cache, and configuration contracts.
 - [`@virtool/jobs-api`](../apps/jobs-api/README.md) documents service deployment
   and configuration.
-- [Workflow testing](workflow-testing.md) documents the jobs API fakes and the
-  integration test server used to exercise this lifecycle.
+- [Workflow testing](../packages/workflow/TESTING.md) documents the complete
+  shared test harness.

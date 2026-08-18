@@ -29,14 +29,124 @@ The web-app frontend for Virtool
 - Client code imports server declarations through `@server/*`, never by a
   relative path. Add every new feature alias to the server
   `noRestrictedImports` list.
-- Route `beforeLoad`, `loader`, `loaderDeps`, and `validateSearch` are eager.
-  Dynamically import feature `queryOptions` in loaders and use
-  `@app/searchParams`, not zod, in `validateSearch`.
-- Keep guard queries in their existing lightweight modules. Keep heavy helpers
-  isolated, use `createServerOnlyFn` to reach server code from the browser
-  graph, and externalize native dependencies in Vite.
 
-See [the bundling guide](../../docs/bundling.md) for details.
+The chunk is the unit of loading, not the export. If a chunk is reachable from
+something loaded eagerly, the whole chunk is downloaded. Tree-shaking removes
+unused code within a chunk; it does not decide which chunks a page fetches.
+
+#### The eager half of a route
+
+`autoCodeSplitting`, set on the `tanstackStart` plugin in `vite.config.js`,
+splits every route file in two.
+
+The critical half is `loader`, `beforeLoad`, `validateSearch`, and
+`loaderDeps`. `routeTree.gen.ts` imports it statically, and that file is the
+router's entry. Whatever the critical half reaches lands in the eager bundle
+that every page load pays for, including `/login`.
+
+Only the `component` half is lazy. An import that is expensive in a loader is
+free in a component.
+
+Never statically import a feature's `queries.ts` from the critical half. A
+feature's query module carries its whole request layer: every server-function
+stub and the zod schemas those stubs validate against. Pulling in one
+`queryOptions` factory brings all of it. Import the factory inside the loader
+body instead, as described in
+[Query options and route prefetching](#query-options-and-route-prefetching).
+
+`validateSearch` is synchronous, so it cannot defer zod with a dynamic import.
+A zod schema there pins all of zod into the eager bundle. Use the
+dependency-free coercion helpers in `@app/searchParams`, and type the function
+so partial navigation still type-checks:
+
+```ts
+validateSearch: (input: Partial<FooSearch> & SearchSchemaInput): FooSearch => ({
+	term: str(input.term, ""),
+	...paginated(input),
+}),
+```
+
+The `SearchSchemaInput` tag keeps `<Link search={{ page: 2 }}>` legal without
+spelling out every other parameter.
+
+#### Keep route-guard queries isolated
+
+A `beforeLoad` that resolves an account, and any loader on `/login` or
+`/setup`, runs for visitors with no session. Everything those reach is fetched
+before a user can sign in, including modules reached through a dynamic
+`import()`. Deferral changes when the chunk loads, not whether an
+unauthenticated visitor loads it.
+
+The `queryOptions` needed by guards therefore live apart from their feature's
+`queries.ts`, each importing exactly one server function and nothing else:
+
+| Module | Exports | Backed by |
+| --- | --- | --- |
+| `@account/account` | `accountQueryOptions`, `useFetchAccount` | `getAccount` |
+| `@administration/passwordPolicy` | `passwordPolicyQueryOptions` | `getPasswordPolicyFn` |
+| `@nav/queries` | `rootQueryOptions`, `useRootQuery` | `getRoot` |
+
+The `@nav/queries` guard reads `firstUser` from the root query before any
+session exists, so it cannot wait until after authentication.
+
+Keep these queries isolated even when their feature module looks light. A
+future request added to the shared module would otherwise ride onto the login
+wall unnoticed.
+
+#### Keep heavy dependencies isolated
+
+A module's imports survive tree-shaking when the package does not declare
+`sideEffects: false`. A grab-bag utility module can therefore leak its heaviest
+dependency into every bundle that wants any of its exports.
+
+`cn()` lives in `@app/cn` rather than `@app/utils` so `tailwind-merge` does not
+enter every bundle that only needs a plain string helper. Keep it separate,
+and isolate any utility that acquires a heavy dependency in the same way.
+
+#### Keep server modules out of the browser graph
+
+`src/server/**` is reachable from the browser program through `start.ts`, which
+`routeTree.gen.ts` pulls in. A top-level import of a server-function module
+from anything on that path drags the server graph, including dependencies such
+as `prom-client` and `node:*`, into the client bundle.
+
+Reach those modules through `createServerOnlyFn` and a dynamic import instead.
+`auth/middleware.ts` is the worked example. `metricsMiddleware` uses the same
+pattern so the metrics registry and `prom-client` never enter the client
+graph.
+
+#### Never bundle a native dependency
+
+A package that loads a `.node` addon locates it relative to `__dirname`, which
+has no value in an ES module. Bundling one can produce a server that builds
+cleanly but throws `ReferenceError: __dirname is not defined` when the package
+is first imported.
+
+Nitro recognizes common native packages and traces them out of its bundle,
+copying each into `.output/server/node_modules`. The production image ships
+only `.output`, so nothing else would put them there. Use `traceDeps` on the
+`nitro()` plugin only for a package Nitro does not already recognize;
+`@sentry/profiling-node` is the current case.
+
+The server is bundled in two stages, and Nitro cannot recover a package that
+Vite inlined first. A native package therefore needs both of the following:
+
+- An entry in `environments.ssr.resolve.external` in `vite.config.js`, so Vite
+  preserves the import for Nitro.
+- An entry in this app's `package.json` dependencies, even when only a
+  workspace package imports it. Under pnpm, Nitro cannot resolve a dependency
+  reached only through another workspace package from the app root. Add it to
+  `ignoreDependencies` for `apps/web` in `knip.json` at the same time.
+
+A green build does not prove this is correct because the failure occurs at
+first import. Check the output:
+
+```bash
+grep -rn "__dirname" apps/web/.output/server/_ssr/
+```
+
+Every hit should define `__dirname` before using it. A bare read means a native
+package was inlined.
 
 ### Rendering
 

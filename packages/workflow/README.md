@@ -147,3 +147,7 @@ Workflow data generators, jobs API fakes, and process fakes live in
 `src/testing/` and are imported through `@virtool/workflow/testing`. Do not
 duplicate them in `apps/web/src/tests/` or a workflow app. Tests that store
 files use `MemoryStorage`.
+
+See [Workflow testing](TESTING.md) for the harness factories, shared jobs API
+state, deterministic builders, subprocess fake, storage helpers, work paths,
+and checksum utilities.

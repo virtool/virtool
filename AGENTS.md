@@ -91,7 +91,8 @@ import. When adding a feature alias, add it to the server
 the browser graph.
 
 Follow the client conventions in [apps/web/README.md](apps/web/README.md), with
-the detailed bundling rationale in [docs/bundling.md](docs/bundling.md).
+the detailed bundling rationale in
+[apps/web/README.md#imports-and-bundles](apps/web/README.md#imports-and-bundles).
 
 ## Server
 
@@ -160,8 +161,8 @@ for claim, ping, cancellation, failure, and exit behaviour.
 Workflow files always stream, and storage keys are recorded or minted rather
 than derived. See [the jobs API README](apps/jobs-api/README.md) for finalize
 manifests and key validation, [indexes](docs/indexes.md) for the SQLite reference
-artifact, and [workflow testing](docs/workflow-testing.md) for the shared test
-harness.
+artifact, and [workflow testing](packages/workflow/TESTING.md) for the shared
+test harness.
 
 ## Code style
 
