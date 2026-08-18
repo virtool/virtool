@@ -93,7 +93,6 @@ the browser graph.
 Follow the client conventions in [apps/web/README.md](apps/web/README.md), with
 the detailed rationale in:
 
-- [docs/ssr.md](docs/ssr.md) — SSR, hydration, time, and CSP
 - [docs/queries.md](docs/queries.md) — React Query and error/loading states
 - [docs/bundling.md](docs/bundling.md) — route splitting and server-only code
 

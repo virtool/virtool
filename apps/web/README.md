@@ -48,16 +48,18 @@ same initial result in Node and the browser:
 - Subscribe to ambient state with `useSyncExternalStore` and a cached server
   snapshot. Use `@app/serverNow` for elapsed time and `ClientOnly` for subtrees
   that must measure the browser.
+- Hold viewer-local absolute times back with `useHydrated`; the server cannot
+  know the viewer's timezone or locale.
 - Give `<title>` exactly one string child, including inside SVG.
 - Disable SSR only on the route that requires it; SSR cannot be re-enabled
   below a disabled parent.
+- Never keep per-user render state at module scope. Server module state is
+  shared by every request handled by the process.
 
 React Compiler covers client `.ts` and `.tsx`. Do not spread a
 `react-hook-form` methods object, sync form props with `useForm({ values })`,
 and use `@app/useMatchPartialPath` instead of `useMatchRoute`. Local tests skip
 the compiler; CI enables it with `VT_TEST_REACT_COMPILER=1`.
-
-See [the SSR guide](../../docs/ssr.md) for details.
 
 ### Routing and data
 
@@ -76,6 +78,8 @@ See [the SSR guide](../../docs/ssr.md) for details.
 - Use suspense queries for primary route data. For secondary data, show
   `QueryError` when `isError && !data` before checking `isPending`, preserving
   stale data after a failed refetch.
+- Only suspense queries and loader prefetches participate in SSR. Plain
+  `useQuery` starts in the browser after hydration.
 
 See [the query guide](../../docs/queries.md) for details.
 
@@ -147,6 +151,10 @@ TanStack Start preserves `Date` values through its serializer, so server
 functions return dates directly. Raw JSON contracts use `z.coerce.date()`.
 Do not manually convert timestamps to ISO strings; timestamps embedded in
 legacy JSONB blobs are the documented exception.
+
+Server-rendered documents use a per-request CSP nonce for Router dehydration
+and streamed React scripts. Set it through the router SSR options; never add it
+by rewriting the response body, because doing so buffers the HTML stream.
 
 See [the architecture guide](../../docs/architecture.md) for the full boundary
 rationale.
