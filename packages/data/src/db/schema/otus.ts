@@ -1,7 +1,4 @@
-// Mirror of the `legacy_otus` and `legacy_sequences` tables. Python owns the
-// schema and its Alembic migrations; do not generate or push migrations from
-// this side. Keep in sync with
-// `../../../../../../virtool/virtool/otus/sql.py`.
+// Schema for the `legacy_otus` and `legacy_sequences` tables.
 //
 // These are hybrid tables: the verbatim Mongo document lives in `data` and the
 // remaining columns are promoted from it for querying. `data` is the source of

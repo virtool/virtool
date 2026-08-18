@@ -1,6 +1,4 @@
-// Mirror of the `instance_messages` table. Schema and migrations are owned by
-// the upstream Python service via Alembic — do not generate or push migrations
-// from this side.
+// Schema for the `instance_messages` table.
 
 import type { BannerColor } from "@virtool/contracts";
 import { sql } from "drizzle-orm";

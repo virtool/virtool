@@ -1,7 +1,5 @@
-// Read-only mirror of the `legacy_references`, `legacy_reference_users`, and
-// `legacy_reference_groups` tables managed by the upstream Python service via
-// Alembic. Do not generate or push migrations from this side. Keep the columns
-// in sync with `../../../../../../virtool/virtool/references/sql.py`.
+// Schema for the `legacy_references`, `legacy_reference_users`, and
+// `legacy_reference_groups` tables.
 
 import {
 	bigint,

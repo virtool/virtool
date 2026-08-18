@@ -1,7 +1,8 @@
-// Mirror of the two migration-bookkeeping tables. Neither is read nor written
-// from this side: `alembic_version` is Alembic's applied-revision pointer, and
-// `revisions` belongs to Python's own migration runner
-// (`../../../../../../virtool/virtool/migration/pg.py`).
+// Schema for the two migration-bookkeeping tables Python left behind. Neither
+// is read nor written from this side: `alembic_version` is Alembic's
+// applied-revision pointer, and `revisions` belongs to Python's own migration
+// runner. Drizzle keeps its own bookkeeping in `drizzle.__drizzle_migrations`
+// and neither of these.
 //
 // They are declared only so the schema snapshot describes production. A table
 // missing from this schema is missing from the snapshot, so nothing could

@@ -1,7 +1,4 @@
-// Partial mirror of the `legacy_history` and `legacy_history_diff` tables.
-// Python owns the schema and its Alembic migrations; do not generate or push
-// migrations from this side. Keep in sync with
-// `../../../../../../virtool/virtool/history/sql.py`.
+// Schema for the `legacy_history` and `legacy_history_diff` tables.
 //
 // Both tables are written from here now that OTU mutations are served from this
 // side — every OTU change records a history row and its diff. `reference` and

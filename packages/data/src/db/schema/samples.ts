@@ -1,7 +1,4 @@
-// Read-only mirror of the `legacy_samples` table and its join / file tables,
-// managed by the upstream Python service via Alembic. Do not generate or push
-// migrations from this side. Keep the columns in sync with
-// `../../../../../../virtool/virtool/samples/sql.py`.
+// Schema for the `legacy_samples` table and its join / file tables.
 
 import { sql } from "drizzle-orm";
 import {
