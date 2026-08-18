@@ -1,4 +1,6 @@
 .idea
+.agents
+.codex
 data
 # The Tilt/Minikube dev cluster. The Tiltfile builds these images with the repo
 # root as the context, and Tilt reads this file to decide what it watches — so
