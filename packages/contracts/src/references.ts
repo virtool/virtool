@@ -113,8 +113,8 @@ export type ReferenceUpdateRequest = z.infer<typeof ReferenceUpdateRequest>;
  * `ReferenceSourceData` and the models under it.
  *
  * Two upload formats parse to this one shape: a gzipped JSON export, which
- * spells an OTU's and a sequence's id `_id`, and a `.v1.sqlite` snapshot, whose
- * reader yields the same documents keyed `id`. Python reconciles the two with a
+ * spells an OTU's and a sequence's id `_id`, and a `.v1.sqlite.gz` snapshot,
+ * whose SQLite reader yields the same documents keyed `id`. Python reconciles the two with a
  * pydantic alias plus `allow_population_by_field_name`; `withUnderscoreId`
  * below is that reconciliation, and it normalises onto `_id` because
  * `prepareOtuInsertion` reads the document Mongo-side.

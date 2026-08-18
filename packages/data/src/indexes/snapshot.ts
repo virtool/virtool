@@ -1,4 +1,4 @@
-// The `reference-snapshot.v1.sqlite` artifact a finished build publishes.
+// The `reference-snapshot.v1.sqlite.gz` artifact a finished build publishes.
 //
 // A build produces two files describing the same OTUs: the gzipped JSON in
 // `artifact.ts`, and this one. Only this one is analysable — a real reference is
@@ -13,6 +13,7 @@ import { createReadStream } from "node:fs";
 import { mkdtemp, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
+import { compressFile } from "@virtool/archive/compression";
 import {
 	createIndexArtifact,
 	type IndexOtu,
@@ -21,6 +22,7 @@ import {
 	type IndexOtuSequence,
 	type IndexReference,
 	REFERENCE_SQLITE_FILE_NAME,
+	REFERENCE_SQLITE_GZIP_FILE_NAME,
 } from "@virtool/sqlite";
 import type { StorageBackend } from "@virtool/storage";
 import { AppError } from "../errors";
@@ -39,8 +41,9 @@ export class IndexSnapshotOtuError extends AppError {}
  *
  * The artifact is assembled on local disk because it is written out of order —
  * an isolate's rowid is only known once it is inserted — so there is no version
- * of this that streams into the bucket. The pod's disk holds one, where its heap
- * would not: the rows go in as they arrive and are never collected.
+ * of this that streams into the bucket. The pod's disk holds the raw prerequisite
+ * and gzip output during compression, where its heap would not: the rows go in
+ * as they arrive and are never collected. Only the gzip output is uploaded.
  */
 export async function writeIndexSnapshot(
 	storage: StorageBackend,
@@ -52,10 +55,12 @@ export async function writeIndexSnapshot(
 
 	try {
 		const path = join(directory, REFERENCE_SQLITE_FILE_NAME);
+		const gzipPath = join(directory, REFERENCE_SQLITE_GZIP_FILE_NAME);
 
 		await createIndexArtifact(path, reference, otus);
+		await compressFile(path, gzipPath);
 
-		return await storage.write(key, createReadStream(path));
+		return await storage.write(key, createReadStream(gzipPath));
 	} finally {
 		await rm(directory, { force: true, recursive: true });
 	}

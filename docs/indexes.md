@@ -1,15 +1,17 @@
-# Indexes 
+# Indexes
 
 ## SQLite Artifact
-A reference index reaches a workflow as one SQLite file. `packages/sqlite/`
-reads it and writes it, and both services write it — the port is not finished,
-so an artifact from either has to satisfy the other's reader.
 
-Two names, one format:
+A reference index is stored as one gzip-encoded SQLite file. A workflow
+stream-decompresses it to a transient raw SQLite path before `packages/sqlite/`
+opens it.
+
+Three names, one SQLite format:
 
 | Name | Written by | Holds |
 | --- | --- | --- |
-| `reference-snapshot.v1.sqlite` | a finished index build | a whole reference |
+| `reference-snapshot.v1.sqlite.gz` | a finished index build, in storage | a whole reference |
+| `reference-snapshot.v1.sqlite` | a build or workflow, transiently | the raw SQLite prerequisite/working file |
 | `index.v1.sqlite` | a workflow, locally | whatever survived a step |
 
 The names are deliberately distinct. Pathoscope's collapsed reference is missing

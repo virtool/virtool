@@ -863,7 +863,7 @@ caller it means the same thing.
 `build_index` — Python's method name, so both runners write the same value to
 the `step` column. The domain function patches every OTU in the build's manifest
 back to the version the manifest pins it to, writes the result to object
-storage as `reference-snapshot.v1.sqlite` and `reference-v2.json.gz`, registers
+storage as `reference-snapshot.v1.sqlite.gz` and `reference-v2.json.gz`, registers
 an `index_files` row for each, stamps `legacy_otus.last_indexed_version` and
 flips `ready`. The snapshot is the artifact an analysis reads; the gzipped JSON
 is kept because the other implementation still falls back to it.
@@ -894,7 +894,8 @@ guarding on a terminal-state column.
 
 **Nothing is buffered.** A real reference decompresses to hundreds of megabytes
 of JSON, and Python holds all of it twice: once as a list of documents and again
-as a gzip buffer. Here the manifest is patched 500 OTUs at a time —
+as a gzip buffer. Here the raw SQLite prerequisite is gzipped from disk and only
+the gzip file is uploaded; the manifest is patched 500 OTUs at a time —
 Python's `OTU_ID_CHUNK_SIZE` — and each chunk is serialized straight into a
 `createGzip()` stream handed to `StorageBackend.write`, so peak memory is set by
 the chunk size rather than by the reference. Python's `concurrency=25` /
@@ -1231,9 +1232,9 @@ already-parsed `ReferenceSourceData`. Pushing the parsing down would put
 `node:sqlite` and a decompression budget inside the package the web server
 imports, for a format only this task reads.
 
-**Two formats, dispatched on the suffix, because Python dispatches on the
-suffix.** A `.json.gz` upload is inflated and `JSON.parse`d; a `.v1.sqlite` one
-is spooled to a temp file and read through `openWorkflowIndex`
+**Two formats, dispatched on the suffix.** A `.json.gz` upload is inflated and
+`JSON.parse`d; a `.v1.sqlite.gz` one is stream-decompressed directly to a temp
+raw SQLite file and read through `openWorkflowIndex`
 (`@virtool/sqlite`), whose reader and DDL are shared with the workflow index
 artifact. Anything else is refused with Python's sentence rather than guessed
 at — opening a JSON export as SQLite fails with a message about a corrupt
@@ -1246,12 +1247,10 @@ upload's id, so it is the only handle the task has;
 removed rows exactly as Python's `get_storage_key_by_name_on_disk` does. The
 string does not locate an object and nothing composes a key from it.
 
-**The inflation guard counts decompressed bytes.** `storage.size` reports the
-compressed figure and so says nothing about what a file expands to. The count is
-of bytes leaving the gunzip stream, capped at 512 MiB — twenty times the largest
-reference seen in production, and low enough that a gzip bomb is named as one
-rather than surfacing as `ERR_STRING_TOO_LONG` from a `JSON.parse` that got that
-far.
+**The inflation guards count decompressed bytes.** `storage.size` reports the
+compressed figure and so says nothing about what a file expands to. JSON is
+capped at 512 MiB — twenty times the largest reference seen in production — and
+SQLite at 1 GiB. A gzip bomb is therefore named before either parser sees it.
 
 **Both `_id` and `id` are accepted for an OTU and a sequence.** The JSON export
 spells them `_id`; the SQLite reader yields `id`. Python reconciles the two with

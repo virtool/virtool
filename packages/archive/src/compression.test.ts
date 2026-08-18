@@ -3,7 +3,13 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { gzipSync } from "node:zlib";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
-import { compressFile, decompressFile, isGzipped } from "./compression";
+import {
+	compressFile,
+	DecompressedSizeLimitError,
+	decompressFile,
+	decompressGzipToFile,
+	isGzipped,
+} from "./compression";
 
 let workPath: string;
 
@@ -72,6 +78,63 @@ describe("compressFile and decompressFile", () => {
 		await expect(
 			decompressFile(source, join(workPath, "out")),
 		).rejects.toThrow();
+	});
+});
+
+describe("decompressGzipToFile", () => {
+	it("streams a multi-chunk gzip object into its destination", async () => {
+		const target = join(workPath, "nested", "snapshot.sqlite");
+		const compressed = gzipSync(Buffer.from("sqlite bytes across chunks"));
+
+		async function* chunks(): AsyncIterable<Uint8Array> {
+			for (let offset = 0; offset < compressed.length; offset += 3) {
+				yield compressed.subarray(offset, offset + 3);
+			}
+		}
+
+		await decompressGzipToFile(chunks(), target);
+
+		expect(await readFile(target, "utf8")).toBe("sqlite bytes across chunks");
+	});
+
+	it.each([
+		["malformed", Buffer.from("not gzip")],
+		["truncated", gzipSync(Buffer.from("snapshot")).subarray(0, 8)],
+	])("rejects a %s gzip stream", async (_label, compressed) => {
+		async function* source(): AsyncIterable<Uint8Array> {
+			yield compressed;
+		}
+
+		await expect(
+			decompressGzipToFile(source(), join(workPath, "out")),
+		).rejects.toThrow();
+	});
+
+	it("propagates aborts", async () => {
+		const controller = new AbortController();
+		controller.abort();
+
+		async function* source(): AsyncIterable<Uint8Array> {
+			yield gzipSync(Buffer.from("snapshot"));
+		}
+
+		await expect(
+			decompressGzipToFile(source(), join(workPath, "out"), {
+				signal: controller.signal,
+			}),
+		).rejects.toMatchObject({ name: "AbortError" });
+	});
+
+	it("rejects output beyond the decompressed-byte limit", async () => {
+		async function* source(): AsyncIterable<Uint8Array> {
+			yield gzipSync(Buffer.from("too many decompressed bytes"));
+		}
+
+		await expect(
+			decompressGzipToFile(source(), join(workPath, "out"), {
+				maxDecompressedBytes: 8,
+			}),
+		).rejects.toBeInstanceOf(DecompressedSizeLimitError);
 	});
 });
 

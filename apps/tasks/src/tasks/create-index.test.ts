@@ -188,7 +188,7 @@ describe("createIndexTask", () => {
 			.orderBy(indexFiles.name);
 
 		expect(files.map((file) => file.name)).toEqual([
-			"reference-snapshot.v1.sqlite",
+			"reference-snapshot.v1.sqlite.gz",
 			"reference-v2.json.gz",
 		]);
 

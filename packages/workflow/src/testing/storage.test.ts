@@ -98,7 +98,7 @@ describe("minted keys", () => {
 
 		const artifact = await seedIndexArtifact(
 			7,
-			"reference-snapshot.v1.sqlite",
+			"reference-snapshot.v1.sqlite.gz",
 			new Uint8Array([1, 2, 3]),
 		);
 

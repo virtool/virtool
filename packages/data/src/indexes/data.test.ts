@@ -1,3 +1,4 @@
+import { REFERENCE_SQLITE_GZIP_FILE_NAME } from "@virtool/sqlite";
 import { eq } from "drizzle-orm";
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
 import { seedUser } from "../auth/test/fixtures";
@@ -13,6 +14,7 @@ import {
 	createIndex,
 	findIndexes,
 	getIndex,
+	getIndexFileKey,
 	IndexBuildInProgressError,
 	IndexNotFoundError,
 	listReadyIndexes,
@@ -283,6 +285,39 @@ describe("getIndex", () => {
 				type: "fasta",
 			},
 		]);
+	});
+});
+
+describe("getIndexFileKey", () => {
+	it("allows only the gzip-encoded SQLite snapshot name", async () => {
+		const userId = await seedNextUser();
+		const referenceId = await seedReference(db, userId);
+		const indexId = await seedIndex(db, { referenceId, userId, version: 0 });
+		const gzipKey = `indexes/${indexId}/gzip-snapshot`;
+
+		await db.insert(indexFiles).values([
+			{
+				index_id: indexId,
+				name: REFERENCE_SQLITE_GZIP_FILE_NAME,
+				size: 100,
+				storage_key: gzipKey,
+				type: "sqlite",
+			},
+			{
+				index_id: indexId,
+				name: "reference-snapshot.v1.sqlite",
+				size: 200,
+				storage_key: `indexes/${indexId}/legacy-snapshot`,
+				type: "sqlite",
+			},
+		]);
+
+		await expect(
+			getIndexFileKey(db, indexId, REFERENCE_SQLITE_GZIP_FILE_NAME),
+		).resolves.toBe(gzipKey);
+		await expect(
+			getIndexFileKey(db, indexId, "reference-snapshot.v1.sqlite"),
+		).resolves.toBeNull();
 	});
 });
 

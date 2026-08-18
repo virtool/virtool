@@ -16,14 +16,17 @@ import { DatabaseSync } from "node:sqlite";
 import { IndexArtifactFormatError, IndexArtifactMissingError } from "./errors";
 
 /**
- * The name a finished build's snapshot carries, in storage and in the work
- * path.
+ * The name of the raw snapshot while a build creates it or a workflow opens it.
  *
  * Versioned in the filename rather than only in the `metadata` table, so an
  * incompatible future artifact cannot be mistaken for this one before it is
  * opened. Mirrors the other implementation's `REFERENCE_SQLITE_FILE_NAME`.
  */
 export const REFERENCE_SQLITE_FILE_NAME = "reference-snapshot.v1.sqlite";
+
+/** The name a finished build's gzip-encoded snapshot carries in storage. */
+export const REFERENCE_SQLITE_GZIP_FILE_NAME =
+	"reference-snapshot.v1.sqlite.gz";
 
 /**
  * The name a workflow gives an artifact it builds itself.

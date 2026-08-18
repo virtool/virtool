@@ -1,11 +1,13 @@
+import { randomBytes } from "node:crypto";
 import { mkdtemp, readFile, rm, stat, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { setTimeout as delay } from "node:timers/promises";
+import { gzipSync } from "node:zlib";
 import type { StorageBackend } from "@virtool/storage";
 import { MemoryStorage, StorageKeyNotFoundError } from "@virtool/storage";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
-import { downloadToPath, uploadFromPath } from "./transfer";
+import { downloadGzipToPath, downloadToPath, uploadFromPath } from "./transfer";
 
 let workPath: string;
 
@@ -99,6 +101,56 @@ describe("downloadToPath", () => {
 	});
 });
 
+describe("downloadGzipToPath", () => {
+	it("decompresses a stored object directly into the destination", async () => {
+		const storage = new MemoryStorage();
+		const compressed = gzipSync(Buffer.from("raw sqlite bytes"));
+		await storage.write("indexes/1/snapshot", oneChunk(compressed));
+
+		const path = join(workPath, "indexes", "1", "snapshot.sqlite");
+		await downloadGzipToPath(storage, "indexes/1/snapshot", path);
+
+		expect(await readFile(path, "utf8")).toBe("raw sqlite bytes");
+	});
+
+	it("propagates missing-storage and corrupt-gzip failures", async () => {
+		const storage = new MemoryStorage();
+
+		await expect(
+			downloadGzipToPath(storage, "absent", join(workPath, "missing")),
+		).rejects.toThrow(StorageKeyNotFoundError);
+
+		await storage.write("corrupt", oneChunk(Buffer.from("not gzip")));
+
+		await expect(
+			downloadGzipToPath(storage, "corrupt", join(workPath, "corrupt")),
+		).rejects.toThrow();
+	});
+
+	it("writes decompressed bytes before the compressed source finishes", async () => {
+		const target = join(workPath, "streamed.sqlite");
+		const compressed = gzipSync(randomBytes(256 * 1024));
+		const chunkSize = Math.ceil(compressed.length / 3);
+		const observed: number[] = [];
+		const storage = {
+			async *read(): AsyncIterable<Uint8Array> {
+				for (let offset = 0; offset < compressed.length; offset += chunkSize) {
+					yield compressed.subarray(offset, offset + chunkSize);
+					await delay(20);
+					observed.push(await sizeOf(target));
+				}
+			},
+		} as unknown as StorageBackend;
+
+		await downloadGzipToPath(storage, "snapshot", target);
+
+		const [first = 0, second = 0, third = 0] = observed;
+		expect(first).toBeGreaterThan(0);
+		expect(second).toBeGreaterThan(first);
+		expect(third).toBeGreaterThan(second);
+	});
+});
+
 describe("uploadFromPath", () => {
 	it("streams the file to the key and returns the byte count", async () => {
 		const storage = new MemoryStorage();
@@ -133,4 +185,8 @@ describe("uploadFromPath", () => {
 
 async function* toChunks(content: string): AsyncIterable<Uint8Array> {
 	yield new TextEncoder().encode(content);
+}
+
+async function* oneChunk(bytes: Uint8Array): AsyncIterable<Uint8Array> {
+	yield bytes;
 }

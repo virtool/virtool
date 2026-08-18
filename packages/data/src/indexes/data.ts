@@ -18,7 +18,7 @@ import type {
 } from "@virtool/contracts";
 import type { Logger } from "@virtool/logger";
 import {
-	REFERENCE_SQLITE_FILE_NAME,
+	REFERENCE_SQLITE_GZIP_FILE_NAME,
 	type IndexOtu as SnapshotOtu,
 } from "@virtool/sqlite";
 import {
@@ -442,7 +442,7 @@ const INDEX_FILE_NAMES = new Set([
 	"reference.rev.1.bt2",
 	"reference.rev.2.bt2",
 	"reference-v2.json.gz",
-	REFERENCE_SQLITE_FILE_NAME,
+	REFERENCE_SQLITE_GZIP_FILE_NAME,
 ]);
 
 /**
@@ -790,9 +790,9 @@ async function stampLastIndexedVersions(
  *
  * The whole of what the `create_index` task runs. It patches every OTU in the
  * manifest to the version the manifest pins it to, writes both artifacts to
- * object storage — the `reference-snapshot.v1.sqlite` every analysis reads and
- * the `reference-v2.json.gz` beside it — registers a row for each and flips
- * `ready`.
+ * object storage — the `reference-snapshot.v1.sqlite.gz` every analysis
+ * decompresses and reads and the `reference-v2.json.gz` beside it — registers a
+ * row for each and flips `ready`.
  *
  * **A build publishes both files or neither.** They are registered in one
  * transaction with the `ready` flip, so there is no state where an index says it
@@ -966,7 +966,7 @@ export async function generateTaskIndex(
 		},
 		{
 			key: snapshotKey,
-			name: REFERENCE_SQLITE_FILE_NAME,
+			name: REFERENCE_SQLITE_GZIP_FILE_NAME,
 			size: snapshotSize,
 			type: "sqlite",
 		},

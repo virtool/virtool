@@ -21,9 +21,11 @@ there are no runtime dependencies at all, workspace ones included.
 An index is built by the server and read by a workflow, so both sides need this
 package:
 
-- **`@virtool/data`** writes `reference-snapshot.v1.sqlite`, the artifact a
-  finished build publishes, from the `create_index` task.
-- **The workflow executors** read that snapshot. Pathoscope also *writes* one:
+- **`@virtool/data`** writes a transient `reference-snapshot.v1.sqlite` and
+  publishes it as `reference-snapshot.v1.sqlite.gz` from the `create_index`
+  task.
+- **The workflow executors** stream-decompress that snapshot back to the raw
+  filename before opening it. Pathoscope also *writes* one:
   `cd-hit-est` collapses the reference it was given, and the survivors go into
   `index.v1.sqlite`, which later steps reopen through `openWorkflowIndex`.
 

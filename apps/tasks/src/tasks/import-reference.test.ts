@@ -2,6 +2,7 @@ import { mkdtemp, readFile, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { gzipSync } from "node:zlib";
+import * as compression from "@virtool/archive/compression";
 import { seedUser } from "@virtool/data/auth/test/fixtures";
 import type { Db } from "@virtool/data/db/pg";
 import {
@@ -25,7 +26,16 @@ import { createLogger, type Logger } from "@virtool/logger";
 import { createIndexArtifact } from "@virtool/sqlite";
 import { MemoryStorage } from "@virtool/storage";
 import { eq } from "drizzle-orm";
-import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
+import {
+	afterAll,
+	afterEach,
+	beforeAll,
+	beforeEach,
+	describe,
+	expect,
+	it,
+	vi,
+} from "vitest";
 import { runTask } from "../framework/run";
 import { acquireOrThrow, readTaskRow, seedTaskRow } from "../testing/tasks";
 import { importReferenceTask } from "./import-reference";
@@ -69,6 +79,10 @@ beforeEach(async () => {
 
 	userId = await seedUser(db, { handle: "curator" });
 	referenceId = await seedReference(userId);
+});
+
+afterEach(() => {
+	vi.restoreAllMocks();
 });
 
 async function seedReference(owner: number): Promise<number> {
@@ -369,8 +383,8 @@ describe("import_reference", () => {
 		).toHaveLength(1);
 	});
 
-	it("imports a .v1.sqlite snapshot", async () => {
-		const nameOnDisk = "8f3c-reference.v1.sqlite";
+	it("imports a .v1.sqlite.gz snapshot", async () => {
+		const nameOnDisk = "8f3c-reference.v1.sqlite.gz";
 		const workPath = await mkdtemp(join(tmpdir(), "vt-import-test-"));
 		const path = join(workPath, "snapshot.v1.sqlite");
 
@@ -415,7 +429,7 @@ describe("import_reference", () => {
 			);
 
 			await seedUpload(nameOnDisk);
-			await storage.write(STORAGE_KEY, once(await readFile(path)));
+			await storage.write(STORAGE_KEY, once(gzipSync(await readFile(path))));
 		} finally {
 			await rm(workPath, { force: true, recursive: true });
 		}
@@ -438,6 +452,49 @@ describe("import_reference", () => {
 		});
 
 		expect(await db.select().from(legacySequences)).toHaveLength(1);
+	});
+
+	it("rejects a legacy uncompressed .v1.sqlite snapshot", async () => {
+		const nameOnDisk = "8f3c-reference.v1.sqlite";
+		await seedUpload(nameOnDisk);
+		await storage.write(STORAGE_KEY, once(Buffer.from("sqlite bytes")));
+
+		expect(await run(await claim(nameOnDisk))).toMatchObject({
+			status: "failed",
+			error: expect.stringContaining("Unsupported reference file name"),
+		});
+	});
+
+	it("rejects an invalid gzip SQLite snapshot before populating OTUs", async () => {
+		const nameOnDisk = "8f3c-reference.v1.sqlite.gz";
+		await seedUpload(nameOnDisk);
+		await storage.write(STORAGE_KEY, once(Buffer.from("not gzip")));
+
+		expect(await run(await claim(nameOnDisk))).toMatchObject({
+			status: "failed",
+			error: expect.stringContaining("Not a gzipped file"),
+		});
+		expect(await db.select().from(legacyOtus)).toHaveLength(0);
+	});
+
+	it("enforces the 1 GiB SQLite limit before populating OTUs", async () => {
+		const nameOnDisk = "8f3c-reference.v1.sqlite.gz";
+		await seedUpload(nameOnDisk);
+		await storage.write(STORAGE_KEY, once(gzipSync(Buffer.from("sqlite"))));
+		vi.spyOn(compression, "decompressGzipToFile").mockImplementationOnce(
+			async (_source, _path, options) => {
+				expect(options?.maxDecompressedBytes).toBe(1024 * 1024 * 1024);
+				throw new compression.DecompressedSizeLimitError(
+					options?.maxDecompressedBytes ?? 0,
+				);
+			},
+		);
+
+		expect(await run(await claim(nameOnDisk))).toMatchObject({
+			status: "failed",
+			error: expect.stringContaining("1024 MB decompressed limit"),
+		});
+		expect(await db.select().from(legacyOtus)).toHaveLength(0);
 	});
 
 	it("reports an abort during the read as aborted, not failed", async () => {

@@ -393,7 +393,7 @@ export function createFakeIndex(
 		files: [
 			{
 				id: id * 10,
-				name: "reference-snapshot.v1.sqlite",
+				name: "reference-snapshot.v1.sqlite.gz",
 				size: random.int(1_000, 999_999),
 				storageKey: seededStorageKey(random, "indexes", id),
 				type: "sqlite",

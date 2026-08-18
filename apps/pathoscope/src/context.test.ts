@@ -1,6 +1,10 @@
 import { readFile } from "node:fs/promises";
 import { join } from "node:path";
-import { REFERENCE_SQLITE_FILE_NAME } from "@virtool/sqlite";
+import { gzipSync } from "node:zlib";
+import {
+	REFERENCE_SQLITE_FILE_NAME,
+	REFERENCE_SQLITE_GZIP_FILE_NAME,
+} from "@virtool/sqlite";
 import {
 	createFakeAnalysis,
 	createFakeBuildContextInput,
@@ -77,8 +81,8 @@ async function setup({ subtractions = 1 }: { subtractions?: number } = {}) {
 
 	const artifact = await seedIndexArtifact(
 		INDEX_ID,
-		REFERENCE_SQLITE_FILE_NAME,
-		"sqlite bytes",
+		REFERENCE_SQLITE_GZIP_FILE_NAME,
+		gzipSync(Buffer.from("sqlite bytes")),
 	);
 
 	state.indexes.set(
@@ -121,6 +125,7 @@ async function setup({ subtractions = 1 }: { subtractions?: number } = {}) {
 	}
 
 	return {
+		seedIndexArtifact,
 		state,
 		storage,
 		workPath,
@@ -272,18 +277,45 @@ describe("buildPathoscopeContext", () => {
 
 	// A 200–500 MB reference document exceeds V8's maximum string length, so
 	// there is no JSON fallback to degrade to.
-	it("refuses an index with no sqlite artifact", async () => {
+	it("refuses an index exposing only the legacy uncompressed artifact", async () => {
 		const { input, state } = await setup();
 
 		const index = state.indexes.get(INDEX_ID);
 
 		if (index) {
-			state.indexes.set(INDEX_ID, { ...index, files: [] });
+			state.indexes.set(INDEX_ID, {
+				...index,
+				files: index.files.map((file) => ({
+					...file,
+					name: REFERENCE_SQLITE_FILE_NAME,
+				})),
+			});
 		}
 
 		await expect(buildPathoscopeContext(input)).rejects.toThrow(
-			REFERENCE_SQLITE_FILE_NAME,
+			REFERENCE_SQLITE_GZIP_FILE_NAME,
 		);
+	});
+
+	it("rejects a corrupt compressed index artifact", async () => {
+		const { input, seedIndexArtifact, state, storage } = await setup();
+		const artifact = await seedIndexArtifact(
+			INDEX_ID,
+			REFERENCE_SQLITE_GZIP_FILE_NAME,
+			"not gzip",
+		);
+		const index = state.indexes.get(INDEX_ID);
+
+		if (index) {
+			state.indexes.set(INDEX_ID, {
+				...index,
+				files: [{ ...index.files[0], ...artifact, id: 1, type: "sqlite" }],
+			});
+		}
+
+		await expect(
+			buildPathoscopeContext({ ...input, storage }),
+		).rejects.toThrow();
 	});
 
 	// A read name is joined into a path under `reads/` and interpolated into a

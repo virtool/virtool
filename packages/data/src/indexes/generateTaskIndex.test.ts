@@ -2,7 +2,10 @@ import { mkdtemp, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { gunzipSync } from "node:zlib";
-import { openWorkflowIndex, REFERENCE_SQLITE_FILE_NAME } from "@virtool/sqlite";
+import {
+	openWorkflowIndex,
+	REFERENCE_SQLITE_GZIP_FILE_NAME,
+} from "@virtool/sqlite";
 import { MemoryStorage } from "@virtool/storage";
 import { and, eq, sql } from "drizzle-orm";
 import {
@@ -36,7 +39,7 @@ import {
 import { seedReference } from "./test/fixtures";
 
 const ARTIFACT = "reference-v2.json.gz";
-const SNAPSHOT = REFERENCE_SQLITE_FILE_NAME;
+const SNAPSHOT = REFERENCE_SQLITE_GZIP_FILE_NAME;
 
 let database: TestDatabase;
 let db: Db;
@@ -307,6 +310,11 @@ describe("generateTaskIndex", () => {
 		]);
 		expect(rows.every((row) => (row.size ?? 0) > 0)).toBe(true);
 
+		const snapshot = rows.find(({ name }) => name === SNAPSHOT);
+		const storedSnapshot = await readKey(storage, snapshot?.storage_key ?? "");
+		expect(snapshot?.size).toBe(storedSnapshot.length);
+		expect(() => gunzipSync(storedSnapshot)).not.toThrow();
+
 		// Each key is minted, so it is derived from neither the row id nor the dead
 		// `indexes.storage_key` slug. Both are checked because a helper named for
 		// either would produce a key that reads nothing and orphans what it writes.
@@ -341,7 +349,10 @@ describe("generateTaskIndex", () => {
 		const path = join(workPath, SNAPSHOT);
 		const file = await readFileRow(indexId, SNAPSHOT);
 
-		await writeFile(path, await readKey(storage, file?.storage_key ?? ""));
+		await writeFile(
+			path,
+			gunzipSync(await readKey(storage, file?.storage_key ?? "")),
+		);
 
 		const index = openWorkflowIndex({ id: indexId, path });
 

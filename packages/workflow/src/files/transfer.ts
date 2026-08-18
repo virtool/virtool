@@ -17,6 +17,10 @@ import { createReadStream, createWriteStream } from "node:fs";
 import { mkdir } from "node:fs/promises";
 import { dirname } from "node:path";
 import { pipeline } from "node:stream/promises";
+import {
+	type DecompressGzipToFileOptions,
+	decompressGzipToFile,
+} from "@virtool/archive/compression";
 import type { StorageBackend } from "@virtool/storage";
 
 /**
@@ -36,6 +40,21 @@ export async function downloadToPath(
 	await mkdir(dirname(path), { recursive: true });
 
 	await pipeline(storage.read(key), createWriteStream(path));
+}
+
+/**
+ * Stream the gzip object at `key` into a decompressed file at `path`.
+ *
+ * No compressed copy is retained on disk and neither representation is
+ * buffered in memory.
+ */
+export async function downloadGzipToPath(
+	storage: StorageBackend,
+	key: string,
+	path: string,
+	options?: DecompressGzipToFileOptions,
+): Promise<void> {
+	await decompressGzipToFile(storage.read(key), path, options);
 }
 
 /**

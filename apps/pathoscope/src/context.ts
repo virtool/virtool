@@ -26,8 +26,12 @@ import {
 	WorkflowSample,
 	WorkflowSubtraction,
 } from "@virtool/contracts";
-import { REFERENCE_SQLITE_FILE_NAME } from "@virtool/sqlite";
-import { type BuildContextInput, downloadToPath } from "@virtool/workflow";
+import { REFERENCE_SQLITE_GZIP_FILE_NAME } from "@virtool/sqlite";
+import {
+	type BuildContextInput,
+	downloadGzipToPath,
+	downloadToPath,
+} from "@virtool/workflow";
 import { type PathoscopePaths, workPaths } from "./paths";
 
 /**
@@ -61,9 +65,9 @@ export type PathoscopeRead = {
 /** The reference index artifact the analysis is pinned to. */
 export type PathoscopeIndex = {
 	id: number;
-	/** The recorded key of the SQLite artifact. */
+	/** The recorded key of the gzip-encoded SQLite artifact. */
 	storageKey: string;
-	/** Where the artifact was downloaded to. */
+	/** Where the artifact was stream-decompressed to raw SQLite. */
 	path: string;
 };
 
@@ -169,7 +173,7 @@ export async function buildPathoscopeContext({
 
 	await Promise.all([
 		...reads.map((read) => downloadToPath(storage, read.storageKey, read.path)),
-		downloadToPath(storage, resolvedIndex.storageKey, resolvedIndex.path),
+		downloadGzipToPath(storage, resolvedIndex.storageKey, resolvedIndex.path),
 		...resolvedSubtractions.map((subtraction) =>
 			checkStorageKeyExists(storage, subtraction.storageKey),
 		),
@@ -269,12 +273,12 @@ function checkReadName(name: string): void {
  */
 function resolveIndex(index: WorkflowIndex, path: string): PathoscopeIndex {
 	const file = index.files.find(
-		({ name }) => name === REFERENCE_SQLITE_FILE_NAME,
+		({ name }) => name === REFERENCE_SQLITE_GZIP_FILE_NAME,
 	);
 
 	if (!file) {
 		throw new Error(
-			`Index ${index.id} has no ${REFERENCE_SQLITE_FILE_NAME}; rebuild it before analysing against it`,
+			`Index ${index.id} has no ${REFERENCE_SQLITE_GZIP_FILE_NAME}; rebuild it before analysing against it`,
 		);
 	}
 

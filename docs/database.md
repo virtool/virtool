@@ -195,7 +195,8 @@ row for each **with its own key on it**, promotes
 `legacy_otus.last_indexed_version`, and only then sets `ready = true`.
 
 A build publishes two files describing the same OTUs:
-`reference-snapshot.v1.sqlite`, which every analysis reads, and
+`reference-snapshot.v1.sqlite.gz`, which every analysis stream-decompresses to
+a local raw SQLite file before reading, and
 `reference-v2.json.gz` beside it. Both rows are written in the
 transaction that flips `ready`, because an index that reports itself
 ready without a snapshot cannot be analysed at all — a workflow claimed

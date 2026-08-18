@@ -35,7 +35,7 @@ export type SubtractionPaths = {
 
 /** Every path one nuvs run uses. */
 export type NuvsPaths = {
-	/** The reference index artifact, as downloaded from object storage */
+	/** The raw reference index, stream-decompressed from object storage */
 	sourceIndex: (indexId: number) => string;
 
 	/** One of the sample's reads files, by the name the row carries */

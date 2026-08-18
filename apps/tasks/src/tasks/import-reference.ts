@@ -1,4 +1,3 @@
-import { createWriteStream } from "node:fs";
 import { mkdtemp, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
@@ -6,12 +5,16 @@ import { Readable } from "node:stream";
 import { pipeline } from "node:stream/promises";
 import { createGunzip } from "node:zlib";
 import {
+	DecompressedSizeLimitError,
+	decompressGzipToFile,
+} from "@virtool/archive/compression";
+import {
 	type ReferenceSourceData,
 	ReferenceSourceDataSchema,
 } from "@virtool/contracts";
 import { populateImportedReference } from "@virtool/data/references/populate";
 import { getUploadFileByNameOnDisk } from "@virtool/data/uploads/data";
-import { openWorkflowIndex } from "@virtool/sqlite";
+import { openWorkflowIndex, REFERENCE_SQLITE_FILE_NAME } from "@virtool/sqlite";
 import type { StorageBackend } from "@virtool/storage";
 import { z } from "zod";
 import { defineTask } from "../framework/define";
@@ -43,11 +46,14 @@ const payload = z.object({
  * Measured against a real export: 6.15 MB gzipped inflates to 24.9 MB, so this
  * is roughly twenty times the largest reference seen in production.
  */
-const MAX_INFLATED_BYTES = 512 * 1024 * 1024;
+const MAX_JSON_INFLATED_BYTES = 512 * 1024 * 1024;
+
+/** The most decompressed bytes an uploaded SQLite snapshot may expand to. */
+const MAX_SQLITE_INFLATED_BYTES = 1024 * 1024 * 1024;
 
 const JSON_SUFFIX = ".json.gz";
 
-const SQLITE_SUFFIX = ".v1.sqlite";
+const SQLITE_SUFFIX = ".v1.sqlite.gz";
 
 /** Thrown when an upload cannot be read as the reference it claims to be. */
 class ReferenceImportError extends Error {
@@ -166,9 +172,9 @@ async function readGzippedJson(
 				for await (const chunk of source) {
 					inflated += chunk.length;
 
-					if (inflated > MAX_INFLATED_BYTES) {
+					if (inflated > MAX_JSON_INFLATED_BYTES) {
 						throw new ReferenceImportError(
-							`Reference file exceeds the ${MAX_INFLATED_BYTES / (1024 * 1024)} MB decompressed limit`,
+							`Reference file exceeds the ${MAX_JSON_INFLATED_BYTES / (1024 * 1024)} MB decompressed limit`,
 						);
 					}
 
@@ -203,12 +209,17 @@ async function readSqliteSnapshot(
 	signal: AbortSignal,
 ): Promise<unknown> {
 	const workPath = await mkdtemp(join(tmpdir(), "vt-import-reference-"));
-	const path = join(workPath, "reference-snapshot.v1.sqlite");
+	const path = join(workPath, REFERENCE_SQLITE_FILE_NAME);
 
 	try {
-		await pipeline(Readable.from(storage.read(key)), createWriteStream(path), {
-			signal,
-		});
+		try {
+			await decompressGzipToFile(storage.read(key), path, {
+				maxDecompressedBytes: MAX_SQLITE_INFLATED_BYTES,
+				signal,
+			});
+		} catch (err) {
+			throw describeDecompressionFailure(err, signal);
+		}
 
 		const snapshot = openWorkflowIndex({ id: referenceId, path });
 
@@ -260,6 +271,13 @@ function describeDecompressionFailure(
 
 	if (err instanceof ReferenceImportError) {
 		return err;
+	}
+
+	if (err instanceof DecompressedSizeLimitError) {
+		return new ReferenceImportError(
+			`Reference file exceeds the ${err.limit / (1024 * 1024)} MB decompressed limit`,
+			{ cause: err },
+		);
 	}
 
 	const message = err instanceof Error ? err.message : String(err);

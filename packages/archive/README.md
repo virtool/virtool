@@ -15,7 +15,7 @@ assemblies), by `@virtool/tasks` (the HMM release archive) and by
 | `@virtool/archive` | everything below |
 | `@virtool/archive/tar` | `extractTarToDir`, `extractTarMembers`, `writePathAsTar` |
 | `@virtool/archive/zip` | `readZipMember` |
-| `@virtool/archive/compression` | `compressFile`, `decompressFile`, `isGzipped` |
+| `@virtool/archive/compression` | `compressFile`, `decompressFile`, `decompressGzipToFile`, `DecompressedSizeLimitError`, `isGzipped` |
 | `@virtool/archive/errors` | `ArchiveError`, `TarArchiveError`, `TarMemberMissingError`, `TarTargetExistsError`, `ZipArchiveError`, `ZipMemberMissingError` |
 
 Prefer a subpath. `@virtool/workflow` re-exports none of these any more —
@@ -64,6 +64,12 @@ stream parser. Links and device nodes are refused outright, where
 
 `compressFile` drops the `pigz` branch: checksums are taken over decompressed
 content, so the gzip bytes need not match Python's.
+
+`decompressGzipToFile` takes an `AsyncIterable<Uint8Array>` so object-storage
+callers can inflate directly into a destination without buffering or retaining
+a compressed copy. Its optional limit counts decompressed bytes and fails with
+`DecompressedSizeLimitError`; its optional abort signal tears down the whole
+pipeline.
 
 ## Testing
 
