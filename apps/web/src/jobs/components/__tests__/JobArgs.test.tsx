@@ -33,6 +33,12 @@ describe("<JobArgs />", () => {
 		expect(
 			screen.getByText("Run arguments that make this job unique."),
 		).toBeInTheDocument();
+		expect(screen.getByText("Reference")).toBeInTheDocument();
+		expect(
+			screen.getByText("Reference used to build the index"),
+		).toBeInTheDocument();
+		expect(screen.getByText("Index")).toBeInTheDocument();
+		expect(screen.getByText("Index built by this job")).toBeInTheDocument();
 	});
 
 	it.each(workflows)(

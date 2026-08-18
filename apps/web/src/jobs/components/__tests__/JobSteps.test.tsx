@@ -127,4 +127,42 @@ describe("<JobSteps />", () => {
 		expect(container.querySelector("img")).toBeNull();
 		expect(screen.getByText(description)).toBeInTheDocument();
 	});
+
+	it("renders the terminal state when the job recorded no steps", () => {
+		renderWithProviders(
+			<JobSteps
+				finishedAt={new Date("2024-04-12T21:53:19.108000Z")}
+				state="succeeded"
+				steps={null}
+			/>,
+		);
+
+		expect(screen.getByText("Succeeded")).toBeInTheDocument();
+		expect(screen.getByText(/This job finished/)).toBeInTheDocument();
+		expect(screen.queryByRole("table")).not.toBeInTheDocument();
+	});
+
+	it("renders the terminal state when the job failed before its first step", () => {
+		renderWithProviders(
+			<JobSteps
+				finishedAt={new Date("2024-04-12T21:53:19.108000Z")}
+				state="failed"
+				steps={[
+					{
+						id: "eliminate_otus",
+						name: "Eliminate OTUs",
+						description: "Mapping reads to the reference",
+						startedAt: null,
+					},
+				]}
+			/>,
+		);
+
+		expect(screen.getByText("Failed")).toBeInTheDocument();
+		expect(screen.getByText(/This job finished/)).toBeInTheDocument();
+		expect(screen.getByRole("table")).toBeInTheDocument();
+		expect(screen.getByText("Eliminate OTUs").closest("tr")).toHaveClass(
+			"text-muted",
+		);
+	});
 });
