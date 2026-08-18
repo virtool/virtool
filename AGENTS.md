@@ -241,164 +241,28 @@ repository-wide rules in view:
 
 ### Data store: Postgres-first
 
-The TypeScript server reads and writes **Postgres only** (via
-Drizzle), through `@virtool/data`: the schema mirror is
-`packages/data/src/db/schema/`, the pool comes from `createDb`
-(`@virtool/data/db/pg`), and every query lives in a
-`packages/data/src/<feature>/data.ts`. Python is the sole owner of schema
-and migrations — TS code reads and writes against the schema Python
-defines. Mirror Python-side column defaults with Drizzle `.$defaultFn()`,
-never `.default()` — the real columns have no `server_default`, so
-`.default()` inserts `null`.
+The TypeScript server reads and writes Postgres only, through
+`@virtool/data`; Python owns the schema and migrations. Mirror constraints
+exactly, use `.$defaultFn()` for Python-side defaults, and declare explicitly
+named table-level foreign keys. Serve legacy-shaped tables without
+renormalizing them.
 
-**Mirror a column's constraint, and only its constraint.** A `text`
-column Python closes with a CHECK constraint is typed
-`text("state").$type<JobState>()`, with the constraint named in a comment
-— `$type` asserts rather than validates, which is exactly right when the
-database is doing the enforcing. A column with **no** constraint stays
-`string` no matter how enumerable its values look: `jobs.workflow` is one,
-Python's `Workflow` being an application-level enum, and that openness is
-what `apps/jobs-api/src/metrics/registry.ts`'s `other` folding and
-`isJobStateTerminal`'s `string` parameter exist for. Never narrow a column
-the database leaves open, and never widen one it closes. The union itself
-lives in `@virtool/contracts` — one definition, imported by the mirror.
-
-**Declare a foreign key table-level, with an explicit name.** Use
-`foreignKey({ columns, foreignColumns, name })`, never an inline
-`.references()`, and name it `{table}_{column}_fkey` — the name Postgres
-assigned, because Alembic never named these itself. `.references()`
-auto-names a constraint production does not have, and because migration
-`0000` is stamped rather than run, the wrong name is caught by nothing
-until a much later migration emits SQL against a constraint that does not
-exist. `schema/foreignKeys.test.ts` pins all 54.
-
-Three `pgEnum` declarations (`messagecolor`, `indextype`,
-`session_type_enum`) describe a Postgres enum where the real column is
-`text` plus a CHECK. Each carries a comment saying so. They are inert —
-nothing generates migrations from this side — so leave them alone rather
-than restructuring. `subtraction_files.type` is the opposite case and is
-genuinely backed by the `subtractiontype` enum.
-
-Postgres is now Virtool's sole data store — Python removed MongoDB
-entirely, so every domain's records live in Postgres and there is no
-Mongoose / Mongo-driver layer here. A domain not yet reachable from the
-TS server is missing only its Drizzle mirror and server functions, not
-its data — build those against the tables Python already defines.
-
-**Serve a legacy-shaped table on its own shape; do not renormalize it.**
-The OTU domain writes `legacy_otus.data` as verbatim Mongo — isolates
-embedded, `_id` keys — because history diffs address that document
-positionally and Python still writes the same tables. Reshaping it from
-this side misapplies every diff already recorded and corrupts the
-analyses read path. Renormalizing is a Python-side migration.
-
-**An index build is two writes with a task between them, and this side
-runs both.** `createIndex` (`@virtool/data/indexes/data`) inserts the
-pending `indexes` row, stamps every unbuilt `legacy_history` row with it,
-and creates a `create_index` task; `generateTaskIndex`, in the same
-module, is what the runner that claims it executes — patching the
-manifest's OTUs, writing **both** artifacts to minted keys, recording an
-`index_files` row for each, stamping `last_indexed_version` and flipping
-`ready`.
-
-**A build publishes `reference-snapshot.v1.sqlite` and
-`reference-v2.json.gz`, or it publishes neither.** The snapshot is the
-only one an analysis can read — a real reference is past the maximum
-string length `JSON.parse` can return — so a build that registers the
-gzipped JSON alone is `ready` and unusable, and every workflow claimed
-against it dies in `buildContext`. Both rows are written in the
-transaction that flips `ready`. The manifest is walked once per artifact
-rather than held for both: the whole point of the chunked patch loop is
-that no reference is ever in the heap. Python's `CreateIndexTask`
-does the same work and both runners are live until the cutover, so the
-two must stay interchangeable. The
-insert runs under
-`pg_try_advisory_xact_lock(hashtext('index_build:{referenceId}'))`, the
-same key Python takes, so a build started from either service excludes
-one started from the other. Don't drop the lock. `indexes.storage_key`
-is dead — it is still `NOT NULL`, so the insert fills it, but nothing
-composes a key from it any more.
-
-See [docs/database.md](docs/database.md) for which domains the TS
-server can reach today, why the OTU tables keep their legacy shape and
-what that costs a writer, the `legacy_id` resolution rules, and the
-column-default convention.
+See [docs/database.md](docs/database.md) for the schema mirror, available
+domains, legacy data, transactions, and index-build contract.
 
 ### Files live in object storage, shared with Python
 
-Uploads, reads, analysis results, indexes, subtractions, HMM profiles,
-and caches live in S3 or Azure Blob — **the same bucket Python uses**.
-`@virtool/storage` exposes a five-method streaming interface
-(`read`, `write`, `delete`, `list`, `size`); there are no paths, file
-handles, or presigned URLs. There is no filesystem backend.
+Files live in the same S3 or Azure bucket Python uses. Stored-object keys are
+recorded, never reconstructed; collect them before deleting their rows. Pass
+the storage backend into data functions, log failures returned by `deleteKeys`,
+and use `MemoryStorage` in unit tests. Client code must read named
+`import.meta.env` keys, never the whole object.
 
-**A key is recorded, not derived.** Every row naming a stored object
-carries its complete key in a `storage_key` column, and every read path
-reads that column — nothing recomposes a key from a row id, a legacy id,
-or a filename. New keys come from `mintStorageKey(domain, parentId)` and
-`mintRootStorageKey(domain)` in `@virtool/storage/keys`, whose UUID leaf
-must stay hyphenless to match Python's `uuid4().hex`. The `parentId`
-segment is for human inspection only; keys in the bucket are
-heterogeneous by design, because a migrated row keeps whatever prefix it
-was written under.
+See [docs/storage.md](docs/storage.md) for the streaming interface, key and
+cleanup contracts, configuration, backend behavior, and testing.
 
-**A key arriving over the wire is validated, not recomposed.** A workflow
-finalizing its outputs sends the key it wrote to, and the jobs API records
-it verbatim after checking it sits under `{domain}/{parentId}/` for the
-resource in its own path — plus non-empty, no leading `/`, no empty
-segment, no `..` segment. Composing a second key server-side would put a
-second opinion about where the bytes went next to the writer's. `POST
-/caches` is the exception and takes a bare uuid, because a cache key
-really is derivable.
-
-`StorageError` and `StorageKeyNotFoundError` come from
-`@virtool/storage/errors` and extend plain `Error`, not the data layer's
-`AppError`, so the storage package carries no dependency on the data layer.
-
-The backend is built once at startup and **passed into `data.ts`
-functions as an argument, the way `db` is**. `deleteKeys` never throws;
-it returns failures, and callers must log them.
-
-**Cleanup enumerates recorded keys; there is no prefix sweep.** Read a
-row's key *before* deleting the row, and where a cascade takes child rows
-with it — a sample's analyses take their `analysis_files`, an index takes
-its `index_files` — collect the children's keys in the parent's delete.
-An object written before keys were recorded is named by no row, survives
-the delete, and is left for an orphan sweep that does not exist yet.
-
-Client code must never reference the whole `import.meta.env` object.
-Vite would serialize every `VT_`-prefixed variable — including
-`VT_STORAGE_S3_SECRET_ACCESS_KEY` — into the browser bundle. Read named
-keys instead; `src/app/__tests__/clientEnv.test.ts` enforces this.
-
-Unit-test anything that stores files against `MemoryStorage`. The
-backends themselves are tested against real Garage and Azurite
-containers in `@virtool/storage`'s `integration` Vitest project.
-
-See [docs/storage.md](docs/storage.md) for the interface, the key
-layout, the backend configuration and its both-or-neither credential
-rule, the three S3 quirks, and the testing setup.
-
-### Every outbound request identifies itself with a `User-Agent`
-
-Anything reaching a third party — NCBI BLAST and GenBank, the virtool.ca
-HMM manifest, the GitHub-hosted release archive — sends
-`User-Agent: virtool`, from the one `USER_AGENT` constant in
-`@virtool/data/userAgent`. NCBI throttles or blocks anonymous traffic and
-BLAST polling is the highest-volume outbound path here; GitHub refuses a
-request carrying no `User-Agent` at all.
-
-**There is no shared HTTP client to hang it off, and adding one is out of
-scope by decision.** Python built a single `aiohttp.ClientSession` at
-startup; here each call site takes its own `AbortSignal.timeout`, which
-works, and a singleton client would be exactly the module-scope
-construction `packages/data` avoids everywhere else.
-
-**The token carries no version**, deliberately: `packages/data` has no
-build-time global to read one from — `apps/web` has `__APP_VERSION__` and
-`apps/tasks` a JSON import of its own manifest, neither visible from
-there — and one token every call site agrees on beats a version on the
-subset that could reach one.
+Third-party requests identify themselves with `USER_AGENT` from
+`@virtool/data/userAgent`; see [packages/data/README.md](packages/data/README.md).
 
 ## Workflows
 
