@@ -1,4 +1,5 @@
 import type {
+	OnDemandTaskName,
 	Reference,
 	ReferenceBuild,
 	ReferenceContributor,
@@ -42,7 +43,7 @@ import { users } from "../db/schema/users";
 import { AppError } from "../errors";
 import { emit } from "../events/emit";
 import { getSettings } from "../settings/data";
-import { createTask, type TaskType } from "../tasks/data";
+import { createTask } from "../tasks/data";
 
 /** Filters and pagination accepted by {@link findReferences}. */
 export type FindReferencesOptions = {
@@ -618,7 +619,7 @@ export async function createReference(
 		let organism = values.organism;
 		let clonedFromId: number | null = null;
 		let uploadId: number | null = null;
-		let taskType: TaskType | null = null;
+		let taskType: OnDemandTaskName | null = null;
 		let taskContext: Record<string, unknown> = {};
 
 		if (values.cloneFrom !== undefined) {

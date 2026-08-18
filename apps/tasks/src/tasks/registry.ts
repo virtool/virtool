@@ -1,6 +1,6 @@
 import type { Db } from "@virtool/data/db/pg";
 import type { StorageBackend } from "@virtool/storage";
-import type { TaskRegistry } from "../framework/define";
+import type { CompleteTaskRegistry } from "../framework/define";
 import { cleanupSessionsTask } from "./cleanup-sessions";
 import { cloneReferenceTask } from "./clone-reference";
 import { createIndexTask } from "./create-index";
@@ -38,7 +38,7 @@ export type TaskContext = {
  * disagrees with its body's `type` would claim under one name and dispatch
  * another; `registry.test.ts` fails on any that do.
  */
-export const taskRegistry: TaskRegistry<TaskContext> = {
+export const taskRegistry: CompleteTaskRegistry<TaskContext> = {
 	cleanup_sessions: cleanupSessionsTask,
 	clone_reference: cloneReferenceTask,
 	create_index: createIndexTask,

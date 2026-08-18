@@ -119,10 +119,10 @@ repository-wide rules in view:
   `/metrics` endpoint. Keep labels bounded and use the shared constant-time
   bearer-token helper. See [the web metrics guide](apps/web/README.md#metrics),
   [the jobs API guide](apps/jobs-api/README.md#metrics), and [the tasks
-  guide](docs/tasks.md).
+  guide](apps/tasks/README.md#probes-and-metrics).
 - `apps/tasks` runs both the periodic spawner and task runner. Its lease,
   fencing, shutdown, progress, metrics, and task-body contracts are maintained
-  in [docs/tasks.md](docs/tasks.md); do not duplicate them here.
+  in [its README](apps/tasks/README.md); do not duplicate them here.
 
 ## Data
 

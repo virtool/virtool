@@ -17,6 +17,7 @@
  * idempotency off `taskId`.
  */
 
+import type { TaskName } from "@virtool/contracts";
 import type { Logger } from "@virtool/logger";
 import type { z } from "zod";
 
@@ -128,6 +129,12 @@ export type RegisteredTask<C = unknown> = TaskDef<z.ZodType, C>;
 
 /** Every task type a runner will dispatch, keyed by its `type` column value. */
 export type TaskRegistry<C = unknown> = Record<string, RegisteredTask<C>>;
+
+/** A registry containing a handler for every task Virtool runs. */
+export type CompleteTaskRegistry<C = unknown> = Record<
+	TaskName,
+	RegisteredTask<C>
+>;
 
 /**
  * Register a task type.

@@ -1,9 +1,9 @@
 import { hostname } from "node:os";
 import type {
 	JsonObject,
+	OnDemandTaskName,
 	PeriodicTaskName,
 	Task,
-	TaskName,
 } from "@virtool/contracts";
 import {
 	and,
@@ -29,19 +29,6 @@ import { emit } from "../events/emit";
 
 /** Thrown when a requested task does not exist. */
 export class TaskNotFoundError extends AppError {}
-
-/**
- * A task type the TS server can spawn. The runner supports every Python task
- * name, but this union only lists the ones we create from here.
- *
- * Written as a subset of {@link TaskName} rather than as its own list of
- * strings, so a name that drifts from the one Python's task class carries is a
- * compile error here instead of a row no runner ever claims.
- */
-export type TaskType = Extract<
-	TaskName,
-	"clone_reference" | "create_index" | "import_reference" | "install_hmms"
->;
 
 /**
  * Insert a pending task row of `type` and return it.
@@ -100,7 +87,7 @@ async function insertTask(
 /** Insert a pending task of `type` and return its id. */
 export async function createTask(
 	db: DbOrTx,
-	type: TaskType,
+	type: OnDemandTaskName,
 	context: Record<string, unknown> = {},
 ): Promise<number> {
 	const task = await insertTask(db, type, context);

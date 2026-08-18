@@ -15,9 +15,8 @@ export const TEST_RUNNER_ID = "ts-runner-a-1";
 /**
  * Insert a queued row of `type` and return its id.
  *
- * Rows are written directly rather than through `createTask`, whose `TaskType`
- * lists only the types the web app spawns — a periodic type has no overload
- * there to reach for.
+ * Rows are written directly rather than through `createTask`, whose
+ * `OnDemandTaskName` excludes periodic types.
  *
  * Split out of {@link claimTask} for the case that needs the id before the
  * claim, to point a row the task owns back at it.

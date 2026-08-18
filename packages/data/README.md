@@ -15,6 +15,26 @@ module-scope client construction. The token has no version because this package
 cannot access the app-specific build versions used by `apps/web` and
 `apps/tasks`.
 
+## Task queue
+
+`src/tasks/data.ts` owns persistence for the Postgres task queue shared by task
+producers and `apps/tasks`. Task names live in `@virtool/contracts`:
+
+- `PeriodicTaskName` is the set scheduled by the task service.
+- `OnDemandTaskName` is the set accepted by `createTask()`.
+- `TaskName` is the complete set the task service runs.
+
+Create on-demand tasks through `createTask()`. When a domain row points at a
+task, create both and attach them in the same transaction so neither can be
+published without the other. The row itself is the enqueue signal; the runner
+polls Postgres, so producers send no additional notification.
+
+The data layer also owns claiming, lease renewal, fencing, progress, completion,
+failure, release, and queue metrics reads. Every mutation that changes a task's
+visible state publishes the corresponding `tasks` event. The execution and
+shutdown contracts are documented in
+[`apps/tasks/README.md`](../../apps/tasks/README.md).
+
 ## Testing
 
 Tests run as one Node Vitest project against a Postgres testcontainer. The

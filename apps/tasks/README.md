@@ -31,6 +31,121 @@ A claim is a lease encoded on `acquired_at`, renewed every 60 s and live for
 300. A reclaimed task re-runs from step zero, so **every task body must be
 idempotent**.
 
+## Task names and queue ownership
+
+The task taxonomy lives in `@virtool/contracts`:
+
+- `PeriodicTaskName` is the set this app schedules.
+- `OnDemandTaskName` is the set request-handling code may pass to
+  `createTask()`.
+- `TaskName` is their union and the complete set this app executes.
+
+`taskRegistry` is typed as a complete registry over `TaskName`, so changing the
+shared taxonomy requires a handler here. `PERIODIC_TASKS` separately defines
+the schedule and is checked against the registry. The taxonomy intentionally
+does not record which feature creates each on-demand task; producers use the
+shared `createTask()` boundary and keep their domain-specific lifecycle local.
+
+Postgres queue persistence belongs to `@virtool/data`, including enqueueing,
+claiming, leases, fencing, progress, completion, failure, release, metrics
+reads, and `tasks` event publication. See the
+[`@virtool/data` README](../../packages/data/README.md#task-queue).
+
+## Task framework
+
+Task bodies are defined with `defineTask()` and registered in
+`src/tasks/registry.ts`. A definition supplies a task name, a zod payload
+schema, optional ordered steps, a `run` function, and optional cleanup.
+`runTask()` parses the row context before calling the body; invalid payloads
+fail through the same terminal path as body errors.
+
+Each declared step occupies an equal slice of 0–100 progress. A step reports a
+fraction from 0 to 1, and the framework debounces, serializes, and keeps writes
+monotonic. Task bodies do not write the `tasks` table or publish task events
+themselves.
+
+Cleanup runs after failure or cooperative abort, but not after success. Its
+reason distinguishes terminal failure from an aborted run that another runner
+will retry. Cleanup errors are logged without replacing the original outcome.
+
+Every task body must:
+
+- be idempotent because an expired or released claim restarts it at step zero;
+- forward its `AbortSignal` into subprocesses and other waits;
+- keep persistence and storage operations in framework-free data functions;
+- throw errors rather than writing terminal task state itself;
+- yield during CPU-heavy loops so the heartbeat can renew its lease.
+
+## Spawner
+
+The spawner checks `PERIODIC_TASKS` every 30 seconds. A task's interval is a
+minimum suppression window, not an exact schedule, and a new row is created
+only when no outstanding task of that type exists.
+
+Each spawn attempt takes a transaction-scoped advisory lock derived from the
+bare task name. This prevents multiple replicas from inserting the same
+periodic task. A failure for one type is logged without skipping the remaining
+types or stopping the loop.
+
+During shutdown the spawner stops before the runner drains, so it cannot add
+new work while claims are being released.
+
+## Runner, leases, and fencing
+
+Each replica runs one task at a time. The runner polls every two seconds and
+claims only names present in `taskRegistry`. Replica count is the concurrency
+control; the runner's in-flight and renewal APIs remain set-based so this can
+change without redesigning lease storage.
+
+A claim records a runner id and acquisition time. The heartbeat renews all
+in-flight claims every 60 seconds against a 300-second lease. Expired leases
+are reclaimable. Every runner mutation is fenced by task id and runner id, so a
+runner whose lease has been reclaimed cannot update the new owner's task.
+
+When renewal reports that a claim was lost, the runner aborts that task and
+does not write or release it. Claim and heartbeat failures are logged and
+retried rather than crashing the process.
+
+## Probes and metrics
+
+The probe listener accepts only `GET` on these routes:
+
+- `/health/live` returns a static success response and never checks Postgres.
+  A database outage must not restart every pod and kill tasks in flight.
+- `/health/ready` checks Postgres and returns unavailable as soon as shutdown
+  begins.
+- `/metrics` requires the configured bearer token. When the token is unset the
+  route returns 404.
+
+The private Prometheus registry contains default Node metrics,
+`virtool_app_info`, Postgres pool occupancy, and these task series:
+
+| Series | Type | Labels |
+| --- | --- | --- |
+| `virtool_task_spawn_total` | counter | `type`, `outcome` |
+| `virtool_task_runs_total` | counter | `type`, `outcome` |
+| `virtool_task_duration_seconds` | histogram | `type` |
+| `virtool_tasks` | gauge | `type`, `state` |
+| `virtool_tasks_oldest_queued_age_seconds` | gauge | `type` |
+
+Task names outside `TaskName` fold into the bounded `other` label. Queue reads
+use the active predicate `complete = false AND error IS NULL`, are bounded by a
+two-second deadline, and are cached for ten seconds. A failed read omits the
+queue series rather than reporting a false zero or repeating stale values.
+
+## Shutdown
+
+The shared shutdown controller flips readiness, runs hooks in reverse
+registration order, closes the listener, drains the pool, and flushes Sentry.
+Failures are logged without preventing later steps, and the process exits
+non-zero if any step fails. A second signal is logged and ignored.
+
+The runner stops claiming, waits for its in-flight task within
+`VT_TASKS_DRAIN_TIMEOUT`, aborts it if necessary, waits briefly for cooperative
+cleanup, stops the heartbeat, and releases this runner's remaining claims. The
+drain timeout is part of the total shutdown budget, not additional to it. The
+container must execute Node directly so SIGTERM reaches these handlers.
+
 ## Commands
 
 Run from the monorepo root.
@@ -75,10 +190,9 @@ whitespace is trimmed, and an empty value is treated as unset.
 | `VT_STORAGE_AZURE_ACCESS_KEY` | String | Unset | Set an Azure account key; leave unset to use managed identity. |
 | `VT_STORAGE_AZURE_ENDPOINT` | URL string | Unset | Override the Azure Blob endpoint. |
 
-## Documentation
+## Related documentation
 
-`docs/tasks.md` covers the `AppContext` contract, shutdown
-ordering, the lease and fencing rules, the framework's step model, the runner's
-loop and the task-body contracts in full. `docs/apps.md` covers the bundling
-and `pnpm deploy` pipeline every non-Vite app shares, and `docs/images.md` the
-image pipeline.
+[`docs/apps.md`](../../docs/apps.md) covers the bundling and `pnpm deploy`
+pipeline shared by non-Vite apps. [`docs/images.md`](../../docs/images.md)
+covers the image pipeline, and [`docs/metrics.md`](../../docs/metrics.md) the
+metrics conventions shared across services.
