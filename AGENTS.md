@@ -400,290 +400,19 @@ build-time global to read one from — `apps/web` has `__APP_VERSION__` and
 there — and one token every call site agrees on beats a version on the
 subset that could reach one.
 
-### Server → client push runs over SSE with id-only frames
-
-Server-pushed cache invalidations are delivered over a single SSE
-stream at `/events`. Each frame carries `{ domain, operation, id }`;
-the client invalidates React Query caches by `domain` and refetches
-through the REST API so per-user auth is
-enforced on the refetch instead of in a fanout broadcast. Both
-Python and Node publish onto the Postgres `client_events` channel;
-`routes/events.ts` is the sole consumer.
-
-`jobs` and `tasks` update frames are the exceptions: a running job or
-task emits one per progress step and every one on screen holds its own
-`detail(id)` query, so invalidating per frame cost a request per record.
-They route through `createJobRefreshQueue` (`jobs/refresh.ts`) and
-`createTaskRefreshQueue` (`tasks/refresh.ts`), which buffer ids and read
-them with the batched `getJobs`/`getTasks` server functions instead.
-Don't add a `detail(id)` invalidation back for either.
-
-Adding a domain is a change in **three** places — `SseDomainSchema` and
-`SseMessageSchema` (`packages/contracts/src/sse.ts`), and
-`reactQueryHandler`'s `domains` record — and doing only the first two
-leaves every frame parsed and then dropped. Python needs no change:
-it publishes free-form domain strings, and a domain the schema does not
-name is discarded silently at the client, which is how `subtractions`
-frames went unhandled for as long as they did.
-
-See [docs/server-push.md](docs/server-push.md) for the wire format,
-auth on the SSE side, the batching queues, and the follow-up TODOs.
-
 ## Workflows
 
-### The runtime is `@virtool/workflow`: no injection, no teardown, no hooks
+Every executor uses `@virtool/workflow`; the runtime stays separate from the
+jobs API lifecycle and has no database access. See
+[the package README](packages/workflow/README.md) for runtime, subprocess,
+storage, cache, and configuration contracts, and [the job lifecycle](docs/jobs.md)
+for claim, ping, cancellation, failure, and exit behaviour.
 
-Every workflow executor runs on `@virtool/workflow`: `defineWorkflow`,
-`runWorkflow`, `createWorkPath`, `createRunSubprocess`,
-`parseWorkflowRunConfig`, and `runWorkflowApp`. It is the port of Python's
-`virtool/workflow/`, and it knows nothing about a database.
-
-**The run loop and the job lifecycle are strictly apart.** See
-[docs/jobs.md](docs/jobs.md) for the ownership boundary and the claim, ping,
-cancellation, failure, and process-exit contracts.
-
-Object storage is reached the way `db` is on the server side: a
-`StorageBackend` is **passed in as an argument**, never constructed here and
-never a module-level singleton. `runWorkflowApp` builds it once from
-`config.storage` and puts it on the run context as `storage`, so a step reaches
-the bucket without constructing anything and a test hands the whole runtime a
-`MemoryStorage`. A pod with no bucket cannot download the reads it was claimed
-to analyse. See the workflow app READMEs for environment configuration and the
-file layer below for transfer rules.
-
-**The cache is the workflow's, not the jobs API's.** `createWorkflowCache`
-(`cache/cache.ts`) resolves a logical key through `GET /caches/{key}` and then
-moves the bytes itself; `POST /caches` registers a row **after** the blob
-lands, because a row published ahead of its blob makes the next reader fail
-where it should have missed. The blob is an **uncompressed tar of one
-directory** whose single top-level entry is that directory's basename — Python's
-`write_path_as_tar` layout exactly, which is what lets the two implementations
-share the `reference_mapping_index` and `subtraction_mapping_index` namespaces.
-An already-registered key is **success**, not an error.
-
-Three decisions shape it and are not up for re-litigation:
-
-- **No dependency injection.** Python resolves fixtures by introspecting a
-  step's parameter names against a `ContextVar` registry. Here a run's
-  context is an ordinary object built once, before the first step, by a
-  per-workflow `buildContext`. Its `data` half must survive a JSON round
-  trip — no class instances, no closures, no live handles — because the
-  deferred end-to-end test bed expresses a run as files plus a JSON blob.
-  `createWorkflowContext` asserts that on every run, not only under test.
-  `state` is the mutable cross-step scratch and carries no such constraint.
-  Lazy or memoized accessors were rejected; per-workflow construction is
-  how one workflow fetches HMMs and another does not. **What is eager is
-  resolution, not necessarily transfer**: every metadata read happens here
-  and `data` records each input's storage key beside its work path, but a
-  file only one branch reads is downloaded by the step that takes that
-  branch, with `buildContext` checking the key with `storage.size` to keep
-  failing fast.
-- **No teardown.** The container is ephemeral and process exit reclaims
-  everything. Do not port `AsyncExitStack` or add a `dispose` /
-  `Symbol.asyncDispose` layer.
-- **No lifecycle hooks.** Python's ten hooks carried three callbacks in all
-  of production: four `on_failure` deletions, plus `on_step_start` and
-  `on_success` used internally by its own runtime. The deletions are gone by
-  decision — a failed run leaves its half-built resource for the user to
-  delete — `on_success` is redundant against the returned `RunOutcome`, and
-  `on_step_start` survives as a single optional `onStepStart` on
-  `RunWorkflowOptions`. Don't reintroduce a registry to give a workflow
-  somewhere to put teardown; that is the previous rule again.
-
-Steps are an **explicit ordered array**, never a scanned module. A step's
-`id` is authored in `snake_case` and **must match the Python function name
-it was ported from** — the jobs API stores it, so a slugified display
-name changes the shape of a job's step list at cutover.
-
-Cancellation is **cooperative** and is the one real divergence from Python:
-aborting an `AbortSignal` interrupts nothing, so `runWorkflow` races the
-in-flight step against the signal and abandons it rather than waiting,
-leaving a `catch` attached so its later rejection cannot take the process
-down mid-report.
-
-Every bioinformatics tool runs through `context.runSubprocess`, which
-`runWorkflowApp` builds once per run with
-`createRunSubprocess({ signal, logger })`. Four rules it carries,
-each of which is a departure from Python or from execa's defaults:
-
-- **stdout is opened on `/dev/null` unless a `stdout` handler is given.** An
-  unread pipe is a buffer that fills, and a tool writing a SAM stream fills
-  it fast. stderr is always piped, logged line by line, and its last twenty
-  lines ride on `SubprocessFailedError`.
-- **Lines are split with a byte ceiling**, 128 MiB by default — the same
-  `limit` Python passes to `asyncio.create_subprocess_exec`. `node:readline`
-  has no ceiling at all. Overrunning it throws `SubprocessLineLimitError`
-  and kills the tree.
-- **Descendants are killed, and execa cannot do it.** There is no
-  `killDescendants` option; `kill()` and `cancelSignal` reach the direct
-  child only, which for `bowtie2` is a perl wrapper. So the runner spawns
-  `detached: true` and signals `-pid` — SIGTERM, then SIGKILL after 5s.
-  `ESRCH` and `EPIPE` from a kill racing an exit are logged at `debug` and
-  never surfaced.
-- **Exit code 15 is a failure here and a success in Python.** Only a
-  cancellation-driven kill resolves, as `cancelled: true`.
-
-The lifecycle half — `createJobsApiClient`, `claimJob`, `startPingLoop`, and
-`runWorkflowApp` — follows the protocol in [docs/jobs.md](docs/jobs.md). Keep
-the implementation and that document in sync when changing lifecycle paths,
-wire shapes, retry policy, terminal-state handling, or exit codes.
-
-See [packages/workflow/README.md](packages/workflow/README.md) for the runtime
-and environment configuration reference.
-
-### Workflow files stream, and a key is minted, never composed
-
-Every byte a workflow moves goes through `downloadToPath` / `uploadFromPath`
-(`files/transfer.ts`). Files run to many gigabytes, so **nothing may
-buffer** — `readFile`, `writeFile` and `Buffer.concat` are absent from the
-transfer path by rule, not by accident.
-
-**No key is derived from row identity, on either side.** A key to read
-arrives from the jobs API, off the row that records it. A key to write is
-minted with `mintStorageKey(domain, parentId)` and sent back on the finalize
-manifest, which the route validates against that resource's own
-`{domain}/{parentId}/` prefix and then records verbatim. A cache is the one
-exception in the other direction: `POST /caches` takes a bare uuid and
-composes `cacheKey(uuid)` server-side, because that key genuinely is
-derivable. The only fixed builders left are the two HMM constants.
-
-**Finalize is one call per resource** — `PATCH /subtractions/{id}`,
-`PATCH /samples/{id}`, `PATCH /analyses/{id}` — carrying the resource's own
-fields plus the manifest, so a run cannot end with the parent flipped
-`ready` and its file rows missing. The manifest declares no `size` and no
-`name_on_disk`: the row is written with the byte count the route reads back
-from storage, which is what makes a row pointing at nothing impossible.
-
-**A resource that is unusable without its files must carry them**, and the
-bound is on the contract in `@virtool/contracts` so the runtime cannot build
-the call: a sample sends one or two reads (`.min(1).max(2)`), a subtraction
-sends its source FASTA (`.min(1)`). An analysis manifest is legitimately
-empty — pathoscope's whole output is the `results` blob — and `results`
-being required is the guard there. A **subtraction accepts one filename,
-`subtraction.fa.gz`**, not Python's seven: nothing consumes the bowtie2
-shards, because both analysis workflows build the index locally from the
-`.fa.gz`. That is the **write** path only — subtractions Python finalized
-still have `bowtie2` rows, `GET /subtractions/{id}` keeps serving them, and
-`SubtractionFileType` keeps both members. See
-[docs/jobs-api.md](docs/jobs-api.md).
-
-Tar and gzip are **`@virtool/archive`**, not this package, and nothing here
-re-exports them.
-
-`deriveCacheKey` (`cache/key.ts`) reproduces `json.dumps(..., sort_keys=True,
-separators=(",", ":"), ensure_ascii=True)`, which `JSON.stringify` does not.
-Mark a Python `float` with `float()` — an unmarked number serialises as an
-`int`, and `1.0` versus `1` is a different key. Non-ASCII param keys and
-numbers the two languages format differently are rejected rather than
-guessed at. `cache/key.test.ts` holds a golden table generated by running
-Python; **never update a golden to match this implementation's output** —
-that converts a caught divergence into a permanent one.
-
-### The reference index is a SQLite file, read with `node:sqlite` and no ORM
-
-An index reaches a workflow as one file, `reference-snapshot.v1.sqlite`,
-written by a finished build. `@virtool/sqlite` mirrors that schema
-(`schema.ts`), reads it (`queries.ts`) and writes one (`create.ts`) — the
-snapshot itself, and the collapsed artifact pathoscope produces, which is named
-`index.v1.sqlite` because a partial reference must not be mistakable for a whole
-one. Both carry `format = virtool-reference-sqlite` in their `metadata` table.
-JSON was abandoned because a real reference exceeds V8's maximum string
-length.
-
-It is a package rather than part of `@virtool/workflow` because both sides
-need it: making `@virtool/data` depend on the workflow runtime would drag
-execa, undici and tar-stream into `apps/tasks` and the jobs API, and a
-second copy of the DDL would be two opinions about a binary format two
-languages have to agree on.
-
-**There is no Drizzle here**, against the original plan: it ships no
-`node:sqlite` driver, and the three alternatives all fail — `sqlite-proxy`
-materialises every row, `better-sqlite3` is a native dependency, and using
-Drizzle for SQL generation alone adds a fake driver for six fixed queries.
-`node:sqlite` is unflagged on Node 22 and 24, so nothing needs raising.
-
-Four rules it carries:
-
-- **Ordering is the output.** Sequence order decides FASTA order, so Bowtie2
-  index order, so every SAM line. `iterSequences`, `iterDefaultSequences` and
-  `iterOtuSequences` carry Python's `ORDER BY` verbatim.
-- **`iterOtus` returns insertion order, and the `ORDER BY` clauses inside its
-  subqueries are no-ops that must stay.** SQLite sorts the one row an
-  aggregate returns, not the rows entering it, so `json_group_array` collects
-  in scan order. Python has the same no-op; `cd-hit-est` picks its
-  representative by the order it sees, so "fixing" the sort changes the
-  analysis. Removing the clauses could change the plan, and the plan is what
-  decides the order.
-- **Nothing materialises the index.** Every iterating query is an async
-  generator over `StatementSync.iterate()` that yields to the event loop each
-  batch, so the ping loop survives a long scan. Id sets bind through
-  `json_each`, never one `?` per id.
-- **The fixture is Python's.** `packages/sqlite/src/fixtures/` holds an
-  artifact Python built plus the golden results of every query; `generate.py`
-  is the provenance record. **Never edit a golden to match this
-  implementation's output.**
-
-See [docs/indexes.md](docs/indexes.md).
-
-### Workflow tests stand on `@virtool/workflow/testing`
-
-The harness replaces Python's `virtool/workflow/pytest_plugin/` and
-`tests/fixtures/workflow_api/`. It lives in
-`packages/workflow/src/testing/` and every workflow app's tests import it
-from `@virtool/workflow/testing` — never from `apps/web`, which it does
-not reach.
-
-**Everything is a factory function.** pytest injected fixtures by
-parameter name and resolved a dependency graph between them; Vitest has
-no equivalent and this harness deliberately builds none. Nothing is
-installed by importing it, there is no module-level mutable state — test
-files run in parallel processes — and anything needing cleanup returns
-its disposer for the caller to hand to `onTestFinished`.
-
-Six rules it carries:
-
-- **It splits by what the test is asking.** A *workflow* test gets
-  `createFakeJobsApiClient(state)` and exercises no HTTP — "does nuvs
-  produce the right results" gains nothing from a wire format. A
-  *runtime* test gets `startJobsApiTestServer(state)`, a real
-  `node:http` server, because retry, ping-driven cancellation, Basic
-  credentials and status-to-error mapping only mean something over one.
-  **Both run `handleJobsApiRequest` over the same `JobsApiState`**, so a
-  test moves between them without rewriting its setup and the two halves
-  cannot drift.
-- **The fixture's responses are camelCase and built from
-  `@virtool/contracts`.** The embedded server is what the jobs API
-  client is tested *against*: spelled snake_case on both sides they
-  agree with each other and the mismatch surfaces only against the real
-  `apps/jobs-api`. Cancellation is therefore a **401 naming the state**,
-  not a `cancelled` flag — `JobPing` has none.
-- **Builders are seeded, with a fixed default.** `createFakeJob`,
-  `createFakeSample`, `createFakeSubtraction` and the rest take
-  `(overrides, seed)` and are reproducible, because checksums are the
-  assertion. `STATIC_TIME` is **injected**, never patched onto a global
-  clock, and is an ISO string rather than a shared `Date` — a shared one
-  is module-level mutable state.
-- **`buildTestContext` goes through `createWorkflowContext`**, so
-  `assertSerializableData` runs on every test context. That seam is what
-  the deferred end-to-end bed depends on and it rots silently the first
-  time someone parks a closure on `data`.
-- **Seeding helpers mint their keys and return them.** The caller
-  attaches the returned key to the fake row the fixture will serve, and
-  the code under test reads it back out of that metadata — its only
-  route to the bytes. A minted key is unguessable by construction, so a
-  fixture that composes one from a row id or falls back to a filename
-  finds nothing. `seedHmmFiles` is the exception and keeps the two fixed
-  HMM constants.
-- **`createTestWorkPath` is never a fixed path.** `createWorkPath`
-  unconditionally `rm -rf`s its target, so a shared path means one test
-  deleting another's tree mid-run.
-
-`checksumFile` and `checksumDirectory` hash **decompressed** content —
-gzip embeds an mtime and varies by compressor, so hashing the compressed
-bytes fails every comparison against a Python fixture for reasons that
-are not correctness.
-
-See [docs/workflow-testing.md](docs/workflow-testing.md).
+Workflow files always stream, and storage keys are recorded or minted rather
+than derived. See [the jobs API README](apps/jobs-api/README.md) for finalize
+manifests and key validation, [indexes](docs/indexes.md) for the SQLite reference
+artifact, and [workflow testing](docs/workflow-testing.md) for the shared test
+harness.
 
 ## Code style
 
@@ -692,21 +421,18 @@ The basics:
 - **Functions:** Use function declarations, not arrow functions. For React
   components this is enforced by Biome's
   `useReactFunctionComponentDefinition`. Everywhere else it stays a
-  convention — Biome has no general `func-style` equivalent, so nothing
-  catches a violation in a plain function but review.
-- **Refs:** Don't use `forwardRef`. React 19 makes `ref` an ordinary prop:
+  convention.
+- Refs:** Don't use `forwardRef`. React 19 makes `ref` an ordinary prop:
   type a wrapper's props with `ComponentPropsWithRef` and let `ref` flow
   through the `...props` spread. `forwardRef` also trips
   `useReactFunctionComponentDefinition`, because the component ends up as a
   function expression rather than a declaration.
-- **Imports:** Biome organises imports automatically.
+- **Imports:** Biome organises imports automatically. Don't manually organise
+  or clean up unused imports.
 - **Conditionals:** Always use curly braces with `if`/`else`.
 - **Prefer `const`** over `let`.
 - **Types:** Use `type`, not `interface`. Enforced by Biome's
-  `useConsistentTypeDefinitions`. The exception is declaration merging —
-  augmenting `Window` or TanStack Router's `Register` requires an
-  `interface`; those sites carry a `biome-ignore` explaining why. Prefer
-  string literal unions over `enum`.
+  `useConsistentTypeDefinitions`.
 - **JSDoc:** Every exported `type` gets a one-line `/** ... */`, leading
   with what the thing *is* rather than a sentence about its behavior — the
   label is the first thing a hover shows.
@@ -739,31 +465,6 @@ The basics:
 
 ## Testing
 
-- **Framework:** Vitest; Vitest node env for packages.
-- **Projects (web app):** `web` runs browser code under jsdom.
-  `server` runs `src/server/**` under **node** — server code runs on
-  Node in production, and under jsdom its typed arrays come from a
-  different realm, so bytes compare unequal to identical bytes.
-  `a11y` runs `*.a11y.test.tsx` under headless Chromium
-  (Playwright) so axe's layout-dependent rules — `color-contrast` above
-  all — can actually run; it needs `playwright install chromium`. `pnpm
-  test` runs all three; use `--project <name>` to narrow.
-- **Projects (`@virtool/storage`):** `unit` covers everything testable
-  against `MemoryStorage`; `integration` runs the S3 and Azure backends
-  against real Garage and Azurite containers and has its own CI job.
-- **`@virtool/workflow` runs under node via its own `test` script**,
-  which `pnpm -r test` picks up — the per-package model every
-  `packages/*` follows. **Do not add a project for it to
-  `apps/web/vitest.config.js`**: that file is where `web`, `server` and
-  `a11y` live, and declaring a package's project inside `apps/web` would
-  contradict the harness's own rule that nothing in it reaches the SPA.
-  Its tests are server-shaped and need node for the same reason the
-  `server` project does.
-- **`@virtool/data`**, **`@virtool/jobs-api`** and **`@virtool/tasks`**
-  each run one node project against a Postgres testcontainer, and each
-  has its own CI job for the same reason storage does — a container pull
-  does not belong in the fast package loop. All three are excluded from
-  `Packages / Test`.
 - **The Postgres container is described once**, in
   `packages/data/src/db/test/globalSetup.ts`. The `@virtool/data`
   project, the web app's `server` project, `@virtool/jobs-api` and
@@ -772,36 +473,12 @@ The basics:
   so the options cannot drift and `withReuse()` boots one container for
   every suite locally. There is no teardown; `docker rm -f` it when done.
   Don't add a second copy of the container options.
-- **Test location:** `__tests__/` directories alongside source files
-  (web), or sibling `*.test.ts` files (packages).
 - **Test files:** `ComponentName.test.tsx` or `functionName.test.ts`.
 - **Imports:** Use explicit vitest imports (`import { describe, it,
   expect, vi } from "vitest"`).
-- **Setup:** `apps/web/src/tests/setup.tsx` provides
-  `renderWithProviders()`, `renderWithRouter()`, and `MemoryRouter`, and
-  gives the test `QueryClient` `retry: false` (a failed query surfaces
-  its error immediately), so error paths are testable and under-mocked
-  tests fail loudly rather than sitting through retries.
-- **Test doubles** split two ways by what they do, and a helper lives
-  in exactly one of them:
-  - `src/tests/fake/` — `createFake*` data generators. No mocking.
-  - `src/tests/server-fn/` — `vi.fn()` stubs over the TanStack Start
-    server functions, named `mock<ServerFnName>` after the function
-    they stub. Returns the `vi.fn()` itself, so assert with
-    `expect(getUser).toHaveBeenCalled()`.
-
-  Files under `server-fn/` mirror the mocked
-  `@server/<feature>/functions` module, not the client feature —
-  `getAccount` is stubbed from `server-fn/users.ts`. The SPA has no HTTP
-  client, so there is no HTTP mocking library either: stub the module
-  that would make the call, never an interceptor. Nothing blocks an
-  outbound request, so a test that reaches the network really will.
-
-  **Both directories are browser-side only.** Workflow data generators,
-  jobs API fakes and process fakes live in the harness under
-  `packages/workflow/src/testing/` and are imported from
-  `@virtool/workflow/testing`. No test double lives in two places, and
-  `apps/web/src/tests/` gains nothing from a workflow fixture.
+- **Test doubles:** A helper lives in exactly one test harness. Keep app and
+  package fixtures with the code whose boundary they model; do not duplicate
+  them in another app's test utilities.
 - **Database tests:** `createTestDatabase()` from
   `@virtool/data/db/test/fixtures` gives a suite its own isolated
   Postgres database with the schema applied, and installs the
@@ -809,27 +486,12 @@ The basics:
   share one database between them. A test that stubs
   `@virtool/data/events/emit` must stub `createEmitter` alongside `emit`,
   or the fixture's install call finds nothing to call.
-- **Server functions:** a test cannot call a server function by
-  importing it — the Vite plugin moves the handler body into a virtual
-  `?tss-serverfn-split` module, so invoking the import runs none of your
-  code and a naive test passes while asserting nothing. Import the split
-  module and call it through `callServerFn` from `@server/test/serverFn`
-  (`groups/functions.test.ts` is the worked example).
 - **Assertions:** Use explicit `expect()` assertions, not snapshots.
-- **User interaction:** Use `@testing-library/user-event` over
-  `fireEvent`.
-- **Queries:** Prefer accessible queries (`getByRole`,
-  `getByLabelText`) over `getByTestId`; don't disambiguate by index.
-- **Accessibility:** `expectNoViolations(container)` from
-  `src/tests/axe.ts` runs axe-core over a rendered subtree. Opt-in per
-  test, not auto-run in `renderWithProviders`; `color-contrast` is off by
-  default (jsdom has no layout engine). Re-enable it in a `*.a11y.test.tsx`
-  file — those run in the browser `a11y` project — via
-  `expectNoViolations(el, { rules: { "color-contrast": { enabled: true } } })`.
 
 See [docs/testing.md](docs/testing.md) for the unit / integration
 layer split, where to mock the network boundary, snapshot guidance, the
 axe-core accessibility helper, and the shared-fixtures rule.
+
 ## Process
 
 ### Documentation

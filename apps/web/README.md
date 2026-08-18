@@ -175,6 +175,45 @@ or explicit whitelist first, then use that row's `storage_key`; never construct
 a key from URL parameters. Use the row's display name for
 `Content-Disposition`.
 
+### Server push
+
+Server-pushed cache invalidations arrive through the authenticated `/events`
+SSE stream. Python and Node publish `{ domain, resource_id, operation }` on the
+Postgres `client_events` channel; the route converts each event to the id-only
+`{ domain, operation, id }` wire shape. The client then refetches through the
+normal API so authorization remains at the request boundary.
+
+Adding a domain requires all three of `SseDomainSchema`, `SseMessageSchema`,
+and `reactQueryHandler`'s `domains` record. A domain absent from the schemas is
+expected forward-compatible traffic and is dropped silently. A known domain
+whose operation or id type fails validation is contract drift and is reported
+to Sentry.
+
+The handshake uses `requireAuthenticatedRequest`. While connected, the server
+rechecks the session on each keepalive interval and closes a revoked stream.
+Because an `EventSource` error exposes no HTTP status, the client probes
+`HEAD /events`: only a 401 ends the session; other failures reconnect with
+backoff. A reconnect invalidates active queries to recover events missed while
+the stream was down.
+
+Most frames invalidate the narrowest matching React Query key. `jobs` and
+`tasks` update frames instead go through `createJobRefreshQueue` and
+`createTaskRefreshQueue`, which deduplicate ids, batch reads, and serialize
+waves so an older response cannot overwrite newer progress. Keep the
+active-observer filtering and do not restore per-frame `detail(id)` refetches.
+The jobs queue also invalidates job lists because progress changes their state,
+ordering, and counts; tasks have no collection query to invalidate.
+
+| File | Responsibility |
+| --- | --- |
+| `packages/contracts/src/sse.ts` | Domain and per-domain message schemas |
+| `packages/data/src/events/` | Postgres channel contract and publisher |
+| `src/server/events/` | Listener, wire-shape conversion, and session revocation |
+| `src/routes/events.ts` | Authenticated SSE route, keepalive, and framing |
+| `src/app/sse/` | Connection lifecycle, validation, and query routing |
+| `src/jobs/refresh.ts` | Batched job refresh queue |
+| `src/tasks/refresh.ts` | Batched task refresh queue |
+
 ## Using in Production
 
 The default CSP configuration expects API requests to be made to the same domain as the
@@ -483,6 +522,55 @@ closure. Recovering it means wrapping every query with an in-flight
 counter — real instrumentation, not a read of existing state.
 
 ## Development
+
+### Testing
+
+The Vitest configuration defines three projects:
+
+- `web` runs browser code under jsdom;
+- `server` runs `src/server/**` under Node, matching production and avoiding
+  cross-realm typed-array comparisons; and
+- `a11y` runs `*.a11y.test.tsx` under headless Chromium so layout-dependent axe
+  rules such as `color-contrast` can run. Install it with `playwright install
+  chromium`.
+
+`pnpm test` runs all three projects; pass `--project <name>` to narrow the run.
+Package test projects do not belong in `apps/web/vitest.config.js`.
+Place tests in `__tests__/` directories alongside the source they cover.
+
+`src/tests/setup.tsx` provides `renderWithProviders()`, `renderWithRouter()`,
+and `MemoryRouter`. Its test `QueryClient` sets `retry: false`, so failed
+queries surface immediately.
+
+Browser-side test doubles are split by purpose:
+
+- `src/tests/fake/` contains `createFake*` data generators and no mocks.
+- `src/tests/server-fn/` contains `vi.fn()` stubs for TanStack Start server
+  functions. Name them `mock<ServerFnName>`, return the mock itself, and mirror
+  the mocked `@server/<feature>/functions` module.
+
+The SPA has no HTTP client or interceptor. Mock the server-function module;
+nothing prevents an under-mocked test from making a real outbound request.
+Workflow fixtures belong in `@virtool/workflow/testing`, never here.
+
+A test cannot invoke an imported server function directly because the Vite
+plugin moves its handler into a virtual `?tss-serverfn-split` module. Import the
+split module and call it through `callServerFn` from `@server/test/serverFn`;
+`groups/functions.test.ts` is the worked example.
+
+Use `@testing-library/user-event` instead of `fireEvent`. Prefer accessible
+queries such as `getByRole` and `getByLabelText` over `getByTestId`, and do not
+disambiguate by index.
+
+Call `expectNoViolations(container)` from `src/tests/axe.ts` explicitly for
+each subtree under test. Colour contrast is disabled under jsdom; enable it in
+an `*.a11y.test.tsx` test with:
+
+```ts
+expectNoViolations(element, {
+  rules: { "color-contrast": { enabled: true } },
+});
+```
 
 ### Server-only package imports
 

@@ -42,6 +42,13 @@ Run from the monorepo root.
 | `pnpm --filter @virtool/tasks test` | Run the Vitest suite (needs Docker — Postgres testcontainer) |
 | `pnpm --filter @virtool/tasks typecheck` | `tsc --noEmit` |
 
+## Testing
+
+Tests run as one Node Vitest project against a Postgres testcontainer. The
+project has its own CI job and is excluded from `Packages / Test` so container
+startup is not part of the fast package loop. It imports the shared container
+setup from `@virtool/data/db/test/globalSetup`.
+
 ## Configuration
 
 All variables are read at startup. Each also accepts a `<VARIABLE>_FILE`

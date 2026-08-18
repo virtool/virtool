@@ -17,6 +17,26 @@ and test harness shared by Virtool workflow executors.
 - Cancellation is cooperative. The runtime abandons the active step when its
   signal aborts and safely observes any later rejection.
 
+The runtime is deliberately small and explicit:
+
+- There is no dependency-injection container. Each workflow builds one ordinary
+  context before its first step. Metadata resolution is eager, but transfer may
+  remain lazy: `buildContext` records storage keys and work paths and checks
+  required objects with `storage.size()`, while the step that needs an optional
+  input downloads it.
+- There is no teardown layer. Workflow containers are ephemeral, and process
+  exit reclaims their work directory. Do not add `dispose`,
+  `Symbol.asyncDispose`, or an `AsyncExitStack` equivalent.
+- There is no lifecycle-hook registry. `RunWorkflowOptions.onStepStart` is the
+  sole optional callback. Successful completion is represented by the returned
+  `RunOutcome`; a failed run leaves a partially built resource for the user to
+  delete.
+
+`createWorkflowContext()` verifies on every run that `data` survives a JSON
+round trip. Put storage keys, paths, ids, and other serializable inputs there;
+put live handles and mutable cross-step scratch in `state`. This boundary is
+also the serialization seam for the end-to-end test bed.
+
 ### Subprocesses
 
 Run every external tool through `context.runSubprocess`:
@@ -26,6 +46,10 @@ Run every external tool through `context.runSubprocess`:
 - lines are limited to 128 MiB by default;
 - the child runs in a process group so cancellation kills descendants;
 - cancellation sends `SIGTERM`, then `SIGKILL` after five seconds.
+
+`createRunSubprocess()` logs `ESRCH` and `EPIPE` from a signal racing process
+exit at debug level. An ordinary tool exit with code 15 is a failure; only a
+cancellation-driven kill resolves with `cancelled: true`.
 
 ### Job lifecycle
 
@@ -50,6 +74,22 @@ ownership boundary between this package and `@virtool/jobs-api`.
   and send them back in the finalize manifest; never derive them from row IDs.
 - `createWorkflowCache()` stores an uncompressed tar containing one top-level
   directory. Upload the blob before registering the cache row.
+
+`runWorkflowApp()` constructs the storage backend once from configuration and
+passes it through the context. The workflow package never constructs a
+database connection or a module-level storage singleton.
+
+The cache archive's one top-level entry is the cached directory's basename,
+matching Python's `write_path_as_tar` layout. That compatibility lets Python
+and TypeScript share the `reference_mapping_index` and
+`subtraction_mapping_index` namespaces. Registering an already-existing cache
+key is success. `deriveCacheKey()` reproduces Python's
+`json.dumps(sort_keys=True, separators=(",", ":"), ensure_ascii=True)` format;
+mark Python floats with `float()`, and do not change the Python-generated golden
+fixtures to match TypeScript output.
+
+Tar and gzip operations belong to `@virtool/archive`; this package does not
+re-export them.
 
 ## Configuration
 
@@ -95,3 +135,15 @@ Run from the monorepo root.
 | `pnpm --filter @virtool/workflow test` | Run tests. |
 | `pnpm --filter @virtool/workflow test:watch` | Run tests in watch mode. |
 | `pnpm --filter @virtool/workflow typecheck` | Type-check the package. |
+
+## Testing
+
+The package runs its server-shaped tests under Node through its own `test`
+script, which the recursive workspace test command discovers. Keep this project
+out of `apps/web/vitest.config.js`; the workflow harness has no dependency on
+the SPA. Place tests beside their source as `*.test.ts`.
+
+Workflow data generators, jobs API fakes, and process fakes live in
+`src/testing/` and are imported through `@virtool/workflow/testing`. Do not
+duplicate them in `apps/web/src/tests/` or a workflow app. Tests that store
+files use `MemoryStorage`.
