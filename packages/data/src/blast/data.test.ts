@@ -123,7 +123,6 @@ async function seedAnalysis(indices: number[] = [0]): Promise<number> {
 				},
 				sample: "0",
 				user_id: userId,
-				reference_id: referenceId,
 				index_id: indexId,
 			})
 			.returning({ id: analyses.id }),
