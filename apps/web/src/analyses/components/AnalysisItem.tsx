@@ -76,12 +76,14 @@ export default function AnalysisItem({ analysis }: AnalysisItemProps) {
 					user={user.handle}
 					time={createdAt}
 				/>
-				<div className="flex justify-end items-center gap-2">
+				<div className="flex h-10 justify-end items-center gap-2">
 					{!ready && (
-						<ProgressCircle
-							progress={job?.progress ?? 0}
-							state={job?.state ?? "pending"}
-						/>
+						<span className="flex size-10 items-center justify-center">
+							<ProgressCircle
+								progress={job?.progress ?? 0}
+								state={job?.state ?? "pending"}
+							/>
+						</span>
 					)}
 					{canDelete && (
 						<AnalysisItemRightIcon
