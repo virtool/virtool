@@ -1,12 +1,7 @@
 import { cn } from "@app/cn";
 import { pluralize } from "@app/format";
-import { useEffect, useRef, useState } from "react";
-
-/** How long the tally holds at full opacity before it starts fading. */
-const HOLD_DURATION = 5000;
-
-/** Matches the `duration-300` opacity transition below. */
-const FADE_DURATION = 300;
+import { useTimedReset } from "@app/hooks";
+import FadeOut from "@base/FadeOut";
 
 type CreatedCountProps = {
 	className?: string;
@@ -28,11 +23,6 @@ type CreatedCountProps = {
  * A running tally of the records a "create more" form has created, which fades
  * out once it has been on screen long enough. Creating again before it expires
  * bumps the count and restarts the hold.
- *
- * The element stays mounted while the count is zero so the live region exists
- * before the first message lands; a region added and filled in the same commit
- * is missed by some screen readers. The message outlives the count so the fade
- * has something to act on, and is dropped afterwards so the row reflows.
  */
 export default function CreatedCount({
 	className,
@@ -41,47 +31,11 @@ export default function CreatedCount({
 	plural,
 	singular,
 }: CreatedCountProps) {
-	const [message, setMessage] = useState("");
-	const onExpireRef = useRef(onExpire);
-
-	useEffect(() => {
-		onExpireRef.current = onExpire;
-	});
-
-	useEffect(() => {
-		if (count === 0) {
-			return;
-		}
-
-		setMessage(`${pluralize(count, singular, plural)} created`);
-
-		const timeout = setTimeout(() => onExpireRef.current(), HOLD_DURATION);
-
-		return () => clearTimeout(timeout);
-	}, [count, plural, singular]);
-
-	// Clocked rather than driven by `transitionend`, which never fires when the
-	// user has asked for reduced motion.
-	useEffect(() => {
-		if (count > 0 || message === "") {
-			return;
-		}
-
-		const timeout = setTimeout(() => setMessage(""), FADE_DURATION);
-
-		return () => clearTimeout(timeout);
-	}, [count, message]);
+	useTimedReset(count, onExpire);
 
 	return (
-		<p
-			className={cn(
-				"m-0 text-gray-600 transition-opacity duration-300",
-				count === 0 ? "opacity-0" : "opacity-100",
-				className,
-			)}
-			role="status"
-		>
-			{message}
-		</p>
+		<FadeOut className={cn("text-gray-600", className)} role="status">
+			{count > 0 ? `${pluralize(count, singular, plural)} created` : null}
+		</FadeOut>
 	);
 }

@@ -1,4 +1,5 @@
 import { readServerNow } from "@app/serverNow";
+import { TRANSIENT_HOLD_DURATION } from "@app/timing";
 import type { RefObject } from "react";
 import {
 	useEffect,
@@ -258,4 +259,32 @@ export function useElementSize<T extends HTMLElement>(): [
 	}, []);
 
 	return [ref, size];
+}
+
+/**
+ * Calls `onExpire` once `key` has been truthy for `delay`.
+ *
+ * A changed `key` restarts the wait, so repeating an action reads as new
+ * instead of inheriting what was left of the previous one's time.
+ */
+export function useTimedReset(
+	key: unknown,
+	onExpire: () => void,
+	delay: number = TRANSIENT_HOLD_DURATION,
+): void {
+	const onExpireRef = useRef(onExpire);
+
+	useEffect(() => {
+		onExpireRef.current = onExpire;
+	});
+
+	useEffect(() => {
+		if (!key) {
+			return;
+		}
+
+		const timeout = setTimeout(() => onExpireRef.current(), delay);
+
+		return () => clearTimeout(timeout);
+	}, [key, delay]);
 }
