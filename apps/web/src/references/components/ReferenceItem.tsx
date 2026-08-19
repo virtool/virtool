@@ -34,10 +34,12 @@ export function ReferenceItem({ onClone, reference }: ReferenceItemProps) {
 
 	if (activeTask && !activeTask.complete) {
 		end = (
-			<ProgressCircle
-				progress={activeTask.progress || 0}
-				state={activeTask.complete ? "succeeded" : "running"}
-			/>
+			<span className="flex size-10 items-center justify-center">
+				<ProgressCircle
+					progress={activeTask.progress || 0}
+					state={activeTask.complete ? "succeeded" : "running"}
+				/>
+			</span>
 		);
 	} else if (archived) {
 		end = (
