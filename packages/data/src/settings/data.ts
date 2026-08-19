@@ -16,6 +16,14 @@ export type Settings = {
 	defaultSourceTypes: string[];
 	enableSentry: boolean;
 	minimumPasswordLength: number;
+	/**
+	 * The instance's NCBI API key, or `""` when none is configured.
+	 *
+	 * A credential, so it never leaves the server as-is —
+	 * `apps/web/src/server/settings/functions.ts` reduces it to a boolean before
+	 * publishing the row.
+	 */
+	ncbiApiKey: string;
 	sampleAllRead: boolean;
 	sampleAllWrite: boolean;
 	sampleGroup: SampleGroup;
@@ -33,6 +41,7 @@ export const DEFAULT_SETTINGS: Settings = {
 	defaultSourceTypes: ["isolate", "strain"],
 	enableSentry: true,
 	minimumPasswordLength: DEFAULT_MINIMUM_PASSWORD_LENGTH,
+	ncbiApiKey: "",
 	sampleAllRead: true,
 	sampleAllWrite: false,
 	sampleGroup: "none",
@@ -45,6 +54,7 @@ function toSettings(row: SettingsRow): Settings {
 		defaultSourceTypes: row.defaultSourceTypes,
 		enableSentry: row.enableSentry,
 		minimumPasswordLength: row.minimumPasswordLength,
+		ncbiApiKey: row.ncbiApiKey,
 		sampleAllRead: row.sampleAllRead,
 		sampleAllWrite: row.sampleAllWrite,
 		sampleGroup: row.sampleGroup,

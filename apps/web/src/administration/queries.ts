@@ -19,6 +19,8 @@ export type SettingsUpdate = {
 	defaultSourceTypes?: string[];
 	enableSentry?: boolean;
 	minimumPasswordLength?: number;
+	/** A new NCBI API key, or `""` to clear the configured one. */
+	ncbiApiKey?: string;
 	sampleAllRead?: boolean;
 	sampleAllWrite?: boolean;
 	sampleGroup?: string;
@@ -34,6 +36,18 @@ export function settingsQueryOptions() {
 		queryKey: settingsQueryKeys.all(),
 		queryFn: () => getSettingsFn(),
 	});
+}
+
+/**
+ * Fetch the API settings without suspending.
+ *
+ * For components on routes that do not prefetch the settings, and for the
+ * settings route itself, which any `users` administrator can reach but only a
+ * `settings` administrator may read — so the query has to be allowed to fail
+ * beside the parts of the view that do render.
+ */
+export function useFetchSettings() {
+	return useQuery(settingsQueryOptions());
 }
 
 /**

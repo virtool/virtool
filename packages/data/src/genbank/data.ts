@@ -265,10 +265,23 @@ function parseGenbank(text: string): Genbank {
  *
  * Returns `null` when NCBI has no such accession, and throws
  * `GenbankUnreachableError` when NCBI could not be reached.
+ *
+ * `apiKey` is the instance's NCBI API key, which raises the E-utilities rate
+ * limit from three requests a second to ten. It is passed in rather than read
+ * here so this module stays free of a settings read. An empty string means no
+ * key is configured, and `api_key` is left off the query string entirely — NCBI
+ * treats a blank one as a bad key and refuses the request rather than falling
+ * back to the anonymous tier.
+ *
+ * **The URL never reaches a log or an error message.** It carries the key, and
+ * nothing here has a scrubber in front of it: the two `logger.warn` calls below
+ * name the accession and the response, and `GenbankUnreachableError` carries a
+ * fixed string.
  */
 export async function getGenbank(
 	logger: Logger,
 	accession: string,
+	apiKey: string,
 ): Promise<Genbank | null> {
 	const url = new URL(FETCH_URL);
 
@@ -279,6 +292,7 @@ export async function getGenbank(
 		retmode: "text",
 		rettype: "gb",
 		tool: TOOL,
+		...(apiKey ? { api_key: apiKey } : {}),
 	}).toString();
 
 	let response: Response;

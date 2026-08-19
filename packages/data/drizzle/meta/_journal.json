@@ -43,6 +43,13 @@
       "when": 1787173426198,
       "tag": "0005_drop_analyses_reference",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1787177564901,
+      "tag": "0006_add_settings_ncbi_api_key",
+      "breakpoints": true
     }
   ]
 }

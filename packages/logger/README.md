@@ -31,11 +31,12 @@ for the silent logger tests pass in its place.
 ## Redaction
 
 `DEFAULT_REDACT_PATHS` (`src/config.ts`) censors the obvious secret
-fields, this codebase's session-credential field names, and the
-`req.headers.*` / `headers.*` variants, matched one level deep as well as
-at the top. Pass `redact` to `createLogger` to merge in more paths for a
-feature that needs to censor something else. Redaction runs before any
-destination sees the record, including the Sentry stream below.
+fields, this codebase's session-credential and stored-credential field names
+(`ncbiApiKey` among them), and the `req.headers.*` / `headers.*` variants,
+matched one level deep as well as at the top. Pass `redact` to `createLogger`
+to merge in more paths for a feature that needs to censor something else.
+Redaction runs before any destination sees the record, including the Sentry
+stream below.
 
 ## Sentry forwarding
 

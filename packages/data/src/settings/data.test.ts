@@ -145,6 +145,7 @@ describe("DEFAULT_SETTINGS", () => {
 			defaultSourceTypes: ["isolate", "strain"],
 			enableSentry: true,
 			minimumPasswordLength: 8,
+			ncbiApiKey: "",
 			sampleAllRead: true,
 			sampleAllWrite: false,
 			sampleGroup: "none",

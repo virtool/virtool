@@ -14,11 +14,16 @@ export type AdministratorRole = {
 };
 
 /**
- * Instance-wide settings
+ * Instance-wide settings, as the server publishes them.
+ *
+ * The NCBI API key is a credential and never crosses the wire. Only
+ * `hasNcbiApiKey` says whether one is configured; the form writes a new key or
+ * clears it, and cannot read the stored one back.
  */
 export type Settings = {
 	defaultSourceTypes: string[];
 	enableSentry: boolean;
+	hasNcbiApiKey: boolean;
 	minimumPasswordLength: number;
 	sampleAllRead: boolean;
 	sampleAllWrite: boolean;

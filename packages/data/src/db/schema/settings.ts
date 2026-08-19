@@ -42,6 +42,11 @@ export const settings = pgTable(
 			.$defaultFn(() => false),
 		enableSentry: boolean("enable_sentry").notNull(),
 		minimumPasswordLength: integer("minimum_password_length").notNull(),
+		// A credential, unlike every other column here. It is never published to
+		// a client: `apps/web/src/server/settings/functions.ts` reduces it to a
+		// boolean at the transport boundary. Empty means unset, and the GenBank
+		// request layer omits `api_key` rather than sending a blank one.
+		ncbiApiKey: text("ncbi_api_key").notNull(),
 		sampleAllRead: boolean("sample_all_read").notNull(),
 		sampleAllWrite: boolean("sample_all_write").notNull(),
 		sampleGroup: text("sample_group").$type<SampleGroup>().notNull(),
