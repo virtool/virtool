@@ -1,6 +1,17 @@
 import type { SearchResult } from "./search";
 import type { UserNested } from "./users";
 
+/** The columns an upload list can be sorted by. */
+export const UPLOAD_SORT_FIELDS = [
+	"createdAt",
+	"name",
+	"size",
+	"user",
+] as const;
+
+/** A column an upload list can be sorted by. */
+export type UploadSortField = (typeof UPLOAD_SORT_FIELDS)[number];
+
 /** The kinds of file that can be uploaded. */
 export const UPLOAD_TYPES = ["reference", "reads", "subtraction"] as const;
 

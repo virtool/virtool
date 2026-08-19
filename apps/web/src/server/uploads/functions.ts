@@ -1,6 +1,10 @@
 import { createServerFn, createServerOnlyFn } from "@tanstack/react-start";
 import { setResponseStatus } from "@tanstack/react-start/server";
-import { UPLOAD_TYPES } from "@virtool/contracts";
+import {
+	SORT_DIRECTIONS,
+	UPLOAD_SORT_FIELDS,
+	UPLOAD_TYPES,
+} from "@virtool/contracts";
 import {
 	deleteUpload,
 	findUploads,
@@ -24,6 +28,10 @@ const findUploadsSchema = z
 		page: pageSchema,
 		perPage: perPageSchema,
 		user: rowIdSchema.optional(),
+		// A direction without a column has nothing to order by, so the pair is
+		// taken together: no column means the default newest-first ordering.
+		sort: z.enum(UPLOAD_SORT_FIELDS).optional(),
+		direction: z.enum(SORT_DIRECTIONS).default("descending"),
 	})
 	.optional();
 
@@ -57,6 +65,7 @@ export const findUploadsFn = createServerFn({ method: "GET" })
 			data?.page ?? 1,
 			data?.perPage ?? 25,
 			data?.user,
+			data?.sort ? { direction: data.direction, field: data.sort } : undefined,
 		),
 	);
 

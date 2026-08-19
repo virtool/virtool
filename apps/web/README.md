@@ -319,6 +319,13 @@ do not render at Tailwind's documented pixel values:
 | `md:` | 768px | 672px |
 | `2xl:` | 1536px | 1344px |
 
+`@base/Table` and `@base/BoxGroupTable` take a `variant`. `keyValue`, the
+default, is the detail-panel shape: a narrow first column of row labels, ruled
+off and top-aligned. `data` is a list of records, where the first column is a
+field like any other. Give a `data` table sortable columns with
+`@base/SortableHead`, which owns the `aria-sort` and direction-arrow rules and
+leaves the sort state to the caller.
+
 Size anything that holds text in `rem`; reserve pixels for graphics without
 text. If an API requires a number, express it as a rem multiple and resolve it
 with `useRootFontSize` from `@app/hooks`. Known exceptions are the virtualized

@@ -111,6 +111,106 @@ describe("<FileManager>", () => {
 		expect(screen.getByText("Drag files here to upload")).toBeInTheDocument();
 	});
 
+	describe("table", () => {
+		it("should label every column, including the ones with no visible header", async () => {
+			mockGetAccount(createFakeAccount({ administratorRole: "full" }));
+			mockFindUploads([createFakeFile({ name: "one.fq.gz" })]);
+
+			await renderWithRouter(<FileManager {...props} />, path);
+
+			const headers = await screen.findAllByRole("columnheader");
+
+			expect(headers.map((header) => header.textContent)).toEqual([
+				"Select",
+				"Name",
+				"User",
+				"Created",
+				"Size",
+				"Actions",
+			]);
+		});
+
+		it("should sort by an unsorted column ascending", async () => {
+			const setSort = vi.fn();
+
+			mockGetAccount(createFakeAccount({ administratorRole: "full" }));
+			mockFindUploads([createFakeFile({ name: "one.fq.gz" })]);
+
+			await renderWithRouter(
+				<FileManager {...props} setSort={setSort} />,
+				path,
+			);
+
+			await userEvent.click(
+				await screen.findByRole("button", { name: "Name" }),
+			);
+
+			expect(setSort).toHaveBeenCalledWith("name", "ascending");
+		});
+
+		it("should reverse the column already sorted by", async () => {
+			const setSort = vi.fn();
+
+			mockGetAccount(createFakeAccount({ administratorRole: "full" }));
+			mockFindUploads([createFakeFile({ name: "one.fq.gz" })]);
+
+			await renderWithRouter(
+				<FileManager
+					{...props}
+					direction="ascending"
+					setSort={setSort}
+					sort="name"
+				/>,
+				path,
+			);
+
+			await userEvent.click(
+				await screen.findByRole("button", { name: "Name" }),
+			);
+
+			expect(setSort).toHaveBeenCalledWith("name", "descending");
+		});
+
+		it("should request the sorted column from the server", async () => {
+			mockGetAccount(createFakeAccount({ administratorRole: "full" }));
+			const findUploads = mockFindUploads([
+				createFakeFile({ name: "one.fq.gz" }),
+			]);
+
+			await renderWithRouter(
+				<FileManager {...props} direction="ascending" sort="size" />,
+				path,
+			);
+
+			await waitFor(() => {
+				expect(findUploads).toHaveBeenCalledWith({
+					data: expect.objectContaining({
+						direction: "ascending",
+						sort: "size",
+					}),
+				});
+			});
+		});
+
+		it("should request the default order when no column is sorted by", async () => {
+			mockGetAccount(createFakeAccount({ administratorRole: "full" }));
+			const findUploads = mockFindUploads([
+				createFakeFile({ name: "one.fq.gz" }),
+			]);
+
+			await renderWithRouter(<FileManager {...props} />, path);
+
+			await waitFor(() => {
+				expect(findUploads).toHaveBeenCalledWith({
+					data: expect.objectContaining({
+						sort: undefined,
+						direction: "descending",
+					}),
+				});
+			});
+		});
+	});
+
 	describe("selection", () => {
 		it("should delete every selected file", async () => {
 			const first = createFakeFile({ name: "one.fq.gz" });

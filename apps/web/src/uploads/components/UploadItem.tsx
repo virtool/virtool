@@ -1,9 +1,8 @@
 import { byteSize } from "@app/format";
-import Attribution from "@base/Attribution";
-import BoxGroupSection from "@base/BoxGroupSection";
 import Checkbox from "@base/Checkbox";
 import IconButton from "@base/IconButton";
 import IconLink from "@base/IconLink";
+import InitialIcon from "@base/InitialIcon";
 import RelativeTime from "@base/RelativeTime";
 import type { UserNested } from "@virtool/contracts";
 import { Download, Trash } from "lucide-react";
@@ -16,81 +15,90 @@ export type UploadItemProps = {
 	canDelete: boolean;
 	/** Whether the file is selected. */
 	checked?: boolean;
+
+	/** When the file was created, or null for a row that predates the column */
+	createdAt: Date | null;
+
 	id: number;
 	name: string;
 	/** Selects the file. Omitting it hides the checkbox. */
 	onSelect?: (event: MouseEvent<HTMLButtonElement>) => void;
 	size: number;
 
-	/** When the file was uploaded, or null for a row that predates the column */
-	uploadedAt: Date | null;
-
 	user: UserNested | null;
 };
 
+/**
+ * A file in the upload table.
+ *
+ * A file with no user was retrieved by Virtool rather than uploaded by anyone,
+ * so its user cell says so instead of naming an account.
+ */
 export default function UploadItem({
 	action,
 	canDelete,
 	checked = false,
+	createdAt,
 	id,
 	name,
 	onSelect,
 	size,
-	uploadedAt,
 	user,
 }: UploadItemProps) {
 	const { mutate: handleRemove } = useDeleteFile();
 
 	return (
-		<BoxGroupSection as="li">
-			<div className="flex items-center gap-4">
-				{onSelect && (
+		<tr>
+			{onSelect && (
+				<td className="w-px">
 					<Checkbox
 						ariaLabel={`Select ${name}`}
 						checked={checked}
 						id={`UploadCheckbox${id}`}
 						onClick={onSelect}
 					/>
-				)}
-				<div className="grid grid-cols-3 grow min-w-0">
-					<div className="flex font-medium items-center text-lg">{name}</div>
-					<div className="flex">
-						{user === null ? (
-							<span>
-								Retrieved <RelativeTime time={uploadedAt} />
-							</span>
-						) : (
-							<Attribution
-								time={uploadedAt}
-								user={user.handle}
-								verb="uploaded"
-							/>
-						)}
-					</div>
-					<div className="flex font-medium items-center gap-6 justify-end text-lg">
-						<div>{byteSize(size, true)}</div>
-						<span className="flex items-center gap-1">
-							{action}
-							<IconLink
-								ariaLabel={`Download ${name}`}
-								color="gray"
-								download={name}
-								href={`/uploads/${id}`}
-								IconComponent={Download}
-								tip="download"
-							/>
-							{canDelete && (
-								<IconButton
-									color="red"
-									IconComponent={Trash}
-									tip="remove"
-									onClick={() => handleRemove({ id })}
-								/>
-							)}
+				</td>
+			)}
+			<td className="break-all font-medium">{name}</td>
+			<td>
+				{user === null ? (
+					"Retrieved"
+				) : (
+					<span className="inline-flex items-center gap-2">
+						{/* Decorative: the handle it draws is already the cell's text, and
+						    `InitialIcon` labels itself with it. */}
+						<span aria-hidden>
+							<InitialIcon size="md" handle={user.handle} />
 						</span>
-					</div>
-				</div>
-			</div>
-		</BoxGroupSection>
+						{user.handle}
+					</span>
+				)}
+			</td>
+			<td className="whitespace-nowrap">
+				<RelativeTime time={createdAt} />
+			</td>
+			<td className="whitespace-nowrap">{byteSize(size, true)}</td>
+			<td className="w-px">
+				<span className="flex items-center gap-1 justify-end">
+					{action}
+					<IconLink
+						ariaLabel={`Download ${name}`}
+						color="gray"
+						download={name}
+						href={`/uploads/${id}`}
+						IconComponent={Download}
+						tip="download"
+					/>
+					{canDelete && (
+						<IconButton
+							color="red"
+							IconComponent={Trash}
+							tip="remove"
+							onClick={() => handleRemove({ id })}
+						/>
+					)}
+				</span>
+			</td>
+		</tr>
 	);
 }

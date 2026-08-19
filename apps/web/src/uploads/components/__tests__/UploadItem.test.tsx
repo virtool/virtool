@@ -7,43 +7,54 @@ import UploadItem, { type UploadItemProps } from "../UploadItem.js";
 
 vi.mock("@administration/utils.ts");
 
+// A row is a `<tr>`, which only renders inside a table.
+function renderItem(props: UploadItemProps) {
+	return renderWithProviders(
+		<table>
+			<tbody>
+				<UploadItem {...props} />
+			</tbody>
+		</table>,
+	);
+}
+
 describe("<UploadItem />", () => {
 	let props: UploadItemProps;
 
 	beforeEach(() => {
 		props = {
 			canDelete: true,
+			createdAt: new Date("2018-02-14T17:12:00.000000Z"),
 			id: 1,
 			name: "foo.fa",
 			size: 10,
-			uploadedAt: new Date("2018-02-14T17:12:00.000000Z"),
 			user: { id: 1, handle: "bill" },
 		};
 	});
 
 	it("should render", () => {
 		const user = { id: 1, handle: "bill" };
-		renderWithProviders(<UploadItem {...props} user={user} />);
+		renderItem({ ...props, user });
 
-		expect(screen.getByText(new RegExp(user.handle))).toBeInTheDocument();
-		expect(screen.getByText(new RegExp(props.name))).toBeInTheDocument();
+		expect(screen.getByRole("cell", { name: user.handle })).toBeInTheDocument();
+		expect(screen.getByRole("cell", { name: props.name })).toBeInTheDocument();
 		expect(screen.getByText("10.0 B")).toBeInTheDocument();
 		expect(screen.getByRole("button", { name: "remove" })).toBeInTheDocument();
 	});
 
-	it("should render when [user=null]", () => {
+	it("should name the file as retrieved when [user=null]", () => {
 		props.user = null;
 
-		renderWithProviders(<UploadItem {...props} />);
+		renderItem(props);
 
-		expect(screen.getByText(/Retrieved/)).toBeInTheDocument();
-		expect(screen.getByText(new RegExp(props.name))).toBeInTheDocument();
+		expect(screen.getByRole("cell", { name: "Retrieved" })).toBeInTheDocument();
+		expect(screen.getByRole("cell", { name: props.name })).toBeInTheDocument();
 		expect(screen.getByText("10.0 B")).toBeInTheDocument();
 		expect(screen.getByRole("button", { name: "remove" })).toBeInTheDocument();
 	});
 
 	it("should link to the download route, named after the file", () => {
-		renderWithProviders(<UploadItem {...props} />);
+		renderItem(props);
 
 		const link = screen.getByRole("link", { name: `Download ${props.name}` });
 
@@ -56,7 +67,7 @@ describe("<UploadItem />", () => {
 	it("should render the download link when [canDelete=false]", () => {
 		props.canDelete = false;
 
-		renderWithProviders(<UploadItem {...props} />);
+		renderItem(props);
 
 		expect(
 			screen.getByRole("link", { name: `Download ${props.name}` }),
@@ -68,7 +79,7 @@ describe("<UploadItem />", () => {
 
 	it("should have [props.onRemove] called when trash icon clicked", async () => {
 		uploadServerFnMocks.deleteUploadFn.mockResolvedValue(null);
-		renderWithProviders(<UploadItem {...props} />);
+		renderItem(props);
 
 		await userEvent.click(screen.getByRole("button", { name: "remove" }));
 
