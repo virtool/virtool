@@ -2,7 +2,7 @@ import { useAnalysisSearch } from "@analyses/components/AnalysisSearchContext";
 import { useSortAndFilterPathoscopeHits } from "@analyses/hooks";
 import type { FormattedPathoscopeAnalysis } from "@analyses/types";
 import { writeToClipboard } from "@app/clipboard";
-import { useIsSecureContext } from "@app/hooks";
+import { useIsSecureContext, useTimedReset } from "@app/hooks";
 import Dropdown from "@base/Dropdown";
 import DropdownButton from "@base/DropdownButton";
 import DropdownMenuContent from "@base/DropdownMenuContent";
@@ -16,7 +16,7 @@ import Tooltip from "@base/Tooltip";
 import * as Sentry from "@sentry/tanstackstart-react";
 import type { PathoscopeHit } from "@virtool/contracts";
 import { Check, ClipboardCopy, Download, FileSpreadsheet } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { collapsingLabel } from "./collapsingLabel";
 import {
 	formatPathoscopeHitsAsTsv,
@@ -65,15 +65,7 @@ export default function PathoscopeExport({ analysis }: PathoscopeExportProps) {
 
 	const [copied, setCopied] = useState(false);
 
-	useEffect(() => {
-		if (!copied) {
-			return;
-		}
-
-		const timeout = setTimeout(() => setCopied(false), 2000);
-
-		return () => clearTimeout(timeout);
-	}, [copied]);
+	useTimedReset(copied, () => setCopied(false));
 
 	// Only a resolved write flips the label, so a rejected one — a revoked
 	// permission, an unfocused document — cannot claim the table was copied.

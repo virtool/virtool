@@ -6,6 +6,7 @@ import {
 	CollapsibleTrigger,
 } from "@base/Collapsible";
 import ContainerNarrow from "@base/ContainerNarrow";
+import CreatedCount from "@base/CreatedCount";
 import InputContainer from "@base/InputContainer";
 import InputError from "@base/InputError";
 import InputGroup from "@base/InputGroup";
@@ -16,14 +17,6 @@ import LoadingPlaceholder from "@base/LoadingPlaceholder";
 import QueryError from "@base/QueryError";
 import SaveButton from "@base/SaveButton";
 import Switch from "@base/Switch";
-import {
-	Toast,
-	ToastClose,
-	ToastDescription,
-	ToastProvider,
-	ToastTitle,
-	ToastViewport,
-} from "@base/Toast";
 import ViewHeader from "@base/ViewHeader";
 import ViewHeaderTitle from "@base/ViewHeaderTitle";
 import { useListGroups } from "@groups/queries";
@@ -31,7 +24,7 @@ import { useCreateSample } from "@samples/queries";
 import { getCreateSampleRequest, getSampleNameFromReads } from "@samples/utils";
 import { useNavigate } from "@tanstack/react-router";
 import { useInfiniteFindFiles } from "@uploads/queries";
-import type { Label, Sample } from "@virtool/contracts";
+import type { Label } from "@virtool/contracts";
 import { WandSparkles } from "lucide-react";
 import { useEffect, useState } from "react";
 import { Controller, useForm } from "react-hook-form";
@@ -107,7 +100,7 @@ export default function CreateSample({ labels }: CreateSampleProps) {
 
 	const [showMetadata, setShowMetadata] = useState(false);
 	const [createMore, setCreateMore] = useState(false);
-	const [createdSample, setCreatedSample] = useState<Sample | null>(null);
+	const [createdCount, setCreatedCount] = useState(0);
 
 	useEffect(() => {
 		setValue("group", String(account?.primaryGroup?.id ?? ""));
@@ -154,11 +147,11 @@ export default function CreateSample({ labels }: CreateSampleProps) {
 
 	function onSubmit(values: FormValues) {
 		mutation.mutate(getCreateSampleRequest(values, values.readFiles), {
-			onSuccess: (sample) => {
+			onSuccess: () => {
 				clearForm();
 
 				if (createMore) {
-					setCreatedSample(sample);
+					setCreatedCount((count) => count + 1);
 					return;
 				}
 
@@ -315,38 +308,24 @@ export default function CreateSample({ labels }: CreateSampleProps) {
 									</label>
 								</div>
 
-								<div className="flex gap-2">
-									<Button onClick={handleReset} type="button">
-										Reset Form
-									</Button>
-									<SaveButton />
+								<div className="flex items-center gap-4">
+									<CreatedCount
+										count={createdCount}
+										onExpire={() => setCreatedCount(0)}
+										singular="sample"
+									/>
+									<div className="flex gap-2">
+										<Button onClick={handleReset} type="button">
+											Reset Form
+										</Button>
+										<SaveButton />
+									</div>
 								</div>
 							</div>
 						</div>
 					</>
 				)}
 			</form>
-
-			<ToastProvider>
-				{createdSample && (
-					<Toast
-						key={createdSample.id}
-						onOpenChange={(open) => {
-							if (!open) {
-								setCreatedSample(null);
-							}
-						}}
-						open
-					>
-						<div>
-							<ToastTitle>Sample created</ToastTitle>
-							<ToastDescription>{createdSample.name}</ToastDescription>
-						</div>
-						<ToastClose />
-					</Toast>
-				)}
-				<ToastViewport />
-			</ToastProvider>
 		</ContainerNarrow>
 	);
 }
