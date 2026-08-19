@@ -6,22 +6,25 @@ Every image ships from a target in the root `Dockerfile`. Five targets use the
 `build` job matrix; Pathoscope and Nuvs have separate, longer path-filtered
 jobs. `release-ghcr` publishes all seven targets on every release.
 
-| Target | Published image | Build job |
+| Target | Published image(s) | Build job |
 | --- | --- | --- |
 | `dist` | `ghcr.io/virtool/web` | `build` |
 | `jobs-api` | `ghcr.io/virtool/jobs-api` | `build` |
 | `tasks` | `ghcr.io/virtool/tasks` | `build` |
-| `create-sample` | `ghcr.io/virtool/ts-create-sample` | `build` |
-| `create-subtraction` | `ghcr.io/virtool/ts-create-subtraction` | `build` |
-| `pathoscope` | `ghcr.io/virtool/ts-pathoscope` | `build-pathoscope` |
-| `nuvs` | `ghcr.io/virtool/ts-nuvs` | `build-nuvs` |
+| `create-sample` | `ghcr.io/virtool/ts-create-sample`, `ghcr.io/virtool/create-sample` | `build` |
+| `create-subtraction` | `ghcr.io/virtool/ts-create-subtraction`, `ghcr.io/virtool/create-subtraction` | `build` |
+| `pathoscope` | `ghcr.io/virtool/ts-pathoscope`, `ghcr.io/virtool/pathoscope` | `build-pathoscope` |
+| `nuvs` | `ghcr.io/virtool/ts-nuvs`, `ghcr.io/virtool/nuvs` | `build-nuvs` |
 
 `dist` retains its name because tooling outside this repository targets it.
 
-The `ts-` prefix distinguishes these workflow images from the unprefixed names
-such as `ghcr.io/virtool/pathoscope` that earlier releases used. Nothing
-publishes the unprefixed names now, so the prefix is retained only so an
-existing deployment keeps pulling what it already pulls.
+The four workflow images publish under both their `ts-` prefixed name and
+their bare, unprefixed name (e.g. `ghcr.io/virtool/pathoscope`). The bare name
+previously came from separate legacy repositories shipping the Python
+workflow of the same name; this repository's release now supersedes those, so
+both tags point at the same TS-based image. The `ts-` prefix is kept
+alongside the bare name only so an existing deployment pinned to it keeps
+pulling the same tag.
 
 Adding an image requires a Dockerfile target and a release-matrix entry. For
 the five targets in `build`, keep its matrix entry in step with
@@ -29,7 +32,9 @@ the five targets in `build`, keep its matrix entry in step with
 and release entries whose `cache-scope` values are `pathoscope` and `nuvs`.
 Those overrides reuse the caches populated by the long build jobs rather than
 rebuilding the Rust crate, bioinformatics tools, or SPAdes inside the shared
-20-minute release timeout.
+20-minute release timeout. Give a workflow image's release entry both its
+`ts-` prefixed and bare `images:` names as a multi-line list, matching the
+existing four.
 
 Build one image locally by naming its target:
 
