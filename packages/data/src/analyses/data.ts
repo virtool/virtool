@@ -114,9 +114,9 @@ export class AnalysisNoReadyIndexError extends AppError {}
 
 /**
  * Thrown when a stored analysis cannot be read back — an `index_id` that does
- * not resolve to a build, an absent parent sample. Each supplies something every
- * response carries, so this surfaces rather than fabricating a placeholder or
- * dropping the row from a list.
+ * not resolve to a build, or an absent parent sample. Each supplies something
+ * every response carries, so this surfaces rather than fabricating a placeholder
+ * or dropping the row from a list.
  */
 export class AnalysisIntegrityError extends AppError {}
 
@@ -129,8 +129,8 @@ const minimalColumns = {
 	workflow: analyses.workflow,
 	ready: analyses.ready,
 	sample_id: analyses.sample_id,
-	// The owning reference comes from the build, not the analysis: `index_id` is
-	// NOT NULL and `indexes.reference_id` is too, so every analysis reaches one.
+	// `index_id` is NOT NULL and so is `indexes.reference_id`, so every analysis
+	// reaches a reference through its build.
 	reference_id: indexes.reference_id,
 	index_id: analyses.index_id,
 	user_id: analyses.user_id,
@@ -241,8 +241,6 @@ function mapMinimal(
 	analysisSubtractionList: SubtractionNested[],
 	job: AnalysisJobNested | null,
 ): AnalysisMinimal {
-	// The version and the owning reference both come off the joined build, so an
-	// index that does not resolve takes all three down together.
 	if (
 		row.index_id === null ||
 		row.indexVersion === null ||
