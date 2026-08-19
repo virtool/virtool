@@ -36,7 +36,6 @@ ALTER TABLE "jobs" ALTER COLUMN "workflow" SET DATA TYPE text;--> statement-brea
 ALTER TABLE "labels" ALTER COLUMN "description" SET DATA TYPE text;--> statement-breakpoint
 ALTER TABLE "labels" ALTER COLUMN "name" SET DATA TYPE text;--> statement-breakpoint
 ALTER TABLE "instance_messages" ALTER COLUMN "message" SET DATA TYPE text;--> statement-breakpoint
-ALTER TABLE "instance_messages" ALTER COLUMN "user" SET DATA TYPE text;--> statement-breakpoint
 ALTER TABLE "revisions" ALTER COLUMN "name" SET DATA TYPE text;--> statement-breakpoint
 ALTER TABLE "revisions" ALTER COLUMN "revision" SET DATA TYPE text;--> statement-breakpoint
 ALTER TABLE "legacy_otus" ALTER COLUMN "id" SET DATA TYPE text;--> statement-breakpoint
