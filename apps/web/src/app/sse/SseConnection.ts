@@ -2,7 +2,7 @@ import { useServerVersionStore } from "@app/serverVersion";
 import { endSession } from "@app/session";
 import * as Sentry from "@sentry/tanstackstart-react";
 import type { QueryClient } from "@tanstack/react-query";
-import { SseDomainSchema, SseMessageSchema } from "@virtool/contracts";
+import { SseMessageSchema } from "@virtool/contracts";
 import { reactQueryHandler } from "./reactQueryHandler";
 
 type ConnectionStatus =
@@ -33,16 +33,9 @@ export function init(queryClient: QueryClient): void {
 			return;
 		}
 
-		// Frames arrive for domains this client doesn't handle yet (otus,
-		// subtraction, and the rest). Those are expected forward-compatible
-		// traffic, not drift, so drop them silently. Only a frame for a domain we
-		// *do* handle that still fails to validate — a wrong id type, a bad
-		// operation — is worth reporting.
-		const domain = (data as { domain?: unknown } | null)?.domain;
-		if (!SseDomainSchema.safeParse(domain).success) {
-			return;
-		}
-
+		// One publisher, typed to the same enum this validates against, and a
+		// forced reload on redeploy: nothing can legitimately arrive that fails to
+		// parse, so every failure is drift worth reporting.
 		Sentry.captureException(parsed.error, {
 			tags: { sse: "message-validation" },
 		});
