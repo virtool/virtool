@@ -1,4 +1,4 @@
-// Read-only mirror of the `legacy_references`, `legacy_reference_users`, and
+// Schema for the `legacy_references`, `legacy_reference_users`, and
 // `legacy_reference_groups` tables.
 
 import {

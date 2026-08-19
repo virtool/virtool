@@ -1,4 +1,4 @@
-// Read-only mirror of the `labels` table.
+// Schema for the `labels` table.
 
 import { pgTable, serial, text, unique, varchar } from "drizzle-orm/pg-core";
 

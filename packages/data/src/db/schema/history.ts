@@ -1,4 +1,4 @@
-// Partial mirror of the `legacy_history` and `legacy_history_diff` tables.
+// Schema for the `legacy_history` and `legacy_history_diff` tables.
 //
 // Both tables are written from here — every OTU change records a history row
 // and its diff. `reference` and `index` are dead, superseded by the

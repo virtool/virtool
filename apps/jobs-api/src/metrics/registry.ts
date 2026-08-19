@@ -1,8 +1,5 @@
-import { JobWorkflow } from "@virtool/contracts";
-import {
-	type JobQueueSnapshot,
-	NON_TERMINAL_JOB_STATES,
-} from "@virtool/data/jobs/data";
+import { JobWorkflow, NON_TERMINAL_JOB_STATES } from "@virtool/contracts";
+import type { JobQueueSnapshot } from "@virtool/data/jobs/data";
 import type { ConnectionCounts } from "@virtool/data/metrics/data";
 import { HTTP_REQUEST_DURATION_BUCKETS } from "@virtool/data/metrics/httpBuckets";
 import {

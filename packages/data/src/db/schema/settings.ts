@@ -1,9 +1,10 @@
-// Mirror of the `settings` table.
+// Schema for the `settings` table.
 //
 // The table is a singleton: exactly one row, pinned to `id = 1`. No column has
-// a server default — the defaults are written into the row on insert, which is
-// why `DEFAULT_SETTINGS` in `../../settings/data.ts` holds them rather than
-// this file. `enable_api` is the one exception, for the reason given below.
+// a server default — every default is written into the row on insert, which
+// is why `DEFAULT_SETTINGS` in `../../settings/data.ts` carries them rather
+// than this file. `enable_api` is the one exception, for the reason given
+// below.
 
 import { sql } from "drizzle-orm";
 import {

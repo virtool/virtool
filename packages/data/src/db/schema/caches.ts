@@ -1,4 +1,4 @@
-// Read-only mirror of the `caches` table.
+// Schema for the `caches` table.
 
 import type { JsonObject } from "@virtool/contracts";
 import {

@@ -1,4 +1,4 @@
-// Mirror of the `instance_messages` table.
+// Schema for the `instance_messages` table.
 
 import type { BannerColor } from "@virtool/contracts";
 import { sql } from "drizzle-orm";

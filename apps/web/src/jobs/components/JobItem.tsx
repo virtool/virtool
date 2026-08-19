@@ -43,9 +43,9 @@ export default function JobItem({
 	workflow,
 }: JobItemProps) {
 	return (
-		<BoxGroupSection as={as} className="grid grid-cols-3 text-lg">
+		<BoxGroupSection as={as} className="grid grid-cols-3 items-center gap-x-4">
 			<Link
-				className="col-span-1 font-medium"
+				className="col-span-1 font-medium text-lg"
 				to="/jobs/$jobId"
 				params={{ jobId: String(id) }}
 			>

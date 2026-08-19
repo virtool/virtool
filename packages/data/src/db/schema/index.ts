@@ -1,6 +1,7 @@
-// Drizzle table definitions are re-exported from this module. Migrations are
-// generated from this barrel — see `drizzle.config.ts`. Each feature owns a
-// sibling file (e.g. `labels.ts`) and is added to the `export *` list as it
+// Drizzle table definitions are re-exported from this module. It is the schema
+// entry point `drizzle.config.ts` names, so a table missing from the `export *`
+// list is missing from the snapshot every migration is generated against. Each
+// feature owns a sibling file (e.g. `labels.ts`) and is added to the list as it
 // lands.
 export * from "./analyses";
 export * from "./apiKeys";

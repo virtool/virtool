@@ -19,9 +19,10 @@ export type AnalysisWorkflow = z.infer<typeof AnalysisWorkflow>;
 /**
  * A format an analysis result file can be stored in.
  *
- * A real Postgres enum (`analysisformat`) behind `analysis_files.format`.
- * Distinct from a sample artifact's `type` even though the two share their
- * members today — they are separate enums and are free to diverge.
+ * Closes `analysis_files.format`, a `text` column behind the
+ * `ck_analysis_files_format` CHECK constraint. Distinct from a sample
+ * artifact's `type` even though the two share their members today — they
+ * are separately constrained and are free to diverge.
  */
 export const AnalysisFormat = z.enum([
 	"sam",

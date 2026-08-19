@@ -1,4 +1,4 @@
-// Read-only mirror of the `groups` and `user_groups` tables.
+// Schema for the `groups` and `user_groups` tables.
 
 import type { Permissions } from "@virtool/contracts";
 import { sql } from "drizzle-orm";

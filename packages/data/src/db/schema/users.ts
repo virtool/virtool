@@ -1,5 +1,4 @@
-// Read-only mirror of the `users` table. Only `id`, `handle`, `password`,
-// `active`, `force_reset`, and `last_password_change` are touched.
+// Schema for the `users` table.
 
 import type { AdministratorRoleName } from "@virtool/contracts";
 import { sql } from "drizzle-orm";

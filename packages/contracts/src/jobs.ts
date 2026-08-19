@@ -25,6 +25,16 @@ export function isJobStateTerminal(state: string): boolean {
 }
 
 /**
+ * The states a job can still leave — `pending` and `running`.
+ *
+ * Derived rather than written out, so it cannot fall out of step with
+ * {@link JobState} or {@link isJobStateTerminal}.
+ */
+export const NON_TERMINAL_JOB_STATES = JobState.options.filter(
+	(state) => !isJobStateTerminal(state),
+);
+
+/**
  * Whether a job reached a terminal state without producing anything.
  *
  * Deliberately narrower than {@link isJobStateTerminal}: `succeeded` is

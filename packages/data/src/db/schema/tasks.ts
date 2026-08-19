@@ -1,4 +1,4 @@
-// Read-only mirror of the `tasks` table.
+// Schema for the `tasks` table.
 
 import { sql } from "drizzle-orm";
 import {

@@ -1,4 +1,4 @@
-// Read-only mirror of the `jobs` table.
+// Schema for the `jobs` table.
 //
 // The legacy Mongo `args` field is not a column. A job's resources are all
 // found on the owning rows via a reverse `job_id` foreign key —
@@ -12,10 +12,11 @@
 // `@virtool/contracts`, which is where the mappers that publish them live. A
 // local copy of either would be free to disagree with the mapper reading it.
 
-import type {
-	JobState,
-	StoredJobClaim,
-	StoredJobStep,
+import {
+	type JobState,
+	NON_TERMINAL_JOB_STATES,
+	type StoredJobClaim,
+	type StoredJobStep,
 } from "@virtool/contracts";
 import { sql } from "drizzle-orm";
 import {
@@ -66,6 +67,18 @@ export const jobs = pgTable(
 		index("ix_jobs_state_created_at").on(table.state, table.created_at),
 		index("ix_jobs_user_id_state").on(table.user_id, table.state),
 		index("ix_jobs_workflow_state").on(table.workflow, table.state),
+		/* Serves the queue metrics and the claim select as an index-only scan.
+		   The indexes above lack `workflow` beside `state`, so those reads fetch a
+		   page per matching row. Terminal rows fall outside the predicate, so its
+		   size tracks the live queue rather than history. */
+		index("idx_jobs_active")
+			.on(table.state, table.workflow, table.created_at)
+			// `sql.raw`, since a bound parameter cannot appear in DDL.
+			.where(
+				sql`${table.state} in (${sql.raw(
+					NON_TERMINAL_JOB_STATES.map((state) => `'${state}'`).join(", "),
+				)})`,
+			),
 		check(
 			"ck_jobs_state",
 			sql`${table.state} in ('pending', 'running', 'cancelled', 'failed', 'succeeded')`,

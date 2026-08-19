@@ -563,6 +563,11 @@ jobs:
         steps:
             - name: Checkout
               uses: actions/checkout@v7
+              with:
+                  # semantic-release resolves the last release from the tags
+                  # reachable from the branch; the default shallow checkout has
+                  # none, and it would publish 1.0.0 over the live series.
+                  fetch-depth: 0
             - name: Setup
               uses: ./.github/actions/setup
             - name: Run semantic-release

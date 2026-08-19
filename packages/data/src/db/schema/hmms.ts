@@ -1,4 +1,4 @@
-// Read-only mirror of the `hmms` and `legacy_hmm_status` tables.
+// Schema for the `hmms` and `legacy_hmm_status` tables.
 //
 // `hmms.legacy_id` holds the old Mongo `_id`. The HMM endpoints address rows by
 // their integer id and never need it, but a NuVs analysis stored before the

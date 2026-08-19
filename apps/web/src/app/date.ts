@@ -78,6 +78,24 @@ export function formatRoundedDuration(seconds: number): string {
 }
 
 /**
+ * Format a duration in seconds as a clock string (HH:MM:SS).
+ *
+ * Hours are not wrapped at 24: a job that ran for a day and a half reads
+ * `36:00:00`, because the figure is an elapsed duration rather than a time of
+ * day.
+ *
+ * @param seconds - the duration in seconds
+ * @returns a zero-padded clock string
+ */
+export function formatElapsed(seconds: number): string {
+	const total = Math.max(0, Math.floor(seconds));
+
+	return [Math.floor(total / 3600), Math.floor(total / 60) % 60, total % 60]
+		.map((part) => String(part).padStart(2, "0"))
+		.join(":");
+}
+
+/**
  * Add seconds to a date.
  *
  * @param date - the base date

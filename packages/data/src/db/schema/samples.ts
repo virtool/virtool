@@ -1,4 +1,4 @@
-// Read-only mirror of the `legacy_samples` table and its join / file tables.
+// Schema for the `legacy_samples` table and its join / file tables.
 
 import { sql } from "drizzle-orm";
 import {

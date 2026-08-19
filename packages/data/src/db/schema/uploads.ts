@@ -1,4 +1,4 @@
-// Read-only mirror of the `uploads` table.
+// Schema for the `uploads` table.
 
 import type { UploadType } from "@virtool/contracts";
 import { sql } from "drizzle-orm";

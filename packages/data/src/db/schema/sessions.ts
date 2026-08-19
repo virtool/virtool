@@ -1,4 +1,4 @@
-// Read-only mirror of the `sessions` table.
+// Schema for the `sessions` table.
 
 import type { SessionType } from "@virtool/contracts";
 import { sql } from "drizzle-orm";

@@ -1,4 +1,4 @@
-// Read-only mirror of the `api_keys` table.
+// Schema for the `api_keys` table.
 
 import type { Permissions } from "@virtool/contracts";
 import {
