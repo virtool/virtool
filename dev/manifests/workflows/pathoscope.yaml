@@ -1,8 +1,3 @@
-# `ghcr.io/virtool/ts-pathoscope` is published on release. The `:latest` tag
-# below resolves today regardless, but it is the leftover of a short-lived
-# publish job from before the port landed and carries the tools with no
-# workflow code — so until a release has run since publishing was restored,
-# use `tilt up -- --pathoscope`, which builds the image locally.
 apiVersion: keda.sh/v1alpha1
 kind: ScaledJob
 metadata:
@@ -24,7 +19,7 @@ spec:
       spec:
         containers:
           - name: workflow-pathoscope
-            image: ghcr.io/virtool/ts-pathoscope:latest
+            image: ghcr.io/virtool/pathoscope:latest
             env:
               - name: VT_MEM
                 value: "6"

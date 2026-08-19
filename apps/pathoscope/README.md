@@ -6,7 +6,7 @@ against one representative per OTU to find candidates, rebuilds an index
 carrying every isolate of just those OTUs, maps again, drops reads that belong
 to the host, and reassigns the reads that matched more than one isolate.
 
-Image: `ghcr.io/virtool/ts-pathoscope`. Eight steps, four external
+Image: `ghcr.io/virtool/pathoscope`. Eight steps, four external
 tools — `bowtie2`, `cd-hit-est`, `pigz`, `samtools` — and `pathoscope-core`,
 which it drives **as a subprocess**; there is no FFI here and adding one is out
 of scope by decision.
@@ -62,13 +62,12 @@ docker run --rm vt-tool-bowtie2 head -1 /tools/bowtie2/2.5.4/bowtie2-build
 
 `Pathoscope / Build` compiles the image on every run and `release-ghcr`
 publishes it on release, alongside `virtool/workflow-pathoscope`'s
-`ghcr.io/virtool/pathoscope`. The names differ, so the cluster picks one by the
-image it pulls and neither stream overwrites the other.
+`ghcr.io/virtool/pathoscope`. Both publishers use the same image name, so each
+release can overwrite the tag published by the other repository.
 
-Its release-matrix entry carries `cache-scope: pathoscope`, because the build
-job writes its gha cache under that bare scope rather than under the image
-name. Without the override the release would rebuild the Rust crate and every
-tool stage from scratch inside a 20-minute timeout.
+Its release-matrix image name is also the `pathoscope` cache scope used by the
+build job. This lets the release reuse the Rust crate and tool stages instead
+of rebuilding them from scratch inside a 20-minute timeout.
 
 ## Configuration
 

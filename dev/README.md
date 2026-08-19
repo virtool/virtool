@@ -79,10 +79,10 @@ stage named after the target. Pass a flag to turn one on:
 | `--web` | `ghcr.io/virtool/web` | `dev` |
 | `--jobs-api` | `ghcr.io/virtool/jobs-api` | `jobs-api` |
 | `--tasks` | `ghcr.io/virtool/tasks` | `tasks` |
-| `--create-sample` | `ghcr.io/virtool/ts-create-sample` | `create-sample` |
-| `--create-subtraction` | `ghcr.io/virtool/ts-create-subtraction` | `create-subtraction` |
-| `--nuvs` | `ghcr.io/virtool/ts-nuvs` | `nuvs` |
-| `--pathoscope` | `ghcr.io/virtool/ts-pathoscope` | `pathoscope` |
+| `--create-sample` | `ghcr.io/virtool/create-sample` | `create-sample` |
+| `--create-subtraction` | `ghcr.io/virtool/create-subtraction` | `create-subtraction` |
+| `--nuvs` | `ghcr.io/virtool/nuvs` | `nuvs` |
+| `--pathoscope` | `ghcr.io/virtool/pathoscope` | `pathoscope` |
 
 Flags combine: `tilt up -- --web --jobs-api`.
 
@@ -104,13 +104,6 @@ the newest release each time it starts and no tag is ever committed. While
 migrations temporarily live in `ghcr.io/virtool/tasks`, the migration Job runs
 the tasks image's Drizzle migrator and follows the same tag or local Tilt build
 as the tasks Deployment.
-
-`ts-nuvs` and `ts-pathoscope` publish on release like the other two, but
-neither has a usable `latest` until the first release that carries them:
-`ts-nuvs` has no registry package at all, and `ts-pathoscope:latest` is the
-leftover of a short-lived publish job and carries the tools with no workflow
-code. Until then, run those two under `--nuvs` / `--pathoscope`, which build
-the image locally.
 
 ## Labels
 

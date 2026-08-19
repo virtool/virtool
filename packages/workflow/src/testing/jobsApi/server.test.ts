@@ -35,7 +35,7 @@ const CLAIM_REQUEST = {
 	runnerId: "runner-1",
 	mem: 8,
 	cpu: 2,
-	image: "ghcr.io/virtool/ts-create-subtraction:1.0.0",
+	image: "ghcr.io/virtool/create-subtraction:1.0.0",
 	runtimeVersion: "1.0.0",
 	workflowVersion: "1.0.0",
 	steps: [
