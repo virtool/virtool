@@ -1,11 +1,12 @@
 import { createServerFn } from "@tanstack/react-start";
 import {
 	type SampleGroup,
+	type Settings,
 	sampleGroups,
-} from "@virtool/data/db/schema/settings";
+} from "@virtool/contracts";
 import {
 	getSettings,
-	type Settings,
+	type Settings as StoredSettings,
 	updateSettings,
 } from "@virtool/data/settings/data";
 import { z } from "zod";
@@ -16,6 +17,18 @@ import { db } from "../composition";
 export type PasswordPolicy = {
 	minimumPasswordLength: number;
 };
+
+/**
+ * Reduce the stored settings to what may cross the wire.
+ *
+ * Both settings functions answer any administrator holding the `settings` role,
+ * so returning the row as stored would put the NCBI API key in a browser
+ * payload. Narrowing here rather than in the data layer keeps the redaction on
+ * the transport boundary, where the row is published.
+ */
+function toSettings({ ncbiApiKey, ...rest }: StoredSettings): Settings {
+	return { ...rest, hasNcbiApiKey: ncbiApiKey !== "" };
+}
 
 /**
  * Password policy server function. Unauthenticated by necessity — the
@@ -33,11 +46,24 @@ export const getPasswordPolicyFn = createServerFn({ method: "GET" })
 		return { minimumPasswordLength };
 	});
 
+/**
+ * The longest NCBI API key accepted.
+ *
+ * NCBI issues a 36-character hexadecimal key today. The bound is generous
+ * rather than exact so a format change does not lock administrators out of
+ * saving one, and exists only to stop an unbounded string reaching the column.
+ */
+const MAX_NCBI_API_KEY_LENGTH = 128;
+
 const updateSettingsSchema = z
 	.object({
 		defaultSourceTypes: z.array(z.string()).optional(),
 		enableSentry: z.boolean().optional(),
 		minimumPasswordLength: z.number().int().min(1).optional(),
+		// Trimmed, so a pasted key carrying whitespace is stored as the key
+		// itself. Empty is how a key is cleared, and is what the request layer
+		// reads as unset.
+		ncbiApiKey: z.string().trim().max(MAX_NCBI_API_KEY_LENGTH).optional(),
 		sampleAllRead: z.boolean().optional(),
 		sampleAllWrite: z.boolean().optional(),
 		sampleGroup: z
@@ -57,9 +83,12 @@ const updateSettingsSchema = z
 
 export const getSettingsFn = createServerFn({ method: "GET" })
 	.middleware([adminRole("settings")])
-	.handler(async (): Promise<Settings> => getSettings(db));
+	.handler(async (): Promise<Settings> => toSettings(await getSettings(db)));
 
 export const updateSettingsFn = createServerFn({ method: "POST" })
 	.middleware([adminRole("settings")])
 	.validator(updateSettingsSchema)
-	.handler(async ({ data }): Promise<Settings> => updateSettings(db, data));
+	.handler(
+		async ({ data }): Promise<Settings> =>
+			toSettings(await updateSettings(db, data)),
+	);

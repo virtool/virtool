@@ -12,17 +12,3 @@ export type AdministratorRole = {
 	id: AdministratorRoleName;
 	name: string;
 };
-
-/**
- * Instance-wide settings
- */
-export type Settings = {
-	defaultSourceTypes: string[];
-	enableSentry: boolean;
-	minimumPasswordLength: number;
-	sampleAllRead: boolean;
-	sampleAllWrite: boolean;
-	sampleGroup: string;
-	sampleGroupRead: boolean;
-	sampleGroupWrite: boolean;
-};

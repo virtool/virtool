@@ -6,6 +6,7 @@
 // than this file. `enable_api` is the one exception, for the reason given
 // below.
 
+import type { SampleGroup } from "@virtool/contracts";
 import { sql } from "drizzle-orm";
 import {
 	boolean,
@@ -15,16 +16,6 @@ import {
 	pgTable,
 	text,
 } from "drizzle-orm/pg-core";
-
-/** The group-access policies a newly created sample can be assigned. */
-export const sampleGroups = [
-	"none",
-	"force_choice",
-	"users_primary_group",
-] as const;
-
-/** The group-access policy applied to a newly created sample. */
-export type SampleGroup = (typeof sampleGroups)[number];
 
 export const settings = pgTable(
 	"settings",
@@ -42,6 +33,11 @@ export const settings = pgTable(
 			.$defaultFn(() => false),
 		enableSentry: boolean("enable_sentry").notNull(),
 		minimumPasswordLength: integer("minimum_password_length").notNull(),
+		// A credential, unlike every other column here. It is never published to
+		// a client: `apps/web/src/server/settings/functions.ts` reduces it to a
+		// boolean at the transport boundary. Empty means unset, and the GenBank
+		// request layer omits `api_key` rather than sending a blank one.
+		ncbiApiKey: text("ncbi_api_key").notNull(),
 		sampleAllRead: boolean("sample_all_read").notNull(),
 		sampleAllWrite: boolean("sample_all_write").notNull(),
 		sampleGroup: text("sample_group").$type<SampleGroup>().notNull(),

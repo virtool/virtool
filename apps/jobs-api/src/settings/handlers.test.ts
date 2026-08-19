@@ -1,3 +1,4 @@
+import { WorkflowSettings } from "@virtool/contracts";
 import { seedUser } from "@virtool/data/auth/test/fixtures";
 import type { Db } from "@virtool/data/db/pg";
 import { jobs } from "@virtool/data/db/schema/jobs";
@@ -39,6 +40,16 @@ beforeEach(async () => {
 	deps = { db };
 });
 
+/**
+ * `DEFAULT_SETTINGS` as the wire carries it.
+ *
+ * The stored row and the wire shape no longer agree field for field —
+ * `ncbiApiKey` is a credential the handler does not serve — so the expectation
+ * is taken through the contract, which strips what does not belong on the wire,
+ * rather than from the data layer's constant.
+ */
+const DEFAULT_WORKFLOW_SETTINGS = WorkflowSettings.parse(DEFAULT_SETTINGS);
+
 function get(authenticated = true): Request {
 	return new Request("https://jobs.virtool.test/settings", {
 		headers: authenticated ? { authorization: `Basic ${credential}` } : {},
@@ -58,7 +69,7 @@ describe("handleGetSettings", () => {
 
 		expect(response.status).toBe(200);
 		expect(await response.json()).toEqual({
-			...DEFAULT_SETTINGS,
+			...DEFAULT_WORKFLOW_SETTINGS,
 			sampleAllWrite: true,
 			minimumPasswordLength: 12,
 		});
@@ -71,8 +82,26 @@ describe("handleGetSettings", () => {
 		const response = await handleGetSettings(deps, get());
 
 		expect(response.status).toBe(200);
-		expect(await response.json()).toEqual(DEFAULT_SETTINGS);
+		expect(await response.json()).toEqual(DEFAULT_WORKFLOW_SETTINGS);
 		expect(await db.select().from(settings)).toHaveLength(1);
+	});
+
+	// The NCBI API key is a credential. `toWorkflowSettings` names the fields it
+	// serves rather than spreading the row, so it cannot pick one up by accident
+	// — this holds that mapping to it.
+	it("never serves the NCBI API key", async () => {
+		await db.insert(settings).values({
+			id: 1,
+			...DEFAULT_SETTINGS,
+			ncbiApiKey: "secret-key",
+		});
+
+		const response = await handleGetSettings(deps, get());
+
+		const body = await response.json();
+
+		expect(body).not.toHaveProperty("ncbiApiKey");
+		expect(JSON.stringify(body)).not.toContain("secret-key");
 	});
 
 	it("refuses an unauthenticated request", async () => {

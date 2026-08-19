@@ -1,5 +1,7 @@
-import type { Settings } from "@administration/types";
-import { DEFAULT_MINIMUM_PASSWORD_LENGTH } from "@virtool/contracts";
+import {
+	DEFAULT_MINIMUM_PASSWORD_LENGTH,
+	type Settings,
+} from "@virtool/contracts";
 import { type Mock, vi } from "vitest";
 
 /**

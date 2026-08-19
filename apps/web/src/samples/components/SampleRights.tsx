@@ -1,11 +1,11 @@
 import { useUpdateSettings } from "@administration/queries";
-import type { Settings } from "@administration/types";
 import BoxGroup from "@base/BoxGroup";
 import BoxGroupHeader from "@base/BoxGroupHeader";
 import BoxGroupSection from "@base/BoxGroupSection";
 import InputGroup from "@base/InputGroup";
 import InputLabel from "@base/InputLabel";
 import { SelectBox, SelectBoxItem } from "@base/SelectBox";
+import type { Settings } from "@virtool/contracts";
 import RightsSelect from "./RightsSelect";
 
 type SampleRightsProps = {

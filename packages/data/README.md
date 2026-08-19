@@ -190,6 +190,20 @@ module-scope client construction. The token has no version because this package
 cannot access the app-specific build versions used by `apps/web` and
 `apps/tasks`.
 
+### NCBI API key
+
+`getGenbank` takes the instance's NCBI API key as an argument and appends it as
+`api_key`, which raises the E-utilities rate limit from three requests a second
+to ten. An empty string means no key is configured and the parameter is omitted
+entirely; NCBI refuses a blank one rather than falling back to the anonymous
+tier.
+
+The key is stored in the `settings` row and read by the caller, not here, so
+this package takes no settings dependency for it. It is a credential: never log
+the request URL, and publish only whether a key is configured. `apps/web`'s
+settings server functions do that narrowing, and `ncbiApiKey` is in the shared
+logger's redaction paths.
+
 ## Task queue
 
 `src/tasks/data.ts` owns persistence for the Postgres task queue shared by task

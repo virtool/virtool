@@ -103,6 +103,26 @@ describe("getSettings", () => {
 			sampleGroup: "force_choice",
 		});
 	});
+
+	it("reports the NCBI API key as a flag and never sends the key", async () => {
+		await signIn(db, getRequest, { administratorRole: "settings" });
+		await seedSettings(db, { ncbiApiKey: "secret-key" });
+
+		const published = await call("getSettingsFn");
+
+		expect(published).toMatchObject({ hasNcbiApiKey: true });
+		expect(published).not.toHaveProperty("ncbiApiKey");
+		expect(JSON.stringify(published)).not.toContain("secret-key");
+	});
+
+	it("reports no NCBI API key when the stored one is empty", async () => {
+		await signIn(db, getRequest, { administratorRole: "settings" });
+		await seedSettings(db, { ncbiApiKey: "" });
+
+		await expect(call("getSettingsFn")).resolves.toMatchObject({
+			hasNcbiApiKey: false,
+		});
+	});
 });
 
 describe("updateSettings", () => {
@@ -150,5 +170,39 @@ describe("updateSettings", () => {
 	it("rejects an empty patch", async () => {
 		await signIn(db, getRequest, { administratorRole: "settings" });
 		await expect(call("updateSettingsFn", {})).rejects.toThrow();
+	});
+
+	it("stores an NCBI API key without echoing it back", async () => {
+		await signIn(db, getRequest, { administratorRole: "settings" });
+		await seedSettings(db);
+
+		const published = await call("updateSettingsFn", {
+			ncbiApiKey: "  secret-key  ",
+		});
+
+		expect(published).toMatchObject({ hasNcbiApiKey: true });
+		expect(JSON.stringify(published)).not.toContain("secret-key");
+
+		const [row] = await db.select().from(settings);
+		expect(row).toMatchObject({ ncbiApiKey: "secret-key" });
+	});
+
+	it("clears the NCBI API key when given an empty string", async () => {
+		await signIn(db, getRequest, { administratorRole: "settings" });
+		await seedSettings(db, { ncbiApiKey: "secret-key" });
+
+		await expect(
+			call("updateSettingsFn", { ncbiApiKey: "" }),
+		).resolves.toMatchObject({ hasNcbiApiKey: false });
+
+		const [row] = await db.select().from(settings);
+		expect(row).toMatchObject({ ncbiApiKey: "" });
+	});
+
+	it("rejects an NCBI API key longer than the column should hold", async () => {
+		await signIn(db, getRequest, { administratorRole: "settings" });
+		await expect(
+			call("updateSettingsFn", { ncbiApiKey: "a".repeat(129) }),
+		).rejects.toThrow();
 	});
 });

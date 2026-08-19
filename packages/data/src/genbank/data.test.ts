@@ -203,7 +203,7 @@ describe("getGenbank", () => {
 		it("calls the NCBI efetch endpoint with the documented parameters", async () => {
 			const fetchMock = mockFetch(HOST_RECORD);
 
-			await getGenbank(logger, "NC_045512");
+			await getGenbank(logger, "NC_045512", "");
 
 			expect(fetchMock).toHaveBeenCalledTimes(1);
 
@@ -223,10 +223,43 @@ describe("getGenbank", () => {
 			});
 		});
 
+		it("sends the API key when one is configured", async () => {
+			const fetchMock = mockFetch(HOST_RECORD);
+
+			await getGenbank(logger, "NC_045512", "abc123");
+
+			expect(requestUrl(fetchMock).searchParams.get("api_key")).toBe("abc123");
+		});
+
+		// NCBI reads a blank `api_key` as a bad key and refuses the request, so an
+		// unconfigured instance has to omit the parameter rather than send it empty.
+		it("omits the API key when none is configured", async () => {
+			const fetchMock = mockFetch(HOST_RECORD);
+
+			await getGenbank(logger, "NC_045512", "");
+
+			expect(requestUrl(fetchMock).searchParams.has("api_key")).toBe(false);
+		});
+
+		it("keeps the API key out of the log when NCBI cannot be reached", async () => {
+			vi.stubGlobal(
+				"fetch",
+				vi.fn().mockRejectedValue(new Error("connect ECONNREFUSED")),
+			);
+
+			await expect(
+				getGenbank(logger, "NC_045512", "abc123"),
+			).rejects.toBeInstanceOf(GenbankUnreachableError);
+
+			expect(JSON.stringify(vi.mocked(logger.warn).mock.calls)).not.toContain(
+				"abc123",
+			);
+		});
+
 		it("identifies itself to NCBI with a User-Agent", async () => {
 			const fetchMock = mockFetch(HOST_RECORD);
 
-			await getGenbank(logger, "NC_045512");
+			await getGenbank(logger, "NC_045512", "");
 
 			const [, init] = firstCall(fetchMock.mock.calls) as [URL, RequestInit];
 
@@ -236,7 +269,7 @@ describe("getGenbank", () => {
 		it("encodes an accession that needs escaping", async () => {
 			const fetchMock = mockFetch(HOST_RECORD);
 
-			await getGenbank(logger, "NC_045512 2");
+			await getGenbank(logger, "NC_045512 2", "");
 
 			const url = requestUrl(fetchMock);
 
@@ -249,7 +282,7 @@ describe("getGenbank", () => {
 		it("parses a record whose source feature carries a host", async () => {
 			mockFetch(HOST_RECORD);
 
-			await expect(getGenbank(logger, "NC_045512")).resolves.toEqual({
+			await expect(getGenbank(logger, "NC_045512", "")).resolves.toEqual({
 				accession: "NC_045512.2",
 				definition:
 					"Severe acute respiratory syndrome coronavirus 2 isolate Wuhan-Hu-1, complete genome",
@@ -263,7 +296,7 @@ describe("getGenbank", () => {
 		it("unwraps a multi-line definition and drops its trailing period", async () => {
 			mockFetch(LAB_HOST_RECORD);
 
-			const genbank = await getGenbank(logger, "AB000048");
+			const genbank = await getGenbank(logger, "AB000048", "");
 
 			expect(genbank?.definition).toBe(
 				"Feline panleukopenia virus gene for nonstructural protein 1, complete cds, isolate: 483",
@@ -273,7 +306,7 @@ describe("getGenbank", () => {
 		it("leaves a definition without a trailing period alone", async () => {
 			mockFetch(HOST_RECORD.replace("complete genome.", "complete genome"));
 
-			const genbank = await getGenbank(logger, "NC_045512");
+			const genbank = await getGenbank(logger, "NC_045512", "");
 
 			expect(genbank?.definition).toBe(
 				"Severe acute respiratory syndrome coronavirus 2 isolate Wuhan-Hu-1, complete genome",
@@ -283,7 +316,7 @@ describe("getGenbank", () => {
 		it("drops only one trailing period", async () => {
 			mockFetch(HOST_RECORD.replace("complete genome.", "complete genome.."));
 
-			const genbank = await getGenbank(logger, "NC_045512");
+			const genbank = await getGenbank(logger, "NC_045512", "");
 
 			expect(genbank?.definition).toBe(
 				"Severe acute respiratory syndrome coronavirus 2 isolate Wuhan-Hu-1, complete genome.",
@@ -293,7 +326,7 @@ describe("getGenbank", () => {
 		it("prefers the VERSION value over the ACCESSION value", async () => {
 			mockFetch(LAB_HOST_RECORD);
 
-			const genbank = await getGenbank(logger, "AB000048");
+			const genbank = await getGenbank(logger, "AB000048", "");
 
 			expect(genbank?.accession).toBe("AB000048.1");
 		});
@@ -306,7 +339,7 @@ describe("getGenbank", () => {
 				),
 			);
 
-			const genbank = await getGenbank(logger, "AB000048");
+			const genbank = await getGenbank(logger, "AB000048", "");
 
 			expect(genbank?.accession).toBe("AB000048.1");
 		});
@@ -314,7 +347,7 @@ describe("getGenbank", () => {
 		it("falls back to ACCESSION when there is no VERSION line", async () => {
 			mockFetch(NO_VERSION_RECORD);
 
-			const genbank = await getGenbank(logger, "ACCNUM01");
+			const genbank = await getGenbank(logger, "ACCNUM01", "");
 
 			expect(genbank?.accession).toBe("ACCNUM01");
 		});
@@ -322,7 +355,7 @@ describe("getGenbank", () => {
 		it("falls back to the LOCUS name when there is neither VERSION nor ACCESSION", async () => {
 			mockFetch(LOCUS_ONLY_RECORD);
 
-			const genbank = await getGenbank(logger, "LOCUSONLY");
+			const genbank = await getGenbank(logger, "LOCUSONLY", "");
 
 			expect(genbank?.accession).toBe("LOCUSONLY");
 		});
@@ -330,7 +363,7 @@ describe("getGenbank", () => {
 		it("upper-cases the lower-case ORIGIN block and drops its numbering", async () => {
 			mockFetch(WRAPPED_HOST_RECORD);
 
-			const genbank = await getGenbank(logger, "TEST0001");
+			const genbank = await getGenbank(logger, "TEST0001", "");
 
 			expect(genbank?.sequence).toBe("ACGTACGTACGTACGTACGTACGT");
 		});
@@ -343,7 +376,7 @@ describe("getGenbank", () => {
 				),
 			);
 
-			const genbank = await getGenbank(logger, "TEST0001");
+			const genbank = await getGenbank(logger, "TEST0001", "");
 
 			expect(genbank?.sequence).toBe("ACGTRYKNNNNNACGTACGTACGT");
 		});
@@ -351,7 +384,7 @@ describe("getGenbank", () => {
 		it("ignores a BASE COUNT line between the feature table and ORIGIN", async () => {
 			mockFetch(BASE_COUNT_RECORD);
 
-			const genbank = await getGenbank(logger, "TEST0005");
+			const genbank = await getGenbank(logger, "TEST0005", "");
 
 			expect(genbank?.host).toBe("Homo sapiens");
 			expect(genbank?.sequence).toBe("ACGTACGTACGTACGTACGTACGT");
@@ -360,7 +393,7 @@ describe("getGenbank", () => {
 		it("parses a record with carriage returns", async () => {
 			mockFetch(HOST_RECORD.replaceAll("\n", "\r\n"));
 
-			const genbank = await getGenbank(logger, "NC_045512");
+			const genbank = await getGenbank(logger, "NC_045512", "");
 
 			expect(genbank?.accession).toBe("NC_045512.2");
 			expect(genbank?.host).toBe("Homo sapiens");
@@ -370,7 +403,7 @@ describe("getGenbank", () => {
 		it("throws when a 200 response is not a GenBank record", async () => {
 			mockFetch("<html><body>Service unavailable</body></html>");
 
-			await expect(getGenbank(logger, "NC_045512")).rejects.toThrow(
+			await expect(getGenbank(logger, "NC_045512", "")).rejects.toThrow(
 				"Could not parse GenBank record",
 			);
 		});
@@ -380,7 +413,7 @@ describe("getGenbank", () => {
 		it("is empty when the source feature has none", async () => {
 			mockFetch(LAB_HOST_RECORD);
 
-			const genbank = await getGenbank(logger, "AB000048");
+			const genbank = await getGenbank(logger, "AB000048", "");
 
 			expect(genbank?.host).toBe("");
 		});
@@ -388,7 +421,7 @@ describe("getGenbank", () => {
 		it("does not match /lab_host", async () => {
 			mockFetch(LAB_HOST_RECORD);
 
-			const genbank = await getGenbank(logger, "AB000048");
+			const genbank = await getGenbank(logger, "AB000048", "");
 
 			expect(genbank?.host).not.toBe("Felis domesticus");
 		});
@@ -396,7 +429,7 @@ describe("getGenbank", () => {
 		it("joins a value wrapped over a continuation line with a single space", async () => {
 			mockFetch(WRAPPED_HOST_RECORD);
 
-			const genbank = await getGenbank(logger, "TEST0001");
+			const genbank = await getGenbank(logger, "TEST0001", "");
 
 			expect(genbank?.host).toBe(
 				"Solanum lycopersicum cultivar Moneymaker grown under glass",
@@ -406,7 +439,7 @@ describe("getGenbank", () => {
 		it("takes the last source feature when several carry a host", async () => {
 			mockFetch(TWO_SOURCES_BOTH_HOSTS);
 
-			const genbank = await getGenbank(logger, "TEST0002");
+			const genbank = await getGenbank(logger, "TEST0002", "");
 
 			expect(genbank?.host).toBe("Second host");
 		});
@@ -414,7 +447,7 @@ describe("getGenbank", () => {
 		it("is cleared when the last source feature carries no host", async () => {
 			mockFetch(TWO_SOURCES_LAST_HOSTLESS);
 
-			const genbank = await getGenbank(logger, "TEST0003");
+			const genbank = await getGenbank(logger, "TEST0003", "");
 
 			expect(genbank?.host).toBe("");
 		});
@@ -422,7 +455,7 @@ describe("getGenbank", () => {
 		it("unescapes doubled quotes", async () => {
 			mockFetch(ESCAPED_QUOTES_RECORD);
 
-			const genbank = await getGenbank(logger, "TEST0004");
+			const genbank = await getGenbank(logger, "TEST0004", "");
 
 			expect(genbank?.host).toBe('Homo "sapiens" here');
 		});
@@ -435,7 +468,7 @@ describe("getGenbank", () => {
 				),
 			);
 
-			const genbank = await getGenbank(logger, "TEST0001");
+			const genbank = await getGenbank(logger, "TEST0001", "");
 
 			expect(genbank?.host).toBe("");
 		});
@@ -448,7 +481,7 @@ describe("getGenbank", () => {
 				),
 			);
 
-			const genbank = await getGenbank(logger, "AB000048");
+			const genbank = await getGenbank(logger, "AB000048", "");
 
 			expect(genbank?.host).toBe("Felis domesticus");
 		});
@@ -458,13 +491,13 @@ describe("getGenbank", () => {
 		it("returns null when NCBI cannot retrieve the sequence", async () => {
 			mockFetch("Error: Failed to retrieve sequence: NOPE00000\n", 400);
 
-			await expect(getGenbank(logger, "NOPE00000")).resolves.toBeNull();
+			await expect(getGenbank(logger, "NOPE00000", "")).resolves.toBeNull();
 		});
 
 		it("does not warn about an expected retrieval failure", async () => {
 			mockFetch("Error: Failed to retrieve sequence: NOPE00000\n", 400);
 
-			await getGenbank(logger, "NOPE00000");
+			await getGenbank(logger, "NOPE00000", "");
 
 			expect(logger.warn).not.toHaveBeenCalled();
 		});
@@ -472,7 +505,7 @@ describe("getGenbank", () => {
 		it("warns about an unexpected non-200 response and returns null", async () => {
 			mockFetch("Bad gateway", 502);
 
-			await expect(getGenbank(logger, "NC_045512")).resolves.toBeNull();
+			await expect(getGenbank(logger, "NC_045512", "")).resolves.toBeNull();
 
 			expect(logger.warn).toHaveBeenCalledWith(
 				expect.objectContaining({
@@ -487,7 +520,7 @@ describe("getGenbank", () => {
 		it("truncates a long body before logging it", async () => {
 			mockFetch("x".repeat(5000), 500);
 
-			await getGenbank(logger, "NC_045512");
+			await getGenbank(logger, "NC_045512", "");
 
 			expect(firstCall(vi.mocked(logger.warn).mock.calls)[0]).toMatchObject({
 				body: "x".repeat(500),
@@ -500,7 +533,7 @@ describe("getGenbank", () => {
 				vi.fn().mockRejectedValue(new Error("ECONNREFUSED")),
 			);
 
-			await expect(getGenbank(logger, "NC_045512")).rejects.toThrow(
+			await expect(getGenbank(logger, "NC_045512", "")).rejects.toThrow(
 				GenbankUnreachableError,
 			);
 		});
@@ -511,7 +544,7 @@ describe("getGenbank", () => {
 				vi.fn().mockRejectedValue(new Error("ECONNREFUSED")),
 			);
 
-			await expect(getGenbank(logger, "NC_045512")).rejects.toThrow(
+			await expect(getGenbank(logger, "NC_045512", "")).rejects.toThrow(
 				"Could not reach NCBI",
 			);
 		});
@@ -522,7 +555,7 @@ describe("getGenbank", () => {
 				vi.fn().mockRejectedValue(new Error("ECONNREFUSED")),
 			);
 
-			await expect(getGenbank(logger, "NC_045512")).rejects.toMatchObject({
+			await expect(getGenbank(logger, "NC_045512", "")).rejects.toMatchObject({
 				name: "GenbankUnreachableError",
 			});
 		});
