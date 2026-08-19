@@ -24,10 +24,9 @@ export const instanceMessages = pgTable(
 		message: text("message"),
 		createdAt: timestamp("created_at"),
 		updatedAt: timestamp("updated_at"),
-		user: text("user"),
-		// Nullable upstream: a row migrated from Mongo carries its author in the
-		// legacy `user` column, and a trigger resolves `user_id` from it. Every
-		// read joins on it, so a row that predates the backfill is simply invisible.
+		// Nullable upstream: the Mongo-era rows arrived without one and were
+		// backfilled. Every read joins on it, so a row the backfill missed is
+		// simply invisible.
 		userId: integer("user_id"),
 	},
 	(table) => [
