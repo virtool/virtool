@@ -55,21 +55,26 @@ const SUBMIT_PARAMS = {
 };
 
 /**
- * Thrown when NCBI could not be reached, or answered something this side
- * cannot use.
+ * Thrown when NCBI could not be reached, or refused an exchange.
  *
  * Transient by assumption: the sweep backs the row off and tries again on a
  * later pass rather than recording anything on it. A condition that will not
- * clear on its own is written to the row's `error` column instead.
+ * clear on its own is {@link BlastResultUnreadableError} instead, and is
+ * written to the row's `error` column.
  */
 export class NcbiBlastError extends AppError {}
 
 /**
- * Thrown when a result arrived but could not be unpacked into JSON.
+ * Thrown when a result arrived but this side cannot make a stored result of
+ * it — bytes that are not a zip of JSON, or JSON whose envelope is not the
+ * shape {@link formatBlastContent} reduces.
  *
- * Distinct from {@link NcbiBlastError} because it is *not* transient — the
- * bytes NCBI holds for that RID will not become a zip on the next attempt — so
- * the sweep records it on the row and stops asking.
+ * Distinct from {@link NcbiBlastError} because it is *not* transient. The
+ * bytes NCBI holds for that RID will not become a zip on the next attempt, and
+ * an envelope NCBI has changed the shape of will not change back, so re-asking
+ * only reproduces the same failure every pass until the row expires half an
+ * hour later — telling the user the search timed out rather than what actually
+ * broke. The sweep records this on the row and stops asking.
  */
 export class BlastResultUnreadableError extends AppError {}
 
@@ -296,7 +301,7 @@ export async function fetchBlastResult(
 
 function readObject(value: JsonValue | undefined, path: string): JsonObject {
 	if (typeof value !== "object" || value === null || Array.isArray(value)) {
-		throw new NcbiBlastError(`BLAST result has no ${path} object`);
+		throw new BlastResultUnreadableError(`BLAST result has no ${path} object`);
 	}
 
 	return value;
@@ -304,7 +309,7 @@ function readObject(value: JsonValue | undefined, path: string): JsonObject {
 
 function readArray(value: JsonValue | undefined, path: string): JsonValue[] {
 	if (!Array.isArray(value)) {
-		throw new NcbiBlastError(`BLAST result has no ${path} array`);
+		throw new BlastResultUnreadableError(`BLAST result has no ${path} array`);
 	}
 
 	return value;
@@ -312,9 +317,9 @@ function readArray(value: JsonValue | undefined, path: string): JsonValue[] {
 
 /**
  * Read a key that must be present, so a result that has lost it is a shape
- * change rather than a hit with a blank field. Failing here backs the row off
- * and leaves it for the next pass; defaulting it would store a result the SPA
- * renders as a real, empty answer.
+ * change rather than a hit with a blank field. Failing here records the row as
+ * unreadable; defaulting it would store a result the SPA renders as a real,
+ * empty answer.
  */
 function readRequired(
 	object: JsonObject,
@@ -324,7 +329,7 @@ function readRequired(
 	const value = object[key];
 
 	if (value === undefined) {
-		throw new NcbiBlastError(`BLAST result ${path} has no ${key}`);
+		throw new BlastResultUnreadableError(`BLAST result ${path} has no ${key}`);
 	}
 
 	return value;
@@ -382,13 +387,18 @@ function formatBlastHit(hit: JsonObject, path: string): JsonObject {
  * `masking` is the one key that may be absent; every other key is required and
  * throws when missing.
  *
+ * **Every throw here is a {@link BlastResultUnreadableError}, not an
+ * {@link NcbiBlastError}.** A missing key means NCBI has changed the shape it
+ * sends, which no later attempt settles, so the row records the failure and
+ * stops rather than re-fetching the same bytes until it expires.
+ *
  * The two single-key assertions are what rejects a multi-query result:
  * `HITLIST_SIZE` bounds the hits per query but nothing bounds the queries, and
  * a zip member carrying two would otherwise have its second silently dropped.
  */
 export function formatBlastContent(raw: JsonObject): JsonObject {
 	if (Object.keys(raw).length !== 1) {
-		throw new NcbiBlastError(
+		throw new BlastResultUnreadableError(
 			`Unexpected BLAST result count ${Object.keys(raw).length} returned`,
 		);
 	}
@@ -396,7 +406,7 @@ export function formatBlastContent(raw: JsonObject): JsonObject {
 	const outputs = readObject(raw.BlastOutput2, "BlastOutput2");
 
 	if (Object.keys(outputs).length !== 1) {
-		throw new NcbiBlastError(
+		throw new BlastResultUnreadableError(
 			`Unexpected BLAST result count ${Object.keys(outputs).length} returned`,
 		);
 	}
