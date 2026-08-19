@@ -38,7 +38,7 @@ export default function UploadTableHead({
 		<thead className="bg-gray-50 text-sm text-gray-600">
 			<tr>
 				{onSelectAll && (
-					<th className="w-px" scope="col">
+					<th className="w-12" scope="col">
 						<span className="sr-only">Select</span>
 						<Checkbox
 							ariaLabel="Select all files"
@@ -57,6 +57,7 @@ export default function UploadTableHead({
 					Name
 				</SortableHead>
 				<SortableHead
+					className="w-48"
 					direction={direction}
 					field="user"
 					onSort={onSort}
@@ -65,6 +66,7 @@ export default function UploadTableHead({
 					User
 				</SortableHead>
 				<SortableHead
+					className="w-48"
 					direction={direction}
 					field="createdAt"
 					onSort={onSort}
@@ -73,6 +75,7 @@ export default function UploadTableHead({
 					Created At
 				</SortableHead>
 				<SortableHead
+					className="w-48"
 					direction={direction}
 					field="size"
 					onSort={onSort}
@@ -80,7 +83,7 @@ export default function UploadTableHead({
 				>
 					Size
 				</SortableHead>
-				<th className="w-px" scope="col">
+				<th className="w-32" scope="col">
 					<span className="sr-only">Actions</span>
 				</th>
 			</tr>

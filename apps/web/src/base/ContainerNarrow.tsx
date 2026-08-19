@@ -14,7 +14,7 @@ export default function ContainerNarrow({
 	className,
 }: ContainerNarrowProps) {
 	return (
-		<div className={cn("flex-grow", "flex-shrink-0", "max-w-6xl", className)}>
+		<div className={cn("flex-grow", "flex-shrink-0", "max-w-7xl", className)}>
 			{children}
 		</div>
 	);

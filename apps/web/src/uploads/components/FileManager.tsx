@@ -188,7 +188,7 @@ export function FileManager({
 								selectedCount={selection.selected.length}
 							/>
 						)}
-						<BoxGroupTable variant="data">
+						<BoxGroupTable className="table-fixed" variant="data">
 							<caption className="sr-only">{title}</caption>
 							<UploadTableHead
 								checked={selection.getVisibleState(files.items)}

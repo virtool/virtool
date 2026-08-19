@@ -59,7 +59,7 @@ export default function UploadItem({
 					/>
 				</td>
 			)}
-			<td className="font-medium">{name}</td>
+			<td className="break-all font-medium">{name}</td>
 			<td>
 				{user === null ? (
 					"Retrieved"
