@@ -111,10 +111,9 @@ async function seedAnalysis(
 			.values({
 				created_at: now,
 				updated_at: now,
-				// The legacy storage slug, the owning reference and the owning build.
-				// All irrelevant to workflow tagging, but required upstream.
+				// The legacy storage slug and the owning build. Both irrelevant to
+				// workflow tagging, but required upstream.
 				sample: String(overrides.sample_id ?? 0),
-				reference_id: referenceId,
 				index_id: indexId,
 				user_id: ownerId,
 				workflow: "nuvs",

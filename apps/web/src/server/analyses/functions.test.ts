@@ -182,7 +182,6 @@ async function seedAnalysis(
 				// A Postgres-native analysis: no legacy id, so a delete never reaches
 				// object storage.
 				legacy_id: null,
-				reference_id: referenceId,
 				index_id: indexId,
 				user_id: ownerId,
 				...overrides,

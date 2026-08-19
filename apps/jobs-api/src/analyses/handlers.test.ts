@@ -121,7 +121,6 @@ async function seedAnalysis(
 			results: null,
 			sample: String(sampleId),
 			sample_id: sampleId,
-			reference_id: referenceId,
 			index_id: indexId,
 			user_id: userId,
 			job_id: jobId,

@@ -114,9 +114,9 @@ export class AnalysisNoReadyIndexError extends AppError {}
 
 /**
  * Thrown when a stored analysis cannot be read back — an `index_id` that does
- * not resolve to a build, an absent reference, an absent parent sample. Each
- * supplies something every response carries, so this surfaces rather than
- * fabricating a placeholder or dropping the row from a list.
+ * not resolve to a build, an absent parent sample. Each supplies something every
+ * response carries, so this surfaces rather than fabricating a placeholder or
+ * dropping the row from a list.
  */
 export class AnalysisIntegrityError extends AppError {}
 
@@ -129,7 +129,9 @@ const minimalColumns = {
 	workflow: analyses.workflow,
 	ready: analyses.ready,
 	sample_id: analyses.sample_id,
-	reference_id: analyses.reference_id,
+	// The owning reference comes from the build, not the analysis: `index_id` is
+	// NOT NULL and `indexes.reference_id` is too, so every analysis reaches one.
+	reference_id: indexes.reference_id,
 	index_id: analyses.index_id,
 	user_id: analyses.user_id,
 	job_id: analyses.job_id,
@@ -239,19 +241,19 @@ function mapMinimal(
 	analysisSubtractionList: SubtractionNested[],
 	job: AnalysisJobNested | null,
 ): AnalysisMinimal {
-	if (row.index_id === null || row.indexVersion === null) {
+	// The version and the owning reference both come off the joined build, so an
+	// index that does not resolve takes all three down together.
+	if (
+		row.index_id === null ||
+		row.indexVersion === null ||
+		row.reference_id === null
+	) {
 		throw new AnalysisIntegrityError(`Index not found for analysis ${row.id}`);
-	}
-
-	if (row.reference_id === null) {
-		throw new AnalysisIntegrityError(
-			`Reference not found for analysis ${row.id}`,
-		);
 	}
 
 	// An analysis exists only as a child of a sample, and every response links to
 	// it. Fabricating a placeholder id would render a link to a sample that
-	// cannot exist, so an orphan surfaces here like the other two.
+	// cannot exist, so an orphan surfaces here like an unresolved build.
 	if (row.sample_id === null) {
 		throw new AnalysisIntegrityError(`Sample not found for analysis ${row.id}`);
 	}
@@ -331,10 +333,7 @@ export async function findAnalyses(
 			})
 			.from(analyses)
 			.leftJoin(indexes, eq(indexes.id, analyses.index_id))
-			.leftJoin(
-				legacyReferences,
-				eq(legacyReferences.id, analyses.reference_id),
-			)
+			.leftJoin(legacyReferences, eq(legacyReferences.id, indexes.reference_id))
 			.leftJoin(legacySamples, eq(legacySamples.id, analyses.sample_id))
 			.leftJoin(users, eq(users.id, analyses.user_id))
 			.where(where)
@@ -396,7 +395,7 @@ export async function getAnalysis(
 		})
 		.from(analyses)
 		.leftJoin(indexes, eq(indexes.id, analyses.index_id))
-		.leftJoin(legacyReferences, eq(legacyReferences.id, analyses.reference_id))
+		.leftJoin(legacyReferences, eq(legacyReferences.id, indexes.reference_id))
 		.leftJoin(legacySamples, eq(legacySamples.id, analyses.sample_id))
 		.leftJoin(users, eq(users.id, analyses.user_id))
 		.where(eq(analyses.id, analysisId))
@@ -635,7 +634,6 @@ export async function createAnalysis(
 					results: null,
 					sample: sampleStorageId(sample.id, sample.legacy_id),
 					sample_id: sample.id,
-					reference_id: reference.id,
 					index_id: index.id,
 					user_id: values.userId,
 					job_id: jobId,

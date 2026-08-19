@@ -84,7 +84,6 @@ async function seedPendingBlast(): Promise<{
 			results: { hits: [{ index: 0, sequence: "ATGCATGC", orfs: [] }] },
 			sample: "0",
 			user_id: userId,
-			reference_id: referenceId,
 			index_id: indexId,
 		})
 		.returning({ id: analyses.id });

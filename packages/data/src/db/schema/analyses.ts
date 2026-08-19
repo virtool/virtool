@@ -4,10 +4,9 @@
 // `./vestigial.ts` instead — nothing reads it, so it is declared for snapshot
 // fidelity alone.
 //
-// `reference` and `index` are dead, superseded by `reference_id` and
-// `index_id`. They are declared anyway: a column missing from this schema is
-// missing from the migration snapshot, so nothing could generate the migration
-// that drops it.
+// `index` is dead, superseded by `index_id`. It is declared anyway: a column
+// missing from this schema is missing from the migration snapshot, so nothing
+// could generate the migration that drops it.
 
 import type { AnalysisFormat } from "@virtool/contracts";
 import { sql } from "drizzle-orm";
@@ -30,7 +29,6 @@ import {
 } from "drizzle-orm/pg-core";
 import { indexes } from "./indexes";
 import { jobs } from "./jobs";
-import { legacyReferences } from "./references";
 import { legacySamples } from "./samples";
 import { subtractions } from "./subtractions";
 import { tasks } from "./tasks";
@@ -54,8 +52,6 @@ export const analyses = pgTable(
 		// analysis's slug-prefixed objects in storage.
 		sample: text("sample").notNull(),
 		sample_id: bigint("sample_id", { mode: "number" }),
-		reference: text("reference"),
-		reference_id: bigint("reference_id", { mode: "number" }),
 		index: text("index"),
 		index_id: bigint("index_id", { mode: "number" }).notNull(),
 		user_id: integer("user_id").notNull(),
@@ -66,11 +62,6 @@ export const analyses = pgTable(
 			columns: [table.sample_id],
 			foreignColumns: [legacySamples.id],
 			name: "analyses_sample_id_fkey",
-		}),
-		foreignKey({
-			columns: [table.reference_id],
-			foreignColumns: [legacyReferences.id],
-			name: "analyses_reference_id_fkey",
 		}),
 		foreignKey({
 			columns: [table.index_id],
@@ -90,10 +81,6 @@ export const analyses = pgTable(
 		unique("analyses_legacy_id_key").on(table.legacy_id),
 		index("ix_analyses_sample").on(table.sample),
 		index("ix_analyses_sample_id_workflow").on(table.sample_id, table.workflow),
-		check(
-			"ck_analyses_reference_present",
-			sql`num_nonnulls(${table.reference}, ${table.reference_id}) >= 1`,
-		),
 	],
 );
 
