@@ -354,7 +354,7 @@ export async function findAnalyses(
 
 	return {
 		foundCount,
-		// Both counts are the scoped one: `totalCount` is not an unscoped total.
+		// Every filter here scopes rather than narrows, so the two counts agree.
 		totalCount: foundCount,
 		page: options.page,
 		perPage: options.perPage,
