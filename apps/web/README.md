@@ -1,11 +1,10 @@
-# virtool-ui
+# @virtool/web
 
 The web-app frontend for Virtool
 
-The root Dockerfile's `dist` target is published as both
-`ghcr.io/virtool/ui` and `ghcr.io/virtool/web` while the cluster migrates to
-the latter name. See [Continuous integration](../../docs/ci.md#images) for the
-shared image build and release pipeline.
+The root Dockerfile's `dist` target is published as `ghcr.io/virtool/web`. See
+[Continuous integration](../../docs/ci.md#images) for the shared image build
+and release pipeline.
 
 ## Key libraries
 
@@ -846,20 +845,11 @@ The `web` Vitest project also aliases `@server/composition`, `@server/config`,
 and `@virtool/data/db/pg` to a guard that throws if one survives the client
 transform.
 
-### Working on `virtool-ui`
+### Working on the web app
 
-Use this guide to create your environment when you are contributing to `virtool/ui`.
+Follow [the development guide](../../dev/README.md) to set up Tilt and Minikube,
+then start the web app's live-edit target from the repository root:
 
-1. Follow the instructions in the [`dev`](https://github.com/virtool/dev) repository's README to set up a local kubernetes cluster.
-
-2. Clone this repository onto your local machine into the same parent folder as `dev`
-
-    ```
-    git clone https://github.com/virtool/virtool-ui.git
-    ```
-
-3. Start tilt with frontend editing enabled
-
-    ```
-     tilt up -- --to-edit ui
-    ```
+```shell
+tilt up -- --web
+```

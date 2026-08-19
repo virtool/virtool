@@ -14,7 +14,7 @@ Virtool service `_FILE` convention.
 ## Astro
 
 The website uses [Astro](https://docs.astro.build) as a site builder. It lives
-in the `virtool-ui` monorepo as the `@virtool/site` workspace package.
+in the `virtool` monorepo as the `@virtool/site` workspace package.
 
 ### Commands
 

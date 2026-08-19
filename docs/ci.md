@@ -8,7 +8,7 @@ jobs. `release-ghcr` publishes all seven targets on every release.
 
 | Target | Published image | Build job |
 | --- | --- | --- |
-| `dist` | `ghcr.io/virtool/ui`, `ghcr.io/virtool/web` | `build` |
+| `dist` | `ghcr.io/virtool/web` | `build` |
 | `jobs-api` | `ghcr.io/virtool/jobs-api` | `build` |
 | `tasks` | `ghcr.io/virtool/tasks` | `build` |
 | `create-sample` | `ghcr.io/virtool/ts-create-sample` | `build` |
@@ -17,8 +17,6 @@ jobs. `release-ghcr` publishes all seven targets on every release.
 | `nuvs` | `ghcr.io/virtool/ts-nuvs` | `build-nuvs` |
 
 `dist` retains its name because tooling outside this repository targets it.
-The release currently tags the same build as both `ui` and `web` while the
-cluster migrates to `web`; remove `ui` once nothing pulls it.
 
 The `ts-` prefix distinguishes these workflow images from the unprefixed names
 such as `ghcr.io/virtool/pathoscope` that earlier releases used. Nothing

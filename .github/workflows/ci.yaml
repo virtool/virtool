@@ -178,7 +178,7 @@ jobs:
             # one in release-ghcr in step.
             matrix:
                 include:
-                    - image: ui
+                    - image: web
                       target: dist
                       workspace: apps/web
                       area: Web
@@ -595,16 +595,13 @@ jobs:
             # release. Keep in step with the matrix in the build job.
             matrix:
                 include:
-                    # Published under both names while the cluster migrates off
-                    # `ui` — drop the first line once nothing pulls it. Matrix
-                    # values are evaluated before the job's `env` context
-                    # exists, so these are literal `ghcr.io`, not `${{ env.REGISTRY }}`.
-                    - image: ui
+                    # Matrix values are evaluated before the job's `env`
+                    # context exists, so these are literal `ghcr.io`, not
+                    # `${{ env.REGISTRY }}`.
+                    - image: web
                       target: dist
                       workspace: apps/web
-                      images: |
-                          ghcr.io/virtool/ui
-                          ghcr.io/virtool/web
+                      images: ghcr.io/virtool/web
                     - image: jobs-api
                       target: jobs-api
                       workspace: apps/jobs-api
