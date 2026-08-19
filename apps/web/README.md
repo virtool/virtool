@@ -1,6 +1,6 @@
-# virtool-ui
+# @virtool/web
 
-The web-app frontend for Virtool
+The web-app frontend for Virtool. Image: `ghcr.io/virtool/web`.
 
 ## Using in Production
 
@@ -285,20 +285,22 @@ counter — real instrumentation, not a read of existing state.
 
 ## Development
 
-### Working on `virtool-ui`
+Live development runs against the local Tilt/Minikube cluster, not a
+standalone dev server. The cluster is the root `Tiltfile` and `dev/`, both
+in this repository — see [dev/README.md](../../dev/README.md) for the
+requirements, the `dev/scripts/init.sh` bootstrap and the resources it
+brings up.
 
-Use this guide to create your environment when you are contributing to `virtool/ui`.
+Once the cluster exists, start Tilt from the repo root with this app's
+live-edit flag on:
 
-1. Follow the instructions in the [`dev`](https://github.com/virtool/dev) repository's README to set up a local kubernetes cluster.
+```shell
+tilt up -- --web
+```
 
-2. Clone this repository onto your local machine into the same parent folder as `dev`
+`--web` is the one target that runs Vite in the pod rather than the built
+artifact, syncing `apps/web/src` and `packages` into it so an edit shows up
+without a rebuild. Virtool is then at <https://virtool.local>.
 
-    ```
-    git clone https://github.com/virtool/virtool-ui.git
-    ```
-
-3. Start tilt with frontend editing enabled
-
-    ```
-     tilt up -- --to-edit ui
-    ```
+The image is `ghcr.io/virtool/web`, built from the root `Dockerfile`'s
+`dist` target; `--web` builds the `dev` stage instead.

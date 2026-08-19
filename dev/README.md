@@ -76,7 +76,7 @@ stage named after the target. Pass a flag to turn one on:
 
 | Flag | Image | Dockerfile stage |
 | --- | --- | --- |
-| `--web` | `ghcr.io/virtool/ui` | `dev` |
+| `--web` | `ghcr.io/virtool/web` | `dev` |
 | `--jobs-api` | `ghcr.io/virtool/jobs-api` | `jobs-api` |
 | `--tasks` | `ghcr.io/virtool/tasks` | `tasks` |
 | `--create-sample` | `ghcr.io/virtool/ts-create-sample` | `create-sample` |

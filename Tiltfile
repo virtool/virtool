@@ -4,7 +4,7 @@ local(['bash', 'dev/scripts/ensure-minikube.sh'], quiet=False)
 # `tilt up -- --web --jobs-api`. The web target is listed apart because it
 # alone runs a dev server rather than the built artifact, so it needs an
 # entrypoint and sync rules; see its docker_build below.
-WEB_IMAGE = 'ghcr.io/virtool/ui'
+WEB_IMAGE = 'ghcr.io/virtool/web'
 
 SERVICE_TARGETS = [
     ('jobs-api', 'ghcr.io/virtool/jobs-api'),
