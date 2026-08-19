@@ -91,7 +91,7 @@ export class SegmentNotDefinedError extends AppError {}
 class MalformedOtuDataError extends AppError {}
 
 // Ids are the 8-character mixed-case alphanumeric strings Mongo's `_id` held,
-// because the columns that key on them are still `VARCHAR`.
+// because the columns that key on them are still `text`.
 const ID_ALPHABET =
 	"0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
 
@@ -106,7 +106,7 @@ const ID_LENGTH = 8;
  *
  * The alphabet stays the mixed-case 62 characters every id written here uses,
  * rather than the lowercase-only 36 a plain alphanumeric draw would default to.
- * Nothing keys on the case: the columns are `VARCHAR`, and the ids Mongo held
+ * Nothing keys on the case: the columns are `text`, and the ids Mongo held
  * were mixed-case, so a lowercase-only draw here would be the odd one out rather
  * than the faithful one. The wider alphabet is also the safer of the two against
  * the collision this path does not check for.
