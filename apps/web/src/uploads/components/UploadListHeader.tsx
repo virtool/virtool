@@ -28,7 +28,7 @@ export default function UploadListHeader({
 	selectedCount,
 }: UploadListHeaderProps) {
 	return (
-		<BoxGroupSection className="flex items-center gap-4 h-14 py-0 text-sm font-medium text-gray-600">
+		<BoxGroupSection className="flex items-center gap-4 h-14 py-0 bg-gray-50 text-sm font-medium text-gray-600">
 			<span>
 				{selectedCount
 					? `${selectedCount} selected`

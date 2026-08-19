@@ -124,7 +124,7 @@ describe("<FileManager>", () => {
 				"Select",
 				"Name",
 				"User",
-				"Created At",
+				"Created",
 				"Size",
 				"Actions",
 			]);

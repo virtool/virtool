@@ -35,7 +35,7 @@ export default function UploadTableHead({
 	sort,
 }: UploadTableHeadProps) {
 	return (
-		<thead className="bg-gray-50 text-sm text-gray-600">
+		<thead className="bg-white text-sm text-gray-600">
 			<tr>
 				{onSelectAll && (
 					<th className="w-12" scope="col">
@@ -72,7 +72,7 @@ export default function UploadTableHead({
 					onSort={onSort}
 					sort={sort}
 				>
-					Created At
+					Created
 				</SortableHead>
 				<SortableHead
 					className="w-48"

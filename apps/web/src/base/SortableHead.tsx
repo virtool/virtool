@@ -1,6 +1,6 @@
 import { cn } from "@app/cn";
 import type { SortDirection } from "@virtool/contracts";
-import { ArrowDown, ArrowUp } from "lucide-react";
+import { ChevronDown, ChevronsUpDown, ChevronUp } from "lucide-react";
 import type { ReactNode } from "react";
 import Icon from "./Icon";
 
@@ -67,14 +67,18 @@ export default function SortableHead<T extends string>({
 				type="button"
 			>
 				{children}
-				{active && (
-					<span aria-hidden>
-						<Icon
-							className="size-4"
-							icon={direction === "ascending" ? ArrowUp : ArrowDown}
-						/>
-					</span>
-				)}
+				<span aria-hidden className="flex items-center">
+					<Icon
+						className="size-4"
+						icon={
+							active
+								? direction === "ascending"
+									? ChevronUp
+									: ChevronDown
+								: ChevronsUpDown
+						}
+					/>
+				</span>
 			</button>
 		</th>
 	);
