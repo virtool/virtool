@@ -401,9 +401,26 @@ jobs:
               uses: actions/checkout@v7
             # hts-sys runs bindgen against htslib's headers and does not fall
             # back to pre-generated bindings, so libclang is required here just
-            # as it is in the image build.
+            # as it is in the image build. Unlike the accessibility job's
+            # Playwright libraries it cannot simply be dropped, so apt is
+            # bounded instead. The runner's mirrorlist puts
+            # azure.archive.ubuntu.com first; when that host goes unreachable
+            # apt retries it for every index against a two-minute default
+            # timeout before falling back to archive.ubuntu.com, which reads as
+            # a hang. Rewriting the mirrorlist skips the dead host outright and
+            # the acquire options cap what a merely slow one can cost, for the
+            # package downloads as well as the index fetch. The step timeout is
+            # the backstop for both.
             - name: Install libclang
-              run: sudo apt-get update && sudo apt-get install -y --no-install-recommends libclang-dev
+              timeout-minutes: 5
+              run: |
+                  if [ -f /etc/apt/apt-mirrors.txt ]; then
+                      sudo sed -i 's|azure\.archive\.ubuntu\.com|archive.ubuntu.com|g' /etc/apt/apt-mirrors.txt
+                  fi
+                  printf 'Acquire::Retries "2";\nAcquire::http::Timeout "15";\nAcquire::https::Timeout "15";\n' \
+                      | sudo tee /etc/apt/apt.conf.d/99-ci-timeouts > /dev/null
+                  sudo apt-get update
+                  sudo apt-get install -y --no-install-recommends libclang-dev
             # The `candidates` golden vectors shell out to bowtie2. Without it
             # the harness skips them; VT_REQUIRE_BOWTIE2 below turns that skip
             # into a failure so CI can never quietly stop checking them. It is
