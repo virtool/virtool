@@ -9,11 +9,11 @@ type ToastProviderProps = ComponentPropsWithoutRef<
 >;
 
 /**
- * Provides the toast context. Toasts sit at the bottom-left of the screen, so
- * they swipe left to dismiss.
+ * Provides the toast context. Toasts sit at the top of the screen, so they
+ * swipe up to dismiss.
  */
 export function ToastProvider({
-	swipeDirection = "left",
+	swipeDirection = "up",
 	...props
 }: ToastProviderProps) {
 	return <ToastPrimitive.Provider swipeDirection={swipeDirection} {...props} />;
@@ -24,17 +24,18 @@ type ToastViewportProps = {
 };
 
 /**
- * A fixed viewport that anchors toasts to the bottom-left of the screen and
- * stacks them vertically. Primary actions sit at the bottom-right of dialogs
- * and forms, so toasts stay on the opposite side to avoid covering them.
+ * A fixed viewport that anchors toasts to the top-centre of the screen and
+ * stacks them vertically. Dialogs put their actions in a footer and the nav
+ * puts its controls in the top corners, so the top centre is the one band
+ * that stays clear of both.
  */
 export function ToastViewport({ className }: ToastViewportProps) {
 	return (
 		<ToastPrimitive.Viewport
 			className={cn(
-				"fixed bottom-0 left-0 z-toast",
+				"fixed top-0 inset-x-0 z-toast",
 				"flex flex-col gap-2",
-				"m-0 p-6 w-full sm:max-w-md",
+				"mx-auto my-0 p-6 w-full sm:max-w-md",
 				"list-none outline-none pointer-events-none",
 				className,
 			)}
@@ -52,7 +53,7 @@ export function Toast({ className, ...props }: ToastProps) {
 	return (
 		<ToastPrimitive.Root
 			className={cn(
-				"data-[state=open]:animate-slideUpAndFade",
+				"data-[state=open]:animate-slideDownAndFade",
 				"bg-white border border-gray-200 rounded-md shadow-lg",
 				"flex items-center justify-between gap-4",
 				"p-4 pointer-events-auto",
