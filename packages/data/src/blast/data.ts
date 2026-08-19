@@ -327,13 +327,10 @@ async function readCheckValues(
 			result: formatBlastContent(await fetchBlastResult(row.rid, signal)),
 		};
 	} catch (err) {
-		/* Only a result NCBI has already sent stops here — bytes that are not a
-		   zip of JSON, or an envelope whose shape has changed. Neither condition
-		   clears, so the row records it and stops asking; retrying would
-		   re-fetch the same bytes every pass until the row expired half an hour
-		   later, reporting a timeout for a fault that was visible on the first
-		   attempt. A refusal or a deadline is thrown on to the caller's backoff
-		   instead, being exactly what a later attempt might settle.
+		/* A result that arrived but cannot be read stops here and is recorded on
+		   the row; a refusal or a deadline is thrown on to the caller's backoff
+		   instead, being exactly what a later attempt might settle. See
+		   BlastResultUnreadableError for why the two are routed differently.
 
 		   The message recorded is the parse failure's own, so the panel names
 		   the key that went missing rather than saying only that something did. */
