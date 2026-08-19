@@ -3,39 +3,24 @@ import { Toast as ToastPrimitive } from "radix-ui";
 import type { ComponentPropsWithoutRef, ReactNode } from "react";
 import { buttonVariants } from "./buttonVariants";
 
-type ToastProviderProps = ComponentPropsWithoutRef<
-	typeof ToastPrimitive.Provider
->;
-
-/**
- * Provides the toast context. Toasts sit at the top of the screen, so they
- * swipe up to dismiss.
- */
-export function ToastProvider({
-	swipeDirection = "up",
-	...props
-}: ToastProviderProps) {
-	return <ToastPrimitive.Provider swipeDirection={swipeDirection} {...props} />;
-}
+export const ToastProvider = ToastPrimitive.Provider;
 
 type ToastViewportProps = {
 	className?: string;
 };
 
 /**
- * A fixed viewport that anchors toasts to the top-centre of the screen and
- * stacks them vertically. Dialogs put their actions in a footer and the nav
- * puts its controls in the top corners, so the top centre is the one band
- * that stays clear of both.
+ * A fixed viewport that anchors toasts to the bottom-right of the screen and
+ * stacks them vertically.
  */
 export function ToastViewport({ className }: ToastViewportProps) {
 	return (
 		<ToastPrimitive.Viewport
 			className={cn(
-				"fixed top-0 inset-x-0 z-toast",
+				"fixed bottom-0 right-0 z-toast",
 				"flex flex-col gap-2",
-				"mx-auto my-0 p-6 w-full sm:max-w-md",
-				"list-none outline-none pointer-events-none",
+				"m-0 p-6 w-full sm:max-w-md",
+				"list-none outline-none",
 				className,
 			)}
 		/>
@@ -52,7 +37,7 @@ export function Toast({ className, ...props }: ToastProps) {
 	return (
 		<ToastPrimitive.Root
 			className={cn(
-				"data-[state=open]:animate-slideDownAndFade",
+				"data-[state=open]:animate-slideUpAndFade",
 				"bg-white border border-gray-200 rounded-md shadow-lg",
 				"flex items-center justify-between gap-4",
 				"p-4 pointer-events-auto",
