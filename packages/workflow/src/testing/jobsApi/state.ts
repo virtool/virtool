@@ -1,9 +1,9 @@
 /**
  * The one mutable object both halves of the jobs API harness read and write.
  *
- * Mirrors Python's `WorkflowData`. The faked client and the embedded server
- * share it, so a test can be moved from one to the other without rewriting its
- * setup — the property that made the Python fixture usable at all.
+ * The faked client and the embedded server share it, so a test can be moved
+ * from one to the other without rewriting its setup — the property that makes
+ * the fixture usable at all.
  */
 
 import type {

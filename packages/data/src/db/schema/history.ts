@@ -1,9 +1,9 @@
 // Schema for the `legacy_history` and `legacy_history_diff` tables.
 //
-// Both tables are written from here now that OTU mutations are served from this
-// side — every OTU change records a history row and its diff. `reference` and
-// `index` are dead, superseded by the `reference_id` and `index_id` foreign
-// keys; an insert omits them and leaves them NULL, exactly as Python's does.
+// Both tables are written from here — every OTU change records a history row
+// and its diff. `reference` and `index` are dead, superseded by the
+// `reference_id` and `index_id` foreign keys; an insert omits them and leaves
+// them NULL.
 // They are declared anyway: a column missing from this schema is missing from
 // the migration snapshot, so nothing could generate the migration that drops
 // it.
@@ -84,9 +84,9 @@ export const legacyHistoryDiff = pgTable(
 	"legacy_history_diff",
 	{
 		id: serial("id"),
-		// The change's public id, duplicating `legacy_history.legacy_id`. It predates
-		// `history_id` and Python still writes it, so an insert from here must too —
-		// the column is NOT NULL upstream.
+		// The change's public id, duplicating `legacy_history.legacy_id`. It
+		// predates `history_id` and the column is NOT NULL, so an insert must
+		// fill it.
 		change_id: text("change_id").notNull(),
 		history_id: bigint("history_id", { mode: "number" }),
 		// A dictdiffer diff: an array of `[action, path, changes]` triples, shaped by

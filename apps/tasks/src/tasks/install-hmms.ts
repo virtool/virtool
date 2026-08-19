@@ -14,9 +14,9 @@ import type { TaskContext } from "./registry";
  * `install_hmms` carries the release to install and who asked for it.
  *
  * `installUpdate` (`apps/web/src/server/hmm/service.ts`) is the only writer of
- * these rows; Python's HMM API no longer creates them. The release is spelled
- * out because `createUpdateSubdocument` copies nearly all of it onto the status
- * singleton, so a field missing here is missing from the install record.
+ * these rows. The release is spelled out because `createUpdateSubdocument`
+ * copies nearly all of it onto the status singleton, so a field missing here is
+ * missing from the install record.
  */
 const payload = z.object({
 	release: z.object({
@@ -37,7 +37,7 @@ const payload = z.object({
 
 const ARCHIVE_NAME = "hmm.tar.gz";
 
-// The paths Python's `decompress_tgz` leaves these at.
+// The member paths these are extracted from inside the release archive.
 const ANNOTATIONS_MEMBER = "hmm/annotations.json";
 const PROFILES_MEMBER = "hmm/profiles.hmm";
 
@@ -45,9 +45,9 @@ const PROFILES_MEMBER = "hmm/profiles.hmm";
  * Install an HMM release: download it, unpack it, and write it to the database
  * and object storage.
  *
- * The port of Python's `HMMInstallTask`. **Nothing in this repo set
- * `ready: true` before this body existed**, so the first install wedged
- * `isInstallInProgress` on and every install after it was refused.
+ * **Nothing else sets `ready: true`**, so an install that does not reach that
+ * write leaves `isInstallInProgress` stuck on and every install after it
+ * refused.
  *
  * **The archive goes to disk rather than being piped through.** A fused
  * download → gunzip → untar cannot retry the download without redoing the
@@ -63,9 +63,9 @@ const PROFILES_MEMBER = "hmm/profiles.hmm";
 export const installHmmsTask = defineTask<typeof payload, TaskContext>({
 	type: "install_hmms",
 	payload,
-	// Python names each step after the bound method it runs, `BaseTask.run`
-	// writing `func.__name__` into the column. Both runners write the same three
-	// names for the same work until the cutover completes.
+	// Each name is written to the row's `step` column, which is what the UI
+	// shows and what rows already written carry, so these are fixed: renaming
+	// one changes what a user sees.
 	steps: ["download", "decompress", "install"],
 	async run({ ctx, helpers, logger, payload, signal }) {
 		const { release, user_id: userId } = payload;
@@ -82,8 +82,8 @@ export const installHmmsTask = defineTask<typeof payload, TaskContext>({
 					logger,
 					signal,
 					onProgress(received) {
-						// Python's progress wrapper divides by the total unguarded, so a
-						// manifest entry carrying `size: 0` is a ZeroDivisionError.
+						// Guarded, because a manifest entry carrying `size: 0` would
+						// otherwise divide by zero.
 						if (release.size > 0) {
 							report(received / release.size);
 						}
@@ -142,11 +142,11 @@ export const installHmmsTask = defineTask<typeof payload, TaskContext>({
 	},
 	async cleanup({ ctx, logger, reason }) {
 		/*
-		 * Python's `BaseTask` runs `cleanup` only on error, and this must match.
-		 * `cleanHmmStatus` empties `updates`, which is what a re-run reads to tell
-		 * whether the install already committed — so running it on a drain strips
-		 * the entry the next attempt needs, and that attempt writes everything and
-		 * records none of it.
+		 * Cleanup must run on a terminal failure only. `cleanHmmStatus` empties
+		 * `updates`, which is what a re-run reads to tell whether the install
+		 * already committed — so running it on a drain strips the entry the next
+		 * attempt needs, and that attempt writes everything and records none of
+		 * it.
 		 */
 		if (reason === "aborted") {
 			return;

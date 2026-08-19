@@ -34,10 +34,10 @@ function toWorkflowIndex(index: Index): WorkflowIndex {
 /**
  * Serve an index build's metadata, its manifest, and the files it produced.
  *
- * Records only. **This read must never build anything.** Python's `create_index`
- * task writes a build's artifacts eagerly — this side stops at inserting the row
- * that task claims — so a build whose files are not there yet answers with the
- * rows that exist rather than generating the ones that do not.
+ * Records only. **This read must never build anything.** A build's artifacts
+ * are written by the `create_index` task — this side stops at the rows that
+ * task writes — so a build whose files are not there yet answers with the rows
+ * that exist rather than generating the ones that do not.
  */
 export async function handleGetIndex(
 	deps: ReadHandlerDeps,

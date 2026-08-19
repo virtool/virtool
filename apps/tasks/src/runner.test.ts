@@ -96,7 +96,7 @@ function buildRunner(
 		drainTimeoutMs: overrides.drainTimeoutMs ?? 5_000,
 		logger,
 		recordRun: overrides.recordRun ?? (() => undefined),
-		// Fast enough that a test does not wait out Python's two seconds, and the
+		// Fast enough that a test does not wait out the real two seconds, and the
 		// interval is injectable for exactly that reason.
 		pollIntervalMs: overrides.pollIntervalMs ?? 10,
 		registry,
@@ -141,9 +141,9 @@ describe("createTaskRunner", () => {
 		});
 	});
 
-	// Python snapshots `BaseTask.__subclasses__()` at construction, which holds
-	// only the classes already imported — so one missing import silently narrows
-	// what its runner can claim, with nothing to say so.
+	// A set of types snapshotted at construction would silently narrow what the
+	// runner can claim if a handler module had not loaded yet, with nothing to
+	// say so.
 	it("reads the supported types from the registry at claim time", async () => {
 		const registry: TaskRegistry = {};
 		const runner = buildRunner(registry);
@@ -251,16 +251,16 @@ describe("createTaskRunner", () => {
 		}
 	});
 
-	// The scope is what converts "make sure Python was drained first" from an
-	// operational hope into something the query enforces. Widening it belongs to
-	// the cutover, after Python's deployment is deleted — and this assertion is
-	// what stops a refactor doing it quietly.
-	it("reclaims an expired ts- lease and never touches Python's", async () => {
+	// Reclaim is scoped to the `ts-` prefix, so a claim recorded under any other
+	// prefix is out of this runner's reach however old the lease is. Widening
+	// the scope is a decision, and this assertion is what stops a refactor
+	// making it quietly.
+	it("reclaims an expired ts- lease but not another prefix's", async () => {
 		const ours = await createTask(db, "install_hmms");
-		const pythons = await createTask(db, "install_hmms");
+		const foreign = await createTask(db, "install_hmms");
 
 		await holdTask(ours, "ts-gone-1", TASK_LEASE_SECONDS + 60);
-		await holdTask(pythons, "somehost-4242", TASK_LEASE_SECONDS * 100);
+		await holdTask(foreign, "somehost-4242", TASK_LEASE_SECONDS * 100);
 
 		const ran: number[] = [];
 
@@ -283,7 +283,7 @@ describe("createTaskRunner", () => {
 		}
 
 		expect(ran).toEqual([ours]);
-		expect(await readRow(pythons)).toMatchObject({
+		expect(await readRow(foreign)).toMatchObject({
 			complete: false,
 			runner_id: "somehost-4242",
 		});
@@ -557,10 +557,9 @@ describe("dispatchTask", () => {
 		return claimed;
 	}
 
-	// Python acquires the row, finds no class for the name, logs and returns —
-	// leaving it claimed, incomplete and error-free. That row is invisible to
-	// every consumer, counted as running forever, and drawn as a bar that never
-	// moves. It is the documented cause of the abandoned KEDA trigger.
+	// Acquiring the row, logging and returning would leave it claimed,
+	// incomplete and error-free. That row is invisible to every consumer,
+	// counted as running forever, and drawn as a bar that never moves.
 	it("fails a task with no registered handler rather than stranding it", async () => {
 		const task = await claimDirectly("no_such_task");
 
@@ -581,7 +580,7 @@ describe("dispatchTask", () => {
 
 		expect(row).toMatchObject({ complete: true, error: message });
 
-		// The exact Python failure state, asserted by name.
+		// The exact stranded state, asserted by name.
 		expect(
 			row.acquired_at !== null && row.error === null && row.complete === false,
 		).toBe(false);

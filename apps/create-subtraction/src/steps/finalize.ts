@@ -10,12 +10,11 @@ import type { CreateSubtractionStep } from "./types";
 /**
  * The one filename a subtraction accepts.
  *
- * Python wrote seven — the genome plus six bowtie2 shards — and this port writes
- * the first only. Nothing consumes the shards: both analysis workflows build a
- * subtraction's index locally from this file and memoize it in their own cache,
- * so the shards were written by one workflow and read by none. The jobs API's
- * finalize route whitelists this name and rejects the rest, so a port that kept
- * them could not finalize at all.
+ * The genome alone is written, and no bowtie2 shards alongside it: nothing
+ * consumes shards, because both analysis workflows build a subtraction's index
+ * locally from this file and memoize it in their own cache. The jobs API's
+ * finalize route whitelists this name and rejects the rest, so a run that wrote
+ * more could not finalize at all.
  */
 const FASTA_NAME = "subtraction.fa.gz";
 
@@ -35,12 +34,11 @@ const FASTA_NAME = "subtraction.fa.gz";
  * **An already-gzipped upload is uploaded as it stands.** Almost every one is,
  * so compressing here would mean decompressing a genome and gzipping it back to
  * produce a file the user already sent — tens of gigabytes of pointless IO on a
- * large reference. Python takes the same branch.
+ * large reference.
  *
- * **There is no delete on failure.** Python registers an `on_failure` hook that
- * issues `DELETE /subtractions/{id}`; a failed run here leaves an unfinalized
- * row for the user to remove, and the jobs API exposes no destructive route a
- * job key could reach.
+ * **There is no delete on failure.** A failed run leaves an unfinalized row for
+ * the user to remove, and the jobs API exposes no destructive route a job key
+ * could reach.
  */
 export const finalizeStep: CreateSubtractionStep = {
 	id: "finalize",

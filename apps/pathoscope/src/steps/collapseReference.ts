@@ -22,9 +22,9 @@ import type { PathoscopeStep } from "./types";
  * Collapse redundant isolates out of the reference and write the survivors as a
  * second index artifact.
  *
- * Cache-aware, on a namespace **forked** from Python's — the artifact is a
- * SQLite file this code writes, so a Python-written one is not interchangeable
- * with it. See `cacheParams.ts`.
+ * Cache-aware, on a namespace **forked** from the shared one — the artifact is
+ * a SQLite file this code writes, so one this code did not write is not
+ * interchangeable with it. See `cacheParams.ts`.
  */
 export const collapseReferenceStep: PathoscopeStep = {
 	id: "collapse_reference",
@@ -94,11 +94,10 @@ async function collapseReference({
 	try {
 		await mkdir(paths.collapsedReferenceDir, { recursive: true });
 
-		// **Read before collapsing, and deliberately not caught.** Python wrapped
-		// this in a `try/except ValueError` that substituted `None`, so an index
-		// missing its metadata produced a collapsed reference with no reference
-		// attached and the run finished normally — a degraded result nobody could
-		// tell was degraded. Here it fails the step.
+		// **Read before collapsing, and deliberately not caught.** Substituting a
+		// null for missing metadata would produce a collapsed reference with no
+		// reference attached and let the run finish normally — a degraded result
+		// nobody could tell was degraded. Here it fails the step.
 		const reference = await source.getReferenceMetadata();
 
 		const tally = createCollapseTally();

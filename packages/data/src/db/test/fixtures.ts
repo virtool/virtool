@@ -79,7 +79,9 @@ function getDdl(): Promise<string[]> {
  * This also installs the process-wide client-event emitter on the new
  * connection, so a mutation that calls `emit` reaches the same database the
  * test is asserting against. Vitest's module registry is per file, as this
- * fixture is, so no two files can race on the handle.
+ * fixture is, so no two files can race on the handle. A test that mocks the
+ * emit module must provide both `emit` and `createEmitter` because this setup
+ * calls the latter.
  */
 export async function createTestDatabase(
 	options: TestDatabaseOptions = {},

@@ -1,8 +1,8 @@
 // Schema for the `analyses` table and its join / file tables.
 //
-// Python's `analysis_results` / `SQLAnalysisResult` table is mirrored in
-// `./vestigial.ts` instead — nothing reads it and its own docstring calls it
-// temporary, so it is declared for snapshot fidelity alone.
+// The `analysis_results` / `SQLAnalysisResult` table is mirrored in
+// `./vestigial.ts` instead — nothing reads it, so it is declared for snapshot
+// fidelity alone.
 //
 // `reference` and `index` are dead, superseded by `reference_id` and
 // `index_id`. They are declared anyway: a column missing from this schema is
@@ -50,8 +50,8 @@ export const analyses = pgTable(
 		// The workflow's raw output, written by the jobs API. Opaque here: its
 		// internals are the worker's contract, not this server's.
 		results: jsonb("results").$type<Record<string, unknown>>(),
-		// The legacy `sample` string column is still written by Python and is needed
-		// to locate a migrated analysis's slug-prefixed objects in storage.
+		// The legacy `sample` string column is needed to locate a migrated
+		// analysis's slug-prefixed objects in storage.
 		sample: text("sample").notNull(),
 		sample_id: bigint("sample_id", { mode: "number" }),
 		reference: text("reference"),

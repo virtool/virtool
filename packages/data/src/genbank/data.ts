@@ -161,9 +161,9 @@ function parseHost(lines: string[]): string {
 
 			inSource = line.slice(5, 21).trim() === "source";
 
-			// Python reads every `source` feature in turn and falls back to "" when
-			// one carries no /host, so a later hostless source clears an earlier
-			// host rather than leaving it standing.
+			// Every `source` feature is read in turn and falls back to "" when one
+			// carries no /host, so a later hostless source clears an earlier host
+			// rather than leaving it standing.
 			if (inSource) {
 				host = "";
 			}

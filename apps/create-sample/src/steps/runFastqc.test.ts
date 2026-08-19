@@ -78,7 +78,7 @@ describe("runFastqcStep", () => {
 	 * The step id outlives the tool it was named after: the jobs API stores it,
 	 * so it stays `run_fastqc` even though nothing here runs FastQC.
 	 */
-	it("keeps the step id Python wrote", () => {
+	it("keeps the step id `run_fastqc`", () => {
 		expect(runFastqcStep.id).toBe("run_fastqc");
 	});
 

@@ -1,0 +1,73 @@
+# Environment configuration
+
+Virtool services own their configuration schemas, but follow one environment
+loading convention. There is no shared configuration package: the shared piece
+is `resolveFileBacked` from `@virtool/contracts/env`.
+
+## Variable names
+
+Virtool-owned variables start with `VT_`, such as `VT_POSTGRES_URL` and
+`VT_METRICS_TOKEN`. Keep names defined by dependencies and platforms unchanged,
+such as `SENTRY_AUTH_TOKEN` and `NODE_OPTIONS`.
+
+Each configured key also accepts a `<KEY>_FILE` variable whose value is the path
+to a file containing the configuration value. This lets Kubernetes workloads
+read secrets directly from a secrets-store CSI mount:
+
+```text
+VT_POSTGRES_URL_FILE=/mnt/secrets-store/postgres-url
+```
+
+Plain variables remain useful for local development.
+
+## Resolution rules
+
+`resolveFileBacked(keys, env)` copies the supplied environment and resolves only
+the keys listed by the caller:
+
+1. If `<KEY>_FILE` is absent or blank, `<KEY>` is unchanged.
+2. Otherwise, the referenced file is read as UTF-8 and trimmed.
+3. The file value replaces `<KEY>`, even when the plain variable is also set.
+4. An unreadable file throws during startup; there is no fallback to a possibly
+   stale plain variable.
+5. A file containing only whitespace resolves to an empty string, which the
+   service's schema handles as unset or invalid.
+
+The file deliberately wins when both forms exist. During a rollout, an
+environment variable synchronized from a Kubernetes `Secret` may be stale while
+the CSI-mounted file is current.
+
+The resolver does not mutate the supplied environment object.
+
+## Service integration
+
+Resolve file-backed values before parsing the service's schema:
+
+```ts
+import { resolveFileBacked } from "@virtool/contracts/env";
+
+export function parseConfig(env: NodeJS.ProcessEnv = process.env): Config {
+	return ConfigSchema.parse(resolveFileBacked(CONFIG_KEYS, env));
+}
+```
+
+The key collection must cover every configuration field. Derive it from the
+schema where practical; if it must be explicit, update it whenever a key is
+added. A missing entry makes the plain variable work while silently disabling
+its `_FILE` variant.
+
+Parse once at the process composition root and pass the resulting configuration
+to downstream code. Avoid direct `process.env` reads elsewhere: they bypass
+validation and `_FILE` resolution. This is especially important for early
+instrumentation such as Sentry initialization.
+
+Current integrations are:
+
+- `apps/web/src/server/config.ts`
+- `apps/jobs-api/src/config.ts`
+- `apps/tasks/src/config.ts`
+- `apps/tasks/src/migrate.ts`
+- `packages/workflow/src/config.ts`
+
+The resolver and its precedence tests live in `packages/contracts/src/env.ts`
+and `packages/contracts/src/env.test.ts`.

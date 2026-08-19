@@ -34,8 +34,8 @@ const QUALITY_SLOTS: usize = 150;
 
 /// The length of the per-read mean quality histogram in the stored blob.
 ///
-/// Python fixes it at 50 and drops any score at or above that rather than
-/// growing the array, and every chart in the SPA is drawn against 50 columns.
+/// It is fixed at 50: a score at or above that is dropped rather than growing
+/// the array, and every chart in the SPA is drawn against 50 columns.
 const SEQUENCE_SCORE_SLOTS: usize = 50;
 
 /// The read depth a cycle needs before FastQC will report percentiles for it.
@@ -50,8 +50,8 @@ const PERCENTILE_MINIMUM_COUNT: u64 = 100;
 /// Field for field the `Quality` object in `packages/contracts/src/samples.ts`.
 /// The column orders inside `bases` and `composition` are load-bearing — the
 /// d3 charts index them positionally — and are stated at each builder below.
-/// `Deserialize` is here for the golden tests, which read blobs FastQC and
-/// `parseFastqcData` produced and compare them against this crate's.
+/// `Deserialize` is here for the golden tests, which read the frozen blobs
+/// derived from FastQC's own reports and compare them against this crate's.
 #[derive(Clone, Debug, Deserialize, PartialEq, Serialize)]
 pub struct Quality {
     pub bases: Vec<[f64; 6]>,
@@ -64,7 +64,7 @@ pub struct Quality {
     /// FastQC computes it with long division — `((g + c) * 100) / (a + t + g +
     /// c)` — so the figure it reports has already lost its fraction before
     /// anything reads it. Storing a float here would not recover the
-    /// precision; it would only disagree with every blob Python wrote.
+    /// precision; it would only disagree with every blob already stored.
     pub gc: u64,
 
     pub length: [usize; 2],
@@ -297,10 +297,10 @@ impl QualityProfiler {
 /// **A cycle without enough reads collapses to its mean.** FastQC reports the
 /// five percentiles as `NaN` for a position covered by 100 reads or fewer, and
 /// a `NaN` cannot be stored — it is not valid JSON, and both the JSONB column
-/// and the `Quality` schema reject it. Python's parser resolves such a row by
-/// substituting the first value in it that did parse, which is the mean, for
-/// every value in the row. That substitution is reproduced here rather than
-/// left to a parser this path no longer goes through.
+/// and the `Quality` schema reject it. Such a row is resolved by substituting
+/// the first value in it that is a real number, which is the mean, for every
+/// value in the row. Stored blobs hold rows in that shape, so the substitution
+/// is made here rather than left to a reader downstream.
 ///
 /// It is not a rare shape. A file of variable-length reads thins out toward
 /// its longest read, so the last cycles of a real MiSeq run reach it.
@@ -356,8 +356,8 @@ fn gc_percentage(totals: &CycleBases) -> u64 {
 /// Read one FASTQ file — gzipped or plain — and resolve its quality blob.
 ///
 /// One file per invocation, deliberately. Pairing two mates into the composite
-/// a sample stores is `compositeQuality`'s, in `packages/bio`, which is tested
-/// against Python and is not reimplemented here.
+/// a sample stores is `compositeQuality`'s, in `packages/bio`, and is not
+/// reimplemented here.
 pub fn profile_fastq(path: &Path) -> Result<Quality, QualityError> {
     let mut reader = parse_fastx_file(path)?;
     let mut profiler = QualityProfiler::new();

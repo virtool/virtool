@@ -17,11 +17,10 @@ import { jsonError, type ReadHandlerDeps, requireRowId } from "../http";
 export type SampleHandlerDeps = FinalizeHandlerDeps;
 
 /**
- * The only filenames a sample's reads may be registered under, matching the
- * check Python's `upload_reads` route makes.
+ * The only filenames a sample's reads may be registered under.
  *
- * `sample_reads.name` is a `VARCHAR(13)` upstream, which both of these fit
- * exactly, and Python addresses a reads file by `name` in its download URL.
+ * `sample_reads.name` is a `VARCHAR(13)`, which both of these fit exactly, and
+ * a reads file is addressed by `name` in its download URL.
  */
 const FILE_NAMES = ["reads_1.fq.gz", "reads_2.fq.gz"] as const;
 
@@ -106,8 +105,8 @@ export async function handleGetSample(
  * Finalize a sample: record its quality report and the reads the create_sample
  * job produced, and flip it ready.
  *
- * The sample's input uploads are removed as part of this, matching Python — see
- * `finalizeSample` for why the blobs go rather than only the rows.
+ * The sample's input uploads are removed as part of this — see `finalizeSample`
+ * for why the blobs go rather than only the rows.
  *
  * A job may only finalize the sample it produced. That check is the resource
  * counterpart of `requireOwnJob` on the lifecycle routes, and answers the same

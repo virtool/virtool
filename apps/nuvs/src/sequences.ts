@@ -1,16 +1,13 @@
 /**
  * Reading sequence files off the work path, streamed.
  *
- * Ports `read_fastq_headers` and `filter_reads_by_headers` from `utils.py`,
- * which are Biopython's `SeqIO.parse` and `SeqIO.write`. There is no Biopython
- * equivalent here and none is wanted: `parseFastq` and `parseFastaLines` from
- * `@virtool/bio` are async generators over lines, so everything below reads one
- * record at a time.
+ * `parseFastq` and `parseFastaLines` from `@virtool/bio` are async generators
+ * over lines, so everything below reads one record at a time.
  *
  * **Nothing here may buffer a file.** A trimmed reads file runs to many
  * gigabytes and an assembly is not something this side sized, so no path is safe
- * to read whole. The one thing that legitimately accumulates is the id set —
- * Python holds the same set, and there is no filtering by membership without it.
+ * to read whole. The one thing that legitimately accumulates is the id set;
+ * there is no filtering by membership without it.
  */
 
 import { createReadStream, createWriteStream } from "node:fs";

@@ -7,14 +7,14 @@
  * command line, and the results file.
  *
  * **One invocation per read.** The crate profiles one file and pairing stays
- * on this side, where `compositeQuality` is the port of Python's averaging and
- * is tested against it. Handing the crate both mates would move that into a
+ * on this side, where `compositeQuality` averages a pair's two blobs into the
+ * one a sample stores. Handing the crate both mates would move that into a
  * second implementation for no gain.
  *
  * Nothing here searches a directory. FastQC wrote a report directory whose
  * name it derived from the input by a suffix-stripping rule that is not a
- * contract, which is why the old module ran one invocation per read into an
- * output directory of its own and asserted it found exactly one report. The
+ * contract, so locating a report meant one invocation per read into an output
+ * directory of its own and an assertion that exactly one report was found. The
  * crate writes the path it is given.
  */
 

@@ -53,15 +53,14 @@ export const createReferenceIndexStep: NuvsStep = {
  *
  * **The genome is decompressed first**, which is where this differs from
  * pathoscope: that workflow hands the gzipped FASTA to `bowtie2-build` directly,
- * which reads gzip perfectly well. Python's nuvs decompresses, and the
- * decompressed bytes are what its index was built from — so decompressing is
- * what keeps this side's shards byte-identical to the ones already sitting in
- * the shared namespace.
+ * which reads gzip perfectly well. The shards already sitting in the shared
+ * namespace were built from the decompressed bytes, so decompressing is what
+ * keeps this workflow's shards byte-identical to them.
  *
  * Both the download and the decompression are deferred until the cache has
- * missed. The namespace is shared with Python, so a hit is the common outcome,
- * and a host genome is gigabytes that would otherwise be pulled out of storage,
- * expanded, and never opened.
+ * missed. The namespace is shared, so a hit is the common outcome, and a host
+ * genome is gigabytes that would otherwise be pulled out of storage, expanded,
+ * and never opened.
  */
 export const createSubtractionIndexesStep: NuvsStep = {
 	id: "create_subtraction_indexes",

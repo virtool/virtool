@@ -165,7 +165,7 @@ describe("installHmms", () => {
 		const rows = await db.select().from(hmms);
 		expect(rows).toHaveLength(2);
 		expect(rows.map((row) => row.cluster).sort()).toEqual([1, 2]);
-		// Python passes `hidden=False` explicitly rather than leaning on a default.
+		// `hidden` is written explicitly rather than left to a column default.
 		expect(rows.every((row) => row.hidden === false)).toBe(true);
 
 		const status = await readStatus();
@@ -228,9 +228,8 @@ describe("installHmms", () => {
 
 	/*
 	 * `HmmRelease.id` is typed `number`, but an entry migrated out of Mongo can
-	 * carry it as a string. Python guards the same comparison with an
-	 * `int()`-and-`except TypeError`; failing it here is silent — every row and
-	 * byte is written and `ready` is never flipped.
+	 * carry it as a string, so the comparison has to coerce. Failing it is
+	 * silent — every row and byte is written and `ready` is never flipped.
 	 */
 	it("matches an update whose id was stored as a string", async () => {
 		const storage = new MemoryStorage();

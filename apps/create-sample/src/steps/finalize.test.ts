@@ -179,7 +179,7 @@ describe("finalizeStep", () => {
 	/**
 	 * The canonical form the sample's `quality` column holds. It is pinned by
 	 * checksum rather than by shape because the key order is what a byte
-	 * comparison against a Python-written row turns on, and `JSON.stringify`
+	 * comparison against a row already written turns on, and `JSON.stringify`
 	 * emits insertion order — so a reordered literal in `@virtool/bio`'s parser
 	 * would change this without changing any assertion about the values.
 	 */

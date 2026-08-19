@@ -1,6 +1,4 @@
-// Render a pathoscope analysis as a downloadable spreadsheet. Ported from
-// `format_analysis_to_csv` and `format_analysis_to_excel` in
-// `../../../../../virtool/virtool/analyses/format.py`.
+// Render a pathoscope analysis as a downloadable spreadsheet.
 
 import type { JsonObject } from "@virtool/contracts";
 import { formatAnalysis } from "@virtool/data/analyses/format";
@@ -27,9 +25,8 @@ const HEADERS = [
 type Row = [string, string, string, number, number, number, number];
 
 // Median depth per hit sequence, taken from the raw alignment before formatting
-// replaces it with simplified coordinates. Python reaches `statistics.median`
-// here, which raises on an empty alignment; an absent one reads as zero depth
-// rather than failing the whole download.
+// replaces it with simplified coordinates. An absent or empty alignment reads
+// as zero depth rather than failing the whole download.
 function calculateMedianDepths(hits: unknown[]): Map<string, number> {
 	const depths = new Map<string, number>();
 
@@ -97,8 +94,8 @@ async function composeRows(
 	return rows;
 }
 
-// Python writes with `csv.QUOTE_NONNUMERIC`: every non-numeric field is quoted,
-// numbers are written bare, and an embedded quote is doubled.
+// Every non-numeric field is quoted, numbers are written bare, and an embedded
+// quote is doubled.
 function toCsvField(value: string | number): string {
 	if (typeof value === "number") {
 		return String(value);
@@ -119,7 +116,7 @@ export async function formatAnalysisToCsv(
 ): Promise<string> {
 	const rows = await composeRows(db, workflow, results);
 
-	// Python's csv writer terminates every row with CRLF, including the last.
+	// Every row is terminated with CRLF, including the last.
 	return `${[HEADERS, ...rows].map(toCsvRow).join("\r\n")}\r\n`;
 }
 

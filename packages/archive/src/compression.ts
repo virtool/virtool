@@ -1,10 +1,10 @@
 /**
- * Gzip helpers, ported from `compress_file`, `decompress_file` and `is_gzipped`
- * in Python's `virtool/utils.py`.
+ * Gzip helpers.
  *
- * Python's versions branch to `pigz` when more than one process is available.
- * That branch is dropped: it exists for parallelism, and checksums are taken
- * over *decompressed* content, so our gzip bytes need not match pigz's.
+ * Compression runs in-process rather than shelling out to a parallel gzip:
+ * checksums are taken over *decompressed* content, so the gzip bytes need not
+ * be reproducible and there is nothing to gain from matching another
+ * compressor.
  */
 
 import { createReadStream, createWriteStream } from "node:fs";
@@ -96,10 +96,9 @@ export async function decompressGzipToFile(
 /**
  * Whether the file at `path` starts with the gzip magic number.
  *
- * Reads **two bytes and stops**. Python opens the whole file through
- * `gzip.open(...).peek(1)` and decides on the exception message, which decodes
- * a member header and can read far more than it needs; these files are large
- * enough that the difference is worth the divergence.
+ * Reads **two bytes and stops**. Decoding a member header to decide would read
+ * far more than it needs, and these files are large enough that the difference
+ * matters.
  *
  * A file shorter than two bytes is not gzipped.
  */

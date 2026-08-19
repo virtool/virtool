@@ -2,6 +2,15 @@
 
 The product [website](https://www.virtool.ca) for Virtool.
 
+## Configuration
+
+The site has one optional build-time environment variable. It does not use the
+Virtool service `_FILE` convention.
+
+| Variable | Type | Default | Use |
+| --- | --- | --- | --- |
+| `GITHUB_TOKEN` | String | Unset | Authenticate GitHub API requests that load release data, increasing the API rate limit. |
+
 ## Astro
 
 The website uses [Astro](https://docs.astro.build) as a site builder. It lives

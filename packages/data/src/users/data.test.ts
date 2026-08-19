@@ -46,11 +46,9 @@ beforeEach(async () => {
 	await db.delete(groups);
 });
 
-// The `users.settings` JSONB column as Python writes it. Python's
-// `virtool/users/settings.py` seeds these keys for every account it creates,
-// which is every account that exists today, so the stored blob is snake_case
-// and the model this side returns is not. Seeding the camelCase spelling here
-// would let a read that never maps anything pass.
+// The `users.settings` JSONB column as it is stored against every account that
+// exists today: snake_case, where the model this side returns is not. Seeding
+// the camelCase spelling here would let a read that never maps anything pass.
 const storedSettings = {
 	quick_analyze_workflow: "nuvs",
 	show_ids: false,
@@ -77,8 +75,8 @@ describe("getAccount", () => {
 		});
 	});
 
-	// A blob written by an older Python release can be missing a key this side
-	// now expects. Falling back per field keeps a partial blob readable instead
+	// A blob written by an older release can be missing a key this side now
+	// expects. Falling back per field keeps a partial blob readable instead
 	// of handing the client `undefined` for a boolean it renders a toggle from.
 	it("falls back to the defaults for keys the stored blob is missing", async () => {
 		const userId = await seedUser(db, {
@@ -372,8 +370,8 @@ describe("changePassword", () => {
 		expect(rows[0]?.ip).toBe("10.0.0.1");
 	});
 
-	// Python passes `remember=False`, so the replacement gets the 60-minute
-	// lifetime even if the session it replaces was a 30-day one.
+	// `remember` is false on the replacement, so it gets the 60-minute lifetime
+	// even if the session it replaces was a 30-day one.
 	it("never remembers the replacement session", async () => {
 		const userId = await seedUserWithPassword("old_password_123");
 
@@ -583,9 +581,9 @@ describe("createUser", () => {
 			primaryGroup: null,
 		});
 
-		// Asserted against the raw column, not the returned model: Python reads
-		// this same blob, so a user created from this side has to be written in
-		// the spelling its `virtool/users/settings.py` expects.
+		// Asserted against the raw column, not the returned model: a user created
+		// from this side has to be written in the same snake_case spelling every
+		// stored blob already uses.
 		const [row] = await db.select().from(users).where(eq(users.id, user.id));
 		expect(row?.settings).toEqual({
 			skip_quick_analyze_dialog: true,

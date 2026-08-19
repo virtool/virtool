@@ -52,8 +52,8 @@ export const jobs = pgTable(
 		state: text("state").$type<JobState>().notNull(),
 		steps: jsonb("steps").$type<StoredJobStep[]>(),
 		user_id: integer("user_id").notNull(),
-		// Deliberately left open. Python's `Workflow` is an application-level enum
-		// with no CHECK constraint behind it, so a row can hold a workflow this
+		// Deliberately left open. Workflow names are an application-level enum
+		// with no CHECK constraint behind them, so a row can hold a workflow this
 		// build has never heard of.
 		workflow: text("workflow").notNull(),
 	},

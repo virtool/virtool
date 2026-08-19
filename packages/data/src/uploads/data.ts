@@ -202,11 +202,10 @@ export async function getUploadFile(
  *
  * `createReference` puts `name_on_disk` on an `import_reference` task's context
  * instead of the upload's id, so that string is the only handle the task has.
- * The column is unique, which makes the lookup exact, and Python resolves it
- * the same way for the same reason.
+ * The column is unique, which makes the lookup exact.
  *
  * Nothing else should reach for this: `name_on_disk` does not locate an object
- * and is kept only because Python's task context is spelled in terms of it.
+ * and is kept only because that task context is spelled in terms of it.
  */
 export async function getUploadFileByNameOnDisk(
 	db: DbOrTx,
@@ -348,7 +347,7 @@ export async function reapOrphanedUploads(
 ): Promise<ReapResult> {
 	/* The cutoff is Postgres's clock, not a bound `Date`, so the sweep selects
 	   against the same instant it stamps `removed_at` with. A NULL `created_at`
-	   is never selected, matching Python. */
+	   is never selected. */
 	const orphans = await db
 		.select({ id: uploadsTable.id })
 		.from(uploadsTable)
@@ -374,9 +373,7 @@ export async function reapOrphanedUploads(
 				   `createSample` writes it in the transaction that reserves, and
 				   `deleteSample` clears it in the transaction that releases. What is
 				   left — a reservation no sample row names — is what this sweep is
-				   for. Python's `reap_orphaned` has to carry this term too; while both
-				   runners sweep the same table, the looser predicate is the one that
-				   decides what is reaped. */
+				   for. */
 				notExists(
 					db
 						.select({ id: sampleUploads.id })
@@ -398,8 +395,8 @@ export async function reapOrphanedUploads(
 	for (const [index, orphan] of orphans.entries()) {
 		signal?.throwIfAborted();
 
-		/* Release and soft-delete in one statement. Never split these: Python
-		   releases the batch and then loops its ordinary delete, so anything
+		/* Release and soft-delete in one statement. Never split these: releasing
+		   the batch and then looping an ordinary delete means anything
 		   interrupting that loop leaves the rest `reserved = false, removed =
 		   false` — which no later sweep matches, its predicate being
 		   `reserved = true`, and which no list shows. The guard is also what makes

@@ -68,9 +68,9 @@ describe("translate", () => {
 
 /**
  * The expected values here are written out rather than captured from a fixture,
- * because they are what Python's `find_orfs` returns and what is already stored
- * in analysis documents. A failure is a finding — never re-baseline one of
- * these to match a change in this implementation.
+ * because they are what the golden corpus holds and what is already stored in
+ * analysis documents. A failure is a finding — never re-baseline one of these
+ * to match a change in this implementation.
  */
 describe("findOrfs", () => {
 	it("returns empty for sequences of 300 bp or less", () => {
@@ -117,10 +117,10 @@ describe("findOrfs", () => {
 
 	/**
 	 * `pos` on the reverse strand is a correct pair of *forward* coordinates,
-	 * but Python then slices `nuc` out of the reverse-complement using them —
-	 * so `nuc` is offset by the stop codon's three bases, holding the stop that
-	 * opens the ORF instead of the one that closes it. The protein is taken
-	 * from the translation and is unaffected.
+	 * but `nuc` is then cut out of the reverse-complement using them — so `nuc`
+	 * is offset by the stop codon's three bases, holding the stop that opens the
+	 * ORF instead of the one that closes it. The protein is taken from the
+	 * translation and is unaffected.
 	 *
 	 * This one is reproduced for completeness only: NuVs pops `nuc` before the
 	 * ORFs reach the stored document, so nothing downstream observes it.
@@ -144,16 +144,16 @@ describe("findOrfs", () => {
 			`${"GCT".repeat(100)}TAA`,
 		);
 
-		// What Python actually stores: the same window taken from the other end.
+		// What is actually stored: the same window taken from the other end.
 		expect(reverse0.nuc).toBe(`TAA${"GCT".repeat(100)}`);
 		expect(translate(reverse0.nuc.slice(3))).toBe(reverse0.pro);
 	});
 
 	/**
-	 * Python adds the stop codon's three bases unconditionally and then clamps
-	 * to the sequence length, so an ORF with no stop reports `end` at the
-	 * sequence length rather than at the end of its last full codon — 301 here,
-	 * not 300. Reproduced deliberately; `pos` is stored in the analysis blob.
+	 * The forward-strand `end` adds the stop codon's three bases unconditionally
+	 * and then clamps to the sequence length, so an ORF with no stop reports
+	 * `end` at the sequence length rather than at the end of its last full codon
+	 * — 301 here, not 300. Deliberate; `pos` is stored in the analysis blob.
 	 */
 	it("clamps the forward-strand end to the sequence length when there is no stop", () => {
 		const orfs = findOrfs("G".repeat(301)).filter((o) => o.strand === 1);
@@ -165,10 +165,10 @@ describe("findOrfs", () => {
 	});
 
 	/**
-	 * The mirror-image quirk: Python subtracts three unconditionally on the
-	 * reverse strand and never clamps, so an ORF with no stop reports a negative
-	 * start. `nuc` inherits it — a negative index makes Python's slice wrap to
-	 * the end of the string, yielding two bases rather than the ORF's 300. NuVs
+	 * The mirror-image quirk: the reverse-strand `start` subtracts three
+	 * unconditionally and is never clamped, so an ORF with no stop reports a
+	 * negative start. `nuc` inherits it — a negative bound counts back from the
+	 * end of the string, yielding two bases rather than the ORF's 300. NuVs
 	 * drops `nuc` before storage, but `pos` is kept and rendered.
 	 */
 	it("reports negative reverse-strand starts when there is no stop", () => {
@@ -234,8 +234,8 @@ describe("findOrfs", () => {
 	});
 
 	/**
-	 * `translate` uppercases, but Python slices `nuc` straight out of the input,
-	 * so a lowercase sequence keeps its case on the forward strand and gains
+	 * `translate` uppercases, but `nuc` is cut straight out of the input, so a
+	 * lowercase sequence keeps its case on the forward strand and gains
 	 * uppercase on the reverse — `reverseComplement` uppercases as it goes.
 	 */
 	it("uppercases the protein but leaves the forward nuc as given", () => {

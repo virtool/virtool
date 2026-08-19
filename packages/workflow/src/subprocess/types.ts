@@ -65,8 +65,7 @@ export type RunSubprocess = (
 ) => Promise<SubprocessResult>;
 
 /**
- * The line cap, matching the `limit` Python passes to
- * `asyncio.create_subprocess_exec`.
+ * The line cap for a subprocess' output streams.
  *
  * It is not a memory budget so much as a guard against a tool that writes an
  * unbounded stream with no newline in it — without a ceiling the reader

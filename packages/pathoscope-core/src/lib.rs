@@ -180,10 +180,10 @@ mod tests {
 
     /// `read_count` is the number of distinct reads the matrix was built from.
     ///
-    /// The expected figures are the lengths of the `reads` arrays the PyO3
-    /// build wrote into `tests/golden/vectors.json`, so this pins the same
-    /// numbers the corpus does — see the `em_basic_cutoff_0.01`,
-    /// `em_isolates_minimal` and `em_multimapping_cutoff_0.01` vectors.
+    /// The expected figures are the lengths of the `reads` arrays in
+    /// `tests/golden/vectors.json`, so this pins the same numbers the corpus
+    /// does — see the `em_basic_cutoff_0.01`, `em_isolates_minimal` and
+    /// `em_multimapping_cutoff_0.01` vectors.
     #[test]
     fn test_read_count_counts_distinct_reads() {
         for (fixture, expected) in [

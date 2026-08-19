@@ -724,9 +724,8 @@ export async function writeHmmAnnotations(
  *
  * **It clears `installed` unconditionally**, so a failed install of release N
  * erases the record of a good N-1 whose rows and profiles are untouched. Left
- * that way while the Python runner still writes this row; any repair has to
- * keep making `isInstallInProgress` false, which is what unwedges the install
- * button.
+ * that way deliberately; any repair has to keep making `isInstallInProgress`
+ * false, which is what unwedges the install button.
  */
 export async function cleanHmmStatus(db: DbOrTx): Promise<void> {
 	await db

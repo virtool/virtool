@@ -146,7 +146,7 @@ function asDocument(value: unknown, where: string): Record<string, unknown> {
 
 // `_id` is what the stored document carries; `id` is what a document that has
 // already been through a read path carries. Both are accepted, as they are by
-// the writer on the other side of this format.
+// the writer of this format.
 function readId(document: Record<string, unknown>, where: string): string {
 	const value = document._id ?? document.id;
 

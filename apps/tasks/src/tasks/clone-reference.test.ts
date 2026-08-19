@@ -213,8 +213,8 @@ describe("cloneReferenceTask", () => {
 		).toHaveLength(2);
 	});
 
-	// The reference is gone rather than left half-built, which is what Python
-	// does and what the two runners must agree on until the cutover.
+	// The reference is gone rather than left half-built: a user sees the clone
+	// disappear instead of an empty reference with no way to finish it.
 	it("fails the task and deletes the reference when the manifest is unpatchable", async () => {
 		const { task, cloneId } = await claimClone(1, { src_otu_missing: 0 });
 

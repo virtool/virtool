@@ -3,10 +3,9 @@
  *
  * Everything a step needs is resolved once, here, before step 1: the metadata
  * reads against the jobs API, and from them the storage key and work-path
- * destination of every file the run reads. That is the eager model — Python
- * resolved fixtures lazily by parameter name, so a storage failure surfaced
- * forty minutes into a run at whichever step first touched the file. Here every
- * key is checked before any work is done.
+ * destination of every file the run reads. Resolving eagerly means a storage
+ * failure surfaces before any work is done, rather than forty minutes into a
+ * run at whichever step first touched the file.
  *
  * **Resolution is eager; transfer is not always.** The reads and the index
  * artifact are read by every run, so they are downloaded here. A subtraction's
@@ -37,7 +36,7 @@ import { type PathoscopePaths, workPaths } from "./paths";
 /**
  * The minimum alignment score an alignment must reach to be counted.
  *
- * Python's `p_score_cutoff` fixture, which nothing ever overrode.
+ * `p_score_cutoff` is not configurable; nothing overrides this default.
  */
 export const P_SCORE_CUTOFF = 0.01;
 
@@ -266,10 +265,10 @@ function checkReadName(name: string): void {
 /**
  * Locate the index's SQLite artifact.
  *
- * There is no fallback to the JSON forms Python still reads. A 200–500 MB
- * reference document exceeds V8's maximum string length, so `JSON.parse` cannot
- * open one at all — an index without a SQLite artifact is not analysable here
- * and must say so rather than degrade.
+ * There is no fallback to the JSON forms an older index may still carry. A
+ * 200–500 MB reference document exceeds V8's maximum string length, so
+ * `JSON.parse` cannot open one at all — an index without a SQLite artifact is
+ * not analysable here and must say so rather than degrade.
  */
 function resolveIndex(index: WorkflowIndex, path: string): PathoscopeIndex {
 	const file = index.files.find(
@@ -288,10 +287,10 @@ function resolveIndex(index: WorkflowIndex, path: string): PathoscopeIndex {
 /**
  * Locate a subtraction's gzipped source genome, and only that.
  *
- * Python downloads every file a subtraction has, including the six bowtie2
- * shards. Pathoscope reads none of them — `create_subtraction_index` builds its
- * own index from this FASTA — so they are six large downloads for nothing. A
- * subtraction finalized by the TypeScript `create_subtraction` workflow has no
+ * A subtraction row can list six bowtie2 shards alongside its genome.
+ * Pathoscope reads none of them — `create_subtraction_index` builds its own
+ * index from this FASTA — so downloading them would be six large transfers for
+ * nothing. A subtraction finalized by the `create_subtraction` workflow has no
  * shards to download in any case.
  */
 function resolveSubtraction(

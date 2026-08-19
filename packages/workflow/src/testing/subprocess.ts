@@ -13,9 +13,9 @@
  *    what says why it failed. A fake that throws without one tests a message
  *    that is never empty in production.
  * 3. **Cancellation** — `exitCode === null` and `signal === "SIGTERM"`, resolved
- *    as `cancelled: true`. Not `exitCode === 15`: Python treats 15 as a success
- *    on the reasoning that the run was already failing, and that reasoning does
- *    not survive a tool choosing 15 as an ordinary error code.
+ *    as `cancelled: true`. Not `exitCode === 15`: treating 15 as a success on
+ *    the reasoning that the run was already failing does not survive a tool
+ *    choosing 15 as an ordinary error code.
  *
  * ## `cd-hit-est -h` exits 1
  *

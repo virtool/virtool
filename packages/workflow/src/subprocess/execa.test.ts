@@ -333,8 +333,8 @@ describe("createRunSubprocess", () => {
 		}
 	});
 
-	// Python treats 15 as a success, on the reasoning that the run was already
-	// failing. A tool is free to use 15 as an ordinary error code.
+	// Exit code 15 is not a success on the reasoning that the run was already
+	// failing: a tool is free to use 15 as an ordinary error code.
 	it("fails on exit code 15 when nothing cancelled the run", async () => {
 		const path = await script("fifteen", "process.exit(15)");
 		const { runSubprocess } = createRunner();

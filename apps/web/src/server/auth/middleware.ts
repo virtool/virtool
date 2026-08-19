@@ -102,7 +102,7 @@ export const requireSession = createServerOnlyFn(
  *
  * An `Authorization` header commits the request to the key path — a malformed
  * one is a 401 rather than a silent fall back to whatever cookies happen to be
- * attached. Python's `authentication_middleware` branches the same way.
+ * attached.
  */
 export const requireAuthenticatedRequest = createServerOnlyFn(
 	async (request: Request): Promise<AuthenticatedSession | Response> => {

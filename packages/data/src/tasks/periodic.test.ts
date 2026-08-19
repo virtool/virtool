@@ -43,8 +43,8 @@ beforeEach(async () => {
 });
 
 /**
- * Insert a row of `type` that was created `ageSeconds` ago, the way Python
- * writes one: a naive UTC `created_at`, computed by Postgres.
+ * Insert a row of `type` that was created `ageSeconds` ago, with a naive UTC
+ * `created_at` computed by Postgres.
  */
 async function seedTask(
 	type: string,
@@ -93,15 +93,14 @@ async function countTasks(type: string): Promise<number> {
 type HeldTransaction = { release: () => Promise<void> };
 
 /**
- * Hold the advisory lock Python's spawner takes, from a session of its own.
+ * Hold the advisory lock a spawner takes, from a session of its own.
  *
  * The statement is written out as a literal rather than reusing anything the
  * implementation under test builds, because the point is to prove the two
- * *independently* agree on the key. `hashtext` of the bare task name, the
- * single-argument transaction-scoped form: exactly what
- * `func.pg_try_advisory_xact_lock(func.hashtext(task_class.name))` emits.
+ * *independently* agree on the key: `hashtext` of the bare task name, in the
+ * single-argument transaction-scoped form.
  */
-async function holdPythonLock(
+async function holdSpawnerLock(
 	client: PgClient,
 	type: string,
 ): Promise<HeldTransaction> {
@@ -151,14 +150,14 @@ describe("createPeriodicTask", () => {
 		expect(await countTasks("sweep_blast")).toBe(1);
 	});
 
-	it("emits Python's advisory lock statement", async () => {
+	it("emits the single-argument hashtext advisory lock statement", async () => {
 		await createPeriodicTask(db, "sweep_blast", 30);
 
 		// Read off the wire rather than off the TypeScript. The single-argument
 		// form, `hashtext` computed in SQL, and the bare name as the parameter are
-		// each what makes this exclude Python's spawner; a hash computed here or
-		// the two-argument form would key a different lock and read the same in
-		// the source.
+		// each what makes this exclude another spawner; a hash computed here or the
+		// two-argument form would key a different lock and read the same in the
+		// source.
 		expect(
 			statements.filter((statement) =>
 				statement.includes("pg_try_advisory_xact_lock"),
@@ -273,9 +272,9 @@ describe("the recency window", () => {
 });
 
 /**
- * The regression guard for the backlog. Python gates on recency alone, so a
- * wedged or absent runner leaves it inserting a fresh row every time the last
- * one ages out of the window, and the fleet comes back to a pile of identical
+ * The regression guard for the backlog. Gating on recency alone would insert a
+ * fresh row every time the last one ages out of the window, however wedged or
+ * absent the runner is, and the fleet would come back to a pile of identical
  * periodic tasks. Nothing here may depend on how *old* the outstanding row is.
  */
 describe("the outstanding-work gate", () => {
@@ -330,11 +329,12 @@ describe("the outstanding-work gate", () => {
 	});
 
 	/**
-	 * A Python failure writes `error` and leaves `complete` false, so gating on
-	 * `complete` alone would leave every type Python has ever failed blocked for
-	 * good — silently, since a suppressed spawn is the ordinary steady state.
+	 * A row can carry an `error` while still marked incomplete — rows written by
+	 * an earlier release do — so gating on `complete` alone would leave every
+	 * type that has ever failed that way blocked for good, silently, since a
+	 * suppressed spawn is the ordinary steady state.
 	 */
-	it("re-arms after a failure Python recorded without completing the row", async () => {
+	it("re-arms after a failure recorded without completing the row", async () => {
 		await seedTask("sweep_blast", 3600, { error: "boom" });
 
 		expect((await createPeriodicTask(db, "sweep_blast", 30)).outcome).toBe(
@@ -354,19 +354,18 @@ describe("the outstanding-work gate", () => {
 describe("mutual exclusion", () => {
 	/**
 	 * The regression guard for the whole issue. One participant is raw SQL
-	 * matching what Python emits, so this exercises the cross-implementation
-	 * exclusion without needing a Python process — and it fails if the key is
+	 * written out independently of the implementation, so it fails if the key is
 	 * namespaced, hashed client-side, or built with the two-argument form, none
-	 * of which a TypeScript-only test would notice.
+	 * of which a test reusing the implementation's own statement would notice.
 	 */
-	it("is blocked by a lock Python's spawner would hold", async () => {
-		const python = database.connect();
+	it("is blocked by a lock another spawner holds", async () => {
+		const other = database.connect();
 
 		onTestFinished(async () => {
-			await python.close();
+			await other.close();
 		});
 
-		const held = await holdPythonLock(python.client, "sweep_blast");
+		const held = await holdSpawnerLock(other.client, "sweep_blast");
 
 		expect(await createPeriodicTask(db, "sweep_blast", 30)).toEqual({
 			outcome: "skipped_locked",

@@ -35,11 +35,11 @@ export async function verifyAuthenticatedSession(
 		return null;
 	}
 
-	// A TS-side deactivation deletes the user's sessions, but Python's does not,
-	// so `active` still has to be checked on every request rather than trusted at
-	// login — a session Python left behind must stop verifying the moment the user
-	// goes inactive. The inner join only drops anonymous sessions, which carry no
-	// user_id and are rejected anyway.
+	// Deactivating a user deletes their sessions, but sessions created before
+	// this release can outlive the deactivation, so `active` still has to be
+	// checked on every request rather than trusted at login — such a session must
+	// stop verifying the moment the user goes inactive. The inner join only drops
+	// anonymous sessions, which carry no user_id and are rejected anyway.
 	const [row] = await db
 		.select({
 			userId: sessions.userId,
@@ -149,11 +149,10 @@ export function parseBasicAuthHeader(header: string): BasicCredentials | null {
  * any failure — unknown handle, deactivated user, or a key that is not that
  * user's — so callers answer a single 401 without saying which check failed.
  *
- * Handles are matched case-insensitively, as they are at login and in Python's
- * `get_by_handle`. Only the key's SHA-256 is stored, so the lookup hashes the
- * supplied secret and matches on that; the digest is indexed and unique, and
- * scoping it to the user keeps one account's key from authenticating another's
- * handle.
+ * Handles are matched case-insensitively, as they are at login. Only the key's
+ * SHA-256 is stored, so the lookup hashes the supplied secret and matches on
+ * that; the digest is indexed and unique, and scoping it to the user keeps one
+ * account's key from authenticating another's handle.
  */
 export async function verifyApiKey(
 	db: Db,
@@ -165,10 +164,9 @@ export async function verifyApiKey(
 	// trips and then resolve to the very same row.
 	const normalized = handle.toLowerCase();
 
-	// Job keys use this same header format against the separate jobs API. Python
-	// refuses them here rather than resolving `job-{id}` as a user handle, and a
-	// handle that reaches Postgres either way must not authenticate differently
-	// depending on which backend served it.
+	// Job keys use this same header format against the separate jobs API. They
+	// are refused here rather than resolved as a `job-{id}` user handle, so a job
+	// key can never authenticate against this API.
 	if (!normalized || normalized.startsWith("job")) {
 		return null;
 	}
@@ -193,8 +191,8 @@ export async function verifyApiKey(
 		return null;
 	}
 
-	// Keys written by the legacy Python path stored only the permissions that
-	// were granted, so expand against the full set before it becomes a cap.
+	// Keys written by an older release stored only the permissions that were
+	// granted, so expand against the full set before it becomes a cap.
 	return {
 		userId: row.userId,
 		keyPermissions: { ...emptyPermissions(), ...row.permissions },

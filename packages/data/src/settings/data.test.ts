@@ -137,10 +137,10 @@ describe("updateSettings", () => {
 });
 
 describe("DEFAULT_SETTINGS", () => {
-	// These are the values Python's `Settings` model declares and its
-	// `d16de6e24788` migration seeds. A drift on either side means a virgin
-	// deployment gets different settings depending on which service starts first.
-	it("matches the defaults Python seeds", () => {
+	// These must match the values the migration seeds the row with. A drift
+	// means a fresh deployment gets different settings depending on whether the
+	// migration or this seeded the row.
+	it("declares the values the settings row is seeded with", () => {
 		expect(DEFAULT_SETTINGS).toEqual({
 			defaultSourceTypes: ["isolate", "strain"],
 			enableSentry: true,

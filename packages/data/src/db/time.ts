@@ -1,8 +1,8 @@
 import { type SQL, sql } from "drizzle-orm";
 
 /**
- * The current UTC wall time, matching the naive `timestamp` columns Python
- * writes.
+ * The current UTC wall time, matching the naive `timestamp` columns these
+ * tables use.
  *
  * `clock_timestamp()` rather than `now()`, which is the *transaction's* start
  * time and is frozen for its whole length. On a heartbeat that back-dates the

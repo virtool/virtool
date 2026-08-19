@@ -90,8 +90,8 @@ export class SubtractionNotOwnedError extends AppError {}
 /** Thrown when the upload a subtraction is created from does not exist. */
 export class SubtractionUploadNotFoundError extends AppError {}
 
-// The Python endpoint escapes LIKE wildcards in the search term so a user's `%`
-// or `_` matches literally rather than acting as a pattern.
+// LIKE wildcards in the search term are escaped so a user's `%` or `_` matches
+// literally rather than acting as a pattern.
 function escapeLike(term: string): string {
 	return term.replace(/[\\%_]/g, (char) => `\\${char}`);
 }
@@ -161,7 +161,7 @@ function toMinimal(row: SubtractionResourceRow): SubtractionMinimal {
 							? null
 							: { id: row.jobUserId, handle: row.jobUserHandle ?? "" },
 					// `jobs.workflow` carries no constraint, so it arrives as free
-					// text; Python only ever writes the union members here.
+					// text; only the union members are ever written there.
 					workflow: (row.jobWorkflow ?? "create_subtraction") as JobWorkflow,
 				};
 
@@ -197,7 +197,7 @@ export async function findSubtractions(
 		: undefined;
 
 	// Both the search term and the ready flag narrow the found set; the total and
-	// ready counts ignore the search term, matching the Python contract.
+	// ready counts ignore the search term.
 	const foundFilter = and(
 		notDeleted,
 		ready ? readyFilter : undefined,
@@ -300,7 +300,7 @@ export async function getSubtraction(
 	};
 }
 
-// Whether a live subtraction has this id. Mirrors Python's `_check_exists`.
+// Whether a live subtraction has this id.
 async function checkSubtractionExists(
 	db: DbOrTx,
 	subtractionId: number,
@@ -453,9 +453,9 @@ export async function createSubtraction(
  * ready = false` and its row count checked, so two finalizes racing each other
  * cannot both write a file set. Losing that race — or arriving second after a
  * retry — is a {@link SubtractionAlreadyFinalizedError}; a row that is gone or
- * soft-deleted is a {@link SubtractionNotFoundError}, which is the split Python
- * makes by re-selecting `deleted` after a zero rowcount; and one produced by
- * another job — or by no job at all — is a {@link SubtractionNotOwnedError}.
+ * soft-deleted is a {@link SubtractionNotFoundError}, told apart by re-selecting
+ * `deleted` after a zero rowcount; and one produced by another job — or by no
+ * job at all — is a {@link SubtractionNotOwnedError}.
  *
  * The ownership predicate rides on the `UPDATE` rather than a read before it, so
  * there is no window between the check and the write, and the fallback `SELECT`

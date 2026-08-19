@@ -8,7 +8,7 @@ import { reunitePairsStep } from "./reunitePairs";
  * Seed the trimmed pair and the reads that survived elimination.
  *
  * The trimmed files are gzipped, as skewer left them — this step gunzips in the
- * stream rather than writing decompressed copies of both, which Python does.
+ * stream rather than writing decompressed copies of both.
  */
 async function runStep({
 	paired = true,

@@ -115,13 +115,13 @@ export type Orf = {
 };
 
 /**
- * Slice with Python's semantics: a negative bound counts back from the end and
- * an inverted range yields the empty string.
+ * Slice where a negative bound counts back from the end of the string, a bound
+ * past either edge clamps to it, and an inverted range yields the empty string.
  *
- * `findOrfs` needs this because Python's ORF coordinates can go negative — see
- * the note there.
+ * `findOrfs` needs this because its ORF coordinates can go negative — see the
+ * note there.
  */
-function pythonSlice(text: string, start: number, end: number): string {
+function clampedSlice(text: string, start: number, end: number): string {
 	const length = text.length;
 	const from =
 		start < 0 ? Math.max(length + start, 0) : Math.min(start, length);
@@ -139,9 +139,9 @@ function pythonSlice(text: string, start: number, end: number): string {
  * and that order is part of the stored output, because the NuVs workflow
  * indexes ORFs positionally.
  *
- * This is a transliteration of Python's `find_orfs`, quirks included, because
- * `pos` is stored positionally in the NuVs analysis `results` blob and rendered
- * by the UI. Two of those quirks are visible in the output:
+ * Two coordinate quirks are deliberate and load-bearing: `pos` is stored
+ * positionally in every NuVs analysis `results` blob already written, and is
+ * rendered by the UI. Both are visible in the output:
  *
  * - The forward-strand `end` adds the stop codon's three bases unconditionally
  *   and then clamps to the sequence length, so an ORF that runs off the end
@@ -150,10 +150,11 @@ function pythonSlice(text: string, start: number, end: number): string {
  *   clamped, so an ORF with no stop codon reports a **negative** start — `-3`,
  *   `-2` or `-1`, depending on the trailing remainder.
  *
- * `nuc` inherits both, and is sliced with Python's negative-index semantics.
- * The NuVs workflow drops `nuc` before the ORFs reach the stored document, so
- * only `pos` is observable downstream, but it is reproduced here so the whole
- * record matches Python.
+ * `nuc` inherits both, and is cut with {@link clampedSlice} so a negative start
+ * counts back from the end of the sequence. The NuVs workflow drops `nuc`
+ * before the ORFs reach the stored document, so only `pos` is observable
+ * downstream, but it is reproduced here so the whole record matches the
+ * goldens.
  */
 export function findOrfs(sequence: string): Orf[] {
 	const orfs: Orf[] = [];
@@ -190,7 +191,7 @@ export function findOrfs(sequence: string): Orf[] {
 
 					orfs.push({
 						pro: translation.slice(aaStart, aaEnd),
-						nuc: pythonSlice(nuc, start, end),
+						nuc: clampedSlice(nuc, start, end),
 						frame,
 						strand,
 						pos: [start, end],

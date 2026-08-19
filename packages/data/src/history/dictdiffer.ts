@@ -40,9 +40,10 @@ function dotLookup(
 	let value = source;
 
 	for (const key of keys) {
-		// Python coerces a string segment to an int before indexing a list. A JS
-		// array read accepts the numeric string as-is, so no coercion is needed
-		// here — only where a write needs a real index (see `applyChange`).
+		// The algorithm coerces a string segment to an int before indexing a
+		// list. A JS array read accepts the numeric string as-is, so no coercion
+		// is needed here — only where a write needs a real index (see
+		// `applyChange`).
 		value = (value as Container)[key];
 	}
 
@@ -55,7 +56,7 @@ function applyAdd(
 	changes: unknown,
 ): void {
 	for (const [key, value] of changes as PairChanges) {
-		// Re-resolved per pair, matching Python: an insert can replace the
+		// The algorithm re-resolves per pair: an insert can replace the
 		// container a later pair in the same entry targets.
 		const target = dotLookup(destination, path);
 
@@ -131,8 +132,8 @@ export function swap(diff: DiffEntry[]): DiffEntry[] {
 /**
  * Apply a diff to a document, returning a patched copy.
  *
- * The destination is deep-cloned first, matching Python dictdiffer's
- * `in_place=False` default.
+ * The destination is deep-cloned first: the algorithm patches a copy rather
+ * than mutating in place.
  */
 export function patch<T>(diff: DiffEntry[], destination: T): T {
 	const patched = structuredClone(destination);
@@ -161,8 +162,8 @@ function isRecord(value: unknown): value is Container {
 }
 
 function isNumeric(value: unknown): value is number | boolean {
-	// Python's `num_types` is `(int, float)`, and `bool` subclasses `int`, so
-	// `True == 1` there.
+	// The algorithm's numeric types are integers and floats, and a boolean
+	// counts as an integer, so `true` equals `1`.
 	return typeof value === "number" || typeof value === "boolean";
 }
 
@@ -172,8 +173,8 @@ function areDifferent(first: unknown, second: unknown): boolean {
 	}
 
 	if (isNumeric(first) && isNumeric(second)) {
-		// `math.isclose(a, b, rel_tol=sys.float_info.epsilon, abs_tol=0)`, the
-		// default `tolerance` dictdiffer is called with.
+		// The algorithm's default tolerance: a relative comparison against the
+		// float epsilon, with no absolute tolerance.
 		const a = Number(first);
 		const b = Number(second);
 
@@ -182,8 +183,9 @@ function areDifferent(first: unknown, second: unknown): boolean {
 		);
 	}
 
-	// Python also counts two NaNs as equal and compares sets, numpy arrays and
-	// Decimals. None of those survives a JSONB round trip, so none is ported.
+	// The algorithm also counts two NaNs as equal and compares sets, numeric
+	// arrays and decimals. None of those survives a JSONB round trip, so none
+	// is implemented here.
 	return true;
 }
 
@@ -276,9 +278,9 @@ function diffRecursive(
 /**
  * Compare two documents, returning the diff that turns the first into the second.
  *
- * Python's generator is materialised as an array, since Virtool only ever
- * consumes it as `list(dictdiffer.diff(old, new))`. The `ignore`, `path_limit`
- * and `expand` options are not ported — every call site takes the defaults.
+ * The algorithm's lazy sequence is materialised as an array, since Virtool
+ * only ever consumes a diff whole. The `ignore`, `path_limit` and `expand`
+ * options are not implemented — every call site takes the defaults.
  */
 export function diff(first: unknown, second: unknown): DiffEntry[] {
 	const entries: DiffEntry[] = [];

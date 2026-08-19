@@ -11,9 +11,8 @@
  * than round-tripped through gzip. A paired sample is several gigabytes; the
  * cheap path is the one that matters.
  *
- * Step ids are `snake_case` and match the Python function names they were
- * ported from. The jobs API stores them, so renaming one changes the shape of a
- * job's step list at cutover.
+ * Step ids are `snake_case` and are stored in the `jobs.steps` column, which
+ * the UI renders, so renaming one changes what users see.
  */
 
 import { defineWorkflow } from "@virtool/workflow";

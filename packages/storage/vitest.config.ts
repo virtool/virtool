@@ -15,8 +15,8 @@ export default defineConfig({
 			},
 			{
 				test: {
-					// The backends against the same services Python tests with: Garage
-					// for S3 and Azurite for Azure Blob.
+					// The backends against real services: Garage for S3 and Azurite
+					// for Azure Blob.
 					name: "integration",
 					environment: "node",
 					globalSetup: ["./src/test/globalSetup.ts"],

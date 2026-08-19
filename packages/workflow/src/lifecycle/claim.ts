@@ -9,7 +9,7 @@ import { createDispatcher, joinUrl, REQUEST_BUDGET_MS } from "../client/client";
 import { assertOkResponse, JobsApiError } from "../client/errors";
 import { sleep } from "../client/retry";
 
-/** Seconds between claim attempts, matching `acquire.py`'s `poll_interval`. */
+/** Delay between claim attempts while no job is available. */
 export const CLAIM_POLL_INTERVAL_MS = 2_000;
 
 /** Options for {@link claimJob}. */
@@ -55,7 +55,7 @@ export async function claimJob({
 			try {
 				const response = await fetch(
 					// The workflow is a query parameter rather than a body field,
-					// matching Python's `ClaimJobView`.
+					// which is where `POST /jobs/claim` reads it from.
 					joinUrl(baseUrl, path, { workflow }),
 					{
 						method,

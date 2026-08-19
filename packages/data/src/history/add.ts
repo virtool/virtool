@@ -1,5 +1,4 @@
-// Recording a change to an OTU. A port of `virtool.history.db.add` and the
-// description composers in `virtool.history.utils`.
+// Recording a change to an OTU, and the composers that describe one.
 //
 // Separate from `./data.ts` so the arrow between the two domains runs one way:
 // `otus/data.ts` records changes through this module, and `history/data.ts`
@@ -40,8 +39,8 @@ export type HistoryValues = {
 /**
  * The description of a change, as its past-tense method name applied to the OTU.
  *
- * Python appends the `d` and, unless the method already ends in one, the `e`
- * before it — `clone` becomes `Cloned` and `import` becomes `Imported`. Only the
+ * A `d` is appended and, unless the method already ends in one, an `e` before
+ * it — `clone` becomes `Cloned` and `import` becomes `Imported`. Only the
  * methods the bulk paths record are described this way; every other method has
  * its own composer, because the generic phrasing reads badly for them.
  */
@@ -83,11 +82,10 @@ export function composeRemoveDescription(document: OtuDocument): string {
  * schema.
  *
  * Only what changed is described: pass `null` for a field the edit left alone,
- * and `schemaChanged` false when the schema is untouched. Python instead
- * composes from the post-change document, so every one of its edit entries
- * names all three fields whether or not they moved — entries written before
- * this read that way and are left as they are, because a stored description is
- * a record of what was said at the time.
+ * and `schemaChanged` false when the schema is untouched. Edit entries
+ * recorded by earlier releases were composed from the post-change document and
+ * so name all three fields whether or not they moved; they are left as they
+ * are, because a stored description is a record of what was said at the time.
  */
 export function composeEditDescription(
 	name: string | null,
@@ -172,10 +170,10 @@ export function composeDiff(values: HistoryValues): unknown {
  * lands with the OTU write it describes or not at all.
  *
  * The reference is passed in rather than read from the OTU document's embedded
- * `reference.id`. Python resolves that field through `resolve_legacy_id` because
- * a historical document may carry a stale Mongo string; the promoted
- * `legacy_otus.reference_id` column is the integer key with no such ambiguity,
- * and every caller already holds it.
+ * `reference.id`. That field needs resolving, because a historical document
+ * may carry a stale legacy string id; the promoted `legacy_otus.reference_id`
+ * column is the integer key with no such ambiguity, and every caller already
+ * holds it.
  */
 export async function addHistory(
 	tx: DbOrTx,

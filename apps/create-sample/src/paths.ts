@@ -1,21 +1,20 @@
 /**
  * Every path this workflow reads or writes under its work path.
  *
- * Uploads land in `{work_path}/uploads/` under the names the user gave them,
- * matching Python. The normalized reads do **not**: they go in
- * `{work_path}/reads/`, where Python writes them beside their sources with
- * `path.with_name(f"reads_{i + 1}.fq.gz")`.
+ * Uploads land in `{work_path}/uploads/` under the names the user gave them.
+ * The normalized reads do **not** sit beside them: they go in
+ * `{work_path}/reads/`.
  *
- * That divergence closes a collision. Upload names are user-supplied, so a
- * sample whose second upload happens to be called `reads_1.fq.gz` has Python
- * rename the *first* upload onto it — destroying the second's bytes — and then
- * rename what is now the first upload's content to `reads_2.fq.gz`. The sample
- * finalizes with one read stored twice, and nothing reports a problem. Separate
- * directories make the target names unreachable from the source names.
+ * That separation closes a collision. Upload names are user-supplied, so
+ * writing `reads_{i + 1}.fq.gz` next to its source means a sample whose second
+ * upload happens to be called `reads_1.fq.gz` has the *first* upload renamed
+ * onto it — destroying the second's bytes — and then has what is now the first
+ * upload's content renamed to `reads_2.fq.gz`. The sample finalizes with one
+ * read stored twice, and nothing reports a problem. Separate directories make
+ * the target names unreachable from the source names.
  *
  * The rename stays a rename: both directories sit under the one work path and
- * so on one filesystem, which is all `rename(2)` requires. Python's constraint
- * was `with_name`'s, not the syscall's.
+ * so on one filesystem, which is all `rename(2)` requires.
  *
  * The quality blobs get a directory of their own rather than the bare work
  * path, for the same reason: one file per read, named by the read's position,

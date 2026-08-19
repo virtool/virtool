@@ -1,11 +1,11 @@
 //! The crate against real FastQC 0.11.9.
 //!
-//! Each golden in `fixtures/` is a blob the *old* path produced: FastQC wrote
-//! the report and `parseFastqcData` turned it into what a sample stored.
-//! **Never edit a golden to match this crate's output, and never regenerate
-//! one from this crate** — that converts a caught divergence into a permanent
-//! one. `README.md` records where they came from and what producing another
-//! would take.
+//! Each golden in `fixtures/` is a blob derived from a report real FastQC
+//! wrote, in the shape a sample stores. They are frozen references: **never
+//! edit a golden to make a failing comparison pass, and never regenerate one
+//! from this crate** — that converts a caught divergence into a permanent one.
+//! `README.md` records where they came from and what producing another would
+//! take.
 //!
 //! Three of the four cases assert exact equality, down to the bit. The fourth
 //! is the one place the two are meant to disagree — see `binned_case` — and it
@@ -287,9 +287,8 @@ fn write_fastq(contents: &str) -> NamedTempFile {
 
 /// A record cut off mid-way is an error, not a short read.
 ///
-/// Python's runner treated a FastQC killed part way through as a success and
-/// parsed whatever landed on disk; this path has no such gap — a file that
-/// does not parse fails the job.
+/// A file that does not parse fails the job rather than yielding a blob built
+/// from whatever landed on disk.
 #[test]
 fn a_truncated_record_is_an_error() {
     let file = write_fastq("@read_0\nACGTACGT\n+\nIIIIIIII\n@read_1\nACGTACGT\n");

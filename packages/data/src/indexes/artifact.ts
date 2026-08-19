@@ -1,13 +1,13 @@
 // The `reference-v2.json.gz` artifact a finished build publishes, encoded as a
 // stream.
 //
-// A real reference decompresses to hundreds of megabytes of JSON. Python builds
-// the whole document in memory and gzips it in one call, which costs two
+// A real reference decompresses to hundreds of megabytes of JSON. Building the
+// whole document in memory and gzipping it in one call would cost two
 // allocations of that size; nothing here holds more than one chunk of OTUs at a
 // time, so peak memory is set by the chunk size rather than by the reference.
 //
-// The field order is Python's — the reference envelope, then `otus` — because
-// the artifact is read by workflows that both services still run.
+// The field order — the reference envelope, then `otus` — is part of the
+// artifact format, because workflows read the artifact.
 
 import { Readable } from "node:stream";
 import { createGzip } from "node:zlib";
@@ -16,7 +16,7 @@ import { createGzip } from "node:zlib";
 export type ArtifactReference = {
 	/** The integer Postgres primary key, despite the Mongo-shaped field name. */
 	_id: number;
-	/** Pre-rendered to match Python's serializer exactly. */
+	/** Pre-rendered to match the artifact's serialized form exactly. */
 	created_at: string;
 	name: string;
 	organism: string;
@@ -28,9 +28,9 @@ export type OtuChunk = readonly unknown[];
 /**
  * Encode the artifact as UTF-8 JSON, one chunk of OTUs at a time.
  *
- * `data_type` is hard-coded to `"genome"` rather than read from the reference,
- * matching Python. Workflows consume the field, so it is a wire value here and
- * not a fact about the row.
+ * `data_type` is hard-coded to `"genome"` rather than read from the reference.
+ * Workflows consume the field, so it is a wire value here and not a fact about
+ * the row.
  */
 async function* encode(
 	reference: ArtifactReference,

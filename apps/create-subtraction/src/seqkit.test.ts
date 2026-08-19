@@ -13,9 +13,9 @@ function accumulate(...lines: string[]) {
 }
 
 describe("buildSeqkitCommand", () => {
-	// Python's command, argument for argument. The five `--base-count` flags
+	// The invocation, argument for argument. The five `--base-count` flags
 	// decide the column order the accumulator reads, so this pins both.
-	it("matches Python's invocation", () => {
+	it("builds the fx2tab invocation", () => {
 		expect(buildSeqkitCommand("/work/subtraction.fa.gz", 4)).toEqual([
 			"seqkit",
 			"fx2tab",
@@ -39,10 +39,10 @@ describe("buildSeqkitCommand", () => {
 });
 
 describe("createBaseCountAccumulator", () => {
-	// Python's own fixture, `>seq_1\nATGCATGCNN\n>seq_2\natgcatgcat\n`, as
-	// seqkit reports it — `--base-count` ignores case, so the mixed-case second
-	// record contributes the same as an upper-case one would.
-	it("matches Python's mixed-case fixture", () => {
+	// The fixture `>seq_1\nATGCATGCNN\n>seq_2\natgcatgcat\n`, as seqkit reports
+	// it — `--base-count` ignores case, so the mixed-case second record
+	// contributes the same as an upper-case one would.
+	it("counts a mixed-case fixture", () => {
 		expect(accumulate("seq_1\t2\t2\t2\t2\t2", "seq_2\t3\t3\t2\t2\t0")).toEqual({
 			count: 2,
 			gc: { a: 0.25, t: 0.25, g: 0.2, c: 0.2, n: 0.1 },
@@ -69,10 +69,10 @@ describe("createBaseCountAccumulator", () => {
 		});
 	});
 
-	// `Math.round(0.0625 * 1000) / 1000` is 0.063; Python's `round(0.0625, 3)`
-	// is 0.062, because it breaks a tie toward the even digit. A genome landing
-	// on one of these is what the two implementations would disagree about.
-	it("rounds a half-way ratio to even, as Python does", () => {
+	// `Math.round(0.0625 * 1000) / 1000` is 0.063; rounding half to even gives
+	// 0.062, because it breaks a tie toward the even digit. A genome landing on
+	// one of these is where the two rules disagree.
+	it("rounds a half-way ratio to even", () => {
 		// 1/16 and 3/16 are both exact, and tie in opposite directions.
 		const { gc } = accumulate("seq_1\t1\t3\t6\t6\t0");
 
@@ -84,8 +84,7 @@ describe("createBaseCountAccumulator", () => {
 		expect(accumulate("seq_1\t1\t1\t1\t1\t0", "").count).toBe(1);
 	});
 
-	// Python raises for each separately, in this order, rather than dividing by
-	// zero.
+	// Each is raised separately, in this order, rather than dividing by zero.
 	it("refuses a FASTA with no sequences", () => {
 		expect(() => accumulate()).toThrow(
 			"No sequences found in subtraction FASTA",

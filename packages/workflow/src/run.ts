@@ -3,13 +3,10 @@ import type { Logger } from "@virtool/logger";
 import type { WorkflowContext } from "./context";
 import type { ResolvedWorkflowStep, Workflow } from "./step";
 
-/** Terminal state of a run. Mirrors Python's `JobState`. */
+/** Terminal state of a run. */
 export type RunState = "succeeded" | "failed" | "cancelled";
 
-/**
- * Cancellation and termination signalling for one run. Replaces Python's
- * `Events`.
- */
+/** Cancellation and termination signalling for one run. */
 export type RunSignals = {
 	signal: AbortSignal;
 	isCancelled: () => boolean;
@@ -107,11 +104,10 @@ function whenAborted(signal: AbortSignal): {
 /**
  * Run one step, giving up on it if the signal aborts first.
  *
- * This is the one real divergence from Python. There, `CancelledError` unwinds
- * the step at its next `await`; aborting an `AbortSignal` in Node interrupts
- * nothing, so the step is raced against the signal and abandoned rather than
- * interrupted. That is safe because the process exits immediately afterwards
- * and the subprocess runner kills its process tree on the same signal.
+ * Aborting an `AbortSignal` interrupts nothing already running, so the step is
+ * raced against the signal and abandoned rather than unwound. That is safe
+ * because the process exits immediately afterwards and the subprocess runner
+ * kills its process tree on the same signal.
  *
  * @returns whether the step finished.
  */

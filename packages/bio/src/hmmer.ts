@@ -37,10 +37,10 @@ export function parseHmmerTblout(lines: Iterable<string>): HmmerHit[] {
 
 		const fields = line.trim().split(/\s+/);
 
-		// Python indexes up to field 9 and raises IndexError on a short row.
-		// Failing here keeps that loud: parsing on would put NaN into a hit and
-		// carry it into the stored analysis document, where it is far harder to
-		// trace back to a truncated table.
+		// A row this parse reads runs to field 9, so a short row is malformed and
+		// fails loudly here: parsing on would put NaN into a hit and carry it into
+		// the stored analysis document, where it is far harder to trace back to a
+		// truncated table.
 		if (fields.length < 10) {
 			throw new Error(
 				`Malformed hmmscan --tblout row: expected at least 10 fields, got ${fields.length}`,
@@ -80,14 +80,13 @@ export function parseHmmerTblout(lines: Iterable<string>): HmmerHit[] {
 		const orfIndex = Number.parseInt(rawOrfIndex, 10);
 
 		hits.push({
-			// `best_bias` and `best_score` are read from the columns hmmscan
-			// documents as the best-domain score and bias respectively — they are
-			// swapped relative to the file format. This reproduces a bug in the
-			// Python workflow on purpose: these values are stored under these names
-			// in every analysis `results` blob and are already pinned by
-			// `NuvsOrfHit` in `@virtool/contracts`. Correcting it here alone would
-			// silently disagree with every record written so far. Fixing it means a
-			// coordinated change to Python, the stored blobs, and the UI.
+			// SWAPPED ON PURPOSE. `best_bias` is read from column 8, which hmmscan
+			// documents as the best-domain *score*, and `best_score` from column 9,
+			// the best-domain *bias*. These values are stored under these names in
+			// every analysis `results` blob already written and are pinned by
+			// `NuvsOrfHit` in `@virtool/contracts`. Unswapping them here alone would
+			// silently disagree with every record written so far; it means a
+			// coordinated change to the stored blobs and the UI.
 			best_bias: Number.parseFloat(field(8)),
 			best_e: Number.parseFloat(field(7)),
 			best_score: Number.parseFloat(field(9)),

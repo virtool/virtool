@@ -123,8 +123,8 @@ describe("formatAnalysisToCsv", () => {
 
 		const csv = await formatAnalysisToCsv(db, "pathoscope", results());
 
-		// Python composes the name with `str.capitalize`, which lower-cases the
-		// remainder, so a shouted source type must not survive as written.
+		// The name is composed capitalize-style — first character upper-cased, the
+		// rest lower-cased — so a shouted source type must not survive as written.
 		expect(csv).toContain('"Isolate A"');
 	});
 

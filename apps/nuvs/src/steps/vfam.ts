@@ -107,11 +107,12 @@ export const vfamStep: NuvsStep = {
  * happen from one run's own files, and is worth a named failure rather than an
  * `undefined` that would silently drop the match.
  *
- * **Python's `hits.remove(sequence)` branch is not ported.** It drops a contig
- * whose ORFs all ended up with empty hit lists, but it only ever runs for a
- * contig that just received a non-empty list, so the condition is never true. It
- * reads like a mutate-while-iterating bug and is in fact dead; porting it as
- * though it fires would renumber the contigs and invalidate every stored index.
+ * **There is deliberately no `hits.remove(sequence)` branch.** Dropping a
+ * contig whose ORFs all ended up with empty hit lists is only ever reachable
+ * for a contig that has just received a non-empty list, so the condition could
+ * never be true. Such a branch reads like a mutate-while-iterating bug and
+ * would be dead; writing one as though it fires would renumber the contigs and
+ * invalidate every stored index.
  */
 async function annotate(
 	tablePath: string,

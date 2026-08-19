@@ -268,8 +268,8 @@ describe("handleSampleReads", () => {
 		expect(response.status).toBe(200);
 	});
 
-	// The Python endpoint this replaces checked only the session, which let any
-	// signed-in caller download the reads of a sample they could not see.
+	// Checking only the session would let any signed-in caller download the reads
+	// of a sample they could not see.
 	it("rejects a user without the read right with a 403", async () => {
 		const sampleId = await seedSample();
 		await write(await seedRead(sampleId), "hello");

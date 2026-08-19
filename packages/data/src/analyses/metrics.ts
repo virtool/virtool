@@ -37,8 +37,8 @@ export function toDepths(align: unknown, length: number): number[] {
  *
  * Depth is displayed as a read count, so the half-value an even-length list
  * produces is rounded away here. The CSV and XLSX exports report the unrounded
- * per-sequence figure, matching Python. An empty list has no depth, which reads
- * as zero rather than `NaN`.
+ * per-sequence figure instead. An empty list has no depth, which reads as zero
+ * rather than `NaN`.
  */
 export function medianDepth(depths: number[]): number {
 	return depths.length === 0 ? 0 : Math.round(median(depths));

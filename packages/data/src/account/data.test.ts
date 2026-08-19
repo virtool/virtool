@@ -86,7 +86,7 @@ describe("findApiKeys", () => {
 
 	it("expands sparse legacy permissions to the full checklist", async () => {
 		const userId = await seedUser(db, { administratorRole: "full" });
-		// The legacy Python path stored only the provided permission keys.
+		// Keys written by an older path stored only the granted permission names.
 		await db.insert(apiKeys).values({
 			hashed: "legacy",
 			name: "Legacy",

@@ -7,13 +7,12 @@
  * contigs for viral protein motifs — so what it reports is, by construction,
  * what nothing else could account for.
  *
- * Step ids are `snake_case` and match the Python function names they were ported
- * from. The jobs API stores them, so renaming one changes the shape of a job's
- * step list at cutover.
+ * Step ids are `snake_case`. The jobs API stores them in the `jobs.steps`
+ * column and the UI renders them, so renaming one changes what users see, on
+ * jobs already written as well as new ones.
  *
- * There is deliberately **no delete-on-failure**. Python registered an
- * `on_failure` hook that issued `DELETE /analyses/{id}`; a failed run now leaves
- * its half-built analysis for the user to delete, and the jobs API has no delete
+ * There is deliberately **no delete-on-failure**. A failed run leaves its
+ * half-built analysis for the user to delete, and the jobs API has no delete
  * route to call.
  */
 

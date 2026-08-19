@@ -79,7 +79,7 @@ describe("createIndexArtifact", () => {
 		index.close();
 	});
 
-	it("writes a FASTA byte-identical to Python's from a written artifact", async () => {
+	it("writes a FASTA byte-identical to the golden from a written artifact", async () => {
 		const path = join(workPath, INDEX_SQLITE_FILE_NAME);
 		const fastaPath = join(workPath, "reference.fa");
 
@@ -96,7 +96,7 @@ describe("createIndexArtifact", () => {
 		);
 	});
 
-	it("writes a schema matching the artifact Python built", async () => {
+	it("writes a schema matching the fixture artifact", async () => {
 		const path = join(workPath, INDEX_SQLITE_FILE_NAME);
 
 		await createIndexArtifact(path, REFERENCE, OTUS);

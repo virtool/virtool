@@ -86,8 +86,8 @@ export const subtractionFiles = pgTable(
 		name: text("name"),
 		subtraction_id: bigint("subtraction_id", { mode: "number" }).notNull(),
 		type: text("type").$type<SubtractionFileType>(),
-		// Files routinely exceed 2 GiB, past the range of a 32-bit integer, so this
-		// mirrors Python's BigInteger. `mode: "number"` is safe up to 2^53.
+		// Files routinely exceed 2 GiB, past the range of a 32-bit integer, hence
+		// `bigint`. `mode: "number"` is safe up to 2^53.
 		size: bigint("size", { mode: "number" }),
 		// The file's complete object-storage key. Nullable because it was backfilled
 		// from `name`, which is itself nullable: a row without one names no

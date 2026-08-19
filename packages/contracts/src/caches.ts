@@ -12,21 +12,21 @@
 //
 // **No endpoint carries cache bytes.** Workflows have direct object-storage
 // access: the writer puts the blob at `caches/v1/<uuid>` itself and then
-// registers the row, and the reader takes `storageKey` to the bucket. This
-// diverges from Python, which streamed payloads through its jobs API.
+// registers the row, and the reader takes `storageKey` to the bucket. No
+// payload is streamed through the jobs API.
 
 import { z } from "zod";
 import { JsonObject } from "./json";
 
 /**
- * The UUID a writer minted for its own blob, as `uuid4().hex` — 32 lowercase
- * hex characters, matching what Python writes.
+ * The UUID a writer minted for its own blob — 32 lowercase hex characters,
+ * matching the keys already in the bucket.
  *
  * The wire carries this rather than a storage key, and the server composes the
  * key with `cacheKey(uuid)`. A caller-supplied key would let a job-authenticated
  * caller register a cache row pointing at a sample, index or subtraction
- * object — and Python's LRU eviction deletes by `storage_key`, so that is a
- * route to having another domain's files destroyed. Validating a uuid and
+ * object — and LRU eviction deletes by `storage_key`, so that is a route to
+ * having another domain's files destroyed. Validating a uuid and
  * composing the key server-side makes that unrepresentable.
  */
 export const CacheUuid = z.string().regex(/^[0-9a-f]{32}$/);
@@ -45,9 +45,9 @@ export type RegisterCacheRequest = z.infer<typeof RegisterCacheRequest>;
 /**
  * A cache row as the endpoints return it.
  *
- * camelCase, like everything else on this wire; the Drizzle mirror keeps
- * Python's snake_case column names because those are row content. `size` is the
- * size the server read from storage, never one the caller sent.
+ * camelCase, like everything else on this wire; the Drizzle mirror keeps the
+ * snake_case column names because those are row content. `size` is the size
+ * the server read from storage, never one the caller sent.
  */
 export const Cache = z.object({
 	id: z.number().int(),

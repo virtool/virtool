@@ -9,18 +9,18 @@ One of two Rust crates here; the other is
 [`quality-core`](../quality-core/README.md). Neither is a pnpm workspace
 member, so `pnpm test` does not reach them.
 
-## Results are byte-identical to the Python build, and pinned that way
+## Results are byte-identical to the golden corpus, and pinned that way
 
-`tests/golden/vectors.json` holds 17 vectors captured from the PyO3 build
-*before* the crate moved, covering all three entry points.
+`tests/golden/vectors.json` holds 17 vectors covering all three entry points.
 `tests/golden_vectors.rs` runs the binary over each and asserts the output
-matches exactly.
+matches exactly. The corpus is a frozen reference: **never edit a vector to
+make a failing comparison pass.**
 
 Floats are compared with `f64::to_bits()` — not a tolerance, and not as text.
 "Equivalent within tolerance" is not the bar for a diagnostic workflow, and
-comparing rendered text would fail on a harmless difference between Python's
-and Rust's float formatters while saying nothing about the values. The harness
-catches a one-ULP drift.
+comparing rendered text would fail on a harmless difference between float
+formatters while saying nothing about the values. The harness catches a one-ULP
+drift.
 
 Coverage arrays are stored sparsely (a length plus the non-zero positions).
 They are sized to the reference, so a vector over a 50 kb reference is 50,000
@@ -29,15 +29,17 @@ of it zeros. The encoding is lossless — the harness rebuilds the dense array.
 
 `tests/golden/generate.py` is the provenance record for the corpus. It is not
 run by CI and cannot be re-run from this repo alone: it imports the Python
-extension module from `workflow-pathoscope`. If a vector ever needs
-regenerating, regenerate it from that build, never from this one — a corpus
-generated from the code under test asserts nothing.
+extension module from `workflow-pathoscope`. There is no supported way to
+produce a new vector, and no need for one: a failing vector is a finding about
+the code, never a golden to re-baseline. **Never edit a vector to make a
+failing comparison pass**, and never regenerate the corpus from this crate — a
+corpus generated from the code under test asserts nothing.
 
 ## Five modules are frozen
 
 `em.rs`, `matrix.rs`, `sam.rs`, `subtraction.rs` and `coverage.rs` — 2,511
-lines — came across with no change but their test fixture paths. A diff showing
-a change inside `em()` is a failed port, not an improvement.
+lines — are pinned by the golden corpus and are not to be edited. A diff
+showing a change inside `em()` is a divergence, not an improvement.
 
 `coverage.rs` carries a TODO at the top flagging an unresolved question about
 whether the score calculation should include all alignments above the threshold
@@ -45,9 +47,15 @@ or only the best assignment per read. **Leave it there.** The golden vectors now
 pin the current behaviour, including that behaviour, so the question can be
 answered against a baseline later instead of guessed at. VIR-2913 tracks it.
 
-`candidates.rs` is the one module that changed: the `pyo3` imports, the
-`py: Python` parameter, the `PyResult` return and the `py.allow_threads`
-wrapper are gone, and it returns `PathoscopeError` instead.
+`candidates.rs` is the sixth module and the one exception, and the reason is
+where each sits. The five above are the numeric core: their intermediate
+arithmetic is unobservable from outside, so leaving them alone is the only way
+to keep it right. `candidates.rs` is process plumbing — it spawns bowtie2,
+streams its stdout, applies the score cutoff and maps failures onto
+`PathoscopeError` — and may be restructured freely, because the golden
+`candidates` vectors pin the set of references it returns, not how it arrives
+at them. The bowtie2 flags it passes are part of that output, so they are as
+fixed as anything above.
 
 ## The CLI contract
 
@@ -59,12 +67,11 @@ One binary, three subcommands, no shared state between invocations.
 | `candidates` | `--index`, `--reads` (repeatable), `--proc`, `--p-score-cutoff`, `--output` |
 | `eliminate-subtraction` | `--isolate-alignments`, `--subtraction-alignments`, `--output-alignments`, `--input-fastq`, `--output-fastq`, `--proc`, `--output` |
 
-The alignment flags are deliberately **format-neutral**. They were renamed from
-`--isolate-sam` / `--subtraction-sam` / `--output-sam`, inherited from the PyO3
-parameter names, because the workflow passes BAM at every one of those
-positions. `rust-htslib` reads and writes both, so the old names were merely
-wrong at every call site forever, and invited someone to "fix" them by
-converting a file that never needed converting.
+The alignment flags are deliberately **format-neutral**, and not
+`--isolate-sam` / `--subtraction-sam` / `--output-sam`: the workflow passes BAM
+at every one of those positions. `rust-htslib` reads and writes both, so a
+`--*-sam` name would be wrong at every call site forever, and would invite
+someone to "fix" it by converting a file that never needed converting.
 
 `--output` always means the JSON results file, in all three subcommands.
 `--output-alignments` and `--output-fastq` are data files at paths the caller
@@ -78,9 +85,7 @@ Other contracts:
   empty for every invocation.
 - **Diagnostics go to stderr as JSON lines** — `{"level","target","msg"}`. The
   parent's logger (`@virtool/logger`, a pino wrapper) reads JSON. Level comes
-  from `--log-level` or `RUST_LOG`, which wins when set. The old `logging.rs`
-  forwarded records to Python's logging module over the GIL; there is no
-  interpreter on the other side any more, so it was deleted rather than ported.
+  from `--log-level` or `RUST_LOG`, which wins when set.
 - **Exit 0 on success, non-zero on failure** with a human-readable message on
   stderr. The Node side treats any non-zero exit as a workflow failure and does
   not parse stderr for control flow.
@@ -108,11 +113,11 @@ This is a recorded decision, not an oversight.
 `cargo fmt --check` runs in CI. The code already satisfied it.
 
 `cargo clippy -- -D warnings` is **not** a gate. The five frozen modules are
-2,511 lines of inherited code that would need edits inside them to satisfy it —
-`sam.rs` alone carries two unused imports that the build warns about today — and
-those edits are exactly what the byte-identical port forbids. Revisit once the
-code has been through a round of ownership here. Until then, clippy is
-advisory: run it, don't gate on it.
+2,511 lines that would need edits inside them to satisfy it — `sam.rs` alone
+carries two unused imports that the build warns about today — and those edits
+are exactly what byte-identity with the golden corpus forbids. Revisit once
+those modules can be re-pinned. Until then, clippy is advisory: run it, don't
+gate on it.
 
 ## Tooling exclusions
 
@@ -178,11 +183,10 @@ Each backs a specific `ldd ... => not found` against the slim base: perl and
 libgomp1 for bowtie2, libcurl4 and libncursesw6 for samtools. `pathoscope-core`
 itself needs none of them — `hts-sys` links htslib statically.
 
-The `build-pathoscope` CI job sets `cache-from: type=gha` and
-`cache-to: type=gha,mode=max` under a `pathoscope` scope. There is no publish
-counterpart yet; when one is restored it needs the same pair, because dropping
-it means the release path rebuilds htslib from scratch every time, which is the
-trap the old repo fell into.
+The `build-pathoscope` CI job and its release entry use the same `pathoscope`
+GitHub Actions cache scope. See
+[Continuous integration](../../docs/ci.md#images) for the shared image build
+and release pipeline.
 
 **A job that exports a cache must run `docker/setup-buildx-action` first.** The
 runner's default builder uses the `docker` driver, which cannot export a build

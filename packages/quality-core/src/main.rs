@@ -2,7 +2,7 @@
 //!
 //! One invocation reads **one** FASTQ file and writes one `Quality` JSON
 //! object. Pairing two mates into the composite a sample stores stays in
-//! TypeScript, where `compositeQuality` is tested against Python.
+//! TypeScript, in `compositeQuality`.
 //!
 //! The result goes to the file named by `--output`, never to stdout: the
 //! workflow runtime opens a subprocess's stdout on `/dev/null` unless a

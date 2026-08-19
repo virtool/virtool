@@ -259,9 +259,9 @@ describe("handleFinalizeSample", () => {
 		]);
 	});
 
-	// Matching Python. A row marked removed but still naming a live object is
-	// invisible to the UI and to any orphan sweep, so the bytes would leak
-	// permanently — one full duplicate of every sample's input reads.
+	// A row marked removed but still naming a live object is invisible to the UI
+	// and to any orphan sweep, so the bytes would leak permanently — one full
+	// duplicate of every sample's input reads.
 	it("removes the input uploads and deletes their objects", async () => {
 		const sampleId = await seedSample();
 		const uploadId = await seedInput(sampleId, 0);

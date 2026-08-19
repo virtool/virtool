@@ -17,7 +17,8 @@ import {
  *
  * `type` is a plain `text` column with no constraint on either side, so
  * "bounded by the union" is only true if this side makes it so. A typo, or a
- * task a future Python release adds, must not mint a series that never retires.
+ * type written by something that does not share the union, must not mint a
+ * series that never retires.
  */
 const OTHER_TASK = "other";
 
@@ -33,7 +34,7 @@ const KNOWN_TASKS = new Set<string>(TaskName.options);
 /** Every task label this process will ever emit. */
 const TASK_LABELS = [...TaskName.options, OTHER_TASK];
 
-/** The two halves Python's `get_counts` splits the active queue into. */
+/** The two halves the active queue is split into. */
 const QUEUE_STATES = ["queued", "running"] as const;
 
 /**
@@ -133,10 +134,10 @@ export function createMetrics(version: string, poolMax: number): Metrics {
 	// not exist until one is incremented and an absent series cannot be told from
 	// a zero one. Two readings depend on the difference: `rate()` needs a prior
 	// sample to subtract, so an unseeded counter reports nothing until its
-	// *second* increment; and `skipped_locked` staying at zero — the spawner
-	// never losing the advisory lock — has to be visible as zero rather than as
-	// a missing series, since that is the evidence the lock is shared with
-	// Python's spawner rather than being taken uncontested.
+	// *second* increment; and `skipped_locked` staying at zero — no replica ever
+	// losing the advisory lock to another — has to be visible as zero rather
+	// than as a missing series, since that reading is the evidence the spawn
+	// gate is being exercised at all rather than taken uncontested.
 	//
 	// The cross product is bounded and known here in a way the run counter's is
 	// not: the spawn schedule is fixed at build time, while which types a runner

@@ -1,15 +1,16 @@
-//! Half-to-even rounding, matching Python's built-in `round`.
+//! Round half to even, on the exact binary value of the double.
 //!
 //! Every figure in the output blob is rounded here, and the result is stored
-//! and compared across three implementations — Python's `create_sample`, the
-//! TypeScript `roundHalfEven` in `packages/bio/src/fastqc.ts`, and this one. A
-//! rounding rule that disagrees with either of the others is a divergence in
-//! the stored data, not a cosmetic difference.
+//! and compared against the TypeScript `roundHalfEven` in
+//! `packages/bio/src/fastqc.ts`. A rounding rule that disagrees with that one,
+//! or with the blobs already stored, is a divergence in the data, not a
+//! cosmetic difference.
 //!
 //! Naive scaling (`(value * 1000.0).round() / 1000.0`) is wrong twice over:
 //! `f64::round` rounds half *away from zero*, and the multiply introduces its
-//! own error, which is what makes it disagree with Python on values such as
-//! `2.675` whose stored double sits fractionally below the decimal midpoint.
+//! own error, which is what makes it get values such as `2.675` wrong — the
+//! stored double sits fractionally *below* the decimal midpoint and so must
+//! round down.
 //!
 //! So this decomposes the double into `mantissa * 2^exponent` and compares
 //! against the midpoint in exact integer arithmetic, exactly as the TypeScript
@@ -88,8 +89,8 @@ pub fn round_half_even(value: f64, digits: u32) -> f64 {
 mod tests {
     use super::round_half_even;
 
-    /// The midpoint cases are the whole point: each of these has Python's
-    /// `round` choosing the even neighbour where `f64::round` would not.
+    /// The midpoint cases are the whole point: each of these must land on the
+    /// even neighbour, where `f64::round` would go away from zero.
     #[test]
     fn rounds_exact_midpoints_to_even() {
         assert_eq!(round_half_even(0.5, 0), 0.0);
@@ -103,8 +104,9 @@ mod tests {
 
     /// `2.675` is the canonical case for why the decision is made against the
     /// binary value rather than the decimal literal: the stored double is
-    /// 2.67499999999999982236431605997495353221893310546875, so Python rounds
-    /// it down and a scale-and-round implementation rounds it up.
+    /// 2.67499999999999982236431605997495353221893310546875, which is below
+    /// the midpoint and must round down; a scale-and-round implementation
+    /// rounds it up.
     #[test]
     fn rounds_against_the_binary_value_not_the_literal() {
         assert_eq!(round_half_even(2.675, 2), 2.67);
@@ -134,7 +136,7 @@ mod tests {
         assert_eq!(round_half_even(-3.5, 0), -4.0);
 
         // Not a midpoint despite how it reads: the stored double is
-        // -37.40650000000000119..., which is above it. Python agrees.
+        // -37.40650000000000119..., which is beyond it.
         assert_eq!(round_half_even(-37.4065, 3), -37.407);
         assert_eq!(round_half_even(37.4065, 3), 37.407);
     }

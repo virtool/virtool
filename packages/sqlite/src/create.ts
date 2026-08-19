@@ -4,9 +4,7 @@
  * Two callers need it. A finished index build publishes a snapshot of the whole
  * reference, and pathoscope collapses the reference it was given — `cd-hit-est`
  * drops near-duplicate isolates — and writes the survivors as a second artifact
- * it then reads back through {@link openWorkflowIndex}. Both have to be files
- * the other implementation's reader accepts, because the two run side by side
- * during the port.
+ * it then reads back through {@link openWorkflowIndex}.
  */
 
 import { unlink } from "node:fs/promises";
@@ -24,9 +22,9 @@ export type CreateIndexReference = IndexReference;
  * `otus` is consumed lazily and never collected, so a caller can pipe a filtered
  * or collapsed stream straight through without holding the index in memory.
  *
- * `reference` is optional because Python's own writer accepts an OTU-only
- * source: an index built from a legacy `otus.json` has no reference document to
- * record, and every `otus.reference_id` is then null.
+ * `reference` is optional because the source may be OTU-only: an index built
+ * from a legacy `otus.json` has no reference document to record, and every
+ * `otus.reference_id` is then null.
  */
 export async function createIndexArtifact(
 	path: string,

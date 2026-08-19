@@ -4,7 +4,8 @@
 metrics at `GET /metrics`, from their own process-wide registry. See
 [apps/web/README.md](../apps/web/README.md#metrics),
 [apps/jobs-api/README.md](../apps/jobs-api/README.md#metrics) and
-[tasks.md](tasks.md) for what each one emits and why — this file holds
+[apps/tasks/README.md](../apps/tasks/README.md#probes-and-metrics) for what each
+one emits and why — this file holds
 only what a reader can't get from any single one of those.
 
 ## Two independent implementations converged on the same error policy

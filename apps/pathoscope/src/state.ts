@@ -1,9 +1,8 @@
 /**
  * The scratch every step of a run shares.
  *
- * Replaces Python's `intermediate` namespace and its `results` dict, which were
- * two objects because fixtures resolved them separately. Here they are one, and
- * it is plain mutable state on the run context rather than anything injected.
+ * One object rather than a scratch namespace beside a results dict, and plain
+ * mutable state on the run context rather than anything injected.
  */
 
 /** Cross-step scratch for one pathoscope run. */

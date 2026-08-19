@@ -1,11 +1,9 @@
 /**
  * Driving `seqkit fx2tab` for a genome's nucleotide composition.
  *
- * Python's `compute_gc_and_count`, kept deliberately close to it: the same
- * subcommand with the same flags, the same per-record accumulation in a stdout
- * handler, and the same arithmetic afterwards. seqkit reads gzip natively, so
- * the compressed upload is counted where it lies and no plain FASTA is ever
- * written.
+ * One subcommand with its flags, a per-record accumulation in a stdout handler,
+ * and the arithmetic afterwards. seqkit reads gzip natively, so the compressed
+ * upload is counted where it lies and no plain FASTA is ever written.
  *
  * The command builder and the accumulator are separate from the step so both
  * are testable without spawning anything — the command line is asserted
@@ -21,7 +19,7 @@ const NUCLEOTIDES = ["a", "t", "g", "c", "n"] as const;
 
 type Nucleotide = (typeof NUCLEOTIDES)[number];
 
-/** Places `gc` is rounded to, matching Python's `round(ratio, 3)`. */
+/** Places `gc` is rounded to: every ratio is `round(ratio, 3)`. */
 const GC_PLACES = 3;
 
 /** What one pass over a genome yields. */
@@ -34,7 +32,7 @@ export type GenomeComposition = {
 };
 
 /**
- * The command Python runs, argument for argument.
+ * The `seqkit fx2tab` invocation, argument for argument.
  *
  * `--name --only-id` reduces the first column to the sequence id, which nothing
  * reads — the columns that matter are the five `--base-count`s that follow, in
@@ -62,8 +60,8 @@ export type BaseCountAccumulator = {
 	 * The composition, once every record has been handled.
 	 *
 	 * @throws {Error} when the file held no sequences, or held sequences but
-	 *   none of the five nucleotides. Python raises separately for each, in this
-	 *   order, rather than dividing by zero.
+	 *   none of the five nucleotides. Each is raised separately, in this order,
+	 *   rather than dividing by zero.
 	 */
 	result: () => GenomeComposition;
 };
@@ -132,7 +130,7 @@ export function createBaseCountAccumulator(): BaseCountAccumulator {
 				throw new Error("No A, T, G, C, or N bases found in subtraction FASTA");
 			}
 
-			// Half-to-even, which is Python's `round`. `Math.round` is half-up, so
+			// Half-to-even on the exact binary double. `Math.round` is half-up, so
 			// the two disagree on a ratio landing exactly on a half at the third
 			// place.
 			return {

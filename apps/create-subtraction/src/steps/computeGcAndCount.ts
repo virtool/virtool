@@ -7,18 +7,16 @@ import type { CreateSubtractionStep } from "./types";
  * seqkit reads gzip natively, so this runs against the upload as it lies and
  * the run never writes a decompressed genome.
  *
- * Python guards this call with an explicit `if process.returncode: raise`,
- * because its runner treats termination by SIGTERM as success and a seqkit
- * killed part way through would otherwise leave the composition computed from a
- * fraction of the sequences. This runtime needs no such guard: a non-zero exit
- * throws `SubprocessFailedError`, exit code 15 included. The one outcome that
- * resolves is a cancellation-driven kill, and that is what the check below is
- * for.
+ * This call needs no explicit return-code guard: a non-zero exit throws
+ * `SubprocessFailedError`, exit code 15 included, so a seqkit killed part way
+ * through cannot leave the composition computed from a fraction of the
+ * sequences. The one outcome that resolves is a cancellation-driven kill, and
+ * that is what the check below is for.
  */
 export const computeGcAndCountStep: CreateSubtractionStep = {
 	id: "compute_gc_and_count",
-	// Title-casing the id gives `Compute Gc And Count`, which is not the label
-	// Python shows for this step.
+	// Title-casing the id gives `Compute Gc And Count`, so the label is spelled
+	// out here instead.
 	name: "Compute GC and Count",
 	description:
 		"Compute the genome's nucleotide composition and sequence count.",

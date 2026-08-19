@@ -91,10 +91,10 @@ const changePasswordSchema = z.object({
 	password: z.string(),
 });
 
-// Mirrors `check_email` in virtool/account/models.py: an empty string clears the
-// address, anything else has to parse. Checked here rather than in the validator
-// because a zod rejection surfaces as a 500 carrying the issue list, which is
-// not something a form can put in front of a user.
+// An empty string clears the address; anything else has to parse. Checked here
+// rather than in the validator because a zod rejection surfaces as a 500
+// carrying the issue list, which is not something a form can put in front of a
+// user.
 function checkEmail(email: string): void {
 	if (email !== "" && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
 		setResponseStatus(400);
@@ -102,8 +102,8 @@ function checkEmail(email: string): void {
 	}
 }
 
-// Reserved handle the Python service forbids; rejected before hitting the
-// database so we return a clear message rather than a unique-constraint error.
+// Reserved handle; rejected before hitting the database so we return a clear
+// message rather than a unique-constraint error.
 // Trim defensively so whitespace-padded variants like " virtool" can't slip
 // past the check even if a caller skips the schema's trim.
 function checkReservedHandle(handle: string): void {
@@ -168,11 +168,11 @@ export const findUsersFn = createServerFn({ method: "GET" })
 		});
 	});
 
-// A paginated user search any signed-in user may run, mirroring Python's
-// `GET /users` (authenticated, no administrator filter). Backs the reference
-// member picker, where a non-admin who holds `modify` on a reference searches
-// users to add. `findUsersFn` above is the stricter administrator-only variant
-// used by the user administration views.
+// A paginated user search any signed-in user may run: authenticated, with no
+// administrator filter. Backs the reference member picker, where a non-admin
+// who holds `modify` on a reference searches users to add. `findUsersFn` above
+// is the stricter administrator-only variant used by the user administration
+// views.
 export const searchUsersFn = createServerFn({ method: "GET" })
 	.middleware([authenticated()])
 	.validator(searchUsersSchema)
@@ -231,7 +231,7 @@ export const updateUserFn = createServerFn({ method: "POST" })
 	.handler(async ({ context, data }) => {
 		// A policy states the floor. This one depends on the target row, so it can
 		// only be checked here: editing a user who is themselves an administrator
-		// requires the full role, mirroring the Python service.
+		// requires the full role.
 		const targetRole = await getAdministratorRole(db, data.userId);
 		if (targetRole !== null) {
 			await requireAdminRole(context.session, "full");
@@ -295,7 +295,7 @@ export const changePasswordFn = createServerFn({ method: "POST" })
 
 			// The change revoked every session the user held, including the one that
 			// authenticated this request. Handing back the replacement is what keeps
-			// the browser signed in, the way Python's `AccountView.patch` does.
+			// the browser signed in.
 			realCookies.setSessionId(sessionId);
 			realCookies.setSessionToken(token);
 

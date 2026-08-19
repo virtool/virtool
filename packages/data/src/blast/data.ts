@@ -1,5 +1,5 @@
 /**
- * The NuVs BLAST sweep, ported from Python's `BLASTData.sweep`.
+ * The NuVs BLAST sweep.
  *
  * A NuVs BLAST search is described entirely by its `nuvs_blast` row, and the
  * sweep is the only thing that ever advances one. There is no queue and no
@@ -68,17 +68,16 @@ const MAX_CONCURRENT_CHECKS = 3;
 /**
  * How many searches may be submitted to NCBI at once.
  *
- * One, because Python's serial task runner only ever submitted one at a time
- * and that is the rate NCBI has accepted from Virtool to date. Raising it is a
- * conversation with NCBI, not a tuning exercise.
+ * One, because that is the rate NCBI has accepted from Virtool to date.
+ * Raising it is a conversation with NCBI, not a tuning exercise.
  */
 const MAX_CONCURRENT_INITIALIZATIONS = 1;
 
 /**
  * What NCBI's `Status=FAILED` and `Status=UNKNOWN` are recorded as.
  *
- * Rendered by the SPA's BLAST panel beside a retry button. Python records
- * nothing here at all — see `checkBlastStatus`.
+ * Rendered by the SPA's BLAST panel beside a retry button — see
+ * `checkBlastStatus`.
  */
 const SEARCH_FAILED_MESSAGE = "NCBI could not complete the search";
 
@@ -86,9 +85,9 @@ const SEARCH_FAILED_MESSAGE = "NCBI could not complete the search";
  * What a search that outlived {@link SEARCH_TIMEOUT_MS} is recorded as.
  *
  * Rendered by the SPA's BLAST panel beside a retry button, which is the whole
- * point of recording it: Python deletes the row, and a contig whose row is gone
- * draws as one that was never BLASTed at all, so a user who waited half an hour
- * is told nothing happened.
+ * point of recording it rather than deleting the row: a contig whose row is
+ * gone draws as one that was never BLASTed at all, so a user who waited half
+ * an hour would be told nothing happened.
  */
 const SEARCH_TIMEOUT_MESSAGE = `NCBI did not return a result within ${SEARCH_TIMEOUT_MINUTES} minutes`;
 
@@ -334,10 +333,9 @@ async function readCheckValues(
 		   what a later attempt might settle.
 
 		   An envelope whose shape has changed lands in the backoff too, and will
-		   fail identically every pass until the row expires. That is Python's
-		   behaviour — `format_blast_content` raises outside its `BadZipFile`
-		   guard — and both writers have to abandon the same rows until the
-		   cutover completes. */
+		   fail identically every pass until the row expires. A shape change is
+		   not something a later attempt can settle, so such rows are abandoned
+		   rather than recorded as a readable result. */
 		if (err instanceof BlastResultUnreadableError) {
 			return { ...values, error: err.message };
 		}
@@ -353,11 +351,11 @@ async function readCheckValues(
  * result arriving after a re-BLAST cannot land on the replacement row and
  * present one contig's hits as another's.
  *
- * `analyses.updated_at` is bumped on every outcome, which is Python's
- * behaviour, but a frame goes out only on a terminal one. A pending search is
- * checked as often as every three seconds and each one on screen holds its own
- * analysis query, so a frame per interval bump is a full analysis refetch in
- * every connected browser for a row whose only visible change is a countdown.
+ * `analyses.updated_at` is bumped on every outcome, but a frame goes out only
+ * on a terminal one. A pending search is checked as often as every three
+ * seconds and each one on screen holds its own analysis query, so a frame per
+ * interval bump is a full analysis refetch in every connected browser for a
+ * row whose only visible change is a countdown.
  */
 async function check(
 	db: Db,

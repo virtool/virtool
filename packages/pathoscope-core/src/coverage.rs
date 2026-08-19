@@ -10,7 +10,7 @@ use rustc_hash::FxHashMap;
 // read1 has a higher probability (0.9) for ref0. This suggests the current logic includes
 // ALL alignments above threshold rather than just the best assignments per read.
 //
-// This behavior is currently verified as correct by the Python integration test, but we should
+// This behavior is currently pinned as correct by the golden vectors, but we should
 // investigate whether this is the intended behavior or if we should only include the best
 
 /// Calculate coverage from BAM file directly (second pass approach)

@@ -74,8 +74,8 @@ function connect(
 }
 
 describe("the lifecycle, end to end", () => {
-	// Python's cancellation path, reproduced: claim, start a step, ping, flip the
-	// job, and watch the next ping refuse.
+	// The cancellation path end to end: claim, start a step, ping, flip the job,
+	// and watch the next ping refuse.
 	it("claims, starts a step, pings, and reports cancellation on the next ping", async () => {
 		const { state, server } = await setup();
 
@@ -440,9 +440,8 @@ describe("failure injection", () => {
 
 		server.destroyNextRequest();
 
-		// One retry at the flat 5 s delay. The delay is Python's observed
-		// behaviour and the ping-timeout sweep is calibrated against it, so it
-		// is paid here rather than shortened.
+		// One retry at the flat 5 s delay. The ping-timeout sweep is calibrated
+		// against that delay, so it is paid here rather than shortened.
 		const job = await client.request({
 			method: "GET",
 			path: `/jobs/${state.job.id}`,

@@ -34,9 +34,8 @@ const rethrowAsHttp = createServerOnlyFn((err: unknown): never => {
  * itself in.
  *
  * A pure outbound proxy — nothing here touches the database. It stays behind a
- * session because Python keeps it there: an open endpoint would let anyone use
- * the deployment as an unmetered NCBI relay under Virtool's `tool` and `email`
- * identifiers.
+ * session because an open endpoint would let anyone use the deployment as an
+ * unmetered NCBI relay under Virtool's `tool` and `email` identifiers.
  */
 export const getGenbankFn = createServerFn({ method: "GET" })
 	.middleware([authenticated()])

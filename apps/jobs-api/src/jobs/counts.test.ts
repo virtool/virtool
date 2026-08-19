@@ -97,9 +97,9 @@ describe("GET /jobs/counts", () => {
 		});
 	});
 
-	// The divergence from Python, pinned. Its query groups over the whole table;
-	// this one covers the non-terminal states alone, because the unbounded scan
-	// grows forever. Nothing scales on a finished job.
+	// The query covers the non-terminal states alone, because grouping over the
+	// whole table is an unbounded scan that grows forever. Nothing scales on a
+	// finished job.
 	it("reports the terminal states as zero even where such rows exist", async () => {
 		await seedJob(db, userId, { state: "succeeded", workflow: "nuvs" });
 		await seedJob(db, userId, { state: "failed", workflow: "nuvs" });
@@ -109,8 +109,8 @@ describe("GET /jobs/counts", () => {
 	});
 
 	// `jobs.workflow` is plain `text`, so a value the union does not name is
-	// reachable. The response shape has no key to put it under and Python's has
-	// none either, so it is dropped rather than folded.
+	// reachable. The response shape has no key to put it under, so it is dropped
+	// rather than folded.
 	it("drops a workflow the union does not name", async () => {
 		await seedJob(db, userId, { state: "pending", workflow: "wat" });
 		await seedJob(db, userId, { state: "pending", workflow: "nuvs" });

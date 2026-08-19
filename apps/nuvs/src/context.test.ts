@@ -355,10 +355,9 @@ describe("buildNuvsContext", () => {
 });
 
 // `max_length` is `quality.length[1]`, and the column is empty while a sample is
-// still being created. Python reads it anyway and compares `None` with an `int`,
-// so an unready sample dies with a `TypeError` inside `trim_reads` — after the
-// reference FASTA is written and, on a cache miss, the whole reference index is
-// built.
+// still being created. Reading it without checking would defer the failure to
+// `trim_reads` — after the reference FASTA is written and, on a cache miss, the
+// whole reference index is built.
 describe("the sample's maximum read length", () => {
 	it("resolves it from the quality data", async () => {
 		const { input } = await setup();

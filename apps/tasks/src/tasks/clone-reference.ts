@@ -20,22 +20,20 @@ const payload = z.object({
 /**
  * Fill a cloned reference with the OTUs of the reference it was cloned from.
  *
- * The port of Python's `CloneReferenceTask`, whose body is likewise one call.
- * Python reports a position within the step and so does this: the manifest gives
- * the OTU count up front, and a real reference is tens of thousands of them.
- * `report` takes a fraction where the data layer publishes percent.
+ * The body is one call, and it reports a position within the step: the manifest
+ * gives the OTU count up front, and a real reference is tens of thousands of
+ * them. `report` takes a fraction where the data layer publishes percent.
  *
  * A failure takes the reference with it — the rollback inside
  * `populateClonedReference` deletes the half-built reference and its rows, so
  * the user sees it disappear rather than sitting there empty with no way to
- * finish it. That is Python's behaviour and both runners are live until the
- * cutover, so it is not this side's to soften.
+ * finish it.
  */
 export const cloneReferenceTask = defineTask<typeof payload, TaskContext>({
 	type: "clone_reference",
 	payload,
-	// Python's method name, which `BaseTask.run` writes to the column. Both
-	// runners write `clone` for the same work until the cutover completes.
+	// The name is written to the row's `step` column, which is what the UI shows
+	// and what rows already written carry, so it is fixed.
 	steps: ["clone"],
 	async run({ ctx, helpers, logger, payload, signal }) {
 		await helpers.runStep("clone", async (report) => {

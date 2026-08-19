@@ -43,16 +43,14 @@ import {
  * `POST /jobs/claim` is public because it **has** to be: the key a runner
  * authenticates every later request with is minted by that call and returned in
  * its response, so a caller has nothing to present yet. A pod started by a KEDA
- * `ScaledJob` knows neither its job id nor its key until it claims. Python's
- * `ClaimJobView` carries `PublicRoutePolicy` for the same reason. What bounds it
- * is the network: this service has no ingress, so reaching the endpoint at all
- * means already being inside the cluster.
+ * `ScaledJob` knows neither its job id nor its key until it claims. What bounds
+ * it is the network: this service has no ingress, so reaching the endpoint at
+ * all means already being inside the cluster.
  *
  * `GET /jobs/counts` is public on the same two grounds. The KEDA scaler that
  * reads it holds no job key and could not: a key is minted at claim time, which
- * is the thing it is deciding whether to start a pod to do. Python's
- * `JobsCountsView` carries `PublicRoutePolicy`, and what it discloses is queue
- * depth per workflow — nothing about a job, a sample or a user.
+ * is the thing it is deciding whether to start a pod to do. What it discloses
+ * is queue depth per workflow — nothing about a job, a sample or a user.
  *
  * `/metrics` is deliberately **not** here: it enforces its own bearer token and
  * is expected to refuse like everything else.
@@ -184,16 +182,15 @@ export function createApp(deps: AppDeps): Hono {
 
 	// The job lifecycle: claim, read, heartbeat, step start, finish. There is
 	// deliberately no failure route and no delete — a job fails by being
-	// cancelled or by Python's stalled-job sweep, neither of which a runner
-	// drives.
+	// cancelled or by the stalled-job sweep, neither of which a runner drives.
 	//
 	// `/jobs/claim` cannot collide with `/jobs/:jobId`: nothing serves POST on
 	// the latter, and Hono prefers a static segment over a parameter regardless.
 	app.post("/jobs/claim", (c) => handleClaimJob(deps, c.req.raw));
 
 	// Queue depth, for the KEDA `ScaledJob` that starts workflow pods. Not part
-	// of the lifecycle — nothing a runner calls — but it lives on `/jobs` because
-	// Python serves it there and the scaler's trigger names the path.
+	// of the lifecycle — nothing a runner calls — but it lives on `/jobs`
+	// because the scaler's trigger names that path.
 	//
 	// It cannot collide with `/jobs/:jobId` for the reason above, and the
 	// collision is worth naming: before this route existed, a poll for
@@ -223,9 +220,9 @@ export function createApp(deps: AppDeps): Hono {
 		handleFinishJob(deps, c.req.raw, c.req.param("jobId")),
 	);
 
-	// Python serves these at the same paths, with no prefix — a separate app has
-	// no SPA to collide with. Each handler calls the job-auth guard itself;
-	// nothing here runs middleware on its behalf.
+	// These sit at the top level, with no prefix — a separate app has no SPA to
+	// collide with. Each handler calls the job-auth guard itself; nothing here
+	// runs middleware on its behalf.
 	app.get("/caches/:key", (c) =>
 		handleGetCache(deps, c.req.raw, c.req.param("key")),
 	);

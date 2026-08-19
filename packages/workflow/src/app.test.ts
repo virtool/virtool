@@ -287,8 +287,8 @@ describe("termination", () => {
 
 		const promise = run(workflow);
 
-		// The handler is installed before the claim, unlike Python's, so a pod
-		// terminated while polling reports 124 rather than dying on node's default.
+		// The handler is installed before the claim, so a pod terminated while
+		// polling reports 124 rather than dying on node's default.
 		await new Promise<void>((resolve) => {
 			const wait = setInterval(() => {
 				if ((server?.requests.length ?? 0) > 0) {

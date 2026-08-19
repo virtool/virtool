@@ -12,9 +12,9 @@ import type { NuvsStep } from "./types";
  * The shortest contig worth considering.
  *
  * `findOrfs` only reports ORFs of 100 residues or more, which needs 300 bases
- * before a start and a stop, so this is very nearly the same filter twice over —
- * it is Python's and is kept because *very nearly* is not the same as exactly: a
- * 300-base contig passes here and yields nothing there.
+ * before a start and a stop, so this is very nearly the same filter twice over.
+ * It is kept because *very nearly* is not the same as exactly: a 300-base
+ * contig passes here and yields nothing there.
  */
 const MINIMUM_CONTIG_LENGTH = 300;
 
@@ -41,7 +41,7 @@ export const processAssemblyStep: NuvsStep = {
 
 		// `assemble` has already compressed the scaffolds under their original
 		// name, so this rename is what gives the uncompressed copy a name only this
-		// step reads. Python does the same, in the same order.
+		// step reads. The order matters: compress first, then rename.
 		await rename(paths.spadesScaffolds, paths.assemblyFasta);
 
 		const contigs: NuvsRawContig[] = [];

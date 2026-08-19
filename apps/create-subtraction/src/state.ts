@@ -1,10 +1,9 @@
 /**
  * The scratch every step of a run shares.
  *
- * Replaces Python's `intermediate` namespace. `compute_gc_and_count` fills both
- * fields and `finalize` sends them; they are null until then rather than zeroed,
- * so a finalize reached without the scan having run fails instead of recording
- * an empty genome.
+ * `compute_gc_and_count` fills both fields and `finalize` sends them; they are
+ * null until then rather than zeroed, so a finalize reached without the scan
+ * having run fails instead of recording an empty genome.
  */
 
 import type { NucleotideComposition } from "@virtool/contracts";

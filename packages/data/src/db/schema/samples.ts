@@ -34,10 +34,9 @@ export type SampleQuality = {
 	sequences: number[];
 };
 
-// The columns Python's model gives a `default=` are mirrored with `$defaultFn`,
-// never `.default()`: the real columns carry no server default, so the value has
-// to be supplied on insert from this side too. `name`, `library_type`, and
-// `created_at` have no Python default and stay required.
+// Columns with a default are given `$defaultFn`, never `.default()`: the real
+// columns carry no server default, so the value has to be supplied on insert.
+// `name`, `library_type`, and `created_at` have no default and stay required.
 export const legacySamples = pgTable(
 	"legacy_samples",
 	{

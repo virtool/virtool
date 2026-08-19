@@ -3,7 +3,7 @@ import { describe, expect, it } from "vitest";
 import { hashToken, newSessionId, newSessionToken } from "./tokens";
 
 describe("newSessionId", () => {
-	it('produces a "session_" + 96 hex chars value matching the Python format', () => {
+	it('produces a "session_" prefix followed by 96 hex characters', () => {
 		const id = newSessionId();
 		expect(id).toMatch(/^session_[0-9a-f]{96}$/);
 	});

@@ -1,11 +1,11 @@
 /**
  * Collapsing redundant isolates out of a reference index.
  *
- * The port of Python's `reference.py`, and the largest piece of logic in this
- * workflow. An OTU's isolates frequently differ by a handful of bases;
- * `cd-hit-est` clusters them at 99% identity and every isolate whose sequences
- * land on the same representatives as an earlier one is dropped. What survives
- * is written to a second index artifact this workflow then maps against.
+ * The largest piece of logic in this workflow. An OTU's isolates frequently
+ * differ by a handful of bases; `cd-hit-est` clusters them at 99% identity and
+ * every isolate whose sequences land on the same representatives as an earlier
+ * one is dropped. What survives is written to a second index artifact this
+ * workflow then maps against.
  *
  * ## Order decides which duplicate survives
  *
@@ -187,9 +187,9 @@ async function collapseOtuSegments(
 /**
  * The representatives an isolate's sequences land on, as a comparable key.
  *
- * Python builds a `frozenset` and compares by value; the nearest thing here is
- * a sorted, joined string. A `Set` compares by identity, so using one would make
- * every isolate look unique and collapse nothing.
+ * The key has to compare by value, so it is a sorted, joined string. A `Set`
+ * compares by identity, so using one would make every isolate look unique and
+ * collapse nothing.
  */
 function representativeKey(
 	isolate: IndexOtuIsolate,
@@ -200,10 +200,10 @@ function representativeKey(
 	for (const sequence of isolate.sequences) {
 		const representative = representativesBySequenceId.get(sequence.id);
 
-		// Python indexes the dict directly and raises `KeyError`. Every sequence
-		// handed to cd-hit-est comes back in its cluster file, so this fires only
-		// if the cluster file was truncated or the wrong one was read — both of
-		// which would otherwise collapse isolates against a partial key.
+		// Every sequence handed to cd-hit-est comes back in its cluster file, so
+		// this fires only if the cluster file was truncated or the wrong one was
+		// read — both of which would otherwise collapse isolates against a partial
+		// key.
 		if (representative === undefined) {
 			throw new Error(
 				`No cd-hit-est cluster representative for sequence ${sequence.id} of isolate ${isolate.id}`,
@@ -275,11 +275,9 @@ export async function collapseOtu(
 
 		seenRepresentativeSets.add(key);
 
-		// A no-op, and deliberately kept: a sequence has exactly one parent
-		// isolate, so this is true precisely when `isolate.default` is. Python's
-		// `reference.py` carries the same redundancy and still releases the
-		// production workflow, so the two collapse loops stay diffable until it
-		// retires. VIR-2938 deletes it in both.
+		// A no-op, and deliberately kept for now: a sequence has exactly one parent
+		// isolate, so this is true precisely when `isolate.default` is. VIR-2938
+		// deletes it.
 		const containsDefaultSequence = isolate.sequences.some((sequence) =>
 			defaultSequenceIds.has(sequence.id),
 		);
@@ -315,11 +313,10 @@ export async function writeSegmentFasta(
  * Run `cd-hit-est` over one segment and read back its clusters.
  *
  * The output is named `otu-{id}-segment-{name}.cdhit`, so the cluster file
- * cd-hit-est writes beside it is `otu-{id}-segment-{name}.cdhit.clstr`. Python
- * spells that `Path.with_suffix(".cdhit.clstr")`, which *replaces* the `.cdhit`
- * suffix rather than appending to it and so lands on the same name. Appending
- * `.clstr` to the output path is what cd-hit-est actually does; do not "fix" it
- * to `.cdhit.clstr` on top of a path that already ends in `.cdhit`.
+ * cd-hit-est writes beside it is `otu-{id}-segment-{name}.cdhit.clstr`.
+ * Appending `.clstr` to the output path is what cd-hit-est actually does; do
+ * not "fix" it to `.cdhit.clstr` on top of a path that already ends in
+ * `.cdhit`.
  */
 export function createSegmentCollapser(
 	runSubprocess: RunSubprocess,

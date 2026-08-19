@@ -409,7 +409,7 @@ describe("reference membership", () => {
 		expect(member.modify).toBe(true);
 	});
 
-	it("refuses adding a group member without modify (closing the Python asymmetry)", async () => {
+	it("refuses adding a group member when the caller lacks modify", async () => {
 		const ownerId = await seedUser(db, {
 			administratorRole: null,
 			handle: "bob",

@@ -292,7 +292,7 @@ describe("import_reference", () => {
 		});
 	});
 
-	it("reports a file that is not gzipped the way Python does", async () => {
+	it("names a file that is not gzipped as such", async () => {
 		await seedUpload(NAME_ON_DISK);
 		await storage.write(STORAGE_KEY, once(Buffer.from("not gzip at all")));
 

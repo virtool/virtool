@@ -14,9 +14,9 @@ import type { NuvsStep } from "./types";
  * **Single-end runs do nothing here**, and `assemble` reads
  * `unmapped_subtractions.fq` directly in that case.
  *
- * Python decompresses both trimmed files to disk before filtering them. This
- * gunzips them in the stream instead: the decompressed copies are read once,
- * never read again, and are gigabytes on a disk sized for one copy of the reads.
+ * The trimmed files are gunzipped in the stream rather than decompressed to
+ * disk first: decompressed copies would be read once, never read again, and are
+ * gigabytes on a disk sized for one copy of the reads.
  */
 export const reunitePairsStep: NuvsStep = {
 	id: "reunite_pairs",
@@ -28,8 +28,8 @@ export const reunitePairsStep: NuvsStep = {
 
 		const paths = workPaths(workPath);
 
-		// The one thing that accumulates. Python holds the same set, and there is
-		// no filtering by membership without it.
+		// The one thing that accumulates. There is no filtering by membership
+		// without it.
 		const ids = await readFastqIds(paths.unmappedSubtractions);
 
 		logger.info({ readCount: ids.size }, "read surviving read ids");

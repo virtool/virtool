@@ -1,16 +1,16 @@
 /**
  * Every path this workflow reads or writes under its work path.
  *
- * One factory rather than a function per path — Python had a fixture each, which
- * transliterates into a dozen exports and a `workPath` argument at every call
- * site. A step resolves them once (`const paths = workPaths(context.workPath)`)
- * and reads fields from there.
+ * One factory rather than a function per path — a function per path would mean
+ * a dozen exports and a `workPath` argument at every call site. A step resolves
+ * them once (`const paths = workPaths(context.workPath)`) and reads fields from
+ * there.
  *
- * The layout is Python's verbatim, and that is a **contract, not a convention**:
- * all three of this workflow's cache namespaces are shared with Python nuvs, and
- * a restored blob's one top-level entry is named after the directory its writer
- * archived. `trimmed/`, `reference_index/` and `subtraction_indexes/{id}/` are
- * therefore fixed names, not preferences.
+ * The layout is a **contract, not a convention**: all three of this workflow's
+ * cache namespaces are shared, and a restored blob's one top-level entry is
+ * named after the directory its writer archived. `trimmed/`,
+ * `reference_index/` and `subtraction_indexes/{id}/` are therefore fixed names,
+ * not preferences.
  */
 
 import { join } from "node:path";
@@ -76,7 +76,7 @@ export type NuvsPaths = {
 	/**
 	 * The same scaffolds, under the name `process_assembly` reads them from.
 	 *
-	 * Python renames rather than copies, and does it *after* `assemble` has
+	 * The scaffolds are renamed rather than copied, and *after* `assemble` has
 	 * already compressed the original — so the rename is what makes the
 	 * uncompressed scaffolds readable by exactly one step.
 	 */
@@ -113,10 +113,9 @@ export type NuvsPaths = {
 /**
  * The trimmed reads, in pair order.
  *
- * Derived from `paired` rather than from the sample's own read count, matching
- * Python's `trimmed_read_paths` fixture: skewer names its output by position and
- * these are the names it was renamed to, so there is nothing here to read off
- * the row.
+ * Derived from `paired` rather than from the sample's own read count: skewer
+ * names its output by position and these are the names it was renamed to, so
+ * there is nothing here to read off the row.
  */
 export function trimmedReadPaths(
 	paths: NuvsPaths,

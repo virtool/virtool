@@ -16,10 +16,10 @@ export class WorkflowError extends Error {
 export class WorkflowDefinitionError extends WorkflowError {}
 
 /**
- * A set of cache params cannot be canonicalized the way Python would.
+ * A set of cache params has no unambiguous canonical form.
  *
  * Thrown rather than guessed at, because the failure it prevents is silent: a
- * key that differs from Python's misses every cache and writes a copy under a
- * key nothing will ask for again.
+ * key that differs from the canonical one misses every cache and writes a copy
+ * under a key nothing will ask for again.
  */
 export class CacheParamError extends WorkflowError {}

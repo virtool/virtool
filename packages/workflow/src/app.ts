@@ -50,9 +50,9 @@ type TerminableRunSignals = RunSignals & { dispose: () => void };
 /**
  * Create the run's signals and start listening for SIGTERM.
  *
- * Installed **before** the claim, unlike Python, which installs it after. A pod
- * terminated while still polling for a job otherwise dies on Node's default
- * handler, reporting 143 rather than the 124 every other termination reports.
+ * Installed **before** the claim, not after it. A pod terminated while still
+ * polling for a job otherwise dies on Node's default handler, reporting 143
+ * rather than the 124 every other termination reports.
  */
 function createTerminableRunSignals(logger: Logger): TerminableRunSignals {
 	const signals = createRunSignals();
@@ -101,10 +101,7 @@ function initSentry(
 	});
 }
 
-/**
- * Identifies one runner to the jobs API. Matches Python's
- * `f"{socket.gethostname()}-{os.getpid()}"`.
- */
+/** Identifies one runner to the jobs API by its hostname and pid. */
 function buildRunnerId(): string {
 	return `${hostname()}-${process.pid}`;
 }
@@ -191,8 +188,7 @@ async function claimAndRun<TData, TState>({
 				})),
 			},
 			logger,
-			// `VT_TIMEOUT` is in seconds, matching Python's
-			// `asyncio.timeout(config.timeout)`.
+			// `VT_TIMEOUT` is in seconds, hence the conversion.
 			signal: AbortSignal.any([
 				signals.signal,
 				AbortSignal.timeout(config.timeout * 1000),
@@ -235,9 +231,9 @@ async function claimAndRun<TData, TState>({
 		>;
 
 		try {
-			// The claim response carries no `args` — Python's does not either, and
-			// its `job` fixture reads the full job back for them. This runtime is
-			// eager, so it does that read once, here, rather than per step.
+			// The claim response carries no `args`, so the full job is read back
+			// for them. This runtime is eager, so it does that read once, here,
+			// rather than per step.
 			const [job, workPath] = await Promise.all([
 				client.getJob(),
 				createWorkPath(config.workPath),

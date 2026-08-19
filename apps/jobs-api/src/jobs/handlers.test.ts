@@ -184,8 +184,8 @@ describe("handleClaimJob", () => {
 
 	// The handler hands `Response.json` the `Date` it read out of Postgres
 	// rather than encoding one itself, and JSON has no date type, so what
-	// crosses is still the ISO string Python's serialiser produces. This is the
-	// half a type change is free to break silently.
+	// crosses is still an ISO string. This is the half a type change is free to
+	// break silently.
 	it("encodes its timestamps as ISO strings on the wire", async () => {
 		const pending = await seedPending();
 
@@ -337,9 +337,9 @@ describe("handleClaimJob", () => {
 		expect((await handleClaimJob(deps, claimRequest(null))).status).toBe(422);
 	});
 
-	// `build_index` rows exist and must still parse on the read path, but Python
-	// builds indexes through a task now, so no runner is waiting on one. Handing
-	// one out would start a pod nothing finishes.
+	// `build_index` rows already written must still parse on the read path, but
+	// indexes are built by a task rather than a workflow pod, so no runner is
+	// waiting on one. Handing one out would start a pod nothing finishes.
 	it("refuses to hand out a build_index job", async () => {
 		await seedPending({ workflow: "build_index" });
 
@@ -571,7 +571,7 @@ describe("handleStartJobStep", () => {
 
 		// The contract carries a `Date`, but JSON has no date type — so what
 		// actually crosses is the same ISO string it always was, and it is the
-		// same string the column holds. Python reads both, so neither may move.
+		// same string the column holds. Both are read back, so neither may move.
 		expect(body.startedAt).toEqual(expect.any(String));
 		expect(body.startedAt).toBe(row?.steps?.[1]?.started_at);
 	});
@@ -688,9 +688,9 @@ describe("handleFinishJob", () => {
 	});
 });
 
-// Python enforces this in its auth middleware. Here it is the handlers' job,
-// which is what `JobPrincipal` carrying the id is for — so it has to hold on
-// every route that takes one, not merely the first one written.
+// Ownership is checked by each handler rather than by the auth guard, which is
+// what `JobPrincipal` carrying the id is for — so it has to hold on every route
+// that takes a job id, not merely the first one written.
 describe("cross-job authorization", () => {
 	it.each([
 		[

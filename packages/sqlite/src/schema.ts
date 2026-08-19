@@ -1,14 +1,13 @@
 /**
  * The index artifact's schema, and the only two ways to open one.
  *
- * A reference index is shipped to a workflow as a single SQLite file, written
- * by this package or by the other implementation still running beside it. This
- * module mirrors that schema so either side can produce a file the other's
- * reader accepts, and validates the `metadata` table so a file that is not what
- * it claims to be is rejected at open rather than halfway through a run.
+ * A reference index is shipped to a workflow as a single SQLite file. This
+ * module defines that schema, and validates the `metadata` table so a file
+ * that is not what it claims to be is rejected at open rather than halfway
+ * through a run.
  *
- * The mirror is of the *schema*, not of SQLAlchemy's DDL text. Python defines
- * its tables explicitly and never reflects them, so only the columns,
+ * What is specified is the *schema*, not any particular DDL text: the tables
+ * are declared explicitly and never reflected, so only the columns,
  * constraints and indexes have to agree.
  */
 
@@ -20,7 +19,7 @@ import { IndexArtifactFormatError, IndexArtifactMissingError } from "./errors";
  *
  * Versioned in the filename rather than only in the `metadata` table, so an
  * incompatible future artifact cannot be mistaken for this one before it is
- * opened. Mirrors the other implementation's `REFERENCE_SQLITE_FILE_NAME`.
+ * opened.
  */
 export const REFERENCE_SQLITE_FILE_NAME = "reference-snapshot.v1.sqlite";
 
@@ -35,7 +34,7 @@ export const REFERENCE_SQLITE_GZIP_FILE_NAME =
  * interchangeable: a snapshot describes a whole reference, where this one holds
  * whatever survived a step — pathoscope's collapsed reference is missing every
  * isolate `cd-hit-est` dropped. Naming both the same is how one gets uploaded
- * as the other. Mirrors the other implementation's `INDEX_SQLITE_FILE_NAME`.
+ * as the other.
  */
 export const INDEX_SQLITE_FILE_NAME = "index.v1.sqlite";
 
@@ -45,7 +44,7 @@ export const REFERENCE_SQLITE_FORMAT = "virtool-reference-sqlite";
 /** The `format_version` value this reader understands. */
 export const REFERENCE_SQLITE_FORMAT_VERSION = "1";
 
-/** The `created_by` value this package writes. Python writes the same. */
+/** The `created_by` value this package writes. */
 const REFERENCE_SQLITE_CREATED_BY = "virtool";
 
 const INDEX_SQLITE_DDL = `
@@ -169,9 +168,9 @@ export function openIndexArtifact(source: IndexArtifactSource): DatabaseSync {
 /**
  * Create an empty artifact at `path`, replacing any file already there.
  *
- * Foreign keys are enforced on the returned handle, as they are on Python's, so
- * a sequence written against an isolate that was never inserted fails at the
- * insert rather than becoming an unreachable row.
+ * Foreign keys are enforced on the returned handle, so a sequence written
+ * against an isolate that was never inserted fails at the insert rather than
+ * becoming an unreachable row.
  */
 export function createIndexArtifactSchema(path: string): DatabaseSync {
 	const database = new DatabaseSync(path);

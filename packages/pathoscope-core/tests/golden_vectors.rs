@@ -2,14 +2,14 @@
 //!
 //! The corpus in `tests/golden/vectors.json` was captured from the PyO3 build
 //! of `workflow-pathoscope` before the crate moved here — see
-//! `tests/golden/generate.py`. This port is meant to be behaviour-preserving
-//! bug-for-bug, so every value has to match, floats included.
+//! `tests/golden/generate.py`. Behaviour is pinned bug-for-bug, so every value
+//! has to match, floats included. **Never edit the corpus to make a failing
+//! comparison pass.**
 //!
 //! Floats are compared with `f64::to_bits`, not with a tolerance and not as
 //! text. "Equivalent within tolerance" is not the bar for a diagnostic
 //! workflow, and comparing the rendered text would fail on a harmless
-//! difference between Python's and Rust's float formatters while saying
-//! nothing about the values.
+//! difference between float formatters while saying nothing about the values.
 
 use std::collections::BTreeMap;
 use std::path::{Path, PathBuf};
@@ -174,10 +174,9 @@ fn check_em(name: &str, vector: &Value, out_dir: &Path) {
         "{name}: refs differs"
     );
 
-    // The corpus records the read *names* the PyO3 build returned, because that
-    // is what it returned; the results carry only their number now. Comparing
-    // the count against the recorded array's length pins the same figure, so
-    // the corpus stays exactly as Python wrote it.
+    // The corpus records the read *names*, while the results carry only their
+    // number. Comparing the count against the recorded array's length pins the
+    // same figure and leaves the corpus untouched.
     assert_eq!(
         strings(expected, "reads").len() as u64,
         actual["read_count"].as_u64().expect("read_count"),

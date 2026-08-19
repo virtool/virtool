@@ -134,7 +134,7 @@ describe("buildCreateSampleContext", () => {
 	/**
 	 * `getSample` derives `paired` from the reads rows, which do not exist until
 	 * finalize — so a running create_sample job is always served `paired: false`
-	 * and a port that branched on it would treat every sample as single-read.
+	 * and anything branching on it would treat every sample as single-read.
 	 */
 	it("takes the read count from the uploads, not from paired", async () => {
 		const { build } = await setup(

@@ -2,15 +2,15 @@ import { describe, expect, it } from "vitest";
 import { createSubtractionWorkflow } from "./workflow";
 
 /**
- * The step list, exactly as Python declares it.
+ * The step list, exactly as this workflow declares it.
  *
- * **Ids are the cutover contract.** The jobs API stores them and
- * `POST /jobs/{jobId}/steps/{stepId}/start` takes them, so an id that does not
- * match the Python function it was ported from changes the shape of a job's step
- * list. Python's `build_index` is deliberately absent: nothing consumes a
- * subtraction's bowtie2 shards and the finalize route accepts the genome alone.
+ * **Ids are a contract.** They are stored in the `jobs.steps` column, rendered
+ * by the UI, and taken by `POST /jobs/{jobId}/steps/{stepId}/start`, so
+ * renaming one changes what users see. There is deliberately no `build_index`
+ * step: nothing consumes a subtraction's bowtie2 shards and the finalize route
+ * accepts the genome alone.
  */
-const PYTHON_STEPS = [
+const STEPS = [
 	["compute_gc_and_count", "Compute GC and Count"],
 	["finalize", "Finalize"],
 ];
@@ -20,9 +20,9 @@ describe("createSubtractionWorkflow", () => {
 		expect(createSubtractionWorkflow.name).toBe("create_subtraction");
 	});
 
-	it("declares Python's two steps, in Python's order", () => {
+	it("declares the two steps, in order", () => {
 		expect(createSubtractionWorkflow.steps.map(({ id }) => id)).toEqual(
-			PYTHON_STEPS.map(([id]) => id),
+			STEPS.map(([id]) => id),
 		);
 	});
 
@@ -30,7 +30,7 @@ describe("createSubtractionWorkflow", () => {
 	// would give `Compute Gc And Count`. `finalize` is left to derive.
 	it("resolves each step's display name", () => {
 		expect(createSubtractionWorkflow.steps.map(({ name }) => name)).toEqual(
-			PYTHON_STEPS.map(([, name]) => name),
+			STEPS.map(([, name]) => name),
 		);
 	});
 
@@ -41,10 +41,9 @@ describe("createSubtractionWorkflow", () => {
 	});
 
 	/**
-	 * Python registers an `@hooks.on_failure` that issues
-	 * `DELETE /subtractions/{id}`. It is deliberately not ported: a failed run
-	 * leaves an unfinalized subtraction for the user to delete. `finalize` makes
-	 * the finalize call itself rather than deriving a payload from state.
+	 * There is deliberately no delete on failure: a failed run leaves an
+	 * unfinalized subtraction for the user to delete. `finalize` makes the
+	 * finalize call itself rather than deriving a payload from state.
 	 */
 	it("declares no result payload, as a subtraction is not an analysis", () => {
 		expect(createSubtractionWorkflow.result).toBeUndefined();

@@ -14,16 +14,16 @@ export type CreateSubtractionPaths = {
 	/**
 	 * The upload, as downloaded.
 	 *
-	 * Named `subtraction.fa.gz` whether or not it is actually gzipped, matching
-	 * Python — a user is free to upload a plain FASTA.
+	 * Named `subtraction.fa.gz` whether or not it is actually gzipped — a user is
+	 * free to upload a plain FASTA.
 	 */
 	upload: string;
 
 	/**
 	 * Where the genome is gzipped to, when the upload was not already gzipped.
 	 *
-	 * A sibling of {@link upload} rather than that path itself: writing in place
-	 * would truncate the file being compressed. An already-gzipped upload never
+	 * A separate path rather than {@link upload} itself: writing in place would
+	 * truncate the file being compressed. An already-gzipped upload never
 	 * reaches this path at all — it is uploaded as it stands.
 	 */
 	compressedFasta: string;

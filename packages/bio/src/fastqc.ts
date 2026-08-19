@@ -10,17 +10,18 @@ import type { Quality } from "@virtool/contracts";
 const FLOAT_VIEW = new DataView(new ArrayBuffer(8));
 
 /**
- * Round half-to-even, matching Python's built-in `round`.
+ * Round half to even, on the exact binary value of the double.
  *
- * JavaScript has no equivalent. `Math.round` rounds half away from zero, and
- * scaling by a power of ten first (`Math.round(v * 1000) / 1000`) introduces
- * its own error — it disagrees with Python on values such as `2.675` at two
- * places, where the stored double is fractionally below the decimal midpoint.
+ * That specification is the whole point, and JavaScript has nothing that meets
+ * it. `Math.round` rounds half away from zero, and scaling by a power of ten
+ * first (`Math.round(v * 1000) / 1000`) introduces its own error — it gets
+ * values such as `2.675` at two places wrong, because the stored double is
+ * fractionally *below* the decimal midpoint and so must round down.
  *
- * Python rounds the *exact* binary value of the double, so this decomposes the
- * double into `mantissa * 2 ** exponent` and does the comparison in exact
- * integer arithmetic. FastQC values must round identically to Python's because
- * the result is stored and compared across the two implementations.
+ * So this decomposes the double into `mantissa * 2 ** exponent` and compares
+ * against the midpoint in exact integer arithmetic. Quality figures are stored
+ * rounded this way, and the same rounding is implemented in
+ * `packages/quality-core`; the two must agree value for value.
  */
 export function roundHalfEven(value: number, digits: number): number {
 	if (!Number.isFinite(value) || value === 0) {
@@ -70,7 +71,7 @@ function meanRows(
 	digits: number,
 ): number[][] {
 	const rows: number[][] = [];
-	// Python zips with `strict=False`, so a length mismatch truncates silently.
+	// A length mismatch truncates silently rather than failing.
 	const rowCount = Math.min(left.length, right.length);
 
 	for (let i = 0; i < rowCount; i++) {
@@ -95,7 +96,7 @@ function meanRows(
 }
 
 /**
- * Average two paired-end `Quality` objects into the composite Python stores.
+ * Average two paired-end `Quality` objects into the composite a sample stores.
  */
 export function compositeQuality(left: Quality, right: Quality): Quality {
 	const sequenceCount = Math.min(left.sequences.length, right.sequences.length);

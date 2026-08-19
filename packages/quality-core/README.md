@@ -42,14 +42,14 @@ Two more that are easy to miss:
   against. A file of nothing but high scores reads as Illumina, not Sanger.
 - **A cycle covered by 100 reads or fewer has no percentiles.** FastQC reports
   `NaN` for all five, which cannot be stored — not valid JSON, and rejected by
-  both the JSONB column and the `Quality` schema — so Python's parser
-  substituted the first value in the row that did parse, the mean, for the
-  whole row. That substitution happens here now. It is not a rare shape: a file
-  of variable-length reads thins out toward its longest read.
+  both the JSONB column and the `Quality` schema — so the row is resolved by
+  substituting the first value in it that is a real number, the mean, for the
+  whole row. It is not a rare shape: a file of variable-length reads thins out
+  toward its longest read.
 
-**Do not "correct" any of these.** The blob is compared against ones Python's
-`create_sample` wrote, and a more defensible statistic is a divergence in
-stored data.
+**Do not "correct" any of these.** The blob is compared against the ones
+samples already hold, and a more defensible statistic is a divergence in stored
+data.
 
 ## One divergence is deliberate: no binning
 
@@ -70,21 +70,20 @@ of the coarser one rather than a different measurement.
 
 ## The goldens come from FastQC, and must keep coming from FastQC
 
-`tests/fixtures/*.json` are blobs the *old* path produced: real FastQC 0.11.9
-wrote the report, and the field table above records exactly how each one maps
-onto `Quality`. **Never edit a golden to match this crate's output**, and never
-regenerate one from this crate. That converts a caught divergence into a
-permanent one, and leaves a test that asserts only that the code still does
-what it did.
+`tests/fixtures/*.json` are blobs derived from real FastQC 0.11.9 reports, and
+the field table above records exactly how each one maps onto `Quality`. They
+are frozen references. **Never edit a golden to make a failing comparison
+pass**, and never regenerate one from this crate. That converts a caught
+divergence into a permanent one, and leaves a test that asserts only that the
+code still does what it did.
 
-They are frozen, and there is no script here that writes them and no
-supported way to regenerate one. If a golden is ever found to be wrong, treat
-it the same as any other bug report against Python's `create_sample`: install
-FastQC 0.11.9 (a JRE and the full `perl`, not `perl-base` — its launcher opens
-with `use FindBin`), run it over the input with `-f fastq --extract`, and
-re-derive the expected `quality` and `baseGroups` from the raw report by hand
-against the field table above, rather than trusting a parser that has not
-been exercised since the port.
+There is no script here that writes them and no supported way to regenerate
+one. If a golden is ever found to be wrong, re-derive it from FastQC itself:
+install FastQC 0.11.9 (a JRE and the full `perl`, not `perl-base` — its
+launcher opens with `use FindBin`), run it over the input with `-f fastq
+--extract`, and work the expected `quality` and `baseGroups` out of the raw
+report by hand against the field table above, rather than trusting any parser
+to do it.
 
 The inputs are synthetic and are committed alongside the goldens, so nothing
 has to be reconstructed to do this. The script that first produced all of it
@@ -102,12 +101,11 @@ run, which would reach whichever ones it happened to:
 | `binned` | 400 reads of 150bp — the one deliberate divergence |
 
 `tests/fixtures/rounding.jsonl` is a separate corpus, 2,058 cases of
-`{value, digits, expected}` where `expected` is CPython's built-in
-`round(value, digits)`. It pins `round_half_even` against Python on every value
-the blob can hold — the figures are rounded half-to-even because Python's
-`round` is, and three implementations (Python, the TypeScript `roundHalfEven`
-in `packages/bio`, and this crate) have to agree. It is frozen on the same
-terms: regenerate it from CPython or not at all.
+`{value, digits, expected}` where `expected` is `value` rounded half to even at
+`digits` places, on the exact binary value of the double. It pins
+`round_half_even` on every value the blob can hold, and the TypeScript
+`roundHalfEven` in `packages/bio` must agree with it figure for figure. It is
+frozen on the same terms as the goldens above.
 
 ## Dependencies stay small
 

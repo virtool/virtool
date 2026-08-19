@@ -86,9 +86,10 @@ function narrowWorkflow(job: { id: number; workflow: string }): JobWorkflow {
  * A timestamp crosses as a `Date`: the RPC boundary serialises with seroval,
  * which revives one as a `Date` rather than the string `JSON.stringify` would
  * leave behind, so nothing here or on the client converts. The one column that
- * really does hold a string — `steps[].started_at`, which Python writes — is
- * converted by `fromStoredJobStep`, the same mapper the jobs API uses, so the
- * two boundaries cannot disagree about what that column means.
+ * really does hold a string — `steps[].started_at`, stored as an ISO string in
+ * the JSONB step list — is converted by `fromStoredJobStep`, the same mapper
+ * the jobs API uses, so the two boundaries cannot disagree about what that
+ * column means.
  */
 function toWireJob(record: JobRecord): Job {
 	return {

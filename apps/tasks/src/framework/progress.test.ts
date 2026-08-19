@@ -82,7 +82,7 @@ async function heldTask(runnerId: string): Promise<number> {
 }
 
 describe("roundHalfToEven", () => {
-	it("breaks a tie to the even side, as Python's round does", () => {
+	it("breaks a tie to the even side", () => {
 		expect(roundHalfToEven(62.5)).toBe(62);
 		expect(roundHalfToEven(12.5)).toBe(12);
 		expect(roundHalfToEven(63.5)).toBe(64);

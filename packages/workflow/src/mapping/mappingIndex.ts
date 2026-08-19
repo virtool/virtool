@@ -2,15 +2,14 @@
  * Building a bowtie2 index, and reusing one another run already built.
  *
  * This lives in the runtime rather than in one workflow app because the two
- * namespaces below are shared three ways: between this implementation and
- * Python's, and between every workflow that maps against a reference or a
- * subtraction. `bowtie2-build` produces the same shards from the same FASTA
- * whoever runs it, so the artifact really is interchangeable and the derivation
- * has to be identical everywhere.
+ * namespaces below are shared by every workflow that maps against a reference
+ * or a subtraction. `bowtie2-build` produces the same shards from the same
+ * FASTA whoever runs it, so the artifact really is interchangeable and the
+ * derivation has to be identical everywhere.
  *
  * **The workflow name is a parameter, not a constant.** It is a field in every
- * derived key, so pathoscope and nuvs memoize under separate keys while each
- * shares with its own Python counterpart. Hardcoding it here would silently give
+ * derived key — and in every key already in the bucket — so pathoscope and
+ * nuvs memoize under separate keys. Hardcoding it here would silently give
  * every caller the first one's namespace.
  */
 
@@ -81,14 +80,14 @@ export async function getBowtie2BuildVersion(
 /**
  * Params for the two shared mapping-index namespaces.
  *
- * Every key here must match Python's `get_mapping_index_cache_params` exactly.
- * There is deliberately no discriminator: sharing is the point.
+ * This field set is frozen: blobs already in the bucket are addressed by keys
+ * derived from exactly these fields. There is deliberately no discriminator:
+ * sharing is the point.
  *
- * **`parent_id` is a number, not a string.** Python's type hint says `str` but
- * both call sites pass an `int` — `WFIndex.id` and `WFSubtraction.id` are both
- * `int` — and `json.dumps` writes `"parent_id":5` where a string would give
- * `"parent_id":"5"`. Quoting it here derives a different SHA-256 and shares
- * nothing, with nothing to tell you.
+ * **`parent_id` is a number, not a string.** `WFIndex.id` and
+ * `WFSubtraction.id` are both integers, and the canonical form writes
+ * `"parent_id":5` where a string would give `"parent_id":"5"`. Quoting it here
+ * derives a different SHA-256 and shares nothing, with nothing to tell you.
  *
  * `extra` is what describes the FASTA the index was built from, and it differs
  * per workflow: pathoscope builds its reference index off a collapsed reference,
@@ -157,7 +156,7 @@ export type CreateMappingIndexOptions = {
  * archived as `reference_index/` and unpacks to the same place. That is what
  * makes a caller's work-path layout part of the cache contract rather than a
  * local convention: the directory holding `indexPrefix` is named inside the
- * blob, and it is a blob Python and every other workflow may restore.
+ * blob, and it is a blob every other workflow may restore.
  */
 export async function createMappingIndex({
 	cache,

@@ -111,8 +111,8 @@ describe("eliminateSubtraction", () => {
 		).resolves.toBe(17);
 	});
 
-	// Format-neutral flag names, not the SAM-flavoured PyO3 parameter names they
-	// replaced, and `--output` is the JSON results file rather than the alignments.
+	// Format-neutral flag names rather than SAM-flavoured ones, and `--output` is
+	// the JSON results file rather than the alignments.
 	it("uses the format-neutral alignment flags", async () => {
 		const outputPath = join(await tempDir(), "eliminate.json");
 		const runSubprocess = coreWriting({ subtracted: 0 });
@@ -170,7 +170,7 @@ describe("runExpectationMaximization", () => {
 		expect(results.read_count).toBe(12345);
 	});
 
-	// Singular, and unchanged from the PyO3 shim's parameter name.
+	// Singular: that is what the core's CLI names it.
 	it("passes the alignment as --alignment", async () => {
 		const outputPath = join(await tempDir(), "em.json");
 		const runSubprocess = coreWriting({ refs: [], read_count: 0 });
@@ -198,9 +198,9 @@ describe("subtractionProc", () => {
 		expect(subtractionProc(4)).toBe(3);
 	});
 
-	// Python passes `proc - 1` and its PyO3 shim took a bare `u32`, so a
-	// single-core run handed the core a zero. The CLI validates `--proc` as
-	// `range(1..)` and would refuse it.
+	// The core gets `proc - 1`, which is a zero on a single-core run. A bare `u32`
+	// would take that, but the CLI validates `--proc` as `range(1..)` and would
+	// refuse it.
 	it("never asks for fewer than one thread", () => {
 		expect(subtractionProc(1)).toBe(1);
 	});

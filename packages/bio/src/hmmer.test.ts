@@ -65,23 +65,22 @@ describe("parseHmmerTblout", () => {
 	/**
 	 * `best_bias` reads column 8 and `best_score` reads column 9, which hmmscan
 	 * documents as the best-domain score and bias respectively — so the two are
-	 * swapped. This is deliberate bug-compatibility with the Python workflow,
-	 * whose output is already stored under these names; see the note in
-	 * `hmmer.ts`.
+	 * SWAPPED ON PURPOSE. The values are already stored under these names in
+	 * every analysis `results` blob written so far; see the note in `hmmer.ts`.
 	 */
-	it("reproduces Python's swapped best_bias and best_score columns", () => {
+	it("reads best_bias and best_score from each other's columns", () => {
 		const [hit] = parse(TBLOUT);
 
-		// Column 8 is the best-domain score, 154.0, but Python calls it bias.
+		// Column 8 is the best-domain score, 154.0, reported as bias.
 		expect(hit.best_bias).toBe(154.0);
 
-		// Column 9 is the best-domain bias, 0.3, but Python calls it score.
+		// Column 9 is the best-domain bias, 0.3, reported as score.
 		expect(hit.best_score).toBe(0.3);
 	});
 
 	/**
-	 * Python raises IndexError here. Parsing on would put NaN into the hit and
-	 * carry it into the stored analysis document.
+	 * A row too short to reach field 9 is malformed. Parsing on would put NaN
+	 * into the hit and carry it into the stored analysis document.
 	 */
 	it("throws on a truncated vFam row rather than emitting NaN", () => {
 		expect(() => parse("vFam_5 - sequence_1.2 - 1e-10 10.0 0.1")).toThrow(

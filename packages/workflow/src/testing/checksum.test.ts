@@ -27,8 +27,8 @@ const CONTENT = ">seq_1\nACGTACGTACGTACGTACGT\n>seq_2\nTTTTGGGGCCCCAAAA\n";
 
 describe("checksumFile", () => {
 	// gzip embeds an mtime and varies by compressor and level, so hashing the
-	// compressed bytes would fail every comparison against a Python-produced
-	// fixture for reasons that have nothing to do with correctness.
+	// compressed bytes would fail every comparison against a fixture compressed
+	// by anything else, for reasons that have nothing to do with correctness.
 	it("gives a file and its gzipped form the same digest", async () => {
 		const path = await workPath();
 		const plain = join(path, "reads.fa");

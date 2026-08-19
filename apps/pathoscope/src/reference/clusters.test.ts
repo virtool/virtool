@@ -78,8 +78,8 @@ describe("parseCdHitClusters", () => {
 		expect(representatives.get("seq_2")).toBe("seq_1");
 	});
 
-	// cd-hit-est does not produce one, and Python treats it as a no-op rather
-	// than an error.
+	// cd-hit-est does not produce one, and it is treated as a no-op rather than
+	// an error.
 	it("drops a cluster with no representative", async () => {
 		const path = await withClusterFile(
 			[

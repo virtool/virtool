@@ -42,9 +42,9 @@ describe("defineWorkflow", () => {
 		expect(workflow.steps[0]?.name).toBe("Map to Default Isolates");
 	});
 
-	// The display name is what the UI already shows for a ported step, so it has
-	// to come out of the id the same way Python's `str.title()` does.
-	it("title-cases an id carrying a digit the way Python does", () => {
+	// The display name is what the UI shows, so it has to come out of the id
+	// with every letter whose predecessor is not a letter uppercased.
+	it("title-cases an id carrying a digit", () => {
 		const workflow = define([
 			makeStep({ id: "build_bowtie2_index", description: "Build the index." }),
 		]);

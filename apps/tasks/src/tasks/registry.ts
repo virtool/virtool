@@ -1,6 +1,6 @@
 import type { Db } from "@virtool/data/db/pg";
 import type { StorageBackend } from "@virtool/storage";
-import type { TaskRegistry } from "../framework/define";
+import type { CompleteTaskRegistry } from "../framework/define";
 import { cleanupSessionsTask } from "./cleanup-sessions";
 import { cloneReferenceTask } from "./clone-reference";
 import { createIndexTask } from "./create-index";
@@ -29,8 +29,8 @@ export type TaskContext = {
  *
  * The keys are the runner's allowed-types filter, handed to `acquireTask`. That
  * is the whole of how an unrecognised `tasks.type` is rejected: a row naming a
- * task absent from here is never claimed, so it stays queued for the Python
- * runner that does know it. Nothing validates the column, and nothing needs to
+ * task absent from here is never claimed, so it stays queued rather than being
+ * dispatched to nothing. Nothing validates the column, and nothing needs to
  * — the filter is the registry, so the two cannot disagree.
  *
  * Written as a literal map rather than derived from each body's `type`, so the
@@ -38,7 +38,7 @@ export type TaskContext = {
  * disagrees with its body's `type` would claim under one name and dispatch
  * another; `registry.test.ts` fails on any that do.
  */
-export const taskRegistry: TaskRegistry<TaskContext> = {
+export const taskRegistry: CompleteTaskRegistry<TaskContext> = {
 	cleanup_sessions: cleanupSessionsTask,
 	clone_reference: cloneReferenceTask,
 	create_index: createIndexTask,

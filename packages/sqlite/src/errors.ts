@@ -46,9 +46,8 @@ export class IndexArtifactMissingError extends IndexArtifactError {
  * An artifact's `metadata` table names a format this reader does not
  * understand.
  *
- * Reports what was expected alongside what was found. A version bump on
- * Python's side is the likely cause, and the found value is what says which
- * one.
+ * Reports what was expected alongside what was found. A format version bump is
+ * the likely cause, and the found value is what says which one.
  */
 export class IndexArtifactFormatError extends IndexArtifactError {
 	constructor(
@@ -70,9 +69,9 @@ export class IndexReferenceNotFoundError extends IndexArtifactError {}
 /**
  * An artifact holds no sequence for one or more of the requested ids.
  *
- * Python raises rather than returning a partial mapping, and so does this: the
- * caller is resolving alignment targets back to OTUs, and a silently dropped id
- * is a hit missing from the analysis.
+ * Raised rather than returning a partial mapping: the caller is resolving
+ * alignment targets back to OTUs, and a silently dropped id is a hit missing
+ * from the analysis.
  */
 export class IndexSequenceNotFoundError extends IndexArtifactError {
 	constructor(sequenceIds: string[]) {

@@ -26,9 +26,8 @@ greppable.
 
 `extractTarToDir` restores a whole tree and enforces the **cache archive
 contract**: exactly one top-level entry, staged and renamed so a failure leaves
-nothing behind, and the target must be free. It is what Python's `tarfile` on
-the other side of the cache boundary expects, and `writePathAsTar` is its
-inverse. Both are uncompressed-only, matching Python's `mode="w"`.
+nothing behind, and the target must be free. `writePathAsTar` is its inverse.
+Both are uncompressed-only.
 
 `extractTarMembers` pulls **named members** out of an archive whose other
 contents do not matter, to destinations the caller chooses. It takes `gzip:
@@ -55,15 +54,15 @@ asserts completion under a timeout rather than asserting an error.
 anything that is not a plain file or directory fail the extraction. A guard that
 only looks at what the caller asked for never looks at the payload.
 
-## Divergences from Python
+`extractTarToDir` stages and renames rather than pre-validating the archive up
+front, which on a stream parser would mean reading a multi-gigabyte file twice.
+Links and device nodes are refused outright, symlinks included, even ones that
+would stay inside the destination.
 
-`extractTarToDir` stages and renames rather than pre-validating with
-`getmembers()`, which would mean reading a multi-gigabyte archive twice on a
-stream parser. Links and device nodes are refused outright, where
-`filter="data"` admits a symlink that stays inside the destination.
+## Gzip
 
-`compressFile` drops the `pigz` branch: checksums are taken over decompressed
-content, so the gzip bytes need not match Python's.
+`compressFile` compresses in-process: checksums are taken over decompressed
+content, so the gzip bytes need not be reproducible.
 
 `decompressGzipToFile` takes an `AsyncIterable<Uint8Array>` so object-storage
 callers can inflate directly into a destination without buffering or retaining

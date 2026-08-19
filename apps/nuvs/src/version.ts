@@ -16,8 +16,8 @@ import pkg from "../package.json" with { type: "json" };
  * shipping one would leave two candidates for what the cluster runs.
  * `workflow_version` is part of all three of this workflow's cache keys, so
  * until this app is published with a real version none of them can coincide
- * with a Python run's and the two implementations share nothing. The derivation
- * is still exact — that is what the tests pin — but the sharing only starts at
- * cutover.
+ * with the key a blob already in the bucket was archived under, and nothing is
+ * restored. The derivation is still exact — that is what the tests pin — but
+ * reuse only starts once a real version ships.
  */
 export const APP_VERSION: string = pkg.version;

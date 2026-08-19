@@ -73,10 +73,7 @@ export type IndexOtu = {
 
 /** A downloadable file produced by an index build. */
 export type IndexFile = {
-	/**
-	 * Where the file can be downloaded from, relative to the API root. Index
-	 * files are still served by the Python API.
-	 */
+	/** Where the file can be downloaded from, relative to the API root. */
 	downloadUrl: string;
 
 	/** The unique identifier */

@@ -2,14 +2,14 @@
  * The cache namespaces this workflow reads and writes, and the params each key
  * is derived from.
  *
- * `deriveCacheKey` reproduces Python's `derive_key` byte for byte, so a params
- * object that matches Python's derives the same key and the two implementations
- * share the artifact. That sharing is silent when it works and silent when it
- * does not — a divergence misses every lookup and writes a second copy under a
- * key nothing else will ever ask for — so all three namespaces are pinned by
- * tests against known Python-generated keys.
+ * `deriveCacheKey` serialises the params byte for byte, so a params object that
+ * matches the one a blob was archived under derives the same key and the run
+ * reuses that blob. That reuse is silent when it works and silent when it does
+ * not — a divergence misses every lookup and writes a second copy under a key
+ * nothing else will ever ask for — so all three namespaces are pinned by tests
+ * against the keys blobs already in the bucket were written under.
  *
- * ## All three are shared, and none is forked
+ * ## None of the three is forked
  *
  * Unlike pathoscope, which forks its `collapsed_reference` namespace because the
  * artifact is a SQLite index *this code* writes, every artifact nuvs caches is
@@ -17,9 +17,9 @@
  * `bowtie2-build` for the two mapping indexes. Those are interchangeable
  * whoever ran them, so there is deliberately no discriminator anywhere here.
  *
- * `workflow` is a field in every one of them, so these namespaces are shared
- * with **Python nuvs**, not with pathoscope — the two workflows memoize their
- * bowtie2 indexes separately even where they would build identical shards.
+ * `workflow` is a field in every one of them, so these namespaces are nuvs'
+ * own and not pathoscope's — the two workflows memoize their bowtie2 indexes
+ * separately even where they would build identical shards.
  */
 
 import {
@@ -81,17 +81,17 @@ export type TrimmedReadsCacheParamsOptions = {
  * Params for the `trimmed_reads` namespace.
  *
  * **The discriminator key is `kind`, not `index_kind`.** The two mapping-index
- * namespaces spell it `index_kind`; this one does not, because Python's
- * `get_trimmed_reads_cache_params` does not. They are different dicts in
- * `utils.py` and the inconsistency is Python's — reproduced rather than tidied,
- * since tidying it forks the namespace.
+ * namespaces spell it `index_kind`; this one does not. The spellings are
+ * inconsistent between the namespaces, and that inconsistency is reproduced
+ * rather than tidied, since tidying it forks the namespace away from every blob
+ * already in the bucket.
  *
  * **`max_error_rate` and `max_indel_rate` are wrapped in {@link float}.** They
- * are Python floats, and an unmarked number serialises as an integer:
- * `json.dumps(0.1)` and `JSON.stringify(0.1)` agree, so today the two keys match
- * either way. They stop agreeing the moment either is configured to a whole
- * number — `1.0` against `1` — which is a divergence with nothing to announce
- * it.
+ * are floats and have to serialise with a decimal point; an unmarked number
+ * serialises as an integer. At the current defaults both spellings agree, so
+ * the marker is invisible today. They stop agreeing the moment either is
+ * configured to a whole number — `1.0` against `1` — which forks the namespace
+ * with nothing to announce it.
  */
 export function buildTrimmedReadsCacheParams({
 	minLength,

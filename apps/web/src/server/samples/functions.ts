@@ -46,7 +46,7 @@ const findSamplesSchema = z.object({
 });
 
 // The group id (or legacy string), or null when none applies. `""` and `"none"`
-// mean "no group", matching the Python request validator.
+// both mean "no group".
 const groupSchema = z.union([z.number().int(), z.string(), z.null()]);
 
 const updateSampleSchema = sampleIdSchema.extend(SampleUpdateRequest.shape);

@@ -8,8 +8,8 @@
  * The minimum length applied when the configured value isn't available.
  *
  * The unauthenticated forms render before their policy query resolves, and the
- * settings row may not exist at all on a database Python has never booted
- * against. Both fall back to this, which is why `DEFAULT_SETTINGS` seeds it.
+ * settings row may not exist at all on a database nothing has booted against.
+ * Both fall back to this, which is why `DEFAULT_SETTINGS` seeds it.
  */
 export const DEFAULT_MINIMUM_PASSWORD_LENGTH = 8;
 
