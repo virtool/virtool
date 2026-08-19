@@ -17,9 +17,6 @@ jobs. `release-ghcr` publishes all seven targets on every release.
 | `nuvs` | `ghcr.io/virtool/ts-nuvs` | `build-nuvs` |
 
 `dist` retains its name because tooling outside this repository targets it.
-The release tagged the same build as `ghcr.io/virtool/ui` as well while the
-cluster migrated to `web`. That tag is no longer written, so the `ui` tags
-still in the registry are frozen at the last release that carried them.
 
 The `ts-` prefix distinguishes these workflow images from the unprefixed names
 such as `ghcr.io/virtool/pathoscope` that earlier releases used. Nothing

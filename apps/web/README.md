@@ -847,18 +847,9 @@ transform.
 
 ### Working on the web app
 
-Live development runs against the local Tilt/Minikube cluster, not a standalone
-dev server. The cluster is the root `Tiltfile` and `dev/`, both in this
-repository — see [dev/README.md](../../dev/README.md) for the requirements and
-the `dev/scripts/init.sh` bootstrap.
-
-Once the cluster exists, start Tilt from the repo root with this app's live-edit
-flag on:
+Follow [the development guide](../../dev/README.md) to set up Tilt and Minikube,
+then start the web app's live-edit target from the repository root:
 
 ```shell
 tilt up -- --web
 ```
-
-`--web` is the one target that runs Vite in the pod rather than the built
-artifact, syncing `apps/web/src` and `packages` into it so an edit shows up
-without a rebuild. Virtool is then at <https://virtool.local>.
