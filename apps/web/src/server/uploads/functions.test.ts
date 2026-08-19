@@ -135,6 +135,57 @@ describe("findUploads", () => {
 
 		expect(result.items.map((upload) => upload.name)).toEqual(["reads.fq.gz"]);
 	});
+
+	it("orders by the requested column and direction", async () => {
+		const userId = await signIn(null);
+		await seedUpload(userId, { name: "beta.fq.gz" });
+		await seedUpload(userId, { name: "alpha.fq.gz" });
+
+		const result = (await call("findUploadsFn", {
+			page: 1,
+			perPage: 25,
+			sort: "name",
+			direction: "ascending",
+		})) as { items: { name: string }[] };
+
+		expect(result.items.map((upload) => upload.name)).toEqual([
+			"alpha.fq.gz",
+			"beta.fq.gz",
+		]);
+	});
+
+	// A direction on its own has nothing to order by, so it must not disturb the
+	// default newest-first ordering.
+	it("keeps the default order when a direction arrives without a column", async () => {
+		const userId = await signIn(null);
+		await seedUpload(userId, {
+			name: "older.fq.gz",
+			createdAt: new Date("2022-01-01T00:00:00Z"),
+		});
+		await seedUpload(userId, {
+			name: "newer.fq.gz",
+			createdAt: new Date("2022-02-01T00:00:00Z"),
+		});
+
+		const result = (await call("findUploadsFn", {
+			page: 1,
+			perPage: 25,
+			direction: "ascending",
+		})) as { items: { name: string }[] };
+
+		expect(result.items.map((upload) => upload.name)).toEqual([
+			"newer.fq.gz",
+			"older.fq.gz",
+		]);
+	});
+
+	it("rejects a column it does not sort by", async () => {
+		await signIn(null);
+
+		await expect(
+			call("findUploadsFn", { page: 1, perPage: 25, sort: "nameOnDisk" }),
+		).rejects.toThrow();
+	});
 });
 
 describe("deleteUpload", () => {

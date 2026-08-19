@@ -1,10 +1,11 @@
 import { cn } from "@app/cn";
-import type { ReactNode } from "react";
+import type { ComponentProps, ReactNode } from "react";
 import Table from "./Table";
 
 type BoxGroupTableProps = {
 	children: ReactNode;
 	className?: string;
+	variant?: ComponentProps<typeof Table>["variant"];
 };
 
 /**
@@ -13,6 +14,7 @@ type BoxGroupTableProps = {
 export default function BoxGroupTable({
 	children,
 	className,
+	variant,
 }: BoxGroupTableProps) {
 	return (
 		<Table
@@ -26,6 +28,7 @@ export default function BoxGroupTable({
 				"[&_td]:py-2 [&_th]:py-2",
 				className,
 			)}
+			variant={variant}
 		>
 			{children}
 		</Table>

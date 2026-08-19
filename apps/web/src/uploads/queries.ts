@@ -7,12 +7,26 @@ import {
 	useQueryClient,
 } from "@tanstack/react-query";
 import { fileQueryKeys } from "@uploads/keys";
-import type { UploadSearchResult, UploadType } from "@virtool/contracts";
+import type {
+	SortDirection,
+	UploadSearchResult,
+	UploadSortField,
+	UploadType,
+} from "@virtool/contracts";
 
-export function useListFiles(type: UploadType, page: number, perPage: number) {
+export function useListFiles(
+	type: UploadType,
+	page: number,
+	perPage: number,
+	sort: UploadSortField | undefined,
+	direction: SortDirection,
+) {
 	return useQuery<UploadSearchResult>({
-		queryKey: fileQueryKeys.list([type, page, perPage]),
-		queryFn: () => findUploadsFn({ data: { uploadType: type, page, perPage } }),
+		queryKey: fileQueryKeys.list([type, page, perPage, sort, direction]),
+		queryFn: () =>
+			findUploadsFn({
+				data: { uploadType: type, page, perPage, sort, direction },
+			}),
 		placeholderData: keepPreviousData,
 	});
 }

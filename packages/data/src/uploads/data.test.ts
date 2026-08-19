@@ -189,6 +189,83 @@ describe("findUploads", () => {
 		expect(result.items).toHaveLength(1);
 		expect(result.items[0]?.user).toEqual({ id: alice, handle: "alice" });
 	});
+
+	describe("sorting", () => {
+		async function seedSortable() {
+			const bob = await seedUser(db, { handle: "bob" });
+			const alice = await seedUser(db, { handle: "alice" });
+
+			await seedUpload(bob, {
+				name: "beta.fq.gz",
+				size: 30,
+				createdAt: new Date("2022-02-01T00:00:00Z"),
+			});
+			await seedUpload(alice, {
+				name: "alpha.fq.gz",
+				size: 10,
+				createdAt: new Date("2022-03-01T00:00:00Z"),
+			});
+			await seedUpload(bob, {
+				name: "gamma.fq.gz",
+				size: 20,
+				createdAt: new Date("2022-01-01T00:00:00Z"),
+			});
+		}
+
+		it.each([
+			["name", "ascending", ["alpha.fq.gz", "beta.fq.gz", "gamma.fq.gz"]],
+			["name", "descending", ["gamma.fq.gz", "beta.fq.gz", "alpha.fq.gz"]],
+			["size", "ascending", ["alpha.fq.gz", "gamma.fq.gz", "beta.fq.gz"]],
+			["size", "descending", ["beta.fq.gz", "gamma.fq.gz", "alpha.fq.gz"]],
+			["createdAt", "ascending", ["gamma.fq.gz", "beta.fq.gz", "alpha.fq.gz"]],
+			["createdAt", "descending", ["alpha.fq.gz", "beta.fq.gz", "gamma.fq.gz"]],
+			// alice uploaded only alpha; bob's two files follow, ordered by the id
+			// tiebreak rather than left to the planner.
+			["user", "ascending", ["alpha.fq.gz", "beta.fq.gz", "gamma.fq.gz"]],
+			["user", "descending", ["gamma.fq.gz", "beta.fq.gz", "alpha.fq.gz"]],
+		] as const)("orders by %s %s", async (field, direction, expected) => {
+			await seedSortable();
+
+			const result = await findUploads(db, undefined, 1, 25, undefined, {
+				direction,
+				field,
+			});
+
+			expect(result.items.map((upload) => upload.name)).toEqual(expected);
+		});
+
+		it("defaults to newest first when no column is given", async () => {
+			await seedSortable();
+
+			const result = await findUploads(db, undefined, 1, 25);
+
+			expect(result.items.map((upload) => upload.name)).toEqual([
+				"alpha.fq.gz",
+				"beta.fq.gz",
+				"gamma.fq.gz",
+			]);
+		});
+
+		// Offset pagination over a tied ordering can repeat or skip rows between
+		// pages, so the primary key breaks every tie.
+		it("pages through tied values without repeating or skipping a row", async () => {
+			const userId = await seedUser(db);
+			const tied = new Date("2022-01-01T00:00:00Z");
+
+			for (const name of ["one", "two", "three", "four"]) {
+				await seedUpload(userId, { name, size: 5, createdAt: tied });
+			}
+
+			const sort = { direction: "ascending", field: "size" } as const;
+
+			const first = await findUploads(db, undefined, 1, 2, undefined, sort);
+			const second = await findUploads(db, undefined, 2, 2, undefined, sort);
+
+			const ids = [...first.items, ...second.items].map((upload) => upload.id);
+
+			expect(new Set(ids).size).toBe(4);
+		});
+	});
 });
 
 describe("deleteUpload", () => {

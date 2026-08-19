@@ -1,6 +1,8 @@
 import type {
+	SortDirection,
 	Upload,
 	UploadSearchResult,
+	UploadSortField,
 	UploadType,
 	UserNested,
 } from "@virtool/contracts";
@@ -67,12 +69,40 @@ async function fetchUser(
 	return row ?? null;
 }
 
+/** Which column an upload list is ordered by, and in which direction. */
+export type UploadSort = {
+	direction: SortDirection;
+	field: UploadSortField;
+};
+
+const SORT_COLUMNS = {
+	createdAt: uploadsTable.createdAt,
+	name: uploadsTable.name,
+	size: uploadsTable.size,
+	user: usersTable.handle,
+} as const;
+
+/**
+ * The `ORDER BY` an upload list takes, defaulting to newest first.
+ *
+ * Every sortable column has ties — two files of the same size, two uploads made
+ * in the same second — and offset pagination over a tied ordering can repeat or
+ * skip rows between pages. The primary key breaks them, so the order is total.
+ */
+function buildOrderBy(sort: UploadSort | undefined) {
+	const order = sort?.direction === "ascending" ? asc : desc;
+	const column = sort ? SORT_COLUMNS[sort.field] : uploadsTable.createdAt;
+
+	return [order(column), order(uploadsTable.id)];
+}
+
 export async function findUploads(
 	db: DbOrTx,
 	uploadType: UploadType | undefined,
 	page: number,
 	perPage: number,
 	userId?: number,
+	sort?: UploadSort,
 ): Promise<UploadSearchResult> {
 	// A visible upload is finished, not deleted, and not held for a sample that
 	// is mid-creation.
@@ -109,7 +139,7 @@ export async function findUploads(
 			.from(uploadsTable)
 			.leftJoin(usersTable, eq(usersTable.id, uploadsTable.userId))
 			.where(and(...filters))
-			.orderBy(desc(uploadsTable.createdAt))
+			.orderBy(...buildOrderBy(sort))
 			.limit(perPage)
 			.offset(skip),
 	]);

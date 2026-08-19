@@ -19,3 +19,12 @@ export type SearchResult = {
 	/** The total number of items */
 	totalCount: number;
 };
+
+/**
+ * The directions a sorted list can be ordered in. The members match the values
+ * `aria-sort` takes, so a sortable column header can pass one straight through.
+ */
+export const SORT_DIRECTIONS = ["ascending", "descending"] as const;
+
+/** The direction a sorted list is ordered in. */
+export type SortDirection = (typeof SORT_DIRECTIONS)[number];

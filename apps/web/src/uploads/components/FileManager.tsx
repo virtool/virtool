@@ -3,6 +3,7 @@ import { checkAdminRoleOrPermissionsFromAccount } from "@administration/utils";
 import Alert from "@base/Alert";
 import Box from "@base/Box";
 import BoxGroup from "@base/BoxGroup";
+import BoxGroupTable from "@base/BoxGroupTable";
 import { Empty, EmptyDescription, EmptyMedia, EmptyTitle } from "@base/Empty";
 import LoadingPlaceholder from "@base/LoadingPlaceholder";
 import Pagination from "@base/Pagination";
@@ -11,7 +12,12 @@ import { useListSelection } from "@base/useListSelection";
 import ViewHeader from "@base/ViewHeader";
 import ViewHeaderTitle from "@base/ViewHeaderTitle";
 import ViewHeaderTitleBadge from "@base/ViewHeaderTitleBadge";
-import type { Upload, UploadType } from "@virtool/contracts";
+import type {
+	SortDirection,
+	Upload,
+	UploadSortField,
+	UploadType,
+} from "@virtool/contracts";
 import { capitalize } from "es-toolkit";
 import { AlertCircle, FileUp } from "lucide-react";
 import type { MouseEvent, ReactNode } from "react";
@@ -21,10 +27,14 @@ import { upload } from "../uploader";
 import { UploadBar } from "./UploadBar";
 import UploadItem from "./UploadItem";
 import UploadListHeader from "./UploadListHeader";
+import UploadTableHead from "./UploadTableHead";
 
 export type FileManagerProps = {
 	/* The MIME-types and extensions to accept. */
 	accept: Accept;
+
+	/* The direction the sorted column is ordered in. */
+	direction?: SortDirection;
 
 	/* The type of file accepted. */
 	fileType: UploadType;
@@ -42,16 +52,24 @@ export type FileManagerProps = {
 	renderItemAction?: (upload: Upload, uploads: Upload[]) => ReactNode;
 
 	setPage?: (page: number) => void;
+
+	setSort?: (sort: UploadSortField, direction: SortDirection) => void;
+
+	/* The column the list is sorted by, or undefined for newest first. */
+	sort?: UploadSortField;
 };
 
 export function FileManager({
 	accept,
+	direction = "descending",
 	fileType,
 	hint,
 	page = 1,
 	regex,
 	renderItemAction,
 	setPage = () => {},
+	setSort = () => {},
+	sort,
 }: FileManagerProps) {
 	const {
 		data: account,
@@ -62,7 +80,7 @@ export function FileManager({
 		data: files,
 		isPending: isPendingFiles,
 		isError: isErrorFiles,
-	} = useListFiles(fileType, page, 25);
+	} = useListFiles(fileType, page, 25, sort, direction);
 
 	// The uploads themselves are held, not just their ids, so a selection made on
 	// one page survives paging away from it.
@@ -104,6 +122,15 @@ export function FileManager({
 	function handleDelete() {
 		deleteFiles({ ids: selection.selected.map((item) => item.id) });
 		selection.clear();
+	}
+
+	// A column already sorted by reverses; a new one starts ascending, so the
+	// first click on any header moves the list somewhere it visibly wasn't.
+	function handleSort(field: UploadSortField) {
+		setSort(
+			field,
+			sort === field && direction === "ascending" ? "descending" : "ascending",
+		);
 	}
 
 	return (
@@ -156,33 +183,45 @@ export function FileManager({
 						{canDelete && (
 							<UploadListHeader
 								canDelete={canDelete}
-								checked={selection.getVisibleState(files.items)}
 								found={files.foundCount}
 								onDelete={handleDelete}
-								onSelectAll={() => selection.toggleVisible(files.items)}
 								selectedCount={selection.selected.length}
 							/>
 						)}
-						<ul className="list-none">
-							{files.items.map((item) => (
-								<UploadItem
-									{...item}
-									action={renderItemAction?.(item, files.items)}
-									canDelete={canDelete}
-									checked={selection.isSelected(item)}
-									key={item.id}
-									onSelect={
-										canDelete
-											? (event: MouseEvent<HTMLButtonElement>) =>
-													selection.select(item, {
-														shiftKey: event.shiftKey,
-														visibleItems: files.items,
-													})
-											: undefined
-									}
-								/>
-							))}
-						</ul>
+						<BoxGroupTable variant="data">
+							<caption className="sr-only">{title}</caption>
+							<UploadTableHead
+								checked={selection.getVisibleState(files.items)}
+								direction={direction}
+								onSelectAll={
+									canDelete
+										? () => selection.toggleVisible(files.items)
+										: undefined
+								}
+								onSort={handleSort}
+								sort={sort}
+							/>
+							<tbody>
+								{files.items.map((item) => (
+									<UploadItem
+										{...item}
+										action={renderItemAction?.(item, files.items)}
+										canDelete={canDelete}
+										checked={selection.isSelected(item)}
+										key={item.id}
+										onSelect={
+											canDelete
+												? (event: MouseEvent<HTMLButtonElement>) =>
+														selection.select(item, {
+															shiftKey: event.shiftKey,
+															visibleItems: files.items,
+														})
+												: undefined
+										}
+									/>
+								))}
+							</tbody>
+						</BoxGroupTable>
 					</BoxGroup>
 				</Pagination>
 			)}
