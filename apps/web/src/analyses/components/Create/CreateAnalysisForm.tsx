@@ -1,18 +1,11 @@
 import { useCompatibleIndexes, useSubtractionOptions } from "@analyses/hooks";
 import { useCreateAnalysis } from "@analyses/queries";
 import Button from "@base/Button";
+import CreatedCount from "@base/CreatedCount";
 import { DialogFooter } from "@base/Dialog";
 import InputError from "@base/InputError";
 import QueryError from "@base/QueryError";
 import Switch from "@base/Switch";
-import {
-	Toast,
-	ToastClose,
-	ToastDescription,
-	ToastProvider,
-	ToastTitle,
-	ToastViewport,
-} from "@base/Toast";
 import SubtractionSelector from "@subtraction/components/SubtractionSelector";
 import type { AnalysisWorkflow } from "@virtool/contracts";
 import { useState } from "react";
@@ -26,13 +19,6 @@ type CreateAnalysisFormValues = {
 	indexId: string;
 	subtractionIds: number[];
 	workflow: AnalysisWorkflow;
-};
-
-/** A dismissible confirmation shown after analyses are created with "Create more" on. */
-type CreatedAnalysis = {
-	id: number;
-	count: number;
-	workflow: string;
 };
 
 type CreateAnalysisFormProps = {
@@ -90,8 +76,7 @@ export default function CreateAnalysisForm({
 	} = useForm<CreateAnalysisFormValues>({ defaultValues });
 
 	const [createMore, setCreateMore] = useState(false);
-	const [createdAnalysis, setCreatedAnalysis] =
-		useState<CreatedAnalysis | null>(null);
+	const [createdCount, setCreatedCount] = useState(0);
 
 	if (isErrorIndexes || isErrorSubtractions) {
 		return <QueryError noun="analysis options" />;
@@ -132,13 +117,7 @@ export default function CreateAnalysisForm({
 		}
 
 		reset(defaultValues);
-		setCreatedAnalysis({
-			id: created[0]?.id ?? 0,
-			count: created.length,
-			workflow:
-				compatibleWorkflows.find((option) => option.id === workflow)?.name ??
-				workflow,
-		});
+		setCreatedCount((count) => count + created.length);
 	}
 
 	return (
@@ -204,6 +183,12 @@ export default function CreateAnalysisForm({
 				</div>
 
 				<div className="flex items-center gap-4">
+					<CreatedCount
+						count={createdCount}
+						onExpire={() => setCreatedCount(0)}
+						plural="analyses"
+						singular="analysis"
+					/>
 					<CreateAnalysisSummary
 						sampleCount={sampleCount}
 						indexCount={watch("indexId") ? 1 : 0}
@@ -213,31 +198,6 @@ export default function CreateAnalysisForm({
 					</Button>
 				</div>
 			</DialogFooter>
-
-			<ToastProvider>
-				{createdAnalysis && (
-					<Toast
-						key={createdAnalysis.id}
-						onOpenChange={(open) => {
-							if (!open) {
-								setCreatedAnalysis(null);
-							}
-						}}
-						open
-					>
-						<div>
-							<ToastTitle>
-								{createdAnalysis.count === 1
-									? "Analysis created"
-									: `${createdAnalysis.count} analyses created`}
-							</ToastTitle>
-							<ToastDescription>{createdAnalysis.workflow}</ToastDescription>
-						</div>
-						<ToastClose />
-					</Toast>
-				)}
-				<ToastViewport />
-			</ToastProvider>
 		</form>
 	);
 }

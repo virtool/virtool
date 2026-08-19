@@ -1,7 +1,9 @@
+import { useTimedReset } from "@app/hooks";
 import Alert from "@base/Alert";
 import BoxGroup from "@base/BoxGroup";
 import BoxGroupHeader from "@base/BoxGroupHeader";
 import BoxGroupSection from "@base/BoxGroupSection";
+import FadeOut from "@base/FadeOut";
 import InputContainer from "@base/InputContainer";
 import InputError from "@base/InputError";
 import InputGroup from "@base/InputGroup";
@@ -45,12 +47,10 @@ export default function AccountPassword({
 	useEffect(() => {
 		if (mutation.isSuccess) {
 			reset();
-			const timer = setTimeout(() => {
-				mutation.reset();
-			}, 3000);
-			return () => clearTimeout(timer);
 		}
-	}, [mutation.isSuccess, reset, mutation.reset]);
+	}, [mutation.isSuccess, reset]);
+
+	useTimedReset(mutation.isSuccess, mutation.reset);
 
 	function onSubmit({ oldPassword, newPassword }: FormValues) {
 		mutation.mutate({ oldPassword, password: newPassword });
@@ -110,11 +110,13 @@ export default function AccountPassword({
 							</InputError>
 						</InputContainer>
 					</InputGroup>
-					{mutation.isSuccess && (
-						<Alert color="green" icon={Check}>
-							Password changed successfully
-						</Alert>
-					)}
+					<FadeOut role="status">
+						{mutation.isSuccess ? (
+							<Alert color="green" icon={Check}>
+								Password changed successfully
+							</Alert>
+						) : null}
+					</FadeOut>
 					<div className="flex items-center justify-between mb-4">
 						<span>
 							Last changed <RelativeTime time={lastPasswordChange} />
