@@ -4,24 +4,38 @@ import { Toast as ToastPrimitive } from "radix-ui";
 import type { ComponentPropsWithoutRef, ReactNode } from "react";
 import { buttonVariants } from "./buttonVariants";
 
-export const ToastProvider = ToastPrimitive.Provider;
+type ToastProviderProps = ComponentPropsWithoutRef<
+	typeof ToastPrimitive.Provider
+>;
+
+/**
+ * Provides the toast context. Toasts sit at the bottom-left of the screen, so
+ * they swipe left to dismiss.
+ */
+export function ToastProvider({
+	swipeDirection = "left",
+	...props
+}: ToastProviderProps) {
+	return <ToastPrimitive.Provider swipeDirection={swipeDirection} {...props} />;
+}
 
 type ToastViewportProps = {
 	className?: string;
 };
 
 /**
- * A fixed viewport that anchors toasts to the bottom-right of the screen and
- * stacks them vertically.
+ * A fixed viewport that anchors toasts to the bottom-left of the screen and
+ * stacks them vertically. Primary actions sit at the bottom-right of dialogs
+ * and forms, so toasts stay on the opposite side to avoid covering them.
  */
 export function ToastViewport({ className }: ToastViewportProps) {
 	return (
 		<ToastPrimitive.Viewport
 			className={cn(
-				"fixed bottom-0 right-0 z-toast",
+				"fixed bottom-0 left-0 z-toast",
 				"flex flex-col gap-2",
 				"m-0 p-6 w-full sm:max-w-md",
-				"list-none outline-none",
+				"list-none outline-none pointer-events-none",
 				className,
 			)}
 		/>
