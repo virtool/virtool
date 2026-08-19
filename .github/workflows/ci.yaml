@@ -190,11 +190,11 @@ jobs:
                       target: tasks
                       workspace: apps/tasks
                       area: Tasks
-                    - image: ts-create-sample
+                    - image: create-sample
                       target: create-sample
                       workspace: apps/create-sample
                       area: Create Sample
-                    - image: ts-create-subtraction
+                    - image: create-subtraction
                       target: create-subtraction
                       workspace: apps/create-subtraction
                       area: Create Subtraction
@@ -214,8 +214,7 @@ jobs:
                   # have each matrix leg overwrite the last one's cache.
                   cache-from: type=gha,scope=${{ matrix.image }}
                   cache-to: type=gha,mode=max,scope=${{ matrix.image }}
-    # Also published by `release-ghcr` as `ghcr.io/virtool/ts-pathoscope` and
-    # `ghcr.io/virtool/pathoscope`.
+    # Also published by `release-ghcr` as `ghcr.io/virtool/pathoscope`.
     build-pathoscope:
         name: Pathoscope / Build
         runs-on: ubuntu-24.04
@@ -332,8 +331,7 @@ jobs:
     # -------------------------------------------------------------------------
     # NuVs (apps/nuvs)
     # -------------------------------------------------------------------------
-    # Also published by `release-ghcr` as `ghcr.io/virtool/ts-nuvs` and
-    # `ghcr.io/virtool/nuvs`.
+    # Also published by `release-ghcr` as `ghcr.io/virtool/nuvs`.
     #
     # The 45-minute timeout is longer than pathoscope's 30: this image compiles
     # SPAdes from source, which is the single most expensive thing either
@@ -610,47 +608,32 @@ jobs:
                       target: tasks
                       workspace: apps/tasks
                       images: ghcr.io/virtool/tasks
-                    # These four also publish their bare, unprefixed name
-                    # (e.g. `ghcr.io/virtool/create-sample`). That name
-                    # previously came from a separate legacy repository
-                    # shipping the Python workflow of the same name; this
-                    # release now supersedes it, so both tags point at the
-                    # TS-based image.
-                    - image: ts-create-sample
+                    # These four names previously came from separate legacy
+                    # repositories shipping the Python workflow of the same
+                    # name; this repository's release supersedes them.
+                    - image: create-sample
                       target: create-sample
                       workspace: apps/create-sample
-                      images: |
-                          ghcr.io/virtool/ts-create-sample
-                          ghcr.io/virtool/create-sample
-                    - image: ts-create-subtraction
+                      images: ghcr.io/virtool/create-sample
+                    - image: create-subtraction
                       target: create-subtraction
                       workspace: apps/create-subtraction
-                      images: |
-                          ghcr.io/virtool/ts-create-subtraction
-                          ghcr.io/virtool/create-subtraction
-                    # cache-scope overrides matrix.image: build-pathoscope and
-                    # build-nuvs write their gha cache under the bare
-                    # `pathoscope` / `nuvs` scope (matching pathoscope-test's
-                    # bowtie2 scope too), not `ts-pathoscope` / `ts-nuvs`. A
-                    # release that read matrix.image here would miss those
-                    # caches and rebuild the Rust crate, the bioinformatics
-                    # tools and SPAdes from scratch inside this job's shared
-                    # 20-minute timeout, instead of reusing what the
-                    # 45/60-minute build jobs already produced.
-                    - image: ts-pathoscope
+                      images: ghcr.io/virtool/create-subtraction
+                    # These two read their gha cache under the same scope
+                    # build-pathoscope and build-nuvs write it to (matching
+                    # pathoscope-test's bowtie2 scope too), so the release
+                    # reuses what those 45/60-minute jobs already produced
+                    # rather than rebuilding the Rust crate, the
+                    # bioinformatics tools and SPAdes from scratch inside this
+                    # job's shared 20-minute timeout.
+                    - image: pathoscope
                       target: pathoscope
                       workspace: apps/pathoscope
-                      images: |
-                          ghcr.io/virtool/ts-pathoscope
-                          ghcr.io/virtool/pathoscope
-                      cache-scope: pathoscope
-                    - image: ts-nuvs
+                      images: ghcr.io/virtool/pathoscope
+                    - image: nuvs
                       target: nuvs
                       workspace: apps/nuvs
-                      images: |
-                          ghcr.io/virtool/ts-nuvs
-                          ghcr.io/virtool/nuvs
-                      cache-scope: nuvs
+                      images: ghcr.io/virtool/nuvs
         steps:
             - name: Checkout
               uses: actions/checkout@v7
@@ -682,7 +665,7 @@ jobs:
                   tags: ${{ steps.meta.outputs.tags }}
                   target: ${{ matrix.target }}
                   labels: ${{ steps.meta.outputs.labels }}
-                  cache-from: type=gha,scope=${{ matrix.cache-scope || matrix.image }}
-                  cache-to: type=gha,mode=max,scope=${{ matrix.cache-scope || matrix.image }}
+                  cache-from: type=gha,scope=${{ matrix.image }}
+                  cache-to: type=gha,mode=max,scope=${{ matrix.image }}
                   secrets: |
                       sentry_auth_token=${{ secrets.SENTRY_AUTH_TOKEN }}

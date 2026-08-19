@@ -11,30 +11,27 @@ jobs. `release-ghcr` publishes all seven targets on every release.
 | `dist` | `ghcr.io/virtool/web` | `build` |
 | `jobs-api` | `ghcr.io/virtool/jobs-api` | `build` |
 | `tasks` | `ghcr.io/virtool/tasks` | `build` |
-| `create-sample` | `ghcr.io/virtool/ts-create-sample`, `ghcr.io/virtool/create-sample` | `build` |
-| `create-subtraction` | `ghcr.io/virtool/ts-create-subtraction`, `ghcr.io/virtool/create-subtraction` | `build` |
-| `pathoscope` | `ghcr.io/virtool/ts-pathoscope`, `ghcr.io/virtool/pathoscope` | `build-pathoscope` |
-| `nuvs` | `ghcr.io/virtool/ts-nuvs`, `ghcr.io/virtool/nuvs` | `build-nuvs` |
+| `create-sample` | `ghcr.io/virtool/create-sample` | `build` |
+| `create-subtraction` | `ghcr.io/virtool/create-subtraction` | `build` |
+| `pathoscope` | `ghcr.io/virtool/pathoscope` | `build-pathoscope` |
+| `nuvs` | `ghcr.io/virtool/nuvs` | `build-nuvs` |
 
 `dist` retains its name because tooling outside this repository targets it.
 
-The four workflow images publish under both their `ts-` prefixed name and
-their bare, unprefixed name (e.g. `ghcr.io/virtool/pathoscope`). The bare name
-previously came from separate legacy repositories shipping the Python
-workflow of the same name; this repository's release now supersedes those, so
-both tags point at the same TS-based image. The `ts-` prefix is kept
-alongside the bare name only so an existing deployment pinned to it keeps
-pulling the same tag.
+The four workflow images publish under their bare, unprefixed names. Those
+names previously came from separate legacy repositories shipping the Python
+workflow of the same name; this repository's release supersedes them. The
+`ts-` prefixed variants were a transitional second tag during the TypeScript
+port and are no longer published; their existing tags stay in the registry
+but never move again.
 
 Adding an image requires a Dockerfile target and a release-matrix entry. For
 the five targets in `build`, keep its matrix entry in step with
-`release-ghcr`. Pathoscope and Nuvs instead use the dedicated build jobs above
-and release entries whose `cache-scope` values are `pathoscope` and `nuvs`.
-Those overrides reuse the caches populated by the long build jobs rather than
-rebuilding the Rust crate, bioinformatics tools, or SPAdes inside the shared
-20-minute release timeout. Give a workflow image's release entry both its
-`ts-` prefixed and bare `images:` names as a multi-line list, matching the
-existing four.
+`release-ghcr`. Pathoscope and Nuvs instead use the dedicated build jobs
+above, and their `matrix.image` values must match the cache scopes those jobs
+write, so the release reuses the caches they populated rather than rebuilding
+the Rust crate, bioinformatics tools, or SPAdes inside the shared 20-minute
+release timeout.
 
 Build one image locally by naming its target:
 

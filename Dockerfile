@@ -248,7 +248,7 @@ COPY --from=seqkit /tools/seqkit/2.13.0/seqkit /usr/local/bin/
 COPY --from=build-create-subtraction /prod/create-subtraction ./
 CMD ["node", "dist/index.mjs"]
 
-# The create-sample workflow, published as ghcr.io/virtool/ts-create-sample. It
+# The create-sample workflow, published as ghcr.io/virtool/create-sample. It
 # turns a user's uploaded FASTQ files into a sample an analysis can run against.
 FROM base AS build-create-sample
 COPY apps/create-sample ./apps/create-sample
@@ -303,7 +303,7 @@ COPY --from=pathoscope-builder /build/target/release/pathoscope-core /usr/local/
 COPY --from=build-pathoscope /prod/pathoscope ./
 CMD ["node", "dist/index.mjs"]
 
-# The NuVs workflow, published as ghcr.io/virtool/ts-nuvs. It finds viruses the
+# The NuVs workflow, published as ghcr.io/virtool/nuvs. It finds viruses the
 # reference does not describe, by discarding reads that map to a known OTU or a
 # subtraction, assembling what is left with SPAdes and searching the contigs
 # for viral motifs with HMMER.

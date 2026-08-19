@@ -6,7 +6,7 @@ against one representative per OTU to find candidates, rebuilds an index
 carrying every isolate of just those OTUs, maps again, drops reads that belong
 to the host, and reassigns the reads that matched more than one isolate.
 
-Image: `ghcr.io/virtool/ts-pathoscope`. Eight steps, four external
+Image: `ghcr.io/virtool/pathoscope`. Eight steps, four external
 tools — `bowtie2`, `cd-hit-est`, `pigz`, `samtools` — and `pathoscope-core`,
 which it drives **as a subprocess**; there is no FFI here and adding one is out
 of scope by decision.

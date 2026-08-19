@@ -139,7 +139,7 @@ export function createFakeJobClaim(
 		runnerId: `runner-${random.hex(8)}`,
 		mem: 8,
 		cpu: 2,
-		image: "ghcr.io/virtool/ts-create-subtraction:1.0.0",
+		image: "ghcr.io/virtool/create-subtraction:1.0.0",
 		runtimeVersion: "1.0.0",
 		workflowVersion: "1.0.0",
 		...overrides,

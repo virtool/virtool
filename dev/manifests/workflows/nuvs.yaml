@@ -1,7 +1,3 @@
-# `ghcr.io/virtool/ts-nuvs` is published on release, but no tag of this name
-# exists in the registry until the first release that carries it. Run this
-# ScaledJob under `tilt up -- --nuvs` meanwhile, which builds the image
-# locally. The same holds for pathoscope.
 apiVersion: keda.sh/v1alpha1
 kind: ScaledJob
 metadata:
@@ -23,7 +19,7 @@ spec:
       spec:
         containers:
           - name: workflow-nuvs
-            image: ghcr.io/virtool/ts-nuvs:latest
+            image: ghcr.io/virtool/nuvs:latest
             # VT_MEM is the cap SPAdes is given, so it moves with the memory
             # limit below rather than being sized independently — a value above
             # the limit is an OOMKill rather than a slower assembly.

@@ -85,7 +85,7 @@ function claimBody() {
 		runnerId: "runner-1",
 		mem: 4,
 		cpu: 2,
-		image: "ghcr.io/virtool/ts-pathoscope:1.0.0",
+		image: "ghcr.io/virtool/pathoscope:1.0.0",
 		runtimeVersion: "1.2.3",
 		workflowVersion: "4.5.6",
 		steps: STEPS,
@@ -234,7 +234,7 @@ describe("handleClaimJob", () => {
 			runnerId: "runner-1",
 			mem: 4,
 			cpu: 2,
-			image: "ghcr.io/virtool/ts-pathoscope:1.0.0",
+			image: "ghcr.io/virtool/pathoscope:1.0.0",
 			runtimeVersion: "1.2.3",
 			workflowVersion: "4.5.6",
 		});
@@ -252,7 +252,7 @@ describe("handleClaimJob", () => {
 			runner_id: "runner-1",
 			mem: 4,
 			cpu: 2,
-			image: "ghcr.io/virtool/ts-pathoscope:1.0.0",
+			image: "ghcr.io/virtool/pathoscope:1.0.0",
 			runtime_version: "1.2.3",
 			workflow_version: "4.5.6",
 		});
