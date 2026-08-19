@@ -1,12 +1,8 @@
-// Mirror of the `settings` table managed by the upstream Python service via
-// Alembic. Do not generate or push migrations from this side. Keep the columns
-// in sync with `../../../../../../virtool/virtool/settings/sql.py`.
+// Mirror of the `settings` table.
 //
-// The table is a singleton: exactly one row, pinned to `id = 1`. Python seeds
-// it in the `d16de6e24788` migration and re-seeds it at startup via
-// `SettingsData.ensure()`. No column has a server default — the defaults live
-// in Python's `Settings` model and are written into the row on insert, which is
-// why `DEFAULT_SETTINGS` in `../../settings/data.ts` mirrors them rather than
+// The table is a singleton: exactly one row, pinned to `id = 1`. No column has
+// a server default — the defaults are written into the row on insert, which is
+// why `DEFAULT_SETTINGS` in `../../settings/data.ts` holds them rather than
 // this file. `enable_api` is the one exception, for the reason given below.
 
 import { sql } from "drizzle-orm";
@@ -37,10 +33,9 @@ export const settings = pgTable(
 			.$type<string[]>()
 			.notNull(),
 		// Virtool no longer exposes a JSON API toggle, so `Settings` does not
-		// carry this and nothing reads it. Python still declares the column
-		// NOT NULL with no server default, so an insert that omits it fails —
-		// hence the client-side default. Drop the column here once Python drops
-		// it from its own schema.
+		// carry this and nothing reads it. The column is still NOT NULL with no
+		// server default, so an insert that omits it fails — hence the
+		// client-side default. The column itself is droppable.
 		enableApi: boolean("enable_api")
 			.notNull()
 			.$defaultFn(() => false),

@@ -37,8 +37,8 @@ describe("claim round trip", () => {
 			"workflow_version",
 		]);
 
-		// The column content must survive a JSON round trip byte-for-byte, because
-		// Python reads and writes these same keys.
+		// The column content must survive a JSON round trip byte-for-byte: rows
+		// already written carry these same keys.
 		const fromColumn = StoredJobClaim.parse(JSON.parse(JSON.stringify(stored)));
 
 		expect(fromStoredJobClaim(fromColumn)).toStrictEqual(claim);
@@ -59,11 +59,11 @@ describe("step round trip", () => {
 		startedAt: new Date(STARTED_AT),
 	};
 
-	// The wire carries a `Date` and the column carries the ISO string Python
-	// wrote, so this pair is the only place the two spellings meet. Both halves
-	// matter: a `Date` reaching the column would be stored as an object Python
-	// cannot read, and a string reaching the wire would arrive as a string every
-	// caller has to remember to parse.
+	// The wire carries a `Date` and the column carries an ISO string, so this
+	// pair is the only place the two spellings meet. Both halves matter: a `Date`
+	// reaching the column would be stored as an object nothing can read, and a
+	// string reaching the wire would arrive as a string every caller has to
+	// remember to parse.
 	it("persists startedAt as an ISO string under started_at, and back as a Date", () => {
 		const stored = toStoredJobStep(JobStep.parse(step));
 
@@ -117,8 +117,7 @@ describe("Job timestamps", () => {
 	});
 
 	// The handler hands `Response.json` the `Date` it read out of Postgres, and
-	// `JSON.stringify` calls `Date.prototype.toJSON`. Python reads these bytes,
-	// so they must not have moved.
+	// `JSON.stringify` calls `Date.prototype.toJSON`. These bytes must not move.
 	it("encodes back to the same ISO string it arrived as", () => {
 		const encoded = JSON.parse(JSON.stringify(Job.parse(job())));
 
@@ -164,8 +163,8 @@ describe("Job", () => {
 	};
 
 	it("accepts a build_index job on the read path", () => {
-		// `build_index` stays Python-owned and is never handed out at claim time,
-		// but its rows exist and must still parse.
+		// `build_index` is never handed out at claim time, but its rows exist and
+		// must still parse.
 		expect(Job.safeParse({ ...base, workflow: "build_index" }).success).toBe(
 			true,
 		);

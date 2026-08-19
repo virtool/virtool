@@ -13,7 +13,7 @@ const WORK_PATH = "/work";
 
 const PATHS = workPaths(WORK_PATH, SUBTRACTION_ID);
 
-/** Python's mixed-case fixture, as seqkit reports it. */
+/** A mixed-case two-record fixture, as seqkit reports it. */
 const RECORDS = ["seq_1\t2\t2\t2\t2\t2", "seq_2\t3\t3\t2\t2\t0"];
 
 function setup(stdout: string[] = RECORDS, cancelled = false) {
@@ -83,8 +83,7 @@ describe("computeGcAndCountStep", () => {
 	});
 
 	// A cancelled seqkit was killed part way through, so its totals cover only
-	// the records that arrived first. This is the case Python guards with an
-	// explicit return-code check.
+	// the records that arrived first.
 	it("records nothing when the run was cancelled", async () => {
 		const { context } = setup(RECORDS, true);
 

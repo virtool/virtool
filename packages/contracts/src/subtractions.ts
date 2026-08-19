@@ -67,9 +67,9 @@ export type SubtractionUpload = {
 /**
  * A subtraction's create job, reduced to what the list and detail show.
  *
- * `state` and `workflow` come out of plain `text` columns Python writes, so the
- * union is asserted once where the row is mapped rather than threaded through
- * as `string`.
+ * `state` and `workflow` come out of plain `text` columns, so the union is
+ * asserted once where the row is mapped rather than threaded through as
+ * `string`.
  */
 export type SubtractionJobMinimal = {
 	id: number;

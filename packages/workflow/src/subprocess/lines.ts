@@ -30,9 +30,9 @@ export type CreateLineSplitterOptions = {
  * Splitting on the newline byte is safe without decoding first, because every
  * byte of a multi-byte UTF-8 sequence has its high bit set and so can never be
  * `0x0a`. Each line is then decoded on its own, with invalid sequences
- * replaced by U+FFFD — Python uses `backslashreplace`, but nothing reads these
- * lines back as bytes and the replacement character is what every other string
- * in this codebase does with undecodable input.
+ * replaced by U+FFFD. Nothing reads these lines back as bytes, and the
+ * replacement character is what every other string in this codebase does with
+ * undecodable input.
  */
 export function createLineSplitter({
 	onLine,
@@ -96,9 +96,8 @@ export function createLineSplitter({
 /**
  * Decode one line, dropping the carriage return a CRLF stream leaves behind.
  *
- * Only the newline is stripped. Python's `rstrip()` takes every trailing
- * whitespace character with it, which would silently reflow the aligned
- * columns a tool writes to stderr.
+ * Only the newline is stripped. Taking every trailing whitespace character
+ * with it would silently reflow the aligned columns a tool writes to stderr.
  */
 function decode(line: Buffer): string {
 	const end =

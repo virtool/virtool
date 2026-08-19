@@ -35,19 +35,18 @@ const KEYS = [
 const positiveInteger = z.coerce.number().int().positive();
 
 const schema = z.object({
-	// Python calls this `VT_JOBS_API_CONNECTION_STRING` and defaults it to
-	// `https://localhost:9950`, which in a pod silently polls nothing and looks
-	// like an idle runner rather than a misconfigured one. Required here
-	// instead, and named for what it is — a base URL a path is appended to, not
-	// a DSN — matching `VT_POSTGRES_URL`. A pod switched to a TypeScript image
-	// without its manifest renaming the variable fails loudly at startup, which
-	// is the whole reason this key keeps no default.
+	// Required, with no default: a default like `https://localhost:9950` leaves
+	// a misconfigured pod silently polling nothing and looking like an idle
+	// runner rather than a broken one. Named for what it is — a base URL a path
+	// is appended to, not a DSN — matching `VT_POSTGRES_URL`. A pod whose
+	// manifest omits the variable fails loudly at startup, which is the whole
+	// reason this key keeps no default.
 	VT_JOBS_API_URL: z.string().min(1),
 	VT_MEM: positiveInteger.default(4),
 	VT_PROC: positiveInteger.default(2),
 	VT_WORKFLOW: ClaimableJobWorkflow,
-	// Python defaults this to the relative path `temp`, and `createWorkPath`
-	// deletes whatever it points at. Required here instead.
+	// Required, with no default: `createWorkPath` deletes whatever this points
+	// at, and a relative default would aim that at the current directory.
 	VT_WORK_PATH: z.string().min(1),
 	VT_TIMEOUT: positiveInteger.default(1000),
 	VT_SENTRY_DSN: z.string().min(1).optional(),

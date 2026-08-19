@@ -16,8 +16,9 @@ import pkg from "../package.json" with { type: "json" };
  * pipeline shipping one would leave two candidates for what the cluster runs.
  * `workflow_version` is part of every cache key, so until this app is published
  * with a real version its `reference_mapping_index` and
- * `subtraction_mapping_index` keys cannot coincide with any Python run's and the
- * two implementations share nothing. The derivation is still exact — that is
- * what the tests pin — but the sharing only starts at cutover.
+ * `subtraction_mapping_index` keys cannot coincide with the key a blob already
+ * in the bucket was archived under, and nothing is restored. The derivation is
+ * still exact — that is what the tests pin — but reuse only starts once a real
+ * version ships.
  */
 export const APP_VERSION: string = pkg.version;

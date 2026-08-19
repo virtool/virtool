@@ -29,8 +29,8 @@ Four modules, all exported from `@virtool/sqlite`:
 | `create.ts` | `createIndexArtifact`, the bulk load |
 | `errors.ts` | `IndexArtifactError` and the five failures a caller can tell apart |
 
-The rules that shape those modules — why ordering is pinned to Python's, why
-nothing materialises the index, and what each error means — are documented as
+The rules that shape those modules — why ordering is pinned, why nothing
+materialises the index, and what each error means — are documented as
 JSDoc on the code itself, not repeated here: `queries.ts`'s module comment and
 the `SELECT_OTUS`/`checkOtu` comments cover ordering and streaming;
 `schema.ts`'s `openIndexArtifact` covers the no-fallback rule; `errors.ts`'s
@@ -52,8 +52,7 @@ artifact, same machine:
 | --- | --- |
 | Raw prepared statements, one transaction | **0.5 s** |
 | Raw prepared statements, autocommit | ~146 s (projected from 2,000 OTUs) |
-| Python's `create_index_sqlite` | ~3 s (projected from 2,000 OTUs) |
 
 Outside a transaction SQLite commits per statement, which is one fsync per
-sequence row. Reads on the same artifact: 1.4 s to write the full FASTA, 0.6 s
-to scan every OTU document, against ~5 s for Python's FASTA scan.
+sequence row. Reads on the same artifact: 1.4 s to write the full FASTA and
+0.6 s to scan every OTU document.

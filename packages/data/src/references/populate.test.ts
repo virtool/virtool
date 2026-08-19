@@ -617,7 +617,7 @@ describe("populateClonedReference", () => {
 			expect(percent).toBeGreaterThanOrEqual(reported[index - 1] ?? 0);
 		}
 
-		// Patching runs to 1/1.3 of the bar, as Python's headroom leaves it.
+		// Patching runs to 1/1.3 of the bar, as the insert's headroom leaves it.
 		expect(reported[0]).toBeCloseTo((10 / 13) * 100, 5);
 		expect(reported.at(-1)).toBe(100);
 	});

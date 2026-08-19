@@ -25,8 +25,8 @@ import type { TaskContext } from "./registry";
  * to fill.
  *
  * `name_on_disk` rather than the upload's id, because that is what
- * `createReference` writes onto the context and what Python's task reads. It
- * does not locate the object — the storage key is resolved from the row.
+ * `createReference` writes onto the context. It does not locate the object —
+ * the storage key is resolved from the row.
  */
 const payload = z.object({
 	name_on_disk: z.string().min(1),
@@ -66,9 +66,8 @@ class ReferenceImportError extends Error {
 export const importReferenceTask = defineTask<typeof payload, TaskContext>({
 	type: "import_reference",
 	payload,
-	// Python names its step after the bound method it runs, `BaseTask.run`
-	// writing `func.__name__` into the column. Both runners write
-	// `import_reference` for the same work until the cutover completes.
+	// The name is written to the row's `step` column, which is what the UI shows
+	// and what rows already written carry, so it is fixed.
 	steps: ["import_reference"],
 	async run({ ctx, helpers, payload, signal }) {
 		await helpers.runStep("import_reference", async (report) => {
@@ -108,7 +107,7 @@ export const importReferenceTask = defineTask<typeof payload, TaskContext>({
 });
 
 /**
- * Read and validate the upload, dispatching on the suffix as Python does.
+ * Read and validate the upload, dispatching on the suffix.
  *
  * The suffix is the only thing that distinguishes the two formats — an upload
  * has no recorded content type — and an unrecognised one is refused rather than
@@ -248,13 +247,12 @@ async function readSqliteSnapshot(
 }
 
 /**
- * Name a decompression failure the way Python's caller does, leaving an abort
+ * Name a decompression failure in terms a user can act on, leaving an abort
  * alone.
  *
- * Python matches `"Not a gzipped file"` out of the text `zlib` raises; Node's
- * message for the same condition is `incorrect header check`, so the check is
- * on the condition rather than on the wording, and the string is reproduced so
- * both runners put the same sentence in front of a user.
+ * Node reports a file that is not gzipped as `incorrect header check`, which
+ * lands in `tasks.error` and says nothing to anyone reading the task list. The
+ * branch keys off that condition and writes `"Not a gzipped file"` instead.
  */
 function describeDecompressionFailure(
 	err: unknown,

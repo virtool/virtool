@@ -359,7 +359,7 @@ export async function findAnalyses(
 
 	return {
 		foundCount,
-		// Python reports the scoped count for both. Match it exactly.
+		// Both counts are the scoped one: `totalCount` is not an unscoped total.
 		totalCount: foundCount,
 		page: options.page,
 		perPage: options.perPage,
@@ -449,7 +449,7 @@ export async function getAnalysisResults(
 	}
 
 	// Only a finished analysis is shaped. An unfinished one holds whatever it
-	// holds — normally null, and never formatted — as Python does.
+	// holds — normally null, and never formatted.
 	if (!row.ready || !row.results) {
 		return (row.results ?? null) as JsonObject | null;
 	}
@@ -681,8 +681,8 @@ export async function createAnalysis(
  * job does not own never reports its state.
  *
  * `name_on_disk` is unique across the table and is minted here rather than sent:
- * a uuid prefix, following the `createUpload` precedent, instead of Python's
- * post-flush `{id}-{name}`, which needs the row id and so a second write.
+ * a uuid prefix, following the `createUpload` precedent, rather than a
+ * post-flush `{id}-{name}`, which would need the row id and so a second write.
  *
  * The sample update is emitted alongside the analysis one because a sample's
  * workflow tags are derived from its analyses — an analysis flipping ready

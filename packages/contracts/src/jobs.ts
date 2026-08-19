@@ -16,10 +16,9 @@ export type JobState = z.infer<typeof JobState>;
 /**
  * Whether a state is one a job never leaves.
  *
- * Mirrors Python's `TERMINAL_JOB_STATES`. Takes a plain `string` because
- * `jobs.state` is a `text` column, not an enum — a row written by a future
- * Python release can hold a state this union has never heard of, and such a
- * state is not terminal until it is named here.
+ * Takes a plain `string` because `jobs.state` is a `text` column, not an enum —
+ * a row can hold a state this union has never heard of, and such a state is not
+ * terminal until it is named here.
  */
 export function isJobStateTerminal(state: string): boolean {
 	return state === "cancelled" || state === "failed" || state === "succeeded";
@@ -41,11 +40,11 @@ export function isJobStateUnsuccessful(state?: string | null): boolean {
 /**
  * A workflow a job can run.
  *
- * This is the job *read* path and carries every member of Python's `Workflow`
- * enum, `build_index` included. That workflow stays Python-owned — the TypeScript
- * runtime ports the other four — but `build_index` rows exist in the `jobs`
- * table today, so a narrower union would fail to parse a job that is perfectly
- * valid. The jobs API instead refuses to hand out a `build_index` job at
+ * This is the job *read* path and carries `build_index` as well as the four
+ * workflows the runtime runs. Nothing creates a `build_index` job any more, but
+ * such rows exist in the `jobs` table today, so a narrower union would fail to
+ * parse a job that is perfectly valid. The jobs API instead refuses to hand out
+ * a `build_index` job at
  * claim time, which is a rule about who may run what, not about what a row may
  * contain.
  *
@@ -66,10 +65,9 @@ export type JobWorkflow = z.infer<typeof JobWorkflow>;
  *
  * {@link JobWorkflow} minus `build_index`, and the difference is the whole
  * point: `build_index` rows exist in the `jobs` table and must still parse on
- * the read path, but nothing creates one any more. Python builds indexes
- * through the `create_index` *task* (`virtool/indexes/tasks.py`), not a job, so
- * no runner is waiting on this workflow and handing one out would start a pod
- * that nothing finishes.
+ * the read path, but nothing creates one any more. Indexes are built by the
+ * `create_index` *task*, not a job, so no runner is waiting on this workflow
+ * and handing one out would start a pod that nothing finishes.
  *
  * `POST /jobs/claim` validates its `workflow` query parameter against this, so
  * asking for `build_index` is a `422` rather than a claim that hangs.
@@ -87,8 +85,8 @@ export type ClaimableJobWorkflow = z.infer<typeof ClaimableJobWorkflow>;
  * A moment on a job wire, as a `Date` on both sides of it.
  *
  * JSON has no date type, so the bytes are an ISO-8601 string either way —
- * `JSON.stringify` calls `Date.prototype.toJSON`, which is `toISOString`, and
- * Python serialises `datetime` to the same shape. The SPA's boundary encodes it
+ * `JSON.stringify` calls `Date.prototype.toJSON`, which is `toISOString`. The
+ * SPA's boundary encodes it
  * with seroval, which revives a `Date` as a `Date`. What this buys is the type:
  * a handler hands the `Date` it read out of Postgres straight to its response,
  * and the caller gets a `Date` back rather than a string every reader would
@@ -104,8 +102,7 @@ export type ClaimableJobWorkflow = z.infer<typeof ClaimableJobWorkflow>;
  * somewhere much later.
  *
  * **This is the wire only.** The `jobs.steps` JSONB array stores `started_at`
- * as a string, because Python reads and writes those same bytes; see
- * {@link StoredJobStep}.
+ * as a string; see {@link StoredJobStep}.
  */
 export const JobTimestamp = z.coerce
 	.date()
@@ -121,8 +118,8 @@ export const JobTimestamp = z.coerce
 //
 // **Row content is not the wire, and stays snake_case.** The elements of the
 // `jobs.steps` JSONB array carry `started_at` and the stored `claim` blob
-// carries `runner_id` / `runtime_version` / `workflow_version`. Python reads
-// and writes those same bytes, so they must not be "fixed" into camelCase.
+// carries `runner_id` / `runtime_version` / `workflow_version`. Rows already
+// carry those bytes, so they must not be "fixed" into camelCase.
 //
 // `JobStep` and `JobClaim` therefore exist in two spellings: the wire shapes
 // here, and `StoredJobStep` / `StoredJobClaim` below, with mappers between
@@ -160,8 +157,8 @@ export type JobClaim = z.infer<typeof JobClaim>;
 /**
  * A {@link JobClaim} as it is stored in the `jobs.claim` JSONB column.
  *
- * snake_case, byte-compatible with what Python reads and writes. Never
- * published as-is — map it with {@link fromStoredJobClaim} first.
+ * snake_case, byte-compatible with the rows already written. Never published
+ * as-is — map it with {@link fromStoredJobClaim} first.
  */
 export const StoredJobClaim = z.object({
 	runner_id: z.string(),
@@ -177,8 +174,8 @@ export type StoredJobClaim = z.infer<typeof StoredJobClaim>;
 /**
  * A {@link JobStep} as it is stored in the `jobs.steps` JSONB array.
  *
- * snake_case, byte-compatible with what Python reads and writes. Never
- * published as-is — map it with {@link fromStoredJobStep} first.
+ * snake_case, byte-compatible with the rows already written. Never published
+ * as-is — map it with {@link fromStoredJobStep} first.
  */
 export const StoredJobStep = z.object({
 	id: z.string(),
@@ -214,7 +211,7 @@ export function fromStoredJobClaim(stored: StoredJobClaim): JobClaim {
 }
 
 // These two are where a `Date` becomes column bytes and back. The wire carries
-// `Date`; the column carries the ISO string Python wrote. Keeping the
+// `Date`; the column carries an ISO string. Keeping the
 // conversion here means no handler does it by hand, and no handler can forget
 // to.
 
@@ -241,8 +238,8 @@ export function fromStoredJobStep(stored: StoredJobStep): JobStep {
 /**
  * How far a job has got, as a percentage.
  *
- * Mirror of Python's `compute_progress`: a terminal job is 100%, a running job
- * is the fraction of its steps that have started, and everything else is 0%.
+ * A terminal job is 100%, a running job is the fraction of its steps that have
+ * started, and everything else is 0%.
  *
  * Reads the stored step shape rather than the wire one, because every caller
  * derives this from the `jobs.steps` JSONB column. `state` is a plain `string`

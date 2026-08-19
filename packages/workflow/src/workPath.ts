@@ -25,7 +25,7 @@ async function isNonDirectory(path: string): Promise<boolean> {
 export async function createWorkPath(path: string): Promise<string> {
 	// This function unconditionally deletes its target and the target comes from
 	// an environment variable, so the guard is worth more than the two lines it
-	// costs. Python has none.
+	// costs.
 	if (path.trim() === "") {
 		throw new WorkflowError("refusing to use a blank work path");
 	}

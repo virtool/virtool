@@ -3,11 +3,11 @@
  *
  * gzip embeds an mtime and varies by compressor and level, so `pigz` and
  * `node:zlib` produce different bytes from identical input. Hashing the
- * compressed bytes would fail every comparison against a Python-produced fixture
- * for reasons that have nothing to do with correctness — so a gzipped file is
- * piped through `createGunzip()` first and a plain one is hashed as it stands.
- * The two therefore agree, which is the property that makes a checksum usable as
- * a workflow assertion at all.
+ * compressed bytes would fail every comparison against a fixture compressed by
+ * anything else, for reasons that have nothing to do with correctness — so a
+ * gzipped file is piped through `createGunzip()` first and a plain one is
+ * hashed as it stands. The two therefore agree, which is the property that
+ * makes a checksum usable as a workflow assertion at all.
  *
  * Gzip detection is `isGzipped` from the file layer, not a second copy of the
  * magic-number check. `decompressFile` is deliberately *not* used: it writes a
@@ -59,10 +59,10 @@ async function* walk(root: string, directory: string): AsyncGenerator<string> {
 /**
  * Every file under `path`, keyed by its path relative to `path`.
  *
- * One assertion covers a whole output tree, which is what makes a ported
- * workflow's outputs comparable to Python's without listing them by hand.
- * Separators are normalised to `/` and the keys are sorted, so the object
- * compares equal regardless of directory order.
+ * One assertion covers a whole output tree, so a workflow's outputs can be
+ * compared against a pinned fixture without listing them by hand. Separators
+ * are normalised to `/` and the keys are sorted, so the object compares equal
+ * regardless of directory order.
  *
  * Symbolic links and device nodes are skipped rather than followed — a link out
  * of the tree would put a file the test does not own into its digest.

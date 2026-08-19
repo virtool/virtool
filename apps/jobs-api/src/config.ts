@@ -20,9 +20,8 @@ export type Config = {
 	/** Seconds the shutdown sequence may run before the backstop gives up. */
 	shutdownTimeout: number;
 	/**
-	 * The same bucket Python and `apps/web` use. Cache registration reads an
-	 * object's size from it before writing a row, so this service cannot start
-	 * without it.
+	 * The same bucket `apps/web` uses. Cache registration reads an object's size
+	 * from it before writing a row, so this service cannot start without it.
 	 */
 	storage: StorageConfig;
 	/**
@@ -163,8 +162,9 @@ function buildStorage(resolved: NodeJS.ProcessEnv): StorageConfig {
  * is imported rather than copied so the precedence rule — the file wins over a
  * plain variable of the same name — cannot drift between the two services.
  *
- * The port mirrors Python's jobs API, which serves on 9950 as
- * `api-jobs-service`, so the two can be swapped behind the same ClusterIP.
+ * The port defaults to 9950, which is the port `api-jobs-service` publishes, so
+ * the ClusterIP and everything that resolves the service expect this process to
+ * be listening there.
  */
 export function parseConfig(env: NodeJS.ProcessEnv = process.env): Config {
 	const resolved = resolveFileBacked(KEYS, env);

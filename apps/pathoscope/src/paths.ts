@@ -1,14 +1,13 @@
 /**
  * Every path this workflow reads or writes under its work path.
  *
- * One factory rather than a function per path — Python had a fixture each, which
- * transliterates into seventeen exports and a `workPath` argument at every call
- * site. A step resolves them once (`const paths = workPaths(context.workPath)`)
- * and reads fields from there.
+ * One factory rather than a function per path — a function per path would mean
+ * seventeen exports and a `workPath` argument at every call site. A step
+ * resolves them once (`const paths = workPaths(context.workPath)`) and reads
+ * fields from there.
  *
- * The layout is Python's `fixtures.py` verbatim, and that is a **contract, not a
- * convention**: a mapping index restored from the cache namespace shared with
- * Python unpacks to these directory names.
+ * The layout is a **contract, not a convention**: a mapping index restored from
+ * a shared cache namespace unpacks to these directory names.
  */
 
 import { join } from "node:path";

@@ -1,6 +1,4 @@
-// Read-only mirror of the `tasks` table managed by the upstream Python service
-// via Alembic. Do not generate or push migrations from this side. Keep the
-// columns in sync with `../../../../../../virtool/virtool/tasks/sql.py`.
+// Read-only mirror of the `tasks` table.
 
 import { sql } from "drizzle-orm";
 import {

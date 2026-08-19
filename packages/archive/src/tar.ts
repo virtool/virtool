@@ -2,9 +2,9 @@
  * Tar reading and writing.
  *
  * The cache archives {@link extractTarToDir} and {@link writePathAsTar} handle
- * are also read and written by the Python runtime, so their format is a
- * contract. They are **uncompressed**, leaving no compressor variance to worry
- * about. {@link extractTarMembers} is the other shape: named members out of an
+ * outlive any one run, so their format is a contract. They are
+ * **uncompressed**, leaving no compressor variance to worry about.
+ * {@link extractTarMembers} is the other shape: named members out of an
  * archive whose other contents are of no interest, and the one that takes gzip.
  *
  * `tar-stream` is used rather than `node-tar` because it is a pure stream
@@ -56,11 +56,7 @@ async function pathExists(path: string): Promise<boolean> {
 	}
 }
 
-/**
- * The top-level entry name an archive member belongs to.
- *
- * Mirrors Python's `member.name.lstrip("/").split("/")[0]`.
- */
+/** The top-level entry name an archive member belongs to. */
 function topLevelNameOf(name: string): string {
 	// `split` on a non-empty string always yields a first element; the fallback
 	// is for the empty-name case, which `checkMemberIsSafe` rejects anyway.
@@ -188,9 +184,9 @@ export type ExtractTarMembersOptions = {
  * chooses every destination, so an archive never decides where a byte lands.
  * Parent directories are created and an existing destination is overwritten.
  *
- * **Every** entry is validated on the way past, wanted or not, matching Python's
- * `safely_extract_tgz`. Checking only what the caller asked for would let an
- * archive carry a payload the guard never looked at.
+ * **Every** entry is validated on the way past, wanted or not. Checking only
+ * what the caller asked for would let an archive carry a payload the guard
+ * never looked at.
  *
  * @throws {TarArchiveError} when any member escapes the archive root or is not
  *   a plain file or directory.
@@ -266,8 +262,7 @@ export async function extractTarMembers(
 
 async function checkTargetIsFree(path: string): Promise<void> {
 	// `lstat` rather than `stat`: `stat` follows symlinks, so one dangling onto
-	// nothing would read as free and be silently overwritten. Python guards the
-	// same case with `exists() or is_symlink()`.
+	// nothing would read as free and be silently overwritten.
 	try {
 		await lstat(path);
 	} catch {
@@ -283,8 +278,7 @@ async function* walk(
 ): AsyncGenerator<{ path: string; name: string; isDirectory: boolean }> {
 	yield { path: root, name: arcname, isDirectory: true };
 
-	// Sorted so an archive of the same tree is byte-stable, matching Python's
-	// `TarFile.add`, which sorts each directory listing.
+	// Sorted so an archive of the same tree is byte-stable.
 	const dirEntries = (await readdir(root, { withFileTypes: true })).sort(
 		(left, right) => (left.name < right.name ? -1 : 1),
 	);
@@ -309,9 +303,8 @@ async function* walk(
  * Write the file or directory at `source` into an uncompressed tar at
  * `archivePath`.
  *
- * The single top-level entry is named after `source`'s basename — Python's
- * `arcname=source.name` — so a restored tree lands at the same relative path it
- * was archived from.
+ * The single top-level entry is named after `source`'s basename, so a restored
+ * tree lands at the same relative path it was archived from.
  *
  * @throws {TarArchiveError} when `source` is neither a file nor a directory.
  */
@@ -378,9 +371,9 @@ async function packFile(
 	size: number,
 	mode: number,
 ): Promise<void> {
-	// Masked to the permission bits: setuid and setgid are exactly what Python's
-	// `filter="data"` strips, and an archive carrying them would be rewritten on
-	// the way out rather than extracted as sent.
+	// Masked to the permission bits: setuid and setgid do not survive a safe
+	// extraction, so an archive carrying them would be rewritten on the way out
+	// rather than extracted as sent.
 	const entry = archive.entry({ name, size, mode: mode & 0o777 });
 
 	await pipeline(createReadStream(path), entry);

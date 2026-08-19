@@ -1,12 +1,11 @@
 /**
  * Driving `pathoscope-core` as a subprocess.
  *
- * The EM core is Rust and stays Rust; what changed in the port is how it is
- * reached. Python loaded it as a PyO3 extension module and called it in-process;
- * here it is a fifth binary beside bowtie2, bowtie2-build, samtools and
- * cd-hit-est, run through the same injected subprocess runner and writing its
- * results to a file this side reads back. **Nothing crosses a pipe, and there is
- * no FFI** — no napi-rs, no native module loaded into the Node process.
+ * The EM core is Rust, and it is reached as a subprocess: a fifth binary beside
+ * bowtie2, bowtie2-build, samtools and cd-hit-est, run through the same
+ * injected subprocess runner and writing its results to a file this side reads
+ * back. **Nothing crosses a pipe, and there is no FFI** — no napi-rs, no native
+ * module loaded into the Node process.
  *
  * Every subcommand takes `--output` naming a JSON results file. stdout carries
  * nothing at all, so a stray `println!` in the core cannot corrupt a result;
@@ -147,8 +146,8 @@ export async function eliminateSubtraction(
 ): Promise<number> {
 	const { subtracted } = await runCore<{ subtracted: number }>(run, [
 		"eliminate-subtraction",
-		// Format-neutral flag names, not the SAM-flavoured PyO3 parameter names
-		// they replaced. Every call site passes BAM.
+		// Format-neutral flag names rather than SAM-flavoured ones. Every call site
+		// passes BAM.
 		"--isolate-alignments",
 		isolateAlignmentsPath,
 		"--subtraction-alignments",
@@ -178,7 +177,7 @@ export function runExpectationMaximization(
 ): Promise<PathoscopeEmResults> {
 	return runCore<PathoscopeEmResults>(run, [
 		"em",
-		// Singular, and unchanged from the PyO3 shim's parameter name.
+		// Singular: that is what the core's CLI names it.
 		"--alignment",
 		alignmentPath,
 		"--p-score-cutoff",
@@ -191,10 +190,10 @@ export function runExpectationMaximization(
 /**
  * The thread count `eliminate-subtraction` is given.
  *
- * Python passes `proc - 1` and its PyO3 shim accepted a bare `u32`, so a run
- * with `proc = 1` handed the core a zero. The CLI validates `--proc` as
- * `range(1..)` and would refuse it, turning a working single-core run into a
- * failed one — so the floor is applied here rather than left to clap.
+ * The core gets `proc - 1`, which is a zero when `proc = 1`. A bare `u32` would
+ * take that, but the CLI validates `--proc` as `range(1..)` and would refuse
+ * it, turning a working single-core run into a failed one — so the floor is
+ * applied here rather than left to clap.
  */
 export function subtractionProc(proc: number): number {
 	return Math.max(1, proc - 1);

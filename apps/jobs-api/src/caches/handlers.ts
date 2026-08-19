@@ -49,8 +49,8 @@ function toCache(row: CacheRow): Cache {
  * Resolve a logical cache key to the row that names the blob behind it.
  *
  * Metadata only. Workflows read object storage directly, so nothing here
- * streams cache bytes — the caller takes `storageKey` to the bucket itself.
- * This diverges from Python, which streamed the payload through its jobs API.
+ * streams cache bytes — the caller takes `storageKey` to the bucket itself,
+ * which keeps this service off the data path entirely.
  *
  * `ReadHandlerDeps` rather than {@link CacheHandlerDeps}: a read that could
  * reach `storage` is a read that could write one, so it is handed no backend
@@ -83,7 +83,7 @@ export async function handleGetCache(
  *
  * The body carries a uuid, never a storage key: the key is composed server-side
  * with `cacheKey(uuid)`, so a job-authenticated caller cannot point a cache row
- * at a sample, index or subtraction object — which Python's LRU eviction, which
+ * at a sample, index or subtraction object — which LRU cache eviction, which
  * deletes by `storage_key`, would then destroy.
  *
  * 201 when this call created the row, 200 when an equivalent one already

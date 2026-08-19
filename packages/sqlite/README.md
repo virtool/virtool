@@ -7,7 +7,7 @@ Four modules, all exported from the package root:
 
 | Module | What it holds |
 | --- | --- |
-| `schema.ts` | the schema mirror, the filename and format constants, `openIndexArtifact`, `createIndexArtifactSchema` |
+| `schema.ts` | the schema, the filename and format constants, `openIndexArtifact`, `createIndexArtifactSchema` |
 | `queries.ts` | `openWorkflowIndex` and the six reads, plus `writeFasta` |
 | `create.ts` | `createIndexArtifact`, the bulk load |
 | `errors.ts` | `IndexArtifactError` and the five failures a caller can tell apart |
@@ -37,22 +37,21 @@ That second caller is why this is a package rather than part of
 `@virtool/workflow`, where it used to live. A workflow-runtime dependency in
 `@virtool/data` would drag execa, undici and tar-stream into `apps/tasks` and
 the jobs API, and a second copy of the DDL in the data package would be two
-opinions about a binary format two languages have to agree on.
+opinions about one binary format.
 
-## The format is Python's, and this is a mirror of it
+## This package specifies the format
 
-Python writes and reads the same artifact, and both implementations are live
-until the port completes. The mirror is of the *schema* — columns, constraints
-and indexes — not of SQLAlchemy's DDL text; Python declares its tables
-explicitly and never reflects them.
+The artifact format is specified here, and what is specified is the *schema* —
+columns, constraints and indexes — not any particular DDL text. The tables are
+declared explicitly and never reflected, so only the schema itself binds a
+writer.
 
 The rules that shape the modules are documented as JSDoc on the code, not
-repeated here: `queries.ts`'s module comment covers why ordering is pinned to
-Python's and why nothing materialises the index, `schema.ts`'s
-`openIndexArtifact` covers the no-fallback rule, and `errors.ts` covers what
-each failure means.
+repeated here: `queries.ts`'s module comment covers why ordering is pinned and
+why nothing materialises the index, `schema.ts`'s `openIndexArtifact` covers
+the no-fallback rule, and `errors.ts` covers what each failure means.
 
-`src/fixtures/` holds an artifact Python built plus the golden results of every
+`src/fixtures/` holds a reference artifact plus the golden results of every
 query, and `generate.py` is the provenance record. **Never edit a golden to
 match this implementation's output** — that converts a caught divergence into a
 permanent one.

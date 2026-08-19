@@ -1,7 +1,4 @@
-// Read-only mirror of the `subtractions` and `subtraction_files` tables managed
-// by the upstream Python service via Alembic. Do not generate or push
-// migrations from this side. Keep the columns in sync with
-// `../../../../../../virtool/virtool/subtractions/pg.py`.
+// Read-only mirror of the `subtractions` and `subtraction_files` tables.
 //
 // `legacy_id` (the Mongo `_id`) is null for Postgres-native subtractions. Every
 // endpoint addresses a subtraction by its integer id. Nothing derives a storage
@@ -98,8 +95,8 @@ export const subtractionFiles = pgTable(
 		name: text("name"),
 		subtraction_id: bigint("subtraction_id", { mode: "number" }).notNull(),
 		type: subtractionType("type"),
-		// Files routinely exceed 2 GiB, past the range of a 32-bit integer, so this
-		// mirrors Python's BigInteger. `mode: "number"` is safe up to 2^53.
+		// Files routinely exceed 2 GiB, past the range of a 32-bit integer, hence
+		// `bigint`. `mode: "number"` is safe up to 2^53.
 		size: bigint("size", { mode: "number" }),
 		// The file's complete object-storage key. Nullable because it was backfilled
 		// from `name`, which is itself nullable: a row without one names no

@@ -94,7 +94,7 @@ describe("compositeQuality", () => {
 		).toEqual([40, 80]);
 	});
 
-	/** Python zips with `strict=False`, so mismatched lengths truncate. */
+	/** Mismatched lengths truncate to the shorter side rather than failing. */
 	it("truncates to the shorter side rather than throwing", () => {
 		const composite = compositeQuality(
 			{ ...left, bases: [...left.bases, [10, 10, 10, 10, 10, 10]] },

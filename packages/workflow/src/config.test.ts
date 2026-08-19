@@ -55,9 +55,9 @@ describe("parseWorkflowRunConfig", () => {
 		});
 	});
 
-	// The defaults Python's CLI declares, kept so a runner started without them
-	// behaves the same as the one it replaces.
-	it("applies Python's defaults for the optional keys", () => {
+	// A runner started without the optional keys still gets a usable
+	// configuration.
+	it("applies the declared defaults for the optional keys", () => {
 		const config = parseWorkflowRunConfig(minimalEnv());
 
 		expect(config.mem).toBe(4);
@@ -248,8 +248,7 @@ describe("parseWorkflowRunConfig", () => {
 		expect(config.image).toBe("unknown");
 	});
 
-	// Python defaults this to `https://localhost:9950`, which in a pod silently
-	// polls nothing.
+	// A default here would leave a misconfigured pod silently polling nothing.
 	it("throws when VT_JOBS_API_URL is missing", () => {
 		const env = minimalEnv();
 
@@ -259,8 +258,8 @@ describe("parseWorkflowRunConfig", () => {
 		expect(() => parseWorkflowRunConfig(env)).toThrow(/VT_JOBS_API_URL/);
 	});
 
-	// Python defaults this to the relative path `temp`, and `createWorkPath`
-	// deletes whatever it points at.
+	// `createWorkPath` deletes whatever this points at, so there is no default
+	// safe enough to fall back on.
 	it("throws when VT_WORK_PATH is missing", () => {
 		const env = minimalEnv();
 

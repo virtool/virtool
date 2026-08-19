@@ -53,10 +53,10 @@ export type StartPingLoopOptions = {
  * otherwise be invisible.
  *
  * Every other failure is a transport problem and counts toward the give-up
- * budget. Failures are counted **consecutively** and reset on success. Python's
- * counter never decrements, so a run long enough to accumulate six scattered
- * blips stops pinging forever and is then failed by the sweep while still
- * working.
+ * budget. Failures are counted **consecutively** and reset on success. A
+ * counter that never decremented would let a run long enough to accumulate six
+ * scattered blips stop pinging forever, and the sweep would then fail it while
+ * it was still working.
  */
 export function startPingLoop({
 	client,

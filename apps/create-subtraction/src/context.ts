@@ -1,10 +1,9 @@
 /**
  * Building a create_subtraction run's context.
  *
- * One metadata read and one download, both before step 1. Python resolved
- * fixtures lazily by parameter name, so an upload whose object is missing
- * surfaced at whichever step first touched the file; here it fails before any
- * work is done.
+ * One metadata read and one download, both before step 1. An upload whose
+ * object is missing therefore fails the run before any work is done, rather
+ * than at whichever step first touches the file.
  *
  * Every value below survives a JSON round trip. `createWorkflowContext` asserts
  * that on every run, so nothing here may be a handle, a closure, or a class

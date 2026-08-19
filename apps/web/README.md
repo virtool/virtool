@@ -410,7 +410,7 @@ a key from URL parameters. Use the row's display name for
 ### Server push
 
 Server-pushed cache invalidations arrive through the authenticated `/events`
-SSE stream. Python and Node publish `{ domain, resource_id, operation }` on the
+SSE stream. Events are published as `{ domain, resource_id, operation }` on the
 Postgres `client_events` channel; the route converts each event to the id-only
 `{ domain, operation, id }` wire shape. The client then refetches through the
 normal API so authorization remains at the request boundary.

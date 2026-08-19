@@ -332,7 +332,7 @@ describe("findAnalyses", () => {
 
 		expect(first.items.map((item) => item.id)).toEqual(ids.slice(0, 2));
 		expect(first.foundCount).toBe(3);
-		// Python reports the scoped count for both.
+		// Both counts are the scoped one.
 		expect(first.totalCount).toBe(3);
 		expect(first.pageCount).toBe(2);
 		expect(first.perPage).toBe(2);

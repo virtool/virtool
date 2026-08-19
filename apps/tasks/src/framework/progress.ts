@@ -13,13 +13,14 @@ import type { Logger } from "@virtool/logger";
 export const PROGRESS_DEBOUNCE_MS = 250;
 
 /**
- * Round the way Python's `round` does, breaking a tie to the even side.
+ * Round to the nearest integer, breaking a tie to the even side.
  *
- * `Math.round` breaks ties upward, so it disagrees with Python on every exact
- * half — `round(62.5)` is 62 there and 63 here. Progress is cosmetic, but
- * Python still runs tasks until the cutover completes, and two runners writing
- * different numbers for the same step of the same task type is a difference
- * nobody would be able to explain later.
+ * `Math.round` breaks ties upward instead, so the two rules disagree on every
+ * exact half — 62.5 rounds to 62 under this one and to 63 under that one.
+ * Progress is cosmetic, but the values already in `tasks` rows were rounded to
+ * even, so holding to the rule keeps a given step of a given task type
+ * reporting one number rather than a number that moves with whichever code
+ * wrote it.
  */
 export function roundHalfToEven(value: number): number {
 	const floor = Math.floor(value);
@@ -75,12 +76,11 @@ export type ProgressWriterOptions = {
  * It holds three guarantees the framework rests on. Progress never goes
  * backwards: a value below one already recorded is dropped, so a rounding
  * wobble or a retried chunk inside a data function cannot destroy an otherwise
- * healthy task the way Python's raising handler does. Writes never overlap: one
- * is chained behind the last, so a flush cannot race a debounced write into
- * writing the older value second. And a write that matches nothing fences the
- * writer for good — the task belongs to another runner from that moment, and
- * this one must stop writing and stop emitting rather than announce a state the
- * row is not in.
+ * healthy task. Writes never overlap: one is chained behind the last, so a
+ * flush cannot race a debounced write into writing the older value second. And
+ * a write that matches nothing fences the writer for good — the task belongs to
+ * another runner from that moment, and this one must stop writing and stop
+ * emitting rather than announce a state the row is not in.
  *
  * The monotonic rule is measured from `options.progress`, the value already on
  * the row, and not from zero. A reclaimed task re-runs from step zero, so its

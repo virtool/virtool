@@ -41,11 +41,11 @@ function request(login: string, key: string): Request {
 	});
 }
 
-// Fixed vectors, not a comparison against `@virtool/data`'s copy or Python's.
-// This digest is what `jobs.key` holds, and Python writes that column — so the
-// three implementations must agree forever. A test that ran the two TypeScript
-// copies against each other would pass just as happily if both drifted away
-// from Python together, which is the only drift that actually matters.
+// Fixed vectors, not a comparison against `@virtool/data`'s copy. This digest
+// is what `jobs.key` holds, including for rows already written, so the two
+// implementations must agree forever. A test that ran them against each other
+// would pass just as happily if both drifted together, which is the drift that
+// actually matters.
 describe("hashToken", () => {
 	it.each([
 		["", "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"],
@@ -250,8 +250,8 @@ describe("verifyJobRequest", () => {
 		},
 	);
 
-	// Python splits the login on "-" and checks only the first part, so the
-	// anchored pattern here is the stricter of the two. Each of these would
+	// The login pattern is anchored and matched whole rather than split on "-",
+	// so a login that merely starts with `job` is refused. Each of these would
 	// otherwise reach the database as a job id.
 	it.each([
 		"job",

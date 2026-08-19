@@ -28,10 +28,10 @@ describe("workPaths", () => {
 	});
 
 	/**
-	 * The collision Python has. `path.with_name("reads_1.fq.gz")` on the first
-	 * upload lands on the second upload's own path, so normalizing the first
-	 * destroys the second before it is read and the sample finalizes with one
-	 * read stored twice.
+	 * The collision separate directories close. Writing `reads_1.fq.gz` beside
+	 * the first upload lands it on the second upload's own path, so normalizing
+	 * the first destroys the second before it is read and the sample finalizes
+	 * with one read stored twice.
 	 */
 	it("puts a normalized read out of reach of any upload name", () => {
 		const { reads } = workPaths("/work", ["reads_1.fq.gz", "reads_2.fq.gz"]);

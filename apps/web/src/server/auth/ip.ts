@@ -2,9 +2,8 @@ import { createServerOnlyFn } from "@tanstack/react-start";
 import { getRequest } from "@tanstack/react-start/server";
 
 /**
- * Best-effort client IP for the session row, from the proxy headers Python
- * reads in `virtool/api/authentication.py:get_ip`. Falls back to the empty
- * string, which the column allows.
+ * Best-effort client IP for the session row, read from the proxy headers.
+ * Falls back to the empty string, which the column allows.
  *
  * Wrapped in createServerOnlyFn so the compiler strips this body and its
  * getRequest import from the client bundle. A plain top-level helper would keep

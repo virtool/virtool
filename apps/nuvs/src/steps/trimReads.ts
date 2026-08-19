@@ -15,9 +15,9 @@ import type { NuvsStep } from "./types";
  * Trim the sample's reads with skewer, reusing another run's work where it can.
  *
  * The `trimmed_reads` namespace is nuvs' own — pathoscope maps untrimmed reads —
- * but it is shared with **Python nuvs**, and every field skewer is configured
- * with is in the derived key. The whole `trimmed/` directory is the artifact,
- * `trim.log` included, because that is what Python archives.
+ * and every field skewer is configured with is in the derived key. The whole
+ * `trimmed/` directory is the artifact, `trim.log` included, because that is
+ * what every blob in the namespace holds.
  */
 export const trimReadsStep: NuvsStep = {
 	id: "trim_reads",
@@ -49,9 +49,9 @@ export const trimReadsStep: NuvsStep = {
 
 		if (restored !== null) {
 			// A blob's one top-level entry is named after the directory its writer
-			// archived, and this namespace is shared with Python — so a blob archived
-			// from a differently named directory unpacks *beside* the trimmed reads
-			// rather than onto them. Thrown rather than treated as a miss:
+			// archived, and this namespace is shared — so a blob archived from a
+			// differently named directory unpacks *beside* the trimmed reads rather
+			// than onto them. Thrown rather than treated as a miss:
 			// `cache.put` cannot replace a registered key, so re-trimming would hand
 			// the same blob back to every later run while leaving the stray tree on a
 			// disk sized for one copy of the reads.

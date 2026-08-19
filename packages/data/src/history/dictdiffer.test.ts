@@ -2,8 +2,8 @@ import { describe, expect, it } from "vitest";
 import { type DiffEntry, diff, patch, swap } from "./dictdiffer";
 
 /**
- * The shape this module actually patches: an OTU document as Python stores it,
- * after a JSONB round trip.
+ * The shape this module actually patches: an OTU document as stored, after a
+ * JSONB round trip.
  */
 const otuBefore = {
 	id: 1,
@@ -40,8 +40,8 @@ const otuAfter = {
 	],
 };
 
-// Produced by Python `dictdiffer.diff(otuBefore, otuAfter)`, as it would be
-// read back out of `legacy_history_diff.diff`.
+// The dictdiffer diff of `otuBefore` and `otuAfter`, as it would be read back
+// out of `legacy_history_diff.diff`.
 const otuDiff: DiffEntry[] = [
 	["change", ["isolates", 0, "source_name"], ["A", "B"]],
 	[
@@ -422,7 +422,7 @@ describe("diff", () => {
 		expect(result).toEqual([["add", "", [["c", { d: 2 }]]]]);
 	});
 
-	it("matches the diff Python wrote for an OTU edit", () => {
+	it("produces the stored diff shape for an OTU edit", () => {
 		expect(diff(otuBefore, otuAfter)).toEqual(otuDiff);
 	});
 });

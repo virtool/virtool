@@ -285,7 +285,7 @@ describe("verifyApiKey", () => {
 		const userId = await seedUser(db);
 		const key = await seedApiKey(db, userId);
 		await db.update(apiKeys).set({
-			// Keys written by the legacy Python path stored only granted names.
+			// Keys written by an older release stored only granted names.
 			permissions: { upload_file: true } as unknown as Permissions,
 		});
 
@@ -323,8 +323,8 @@ describe("verifyApiKey", () => {
 		expect(await verifyApiKey(db, "alice", "not-a-key")).toBeNull();
 	});
 
-	// Job keys authenticate against a separate service, and Python refuses them
-	// here rather than resolving `job-{id}` as a user handle.
+	// Job keys authenticate against the separate jobs API; they are refused here
+	// rather than resolved as a `job-{id}` user handle.
 	it("rejects a job-prefixed login without touching the database", async () => {
 		const userId = await seedUser(db, { handle: "jobs" });
 		const key = await seedApiKey(db, userId);

@@ -131,8 +131,8 @@ function summarizeCoverage(coverage: readonly number[]): {
  * Record the run's output against the analysis.
  *
  * **The manifest is empty, and that is the point.** Pathoscope's entire output
- * is `results`; Python also wrote a `report.tsv` and uploaded it, but every
- * figure in that file is in this blob and nothing ever read it back.
+ * is `results`. Every figure a `report.tsv` could carry is in this blob, and
+ * nothing would ever read such a file back.
  */
 async function finalize(
 	client: JobsApiClient,

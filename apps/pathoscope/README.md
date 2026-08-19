@@ -13,11 +13,11 @@ of scope by decision.
 
 ## Two rules it carries
 
-- **It writes no result file.** Python uploaded a `report.tsv` whose every
-  figure is already in the `results` blob, so the finalize manifest is empty and
+- **It writes no result file.** Every figure a `report.tsv` would carry is
+  already in the `results` blob, so the finalize manifest is empty and
   `FinalizeAnalysisRequest.files` allows that for this workflow's sake.
-- **Nothing deletes an analysis on failure.** Python's `on_failure` hook is not
-  ported and the jobs API has no delete route.
+- **Nothing deletes an analysis on failure.** A failed run leaves its half-built
+  analysis for the user to delete, and the jobs API has no delete route.
 
 ## Building the image
 

@@ -3,10 +3,9 @@
  *
  * Everything a step needs is resolved once, here, before step 1: the metadata
  * reads against the jobs API, and from them the storage key and work-path
- * destination of every file the run reads. That is the eager model — Python
- * resolved fixtures lazily by parameter name, so a storage failure surfaced
- * forty minutes into a run at whichever step first touched the file. Here every
- * key is checked before any work is done.
+ * destination of every file the run reads. Resolving eagerly means a storage
+ * failure surfaces before any work is done, rather than forty minutes into a
+ * run at whichever step first touched the file.
  *
  * **Resolution is eager; transfer is not always.** The reads and the index
  * artifact are read by every run, so they are downloaded here. A subtraction's
@@ -49,12 +48,10 @@ const SUBTRACTION_FASTA_NAME = "subtraction.fa.gz";
  * The HMM annotations blob is not in the bucket.
  *
  * Its own class because the likely cause is neither a misconfigured bucket nor a
- * broken row, and a bare `StorageKeyNotFoundError` reads like both. Python
- * generates this blob **lazily**, on the first
- * `GET /hmms/files/annotations.json.gz`, and deletes it again whenever an HMM
- * install commits new rows — so on a fresh install the key is simply cold. There
- * is no jobs API route to trigger that generation, so a TypeScript run cannot
- * warm it and must say why rather than fail at `vfam` forty minutes in.
+ * broken row, and a bare `StorageKeyNotFoundError` reads like both. The blob is
+ * written by the HMM install task, so a deployment that has never installed
+ * HMMs has no key to read. No jobs API route writes it, so a run cannot warm it
+ * and must say why rather than fail at `vfam` forty minutes in.
  */
 export class HmmAnnotationsUnavailableError extends WorkflowError {
 	constructor(options?: ErrorOptions) {
@@ -289,11 +286,10 @@ async function checkHmmAnnotationsExist(
  *
  * **A sample with no quality data fails here.** `max_length` is
  * `quality.length[1]`, and the column is nullable because it is empty while a
- * sample is still being created. Python reads it anyway and compares `None` with
- * an `int`, so an analysis of an unready sample dies with a `TypeError` inside
- * `trim_reads` — after the reference FASTA has been written and, on a cache miss,
- * the whole reference index built. This is the same failure, named, before step
- * one.
+ * sample is still being created. Reading it without checking would defer the
+ * failure to `trim_reads` — after the reference FASTA has been written and, on
+ * a cache miss, the whole reference index built. Failing here names the cause
+ * before step one.
  */
 function resolveSample(sample: WorkflowSample): NuvsSample {
 	const maxLength = sample.quality?.length[1];
@@ -367,10 +363,10 @@ function checkReadName(name: string): void {
 /**
  * Locate the index's SQLite artifact.
  *
- * There is no fallback to the JSON forms Python still reads. A 200–500 MB
- * reference document exceeds V8's maximum string length, so `JSON.parse` cannot
- * open one at all — an index without a SQLite artifact is not analysable here
- * and must say so rather than degrade.
+ * There is no fallback to the JSON forms an older index may still carry. A
+ * 200–500 MB reference document exceeds V8's maximum string length, so
+ * `JSON.parse` cannot open one at all — an index without a SQLite artifact is
+ * not analysable here and must say so rather than degrade.
  */
 function resolveIndex(index: WorkflowIndex, path: string): NuvsIndex {
 	const file = index.files.find(
@@ -389,11 +385,11 @@ function resolveIndex(index: WorkflowIndex, path: string): NuvsIndex {
 /**
  * Locate a subtraction's gzipped source genome, and only that.
  *
- * Python downloads every file a subtraction has, including the six bowtie2
- * shards. NuVs reads none of them — `create_subtraction_indexes` builds its own
- * index from this FASTA — so they are six large downloads for nothing. A
- * subtraction finalized by the TypeScript `create_subtraction` workflow has no
- * shards to download in any case.
+ * A subtraction row can list six bowtie2 shards alongside its genome. NuVs
+ * reads none of them — `create_subtraction_indexes` builds its own index from
+ * this FASTA — so downloading them would be six large transfers for nothing. A
+ * subtraction finalized by the `create_subtraction` workflow has no shards to
+ * download in any case.
  */
 function resolveSubtraction(
 	subtraction: WorkflowSubtraction,

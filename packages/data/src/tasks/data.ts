@@ -35,8 +35,7 @@ export class TaskNotFoundError extends AppError {}
  *
  * The row is all a task runner needs to pick the work up: it polls Postgres for
  * a task with `acquired_at IS NULL`, `complete = false` and a matching `type`,
- * so no further signal is sent from here. `step` mirrors the Python `create`,
- * which seeds it with the task name.
+ * so no further signal is sent from here. `step` is seeded with the task name.
  *
  * `type` is `string` rather than a union because the two exported wrappers own
  * that narrowing, and they narrow to different sets.
@@ -99,16 +98,15 @@ export async function createTask(
  * A task that is neither finished nor failed: outstanding work, whether it is
  * queued, running, or claimed by a runner that has stopped renewing its lease.
  *
- * The two terms are both required and neither implies the other. A Python
- * failure writes `error` and leaves `complete` false, so `complete = false`
- * alone would count a row Python has already given up on; `error IS NULL`
- * alone would count every row that ever succeeded.
+ * The two terms are both required and neither implies the other. A row can
+ * carry an `error` without ever being marked `complete` — rows written by an
+ * earlier release do — so `complete = false` alone would count a row that has
+ * already been given up on; `error IS NULL` alone would count every row that
+ * ever succeeded.
  *
- * It is Python's `TasksData.get_counts` predicate term for term, which is what
- * makes the pre- and post-cutover comparison apples-to-apples, and it is the
- * predicate of Python's `idx_tasks_active` partial index, so a read under it is
- * served by that index rather than scanning a table whose completed rows
- * accumulate without bound.
+ * It is also the predicate of the `idx_tasks_active` partial index, so a read
+ * under it is served by that index rather than scanning a table whose completed
+ * rows accumulate without bound.
  */
 function isActive(): SQL | undefined {
 	return and(eq(tasksTable.complete, false), isNull(tasksTable.error));
@@ -118,11 +116,10 @@ function isActive(): SQL | undefined {
  * How a spawn attempt for one periodic task type ended.
  *
  * `skipped_locked` and `not_due` are told apart rather than folded into one
- * `null`, because the two say different things about the cutover: the first is
- * evidence the advisory lock is being contended — that Python's spawner is
- * still live and the two are excluding each other — and the second is the
- * ordinary steady state. The metrics registry labels its counter with this
- * union rather than declaring a second copy of it.
+ * `null`, because the two say different things: the first is evidence the
+ * advisory lock is being contended — another spawner is handling this type this
+ * tick — and the second is the ordinary steady state. The metrics registry
+ * labels its counter with this union rather than declaring a second copy of it.
  */
 export type PeriodicSpawnOutcome = "spawned" | "skipped_locked" | "not_due";
 
@@ -133,22 +130,20 @@ export type PeriodicSpawnResult =
 	| { outcome: "not_due"; task: null };
 
 /**
- * Spawn a periodic task if one is due, excluding Python's spawner with a
+ * Spawn a periodic task if one is due, excluding any other spawner with a
  * transaction-scoped advisory lock on `hashtext(type)`.
  *
- * This runs in production *beside* Python's `PeriodicTaskSpawner`, which spawns
- * the same five types into this same table. The two are mutually excluded by
- * nothing but that lock, and the failure mode is silent: diverge on the key and
- * both spawn, every periodic task runs twice, and nothing errors or logs.
+ * Two spawners working this table are mutually excluded by nothing but that
+ * lock, and the failure mode is silent: diverge on the key and both spawn,
+ * every periodic task runs twice, and nothing errors or logs.
  *
  * Two rules make the exclusion hold, and neither is a preference:
  *
- * - **The key is `hashtext` of the bare task name, computed in SQL.** Python
- *   emits `pg_try_advisory_xact_lock(hashtext($1))` from
- *   `func.pg_try_advisory_xact_lock(func.hashtext(task_class.name))`. Hashing
- *   in TypeScript, namespacing the name, or reaching for the two-argument
- *   `(int4, int4)` form — a *different lock namespace* — each stops excluding
- *   Python entirely.
+ * - **The key is `hashtext` of the bare task name, computed in SQL.** The
+ *   statement is `pg_try_advisory_xact_lock(hashtext($1))`. Hashing in
+ *   TypeScript, namespacing the name, or reaching for the two-argument
+ *   `(int4, int4)` form — a *different lock namespace* — each stops the
+ *   exclusion holding at all.
  * - **`pg_try_advisory_xact_lock`, never the session-level form.** The
  *   transaction-scoped lock is released by the commit and is the only
  *   pooler-safe one: session locks survive rollback, are reentrant so two
@@ -161,30 +156,24 @@ export type PeriodicSpawnResult =
  * Virtool's key population — five task names plus one `index_build:{id}` per
  * reference in the same namespace — a collision is ~10⁻⁵ and degrades to a
  * spurious skip, because every call site is a `try_` lock. Widening the hash
- * would break exclusion with Python, which is the whole point. Accept it.
+ * would break the exclusion, which is the whole point. Accept it.
  *
  * `try_` never blocks: `false` means another spawner is handling this type this
  * tick, and the caller moves on without retrying or escalating.
  *
- * **The spawn is gated on outstanding work as well as on recency**, and this is
- * a deliberate divergence from Python, which gates on recency alone. A row of
+ * **The spawn is gated on outstanding work as well as on recency.** A row of
  * the type that is still {@link isActive} suppresses the spawn *whatever its
- * age*, so a type has at most one outstanding row at a time. Python's rule
- * keeps inserting once the last row ages out of the window however wedged the
- * runner is, and a fleet that comes back after an outage finds a pile of
- * identical periodic tasks to drain rather than one.
+ * age*, so a type has at most one outstanding row at a time. Gating on recency
+ * alone would keep inserting once the last row ages out of the window however
+ * wedged the runner is, and a fleet that comes back after an outage would find
+ * a pile of identical periodic tasks to drain rather than one.
  *
  * That an active row is what blocks — rather than an incomplete one — is what
- * keeps a failure from blocking the type forever: a Python failure writes
- * `error` and leaves `complete` false, and such a row re-arms on the ordinary
- * interval like any other finished one. A row whose lease has gone stale
- * *does* block, because a reclaim will run it and a second row would then be
- * the duplicate this gate exists to avoid.
- *
- * Diverging this way cannot produce a duplicate while Python's spawner is
- * live, because it only ever declines a spawn Python's rule would have made:
- * Python's looser predicate sets the effective rate until its spawner is
- * deleted, and the pile-up it is responsible for goes with it.
+ * keeps a failure from blocking the type forever: a row carrying an `error`
+ * without being marked `complete` re-arms on the ordinary interval like any
+ * other finished one. A row whose lease has gone stale *does* block, because a
+ * reclaim will run it and a second row would then be the duplicate this gate
+ * exists to avoid.
  *
  * The lock, the check and the insert are one transaction; the event is emitted
  * after it commits, so a rolled-back insert cannot announce a row that does not
@@ -291,8 +280,8 @@ export async function getTask(db: Db, taskId: number): Promise<Task> {
  *
  * The lease is encoded on `acquired_at` itself — a claim is live while
  * `acquired_at` is within this many seconds of now — so renewing one is a write
- * to a column that already exists. There is no lease column and no DDL; the
- * `tasks` table is Python's.
+ * to a column that already exists rather than to a lease column added for the
+ * purpose.
  */
 export const TASK_LEASE_SECONDS = 300;
 
@@ -307,16 +296,16 @@ export const TASK_LEASE_SECONDS = 300;
 export const TASK_HEARTBEAT_SECONDS = 60;
 
 /**
- * Marks a `runner_id` as belonging to this service rather than to Python.
+ * Marks a `runner_id` as belonging to this service.
  *
- * Every query that takes work back off a runner is scoped to this prefix.
- * Python never renews `acquired_at`, so a row it claimed and has been working
- * for longer than the lease is indistinguishable from an abandoned one — a
- * reclaimer that could see it would pull live work out from under the Python
- * runner. Scoping at the query level is what makes the drain assumption
- * enforceable rather than a note in a runbook, which is why there is
- * deliberately no configuration flag to widen it. Widening happens once Python
- * no longer runs tasks at all, as an edit here.
+ * Every query that takes work back off a runner is scoped to this prefix, so a
+ * claim carrying any other id is never reclaimed and never released. Reclaim
+ * reads a stale `acquired_at` as abandonment, which only holds for a runner
+ * that renews it; a claim from anything that does not would look abandoned
+ * while it was still live, and the reclaimer would pull work out from under it.
+ * Scoping at the query level is what makes that enforceable rather than a note
+ * in a runbook, which is why there is deliberately no configuration flag to
+ * widen it.
  */
 const RUNNER_ID_PREFIX = "ts-";
 
@@ -348,11 +337,11 @@ export type TaskProgressValues = {
 /**
  * Identify this process as a task runner.
  *
- * `{hostname}-{pid}` is Python's format, prefixed to mark the row as this
- * service's. The column is `varchar(255)`, which a Kubernetes pod name and a
- * pid cannot come close to filling — and Postgres raises on overflow rather
- * than truncating, so a hostname that did would fail the claim loudly instead
- * of minting an id that collides with another runner's.
+ * `{hostname}-{pid}`, prefixed to mark the row as this service's. The column is
+ * `varchar(255)`, which a Kubernetes pod name and a pid cannot come close to
+ * filling — and Postgres raises on overflow rather than truncating, so a
+ * hostname that did would fail the claim loudly instead of minting an id that
+ * collides with another runner's.
  */
 export function buildRunnerId(): string {
 	return `${RUNNER_ID_PREFIX}${hostname()}-${process.pid}`;
@@ -368,9 +357,9 @@ export function buildRunnerId(): string {
  * alive when the fleet is idle, and no window between a sweep marking a row
  * free and a claimer taking it.
  *
- * Python's `progress = 0` term is deliberately absent. It was there to avoid
+ * **There is deliberately no `progress = 0` term.** Such a term would avoid
  * re-running partially-finished work, but a row worth reclaiming has almost
- * always reported progress, so the term excluded exactly the rows the reclaim
+ * always reported progress, so it would exclude exactly the rows the reclaim
  * exists for.
  */
 function isClaimable(
@@ -533,10 +522,10 @@ export async function completeTask(
 /**
  * Mark the task `runnerId` holds as failed, recording `message`.
  *
- * Sets `complete` as well as `error`, which Python does not: its failure path
- * writes `error` alone and leaves `complete` false, so a failed task stays
- * forever in the set its own `get_counts` reports as neither queued nor
- * running. Failure is terminal here.
+ * Sets `complete` as well as `error`. Failure is terminal, and a row carrying
+ * an `error` while still marked incomplete sits in a state nothing reports on:
+ * {@link isActive} excludes it, so it is counted as neither queued nor running,
+ * and nothing will ever finish it.
  *
  * Returns `false` under the same fencing rule as {@link completeTask}.
  */
@@ -669,12 +658,12 @@ export async function releaseRunnerClaims(
 	return rows.map((row) => row.id);
 }
 
-/** Active tasks of one type, split the way Python's `get_counts` splits them. */
+/** Active tasks of one type, split into queued and running. */
 export type TaskCount = {
 	type: string;
-	/** Active and unclaimed — Python's `queued`. */
+	/** Active and unclaimed. */
 	queued: number;
-	/** Active and claimed — Python's `running`. */
+	/** Active and claimed. */
 	running: number;
 };
 
@@ -706,10 +695,9 @@ export const TASK_QUEUE_PROBE_TIMEOUT_MS = 2000;
  * partition the same predicate — and a queue read split across two statements
  * can report a task in neither half, or in both, if it is claimed between them.
  *
- * The `type` breakdown is additional to Python, which reports two scalars.
- * Summing over `type` reproduces them exactly, so the breakdown costs the
- * comparison nothing and is what makes the gauge actionable: "twelve queued"
- * says nothing about whether anything can drain them.
+ * The breakdown by `type` is what makes the gauge actionable: "twelve queued"
+ * says nothing about whether anything can drain them. Summing over `type`
+ * recovers the two fleet-wide scalars exactly, so the breakdown costs nothing.
  */
 export async function readTaskCounts(db: Db): Promise<TaskCount[]> {
 	return db
@@ -732,14 +720,11 @@ export async function readTaskCounts(db: Db): Promise<TaskCount[]> {
  *
  * Depth alone cannot tell a busy fleet from a stalled one — a queue holding at
  * twelve looks the same whether it is being drained and refilled or not being
- * drained at all. This is the series that separates them, and during the
- * cutover it is the one that says the TypeScript runner has actually started
- * claiming.
+ * drained at all. This is the series that separates them.
  *
  * The subtraction happens in Postgres, with `created_at` pinned to UTC on the
  * way into it. The column is a naive `timestamp`, so left to the session's time
- * zone the age would be wrong by that offset — and both writers, Python and
- * Drizzle, store UTC.
+ * zone the age would be wrong by that offset, and every writer stores UTC.
  */
 export async function readOldestQueuedTaskAges(
 	db: Db,
@@ -782,13 +767,13 @@ export function readTaskQueueBounded(
  * Take back every claim held by one of our runners whose lease has run out, and
  * report which.
  *
- * {@link acquireTask} already reclaims as it claims, so nothing calls this on a
- * running fleet. It ships as its own query for the cutover, whose last step is
- * widening the prefix scope below to recover what Python was mid-flight on when
- * its deployment was deleted — a sweep that has to be invocable on its own,
- * because by then there is no claim left to fold it into.
+ * {@link acquireTask} already reclaims as it claims, so a fleet that is
+ * claiming heals itself without this. It ships as its own query for the case
+ * where there is no claim to fold the sweep into: a fleet that has stopped
+ * claiming cannot otherwise recover what a departed runner was mid-flight on.
  *
- * Scoped to {@link RUNNER_ID_PREFIX}: a row Python holds is never touched.
+ * Scoped to {@link RUNNER_ID_PREFIX}: a claim carrying any other id is never
+ * touched.
  *
  * Emits nothing. A reclaimed task is pending again, which is the state a client
  * last saw it in.

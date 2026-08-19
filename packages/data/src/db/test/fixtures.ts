@@ -55,7 +55,7 @@ let ddl: Promise<string[]> | undefined;
 function getDdl(): Promise<string[]> {
 	// drizzle-kit is a test-only dependency, imported lazily so it never reaches
 	// a production bundle. This materializes the schema into a throwaway
-	// database — it is not a migration path. Python owns the real schema.
+	// database — it is not a migration path.
 	ddl ??= import("drizzle-kit/api").then(
 		({ generateDrizzleJson, generateMigration }) =>
 			generateMigration(

@@ -135,21 +135,19 @@ repository-wide rules in view:
 ### Data store: Postgres-first
 
 The TypeScript server reads and writes Postgres only, through
-`@virtool/data`; Python owns the schema and migrations. Mirror constraints
-exactly, use `.$defaultFn()` for Python-side defaults, and declare explicitly
-named table-level foreign keys. Serve legacy-shaped tables without
-renormalizing them.
+`@virtool/data`. Mirror constraints exactly, use `.$defaultFn()` for columns
+whose default is applied outside the database, and declare explicitly named
+table-level foreign keys. Serve legacy-shaped tables without renormalizing
+them.
 
-See [the data package README](packages/data/README.md) for schema ownership and
-the migration handoff contract.
+See [the data package README](packages/data/README.md) for schema ownership.
 
-### Files live in object storage, shared with Python
+### Files live in object storage
 
-Files live in the same S3 or Azure bucket Python uses. Stored-object keys are
-recorded, never reconstructed; collect them before deleting their rows. Pass
-the storage backend into data functions, log failures returned by `deleteKeys`,
-and use `MemoryStorage` in unit tests. Client code must read named
-`import.meta.env` keys, never the whole object.
+Stored-object keys are recorded, never reconstructed; collect them before
+deleting their rows. Pass the storage backend into data functions, log
+failures returned by `deleteKeys`, and use `MemoryStorage` in unit tests.
+Client code must read named `import.meta.env` keys, never the whole object.
 
 See the [`@virtool/data` README](packages/data/README.md#object-storage) for the
 streaming interface, key and cleanup contracts, configuration, backend

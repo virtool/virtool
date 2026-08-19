@@ -54,9 +54,8 @@ describe("createWorkflowCache", () => {
 
 		expect(restored).toBe(join(target, "reference_index"));
 
-		// The top-level entry is the source's basename — Python's
-		// `arcname=source.name` — so the restored tree lands at the same relative
-		// path the writer built it at.
+		// The top-level entry is the source's basename, so the restored tree lands
+		// at the same relative path the writer built it at.
 		expect(
 			await readFile(
 				join(target, "reference_index", "reference.1.bt2"),

@@ -11,9 +11,9 @@ export type JobsApiErrorOptions = {
 /**
  * Base for every failure reaching the jobs API.
  *
- * Thrown directly when a non-2xx status has no named subclass. Python raises a
- * bare `ValueError` there (`api/utils.py:140`), which is indistinguishable from
- * a programming error; a named error carrying the status is the improvement.
+ * Thrown directly when a non-2xx status has no named subclass. It carries the
+ * status, so an API failure is never mistaken for a programming error the way
+ * a bare `Error` would be.
  */
 export class JobsApiError extends WorkflowError {
 	readonly status: number | undefined;
@@ -95,9 +95,8 @@ export type ErrorResponse = {
 /**
  * Pull a human-readable message out of an error response.
  *
- * Mirrors `api/utils.py:124-142`: the JSON body's `message` key when there is
- * one, else the stringified JSON, else the response text, else a fixed
- * fallback.
+ * The JSON body's `message` key when there is one, else the stringified JSON,
+ * else the response text, else a fixed fallback.
  */
 export async function readErrorMessage(
 	response: ErrorResponse,

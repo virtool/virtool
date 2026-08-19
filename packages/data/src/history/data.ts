@@ -1,9 +1,8 @@
 // Reading an OTU's history, and taking OTUs back to the versions an analysis saw
 // by reverting the diffs written since. Changes are recorded by `./add.ts`.
 //
-// The patching is a port of `virtool.history.db.patch_otus_to_versions`, narrowed
-// to the patched document. Python returns a `(current, patched)` pair per
-// specifier and our only caller reads `patched`.
+// Patching returns only the patched document for each specifier, which is all
+// the single caller reads.
 
 import type {
 	HistoryNested,
@@ -83,14 +82,14 @@ function coerceOtuVersion(otuVersion: string | null): number | typeof REMOVED {
  * reference it belongs to, or the version of the index it was built into.
  *
  * Both columns are nullable in the schema for reasons that predate the foreign
- * keys, but a row written by either service always fills them. Python raises on
- * the same condition rather than serving a change with a hole in it.
+ * keys, but every row written fills them. Throwing is better than serving a
+ * change with a hole in it.
  */
 export class MalformedHistoryRowError extends AppError {}
 
-// The public change id. `legacy_id` carries it on every row either service has
-// written; the integer primary key stands in for a row old enough to predate it,
-// so a history list renders rather than failing on one unidentifiable change.
+// The public change id. `legacy_id` carries it on every row written; the
+// integer primary key stands in for a row old enough to predate it, so a
+// history list renders rather than failing on one unidentifiable change.
 function changeId(row: { legacy_id: string | null; id: number }): string {
 	return row.legacy_id ?? String(row.id);
 }
@@ -151,9 +150,9 @@ function mapOtuHistory(row: JoinedHistoryRow): OtuHistory {
  * The change that removed the OTU sorts above every numbered version — its
  * `otu_version` is `NULL`, and the sort takes nulls first.
  *
- * The user, index, and reference each resolve in the same query. Python attaches
- * the reference with `AttachReferenceTransform`, a second round trip to nest two
- * columns behind a foreign key this query is already positioned to join.
+ * The user, index, and reference each resolve in the same query rather than in
+ * a second round trip to nest two columns behind a foreign key this query is
+ * already positioned to join.
  */
 export async function listByOtu(
 	db: DbOrTx,
@@ -207,7 +206,7 @@ export async function listByOtu(
  *
  * `totalCount` counts every change in the reference, built or not, so a caller
  * can tell "nothing unbuilt" from "no history at all"; `foundCount` counts only
- * the unbuilt ones. Python scopes the two the same way.
+ * the unbuilt ones.
  *
  * The join is the one {@link listByOtu} uses. An unbuilt change has no index by
  * definition, so the index columns come back null and `index` is always `null` —
@@ -392,14 +391,10 @@ function changesToRevert(
 /**
  * Resolve the diff for each change in one query, keyed by `legacy_history.id`.
  *
- * Python compares a Mongo change document's `diff` field against the
- * `"postgres"` sentinel before looking the real diff up. That field has no
- * column in `legacy_history` — the diff lives only in `legacy_history_diff` —
- * and Python's own `_change_to_revert` hardcodes the sentinel, so the check is
- * already inert on the path it guards. What it was protecting survives here as
- * the two failures the schema can actually express: a change with no diff row,
- * and a diff row that never received its diff. Both throw rather than patching
- * nothing.
+ * A change carries no diff of its own: the diff lives only in
+ * `legacy_history_diff`, so the two failures the schema can express are a
+ * change with no diff row, and a diff row that never received its diff. Both
+ * throw rather than patching nothing.
  *
  * The diffs join on the integer `history_id` foreign key rather than on
  * `legacy_id`, which is nullable.
@@ -475,7 +470,7 @@ function toEntryDiff(change: HistoryRow, diff: unknown): DiffEntry[] {
 // historical snapshot held, which may be a stale legacy string. An OTU's parent
 // reference never changes, so the current id is restamped over it.
 //
-// Python mutates the document in place. Rebuilding it instead keeps a patched
+// The document is rebuilt rather than mutated in place, which keeps a patched
 // OTU from writing through structure it shares with the diff it was recovered
 // from, which two specifiers for the same OTU both read.
 function stampReference(otu: OtuDocument, referenceId: unknown): OtuDocument {
@@ -530,10 +525,10 @@ function applyChangesToRevert(
 		}
 	}
 
-	// Python guards the stamping on the truthiness of the patched document, which
-	// also catches the empty one an OTU with neither a row nor any history above
-	// the target reduces to. Both mean the same thing to a caller — the OTU did
-	// not exist at that version — so both come back as null.
+	// The stamping is guarded on the patched document being present and
+	// non-empty, which also catches the empty document an OTU with neither a row
+	// nor any history above the target reduces to. Both mean the same thing to a
+	// caller — the OTU did not exist at that version — so both come back as null.
 	if (patched === null || Object.keys(patched).length === 0) {
 		return null;
 	}
@@ -541,9 +536,7 @@ function applyChangesToRevert(
 	// The live OTU's reference is authoritative when it still exists; an OTU that
 	// was removed falls back to its latest change. Only a reverted change can
 	// leave a patched OTU without a live one, so there is always a latest change
-	// to fall back to by the time this is reached. Python also falls back to the
-	// legacy string `reference` column, which the mirror does not declare because
-	// upstream stopped writing it.
+	// to fall back to by the time this is reached.
 	const live = current.reference as Record<string, unknown> | undefined;
 
 	const referenceId =

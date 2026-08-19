@@ -141,7 +141,7 @@ describe("registerCache", () => {
 	});
 
 	// The size on the row is what this side measured, so a caller cannot inflate
-	// its own footprint or hide from Python's storage-budget accounting.
+	// its own footprint or hide from the storage-budget accounting.
 	it("stores the size read from storage", async () => {
 		const storage = await storageWith({ [UUID_A]: "hello world!" });
 
@@ -193,8 +193,8 @@ describe("registerCache", () => {
 		expect(await db.select().from(caches)).toHaveLength(1);
 	});
 
-	// An orphan has no row, so Python's LRU eviction — which walks rows — would
-	// never reclaim it.
+	// An orphan has no row, so LRU eviction — which walks rows — would never
+	// reclaim it.
 	it("deletes the loser's orphan and leaves the winner's object intact", async () => {
 		const storage = await storageWith({ [UUID_A]: "aaa", [UUID_B]: "aaa" });
 
@@ -422,9 +422,9 @@ describe("evictLruCaches", () => {
 		expect(await remainingKeys()).toEqual(["young"]);
 	});
 
-	// Python's quirk, inherited on purpose: the grace period filters the
-	// candidates but not the total, so a store over budget on nothing but fresh
-	// entries frees less than it needs, or nothing at all.
+	// Deliberate: the grace period filters the candidates but not the total, so
+	// a store over budget on nothing but fresh entries frees less than it needs,
+	// or nothing at all.
 	it("frees nothing when everything over budget is inside the grace period", async () => {
 		const storage = new MemoryStorage();
 

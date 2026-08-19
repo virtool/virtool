@@ -29,9 +29,9 @@ segment, or a `..` segment are invalid.
 
 The shared contracts enforce the minimum usable output: a sample has one or two
 reads, a subtraction has at least its source FASTA, and an analysis requires
-`results` but may have an empty file manifest. New TypeScript subtraction runs
-write only `subtraction.fa.gz`; reads remain compatible with older Python rows
-that also contain Bowtie2 files.
+`results` but may have an empty file manifest. Subtraction runs write only
+`subtraction.fa.gz`; reads still serve older subtractions whose rows also
+contain Bowtie2 files.
 
 Caches are the sole key-composition exception. `POST /caches` accepts a bare
 UUID and composes its cache key server-side. The workflow uploads the cache blob

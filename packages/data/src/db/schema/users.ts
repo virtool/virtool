@@ -1,8 +1,5 @@
-// Read-only mirror of the `users` table managed by the upstream Python service
-// via Alembic. Do not generate or push migrations from this side. Keep the
-// columns we touch (`id`, `handle`, `password`, `active`, `force_reset`,
-// `last_password_change`) in sync with
-// `../../../../../../virtool/virtool/users/pg.py`.
+// Read-only mirror of the `users` table. Only `id`, `handle`, `password`,
+// `active`, `force_reset`, and `last_password_change` are touched.
 
 import type { AdministratorRoleName } from "@virtool/contracts";
 import { sql } from "drizzle-orm";

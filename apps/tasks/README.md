@@ -8,9 +8,8 @@ Image: `ghcr.io/virtool/tasks`. No ingress and **no Service** — its
 HTTP listener serves only `GET /health/live`, `GET /health/ready` and a
 token-gated `GET /metrics` on `VT_TASKS_PROBE_PORT` (**9900**).
 
-Neither half has a flag to turn it off. The cutover from Python is two
-deployments inside a minute, and a minute of task lag is invisible to a user,
-so a staged rollout buys nothing.
+Neither half has a flag to turn it off. A minute of task lag is invisible to a
+user, so a staged rollout buys nothing.
 
 ## Shape
 

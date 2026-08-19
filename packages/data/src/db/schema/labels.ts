@@ -1,6 +1,4 @@
-// Read-only mirror of the `labels` table managed by the upstream Python service
-// via Alembic. Do not generate or push migrations from this side. Keep the
-// columns in sync with `../../../../../../virtool/virtool/labels/sql.py`.
+// Read-only mirror of the `labels` table.
 
 import { pgTable, serial, text, unique, varchar } from "drizzle-orm/pg-core";
 

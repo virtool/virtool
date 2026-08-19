@@ -40,11 +40,10 @@ import { emit } from "../events/emit";
 /**
  * {@link AccountSettings} as it is stored in the `users.settings` JSONB column.
  *
- * snake_case, byte-compatible with what Python reads and writes — its
- * `virtool/users/settings.py` seeds these keys for every account it creates,
- * which is every account that exists today. **Never returned from a read, and
- * never written from a model value**: map with {@link fromStoredAccountSettings}
- * and {@link toStoredAccountSettings} instead.
+ * snake_case, and byte-compatible with the blobs already stored against every
+ * account that exists today. **Never returned from a read, and never written
+ * from a model value**: map with {@link fromStoredAccountSettings} and
+ * {@link toStoredAccountSettings} instead.
  *
  * The column is typed `Record<string, unknown>` and was previously read with a
  * blind cast, so nothing but this mapper stands between a rename on this side
@@ -61,8 +60,8 @@ type StoredAccountSettings = {
  * Map the stored blob to the camelCase model.
  *
  * Every field falls back to its default rather than trusting the column: the
- * blob is untyped `jsonb`, and a row written by an older Python release may be
- * missing a key this side now expects.
+ * blob is untyped `jsonb`, and a row written by an older release may be missing
+ * a key this side now expects.
  */
 function fromStoredAccountSettings(stored: unknown): AccountSettings {
 	const blob = (stored ?? {}) as Partial<StoredAccountSettings>;
@@ -154,9 +153,8 @@ export class UserConflictError extends AppError {}
 /** Thrown when a primary group is set to a group the user does not belong to. */
 export class GroupMembershipError extends AppError {}
 
-// Mirrors virtool/users/settings.py DEFAULT_USER_SETTINGS. The Python service
-// owns this default for accounts it creates; we keep parity for accounts we
-// create from this side.
+// The settings every newly created account starts with, and the fallback for
+// any key a stored blob is missing.
 const DEFAULT_USER_SETTINGS: AccountSettings = {
 	skipQuickAnalyzeDialog: true,
 	showIds: true,
@@ -164,8 +162,8 @@ const DEFAULT_USER_SETTINGS: AccountSettings = {
 	quickAnalyzeWorkflow: "pathoscope",
 };
 
-// Mirrors virtool/models/roles.py::AdministratorRole: every member of that
-// enum, with its capitalized name and docstring description.
+// Every member of the administrator-role enum, with its capitalized name and
+// description.
 const ADMINISTRATOR_ROLES: AdministratorRole[] = [
 	{
 		id: "full",
@@ -397,8 +395,8 @@ export async function getAccount(db: Db, userId: number): Promise<Account> {
 /**
  * Set the signed-in user's email address.
  *
- * An empty string clears it, which is what Python's `check_email` allows and
- * what a user who wants no address on file submits.
+ * An empty string clears it, which is what a user who wants no address on file
+ * submits and what the email check deliberately allows.
  */
 export async function updateAccountEmail(
 	db: Db,
@@ -422,11 +420,11 @@ export async function updateAccountEmail(
  * Change the signed-in user's own password, after verifying the one they
  * already hold.
  *
- * Mirrors `AccountData.update` in `virtool/account/data.py`: the change clears
- * `force_reset`, revokes every session the user has, and mints a replacement so
- * the browser that submitted the form is not signed out by its own request. The
- * replacement never remembers — Python passes `remember=False` here too, so a
- * password change downgrades a 30-day session to the 60-minute one.
+ * The change clears `force_reset`, revokes every session the user has, and
+ * mints a replacement so the browser that submitted the form is not signed out
+ * by its own request. The replacement never remembers — `remember` is false
+ * here too — so a password change downgrades a 30-day session to the 60-minute
+ * one.
  *
  * The caller writes the returned credentials to the response cookies. Unlike
  * login and reset, which set different cookies depending on how they resolve,
@@ -455,9 +453,9 @@ export async function changePassword(
 	const hashed = await hashPassword(password);
 
 	// One unit: a failure partway through must not leave the password changed
-	// with no session to show for it. The order keeps Python's — update the user,
-	// revoke the old sessions, then create the replacement, which has to come
-	// last or the revocation would take it with the rest.
+	// with no session to show for it. The order matters — update the user, revoke
+	// the old sessions, then create the replacement, which has to come last or
+	// the revocation would take it with the rest.
 	//
 	// The update matches on the hash we verified, not just the id. Nothing held a
 	// lock across the read, the bcrypt verify, and the bcrypt hash above, and at

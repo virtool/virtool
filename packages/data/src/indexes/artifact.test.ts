@@ -34,7 +34,7 @@ async function build(...chunks: OtuChunk[]): Promise<string> {
 }
 
 describe("streamArtifact", () => {
-	it("writes the envelope Python writes, with the OTUs last", async () => {
+	it("writes the reference envelope first and the OTUs last", async () => {
 		const text = await build([{ _id: "otu1" }], [{ _id: "otu2" }]);
 
 		// The field order is asserted on the text rather than the parsed object,
@@ -46,8 +46,8 @@ describe("streamArtifact", () => {
 		);
 	});
 
-	// Python hard-codes it rather than reading the reference row, and workflows
-	// consume the field, so it is a wire value and not a fact about the row.
+	// The field is hard-coded rather than read from the reference row, and
+	// workflows consume it, so it is a wire value and not a fact about the row.
 	it("hard-codes data_type to genome", async () => {
 		expect(JSON.parse(await build([]))).toMatchObject({ data_type: "genome" });
 	});

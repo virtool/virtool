@@ -1,9 +1,8 @@
 /**
  * The workflow test harness, exported as `@virtool/workflow/testing`.
  *
- * It replaces Python's `virtool/workflow/pytest_plugin/` and
- * `tests/fixtures/workflow_api/`, and it is what every workflow app's tests
- * stand on. Three rules hold it together:
+ * It is what every workflow app's tests stand on. Three rules hold it
+ * together:
  *
  * - **Everything is a factory function.** Nothing is installed by importing this
  *   module, and there is no module-level mutable state — Vitest runs test files

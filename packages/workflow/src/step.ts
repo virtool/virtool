@@ -5,25 +5,24 @@ import { WorkflowDefinitionError } from "./errors";
 /**
  * The shape a step id must take.
  *
- * `snake_case`, because the id is the Python function name a ported step is
- * carried over from, and the jobs API stores it verbatim.
+ * `snake_case`, because the jobs API stores the id verbatim and every step
+ * list already recorded spells them that way.
  */
 const STEP_ID_PATTERN = /^[a-z][a-z0-9_]*$/;
 
 /** A single step in a workflow. */
 export type WorkflowStep<TData, TState> = {
 	/**
-	 * Stable `snake_case` id reported to the jobs API. Matches the ported
-	 * Python function name.
+	 * Stable `snake_case` id reported to the jobs API.
 	 *
 	 * Authored explicitly and never derived from the display name: it is what
 	 * `POST /jobs/{jobId}/steps/{stepId}/start` takes, so slugifying a label
-	 * would change the shape of a job's step list at cutover.
+	 * would change the shape of a job's step list.
 	 */
 	id: string;
 	/** Display name. Defaults to the title-cased id. */
 	name?: string;
-	/** One-line description, from the Python docstring's first line. */
+	/** One-line description. */
 	description: string;
 	run: (context: WorkflowContext<TData, TState>) => Promise<void>;
 };
@@ -63,12 +62,11 @@ export type Workflow<TData, TState> = Omit<
 };
 
 /**
- * Title-case an id the way Python's `str.title()` does.
+ * Title-case an id.
  *
- * `map_default_isolates` becomes `Map Default Isolates`, so a ported step keeps
- * the label the UI already shows for it. Python uppercases any letter whose
- * predecessor is not a letter, which is why this matches on the boundary rather
- * than splitting on spaces.
+ * `map_default_isolates` becomes `Map Default Isolates`, which is the label the
+ * UI shows. Every letter whose predecessor is not a letter is uppercased, which
+ * is why this matches on the boundary rather than splitting on spaces.
  */
 function titleCase(id: string): string {
 	return id
@@ -83,10 +81,10 @@ function titleCase(id: string): string {
 /**
  * Validate a workflow definition and resolve its step display names.
  *
- * There is no module scanning. Python's `collect()` reads a module's `__dict__`
- * to pick up decorated functions in definition order; bundling and tree-shaking
- * make that order an unsafe thing to depend on, so steps are an explicit
- * ordered array instead.
+ * There is no module scanning. Collecting steps by reading a module's exports
+ * in definition order would make step order depend on something bundling and
+ * tree-shaking are free to change, so steps are an explicit ordered array
+ * instead.
  *
  * @throws {WorkflowDefinitionError} when the workflow declares no steps, or a
  *   step has an id that is not `snake_case`, an id shared with another step, or

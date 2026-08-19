@@ -5,15 +5,11 @@ import type { ZodType } from "zod";
 import { assertOkResponse, JobsApiError, TransportError } from "./errors";
 import { withRetry } from "./retry";
 
-/**
- * The overall budget for one request, in milliseconds. Python's
- * `ClientTimeout(total=600)`.
- */
+/** The overall budget for one request, in milliseconds. */
 export const REQUEST_BUDGET_MS = 600_000;
 
 /**
- * Socket-level deadlines, in milliseconds, matching aiohttp's `sock_connect`
- * and `sock_read`.
+ * Socket-level deadlines, in milliseconds.
  *
  * The overall budget alone is not equivalent: it does not bound a stalled
  * socket that keeps trickling bytes, which is the failure the ping loop's
@@ -35,9 +31,8 @@ export function createDispatcher(): Agent {
 /**
  * Append a path to the jobs API's base URL.
  *
- * Plain concatenation, matching Python's `f"{connection_string}{path}"`, so a
- * base URL carrying a path prefix keeps it. `new URL(path, base)` would discard
- * one.
+ * Plain concatenation, so a base URL carrying a path prefix keeps it.
+ * `new URL(path, base)` would discard one.
  */
 export function joinUrl(
 	baseUrl: string,
@@ -59,7 +54,7 @@ export type HttpMethod = "GET" | "POST" | "PUT" | "PATCH" | "DELETE";
 /** One request against the jobs API. */
 export type RequestOptions<T> = {
 	method: HttpMethod;
-	/** Unprefixed, matching Python's paths byte for byte — `/jobs/1/ping`. */
+	/** Unprefixed, exactly as the jobs API spells it — `/jobs/1/ping`. */
 	path: string;
 	body?: JsonValue;
 	searchParams?: Record<string, string>;
@@ -114,7 +109,7 @@ export type CreateJobsApiClientOptions = {
  * The credential a workflow pod authenticates with.
  *
  * `job-{id}` is the handle the jobs API's key verification reserves for a
- * runner, matching Python's `BasicAuth(login=f"job-{job_id}", password=key)`.
+ * runner, sent as HTTP basic auth with the job key as the password.
  */
 function buildAuthorization(jobId: number, key: string): string {
 	return `Basic ${Buffer.from(`job-${jobId}:${key}`).toString("base64")}`;
@@ -219,8 +214,8 @@ export function createJobsApiClient({
 			request({ method: "GET", path: `/jobs/${jobId}`, schema: Job }),
 
 		// Retries are disabled so the ping loop owns the give-up window end to
-		// end. Python's ping goes through `@retry`, so one failure as its loop
-		// counts it costs 25 s of hidden retries first and the pod can go over two
+		// end. A ping that retried internally would spend 25 s of hidden attempts
+		// before the loop counted a single failure, and the pod could go over two
 		// minutes without a successful ping while believing it is healthy.
 		ping: (signal) =>
 			request({

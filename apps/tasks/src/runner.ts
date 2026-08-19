@@ -18,9 +18,9 @@ import type { RunOutcome, TaskRunSample } from "./metrics/registry";
 /**
  * How long the claim loop waits between polls.
  *
- * Python's interval, kept as it is. A LISTEN/NOTIFY wakeup would cut the latency
- * between a task being spawned and picked up, but it is an optimisation over a
- * claim path that has to be correct on polling alone first.
+ * A LISTEN/NOTIFY wakeup would cut the latency between a task being spawned and
+ * picked up, but it is an optimisation over a claim path that has to be correct
+ * on polling alone first.
  */
 export const POLL_INTERVAL_MS = 2_000;
 
@@ -155,11 +155,11 @@ function settles(promise: Promise<void>, ms: number): Promise<boolean> {
 /**
  * Run a claimed task through its registered handler, or fail it for having none.
  *
- * **A type with no handler is failed, never released.** Python acquires the row,
- * finds no class for the name, logs and returns — leaving `acquired_at` set,
- * `complete = false` and `error = NULL`. That row is invisible to every
- * consumer, counted as running forever, and drawn as a progress bar that never
- * moves; it is the documented cause of the task runner's abandoned KEDA trigger.
+ * **A type with no handler is failed, never released.** Acquiring the row,
+ * logging and returning would leave `acquired_at` set, `complete = false` and
+ * `error = NULL` — a row invisible to every consumer, counted as running
+ * forever, and drawn as a progress bar that never moves. Stranded rows of
+ * exactly that shape are what made a KEDA trigger on the queue unusable.
  * Releasing instead is no better: an unknown row is claimable by construction,
  * so it comes straight back on the next poll and hot-loops without ever
  * surfacing anything. Failing it is the only outcome a user can see.
@@ -217,11 +217,11 @@ export async function dispatchTask<C>(
 /**
  * Build the loop that claims tasks, runs them, and holds their leases.
  *
- * **One task at a time**, matching Python. Replica count is the scaling lever
- * and it already exists, and the bodies are heavy enough — a reference import
- * parses tens of megabytes of JSON, an HMM install decompresses a
- * multi-hundred-megabyte tarball — that in-process concurrency would multiply
- * peak memory against a pod limit rather than fill idle time.
+ * **One task at a time.** Replica count is the scaling lever and it already
+ * exists, and the bodies are heavy enough — a reference import parses tens of
+ * megabytes of JSON, an HMM install decompresses a multi-hundred-megabyte
+ * tarball — that in-process concurrency would multiply peak memory against a
+ * pod limit rather than fill idle time.
  *
  * The seams for many are built anyway: the in-flight tasks are a collection
  * rather than a nullable single, and `renewLeases` renews a set. Raising the cap
@@ -417,10 +417,10 @@ export function createTaskRunner<C>(options: TaskRunnerOptions<C>): TaskRunner {
 			claimed = await acquireTask(db, {
 				runnerId,
 				// Read from the registry on every poll, never snapshotted at
-				// construction. Python snapshots `BaseTask.__subclasses__()`, which
-				// holds only the classes already imported, so one missing import
-				// silently narrows what its runner can claim. Reading live costs
-				// nothing and removes the class of bug.
+				// construction. A set snapshotted before every handler module has
+				// loaded silently narrows what this runner can claim, with nothing
+				// to say so. Reading live costs nothing and removes the class of
+				// bug.
 				allowedTypes: Object.keys(registry),
 			});
 		} catch (err) {

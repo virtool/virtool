@@ -1,17 +1,16 @@
 /**
  * The jobs API's behaviour, over {@link JobsApiState}.
  *
- * Ported from `tests/fixtures/workflow_api/`, which spread the same route table
- * across seven aiohttp modules. There is **one** implementation here and both
- * halves of the harness call it — the faked client and the embedded server —
- * because two implementations of the same fixture drift, and the half a test is
- * not using is the half that stops matching the real service.
+ * There is **one** implementation of the route table here and both halves of
+ * the harness call it — the faked client and the embedded server — because two
+ * implementations of the same fixture drift, and the half a test is not using
+ * is the half that stops matching the real service.
  *
  * **Every field is camelCase**, taken from the schemas in `@virtool/contracts`
- * rather than transcribed from Python's `started_at` / `pinged_at`. The embedded
- * server is the fixture the jobs API client is tested against: spelled
- * snake_case on both sides they would agree with each other and the mismatch
- * would surface only against the real `apps/jobs-api`.
+ * rather than hand-written. The embedded server is the fixture the jobs API
+ * client is tested against: misspelled the same way on both sides they would
+ * agree with each other, and the mismatch would surface only against the real
+ * `apps/jobs-api`.
  */
 
 import {
@@ -119,8 +118,8 @@ function readJob(state: JobsApiState): Job {
  * Hand out the one job this fixture holds.
  *
  * The workflow arrives as a query parameter rather than a body field, matching
- * Python's `ClaimJobView` and `handleClaimJob`, and it is **checked against the
- * job's own workflow**. A fixture that handed its `create_subtraction` job to a
+ * the real `POST /jobs/claim`, and it is **checked against the job's own
+ * workflow**. A fixture that handed its `create_subtraction` job to a
  * runner asking for `nuvs` would let a test pass with a claim configuration the
  * real service answers 404 to, which is the runner polling forever.
  */
@@ -146,10 +145,10 @@ function handleClaim(
 		return { status: 400, body: { message: parsed.error.message } };
 	}
 
-	// Python's fixture answers a second claim with a 404, the same status it uses
-	// for "no job available" — a runner cannot tell the two apart and does not
-	// need to. Asking for a workflow this fixture's job does not run is the same
-	// answer for the same reason.
+	// A second claim is answered with a 404, the same status as "no job
+	// available" — a runner cannot tell the two apart and does not need to.
+	// Asking for a workflow this fixture's job does not run gets the same answer
+	// for the same reason.
 	if (state.acquired || workflow.data !== state.job.workflow) {
 		return notFound("No job available");
 	}
@@ -278,7 +277,7 @@ function handleRegisterCache(
 		key: parsed.data.key,
 		// Composed server-side from the uuid, never taken from the caller. A
 		// caller-supplied key would let a job register a row pointing at another
-		// domain's object, which Python's LRU eviction would then delete.
+		// domain's object, which cache eviction would then delete.
 		storageKey: cacheKey(parsed.data.uuid),
 		size: 0,
 		params: parsed.data.params,

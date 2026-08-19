@@ -11,7 +11,7 @@
 //! truncates the summed raw characters, and its base-composition denominator
 //! excludes `N`. Each is documented where it is implemented, with the Java
 //! file it came from. Do not "correct" any of them — the blob is compared
-//! against ones Python's `create_sample` wrote.
+//! against the stored blobs samples already hold.
 //!
 //! **One divergence is deliberate: this computes per cycle and does not bin.**
 //! FastQC groups base positions once a read is longer than 75bp, reporting one

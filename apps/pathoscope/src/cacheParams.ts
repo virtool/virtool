@@ -2,28 +2,28 @@
  * The cache namespaces this workflow reads and writes, and the params each key
  * is derived from.
  *
- * `deriveCacheKey` reproduces Python's `derive_key` byte for byte, so a params
- * object that matches Python's derives the same key and the two implementations
- * share the artifact. That sharing is silent when it works and silent when it
- * does not — a divergence misses every lookup and writes a second copy under a
- * key nothing else will ever ask for — so the shared namespaces are pinned by
- * tests against known Python-generated keys.
+ * `deriveCacheKey` serialises the params byte for byte, so a params object that
+ * matches the one a blob was archived under derives the same key and the run
+ * reuses that blob. That reuse is silent when it works and silent when it does
+ * not — a divergence misses every lookup and writes a second copy under a key
+ * nothing else will ever ask for — so the shared namespaces are pinned by tests
+ * against the keys blobs already in the bucket were written under.
  *
  * ## Two namespaces are shared and one is forked
  *
  * - `reference_mapping_index` and `subtraction_mapping_index` are **shared**,
  *   and their params are the runtime's `buildMappingIndexCacheParams` rather
  *   than anything declared here. Their artifact is a bowtie2 index, which
- *   `bowtie2-build` produces identically from either implementation and from
- *   either analysis workflow, so this side contributes only {@link WORKFLOW_NAME}
- *   and {@link REFERENCE_INDEX_EXTRA_PARAMS} — what the index was built from.
+ *   `bowtie2-build` produces identically whoever ran it, so this side
+ *   contributes only {@link WORKFLOW_NAME} and
+ *   {@link REFERENCE_INDEX_EXTRA_PARAMS} — what the index was built from.
  * - `collapsed_reference` is **forked**, deliberately, and is this workflow's
- *   alone. Its artifact is a SQLite index *this code* writes, and byte-level
- *   interchangeability with Python's writer is not something either side
- *   guarantees. {@link COLLAPSE_IMPL} is the discriminator that makes the
- *   derived key differ by construction, so the two namespaces cannot collide
- *   during the cutover. Removing it would let a Python-written collapsed index
- *   be restored here and analysed as though this code had produced it.
+ *   alone. Its artifact is a SQLite index *this code* writes, and a collapsed
+ *   index from the shared namespace is not interchangeable with it.
+ *   {@link COLLAPSE_IMPL} is the discriminator that makes the derived key
+ *   differ by construction, so the two namespaces cannot collide. Removing it
+ *   would let a collapsed index this code did not write be restored here and
+ *   analysed as though it had.
  */
 
 import {
@@ -36,12 +36,12 @@ import { CD_HIT_EST_IDENTITY, CD_HIT_EST_TOOL } from "./reference/collapse";
 export const WORKFLOW_NAME = "pathoscope";
 
 /**
- * The discriminator that forks the `collapsed_reference` namespace from
- * Python's.
+ * The discriminator that forks the `collapsed_reference` namespace away from
+ * the shared one.
  *
- * A field Python's params do not carry, so the sorted-key serialization differs
- * and so does the SHA-256 over it. Bump the value if the collapsed artifact's
- * content ever changes shape; do not remove it.
+ * A field the shared namespace's params do not carry, so the sorted-key
+ * serialization differs and so does the SHA-256 over it. Bump the value if the
+ * collapsed artifact's content ever changes shape; do not remove it.
  */
 const COLLAPSE_IMPL = "typescript-v1";
 

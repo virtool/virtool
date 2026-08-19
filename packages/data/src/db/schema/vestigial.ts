@@ -1,17 +1,15 @@
 // Mirror of four tables that still exist in production and that nothing reads
-// or writes — not this codebase, and not Python either.
+// or writes.
 //
 // They are declared only so the schema snapshot describes production. A table
 // missing from this schema is missing from the snapshot, so nothing could
 // generate the migration that drops it — the same reasoning that keeps
 // `analyses`' dead `reference` and `index` columns declared. Dropping them is
-// a post-cutover cleanup, not something to do from here while Alembic still
-// owns the schema.
+// outstanding cleanup.
 //
-// `permissions` is the furthest gone: it has no SQLAlchemy model upstream at
-// all, and its two enum types are referenced by nothing in either repository.
-// That is why their members are spelled out here rather than taken from
-// `@virtool/contracts` — there is no shared contract, because there is no
+// `permissions` is the furthest gone: its two enum types are referenced by
+// nothing. That is why their members are spelled out here rather than taken
+// from `@virtool/contracts` — there is no shared contract, because there is no
 // consumer to share one with.
 
 import {

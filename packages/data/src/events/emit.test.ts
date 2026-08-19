@@ -19,7 +19,7 @@ beforeEach(() => {
 });
 
 describe("emit", () => {
-	it("publishes a create event with the python-compatible payload", async () => {
+	it("publishes a create event with domain, id, and operation", async () => {
 		await emit("labels", 7, "create");
 
 		expect(notify).toHaveBeenCalledTimes(1);

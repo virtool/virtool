@@ -47,12 +47,11 @@ export type TaskSpawnerOptions = {
 /**
  * Reject a schedule the tick cannot honour.
  *
- * Python raises `ValueError` on a non-positive interval inside
- * `create_periodic`, which is per call; this checks once, at construction, so a
- * bad schedule fails the process at startup rather than every thirty seconds
- * forever. An interval of zero would leave the suppression window permanently
- * open, so nothing but `createPeriodicTask`'s outstanding-work gate would pace
- * the type and it would respawn the moment each run finished.
+ * The check runs once, at construction, so a bad schedule fails the process at
+ * startup rather than failing a spawn every thirty seconds forever. An interval
+ * of zero would leave the suppression window permanently open, so nothing but
+ * `createPeriodicTask`'s outstanding-work gate would pace the type and it would
+ * respawn the moment each run finished.
  */
 function checkSchedule(schedule: PeriodicTaskRegistration[]): void {
 	for (const { type, intervalSeconds } of schedule) {
@@ -67,10 +66,10 @@ function checkSchedule(schedule: PeriodicTaskRegistration[]): void {
 /**
  * Build the loop that spawns Virtool's periodic tasks.
  *
- * **This runs in production beside Python's spawner**, not instead of it. Both
- * insert the same five types into the same table and are mutually excluded only
- * by the advisory lock `createPeriodicTask` takes, so the loop's job is to walk
- * the schedule on Python's cadence and stay out of the way of the exclusion.
+ * The loop's whole job is to walk the schedule and ask `createPeriodicTask` to
+ * insert. Replicas are mutually excluded only by the advisory lock that
+ * function takes, so the loop coordinates nothing itself and stays out of the
+ * way of the exclusion.
  *
  * It inserts and nothing else — it never claims, updates or completes a task.
  * That is the runner's half of this process.

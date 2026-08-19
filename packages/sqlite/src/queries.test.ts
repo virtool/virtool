@@ -115,7 +115,7 @@ describe("openWorkflowIndex", () => {
 });
 
 describe("getReferenceMetadata", () => {
-	it("matches Python", async () => {
+	it("matches the pinned golden", async () => {
 		expect(await index.getReferenceMetadata()).toEqual(
 			golden.referenceMetadata,
 		);
@@ -137,13 +137,13 @@ describe("getReferenceMetadata", () => {
 });
 
 describe("iterSequences", () => {
-	it("matches Python, ordered by sequence id", async () => {
+	it("matches the golden, ordered by sequence id", async () => {
 		expect(await collect(index.iterSequences())).toEqual(golden.sequences);
 	});
 });
 
 describe("iterDefaultSequences", () => {
-	it("matches Python, and excludes non-default isolates", async () => {
+	it("matches the golden, and excludes non-default isolates", async () => {
 		const sequences = await collect(index.iterDefaultSequences());
 
 		expect(sequences).toEqual(golden.defaultSequences);
@@ -162,7 +162,7 @@ describe("iterDefaultSequences", () => {
 });
 
 describe("iterOtuSequences", () => {
-	it("matches Python for a set of OTU ids", async () => {
+	it("matches the golden for a set of OTU ids", async () => {
 		expect(
 			await collect(index.iterOtuSequences(golden.otuSequences.otuIds)),
 		).toEqual(golden.otuSequences.result);
@@ -180,7 +180,7 @@ describe("iterOtuSequences", () => {
 });
 
 describe("iterOtus", () => {
-	it("matches Python, including the nested insertion order", async () => {
+	it("matches the golden, including the nested insertion order", async () => {
 		expect(await collect(index.iterOtus())).toEqual(golden.otus);
 	});
 
@@ -189,8 +189,7 @@ describe("iterOtus", () => {
 
 		// Written row by row rather than through `createIndexArtifact`, which
 		// refuses to produce this. The guard here is for an artifact that arrived
-		// from somewhere else — the other implementation, or a build predating that
-		// refusal.
+		// from somewhere else, such as a build predating that refusal.
 		const database = createIndexArtifactSchema(path);
 
 		database
@@ -220,7 +219,7 @@ describe("iterOtus", () => {
 });
 
 describe("getOtuRefsBySequenceIds", () => {
-	it("matches Python", async () => {
+	it("matches the pinned golden", async () => {
 		expect(
 			await index.getOtuRefsBySequenceIds(
 				golden.otuRefsBySequenceId.sequenceIds,
@@ -246,7 +245,7 @@ describe("getOtuRefsBySequenceIds", () => {
 });
 
 describe("writeFasta", () => {
-	it("writes byte-identical output to Python", async () => {
+	it("writes byte-identical output to the golden", async () => {
 		const path = join(workPath, "reference.fa");
 
 		await writeFasta(path, index.iterDefaultSequences());

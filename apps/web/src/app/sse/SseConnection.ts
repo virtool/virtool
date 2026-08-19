@@ -33,12 +33,11 @@ export function init(queryClient: QueryClient): void {
 			return;
 		}
 
-		// Python and Node share one Postgres channel, and Python emits frames for
-		// domains this client doesn't handle yet (otus, subtraction, and the
-		// rest). Those are expected forward-compatible traffic, not drift, so
-		// drop them silently. Only a frame for a domain we *do* handle that still
-		// fails to validate — a wrong id type, a bad operation — is worth
-		// reporting.
+		// Frames arrive for domains this client doesn't handle yet (otus,
+		// subtraction, and the rest). Those are expected forward-compatible
+		// traffic, not drift, so drop them silently. Only a frame for a domain we
+		// *do* handle that still fails to validate — a wrong id type, a bad
+		// operation — is worth reporting.
 		const domain = (data as { domain?: unknown } | null)?.domain;
 		if (!SseDomainSchema.safeParse(domain).success) {
 			return;

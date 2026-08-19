@@ -22,8 +22,8 @@ export class ApiKeyNotFoundError extends AppError {}
 
 /**
  * Build the API-key representation from a stored row. Permissions are expanded
- * against `emptyPermissions()` so keys written by the legacy Python path —
- * which stored only the provided keys — still report every permission as an
+ * against `emptyPermissions()` so keys written by an older path — which stored
+ * only the granted permission names — still report every permission as an
  * explicit boolean, and the edit UI can offer the full checklist.
  */
 function toApiKey(row: ApiKeyRow): ApiKey {

@@ -2,12 +2,11 @@
  * Reshaping the EM output into the per-reference report the analysis is built
  * from.
  *
- * The port of Python's `write_report`, minus the writing. Python also emitted a
- * `report.tsv` and uploaded it as the analysis's one retained file; nothing ever
- * read it back — every figure in it is in the `results` blob the same function
- * returns, and that blob is what the server formats and the SPA renders. So this
- * side writes no file at all, which is why `FinalizeAnalysisRequest.files` is
- * allowed to be empty and pathoscope is the reason it is.
+ * **No file is written.** A `report.tsv` uploaded as the analysis's one
+ * retained file would never be read back — every figure it could carry is in
+ * the `results` blob built here, and that blob is what the server formats and
+ * the SPA renders. That is why `FinalizeAnalysisRequest.files` is allowed to be
+ * empty, and pathoscope is the reason it is.
  *
  * The EM core hands back eleven parallel arrays plus `refs`. They are gathered
  * into one entry per reference, ordered, and cut off at the first uninteresting
@@ -22,8 +21,8 @@ import type { PathoscopeEmResults } from "./pathoscopeCore";
  * A storage choice, not a compatibility one. These are proportions and scores
  * out of a floating-point accumulation, so the digits past here are arithmetic
  * noise and keeping them only makes the JSONB blob larger. Ties at the tenth
- * place round however `toFixed` rounds them — Python's `round` breaks them to
- * even and this does not, and nothing depends on which.
+ * place round however `toFixed` rounds them, and nothing depends on which way
+ * they go.
  *
  * Applied **after** the cutoff, so rounding can never move a reference across
  * it.
@@ -71,8 +70,8 @@ export type ReportEntry = {
  *
  * The arrays are positional, so one short by a single element would shift every
  * figure after it onto the wrong reference and the report would still look
- * entirely plausible. Python zips them and lets a short array truncate the
- * result silently; here it is an error.
+ * entirely plausible. An array short of `refs` is an error here rather than
+ * something that silently truncates the result.
  *
  * @throws {Error} when any array is not the same length as `refs`.
  */
@@ -191,8 +190,8 @@ function round(value: number): number {
  * Build the report from an EM run's results.
  *
  * @returns the surviving references, most abundant first. An **ordered list**
- *   rather than a lookup: Python keyed a dict by sequence id, but nothing here
- *   addresses an entry by id — the order is the meaning.
+ *   rather than a lookup keyed by sequence id: nothing here addresses an entry
+ *   by id — the order is the meaning.
  */
 export function buildReport(results: PathoscopeEmResults): ReportEntry[] {
 	const entries = gatherEntries(results).sort(compareEntries);

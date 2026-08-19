@@ -1,7 +1,4 @@
-// Read-only mirror of the `hmms` and `legacy_hmm_status` tables managed by the
-// upstream Python service via Alembic. Do not generate or push migrations from
-// this side. Keep the columns in sync with
-// `../../../../../../virtool/virtool/hmm/sql.py`.
+// Read-only mirror of the `hmms` and `legacy_hmm_status` tables.
 //
 // `hmms.legacy_id` holds the old Mongo `_id`. The HMM endpoints address rows by
 // their integer id and never need it, but a NuVs analysis stored before the

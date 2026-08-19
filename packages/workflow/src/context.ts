@@ -41,10 +41,9 @@ export type BuildContextInput = {
 /**
  * Builds the serializable data half of a run's context.
  *
- * One of these per workflow, and it is the *only* producer of `data`. Python
- * resolved fixtures lazily by introspecting a step's parameter names against a
- * registry; this is eager and plain, so a storage read that fails surfaces
- * before step 1 rather than forty minutes in.
+ * One of these per workflow, and it is the *only* producer of `data`. It is
+ * eager and plain rather than resolving each step's dependencies lazily, so a
+ * storage read that fails surfaces before step 1 rather than forty minutes in.
  */
 export type BuildContext<TData> = (input: BuildContextInput) => Promise<TData>;
 
@@ -55,7 +54,7 @@ export type WorkflowContext<TData, TState> = {
 	 * produces.
 	 */
 	readonly data: TData;
-	/** Mutable cross-step scratch. Replaces Python's `results` dict. */
+	/** Mutable cross-step scratch. */
 	state: TState;
 	readonly job: RunJob;
 	/** Absolute path to the emptied per-run work directory. */

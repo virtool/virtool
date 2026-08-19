@@ -53,7 +53,7 @@ afterEach(async () => {
 	server = undefined;
 });
 
-it("defaults to python's two second poll interval", () => {
+it("defaults to a two second poll interval", () => {
 	expect(CLAIM_POLL_INTERVAL_MS).toBe(2_000);
 });
 

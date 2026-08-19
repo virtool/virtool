@@ -34,8 +34,8 @@ describe("<Indexes />", () => {
 		expect(await screen.findByText("Version 3")).toBeInTheDocument();
 		expect(screen.getByText("4 changes made in 2 OTUs")).toBeInTheDocument();
 
-		// `createdAt` is a `Date` now that indexes are served from here rather than
-		// the snake_case Python API, so the attribution has to render one.
+		// `createdAt` crosses the wire as a `Date`, so the attribution renders it
+		// as a relative time.
 		const attribution = screen.getByText(index.user.handle, { exact: false });
 		expect(attribution).toHaveTextContent(/ago$/);
 	});

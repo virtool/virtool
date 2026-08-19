@@ -15,16 +15,16 @@ import type { CreateSampleStep } from "./types";
  * and nothing else, so the memory argument FastQC forced is gone, but there is
  * no throughput to win either. Both invocations are bound by reading the file.
  *
- * Python guards nothing here; its runner treats termination by SIGTERM as
- * success, so a FastQC killed part way through leaves a truncated report that
- * parses. This runtime throws `SubprocessFailedError` on any non-zero exit,
- * code 15 included. The one outcome that resolves is a cancellation-driven
- * kill, and that is what the check below is for.
+ * This runtime throws `SubprocessFailedError` on any non-zero exit, code 15
+ * included, so an invocation killed part way through cannot leave a truncated
+ * results file behind for the read below to parse. The one outcome that
+ * resolves is a cancellation-driven kill, and that is what the check below is
+ * for.
  */
 export const runFastqcStep: CreateSampleStep = {
-	/* Python's function name, and the jobs API stores it — a rename changes the
-	 * shape of a job's step list at cutover. It outlives the tool it was named
-	 * after; the display name below is the part free to say what now runs. */
+	/* Stored in the `jobs.steps` column and rendered by the UI, so renaming it
+	 * changes what users see. It outlives the tool it was named after; the
+	 * display name below is the part free to say what actually runs. */
 	id: "run_fastqc",
 	name: "Measure quality",
 	description: "Measure the quality of the read files.",

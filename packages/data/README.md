@@ -17,9 +17,8 @@ legacy `types.ts` files.
 ## Object storage
 
 Virtool stores uploads, sample reads, analysis results, indexes, subtraction
-files, HMM profiles, and caches in object storage. Python and the TypeScript
-services use the same bucket. The TypeScript implementation lives in the
-server-only `@virtool/storage` package and must remain compatible with Python.
+files, HMM profiles, and caches in object storage. The implementation lives in
+the server-only `@virtool/storage` package.
 
 ### Interface
 
@@ -77,8 +76,8 @@ Nullable columns mirror nullable legacy sources rather than inventing keys
 for objects that cannot be retrieved. The index OTU JSON key is stored on the
 index because the on-demand artifact should not appear in its file listing.
 
-Mint new keys with `@virtool/storage/keys`. UUID leaves match Python's
-`uuid4().hex` representation and therefore contain no hyphens.
+Mint new keys with `@virtool/storage/keys`. UUID leaves are written in hex and
+therefore contain no hyphens, matching the keys already in the bucket.
 
 | Minter | Shape |
 | --- | --- |
@@ -162,26 +161,18 @@ environment so typed arrays come from the same JavaScript realm.
 
 ## Schema ownership
 
-The Python `virtool` repository owns the Postgres schema and applies its Alembic
-migrations. This package mirrors that schema for Drizzle and does not ship
-migrations of its own.
+This package owns the Postgres schema. `src/db/schema/` is the source of truth;
+migrations are generated from it with `db:generate` and applied with
+`db:migrate`.
 
-When an endpoint needs a schema change:
+`drizzle/0000_baseline.sql` describes the schema as it stood when ownership
+moved here. Production was stamped as already migrated rather than having that
+baseline applied to it, so it must never be run against an existing database.
 
-1. Add and deploy the Alembic migration from the Python repository.
-2. Update `src/db/schema/` to match it.
-3. Migrate the endpoint to TypeScript.
-
-The TypeScript mirror may temporarily lag the deployed schema, but the Python
-application must never lag it while Python remains in production.
-
-### Taking ownership of migrations
-
-Before moving schema ownership to this package, baseline Drizzle against the
-production schema. Compare the initial generated migration with
-`pg_dump --schema-only`, then stamp production as already migrated instead of
-applying that initial migration. In particular, verify constraint names,
-default expressions, indexes, and enum value ordering.
+Many tables keep legacy shapes — `legacy_` prefixes, dead columns held for
+snapshot fidelity, promoted-from-JSONB projections. Serve them as they are
+rather than renormalizing them; the schema files say per-table what is dead and
+what is load-bearing.
 
 Keep `drizzle-orm` and `drizzle-kit` on compatible versions. Check both release
 notes when updating either package because their schema-generation internals

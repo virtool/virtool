@@ -80,7 +80,7 @@ export const getGroupFn = createServerFn({ method: "GET" })
 
 // A group's permissions are unioned into every member's, so anyone who can
 // write a group can grant themselves any permission. All three mutations are
-// administrator-only, as they were in the Python service they replaced.
+// administrator-only.
 export const createGroupFn = createServerFn({ method: "POST" })
 	.middleware([adminRole("base")])
 	.validator(createGroupSchema)

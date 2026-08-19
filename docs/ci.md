@@ -20,10 +20,10 @@ jobs. `release-ghcr` publishes all seven targets on every release.
 The release currently tags the same build as both `ui` and `web` while the
 cluster migrates to `web`; remove `ui` once nothing pulls it.
 
-The `ts-` prefix distinguishes these workflow images from the images still
-published by the Python workflow repositories under unprefixed names such as
-`ghcr.io/virtool/pathoscope`. The two release streams do not overwrite each
-other; the cluster selects one by the image it pulls.
+The `ts-` prefix distinguishes these workflow images from the unprefixed names
+such as `ghcr.io/virtool/pathoscope` that earlier releases used. Nothing
+publishes the unprefixed names now, so the prefix is retained only so an
+existing deployment keeps pulling what it already pulls.
 
 Adding an image requires a Dockerfile target and a release-matrix entry. For
 the five targets in `build`, keep its matrix entry in step with

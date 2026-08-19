@@ -2,15 +2,14 @@ import { describe, expect, it } from "vitest";
 import { nuvsWorkflow } from "./workflow";
 
 /**
- * The step list, exactly as Python declares it.
+ * The step list, in order, with the display name each step resolves to.
  *
- * **Ids are the cutover contract.** The jobs API stores them and
- * `POST /jobs/{jobId}/steps/{stepId}/start` takes them, so an id that does not
- * match the Python function it was ported from changes the shape of a job's step
- * list — and a job claimed by one implementation and read by the other would
- * disagree about which step it is on. Renaming one is not a refactor.
+ * **Ids are a contract.** The jobs API stores them in the `jobs.steps` column
+ * and `POST /jobs/{jobId}/steps/{stepId}/start` takes them, and the UI renders
+ * them, so renaming one changes what users see — on jobs already written as
+ * well as new ones. Renaming one is not a refactor.
  */
-const PYTHON_STEPS = [
+const EXPECTED_STEPS = [
 	["create_reference_fasta", "Create reference FASTA"],
 	["trim_reads", "Trim Reads"],
 	["create_reference_index", "Create reference index"],
@@ -28,9 +27,9 @@ describe("nuvsWorkflow", () => {
 		expect(nuvsWorkflow.name).toBe("nuvs");
 	});
 
-	it("declares Python's ten steps, in Python's order", () => {
+	it("declares its ten step ids, in order", () => {
 		expect(nuvsWorkflow.steps.map(({ id }) => id)).toEqual(
-			PYTHON_STEPS.map(([id]) => id),
+			EXPECTED_STEPS.map(([id]) => id),
 		);
 	});
 
@@ -38,7 +37,7 @@ describe("nuvsWorkflow", () => {
 	// `Create Reference Fasta`, `Otus` and `Vfam`. The rest are left to derive.
 	it("resolves each step's display name", () => {
 		expect(nuvsWorkflow.steps.map(({ name }) => name)).toEqual(
-			PYTHON_STEPS.map(([, name]) => name),
+			EXPECTED_STEPS.map(([, name]) => name),
 		);
 	});
 

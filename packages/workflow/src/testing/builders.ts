@@ -1,5 +1,5 @@
 /**
- * Seeded fixture builders, replacing `pytest_plugin/data.py`.
+ * Seeded fixture builders.
  *
  * Every builder takes `(overrides, seed)` and returns a plain object. Two calls
  * with the same seed produce identical values, which is what makes a checksum
@@ -32,9 +32,8 @@ import { createSeededRandom, DEFAULT_SEED, type SeededRandom } from "./random";
 /**
  * The instant every fixture timestamp carries, as ISO-8601.
  *
- * Python pins `2015-10-06T20:00:00Z` and gets there by monkeypatching
- * `virtool.utils.timestamp`. Nothing is patched here — the value is injected,
- * and a fixture that wants a different one passes an override.
+ * Nothing is patched to produce it — the value is injected, and a fixture that
+ * wants a different one passes an override.
  *
  * A string rather than a `Date` on purpose: a shared `Date` is module-level
  * mutable state, and one test calling `setUTCFullYear` on it would silently
@@ -48,7 +47,7 @@ export function staticTime(): Date {
 }
 
 /**
- * The files a finished subtraction carries, from `pytest_plugin/utils.py`.
+ * The files a finished subtraction carries.
  *
  * The source genome plus the six Bowtie2 shards `bowtie2-build` writes. A
  * workflow reading a subtraction branches on this list, so a fixture short of a
@@ -150,8 +149,7 @@ export function createFakeJobClaim(
 /**
  * The step list a claimed job carries.
  *
- * Ids are `snake_case` because they are the Python function names the ported
- * steps were carried over from, and the jobs API stores them verbatim.
+ * Ids are `snake_case` because the jobs API stores them verbatim.
  */
 export function createFakeJobSteps(): JobStep[] {
 	return [
@@ -411,9 +409,8 @@ export function createFakeIndex(
 /**
  * An analysis wired to a sample, index, reference and subtraction.
  *
- * The relationships Python's `data.py` set up by hand. Pass the fixtures it
- * should point at rather than letting it mint its own, so the ids a test
- * asserts on are the ones it seeded.
+ * Pass the fixtures it should point at rather than letting it mint its own, so
+ * the ids a test asserts on are the ones it seeded.
  */
 export function createFakeAnalysis(
 	overrides: Partial<WorkflowAnalysis> = {},

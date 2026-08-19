@@ -15,8 +15,8 @@
 // `jobs.steps` JSONB array carry `started_at`; the stored `claim` blob carries
 // `runner_id` / `runtime_version` / `workflow_version`; and anything inside an
 // analysis `results` blob keeps whatever the workflow wrote (`full_e`,
-// `best_bias`, `best_score` on a NuVs ORF hit). Python reads and writes those
-// same bytes, so they must not be "fixed" into camelCase.
+// `best_bias`, `best_score` on a NuVs ORF hit). Rows already carry those
+// bytes, so they must not be "fixed" into camelCase.
 //
 // `JobStep` / `JobClaim`, their `StoredJobStep` / `StoredJobClaim` column
 // spellings and the mappers between them live in `./jobs`, not here. They are
@@ -28,8 +28,7 @@
 // # Endpoint surface
 //
 // Paths carry no prefix. The jobs API is its own app serving no SPA, so
-// nothing collides with the SPA's own `/jobs/{jobId}` route and these match
-// Python's byte for byte.
+// nothing collides with the SPA's own `/jobs/{jobId}` route.
 //
 //   POST   /jobs/claim                         CreateJobClaimRequest -> JobClaimed     (200 | 404 no job available | 422 unclaimable workflow)
 //   GET    /jobs/{jobId}                       -                     -> Job            (200 | 401 | 403 | 404)
@@ -60,7 +59,7 @@
 // behalf of a job it is finishing.
 //
 // The workflow to claim is a query parameter on `POST /jobs/claim`, not a body
-// field, matching Python's `ClaimJobView`.
+// field.
 //
 // **Failure is API-side, not runner-side.** There is deliberately no "fail"
 // endpoint: `POST /jobs/{jobId}/finish` is a success-only terminal transition,
@@ -68,10 +67,9 @@
 // is the first thing a reader assumes is an omission, so it is written down
 // here.
 //
-// Python also declares `JobWithKey(Job)` for the same idea `JobClaimed` covers.
-// This side declares only `JobClaimed`: the key is minted once, at claim time,
-// and no read endpoint ever carries it, so a second key-bearing shape would
-// only invite one to.
+// `JobClaimed` is the only key-bearing shape: the key is minted once, at claim
+// time, and no read endpoint ever carries it, so a second one would only invite
+// a leak.
 
 import { z } from "zod";
 import { AnalysisFormat, AnalysisWorkflow } from "./analyses";
@@ -146,8 +144,7 @@ export type JobClaimed = z.infer<typeof JobClaimed>;
 /**
  * Response to `PUT /jobs/{jobId}/ping`.
  *
- * Carries no cancellation flag, matching Python's model. **A refusal is the
- * cancellation channel**: reaching a terminal state is what stops a job key
+ * Carries no cancellation flag. **A refusal is the cancellation channel**: reaching a terminal state is what stops a job key
  * authenticating, so a cancelled job's next ping is answered `401` rather than
  * `200` with a flag set. A flag would have to be readable by a credential the
  * same transition revokes, and it would speak only for `cancelled` — a job
@@ -201,9 +198,8 @@ export type AnalysisFileManifest = z.infer<typeof AnalysisFileManifest>;
  * A file a workflow wrote to object storage and is declaring to the control
  * plane, which inserts the row.
  *
- * Under Python a workflow uploaded its outputs through the jobs API and the API
- * wrote both the bytes and the row. Workflows now have direct object-storage
- * access and write the bytes themselves, so they declare what they wrote instead.
+ * Workflows have direct object-storage access and write the bytes themselves,
+ * so they declare what they wrote rather than uploading it through this API.
  *
  * **The manifest carries the storage key, and the route records it verbatim.**
  * The alternative — composing the key server-side from ids the route already
@@ -449,8 +445,8 @@ export type WorkflowIndex = z.infer<typeof WorkflowIndex>;
 /**
  * An analysis, as a workflow reads it.
  *
- * **`sample` is an object carrying an id, not a bare id.** Python's workflow
- * runtime falls back to reading it when a job's `args` carry no `sample_id`, so
+ * **`sample` is an object carrying an id, not a bare id.** The workflow runtime
+ * falls back to reading it when a job's `args` carry no `sample_id`, so
  * flattening it breaks every analysis whose job was created without one.
  *
  * No results and no files: an analysis a workflow is running has neither yet,

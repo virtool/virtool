@@ -255,10 +255,11 @@ export function createRunSubprocess({
 			(terminatedBy === "SIGTERM" || terminatedBy === "SIGKILL");
 
 		if (!cancelled && exitCode !== 0) {
-			// Python treats 15 and -15 as a success, on the reasoning that the
-			// run was already failing for another reason. That reasoning does
-			// not survive a tool choosing 15 as an ordinary error code, and the
-			// cancellation case above is what it was really reaching for.
+			// Exit codes 15 and -15 are not special-cased as a success on the
+			// reasoning that the run was already failing for another reason.
+			// That reasoning does not survive a tool choosing 15 as an ordinary
+			// error code, and the cancellation case above is what such a rule is
+			// really reaching for.
 			throw new SubprocessFailedError({
 				command,
 				exitCode,

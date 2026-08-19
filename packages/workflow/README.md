@@ -6,8 +6,7 @@ and test harness shared by Virtool workflow executors.
 ## Runtime contract
 
 - Define workflows with `defineWorkflow()` and an explicit ordered step array.
-  Step IDs use snake case and must match the Python step names stored by the
-  jobs API.
+  Step IDs use snake case and are stored verbatim by the jobs API.
 - Build the run context once with `buildContext`. Its `data` field must survive
   a JSON round trip; use `state` for mutable step-to-step data.
 - `runWorkflow()` returns an outcome. It does not use the network, install
@@ -79,14 +78,14 @@ ownership boundary between this package and `@virtool/jobs-api`.
 passes it through the context. The workflow package never constructs a
 database connection or a module-level storage singleton.
 
-The cache archive's one top-level entry is the cached directory's basename,
-matching Python's `write_path_as_tar` layout. That compatibility lets Python
-and TypeScript share the `reference_mapping_index` and
+The cache archive's one top-level entry is the cached directory's basename.
+That layout is what lets every workflow share the `reference_mapping_index` and
 `subtraction_mapping_index` namespaces. Registering an already-existing cache
-key is success. `deriveCacheKey()` reproduces Python's
-`json.dumps(sort_keys=True, separators=(",", ":"), ensure_ascii=True)` format;
-mark Python floats with `float()`, and do not change the Python-generated golden
-fixtures to match TypeScript output.
+key is success. `deriveCacheKey()` serialises params as JSON with keys sorted
+by code point, `,` and `:` separators, and every character outside
+`0x20`–`0x7E` escaped, then takes the SHA-256 of the result; mark floats with
+`float()`, and do not change the frozen golden fixtures to match what the
+implementation currently produces.
 
 Tar and gzip operations belong to `@virtool/archive`; this package does not
 re-export them.
@@ -122,9 +121,9 @@ not read `process.env` at import time.
 Storage is required because workflow pods transfer their own files. The S3
 access and secret keys must be set together or both omitted.
 
-`VT_JOBS_API_URL` and `VT_WORK_PATH` intentionally have no defaults. The URL
-replaces Python's `VT_JOBS_API_CONNECTION_STRING`; deployment manifests must
-use the new name for TypeScript workflow images.
+`VT_JOBS_API_URL` and `VT_WORK_PATH` intentionally have no defaults. A missing
+value fails startup loudly rather than leaving a pod polling nothing or
+deleting whatever a relative work path resolves to.
 
 ## Commands
 

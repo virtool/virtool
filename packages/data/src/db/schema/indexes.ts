@@ -1,6 +1,4 @@
-// Mirror of the `indexes` and `index_files` tables managed by the upstream
-// Python service via Alembic. Do not generate or push migrations from this side.
-// Keep in sync with `../../../../../../virtool/virtool/indexes/sql.py`.
+// Mirror of the `indexes` and `index_files` tables.
 //
 // Both tables are written from here — starting a build inserts the `indexes`
 // row and the `create_index` task registers the artifact it produces — so every
@@ -42,10 +40,9 @@ export const indexes = pgTable(
 		ready: boolean("ready")
 			.$defaultFn(() => false)
 			.notNull(),
-		// Dead. Keys were once composed as `indexes/{storage_key}/{file name}`; each
-		// file now records its own complete key. Python retains the column until a
-		// later cleanup revision so a rolling deploy never has readers of a dropped
-		// column, and still requires it on insert.
+		// Dead. Keys were once composed as `indexes/{storage_key}/{file name}`;
+		// each file now records its own complete key. The column is still NOT NULL
+		// and requires a value on insert until a cleanup migration drops it.
 		storage_key: text("storage_key").notNull(),
 		// The exception to files recording their own keys. The compressed OTU JSON is
 		// materialized on demand and deliberately has no `index_files` row, because
@@ -100,10 +97,10 @@ export const indexFiles = pgTable(
 	{
 		id: serial("id").primaryKey(),
 		name: text("name").notNull(),
-		// The owning build's id as a string, predating `index_id` and dropped by a
-		// later cleanup revision. Nullable, so nothing has to fill it, but Python
-		// writes `str(index_id)` and this side writes the same — a row is then
-		// identical whichever runner built it.
+		// The owning build's id as a string, predating `index_id` and due to be
+		// dropped by a cleanup migration. Nullable, so nothing has to fill it, but
+		// this side writes the stringified `index_id` so older rows and new ones
+		// look the same.
 		index: text("index"),
 		index_id: bigint("index_id", { mode: "number" }).notNull(),
 		type: text("type").$type<IndexFileType>(),

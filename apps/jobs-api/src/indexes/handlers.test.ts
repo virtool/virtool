@@ -119,9 +119,9 @@ describe("handleGetIndex", () => {
 		expect(index.files[0]?.storageKey).toBe(legacyKey);
 	});
 
-	// Python's `create_index` task writes a build's artifacts eagerly. This read
-	// reports what the rows say and generates nothing, so an unfinished build
-	// answers with an empty file list rather than building one.
+	// The `create_index` task writes a build's artifacts. This read reports what
+	// the rows say and generates nothing, so an unfinished build answers with an
+	// empty file list rather than building one.
 	it("reports an unfinished build without producing its files", async () => {
 		const indexId = await seedIndex(db, {
 			referenceId,

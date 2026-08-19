@@ -99,9 +99,9 @@ describe("eliminateSubtractionStep", () => {
 		).toEqual(["r1", "r2", "r3"]);
 	});
 
-	// Python copies at every hand-off, which is a full copy of a multi-gigabyte
-	// FASTQ per subtraction on a disk sized for one. Nothing reads either path
-	// between passes, so moving is equivalent — and this is what proves it moved.
+	// Copying at every hand-off would be a full copy of a multi-gigabyte FASTQ per
+	// subtraction on a disk sized for one. Nothing reads either path between
+	// passes, so moving is equivalent — and this is what proves it moved.
 	it("moves the unmapped reads rather than copying them", async () => {
 		const { paths } = await runStep([["r1"]], 1);
 
@@ -111,9 +111,9 @@ describe("eliminateSubtractionStep", () => {
 		await expect(readFile(paths.workingOtus, "utf8")).rejects.toThrow(/ENOENT/);
 	});
 
-	// Python wraps the index prefix in `shlex.quote`, which is a no-op for every
-	// path it is ever given and would be wrong if it were not: the command is an
-	// argument array, never a shell string.
+	// Shell-quoting the index prefix would be a no-op for every path it is ever
+	// given and would be wrong if it were not: the command is an argument array,
+	// never a shell string.
 	it("passes the index prefix unquoted", async () => {
 		const { commands, paths } = await runStep([[]], 1);
 

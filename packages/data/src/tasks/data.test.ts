@@ -227,8 +227,8 @@ describe("acquireTask", () => {
 	});
 
 	it("claims a pending task that has already reported progress", async () => {
-		// Python's claim carries an `AND progress = 0` term, which excludes exactly
-		// the rows a reclaim exists for: work abandoned part-way through.
+		// An `AND progress = 0` term on the claim would exclude exactly the rows a
+		// reclaim exists for: work abandoned part-way through.
 		const taskId = await createTask(db, "install_hmms");
 
 		await db.update(tasks).set({ progress: 42 }).where(eq(tasks.id, taskId));
@@ -284,10 +284,10 @@ describe("acquireTask", () => {
 		expect(await readRow(taskId)).toMatchObject({ runner_id: RUNNER_A });
 	});
 
-	it("never reclaims a task Python is holding", async () => {
-		// Python does not renew `acquired_at`, so any long-running task of its
-		// looks abandoned. The `ts-` scoping is the only thing keeping this side
-		// from pulling live work out from under it.
+	it("never reclaims a task claimed outside our runner-id prefix", async () => {
+		// Reclaim reads a stale `acquired_at` as abandonment, so a claim nothing
+		// renews looks abandoned however live it is. The `ts-` scoping is the only
+		// thing keeping this side from pulling work out from under it.
 		const taskId = await createTask(db, "install_hmms");
 		await holdTask(taskId, "somehost-4242", TASK_LEASE_SECONDS * 100);
 
@@ -413,8 +413,8 @@ describe("completeTask", () => {
 
 describe("failTask", () => {
 	it("records the error and finishes the task", async () => {
-		// Python writes `error` alone and leaves `complete` false, which strands the
-		// row outside both halves of its own `get_counts`. Failure is terminal here.
+		// Writing `error` alone and leaving `complete` false would strand the row
+		// outside both halves of the queue counts. Failure is terminal here.
 		const taskId = await createTask(db, "install_hmms");
 		await holdTask(taskId, RUNNER_A, 10);
 
@@ -519,8 +519,8 @@ describe("releaseTask", () => {
 		expect(await readRow(taskId)).toMatchObject({ runner_id: RUNNER_B });
 	});
 
-	it("never releases a task Python is holding", async () => {
-		// The scope has to hold at the query, not at the caller: a Python-format id
+	it("never releases a task claimed outside our runner-id prefix", async () => {
+		// The scope has to hold at the query, not at the caller: an unprefixed id
 		// reaching this argument would otherwise hand live work to our fleet.
 		const taskId = await createTask(db, "install_hmms");
 		await holdTask(taskId, "somehost-4242", 10);
@@ -560,7 +560,7 @@ describe("releaseRunnerClaims", () => {
 		expect(await readRow(taskId)).toMatchObject({ runner_id: RUNNER_A });
 	});
 
-	it("never releases the claims of a Python runner", async () => {
+	it("never releases the claims of a runner outside our prefix", async () => {
 		const taskId = await createTask(db, "install_hmms");
 		await holdTask(taskId, "somehost-4242", 10);
 
@@ -590,7 +590,7 @@ describe("reclaimExpiredLeases", () => {
 		await expect(reclaimExpiredLeases(db)).resolves.toEqual([]);
 	});
 
-	it("never touches a task Python is holding", async () => {
+	it("never touches a task claimed outside our runner-id prefix", async () => {
 		const taskId = await createTask(db, "install_hmms");
 		await holdTask(taskId, "somehost-4242", TASK_LEASE_SECONDS * 100);
 
@@ -668,7 +668,7 @@ describe("timestamps", () => {
 	it("writes UTC whatever the session's timezone is", async () => {
 		// `timezone('utc', clock_timestamp())` is explicit and so immune to the
 		// session's TimeZone. `localtimestamp`, or a `now()::timestamp`, is not —
-		// it would store Vancouver's wall time in a column Python reads as UTC.
+		// it would store Vancouver's wall time in a column read as UTC.
 		const connection = database.connect();
 		onTestFinished(() => connection.close());
 
@@ -787,19 +787,18 @@ describe("readTaskCounts", () => {
 			count: 0,
 			created_at: new Date(),
 			progress: 0,
-			step: "a_python_task",
-			type: "a_python_task",
+			step: "an_unlisted_task",
+			type: "an_unlisted_task",
 		});
 
 		expect(await readTaskCounts(db)).toEqual([
-			{ type: "a_python_task", queued: 1, running: 0 },
+			{ type: "an_unlisted_task", queued: 1, running: 0 },
 		]);
 	});
 
-	// The predicate is Python's `get_counts`, and the pre/post-cutover comparison
-	// only holds if both sides count the same rows. A failure is the case worth
-	// pinning: `failTask` sets `complete` as well as `error`, but Python's failure
-	// path writes `error` alone, so a row can be failed and incomplete at once.
+	// A failure is the case worth pinning: `failTask` sets `complete` as well as
+	// `error`, but a row can carry an `error` while still marked incomplete —
+	// rows written by an earlier release do — and neither form is active.
 	it("excludes complete, failed, and failed-but-incomplete tasks", async () => {
 		const completed = await createTask(db, "install_hmms");
 		await holdTask(completed, RUNNER_A, 1);
@@ -809,11 +808,11 @@ describe("readTaskCounts", () => {
 		await holdTask(failed, RUNNER_A, 1);
 		await failTask(db, failed, RUNNER_A, "it broke");
 
-		const pythonStyleFailure = await createTask(db, "install_hmms");
+		const errorWithoutComplete = await createTask(db, "install_hmms");
 		await db
 			.update(tasks)
-			.set({ error: "python wrote this" })
-			.where(eq(tasks.id, pythonStyleFailure));
+			.set({ error: "recorded without completing" })
+			.where(eq(tasks.id, errorWithoutComplete));
 
 		expect(await readTaskCounts(db)).toEqual([]);
 	});

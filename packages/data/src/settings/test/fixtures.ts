@@ -6,8 +6,8 @@ import { DEFAULT_SETTINGS, type Settings } from "../data";
  * Insert the singleton settings row, overriding any of the defaults.
  *
  * A test database is built from the Drizzle schema alone, so it starts with an
- * empty `settings` table — unlike production, where Python seeds the row. A
- * test that wants settings to already exist must call this.
+ * empty `settings` table — unlike production, where the row is already seeded.
+ * A test that wants settings to already exist must call this.
  */
 export async function seedSettings(
 	db: Db,

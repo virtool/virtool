@@ -3,11 +3,10 @@ import { createSampleWorkflow } from "./workflow";
 
 describe("createSampleWorkflow", () => {
 	/**
-	 * The jobs API stores a step id and the SPA renders a job's step list from
-	 * it, so these must stay the Python function names they were ported from
-	 * until the cutover completes.
+	 * A step id is stored in the `jobs.steps` column and the SPA renders a job's
+	 * step list from it, so renaming one changes what users see.
 	 */
-	it("declares Python's steps, in order, under Python's names", () => {
+	it("declares the two steps, in order", () => {
 		expect(createSampleWorkflow.steps.map((step) => step.id)).toStrictEqual([
 			"run_fastqc",
 			"finalize",
@@ -19,19 +18,18 @@ describe("createSampleWorkflow", () => {
 	});
 
 	/**
-	 * Python's is "Run FastQC". The id above is what the jobs API stores and
-	 * what a step list is keyed by; the display name is free to stop naming a
-	 * tool this image no longer carries.
+	 * The id above is what the jobs API stores and what a step list is keyed by;
+	 * the display name is free to stop naming a tool this image no longer
+	 * carries.
 	 */
 	it("names the step for what it measures rather than the tool", () => {
 		expect(createSampleWorkflow.steps[0]?.name).toBe("Measure quality");
 	});
 
 	/**
-	 * Python registers an `@hooks.on_failure` that issues `DELETE /samples/{id}`.
-	 * It is deliberately not ported: a failed run leaves an unfinalized sample
-	 * for the user to delete, and the jobs API exposes no destructive route a
-	 * job key could reach.
+	 * There is deliberately no delete on failure: a failed run leaves an
+	 * unfinalized sample for the user to delete, and the jobs API exposes no
+	 * destructive route a job key could reach.
 	 */
 	it("declares no result payload, as a sample is not an analysis", () => {
 		expect(createSampleWorkflow.result).toBeUndefined();

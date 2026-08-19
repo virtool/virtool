@@ -378,9 +378,9 @@ COPY --from=skewer /tools/skewer/0.2.2/ /usr/local/bin/
 COPY --from=hmmer /tools/hmmer/3.3.2/ /opt/hmmer/
 COPY --from=spades /build/spades /opt/spades
 
-# There is deliberately no pigz. Python shells out to it for every compression;
-# `@virtool/workflow`'s gzip helpers are `node:zlib` in-process, and checksums
-# are taken over decompressed content, so nothing depends on pigz's output.
+# There is deliberately no pigz. `@virtool/workflow`'s gzip helpers are
+# `node:zlib` in-process, and checksums are taken over decompressed content,
+# so nothing depends on pigz's output.
 ENV PATH="/opt/hmmer/bin:/opt/spades/bin:${PATH}"
 
 COPY --from=build-nuvs /prod/nuvs ./

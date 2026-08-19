@@ -1,6 +1,4 @@
-// Read-only mirror of the `jobs` table, managed by the upstream Python service
-// via Alembic. Do not generate or push migrations from this side. Keep the
-// columns in sync with `../../../../../../virtool/virtool/jobs/pg.py`.
+// Read-only mirror of the `jobs` table.
 //
 // The legacy Mongo `args` field is not a column. A job's resources are all
 // found on the owning rows via a reverse `job_id` foreign key —
@@ -53,8 +51,8 @@ export const jobs = pgTable(
 		state: text("state").$type<JobState>().notNull(),
 		steps: jsonb("steps").$type<StoredJobStep[]>(),
 		user_id: integer("user_id").notNull(),
-		// Deliberately left open. Python's `Workflow` is an application-level enum
-		// with no CHECK constraint behind it, so a row can hold a workflow this
+		// Deliberately left open. Workflow names are an application-level enum
+		// with no CHECK constraint behind them, so a row can hold a workflow this
 		// build has never heard of.
 		workflow: text("workflow").notNull(),
 	},

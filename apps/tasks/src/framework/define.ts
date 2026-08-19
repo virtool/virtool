@@ -11,8 +11,8 @@
  * idempotent.** A claim is a lease, and a lease that expires is reclaimed by
  * another runner — which starts the body again from step zero, with whatever
  * partial work the previous attempt left behind still in place. Nothing here
- * records which steps already ran; the claim query deliberately dropped
- * Python's `progress = 0` filter, because it excluded exactly the rows a
+ * records which steps already ran, and the claim query deliberately carries no
+ * `progress = 0` filter, because such a filter excludes exactly the rows a
  * reclaim exists for. A body that cannot tolerate re-entry must key its own
  * idempotency off `taskId`.
  */
@@ -89,7 +89,7 @@ export type TaskCleanupArgs<P, C> = TaskHandlerArgs<P, C> & {
  * off when a body does not read `ctx`.
  */
 export type TaskDef<S extends z.ZodType, C = unknown> = {
-	/** Matches the `type` column, and the name Python's runner knows. */
+	/** Matches the `type` column, which is what the runner claims on. */
 	type: string;
 	/** Parsed against the row's `context` before any handler code runs. */
 	payload: S;

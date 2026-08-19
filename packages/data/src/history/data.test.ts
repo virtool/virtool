@@ -117,15 +117,15 @@ async function seedChange(values: {
 }
 
 async function seedDiff(historyId: number, diff: unknown): Promise<void> {
-	// `change_id` duplicates the history row's public id and is NOT NULL
-	// upstream, so a seed has to supply one even though nothing here reads it.
+	// `change_id` duplicates the history row's public id and is NOT NULL in the
+	// schema, so a seed has to supply one even though nothing here reads it.
 	await db
 		.insert(legacyHistoryDiff)
 		.values({ change_id: `seed.${historyId}`, history_id: historyId, diff });
 }
 
-// The dictdiffer diff Python's `calculate_diff` writes for a rename, serialized
-// to JSONB. Reverting it swaps the pair back.
+// The dictdiffer diff recorded for a rename, serialized to JSONB. Reverting it
+// swaps the pair back.
 function renameDiff(
 	from: string,
 	to: string,
@@ -394,7 +394,7 @@ describe("patchOtusToVersions", () => {
 	});
 
 	it("throws when a remove change carries no document", async () => {
-		// JSON null, not SQL NULL: the column is NOT NULL upstream, so a row that
+		// JSON null, not SQL NULL: the column is NOT NULL, so a row that
 		// carries no document holds a `null` inside the JSONB rather than an
 		// absent value. Both read back as `null` here.
 		await seedDiff(

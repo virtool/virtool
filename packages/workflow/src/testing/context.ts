@@ -3,9 +3,8 @@
  *
  * Composition is explicit: a test that wants a seeded context over a faked jobs
  * API calls both factories and wires them, rather than declaring parameter names
- * and hoping a plugin resolves them. pytest injected fixtures by name and
- * resolved a dependency graph between them; Vitest has no equivalent and this
- * harness deliberately does not build one.
+ * and hoping a plugin resolves them. Vitest has no fixture-injection mechanism
+ * and this harness deliberately does not build one.
  */
 
 import { MemoryStorage } from "@virtool/storage";

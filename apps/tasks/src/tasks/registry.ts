@@ -29,8 +29,8 @@ export type TaskContext = {
  *
  * The keys are the runner's allowed-types filter, handed to `acquireTask`. That
  * is the whole of how an unrecognised `tasks.type` is rejected: a row naming a
- * task absent from here is never claimed, so it stays queued for the Python
- * runner that does know it. Nothing validates the column, and nothing needs to
+ * task absent from here is never claimed, so it stays queued rather than being
+ * dispatched to nothing. Nothing validates the column, and nothing needs to
  * — the filter is the registry, so the two cannot disagree.
  *
  * Written as a literal map rather than derived from each body's `type`, so the

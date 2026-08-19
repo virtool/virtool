@@ -313,9 +313,9 @@ describe("reapOrphanedUploads", () => {
 		return row;
 	}
 
-	// Both runners sweep the same table until the cutover, so the shorter of the
-	// two ages would be the real one.
-	it("reaps at Python's thirty days", () => {
+	// The sweep's age threshold, pinned: shortening it reaps uploads a user is
+	// still expecting to find in their list.
+	it("reaps uploads older than thirty days", () => {
 		expect(ORPHAN_AGE_SECONDS).toBe(30 * 24 * 60 * 60);
 	});
 
@@ -437,8 +437,8 @@ describe("reapOrphanedUploads", () => {
 		expect((await readRow(inside.id)).removed).toBe(false);
 	});
 
-	// The regression the port exists for: Python's release-then-loop leaves the
-	// rest `reserved = false, removed = false`, which no later sweep matches.
+	// The regression this guards: a release-then-loop leaves the rest
+	// `reserved = false, removed = false`, which no later sweep matches.
 	it("soft-deletes an upload whose object refuses to delete, and continues", async () => {
 		const userId = await seedUser(db);
 		const first = await seedStored(userId);

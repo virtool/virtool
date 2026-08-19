@@ -109,14 +109,12 @@ export const ReferenceUpdateRequest = z.object({
 export type ReferenceUpdateRequest = z.infer<typeof ReferenceUpdateRequest>;
 
 /*
- * The shape of an uploaded reference file, and the port of Python's
- * `ReferenceSourceData` and the models under it.
+ * The shape of an uploaded reference file.
  *
  * Two upload formats parse to this one shape: a gzipped JSON export, which
  * spells an OTU's and a sequence's id `_id`, and a `.v1.sqlite.gz` snapshot,
- * whose SQLite reader yields the same documents keyed `id`. Python reconciles the two with a
- * pydantic alias plus `allow_population_by_field_name`; `withUnderscoreId`
- * below is that reconciliation, and it normalises onto `_id` because
+ * whose SQLite reader yields the same documents keyed `id`. `withUnderscoreId`
+ * below reconciles the two, normalising onto `_id` because
  * `prepareOtuInsertion` reads the document Mongo-side.
  *
  * Every object is loose. A reference carries keys neither implementation reads
@@ -125,7 +123,7 @@ export type ReferenceUpdateRequest = z.infer<typeof ReferenceUpdateRequest>;
  */
 
 /**
- * Accept an `id` where the schema wants `_id`, as Python's alias does.
+ * Accept an `id` where the schema wants `_id`.
  *
  * Only fills `_id` in; an object that already has one is untouched, so a
  * document carrying both keeps whichever the JSON export wrote.
@@ -157,8 +155,7 @@ const referenceSourceSequenceSchema = z.preprocess(
 );
 
 const referenceSourceIsolateSchema = z.looseObject({
-	// No alias here, and none in Python either: both readers spell an isolate's
-	// id `id` already.
+	// No alias here: both readers spell an isolate's id `id` already.
 	id: z.string(),
 	default: z.boolean(),
 	source_type: z.string(),
@@ -188,12 +185,12 @@ export type ReferenceSourceOtu = z.infer<typeof referenceSourceOtuSchema>;
 const MAX_REPORTED_DUPLICATES = 5;
 
 /**
- * Every duplicate check Python runs, in one pass over the OTUs.
+ * Every duplicate check, in one pass over the OTUs.
  *
- * Python spreads these across four `@validator("otus")` functions, which stop
- * at the first that raises, so a file with two problems is fixed and
- * re-uploaded only to fail on the next. Running them together reports all four
- * at once; the predicates themselves are unchanged, quirks included — the name
+ * Running them together reports all four at once rather than stopping at the
+ * first failure, so a file with two problems is not fixed and re-uploaded only
+ * to fail on the next. The predicates themselves are unchanged, quirks
+ * included — the name
  * check compares case-insensitively but reports the name as written, isolate
  * ids collide only within their own OTU, and sequence ids collide across the
  * whole file.
@@ -284,10 +281,7 @@ function summarize(items: string[]): string {
 export const ReferenceSourceDataSchema = z
 	.object({
 		/*
-		 * Python's `ReferenceDataType` has one member, so a barcode reference is
-		 * rejected there and must be rejected here too — both runners claim these
-		 * tasks until the cutover, and the looser side would accept a file the
-		 * other refuses.
+		 * There is one data type, so a barcode reference is rejected.
 		 */
 		data_type: z.enum(["genome"]).default("genome"),
 		organism: z.string().default("Unknown"),

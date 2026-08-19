@@ -18,8 +18,8 @@ import type { NuvsStep } from "./types";
  *
  * Unlike pathoscope, which writes this FASTA lazily from inside
  * `createMappingIndex` so a cache hit never scans the reference, nuvs writes it
- * in a step of its own. That is Python's shape and the step id is stored by the
- * jobs API, so the scan is paid even on a hit.
+ * in a step of its own. The step id is stored by the jobs API and rendered by
+ * the UI, so the shape is fixed and the scan is paid even on a hit.
  */
 export const createReferenceFastaStep: NuvsStep = {
 	id: "create_reference_fasta",

@@ -20,8 +20,8 @@ function params(overrides: { workflow?: "nuvs" | "pathoscope" } = {}) {
 }
 
 describe("buildMappingIndexCacheParams", () => {
-	// The byte-exact keys are pinned against Python in each workflow app, which
-	// is where the `extra` params describing the built FASTA live. What is
+	// The byte-exact keys are pinned by goldens in each workflow app, which is
+	// where the `extra` params describing the built FASTA live. What is
 	// generic — the field set and their types — belongs here.
 	it("names the tool rather than leaving it to the caller", () => {
 		expect(params()).toMatchObject({
@@ -33,8 +33,8 @@ describe("buildMappingIndexCacheParams", () => {
 		});
 	});
 
-	// Python's type hint says `str` but both call sites pass an `int`, and
-	// `json.dumps` writes `"parent_id":7` where a string gives `"parent_id":"7"`.
+	// Both call sites pass an integer, and the canonical form writes
+	// `"parent_id":7` where a string gives `"parent_id":"7"`.
 	it("sends parent_id as a number", () => {
 		expect(params().parent_id).toBe(7);
 
@@ -43,9 +43,9 @@ describe("buildMappingIndexCacheParams", () => {
 		);
 	});
 
-	// The reason the workflow name is a parameter at all: two workflows building
-	// a bowtie2 index off the same subtraction must not share a key, because each
-	// shares that key with its own Python counterpart instead.
+	// The reason the workflow name is a parameter at all: keys already in the
+	// bucket carry it, so two workflows building a bowtie2 index off the same
+	// subtraction keep separate namespaces.
 	it("derives a different key per workflow", () => {
 		expect(deriveCacheKey(params({ workflow: "nuvs" }))).not.toBe(
 			deriveCacheKey(params({ workflow: "pathoscope" })),

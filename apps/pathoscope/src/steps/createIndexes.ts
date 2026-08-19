@@ -63,9 +63,9 @@ export const createReferenceIndexStep: PathoscopeStep = {
  * Write the collapsed reference's default isolates as one FASTA.
  *
  * Handed to {@link createMappingIndex} as a producer rather than run before it:
- * the `reference_mapping_index` namespace is shared with Python, so a hit is the
- * common outcome and the whole collapsed reference would be scanned into a file
- * nothing then reads.
+ * the `reference_mapping_index` namespace is shared, so a hit is the common
+ * outcome and the whole collapsed reference would otherwise be scanned into a
+ * file nothing then reads.
  */
 async function writeDefaultIsolateFasta({
 	fastaPath,
@@ -100,8 +100,8 @@ async function writeDefaultIsolateFasta({
  *
  * The genome is downloaded here rather than with the run's other inputs, and
  * only once the cache has missed. The `subtraction_mapping_index` namespace is
- * shared with Python, so a hit is the common outcome, and a host genome is
- * gigabytes that would otherwise be pulled out of storage and never opened.
+ * shared, so a hit is the common outcome, and a host genome is gigabytes that
+ * would otherwise be pulled out of storage and never opened.
  */
 export const createSubtractionIndexStep: PathoscopeStep = {
 	id: "create_subtraction_index",

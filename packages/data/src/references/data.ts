@@ -83,8 +83,8 @@ export class ReferenceMemberNotFoundError extends AppError {}
 /** Thrown when a membership operation conflicts (unknown or duplicate member). */
 export class ReferenceMemberConflictError extends AppError {}
 
-// The Python endpoint escapes LIKE wildcards in the search term so a user's `%`
-// or `_` matches literally rather than acting as a pattern.
+// LIKE wildcards in the search term are escaped so a user's `%` or `_` matches
+// literally rather than acting as a pattern.
 function escapeLike(term: string): string {
 	return term.replace(/[\\%_]/g, (char) => `\\${char}`);
 }
@@ -209,7 +209,7 @@ async function getOtuCounts(
 }
 
 // The latest ready build per reference: order by version then id descending and
-// keep the first row seen for each reference, matching Python's `DISTINCT ON`.
+// keep the first row seen for each reference, as `DISTINCT ON` would.
 async function getLatestBuilds(
 	db: DbOrTx,
 	referenceIds: number[],
@@ -273,8 +273,8 @@ async function getContributors(
 	}));
 }
 
-// A per-member `created_at` is not stored, so Python stamps the reference's own
-// creation time onto every member row; this mirrors that.
+// A per-member `created_at` is not stored, so the reference's own creation time
+// is stamped onto every member row.
 async function getReferenceUsers(
 	db: DbOrTx,
 	referenceId: number,
@@ -349,7 +349,7 @@ export async function resolveReferenceActor(
  * rows with the flag set grants it — additively, either can grant.
  *
  * Throws {@link ReferenceNotFoundError} for a non-administrator when the
- * reference does not exist, mirroring Python's `check_right`.
+ * reference does not exist.
  */
 export async function checkReferenceRight(
 	db: Db,
@@ -611,7 +611,7 @@ export async function createReference(
 	values: CreateReferenceValues,
 ): Promise<Reference> {
 	// New references seed their allowed source types from the instance settings,
-	// for every creation mode (empty, clone, and import), matching Python.
+	// for every creation mode (empty, clone, and import).
 	const settings = await getSettings(db);
 
 	const newId = await db.transaction(async (tx) => {

@@ -18,10 +18,9 @@ import { streamStorageObject, textResponse } from "../http";
  * Node heap.
  *
  * Being a route means no policy middleware runs, so the authorization floor is
- * enforced here: a valid session, then the read right on the sample. The Python
- * endpoint this replaces checked only the session, which let any signed-in
- * caller download a sample's reads whether or not they could see the sample
- * itself.
+ * enforced here: a valid session, then the read right on the sample. Checking
+ * only the session would let any signed-in caller download a sample's reads
+ * whether or not they could see the sample itself.
  */
 export async function handleSampleReads(
 	request: Request,

@@ -624,8 +624,8 @@ export async function findSamples(
 	const where = filters.length > 0 ? and(...filters) : undefined;
 
 	const [totalRows, foundRows, rows] = await Promise.all([
-		// Python's `total_count` is the unscoped grand total of samples, not the
-		// count visible to the caller. Match it exactly.
+		// `total_count` is the unscoped grand total of samples, not the count
+		// visible to the caller.
 		db.select({ value: count() }).from(legacySamples),
 		db.select({ value: count() }).from(legacySamples).where(where),
 		// The owner joins onto the sample row; the collection relationships fan
@@ -1287,11 +1287,11 @@ export async function updateSampleRights(
  * by position, and a runner has no field with which to name another sample's
  * upload. A sample with no `sample_uploads` rows leaves the column null.
  *
- * **The input uploads are removed, blobs and all.** Python does the same, and the
- * alternative is worse than it looks: `removed = true` already means the bytes
- * are gone everywhere else, and a removed row that still names a live object is
- * invisible to the UI *and* to any orphan sweep, because the object is named by
- * a row. That leaks one full duplicate of every sample's reads, permanently.
+ * **The input uploads are removed, blobs and all.** The alternative is worse
+ * than it looks: `removed = true` already means the bytes are gone everywhere
+ * else, and a removed row that still names a live object is invisible to the UI
+ * *and* to any orphan sweep, because the object is named by a row. That leaks
+ * one full duplicate of every sample's reads, permanently.
  * `reserveUploads` rejects an already-reserved upload, so an upload belongs to
  * exactly one sample and no other row can name those bytes.
  *
@@ -1357,7 +1357,7 @@ export async function finalizeSample(
 		const now = new Date();
 
 		// Sorted so the first read pairs with the first upload. `name_on_disk`
-		// repeats `name`, which is what Python writes for a reads file.
+		// repeats `name`, which is what a reads file carries.
 		const files = [...values.files].sort((a, b) =>
 			a.name.localeCompare(b.name),
 		);
@@ -1365,8 +1365,8 @@ export async function finalizeSample(
 		if (files.length > 0) {
 			await tx.insert(sampleReads).values(
 				files.map((file, index) => ({
-					// The dead legacy prefix column, still `NOT NULL`. Python fills it
-					// with the sample's primary key and nothing reads it.
+					// The dead legacy prefix column, still `NOT NULL`. It holds the
+					// sample's primary key and nothing reads it.
 					sample: String(sampleId),
 					sample_id: sampleId,
 					name: file.name,

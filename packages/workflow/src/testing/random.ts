@@ -1,11 +1,10 @@
 /**
  * Deterministic pseudo-randomness for the fixture builders.
  *
- * Replaces `ModelFactory.seed_random(...)` from Python's pytest plugin, which
- * seeded the global `random` module per model. Nothing global is seeded here:
- * a generator is created per builder call from an explicit seed, so two builder
- * calls cannot influence each other through a shared stream and a test file's
- * fixtures do not change when another test is added ahead of it.
+ * Nothing global is seeded: a generator is created per builder call from an
+ * explicit seed, so two builder calls cannot influence each other through a
+ * shared stream and a test file's fixtures do not change when another test is
+ * added ahead of it.
  *
  * The algorithm is mulberry32, chosen because it is small enough to read and
  * has no state beyond a single 32-bit word. It is not cryptographic and must
@@ -15,9 +14,8 @@
 /**
  * The seed every builder uses unless a test asks for another.
  *
- * Python spread four seeds across its models (12, 55, 22, 5). One is enough
- * here because each builder derives its own generator rather than drawing from
- * a shared one.
+ * One value covers every builder, because each derives its own generator
+ * rather than drawing from a shared stream.
  */
 export const DEFAULT_SEED = 12;
 

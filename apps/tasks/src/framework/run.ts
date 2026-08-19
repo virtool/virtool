@@ -49,9 +49,9 @@ export type RunTaskOptions<C> = {
 /**
  * Render an error for the `error` column.
  *
- * Python writes `f"{type(e)}: {e!s}"`, which puts `"<class 'ValueError'>: boom"`
- * in front of a user. The name alone is what anyone reading the task list
- * actually wants.
+ * The error's name and its message, and nothing else. The column is read
+ * straight off the task list, so anything that puts a class repr or a stack in
+ * front of a user is worse than useless there.
  */
 function describeError(err: unknown): string {
 	return err instanceof Error ? `${err.name}: ${err.message}` : String(err);
@@ -87,9 +87,9 @@ function createHelpers(
 		const sliceStart = declared ? (100 * index) / steps.length : 0;
 		const sliceEnd = declared ? (100 * (index + 1)) / steps.length : 100;
 
-		// The step name and the basis are written before the body runs, matching
-		// Python, and immediately rather than on the debounce: entering a step is
-		// the transition a watching user notices. There is no matching write on the
+		// The step name and the basis are written before the body runs, and
+		// immediately rather than on the debounce: entering a step is the
+		// transition a watching user notices. There is no matching write on the
 		// way out — the next step's entry carries the same value, and the last
 		// step's end is what the completion writes. One that fired regardless of
 		// how the step ended would report a step that threw as finished.
