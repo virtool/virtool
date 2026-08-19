@@ -129,8 +129,6 @@ const minimalColumns = {
 	workflow: analyses.workflow,
 	ready: analyses.ready,
 	sample_id: analyses.sample_id,
-	// `index_id` is NOT NULL and so is `indexes.reference_id`, so every analysis
-	// reaches a reference through its build.
 	reference_id: indexes.reference_id,
 	index_id: analyses.index_id,
 	user_id: analyses.user_id,
