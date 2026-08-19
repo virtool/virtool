@@ -90,7 +90,7 @@ describe("<CreateAnalysisForm>", () => {
 		expect(createAnalysis).toHaveBeenCalled();
 	});
 
-	it("keeps the dialog open and shows a toast when 'Create more' is on", async () => {
+	it("keeps the dialog open and counts the created analysis when 'Create more' is on", async () => {
 		const { onClose, sample } = await renderForm();
 
 		const createAnalysis = mockCreateAnalysis(
@@ -103,7 +103,7 @@ describe("<CreateAnalysisForm>", () => {
 		await userEvent.click(screen.getByRole("switch", { name: "Create more" }));
 		await userEvent.click(screen.getByRole("button", { name: "Create" }));
 
-		expect(await screen.findByText("Analysis created")).toBeInTheDocument();
+		expect(await screen.findByText("1 analysis created")).toBeInTheDocument();
 		expect(onClose).not.toHaveBeenCalled();
 		expect(screen.getByText("Select a reference")).toBeInTheDocument();
 		expect(createAnalysis).toHaveBeenCalled();

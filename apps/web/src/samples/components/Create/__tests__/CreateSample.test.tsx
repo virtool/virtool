@@ -362,7 +362,7 @@ describe("<CreateSample>", () => {
 
 		await submitForm();
 
-		expect(await screen.findByText("Sample created")).toBeInTheDocument();
+		expect(await screen.findByText("1 sample created")).toBeInTheDocument();
 		expect(screen.getByLabelText("Name")).toHaveValue("");
 	});
 

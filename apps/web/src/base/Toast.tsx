@@ -1,5 +1,4 @@
 import { cn } from "@app/cn";
-import { X } from "lucide-react";
 import { Toast as ToastPrimitive } from "radix-ui";
 import type { ComponentPropsWithoutRef, ReactNode } from "react";
 import { buttonVariants } from "./buttonVariants";
@@ -65,25 +64,6 @@ export function ToastTitle({ children, className }: ToastTitleProps) {
 	);
 }
 
-type ToastDescriptionProps = {
-	children: ReactNode;
-	className?: string;
-};
-
-/** A styled toast body for secondary detail beneath the title. */
-export function ToastDescription({
-	children,
-	className,
-}: ToastDescriptionProps) {
-	return (
-		<ToastPrimitive.Description
-			className={cn("text-gray-600 text-sm", className)}
-		>
-			{children}
-		</ToastPrimitive.Description>
-	);
-}
-
 type ToastActionProps = ComponentPropsWithoutRef<typeof ToastPrimitive.Action>;
 
 /**
@@ -99,24 +79,5 @@ export function ToastAction({ className, ...props }: ToastActionProps) {
 			)}
 			{...props}
 		/>
-	);
-}
-
-type ToastCloseProps = {
-	className?: string;
-};
-
-/** A styled dismiss button rendered in the corner of a toast. */
-export function ToastClose({ className }: ToastCloseProps) {
-	return (
-		<ToastPrimitive.Close
-			aria-label="Close"
-			className={cn(
-				"text-gray-500 hover:text-gray-600 cursor-pointer",
-				className,
-			)}
-		>
-			<X size={16} />
-		</ToastPrimitive.Close>
 	);
 }
