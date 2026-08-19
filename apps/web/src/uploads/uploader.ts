@@ -106,7 +106,7 @@ function readErrorMessage(xhr: XMLHttpRequest): string {
  * cannot report upload progress and read files can run to many gigabytes. The
  * browser streams the raw `File` body from disk (never buffering it in JS), and
  * the route reads it as a stream too, so nothing large sits in memory on either
- * side. `name` and `type` travel in the query string, as they do to Python.
+ * side. `name` and `type` travel in the query string.
  */
 export function postUpload(
 	file: File,

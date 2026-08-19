@@ -13,11 +13,11 @@ of scope by decision.
 
 ## Two rules it carries
 
-- **It writes no result file.** Python uploaded a `report.tsv` whose every
-  figure is already in the `results` blob, so the finalize manifest is empty and
+- **It writes no result file.** Every figure a `report.tsv` would carry is
+  already in the `results` blob, so the finalize manifest is empty and
   `FinalizeAnalysisRequest.files` allows that for this workflow's sake.
-- **Nothing deletes an analysis on failure.** Python's `on_failure` hook is not
-  ported and the jobs API has no delete route.
+- **Nothing deletes an analysis on failure.** A failed run leaves its half-built
+  analysis for the user to delete, and the jobs API has no delete route.
 
 ## Building the image
 
@@ -70,10 +70,11 @@ job writes its gha cache under that bare scope rather than under the image
 name. Without the override the release would rebuild the Rust crate and every
 tool stage from scratch inside a 20-minute timeout.
 
-**`ghcr.io/virtool/ts-pathoscope`'s older tags predate all this** — a
-short-lived publish job left them behind before the port landed, so `:latest`
-is a tools-only image with no workflow code in it. Don't read it as current
-until a release has run since publishing was restored.
+## Configuration
+
+This app uses the shared `@virtool/workflow` runtime configuration. See the
+[workflow package README](../../packages/workflow/README.md#configuration) for
+the complete environment-variable table and configuration rules.
 
 ## Commands
 
@@ -92,9 +93,11 @@ The Rust crate is not a pnpm workspace — run `cargo test` in
 
 ## Documentation
 
-`docs/workflow-runtime.md` covers the runtime every executor runs on,
+[`packages/workflow/README.md`](../../packages/workflow/README.md) covers the
+runtime every executor runs on,
 [`packages/pathoscope-core/README.md`](../../packages/pathoscope-core/README.md)
 the Rust crate,
 [`packages/sqlite/README.md`](../../packages/sqlite/README.md) the SQLite
 reference index it reads, `docs/apps.md` the bundling and `pnpm deploy`
-pipeline every non-Vite app shares, and `docs/images.md` the image pipeline.
+pipeline every non-Vite app shares, and
+[`docs/ci.md`](../../docs/ci.md#images) the shared image pipeline.

@@ -380,7 +380,7 @@ describe("generateTaskIndex", () => {
 		}
 	});
 
-	it("writes the envelope and OTUs Python writes", async () => {
+	it("writes the reference envelope and the manifest's OTUs", async () => {
 		const storage = new MemoryStorage();
 		const userId = await seedNextUser();
 		const referenceId = await seedReference(db, userId, { name: "Plants" });
@@ -419,7 +419,7 @@ describe("generateTaskIndex", () => {
 	// `JSON.parse` hoists array-index-like keys to the front of an object and
 	// sorts them numerically, and an eight-character id drawn from digits and
 	// lowercase letters is all digits often enough that a real reference has one.
-	// Python iterates the manifest in JSONB order, and the artifact's OTU order
+	// The manifest is iterated in JSONB order, and the artifact's OTU order
 	// decides which isolate `cd-hit-est` keeps, so the two must agree.
 	it("orders OTUs by the manifest's stored order, not by parsed key order", async () => {
 		const storage = new MemoryStorage();
@@ -459,7 +459,7 @@ describe("generateTaskIndex", () => {
 		);
 	});
 
-	// orjson writes six fractional digits or, with no microseconds, none.
+	// The artifact carries six fractional digits or, with no microseconds, none.
 	// `Date.toISOString` always writes exactly three and has already truncated the
 	// other three, and postgres.js parses a naive timestamp as local time. The
 	// string is asserted rather than a parsed `Date` because it is the string that
@@ -596,8 +596,8 @@ describe("generateTaskIndex", () => {
 	});
 
 	// A claim is a lease, so a body may re-run from step zero after its work has
-	// already committed. Python raises here, which would fail the task and show an
-	// error against an index that is perfectly fine.
+	// already committed. Raising here would fail the task and show an error
+	// against an index that is perfectly fine.
 	it("is a successful no-op when the build is already ready", async () => {
 		const storage = new MemoryStorage();
 		const { indexId } = await seedBuildable();

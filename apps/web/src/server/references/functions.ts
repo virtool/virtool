@@ -248,8 +248,8 @@ export const addReferenceGroupFn = createServerFn({ method: "POST" })
 	.handler(async ({ context, data }) => {
 		const { referenceId, groupId, ...rights } = data;
 		try {
-			// The user-membership add checks `modify`; this closes the asymmetry with
-			// the Python service, which left group-add unguarded.
+			// Adding a group member requires `modify` on the reference, the same as
+			// adding a user member.
 			await authorizeReference(referenceId, context.session.userId, "modify");
 			const member = await addReferenceGroup(db, referenceId, groupId, rights);
 			setResponseStatus(201);

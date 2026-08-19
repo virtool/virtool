@@ -11,9 +11,9 @@ import type { NuvsStep } from "./types";
  * are a chain: each one filters what the last left, so a read has to miss *every*
  * subtraction to reach the assembler.
  *
- * **The carry between passes is a rename, not a copy.** Python copies
- * `unmapped_subtractions.fq` back over `working_otus.fq` after every pass, which
- * is a full copy of a multi-gigabyte FASTQ per subtraction on a disk sized for
+ * **The carry between passes is a rename, not a copy.** Copying
+ * `unmapped_subtractions.fq` back over `working_otus.fq` after every pass would
+ * be a full copy of a multi-gigabyte FASTQ per subtraction on a disk sized for
  * one. Nothing reads either path between passes, so moving is equivalent — and
  * `unmapped_otus.fq` is moved in for the same reason, since no later step opens
  * it.
@@ -44,8 +44,8 @@ export const eliminateSubtractionStep: NuvsStep = {
 					"-p",
 					String(proc),
 					"-x",
-					// Python wraps this in `shlex.quote`, which is a no-op for every
-					// path it is ever given and would be wrong if it were not: the
+					// Deliberately not shell-quoted. Quoting would be a no-op for every
+					// path this is ever given and would be wrong if it were not: the
 					// command is an argument array, never a shell string, so a quoted
 					// path would reach bowtie2 with its quotes attached.
 					paths.subtraction(subtraction.id).indexPrefix,

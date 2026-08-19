@@ -39,9 +39,9 @@ describe("the three outcomes the real runner distinguishes", () => {
 		expect((error as SubprocessFailedError).exitCode).toBe(1);
 	});
 
-	// `code === null && signal === "SIGTERM"`, not `code === 15`. Python treats 15
-	// as a success on the reasoning that the run was already failing, and that
-	// reasoning does not survive a tool choosing 15 as an ordinary error code.
+	// `code === null && signal === "SIGTERM"`, not `code === 15`. Treating 15 as
+	// a success on the reasoning that the run was already failing does not
+	// survive a tool choosing 15 as an ordinary error code.
 	it("resolves a cancellation rather than throwing", async () => {
 		const run = createFakeSubprocessRunner();
 

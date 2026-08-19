@@ -1,14 +1,13 @@
-// Schema for the two migration-bookkeeping tables Python left behind. Neither
-// is read nor written from this side: `alembic_version` is Alembic's
-// applied-revision pointer, and `revisions` belongs to Python's own migration
-// runner. Drizzle keeps its own bookkeeping in `drizzle.__drizzle_migrations`
-// and neither of these.
+// Mirror of the two legacy migration-bookkeeping tables. Neither is read nor
+// written from this side: `alembic_version` was Alembic's applied-revision
+// pointer and `revisions` belonged to the legacy migration runner. Nothing
+// applies either any more.
 //
 // They are declared only so the schema snapshot describes production. A table
 // missing from this schema is missing from the snapshot, so nothing could
 // generate the migration that drops it — the same reasoning that keeps
-// `analyses`' dead `reference` and `index` columns declared. Both tables go
-// when Python does.
+// `analyses`' dead `reference` and `index` columns declared. Both are now
+// droppable.
 
 import {
 	pgTable,
@@ -36,7 +35,7 @@ export const alembicVersion = pgTable(
 	],
 );
 
-/** @public One applied revision of Python's own migration runner. */
+/** @public One applied revision of the legacy migration runner. */
 export const revisions = pgTable(
 	"revisions",
 	{

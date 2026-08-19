@@ -363,7 +363,7 @@ describe("createIndex", () => {
 		expect(index.changeCount).toBe(2);
 	});
 
-	it("creates the task the Python runner claims and points it at the index", async () => {
+	it("creates an incomplete create_index task carrying the index id", async () => {
 		const { userId, referenceId } = await seedBuildable();
 
 		const index = await createIndex(db, referenceId, userId);

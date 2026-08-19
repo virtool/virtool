@@ -65,8 +65,8 @@ describe("handleGetSettings", () => {
 	});
 
 	// The one read in this service that writes. `getSettings` seeds the defaults
-	// when the row is absent, mirroring Python's `SettingsData.ensure()`, so a
-	// database that has never seen a Python boot answers rather than failing.
+	// when the row is absent, so a database nothing has booted against yet
+	// answers rather than failing.
 	it("seeds the defaults when the row is absent", async () => {
 		const response = await handleGetSettings(deps, get());
 

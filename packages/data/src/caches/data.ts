@@ -11,21 +11,17 @@ import { AppError } from "../errors";
 /**
  * How stale `last_accessed_at` must be before a lookup refreshes it.
  *
- * Python's `LAST_ACCESSED_REFRESH_INTERVAL` (`virtool/caches/data.py`), and the
- * threshold has to stay the same on both sides because both services read the
- * same rows. Refreshing unconditionally would turn every cache lookup — which
- * is on the hot path of every workflow start — into a write.
+ * Refreshing unconditionally would turn every cache lookup — which is on the
+ * hot path of every workflow start — into a write.
  */
 const LAST_ACCESSED_REFRESH_INTERVAL_MS = 5 * 60 * 1000;
 
 /**
  * How much object storage the cache store is allowed to occupy.
  *
- * Python's `CACHE_STORAGE_BUDGET` (`virtool/config/cls.py`), where it is the
- * default of a `--cache-storage-budget` option no deployment overrides. It is a
- * bare constant here rather than a `VT_` key because it is application state —
- * how much of the bucket caching may spend — not something about the pod it
- * runs in, and a per-replica environment variable is the wrong shape for a
+ * A bare constant rather than a `VT_` key because it is application state — how
+ * much of the bucket caching may spend — not something about the pod it runs
+ * in, and a per-replica environment variable is the wrong shape for a
  * fleet-wide budget. Making it configurable follows under VIR-2925.
  */
 export const CACHE_STORAGE_BUDGET_BYTES = 100 * 1024 ** 3;
@@ -33,19 +29,18 @@ export const CACHE_STORAGE_BUDGET_BYTES = 100 * 1024 ** 3;
 /**
  * How old a cache must be before budget pressure can evict it.
  *
- * Python's `CACHE_EVICTION_GRACE_PERIOD`. A cache is written by one workflow
- * and read by the next, and the two can be an hour apart, so a fresh entry is
- * off limits however little it has been used.
+ * A cache is written by one workflow and read by the next, and the two can be
+ * an hour apart, so a fresh entry is off limits however little it has been
+ * used.
  */
 const CACHE_EVICTION_GRACE_PERIOD_SECONDS = 60 * 60;
 
 /**
  * How many cache objects eviction deletes at once.
  *
- * Python's `CACHE_EVICTION_STORAGE_DELETE_CONCURRENCY`. Deletes are one round
- * trip each and a run can have hundreds to make, so they overlap — but not
- * without bound, which would open a connection per candidate against a bucket
- * this process shares with every workflow pod.
+ * Deletes are one round trip each and a run can have hundreds to make, so they
+ * overlap — but not without bound, which would open a connection per candidate
+ * against a bucket this process shares with every workflow pod.
  */
 const CACHE_EVICTION_STORAGE_DELETE_CONCURRENCY = 8;
 
@@ -129,17 +124,16 @@ export async function getCache(db: Db, key: string): Promise<CacheRow> {
  * blobs hold the same bytes, so **losing that race is success**. The insert
  * targets the `cache_key` constraint specifically: a `storage_key` collision can
  * only mean a reused uuid, which is a bug, and must still raise rather than be
- * swallowed. This deliberately diverges from Python, which raises
- * `CacheAlreadyExistsError` on the same race.
+ * swallowed.
  *
  * The loser then deletes its own orphan — but **only once it has established
  * the winner is somebody else**. A retry of a call that already succeeded
  * arrives with the same uuid and so re-selects its own row, and deleting there
  * would leave a live row pointing at nothing. Otherwise the delete is safe,
  * because `storage_key` is a per-write uuid and the winner's row points
- * elsewhere, and it is necessary, because an orphan has no row and Python's LRU
- * eviction walks rows. It happens after the write has committed, so a storage
- * failure only leaks bytes and is logged rather than thrown.
+ * elsewhere, and it is necessary, because an orphan has no row and LRU eviction
+ * walks rows. It happens after the write has committed, so a storage failure
+ * only leaks bytes and is logged rather than thrown.
  */
 export async function registerCache(
 	db: Db,
@@ -222,26 +216,26 @@ type EvictionCandidate = {
  * The least-recently-used rows whose removal would bring the store under
  * `budgetBytes`, oldest first.
  *
- * One statement, where Python takes two — a `SELECT sum(size)` and then the
- * candidate query. Folding the total into a CTE-free scalar subquery removes
- * the window between them, in which a concurrent write could change the figure
- * the second statement is selecting against.
+ * One statement, not two. A `SELECT sum(size)` followed by the candidate query
+ * leaves a window between them in which a concurrent write can change the
+ * figure the second statement is selecting against; folding the total into a
+ * CTE-free scalar subquery closes it.
  *
  * The running total is a window function over the *filtered* rows, and a row
  * qualifies while the bytes ahead of it — `cumulative_size - size` — fall short
  * of what has to be freed. That is what admits the last candidate, the one that
  * carries the total past the target: dropping it would leave the store over
- * budget by however much of it is needed. Python's `bytes_to_free <= 0` early
- * return needs no equivalent, because the preceding bytes are never negative and
- * so no row can satisfy the comparison against a non-positive target.
+ * budget by however much of it is needed. An explicit `bytes_to_free <= 0`
+ * early return needs no equivalent, because the preceding bytes are never
+ * negative and so no row can satisfy the comparison against a non-positive
+ * target.
  *
- * **The grace period filters the candidates but not the total**, which is
- * Python's behaviour and is inherited deliberately: the two runners have to
- * evict the same rows until the cutover completes. A store that is over budget
- * on entries younger than the grace period therefore frees less than it needs,
- * or nothing at all, and waits for them to age. Widening the total to the
- * filtered set instead would understate the overage and evict too little; the
- * fix is a shorter grace period, not a different sum.
+ * **The grace period filters the candidates but not the total**, deliberately.
+ * A store that is over budget on entries younger than the grace period
+ * therefore frees less than it needs, or nothing at all, and waits for them to
+ * age. Widening the total to the filtered set instead would understate the
+ * overage and evict too little; the fix is a shorter grace period, not a
+ * different sum.
  */
 async function selectEvictionCandidates(
 	db: Db,
@@ -287,10 +281,9 @@ async function selectEvictionCandidates(
  * Delete every candidate's object, at most
  * {@link CACHE_EVICTION_STORAGE_DELETE_CONCURRENCY} at a time.
  *
- * Every delete is attempted before the first failure is raised, matching
- * Python's `gather(..., return_exceptions=True)` followed by a re-raise: a
- * bucket refusing one key says nothing about the rest, and stopping on it would
- * leave objects behind that this run has already decided to reclaim.
+ * Every delete is attempted before the first failure is raised: a bucket
+ * refusing one key says nothing about the rest, and stopping on it would leave
+ * objects behind that this run has already decided to reclaim.
  *
  * The exact `storage_key` recorded on the row is deleted, never a prefix — the
  * key is a per-write uuid and a prefix delete would reach another row's object.
@@ -367,10 +360,9 @@ async function deleteCandidateObjects(
 /**
  * Evict least-recently-used caches until the store is back under `budgetBytes`.
  *
- * The port of Python's `CachesData.evict_lru`, and idempotent by construction:
- * a re-run selects whatever is still over budget, and every delete it makes is
- * idempotent on its own, so a reclaimed task repeating this from step zero
- * leaves what one pass leaves.
+ * Idempotent by construction: a re-run selects whatever is still over budget,
+ * and every delete it makes is idempotent on its own, so a reclaimed task
+ * repeating this from step zero leaves what one pass leaves.
  *
  * **Objects go before rows.** A failure part-way through leaves rows naming
  * objects that are gone, which a later run reclaims and a reader can at least

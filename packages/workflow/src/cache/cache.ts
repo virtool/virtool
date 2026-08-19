@@ -1,20 +1,19 @@
 /**
- * The workflow-side cache, ported from Python's `WorkflowCache`.
+ * The workflow-side cache.
  *
  * A workflow reuses expensive derived artifacts — mapping indexes, a collapsed
  * reference — by deriving a logical key from the inputs that produced them and
  * asking for it. The blob is an **uncompressed tar of one directory**, whose
  * single top-level entry is the directory's own basename, exactly as
- * `write_path_as_tar` produces and `extract_tar_to_dir` expects. That layout is
- * not an implementation detail: the `reference_mapping_index` and
- * `subtraction_mapping_index` namespaces are shared with Python, so a blob
- * written here is restored there and the reverse.
+ * `writePathAsTar` produces and `extractTarToDir` expects. That layout is not
+ * an implementation detail: the `reference_mapping_index` and
+ * `subtraction_mapping_index` namespaces are shared across workflows, and
+ * blobs already in the bucket are laid out this way.
  *
  * ## No endpoint carries bytes
  *
- * This diverges from Python, which streamed cache payloads through its jobs API.
- * Here the jobs API resolves a logical key to a row and the workflow moves the
- * bytes itself:
+ * No jobs API endpoint streams cache payloads. The jobs API resolves a logical
+ * key to a row and the workflow moves the bytes itself:
  *
  * - a **read** is `GET /caches/{key}` for the row's `storageKey`, then a
  *   streamed download;
@@ -76,8 +75,8 @@ export type CreateWorkflowCacheOptions = {
 };
 
 /**
- * A uuid as `uuid4().hex` — 32 lowercase hex characters, matching what Python
- * writes and what `CacheUuid` accepts.
+ * A uuid with its dashes stripped — 32 lowercase hex characters, which is what
+ * `CacheUuid` accepts and how uuids already in the bucket are spelled.
  */
 function mintCacheUuid(): string {
 	return randomUUID().replaceAll("-", "");

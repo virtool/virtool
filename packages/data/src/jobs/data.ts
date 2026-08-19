@@ -120,8 +120,7 @@ export async function findJobs(
 	db: Db,
 	{ page, perPage, states }: FindJobsOptions,
 ): Promise<JobSearchResult> {
-	// TODO: the Python endpoint also accepts a `users` filter; add it here if a
-	// caller needs to scope jobs by user.
+	// TODO: add a `users` filter here if a caller needs to scope jobs by user.
 	const stateFilter = states.length ? inArray(jobs.state, states) : undefined;
 
 	const [countRows, totalCountRows, foundCountRows, rows] = await Promise.all([
@@ -538,7 +537,8 @@ export async function startJobStep(
  *
  * The success half of the terminal transition, and the only one a runner makes.
  * There is deliberately no failure counterpart: a job fails by being cancelled
- * or by the jobs API's stalled-job sweep, neither of which the runner drives.
+ * or by the stalled-job sweep in `apps/tasks`, neither of which the runner
+ * drives.
  *
  * @throws {JobNotFoundError} when no such job exists.
  * @throws {JobNotRunningError} when the job is in any other state, which is
@@ -702,8 +702,7 @@ export async function readJobCounts(db: Db): Promise<JobCount[]> {
  *
  * The subtraction happens in Postgres, and `created_at` is pinned to UTC on the
  * way into it. The column is a naive `timestamp`, so left to the session's time
- * zone the age would be wrong by that offset — and both writers, Python and
- * Drizzle, store UTC.
+ * zone the age would be wrong by that offset, and every writer stores UTC.
  */
 export async function readOldestPendingJobAges(
 	db: Db,

@@ -1,9 +1,8 @@
 // The OTU domain: OTUs, their isolates, and their sequences.
 //
-// A port of `virtool.otus.data`, `virtool.otus.db`, and `virtool.otus.utils`.
-// Python still writes these tables — reference import, clone, remote update and
-// index build all do — so every write here produces the same document shape it
-// would, `data` JSONB included.
+// Reference import, clone, remote update and index build all write these
+// tables, so every write has to produce the same document shape, `data` JSONB
+// included.
 //
 // Two shapes appear throughout, and conflating them corrupts history:
 //
@@ -92,8 +91,7 @@ export class SegmentNotDefinedError extends AppError {}
 class MalformedOtuDataError extends AppError {}
 
 // Ids are the 8-character mixed-case alphanumeric strings Mongo's `_id` held,
-// because the columns that key on them are still `VARCHAR` and Python still
-// generates them this way.
+// because the columns that key on them are still `VARCHAR`.
 const ID_ALPHABET =
 	"0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
 
@@ -106,8 +104,8 @@ const ID_LENGTH = 8;
  * twelve characters where an OTU's is eight, which is the only reason the
  * length is a parameter.
  *
- * The alphabet stays the mixed-case 62 characters every id written from this
- * side uses, where Python's `random_alphanumeric` defaults to lowercase-only 36.
+ * The alphabet stays the mixed-case 62 characters every id written here uses,
+ * rather than the lowercase-only 36 a plain alphanumeric draw would default to.
  * Nothing keys on the case: the columns are `VARCHAR`, and the ids Mongo held
  * were mixed-case, so a lowercase-only draw here would be the odd one out rather
  * than the faithful one. The wider alphabet is also the safer of the two against
@@ -161,12 +159,11 @@ async function sequenceIdTaken(tx: DbOrTx, id: string): Promise<boolean> {
 }
 
 // Bucket sequences into the isolates embedded in the OTU document by
-// `isolate_id`, the way Python's `merge_otu` does. An isolate with no sequences
-// still gets an empty list.
+// `isolate_id`. An isolate with no sequences still gets an empty list.
 //
-// Nothing is mutated. Python deep-copies the OTU before merging; building fresh
-// objects instead means no two callers can ever write through the same nested
-// isolate, which is what the copy was defending against.
+// Nothing is mutated. Building fresh objects rather than deep-copying the OTU
+// before merging means no two callers can ever write through the same nested
+// isolate, which is what a copy would otherwise have to defend against.
 function mergeOtu(
 	otu: OtuDocument,
 	sequences: SequenceDocument[],
@@ -277,8 +274,8 @@ export async function joinLegacyOtus(
 		// unsorted cursor returned sequences in, which is the order the diffs that
 		// address an isolate's sequence list by index were written against. A NULL
 		// position on an unbackfilled row is deliberately not sorted around — it
-		// takes Postgres' default NULLS LAST, exactly as Python's plain ascending
-		// sort does. Shuffling such an OTU to tidy it would misapply every indexed
+		// takes Postgres' default NULLS LAST, which is what a plain ascending sort
+		// gives. Shuffling such an OTU to tidy it would misapply every indexed
 		// diff, which is the failure `position` exists to prevent.
 		.orderBy(legacySequences.otu_id, legacySequences.position);
 
@@ -293,15 +290,14 @@ export async function joinLegacyOtus(
 	return new Map(
 		otuRows.map((row) => [
 			row.id,
-			// `data` is used as it comes out of the column. Python parses
-			// `created_at` back from its ISO string to a datetime because the rest of
-			// its codebase re-encodes the document to BSON; nothing here does. This
-			// document is about to be diff-patched — and a `created_at` inside a diff
-			// is an ISO string too, because the diffs were themselves serialized to
-			// JSONB — and then read for OTU, isolate and sequence metadata that never
-			// includes `created_at`. Parsing it would put a `Date` into a document
-			// that has to stay plain JSON to survive both the patch and the trip back
-			// to the browser, in exchange for a field no reader looks at.
+			// `data` is used as it comes out of the column, `created_at` left as the
+			// ISO string it is stored as. This document is about to be diff-patched —
+			// and a `created_at` inside a diff is an ISO string too, because the
+			// diffs were themselves serialized to JSONB — and then read for OTU,
+			// isolate and sequence metadata that never includes `created_at`.
+			// Parsing it would put a `Date` into a document that has to stay plain
+			// JSON to survive both the patch and the trip back to the browser, in
+			// exchange for a field no reader looks at.
 			mergeOtu(row.data, sequencesByOtu.get(row.id) ?? []),
 		]),
 	);
@@ -501,9 +497,9 @@ async function incrementLegacyOtuVersion(
  * put that disagreement into the diff — the change that verified an OTU would
  * record no transition at all, and the next change would record a spurious
  * `true → false`. Replaying those diffs hands back an OTU verified when it was
- * not, which a reference clone then writes into a new row. Python mutates its
- * caller's copy for the same reason; a joined document here is shared structure
- * and read-only, so this rebuilds instead.
+ * not, which a reference clone then writes into a new row. A joined document is
+ * shared structure and read-only, so this rebuilds it rather than mutating the
+ * caller's copy.
  */
 async function updateLegacyOtuVerification(
 	tx: DbOrTx,
@@ -616,7 +612,7 @@ async function updateLegacySequenceSegments(
  * when there are none.
  *
  * Every field is present whether or not it fired, and a field that did not fire
- * is `false` rather than an empty list — the shape Python's `verify` returns.
+ * is `false` rather than an empty list — the shape `OtuIssueReport` declares.
  * `verified` on the row is exactly `verify(...) === null`.
  */
 export function verify(joined: OtuDocument): OtuIssueReport | null {
@@ -721,8 +717,7 @@ function formatSchema(document: OtuDocument): OtuSegment[] {
  * strings would therefore never match, and every request carrying a schema
  * would look like a change — bumping the version, writing a bogus history
  * entry, and pushing the OTU into the unbuilt-changes list that prompts an
- * index rebuild. Python compares dicts, which ignores key order for the same
- * reason.
+ * index rebuild.
  *
  * Segment order is still significant: reordering a schema *is* a change.
  */
@@ -986,7 +981,7 @@ async function getOtuInTransaction(tx: DbOrTx, otuId: string): Promise<Otu> {
 // The name is matched on `lower(name)` rather than the denormalised `lower_name`
 // field the Mongo query used; the `legacy_otus_name_lower` index makes that
 // expression a lookup rather than a scan. The abbreviation is matched exactly,
-// case included, as Python does. An empty value is never "in use".
+// case included. An empty value is never "in use".
 async function checkNameAndAbbreviation(
 	tx: DbOrTx,
 	referenceId: number,
@@ -1563,8 +1558,8 @@ export async function createSequence(
 
 		const isolate = findIsolate(old, isolateId);
 
-		// The stored key order is the order Python writes it in, so `data` stays a
-		// faithful lift of the document a diff was composed against.
+		// The stored key order is fixed, so `data` stays a faithful lift of the
+		// document a diff was composed against.
 		const document: SequenceDocument = {
 			_id: await generateId(tx, sequenceIdTaken),
 			accession: values.accession,
@@ -1626,8 +1621,7 @@ export async function updateSequence(
 		// Scoped to the OTU and isolate in the request, not read by id alone.
 		// Authorization is granted against the OTU's reference, so an unscoped read
 		// would let a caller with `modify_otu` on one reference edit a sequence
-		// belonging to another by naming their own OTU alongside its id. Python
-		// reads by id alone and has that hole; there is no reason to carry it over.
+		// belonging to another by naming their own OTU alongside its id.
 		const [stored] = await tx
 			.select({ data: legacySequences.data })
 			.from(legacySequences)

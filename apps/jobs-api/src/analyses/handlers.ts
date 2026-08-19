@@ -17,7 +17,7 @@ export type AnalysisHandlerDeps = FinalizeHandlerDeps;
 /**
  * Narrow an analysis to what a workflow reads.
  *
- * `sample` stays an object carrying an id. Python's runtime falls back to
+ * `sample` stays an object carrying an id. The workflow runtime falls back to
  * reading it when a job's `args` carry no `sample_id`, so flattening it to a
  * bare id breaks every analysis whose job was created without one.
  *

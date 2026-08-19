@@ -109,9 +109,9 @@ describe("PERIODIC_TASKS", () => {
 
 	// Asserted against the intervals themselves rather than against the constants
 	// this module exports, which would only prove the module agrees with itself.
-	// Every figure but `cleanup_sessions` is Python's, so replacing that spawner
-	// does not move the cadence a deployment already sees.
-	it("carries Python's intervals", () => {
+	// These figures are the cadence every deployment sees, so moving one is a
+	// deliberate act rather than a refactor.
+	it("pins the interval of every periodic task", () => {
 		expect(
 			Object.fromEntries(
 				PERIODIC_TASKS.map(({ type, intervalSeconds }) => [
@@ -129,9 +129,9 @@ describe("PERIODIC_TASKS", () => {
 		});
 	});
 
-	// Python sleeps a hardcoded 30 s between ticks whatever the intervals are, so
+	// The loop sleeps a fixed 30 s between ticks whatever the intervals are, so
 	// a task's effective period is `max(30, interval)` quantised to that tick.
-	it("ticks on Python's 30 second period", () => {
+	it("ticks on a 30 second period", () => {
 		expect(SPAWN_TICK_INTERVAL_MS).toBe(30_000);
 	});
 });

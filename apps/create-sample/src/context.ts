@@ -1,10 +1,9 @@
 /**
  * Building a create_sample run's context.
  *
- * One metadata read and one download per upload, all before step 1. Python
- * resolved fixtures lazily by parameter name, so an upload whose object is
- * missing surfaced at whichever step first touched the file; here it fails
- * before the first subprocess is spawned.
+ * One metadata read and one download per upload, all before step 1. An upload
+ * whose object is missing therefore fails the run before the first subprocess
+ * is spawned, rather than at whichever step first touches the file.
  *
  * Every value below survives a JSON round trip. `createWorkflowContext` asserts
  * that on every run, so nothing here may be a handle, a closure, or a class
@@ -140,7 +139,7 @@ type ResolvedUpload = { name: string; storageKey: string };
  * **Neither `sample.paired` nor `sample.reads` decides the count.** `getSample`
  * derives `paired` from the reads rows, which do not exist until finalize, so a
  * running job is always served `paired: false`. The uploads are the only
- * statement of how many files there are, which is what Python reads too.
+ * statement of how many files there are.
  */
 function resolveUploads(sample: WorkflowSample): ResolvedUpload[] {
 	const { uploads } = sample;

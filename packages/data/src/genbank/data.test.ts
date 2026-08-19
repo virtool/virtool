@@ -200,7 +200,7 @@ describe("getGenbank", () => {
 	});
 
 	describe("the request", () => {
-		it("calls the NCBI efetch endpoint with the parameters Python sends", async () => {
+		it("calls the NCBI efetch endpoint with the documented parameters", async () => {
 			const fetchMock = mockFetch(HOST_RECORD);
 
 			await getGenbank(logger, "NC_045512");
@@ -505,7 +505,7 @@ describe("getGenbank", () => {
 			);
 		});
 
-		it("carries the message the Python API surfaced for an unreachable NCBI", async () => {
+		it("carries a message naming NCBI when it cannot be reached", async () => {
 			vi.stubGlobal(
 				"fetch",
 				vi.fn().mockRejectedValue(new Error("ECONNREFUSED")),

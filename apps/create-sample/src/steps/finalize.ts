@@ -26,17 +26,16 @@ import type { CreateSampleStep } from "./types";
  * **An already-gzipped upload is renamed, not recompressed.** Almost every one
  * is, so compressing here would mean decompressing a read file and gzipping it
  * back to produce bytes the user already sent — and these run to several
- * gigabytes each. Python takes the same branch.
+ * gigabytes each.
  *
  * The uploads are processed in `sample_uploads.index` order and named by
  * position, which is the only thing linking an upload to the reads file it
  * becomes: `finalizeSample` pairs the rows it writes with the uploads by that
  * same order.
  *
- * **There is no delete on failure.** Python registers an `on_failure` hook that
- * issues `DELETE /samples/{id}`; a failed run here leaves an unfinalized row
- * for the user to remove, and the jobs API exposes no destructive route a job
- * key could reach.
+ * **There is no delete on failure.** A failed run leaves an unfinalized row for
+ * the user to remove, and the jobs API exposes no destructive route a job key
+ * could reach.
  */
 export const finalizeStep: CreateSampleStep = {
 	id: "finalize",

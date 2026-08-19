@@ -20,8 +20,8 @@ import { z } from "zod";
  * Derived from the shared record rather than restated, so this cannot come to
  * disagree with what writes the blob. `pick` keeps zod's default strip
  * behaviour, so the fields this workflow does not read are ignored rather than
- * required — a blob Python wrote, or one written by a later version carrying
- * more, still reads.
+ * required — a blob written by an earlier release, or one written by a later
+ * version carrying more, still reads.
  */
 const ClusterAnnotations = z.array(
 	HmmAnnotationRecord.pick({ cluster: true, id: true }),
@@ -43,9 +43,8 @@ export class HmmClusterUnknownError extends WorkflowError {
  * Read `path` and map each annotation's vFam cluster to its id.
  *
  * **This does buffer**, and it is the one place in the workflow that does.
- * `JSON.parse` has no streaming form, and Python reads the same file the same
- * way. The bound is the installed dataset rather than anything about the sample,
- * so it does not grow with the analysis.
+ * `JSON.parse` has no streaming form. The bound is the installed dataset rather
+ * than anything about the sample, so it does not grow with the analysis.
  */
 export async function readHmmClusterMap(
 	path: string,

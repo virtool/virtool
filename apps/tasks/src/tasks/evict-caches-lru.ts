@@ -10,19 +10,19 @@ import type { TaskContext } from "./registry";
  * `evict_caches_lru` is spawned on a schedule and carries nothing.
  *
  * `z.object` strips unknown keys rather than rejecting them, which is what is
- * wanted here: a row Python wrote carrying a key this side does not read still
- * runs. `z.strictObject` would fail the task on that key, and the body reads no
- * key at all.
+ * wanted here: a row already written carrying a key this body does not read
+ * still runs. `z.strictObject` would fail the task on that key, and the body
+ * reads no key at all.
  */
 const payload = z.object({});
 
 /**
  * Evict least-recently-used caches until the store is back under budget.
  *
- * The port of Python's `LRUCacheEvictionTask`, whose body is likewise one call.
- * Everything it runs is `evictLruCaches`: select the LRU rows whose removal
- * brings the store under {@link CACHE_STORAGE_BUDGET_BYTES}, delete their
- * objects, then delete the rows.
+ * The body is one call. Everything it runs is `evictLruCaches`: select the LRU
+ * rows whose removal brings the store under
+ * {@link CACHE_STORAGE_BUDGET_BYTES}, delete their objects, then delete the
+ * rows.
  *
  * It is idempotent as a reclaim requires. A re-run selects whatever is still
  * over budget — nothing, if the first attempt committed — and every storage
@@ -43,9 +43,8 @@ const payload = z.object({});
 export const evictCachesLruTask = defineTask<typeof payload, TaskContext>({
 	type: "evict_caches_lru",
 	payload,
-	// Python names its step after the bound method it runs, `BaseTask.run`
-	// writing `func.__name__` into the column. Both runners write `evict` for the
-	// same work until the cutover completes.
+	// The name is written to the row's `step` column, which is what the UI shows
+	// and what rows already written carry, so it is fixed.
 	steps: ["evict"],
 	async run({ ctx, helpers, logger, signal }) {
 		await helpers.runStep("evict", async () => {

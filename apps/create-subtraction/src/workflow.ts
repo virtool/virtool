@@ -5,19 +5,17 @@
  * eliminate reads against. It counts the genome's sequences and nucleotides with
  * `seqkit` and hands the jobs API those figures alongside the file it stored.
  *
- * Python has a third step, `build_index`, which runs `bowtie2-build` and uploads
- * six `.bt2` shards. It is deliberately not ported — nothing reads those shards,
- * and the finalize route accepts the genome alone. So the image carries `seqkit`
- * and no other binary.
+ * **There is deliberately no third step building a bowtie2 index.** Nothing
+ * reads `.bt2` shards — both analysis workflows build a subtraction's index
+ * locally — and the finalize route accepts the genome alone. So the image
+ * carries `seqkit` and no other binary.
  *
- * **Nothing here decompresses the genome to disk.** Python used to, in a
- * `decompress` step; it dropped that once `seqkit` and `bowtie2-build` were
- * reading gzip natively, and this side follows. Don't reintroduce the step to
- * make a plain FASTA available — no step needs one.
+ * **Nothing here decompresses the genome to disk.** `seqkit` reads gzip
+ * natively, so no step needs a plain FASTA. Don't add a decompress step to make
+ * one available.
  *
- * Step ids are `snake_case` and match the Python function names they were ported
- * from. The jobs API stores them, so renaming one changes the shape of a job's
- * step list at cutover.
+ * Step ids are `snake_case` and are stored in the `jobs.steps` column, which
+ * the UI renders, so renaming one changes what users see.
  */
 
 import { defineWorkflow } from "@virtool/workflow";

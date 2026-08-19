@@ -294,9 +294,9 @@ describe("formatAnalysis for nuvs", () => {
 			],
 		});
 
-		// Python scores an unmatched orf as zero and takes the minimum across all
-		// of them, so one drags the whole contig down. Preserved deliberately: the
-		// NuVs list sorts and filters on this figure.
+		// An unmatched orf scores zero and the minimum is taken across all of them,
+		// so one drags the whole contig down. Deliberate: the NuVs list sorts and
+		// filters on this figure.
 		expect(results.hits).toMatchObject([{ annotatedOrfCount: 1, e: 0 }]);
 	});
 

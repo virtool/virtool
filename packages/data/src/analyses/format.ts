@@ -1,6 +1,5 @@
-// Shape a workflow's `results` blob for presentation. Ported from
-// `../../../../../virtool/virtool/analyses/format.py`, then extended to derive
-// the display metrics the client used to compute for itself.
+// Shape a workflow's `results` blob for presentation, deriving the display
+// metrics the client would otherwise have to compute for itself.
 //
 // This is business logic, not a join simplification. Pathoscope results record
 // only per-sequence hit metrics; every OTU, isolate and sequence name,
@@ -196,9 +195,9 @@ function formatIsolates(
 			schemaNames,
 		);
 
-		// Python gates this on any formatted sequence carrying a `pi` or `final`
-		// key. Every sequence it yields always carries `pi`, so the test reduces to
-		// "the isolate matched at least one hit" — which is what is written here.
+		// The gate is any formatted sequence carrying a `pi` or `final` key. Every
+		// sequence yielded here always carries `pi`, so the test reduces to "the
+		// isolate matched at least one hit" — which is what is written here.
 		if (sequences.length === 0) {
 			continue;
 		}
@@ -435,9 +434,9 @@ function orfHits(orfs: NuvsOrf[]): NuvsOrfHit[] {
 /**
  * The lowest e-value across a contig's ORF hits.
  *
- * An ORF that matched no annotation contributes zero, which is Python's
- * behaviour and the client's before it. A contig with no ORFs at all has no
- * e-value, and the NuVs list offers a filter that hides exactly those.
+ * An ORF that matched no annotation contributes zero, so a single unmatched ORF
+ * drags the whole contig down. A contig with no ORFs at all has no e-value, and
+ * the NuVs list offers a filter that hides exactly those.
  */
 function minimumE(orfs: NuvsOrf[]): number | null {
 	if (orfs.length === 0) {

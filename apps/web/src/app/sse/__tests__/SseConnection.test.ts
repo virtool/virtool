@@ -215,9 +215,9 @@ describe("SseConnection", () => {
 	it("drops frames for domains it does not handle without reporting them", async () => {
 		await establish();
 
-		// Python emits domains the TS client has no query keys for yet; a frame for
-		// one of them must be ignored, not treated as a validation error worth a
-		// Sentry report.
+		// Frames arrive for domains the client has no query keys for yet; a frame
+		// for one of them must be ignored, not treated as a validation error worth
+		// a Sentry report.
 		openConnection().message({
 			domain: "subtraction",
 			operation: "update",

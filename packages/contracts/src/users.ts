@@ -45,8 +45,8 @@ export type QuickAnalyzeWorkflow = "nuvs" | "pathoscope";
 /**
  * A signed-in user's client-side preferences.
  *
- * Stored snake_case in the `users.settings` JSONB column, which Python also
- * writes — the data layer maps between the two spellings.
+ * Stored snake_case in the `users.settings` JSONB column — the data layer maps
+ * between the two spellings.
  */
 export type AccountSettings = {
 	quickAnalyzeWorkflow: QuickAnalyzeWorkflow;

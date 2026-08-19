@@ -14,9 +14,9 @@ import { createTask } from "@virtool/data/tasks/data";
 /**
  * Start an HMM install and return the pending install record.
  *
- * Mirrors the Python `HmmsData.install_update`: refuse if an install is already
- * running, refresh the release from the manifest, create the `install_hmms`
- * task the Python runner will claim, and point the status singleton at it.
+ * Refuses if an install is already running, refreshes the release from the
+ * manifest, creates the `install_hmms` task the task runner will claim, and
+ * points the status singleton at it.
  */
 export async function installUpdate(
 	db: Db,

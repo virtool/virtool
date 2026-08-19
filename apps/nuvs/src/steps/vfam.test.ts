@@ -185,10 +185,10 @@ describe("vfamStep", () => {
 	});
 
 	// `best_bias` and `best_score` are read from the columns hmmscan documents as
-	// the best-domain score and bias respectively — they are swapped. This
-	// reproduces a bug in the Python workflow on purpose: the values are stored
-	// under these names in every analysis blob written so far, and correcting it
-	// on this side alone would silently disagree with all of them.
+	// the best-domain score and bias respectively — they are swapped. The swap is
+	// deliberate: the values are stored under these names in every analysis blob
+	// written so far, and correcting it here would silently disagree with all of
+	// them.
 	it("stores the best-domain score as best_bias and the bias as best_score", async () => {
 		const { run, state } = await runStep({
 			rows: [
@@ -231,10 +231,10 @@ describe("vfamStep", () => {
 		expect(hit?.full_bias).toBe(1.5);
 	});
 
-	// Python drops a contig whose ORFs all ended up with empty hit lists, but the
-	// branch only runs for a contig that just received a non-empty list, so it can
-	// never fire. Porting it as though it does would renumber the contigs and
-	// invalidate every stored index.
+	// Dropping a contig whose ORFs all ended up with empty hit lists is only ever
+	// reachable for a contig that has just received a non-empty list, so such a
+	// branch could never fire. Writing one as though it does would renumber the
+	// contigs and invalidate every stored index.
 	it("keeps a contig none of whose ORFs matched", async () => {
 		const { run, state } = await runStep({
 			rows: [tbloutRow({ cluster: 2, query: "sequence_0.0" })],

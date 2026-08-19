@@ -15,7 +15,7 @@ import {
  *
  * `workflow` is a plain `text` column with no enum constraint, so "bounded by
  * construction" is only true if this side makes it so. A typo, or a workflow a
- * future Python release adds, must not mint a series that never retires.
+ * future release adds, must not mint a series that never retires.
  */
 const OTHER_WORKFLOW = "other";
 

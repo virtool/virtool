@@ -20,11 +20,8 @@ coverage
 config.json
 /settings.json
 *.log*
-.coverage.cog*
-.coverage
 .cache
 .DS_store
-.pytest_cache
 env
 tags
 .vscode

@@ -4,10 +4,10 @@
 // them with a plain `<a href>` — the browser has to see a real response carrying
 // a `Content-Disposition`, which an RPC call cannot produce.
 //
-// Python serves these by sniffing a `.fa` suffix on the OTU and sequence *read*
-// endpoints and branching inside the handler. That conflates two resources on
-// one URL; here each is its own route ending in a `fasta` segment, and the
-// filename lives in the `Content-Disposition` where it belongs.
+// Each export is its own route ending in a `fasta` segment rather than a `.fa`
+// suffix sniffed on the OTU and sequence *read* endpoints, which would conflate
+// two resources on one URL. The filename lives in the `Content-Disposition`
+// where it belongs.
 
 import { formatIsolateName } from "@virtool/contracts";
 import type { DbOrTx } from "@virtool/data/db/pg";
@@ -36,9 +36,9 @@ function formatFastaEntry(
  * A filename of the form `otu.isolate.sequence_id.fa`, lower-cased with spaces
  * replaced.
  *
- * Python's `str.replace` substitutes every space; JavaScript's replaces only the
- * first, so this uses `replaceAll` — an OTU named "Squash browning spot virus"
- * would otherwise keep three of its spaces.
+ * Every space is substituted, so this uses `replaceAll` rather than `replace`,
+ * which would substitute only the first — an OTU named "Squash browning spot
+ * virus" would otherwise keep three of its spaces.
  */
 function formatFastaFilename(...parts: string[]): string {
 	return `${parts.join(".").replaceAll(" ", "_")}.fa`.toLowerCase();

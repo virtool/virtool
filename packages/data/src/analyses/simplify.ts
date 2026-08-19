@@ -9,15 +9,15 @@
  * high-variance profile over a long genome, where the first pass alone still
  * yields thousands of coordinates.
  *
- * This replaced a port of the Visvalingam-Whyatt reduction Python performed.
- * That algorithm minimises the areal deviation of a polyline, which is the wrong
- * criterion for a coverage curve twice over: it discards narrow triangles first,
- * and on this data the narrow features — a spike, a single-position drop to zero
- * — are the whole signal. `metrics.ts` already had to derive every depth and
- * coverage figure ahead of it for that reason. It was also quadratic, taking
- * over eight seconds on a single 30 kb genome, and reduced to a *proportion* of
- * its input rather than to a point count, so it bounded nothing and the client
- * had to reduce the result a second time anyway.
+ * Visvalingam-Whyatt, the obvious alternative, is the wrong criterion for a
+ * coverage curve twice over: it minimises the areal deviation of a polyline and
+ * so discards narrow triangles first, and on this data the narrow features — a
+ * spike, a single-position drop to zero — are the whole signal. `metrics.ts`
+ * derives every depth and coverage figure from the raw depths for that reason.
+ * It is also quadratic, over eight seconds on a single 30 kb genome, and
+ * reduces to a *proportion* of its input rather than to a point count, so it
+ * bounds nothing and the client would have to reduce the result a second time
+ * anyway.
  */
 
 import type { Coordinate } from "@virtool/contracts";

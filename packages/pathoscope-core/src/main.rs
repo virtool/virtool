@@ -1,7 +1,7 @@
 //! The `pathoscope-core` command line interface.
 //!
-//! Three subcommands, one per entry point the Python extension module used to
-//! expose. The TypeScript workflow invokes this binary as a subprocess.
+//! Three subcommands, one per stage of the analysis. The TypeScript workflow
+//! invokes this binary as a subprocess.
 //!
 //! Results are written to the file named by `--output`, never to stdout, so a
 //! stray `println!` cannot corrupt a result. stdout carries nothing at all;
@@ -139,9 +139,7 @@ struct SubtractionSummary {
 
 /// Emit structured logs to stderr as JSON lines.
 ///
-/// This replaces the old `logging.rs`, which forwarded records to Python's
-/// logging module over the GIL. There is no interpreter on the other side any
-/// more — the parent is a Node process whose logger (`@virtool/logger`, a pino
+/// The parent is a Node process whose logger (`@virtool/logger`, a pino
 /// wrapper) reads JSON.
 fn init_logging(level: LevelFilter) {
     let mut builder = env_logger::Builder::new();

@@ -173,9 +173,9 @@ describe("hasPermission", () => {
 			).toBe(false);
 		});
 
-		// Python's PermissionRoutePolicy lets any administrator role through
-		// regardless of the key. We cap them, because the account UI offers an
-		// administrator a checkbox per permission and promises it means something.
+		// An administrator role does not let a key past its own permissions. We
+		// cap them, because the account UI offers an administrator a checkbox per
+		// permission and promises it means something.
 		it("caps a full administrator to the key's permissions", async () => {
 			const userId = await seedUser(db, { administratorRole: "full" });
 

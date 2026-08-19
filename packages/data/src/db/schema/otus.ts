@@ -8,10 +8,10 @@
 // joined OTU feeds diffs that address the document as it was written, so
 // anything the projection drops would corrupt a patch.
 //
-// That constraint governs writes from this side too. Python still writes these
-// tables — reference import, clone, remote update, and index build all do — so
-// a write from here must produce the same document shape, `data` included, or
-// the diffs already recorded against it stop applying.
+// That constraint governs writes from this side too. Reference import, clone,
+// remote update, and index build all write these tables, so a write must
+// produce the same document shape, `data` included, or the diffs already
+// recorded against it stop applying.
 
 import {
 	bigint,

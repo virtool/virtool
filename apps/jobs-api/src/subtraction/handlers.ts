@@ -51,9 +51,9 @@ function toWorkflowSubtraction(
 
 /**
  * Serve a subtraction's metadata and the files that make it up: its source
- * genome, plus the bowtie2 shards a subtraction finalized under Python still
- * carries. Those rows are served as they stand, `type` and all — only the write
- * path stopped accepting shards.
+ * genome, plus the bowtie2 shards an older subtraction still carries. Those
+ * rows are served as they stand, `type` and all — only the write path stopped
+ * accepting shards.
  *
  * Records only. Nothing here reads or writes an object.
  */
@@ -98,19 +98,18 @@ export async function handleGetSubtraction(
 /**
  * The only filename a subtraction accepts.
  *
- * Python's `virtool/subtractions/utils.py:FILES` names seven — the source FASTA
- * plus the six shards of a bowtie2 index — but **nothing consumes the shards**.
- * Both analysis workflows build a subtraction's bowtie2 index locally from the
- * `.fa.gz` and memoize it through their own workflow cache, so the shards are
- * written by one workflow and read by none. There is no parity constraint
- * either: this service has no per-file upload route, so Python's
- * `create_subtraction` cannot finalize against it at all, and
- * `apps/create-subtraction` is the only writer this route will ever have.
+ * An older subtraction carries seven files — the source FASTA plus the six
+ * shards of a bowtie2 index — but **nothing consumes the shards**. Both
+ * analysis workflows build a subtraction's bowtie2 index locally from the
+ * `.fa.gz` and memoize it through their own workflow cache, so a shard has no
+ * reader at all. `apps/create-subtraction` is the only writer this route will
+ * ever have, and this service has no per-file upload route, so no other caller
+ * can register a name against it.
  *
- * This is the **write** path. Subtractions finalized under Python still carry
- * `bowtie2` rows and {@link handleGetSubtraction} keeps serving them.
+ * This is the **write** path. Subtractions finalized before this release still
+ * carry `bowtie2` rows and {@link handleGetSubtraction} keeps serving them.
  *
- * Python addresses a subtraction file by `name` in the URL of its download
+ * A subtraction file is addressed by `name` in the URL of its download
  * endpoint, so this is what keeps that URL space closed. It is no longer doing
  * duty as key safety — the key is checked against the subtraction's own prefix.
  * With one name whitelisted, the duplicate check in `checkManifest` and the

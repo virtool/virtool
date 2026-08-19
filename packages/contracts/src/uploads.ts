@@ -8,12 +8,11 @@ export const UPLOAD_TYPES = ["reference", "reads", "subtraction"] as const;
 export type UploadType = (typeof UPLOAD_TYPES)[number];
 
 /**
- * An upload as returned to the client. Mirrors Python's `UploadMinimal`:
- * `name_on_disk` is internal and never exposed.
+ * An upload as returned to the client. `name_on_disk` is internal and never
+ * exposed.
  *
- * **Every timestamp is nullable, because its column is.** Python sets them all
- * when it creates a row, so in practice they are populated — but that is an
- * invariant another service owns, not one this schema enforces, and a row
+ * **Every timestamp is nullable, because its column is.** They are populated in
+ * practice, but that is not an invariant this schema enforces, and a row
  * migrated from before a column existed carries null regardless. Typing them
  * non-null previously forced the mapper to substitute an epoch date, which
  * renders as a plausible-looking timestamp half a century ago rather than as

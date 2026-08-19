@@ -189,8 +189,8 @@ export type DeleteExpiredSessionsOptions = {
  * a row updated by a transaction that commits mid-statement is re-checked
  * against the outer `where` alone — the subquery is not re-run — so a predicate
  * naming only the id passes on a row whose `expires_at` has since moved
- * forward, and a session Python's sliding refresh just extended is deleted out
- * from under its user.
+ * forward, and a session the sliding refresh just extended is deleted out from
+ * under its user.
  *
  * The loop stops on a batch shorter than the limit. A concurrent logout that
  * removes an expired row between the select and the delete, or a refresh the

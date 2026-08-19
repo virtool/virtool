@@ -19,15 +19,23 @@ export const PeriodicTaskName = z.enum([
 export type PeriodicTaskName = z.infer<typeof PeriodicTaskName>;
 
 /**
- * Every task name Virtool runs — the six periodic ones and the four created in
- * response to a request.
+ * A task created on demand in response to a request.
  */
-export const TaskName = z.enum([
-	...PeriodicTaskName.options,
+export const OnDemandTaskName = z.enum([
 	"clone_reference",
 	"create_index",
 	"import_reference",
 	"install_hmms",
+]);
+
+export type OnDemandTaskName = z.infer<typeof OnDemandTaskName>;
+
+/**
+ * Every task name Virtool runs.
+ */
+export const TaskName = z.enum([
+	...PeriodicTaskName.options,
+	...OnDemandTaskName.options,
 ]);
 
 export type TaskName = z.infer<typeof TaskName>;

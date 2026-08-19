@@ -1,6 +1,5 @@
 /**
- * The `cd-hit-est` cluster file, parsed the way Python's
- * `_parse_cd_hit_clusters` parses it.
+ * The `cd-hit-est` cluster file, parsed.
  *
  * A cluster file looks like:
  *
@@ -14,8 +13,8 @@
  *
  * Every member of a cluster is mapped to that cluster's representative — the
  * member whose line ends in `*`. That mapping is what collapsing compares
- * isolates by, so a member left unmapped is a `KeyError` in Python and would be
- * an `undefined` set member here.
+ * isolates by, so a member left unmapped would become an `undefined` set
+ * member.
  */
 
 import { createReadStream } from "node:fs";
@@ -41,7 +40,7 @@ export async function parseCdHitClusters(
 
 	function flushCluster(): void {
 		// A cluster with no representative is flushed as a no-op rather than an
-		// error, matching Python. cd-hit-est does not produce one.
+		// error. cd-hit-est does not produce one.
 		if (representativeId === null) {
 			return;
 		}

@@ -146,7 +146,7 @@ describe("handleRegisterCache", () => {
 	// The wire carries no storage key, so the only lever a caller has on the
 	// object's location is the uuid — and a traversal-shaped one is not a uuid.
 	// Without this, a job-authenticated caller could point a cache row at a
-	// sample or index object, which Python's LRU eviction would then delete.
+	// sample or index object, which LRU cache eviction would then delete.
 	it("cannot produce a row pointing outside caches/v1/", async () => {
 		await storage.write("samples/1/reads_1.fq.gz", body("not a cache"));
 
@@ -201,7 +201,7 @@ describe("handleRegisterCache", () => {
 
 	// Both derived the same key and wrote the same bytes. The loser is pointed at
 	// the winner's blob and its own orphan is reclaimed, because an orphan has no
-	// row for Python's LRU eviction to walk.
+	// row for LRU eviction to walk.
 	it("answers 200 with the winner's row when the key already exists", async () => {
 		await storage.write(cacheKey(UUID_A), body("aaa"));
 		await storage.write(cacheKey(UUID_B), body("aaa"));
@@ -313,7 +313,7 @@ describe("handleGetCache", () => {
 	});
 
 	// Metadata only. The workflow reads the bytes from the bucket itself, so a
-	// body here would put this service back on the data path Python was on.
+	// body here would put this service on the data path.
 	it("relays no cache bytes", async () => {
 		await storage.write(cacheKey(UUID_A), body("hello world!"));
 

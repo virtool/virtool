@@ -84,8 +84,8 @@ async function attemptDownload(
 			signal: composed,
 		});
 
-		// Before a byte is read, as Python does. An error page fed to gunzip fails
-		// two steps later complaining about compression, not about the 404.
+		// Checked before a byte is read. An error page fed to gunzip fails two
+		// steps later complaining about compression, not about the 404.
 		if (response.status > 399) {
 			throw new DownloadStatusError(url, response.status);
 		}

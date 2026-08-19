@@ -28,9 +28,9 @@ function toWorkflowSettings(settings: Settings): WorkflowSettings {
  *
  * There is no 404: the settings row is a singleton, and `getSettings` seeds the
  * defaults when it is absent. **That makes this read a write** on a database
- * that has never seen a Python boot — the one endpoint in this service where a
- * GET can insert a row. It mirrors Python's `SettingsData.ensure()`, and the
- * alternative is failing a workflow because nothing had written the row yet.
+ * that has never been booted against — the one endpoint in this service where a
+ * GET can insert a row. The alternative is failing a workflow because nothing
+ * had written the row yet.
  */
 export async function handleGetSettings(
 	deps: ReadHandlerDeps,

@@ -1,8 +1,7 @@
 // Schema for the `settings` table.
 //
-// The table is a singleton: exactly one row, pinned to `id = 1`. Python seeded
-// it and still re-seeds it at startup via `SettingsData.ensure()`. No column
-// has a server default — every default is written into the row on insert, which
+// The table is a singleton: exactly one row, pinned to `id = 1`. No column has
+// a server default — every default is written into the row on insert, which
 // is why `DEFAULT_SETTINGS` in `../../settings/data.ts` carries them rather
 // than this file. `enable_api` is the one exception, for the reason given
 // below.
@@ -35,10 +34,9 @@ export const settings = pgTable(
 			.$type<string[]>()
 			.notNull(),
 		// Virtool no longer exposes a JSON API toggle, so `Settings` does not
-		// carry this and nothing reads it. Python still declares the column
-		// NOT NULL with no server default, so an insert that omits it fails —
-		// hence the client-side default. Drop the column here once Python drops
-		// it from its own schema.
+		// carry this and nothing reads it. The column is still NOT NULL with no
+		// server default, so an insert that omits it fails — hence the
+		// client-side default. The column itself is droppable.
 		enableApi: boolean("enable_api")
 			.notNull()
 			.$defaultFn(() => false),

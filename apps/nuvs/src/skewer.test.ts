@@ -80,8 +80,8 @@ const SINGLE_OUTPUTS = ["reads-trimmed.log", "reads-trimmed.fastq.gz"];
 describe("runSkewer", () => {
 	// The flag order has no effect on skewer, but the command is what a failed
 	// run is debugged from and a reordered one is needlessly hard to diff against
-	// Python's.
-	it("builds Python's command, in Python's order", async () => {
+	// the commands in run logs already written.
+	it("passes every flag in the fixed order", async () => {
 		const { calls } = await run(SINGLE_OUTPUTS);
 
 		const command = calls[0]?.command ?? [];
@@ -117,7 +117,6 @@ describe("runSkewer", () => {
 		]);
 	});
 
-	// Python runs skewer from the reads' own directory.
 	it("runs from the reads' directory", async () => {
 		const { calls, workPath } = await run(SINGLE_OUTPUTS);
 
@@ -161,9 +160,9 @@ describe("runSkewer", () => {
 		).resolves.toBe("reads-trimmed-pair2.fastq.gz");
 	});
 
-	// Python catches a `FileNotFoundError` on the single-end name to decide this.
-	// Testing for the file instead means a genuinely absent paired output still
-	// fails naming itself, rather than being read as "must have been single-end".
+	// Testing for the single-end file, rather than catching its absence, means a
+	// genuinely absent paired output still fails naming itself instead of being
+	// read as "must have been single-end".
 	it("fails naming the missing file when neither output is there", async () => {
 		await expect(run(["reads-trimmed.log"])).rejects.toThrow(
 			/reads-trimmed-pair1\.fastq\.gz/,

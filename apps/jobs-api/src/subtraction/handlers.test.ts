@@ -233,10 +233,9 @@ describe("handleFinalizeSubtraction", () => {
 		expect(row?.ready).toBe(false);
 	});
 
-	// The shards are written by `create_subtraction` and read by nothing: both
-	// analysis workflows build the bowtie2 index locally from the FASTA. The
-	// write path stopped accepting them; the read path still serves the rows
-	// Python left behind.
+	// The shards are read by nothing: both analysis workflows build the bowtie2
+	// index locally from the FASTA. The write path stopped accepting them; the
+	// read path still serves the rows older subtractions carry.
 	it("refuses a bowtie2 shard", async () => {
 		const subtractionId = await seedSubtraction();
 
@@ -617,8 +616,9 @@ describe("handleGetSubtraction", () => {
 	});
 
 	// The write path no longer accepts a bowtie2 shard, but every subtraction
-	// Python finalized has six of them. They keep being served, `type` and all.
-	it("serves the bowtie2 shards of a subtraction Python finalized", async () => {
+	// finalized before this release has six of them. They keep being served,
+	// `type` and all.
+	it("serves the bowtie2 shards of an older subtraction", async () => {
 		const subtractionId = await seedSubtraction({ ready: true });
 
 		await db.insert(subtractionFiles).values([

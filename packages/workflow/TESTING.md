@@ -1,18 +1,12 @@
-# The workflow test harness
+# Workflow testing
 
-`@virtool/workflow/testing` is what every workflow test stands on. It replaces
-two pieces of Python scaffolding outright:
+`@virtool/workflow/testing` is what every workflow test stands on. It covers
+the whole surface a workflow test needs: fixture builders, a fixed clock and a
+deterministic random source, a fake subprocess runner, checksum helpers, and
+both halves of the jobs API fixture.
 
-- `virtool/workflow/pytest_plugin/` (~284 lines) — the `workflow_data` fixture,
-  a `WorkflowData` dataclass seeded by `pydantic_factories`, a `StaticTime`, and
-  a real `run_subprocess`.
-- `tests/fixtures/workflow_api/` (~1,000 lines across seven route modules) — a
-  real aiohttp `TestServer` whose route tables mutated one shared `WorkflowData`
-  object in place.
-
-There is more workflow test code than workflow source and none of it ports
-mechanically, so this harness is used four times over by the workflow ports and
-once more by the runtime itself.
+There is more workflow test code than workflow source, so this harness is used
+once by each of the four workflow apps and once more by the runtime itself.
 
 It lives in `packages/workflow/src/testing/`, runs under node via
 `packages/workflow`'s own `test` script, and **imports nothing from
@@ -21,9 +15,9 @@ depending on the SPA.
 
 ## Factory functions, not framework magic
 
-pytest injected fixtures by parameter name and resolved a dependency graph
-between them. Vitest has no equivalent and this harness deliberately does not
-build one.
+Vitest has no mechanism for injecting fixtures by parameter name or resolving a
+dependency graph between them, and this harness deliberately does not build
+one.
 
 - Everything is an exported factory taking explicit arguments and returning a
   value: `createJobsApiState`, `createFakeJobsApiClient`,
@@ -95,7 +89,7 @@ Both run `handleJobsApiRequest` over the same `JobsApiState`. That is not a
 convenience — it is what keeps the two from drifting, and the half a test is not
 using is the half that would quietly stop matching the real service. It is also
 what lets a test be moved from one to the other without rewriting its setup, the
-property that made the Python fixture usable at all.
+property that makes the fixture usable at all.
 
 The faked client is not a shortcut around the contract either. Every response
 goes through `JSON.stringify` and back and is parsed with the same schema the
@@ -105,8 +99,8 @@ contract does not describe fails there exactly as it would over a wire.
 
 ### The state is the assertion surface
 
-`JobsApiState` mirrors Python's `WorkflowData` and exposes what its fixture
-exposed, plus what this side needs:
+`JobsApiState` exposes everything a test drives the fixture with or asserts
+against:
 
 | Field | What it records |
 | --- | --- |
@@ -126,7 +120,7 @@ exposed, plus what this side needs:
 
 The fixture's responses are built from the schemas in `@virtool/contracts`
 rather than hand-spelled, and every field crossing this wire is camelCase —
-`startedAt`, `pingedAt`, never Python's `started_at` / `pinged_at`.
+`startedAt`, `pingedAt`, never `started_at` / `pinged_at`.
 
 The embedded server is the fixture the jobs API client is tested *against*. If
 server and client were both written snake_case they would agree with each other,
@@ -169,8 +163,8 @@ for the race between the guard's read and the transaction's lock.
 
 ### The claim is filtered by workflow
 
-`POST /jobs/claim` reads its `workflow` query parameter, the way Python's
-`ClaimJobView` and `handleClaimJob` do. Asking for a workflow this fixture's job
+`POST /jobs/claim` reads its `workflow` query parameter, the way the real
+service does. Asking for a workflow this fixture's job
 does not run is answered **404**, the same "no job available" a second claim
 gets; a workflow that is not claimable at all — `build_index`, which parses as a
 job workflow but which nothing creates any more — is **422**. Without the filter
@@ -220,20 +214,19 @@ several requests in order:
 `@virtool/contracts` — what the jobs API actually serves a workflow, not the
 wider shapes the SPA reads.
 
-Two calls with the same seed produce identical values, replacing Python's
-`ModelFactory.seed_random(12/55/22/5)`. Determinism is not decoration: checksums
-are the assertion, and a fixture that changed between runs would make one
-unusable. Nothing global is seeded — a generator is derived per call, so two
-builders cannot influence each other through a shared stream and a file's
-fixtures do not change when a test is added ahead of them.
+Two calls with the same seed produce identical values. Determinism is not
+decoration: checksums are the assertion, and a fixture that changed between
+runs would make one unusable. Nothing global is seeded — a generator is derived
+per call, so two builders cannot influence each other through a shared stream
+and a file's fixtures do not change when a test is added ahead of them.
 
-`STATIC_TIME` pins `2015-10-06T20:00:00Z`, the instant Python pins, and is
-**injected** rather than monkeypatched onto a global clock. It is an ISO string
+`STATIC_TIME` pins `2015-10-06T20:00:00Z` and is **injected** rather than
+patched onto a global clock. It is an ISO string
 with a `staticTime()` accessor rather than a shared `Date`, because a shared
 `Date` is module-level mutable state and one test mutating it would silently move
 every other test's fixtures.
 
-The relationships `data.py` set up by hand are carried over: a sample with two
+The builders are wired into one consistent set: a sample with two
 `reads_{1,2}.fq.gz` files, a subtraction whose `files` list covers the source
 genome and all six Bowtie2 shards, an unfinished subtraction with `ready: false`
 and no counts, and an analysis wired to the sample, index, reference and
@@ -289,9 +282,9 @@ naive fake collapses into one are the three a workflow step branches on:
 | `{}` | resolves `{ exitCode: 0, cancelled: false }` |
 
 Cancellation is `exitCode === null && signal === "SIGTERM"`, **not**
-`exitCode === 15`. Python treats 15 as a success on the reasoning that the run
-was already failing for another reason, and that reasoning does not survive a
-tool choosing 15 as an ordinary error code.
+`exitCode === 15`. Treating 15 as a success on the reasoning that the run was
+already failing for another reason does not survive a tool choosing 15 as an
+ordinary error code.
 
 The stderr tail matters: the real runner drains stderr *and* the process promise
 before deciding, because a subprocess can exit before its stdio is drained and
@@ -397,9 +390,9 @@ Both hash **decompressed** content: gzip is detected by the two-byte magic and
 piped through `createGunzip()` first. gzip embeds an mtime and varies by
 compressor and level, so `pigz` and `node:zlib` produce different bytes from
 identical input — hashing the compressed bytes would fail every comparison
-against a Python-produced fixture for reasons that have nothing to do with
-correctness. A file and its gzipped form therefore have the same digest, as do
-the same content gzipped at two different levels.
+against a fixture compressed by anything else, for reasons that have nothing to
+do with correctness. A file and its gzipped form therefore have the same digest,
+as does the same content gzipped at two different levels.
 
 Detection consumes `isGzipped` from `@virtool/archive/compression` rather than
 re-reading the magic number here; a second copy of that check is a second thing

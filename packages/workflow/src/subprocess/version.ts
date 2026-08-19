@@ -15,10 +15,9 @@ export function matchToolVersion(
 	lines: readonly string[],
 	message: string,
 ): string {
-	// Joined with a newline, not the empty string. Python concatenates lines that
-	// still carry their terminator, so `"".join(...)` reproduces the original
-	// text; the runtime's line handler has already stripped it, and joining with
-	// nothing would run the last word of one line into the first of the next.
+	// Joined with a newline, not the empty string. The runtime's line handler has
+	// already stripped each terminator, so joining with nothing would run the
+	// last word of one line into the first of the next.
 	const match = pattern.exec(lines.join("\n"));
 
 	const version = match?.[1];

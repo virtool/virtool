@@ -14,8 +14,8 @@ const { realCookies, SESSION_ID_COOKIE, SESSION_TOKEN_COOKIE } = await import(
 	"./cookies"
 );
 
-// Python sets this on both cookies. A mismatch would make a cookie written here
-// expire on a different schedule from one written by the Python backend.
+// The max-age set on both cookies. A mismatch would let the session id and
+// session token cookies expire on different schedules.
 const MAX_AGE_SECONDS = 2_600_000;
 
 beforeEach(() => {

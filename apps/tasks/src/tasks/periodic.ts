@@ -5,8 +5,8 @@ export type PeriodicTaskRegistration = {
 	/**
 	 * The task type name.
 	 *
-	 * Byte-identical to Python's `BaseTask.name`, because it is the
-	 * advisory-lock key both spawners hash and the `type` a runner filters on.
+	 * It is both the advisory-lock key the spawn gate hashes and the `type` a
+	 * runner filters its claim on, so it has to match the `type` column exactly.
 	 */
 	type: PeriodicTaskName;
 	/**
@@ -16,9 +16,7 @@ export type PeriodicTaskRegistration = {
 	 * {@link SPAWN_TICK_INTERVAL_MS} regardless, so a type's effective period is
 	 * `max(tick, intervalSeconds)` quantised to tick boundaries — and a floor
 	 * rather than a period, since a spawn also waits on the last run of the type
-	 * to finish. Every type Python also spawns carries Python's interval from
-	 * `virtool/startup.py`, so the cadence a deployment sees does not move when
-	 * this process replaces that one.
+	 * to finish.
 	 */
 	intervalSeconds: number;
 };
@@ -26,12 +24,12 @@ export type PeriodicTaskRegistration = {
 /**
  * How long the spawn loop waits between ticks.
  *
- * Python's `PeriodicTaskSpawner` walks every registered task and then sleeps a
- * hardcoded 30 s (`virtool/tasks/periodic.py`), whatever the individual
- * intervals are. Matching the tick matters as much as matching the intervals:
- * a per-task timer firing exactly on its interval opens its suppression window
- * at a different moment than Python's tick does, and the two spawners then
- * disagree about when a window is open.
+ * The loop walks every registered task and then sleeps a fixed 30 s, whatever
+ * the individual intervals are. One shared tick rather than a timer per type,
+ * which makes this the quantum every schedule is measured in: a type's
+ * effective period is `max(30 s, intervalSeconds)` quantised to tick
+ * boundaries, and no type is considered more often than this however short its
+ * interval.
  */
 export const SPAWN_TICK_INTERVAL_MS = 30_000;
 
@@ -56,9 +54,9 @@ export const PERIODIC_TASKS: PeriodicTaskRegistration[] = [
 	{ type: "timeout_jobs", intervalSeconds: 600 },
 	{ type: "evict_caches_lru", intervalSeconds: 3600 },
 	/*
-	 * Hourly, and the one interval here Python does not set — `SessionCleanupTask`
-	 * was written, never registered, and has since been deleted from that repo, so
-	 * expired `sessions` rows have never been deleted in production.
+	 * Hourly. Nothing swept expired `sessions` rows before this registration
+	 * existed, so there is no established cadence to hold to and the interval is
+	 * chosen on its own merits.
 	 *
 	 * Correctness never waits on this: `verify.ts` and the reset path in `core.ts`
 	 * both reject an expired row on sight, so a row lingering between sweeps is

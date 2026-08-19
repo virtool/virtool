@@ -62,8 +62,8 @@ export function createEmitter({ client, logger }: EmitterOptions): Emit {
 
 /**
  * Publish a resource-change event on the shared `client_events` channel via
- * Postgres NOTIFY. Mirrors the payload shape emitted by the Python service so
- * a single listener can fan out events from either source.
+ * Postgres NOTIFY. The `ClientEvent` payload shape is the contract a listener
+ * fans out from.
  */
 export async function emit<D extends SseDomain>(
 	domain: D,

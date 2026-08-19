@@ -62,8 +62,8 @@ describe("writePathAsTar and extractTarToDir", () => {
 		expect(await readFile(restored, "utf8")).toBe("@read\nACGT\n");
 	});
 
-	// `arcname=source.name` in Python. A restored tree has to land at the same
-	// relative path it was archived from, whatever directory it was archived in.
+	// A restored tree has to land at the same relative path it was archived
+	// from, whatever directory it was archived in.
 	it("names the top-level entry after the source's basename", async () => {
 		const source = join(workPath, "deeply", "nested", "trimmed");
 		const archive = join(workPath, "cache.tar");

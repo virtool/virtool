@@ -3,13 +3,13 @@ import type { SearchResult } from "./search";
 import type { UserNested } from "./users";
 
 /**
- * An isolate's canonical display name, as Python's `format_isolate_name`
- * composes it: the capitalised source type followed by the source name.
+ * An isolate's canonical display name: the capitalised source type followed by
+ * the source name.
  *
  * Either field being absent or empty yields the `"Unnamed Isolate"` sentinel —
  * a name is only meaningful with both halves. The source type is lower-cased
- * past its first character to match Python's `str.capitalize`, so an isolate
- * stored as `ISOLATE` renders the same on both sides.
+ * past its first character, so an isolate stored as `ISOLATE` renders as
+ * `Isolate`.
  *
  * Read structurally rather than through a declared isolate type: the callers
  * hold OTU documents at several different stages of patching, and all of them
@@ -162,8 +162,7 @@ export type OtuEmptySequence = {
 
 /**
  * Validation issues that must be resolved before an OTU can be built into an
- * index. Every field is `false` rather than absent when it does not apply,
- * matching the shape Python's `verify` returns.
+ * index. Every field is `false` rather than absent when it does not apply.
  */
 export type OtuIssueReport = {
 	/** The ids of isolates that have no sequences, or `false` when there are none */
@@ -336,10 +335,8 @@ export type IsolateUpdateRequest = z.infer<typeof IsolateUpdateRequest>;
  * The characters a stored nucleotide sequence may use: the four bases plus the
  * IUPAC ambiguity codes Virtool accepts.
  *
- * Python strips spaces and newlines after validating against this same pattern,
- * which its own regex has already rejected — the strip is unreachable and is not
- * carried over. The sequence field enforces the pattern client-side too, so
- * nothing reaching here has whitespace to lose.
+ * The sequence field enforces the pattern client-side too, so nothing reaching
+ * here has whitespace to lose.
  */
 const sequenceSchema = z
 	.string()

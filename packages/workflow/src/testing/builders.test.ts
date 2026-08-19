@@ -44,7 +44,7 @@ describe("determinism", () => {
 });
 
 describe("static time", () => {
-	it("pins the instant Python pins", () => {
+	it("pins a fixed instant", () => {
 		expect(STATIC_TIME).toBe("2015-10-06T20:00:00Z");
 	});
 

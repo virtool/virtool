@@ -379,7 +379,7 @@ export const updateSequenceFn = createServerFn({ method: "POST" })
 		try {
 			// The sequence is checked before the rights are, so a caller naming a
 			// sequence that does not exist gets a 404 whether or not they could have
-			// edited it. Python orders it this way and the client relies on the 404.
+			// edited it. The client relies on the 404.
 			if (!(await sequenceExists(db, otuId, isolateId, sequenceId))) {
 				return notFound("Sequence not found.");
 			}

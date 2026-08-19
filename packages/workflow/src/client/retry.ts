@@ -1,16 +1,15 @@
 import type { Logger } from "@virtool/logger";
 import { TransportError } from "./errors";
 
-/** Attempts after the first. Matches Python's `API_MAX_RETRIES`. */
+/** Attempts after the first. */
 export const MAX_RETRIES = 5;
 
 /**
  * Delay between attempts, in milliseconds. **Flat, not exponential.**
  *
- * Python's `retry` decorator only backs off exponentially when a caller passes
- * a non-default `base_delay`, and nothing does — so the observed behaviour is
- * six attempts spread over 25 s, which is what the jobs API's five-minute
- * ping-timeout sweep is calibrated against. Do not "improve" this.
+ * Six attempts spread over 25 s is what the jobs API's five-minute
+ * ping-timeout sweep is calibrated against. Do not "improve" this into an
+ * exponential backoff.
  */
 export const RETRY_DELAY_MS = 5_000;
 

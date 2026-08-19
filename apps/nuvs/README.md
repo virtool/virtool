@@ -8,17 +8,32 @@ viral motifs with HMMER.
 Image: `ghcr.io/virtool/ts-nuvs`. Ten steps, five external tools — `skewer`,
 `bowtie2`, SPAdes, `hmmpress` and `hmmscan`.
 
-## Five rules it carries
+## Building the image
 
-- **SPAdes 4.2.0 is compiled from source**, because no binary release fits the
-  base, and the runtime installs `python3` for it — `spades.py` is a Python
-  script driving the compiled assembler binaries.
+The root Dockerfile builds each external tool in an independent stage. SPAdes
+4.2.0 is compiled from source because it has no binary release suitable for
+the runtime base. The runtime installs Perl for the Bowtie 2 wrapper, Python
+for `bowtie2-build` and `spades.py`, and the shared libraries required by the
+copied binaries.
+
+```console
+docker build --target nuvs .
+```
+
+## Result shape
+
 - **The raw `results` shape is pinned by `formatNuvs`**
   (`packages/data/src/analyses/format.ts`), *not* by
   `packages/contracts/src/nuvs.ts`, which describes the **formatted**
   envelope. The workflow writes each ORF hit's `hit` (an annotation id) and
   never `cluster`, `families` or `names`, which the server merges in from the
   `hmms` table.
+
+## Configuration
+
+This app uses the shared `@virtool/workflow` runtime configuration. See the
+[workflow package README](../../packages/workflow/README.md#configuration) for
+the complete environment-variable table and configuration rules.
 
 ## Commands
 
@@ -31,4 +46,3 @@ Run from the monorepo root.
 | `pnpm --filter @virtool/nuvs test` | Run the Vitest suite |
 | `pnpm --filter @virtool/nuvs test:watch` | Vitest in watch mode |
 | `pnpm --filter @virtool/nuvs typecheck` | `tsc --noEmit` |
-

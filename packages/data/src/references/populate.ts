@@ -1,9 +1,8 @@
 // Bulk-populating a brand new reference with OTUs, sequences and history.
 //
-// A port of `virtool.references.alot` and `populate_insert_only_reference`, plus
-// the `populate_cloned_reference` and `populate_imported_reference` that drive
-// them for a clone and an import. It is the layer under both the
-// `clone_reference` and `import_reference` tasks.
+// One insert-only path, with an entry point for a clone and another for an
+// import. It is the layer under both the `clone_reference` and
+// `import_reference` tasks.
 //
 // Neither entry point reads a file. An import's upload is parsed and validated
 // by the task body, which hands the documents down; that keeps gzip, SQLite and
@@ -78,8 +77,9 @@ export type PopulateClonedReferenceValues = {
  */
 const OTU_CHUNK_SIZE = 1000;
 
-// The most bind parameters a statement may carry. postgres.js allows rather more
-// than this, but the figure is Python's and the two write the same rows.
+// The most bind parameters a statement may carry, which is what the Postgres
+// wire protocol's 16-bit parameter count allows. postgres.js accepts rather
+// more than this.
 const MAX_BIND_PARAMETERS = 32767;
 
 // Each row binds the columns its `*RowValues` mapper produces, so the row count a
@@ -137,11 +137,10 @@ function* chunked<T>(items: T[], size: number): Generator<T[]> {
  * `patchOtusToVersions`, which hands back documents that may share structure
  * with one another, so a mutation in place would corrupt the OTU next to it.
  *
- * `issues` is stored on the document because Python stores it, but the shape is
- * this side's camelCase `OtuIssueReport` rather than Python's snake_case one.
- * Nothing reads the stored field on either side — both recompute `verify` at
- * read time — so the divergence is inert, and reproducing a second, snake_case
- * report here would be a second declaration of a shape the contract already owns.
+ * `issues` is stored on the document in the camelCase `OtuIssueReport` shape.
+ * Nothing reads the stored field — `verify` is recomputed at read time — so the
+ * stored shape is inert, and declaring a second report shape here would
+ * duplicate one the contract already owns.
  */
 function prepareOtuInsertion(
 	createdAt: Date,
@@ -178,8 +177,8 @@ function prepareOtuInsertion(
 				_id: randomId(NESTED_ID_LENGTH),
 				isolate_id: isolateId,
 				otu_id: otuId,
-				// Python's `.get("segment", "")`: an absent segment becomes the empty
-				// string, where an explicit null stays null.
+				// An absent segment becomes the empty string, where an explicit null
+				// stays null.
 				segment: "segment" in sequence ? sequence.segment : "",
 				reference: { id: referenceId },
 				remote: {
@@ -226,8 +225,8 @@ function prepareOtuInsertion(
 				otu.abbreviation,
 			),
 			// Composed against the OTU as it will be stored, isolates already emptied
-			// of their sequences. Python does the same, and a diff taken from the
-			// joined document instead would describe a document no row holds.
+			// of their sequences; a diff taken from the joined document instead
+			// would describe a document no row holds.
 			diff: composeDiff({
 				description: "",
 				methodName: historyMethod,
@@ -281,9 +280,9 @@ async function insertPreparedOtus(
 	);
 
 	// One instant for the whole chunk, and a different one from the OTUs' own
-	// `created_at` — which is the reference's. Python stamps each row as it
-	// prepares it; a chunk is prepared in a single synchronous stretch, so the
-	// two differ by nothing a reader could see.
+	// `created_at` — which is the reference's. A chunk is prepared in a single
+	// synchronous stretch, so stamping each row as it is prepared would differ by
+	// nothing a reader could see.
 	const now = new Date();
 
 	const historyRows = insertions.map(({ history }) => ({
@@ -326,7 +325,7 @@ async function insertPreparedOtus(
 			const historyId = historyIds.get(history.changeId);
 
 			/* Not a manifest failure: the ids are minted in this function and the
-			   insert above is what wrote them, so a miss here is this side's own
+			   insert above is what wrote them, so a miss here is this function's own
 			   invariant breaking rather than anything the manifest said. */
 			if (historyId === undefined) {
 				throw new Error(
@@ -351,7 +350,7 @@ async function insertPreparedOtus(
  * Delete every OTU, sequence, history row and diff the reference carries.
  *
  * Sequences are deleted explicitly rather than left to the cascade from their
- * OTUs. The cascade is real upstream, but it is a database constraint the
+ * OTUs. The cascade is real in the database, but it is a constraint the
  * Drizzle mirror does not declare, so relying on it would make this correct in
  * production and silently wrong anywhere the schema is materialised from the
  * mirror.
@@ -397,9 +396,8 @@ async function clearReferenceContents(
  * Everything the populate committed goes in one transaction, so the cleanup is
  * atomic and every delete is scoped to the reference's own primary key. The
  * reference row goes last, and it does go: a clone that failed has nothing a
- * user could retry, so Python removes it from the list rather than leaving a
- * half-populated one behind, and the two runners must not disagree about that
- * while both are live.
+ * user could retry, so it is removed from the list rather than left in it as a
+ * half-populated placeholder.
  */
 async function rollbackPopulatedReference(
 	db: Db,
@@ -444,7 +442,7 @@ async function readReferenceCreatedAt(
  *
  * Every OTU in the manifest is reconstructed at the version the manifest pins
  * it to, given fresh ids, and written with the history row that records its
- * creation. The reference's own `created_at` stamps every OTU, matching Python.
+ * creation. The reference's own `created_at` stamps every OTU.
  *
  * Work runs a chunk at a time — patch, prepare, commit — so peak memory is
  * bounded by the chunk rather than by the size of the reference, and the event
@@ -478,10 +476,8 @@ export async function populateClonedReference(
 
 	const count = specifiers.length;
 
-	/* Python gives the insert a thirtieth of the bar for every ten OTUs patched,
-	   so patching runs to 1/1.3 of it and inserting covers the rest. The split is
-	   reproduced rather than rounded off because the two runners' progress is
-	   compared during the cutover. */
+	/* The insert is given a thirtieth of the bar for every ten OTUs patched, so
+	   patching runs to 1/1.3 of it and inserting covers the rest. */
 	const headroom = Math.floor(count * 0.3);
 	const total = count + headroom;
 
@@ -595,7 +591,7 @@ export type PopulateImportedReferenceValues = {
  * The file is parsed and validated before it reaches here — this layer takes
  * documents, never bytes, so neither gzip nor SQLite appears in it. Every OTU
  * is given fresh ids and written with the history row recording its creation,
- * stamped with the reference's own `created_at` as Python does.
+ * stamped with the reference's own `created_at`.
  *
  * It is idempotent, as a reclaimed task requires. A re-run clears whatever a
  * previous attempt committed before writing anything, because the ids are
@@ -619,10 +615,9 @@ export async function populateImportedReference(
 	await db.transaction(async (tx) => {
 		await clearReferenceContents(tx, referenceId);
 
-		/* Python updates `organism` in its own transaction before inserting
-		   anything. Folded into the clearing transaction here so a re-entry
-		   cannot leave the column updated against contents it then fails to
-		   write. */
+		/* `organism` is updated before anything is inserted, folded into the
+		   clearing transaction so a re-entry cannot leave the column updated
+		   against contents it then fails to write. */
 		await tx
 			.update(legacyReferences)
 			.set({ organism: data.organism })

@@ -37,9 +37,9 @@ async function* streamBytes(
  * This is a raw route handler rather than a server function on purpose. The
  * client posts the file with `XMLHttpRequest` so it can report upload progress
  * — `fetch`, and so the generated server-function client, cannot — and read
- * files can run to many gigabytes. The body is read as a stream and handed straight
- * to storage, so a multi-GB file never sits in the Node heap; `name` and `type`
- * travel in the query string, as they do to Python.
+ * files can run to many gigabytes. The body is read as a stream and handed
+ * straight to storage, so a multi-GB file never sits in the Node heap; `name`
+ * and `type` travel in the query string.
  *
  * Being a route means no policy middleware runs, so the authorization floor is
  * enforced here: a valid session, then the `upload_file` permission.

@@ -43,9 +43,8 @@ const payload = z.object({});
 export const sweepBlastTask = defineTask<typeof payload, TaskContext>({
 	type: "sweep_blast",
 	payload,
-	// Python names its step after the bound method it runs, `BaseTask.run`
-	// writing `func.__name__` into the column. Both runners write `sweep` for the
-	// same work until the cutover completes.
+	// The name is written to the row's `step` column, which is what the UI shows
+	// and what rows already written carry, so it is fixed.
 	steps: ["sweep"],
 	async run({ ctx, helpers, logger, signal }) {
 		await helpers.runStep("sweep", async () => {

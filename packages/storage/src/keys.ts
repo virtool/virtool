@@ -1,8 +1,5 @@
 /**
- * Minting of object-storage keys, which must stay byte-for-byte compatible with
- * the ones Python mints. Both processes read and write the same bucket, so a
- * divergence here does not fail loudly — it silently reads nothing and orphans
- * what it writes.
+ * Minting of object-storage keys.
  *
  * Keys are not derived from database identity. Every row that names a stored
  * object records its complete key verbatim, so no read path recomposes one and
@@ -13,7 +10,6 @@
 
 import { randomUUID } from "node:crypto";
 
-// Python mints the leaf with `uuid4().hex`, which carries no hyphens.
 function uuidHex(): string {
 	return randomUUID().replaceAll("-", "");
 }

@@ -1,12 +1,12 @@
 /**
  * The scratch every step of a run shares, and the shape of the blob it becomes.
  *
- * Replaces Python's `results` dict. What is declared here is the **raw** results
- * shape — the workflow's own contract, stored verbatim in `analyses.results` —
- * not the envelope `@virtool/contracts`' `NuvsResults` describes. That one is
- * what `formatNuvs` (`packages/data/src/analyses/format.ts`) *produces*, after
- * merging each hit's `cluster`, `families` and `names` in from the `hmms` table
- * and deriving `annotatedOrfCount`, `e`, `id` and `blast`.
+ * What is declared here is the **raw** results shape — the workflow's own
+ * contract, stored verbatim in `analyses.results` — not the envelope
+ * `@virtool/contracts`' `NuvsResults` describes. That one is what `formatNuvs`
+ * (`packages/data/src/analyses/format.ts`) *produces*, after merging each hit's
+ * `cluster`, `families` and `names` in from the `hmms` table and deriving
+ * `annotatedOrfCount`, `e`, `id` and `blast`.
  *
  * **So this side must not write those fields.** A `families` written here is a
  * second opinion about an annotation the database owns, free to go stale the

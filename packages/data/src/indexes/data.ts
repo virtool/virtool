@@ -1,10 +1,9 @@
 // Reading and building reference indexes.
 //
-// A port of `virtool.indexes.db`, `virtool.indexes.data`, and the index half of
-// `virtool.references.data`, both halves of a build included: `createIndex`
-// inserts the pending row and creates the task, and `generateTaskIndex` is what
-// that task runs — patching every OTU in the manifest, writing the artifact to
-// object storage, and flipping `ready`.
+// Both halves of a build live here: `createIndex` inserts the pending row and
+// creates the task, and `generateTaskIndex` is what that task runs — patching
+// every OTU in the manifest, writing the artifact to object storage, and
+// flipping `ready`.
 
 import { randomUUID } from "node:crypto";
 import { setImmediate } from "node:timers/promises";
@@ -107,8 +106,8 @@ export type FindIndexesOptions = {
 };
 
 // The reference and user each resolve in the same query the indexes are read
-// with. Python attaches both with a transform, a second and third round trip to
-// nest two columns behind foreign keys this query is already positioned to join.
+// with, rather than in a second and third round trip to nest two columns behind
+// foreign keys this query is already positioned to join.
 function selectIndexes(db: DbOrTx) {
 	return db
 		.select({
@@ -159,7 +158,7 @@ function mapMinimal(row: IndexJoinRow, counts: IndexCounts): IndexMinimal {
 
 // How many changes each build included, and how many distinct OTUs they touched.
 // A build with no history rows is absent from the result and falls back to zero,
-// matching Python's inner join.
+// which is what the inner join yields.
 async function getIndexCounts(
 	db: DbOrTx,
 	indexIds: number[],
@@ -201,7 +200,7 @@ type UnbuiltStats = {
 
 // The counts a list view needs to decide whether a rebuild is worth offering.
 // Scoped to a reference when one is given, global otherwise; the archived filter
-// deliberately does not apply, matching Python.
+// deliberately does not apply.
 async function getUnbuiltStats(
 	db: DbOrTx,
 	referenceId?: number,
@@ -239,9 +238,9 @@ async function getUnbuiltStats(
 	};
 }
 
-// Restrict to indexes whose reference matches an archived state. Python
-// expresses this as a subquery rather than a join so the archived filter cannot
-// change the row count.
+// Restrict to indexes whose reference matches an archived state. Expressed as a
+// subquery rather than a join so the archived filter cannot change the row
+// count.
 function archivedFilter(db: DbOrTx, archived: boolean) {
 	return inArray(
 		indexes.reference_id,
@@ -361,8 +360,8 @@ async function getContributors(
 //
 // The name comes from the change with the highest `otu_version`, taking nulls
 // last — a `NULL` version is the "removed" sentinel, and the name it carries is
-// the one the OTU had before it was deleted. Python reaches the same row with
-// `DISTINCT ON` plus a window count; one aggregate does both here.
+// the one the OTU had before it was deleted. `DISTINCT ON` plus a window count
+// would reach the same row; one aggregate does both here.
 async function getIndexOtus(db: DbOrTx, indexId: number): Promise<IndexOtu[]> {
 	const rows = await db
 		.select({
@@ -430,8 +429,8 @@ export async function getIndex(db: Db, indexId: number): Promise<Index> {
 }
 
 // The files a finished build produces, and so the only names the download route
-// will serve. Mirrors Python's `INDEX_FILE_NAMES`; a build's other artifacts
-// stay unreachable even once a row exists for them.
+// will serve. A build's other artifacts stay unreachable even once a row exists
+// for them.
 const INDEX_FILE_NAMES = new Set([
 	"reference.fa.gz",
 	"reference.json.gz",
@@ -523,24 +522,23 @@ async function getNextVersion(
 /**
  * Start an index build for a reference and return the index it inserted.
  *
- * The build itself is the Python `create_index` task's work; this mints the row
+ * The build itself is the `create_index` task's work; this mints the row
  * it claims, stamps every unbuilt change with the build that will include it,
  * and pins the manifest to the OTU versions live once those changes are claimed.
  *
  * Concurrency is what most of this guards. Two builds of one reference would
  * each stamp the other's changes and collide on the `(reference_id, version)`
  * unique constraint, so the write runs under a transaction-scoped advisory lock
- * keyed on the reference — the same key Python takes, so a build started from
- * either service excludes one started from the other. The in-progress check runs
- * both before the lock (a cheap rejection) and again under it (the one that is
- * actually race-free).
+ * keyed on the reference, so one build of a reference excludes every other. The
+ * in-progress check runs both before the lock (a cheap rejection) and again
+ * under it (the one that is actually race-free).
  *
  * That lock excludes other builds, not OTU editors, so the manifest is read
  * *after* the history rows are claimed rather than before. An edit landing
  * between the two is then either unclaimed and absent from the manifest (built
  * next time), or claimed and present. Reading the manifest first admits the one
  * ordering that loses a change outright: claimed by this build, but at a version
- * the manifest — and so the artifact Python writes — does not carry.
+ * the manifest — and so the artifact — does not carry.
  */
 export async function createIndex(
 	db: Db,
@@ -620,9 +618,9 @@ export async function createIndex(
 					// Filled in below, once this build owns its changes.
 					manifest: {},
 					ready: false,
-					// Dead, but still `NOT NULL` until Python's cleanup revision drops
-					// it. Each of the build's files records its own complete key; this
-					// is no longer a prefix anything is composed from.
+					// Dead, but still `NOT NULL` until a migration drops it. Each of the
+					// build's files records its own complete key; this is no longer a
+					// prefix anything is composed from.
 					storage_key: randomUUID().replaceAll("-", ""),
 					reference_id: referenceId,
 					user_id: userId,
@@ -671,9 +669,9 @@ export async function createIndex(
 	return getIndex(db, indexId);
 }
 
-// Python's `OTU_ID_CHUNK_SIZE`. It bounds both halves of a build: how many OTU
-// documents are held at once while the artifact streams, and how many ids go
-// into one `last_indexed_version` statement.
+// Bounds both halves of a build: how many OTU documents are held at once while
+// the artifact streams, and how many ids go into one `last_indexed_version`
+// statement.
 const OTU_ID_CHUNK_SIZE = 500;
 
 /** The gzipped JSON a finished build publishes, beside its snapshot. */
@@ -686,9 +684,10 @@ const REFERENCE_JSON_V2_FILE_NAME = "reference-v2.json.gz";
 // without time zone` with `new Date(x)`, and the wire text carries no offset, so
 // V8's fallback reads it as *local* time and a process outside UTC shifts every
 // timestamp in the artifact by its offset. And `toISOString` always writes
-// exactly three fractional digits, where orjson writes six or, when there are no
-// microseconds at all, none — and a `Date` has already truncated the other three
-// by then. Rendering in SQL sidesteps both, and matches Python byte for byte.
+// exactly three fractional digits, where the artifact format carries six or,
+// when there are no microseconds at all, none — and a `Date` has already
+// truncated the other three by then. Rendering in SQL sidesteps both and is
+// byte-exact.
 async function readArtifactReference(db: DbOrTx, referenceId: number) {
 	const [row] = await db
 		.select({
@@ -711,12 +710,12 @@ async function readArtifactReference(db: DbOrTx, referenceId: number) {
 	return row;
 }
 
-// The manifest as ordered pairs, in the order Python iterates it.
+// The manifest as ordered pairs, in the order it is iterated.
 //
 // The order is the artifact's OTU order, and so the order of every downstream
 // artifact built from it — including which isolate `cd-hit-est` keeps as a
-// cluster representative. Python gets it from `json.loads`, which preserves the
-// JSONB text order. Reading the column into a JavaScript object would not:
+// cluster representative. The order is the JSONB text order, which this query
+// preserves. Reading the column into a JavaScript object would not:
 // `JSON.parse` hoists array-index-like keys to the front and sorts them
 // numerically, and an eight-character OTU id drawn from digits and lowercase
 // letters is all digits often enough that a real reference has one.
@@ -742,8 +741,8 @@ async function readManifestOrder(
 //
 // `jsonb_set` on the one key is also the only correct write: `data` is verbatim
 // Mongo, and reading the document out, mutating it and writing it back would
-// round-trip the whole shape through this side's JSON handling. The diffs
-// already recorded against it address it as Python wrote it.
+// round-trip the whole shape through JavaScript's JSON handling. The diffs
+// already recorded against it address the document as written.
 async function stampLastIndexedVersions(
 	tx: DbOrTx,
 	referenceId: number,
@@ -836,8 +835,8 @@ export async function generateTaskIndex(
 
 	// The `ck_indexes_job_or_task` CHECK constraint already makes "both set"
 	// impossible, so only "neither" is reachable — a legacy build whose job was
-	// deleted before the jobs migration. Python's message covers both and the
-	// constraint is not this repo's to rely on, so both are kept.
+	// deleted before the jobs migration. The message covers both cases, so the
+	// check stands on its own rather than leaning on the constraint.
 	if ((row.jobId === null) === (row.taskId === null)) {
 		throw new IndexBuildTypeError(
 			"Index must be backed by exactly one job or task build",

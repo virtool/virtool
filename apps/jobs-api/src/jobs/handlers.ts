@@ -42,8 +42,8 @@ export type JobHandlerDeps = {
  *
  * A timestamp crosses as a `Date` and is encoded by `Response.json`, so nothing
  * here calls `toISOString`. A column that already holds a `timestamp` is passed
- * straight through; the one that holds an ISO string — `steps[].started_at`,
- * which Python writes — is converted by `fromStoredJobStep`.
+ * straight through; the one that holds an ISO string — `steps[].started_at` —
+ * is converted by `fromStoredJobStep`.
  *
  * `jobs.workflow` is a `text` column carrying no CHECK constraint, so the data
  * layer types it as a plain string while the wire types it as a union. The
@@ -125,11 +125,10 @@ function toJobStepStarted(step: StartedJobStep): JobStepStarted {
  * Resolve the job a request is authenticated as, and require it to be the job
  * the path names.
  *
- * Python enforces this in its auth middleware, comparing the credential's job
- * id against a `job_id` match-info parameter for every route that has one. It
- * belongs here instead: it is a rule about a route's path, not a property of the
- * credential, which is why `JobPrincipal` carries the id rather than the guard
- * carrying the comparison.
+ * The comparison lives here rather than in the auth guard, because it is a rule
+ * about a route's path and not a property of the credential. That is why
+ * `JobPrincipal` carries the id and the guard carries no comparison of its own:
+ * every route naming a job id has to make this check for itself.
  *
  * A mismatch is **403, not 404**. The caller authenticated successfully and is
  * asking about a job that is simply not its own; hiding the job's existence
@@ -175,8 +174,8 @@ export async function handleClaimJob(
 	deps: JobHandlerDeps,
 	request: Request,
 ): Promise<Response> {
-	// A query parameter rather than a body field, matching Python's
-	// `ClaimJobView`.
+	// The workflow being claimed is a query parameter rather than a body field;
+	// the body carries the claim itself.
 	const requested = new URL(request.url).searchParams.get("workflow");
 
 	const workflow = ClaimableJobWorkflow.safeParse(requested);
@@ -218,7 +217,7 @@ export async function handleClaimJob(
  * Read the job a runner is working on.
  *
  * This is where a run gets its `args`: the claim response deliberately carries
- * none, matching Python, so a runner reads them back once after claiming.
+ * none, so a runner reads them back once after claiming.
  */
 export async function handleReadJob(
 	deps: JobHandlerDeps,

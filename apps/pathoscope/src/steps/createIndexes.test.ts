@@ -338,9 +338,9 @@ describe("createReferenceIndexStep", () => {
 		).resolves.toBe("cached shard");
 	});
 
-	// The namespace is shared with Python, so a blob can have been archived from a
-	// directory named something else and unpacks beside the index rather than onto
-	// it. Reported here rather than left for bowtie2 to hit as a missing index.
+	// The namespace is shared, so a blob can have been archived from a directory
+	// named something else and unpacks beside the index rather than onto it.
+	// Reported here rather than left for bowtie2 to hit as a missing index.
 	it("fails when a cached blob restores outside the index directory", async () => {
 		const { builtFastas, paths, run, seedCachedIndex, state, workPath } =
 			await setup();

@@ -33,8 +33,8 @@ export const uploads = pgTable(
 		reserved: boolean("reserved")
 			.$defaultFn(() => false)
 			.notNull(),
-		// Read sizes routinely exceed 2 GiB, past the range of a 32-bit integer, so
-		// this mirrors Python's BigInteger. `mode: "number"` is safe up to 2^53.
+		// Read sizes routinely exceed 2 GiB, past the range of a 32-bit integer,
+		// hence `bigint`. `mode: "number"` is safe up to 2^53.
 		size: bigint("size", { mode: "number" }),
 		// The upload's complete object-storage key. Nullable because it was
 		// backfilled from `name_on_disk`, which is itself nullable: a row without one

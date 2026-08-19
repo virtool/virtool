@@ -26,9 +26,8 @@ export type Settings = {
 /**
  * The values written when the settings row is missing.
  *
- * Mirrors the defaults on Python's `Settings` model, which are the same values
- * its `d16de6e24788` migration seeds the row with. The columns themselves have
- * no server default, so every one must be supplied on insert.
+ * The columns carry no server defaults, so every one has to be supplied on
+ * insert and the defaults live here in code rather than in the schema.
  */
 export const DEFAULT_SETTINGS: Settings = {
 	defaultSourceTypes: ["isolate", "strain"],
@@ -64,11 +63,10 @@ function selectSettings(db: Db): Promise<SettingsRow[]> {
 /**
  * Get the instance settings, seeding the defaults when the row is absent.
  *
- * Python guarantees the row in practice — its migration inserts it and
- * `SettingsData.ensure()` re-seeds it at startup — but a database that has yet
- * to see a Python boot has none. Writing the defaults here mirrors `ensure()`
- * and keeps the read total, rather than failing a caller that only wanted the
- * minimum password length.
+ * The row is there in practice, the migration inserting it, but a database
+ * that has never had one must still answer. Seeding on read makes this an
+ * ensure — the row exists by the time it returns — and keeps the read total,
+ * rather than failing a caller that only wanted the minimum password length.
  */
 export async function getSettings(db: Db): Promise<Settings> {
 	const existing = takeFirst(await selectSettings(db));
@@ -96,9 +94,9 @@ export async function getSettings(db: Db): Promise<Settings> {
 /**
  * Update the instance settings, returning the full row after the change.
  *
- * Seeds the defaults first when the row is absent, mirroring `getSettings`, so a
- * patch against a database that has never seen a Python boot still writes onto a
- * complete row rather than failing.
+ * Seeds the defaults first when the row is absent, mirroring `getSettings`, so
+ * a patch against a database with no settings row still writes onto a complete
+ * row rather than failing.
  */
 export async function updateSettings(
 	db: Db,

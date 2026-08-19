@@ -8,8 +8,6 @@ import { eq } from "drizzle-orm";
  * The states a job never leaves, and what a runner holding a key for one is
  * told.
  *
- * Mirrors Python's `TERMINAL_JOB_STATES` in `virtool/jobs/models.py`.
- *
  * Reaching one of these is the **only** thing that stops a job key
  * authenticating. There is no expiry, no revocation list, no rotation, and no
  * way to invalidate a key while its job is still running — the column holds one
@@ -64,12 +62,12 @@ const MAX_JOB_ID = 2_147_483_647;
 /**
  * SHA-256 hex digest.
  *
- * A local copy of `hashToken` in `@virtool/data/auth/tokens`, which is itself a
- * copy of Python's `hash_key` at `virtool/utils.py:98-99`. All three have to
- * produce the same digest for the same input forever — `jobs.key` is written by
- * Python and read here — so this one is pinned against fixed vectors in
- * `verify.test.ts` rather than against either counterpart. A test that compared
- * the two implementations would pass just as happily if both drifted together.
+ * A local copy of `hashToken` in `@virtool/data/auth/tokens`. Both have to
+ * produce the same digest for the same input forever — `jobs.key` holds digests
+ * of keys handed out for jobs that are still running — so this one is pinned
+ * against fixed vectors in `verify.test.ts` rather than against its
+ * counterpart. A test that compared the two implementations would pass just as
+ * happily if both drifted together.
  */
 export function hashToken(token: string): string {
 	return createHash("sha256").update(token).digest("hex");
@@ -163,11 +161,11 @@ const REJECTED: JobVerification = { ok: false, terminalMessage: null };
  * from a ping-timeout sweep from its own broken credential, which is otherwise
  * three indistinguishable 401s on the one channel it has.
  *
- * Mirrors Python's `virtool/jobs/auth.py` middleware, with two deliberate
- * differences. The login is matched against an anchored pattern rather than
- * `split("-")`, so `job-1-2` is refused rather than raising past the prefix
- * check by accident; and the key comparison is timing-safe, where Python's is a
- * plain `!=`.
+ * Two details of the check are deliberate. The login is matched against an
+ * anchored pattern rather than split on `-`, so `job-1-2` is refused rather
+ * than sliding past the prefix check by accident; and the key comparison is
+ * timing-safe rather than a plain `!=`, which would let a caller learn how far
+ * a guessed key matched from how long the refusal took.
  */
 export async function verifyJobRequest(
 	db: Db,

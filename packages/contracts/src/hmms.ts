@@ -38,14 +38,13 @@ export type HmmAnnotation = z.infer<typeof HmmAnnotation>;
 /**
  * One annotation as the stored `hmm/annotations.json.gz` blob carries it.
  *
- * This shape has two independent implementations that cannot see each other —
- * `writeHmmAnnotations` in `@virtool/data` writes it, NuVs reads it out of the
- * bucket, and Python's `annotation_from_row` writes it too — so it lives here
- * rather than beside either of them.
+ * This shape has two independent implementations that cannot see each other:
+ * `writeHmmAnnotations` in `@virtool/data` writes it and NuVs reads it out of
+ * the bucket. It lives here rather than beside either of them.
  *
  * Field names are the database's snake_case, because the blob is a dump of
  * `hmms` rows rather than anything this codebase serves to a browser. `hidden`
- * is nullable: the column has no `NOT NULL`, and Python writes whatever it read.
+ * is nullable because the column has no `NOT NULL`.
  */
 export const HmmAnnotationRecord = HmmAnnotation.extend({
 	hidden: z.boolean().nullable(),

@@ -475,9 +475,9 @@ describe("handleGetAnalysis", () => {
 		});
 	});
 
-	// Python's runtime falls back to reading `sample.id` when a job's args carry
-	// no `sample_id`, so flattening this to a bare id breaks every analysis whose
-	// job was created without one.
+	// The workflow runtime falls back to reading `sample.id` when a job's args
+	// carry no `sample_id`, so flattening this to a bare id breaks every
+	// analysis whose job was created without one.
 	it("carries the sample as an object, not a bare id", async () => {
 		const analysisId = await seedAnalysis();
 

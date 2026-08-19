@@ -7,18 +7,17 @@ import type { TaskContext } from "./registry";
  * `refresh_hmms` is spawned on a schedule and carries nothing.
  *
  * `z.object` strips unknown keys rather than rejecting them, which is what is
- * wanted here: a row Python wrote carrying a key this side does not read still
- * runs. `z.strictObject` would fail the task on that key, and the body reads no
- * key at all.
+ * wanted here: a row already written carrying a key this body does not read
+ * still runs. `z.strictObject` would fail the task on that key, and the body
+ * reads no key at all.
  */
 const payload = z.object({});
 
 /**
  * Refresh the stored HMM release from the www.virtool.ca manifest.
  *
- * The port of Python's `HMMRefreshTask`, and the first task body written
- * against this framework. One step, one call, no branching — every decision it
- * makes visible is a framework decision rather than a domain one.
+ * One step, one call, no branching — every decision it makes visible is a
+ * framework decision rather than a domain one.
  *
  * It is idempotent by construction, which is what a reclaim requires: the step
  * reads the manifest and overwrites the status singleton, so running it twice
@@ -37,9 +36,8 @@ const payload = z.object({});
 export const refreshHmmsTask = defineTask<typeof payload, TaskContext>({
 	type: "refresh_hmms",
 	payload,
-	// Python names its step after the bound method it runs, `BaseTask.run`
-	// writing `func.__name__` into the column. Both runners write `refresh` for
-	// the same work until the cutover completes.
+	// The name is written to the row's `step` column, which is what the UI shows
+	// and what rows already written carry, so it is fixed.
 	steps: ["refresh"],
 	async run({ ctx, helpers, signal }) {
 		await helpers.runStep("refresh", async () => {

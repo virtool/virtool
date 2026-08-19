@@ -18,8 +18,8 @@ const AZURE_CONTAINER = "virtool-test";
 const AZURE_KEY =
 	"Eby8vdM02xNOcqFlqUwJPLlmEtlCDXJ1OUzFT50uSRZ6IFsuFq2UVErCz4I6tq/K1SZFPTOtr/KBHBeksoGMGw==";
 
-// Mirrors tests/garage.toml in the Python repo, with the RPC address pointed at
-// loopback because a testcontainer has no stable hostname to advertise.
+// The RPC address is pointed at loopback because a testcontainer has no stable
+// hostname to advertise.
 const GARAGE_CONFIG = `
 metadata_dir = "/var/lib/garage/meta"
 data_dir = "/var/lib/garage/data"

@@ -152,8 +152,8 @@ describe("parseConfig", () => {
 		const config = parseConfig(baseEnv());
 
 		expect(config.host).toBe("0.0.0.0");
-		// Python's jobs API serves on 9950, so the two can be swapped behind the
-		// same ClusterIP.
+		// 9950 is the port `api-jobs-service` publishes, so the ClusterIP and
+		// everything that resolves the service expect it there.
 		expect(config.port).toBe(9950);
 		expect(config.postgresPoolMax).toBe(10);
 		expect(config.shutdownTimeout).toBe(30);

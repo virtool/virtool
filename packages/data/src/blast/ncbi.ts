@@ -1,5 +1,5 @@
 /**
- * The NCBI BLAST URL API client, ported from Python's `virtool/blast/utils.py`.
+ * The NCBI BLAST URL API client.
  *
  * NCBI's BLAST service is asynchronous over three unrelated request shapes on
  * one CGI endpoint: a submission that answers with an HTML page, a status poll
@@ -9,10 +9,6 @@
  * that returned 200. That is why every function here parses rather than
  * deserialises, and why the sweep that drives them backs a row off rather than
  * trusting any one exchange.
- *
- * Python's `initialize_ncbi_blast` is deliberately not ported: it is a byte-for
- * byte duplicate of `fetch_ncbi_blast_html` followed by `extract_blast_info`,
- * and nothing called it.
  */
 
 import { readZipMember } from "@virtool/archive/zip";
@@ -26,10 +22,10 @@ const BLAST_URL = "https://blast.ncbi.nlm.nih.gov/Blast.cgi";
 /**
  * How long any one NCBI request may take.
  *
- * NCBI is a third party on the far side of the internet, and Python passes no
- * deadline at all — a hung connection there holds a task's lease until it
- * expires, and the reclaim then opens a second hung connection behind the
- * first. Ten seconds matches `genbank/data.ts`.
+ * NCBI is a third party on the far side of the internet. Without a deadline a
+ * hung connection holds a task's lease until it expires, and the reclaim then
+ * opens a second hung connection behind the first. Ten seconds matches
+ * `genbank/data.ts`.
  */
 const REQUEST_TIMEOUT_MS = 10_000;
 
@@ -42,7 +38,7 @@ const REQUEST_TIMEOUT_MS = 10_000;
 const MAX_LOGGED_BODY = 500;
 
 /**
- * The submission parameters, which are Python's exactly.
+ * The submission parameters.
  *
  * `HITLIST_SIZE` bounds what the result zip carries and so what lands in the
  * `result` column; `FORMAT_TYPE=JSON2` is what makes the result a zip of JSON
@@ -165,8 +161,8 @@ export function extractBlastRid(html: string): string {
  * Submit a nucleotide sequence to NCBI and return the RID it answers with.
  *
  * The parameters go in the query string and the sequence in a form-encoded
- * body, which is Python's shape and NCBI's documented one — the sequence is
- * unbounded and a query string is not.
+ * body, which is NCBI's documented shape — the sequence is unbounded and a
+ * query string is not.
  */
 export async function submitBlast(
 	sequence: string,
@@ -200,12 +196,12 @@ export async function submitBlast(
  * values that matter are `WAITING`, `READY` and `FAILED`, with `UNKNOWN` sent
  * for an RID that has expired off NCBI's side.
  *
- * **Reporting `FAILED` and `UNKNOWN` as their own outcome is a deliberate
- * divergence from Python**, which tests only for the absence of
- * `Status=WAITING` and so treats both as ready. It then fetches a result that
- * does not exist, and the user is shown "No BLAST hits found" for a search
- * that never ran — indistinguishable from a real, empty answer, and with no
- * retry offered. Naming the failure puts the retry button back.
+ * **`FAILED` and `UNKNOWN` are reported as their own outcome rather than
+ * folded into ready.** Testing only for the absence of `Status=WAITING` would
+ * treat both as ready and then fetch a result that does not exist, showing the
+ * user "No BLAST hits found" for a search that never ran — indistinguishable
+ * from a real, empty answer, and with no retry offered. Naming the failure
+ * puts the retry button back.
  */
 export async function checkBlastStatus(
 	rid: string,
@@ -244,11 +240,12 @@ export async function checkBlastStatus(
  * every search here is submitted with a single sequence, so the member wanted
  * is always `{rid}_1.json`.
  *
- * **The HTTP status is checked, which Python does not do.** Python reads the
- * body whatever the status and hands it to a zip reader, so an NCBI refusal
- * becomes a `BadZipFile` and is recorded as "Unable to interpret NCBI result" —
- * a permanent error on the row for what was a transient outage. Checking first
- * keeps a refusal a refusal, which the sweep backs off rather than records.
+ * **The HTTP status is checked before the body is unpacked.** Reading the body
+ * whatever the status and handing it to a zip reader would turn an NCBI
+ * refusal into a zip parse failure recorded as "Unable to interpret NCBI
+ * result" — a permanent error on the row for what was a transient outage.
+ * Checking first keeps a refusal a refusal, which the sweep backs off rather
+ * than records.
  */
 export async function fetchBlastResult(
 	rid: string,
@@ -314,10 +311,10 @@ function readArray(value: JsonValue | undefined, path: string): JsonValue[] {
 }
 
 /**
- * A key Python reads by subscript rather than `.get`, so a result that has lost
- * it is a shape change rather than a hit with a blank field. Failing here backs
- * the row off and leaves it for the next pass; defaulting it would store a
- * result the SPA renders as a real, empty answer.
+ * Read a key that must be present, so a result that has lost it is a shape
+ * change rather than a hit with a blank field. Failing here backs the row off
+ * and leaves it for the next pass; defaulting it would store a result the SPA
+ * renders as a real, empty answer.
  */
 function readRequired(
 	object: JsonObject,
@@ -333,7 +330,7 @@ function readRequired(
 	return value;
 }
 
-/** A key Python reads with `.get(key, "")`, so an absent one is blank. */
+/** Read a key that may be absent, in which case it is blank. */
 function readOptional(object: JsonObject, key: string): JsonValue {
 	return object[key] ?? "";
 }
@@ -341,9 +338,9 @@ function readOptional(object: JsonObject, key: string): JsonValue {
 /**
  * Reduce one of NCBI's hits to the eleven fields Virtool renders.
  *
- * The three description fields fall back to `""` and `sciname` to `"No name"`,
- * matching Python's `.get`; the six HSP fields and `len` are read straight, so
- * a hit missing one is a result shape that has changed and is worth failing on.
+ * The three description fields fall back to `""` and `sciname` to `"No name"`;
+ * the six HSP fields and `len` are read straight, so a hit missing one is a
+ * result shape that has changed and is worth failing on.
  *
  * Only the *first* description and the *first* HSP are read. A BLAST hit can
  * carry many of each — one description per accession sharing the sequence, one
@@ -378,17 +375,16 @@ function formatBlastHit(hit: JsonObject, path: string): JsonObject {
  *
  * This shape is a contract with the SPA, which narrows the `result` column to
  * it in `apps/web/src/analyses/types.ts` and reads `hits[]` straight out. It is
- * also a contract with every row Python already wrote, since both writers fill
- * the same column until the cutover completes — so neither the envelope keys
- * nor the per-hit keys may be added to or renamed here alone.
+ * also a contract with every row already written to that column, so neither
+ * the envelope keys nor the per-hit keys may be added to or renamed here
+ * alone.
  *
- * `masking` is the one key that may be absent, because Python reads it with
- * `.get`; everything else is a subscript there and a throw here.
+ * `masking` is the one key that may be absent; every other key is required and
+ * throws when missing.
  *
- * The two single-key assertions are Python's, and they are what rejects a
- * multi-query result: `HITLIST_SIZE` bounds the hits per query but nothing
- * bounds the queries, and a zip member carrying two would otherwise have its
- * second silently dropped.
+ * The two single-key assertions are what rejects a multi-query result:
+ * `HITLIST_SIZE` bounds the hits per query but nothing bounds the queries, and
+ * a zip member carrying two would otherwise have its second silently dropped.
  */
 export function formatBlastContent(raw: JsonObject): JsonObject {
 	if (Object.keys(raw).length !== 1) {

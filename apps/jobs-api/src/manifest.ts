@@ -21,8 +21,8 @@ export type ManifestEntry = {
  *
  * The prefix is `{domain}/{parentId}/` for the resource in the route's own path,
  * which is what `mintStorageKey` produces, so a key naming another resource —
- * another sample's reads, a cache blob Python's eviction walks — is refused
- * before the row that would point at it exists.
+ * another sample's reads, a cache blob that eviction walks — is refused before
+ * the row that would point at it exists.
  *
  * The segment check covers a leading `/` as well: it would make the first
  * segment empty.
@@ -40,9 +40,9 @@ export function isStorageKeyUnder(key: string, prefix: string): boolean {
 /**
  * Whether `name` is a plain filename.
  *
- * Python addresses a subtraction file and a reads file by `name` in the URL of
- * its download endpoints, so a name carrying a separator or a traversal segment
- * is refused rather than left to be composed into a path later.
+ * A subtraction file and a reads file are addressed by `name` in the URL of
+ * their download endpoints, so a name carrying a separator or a traversal
+ * segment is refused rather than left to be composed into a path later.
  */
 export function isPlainFileName(name: string): boolean {
 	return (
