@@ -22,6 +22,7 @@ export * from "./references";
 export * from "./samples";
 export * from "./search";
 export * from "./sessions";
+export * from "./settings";
 export * from "./sse";
 export * from "./subtractions";
 export * from "./tasks";

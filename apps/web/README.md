@@ -422,10 +422,9 @@ Postgres `client_events` channel; the route converts each event to the id-only
 normal API so authorization remains at the request boundary.
 
 Adding a domain requires all three of `SseDomainSchema`, `SseMessageSchema`,
-and `reactQueryHandler`'s `domains` record. A domain absent from the schemas is
-expected forward-compatible traffic and is dropped silently. A known domain
-whose operation or id type fails validation is contract drift and is reported
-to Sentry.
+and `reactQueryHandler`'s `domains` record. A frame that fails validation — an
+unknown domain, a bad operation, a wrong id type — is contract drift and is
+reported to Sentry.
 
 The handshake uses `requireAuthenticatedRequest`. While connected, the server
 rechecks the session on each keepalive interval and closes a revoked stream.

@@ -212,22 +212,6 @@ describe("SseConnection", () => {
 		expect(captureException).not.toHaveBeenCalled();
 	});
 
-	it("drops frames for domains it does not handle without reporting them", async () => {
-		await establish();
-
-		// Frames arrive for domains the client has no query keys for yet; a frame
-		// for one of them must be ignored, not treated as a validation error worth
-		// a Sentry report.
-		openConnection().message({
-			domain: "subtraction",
-			operation: "update",
-			id: 4,
-		});
-
-		expect(handler).not.toHaveBeenCalled();
-		expect(captureException).not.toHaveBeenCalled();
-	});
-
 	it("reports a malformed frame for a domain it does handle", async () => {
 		await establish();
 

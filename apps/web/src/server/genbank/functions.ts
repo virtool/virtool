@@ -4,8 +4,10 @@ import {
 	GenbankUnreachableError,
 	getGenbank,
 } from "@virtool/data/genbank/data";
+import { getSettings } from "@virtool/data/settings/data";
 import { z } from "zod";
 import { authenticated } from "../auth/policy";
+import { db } from "../composition";
 import { ClientError } from "../errors";
 import { logger } from "../logger";
 
@@ -33,15 +35,22 @@ const rethrowAsHttp = createServerOnlyFn((err: unknown): never => {
  * Look a sequence up in GenBank by accession, so the sequence form can fill
  * itself in.
  *
- * A pure outbound proxy — nothing here touches the database. It stays behind a
- * session because an open endpoint would let anyone use the deployment as an
- * unmetered NCBI relay under Virtool's `tool` and `email` identifiers.
+ * The one database read is the instance's NCBI API key, which raises the rate
+ * limit NCBI applies to the deployment. It is read here rather than in
+ * `getGenbank` so the data layer carries no settings dependency, and it is
+ * handed straight to the request without being logged or returned.
+ *
+ * It stays behind a session because an open endpoint would let anyone use the
+ * deployment as an unmetered NCBI relay under Virtool's `tool` and `email`
+ * identifiers — and, now, its API key.
  */
 export const getGenbankFn = createServerFn({ method: "GET" })
 	.middleware([authenticated()])
 	.validator(accessionSchema)
 	.handler(async ({ data }) => {
-		const record = await getGenbank(logger, data.accession).catch(
+		const { ncbiApiKey } = await getSettings(db);
+
+		const record = await getGenbank(logger, data.accession, ncbiApiKey).catch(
 			rethrowAsHttp,
 		);
 
