@@ -1,5 +1,5 @@
 import { settingsQueryKeys } from "@administration/keys";
-import type { Settings } from "@administration/types";
+
 import { referenceQueryKeys } from "@references/keys";
 import {
 	addReferenceGroupFn,
@@ -31,6 +31,7 @@ import type {
 	ReferenceSearchResult,
 	ReferenceUpdateRequest,
 	ReferenceUser,
+	Settings,
 } from "@virtool/contracts";
 import { useState } from "react";
 

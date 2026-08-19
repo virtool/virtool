@@ -6,6 +6,7 @@
 // than this file. `enable_api` is the one exception, for the reason given
 // below.
 
+import type { SampleGroup } from "@virtool/contracts";
 import { sql } from "drizzle-orm";
 import {
 	boolean,
@@ -15,16 +16,6 @@ import {
 	pgTable,
 	text,
 } from "drizzle-orm/pg-core";
-
-/** The group-access policies a newly created sample can be assigned. */
-export const sampleGroups = [
-	"none",
-	"force_choice",
-	"users_primary_group",
-] as const;
-
-/** The group-access policy applied to a newly created sample. */
-export type SampleGroup = (typeof sampleGroups)[number];
 
 export const settings = pgTable(
 	"settings",

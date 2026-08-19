@@ -1,11 +1,12 @@
 import { createServerFn } from "@tanstack/react-start";
 import {
 	type SampleGroup,
+	type Settings,
 	sampleGroups,
-} from "@virtool/data/db/schema/settings";
+} from "@virtool/contracts";
 import {
 	getSettings,
-	type Settings,
+	type Settings as StoredSettings,
 	updateSettings,
 } from "@virtool/data/settings/data";
 import { z } from "zod";
@@ -18,17 +19,6 @@ export type PasswordPolicy = {
 };
 
 /**
- * The instance settings as a client sees them.
- *
- * Every stored setting except the NCBI API key, which is a credential and is
- * reported only as whether one is configured. A client writes the key and never
- * reads it back.
- */
-export type PublicSettings = Omit<Settings, "ncbiApiKey"> & {
-	hasNcbiApiKey: boolean;
-};
-
-/**
  * Reduce the stored settings to what may cross the wire.
  *
  * Both settings functions answer any administrator holding the `settings` role,
@@ -36,7 +26,7 @@ export type PublicSettings = Omit<Settings, "ncbiApiKey"> & {
  * payload. Narrowing here rather than in the data layer keeps the redaction on
  * the transport boundary, where the row is published.
  */
-function toPublicSettings({ ncbiApiKey, ...rest }: Settings): PublicSettings {
+function toSettings({ ncbiApiKey, ...rest }: StoredSettings): Settings {
 	return { ...rest, hasNcbiApiKey: ncbiApiKey !== "" };
 }
 
@@ -93,15 +83,12 @@ const updateSettingsSchema = z
 
 export const getSettingsFn = createServerFn({ method: "GET" })
 	.middleware([adminRole("settings")])
-	.handler(
-		async (): Promise<PublicSettings> =>
-			toPublicSettings(await getSettings(db)),
-	);
+	.handler(async (): Promise<Settings> => toSettings(await getSettings(db)));
 
 export const updateSettingsFn = createServerFn({ method: "POST" })
 	.middleware([adminRole("settings")])
 	.validator(updateSettingsSchema)
 	.handler(
-		async ({ data }): Promise<PublicSettings> =>
-			toPublicSettings(await updateSettings(db, data)),
+		async ({ data }): Promise<Settings> =>
+			toSettings(await updateSettings(db, data)),
 	);

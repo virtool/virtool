@@ -12,7 +12,7 @@ import {
 	useQueryClient,
 	useSuspenseQuery,
 } from "@tanstack/react-query";
-import type { Settings } from "./types";
+import type { Settings } from "@virtool/contracts";
 
 /** Fields that can be changed when updating the server settings */
 export type SettingsUpdate = {

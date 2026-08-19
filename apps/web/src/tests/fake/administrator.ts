@@ -1,5 +1,6 @@
-import type { AdministratorRole, Settings } from "@administration/types";
+import type { AdministratorRole } from "@administration/types";
 import { faker } from "@faker-js/faker";
+import type { Settings } from "@virtool/contracts";
 
 export const administratorRoles: AdministratorRole[] = [
 	{
@@ -31,7 +32,7 @@ export const administratorRoles: AdministratorRole[] = [
  * @param overrides - optional properties for creating fake settings with specific values
  */
 export function createFakeSettings(overrides?: Partial<Settings>): Settings {
-	const defaultSettings = {
+	const defaultSettings: Settings = {
 		defaultSourceTypes: [faker.word.noun({ strategy: "any-length" })],
 		enableSentry: faker.datatype.boolean(),
 		hasNcbiApiKey: false,

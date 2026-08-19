@@ -1,9 +1,11 @@
-import { DEFAULT_MINIMUM_PASSWORD_LENGTH } from "@virtool/contracts";
+import {
+	DEFAULT_MINIMUM_PASSWORD_LENGTH,
+	type SampleGroup,
+} from "@virtool/contracts";
 import { eq } from "drizzle-orm";
 import type { Db } from "../db/pg";
 import { takeFirst, takeFirstOrThrow } from "../db/rows";
 import {
-	type SampleGroup,
 	type SettingsRow,
 	settings as settingsTable,
 } from "../db/schema/settings";
