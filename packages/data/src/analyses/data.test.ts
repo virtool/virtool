@@ -169,7 +169,6 @@ async function seedAnalysis(
 				// The legacy storage slug, NOT NULL upstream.
 				sample: String(overrides.sample_id ?? 0),
 				sample_id: overrides.sample_id ?? null,
-				reference_id: referenceId,
 				index_id: indexId,
 				user_id: ownerId,
 				...overrides,
@@ -570,7 +569,6 @@ describe("createAnalysis", () => {
 			.where(eq(analyses.id, analysis.id));
 
 		expect(row?.sample).toBe(String(sampleId));
-		expect(row?.reference_id).toBe(referenceId);
 		expect(row?.index_id).toBe(indexId);
 		expect(row?.user_id).toBe(ownerId);
 
