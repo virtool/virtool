@@ -147,16 +147,14 @@ every Rust edit. Add a line there when a new TypeScript package appears.
 ## The image build
 
 The root `Dockerfile`'s `pathoscope` target builds
-`ghcr.io/virtool/ts-pathoscope`. The crate is compiled in the same Dockerfile as
+`ghcr.io/virtool/pathoscope`. The crate is compiled in the same Dockerfile as
 its only consumer, so there is no second release stream to coordinate and no
 window in which the workflow and its core disagree.
 
 The `Pathoscope / Build` job compiles the Dockerfile on every run and
-`release-ghcr` pushes it on release. `virtool/workflow-pathoscope` still
-releases the pathoscope workflow too, but it publishes
-`ghcr.io/virtool/pathoscope` while this Dockerfile targets
-`ghcr.io/virtool/ts-pathoscope` — the cluster picks one by the image it pulls,
-and neither stream overwrites the other.
+`release-ghcr` pushes it on release. `ghcr.io/virtool/pathoscope` previously
+came from `virtool/workflow-pathoscope`, which shipped the Python workflow
+under that name; this repository's release supersedes it and owns the name now.
 
 **The crate is built on `rust:1.97-bookworm`.** The runtime copies binaries from
 the tool stages in the same file, which are built on `debian:bookworm`, so the

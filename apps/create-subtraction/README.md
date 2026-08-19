@@ -1,8 +1,8 @@
 # @virtool/create-subtraction
 
-Image: `ghcr.io/virtool/ts-create-subtraction`.
+Image: `ghcr.io/virtool/create-subtraction`.
 
-Computes GC and sequence count for a subtraction and commits it's 
+Computes GC and sequence count for a subtraction and commits its
 FASTA to object storage.
 
 Two steps, `compute_gc_and_count` and `finalize`, and one external tool,

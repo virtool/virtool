@@ -1,6 +1,6 @@
 # @virtool/create-sample
 
-Image: `ghcr.io/virtool/ts-create-sample`.
+Image: `ghcr.io/virtool/create-sample`.
 
 Turns a user's uploaded FASTQ files into a sample an analysis can run against:
 measures their quality, normalizes them to `reads_1.fq.gz` and

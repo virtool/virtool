@@ -15,16 +15,11 @@ SERVICE_TARGETS = [
 # start when something claims work, so nothing is waiting on a rebuild — and an
 # automatic one would rebuild a large image on every edit. Deploy them from the
 # Tilt UI.
-#
-# All four images publish on release, but `ts-nuvs` has no registry package
-# until the first release that carries it and `ts-pathoscope:latest` is a
-# tools-only leftover with no workflow code in it, so build those two locally
-# meanwhile with `tilt up -- --nuvs`.
 WORKFLOW_TARGETS = [
-    ('create-sample', 'ghcr.io/virtool/ts-create-sample'),
-    ('create-subtraction', 'ghcr.io/virtool/ts-create-subtraction'),
-    ('nuvs', 'ghcr.io/virtool/ts-nuvs'),
-    ('pathoscope', 'ghcr.io/virtool/ts-pathoscope'),
+    ('create-sample', 'ghcr.io/virtool/create-sample'),
+    ('create-subtraction', 'ghcr.io/virtool/create-subtraction'),
+    ('nuvs', 'ghcr.io/virtool/nuvs'),
+    ('pathoscope', 'ghcr.io/virtool/pathoscope'),
 ]
 
 config.define_bool('web', usage='live edit web')

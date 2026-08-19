@@ -31,7 +31,7 @@ describe("parseWorkflowRunConfig", () => {
 				VT_PROC: "8",
 				VT_TIMEOUT: "60",
 				VT_SENTRY_DSN: "https://key@sentry.example/1",
-				VT_IMAGE: "ghcr.io/virtool/ts-pathoscope:1.2.3",
+				VT_IMAGE: "ghcr.io/virtool/pathoscope:1.2.3",
 			}),
 		);
 
@@ -43,7 +43,7 @@ describe("parseWorkflowRunConfig", () => {
 			workPath: "/work",
 			timeout: 60,
 			sentryDsn: "https://key@sentry.example/1",
-			image: "ghcr.io/virtool/ts-pathoscope:1.2.3",
+			image: "ghcr.io/virtool/pathoscope:1.2.3",
 			storage: {
 				kind: "s3",
 				bucket: "virtool",
@@ -89,9 +89,9 @@ describe("parseWorkflowRunConfig", () => {
 		],
 		[
 			"VT_IMAGE",
-			"ghcr.io/virtool/ts-nuvs:2.0.0",
+			"ghcr.io/virtool/nuvs:2.0.0",
 			"image",
-			"ghcr.io/virtool/ts-nuvs:2.0.0",
+			"ghcr.io/virtool/nuvs:2.0.0",
 		],
 	])("resolves %s from its _FILE variant", (key, written, field, expected) => {
 		const env = minimalEnv({ [`${key}_FILE`]: writeSecret(written) });

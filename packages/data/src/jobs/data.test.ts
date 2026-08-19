@@ -428,7 +428,7 @@ const CLAIM: StoredJobClaim = {
 	runner_id: "dead-runner",
 	mem: 8,
 	cpu: 2,
-	image: "ghcr.io/virtool/ts-nuvs:0.0.0",
+	image: "ghcr.io/virtool/nuvs:0.0.0",
 	runtime_version: "1.0.0",
 	workflow_version: "0.0.0",
 };

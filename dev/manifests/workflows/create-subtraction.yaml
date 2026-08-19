@@ -19,7 +19,7 @@ spec:
       spec:
         containers:
           - name: workflow-create-subtraction
-            image: ghcr.io/virtool/ts-create-subtraction:latest
+            image: ghcr.io/virtool/create-subtraction:latest
             env:
               - name: VT_PROC
                 value: "2"
