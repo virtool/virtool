@@ -589,23 +589,20 @@ export async function findSamples(
 	options: FindSamplesOptions,
 	actor: SampleActor,
 ): Promise<SampleSearchResult> {
-	const filters: SQL[] = [];
+	const baseFilter = sampleReadableFilter(actor);
 
-	const readable = sampleReadableFilter(actor);
-	if (readable) {
-		filters.push(readable);
-	}
+	const narrowing: SQL[] = [];
 
 	if (options.term) {
-		filters.push(ilike(legacySamples.name, `%${escapeLike(options.term)}%`));
+		narrowing.push(ilike(legacySamples.name, `%${escapeLike(options.term)}%`));
 	}
 
 	if (options.users.length > 0) {
-		filters.push(inArray(legacySamples.user_id, options.users));
+		narrowing.push(inArray(legacySamples.user_id, options.users));
 	}
 
 	if (options.labels.length > 0) {
-		filters.push(
+		narrowing.push(
 			inArray(
 				legacySamples.id,
 				db
@@ -618,16 +615,19 @@ export async function findSamples(
 
 	const workflowFilter = composeWorkflowFilter(db, options.workflows);
 	if (workflowFilter) {
-		filters.push(workflowFilter);
+		narrowing.push(workflowFilter);
 	}
 
-	const where = filters.length > 0 ? and(...filters) : undefined;
+	const where =
+		narrowing.length > 0 ? and(baseFilter, ...narrowing) : baseFilter;
 
 	const [totalRows, foundRows, rows] = await Promise.all([
-		// `total_count` is the unscoped grand total of samples, not the count
-		// visible to the caller.
-		db.select({ value: count() }).from(legacySamples),
-		db.select({ value: count() }).from(legacySamples).where(where),
+		db.select({ value: count() }).from(legacySamples).where(baseFilter),
+		// Without a narrowing filter the found count equals the total count, so
+		// skip the redundant query and reuse totalCount below.
+		narrowing.length > 0
+			? db.select({ value: count() }).from(legacySamples).where(where)
+			: undefined,
 		// The owner joins onto the sample row; the collection relationships fan
 		// out below, batched by the page's sample ids.
 		db
@@ -641,7 +641,7 @@ export async function findSamples(
 	]);
 
 	const totalCount = totalRows[0]?.value ?? 0;
-	const foundCount = foundRows[0]?.value ?? 0;
+	const foundCount = foundRows ? (foundRows[0]?.value ?? 0) : totalCount;
 
 	const sampleIds = rows.map(({ sample }) => sample.id);
 	const jobIds = [

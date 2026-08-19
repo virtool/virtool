@@ -265,13 +265,24 @@ describe("findSamples", () => {
 		expect(result.items).toHaveLength(2);
 	});
 
-	it("reports the unscoped total but the scoped found count", async () => {
+	it("leaves samples the caller cannot read out of both counts", async () => {
 		await seedSample({ user_id: ownerId, name: "Mine" });
 		const stranger = await seedUser(db, { handle: "stranger" });
 		await seedSample({ user_id: stranger, name: "Theirs" });
 
 		const actor = await resolveSampleActor(db, ownerId);
 		const result = await findSamples(db, options, actor);
+
+		expect(result.totalCount).toBe(1);
+		expect(result.foundCount).toBe(1);
+	});
+
+	it("narrows the found count by the search term, leaving totalCount whole", async () => {
+		await seedSample({ user_id: ownerId, name: "Apple" });
+		await seedSample({ user_id: ownerId, name: "Banana" });
+
+		const actor = await resolveSampleActor(db, ownerId);
+		const result = await findSamples(db, { ...options, term: "app" }, actor);
 
 		expect(result.totalCount).toBe(2);
 		expect(result.foundCount).toBe(1);

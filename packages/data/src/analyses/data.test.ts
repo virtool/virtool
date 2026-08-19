@@ -246,6 +246,7 @@ describe("findAnalyses", () => {
 
 		expect(result.items.map((item) => item.id)).toEqual([wanted]);
 		expect(result.foundCount).toBe(1);
+		expect(result.totalCount).toBe(2);
 	});
 
 	it("names the parent sample of each analysis", async () => {
@@ -273,6 +274,7 @@ describe("findAnalyses", () => {
 
 		expect(result.items.map((item) => item.id)).toEqual([wanted]);
 		expect(result.foundCount).toBe(1);
+		expect(result.totalCount).toBe(2);
 	});
 
 	it("intersects a userId with the caller's readable samples", async () => {
@@ -292,6 +294,7 @@ describe("findAnalyses", () => {
 
 		expect(result.items.map((item) => item.id)).toEqual([readable]);
 		expect(result.foundCount).toBe(1);
+		expect(result.totalCount).toBe(1);
 	});
 
 	it("orders by created_at descending, then id descending", async () => {

@@ -296,25 +296,24 @@ export async function findAnalyses(
 	options: FindAnalysesOptions,
 	actor: SampleActor,
 ): Promise<AnalysisSearchResult> {
-	const filters: SQL[] = [];
-
 	const readable = analysisReadableFilter(db, actor);
-	if (readable) {
-		filters.push(readable);
-	}
+	const narrowing: SQL[] = [];
 
 	if (options.sampleId !== undefined) {
-		filters.push(eq(analyses.sample_id, options.sampleId));
+		narrowing.push(eq(analyses.sample_id, options.sampleId));
 	}
 
 	if (options.userId !== undefined) {
-		filters.push(eq(analyses.user_id, options.userId));
+		narrowing.push(eq(analyses.user_id, options.userId));
 	}
 
-	const where = filters.length > 0 ? and(...filters) : undefined;
+	const where = narrowing.length > 0 ? and(readable, ...narrowing) : readable;
 
-	const [foundRows, rows] = await Promise.all([
-		db.select({ value: count() }).from(analyses).where(where),
+	const [totalRows, foundRows, rows] = await Promise.all([
+		db.select({ value: count() }).from(analyses).where(readable),
+		narrowing.length > 0
+			? db.select({ value: count() }).from(analyses).where(where)
+			: undefined,
 		// The index, reference and owner are one-to-one, so they join onto the
 		// analysis row. The index join is an outer join so an analysis whose index
 		// cannot be resolved surfaces loudly in `mapMinimal` rather than silently
@@ -338,7 +337,8 @@ export async function findAnalyses(
 			.limit(options.perPage),
 	]);
 
-	const foundCount = foundRows[0]?.value ?? 0;
+	const totalCount = totalRows[0]?.value ?? 0;
+	const foundCount = foundRows ? (foundRows[0]?.value ?? 0) : totalCount;
 
 	const analysisIds = rows.map((row) => row.id);
 	const jobIds = [
@@ -354,8 +354,7 @@ export async function findAnalyses(
 
 	return {
 		foundCount,
-		// Both counts are the scoped one: `totalCount` is not an unscoped total.
-		totalCount: foundCount,
+		totalCount,
 		page: options.page,
 		perPage: options.perPage,
 		pageCount: foundCount ? Math.ceil(foundCount / options.perPage) : 0,
