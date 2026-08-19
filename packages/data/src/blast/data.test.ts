@@ -415,6 +415,31 @@ describe("sweepBlasts", () => {
 			);
 		});
 
+		it("records a changed result envelope as an error rather than backing off", async () => {
+			const analysisId = await seedAnalysis();
+			const blastId = await seedBlast(analysisId, {
+				rid: "RID001",
+				interval: 3,
+			});
+
+			const { program, ...report } = REPORT.BlastOutput2.report;
+
+			void program;
+
+			stubNcbi({
+				check: () => new Response("Status=READY"),
+				result: (rid) => zipResponse(rid, { BlastOutput2: { report } }),
+			});
+
+			await sweepBlasts(db, testLogger);
+
+			expect(await readBlast(blastId)).toMatchObject({
+				error: "BLAST result report has no program",
+				interval: 3,
+				ready: false,
+			});
+		});
+
 		it("backs off rather than recording an error when the fetch is refused", async () => {
 			const analysisId = await seedAnalysis();
 			const blastId = await seedBlast(analysisId, {

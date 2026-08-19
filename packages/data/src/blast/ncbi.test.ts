@@ -370,19 +370,39 @@ describe("formatBlastContent", () => {
 		expect(formatBlastContent(unmasked).masking).toBeNull();
 	});
 
-	it("throws on a hit whose HSP has lost a field", async () => {
+	it("throws an unreadable error on a hit whose HSP has lost a field", async () => {
 		const damaged = structuredClone(raw);
 
 		damaged.BlastOutput2.report.results.search.hits[0].hsps[0] = {
 			score: 600,
 		} as unknown as (typeof raw.BlastOutput2.report.results.search.hits)[0]["hsps"][0];
 
-		expect(() => formatBlastContent(damaged)).toThrow(NcbiBlastError);
+		expect(() => formatBlastContent(damaged)).toThrow(
+			BlastResultUnreadableError,
+		);
 	});
 
-	it("throws on a result carrying more than one query", async () => {
+	it("throws an unreadable error on a result carrying more than one query", async () => {
 		expect(() =>
 			formatBlastContent({ BlastOutput2: { report: {}, extra: {} } }),
-		).toThrow(NcbiBlastError);
+		).toThrow(BlastResultUnreadableError);
+	});
+
+	it("throws an unreadable rather than a transient error on a missing envelope key", async () => {
+		const { program, ...report } = raw.BlastOutput2.report;
+
+		void program;
+
+		const error = (() => {
+			try {
+				formatBlastContent({ BlastOutput2: { report } });
+			} catch (err) {
+				return err;
+			}
+		})();
+
+		expect(error).toBeInstanceOf(BlastResultUnreadableError);
+		expect(error).not.toBeInstanceOf(NcbiBlastError);
+		expect((error as Error).message).toBe("BLAST result report has no program");
 	});
 });
