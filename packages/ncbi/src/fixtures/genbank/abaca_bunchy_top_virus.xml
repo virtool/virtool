@@ -1,0 +1,2630 @@
+<?xml version="1.0" encoding="UTF-8"  ?>
+<!DOCTYPE GBSet PUBLIC "-//NCBI//NCBI GBSeq/EN" "https://www.ncbi.nlm.nih.gov/dtd/NCBI_GBSeq.dtd">
+<GBSet>
+  <GBSeq>
+
+    <GBSeq_locus>EF546802</GBSeq_locus>
+    <GBSeq_length>1073</GBSeq_length>
+    <GBSeq_strandedness>single</GBSeq_strandedness>
+    <GBSeq_moltype>DNA</GBSeq_moltype>
+    <GBSeq_topology>circular</GBSeq_topology>
+    <GBSeq_division>VRL</GBSeq_division>
+    <GBSeq_update-date>05-FEB-2008</GBSeq_update-date>
+    <GBSeq_create-date>04-FEB-2008</GBSeq_create-date>
+    <GBSeq_definition>Abaca bunchy top virus isolate Q1108 segment DNA-N, complete sequence</GBSeq_definition>
+    <GBSeq_primary-accession>EF546802</GBSeq_primary-accession>
+    <GBSeq_accession-version>EF546802.1</GBSeq_accession-version>
+    <GBSeq_other-seqids>
+      <GBSeqid>gb|EF546802.1|</GBSeqid>
+      <GBSeqid>gi|145845920</GBSeqid>
+    </GBSeq_other-seqids>
+    <GBSeq_source>abaca bunchy top virus (ABTV)</GBSeq_source>
+    <GBSeq_organism>abaca bunchy top virus</GBSeq_organism>
+    <GBSeq_taxonomy>Viruses; Floreoviria; Shotokuvirae; Cressdnaviricota; Arfiviricetes; Mulpavirales; Nanoviridae; Babuvirus; Babuvirus abacae</GBSeq_taxonomy>
+    <GBSeq_references>
+      <GBReference>
+        <GBReference_reference>1</GBReference_reference>
+        <GBReference_position>1..1073</GBReference_position>
+        <GBReference_authors>
+          <GBAuthor>Sharman,M.</GBAuthor>
+          <GBAuthor>Thomas,J.E.</GBAuthor>
+          <GBAuthor>Skabo,S.</GBAuthor>
+          <GBAuthor>Holton,T.A.</GBAuthor>
+        </GBReference_authors>
+        <GBReference_title>Abaca bunchy top virus, a new member of the genus Babuvirus (family Nanoviridae)</GBReference_title>
+        <GBReference_journal>Arch. Virol. 153 (1), 135-147 (2008)</GBReference_journal>
+        <GBReference_xref>
+          <GBXref>
+            <GBXref_dbname>doi</GBXref_dbname>
+            <GBXref_id>10.1007/s00705-007-1077-z</GBXref_id>
+          </GBXref>
+        </GBReference_xref>
+        <GBReference_pubmed>17978886</GBReference_pubmed>
+      </GBReference>
+      <GBReference>
+        <GBReference_reference>2</GBReference_reference>
+        <GBReference_position>1..1073</GBReference_position>
+        <GBReference_authors>
+          <GBAuthor>Sharman,M.</GBAuthor>
+          <GBAuthor>Thomas,J.E.</GBAuthor>
+          <GBAuthor>Skabo,S.</GBAuthor>
+        </GBReference_authors>
+        <GBReference_title>Direct Submission</GBReference_title>
+        <GBReference_journal>Submitted (11-APR-2007) Department of Primary Industries and Fisheries, Queensland Government, Plant Pathology Building, 80 Meiers Road, Indooroopilly, Brisbane, Queensland 4068, Australia</GBReference_journal>
+      </GBReference>
+    </GBSeq_references>
+    <GBSeq_feature-table>
+      <GBFeature>
+        <GBFeature_key>source</GBFeature_key>
+        <GBFeature_location>1..1073</GBFeature_location>
+        <GBFeature_intervals>
+          <GBInterval>
+            <GBInterval_from>1</GBInterval_from>
+            <GBInterval_to>1073</GBInterval_to>
+            <GBInterval_accession>EF546802.1</GBInterval_accession>
+          </GBInterval>
+        </GBFeature_intervals>
+        <GBFeature_quals>
+          <GBQualifier>
+            <GBQualifier_name>organism</GBQualifier_name>
+            <GBQualifier_value>abaca bunchy top virus</GBQualifier_value>
+          </GBQualifier>
+          <GBQualifier>
+            <GBQualifier_name>mol_type</GBQualifier_name>
+            <GBQualifier_value>genomic DNA</GBQualifier_value>
+          </GBQualifier>
+          <GBQualifier>
+            <GBQualifier_name>cultivar</GBQualifier_name>
+            <GBQualifier_value>Luno</GBQualifier_value>
+          </GBQualifier>
+          <GBQualifier>
+            <GBQualifier_name>isolate</GBQualifier_name>
+            <GBQualifier_value>Q1108</GBQualifier_value>
+          </GBQualifier>
+          <GBQualifier>
+            <GBQualifier_name>host</GBQualifier_name>
+            <GBQualifier_value>Musa textilis</GBQualifier_value>
+          </GBQualifier>
+          <GBQualifier>
+            <GBQualifier_name>db_xref</GBQualifier_name>
+            <GBQualifier_value>taxon:3158377</GBQualifier_value>
+          </GBQualifier>
+          <GBQualifier>
+            <GBQualifier_name>segment</GBQualifier_name>
+            <GBQualifier_value>DNA-N</GBQualifier_value>
+          </GBQualifier>
+          <GBQualifier>
+            <GBQualifier_name>geo_loc_name</GBQualifier_name>
+            <GBQualifier_value>Philippines</GBQualifier_value>
+          </GBQualifier>
+          <GBQualifier>
+            <GBQualifier_name>note</GBQualifier_name>
+            <GBQualifier_value>acronym: ABTV</GBQualifier_value>
+          </GBQualifier>
+        </GBFeature_quals>
+      </GBFeature>
+      <GBFeature>
+        <GBFeature_key>CDS</GBFeature_key>
+        <GBFeature_location>237..701</GBFeature_location>
+        <GBFeature_intervals>
+          <GBInterval>
+            <GBInterval_from>237</GBInterval_from>
+            <GBInterval_to>701</GBInterval_to>
+            <GBInterval_accession>EF546802.1</GBInterval_accession>
+          </GBInterval>
+        </GBFeature_intervals>
+        <GBFeature_quals>
+          <GBQualifier>
+            <GBQualifier_name>codon_start</GBQualifier_name>
+            <GBQualifier_value>1</GBQualifier_value>
+          </GBQualifier>
+          <GBQualifier>
+            <GBQualifier_name>transl_table</GBQualifier_name>
+            <GBQualifier_value>1</GBQualifier_value>
+          </GBQualifier>
+          <GBQualifier>
+            <GBQualifier_name>product</GBQualifier_name>
+            <GBQualifier_value>putative nuclear shuttle protein</GBQualifier_value>
+          </GBQualifier>
+          <GBQualifier>
+            <GBQualifier_name>protein_id</GBQualifier_name>
+            <GBQualifier_value>ABP96956.1</GBQualifier_value>
+          </GBQualifier>
+          <GBQualifier>
+            <GBQualifier_name>translation</GBQualifier_name>
+            <GBQualifier_value>MDWFESQFKTCTHGCDWKAIAPDARDNIQVITCIDSGYGRKNPRRVLLRSIQIGFNGSFKGNNRNVRGFLYVSIRQDDGELRPIMVVPFGGYGYHNDYYYFEGQSSTNCEIGSDYIPAGEDWSRDMEISISNSNNCTQECDIKCYVVCNLRIKE</GBQualifier_value>
+          </GBQualifier>
+        </GBFeature_quals>
+      </GBFeature>
+    </GBSeq_feature-table>
+    <GBSeq_sequence>ggcgggggggcatattattaccccccccgcccgggacgggacattctgtaatggattgggcttaatgatgccaaaggcccattaagcggaagcgcggcccattcgatggcctgtgcgctggtttcaaatgtcgcgttcccgcctatttagttgcttgccctgcaagcaattaactagtctataaataaggtggttctctgcgagtccaatacagcagttgcgataacatagcaacaatggattggtttgaatcacaattcaagacgtgtacgcatggatgcgactggaaggcgatagccccagatgcaagagacaatatacaggtaattacttgtatcgattcaggttatggaagaaagaaccctcgtagggttcttctaagaagtattcagatagggttcaatggtagcttcaaaggaaacaatagaaacgttcgaggattcctctacgtttctataaggcaagatgatggggaattgagacctatcatggttgtgccatttggaggatatggatatcataatgactattactatttcgaagggcaatcaagtacgaattgtgagatagggtcggattatatcccggccggtgaagactggagcagagacatggaaatcagtataagcaacagcaacaattgtactcaagagtgtgatataaaatgctatgtggtatgtaacttaagaattaaggaataatatgttgctgaaagatcttatttaatgtttagataatgatgttgtgctgtgaagtatctgtttatatttattataaacacgctatgccaataagggaaaaatgcaattaagacctgtcagattgtgtatatgaatgaatatacggccgaaggccgtaagtatgaaattagaaataatttataagcactggttaaatgtacgaagagatgtatataaccgaaagggtatgaacaataacataataccataaaataataaggggcaatgaaagcagaatgcgtatgtaacaaaatgatgctctgagtacaggcttgcgtgctctggacgccactttagtggtgggccagatgtcccgagttagtgcgctagtgg</GBSeq_sequence>
+  </GBSeq>
+
+  <GBSeq>
+
+    <GBSeq_locus>EF546803</GBSeq_locus>
+    <GBSeq_length>1059</GBSeq_length>
+    <GBSeq_strandedness>single</GBSeq_strandedness>
+    <GBSeq_moltype>DNA</GBSeq_moltype>
+    <GBSeq_topology>circular</GBSeq_topology>
+    <GBSeq_division>VRL</GBSeq_division>
+    <GBSeq_update-date>05-FEB-2008</GBSeq_update-date>
+    <GBSeq_create-date>04-FEB-2008</GBSeq_create-date>
+    <GBSeq_definition>Abaca bunchy top virus isolate Q1108 segment DNA-U3, complete sequence</GBSeq_definition>
+    <GBSeq_primary-accession>EF546803</GBSeq_primary-accession>
+    <GBSeq_accession-version>EF546803.1</GBSeq_accession-version>
+    <GBSeq_other-seqids>
+      <GBSeqid>gb|EF546803.1|</GBSeqid>
+      <GBSeqid>gi|145845922</GBSeqid>
+    </GBSeq_other-seqids>
+    <GBSeq_source>abaca bunchy top virus (ABTV)</GBSeq_source>
+    <GBSeq_organism>abaca bunchy top virus</GBSeq_organism>
+    <GBSeq_taxonomy>Viruses; Floreoviria; Shotokuvirae; Cressdnaviricota; Arfiviricetes; Mulpavirales; Nanoviridae; Babuvirus; Babuvirus abacae</GBSeq_taxonomy>
+    <GBSeq_references>
+      <GBReference>
+        <GBReference_reference>1</GBReference_reference>
+        <GBReference_position>1..1059</GBReference_position>
+        <GBReference_authors>
+          <GBAuthor>Sharman,M.</GBAuthor>
+          <GBAuthor>Thomas,J.E.</GBAuthor>
+          <GBAuthor>Skabo,S.</GBAuthor>
+          <GBAuthor>Holton,T.A.</GBAuthor>
+        </GBReference_authors>
+        <GBReference_title>Abaca bunchy top virus, a new member of the genus Babuvirus (family Nanoviridae)</GBReference_title>
+        <GBReference_journal>Arch. Virol. 153 (1), 135-147 (2008)</GBReference_journal>
+        <GBReference_xref>
+          <GBXref>
+            <GBXref_dbname>doi</GBXref_dbname>
+            <GBXref_id>10.1007/s00705-007-1077-z</GBXref_id>
+          </GBXref>
+        </GBReference_xref>
+        <GBReference_pubmed>17978886</GBReference_pubmed>
+      </GBReference>
+      <GBReference>
+        <GBReference_reference>2</GBReference_reference>
+        <GBReference_position>1..1059</GBReference_position>
+        <GBReference_authors>
+          <GBAuthor>Sharman,M.</GBAuthor>
+          <GBAuthor>Thomas,J.E.</GBAuthor>
+          <GBAuthor>Skabo,S.</GBAuthor>
+        </GBReference_authors>
+        <GBReference_title>Direct Submission</GBReference_title>
+        <GBReference_journal>Submitted (11-APR-2007) Department of Primary Industries and Fisheries, Queensland Government, Plant Pathology Building, 80 Meiers Road, Indooroopilly, Brisbane, Queensland 4068, Australia</GBReference_journal>
+      </GBReference>
+    </GBSeq_references>
+    <GBSeq_feature-table>
+      <GBFeature>
+        <GBFeature_key>source</GBFeature_key>
+        <GBFeature_location>1..1059</GBFeature_location>
+        <GBFeature_intervals>
+          <GBInterval>
+            <GBInterval_from>1</GBInterval_from>
+            <GBInterval_to>1059</GBInterval_to>
+            <GBInterval_accession>EF546803.1</GBInterval_accession>
+          </GBInterval>
+        </GBFeature_intervals>
+        <GBFeature_quals>
+          <GBQualifier>
+            <GBQualifier_name>organism</GBQualifier_name>
+            <GBQualifier_value>abaca bunchy top virus</GBQualifier_value>
+          </GBQualifier>
+          <GBQualifier>
+            <GBQualifier_name>mol_type</GBQualifier_name>
+            <GBQualifier_value>genomic DNA</GBQualifier_value>
+          </GBQualifier>
+          <GBQualifier>
+            <GBQualifier_name>cultivar</GBQualifier_name>
+            <GBQualifier_value>Luno</GBQualifier_value>
+          </GBQualifier>
+          <GBQualifier>
+            <GBQualifier_name>isolate</GBQualifier_name>
+            <GBQualifier_value>Q1108</GBQualifier_value>
+          </GBQualifier>
+          <GBQualifier>
+            <GBQualifier_name>host</GBQualifier_name>
+            <GBQualifier_value>Musa textilis</GBQualifier_value>
+          </GBQualifier>
+          <GBQualifier>
+            <GBQualifier_name>db_xref</GBQualifier_name>
+            <GBQualifier_value>taxon:3158377</GBQualifier_value>
+          </GBQualifier>
+          <GBQualifier>
+            <GBQualifier_name>segment</GBQualifier_name>
+            <GBQualifier_value>DNA-U3</GBQualifier_value>
+          </GBQualifier>
+          <GBQualifier>
+            <GBQualifier_name>geo_loc_name</GBQualifier_name>
+            <GBQualifier_value>Philippines</GBQualifier_value>
+          </GBQualifier>
+          <GBQualifier>
+            <GBQualifier_name>note</GBQualifier_name>
+            <GBQualifier_value>acronym: ABTV</GBQualifier_value>
+          </GBQualifier>
+        </GBFeature_quals>
+      </GBFeature>
+    </GBSeq_feature-table>
+    <GBSeq_sequence>ggggctggggcatattattacycccagccccggaacgggacatctgaatagtattgggctcattatatataatgggccgacaaataagcgtacagttcagtatcttcgttttgggccttggcccaaaattaagagaacgtgtgcgcttgtttggttagaccgaaggtccggttcgaataaggtatattctttgcttccgaaggaaggaacaacgaaatattcaatttcgttgtgacaggtgtacgtttactattggttcgcaatgtttataaatacccgcgaagctcaagggtatggtgctctctctcttctgtcatatgcgactgyaaggcgatcatatgcgactgcaaggcgatactcgccgtgagtaaagaagggcggaggtggaggagccgcctcgcccgtcctctcagacgacgtagtatacgaagtcgtgtgtaggtaagggtatttatagaagcgcgtgtactatatacgcgcctgtatattacatgtatttgtgtatttaattatttaaatactaaaccttaatgaggagaagtgttcatataacaaataaaatataacatatttactaggcaacaatattaacaatatttgcgatcaaaagggtataattaaggtcctgtaatatacatatttatatgtatatcagagttcaggtaaataatctggccttgaaggaaccaataataatactgataggataagaagaaatataacacgctatgccaataagggaaaaataatataatgacctgtaagattgttttttagaaccgacggaggccgaaggccgaaggcctgaaggccgatcagtatgccggatcattaggtgttgcttctccaagaagcaagggtgtaaatgtaaatatgaaagcatctgactactttagtggtgggcctacatacagctgtcataagacagctggcagaggataattggacggacttgaaatataaatacaatacaacatattaatatattccactatcagacaaatgatgcgctgacgtcatggcgtgcaatcgtgaccgtttaaatgtcccgctgacgta</GBSeq_sequence>
+  </GBSeq>
+
+  <GBSeq>
+
+    <GBSeq_locus>EF546804</GBSeq_locus>
+    <GBSeq_length>1078</GBSeq_length>
+    <GBSeq_strandedness>single</GBSeq_strandedness>
+    <GBSeq_moltype>DNA</GBSeq_moltype>
+    <GBSeq_topology>circular</GBSeq_topology>
+    <GBSeq_division>VRL</GBSeq_division>
+    <GBSeq_update-date>05-FEB-2008</GBSeq_update-date>
+    <GBSeq_create-date>04-FEB-2008</GBSeq_create-date>
+    <GBSeq_definition>Abaca bunchy top virus isolate Q1108 segment DNA-S, complete sequence</GBSeq_definition>
+    <GBSeq_primary-accession>EF546804</GBSeq_primary-accession>
+    <GBSeq_accession-version>EF546804.1</GBSeq_accession-version>
+    <GBSeq_other-seqids>
+      <GBSeqid>gb|EF546804.1|</GBSeqid>
+      <GBSeqid>gi|145845923</GBSeqid>
+    </GBSeq_other-seqids>
+    <GBSeq_source>abaca bunchy top virus (ABTV)</GBSeq_source>
+    <GBSeq_organism>abaca bunchy top virus</GBSeq_organism>
+    <GBSeq_taxonomy>Viruses; Floreoviria; Shotokuvirae; Cressdnaviricota; Arfiviricetes; Mulpavirales; Nanoviridae; Babuvirus; Babuvirus abacae</GBSeq_taxonomy>
+    <GBSeq_references>
+      <GBReference>
+        <GBReference_reference>1</GBReference_reference>
+        <GBReference_position>1..1078</GBReference_position>
+        <GBReference_authors>
+          <GBAuthor>Sharman,M.</GBAuthor>
+          <GBAuthor>Thomas,J.E.</GBAuthor>
+          <GBAuthor>Skabo,S.</GBAuthor>
+          <GBAuthor>Holton,T.A.</GBAuthor>
+        </GBReference_authors>
+        <GBReference_title>Abaca bunchy top virus, a new member of the genus Babuvirus (family Nanoviridae)</GBReference_title>
+        <GBReference_journal>Arch. Virol. 153 (1), 135-147 (2008)</GBReference_journal>
+        <GBReference_xref>
+          <GBXref>
+            <GBXref_dbname>doi</GBXref_dbname>
+            <GBXref_id>10.1007/s00705-007-1077-z</GBXref_id>
+          </GBXref>
+        </GBReference_xref>
+        <GBReference_pubmed>17978886</GBReference_pubmed>
+      </GBReference>
+      <GBReference>
+        <GBReference_reference>2</GBReference_reference>
+        <GBReference_position>1..1078</GBReference_position>
+        <GBReference_authors>
+          <GBAuthor>Sharman,M.</GBAuthor>
+          <GBAuthor>Thomas,J.E.</GBAuthor>
+          <GBAuthor>Skabo,S.</GBAuthor>
+        </GBReference_authors>
+        <GBReference_title>Direct Submission</GBReference_title>
+        <GBReference_journal>Submitted (11-APR-2007) Department of Primary Industries and Fisheries, Queensland Government, Plant Pathology Building, 80 Meiers Road, Indooroopilly, Brisbane, Queensland 4068, Australia</GBReference_journal>
+      </GBReference>
+    </GBSeq_references>
+    <GBSeq_feature-table>
+      <GBFeature>
+        <GBFeature_key>source</GBFeature_key>
+        <GBFeature_location>1..1078</GBFeature_location>
+        <GBFeature_intervals>
+          <GBInterval>
+            <GBInterval_from>1</GBInterval_from>
+            <GBInterval_to>1078</GBInterval_to>
+            <GBInterval_accession>EF546804.1</GBInterval_accession>
+          </GBInterval>
+        </GBFeature_intervals>
+        <GBFeature_quals>
+          <GBQualifier>
+            <GBQualifier_name>organism</GBQualifier_name>
+            <GBQualifier_value>abaca bunchy top virus</GBQualifier_value>
+          </GBQualifier>
+          <GBQualifier>
+            <GBQualifier_name>mol_type</GBQualifier_name>
+            <GBQualifier_value>genomic DNA</GBQualifier_value>
+          </GBQualifier>
+          <GBQualifier>
+            <GBQualifier_name>cultivar</GBQualifier_name>
+            <GBQualifier_value>Luno</GBQualifier_value>
+          </GBQualifier>
+          <GBQualifier>
+            <GBQualifier_name>isolate</GBQualifier_name>
+            <GBQualifier_value>Q1108</GBQualifier_value>
+          </GBQualifier>
+          <GBQualifier>
+            <GBQualifier_name>host</GBQualifier_name>
+            <GBQualifier_value>Musa textilis</GBQualifier_value>
+          </GBQualifier>
+          <GBQualifier>
+            <GBQualifier_name>db_xref</GBQualifier_name>
+            <GBQualifier_value>taxon:3158377</GBQualifier_value>
+          </GBQualifier>
+          <GBQualifier>
+            <GBQualifier_name>segment</GBQualifier_name>
+            <GBQualifier_value>DNA-S</GBQualifier_value>
+          </GBQualifier>
+          <GBQualifier>
+            <GBQualifier_name>geo_loc_name</GBQualifier_name>
+            <GBQualifier_value>Philippines</GBQualifier_value>
+          </GBQualifier>
+          <GBQualifier>
+            <GBQualifier_name>note</GBQualifier_name>
+            <GBQualifier_value>acronym: ABTV</GBQualifier_value>
+          </GBQualifier>
+        </GBFeature_quals>
+      </GBFeature>
+      <GBFeature>
+        <GBFeature_key>CDS</GBFeature_key>
+        <GBFeature_location>223..735</GBFeature_location>
+        <GBFeature_intervals>
+          <GBInterval>
+            <GBInterval_from>223</GBInterval_from>
+            <GBInterval_to>735</GBInterval_to>
+            <GBInterval_accession>EF546804.1</GBInterval_accession>
+          </GBInterval>
+        </GBFeature_intervals>
+        <GBFeature_quals>
+          <GBQualifier>
+            <GBQualifier_name>codon_start</GBQualifier_name>
+            <GBQualifier_value>1</GBQualifier_value>
+          </GBQualifier>
+          <GBQualifier>
+            <GBQualifier_name>transl_table</GBQualifier_name>
+            <GBQualifier_value>1</GBQualifier_value>
+          </GBQualifier>
+          <GBQualifier>
+            <GBQualifier_name>product</GBQualifier_name>
+            <GBQualifier_value>putative coat protein</GBQualifier_value>
+          </GBQualifier>
+          <GBQualifier>
+            <GBQualifier_name>protein_id</GBQualifier_name>
+            <GBQualifier_value>ABP96957.1</GBQualifier_value>
+          </GBQualifier>
+          <GBQualifier>
+            <GBQualifier_name>translation</GBQualifier_name>
+            <GBQualifier_value>MARYPKKSLKKRKAVRRKYGSKATTSHDYAIDTSFIVPETTIKLYRIEPTDKTLPRYFIWKMFMLLVCKVRPGRILHWAMIKSSWDIHQPEAVLEAPGLFIKPANSHLVKLVCSGELEAPVGGGTTDVECLLRKTTLLRRNVTELDFLYLAFYCTSGVTINYQNRITYHV</GBQualifier_value>
+          </GBQualifier>
+        </GBFeature_quals>
+      </GBFeature>
+    </GBSeq_feature-table>
+    <GBSeq_sequence>ggcaggggggcatattattaccccccctgcccgggacgggacattctgtaatggattgggcttaatgatgccaaaggcccattaagcggaagcgcggcccattcaatggcctgtgcgctggattcaaatgtcgcgttcccgcctatttagttgcttgctctgcaagcaacaacatctattataaataccaggatggaaggcagtctgatatgcaagaaacaaatggcgaggtatcccaagaaatcgttgaagaaaagaaaggcggttcgccggaagtatggaagtaaggctactaccagtcatgattatgctattgacacttcatttattgttcccgaaacaactattaagttgtatcgtattgagcctactgataaaacattacccagatattttatctggaaaatgtttatgctattagtatgcaaagtgagacctggtcgtatacttcattgggcgatgattaagagttcatgggatatacatcaaccagaggcagtgttagaagcccctggcctgtttataaagcctgcaaatagccatttggtgaaactggtatgcagtggcgagttagaggctccagttggcggagggacaacagatgtggaatgtcttctacggaagaccacattacttcgtaggaatgtaacagagttggatttcctgtatctggcgttttattgtacttctggagttacaattaactaccagaatcggataacatatcatgtataaacccctatataataatggggtgatgtacatatgtgaaataaaacaatgatatgcctacgaaatattttgggaaaatgcaattatgacctgtcagattgtgtatatgaatgaacttacggccgaaggccgtaagtaagaatatgcctagaataaaatacaaggtatatgtacgaagagatgtatataaccgaaagggtatgaacaaaaacataatattataaaataataaggggcaatgaaagcagaatgcgtatgtaacaaaatgatgctctgagtacaggcttgcgtgctctggacgccactttagtggtgggccagatgtcccgagttagtgcgccacgtg</GBSeq_sequence>
+  </GBSeq>
+
+  <GBSeq>
+
+    <GBSeq_locus>EF546805</GBSeq_locus>
+    <GBSeq_length>1088</GBSeq_length>
+    <GBSeq_strandedness>single</GBSeq_strandedness>
+    <GBSeq_moltype>DNA</GBSeq_moltype>
+    <GBSeq_topology>circular</GBSeq_topology>
+    <GBSeq_division>VRL</GBSeq_division>
+    <GBSeq_update-date>05-FEB-2008</GBSeq_update-date>
+    <GBSeq_create-date>04-FEB-2008</GBSeq_create-date>
+    <GBSeq_definition>Abaca bunchy top virus isolate Q1108 segment DNA-M, complete sequence</GBSeq_definition>
+    <GBSeq_primary-accession>EF546805</GBSeq_primary-accession>
+    <GBSeq_accession-version>EF546805.1</GBSeq_accession-version>
+    <GBSeq_other-seqids>
+      <GBSeqid>gb|EF546805.1|</GBSeqid>
+      <GBSeqid>gi|145845925</GBSeqid>
+    </GBSeq_other-seqids>
+    <GBSeq_source>abaca bunchy top virus (ABTV)</GBSeq_source>
+    <GBSeq_organism>abaca bunchy top virus</GBSeq_organism>
+    <GBSeq_taxonomy>Viruses; Floreoviria; Shotokuvirae; Cressdnaviricota; Arfiviricetes; Mulpavirales; Nanoviridae; Babuvirus; Babuvirus abacae</GBSeq_taxonomy>
+    <GBSeq_references>
+      <GBReference>
+        <GBReference_reference>1</GBReference_reference>
+        <GBReference_position>1..1088</GBReference_position>
+        <GBReference_authors>
+          <GBAuthor>Sharman,M.</GBAuthor>
+          <GBAuthor>Thomas,J.E.</GBAuthor>
+          <GBAuthor>Skabo,S.</GBAuthor>
+          <GBAuthor>Holton,T.A.</GBAuthor>
+        </GBReference_authors>
+        <GBReference_title>Abaca bunchy top virus, a new member of the genus Babuvirus (family Nanoviridae)</GBReference_title>
+        <GBReference_journal>Arch. Virol. 153 (1), 135-147 (2008)</GBReference_journal>
+        <GBReference_xref>
+          <GBXref>
+            <GBXref_dbname>doi</GBXref_dbname>
+            <GBXref_id>10.1007/s00705-007-1077-z</GBXref_id>
+          </GBXref>
+        </GBReference_xref>
+        <GBReference_pubmed>17978886</GBReference_pubmed>
+      </GBReference>
+      <GBReference>
+        <GBReference_reference>2</GBReference_reference>
+        <GBReference_position>1..1088</GBReference_position>
+        <GBReference_authors>
+          <GBAuthor>Sharman,M.</GBAuthor>
+          <GBAuthor>Thomas,J.E.</GBAuthor>
+          <GBAuthor>Skabo,S.</GBAuthor>
+        </GBReference_authors>
+        <GBReference_title>Direct Submission</GBReference_title>
+        <GBReference_journal>Submitted (11-APR-2007) Department of Primary Industries and Fisheries, Queensland Government, Plant Pathology Building, 80 Meiers Road, Indooroopilly, Brisbane, Queensland 4068, Australia</GBReference_journal>
+      </GBReference>
+    </GBSeq_references>
+    <GBSeq_feature-table>
+      <GBFeature>
+        <GBFeature_key>source</GBFeature_key>
+        <GBFeature_location>1..1088</GBFeature_location>
+        <GBFeature_intervals>
+          <GBInterval>
+            <GBInterval_from>1</GBInterval_from>
+            <GBInterval_to>1088</GBInterval_to>
+            <GBInterval_accession>EF546805.1</GBInterval_accession>
+          </GBInterval>
+        </GBFeature_intervals>
+        <GBFeature_quals>
+          <GBQualifier>
+            <GBQualifier_name>organism</GBQualifier_name>
+            <GBQualifier_value>abaca bunchy top virus</GBQualifier_value>
+          </GBQualifier>
+          <GBQualifier>
+            <GBQualifier_name>mol_type</GBQualifier_name>
+            <GBQualifier_value>genomic DNA</GBQualifier_value>
+          </GBQualifier>
+          <GBQualifier>
+            <GBQualifier_name>cultivar</GBQualifier_name>
+            <GBQualifier_value>Luno</GBQualifier_value>
+          </GBQualifier>
+          <GBQualifier>
+            <GBQualifier_name>isolate</GBQualifier_name>
+            <GBQualifier_value>Q1108</GBQualifier_value>
+          </GBQualifier>
+          <GBQualifier>
+            <GBQualifier_name>host</GBQualifier_name>
+            <GBQualifier_value>Musa textilis</GBQualifier_value>
+          </GBQualifier>
+          <GBQualifier>
+            <GBQualifier_name>db_xref</GBQualifier_name>
+            <GBQualifier_value>taxon:3158377</GBQualifier_value>
+          </GBQualifier>
+          <GBQualifier>
+            <GBQualifier_name>segment</GBQualifier_name>
+            <GBQualifier_value>DNA-M</GBQualifier_value>
+          </GBQualifier>
+          <GBQualifier>
+            <GBQualifier_name>geo_loc_name</GBQualifier_name>
+            <GBQualifier_value>Philippines</GBQualifier_value>
+          </GBQualifier>
+          <GBQualifier>
+            <GBQualifier_name>note</GBQualifier_name>
+            <GBQualifier_value>acronym: ABTV</GBQualifier_value>
+          </GBQualifier>
+        </GBFeature_quals>
+      </GBFeature>
+      <GBFeature>
+        <GBFeature_key>CDS</GBFeature_key>
+        <GBFeature_location>176..517</GBFeature_location>
+        <GBFeature_intervals>
+          <GBInterval>
+            <GBInterval_from>176</GBInterval_from>
+            <GBInterval_to>517</GBInterval_to>
+            <GBInterval_accession>EF546805.1</GBInterval_accession>
+          </GBInterval>
+        </GBFeature_intervals>
+        <GBFeature_quals>
+          <GBQualifier>
+            <GBQualifier_name>codon_start</GBQualifier_name>
+            <GBQualifier_value>1</GBQualifier_value>
+          </GBQualifier>
+          <GBQualifier>
+            <GBQualifier_name>transl_table</GBQualifier_name>
+            <GBQualifier_value>1</GBQualifier_value>
+          </GBQualifier>
+          <GBQualifier>
+            <GBQualifier_name>product</GBQualifier_name>
+            <GBQualifier_value>putative movement protein</GBQualifier_value>
+          </GBQualifier>
+          <GBQualifier>
+            <GBQualifier_name>protein_id</GBQualifier_name>
+            <GBQualifier_value>ABP96958.1</GBQualifier_value>
+          </GBQualifier>
+          <GBQualifier>
+            <GBQualifier_name>translation</GBQualifier_name>
+            <GBQualifier_value>MALTGERVKQFFEWFLFFAAIFVAISIIYILLAVLLELPKYIKGVVKYIVEYVTRRRVWMRRTQLTEATGGGEIEGDRHDSHITVMPSVPPVSAPISNRRGDQGLRPSTGPMF</GBQualifier_value>
+          </GBQualifier>
+        </GBFeature_quals>
+      </GBFeature>
+    </GBSeq_feature-table>
+    <GBSeq_sequence>ggcgggggggcatattattaccccccccgcccgggacgggacatcacgtgcgcctatagtaatgcacgtgataatacatggcttgcagcgcaagatatatggcttccgcaggaagccttgcaatatatgggtttgtctaagacctgccgactctataaaaagaggcggcgagttcatggctttgacaggagaacgagtgaaacaattctttgaatggtttctgttcttcgcagcaatatttgttgctatatcaataatatatatattgttggcagttctccttgaactacctaagtatattaagggcgtggtaaaatacatagtggagtatgtaaccagacggcgagtatggatgcgacgaacacagttgacggaggcaactggaggtggcgagatagaaggagatcggcatgacagtcatattactgttatgccttctgttccaccggtaagtgctcctatatccaataggagaggtgatcagggtcttcgaccaagcacgggaccaatgttttaaatactcgtgtaatataatatacgagaatacaatacccaatgatctgttgaatgtaatatgtaatgcaaaatataatatagtttgctgttacatgttgttgtacaattcaaaatatatgtggtgtcgaagtcttcttatatggaagtatacctaataactaaaatataagattggtgtatacttcatgacaaggatattaaactatacaatacaaccacataaatacaatgtattgtatgaattaaataagaagacagagaagtaaagtgaagtctgacagcgacagataaggacaggagaatatgattggtggagcaagacttaacggttaagcaaagcatatggataagaatctttcttccgaaggaaggaatattcgcggaggatagaataaagattgtaatctgaaaaacacactatgacagaaagggaaaaatgcaattatgacctgtcagattgtgttataggaccgacggaggccgaaggccgaaggcctgaaggccgatcagtatggcgcctgtattattctttattatggtgggccatatgtcccgagttagtgcgttagtgg</GBSeq_sequence>
+  </GBSeq>
+
+  <GBSeq>
+
+    <GBSeq_locus>EF546806</GBSeq_locus>
+    <GBSeq_length>1013</GBSeq_length>
+    <GBSeq_strandedness>single</GBSeq_strandedness>
+    <GBSeq_moltype>DNA</GBSeq_moltype>
+    <GBSeq_topology>circular</GBSeq_topology>
+    <GBSeq_division>VRL</GBSeq_division>
+    <GBSeq_update-date>05-FEB-2008</GBSeq_update-date>
+    <GBSeq_create-date>04-FEB-2008</GBSeq_create-date>
+    <GBSeq_definition>Abaca bunchy top virus isolate Q1108 segment DNA-C, complete sequence</GBSeq_definition>
+    <GBSeq_primary-accession>EF546806</GBSeq_primary-accession>
+    <GBSeq_accession-version>EF546806.1</GBSeq_accession-version>
+    <GBSeq_other-seqids>
+      <GBSeqid>gb|EF546806.1|</GBSeqid>
+      <GBSeqid>gi|145845927</GBSeqid>
+    </GBSeq_other-seqids>
+    <GBSeq_source>abaca bunchy top virus (ABTV)</GBSeq_source>
+    <GBSeq_organism>abaca bunchy top virus</GBSeq_organism>
+    <GBSeq_taxonomy>Viruses; Floreoviria; Shotokuvirae; Cressdnaviricota; Arfiviricetes; Mulpavirales; Nanoviridae; Babuvirus; Babuvirus abacae</GBSeq_taxonomy>
+    <GBSeq_references>
+      <GBReference>
+        <GBReference_reference>1</GBReference_reference>
+        <GBReference_position>1..1013</GBReference_position>
+        <GBReference_authors>
+          <GBAuthor>Sharman,M.</GBAuthor>
+          <GBAuthor>Thomas,J.E.</GBAuthor>
+          <GBAuthor>Skabo,S.</GBAuthor>
+          <GBAuthor>Holton,T.A.</GBAuthor>
+        </GBReference_authors>
+        <GBReference_title>Abaca bunchy top virus, a new member of the genus Babuvirus (family Nanoviridae)</GBReference_title>
+        <GBReference_journal>Arch. Virol. 153 (1), 135-147 (2008)</GBReference_journal>
+        <GBReference_xref>
+          <GBXref>
+            <GBXref_dbname>doi</GBXref_dbname>
+            <GBXref_id>10.1007/s00705-007-1077-z</GBXref_id>
+          </GBXref>
+        </GBReference_xref>
+        <GBReference_pubmed>17978886</GBReference_pubmed>
+      </GBReference>
+      <GBReference>
+        <GBReference_reference>2</GBReference_reference>
+        <GBReference_position>1..1013</GBReference_position>
+        <GBReference_authors>
+          <GBAuthor>Sharman,M.</GBAuthor>
+          <GBAuthor>Thomas,J.E.</GBAuthor>
+          <GBAuthor>Skabo,S.</GBAuthor>
+        </GBReference_authors>
+        <GBReference_title>Direct Submission</GBReference_title>
+        <GBReference_journal>Submitted (11-APR-2007) Department of Primary Industries and Fisheries, Queensland Government, Plant Pathology Building, 80 Meiers Road, Indooroopilly, Brisbane, Queensland 4068, Australia</GBReference_journal>
+      </GBReference>
+    </GBSeq_references>
+    <GBSeq_feature-table>
+      <GBFeature>
+        <GBFeature_key>source</GBFeature_key>
+        <GBFeature_location>1..1013</GBFeature_location>
+        <GBFeature_intervals>
+          <GBInterval>
+            <GBInterval_from>1</GBInterval_from>
+            <GBInterval_to>1013</GBInterval_to>
+            <GBInterval_accession>EF546806.1</GBInterval_accession>
+          </GBInterval>
+        </GBFeature_intervals>
+        <GBFeature_quals>
+          <GBQualifier>
+            <GBQualifier_name>organism</GBQualifier_name>
+            <GBQualifier_value>abaca bunchy top virus</GBQualifier_value>
+          </GBQualifier>
+          <GBQualifier>
+            <GBQualifier_name>mol_type</GBQualifier_name>
+            <GBQualifier_value>genomic DNA</GBQualifier_value>
+          </GBQualifier>
+          <GBQualifier>
+            <GBQualifier_name>cultivar</GBQualifier_name>
+            <GBQualifier_value>Luno</GBQualifier_value>
+          </GBQualifier>
+          <GBQualifier>
+            <GBQualifier_name>isolate</GBQualifier_name>
+            <GBQualifier_value>Q1108</GBQualifier_value>
+          </GBQualifier>
+          <GBQualifier>
+            <GBQualifier_name>host</GBQualifier_name>
+            <GBQualifier_value>Musa textilis</GBQualifier_value>
+          </GBQualifier>
+          <GBQualifier>
+            <GBQualifier_name>db_xref</GBQualifier_name>
+            <GBQualifier_value>taxon:3158377</GBQualifier_value>
+          </GBQualifier>
+          <GBQualifier>
+            <GBQualifier_name>segment</GBQualifier_name>
+            <GBQualifier_value>DNA-C</GBQualifier_value>
+          </GBQualifier>
+          <GBQualifier>
+            <GBQualifier_name>geo_loc_name</GBQualifier_name>
+            <GBQualifier_value>Philippines</GBQualifier_value>
+          </GBQualifier>
+          <GBQualifier>
+            <GBQualifier_name>note</GBQualifier_name>
+            <GBQualifier_value>acronym: ABTV</GBQualifier_value>
+          </GBQualifier>
+        </GBFeature_quals>
+      </GBFeature>
+      <GBFeature>
+        <GBFeature_key>CDS</GBFeature_key>
+        <GBFeature_location>247..723</GBFeature_location>
+        <GBFeature_intervals>
+          <GBInterval>
+            <GBInterval_from>247</GBInterval_from>
+            <GBInterval_to>723</GBInterval_to>
+            <GBInterval_accession>EF546806.1</GBInterval_accession>
+          </GBInterval>
+        </GBFeature_intervals>
+        <GBFeature_quals>
+          <GBQualifier>
+            <GBQualifier_name>note</GBQualifier_name>
+            <GBQualifier_value>Clink</GBQualifier_value>
+          </GBQualifier>
+          <GBQualifier>
+            <GBQualifier_name>codon_start</GBQualifier_name>
+            <GBQualifier_value>1</GBQualifier_value>
+          </GBQualifier>
+          <GBQualifier>
+            <GBQualifier_name>transl_table</GBQualifier_name>
+            <GBQualifier_value>1</GBQualifier_value>
+          </GBQualifier>
+          <GBQualifier>
+            <GBQualifier_name>product</GBQualifier_name>
+            <GBQualifier_value>putative cell-cycle link protein</GBQualifier_value>
+          </GBQualifier>
+          <GBQualifier>
+            <GBQualifier_name>protein_id</GBQualifier_name>
+            <GBQualifier_value>ABP96959.1</GBQualifier_value>
+          </GBQualifier>
+          <GBQualifier>
+            <GBQualifier_name>translation</GBQualifier_name>
+            <GBQualifier_value>MEFWNSEAFCDDVKRCIKQKYWEERMKSLFIERVSGYVRRICGYGNLDDAIYAVQQLKTSIVQCAERYGKACVVVYSGTDKLMVYRLHTMAFFFEEYVEELKTADPLTVQLFCDEDISEFVESDVRYCKNVIMASTDEHVSINKCIQIVISDNVITFY</GBQualifier_value>
+          </GBQualifier>
+        </GBFeature_quals>
+      </GBFeature>
+    </GBSeq_feature-table>
+    <GBSeq_sequence>ggcgggggggcatattattaccccccccgcccgggacgggacatcacgtgatgcctttataaatcacgtgggcatataacttttgtatgccgtaagctgtataaaagcggcagctttatgttttattcgttgcttcatcgataagcaatgtgataatggatggtggtcctgttgcaaagcaggtgactggtttgctatttatatcagttgttgtgcagggttttggtgtatacaacgctgatcagaatggaattctggaattcggaagcattctgcgacgatgtgaagcgttgtatcaagcaaaaatattgggaagagcggatgaaatctctatttatagagagggtaagtggttatgtaagaaggatttgtggttatggtaatcttgatgatgcaatatatgctgttcagcaattgaagacttctatagttcagtgtgctgaacgatatgggaaagcttgtgtggttgtatattcgggtactgataaattaatggtctatagactacatacaatggctttcttcttcgaagaatatgttgaggaactgaagactgcagatccattaactgttcagctattctgtgatgaggatatatcagaattcgtagaatctgatgtacgttattgtaagaatgttattatggcatcgacagatgagcatgtatctataaacaaatgtattcagatagtaatatctgataatgtaataacattctattaatgtaatcttcatttcagcgtaagtctataatgaagtggttgatttatgatttttagaatataatcataaatggtcaactagaccaaataataccttaagaaatataacacactatgccaataagggaaaaatgcaattaagacctctaagattctatttagaataatataaatgtgccgaaggcacatataaataatattaggccgaaggcctaataatttgtaagtgaatgaccatctgtacgcttacgtggaatgtgggtcatatgtcccgagttagtgcgccagtgg</GBSeq_sequence>
+  </GBSeq>
+
+  <GBSeq>
+
+    <GBSeq_locus>EF546807</GBSeq_locus>
+    <GBSeq_length>1098</GBSeq_length>
+    <GBSeq_strandedness>single</GBSeq_strandedness>
+    <GBSeq_moltype>DNA</GBSeq_moltype>
+    <GBSeq_topology>circular</GBSeq_topology>
+    <GBSeq_division>VRL</GBSeq_division>
+    <GBSeq_update-date>05-FEB-2008</GBSeq_update-date>
+    <GBSeq_create-date>04-FEB-2008</GBSeq_create-date>
+    <GBSeq_definition>Abaca bunchy top virus isolate Q1108 segment DNA-R, complete sequence</GBSeq_definition>
+    <GBSeq_primary-accession>EF546807</GBSeq_primary-accession>
+    <GBSeq_accession-version>EF546807.1</GBSeq_accession-version>
+    <GBSeq_other-seqids>
+      <GBSeqid>gb|EF546807.1|</GBSeqid>
+      <GBSeqid>gi|145845929</GBSeqid>
+    </GBSeq_other-seqids>
+    <GBSeq_source>abaca bunchy top virus (ABTV)</GBSeq_source>
+    <GBSeq_organism>abaca bunchy top virus</GBSeq_organism>
+    <GBSeq_taxonomy>Viruses; Floreoviria; Shotokuvirae; Cressdnaviricota; Arfiviricetes; Mulpavirales; Nanoviridae; Babuvirus; Babuvirus abacae</GBSeq_taxonomy>
+    <GBSeq_references>
+      <GBReference>
+        <GBReference_reference>1</GBReference_reference>
+        <GBReference_position>1..1098</GBReference_position>
+        <GBReference_authors>
+          <GBAuthor>Sharman,M.</GBAuthor>
+          <GBAuthor>Thomas,J.E.</GBAuthor>
+          <GBAuthor>Skabo,S.</GBAuthor>
+          <GBAuthor>Holton,T.A.</GBAuthor>
+        </GBReference_authors>
+        <GBReference_title>Abaca bunchy top virus, a new member of the genus Babuvirus (family Nanoviridae)</GBReference_title>
+        <GBReference_journal>Arch. Virol. 153 (1), 135-147 (2008)</GBReference_journal>
+        <GBReference_xref>
+          <GBXref>
+            <GBXref_dbname>doi</GBXref_dbname>
+            <GBXref_id>10.1007/s00705-007-1077-z</GBXref_id>
+          </GBXref>
+        </GBReference_xref>
+        <GBReference_pubmed>17978886</GBReference_pubmed>
+      </GBReference>
+      <GBReference>
+        <GBReference_reference>2</GBReference_reference>
+        <GBReference_position>1..1098</GBReference_position>
+        <GBReference_authors>
+          <GBAuthor>Sharman,M.</GBAuthor>
+          <GBAuthor>Thomas,J.E.</GBAuthor>
+          <GBAuthor>Skabo,S.</GBAuthor>
+        </GBReference_authors>
+        <GBReference_title>Direct Submission</GBReference_title>
+        <GBReference_journal>Submitted (11-APR-2007) Department of Primary Industries and Fisheries, Queensland Government, Plant Pathology Building, 80 Meiers Road, Indooroopilly, Brisbane, Queensland 4068, Australia</GBReference_journal>
+      </GBReference>
+    </GBSeq_references>
+    <GBSeq_feature-table>
+      <GBFeature>
+        <GBFeature_key>source</GBFeature_key>
+        <GBFeature_location>1..1098</GBFeature_location>
+        <GBFeature_intervals>
+          <GBInterval>
+            <GBInterval_from>1</GBInterval_from>
+            <GBInterval_to>1098</GBInterval_to>
+            <GBInterval_accession>EF546807.1</GBInterval_accession>
+          </GBInterval>
+        </GBFeature_intervals>
+        <GBFeature_quals>
+          <GBQualifier>
+            <GBQualifier_name>organism</GBQualifier_name>
+            <GBQualifier_value>abaca bunchy top virus</GBQualifier_value>
+          </GBQualifier>
+          <GBQualifier>
+            <GBQualifier_name>mol_type</GBQualifier_name>
+            <GBQualifier_value>genomic DNA</GBQualifier_value>
+          </GBQualifier>
+          <GBQualifier>
+            <GBQualifier_name>cultivar</GBQualifier_name>
+            <GBQualifier_value>Luno</GBQualifier_value>
+          </GBQualifier>
+          <GBQualifier>
+            <GBQualifier_name>isolate</GBQualifier_name>
+            <GBQualifier_value>Q1108</GBQualifier_value>
+          </GBQualifier>
+          <GBQualifier>
+            <GBQualifier_name>host</GBQualifier_name>
+            <GBQualifier_value>Musa textilis</GBQualifier_value>
+          </GBQualifier>
+          <GBQualifier>
+            <GBQualifier_name>db_xref</GBQualifier_name>
+            <GBQualifier_value>taxon:3158377</GBQualifier_value>
+          </GBQualifier>
+          <GBQualifier>
+            <GBQualifier_name>segment</GBQualifier_name>
+            <GBQualifier_value>DNA-R</GBQualifier_value>
+          </GBQualifier>
+          <GBQualifier>
+            <GBQualifier_name>geo_loc_name</GBQualifier_name>
+            <GBQualifier_value>Philippines</GBQualifier_value>
+          </GBQualifier>
+          <GBQualifier>
+            <GBQualifier_name>note</GBQualifier_name>
+            <GBQualifier_value>acronym: ABTV</GBQualifier_value>
+          </GBQualifier>
+        </GBFeature_quals>
+      </GBFeature>
+      <GBFeature>
+        <GBFeature_key>CDS</GBFeature_key>
+        <GBFeature_location>95..955</GBFeature_location>
+        <GBFeature_intervals>
+          <GBInterval>
+            <GBInterval_from>95</GBInterval_from>
+            <GBInterval_to>955</GBInterval_to>
+            <GBInterval_accession>EF546807.1</GBInterval_accession>
+          </GBInterval>
+        </GBFeature_intervals>
+        <GBFeature_quals>
+          <GBQualifier>
+            <GBQualifier_name>codon_start</GBQualifier_name>
+            <GBQualifier_value>1</GBQualifier_value>
+          </GBQualifier>
+          <GBQualifier>
+            <GBQualifier_name>transl_table</GBQualifier_name>
+            <GBQualifier_value>1</GBQualifier_value>
+          </GBQualifier>
+          <GBQualifier>
+            <GBQualifier_name>product</GBQualifier_name>
+            <GBQualifier_value>putative replicase protein</GBQualifier_value>
+          </GBQualifier>
+          <GBQualifier>
+            <GBQualifier_name>protein_id</GBQualifier_name>
+            <GBQualifier_value>ABP96960.1</GBQualifier_value>
+          </GBQualifier>
+          <GBQualifier>
+            <GBQualifier_name>translation</GBQualifier_name>
+            <GBQualifier_value>MARYVICWMFTINNPETLPPMRDEYKYMVYQVERGESGTRHVQGYVEMKRRTSLKQMRALIPGAHLEKRKGTQEEARSYCMKADTRIEGPFEYGMFKISCNDNLYDVIQDMRETNKRPIEYLYDCPNTFDRSRDTLYRVQAELNKMQAMKSWSESYGCWTKEVEEIMAEPCHRRIIWVYGPNGGEGKTTYAKHLIKTRNAFYTPGGKSLDICRLYNYESIVIFDIPRCKEEYLNYGIVEEFKNGIIQSGKYEPVLKVVQYVEVIVMANFLPKEGIFSEDRIKLVTC</GBQualifier_value>
+          </GBQualifier>
+        </GBFeature_quals>
+      </GBFeature>
+    </GBSeq_feature-table>
+    <GBSeq_sequence>ggggctggggcttattattacccccagccccgggacgggacatcttgcatctataaatagattgcctcctcgcactaccagtgcaggcaatgcaatggctaggtatgtgatatgttggatgttcaccatcaacaatcccgaaacccttccaccaatgagggatgaatacaaatacatggtatatcaagtagagcgaggagaaagcggtactcggcatgtgcagggatacgtggagatgaagagacgcacgtctctgaaacaaatgagagctttaattcctggtgcccatctcgagaagagaaagggcacacaggaagaagctagatcatactgtatgaaggcggatacaagaatcgaaggacccttcgagtacggtatgttcaaaatatcatgtaatgataatttgtatgatgtcatacaggatatgagagaaacgaacaaaaggccgattgagtatttatatgattgtcctaataccttcgatagaagtagagatacattatacagggttcaggcagaactcaataaaatgcaagcaatgaagtcgtggtcggaatcctatggttgttggacgaaggaagtggaggaaataatggcggagccatgtcaccgacggatcatttgggtctatggaccaaatggtggtgaaggaaaaacaacctatgcgaagcatttaatcaagaccagaaatgcattttatacacctggcgggaaatcactggatatatgtaggttgtataattatgagtctattgtaatattcgatattccaagatgcaaagaggaatatttgaattacggaatagttgaggaattcaaaaatggcatcatccagagcgggaaatatgaacctgttctgaaagtagtacagtatgtggaagtcattgtcatggctaacttccttccgaaggaaggaatcttctcagaagataggataaagcttgtaacttgttgaacacgctatgacaaaaagggaaaaatgcaattatgacctgtcagattgttttataggaccgaccgaggccgcaggccgtcagtatgccacctgtacttactttaatgtggtgggtcatatgtcccgagttagtgcgccacgta</GBSeq_sequence>
+  </GBSeq>
+
+  <GBSeq>
+
+    <GBSeq_locus>EF546808</GBSeq_locus>
+    <GBSeq_length>1090</GBSeq_length>
+    <GBSeq_strandedness>single</GBSeq_strandedness>
+    <GBSeq_moltype>DNA</GBSeq_moltype>
+    <GBSeq_topology>circular</GBSeq_topology>
+    <GBSeq_division>VRL</GBSeq_division>
+    <GBSeq_update-date>05-FEB-2008</GBSeq_update-date>
+    <GBSeq_create-date>04-FEB-2008</GBSeq_create-date>
+    <GBSeq_definition>Abaca bunchy top virus isolate Q767 segment DNA-N, complete sequence</GBSeq_definition>
+    <GBSeq_primary-accession>EF546808</GBSeq_primary-accession>
+    <GBSeq_accession-version>EF546808.1</GBSeq_accession-version>
+    <GBSeq_other-seqids>
+      <GBSeqid>gb|EF546808.1|</GBSeqid>
+      <GBSeqid>gi|145845931</GBSeqid>
+    </GBSeq_other-seqids>
+    <GBSeq_source>abaca bunchy top virus (ABTV)</GBSeq_source>
+    <GBSeq_organism>abaca bunchy top virus</GBSeq_organism>
+    <GBSeq_taxonomy>Viruses; Floreoviria; Shotokuvirae; Cressdnaviricota; Arfiviricetes; Mulpavirales; Nanoviridae; Babuvirus; Babuvirus abacae</GBSeq_taxonomy>
+    <GBSeq_references>
+      <GBReference>
+        <GBReference_reference>1</GBReference_reference>
+        <GBReference_position>1..1090</GBReference_position>
+        <GBReference_authors>
+          <GBAuthor>Sharman,M.</GBAuthor>
+          <GBAuthor>Thomas,J.E.</GBAuthor>
+          <GBAuthor>Skabo,S.</GBAuthor>
+          <GBAuthor>Holton,T.A.</GBAuthor>
+        </GBReference_authors>
+        <GBReference_title>Abaca bunchy top virus, a new member of the genus Babuvirus (family Nanoviridae)</GBReference_title>
+        <GBReference_journal>Arch. Virol. 153 (1), 135-147 (2008)</GBReference_journal>
+        <GBReference_xref>
+          <GBXref>
+            <GBXref_dbname>doi</GBXref_dbname>
+            <GBXref_id>10.1007/s00705-007-1077-z</GBXref_id>
+          </GBXref>
+        </GBReference_xref>
+        <GBReference_pubmed>17978886</GBReference_pubmed>
+      </GBReference>
+      <GBReference>
+        <GBReference_reference>2</GBReference_reference>
+        <GBReference_position>1..1090</GBReference_position>
+        <GBReference_authors>
+          <GBAuthor>Sharman,M.</GBAuthor>
+          <GBAuthor>Thomas,J.E.</GBAuthor>
+          <GBAuthor>Skabo,S.</GBAuthor>
+        </GBReference_authors>
+        <GBReference_title>Direct Submission</GBReference_title>
+        <GBReference_journal>Submitted (11-APR-2007) Department of Primary Industries and Fisheries, Queensland Government, Plant Pathology Building, 80 Meiers Road, Indooroopilly, Brisbane, Queensland 4068, Australia</GBReference_journal>
+      </GBReference>
+    </GBSeq_references>
+    <GBSeq_feature-table>
+      <GBFeature>
+        <GBFeature_key>source</GBFeature_key>
+        <GBFeature_location>1..1090</GBFeature_location>
+        <GBFeature_intervals>
+          <GBInterval>
+            <GBInterval_from>1</GBInterval_from>
+            <GBInterval_to>1090</GBInterval_to>
+            <GBInterval_accession>EF546808.1</GBInterval_accession>
+          </GBInterval>
+        </GBFeature_intervals>
+        <GBFeature_quals>
+          <GBQualifier>
+            <GBQualifier_name>organism</GBQualifier_name>
+            <GBQualifier_value>abaca bunchy top virus</GBQualifier_value>
+          </GBQualifier>
+          <GBQualifier>
+            <GBQualifier_name>mol_type</GBQualifier_name>
+            <GBQualifier_value>genomic DNA</GBQualifier_value>
+          </GBQualifier>
+          <GBQualifier>
+            <GBQualifier_name>isolate</GBQualifier_name>
+            <GBQualifier_value>Q767</GBQualifier_value>
+          </GBQualifier>
+          <GBQualifier>
+            <GBQualifier_name>host</GBQualifier_name>
+            <GBQualifier_value>Musa sp.</GBQualifier_value>
+          </GBQualifier>
+          <GBQualifier>
+            <GBQualifier_name>db_xref</GBQualifier_name>
+            <GBQualifier_value>taxon:3158377</GBQualifier_value>
+          </GBQualifier>
+          <GBQualifier>
+            <GBQualifier_name>segment</GBQualifier_name>
+            <GBQualifier_value>DNA-N</GBQualifier_value>
+          </GBQualifier>
+          <GBQualifier>
+            <GBQualifier_name>geo_loc_name</GBQualifier_name>
+            <GBQualifier_value>Malaysia</GBQualifier_value>
+          </GBQualifier>
+          <GBQualifier>
+            <GBQualifier_name>note</GBQualifier_name>
+            <GBQualifier_value>acronym: ABTV</GBQualifier_value>
+          </GBQualifier>
+        </GBFeature_quals>
+      </GBFeature>
+      <GBFeature>
+        <GBFeature_key>CDS</GBFeature_key>
+        <GBFeature_location>236..700</GBFeature_location>
+        <GBFeature_intervals>
+          <GBInterval>
+            <GBInterval_from>236</GBInterval_from>
+            <GBInterval_to>700</GBInterval_to>
+            <GBInterval_accession>EF546808.1</GBInterval_accession>
+          </GBInterval>
+        </GBFeature_intervals>
+        <GBFeature_quals>
+          <GBQualifier>
+            <GBQualifier_name>codon_start</GBQualifier_name>
+            <GBQualifier_value>1</GBQualifier_value>
+          </GBQualifier>
+          <GBQualifier>
+            <GBQualifier_name>transl_table</GBQualifier_name>
+            <GBQualifier_value>1</GBQualifier_value>
+          </GBQualifier>
+          <GBQualifier>
+            <GBQualifier_name>product</GBQualifier_name>
+            <GBQualifier_value>putative nuclear shuttle protein</GBQualifier_value>
+          </GBQualifier>
+          <GBQualifier>
+            <GBQualifier_name>protein_id</GBQualifier_name>
+            <GBQualifier_value>ABP96961.1</GBQualifier_value>
+          </GBQualifier>
+          <GBQualifier>
+            <GBQualifier_name>translation</GBQualifier_name>
+            <GBQualifier_value>MDWMESQFKTCTHGCDWKAIAPEAQDNIQVITCSDSGYGRKNPRKVLLRSIQIGFNGSFRGSNRNVRGFIYVSVRQDDGQMRPIMVVPFGGYGYHNDYYYFEGQSSTNCEIVSDYIPAGQDWSRDMEISISNSNNCNQECDIKCYVVCNLRIKE</GBQualifier_value>
+          </GBQualifier>
+        </GBFeature_quals>
+      </GBFeature>
+    </GBSeq_feature-table>
+    <GBSeq_sequence>agcaggggggcttattattaccccccctgctcggggcgggacattctgtgatgggctgggctttatgcggccaaataagcccataaagccagatctgggcccatttaagggcccgtggtttgaaaatgtcgcgttcccgcctaaattgtttgcttgccctgcaaggaaacgaaaactctataaatagggttgttctctgcttgtttaatacatcaggcgcaaatcttttgcaacgatggattggatggaatcacaattcaagacatgtacgcatggctgcgactggaaggcgatagctccagaagcacaagataatatacaggtaattacatgttccgattcaggttacggaagaaagaaccctcgtaaggttcttctgaggagtattcagatagggttcaatggaagcttcagaggaagtaatagaaatgttcgaggcttcatatacgtgtctgtaagacaggatgatggccaaatgagaccaattatggtcgttccattcggagggtatggatatcataacgactactattattttgaaggacaatccagtacgaattgtgagatagtgtcggactatattccggccggtcaagactggagcagagatatggagataagtataagtaacagcaacaattgtaatcaagagtgcgatatcaagtgttatgtagtatgtaatttaagaattaaggaataawattgttgccgaaggtctgttatttgaatgttgagataaggaaaggggcggcgaagcatgtgtgtataataacatataacacactattatatattttgtaaagaataaaattatgacctgtcagattaagtttagaatgaactgaggccgaaggcctcaccgaggccgaaggccgtcaggatggttttacaaaataattataagcacctgtactaagtacgaagagcggtataatatctgaaaggaaaaaataataatataataaaaatattatgatgtcccaaaatagcagaatgctaaaggaacaaaaggatgctctaagtacagggttgcgtgctctggacgccactttagtggtgggccagatgtcccgagttagtgcgccacgtc</GBSeq_sequence>
+  </GBSeq>
+
+  <GBSeq>
+
+    <GBSeq_locus>EF546809</GBSeq_locus>
+    <GBSeq_length>1057</GBSeq_length>
+    <GBSeq_strandedness>single</GBSeq_strandedness>
+    <GBSeq_moltype>DNA</GBSeq_moltype>
+    <GBSeq_topology>circular</GBSeq_topology>
+    <GBSeq_division>VRL</GBSeq_division>
+    <GBSeq_update-date>05-FEB-2008</GBSeq_update-date>
+    <GBSeq_create-date>04-FEB-2008</GBSeq_create-date>
+    <GBSeq_definition>Abaca bunchy top virus isolate Q767 segment DNA-U3, complete sequence</GBSeq_definition>
+    <GBSeq_primary-accession>EF546809</GBSeq_primary-accession>
+    <GBSeq_accession-version>EF546809.1</GBSeq_accession-version>
+    <GBSeq_other-seqids>
+      <GBSeqid>gb|EF546809.1|</GBSeqid>
+      <GBSeqid>gi|145845933</GBSeqid>
+    </GBSeq_other-seqids>
+    <GBSeq_source>abaca bunchy top virus (ABTV)</GBSeq_source>
+    <GBSeq_organism>abaca bunchy top virus</GBSeq_organism>
+    <GBSeq_taxonomy>Viruses; Floreoviria; Shotokuvirae; Cressdnaviricota; Arfiviricetes; Mulpavirales; Nanoviridae; Babuvirus; Babuvirus abacae</GBSeq_taxonomy>
+    <GBSeq_references>
+      <GBReference>
+        <GBReference_reference>1</GBReference_reference>
+        <GBReference_position>1..1057</GBReference_position>
+        <GBReference_authors>
+          <GBAuthor>Sharman,M.</GBAuthor>
+          <GBAuthor>Thomas,J.E.</GBAuthor>
+          <GBAuthor>Skabo,S.</GBAuthor>
+          <GBAuthor>Holton,T.A.</GBAuthor>
+        </GBReference_authors>
+        <GBReference_title>Abaca bunchy top virus, a new member of the genus Babuvirus (family Nanoviridae)</GBReference_title>
+        <GBReference_journal>Arch. Virol. 153 (1), 135-147 (2008)</GBReference_journal>
+        <GBReference_xref>
+          <GBXref>
+            <GBXref_dbname>doi</GBXref_dbname>
+            <GBXref_id>10.1007/s00705-007-1077-z</GBXref_id>
+          </GBXref>
+        </GBReference_xref>
+        <GBReference_pubmed>17978886</GBReference_pubmed>
+      </GBReference>
+      <GBReference>
+        <GBReference_reference>2</GBReference_reference>
+        <GBReference_position>1..1057</GBReference_position>
+        <GBReference_authors>
+          <GBAuthor>Sharman,M.</GBAuthor>
+          <GBAuthor>Thomas,J.E.</GBAuthor>
+          <GBAuthor>Skabo,S.</GBAuthor>
+        </GBReference_authors>
+        <GBReference_title>Direct Submission</GBReference_title>
+        <GBReference_journal>Submitted (11-APR-2007) Department of Primary Industries and Fisheries, Queensland Government, Plant Pathology Building, 80 Meiers Road, Indooroopilly, Brisbane, Queensland 4068, Australia</GBReference_journal>
+      </GBReference>
+    </GBSeq_references>
+    <GBSeq_feature-table>
+      <GBFeature>
+        <GBFeature_key>source</GBFeature_key>
+        <GBFeature_location>1..1057</GBFeature_location>
+        <GBFeature_intervals>
+          <GBInterval>
+            <GBInterval_from>1</GBInterval_from>
+            <GBInterval_to>1057</GBInterval_to>
+            <GBInterval_accession>EF546809.1</GBInterval_accession>
+          </GBInterval>
+        </GBFeature_intervals>
+        <GBFeature_quals>
+          <GBQualifier>
+            <GBQualifier_name>organism</GBQualifier_name>
+            <GBQualifier_value>abaca bunchy top virus</GBQualifier_value>
+          </GBQualifier>
+          <GBQualifier>
+            <GBQualifier_name>mol_type</GBQualifier_name>
+            <GBQualifier_value>genomic DNA</GBQualifier_value>
+          </GBQualifier>
+          <GBQualifier>
+            <GBQualifier_name>isolate</GBQualifier_name>
+            <GBQualifier_value>Q767</GBQualifier_value>
+          </GBQualifier>
+          <GBQualifier>
+            <GBQualifier_name>host</GBQualifier_name>
+            <GBQualifier_value>Musa sp.</GBQualifier_value>
+          </GBQualifier>
+          <GBQualifier>
+            <GBQualifier_name>db_xref</GBQualifier_name>
+            <GBQualifier_value>taxon:3158377</GBQualifier_value>
+          </GBQualifier>
+          <GBQualifier>
+            <GBQualifier_name>segment</GBQualifier_name>
+            <GBQualifier_value>DNA-U3</GBQualifier_value>
+          </GBQualifier>
+          <GBQualifier>
+            <GBQualifier_name>geo_loc_name</GBQualifier_name>
+            <GBQualifier_value>Malaysia</GBQualifier_value>
+          </GBQualifier>
+          <GBQualifier>
+            <GBQualifier_name>note</GBQualifier_name>
+            <GBQualifier_value>acronym: ABTV</GBQualifier_value>
+          </GBQualifier>
+        </GBFeature_quals>
+      </GBFeature>
+    </GBSeq_feature-table>
+    <GBSeq_sequence>agcaggggggcttattattaccccccctgctgggacgggacatccgaatagtaatgggcttaatacataaatgggccgccaaataagcgtacagttcagtatcttcgttttgggcctcggcccaaaattaagagaacgtgtgcgcttgtttgggttggaccgtaggtccggttcgaatgaggaatattccttgcttccataggaaggaacagcgaaataaaataaatcgctgttacacgtgtaagaatactattagttcgcagagtttataaatacccttcaagttgaagggtgtggtgctctctctcttctgtcagacggtgtgccatgatgaagctctccgggaggaaagaagggcggaggtggaggagccgcctcgcccgtccctccgacgaagtatacgaagtcgtaggtatgtcagggtatttatagaagcgtcgtatactaaacgcgcctgtatcataattgtatttgtgtatttaaatatttaaataccaaaccttaaggaataaaatatatgtttaataaaataacacatgacaataaaagaaaacaataatacaataataaaattgtattatgcaaacgttgtataattaaggtctgtttaatatacatatatatatgtatattacagtattgtttaaaataaatgacttggaaggaaataataatattaatgataagcaataaaatattccgaatacataaaaaggggaaaatgcaattaagacctgtcacgtttacatatttcgaatatattaagggccgaaggcccgtcagtatgcaggtacatcagtgattgcttcgtgacgaagcaagggtattattgtaaataagaaagcatctgacaactttaatagtggtcccctatacagctgtcatatgacagctggcaaaggatcattgggcggactccaaatatatattaaatataacatataaaatatataaggtatagatactattattaattaaaagaggcgggaaagaggacacgtgcgccgcacgccactttagtggtgggccatatgtcccgagttagtgcgcttacgtc</GBSeq_sequence>
+  </GBSeq>
+
+  <GBSeq>
+
+    <GBSeq_locus>EF546810</GBSeq_locus>
+    <GBSeq_length>1087</GBSeq_length>
+    <GBSeq_strandedness>single</GBSeq_strandedness>
+    <GBSeq_moltype>DNA</GBSeq_moltype>
+    <GBSeq_topology>circular</GBSeq_topology>
+    <GBSeq_division>VRL</GBSeq_division>
+    <GBSeq_update-date>05-FEB-2008</GBSeq_update-date>
+    <GBSeq_create-date>04-FEB-2008</GBSeq_create-date>
+    <GBSeq_definition>Abaca bunchy top virus isolate Q767 segment DNA-S, complete sequence</GBSeq_definition>
+    <GBSeq_primary-accession>EF546810</GBSeq_primary-accession>
+    <GBSeq_accession-version>EF546810.1</GBSeq_accession-version>
+    <GBSeq_other-seqids>
+      <GBSeqid>gb|EF546810.1|</GBSeqid>
+      <GBSeqid>gi|145845934</GBSeqid>
+    </GBSeq_other-seqids>
+    <GBSeq_source>abaca bunchy top virus (ABTV)</GBSeq_source>
+    <GBSeq_organism>abaca bunchy top virus</GBSeq_organism>
+    <GBSeq_taxonomy>Viruses; Floreoviria; Shotokuvirae; Cressdnaviricota; Arfiviricetes; Mulpavirales; Nanoviridae; Babuvirus; Babuvirus abacae</GBSeq_taxonomy>
+    <GBSeq_references>
+      <GBReference>
+        <GBReference_reference>1</GBReference_reference>
+        <GBReference_position>1..1087</GBReference_position>
+        <GBReference_authors>
+          <GBAuthor>Sharman,M.</GBAuthor>
+          <GBAuthor>Thomas,J.E.</GBAuthor>
+          <GBAuthor>Skabo,S.</GBAuthor>
+          <GBAuthor>Holton,T.A.</GBAuthor>
+        </GBReference_authors>
+        <GBReference_title>Abaca bunchy top virus, a new member of the genus Babuvirus (family Nanoviridae)</GBReference_title>
+        <GBReference_journal>Arch. Virol. 153 (1), 135-147 (2008)</GBReference_journal>
+        <GBReference_xref>
+          <GBXref>
+            <GBXref_dbname>doi</GBXref_dbname>
+            <GBXref_id>10.1007/s00705-007-1077-z</GBXref_id>
+          </GBXref>
+        </GBReference_xref>
+        <GBReference_pubmed>17978886</GBReference_pubmed>
+      </GBReference>
+      <GBReference>
+        <GBReference_reference>2</GBReference_reference>
+        <GBReference_position>1..1087</GBReference_position>
+        <GBReference_authors>
+          <GBAuthor>Sharman,M.</GBAuthor>
+          <GBAuthor>Thomas,J.E.</GBAuthor>
+          <GBAuthor>Skabo,S.</GBAuthor>
+        </GBReference_authors>
+        <GBReference_title>Direct Submission</GBReference_title>
+        <GBReference_journal>Submitted (11-APR-2007) Department of Primary Industries and Fisheries, Queensland Government, Plant Pathology Building, 80 Meiers Road, Indooroopilly, Brisbane, Queensland 4068, Australia</GBReference_journal>
+      </GBReference>
+    </GBSeq_references>
+    <GBSeq_feature-table>
+      <GBFeature>
+        <GBFeature_key>source</GBFeature_key>
+        <GBFeature_location>1..1087</GBFeature_location>
+        <GBFeature_intervals>
+          <GBInterval>
+            <GBInterval_from>1</GBInterval_from>
+            <GBInterval_to>1087</GBInterval_to>
+            <GBInterval_accession>EF546810.1</GBInterval_accession>
+          </GBInterval>
+        </GBFeature_intervals>
+        <GBFeature_quals>
+          <GBQualifier>
+            <GBQualifier_name>organism</GBQualifier_name>
+            <GBQualifier_value>abaca bunchy top virus</GBQualifier_value>
+          </GBQualifier>
+          <GBQualifier>
+            <GBQualifier_name>mol_type</GBQualifier_name>
+            <GBQualifier_value>genomic DNA</GBQualifier_value>
+          </GBQualifier>
+          <GBQualifier>
+            <GBQualifier_name>isolate</GBQualifier_name>
+            <GBQualifier_value>Q767</GBQualifier_value>
+          </GBQualifier>
+          <GBQualifier>
+            <GBQualifier_name>host</GBQualifier_name>
+            <GBQualifier_value>Musa sp.</GBQualifier_value>
+          </GBQualifier>
+          <GBQualifier>
+            <GBQualifier_name>db_xref</GBQualifier_name>
+            <GBQualifier_value>taxon:3158377</GBQualifier_value>
+          </GBQualifier>
+          <GBQualifier>
+            <GBQualifier_name>segment</GBQualifier_name>
+            <GBQualifier_value>DNA-S</GBQualifier_value>
+          </GBQualifier>
+          <GBQualifier>
+            <GBQualifier_name>geo_loc_name</GBQualifier_name>
+            <GBQualifier_value>Malaysia</GBQualifier_value>
+          </GBQualifier>
+          <GBQualifier>
+            <GBQualifier_name>note</GBQualifier_name>
+            <GBQualifier_value>acronym: ABTV</GBQualifier_value>
+          </GBQualifier>
+        </GBFeature_quals>
+      </GBFeature>
+      <GBFeature>
+        <GBFeature_key>CDS</GBFeature_key>
+        <GBFeature_location>224..736</GBFeature_location>
+        <GBFeature_intervals>
+          <GBInterval>
+            <GBInterval_from>224</GBInterval_from>
+            <GBInterval_to>736</GBInterval_to>
+            <GBInterval_accession>EF546810.1</GBInterval_accession>
+          </GBInterval>
+        </GBFeature_intervals>
+        <GBFeature_quals>
+          <GBQualifier>
+            <GBQualifier_name>codon_start</GBQualifier_name>
+            <GBQualifier_value>1</GBQualifier_value>
+          </GBQualifier>
+          <GBQualifier>
+            <GBQualifier_name>transl_table</GBQualifier_name>
+            <GBQualifier_value>1</GBQualifier_value>
+          </GBQualifier>
+          <GBQualifier>
+            <GBQualifier_name>product</GBQualifier_name>
+            <GBQualifier_value>putative coat protein</GBQualifier_value>
+          </GBQualifier>
+          <GBQualifier>
+            <GBQualifier_name>protein_id</GBQualifier_name>
+            <GBQualifier_value>ABP96962.1</GBQualifier_value>
+          </GBQualifier>
+          <GBQualifier>
+            <GBQualifier_name>translation</GBQualifier_name>
+            <GBQualifier_value>MARYPKKALKKRKAVRRKYGSKATTSHDYAVDTSFIVPENTIKLYRIEPTDKTLPRYFIWKMFMLLVCKVRPGRILHWAMIKSSWDVKDPTVVLEAPGLFIKPANSHLVKLVCSGELEAPVGGGTSEVECLLRKTTLLRRNVTELDFLYLAFYCSSGVTINYQNRITYHV</GBQualifier_value>
+          </GBQualifier>
+        </GBFeature_quals>
+      </GBFeature>
+    </GBSeq_feature-table>
+    <GBSeq_sequence>ggcaggggggcttattattaccccccctgcccgggacgggacattctgtgatgggctgggctttatgcggccaaataagcccataaagccagatctgggcccatttaagggcccgtggtttgaaaatgtcgcgttcccgccaaaatagttgcttgctctgcaagcaaactatatctattataaataccagatgtaatggttgcctgagaatgaaaataaaaggatggcgaggtatccgaagaaggcgctaaagaagaggaaggcggtacgccgtaagtatggaagtaaagctacgaccagtcatgattatgctgttgatacttcatttattgttcctgaaaatactattaagctgtatcgtattgagcctactgataaaacattacccagatattttatctggaaaatgtttatgttgttggtatgcaaagtcagaccagggcgtatacttcattgggcgatgattaagagctcttgggatgtgaaggatccaacagttgttcttgaagcgcctggattgtttatcaagccagcaaacagccatctggttaaactggtatgcagtggcgagttagaagctccagtaggaggagggacttcagaggttgaatgtcttctacggaagacaactttacttcgtaggaatgttacagaattggatttcttgtatttggcgttttattgttcttctggagttacaatcaactaccagaacaggattacatatcatgtataaaccacataaaataaatgtggtgttgcaggcatgggaagaataaaacaatgtttgcctacgaaatattttggtaaagtgaaattatgacctgtcagaattaagtttagaatgaactgaggccgaaggcctcaccgaggccgaaggccgtcaagttggatgaataaaatacaaggtataagtacgaagagcggtataatatctgaaaggaaataataataatataataaaatattatgatgtcccaaaatagcagaatgctaaaggaacaaaaggatgctctaagtacagggttgcgtgctctggacgccactttagtggtgggccagatgtcccgagttagtgcgccacgtg</GBSeq_sequence>
+  </GBSeq>
+
+  <GBSeq>
+
+    <GBSeq_locus>EF546811</GBSeq_locus>
+    <GBSeq_length>1074</GBSeq_length>
+    <GBSeq_strandedness>single</GBSeq_strandedness>
+    <GBSeq_moltype>DNA</GBSeq_moltype>
+    <GBSeq_topology>circular</GBSeq_topology>
+    <GBSeq_division>VRL</GBSeq_division>
+    <GBSeq_update-date>05-FEB-2008</GBSeq_update-date>
+    <GBSeq_create-date>04-FEB-2008</GBSeq_create-date>
+    <GBSeq_definition>Abaca bunchy top virus isolate Q767 segment DNA-M, complete sequence</GBSeq_definition>
+    <GBSeq_primary-accession>EF546811</GBSeq_primary-accession>
+    <GBSeq_accession-version>EF546811.1</GBSeq_accession-version>
+    <GBSeq_other-seqids>
+      <GBSeqid>gb|EF546811.1|</GBSeqid>
+      <GBSeqid>gi|145845936</GBSeqid>
+    </GBSeq_other-seqids>
+    <GBSeq_source>abaca bunchy top virus (ABTV)</GBSeq_source>
+    <GBSeq_organism>abaca bunchy top virus</GBSeq_organism>
+    <GBSeq_taxonomy>Viruses; Floreoviria; Shotokuvirae; Cressdnaviricota; Arfiviricetes; Mulpavirales; Nanoviridae; Babuvirus; Babuvirus abacae</GBSeq_taxonomy>
+    <GBSeq_references>
+      <GBReference>
+        <GBReference_reference>1</GBReference_reference>
+        <GBReference_position>1..1074</GBReference_position>
+        <GBReference_authors>
+          <GBAuthor>Sharman,M.</GBAuthor>
+          <GBAuthor>Thomas,J.E.</GBAuthor>
+          <GBAuthor>Skabo,S.</GBAuthor>
+          <GBAuthor>Holton,T.A.</GBAuthor>
+        </GBReference_authors>
+        <GBReference_title>Abaca bunchy top virus, a new member of the genus Babuvirus (family Nanoviridae)</GBReference_title>
+        <GBReference_journal>Arch. Virol. 153 (1), 135-147 (2008)</GBReference_journal>
+        <GBReference_xref>
+          <GBXref>
+            <GBXref_dbname>doi</GBXref_dbname>
+            <GBXref_id>10.1007/s00705-007-1077-z</GBXref_id>
+          </GBXref>
+        </GBReference_xref>
+        <GBReference_pubmed>17978886</GBReference_pubmed>
+      </GBReference>
+      <GBReference>
+        <GBReference_reference>2</GBReference_reference>
+        <GBReference_position>1..1074</GBReference_position>
+        <GBReference_authors>
+          <GBAuthor>Sharman,M.</GBAuthor>
+          <GBAuthor>Thomas,J.E.</GBAuthor>
+          <GBAuthor>Skabo,S.</GBAuthor>
+        </GBReference_authors>
+        <GBReference_title>Direct Submission</GBReference_title>
+        <GBReference_journal>Submitted (11-APR-2007) Department of Primary Industries and Fisheries, Queensland Government, Plant Pathology Building, 80 Meiers Road, Indooroopilly, Brisbane, Queensland 4068, Australia</GBReference_journal>
+      </GBReference>
+    </GBSeq_references>
+    <GBSeq_feature-table>
+      <GBFeature>
+        <GBFeature_key>source</GBFeature_key>
+        <GBFeature_location>1..1074</GBFeature_location>
+        <GBFeature_intervals>
+          <GBInterval>
+            <GBInterval_from>1</GBInterval_from>
+            <GBInterval_to>1074</GBInterval_to>
+            <GBInterval_accession>EF546811.1</GBInterval_accession>
+          </GBInterval>
+        </GBFeature_intervals>
+        <GBFeature_quals>
+          <GBQualifier>
+            <GBQualifier_name>organism</GBQualifier_name>
+            <GBQualifier_value>abaca bunchy top virus</GBQualifier_value>
+          </GBQualifier>
+          <GBQualifier>
+            <GBQualifier_name>mol_type</GBQualifier_name>
+            <GBQualifier_value>genomic DNA</GBQualifier_value>
+          </GBQualifier>
+          <GBQualifier>
+            <GBQualifier_name>isolate</GBQualifier_name>
+            <GBQualifier_value>Q767</GBQualifier_value>
+          </GBQualifier>
+          <GBQualifier>
+            <GBQualifier_name>host</GBQualifier_name>
+            <GBQualifier_value>Musa sp.</GBQualifier_value>
+          </GBQualifier>
+          <GBQualifier>
+            <GBQualifier_name>db_xref</GBQualifier_name>
+            <GBQualifier_value>taxon:3158377</GBQualifier_value>
+          </GBQualifier>
+          <GBQualifier>
+            <GBQualifier_name>segment</GBQualifier_name>
+            <GBQualifier_value>DNA-M</GBQualifier_value>
+          </GBQualifier>
+          <GBQualifier>
+            <GBQualifier_name>geo_loc_name</GBQualifier_name>
+            <GBQualifier_value>Malaysia</GBQualifier_value>
+          </GBQualifier>
+          <GBQualifier>
+            <GBQualifier_name>note</GBQualifier_name>
+            <GBQualifier_value>acronym: ABTV</GBQualifier_value>
+          </GBQualifier>
+        </GBFeature_quals>
+      </GBFeature>
+      <GBFeature>
+        <GBFeature_key>CDS</GBFeature_key>
+        <GBFeature_location>178..528</GBFeature_location>
+        <GBFeature_intervals>
+          <GBInterval>
+            <GBInterval_from>178</GBInterval_from>
+            <GBInterval_to>528</GBInterval_to>
+            <GBInterval_accession>EF546811.1</GBInterval_accession>
+          </GBInterval>
+        </GBFeature_intervals>
+        <GBFeature_quals>
+          <GBQualifier>
+            <GBQualifier_name>codon_start</GBQualifier_name>
+            <GBQualifier_value>1</GBQualifier_value>
+          </GBQualifier>
+          <GBQualifier>
+            <GBQualifier_name>transl_table</GBQualifier_name>
+            <GBQualifier_value>1</GBQualifier_value>
+          </GBQualifier>
+          <GBQualifier>
+            <GBQualifier_name>product</GBQualifier_name>
+            <GBQualifier_value>putative movement protein</GBQualifier_value>
+          </GBQualifier>
+          <GBQualifier>
+            <GBQualifier_name>protein_id</GBQualifier_name>
+            <GBQualifier_value>ABP96963.1</GBQualifier_value>
+          </GBQualifier>
+          <GBQualifier>
+            <GBQualifier_name>translation</GBQualifier_name>
+            <GBQualifier_value>MGLTGERVKQFFEWFLFFSAIFVAITIIYILLAVLLELPKYIKGLVQYVVEYITRRRVWTRRTQLTEATGGGDIEAVGHDSQAYTHTVMPXVPPVSAPISNRRADQPLRSSAGPMF</GBQualifier_value>
+          </GBQualifier>
+        </GBFeature_quals>
+      </GBFeature>
+    </GBSeq_feature-table>
+    <GBSeq_sequence>ggggctggggcttattattacccccagccccggaacgggacatcacgtgcctccctgtacacgcacgtgacatcaaatggcttgctgygcaagatagaaaggcttcctgcggaagccaggcatcatatatgggttgtagaggatcagccgactctataaatatagggaggcgtggtcatgggattgacaggagaacgagtgaaacaattctttgaatggtttctgttcttctcagcaatatttgttgcaataacaataatatatatattgctggcagttctccttgaactaccgaagtatattaagggtttagtacaatacgtagtggagtatattactagacgacgggtatggacacggaggacccaattgacagaggcaaccggaggaggcgatatagaagctgtagggcatgacagtcaggcgtatacgcatactgttatgccatstgttccaccagttagcgctcctatatcaaataggagagctgatcagcctcttcgatcaagcgccggaccaatgttttaaatacccgtgatatttaatatgcaagtgtataaatacccattgtagatctgtttgtaacctgaatatgcaaagtatataatactttgttgtaatgtataagtacattaataatatacgaagtataatgttgatgcgatgtcttcggaaaatgaagtatacccaaatacacaaaaaaacatatatgtggtgtatacttattgttaagtataataaaattataatacaaacaaatatattgtgtattataatacataaaagaagacagagctgtgaagttaagtaagaaagcgacggattcgtattggataatatgattcgcggagcattacttaacggcgaagtaaagcatcagacaagaatatgacagctgtcatatcaactaaaaagcatagcttgccgagcacgctatgcaatataagggaaaaatgaaataatgacctgtcacgtttacacttttcgtaaagatgtagggccgaaggccctaatgacgcgtgtcatattctctatagtggtgggtcatatgtcccgagttagtgcgccacgtaa</GBSeq_sequence>
+  </GBSeq>
+
+  <GBSeq>
+
+    <GBSeq_locus>EF546812</GBSeq_locus>
+    <GBSeq_length>1015</GBSeq_length>
+    <GBSeq_strandedness>single</GBSeq_strandedness>
+    <GBSeq_moltype>DNA</GBSeq_moltype>
+    <GBSeq_topology>circular</GBSeq_topology>
+    <GBSeq_division>VRL</GBSeq_division>
+    <GBSeq_update-date>05-FEB-2008</GBSeq_update-date>
+    <GBSeq_create-date>04-FEB-2008</GBSeq_create-date>
+    <GBSeq_definition>Abaca bunchy top virus isolate Q767 segment DNA-C, complete sequence</GBSeq_definition>
+    <GBSeq_primary-accession>EF546812</GBSeq_primary-accession>
+    <GBSeq_accession-version>EF546812.1</GBSeq_accession-version>
+    <GBSeq_other-seqids>
+      <GBSeqid>gb|EF546812.1|</GBSeqid>
+      <GBSeqid>gi|145845938</GBSeqid>
+    </GBSeq_other-seqids>
+    <GBSeq_source>abaca bunchy top virus (ABTV)</GBSeq_source>
+    <GBSeq_organism>abaca bunchy top virus</GBSeq_organism>
+    <GBSeq_taxonomy>Viruses; Floreoviria; Shotokuvirae; Cressdnaviricota; Arfiviricetes; Mulpavirales; Nanoviridae; Babuvirus; Babuvirus abacae</GBSeq_taxonomy>
+    <GBSeq_references>
+      <GBReference>
+        <GBReference_reference>1</GBReference_reference>
+        <GBReference_position>1..1015</GBReference_position>
+        <GBReference_authors>
+          <GBAuthor>Sharman,M.</GBAuthor>
+          <GBAuthor>Thomas,J.E.</GBAuthor>
+          <GBAuthor>Skabo,S.</GBAuthor>
+          <GBAuthor>Holton,T.A.</GBAuthor>
+        </GBReference_authors>
+        <GBReference_title>Abaca bunchy top virus, a new member of the genus Babuvirus (family Nanoviridae)</GBReference_title>
+        <GBReference_journal>Arch. Virol. 153 (1), 135-147 (2008)</GBReference_journal>
+        <GBReference_xref>
+          <GBXref>
+            <GBXref_dbname>doi</GBXref_dbname>
+            <GBXref_id>10.1007/s00705-007-1077-z</GBXref_id>
+          </GBXref>
+        </GBReference_xref>
+        <GBReference_pubmed>17978886</GBReference_pubmed>
+      </GBReference>
+      <GBReference>
+        <GBReference_reference>2</GBReference_reference>
+        <GBReference_position>1..1015</GBReference_position>
+        <GBReference_authors>
+          <GBAuthor>Sharman,M.</GBAuthor>
+          <GBAuthor>Thomas,J.E.</GBAuthor>
+          <GBAuthor>Skabo,S.</GBAuthor>
+        </GBReference_authors>
+        <GBReference_title>Direct Submission</GBReference_title>
+        <GBReference_journal>Submitted (11-APR-2007) Department of Primary Industries and Fisheries, Queensland Government, Plant Pathology Building, 80 Meiers Road, Indooroopilly, Brisbane, Queensland 4068, Australia</GBReference_journal>
+      </GBReference>
+    </GBSeq_references>
+    <GBSeq_feature-table>
+      <GBFeature>
+        <GBFeature_key>source</GBFeature_key>
+        <GBFeature_location>1..1015</GBFeature_location>
+        <GBFeature_intervals>
+          <GBInterval>
+            <GBInterval_from>1</GBInterval_from>
+            <GBInterval_to>1015</GBInterval_to>
+            <GBInterval_accession>EF546812.1</GBInterval_accession>
+          </GBInterval>
+        </GBFeature_intervals>
+        <GBFeature_quals>
+          <GBQualifier>
+            <GBQualifier_name>organism</GBQualifier_name>
+            <GBQualifier_value>abaca bunchy top virus</GBQualifier_value>
+          </GBQualifier>
+          <GBQualifier>
+            <GBQualifier_name>mol_type</GBQualifier_name>
+            <GBQualifier_value>genomic DNA</GBQualifier_value>
+          </GBQualifier>
+          <GBQualifier>
+            <GBQualifier_name>isolate</GBQualifier_name>
+            <GBQualifier_value>Q767</GBQualifier_value>
+          </GBQualifier>
+          <GBQualifier>
+            <GBQualifier_name>host</GBQualifier_name>
+            <GBQualifier_value>Musa sp.</GBQualifier_value>
+          </GBQualifier>
+          <GBQualifier>
+            <GBQualifier_name>db_xref</GBQualifier_name>
+            <GBQualifier_value>taxon:3158377</GBQualifier_value>
+          </GBQualifier>
+          <GBQualifier>
+            <GBQualifier_name>segment</GBQualifier_name>
+            <GBQualifier_value>DNA-C</GBQualifier_value>
+          </GBQualifier>
+          <GBQualifier>
+            <GBQualifier_name>geo_loc_name</GBQualifier_name>
+            <GBQualifier_value>Malaysia</GBQualifier_value>
+          </GBQualifier>
+          <GBQualifier>
+            <GBQualifier_name>note</GBQualifier_name>
+            <GBQualifier_value>acronym: ABTV</GBQualifier_value>
+          </GBQualifier>
+        </GBFeature_quals>
+      </GBFeature>
+      <GBFeature>
+        <GBFeature_key>CDS</GBFeature_key>
+        <GBFeature_location>248..730</GBFeature_location>
+        <GBFeature_intervals>
+          <GBInterval>
+            <GBInterval_from>248</GBInterval_from>
+            <GBInterval_to>730</GBInterval_to>
+            <GBInterval_accession>EF546812.1</GBInterval_accession>
+          </GBInterval>
+        </GBFeature_intervals>
+        <GBFeature_quals>
+          <GBQualifier>
+            <GBQualifier_name>note</GBQualifier_name>
+            <GBQualifier_value>Clink</GBQualifier_value>
+          </GBQualifier>
+          <GBQualifier>
+            <GBQualifier_name>codon_start</GBQualifier_name>
+            <GBQualifier_value>1</GBQualifier_value>
+          </GBQualifier>
+          <GBQualifier>
+            <GBQualifier_name>transl_table</GBQualifier_name>
+            <GBQualifier_value>1</GBQualifier_value>
+          </GBQualifier>
+          <GBQualifier>
+            <GBQualifier_name>product</GBQualifier_name>
+            <GBQualifier_value>putative cell-cycle link protein</GBQualifier_value>
+          </GBQualifier>
+          <GBQualifier>
+            <GBQualifier_name>protein_id</GBQualifier_name>
+            <GBQualifier_value>ABP96964.1</GBQualifier_value>
+          </GBQualifier>
+          <GBQualifier>
+            <GBQualifier_name>translation</GBQualifier_name>
+            <GBQualifier_value>MEFWNSEAFCDDVKRVIKQKYWEERMKSLFIEKVSGYVRRILVYGNLDDTIYAVQQMKTSIVQCAERFGKACVVVYNGLDPSIGFRLHTMAFFFEEYVEEVSTADPMAVQLFCDEEIEEFSNSDVRLIKNVIMASTDASIDVGNCIQIIISDNVITFYIC</GBQualifier_value>
+          </GBQualifier>
+        </GBFeature_quals>
+      </GBFeature>
+    </GBSeq_feature-table>
+    <GBSeq_sequence>ggcaggggggcttattattaccccccctgcccgggacgggacatcacgtgcgcctataaagaagcacgtgatgatgtgacatatgtttgccgtaagctgtacaaaagcgaatgctttattgctttattcgttgcttagcccctaagcaacctggtagtgggatgtggtccctgatgcgaagcagctttgttgttgctatttatatctgtgttcgccatgtaaaatgcgaaatacaacgctgatcagaatggagttctggaattcggaagcattttgcgacgatgtgaagcgtgtcattaagcaaaaatattgggaagagcggatgaaatctctatttatagagaaggtgagtggttatgttcgaaggattcttgtttatggtaatcttgatgataccatatatgcggttcagcaaatgaagacttctatagttcagtgtgctgaacgtttcggtaaagcctgtgtggtggtatataatggtttggatccatcaataggtttccgattacacactatggcgttcttcttcgaagaatatgttgaggaagtgagtactgcagatccaatggcggttcagttattttgtgatgaagaaatagaagaattctcaaattctgatgtacgccttattaaaaatgttattatggcatcgacagatgcatcgattgatgtaggaaattgtattcagataataatatctgataatgtaataacattctatatatgttaacttcatttatacataagaatgaatgaagtggtttatttatgatttttagaatataatcataaatggtaaaccttaagcaaaaccaccctaaaacaaataaacctctctgacatacaaccctctataaaataaagcccatgtaagattcaaatttagaatgaaaaatgggccgaaggcccatataaatgcatttaaggccgaaggccttataattgcaggaagaaaagaacacggttttgcttacgtggcctgtgggccatatgtcccgagttagtgcgccacgtg</GBSeq_sequence>
+  </GBSeq>
+
+  <GBSeq>
+
+    <GBSeq_locus>EF546813</GBSeq_locus>
+    <GBSeq_length>1099</GBSeq_length>
+    <GBSeq_strandedness>single</GBSeq_strandedness>
+    <GBSeq_moltype>DNA</GBSeq_moltype>
+    <GBSeq_topology>circular</GBSeq_topology>
+    <GBSeq_division>VRL</GBSeq_division>
+    <GBSeq_update-date>05-FEB-2008</GBSeq_update-date>
+    <GBSeq_create-date>04-FEB-2008</GBSeq_create-date>
+    <GBSeq_definition>Abaca bunchy top virus isolate Q767 segment DNA-R, complete sequence</GBSeq_definition>
+    <GBSeq_primary-accession>EF546813</GBSeq_primary-accession>
+    <GBSeq_accession-version>EF546813.1</GBSeq_accession-version>
+    <GBSeq_other-seqids>
+      <GBSeqid>gb|EF546813.1|</GBSeqid>
+      <GBSeqid>gi|145845940</GBSeqid>
+    </GBSeq_other-seqids>
+    <GBSeq_source>abaca bunchy top virus (ABTV)</GBSeq_source>
+    <GBSeq_organism>abaca bunchy top virus</GBSeq_organism>
+    <GBSeq_taxonomy>Viruses; Floreoviria; Shotokuvirae; Cressdnaviricota; Arfiviricetes; Mulpavirales; Nanoviridae; Babuvirus; Babuvirus abacae</GBSeq_taxonomy>
+    <GBSeq_references>
+      <GBReference>
+        <GBReference_reference>1</GBReference_reference>
+        <GBReference_position>1..1099</GBReference_position>
+        <GBReference_authors>
+          <GBAuthor>Sharman,M.</GBAuthor>
+          <GBAuthor>Thomas,J.E.</GBAuthor>
+          <GBAuthor>Skabo,S.</GBAuthor>
+          <GBAuthor>Holton,T.A.</GBAuthor>
+        </GBReference_authors>
+        <GBReference_title>Abaca bunchy top virus, a new member of the genus Babuvirus (family Nanoviridae)</GBReference_title>
+        <GBReference_journal>Arch. Virol. 153 (1), 135-147 (2008)</GBReference_journal>
+        <GBReference_xref>
+          <GBXref>
+            <GBXref_dbname>doi</GBXref_dbname>
+            <GBXref_id>10.1007/s00705-007-1077-z</GBXref_id>
+          </GBXref>
+        </GBReference_xref>
+        <GBReference_pubmed>17978886</GBReference_pubmed>
+      </GBReference>
+      <GBReference>
+        <GBReference_reference>2</GBReference_reference>
+        <GBReference_position>1..1099</GBReference_position>
+        <GBReference_authors>
+          <GBAuthor>Sharman,M.</GBAuthor>
+          <GBAuthor>Thomas,J.E.</GBAuthor>
+          <GBAuthor>Skabo,S.</GBAuthor>
+        </GBReference_authors>
+        <GBReference_title>Direct Submission</GBReference_title>
+        <GBReference_journal>Submitted (11-APR-2007) Department of Primary Industries and Fisheries, Queensland Government, Plant Pathology Building, 80 Meiers Road, Indooroopilly, Brisbane, Queensland 4068, Australia</GBReference_journal>
+      </GBReference>
+    </GBSeq_references>
+    <GBSeq_feature-table>
+      <GBFeature>
+        <GBFeature_key>source</GBFeature_key>
+        <GBFeature_location>1..1099</GBFeature_location>
+        <GBFeature_intervals>
+          <GBInterval>
+            <GBInterval_from>1</GBInterval_from>
+            <GBInterval_to>1099</GBInterval_to>
+            <GBInterval_accession>EF546813.1</GBInterval_accession>
+          </GBInterval>
+        </GBFeature_intervals>
+        <GBFeature_quals>
+          <GBQualifier>
+            <GBQualifier_name>organism</GBQualifier_name>
+            <GBQualifier_value>abaca bunchy top virus</GBQualifier_value>
+          </GBQualifier>
+          <GBQualifier>
+            <GBQualifier_name>mol_type</GBQualifier_name>
+            <GBQualifier_value>genomic DNA</GBQualifier_value>
+          </GBQualifier>
+          <GBQualifier>
+            <GBQualifier_name>isolate</GBQualifier_name>
+            <GBQualifier_value>Q767</GBQualifier_value>
+          </GBQualifier>
+          <GBQualifier>
+            <GBQualifier_name>host</GBQualifier_name>
+            <GBQualifier_value>Musa sp.</GBQualifier_value>
+          </GBQualifier>
+          <GBQualifier>
+            <GBQualifier_name>db_xref</GBQualifier_name>
+            <GBQualifier_value>taxon:3158377</GBQualifier_value>
+          </GBQualifier>
+          <GBQualifier>
+            <GBQualifier_name>segment</GBQualifier_name>
+            <GBQualifier_value>DNA-R</GBQualifier_value>
+          </GBQualifier>
+          <GBQualifier>
+            <GBQualifier_name>geo_loc_name</GBQualifier_name>
+            <GBQualifier_value>Malaysia</GBQualifier_value>
+          </GBQualifier>
+          <GBQualifier>
+            <GBQualifier_name>note</GBQualifier_name>
+            <GBQualifier_value>acronym: ABTV</GBQualifier_value>
+          </GBQualifier>
+        </GBFeature_quals>
+      </GBFeature>
+      <GBFeature>
+        <GBFeature_key>CDS</GBFeature_key>
+        <GBFeature_location>94..954</GBFeature_location>
+        <GBFeature_intervals>
+          <GBInterval>
+            <GBInterval_from>94</GBInterval_from>
+            <GBInterval_to>954</GBInterval_to>
+            <GBInterval_accession>EF546813.1</GBInterval_accession>
+          </GBInterval>
+        </GBFeature_intervals>
+        <GBFeature_quals>
+          <GBQualifier>
+            <GBQualifier_name>codon_start</GBQualifier_name>
+            <GBQualifier_value>1</GBQualifier_value>
+          </GBQualifier>
+          <GBQualifier>
+            <GBQualifier_name>transl_table</GBQualifier_name>
+            <GBQualifier_value>1</GBQualifier_value>
+          </GBQualifier>
+          <GBQualifier>
+            <GBQualifier_name>product</GBQualifier_name>
+            <GBQualifier_value>putative replicase protein</GBQualifier_value>
+          </GBQualifier>
+          <GBQualifier>
+            <GBQualifier_name>protein_id</GBQualifier_name>
+            <GBQualifier_value>ABP96965.1</GBQualifier_value>
+          </GBQualifier>
+          <GBQualifier>
+            <GBQualifier_name>translation</GBQualifier_name>
+            <GBQualifier_value>MARYVVCWMFTINNPEALPEMREEYKYLVYQVERGESGTRHVQGYVEMKRRSSLKQMRALIPGAHLEKRRGTQEEARAYCMKADTRVEGPFEFGLFKVSCNDNLFDVIQDMRETHKRPIEYLYDCPNTFDRSKDTLYRVQAEMNKMQAMMSWSETYGCWTKEVEELMAEPCHRRIIWVYGPNGGEGKTTYAKHLIKTRNAFYTPGGKTLDICRLYNYEGIVIFDIPRCKEDYLNYGILEEFKNGIIQSGKYEPVLKIVEYVEVIVMANFLPKEGIFSEDRIKLVTC</GBQualifier_value>
+          </GBQualifier>
+        </GBFeature_quals>
+      </GBFeature>
+    </GBSeq_feature-table>
+    <GBSeq_sequence>ggcaggggggcttattattaccccccctgcccgggacgggacatttgcatctataaatagaagcgccctcgctcaaccagatcaggcgctgcaatggctagatatgtcgtatgttggatgttcaccatcaacaatcccgaagctcttccagagatgagggaagaatacaaatacctggtttaccaggtggagcgaggcgaaagcggtacacgacatgtgcagggctatgttgaaatgaagagacgaagttctctgaaacaaatgagggctttaattcctggtgcccatctcgaaaagagaaggggcacacaggaagaagctagagcttattgtatgaaggcagatacgagagtcgaaggtcccttcgagtttggtcttttcaaagtatcatgtaatgataatttgtttgatgtcatacaggatatgagagaaacgcacaaacggccgattgagtatttatacgactgtcctaataccttcgatagaagtaaggatacattatacagggtacaagcggaaatgaataaaatgcaagctatgatgtcgtggtcggaaacctatggttgctggacgaaggaagtggaggaactaatggcggagccatgtcaccgacggattatttgggtctatggcccaaatggtggtgaaggtaaaacaacctatgcgaagcatctaatcaagaccagaaatgcattttatacacctggcggaaagacactggatatatgtaggctgtataattatgagggaattgtaatatttgatattcccagatgcaaagaggattacttgaattacggaattcttgaggaattcaagaatggcatcattcagagcgggaaatatgaaccagttttaaaaattgtagagtatgtggaggtcattgtcatggctaacttcctgccgaaggaaggaatattctcggaagaccgaataaagcttgtaacttgttgaacacgctatgcaataaaggggaaaaatgcaattatgacctgtcacgtttacacttttcgtaaagatgtagggccgaaggccctaatgacgcgtgtcatattctctatagtggtgggtcatatgtcccgagttagtgcgccacgtg</GBSeq_sequence>
+  </GBSeq>
+
+  <GBSeq>
+
+    <GBSeq_locus>NC_010314</GBSeq_locus>
+    <GBSeq_length>1090</GBSeq_length>
+    <GBSeq_strandedness>single</GBSeq_strandedness>
+    <GBSeq_moltype>DNA</GBSeq_moltype>
+    <GBSeq_topology>circular</GBSeq_topology>
+    <GBSeq_division>VRL</GBSeq_division>
+    <GBSeq_update-date>13-AUG-2018</GBSeq_update-date>
+    <GBSeq_create-date>06-FEB-2008</GBSeq_create-date>
+    <GBSeq_definition>Abaca bunchy top virus DNA-N, complete genome</GBSeq_definition>
+    <GBSeq_primary-accession>NC_010314</GBSeq_primary-accession>
+    <GBSeq_accession-version>NC_010314.1</GBSeq_accession-version>
+    <GBSeq_other-seqids>
+      <GBSeqid>ref|NC_010314.1|</GBSeqid>
+      <GBSeqid>gnl|NCBI_GENOMES|21902</GBSeqid>
+      <GBSeqid>gi|167006425</GBSeqid>
+    </GBSeq_other-seqids>
+    <GBSeq_project>PRJNA485481</GBSeq_project>
+    <GBSeq_keywords>
+      <GBKeyword>RefSeq</GBKeyword>
+    </GBSeq_keywords>
+    <GBSeq_source>abaca bunchy top virus (ABTV)</GBSeq_source>
+    <GBSeq_organism>abaca bunchy top virus</GBSeq_organism>
+    <GBSeq_taxonomy>Viruses; Floreoviria; Shotokuvirae; Cressdnaviricota; Arfiviricetes; Mulpavirales; Nanoviridae; Babuvirus; Babuvirus abacae</GBSeq_taxonomy>
+    <GBSeq_references>
+      <GBReference>
+        <GBReference_reference>1</GBReference_reference>
+        <GBReference_position>1..1090</GBReference_position>
+        <GBReference_authors>
+          <GBAuthor>Sharman,M.</GBAuthor>
+          <GBAuthor>Thomas,J.E.</GBAuthor>
+          <GBAuthor>Skabo,S.</GBAuthor>
+          <GBAuthor>Holton,T.A.</GBAuthor>
+        </GBReference_authors>
+        <GBReference_title>Abaca bunchy top virus, a new member of the genus Babuvirus (family Nanoviridae)</GBReference_title>
+        <GBReference_journal>Arch. Virol. 153 (1), 135-147 (2008)</GBReference_journal>
+        <GBReference_xref>
+          <GBXref>
+            <GBXref_dbname>doi</GBXref_dbname>
+            <GBXref_id>10.1007/s00705-007-1077-z</GBXref_id>
+          </GBXref>
+        </GBReference_xref>
+        <GBReference_pubmed>17978886</GBReference_pubmed>
+      </GBReference>
+      <GBReference>
+        <GBReference_reference>2</GBReference_reference>
+        <GBReference_position>1..1090</GBReference_position>
+        <GBReference_consortium>NCBI Genome Project</GBReference_consortium>
+        <GBReference_title>Direct Submission</GBReference_title>
+        <GBReference_journal>Submitted (06-FEB-2008) National Center for Biotechnology Information, NIH, Bethesda, MD 20894, USA</GBReference_journal>
+      </GBReference>
+      <GBReference>
+        <GBReference_reference>3</GBReference_reference>
+        <GBReference_position>1..1090</GBReference_position>
+        <GBReference_authors>
+          <GBAuthor>Sharman,M.</GBAuthor>
+          <GBAuthor>Thomas,J.E.</GBAuthor>
+          <GBAuthor>Skabo,S.</GBAuthor>
+        </GBReference_authors>
+        <GBReference_title>Direct Submission</GBReference_title>
+        <GBReference_journal>Submitted (11-APR-2007) Department of Primary Industries and Fisheries, Queensland Government, Plant Pathology Building, 80 Meiers Road, Indooroopilly, Brisbane, Queensland 4068, Australia</GBReference_journal>
+      </GBReference>
+    </GBSeq_references>
+    <GBSeq_comment>PROVISIONAL REFSEQ: This record has not yet been subject to final NCBI review. The reference sequence is identical to EF546808.; COMPLETENESS: full length.</GBSeq_comment>
+    <GBSeq_feature-table>
+      <GBFeature>
+        <GBFeature_key>source</GBFeature_key>
+        <GBFeature_location>1..1090</GBFeature_location>
+        <GBFeature_intervals>
+          <GBInterval>
+            <GBInterval_from>1</GBInterval_from>
+            <GBInterval_to>1090</GBInterval_to>
+            <GBInterval_accession>NC_010314.1</GBInterval_accession>
+          </GBInterval>
+        </GBFeature_intervals>
+        <GBFeature_quals>
+          <GBQualifier>
+            <GBQualifier_name>organism</GBQualifier_name>
+            <GBQualifier_value>abaca bunchy top virus</GBQualifier_value>
+          </GBQualifier>
+          <GBQualifier>
+            <GBQualifier_name>mol_type</GBQualifier_name>
+            <GBQualifier_value>genomic DNA</GBQualifier_value>
+          </GBQualifier>
+          <GBQualifier>
+            <GBQualifier_name>isolate</GBQualifier_name>
+            <GBQualifier_value>Q767</GBQualifier_value>
+          </GBQualifier>
+          <GBQualifier>
+            <GBQualifier_name>host</GBQualifier_name>
+            <GBQualifier_value>Musa sp.</GBQualifier_value>
+          </GBQualifier>
+          <GBQualifier>
+            <GBQualifier_name>db_xref</GBQualifier_name>
+            <GBQualifier_value>taxon:3158377</GBQualifier_value>
+          </GBQualifier>
+          <GBQualifier>
+            <GBQualifier_name>segment</GBQualifier_name>
+            <GBQualifier_value>DNA N</GBQualifier_value>
+          </GBQualifier>
+          <GBQualifier>
+            <GBQualifier_name>geo_loc_name</GBQualifier_name>
+            <GBQualifier_value>Malaysia</GBQualifier_value>
+          </GBQualifier>
+          <GBQualifier>
+            <GBQualifier_name>acronym</GBQualifier_name>
+            <GBQualifier_value>ABTV</GBQualifier_value>
+          </GBQualifier>
+        </GBFeature_quals>
+      </GBFeature>
+      <GBFeature>
+        <GBFeature_key>gene</GBFeature_key>
+        <GBFeature_location>236..700</GBFeature_location>
+        <GBFeature_intervals>
+          <GBInterval>
+            <GBInterval_from>236</GBInterval_from>
+            <GBInterval_to>700</GBInterval_to>
+            <GBInterval_accession>NC_010314.1</GBInterval_accession>
+          </GBInterval>
+        </GBFeature_intervals>
+        <GBFeature_quals>
+          <GBQualifier>
+            <GBQualifier_name>locus_tag</GBQualifier_name>
+            <GBQualifier_value>ABTV_sNgp1</GBQualifier_value>
+          </GBQualifier>
+          <GBQualifier>
+            <GBQualifier_name>db_xref</GBQualifier_name>
+            <GBQualifier_value>GeneID:10987403</GBQualifier_value>
+          </GBQualifier>
+        </GBFeature_quals>
+      </GBFeature>
+      <GBFeature>
+        <GBFeature_key>CDS</GBFeature_key>
+        <GBFeature_location>236..700</GBFeature_location>
+        <GBFeature_intervals>
+          <GBInterval>
+            <GBInterval_from>236</GBInterval_from>
+            <GBInterval_to>700</GBInterval_to>
+            <GBInterval_accession>NC_010314.1</GBInterval_accession>
+          </GBInterval>
+        </GBFeature_intervals>
+        <GBFeature_quals>
+          <GBQualifier>
+            <GBQualifier_name>locus_tag</GBQualifier_name>
+            <GBQualifier_value>ABTV_sNgp1</GBQualifier_value>
+          </GBQualifier>
+          <GBQualifier>
+            <GBQualifier_name>codon_start</GBQualifier_name>
+            <GBQualifier_value>1</GBQualifier_value>
+          </GBQualifier>
+          <GBQualifier>
+            <GBQualifier_name>transl_table</GBQualifier_name>
+            <GBQualifier_value>1</GBQualifier_value>
+          </GBQualifier>
+          <GBQualifier>
+            <GBQualifier_name>product</GBQualifier_name>
+            <GBQualifier_value>putative nuclear shuttle protein</GBQualifier_value>
+          </GBQualifier>
+          <GBQualifier>
+            <GBQualifier_name>protein_id</GBQualifier_name>
+            <GBQualifier_value>YP_001661656.1</GBQualifier_value>
+          </GBQualifier>
+          <GBQualifier>
+            <GBQualifier_name>db_xref</GBQualifier_name>
+            <GBQualifier_value>GeneID:10987403</GBQualifier_value>
+          </GBQualifier>
+          <GBQualifier>
+            <GBQualifier_name>translation</GBQualifier_name>
+            <GBQualifier_value>MDWMESQFKTCTHGCDWKAIAPEAQDNIQVITCSDSGYGRKNPRKVLLRSIQIGFNGSFRGSNRNVRGFIYVSVRQDDGQMRPIMVVPFGGYGYHNDYYYFEGQSSTNCEIVSDYIPAGQDWSRDMEISISNSNNCNQECDIKCYVVCNLRIKE</GBQualifier_value>
+          </GBQualifier>
+        </GBFeature_quals>
+      </GBFeature>
+    </GBSeq_feature-table>
+    <GBSeq_sequence>agcaggggggcttattattaccccccctgctcggggcgggacattctgtgatgggctgggctttatgcggccaaataagcccataaagccagatctgggcccatttaagggcccgtggtttgaaaatgtcgcgttcccgcctaaattgtttgcttgccctgcaaggaaacgaaaactctataaatagggttgttctctgcttgtttaatacatcaggcgcaaatcttttgcaacgatggattggatggaatcacaattcaagacatgtacgcatggctgcgactggaaggcgatagctccagaagcacaagataatatacaggtaattacatgttccgattcaggttacggaagaaagaaccctcgtaaggttcttctgaggagtattcagatagggttcaatggaagcttcagaggaagtaatagaaatgttcgaggcttcatatacgtgtctgtaagacaggatgatggccaaatgagaccaattatggtcgttccattcggagggtatggatatcataacgactactattattttgaaggacaatccagtacgaattgtgagatagtgtcggactatattccggccggtcaagactggagcagagatatggagataagtataagtaacagcaacaattgtaatcaagagtgcgatatcaagtgttatgtagtatgtaatttaagaattaaggaataawattgttgccgaaggtctgttatttgaatgttgagataaggaaaggggcggcgaagcatgtgtgtataataacatataacacactattatatattttgtaaagaataaaattatgacctgtcagattaagtttagaatgaactgaggccgaaggcctcaccgaggccgaaggccgtcaggatggttttacaaaataattataagcacctgtactaagtacgaagagcggtataatatctgaaaggaaaaaataataatataataaaaatattatgatgtcccaaaatagcagaatgctaaaggaacaaaaggatgctctaagtacagggttgcgtgctctggacgccactttagtggtgggccagatgtcccgagttagtgcgccacgtc</GBSeq_sequence>
+    <GBSeq_xrefs>
+      <GBXref>
+        <GBXref_dbname>BioProject</GBXref_dbname>
+        <GBXref_id>PRJNA485481</GBXref_id>
+      </GBXref>
+    </GBSeq_xrefs>
+  </GBSeq>
+
+  <GBSeq>
+
+    <GBSeq_locus>NC_010315</GBSeq_locus>
+    <GBSeq_length>1057</GBSeq_length>
+    <GBSeq_strandedness>single</GBSeq_strandedness>
+    <GBSeq_moltype>DNA</GBSeq_moltype>
+    <GBSeq_topology>circular</GBSeq_topology>
+    <GBSeq_division>VRL</GBSeq_division>
+    <GBSeq_update-date>13-AUG-2018</GBSeq_update-date>
+    <GBSeq_create-date>06-FEB-2008</GBSeq_create-date>
+    <GBSeq_definition>Abaca bunchy top virus segment 2, complete sequence</GBSeq_definition>
+    <GBSeq_primary-accession>NC_010315</GBSeq_primary-accession>
+    <GBSeq_accession-version>NC_010315.1</GBSeq_accession-version>
+    <GBSeq_other-seqids>
+      <GBSeqid>ref|NC_010315.1|</GBSeqid>
+      <GBSeqid>gnl|NCBI_GENOMES|21903</GBSeqid>
+      <GBSeqid>gi|167006427</GBSeqid>
+    </GBSeq_other-seqids>
+    <GBSeq_project>PRJNA485481</GBSeq_project>
+    <GBSeq_keywords>
+      <GBKeyword>RefSeq</GBKeyword>
+    </GBSeq_keywords>
+    <GBSeq_source>abaca bunchy top virus (ABTV)</GBSeq_source>
+    <GBSeq_organism>abaca bunchy top virus</GBSeq_organism>
+    <GBSeq_taxonomy>Viruses; Floreoviria; Shotokuvirae; Cressdnaviricota; Arfiviricetes; Mulpavirales; Nanoviridae; Babuvirus; Babuvirus abacae</GBSeq_taxonomy>
+    <GBSeq_references>
+      <GBReference>
+        <GBReference_reference>1</GBReference_reference>
+        <GBReference_position>1..1057</GBReference_position>
+        <GBReference_authors>
+          <GBAuthor>Sharman,M.</GBAuthor>
+          <GBAuthor>Thomas,J.E.</GBAuthor>
+          <GBAuthor>Skabo,S.</GBAuthor>
+          <GBAuthor>Holton,T.A.</GBAuthor>
+        </GBReference_authors>
+        <GBReference_title>Abaca bunchy top virus, a new member of the genus Babuvirus (family Nanoviridae)</GBReference_title>
+        <GBReference_journal>Arch. Virol. 153 (1), 135-147 (2008)</GBReference_journal>
+        <GBReference_xref>
+          <GBXref>
+            <GBXref_dbname>doi</GBXref_dbname>
+            <GBXref_id>10.1007/s00705-007-1077-z</GBXref_id>
+          </GBXref>
+        </GBReference_xref>
+        <GBReference_pubmed>17978886</GBReference_pubmed>
+      </GBReference>
+      <GBReference>
+        <GBReference_reference>2</GBReference_reference>
+        <GBReference_position>1..1057</GBReference_position>
+        <GBReference_consortium>NCBI Genome Project</GBReference_consortium>
+        <GBReference_title>Direct Submission</GBReference_title>
+        <GBReference_journal>Submitted (06-FEB-2008) National Center for Biotechnology Information, NIH, Bethesda, MD 20894, USA</GBReference_journal>
+      </GBReference>
+      <GBReference>
+        <GBReference_reference>3</GBReference_reference>
+        <GBReference_position>1..1057</GBReference_position>
+        <GBReference_authors>
+          <GBAuthor>Sharman,M.</GBAuthor>
+          <GBAuthor>Thomas,J.E.</GBAuthor>
+          <GBAuthor>Skabo,S.</GBAuthor>
+        </GBReference_authors>
+        <GBReference_title>Direct Submission</GBReference_title>
+        <GBReference_journal>Submitted (11-APR-2007) Department of Primary Industries and Fisheries, Queensland Government, Plant Pathology Building, 80 Meiers Road, Indooroopilly, Brisbane, Queensland 4068, Australia</GBReference_journal>
+      </GBReference>
+    </GBSeq_references>
+    <GBSeq_comment>PROVISIONAL REFSEQ: This record has not yet been subject to final NCBI review. The reference sequence was derived from EF546809.; COMPLETENESS: full length.</GBSeq_comment>
+    <GBSeq_feature-table>
+      <GBFeature>
+        <GBFeature_key>source</GBFeature_key>
+        <GBFeature_location>1..1057</GBFeature_location>
+        <GBFeature_intervals>
+          <GBInterval>
+            <GBInterval_from>1</GBInterval_from>
+            <GBInterval_to>1057</GBInterval_to>
+            <GBInterval_accession>NC_010315.1</GBInterval_accession>
+          </GBInterval>
+        </GBFeature_intervals>
+        <GBFeature_quals>
+          <GBQualifier>
+            <GBQualifier_name>organism</GBQualifier_name>
+            <GBQualifier_value>abaca bunchy top virus</GBQualifier_value>
+          </GBQualifier>
+          <GBQualifier>
+            <GBQualifier_name>mol_type</GBQualifier_name>
+            <GBQualifier_value>genomic DNA</GBQualifier_value>
+          </GBQualifier>
+          <GBQualifier>
+            <GBQualifier_name>isolate</GBQualifier_name>
+            <GBQualifier_value>Q767</GBQualifier_value>
+          </GBQualifier>
+          <GBQualifier>
+            <GBQualifier_name>host</GBQualifier_name>
+            <GBQualifier_value>Musa sp.</GBQualifier_value>
+          </GBQualifier>
+          <GBQualifier>
+            <GBQualifier_name>db_xref</GBQualifier_name>
+            <GBQualifier_value>taxon:3158377</GBQualifier_value>
+          </GBQualifier>
+          <GBQualifier>
+            <GBQualifier_name>segment</GBQualifier_name>
+            <GBQualifier_value>DNA U3</GBQualifier_value>
+          </GBQualifier>
+          <GBQualifier>
+            <GBQualifier_name>geo_loc_name</GBQualifier_name>
+            <GBQualifier_value>Malaysia</GBQualifier_value>
+          </GBQualifier>
+          <GBQualifier>
+            <GBQualifier_name>acronym</GBQualifier_name>
+            <GBQualifier_value>ABTV</GBQualifier_value>
+          </GBQualifier>
+        </GBFeature_quals>
+      </GBFeature>
+    </GBSeq_feature-table>
+    <GBSeq_sequence>agcaggggggcttattattaccccccctgctgggacgggacatccgaatagtaatgggcttaatacataaatgggccgccaaataagcgtacagttcagtatcttcgttttgggcctcggcccaaaattaagagaacgtgtgcgcttgtttgggttggaccgtaggtccggttcgaatgaggaatattccttgcttccataggaaggaacagcgaaataaaataaatcgctgttacacgtgtaagaatactattagttcgcagagtttataaatacccttcaagttgaagggtgtggtgctctctctcttctgtcagacggtgtgccatgatgaagctctccgggaggaaagaagggcggaggtggaggagccgcctcgcccgtccctccgacgaagtatacgaagtcgtaggtatgtcagggtatttatagaagcgtcgtatactaaacgcgcctgtatcataattgtatttgtgtatttaaatatttaaataccaaaccttaaggaataaaatatatgtttaataaaataacacatgacaataaaagaaaacaataatacaataataaaattgtattatgcaaacgttgtataattaaggtctgtttaatatacatatatatatgtatattacagtattgtttaaaataaatgacttggaaggaaataataatattaatgataagcaataaaatattccgaatacataaaaaggggaaaatgcaattaagacctgtcacgtttacatatttcgaatatattaagggccgaaggcccgtcagtatgcaggtacatcagtgattgcttcgtgacgaagcaagggtattattgtaaataagaaagcatctgacaactttaatagtggtcccctatacagctgtcatatgacagctggcaaaggatcattgggcggactccaaatatatattaaatataacatataaaatatataaggtatagatactattattaattaaaagaggcgggaaagaggacacgtgcgccgcacgccactttagtggtgggccatatgtcccgagttagtgcgcttacgtc</GBSeq_sequence>
+    <GBSeq_xrefs>
+      <GBXref>
+        <GBXref_dbname>BioProject</GBXref_dbname>
+        <GBXref_id>PRJNA485481</GBXref_id>
+      </GBXref>
+    </GBSeq_xrefs>
+  </GBSeq>
+
+  <GBSeq>
+
+    <GBSeq_locus>NC_010316</GBSeq_locus>
+    <GBSeq_length>1087</GBSeq_length>
+    <GBSeq_strandedness>single</GBSeq_strandedness>
+    <GBSeq_moltype>DNA</GBSeq_moltype>
+    <GBSeq_topology>circular</GBSeq_topology>
+    <GBSeq_division>VRL</GBSeq_division>
+    <GBSeq_update-date>13-AUG-2018</GBSeq_update-date>
+    <GBSeq_create-date>06-FEB-2008</GBSeq_create-date>
+    <GBSeq_definition>Abaca bunchy top virus DNA-S, complete genome</GBSeq_definition>
+    <GBSeq_primary-accession>NC_010316</GBSeq_primary-accession>
+    <GBSeq_accession-version>NC_010316.1</GBSeq_accession-version>
+    <GBSeq_other-seqids>
+      <GBSeqid>ref|NC_010316.1|</GBSeqid>
+      <GBSeqid>gnl|NCBI_GENOMES|21904</GBSeqid>
+      <GBSeqid>gi|167006428</GBSeqid>
+    </GBSeq_other-seqids>
+    <GBSeq_project>PRJNA485481</GBSeq_project>
+    <GBSeq_keywords>
+      <GBKeyword>RefSeq</GBKeyword>
+    </GBSeq_keywords>
+    <GBSeq_source>abaca bunchy top virus (ABTV)</GBSeq_source>
+    <GBSeq_organism>abaca bunchy top virus</GBSeq_organism>
+    <GBSeq_taxonomy>Viruses; Floreoviria; Shotokuvirae; Cressdnaviricota; Arfiviricetes; Mulpavirales; Nanoviridae; Babuvirus; Babuvirus abacae</GBSeq_taxonomy>
+    <GBSeq_references>
+      <GBReference>
+        <GBReference_reference>1</GBReference_reference>
+        <GBReference_position>1..1087</GBReference_position>
+        <GBReference_authors>
+          <GBAuthor>Sharman,M.</GBAuthor>
+          <GBAuthor>Thomas,J.E.</GBAuthor>
+          <GBAuthor>Skabo,S.</GBAuthor>
+          <GBAuthor>Holton,T.A.</GBAuthor>
+        </GBReference_authors>
+        <GBReference_title>Abaca bunchy top virus, a new member of the genus Babuvirus (family Nanoviridae)</GBReference_title>
+        <GBReference_journal>Arch. Virol. 153 (1), 135-147 (2008)</GBReference_journal>
+        <GBReference_xref>
+          <GBXref>
+            <GBXref_dbname>doi</GBXref_dbname>
+            <GBXref_id>10.1007/s00705-007-1077-z</GBXref_id>
+          </GBXref>
+        </GBReference_xref>
+        <GBReference_pubmed>17978886</GBReference_pubmed>
+      </GBReference>
+      <GBReference>
+        <GBReference_reference>2</GBReference_reference>
+        <GBReference_position>1..1087</GBReference_position>
+        <GBReference_consortium>NCBI Genome Project</GBReference_consortium>
+        <GBReference_title>Direct Submission</GBReference_title>
+        <GBReference_journal>Submitted (06-FEB-2008) National Center for Biotechnology Information, NIH, Bethesda, MD 20894, USA</GBReference_journal>
+      </GBReference>
+      <GBReference>
+        <GBReference_reference>3</GBReference_reference>
+        <GBReference_position>1..1087</GBReference_position>
+        <GBReference_authors>
+          <GBAuthor>Sharman,M.</GBAuthor>
+          <GBAuthor>Thomas,J.E.</GBAuthor>
+          <GBAuthor>Skabo,S.</GBAuthor>
+        </GBReference_authors>
+        <GBReference_title>Direct Submission</GBReference_title>
+        <GBReference_journal>Submitted (11-APR-2007) Department of Primary Industries and Fisheries, Queensland Government, Plant Pathology Building, 80 Meiers Road, Indooroopilly, Brisbane, Queensland 4068, Australia</GBReference_journal>
+      </GBReference>
+    </GBSeq_references>
+    <GBSeq_comment>PROVISIONAL REFSEQ: This record has not yet been subject to final NCBI review. The reference sequence is identical to EF546810.; COMPLETENESS: full length.</GBSeq_comment>
+    <GBSeq_feature-table>
+      <GBFeature>
+        <GBFeature_key>source</GBFeature_key>
+        <GBFeature_location>1..1087</GBFeature_location>
+        <GBFeature_intervals>
+          <GBInterval>
+            <GBInterval_from>1</GBInterval_from>
+            <GBInterval_to>1087</GBInterval_to>
+            <GBInterval_accession>NC_010316.1</GBInterval_accession>
+          </GBInterval>
+        </GBFeature_intervals>
+        <GBFeature_quals>
+          <GBQualifier>
+            <GBQualifier_name>organism</GBQualifier_name>
+            <GBQualifier_value>abaca bunchy top virus</GBQualifier_value>
+          </GBQualifier>
+          <GBQualifier>
+            <GBQualifier_name>mol_type</GBQualifier_name>
+            <GBQualifier_value>genomic DNA</GBQualifier_value>
+          </GBQualifier>
+          <GBQualifier>
+            <GBQualifier_name>isolate</GBQualifier_name>
+            <GBQualifier_value>Q767</GBQualifier_value>
+          </GBQualifier>
+          <GBQualifier>
+            <GBQualifier_name>host</GBQualifier_name>
+            <GBQualifier_value>Musa sp.</GBQualifier_value>
+          </GBQualifier>
+          <GBQualifier>
+            <GBQualifier_name>db_xref</GBQualifier_name>
+            <GBQualifier_value>taxon:3158377</GBQualifier_value>
+          </GBQualifier>
+          <GBQualifier>
+            <GBQualifier_name>segment</GBQualifier_name>
+            <GBQualifier_value>DNA S</GBQualifier_value>
+          </GBQualifier>
+          <GBQualifier>
+            <GBQualifier_name>geo_loc_name</GBQualifier_name>
+            <GBQualifier_value>Malaysia</GBQualifier_value>
+          </GBQualifier>
+          <GBQualifier>
+            <GBQualifier_name>acronym</GBQualifier_name>
+            <GBQualifier_value>ABTV</GBQualifier_value>
+          </GBQualifier>
+        </GBFeature_quals>
+      </GBFeature>
+      <GBFeature>
+        <GBFeature_key>gene</GBFeature_key>
+        <GBFeature_location>224..736</GBFeature_location>
+        <GBFeature_intervals>
+          <GBInterval>
+            <GBInterval_from>224</GBInterval_from>
+            <GBInterval_to>736</GBInterval_to>
+            <GBInterval_accession>NC_010316.1</GBInterval_accession>
+          </GBInterval>
+        </GBFeature_intervals>
+        <GBFeature_quals>
+          <GBQualifier>
+            <GBQualifier_name>locus_tag</GBQualifier_name>
+            <GBQualifier_value>ABTV_sSgp1</GBQualifier_value>
+          </GBQualifier>
+          <GBQualifier>
+            <GBQualifier_name>db_xref</GBQualifier_name>
+            <GBQualifier_value>GeneID:10987404</GBQualifier_value>
+          </GBQualifier>
+        </GBFeature_quals>
+      </GBFeature>
+      <GBFeature>
+        <GBFeature_key>CDS</GBFeature_key>
+        <GBFeature_location>224..736</GBFeature_location>
+        <GBFeature_intervals>
+          <GBInterval>
+            <GBInterval_from>224</GBInterval_from>
+            <GBInterval_to>736</GBInterval_to>
+            <GBInterval_accession>NC_010316.1</GBInterval_accession>
+          </GBInterval>
+        </GBFeature_intervals>
+        <GBFeature_quals>
+          <GBQualifier>
+            <GBQualifier_name>locus_tag</GBQualifier_name>
+            <GBQualifier_value>ABTV_sSgp1</GBQualifier_value>
+          </GBQualifier>
+          <GBQualifier>
+            <GBQualifier_name>codon_start</GBQualifier_name>
+            <GBQualifier_value>1</GBQualifier_value>
+          </GBQualifier>
+          <GBQualifier>
+            <GBQualifier_name>transl_table</GBQualifier_name>
+            <GBQualifier_value>1</GBQualifier_value>
+          </GBQualifier>
+          <GBQualifier>
+            <GBQualifier_name>product</GBQualifier_name>
+            <GBQualifier_value>putative coat protein</GBQualifier_value>
+          </GBQualifier>
+          <GBQualifier>
+            <GBQualifier_name>protein_id</GBQualifier_name>
+            <GBQualifier_value>YP_001661657.1</GBQualifier_value>
+          </GBQualifier>
+          <GBQualifier>
+            <GBQualifier_name>db_xref</GBQualifier_name>
+            <GBQualifier_value>GeneID:10987404</GBQualifier_value>
+          </GBQualifier>
+          <GBQualifier>
+            <GBQualifier_name>translation</GBQualifier_name>
+            <GBQualifier_value>MARYPKKALKKRKAVRRKYGSKATTSHDYAVDTSFIVPENTIKLYRIEPTDKTLPRYFIWKMFMLLVCKVRPGRILHWAMIKSSWDVKDPTVVLEAPGLFIKPANSHLVKLVCSGELEAPVGGGTSEVECLLRKTTLLRRNVTELDFLYLAFYCSSGVTINYQNRITYHV</GBQualifier_value>
+          </GBQualifier>
+        </GBFeature_quals>
+      </GBFeature>
+    </GBSeq_feature-table>
+    <GBSeq_sequence>ggcaggggggcttattattaccccccctgcccgggacgggacattctgtgatgggctgggctttatgcggccaaataagcccataaagccagatctgggcccatttaagggcccgtggtttgaaaatgtcgcgttcccgccaaaatagttgcttgctctgcaagcaaactatatctattataaataccagatgtaatggttgcctgagaatgaaaataaaaggatggcgaggtatccgaagaaggcgctaaagaagaggaaggcggtacgccgtaagtatggaagtaaagctacgaccagtcatgattatgctgttgatacttcatttattgttcctgaaaatactattaagctgtatcgtattgagcctactgataaaacattacccagatattttatctggaaaatgtttatgttgttggtatgcaaagtcagaccagggcgtatacttcattgggcgatgattaagagctcttgggatgtgaaggatccaacagttgttcttgaagcgcctggattgtttatcaagccagcaaacagccatctggttaaactggtatgcagtggcgagttagaagctccagtaggaggagggacttcagaggttgaatgtcttctacggaagacaactttacttcgtaggaatgttacagaattggatttcttgtatttggcgttttattgttcttctggagttacaatcaactaccagaacaggattacatatcatgtataaaccacataaaataaatgtggtgttgcaggcatgggaagaataaaacaatgtttgcctacgaaatattttggtaaagtgaaattatgacctgtcagaattaagtttagaatgaactgaggccgaaggcctcaccgaggccgaaggccgtcaagttggatgaataaaatacaaggtataagtacgaagagcggtataatatctgaaaggaaataataataatataataaaatattatgatgtcccaaaatagcagaatgctaaaggaacaaaaggatgctctaagtacagggttgcgtgctctggacgccactttagtggtgggccagatgtcccgagttagtgcgccacgtg</GBSeq_sequence>
+    <GBSeq_xrefs>
+      <GBXref>
+        <GBXref_dbname>BioProject</GBXref_dbname>
+        <GBXref_id>PRJNA485481</GBXref_id>
+      </GBXref>
+    </GBSeq_xrefs>
+  </GBSeq>
+
+  <GBSeq>
+
+    <GBSeq_locus>NC_010317</GBSeq_locus>
+    <GBSeq_length>1074</GBSeq_length>
+    <GBSeq_strandedness>single</GBSeq_strandedness>
+    <GBSeq_moltype>DNA</GBSeq_moltype>
+    <GBSeq_topology>circular</GBSeq_topology>
+    <GBSeq_division>VRL</GBSeq_division>
+    <GBSeq_update-date>13-AUG-2018</GBSeq_update-date>
+    <GBSeq_create-date>06-FEB-2008</GBSeq_create-date>
+    <GBSeq_definition>Abaca bunchy top virus DNA-M, complete genome</GBSeq_definition>
+    <GBSeq_primary-accession>NC_010317</GBSeq_primary-accession>
+    <GBSeq_accession-version>NC_010317.1</GBSeq_accession-version>
+    <GBSeq_other-seqids>
+      <GBSeqid>ref|NC_010317.1|</GBSeqid>
+      <GBSeqid>gnl|NCBI_GENOMES|21905</GBSeqid>
+      <GBSeqid>gi|167006430</GBSeqid>
+    </GBSeq_other-seqids>
+    <GBSeq_project>PRJNA485481</GBSeq_project>
+    <GBSeq_keywords>
+      <GBKeyword>RefSeq</GBKeyword>
+    </GBSeq_keywords>
+    <GBSeq_source>abaca bunchy top virus (ABTV)</GBSeq_source>
+    <GBSeq_organism>abaca bunchy top virus</GBSeq_organism>
+    <GBSeq_taxonomy>Viruses; Floreoviria; Shotokuvirae; Cressdnaviricota; Arfiviricetes; Mulpavirales; Nanoviridae; Babuvirus; Babuvirus abacae</GBSeq_taxonomy>
+    <GBSeq_references>
+      <GBReference>
+        <GBReference_reference>1</GBReference_reference>
+        <GBReference_position>1..1074</GBReference_position>
+        <GBReference_authors>
+          <GBAuthor>Sharman,M.</GBAuthor>
+          <GBAuthor>Thomas,J.E.</GBAuthor>
+          <GBAuthor>Skabo,S.</GBAuthor>
+          <GBAuthor>Holton,T.A.</GBAuthor>
+        </GBReference_authors>
+        <GBReference_title>Abaca bunchy top virus, a new member of the genus Babuvirus (family Nanoviridae)</GBReference_title>
+        <GBReference_journal>Arch. Virol. 153 (1), 135-147 (2008)</GBReference_journal>
+        <GBReference_xref>
+          <GBXref>
+            <GBXref_dbname>doi</GBXref_dbname>
+            <GBXref_id>10.1007/s00705-007-1077-z</GBXref_id>
+          </GBXref>
+        </GBReference_xref>
+        <GBReference_pubmed>17978886</GBReference_pubmed>
+      </GBReference>
+      <GBReference>
+        <GBReference_reference>2</GBReference_reference>
+        <GBReference_position>1..1074</GBReference_position>
+        <GBReference_consortium>NCBI Genome Project</GBReference_consortium>
+        <GBReference_title>Direct Submission</GBReference_title>
+        <GBReference_journal>Submitted (06-FEB-2008) National Center for Biotechnology Information, NIH, Bethesda, MD 20894, USA</GBReference_journal>
+      </GBReference>
+      <GBReference>
+        <GBReference_reference>3</GBReference_reference>
+        <GBReference_position>1..1074</GBReference_position>
+        <GBReference_authors>
+          <GBAuthor>Sharman,M.</GBAuthor>
+          <GBAuthor>Thomas,J.E.</GBAuthor>
+          <GBAuthor>Skabo,S.</GBAuthor>
+        </GBReference_authors>
+        <GBReference_title>Direct Submission</GBReference_title>
+        <GBReference_journal>Submitted (11-APR-2007) Department of Primary Industries and Fisheries, Queensland Government, Plant Pathology Building, 80 Meiers Road, Indooroopilly, Brisbane, Queensland 4068, Australia</GBReference_journal>
+      </GBReference>
+    </GBSeq_references>
+    <GBSeq_comment>PROVISIONAL REFSEQ: This record has not yet been subject to final NCBI review. The reference sequence is identical to EF546811.; COMPLETENESS: full length.</GBSeq_comment>
+    <GBSeq_feature-table>
+      <GBFeature>
+        <GBFeature_key>source</GBFeature_key>
+        <GBFeature_location>1..1074</GBFeature_location>
+        <GBFeature_intervals>
+          <GBInterval>
+            <GBInterval_from>1</GBInterval_from>
+            <GBInterval_to>1074</GBInterval_to>
+            <GBInterval_accession>NC_010317.1</GBInterval_accession>
+          </GBInterval>
+        </GBFeature_intervals>
+        <GBFeature_quals>
+          <GBQualifier>
+            <GBQualifier_name>organism</GBQualifier_name>
+            <GBQualifier_value>abaca bunchy top virus</GBQualifier_value>
+          </GBQualifier>
+          <GBQualifier>
+            <GBQualifier_name>mol_type</GBQualifier_name>
+            <GBQualifier_value>genomic DNA</GBQualifier_value>
+          </GBQualifier>
+          <GBQualifier>
+            <GBQualifier_name>isolate</GBQualifier_name>
+            <GBQualifier_value>Q767</GBQualifier_value>
+          </GBQualifier>
+          <GBQualifier>
+            <GBQualifier_name>host</GBQualifier_name>
+            <GBQualifier_value>Musa sp.</GBQualifier_value>
+          </GBQualifier>
+          <GBQualifier>
+            <GBQualifier_name>db_xref</GBQualifier_name>
+            <GBQualifier_value>taxon:3158377</GBQualifier_value>
+          </GBQualifier>
+          <GBQualifier>
+            <GBQualifier_name>segment</GBQualifier_name>
+            <GBQualifier_value>DNA M</GBQualifier_value>
+          </GBQualifier>
+          <GBQualifier>
+            <GBQualifier_name>geo_loc_name</GBQualifier_name>
+            <GBQualifier_value>Malaysia</GBQualifier_value>
+          </GBQualifier>
+          <GBQualifier>
+            <GBQualifier_name>acronym</GBQualifier_name>
+            <GBQualifier_value>ABTV</GBQualifier_value>
+          </GBQualifier>
+        </GBFeature_quals>
+      </GBFeature>
+      <GBFeature>
+        <GBFeature_key>gene</GBFeature_key>
+        <GBFeature_location>178..528</GBFeature_location>
+        <GBFeature_intervals>
+          <GBInterval>
+            <GBInterval_from>178</GBInterval_from>
+            <GBInterval_to>528</GBInterval_to>
+            <GBInterval_accession>NC_010317.1</GBInterval_accession>
+          </GBInterval>
+        </GBFeature_intervals>
+        <GBFeature_quals>
+          <GBQualifier>
+            <GBQualifier_name>locus_tag</GBQualifier_name>
+            <GBQualifier_value>ABTV_sMgp1</GBQualifier_value>
+          </GBQualifier>
+          <GBQualifier>
+            <GBQualifier_name>db_xref</GBQualifier_name>
+            <GBQualifier_value>GeneID:10987405</GBQualifier_value>
+          </GBQualifier>
+        </GBFeature_quals>
+      </GBFeature>
+      <GBFeature>
+        <GBFeature_key>CDS</GBFeature_key>
+        <GBFeature_location>178..528</GBFeature_location>
+        <GBFeature_intervals>
+          <GBInterval>
+            <GBInterval_from>178</GBInterval_from>
+            <GBInterval_to>528</GBInterval_to>
+            <GBInterval_accession>NC_010317.1</GBInterval_accession>
+          </GBInterval>
+        </GBFeature_intervals>
+        <GBFeature_quals>
+          <GBQualifier>
+            <GBQualifier_name>locus_tag</GBQualifier_name>
+            <GBQualifier_value>ABTV_sMgp1</GBQualifier_value>
+          </GBQualifier>
+          <GBQualifier>
+            <GBQualifier_name>codon_start</GBQualifier_name>
+            <GBQualifier_value>1</GBQualifier_value>
+          </GBQualifier>
+          <GBQualifier>
+            <GBQualifier_name>transl_table</GBQualifier_name>
+            <GBQualifier_value>1</GBQualifier_value>
+          </GBQualifier>
+          <GBQualifier>
+            <GBQualifier_name>product</GBQualifier_name>
+            <GBQualifier_value>putative movement protein</GBQualifier_value>
+          </GBQualifier>
+          <GBQualifier>
+            <GBQualifier_name>protein_id</GBQualifier_name>
+            <GBQualifier_value>YP_001661658.1</GBQualifier_value>
+          </GBQualifier>
+          <GBQualifier>
+            <GBQualifier_name>db_xref</GBQualifier_name>
+            <GBQualifier_value>GeneID:10987405</GBQualifier_value>
+          </GBQualifier>
+          <GBQualifier>
+            <GBQualifier_name>translation</GBQualifier_name>
+            <GBQualifier_value>MGLTGERVKQFFEWFLFFSAIFVAITIIYILLAVLLELPKYIKGLVQYVVEYITRRRVWTRRTQLTEATGGGDIEAVGHDSQAYTHTVMPXVPPVSAPISNRRADQPLRSSAGPMF</GBQualifier_value>
+          </GBQualifier>
+        </GBFeature_quals>
+      </GBFeature>
+    </GBSeq_feature-table>
+    <GBSeq_sequence>ggggctggggcttattattacccccagccccggaacgggacatcacgtgcctccctgtacacgcacgtgacatcaaatggcttgctgygcaagatagaaaggcttcctgcggaagccaggcatcatatatgggttgtagaggatcagccgactctataaatatagggaggcgtggtcatgggattgacaggagaacgagtgaaacaattctttgaatggtttctgttcttctcagcaatatttgttgcaataacaataatatatatattgctggcagttctccttgaactaccgaagtatattaagggtttagtacaatacgtagtggagtatattactagacgacgggtatggacacggaggacccaattgacagaggcaaccggaggaggcgatatagaagctgtagggcatgacagtcaggcgtatacgcatactgttatgccatstgttccaccagttagcgctcctatatcaaataggagagctgatcagcctcttcgatcaagcgccggaccaatgttttaaatacccgtgatatttaatatgcaagtgtataaatacccattgtagatctgtttgtaacctgaatatgcaaagtatataatactttgttgtaatgtataagtacattaataatatacgaagtataatgttgatgcgatgtcttcggaaaatgaagtatacccaaatacacaaaaaaacatatatgtggtgtatacttattgttaagtataataaaattataatacaaacaaatatattgtgtattataatacataaaagaagacagagctgtgaagttaagtaagaaagcgacggattcgtattggataatatgattcgcggagcattacttaacggcgaagtaaagcatcagacaagaatatgacagctgtcatatcaactaaaaagcatagcttgccgagcacgctatgcaatataagggaaaaatgaaataatgacctgtcacgtttacacttttcgtaaagatgtagggccgaaggccctaatgacgcgtgtcatattctctatagtggtgggtcatatgtcccgagttagtgcgccacgtaa</GBSeq_sequence>
+    <GBSeq_xrefs>
+      <GBXref>
+        <GBXref_dbname>BioProject</GBXref_dbname>
+        <GBXref_id>PRJNA485481</GBXref_id>
+      </GBXref>
+    </GBSeq_xrefs>
+  </GBSeq>
+
+  <GBSeq>
+
+    <GBSeq_locus>NC_010318</GBSeq_locus>
+    <GBSeq_length>1015</GBSeq_length>
+    <GBSeq_strandedness>single</GBSeq_strandedness>
+    <GBSeq_moltype>DNA</GBSeq_moltype>
+    <GBSeq_topology>circular</GBSeq_topology>
+    <GBSeq_division>VRL</GBSeq_division>
+    <GBSeq_update-date>13-AUG-2018</GBSeq_update-date>
+    <GBSeq_create-date>06-FEB-2008</GBSeq_create-date>
+    <GBSeq_definition>Abaca bunchy top virus DNA-C, complete sequence</GBSeq_definition>
+    <GBSeq_primary-accession>NC_010318</GBSeq_primary-accession>
+    <GBSeq_accession-version>NC_010318.1</GBSeq_accession-version>
+    <GBSeq_other-seqids>
+      <GBSeqid>ref|NC_010318.1|</GBSeqid>
+      <GBSeqid>gnl|NCBI_GENOMES|21906</GBSeqid>
+      <GBSeqid>gi|167006432</GBSeqid>
+    </GBSeq_other-seqids>
+    <GBSeq_project>PRJNA485481</GBSeq_project>
+    <GBSeq_keywords>
+      <GBKeyword>RefSeq</GBKeyword>
+    </GBSeq_keywords>
+    <GBSeq_source>abaca bunchy top virus (ABTV)</GBSeq_source>
+    <GBSeq_organism>abaca bunchy top virus</GBSeq_organism>
+    <GBSeq_taxonomy>Viruses; Floreoviria; Shotokuvirae; Cressdnaviricota; Arfiviricetes; Mulpavirales; Nanoviridae; Babuvirus; Babuvirus abacae</GBSeq_taxonomy>
+    <GBSeq_references>
+      <GBReference>
+        <GBReference_reference>1</GBReference_reference>
+        <GBReference_position>1..1015</GBReference_position>
+        <GBReference_authors>
+          <GBAuthor>Sharman,M.</GBAuthor>
+          <GBAuthor>Thomas,J.E.</GBAuthor>
+          <GBAuthor>Skabo,S.</GBAuthor>
+          <GBAuthor>Holton,T.A.</GBAuthor>
+        </GBReference_authors>
+        <GBReference_title>Abaca bunchy top virus, a new member of the genus Babuvirus (family Nanoviridae)</GBReference_title>
+        <GBReference_journal>Arch. Virol. 153 (1), 135-147 (2008)</GBReference_journal>
+        <GBReference_xref>
+          <GBXref>
+            <GBXref_dbname>doi</GBXref_dbname>
+            <GBXref_id>10.1007/s00705-007-1077-z</GBXref_id>
+          </GBXref>
+        </GBReference_xref>
+        <GBReference_pubmed>17978886</GBReference_pubmed>
+      </GBReference>
+      <GBReference>
+        <GBReference_reference>2</GBReference_reference>
+        <GBReference_position>1..1015</GBReference_position>
+        <GBReference_consortium>NCBI Genome Project</GBReference_consortium>
+        <GBReference_title>Direct Submission</GBReference_title>
+        <GBReference_journal>Submitted (06-FEB-2008) National Center for Biotechnology Information, NIH, Bethesda, MD 20894, USA</GBReference_journal>
+      </GBReference>
+      <GBReference>
+        <GBReference_reference>3</GBReference_reference>
+        <GBReference_position>1..1015</GBReference_position>
+        <GBReference_authors>
+          <GBAuthor>Sharman,M.</GBAuthor>
+          <GBAuthor>Thomas,J.E.</GBAuthor>
+          <GBAuthor>Skabo,S.</GBAuthor>
+        </GBReference_authors>
+        <GBReference_title>Direct Submission</GBReference_title>
+        <GBReference_journal>Submitted (11-APR-2007) Department of Primary Industries and Fisheries, Queensland Government, Plant Pathology Building, 80 Meiers Road, Indooroopilly, Brisbane, Queensland 4068, Australia</GBReference_journal>
+      </GBReference>
+    </GBSeq_references>
+    <GBSeq_comment>PROVISIONAL REFSEQ: This record has not yet been subject to final NCBI review. The reference sequence was derived from EF546812.; COMPLETENESS: full length.</GBSeq_comment>
+    <GBSeq_feature-table>
+      <GBFeature>
+        <GBFeature_key>source</GBFeature_key>
+        <GBFeature_location>1..1015</GBFeature_location>
+        <GBFeature_intervals>
+          <GBInterval>
+            <GBInterval_from>1</GBInterval_from>
+            <GBInterval_to>1015</GBInterval_to>
+            <GBInterval_accession>NC_010318.1</GBInterval_accession>
+          </GBInterval>
+        </GBFeature_intervals>
+        <GBFeature_quals>
+          <GBQualifier>
+            <GBQualifier_name>organism</GBQualifier_name>
+            <GBQualifier_value>abaca bunchy top virus</GBQualifier_value>
+          </GBQualifier>
+          <GBQualifier>
+            <GBQualifier_name>mol_type</GBQualifier_name>
+            <GBQualifier_value>genomic DNA</GBQualifier_value>
+          </GBQualifier>
+          <GBQualifier>
+            <GBQualifier_name>isolate</GBQualifier_name>
+            <GBQualifier_value>Q767</GBQualifier_value>
+          </GBQualifier>
+          <GBQualifier>
+            <GBQualifier_name>host</GBQualifier_name>
+            <GBQualifier_value>Musa sp.</GBQualifier_value>
+          </GBQualifier>
+          <GBQualifier>
+            <GBQualifier_name>db_xref</GBQualifier_name>
+            <GBQualifier_value>taxon:3158377</GBQualifier_value>
+          </GBQualifier>
+          <GBQualifier>
+            <GBQualifier_name>segment</GBQualifier_name>
+            <GBQualifier_value>DNA C</GBQualifier_value>
+          </GBQualifier>
+          <GBQualifier>
+            <GBQualifier_name>geo_loc_name</GBQualifier_name>
+            <GBQualifier_value>Malaysia</GBQualifier_value>
+          </GBQualifier>
+          <GBQualifier>
+            <GBQualifier_name>acronym</GBQualifier_name>
+            <GBQualifier_value>ABTV</GBQualifier_value>
+          </GBQualifier>
+        </GBFeature_quals>
+      </GBFeature>
+      <GBFeature>
+        <GBFeature_key>gene</GBFeature_key>
+        <GBFeature_location>248..730</GBFeature_location>
+        <GBFeature_intervals>
+          <GBInterval>
+            <GBInterval_from>248</GBInterval_from>
+            <GBInterval_to>730</GBInterval_to>
+            <GBInterval_accession>NC_010318.1</GBInterval_accession>
+          </GBInterval>
+        </GBFeature_intervals>
+        <GBFeature_quals>
+          <GBQualifier>
+            <GBQualifier_name>locus_tag</GBQualifier_name>
+            <GBQualifier_value>ABTV_sCgp1</GBQualifier_value>
+          </GBQualifier>
+          <GBQualifier>
+            <GBQualifier_name>db_xref</GBQualifier_name>
+            <GBQualifier_value>GeneID:11027299</GBQualifier_value>
+          </GBQualifier>
+        </GBFeature_quals>
+      </GBFeature>
+      <GBFeature>
+        <GBFeature_key>CDS</GBFeature_key>
+        <GBFeature_location>248..730</GBFeature_location>
+        <GBFeature_intervals>
+          <GBInterval>
+            <GBInterval_from>248</GBInterval_from>
+            <GBInterval_to>730</GBInterval_to>
+            <GBInterval_accession>NC_010318.1</GBInterval_accession>
+          </GBInterval>
+        </GBFeature_intervals>
+        <GBFeature_quals>
+          <GBQualifier>
+            <GBQualifier_name>locus_tag</GBQualifier_name>
+            <GBQualifier_value>ABTV_sCgp1</GBQualifier_value>
+          </GBQualifier>
+          <GBQualifier>
+            <GBQualifier_name>note</GBQualifier_name>
+            <GBQualifier_value>Clink</GBQualifier_value>
+          </GBQualifier>
+          <GBQualifier>
+            <GBQualifier_name>codon_start</GBQualifier_name>
+            <GBQualifier_value>1</GBQualifier_value>
+          </GBQualifier>
+          <GBQualifier>
+            <GBQualifier_name>transl_table</GBQualifier_name>
+            <GBQualifier_value>1</GBQualifier_value>
+          </GBQualifier>
+          <GBQualifier>
+            <GBQualifier_name>product</GBQualifier_name>
+            <GBQualifier_value>putative cell-cycle link protein</GBQualifier_value>
+          </GBQualifier>
+          <GBQualifier>
+            <GBQualifier_name>protein_id</GBQualifier_name>
+            <GBQualifier_value>YP_001661659.1</GBQualifier_value>
+          </GBQualifier>
+          <GBQualifier>
+            <GBQualifier_name>db_xref</GBQualifier_name>
+            <GBQualifier_value>GeneID:11027299</GBQualifier_value>
+          </GBQualifier>
+          <GBQualifier>
+            <GBQualifier_name>translation</GBQualifier_name>
+            <GBQualifier_value>MEFWNSEAFCDDVKRVIKQKYWEERMKSLFIEKVSGYVRRILVYGNLDDTIYAVQQMKTSIVQCAERFGKACVVVYNGLDPSIGFRLHTMAFFFEEYVEEVSTADPMAVQLFCDEEIEEFSNSDVRLIKNVIMASTDASIDVGNCIQIIISDNVITFYIC</GBQualifier_value>
+          </GBQualifier>
+        </GBFeature_quals>
+      </GBFeature>
+    </GBSeq_feature-table>
+    <GBSeq_sequence>ggcaggggggcttattattaccccccctgcccgggacgggacatcacgtgcgcctataaagaagcacgtgatgatgtgacatatgtttgccgtaagctgtacaaaagcgaatgctttattgctttattcgttgcttagcccctaagcaacctggtagtgggatgtggtccctgatgcgaagcagctttgttgttgctatttatatctgtgttcgccatgtaaaatgcgaaatacaacgctgatcagaatggagttctggaattcggaagcattttgcgacgatgtgaagcgtgtcattaagcaaaaatattgggaagagcggatgaaatctctatttatagagaaggtgagtggttatgttcgaaggattcttgtttatggtaatcttgatgataccatatatgcggttcagcaaatgaagacttctatagttcagtgtgctgaacgtttcggtaaagcctgtgtggtggtatataatggtttggatccatcaataggtttccgattacacactatggcgttcttcttcgaagaatatgttgaggaagtgagtactgcagatccaatggcggttcagttattttgtgatgaagaaatagaagaattctcaaattctgatgtacgccttattaaaaatgttattatggcatcgacagatgcatcgattgatgtaggaaattgtattcagataataatatctgataatgtaataacattctatatatgttaacttcatttatacataagaatgaatgaagtggtttatttatgatttttagaatataatcataaatggtaaaccttaagcaaaaccaccctaaaacaaataaacctctctgacatacaaccctctataaaataaagcccatgtaagattcaaatttagaatgaaaaatgggccgaaggcccatataaatgcatttaaggccgaaggccttataattgcaggaagaaaagaacacggttttgcttacgtggcctgtgggccatatgtcccgagttagtgcgccacgtg</GBSeq_sequence>
+    <GBSeq_xrefs>
+      <GBXref>
+        <GBXref_dbname>BioProject</GBXref_dbname>
+        <GBXref_id>PRJNA485481</GBXref_id>
+      </GBXref>
+    </GBSeq_xrefs>
+  </GBSeq>
+
+  <GBSeq>
+
+    <GBSeq_locus>NC_010319</GBSeq_locus>
+    <GBSeq_length>1099</GBSeq_length>
+    <GBSeq_strandedness>single</GBSeq_strandedness>
+    <GBSeq_moltype>DNA</GBSeq_moltype>
+    <GBSeq_topology>circular</GBSeq_topology>
+    <GBSeq_division>VRL</GBSeq_division>
+    <GBSeq_update-date>13-AUG-2018</GBSeq_update-date>
+    <GBSeq_create-date>06-FEB-2008</GBSeq_create-date>
+    <GBSeq_definition>Abaca bunchy top virus DNA-R, complete genome</GBSeq_definition>
+    <GBSeq_primary-accession>NC_010319</GBSeq_primary-accession>
+    <GBSeq_accession-version>NC_010319.1</GBSeq_accession-version>
+    <GBSeq_other-seqids>
+      <GBSeqid>ref|NC_010319.1|</GBSeqid>
+      <GBSeqid>gnl|NCBI_GENOMES|21907</GBSeqid>
+      <GBSeqid>gi|167006434</GBSeqid>
+    </GBSeq_other-seqids>
+    <GBSeq_project>PRJNA485481</GBSeq_project>
+    <GBSeq_keywords>
+      <GBKeyword>RefSeq</GBKeyword>
+    </GBSeq_keywords>
+    <GBSeq_source>abaca bunchy top virus (ABTV)</GBSeq_source>
+    <GBSeq_organism>abaca bunchy top virus</GBSeq_organism>
+    <GBSeq_taxonomy>Viruses; Floreoviria; Shotokuvirae; Cressdnaviricota; Arfiviricetes; Mulpavirales; Nanoviridae; Babuvirus; Babuvirus abacae</GBSeq_taxonomy>
+    <GBSeq_references>
+      <GBReference>
+        <GBReference_reference>1</GBReference_reference>
+        <GBReference_position>1..1099</GBReference_position>
+        <GBReference_authors>
+          <GBAuthor>Sharman,M.</GBAuthor>
+          <GBAuthor>Thomas,J.E.</GBAuthor>
+          <GBAuthor>Skabo,S.</GBAuthor>
+          <GBAuthor>Holton,T.A.</GBAuthor>
+        </GBReference_authors>
+        <GBReference_title>Abaca bunchy top virus, a new member of the genus Babuvirus (family Nanoviridae)</GBReference_title>
+        <GBReference_journal>Arch. Virol. 153 (1), 135-147 (2008)</GBReference_journal>
+        <GBReference_xref>
+          <GBXref>
+            <GBXref_dbname>doi</GBXref_dbname>
+            <GBXref_id>10.1007/s00705-007-1077-z</GBXref_id>
+          </GBXref>
+        </GBReference_xref>
+        <GBReference_pubmed>17978886</GBReference_pubmed>
+      </GBReference>
+      <GBReference>
+        <GBReference_reference>2</GBReference_reference>
+        <GBReference_position>1..1099</GBReference_position>
+        <GBReference_consortium>NCBI Genome Project</GBReference_consortium>
+        <GBReference_title>Direct Submission</GBReference_title>
+        <GBReference_journal>Submitted (06-FEB-2008) National Center for Biotechnology Information, NIH, Bethesda, MD 20894, USA</GBReference_journal>
+      </GBReference>
+      <GBReference>
+        <GBReference_reference>3</GBReference_reference>
+        <GBReference_position>1..1099</GBReference_position>
+        <GBReference_authors>
+          <GBAuthor>Sharman,M.</GBAuthor>
+          <GBAuthor>Thomas,J.E.</GBAuthor>
+          <GBAuthor>Skabo,S.</GBAuthor>
+        </GBReference_authors>
+        <GBReference_title>Direct Submission</GBReference_title>
+        <GBReference_journal>Submitted (11-APR-2007) Department of Primary Industries and Fisheries, Queensland Government, Plant Pathology Building, 80 Meiers Road, Indooroopilly, Brisbane, Queensland 4068, Australia</GBReference_journal>
+      </GBReference>
+    </GBSeq_references>
+    <GBSeq_comment>PROVISIONAL REFSEQ: This record has not yet been subject to final NCBI review. The reference sequence is identical to EF546813.; COMPLETENESS: full length.</GBSeq_comment>
+    <GBSeq_feature-table>
+      <GBFeature>
+        <GBFeature_key>source</GBFeature_key>
+        <GBFeature_location>1..1099</GBFeature_location>
+        <GBFeature_intervals>
+          <GBInterval>
+            <GBInterval_from>1</GBInterval_from>
+            <GBInterval_to>1099</GBInterval_to>
+            <GBInterval_accession>NC_010319.1</GBInterval_accession>
+          </GBInterval>
+        </GBFeature_intervals>
+        <GBFeature_quals>
+          <GBQualifier>
+            <GBQualifier_name>organism</GBQualifier_name>
+            <GBQualifier_value>abaca bunchy top virus</GBQualifier_value>
+          </GBQualifier>
+          <GBQualifier>
+            <GBQualifier_name>mol_type</GBQualifier_name>
+            <GBQualifier_value>genomic DNA</GBQualifier_value>
+          </GBQualifier>
+          <GBQualifier>
+            <GBQualifier_name>isolate</GBQualifier_name>
+            <GBQualifier_value>Q767</GBQualifier_value>
+          </GBQualifier>
+          <GBQualifier>
+            <GBQualifier_name>host</GBQualifier_name>
+            <GBQualifier_value>Musa sp.</GBQualifier_value>
+          </GBQualifier>
+          <GBQualifier>
+            <GBQualifier_name>db_xref</GBQualifier_name>
+            <GBQualifier_value>taxon:3158377</GBQualifier_value>
+          </GBQualifier>
+          <GBQualifier>
+            <GBQualifier_name>segment</GBQualifier_name>
+            <GBQualifier_value>DNA R</GBQualifier_value>
+          </GBQualifier>
+          <GBQualifier>
+            <GBQualifier_name>geo_loc_name</GBQualifier_name>
+            <GBQualifier_value>Malaysia</GBQualifier_value>
+          </GBQualifier>
+          <GBQualifier>
+            <GBQualifier_name>acronym</GBQualifier_name>
+            <GBQualifier_value>ABTV</GBQualifier_value>
+          </GBQualifier>
+        </GBFeature_quals>
+      </GBFeature>
+      <GBFeature>
+        <GBFeature_key>gene</GBFeature_key>
+        <GBFeature_location>94..954</GBFeature_location>
+        <GBFeature_intervals>
+          <GBInterval>
+            <GBInterval_from>94</GBInterval_from>
+            <GBInterval_to>954</GBInterval_to>
+            <GBInterval_accession>NC_010319.1</GBInterval_accession>
+          </GBInterval>
+        </GBFeature_intervals>
+        <GBFeature_quals>
+          <GBQualifier>
+            <GBQualifier_name>locus_tag</GBQualifier_name>
+            <GBQualifier_value>ABTV_sRgp1</GBQualifier_value>
+          </GBQualifier>
+          <GBQualifier>
+            <GBQualifier_name>db_xref</GBQualifier_name>
+            <GBQualifier_value>GeneID:10987406</GBQualifier_value>
+          </GBQualifier>
+        </GBFeature_quals>
+      </GBFeature>
+      <GBFeature>
+        <GBFeature_key>CDS</GBFeature_key>
+        <GBFeature_location>94..954</GBFeature_location>
+        <GBFeature_intervals>
+          <GBInterval>
+            <GBInterval_from>94</GBInterval_from>
+            <GBInterval_to>954</GBInterval_to>
+            <GBInterval_accession>NC_010319.1</GBInterval_accession>
+          </GBInterval>
+        </GBFeature_intervals>
+        <GBFeature_quals>
+          <GBQualifier>
+            <GBQualifier_name>locus_tag</GBQualifier_name>
+            <GBQualifier_value>ABTV_sRgp1</GBQualifier_value>
+          </GBQualifier>
+          <GBQualifier>
+            <GBQualifier_name>codon_start</GBQualifier_name>
+            <GBQualifier_value>1</GBQualifier_value>
+          </GBQualifier>
+          <GBQualifier>
+            <GBQualifier_name>transl_table</GBQualifier_name>
+            <GBQualifier_value>1</GBQualifier_value>
+          </GBQualifier>
+          <GBQualifier>
+            <GBQualifier_name>product</GBQualifier_name>
+            <GBQualifier_value>putative replicase protein</GBQualifier_value>
+          </GBQualifier>
+          <GBQualifier>
+            <GBQualifier_name>protein_id</GBQualifier_name>
+            <GBQualifier_value>YP_001661660.1</GBQualifier_value>
+          </GBQualifier>
+          <GBQualifier>
+            <GBQualifier_name>db_xref</GBQualifier_name>
+            <GBQualifier_value>GeneID:10987406</GBQualifier_value>
+          </GBQualifier>
+          <GBQualifier>
+            <GBQualifier_name>translation</GBQualifier_name>
+            <GBQualifier_value>MARYVVCWMFTINNPEALPEMREEYKYLVYQVERGESGTRHVQGYVEMKRRSSLKQMRALIPGAHLEKRRGTQEEARAYCMKADTRVEGPFEFGLFKVSCNDNLFDVIQDMRETHKRPIEYLYDCPNTFDRSKDTLYRVQAEMNKMQAMMSWSETYGCWTKEVEELMAEPCHRRIIWVYGPNGGEGKTTYAKHLIKTRNAFYTPGGKTLDICRLYNYEGIVIFDIPRCKEDYLNYGILEEFKNGIIQSGKYEPVLKIVEYVEVIVMANFLPKEGIFSEDRIKLVTC</GBQualifier_value>
+          </GBQualifier>
+        </GBFeature_quals>
+      </GBFeature>
+    </GBSeq_feature-table>
+    <GBSeq_sequence>ggcaggggggcttattattaccccccctgcccgggacgggacatttgcatctataaatagaagcgccctcgctcaaccagatcaggcgctgcaatggctagatatgtcgtatgttggatgttcaccatcaacaatcccgaagctcttccagagatgagggaagaatacaaatacctggtttaccaggtggagcgaggcgaaagcggtacacgacatgtgcagggctatgttgaaatgaagagacgaagttctctgaaacaaatgagggctttaattcctggtgcccatctcgaaaagagaaggggcacacaggaagaagctagagcttattgtatgaaggcagatacgagagtcgaaggtcccttcgagtttggtcttttcaaagtatcatgtaatgataatttgtttgatgtcatacaggatatgagagaaacgcacaaacggccgattgagtatttatacgactgtcctaataccttcgatagaagtaaggatacattatacagggtacaagcggaaatgaataaaatgcaagctatgatgtcgtggtcggaaacctatggttgctggacgaaggaagtggaggaactaatggcggagccatgtcaccgacggattatttgggtctatggcccaaatggtggtgaaggtaaaacaacctatgcgaagcatctaatcaagaccagaaatgcattttatacacctggcggaaagacactggatatatgtaggctgtataattatgagggaattgtaatatttgatattcccagatgcaaagaggattacttgaattacggaattcttgaggaattcaagaatggcatcattcagagcgggaaatatgaaccagttttaaaaattgtagagtatgtggaggtcattgtcatggctaacttcctgccgaaggaaggaatattctcggaagaccgaataaagcttgtaacttgttgaacacgctatgcaataaaggggaaaaatgcaattatgacctgtcacgtttacacttttcgtaaagatgtagggccgaaggccctaatgacgcgtgtcatattctctatagtggtgggtcatatgtcccgagttagtgcgccacgtg</GBSeq_sequence>
+    <GBSeq_xrefs>
+      <GBXref>
+        <GBXref_dbname>BioProject</GBXref_dbname>
+        <GBXref_id>PRJNA485481</GBXref_id>
+      </GBXref>
+    </GBSeq_xrefs>
+  </GBSeq>
+
+</GBSet>

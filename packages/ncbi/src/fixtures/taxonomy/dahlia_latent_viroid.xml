@@ -1,0 +1,53 @@
+<?xml version="1.0" ?>
+<!DOCTYPE TaxaSet PUBLIC "-//NLM//DTD Taxon, 14th January 2002//EN" "https://www.ncbi.nlm.nih.gov/entrez/query/DTD/taxon.dtd">
+<TaxaSet><Taxon>
+    <TaxId>1278205</TaxId>
+    <ScientificName>Dahlia latent viroid</ScientificName>
+    <OtherNames>
+        <EquivalentName>Dahlia viroid</EquivalentName>
+    </OtherNames>
+    <ParentTaxId>3429802</ParentTaxId>
+    <Rank>no rank</Rank>
+    <Division>Viruses</Division>
+    <GeneticCode>
+        <GCId>1</GCId>
+        <GCName>Standard</GCName>
+    </GeneticCode>
+    <MitoGeneticCode>
+        <MGCId>0</MGCId>
+        <MGCName>Unspecified</MGCName>
+    </MitoGeneticCode>
+    <Lineage>Viruses; Viruses incertae sedis; Pospiviroidae; Hostuviroid; Hostuviroid latensdahliae</Lineage>
+    <LineageEx>
+        <Taxon>
+            <TaxId>10239</TaxId>
+            <ScientificName>Viruses</ScientificName>
+            <Rank>acellular root</Rank>
+        </Taxon>
+        <Taxon>
+            <TaxId>3403061</TaxId>
+            <ScientificName>Viruses incertae sedis</ScientificName>
+            <Rank>no rank</Rank>
+        </Taxon>
+        <Taxon>
+            <TaxId>185751</TaxId>
+            <ScientificName>Pospiviroidae</ScientificName>
+            <Rank>family</Rank>
+        </Taxon>
+        <Taxon>
+            <TaxId>147262</TaxId>
+            <ScientificName>Hostuviroid</ScientificName>
+            <Rank>genus</Rank>
+        </Taxon>
+        <Taxon>
+            <TaxId>3429802</TaxId>
+            <ScientificName>Hostuviroid latensdahliae</ScientificName>
+            <Rank>species</Rank>
+        </Taxon>
+    </LineageEx>
+    <CreateDate>2013/01/04 14:07:13</CreateDate>
+    <UpdateDate>2025/06/03 12:49:06</UpdateDate>
+    <PubDate>2013/01/13 07:01:10</PubDate>
+</Taxon>
+
+</TaxaSet>

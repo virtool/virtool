@@ -1,0 +1,73 @@
+<?xml version="1.0" ?>
+<!DOCTYPE TaxaSet PUBLIC "-//NLM//DTD Taxon, 14th January 2002//EN" "https://www.ncbi.nlm.nih.gov/entrez/query/DTD/taxon.dtd">
+<TaxaSet><Taxon>
+    <TaxId>56879</TaxId>
+    <ScientificName>Oat blue dwarf virus</ScientificName>
+    <OtherNames>
+        <Acronym>OBDV</Acronym>
+    </OtherNames>
+    <ParentTaxId>3048226</ParentTaxId>
+    <Rank>no rank</Rank>
+    <Division>Viruses</Division>
+    <GeneticCode>
+        <GCId>1</GCId>
+        <GCName>Standard</GCName>
+    </GeneticCode>
+    <MitoGeneticCode>
+        <MGCId>0</MGCId>
+        <MGCName>Unspecified</MGCName>
+    </MitoGeneticCode>
+    <Lineage>Viruses; Riboviria; Orthornavirae; Kitrinoviricota; Alsuviricetes; Tymovirales; Tymoviridae; Marafivirus; Marafivirus avenae</Lineage>
+    <LineageEx>
+        <Taxon>
+            <TaxId>10239</TaxId>
+            <ScientificName>Viruses</ScientificName>
+            <Rank>acellular root</Rank>
+        </Taxon>
+        <Taxon>
+            <TaxId>2559587</TaxId>
+            <ScientificName>Riboviria</ScientificName>
+            <Rank>realm</Rank>
+        </Taxon>
+        <Taxon>
+            <TaxId>2732396</TaxId>
+            <ScientificName>Orthornavirae</ScientificName>
+            <Rank>kingdom</Rank>
+        </Taxon>
+        <Taxon>
+            <TaxId>2732406</TaxId>
+            <ScientificName>Kitrinoviricota</ScientificName>
+            <Rank>phylum</Rank>
+        </Taxon>
+        <Taxon>
+            <TaxId>2732461</TaxId>
+            <ScientificName>Alsuviricetes</ScientificName>
+            <Rank>class</Rank>
+        </Taxon>
+        <Taxon>
+            <TaxId>675063</TaxId>
+            <ScientificName>Tymovirales</ScientificName>
+            <Rank>order</Rank>
+        </Taxon>
+        <Taxon>
+            <TaxId>249184</TaxId>
+            <ScientificName>Tymoviridae</ScientificName>
+            <Rank>family</Rank>
+        </Taxon>
+        <Taxon>
+            <TaxId>12051</TaxId>
+            <ScientificName>Marafivirus</ScientificName>
+            <Rank>genus</Rank>
+        </Taxon>
+        <Taxon>
+            <TaxId>3048226</TaxId>
+            <ScientificName>Marafivirus avenae</ScientificName>
+            <Rank>species</Rank>
+        </Taxon>
+    </LineageEx>
+    <CreateDate>1997/02/12 11:39:00</CreateDate>
+    <UpdateDate>2018/10/25 16:18:22</UpdateDate>
+    <PubDate>1997/02/20 00:00:00</PubDate>
+</Taxon>
+
+</TaxaSet>

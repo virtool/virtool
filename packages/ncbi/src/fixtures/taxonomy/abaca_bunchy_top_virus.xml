@@ -1,0 +1,70 @@
+<?xml version="1.0" ?>
+<!DOCTYPE TaxaSet PUBLIC "-//NLM//DTD Taxon, 14th January 2002//EN" "https://www.ncbi.nlm.nih.gov/entrez/query/DTD/taxon.dtd">
+<TaxaSet><Taxon>
+    <TaxId>3158377</TaxId>
+    <ScientificName>abaca bunchy top virus</ScientificName>
+    <ParentTaxId>438782</ParentTaxId>
+    <Rank>no rank</Rank>
+    <Division>Viruses</Division>
+    <GeneticCode>
+        <GCId>1</GCId>
+        <GCName>Standard</GCName>
+    </GeneticCode>
+    <MitoGeneticCode>
+        <MGCId>0</MGCId>
+        <MGCName>Unspecified</MGCName>
+    </MitoGeneticCode>
+    <Lineage>Viruses; Floreoviria; Shotokuvirae; Cressdnaviricota; Arfiviricetes; Mulpavirales; Nanoviridae; Babuvirus; Babuvirus abacae</Lineage>
+    <LineageEx>
+        <Taxon>
+            <TaxId>10239</TaxId>
+            <ScientificName>Viruses</ScientificName>
+            <Rank>acellular root</Rank>
+        </Taxon>
+        <Taxon>
+            <TaxId>2731342</TaxId>
+            <ScientificName>Floreoviria</ScientificName>
+            <Rank>realm</Rank>
+        </Taxon>
+        <Taxon>
+            <TaxId>2732092</TaxId>
+            <ScientificName>Shotokuvirae</ScientificName>
+            <Rank>kingdom</Rank>
+        </Taxon>
+        <Taxon>
+            <TaxId>2732416</TaxId>
+            <ScientificName>Cressdnaviricota</ScientificName>
+            <Rank>phylum</Rank>
+        </Taxon>
+        <Taxon>
+            <TaxId>2732423</TaxId>
+            <ScientificName>Arfiviricetes</ScientificName>
+            <Rank>class</Rank>
+        </Taxon>
+        <Taxon>
+            <TaxId>2732538</TaxId>
+            <ScientificName>Mulpavirales</ScientificName>
+            <Rank>order</Rank>
+        </Taxon>
+        <Taxon>
+            <TaxId>251095</TaxId>
+            <ScientificName>Nanoviridae</ScientificName>
+            <Rank>family</Rank>
+        </Taxon>
+        <Taxon>
+            <TaxId>251096</TaxId>
+            <ScientificName>Babuvirus</ScientificName>
+            <Rank>genus</Rank>
+        </Taxon>
+        <Taxon>
+            <TaxId>438782</TaxId>
+            <ScientificName>Babuvirus abacae</ScientificName>
+            <Rank>species</Rank>
+        </Taxon>
+    </LineageEx>
+    <CreateDate>2024/05/31 13:18:46</CreateDate>
+    <UpdateDate>2024/05/31 13:18:46</UpdateDate>
+    <PubDate>2024/06/20 13:07:41</PubDate>
+</Taxon>
+
+</TaxaSet>

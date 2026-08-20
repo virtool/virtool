@@ -1,0 +1,77 @@
+{
+	"genbank": {
+		"NC_005954.1": {
+			"accession": "NC_005954",
+			"accession_version": "NC_005954.1",
+			"comment": "PROVISIONAL REFSEQ: This record has not yet been subject to final NCBI review. The reference sequence is identical to AJ512954.; COMPLETENESS: full length.",
+			"definition": "Okra leaf curl alphasatellite rep gene for replication associated protein, clone NOB-3",
+			"moltype": "DNA",
+			"organism": "Okra leaf curl alphasatellite",
+			"refseq": true,
+			"sequence": "ACCCCGCCTCGAGACTTTAGCCCGAGACCCTCCGTACAGTTTTTTGTGCTCTCGCTTATATTTCTGTCTTCTGCGATAGATGGCTGCAATTAAGTCACATTGGTGGTGTTTCACGGTGTTCTTCCTCTCTGCTACTGCACCTGACTTGGTGCCTCTGTTCGAAAACACTCACGTGAGTTATGCTTGTTGGCAAGAAGAGGAGTCTCCGACGACGAAACGTCGCCACCTTCAAGGATACCTGCAATTGAAGGGTCAGAGGACCCTGAACCAGGTGAAGGCCATATTTGGGGATTTGAAGCCCCATCTTGAGAAACAGCGAGCTCGTAAGACAGACGATGCTCGCGATTACTGTATGAAACCCGAAACTAGGGTTTCTGGCCCCTTTGAATTTGGGGAATACTGTCCTGCTGGTTCTCACAAACGACGACAAAGGGAACTCGTAATTCGATCTCCGGTGAGAATGGCAGAGGAAAATCCGTCCGTCTTCCGACGAGTAAAGGCAAAGATTGCTGAGGAAGAATTCCAGAAGAGCGCTCATGAGATTCAAATTTCAAATTTGAAATCTTGGCAATCGCGCCTAAAGACGCTCCTGGAGAGGGACCCAGACGACCGCACTATTCTCTGGGTTTACGGACCTAATGGTGGGGAAGGGAAATCCACTTTCGCCAGAGACCTATACAGAAGTGGGTCCTGGTTCTATACACGTGGAGGATCTGCAGATAATGTAGCTTACCAGTACATAGGATGTTTAGGCAATAATATTGTATTTGATATTCCTCGTGATAAGAAGGAGTATCTTCAGTATAGTTTAATAGAGATGTTTAAGGATAGATTAATAGTTAGTAATAAGTACGAGCCTCTTATGGCCCCTTTGCTTAATTGTATTCATGTTGTAGTTATGTCTAATTTTCTCCCAGACTTTGAGAAGATTAGTCAGGATAGAGTCCATGTAATCCCATGTATACCATGTGGTGTTTGTCTTAAACACCATAATATTAATGATAAATGTGATGATTATGTGGATTAATTATTTTTGTTTCTTGAATACAAGAAAGAATGAAATGAAAAAAAAACAAAGAAAAAACATGAGCCTTCTATTATTTTAAGATAACAGTTGCCGCGCAGCGGCATTCAAAAAAAAAATGGAAAAGAAAAATAAAATGAAAAAGAAAAATAAAATGTCTTATTAAAACGACGACGTATTGAATAAATTGATCTGGGAGTAAAATGTAAATATTGGAAACTTGCGGGCTTGCGCTATAAATATTTAAAAGTTACGGTTAAGCGGAGTAAATGTAGAAGTCTTCAGGGGTATGTGTTTGCAATTATTTTGGTCTCTCAGCTATAAATAACACGTCACGAGGCGGGTGTAGTATT",
+			"source": {
+				"clone": "NOB-3",
+				"focus": false,
+				"host": "Okra",
+				"isolate": null,
+				"macronuclear": false,
+				"mol_type": "genomic DNA",
+				"organism": "Okra leaf curl alphasatellite",
+				"proviral": false,
+				"segment": null,
+				"strain": null,
+				"taxid": 518829,
+				"transgenic": false
+			},
+			"strandedness": "double",
+			"topology": "circular"
+		}
+	},
+	"taxonomy": {
+		"id": 518829,
+		"lineage": [
+			{
+				"id": 10239,
+				"name": "Viruses",
+				"rank": "acellular root"
+			},
+			{
+				"id": 3403061,
+				"name": "Viruses incertae sedis",
+				"rank": "no rank"
+			},
+			{
+				"id": 1458186,
+				"name": "Alphasatellitidae",
+				"rank": "family"
+			},
+			{
+				"id": 283494,
+				"name": "Geminialphasatellitinae",
+				"rank": "subfamily"
+			},
+			{
+				"id": 1231296,
+				"name": "unclassified Begomovirus-associated alphasatellites",
+				"rank": "no rank"
+			}
+		],
+		"name": "Okra leaf curl alphasatellite",
+		"other_names": {
+			"acronym": [],
+			"equivalent_name": [
+				"Okra leaf curl disease associated DNA 1",
+				"Okra leaf curl virus-associated alphasatellite"
+			],
+			"genbank_acronym": [],
+			"includes": [],
+			"synonym": []
+		},
+		"rank": "species",
+		"species": {
+			"id": 518829,
+			"name": "Okra leaf curl alphasatellite",
+			"rank": "species"
+		}
+	}
+}

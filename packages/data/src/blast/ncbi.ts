@@ -13,8 +13,8 @@
 
 import { readZipMember } from "@virtool/archive/zip";
 import type { JsonObject, JsonValue } from "@virtool/contracts";
+import { USER_AGENT } from "@virtool/contracts/userAgent";
 import { AppError } from "../errors";
-import { USER_AGENT } from "../userAgent";
 
 /** The one CGI endpoint every BLAST exchange goes through. */
 const BLAST_URL = "https://blast.ncbi.nlm.nih.gov/Blast.cgi";
@@ -24,8 +24,7 @@ const BLAST_URL = "https://blast.ncbi.nlm.nih.gov/Blast.cgi";
  *
  * NCBI is a third party on the far side of the internet. Without a deadline a
  * hung connection holds a task's lease until it expires, and the reclaim then
- * opens a second hung connection behind the first. Ten seconds matches
- * `genbank/data.ts`.
+ * opens a second hung connection behind the first.
  */
 const REQUEST_TIMEOUT_MS = 10_000;
 
