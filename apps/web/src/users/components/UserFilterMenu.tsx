@@ -1,8 +1,7 @@
 import { useFetchAccount } from "@account/account";
-import DropdownMenuCheckboxItem from "@base/DropdownMenuCheckboxItem";
-import DropdownMenuContent from "@base/DropdownMenuContent";
-import DropdownMenuItem from "@base/DropdownMenuItem";
 import DropdownMenuSeparator from "@base/DropdownMenuSeparator";
+import FilterMenuCheckboxItem from "@base/FilterMenuCheckboxItem";
+import FilterMenuContent from "@base/FilterMenuContent";
 import Input from "@base/Input";
 import QueryError from "@base/QueryError";
 import { useListUsers } from "@users/queries";
@@ -21,7 +20,7 @@ type UserFilterMenuProps = {
 };
 
 /**
- * A dropdown menu for selecting the users whose samples are shown
+ * A dropdown menu for selecting the users a list is filtered by
  */
 export default function UserFilterMenu({
 	onClear,
@@ -36,30 +35,28 @@ export default function UserFilterMenu({
 		user.handle.toLowerCase().includes(term.toLowerCase()),
 	);
 
-	// Filtering to your own samples is the common case, so lift yourself out of
-	// the alphabetical list.
+	// Filtering to your own work is the common case, so lift yourself out of the
+	// alphabetical list.
 	const self = matches.find((user) => user.id === account?.id);
 	const others = matches.filter((user) => user.id !== account?.id);
 
 	function renderUser(user: UserNested, isSelf: boolean) {
 		return (
-			<DropdownMenuCheckboxItem
+			<FilterMenuCheckboxItem
 				checked={selected.includes(user.id)}
 				key={user.id}
 				onCheckedChange={() => onToggle(user.id)}
-				// Keep the menu open so several users can be toggled at once.
-				onSelect={(e) => e.preventDefault()}
 			>
 				<span className="flex-grow truncate">{user.handle}</span>
 				{isSelf && (
 					<span className="shrink-0 pl-2 text-gray-500 text-sm">You</span>
 				)}
-			</DropdownMenuCheckboxItem>
+			</FilterMenuCheckboxItem>
 		);
 	}
 
 	return (
-		<DropdownMenuContent className="w-64">
+		<FilterMenuContent onClear={onClear} showClear={selected.length > 0}>
 			<div className="sticky top-0 bg-white p-1">
 				<Input
 					aria-label="Filter users"
@@ -88,14 +85,6 @@ export default function UserFilterMenu({
 					{others.map((user) => renderUser(user, false))}
 				</>
 			)}
-			{selected.length > 0 && (
-				<>
-					<DropdownMenuSeparator />
-					<DropdownMenuItem color="blue" onSelect={onClear}>
-						Clear
-					</DropdownMenuItem>
-				</>
-			)}
-		</DropdownMenuContent>
+		</FilterMenuContent>
 	);
 }

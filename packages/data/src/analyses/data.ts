@@ -55,8 +55,10 @@ export type FindAnalysesOptions = {
 	sampleId?: number;
 	/** The column to order by, or undefined for newest first. */
 	sort?: AnalysisSort;
-	/** Restrict the page to the analyses one user started. */
-	userId?: number;
+	/** Restrict the page to the analyses these users started. */
+	userIds?: number[];
+	/** Restrict the page to the analyses run with these workflows. */
+	workflows?: AnalysisWorkflow[];
 };
 
 /** The fields an analysis is created from, plus the user starting it. */
@@ -334,8 +336,12 @@ export async function findAnalyses(
 		narrowing.push(eq(analyses.sample_id, options.sampleId));
 	}
 
-	if (options.userId !== undefined) {
-		narrowing.push(eq(analyses.user_id, options.userId));
+	if (options.userIds?.length) {
+		narrowing.push(inArray(analyses.user_id, options.userIds));
+	}
+
+	if (options.workflows?.length) {
+		narrowing.push(inArray(analyses.workflow, options.workflows));
 	}
 
 	const where = narrowing.length > 0 ? and(readable, ...narrowing) : readable;

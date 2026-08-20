@@ -2,8 +2,11 @@
 // and aggregate figure is derived server-side from the raw alignments, in
 // `@server/analyses/format`. Nothing is re-derived here.
 
-const supportedWorkflows: string[] = ["pathoscope", "nuvs"];
+import type { AnalysisWorkflow } from "@virtool/contracts";
+
+/** The workflows this client can view results for, and filter a list by. */
+export const supportedWorkflows: AnalysisWorkflow[] = ["pathoscope", "nuvs"];
 
 export function checkSupportedWorkflow(workflow: string) {
-	return supportedWorkflows.includes(workflow);
+	return supportedWorkflows.some((supported) => supported === workflow);
 }

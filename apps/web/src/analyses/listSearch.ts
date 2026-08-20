@@ -1,20 +1,34 @@
 import { type Paginated, paginated } from "@app/pagination";
-import { oneOf, oneOfOptional } from "@app/searchParams";
+import {
+	numberArray,
+	oneOf,
+	oneOfArray,
+	oneOfOptional,
+} from "@app/searchParams";
 import {
 	ANALYSIS_SORT_FIELDS,
 	type AnalysisSortField,
+	type AnalysisWorkflow,
 	SORT_DIRECTIONS,
 	type SortDirection,
 } from "@virtool/contracts";
+
+/** The workflows an analyses list can be filtered by. */
+const ANALYSIS_WORKFLOWS = [
+	"pathoscope",
+	"nuvs",
+] as const satisfies readonly AnalysisWorkflow[];
 
 /**
  * The params an analyses list route resolves for itself, and so strips from the
  * URL on the way out.
  */
-export const ANALYSES_LIST_SEARCH_DEFAULTS = {
+export const ANALYSES_LIST_SEARCH_DEFAULTS: AnalysesListSearch = {
 	direction: "descending",
 	page: 1,
-} as const;
+	users: [],
+	workflows: [],
+};
 
 /**
  * The search params a route listing a sample's analyses takes.
@@ -28,6 +42,12 @@ export type AnalysesListSearch = Paginated & {
 
 	/** The column the list is sorted by, or undefined for the default order */
 	sort?: AnalysisSortField;
+
+	/** The ids of the users whose analyses are shown, or empty for every user */
+	users: number[];
+
+	/** The workflows whose analyses are shown, or empty for every workflow */
+	workflows: AnalysisWorkflow[];
 };
 
 /**
@@ -41,6 +61,8 @@ export function analysesListSearch(input: {
 	direction?: unknown;
 	page?: unknown;
 	sort?: unknown;
+	users?: unknown;
+	workflows?: unknown;
 }): AnalysesListSearch {
 	return {
 		...paginated(input),
@@ -50,5 +72,7 @@ export function analysesListSearch(input: {
 			ANALYSES_LIST_SEARCH_DEFAULTS.direction,
 		),
 		sort: oneOfOptional(input.sort, ANALYSIS_SORT_FIELDS),
+		users: numberArray(input.users, []),
+		workflows: oneOfArray(input.workflows, ANALYSIS_WORKFLOWS, []),
 	};
 }

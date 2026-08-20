@@ -42,7 +42,8 @@ const analysisIdSchema = z.object({
 
 const findAnalysesSchema = z.object({
 	sampleId: rowIdSchema.optional(),
-	userId: rowIdSchema.optional(),
+	userIds: z.array(rowIdSchema).default([]),
+	workflows: z.array(AnalysisWorkflow).default([]),
 	page: pageSchema,
 	perPage: perPageSchema,
 	// A direction without a column has nothing to order by, so the pair is
@@ -138,7 +139,8 @@ export const findAnalysesFn = createServerFn({ method: "GET" })
 				sort: data.sort
 					? { direction: data.direction, field: data.sort }
 					: undefined,
-				userId: data.userId,
+				userIds: data.userIds,
+				workflows: data.workflows,
 			},
 			actor,
 		);

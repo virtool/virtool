@@ -260,7 +260,7 @@ describe("findAnalyses", () => {
 		]);
 	});
 
-	it("restricts the page to one user when a userId is given", async () => {
+	it("restricts the page to the given users", async () => {
 		const other = await seedUser(db, { handle: "other" });
 
 		const wanted = await seedAnalysisOnNewSample({ user_id: other });
@@ -268,7 +268,7 @@ describe("findAnalyses", () => {
 
 		const result = await findAnalyses(
 			db,
-			{ ...page, userId: other },
+			{ ...page, userIds: [other] },
 			adminActor,
 		);
 
@@ -277,7 +277,43 @@ describe("findAnalyses", () => {
 		expect(result.totalCount).toBe(2);
 	});
 
-	it("intersects a userId with the caller's readable samples", async () => {
+	it("restricts the page to the given workflows", async () => {
+		const wanted = await seedAnalysisOnNewSample({ workflow: "pathoscope" });
+		await seedAnalysisOnNewSample({ workflow: "nuvs" });
+
+		const result = await findAnalyses(
+			db,
+			{ ...page, workflows: ["pathoscope"] },
+			adminActor,
+		);
+
+		expect(result.items.map((item) => item.id)).toEqual([wanted]);
+		expect(result.foundCount).toBe(1);
+		expect(result.totalCount).toBe(2);
+	});
+
+	it("intersects the user and workflow filters", async () => {
+		const other = await seedUser(db, { handle: "other" });
+
+		const wanted = await seedAnalysisOnNewSample({
+			user_id: other,
+			workflow: "pathoscope",
+		});
+		await seedAnalysisOnNewSample({ user_id: other, workflow: "nuvs" });
+		await seedAnalysisOnNewSample({ workflow: "pathoscope" });
+
+		const result = await findAnalyses(
+			db,
+			{ ...page, userIds: [other], workflows: ["pathoscope"] },
+			adminActor,
+		);
+
+		expect(result.items.map((item) => item.id)).toEqual([wanted]);
+		expect(result.foundCount).toBe(1);
+		expect(result.totalCount).toBe(3);
+	});
+
+	it("intersects a user filter with the caller's readable samples", async () => {
 		const other = await seedUser(db, { handle: "other" });
 
 		await seedAnalysis({
@@ -290,7 +326,7 @@ describe("findAnalyses", () => {
 		});
 
 		const actor = await resolveSampleActor(db, other);
-		const result = await findAnalyses(db, { ...page, userId: other }, actor);
+		const result = await findAnalyses(db, { ...page, userIds: [other] }, actor);
 
 		expect(result.items.map((item) => item.id)).toEqual([readable]);
 		expect(result.foundCount).toBe(1);

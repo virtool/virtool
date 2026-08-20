@@ -1,7 +1,5 @@
-import DropdownMenuCheckboxItem from "@base/DropdownMenuCheckboxItem";
-import DropdownMenuContent from "@base/DropdownMenuContent";
-import DropdownMenuItem from "@base/DropdownMenuItem";
-import DropdownMenuSeparator from "@base/DropdownMenuSeparator";
+import FilterMenuCheckboxItem from "@base/FilterMenuCheckboxItem";
+import FilterMenuContent from "@base/FilterMenuContent";
 import { getHexColor } from "@samples/labels";
 import type { Label } from "@virtool/contracts";
 
@@ -29,36 +27,26 @@ export default function LabelFilterMenu({
 	selected,
 }: LabelFilterMenuProps) {
 	return (
-		<DropdownMenuContent className="w-64">
+		<FilterMenuContent onClear={onClear} showClear={selected.length > 0}>
 			{labels.length === 0 ? (
 				<p className="px-2 py-1.5 text-gray-500 text-sm">
 					No labels have been created.
 				</p>
 			) : (
 				labels.map((label) => (
-					<DropdownMenuCheckboxItem
+					<FilterMenuCheckboxItem
 						checked={selected.includes(label.id)}
 						key={label.id}
 						onCheckedChange={() => onToggle(label.id)}
-						// Keep the menu open so several labels can be toggled at once.
-						onSelect={(e) => e.preventDefault()}
 					>
 						<span
 							className="rounded-full shrink-0 size-3"
 							style={{ backgroundColor: getHexColor(label.color) }}
 						/>
 						<span className="flex-grow truncate">{label.name}</span>
-					</DropdownMenuCheckboxItem>
+					</FilterMenuCheckboxItem>
 				))
 			)}
-			{selected.length > 0 && (
-				<>
-					<DropdownMenuSeparator />
-					<DropdownMenuItem color="blue" onSelect={onClear}>
-						Clear
-					</DropdownMenuItem>
-				</>
-			)}
-		</DropdownMenuContent>
+		</FilterMenuContent>
 	);
 }

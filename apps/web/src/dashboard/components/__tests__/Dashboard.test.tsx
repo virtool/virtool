@@ -74,7 +74,7 @@ describe("<Dashboard />", () => {
 
 		await waitFor(() => {
 			expect(findAnalyses).toHaveBeenCalledWith({
-				data: { userId: account.id, page: 1, perPage: 10 },
+				data: { userIds: [account.id], page: 1, perPage: 10 },
 			});
 		});
 	});

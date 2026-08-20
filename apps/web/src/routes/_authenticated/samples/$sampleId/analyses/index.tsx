@@ -31,13 +31,12 @@ function AnalysesRoute() {
 	return (
 		<AnalysesList
 			direction={search.direction}
-			onPageChange={(page) => navigate({ search: { ...search, page } })}
-			onSortChange={(sort, direction) =>
-				navigate({ search: { ...search, direction, page: 1, sort } })
-			}
 			page={search.page}
 			sampleId={Number(sampleId)}
+			setSearch={(next) => navigate({ search: { ...search, ...next } })}
 			sort={search.sort}
+			users={search.users}
+			workflows={search.workflows}
 		/>
 	);
 }
