@@ -37,7 +37,7 @@ describe("<AnalysisItem />", () => {
 	 */
 	async function expectNoRemoveButton() {
 		await expect(
-			screen.findByRole("button", { name: "remove" }),
+			screen.findByRole("button", { name: "Delete" }),
 		).rejects.toThrow();
 	}
 
@@ -45,7 +45,7 @@ describe("<AnalysisItem />", () => {
 		renderItem(withJob("succeeded", true));
 
 		expect(
-			await screen.findByRole("button", { name: "remove" }),
+			await screen.findByRole("button", { name: "Delete" }),
 		).toBeInTheDocument();
 	});
 
@@ -75,7 +75,7 @@ describe("<AnalysisItem />", () => {
 			renderItem(withJob(state, false));
 
 			expect(
-				await screen.findByRole("button", { name: "remove" }),
+				await screen.findByRole("button", { name: "Delete" }),
 			).toBeInTheDocument();
 			// The failure itself stays on screen alongside the remove button.
 			expect(screen.getByRole("progressbar")).toBeInTheDocument();
@@ -86,7 +86,15 @@ describe("<AnalysisItem />", () => {
 		renderItem({ ready: false, job: null });
 
 		expect(
-			await screen.findByRole("button", { name: "remove" }),
+			await screen.findByRole("button", { name: "Delete" }),
 		).toBeInTheDocument();
+	});
+
+	it("withholds removal from a user without the users role", async () => {
+		mockGetAccount(createFakeAccount({ administratorRole: null }));
+
+		renderItem(withJob("succeeded", true));
+
+		await expectNoRemoveButton();
 	});
 });

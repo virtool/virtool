@@ -1,5 +1,6 @@
 import { useCheckAdminRole } from "@administration/hooks";
 import { getWorkflowDisplayName } from "@app/utils";
+import IconButton from "@base/IconButton";
 import Link from "@base/Link";
 import ProgressCircle from "@base/ProgressCircle";
 import RelativeTime from "@base/RelativeTime";
@@ -8,9 +9,9 @@ import TableActionsCell from "@base/TableActionsCell";
 import UserLabel from "@base/UserLabel";
 import { useFetchJob } from "@jobs/queries";
 import { type AnalysisMinimal, isJobStateTerminal } from "@virtool/contracts";
+import { Trash } from "lucide-react";
 import { useRemoveAnalysis } from "../queries";
 import { checkSupportedWorkflow } from "../utils";
-import { AnalysisItemRightIcon } from "./AnalysisItemRightIcon";
 
 type AnalysisItemProps = {
 	analysis: AnalysisMinimal;
@@ -114,10 +115,12 @@ export default function AnalysisItem({ analysis }: AnalysisItemProps) {
 						/>
 					</span>
 				)}
-				{canDelete && (
-					<AnalysisItemRightIcon
-						canModify={canModify ?? false}
-						onRemove={onRemove}
+				{canDelete && canModify && (
+					<IconButton
+						IconComponent={Trash}
+						color="red"
+						tip="Delete"
+						onClick={onRemove}
 					/>
 				)}
 			</TableActionsCell>
