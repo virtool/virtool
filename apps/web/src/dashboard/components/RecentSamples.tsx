@@ -38,14 +38,11 @@ export default function RecentSamples({ userId }: RecentSamplesProps) {
 }
 
 function RecentSamplesBody({ userId }: RecentSamplesProps) {
-	const { data } = useSuspenseSamples(
-		1,
-		DASHBOARD_ITEM_COUNT,
-		"",
-		[],
-		[],
-		[userId],
-	);
+	const { data } = useSuspenseSamples({
+		page: 1,
+		perPage: DASHBOARD_ITEM_COUNT,
+		users: [userId],
+	});
 
 	if (data.items.length === 0) {
 		return (

@@ -93,3 +93,18 @@ export function oneOfArray<T extends string>(
 		? (value as T[])
 		: fallback;
 }
+
+const CALENDAR_DATE_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
+
+/**
+ * Coerce a `yyyy-MM-dd` calendar date, discarding anything else.
+ *
+ * Only the shape is checked here. A day no month has still reads as absent,
+ * because the filter that consumes it parses both of its bounds together and
+ * drops the pair if either fails.
+ */
+export function calendarDate(value: unknown): string | undefined {
+	return typeof value === "string" && CALENDAR_DATE_PATTERN.test(value)
+		? value
+		: undefined;
+}

@@ -9,6 +9,7 @@ import { useListSelection } from "@base/useListSelection";
 import ViewHeader from "@base/ViewHeader";
 import ViewHeaderTitle from "@base/ViewHeaderTitle";
 import { useFetchLabels } from "@labels/queries";
+import type { DateFilter } from "@samples/dateFilter";
 import { useListSamples } from "@samples/queries";
 import type { Sample, SampleMinimal } from "@virtool/contracts";
 import { xor } from "es-toolkit/array";
@@ -35,19 +36,24 @@ function getFilterKey(
 	labels: number[],
 	workflows: string[],
 	users: number[],
+	date: DateFilter | undefined,
 ): string {
 	return JSON.stringify([
 		term,
 		[...labels].sort((a, b) => a - b),
 		[...workflows].sort(),
 		[...users].sort((a, b) => a - b),
+		date ?? null,
 	]);
 }
 
 type SamplesListProps = {
+	dateFilter?: DateFilter;
 	filterLabels?: number[];
 	page?: number;
 	setSearch?: (next: {
+		createdAfter?: string;
+		createdBefore?: string;
 		labels?: number[];
 		page?: number;
 		term?: string;
@@ -63,6 +69,7 @@ type SamplesListProps = {
  * A list of samples with filtering.
  */
 export default function SamplesList({
+	dateFilter,
 	filterLabels = [],
 	page: urlPage = 1,
 	setSearch = () => {},
@@ -74,14 +81,16 @@ export default function SamplesList({
 		data: samples,
 		isPending: isPendingSamples,
 		isError: isErrorSamples,
-	} = useListSamples(
-		urlPage,
-		25,
+	} = useListSamples({
+		createdAfter: dateFilter?.after,
+		createdBefore: dateFilter?.before,
+		labels: filterLabels,
+		page: urlPage,
+		perPage: 25,
 		term,
-		filterLabels,
-		filterWorkflows,
-		filterUsers,
-	);
+		users: filterUsers,
+		workflows: filterWorkflows,
+	});
 	// Labels are fetched here rather than passed in so the request goes out in
 	// the same render as the samples request, instead of gating it.
 	const {
@@ -100,6 +109,7 @@ export default function SamplesList({
 		filterLabels,
 		filterWorkflows,
 		filterUsers,
+		dateFilter,
 	);
 	const selection = useListSelection<SampleMinimal>({
 		getKey: (sample) => sample.id,
@@ -130,17 +140,28 @@ export default function SamplesList({
 	// it. Otherwise the samples exist and the filters are hiding them.
 	const isFiltered =
 		Boolean(term) ||
+		Boolean(dateFilter) ||
 		filterLabels.length > 0 ||
 		filterWorkflows.length > 0 ||
 		filterUsers.length > 0;
 
 	function clearFilters() {
 		setSearch({
+			createdAfter: undefined,
+			createdBefore: undefined,
 			labels: [],
 			page: 1,
 			term: "",
 			users: [],
 			workflows: [],
+		});
+	}
+
+	function handleChangeDate(next: DateFilter | undefined) {
+		setSearch({
+			createdAfter: next?.after,
+			createdBefore: next?.before,
+			page: 1,
 		});
 	}
 
@@ -203,7 +224,9 @@ export default function SamplesList({
 				</ViewHeader>
 				<SampleToolbar term={term} onChange={(term) => setSearch({ term })} />
 				<FilterBar
+					dateFilter={dateFilter}
 					labels={labels}
+					onChangeDate={handleChangeDate}
 					onClearLabels={() => setSearch({ labels: [] })}
 					onClearTerm={() => setSearch({ term: "" })}
 					onClearUsers={() => setSearch({ users: [] })}

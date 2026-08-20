@@ -2,6 +2,8 @@ import { cn } from "@app/cn";
 import { getWorkflowDisplayName } from "@app/utils";
 import Dropdown from "@base/Dropdown";
 import DropdownMenuTrigger from "@base/DropdownMenuTrigger";
+import PopoverContent from "@base/PopoverContent";
+import { type DateFilter, getDateFilterLabel } from "@samples/dateFilter";
 import { getHexColor } from "@samples/labels";
 import {
 	formatWorkflowFilter,
@@ -10,12 +12,17 @@ import {
 } from "@samples/utils";
 import { useListUsers } from "@users/queries";
 import type { Label } from "@virtool/contracts";
-import { Search, Tag, Users, Workflow } from "lucide-react";
-import type { ReactNode } from "react";
+import { CalendarDays, Search, Tag, Users, Workflow } from "lucide-react";
+import { Popover } from "radix-ui";
+import { lazy, type ReactNode, Suspense } from "react";
 import LabelFilterMenu from "./LabelFilterMenu";
 import UserFilterMenu from "./UserFilterMenu";
 import WorkflowFilterMenu from "./WorkflowFilterMenu";
 import { workflowStateIcons } from "./workflowStateIcons";
+
+// The range calendar and its date library are a large share of the samples
+// route's chunk, and nothing downloads them until this popover is opened.
+const DateFilterMenu = lazy(() => import("./DateFilterMenu"));
 
 const titleClassName =
 	"flex items-center gap-1.5 px-2 py-0.5 font-medium text-gray-500";
@@ -49,48 +56,93 @@ type FilterGroupProps = {
 	/** The menu opened by the group title. Omit to make the title inert. */
 	menu?: ReactNode;
 
-	/** The group title, which triggers ``menu``. */
+	/**
+	 * The popover opened by the group title, for a panel whose own arrow-key
+	 * navigation a menu would swallow. Mutually exclusive with ``menu``.
+	 */
+	popover?: ReactNode;
+
+	/** The group title, which triggers ``menu`` or ``popover``. */
 	title: string;
 };
 
-function FilterGroup({ children, icon, menu, title }: FilterGroupProps) {
-	const shell = (
-		<div className="flex items-stretch overflow-hidden rounded-md border border-gray-300 bg-white text-sm">
-			{menu ? (
+function FilterGroup({
+	children,
+	icon,
+	menu,
+	popover,
+	title,
+}: FilterGroupProps) {
+	const label = (
+		<>
+			{icon}
+			{title}
+		</>
+	);
+
+	function renderTrigger() {
+		if (menu) {
+			return (
 				<DropdownMenuTrigger
 					className={cn(titleClassName, "hover:bg-gray-100")}
 				>
-					{icon}
-					{title}
+					{label}
 				</DropdownMenuTrigger>
-			) : (
-				<span className={titleClassName}>
-					{icon}
-					{title}
-				</span>
-			)}
+			);
+		}
+
+		if (popover) {
+			return (
+				<Popover.Trigger
+					className={cn(titleClassName, "cursor-pointer hover:bg-gray-100")}
+				>
+					{label}
+				</Popover.Trigger>
+			);
+		}
+
+		return <span className={titleClassName}>{label}</span>;
+	}
+
+	const shell = (
+		<div className="flex items-stretch overflow-hidden rounded-md border border-gray-300 bg-white text-sm">
+			{renderTrigger()}
 			{children}
 		</div>
 	);
 
-	if (!menu) {
-		return shell;
+	// Non-modal so the group's chips stay visible and clickable while its panel is
+	// open. A modal one would `aria-hidden` them along with the rest of the page.
+	if (menu) {
+		return (
+			<Dropdown modal={false}>
+				{shell}
+				{menu}
+			</Dropdown>
+		);
 	}
 
-	return (
-		// Non-modal so the group's chips stay visible and clickable while its menu
-		// is open. A modal menu would `aria-hidden` them along with the rest of the
-		// page.
-		<Dropdown modal={false}>
-			{shell}
-			{menu}
-		</Dropdown>
-	);
+	if (popover) {
+		return (
+			<Popover.Root modal={false}>
+				{shell}
+				{popover}
+			</Popover.Root>
+		);
+	}
+
+	return shell;
 }
 
 type FilterBarProps = {
+	/** The days the list is narrowed to, if any. */
+	dateFilter?: DateFilter;
+
 	/** All available labels, used to resolve selected IDs to names and colors. */
 	labels: Label[];
+
+	/** Applies a date filter, or clears it when passed nothing. */
+	onChangeDate: (filter: DateFilter | undefined) => void;
 
 	/** Deselects every label. */
 	onClearLabels: () => void;
@@ -130,7 +182,9 @@ type FilterBarProps = {
  * A row of filter dropdowns, each showing chips for its active filters
  */
 export default function FilterBar({
+	dateFilter,
 	labels,
+	onChangeDate,
 	onClearLabels,
 	onClearTerm,
 	onClearUsers,
@@ -245,6 +299,30 @@ export default function FilterBar({
 						</FilterChip>
 					);
 				})}
+			</FilterGroup>
+			<FilterGroup
+				icon={<CalendarDays size={14} />}
+				popover={
+					<Suspense
+						fallback={
+							<PopoverContent className="p-3 text-gray-500">
+								Loading calendar...
+							</PopoverContent>
+						}
+					>
+						<DateFilterMenu onChange={onChangeDate} value={dateFilter} />
+					</Suspense>
+				}
+				title="Date"
+			>
+				{dateFilter && (
+					<FilterChip
+						onRemove={() => onChangeDate(undefined)}
+						removeLabel="Clear date filter"
+					>
+						{getDateFilterLabel(dateFilter)}
+					</FilterChip>
+				)}
 			</FilterGroup>
 		</div>
 	);

@@ -33,14 +33,45 @@ export type SampleLabel = LabelNested & {
 	allLabeled: boolean;
 };
 
-function samplesQueryOptions(
-	page: number,
-	perPage: number,
-	term?: string,
-	labels?: number[],
-	workflows?: string[],
-	users?: number[],
-) {
+/** The page and filters a samples list request is made with. */
+export type ListSamplesOptions = {
+	/** The first day of created samples to include, as `yyyy-MM-dd`. */
+	createdAfter?: string;
+
+	/** The last day of created samples to include, as `yyyy-MM-dd`. */
+	createdBefore?: string;
+
+	/** The ids of the labels to filter the samples by. */
+	labels?: number[];
+
+	/** The page to fetch. */
+	page: number;
+
+	/** The number of samples to fetch per page. */
+	perPage: number;
+
+	/** The search term to filter samples by. */
+	term?: string;
+
+	/** The ids of the users to filter the samples by. */
+	users?: number[];
+
+	/** The `workflow:state` filters to narrow the samples by. */
+	workflows?: string[];
+};
+
+function samplesQueryOptions(options: ListSamplesOptions) {
+	const {
+		createdAfter,
+		createdBefore,
+		labels,
+		page,
+		perPage,
+		term,
+		users,
+		workflows,
+	} = options;
+
 	return queryOptions<SampleSearchResult, Error>({
 		queryKey: samplesQueryKeys.list([
 			page,
@@ -49,6 +80,8 @@ function samplesQueryOptions(
 			labels,
 			workflows,
 			users,
+			createdAfter,
+			createdBefore,
 		]),
 		queryFn: () =>
 			findSamplesFn({
@@ -59,6 +92,8 @@ function samplesQueryOptions(
 					labels: labels ?? [],
 					workflows: workflows ?? [],
 					users: users ?? [],
+					createdAfter,
+					createdBefore,
 				},
 			}) as Promise<SampleSearchResult>,
 	});
@@ -66,24 +101,10 @@ function samplesQueryOptions(
 
 /**
  * Fetch a page of samples from the API
- *
- * @param page - The page to fetch
- * @param perPage - The number of samples to fetch per page
- * @param term - The search term to filter samples by
- * @param labels - The labels to filter the samples by
- * @param workflows - The workflows to filter the samples by
- * @param users - The ids of the users to filter the samples by
  */
-export function useListSamples(
-	page: number,
-	perPage: number,
-	term?: string,
-	labels?: number[],
-	workflows?: string[],
-	users?: number[],
-) {
+export function useListSamples(options: ListSamplesOptions) {
 	return useQuery({
-		...samplesQueryOptions(page, perPage, term, labels, workflows, users),
+		...samplesQueryOptions(options),
 		placeholderData: keepPreviousData,
 	});
 }
@@ -99,17 +120,8 @@ export function useListSamples(
  * build the same key — but carries no `placeholderData`, which a suspense query
  * rejects.
  */
-export function useSuspenseSamples(
-	page: number,
-	perPage: number,
-	term?: string,
-	labels?: number[],
-	workflows?: string[],
-	users?: number[],
-) {
-	return useSuspenseQuery(
-		samplesQueryOptions(page, perPage, term, labels, workflows, users),
-	);
+export function useSuspenseSamples(options: ListSamplesOptions) {
+	return useSuspenseQuery(samplesQueryOptions(options));
 }
 
 export function sampleQueryOptions(sampleId: number) {

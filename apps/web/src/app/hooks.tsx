@@ -1,3 +1,4 @@
+import { formatDate } from "@app/date";
 import { readServerNow } from "@app/serverNow";
 import { TRANSIENT_HOLD_DURATION } from "@app/timing";
 import type { RefObject } from "react";
@@ -37,6 +38,48 @@ function getNow() {
  */
 export function useNow(): number {
 	return useSyncExternalStore(subscribeToTime, getNow, readServerNow);
+}
+
+// Cached for the same reason `now` is: the snapshot has to be stable between
+// calls, and it only moves when the viewer's calendar day does. Filled on first
+// read rather than at import, which on the server happens outside a request.
+let today: string | undefined;
+
+function subscribeToToday(callback: () => void) {
+	const interval = setInterval(() => {
+		const current = formatDate(new Date());
+
+		if (current !== today) {
+			today = current;
+			callback();
+		}
+	}, 60_000);
+
+	return () => clearInterval(interval);
+}
+
+function getToday() {
+	today ??= formatDate(new Date());
+	return today;
+}
+
+function readTodayOnServer() {
+	return formatDate(new Date(readServerNow()));
+}
+
+/**
+ * The viewer's current calendar day as `yyyy-MM-dd`, rechecked every minute.
+ *
+ * Subscribed to rather than read during render, for the reason {@link useNow}
+ * gives. It changes only when the day rolls over, so a calendar can hold it
+ * without re-rendering every second.
+ *
+ * The server snapshot resolves the render instant in the server's timezone,
+ * which the viewer's need not share. Only render this behind an interaction —
+ * a menu or popover — so the divergent snapshot is never the one hydrated.
+ */
+export function useToday(): string {
+	return useSyncExternalStore(subscribeToToday, getToday, readTodayOnServer);
 }
 
 // Whether a document is secure is fixed for its lifetime, so there is nothing
