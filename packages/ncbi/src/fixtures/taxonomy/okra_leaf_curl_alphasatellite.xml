@@ -1,0 +1,54 @@
+<?xml version="1.0" ?>
+<!DOCTYPE TaxaSet PUBLIC "-//NLM//DTD Taxon, 14th January 2002//EN" "https://www.ncbi.nlm.nih.gov/entrez/query/DTD/taxon.dtd">
+<TaxaSet><Taxon>
+    <TaxId>518829</TaxId>
+    <ScientificName>Okra leaf curl alphasatellite</ScientificName>
+    <OtherNames>
+        <EquivalentName>Okra leaf curl disease associated DNA 1</EquivalentName>
+        <EquivalentName>Okra leaf curl virus-associated alphasatellite</EquivalentName>
+    </OtherNames>
+    <ParentTaxId>1231296</ParentTaxId>
+    <Rank>species</Rank>
+    <Division>Viruses</Division>
+    <GeneticCode>
+        <GCId>1</GCId>
+        <GCName>Standard</GCName>
+    </GeneticCode>
+    <MitoGeneticCode>
+        <MGCId>0</MGCId>
+        <MGCName>Unspecified</MGCName>
+    </MitoGeneticCode>
+    <Lineage>Viruses; Viruses incertae sedis; Alphasatellitidae; Geminialphasatellitinae; unclassified Begomovirus-associated alphasatellites</Lineage>
+    <LineageEx>
+        <Taxon>
+            <TaxId>10239</TaxId>
+            <ScientificName>Viruses</ScientificName>
+            <Rank>acellular root</Rank>
+        </Taxon>
+        <Taxon>
+            <TaxId>3403061</TaxId>
+            <ScientificName>Viruses incertae sedis</ScientificName>
+            <Rank>no rank</Rank>
+        </Taxon>
+        <Taxon>
+            <TaxId>1458186</TaxId>
+            <ScientificName>Alphasatellitidae</ScientificName>
+            <Rank>family</Rank>
+        </Taxon>
+        <Taxon>
+            <TaxId>283494</TaxId>
+            <ScientificName>Geminialphasatellitinae</ScientificName>
+            <Rank>subfamily</Rank>
+        </Taxon>
+        <Taxon>
+            <TaxId>1231296</TaxId>
+            <ScientificName>unclassified Begomovirus-associated alphasatellites</ScientificName>
+            <Rank>no rank</Rank>
+        </Taxon>
+    </LineageEx>
+    <CreateDate>2008/04/10 18:38:03</CreateDate>
+    <UpdateDate>2020/04/07 15:24:16</UpdateDate>
+    <PubDate>2008/04/21 18:00:32</PubDate>
+</Taxon>
+
+</TaxaSet>

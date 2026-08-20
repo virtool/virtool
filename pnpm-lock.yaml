@@ -478,6 +478,9 @@ importers:
       '@virtool/logger':
         specifier: workspace:*
         version: link:../../packages/logger
+      '@virtool/ncbi':
+        specifier: workspace:*
+        version: link:../../packages/ncbi
       '@virtool/sentry':
         specifier: workspace:*
         version: link:../../packages/sentry
@@ -709,6 +712,25 @@ importers:
       pino:
         specifier: ^10.1.0
         version: 10.3.1
+    devDependencies:
+      vitest:
+        specifier: ^4.1.10
+        version: 4.1.10(@opentelemetry/api@1.9.1)(@types/node@26.2.0)(@vitest/browser-playwright@4.1.10)(jsdom@30.0.1)(vite@8.2.1(@types/node@26.2.0)(esbuild@0.28.2)(jiti@2.7.0)(tsx@4.23.0)(yaml@2.9.0))
+
+  packages/ncbi:
+    dependencies:
+      '@virtool/contracts':
+        specifier: workspace:*
+        version: link:../contracts
+      '@virtool/logger':
+        specifier: workspace:*
+        version: link:../logger
+      fast-xml-parser:
+        specifier: ^5.10.1
+        version: 5.10.1
+      zod:
+        specifier: ^4.3.6
+        version: 4.4.3
     devDependencies:
       vitest:
         specifier: ^4.1.10
