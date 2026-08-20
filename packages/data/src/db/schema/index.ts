@@ -22,4 +22,3 @@ export * from "./subtractions";
 export * from "./tasks";
 export * from "./uploads";
 export * from "./users";
-export * from "./vestigial";

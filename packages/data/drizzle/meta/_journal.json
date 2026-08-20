@@ -57,6 +57,13 @@
       "when": 1787243507479,
       "tag": "0007_drop_migration_bookkeeping",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1787258100016,
+      "tag": "0008_drop_dead_tables",
+      "breakpoints": true
     }
   ]
 }

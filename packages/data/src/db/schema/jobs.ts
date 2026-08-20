@@ -3,10 +3,7 @@
 // The legacy Mongo `args` field is not a column. A job's resources are all
 // found on the owning rows via a reverse `job_id` foreign key —
 // `legacy_samples.job_id`, `indexes.job_id`, `subtractions.job_id`, and
-// `analyses.job_id` — and recombined into `args` when a job is read. The
-// `job_analyses` and `job_indexes` link tables upstream are superseded by those
-// reverse foreign keys and nothing reads or writes a link row; they are
-// mirrored in `./vestigial.ts` for snapshot fidelity alone.
+// `analyses.job_id` — and recombined into `args` when a job is read.
 //
 // The two JSONB columns are typed with the `Stored*` shapes from
 // `@virtool/contracts`, which is where the mappers that publish them live. A
