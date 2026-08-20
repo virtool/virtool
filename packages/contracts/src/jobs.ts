@@ -1,5 +1,6 @@
 import { z } from "zod";
 import type { SearchResult } from "./search";
+import { Timestamp } from "./timestamps";
 import { UserNested } from "./users";
 
 /** A job's lifecycle state. Shared by every resource that embeds a job. */
@@ -91,35 +92,6 @@ export const ClaimableJobWorkflow = z.enum([
 
 export type ClaimableJobWorkflow = z.infer<typeof ClaimableJobWorkflow>;
 
-/**
- * A moment on a job wire, as a `Date` on both sides of it.
- *
- * JSON has no date type, so the bytes are an ISO-8601 string either way —
- * `JSON.stringify` calls `Date.prototype.toJSON`, which is `toISOString`. The
- * SPA's boundary encodes it
- * with seroval, which revives a `Date` as a `Date`. What this buys is the type:
- * a handler hands the `Date` it read out of Postgres straight to its response,
- * and the caller gets a `Date` back rather than a string every reader would
- * have to remember to parse.
- *
- * `z.coerce.date()` rather than `z.date()`, because the value arriving over the
- * jobs API's wire really is a string; `z.date()` would reject it. It passes a
- * `Date` through unchanged, so the same schema types both directions.
- *
- * The refinement is not decoration. `coerce` runs `new Date(value)`, which
- * answers `Invalid Date` rather than throwing for anything it cannot read — so
- * without it a malformed timestamp parses successfully and surfaces as `NaN`
- * somewhere much later.
- *
- * **This is the wire only.** The `jobs.steps` JSONB array stores `started_at`
- * as a string; see {@link StoredJobStep}.
- */
-export const JobTimestamp = z.coerce
-	.date()
-	.refine((value) => !Number.isNaN(value.getTime()), {
-		message: "not a readable timestamp",
-	});
-
 // # Naming, both halves
 //
 // **Every field crossing a wire is camelCase** — `runnerId`, `startedAt`,
@@ -147,7 +119,7 @@ export const JobStep = z.object({
 	id: z.string(),
 	name: z.string(),
 	description: z.string(),
-	startedAt: JobTimestamp.nullable(),
+	startedAt: Timestamp.nullable(),
 });
 
 export type JobStep = z.infer<typeof JobStep>;
@@ -322,9 +294,9 @@ export const Job = z.object({
 	args: z.record(z.string(), z.string()),
 
 	claim: JobClaim.nullable(),
-	claimedAt: JobTimestamp.nullable(),
-	createdAt: JobTimestamp,
-	finishedAt: JobTimestamp.nullable(),
+	claimedAt: Timestamp.nullable(),
+	createdAt: Timestamp,
+	finishedAt: Timestamp.nullable(),
 	id: z.number().int(),
 	progress: z.number().int(),
 	state: JobState,

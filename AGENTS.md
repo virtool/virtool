@@ -113,7 +113,9 @@ repository-wide rules in view:
   and transport boundaries stay in the app.
 - Shared wire shapes belong in `@virtool/contracts` and are imported directly.
   Shape and narrow values at the publishing boundary. Timestamps cross wires as
-  `Date`; raw JSON schemas use `z.coerce.date()`.
+  `Date`; raw JSON schemas use the shared `Timestamp`. Row content keeps
+  the spelling its bytes already carry, so a timestamp inside a JSONB column
+  stays a string.
 - Virtool-owned environment variables use the `VT_` prefix, and every configured
   key supports a file-backed variant. Follow [the shared environment
   configuration pattern](docs/env.md).
