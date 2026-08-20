@@ -14,7 +14,6 @@ import {
 	integer,
 	jsonb,
 	pgTable,
-	serial,
 	text,
 	timestamp,
 	unique,
@@ -89,7 +88,7 @@ export const indexes = pgTable(
 export const indexFiles = pgTable(
 	"index_files",
 	{
-		id: serial("id").primaryKey(),
+		id: integer("id").primaryKey().generatedAlwaysAsIdentity(),
 		name: text("name").notNull(),
 		index_id: bigint("index_id", { mode: "number" }).notNull(),
 		type: text("type").$type<IndexFileType>(),

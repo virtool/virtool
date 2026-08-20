@@ -9,7 +9,6 @@ import {
 	jsonb,
 	pgTable,
 	primaryKey,
-	serial,
 	text,
 	unique,
 	uniqueIndex,
@@ -20,7 +19,7 @@ import { users } from "./users";
 export const groups = pgTable(
 	"groups",
 	{
-		id: serial("id").primaryKey(),
+		id: integer("id").primaryKey().generatedAlwaysAsIdentity(),
 		legacyId: text("legacy_id"),
 		name: varchar("name", { length: 255 }).unique().notNull(),
 		permissions: jsonb("permissions").$type<Permissions>().notNull(),

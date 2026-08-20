@@ -7,7 +7,6 @@ import {
 	integer,
 	jsonb,
 	pgTable,
-	serial,
 	text,
 	timestamp,
 	unique,
@@ -17,7 +16,7 @@ import { users } from "./users";
 export const apiKeys = pgTable(
 	"api_keys",
 	{
-		id: serial("id").primaryKey(),
+		id: integer("id").primaryKey().generatedAlwaysAsIdentity(),
 		hashed: text("hashed").notNull(),
 		name: text("name").notNull(),
 		createdAt: timestamp("created_at").notNull(),

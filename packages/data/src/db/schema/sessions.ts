@@ -9,7 +9,6 @@ import {
 	index,
 	integer,
 	pgTable,
-	serial,
 	text,
 	timestamp,
 	unique,
@@ -21,7 +20,7 @@ import { users } from "./users";
 export const sessions = pgTable(
 	"sessions",
 	{
-		id: serial("id").primaryKey(),
+		id: integer("id").primaryKey().generatedAlwaysAsIdentity(),
 		sessionId: text("session_id").notNull(),
 		userId: integer("user_id"),
 		ip: text("ip").notNull(),

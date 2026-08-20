@@ -8,7 +8,6 @@ import {
 	integer,
 	jsonb,
 	pgTable,
-	serial,
 	text,
 	timestamp,
 	varchar,
@@ -17,7 +16,7 @@ import {
 export const tasks = pgTable(
 	"tasks",
 	{
-		id: serial("id").primaryKey(),
+		id: integer("id").primaryKey().generatedAlwaysAsIdentity(),
 		acquired_at: timestamp("acquired_at"),
 		complete: boolean("complete").$defaultFn(() => false),
 		context: jsonb("context"),
