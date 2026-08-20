@@ -1,3 +1,4 @@
+import { supportedWorkflows } from "@analyses/utils";
 import { type Paginated, paginated } from "@app/pagination";
 import {
 	numberArray,
@@ -12,12 +13,6 @@ import {
 	SORT_DIRECTIONS,
 	type SortDirection,
 } from "@virtool/contracts";
-
-/** The workflows an analyses list can be filtered by. */
-const ANALYSIS_WORKFLOWS = [
-	"pathoscope",
-	"nuvs",
-] as const satisfies readonly AnalysisWorkflow[];
 
 /**
  * The params an analyses list route resolves for itself, and so strips from the
@@ -73,6 +68,6 @@ export function analysesListSearch(input: {
 		),
 		sort: oneOfOptional(input.sort, ANALYSIS_SORT_FIELDS),
 		users: numberArray(input.users, []),
-		workflows: oneOfArray(input.workflows, ANALYSIS_WORKFLOWS, []),
+		workflows: oneOfArray(input.workflows, supportedWorkflows, []),
 	};
 }

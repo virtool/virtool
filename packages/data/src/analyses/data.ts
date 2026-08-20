@@ -330,11 +330,16 @@ export async function findAnalyses(
 	actor: SampleActor,
 ): Promise<AnalysisSearchResult> {
 	const readable = analysisReadableFilter(db, actor);
-	const narrowing: SQL[] = [];
 
-	if (options.sampleId !== undefined) {
-		narrowing.push(eq(analyses.sample_id, options.sampleId));
-	}
+	// The sample is the scope the list is drawn from, not a filter applied to
+	// it, so `totalCount` counts within it. Only the user and workflow filters
+	// separate the found rows from the total.
+	const scope =
+		options.sampleId === undefined
+			? readable
+			: and(readable, eq(analyses.sample_id, options.sampleId));
+
+	const narrowing: SQL[] = [];
 
 	if (options.userIds?.length) {
 		narrowing.push(inArray(analyses.user_id, options.userIds));
@@ -344,10 +349,10 @@ export async function findAnalyses(
 		narrowing.push(inArray(analyses.workflow, options.workflows));
 	}
 
-	const where = narrowing.length > 0 ? and(readable, ...narrowing) : readable;
+	const where = narrowing.length > 0 ? and(scope, ...narrowing) : scope;
 
 	const [totalRows, foundRows, rows] = await Promise.all([
-		db.select({ value: count() }).from(analyses).where(readable),
+		db.select({ value: count() }).from(analyses).where(scope),
 		narrowing.length > 0
 			? db.select({ value: count() }).from(analyses).where(where)
 			: undefined,

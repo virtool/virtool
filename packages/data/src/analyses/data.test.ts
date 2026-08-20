@@ -246,6 +246,26 @@ describe("findAnalyses", () => {
 
 		expect(result.items.map((item) => item.id)).toEqual([wanted]);
 		expect(result.foundCount).toBe(1);
+		expect(result.totalCount).toBe(1);
+	});
+
+	it("counts the total within the sample when one is given", async () => {
+		const sampleId = await seedSample();
+		const wanted = await seedAnalysis({
+			sample_id: sampleId,
+			workflow: "nuvs",
+		});
+		await seedAnalysis({ sample_id: sampleId, workflow: "pathoscope" });
+		await seedAnalysisOnNewSample();
+
+		const result = await findAnalyses(
+			db,
+			{ ...page, sampleId, workflows: ["nuvs"] },
+			adminActor,
+		);
+
+		expect(result.items.map((item) => item.id)).toEqual([wanted]);
+		expect(result.foundCount).toBe(1);
 		expect(result.totalCount).toBe(2);
 	});
 
