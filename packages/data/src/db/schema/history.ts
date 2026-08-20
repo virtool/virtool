@@ -11,7 +11,6 @@ import {
 	jsonb,
 	pgTable,
 	primaryKey,
-	serial,
 	text,
 	timestamp,
 	unique,
@@ -76,7 +75,7 @@ export const legacyHistory = pgTable(
 export const legacyHistoryDiff = pgTable(
 	"legacy_history_diff",
 	{
-		id: serial("id"),
+		id: integer("id").generatedAlwaysAsIdentity(),
 		// The change's public id, duplicating `legacy_history.legacy_id`. It
 		// predates `history_id` and the column is NOT NULL, so an insert must
 		// fill it.

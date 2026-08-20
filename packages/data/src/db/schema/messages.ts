@@ -8,7 +8,6 @@ import {
 	foreignKey,
 	integer,
 	pgTable,
-	serial,
 	text,
 	timestamp,
 	uniqueIndex,
@@ -18,7 +17,7 @@ import { users } from "./users";
 export const instanceMessages = pgTable(
 	"instance_messages",
 	{
-		id: serial("id").primaryKey(),
+		id: integer("id").primaryKey().generatedAlwaysAsIdentity(),
 		active: boolean("active").$defaultFn(() => true),
 		color: text("color").$type<BannerColor>().notNull(),
 		message: text("message"),

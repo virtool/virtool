@@ -6,9 +6,9 @@ import {
 	boolean,
 	check,
 	customType,
+	integer,
 	jsonb,
 	pgTable,
-	serial,
 	text,
 	timestamp,
 	unique,
@@ -25,7 +25,7 @@ const bytea = customType<{ data: Buffer; default: false }>({
 export const users = pgTable(
 	"users",
 	{
-		id: serial("id").primaryKey(),
+		id: integer("id").primaryKey().generatedAlwaysAsIdentity(),
 		active: boolean("active")
 			.$defaultFn(() => true)
 			.notNull(),

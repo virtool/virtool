@@ -24,7 +24,6 @@ import {
 	integer,
 	jsonb,
 	pgTable,
-	serial,
 	text,
 	timestamp,
 	unique,
@@ -34,7 +33,7 @@ import { users } from "./users";
 export const jobs = pgTable(
 	"jobs",
 	{
-		id: serial("id").primaryKey(),
+		id: integer("id").primaryKey().generatedAlwaysAsIdentity(),
 		// `.default()`, not `$defaultFn()`: this is the one column here that really
 		// does carry a server default upstream, so the generated test DDL has to
 		// carry it too or a raw insert omitting it fails only under test.
