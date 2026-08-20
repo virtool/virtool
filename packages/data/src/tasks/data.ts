@@ -13,7 +13,6 @@ import {
 	inArray,
 	isNotNull,
 	isNull,
-	like,
 	lt,
 	or,
 	type SQL,
@@ -295,20 +294,6 @@ export const TASK_LEASE_SECONDS = 300;
  */
 export const TASK_HEARTBEAT_SECONDS = 60;
 
-/**
- * Marks a `runner_id` as belonging to this service.
- *
- * Every query that takes work back off a runner is scoped to this prefix, so a
- * claim carrying any other id is never reclaimed and never released. Reclaim
- * reads a stale `acquired_at` as abandonment, which only holds for a runner
- * that renews it; a claim from anything that does not would look abandoned
- * while it was still live, and the reclaimer would pull work out from under it.
- * Scoping at the query level is what makes that enforceable rather than a note
- * in a runbook, which is why there is deliberately no configuration flag to
- * widen it.
- */
-const RUNNER_ID_PREFIX = "ts-";
-
 /** A task just claimed by a runner, with the lease it now holds. */
 export type ClaimedTask = {
 	id: number;
@@ -337,14 +322,13 @@ export type TaskProgressValues = {
 /**
  * Identify this process as a task runner.
  *
- * `{hostname}-{pid}`, prefixed to mark the row as this service's. The column is
- * `varchar(255)`, which a Kubernetes pod name and a pid cannot come close to
- * filling — and Postgres raises on overflow rather than truncating, so a
- * hostname that did would fail the claim loudly instead of minting an id that
- * collides with another runner's.
+ * `{hostname}-{pid}`. The column is `varchar(255)`, which a Kubernetes pod name
+ * and a pid cannot come close to filling — and Postgres raises on overflow
+ * rather than truncating, so a hostname that did would fail the claim loudly
+ * instead of minting an id that collides with another runner's.
  */
 export function buildRunnerId(): string {
-	return `${RUNNER_ID_PREFIX}${hostname()}-${process.pid}`;
+	return `${hostname()}-${process.pid}`;
 }
 
 /**
@@ -372,10 +356,7 @@ function isClaimable(
 		inArray(tasksTable.type, [...allowedTypes]),
 		or(
 			isNull(tasksTable.acquired_at),
-			and(
-				like(tasksTable.runner_id, `${RUNNER_ID_PREFIX}%`),
-				lt(tasksTable.acquired_at, secondsAgo(leaseSeconds)),
-			),
+			lt(tasksTable.acquired_at, secondsAgo(leaseSeconds)),
 		),
 	);
 }
@@ -604,10 +585,6 @@ async function writeHeldTask(
  * rather than letting it sit until the lease expires. Returns `false` when the
  * runner no longer holds the task.
  *
- * Scoped to {@link RUNNER_ID_PREFIX} like every other query that takes work off
- * a runner, so the scope holds however the id was obtained rather than only
- * when it came from {@link buildRunnerId}.
- *
  * Emits nothing. The task returns to exactly the state a client last saw it
  * in — nothing about the row that any view renders has changed.
  */
@@ -623,7 +600,6 @@ export async function releaseTask(
 			and(
 				eq(tasksTable.id, taskId),
 				eq(tasksTable.runner_id, runnerId),
-				like(tasksTable.runner_id, `${RUNNER_ID_PREFIX}%`),
 				eq(tasksTable.complete, false),
 			),
 		)
@@ -636,8 +612,8 @@ export async function releaseTask(
  * Give up every unfinished claim `runnerId` holds, and report which.
  *
  * The bulk form of {@link releaseTask}, for a runner draining on shutdown or
- * clearing whatever a previous incarnation left behind at startup. Scoped and
- * silent for the same reasons.
+ * clearing whatever a previous incarnation left behind at startup. Silent for
+ * the same reason.
  */
 export async function releaseRunnerClaims(
 	db: Db,
@@ -647,11 +623,7 @@ export async function releaseRunnerClaims(
 		.update(tasksTable)
 		.set({ acquired_at: null, runner_id: null })
 		.where(
-			and(
-				eq(tasksTable.runner_id, runnerId),
-				like(tasksTable.runner_id, `${RUNNER_ID_PREFIX}%`),
-				eq(tasksTable.complete, false),
-			),
+			and(eq(tasksTable.runner_id, runnerId), eq(tasksTable.complete, false)),
 		)
 		.returning({ id: tasksTable.id });
 
@@ -761,41 +733,4 @@ export function readTaskQueueBounded(
 		),
 		timeoutMs,
 	);
-}
-
-/**
- * Take back every claim held by one of our runners whose lease has run out, and
- * report which.
- *
- * {@link acquireTask} already reclaims as it claims, so a fleet that is
- * claiming heals itself without this. It ships as its own query for the case
- * where there is no claim to fold the sweep into: a fleet that has stopped
- * claiming cannot otherwise recover what a departed runner was mid-flight on.
- *
- * Scoped to {@link RUNNER_ID_PREFIX}: a claim carrying any other id is never
- * touched.
- *
- * Emits nothing. A reclaimed task is pending again, which is the state a client
- * last saw it in.
- */
-export async function reclaimExpiredLeases(
-	db: Db,
-	options: { leaseSeconds?: number } = {},
-): Promise<number[]> {
-	const leaseSeconds = options.leaseSeconds ?? TASK_LEASE_SECONDS;
-
-	const rows = await db
-		.update(tasksTable)
-		.set({ acquired_at: null, runner_id: null })
-		.where(
-			and(
-				like(tasksTable.runner_id, `${RUNNER_ID_PREFIX}%`),
-				lt(tasksTable.acquired_at, secondsAgo(leaseSeconds)),
-				eq(tasksTable.complete, false),
-				isNull(tasksTable.error),
-			),
-		)
-		.returning({ id: tasksTable.id });
-
-	return rows.map((row) => row.id);
 }

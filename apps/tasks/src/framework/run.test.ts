@@ -23,7 +23,7 @@ import { acquireOrThrow, readTaskRow } from "../testing/tasks";
 import { defineTask, type TaskRegistry } from "./define";
 import { runTask } from "./run";
 
-const OTHER_RUNNER = "ts-runner-b-2";
+const OTHER_RUNNER = "runner-b-2";
 
 /** Long enough that no test's debounce window closes on its own. */
 const NEVER_FIRES_MS = 60_000;

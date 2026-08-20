@@ -22,8 +22,8 @@ import {
 	roundHalfToEven,
 } from "./progress";
 
-const RUNNER_A = "ts-runner-a-1";
-const RUNNER_B = "ts-runner-b-2";
+const RUNNER_A = "runner-a-1";
+const RUNNER_B = "runner-b-2";
 
 /** Long enough that no test's debounce window closes on its own. */
 const NEVER_FIRES_MS = 60_000;

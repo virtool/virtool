@@ -3,14 +3,8 @@ import { type TaskRow, tasks } from "@virtool/data/db/schema/tasks";
 import { acquireTask, type ClaimedTask } from "@virtool/data/tasks/data";
 import { eq } from "drizzle-orm";
 
-/**
- * The runner id a task test claims under.
- *
- * The `ts-` prefix is load-bearing rather than decorative: reclaim and release
- * are scoped to it, so a test claiming under any other prefix exercises a path
- * no runner in the fleet takes.
- */
-export const TEST_RUNNER_ID = "ts-runner-a-1";
+/** The runner id a task test claims under. */
+export const TEST_RUNNER_ID = "runner-a-1";
 
 /**
  * Insert a queued row of `type` and return its id.
