@@ -1,5 +1,5 @@
 import { act, renderHook } from "@testing-library/react";
-import { describe, expect, it, vi } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import { useDebounce } from "../hooks";
 
 describe("useDebounce()", () => {
@@ -59,5 +59,33 @@ describe("useDebounce()", () => {
 		await act(() => new Promise((resolve) => setTimeout(resolve, 20)));
 
 		expect(onChange).not.toHaveBeenCalled();
+	});
+});
+
+describe("useToday()", () => {
+	const originalTimeZone = process.env.TZ;
+
+	afterEach(() => {
+		process.env.TZ = originalTimeZone;
+		vi.useRealTimers();
+		vi.resetModules();
+	});
+
+	it("should report the UTC day when the viewer's local day is behind it", async () => {
+		// 18:00 in Vancouver on the 20th is already the 21st in UTC, which is the
+		// day the server resolves a date filter against.
+		process.env.TZ = "America/Vancouver";
+		vi.useFakeTimers();
+		vi.setSystemTime(new Date("2026-08-21T01:00:00.000Z"));
+
+		// Imported fresh because the hook caches the day in module state, which an
+		// earlier test in this file may already have filled from the real clock.
+		vi.resetModules();
+		const { useToday } = await import("../hooks");
+
+		const { result } = renderHook(() => useToday());
+
+		expect(new Date().getDate()).toBe(20);
+		expect(result.current).toBe("2026-08-21");
 	});
 });

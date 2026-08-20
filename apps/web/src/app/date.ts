@@ -133,3 +133,26 @@ export function formatDate(date: Date): string {
 	const day = String(date.getDate()).padStart(2, "0");
 	return `${year}-${month}-${day}`;
 }
+
+const CALENDAR_DATE_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
+
+/**
+ * Whether a string has the `yyyy-MM-dd` shape a calendar date is written in.
+ *
+ * Shape only: the pattern admits days no month has, so a caller that needs a
+ * real day parses it as well.
+ */
+export function isCalendarDate(value: string): boolean {
+	return CALENDAR_DATE_PATTERN.test(value);
+}
+
+/**
+ * Format a date as `yyyy-MM-dd` in UTC.
+ *
+ * The counterpart to {@link formatDate}, for the days a date filter names —
+ * those resolve against UTC midnight on the server, so the day they belong to
+ * has to be read off the same clock.
+ */
+export function formatUtcDate(date: Date): string {
+	return date.toISOString().slice(0, 10);
+}

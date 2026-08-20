@@ -12,6 +12,8 @@
  * not an error boundary.
  */
 
+import { isCalendarDate } from "@app/date";
+
 export function str(value: unknown, fallback: string): string {
 	return typeof value === "string" ? value : fallback;
 }
@@ -94,8 +96,6 @@ export function oneOfArray<T extends string>(
 		: fallback;
 }
 
-const CALENDAR_DATE_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
-
 /**
  * Coerce a `yyyy-MM-dd` calendar date, discarding anything else.
  *
@@ -103,7 +103,5 @@ const CALENDAR_DATE_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
  * impossible dates and incomplete ranges.
  */
 export function calendarDate(value: unknown): string | undefined {
-	return typeof value === "string" && CALENDAR_DATE_PATTERN.test(value)
-		? value
-		: undefined;
+	return typeof value === "string" && isCalendarDate(value) ? value : undefined;
 }

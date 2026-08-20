@@ -1,4 +1,4 @@
-import { formatDate } from "@app/date";
+import { formatUtcDate } from "@app/date";
 import { readServerNow } from "@app/serverNow";
 import { TRANSIENT_HOLD_DURATION } from "@app/timing";
 import type { RefObject } from "react";
@@ -41,13 +41,13 @@ export function useNow(): number {
 }
 
 // Cached for the same reason `now` is: the snapshot has to be stable between
-// calls, and it only moves when the viewer's calendar day does. Filled on first
-// read rather than at import, which on the server happens outside a request.
+// calls, and it only moves when the UTC day does. Filled on first read rather
+// than at import, which on the server happens outside a request.
 let today: string | undefined;
 
 function subscribeToToday(callback: () => void) {
 	const interval = setInterval(() => {
-		const current = formatDate(new Date());
+		const current = formatUtcDate(new Date());
 
 		if (current !== today) {
 			today = current;
@@ -59,24 +59,25 @@ function subscribeToToday(callback: () => void) {
 }
 
 function getToday() {
-	today ??= formatDate(new Date());
+	today ??= formatUtcDate(new Date());
 	return today;
 }
 
 function readTodayOnServer() {
-	return formatDate(new Date(readServerNow()));
+	return formatUtcDate(new Date(readServerNow()));
 }
 
 /**
- * The viewer's current calendar day as `yyyy-MM-dd`, rechecked every minute.
+ * The current calendar day in UTC as `yyyy-MM-dd`, rechecked every minute.
+ *
+ * UTC rather than the viewer's timezone because the days a date filter names
+ * resolve against UTC midnight on the server. Read locally, a viewer west of
+ * Greenwich would find the current UTC day — one that already has samples on
+ * it — refused as being in the future until their own midnight.
  *
  * Subscribed to rather than read during render, for the reason {@link useNow}
  * gives. It changes only when the day rolls over, so a calendar can hold it
  * without re-rendering every second.
- *
- * The server snapshot resolves the render instant in the server's timezone,
- * which the viewer's need not share. Only render this behind an interaction —
- * a menu or popover — so the divergent snapshot is never the one hydrated.
  */
 export function useToday(): string {
 	return useSyncExternalStore(subscribeToToday, getToday, readTodayOnServer);

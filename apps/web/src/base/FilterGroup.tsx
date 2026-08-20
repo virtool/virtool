@@ -7,25 +7,42 @@ import DropdownMenuTrigger from "./DropdownMenuTrigger";
 const titleClassName =
 	"flex items-center gap-1.5 px-2 py-0.5 font-medium text-gray-500";
 
-type FilterGroupProps = {
+type FilterGroupBaseProps = {
 	/** Chips for the filters that are active in this group. */
 	children?: ReactNode;
 
 	/** An icon shown left of the group title. */
 	icon: ReactNode;
 
-	/** The menu opened by the group title. Omit to make the title inert. */
-	menu?: ReactNode;
-
-	/**
-	 * The popover opened by the group title, for a panel whose own arrow-key
-	 * navigation a menu would swallow. Mutually exclusive with `menu`.
-	 */
-	popover?: ReactNode;
-
 	/** The group title, which triggers `menu` or `popover`. */
 	title: string;
 };
+
+/**
+ * The panel a {@link FilterGroup} title opens, if it opens one at all.
+ *
+ * A union rather than two optional props, because the render path can only
+ * honour one of them: a group given both would silently drop whichever branch
+ * lost. Omitting both makes the title inert.
+ */
+type FilterGroupPanelProps =
+	| { menu?: never; popover?: never }
+	| {
+			/** The menu opened by the group title. */
+			menu: ReactNode;
+			popover?: never;
+	  }
+	| {
+			menu?: never;
+
+			/**
+			 * The popover opened by the group title, for a panel whose own
+			 * arrow-key navigation a menu would swallow.
+			 */
+			popover: ReactNode;
+	  };
+
+type FilterGroupProps = FilterGroupBaseProps & FilterGroupPanelProps;
 
 /**
  * One filter of a {@link FilterBar}: a titled button opening a menu, followed

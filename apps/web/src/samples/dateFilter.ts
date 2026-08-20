@@ -1,4 +1,4 @@
-import { formatDate } from "@app/date";
+import { formatDate, isCalendarDate } from "@app/date";
 
 /**
  * The calendar days a samples list is narrowed to, both bounds inclusive.
@@ -32,8 +32,6 @@ export function getDateFilterModeName(mode: DateFilterMode): string {
 	return dateFilterModeNames[mode];
 }
 
-const CALENDAR_DATE_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
-
 /**
  * Parse a `yyyy-MM-dd` day into a `Date` at local midnight, or `undefined` when
  * it isn't one.
@@ -43,7 +41,7 @@ const CALENDAR_DATE_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
  * anyone west of Greenwich and would show the wrong day selected.
  */
 export function parseCalendarDate(value: string): Date | undefined {
-	if (!CALENDAR_DATE_PATTERN.test(value)) {
+	if (!isCalendarDate(value)) {
 		return undefined;
 	}
 
