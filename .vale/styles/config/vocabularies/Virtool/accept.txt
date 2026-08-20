@@ -143,3 +143,11 @@ WebSockets
 [Gg]oldens
 [Aa]ccessor
 [Aa]ddons?
+[Dd]ev
+[Gg]lobals
+[Tt][Oo][Dd][Oo]
+watch_path
+novo
+[Xx]z
+[Pp]erl
+contentless
