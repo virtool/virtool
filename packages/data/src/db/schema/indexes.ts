@@ -2,8 +2,7 @@
 //
 // Both tables are written from here — starting a build inserts the `indexes`
 // row and the `create_index` task registers the artifact it produces — so every
-// column the real tables require is declared, the legacy `index` string column
-// on `index_files` included.
+// column the real tables require is declared.
 
 import type { IndexFileType } from "@virtool/contracts";
 import { sql } from "drizzle-orm";
@@ -40,15 +39,11 @@ export const indexes = pgTable(
 		ready: boolean("ready")
 			.$defaultFn(() => false)
 			.notNull(),
-		// Dead. Keys were once composed as `indexes/{storage_key}/{file name}`;
-		// each file now records its own complete key. The column is still NOT NULL
-		// and requires a value on insert until a cleanup migration drops it.
-		storage_key: text("storage_key").notNull(),
-		// The exception to files recording their own keys. The compressed OTU JSON is
-		// materialized on demand and deliberately has no `index_files` row, because
-		// such a row would publish it in the index's file listing. Nullable: an index
-		// that has never been asked for its OTU JSON has not written one, and the key
-		// is minted on first write.
+		// The one key an `index_files` row does not carry. The compressed OTU JSON
+		// is materialized on demand and deliberately has no such row, because one
+		// would publish it in the index's file listing. Nullable: an index that has
+		// never been asked for its OTU JSON has not written one, and the key is
+		// minted on first write.
 		otus_json_storage_key: text("otus_json_storage_key"),
 		reference_id: bigint("reference_id", { mode: "number" }).notNull(),
 		user_id: integer("user_id").notNull(),
@@ -79,7 +74,6 @@ export const indexes = pgTable(
 			name: "indexes_task_id_fkey",
 		}),
 		unique("indexes_legacy_id_key").on(table.legacy_id),
-		unique("indexes_storage_key_key").on(table.storage_key),
 		unique("uq_indexes_otus_json_storage_key").on(table.otus_json_storage_key),
 		unique("uq_indexes_reference_id_version").on(
 			table.reference_id,
@@ -97,16 +91,11 @@ export const indexFiles = pgTable(
 	{
 		id: serial("id").primaryKey(),
 		name: text("name").notNull(),
-		// The owning build's id as a string, predating `index_id` and due to be
-		// dropped by a cleanup migration. Nullable, so nothing has to fill it, but
-		// this side writes the stringified `index_id` so older rows and new ones
-		// look the same.
-		index: text("index"),
 		index_id: bigint("index_id", { mode: "number" }).notNull(),
 		type: text("type").$type<IndexFileType>(),
 		size: bigint("size", { mode: "number" }),
-		// The file's complete object-storage key, superseding the per-index
-		// `indexes.storage_key` slug keys were previously composed from.
+		// The file's complete object-storage key. Keys were once composed from a
+		// per-index slug; each file now records its own.
 		storage_key: text("storage_key").notNull(),
 	},
 	(table) => [

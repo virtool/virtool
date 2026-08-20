@@ -97,7 +97,6 @@ async function seedIndex(values: {
 				manifest: {},
 				ready: values.ready,
 				reference_id: values.referenceId,
-				storage_key: `index-${values.referenceId}-${values.version}`,
 				user_id: ownerId,
 				version: values.version,
 			})

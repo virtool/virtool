@@ -77,16 +77,6 @@ function coerceOtuVersion(otuVersion: string | null): number | typeof REMOVED {
 	return Number(otuVersion);
 }
 
-/**
- * Thrown when a history row is missing something every row must carry: the
- * reference it belongs to, or the version of the index it was built into.
- *
- * Both columns are nullable in the schema for reasons that predate the foreign
- * keys, but every row written fills them. Throwing is better than serving a
- * change with a hole in it.
- */
-export class MalformedHistoryRowError extends AppError {}
-
 // The public change id. `legacy_id` carries it on every row written; the
 // integer primary key stands in for a row old enough to predate it, so a
 // history list renders rather than failing on one unidentifiable change.
@@ -106,34 +96,24 @@ type JoinedHistoryRow = {
 	otuVersion: string | null;
 	indexId: number | null;
 	indexVersion: number | null;
-	referenceId: number | null;
-	referenceName: string | null;
+	referenceId: number;
+	referenceName: string;
 	userId: number;
 	userHandle: string;
 };
 
 function mapOtuHistory(row: JoinedHistoryRow): OtuHistory {
-	if (row.referenceId === null || row.referenceName === null) {
-		throw new MalformedHistoryRowError(
-			`Change ${changeId(row)} names no reference`,
-		);
-	}
-
-	if (row.indexId !== null && row.indexVersion === null) {
-		throw new MalformedHistoryRowError(
-			`Change ${changeId(row)} was built into index ${row.indexId}, which has no version`,
-		);
-	}
-
 	return {
 		id: changeId(row),
 		createdAt: row.createdAt,
 		description: row.description,
 		methodName: row.methodName as OtuHistory["methodName"],
+		// The two cannot disagree: `index_id` is a foreign key and `indexes.version`
+		// is NOT NULL, so the left join either misses entirely or supplies both.
 		index:
-			row.indexId === null
+			row.indexId === null || row.indexVersion === null
 				? null
-				: { id: row.indexId, version: row.indexVersion as number },
+				: { id: row.indexId, version: row.indexVersion },
 		otu: {
 			id: row.otu,
 			name: row.otuName,
@@ -188,7 +168,7 @@ export async function listByOtu(
 		.from(legacyHistory)
 		.innerJoin(users, eq(legacyHistory.user_id, users.id))
 		.leftJoin(indexes, eq(legacyHistory.index_id, indexes.id))
-		.leftJoin(
+		.innerJoin(
 			legacyReferences,
 			eq(legacyHistory.reference_id, legacyReferences.id),
 		)
@@ -244,7 +224,7 @@ export async function findUnbuiltByReference(
 			.from(legacyHistory)
 			.innerJoin(users, eq(legacyHistory.user_id, users.id))
 			.leftJoin(indexes, eq(legacyHistory.index_id, indexes.id))
-			.leftJoin(
+			.innerJoin(
 				legacyReferences,
 				eq(legacyHistory.reference_id, legacyReferences.id),
 			)
