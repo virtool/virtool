@@ -256,3 +256,4 @@ type(scope): description
   The Todo-by-default rule above governs issues you create, not ones already
   in flight.
 - Label bugs as **Bug** in addition to any other labels.
+- Never create new Linear labels.
