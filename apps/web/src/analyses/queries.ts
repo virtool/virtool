@@ -20,27 +20,62 @@ import type {
 	Analysis,
 	AnalysisResults,
 	AnalysisSearchResult,
+	AnalysisSortField,
 	AnalysisWorkflow,
+	SortDirection,
 } from "@virtool/contracts";
+
+/** The page, ordering, and filters {@link useListAnalyses} requests. */
+export type ListAnalysesOptions = {
+	/** The direction the sorted column is ordered in */
+	direction: SortDirection;
+
+	page: number;
+	perPage: number;
+
+	/** The sample the analyses belong to */
+	sampleId: number;
+
+	/** The column to order by, or undefined for newest first */
+	sort?: AnalysisSortField;
+
+	/** The ids of the users whose analyses to show, or empty for every user */
+	userIds: number[];
+
+	/** The workflows to show analyses of, or empty for every workflow */
+	workflows: AnalysisWorkflow[];
+};
 
 /**
  * Fetch a page of a sample's analyses
  *
- * @param sampleId - The sample which the analyses are associated with
- * @param page - The page to fetch
- * @param perPage - The number of analyses to fetch per page
+ * @param options - The page, ordering, and filters to request
  * @returns A page of analyses search results
  */
-export function useListAnalyses(
-	sampleId: number,
-	page: number,
-	perPage: number,
-) {
+export function useListAnalyses({
+	direction,
+	page,
+	perPage,
+	sampleId,
+	sort,
+	userIds,
+	workflows,
+}: ListAnalysesOptions) {
 	return useQuery<AnalysisSearchResult, Error>({
-		queryKey: analysesQueryKeys.list([sampleId, page, perPage]),
+		// The sample id leads the key so that creating an analysis can invalidate
+		// one sample's lists without touching another's.
+		queryKey: analysesQueryKeys.list([
+			sampleId,
+			page,
+			perPage,
+			sort,
+			direction,
+			userIds,
+			workflows,
+		]),
 		queryFn: () =>
 			findAnalysesFn({
-				data: { sampleId, page, perPage },
+				data: { sampleId, page, perPage, sort, direction, userIds, workflows },
 			}),
 		placeholderData: keepPreviousData,
 	});
@@ -60,7 +95,8 @@ export function useListAnalyses(
 export function useSuspenseRecentAnalyses(userId: number, perPage: number) {
 	return useSuspenseQuery<AnalysisSearchResult, Error>({
 		queryKey: analysesQueryKeys.list(["recent", userId, perPage]),
-		queryFn: () => findAnalysesFn({ data: { userId, page: 1, perPage } }),
+		queryFn: () =>
+			findAnalysesFn({ data: { userIds: [userId], page: 1, perPage } }),
 	});
 }
 

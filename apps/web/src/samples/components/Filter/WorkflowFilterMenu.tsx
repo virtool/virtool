@@ -1,10 +1,9 @@
 import { getWorkflowDisplayName } from "@app/utils";
-import DropdownMenuCheckboxItem from "@base/DropdownMenuCheckboxItem";
-import DropdownMenuContent from "@base/DropdownMenuContent";
 import DropdownMenuGroup from "@base/DropdownMenuGroup";
-import DropdownMenuItem from "@base/DropdownMenuItem";
 import DropdownMenuLabel from "@base/DropdownMenuLabel";
 import DropdownMenuSeparator from "@base/DropdownMenuSeparator";
+import FilterMenuCheckboxItem from "@base/FilterMenuCheckboxItem";
+import FilterMenuContent from "@base/FilterMenuContent";
 import {
 	filterableWorkflows,
 	formatWorkflowFilter,
@@ -34,7 +33,7 @@ export default function WorkflowFilterMenu({
 	selected,
 }: WorkflowFilterMenuProps) {
 	return (
-		<DropdownMenuContent className="w-64">
+		<FilterMenuContent onClear={onClear} showClear={selected.length > 0}>
 			{filterableWorkflows.map((workflow, index) => {
 				const workflowName = getWorkflowDisplayName(workflow);
 				const labelId = `workflow-filter-${workflow}`;
@@ -51,31 +50,21 @@ export default function WorkflowFilterMenu({
 									workflowStateIcons[state];
 
 								return (
-									<DropdownMenuCheckboxItem
+									<FilterMenuCheckboxItem
 										aria-label={`${workflowName} ${stateName}`}
 										checked={selected.includes(value)}
 										key={state}
 										onCheckedChange={() => onToggle(value)}
-										// Keep the menu open so several states can be toggled at once.
-										onSelect={(e) => e.preventDefault()}
 									>
 										<StateIcon className={className} size={14} />
 										{stateName}
-									</DropdownMenuCheckboxItem>
+									</FilterMenuCheckboxItem>
 								);
 							})}
 						</DropdownMenuGroup>
 					</Fragment>
 				);
 			})}
-			{selected.length > 0 && (
-				<>
-					<DropdownMenuSeparator />
-					<DropdownMenuItem color="blue" onSelect={onClear}>
-						Clear
-					</DropdownMenuItem>
-				</>
-			)}
-		</DropdownMenuContent>
+		</FilterMenuContent>
 	);
 }

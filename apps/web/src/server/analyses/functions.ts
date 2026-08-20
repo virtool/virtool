@@ -1,6 +1,10 @@
 import { createServerFn, createServerOnlyFn } from "@tanstack/react-start";
 import { setResponseStatus } from "@tanstack/react-start/server";
-import { AnalysisWorkflow } from "@virtool/contracts";
+import {
+	ANALYSIS_SORT_FIELDS,
+	AnalysisWorkflow,
+	SORT_DIRECTIONS,
+} from "@virtool/contracts";
 import {
 	AnalysisNoReadyIndexError,
 	AnalysisNotFoundError,
@@ -38,9 +42,14 @@ const analysisIdSchema = z.object({
 
 const findAnalysesSchema = z.object({
 	sampleId: rowIdSchema.optional(),
-	userId: rowIdSchema.optional(),
+	userIds: z.array(rowIdSchema).default([]),
+	workflows: z.array(AnalysisWorkflow).default([]),
 	page: pageSchema,
 	perPage: perPageSchema,
+	// A direction without a column has nothing to order by, so the pair is
+	// applied only once a column is named.
+	sort: z.enum(ANALYSIS_SORT_FIELDS).optional(),
+	direction: z.enum(SORT_DIRECTIONS).default("descending"),
 });
 
 const createAnalysisSchema = z.object({
@@ -127,7 +136,11 @@ export const findAnalysesFn = createServerFn({ method: "GET" })
 				page: data.page,
 				perPage: data.perPage,
 				sampleId: data.sampleId,
-				userId: data.userId,
+				sort: data.sort
+					? { direction: data.direction, field: data.sort }
+					: undefined,
+				userIds: data.userIds,
+				workflows: data.workflows,
 			},
 			actor,
 		);

@@ -2,8 +2,9 @@ import { byteSize } from "@app/format";
 import Checkbox from "@base/Checkbox";
 import IconButton from "@base/IconButton";
 import IconLink from "@base/IconLink";
-import InitialIcon from "@base/InitialIcon";
 import RelativeTime from "@base/RelativeTime";
+import TableActionsCell from "@base/TableActionsCell";
+import UserLabel from "@base/UserLabel";
 import type { UserNested } from "@virtool/contracts";
 import { Download, Trash } from "lucide-react";
 import type { MouseEvent, ReactNode } from "react";
@@ -61,44 +62,31 @@ export default function UploadItem({
 			)}
 			<td className="break-all font-medium">{name}</td>
 			<td>
-				{user === null ? (
-					"Retrieved"
-				) : (
-					<span className="inline-flex items-center gap-2">
-						{/* Decorative: the handle it draws is already the cell's text, and
-						    `InitialIcon` labels itself with it. */}
-						<span aria-hidden>
-							<InitialIcon size="md" handle={user.handle} />
-						</span>
-						{user.handle}
-					</span>
-				)}
+				{user === null ? "Retrieved" : <UserLabel handle={user.handle} />}
 			</td>
 			<td className="whitespace-nowrap">
 				<RelativeTime time={createdAt} />
 			</td>
 			<td className="whitespace-nowrap">{byteSize(size, true)}</td>
-			<td className="w-px">
-				<span className="flex items-center gap-1 justify-end">
-					{action}
-					<IconLink
-						ariaLabel={`Download ${name}`}
-						color="gray"
-						download={name}
-						href={`/uploads/${id}`}
-						IconComponent={Download}
-						tip="download"
+			<TableActionsCell>
+				{action}
+				<IconLink
+					ariaLabel={`Download ${name}`}
+					color="gray"
+					download={name}
+					href={`/uploads/${id}`}
+					IconComponent={Download}
+					tip="download"
+				/>
+				{canDelete && (
+					<IconButton
+						color="red"
+						IconComponent={Trash}
+						tip="remove"
+						onClick={() => handleRemove({ id })}
 					/>
-					{canDelete && (
-						<IconButton
-							color="red"
-							IconComponent={Trash}
-							tip="remove"
-							onClick={() => handleRemove({ id })}
-						/>
-					)}
-				</span>
-			</td>
+				)}
+			</TableActionsCell>
 		</tr>
 	);
 }

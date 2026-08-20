@@ -5,9 +5,11 @@ import type {
 	AnalysisJobNested,
 	AnalysisMinimal,
 	AnalysisSearchResult,
+	AnalysisSortField,
 	AnalysisWorkflow,
 	JsonObject,
 	NuvsBlast,
+	SortDirection,
 	SubtractionNested,
 	UserNested,
 } from "@virtool/contracts";
@@ -39,14 +41,24 @@ import {
 } from "../samples/data";
 import { formatAnalysis } from "./format";
 
-/** Filters and pagination accepted by {@link findAnalyses}. */
+/** Which column an analysis list is ordered by, and in which direction. */
+export type AnalysisSort = {
+	direction: SortDirection;
+	field: AnalysisSortField;
+};
+
+/** Filters, ordering, and pagination accepted by {@link findAnalyses}. */
 export type FindAnalysesOptions = {
 	page: number;
 	perPage: number;
 	/** Restrict the page to one sample's analyses. */
 	sampleId?: number;
-	/** Restrict the page to the analyses one user started. */
-	userId?: number;
+	/** The column to order by, or undefined for newest first. */
+	sort?: AnalysisSort;
+	/** Restrict the page to the analyses these users started. */
+	userIds?: number[];
+	/** Restrict the page to the analyses run with these workflows. */
+	workflows?: AnalysisWorkflow[];
 };
 
 /** The fields an analysis is created from, plus the user starting it. */
@@ -291,26 +303,56 @@ function analysisReadableFilter(db: Db, actor: SampleActor): SQL | undefined {
 	);
 }
 
+const SORT_COLUMNS = {
+	createdAt: analyses.created_at,
+	user: users.handle,
+	workflow: analyses.workflow,
+} as const;
+
+/**
+ * The `ORDER BY` an analysis list takes, defaulting to newest first.
+ *
+ * Every sortable column has ties — a sample analysed twice by the same workflow,
+ * two analyses started in the same second — and offset pagination over a tied
+ * ordering can repeat or skip rows between pages. The primary key breaks them,
+ * so the order is total.
+ */
+function buildOrderBy(sort: AnalysisSort | undefined) {
+	const order = sort?.direction === "ascending" ? asc : desc;
+	const column = sort ? SORT_COLUMNS[sort.field] : analyses.created_at;
+
+	return [order(column), order(analyses.id)];
+}
+
 export async function findAnalyses(
 	db: Db,
 	options: FindAnalysesOptions,
 	actor: SampleActor,
 ): Promise<AnalysisSearchResult> {
 	const readable = analysisReadableFilter(db, actor);
+
+	// The sample is the scope the list is drawn from, not a filter applied to
+	// it, so `totalCount` counts within it. Only the user and workflow filters
+	// separate the found rows from the total.
+	const scope =
+		options.sampleId === undefined
+			? readable
+			: and(readable, eq(analyses.sample_id, options.sampleId));
+
 	const narrowing: SQL[] = [];
 
-	if (options.sampleId !== undefined) {
-		narrowing.push(eq(analyses.sample_id, options.sampleId));
+	if (options.userIds?.length) {
+		narrowing.push(inArray(analyses.user_id, options.userIds));
 	}
 
-	if (options.userId !== undefined) {
-		narrowing.push(eq(analyses.user_id, options.userId));
+	if (options.workflows?.length) {
+		narrowing.push(inArray(analyses.workflow, options.workflows));
 	}
 
-	const where = narrowing.length > 0 ? and(readable, ...narrowing) : readable;
+	const where = narrowing.length > 0 ? and(scope, ...narrowing) : scope;
 
 	const [totalRows, foundRows, rows] = await Promise.all([
-		db.select({ value: count() }).from(analyses).where(readable),
+		db.select({ value: count() }).from(analyses).where(scope),
 		narrowing.length > 0
 			? db.select({ value: count() }).from(analyses).where(where)
 			: undefined,
@@ -332,7 +374,7 @@ export async function findAnalyses(
 			.leftJoin(legacySamples, eq(legacySamples.id, analyses.sample_id))
 			.leftJoin(users, eq(users.id, analyses.user_id))
 			.where(where)
-			.orderBy(desc(analyses.created_at), desc(analyses.id))
+			.orderBy(...buildOrderBy(options.sort))
 			.offset((options.page - 1) * options.perPage)
 			.limit(options.perPage),
 	]);
