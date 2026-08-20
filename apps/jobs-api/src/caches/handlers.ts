@@ -32,10 +32,6 @@ export type CacheHandlerDeps = {
  * The mapping happens here, at the handler boundary, rather than inside
  * `@virtool/data` — `apps/web`'s client feature modules read the same data
  * functions, so renaming a field down there would break them at a distance.
- *
- * A timestamp crosses as a `Date` and is encoded by `Response.json`, so nothing
- * here calls `toISOString`. Both columns already hold a `timestamp` and are
- * passed straight through.
  */
 function toCache(row: CacheRow): Cache {
 	return {
