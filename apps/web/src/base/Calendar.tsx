@@ -34,11 +34,6 @@ const navButtonClassName = cn(
 	"disabled:cursor-default disabled:opacity-40 disabled:hover:bg-transparent",
 );
 
-// The day picker joins its modifier class names onto the cell rather than the
-// button inside it, so each state below reaches the button through a child
-// selector. A day both `selected` and `today` would otherwise get two competing
-// text colours, resolved by stylesheet order rather than intent — hence the
-// `:not([data-selected])` guards, which make the two disjoint.
 const dayButtonClassName = cn(
 	"cursor-pointer flex font-normal h-8 items-center justify-center rounded-md text-sm w-8",
 	"hover:bg-gray-100",
@@ -50,7 +45,10 @@ const dayButtonClassName = cn(
  *
  * The day picker's own stylesheet is never loaded — every element is classed
  * from here, so the calendar matches the rest of the interface rather than the
- * library's default theme.
+ * library's default theme. This component pulls `react-day-picker` and its
+ * `date-fns` dependency into its consumer's bundle, so lazy-load consumers that
+ * do not need a calendar on initial render. Use `@app/date`, not `date-fns`, for
+ * other application date helpers.
  */
 export default function Calendar({
 	className,
@@ -79,6 +77,8 @@ export default function Calendar({
 				week: "flex mt-1",
 				day: "h-8 p-0 relative text-center w-8",
 				day_button: dayButtonClassName,
+				// Modifier classes apply to the cell, so child selectors style its button.
+				// Keep `today` and `selected` disjoint to avoid competing text styles.
 				selected:
 					"[&>button]:bg-gray-700 [&>button]:text-white [&>button]:hover:bg-gray-700",
 				// The band is painted on the cell, so it runs unbroken between

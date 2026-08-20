@@ -18,13 +18,6 @@ and release pipeline.
 - **Radix UI** primitives for accessible components
 - **CVA** (`class-variance-authority`) for component variants
 - **Lucide React** for icons
-- **react-day-picker** for the samples date filter's range calendar, wrapped by
-  `@base/Calendar`, which classes every element itself rather than loading the
-  library's stylesheet. It and its transitive `date-fns` are three quarters of
-  the samples route's chunk, so `FilterBar` reaches the menu through
-  `lazy()` and nothing fetches them until the date popover is opened. Nothing
-  else in the app may import `date-fns` — the app's own date helpers live in
-  `@app/date`
 - **d3** for the quality, coverage, and NuVs charts — imperative SVG, not a
   React charting wrapper
 - **exceljs** for the analysis XLSX export — server-only, and reached through a

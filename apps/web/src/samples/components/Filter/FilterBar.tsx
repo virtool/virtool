@@ -58,11 +58,11 @@ type FilterGroupProps = {
 
 	/**
 	 * The popover opened by the group title, for a panel whose own arrow-key
-	 * navigation a menu would swallow. Mutually exclusive with ``menu``.
+	 * navigation a menu would swallow. Mutually exclusive with `menu`.
 	 */
 	popover?: ReactNode;
 
-	/** The group title, which triggers ``menu`` or ``popover``. */
+	/** The group title, which triggers `menu` or `popover`. */
 	title: string;
 };
 

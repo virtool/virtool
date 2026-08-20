@@ -99,9 +99,8 @@ const CALENDAR_DATE_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
 /**
  * Coerce a `yyyy-MM-dd` calendar date, discarding anything else.
  *
- * Only the shape is checked here. A day no month has still reads as absent,
- * because the filter that consumes it parses both of its bounds together and
- * drops the pair if either fails.
+ * This validates only the parameter shape; `getDateFilter` later rejects
+ * impossible dates and incomplete ranges.
  */
 export function calendarDate(value: unknown): string | undefined {
 	return typeof value === "string" && CALENDAR_DATE_PATTERN.test(value)

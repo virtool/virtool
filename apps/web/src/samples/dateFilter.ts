@@ -28,9 +28,6 @@ const dateFilterModeNames: Record<DateFilterMode, string> = {
 	range: "Range",
 };
 
-/**
- * Get the human-readable name of a date filter mode.
- */
 export function getDateFilterModeName(mode: DateFilterMode): string {
 	return dateFilterModeNames[mode];
 }
@@ -85,9 +82,6 @@ export function getMonthFilter(year: number, month: number): DateFilter {
 	};
 }
 
-/**
- * Build the filter covering a whole calendar year.
- */
 export function getYearFilter(year: number): DateFilter {
 	return {
 		after: formatDate(new Date(year, 0, 1)),
@@ -95,9 +89,6 @@ export function getYearFilter(year: number): DateFilter {
 	};
 }
 
-/**
- * Build the filter covering two picked days, in whichever order they came.
- */
 export function getRangeFilter(from: Date, to: Date): DateFilter {
 	const first = formatDate(from);
 	const second = formatDate(to);
@@ -122,7 +113,6 @@ const monthNames = [
 	"December",
 ];
 
-/** The month names, in calendar order. */
 export function getMonthNames(): string[] {
 	return monthNames;
 }
@@ -165,11 +155,6 @@ export function getDateFilterMode(filter: DateFilter): DateFilterMode {
 	return "range";
 }
 
-/**
- * Get the label a date filter's chip shows.
- *
- * A month or year reads as its own name; anything else reads as its two bounds.
- */
 export function getDateFilterLabel(filter: DateFilter): string {
 	const after = parseCalendarDate(filter.after);
 

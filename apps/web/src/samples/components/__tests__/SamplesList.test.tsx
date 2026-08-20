@@ -33,7 +33,7 @@ type SamplesListSearch = {
 	workflows?: string[];
 };
 
-/** Mirrors the route, which maps the ``labels`` search param onto ``filterLabels``. */
+/** Mirrors the route, which maps the `labels` search param onto `filterLabels`. */
 function SamplesListHarness({
 	initialSearch = { term: "" },
 }: {
@@ -229,8 +229,6 @@ describe("<SamplesList />", () => {
 	});
 
 	describe("date filtering", () => {
-		// A year back is always in the past, so the month it picks is never one the
-		// menu disables for being ahead of today.
 		const lastYear = new Date().getFullYear() - 1;
 
 		async function pickLastJanuary() {

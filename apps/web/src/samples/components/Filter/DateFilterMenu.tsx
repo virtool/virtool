@@ -21,7 +21,6 @@ import { ChevronLeft, ChevronRight } from "lucide-react";
 import { useState } from "react";
 import type { DateRange } from "react-day-picker";
 
-/** How many years one page of the year grid shows. */
 const YEARS_PER_PAGE = 12;
 
 const cellClassName = cn(
@@ -81,21 +80,11 @@ function StepHeader({
 }
 
 type DateFilterMenuProps = {
-	/** Applies a filter, or clears it when nothing is selected. */
 	onChange: (filter: DateFilter | undefined) => void;
-
-	/** The filter currently narrowing the list, if any. */
 	value?: DateFilter;
 };
 
-/**
- * A popover for narrowing the samples list to a month, a year, or a range of
- * days picked off a calendar.
- *
- * Each mode produces the same pair of bounds, so switching between them only
- * changes how the days are chosen. The mode the popover opens on is recovered
- * from the active filter's bounds rather than remembered.
- */
+/** A popover for filtering samples by month, year, or date range. */
 export default function DateFilterMenu({
 	onChange,
 	value,
