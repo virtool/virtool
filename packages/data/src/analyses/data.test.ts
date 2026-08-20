@@ -97,7 +97,6 @@ async function seedIndex(values: {
 				manifest: {},
 				ready: values.ready,
 				reference_id: values.referenceId,
-				storage_key: `index-${values.referenceId}-${values.version}`,
 				user_id: ownerId,
 				version: values.version,
 			})
@@ -246,6 +245,26 @@ describe("findAnalyses", () => {
 
 		expect(result.items.map((item) => item.id)).toEqual([wanted]);
 		expect(result.foundCount).toBe(1);
+		expect(result.totalCount).toBe(1);
+	});
+
+	it("counts the total within the sample when one is given", async () => {
+		const sampleId = await seedSample();
+		const wanted = await seedAnalysis({
+			sample_id: sampleId,
+			workflow: "nuvs",
+		});
+		await seedAnalysis({ sample_id: sampleId, workflow: "pathoscope" });
+		await seedAnalysisOnNewSample();
+
+		const result = await findAnalyses(
+			db,
+			{ ...page, sampleId, workflows: ["nuvs"] },
+			adminActor,
+		);
+
+		expect(result.items.map((item) => item.id)).toEqual([wanted]);
+		expect(result.foundCount).toBe(1);
 		expect(result.totalCount).toBe(2);
 	});
 
@@ -260,7 +279,7 @@ describe("findAnalyses", () => {
 		]);
 	});
 
-	it("restricts the page to one user when a userId is given", async () => {
+	it("restricts the page to the given users", async () => {
 		const other = await seedUser(db, { handle: "other" });
 
 		const wanted = await seedAnalysisOnNewSample({ user_id: other });
@@ -268,7 +287,7 @@ describe("findAnalyses", () => {
 
 		const result = await findAnalyses(
 			db,
-			{ ...page, userId: other },
+			{ ...page, userIds: [other] },
 			adminActor,
 		);
 
@@ -277,7 +296,43 @@ describe("findAnalyses", () => {
 		expect(result.totalCount).toBe(2);
 	});
 
-	it("intersects a userId with the caller's readable samples", async () => {
+	it("restricts the page to the given workflows", async () => {
+		const wanted = await seedAnalysisOnNewSample({ workflow: "pathoscope" });
+		await seedAnalysisOnNewSample({ workflow: "nuvs" });
+
+		const result = await findAnalyses(
+			db,
+			{ ...page, workflows: ["pathoscope"] },
+			adminActor,
+		);
+
+		expect(result.items.map((item) => item.id)).toEqual([wanted]);
+		expect(result.foundCount).toBe(1);
+		expect(result.totalCount).toBe(2);
+	});
+
+	it("intersects the user and workflow filters", async () => {
+		const other = await seedUser(db, { handle: "other" });
+
+		const wanted = await seedAnalysisOnNewSample({
+			user_id: other,
+			workflow: "pathoscope",
+		});
+		await seedAnalysisOnNewSample({ user_id: other, workflow: "nuvs" });
+		await seedAnalysisOnNewSample({ workflow: "pathoscope" });
+
+		const result = await findAnalyses(
+			db,
+			{ ...page, userIds: [other], workflows: ["pathoscope"] },
+			adminActor,
+		);
+
+		expect(result.items.map((item) => item.id)).toEqual([wanted]);
+		expect(result.foundCount).toBe(1);
+		expect(result.totalCount).toBe(3);
+	});
+
+	it("intersects a user filter with the caller's readable samples", async () => {
 		const other = await seedUser(db, { handle: "other" });
 
 		await seedAnalysis({
@@ -290,7 +345,7 @@ describe("findAnalyses", () => {
 		});
 
 		const actor = await resolveSampleActor(db, other);
-		const result = await findAnalyses(db, { ...page, userId: other }, actor);
+		const result = await findAnalyses(db, { ...page, userIds: [other] }, actor);
 
 		expect(result.items.map((item) => item.id)).toEqual([readable]);
 		expect(result.foundCount).toBe(1);
@@ -318,6 +373,67 @@ describe("findAnalyses", () => {
 		const result = await findAnalyses(db, page, adminActor);
 
 		expect(result.items.map((item) => item.id)).toEqual([third, second, first]);
+	});
+
+	it("orders by a named column in the direction asked for", async () => {
+		const sampleId = await seedSample();
+
+		const nuvs = await seedAnalysis({ sample_id: sampleId, workflow: "nuvs" });
+		const pathoscope = await seedAnalysis({
+			sample_id: sampleId,
+			workflow: "pathoscope",
+		});
+
+		const ascending = await findAnalyses(
+			db,
+			{ ...page, sort: { direction: "ascending", field: "workflow" } },
+			adminActor,
+		);
+		const descending = await findAnalyses(
+			db,
+			{ ...page, sort: { direction: "descending", field: "workflow" } },
+			adminActor,
+		);
+
+		expect(ascending.items.map((item) => item.id)).toEqual([nuvs, pathoscope]);
+		expect(descending.items.map((item) => item.id)).toEqual([pathoscope, nuvs]);
+	});
+
+	it("orders by the handle of the user who started the analysis", async () => {
+		const sampleId = await seedSample();
+		const zoe = await seedUser(db, { handle: "zoe" });
+		const abe = await seedUser(db, { handle: "abe" });
+
+		const byZoe = await seedAnalysis({ sample_id: sampleId, user_id: zoe });
+		const byAbe = await seedAnalysis({ sample_id: sampleId, user_id: abe });
+
+		const result = await findAnalyses(
+			db,
+			{ ...page, sort: { direction: "ascending", field: "user" } },
+			adminActor,
+		);
+
+		expect(result.items.map((item) => item.id)).toEqual([byAbe, byZoe]);
+	});
+
+	// Offset pagination over a tied ordering can repeat or skip rows between
+	// pages, so the primary key has to break the ties the sorted column leaves.
+	it("breaks ties on a sorted column with the id", async () => {
+		const sampleId = await seedSample();
+
+		const first = await seedAnalysis({ sample_id: sampleId, workflow: "nuvs" });
+		const second = await seedAnalysis({
+			sample_id: sampleId,
+			workflow: "nuvs",
+		});
+
+		const result = await findAnalyses(
+			db,
+			{ ...page, sort: { direction: "ascending", field: "workflow" } },
+			adminActor,
+		);
+
+		expect(result.items.map((item) => item.id)).toEqual([first, second]);
 	});
 
 	it("pages the results and reports the counts", async () => {

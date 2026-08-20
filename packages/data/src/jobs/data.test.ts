@@ -206,7 +206,6 @@ describe("getJob", () => {
 				job_id: jobId,
 				manifest: {},
 				reference_id: referenceId,
-				storage_key: "job-linked-index",
 				user_id: userId,
 				version: 0,
 			})

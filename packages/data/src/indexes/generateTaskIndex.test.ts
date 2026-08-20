@@ -175,11 +175,6 @@ async function seedOtus(
 	);
 }
 
-// `storage_key` is unique on `indexes` and is dead — nothing composes a key from
-// it. Each seeded build gets one anyway, and it is deliberately unlike the row
-// id so a write derived from either is distinguishable from a minted key.
-let slugCounter = 0;
-
 async function seedBuild(values: {
 	referenceId: number;
 	userId: number;
@@ -187,8 +182,6 @@ async function seedBuild(values: {
 	ready?: boolean;
 	backing?: "task" | "job" | "neither";
 }): Promise<number> {
-	slugCounter += 1;
-
 	const backing = values.backing ?? "task";
 
 	return takeFirstOrThrow(
@@ -199,7 +192,6 @@ async function seedBuild(values: {
 				manifest: values.manifest,
 				ready: values.ready ?? false,
 				reference_id: values.referenceId,
-				storage_key: `5f9a${slugCounter}legacymongoslug`,
 				user_id: values.userId,
 				version: 0,
 				job_id: backing === "job" ? await seedJob(values.userId) : null,
@@ -282,11 +274,6 @@ describe("generateTaskIndex", () => {
 		const storage = new MemoryStorage();
 		const { indexId } = await seedBuildable();
 
-		const [before] = await db
-			.select({ slug: indexes.storage_key })
-			.from(indexes)
-			.where(eq(indexes.id, indexId));
-
 		await generateTaskIndex(db, storage, testLogger, indexId);
 
 		const rows = await readFileRows(indexId);
@@ -295,18 +282,8 @@ describe("generateTaskIndex", () => {
 		// asserts against: every analysis reads the snapshot and nothing else, so
 		// the index would be `ready` and unusable.
 		expect(rows).toMatchObject([
-			{
-				index: String(indexId),
-				index_id: indexId,
-				name: SNAPSHOT,
-				type: "sqlite",
-			},
-			{
-				index: String(indexId),
-				index_id: indexId,
-				name: ARTIFACT,
-				type: "json",
-			},
+			{ index_id: indexId, name: SNAPSHOT, type: "sqlite" },
+			{ index_id: indexId, name: ARTIFACT, type: "json" },
 		]);
 		expect(rows.every((row) => (row.size ?? 0) > 0)).toBe(true);
 
@@ -315,12 +292,11 @@ describe("generateTaskIndex", () => {
 		expect(snapshot?.size).toBe(storedSnapshot.length);
 		expect(() => gunzipSync(storedSnapshot)).not.toThrow();
 
-		// Each key is minted, so it is derived from neither the row id nor the dead
-		// `indexes.storage_key` slug. Both are checked because a helper named for
-		// either would produce a key that reads nothing and orphans what it writes.
+		// Each key is minted rather than composed, so a helper that derived one
+		// from the row id would produce a key that reads nothing and orphans what
+		// it writes.
 		for (const row of rows) {
 			expect(row.storage_key).toMatch(/^indexes\/\d+\/[0-9a-f]{32}$/);
-			expect(row.storage_key).not.toContain(before?.slug);
 		}
 
 		// The whole bucket, so a write to a third key cannot go unnoticed.

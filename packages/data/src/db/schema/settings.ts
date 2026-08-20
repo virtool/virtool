@@ -3,8 +3,7 @@
 // The table is a singleton: exactly one row, pinned to `id = 1`. No column has
 // a server default — every default is written into the row on insert, which
 // is why `DEFAULT_SETTINGS` in `../../settings/data.ts` carries them rather
-// than this file. `enable_api` is the one exception, for the reason given
-// below.
+// than this file.
 
 import type { SampleGroup } from "@virtool/contracts";
 import { sql } from "drizzle-orm";
@@ -24,13 +23,6 @@ export const settings = pgTable(
 		defaultSourceTypes: jsonb("default_source_types")
 			.$type<string[]>()
 			.notNull(),
-		// Virtool no longer exposes a JSON API toggle, so `Settings` does not
-		// carry this and nothing reads it. The column is still NOT NULL with no
-		// server default, so an insert that omits it fails — hence the
-		// client-side default. The column itself is droppable.
-		enableApi: boolean("enable_api")
-			.notNull()
-			.$defaultFn(() => false),
 		enableSentry: boolean("enable_sentry").notNull(),
 		minimumPasswordLength: integer("minimum_password_length").notNull(),
 		// A credential, unlike every other column here. It is never published to

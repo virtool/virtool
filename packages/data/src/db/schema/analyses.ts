@@ -1,8 +1,4 @@
 // Schema for the `analyses` table and its join / file tables.
-//
-// `index` is dead, superseded by `index_id`. It is declared anyway: a column
-// missing from this schema is missing from the migration snapshot, so nothing
-// could generate the migration that drops it.
 
 import type { AnalysisFormat } from "@virtool/contracts";
 import { sql } from "drizzle-orm";
@@ -48,7 +44,6 @@ export const analyses = pgTable(
 		// analysis's slug-prefixed objects in storage.
 		sample: text("sample").notNull(),
 		sample_id: bigint("sample_id", { mode: "number" }),
-		index: text("index"),
 		index_id: bigint("index_id", { mode: "number" }).notNull(),
 		user_id: integer("user_id").notNull(),
 		job_id: integer("job_id"),

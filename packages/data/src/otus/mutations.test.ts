@@ -6,11 +6,7 @@ import { legacyOtus, legacySequences } from "../db/schema/otus";
 import { legacyReferences } from "../db/schema/references";
 import { users } from "../db/schema/users";
 import { createTestDatabase, type TestDatabase } from "../db/test/fixtures";
-import {
-	listByOtu,
-	MalformedHistoryRowError,
-	patchOtusToVersions,
-} from "../history/data";
+import { listByOtu, patchOtusToVersions } from "../history/data";
 import { ReferenceNotFoundError } from "../references/data";
 import {
 	createIsolate,
@@ -836,19 +832,6 @@ describe("listByOtu", () => {
 		await db.delete(legacyHistory);
 
 		await expect(listByOtu(db, otu.id)).resolves.toEqual([]);
-	});
-
-	it("refuses to serve a change that names no reference", async () => {
-		const otu = await seedOtu();
-
-		await db
-			.update(legacyHistory)
-			.set({ reference_id: null })
-			.where(eq(legacyHistory.otu, otu.id));
-
-		await expect(listByOtu(db, otu.id)).rejects.toThrow(
-			MalformedHistoryRowError,
-		);
 	});
 
 	it("throws for an OTU that does not exist", async () => {

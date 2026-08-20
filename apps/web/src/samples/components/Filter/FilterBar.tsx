@@ -1,7 +1,7 @@
-import { cn } from "@app/cn";
 import { getWorkflowDisplayName } from "@app/utils";
-import Dropdown from "@base/Dropdown";
-import DropdownMenuTrigger from "@base/DropdownMenuTrigger";
+import BaseFilterBar from "@base/FilterBar";
+import FilterChip from "@base/FilterChip";
+import FilterGroup from "@base/FilterGroup";
 import PopoverContent from "@base/PopoverContent";
 import { type DateFilter, getDateFilterLabel } from "@samples/dateFilter";
 import { getHexColor } from "@samples/labels";
@@ -10,130 +10,17 @@ import {
 	getWorkflowFilterStateDisplayName,
 	parseWorkflowFilters,
 } from "@samples/utils";
-import { useListUsers } from "@users/queries";
+import UserFilterGroup from "@users/components/UserFilterGroup";
 import type { Label } from "@virtool/contracts";
-import { CalendarDays, Search, Tag, Users, Workflow } from "lucide-react";
-import { Popover } from "radix-ui";
-import { lazy, type ReactNode, Suspense } from "react";
+import { CalendarDays, Search, Tag, Workflow } from "lucide-react";
+import { lazy, Suspense } from "react";
 import LabelFilterMenu from "./LabelFilterMenu";
-import UserFilterMenu from "./UserFilterMenu";
 import WorkflowFilterMenu from "./WorkflowFilterMenu";
 import { workflowStateIcons } from "./workflowStateIcons";
 
 // The range calendar and its date library are a large share of the samples
 // route's chunk, and nothing downloads them until this popover is opened.
 const DateFilterMenu = lazy(() => import("./DateFilterMenu"));
-
-const titleClassName =
-	"flex items-center gap-1.5 px-2 py-0.5 font-medium text-gray-500";
-
-type FilterChipProps = {
-	children: ReactNode;
-	onRemove: () => void;
-	removeLabel: string;
-};
-
-function FilterChip({ children, onRemove, removeLabel }: FilterChipProps) {
-	return (
-		<button
-			aria-label={removeLabel}
-			className="inline-flex cursor-pointer items-center gap-1.5 border-gray-300 border-l px-2 py-0.5 hover:bg-gray-100"
-			onClick={onRemove}
-			type="button"
-		>
-			{children}
-		</button>
-	);
-}
-
-type FilterGroupProps = {
-	/** Chips for the filters that are active in this group. */
-	children?: ReactNode;
-
-	/** An icon shown left of the group title. */
-	icon: ReactNode;
-
-	/** The menu opened by the group title. Omit to make the title inert. */
-	menu?: ReactNode;
-
-	/**
-	 * The popover opened by the group title, for a panel whose own arrow-key
-	 * navigation a menu would swallow. Mutually exclusive with `menu`.
-	 */
-	popover?: ReactNode;
-
-	/** The group title, which triggers `menu` or `popover`. */
-	title: string;
-};
-
-function FilterGroup({
-	children,
-	icon,
-	menu,
-	popover,
-	title,
-}: FilterGroupProps) {
-	const label = (
-		<>
-			{icon}
-			{title}
-		</>
-	);
-
-	function renderTrigger() {
-		if (menu) {
-			return (
-				<DropdownMenuTrigger
-					className={cn(titleClassName, "hover:bg-gray-100")}
-				>
-					{label}
-				</DropdownMenuTrigger>
-			);
-		}
-
-		if (popover) {
-			return (
-				<Popover.Trigger
-					className={cn(titleClassName, "cursor-pointer hover:bg-gray-100")}
-				>
-					{label}
-				</Popover.Trigger>
-			);
-		}
-
-		return <span className={titleClassName}>{label}</span>;
-	}
-
-	const shell = (
-		<div className="flex items-stretch overflow-hidden rounded-md border border-gray-300 bg-white text-sm">
-			{renderTrigger()}
-			{children}
-		</div>
-	);
-
-	// Non-modal so the group's chips stay visible and clickable while its panel is
-	// open. A modal one would `aria-hidden` them along with the rest of the page.
-	if (menu) {
-		return (
-			<Dropdown modal={false}>
-				{shell}
-				{menu}
-			</Dropdown>
-		);
-	}
-
-	if (popover) {
-		return (
-			<Popover.Root modal={false}>
-				{shell}
-				{popover}
-			</Popover.Root>
-		);
-	}
-
-	return shell;
-}
-
 type FilterBarProps = {
 	/** The days the list is narrowed to, if any. */
 	dateFilter?: DateFilter;
@@ -197,16 +84,11 @@ export default function FilterBar({
 	selectedWorkflows,
 	term,
 }: FilterBarProps) {
-	// Shares a query key with the menu's own list, so this resolves from the cache
-	// rather than issuing a second request.
-	const { data: users, isPending: isPendingUsers } = useListUsers();
-
 	const selected = labels.filter((label) => selectedLabels.includes(label.id));
 	const workflows = parseWorkflowFilters(selectedWorkflows);
-	const handlesById = new Map(users?.map((user) => [user.id, user.handle]));
 
 	return (
-		<div className="flex flex-wrap items-center gap-x-5 gap-y-2 mb-3">
+		<BaseFilterBar className="mb-3">
 			{term && (
 				<FilterGroup icon={<Search size={14} />} title="Search">
 					<FilterChip onRemove={onClearTerm} removeLabel="Clear search term">
@@ -214,36 +96,11 @@ export default function FilterBar({
 					</FilterChip>
 				</FilterGroup>
 			)}
-			<FilterGroup
-				icon={<Users size={14} />}
-				menu={
-					<UserFilterMenu
-						onClear={onClearUsers}
-						onToggle={onToggleUser}
-						selected={selectedUsers}
-					/>
-				}
-				title="Users"
-			>
-				{selectedUsers.map((userId) => {
-					const handle = handlesById.get(userId);
-
-					return (
-						<FilterChip
-							key={userId}
-							onRemove={() => onToggleUser(userId)}
-							removeLabel={`Remove ${handle ?? `User ${userId}`} user filter`}
-						>
-							{handle ??
-								(isPendingUsers ? (
-									<span className="h-3 w-16 animate-pulse rounded-sm bg-gray-200" />
-								) : (
-									`User ${userId}`
-								))}
-						</FilterChip>
-					);
-				})}
-			</FilterGroup>
+			<UserFilterGroup
+				onClear={onClearUsers}
+				onToggle={onToggleUser}
+				selected={selectedUsers}
+			/>
 			<FilterGroup
 				icon={<Tag size={14} />}
 				menu={
@@ -324,6 +181,6 @@ export default function FilterBar({
 					</FilterChip>
 				)}
 			</FilterGroup>
-		</div>
+		</BaseFilterBar>
 	);
 }

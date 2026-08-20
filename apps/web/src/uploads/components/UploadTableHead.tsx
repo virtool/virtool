@@ -1,5 +1,7 @@
 import Checkbox from "@base/Checkbox";
 import SortableHead from "@base/SortableHead";
+import TableActionsHead from "@base/TableActionsHead";
+import TableHead from "@base/TableHead";
 import type { SortDirection, UploadSortField } from "@virtool/contracts";
 
 type UploadTableHeadProps = {
@@ -35,58 +37,54 @@ export default function UploadTableHead({
 	sort,
 }: UploadTableHeadProps) {
 	return (
-		<thead className="bg-white text-sm text-gray-600">
-			<tr>
-				{onSelectAll && (
-					<th className="w-12" scope="col">
-						<span className="sr-only">Select</span>
-						<Checkbox
-							ariaLabel="Select all files"
-							checked={checked}
-							id="UploadSelectAll"
-							onClick={onSelectAll}
-						/>
-					</th>
-				)}
-				<SortableHead
-					direction={direction}
-					field="name"
-					onSort={onSort}
-					sort={sort}
-				>
-					Name
-				</SortableHead>
-				<SortableHead
-					className="w-48"
-					direction={direction}
-					field="user"
-					onSort={onSort}
-					sort={sort}
-				>
-					User
-				</SortableHead>
-				<SortableHead
-					className="w-48"
-					direction={direction}
-					field="createdAt"
-					onSort={onSort}
-					sort={sort}
-				>
-					Created
-				</SortableHead>
-				<SortableHead
-					className="w-48"
-					direction={direction}
-					field="size"
-					onSort={onSort}
-					sort={sort}
-				>
-					Size
-				</SortableHead>
-				<th className="w-32" scope="col">
-					<span className="sr-only">Actions</span>
+		<TableHead>
+			{onSelectAll && (
+				<th className="w-12" scope="col">
+					<span className="sr-only">Select</span>
+					<Checkbox
+						ariaLabel="Select all files"
+						checked={checked}
+						id="UploadSelectAll"
+						onClick={onSelectAll}
+					/>
 				</th>
-			</tr>
-		</thead>
+			)}
+			<SortableHead
+				direction={direction}
+				field="name"
+				onSort={onSort}
+				sort={sort}
+			>
+				Name
+			</SortableHead>
+			<SortableHead
+				className="w-48"
+				direction={direction}
+				field="user"
+				onSort={onSort}
+				sort={sort}
+			>
+				User
+			</SortableHead>
+			<SortableHead
+				className="w-48"
+				direction={direction}
+				field="createdAt"
+				onSort={onSort}
+				sort={sort}
+			>
+				Created
+			</SortableHead>
+			<SortableHead
+				className="w-48"
+				direction={direction}
+				field="size"
+				onSort={onSort}
+				sort={sort}
+			>
+				Size
+			</SortableHead>
+			<TableActionsHead className="w-32" />
+		</TableHead>
 	);
 }

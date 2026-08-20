@@ -5,7 +5,6 @@
 // every OTU in the manifest, writing the artifact to object storage, and
 // flipping `ready`.
 
-import { randomUUID } from "node:crypto";
 import { setImmediate } from "node:timers/promises";
 import type {
 	Index,
@@ -618,10 +617,6 @@ export async function createIndex(
 					// Filled in below, once this build owns its changes.
 					manifest: {},
 					ready: false,
-					// Dead, but still `NOT NULL` until a migration drops it. Each of the
-					// build's files records its own complete key; this is no longer a
-					// prefix anything is composed from.
-					storage_key: randomUUID().replaceAll("-", ""),
 					reference_id: referenceId,
 					user_id: userId,
 					task_id: taskId,
@@ -989,7 +984,6 @@ export async function generateTaskIndex(
 			await tx
 				.insert(indexFiles)
 				.values({
-					index: String(indexId),
 					index_id: indexId,
 					name,
 					size,

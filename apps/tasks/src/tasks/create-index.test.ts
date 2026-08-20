@@ -138,7 +138,6 @@ async function claimBuild(count = 2): Promise<{
 			manifest,
 			ready: false,
 			reference_id: referenceId,
-			storage_key: `5f9a${handleCounter}legacymongoslug`,
 			user_id: userId,
 			version: 0,
 			task_id: taskId,

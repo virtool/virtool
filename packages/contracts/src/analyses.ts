@@ -154,6 +154,12 @@ export type Analysis = AnalysisMinimal & {
  */
 export type AnalysisResults = JsonObject | null;
 
+/** The columns an analysis list can be sorted by. */
+export const ANALYSIS_SORT_FIELDS = ["createdAt", "user", "workflow"] as const;
+
+/** A column an analysis list can be sorted by. */
+export type AnalysisSortField = (typeof ANALYSIS_SORT_FIELDS)[number];
+
 /** A page of analyses. */
 export type AnalysisSearchResult = SearchResult & {
 	items: AnalysisMinimal[];

@@ -1,12 +1,7 @@
 // Schema for the `legacy_history` and `legacy_history_diff` tables.
 //
 // Both tables are written from here — every OTU change records a history row
-// and its diff. `reference` and `index` are dead, superseded by the
-// `reference_id` and `index_id` foreign keys; an insert omits them and leaves
-// them NULL.
-// They are declared anyway: a column missing from this schema is missing from
-// the migration snapshot, so nothing could generate the migration that drops
-// it.
+// and its diff.
 
 import {
 	bigint,
@@ -44,9 +39,9 @@ export const legacyHistory = pgTable(
 		// A stringified integer. `NULL` is the `"removed"` sentinel, normalised on
 		// write upstream — the column never stores the sentinel itself.
 		otu_version: text("otu_version"),
-		reference: text("reference"),
-		reference_id: bigint("reference_id", { mode: "number" }),
-		index: text("index"),
+		reference_id: bigint("reference_id", { mode: "number" }).notNull(),
+		// Null until a build claims the change — starting one stamps every
+		// unclaimed change in the reference with the build it went into.
 		index_id: bigint("index_id", { mode: "number" }),
 	},
 	(table) => [
@@ -66,13 +61,11 @@ export const legacyHistory = pgTable(
 			name: "legacy_history_index_id_fkey",
 		}),
 		unique("legacy_history_legacy_id_key").on(table.legacy_id),
-		index("ix_legacy_history_index").on(table.index),
 		index("ix_legacy_history_index_id").on(table.index_id),
 		index("ix_legacy_history_otu_otu_version").on(
 			table.otu,
 			table.otu_version.desc().nullsFirst(),
 		),
-		index("ix_legacy_history_reference").on(table.reference),
 		index("ix_legacy_history_reference_id").on(table.reference_id),
 		index("ix_legacy_history_user_id").on(table.user_id),
 	],

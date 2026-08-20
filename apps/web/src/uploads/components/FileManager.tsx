@@ -1,13 +1,17 @@
 import { useFetchAccount } from "@account/account";
 import { checkAdminRoleOrPermissionsFromAccount } from "@administration/utils";
+import { pluralize } from "@app/format";
 import Alert from "@base/Alert";
-import Box from "@base/Box";
 import BoxGroup from "@base/BoxGroup";
 import BoxGroupTable from "@base/BoxGroupTable";
-import { Empty, EmptyDescription, EmptyMedia, EmptyTitle } from "@base/Empty";
+import Button from "@base/Button";
+import Icon from "@base/Icon";
+import ListEmpty from "@base/ListEmpty";
+import ListHeader from "@base/ListHeader";
 import LoadingPlaceholder from "@base/LoadingPlaceholder";
 import Pagination from "@base/Pagination";
 import QueryError from "@base/QueryError";
+import { nextSortDirection } from "@base/sorting";
 import { useListSelection } from "@base/useListSelection";
 import ViewHeader from "@base/ViewHeader";
 import ViewHeaderTitle from "@base/ViewHeaderTitle";
@@ -19,14 +23,13 @@ import type {
 	UploadType,
 } from "@virtool/contracts";
 import { capitalize } from "es-toolkit";
-import { AlertCircle, FileUp } from "lucide-react";
+import { AlertCircle, FileUp, Trash } from "lucide-react";
 import type { MouseEvent, ReactNode } from "react";
 import type { Accept } from "react-dropzone";
 import { useDeleteFiles, useListFiles } from "../queries";
 import { upload } from "../uploader";
 import { UploadBar } from "./UploadBar";
 import UploadItem from "./UploadItem";
-import UploadListHeader from "./UploadListHeader";
 import UploadTableHead from "./UploadTableHead";
 
 export type FileManagerProps = {
@@ -124,13 +127,8 @@ export function FileManager({
 		selection.clear();
 	}
 
-	// A column already sorted by reverses; a new one starts ascending, so the
-	// first click on any header moves the list somewhere it visibly wasn't.
 	function handleSort(field: UploadSortField) {
-		setSort(
-			field,
-			sort === field && direction === "ascending" ? "descending" : "ascending",
-		);
+		setSort(field, nextSortDirection(field, sort, direction));
 	}
 
 	return (
@@ -159,19 +157,15 @@ export function FileManager({
 			)}
 
 			{files.foundCount === 0 ? (
-				<Box>
-					<Empty className="h-72">
-						<EmptyMedia className="text-gray-400">
-							<FileUp size={40} strokeWidth={1.5} />
-						</EmptyMedia>
-						<EmptyTitle>No files found</EmptyTitle>
-						<EmptyDescription>
-							{canUpload
-								? "Upload a file to get started."
-								: "No files have been uploaded yet."}
-						</EmptyDescription>
-					</Empty>
-				</Box>
+				<ListEmpty
+					description={
+						canUpload
+							? "Upload a file to get started."
+							: "No files have been uploaded yet."
+					}
+					icon={FileUp}
+					title="No files found"
+				/>
 			) : (
 				<Pagination
 					storedPage={files.page}
@@ -180,14 +174,19 @@ export function FileManager({
 					onPageChange={setPage}
 				>
 					<BoxGroup>
-						{canDelete && (
-							<UploadListHeader
-								canDelete={canDelete}
-								found={files.foundCount}
-								onDelete={handleDelete}
-								selectedCount={selection.selected.length}
-							/>
-						)}
+						<ListHeader
+							label={
+								selection.selected.length
+									? `${selection.selected.length} selected`
+									: pluralize(files.foundCount, "file")
+							}
+						>
+							{canDelete && selection.selected.length > 0 && (
+								<Button color="red" size="small" onClick={handleDelete}>
+									<Icon icon={Trash} /> Delete
+								</Button>
+							)}
+						</ListHeader>
 						<BoxGroupTable className="table-fixed" variant="data">
 							<caption className="sr-only">{title}</caption>
 							<UploadTableHead

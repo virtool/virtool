@@ -349,11 +349,8 @@ async function insertPreparedOtus(
 /**
  * Delete every OTU, sequence, history row and diff the reference carries.
  *
- * Sequences are deleted explicitly rather than left to the cascade from their
- * OTUs. The cascade is real in the database, but it is a constraint the
- * Drizzle mirror does not declare, so relying on it would make this correct in
- * production and silently wrong anywhere the schema is materialised from the
- * mirror.
+ * Sequences go with their OTUs on the cascade. History diffs do not — that
+ * foreign key has no cascade — so they are deleted ahead of their rows.
  */
 async function clearReferenceContents(
 	tx: DbOrTx,
@@ -374,18 +371,6 @@ async function clearReferenceContents(
 	await tx
 		.delete(legacyHistory)
 		.where(eq(legacyHistory.reference_id, referenceId));
-
-	await tx
-		.delete(legacySequences)
-		.where(
-			inArray(
-				legacySequences.otu_id,
-				tx
-					.select({ id: legacyOtus.id })
-					.from(legacyOtus)
-					.where(eq(legacyOtus.reference_id, referenceId)),
-			),
-		);
 
 	await tx.delete(legacyOtus).where(eq(legacyOtus.reference_id, referenceId));
 }

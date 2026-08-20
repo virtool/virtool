@@ -1,25 +1,23 @@
 import { useCheckAdminRole } from "@administration/hooks";
 import { getWorkflowDisplayName } from "@app/utils";
-import Attribution from "@base/Attribution";
-import Box from "@base/Box";
-import Icon from "@base/Icon";
+import IconButton from "@base/IconButton";
 import Link from "@base/Link";
 import ProgressCircle from "@base/ProgressCircle";
+import RelativeTime from "@base/RelativeTime";
 import SlashList from "@base/SlashList";
+import TableActionsCell from "@base/TableActionsCell";
+import UserLabel from "@base/UserLabel";
 import { useFetchJob } from "@jobs/queries";
 import { type AnalysisMinimal, isJobStateTerminal } from "@virtool/contracts";
-import { Equal, EqualNot } from "lucide-react";
+import { Trash } from "lucide-react";
 import { useRemoveAnalysis } from "../queries";
 import { checkSupportedWorkflow } from "../utils";
-import { AnalysisItemRightIcon } from "./AnalysisItemRightIcon";
 
 type AnalysisItemProps = {
 	analysis: AnalysisMinimal;
 };
 
-/**
- * Condensed analysis item for use in a list of analyses
- */
+/** One analysis in the table of a sample's analyses. */
 export default function AnalysisItem({ analysis }: AnalysisItemProps) {
 	const {
 		id,
@@ -33,26 +31,6 @@ export default function AnalysisItem({ analysis }: AnalysisItemProps) {
 	} = analysis;
 	const { hasPermission: canModify } = useCheckAdminRole("users");
 	const onRemove = useRemoveAnalysis(id);
-
-	const title = checkSupportedWorkflow(workflow) ? (
-		<Link
-			className="text-lg"
-			to="/samples/$sampleId/analyses/$analysisId"
-			params={{
-				sampleId: String(analysis.sample.id),
-				analysisId: String(id),
-			}}
-		>
-			{getWorkflowDisplayName(workflow)}
-		</Link>
-	) : (
-		<div className="text-lg [&_svg]:ml-1">
-			{getWorkflowDisplayName(workflow)}
-			<span className="text-gray-500 text-sm ml-1 font-normal">
-				Workflow unavailable
-			</span>
-		</div>
-	);
 
 	const { data: job } = useFetchJob(
 		analysis.job?.id ?? Number.NaN,
@@ -68,62 +46,51 @@ export default function AnalysisItem({ analysis }: AnalysisItemProps) {
 	const canDelete = state === undefined || isJobStateTerminal(state);
 
 	return (
-		<Box as="li" className="mb-2.5">
-			<div className="grid grid-cols-5 items-center text-base font-medium [&_a]:font-medium">
-				<div className="col-span-2">{title}</div>
-				<Attribution
-					className="col-span-2 font-normal"
-					user={user.handle}
-					time={createdAt}
-				/>
-				<div className="flex h-10 justify-end items-center gap-2">
-					{!ready && (
-						<span className="flex size-10 items-center justify-center">
-							<ProgressCircle
-								progress={job?.progress ?? 0}
-								state={job?.state ?? "pending"}
-							/>
-						</span>
-					)}
-					{canDelete && (
-						<AnalysisItemRightIcon
-							canModify={canModify ?? false}
-							onRemove={onRemove}
-						/>
-					)}
-				</div>
-			</div>
-			<div className="flex items-center mt-2.5">
-				<span
-					className="inline-flex items-center mr-4 [&_i]:mr-1"
-					key="reference"
-				>
-					<Equal size={18} />
-					<SlashList className="m-0">
-						<li>
-							<Link to="/refs/$refId" params={{ refId: String(reference.id) }}>
-								{reference.name}
-							</Link>
-						</li>
-						<li>
-							<Link
-								to="/refs/$refId/indexes/$indexId"
-								params={{
-									refId: String(reference.id),
-									indexId: String(index.id),
-								}}
-							>
-								Index {index.version}
-							</Link>
-						</li>
-					</SlashList>
-				</span>
-				{subtractions.map((subtraction) => (
-					<span
-						className="inline-flex items-center mr-4 [&_i]:mr-1"
-						key={subtraction.id}
+		<tr>
+			<td className="font-medium">
+				{checkSupportedWorkflow(workflow) ? (
+					<Link
+						to="/samples/$sampleId/analyses/$analysisId"
+						params={{
+							sampleId: String(analysis.sample.id),
+							analysisId: String(id),
+						}}
 					>
-						<Icon icon={EqualNot} />
+						{getWorkflowDisplayName(workflow)}
+					</Link>
+				) : (
+					<>
+						{getWorkflowDisplayName(workflow)}
+						<span className="block text-gray-500 text-sm font-normal">
+							Workflow unavailable
+						</span>
+					</>
+				)}
+			</td>
+			<td>
+				<SlashList className="m-0">
+					<li>
+						<Link to="/refs/$refId" params={{ refId: String(reference.id) }}>
+							{reference.name}
+						</Link>
+					</li>
+					<li>
+						<Link
+							to="/refs/$refId/indexes/$indexId"
+							params={{
+								refId: String(reference.id),
+								indexId: String(index.id),
+							}}
+						>
+							Index {index.version}
+						</Link>
+					</li>
+				</SlashList>
+			</td>
+			<td>
+				{subtractions.map((subtraction, subtractionIndex) => (
+					<span key={subtraction.id}>
+						{subtractionIndex > 0 && ", "}
 						<Link
 							to="/subtractions/$subtractionId"
 							params={{ subtractionId: String(subtraction.id) }}
@@ -132,7 +99,31 @@ export default function AnalysisItem({ analysis }: AnalysisItemProps) {
 						</Link>
 					</span>
 				))}
-			</div>
-		</Box>
+			</td>
+			<td>
+				<UserLabel handle={user.handle} />
+			</td>
+			<td className="whitespace-nowrap">
+				<RelativeTime time={createdAt} />
+			</td>
+			<TableActionsCell>
+				{!ready && (
+					<span className="flex size-10 items-center justify-center">
+						<ProgressCircle
+							progress={job?.progress ?? 0}
+							state={job?.state ?? "pending"}
+						/>
+					</span>
+				)}
+				{canDelete && canModify && (
+					<IconButton
+						IconComponent={Trash}
+						color="red"
+						tip="Delete"
+						onClick={onRemove}
+					/>
+				)}
+			</TableActionsCell>
+		</tr>
 	);
 }
