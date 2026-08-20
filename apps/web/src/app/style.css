@@ -24,7 +24,7 @@
 	--z-dialog: 50; /* dialog content */
 	--z-dropdown: 60; /* dropdown menus, selects, comboboxes */
 	--z-popover: 70; /* tooltips and popovers — above dialog content */
-	--z-toast: 80; /* toasts and upload progress — topmost */
+	--z-toast: 80; /* upload progress — topmost */
 
 	/* Every rem-valued token Tailwind ships is scaled to 0.875 of its stock
 	   value, which is what the app got from the 14px root this replaced. Holding
