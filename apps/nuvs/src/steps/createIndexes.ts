@@ -1,7 +1,10 @@
 import { mkdtemp, rm } from "node:fs/promises";
 import { join } from "node:path";
-import { decompressFile } from "@virtool/archive/compression";
-import { createMappingIndex, downloadToPath } from "@virtool/workflow";
+import {
+	createMappingIndex,
+	downloadToPath,
+	gunzipFile,
+} from "@virtool/workflow";
 import { cacheFor } from "../cache";
 import {
 	REFERENCE_INDEX_EXTRA_PARAMS,
@@ -97,7 +100,12 @@ export const createSubtractionIndexesStep: NuvsStep = {
 							subtraction.path,
 						);
 
-						await decompressFile(subtraction.path, fastaPath);
+						await gunzipFile({
+							proc,
+							runSubprocess,
+							source: subtraction.path,
+							target: fastaPath,
+						});
 
 						logger.info(
 							{ fastaPath, subtractionId: subtraction.id },

@@ -16,6 +16,7 @@ import {
 	type WorkflowContext,
 } from "../context";
 import type { Workflow } from "../step";
+import { registerFakePigz } from "./gzip";
 import { createRecordingLogger } from "./logger";
 import { createFakeSubprocessRunner } from "./subprocess";
 
@@ -53,6 +54,11 @@ export function createUnreachableJobsApiClient(
 export function createFakeBuildContextInput(
 	overrides: Partial<BuildContextInput> = {},
 ): BuildContextInput {
+	const runSubprocess = createFakeSubprocessRunner();
+
+	// A fake context stands for a workflow image, and every one carries pigz.
+	registerFakePigz(runSubprocess);
+
 	return {
 		job: createFakeRunJob(),
 		workPath: "/tmp/workflow-test",
@@ -61,7 +67,7 @@ export function createFakeBuildContextInput(
 		logger: createRecordingLogger().logger,
 		signal: new AbortController().signal,
 		client: createUnreachableJobsApiClient(),
-		runSubprocess: createFakeSubprocessRunner(),
+		runSubprocess,
 		// An empty bucket rather than a refusing one: storage is faked at the
 		// backend, so a test that reads a key it never seeded gets the
 		// `StorageKeyNotFoundError` production would give it. Pass the

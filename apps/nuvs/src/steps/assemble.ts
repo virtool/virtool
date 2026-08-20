@@ -1,4 +1,4 @@
-import { compressFile } from "@virtool/archive/compression";
+import { gzipFile } from "@virtool/workflow";
 import { workPaths } from "../paths";
 import type { NuvsStep } from "./types";
 
@@ -67,7 +67,12 @@ export const assembleStep: NuvsStep = {
 			},
 		});
 
-		await compressFile(paths.spadesScaffolds, paths.compressedAssembly);
+		await gzipFile({
+			proc,
+			runSubprocess,
+			source: paths.spadesScaffolds,
+			target: paths.compressedAssembly,
+		});
 
 		logger.info(
 			{ assemblyPath: paths.compressedAssembly, kmerLengths },

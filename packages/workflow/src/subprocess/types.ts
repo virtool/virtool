@@ -25,6 +25,14 @@ export type RunSubprocessOptions = {
 	 * reads.
 	 */
 	stdout?: LineHandler;
+	/**
+	 * Write stdout straight to this file, truncating it first. Mutually
+	 * exclusive with `stdout`.
+	 *
+	 * For a tool whose stdout is bytes rather than lines: the splitter would
+	 * buffer a gigabyte of gzip looking for a newline that never comes.
+	 */
+	stdoutFile?: string;
 	/** Called for each line of stderr, after it is logged. */
 	stderr?: LineHandler;
 	/**

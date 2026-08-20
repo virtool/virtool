@@ -5,16 +5,16 @@ describe: it discards every read that maps to a known OTU or to a
 subtraction, assembles what is left with SPAdes, and searches the contigs for
 viral motifs with HMMER.
 
-Image: `ghcr.io/virtool/nuvs`. Ten steps, five external tools — `skewer`,
-`bowtie2`, SPAdes, `hmmpress` and `hmmscan`.
+Image: `ghcr.io/virtool/nuvs`. Ten steps, six external tools — `skewer`,
+`bowtie2`, SPAdes, `hmmpress`, `hmmscan` and `pigz`.
 
 ## Building the image
 
 The root Dockerfile builds each external tool in an independent stage. SPAdes
 4.2.0 is compiled from source because it has no binary release suitable for
 the runtime base. The runtime installs Perl for the Bowtie 2 wrapper, Python
-for `bowtie2-build` and `spades.py`, and the shared libraries required by the
-copied binaries.
+for `bowtie2-build` and `spades.py`, `pigz`, and the shared libraries required
+by the copied binaries.
 
 ```console
 docker build --target nuvs .

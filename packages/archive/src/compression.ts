@@ -1,10 +1,10 @@
 /**
  * Gzip helpers.
  *
- * Compression runs in-process rather than shelling out to a parallel gzip:
- * checksums are taken over *decompressed* content, so the gzip bytes need not
- * be reproducible and there is nothing to gain from matching another
- * compressor.
+ * Compression runs in-process: checksums are taken over *decompressed* content,
+ * so the gzip bytes need not be reproducible and there is nothing to gain from
+ * matching another compressor. Workflow steps use `@virtool/workflow`'s
+ * `gzipFile`, which runs `pigz` across the pod's cores.
  */
 
 import { createReadStream, createWriteStream } from "node:fs";

@@ -90,7 +90,7 @@ RUN ./configure --prefix /tools/hmmer/3.3.2 \
 
 # There is deliberately no `pigz` stage. The only source for its tarball is
 # zlib.net, which goes down often enough to hang every build queued behind it,
-# so the stages that want pigz install Debian's package instead. Nothing here
+# so every workflow stage installs Debian's package instead. Nothing here
 # depends on its exact output bytes — checksums are taken over decompressed
 # content — so 2.6 rather than 2.8 costs nothing.
 
@@ -244,6 +244,12 @@ RUN pnpm --filter @virtool/create-subtraction build \
 
 FROM node:24-bookworm-slim AS create-subtraction
 WORKDIR /workflow
+
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends pigz \
+    && rm -rf /var/lib/apt/lists/* \
+    && apt-get clean
+
 COPY --from=seqkit /tools/seqkit/2.13.0/seqkit /usr/local/bin/
 COPY --from=build-create-subtraction /prod/create-subtraction ./
 CMD ["node", "dist/index.mjs"]
@@ -258,10 +264,16 @@ RUN pnpm --filter @virtool/create-sample build \
 FROM node:24-bookworm-slim AS create-sample
 WORKDIR /workflow
 
-# There is deliberately no apt layer here. FastQC forced a JRE and the full
-# `perl` into this image — it is a Java program behind a Perl launcher that
-# opens with `use FindBin` — and `quality-core` replaced it with one static
-# binary that needs nothing the base does not already carry.
+# pigz is here because `finalize` calls it, not because a copied binary needs
+# it. Nothing copied does: FastQC once forced a JRE and the full `perl` into
+# this image — a Java program behind a Perl launcher that opens with
+# `use FindBin` — and `quality-core` replaced it with a static binary that needs
+# nothing the base does not already carry. Keep it that way.
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends pigz \
+    && rm -rf /var/lib/apt/lists/* \
+    && apt-get clean
+
 COPY --from=quality-builder /build/target/release/quality-core /usr/local/bin/
 
 COPY --from=build-create-sample /prod/create-sample ./
@@ -364,11 +376,14 @@ WORKDIR /workflow
 # `bowtie2-build` one and `spades.py`, which drives the compiled assembler
 # binaries. Dropping either leaves an image whose steps fail at exec with no
 # clue why.
+#
+# pigz is the odd one out: a tool the steps call, not a library.
 RUN apt-get update \
     && apt-get install -y --no-install-recommends \
         libbz2-1.0 \
         libgomp1 \
         perl \
+        pigz \
         python3 \
     && rm -rf /var/lib/apt/lists/* \
     && apt-get clean
@@ -378,9 +393,6 @@ COPY --from=skewer /tools/skewer/0.2.2/ /usr/local/bin/
 COPY --from=hmmer /tools/hmmer/3.3.2/ /opt/hmmer/
 COPY --from=spades /build/spades /opt/spades
 
-# There is deliberately no pigz. `@virtool/workflow`'s gzip helpers are
-# `node:zlib` in-process, and checksums are taken over decompressed content,
-# so nothing depends on pigz's output.
 ENV PATH="/opt/hmmer/bin:/opt/spades/bin:${PATH}"
 
 COPY --from=build-nuvs /prod/nuvs ./
