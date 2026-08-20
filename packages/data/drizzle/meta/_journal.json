@@ -50,6 +50,13 @@
       "when": 1787177564901,
       "tag": "0006_add_settings_ncbi_api_key",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1787243507479,
+      "tag": "0007_drop_migration_bookkeeping",
+      "breakpoints": true
     }
   ]
 }

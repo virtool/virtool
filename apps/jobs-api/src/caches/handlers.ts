@@ -40,8 +40,8 @@ function toCache(row: CacheRow): Cache {
 		storageKey: row.storage_key,
 		size: row.size,
 		params: row.params,
-		createdAt: row.created_at.toISOString(),
-		lastAccessedAt: row.last_accessed_at.toISOString(),
+		createdAt: row.created_at,
+		lastAccessedAt: row.last_accessed_at,
 	};
 }
 
