@@ -1,5 +1,5 @@
-import { mkdir, rm, stat } from "node:fs/promises";
-import { dirname, resolve } from "node:path";
+import { mkdir, readdir, rm, stat } from "node:fs/promises";
+import { dirname, join, resolve } from "node:path";
 import { WorkflowError } from "./errors";
 
 /** Whether the path exists and is something other than a directory. */
@@ -14,7 +14,8 @@ async function isNonDirectory(path: string): Promise<boolean> {
 }
 
 /**
- * Empty and recreate the per-run work directory, returning its absolute path.
+ * Empty the per-run work directory, creating it if it does not exist, and
+ * return its absolute path.
  *
  * There is no cleanup at the end of a run: the pod is destroyed instead, and
  * process exit reclaims everything.
@@ -47,8 +48,17 @@ export async function createWorkPath(path: string): Promise<string> {
 		);
 	}
 
-	await rm(resolved, { recursive: true, force: true });
 	await mkdir(resolved, { recursive: true });
+
+	// The contents go, the directory stays: a work path is routinely a volume
+	// mount, and rmdir on a mount point is EBUSY however empty it is.
+	const entries = await readdir(resolved);
+
+	await Promise.all(
+		entries.map((entry) =>
+			rm(join(resolved, entry), { recursive: true, force: true }),
+		),
+	);
 
 	return resolved;
 }

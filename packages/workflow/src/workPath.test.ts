@@ -1,7 +1,15 @@
-import { mkdtemp, readdir, readFile, writeFile } from "node:fs/promises";
+import {
+	chmod,
+	mkdir,
+	mkdtemp,
+	readdir,
+	readFile,
+	stat,
+	writeFile,
+} from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { isAbsolute, join, relative } from "node:path";
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, onTestFinished } from "vitest";
 import { WorkflowError } from "./errors";
 import { createWorkPath } from "./workPath";
 
@@ -28,6 +36,32 @@ describe("createWorkPath", () => {
 
 		expect(await readdir(created)).toEqual([]);
 	});
+
+	// A work path is routinely a volume mount, and rmdir on a mount point is
+	// EBUSY however empty it is. Mounting needs privileges no test run has, so
+	// the stand-in is a directory whose parent forbids unlinking it — the same
+	// shape, reachable without root.
+	it.skipIf(process.getuid?.() === 0)(
+		"empties a directory it is not allowed to remove",
+		async () => {
+			const parent = await makeTempDir();
+			const path = join(parent, "work");
+
+			await mkdir(path);
+			await writeFile(join(path, "leftover.fq"), "stale");
+			await chmod(parent, 0o500);
+
+			onTestFinished(() => chmod(parent, 0o700));
+
+			const created = await createWorkPath(path);
+
+			expect(created).toBe(path);
+			expect(await readdir(created)).toEqual([]);
+			await expect(stat(path).then((info) => info.isDirectory())).resolves.toBe(
+				true,
+			);
+		},
+	);
 
 	it("returns an absolute path when given a relative one", async () => {
 		const target = join(await makeTempDir(), "work");

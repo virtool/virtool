@@ -26,10 +26,10 @@ export type TestWorkPath = {
 /**
  * Make a unique work directory under the system temp directory.
  *
- * **Never a fixed path.** `createWorkPath` unconditionally `rm -rf`s its target
- * before recreating it, and Vitest runs test files in parallel processes — so a
- * shared path means one test deleting another's tree mid-run, which surfaces as
- * a missing file in whichever test happened to lose the race. `mkdtemp`
+ * **Never a fixed path.** `createWorkPath` unconditionally empties its target,
+ * and Vitest runs test files in parallel processes — so a shared path means one
+ * test deleting another's tree mid-run, which surfaces as a missing file in
+ * whichever test happened to lose the race. `mkdtemp`
  * guarantees uniqueness per call, which covers both parallel files and repeated
  * calls within one.
  *
