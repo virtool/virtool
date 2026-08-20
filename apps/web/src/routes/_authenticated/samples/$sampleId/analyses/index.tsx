@@ -1,31 +1,43 @@
 import AnalysesList from "@analyses/components/AnalysisList";
-import { type Paginated, paginated } from "@app/pagination";
+import {
+	ANALYSES_LIST_SEARCH_DEFAULTS,
+	type AnalysesListSearch,
+	analysesListSearch,
+} from "@analyses/listSearch";
 import type { SearchSchemaInput } from "@tanstack/react-router";
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, stripSearchParams } from "@tanstack/react-router";
 
 function validateAnalysesListSearch(
-	input: Partial<Paginated> & SearchSchemaInput,
-): Paginated {
-	return paginated(input);
+	input: Partial<AnalysesListSearch> & SearchSchemaInput,
+): AnalysesListSearch {
+	return analysesListSearch(input);
 }
 
 export const Route = createFileRoute(
 	"/_authenticated/samples/$sampleId/analyses/",
 )({
 	validateSearch: validateAnalysesListSearch,
+	// `validateSearch` puts every default back on the way in, so dropping them on
+	// the way out keeps a shared link down to the params its sender changed.
+	search: { middlewares: [stripSearchParams(ANALYSES_LIST_SEARCH_DEFAULTS)] },
 	component: AnalysesRoute,
 });
 
 function AnalysesRoute() {
 	const { sampleId } = Route.useParams();
-	const { page } = Route.useSearch();
+	const search = Route.useSearch();
 	const navigate = Route.useNavigate();
 
 	return (
 		<AnalysesList
-			onPageChange={(page) => navigate({ search: { page } })}
-			page={page}
+			direction={search.direction}
+			onPageChange={(page) => navigate({ search: { ...search, page } })}
+			onSortChange={(sort, direction) =>
+				navigate({ search: { ...search, direction, page: 1, sort } })
+			}
+			page={search.page}
 			sampleId={Number(sampleId)}
+			sort={search.sort}
 		/>
 	);
 }

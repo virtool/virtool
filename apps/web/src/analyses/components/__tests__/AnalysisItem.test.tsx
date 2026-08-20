@@ -15,7 +15,11 @@ describe("<AnalysisItem />", () => {
 	function renderItem(overrides: Partial<AnalysisMinimal>) {
 		renderWithProviders(
 			<MemoryRouter>
-				<AnalysisItem analysis={createFakeAnalysisMinimal(overrides)} />
+				<table>
+					<tbody>
+						<AnalysisItem analysis={createFakeAnalysisMinimal(overrides)} />
+					</tbody>
+				</table>
 			</MemoryRouter>,
 		);
 	}

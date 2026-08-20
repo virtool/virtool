@@ -20,7 +20,9 @@ import type {
 	Analysis,
 	AnalysisResults,
 	AnalysisSearchResult,
+	AnalysisSortField,
 	AnalysisWorkflow,
+	SortDirection,
 } from "@virtool/contracts";
 
 /**
@@ -29,18 +31,28 @@ import type {
  * @param sampleId - The sample which the analyses are associated with
  * @param page - The page to fetch
  * @param perPage - The number of analyses to fetch per page
+ * @param sort - The column to order by, or undefined for newest first
+ * @param direction - The direction the sorted column is ordered in
  * @returns A page of analyses search results
  */
 export function useListAnalyses(
 	sampleId: number,
 	page: number,
 	perPage: number,
+	sort: AnalysisSortField | undefined,
+	direction: SortDirection,
 ) {
 	return useQuery<AnalysisSearchResult, Error>({
-		queryKey: analysesQueryKeys.list([sampleId, page, perPage]),
+		queryKey: analysesQueryKeys.list([
+			sampleId,
+			page,
+			perPage,
+			sort,
+			direction,
+		]),
 		queryFn: () =>
 			findAnalysesFn({
-				data: { sampleId, page, perPage },
+				data: { sampleId, page, perPage, sort, direction },
 			}),
 		placeholderData: keepPreviousData,
 	});

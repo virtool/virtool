@@ -320,6 +320,67 @@ describe("findAnalyses", () => {
 		expect(result.items.map((item) => item.id)).toEqual([third, second, first]);
 	});
 
+	it("orders by a named column in the direction asked for", async () => {
+		const sampleId = await seedSample();
+
+		const nuvs = await seedAnalysis({ sample_id: sampleId, workflow: "nuvs" });
+		const pathoscope = await seedAnalysis({
+			sample_id: sampleId,
+			workflow: "pathoscope",
+		});
+
+		const ascending = await findAnalyses(
+			db,
+			{ ...page, sort: { direction: "ascending", field: "workflow" } },
+			adminActor,
+		);
+		const descending = await findAnalyses(
+			db,
+			{ ...page, sort: { direction: "descending", field: "workflow" } },
+			adminActor,
+		);
+
+		expect(ascending.items.map((item) => item.id)).toEqual([nuvs, pathoscope]);
+		expect(descending.items.map((item) => item.id)).toEqual([pathoscope, nuvs]);
+	});
+
+	it("orders by the handle of the user who started the analysis", async () => {
+		const sampleId = await seedSample();
+		const zoe = await seedUser(db, { handle: "zoe" });
+		const abe = await seedUser(db, { handle: "abe" });
+
+		const byZoe = await seedAnalysis({ sample_id: sampleId, user_id: zoe });
+		const byAbe = await seedAnalysis({ sample_id: sampleId, user_id: abe });
+
+		const result = await findAnalyses(
+			db,
+			{ ...page, sort: { direction: "ascending", field: "user" } },
+			adminActor,
+		);
+
+		expect(result.items.map((item) => item.id)).toEqual([byAbe, byZoe]);
+	});
+
+	// Offset pagination over a tied ordering can repeat or skip rows between
+	// pages, so the primary key has to break the ties the sorted column leaves.
+	it("breaks ties on a sorted column with the id", async () => {
+		const sampleId = await seedSample();
+
+		const first = await seedAnalysis({ sample_id: sampleId, workflow: "nuvs" });
+		const second = await seedAnalysis({
+			sample_id: sampleId,
+			workflow: "nuvs",
+		});
+
+		const result = await findAnalyses(
+			db,
+			{ ...page, sort: { direction: "ascending", field: "workflow" } },
+			adminActor,
+		);
+
+		expect(result.items.map((item) => item.id)).toEqual([first, second]);
+	});
+
 	it("pages the results and reports the counts", async () => {
 		const sampleId = await seedSample();
 		const created = new Date("2024-01-01T00:00:00Z");

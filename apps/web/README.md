@@ -322,9 +322,17 @@ do not render at Tailwind's documented pixel values:
 `@base/Table` and `@base/BoxGroupTable` take a `variant`. `keyValue`, the
 default, is the detail-panel shape: a narrow first column of row labels, ruled
 off and top-aligned. `data` is a list of records, where the first column is a
-field like any other. Give a `data` table sortable columns with
-`@base/SortableHead`, which owns the `aria-sort` and direction-arrow rules and
-leaves the sort state to the caller.
+field like any other.
+
+Assemble a `data` table from the shared pieces rather than restyling its parts:
+`@base/TableHead` for the header row, `@base/SortableHead` for a sortable column,
+`@base/TableActionsHead` and `@base/TableActionsCell` for the trailing column of
+row controls, and `@base/UserLabel` for a cell naming an account.
+`@base/ListHeader` is the bar above the table, carrying the list's count and its
+actions. `SortableHead` owns the `aria-sort` and direction-arrow rules and
+leaves the sort state to the caller; `nextSortDirection` from `@base/sorting`
+is the rule that state follows — reverse the active column, start a new one
+ascending.
 
 Size anything that holds text in `rem`; reserve pixels for graphics without
 text. If an API requires a number, express it as a rem multiple and resolve it

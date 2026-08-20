@@ -1,40 +1,59 @@
-import Box from "@base/Box";
+import { pluralize } from "@app/format";
+import BoxGroup from "@base/BoxGroup";
+import BoxGroupTable from "@base/BoxGroupTable";
 import { buttonVariants } from "@base/buttonVariants";
 import ContainerNarrow from "@base/ContainerNarrow";
-import { Empty, EmptyDescription, EmptyMedia, EmptyTitle } from "@base/Empty";
+import ListEmpty from "@base/ListEmpty";
+import ListHeader from "@base/ListHeader";
 import LoadingPlaceholder from "@base/LoadingPlaceholder";
 import Pagination from "@base/Pagination";
 import QueryError from "@base/QueryError";
+import { nextSortDirection } from "@base/sorting";
 import { useListHmms } from "@hmm/queries";
 import { useCheckCanEditSample } from "@samples/hooks";
 import { useFetchSample } from "@samples/queries";
+import type { AnalysisSortField, SortDirection } from "@virtool/contracts";
 import { Microscope } from "lucide-react";
 import { useState } from "react";
 import { useListAnalyses } from "../queries";
 import AnalysisItem from "./AnalysisItem";
+import AnalysisTableHead from "./AnalysisTableHead";
 import CreateAnalysis from "./Create/CreateAnalysis";
 import AnalysisHmmAlert from "./HmmAlert";
 
 type AnalysesListProps = {
+	/** The direction the sorted column is ordered in */
+	direction: SortDirection;
+
 	onPageChange: (page: number) => void;
+
+	/** Called with the column to order by and the direction to order it in */
+	onSortChange: (sort: AnalysisSortField, direction: SortDirection) => void;
+
 	page: number;
 	sampleId: number;
+
+	/** The column the list is sorted by, or undefined for newest first */
+	sort?: AnalysisSortField;
 };
 
 /**
- * A list of analyses with filtering options
+ * A sample's analyses, as a sortable table.
  */
 export default function AnalysesList({
+	direction,
 	onPageChange,
+	onSortChange,
 	page,
 	sampleId,
+	sort,
 }: AnalysesListProps) {
 	const [openCreateAnalysis, setOpenCreateAnalysis] = useState(false);
 	const {
 		data: analyses,
 		isPending: isPendingAnalyses,
 		isError: isErrorAnalyses,
-	} = useListAnalyses(sampleId, page, 25);
+	} = useListAnalyses(sampleId, page, 25, sort, direction);
 	const {
 		data: hmms,
 		isPending: isPendingHmms,
@@ -65,6 +84,20 @@ export default function AnalysesList({
 		return <LoadingPlaceholder />;
 	}
 
+	function handleSort(field: AnalysisSortField) {
+		onSortChange(field, nextSortDirection(field, sort, direction));
+	}
+
+	const createButton = canCreate ? (
+		<button
+			type="button"
+			className={buttonVariants({ color: "blue", size: "small" })}
+			onClick={() => setOpenCreateAnalysis(true)}
+		>
+			Create
+		</button>
+	) : null;
+
 	return (
 		<ContainerNarrow>
 			<AnalysisHmmAlert
@@ -72,17 +105,6 @@ export default function AnalysesList({
 					hmms.status.installed?.ready ?? hmms.status.task?.complete,
 				)}
 			/>
-			<div className="flex justify-end pb-4">
-				{canCreate && (
-					<button
-						type="button"
-						className={buttonVariants({ color: "blue" })}
-						onClick={() => setOpenCreateAnalysis(true)}
-					>
-						Create
-					</button>
-				)}
-			</div>
 			{analyses.foundCount ? (
 				<Pagination
 					storedPage={analyses.page}
@@ -90,24 +112,35 @@ export default function AnalysesList({
 					pageCount={analyses.pageCount}
 					onPageChange={onPageChange}
 				>
-					<ul className="list-none">
-						{analyses.items.map((item) => (
-							<AnalysisItem key={item.id} analysis={item} />
-						))}
-					</ul>
+					<BoxGroup>
+						<ListHeader
+							label={pluralize(analyses.foundCount, "analysis", "analyses")}
+						>
+							{createButton}
+						</ListHeader>
+						<BoxGroupTable variant="data">
+							<caption className="sr-only">Analyses</caption>
+							<AnalysisTableHead
+								direction={direction}
+								onSort={handleSort}
+								sort={sort}
+							/>
+							<tbody>
+								{analyses.items.map((item) => (
+									<AnalysisItem key={item.id} analysis={item} />
+								))}
+							</tbody>
+						</BoxGroupTable>
+					</BoxGroup>
 				</Pagination>
 			) : (
-				<Box>
-					<Empty className="h-72">
-						<EmptyMedia className="text-gray-400">
-							<Microscope size={40} strokeWidth={1.5} />
-						</EmptyMedia>
-						<EmptyTitle>No analyses found</EmptyTitle>
-						<EmptyDescription>
-							This sample has no analyses yet.
-						</EmptyDescription>
-					</Empty>
-				</Box>
+				<ListEmpty
+					description="This sample has no analyses yet."
+					icon={Microscope}
+					title="No analyses found"
+				>
+					{createButton}
+				</ListEmpty>
 			)}
 
 			<CreateAnalysis
