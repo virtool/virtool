@@ -919,7 +919,7 @@ The request path is deliberately **not** a label. Pathnames carry sample
 ids, OTU ids, and reference ids; one label would mint a time series per
 entity and eventually take down the Prometheus instance. Server
 functions are identified by `serverFnMeta.name` — the original export
-name, e.g. `getSampleFn` — which is bounded by the number of functions
+name, such as `getSampleFn` — which is bounded by the number of functions
 in the codebase. Router requests get `server_fn=""`.
 
 If per-route latency is ever needed, the label must come from a matched
