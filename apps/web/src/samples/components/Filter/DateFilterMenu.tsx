@@ -1,8 +1,9 @@
 import { cn } from "@app/cn";
 import { useToday } from "@app/hooks";
-import { buttonVariants } from "@base/buttonVariants";
 import Calendar from "@base/Calendar";
 import PopoverContent from "@base/PopoverContent";
+import ToggleGroup from "@base/ToggleGroup";
+import ToggleGroupItem from "@base/ToggleGroupItem";
 import {
 	type DateFilter,
 	type DateFilterMode,
@@ -17,7 +18,6 @@ import {
 	parseCalendarDate,
 } from "@samples/dateFilter";
 import { ChevronLeft, ChevronRight } from "lucide-react";
-import { ToggleGroup } from "radix-ui";
 import { useState } from "react";
 import type { DateRange } from "react-day-picker";
 
@@ -28,7 +28,7 @@ const cellClassName = cn(
 	"cursor-pointer flex h-9 items-center justify-center rounded-md text-sm",
 	"hover:bg-gray-100",
 	"outline-none focus-visible:ring-2 focus-visible:ring-blue-600",
-	"aria-pressed:bg-blue-600 aria-pressed:text-white aria-pressed:hover:bg-blue-600",
+	"aria-pressed:bg-gray-700 aria-pressed:text-white aria-pressed:hover:bg-gray-700",
 	"disabled:cursor-default disabled:opacity-40 disabled:hover:bg-transparent",
 );
 
@@ -152,28 +152,22 @@ export default function DateFilterMenu({
 
 	return (
 		<PopoverContent className="w-auto p-3">
-			<ToggleGroup.Root
+			<ToggleGroup
 				aria-label="Date filter mode"
-				className="grid grid-cols-3 gap-1"
-				onValueChange={(next) =>
-					next && handleChangeMode(next as DateFilterMode)
-				}
-				type="single"
+				className="grid w-full grid-cols-3"
+				onValueChange={(next) => handleChangeMode(next as DateFilterMode)}
 				value={mode}
 			>
 				{dateFilterModes.map((item) => (
-					<ToggleGroup.Item
-						className={cn(
-							buttonVariants({ size: "small" }),
-							"justify-center px-3",
-						)}
+					<ToggleGroupItem
+						className="min-h-8 justify-center px-3 text-sm"
 						key={item}
 						value={item}
 					>
 						{getDateFilterModeName(item)}
-					</ToggleGroup.Item>
+					</ToggleGroupItem>
 				))}
-			</ToggleGroup.Root>
+			</ToggleGroup>
 			<div className="mt-3">
 				{mode === "month" && (
 					<div className="w-64">

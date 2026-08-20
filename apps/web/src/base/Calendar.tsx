@@ -80,18 +80,18 @@ export default function Calendar({
 				day: "h-8 p-0 relative text-center w-8",
 				day_button: dayButtonClassName,
 				selected:
-					"[&>button]:bg-blue-600 [&>button]:text-white [&>button]:hover:bg-blue-600",
+					"[&>button]:bg-gray-700 [&>button]:text-white [&>button]:hover:bg-gray-700",
 				// The band is painted on the cell, so it runs unbroken between
 				// adjacent days; the week's own edges round it where a range wraps.
-				range_start: "bg-blue-50 rounded-l-md",
-				range_end: "bg-blue-50 rounded-r-md",
+				range_start: "bg-gray-100 rounded-l-md",
+				range_end: "bg-gray-100 rounded-r-md",
 				range_middle: cn(
-					"bg-blue-50 first:rounded-l-md last:rounded-r-md",
-					"[&>button]:bg-transparent! [&>button]:text-blue-900!",
-					"[&>button]:hover:bg-blue-100!",
+					"bg-gray-100 first:rounded-l-md last:rounded-r-md",
+					"[&>button]:bg-transparent! [&>button]:text-gray-900!",
+					"[&>button]:hover:bg-gray-200!",
 				),
 				today:
-					"[&:not([data-selected])>button]:font-semibold [&:not([data-selected])>button]:text-blue-600",
+					"[&:not([data-selected])>button]:font-semibold [&:not([data-selected])>button]:ring-1 [&:not([data-selected])>button]:ring-gray-400",
 				outside: "[&:not([data-selected])>button]:text-gray-400",
 				disabled:
 					"[&>button]:cursor-default [&>button]:opacity-40 [&>button]:hover:bg-transparent",
