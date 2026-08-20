@@ -130,6 +130,50 @@ describe("getSample", () => {
 	});
 });
 
+describe("findSamples", () => {
+	it("resolves both date bounds against UTC midnight, the upper one inclusively", async () => {
+		const userId = await signIn(db, getRequest, { administratorRole: "full" });
+
+		await seedSampleRow({
+			user_id: userId,
+			name: "Before",
+			created_at: new Date("2026-07-31T23:59:59.999Z"),
+		});
+		await seedSampleRow({
+			user_id: userId,
+			name: "First",
+			created_at: new Date("2026-08-01T00:00:00.000Z"),
+		});
+		await seedSampleRow({
+			user_id: userId,
+			name: "Last",
+			created_at: new Date("2026-08-31T23:59:59.999Z"),
+		});
+		await seedSampleRow({
+			user_id: userId,
+			name: "After",
+			created_at: new Date("2026-09-01T00:00:00.000Z"),
+		});
+
+		const result = (await call("findSamplesFn", {
+			createdAfter: "2026-08-01",
+			createdBefore: "2026-08-31",
+		})) as { items: { name: string }[] };
+
+		expect(new Set(result.items.map((item) => item.name))).toEqual(
+			new Set(["First", "Last"]),
+		);
+	});
+
+	it("rejects a day no month has", async () => {
+		await signIn(db, getRequest, { administratorRole: "full" });
+
+		await expect(
+			call("findSamplesFn", { createdAfter: "2026-02-31" }),
+		).rejects.toThrow();
+	});
+});
+
 describe("updateSampleRights", () => {
 	it("returns 404 for a sample that does not exist", async () => {
 		await signIn(db, getRequest, { administratorRole: "full" });

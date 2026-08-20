@@ -1,11 +1,14 @@
 import { type Paginated, paginated } from "@app/pagination";
-import { numberArray, str, stringArray } from "@app/searchParams";
+import { calendarDate, numberArray, str, stringArray } from "@app/searchParams";
 import SamplesList from "@samples/components/SamplesList";
+import { getDateFilter } from "@samples/dateFilter";
 import type { SearchSchemaInput } from "@tanstack/react-router";
 import { createFileRoute } from "@tanstack/react-router";
 
 /** Search params for the samples list. */
 type SamplesSearch = Paginated & {
+	createdAfter: string | undefined;
+	createdBefore: string | undefined;
 	term: string;
 	labels: number[];
 	users: number[];
@@ -17,6 +20,8 @@ function validateSamplesSearch(
 ): SamplesSearch {
 	return {
 		...paginated(input),
+		createdAfter: calendarDate(input.createdAfter),
+		createdBefore: calendarDate(input.createdBefore),
 		term: str(input.term, ""),
 		labels: numberArray(input.labels, []),
 		users: numberArray(input.users, []),
@@ -35,6 +40,7 @@ function SamplesRoute() {
 
 	return (
 		<SamplesList
+			dateFilter={getDateFilter(search.createdAfter, search.createdBefore)}
 			filterLabels={search.labels}
 			page={search.page}
 			term={search.term}
