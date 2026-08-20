@@ -1,9 +1,5 @@
 // Schema for the `analyses` table and its join / file tables.
 //
-// The `analysis_results` / `SQLAnalysisResult` table is mirrored in
-// `./vestigial.ts` instead — nothing reads it, so it is declared for snapshot
-// fidelity alone.
-//
 // `index` is dead, superseded by `index_id`. It is declared anyway: a column
 // missing from this schema is missing from the migration snapshot, so nothing
 // could generate the migration that drops it.

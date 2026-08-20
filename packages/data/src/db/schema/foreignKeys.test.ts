@@ -41,7 +41,7 @@ describe("foreign key constraint names", () => {
 	});
 
 	it("covers every foreign key in the mirror", () => {
-		expect(found).toHaveLength(53);
+		expect(found).toHaveLength(51);
 	});
 
 	it.each(found)("names $expected", ({ actual, expected }) => {
