@@ -91,7 +91,7 @@ describe("<AnalysesList />", () => {
 		mockFindAnalyses([]);
 		renderList();
 
-		const count = await screen.findByText("0 analyses");
+		const count = await screen.findByText("Showing 0 of 0 analyses");
 		const create = screen.getByRole("button", { name: "Create" });
 		const emptyState = screen.getByText("No analyses found");
 

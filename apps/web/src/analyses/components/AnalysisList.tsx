@@ -129,24 +129,25 @@ export default function AnalysesList({
 					hmms.status.installed?.ready ?? hmms.status.task?.complete,
 				)}
 			/>
-			<div className="mb-3 flex min-h-9 items-center gap-4">
+			<div className="mb-3 flex min-h-9 flex-wrap items-center gap-4">
+				<FilterBar
+					onClearUsers={() => setSearch({ page: 1, users: [] })}
+					onClearWorkflows={() => setSearch({ page: 1, workflows: [] })}
+					onToggleUser={(userId) =>
+						setSearch({ page: 1, users: xor(users, [userId]) })
+					}
+					onToggleWorkflow={(workflow) =>
+						setSearch({ page: 1, workflows: xor(workflows, [workflow]) })
+					}
+					selectedUsers={users}
+					selectedWorkflows={workflows}
+				/>
 				<span className="text-sm font-medium text-gray-600">
-					{pluralize(analyses.foundCount, "analysis", "analyses")}
+					Showing {analyses.foundCount} of{" "}
+					{pluralize(analyses.totalCount, "analysis", "analyses")}
 				</span>
 				{createButton ? <div className="ml-auto">{createButton}</div> : null}
 			</div>
-			<FilterBar
-				onClearUsers={() => setSearch({ page: 1, users: [] })}
-				onClearWorkflows={() => setSearch({ page: 1, workflows: [] })}
-				onToggleUser={(userId) =>
-					setSearch({ page: 1, users: xor(users, [userId]) })
-				}
-				onToggleWorkflow={(workflow) =>
-					setSearch({ page: 1, workflows: xor(workflows, [workflow]) })
-				}
-				selectedUsers={users}
-				selectedWorkflows={workflows}
-			/>
 			{analyses.foundCount ? (
 				<Pagination
 					storedPage={analyses.page}
