@@ -25,8 +25,10 @@ import {
 	desc,
 	eq,
 	exists,
+	gte,
 	ilike,
 	inArray,
+	lt,
 	not,
 	or,
 	type SQL,
@@ -72,6 +74,16 @@ export type FindSamplesOptions = {
 	labels: number[];
 	users: number[];
 	workflows: string[];
+
+	/**
+	 * The inclusive instant a sample must have been created at or after. The
+	 * bound is half-open with {@link FindSamplesOptions.createdBefore} so that
+	 * adjacent ranges neither overlap nor leave a gap.
+	 */
+	createdAfter: Date | null;
+
+	/** The exclusive instant a sample must have been created before. */
+	createdBefore: Date | null;
 };
 
 /**
@@ -611,6 +623,14 @@ export async function findSamples(
 					.where(inArray(legacySampleLabels.label_id, options.labels)),
 			),
 		);
+	}
+
+	if (options.createdAfter) {
+		narrowing.push(gte(legacySamples.created_at, options.createdAfter));
+	}
+
+	if (options.createdBefore) {
+		narrowing.push(lt(legacySamples.created_at, options.createdBefore));
 	}
 
 	const workflowFilter = composeWorkflowFilter(db, options.workflows);

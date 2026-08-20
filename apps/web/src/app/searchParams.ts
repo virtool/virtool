@@ -12,6 +12,8 @@
  * not an error boundary.
  */
 
+import { isCalendarDate } from "@app/date";
+
 export function str(value: unknown, fallback: string): string {
 	return typeof value === "string" ? value : fallback;
 }
@@ -92,4 +94,14 @@ export function oneOfArray<T extends string>(
 	return Array.isArray(value) && value.every((item) => allowed.includes(item))
 		? (value as T[])
 		: fallback;
+}
+
+/**
+ * Coerce a `yyyy-MM-dd` calendar date, discarding anything else.
+ *
+ * This validates only the parameter shape; `getDateFilter` later rejects
+ * impossible dates and incomplete ranges.
+ */
+export function calendarDate(value: unknown): string | undefined {
+	return typeof value === "string" && isCalendarDate(value) ? value : undefined;
 }

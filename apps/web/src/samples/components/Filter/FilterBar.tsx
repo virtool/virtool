@@ -2,6 +2,8 @@ import { getWorkflowDisplayName } from "@app/utils";
 import BaseFilterBar from "@base/FilterBar";
 import FilterChip from "@base/FilterChip";
 import FilterGroup from "@base/FilterGroup";
+import PopoverContent from "@base/PopoverContent";
+import { type DateFilter, getDateFilterLabel } from "@samples/dateFilter";
 import { getHexColor } from "@samples/labels";
 import {
 	formatWorkflowFilter,
@@ -10,14 +12,24 @@ import {
 } from "@samples/utils";
 import UserFilterGroup from "@users/components/UserFilterGroup";
 import type { Label } from "@virtool/contracts";
-import { Search, Tag, Workflow } from "lucide-react";
+import { CalendarDays, Search, Tag, Workflow } from "lucide-react";
+import { lazy, Suspense } from "react";
 import LabelFilterMenu from "./LabelFilterMenu";
 import WorkflowFilterMenu from "./WorkflowFilterMenu";
 import { workflowStateIcons } from "./workflowStateIcons";
 
+// The range calendar and its date library are a large share of the samples
+// route's chunk, and nothing downloads them until this popover is opened.
+const DateFilterMenu = lazy(() => import("./DateFilterMenu"));
 type FilterBarProps = {
+	/** The days the list is narrowed to, if any. */
+	dateFilter?: DateFilter;
+
 	/** All available labels, used to resolve selected IDs to names and colors. */
 	labels: Label[];
+
+	/** Applies a date filter, or clears it when passed nothing. */
+	onChangeDate: (filter: DateFilter | undefined) => void;
 
 	/** Deselects every label. */
 	onClearLabels: () => void;
@@ -57,7 +69,9 @@ type FilterBarProps = {
  * A row of filter dropdowns, each showing chips for its active filters
  */
 export default function FilterBar({
+	dateFilter,
 	labels,
+	onChangeDate,
 	onClearLabels,
 	onClearTerm,
 	onClearUsers,
@@ -142,6 +156,30 @@ export default function FilterBar({
 						</FilterChip>
 					);
 				})}
+			</FilterGroup>
+			<FilterGroup
+				icon={<CalendarDays size={14} />}
+				popover={
+					<Suspense
+						fallback={
+							<PopoverContent className="p-3 text-gray-500">
+								Loading calendar...
+							</PopoverContent>
+						}
+					>
+						<DateFilterMenu onChange={onChangeDate} value={dateFilter} />
+					</Suspense>
+				}
+				title="Date"
+			>
+				{dateFilter && (
+					<FilterChip
+						onRemove={() => onChangeDate(undefined)}
+						removeLabel="Clear date filter"
+					>
+						{getDateFilterLabel(dateFilter)}
+					</FilterChip>
+				)}
 			</FilterGroup>
 		</BaseFilterBar>
 	);

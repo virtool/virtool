@@ -1,3 +1,4 @@
+import { getDateFilter } from "@samples/dateFilter";
 import { screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { createFakeAccount } from "@tests/fake/account";
@@ -10,7 +11,11 @@ import { createFakeUserNested } from "@tests/fake/user";
 import { mockFindHmms } from "@tests/server-fn/hmm";
 import { mockListReadyIndexes } from "@tests/server-fn/indexes";
 import { mockFindLabels } from "@tests/server-fn/labels";
-import { mockFindSamplePages, mockFindSamples } from "@tests/server-fn/samples";
+import {
+	mockFindSamplePages,
+	mockFindSamples,
+	sampleServerFnMocks,
+} from "@tests/server-fn/samples";
 import { mockListSubtractionsShortlist } from "@tests/server-fn/subtractions";
 import { mockGetAccount, mockListUsers } from "@tests/server-fn/users";
 import { at, renderWithRouter } from "@tests/setup";
@@ -19,6 +24,8 @@ import { beforeEach, describe, expect, it } from "vitest";
 import SamplesList from "../SamplesList";
 
 type SamplesListSearch = {
+	createdAfter?: string;
+	createdBefore?: string;
 	labels?: number[];
 	page?: number;
 	term?: string;
@@ -26,7 +33,7 @@ type SamplesListSearch = {
 	workflows?: string[];
 };
 
-/** Mirrors the route, which maps the ``labels`` search param onto ``filterLabels``. */
+/** Mirrors the route, which maps the `labels` search param onto `filterLabels`. */
 function SamplesListHarness({
 	initialSearch = { term: "" },
 }: {
@@ -40,6 +47,7 @@ function SamplesListHarness({
 
 	return (
 		<SamplesList
+			dateFilter={getDateFilter(search.createdAfter, search.createdBefore)}
 			filterLabels={search.labels}
 			page={search.page}
 			setSearch={handleSetSearch}
@@ -217,6 +225,146 @@ describe("<SamplesList />", () => {
 				await screen.findByRole("button", { name: "Clear search term" }),
 			).toBeInTheDocument();
 			expect(screen.getByText("Search")).toBeInTheDocument();
+		});
+	});
+
+	describe("date filtering", () => {
+		const lastYear = new Date().getFullYear() - 1;
+
+		async function pickLastJanuary() {
+			await userEvent.click(screen.getByRole("button", { name: "Date" }));
+			await userEvent.click(
+				await screen.findByRole("button", { name: "Previous year" }),
+			);
+			await userEvent.click(
+				screen.getByRole("button", { name: `January ${lastYear}` }),
+			);
+		}
+
+		it("should show a chip naming the month picked in the popover", async () => {
+			mockFindSamples(samples);
+			mockFindSamples(samples);
+			await renderWithRouter(<SamplesListHarness />, path);
+			expect(await screen.findByText("Samples")).toBeInTheDocument();
+
+			await pickLastJanuary();
+
+			expect(
+				await screen.findByRole("button", { name: "Clear date filter" }),
+			).toHaveTextContent(`January ${lastYear}`);
+		});
+
+		it("should request the month's bounds", async () => {
+			mockFindSamples(samples);
+			mockFindSamples(samples);
+			await renderWithRouter(<SamplesListHarness />, path);
+			expect(await screen.findByText("Samples")).toBeInTheDocument();
+
+			await pickLastJanuary();
+			expect(
+				await screen.findByRole("button", { name: "Clear date filter" }),
+			).toBeInTheDocument();
+
+			expect(sampleServerFnMocks.findSamplesFn).toHaveBeenLastCalledWith(
+				expect.objectContaining({
+					data: expect.objectContaining({
+						createdAfter: `${lastYear}-01-01`,
+						createdBefore: `${lastYear}-01-31`,
+					}),
+				}),
+			);
+		});
+
+		it("should request a whole year when one is picked", async () => {
+			mockFindSamples(samples);
+			mockFindSamples(samples);
+			await renderWithRouter(<SamplesListHarness />, path);
+			expect(await screen.findByText("Samples")).toBeInTheDocument();
+
+			await userEvent.click(screen.getByRole("button", { name: "Date" }));
+			await userEvent.click(await screen.findByRole("radio", { name: "Year" }));
+			await userEvent.click(
+				screen.getByRole("button", { name: String(lastYear) }),
+			);
+
+			expect(
+				await screen.findByRole("button", { name: "Clear date filter" }),
+			).toHaveTextContent(String(lastYear));
+			expect(sampleServerFnMocks.findSamplesFn).toHaveBeenLastCalledWith(
+				expect.objectContaining({
+					data: expect.objectContaining({
+						createdAfter: `${lastYear}-01-01`,
+						createdBefore: `${lastYear}-12-31`,
+					}),
+				}),
+			);
+		});
+
+		it("should show both bounds of a range picked on the calendar", async () => {
+			mockFindSamples(samples);
+			mockFindSamples(samples);
+			// Seeded with a range so the popover opens on the calendar, showing the
+			// month those bounds fall in rather than whichever month today is in.
+			await renderWithRouter(
+				<SamplesListHarness
+					initialSearch={{
+						createdAfter: `${lastYear}-03-05`,
+						createdBefore: `${lastYear}-03-15`,
+						term: "",
+					}}
+				/>,
+				path,
+			);
+			expect(await screen.findByText("Samples")).toBeInTheDocument();
+
+			await userEvent.click(screen.getByRole("button", { name: "Date" }));
+
+			// Opened on the calendar, which keys each cell by its own ISO date — the
+			// only unambiguous handle when two months are shown side by side.
+			await screen.findByRole("radio", { name: "Range" });
+
+			async function clickDay(isoDate: string) {
+				const day = document.querySelector<HTMLElement>(
+					`[data-day="${isoDate}"] button`,
+				);
+
+				expect(day).not.toBeNull();
+				await userEvent.click(day as HTMLElement);
+			}
+
+			await clickDay(`${lastYear}-03-02`);
+			await clickDay(`${lastYear}-03-20`);
+
+			expect(
+				await screen.findByRole("button", { name: "Clear date filter" }),
+			).toHaveTextContent(`${lastYear}-03-02 – ${lastYear}-03-20`);
+			expect(sampleServerFnMocks.findSamplesFn).toHaveBeenLastCalledWith(
+				expect.objectContaining({
+					data: expect.objectContaining({
+						createdAfter: `${lastYear}-03-02`,
+						createdBefore: `${lastYear}-03-20`,
+					}),
+				}),
+			);
+		});
+
+		it("should remove the chip when the filter is cleared", async () => {
+			mockFindSamples(samples);
+			mockFindSamples(samples);
+			mockFindSamples(samples);
+			await renderWithRouter(<SamplesListHarness />, path);
+			expect(await screen.findByText("Samples")).toBeInTheDocument();
+
+			await pickLastJanuary();
+			const chip = await screen.findByRole("button", {
+				name: "Clear date filter",
+			});
+
+			await userEvent.click(chip);
+
+			expect(
+				screen.queryByRole("button", { name: "Clear date filter" }),
+			).not.toBeInTheDocument();
 		});
 	});
 

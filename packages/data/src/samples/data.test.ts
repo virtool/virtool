@@ -227,6 +227,8 @@ describe("findSamples", () => {
 		labels: [],
 		users: [],
 		workflows: [],
+		createdAfter: null,
+		createdBefore: null,
 	};
 
 	it("scopes a non-admin to their own, world-readable, and group-readable samples", async () => {
@@ -315,6 +317,65 @@ describe("findSamples", () => {
 		expect(result.items.map((s) => s.name)).toEqual(["Theirs"]);
 	});
 
+	it("filters by a half-open created range", async () => {
+		await seedSample({
+			name: "Before",
+			created_at: new Date("2026-07-31T23:59:59.999Z"),
+		});
+		const first = await seedSample({
+			name: "First",
+			created_at: new Date("2026-08-01T00:00:00.000Z"),
+		});
+		const last = await seedSample({
+			name: "Last",
+			created_at: new Date("2026-08-31T23:59:59.999Z"),
+		});
+		await seedSample({
+			name: "After",
+			created_at: new Date("2026-09-01T00:00:00.000Z"),
+		});
+
+		const result = await findSamples(
+			db,
+			{
+				...options,
+				createdAfter: new Date("2026-08-01T00:00:00.000Z"),
+				createdBefore: new Date("2026-09-01T00:00:00.000Z"),
+			},
+			adminActor,
+		);
+
+		expect(new Set(result.items.map((s) => s.id))).toEqual(
+			new Set([first, last]),
+		);
+		expect(result.foundCount).toBe(2);
+	});
+
+	it("applies either created bound on its own", async () => {
+		const early = await seedSample({
+			name: "Early",
+			created_at: new Date("2026-01-15T00:00:00.000Z"),
+		});
+		const late = await seedSample({
+			name: "Late",
+			created_at: new Date("2026-11-15T00:00:00.000Z"),
+		});
+
+		const after = await findSamples(
+			db,
+			{ ...options, createdAfter: new Date("2026-06-01T00:00:00.000Z") },
+			adminActor,
+		);
+		const before = await findSamples(
+			db,
+			{ ...options, createdBefore: new Date("2026-06-01T00:00:00.000Z") },
+			adminActor,
+		);
+
+		expect(after.items.map((s) => s.id)).toEqual([late]);
+		expect(before.items.map((s) => s.id)).toEqual([early]);
+	});
+
 	it("filters by label", async () => {
 		const labelId = await seedLabel("important");
 		const labelled = await seedSample({ name: "Labelled" });
@@ -349,7 +410,16 @@ describe("workflow tags and filtering", () => {
 
 		const result = await findSamples(
 			db,
-			{ page: 1, perPage: 25, term: "", labels: [], users: [], workflows: [] },
+			{
+				page: 1,
+				perPage: 25,
+				term: "",
+				labels: [],
+				users: [],
+				workflows: [],
+				createdAfter: null,
+				createdBefore: null,
+			},
 			adminActor,
 		);
 		const byId = new Map(result.items.map((s) => [s.id, s]));
@@ -376,6 +446,8 @@ describe("workflow tags and filtering", () => {
 				labels: [],
 				users: [],
 				workflows: ["nuvs:ready"],
+				createdAfter: null,
+				createdBefore: null,
 			},
 			adminActor,
 		);
@@ -396,6 +468,8 @@ describe("workflow tags and filtering", () => {
 				labels: [],
 				users: [],
 				workflows: ["bogus:none"],
+				createdAfter: null,
+				createdBefore: null,
 			},
 			adminActor,
 		);

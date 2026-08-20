@@ -30,7 +30,12 @@ import { authenticated, permission } from "../auth/policy";
 import { db, storage } from "../composition";
 import { ClientError } from "../errors";
 import { logger } from "../logger";
-import { pageSchema, perPageSchema, rowIdSchema } from "../validation";
+import {
+	calendarDateSchema,
+	pageSchema,
+	perPageSchema,
+	rowIdSchema,
+} from "../validation";
 
 const sampleIdSchema = z.object({
 	sampleId: rowIdSchema,
@@ -43,6 +48,8 @@ const findSamplesSchema = z.object({
 	labels: z.array(rowIdSchema).default([]),
 	workflows: z.array(z.string()).default([]),
 	users: z.array(rowIdSchema).default([]),
+	createdAfter: calendarDateSchema.optional(),
+	createdBefore: calendarDateSchema.optional(),
 });
 
 // The group id (or legacy string), or null when none applies. `""` and `"none"`
@@ -116,6 +123,21 @@ const authorizeSample = createServerOnlyFn(
 	},
 );
 
+// A date filter names calendar days, but `created_at` is stored as a UTC
+// instant. Both bounds resolve against UTC midnight so that a filtered month
+// holds the same samples whatever timezone the viewer picked it in.
+function startOfUtcDay(date: string): Date {
+	return new Date(`${date}T00:00:00.000Z`);
+}
+
+// The upper bound covers the whole of its own day, so it resolves to the start
+// of the day after — the exclusive bound `findSamples` expects.
+function startOfNextUtcDay(date: string): Date {
+	const start = startOfUtcDay(date);
+	start.setUTCDate(start.getUTCDate() + 1);
+	return start;
+}
+
 function coerceGroup(group: string | number | null | undefined): number | null {
 	if (group == null || group === "" || group === "none") {
 		return null;
@@ -138,6 +160,12 @@ export const findSamplesFn = createServerFn({ method: "GET" })
 				labels: data.labels,
 				users: data.users,
 				workflows: data.workflows,
+				createdAfter: data.createdAfter
+					? startOfUtcDay(data.createdAfter)
+					: null,
+				createdBefore: data.createdBefore
+					? startOfNextUtcDay(data.createdBefore)
+					: null,
 			},
 			actor,
 		);

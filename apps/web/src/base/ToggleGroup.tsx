@@ -3,6 +3,7 @@ import { ToggleGroup as ToggleGroupPrimitive } from "radix-ui";
 import type { ReactNode } from "react";
 
 type ToggleGroupProps = {
+	"aria-label"?: string;
 	"aria-labelledby"?: string;
 	children: ReactNode;
 	className?: string;
@@ -11,6 +12,7 @@ type ToggleGroupProps = {
 };
 
 export default function ToggleGroup({
+	"aria-label": ariaLabel,
 	"aria-labelledby": ariaLabelledby,
 	children,
 	className,
@@ -25,6 +27,7 @@ export default function ToggleGroup({
 
 	return (
 		<ToggleGroupPrimitive.Root
+			aria-label={ariaLabel}
 			aria-labelledby={ariaLabelledby}
 			className={cn("inline-flex", className)}
 			onValueChange={handleValueChange}
