@@ -96,8 +96,8 @@ describe("createWorkPath", () => {
 		expect(await readFile(path, "utf8")).toBe("important");
 	});
 
-	// The root and file guards are lexical or follow the link, so a link is a way
-	// around both: emptying `/tmp/work -> /` would empty the filesystem root.
+	// A link slips past the root and non-directory guards: `/tmp/work -> /`
+	// would empty the filesystem root.
 	it("refuses a symbolic link", async () => {
 		const parent = await makeTempDir();
 		const target = join(parent, "target");

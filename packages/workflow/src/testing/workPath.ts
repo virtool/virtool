@@ -29,9 +29,8 @@ export type TestWorkPath = {
  * **Never a fixed path.** `createWorkPath` unconditionally empties its target,
  * and Vitest runs test files in parallel processes — so a shared path means one
  * test deleting another's tree mid-run, which surfaces as a missing file in
- * whichever test happened to lose the race. `mkdtemp`
- * guarantees uniqueness per call, which covers both parallel files and repeated
- * calls within one.
+ * whichever test happened to lose the race. `mkdtemp` guarantees uniqueness per
+ * call, which covers both parallel files and repeated calls within one.
  *
  * Cleanup is the caller's: register it with `onTestFinished` rather than a
  * global `afterEach`, which would tie every test in a file to one path.

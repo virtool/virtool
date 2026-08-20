@@ -8,8 +8,7 @@ async function statPath(path: string): Promise<Stats | null> {
 	try {
 		return await lstat(path);
 	} catch {
-		// Anything unreadable is left to `mkdir`, which is far better placed to
-		// say what went wrong than a guess made from a failed `lstat` would be.
+		// Anything unreadable is left to `mkdir` to report.
 		return null;
 	}
 }
@@ -21,9 +20,8 @@ async function statPath(path: string): Promise<Stats | null> {
  * There is no cleanup at the end of a run: the pod is destroyed instead, and
  * process exit reclaims everything.
  *
- * @throws {WorkflowError} when the path is blank, resolves somewhere with no
- *   parent directory, is a symbolic link, or exists as something other than a
- *   directory.
+ * @throws {WorkflowError} when the path is blank, has no parent directory, or
+ *   is a symbolic link or a non-directory.
  */
 export async function createWorkPath(path: string): Promise<string> {
 	// This function unconditionally deletes its target and the target comes from
@@ -43,9 +41,8 @@ export async function createWorkPath(path: string): Promise<string> {
 
 	const stats = await statPath(resolved);
 
-	// The guards above are lexical, so a link is a way around them: emptying
-	// `/tmp/work -> /` would empty the filesystem root. Nothing legitimate needs
-	// the work path to be a link, so refuse rather than resolve it.
+	// A link slips past the guards above: `/tmp/work -> /` resolves lexically and
+	// stats as a directory, so emptying it would empty the filesystem root.
 	if (stats?.isSymbolicLink()) {
 		throw new WorkflowError(
 			`refusing to use ${resolved} as a work path: it is a symbolic link`,
