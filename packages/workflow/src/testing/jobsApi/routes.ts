@@ -281,8 +281,8 @@ function handleRegisterCache(
 		storageKey: cacheKey(parsed.data.uuid),
 		size: 0,
 		params: parsed.data.params,
-		createdAt: state.now().toISOString(),
-		lastAccessedAt: state.now().toISOString(),
+		createdAt: state.now(),
+		lastAccessedAt: state.now(),
 	};
 
 	state.caches.set(cache.key, cache);

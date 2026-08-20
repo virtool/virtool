@@ -17,6 +17,7 @@
 
 import { z } from "zod";
 import { JsonObject } from "./json";
+import { Timestamp } from "./timestamps";
 
 /**
  * The UUID a writer minted for its own blob — 32 lowercase hex characters,
@@ -55,8 +56,8 @@ export const Cache = z.object({
 	storageKey: z.string(),
 	size: z.number().int().nonnegative(),
 	params: JsonObject,
-	createdAt: z.string(),
-	lastAccessedAt: z.string(),
+	createdAt: Timestamp,
+	lastAccessedAt: Timestamp,
 });
 
 export type Cache = z.infer<typeof Cache>;
