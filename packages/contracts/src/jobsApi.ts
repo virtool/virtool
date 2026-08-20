@@ -73,10 +73,11 @@
 
 import { z } from "zod";
 import { AnalysisFormat, AnalysisWorkflow } from "./analyses";
-import { JobClaim, JobState, JobStep, JobTimestamp, JobWorkflow } from "./jobs";
+import { JobClaim, JobState, JobStep, JobWorkflow } from "./jobs";
 import { JsonObject } from "./json";
 import { LibraryType, Quality } from "./samples";
 import { NucleotideComposition } from "./subtractions";
+import { Timestamp } from "./timestamps";
 import { UserNested } from "./users";
 
 /** A workflow step as the runner declares it at claim time. The runner owns its own step list. */
@@ -93,7 +94,7 @@ export const JobStepStarted = z.object({
 	id: z.string(),
 	name: z.string(),
 	description: z.string(),
-	startedAt: JobTimestamp,
+	startedAt: Timestamp,
 });
 
 export type JobStepStarted = z.infer<typeof JobStepStarted>;
@@ -120,8 +121,8 @@ export const JobClaimed = z.object({
 	id: z.number().int(),
 	acquired: z.boolean(),
 	claim: JobClaim,
-	claimedAt: JobTimestamp,
-	createdAt: JobTimestamp,
+	claimedAt: Timestamp,
+	createdAt: Timestamp,
 
 	/**
 	 * The plaintext runner key, used to authenticate every subsequent request for
@@ -152,7 +153,7 @@ export type JobClaimed = z.infer<typeof JobClaimed>;
  * too. See the ping loop in `@virtool/workflow`.
  */
 export const JobPing = z.object({
-	pingedAt: JobTimestamp,
+	pingedAt: Timestamp,
 });
 
 export type JobPing = z.infer<typeof JobPing>;
