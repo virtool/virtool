@@ -63,9 +63,7 @@ export async function setupStep({
 	const paths = workPaths(workPath);
 	const runSubprocess = createFakeSubprocessRunner();
 
-	// This runner replaces the one `createFakeContext` would have built, and
-	// with it the pigz that builder registers. Three steps here gzip or gunzip
-	// a file and then read it back.
+	// This runner replaces the one `createFakeContext` builds, and its pigz.
 	registerFakePigz(runSubprocess);
 	const jobsApiState = createJobsApiState();
 	const client = createFakeJobsApiClient(jobsApiState);

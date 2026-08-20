@@ -83,8 +83,8 @@ export function createRunSubprocess({
 			stdin: "ignore",
 			// Not piped at all without a handler: an unread pipe is a buffer
 			// that fills, and a tool writing a SAM stream to stdout would fill
-			// it fast. `stdoutFile` skips this process entirely — execa opens
-			// the file and hands the subprocess the descriptor.
+			// it fast. `stdoutFile` hands the subprocess a descriptor instead,
+			// so the bytes never reach this process.
 			stdout:
 				stdoutFile !== undefined
 					? { file: stdoutFile }

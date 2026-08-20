@@ -3,10 +3,10 @@
 Tar, gzip and zip, for anything in the monorepo that reads or writes an archive.
 
 Framework-agnostic and dependency-light: `tar-stream` and `fflate` plus
-`node:zlib`, no database, no object storage, no logger, and no tool that has to
-be on `PATH`. It is imported by `@virtool/workflow` (cache archives), by the
-workflow apps (unpacking archives and reading gzip magic), by `@virtool/tasks`
-(the HMM release archive) and by `@virtool/data` (the NCBI BLAST result zip).
+`node:zlib`, no database, no object storage, no logger. It is imported by
+`@virtool/workflow` (cache archives), by the workflow apps (reading gzip magic),
+by `@virtool/tasks` (the HMM release archive) and by `@virtool/data` (the NCBI
+BLAST result zip).
 
 ## Exports
 
@@ -61,15 +61,10 @@ would stay inside the destination.
 
 ## Gzip
 
-`compressFile` compresses in-process, single threaded. Checksums are taken over
-decompressed content, so the gzip bytes need not be reproducible and nothing
-compares them against another compressor's.
-
-**Workflow steps do not use it.** They gzip several gigabytes at a time in a pod
-sized with `VT_PROC` cores, so they call `gzipFile()` and `gunzipFile()` from
-`@virtool/workflow`, which shell out to `pigz`. Those need a tool on `PATH` and
-a core count, and this package promises neither — which is why they live there
-and not here. Server-side callers run in pods with no `pigz` and stay on these.
+`compressFile` compresses in-process: checksums are taken over decompressed
+content, so the gzip bytes need not be reproducible. Workflow steps gzip
+gigabytes at a time and use `gzipFile` from `@virtool/workflow` instead, which
+runs `pigz`.
 
 `decompressGzipToFile` takes an `AsyncIterable<Uint8Array>` so object-storage
 callers can inflate directly into a destination without buffering or retaining

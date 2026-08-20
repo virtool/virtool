@@ -69,9 +69,6 @@ ownership boundary between this package and `@virtool/jobs-api`.
 - Pass one `StorageBackend` into the run context. Tests use `MemoryStorage`.
 - Transfer files with `downloadToPath()` and `uploadFromPath()`; never buffer
   workflow files in memory.
-- Gzip a file on the work path with `gzipFile()` and `gunzipFile()`, passing the
-  context's `proc` and `runSubprocess`. Both shell out to `pigz`, which every
-  workflow image installs; there is no fallback.
 - Read storage keys from API records. Mint output keys with `mintStorageKey()`
   and send them back in the finalize manifest; never derive them from row IDs.
 - `createWorkflowCache()` stores an uncompressed tar containing one top-level
@@ -90,14 +87,8 @@ by code point, `,` and `:` separators, and every character outside
 `float()`, and do not change the frozen golden fixtures to match what the
 implementation currently produces.
 
-Tar belongs to `@virtool/archive`, and so does in-process gzip; this package
-re-exports neither. `gzipFile()` and `gunzipFile()` are not re-exports — they
-are the parallel counterparts of `compressFile()` and `decompressFile()`, and
-they live here because they need a tool on `PATH` and a core count, neither of
-which `@virtool/archive` promises. A pod is sized with `VT_PROC` cores and these
-files run to several gigabytes, so gzipping a sample's reads on one core leaves
-the rest of the allocation idle for minutes. Server-side callers, which run in
-pods with no `pigz`, keep the `@virtool/archive` functions.
+Tar and gzip operations belong to `@virtool/archive`; this package does not
+re-export them.
 
 ## Configuration
 

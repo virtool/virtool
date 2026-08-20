@@ -60,12 +60,10 @@ export type FakeSubprocessResponse = {
 	/** Reported on the result. Defaults to 0. */
 	durationMs?: number;
 	/**
-	 * Runs in place of the tool itself, once the command is matched and before
-	 * any output is delivered.
+	 * Runs in place of the tool, before any output is delivered.
 	 *
-	 * For the tools whose whole point is a file they leave behind: a step that
-	 * reads one back cannot be tested against a fake that only reports an exit
-	 * code. See {@link registerFakePigz}.
+	 * For a tool whose whole point is the file it leaves behind. See
+	 * `registerFakePigz`.
 	 */
 	effect?: (options: RunSubprocessOptions) => void | Promise<void>;
 };

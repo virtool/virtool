@@ -327,31 +327,6 @@ try {
 If the runner ever grows an `okExitCodes` option this changes — and it changes
 there, not here.
 
-### `pigz` is faked by actually gzipping
-
-An exit code is the whole of what most tools mean to a test, but not for one
-whose point is the file it leaves behind. `gzipFile()` and `gunzipFile()` shell
-out to `pigz`, and a step that gzips its output is almost always tested by
-reading that output back — against a runner that reports success and writes
-nothing, every such assertion becomes one about a file that is not there.
-
-So `registerFakePigz(run)` registers a response whose `effect` performs a real
-`node:zlib` round trip into the command's `stdoutFile`:
-
-```ts
-const run = createFakeSubprocessRunner();
-
-registerFakePigz(run);
-```
-
-`createFakeBuildContextInput` already does this to the runner it builds, because
-a fake context stands for a workflow image and every one of those carries pigz.
-**A test that supplies its own `runSubprocess` replaces that runner and loses
-it**, so register it again — `apps/nuvs/src/steps/fixtures.ts` is the example.
-
-`effect` is not pigz-specific: it is the hook for any tool whose test double has
-to leave a file behind.
-
 ## Storage: keys are minted and handed back
 
 Storage is faked at the **backend**, not at HTTP. `MemoryStorage` already

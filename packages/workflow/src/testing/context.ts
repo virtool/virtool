@@ -56,9 +56,7 @@ export function createFakeBuildContextInput(
 ): BuildContextInput {
 	const runSubprocess = createFakeSubprocessRunner();
 
-	// A fake context stands for a workflow image, and every one of those carries
-	// pigz. A runner that reported success and wrote nothing would leave any
-	// step that gzips its output asserting against an empty file.
+	// A fake context stands for a workflow image, and every one carries pigz.
 	registerFakePigz(runSubprocess);
 
 	return {

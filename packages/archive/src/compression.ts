@@ -1,14 +1,10 @@
 /**
  * Gzip helpers.
  *
- * In-process and single threaded. Checksums are taken over *decompressed*
- * content, so the gzip bytes need not be reproducible and there is nothing to
- * gain from matching another compressor.
- *
- * Workflow steps gzip gigabytes at a time on a pod sized with `VT_PROC` cores
- * and use `gzipFile` and `gunzipFile` from `@virtool/workflow` instead, which
- * shell out to `pigz`. They live there rather than here because they need a
- * tool on `PATH` and a core count, and this package promises neither.
+ * Compression runs in-process: checksums are taken over *decompressed* content,
+ * so the gzip bytes need not be reproducible and there is nothing to gain from
+ * matching another compressor. Workflow steps use `@virtool/workflow`'s
+ * `gzipFile`, which runs `pigz` across the pod's cores.
  */
 
 import { createReadStream, createWriteStream } from "node:fs";

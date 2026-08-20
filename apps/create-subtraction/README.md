@@ -5,8 +5,8 @@ Image: `ghcr.io/virtool/create-subtraction`.
 Computes GC and sequence count for a subtraction and commits its
 FASTA to object storage.
 
-Two steps, `compute_gc_and_count` and `finalize`, and two external tools:
-`seqkit`, and `pigz` for gzipping the genome in `finalize`.
+Two steps, `compute_gc_and_count` and `finalize`, and two external tools,
+`seqkit` and `pigz`.
 
 ## Building the image
 

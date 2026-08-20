@@ -40,8 +40,8 @@ describe("gzipFile", () => {
 			stdoutFile: target,
 		});
 
-		// The nested directory is the assertion: pigz would fail on a target
-		// whose parent does not exist, and every caller passes one it made up.
+		// The nested target directory is half the assertion: pigz would fail on a
+		// parent that does not exist.
 		expect(gunzipSync(await readFile(target)).toString("utf8")).toBe(CONTENTS);
 	});
 });

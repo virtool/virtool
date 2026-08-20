@@ -245,8 +245,6 @@ RUN pnpm --filter @virtool/create-subtraction build \
 FROM node:24-bookworm-slim AS create-subtraction
 WORKDIR /workflow
 
-# pigz gzips the source genome in `finalize`. See the note above the tool
-# stages for why it comes from apt rather than a stage of its own.
 RUN apt-get update \
     && apt-get install -y --no-install-recommends pigz \
     && rm -rf /var/lib/apt/lists/* \
@@ -266,16 +264,11 @@ RUN pnpm --filter @virtool/create-sample build \
 FROM node:24-bookworm-slim AS create-sample
 WORKDIR /workflow
 
-# pigz is the one apt package, and it is here because `finalize` calls it — not
-# because a copied binary needs it. Nothing copied does: FastQC once forced a
-# JRE and the full `perl` into this image, being a Java program behind a Perl
-# launcher that opens with `use FindBin`, and `quality-core` replaced it with a
-# static binary that needs nothing the base does not already carry. Keep it
-# that way.
-#
-# `finalize` gzips the normalized reads, which is this image's longest step on
-# its largest files. See the note above the tool stages for why pigz comes from
-# apt rather than a stage of its own.
+# pigz is here because `finalize` calls it, not because a copied binary needs
+# it. Nothing copied does: FastQC once forced a JRE and the full `perl` into
+# this image — a Java program behind a Perl launcher that opens with
+# `use FindBin` — and `quality-core` replaced it with a static binary that needs
+# nothing the base does not already carry. Keep it that way.
 RUN apt-get update \
     && apt-get install -y --no-install-recommends pigz \
     && rm -rf /var/lib/apt/lists/* \
@@ -384,8 +377,7 @@ WORKDIR /workflow
 # binaries. Dropping either leaves an image whose steps fail at exec with no
 # clue why.
 #
-# pigz is the odd one out: a tool this workflow calls itself, to gzip the
-# assembly and the ORFs and to gunzip a subtraction genome.
+# pigz is the odd one out: a tool the steps call, not a library.
 RUN apt-get update \
     && apt-get install -y --no-install-recommends \
         libbz2-1.0 \

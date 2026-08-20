@@ -1,15 +1,9 @@
 /**
  * A `pigz` that does not spawn.
  *
- * `gzipFile` and `gunzipFile` shell out, and a step that gzips its output is
- * almost always tested by reading that output back. The default fake runner
- * reports a silent success and writes nothing, which turns every such
- * assertion into one about an empty file, so this stands in a real `node:zlib`
- * round trip instead.
- *
- * It is registered on the runner `createFakeBuildContextInput` builds, because
- * every workflow image carries `pigz` and a fake context stands for one of
- * those. Register it by hand on a runner a test supplies itself.
+ * `gzipFile` shells out, and a step that gzips its output is almost always
+ * tested by reading that output back — against a runner that writes nothing,
+ * every such assertion is about a file that is not there.
  */
 
 import { readFile, writeFile } from "node:fs/promises";
