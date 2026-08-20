@@ -73,10 +73,6 @@ export async function seedReference(
 	return referenceId;
 }
 
-// `storage_key` is unique, and cannot be derived from the row id, so each seeded
-// build mints its own.
-let storageKeyCounter = 0;
-
 /** Insert a build, finished unless told otherwise, and return its id. */
 export async function seedIndex(
 	db: Db,
@@ -88,8 +84,6 @@ export async function seedIndex(
 		createdAt?: Date;
 	},
 ): Promise<number> {
-	storageKeyCounter += 1;
-
 	return takeFirstOrThrow(
 		await db
 			.insert(indexes)
@@ -98,7 +92,6 @@ export async function seedIndex(
 				manifest: {},
 				ready: values.ready ?? true,
 				reference_id: values.referenceId,
-				storage_key: `storage-${storageKeyCounter}`,
 				user_id: values.userId,
 				version: values.version,
 			})

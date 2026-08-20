@@ -78,7 +78,6 @@ beforeEach(async () => {
 			manifest: {},
 			ready: true,
 			reference_id: referenceId,
-			storage_key: "indexes/1/abc",
 			user_id: userId,
 			version: 1,
 		})
