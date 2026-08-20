@@ -77,7 +77,7 @@ onTestFinished(cleanup);
 The harness splits by what the test is actually asking.
 
 **Workflow tests** get `createFakeJobsApiClient(state)` and exercise no HTTP. A
-workflow test asks whether nuvs produces the right results; HTTP only adds a wire
+workflow test asks whether Nuvs produces the right results; HTTP only adds a wire
 format to break.
 
 **Runtime tests** get `startJobsApiTestServer(state)`, a real `node:http` server
