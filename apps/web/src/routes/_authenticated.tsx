@@ -7,7 +7,6 @@ import LoadingPlaceholder from "@base/LoadingPlaceholder";
 import SkipLink from "@base/SkipLink";
 import Nav from "@nav/components/Nav";
 import Sidebar from "@nav/components/Sidebar";
-import UpdateToast from "@nav/components/UpdateToast";
 import * as Sentry from "@sentry/tanstackstart-react";
 import type { QueryClient } from "@tanstack/react-query";
 import { useQueryClient } from "@tanstack/react-query";
@@ -93,8 +92,6 @@ function AuthenticatedLayout() {
 			<meta charSet="utf-8" />
 
 			<SkipLink />
-
-			<UpdateToast />
 
 			<div className="flex flex-col h-screen">
 				<div className="shrink-0 z-nav">

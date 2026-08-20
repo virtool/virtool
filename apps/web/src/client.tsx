@@ -27,10 +27,10 @@ function captureReactError(error: unknown, errorInfo: ErrorInfo) {
 
 // Reload the page if a preload error occurs. These errors happen when a new
 // version of the app bundle is deployed and a requested chunk no longer exists
-// on the server. The version prompt usually pre-empts this; the listener is a
-// fallback for navigations that race it. A sessionStorage guard caps it at one
-// reload per session so a genuinely missing chunk surfaces the error instead of
-// looping.
+// on the server. This is how the app picks up a redeploy: it reloads at the
+// moment staleness actually breaks a navigation, rather than interrupting the
+// user on every deploy. A sessionStorage guard caps it at one reload per session
+// so a genuinely missing chunk surfaces the error instead of looping.
 const PRELOAD_RELOAD_KEY = "vt-preload-reloaded";
 
 function handlePreloadError() {

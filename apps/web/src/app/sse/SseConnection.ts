@@ -1,4 +1,3 @@
-import { useServerVersionStore } from "@app/serverVersion";
 import { endSession } from "@app/session";
 import * as Sentry from "@sentry/tanstackstart-react";
 import type { QueryClient } from "@tanstack/react-query";
@@ -33,9 +32,9 @@ export function init(queryClient: QueryClient): void {
 			return;
 		}
 
-		// One publisher, typed to the same enum this validates against, and a
-		// forced reload on redeploy: nothing can legitimately arrive that fails to
-		// parse, so every failure is drift worth reporting.
+		// One publisher, typed to the same enum this validates against: nothing can
+		// legitimately arrive that fails to parse, so every failure is drift worth
+		// reporting.
 		Sentry.captureException(parsed.error, {
 			tags: { sse: "message-validation" },
 		});
@@ -123,17 +122,6 @@ export function establishConnection(): void {
 		}
 		hasConnected = true;
 	};
-
-	connection.addEventListener("version", (event) => {
-		try {
-			const version = JSON.parse((event as MessageEvent).data);
-			if (typeof version === "string") {
-				useServerVersionStore.getState().setVersion(version);
-			}
-		} catch (error) {
-			Sentry.captureException(error, { tags: { sse: "version-parse" } });
-		}
-	});
 
 	connection.onmessage = (e) => {
 		try {
