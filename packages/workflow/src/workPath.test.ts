@@ -5,6 +5,7 @@ import {
 	readdir,
 	readFile,
 	stat,
+	symlink,
 	writeFile,
 } from "node:fs/promises";
 import { tmpdir } from "node:os";
@@ -93,6 +94,22 @@ describe("createWorkPath", () => {
 			/exists and is not a directory/,
 		);
 		expect(await readFile(path, "utf8")).toBe("important");
+	});
+
+	// The root and file guards are lexical or follow the link, so a link is a way
+	// around both: emptying `/tmp/work -> /` would empty the filesystem root.
+	it("refuses a symbolic link", async () => {
+		const parent = await makeTempDir();
+		const target = join(parent, "target");
+		const path = join(parent, "link");
+
+		await mkdir(target);
+		await writeFile(join(target, "important.fq"), "important");
+		await symlink(target, path);
+
+		await expect(createWorkPath(path)).rejects.toThrow(WorkflowError);
+		await expect(createWorkPath(path)).rejects.toThrow(/symbolic link/);
+		expect(await readdir(target)).toEqual(["important.fq"]);
 	});
 
 	it.each(["", "   "])("refuses a blank path", async (path) => {
