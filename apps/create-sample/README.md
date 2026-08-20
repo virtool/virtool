@@ -6,14 +6,15 @@ Turns a user's uploaded FASTQ files into a sample an analysis can run against:
 measures their quality, normalizes them to `reads_1.fq.gz` and
 `reads_2.fq.gz`, and commits them to object storage.
 
-Two steps, `run_fastqc` and `finalize`, and one external binary,
+Two steps, `run_fastqc` and `finalize`, and two external binaries:
 [`quality-core`](../../packages/quality-core/README.md) — a Rust crate in this
-repo rather than a third-party tool.
+repo rather than a third-party tool — and `pigz`, which `finalize` uses to gzip
+the normalized reads across the pod's whole core allocation.
 
 ## Building the image
 
 The root Dockerfile uses cargo-chef to build `quality-core`, then copies its
-single binary into the runtime stage:
+single binary into the runtime stage, whose only apt package is `pigz`:
 
 ```console
 docker build --target create-sample .

@@ -1,10 +1,9 @@
-import { compressFile } from "@virtool/archive/compression";
 import type {
 	FinalizeSubtractionRequest,
 	SubtractionFileManifest,
 } from "@virtool/contracts";
 import { mintStorageKey } from "@virtool/storage";
-import { uploadFromPath } from "@virtool/workflow";
+import { gzipFile, uploadFromPath } from "@virtool/workflow";
 import type { CreateSubtractionStep } from "./types";
 
 /**
@@ -43,7 +42,7 @@ const FASTA_NAME = "subtraction.fa.gz";
 export const finalizeStep: CreateSubtractionStep = {
 	id: "finalize",
 	description: "Upload the compressed genome and finalize the subtraction.",
-	async run({ client, data, logger, state, storage }) {
+	async run({ client, data, logger, proc, runSubprocess, state, storage }) {
 		const { count, gc } = state;
 
 		// `compute_gc_and_count` fills both. Reaching finalize without them means
@@ -57,7 +56,12 @@ export const finalizeStep: CreateSubtractionStep = {
 		if (!data.uploadIsGzipped) {
 			path = data.paths.compressedFasta;
 
-			await compressFile(data.paths.upload, path);
+			await gzipFile({
+				proc,
+				runSubprocess,
+				source: data.paths.upload,
+				target: path,
+			});
 		}
 
 		const storageKey = mintStorageKey("subtractions", data.subtractionId);

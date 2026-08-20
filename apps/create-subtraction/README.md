@@ -5,13 +5,13 @@ Image: `ghcr.io/virtool/create-subtraction`.
 Computes GC and sequence count for a subtraction and commits its
 FASTA to object storage.
 
-Two steps, `compute_gc_and_count` and `finalize`, and one external tool,
-`seqkit`.
+Two steps, `compute_gc_and_count` and `finalize`, and two external tools:
+`seqkit`, and `pigz` for gzipping the genome in `finalize`.
 
 ## Building the image
 
 The root Dockerfile builds SeqKit in its own stage and copies its binary into
-this app's runtime stage:
+this app's runtime stage, which installs `pigz` from apt:
 
 ```console
 docker build --target create-subtraction .

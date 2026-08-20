@@ -1,8 +1,8 @@
 import { createWriteStream } from "node:fs";
 import { rename } from "node:fs/promises";
 import { pipeline } from "node:stream/promises";
-import { compressFile } from "@virtool/archive/compression";
 import { findOrfs, parseFastaLines } from "@virtool/bio";
+import { gzipFile } from "@virtool/workflow";
 import { workPaths } from "../paths";
 import { readLines } from "../sequences";
 import type { NuvsRawContig } from "../state";
@@ -36,7 +36,7 @@ const MINIMUM_CONTIG_LENGTH = 300;
 export const processAssemblyStep: NuvsStep = {
 	id: "process_assembly",
 	description: "Find ORFs in the assembled contigs.",
-	async run({ logger, state, workPath }) {
+	async run({ logger, proc, runSubprocess, state, workPath }) {
 		const paths = workPaths(workPath);
 
 		// `assemble` has already compressed the scaffolds under their original
@@ -72,7 +72,12 @@ export const processAssemblyStep: NuvsStep = {
 
 		await writeOrfsFasta(paths.orfsFasta, contigs);
 
-		await compressFile(paths.orfsFasta, paths.compressedOrfs);
+		await gzipFile({
+			proc,
+			runSubprocess,
+			source: paths.orfsFasta,
+			target: paths.compressedOrfs,
+		});
 
 		state.hits = contigs;
 

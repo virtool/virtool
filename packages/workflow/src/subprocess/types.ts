@@ -25,6 +25,17 @@ export type RunSubprocessOptions = {
 	 * reads.
 	 */
 	stdout?: LineHandler;
+	/**
+	 * Write stdout straight to this file, truncating it first.
+	 *
+	 * For a tool whose stdout is bytes rather than lines — `pigz -c` and
+	 * nothing else so far. The line splitter would have to buffer a gigabyte of
+	 * gzip looking for a newline that may never come, so the descriptor is
+	 * handed to the subprocess and this process never sees the stream.
+	 *
+	 * Mutually exclusive with `stdout`.
+	 */
+	stdoutFile?: string;
 	/** Called for each line of stderr, after it is logged. */
 	stderr?: LineHandler;
 	/**

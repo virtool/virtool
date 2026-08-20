@@ -59,6 +59,15 @@ export type FakeSubprocessResponse = {
 	cancelled?: boolean;
 	/** Reported on the result. Defaults to 0. */
 	durationMs?: number;
+	/**
+	 * Runs in place of the tool itself, once the command is matched and before
+	 * any output is delivered.
+	 *
+	 * For the tools whose whole point is a file they leave behind: a step that
+	 * reads one back cannot be tested against a fake that only reports an exit
+	 * code. See {@link registerFakePigz}.
+	 */
+	effect?: (options: RunSubprocessOptions) => void | Promise<void>;
 };
 
 /** Decides whether a registration applies to a command. */
@@ -139,6 +148,8 @@ export function createFakeSubprocessRunner(
 		if (response.spawnError !== undefined) {
 			throw new SubprocessSpawnError(command, response.spawnError);
 		}
+
+		await response.effect?.(options);
 
 		// Handlers are awaited before the next line, matching the backpressure the
 		// real runner applies. A step whose handler throws must fail here too.

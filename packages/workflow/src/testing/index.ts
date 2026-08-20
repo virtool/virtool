@@ -17,6 +17,7 @@
 export * from "./builders";
 export * from "./checksum";
 export * from "./context";
+export * from "./gzip";
 export * from "./http";
 export * from "./jobsApi/fake";
 export * from "./jobsApi/routes";

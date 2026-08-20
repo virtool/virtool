@@ -20,6 +20,7 @@ import {
 	createJobsApiState,
 	createTestStorage,
 	createTestWorkPath,
+	registerFakePigz,
 } from "@virtool/workflow/testing";
 import { onTestFinished } from "vitest";
 import type { NuvsData, NuvsSubtraction } from "../context";
@@ -61,6 +62,11 @@ export async function setupStep({
 
 	const paths = workPaths(workPath);
 	const runSubprocess = createFakeSubprocessRunner();
+
+	// This runner replaces the one `createFakeContext` would have built, and
+	// with it the pigz that builder registers. Three steps here gzip or gunzip
+	// a file and then read it back.
+	registerFakePigz(runSubprocess);
 	const jobsApiState = createJobsApiState();
 	const client = createFakeJobsApiClient(jobsApiState);
 	const testStorage = createTestStorage();

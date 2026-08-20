@@ -7,6 +7,7 @@ export * from "./client/retry";
 export * from "./config";
 export * from "./context";
 export * from "./errors";
+export * from "./files/gzip";
 export * from "./files/transfer";
 export * from "./lifecycle/claim";
 export * from "./lifecycle/ping";

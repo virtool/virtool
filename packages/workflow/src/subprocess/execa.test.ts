@@ -1,8 +1,9 @@
-import { mkdtemp, writeFile } from "node:fs/promises";
+import { mkdtemp, readFile, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { setTimeout as delay } from "node:timers/promises";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
+import { WorkflowError } from "../errors";
 import { createRecordingLogger } from "../testing";
 import { createRunSubprocess } from "./execa";
 import {
@@ -200,6 +201,36 @@ describe("createRunSubprocess", () => {
 		});
 
 		expect(seen).toEqual(["first", "second", "third"]);
+	});
+
+	it("writes stdout to the file given, truncating what was there", async () => {
+		const path = await script(
+			"stdoutFile",
+			'process.stdout.write("kept\\nbytes\\n");',
+		);
+
+		const target = join(scriptDir, "redirected.txt");
+
+		await writeFile(target, "a".repeat(4096));
+
+		const { runSubprocess } = createRunner();
+
+		await runSubprocess({ command: node(path), stdoutFile: target });
+
+		await expect(readFile(target, "utf8")).resolves.toBe("kept\nbytes\n");
+	});
+
+	it("refuses to both read stdout and redirect it to a file", async () => {
+		const path = await script("bothStdout", 'process.stdout.write("x");');
+		const { runSubprocess } = createRunner();
+
+		await expect(
+			runSubprocess({
+				command: node(path),
+				stdout: () => {},
+				stdoutFile: join(scriptDir, "unused.txt"),
+			}),
+		).rejects.toThrow(WorkflowError);
 	});
 
 	it("throws and kills the tree when a line exceeds the cap", async () => {

@@ -43,6 +43,7 @@ export function createRunSubprocess({
 		cwd,
 		env,
 		stdout,
+		stdoutFile,
 		stderr,
 		maxLineBytes = DEFAULT_MAX_LINE_BYTES,
 	}) {
@@ -50,6 +51,12 @@ export function createRunSubprocess({
 
 		if (file === undefined) {
 			throw new WorkflowError("refusing to run an empty command");
+		}
+
+		if (stdout && stdoutFile !== undefined) {
+			throw new WorkflowError(
+				"refusing to both read stdout and redirect it to a file",
+			);
 		}
 
 		logger.info({ command }, "running subprocess");
@@ -76,8 +83,14 @@ export function createRunSubprocess({
 			stdin: "ignore",
 			// Not piped at all without a handler: an unread pipe is a buffer
 			// that fills, and a tool writing a SAM stream to stdout would fill
-			// it fast.
-			stdout: stdout ? "pipe" : "ignore",
+			// it fast. `stdoutFile` skips this process entirely — execa opens
+			// the file and hands the subprocess the descriptor.
+			stdout:
+				stdoutFile !== undefined
+					? { file: stdoutFile }
+					: stdout
+						? "pipe"
+						: "ignore",
 			stderr: "pipe",
 			// Every outcome is mapped below, and a rejection here would carry
 			// none of the stderr tail.

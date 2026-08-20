@@ -1,12 +1,11 @@
 import { mkdir, rename } from "node:fs/promises";
 import { dirname } from "node:path";
-import { compressFile } from "@virtool/archive/compression";
 import type {
 	FinalizeSampleRequest,
 	SampleReadManifest,
 } from "@virtool/contracts";
 import { mintStorageKey } from "@virtool/storage";
-import { uploadFromPath } from "@virtool/workflow";
+import { gzipFile, uploadFromPath } from "@virtool/workflow";
 import { readsFileName } from "../paths";
 import type { CreateSampleStep } from "./types";
 
@@ -40,7 +39,7 @@ import type { CreateSampleStep } from "./types";
 export const finalizeStep: CreateSampleStep = {
 	id: "finalize",
 	description: "Upload the normalized reads and finalize the sample.",
-	async run({ client, data, logger, state, storage }) {
+	async run({ client, data, logger, proc, runSubprocess, state, storage }) {
 		const { quality } = state;
 
 		// `run_fastqc` fills this. Reaching finalize without it means the run is
@@ -67,7 +66,12 @@ export const finalizeStep: CreateSampleStep = {
 			if (gzipped) {
 				await rename(read.upload, read.normalized);
 			} else {
-				await compressFile(read.upload, read.normalized);
+				await gzipFile({
+					proc,
+					runSubprocess,
+					source: read.upload,
+					target: read.normalized,
+				});
 			}
 
 			const storageKey = mintStorageKey("samples", data.sampleId);
