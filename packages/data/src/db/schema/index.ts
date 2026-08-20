@@ -13,7 +13,6 @@ export * from "./indexes";
 export * from "./jobs";
 export * from "./labels";
 export * from "./messages";
-export * from "./migrations";
 export * from "./otus";
 export * from "./references";
 export * from "./samples";
