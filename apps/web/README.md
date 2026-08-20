@@ -796,7 +796,7 @@ API's.
 
 Prometheus scrapes over plain HTTP with a `GET`. It cannot speak the
 generated server-function RPC client, which posts to a hashed URL and
-expects a framed response. So `/metrics` is a `createFileRoute` handler,
+expects a framed response. `/metrics` is therefore a `createFileRoute` handler,
 like `/uploads` and `/events`.
 
 Routes get no policy middleware, so the handler enforces its own
@@ -942,8 +942,8 @@ Two constraints shape the file:
 - `start.ts` is part of the browser program, because `routeTree.gen.ts`
   imports it. A static import of the registry would drag prom-client —
   and the `node:os`, `node:process`, and `node:perf_hooks` reads behind
-  `collectDefaultMetrics` — into the client graph. So the middleware
-  reaches the registry through `createServerOnlyFn` and a dynamic
+  `collectDefaultMetrics` — into the client graph. The middleware
+  therefore reaches the registry through `createServerOnlyFn` and a dynamic
   import, which the Vite plugin strips client-side. Node's module cache
   makes every call after the first a resolved-promise lookup.
 - Recording runs on the path of every request in the process, so a
@@ -963,7 +963,7 @@ no matching increment cannot drive a gauge.
 `totalCount` / `idleCount` / `waitingCount` belong to **node-postgres**
 (`pg`), a different library. Do not go looking for them here.
 
-So occupancy is read from Postgres' own view instead. `createDb`
+Occupancy is therefore read from Postgres' own view instead. `createDb`
 (`@virtool/data/db/pg`) sets a distinctive `application_name` on every
 connection and hands it back alongside the pool:
 
@@ -1029,7 +1029,7 @@ in the postgres.js closure, where nothing rejects and no statement
 timeout applies. Unbounded, it would hang past Prometheus' scrape
 deadline and cost the entire response — process and request metrics
 included — in precisely the situation the pool gauges exist to diagnose.
-Two seconds sits well inside a default 10s scrape timeout. The abandoned
+Two seconds sits well inside a default 10 s scrape timeout. The abandoned
 query is left to settle on its own and its result discarded.
 
 #### What this cannot see

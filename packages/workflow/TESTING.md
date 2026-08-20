@@ -149,7 +149,7 @@ await expect(client.ping()).rejects.toThrow("Job is cancelled.");
 
 **The refusal covers every route but the claim**, not the ping alone. The real
 service refuses in `requireJobRequest`, which is the floor under every handler;
-the ping is only where a run *notices*. So a terminal job's key stops serving
+the ping is only where a run *notices*. A terminal job's key therefore stops serving
 metadata reads, step starts and finalize calls too, and the three messages are
 the service's own wording — `Job is cancelled.`, `Job has failed.`,
 `Job has succeeded.` A fixture that checked terminal state on the ping alone
@@ -302,8 +302,8 @@ Several steps probe a tool's version, and `cd-hit-est -h` prints its banner and
 exits 1.
 
 **`RunSubprocessOptions` has no allowed-exit-codes escape**, and the runner
-throws `SubprocessFailedError` on any non-zero exit. So the fake models that
-probe as an ordinary non-zero exit and **the call site catches the error and
+throws `SubprocessFailedError` on any non-zero exit. The fake therefore models
+that probe as an ordinary non-zero exit, and **the call site catches the error and
 reads `stderrTail`**. The runner does not return success for it and must not be
 taught to:
 

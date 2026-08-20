@@ -19,7 +19,7 @@ differently rounded* output is a failure, not a nit. Analysis documents already
 written sit in the same table as the ones written today and are rendered by the
 same UI.
 
-So the rule for everything in this package is: **match the stored and golden
+The rule for everything in this package is therefore: **match the stored and golden
 output exactly, including its bugs.** `roundHalfEven` exists because
 `Math.round` rounds half away from zero rather than half to even;
 `parseHmmerTblout` reads the best-domain score and bias from each other's

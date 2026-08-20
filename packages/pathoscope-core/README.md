@@ -78,7 +78,7 @@ someone to "fix" it by converting a file that never needed converting.
 `--output` always means the JSON results file, in all three subcommands.
 `--output-alignments` and `--output-fastq` are data files at paths the caller
 names. The near-collision is deliberate: one flag means "where the result
-summary goes", everywhere.
+summary goes," everywhere.
 
 Other contracts:
 
