@@ -18,7 +18,7 @@ describe("createTestWorkPath", () => {
 		);
 	});
 
-	// `createWorkPath` unconditionally `rm -rf`s its target and Vitest runs test
+	// `createWorkPath` unconditionally empties its target and Vitest runs test
 	// files in parallel processes, so a fixed path means one test deleting
 	// another's tree mid-run.
 	it("never hands out the same path twice", async () => {
@@ -40,8 +40,8 @@ describe("createTestWorkPath", () => {
 
 		await writeFile(join(path, "stale"), "left over");
 
-		// The real thing empties and recreates its target. A test work path has to
-		// be somewhere that can happen without touching anyone else's tree.
+		// The real thing empties its target. A test work path has to be somewhere
+		// that can happen without touching anyone else's tree.
 		await expect(createWorkPath(path)).resolves.toBe(path);
 		await expect(stat(join(path, "stale"))).rejects.toThrow();
 	});

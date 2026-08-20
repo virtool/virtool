@@ -371,11 +371,11 @@ key the seeding helper returns, and that one *is* minted.
 `mkdtemp` under `os.tmpdir()` with a `virtool-workflow-` prefix, laying out any
 of `{reads, uploads, subtractions, indexes, hmms, caches}` asked for.
 
-**Never a fixed path.** `createWorkPath` unconditionally `rm -rf`s its target
-before recreating it, and Vitest runs test files in parallel processes — so a
-shared path means one test deleting another's tree mid-run, which surfaces as a
-missing file in whichever test lost the race. `mkdtemp` guarantees uniqueness per
-call, covering both parallel files and repeated calls within one.
+**Never a fixed path.** `createWorkPath` unconditionally empties its target, and
+Vitest runs test files in parallel processes — so a shared path means one test
+deleting another's tree mid-run, which surfaces as a missing file in whichever
+test lost the race. `mkdtemp` guarantees uniqueness per call, covering both
+parallel files and repeated calls within one.
 
 Cleanup is the caller's, registered with `onTestFinished` rather than a global
 `afterEach`, which would tie every test in a file to one path.
