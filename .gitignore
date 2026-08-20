@@ -31,3 +31,7 @@ tags
 
 # Sentry Config File
 .env.sentry-build-plugin
+
+# Vale styles are fetched with `vale sync`; the vocabulary is checked in.
+.vale/styles/*
+!.vale/styles/config
