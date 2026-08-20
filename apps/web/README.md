@@ -300,6 +300,13 @@ logic.
 
 ### Styling
 
+Read `src/base` before building any piece of UI, and assemble from what is
+there rather than restyling its parts — the base components carry the
+accessibility and interaction rules that a local reimplementation drops. When a
+feature needs a shape base does not have, search the other features for it
+first: if it already exists somewhere else, extract it to `@base` and use it
+from both places instead of writing a third copy.
+
 Use Tailwind utilities and `cn()` from `@app/cn`. Reuse or add design tokens in
 `src/app/style.css` and animation tokens in `src/app/animations.css`; do not use
 arbitrary utilities or hard-coded colors. Base component colors use the shared
@@ -323,16 +330,6 @@ do not render at Tailwind's documented pixel values:
 default, is the detail-panel shape: a narrow first column of row labels, ruled
 off and top-aligned. `data` is a list of records, where the first column is a
 field like any other.
-
-Assemble a `data` table from the shared pieces rather than restyling its parts:
-`@base/TableHead` for the header row, `@base/SortableHead` for a sortable column,
-`@base/TableActionsHead` and `@base/TableActionsCell` for the trailing column of
-row controls, and `@base/UserLabel` for a cell naming an account.
-`@base/ListHeader` is the bar above the table, carrying the list's count and its
-actions. `SortableHead` owns the `aria-sort` and direction-arrow rules and
-leaves the sort state to the caller; `nextSortDirection` from `@base/sorting`
-is the rule that state follows — reverse the active column, start a new one
-ascending.
 
 Size anything that holds text in `rem`; reserve pixels for graphics without
 text. If an API requires a number, express it as a rem multiple and resolve it
