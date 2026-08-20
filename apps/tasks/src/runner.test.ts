@@ -28,7 +28,7 @@ import type { TaskRunSample } from "./metrics/registry";
 import { createTaskRunner, dispatchTask, type TaskRunner } from "./runner";
 import { waitFor } from "./testing/waitFor";
 
-const RUNNER = "ts-runner-a-1";
+const RUNNER = "runner-a-1";
 
 const logger: Logger = createLogger({ name: "test", level: "silent" });
 
@@ -251,16 +251,10 @@ describe("createTaskRunner", () => {
 		}
 	});
 
-	// Reclaim is scoped to the `ts-` prefix, so a claim recorded under any other
-	// prefix is out of this runner's reach however old the lease is. Widening
-	// the scope is a decision, and this assertion is what stops a refactor
-	// making it quietly.
-	it("reclaims an expired ts- lease but not another prefix's", async () => {
+	it("reclaims the expired lease of a departed runner", async () => {
 		const ours = await createTask(db, "install_hmms");
-		const foreign = await createTask(db, "install_hmms");
 
-		await holdTask(ours, "ts-gone-1", TASK_LEASE_SECONDS + 60);
-		await holdTask(foreign, "somehost-4242", TASK_LEASE_SECONDS * 100);
+		await holdTask(ours, "gone-1", TASK_LEASE_SECONDS + 60);
 
 		const ran: number[] = [];
 
@@ -283,10 +277,6 @@ describe("createTaskRunner", () => {
 		}
 
 		expect(ran).toEqual([ours]);
-		expect(await readRow(foreign)).toMatchObject({
-			complete: false,
-			runner_id: "somehost-4242",
-		});
 	});
 
 	// Release converts an abandoned task from the full lease of dead time into

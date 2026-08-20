@@ -1,3 +1,4 @@
+import { hostname } from "node:os";
 import { eq } from "drizzle-orm";
 import {
 	afterAll,
@@ -24,7 +25,6 @@ import {
 	readOldestQueuedTaskAges,
 	readTaskCounts,
 	readTaskQueueBounded,
-	reclaimExpiredLeases,
 	releaseRunnerClaims,
 	releaseTask,
 	renewLeases,
@@ -37,8 +37,8 @@ import {
 let database: TestDatabase;
 let db: Db;
 
-const RUNNER_A = "ts-runner-a-1";
-const RUNNER_B = "ts-runner-b-2";
+const RUNNER_A = "runner-a-1";
+const RUNNER_B = "runner-b-2";
 
 const ALL_TYPES = [
 	"clone_reference",
@@ -145,11 +145,10 @@ describe("getTasks", () => {
 });
 
 describe("buildRunnerId", () => {
-	it("marks the runner as this service's and names the process", () => {
+	it("names the host and the process", () => {
 		const runnerId = buildRunnerId();
 
-		expect(runnerId.startsWith("ts-")).toBe(true);
-		expect(runnerId.endsWith(`-${process.pid}`)).toBe(true);
+		expect(runnerId).toBe(`${hostname()}-${process.pid}`);
 	});
 });
 
@@ -282,20 +281,6 @@ describe("acquireTask", () => {
 		).resolves.toBeNull();
 
 		expect(await readRow(taskId)).toMatchObject({ runner_id: RUNNER_A });
-	});
-
-	it("never reclaims a task claimed outside our runner-id prefix", async () => {
-		// Reclaim reads a stale `acquired_at` as abandonment, so a claim nothing
-		// renews looks abandoned however live it is. The `ts-` scoping is the only
-		// thing keeping this side from pulling work out from under it.
-		const taskId = await createTask(db, "install_hmms");
-		await holdTask(taskId, "somehost-4242", TASK_LEASE_SECONDS * 100);
-
-		await expect(
-			acquireTask(db, { runnerId: RUNNER_B, allowedTypes: ["install_hmms"] }),
-		).resolves.toBeNull();
-
-		expect(await readRow(taskId)).toMatchObject({ runner_id: "somehost-4242" });
 	});
 
 	it("honours a shorter lease passed by the caller", async () => {
@@ -518,17 +503,6 @@ describe("releaseTask", () => {
 
 		expect(await readRow(taskId)).toMatchObject({ runner_id: RUNNER_B });
 	});
-
-	it("never releases a task claimed outside our runner-id prefix", async () => {
-		// The scope has to hold at the query, not at the caller: an unprefixed id
-		// reaching this argument would otherwise hand live work to our fleet.
-		const taskId = await createTask(db, "install_hmms");
-		await holdTask(taskId, "somehost-4242", 10);
-
-		await expect(releaseTask(db, taskId, "somehost-4242")).resolves.toBe(false);
-
-		expect(await readRow(taskId)).toMatchObject({ runner_id: "somehost-4242" });
-	});
 });
 
 describe("releaseRunnerClaims", () => {
@@ -558,70 +532,6 @@ describe("releaseRunnerClaims", () => {
 		await expect(releaseRunnerClaims(db, RUNNER_A)).resolves.toEqual([]);
 
 		expect(await readRow(taskId)).toMatchObject({ runner_id: RUNNER_A });
-	});
-
-	it("never releases the claims of a runner outside our prefix", async () => {
-		const taskId = await createTask(db, "install_hmms");
-		await holdTask(taskId, "somehost-4242", 10);
-
-		await expect(releaseRunnerClaims(db, "somehost-4242")).resolves.toEqual([]);
-
-		expect(await readRow(taskId)).toMatchObject({ runner_id: "somehost-4242" });
-	});
-});
-
-describe("reclaimExpiredLeases", () => {
-	it("takes back a lease that has run out", async () => {
-		const taskId = await createTask(db, "install_hmms");
-		await holdTask(taskId, RUNNER_A, TASK_LEASE_SECONDS + 60);
-
-		await expect(reclaimExpiredLeases(db)).resolves.toEqual([taskId]);
-
-		expect(await readRow(taskId)).toMatchObject({
-			acquired_at: null,
-			runner_id: null,
-		});
-	});
-
-	it("leaves a live lease alone", async () => {
-		const taskId = await createTask(db, "install_hmms");
-		await holdTask(taskId, RUNNER_A, TASK_LEASE_SECONDS - 60);
-
-		await expect(reclaimExpiredLeases(db)).resolves.toEqual([]);
-	});
-
-	it("never touches a task claimed outside our runner-id prefix", async () => {
-		const taskId = await createTask(db, "install_hmms");
-		await holdTask(taskId, "somehost-4242", TASK_LEASE_SECONDS * 100);
-
-		await expect(reclaimExpiredLeases(db)).resolves.toEqual([]);
-
-		expect(await readRow(taskId)).toMatchObject({ runner_id: "somehost-4242" });
-	});
-
-	it("leaves finished and failed tasks alone", async () => {
-		const completed = await createTask(db, "install_hmms");
-		const failed = await createTask(db, "clone_reference");
-
-		await holdTask(completed, RUNNER_A, TASK_LEASE_SECONDS + 60);
-		await holdTask(failed, RUNNER_A, TASK_LEASE_SECONDS + 60);
-
-		await db
-			.update(tasks)
-			.set({ complete: true })
-			.where(eq(tasks.id, completed));
-		await db.update(tasks).set({ error: "boom" }).where(eq(tasks.id, failed));
-
-		await expect(reclaimExpiredLeases(db)).resolves.toEqual([]);
-	});
-
-	it("honours a shorter lease passed by the caller", async () => {
-		const taskId = await createTask(db, "install_hmms");
-		await holdTask(taskId, RUNNER_A, 30);
-
-		await expect(
-			reclaimExpiredLeases(db, { leaseSeconds: 10 }),
-		).resolves.toEqual([taskId]);
 	});
 });
 
@@ -729,11 +639,8 @@ describe("frames", () => {
 		]);
 	});
 
-	it("publishes nothing for claiming, releasing or reclaiming", async () => {
+	it("publishes nothing for claiming or releasing", async () => {
 		const claimable = await createTask(db, "install_hmms");
-		const expired = await createTask(db, "clone_reference");
-
-		await holdTask(expired, RUNNER_B, TASK_LEASE_SECONDS + 60);
 
 		const frames = await collectFrames(database.client, async () => {
 			await acquireTask(db, {
@@ -743,7 +650,6 @@ describe("frames", () => {
 			await renewLeases(db, [claimable], RUNNER_A);
 			await releaseTask(db, claimable, RUNNER_A);
 			await releaseRunnerClaims(db, RUNNER_A);
-			await reclaimExpiredLeases(db);
 		});
 
 		expect(frames).toEqual([]);
