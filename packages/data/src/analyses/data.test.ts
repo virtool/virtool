@@ -636,7 +636,7 @@ describe("getAnalysisResults", () => {
 		expect(await getAnalysisResults(db, analysisId)).toEqual(results);
 	});
 
-	it("merges NuVs BLAST records onto the hit with the matching index", async () => {
+	it("merges Nuvs BLAST records onto the hit with the matching index", async () => {
 		const analysisId = await seedAnalysisOnNewSample({
 			workflow: "nuvs",
 			ready: true,
@@ -1020,7 +1020,7 @@ describe("blastNuvs", () => {
 		);
 	});
 
-	it("refuses an analysis that is not NuVs", async () => {
+	it("refuses an analysis that is not Nuvs", async () => {
 		const analysisId = await seedNuvs({ workflow: "pathoscope" });
 
 		await expect(blastNuvs(db, analysisId, 0)).rejects.toBeInstanceOf(

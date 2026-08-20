@@ -2,7 +2,7 @@ import { useAnalysisSearch } from "@analyses/components/AnalysisSearchContext";
 import NuvsDetail from "@analyses/components/Nuvs/NuvsDetail";
 import NuvsValues from "@analyses/components/Nuvs/NuvsValues";
 import { useKeyNavigation } from "@analyses/components/Viewer/hooks";
-import { useActiveHit, useSortAndFilterNuVsHits } from "@analyses/hooks";
+import { useActiveHit, useSortAndFilterNuvsHits } from "@analyses/hooks";
 import type { FormattedNuvsAnalysis, FormattedNuvsHit } from "@analyses/types";
 import { cn } from "@app/cn";
 import Badge from "@base/Badge";
@@ -54,7 +54,7 @@ function NuvsListItem({ activeHit, hit, setActiveHit }: NuvsListItemProps) {
 	);
 }
 
-type NuVsListProps = {
+type NuvsListProps = {
 	/** Complete Nuvs analysis details */
 	detail: FormattedNuvsAnalysis;
 };
@@ -62,8 +62,8 @@ type NuVsListProps = {
 /**
  * Displays a list of Nuvs hits with a detailed view
  */
-export default function NuvsList({ detail }: NuVsListProps) {
-	const sortedHits = useSortAndFilterNuVsHits(detail);
+export default function NuvsList({ detail }: NuvsListProps) {
+	const sortedHits = useSortAndFilterNuvsHits(detail);
 	const { search, setSearch } = useAnalysisSearch();
 
 	const hit = useActiveHit(sortedHits);

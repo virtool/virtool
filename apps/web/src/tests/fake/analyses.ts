@@ -47,14 +47,14 @@ export function createFakeAnalysisMinimal(
  *
  * @param overrides - optional properties for creating an fake formatted nuvs analysis with specific values
  */
-export function createFakeFormattedNuVsAnalysis(
+export function createFakeFormattedNuvsAnalysis(
 	overrides?: Partial<FormattedNuvsAnalysis>,
 ): FormattedNuvsAnalysis {
 	const defaultAnalysis: FormattedNuvsAnalysis = {
 		...createFakeAnalysisMinimal(),
 		files: [],
 		results: {
-			hits: [createFakeFormattedNuVsHit()],
+			hits: [createFakeFormattedNuvsHit()],
 			maxSequenceLength: faker.number.int({ min: 800, max: 20000 }),
 		},
 		workflow: "nuvs",
@@ -63,7 +63,7 @@ export function createFakeFormattedNuVsAnalysis(
 	return { ...defaultAnalysis, ...overrides };
 }
 
-type FakeFormattedNuVsHit = {
+type FakeFormattedNuvsHit = {
 	blast?: Blast;
 	index?: number;
 };
@@ -101,7 +101,7 @@ export function createFakePathoscopeHit(
  *
  * @param overrides - optional properties for creating an nuvs hit with specific values
  */
-export function createFakeFormattedNuVsHit(overrides?: FakeFormattedNuVsHit) {
+export function createFakeFormattedNuvsHit(overrides?: FakeFormattedNuvsHit) {
 	const nuvsHit = {
 		annotatedOrfCount: faker.number.int(),
 		blast: null,

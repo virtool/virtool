@@ -10,11 +10,11 @@
  * Anything with a viewer-wide default is therefore required here and carries
  * that default in `DEFAULT_ANALYSIS_SEARCH`, which the route also strips back
  * out of the URL. `sort` has no viewer-wide default — pathoscope ranks by
- * coverage and NuVs by length — so it stays optional and each toolbar names its
+ * coverage and Nuvs by length — so it stays optional and each toolbar names its
  * own.
  */
 export type AnalysisSearch = {
-	/** The hit shown in the NuVs detail pane */
+	/** The hit shown in the Nuvs detail pane */
 	hit?: string;
 
 	/** The sort direction, applied to whichever key is active */
@@ -35,10 +35,10 @@ export type AnalysisSearch = {
 	/** Keep OTUs whose coverage is under `minCoverage` */
 	showLowOtus: boolean;
 
-	/** Keep NuVs ORFs that got no HMM hit */
+	/** Keep Nuvs ORFs that got no HMM hit */
 	showUnhitOrfs: boolean;
 
-	/** Keep NuVs sequences that got no HMM hit */
+	/** Keep Nuvs sequences that got no HMM hit */
 	showUnhitSequences: boolean;
 
 	/** The key hits are ranked by, named by the viewer showing them */
@@ -79,7 +79,7 @@ const DEFAULT_MIN_COVERAGE = 0.5;
  * its filters at their defaults has no search params at all, and only the ones
  * a person actually changed are carried in a shared link.
  *
- * The two coverage filters and the two NuVs filters are named for what they
+ * The two coverage filters and the two Nuvs filters are named for what they
  * *keep* rather than what they hide, so that the filtering state — the one a
  * viewer opens in — is the absent one.
  */

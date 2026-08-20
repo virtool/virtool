@@ -97,7 +97,7 @@ describe("processAssemblyStep", () => {
 	});
 
 	// `nuc` is recoverable from the contig's own sequence and the ORF's `pos`, and
-	// keeping it would roughly double the largest thing a NuVs analysis stores.
+	// keeping it would roughly double the largest thing a Nuvs analysis stores.
 	it("drops each ORF's nucleotide slice but keeps its coordinates", async () => {
 		const { state } = await runStep(fasta(WITH_ORFS));
 

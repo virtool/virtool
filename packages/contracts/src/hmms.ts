@@ -39,7 +39,7 @@ export type HmmAnnotation = z.infer<typeof HmmAnnotation>;
  * One annotation as the stored `hmm/annotations.json.gz` blob carries it.
  *
  * This shape has two independent implementations that cannot see each other:
- * `writeHmmAnnotations` in `@virtool/data` writes it and NuVs reads it out of
+ * `writeHmmAnnotations` in `@virtool/data` writes it and Nuvs reads it out of
  * the bucket. It lives here rather than beside either of them.
  *
  * Field names are the database's snake_case, because the blob is a dump of

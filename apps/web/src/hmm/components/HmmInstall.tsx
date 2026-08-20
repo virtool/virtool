@@ -65,7 +65,7 @@ export function HmmInstall({ status }: HmmInstallProps) {
 					HMM profiles not installed.
 				</h3>
 				<p>
-					HMM profiles are required for NuVs analysis. Click below to install
+					HMM profiles are required for Nuvs analysis. Click below to install
 					the official profiles.
 				</p>
 				{canInstall ? (

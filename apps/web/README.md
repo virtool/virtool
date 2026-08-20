@@ -18,7 +18,7 @@ and release pipeline.
 - **Radix UI** primitives for accessible components
 - **CVA** (`class-variance-authority`) for component variants
 - **Lucide React** for icons
-- **d3** for the quality, coverage, and NuVs charts — imperative SVG, not a
+- **d3** for the quality, coverage, and Nuvs charts — imperative SVG, not a
   React charting wrapper
 - **exceljs** for the analysis XLSX export — server-only, and reached through a
   dynamic `import()` inside `@server/analyses/export` so it stays out of every

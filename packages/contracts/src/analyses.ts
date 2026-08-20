@@ -9,7 +9,7 @@ import type { UserNested } from "./users";
  * A workflow that produces an analysis.
  *
  * Strictly narrower than `JobWorkflow`: an analysis is only ever the output of
- * Pathoscope or NuVs. The wider union would let a caller ask for an analysis
+ * Pathoscope or Nuvs. The wider union would let a caller ask for an analysis
  * run by `create_sample`, which has no meaning and no result shape.
  */
 export const AnalysisWorkflow = z.enum(["pathoscope", "nuvs"]);

@@ -1,7 +1,7 @@
 /**
- * The NuVs workflow: ten steps and five external tools.
+ * The Nuvs workflow: ten steps and five external tools.
  *
- * NuVs looks for viruses the reference does *not* already describe. It maps the
+ * Nuvs looks for viruses the reference does *not* already describe. It maps the
  * sample against every known OTU and throws those reads away, throws away what
  * belongs to the host, assembles whatever is left, and searches the resulting
  * contigs for viral protein motifs — so what it reports is, by construction,

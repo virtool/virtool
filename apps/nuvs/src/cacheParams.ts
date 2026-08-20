@@ -42,7 +42,7 @@ export const WORKFLOW_NAME = "nuvs";
  * What this workflow's reference mapping index adds, describing the FASTA it was
  * built from.
  *
- * NuVs maps against the artifact's **default isolates**, straight out of the
+ * Nuvs maps against the artifact's **default isolates**, straight out of the
  * SQLite index. Pathoscope's index over the same reference is built from a
  * cd-hit-collapsed FASTA and says so with `source: "collapsed_reference"` and a
  * `collapse_identity`, which is what keeps the two out of each other's

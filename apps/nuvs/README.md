@@ -1,6 +1,6 @@
 # @virtool/nuvs
 
-NuVs finds viruses the reference does **not**
+Nuvs finds viruses the reference does **not**
 describe: it discards every read that maps to a known OTU or to a
 subtraction, assembles what is left with SPAdes, and searches the contigs for
 viral motifs with HMMER.

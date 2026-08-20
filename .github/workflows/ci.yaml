@@ -352,7 +352,7 @@ jobs:
                   TZ: UTC
 
     # -------------------------------------------------------------------------
-    # NuVs (apps/nuvs)
+    # Nuvs (apps/nuvs)
     # -------------------------------------------------------------------------
     # Also published by `release-ghcr` as `ghcr.io/virtool/nuvs`.
     #
@@ -361,7 +361,7 @@ jobs:
     # workflow build does. It is the first stage in the Dockerfile and depends on
     # nothing else, so a warm layer cache skips it entirely.
     build-nuvs:
-        name: NuVs / Build
+        name: Nuvs / Build
         runs-on: ubuntu-24.04
         timeout-minutes: 60
         needs: [changes]

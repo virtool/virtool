@@ -456,7 +456,7 @@ describe("blastNuvs", () => {
 		expect(await db.select().from(nuvsBlast)).toHaveLength(0);
 	});
 
-	it("returns 409 for an analysis that is not NuVs", async () => {
+	it("returns 409 for an analysis that is not Nuvs", async () => {
 		const userId = await signInAsNewUser();
 		const sampleId = await seedSample({ user_id: userId });
 		const analysisId = await seedAnalysis({

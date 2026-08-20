@@ -15,7 +15,7 @@
 // `jobs.steps` JSONB array carry `started_at`; the stored `claim` blob carries
 // `runner_id` / `runtime_version` / `workflow_version`; and anything inside an
 // analysis `results` blob keeps whatever the workflow wrote (`full_e`,
-// `best_bias`, `best_score` on a NuVs ORF hit). Rows already carry those
+// `best_bias`, `best_score` on a Nuvs ORF hit). Rows already carry those
 // bytes, so they must not be "fixed" into camelCase.
 //
 // `JobStep` / `JobClaim`, their `StoredJobStep` / `StoredJobClaim` column
@@ -275,7 +275,7 @@ export const FinalizeAnalysisRequest = z.object({
 
 	/**
 	 * Empty is legitimate here, unlike the other two. Pathoscope's entire output
-	 * is `results` and it retains no files; NuVs is the workflow that writes
+	 * is `results` and it retains no files; Nuvs is the workflow that writes
 	 * FASTA and HMM outputs. `results` is the guard on an analysis being usable.
 	 */
 	files: z.array(AnalysisFileManifest),

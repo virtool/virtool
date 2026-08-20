@@ -327,7 +327,7 @@ COPY --from=pathoscope-builder /build/target/release/pathoscope-core /usr/local/
 COPY --from=build-pathoscope /prod/pathoscope ./
 CMD ["node", "dist/index.mjs"]
 
-# The NuVs workflow, published as ghcr.io/virtool/nuvs. It finds viruses the
+# The Nuvs workflow, published as ghcr.io/virtool/nuvs. It finds viruses the
 # reference does not describe, by discarding reads that map to a known OTU or a
 # subtraction, assembling what is left with SPAdes and searching the contigs
 # for viral motifs with HMMER.
