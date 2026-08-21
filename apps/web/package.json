@@ -45,7 +45,7 @@
 		"react": "^19.2.8",
 		"react-day-picker": "^10.0.1",
 		"react-dom": "^19.2.8",
-		"react-dropzone": "^20.1.0",
+		"react-dropzone": "^20.1.1",
 		"react-hook-form": "^7.85.0",
 		"react-markdown": "^10.1.0",
 		"remark-gfm": "^4.0.1",
