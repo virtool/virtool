@@ -32,7 +32,7 @@
     "tailwindcss": "^4.2.2"
   },
   "devDependencies": {
-    "vitest": "^4.1.4",
+    "vitest": "^4.1.11",
     "wrangler": "^4.119.0"
   }
 }
