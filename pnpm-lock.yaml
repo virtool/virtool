@@ -166,7 +166,7 @@ importers:
         version: link:../../packages/contracts
       '@virtool/data':
         specifier: workspace:*
-        version: link:../../packages/data
+        version: file:packages/data(@opentelemetry/api@1.9.1)
       '@virtool/logger':
         specifier: workspace:*
         version: link:../../packages/logger
@@ -331,7 +331,7 @@ importers:
         version: 0.5.20(tailwindcss@4.3.3)
       '@tailwindcss/vite':
         specifier: ^4.2.2
-        version: 4.3.3(vite@8.2.1(@types/node@26.2.0)(esbuild@0.28.2)(jiti@2.7.0)(tsx@4.23.0)(yaml@2.9.0))
+        version: 4.3.3(vite@8.2.1(@types/node@26.2.0)(jiti@2.7.0)(tsx@4.23.0)(yaml@2.9.0))
       '@types/node':
         specifier: ^26.2.0
         version: 26.2.0
@@ -383,7 +383,7 @@ importers:
         version: link:../../packages/contracts
       '@virtool/data':
         specifier: workspace:*
-        version: link:../../packages/data
+        version: file:packages/data(@opentelemetry/api@1.9.1)
       '@virtool/logger':
         specifier: workspace:*
         version: link:../../packages/logger
@@ -474,7 +474,7 @@ importers:
         version: link:../../packages/contracts
       '@virtool/data':
         specifier: workspace:*
-        version: link:../../packages/data
+        version: file:packages/data(@opentelemetry/api@1.9.1)
       '@virtool/logger':
         specifier: workspace:*
         version: link:../../packages/logger
@@ -512,8 +512,8 @@ importers:
         specifier: ^7.5.0
         version: 7.5.0
       lucide-react:
-        specifier: ^1.28.0
-        version: 1.28.0(react@19.2.8)
+        specifier: ^1.33.0
+        version: 1.33.0(react@19.2.8)
       prom-client:
         specifier: ^15.1.3
         version: 15.1.3
@@ -562,7 +562,7 @@ importers:
         version: 0.2.3(@babel/core@8.0.1)(@babel/runtime@7.29.7)(rolldown@1.2.3)(vite@8.2.1(@types/node@26.2.0)(jiti@2.7.0)(tsx@4.23.0)(yaml@2.9.0))
       '@tailwindcss/vite':
         specifier: ^4.3.3
-        version: 4.3.3(vite@8.2.1(@types/node@26.2.0)(esbuild@0.28.2)(jiti@2.7.0)(tsx@4.23.0)(yaml@2.9.0))
+        version: 4.3.3(vite@8.2.1(@types/node@26.2.0)(jiti@2.7.0)(tsx@4.23.0)(yaml@2.9.0))
       '@tanstack/start-storage-context':
         specifier: 1.167.26
         version: 1.167.26
@@ -4699,6 +4699,24 @@ packages:
   '@ungap/structured-clone@1.3.3':
     resolution: {integrity: sha512-60YRaenCQcVjYEKOcG824+DRGGIQ3VKErcBoAEDJZz5bKIs2ZG+X/H9Nk+Q6EVkwJk5QNApxbrc5QtBSwtrXAg==}
 
+  '@virtool/archive@file:packages/archive':
+    resolution: {directory: packages/archive, type: directory}
+
+  '@virtool/contracts@file:packages/contracts':
+    resolution: {directory: packages/contracts, type: directory}
+
+  '@virtool/data@file:packages/data':
+    resolution: {directory: packages/data, type: directory}
+
+  '@virtool/logger@file:packages/logger':
+    resolution: {directory: packages/logger, type: directory}
+
+  '@virtool/sqlite@file:packages/sqlite':
+    resolution: {directory: packages/sqlite, type: directory}
+
+  '@virtool/storage@file:packages/storage':
+    resolution: {directory: packages/storage, type: directory}
+
   '@vitejs/plugin-react@6.0.5':
     resolution: {integrity: sha512-BOVzne/NL162sMdResB25mUv+vWMF5NoAjNf09TeGlE7ZpszZWSD3winycicLJw72yeVsoCn/2kOhEuCvEShMA==}
     engines: {node: ^20.19.0 || >=22.12.0}
@@ -6015,6 +6033,9 @@ packages:
   es-toolkit@1.50.0:
     resolution: {integrity: sha512-OyZKhUVvEep9ITEiwHn8GKnMRQIVqoSIX7WnRbkWgJkllCujilqP2rD0u979tkl8wqyc8ICwlc1UBVv/Sl1G6w==}
 
+  es-toolkit@1.51.0:
+    resolution: {integrity: sha512-zC2lQGkM7QX+Gm6iM3+WIdZJzthsEd14LvRNJneSO2hzyz/zNBENR8+YXWo1cKxgPBtV6ksPYHELbcwBRzmdCw==}
+
   esast-util-from-estree@2.0.0:
     resolution: {integrity: sha512-4CyanoAudUSBAn5K13H4JhsMH6L9ZP7XbLVe/dKybkxMO7eDyLsT8UHl9TRNrU2Gr9nz+FovfSIjuXWJ81uVwQ==}
 
@@ -6944,8 +6965,8 @@ packages:
   lru-cache@5.1.1:
     resolution: {integrity: sha512-KpNARQA3Iwv+jTA0utUVVbrh+Jlrr1Fv0e56GGzAFOXN7dk/FviaDW8LHmK52DlcH4WP2n6gI8vN1aesBFgo9w==}
 
-  lucide-react@1.28.0:
-    resolution: {integrity: sha512-fARAFJULsGuDDydjp6+6blekG/sBIM29TerzLjc9bQUKAcEfrSc4ZQKb25KRz4OMKd87cZTb5dgq0w/T6KufVg==}
+  lucide-react@1.33.0:
+    resolution: {integrity: sha512-MTRwMy0ZlL8Ur/vOAiJ9XGHE+kFPC7brq6MxAm0GiGXEBj0qy0jA/pG4N675oSzciO/UCdX8T+5yUQdmDeTLxg==}
     peerDependencies:
       react: ^16.5.1 || ^17.0.0 || ^18.0.0 || ^19.0.0
 
@@ -12394,7 +12415,7 @@ snapshots:
       postcss-selector-parser: 6.0.10
       tailwindcss: 4.3.3
 
-  '@tailwindcss/vite@4.3.3(vite@8.2.1(@types/node@26.2.0)(esbuild@0.28.2)(jiti@2.7.0)(tsx@4.23.0)(yaml@2.9.0))':
+  '@tailwindcss/vite@4.3.3(vite@8.2.1(@types/node@26.2.0)(jiti@2.7.0)(tsx@4.23.0)(yaml@2.9.0))':
     dependencies:
       '@tailwindcss/node': 4.3.3
       '@tailwindcss/oxide': 4.3.3
@@ -12606,7 +12627,7 @@ snapshots:
       srvx: 0.11.22
       tinyglobby: 0.2.17
       ufo: 1.6.4
-      vitefu: 1.1.3(vite@8.2.1(@types/node@26.2.0)(esbuild@0.28.2)(jiti@2.7.0)(tsx@4.23.0)(yaml@2.9.0))
+      vitefu: 1.1.3(vite@8.2.1(@types/node@26.2.0)(jiti@2.7.0)(tsx@4.23.0)(yaml@2.9.0))
       xmlbuilder2: 4.0.3
       zod: 4.4.3
     optionalDependencies:
@@ -13001,6 +13022,79 @@ snapshots:
 
   '@ungap/structured-clone@1.3.3': {}
 
+  '@virtool/archive@file:packages/archive':
+    dependencies:
+      fflate: 0.8.3
+      tar-stream: 3.2.0
+    transitivePeerDependencies:
+      - bare-abort-controller
+      - bare-buffer
+      - react-native-b4a
+
+  '@virtool/contracts@file:packages/contracts':
+    dependencies:
+      zod: 4.4.3
+
+  '@virtool/data@file:packages/data(@opentelemetry/api@1.9.1)':
+    dependencies:
+      '@virtool/archive': file:packages/archive
+      '@virtool/contracts': file:packages/contracts
+      '@virtool/logger': file:packages/logger
+      '@virtool/sqlite': file:packages/sqlite
+      '@virtool/storage': file:packages/storage
+      bcrypt: 6.0.0
+      drizzle-orm: 0.45.2(@opentelemetry/api@1.9.1)(postgres@3.4.9)
+      es-toolkit: 1.51.0
+      postgres: 3.4.9
+    transitivePeerDependencies:
+      - '@aws-sdk/client-rds-data'
+      - '@cloudflare/workers-types'
+      - '@electric-sql/pglite'
+      - '@libsql/client'
+      - '@libsql/client-wasm'
+      - '@neondatabase/serverless'
+      - '@op-engineering/op-sqlite'
+      - '@opentelemetry/api'
+      - '@planetscale/database'
+      - '@prisma/client'
+      - '@tidbcloud/serverless'
+      - '@types/better-sqlite3'
+      - '@types/pg'
+      - '@types/sql.js'
+      - '@upstash/redis'
+      - '@vercel/postgres'
+      - '@xata.io/client'
+      - bare-abort-controller
+      - bare-buffer
+      - better-sqlite3
+      - bun-types
+      - expo-sqlite
+      - gel
+      - knex
+      - kysely
+      - mysql2
+      - pg
+      - prisma
+      - react-native-b4a
+      - sql.js
+      - sqlite3
+      - supports-color
+
+  '@virtool/logger@file:packages/logger':
+    dependencies:
+      pino: 10.3.1
+
+  '@virtool/sqlite@file:packages/sqlite': {}
+
+  '@virtool/storage@file:packages/storage':
+    dependencies:
+      '@aws-sdk/client-s3': 3.1110.0
+      '@aws-sdk/lib-storage': 3.1094.0(@aws-sdk/client-s3@3.1110.0)
+      '@azure/identity': 4.13.1
+      '@azure/storage-blob': 12.33.0
+    transitivePeerDependencies:
+      - supports-color
+
   '@vitejs/plugin-react@6.0.5(@rolldown/plugin-babel@0.2.3(@babel/core@8.0.1)(@babel/runtime@7.29.7)(rolldown@1.2.3)(vite@8.2.1(@types/node@26.2.0)(jiti@2.7.0)(tsx@4.23.0)(yaml@2.9.0)))(babel-plugin-react-compiler@1.0.0)(vite@8.2.1(@types/node@26.2.0)(jiti@2.7.0)(tsx@4.23.0)(yaml@2.9.0))':
     dependencies:
       '@rolldown/pluginutils': 1.0.1
@@ -13012,7 +13106,7 @@ snapshots:
   '@vitest/browser-playwright@4.1.10(playwright@1.61.1)(vite@8.2.1(@types/node@26.2.0)(esbuild@0.28.2)(jiti@2.7.0)(tsx@4.23.0)(yaml@2.9.0))(vitest@4.1.10)':
     dependencies:
       '@vitest/browser': 4.1.10(vite@8.2.1(@types/node@26.2.0)(esbuild@0.28.2)(jiti@2.7.0)(tsx@4.23.0)(yaml@2.9.0))(vitest@4.1.10)
-      '@vitest/mocker': 4.1.10(vite@8.2.1(@types/node@26.2.0)(esbuild@0.28.2)(jiti@2.7.0)(tsx@4.23.0)(yaml@2.9.0))
+      '@vitest/mocker': 4.1.10(vite@8.2.1(@types/node@26.2.0)(jiti@2.7.0)(tsx@4.23.0)(yaml@2.9.0))
       playwright: 1.61.1
       tinyrainbow: 3.1.0
       vitest: 4.1.10(@opentelemetry/api@1.9.1)(@types/node@26.2.0)(@vitest/browser-playwright@4.1.10)(jsdom@30.0.1)(vite@8.2.1(@types/node@26.2.0)(esbuild@0.28.2)(jiti@2.7.0)(tsx@4.23.0)(yaml@2.9.0))
@@ -13026,7 +13120,7 @@ snapshots:
   '@vitest/browser-playwright@4.1.10(playwright@1.61.1)(vite@8.2.1(@types/node@26.2.0)(jiti@2.7.0)(tsx@4.23.0)(yaml@2.9.0))(vitest@4.1.10)':
     dependencies:
       '@vitest/browser': 4.1.10(vite@8.2.1(@types/node@26.2.0)(jiti@2.7.0)(tsx@4.23.0)(yaml@2.9.0))(vitest@4.1.10)
-      '@vitest/mocker': 4.1.10(vite@8.2.1(@types/node@26.2.0)(esbuild@0.28.2)(jiti@2.7.0)(tsx@4.23.0)(yaml@2.9.0))
+      '@vitest/mocker': 4.1.10(vite@8.2.1(@types/node@26.2.0)(jiti@2.7.0)(tsx@4.23.0)(yaml@2.9.0))
       playwright: 1.61.1
       tinyrainbow: 3.1.0
       vitest: 4.1.10(@opentelemetry/api@1.9.1)(@types/node@26.2.0)(@vitest/browser-playwright@4.1.10)(jsdom@30.0.1)(vite@8.2.1(@types/node@26.2.0)(jiti@2.7.0)(tsx@4.23.0)(yaml@2.9.0))
@@ -13039,7 +13133,7 @@ snapshots:
   '@vitest/browser@4.1.10(vite@8.2.1(@types/node@26.2.0)(esbuild@0.28.2)(jiti@2.7.0)(tsx@4.23.0)(yaml@2.9.0))(vitest@4.1.10)':
     dependencies:
       '@blazediff/core': 1.9.1
-      '@vitest/mocker': 4.1.10(vite@8.2.1(@types/node@26.2.0)(esbuild@0.28.2)(jiti@2.7.0)(tsx@4.23.0)(yaml@2.9.0))
+      '@vitest/mocker': 4.1.10(vite@8.2.1(@types/node@26.2.0)(jiti@2.7.0)(tsx@4.23.0)(yaml@2.9.0))
       '@vitest/utils': 4.1.10
       magic-string: 0.30.21
       pngjs: 7.0.0
@@ -13057,7 +13151,7 @@ snapshots:
   '@vitest/browser@4.1.10(vite@8.2.1(@types/node@26.2.0)(jiti@2.7.0)(tsx@4.23.0)(yaml@2.9.0))(vitest@4.1.10)':
     dependencies:
       '@blazediff/core': 1.9.1
-      '@vitest/mocker': 4.1.10(vite@8.2.1(@types/node@26.2.0)(esbuild@0.28.2)(jiti@2.7.0)(tsx@4.23.0)(yaml@2.9.0))
+      '@vitest/mocker': 4.1.10(vite@8.2.1(@types/node@26.2.0)(jiti@2.7.0)(tsx@4.23.0)(yaml@2.9.0))
       '@vitest/utils': 4.1.10
       magic-string: 0.30.21
       pngjs: 7.0.0
@@ -13080,7 +13174,7 @@ snapshots:
       chai: 6.2.2
       tinyrainbow: 3.1.0
 
-  '@vitest/mocker@4.1.10(vite@8.2.1(@types/node@26.2.0)(esbuild@0.28.2)(jiti@2.7.0)(tsx@4.23.0)(yaml@2.9.0))':
+  '@vitest/mocker@4.1.10(vite@8.2.1(@types/node@26.2.0)(jiti@2.7.0)(tsx@4.23.0)(yaml@2.9.0))':
     dependencies:
       '@vitest/spy': 4.1.10
       estree-walker: 3.0.3
@@ -13389,7 +13483,7 @@ snapshots:
       unifont: 0.7.4
       unstorage: 1.17.5(@azure/identity@4.13.1)(@azure/storage-blob@12.33.0)(db0@0.3.4(drizzle-orm@0.45.2(@opentelemetry/api@1.9.1)(postgres@3.4.9)))
       vite: 8.2.1(@types/node@26.2.0)(esbuild@0.28.2)(jiti@2.7.0)(tsx@4.23.0)(yaml@2.9.0)
-      vitefu: 1.1.3(vite@8.2.1(@types/node@26.2.0)(esbuild@0.28.2)(jiti@2.7.0)(tsx@4.23.0)(yaml@2.9.0))
+      vitefu: 1.1.3(vite@8.2.1(@types/node@26.2.0)(jiti@2.7.0)(tsx@4.23.0)(yaml@2.9.0))
       xxhash-wasm: 1.1.0
       yargs-parser: 22.0.0
       zod: 4.4.3
@@ -14257,6 +14351,8 @@ snapshots:
   es-module-lexer@2.3.1: {}
 
   es-toolkit@1.50.0: {}
+
+  es-toolkit@1.51.0: {}
 
   esast-util-from-estree@2.0.0:
     dependencies:
@@ -15341,7 +15437,7 @@ snapshots:
     dependencies:
       yallist: 3.1.1
 
-  lucide-react@1.28.0(react@19.2.8):
+  lucide-react@1.33.0(react@19.2.8):
     dependencies:
       react: 19.2.8
 
@@ -17715,14 +17811,14 @@ snapshots:
       tsx: 4.23.0
       yaml: 2.9.0
 
-  vitefu@1.1.3(vite@8.2.1(@types/node@26.2.0)(esbuild@0.28.2)(jiti@2.7.0)(tsx@4.23.0)(yaml@2.9.0)):
+  vitefu@1.1.3(vite@8.2.1(@types/node@26.2.0)(jiti@2.7.0)(tsx@4.23.0)(yaml@2.9.0)):
     optionalDependencies:
       vite: 8.2.1(@types/node@26.2.0)(esbuild@0.28.2)(jiti@2.7.0)(tsx@4.23.0)(yaml@2.9.0)
 
   vitest@4.1.10(@opentelemetry/api@1.9.1)(@types/node@26.2.0)(@vitest/browser-playwright@4.1.10)(jsdom@30.0.1)(vite@8.2.1(@types/node@26.2.0)(esbuild@0.28.2)(jiti@2.7.0)(tsx@4.23.0)(yaml@2.9.0)):
     dependencies:
       '@vitest/expect': 4.1.10
-      '@vitest/mocker': 4.1.10(vite@8.2.1(@types/node@26.2.0)(esbuild@0.28.2)(jiti@2.7.0)(tsx@4.23.0)(yaml@2.9.0))
+      '@vitest/mocker': 4.1.10(vite@8.2.1(@types/node@26.2.0)(jiti@2.7.0)(tsx@4.23.0)(yaml@2.9.0))
       '@vitest/pretty-format': 4.1.10
       '@vitest/runner': 4.1.10
       '@vitest/snapshot': 4.1.10
@@ -17752,7 +17848,7 @@ snapshots:
   vitest@4.1.10(@opentelemetry/api@1.9.1)(@types/node@26.2.0)(@vitest/browser-playwright@4.1.10)(jsdom@30.0.1)(vite@8.2.1(@types/node@26.2.0)(jiti@2.7.0)(tsx@4.23.0)(yaml@2.9.0)):
     dependencies:
       '@vitest/expect': 4.1.10
-      '@vitest/mocker': 4.1.10(vite@8.2.1(@types/node@26.2.0)(esbuild@0.28.2)(jiti@2.7.0)(tsx@4.23.0)(yaml@2.9.0))
+      '@vitest/mocker': 4.1.10(vite@8.2.1(@types/node@26.2.0)(jiti@2.7.0)(tsx@4.23.0)(yaml@2.9.0))
       '@vitest/pretty-format': 4.1.10
       '@vitest/runner': 4.1.10
       '@vitest/snapshot': 4.1.10
