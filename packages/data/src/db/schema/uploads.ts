@@ -9,7 +9,6 @@ import {
 	foreignKey,
 	integer,
 	pgTable,
-	serial,
 	text,
 	timestamp,
 	unique,
@@ -19,7 +18,7 @@ import { users } from "./users";
 export const uploads = pgTable(
 	"uploads",
 	{
-		id: serial("id").primaryKey(),
+		id: integer("id").primaryKey().generatedAlwaysAsIdentity(),
 		createdAt: timestamp("created_at"),
 		name: text("name"),
 		nameOnDisk: text("name_on_disk"),

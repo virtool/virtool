@@ -1,11 +1,11 @@
 // Schema for the `labels` table.
 
-import { pgTable, serial, text, unique, varchar } from "drizzle-orm/pg-core";
+import { integer, pgTable, text, unique, varchar } from "drizzle-orm/pg-core";
 
 export const labels = pgTable(
 	"labels",
 	{
-		id: serial("id").primaryKey(),
+		id: integer("id").primaryKey().generatedAlwaysAsIdentity(),
 		color: varchar("color", { length: 7 }),
 		description: text("description").$defaultFn(() => ""),
 		name: text("name"),

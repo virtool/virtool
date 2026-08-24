@@ -10,7 +10,6 @@ import {
 	jsonb,
 	pgTable,
 	primaryKey,
-	serial,
 	text,
 	timestamp,
 	unique,
@@ -178,7 +177,7 @@ export const legacySampleSubtractions = pgTable(
 export const sampleReads = pgTable(
 	"sample_reads",
 	{
-		id: serial("id").primaryKey(),
+		id: integer("id").primaryKey().generatedAlwaysAsIdentity(),
 		sample: text("sample").notNull(),
 		sample_id: bigint("sample_id", { mode: "number" }),
 		name: varchar("name", { length: 13 }).notNull(),

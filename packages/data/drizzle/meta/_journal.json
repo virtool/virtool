@@ -71,6 +71,13 @@
       "when": 1787263886791,
       "tag": "0009_drop_dead_columns",
       "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1787266662230,
+      "tag": "0010_identity_surrogate_pks",
+      "breakpoints": true
     }
   ]
 }

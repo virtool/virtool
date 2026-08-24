@@ -13,7 +13,6 @@ import {
 	jsonb,
 	pgTable,
 	primaryKey,
-	serial,
 	text,
 	timestamp,
 	unique,
@@ -105,7 +104,7 @@ export const analysisSubtractions = pgTable(
 export const analysisFiles = pgTable(
 	"analysis_files",
 	{
-		id: serial("id").primaryKey(),
+		id: integer("id").primaryKey().generatedAlwaysAsIdentity(),
 		analysis_id: bigint("analysis_id", { mode: "number" }).notNull(),
 		description: text("description"),
 		format: text("format").$type<AnalysisFormat>(),
@@ -139,7 +138,7 @@ export const analysisFiles = pgTable(
 export const nuvsBlast = pgTable(
 	"nuvs_blast",
 	{
-		id: serial("id").primaryKey(),
+		id: integer("id").primaryKey().generatedAlwaysAsIdentity(),
 		analysis_id: bigint("analysis_id", { mode: "number" }).notNull(),
 		sequence_index: integer("sequence_index").notNull(),
 		created_at: timestamp("created_at").notNull(),
