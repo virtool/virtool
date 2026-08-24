@@ -80,6 +80,7 @@ export default function UploadItem({
 				/>
 				{canDelete && (
 					<IconButton
+						ariaLabel={`Delete ${name}`}
 						color="red"
 						IconComponent={Trash}
 						tip="Delete"

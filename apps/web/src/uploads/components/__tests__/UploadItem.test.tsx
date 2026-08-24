@@ -39,7 +39,9 @@ describe("<UploadItem />", () => {
 		expect(screen.getByRole("cell", { name: user.handle })).toBeInTheDocument();
 		expect(screen.getByRole("cell", { name: props.name })).toBeInTheDocument();
 		expect(screen.getByText("10.0 B")).toBeInTheDocument();
-		expect(screen.getByRole("button", { name: "Delete" })).toBeInTheDocument();
+		expect(
+			screen.getByRole("button", { name: `Delete ${props.name}` }),
+		).toBeInTheDocument();
 	});
 
 	it("should name the file as retrieved when [user=null]", () => {
@@ -50,7 +52,9 @@ describe("<UploadItem />", () => {
 		expect(screen.getByRole("cell", { name: "Retrieved" })).toBeInTheDocument();
 		expect(screen.getByRole("cell", { name: props.name })).toBeInTheDocument();
 		expect(screen.getByText("10.0 B")).toBeInTheDocument();
-		expect(screen.getByRole("button", { name: "Delete" })).toBeInTheDocument();
+		expect(
+			screen.getByRole("button", { name: `Delete ${props.name}` }),
+		).toBeInTheDocument();
 	});
 
 	it("should link to the download route, named after the file", () => {
@@ -73,7 +77,7 @@ describe("<UploadItem />", () => {
 			screen.getByRole("link", { name: `Download ${props.name}` }),
 		).toBeInTheDocument();
 		expect(
-			screen.queryByRole("button", { name: "Delete" }),
+			screen.queryByRole("button", { name: `Delete ${props.name}` }),
 		).not.toBeInTheDocument();
 	});
 
@@ -81,7 +85,9 @@ describe("<UploadItem />", () => {
 		uploadServerFnMocks.deleteUploadFn.mockResolvedValue(null);
 		renderItem(props);
 
-		await userEvent.click(screen.getByRole("button", { name: "Delete" }));
+		await userEvent.click(
+			screen.getByRole("button", { name: `Delete ${props.name}` }),
+		);
 
 		await waitFor(() => {
 			expect(uploadServerFnMocks.deleteUploadFn).toHaveBeenCalledWith({

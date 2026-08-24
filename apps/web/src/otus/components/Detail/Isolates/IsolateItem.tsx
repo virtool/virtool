@@ -43,6 +43,7 @@ export default function IsolateItem({
 			{canDelete && (
 				<IconButton
 					IconComponent={Trash}
+					ariaLabel="Delete isolate"
 					color="red"
 					tip="Delete"
 					onClick={() => onDelete(isolate)}

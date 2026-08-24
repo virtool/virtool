@@ -45,6 +45,7 @@ export function OtuHeaderIcons({
 			/>
 			<IconButton
 				key="delete-icon"
+				ariaLabel="Delete OTU"
 				color="red"
 				IconComponent={Trash}
 				tip="Delete"
