@@ -4,10 +4,10 @@ import RelativeTime from "@base/RelativeTime";
 import { TableActionsCell } from "@base/Table";
 import UserLabel from "@base/UserLabel";
 import { useFetchJob } from "@jobs/queries";
+import { getLibraryTypeDisplayName } from "@samples/utils";
 import type { SampleMinimal } from "@virtool/contracts";
 import type { MouseEvent } from "react";
 import SampleLabel from "../Label/SampleLabel";
-import SampleLibraryTypeLabel from "../Label/SampleLibraryTypeLabel";
 import WorkflowTags from "../Tag/WorkflowTags";
 import EndIcon from "./EndIcon";
 
@@ -46,18 +46,24 @@ export default function SampleItem({
 					onClick={handleSelect}
 				/>
 			</td>
-			<td className="font-medium">
-				<Link to="/samples/$sampleId" params={{ sampleId: String(sample.id) }}>
-					{sample.name}
-				</Link>
-			</td>
 			<td>
-				<div className="flex flex-wrap gap-1">
-					<SampleLibraryTypeLabel libraryType={sample.libraryType} />
-					{sample.labels.map((label) => (
-						<SampleLabel {...label} key={label.id} size="sm" />
-					))}
+				<div className="flex items-center gap-2">
+					<Link
+						className="font-medium"
+						to="/samples/$sampleId"
+						params={{ sampleId: String(sample.id) }}
+					>
+						{sample.name}
+					</Link>
+					<div className="ml-auto flex flex-wrap justify-end gap-1">
+						{sample.labels.map((label) => (
+							<SampleLabel {...label} key={label.id} size="sm" />
+						))}
+					</div>
 				</div>
+			</td>
+			<td className="hidden 2xl:table-cell">
+				{getLibraryTypeDisplayName(sample.libraryType)}
 			</td>
 			<td>
 				{sample.ready && (

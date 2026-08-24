@@ -26,10 +26,10 @@
 	--z-popover: 70; /* tooltips and popovers — above dialog content */
 	--z-toast: 80; /* upload progress — topmost */
 
-	/* Every rem-valued token Tailwind ships is scaled to 0.875 of its stock
-	   value, which is what the app got from the 14px root this replaced. Holding
-	   the shrink on the scale rather than the root is what lets it be walked back
-	   a token at a time.
+	/* The app's rem-valued size tokens are scaled to 0.875 of their stock values,
+	   which is what the app got from the 14px root this replaced. Holding the
+	   shrink on the scale rather than the root is what lets it be walked back a
+	   token at a time.
 
 	   Line heights are unitless ratios and letter spacing is in em, so both
 	   follow their font size untouched. */
@@ -49,12 +49,6 @@
 	--text-9xl: 7rem;
 
 	--spacing: 0.21875rem;
-
-	--breakpoint-sm: 35rem;
-	--breakpoint-md: 42rem;
-	--breakpoint-lg: 56rem;
-	--breakpoint-xl: 70rem;
-	--breakpoint-2xl: 84rem;
 
 	--container-3xs: 14rem;
 	--container-2xs: 15.75rem;

@@ -26,20 +26,18 @@ export default function WorkflowTags({ id, workflows }: WorkflowTagsProps) {
 			<WorkflowTag
 				key={key}
 				displayName={getWorkflowDisplayName(key)}
+				sampleId={id}
 				workflowState={value}
 			/>
 		));
 	return (
 		<div className="flex items-stretch">
-			<BaseWorkflowTag
-				as={Link}
-				className="bg-purple-400 border-purple-400 border-l-0"
-				to={`/samples/${id}/analyses`}
-			>
-				View
-			</BaseWorkflowTag>
 			{!workflowTags.length && (
-				<BaseWorkflowTag className="bg-purple-50 border border-purple-400 text-purple-900">
+				<BaseWorkflowTag
+					as={Link}
+					className="bg-purple-50 border border-purple-400 text-purple-900 hover:bg-purple-100"
+					to={`/samples/${id}/analyses`}
+				>
 					No Analyses
 				</BaseWorkflowTag>
 			)}

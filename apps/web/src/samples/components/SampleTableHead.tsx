@@ -23,9 +23,9 @@ type SampleTableHeadProps = {
 /**
  * The column headers for the samples table.
  *
- * Labels and Workflows are not sortable: each is multi-valued, so there is no
- * single value to order the list by. The select-all checkbox names its own
- * cell, and the trailing action column is named for assistive technology.
+ * Workflows are not sortable because each sample can have multiple workflow
+ * states. The select-all checkbox names its own cell, and the trailing action
+ * column is named for assistive technology.
  */
 export default function SampleTableHead({
 	checked,
@@ -36,7 +36,7 @@ export default function SampleTableHead({
 }: SampleTableHeadProps) {
 	return (
 		<TableHead>
-			<th className="w-12" scope="col">
+			<th className="w-16" scope="col">
 				<span className="sr-only">Select</span>
 				<Checkbox
 					ariaLabel="Select all samples"
@@ -53,8 +53,12 @@ export default function SampleTableHead({
 			>
 				Name
 			</SortableHead>
-			<th scope="col">Labels</th>
-			<th scope="col">Workflows</th>
+			<th className="hidden w-32 2xl:table-cell" scope="col">
+				Library Type
+			</th>
+			<th className="w-64" scope="col">
+				Workflows
+			</th>
 			<SortableHead
 				className="w-40"
 				direction={direction}
@@ -73,7 +77,7 @@ export default function SampleTableHead({
 			>
 				User
 			</SortableHead>
-			<TableActionsHead className="w-32" />
+			<TableActionsHead className="w-16" />
 		</TableHead>
 	);
 }
