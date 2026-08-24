@@ -39,7 +39,7 @@ export default function ComboBoxMenu({
 					className={cn(
 						"z-dropdown",
 						"w-(--radix-popper-anchor-width)",
-						"max-h-60",
+						"max-h-[min(15rem,var(--radix-popper-available-height))]",
 						"overflow-y-auto",
 						"bg-white",
 						"border",
