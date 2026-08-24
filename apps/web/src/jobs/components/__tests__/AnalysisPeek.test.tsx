@@ -72,12 +72,12 @@ describe("<AnalysisPeek />", () => {
 	it.each([
 		["unfinished", false],
 		["complete", true],
-	])("shows no remove button for an %s analysis", async (_, ready) => {
+	])("shows no delete button for an %s analysis", async (_, ready) => {
 		await renderPeek({ ready });
 
 		await screen.findByRole("link", { name: "Pathoscope" });
 		expect(
-			screen.queryByRole("button", { name: "remove" }),
+			screen.queryByRole("button", { name: "Delete" }),
 		).not.toBeInTheDocument();
 	});
 });

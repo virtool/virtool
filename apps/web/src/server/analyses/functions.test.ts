@@ -177,7 +177,6 @@ async function seedAnalysis(
 				workflow: "nuvs",
 				ready: true,
 				results: null,
-				sample: String(overrides.sample_id ?? 0),
 				// A Postgres-native analysis: no legacy id, so a delete never reaches
 				// object storage.
 				legacy_id: null,

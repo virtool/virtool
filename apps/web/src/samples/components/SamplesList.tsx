@@ -1,13 +1,12 @@
 import QuickAnalyze from "@analyses/components/Create/QuickAnalyze";
 import Button from "@base/Button";
-import ContainerNarrow from "@base/ContainerNarrow";
+import { ContainerNarrow } from "@base/Container";
 import ListEmpty from "@base/ListEmpty";
 import LoadingPlaceholder from "@base/LoadingPlaceholder";
 import Pagination from "@base/Pagination";
 import QueryError from "@base/QueryError";
 import { useListSelection } from "@base/useListSelection";
-import ViewHeader from "@base/ViewHeader";
-import ViewHeaderTitle from "@base/ViewHeaderTitle";
+import { ViewHeader, ViewHeaderTitle } from "@base/View";
 import { useFetchLabels } from "@labels/queries";
 import type { DateFilter } from "@samples/dateFilter";
 import { useListSamples } from "@samples/queries";

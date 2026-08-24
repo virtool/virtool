@@ -1,5 +1,5 @@
 import { cn } from "@app/cn";
-import Input from "./Input";
+import Input from "@base/Input";
 
 type PresetColor = {
 	// The color in hex format, without a leading "#"

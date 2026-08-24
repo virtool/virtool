@@ -1,6 +1,5 @@
 import Badge from "@base/Badge";
-import BoxGroup from "@base/BoxGroup";
-import BoxGroupSection from "@base/BoxGroupSection";
+import { BoxGroup, BoxGroupSection } from "@base/Box";
 import ScrollArea from "@base/ScrollArea";
 import { sortBy } from "es-toolkit";
 

@@ -1,10 +1,8 @@
-import BoxGroup from "@base/BoxGroup";
-import ContainerNarrow from "@base/ContainerNarrow";
+import { BoxGroup } from "@base/Box";
+import { ContainerNarrow } from "@base/Container";
 import ListEmpty from "@base/ListEmpty";
 import Pagination from "@base/Pagination";
-import ViewHeader from "@base/ViewHeader";
-import ViewHeaderTitle from "@base/ViewHeaderTitle";
-import ViewHeaderTitleBadge from "@base/ViewHeaderTitleBadge";
+import { ViewHeader, ViewHeaderTitle, ViewHeaderTitleBadge } from "@base/View";
 import { Library } from "lucide-react";
 import { useState } from "react";
 import { useSuspenseReferences } from "../queries";

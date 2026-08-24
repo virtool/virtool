@@ -1,7 +1,6 @@
 import Checkbox from "@base/Checkbox";
 import SortableHead from "@base/SortableHead";
-import TableActionsHead from "@base/TableActionsHead";
-import TableHead from "@base/TableHead";
+import { TableActionsHead, TableHead } from "@base/Table";
 import type { SortDirection, UploadSortField } from "@virtool/contracts";
 
 type UploadTableHeadProps = {

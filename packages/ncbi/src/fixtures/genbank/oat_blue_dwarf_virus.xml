@@ -1,0 +1,228 @@
+<?xml version="1.0" encoding="UTF-8"  ?>
+<!DOCTYPE GBSet PUBLIC "-//NCBI//NCBI GBSeq/EN" "https://www.ncbi.nlm.nih.gov/dtd/NCBI_GBSeq.dtd">
+<GBSet>
+  <GBSeq>
+
+    <GBSeq_locus>NC_001793</GBSeq_locus>
+    <GBSeq_length>6509</GBSeq_length>
+    <GBSeq_strandedness>single</GBSeq_strandedness>
+    <GBSeq_moltype>RNA</GBSeq_moltype>
+    <GBSeq_topology>circular</GBSeq_topology>
+    <GBSeq_division>VRL</GBSeq_division>
+    <GBSeq_update-date>13-AUG-2018</GBSeq_update-date>
+    <GBSeq_create-date>19-FEB-1997</GBSeq_create-date>
+    <GBSeq_definition>Oat blue dwarf virus complete genome</GBSeq_definition>
+    <GBSeq_primary-accession>NC_001793</GBSeq_primary-accession>
+    <GBSeq_accession-version>NC_001793.1</GBSeq_accession-version>
+    <GBSeq_other-seqids>
+      <GBSeqid>ref|NC_001793.1|</GBSeqid>
+      <GBSeqid>gnl|NCBI_GENOMES|12154</GBSeqid>
+      <GBSeqid>gi|9629255</GBSeqid>
+    </GBSeq_other-seqids>
+    <GBSeq_project>PRJNA485481</GBSeq_project>
+    <GBSeq_keywords>
+      <GBKeyword>RefSeq</GBKeyword>
+    </GBSeq_keywords>
+    <GBSeq_source>Oat blue dwarf virus</GBSeq_source>
+    <GBSeq_organism>Oat blue dwarf virus</GBSeq_organism>
+    <GBSeq_taxonomy>Viruses; Riboviria; Orthornavirae; Kitrinoviricota; Alsuviricetes; Tymovirales; Tymoviridae; Marafivirus; Marafivirus avenae</GBSeq_taxonomy>
+    <GBSeq_references>
+      <GBReference>
+        <GBReference_reference>1</GBReference_reference>
+        <GBReference_position>1..6509</GBReference_position>
+        <GBReference_authors>
+          <GBAuthor>Edwards,M.C.</GBAuthor>
+          <GBAuthor>Zhang,Z.</GBAuthor>
+          <GBAuthor>Weiland,J.J.</GBAuthor>
+        </GBReference_authors>
+        <GBReference_title>Oat blue dwarf marafivirus resembles the tymoviruses in sequence, genome organization, and expression strategy</GBReference_title>
+        <GBReference_journal>Virology 232 (1), 217-229 (1997)</GBReference_journal>
+        <GBReference_pubmed>9185605</GBReference_pubmed>
+      </GBReference>
+      <GBReference>
+        <GBReference_reference>2</GBReference_reference>
+        <GBReference_position>1..6509</GBReference_position>
+        <GBReference_consortium>NCBI Genome Project</GBReference_consortium>
+        <GBReference_title>Direct Submission</GBReference_title>
+        <GBReference_journal>Submitted (01-AUG-2000) National Center for Biotechnology Information, NIH, Bethesda, MD 20894, USA</GBReference_journal>
+      </GBReference>
+      <GBReference>
+        <GBReference_reference>3</GBReference_reference>
+        <GBReference_position>1..6509</GBReference_position>
+        <GBReference_authors>
+          <GBAuthor>Edwards,M.C.</GBAuthor>
+        </GBReference_authors>
+        <GBReference_title>Direct Submission</GBReference_title>
+        <GBReference_journal>Submitted (29-JAN-1997) Cereal Crops Research Unit, USDA-ARS, Northern Crop Science Laboratory, Fargo, ND 58105-5677, USA</GBReference_journal>
+      </GBReference>
+    </GBSeq_references>
+    <GBSeq_comment>PROVISIONAL REFSEQ: This record has not yet been subject to final NCBI review. The reference sequence is identical to U87832.; COMPLETENESS: full length.</GBSeq_comment>
+    <GBSeq_feature-table>
+      <GBFeature>
+        <GBFeature_key>source</GBFeature_key>
+        <GBFeature_location>1..6509</GBFeature_location>
+        <GBFeature_intervals>
+          <GBInterval>
+            <GBInterval_from>1</GBInterval_from>
+            <GBInterval_to>6509</GBInterval_to>
+            <GBInterval_accession>NC_001793.1</GBInterval_accession>
+          </GBInterval>
+        </GBFeature_intervals>
+        <GBFeature_quals>
+          <GBQualifier>
+            <GBQualifier_name>organism</GBQualifier_name>
+            <GBQualifier_value>Oat blue dwarf virus</GBQualifier_value>
+          </GBQualifier>
+          <GBQualifier>
+            <GBQualifier_name>mol_type</GBQualifier_name>
+            <GBQualifier_value>genomic RNA</GBQualifier_value>
+          </GBQualifier>
+          <GBQualifier>
+            <GBQualifier_name>db_xref</GBQualifier_name>
+            <GBQualifier_value>taxon:56879</GBQualifier_value>
+          </GBQualifier>
+        </GBFeature_quals>
+      </GBFeature>
+      <GBFeature>
+        <GBFeature_key>gene</GBFeature_key>
+        <GBFeature_location>115..6315</GBFeature_location>
+        <GBFeature_intervals>
+          <GBInterval>
+            <GBInterval_from>115</GBInterval_from>
+            <GBInterval_to>6315</GBInterval_to>
+            <GBInterval_accession>NC_001793.1</GBInterval_accession>
+          </GBInterval>
+        </GBFeature_intervals>
+        <GBFeature_quals>
+          <GBQualifier>
+            <GBQualifier_name>locus_tag</GBQualifier_name>
+            <GBQualifier_value>OBDVgp1</GBQualifier_value>
+          </GBQualifier>
+          <GBQualifier>
+            <GBQualifier_name>db_xref</GBQualifier_name>
+            <GBQualifier_value>GeneID:1446385</GBQualifier_value>
+          </GBQualifier>
+        </GBFeature_quals>
+      </GBFeature>
+      <GBFeature>
+        <GBFeature_key>CDS</GBFeature_key>
+        <GBFeature_location>115..6315</GBFeature_location>
+        <GBFeature_intervals>
+          <GBInterval>
+            <GBInterval_from>115</GBInterval_from>
+            <GBInterval_to>6315</GBInterval_to>
+            <GBInterval_accession>NC_001793.1</GBInterval_accession>
+          </GBInterval>
+        </GBFeature_intervals>
+        <GBFeature_quals>
+          <GBQualifier>
+            <GBQualifier_name>locus_tag</GBQualifier_name>
+            <GBQualifier_value>OBDVgp1</GBQualifier_value>
+          </GBQualifier>
+          <GBQualifier>
+            <GBQualifier_name>note</GBQualifier_name>
+            <GBQualifier_value>putative 227 kDa polyprotein possessing sequence motifs similar to methyltransferase, papain-like protease, helicase, and polymerase motifs that arepresent in the nonstructural proteins of other positive strand RNA viruses</GBQualifier_value>
+          </GBQualifier>
+          <GBQualifier>
+            <GBQualifier_name>codon_start</GBQualifier_name>
+            <GBQualifier_value>1</GBQualifier_value>
+          </GBQualifier>
+          <GBQualifier>
+            <GBQualifier_name>transl_table</GBQualifier_name>
+            <GBQualifier_value>1</GBQualifier_value>
+          </GBQualifier>
+          <GBQualifier>
+            <GBQualifier_name>product</GBQualifier_name>
+            <GBQualifier_value>replicase-associated polyprotein</GBQualifier_value>
+          </GBQualifier>
+          <GBQualifier>
+            <GBQualifier_name>protein_id</GBQualifier_name>
+            <GBQualifier_value>NP_044447.1</GBQualifier_value>
+          </GBQualifier>
+          <GBQualifier>
+            <GBQualifier_name>db_xref</GBQualifier_name>
+            <GBQualifier_value>GeneID:1446385</GBQualifier_value>
+          </GBQualifier>
+          <GBQualifier>
+            <GBQualifier_name>translation</GBQualifier_name>
+            <GBQualifier_value>MTTYAFHPLLPTPTSFATITGGGLKDVIETLSSTIHRDTIAAPLMETLASPYRDSLRDFPWAVPASALPFLQECGITVAGHGFKAHPHPVHKTIETHLLHKVWPHYAQVPSSVLFMKPSKFAKLQRGNANFSALHNYRLTAKDTPRYPNTSTSLPDTETAFMHDALMYYTPAQIVDLFLSCPKLEKLYASLVVPPESSFTSISLHPDLYRFRFDGDRLIYELEGNPAHNYTQPRSALDWLRTTTIRGPGVSLTVSRLDSWGPCHSLLIQRGIPPMHAEHDSISFRGPRAVAIPEPSSLHQDLRHRLVPEDVYNALFLYVRAVRTLRVTDPAGFVRTQCSKPEYAWVTSSAWDNLAHFALLTAPHRPRTSFYLFSSTFQRLEHWVRHHTFLLAGLTTAFALPPSAWLANLVARASASHIQGLALARRWLITPPHLFRPPPPPSFALLLQRNSTGPVLLRGSRLEFEAFPSLAPQLARRFPFLARLLPQKPIDPWVVASLAVAVAIPAASLAVRWFFGPDTPQAMHDRYHTMFHPREWRLTLPRGPISCGRSSFSPLPHPPSPTPAPDSRAEPLQPPSAPPSTHEPAPADLEPQAPPAHAPQTEPPSPVIEQEARPNPLPAPAPLSAPTPSASAPSLAPTPSAPEPPSPTASEQAASLIPAPSSALVVEPSGVVSASSWGATNQPADQVDDSPLARDPSASGPVRFYRDLFPANYAGDSGTFDFRARASGRSPTPYPAMDCLLVATEQATRISREALWDCLTATCPDSFLDPKSIAQHGLSTDHFVILAHRFSLCANFHSAEHVIQLGMADATSIFMINHTAGSAGLPGHFSLRLGDQPRALNGGLAQDLAVAALRFNISGDLLPTRSVHTYRSWPKRAKNLVSNMKNGFDGVMASINPIRPSDAREKIVALDGLLDIARPRSVRLIHIAGFPGCGKTHPITKLLHTAAFRDFKLAVPTTELRSEWKELMKLSPSQAWRFGTWESSLLKSARILVIDEIYKLPRGYLDLAIHSDSSIEFVIALGDPLQGEYHSTHPSSSNSRLIPEVSHLAPYLDYYCLWSYRVPQDVAAFFQVQSHNPALGFARLSKQFPTTGRVLTNSQNSMLTMTQCGYSAVTIASSQGSTYSGATHIHLDRNSSLLSPSNSLVALTRSRTGVFFSGDPALLNGGPNSNLMFSAFFQGKSRHIRAWFPTLFPTATLLFSPLRQRHNRLTGALAPAQPSHLLLPDLPSLPPLPASGPYSRSFPVRSRFAAAVKPSDRSDVLSWAPIAVGDGETNAPRIDTSFLPETRRPLHFDLPSFRPQAPPPPSDPAPSGTAFEPVYPGETFENLVAHFLPAHDPTDREIHWRRQLSNQFPHVDKEYHLAAQPMTLLAPIHDSKHDPTLLAASIQKRLRFRPSASPYRISPRDELLGQLLYESLCRAYHRSPTTTHPFDEALFVECIDLNEFAQLTSKTQAVIMGNARRSDPDWRWSAVRIFSKTQHKVNEGSIFGAWKACQTLALMHDAVVLLLGPVKKYQRVFDARDRPAHLYIHAGQTPSSMSLWCQTHLTPAVKLANDYTAFDQSQHGEAVVLERKKMERLSIPDHLISLHVHLKTHVETQFGPLTCMRLTGEPGTYDDNTDYNLAVINLEYAAAHVPTMVSGDDSLLDFEPPRRPEWVAIEPLLALRFKKERGLYATFCGYYASRVGCVRSPIALFAKLAIAVDDSSISDKLAAYLMEFAVGHSLGDSLWSALPLSAVPFQSACFDFFCRRAPRDLKLALHLGEVPETIIQRLSHLSWLSHAVYSLLPSRLRLAILHSSRQHRSLPEDPAVSSLQGELLQTFHAPMPSLPSLPLFGGLSPDNILTPHEFRTALYESSAYPTPPNSPTSMSGIHASQVGPPPASDDRTDRQPSLPLAPRIVESSLAVPHVDVPFQWAVASYAGDSAKFLTDDLSGSSHLSRLTIGYRHAELISAELEFAPLAAAFAKPISVTAVWTIASIAPATTTELQYYGGRLLTLGGPVLMGSVTRIPADLTRLNPVIKTAVGFTDCPRFTYSVYANGGSANTPLITVMVRGVIRLSGPSGNTVTAT</GBQualifier_value>
+          </GBQualifier>
+        </GBFeature_quals>
+      </GBFeature>
+      <GBFeature>
+        <GBFeature_key>gene</GBFeature_key>
+        <GBFeature_location>5710..6315</GBFeature_location>
+        <GBFeature_intervals>
+          <GBInterval>
+            <GBInterval_from>5710</GBInterval_from>
+            <GBInterval_to>6315</GBInterval_to>
+            <GBInterval_accession>NC_001793.1</GBInterval_accession>
+          </GBInterval>
+        </GBFeature_intervals>
+        <GBFeature_quals>
+          <GBQualifier>
+            <GBQualifier_name>locus_tag</GBQualifier_name>
+            <GBQualifier_value>OBDVgp2</GBQualifier_value>
+          </GBQualifier>
+          <GBQualifier>
+            <GBQualifier_name>db_xref</GBQualifier_name>
+            <GBQualifier_value>GeneID:1446386</GBQualifier_value>
+          </GBQualifier>
+        </GBFeature_quals>
+      </GBFeature>
+      <GBFeature>
+        <GBFeature_key>CDS</GBFeature_key>
+        <GBFeature_location>5710..6315</GBFeature_location>
+        <GBFeature_intervals>
+          <GBInterval>
+            <GBInterval_from>5710</GBInterval_from>
+            <GBInterval_to>6315</GBInterval_to>
+            <GBInterval_accession>NC_001793.1</GBInterval_accession>
+          </GBInterval>
+        </GBFeature_intervals>
+        <GBFeature_quals>
+          <GBQualifier>
+            <GBQualifier_name>locus_tag</GBQualifier_name>
+            <GBQualifier_value>OBDVgp2</GBQualifier_value>
+          </GBQualifier>
+          <GBQualifier>
+            <GBQualifier_name>note</GBQualifier_name>
+            <GBQualifier_value>putative start site; believed to be translated from a subgenomic RNA</GBQualifier_value>
+          </GBQualifier>
+          <GBQualifier>
+            <GBQualifier_name>codon_start</GBQualifier_name>
+            <GBQualifier_value>1</GBQualifier_value>
+          </GBQualifier>
+          <GBQualifier>
+            <GBQualifier_name>transl_table</GBQualifier_name>
+            <GBQualifier_value>1</GBQualifier_value>
+          </GBQualifier>
+          <GBQualifier>
+            <GBQualifier_name>product</GBQualifier_name>
+            <GBQualifier_value>21 kDa capsid protein</GBQualifier_value>
+          </GBQualifier>
+          <GBQualifier>
+            <GBQualifier_name>protein_id</GBQualifier_name>
+            <GBQualifier_value>NP_044448.1</GBQualifier_value>
+          </GBQualifier>
+          <GBQualifier>
+            <GBQualifier_name>db_xref</GBQualifier_name>
+            <GBQualifier_value>GeneID:1446386</GBQualifier_value>
+          </GBQualifier>
+          <GBQualifier>
+            <GBQualifier_name>translation</GBQualifier_name>
+            <GBQualifier_value>MSGIHASQVGPPPASDDRTDRQPSLPLAPRIVESSLAVPHVDVPFQWAVASYAGDSAKFLTDDLSGSSHLSRLTIGYRHAELISAELEFAPLAAAFAKPISVTAVWTIASIAPATTTELQYYGGRLLTLGGPVLMGSVTRIPADLTRLNPVIKTAVGFTDCPRFTYSVYANGGSANTPLITVMVRGVIRLSGPSGNTVTAT</GBQualifier_value>
+          </GBQualifier>
+        </GBFeature_quals>
+      </GBFeature>
+    </GBSeq_feature-table>
+    <GBSeq_sequence>gtgtcccagtgtcattattccgctcagtttcagatctgccggaattctccaagcatcccgccccaaaagccggctgcttaaaatctgatcttctccatcttgtcaagtgtcgttatgaccacatacgccttccacccgctgctccccaccccgacctccttcgccactatcactgggggtggtttgaaggatgttatcgaaaccctctcgtccaccatccacagagacacgatcgcagcacccctcatggagaccctcgcctcgccttaccgagactcccttcgcgacttcccttgggccgtccccgcctccgccctgcccttcctccaggaatgtggcatcacggtcgccggccacggtttcaaagctcatccccaccctgtccacaaaaccatcgagacccacctcctccacaaggtttggcctcactatgcccaagtcccttcttccgtcctcttcatgaagccctcgaagttcgccaaactccagcggggcaacgccaacttctccgcactccacaactatcgcctcaccgccaaagacaccccgcggtatcctaacacttcaacctctctccccgacaccgagaccgccttcatgcatgacgccctcatgtattacacccccgctcaaattgttgacctgttcctttcctgcccgaagctcgagaaactgtacgcctcccttgtcgtcccccccgagtcctccttcacctctatctctctccatccagatctttaccgctttcgctttgacggggaccgtttgatttatgagttggagggcaaccccgcccacaactacacccaacctcgatccgccctcgactggctccgcacaaccaccatccgcggaccaggcgtttctctcaccgtgtccaggctcgactcgtggggtccctgccattccctcctcatccagcgcggcattccccccatgcacgccgagcacgactccatctcgttcaggggtccacgcgccgtcgccattcccgagccctcctccctccaccaggatctgcgccaccgtctcgttccagaggacgtgtataacgccctcttcctctacgtccgcgctgtccgcacgctccgcgtaaccgatcccgccggctttgtccgcacccagtgctctaagcccgagtacgcttgggtcacttcctccgcttgggacaacttggcccacttcgccctcctcaccgctccacaccggccccgcacctcgttctacctattctcctctaccttccagcgccttgagcactgggtccgccatcacaccttcctcctcgccggcctcaccacagcctttgctctcccgccgtctgcctggctcgcgaacctcgtcgcccgcgcctccgcttcacacatccaaggcctcgcgctagcccgccggtggctcatcactccccctcatctcttccgcccccctccacccccaagcttcgctcttcttctccagcgcaactccaccggcccggtccttctccgtggctcccgcctcgagtttgaggccttcccttctctcgccccacaactcgcccgtcgctttccattcctcgctcgccttctcccccagaaacccatcgacccctgggtcgtcgcgagcctcgctgtcgccgttgctatacccgccgcctccctcgccgttcgctggttcttcggccccgacaccccccaagccatgcacgaccgataccacaccatgttccaccccagagagtggcgcctcaccctgcccaggggccccatctcatgtggccgctccagcttctccccccttccccacccaccttcgcccactcccgctcccgactcccgagctgaacccctccagccaccctccgctccaccctcgacccacgagccggctcccgccgatctcgagccccaagctcctccggcccacgccccccagaccgagcctccgagtcccgtgatcgagcaagaagcgcgtccgaatccccttcccgctcctgccccgctttctgctcccaccccctccgcttccgcgccttcacttgccccaacaccctcggcccccgagcctccctcgccgaccgcttccgagcaggccgcgtccctcatccctgctccctcttccgccctcgtcgtggagccatccggcgtcgtctctgcctcatcttggggcgccaccaaccagccggccgatcaagtcgatgactcccctctcgctcgcgatcccagcgcctccggccccgtccgcttctatcgagacctcttccccgccaactacgcgggtgattccggcaccttcgacttccgcgcccgcgcctcaggccgctctcccaccccataccccgccatggattgcctcctcgtcgccaccgagcaagccacccgcatctctcgagaggccctctgggactgcctcacagccacctgccccgactcattcctcgaccccaagagcatcgcccagcatggcctcagcaccgatcacttcgtcatcctcgctcatcgcttttccctatgtgccaacttccactccgccgagcacgtcattcagctcgggatggccgatgccacctccattttcatgatcaaccacacggctggctccgcgggcctcccgggccacttctccctccgcctgggtgaccagccccgtgccctcaacggtggcctcgctcaggacctcgccgtcgccgccctccgattcaacatctccggtgatctcctcccaacccgatccgttcacacttacaggtcttggccaaagcgcgccaagaaccttgtgtccaacatgaagaacggctttgacggagtcatggccagcatcaacccgatccgacccagcgatgctcgcgagaagatcgtcgccctcgacggtctcctagacattgcccgaccccgatccgtccgcctcatccacattgctggtttcccaggctgcggaaaaacacatccgatcaccaagctcctccacaccgccgccttccgcgacttcaaactcgccgtcccgaccaccgagctccggtctgagtggaaagagctcatgaagctctcaccctctcaggcctggcgcttcggcacctgggagtcctcccttctcaagagcgccaggatcctcgtgatcgatgagatctacaagttgccccgagggtacctcgacctagccatccactccgactcgtccatcgagtttgttatcgccctgggagatcctctgcaaggcgagtatcactccactcatcccagctcctccaactctcgcctcattcccgaagtcagccatctcgctccctacctcgactactactgcctctggagttaccgcgtcccccaagacgtcgccgctttcttccaggttcagagccacaaccctgctctcgggtttgcccgtctctcgaagcagtttcccacgaccgggcgcgtcctcaccaactcacagaactcgatgcttaccatgacgcagtgcggctactctgccgtcaccattgcctcaagccagggttccacctacagcggcgccacgcacatccaccttgaccgcaactcatcgctcctctccccttcgaactccctcgtcgccctcactcgctcgagaaccggcgtgttcttctccggggaccctgctcttctcaacggtggtcccaactccaacctcatgttctctgccttctttcagggcaagtctcgccacattcgcgcctggttccccacccttttccctacggccactctcctcttctcccccctccgccaacgccacaaccgcctcactggcgccctcgctcccgcccaaccttcccacctcctgctccctgaccttccgagcctccctcctctccccgcctccggtccctactcccgctcattcccagttcgatctcgcttcgccgcggccgtcaagccttccgaccggtcagacgtcctctcgtgggcccctatcgccgtcggtgacggggaaaccaacgcccctcgcattgacacctccttcctgcccgaaactcgccgcccgcttcattttgatcttccctcgttccgcccccaagccccaccgcctccctctgacccagccccttctgggaccgcctttgagcccgtttaccccggcgaaaccttcgaaaatttggtcgcccacttccttccggctcacgaccccactgaccgcgaaatccactggcgtcggcagctttccaaccagtttccccatgtcgataaggagtaccacctcgcggctcagccaatgacgctcctcgctcccatccacgactccaagcacgaccccaccctccttgccgcctccatccagaaacgacttcgatttcgaccctccgcctctccctaccgaatctcccctcgtgacgagctgcttggccagctcctctacgagagtctctgccgcgcgtatcatcgttccccaaccaccacccaccctttcgatgaggccctcttcgtcgagtgtatcgacctgaacgaattcgctcaactcaccagcaaaactcaggccgtcatcatgggcaacgcccgccgctctgacccagactggcgctggtccgccgtccggatcttcagcaaaacccagcacaaggtcaacgaaggttcgatctttggagcctggaaagcttgccagaccctcgctctcatgcacgacgccgtcgttctgctccttggccccgtcaagaagtatcaacgcgtcttcgatgctcgagaccgccccgcccacctctacatccacgccggccagacgccctcttccatgagcctgtggtgccagacccacctcacccccgctgtcaagctcgcgaacgactacaccgctttcgaccagtctcagcatggcgaggccgtcgtcctcgagagaaagaagatggaacgcctttccatcccggatcacctcatctccctccacgttcaccttaagacccatgtcgaaacccagtttggccctctcacctgcatgcgcctaaccggcgagcctggcacctacgacgacaacactgactataacctcgccgtcatcaacctcgagtacgcggctgcccacgtcccgaccatggtctcgggcgacgattcactccttgacttcgagcccccacgccgcccagagtgggtcgccatcgaacctcttttagccctccgcttcaagaaggagcgcggtctgtatgccaccttctgcggctactacgcctcgcgagttggctgcgtccgatctcccatcgccctcttcgctaagctcgccatcgccgtcgacgactcatccatctccgacaagctcgccgcatacctcatggagttcgcggtcggtcactctctcggcgactctctttggtccgccctccccctgtccgccgtcccctttcagtcagcctgtttcgatttcttctgccgccgcgctccccgcgatctaaagctcgcccttcacctgggcgaagtccctgaaaccatcatccaacgcctctcccacctctcctggctatcccacgccgtctacagcctcctcccatctcgccttcgcctcgccatccttcacagctcacgccagcaccgttccctccccgaagacccagccgtttcttcgcttcagggtgaattgcttcagacgttccatgctccaatgccctctctcccttcactcccactcttcggcggtctatctcccgacaacatcctcactccccacgagttccgcaccgccctctacgaaagctccgcctaccctactcctcccaactctccgacctccatgtcaggaatccatgcctcgcaagttggtccgccccccgccagcgatgatcgcactgaccgccagccttctcttcctcttgctcctcgtattgtggagagctctctcgccgtgccgcacgtcgacgtcccgttccaatgggccgtcgcgtcgtacgccggagactccgccaagttcctcaccgacgacctctcaggatcctctcacctgagccgcctcaccatcggctatcgccacgccgagctcatctccgccgagctcgagttcgccccccttgccgccgccttcgccaagcccatctccgtcaccgccgtctggaccatagcctccatcgccccagccaccaccaccgagctccagtactacggtggccgactcctcaccctcggaggccccgtcctcatgggctccgtcacccgcatcccagccgacctcacccgcctcaaccccgtcatcaagaccgccgtgggcttcactgactgcccccgcttcacctactccgtctatgccaacggcgggtccgccaacactcctctcatcaccgtcatggtgcgaggagttatccgcctctccggcccttcgggcaacaccgtcaccgccacctaagccctctcaccggtttcaacaggagtttcttcctcgttcttctcctgacgaccaatgaacgttgcttatccccccttcacatccctccgtttccccctccgttttcctctctgttccattccccctctccctccccgtctcagcaatgagtaaggttccaggtcgattcaaagacctgatgggattttcctcgg</GBSeq_sequence>
+    <GBSeq_xrefs>
+      <GBXref>
+        <GBXref_dbname>BioProject</GBXref_dbname>
+        <GBXref_id>PRJNA485481</GBXref_id>
+      </GBXref>
+    </GBSeq_xrefs>
+  </GBSeq>
+
+</GBSet>

@@ -1,9 +1,11 @@
 import { cn } from "@app/cn";
+import Icon from "@base/Icon";
+import { InputLabel } from "@base/Input";
 import { useCombobox } from "downshift";
 import { ChevronDown } from "lucide-react";
+import { Popover } from "radix-ui";
 import type { ReactNode } from "react";
-import Icon from "./Icon";
-import InputLabel from "./InputLabel";
+import ComboBoxMenu from "./ComboBoxMenu";
 import { inputHeightClass } from "./styles";
 
 type ComboBoxProps<Item> = {
@@ -103,8 +105,8 @@ export default function ComboBox<Item>({
 			>
 				{label}
 			</InputLabel>
-			<div className="relative">
-				<div
+			<Popover.Root open={isOpen} onOpenChange={() => {}}>
+				<Popover.Anchor
 					className={cn(
 						"flex",
 						"items-center",
@@ -133,24 +135,9 @@ export default function ComboBox<Item>({
 					>
 						<Icon icon={ChevronDown} />
 					</button>
-				</div>
-				<ul
-					className={cn(
-						"absolute",
-						"z-dropdown",
-						"w-full",
-						"mt-1",
-						"max-h-60",
-						"overflow-y-auto",
-						"bg-white",
-						"border",
-						"border-gray-300",
-						"rounded-md",
-						"shadow-md",
-						"outline-none",
-						isOpen ? "block" : "hidden",
-					)}
-					{...getMenuProps()}
+				</Popover.Anchor>
+				<ComboBoxMenu
+					menuProps={getMenuProps(undefined, { suppressRefError: true })}
 				>
 					{isOpen &&
 						(items.length ? (
@@ -175,8 +162,8 @@ export default function ComboBox<Item>({
 						) : (
 							<li className="px-3 py-2 text-gray-500">No options</li>
 						))}
-				</ul>
-			</div>
+				</ComboBoxMenu>
+			</Popover.Root>
 		</div>
 	);
 }

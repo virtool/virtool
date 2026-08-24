@@ -82,7 +82,6 @@ async function seedPendingBlast(): Promise<{
 			workflow: "nuvs",
 			ready: true,
 			results: { hits: [{ index: 0, sequence: "ATGCATGC", orfs: [] }] },
-			sample: "0",
 			user_id: userId,
 			index_id: indexId,
 		})

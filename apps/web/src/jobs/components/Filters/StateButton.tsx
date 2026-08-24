@@ -1,6 +1,6 @@
 import { cn } from "@app/cn";
 import Badge from "@base/Badge";
-import BoxGroupSection from "@base/BoxGroupSection";
+import { BoxGroupSection } from "@base/Box";
 import Checkbox from "@base/Checkbox";
 
 type StateButtonProps = {

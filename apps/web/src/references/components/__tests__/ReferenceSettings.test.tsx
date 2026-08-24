@@ -22,7 +22,7 @@ test("GlobalSourceTypes", async () => {
 		"div",
 	) as HTMLElement;
 	await userEvent.click(
-		within(cloneRow).getByRole("button", { name: "remove" }),
+		within(cloneRow).getByRole("button", { name: "Remove" }),
 	);
 
 	expect(updateSettings).toHaveBeenCalledWith({

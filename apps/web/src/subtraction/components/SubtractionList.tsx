@@ -1,9 +1,7 @@
-import BoxGroup from "@base/BoxGroup";
+import { BoxGroup } from "@base/Box";
 import ListEmpty from "@base/ListEmpty";
 import Pagination from "@base/Pagination";
-import ViewHeader from "@base/ViewHeader";
-import ViewHeaderTitle from "@base/ViewHeaderTitle";
-import ViewHeaderTitleBadge from "@base/ViewHeaderTitleBadge";
+import { ViewHeader, ViewHeaderTitle, ViewHeaderTitleBadge } from "@base/View";
 import { Scissors } from "lucide-react";
 import { useSuspenseSubtractions } from "../queries";
 import { SubtractionItem } from "./SubtractionItem";

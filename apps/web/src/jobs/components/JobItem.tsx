@@ -1,6 +1,6 @@
 import { getWorkflowDisplayName } from "@app/utils";
 import Attribution from "@base/Attribution";
-import BoxGroupSection from "@base/BoxGroupSection";
+import { BoxGroupSection } from "@base/Box";
 import Link from "@base/Link";
 import ProgressCircle from "@base/ProgressCircle";
 import JobStateIcon from "@jobs/components/JobStateIcon";

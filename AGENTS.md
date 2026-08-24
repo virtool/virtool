@@ -31,6 +31,7 @@ Apps bundle; packages stay source.
 | [`@virtool/contracts`](packages/contracts/README.md) | Shared wire shapes and isolated server-only helpers. |
 | [`@virtool/data`](packages/data/README.md) | Server-only Drizzle schema mirror and Postgres queries. |
 | [`@virtool/logger`](packages/logger/README.md) | Shared pino configuration. |
+| [`@virtool/ncbi`](packages/ncbi/README.md) | NCBI Nucleotide and Taxonomy client. |
 | [`@virtool/sentry`](packages/sentry/README.md) | Shared browser and server Sentry wiring. |
 | [`@virtool/service`](packages/service/README.md) | Shared lifecycle utilities for long-lived services. |
 | [`@virtool/sqlite`](packages/sqlite/README.md) | Reference-index SQLite schema, reader, and writer. |
@@ -154,7 +155,11 @@ streaming interface, key and cleanup contracts, configuration, backend
 behavior, and testing.
 
 Third-party requests identify themselves with `USER_AGENT` from
-`@virtool/data/userAgent`; see [packages/data/README.md](packages/data/README.md).
+`@virtool/contracts/userAgent`; see [packages/data/README.md](packages/data/README.md).
+
+NCBI Nucleotide and Taxonomy requests go through `@virtool/ncbi`. It is the
+only E-utilities client; see [packages/ncbi/README.md](packages/ncbi/README.md).
+NCBI BLAST is a different API and stays in `@virtool/data`.
 
 ## Workflows
 
@@ -234,6 +239,7 @@ type(scope): description
 - Releases are automated with semantic-release. Only `feat` (minor) and `fix`
   (patch) trigger a release; use them for every user-visible change.
 - Don't push or create PRs unless asked.
+- Never amend or force-push a pushed branch. Add follow-up commits instead.
 - Don't include a Test plan section in pull request descriptions or comments.
 - Don't use `git -C <path>` unless necessary. It triggers permission prompts
   that aren't worth the trouble. Run git commands from the working directory

@@ -217,11 +217,11 @@ export function useUpdateSample(sampleId: number) {
 }
 
 /**
- * Initialize a mutator for removing a sample
+ * Initialize a mutator for deleting a sample
  *
- * @returns A mutator for removing a sample
+ * @returns A mutator for deleting a sample
  */
-export function useRemoveSample() {
+export function useDeleteSample() {
 	return useMutation<null, Error, { sampleId: number }>({
 		mutationFn: ({ sampleId }) =>
 			deleteSampleFn({ data: { sampleId } }) as Promise<null>,

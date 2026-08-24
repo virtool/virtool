@@ -1,0 +1,73 @@
+<?xml version="1.0" ?>
+<!DOCTYPE TaxaSet PUBLIC "-//NLM//DTD Taxon, 14th January 2002//EN" "https://www.ncbi.nlm.nih.gov/entrez/query/DTD/taxon.dtd">
+<TaxaSet><Taxon>
+    <TaxId>223262</TaxId>
+    <ScientificName>East African cassava mosaic Cameroon virus</ScientificName>
+    <OtherNames>
+        <EquivalentName>cassava mosaic virus</EquivalentName>
+    </OtherNames>
+    <ParentTaxId>3426860</ParentTaxId>
+    <Rank>no rank</Rank>
+    <Division>Viruses</Division>
+    <GeneticCode>
+        <GCId>1</GCId>
+        <GCName>Standard</GCName>
+    </GeneticCode>
+    <MitoGeneticCode>
+        <MGCId>0</MGCId>
+        <MGCName>Unspecified</MGCName>
+    </MitoGeneticCode>
+    <Lineage>Viruses; Floreoviria; Shotokuvirae; Cressdnaviricota; Repensiviricetes; Geplafuvirales; Geminiviridae; Begomovirus; Begomovirus manihotiscameroonense</Lineage>
+    <LineageEx>
+        <Taxon>
+            <TaxId>10239</TaxId>
+            <ScientificName>Viruses</ScientificName>
+            <Rank>acellular root</Rank>
+        </Taxon>
+        <Taxon>
+            <TaxId>2731342</TaxId>
+            <ScientificName>Floreoviria</ScientificName>
+            <Rank>realm</Rank>
+        </Taxon>
+        <Taxon>
+            <TaxId>2732092</TaxId>
+            <ScientificName>Shotokuvirae</ScientificName>
+            <Rank>kingdom</Rank>
+        </Taxon>
+        <Taxon>
+            <TaxId>2732416</TaxId>
+            <ScientificName>Cressdnaviricota</ScientificName>
+            <Rank>phylum</Rank>
+        </Taxon>
+        <Taxon>
+            <TaxId>2732424</TaxId>
+            <ScientificName>Repensiviricetes</ScientificName>
+            <Rank>class</Rank>
+        </Taxon>
+        <Taxon>
+            <TaxId>2732539</TaxId>
+            <ScientificName>Geplafuvirales</ScientificName>
+            <Rank>order</Rank>
+        </Taxon>
+        <Taxon>
+            <TaxId>10811</TaxId>
+            <ScientificName>Geminiviridae</ScientificName>
+            <Rank>family</Rank>
+        </Taxon>
+        <Taxon>
+            <TaxId>10814</TaxId>
+            <ScientificName>Begomovirus</ScientificName>
+            <Rank>genus</Rank>
+        </Taxon>
+        <Taxon>
+            <TaxId>3426860</TaxId>
+            <ScientificName>Begomovirus manihotiscameroonense</ScientificName>
+            <Rank>species</Rank>
+        </Taxon>
+    </LineageEx>
+    <CreateDate>2002/05/08 12:00:00</CreateDate>
+    <UpdateDate>2025/06/03 12:49:10</UpdateDate>
+    <PubDate>2003/03/08 18:01:00</PubDate>
+</Taxon>
+
+</TaxaSet>

@@ -1,5 +1,5 @@
 import DeleteDialog from "@base/DeleteDialog";
-import IconButton from "@base/IconButton";
+import { IconButton } from "@base/Icon";
 import { Trash } from "lucide-react";
 
 type DeleteBannerProps = {
@@ -21,7 +21,7 @@ export default function DeleteBanner({
 			name={message}
 			noun="Banner"
 			onConfirm={onConfirm}
-			trigger={<IconButton color="red" IconComponent={Trash} tip="delete" />}
+			trigger={<IconButton color="red" IconComponent={Trash} tip="Delete" />}
 		/>
 	);
 }

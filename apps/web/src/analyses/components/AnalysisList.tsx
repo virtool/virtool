@@ -1,10 +1,8 @@
 import type { AnalysesListSearch } from "@analyses/listSearch";
 import { pluralize } from "@app/format";
-import BoxGroup from "@base/BoxGroup";
-import BoxGroupTable from "@base/BoxGroupTable";
-import Button from "@base/Button";
-import { buttonVariants } from "@base/buttonVariants";
-import ContainerNarrow from "@base/ContainerNarrow";
+import { BoxGroup, BoxGroupTable } from "@base/Box";
+import Button, { buttonVariants } from "@base/Button";
+import { ContainerNarrow } from "@base/Container";
 import ListEmpty from "@base/ListEmpty";
 import LoadingPlaceholder from "@base/LoadingPlaceholder";
 import Pagination from "@base/Pagination";

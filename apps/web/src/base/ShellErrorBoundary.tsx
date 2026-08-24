@@ -1,6 +1,6 @@
+import Button from "@base/Button";
 import * as Sentry from "@sentry/tanstackstart-react";
 import { Component, type ErrorInfo, type ReactNode } from "react";
-import Button from "./Button";
 import ErrorState from "./ErrorState";
 import LoadingPlaceholder from "./LoadingPlaceholder";
 

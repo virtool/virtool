@@ -1,8 +1,8 @@
 import { cn } from "@app/cn";
+import Icon from "@base/Icon";
 import { Check, Minus } from "lucide-react";
 import { Checkbox as CheckboxPrimitive } from "radix-ui";
 import type { MouseEvent, ReactNode } from "react";
-import Icon from "./Icon";
 
 type CheckboxProps = {
 	ariaLabel?: string;

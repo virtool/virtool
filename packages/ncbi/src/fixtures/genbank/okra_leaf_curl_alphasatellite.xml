@@ -1,0 +1,217 @@
+<?xml version="1.0" encoding="UTF-8"  ?>
+<!DOCTYPE GBSet PUBLIC "-//NCBI//NCBI GBSeq/EN" "https://www.ncbi.nlm.nih.gov/dtd/NCBI_GBSeq.dtd">
+<GBSet>
+  <GBSeq>
+
+    <GBSeq_locus>NC_005954</GBSeq_locus>
+    <GBSeq_length>1377</GBSeq_length>
+    <GBSeq_strandedness>double</GBSeq_strandedness>
+    <GBSeq_moltype>DNA</GBSeq_moltype>
+    <GBSeq_topology>circular</GBSeq_topology>
+    <GBSeq_division>VRL</GBSeq_division>
+    <GBSeq_update-date>13-AUG-2018</GBSeq_update-date>
+    <GBSeq_create-date>30-JUN-2004</GBSeq_create-date>
+    <GBSeq_definition>Okra leaf curl alphasatellite rep gene for replication associated protein, clone NOB-3</GBSeq_definition>
+    <GBSeq_primary-accession>NC_005954</GBSeq_primary-accession>
+    <GBSeq_accession-version>NC_005954.1</GBSeq_accession-version>
+    <GBSeq_other-seqids>
+      <GBSeqid>ref|NC_005954.1|</GBSeqid>
+      <GBSeqid>gnl|NCBI_GENOMES|17765</GBSeqid>
+      <GBSeqid>gi|49487495</GBSeqid>
+    </GBSeq_other-seqids>
+    <GBSeq_project>PRJNA485481</GBSeq_project>
+    <GBSeq_keywords>
+      <GBKeyword>RefSeq</GBKeyword>
+      <GBKeyword>rep gene</GBKeyword>
+      <GBKeyword>replication associated protein</GBKeyword>
+    </GBSeq_keywords>
+    <GBSeq_source>Okra leaf curl alphasatellite</GBSeq_source>
+    <GBSeq_organism>Okra leaf curl alphasatellite</GBSeq_organism>
+    <GBSeq_taxonomy>Viruses; Viruses incertae sedis; Alphasatellitidae; Geminialphasatellitinae</GBSeq_taxonomy>
+    <GBSeq_references>
+      <GBReference>
+        <GBReference_reference>1</GBReference_reference>
+        <GBReference_position>1..1377</GBReference_position>
+        <GBReference_authors>
+          <GBAuthor>Briddon,R.W.</GBAuthor>
+          <GBAuthor>Bull,S.E.</GBAuthor>
+          <GBAuthor>Amin,I.</GBAuthor>
+          <GBAuthor>Mansoor,S.</GBAuthor>
+          <GBAuthor>Bedford,I.D.</GBAuthor>
+          <GBAuthor>Rishi,N.</GBAuthor>
+          <GBAuthor>Siwatch,S.S.</GBAuthor>
+          <GBAuthor>Zafar,Y.</GBAuthor>
+          <GBAuthor>Abdel-Salam,A.M.</GBAuthor>
+          <GBAuthor>Markham,P.G.</GBAuthor>
+        </GBReference_authors>
+        <GBReference_title>Diversity of DNA 1: a satellite-like molecule associated with monopartite begomovirus-DNA beta complexes</GBReference_title>
+        <GBReference_journal>Virology 324 (2), 462-474 (2004)</GBReference_journal>
+        <GBReference_xref>
+          <GBXref>
+            <GBXref_dbname>doi</GBXref_dbname>
+            <GBXref_id>10.1016/j.virol.2004.03.041</GBXref_id>
+          </GBXref>
+        </GBReference_xref>
+        <GBReference_pubmed>15207631</GBReference_pubmed>
+      </GBReference>
+      <GBReference>
+        <GBReference_reference>2</GBReference_reference>
+        <GBReference_position>1..1377</GBReference_position>
+        <GBReference_consortium>NCBI Genome Project</GBReference_consortium>
+        <GBReference_title>Direct Submission</GBReference_title>
+        <GBReference_journal>Submitted (30-JUN-2004) National Center for Biotechnology Information, NIH, Bethesda, MD 20894, USA</GBReference_journal>
+      </GBReference>
+      <GBReference>
+        <GBReference_reference>3</GBReference_reference>
+        <GBReference_position>1..1377</GBReference_position>
+        <GBReference_authors>
+          <GBAuthor>Briddon,R.W.</GBAuthor>
+        </GBReference_authors>
+        <GBReference_title>Direct Submission</GBReference_title>
+        <GBReference_journal>Submitted (24-OCT-2002) Briddon R.W., Dept. of Disease and Stress Biology, John Innes Centre, Coney Lane, Norwich, NR4 7UH, UNITED KINGDOM</GBReference_journal>
+      </GBReference>
+    </GBSeq_references>
+    <GBSeq_comment>PROVISIONAL REFSEQ: This record has not yet been subject to final NCBI review. The reference sequence is identical to AJ512954.; COMPLETENESS: full length.</GBSeq_comment>
+    <GBSeq_feature-table>
+      <GBFeature>
+        <GBFeature_key>source</GBFeature_key>
+        <GBFeature_location>1..1377</GBFeature_location>
+        <GBFeature_intervals>
+          <GBInterval>
+            <GBInterval_from>1</GBInterval_from>
+            <GBInterval_to>1377</GBInterval_to>
+            <GBInterval_accession>NC_005954.1</GBInterval_accession>
+          </GBInterval>
+        </GBFeature_intervals>
+        <GBFeature_quals>
+          <GBQualifier>
+            <GBQualifier_name>organism</GBQualifier_name>
+            <GBQualifier_value>Okra leaf curl alphasatellite</GBQualifier_value>
+          </GBQualifier>
+          <GBQualifier>
+            <GBQualifier_name>mol_type</GBQualifier_name>
+            <GBQualifier_value>genomic DNA</GBQualifier_value>
+          </GBQualifier>
+          <GBQualifier>
+            <GBQualifier_name>host</GBQualifier_name>
+            <GBQualifier_value>Okra</GBQualifier_value>
+          </GBQualifier>
+          <GBQualifier>
+            <GBQualifier_name>db_xref</GBQualifier_name>
+            <GBQualifier_value>taxon:518829</GBQualifier_value>
+          </GBQualifier>
+          <GBQualifier>
+            <GBQualifier_name>clone</GBQualifier_name>
+            <GBQualifier_value>NOB-3</GBQualifier_value>
+          </GBQualifier>
+          <GBQualifier>
+            <GBQualifier_name>tissue_type</GBQualifier_name>
+            <GBQualifier_value>leaf</GBQualifier_value>
+          </GBQualifier>
+          <GBQualifier>
+            <GBQualifier_name>geo_loc_name</GBQualifier_name>
+            <GBQualifier_value>Pakistan</GBQualifier_value>
+          </GBQualifier>
+        </GBFeature_quals>
+      </GBFeature>
+      <GBFeature>
+        <GBFeature_key>gene</GBFeature_key>
+        <GBFeature_location>80..1027</GBFeature_location>
+        <GBFeature_intervals>
+          <GBInterval>
+            <GBInterval_from>80</GBInterval_from>
+            <GBInterval_to>1027</GBInterval_to>
+            <GBInterval_accession>NC_005954.1</GBInterval_accession>
+          </GBInterval>
+        </GBFeature_intervals>
+        <GBFeature_quals>
+          <GBQualifier>
+            <GBQualifier_name>gene</GBQualifier_name>
+            <GBQualifier_value>rep</GBQualifier_value>
+          </GBQualifier>
+          <GBQualifier>
+            <GBQualifier_name>locus_tag</GBQualifier_name>
+            <GBQualifier_value>NPV_gp1</GBQualifier_value>
+          </GBQualifier>
+          <GBQualifier>
+            <GBQualifier_name>db_xref</GBQualifier_name>
+            <GBQualifier_value>GeneID:2853605</GBQualifier_value>
+          </GBQualifier>
+        </GBFeature_quals>
+      </GBFeature>
+      <GBFeature>
+        <GBFeature_key>CDS</GBFeature_key>
+        <GBFeature_location>80..1027</GBFeature_location>
+        <GBFeature_intervals>
+          <GBInterval>
+            <GBInterval_from>80</GBInterval_from>
+            <GBInterval_to>1027</GBInterval_to>
+            <GBInterval_accession>NC_005954.1</GBInterval_accession>
+          </GBInterval>
+        </GBFeature_intervals>
+        <GBFeature_quals>
+          <GBQualifier>
+            <GBQualifier_name>gene</GBQualifier_name>
+            <GBQualifier_value>rep</GBQualifier_value>
+          </GBQualifier>
+          <GBQualifier>
+            <GBQualifier_name>locus_tag</GBQualifier_name>
+            <GBQualifier_value>NPV_gp1</GBQualifier_value>
+          </GBQualifier>
+          <GBQualifier>
+            <GBQualifier_name>function</GBQualifier_name>
+            <GBQualifier_value>involved in initiation of rolling circle replication</GBQualifier_value>
+          </GBQualifier>
+          <GBQualifier>
+            <GBQualifier_name>codon_start</GBQualifier_name>
+            <GBQualifier_value>1</GBQualifier_value>
+          </GBQualifier>
+          <GBQualifier>
+            <GBQualifier_name>transl_table</GBQualifier_name>
+            <GBQualifier_value>1</GBQualifier_value>
+          </GBQualifier>
+          <GBQualifier>
+            <GBQualifier_name>product</GBQualifier_name>
+            <GBQualifier_value>replication associated protein</GBQualifier_value>
+          </GBQualifier>
+          <GBQualifier>
+            <GBQualifier_name>protein_id</GBQualifier_name>
+            <GBQualifier_value>YP_031730.1</GBQualifier_value>
+          </GBQualifier>
+          <GBQualifier>
+            <GBQualifier_name>db_xref</GBQualifier_name>
+            <GBQualifier_value>GOA:Q6HA18</GBQualifier_value>
+          </GBQualifier>
+          <GBQualifier>
+            <GBQualifier_name>db_xref</GBQualifier_name>
+            <GBQualifier_value>InterPro:IPR000605</GBQualifier_value>
+          </GBQualifier>
+          <GBQualifier>
+            <GBQualifier_name>db_xref</GBQualifier_name>
+            <GBQualifier_value>InterPro:IPR003365</GBQualifier_value>
+          </GBQualifier>
+          <GBQualifier>
+            <GBQualifier_name>db_xref</GBQualifier_name>
+            <GBQualifier_value>UniProtKB/TrEMBL:Q6HA18</GBQualifier_value>
+          </GBQualifier>
+          <GBQualifier>
+            <GBQualifier_name>db_xref</GBQualifier_name>
+            <GBQualifier_value>GeneID:2853605</GBQualifier_value>
+          </GBQualifier>
+          <GBQualifier>
+            <GBQualifier_name>translation</GBQualifier_name>
+            <GBQualifier_value>MAAIKSHWWCFTVFFLSATAPDLVPLFENTHVSYACWQEEESPTTKRRHLQGYLQLKGQRTLNQVKAIFGDLKPHLEKQRARKTDDARDYCMKPETRVSGPFEFGEYCPAGSHKRRQRELVIRSPVRMAEENPSVFRRVKAKIAEEEFQKSAHEIQISNLKSWQSRLKTLLERDPDDRTILWVYGPNGGEGKSTFARDLYRSGSWFYTRGGSADNVAYQYIGCLGNNIVFDIPRDKKEYLQYSLIEMFKDRLIVSNKYEPLMAPLLNCIHVVVMSNFLPDFEKISQDRVHVIPCIPCGVCLKHHNINDKCDDYVD</GBQualifier_value>
+          </GBQualifier>
+        </GBFeature_quals>
+      </GBFeature>
+    </GBSeq_feature-table>
+    <GBSeq_sequence>accccgcctcgagactttagcccgagaccctccgtacagttttttgtgctctcgcttatatttctgtcttctgcgatagatggctgcaattaagtcacattggtggtgtttcacggtgttcttcctctctgctactgcacctgacttggtgcctctgttcgaaaacactcacgtgagttatgcttgttggcaagaagaggagtctccgacgacgaaacgtcgccaccttcaaggatacctgcaattgaagggtcagaggaccctgaaccaggtgaaggccatatttggggatttgaagccccatcttgagaaacagcgagctcgtaagacagacgatgctcgcgattactgtatgaaacccgaaactagggtttctggcccctttgaatttggggaatactgtcctgctggttctcacaaacgacgacaaagggaactcgtaattcgatctccggtgagaatggcagaggaaaatccgtccgtcttccgacgagtaaaggcaaagattgctgaggaagaattccagaagagcgctcatgagattcaaatttcaaatttgaaatcttggcaatcgcgcctaaagacgctcctggagagggacccagacgaccgcactattctctgggtttacggacctaatggtggggaagggaaatccactttcgccagagacctatacagaagtgggtcctggttctatacacgtggaggatctgcagataatgtagcttaccagtacataggatgtttaggcaataatattgtatttgatattcctcgtgataagaaggagtatcttcagtatagtttaatagagatgtttaaggatagattaatagttagtaataagtacgagcctcttatggcccctttgcttaattgtattcatgttgtagttatgtctaattttctcccagactttgagaagattagtcaggatagagtccatgtaatcccatgtataccatgtggtgtttgtcttaaacaccataatattaatgataaatgtgatgattatgtggattaattatttttgtttcttgaatacaagaaagaatgaaatgaaaaaaaaacaaagaaaaaacatgagccttctattattttaagataacagttgccgcgcagcggcattcaaaaaaaaaatggaaaagaaaaataaaatgaaaaagaaaaataaaatgtcttattaaaacgacgacgtattgaataaattgatctgggagtaaaatgtaaatattggaaacttgcgggcttgcgctataaatatttaaaagttacggttaagcggagtaaatgtagaagtcttcaggggtatgtgtttgcaattattttggtctctcagctataaataacacgtcacgaggcgggtgtagtatt</GBSeq_sequence>
+    <GBSeq_xrefs>
+      <GBXref>
+        <GBXref_dbname>BioProject</GBXref_dbname>
+        <GBXref_id>PRJNA485481</GBXref_id>
+      </GBXref>
+    </GBSeq_xrefs>
+  </GBSeq>
+
+</GBSet>

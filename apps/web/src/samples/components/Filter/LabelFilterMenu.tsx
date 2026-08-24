@@ -1,5 +1,4 @@
-import FilterMenuCheckboxItem from "@base/FilterMenuCheckboxItem";
-import FilterMenuContent from "@base/FilterMenuContent";
+import { FilterMenuCheckboxItem, FilterMenuContent } from "@base/Filter";
 import { getHexColor } from "@samples/labels";
 import type { Label } from "@virtool/contracts";
 

@@ -39,9 +39,6 @@ export const analyses = pgTable(
 		// The workflow's raw output, written by the jobs API. Opaque here: its
 		// internals are the worker's contract, not this server's.
 		results: jsonb("results").$type<Record<string, unknown>>(),
-		// The legacy `sample` string column is needed to locate a migrated
-		// analysis's slug-prefixed objects in storage.
-		sample: text("sample").notNull(),
 		sample_id: bigint("sample_id", { mode: "number" }),
 		index_id: bigint("index_id", { mode: "number" }).notNull(),
 		user_id: integer("user_id").notNull(),
@@ -69,7 +66,6 @@ export const analyses = pgTable(
 			name: "analyses_job_id_fkey",
 		}),
 		unique("analyses_legacy_id_key").on(table.legacy_id),
-		index("ix_analyses_sample").on(table.sample),
 		index("ix_analyses_sample_id_workflow").on(table.sample_id, table.workflow),
 	],
 );

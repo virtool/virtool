@@ -1,4 +1,4 @@
-import { buttonVariants } from "@base/buttonVariants";
+import { buttonVariants } from "@base/Button";
 import {
 	Dialog,
 	DialogContent,
@@ -7,10 +7,7 @@ import {
 	DialogTitle,
 	DialogTrigger,
 } from "@base/Dialog";
-import InputError from "@base/InputError";
-import InputGroup from "@base/InputGroup";
-import InputLabel from "@base/InputLabel";
-import InputSimple from "@base/InputSimple";
+import { InputError, InputGroup, InputLabel, InputSimple } from "@base/Input";
 import LoadingPlaceholder from "@base/LoadingPlaceholder";
 import QueryError from "@base/QueryError";
 import SaveButton from "@base/SaveButton";

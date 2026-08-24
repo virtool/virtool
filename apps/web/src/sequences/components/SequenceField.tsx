@@ -1,7 +1,5 @@
 import Badge from "@base/Badge";
-import InputError from "@base/InputError";
-import InputGroup from "@base/InputGroup";
-import InputLabel from "@base/InputLabel";
+import { InputError, InputGroup, InputLabel } from "@base/Input";
 import TextArea from "@base/TextArea";
 import { useFormContext } from "react-hook-form";
 

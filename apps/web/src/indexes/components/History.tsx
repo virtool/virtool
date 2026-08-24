@@ -1,6 +1,4 @@
-import BoxGroup from "@base/BoxGroup";
-import BoxGroupHeader from "@base/BoxGroupHeader";
-import BoxGroupSection from "@base/BoxGroupSection";
+import { BoxGroup, BoxGroupHeader, BoxGroupSection } from "@base/Box";
 import LoadingPlaceholder from "@base/LoadingPlaceholder";
 import type { UnbuiltChangesSearchResult } from "@virtool/contracts";
 import { sortBy } from "es-toolkit";

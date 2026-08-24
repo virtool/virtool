@@ -1,10 +1,11 @@
 //! Assert the CLI reproduces the golden-vector corpus exactly.
 //!
 //! The corpus in `tests/golden/vectors.json` was captured from the PyO3 build
-//! of `workflow-pathoscope` before the crate moved here — see
-//! `tests/golden/generate.py`. Behaviour is pinned bug-for-bug, so every value
-//! has to match, floats included. **Never edit the corpus to make a failing
-//! comparison pass.**
+//! of `workflow-pathoscope` before the crate moved here. The script that
+//! captured it is gone, and there is no supported way to regenerate it from
+//! this crate — `git log --diff-filter=D` under `tests/golden/` finds it if it
+//! is wanted. Behaviour is pinned bug-for-bug, so every value has to match,
+//! floats included. **Never edit the corpus to make a failing comparison pass.**
 //!
 //! Floats are compared with `f64::to_bits`, not with a tolerance and not as
 //! text. "Equivalent within tolerance" is not the bar for a diagnostic

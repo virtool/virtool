@@ -1,4 +1,4 @@
-import BoxGroupSection from "@base/BoxGroupSection";
+import { BoxGroupSection } from "@base/Box";
 import { Empty, EmptyDescription, EmptyMedia, EmptyTitle } from "@base/Empty";
 import Link from "@base/Link";
 import RelativeTime from "@base/RelativeTime";

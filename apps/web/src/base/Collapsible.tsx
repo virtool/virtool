@@ -1,8 +1,8 @@
 import { cn } from "@app/cn";
+import Icon from "@base/Icon";
 import { ChevronDown } from "lucide-react";
 import { Collapsible as CollapsiblePrimitive } from "radix-ui";
 import type { ComponentProps } from "react";
-import Icon from "./Icon";
 
 /**
  * A disclosure that shows and hides its content. Control it with `open` and

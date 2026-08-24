@@ -1,8 +1,8 @@
 import { useCheckAdminRoleOrPermission } from "@administration/hooks";
 import Attribution from "@base/Attribution";
 import Badge from "@base/Badge";
-import BoxGroupSection from "@base/BoxGroupSection";
-import IconButton from "@base/IconButton";
+import { BoxGroupSection } from "@base/Box";
+import { IconButton } from "@base/Icon";
 import Link from "@base/Link";
 import ProgressCircle from "@base/ProgressCircle";
 import { useFetchTask } from "@tasks/queries";

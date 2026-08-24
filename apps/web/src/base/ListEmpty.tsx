@@ -1,6 +1,6 @@
+import Box from "@base/Box";
 import type { LucideIcon } from "lucide-react";
 import type { ReactNode } from "react";
-import Box from "./Box";
 import {
 	Empty,
 	EmptyContent,

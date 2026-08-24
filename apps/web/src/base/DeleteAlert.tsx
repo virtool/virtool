@@ -1,5 +1,5 @@
+import Button from "@base/Button";
 import Alert from "./Alert";
-import Button from "./Button";
 
 type DeleteAlertProps = {
 	buttonText: string;

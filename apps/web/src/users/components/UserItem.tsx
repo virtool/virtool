@@ -1,6 +1,6 @@
 import { useCheckAdminRole } from "@administration/hooks";
-import BoxGroupSection from "@base/BoxGroupSection";
-import InitialIcon from "@base/InitialIcon";
+import { BoxGroupSection } from "@base/Box";
+import { InitialIcon } from "@base/Icon";
 import Label from "@base/Label";
 import Link from "@base/Link";
 import type { AdministratorRoleName, GroupMinimal } from "@virtool/contracts";

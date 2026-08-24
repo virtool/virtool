@@ -1,7 +1,7 @@
 import { cn } from "@app/cn";
 import { pluralize } from "@app/format";
 import { useTimedReset } from "@app/hooks";
-import FadeOut from "@base/FadeOut";
+import FadeOut from "./FadeOut";
 
 type CreatedCountProps = {
 	className?: string;

@@ -165,8 +165,6 @@ async function seedAnalysis(
 				workflow: "nuvs",
 				ready: true,
 				results: null,
-				// The legacy storage slug, NOT NULL upstream.
-				sample: String(overrides.sample_id ?? 0),
 				sample_id: overrides.sample_id ?? null,
 				index_id: indexId,
 				user_id: ownerId,
@@ -687,7 +685,6 @@ describe("createAnalysis", () => {
 			.from(analyses)
 			.where(eq(analyses.id, analysis.id));
 
-		expect(row?.sample).toBe(String(sampleId));
 		expect(row?.index_id).toBe(indexId);
 		expect(row?.user_id).toBe(ownerId);
 
@@ -708,25 +705,6 @@ describe("createAnalysis", () => {
 		expect(job?.workflow).toBe("nuvs");
 		expect(job?.state).toBe("pending");
 		expect(job?.user_id).toBe(ownerId);
-	});
-
-	it("uses the sample's legacy storage id when it has one", async () => {
-		const sampleId = await seedSample({ legacy_id: "abc123" });
-
-		const analysis = await createAnalysis(db, {
-			sampleId,
-			referenceId,
-			subtractionIds: [],
-			workflow: "nuvs",
-			userId: ownerId,
-		});
-
-		const [row] = await db
-			.select({ sample: analyses.sample })
-			.from(analyses)
-			.where(eq(analyses.id, analysis.id));
-
-		expect(row?.sample).toBe("abc123");
 	});
 
 	it("picks the reference's highest-versioned ready index", async () => {
@@ -902,7 +880,6 @@ describe("deleteAnalysis", () => {
 
 		const analysisId = await seedAnalysis({
 			sample_id: sampleId,
-			sample: String(sampleId),
 			legacy_id: null,
 		});
 
@@ -938,7 +915,6 @@ describe("deleteAnalysis", () => {
 
 		const analysisId = await seedAnalysis({
 			sample_id: sampleId,
-			sample: "smpl",
 			legacy_id: "abc",
 		});
 

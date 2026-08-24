@@ -1,6 +1,5 @@
-import BoxGroupSection from "@base/BoxGroupSection";
-import IconButton from "@base/IconButton";
-import InitialIcon from "@base/InitialIcon";
+import { BoxGroupSection } from "@base/Box";
+import { IconButton, InitialIcon } from "@base/Icon";
 import { Pencil, Trash } from "lucide-react";
 
 type MemberItemIconProps = {
@@ -57,7 +56,7 @@ export default function MemberItem({
 					<IconButton
 						IconComponent={Trash}
 						color="red"
-						tip="remove member"
+						tip="Remove member"
 						onClick={() => onRemove(id)}
 					/>
 				</span>

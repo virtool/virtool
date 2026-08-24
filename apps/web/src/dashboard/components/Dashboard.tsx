@@ -1,7 +1,6 @@
 import { useSuspenseAccount } from "@account/account";
-import ContainerNarrow from "@base/ContainerNarrow";
-import ViewHeader from "@base/ViewHeader";
-import ViewHeaderTitle from "@base/ViewHeaderTitle";
+import { ContainerNarrow } from "@base/Container";
+import { ViewHeader, ViewHeaderTitle } from "@base/View";
 import ActiveJobs from "./ActiveJobs";
 import RecentAnalyses from "./RecentAnalyses";
 import RecentSamples from "./RecentSamples";

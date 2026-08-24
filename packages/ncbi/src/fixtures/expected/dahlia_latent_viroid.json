@@ -1,0 +1,74 @@
+{
+	"genbank": {
+		"NC_020160.1": {
+			"accession": "NC_020160",
+			"accession_version": "NC_020160.1",
+			"comment": "PROVISIONAL REFSEQ: This record has not yet been subject to final NCBI review. The reference sequence is identical to JX263426.; COMPLETENESS: full length.",
+			"definition": "Dahlia latent viroid, complete sequence",
+			"moltype": "RNA",
+			"organism": "Dahlia latent viroid",
+			"refseq": true,
+			"sequence": "CAGGTCTTCTAAGGGTTCCTGTGGTGCCTCCCTCCAAGGCCGCGTAGGGAAAGAAAAAGTGAAAGAAAGTGTACCTGAAGAGAGAGAGACTCTCTGAGGAGCCCCGGGGCAACTCCGAGAGTGCTGCGGCAGGAGGAGCCGGGGGCGGAGGTTGTCTCGCTCTTGAGAGCTCCGCTCCTTGTAGCTTTGAGACTACCGCCCTTTTGCTTCCTTCTCGCTGGCTGACTCGAGGACGCGACCGGTGGTACACCAAGAGGTCTCCACCTCCTAGGGTACTTTTTTCTAACACCGATTCCGTACCGAGCGCCGGAGAGTGAAGCGCCCAGGGCTCCAAAGAAGCCC",
+			"source": {
+				"clone": null,
+				"focus": false,
+				"host": "Dahlia pinnata Cav.",
+				"isolate": "4706174",
+				"macronuclear": false,
+				"mol_type": "genomic RNA",
+				"organism": "Dahlia latent viroid",
+				"proviral": false,
+				"segment": null,
+				"strain": null,
+				"taxid": 1278205,
+				"transgenic": false
+			},
+			"strandedness": "single",
+			"topology": "linear"
+		}
+	},
+	"taxonomy": {
+		"id": 1278205,
+		"lineage": [
+			{
+				"id": 10239,
+				"name": "Viruses",
+				"rank": "acellular root"
+			},
+			{
+				"id": 3403061,
+				"name": "Viruses incertae sedis",
+				"rank": "no rank"
+			},
+			{
+				"id": 185751,
+				"name": "Pospiviroidae",
+				"rank": "family"
+			},
+			{
+				"id": 147262,
+				"name": "Hostuviroid",
+				"rank": "genus"
+			},
+			{
+				"id": 3429802,
+				"name": "Hostuviroid latensdahliae",
+				"rank": "species"
+			}
+		],
+		"name": "Dahlia latent viroid",
+		"other_names": {
+			"acronym": [],
+			"equivalent_name": ["Dahlia viroid"],
+			"genbank_acronym": [],
+			"includes": [],
+			"synonym": []
+		},
+		"rank": "no rank",
+		"species": {
+			"id": 3429802,
+			"name": "Hostuviroid latensdahliae",
+			"rank": "species"
+		}
+	}
+}

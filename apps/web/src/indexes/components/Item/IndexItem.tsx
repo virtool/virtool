@@ -1,5 +1,5 @@
 import Attribution from "@base/Attribution";
-import BoxGroupSection from "@base/BoxGroupSection";
+import { BoxGroupSection } from "@base/Box";
 import Link from "@base/Link";
 import type { IndexMinimal } from "@virtool/contracts";
 import { IndexItemDescription } from "./IndexItemDescription";

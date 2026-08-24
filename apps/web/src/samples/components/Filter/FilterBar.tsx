@@ -1,8 +1,10 @@
 import { getWorkflowDisplayName } from "@app/utils";
-import BaseFilterBar from "@base/FilterBar";
-import FilterChip from "@base/FilterChip";
-import FilterGroup from "@base/FilterGroup";
-import PopoverContent from "@base/PopoverContent";
+import {
+	FilterBar as BaseFilterBar,
+	FilterChip,
+	FilterGroup,
+} from "@base/Filter";
+import { PopoverContent } from "@base/Popover";
 import { type DateFilter, getDateFilterLabel } from "@samples/dateFilter";
 import { getHexColor } from "@samples/labels";
 import {

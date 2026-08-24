@@ -28,6 +28,7 @@
 		"@virtool/contracts": "workspace:*",
 		"@virtool/data": "workspace:*",
 		"@virtool/logger": "workspace:*",
+		"@virtool/ncbi": "workspace:*",
 		"@virtool/sentry": "workspace:*",
 		"@virtool/storage": "workspace:*",
 		"bcrypt": "^6.0.0",

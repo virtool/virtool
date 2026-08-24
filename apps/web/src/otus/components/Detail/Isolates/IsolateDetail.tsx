@@ -1,6 +1,6 @@
 import { formatIsolateName } from "@app/utils";
 import Alert from "@base/Alert";
-import IconButton from "@base/IconButton";
+import { IconButton } from "@base/Icon";
 import { useCurrentOtuContext } from "@otus/components/CurrentOtuContext";
 import { useSetIsolateAsDefault } from "@otus/queries";
 import { DownloadLink } from "@references/components/Detail/DownloadLink";
@@ -102,7 +102,7 @@ export default function IsolateDetail() {
 							<IconButton
 								IconComponent={Trash}
 								color="red"
-								tip="delete"
+								tip="Delete"
 								onClick={() => setOpenDelete(true)}
 							/>
 						</>

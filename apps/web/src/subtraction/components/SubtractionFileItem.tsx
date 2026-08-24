@@ -1,5 +1,5 @@
 import Attribution from "@base/Attribution";
-import SelectBoxGroupSection from "@base/SelectBoxGroupSection";
+import { SelectBoxGroupSection } from "@base/Select";
 import type { UserNested } from "@virtool/contracts";
 
 type SubtractionFileItemProps = {

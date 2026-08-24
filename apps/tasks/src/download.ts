@@ -3,7 +3,7 @@
 import { createWriteStream } from "node:fs";
 import { pipeline } from "node:stream/promises";
 import { setTimeout as delay } from "node:timers/promises";
-import { USER_AGENT } from "@virtool/data/userAgent";
+import { USER_AGENT } from "@virtool/contracts/userAgent";
 import type { Logger } from "@virtool/logger";
 
 /**

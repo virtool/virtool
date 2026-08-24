@@ -1,0 +1,70 @@
+<?xml version="1.0" ?>
+<!DOCTYPE TaxaSet PUBLIC "-//NLM//DTD Taxon, 14th January 2002//EN" "https://www.ncbi.nlm.nih.gov/entrez/query/DTD/taxon.dtd">
+<TaxaSet><Taxon>
+    <TaxId>2060511</TaxId>
+    <ScientificName>Babaco mosaic virus</ScientificName>
+    <ParentTaxId>3158379</ParentTaxId>
+    <Rank>no rank</Rank>
+    <Division>Viruses</Division>
+    <GeneticCode>
+        <GCId>1</GCId>
+        <GCName>Standard</GCName>
+    </GeneticCode>
+    <MitoGeneticCode>
+        <MGCId>0</MGCId>
+        <MGCName>Unspecified</MGCName>
+    </MitoGeneticCode>
+    <Lineage>Viruses; Riboviria; Orthornavirae; Kitrinoviricota; Alsuviricetes; Tymovirales; Alphaflexiviridae; Potexvirus; Potexvirus babaci</Lineage>
+    <LineageEx>
+        <Taxon>
+            <TaxId>10239</TaxId>
+            <ScientificName>Viruses</ScientificName>
+            <Rank>acellular root</Rank>
+        </Taxon>
+        <Taxon>
+            <TaxId>2559587</TaxId>
+            <ScientificName>Riboviria</ScientificName>
+            <Rank>realm</Rank>
+        </Taxon>
+        <Taxon>
+            <TaxId>2732396</TaxId>
+            <ScientificName>Orthornavirae</ScientificName>
+            <Rank>kingdom</Rank>
+        </Taxon>
+        <Taxon>
+            <TaxId>2732406</TaxId>
+            <ScientificName>Kitrinoviricota</ScientificName>
+            <Rank>phylum</Rank>
+        </Taxon>
+        <Taxon>
+            <TaxId>2732461</TaxId>
+            <ScientificName>Alsuviricetes</ScientificName>
+            <Rank>class</Rank>
+        </Taxon>
+        <Taxon>
+            <TaxId>675063</TaxId>
+            <ScientificName>Tymovirales</ScientificName>
+            <Rank>order</Rank>
+        </Taxon>
+        <Taxon>
+            <TaxId>675064</TaxId>
+            <ScientificName>Alphaflexiviridae</ScientificName>
+            <Rank>family</Rank>
+        </Taxon>
+        <Taxon>
+            <TaxId>12176</TaxId>
+            <ScientificName>Potexvirus</ScientificName>
+            <Rank>genus</Rank>
+        </Taxon>
+        <Taxon>
+            <TaxId>3158379</TaxId>
+            <ScientificName>Potexvirus babaci</ScientificName>
+            <Rank>species</Rank>
+        </Taxon>
+    </LineageEx>
+    <CreateDate>2017/12/14 15:06:22</CreateDate>
+    <UpdateDate>2024/05/31 13:22:04</UpdateDate>
+    <PubDate>2017/12/28 01:01:55</PubDate>
+</Taxon>
+
+</TaxaSet>

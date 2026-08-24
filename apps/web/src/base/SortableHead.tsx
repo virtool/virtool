@@ -1,8 +1,8 @@
 import { cn } from "@app/cn";
+import Icon from "@base/Icon";
 import type { SortDirection } from "@virtool/contracts";
 import { ChevronDown, ChevronsUpDown, ChevronUp } from "lucide-react";
 import type { ReactNode } from "react";
-import Icon from "./Icon";
 
 type SortableHeadProps<T extends string> = {
 	/** The column label */

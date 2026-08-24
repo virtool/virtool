@@ -10,6 +10,7 @@ import type {
 	HmmStatus,
 	Task,
 } from "@virtool/contracts";
+import { USER_AGENT } from "@virtool/contracts/userAgent";
 import type { Logger } from "@virtool/logger";
 import {
 	HMM_ANNOTATIONS_KEY,
@@ -30,7 +31,6 @@ import {
 import { tasks } from "../db/schema/tasks";
 import { users } from "../db/schema/users";
 import { AppError } from "../errors";
-import { USER_AGENT } from "../userAgent";
 
 /** The task type the runner matches to run an HMM install. */
 export const HMM_INSTALL_TASK_TYPE = "install_hmms";
