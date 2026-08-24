@@ -1,10 +1,5 @@
-import InputGroup from "@base/InputGroup";
-import InputLabel from "@base/InputLabel";
-import InputSimple from "@base/InputSimple";
-import Select from "@base/Select";
-import SelectButton from "@base/SelectButton";
-import SelectContent from "@base/SelectContent";
-import SelectItem from "@base/SelectItem";
+import { InputGroup, InputLabel, InputSimple } from "@base/Input";
+import Select, { SelectButton, SelectContent, SelectItem } from "@base/Select";
 import { capitalize } from "es-toolkit";
 import { ChevronDown } from "lucide-react";
 import { type Control, Controller } from "react-hook-form";

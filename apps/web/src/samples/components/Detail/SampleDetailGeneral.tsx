@@ -1,9 +1,6 @@
 import { toGcContent } from "@app/format";
-import BoxGroup from "@base/BoxGroup";
-import BoxGroupHeader from "@base/BoxGroupHeader";
-import BoxGroupTable from "@base/BoxGroupTable";
-import ContainerNarrow from "@base/ContainerNarrow";
-import ContainerSide from "@base/ContainerSide";
+import { BoxGroup, BoxGroupHeader, BoxGroupTable } from "@base/Box";
+import { ContainerNarrow, ContainerSide } from "@base/Container";
 import JobItem from "@jobs/components/JobItem";
 import { useFetchJob } from "@jobs/queries";
 import { useSuspenseSample } from "@samples/queries";

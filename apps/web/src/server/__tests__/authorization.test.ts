@@ -119,10 +119,10 @@ const MODULES = [
 		)) as SplitServerFnModule,
 	},
 	{
-		path: "../messages/functions.ts",
-		fns: await import("../messages/functions"),
+		path: "../banners/functions.ts",
+		fns: await import("../banners/functions"),
 		handlers: (await import(
-			"../messages/functions.ts?tss-serverfn-split"
+			"../banners/functions.ts?tss-serverfn-split"
 		)) as SplitServerFnModule,
 	},
 	{

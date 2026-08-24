@@ -1,7 +1,7 @@
 import { cn } from "@app/cn";
+import Icon from "@base/Icon";
 import type { LucideIcon } from "lucide-react";
 import type { ReactNode } from "react";
-import Icon from "./Icon";
 import type { PaletteColor } from "./types";
 
 const alertColorStyles: Record<PaletteColor, string> = {

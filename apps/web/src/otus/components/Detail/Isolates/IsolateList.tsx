@@ -4,8 +4,8 @@ import { formatIsolateName } from "@app/utils";
 import Box from "@base/Box";
 import Button from "@base/Button";
 import { Empty, EmptyDescription, EmptyMedia, EmptyTitle } from "@base/Empty";
-import InputSearch from "@base/InputSearch";
-import SubviewHeader from "@base/SubviewHeader";
+import { InputSearch } from "@base/Input";
+import { SubviewHeader } from "@base/Subview";
 import Toolbar from "@base/Toolbar";
 import { useCurrentOtuContext } from "@otus/components/CurrentOtuContext";
 import {

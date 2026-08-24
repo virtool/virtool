@@ -1,5 +1,4 @@
-import Button from "@base/Button";
-import { buttonVariants } from "@base/buttonVariants";
+import Button, { buttonVariants } from "@base/Button";
 import {
 	Dialog,
 	DialogContent,

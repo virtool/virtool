@@ -2,8 +2,7 @@ import { useFetchAccount } from "@account/account";
 import { checkAdminRoleOrPermissionsFromAccount } from "@administration/utils";
 import { pluralize } from "@app/format";
 import Alert from "@base/Alert";
-import BoxGroup from "@base/BoxGroup";
-import BoxGroupTable from "@base/BoxGroupTable";
+import { BoxGroup, BoxGroupTable } from "@base/Box";
 import Button from "@base/Button";
 import Icon from "@base/Icon";
 import ListEmpty from "@base/ListEmpty";
@@ -13,9 +12,7 @@ import Pagination from "@base/Pagination";
 import QueryError from "@base/QueryError";
 import { nextSortDirection } from "@base/sorting";
 import { useListSelection } from "@base/useListSelection";
-import ViewHeader from "@base/ViewHeader";
-import ViewHeaderTitle from "@base/ViewHeaderTitle";
-import ViewHeaderTitleBadge from "@base/ViewHeaderTitleBadge";
+import { ViewHeader, ViewHeaderTitle, ViewHeaderTitleBadge } from "@base/View";
 import type {
 	SortDirection,
 	Upload,

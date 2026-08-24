@@ -1,6 +1,6 @@
 import { useCheckAdminRole } from "@administration/hooks";
 import Alert from "@base/Alert";
-import InitialIcon from "@base/InitialIcon";
+import { InitialIcon } from "@base/Icon";
 import Label from "@base/Label";
 import { useSuspenseUser, useUpdateUser } from "@users/queries";
 import { CircleAlert, ShieldUserIcon } from "lucide-react";

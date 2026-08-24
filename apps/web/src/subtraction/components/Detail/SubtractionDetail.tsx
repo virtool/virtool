@@ -1,14 +1,11 @@
 import { useCheckAdminRoleOrPermission } from "@administration/hooks";
 import { toGcContent } from "@app/format";
 import Alert from "@base/Alert";
-import BoxGroup from "@base/BoxGroup";
-import BoxGroupSection from "@base/BoxGroupSection";
+import { BoxGroup, BoxGroupSection } from "@base/Box";
 import Link from "@base/Link";
 import LoadingPlaceholder from "@base/LoadingPlaceholder";
 import NotFound from "@base/NotFound";
-import ViewHeader from "@base/ViewHeader";
-import ViewHeaderIcons from "@base/ViewHeaderIcons";
-import ViewHeaderTitle from "@base/ViewHeaderTitle";
+import { ViewHeader, ViewHeaderIcons, ViewHeaderTitle } from "@base/View";
 import { useFetchJob } from "@jobs/queries";
 import { useFetchSubtraction } from "@subtraction/queries";
 import {

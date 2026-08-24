@@ -1,5 +1,5 @@
 import { DEFAULT_PER_PAGE } from "@app/pagination";
-import BoxGroup from "@base/BoxGroup";
+import { BoxGroup } from "@base/Box";
 import ListEmpty from "@base/ListEmpty";
 import Pagination from "@base/Pagination";
 import Toolbar from "@base/Toolbar";

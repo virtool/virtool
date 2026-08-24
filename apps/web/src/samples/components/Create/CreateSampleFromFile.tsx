@@ -11,11 +11,8 @@ import {
 	DialogTitle,
 	DialogTrigger,
 } from "@base/Dialog";
-import IconButton from "@base/IconButton";
-import InputError from "@base/InputError";
-import InputGroup from "@base/InputGroup";
-import InputLabel from "@base/InputLabel";
-import InputSimple from "@base/InputSimple";
+import { IconButton } from "@base/Icon";
+import { InputError, InputGroup, InputLabel, InputSimple } from "@base/Input";
 import LoadingPlaceholder from "@base/LoadingPlaceholder";
 import QueryError from "@base/QueryError";
 import SaveButton from "@base/SaveButton";

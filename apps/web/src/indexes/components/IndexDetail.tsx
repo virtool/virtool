@@ -1,10 +1,12 @@
-import ContainerNarrow from "@base/ContainerNarrow";
+import { ContainerNarrow } from "@base/Container";
 import LoadingPlaceholder from "@base/LoadingPlaceholder";
 import NotFound from "@base/NotFound";
 import RelativeTime from "@base/RelativeTime";
-import SubviewHeader from "@base/SubviewHeader";
-import SubviewHeaderAttribution from "@base/SubviewHeaderAttribution";
-import SubviewHeaderTitle from "@base/SubviewHeaderTitle";
+import {
+	SubviewHeader,
+	SubviewHeaderAttribution,
+	SubviewHeaderTitle,
+} from "@base/Subview";
 import { useFetchReference } from "@references/queries";
 import { getRouteApi } from "@tanstack/react-router";
 import { useFetchIndex } from "../queries";

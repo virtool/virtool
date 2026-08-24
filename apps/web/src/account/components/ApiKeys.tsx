@@ -1,6 +1,5 @@
 import { cn } from "@app/cn";
-import Box from "@base/Box";
-import BoxGroup from "@base/BoxGroup";
+import Box, { BoxGroup } from "@base/Box";
 import { Empty, EmptyDescription, EmptyMedia, EmptyTitle } from "@base/Empty";
 import ExternalLink from "@base/ExternalLink";
 import LoadingPlaceholder from "@base/LoadingPlaceholder";

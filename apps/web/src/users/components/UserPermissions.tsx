@@ -1,6 +1,5 @@
 import { cn } from "@app/cn";
-import BoxGroup from "@base/BoxGroup";
-import BoxGroupSection from "@base/BoxGroupSection";
+import { BoxGroup, BoxGroupSection } from "@base/Box";
 import type { Permissions } from "@virtool/contracts";
 import { Check, X } from "lucide-react";
 

@@ -6,7 +6,7 @@ import {
 	DialogFooter,
 	DialogTitle,
 } from "@base/Dialog";
-import IconButton from "@base/IconButton";
+import { IconButton } from "@base/Icon";
 import {
 	useArchiveReference,
 	useUnarchiveReference,

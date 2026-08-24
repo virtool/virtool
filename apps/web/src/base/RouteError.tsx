@@ -1,4 +1,5 @@
 import { getErrorStatus } from "@app/queryErrors";
+import Button from "@base/Button";
 import { useQueryErrorResetBoundary } from "@tanstack/react-query";
 import { type ErrorComponentProps, useRouter } from "@tanstack/react-router";
 import {
@@ -6,7 +7,6 @@ import {
 	UNAUTHORIZED_ERROR_NAME,
 } from "@virtool/contracts";
 import { useEffect } from "react";
-import Button from "./Button";
 import ErrorState from "./ErrorState";
 import NotFound from "./NotFound";
 

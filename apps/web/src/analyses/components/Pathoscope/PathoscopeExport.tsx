@@ -3,14 +3,15 @@ import { useSortAndFilterPathoscopeHits } from "@analyses/hooks";
 import type { FormattedPathoscopeAnalysis } from "@analyses/types";
 import { writeToClipboard } from "@app/clipboard";
 import { useIsSecureContext, useTimedReset } from "@app/hooks";
-import Dropdown from "@base/Dropdown";
-import DropdownButton from "@base/DropdownButton";
-import DropdownMenuContent from "@base/DropdownMenuContent";
-import DropdownMenuDownload from "@base/DropdownMenuDownload";
-import DropdownMenuGroup from "@base/DropdownMenuGroup";
-import DropdownMenuItem from "@base/DropdownMenuItem";
-import DropdownMenuLabel from "@base/DropdownMenuLabel";
-import DropdownMenuSeparator from "@base/DropdownMenuSeparator";
+import Dropdown, {
+	DropdownButton,
+	DropdownMenuContent,
+	DropdownMenuDownload,
+	DropdownMenuGroup,
+	DropdownMenuItem,
+	DropdownMenuLabel,
+	DropdownMenuSeparator,
+} from "@base/Dropdown";
 import Icon from "@base/Icon";
 import Tooltip from "@base/Tooltip";
 import * as Sentry from "@sentry/tanstackstart-react";

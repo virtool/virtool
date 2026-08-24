@@ -1,11 +1,11 @@
 import { useCheckAdminRole } from "@administration/hooks";
 import { getWorkflowDisplayName } from "@app/utils";
-import IconButton from "@base/IconButton";
+import { IconButton } from "@base/Icon";
 import Link from "@base/Link";
 import ProgressCircle from "@base/ProgressCircle";
 import RelativeTime from "@base/RelativeTime";
 import SlashList from "@base/SlashList";
-import TableActionsCell from "@base/TableActionsCell";
+import { TableActionsCell } from "@base/Table";
 import UserLabel from "@base/UserLabel";
 import { useFetchJob } from "@jobs/queries";
 import { type AnalysisMinimal, isJobStateTerminal } from "@virtool/contracts";

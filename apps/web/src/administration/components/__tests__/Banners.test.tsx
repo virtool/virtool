@@ -4,37 +4,37 @@ import { createFakeBanner } from "@tests/fake/banner";
 import { renderWithProviders } from "@tests/setup";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-const findMessages = vi.fn();
-const setActiveMessage = vi.fn();
-const clearActiveMessage = vi.fn();
-const createMessage = vi.fn();
-const updateMessage = vi.fn();
-const deleteMessage = vi.fn();
+const findBanners = vi.fn();
+const setActiveBanner = vi.fn();
+const clearActiveBanner = vi.fn();
+const createBanner = vi.fn();
+const updateBanner = vi.fn();
+const deleteBanner = vi.fn();
 
-vi.mock("@server/messages/functions", () => ({
-	findMessageFn: vi.fn(),
-	findMessagesFn: (...args: unknown[]) => findMessages(...args),
-	setActiveMessageFn: (...args: unknown[]) => setActiveMessage(...args),
-	clearActiveMessageFn: (...args: unknown[]) => clearActiveMessage(...args),
-	createMessageFn: (...args: unknown[]) => createMessage(...args),
-	updateMessageFn: (...args: unknown[]) => updateMessage(...args),
-	deleteMessageFn: (...args: unknown[]) => deleteMessage(...args),
+vi.mock("@server/banners/functions", () => ({
+	findBannerFn: vi.fn(),
+	findBannersFn: (...args: unknown[]) => findBanners(...args),
+	setActiveBannerFn: (...args: unknown[]) => setActiveBanner(...args),
+	clearActiveBannerFn: (...args: unknown[]) => clearActiveBanner(...args),
+	createBannerFn: (...args: unknown[]) => createBanner(...args),
+	updateBannerFn: (...args: unknown[]) => updateBanner(...args),
+	deleteBannerFn: (...args: unknown[]) => deleteBanner(...args),
 }));
 
 const { default: Banners } = await import("../Banners");
 
 beforeEach(() => {
-	findMessages.mockReset();
-	setActiveMessage.mockReset();
-	clearActiveMessage.mockReset();
-	createMessage.mockReset();
-	updateMessage.mockReset();
-	deleteMessage.mockReset();
+	findBanners.mockReset();
+	setActiveBanner.mockReset();
+	clearActiveBanner.mockReset();
+	createBanner.mockReset();
+	updateBanner.mockReset();
+	deleteBanner.mockReset();
 });
 
 describe("<Banners>", () => {
 	it("renders the empty state when there are no banners", async () => {
-		findMessages.mockResolvedValueOnce([]);
+		findBanners.mockResolvedValueOnce([]);
 		renderWithProviders(<Banners />);
 
 		expect(await screen.findByText(/no banners found/i)).toBeInTheDocument();
@@ -55,7 +55,7 @@ describe("<Banners>", () => {
 				message: "Inactive one",
 			}),
 		];
-		findMessages.mockResolvedValueOnce(banners);
+		findBanners.mockResolvedValueOnce(banners);
 
 		renderWithProviders(<Banners />);
 
@@ -79,7 +79,7 @@ describe("<Banners>", () => {
 				message: "First",
 			}),
 		];
-		findMessages.mockResolvedValueOnce(banners);
+		findBanners.mockResolvedValueOnce(banners);
 
 		renderWithProviders(<Banners />);
 
@@ -99,9 +99,9 @@ describe("<Banners>", () => {
 				message: "First",
 			}),
 		];
-		findMessages.mockResolvedValueOnce(banners);
-		setActiveMessage.mockResolvedValueOnce(undefined);
-		findMessages.mockResolvedValue(banners);
+		findBanners.mockResolvedValueOnce(banners);
+		setActiveBanner.mockResolvedValueOnce(undefined);
+		findBanners.mockResolvedValue(banners);
 
 		renderWithProviders(<Banners />);
 
@@ -109,7 +109,7 @@ describe("<Banners>", () => {
 		await userEvent.click(screen.getByLabelText(/First/));
 
 		await waitFor(() =>
-			expect(setActiveMessage).toHaveBeenCalledWith({ data: { id: 1 } }),
+			expect(setActiveBanner).toHaveBeenCalledWith({ data: { id: 1 } }),
 		);
 	});
 
@@ -122,15 +122,15 @@ describe("<Banners>", () => {
 				message: "First",
 			}),
 		];
-		findMessages.mockResolvedValueOnce(banners);
-		clearActiveMessage.mockResolvedValueOnce(null);
-		findMessages.mockResolvedValue(banners);
+		findBanners.mockResolvedValueOnce(banners);
+		clearActiveBanner.mockResolvedValueOnce(null);
+		findBanners.mockResolvedValue(banners);
 
 		renderWithProviders(<Banners />);
 
 		await screen.findByText("First");
 		await userEvent.click(screen.getByLabelText(/Off/));
 
-		await waitFor(() => expect(clearActiveMessage).toHaveBeenCalled());
+		await waitFor(() => expect(clearActiveBanner).toHaveBeenCalled());
 	});
 });

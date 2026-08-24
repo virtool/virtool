@@ -1,13 +1,11 @@
 import Badge from "@base/Badge";
-import BoxGroup from "@base/BoxGroup";
-import BoxGroupSection from "@base/BoxGroupSection";
+import { BoxGroup, BoxGroupSection } from "@base/Box";
 import ExternalLink from "@base/ExternalLink";
 import Label from "@base/Label";
 import LoadingPlaceholder from "@base/LoadingPlaceholder";
 import NotFound from "@base/NotFound";
 import ScrollArea from "@base/ScrollArea";
-import ViewHeader from "@base/ViewHeader";
-import ViewHeaderTitle from "@base/ViewHeaderTitle";
+import { ViewHeader, ViewHeaderTitle } from "@base/View";
 import { getRouteApi } from "@tanstack/react-router";
 import { useFetchHmm } from "../queries";
 import { HmmEntropyIndicator } from "./HmmEntropyIndicator";

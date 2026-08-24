@@ -5,7 +5,7 @@ import {
 	DialogTitle,
 	DialogTrigger,
 } from "@base/Dialog";
-import IconButton from "@base/IconButton";
+import { IconButton } from "@base/Icon";
 import SaveButton from "@base/SaveButton";
 import type { Permissions } from "@virtool/contracts";
 import { Pencil } from "lucide-react";

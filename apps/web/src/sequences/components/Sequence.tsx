@@ -1,6 +1,6 @@
 import { cn } from "@app/cn";
 import Badge from "@base/Badge";
-import BoxGroupSection from "@base/BoxGroupSection";
+import { BoxGroupSection } from "@base/Box";
 import { Collapsible, CollapsibleContent } from "@base/Collapsible";
 import Icon from "@base/Icon";
 import ScrollArea from "@base/ScrollArea";

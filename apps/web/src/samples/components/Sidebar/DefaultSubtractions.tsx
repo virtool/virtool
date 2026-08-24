@@ -1,8 +1,7 @@
 import Link from "@base/Link";
 import LoadingPlaceholder from "@base/LoadingPlaceholder";
 import QueryError from "@base/QueryError";
-import SideBarSection from "@base/SideBarSection";
-import SidebarHeader from "@base/SidebarHeader";
+import { SideBarSection, SidebarHeader } from "@base/Sidebar";
 import { useFetchSubtractionsShortlist } from "@subtraction/queries";
 import { xor } from "es-toolkit/array";
 import SampleSidebarList from "./SampleSidebarList";

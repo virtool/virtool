@@ -1,8 +1,10 @@
 import Badge from "@base/Badge";
-import ViewHeader from "@base/ViewHeader";
-import ViewHeaderAttribution from "@base/ViewHeaderAttribution";
-import ViewHeaderIcons from "@base/ViewHeaderIcons";
-import ViewHeaderTitle from "@base/ViewHeaderTitle";
+import {
+	ViewHeader,
+	ViewHeaderAttribution,
+	ViewHeaderIcons,
+	ViewHeaderTitle,
+} from "@base/View";
 import { useCheckReferenceRight } from "@references/hooks";
 import { useLocation } from "@tanstack/react-router";
 import type { Reference } from "@virtool/contracts";

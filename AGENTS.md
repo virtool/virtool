@@ -239,6 +239,7 @@ type(scope): description
 - Releases are automated with semantic-release. Only `feat` (minor) and `fix`
   (patch) trigger a release; use them for every user-visible change.
 - Don't push or create PRs unless asked.
+- Never amend or force-push a pushed branch. Add follow-up commits instead.
 - Don't include a Test plan section in pull request descriptions or comments.
 - Don't use `git -C <path>` unless necessary. It triggers permission prompts
   that aren't worth the trouble. Run git commands from the working directory

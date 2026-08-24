@@ -1,6 +1,6 @@
 import { cn } from "@app/cn";
 import Badge from "@base/Badge";
-import BoxGroupSection from "@base/BoxGroupSection";
+import { BoxGroupSection } from "@base/Box";
 import type { SampleMinimal } from "@virtool/contracts";
 import CreateAnalysisFieldTitle from "./CreateAnalysisFieldTitle";
 

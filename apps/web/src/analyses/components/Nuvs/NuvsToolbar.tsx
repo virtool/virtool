@@ -1,6 +1,6 @@
 import { useAnalysisSearch } from "@analyses/components/AnalysisSearchContext";
 import { DEFAULT_SORT_KEY } from "@analyses/search";
-import ButtonToggle from "@base/ButtonToggle";
+import { ButtonToggle } from "@base/Button";
 import SearchToolbar from "@base/SearchToolbar";
 import Tooltip from "@base/Tooltip";
 import { AnalysisViewerSort } from "../Viewer/Sort";

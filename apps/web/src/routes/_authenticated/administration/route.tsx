@@ -1,8 +1,6 @@
 import AdministrationTabs from "@administration/components/AdministrationTabs";
-import ContainerNarrow from "@base/ContainerNarrow";
-import ContainerWide from "@base/ContainerWide";
-import ViewHeader from "@base/ViewHeader";
-import ViewHeaderTitle from "@base/ViewHeaderTitle";
+import { ContainerNarrow, ContainerWide } from "@base/Container";
+import { ViewHeader, ViewHeaderTitle } from "@base/View";
 import { createFileRoute, Outlet, redirect } from "@tanstack/react-router";
 import { hasSufficientAdminRole } from "@virtool/contracts";
 

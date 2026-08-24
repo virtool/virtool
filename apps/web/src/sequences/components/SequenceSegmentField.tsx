@@ -1,13 +1,14 @@
 import { cn } from "@app/cn";
 import Box from "@base/Box";
 import Icon from "@base/Icon";
-import InputGroup from "@base/InputGroup";
-import InputLabel from "@base/InputLabel";
+import { InputGroup, InputLabel } from "@base/Input";
 import Link from "@base/Link";
-import Select from "@base/Select";
-import SelectButton from "@base/SelectButton";
-import SelectContent from "@base/SelectContent";
-import SelectItem, { SelectItemIndicator } from "@base/SelectItem";
+import Select, {
+	SelectButton,
+	SelectContent,
+	SelectItem,
+	SelectItemIndicator,
+} from "@base/Select";
 import { selectItemStateClasses } from "@base/styles";
 import type { OtuSegment } from "@virtool/contracts";
 import { ChevronDown, CircleAlert } from "lucide-react";

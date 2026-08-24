@@ -1,6 +1,6 @@
 import Attribution from "@base/Attribution";
-import BoxGroupSection from "@base/BoxGroupSection";
-import IconButton from "@base/IconButton";
+import { BoxGroupSection } from "@base/Box";
+import { IconButton } from "@base/Icon";
 import type { ApiKey } from "@virtool/contracts";
 import { Trash } from "lucide-react";
 import { useDeleteApiKey } from "../queries";

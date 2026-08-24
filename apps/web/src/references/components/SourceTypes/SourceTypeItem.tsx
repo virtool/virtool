@@ -1,5 +1,5 @@
-import BoxGroupSection from "@base/BoxGroupSection";
-import IconButton from "@base/IconButton";
+import { BoxGroupSection } from "@base/Box";
+import { IconButton } from "@base/Icon";
 import { Trash } from "lucide-react";
 
 type SourceTypeItemProps = {

@@ -1,6 +1,6 @@
 import Button from "@base/Button";
 import DeleteAlert from "@base/DeleteAlert";
-import InputHeader from "@base/InputHeader";
+import { InputHeader } from "@base/Input";
 import LoadingPlaceholder from "@base/LoadingPlaceholder";
 import QueryError from "@base/QueryError";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@base/Tabs";

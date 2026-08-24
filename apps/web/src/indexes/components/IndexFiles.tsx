@@ -1,6 +1,5 @@
 import Badge from "@base/Badge";
-import BoxGroup from "@base/BoxGroup";
-import BoxGroupHeader from "@base/BoxGroupHeader";
+import { BoxGroup, BoxGroupHeader } from "@base/Box";
 import type { IndexFile } from "@virtool/contracts";
 import { IndexFileItem } from "./IndexFileItem";
 

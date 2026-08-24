@@ -1,4 +1,4 @@
-import { SelectBox, SelectBoxItem } from "@base/SelectBox";
+import { SelectBox, SelectBoxItem } from "@base/Select";
 import type { AnalysisWorkflow } from "@virtool/contracts";
 import type { workflow } from "./workflows";
 

@@ -1,10 +1,9 @@
 import { cn } from "@app/cn";
-import BoxGroup from "@base/BoxGroup";
-import BoxGroupSection from "@base/BoxGroupSection";
+import { BoxGroup, BoxGroupSection } from "@base/Box";
 import CompactScrollList from "@base/CompactScrollList";
 import { Dialog, DialogContent, DialogTitle } from "@base/Dialog";
 import { Empty, EmptyDescription, EmptyMedia, EmptyTitle } from "@base/Empty";
-import InitialIcon from "@base/InitialIcon";
+import { InitialIcon } from "@base/Icon";
 import QueryError from "@base/QueryError";
 import SearchToolbar from "@base/SearchToolbar";
 import { useInfiniteFindGroups } from "@groups/queries";

@@ -1,9 +1,8 @@
-import BoxGroup from "@base/BoxGroup";
-import ContainerNarrow from "@base/ContainerNarrow";
+import { BoxGroup } from "@base/Box";
+import { ContainerNarrow } from "@base/Container";
 import ListEmpty from "@base/ListEmpty";
 import Pagination from "@base/Pagination";
-import ViewHeader from "@base/ViewHeader";
-import ViewHeaderTitle from "@base/ViewHeaderTitle";
+import { ViewHeader, ViewHeaderTitle } from "@base/View";
 import type { JobState } from "@virtool/contracts";
 import { Cog, SearchX } from "lucide-react";
 import { useSuspenseJobs } from "../queries";

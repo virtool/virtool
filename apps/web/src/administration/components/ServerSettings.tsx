@@ -1,4 +1,4 @@
-import ContainerNarrow from "@base/ContainerNarrow";
+import { ContainerNarrow } from "@base/Container";
 import Banners from "./Banners";
 import NcbiApiKey from "./NcbiApiKey";
 

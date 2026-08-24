@@ -1,7 +1,6 @@
 import { renderWithProviders } from "@tests/setup";
 import { describe, expect, it } from "vitest";
-import Input from "../Input";
-import InputGroup from "../InputGroup";
+import Input, { InputGroup } from "../Input";
 
 describe("<Input />", () => {
 	it("should forward aria attributes to the underlying input", () => {

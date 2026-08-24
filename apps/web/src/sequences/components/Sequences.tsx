@@ -1,6 +1,5 @@
 import Badge from "@base/Badge";
-import BoxGroup from "@base/BoxGroup";
-import BoxGroupSection from "@base/BoxGroupSection";
+import { BoxGroup, BoxGroupSection } from "@base/Box";
 import { Empty, EmptyDescription, EmptyMedia, EmptyTitle } from "@base/Empty";
 import { useCurrentOtuContext } from "@otus/components/CurrentOtuContext";
 import sortSequencesBySegment from "@otus/utils";

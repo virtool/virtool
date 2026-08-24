@@ -1,6 +1,6 @@
 import { cn } from "@app/cn";
 import { byteSize } from "@app/format";
-import IconButton from "@base/IconButton";
+import { IconButton } from "@base/Icon";
 import Loader from "@base/Loader";
 import ProgressBarAffixed from "@base/ProgressBarAffixed";
 import { Trash } from "lucide-react";

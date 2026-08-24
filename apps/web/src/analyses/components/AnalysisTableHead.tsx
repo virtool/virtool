@@ -1,6 +1,5 @@
 import SortableHead from "@base/SortableHead";
-import TableActionsHead from "@base/TableActionsHead";
-import TableHead from "@base/TableHead";
+import { TableActionsHead, TableHead } from "@base/Table";
 import type { AnalysisSortField, SortDirection } from "@virtool/contracts";
 
 type AnalysisTableHeadProps = {

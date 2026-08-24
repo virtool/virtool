@@ -1,5 +1,5 @@
+import { BoxGroupSection } from "@base/Box";
 import type { ReactNode } from "react";
-import BoxGroupSection from "./BoxGroupSection";
 
 type ListHeaderProps = {
 	/** Actions that apply to the list, aligned against its right edge */

@@ -1,11 +1,11 @@
-import BoxGroup from "@base/BoxGroup";
-import BoxGroupHeader from "@base/BoxGroupHeader";
-import BoxGroupSection from "@base/BoxGroupSection";
+import { BoxGroup, BoxGroupHeader, BoxGroupSection } from "@base/Box";
 import Checkbox from "@base/Checkbox";
-import InputContainer from "@base/InputContainer";
-import InputError from "@base/InputError";
-import InputGroup from "@base/InputGroup";
-import InputSimple from "@base/InputSimple";
+import {
+	InputContainer,
+	InputError,
+	InputGroup,
+	InputSimple,
+} from "@base/Input";
 import RelativeTime from "@base/RelativeTime";
 import SaveButton from "@base/SaveButton";
 import { usePasswordRules } from "@forms/password";

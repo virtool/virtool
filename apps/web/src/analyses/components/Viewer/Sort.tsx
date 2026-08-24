@@ -1,9 +1,10 @@
 import { cn } from "@app/cn";
-import Dropdown from "@base/Dropdown";
-import DropdownButton from "@base/DropdownButton";
-import DropdownMenuContent from "@base/DropdownMenuContent";
-import DropdownMenuRadioGroup from "@base/DropdownMenuRadioGroup";
-import DropdownMenuRadioItem from "@base/DropdownMenuRadioItem";
+import Dropdown, {
+	DropdownButton,
+	DropdownMenuContent,
+	DropdownMenuRadioGroup,
+	DropdownMenuRadioItem,
+} from "@base/Dropdown";
 import Icon from "@base/Icon";
 import type { AnalysisWorkflow } from "@virtool/contracts";
 import { ArrowUpDown, ChevronDown } from "lucide-react";

@@ -1,5 +1,5 @@
 import DeleteDialog from "@base/DeleteDialog";
-import IconButton from "@base/IconButton";
+import { IconButton } from "@base/Icon";
 import { useDeleteSample } from "@samples/queries";
 import { checkCanDeleteSample } from "@samples/utils";
 import type { JobNested } from "@virtool/contracts";

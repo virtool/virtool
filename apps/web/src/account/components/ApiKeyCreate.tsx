@@ -1,8 +1,7 @@
 import { writeToClipboard } from "@app/clipboard";
 import { cn } from "@app/cn";
 import { useIsSecureContext } from "@app/hooks";
-import Button from "@base/Button";
-import { buttonVariants } from "@base/buttonVariants";
+import Button, { buttonVariants } from "@base/Button";
 import {
 	Dialog,
 	DialogContent,
@@ -11,10 +10,7 @@ import {
 	DialogTitle,
 	DialogTrigger,
 } from "@base/Dialog";
-import InputError from "@base/InputError";
-import InputGroup from "@base/InputGroup";
-import InputLabel from "@base/InputLabel";
-import InputSimple from "@base/InputSimple";
+import { InputError, InputGroup, InputLabel, InputSimple } from "@base/Input";
 import SaveButton from "@base/SaveButton";
 import type { Permissions } from "@virtool/contracts";
 import { emptyPermissions } from "@virtool/contracts";

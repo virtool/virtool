@@ -1,4 +1,4 @@
-import BoxGroupSection from "@base/BoxGroupSection";
+import { BoxGroupSection } from "@base/Box";
 import SampleLabel from "@samples/components/Label/SampleLabel";
 import { Link } from "@tanstack/react-router";
 import { DeleteLabel } from "./DeleteLabel";
