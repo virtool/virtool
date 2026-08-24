@@ -10,29 +10,10 @@ import type { PgClient } from "./pg";
 import * as schema from "./schema";
 import { createTestDatabase } from "./test/fixtures";
 
-/*
- Nothing else in the suite runs `drizzle/`. `createTestDatabase` materializes
- the schema by diffing an empty snapshot against the mirror, so a migration
- file that does not run — or that runs and lands somewhere other than where the
- mirror says — reaches production before anything notices.
-
- So this builds one database each way and compares the catalogs. The migration
- half proves every file executes, in the same order and through the same
- bookkeeping as `apps/tasks`' `migrate` entrypoint. The comparison proves the
- two paths agree, which is the half that catches a hand-written migration whose
- SQL has drifted from the snapshot kit generated beside it.
-*/
 const MIGRATIONS_FOLDER = fileURLToPath(
 	new URL("../../drizzle", import.meta.url),
 );
 
-/*
- `pg_get_constraintdef` and `indexdef` are Postgres's own canonical rendering,
- so two databases that agree on structure agree on this text whatever SQL built
- them. Only `public` is read: the migration path also creates
- `drizzle.__drizzle_migrations`, which the mirror does not describe and which
- no schema assertion should care about.
-*/
 async function describeSchema(client: PgClient) {
 	const columns = await client`
 		select table_name, column_name, data_type, is_nullable, column_default,
@@ -88,8 +69,6 @@ it("apply from empty and land on the schema mirror", async () => {
 		await admin.end();
 	});
 
-	// The table and schema match `drizzle.config.ts` and the `migrate`
-	// entrypoint, so this exercises the bookkeeping production was stamped into.
 	await migrate(drizzle(client, { schema }), {
 		migrationsFolder: MIGRATIONS_FOLDER,
 		migrationsSchema: "drizzle",

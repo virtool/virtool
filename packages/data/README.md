@@ -169,12 +169,6 @@ migrations are generated from it with `db:generate` and applied with
 moved here. Production was stamped as already migrated rather than having that
 baseline applied to it, so it must never be run against an existing database.
 
-Every integer surrogate primary key is `GENERATED ALWAYS AS IDENTITY`, so
-Postgres rejects an explicit id outright and drizzle drops `id` from the
-table's insert type. Insert a row and read the id back with `.returning()`;
-never choose one. The `settings` and `legacy_hmm_status` singletons are the
-exceptions — their ids are fixed constants, not surrogates.
-
 Many tables keep legacy shapes — `legacy_` prefixes, dead columns held for
 snapshot fidelity, promoted-from-JSONB projections. Serve them as they are
 rather than renormalizing them; the schema files say per-table what is dead and
@@ -244,12 +238,6 @@ file and drop it in `afterAll`. It creates an isolated database, applies the
 schema derived from the Drizzle mirror, and installs the `client_events`
 emitter on its connection. If a test mocks `@virtool/data/events/emit`, mock
 both `emit` and `createEmitter` so fixture setup can still install the emitter.
-
-`src/db/migrations.test.ts` is the exception to that fixture. It applies
-`drizzle/` from empty the way the `migrate` entrypoint does, then compares the
-resulting catalog against a database built from the mirror. It is the only test
-that runs the migration files at all, so a migration edited by hand has nothing
-else standing between it and production.
 
 The shared container uses `withReuse()` and deliberately has no teardown, so
 local suites reuse it. Remove it with `docker rm -f` when it is no longer
