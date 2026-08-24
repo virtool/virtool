@@ -26,11 +26,7 @@ export default function ScrollArea({ children, className }: ScrollAreaProps) {
 				className,
 			)}
 		>
-			{/* `max-h-[inherit]` lets a root with a max height and no fixed height
-			    scroll instead of clipping: the viewport picks up the same cap. */}
-			<ScrollAreaPrimitive.Viewport
-				className={cn("w-full", "h-full max-h-[inherit] rounded")}
-			>
+			<ScrollAreaPrimitive.Viewport className={cn("w-full", "h-full rounded")}>
 				{children}
 			</ScrollAreaPrimitive.Viewport>
 			<ScrollAreaPrimitive.Scrollbar
