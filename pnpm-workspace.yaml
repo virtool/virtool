@@ -2,9 +2,8 @@ packages:
   - 'apps/*'
   - 'packages/*'
 
-# `pnpm deploy` refuses to materialise a `workspace:*` dependency without this,
-# leaving the deployed tree broken. Non-Vite apps bundle their workspace
-# packages, but their externals still have to be real files in the image.
+# `pnpm deploy` requires injected workspace packages. Record their portable
+# snapshots in the checked-in lockfile for production deployments.
 injectWorkspacePackages: true
 
 # Reject lockfile entries published less than 24h ago. Guards against
