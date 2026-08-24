@@ -27,13 +27,15 @@ They are sized to the reference, so a vector over a 50 kb reference is 50,000
 entries of which ~200 are non-zero; dense storage made the corpus 1.3 MB, 98%
 of it zeros. The encoding is lossless — the harness rebuilds the dense array.
 
-`tests/golden/generate.py` is the provenance record for the corpus. It is not
-run by CI and cannot be re-run from this repo alone: it imports the Python
-extension module from `workflow-pathoscope`. There is no supported way to
-produce a new vector, and no need for one: a failing vector is a finding about
-the code, never a golden to re-baseline. **Never edit a vector to make a
-failing comparison pass**, and never regenerate the corpus from this crate — a
-corpus generated from the code under test asserts nothing.
+The corpus was captured from the PyO3 build of `workflow-pathoscope` before the
+crate moved here. The script that captured it is gone, and there is no supported
+way to produce a new vector: it needed the Python extension module, which this
+repository does not hold. `git log --diff-filter=D` under `tests/golden/` finds
+the script if it is wanted as a starting point. There is no need for a new
+vector — a failing vector is a finding about the code, never a golden to
+re-baseline. **Never edit a vector to make a failing comparison pass**, and
+never regenerate the corpus from this crate — a corpus generated from the code
+under test asserts nothing.
 
 ## Five modules are frozen
 

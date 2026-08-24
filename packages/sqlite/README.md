@@ -52,9 +52,11 @@ why nothing materialises the index, `schema.ts`'s `openIndexArtifact` covers
 the no-fallback rule, and `errors.ts` covers what each failure means.
 
 `src/fixtures/` holds a reference artifact plus the golden results of every
-query, and `generate.py` is the provenance record. **Never edit a golden to
-match this implementation's output** — that converts a caught divergence into a
-permanent one.
+query, captured from the Python server the reader is pinned to. The script that
+wrote them is gone, and there is no supported way to regenerate them from this
+package — `git log --diff-filter=D` under `src/fixtures/` finds it if it is
+wanted. **Never edit a golden to match this implementation's output** — that
+converts a caught divergence into a permanent one.
 
 See [docs/references.md](../../docs/references.md) for the measurements
 behind the streaming and bulk-load decisions.
