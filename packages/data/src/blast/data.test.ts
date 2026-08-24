@@ -121,7 +121,6 @@ async function seedAnalysis(indices: number[] = [0]): Promise<number> {
 						orfs: [],
 					})),
 				},
-				sample: "0",
 				user_id: userId,
 				index_id: indexId,
 			})

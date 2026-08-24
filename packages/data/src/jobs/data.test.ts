@@ -151,7 +151,6 @@ describe("getJob", () => {
 			.values({
 				created_at: now,
 				updated_at: now,
-				sample: "0",
 				user_id: userId,
 				index_id: indexId,
 				job_id: jobId,
