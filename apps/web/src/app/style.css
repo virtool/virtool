@@ -118,16 +118,6 @@ html {
 	z-index: var(--z-toast);
 }
 
-/* Shared column tracks for the samples list. Applied to every row and to the
-   list header so the columns line up instead of being sized per row. */
-@utility grid-cols-sample {
-	grid-template-columns:
-		min-content
-		minmax(0, 1fr)
-		minmax(0, 1fr)
-		minmax(0, 1fr);
-}
-
 @layer base {
 	/* The app's own base size, which came from the root before the root became
 	   the reader's. */

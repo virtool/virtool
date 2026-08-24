@@ -1,7 +1,8 @@
-import Attribution from "@base/Attribution";
-import Box from "@base/Box";
 import Checkbox from "@base/Checkbox";
 import Link from "@base/Link";
+import RelativeTime from "@base/RelativeTime";
+import { TableActionsCell } from "@base/Table";
+import UserLabel from "@base/UserLabel";
 import { useFetchJob } from "@jobs/queries";
 import type { SampleMinimal } from "@virtool/contracts";
 import type { MouseEvent } from "react";
@@ -25,7 +26,7 @@ type SampleItemProps = {
 };
 
 /**
- * A condensed sample item for use in a list of samples
+ * One sample in the table of samples.
  */
 export default function SampleItem({
 	sample,
@@ -36,28 +37,40 @@ export default function SampleItem({
 	const { data: job } = useFetchJob(sample.job?.id ?? Number.NaN, sample.job);
 
 	return (
-		<Box
-			as="li"
-			className="grid grid-cols-sample items-center gap-x-4 gap-y-2.5 border-0 mb-0 py-2.5 rounded-none"
-		>
-			<Checkbox
-				ariaLabel={`Select ${sample.name}`}
-				checked={checked}
-				id={`SampleCheckbox${sample.id}`}
-				onClick={handleSelect}
-			/>
-			<Link
-				className="text-lg font-medium overflow-hidden text-ellipsis whitespace-nowrap"
-				to="/samples/$sampleId"
-				params={{ sampleId: String(sample.id) }}
-			>
-				{sample.name}
-			</Link>
-			<Attribution time={sample.createdAt} user={sample.user.handle} />
-			<div className="flex justify-end items-center gap-2">
+		<tr>
+			<td className="w-px">
+				<Checkbox
+					ariaLabel={`Select ${sample.name}`}
+					checked={checked}
+					id={`SampleCheckbox${sample.id}`}
+					onClick={handleSelect}
+				/>
+			</td>
+			<td className="font-medium">
+				<Link to="/samples/$sampleId" params={{ sampleId: String(sample.id) }}>
+					{sample.name}
+				</Link>
+			</td>
+			<td>
+				<div className="flex flex-wrap gap-1">
+					<SampleLibraryTypeLabel libraryType={sample.libraryType} />
+					{sample.labels.map((label) => (
+						<SampleLabel {...label} key={label.id} size="sm" />
+					))}
+				</div>
+			</td>
+			<td>
 				{sample.ready && (
 					<WorkflowTags id={sample.id} workflows={sample.workflows} />
 				)}
+			</td>
+			<td className="whitespace-nowrap">
+				<RelativeTime time={sample.createdAt} />
+			</td>
+			<td>
+				<UserLabel handle={sample.user.handle} />
+			</td>
+			<TableActionsCell>
 				<EndIcon
 					ariaLabel={`Quick analyze ${sample.name}`}
 					progress={job?.progress ?? 0}
@@ -65,13 +78,7 @@ export default function SampleItem({
 					onClick={onQuickAnalyze}
 					ready={sample.ready}
 				/>
-			</div>
-			<div className="col-start-2 col-span-3 flex gap-1">
-				<SampleLibraryTypeLabel libraryType={sample.libraryType} />
-				{sample.labels.map((label) => (
-					<SampleLabel {...label} key={label.id} size="sm" />
-				))}
-			</div>
-		</Box>
+			</TableActionsCell>
+		</tr>
 	);
 }

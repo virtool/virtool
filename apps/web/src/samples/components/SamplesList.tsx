@@ -1,16 +1,23 @@
 import QuickAnalyze from "@analyses/components/Create/QuickAnalyze";
+import { BoxGroup, BoxGroupTable } from "@base/Box";
 import Button from "@base/Button";
 import { ContainerNarrow } from "@base/Container";
 import ListEmpty from "@base/ListEmpty";
 import LoadingPlaceholder from "@base/LoadingPlaceholder";
 import Pagination from "@base/Pagination";
 import QueryError from "@base/QueryError";
+import { nextSortDirection } from "@base/sorting";
 import { useListSelection } from "@base/useListSelection";
 import { ViewHeader, ViewHeaderTitle } from "@base/View";
 import { useFetchLabels } from "@labels/queries";
 import type { DateFilter } from "@samples/dateFilter";
 import { useListSamples } from "@samples/queries";
-import type { Sample, SampleMinimal } from "@virtool/contracts";
+import type {
+	Sample,
+	SampleMinimal,
+	SampleSortField,
+	SortDirection,
+} from "@virtool/contracts";
 import { xor } from "es-toolkit/array";
 import { FlaskConical, SearchX } from "lucide-react";
 import { type MouseEvent, useState } from "react";
@@ -18,6 +25,7 @@ import FilterBar from "./Filter/FilterBar";
 import SampleItem from "./Item/SampleItem";
 import SampleListHeader from "./SampleListHeader";
 import SampleToolbar from "./SamplesToolbar";
+import SampleTableHead from "./SampleTableHead";
 
 type QuickAnalyzeTarget = {
 	/** Whether the samples came from the list selection rather than a single sample */
@@ -48,17 +56,27 @@ function getFilterKey(
 
 type SamplesListProps = {
 	dateFilter?: DateFilter;
+
+	/** The direction the sorted column is ordered in */
+	direction?: SortDirection;
+
 	filterLabels?: number[];
 	page?: number;
 	setSearch?: (next: {
 		createdAfter?: string;
 		createdBefore?: string;
+		direction?: SortDirection;
 		labels?: number[];
 		page?: number;
+		sort?: SampleSortField;
 		term?: string;
 		users?: number[];
 		workflows?: string[];
 	}) => void;
+
+	/** The column the list is sorted by, or undefined for newest first */
+	sort?: SampleSortField;
+
 	term?: string;
 	users?: number[];
 	workflows?: string[];
@@ -69,9 +87,11 @@ type SamplesListProps = {
  */
 export default function SamplesList({
 	dateFilter,
+	direction = "descending",
 	filterLabels = [],
 	page: urlPage = 1,
 	setSearch = () => {},
+	sort,
 	term = "",
 	users: filterUsers = [],
 	workflows: filterWorkflows = [],
@@ -83,9 +103,11 @@ export default function SamplesList({
 	} = useListSamples({
 		createdAfter: dateFilter?.after,
 		createdBefore: dateFilter?.before,
+		direction,
 		labels: filterLabels,
 		page: urlPage,
 		perPage: 25,
+		sort,
 		term,
 		users: filterUsers,
 		workflows: filterWorkflows,
@@ -161,6 +183,14 @@ export default function SamplesList({
 			createdAfter: next?.after,
 			createdBefore: next?.before,
 			page: 1,
+		});
+	}
+
+	function handleSort(field: SampleSortField) {
+		setSearch({
+			direction: nextSortDirection(field, sort, direction),
+			page: 1,
+			sort: field,
 		});
 	}
 
@@ -266,25 +296,32 @@ export default function SamplesList({
 						currentPage={urlPage}
 						pageCount={pageCount}
 						onPageChange={(page) => setSearch({ page })}
-						rowsClassName="pb-0 rounded-sm border-1 border-gray-300 overflow-hidden [&>*:not(:first-child)]:border-t-1 [&>*:not(:first-child)]:border-gray-300"
 					>
-						<SampleListHeader
-							checked={selection.getVisibleState(items)}
-							found={foundCount}
-							labels={labels}
-							onLabelsUpdated={handleLabelsUpdated}
-							onSelectAll={() => selection.toggleVisible(items)}
-							onQuickAnalyze={() =>
-								openQuickAnalyzeFor({
-									fromSelection: true,
-									samples: selectedSamples,
-								})
-							}
-							selectedSamples={selectedSamples}
-						/>
-						<ul className="list-none [&>li:not(:first-child)]:border-t-1 [&>li:not(:first-child)]:border-gray-300">
-							{items.map(renderRow)}
-						</ul>
+						<BoxGroup>
+							<SampleListHeader
+								found={foundCount}
+								labels={labels}
+								onLabelsUpdated={handleLabelsUpdated}
+								onQuickAnalyze={() =>
+									openQuickAnalyzeFor({
+										fromSelection: true,
+										samples: selectedSamples,
+									})
+								}
+								selectedSamples={selectedSamples}
+							/>
+							<BoxGroupTable variant="data">
+								<caption className="sr-only">Samples list</caption>
+								<SampleTableHead
+									checked={selection.getVisibleState(items)}
+									direction={direction}
+									onSelectAll={() => selection.toggleVisible(items)}
+									onSort={handleSort}
+									sort={sort}
+								/>
+								<tbody>{items.map(renderRow)}</tbody>
+							</BoxGroupTable>
+						</BoxGroup>
 					</Pagination>
 				)}
 			</ContainerNarrow>

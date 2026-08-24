@@ -1,6 +1,11 @@
 import { createServerFn, createServerOnlyFn } from "@tanstack/react-start";
 import { setResponseStatus } from "@tanstack/react-start/server";
-import { SampleCreateRequest, SampleUpdateRequest } from "@virtool/contracts";
+import {
+	SAMPLE_SORT_FIELDS,
+	SampleCreateRequest,
+	SampleUpdateRequest,
+	SORT_DIRECTIONS,
+} from "@virtool/contracts";
 import {
 	checkSampleRight,
 	createSample,
@@ -50,6 +55,10 @@ const findSamplesSchema = z.object({
 	users: z.array(rowIdSchema).default([]),
 	createdAfter: calendarDateSchema.optional(),
 	createdBefore: calendarDateSchema.optional(),
+	// A direction without a column has nothing to order by, so the pair is
+	// resolved into an optional sort below.
+	sort: z.enum(SAMPLE_SORT_FIELDS).optional(),
+	direction: z.enum(SORT_DIRECTIONS).default("descending"),
 });
 
 // The group id (or legacy string), or null when none applies. `""` and `"none"`
@@ -166,6 +175,9 @@ export const findSamplesFn = createServerFn({ method: "GET" })
 				createdBefore: data.createdBefore
 					? startOfNextUtcDay(data.createdBefore)
 					: null,
+				sort: data.sort
+					? { direction: data.direction, field: data.sort }
+					: undefined,
 			},
 			actor,
 		);

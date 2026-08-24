@@ -9,8 +9,10 @@ import type {
 	SampleMinimal,
 	SampleRightsUpdate,
 	SampleSearchResult,
+	SampleSortField,
 	SampleUpdateRequest,
 	SampleWorkflows,
+	SortDirection,
 	SubtractionNested,
 	UserNested,
 	WorkflowState,
@@ -66,6 +68,12 @@ export type SampleActor = {
 	isAdmin: boolean;
 };
 
+/** Which column a sample list is ordered by, and in which direction. */
+export type SampleSort = {
+	direction: SortDirection;
+	field: SampleSortField;
+};
+
 /** Filters and pagination accepted by {@link findSamples}. */
 export type FindSamplesOptions = {
 	page: number;
@@ -74,6 +82,9 @@ export type FindSamplesOptions = {
 	labels: number[];
 	users: number[];
 	workflows: string[];
+
+	/** The column and direction to order by, or undefined for newest first. */
+	sort?: SampleSort;
 
 	/**
 	 * The inclusive instant a sample must have been created at or after. The
@@ -596,6 +607,27 @@ function composeWorkflowFilter(db: Db, workflows: string[]): SQL | undefined {
 	return and(...clauses);
 }
 
+const SORT_COLUMNS = {
+	createdAt: legacySamples.created_at,
+	name: legacySamples.name,
+	user: users.handle,
+} as const;
+
+/**
+ * The `ORDER BY` a sample list takes, defaulting to newest first.
+ *
+ * Offset pagination over a tied ordering can repeat or skip rows between pages,
+ * and every sortable column has ties — two samples created in the same second,
+ * two owned by the same user. The primary key breaks them, so the order is
+ * total.
+ */
+function buildOrderBy(sort: SampleSort | undefined) {
+	const order = sort?.direction === "ascending" ? asc : desc;
+	const column = sort ? SORT_COLUMNS[sort.field] : legacySamples.created_at;
+
+	return [order(column), order(legacySamples.id)];
+}
+
 export async function findSamples(
 	db: Db,
 	options: FindSamplesOptions,
@@ -655,7 +687,7 @@ export async function findSamples(
 			.from(legacySamples)
 			.leftJoin(users, eq(users.id, legacySamples.user_id))
 			.where(where)
-			.orderBy(desc(legacySamples.created_at), asc(legacySamples.id))
+			.orderBy(...buildOrderBy(options.sort))
 			.offset((options.page - 1) * options.perPage)
 			.limit(options.perPage),
 	]);
