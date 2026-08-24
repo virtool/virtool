@@ -172,7 +172,7 @@ describe("formatAnalysisToExcel", () => {
 			db,
 			"pathoscope",
 			results(),
-			"1234",
+			1234,
 		);
 
 		// An XLSX file is a zip, which always starts with the local file header.

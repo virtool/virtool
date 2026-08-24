@@ -34,11 +34,7 @@ import { users } from "../db/schema/users";
 import { AppError } from "../errors";
 import { emit } from "../events/emit";
 import { createJob, getJobs } from "../jobs/data";
-import {
-	type SampleActor,
-	sampleReadableFilter,
-	sampleStorageId,
-} from "../samples/data";
+import { type SampleActor, sampleReadableFilter } from "../samples/data";
 import { formatAnalysis } from "./format";
 
 /** Which column an analysis list is ordered by, and in which direction. */
@@ -596,7 +592,7 @@ export async function createAnalysis(
 
 	const { analysisId, jobId } = await db.transaction(async (tx) => {
 		const [sample] = await tx
-			.select({ id: legacySamples.id, legacy_id: legacySamples.legacy_id })
+			.select({ id: legacySamples.id })
 			.from(legacySamples)
 			.where(eq(legacySamples.id, values.sampleId))
 			.limit(1);
@@ -669,7 +665,6 @@ export async function createAnalysis(
 					workflow: values.workflow,
 					ready: false,
 					results: null,
-					sample: sampleStorageId(sample.id, sample.legacy_id),
 					sample_id: sample.id,
 					index_id: index.id,
 					user_id: values.userId,
@@ -973,13 +968,13 @@ export async function getAnalysisForExport(
 ): Promise<{
 	workflow: string;
 	results: JsonObject | null;
-	sample: string;
+	sample_id: number | null;
 }> {
 	const [row] = await db
 		.select({
 			workflow: analyses.workflow,
 			results: analyses.results,
-			sample: analyses.sample,
+			sample_id: analyses.sample_id,
 		})
 		.from(analyses)
 		.where(eq(analyses.id, analysisId))

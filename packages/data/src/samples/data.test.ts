@@ -111,7 +111,6 @@ async function seedAnalysis(
 			.values({
 				created_at: now,
 				updated_at: now,
-				sample: String(overrides.sample_id ?? 0),
 				index_id: indexId,
 				user_id: ownerId,
 				workflow: "nuvs",

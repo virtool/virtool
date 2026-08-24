@@ -118,7 +118,6 @@ async function seedAnalysis(
 			workflow: "pathoscope",
 			ready: false,
 			results: null,
-			sample: String(sampleId),
 			sample_id: sampleId,
 			index_id: indexId,
 			user_id: userId,

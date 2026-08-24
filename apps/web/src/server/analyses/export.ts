@@ -125,7 +125,7 @@ export async function formatAnalysisToExcel(
 	db: DbOrTx,
 	workflow: string,
 	results: JsonObject,
-	sampleId: string,
+	sampleId: number | null,
 ): Promise<Uint8Array<ArrayBuffer>> {
 	const rows = await composeRows(db, workflow, results);
 

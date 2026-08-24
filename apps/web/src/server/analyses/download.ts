@@ -103,7 +103,7 @@ export async function handleAnalysisDocument(
 			db,
 			analysis.workflow,
 			analysis.results,
-			analysis.sample,
+			analysis.sample_id,
 		),
 		{ headers },
 	);
