@@ -1,4 +1,4 @@
-// Schema for the `instance_messages` table.
+// Schema for the `banners` table.
 
 import type { BannerColor } from "@virtool/contracts";
 import { sql } from "drizzle-orm";
@@ -14,8 +14,8 @@ import {
 } from "drizzle-orm/pg-core";
 import { users } from "./users";
 
-export const instanceMessages = pgTable(
-	"instance_messages",
+export const banners = pgTable(
+	"banners",
 	{
 		id: integer("id").primaryKey().generatedAlwaysAsIdentity(),
 		active: boolean("active").$defaultFn(() => true),
@@ -32,17 +32,17 @@ export const instanceMessages = pgTable(
 		foreignKey({
 			columns: [table.userId],
 			foreignColumns: [users.id],
-			name: "instance_messages_user_id_fkey",
+			name: "banners_user_id_fkey",
 		}),
-		uniqueIndex("instance_messages_one_active")
+		uniqueIndex("banners_one_active")
 			.on(table.active)
 			.where(sql`${table.active} = true`),
 		check(
-			"ck_instance_messages_color",
+			"ck_banners_color",
 			sql`${table.color} in ('red', 'yellow', 'blue', 'purple', 'orange', 'grey')`,
 		),
 	],
 );
 
-/** A row from the `instance_messages` table. */
-export type InstanceMessageRow = typeof instanceMessages.$inferSelect;
+/** A row from the `banners` table. */
+export type BannerRow = typeof banners.$inferSelect;

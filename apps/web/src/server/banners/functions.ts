@@ -2,15 +2,15 @@ import { createServerFn, createServerOnlyFn } from "@tanstack/react-start";
 import { setResponseStatus } from "@tanstack/react-start/server";
 import { bannerColors } from "@virtool/contracts";
 import {
-	clearActiveMessage,
-	createMessage,
-	deleteMessage,
-	findMessage,
-	findMessages,
-	MessageNotFoundError,
-	setActiveMessage,
-	updateMessage,
-} from "@virtool/data/messages/data";
+	BannerNotFoundError,
+	clearActiveBanner,
+	createBanner,
+	deleteBanner,
+	findBanner,
+	findBanners,
+	setActiveBanner,
+	updateBanner,
+} from "@virtool/data/banners/data";
 import { z } from "zod";
 import { adminRole, authenticated } from "../auth/policy";
 import { db } from "../composition";
@@ -21,12 +21,12 @@ const colorSchema = z.enum(bannerColors);
 
 const idSchema = z.object({ id: rowIdSchema });
 
-const createMessageSchema = z.object({
+const createBannerSchema = z.object({
 	message: z.string().min(1, "Message cannot be empty."),
 	color: colorSchema,
 });
 
-const updateMessageSchema = idSchema
+const updateBannerSchema = idSchema
 	.extend({
 		message: z.string().min(1, "Message cannot be empty.").optional(),
 		color: colorSchema.optional(),
@@ -36,43 +36,43 @@ const updateMessageSchema = idSchema
 	});
 
 // Wrapped in createServerOnlyFn so the compiler can strip this body — and the
-// MessageNotFoundError import it references — from the client bundle.
+// BannerNotFoundError import it references — from the client bundle.
 const rethrowAsHttp = createServerOnlyFn((err: unknown): never => {
-	if (err instanceof MessageNotFoundError) {
+	if (err instanceof BannerNotFoundError) {
 		setResponseStatus(404);
-		throw new ClientError("Message not found.");
+		throw new ClientError("Banner not found.");
 	}
 	throw err;
 });
 
-export const findMessageFn = createServerFn({ method: "GET" })
+export const findBannerFn = createServerFn({ method: "GET" })
 	.middleware([authenticated()])
-	.handler(async () => findMessage(db));
+	.handler(async () => findBanner(db));
 
-export const findMessagesFn = createServerFn({ method: "GET" })
+export const findBannersFn = createServerFn({ method: "GET" })
 	.middleware([adminRole("settings")])
-	.handler(async () => findMessages(db));
+	.handler(async () => findBanners(db));
 
-export const createMessageFn = createServerFn({ method: "POST" })
+export const createBannerFn = createServerFn({ method: "POST" })
 	.middleware([adminRole("settings")])
-	.validator(createMessageSchema)
+	.validator(createBannerSchema)
 	.handler(async ({ context, data }) => {
-		const message = await createMessage(
+		const banner = await createBanner(
 			db,
 			data.message,
 			data.color,
 			context.session.userId,
 		);
 		setResponseStatus(201);
-		return message;
+		return banner;
 	});
 
-export const updateMessageFn = createServerFn({ method: "POST" })
+export const updateBannerFn = createServerFn({ method: "POST" })
 	.middleware([adminRole("settings")])
-	.validator(updateMessageSchema)
+	.validator(updateBannerSchema)
 	.handler(async ({ context, data }) => {
 		try {
-			return await updateMessage(
+			return await updateBanner(
 				db,
 				data.id,
 				{ message: data.message, color: data.color },
@@ -83,32 +83,32 @@ export const updateMessageFn = createServerFn({ method: "POST" })
 		}
 	});
 
-export const deleteMessageFn = createServerFn({ method: "POST" })
+export const deleteBannerFn = createServerFn({ method: "POST" })
 	.middleware([adminRole("settings")])
 	.validator(idSchema)
 	.handler(async ({ data }) => {
 		try {
-			await deleteMessage(db, data.id);
+			await deleteBanner(db, data.id);
 			return null;
 		} catch (err) {
 			rethrowAsHttp(err);
 		}
 	});
 
-export const setActiveMessageFn = createServerFn({ method: "POST" })
+export const setActiveBannerFn = createServerFn({ method: "POST" })
 	.middleware([adminRole("settings")])
 	.validator(idSchema)
 	.handler(async ({ data }) => {
 		try {
-			return await setActiveMessage(db, data.id);
+			return await setActiveBanner(db, data.id);
 		} catch (err) {
 			rethrowAsHttp(err);
 		}
 	});
 
-export const clearActiveMessageFn = createServerFn({ method: "POST" })
+export const clearActiveBannerFn = createServerFn({ method: "POST" })
 	.middleware([adminRole("settings")])
 	.handler(async () => {
-		await clearActiveMessage(db);
+		await clearActiveBanner(db);
 		return null;
 	});

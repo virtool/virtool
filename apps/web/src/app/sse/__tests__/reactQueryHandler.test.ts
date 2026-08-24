@@ -127,11 +127,11 @@ describe("reactQueryHandler", () => {
 			// Banners cache the active banner at active(), outside lists(), so an
 			// update still has to fall back to the whole domain to reach it.
 			{
-				message: { domain: "messages", operation: "update", id: 1 },
+				message: { domain: "banners", operation: "update", id: 1 },
 				queryKey: bannerQueryKeys.all(),
 			},
 			{
-				message: { domain: "messages", operation: "delete", id: 1 },
+				message: { domain: "banners", operation: "delete", id: 1 },
 				queryKey: bannerQueryKeys.lists(),
 			},
 
@@ -198,7 +198,7 @@ describe("reactQueryHandler", () => {
 					queryKey: analysesQueryKeys.list(["smp1", 1, 25]),
 				},
 				{
-					message: { domain: "messages", operation: "update", id: 1 },
+					message: { domain: "banners", operation: "update", id: 1 },
 					queryKey: bannerQueryKeys.active(),
 				},
 				{
