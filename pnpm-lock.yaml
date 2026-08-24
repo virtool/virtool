@@ -315,8 +315,8 @@ importers:
   apps/site:
     dependencies:
       '@astrojs/mdx':
-        specifier: ^7.0.5
-        version: 7.0.5(@astrojs/markdown-satteri@0.3.5)(astro@7.2.0(@astrojs/markdown-remark@7.2.2)(@azure/identity@4.13.1)(@azure/storage-blob@12.33.0)(@emnapi/core@1.11.2)(@emnapi/runtime@1.11.3)(@types/node@26.2.0)(db0@0.3.4(drizzle-orm@0.45.2(@opentelemetry/api@1.9.1)(postgres@3.4.9)))(jiti@2.7.0)(tsx@4.23.0)(yaml@2.9.0))
+        specifier: ^7.0.7
+        version: 7.0.7(@astrojs/markdown-satteri@0.3.5)(astro@7.2.0(@azure/identity@4.13.1)(@azure/storage-blob@12.33.0)(@emnapi/core@1.11.2)(@emnapi/runtime@1.11.3)(@types/node@26.2.0)(db0@0.3.4(drizzle-orm@0.45.2(@opentelemetry/api@1.9.1)(postgres@3.4.9)))(jiti@2.7.0)(tsx@4.23.0)(yaml@2.9.0))
       '@astrojs/prism':
         specifier: ^4.0.2
         version: 4.0.2
@@ -325,19 +325,19 @@ importers:
         version: 3.7.3
       '@lucide/astro':
         specifier: ^1.31.0
-        version: 1.31.0(astro@7.2.0(@astrojs/markdown-remark@7.2.2)(@azure/identity@4.13.1)(@azure/storage-blob@12.33.0)(@emnapi/core@1.11.2)(@emnapi/runtime@1.11.3)(@types/node@26.2.0)(db0@0.3.4(drizzle-orm@0.45.2(@opentelemetry/api@1.9.1)(postgres@3.4.9)))(jiti@2.7.0)(tsx@4.23.0)(yaml@2.9.0))
+        version: 1.31.0(astro@7.2.0(@azure/identity@4.13.1)(@azure/storage-blob@12.33.0)(@emnapi/core@1.11.2)(@emnapi/runtime@1.11.3)(@types/node@26.2.0)(db0@0.3.4(drizzle-orm@0.45.2(@opentelemetry/api@1.9.1)(postgres@3.4.9)))(jiti@2.7.0)(tsx@4.23.0)(yaml@2.9.0))
       '@tailwindcss/typography':
         specifier: ^0.5.19
         version: 0.5.20(tailwindcss@4.3.3)
       '@tailwindcss/vite':
         specifier: ^4.2.2
-        version: 4.3.3(vite@8.2.1(@types/node@26.2.0)(esbuild@0.28.2)(jiti@2.7.0)(tsx@4.23.0)(yaml@2.9.0))
+        version: 4.3.3(vite@8.2.1(@types/node@26.2.0)(jiti@2.7.0)(tsx@4.23.0)(yaml@2.9.0))
       '@types/node':
         specifier: ^26.2.0
         version: 26.2.0
       astro:
         specifier: ^7.2.0
-        version: 7.2.0(@astrojs/markdown-remark@7.2.2)(@azure/identity@4.13.1)(@azure/storage-blob@12.33.0)(@emnapi/core@1.11.2)(@emnapi/runtime@1.11.3)(@types/node@26.2.0)(db0@0.3.4(drizzle-orm@0.45.2(@opentelemetry/api@1.9.1)(postgres@3.4.9)))(jiti@2.7.0)(tsx@4.23.0)(yaml@2.9.0)
+        version: 7.2.0(@azure/identity@4.13.1)(@azure/storage-blob@12.33.0)(@emnapi/core@1.11.2)(@emnapi/runtime@1.11.3)(@types/node@26.2.0)(db0@0.3.4(drizzle-orm@0.45.2(@opentelemetry/api@1.9.1)(postgres@3.4.9)))(jiti@2.7.0)(tsx@4.23.0)(yaml@2.9.0)
       micromark:
         specifier: ^4.0.2
         version: 4.0.2
@@ -562,7 +562,7 @@ importers:
         version: 0.2.3(@babel/core@8.0.1)(@babel/runtime@7.29.7)(rolldown@1.2.3)(vite@8.2.1(@types/node@26.2.0)(jiti@2.7.0)(tsx@4.23.0)(yaml@2.9.0))
       '@tailwindcss/vite':
         specifier: ^4.3.3
-        version: 4.3.3(vite@8.2.1(@types/node@26.2.0)(esbuild@0.28.2)(jiti@2.7.0)(tsx@4.23.0)(yaml@2.9.0))
+        version: 4.3.3(vite@8.2.1(@types/node@26.2.0)(jiti@2.7.0)(tsx@4.23.0)(yaml@2.9.0))
       '@tanstack/start-storage-context':
         specifier: 1.167.26
         version: 1.167.26
@@ -907,14 +907,17 @@ packages:
   '@astrojs/internal-helpers@0.10.2':
     resolution: {integrity: sha512-yt7fMgPYqSM4Tmr+taTW6Per+hjJ8Pk6lA1PAcDyqzOt8HzJ6Kje5WzCxA2Sd+9wsUW7uhkLeoTMK0cXPwH9rQ==}
 
-  '@astrojs/markdown-remark@7.2.2':
-    resolution: {integrity: sha512-FGfmK84zSNcrsBd0dl1gXE9JvZYElp8EXQa2jpHVAxG4deGKAp43wspxFupjADJX7MSsMRHwYCnfT6EyVmgeFQ==}
+  '@astrojs/internal-helpers@0.10.4':
+    resolution: {integrity: sha512-nozZSy/mKYLqe4YrqbKtdOszedAfXYCtw3wZ0d+CAjz4GqQ4L9rl1ltIL5BlgwmYVinJg/RZ0MgGuWOdlyRZlA==}
+
+  '@astrojs/markdown-remark@7.2.4':
+    resolution: {integrity: sha512-MvspGMynWKAjTe4/lTUdmBPHIFKNVLTCF6UlyWGogTGzNrTvjD+D4n48k7h8swxsEPKHK2TwxkZO7uoaCv1Pow==}
 
   '@astrojs/markdown-satteri@0.3.5':
     resolution: {integrity: sha512-CvWVEFAbay7YO+i9SaqDJubipA5ckiVB89QWoMJ5XC0m5CtFg8JwZ7Kau6X9sYY7FZURH0w2l03ISH2jOS/RDQ==}
 
-  '@astrojs/mdx@7.0.5':
-    resolution: {integrity: sha512-wEM/HH1RiEntyPVagdiF+yArzfcYLKBB0C1RZspVidKZ97rRMbaqP1Nbl/GR0sJs8zwaceqxRymw8aOKKJRdYw==}
+  '@astrojs/mdx@7.0.7':
+    resolution: {integrity: sha512-hv+NJh2s+/KDrjXaYNOaS344e3M2ekMXHBR7x9EwBwE3VvE1y/9Ifh1rhR1H2zK2sMgXoUnakI9e9ZeCKPX9/Q==}
     engines: {node: '>=22.12.0'}
     peerDependencies:
       '@astrojs/markdown-satteri': ^0.3.1
@@ -9364,9 +9367,20 @@ snapshots:
       smol-toml: 1.8.0
       unified: 11.0.5
 
-  '@astrojs/markdown-remark@7.2.2':
+  '@astrojs/internal-helpers@0.10.4':
     dependencies:
-      '@astrojs/internal-helpers': 0.10.2
+      '@types/hast': 3.0.5
+      '@types/mdast': 4.0.4
+      js-yaml: 4.3.1
+      picomatch: 4.0.5
+      retext-smartypants: 6.2.0
+      shiki: 4.4.2
+      smol-toml: 1.8.0
+      unified: 11.0.5
+
+  '@astrojs/markdown-remark@7.2.4':
+    dependencies:
+      '@astrojs/internal-helpers': 0.10.4
       '@astrojs/prism': 4.0.2
       github-slugger: 2.0.0
       hast-util-from-html: 2.0.3
@@ -9394,13 +9408,13 @@ snapshots:
       hast-util-from-html: 2.0.3
       satteri: 0.9.5
 
-  '@astrojs/mdx@7.0.5(@astrojs/markdown-satteri@0.3.5)(astro@7.2.0(@astrojs/markdown-remark@7.2.2)(@azure/identity@4.13.1)(@azure/storage-blob@12.33.0)(@emnapi/core@1.11.2)(@emnapi/runtime@1.11.3)(@types/node@26.2.0)(db0@0.3.4(drizzle-orm@0.45.2(@opentelemetry/api@1.9.1)(postgres@3.4.9)))(jiti@2.7.0)(tsx@4.23.0)(yaml@2.9.0))':
+  '@astrojs/mdx@7.0.7(@astrojs/markdown-satteri@0.3.5)(astro@7.2.0(@azure/identity@4.13.1)(@azure/storage-blob@12.33.0)(@emnapi/core@1.11.2)(@emnapi/runtime@1.11.3)(@types/node@26.2.0)(db0@0.3.4(drizzle-orm@0.45.2(@opentelemetry/api@1.9.1)(postgres@3.4.9)))(jiti@2.7.0)(tsx@4.23.0)(yaml@2.9.0))':
     dependencies:
-      '@astrojs/internal-helpers': 0.10.2
-      '@astrojs/markdown-remark': 7.2.2
+      '@astrojs/internal-helpers': 0.10.4
+      '@astrojs/markdown-remark': 7.2.4
       '@mdx-js/mdx': 3.1.1
       acorn: 8.18.0
-      astro: 7.2.0(@astrojs/markdown-remark@7.2.2)(@azure/identity@4.13.1)(@azure/storage-blob@12.33.0)(@emnapi/core@1.11.2)(@emnapi/runtime@1.11.3)(@types/node@26.2.0)(db0@0.3.4(drizzle-orm@0.45.2(@opentelemetry/api@1.9.1)(postgres@3.4.9)))(jiti@2.7.0)(tsx@4.23.0)(yaml@2.9.0)
+      astro: 7.2.0(@azure/identity@4.13.1)(@azure/storage-blob@12.33.0)(@emnapi/core@1.11.2)(@emnapi/runtime@1.11.3)(@types/node@26.2.0)(db0@0.3.4(drizzle-orm@0.45.2(@opentelemetry/api@1.9.1)(postgres@3.4.9)))(jiti@2.7.0)(tsx@4.23.0)(yaml@2.9.0)
       es-module-lexer: 2.3.1
       estree-util-visit: 2.0.0
       hast-util-to-html: 9.0.5
@@ -10737,9 +10751,9 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  '@lucide/astro@1.31.0(astro@7.2.0(@astrojs/markdown-remark@7.2.2)(@azure/identity@4.13.1)(@azure/storage-blob@12.33.0)(@emnapi/core@1.11.2)(@emnapi/runtime@1.11.3)(@types/node@26.2.0)(db0@0.3.4(drizzle-orm@0.45.2(@opentelemetry/api@1.9.1)(postgres@3.4.9)))(jiti@2.7.0)(tsx@4.23.0)(yaml@2.9.0))':
+  '@lucide/astro@1.31.0(astro@7.2.0(@azure/identity@4.13.1)(@azure/storage-blob@12.33.0)(@emnapi/core@1.11.2)(@emnapi/runtime@1.11.3)(@types/node@26.2.0)(db0@0.3.4(drizzle-orm@0.45.2(@opentelemetry/api@1.9.1)(postgres@3.4.9)))(jiti@2.7.0)(tsx@4.23.0)(yaml@2.9.0))':
     dependencies:
-      astro: 7.2.0(@astrojs/markdown-remark@7.2.2)(@azure/identity@4.13.1)(@azure/storage-blob@12.33.0)(@emnapi/core@1.11.2)(@emnapi/runtime@1.11.3)(@types/node@26.2.0)(db0@0.3.4(drizzle-orm@0.45.2(@opentelemetry/api@1.9.1)(postgres@3.4.9)))(jiti@2.7.0)(tsx@4.23.0)(yaml@2.9.0)
+      astro: 7.2.0(@azure/identity@4.13.1)(@azure/storage-blob@12.33.0)(@emnapi/core@1.11.2)(@emnapi/runtime@1.11.3)(@types/node@26.2.0)(db0@0.3.4(drizzle-orm@0.45.2(@opentelemetry/api@1.9.1)(postgres@3.4.9)))(jiti@2.7.0)(tsx@4.23.0)(yaml@2.9.0)
 
   '@mdx-js/mdx@3.1.1':
     dependencies:
@@ -12394,7 +12408,7 @@ snapshots:
       postcss-selector-parser: 6.0.10
       tailwindcss: 4.3.3
 
-  '@tailwindcss/vite@4.3.3(vite@8.2.1(@types/node@26.2.0)(esbuild@0.28.2)(jiti@2.7.0)(tsx@4.23.0)(yaml@2.9.0))':
+  '@tailwindcss/vite@4.3.3(vite@8.2.1(@types/node@26.2.0)(jiti@2.7.0)(tsx@4.23.0)(yaml@2.9.0))':
     dependencies:
       '@tailwindcss/node': 4.3.3
       '@tailwindcss/oxide': 4.3.3
@@ -12606,7 +12620,7 @@ snapshots:
       srvx: 0.11.22
       tinyglobby: 0.2.17
       ufo: 1.6.4
-      vitefu: 1.1.3(vite@8.2.1(@types/node@26.2.0)(esbuild@0.28.2)(jiti@2.7.0)(tsx@4.23.0)(yaml@2.9.0))
+      vitefu: 1.1.3(vite@8.2.1(@types/node@26.2.0)(jiti@2.7.0)(tsx@4.23.0)(yaml@2.9.0))
       xmlbuilder2: 4.0.3
       zod: 4.4.3
     optionalDependencies:
@@ -13012,7 +13026,7 @@ snapshots:
   '@vitest/browser-playwright@4.1.10(playwright@1.61.1)(vite@8.2.1(@types/node@26.2.0)(esbuild@0.28.2)(jiti@2.7.0)(tsx@4.23.0)(yaml@2.9.0))(vitest@4.1.10)':
     dependencies:
       '@vitest/browser': 4.1.10(vite@8.2.1(@types/node@26.2.0)(esbuild@0.28.2)(jiti@2.7.0)(tsx@4.23.0)(yaml@2.9.0))(vitest@4.1.10)
-      '@vitest/mocker': 4.1.10(vite@8.2.1(@types/node@26.2.0)(esbuild@0.28.2)(jiti@2.7.0)(tsx@4.23.0)(yaml@2.9.0))
+      '@vitest/mocker': 4.1.10(vite@8.2.1(@types/node@26.2.0)(jiti@2.7.0)(tsx@4.23.0)(yaml@2.9.0))
       playwright: 1.61.1
       tinyrainbow: 3.1.0
       vitest: 4.1.10(@opentelemetry/api@1.9.1)(@types/node@26.2.0)(@vitest/browser-playwright@4.1.10)(jsdom@30.0.1)(vite@8.2.1(@types/node@26.2.0)(esbuild@0.28.2)(jiti@2.7.0)(tsx@4.23.0)(yaml@2.9.0))
@@ -13026,7 +13040,7 @@ snapshots:
   '@vitest/browser-playwright@4.1.10(playwright@1.61.1)(vite@8.2.1(@types/node@26.2.0)(jiti@2.7.0)(tsx@4.23.0)(yaml@2.9.0))(vitest@4.1.10)':
     dependencies:
       '@vitest/browser': 4.1.10(vite@8.2.1(@types/node@26.2.0)(jiti@2.7.0)(tsx@4.23.0)(yaml@2.9.0))(vitest@4.1.10)
-      '@vitest/mocker': 4.1.10(vite@8.2.1(@types/node@26.2.0)(esbuild@0.28.2)(jiti@2.7.0)(tsx@4.23.0)(yaml@2.9.0))
+      '@vitest/mocker': 4.1.10(vite@8.2.1(@types/node@26.2.0)(jiti@2.7.0)(tsx@4.23.0)(yaml@2.9.0))
       playwright: 1.61.1
       tinyrainbow: 3.1.0
       vitest: 4.1.10(@opentelemetry/api@1.9.1)(@types/node@26.2.0)(@vitest/browser-playwright@4.1.10)(jsdom@30.0.1)(vite@8.2.1(@types/node@26.2.0)(jiti@2.7.0)(tsx@4.23.0)(yaml@2.9.0))
@@ -13039,7 +13053,7 @@ snapshots:
   '@vitest/browser@4.1.10(vite@8.2.1(@types/node@26.2.0)(esbuild@0.28.2)(jiti@2.7.0)(tsx@4.23.0)(yaml@2.9.0))(vitest@4.1.10)':
     dependencies:
       '@blazediff/core': 1.9.1
-      '@vitest/mocker': 4.1.10(vite@8.2.1(@types/node@26.2.0)(esbuild@0.28.2)(jiti@2.7.0)(tsx@4.23.0)(yaml@2.9.0))
+      '@vitest/mocker': 4.1.10(vite@8.2.1(@types/node@26.2.0)(jiti@2.7.0)(tsx@4.23.0)(yaml@2.9.0))
       '@vitest/utils': 4.1.10
       magic-string: 0.30.21
       pngjs: 7.0.0
@@ -13057,7 +13071,7 @@ snapshots:
   '@vitest/browser@4.1.10(vite@8.2.1(@types/node@26.2.0)(jiti@2.7.0)(tsx@4.23.0)(yaml@2.9.0))(vitest@4.1.10)':
     dependencies:
       '@blazediff/core': 1.9.1
-      '@vitest/mocker': 4.1.10(vite@8.2.1(@types/node@26.2.0)(esbuild@0.28.2)(jiti@2.7.0)(tsx@4.23.0)(yaml@2.9.0))
+      '@vitest/mocker': 4.1.10(vite@8.2.1(@types/node@26.2.0)(jiti@2.7.0)(tsx@4.23.0)(yaml@2.9.0))
       '@vitest/utils': 4.1.10
       magic-string: 0.30.21
       pngjs: 7.0.0
@@ -13080,7 +13094,7 @@ snapshots:
       chai: 6.2.2
       tinyrainbow: 3.1.0
 
-  '@vitest/mocker@4.1.10(vite@8.2.1(@types/node@26.2.0)(esbuild@0.28.2)(jiti@2.7.0)(tsx@4.23.0)(yaml@2.9.0))':
+  '@vitest/mocker@4.1.10(vite@8.2.1(@types/node@26.2.0)(jiti@2.7.0)(tsx@4.23.0)(yaml@2.9.0))':
     dependencies:
       '@vitest/spy': 4.1.10
       estree-walker: 3.0.3
@@ -13339,7 +13353,7 @@ snapshots:
 
   astring@1.9.0: {}
 
-  astro@7.2.0(@astrojs/markdown-remark@7.2.2)(@azure/identity@4.13.1)(@azure/storage-blob@12.33.0)(@emnapi/core@1.11.2)(@emnapi/runtime@1.11.3)(@types/node@26.2.0)(db0@0.3.4(drizzle-orm@0.45.2(@opentelemetry/api@1.9.1)(postgres@3.4.9)))(jiti@2.7.0)(tsx@4.23.0)(yaml@2.9.0):
+  astro@7.2.0(@azure/identity@4.13.1)(@azure/storage-blob@12.33.0)(@emnapi/core@1.11.2)(@emnapi/runtime@1.11.3)(@types/node@26.2.0)(db0@0.3.4(drizzle-orm@0.45.2(@opentelemetry/api@1.9.1)(postgres@3.4.9)))(jiti@2.7.0)(tsx@4.23.0)(yaml@2.9.0):
     dependencies:
       '@astrojs/compiler-rs': 0.3.2(@emnapi/core@1.11.2)(@emnapi/runtime@1.11.3)
       '@astrojs/internal-helpers': 0.10.2
@@ -13389,12 +13403,11 @@ snapshots:
       unifont: 0.7.4
       unstorage: 1.17.5(@azure/identity@4.13.1)(@azure/storage-blob@12.33.0)(db0@0.3.4(drizzle-orm@0.45.2(@opentelemetry/api@1.9.1)(postgres@3.4.9)))
       vite: 8.2.1(@types/node@26.2.0)(esbuild@0.28.2)(jiti@2.7.0)(tsx@4.23.0)(yaml@2.9.0)
-      vitefu: 1.1.3(vite@8.2.1(@types/node@26.2.0)(esbuild@0.28.2)(jiti@2.7.0)(tsx@4.23.0)(yaml@2.9.0))
+      vitefu: 1.1.3(vite@8.2.1(@types/node@26.2.0)(jiti@2.7.0)(tsx@4.23.0)(yaml@2.9.0))
       xxhash-wasm: 1.1.0
       yargs-parser: 22.0.0
       zod: 4.4.3
     optionalDependencies:
-      '@astrojs/markdown-remark': 7.2.2
       sharp: 0.35.3(@types/node@26.2.0)
     transitivePeerDependencies:
       - '@azure/app-configuration'
@@ -17715,14 +17728,14 @@ snapshots:
       tsx: 4.23.0
       yaml: 2.9.0
 
-  vitefu@1.1.3(vite@8.2.1(@types/node@26.2.0)(esbuild@0.28.2)(jiti@2.7.0)(tsx@4.23.0)(yaml@2.9.0)):
+  vitefu@1.1.3(vite@8.2.1(@types/node@26.2.0)(jiti@2.7.0)(tsx@4.23.0)(yaml@2.9.0)):
     optionalDependencies:
       vite: 8.2.1(@types/node@26.2.0)(esbuild@0.28.2)(jiti@2.7.0)(tsx@4.23.0)(yaml@2.9.0)
 
   vitest@4.1.10(@opentelemetry/api@1.9.1)(@types/node@26.2.0)(@vitest/browser-playwright@4.1.10)(jsdom@30.0.1)(vite@8.2.1(@types/node@26.2.0)(esbuild@0.28.2)(jiti@2.7.0)(tsx@4.23.0)(yaml@2.9.0)):
     dependencies:
       '@vitest/expect': 4.1.10
-      '@vitest/mocker': 4.1.10(vite@8.2.1(@types/node@26.2.0)(esbuild@0.28.2)(jiti@2.7.0)(tsx@4.23.0)(yaml@2.9.0))
+      '@vitest/mocker': 4.1.10(vite@8.2.1(@types/node@26.2.0)(jiti@2.7.0)(tsx@4.23.0)(yaml@2.9.0))
       '@vitest/pretty-format': 4.1.10
       '@vitest/runner': 4.1.10
       '@vitest/snapshot': 4.1.10
@@ -17752,7 +17765,7 @@ snapshots:
   vitest@4.1.10(@opentelemetry/api@1.9.1)(@types/node@26.2.0)(@vitest/browser-playwright@4.1.10)(jsdom@30.0.1)(vite@8.2.1(@types/node@26.2.0)(jiti@2.7.0)(tsx@4.23.0)(yaml@2.9.0)):
     dependencies:
       '@vitest/expect': 4.1.10
-      '@vitest/mocker': 4.1.10(vite@8.2.1(@types/node@26.2.0)(esbuild@0.28.2)(jiti@2.7.0)(tsx@4.23.0)(yaml@2.9.0))
+      '@vitest/mocker': 4.1.10(vite@8.2.1(@types/node@26.2.0)(jiti@2.7.0)(tsx@4.23.0)(yaml@2.9.0))
       '@vitest/pretty-format': 4.1.10
       '@vitest/runner': 4.1.10
       '@vitest/snapshot': 4.1.10
