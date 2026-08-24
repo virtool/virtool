@@ -2,7 +2,7 @@ import { readFile } from "node:fs/promises";
 import { fileURLToPath } from "node:url";
 
 import { eq, isNull } from "drizzle-orm";
-import { beforeEach, expect, it, onTestFinished } from "vitest";
+import { afterAll, beforeAll, beforeEach, expect, it } from "vitest";
 
 import { seedUser } from "../auth/test/fixtures";
 import { seedReference } from "../indexes/test/fixtures";
@@ -10,7 +10,9 @@ import type { Db } from "./pg";
 import { takeFirstOrThrow } from "./rows";
 import { indexes } from "./schema/indexes";
 import { jobs } from "./schema/jobs";
+import { legacyReferences } from "./schema/references";
 import { tasks } from "./schema/tasks";
+import { users } from "./schema/users";
 import { createTestDatabase, type TestDatabase } from "./test/fixtures";
 
 const MIGRATION_SQL = fileURLToPath(
@@ -23,10 +25,21 @@ const MIGRATION_SQL = fileURLToPath(
 let database: TestDatabase;
 let db: Db;
 
-beforeEach(async () => {
+beforeAll(async () => {
 	database = await createTestDatabase();
 	db = database.db;
-	onTestFinished(database.drop);
+}, 60_000);
+
+afterAll(async () => {
+	await database.drop();
+});
+
+beforeEach(async () => {
+	await db.delete(indexes);
+	await db.delete(jobs);
+	await db.delete(tasks);
+	await db.delete(legacyReferences);
+	await db.delete(users);
 });
 
 async function applyBackfill(): Promise<void> {
