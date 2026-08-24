@@ -1,4 +1,4 @@
-import IconButton from "@base/IconButton";
+import { IconButton } from "@base/Icon";
 import { useCurrentOtuContext } from "@otus/components/CurrentOtuContext";
 import { useGetActiveIsolateId } from "@otus/hooks";
 import { DownloadLink } from "@references/components/Detail/DownloadLink";

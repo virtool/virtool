@@ -1,9 +1,10 @@
-import Dropdown from "@base/Dropdown";
-import DropdownMenuCheckboxItem from "@base/DropdownMenuCheckboxItem";
-import DropdownMenuContent from "@base/DropdownMenuContent";
-import DropdownMenuLink from "@base/DropdownMenuLink";
-import DropdownMenuSeparator from "@base/DropdownMenuSeparator";
-import DropdownMenuTrigger from "@base/DropdownMenuTrigger";
+import Dropdown, {
+	DropdownMenuCheckboxItem,
+	DropdownMenuContent,
+	DropdownMenuLink,
+	DropdownMenuSeparator,
+	DropdownMenuTrigger,
+} from "@base/Dropdown";
 import Icon from "@base/Icon";
 import Input from "@base/Input";
 import { getHexColor, getSelectedLabels } from "@samples/labels";

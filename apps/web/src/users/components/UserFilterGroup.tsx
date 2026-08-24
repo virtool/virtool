@@ -1,5 +1,4 @@
-import FilterChip from "@base/FilterChip";
-import FilterGroup from "@base/FilterGroup";
+import { FilterChip, FilterGroup } from "@base/Filter";
 import { useListUsers } from "@users/queries";
 import { Users } from "lucide-react";
 import UserFilterMenu from "./UserFilterMenu";

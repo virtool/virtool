@@ -1,6 +1,5 @@
 import Link from "@base/Link";
-import SideBarSection from "@base/SideBarSection";
-import SidebarHeader from "@base/SidebarHeader";
+import { SideBarSection, SidebarHeader } from "@base/Sidebar";
 import type { Label } from "@virtool/contracts";
 import { xor } from "es-toolkit/array";
 import SampleLabel from "../Label/SampleLabel";

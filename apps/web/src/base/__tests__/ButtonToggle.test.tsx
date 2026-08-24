@@ -1,7 +1,7 @@
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
-import ButtonToggle from "../ButtonToggle";
+import { ButtonToggle } from "../Button";
 import Tooltip from "../Tooltip";
 
 describe("<ButtonToggle />", () => {

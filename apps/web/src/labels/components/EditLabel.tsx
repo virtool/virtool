@@ -4,7 +4,7 @@ import {
 	DialogTitle,
 	DialogTrigger,
 } from "@base/Dialog";
-import IconButton from "@base/IconButton";
+import { IconButton } from "@base/Icon";
 import { Pencil } from "lucide-react";
 import { useState } from "react";
 import { LabelForm } from "./LabelForm";

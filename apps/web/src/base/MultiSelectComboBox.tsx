@@ -1,9 +1,9 @@
 import { cn } from "@app/cn";
+import Icon from "@base/Icon";
+import { InputLabel } from "@base/Input";
 import { useCombobox, useMultipleSelection } from "downshift";
 import { ChevronDown, X } from "lucide-react";
 import type { ReactNode } from "react";
-import Icon from "./Icon";
-import InputLabel from "./InputLabel";
 
 type MultiSelectComboBoxProps<Item> = {
 	/** The text label associated with the combobox input */

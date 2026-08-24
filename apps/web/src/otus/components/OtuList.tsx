@@ -1,7 +1,7 @@
 import { DEFAULT_PER_PAGE } from "@app/pagination";
-import BoxGroup from "@base/BoxGroup";
+import { BoxGroup } from "@base/Box";
 import Button from "@base/Button";
-import ContainerNarrow from "@base/ContainerNarrow";
+import { ContainerNarrow } from "@base/Container";
 import ListEmpty from "@base/ListEmpty";
 import Pagination from "@base/Pagination";
 import RebuildAlert from "@indexes/components/RebuildAlert";

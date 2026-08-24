@@ -1,9 +1,11 @@
 import { useAnalysisSearch } from "@analyses/components/AnalysisSearchContext";
 import AnalysisValue from "@analyses/components/AnalysisValue";
 import { toScientificNotation } from "@app/format";
-import AccordionContent from "@base/AccordionContent";
-import AccordionItem from "@base/AccordionItem";
-import AccordionTrigger from "@base/AccordionTrigger";
+import {
+	AccordionContent,
+	AccordionItem,
+	AccordionTrigger,
+} from "@base/Accordion";
 import Checkbox from "@base/Checkbox";
 import type { PathoscopeHit } from "@virtool/contracts";
 import type { MouseEvent } from "react";

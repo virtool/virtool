@@ -1,5 +1,4 @@
-import BoxGroup from "@base/BoxGroup";
-import BoxGroupHeader from "@base/BoxGroupHeader";
+import { BoxGroup, BoxGroupHeader } from "@base/Box";
 import Checkbox from "@base/Checkbox";
 import type { Group } from "@virtool/contracts";
 import { useUpdateGroup } from "../queries";

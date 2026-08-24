@@ -1,6 +1,5 @@
 import { useNow } from "@app/hooks";
-import BoxGroup from "@base/BoxGroup";
-import BoxGroupSection from "@base/BoxGroupSection";
+import { BoxGroup, BoxGroupSection } from "@base/Box";
 import RelativeTime from "@base/RelativeTime";
 import type { JobState, JobStep } from "@virtool/contracts";
 import JobStateIcon from "./JobStateIcon";

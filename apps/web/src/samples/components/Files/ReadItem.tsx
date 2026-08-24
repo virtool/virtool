@@ -1,5 +1,5 @@
 import { byteSize } from "@app/format";
-import BoxGroupSection from "@base/BoxGroupSection";
+import { BoxGroupSection } from "@base/Box";
 
 /**
  * Sanitize a string for use as a filename by replacing invalid characters

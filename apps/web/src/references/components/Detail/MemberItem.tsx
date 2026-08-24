@@ -1,6 +1,5 @@
-import BoxGroupSection from "@base/BoxGroupSection";
-import IconButton from "@base/IconButton";
-import InitialIcon from "@base/InitialIcon";
+import { BoxGroupSection } from "@base/Box";
+import { IconButton, InitialIcon } from "@base/Icon";
 import { Pencil, Trash } from "lucide-react";
 
 type MemberItemIconProps = {

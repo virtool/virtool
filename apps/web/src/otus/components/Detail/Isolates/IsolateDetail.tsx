@@ -1,6 +1,6 @@
 import { formatIsolateName } from "@app/utils";
 import Alert from "@base/Alert";
-import IconButton from "@base/IconButton";
+import { IconButton } from "@base/Icon";
 import { useCurrentOtuContext } from "@otus/components/CurrentOtuContext";
 import { useSetIsolateAsDefault } from "@otus/queries";
 import { DownloadLink } from "@references/components/Detail/DownloadLink";

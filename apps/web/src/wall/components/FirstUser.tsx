@@ -1,8 +1,5 @@
 import Button from "@base/Button";
-import InputError from "@base/InputError";
-import InputGroup from "@base/InputGroup";
-import InputLabel from "@base/InputLabel";
-import InputSimple from "@base/InputSimple";
+import { InputError, InputGroup, InputLabel, InputSimple } from "@base/Input";
 import { usePasswordRules } from "@forms/password";
 import { useNavigate } from "@tanstack/react-router";
 import { useForm } from "react-hook-form";

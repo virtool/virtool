@@ -1,11 +1,8 @@
 import { getErrorStatus } from "@app/queryErrors";
 import Badge from "@base/Badge";
 import Link from "@base/Link";
-import NavTab from "@base/NavTab";
-import NavTabs from "@base/NavTabs";
-import ViewHeader from "@base/ViewHeader";
-import ViewHeaderIcons from "@base/ViewHeaderIcons";
-import ViewHeaderTitle from "@base/ViewHeaderTitle";
+import { NavTab, NavTabs } from "@base/Nav";
+import { ViewHeader, ViewHeaderIcons, ViewHeaderTitle } from "@base/View";
 import { OtuHeaderIcons } from "@otus/components/Detail/OtuHeaderIcons";
 import { useFetchOtu } from "@otus/queries";
 import { DownloadLink } from "@references/components/Detail/DownloadLink";

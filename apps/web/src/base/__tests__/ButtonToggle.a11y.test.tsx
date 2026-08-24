@@ -1,6 +1,5 @@
-import ButtonToggle from "@base/ButtonToggle";
-import ToggleGroup from "@base/ToggleGroup";
-import ToggleGroupItem from "@base/ToggleGroupItem";
+import { ButtonToggle } from "@base/Button";
+import { ToggleGroup, ToggleGroupItem } from "@base/Toggle";
 import { render } from "@testing-library/react";
 import { expectNoViolations } from "@tests/axe";
 import { describe, it, vi } from "vitest";

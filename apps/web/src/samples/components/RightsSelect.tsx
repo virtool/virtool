@@ -1,7 +1,4 @@
-import Select from "@base/Select";
-import SelectButton from "@base/SelectButton";
-import SelectContent from "@base/SelectContent";
-import SelectItem from "@base/SelectItem";
+import Select, { SelectButton, SelectContent, SelectItem } from "@base/Select";
 import { ChevronDown } from "lucide-react";
 
 /**

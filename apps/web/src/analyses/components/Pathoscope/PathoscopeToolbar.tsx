@@ -1,13 +1,10 @@
 import { useAnalysisSearch } from "@analyses/components/AnalysisSearchContext";
 import { DEFAULT_SORT_KEY } from "@analyses/search";
 import type { FormattedPathoscopeAnalysis } from "@analyses/types";
-import Button from "@base/Button";
-import ButtonGroup from "@base/ButtonGroup";
-import ButtonToggle from "@base/ButtonToggle";
+import Button, { ButtonGroup, ButtonToggle } from "@base/Button";
 import Icon from "@base/Icon";
 import SearchToolbar from "@base/SearchToolbar";
-import ToggleGroup from "@base/ToggleGroup";
-import ToggleGroupItem from "@base/ToggleGroupItem";
+import { ToggleGroup, ToggleGroupItem } from "@base/Toggle";
 import Tooltip from "@base/Tooltip";
 import {
 	ArrowDownAZ,

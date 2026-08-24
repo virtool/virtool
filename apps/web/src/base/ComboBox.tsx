@@ -1,9 +1,9 @@
 import { cn } from "@app/cn";
+import Icon from "@base/Icon";
+import { InputLabel } from "@base/Input";
 import { useCombobox } from "downshift";
 import { ChevronDown } from "lucide-react";
 import type { ReactNode } from "react";
-import Icon from "./Icon";
-import InputLabel from "./InputLabel";
 import { inputHeightClass } from "./styles";
 
 type ComboBoxProps<Item> = {

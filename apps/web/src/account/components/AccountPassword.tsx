@@ -1,14 +1,14 @@
 import { useTimedReset } from "@app/hooks";
 import Alert from "@base/Alert";
-import BoxGroup from "@base/BoxGroup";
-import BoxGroupHeader from "@base/BoxGroupHeader";
-import BoxGroupSection from "@base/BoxGroupSection";
+import { BoxGroup, BoxGroupHeader, BoxGroupSection } from "@base/Box";
 import FadeOut from "@base/FadeOut";
-import InputContainer from "@base/InputContainer";
-import InputError from "@base/InputError";
-import InputGroup from "@base/InputGroup";
-import InputLabel from "@base/InputLabel";
-import InputPassword from "@base/InputPassword";
+import {
+	InputContainer,
+	InputError,
+	InputGroup,
+	InputLabel,
+	InputPassword,
+} from "@base/Input";
 import RelativeTime from "@base/RelativeTime";
 import SaveButton from "@base/SaveButton";
 import { usePasswordRules } from "@forms/password";

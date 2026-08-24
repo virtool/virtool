@@ -1,5 +1,5 @@
 import { Dialog, DialogContent, DialogFooter, DialogTitle } from "@base/Dialog";
-import IconButton from "@base/IconButton";
+import { IconButton } from "@base/Icon";
 import SaveButton from "@base/SaveButton";
 import { useUpdateReference } from "@references/queries";
 import type { Reference } from "@virtool/contracts";

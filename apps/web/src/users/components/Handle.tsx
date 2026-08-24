@@ -1,10 +1,10 @@
-import BoxGroup from "@base/BoxGroup";
-import BoxGroupHeader from "@base/BoxGroupHeader";
-import BoxGroupSection from "@base/BoxGroupSection";
-import InputContainer from "@base/InputContainer";
-import InputError from "@base/InputError";
-import InputGroup from "@base/InputGroup";
-import InputSimple from "@base/InputSimple";
+import { BoxGroup, BoxGroupHeader, BoxGroupSection } from "@base/Box";
+import {
+	InputContainer,
+	InputError,
+	InputGroup,
+	InputSimple,
+} from "@base/Input";
 import SaveButton from "@base/SaveButton";
 import { useUpdateUser } from "@users/queries";
 import { useEffect } from "react";

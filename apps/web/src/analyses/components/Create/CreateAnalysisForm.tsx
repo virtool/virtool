@@ -3,7 +3,7 @@ import { useCreateAnalysis } from "@analyses/queries";
 import Button from "@base/Button";
 import CreatedCount from "@base/CreatedCount";
 import { DialogFooter } from "@base/Dialog";
-import InputError from "@base/InputError";
+import { InputError } from "@base/Input";
 import QueryError from "@base/QueryError";
 import Switch from "@base/Switch";
 import SubtractionSelector from "@subtraction/components/SubtractionSelector";

@@ -1,4 +1,4 @@
-import InputError from "@base/InputError";
+import { InputError } from "@base/Input";
 import { render } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
 import { expectNoViolations } from "../axe";

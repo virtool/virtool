@@ -1,8 +1,7 @@
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
-import ToggleGroup from "../ToggleGroup";
-import ToggleGroupItem from "../ToggleGroupItem";
+import { ToggleGroup, ToggleGroupItem } from "../Toggle";
 import Tooltip from "../Tooltip";
 
 function renderGroup() {

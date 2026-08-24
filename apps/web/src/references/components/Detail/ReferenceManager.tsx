@@ -1,7 +1,5 @@
-import BoxGroup from "@base/BoxGroup";
-import BoxGroupHeader from "@base/BoxGroupHeader";
-import BoxGroupTable from "@base/BoxGroupTable";
-import ContainerNarrow from "@base/ContainerNarrow";
+import { BoxGroup, BoxGroupHeader, BoxGroupTable } from "@base/Box";
+import { ContainerNarrow } from "@base/Container";
 import LoadingPlaceholder from "@base/LoadingPlaceholder";
 import QueryError from "@base/QueryError";
 import Contributors from "@indexes/components/Contributors";

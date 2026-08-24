@@ -1,4 +1,4 @@
-import IconButton from "@base/IconButton";
+import { IconButton } from "@base/Icon";
 import { useCheckReferenceRight } from "@references/hooks";
 import { Pencil, Trash } from "lucide-react";
 import { useState } from "react";

@@ -1,7 +1,6 @@
 import { useFetchAccount } from "@account/account";
-import DropdownMenuSeparator from "@base/DropdownMenuSeparator";
-import FilterMenuCheckboxItem from "@base/FilterMenuCheckboxItem";
-import FilterMenuContent from "@base/FilterMenuContent";
+import { DropdownMenuSeparator } from "@base/Dropdown";
+import { FilterMenuCheckboxItem, FilterMenuContent } from "@base/Filter";
 import Input from "@base/Input";
 import QueryError from "@base/QueryError";
 import { useListUsers } from "@users/queries";

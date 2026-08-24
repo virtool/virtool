@@ -1,6 +1,5 @@
 import Badge from "@base/Badge";
-import BoxGroup from "@base/BoxGroup";
-import BoxGroupHeader from "@base/BoxGroupHeader";
+import { BoxGroup, BoxGroupHeader } from "@base/Box";
 import type { OtuHistory } from "@virtool/contracts";
 import { sortBy } from "es-toolkit";
 import Change from "./Change";
