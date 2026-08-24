@@ -77,7 +77,7 @@ export function SegmentItem({
 					<IconButton
 						IconComponent={Trash}
 						color="red"
-						tip="delete segment"
+						tip="Delete"
 						onClick={onDelete}
 					/>
 				</div>

@@ -401,7 +401,7 @@ describe("<UserDetail />", () => {
 
 			await userEvent.click(
 				await screen.findByRole("button", {
-					name: "remove administrator role",
+					name: "Remove administrator role",
 				}),
 			);
 

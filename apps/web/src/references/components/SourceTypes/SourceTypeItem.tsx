@@ -21,7 +21,7 @@ export function SourceTypeItem({
 					className="ml-auto"
 					IconComponent={Trash}
 					color="red"
-					tip="remove"
+					tip="Remove"
 					onClick={() => onRemove(sourceType)}
 				/>
 			)}

@@ -11,7 +11,7 @@ import type { MouseEvent, ReactNode } from "react";
 import { useDeleteFile } from "../queries";
 
 export type UploadItemProps = {
-	/** An extra control shown beside the remove button. */
+	/** An extra control shown beside the delete button. */
 	action?: ReactNode;
 	canDelete: boolean;
 	/** Whether the file is selected. */
@@ -46,7 +46,7 @@ export default function UploadItem({
 	size,
 	user,
 }: UploadItemProps) {
-	const { mutate: handleRemove } = useDeleteFile();
+	const { mutate: handleDelete } = useDeleteFile();
 
 	return (
 		<tr>
@@ -82,8 +82,8 @@ export default function UploadItem({
 					<IconButton
 						color="red"
 						IconComponent={Trash}
-						tip="remove"
-						onClick={() => handleRemove({ id })}
+						tip="Delete"
+						onClick={() => handleDelete({ id })}
 					/>
 				)}
 			</TableActionsCell>

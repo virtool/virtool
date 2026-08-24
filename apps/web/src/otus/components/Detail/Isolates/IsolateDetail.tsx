@@ -102,7 +102,7 @@ export default function IsolateDetail() {
 							<IconButton
 								IconComponent={Trash}
 								color="red"
-								tip="delete"
+								tip="Delete"
 								onClick={() => setOpenDelete(true)}
 							/>
 						</>

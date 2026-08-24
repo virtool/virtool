@@ -54,7 +54,7 @@ export default function UserAdministratorRole({
 					<IconButton
 						IconComponent={Trash}
 						color="red"
-						tip="remove administrator role"
+						tip="Remove administrator role"
 						onClick={() => onChange(null)}
 					/>
 				)}

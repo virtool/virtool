@@ -47,7 +47,7 @@ export function OtuHeaderIcons({
 				key="delete-icon"
 				color="red"
 				IconComponent={Trash}
-				tip="delete OTU"
+				tip="Delete"
 				onClick={() => setOpenDelete(true)}
 			/>
 

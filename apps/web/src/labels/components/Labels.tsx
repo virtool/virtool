@@ -9,8 +9,8 @@ import ViewHeaderTitle from "@base/ViewHeaderTitle";
 import { Tags } from "lucide-react";
 import {
 	useCreateLabel,
+	useDeleteLabel,
 	useFetchLabels,
-	useRemoveLabel,
 	useUpdateLabel,
 } from "../queries";
 import { CreateLabel } from "./CreateLabel";
@@ -24,7 +24,7 @@ export function Labels() {
 	const { data, isPending, isError } = useFetchLabels();
 	const createMutation = useCreateLabel();
 	const updateMutation = useUpdateLabel();
-	const removeMutation = useRemoveLabel();
+	const deleteMutation = useDeleteLabel();
 
 	if (isError && !data) {
 		return <QueryError noun="labels" />;
@@ -61,7 +61,7 @@ export function Labels() {
 							onEdit={(labelId, values) =>
 								updateMutation.mutateAsync({ labelId, ...values })
 							}
-							onRemove={(labelId) => removeMutation.mutateAsync({ labelId })}
+							onDelete={(labelId) => deleteMutation.mutateAsync({ labelId })}
 						/>
 					))
 				) : (

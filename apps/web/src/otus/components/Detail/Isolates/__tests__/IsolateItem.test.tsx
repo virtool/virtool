@@ -87,9 +87,7 @@ describe("<IsolateItem />", () => {
 			/>,
 		);
 
-		await userEvent.click(
-			screen.getByRole("button", { name: "delete isolate" }),
-		);
+		await userEvent.click(screen.getByRole("button", { name: "Delete" }));
 
 		expect(onDelete).toHaveBeenCalledWith(isolate);
 	});

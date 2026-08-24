@@ -45,7 +45,7 @@ export function UploaderItem({
 				<IconButton
 					IconComponent={Trash}
 					color="red"
-					tip="remove"
+					tip="Remove"
 					onClick={() => removeUpload(localId)}
 				/>
 			</span>

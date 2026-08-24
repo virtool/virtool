@@ -29,7 +29,7 @@ export default function DeleteSubtraction({
 			name={subtraction.name}
 			noun="Subtraction"
 			onConfirm={handleConfirm}
-			trigger={<IconButton IconComponent={Trash} color="red" tip="delete" />}
+			trigger={<IconButton IconComponent={Trash} color="red" tip="Delete" />}
 		/>
 	);
 }

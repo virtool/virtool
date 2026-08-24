@@ -44,7 +44,7 @@ export default function IsolateItem({
 				<IconButton
 					IconComponent={Trash}
 					color="red"
-					tip="delete isolate"
+					tip="Delete"
 					onClick={() => onDelete(isolate)}
 				/>
 			)}

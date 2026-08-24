@@ -132,11 +132,11 @@ export function useUpdateApiKey() {
 }
 
 /**
- * Initializes a mutator for removing an API key
+ * Initializes a mutator for deleting an API key
  *
- * @returns A mutator for removing an API key
+ * @returns A mutator for deleting an API key
  */
-export function useRemoveApiKey() {
+export function useDeleteApiKey() {
 	const queryClient = useQueryClient();
 
 	return useMutation<null, Error, { keyId: number }>({
