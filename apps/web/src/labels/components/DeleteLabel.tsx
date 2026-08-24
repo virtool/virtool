@@ -1,5 +1,5 @@
 import DeleteDialog from "@base/DeleteDialog";
-import IconButton from "@base/IconButton";
+import { IconButton } from "@base/Icon";
 import { Trash } from "lucide-react";
 
 type DeleteLabelProps = {

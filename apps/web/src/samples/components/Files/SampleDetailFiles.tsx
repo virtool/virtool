@@ -1,4 +1,4 @@
-import ContainerNarrow from "@base/ContainerNarrow";
+import { ContainerNarrow } from "@base/Container";
 import SampleFileSizeWarning from "@samples/components/Detail/SampleFileSizeWarning";
 import { useSuspenseSample } from "@samples/queries";
 import { getRouteApi } from "@tanstack/react-router";

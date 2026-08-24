@@ -1,9 +1,8 @@
 import { byteSize } from "@app/format";
 import Checkbox from "@base/Checkbox";
-import IconButton from "@base/IconButton";
-import IconLink from "@base/IconLink";
+import { IconButton, IconLink } from "@base/Icon";
 import RelativeTime from "@base/RelativeTime";
-import TableActionsCell from "@base/TableActionsCell";
+import { TableActionsCell } from "@base/Table";
 import UserLabel from "@base/UserLabel";
 import type { UserNested } from "@virtool/contracts";
 import { Download, Trash } from "lucide-react";

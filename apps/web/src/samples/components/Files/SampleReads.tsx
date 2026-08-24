@@ -1,5 +1,4 @@
-import BoxGroup from "@base/BoxGroup";
-import BoxGroupHeader from "@base/BoxGroupHeader";
+import { BoxGroup, BoxGroupHeader } from "@base/Box";
 import type { Read } from "@virtool/contracts";
 import ReadItem from "./ReadItem";
 

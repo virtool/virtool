@@ -1,14 +1,8 @@
 import Checkbox from "@base/Checkbox";
 import { DialogFooter } from "@base/Dialog";
-import InputError from "@base/InputError";
-import InputGroup from "@base/InputGroup";
-import InputLabel from "@base/InputLabel";
-import InputSimple from "@base/InputSimple";
+import { InputError, InputGroup, InputLabel, InputSimple } from "@base/Input";
 import SaveButton from "@base/SaveButton";
-import Select from "@base/Select";
-import SelectButton from "@base/SelectButton";
-import SelectContent from "@base/SelectContent";
-import SelectItem from "@base/SelectItem";
+import Select, { SelectButton, SelectContent, SelectItem } from "@base/Select";
 import { Molecule, type OtuSegment } from "@virtool/contracts";
 import { ChevronDown } from "lucide-react";
 import { Controller, useForm } from "react-hook-form";

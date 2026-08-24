@@ -1,5 +1,5 @@
 import { Dialog, DialogContent, DialogTitle } from "@base/Dialog";
-import IconButton from "@base/IconButton";
+import { IconButton } from "@base/Icon";
 import type { BannerColor } from "@virtool/contracts";
 import { Pen } from "lucide-react";
 import { useState } from "react";

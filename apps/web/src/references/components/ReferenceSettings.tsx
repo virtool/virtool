@@ -1,7 +1,6 @@
 import { useSuspenseSettings } from "@administration/queries";
-import ContainerNarrow from "@base/ContainerNarrow";
-import ViewHeader from "@base/ViewHeader";
-import ViewHeaderTitle from "@base/ViewHeaderTitle";
+import { ContainerNarrow } from "@base/Container";
+import { ViewHeader, ViewHeaderTitle } from "@base/View";
 import { GlobalSourceTypes } from "./SourceTypes/GlobalSourceTypes";
 
 export default function ReferenceSettings() {

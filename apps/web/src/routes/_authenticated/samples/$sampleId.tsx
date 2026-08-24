@@ -1,12 +1,12 @@
 import { getErrorStatus } from "@app/queryErrors";
-import Icon from "@base/Icon";
-import IconButton from "@base/IconButton";
-import NavTab from "@base/NavTab";
-import NavTabs from "@base/NavTabs";
-import ViewHeader from "@base/ViewHeader";
-import ViewHeaderAttribution from "@base/ViewHeaderAttribution";
-import ViewHeaderIcons from "@base/ViewHeaderIcons";
-import ViewHeaderTitle from "@base/ViewHeaderTitle";
+import Icon, { IconButton } from "@base/Icon";
+import { NavTab, NavTabs } from "@base/Nav";
+import {
+	ViewHeader,
+	ViewHeaderAttribution,
+	ViewHeaderIcons,
+	ViewHeaderTitle,
+} from "@base/View";
 import DeleteSample from "@samples/components/Detail/DeleteSample";
 import EditSample from "@samples/components/EditSample";
 import { useCheckCanEditSample } from "@samples/hooks";

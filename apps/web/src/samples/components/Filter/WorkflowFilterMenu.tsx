@@ -1,9 +1,10 @@
 import { getWorkflowDisplayName } from "@app/utils";
-import DropdownMenuGroup from "@base/DropdownMenuGroup";
-import DropdownMenuLabel from "@base/DropdownMenuLabel";
-import DropdownMenuSeparator from "@base/DropdownMenuSeparator";
-import FilterMenuCheckboxItem from "@base/FilterMenuCheckboxItem";
-import FilterMenuContent from "@base/FilterMenuContent";
+import {
+	DropdownMenuGroup,
+	DropdownMenuLabel,
+	DropdownMenuSeparator,
+} from "@base/Dropdown";
+import { FilterMenuCheckboxItem, FilterMenuContent } from "@base/Filter";
 import {
 	filterableWorkflows,
 	formatWorkflowFilter,

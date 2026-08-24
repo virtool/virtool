@@ -1,6 +1,6 @@
 import { cn } from "@app/cn";
+import { iconVariants } from "@base/Icon";
 import type React from "react";
-import { iconVariants } from "./iconVariants";
 import type { IconColor } from "./types";
 
 export type CircleProps = {

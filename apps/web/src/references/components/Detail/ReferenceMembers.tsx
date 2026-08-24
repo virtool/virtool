@@ -1,7 +1,5 @@
 import { objectHasProperty } from "@app/common";
-import BoxGroup from "@base/BoxGroup";
-import BoxGroupHeader from "@base/BoxGroupHeader";
-import BoxGroupSection from "@base/BoxGroupSection";
+import { BoxGroup, BoxGroupHeader, BoxGroupSection } from "@base/Box";
 import { Empty, EmptyDescription, EmptyMedia, EmptyTitle } from "@base/Empty";
 import { useCheckReferenceRight } from "@references/hooks";
 import {

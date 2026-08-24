@@ -1,6 +1,5 @@
 import Badge from "@base/Badge";
-import NavTab from "@base/NavTab";
-import NavTabs from "@base/NavTabs";
+import { NavTab, NavTabs } from "@base/Nav";
 
 type ReferenceDetailTabsProps = {
 	id: string;

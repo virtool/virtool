@@ -1,6 +1,5 @@
 import { formatIsolateName } from "@app/utils";
-import Icon from "@base/Icon";
-import IconButton from "@base/IconButton";
+import Icon, { IconButton } from "@base/Icon";
 import Link from "@base/Link";
 import type { OtuIsolate } from "@virtool/contracts";
 import { Star, Trash } from "lucide-react";

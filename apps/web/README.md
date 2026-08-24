@@ -307,6 +307,16 @@ feature needs a shape base does not have, search the other features for it
 first: if it already exists somewhere else, extract it to `@base` and use it
 from both places instead of writing a third copy.
 
+`src/base` groups related components into family directories, each with an
+`index.ts` barrel. Import a family from its barrel, as in
+`import Input, { InputLabel } from "@base/Input"`. The main component of a
+family keeps the default export; its parts are named exports. A component
+without a family stays as a top-level file and keeps its own module, as in
+`@base/Badge`. The heavy-dependency components — `Markdown`, `ComboBox`,
+`MultiSelectComboBox`, and `ShellErrorBoundary` — also stay at the top level.
+Do not put a heavy-dependency component in a barrel with light ones, because
+every importer of that barrel then pays for its bundle.
+
 Use Tailwind utilities and `cn()` from `@app/cn`. Reuse or add design tokens in
 `src/app/style.css` and animation tokens in `src/app/animations.css`; do not use
 arbitrary utilities or hard-coded colors. Base component colors use the shared
@@ -326,8 +336,8 @@ do not render at Tailwind's documented pixel values:
 | `md:` | 768px | 672px |
 | `2xl:` | 1536px | 1344px |
 
-`@base/Table` and `@base/BoxGroupTable` take a `variant`. `keyValue`, the
-default, is the detail-panel shape: a narrow first column of row labels, ruled
+`Table` (`@base/Table`) and `BoxGroupTable` (`@base/Box`) take a `variant`.
+`keyValue`, the default, is the detail-panel shape: a narrow first column of row labels, ruled
 off and top-aligned. `data` is a list of records, where the first column is a
 field like any other.
 

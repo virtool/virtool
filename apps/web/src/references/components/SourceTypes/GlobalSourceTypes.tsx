@@ -1,11 +1,7 @@
-import BoxGroup from "@base/BoxGroup";
-import BoxGroupHeader from "@base/BoxGroupHeader";
-import BoxGroupSection from "@base/BoxGroupSection";
+import { BoxGroup, BoxGroupHeader, BoxGroupSection } from "@base/Box";
 import Button from "@base/Button";
-import IconButton from "@base/IconButton";
-import InputError from "@base/InputError";
-import InputLabel from "@base/InputLabel";
-import InputSimple from "@base/InputSimple";
+import { IconButton } from "@base/Icon";
+import { InputError, InputLabel, InputSimple } from "@base/Input";
 import SectionHeader from "@base/SectionHeader";
 import Toolbar from "@base/Toolbar";
 import { useUpdateDefaultSourceTypes } from "@references/queries";

@@ -5,20 +5,21 @@ import {
 	CollapsibleContent,
 	CollapsibleTrigger,
 } from "@base/Collapsible";
-import ContainerNarrow from "@base/ContainerNarrow";
+import { ContainerNarrow } from "@base/Container";
 import CreatedCount from "@base/CreatedCount";
-import InputContainer from "@base/InputContainer";
-import InputError from "@base/InputError";
-import InputGroup from "@base/InputGroup";
-import InputIconButton from "@base/InputIconButton";
-import InputLabel from "@base/InputLabel";
-import InputSimple from "@base/InputSimple";
+import {
+	InputContainer,
+	InputError,
+	InputGroup,
+	InputIconButton,
+	InputLabel,
+	InputSimple,
+} from "@base/Input";
 import LoadingPlaceholder from "@base/LoadingPlaceholder";
 import QueryError from "@base/QueryError";
 import SaveButton from "@base/SaveButton";
 import Switch from "@base/Switch";
-import ViewHeader from "@base/ViewHeader";
-import ViewHeaderTitle from "@base/ViewHeaderTitle";
+import { ViewHeader, ViewHeaderTitle } from "@base/View";
 import { useListGroups } from "@groups/queries";
 import { useCreateSample } from "@samples/queries";
 import { getCreateSampleRequest, getSampleNameFromReads } from "@samples/utils";

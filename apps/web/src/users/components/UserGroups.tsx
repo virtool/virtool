@@ -1,6 +1,5 @@
 import { useFuse } from "@app/fuse";
-import BoxGroup from "@base/BoxGroup";
-import BoxGroupSection from "@base/BoxGroupSection";
+import { BoxGroup, BoxGroupSection } from "@base/Box";
 import ComboBox from "@base/ComboBox";
 import Icon from "@base/Icon";
 import Link from "@base/Link";

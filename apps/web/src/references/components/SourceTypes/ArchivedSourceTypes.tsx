@@ -1,5 +1,4 @@
-import BoxGroup from "@base/BoxGroup";
-import BoxGroupSection from "@base/BoxGroupSection";
+import { BoxGroup, BoxGroupSection } from "@base/Box";
 import SectionHeader from "@base/SectionHeader";
 import { useSuspenseReference } from "@references/queries";
 import { getRouteApi } from "@tanstack/react-router";

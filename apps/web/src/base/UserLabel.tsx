@@ -1,5 +1,5 @@
 import { cn } from "@app/cn";
-import InitialIcon from "./InitialIcon";
+import { InitialIcon } from "@base/Icon";
 
 type UserLabelProps = {
 	className?: string;

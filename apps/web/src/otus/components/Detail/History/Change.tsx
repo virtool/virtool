@@ -1,5 +1,5 @@
 import Attribution from "@base/Attribution";
-import BoxGroupSection from "@base/BoxGroupSection";
+import { BoxGroupSection } from "@base/Box";
 import Icon, { type IconProps } from "@base/Icon";
 import Label from "@base/Label";
 import type {

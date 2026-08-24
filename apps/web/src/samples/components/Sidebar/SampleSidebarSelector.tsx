@@ -1,9 +1,9 @@
 import { useFuse } from "@app/fuse";
-import BoxGroupSearch from "@base/BoxGroupSearch";
+import { BoxGroupSearch } from "@base/Box";
 import Icon from "@base/Icon";
 import Link from "@base/Link";
 import Popover from "@base/Popover";
-import SidebarHeaderButton from "@base/SidebarHeaderButton";
+import { SidebarHeaderButton } from "@base/Sidebar";
 import type { SubtractionOption } from "@subtraction/types";
 import type { Label } from "@virtool/contracts";
 import { Pen } from "lucide-react";

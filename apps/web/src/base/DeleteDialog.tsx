@@ -1,8 +1,8 @@
 import { cn } from "@app/cn";
+import Button from "@base/Button";
 import { CLIENT_ERROR_NAME } from "@virtool/contracts";
 import { AlertDialog as AlertDialogPrimitive } from "radix-ui";
 import { type ReactNode, useState } from "react";
-import Button from "./Button";
 
 /**
  * Pull a server-provided message off a rejected deletion, if there is one.

@@ -1,7 +1,6 @@
 import { render, screen } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
-import Button from "../Button";
-import ButtonGroup from "../ButtonGroup";
+import Button, { ButtonGroup } from "../Button";
 
 describe("<ButtonGroup />", () => {
 	it("should expose its members as a group", () => {

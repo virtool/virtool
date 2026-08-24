@@ -1,14 +1,13 @@
 import { cn } from "@app/cn";
 import Alert from "@base/Alert";
-import Box from "@base/Box";
-import BoxGroup from "@base/BoxGroup";
-import BoxGroupSection from "@base/BoxGroupSection";
+import Box, { BoxGroup, BoxGroupSection } from "@base/Box";
 import Button from "@base/Button";
 import CompactScrollList from "@base/CompactScrollList";
-import Dropdown from "@base/Dropdown";
-import DropdownButton from "@base/DropdownButton";
-import DropdownMenuContent from "@base/DropdownMenuContent";
-import DropdownMenuItem from "@base/DropdownMenuItem";
+import Dropdown, {
+	DropdownButton,
+	DropdownMenuContent,
+	DropdownMenuItem,
+} from "@base/Dropdown";
 import {
 	Empty,
 	EmptyContent,
@@ -17,10 +16,7 @@ import {
 	EmptyTitle,
 } from "@base/Empty";
 import Icon from "@base/Icon";
-import InputError from "@base/InputError";
-import InputGroup from "@base/InputGroup";
-import InputLabel from "@base/InputLabel";
-import InputSearch from "@base/InputSearch";
+import { InputError, InputGroup, InputLabel, InputSearch } from "@base/Input";
 import Link from "@base/Link";
 import Toolbar from "@base/Toolbar";
 import type {

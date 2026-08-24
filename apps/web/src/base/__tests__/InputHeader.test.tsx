@@ -1,7 +1,7 @@
 import userEvent from "@testing-library/user-event";
 import { renderWithProviders } from "@tests/setup";
 import { expect, it, vi } from "vitest";
-import InputHeader from "../InputHeader";
+import { InputHeader } from "../Input";
 
 it("<InputHeader />", async () => {
 	const value = "Hello";

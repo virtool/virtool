@@ -1,6 +1,6 @@
 import { renderWithProviders } from "@tests/setup";
 import { describe, expect, it } from "vitest";
-import InputError from "../InputError";
+import { InputError } from "../Input";
 
 describe("<InputError />", () => {
 	it("should announce its message as an assertive live region", () => {

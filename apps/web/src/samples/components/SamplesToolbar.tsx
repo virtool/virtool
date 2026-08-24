@@ -1,5 +1,5 @@
 import { useCheckAdminRoleOrPermission } from "@administration/hooks";
-import { buttonVariants } from "@base/buttonVariants";
+import { buttonVariants } from "@base/Button";
 import Link from "@base/Link";
 import SearchToolbar from "@base/SearchToolbar";
 

@@ -1,13 +1,13 @@
 import SettingsCheckbox from "@administration/components/SettingsCheckbox";
-import BoxGroup from "@base/BoxGroup";
-import BoxGroupDisabled from "@base/BoxGroupDisabled";
-import BoxGroupHeader from "@base/BoxGroupHeader";
-import BoxGroupSection from "@base/BoxGroupSection";
+import {
+	BoxGroup,
+	BoxGroupDisabled,
+	BoxGroupHeader,
+	BoxGroupSection,
+} from "@base/Box";
 import Button from "@base/Button";
-import IconButton from "@base/IconButton";
-import InputContainer from "@base/InputContainer";
-import InputError from "@base/InputError";
-import InputSimple from "@base/InputSimple";
+import { IconButton } from "@base/Icon";
+import { InputContainer, InputError, InputSimple } from "@base/Input";
 import SectionHeader from "@base/SectionHeader";
 import {
 	useSuspenseReference,

@@ -4,9 +4,11 @@ import Box from "@base/Box";
 import LoadingPlaceholder from "@base/LoadingPlaceholder";
 import QueryError from "@base/QueryError";
 import RelativeTime from "@base/RelativeTime";
-import SubviewHeader from "@base/SubviewHeader";
-import SubviewHeaderAttribution from "@base/SubviewHeaderAttribution";
-import SubviewHeaderTitle from "@base/SubviewHeaderTitle";
+import {
+	SubviewHeader,
+	SubviewHeaderAttribution,
+	SubviewHeaderTitle,
+} from "@base/Subview";
 import { useFetchSample } from "@samples/queries";
 import { getRouteApi } from "@tanstack/react-router";
 import type { Analysis, Sample } from "@virtool/contracts";
