@@ -56,7 +56,7 @@ export default function MemberItem({
 					<IconButton
 						IconComponent={Trash}
 						color="red"
-						tip="remove member"
+						tip="Remove member"
 						onClick={() => onRemove(id)}
 					/>
 				</span>

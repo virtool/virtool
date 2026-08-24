@@ -8,9 +8,9 @@ import type { GroupMinimal } from "@virtool/contracts";
 import { sortBy } from "es-toolkit/compat";
 import { useState } from "react";
 import {
+	useDeleteGroup,
 	useFetchGroup,
 	useListGroups,
-	useRemoveGroup,
 	useUpdateGroup,
 } from "../queries";
 import Create from "./CreateGroup";
@@ -19,7 +19,7 @@ import { GroupPermissions } from "./GroupPermissions";
 
 export default function Groups() {
 	const updateGroupMutation = useUpdateGroup();
-	const removeMutation = useRemoveGroup();
+	const deleteMutation = useDeleteGroup();
 
 	const [openCreateGroup, setOpenCreateGroup] = useState(false);
 	const [selectedGroupId, setSelectedGroupId] = useState<number | null>(null);
@@ -105,7 +105,7 @@ export default function Groups() {
 							outerClassName="!mb-0"
 							message="Permanently delete this group."
 							buttonText="Delete"
-							onClick={() => removeMutation.mutate({ id: selectedGroup.id })}
+							onClick={() => deleteMutation.mutate({ id: selectedGroup.id })}
 						/>
 					</TabsContent>
 				</Tabs>

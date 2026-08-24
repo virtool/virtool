@@ -21,7 +21,7 @@ export default function DeleteBanner({
 			name={message}
 			noun="Banner"
 			onConfirm={onConfirm}
-			trigger={<IconButton color="red" IconComponent={Trash} tip="delete" />}
+			trigger={<IconButton color="red" IconComponent={Trash} tip="Delete" />}
 		/>
 	);
 }

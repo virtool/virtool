@@ -10,7 +10,7 @@ import UserLabel from "@base/UserLabel";
 import { useFetchJob } from "@jobs/queries";
 import { type AnalysisMinimal, isJobStateTerminal } from "@virtool/contracts";
 import { Trash } from "lucide-react";
-import { useRemoveAnalysis } from "../queries";
+import { useDeleteAnalysis } from "../queries";
 import { checkSupportedWorkflow } from "../utils";
 
 type AnalysisItemProps = {
@@ -30,7 +30,7 @@ export default function AnalysisItem({ analysis }: AnalysisItemProps) {
 		createdAt,
 	} = analysis;
 	const { hasPermission: canModify } = useCheckAdminRole("users");
-	const onRemove = useRemoveAnalysis(id);
+	const onDelete = useDeleteAnalysis(id);
 
 	const { data: job } = useFetchJob(
 		analysis.job?.id ?? Number.NaN,
@@ -120,7 +120,7 @@ export default function AnalysisItem({ analysis }: AnalysisItemProps) {
 						IconComponent={Trash}
 						color="red"
 						tip="Delete"
-						onClick={onRemove}
+						onClick={onDelete}
 					/>
 				)}
 			</TableActionsCell>

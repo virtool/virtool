@@ -3,7 +3,7 @@ import { BoxGroupSection } from "@base/Box";
 import { IconButton } from "@base/Icon";
 import type { ApiKey } from "@virtool/contracts";
 import { Trash } from "lucide-react";
-import { useRemoveApiKey } from "../queries";
+import { useDeleteApiKey } from "../queries";
 import ApiKeyEdit from "./ApiKeyEdit";
 
 type ApiKeyItemProps = {
@@ -19,7 +19,7 @@ export default function ApiKeyItem({ apiKey }: ApiKeyItemProps) {
 		0,
 	);
 
-	const removeMutation = useRemoveApiKey();
+	const deleteMutation = useDeleteApiKey();
 
 	return (
 		<BoxGroupSection>
@@ -35,7 +35,7 @@ export default function ApiKeyItem({ apiKey }: ApiKeyItemProps) {
 					<IconButton
 						color="red"
 						IconComponent={Trash}
-						onClick={() => removeMutation.mutate({ keyId: apiKey.id })}
+						onClick={() => deleteMutation.mutate({ keyId: apiKey.id })}
 						tip="Delete"
 					/>
 				</div>
