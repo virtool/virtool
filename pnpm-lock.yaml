@@ -533,8 +533,8 @@ importers:
         specifier: ^19.2.8
         version: 19.2.8(react@19.2.8)
       react-dropzone:
-        specifier: ^20.1.0
-        version: 20.1.0(@types/react@19.2.18)(react@19.2.8)
+        specifier: ^20.1.1
+        version: 20.1.1(@types/react@19.2.18)(react@19.2.8)
       react-hook-form:
         specifier: ^7.85.0
         version: 7.85.0(react@19.2.8)
@@ -5069,9 +5069,9 @@ packages:
     resolution: {integrity: sha512-kNOjDqAh7px0XWNI+4QbzoiR/nTkHAWNud2uvnJquD1/x5a7EQZMJT0AczqK0Qn67oY/TTQ1LbUKajZpp3I9tQ==}
     engines: {node: '>=8.0.0'}
 
-  attr-accept@2.2.5:
-    resolution: {integrity: sha512-0bDNnY/u6pPwHDMoF0FieU354oBi0a8rD9FcsLwzcGWbc8KS8KPIi7y+s13OlVY+gMWc/9xEMUgNE6Qm8ZllYQ==}
-    engines: {node: '>=4'}
+  attr-accept@4.0.0:
+    resolution: {integrity: sha512-hmCnJClmeKNKlsBHgbM8yLZRiQZ4/20UXbLJb6OUT16eWcM5/xNZerr80a/zCYob768KIGq++aLrQNTuwPsIOQ==}
+    engines: {node: '>= 22'}
 
   axe-core@4.12.1:
     resolution: {integrity: sha512-s7iGf5GaVMxEG0ENN9x+xTr7GFZCb1ZP/1uATUpCEK2X78nDB3RwbtFCo9pGAf9ru+VwoQ464DkaLEeRM08wJA==}
@@ -6194,9 +6194,9 @@ packages:
     resolution: {integrity: sha512-d+l3qxjSesT4V7v2fh+QnmFnUWv9lSpjarhShNTgBOfA0ttejbQUAlHLitbjkoRiDulW0OPoQPYIGhIC8ohejg==}
     engines: {node: '>=18'}
 
-  file-selector@4.1.0:
-    resolution: {integrity: sha512-Io1mP8CI3zec5Bxy3P3TxdrKnt35Cm8vNIHnZsvyj43l4YFjD4NRInBp240S5bDJQ0EP1jnh7nCAwXsO818OCg==}
-    engines: {node: '>= 20'}
+  file-selector@5.0.1:
+    resolution: {integrity: sha512-v0g/PTeuQgvKCBrVRsfVudvwXlRHSWHEQkVgKawgCGHkEpKA1clp3Om5jvEVhz8G9W/mOYjJH9FhkH4C888PgQ==}
+    engines: {node: '>= 22'}
 
   fill-range@7.1.1:
     resolution: {integrity: sha512-YsGpe3WHLK8ZYi4tWDg2Jy3ebRz2rXowDxnld4bkQB00cc/1Zw9AWnC0i9ztDJitivtQvaI9KaLyKrc+hBW0yg==}
@@ -7823,8 +7823,8 @@ packages:
     peerDependencies:
       react: ^19.2.8
 
-  react-dropzone@20.1.0:
-    resolution: {integrity: sha512-id1t9JDYNQeFzzIfB5/C6TrpLchy29rTSDxsBH/pcxhILyv/6bSOTJwOlvUsTWXkC2GduuHIldDV6UQXNWfIuA==}
+  react-dropzone@20.1.1:
+    resolution: {integrity: sha512-2cilRFP8bsjDOHpV0sJ6XY8pzJhmz4/cQ6s9yeckOACWYDR+n4MGGtnJh3Rycq/9SLhDWugqDx1z5mtfmOOZhw==}
     engines: {node: '>= 22'}
     peerDependencies:
       '@types/react': '*'
@@ -13439,7 +13439,7 @@ snapshots:
 
   atomic-sleep@1.0.0: {}
 
-  attr-accept@2.2.5: {}
+  attr-accept@4.0.0: {}
 
   axe-core@4.12.1: {}
 
@@ -14534,7 +14534,7 @@ snapshots:
     dependencies:
       is-unicode-supported: 2.1.0
 
-  file-selector@4.1.0: {}
+  file-selector@5.0.1: {}
 
   fill-range@7.1.1:
     dependencies:
@@ -16478,10 +16478,10 @@ snapshots:
       react: 19.2.8
       scheduler: 0.27.0
 
-  react-dropzone@20.1.0(@types/react@19.2.18)(react@19.2.8):
+  react-dropzone@20.1.1(@types/react@19.2.18)(react@19.2.8):
     dependencies:
-      attr-accept: 2.2.5
-      file-selector: 4.1.0
+      attr-accept: 4.0.0
+      file-selector: 5.0.1
       react: 19.2.8
     optionalDependencies:
       '@types/react': 19.2.18
