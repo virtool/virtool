@@ -86,11 +86,6 @@ export function DialogContent({
 					"max-w-[90vw]",
 					"max-h-[90vh]",
 					"overflow-y-auto",
-					// A dropdown in the dialog has absolute position, but it increases
-					// the scroll height of this container. Then a scrollbar can appear
-					// and make the content area more narrow. This changes the layout of
-					// the dialog. A stable gutter keeps the width constant.
-					"scrollbar-gutter-stable",
 					className,
 				)}
 			>
