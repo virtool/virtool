@@ -1,5 +1,5 @@
 import { Dialog, DialogContent, DialogTitle } from "@base/Dialog";
-import { SelectBox, SelectBoxItem } from "@base/SelectBox";
+import { SelectBox, SelectBoxItem } from "@base/Select";
 import { useState } from "react";
 import { CreateReferenceForm } from "./CreateReferenceForm";
 

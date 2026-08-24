@@ -63,11 +63,11 @@ export function useUpdateLabel() {
 }
 
 /**
- * Initialize a mutator for removing a label
+ * Initialize a mutator for deleting a label
  *
- * @returns A mutator for removing a label
+ * @returns A mutator for deleting a label
  */
-export function useRemoveLabel() {
+export function useDeleteLabel() {
 	const queryClient = useQueryClient();
 
 	return useMutation<null, Error, { labelId: number }>({

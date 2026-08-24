@@ -1,6 +1,6 @@
 import { useDebounce } from "@app/hooks";
+import { InputSearch } from "@base/Input";
 import type { ReactNode } from "react";
-import InputSearch from "./InputSearch";
 import Toolbar from "./Toolbar";
 
 type SearchToolbarProps = {

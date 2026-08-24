@@ -2,7 +2,7 @@ import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { Pencil } from "lucide-react";
 import { describe, expect, it, vi } from "vitest";
-import IconButton from "../IconButton";
+import { IconButton } from "../Icon";
 
 describe("IconButton", () => {
 	it("renders the gray variant at text-gray-500 so it meets non-text contrast", () => {

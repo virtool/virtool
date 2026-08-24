@@ -1,11 +1,9 @@
 import { getErrorStatus } from "@app/queryErrors";
 import { getWorkflowDisplayName } from "@app/utils";
-import ContainerNarrow from "@base/ContainerNarrow";
+import { ContainerNarrow } from "@base/Container";
 import LoadingPlaceholder from "@base/LoadingPlaceholder";
 import NotFound from "@base/NotFound";
-import ViewHeader from "@base/ViewHeader";
-import ViewHeaderAttribution from "@base/ViewHeaderAttribution";
-import ViewHeaderTitle from "@base/ViewHeaderTitle";
+import { ViewHeader, ViewHeaderAttribution, ViewHeaderTitle } from "@base/View";
 import { useFetchIndex } from "@indexes/queries";
 import { getRouteApi } from "@tanstack/react-router";
 import { useFetchJob } from "../queries";

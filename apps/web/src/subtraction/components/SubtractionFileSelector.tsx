@@ -8,7 +8,7 @@ import {
 	EmptyMedia,
 	EmptyTitle,
 } from "@base/Empty";
-import InputError from "@base/InputError";
+import { InputError } from "@base/Input";
 import Link from "@base/Link";
 import useListboxNavigation from "@base/useListboxNavigation";
 import type { InfiniteData } from "@tanstack/react-query";

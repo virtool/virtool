@@ -97,7 +97,7 @@ describe("<SubtractionDetail />", () => {
 				`/jobs/${job.id}`,
 			);
 			expect(
-				screen.getByRole("button", { name: "delete" }),
+				screen.getByRole("button", { name: "Delete" }),
 			).toBeInTheDocument();
 			expect(screen.queryByRole("button", { name: "modify" })).toBeNull();
 			expect(
@@ -126,7 +126,7 @@ describe("<SubtractionDetail />", () => {
 		await renderRoute(formatSubtractionPath(failedSubtraction), { account });
 
 		expect(await screen.findByText(failedSubtraction.name)).toBeInTheDocument();
-		expect(screen.getByRole("button", { name: "delete" })).toBeInTheDocument();
+		expect(screen.getByRole("button", { name: "Delete" })).toBeInTheDocument();
 		expect(screen.queryByRole("link", { name: "View job" })).toBeNull();
 	});
 
@@ -145,7 +145,7 @@ describe("<SubtractionDetail />", () => {
 		await renderRoute(formatSubtractionPath(failedSubtraction), { account });
 
 		expect(await screen.findByText(failedSubtraction.name)).toBeInTheDocument();
-		expect(screen.queryByRole("button", { name: "delete" })).toBeNull();
+		expect(screen.queryByRole("button", { name: "Delete" })).toBeNull();
 	});
 
 	it("should not render icons when [canModify=true]", async () => {
@@ -156,7 +156,7 @@ describe("<SubtractionDetail />", () => {
 
 		expect(await screen.findByText(subtraction.name)).toBeInTheDocument();
 		expect(screen.getByRole("button", { name: "modify" })).toBeInTheDocument();
-		expect(screen.getByRole("button", { name: "delete" })).toBeInTheDocument();
+		expect(screen.getByRole("button", { name: "Delete" })).toBeInTheDocument();
 
 		expect(getSubtraction).toHaveBeenCalled();
 	});
@@ -171,7 +171,7 @@ describe("<SubtractionDetail />", () => {
 
 		expect(await screen.findByText(subtraction.name)).toBeInTheDocument();
 		expect(screen.queryByRole("button", { name: "modify" })).toBeNull();
-		expect(screen.queryByRole("button", { name: "delete" })).toBeNull();
+		expect(screen.queryByRole("button", { name: "Delete" })).toBeNull();
 
 		expect(getSubtraction).toHaveBeenCalled();
 	});

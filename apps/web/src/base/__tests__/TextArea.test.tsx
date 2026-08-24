@@ -1,6 +1,6 @@
 import { renderWithProviders } from "@tests/setup";
 import { describe, expect, it } from "vitest";
-import InputGroup from "../InputGroup";
+import { InputGroup } from "../Input";
 import TextArea from "../TextArea";
 
 describe("<TextArea />", () => {

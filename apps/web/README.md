@@ -326,7 +326,7 @@ do not render at Tailwind's documented pixel values:
 | `md:` | 768px | 672px |
 | `2xl:` | 1536px | 1344px |
 
-`@base/Table` and `@base/BoxGroupTable` take a `variant`. `keyValue`, the
+`@base/Table` and `BoxGroupTable` (`@base/Box`) take a `variant`. `keyValue`, the
 default, is the detail-panel shape: a narrow first column of row labels, ruled
 off and top-aligned. `data` is a list of records, where the first column is a
 field like any other.

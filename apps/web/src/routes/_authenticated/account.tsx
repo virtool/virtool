@@ -1,9 +1,6 @@
-import ContainerNarrow from "@base/ContainerNarrow";
-import ContainerWide from "@base/ContainerWide";
-import NavTab from "@base/NavTab";
-import NavTabs from "@base/NavTabs";
-import ViewHeader from "@base/ViewHeader";
-import ViewHeaderTitle from "@base/ViewHeaderTitle";
+import { ContainerNarrow, ContainerWide } from "@base/Container";
+import { NavTab, NavTabs } from "@base/Nav";
+import { ViewHeader, ViewHeaderTitle } from "@base/View";
 import { createFileRoute, Outlet } from "@tanstack/react-router";
 
 export const Route = createFileRoute("/_authenticated/account")({

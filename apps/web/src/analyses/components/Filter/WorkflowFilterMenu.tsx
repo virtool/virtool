@@ -1,7 +1,6 @@
 import { supportedWorkflows } from "@analyses/utils";
 import { getWorkflowDisplayName } from "@app/utils";
-import FilterMenuCheckboxItem from "@base/FilterMenuCheckboxItem";
-import FilterMenuContent from "@base/FilterMenuContent";
+import { FilterMenuCheckboxItem, FilterMenuContent } from "@base/Filter";
 import type { AnalysisWorkflow } from "@virtool/contracts";
 
 type WorkflowFilterMenuProps = {

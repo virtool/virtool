@@ -1,12 +1,12 @@
 import { useLogout } from "@account/queries";
-import Dropdown from "@base/Dropdown";
-import DropdownMenuContent from "@base/DropdownMenuContent";
-import DropdownMenuItem from "@base/DropdownMenuItem";
-import DropdownMenuLink from "@base/DropdownMenuLink";
-import DropdownMenuSeparator from "@base/DropdownMenuSeparator";
-import DropdownMenuTrigger from "@base/DropdownMenuTrigger";
-import IconButton from "@base/IconButton";
-import InitialIcon from "@base/InitialIcon";
+import Dropdown, {
+	DropdownMenuContent,
+	DropdownMenuItem,
+	DropdownMenuLink,
+	DropdownMenuSeparator,
+	DropdownMenuTrigger,
+} from "@base/Dropdown";
+import { IconButton, InitialIcon } from "@base/Icon";
 import Logo from "@base/Logo";
 import type { AdministratorRoleName } from "@virtool/contracts";
 import { hasSufficientAdminRole } from "@virtool/contracts";

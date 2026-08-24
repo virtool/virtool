@@ -1,5 +1,5 @@
 import { getErrorStatus } from "@app/queryErrors";
-import ContainerNarrow from "@base/ContainerNarrow";
+import { ContainerNarrow } from "@base/Container";
 import ReferenceDetailHeader from "@references/components/Detail/ReferenceDetailHeader";
 import ReferenceDetailTabs from "@references/components/Detail/ReferenceDetailTabs";
 import { useFetchReference } from "@references/queries";

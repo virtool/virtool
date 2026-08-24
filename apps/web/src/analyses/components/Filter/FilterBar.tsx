@@ -1,7 +1,9 @@
 import { getWorkflowDisplayName } from "@app/utils";
-import BaseFilterBar from "@base/FilterBar";
-import FilterChip from "@base/FilterChip";
-import FilterGroup from "@base/FilterGroup";
+import {
+	FilterBar as BaseFilterBar,
+	FilterChip,
+	FilterGroup,
+} from "@base/Filter";
 import UserFilterGroup from "@users/components/UserFilterGroup";
 import type { AnalysisWorkflow } from "@virtool/contracts";
 import { Workflow } from "lucide-react";

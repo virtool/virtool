@@ -2,8 +2,8 @@ import { useFetchAccount } from "@account/account";
 import AdministratorRoleSelect from "@administration/components/AdministratorRoleSelect";
 import { useCheckAdminRole } from "@administration/hooks";
 import { useGetAdministratorRoles } from "@administration/queries";
-import IconButton from "@base/IconButton";
-import InputLabel from "@base/InputLabel";
+import { IconButton } from "@base/Icon";
+import { InputLabel } from "@base/Input";
 import { useSetAdministratorRole } from "@users/queries";
 import type { AdministratorRoleName } from "@virtool/contracts";
 import { Trash } from "lucide-react";
@@ -54,7 +54,7 @@ export default function UserAdministratorRole({
 					<IconButton
 						IconComponent={Trash}
 						color="red"
-						tip="remove administrator role"
+						tip="Remove administrator role"
 						onClick={() => onChange(null)}
 					/>
 				)}

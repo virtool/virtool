@@ -1,4 +1,4 @@
-import BoxGroupSection from "@base/BoxGroupSection";
+import { BoxGroupSection } from "@base/Box";
 import Label from "@base/Label";
 import Link from "@base/Link";
 import type { HmmMinimal } from "@virtool/contracts";

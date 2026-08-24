@@ -1,16 +1,14 @@
-import BoxGroup from "@base/BoxGroup";
-import BoxGroupSection from "@base/BoxGroupSection";
-import ContainerNarrow from "@base/ContainerNarrow";
+import { BoxGroup, BoxGroupSection } from "@base/Box";
+import { ContainerNarrow } from "@base/Container";
 import { Empty, EmptyDescription, EmptyMedia, EmptyTitle } from "@base/Empty";
 import LoadingPlaceholder from "@base/LoadingPlaceholder";
 import QueryError from "@base/QueryError";
-import ViewHeader from "@base/ViewHeader";
-import ViewHeaderTitle from "@base/ViewHeaderTitle";
+import { ViewHeader, ViewHeaderTitle } from "@base/View";
 import { Tags } from "lucide-react";
 import {
 	useCreateLabel,
+	useDeleteLabel,
 	useFetchLabels,
-	useRemoveLabel,
 	useUpdateLabel,
 } from "../queries";
 import { CreateLabel } from "./CreateLabel";
@@ -24,7 +22,7 @@ export function Labels() {
 	const { data, isPending, isError } = useFetchLabels();
 	const createMutation = useCreateLabel();
 	const updateMutation = useUpdateLabel();
-	const removeMutation = useRemoveLabel();
+	const deleteMutation = useDeleteLabel();
 
 	if (isError && !data) {
 		return <QueryError noun="labels" />;
@@ -61,7 +59,7 @@ export function Labels() {
 							onEdit={(labelId, values) =>
 								updateMutation.mutateAsync({ labelId, ...values })
 							}
-							onRemove={(labelId) => removeMutation.mutateAsync({ labelId })}
+							onDelete={(labelId) => deleteMutation.mutateAsync({ labelId })}
 						/>
 					))
 				) : (

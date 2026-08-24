@@ -1,6 +1,6 @@
 import Badge from "@base/Badge";
-import BoxGroupSection from "@base/BoxGroupSection";
-import InitialIcon from "@base/InitialIcon";
+import { BoxGroupSection } from "@base/Box";
+import { InitialIcon } from "@base/Icon";
 
 type ContributorProps = {
 	id: number;

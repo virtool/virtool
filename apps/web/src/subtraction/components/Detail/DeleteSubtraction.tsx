@@ -1,5 +1,5 @@
 import DeleteDialog from "@base/DeleteDialog";
-import IconButton from "@base/IconButton";
+import { IconButton } from "@base/Icon";
 import { useDeleteSubtraction } from "@subtraction/queries";
 import { useNavigate } from "@tanstack/react-router";
 import type { Subtraction } from "@virtool/contracts";
@@ -29,7 +29,7 @@ export default function DeleteSubtraction({
 			name={subtraction.name}
 			noun="Subtraction"
 			onConfirm={handleConfirm}
-			trigger={<IconButton IconComponent={Trash} color="red" tip="delete" />}
+			trigger={<IconButton IconComponent={Trash} color="red" tip="Delete" />}
 		/>
 	);
 }

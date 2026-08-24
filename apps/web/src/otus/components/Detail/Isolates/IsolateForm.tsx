@@ -1,9 +1,6 @@
 import { formatIsolateName } from "@app/utils";
 import { DialogFooter } from "@base/Dialog";
-import Input from "@base/Input";
-import InputGroup from "@base/InputGroup";
-import InputLabel from "@base/InputLabel";
-import InputSimple from "@base/InputSimple";
+import Input, { InputGroup, InputLabel, InputSimple } from "@base/Input";
 import SaveButton from "@base/SaveButton";
 import { useForm } from "react-hook-form";
 import { SourceType } from "./SourceType";

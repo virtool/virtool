@@ -1,6 +1,6 @@
 import DeleteDialog from "@base/DeleteDialog";
-import IconButton from "@base/IconButton";
-import { useRemoveSample } from "@samples/queries";
+import { IconButton } from "@base/Icon";
+import { useDeleteSample } from "@samples/queries";
 import { checkCanDeleteSample } from "@samples/utils";
 import type { JobNested } from "@virtool/contracts";
 import { Trash } from "lucide-react";
@@ -28,7 +28,7 @@ export default function DeleteSample({
 	name,
 	ready,
 }: DeleteSampleProps) {
-	const mutation = useRemoveSample();
+	const mutation = useDeleteSample();
 
 	if (!checkCanDeleteSample(ready, job)) {
 		return null;
@@ -39,7 +39,7 @@ export default function DeleteSample({
 			name={name}
 			noun="Sample"
 			onConfirm={() => mutation.mutateAsync({ sampleId: id })}
-			trigger={<IconButton color="red" IconComponent={Trash} tip="delete" />}
+			trigger={<IconButton color="red" IconComponent={Trash} tip="Delete" />}
 		/>
 	);
 }

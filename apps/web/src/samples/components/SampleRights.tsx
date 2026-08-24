@@ -1,10 +1,7 @@
 import { useUpdateSettings } from "@administration/queries";
-import BoxGroup from "@base/BoxGroup";
-import BoxGroupHeader from "@base/BoxGroupHeader";
-import BoxGroupSection from "@base/BoxGroupSection";
-import InputGroup from "@base/InputGroup";
-import InputLabel from "@base/InputLabel";
-import { SelectBox, SelectBoxItem } from "@base/SelectBox";
+import { BoxGroup, BoxGroupHeader, BoxGroupSection } from "@base/Box";
+import { InputGroup, InputLabel } from "@base/Input";
+import { SelectBox, SelectBoxItem } from "@base/Select";
 import type { Settings } from "@virtool/contracts";
 import RightsSelect from "./RightsSelect";
 

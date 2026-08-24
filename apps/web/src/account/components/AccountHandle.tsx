@@ -1,10 +1,5 @@
-import BoxGroup from "@base/BoxGroup";
-import BoxGroupHeader from "@base/BoxGroupHeader";
-import BoxGroupSection from "@base/BoxGroupSection";
-import InputError from "@base/InputError";
-import InputGroup from "@base/InputGroup";
-import InputLabel from "@base/InputLabel";
-import InputSimple from "@base/InputSimple";
+import { BoxGroup, BoxGroupHeader, BoxGroupSection } from "@base/Box";
+import { InputError, InputGroup, InputLabel, InputSimple } from "@base/Input";
 import SaveButton from "@base/SaveButton";
 import { useForm } from "react-hook-form";
 import { useUpdateHandle } from "../queries";

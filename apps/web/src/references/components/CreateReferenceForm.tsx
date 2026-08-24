@@ -1,8 +1,5 @@
 import { DialogFooter } from "@base/Dialog";
-import InputError from "@base/InputError";
-import InputGroup from "@base/InputGroup";
-import InputLabel from "@base/InputLabel";
-import InputSimple from "@base/InputSimple";
+import { InputError, InputGroup, InputLabel, InputSimple } from "@base/Input";
 import ProgressBarAffixed from "@base/ProgressBarAffixed";
 import SaveButton from "@base/SaveButton";
 import TextArea from "@base/TextArea";

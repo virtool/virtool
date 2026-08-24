@@ -7,13 +7,10 @@
  * itself, over sequences chosen to exercise the quirks rather than the happy
  * path.
  *
- * The golden was generated with:
- *
- * ```
- * PYTHONPATH=<virtool site-packages> python3 packages/bio/src/fixtures/generateFindOrfs.py
- * ```
- *
- * against `virtool.bio.find_orfs`. **Never edit it to match this
+ * The golden was captured from `virtool.bio.find_orfs` on the legacy Python
+ * server. The script that wrote it is gone, and there is no supported way to
+ * regenerate the golden from this repository — `git log --diff-filter=D` under
+ * `src/fixtures/` finds it if the cases must grow. **Never edit it to match this
  * implementation's output.** `pos` is stored positionally in every NuVs analysis
  * `results` blob and rendered by the UI, so a divergence here is a divergence in
  * data already written.

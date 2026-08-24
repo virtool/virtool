@@ -1,5 +1,5 @@
 import { byteSize } from "@app/format";
-import BoxGroupSection from "@base/BoxGroupSection";
+import { BoxGroupSection } from "@base/Box";
 
 export type IndexFileItemProps = {
 	downloadUrl: string;

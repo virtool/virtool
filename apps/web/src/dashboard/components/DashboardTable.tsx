@@ -1,5 +1,5 @@
 import { cn } from "@app/cn";
-import BoxGroup from "@base/BoxGroup";
+import { BoxGroup } from "@base/Box";
 import RelativeTime from "@base/RelativeTime";
 import type { ReactNode } from "react";
 import { useDashboardCardHeadingId } from "./DashboardCard";

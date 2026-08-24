@@ -1,11 +1,7 @@
 import { useFetchSettings, useUpdateSettings } from "@administration/queries";
-import BoxGroup from "@base/BoxGroup";
-import BoxGroupSection from "@base/BoxGroupSection";
+import { BoxGroup, BoxGroupSection } from "@base/Box";
 import Button from "@base/Button";
-import InputError from "@base/InputError";
-import InputGroup from "@base/InputGroup";
-import InputLabel from "@base/InputLabel";
-import InputPassword from "@base/InputPassword";
+import { InputError, InputGroup, InputLabel, InputPassword } from "@base/Input";
 import LoadingPlaceholder from "@base/LoadingPlaceholder";
 import QueryError from "@base/QueryError";
 import SaveButton from "@base/SaveButton";

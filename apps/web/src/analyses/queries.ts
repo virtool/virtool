@@ -101,12 +101,12 @@ export function useSuspenseRecentAnalyses(userId: number, perPage: number) {
 }
 
 /**
- * Initializes a mutator for removing an analysis
+ * Initializes a mutator for deleting an analysis
  *
- * @param analysisId - The id of the analysis to remove
- * @returns A mutator for removing an analysis
+ * @param analysisId - The id of the analysis to delete
+ * @returns A mutator for deleting an analysis
  */
-export function useRemoveAnalysis(analysisId: number) {
+export function useDeleteAnalysis(analysisId: number) {
 	const queryClient = useQueryClient();
 
 	const mutation = useMutation<null, Error, { analysisId: number }>({

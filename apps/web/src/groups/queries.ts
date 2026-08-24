@@ -102,11 +102,11 @@ export function useUpdateGroup() {
 }
 
 /**
- * Initializes a mutator for removing a group
+ * Initializes a mutator for deleting a group
  *
- * @returns A mutator for removing a group
+ * @returns A mutator for deleting a group
  */
-export function useRemoveGroup() {
+export function useDeleteGroup() {
 	const queryClient = useQueryClient();
 	return useMutation<null, Error, { id: string | number }>({
 		mutationFn: ({ id }) =>

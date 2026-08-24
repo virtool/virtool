@@ -1,5 +1,4 @@
-import Attribution from "@base/Attribution";
-import AttributionWithName from "@base/AttributionWithName";
+import Attribution, { AttributionWithName } from "@base/Attribution";
 import type { ReactElement } from "react";
 
 type SubtractionAttributionProps = {

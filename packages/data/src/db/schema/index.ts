@@ -5,6 +5,7 @@
 // lands.
 export * from "./analyses";
 export * from "./apiKeys";
+export * from "./banners";
 export * from "./caches";
 export * from "./groups";
 export * from "./history";
@@ -12,7 +13,6 @@ export * from "./hmms";
 export * from "./indexes";
 export * from "./jobs";
 export * from "./labels";
-export * from "./messages";
 export * from "./otus";
 export * from "./references";
 export * from "./samples";

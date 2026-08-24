@@ -1,4 +1,4 @@
-import Button from "./Button";
+import Button from "@base/Button";
 
 type SaveButtonProps = {
 	altText?: string;

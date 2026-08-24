@@ -1,6 +1,6 @@
 import { cn } from "@app/cn";
-import BoxGroupSection from "@base/BoxGroupSection";
-import IconButton from "@base/IconButton";
+import { BoxGroupSection } from "@base/Box";
+import { IconButton } from "@base/Icon";
 import Label from "@base/Label";
 import Tooltip from "@base/Tooltip";
 import { useSortable } from "@dnd-kit/sortable";
@@ -77,7 +77,7 @@ export function SegmentItem({
 					<IconButton
 						IconComponent={Trash}
 						color="red"
-						tip="delete segment"
+						tip="Delete"
 						onClick={onDelete}
 					/>
 				</div>

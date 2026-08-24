@@ -24,7 +24,7 @@ describe("<MemberItem />", () => {
 			screen.queryByRole("button", { name: "edit member" }),
 		).not.toBeInTheDocument();
 		expect(
-			screen.queryByRole("button", { name: "remove member" }),
+			screen.queryByRole("button", { name: "Remove member" }),
 		).not.toBeInTheDocument();
 	});
 
@@ -35,7 +35,7 @@ describe("<MemberItem />", () => {
 			screen.getByRole("button", { name: "edit member" }),
 		).toBeInTheDocument();
 		expect(
-			screen.getByRole("button", { name: "remove member" }),
+			screen.getByRole("button", { name: "Remove member" }),
 		).toBeInTheDocument();
 	});
 
@@ -52,7 +52,7 @@ describe("<MemberItem />", () => {
 		renderWithProviders(<MemberItem {...props} />);
 
 		await userEvent.click(
-			screen.getByRole("button", { name: "remove member" }),
+			screen.getByRole("button", { name: "Remove member" }),
 		);
 		expect(props.onRemove).toHaveBeenCalledWith(props.id);
 	});

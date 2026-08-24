@@ -1,6 +1,4 @@
-import BoxGroup from "@base/BoxGroup";
-import BoxGroupHeader from "@base/BoxGroupHeader";
-import BoxGroupSection from "@base/BoxGroupSection";
+import { BoxGroup, BoxGroupHeader, BoxGroupSection } from "@base/Box";
 import { Link } from "@tanstack/react-router";
 
 type CloneProps = {

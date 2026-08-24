@@ -1,8 +1,7 @@
 import { useCheckAdminRoleOrPermission } from "@administration/hooks";
 import Button from "@base/Button";
 import SearchToolbar from "@base/SearchToolbar";
-import ToggleGroup from "@base/ToggleGroup";
-import ToggleGroupItem from "@base/ToggleGroupItem";
+import { ToggleGroup, ToggleGroupItem } from "@base/Toggle";
 
 type ReferenceToolbarProps = {
 	archived: boolean;

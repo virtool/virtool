@@ -1,4 +1,4 @@
-import { SelectBox, SelectBoxItem } from "@base/SelectBox";
+import { SelectBox, SelectBoxItem } from "@base/Select";
 
 type LibraryTypeSelectorProps = {
 	libraryType: string;

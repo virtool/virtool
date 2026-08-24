@@ -1,4 +1,4 @@
-import IconButton from "@base/IconButton";
+import { IconButton } from "@base/Icon";
 import { useCheckReferenceRight } from "@references/hooks";
 import { Pencil, Trash } from "lucide-react";
 import { useState } from "react";
@@ -45,9 +45,10 @@ export function OtuHeaderIcons({
 			/>
 			<IconButton
 				key="delete-icon"
+				ariaLabel="Delete OTU"
 				color="red"
 				IconComponent={Trash}
-				tip="delete OTU"
+				tip="Delete"
 				onClick={() => setOpenDelete(true)}
 			/>
 

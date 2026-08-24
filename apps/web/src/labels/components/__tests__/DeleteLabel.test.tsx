@@ -9,7 +9,7 @@ describe("<DeleteLabel>", () => {
 		const onConfirm = vi.fn().mockResolvedValue(undefined);
 		renderWithProviders(<DeleteLabel name="Foo" onConfirm={onConfirm} />);
 
-		await userEvent.click(screen.getByRole("button", { name: "delete label" }));
+		await userEvent.click(screen.getByRole("button", { name: "Delete" }));
 
 		expect(
 			screen.getByText(/are you sure you want to delete/i),
@@ -27,7 +27,7 @@ describe("<DeleteLabel>", () => {
 		const onConfirm = vi.fn().mockRejectedValue(new Error("oops"));
 		renderWithProviders(<DeleteLabel name="Foo" onConfirm={onConfirm} />);
 
-		await userEvent.click(screen.getByRole("button", { name: "delete label" }));
+		await userEvent.click(screen.getByRole("button", { name: "Delete" }));
 		await userEvent.click(screen.getByRole("button", { name: "Confirm" }));
 
 		await waitFor(() => expect(onConfirm).toHaveBeenCalledOnce());

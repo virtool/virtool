@@ -1,10 +1,8 @@
-import BoxGroup from "@base/BoxGroup";
+import { BoxGroup } from "@base/Box";
 import ListEmpty from "@base/ListEmpty";
 import Pagination from "@base/Pagination";
 import SearchToolbar from "@base/SearchToolbar";
-import ViewHeader from "@base/ViewHeader";
-import ViewHeaderTitle from "@base/ViewHeaderTitle";
-import ViewHeaderTitleBadge from "@base/ViewHeaderTitleBadge";
+import { ViewHeader, ViewHeaderTitle, ViewHeaderTitleBadge } from "@base/View";
 import { Boxes, SearchX } from "lucide-react";
 import { useSuspenseHmms } from "../queries";
 import { HmmInstall } from "./HmmInstall";

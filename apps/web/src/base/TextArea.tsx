@@ -1,6 +1,6 @@
 import { cn } from "@app/cn";
+import { useIsInvalid } from "@base/Input";
 import type { ComponentProps } from "react";
-import { useIsInvalid } from "./InputContext";
 import {
 	inputBaseClasses,
 	inputFocusClasses,

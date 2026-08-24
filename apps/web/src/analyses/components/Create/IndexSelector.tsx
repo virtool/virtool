@@ -2,10 +2,11 @@ import { cn } from "@app/cn";
 import Box from "@base/Box";
 import { Empty, EmptyDescription, EmptyMedia, EmptyTitle } from "@base/Empty";
 import Label from "@base/Label";
-import Select from "@base/Select";
-import SelectButton from "@base/SelectButton";
-import SelectContent from "@base/SelectContent";
-import { SelectItemIndicator } from "@base/SelectItem";
+import Select, {
+	SelectButton,
+	SelectContent,
+	SelectItemIndicator,
+} from "@base/Select";
 import { selectItemStateClasses } from "@base/styles";
 import type { IndexMinimal } from "@virtool/contracts";
 import { sortBy } from "es-toolkit";

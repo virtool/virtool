@@ -1,4 +1,4 @@
-import BoxGroupSection from "@base/BoxGroupSection";
+import { BoxGroupSection } from "@base/Box";
 import SampleLabel from "@samples/components/Label/SampleLabel";
 import { Link } from "@tanstack/react-router";
 import { DeleteLabel } from "./DeleteLabel";
@@ -10,7 +10,7 @@ type LabelItemProps = {
 	id: number;
 	name: string;
 	onEdit: (id: number, values: UpdatedLabel) => Promise<unknown>;
-	onRemove: (id: number) => Promise<unknown>;
+	onDelete: (id: number) => Promise<unknown>;
 };
 
 /**
@@ -22,7 +22,7 @@ export function LabelItem({
 	id,
 	name,
 	onEdit,
-	onRemove,
+	onDelete,
 }: LabelItemProps) {
 	return (
 		<BoxGroupSection className="flex items-center">
@@ -43,7 +43,7 @@ export function LabelItem({
 					name={name}
 					onSubmit={(values) => onEdit(id, values)}
 				/>
-				<DeleteLabel name={name} onConfirm={() => onRemove(id)} />
+				<DeleteLabel name={name} onConfirm={() => onDelete(id)} />
 			</div>
 		</BoxGroupSection>
 	);

@@ -1,7 +1,5 @@
-import BoxGroup from "@base/BoxGroup";
-import BoxGroupHeader from "@base/BoxGroupHeader";
-import BoxGroupSection from "@base/BoxGroupSection";
-import InitialIcon from "@base/InitialIcon";
+import { BoxGroup, BoxGroupHeader, BoxGroupSection } from "@base/Box";
+import { InitialIcon } from "@base/Icon";
 import type { UserNested } from "@virtool/contracts";
 
 type MemberProps = {

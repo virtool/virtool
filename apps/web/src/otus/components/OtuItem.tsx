@@ -1,4 +1,4 @@
-import BoxGroupSection from "@base/BoxGroupSection";
+import { BoxGroupSection } from "@base/Box";
 import Link from "@base/Link";
 
 type OtuItemProps = {

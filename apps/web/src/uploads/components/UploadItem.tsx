@@ -1,9 +1,8 @@
 import { byteSize } from "@app/format";
 import Checkbox from "@base/Checkbox";
-import IconButton from "@base/IconButton";
-import IconLink from "@base/IconLink";
+import { IconButton, IconLink } from "@base/Icon";
 import RelativeTime from "@base/RelativeTime";
-import TableActionsCell from "@base/TableActionsCell";
+import { TableActionsCell } from "@base/Table";
 import UserLabel from "@base/UserLabel";
 import type { UserNested } from "@virtool/contracts";
 import { Download, Trash } from "lucide-react";
@@ -11,7 +10,7 @@ import type { MouseEvent, ReactNode } from "react";
 import { useDeleteFile } from "../queries";
 
 export type UploadItemProps = {
-	/** An extra control shown beside the remove button. */
+	/** An extra control shown beside the delete button. */
 	action?: ReactNode;
 	canDelete: boolean;
 	/** Whether the file is selected. */
@@ -46,7 +45,7 @@ export default function UploadItem({
 	size,
 	user,
 }: UploadItemProps) {
-	const { mutate: handleRemove } = useDeleteFile();
+	const { mutate: handleDelete } = useDeleteFile();
 
 	return (
 		<tr>
@@ -80,10 +79,11 @@ export default function UploadItem({
 				/>
 				{canDelete && (
 					<IconButton
+						ariaLabel={`Delete ${name}`}
 						color="red"
 						IconComponent={Trash}
-						tip="remove"
-						onClick={() => handleRemove({ id })}
+						tip="Delete"
+						onClick={() => handleDelete({ id })}
 					/>
 				)}
 			</TableActionsCell>
