@@ -1,5 +1,7 @@
+// biome-ignore-all lint/a11y/useFocusableInteractive: The ARIA table and row group do not require independent focus.
+// biome-ignore-all lint/a11y/useSemanticElements: Grid layout requires div elements with explicit table roles.
 import QuickAnalyze from "@analyses/components/Create/QuickAnalyze";
-import { BoxGroup, BoxGroupTable } from "@base/Box";
+import { BoxGroup } from "@base/Box";
 import Button from "@base/Button";
 import { ContainerNarrow } from "@base/Container";
 import ListEmpty from "@base/ListEmpty";
@@ -310,8 +312,11 @@ export default function SamplesList({
 								}
 								selectedSamples={selectedSamples}
 							/>
-							<BoxGroupTable variant="data">
-								<caption className="sr-only">Samples list</caption>
+							<div
+								aria-label="Samples list"
+								className="[&_.sample-table-grid]:grid [&_.sample-table-grid]:grid-cols-[4rem_minmax(0,1fr)_16rem_12rem_10rem_4rem] 2xl:[&_.sample-table-grid]:grid-cols-[4rem_minmax(0,1fr)_8rem_16rem_12rem_10rem_4rem]"
+								role="table"
+							>
 								<SampleTableHead
 									checked={selection.getVisibleState(items)}
 									direction={direction}
@@ -319,8 +324,8 @@ export default function SamplesList({
 									onSort={handleSort}
 									sort={sort}
 								/>
-								<tbody>{items.map(renderRow)}</tbody>
-							</BoxGroupTable>
+								{items.map(renderRow)}
+							</div>
 						</BoxGroup>
 					</Pagination>
 				)}
