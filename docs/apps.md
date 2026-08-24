@@ -78,16 +78,13 @@ own `node_modules`, not `@virtool/data`'s.
 
 Bundling handles the workspace TypeScript; the externals still have to be
 real files. `pnpm deploy --filter <app> --prod <out>` builds that tree,
-and `injectWorkspacePackages: true` in `pnpm-workspace.yaml` is what
-allows it — without the setting `pnpm deploy` refuses to materialise a
-`workspace:*` dependency and the deployed tree is broken.
+and `injectWorkspacePackages: true` in `pnpm-workspace.yaml` gives deploy
+portable copies of workspace dependencies instead of links back into the
+repository.
 
-The setting is scoped in practice to `pnpm deploy`. A normal
-`pnpm install` still symlinks workspace packages into
-`apps/*/node_modules/@virtool/*`, because `dedupeInjectedDeps` defaults on
-and dedupes an injected dependency back to a symlink when no peer
-mismatch forces otherwise. Editing a package's source is still picked up
-with no re-install.
+The checked-in lockfile is generated with the pnpm version pinned in the
+root `package.json`. Keep that version aligned anywhere the lockfile is
+regenerated so injected dependency snapshots remain deterministic.
 
 Each app sets `"files": ["dist"]` so `pnpm deploy` packs the bundle
 alongside the manifest and `node_modules`. Without it the deployed tree
