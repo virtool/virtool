@@ -392,6 +392,41 @@ describe("fetchDescendantTaxids()", () => {
 
 		expect(calls).toHaveLength(1);
 	});
+
+	it("pages the subtree search and keeps a descendant from a later page", async () => {
+		// A subtree larger than one page must not be truncated. The first page is
+		// filled with the species itself, which is filtered out, so only the
+		// isolate on the second page survives — and it does only if paging ran.
+		const firstPage = Array.from({ length: 1000 }, () => "3432891");
+
+		const { calls, fetchMock } = createFetch((url) => {
+			if (url.pathname.endsWith("esearch.fcgi")) {
+				return ok(
+					url.searchParams.get("retstart") === "0"
+						? esearchBody(firstPage, 1001)
+						: esearchBody(["12242"], 1001),
+				);
+			}
+
+			return ok(
+				`<?xml version="1.0"?><TaxaSet><Taxon>
+					<TaxId>12242</TaxId>
+					<ScientificName>Test taxon</ScientificName>
+					<Rank>isolate</Rank>
+				</Taxon></TaxaSet>`,
+			);
+		});
+
+		const taxids = await createNcbiClient({
+			logger,
+			fetch: fetchMock,
+		}).fetchDescendantTaxids(3432891);
+
+		expect(taxids).toEqual([12242]);
+		expect(
+			calls.filter((call) => call.url.pathname.endsWith("esearch.fcgi")),
+		).toHaveLength(2);
+	});
 });
 
 describe("fetchAccessionsByTaxid()", () => {
@@ -527,6 +562,23 @@ describe("failure handling", () => {
 		await expect(
 			createNcbiClient({ logger, fetch: fetchMock }).fetchDescendantTaxids(1),
 		).rejects.toThrow(NcbiUnreadableError);
+	});
+
+	it("translates a stalled body read into an unreachable error", async () => {
+		// The headers arrive, so the request resolves, and the connection then
+		// stalls while the body streams. That rejection lands outside the retry
+		// block and must still be reported as an unreachable NCBI, not a raw
+		// timeout that surfaces as a 500.
+		const fetchMock = vi.fn(async () => ({
+			status: 200,
+			text: () => Promise.reject(new DOMException("timed out", "TimeoutError")),
+		})) as unknown as typeof globalThis.fetch;
+
+		await expect(
+			createNcbiClient({ logger, fetch: fetchMock }).fetchGenbankRecord(
+				"AB000048",
+			),
+		).rejects.toThrow(NcbiUnreachableError);
 	});
 
 	it("lets the caller's abort escape untranslated", async () => {

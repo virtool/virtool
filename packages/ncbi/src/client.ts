@@ -78,9 +78,6 @@ const ESEARCH_PAGE_SIZE = 1000;
 /** The number of records to fetch per batch in an EFetch query. */
 const EFETCH_BATCH_SIZE = 500;
 
-/** The most subtree taxids one search will return. */
-const SUBTREE_MAX = 10_000;
-
 /** How many times a request is retried before the failure is reported. */
 const MAX_ATTEMPTS = 3;
 
@@ -308,7 +305,25 @@ export function createNcbiClient(options: NcbiClientOptions): NcbiClient {
 	): Promise<string> {
 		const response = await request(path, params, body, description, signal);
 
-		const text = await response.text();
+		// `request` has returned once the headers arrive, so a stall or a
+		// disconnect while the body streams rejects here, outside its retry and
+		// translation. Left raw, a body-read timeout escapes as a bare
+		// `TimeoutError` and surfaces as a 500 rather than the 502 an
+		// unreachable NCBI should give. The caller's own abort still propagates.
+		let text: string;
+
+		try {
+			text = await response.text();
+		} catch (err) {
+			if (isAborted(err, signal)) {
+				throw err;
+			}
+
+			throw new NcbiUnreachableError(
+				`NCBI disconnected while trying to ${description}`,
+				{ cause: err },
+			);
+		}
 
 		if (response.status !== 200) {
 			throw new NcbiUnreachableError(
@@ -498,14 +513,32 @@ export function createNcbiClient(options: NcbiClientOptions): NcbiClient {
 		speciesTaxid: number,
 		signal?: AbortSignal,
 	): Promise<number[]> {
-		const { ids } = await esearch(
-			NcbiDatabase.Taxonomy,
-			`txid${speciesTaxid}[Subtree]`,
-			0,
-			SUBTREE_MAX,
-			{},
-			signal,
-		);
+		const term = `txid${speciesTaxid}[Subtree]`;
+
+		const ids: string[] = [];
+
+		for (let page = 0; ; page++) {
+			const retstart = page * ESEARCH_PAGE_SIZE;
+
+			const result = await esearch(
+				NcbiDatabase.Taxonomy,
+				term,
+				retstart,
+				ESEARCH_PAGE_SIZE,
+				{},
+				signal,
+			);
+
+			if (result.ids.length === 0) {
+				break;
+			}
+
+			ids.push(...result.ids);
+
+			if (result.count - retstart <= ESEARCH_PAGE_SIZE) {
+				break;
+			}
+		}
 
 		const descendants = ids
 			.map((id) => Number(id))
