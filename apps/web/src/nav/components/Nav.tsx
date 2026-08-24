@@ -8,6 +8,7 @@ import Dropdown, {
 } from "@base/Dropdown";
 import { IconButton, InitialIcon } from "@base/Icon";
 import Logo from "@base/Logo";
+import UploadIndicator from "@uploads/components/UploadIndicator";
 import type { AdministratorRoleName } from "@virtool/contracts";
 import { hasSufficientAdminRole } from "@virtool/contracts";
 import { Info } from "lucide-react";
@@ -52,6 +53,8 @@ export default function Nav({ administratorRole, handle }: NavBarProps) {
 			</div>
 
 			<div className="flex gap-2 items-center pr-4">
+				<UploadIndicator />
+
 				<IconButton
 					onClick={() => setAboutOpen(true)}
 					IconComponent={Info}

@@ -7,6 +7,8 @@ import { create } from "zustand";
 import { subscribeWithSelector } from "zustand/middleware";
 import type { UploadInProgress } from "./types";
 
+const SAMPLE_INTERVAL_MS = 500;
+
 type UploaderState = {
 	/** The ID of the interval that tracks the upload progress. */
 	intervalId?: number;
@@ -29,8 +31,11 @@ type UploaderState = {
 	/** Remove an upload from the list of uploads. */
 	removeUpload: (localId: string) => void;
 
-	/** Set an upload as failed. */
-	setFailure: (localId: string) => void;
+	/** Return a failed upload to a fresh, in-progress state so it can retry. */
+	resetUpload: (localId: string) => void;
+
+	/** Set an upload as failed, recording why. */
+	setFailure: (localId: string, error: string) => void;
 
 	/** Set the progress of an upload. */
 	setProgress: (localId: string, loaded: number, progress: number) => void;
@@ -57,10 +62,26 @@ export const useUploaderStore = create<UploaderState>()(
 					? { uploads, remaining: 0, speed: 0 }
 					: { uploads };
 			}),
-		setFailure: (localId) =>
+		resetUpload: (localId) =>
 			set((state) => ({
 				uploads: state.uploads.map((upload) =>
-					upload.localId === localId ? { ...upload, failed: true } : upload,
+					upload.localId === localId
+						? {
+								...upload,
+								error: undefined,
+								failed: false,
+								loaded: 0,
+								progress: 0,
+							}
+						: upload,
+				),
+			})),
+		setFailure: (localId, error) =>
+			set((state) => ({
+				uploads: state.uploads.map((upload) =>
+					upload.localId === localId
+						? { ...upload, error, failed: true }
+						: upload,
 				),
 			})),
 		setProgress: (localId, loaded, progress) =>
@@ -113,11 +134,14 @@ export function postUpload(
 	name: string,
 	fileType: UploadType,
 	onProgress?: (progress: UploadProgress) => void,
+	signal?: AbortSignal,
 ): Promise<Upload> {
 	return new Promise((resolve, reject) => {
 		const xhr = new XMLHttpRequest();
 		const query = `?name=${encodeURIComponent(name)}&type=${fileType}`;
 		xhr.open("POST", `/uploads${query}`);
+
+		signal?.addEventListener("abort", () => xhr.abort());
 
 		xhr.upload.addEventListener("progress", (event) => {
 			if (event.lengthComputable && onProgress) {
@@ -144,6 +168,47 @@ export function postUpload(
 }
 
 /**
+ * The file and abort controller for each tracked upload, kept out of the store
+ * so its state stays serialisable. An entry lives until the upload is removed:
+ * a failed upload keeps its entry so `retryUpload` can re-post the same file.
+ */
+const tracked = new Map<
+	string,
+	{ controller: AbortController; file: File; fileType: UploadType }
+>();
+
+/**
+ * Post one tracked file, wiring its progress and outcome into the store.
+ *
+ * An aborted request is left to `cancelUpload`, which has already removed the
+ * upload; any other rejection surfaces its message on the failed upload.
+ */
+function runUpload(localId: string, file: File, fileType: UploadType): void {
+	const controller = new AbortController();
+	tracked.set(localId, { controller, file, fileType });
+
+	postUpload(
+		file,
+		file.name,
+		fileType,
+		({ loaded, percent }) => {
+			useUploaderStore.getState().setProgress(localId, loaded, percent);
+		},
+		controller.signal,
+	)
+		.then(() => {
+			tracked.delete(localId);
+			useUploaderStore.getState().removeUpload(localId);
+		})
+		.catch((error: Error) => {
+			if (controller.signal.aborted) {
+				return;
+			}
+			useUploaderStore.getState().setFailure(localId, error.message);
+		});
+}
+
+/**
  * Upload a file to the Virtool server.
  *
  * This function ties in with the Zustand store `useUploaderStore` to track the progress of the upload.
@@ -162,18 +227,39 @@ export function upload(file: File, fileType: UploadType) {
 		size,
 	});
 
-	postUpload(file, name, fileType, ({ loaded, percent }) => {
-		useUploaderStore.getState().setProgress(localId, loaded, percent);
-	})
-		.then(() => useUploaderStore.getState().removeUpload(localId))
-		.catch(() => useUploaderStore.getState().setFailure(localId));
+	runUpload(localId, file, fileType);
 }
 
 /**
- * Update the remaining time and speed of the uploads every 500 milliseconds.
- * Poll the uploads to calculate the remaining time and speed of the uploads.
+ * Cancel an in-progress upload, or remove a failed one. Aborting a request that
+ * has already settled is a harmless no-op.
  */
-function watchUploadTiming(): void {
+export function cancelUpload(localId: string): void {
+	tracked.get(localId)?.controller.abort();
+	tracked.delete(localId);
+	useUploaderStore.getState().removeUpload(localId);
+}
+
+/**
+ * Retry a failed upload, re-posting the same file in place.
+ */
+export function retryUpload(localId: string): void {
+	const entry = tracked.get(localId);
+
+	if (entry === undefined) {
+		return;
+	}
+
+	useUploaderStore.getState().resetUpload(localId);
+	runUpload(localId, entry.file, entry.fileType);
+}
+
+/**
+ * Recompute the aggregate upload speed and remaining time from byte samples.
+ *
+ * Runs once per {@link SAMPLE_INTERVAL_MS} while uploads are in flight.
+ */
+export function watchUploadTiming(): void {
 	const { getState, setState } = useUploaderStore;
 	const { samples, uploads } = getState();
 
@@ -196,8 +282,17 @@ function watchUploadTiming(): void {
 
 	let speed: number;
 
-	if (newSamples.length > 1 && last !== undefined && first !== undefined) {
-		speed = Math.abs(last - first) / newSamples.length;
+	if (
+		newSamples.length > 1 &&
+		last !== undefined &&
+		first !== undefined &&
+		last > first
+	) {
+		// Samples are taken once per interval, so the span they cover is one
+		// interval shorter than the sample count.
+		const elapsedSeconds =
+			(newSamples.length - 1) * (SAMPLE_INTERVAL_MS / 1000);
+		speed = (last - first) / elapsedSeconds;
 	} else {
 		speed = 0;
 	}
@@ -214,13 +309,14 @@ useUploaderStore.subscribe(
 	(uploadsLength, previousUploadsLength) => {
 		const { getState, setState } = useUploaderStore;
 
-		if (uploadsLength === 0 && previousUploadsLength > 0) {
+		if (uploadsLength === 0) {
 			window.clearInterval(getState().intervalId);
 			setState({ intervalId: 0, remaining: 0, samples: [], speed: 0 });
-		} else {
-			const intervalId = window.setInterval(() => {
-				watchUploadTiming();
-			}, 500);
+		} else if (previousUploadsLength === 0) {
+			const intervalId = window.setInterval(
+				watchUploadTiming,
+				SAMPLE_INTERVAL_MS,
+			);
 
 			setState({ intervalId });
 		}

@@ -3,11 +3,14 @@ import { byteSize } from "@app/format";
 import { IconButton } from "@base/Icon";
 import Loader from "@base/Loader";
 import ProgressBarAffixed from "@base/ProgressBarAffixed";
-import { Trash } from "lucide-react";
+import { RotateCw, Trash, X } from "lucide-react";
 import type { ReactNode } from "react";
-import { useUploaderStore } from "../uploader";
+import { cancelUpload, retryUpload } from "../uploader";
 
 export type UploaderItemProps = {
+	/* A human-readable reason the upload failed, when `failed` is true */
+	error?: string;
+
 	/* Whether the upload failed */
 	failed: boolean;
 
@@ -28,47 +31,57 @@ export type UploaderItemProps = {
  * Progress tracker for a single uploaded file
  */
 export function UploaderItem({
+	error,
 	failed,
 	localId,
 	name,
 	progress,
 	size,
 }: UploaderItemProps) {
-	const removeUpload = useUploaderStore((state) => state.removeUpload);
-
 	let end: ReactNode;
 
 	if (failed) {
 		end = (
-			<span className="flex font-medium gap-2">
-				<span>Failed</span>
+			<span className="flex font-medium gap-2 items-center text-red-500">
+				<span>{error ?? "Failed"}</span>
+				<IconButton
+					IconComponent={RotateCw}
+					color="blue"
+					tip="Retry"
+					onClick={() => retryUpload(localId)}
+				/>
 				<IconButton
 					IconComponent={Trash}
 					color="red"
 					tip="Remove"
-					onClick={() => removeUpload(localId)}
+					onClick={() => cancelUpload(localId)}
 				/>
 			</span>
 		);
 	} else if (progress === 100) {
 		end = <Loader className="size-4" />;
 	} else {
-		end = byteSize(size, true);
+		end = (
+			<span className="flex gap-2 items-center text-gray-500">
+				<span>{byteSize(size, true)}</span>
+				<IconButton
+					IconComponent={X}
+					color="gray"
+					tip="Cancel"
+					onClick={() => cancelUpload(localId)}
+				/>
+			</span>
+		);
 	}
 
 	return (
 		<div className="relative p-0">
 			<ProgressBarAffixed now={progress} color={failed ? "red" : "blue"} />
 			<div className="flex justify-between p-4">
-				<span className="font-medium">{name}</span>
-				<span
-					className={cn({
-						"text-red-500": failed,
-						"text-gray-500": !failed,
-					})}
-				>
-					{end}
+				<span className={cn("font-medium", { "text-red-500": failed })}>
+					{name}
 				</span>
+				{end}
 			</div>
 		</div>
 	);

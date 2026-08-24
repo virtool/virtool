@@ -2,6 +2,9 @@ import type { UploadType } from "@virtool/contracts";
 
 /** A file being uploaded from this browser, tracked until the request settles. */
 export type UploadInProgress = {
+	/* A human-readable reason the upload failed, when `failed` is true */
+	error?: string;
+
 	/* Whether the upload failed */
 	failed: boolean;
 

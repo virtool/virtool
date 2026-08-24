@@ -17,9 +17,7 @@ import {
 	redirect,
 	useLocation,
 } from "@tanstack/react-router";
-import { lazy, Suspense, useEffect } from "react";
-
-const UploadOverlay = lazy(() => import("@uploads/components/UploadOverlay"));
+import { Suspense, useEffect } from "react";
 
 function setupSse(queryClient: QueryClient) {
 	Sse.init(queryClient);
@@ -116,10 +114,6 @@ function AuthenticatedLayout() {
 					</main>
 				</div>
 			</div>
-
-			<Suspense fallback={null}>
-				<UploadOverlay />
-			</Suspense>
 		</>
 	);
 }
