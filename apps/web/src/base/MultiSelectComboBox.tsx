@@ -3,7 +3,9 @@ import Icon from "@base/Icon";
 import { InputLabel } from "@base/Input";
 import { useCombobox, useMultipleSelection } from "downshift";
 import { ChevronDown, X } from "lucide-react";
+import { Popover } from "radix-ui";
 import type { ReactNode } from "react";
+import ComboBoxMenu from "./ComboBoxMenu";
 
 type MultiSelectComboBoxProps<Item> = {
 	/** The text label associated with the combobox input */
@@ -140,8 +142,8 @@ export default function MultiSelectComboBox<Item>({
 			>
 				{label}
 			</InputLabel>
-			<div className="relative">
-				<div
+			<Popover.Root open={isOpen} onOpenChange={() => {}}>
+				<Popover.Anchor
 					className={cn(
 						"flex",
 						"flex-wrap",
@@ -205,24 +207,9 @@ export default function MultiSelectComboBox<Item>({
 					>
 						<Icon icon={ChevronDown} />
 					</button>
-				</div>
-				<ul
-					className={cn(
-						"absolute",
-						"z-dropdown",
-						"w-full",
-						"mt-1",
-						"max-h-60",
-						"overflow-y-auto",
-						"bg-white",
-						"border",
-						"border-gray-300",
-						"rounded-md",
-						"shadow-md",
-						"outline-none",
-						isOpen ? "block" : "hidden",
-					)}
-					{...getMenuProps()}
+				</Popover.Anchor>
+				<ComboBoxMenu
+					menuProps={getMenuProps(undefined, { suppressRefError: true })}
 				>
 					{isOpen &&
 						(availableItems.length ? (
@@ -247,8 +234,8 @@ export default function MultiSelectComboBox<Item>({
 						) : (
 							<li className="px-3 py-2 text-gray-500">No options</li>
 						))}
-				</ul>
-			</div>
+				</ComboBoxMenu>
+			</Popover.Root>
 		</div>
 	);
 }
