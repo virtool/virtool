@@ -1,10 +1,9 @@
 /**
- * Allowed colors for an instance banner.
+ * Allowed colors for a banner.
  *
- * `instance_messages.color` is a `text` column closed by the
- * `ck_instance_messages_color` CHECK constraint; this is the one declaration
- * of what that constraint admits, imported by the schema mirror rather than
- * restated there.
+ * `banners.color` is a `text` column closed by the `ck_banners_color` CHECK
+ * constraint; this is the one declaration of what that constraint admits,
+ * imported by the schema mirror rather than restated there.
  */
 export const bannerColors = [
 	"red",
