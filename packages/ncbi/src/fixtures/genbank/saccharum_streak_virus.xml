@@ -1,0 +1,327 @@
+<?xml version="1.0" encoding="UTF-8"  ?>
+<!DOCTYPE GBSet PUBLIC "-//NCBI//NCBI GBSeq/EN" "https://www.ncbi.nlm.nih.gov/dtd/NCBI_GBSeq.dtd">
+<GBSet>
+  <GBSeq>
+
+    <GBSeq_locus>NC_013464</GBSeq_locus>
+    <GBSeq_length>2744</GBSeq_length>
+    <GBSeq_strandedness>single</GBSeq_strandedness>
+    <GBSeq_moltype>DNA</GBSeq_moltype>
+    <GBSeq_topology>circular</GBSeq_topology>
+    <GBSeq_division>VRL</GBSeq_division>
+    <GBSeq_update-date>13-AUG-2018</GBSeq_update-date>
+    <GBSeq_create-date>04-NOV-2009</GBSeq_create-date>
+    <GBSeq_definition>Saccharum streak virus, complete genome</GBSeq_definition>
+    <GBSeq_primary-accession>NC_013464</GBSeq_primary-accession>
+    <GBSeq_accession-version>NC_013464.1</GBSeq_accession-version>
+    <GBSeq_other-seqids>
+      <GBSeqid>ref|NC_013464.1|</GBSeqid>
+      <GBSeqid>gnl|NCBI_GENOMES|25375</GBSeqid>
+      <GBSeqid>gi|262396919</GBSeqid>
+    </GBSeq_other-seqids>
+    <GBSeq_project>PRJNA485481</GBSeq_project>
+    <GBSeq_keywords>
+      <GBKeyword>RefSeq</GBKeyword>
+    </GBSeq_keywords>
+    <GBSeq_source>Saccharum streak virus</GBSeq_source>
+    <GBSeq_organism>Saccharum streak virus</GBSeq_organism>
+    <GBSeq_taxonomy>Viruses; Floreoviria; Shotokuvirae; Cressdnaviricota; Repensiviricetes; Geplafuvirales; Geminiviridae; Mastrevirus; Mastrevirus sacchari</GBSeq_taxonomy>
+    <GBSeq_references>
+      <GBReference>
+        <GBReference_reference>1</GBReference_reference>
+        <GBReference_position>1..2744</GBReference_position>
+        <GBReference_authors>
+          <GBAuthor>Lawry,R.</GBAuthor>
+          <GBAuthor>Martin,D.P.</GBAuthor>
+          <GBAuthor>Shepherd,D.N.</GBAuthor>
+          <GBAuthor>van Antwerpen,T.</GBAuthor>
+          <GBAuthor>Varsani,A.</GBAuthor>
+        </GBReference_authors>
+        <GBReference_title>A novel sugarcane-infecting mastrevirus from South Africa</GBReference_title>
+        <GBReference_journal>Arch. Virol. 154 (10), 1699-1703 (2009)</GBReference_journal>
+        <GBReference_xref>
+          <GBXref>
+            <GBXref_dbname>doi</GBXref_dbname>
+            <GBXref_id>10.1007/s00705-009-0490-x</GBXref_id>
+          </GBXref>
+        </GBReference_xref>
+        <GBReference_pubmed>19756359</GBReference_pubmed>
+      </GBReference>
+      <GBReference>
+        <GBReference_reference>2</GBReference_reference>
+        <GBReference_position>1..2744</GBReference_position>
+        <GBReference_consortium>NCBI Genome Project</GBReference_consortium>
+        <GBReference_title>Direct Submission</GBReference_title>
+        <GBReference_journal>Submitted (04-NOV-2009) National Center for Biotechnology Information, NIH, Bethesda, MD 20894, USA</GBReference_journal>
+      </GBReference>
+      <GBReference>
+        <GBReference_reference>3</GBReference_reference>
+        <GBReference_position>1..2744</GBReference_position>
+        <GBReference_authors>
+          <GBAuthor>Varsani,A.</GBAuthor>
+          <GBAuthor>Lawry,R.</GBAuthor>
+          <GBAuthor>Martin,D.P.</GBAuthor>
+          <GBAuthor>Shepherd,D.N.</GBAuthor>
+          <GBAuthor>van Antwerpen,T.</GBAuthor>
+        </GBReference_authors>
+        <GBReference_title>Direct Submission</GBReference_title>
+        <GBReference_journal>Submitted (16-JUN-2009) Electron Microscope Unit, University of Cape Town, Private Bag, Rondebosch, Cape Town, WP 7701, South Africa</GBReference_journal>
+      </GBReference>
+    </GBSeq_references>
+    <GBSeq_comment>PROVISIONAL REFSEQ: This record has not yet been subject to final NCBI review. The reference sequence is identical to GQ273988.; COMPLETENESS: full length.</GBSeq_comment>
+    <GBSeq_feature-table>
+      <GBFeature>
+        <GBFeature_key>source</GBFeature_key>
+        <GBFeature_location>1..2744</GBFeature_location>
+        <GBFeature_intervals>
+          <GBInterval>
+            <GBInterval_from>1</GBInterval_from>
+            <GBInterval_to>2744</GBInterval_to>
+            <GBInterval_accession>NC_013464.1</GBInterval_accession>
+          </GBInterval>
+        </GBFeature_intervals>
+        <GBFeature_quals>
+          <GBQualifier>
+            <GBQualifier_name>organism</GBQualifier_name>
+            <GBQualifier_value>Saccharum streak virus</GBQualifier_value>
+          </GBQualifier>
+          <GBQualifier>
+            <GBQualifier_name>mol_type</GBQualifier_name>
+            <GBQualifier_value>genomic DNA</GBQualifier_value>
+          </GBQualifier>
+          <GBQualifier>
+            <GBQualifier_name>isolate</GBQualifier_name>
+            <GBQualifier_value>SacSV_ZA_Emp_T1_2008</GBQualifier_value>
+          </GBQualifier>
+          <GBQualifier>
+            <GBQualifier_name>isolation_source</GBQualifier_name>
+            <GBQualifier_value>sugarcane plant with streak symptoms similar to those produced by Maize streak virus (MSV)</GBQualifier_value>
+          </GBQualifier>
+          <GBQualifier>
+            <GBQualifier_name>host</GBQualifier_name>
+            <GBQualifier_value>Saccharum genotype N44</GBQualifier_value>
+          </GBQualifier>
+          <GBQualifier>
+            <GBQualifier_name>db_xref</GBQualifier_name>
+            <GBQualifier_value>taxon:683179</GBQualifier_value>
+          </GBQualifier>
+          <GBQualifier>
+            <GBQualifier_name>geo_loc_name</GBQualifier_name>
+            <GBQualifier_value>South Africa: KwaZulu-Natal</GBQualifier_value>
+          </GBQualifier>
+          <GBQualifier>
+            <GBQualifier_name>lat_lon</GBQualifier_name>
+            <GBQualifier_value>28.737285 S 31.885717 E</GBQualifier_value>
+          </GBQualifier>
+          <GBQualifier>
+            <GBQualifier_name>collection_date</GBQualifier_name>
+            <GBQualifier_value>2008</GBQualifier_value>
+          </GBQualifier>
+        </GBFeature_quals>
+      </GBFeature>
+      <GBFeature>
+        <GBFeature_key>gene</GBFeature_key>
+        <GBFeature_location>156..485</GBFeature_location>
+        <GBFeature_intervals>
+          <GBInterval>
+            <GBInterval_from>156</GBInterval_from>
+            <GBInterval_to>485</GBInterval_to>
+            <GBInterval_accession>NC_013464.1</GBInterval_accession>
+          </GBInterval>
+        </GBFeature_intervals>
+        <GBFeature_quals>
+          <GBQualifier>
+            <GBQualifier_name>locus_tag</GBQualifier_name>
+            <GBQualifier_value>SacSV_gp1</GBQualifier_value>
+          </GBQualifier>
+          <GBQualifier>
+            <GBQualifier_name>db_xref</GBQualifier_name>
+            <GBQualifier_value>GeneID:11273150</GBQualifier_value>
+          </GBQualifier>
+        </GBFeature_quals>
+      </GBFeature>
+      <GBFeature>
+        <GBFeature_key>CDS</GBFeature_key>
+        <GBFeature_location>156..485</GBFeature_location>
+        <GBFeature_intervals>
+          <GBInterval>
+            <GBInterval_from>156</GBInterval_from>
+            <GBInterval_to>485</GBInterval_to>
+            <GBInterval_accession>NC_013464.1</GBInterval_accession>
+          </GBInterval>
+        </GBFeature_intervals>
+        <GBFeature_quals>
+          <GBQualifier>
+            <GBQualifier_name>locus_tag</GBQualifier_name>
+            <GBQualifier_value>SacSV_gp1</GBQualifier_value>
+          </GBQualifier>
+          <GBQualifier>
+            <GBQualifier_name>codon_start</GBQualifier_name>
+            <GBQualifier_value>1</GBQualifier_value>
+          </GBQualifier>
+          <GBQualifier>
+            <GBQualifier_name>transl_table</GBQualifier_name>
+            <GBQualifier_value>1</GBQualifier_value>
+          </GBQualifier>
+          <GBQualifier>
+            <GBQualifier_name>product</GBQualifier_name>
+            <GBQualifier_value>movement protein</GBQualifier_value>
+          </GBQualifier>
+          <GBQualifier>
+            <GBQualifier_name>protein_id</GBQualifier_name>
+            <GBQualifier_value>YP_003288766.1</GBQualifier_value>
+          </GBQualifier>
+          <GBQualifier>
+            <GBQualifier_name>db_xref</GBQualifier_name>
+            <GBQualifier_value>GeneID:11273150</GBQualifier_value>
+          </GBQualifier>
+          <GBQualifier>
+            <GBQualifier_name>translation</GBQualifier_name>
+            <GBQualifier_value>MEGAYGAIYPSAQSALPRVPIAAPSSPSLPWSRVGEIAIFVFVAVLSFYLLWVWVLRDLIFVVKARRGHSTEELRFGPTVQAPPVAPVSVPGASAVTASCPPEPRPFCV</GBQualifier_value>
+          </GBQualifier>
+        </GBFeature_quals>
+      </GBFeature>
+      <GBFeature>
+        <GBFeature_key>gene</GBFeature_key>
+        <GBFeature_location>500..1243</GBFeature_location>
+        <GBFeature_intervals>
+          <GBInterval>
+            <GBInterval_from>500</GBInterval_from>
+            <GBInterval_to>1243</GBInterval_to>
+            <GBInterval_accession>NC_013464.1</GBInterval_accession>
+          </GBInterval>
+        </GBFeature_intervals>
+        <GBFeature_quals>
+          <GBQualifier>
+            <GBQualifier_name>locus_tag</GBQualifier_name>
+            <GBQualifier_value>SacSV_gp2</GBQualifier_value>
+          </GBQualifier>
+          <GBQualifier>
+            <GBQualifier_name>db_xref</GBQualifier_name>
+            <GBQualifier_value>GeneID:11273151</GBQualifier_value>
+          </GBQualifier>
+        </GBFeature_quals>
+      </GBFeature>
+      <GBFeature>
+        <GBFeature_key>CDS</GBFeature_key>
+        <GBFeature_location>500..1243</GBFeature_location>
+        <GBFeature_intervals>
+          <GBInterval>
+            <GBInterval_from>500</GBInterval_from>
+            <GBInterval_to>1243</GBInterval_to>
+            <GBInterval_accession>NC_013464.1</GBInterval_accession>
+          </GBInterval>
+        </GBFeature_intervals>
+        <GBFeature_quals>
+          <GBQualifier>
+            <GBQualifier_name>locus_tag</GBQualifier_name>
+            <GBQualifier_value>SacSV_gp2</GBQualifier_value>
+          </GBQualifier>
+          <GBQualifier>
+            <GBQualifier_name>codon_start</GBQualifier_name>
+            <GBQualifier_value>1</GBQualifier_value>
+          </GBQualifier>
+          <GBQualifier>
+            <GBQualifier_name>transl_table</GBQualifier_name>
+            <GBQualifier_value>1</GBQualifier_value>
+          </GBQualifier>
+          <GBQualifier>
+            <GBQualifier_name>product</GBQualifier_name>
+            <GBQualifier_value>coat protein</GBQualifier_value>
+          </GBQualifier>
+          <GBQualifier>
+            <GBQualifier_name>protein_id</GBQualifier_name>
+            <GBQualifier_value>YP_003288767.1</GBQualifier_value>
+          </GBQualifier>
+          <GBQualifier>
+            <GBQualifier_name>db_xref</GBQualifier_name>
+            <GBQualifier_value>GeneID:11273151</GBQualifier_value>
+          </GBQualifier>
+          <GBQualifier>
+            <GBQualifier_name>translation</GBQualifier_name>
+            <GBQualifier_value>MSSSLGKRKRSNGGDWSKRSAKKKPAGTPSRRAGPGRGPRPALQIATYQAAGTSMVTVPSGGVCELLATYARGSDEGNRHTNETITYKVALDYHFVASSAACRYSSIGVGVVWLVYDAQPSGNAPQVTDIFPHPDSLAAFPYTWKVGREVCHRFVVKRRWTFTMETDGRIGSDIPRSTDSWPPCKRSIYFHKFATGLGVKTEWKNLADGGVGSIKKGALYIVIAPGNGLEFTAHGNARLYFKSVGNQ</GBQualifier_value>
+          </GBQualifier>
+        </GBFeature_quals>
+      </GBFeature>
+      <GBFeature>
+        <GBFeature_key>gene</GBFeature_key>
+        <GBFeature_location>complement(1442..2592)</GBFeature_location>
+        <GBFeature_intervals>
+          <GBInterval>
+            <GBInterval_from>2592</GBInterval_from>
+            <GBInterval_to>1442</GBInterval_to>
+            <GBInterval_iscomp value="true"/>
+            <GBInterval_accession>NC_013464.1</GBInterval_accession>
+          </GBInterval>
+        </GBFeature_intervals>
+        <GBFeature_quals>
+          <GBQualifier>
+            <GBQualifier_name>locus_tag</GBQualifier_name>
+            <GBQualifier_value>SacSV_gp3</GBQualifier_value>
+          </GBQualifier>
+          <GBQualifier>
+            <GBQualifier_name>db_xref</GBQualifier_name>
+            <GBQualifier_value>GeneID:11273152</GBQualifier_value>
+          </GBQualifier>
+        </GBFeature_quals>
+      </GBFeature>
+      <GBFeature>
+        <GBFeature_key>CDS</GBFeature_key>
+        <GBFeature_location>complement(join(1442..1844,1931..2592))</GBFeature_location>
+        <GBFeature_intervals>
+          <GBInterval>
+            <GBInterval_from>2592</GBInterval_from>
+            <GBInterval_to>1931</GBInterval_to>
+            <GBInterval_iscomp value="true"/>
+            <GBInterval_accession>NC_013464.1</GBInterval_accession>
+          </GBInterval>
+          <GBInterval>
+            <GBInterval_from>1844</GBInterval_from>
+            <GBInterval_to>1442</GBInterval_to>
+            <GBInterval_iscomp value="true"/>
+            <GBInterval_accession>NC_013464.1</GBInterval_accession>
+          </GBInterval>
+        </GBFeature_intervals>
+        <GBFeature_operator>join</GBFeature_operator>
+        <GBFeature_quals>
+          <GBQualifier>
+            <GBQualifier_name>locus_tag</GBQualifier_name>
+            <GBQualifier_value>SacSV_gp3</GBQualifier_value>
+          </GBQualifier>
+          <GBQualifier>
+            <GBQualifier_name>codon_start</GBQualifier_name>
+            <GBQualifier_value>1</GBQualifier_value>
+          </GBQualifier>
+          <GBQualifier>
+            <GBQualifier_name>transl_table</GBQualifier_name>
+            <GBQualifier_value>1</GBQualifier_value>
+          </GBQualifier>
+          <GBQualifier>
+            <GBQualifier_name>product</GBQualifier_name>
+            <GBQualifier_value>RepA</GBQualifier_value>
+          </GBQualifier>
+          <GBQualifier>
+            <GBQualifier_name>protein_id</GBQualifier_name>
+            <GBQualifier_value>YP_003288768.1</GBQualifier_value>
+          </GBQualifier>
+          <GBQualifier>
+            <GBQualifier_name>db_xref</GBQualifier_name>
+            <GBQualifier_value>GeneID:11273152</GBQualifier_value>
+          </GBQualifier>
+          <GBQualifier>
+            <GBQualifier_name>translation</GBQualifier_name>
+            <GBQualifier_value>MAYANSTSTESNSSRSFRHRNANTFLTYSKCSLDPEILGLSLWSKLAPWTPAYILVAREAHQDGTWHCHALAQSVRPVTTSDPRFFDVNEYHPNIQSAKSVDRVREYILKDPLCQWEKGTFVPRKKPFVPQIGESSNTRASKDDIVRDIIQHSTNKHEYLSMLQKELPYEWATKLQYFEYSANKLFPEIAEPYTNPHPPTQPDLHCYERIEEWLNFNVYQVQPQEAGRARSLYIVGPTRTGKSTWARSLGRHNYWQNNVDWSSYDEEAVLNVIDDIPFKYCPCWKQLVGCQKNYVVNPKYGKKKKVAKRSIPAVILANEDEDWLRDMTPAQRDYMEANCEVYIMSSGEKWFTPA</GBQualifier_value>
+          </GBQualifier>
+        </GBFeature_quals>
+      </GBFeature>
+    </GBSeq_feature-table>
+    <GBSeq_sequence>taatattaccgcatccccttttgcgagggccccaaaggcccgagcggtcctagccgctttgtctctgtggggtatttcgaagatgaaatctgctctttcgaccgccgacaggctaaggtgcgatataaatcagccgtcctcgccttgctttgaacatggagggcgcctacggtgcgatctatccttccgcgcagagtgctttgccgcgggtacccattgcagctccgtcctctccgagcttgccgtggagtcgcgtcggtgagatagctatctttgtctttgttgcagtactaagcttttatctgctgtgggtgtgggtgctgagagatcttatcttcgttgtgaaggctcgccgagggcactcaacggaggagctgcgctttggccctaccgttcaagcccctcccgtcgcgccagtgtctgttcctggtgcgtccgctgtcactgctagctgtccaccggagcctagacctttctgtgtctaggcgggccatcagctatgtcttcttcccttggcaagaggaagaggtcgaatggaggcgattggtctaagcgctccgctaagaagaagccggcgggtaccccttcacgccgtgctgggcctggaagaggcccacgtccagctctacagattgcgacctaccaggccgctggaacctctatggttactgtccctagcgggggcgtttgtgaactccttgcgacatatgctcgagggtccgacgagggcaaccgtcacaccaacgagactatcacgtacaaggttgccttggactaccactttgtagcctcgtctgctgcttgcaggtactcttccatcggtgtgggggtcgtgtggttggtgtatgatgcacagccctccggcaatgccccccaggtaacggatatcttcccgcatcctgatagtctggccgcgttcccgtacacttggaaggtcggaagggaggtgtgtcatcgcttcgtggtgaagcggaggtggactttcacgatggagacggacgggcgtatcgggagcgatatccctcggtcgacggattcttggccgccctgcaagcggtctatttactttcacaagtttgccaccggtctcggtgtcaaaacggagtggaagaatctcgctgatggaggagttggatccattaagaagggtgccctgtatattgtaattgcccccggcaatggtttagagtttacggcgcatggcaatgcccgtttgtactttaagtctgttggaaatcagtgatttccacgaaataataaataaatttatttattacaatgattggaatgcgtagcattacattacagtacatagtctgcagatgtgcagacccaaacacacacatacccaactcggcggtcagatcgtaggcggctaaggggtaggactcgaaaaaaacacacgaaaaacatgatattattataattgcagccgccggctttacgcaggggtgaaccacttctccccggagctcatgatgtagacttcgcagtttgcctccatgtagtcccgctgcgcgggagtcatgtcccgcagccagtcctcatcttcgttggcgaggattacagcaggaatggagcgtttagcgaccttctttttcttcccgtatttcgggtttacaacgtagttcttctgacagccaacgagctgcttccagcaaggacagtatttaaagggaatgtcatctatgacattcaggactgcttcctcgtcatatgaggaccagtccacgttattctgccagtagttgtggcgacctaggcttctcgcccaggtggatttgccggtccttgttggaccgacgatgtacaggcttcgcgctcttccggcctcttgaggttgctgtgatacagttcgtcgagccagacaaggtcagaggttgcctgttctaaagagcagccatgaagaagagtatagtcctcaggagtgacctgatagacgttgaagttcagccattcttcaatgcgctcgtagcagtggaggtcgggttgtgttggtggatgaggattggtgtagggctctgctatctcagggaacagcttattagctgagtactcgaagtactgcagcttcgttgcccactcgtacggtagctccttctgaagcatggagaggtactcgtgcttgttggtggagtgttgaatgatatcgcgaacgatatcatcctttgaggcgcgagtgttagagctctcaccgatctgaggaacgaagggcttcttccgtggaacgaaagtacccttctcccactgacacaatgggtccttgagtatgtactctcttaccctgtctaccgatttagcagactggatgttggggtggtactcatttacgtcgaagaaccgcgggtctgaagtcgtcacggggcggacgctctgtgccagggcatggcagtgccatgtcccatcttgatgagcttctctagccaccaggatgtatgccggagtccatggagctagcttgctccataggctcagacccaagatctcgggatcaaggctacacttgctgtaggttaggaaggtgtttgcgttcctgtgcctgaaggaacgagagctgttactctcagtgctagtgctgttagcgtaggccatcggacggctgtggttgtgctttgagatccgaggtttctcaaaactctagctagacttcgcatcgaaatccgccagcacccgggcggcttttatagctgtcttatatgggctgggccgaaaggccggccggcatacaaaaggggatgcgaaga</GBSeq_sequence>
+    <GBSeq_xrefs>
+      <GBXref>
+        <GBXref_dbname>BioProject</GBXref_dbname>
+        <GBXref_id>PRJNA485481</GBXref_id>
+      </GBXref>
+    </GBSeq_xrefs>
+  </GBSeq>
+
+</GBSet>

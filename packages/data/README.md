@@ -180,29 +180,24 @@ change together.
 
 ## Outbound requests
 
-Third-party requests use `USER_AGENT` from `@virtool/data/userAgent`, which is
-the unversioned product token `virtool`. NCBI throttles or blocks anonymous
-traffic, while GitHub rejects requests without a `User-Agent`.
+Third-party requests use `USER_AGENT` from `@virtool/contracts/userAgent`,
+which is the product name `virtool` and has no version. NCBI limits or blocks
+requests that do not give a name. GitHub refuses requests that have no
+`User-Agent` header.
 
-There is deliberately no shared HTTP client. Each call site owns its timeout,
-and the shared constant keeps identification consistent without introducing
-module-scope client construction. The token has no version because this package
-cannot access the app-specific build versions used by `apps/web` and
-`apps/tasks`.
+This repository has no shared HTTP client. Each caller sets its own timeout.
+The shared constant keeps the name the same everywhere, and no module builds a
+client at import time.
 
-### NCBI API key
+### NCBI
 
-`getGenbank` takes the instance's NCBI API key as an argument and appends it as
-`api_key`, which raises the E-utilities rate limit from three requests a second
-to ten. An empty string means no key is configured and the parameter is omitted
-entirely; NCBI refuses a blank one rather than falling back to the anonymous
-tier.
+This package speaks to two NCBI services, and they are not the same API.
 
-The key is stored in the `settings` row and read by the caller, not here, so
-this package takes no settings dependency for it. It is a credential: never log
-the request URL, and publish only whether a key is configured. `apps/web`'s
-settings server functions do that narrowing, and `ncbiApiKey` is in the shared
-logger's redaction paths.
+`src/blast/ncbi.ts` is the BLAST URL API client. It is a separate CGI endpoint
+that answers with HTML, plain text, and zip archives, so it stays here.
+
+Nucleotide records and taxonomy come from `@virtool/ncbi`, which speaks to
+E-utilities. Do not add a second E-utilities client to this package.
 
 ## Task queue
 

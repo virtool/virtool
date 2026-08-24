@@ -1,9 +1,16 @@
 {
 	"$schema": "https://unpkg.com/knip@6/schema.json",
 	"ignoreExportsUsedInFile": true,
-	"ignoreDependencies": ["conventional-changelog-conventionalcommits"],
-	"ignoreWorkspaces": ["apps/site"],
-	"ignore": [".venv/**", "packages/pathoscope-core/**"],
+	"ignoreDependencies": [
+		"conventional-changelog-conventionalcommits"
+	],
+	"ignoreWorkspaces": [
+		"apps/site"
+	],
+	"ignore": [
+		".venv/**",
+		"packages/pathoscope-core/**"
+	],
 	"workspaces": {
 		"apps/web": {
 			"entry": [
@@ -12,38 +19,68 @@
 				"src/types/window.ts",
 				"src/tests/postgresGuard.ts"
 			],
-			"project": ["src/**/*.{ts,tsx,css}"],
-			"ignoreDependencies": ["bcrypt"]
+			"project": [
+				"src/**/*.{ts,tsx,css}"
+			],
+			"ignoreDependencies": [
+				"bcrypt"
+			]
 		},
 		"packages/bio": {
-			"entry": ["src/**/*.test.ts"]
+			"entry": [
+				"src/**/*.test.ts"
+			]
 		},
 		"packages/contracts": {
-			"entry": ["src/**/*.test.ts"]
+			"entry": [
+				"src/**/*.test.ts"
+			]
 		},
 		"packages/data": {
-			"entry": ["src/**/*.test.ts"]
+			"entry": [
+				"src/**/*.test.ts"
+			]
 		},
 		"packages/storage": {
-			"entry": ["src/**/*.test.ts"]
+			"entry": [
+				"src/**/*.test.ts"
+			]
 		},
 		"packages/logger": {
-			"entry": ["src/**/*.test.ts"]
+			"entry": [
+				"src/**/*.test.ts"
+			]
 		},
 		"packages/sentry": {
-			"entry": ["src/**/*.test.ts"]
+			"entry": [
+				"src/**/*.test.ts"
+			]
 		},
 		"packages/service": {
-			"entry": ["src/**/*.test.ts"]
+			"entry": [
+				"src/**/*.test.ts"
+			]
 		},
 		"packages/archive": {
-			"entry": ["src/**/*.test.ts"]
+			"entry": [
+				"src/**/*.test.ts"
+			]
 		},
 		"packages/sqlite": {
-			"entry": ["src/**/*.test.ts"]
+			"entry": [
+				"src/**/*.test.ts"
+			]
 		},
 		"packages/workflow": {
-			"entry": ["src/**/*.test.ts"]
+			"entry": [
+				"src/**/*.test.ts"
+			]
+		},
+		"packages/ncbi": {
+			"entry": [
+				"src/**/*.test.ts",
+				"scripts/*.ts"
+			]
 		}
 	}
 }

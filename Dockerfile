@@ -24,6 +24,7 @@ COPY packages/bio ./packages/bio
 COPY packages/contracts ./packages/contracts
 COPY packages/data ./packages/data
 COPY packages/logger ./packages/logger
+COPY packages/ncbi ./packages/ncbi
 COPY packages/sentry ./packages/sentry
 COPY packages/service ./packages/service
 COPY packages/sqlite ./packages/sqlite
