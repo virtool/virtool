@@ -3,7 +3,6 @@ import { DropdownMenuSeparator } from "@base/Dropdown";
 import { FilterMenuCheckboxItem, FilterMenuContent } from "@base/Filter";
 import Input from "@base/Input";
 import QueryError from "@base/QueryError";
-import ScrollArea from "@base/ScrollArea";
 import { useListUsers } from "@users/queries";
 import type { UserNested } from "@virtool/contracts";
 import { useState } from "react";
@@ -75,17 +74,24 @@ export default function UserFilterMenu({
 			) : matches.length === 0 ? (
 				<p className="px-2 py-1.5 text-gray-500 text-sm">No users found.</p>
 			) : (
-				// Capped at twelve users so a large instance doesn't grow the menu
-				// past the viewport.
-				<ScrollArea className="mr-0 h-auto max-h-96 w-full rounded-none border-none">
+				<>
 					{self && (
 						<>
 							{renderUser(self, true)}
 							{others.length > 0 && <DropdownMenuSeparator />}
 						</>
 					)}
-					{others.map((user) => renderUser(user, false))}
-				</ScrollArea>
+					{others.length > 0 && (
+						// Capped at twelve users so a large instance doesn't grow the menu
+						// past the viewport.
+						<div
+							className="max-h-96 overflow-x-hidden overflow-y-auto"
+							data-testid="other-users"
+						>
+							{others.map((user) => renderUser(user, false))}
+						</div>
+					)}
+				</>
 			)}
 		</FilterMenuContent>
 	);
