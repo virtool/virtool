@@ -43,7 +43,7 @@ export default function SampleItem({
 			role="rowgroup"
 		>
 			<div
-				className="grid grid-cols-subgrid col-span-full items-center py-2"
+				className="grid grid-cols-subgrid col-span-full items-center gap-y-1 py-2"
 				role="row"
 			>
 				<div className="pl-4" role="cell">
