@@ -71,7 +71,7 @@ distinction for operators without changing the runner's response.
 
 ## Workflow failure
 
-There is deliberately no endpoint for a runner to report failure. If a step or
+By design, no endpoint lets a runner report failure. If a step or
 workflow finalization fails, `runWorkflow` returns `failed`, the pod stops
 pinging, and `runWorkflowApp` exits `0`. The stalled-job sweep eventually moves
 the job from `running` to `failed` after its last ping becomes more than five

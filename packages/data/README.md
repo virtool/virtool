@@ -67,7 +67,7 @@ returns `{ key, error }` pairs for failures; callers must log every returned
 failure so orphaned objects remain observable. Collect recorded keys before
 deleting their rows, including child keys removed by database cascades.
 
-There is no prefix-based cleanup. Objects that were written without a key
+No prefix-based cleanup exists. Objects that were written without a key
 being recorded remain for a future orphan sweep.
 
 `reapUploads` removes unfinished chunked uploads that clients never finalized

@@ -77,8 +77,8 @@ pass**, and never regenerate one from this crate. That converts a caught
 divergence into a permanent one, and leaves a test that asserts only that the
 code still does what it did.
 
-There is no script here that writes them and no supported way to regenerate
-one. If a golden is ever found to be wrong, re-derive it from FastQC itself:
+No script here writes them, and no supported way to regenerate
+one exists. If a golden is ever found to be wrong, re-derive it from FastQC itself:
 install FastQC 0.11.9 (a JRE and the full `perl`, not `perl-base` — its
 launcher opens with `use FindBin`), run it over the input with `-f fastq
 --extract`, and work the expected `quality` and `baseGroups` out of the raw
@@ -116,8 +116,8 @@ gzipped or plain. `flate2` resolves to the pure-Rust `miniz_oxide`, so the
 binary links nothing but glibc, which is why the create-sample runtime stage
 installs nothing at all.
 
-`clap`, `serde`/`serde_json` and `thiserror` are the rest. There is no
-`libclang` requirement here — that is `pathoscope-core`'s `hts-sys`.
+`clap`, `serde`/`serde_json` and `thiserror` are the rest. No
+`libclang` requirement applies here — that is `pathoscope-core`'s `hts-sys`.
 
 ## Commands
 

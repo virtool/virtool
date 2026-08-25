@@ -1,7 +1,7 @@
 # Environment configuration
 
 Virtool services own their configuration schemas, but follow one environment
-loading convention. There is no shared configuration package: the shared piece
+loading convention. No shared configuration package exists: the shared piece
 is `resolveFileBacked` from `@virtool/contracts/env`.
 
 ## Variable names

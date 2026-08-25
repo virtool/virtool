@@ -123,7 +123,7 @@ for each is on the function.
 - **`rank` is a plain string.** ref-builder rejects any taxon above species at
   validation time, because an OTU must be species-or-below. That is a
   reference-building policy, not a property of the record, and this client is
-  also used to validate an arbitrary taxid a user has typed. `getSpecies()`
+  also used to validate an arbitrary taxonomy ID a user has typed. `getSpecies()`
   returns `null` for a taxon above species rather than throwing.
 - **No `fetch_lineage`.** It assembles ref-builder's own `Lineage` and `Taxon`
   domain objects, which belong to reference building rather than to an NCBI
@@ -144,7 +144,7 @@ pnpm --filter @virtool/ncbi test
 holds ref-builder's own validated models, copied from its
 `tests/fixtures/ncbi/otus/`; `src/fixtures/genbank/` and
 `src/fixtures/taxonomy/` hold the raw NCBI responses for the same 47
-accessions and 11 taxids. The test parses the responses and asserts the result
+accessions and 11 taxonomy IDs. The test parses the responses and asserts the result
 equals ref-builder's model, field for field.
 
 **ref-builder records no raw XML of its own** — everything it keeps is already
@@ -163,7 +163,7 @@ itself, so a shape change at NCBI shows up as a failing test with a reviewable
 diff. When a failure turns out to be NCBI having changed the *data* rather than
 this client having broken, edit the expected file by hand and say so in the
 commit — as was done for the realm `Monodnaviria` being renamed `Floreoviria`
-(taxid 2731342) and for `unclassified Tolucaviricetes` (taxid 2788833) being
+(taxonomy ID 2731342) and for `unclassified Tolucaviricetes` (taxonomy ID 2788833) being
 retired from beet black scorch virus's lineage.
 
 ### Live smoke tests
@@ -183,6 +183,6 @@ field is.
 ## Residual risk
 
 The fixtures cover organisms that are already curated, so novel GBSeq shapes
-from new submissions will still surprise. The live smoke tests and the
-refreshable golden files are how that surfaces as a reviewable diff rather than
-a silent regression.
+from new submissions will still surprise. The live smoke tests and the golden
+files, which can be refreshed, are how that surfaces as a reviewable diff rather
+than a silent regression.

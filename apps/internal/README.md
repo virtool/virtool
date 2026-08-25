@@ -261,7 +261,7 @@ unset.
 | `VT_TASKS_PROBE_PORT` | Positive integer | `9900` | `run`: listen for health probes and Prometheus scrapes. |
 | `VT_TASKS_SHUTDOWN_TIMEOUT` | Positive integer (seconds) | `40` | `run`: bound the complete graceful-shutdown sequence. It must remain below the pod termination grace period. |
 | `VT_TASKS_DRAIN_TIMEOUT` | Positive integer (seconds) | `25` | `run`: allow an in-flight task to finish before releasing its claim. This must be less than `VT_TASKS_SHUTDOWN_TIMEOUT` and is part of that budget. |
-| `VT_MIGRATIONS_PATH` | String | Bundled `drizzle/` | `migrate`: override the migrations folder, e.g. to run against the working tree. |
+| `VT_MIGRATIONS_PATH` | String | Bundled `drizzle/` | `migrate`: override the migrations folder, for example to run against the working tree. |
 | `VT_POSTGRES_URL` | URL | Required | Connect to the Virtool Postgres database. |
 | `VT_POSTGRES_POOL_MAX` | Positive integer | `10` | Limit the Postgres connection pool (`serve` and `run`; `migrate` always uses one connection). |
 | `VT_METRICS_TOKEN` | String | Unset | Enable `/metrics` and authenticate scrapes with a bearer token. When unset, `/metrics` returns 404. |

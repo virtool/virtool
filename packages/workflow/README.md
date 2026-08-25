@@ -18,15 +18,15 @@ and test harness shared by Virtool workflow executors.
 
 The runtime is deliberately small and explicit:
 
-- There is no dependency-injection container. Each workflow builds one ordinary
+- No dependency-injection container exists. Each workflow builds one ordinary
   context before its first step. Metadata resolution is eager, but transfer may
   remain lazy: `buildContext` records storage keys and work paths and checks
   required objects with `storage.size()`, while the step that needs an optional
   input downloads it.
-- There is no teardown layer. Workflow containers are ephemeral, and process
+- No teardown layer exists. Workflow containers are ephemeral, and process
   exit reclaims their work directory. Do not add `dispose`,
   `Symbol.asyncDispose`, or an `AsyncExitStack` equivalent.
-- There is no lifecycle-hook registry. `RunWorkflowOptions.onStepStart` is the
+- No lifecycle-hook registry exists. `RunWorkflowOptions.onStepStart` is the
   sole optional callback. Successful completion is represented by the returned
   `RunOutcome`; a failed run leaves a partially built resource for the user to
   delete.

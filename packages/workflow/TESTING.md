@@ -5,7 +5,7 @@ the whole surface a workflow test needs: fixture builders, a fixed clock and a
 deterministic random source, a fake subprocess runner, checksum helpers, and
 both halves of the jobs API fixture.
 
-There is more workflow test code than workflow source, so this harness is used
+The workflow test code outweighs the workflow source, so this harness is used
 once by each of the four workflow apps and once more by the runtime itself.
 
 It lives in `packages/workflow/src/testing/`, runs under node via
@@ -28,7 +28,7 @@ one.
   a file concurrently on request, so shared module state is a cross-test data
   race.
 - Anything needing cleanup returns its disposer alongside the value, and the
-  caller registers it with `onTestFinished`. There is no global `beforeEach`.
+  caller registers it with `onTestFinished`. No global `beforeEach` exists.
 - Composition is explicit. A test that wants a seeded context over a faked jobs
   API calls both factories and wires them.
 
@@ -373,8 +373,8 @@ of `{reads, uploads, subtractions, indexes, hmms, caches}` asked for.
 
 **Never a fixed path.** `createWorkPath` unconditionally empties its target, and
 Vitest runs test files in parallel processes — so a shared path means one test
-deleting another's tree mid-run, which surfaces as a missing file in whichever
-test lost the race. `mkdtemp` guarantees uniqueness per call, covering both
+deleting the tree out from under another mid-run, which surfaces as a missing
+file in whichever test lost the race. `mkdtemp` guarantees uniqueness per call, covering both
 parallel files and repeated calls within one.
 
 Cleanup is the caller's, registered with `onTestFinished` rather than a global

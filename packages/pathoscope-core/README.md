@@ -31,8 +31,8 @@ The corpus was captured from the PyO3 build of `workflow-pathoscope` before the
 crate moved here. The script that captured it is gone, and there is no supported
 way to produce a new vector: it needed the Python extension module, which this
 repository does not hold. `git log --diff-filter=D` under `tests/golden/` finds
-the script if it is wanted as a starting point. There is no need for a new
-vector — a failing vector is a finding about the code, never a golden to
+the script if it is wanted as a starting point. A new vector is never
+needed — a failing vector is a finding about the code, never a golden to
 re-baseline. **Never edit a vector to make a failing comparison pass**, and
 never regenerate the corpus from this crate — a corpus generated from the code
 under test asserts nothing.

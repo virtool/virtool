@@ -223,7 +223,7 @@ the compiler; CI enables it with `VT_TEST_REACT_COMPILER=1`.
 
 #### Query modules and keys
 
-There is one data-fetching transport: TanStack Start server functions called
+The app has one data-fetching transport: TanStack Start server functions called
 through React Query hooks. Raw uploads, downloads, and SSE use their native
 browser transports instead. A feature divides its cache surface between:
 
@@ -832,7 +832,7 @@ the optional whitespace around a header value before the handler ever
 sees it.
 
 The gate exists because the server listens on **one port**
-(`EXPOSE 9900`). There is no separate admin socket, so `/metrics` shares
+(`EXPOSE 9900`). No separate admin socket exists, so `/metrics` shares
 its listener with the application and would otherwise be readable by
 anyone who guesses the path. That is a different situation from
 `/health/live` and `/health/ready`, which are deliberately contentless

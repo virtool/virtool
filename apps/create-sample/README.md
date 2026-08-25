@@ -83,7 +83,7 @@ instead. Reducing the two blobs to the composite a sample stores stays here, in
 `compositeQuality` from `@virtool/bio`, which averages the two paired-end
 quality objects.
 
-**There is no delete on failure.** A failed run leaves an unfinalized sample for
+**No delete on failure.** A failed run leaves an unfinalized sample for
 the user to remove, and the jobs API exposes no destructive route a job key
 could reach. This matches `create_subtraction`, `pathoscope` and `nuvs`.
 
