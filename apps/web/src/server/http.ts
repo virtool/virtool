@@ -80,24 +80,15 @@ export function toStream(
 	});
 }
 
-/**
- * How long a redirect download's presigned URL stays valid. The token only has
- * to be valid when the transfer starts — Azure and S3 do not tear down a
- * transfer already in flight when it lapses — so a short window covers even a
- * multi-GB object while keeping a leaked URL useless within minutes.
- */
+/** Keep redirected downloads available long enough to start without prolonged access. */
 const DOWNLOAD_URL_TTL_SECONDS = 15 * 60;
 
 /**
  * Serve the object at `key` as a download named `filename`, or a 404 when it
  * has no bytes in storage.
  *
- * With `mode` `redirect` and a backend that can presign, this mints a
- * short-lived URL and 302s the client straight to storage, so the bytes never
- * pass through this server. The filename rides in the presigned URL's own
- * `Content-Disposition` because a cross-origin `<a download>` is ignored by the
- * browser. A backend that cannot presign — `MemoryStorage` in tests — falls
- * through to streaming, as does `mode` `stream`.
+ * With `mode` `redirect` and a backend that can presign, redirect the client to
+ * storage. Otherwise, stream the object through this server.
  *
  * Every file download ends this way, so the rule that makes it correct lives
  * here rather than in each handler: `Content-Length` comes from the object and

@@ -13,19 +13,13 @@ export type StorageObjectInfo = {
 	lastModified: Date;
 };
 
-/**
- * The response-header overrides and lifetime for a presigned download URL.
- *
- * `contentDisposition` and `contentType` become the `Content-Disposition` and
- * `Content-Type` the storage service sends when the URL is fetched, so a
- * cross-origin `<a download>` — which the browser ignores — is not what names
- * the file. `expiresIn` is the URL's lifetime in seconds from now; the token
- * only has to be valid when the transfer starts, so a short window is safe even
- * for a multi-GB object.
- */
+/** The response-header overrides and lifetime for a presigned download URL. */
 export type PresignDownloadOptions = {
+	/** The `Content-Disposition` response header. */
 	contentDisposition: string;
+	/** The `Content-Type` response header. */
 	contentType: string;
+	/** The URL lifetime in seconds from now. */
 	expiresIn: number;
 };
 

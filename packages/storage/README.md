@@ -13,12 +13,9 @@ headers the service sends, because a cross-origin `<a download>` is ignored by
 the browser and the filename has to come from the URL.
 
 - **S3** signs a `GetObject` GET with the SDK's presigner.
-- **Azure** mints a user-delegation SAS under the account's managed identity —
-  the delegation key is an account-level round trip valid up to seven days, so
-  it is cached and refreshed before it lapses. With a shared access key
-  (Azurite in development) it signs the SAS directly. `downloadUrl` rehosts the
-  URL onto a public host such as `files.virtool.ca`; the SAS signs the resource
-  path, not the host, so serving it elsewhere still validates.
+- **Azure** uses a user-delegation SAS with token credentials and a shared-key
+  SAS when an access key is configured. `downloadUrl` can rehost the URL on a
+  public origin such as `https://files.virtool.ca`.
 - **`MemoryStorage`** leaves the method undefined, and a caller falls back to
   streaming.
 

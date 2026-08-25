@@ -73,10 +73,7 @@ function createServiceClient(config: AzureConfig): {
 	return { service: new BlobServiceClient(url, sharedKey), sharedKey };
 }
 
-// Rehost a blob's SAS URL onto `config.downloadUrl` when one is set, so a
-// download is served through the public host that fronts the account rather
-// than the blob endpoint. Only the origin is swapped; the resource path the
-// signature covers is untouched.
+// Only swap the origin so the signed resource path remains unchanged.
 function buildDownloadUrl(
 	container: ContainerClient,
 	key: string,
@@ -86,9 +83,9 @@ function buildDownloadUrl(
 	const url = new URL(container.getBlobClient(key).url);
 
 	if (config.downloadUrl) {
-		const host = new URL(config.downloadUrl);
-		url.protocol = host.protocol;
-		url.host = host.host;
+		const origin = new URL(config.downloadUrl);
+		url.protocol = origin.protocol;
+		url.host = origin.host;
 	}
 
 	return `${url.toString()}?${sas}`;
