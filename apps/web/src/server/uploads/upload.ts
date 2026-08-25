@@ -81,6 +81,12 @@ export async function handleUpload(request: Request): Promise<Response> {
 
 		return jsonResponse(upload, 201);
 	} catch (err) {
+		// A client that cancels its upload aborts the request; that is expected,
+		// not a failure, so there is nothing to log and no response to deliver.
+		if (request.signal.aborted) {
+			return new Response(null, { status: 499 });
+		}
+
 		logger.error({ err }, "upload failed");
 		return jsonResponse({ message: "Upload failed." }, 500);
 	}
