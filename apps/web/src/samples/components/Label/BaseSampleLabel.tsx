@@ -7,7 +7,7 @@ const baseSampleLabelVariants = cva(
 	{
 		variants: {
 			size: {
-				sm: "text-sm font-semibold px-1.5 py-0.5 [&_svg]:mr-0.5",
+				sm: "text-sm font-medium px-1.5 py-0.5 [&_svg]:mr-0.5",
 				md: "text-base px-2 py-1",
 			},
 			variant: {
