@@ -59,7 +59,16 @@ export function UploaderItem({
 			</>
 		);
 	} else if (progress === 100) {
-		end = <Loader className="size-4" />;
+		end = (
+			<>
+				<span className="tabular-nums text-gray-500">
+					{byteSize(size, true)}
+				</span>
+				<span className="flex items-center justify-center size-9">
+					<Loader className="size-4" />
+				</span>
+			</>
+		);
 	} else {
 		end = (
 			<>
@@ -79,7 +88,7 @@ export function UploaderItem({
 	return (
 		<div className="relative">
 			<ProgressBarAffixed now={progress} color={failed ? "red" : "blue"} />
-			<div className="flex gap-3 items-center justify-between px-3 py-2">
+			<div className="flex gap-3 items-center justify-between min-h-13 px-3 py-1">
 				<span
 					className={cn("font-medium min-w-0 truncate", {
 						"text-red-500": failed,

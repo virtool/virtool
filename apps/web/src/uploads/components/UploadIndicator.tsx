@@ -88,13 +88,9 @@ export default function UploadIndicator(): ReactElement | null {
 				align="end"
 				className="w-80 p-0"
 				onMouseEnter={clearAutoDismiss}
+				onOpenAutoFocus={(event) => event.preventDefault()}
 			>
-				<UploaderPanel
-					onClose={() => handleOpenChange(false)}
-					remaining={remaining}
-					speed={speed}
-					uploads={uploads}
-				/>
+				<UploaderPanel remaining={remaining} speed={speed} uploads={uploads} />
 			</PopoverContent>
 		</PopoverPrimitive.Root>
 	);
