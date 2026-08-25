@@ -81,7 +81,16 @@ export default function UserFilterMenu({
 							{others.length > 0 && <DropdownMenuSeparator />}
 						</>
 					)}
-					{others.map((user) => renderUser(user, false))}
+					{others.length > 0 && (
+						// Capped at twelve users so a large instance doesn't grow the menu
+						// past the viewport.
+						<div
+							className="max-h-96 overflow-x-hidden overflow-y-auto"
+							data-testid="other-users"
+						>
+							{others.map((user) => renderUser(user, false))}
+						</div>
+					)}
 				</>
 			)}
 		</FilterMenuContent>
