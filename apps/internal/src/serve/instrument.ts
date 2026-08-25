@@ -20,7 +20,7 @@ export const SERVICE = "jobs-api";
  * Init cannot simply move earlier: the DSN comes from `<KEY>_FILE`-backed
  * config, which has to be read first. That is exactly the case Sentry's "late
  * initialization" guidance covers, and the preload hook is its answer. If the
- * flag is ever dropped from the Dockerfile or the `start` script, tracing goes
+ * flag is ever dropped from the Dockerfile ENTRYPOINT, tracing goes
  * quiet with nothing in the logs to say so.
  *
  * Reports to the same project as `apps/web`, tagged `service: jobs-api` and

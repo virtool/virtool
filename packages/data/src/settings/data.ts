@@ -3,6 +3,7 @@ import {
 	type SampleGroup,
 } from "@virtool/contracts";
 import { eq } from "drizzle-orm";
+import { CACHE_STORAGE_BUDGET_BYTES } from "../caches/data";
 import type { Db } from "../db/pg";
 import { takeFirst, takeFirstOrThrow } from "../db/rows";
 import {
@@ -15,6 +16,11 @@ const SETTINGS_ID = 1;
 
 /** Instance-wide settings. */
 export type Settings = {
+	/**
+	 * The object-storage budget, in bytes, the LRU cache eviction task keeps the
+	 * cache store under.
+	 */
+	cacheStorageBudget: number;
 	defaultSourceTypes: string[];
 	enableSentry: boolean;
 	minimumPasswordLength: number;
@@ -40,6 +46,7 @@ export type Settings = {
  * insert and the defaults live here in code rather than in the schema.
  */
 export const DEFAULT_SETTINGS: Settings = {
+	cacheStorageBudget: CACHE_STORAGE_BUDGET_BYTES,
 	defaultSourceTypes: ["isolate", "strain"],
 	enableSentry: true,
 	minimumPasswordLength: DEFAULT_MINIMUM_PASSWORD_LENGTH,
@@ -53,6 +60,7 @@ export const DEFAULT_SETTINGS: Settings = {
 
 function toSettings(row: SettingsRow): Settings {
 	return {
+		cacheStorageBudget: row.cacheStorageBudget,
 		defaultSourceTypes: row.defaultSourceTypes,
 		enableSentry: row.enableSentry,
 		minimumPasswordLength: row.minimumPasswordLength,

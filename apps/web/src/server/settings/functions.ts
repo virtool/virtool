@@ -57,6 +57,7 @@ const MAX_NCBI_API_KEY_LENGTH = 128;
 
 const updateSettingsSchema = z
 	.object({
+		cacheStorageBudget: z.number().int().positive().optional(),
 		defaultSourceTypes: z.array(z.string()).optional(),
 		enableSentry: z.boolean().optional(),
 		minimumPasswordLength: z.number().int().min(1).optional(),

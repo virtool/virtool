@@ -2,10 +2,12 @@
  * Histogram bucket boundaries for `virtool_http_request_duration_seconds`, in
  * seconds: 5 ms to 10 s.
  *
- * Shared by every service that serves HTTP traffic (`apps/web`,
- * `apps/jobs-api`) rather than declared as a literal in each registry — two
+ * Shared by every service that serves HTTP traffic (`apps/web` and
+ * `apps/internal`'s `serve` subcommand) rather than declared as a literal in
+ * each registry — two
  * independent copies matching today is coincidence, and nothing would catch
- * them drifting apart. `apps/tasks` does not use these: it serves nothing but
+ * them drifting apart. The `run` subcommand does not use these: it serves
+ * nothing but
  * probes and a scrape, and its own `virtool_task_duration_seconds` buckets
  * are sized for tasks (1 s–2 h), not requests.
  */

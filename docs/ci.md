@@ -2,15 +2,14 @@
 
 ## Images
 
-Every image ships from a target in the root `Dockerfile`. Five targets use the
+Every image ships from a target in the root `Dockerfile`. Four targets use the
 `build` job matrix; Pathoscope and Nuvs have separate, longer path-filtered
-jobs. `release-ghcr` publishes all seven targets on every release.
+jobs. `release-ghcr` publishes all six targets on every release.
 
 | Target | Published image(s) | Build job |
 | --- | --- | --- |
 | `dist` | `ghcr.io/virtool/web` | `build` |
-| `jobs-api` | `ghcr.io/virtool/jobs-api` | `build` |
-| `tasks` | `ghcr.io/virtool/tasks` | `build` |
+| `internal` | `ghcr.io/virtool/internal` | `build` |
 | `create-sample` | `ghcr.io/virtool/create-sample` | `build` |
 | `create-subtraction` | `ghcr.io/virtool/create-subtraction` | `build` |
 | `pathoscope` | `ghcr.io/virtool/pathoscope` | `build-pathoscope` |

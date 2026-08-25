@@ -202,7 +202,8 @@ E-utilities. Do not add a second E-utilities client to this package.
 ## Task queue
 
 `src/tasks/data.ts` owns persistence for the Postgres task queue shared by task
-producers and `apps/tasks`. Task names live in `@virtool/contracts`:
+producers and `apps/internal`'s `run` subcommand. Task names live in
+`@virtool/contracts`:
 
 - `PeriodicTaskName` is the set scheduled by the task service.
 - `OnDemandTaskName` is the set accepted by `createTask()`.
@@ -217,13 +218,13 @@ The data layer also owns claiming, lease renewal, fencing, progress, completion,
 failure, release, and queue metrics reads. Every mutation that changes a task's
 visible state publishes the corresponding `tasks` event. The execution and
 shutdown contracts are documented in
-[`apps/tasks/README.md`](../../apps/tasks/README.md).
+[`apps/internal/README.md`](../../apps/internal/README.md).
 
 ## Testing
 
 Tests run as one Node Vitest project against a Postgres testcontainer. The
 project owns the shared container definition in `src/db/test/globalSetup.ts`;
-the web server project, `@virtool/jobs-api`, and `@virtool/tasks` import that
+the web server project and `@virtool/internal` import that
 setup rather than defining another container. The project has its own CI job
 and is excluded from `Packages / Test`. Place tests beside their source as
 `*.test.ts`.

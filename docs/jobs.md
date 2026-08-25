@@ -1,6 +1,7 @@
 # Job lifecycle
 
-`@virtool/workflow` and `@virtool/jobs-api` divide the workflow run from the
+`@virtool/workflow` and the jobs API (`@virtool/internal`'s `serve` subcommand)
+divide the workflow run from the
 job lifecycle. The workflow runtime executes steps and returns an outcome. The
 jobs API owns the persisted job state and the protocol a workflow pod uses to
 claim, update, and finish a job.
@@ -153,7 +154,7 @@ builders, subprocess and storage fakes, work paths, and checksum helpers.
 
 - [`@virtool/workflow`](../packages/workflow/README.md) documents the runtime,
   subprocess, file-transfer, cache, and configuration contracts.
-- [`@virtool/jobs-api`](../apps/jobs-api/README.md) documents service deployment
-  and configuration.
+- [`@virtool/internal`](../apps/internal/README.md) documents the jobs API
+  service deployment and configuration.
 - [Workflow testing](../packages/workflow/TESTING.md) documents the complete
   shared test harness.

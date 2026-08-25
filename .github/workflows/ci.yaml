@@ -166,7 +166,7 @@ jobs:
               run: pnpm typecheck
 
     # -------------------------------------------------------------------------
-    # Docker images (apps/web, apps/jobs-api, apps/tasks, apps/create-subtraction,
+    # Docker images (apps/web, apps/internal, apps/create-subtraction,
     # apps/pathoscope)
     # -------------------------------------------------------------------------
     build:
@@ -184,14 +184,10 @@ jobs:
                       target: dist
                       workspace: apps/web
                       area: Web
-                    - image: jobs-api
-                      target: jobs-api
-                      workspace: apps/jobs-api
-                      area: Jobs API
-                    - image: tasks
-                      target: tasks
-                      workspace: apps/tasks
-                      area: Tasks
+                    - image: internal
+                      target: internal
+                      workspace: apps/internal
+                      area: Internal
                     - image: create-sample
                       target: create-sample
                       workspace: apps/create-sample
@@ -311,10 +307,10 @@ jobs:
                   TZ: UTC
 
     # -------------------------------------------------------------------------
-    # Jobs API (apps/jobs-api)
+    # Internal (apps/internal)
     # -------------------------------------------------------------------------
-    jobs-api-test:
-        name: Jobs API / Test
+    internal-test:
+        name: Internal / Test
         runs-on: ubuntu-24.04
         timeout-minutes: 15
         steps:
@@ -323,32 +319,11 @@ jobs:
             - name: Setup
               uses: ./.github/actions/setup
             # Its own job rather than part of Packages / Test, for the same
-            # reason as Data / Test: the job guard is tested against a real
-            # Postgres testcontainer, and pulling that image does not belong in
-            # the fast package loop.
+            # reason as Data / Test: the job guard and the task probes are tested
+            # against a real Postgres testcontainer, and pulling that image does
+            # not belong in the fast package loop.
             - name: Test
-              run: pnpm --filter @virtool/jobs-api test
-              env:
-                  TZ: UTC
-
-    # -------------------------------------------------------------------------
-    # Tasks (apps/tasks)
-    # -------------------------------------------------------------------------
-    tasks-test:
-        name: Tasks / Test
-        runs-on: ubuntu-24.04
-        timeout-minutes: 15
-        steps:
-            - name: Checkout
-              uses: actions/checkout@v7
-            - name: Setup
-              uses: ./.github/actions/setup
-            # Its own job rather than part of Packages / Test, for the same
-            # reason as Data / Test: the probes are tested against a real
-            # Postgres testcontainer, and pulling that image does not belong in
-            # the fast package loop.
-            - name: Test
-              run: pnpm --filter @virtool/tasks test
+              run: pnpm --filter @virtool/internal test
               env:
                   TZ: UTC
 
@@ -526,10 +501,10 @@ jobs:
             - name: Setup
               uses: ./.github/actions/setup
             # Exclusions rather than an inclusion list, so a new workspace that
-            # declares `test` is covered without editing this job. The five
+            # declares `test` is covered without editing this job. The four
             # excluded here have their own jobs.
             - name: Test
-              run: pnpm -r --filter "!@virtool/web" --filter "!@virtool/data" --filter "!@virtool/storage" --filter "!@virtool/jobs-api" --filter "!@virtool/tasks" test
+              run: pnpm -r --filter "!@virtool/web" --filter "!@virtool/data" --filter "!@virtool/storage" --filter "!@virtool/internal" test
 
     # -------------------------------------------------------------------------
     # Data (packages/data)
@@ -583,13 +558,12 @@ jobs:
                 build-pathoscope,
                 checks,
                 data-test,
-                jobs-api-test,
+                internal-test,
                 packages-test,
                 pathoscope-test,
                 quality-test,
                 site-build,
                 storage-test,
-                tasks-test,
                 web-test,
                 web-test-a11y,
                 web-test-server,
@@ -641,14 +615,10 @@ jobs:
                       target: dist
                       workspace: apps/web
                       images: ghcr.io/virtool/web
-                    - image: jobs-api
-                      target: jobs-api
-                      workspace: apps/jobs-api
-                      images: ghcr.io/virtool/jobs-api
-                    - image: tasks
-                      target: tasks
-                      workspace: apps/tasks
-                      images: ghcr.io/virtool/tasks
+                    - image: internal
+                      target: internal
+                      workspace: apps/internal
+                      images: ghcr.io/virtool/internal
                     # These four names previously came from separate legacy
                     # repositories shipping the Python workflow of the same
                     # name; this repository's release supersedes them.

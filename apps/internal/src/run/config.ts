@@ -267,7 +267,7 @@ export const TASKS_ENV_KEYS: string[] = Object.keys(TasksEnv.shape);
  * force an environment parse.
  *
  * Every key also accepts a `<KEY>_FILE` variant naming a file to read the value
- * from, via the resolver shared with `apps/web` and `apps/jobs-api` in
+ * from, via the resolver shared with `apps/web` and the `serve` subcommand in
  * `@virtool/contracts/env`. It is imported rather than copied so the precedence
  * rule — the file wins over a plain variable of the same name — cannot drift
  * between the three services.

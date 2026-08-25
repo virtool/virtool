@@ -99,6 +99,13 @@
       "when": 1787680443133,
       "tag": "0013_backfill_orphaned_index_jobs",
       "breakpoints": true
+    },
+    {
+      "idx": 14,
+      "version": "7",
+      "when": 1787687788152,
+      "tag": "0014_add_settings_cache_storage_budget",
+      "breakpoints": true
     }
   ]
 }

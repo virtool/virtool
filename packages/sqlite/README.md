@@ -35,8 +35,8 @@ and one name for both is how a partial artifact gets uploaded as a whole one.
 
 That second caller is why this is a package rather than part of
 `@virtool/workflow`, where it used to live. A workflow-runtime dependency in
-`@virtool/data` would drag execa, undici and tar-stream into `apps/tasks` and
-the jobs API, and a second copy of the DDL in the data package would be two
+`@virtool/data` would drag execa, undici and tar-stream into `apps/internal`,
+and a second copy of the DDL in the data package would be two
 opinions about one binary format.
 
 ## This package specifies the format

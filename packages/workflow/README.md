@@ -53,7 +53,7 @@ cancellation-driven kill resolves with `cancelled: true`.
 ### Job lifecycle
 
 See [Job lifecycle](../../docs/jobs.md) for the complete protocol and the
-ownership boundary between this package and `@virtool/jobs-api`.
+ownership boundary between this package and the jobs API (`@virtool/internal`).
 
 - Claim paths are unprefixed and wire fields are camel case.
 - A pod gets its job ID and credential from the claim response.
