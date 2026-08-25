@@ -422,7 +422,10 @@ describe("createRepresentativeIndexStep", () => {
 		expect(state.cacheRegistrations).toEqual([]);
 
 		await expect(
-			readFile(join(dirname(paths.representativeIndexPrefix), SHARD_NAME), "utf8"),
+			readFile(
+				join(dirname(paths.representativeIndexPrefix), SHARD_NAME),
+				"utf8",
+			),
 		).resolves.toBe("cached shard");
 	});
 
