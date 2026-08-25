@@ -88,7 +88,13 @@ export default function UploadIndicator(): ReactElement | null {
 				align="end"
 				className="w-80 p-0"
 				onMouseEnter={clearAutoDismiss}
-				onOpenAutoFocus={(event) => event.preventDefault()}
+				onOpenAutoFocus={(event) => {
+					// Keep focus inside the panel so the dismissable layer does not
+					// treat the open as a focus-outside event and close immediately,
+					// but off the first item's cancel button.
+					event.preventDefault();
+					(event.currentTarget as HTMLElement | null)?.focus();
+				}}
 			>
 				<UploaderPanel remaining={remaining} speed={speed} uploads={uploads} />
 			</PopoverContent>
