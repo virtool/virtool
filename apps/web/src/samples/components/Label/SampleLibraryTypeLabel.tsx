@@ -1,7 +1,7 @@
 import Icon from "@base/Icon";
 import { getLibraryTypeDisplayName } from "@samples/utils";
 import type { LibraryType } from "@virtool/contracts";
-import { Dna } from "lucide-react";
+import { SquareLibrary } from "lucide-react";
 import { BaseSampleLabel } from "./BaseSampleLabel";
 
 type SampleLibraryTypeLabelProps = {
@@ -17,7 +17,7 @@ export default function SampleLibraryTypeLabel({
 }: SampleLibraryTypeLabelProps) {
 	return (
 		<BaseSampleLabel variant="library">
-			<Icon icon={Dna} />
+			<Icon className="size-4" icon={SquareLibrary} strokeWidth={1.5} />
 			<span>{getLibraryTypeDisplayName(libraryType)}</span>
 		</BaseSampleLabel>
 	);

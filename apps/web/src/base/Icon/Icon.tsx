@@ -1,9 +1,9 @@
 import { cn } from "@app/cn";
 import type { IconColor } from "@base/types";
-import type { LucideIcon } from "lucide-react";
+import type { LucideIcon, LucideProps } from "lucide-react";
 import { iconVariants } from "./iconVariants";
 
-export type IconProps = {
+export type IconProps = Omit<LucideProps, "color"> & {
 	color?: IconColor;
 	icon: LucideIcon;
 	className?: string;

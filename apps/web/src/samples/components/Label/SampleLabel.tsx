@@ -24,7 +24,7 @@ export default function SampleLabel({
 }: SampleLabelProps) {
 	return (
 		<BaseSampleLabel className={className} color={color} size={size}>
-			{color && <Circle className={"mr-5"} />}
+			{color && <Circle />}
 			{name}
 		</BaseSampleLabel>
 	);
