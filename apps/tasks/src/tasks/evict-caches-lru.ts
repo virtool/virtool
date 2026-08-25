@@ -1,7 +1,5 @@
-import {
-	CACHE_STORAGE_BUDGET_BYTES,
-	evictLruCaches,
-} from "@virtool/data/caches/data";
+import { evictLruCaches } from "@virtool/data/caches/data";
+import { getSettings } from "@virtool/data/settings/data";
 import { z } from "zod";
 import { defineTask } from "../framework/define";
 import type { TaskContext } from "./registry";
@@ -19,10 +17,9 @@ const payload = z.object({});
 /**
  * Evict least-recently-used caches until the store is back under budget.
  *
- * The body is one call. Everything it runs is `evictLruCaches`: select the LRU
- * rows whose removal brings the store under
- * {@link CACHE_STORAGE_BUDGET_BYTES}, delete their objects, then delete the
- * rows.
+ * The body reads the budget from the settings row, then hands it to
+ * `evictLruCaches`: select the LRU rows whose removal brings the store under
+ * that budget, delete their objects, then delete the rows.
  *
  * It is idempotent as a reclaim requires. A re-run selects whatever is still
  * over budget — nothing, if the first attempt committed — and every storage
@@ -48,11 +45,13 @@ export const evictCachesLruTask = defineTask<typeof payload, TaskContext>({
 	steps: ["evict"],
 	async run({ ctx, helpers, logger, signal }) {
 		await helpers.runStep("evict", async () => {
+			const { cacheStorageBudget } = await getSettings(ctx.db);
+
 			await evictLruCaches(
 				ctx.db,
 				ctx.storage,
 				logger,
-				CACHE_STORAGE_BUDGET_BYTES,
+				cacheStorageBudget,
 				signal,
 			);
 		});

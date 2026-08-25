@@ -127,6 +127,18 @@ describe("updateSettings", () => {
 		await expect(countRows()).resolves.toHaveLength(1);
 	});
 
+	it("stores a new cache storage budget", async () => {
+		await seedSettings(db);
+
+		await expect(
+			updateSettings(db, { cacheStorageBudget: 50 * 1024 ** 3 }),
+		).resolves.toMatchObject({ cacheStorageBudget: 50 * 1024 ** 3 });
+
+		await expect(getSettings(db)).resolves.toMatchObject({
+			cacheStorageBudget: 50 * 1024 ** 3,
+		});
+	});
+
 	it("returns the stored settings when given no values", async () => {
 		await seedSettings(db, { minimumPasswordLength: 15 });
 
@@ -142,6 +154,7 @@ describe("DEFAULT_SETTINGS", () => {
 	// migration or this seeded the row.
 	it("declares the values the settings row is seeded with", () => {
 		expect(DEFAULT_SETTINGS).toEqual({
+			cacheStorageBudget: 100 * 1024 ** 3,
 			defaultSourceTypes: ["isolate", "strain"],
 			enableSentry: true,
 			minimumPasswordLength: 8,
