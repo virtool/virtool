@@ -46,7 +46,7 @@ export default function SampleItemEndIcon({
 				<IconButton
 					ariaLabel={ariaLabel}
 					className="text-lg"
-					color="green"
+					color="blue"
 					IconComponent={ChartArea}
 					tip="quick analyze"
 					tipPlacement="left"
