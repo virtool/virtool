@@ -17,12 +17,12 @@ import { AppError } from "../errors";
 const LAST_ACCESSED_REFRESH_INTERVAL_MS = 5 * 60 * 1000;
 
 /**
- * How much object storage the cache store is allowed to occupy.
+ * The default object storage the cache store is allowed to occupy.
  *
- * A bare constant rather than a `VT_` key because it is application state — how
- * much of the bucket caching may spend — not something about the pod it runs
- * in, and a per-replica environment variable is the wrong shape for a
- * fleet-wide budget. Making it configurable follows under VIR-2925.
+ * The live budget is a stored setting — `settings.cache_storage_budget`, read
+ * through `getSettings` — so an operator can raise or lower it without a
+ * deploy. This is only the value seeded into the settings row when none is
+ * present, kept here beside the eviction logic it feeds.
  */
 export const CACHE_STORAGE_BUDGET_BYTES = 100 * 1024 ** 3;
 

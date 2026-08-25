@@ -16,6 +16,8 @@ import type { Settings } from "@virtool/contracts";
 
 /** Fields that can be changed when updating the server settings */
 export type SettingsUpdate = {
+	/** A new cache storage eviction budget, in bytes. */
+	cacheStorageBudget?: number;
 	defaultSourceTypes?: string[];
 	enableSentry?: boolean;
 	minimumPasswordLength?: number;

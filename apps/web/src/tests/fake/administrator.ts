@@ -33,6 +33,7 @@ export const administratorRoles: AdministratorRole[] = [
  */
 export function createFakeSettings(overrides?: Partial<Settings>): Settings {
 	const defaultSettings: Settings = {
+		cacheStorageBudget: 100 * 1024 ** 3,
 		defaultSourceTypes: [faker.word.noun({ strategy: "any-length" })],
 		enableSentry: faker.datatype.boolean(),
 		hasNcbiApiKey: false,
