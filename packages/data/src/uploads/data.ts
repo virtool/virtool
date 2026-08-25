@@ -30,6 +30,12 @@ export type UploadCreateValues = {
 	type: UploadType;
 	userId: number;
 	body: AsyncIterable<Uint8Array>;
+	/**
+	 * Aborted when the client cancels the request. A disconnect can surface as a
+	 * clean end of `body` rather than an error, so this is checked after the
+	 * write to keep a truncated file from being recorded as ready.
+	 */
+	signal?: AbortSignal;
 };
 
 /** Thrown when a requested upload does not exist or is already removed. */
@@ -171,6 +177,12 @@ export async function createUpload(
 	const storageKey = mintRootStorageKey("uploads");
 
 	const size = await storage.write(storageKey, values.body);
+
+	// A cancelled upload can end the body stream cleanly, so the write resolves
+	// with a truncated byte count instead of throwing. Bail before the insert so
+	// no ready row ever points at a partial file; the written object is left to
+	// the orphan sweep.
+	values.signal?.throwIfAborted();
 
 	const row = takeFirstOrThrow(
 		await db

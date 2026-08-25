@@ -121,6 +121,25 @@ describe("createUpload", () => {
 
 		expect(upload).not.toHaveProperty("name_on_disk");
 	});
+
+	it("records no row when the request was cancelled", async () => {
+		const userId = await seedUser(db);
+		const controller = new AbortController();
+		controller.abort();
+
+		await expect(
+			createUpload(db, new MemoryStorage(), {
+				name: "external.fa.gz",
+				type: "reference",
+				userId,
+				body: bodyOf("hello"),
+				signal: controller.signal,
+			}),
+		).rejects.toThrow();
+
+		const rows = await db.select().from(uploadsTable);
+		expect(rows).toHaveLength(0);
+	});
 });
 
 describe("findUploads", () => {

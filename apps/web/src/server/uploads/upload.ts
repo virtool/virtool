@@ -77,6 +77,7 @@ export async function handleUpload(request: Request): Promise<Response> {
 			type: type as UploadType,
 			userId: session.userId,
 			body: streamBytes(request.body),
+			signal: request.signal,
 		});
 
 		return jsonResponse(upload, 201);
