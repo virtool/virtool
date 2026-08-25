@@ -103,36 +103,8 @@
     {
       "idx": 14,
       "version": "7",
-      "when": 1787687788152,
-      "tag": "0014_add_settings_cache_storage_budget",
-      "breakpoints": true
-    },
-    {
-      "idx": 15,
-      "version": "7",
-      "when": 1787757523999,
-      "tag": "0015_add_analyses_workflow_version",
-      "breakpoints": true
-    },
-    {
-      "idx": 16,
-      "version": "7",
-      "when": 1787766173203,
-      "tag": "0016_add_uploads_expected_size",
-      "breakpoints": true
-    },
-    {
-      "idx": 17,
-      "version": "7",
-      "when": 1787777826760,
-      "tag": "0017_lucky_ender_wiggin",
-      "breakpoints": true
-    },
-    {
-      "idx": 18,
-      "version": "7",
-      "when": 1787779000000,
-      "tag": "0018_backfill_analyses_workflow_version",
+      "when": 1787614163340,
+      "tag": "0014_unusual_darwin",
       "breakpoints": true
     }
   ]
