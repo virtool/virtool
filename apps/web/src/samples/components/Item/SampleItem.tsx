@@ -46,7 +46,7 @@ export default function SampleItem({
 				className="grid grid-cols-subgrid col-span-full items-center py-2"
 				role="row"
 			>
-				<div className="px-4" role="cell">
+				<div className="pl-4" role="cell">
 					<Checkbox
 						ariaLabel={`Select ${sample.name}`}
 						checked={checked}
@@ -54,7 +54,7 @@ export default function SampleItem({
 						onClick={handleSelect}
 					/>
 				</div>
-				<div className="min-w-0 px-4" role="cell">
+				<div className="min-w-0" role="cell">
 					<Link
 						className="text-lg font-medium"
 						to="/samples/$sampleId"
@@ -63,29 +63,29 @@ export default function SampleItem({
 						{sample.name}
 					</Link>
 				</div>
-				<div className="hidden px-4 2xl:block" role="cell">
+				<div className="hidden 2xl:block" role="cell">
 					<SampleLibraryTypeLabel libraryType={sample.libraryType} />
 				</div>
 				<div
-					className="hidden min-w-0 flex-wrap items-center gap-1 px-4 2xl:flex"
+					className="hidden min-w-0 flex-wrap items-center gap-1 2xl:flex"
 					role="cell"
 				>
 					{sample.labels.map((label) => (
 						<SampleLabel {...label} key={label.id} size="sm" />
 					))}
 				</div>
-				<div className="min-w-0 px-4" role="cell">
+				<div className="min-w-0" role="cell">
 					{sample.ready && (
 						<WorkflowTags id={sample.id} workflows={sample.workflows} />
 					)}
 				</div>
-				<div className="whitespace-nowrap px-4" role="cell">
+				<div className="whitespace-nowrap" role="cell">
 					<RelativeTime time={sample.createdAt} />
 				</div>
-				<div className="min-w-0 px-4" role="cell">
+				<div className="min-w-0" role="cell">
 					<UserLabel handle={sample.user.handle} />
 				</div>
-				<div className="flex items-center justify-end px-4" role="cell">
+				<div className="flex items-center justify-end pr-4" role="cell">
 					<EndIcon
 						ariaLabel={`Quick analyze ${sample.name}`}
 						progress={job?.progress ?? 0}
@@ -96,7 +96,7 @@ export default function SampleItem({
 				</div>
 				<div
 					aria-label="Labels"
-					className="col-start-2 col-end-3 row-start-2 flex min-w-0 flex-wrap items-center gap-1 px-4 pb-2 2xl:hidden"
+					className="col-start-2 col-end-3 row-start-2 flex min-w-0 flex-wrap items-center gap-1 pb-2 2xl:hidden"
 					role="cell"
 				>
 					<SampleLibraryTypeLabel libraryType={sample.libraryType} />

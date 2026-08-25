@@ -313,7 +313,7 @@ export default function SamplesList({
 							/>
 							<div
 								aria-label="Samples list"
-								className="grid grid-cols-[4rem_minmax(0,1fr)_max-content_max-content_max-content_4rem] 2xl:grid-cols-[4rem_minmax(0,1fr)_max-content_fit-content(24rem)_max-content_max-content_max-content_4rem]"
+								className="grid grid-cols-[auto_minmax(0,1fr)_max-content_max-content_max-content_4rem] gap-x-8 2xl:grid-cols-[auto_minmax(0,1fr)_max-content_fit-content(24rem)_max-content_max-content_max-content_4rem]"
 								role="table"
 							>
 								<SampleTableHead

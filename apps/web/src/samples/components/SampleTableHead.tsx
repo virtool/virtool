@@ -37,7 +37,7 @@ function SortableColumn({
 	return (
 		<div
 			aria-sort={active ? direction : "none"}
-			className={cn("px-4 py-2", className)}
+			className={cn("py-2", className)}
 			role="columnheader"
 		>
 			<button
@@ -80,7 +80,7 @@ export default function SampleTableHead({
 				className="grid grid-cols-subgrid col-span-full items-center"
 				role="row"
 			>
-				<div className="px-4 py-2" role="columnheader">
+				<div className="py-2 pl-4" role="columnheader">
 					<span className="sr-only">Select</span>
 					<Checkbox
 						ariaLabel="Select all samples"
@@ -97,13 +97,13 @@ export default function SampleTableHead({
 				>
 					Name
 				</SortableColumn>
-				<div className="hidden px-4 py-2 2xl:block" role="columnheader">
+				<div className="hidden py-2 2xl:block" role="columnheader">
 					Library Type
 				</div>
-				<div className="hidden px-4 py-2 2xl:block" role="columnheader">
+				<div className="hidden py-2 2xl:block" role="columnheader">
 					Labels
 				</div>
-				<div className="px-4 py-2" role="columnheader">
+				<div className="py-2" role="columnheader">
 					Workflows
 				</div>
 				<SortableColumn
@@ -122,7 +122,7 @@ export default function SampleTableHead({
 				>
 					User
 				</SortableColumn>
-				<div className="px-4 py-2" role="columnheader">
+				<div className="py-2 pr-4" role="columnheader">
 					<span className="sr-only">Actions</span>
 				</div>
 			</div>
