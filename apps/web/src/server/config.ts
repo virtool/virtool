@@ -61,7 +61,12 @@ const ServerEnv = z.object({
 	VT_STORAGE_AZURE_CONTAINER: z.string().optional(),
 	VT_STORAGE_AZURE_ACCESS_KEY: z.string().optional(),
 	VT_STORAGE_AZURE_ENDPOINT: z.string().optional(),
-	VT_STORAGE_AZURE_DOWNLOAD_URL: z.string().optional(),
+	// A malformed value here would otherwise reach `new URL()` at download time
+	// and fail every affected download; validate it at startup instead.
+	VT_STORAGE_AZURE_DOWNLOAD_URL: z.preprocess(
+		(value) => (value === "" ? undefined : value),
+		z.string().url().optional(),
+	),
 	// Unset — or empty, which deployment tooling injects — keeps downloads
 	// streaming through this server.
 	VT_STORAGE_DOWNLOAD_MODE: z.preprocess(

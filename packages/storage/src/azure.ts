@@ -113,7 +113,10 @@ function createPresign(
 
 		if (!inflight) {
 			const startsOn = new Date(now.getTime() - CLOCK_SKEW_MS);
-			const expiresOn = new Date(now.getTime() + DELEGATION_KEY_TTL_MS);
+			// Azure caps a user-delegation key at seven days from its start, so the
+			// expiry is measured from `startsOn` rather than now — the backdated skew
+			// would otherwise push the span past the limit and the request rejects.
+			const expiresOn = new Date(startsOn.getTime() + DELEGATION_KEY_TTL_MS);
 
 			inflight = service
 				.getUserDelegationKey(startsOn, expiresOn)
