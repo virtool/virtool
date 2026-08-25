@@ -57,8 +57,16 @@ export default function SampleItem({
 						{sample.name}
 					</Link>
 				</div>
-				<div className="hidden px-4 py-2 2xl:block" role="cell">
+				<div className="hidden px-4 py-2 xl:block" role="cell">
 					<SampleLibraryTypeLabel libraryType={sample.libraryType} />
+				</div>
+				<div
+					className="hidden min-w-0 flex-wrap items-center gap-1 px-4 py-2 xl:flex"
+					role="cell"
+				>
+					{sample.labels.map((label) => (
+						<SampleLabel {...label} key={label.id} size="sm" />
+					))}
 				</div>
 				<div className="min-w-0 px-4 py-2" role="cell">
 					{sample.ready && (
@@ -81,20 +89,19 @@ export default function SampleItem({
 					/>
 				</div>
 			</div>
-			{sample.labels.length > 0 && (
-				<div className="sample-table-grid pb-2" role="row">
-					<div
-						aria-colindex={2}
-						aria-label="Labels"
-						className="col-start-2 col-end-3 flex flex-wrap gap-1 px-4"
-						role="cell"
-					>
-						{sample.labels.map((label) => (
-							<SampleLabel {...label} key={label.id} size="sm" />
-						))}
-					</div>
+			<div className="sample-table-grid pb-2 xl:hidden" role="row">
+				<div
+					aria-colindex={2}
+					aria-label="Labels"
+					className="col-start-2 col-end-3 flex flex-wrap gap-1 px-4"
+					role="cell"
+				>
+					<SampleLibraryTypeLabel libraryType={sample.libraryType} />
+					{sample.labels.map((label) => (
+						<SampleLabel {...label} key={label.id} size="sm" />
+					))}
 				</div>
-			)}
+			</div>
 		</div>
 	);
 }

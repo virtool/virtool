@@ -3,7 +3,6 @@
 import QuickAnalyze from "@analyses/components/Create/QuickAnalyze";
 import { BoxGroup } from "@base/Box";
 import Button from "@base/Button";
-import { ContainerNarrow } from "@base/Container";
 import ListEmpty from "@base/ListEmpty";
 import LoadingPlaceholder from "@base/LoadingPlaceholder";
 import Pagination from "@base/Pagination";
@@ -249,7 +248,7 @@ export default function SamplesList({
 				setOpen={setOpenQuickAnalyze}
 				samples={quickAnalyzeTarget.samples}
 			/>
-			<ContainerNarrow>
+			<div className="container mx-auto">
 				<ViewHeader title="Samples">
 					<ViewHeaderTitle>Samples</ViewHeaderTitle>
 				</ViewHeader>
@@ -314,7 +313,7 @@ export default function SamplesList({
 							/>
 							<div
 								aria-label="Samples list"
-								className="[&_.sample-table-grid]:grid [&_.sample-table-grid]:grid-cols-[4rem_minmax(0,1fr)_16rem_12rem_10rem_4rem] 2xl:[&_.sample-table-grid]:grid-cols-[4rem_minmax(0,1fr)_8rem_16rem_12rem_10rem_4rem]"
+								className="[&_.sample-table-grid]:grid [&_.sample-table-grid]:grid-cols-[4rem_minmax(0,1fr)_16rem_12rem_10rem_4rem] xl:[&_.sample-table-grid]:grid-cols-[4rem_minmax(0,1fr)_8rem_12rem_16rem_12rem_10rem_4rem]"
 								role="table"
 							>
 								<SampleTableHead
@@ -329,7 +328,7 @@ export default function SamplesList({
 						</BoxGroup>
 					</Pagination>
 				)}
-			</ContainerNarrow>
+			</div>
 		</>
 	);
 }

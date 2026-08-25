@@ -1,4 +1,6 @@
+import { cn } from "@app/cn";
 import Icon from "@base/Icon";
+import type { WorkflowFilterState } from "@samples/utils";
 import type { WorkflowState } from "@virtool/contracts";
 import { workflowStateIcons } from "../Filter/workflowStateIcons";
 import { BaseWorkflowTag } from "./BaseWorkflowTag";
@@ -6,6 +8,19 @@ import { BaseWorkflowTag } from "./BaseWorkflowTag";
 type SampleItemWorkflowTagProps = {
 	displayName: string;
 	workflowState: WorkflowState;
+};
+
+const filterStates: Record<WorkflowState, WorkflowFilterState> = {
+	complete: "ready",
+	pending: "pending",
+	none: "none",
+	incompatible: "none",
+};
+
+const tagClassNames: Record<WorkflowFilterState, string> = {
+	ready: "bg-green-50 text-green-800 group-hover:bg-green-100",
+	pending: "bg-gray-100 text-gray-700 group-hover:bg-gray-200",
+	none: "bg-white text-gray-600 group-hover:bg-gray-50",
 };
 
 /**
@@ -19,12 +34,12 @@ export default function WorkflowTag({
 	displayName,
 	workflowState,
 }: SampleItemWorkflowTagProps) {
-	const { icon } =
-		workflowStateIcons[workflowState === "pending" ? "pending" : "ready"];
+	const state = filterStates[workflowState];
+	const { className, icon } = workflowStateIcons[state];
 
 	return (
-		<BaseWorkflowTag className="group-hover:bg-gray-800">
-			<Icon icon={icon} className="size-4" />
+		<BaseWorkflowTag className={tagClassNames[state]}>
+			<Icon icon={icon} className={cn("size-4", className)} />
 			<span>{displayName}</span>
 		</BaseWorkflowTag>
 	);

@@ -1,7 +1,6 @@
 import { getWorkflowDisplayName } from "@app/utils";
 import Link from "@base/Link";
 import type { SampleWorkflows } from "@virtool/contracts";
-import { BaseWorkflowTag } from "./BaseWorkflowTag";
 import WorkflowTag from "./WorkflowTag";
 
 type WorkflowTagsProps = {
@@ -20,34 +19,19 @@ type WorkflowTagsProps = {
  * @returns The workflow tags for a sample.
  */
 export default function WorkflowTags({ id, workflows }: WorkflowTagsProps) {
-	const workflowTags = Object.entries(workflows)
-		.filter(([, value]) => value === "complete" || value === "pending")
-		.map(([key, value]) => (
-			<WorkflowTag
-				key={key}
-				displayName={getWorkflowDisplayName(key)}
-				workflowState={value}
-			/>
-		));
 	return (
-		<div className="flex items-stretch">
-			{workflowTags.length ? (
-				<Link
-					className="group flex items-stretch"
-					to="/samples/$sampleId/analyses"
-					params={{ sampleId: String(id) }}
-				>
-					{workflowTags}
-				</Link>
-			) : (
-				<BaseWorkflowTag
-					as={Link}
-					className="bg-gray-50 border border-gray-300 text-gray-700 hover:bg-gray-100"
-					to={`/samples/${id}/analyses`}
-				>
-					No Analyses
-				</BaseWorkflowTag>
-			)}
-		</div>
+		<Link
+			className="group flex items-stretch"
+			to="/samples/$sampleId/analyses"
+			params={{ sampleId: String(id) }}
+		>
+			{Object.entries(workflows).map(([key, value]) => (
+				<WorkflowTag
+					key={key}
+					displayName={getWorkflowDisplayName(key)}
+					workflowState={value}
+				/>
+			))}
+		</Link>
 	);
 }

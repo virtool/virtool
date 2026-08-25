@@ -91,8 +91,11 @@ export default function SampleTableHead({
 				>
 					Name
 				</SortableColumn>
-				<div className="hidden px-4 py-2 2xl:block" role="columnheader">
+				<div className="hidden px-4 py-2 xl:block" role="columnheader">
 					Library Type
+				</div>
+				<div className="hidden px-4 py-2 xl:block" role="columnheader">
+					Labels
 				</div>
 				<div className="px-4 py-2" role="columnheader">
 					Workflows
