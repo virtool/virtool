@@ -45,7 +45,7 @@ const MigrateEnv = z.object({
 /** Every environment key this entrypoint reads. */
 const MIGRATE_ENV_KEYS: string[] = Object.keys(MigrateEnv.shape);
 
-async function main(): Promise<void> {
+async function doMigrate(): Promise<void> {
 	const env = MigrateEnv.parse(
 		resolveFileBacked(MIGRATE_ENV_KEYS, process.env),
 	);
@@ -84,9 +84,20 @@ async function main(): Promise<void> {
 	}
 }
 
-try {
-	await main();
-} catch (err) {
-	createLogger({ name: SERVICE }).fatal({ err }, "failed to apply migrations");
-	process.exitCode = 1;
+/**
+ * Apply pending Drizzle migrations — the `migrate` subcommand.
+ *
+ * A function rather than module-scope side effects so the merged binary's
+ * dispatcher decides when it runs, and so importing this module costs nothing.
+ */
+export async function startMigrate(): Promise<void> {
+	try {
+		await doMigrate();
+	} catch (err) {
+		createLogger({ name: SERVICE }).fatal(
+			{ err },
+			"failed to apply migrations",
+		);
+		process.exitCode = 1;
+	}
 }

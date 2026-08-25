@@ -21,7 +21,8 @@ spec:
     spec:
       containers:
         - name: tasks
-          image: ghcr.io/virtool/tasks:latest
+          image: ghcr.io/virtool/internal:latest
+          args: ["run"]
           envFrom:
             - configMapRef:
                 name: virtool-env

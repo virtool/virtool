@@ -5,7 +5,7 @@ import { PostgreSqlContainer } from "@testcontainers/postgresql";
  * against, and export its URL as `VT_POSTGRES_URL`.
  *
  * This is the only place the container is described. `@virtool/data`, the web
- * server project, `@virtool/jobs-api`, and `@virtool/tasks` all name this
+ * server project, and `@virtool/internal` all name this
  * module as their `globalSetup`, so the options cannot drift apart and
  * `withReuse()` lets their local runs share one Postgres container.
  */

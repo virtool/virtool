@@ -21,7 +21,8 @@ spec:
     spec:
       containers:
         - name: jobs-api
-          image: ghcr.io/virtool/jobs-api:latest
+          image: ghcr.io/virtool/internal:latest
+          args: ["serve"]
           envFrom:
             - configMapRef:
                 name: virtool-env

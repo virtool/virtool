@@ -108,10 +108,8 @@
 									},
 									{
 										"group": [
-											"**/apps/jobs-api/**",
-											"**/jobs-api/src/**",
-											"**/apps/tasks/**",
-											"**/tasks/src/**",
+											"**/apps/internal/**",
+											"**/internal/src/**",
 											"**/apps/create-subtraction/**",
 											"**/create-subtraction/src/**",
 											"**/apps/pathoscope/**",
@@ -170,10 +168,8 @@
 									},
 									{
 										"group": [
-											"**/apps/jobs-api/**",
-											"**/jobs-api/src/**",
-											"**/apps/tasks/**",
-											"**/tasks/src/**",
+											"**/apps/internal/**",
+											"**/internal/src/**",
 											"**/apps/create-subtraction/**",
 											"**/create-subtraction/src/**",
 											"**/apps/pathoscope/**",
@@ -231,10 +227,8 @@
 											"@wall/**",
 											"**/apps/web/**",
 											"**/web/src/**",
-											"**/apps/jobs-api/**",
-											"**/jobs-api/src/**",
-											"**/apps/tasks/**",
-											"**/tasks/src/**",
+											"**/apps/internal/**",
+											"**/internal/src/**",
 											"**/apps/create-subtraction/**",
 											"**/create-subtraction/src/**",
 											"**/apps/pathoscope/**",
@@ -242,7 +236,7 @@
 											"**/apps/nuvs/**",
 											"**/nuvs/src/**"
 										],
-										"message": "No app may import another app's source, in any direction. apps/jobs-api is the likeliest offender against apps/web because it does work src/server also does, so copying an import from there is an easy mistake. Shared shapes and helpers belong in @virtool/contracts, @virtool/data or @virtool/storage, which every app imports down into."
+										"message": "No app may import another app's source, in any direction. apps/internal is the likeliest offender against apps/web because it does work src/server also does, so copying an import from there is an easy mistake. Shared shapes and helpers belong in @virtool/contracts, @virtool/data or @virtool/storage, which every app imports down into."
 									}
 								]
 							}

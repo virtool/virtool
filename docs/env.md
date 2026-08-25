@@ -64,9 +64,9 @@ instrumentation such as Sentry initialization.
 Current integrations are:
 
 - `apps/web/src/server/config.ts`
-- `apps/jobs-api/src/config.ts`
-- `apps/tasks/src/config.ts`
-- `apps/tasks/src/migrate.ts`
+- `apps/internal/src/serve/config.ts`
+- `apps/internal/src/run/config.ts`
+- `apps/internal/src/migrate/main.ts`
 - `packages/workflow/src/config.ts`
 
 The resolver and its precedence tests live in `packages/contracts/src/env.ts`

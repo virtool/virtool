@@ -25,10 +25,10 @@ export type SentryStatus = {
  * Init cannot simply move earlier: the DSN comes from `<KEY>_FILE`-backed
  * config, which has to be read first. That is exactly the case Sentry's "late
  * initialization" guidance covers, and the preload hook is its answer. If the
- * flag is ever dropped from the Dockerfile or the `start` script, tracing goes
+ * flag is ever dropped from the Dockerfile ENTRYPOINT, tracing goes
  * quiet with nothing in the logs to say so.
  *
- * Reports to the same project as `apps/web` and `apps/jobs-api`, tagged
+ * Reports to the same project as `apps/web` and the `serve` subcommand, tagged
  * `service: tasks` and carrying its own `dist` so the images' source maps do
  * not collide under the shared release version. Both come from
  * `getCommonOptions`.
