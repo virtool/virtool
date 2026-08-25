@@ -77,6 +77,7 @@ afterEach(() => {
 	useUploaderStore.setState({
 		remaining: 0,
 		samples: [],
+		sampleIds: [],
 		speed: 0,
 		uploads: [],
 	});
@@ -263,12 +264,53 @@ describe("watchUploadTiming", () => {
 			progress: 50,
 			size: 2000,
 		};
-		useUploaderStore.setState({ samples: [0, 500], uploads: [inProgress] });
+		useUploaderStore.setState({
+			samples: [0, 500],
+			sampleIds: ["a"],
+			uploads: [inProgress],
+		});
 
 		watchUploadTiming();
 
 		const { remaining, speed } = useUploaderStore.getState();
 		expect(speed).toBe(1000);
 		expect(remaining).toBe(1);
+	});
+
+	it("rebases samples when an upload leaves the active set", () => {
+		const active: UploadInProgress = {
+			completed: false,
+			failed: false,
+			fileType: "reads",
+			loaded: 1000,
+			localId: "a",
+			name: "a.fq.gz",
+			progress: 50,
+			size: 2000,
+		};
+		const finished: UploadInProgress = {
+			...active,
+			completed: true,
+			loaded: 2000,
+			localId: "b",
+			name: "b.fq.gz",
+			progress: 100,
+		};
+
+		// The samples still sum over both uploads when one has just completed.
+		useUploaderStore.setState({
+			samples: [0, 3000],
+			sampleIds: ["a", "b"],
+			uploads: [active, finished],
+		});
+
+		watchUploadTiming();
+
+		// The completed upload's bytes must not carry into the remaining one's
+		// speed, so the samples restart from the current active set.
+		const { samples, sampleIds, speed } = useUploaderStore.getState();
+		expect(sampleIds).toEqual(["a"]);
+		expect(samples).toEqual([1000]);
+		expect(speed).toBe(0);
 	});
 });

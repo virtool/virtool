@@ -28,6 +28,13 @@ type UploaderState = {
 	/** The samples of the loaded bytes for the uploads. Used to estimate speed and time remaining. */
 	samples: number[];
 
+	/**
+	 * The active upload ids the current {@link samples} sum over. When this set
+	 * changes the samples are rebased, since totals from a different set would
+	 * make the aggregate jump.
+	 */
+	sampleIds: string[];
+
 	/** The current estimated upload speed in bytes per second. */
 	speed: number;
 
@@ -66,6 +73,7 @@ export const useUploaderStore = create<UploaderState>()(
 		uploads: [],
 		remaining: 0,
 		samples: [],
+		sampleIds: [],
 		speed: 0,
 		addUpload: (upload) =>
 			set((state) => ({ uploads: [...state.uploads, upload] })),
@@ -262,7 +270,7 @@ export function upload(file: File, fileType: UploadType) {
 		.uploads.filter((upload) => !upload.completed && !upload.failed);
 
 	if (active.length === 0) {
-		useUploaderStore.setState({ samples: [] });
+		useUploaderStore.setState({ samples: [], sampleIds: [] });
 	}
 
 	useUploaderStore.getState().addUpload({
@@ -328,7 +336,7 @@ export function retryUpload(localId: string): void {
  */
 export function watchUploadTiming(): void {
 	const { getState, setState } = useUploaderStore;
-	const { samples, uploads } = getState();
+	const { samples, sampleIds, uploads } = getState();
 
 	const active = uploads.filter(
 		(upload) => !upload.completed && !upload.failed,
@@ -349,7 +357,16 @@ export function watchUploadTiming(): void {
 		{ loaded: 0, total: 0 },
 	);
 
-	const newSamples = [...samples.slice(-9), loaded];
+	// Samples sum loaded bytes across the active set. When an upload completes,
+	// fails, or joins, that set changes and the earlier totals describe different
+	// files, so carrying them forward would make the aggregate jump. Start the
+	// samples fresh from the current set instead of comparing across the change.
+	const activeIds = active.map((upload) => upload.localId);
+	const sameSet =
+		activeIds.length === sampleIds.length &&
+		activeIds.every((id, index) => id === sampleIds[index]);
+
+	const newSamples = [...(sameSet ? samples : []).slice(-9), loaded];
 
 	const last = newSamples[newSamples.length - 1];
 	const first = newSamples[0];
@@ -374,6 +391,7 @@ export function watchUploadTiming(): void {
 	setState({
 		remaining: speed > 0 ? (total - loaded) / speed : 0,
 		samples: newSamples,
+		sampleIds: activeIds,
 		speed,
 	});
 }
@@ -390,6 +408,7 @@ useUploaderStore.subscribe(
 				open: false,
 				remaining: 0,
 				samples: [],
+				sampleIds: [],
 				speed: 0,
 			});
 		} else if (previousUploadsLength === 0) {
