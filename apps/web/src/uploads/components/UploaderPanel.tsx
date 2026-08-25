@@ -88,7 +88,7 @@ export default function UploaderPanel({
 			<div className="flex items-center justify-between gap-3 border-b border-slate-200 bg-slate-50 px-3 py-1 text-gray-500">
 				{status}
 			</div>
-			<div className="max-h-96 divide-y divide-slate-100 overflow-y-auto">
+			<div className="max-h-96 overflow-y-auto">
 				{uploads.map((upload) => (
 					<UploaderItem key={upload.localId} {...upload} />
 				))}

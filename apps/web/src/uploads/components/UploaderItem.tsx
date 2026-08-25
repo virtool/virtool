@@ -2,7 +2,6 @@ import { cn } from "@app/cn";
 import { byteSize } from "@app/format";
 import { IconButton } from "@base/Icon";
 import Loader from "@base/Loader";
-import ProgressBarAffixed from "@base/ProgressBarAffixed";
 import { Ban, Check, RotateCw, Trash } from "lucide-react";
 import type { ReactNode } from "react";
 import { cancelUpload, retryUpload } from "../uploader";
@@ -101,12 +100,25 @@ export function UploaderItem({
 	}
 
 	return (
-		<div className="relative">
-			<ProgressBarAffixed
-				now={progress}
-				color={failed ? "red" : completed ? "green" : "blue"}
+		<div className="relative overflow-hidden">
+			<div
+				className={cn(
+					"absolute inset-y-0 left-0 transition-[width] duration-200 ease-out",
+					failed ? "bg-red-100" : completed ? "bg-green-100" : "bg-blue-100",
+				)}
+				style={{ width: `${progress}%` }}
 			/>
-			<div className="flex gap-3 items-center justify-between min-h-13 px-3 py-1">
+			<div
+				className={cn(
+					"pointer-events-none absolute inset-0 ring-1 ring-inset",
+					failed
+						? "ring-red-300"
+						: completed
+							? "ring-green-300"
+							: "ring-blue-300",
+				)}
+			/>
+			<div className="relative flex gap-3 items-center justify-between min-h-13 px-3 py-1">
 				<span
 					className={cn("font-medium min-w-0 truncate", {
 						"text-red-500": failed,
