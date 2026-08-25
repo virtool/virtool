@@ -14,8 +14,8 @@ import type { PathoscopeStep } from "./types";
  */
 export const eliminateSubtractionStep: PathoscopeStep = {
 	id: "eliminate_subtraction",
-	description:
-		"Remove reads that map better to a subtraction than to a reference.",
+	name: "Remove Host Reads",
+	description: "Remove reads belonging to the sample's host.",
 	async run({ data, logger, proc, runSubprocess, state, workPath }) {
 		const paths = workPaths(workPath);
 

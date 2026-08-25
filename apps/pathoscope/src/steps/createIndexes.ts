@@ -25,7 +25,9 @@ import type { PathoscopeStep } from "./types";
  */
 export const createRepresentativeIndexStep: PathoscopeStep = {
 	id: "create_representative_index",
-	description: "Ensure the representative Bowtie2 index exists locally.",
+	name: "Prepare Screening Reference",
+	description:
+		"Select a small set of reference sequences for quickly finding possible viruses.",
 	async run(context) {
 		const { data, logger, proc, runSubprocess, workPath } = context;
 		const paths = workPaths(workPath);
@@ -161,7 +163,9 @@ async function writeRepresentativeFasta({
  */
 export const createSubtractionIndexStep: PathoscopeStep = {
 	id: "create_subtraction_index",
-	description: "Ensure subtraction Bowtie2 indexes exist locally.",
+	name: "Prepare Host References",
+	description:
+		"Build the search data used later to remove reads from the sample's host.",
 	async run(context) {
 		const { data, logger, proc, runSubprocess, storage, workPath } = context;
 		const paths = workPaths(workPath);

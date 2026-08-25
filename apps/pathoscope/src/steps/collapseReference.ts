@@ -29,7 +29,9 @@ import type { PathoscopeStep } from "./types";
  */
 export const collapseReferenceStep: PathoscopeStep = {
 	id: "collapse_reference",
-	description: "Ensure a cd-hit-est collapsed reference index exists locally.",
+	name: "Remove Redundant Isolates",
+	description:
+		"Remove nearly identical virus isolates before detailed read matching.",
 	async run(context) {
 		const { data, logger, proc, runSubprocess, workPath } = context;
 		const paths = workPaths(workPath);

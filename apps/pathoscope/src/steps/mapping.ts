@@ -15,8 +15,9 @@ import type { PathoscopeStep } from "./types";
  */
 export const mapRepresentativesStep: PathoscopeStep = {
 	id: "map_representatives",
+	name: "Find Possible Viruses",
 	description:
-		"Map sample reads to reference representatives to identify candidate OTUs.",
+		"Compare sample reads with the screening reference to identify viruses for detailed analysis.",
 	async run({ data, logger, proc, runSubprocess, state, workPath }) {
 		const paths = workPaths(workPath);
 
@@ -62,8 +63,9 @@ export const mapRepresentativesStep: PathoscopeStep = {
  */
 export const buildCandidateOtuIndexStep: PathoscopeStep = {
 	id: "build_candidate_otu_index",
+	name: "Prepare Detailed Reference",
 	description:
-		"Build a mapping index containing surviving isolates of candidate OTUs.",
+		"Build a reference containing the remaining isolates for the possible viruses.",
 	async run({ data, logger, proc, runSubprocess, state, workPath }) {
 		const paths = workPaths(workPath);
 
@@ -118,7 +120,9 @@ export const buildCandidateOtuIndexStep: PathoscopeStep = {
  */
 export const mapIsolatesStep: PathoscopeStep = {
 	id: "map_isolates",
-	description: "Map sample reads to the candidate isolate index.",
+	name: "Match Reads in Detail",
+	description:
+		"Compare sample reads with the possible viruses at isolate level.",
 	async run({ data, logger, proc, runSubprocess, state, workPath }) {
 		const paths = workPaths(workPath);
 

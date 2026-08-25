@@ -22,7 +22,9 @@ const COVERAGE_PLACES = 3;
  */
 export const reassignmentStep: PathoscopeStep = {
 	id: "reassignment",
-	description: "Run the Pathoscope reassignment algorithm.",
+	name: "Estimate Virus Abundance",
+	description:
+		"Assign reads that match multiple isolates and calculate the final results.",
 	async run({ client, data, logger, runSubprocess, state, workPath }) {
 		const paths = workPaths(workPath);
 
