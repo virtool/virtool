@@ -502,6 +502,15 @@ describe("<SamplesList />", () => {
 				`${self.handle}You`,
 				at(users, 0).handle,
 			]);
+
+			const otherUsers = screen.getByTestId("other-users");
+			expect(otherUsers).not.toContainElement(at(items, 0));
+			expect(otherUsers).toContainElement(at(items, 1));
+			expect(otherUsers).toHaveClass(
+				"max-h-96",
+				"overflow-x-hidden",
+				"overflow-y-auto",
+			);
 		});
 
 		it("should narrow the user list as the search input is typed in", async () => {
