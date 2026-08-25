@@ -77,33 +77,33 @@ stage named after the target. Pass a flag to turn one on:
 | Flag | Image | Dockerfile stage |
 | --- | --- | --- |
 | `--web` | `ghcr.io/virtool/web` | `dev` |
-| `--jobs-api` | `ghcr.io/virtool/jobs-api` | `jobs-api` |
-| `--tasks` | `ghcr.io/virtool/tasks` | `tasks` |
+| `--internal` | `ghcr.io/virtool/internal` | `internal` |
 | `--create-sample` | `ghcr.io/virtool/create-sample` | `create-sample` |
 | `--create-subtraction` | `ghcr.io/virtool/create-subtraction` | `create-subtraction` |
 | `--nuvs` | `ghcr.io/virtool/nuvs` | `nuvs` |
 | `--pathoscope` | `ghcr.io/virtool/pathoscope` | `pathoscope` |
 
-Flags combine: `tilt up -- --web --jobs-api`.
+Flags combine: `tilt up -- --web --internal`.
 
 `--web` runs Vite in the pod and syncs `apps/web/src` and `packages` into it,
 so an edit shows up without a rebuild. The rest rebuild the image on change,
 and `jobs-api`, `tasks` and every workflow are on manual trigger — update them
-from the Tilt UI when you want the build. A workflow's pods are one-shot and
+from the Tilt UI when you want the build. `--internal` builds the one image the
+`jobs-api` and `tasks` workloads and the migration Job all share, so a rebuild
+updates all three. A workflow's pods are one-shot and
 only start when something claims work, so nothing waits on a rebuild and an
 automatic one would rebuild a large image on every edit.
 
-There is no separate migration target. Migrations temporarily live in the
-`tasks` image, and the migration Job runs its `node dist/migrate.mjs`
-entrypoint.
+There is no separate migration target. The migration Job runs the `internal`
+image's `migrate` subcommand.
 
 ## Images
 
 Every image this repository publishes is pinned to `latest`, so a pod picks up
-the newest release each time it starts and no tag is ever committed. While
-migrations temporarily live in `ghcr.io/virtool/tasks`, the migration Job runs
-the tasks image's Drizzle migrator and follows the same tag or local Tilt build
-as the tasks Deployment.
+the newest release each time it starts and no tag is ever committed. The
+migration Job runs `ghcr.io/virtool/internal`'s `migrate` subcommand and follows
+the same tag or local Tilt build as the `jobs-api` and `tasks` Deployments,
+which run the same image.
 
 ## Labels
 

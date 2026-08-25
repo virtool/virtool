@@ -10,7 +10,7 @@
  * rather than hand-written. The embedded server is the fixture the jobs API
  * client is tested against: misspelled the same way on both sides they would
  * agree with each other, and the mismatch would surface only against the real
- * `apps/jobs-api`.
+ * jobs API in `apps/internal`.
  */
 
 import {
@@ -73,7 +73,7 @@ function conflict(message: string): JobsApiResponse {
  * The states a job never leaves, and what a runner holding a key for one is
  * told.
  *
- * A copy of `TERMINAL_REFUSALS` in `apps/jobs-api/src/auth/verify.ts`, wording
+ * A copy of `TERMINAL_REFUSALS` in `apps/internal/src/serve/auth/verify.ts`, wording
  * and all. The message is the whole of the cancellation channel, so a fixture
  * that answered `Job is failed.` where the service answers `Job has failed.`
  * would let a run that keyed on the wording pass here and stall in production.

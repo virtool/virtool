@@ -204,39 +204,35 @@ ENV HOST="0.0.0.0"
 ENV PORT="9900"
 CMD ["npm", "start"]
 
-FROM base AS build-jobs-api
-COPY apps/jobs-api ./apps/jobs-api
-RUN pnpm --filter @virtool/jobs-api build \
-    && pnpm deploy --filter @virtool/jobs-api --prod /prod/jobs-api
+FROM base AS build-internal
+COPY apps/internal ./apps/internal
+RUN pnpm --filter @virtool/internal build \
+    && pnpm deploy --filter @virtool/internal --prod /prod/internal
 
-FROM node:24-bookworm-slim AS jobs-api
-WORKDIR /jobs-api
-COPY --from=build-jobs-api /prod/jobs-api ./
-EXPOSE 9950
+FROM node:24-bookworm-slim AS internal
+WORKDIR /internal
+COPY --from=build-internal /prod/internal ./
+# The migration SQL, for the `migrate` subcommand the migration Job runs.
+# `pnpm deploy` carries only `dist` and `node_modules`, and the migrator reads
+# the journal and the `.sql` files off disk rather than from the bundle, so they
+# have to be copied in. The path matches `DEFAULT_MIGRATIONS_PATH` in
+# `apps/internal/src/migrate/main.ts`.
+COPY --from=build-internal /repo/packages/data/drizzle ./drizzle
+# `serve` binds 9950; `run` binds its probe/metrics listener on 9900. One image
+# carries both, so both are declared.
+EXPOSE 9950 9900
 ENV VT_JOBS_API_HOST="0.0.0.0"
 ENV VT_JOBS_API_PORT="9950"
-
-# Installs Sentry's module hooks before any application import is evaluated.
-# Without it the app's own static imports resolve before `Sentry.init` runs.
-CMD ["node", "--import", "@sentry/node/preload", "dist/index.mjs"]
-
-FROM base AS build-tasks
-COPY apps/tasks ./apps/tasks
-RUN pnpm --filter @virtool/tasks build \
-    && pnpm deploy --filter @virtool/tasks --prod /prod/tasks
-
-FROM node:24-bookworm-slim AS tasks
-WORKDIR /tasks
-COPY --from=build-tasks /prod/tasks ./
-# The migration SQL, for the `dist/migrate.mjs` entrypoint the migration Job
-# runs. `pnpm deploy` carries only `dist` and `node_modules`, and the migrator
-# reads the journal and the `.sql` files off disk rather than from the bundle,
-# so they have to be copied in. The path matches `DEFAULT_MIGRATIONS_PATH` in
-# `apps/tasks/src/migrate.ts`.
-COPY --from=build-tasks /repo/packages/data/drizzle ./drizzle
-EXPOSE 9900
 ENV VT_TASKS_PROBE_PORT="9900"
-CMD ["node", "--import", "@sentry/node/preload", "dist/index.mjs"]
+
+# Installs Sentry's module hooks before the dispatcher imports the selected
+# command's graph, so the SDK patches Hono and postgres ahead of what it
+# instruments. The subcommand — serve, run or migrate — is the argument each
+# workload's manifest supplies; the default is the HTTP server. `migrate` runs
+# under the same preload, which is a no-op there: with no DSN configured the SDK
+# never initialises.
+ENTRYPOINT ["node", "--import", "@sentry/node/preload", "dist/index.mjs"]
+CMD ["serve"]
 
 FROM base AS build-create-subtraction
 COPY apps/create-subtraction ./apps/create-subtraction

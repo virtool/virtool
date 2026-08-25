@@ -12,8 +12,7 @@ never `npm` or `bun`.
 | --- | --- |
 | [`@virtool/web`](apps/web/README.md) | The Virtool SPA and its TanStack Start server. |
 | [`@virtool/site`](apps/site/README.md) | The product website at [virtool.ca](https://www.virtool.ca). |
-| [`@virtool/jobs-api`](apps/jobs-api/README.md) | Lets workflow runners claim, run, and finish jobs. |
-| [`@virtool/tasks`](apps/tasks/README.md) | Runs the periodic task spawner and task runner in one process. |
+| [`@virtool/internal`](apps/internal/README.md) | One image, three subcommands: `serve` (jobs API), `run` (task spawner and runner), `migrate` (Drizzle migrations). |
 | [`@virtool/create-sample`](apps/create-sample/README.md) | Creates a sample from uploaded FASTQ files. |
 | [`@virtool/create-subtraction`](apps/create-subtraction/README.md) | Creates a subtraction from an uploaded FASTA. |
 | [`@virtool/pathoscope`](apps/pathoscope/README.md) | Quantifies known viruses in a sample. |
@@ -124,12 +123,12 @@ repository-wide rules in view:
   [packages/logger/README.md](packages/logger/README.md).
 - Each long-lived service owns its Prometheus registry and token-gated
   `/metrics` endpoint. Keep labels bounded and use the shared constant-time
-  bearer-token helper. See [the web metrics guide](apps/web/README.md#metrics),
-  [the jobs API guide](apps/jobs-api/README.md#metrics), and [the tasks
-  guide](apps/tasks/README.md#probes-and-metrics).
-- `apps/tasks` runs both the periodic spawner and task runner. Its lease,
-  fencing, shutdown, progress, metrics, and task-body contracts are maintained
-  in [its README](apps/tasks/README.md); do not duplicate them here.
+  bearer-token helper. See [the web metrics guide](apps/web/README.md#metrics)
+  and [the internal metrics guide](apps/internal/README.md#metrics).
+- `apps/internal`'s `run` subcommand carries both the periodic spawner and the
+  task runner. Its lease, fencing, shutdown, progress, metrics, and task-body
+  contracts are maintained in [its README](apps/internal/README.md); do not
+  duplicate them here.
 
 ## Data
 
@@ -170,8 +169,8 @@ storage, cache, and configuration contracts, and [the job lifecycle](docs/jobs.m
 for claim, ping, cancellation, failure, and exit behaviour.
 
 Workflow files always stream, and storage keys are recorded or minted rather
-than derived. See [the jobs API README](apps/jobs-api/README.md) for finalize
-manifests and key validation, [references](docs/references.md) for the SQLite
+than derived. See [the internal app README](apps/internal/README.md) for
+finalize manifests and key validation, [references](docs/references.md) for the SQLite
 reference artifact, and [workflow testing](packages/workflow/TESTING.md) for
 the shared test harness.
 

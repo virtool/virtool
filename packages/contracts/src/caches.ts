@@ -1,4 +1,4 @@
-// The cache endpoints' wire contract, shared by the handlers in `apps/jobs-api`
+// The cache endpoints' wire contract, shared by the handlers in `apps/internal`
 // and the workflow runtime that calls them.
 //
 //   GET  /caches/{key}  -                    -> Cache           (200 | 404)

@@ -17,9 +17,9 @@ spec:
     spec:
       restartPolicy: Never
       containers:
-        - image: ghcr.io/virtool/tasks:latest
+        - image: ghcr.io/virtool/internal:latest
           name: virtool-migration
-          command: ["node", "dist/migrate.mjs"]
+          args: ["migrate"]
           envFrom:
             - configMapRef:
                 name: virtool-env
