@@ -24,6 +24,7 @@ import { Route as AuthenticatedHmmsRouteImport } from './routes/_authenticated/h
 import { Route as AuthenticatedHomeRouteImport } from './routes/_authenticated/home'
 import { Route as AuthenticatedJobsRouteImport } from './routes/_authenticated/jobs'
 import { Route as AuthenticatedRefsRouteRouteImport } from './routes/_authenticated/refs/route'
+import { Route as AuthenticatedRefsV2RouteRouteImport } from './routes/_authenticated/refs-v2/route'
 import { Route as AuthenticatedSamplesRouteImport } from './routes/_authenticated/samples'
 import { Route as AuthenticatedSubtractionsRouteImport } from './routes/_authenticated/subtractions'
 import { Route as HealthLiveRouteImport } from './routes/health/live'
@@ -44,6 +45,8 @@ import { Route as AuthenticatedHmmsIndexRouteImport } from './routes/_authentica
 import { Route as AuthenticatedHmmsHmmIdRouteImport } from './routes/_authenticated/hmms/$hmmId'
 import { Route as AuthenticatedJobsIndexRouteImport } from './routes/_authenticated/jobs/index'
 import { Route as AuthenticatedJobsJobIdRouteImport } from './routes/_authenticated/jobs/$jobId'
+import { Route as AuthenticatedRefsV2IndexRouteImport } from './routes/_authenticated/refs-v2/index'
+import { Route as AuthenticatedRefsV2ReferenceIdRouteRouteImport } from './routes/_authenticated/refs-v2/$referenceId/route'
 import { Route as AuthenticatedRefsIndexRouteImport } from './routes/_authenticated/refs/index'
 import { Route as AuthenticatedRefsRefIdRouteRouteImport } from './routes/_authenticated/refs/$refId/route'
 import { Route as AuthenticatedRefsSettingsRouteImport } from './routes/_authenticated/refs/settings'
@@ -62,6 +65,7 @@ import { Route as ApiV1UploadsRouteImport } from './routes/api.v1.uploads'
 import { Route as OtusOtuIdFastaRouteImport } from './routes/otus.$otuId.fasta'
 import { Route as AuthenticatedAdministrationUsersIndexRouteImport } from './routes/_authenticated/administration/users/index'
 import { Route as AuthenticatedAdministrationUsersUserIdRouteImport } from './routes/_authenticated/administration/users/$userId'
+import { Route as AuthenticatedRefsV2ReferenceIdIndexRouteImport } from './routes/_authenticated/refs-v2/$referenceId/index'
 import { Route as AuthenticatedRefsRefIdIndexRouteImport } from './routes/_authenticated/refs/$refId/index'
 import { Route as AuthenticatedRefsRefIdManageRouteImport } from './routes/_authenticated/refs/$refId/manage'
 import { Route as AuthenticatedRefsRefIdSettingsRouteImport } from './routes/_authenticated/refs/$refId/settings'
@@ -75,6 +79,8 @@ import { Route as ApiV1UploadsUploadIdRouteImport } from './routes/api.v1.upload
 import { Route as IndexesIndexIdFilesFilenameRouteImport } from './routes/indexes.$indexId.files.$filename'
 import { Route as SamplesSampleIdReadsFilenameRouteImport } from './routes/samples.$sampleId.reads.$filename'
 import { Route as SubtractionsSubtractionIdFilesFilenameRouteImport } from './routes/subtractions.$subtractionId.files.$filename'
+import { Route as AuthenticatedRefsV2ReferenceIdOtusOtuIdRouteImport } from './routes/_authenticated/refs-v2/$referenceId/otus/$otuId'
+import { Route as AuthenticatedRefsV2ReferenceIdOtusNewRouteImport } from './routes/_authenticated/refs-v2/$referenceId/otus/new'
 import { Route as AuthenticatedRefsRefIdIndexesIndexRouteImport } from './routes/_authenticated/refs/$refId/indexes/index'
 import { Route as AuthenticatedRefsRefIdIndexesIndexIdRouteImport } from './routes/_authenticated/refs/$refId/indexes/$indexId'
 import { Route as AuthenticatedRefsRefIdOtusIndexRouteImport } from './routes/_authenticated/refs/$refId/otus/index'
@@ -166,6 +172,12 @@ const AuthenticatedRefsRouteRoute = AuthenticatedRefsRouteRouteImport.update({
   path: '/refs',
   getParentRoute: () => AuthenticatedRoute,
 } as any)
+const AuthenticatedRefsV2RouteRoute =
+  AuthenticatedRefsV2RouteRouteImport.update({
+    id: '/refs-v2',
+    path: '/refs-v2',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
 const AuthenticatedSamplesRoute = AuthenticatedSamplesRouteImport.update({
   id: '/samples',
   path: '/samples',
@@ -277,6 +289,18 @@ const AuthenticatedJobsJobIdRoute = AuthenticatedJobsJobIdRouteImport.update({
   path: '/$jobId',
   getParentRoute: () => AuthenticatedJobsRoute,
 } as any)
+const AuthenticatedRefsV2IndexRoute =
+  AuthenticatedRefsV2IndexRouteImport.update({
+    id: '/',
+    path: '/',
+    getParentRoute: () => AuthenticatedRefsV2RouteRoute,
+  } as any)
+const AuthenticatedRefsV2ReferenceIdRouteRoute =
+  AuthenticatedRefsV2ReferenceIdRouteRouteImport.update({
+    id: '/$referenceId',
+    path: '/$referenceId',
+    getParentRoute: () => AuthenticatedRefsV2RouteRoute,
+  } as any)
 const AuthenticatedRefsIndexRoute = AuthenticatedRefsIndexRouteImport.update({
   id: '/',
   path: '/',
@@ -381,6 +405,12 @@ const AuthenticatedAdministrationUsersUserIdRoute =
     path: '/users/$userId',
     getParentRoute: () => AuthenticatedAdministrationRouteRoute,
   } as any)
+const AuthenticatedRefsV2ReferenceIdIndexRoute =
+  AuthenticatedRefsV2ReferenceIdIndexRouteImport.update({
+    id: '/',
+    path: '/',
+    getParentRoute: () => AuthenticatedRefsV2ReferenceIdRouteRoute,
+  } as any)
 const AuthenticatedRefsRefIdIndexRoute =
   AuthenticatedRefsRefIdIndexRouteImport.update({
     id: '/',
@@ -457,6 +487,18 @@ const SubtractionsSubtractionIdFilesFilenameRoute =
     id: '/subtractions/$subtractionId/files/$filename',
     path: '/subtractions/$subtractionId/files/$filename',
     getParentRoute: () => rootRouteImport,
+  } as any)
+const AuthenticatedRefsV2ReferenceIdOtusOtuIdRoute =
+  AuthenticatedRefsV2ReferenceIdOtusOtuIdRouteImport.update({
+    id: '/otus/$otuId',
+    path: '/otus/$otuId',
+    getParentRoute: () => AuthenticatedRefsV2ReferenceIdRouteRoute,
+  } as any)
+const AuthenticatedRefsV2ReferenceIdOtusNewRoute =
+  AuthenticatedRefsV2ReferenceIdOtusNewRouteImport.update({
+    id: '/otus/new',
+    path: '/otus/new',
+    getParentRoute: () => AuthenticatedRefsV2ReferenceIdRouteRoute,
   } as any)
 const AuthenticatedRefsRefIdIndexesIndexRoute =
   AuthenticatedRefsRefIdIndexesIndexRouteImport.update({
@@ -560,6 +602,7 @@ export interface FileRoutesByFullPath {
   '/setup': typeof SetupRoute
   '/administration': typeof AuthenticatedAdministrationRouteRouteWithChildren
   '/refs': typeof AuthenticatedRefsRouteRouteWithChildren
+  '/refs-v2': typeof AuthenticatedRefsV2RouteRouteWithChildren
   '/account': typeof AuthenticatedAccountRouteWithChildren
   '/hmms': typeof AuthenticatedHmmsRouteWithChildren
   '/home': typeof AuthenticatedHomeRoute
@@ -569,6 +612,7 @@ export interface FileRoutesByFullPath {
   '/health/live': typeof HealthLiveRoute
   '/health/ready': typeof HealthReadyRoute
   '/uploads/$uploadId': typeof UploadsUploadIdRoute
+  '/refs-v2/$referenceId': typeof AuthenticatedRefsV2ReferenceIdRouteRouteWithChildren
   '/refs/$refId': typeof AuthenticatedRefsRefIdRouteRouteWithChildren
   '/account/api': typeof AuthenticatedAccountApiRoute
   '/account/profile': typeof AuthenticatedAccountProfileRoute
@@ -597,6 +641,7 @@ export interface FileRoutesByFullPath {
   '/administration/': typeof AuthenticatedAdministrationIndexRoute
   '/hmms/': typeof AuthenticatedHmmsIndexRoute
   '/jobs/': typeof AuthenticatedJobsIndexRoute
+  '/refs-v2/': typeof AuthenticatedRefsV2IndexRoute
   '/refs/': typeof AuthenticatedRefsIndexRoute
   '/samples/': typeof AuthenticatedSamplesIndexRoute
   '/subtractions/': typeof AuthenticatedSubtractionsIndexRoute
@@ -613,9 +658,12 @@ export interface FileRoutesByFullPath {
   '/samples/$sampleId/reads/$filename': typeof SamplesSampleIdReadsFilenameRoute
   '/subtractions/$subtractionId/files/$filename': typeof SubtractionsSubtractionIdFilesFilenameRoute
   '/administration/users/': typeof AuthenticatedAdministrationUsersIndexRoute
+  '/refs-v2/$referenceId/': typeof AuthenticatedRefsV2ReferenceIdIndexRoute
   '/refs/$refId/': typeof AuthenticatedRefsRefIdIndexRoute
   '/samples/$sampleId/': typeof AuthenticatedSamplesSampleIdIndexRoute
   '/refs/$refId/otus/$otuId': typeof AuthenticatedRefsRefIdOtusOtuIdRouteRouteWithChildren
+  '/refs-v2/$referenceId/otus/$otuId': typeof AuthenticatedRefsV2ReferenceIdOtusOtuIdRoute
+  '/refs-v2/$referenceId/otus/new': typeof AuthenticatedRefsV2ReferenceIdOtusNewRoute
   '/refs/$refId/indexes/$indexId': typeof AuthenticatedRefsRefIdIndexesIndexIdRoute
   '/samples/$sampleId/analyses/$analysisId': typeof AuthenticatedSamplesSampleIdAnalysesAnalysisIdRoute
   '/api/v1/uploads/$uploadId/finalize': typeof ApiV1UploadsUploadIdFinalizeRoute
@@ -670,6 +718,7 @@ export interface FileRoutesByTo {
   '/administration': typeof AuthenticatedAdministrationIndexRoute
   '/hmms': typeof AuthenticatedHmmsIndexRoute
   '/jobs': typeof AuthenticatedJobsIndexRoute
+  '/refs-v2': typeof AuthenticatedRefsV2IndexRoute
   '/refs': typeof AuthenticatedRefsIndexRoute
   '/samples': typeof AuthenticatedSamplesIndexRoute
   '/subtractions': typeof AuthenticatedSubtractionsIndexRoute
@@ -685,8 +734,11 @@ export interface FileRoutesByTo {
   '/samples/$sampleId/reads/$filename': typeof SamplesSampleIdReadsFilenameRoute
   '/subtractions/$subtractionId/files/$filename': typeof SubtractionsSubtractionIdFilesFilenameRoute
   '/administration/users': typeof AuthenticatedAdministrationUsersIndexRoute
+  '/refs-v2/$referenceId': typeof AuthenticatedRefsV2ReferenceIdIndexRoute
   '/refs/$refId': typeof AuthenticatedRefsRefIdIndexRoute
   '/samples/$sampleId': typeof AuthenticatedSamplesSampleIdIndexRoute
+  '/refs-v2/$referenceId/otus/$otuId': typeof AuthenticatedRefsV2ReferenceIdOtusOtuIdRoute
+  '/refs-v2/$referenceId/otus/new': typeof AuthenticatedRefsV2ReferenceIdOtusNewRoute
   '/refs/$refId/indexes/$indexId': typeof AuthenticatedRefsRefIdIndexesIndexIdRoute
   '/samples/$sampleId/analyses/$analysisId': typeof AuthenticatedSamplesSampleIdAnalysesAnalysisIdRoute
   '/api/v1/uploads/$uploadId/finalize': typeof ApiV1UploadsUploadIdFinalizeRoute
@@ -713,6 +765,7 @@ export interface FileRoutesById {
   '/setup': typeof SetupRoute
   '/_authenticated/administration': typeof AuthenticatedAdministrationRouteRouteWithChildren
   '/_authenticated/refs': typeof AuthenticatedRefsRouteRouteWithChildren
+  '/_authenticated/refs-v2': typeof AuthenticatedRefsV2RouteRouteWithChildren
   '/_authenticated/account': typeof AuthenticatedAccountRouteWithChildren
   '/_authenticated/hmms': typeof AuthenticatedHmmsRouteWithChildren
   '/_authenticated/home': typeof AuthenticatedHomeRoute
@@ -723,6 +776,7 @@ export interface FileRoutesById {
   '/health/ready': typeof HealthReadyRoute
   '/uploads_/$uploadId': typeof UploadsUploadIdRoute
   '/_authenticated/': typeof AuthenticatedIndexRoute
+  '/_authenticated/refs-v2/$referenceId': typeof AuthenticatedRefsV2ReferenceIdRouteRouteWithChildren
   '/_authenticated/refs/$refId': typeof AuthenticatedRefsRefIdRouteRouteWithChildren
   '/_authenticated/account/api': typeof AuthenticatedAccountApiRoute
   '/_authenticated/account/profile': typeof AuthenticatedAccountProfileRoute
@@ -751,6 +805,7 @@ export interface FileRoutesById {
   '/_authenticated/administration/': typeof AuthenticatedAdministrationIndexRoute
   '/_authenticated/hmms/': typeof AuthenticatedHmmsIndexRoute
   '/_authenticated/jobs/': typeof AuthenticatedJobsIndexRoute
+  '/_authenticated/refs-v2/': typeof AuthenticatedRefsV2IndexRoute
   '/_authenticated/refs/': typeof AuthenticatedRefsIndexRoute
   '/_authenticated/samples/': typeof AuthenticatedSamplesIndexRoute
   '/_authenticated/subtractions/': typeof AuthenticatedSubtractionsIndexRoute
@@ -767,9 +822,12 @@ export interface FileRoutesById {
   '/samples/$sampleId/reads/$filename': typeof SamplesSampleIdReadsFilenameRoute
   '/subtractions/$subtractionId/files/$filename': typeof SubtractionsSubtractionIdFilesFilenameRoute
   '/_authenticated/administration/users/': typeof AuthenticatedAdministrationUsersIndexRoute
+  '/_authenticated/refs-v2/$referenceId/': typeof AuthenticatedRefsV2ReferenceIdIndexRoute
   '/_authenticated/refs/$refId/': typeof AuthenticatedRefsRefIdIndexRoute
   '/_authenticated/samples/$sampleId/': typeof AuthenticatedSamplesSampleIdIndexRoute
   '/_authenticated/refs/$refId/otus/$otuId': typeof AuthenticatedRefsRefIdOtusOtuIdRouteRouteWithChildren
+  '/_authenticated/refs-v2/$referenceId/otus/$otuId': typeof AuthenticatedRefsV2ReferenceIdOtusOtuIdRoute
+  '/_authenticated/refs-v2/$referenceId/otus/new': typeof AuthenticatedRefsV2ReferenceIdOtusNewRoute
   '/_authenticated/refs/$refId/indexes/$indexId': typeof AuthenticatedRefsRefIdIndexesIndexIdRoute
   '/_authenticated/samples/$sampleId/analyses/$analysisId': typeof AuthenticatedSamplesSampleIdAnalysesAnalysisIdRoute
   '/api/v1/uploads_/$uploadId/finalize': typeof ApiV1UploadsUploadIdFinalizeRoute
@@ -798,6 +856,7 @@ export interface FileRouteTypes {
     | '/setup'
     | '/administration'
     | '/refs'
+    | '/refs-v2'
     | '/account'
     | '/hmms'
     | '/home'
@@ -807,6 +866,7 @@ export interface FileRouteTypes {
     | '/health/live'
     | '/health/ready'
     | '/uploads/$uploadId'
+    | '/refs-v2/$referenceId'
     | '/refs/$refId'
     | '/account/api'
     | '/account/profile'
@@ -835,6 +895,7 @@ export interface FileRouteTypes {
     | '/administration/'
     | '/hmms/'
     | '/jobs/'
+    | '/refs-v2/'
     | '/refs/'
     | '/samples/'
     | '/subtractions/'
@@ -851,9 +912,12 @@ export interface FileRouteTypes {
     | '/samples/$sampleId/reads/$filename'
     | '/subtractions/$subtractionId/files/$filename'
     | '/administration/users/'
+    | '/refs-v2/$referenceId/'
     | '/refs/$refId/'
     | '/samples/$sampleId/'
     | '/refs/$refId/otus/$otuId'
+    | '/refs-v2/$referenceId/otus/$otuId'
+    | '/refs-v2/$referenceId/otus/new'
     | '/refs/$refId/indexes/$indexId'
     | '/samples/$sampleId/analyses/$analysisId'
     | '/api/v1/uploads/$uploadId/finalize'
@@ -908,6 +972,7 @@ export interface FileRouteTypes {
     | '/administration'
     | '/hmms'
     | '/jobs'
+    | '/refs-v2'
     | '/refs'
     | '/samples'
     | '/subtractions'
@@ -923,8 +988,11 @@ export interface FileRouteTypes {
     | '/samples/$sampleId/reads/$filename'
     | '/subtractions/$subtractionId/files/$filename'
     | '/administration/users'
+    | '/refs-v2/$referenceId'
     | '/refs/$refId'
     | '/samples/$sampleId'
+    | '/refs-v2/$referenceId/otus/$otuId'
+    | '/refs-v2/$referenceId/otus/new'
     | '/refs/$refId/indexes/$indexId'
     | '/samples/$sampleId/analyses/$analysisId'
     | '/api/v1/uploads/$uploadId/finalize'
@@ -950,6 +1018,7 @@ export interface FileRouteTypes {
     | '/setup'
     | '/_authenticated/administration'
     | '/_authenticated/refs'
+    | '/_authenticated/refs-v2'
     | '/_authenticated/account'
     | '/_authenticated/hmms'
     | '/_authenticated/home'
@@ -960,6 +1029,7 @@ export interface FileRouteTypes {
     | '/health/ready'
     | '/uploads_/$uploadId'
     | '/_authenticated/'
+    | '/_authenticated/refs-v2/$referenceId'
     | '/_authenticated/refs/$refId'
     | '/_authenticated/account/api'
     | '/_authenticated/account/profile'
@@ -988,6 +1058,7 @@ export interface FileRouteTypes {
     | '/_authenticated/administration/'
     | '/_authenticated/hmms/'
     | '/_authenticated/jobs/'
+    | '/_authenticated/refs-v2/'
     | '/_authenticated/refs/'
     | '/_authenticated/samples/'
     | '/_authenticated/subtractions/'
@@ -1004,9 +1075,12 @@ export interface FileRouteTypes {
     | '/samples/$sampleId/reads/$filename'
     | '/subtractions/$subtractionId/files/$filename'
     | '/_authenticated/administration/users/'
+    | '/_authenticated/refs-v2/$referenceId/'
     | '/_authenticated/refs/$refId/'
     | '/_authenticated/samples/$sampleId/'
     | '/_authenticated/refs/$refId/otus/$otuId'
+    | '/_authenticated/refs-v2/$referenceId/otus/$otuId'
+    | '/_authenticated/refs-v2/$referenceId/otus/new'
     | '/_authenticated/refs/$refId/indexes/$indexId'
     | '/_authenticated/samples/$sampleId/analyses/$analysisId'
     | '/api/v1/uploads_/$uploadId/finalize'
@@ -1154,6 +1228,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedRefsRouteRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
+    '/_authenticated/refs-v2': {
+      id: '/_authenticated/refs-v2'
+      path: '/refs-v2'
+      fullPath: '/refs-v2'
+      preLoaderRoute: typeof AuthenticatedRefsV2RouteRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
     '/_authenticated/samples': {
       id: '/_authenticated/samples'
       path: '/samples'
@@ -1294,6 +1375,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedJobsJobIdRouteImport
       parentRoute: typeof AuthenticatedJobsRoute
     }
+    '/_authenticated/refs-v2/': {
+      id: '/_authenticated/refs-v2/'
+      path: '/'
+      fullPath: '/refs-v2/'
+      preLoaderRoute: typeof AuthenticatedRefsV2IndexRouteImport
+      parentRoute: typeof AuthenticatedRefsV2RouteRoute
+    }
+    '/_authenticated/refs-v2/$referenceId': {
+      id: '/_authenticated/refs-v2/$referenceId'
+      path: '/$referenceId'
+      fullPath: '/refs-v2/$referenceId'
+      preLoaderRoute: typeof AuthenticatedRefsV2ReferenceIdRouteRouteImport
+      parentRoute: typeof AuthenticatedRefsV2RouteRoute
+    }
     '/_authenticated/refs/': {
       id: '/_authenticated/refs/'
       path: '/'
@@ -1420,6 +1515,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAdministrationUsersUserIdRouteImport
       parentRoute: typeof AuthenticatedAdministrationRouteRoute
     }
+    '/_authenticated/refs-v2/$referenceId/': {
+      id: '/_authenticated/refs-v2/$referenceId/'
+      path: '/'
+      fullPath: '/refs-v2/$referenceId/'
+      preLoaderRoute: typeof AuthenticatedRefsV2ReferenceIdIndexRouteImport
+      parentRoute: typeof AuthenticatedRefsV2ReferenceIdRouteRoute
+    }
     '/_authenticated/refs/$refId/': {
       id: '/_authenticated/refs/$refId/'
       path: '/'
@@ -1510,6 +1612,20 @@ declare module '@tanstack/react-router' {
       fullPath: '/subtractions/$subtractionId/files/$filename'
       preLoaderRoute: typeof SubtractionsSubtractionIdFilesFilenameRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/_authenticated/refs-v2/$referenceId/otus/$otuId': {
+      id: '/_authenticated/refs-v2/$referenceId/otus/$otuId'
+      path: '/otus/$otuId'
+      fullPath: '/refs-v2/$referenceId/otus/$otuId'
+      preLoaderRoute: typeof AuthenticatedRefsV2ReferenceIdOtusOtuIdRouteImport
+      parentRoute: typeof AuthenticatedRefsV2ReferenceIdRouteRoute
+    }
+    '/_authenticated/refs-v2/$referenceId/otus/new': {
+      id: '/_authenticated/refs-v2/$referenceId/otus/new'
+      path: '/otus/new'
+      fullPath: '/refs-v2/$referenceId/otus/new'
+      preLoaderRoute: typeof AuthenticatedRefsV2ReferenceIdOtusNewRouteImport
+      parentRoute: typeof AuthenticatedRefsV2ReferenceIdRouteRoute
     }
     '/_authenticated/refs/$refId/indexes/': {
       id: '/_authenticated/refs/$refId/indexes/'
@@ -1750,6 +1866,44 @@ const AuthenticatedRefsRouteRouteWithChildren =
     AuthenticatedRefsRouteRouteChildren,
   )
 
+interface AuthenticatedRefsV2ReferenceIdRouteRouteChildren {
+  AuthenticatedRefsV2ReferenceIdIndexRoute: typeof AuthenticatedRefsV2ReferenceIdIndexRoute
+  AuthenticatedRefsV2ReferenceIdOtusOtuIdRoute: typeof AuthenticatedRefsV2ReferenceIdOtusOtuIdRoute
+  AuthenticatedRefsV2ReferenceIdOtusNewRoute: typeof AuthenticatedRefsV2ReferenceIdOtusNewRoute
+}
+
+const AuthenticatedRefsV2ReferenceIdRouteRouteChildren: AuthenticatedRefsV2ReferenceIdRouteRouteChildren =
+  {
+    AuthenticatedRefsV2ReferenceIdIndexRoute:
+      AuthenticatedRefsV2ReferenceIdIndexRoute,
+    AuthenticatedRefsV2ReferenceIdOtusOtuIdRoute:
+      AuthenticatedRefsV2ReferenceIdOtusOtuIdRoute,
+    AuthenticatedRefsV2ReferenceIdOtusNewRoute:
+      AuthenticatedRefsV2ReferenceIdOtusNewRoute,
+  }
+
+const AuthenticatedRefsV2ReferenceIdRouteRouteWithChildren =
+  AuthenticatedRefsV2ReferenceIdRouteRoute._addFileChildren(
+    AuthenticatedRefsV2ReferenceIdRouteRouteChildren,
+  )
+
+interface AuthenticatedRefsV2RouteRouteChildren {
+  AuthenticatedRefsV2ReferenceIdRouteRoute: typeof AuthenticatedRefsV2ReferenceIdRouteRouteWithChildren
+  AuthenticatedRefsV2IndexRoute: typeof AuthenticatedRefsV2IndexRoute
+}
+
+const AuthenticatedRefsV2RouteRouteChildren: AuthenticatedRefsV2RouteRouteChildren =
+  {
+    AuthenticatedRefsV2ReferenceIdRouteRoute:
+      AuthenticatedRefsV2ReferenceIdRouteRouteWithChildren,
+    AuthenticatedRefsV2IndexRoute: AuthenticatedRefsV2IndexRoute,
+  }
+
+const AuthenticatedRefsV2RouteRouteWithChildren =
+  AuthenticatedRefsV2RouteRoute._addFileChildren(
+    AuthenticatedRefsV2RouteRouteChildren,
+  )
+
 interface AuthenticatedAccountRouteChildren {
   AuthenticatedAccountApiRoute: typeof AuthenticatedAccountApiRoute
   AuthenticatedAccountProfileRoute: typeof AuthenticatedAccountProfileRoute
@@ -1883,6 +2037,7 @@ const AuthenticatedSubtractionsRouteWithChildren =
 interface AuthenticatedRouteChildren {
   AuthenticatedAdministrationRouteRoute: typeof AuthenticatedAdministrationRouteRouteWithChildren
   AuthenticatedRefsRouteRoute: typeof AuthenticatedRefsRouteRouteWithChildren
+  AuthenticatedRefsV2RouteRoute: typeof AuthenticatedRefsV2RouteRouteWithChildren
   AuthenticatedAccountRoute: typeof AuthenticatedAccountRouteWithChildren
   AuthenticatedHmmsRoute: typeof AuthenticatedHmmsRouteWithChildren
   AuthenticatedHomeRoute: typeof AuthenticatedHomeRoute
@@ -1896,6 +2051,7 @@ const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
   AuthenticatedAdministrationRouteRoute:
     AuthenticatedAdministrationRouteRouteWithChildren,
   AuthenticatedRefsRouteRoute: AuthenticatedRefsRouteRouteWithChildren,
+  AuthenticatedRefsV2RouteRoute: AuthenticatedRefsV2RouteRouteWithChildren,
   AuthenticatedAccountRoute: AuthenticatedAccountRouteWithChildren,
   AuthenticatedHmmsRoute: AuthenticatedHmmsRouteWithChildren,
   AuthenticatedHomeRoute: AuthenticatedHomeRoute,
