@@ -24,9 +24,9 @@ export function BaseWorkflowTag<T extends ElementType = "div">({
 	return (
 		<Component
 			className={cn(
-				"flex items-center gap-1.5 bg-purple-800 text-white text-sm font-bold px-2 py-1.5",
+				"flex items-center gap-1.5 bg-gray-700 text-white text-sm font-bold px-2 py-1.5",
 				"first:rounded-l-sm last:rounded-r-sm",
-				"[&:not(:last-child)]:border-r-2 [&:not(:last-child)]:border-purple-400",
+				"[&:not(:last-child)]:border-r-2 [&:not(:last-child)]:border-gray-500",
 				"[&_svg]:leading-[inherit]",
 				className,
 			)}

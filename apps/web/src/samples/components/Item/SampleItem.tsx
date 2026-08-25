@@ -85,9 +85,8 @@ export default function SampleItem({
 				<div className="sample-table-grid pb-2" role="row">
 					<div
 						aria-colindex={2}
-						aria-colspan={6}
 						aria-label="Labels"
-						className="col-start-2 col-end-[-1] flex flex-wrap gap-1 px-4"
+						className="col-start-2 col-end-3 flex flex-wrap gap-1 px-4"
 						role="cell"
 					>
 						{sample.labels.map((label) => (

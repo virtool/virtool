@@ -1,17 +1,15 @@
 import Icon from "@base/Icon";
-import Link from "@base/Link";
 import type { WorkflowState } from "@virtool/contracts";
 import { workflowStateIcons } from "../Filter/workflowStateIcons";
 import { BaseWorkflowTag } from "./BaseWorkflowTag";
 
 type SampleItemWorkflowTagProps = {
 	displayName: string;
-	sampleId: number;
 	workflowState: WorkflowState;
 };
 
 /**
- * An inline tag for displaying the current state of a workflow.
+ * An inline segment displaying the current state of a single workflow.
  *
  * @param displayName - the display name of the workflow
  * @param workflowState - current state of the workflow
@@ -19,18 +17,13 @@ type SampleItemWorkflowTagProps = {
  */
 export default function WorkflowTag({
 	displayName,
-	sampleId,
 	workflowState,
 }: SampleItemWorkflowTagProps) {
 	const { icon } =
 		workflowStateIcons[workflowState === "pending" ? "pending" : "ready"];
 
 	return (
-		<BaseWorkflowTag
-			as={Link}
-			className="hover:bg-purple-700"
-			to={`/samples/${sampleId}/analyses`}
-		>
+		<BaseWorkflowTag className="group-hover:bg-gray-800">
 			<Icon icon={icon} className="size-4" />
 			<span>{displayName}</span>
 		</BaseWorkflowTag>
