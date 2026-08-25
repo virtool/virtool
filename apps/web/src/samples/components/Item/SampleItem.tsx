@@ -88,12 +88,9 @@ export default function SampleItem({
 						ready={sample.ready}
 					/>
 				</div>
-			</div>
-			<div className="sample-table-grid pb-2 xl:hidden" role="row">
 				<div
-					aria-colindex={2}
 					aria-label="Labels"
-					className="col-start-2 col-end-3 flex flex-wrap gap-1 px-4"
+					className="col-start-2 -col-end-1 row-start-2 flex flex-wrap items-center gap-1 px-4 pb-2 xl:hidden"
 					role="cell"
 				>
 					<SampleLibraryTypeLabel libraryType={sample.libraryType} />
