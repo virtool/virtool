@@ -66,7 +66,7 @@
 		"@types/d3": "^7.4.3",
 		"@types/react": "^19.2.18",
 		"@types/react-dom": "^19.2.4",
-		"@vitejs/plugin-react": "^6.0.5",
+		"@vitejs/plugin-react": "^6.1.0",
 		"@vitest/browser-playwright": "^4.1.11",
 		"axe-core": "^4.12.1",
 		"babel-plugin-react-compiler": "^1.0.0",
@@ -74,7 +74,7 @@
 		"nitro": "3.0.260429-beta",
 		"playwright": "^1.61.1",
 		"tailwindcss": "^4.3.3",
-		"vite": "^8.2.1",
+		"vite": "^8.2.2",
 		"vitest": "^4.1.11"
 	},
 	"optionalDependencies": {
