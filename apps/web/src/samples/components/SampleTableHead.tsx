@@ -72,8 +72,14 @@ export default function SampleTableHead({
 	sort,
 }: SampleTableHeadProps) {
 	return (
-		<div className="text-sm font-semibold text-gray-600" role="rowgroup">
-			<div className="sample-table-grid items-center" role="row">
+		<div
+			className="grid grid-cols-subgrid col-span-full text-sm font-semibold text-gray-600"
+			role="rowgroup"
+		>
+			<div
+				className="grid grid-cols-subgrid col-span-full items-center"
+				role="row"
+			>
 				<div className="px-4 py-2" role="columnheader">
 					<span className="sr-only">Select</span>
 					<Checkbox

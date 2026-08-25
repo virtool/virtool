@@ -313,7 +313,7 @@ export default function SamplesList({
 							/>
 							<div
 								aria-label="Samples list"
-								className="[&_.sample-table-grid]:grid [&_.sample-table-grid]:grid-cols-[4rem_minmax(0,1fr)_16rem_12rem_10rem_4rem] xl:[&_.sample-table-grid]:grid-cols-[4rem_minmax(0,1fr)_8rem_12rem_16rem_12rem_10rem_4rem]"
+								className="grid grid-cols-[4rem_minmax(0,1fr)_max-content_max-content_max-content_4rem] xl:grid-cols-[4rem_minmax(0,1fr)_max-content_max-content_max-content_max-content_max-content_4rem]"
 								role="table"
 							>
 								<SampleTableHead
