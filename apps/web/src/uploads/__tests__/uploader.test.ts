@@ -1,6 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { UploadInProgress } from "../types";
 import {
+	cancelAll,
 	cancelUpload,
 	postUpload,
 	retryUpload,
@@ -195,9 +196,21 @@ describe("upload lifecycle", () => {
 		});
 	});
 
-	it("removes an upload on success", async () => {
+	it("marks an upload completed on success, keeping it until dismissed", async () => {
 		upload(file(), "reads");
 		xhr.emitLoad(201, JSON.stringify({ id: 1 }));
+		await flush();
+
+		expect(useUploaderStore.getState().uploads[0]).toMatchObject({
+			completed: true,
+			progress: 100,
+		});
+	});
+
+	it("cancels every upload at once", async () => {
+		upload(file(), "reads");
+		upload(file(), "reads");
+		cancelAll();
 		await flush();
 
 		expect(useUploaderStore.getState().uploads).toHaveLength(0);
@@ -232,13 +245,16 @@ describe("upload lifecycle", () => {
 
 		xhr.emitLoad(201, JSON.stringify({ id: 1 }));
 		await flush();
-		expect(useUploaderStore.getState().uploads).toHaveLength(0);
+		expect(useUploaderStore.getState().uploads[0]).toMatchObject({
+			completed: true,
+		});
 	});
 });
 
 describe("watchUploadTiming", () => {
 	it("derives speed from elapsed time between samples", () => {
 		const inProgress: UploadInProgress = {
+			completed: false,
 			failed: false,
 			fileType: "reads",
 			loaded: 1000,

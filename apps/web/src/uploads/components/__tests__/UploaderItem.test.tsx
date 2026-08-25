@@ -13,6 +13,7 @@ vi.mock("../../uploader", () => ({
 function renderItem(props: Partial<UploaderItemProps> = {}) {
 	return renderWithProviders(
 		<UploaderItem
+			completed={false}
 			failed={false}
 			localId="a"
 			name="reads.fq.gz"
@@ -48,5 +49,13 @@ describe("<UploaderItem />", () => {
 		renderItem({ failed: true });
 
 		expect(screen.getByText("Failed")).toBeInTheDocument();
+	});
+
+	it("shows no cancel control once completed", () => {
+		renderItem({ completed: true, progress: 100 });
+
+		expect(
+			screen.queryByRole("button", { name: "Cancel" }),
+		).not.toBeInTheDocument();
 	});
 });

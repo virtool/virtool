@@ -13,6 +13,9 @@ type UploaderState = {
 	/** The ID of the interval that tracks the upload progress. */
 	intervalId?: number;
 
+	/** Whether the detail card is shown. The nav indicator toggles it. */
+	open: boolean;
+
 	/** The list of uploads. */
 	uploads: UploadInProgress[];
 
@@ -34,8 +37,14 @@ type UploaderState = {
 	/** Return a failed upload to a fresh, in-progress state so it can retry. */
 	resetUpload: (localId: string) => void;
 
+	/** Mark an upload as finished successfully, awaiting dismissal. */
+	setComplete: (localId: string) => void;
+
 	/** Set an upload as failed, recording why. */
 	setFailure: (localId: string, error: string) => void;
+
+	/** Show or hide the detail card. */
+	setOpen: (open: boolean) => void;
 
 	/** Set the progress of an upload. */
 	setProgress: (localId: string, loaded: number, progress: number) => void;
@@ -47,6 +56,7 @@ type UploaderState = {
 export const useUploaderStore = create<UploaderState>()(
 	subscribeWithSelector((set) => ({
 		intervalId: 0,
+		open: false,
 		uploads: [],
 		remaining: 0,
 		samples: [],
@@ -68,6 +78,7 @@ export const useUploaderStore = create<UploaderState>()(
 					upload.localId === localId
 						? {
 								...upload,
+								completed: false,
 								error: undefined,
 								failed: false,
 								loaded: 0,
@@ -76,6 +87,20 @@ export const useUploaderStore = create<UploaderState>()(
 						: upload,
 				),
 			})),
+		setComplete: (localId) =>
+			set((state) => ({
+				uploads: state.uploads.map((upload) =>
+					upload.localId === localId
+						? {
+								...upload,
+								completed: true,
+								loaded: upload.size,
+								progress: 100,
+							}
+						: upload,
+				),
+			})),
+		setOpen: (open) => set({ open }),
 		setFailure: (localId, error) =>
 			set((state) => ({
 				uploads: state.uploads.map((upload) =>
@@ -198,7 +223,7 @@ function runUpload(localId: string, file: File, fileType: UploadType): void {
 	)
 		.then(() => {
 			tracked.delete(localId);
-			useUploaderStore.getState().removeUpload(localId);
+			useUploaderStore.getState().setComplete(localId);
 		})
 		.catch((error: Error) => {
 			if (controller.signal.aborted) {
@@ -218,6 +243,7 @@ export function upload(file: File, fileType: UploadType) {
 	const localId = createRandomString();
 
 	useUploaderStore.getState().addUpload({
+		completed: false,
 		failed: false,
 		fileType,
 		loaded: 0,
@@ -238,6 +264,24 @@ export function cancelUpload(localId: string): void {
 	tracked.get(localId)?.controller.abort();
 	tracked.delete(localId);
 	useUploaderStore.getState().removeUpload(localId);
+}
+
+/** Cancel every tracked upload, aborting those still in flight. */
+export function cancelAll(): void {
+	for (const { localId } of useUploaderStore.getState().uploads) {
+		cancelUpload(localId);
+	}
+}
+
+/** Show or hide the upload detail card. */
+export function setOpen(open: boolean): void {
+	useUploaderStore.getState().setOpen(open);
+}
+
+/** Toggle the upload detail card between shown and hidden. */
+export function toggleOpen(): void {
+	const { open, setOpen } = useUploaderStore.getState();
+	setOpen(!open);
 }
 
 /**
@@ -263,11 +307,18 @@ export function watchUploadTiming(): void {
 	const { getState, setState } = useUploaderStore;
 	const { samples, uploads } = getState();
 
-	if (uploads.every((upload) => upload.progress === 100)) {
+	const active = uploads.filter(
+		(upload) => !upload.completed && !upload.failed,
+	);
+
+	if (
+		active.length === 0 ||
+		active.every((upload) => upload.progress === 100)
+	) {
 		return;
 	}
 
-	const { loaded, total } = uploads.reduce(
+	const { loaded, total } = active.reduce(
 		(acc, upload) => ({
 			loaded: acc.loaded + upload.loaded,
 			total: acc.total + upload.size,
@@ -311,14 +362,20 @@ useUploaderStore.subscribe(
 
 		if (uploadsLength === 0) {
 			window.clearInterval(getState().intervalId);
-			setState({ intervalId: 0, remaining: 0, samples: [], speed: 0 });
+			setState({
+				intervalId: 0,
+				open: false,
+				remaining: 0,
+				samples: [],
+				speed: 0,
+			});
 		} else if (previousUploadsLength === 0) {
 			const intervalId = window.setInterval(
 				watchUploadTiming,
 				SAMPLE_INTERVAL_MS,
 			);
 
-			setState({ intervalId });
+			setState({ intervalId, open: true });
 		}
 	},
 );

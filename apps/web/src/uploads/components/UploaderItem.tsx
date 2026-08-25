@@ -3,11 +3,14 @@ import { byteSize } from "@app/format";
 import { IconButton } from "@base/Icon";
 import Loader from "@base/Loader";
 import ProgressBarAffixed from "@base/ProgressBarAffixed";
-import { RotateCw, Trash, X } from "lucide-react";
+import { Ban, Check, RotateCw, Trash } from "lucide-react";
 import type { ReactNode } from "react";
 import { cancelUpload, retryUpload } from "../uploader";
 
 export type UploaderItemProps = {
+	/* Whether the upload finished successfully */
+	completed: boolean;
+
 	/* A human-readable reason the upload failed, when `failed` is true */
 	error?: string;
 
@@ -31,6 +34,7 @@ export type UploaderItemProps = {
  * Progress tracker for a single uploaded file
  */
 export function UploaderItem({
+	completed,
 	error,
 	failed,
 	localId,
@@ -58,6 +62,17 @@ export function UploaderItem({
 				/>
 			</>
 		);
+	} else if (completed) {
+		end = (
+			<>
+				<span className="tabular-nums text-gray-500">
+					{byteSize(size, true)}
+				</span>
+				<span className="flex items-center justify-center size-9 text-green-600">
+					<Check className="size-4" />
+				</span>
+			</>
+		);
 	} else if (progress === 100) {
 		end = (
 			<>
@@ -76,7 +91,7 @@ export function UploaderItem({
 					{byteSize(size, true)}
 				</span>
 				<IconButton
-					IconComponent={X}
+					IconComponent={Ban}
 					color="gray"
 					tip="Cancel"
 					onClick={() => cancelUpload(localId)}
@@ -87,7 +102,10 @@ export function UploaderItem({
 
 	return (
 		<div className="relative">
-			<ProgressBarAffixed now={progress} color={failed ? "red" : "blue"} />
+			<ProgressBarAffixed
+				now={progress}
+				color={failed ? "red" : completed ? "green" : "blue"}
+			/>
 			<div className="flex gap-3 items-center justify-between min-h-13 px-3 py-1">
 				<span
 					className={cn("font-medium min-w-0 truncate", {
