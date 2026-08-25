@@ -1,4 +1,11 @@
-import { mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
+import {
+	mkdir,
+	mkdtemp,
+	readdir,
+	readFile,
+	rm,
+	writeFile,
+} from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 import { createIndexArtifact, type IndexOtu } from "@virtool/sqlite";
@@ -15,22 +22,24 @@ import {
 	createFakeJobsApiClient,
 	createFakeSubprocessRunner,
 	createJobsApiState,
+	createRecordingLogger,
 	createTestStorage,
 	createTestWorkPath,
 } from "@virtool/workflow/testing";
 import { describe, expect, it, onTestFinished } from "vitest";
-import { REFERENCE_INDEX_EXTRA_PARAMS, WORKFLOW_NAME } from "../cacheParams";
+import { buildReferenceIndexExtraParams, WORKFLOW_NAME } from "../cacheParams";
 import type { PathoscopeData } from "../context";
 import { workPaths } from "../paths";
 import type { PathoscopeState } from "../state";
 import { APP_VERSION } from "../version";
 import {
-	createReferenceIndexStep,
+	createRepresentativeIndexStep,
 	createSubtractionIndexStep,
 } from "./createIndexes";
 
 const BOWTIE2_BUILD = "bowtie2-build";
 const BOWTIE2_BUILD_VERSION = "2.4.4";
+const CD_HIT_EST_VERSION = "4.8.1";
 const INDEX_ID = 7;
 const SHARD_NAME = "reference.1.bt2";
 const SUBTRACTION_ID = 9;
@@ -51,7 +60,7 @@ const OTU: IndexOtu = {
 					host: null,
 					id: "seq_default",
 					segment: null,
-					sequence: "ACGTACGT",
+					sequence: "ACGTACGTACGT",
 				},
 			],
 			source_name: "A",
@@ -67,7 +76,7 @@ const OTU: IndexOtu = {
 					host: null,
 					id: "seq_other",
 					segment: null,
-					sequence: "TTTT",
+					sequence: "TTTTTTTTTTTT",
 				},
 			],
 			source_name: "B",
@@ -82,7 +91,7 @@ const OTU: IndexOtu = {
 
 function referenceIndexCacheParams(): CacheParams {
 	return buildMappingIndexCacheParams({
-		extra: REFERENCE_INDEX_EXTRA_PARAMS,
+		extra: buildReferenceIndexExtraParams(CD_HIT_EST_VERSION),
 		indexKind: "reference_mapping_index",
 		parentId: INDEX_ID,
 		toolVersion: BOWTIE2_BUILD_VERSION,
@@ -117,19 +126,60 @@ async function createHarness() {
 	const client = createFakeJobsApiClient(state);
 	const testStorage = createTestStorage();
 	const { storage } = testStorage;
+	const recordingLogger = createRecordingLogger();
 
 	const runner = createFakeSubprocessRunner();
 
 	runner.register([BOWTIE2_BUILD, "--version"], {
 		stdout: [`${BOWTIE2_BUILD} version ${BOWTIE2_BUILD_VERSION}`],
 	});
+	runner.register(["cd-hit-est", "-h"], {
+		exitCode: 1,
+		stderr: [`====== CD-HIT version ${CD_HIT_EST_VERSION} ======`],
+	});
 
 	const builtFastas: string[] = [];
+	const cdHitCommands: Array<readonly string[]> = [];
+	let shouldFailCdHit = false;
 
 	const runSubprocess: RunSubprocess = async (
 		options: RunSubprocessOptions,
 	) => {
 		const [tool, flag, , fastaPath, indexPrefix] = options.command;
+
+		if (tool === "cd-hit-est" && flag !== "-h") {
+			cdHitCommands.push(options.command);
+
+			if (shouldFailCdHit) {
+				throw new Error("cd-hit-est failed");
+			}
+
+			const input = await readFile(options.command[2] ?? "", "utf8");
+			const ids = [...input.matchAll(/^>(.+)$/gm)].map(
+				(match) => match[1] ?? "",
+			);
+			const representative = ids.at(-1) ?? "";
+			const cluster = [
+				">Cluster 0",
+				...ids.map((id, index) =>
+					id === representative
+						? `${index}\t12nt, >${id}... *`
+						: `${index}\t12nt, >${id}... at +/80.00%`,
+				),
+				"",
+			].join("\n");
+
+			await writeFile(`${options.command[4]}.clstr`, cluster);
+
+			return {
+				cancelled: false,
+				command: options.command,
+				durationMs: 1,
+				exitCode: 0,
+				signal: null,
+				stderrTail: [],
+			};
+		}
 
 		if (tool === BOWTIE2_BUILD && flag !== "--version") {
 			builtFastas.push(await readFile(fastaPath ?? "", "utf8"));
@@ -143,20 +193,25 @@ async function createHarness() {
 	};
 
 	const pathoscopeState: PathoscopeState = {
-		candidateSequenceIds: [],
+		candidateOtuIds: [],
 		subtractedCount: 0,
 	};
 
 	return {
 		builtFastas,
+		cdHitCommands,
 		client,
 		paths,
 		pathoscopeState,
+		recordingLogger,
 		runSubprocess,
 		state,
 		storage,
 		testStorage,
 		workPath,
+		failCdHit() {
+			shouldFailCdHit = true;
+		},
 
 		/**
 		 * Register a built index under the key a run derives.
@@ -190,8 +245,15 @@ async function createHarness() {
 
 async function setup() {
 	const harness = await createHarness();
-	const { client, paths, pathoscopeState, runSubprocess, storage, workPath } =
-		harness;
+	const {
+		client,
+		paths,
+		pathoscopeState,
+		recordingLogger,
+		runSubprocess,
+		storage,
+		workPath,
+	} = harness;
 
 	const data: PathoscopeData = {
 		analysisId: 1,
@@ -209,9 +271,10 @@ async function setup() {
 		...harness,
 
 		run() {
-			return createReferenceIndexStep.run(
+			return createRepresentativeIndexStep.run(
 				createFakeContext(data, pathoscopeState, {
 					client,
+					logger: recordingLogger.logger,
 					runSubprocess,
 					storage,
 					workPath,
@@ -219,11 +282,11 @@ async function setup() {
 			);
 		},
 
-		/** Write a collapsed reference for the step to read default isolates from. */
-		async writeCollapsedReference() {
-			await mkdir(dirname(paths.collapsedReference), { recursive: true });
+		/** Write the full source reference used for representative selection. */
+		async writeSourceReference() {
+			await mkdir(dirname(data.index.path), { recursive: true });
 
-			await createIndexArtifact(paths.collapsedReference, null, [OTU]);
+			await createIndexArtifact(data.index.path, null, [OTU]);
 		},
 
 		seedCachedIndex(directoryName = "reference_index") {
@@ -243,6 +306,7 @@ async function setupSubtraction() {
 		client,
 		paths,
 		pathoscopeState,
+		recordingLogger,
 		runSubprocess,
 		storage,
 		testStorage,
@@ -282,6 +346,7 @@ async function setupSubtraction() {
 			return createSubtractionIndexStep.run(
 				createFakeContext(data, pathoscopeState, {
 					client,
+					logger: recordingLogger.logger,
 					runSubprocess,
 					storage,
 					workPath,
@@ -299,43 +364,90 @@ async function setupSubtraction() {
 	};
 }
 
-describe("createReferenceIndexStep", () => {
+describe("createRepresentativeIndexStep", () => {
 	it("writes the reference fasta and caches the index on a miss", async () => {
-		const { builtFastas, paths, run, state, writeCollapsedReference } =
-			await setup();
+		const {
+			builtFastas,
+			cdHitCommands,
+			paths,
+			recordingLogger,
+			run,
+			state,
+			writeSourceReference,
+		} = await setup();
 
-		await writeCollapsedReference();
+		await writeSourceReference();
 
 		await run();
 
-		expect(builtFastas).toEqual([">seq_default\nACGTACGT\n"]);
+		expect(builtFastas).toEqual([">seq_other\nTTTTTTTTTTTT\n"]);
+		expect(cdHitCommands).toHaveLength(1);
+		expect(
+			recordingLogger
+				.records()
+				.find(
+					(record) => record.msg === "assembled representative reference fasta",
+				),
+		).toMatchObject({
+			baseCount: 12,
+			durationMs: expect.any(Number),
+			fastaBytes: 24,
+			groupCount: 1,
+			representativeCount: 1,
+		});
 
 		expect(state.cacheRegistrations.map(({ key }) => key)).toEqual([
 			deriveCacheKey(referenceIndexCacheParams()),
 		]);
 
 		await expect(
-			readFile(`${paths.referenceIndexPrefix}.1.bt2`, "utf8"),
+			readFile(`${paths.representativeIndexPrefix}.1.bt2`, "utf8"),
 		).resolves.toBe("built shard");
 	});
 
-	// The collapsed reference is deliberately absent: assembling the FASTA has to
+	// The source reference is deliberately absent: assembling the FASTA has to
 	// open it, and `openWorkflowIndex` throws on a missing artifact. So a run that
-	// restores the index cannot have scanned the reference to write a file it
+	// restores the index cannot have scanned or clustered the reference to write a file it
 	// then deletes unread.
 	it("writes no reference fasta on a cache hit", async () => {
-		const { builtFastas, paths, run, seedCachedIndex, state } = await setup();
+		const { builtFastas, cdHitCommands, paths, run, seedCachedIndex, state } =
+			await setup();
 
 		await seedCachedIndex();
 
 		await run();
 
 		expect(builtFastas).toEqual([]);
+		expect(cdHitCommands).toEqual([]);
 		expect(state.cacheRegistrations).toEqual([]);
 
 		await expect(
-			readFile(join(dirname(paths.referenceIndexPrefix), SHARD_NAME), "utf8"),
+			readFile(join(dirname(paths.representativeIndexPrefix), SHARD_NAME), "utf8"),
 		).resolves.toBe("cached shard");
+	});
+
+	it("does not build or cache an index when representative preparation fails", async () => {
+		const {
+			builtFastas,
+			failCdHit,
+			run,
+			state,
+			workPath,
+			writeSourceReference,
+		} = await setup();
+
+		await writeSourceReference();
+		failCdHit();
+
+		await expect(run()).rejects.toThrow("cd-hit-est failed");
+
+		expect(builtFastas).toEqual([]);
+		expect(state.cacheRegistrations).toEqual([]);
+		expect(
+			(await readdir(workPath)).filter((name) =>
+				name.startsWith("reference-fasta-"),
+			),
+		).toEqual([]);
 	});
 
 	// The namespace is shared, so a blob can have been archived from a directory
@@ -348,7 +460,7 @@ describe("createReferenceIndexStep", () => {
 		await seedCachedIndex("reference-index");
 
 		await expect(run()).rejects.toThrow(
-			`restored to ${join(workPath, "reference-index")}, not ${dirname(paths.referenceIndexPrefix)}`,
+			`restored to ${join(workPath, "reference-index")}, not ${dirname(paths.representativeIndexPrefix)}`,
 		);
 
 		expect(builtFastas).toEqual([]);

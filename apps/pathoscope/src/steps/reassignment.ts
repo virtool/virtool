@@ -26,7 +26,7 @@ export const reassignmentStep: PathoscopeStep = {
 	async run({ client, data, logger, runSubprocess, state, workPath }) {
 		const paths = workPaths(workPath);
 
-		if (state.candidateSequenceIds.length === 0) {
+		if (state.candidateOtuIds.length === 0) {
 			logger.info("no candidate otus found; uploading empty result");
 
 			await finalize(client, data.analysisId, {

@@ -49,16 +49,16 @@ export type PathoscopePaths = {
 	/** The directory archived into the collapsed-reference cache */
 	collapsedReferenceDir: string;
 
-	/** The bowtie2 index prefix over the collapsed default isolates */
-	referenceIndexPrefix: string;
+	/** The bowtie2 index prefix over full-source reference representatives */
+	representativeIndexPrefix: string;
 
 	subtraction: (subtractionId: number) => SubtractionPaths;
 
 	/** Every sequence of every candidate OTU */
-	isolateFasta: string;
+	candidateOtuFasta: string;
 
-	/** The bowtie2 index prefix over {@link isolateFasta} */
-	isolateIndexPrefix: string;
+	/** The bowtie2 index prefix over {@link candidateOtuFasta} */
+	candidateOtuIndexPrefix: string;
 
 	/** Reads that aligned to an isolate, written by `bowtie2 --al` */
 	isolateFastq: string;
@@ -118,7 +118,7 @@ export function workPaths(workPath: string): PathoscopePaths {
 		),
 		collapsedReferenceDir: join(workPath, "collapsed_reference"),
 
-		referenceIndexPrefix: join(workPath, "reference_index", "reference"),
+		representativeIndexPrefix: join(workPath, "reference_index", "reference"),
 
 		subtraction: (subtractionId) => {
 			const dir = join(workPath, "subtraction_indexes", String(subtractionId));
@@ -139,8 +139,8 @@ export function workPaths(workPath: string): PathoscopePaths {
 		},
 
 		isolatesDir,
-		isolateFasta: join(isolatesDir, "isolate_index.fa"),
-		isolateIndexPrefix: join(isolatesDir, "isolates"),
+		candidateOtuFasta: join(isolatesDir, "isolate_index.fa"),
+		candidateOtuIndexPrefix: join(isolatesDir, "isolates"),
 		isolateFastq: join(isolatesDir, "isolate_mapped.fq"),
 		isolateBam: join(isolatesDir, "to_isolates.bam"),
 

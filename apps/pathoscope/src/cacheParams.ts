@@ -16,7 +16,7 @@
  *   than anything declared here. Their artifact is a bowtie2 index, which
  *   `bowtie2-build` produces identically whoever ran it, so this side
  *   contributes only {@link WORKFLOW_NAME} and
- *   {@link REFERENCE_INDEX_EXTRA_PARAMS} — what the index was built from.
+ *   {@link buildReferenceIndexExtraParams} — what the index was built from.
  * - `collapsed_reference` is **forked**, deliberately, and is this workflow's
  *   alone. Its artifact is a SQLite index *this code* writes, and a collapsed
  *   index from the shared namespace is not interchangeable with it.
@@ -28,10 +28,10 @@
 
 import {
 	type CacheParams,
-	matchToolVersion,
-	type RunSubprocess,
+	CD_HIT_EST_TOOL,
+	REFERENCE_REPRESENTATIVE_POLICY,
 } from "@virtool/workflow";
-import { CD_HIT_EST_IDENTITY, CD_HIT_EST_TOOL } from "./reference/collapse";
+import { CD_HIT_EST_IDENTITY } from "./reference/collapse";
 
 export const WORKFLOW_NAME = "pathoscope";
 
@@ -43,7 +43,7 @@ export const WORKFLOW_NAME = "pathoscope";
  * serialization differs and so does the SHA-256 over it. Bump the value if the
  * collapsed artifact's content ever changes shape; do not remove it.
  */
-const COLLAPSE_IMPL = "typescript-v1";
+const COLLAPSE_IMPL = "typescript-v2";
 
 /** Params for the forked `collapsed_reference` namespace. */
 export function buildCollapsedReferenceCacheParams({
@@ -72,50 +72,22 @@ export function buildCollapsedReferenceCacheParams({
  * What this workflow's reference mapping index adds, describing the FASTA it was
  * built from.
  *
- * Pathoscope maps against a *collapsed* reference, so its index is built from
- * different bytes than one built straight off the artifact's default isolates.
- * These fields are what keep the two out of each other's namespace.
+ * Pathoscope maps against representatives selected from the full source
+ * reference. These fields keep that policy out of every older or differently
+ * selected mapping-index namespace.
  */
-export const REFERENCE_INDEX_EXTRA_PARAMS = {
-	collapse_identity: CD_HIT_EST_IDENTITY,
-	selection: "default_isolates",
-	source: "collapsed_reference",
-};
-
-/**
- * Read `cd-hit-est`'s version.
- *
- * **`cd-hit-est -h` prints its help text and exits 1**, so the subprocess
- * failure is caught and the output parsed anyway. There is no `--version` flag
- * to use instead. Both streams are collected because the tool has moved the
- * banner between them across releases.
- *
- * @throws {WorkflowError} when the output carries no recognisable version.
- */
-export async function getCdHitEstVersion(
-	runSubprocess: RunSubprocess,
-): Promise<string> {
-	const lines: string[] = [];
-
-	const collect = (line: string) => {
-		lines.push(line);
+export function buildReferenceIndexExtraParams(
+	toolVersion: string,
+): Record<string, string> {
+	return {
+		selection: "cd_hit_est_representatives",
+		selection_coverage: REFERENCE_REPRESENTATIVE_POLICY.coverage,
+		selection_identity: REFERENCE_REPRESENTATIVE_POLICY.identity,
+		selection_minimum_length: REFERENCE_REPRESENTATIVE_POLICY.minimumLength,
+		selection_policy_version: REFERENCE_REPRESENTATIVE_POLICY.version,
+		selection_source: "full_source_reference",
+		selection_tool: CD_HIT_EST_TOOL,
+		selection_tool_version: toolVersion,
+		selection_word_size: REFERENCE_REPRESENTATIVE_POLICY.wordSize,
 	};
-
-	try {
-		await runSubprocess({
-			command: [CD_HIT_EST_TOOL, "-h"],
-			stdout: collect,
-			stderr: collect,
-		});
-	} catch {
-		// Expected: the help text is the output and exit 1 is how it ends. A tool
-		// that is genuinely absent produces no matching line and fails below,
-		// naming the version parse rather than the exit code.
-	}
-
-	return matchToolVersion(
-		/\bCD-HIT\s+version\s+(\S+)/,
-		lines,
-		"Could not parse cd-hit-est version",
-	);
 }

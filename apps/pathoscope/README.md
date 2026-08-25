@@ -2,9 +2,10 @@
 
 The pathoscope workflow executor. Pathoscope quantifies known viruses in a
 sample: it collapses redundant isolates out of the reference, maps the sample
-against one representative per OTU to find candidates, rebuilds an index
-carrying every isolate of just those OTUs, maps again, drops reads that belong
-to the host, and reassigns the reads that matched more than one isolate.
+against CD-HIT-EST representatives from every OTU and declared segment to find
+candidates, rebuilds an index carrying every collapsed isolate of just those
+OTUs, maps again, drops reads that belong to the host, and reassigns the reads
+that matched more than one isolate.
 
 Image: `ghcr.io/virtool/ts-pathoscope`. Eight steps, four external
 tools — `bowtie2`, `cd-hit-est`, `pigz`, `samtools` — and `pathoscope-core`,

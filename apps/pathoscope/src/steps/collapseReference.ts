@@ -2,12 +2,13 @@ import { mkdir, mkdtemp, rm } from "node:fs/promises";
 import { dirname, join } from "node:path";
 import type { Logger } from "@virtool/logger";
 import { createIndexArtifact, openWorkflowIndex } from "@virtool/sqlite";
-import { deriveCacheKey, type RunSubprocess } from "@virtool/workflow";
-import { cacheFor } from "../cache";
 import {
-	buildCollapsedReferenceCacheParams,
+	deriveCacheKey,
 	getCdHitEstVersion,
-} from "../cacheParams";
+	type RunSubprocess,
+} from "@virtool/workflow";
+import { cacheFor } from "../cache";
+import { buildCollapsedReferenceCacheParams } from "../cacheParams";
 import { type PathoscopePaths, workPaths } from "../paths";
 import {
 	collapseOtus,

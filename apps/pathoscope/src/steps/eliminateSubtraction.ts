@@ -19,7 +19,7 @@ export const eliminateSubtractionStep: PathoscopeStep = {
 	async run({ data, logger, proc, runSubprocess, state, workPath }) {
 		const paths = workPaths(workPath);
 
-		if (state.candidateSequenceIds.length === 0) {
+		if (state.candidateOtuIds.length === 0) {
 			logger.info("no candidate otus; nothing to subtract");
 
 			return;

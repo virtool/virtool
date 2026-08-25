@@ -64,7 +64,7 @@ export type Workflow<TData, TState> = Omit<
 /**
  * Title-case an id.
  *
- * `map_default_isolates` becomes `Map Default Isolates`, which is the label the
+ * `map_representatives` becomes `Map Representatives`, which is the label the
  * UI shows. Every letter whose predecessor is not a letter is uppercased, which
  * is why this matches on the boundary rather than splitting on spaces.
  */

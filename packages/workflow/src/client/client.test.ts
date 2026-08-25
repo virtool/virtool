@@ -116,7 +116,7 @@ describe("paths", () => {
 
 		await client.getJob();
 		await client.ping();
-		await client.startStep("map_default_isolates");
+		await client.startStep("map_representatives");
 		await client.finish();
 
 		expect(
@@ -124,7 +124,7 @@ describe("paths", () => {
 		).toEqual([
 			"GET /jobs/17",
 			"PUT /jobs/17/ping",
-			"POST /jobs/17/steps/map_default_isolates/start",
+			"POST /jobs/17/steps/map_representatives/start",
 			"POST /jobs/17/finish",
 		]);
 	});

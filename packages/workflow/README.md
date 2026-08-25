@@ -46,6 +46,19 @@ Run every external tool through `context.runSubprocess`:
 - the child runs in a process group so cancellation kills descendants;
 - cancellation sends `SIGTERM`, then `SIGKILL` after five seconds.
 
+### Reference representatives
+
+`selectReferenceRepresentatives()` streams full-reference OTUs and runs one
+single-threaded `cd-hit-est` process per OTU and declared segment. Its exported
+policy fixes global identity at `0.80`, word size at `5`, minimum length at `9`,
+and uses no coverage controls. Callers provide the scratch path, subprocess
+runner, and concurrency bound; the selector yields original sequence records in
+deterministic group and cluster order and removes its temporary files on every
+exit path.
+
+Invalid grouping, malformed or incomplete cluster output, and subprocess
+failure reject selection. There is no default-sequence or all-sequence fallback.
+
 `createRunSubprocess()` logs `ESRCH` and `EPIPE` from a signal racing process
 exit at debug level. An ordinary tool exit with code 15 is a failure; only a
 cancellation-driven kill resolves with `cancelled: true`.

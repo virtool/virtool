@@ -7,8 +7,8 @@ type State = { hits: number };
 
 function makeStep(overrides: Partial<WorkflowStep<Data, State>> = {}) {
 	return {
-		id: "map_default_isolates",
-		description: "Map reads to the default isolates.",
+		id: "map_representatives",
+		description: "Map reads to reference representatives.",
 		run: async () => {},
 		...overrides,
 	};
@@ -31,15 +31,15 @@ describe("defineWorkflow", () => {
 		]);
 
 		expect(workflow.steps.map((step) => step.name)).toEqual([
-			"Map Default Isolates",
+			"Map Representatives",
 			"Write Report",
 		]);
 	});
 
 	it("keeps an explicit display name", () => {
-		const workflow = define([makeStep({ name: "Map to Default Isolates" })]);
+		const workflow = define([makeStep({ name: "Map to Representatives" })]);
 
-		expect(workflow.steps[0]?.name).toBe("Map to Default Isolates");
+		expect(workflow.steps[0]?.name).toBe("Map to Representatives");
 	});
 
 	// The display name is what the UI shows, so it has to come out of the id
@@ -72,8 +72,8 @@ describe("defineWorkflow", () => {
 	});
 
 	it.each([
-		["MapDefaultIsolates", "camel or pascal case"],
-		["map-default-isolates", "kebab case"],
+		["MapRepresentatives", "camel or pascal case"],
+		["map-representatives", "kebab case"],
 		["2_map_isolates", "a leading digit"],
 		["map isolates", "a space"],
 		["", "an empty string"],
@@ -89,7 +89,7 @@ describe("defineWorkflow", () => {
 
 		expect(() => define(steps)).toThrow(WorkflowDefinitionError);
 		expect(() => define(steps)).toThrow(
-			/pathoscope step "map_default_isolates" has an id already used/,
+			/pathoscope step "map_representatives" has an id already used/,
 		);
 	});
 
@@ -101,7 +101,7 @@ describe("defineWorkflow", () => {
 			WorkflowDefinitionError,
 		);
 		expect(() => define([makeStep({ description })])).toThrow(
-			/pathoscope step "map_default_isolates" has an empty description/,
+			/pathoscope step "map_representatives" has an empty description/,
 		);
 	});
 });

@@ -8,15 +8,15 @@
 /** Cross-step scratch for one pathoscope run. */
 export type PathoscopeState = {
 	/**
-	 * The reference sequences the sample's reads mapped to.
+	 * The OTUs owning reference representatives the sample's reads mapped to.
 	 *
-	 * Empty until `map_default_isolates` fills it, and **an empty set after that
+	 * Empty until `map_representatives` fills it, and **an empty list after that
 	 * step is a legitimate outcome**: the sample carries nothing this reference
 	 * knows about. Four later steps short-circuit on it, because `bowtie2-build`
 	 * exits 1 on an empty FASTA and every step after that has no index to map
 	 * against.
 	 */
-	candidateSequenceIds: string[];
+	candidateOtuIds: string[];
 
 	/**
 	 * Reads dropped for aligning at least as well to a subtraction, accumulated
@@ -26,5 +26,5 @@ export type PathoscopeState = {
 };
 
 export function createPathoscopeState(): PathoscopeState {
-	return { candidateSequenceIds: [], subtractedCount: 0 };
+	return { candidateOtuIds: [], subtractedCount: 0 };
 }
