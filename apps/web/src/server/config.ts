@@ -160,7 +160,7 @@ function buildStorage(raw: StorageEnv, ctx: z.RefinementCtx): StorageConfig {
 }
 
 // Every key also accepts a `<KEY>_FILE` variant naming a file to read the value
-// from. The resolver is shared with `apps/jobs-api` through
+// from. The resolver is shared with `apps/internal` through
 // `@virtool/contracts/env` rather than copied, so the precedence rule — the
 // file wins over a plain variable of the same name — cannot drift between the
 // two services.

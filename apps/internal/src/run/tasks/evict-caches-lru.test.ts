@@ -1,10 +1,12 @@
 import type { Db } from "@virtool/data/db/pg";
 import { caches } from "@virtool/data/db/schema/caches";
+import { settings } from "@virtool/data/db/schema/settings";
 import { tasks } from "@virtool/data/db/schema/tasks";
 import {
 	createTestDatabase,
 	type TestDatabase,
 } from "@virtool/data/db/test/fixtures";
+import { seedSettings } from "@virtool/data/settings/test/fixtures";
 import { createLogger, type Logger } from "@virtool/logger";
 import type { StorageBackend } from "@virtool/storage";
 import { cacheKey, MemoryStorage } from "@virtool/storage";
@@ -36,6 +38,9 @@ afterAll(async () => {
 beforeEach(async () => {
 	await db.delete(caches);
 	await db.delete(tasks);
+	// Cleared so each test starts from the seeded default budget unless it sets
+	// its own.
+	await db.delete(settings);
 
 	storage = new MemoryStorage();
 	ctx = { db, storage };
@@ -49,8 +54,8 @@ async function* body(text: string): AsyncIterable<Uint8Array> {
  * Seed `count` cache entries of `size` declared bytes each, oldest first.
  *
  * The declared `size` is a column rather than a measurement, so a store that
- * reads as hundreds of gigabytes — enough to press against the hardcoded
- * budget the body passes — costs a handful of bytes of real object storage.
+ * reads as hundreds of gigabytes — enough to press against the budget the body
+ * reads from settings — costs a handful of bytes of real object storage.
  */
 async function seedEntries(count: number, size: number): Promise<string[]> {
 	const keys: string[] = [];
@@ -129,7 +134,7 @@ describe("evictCachesLruTask", () => {
 		expect(await remainingKeys()).toEqual(keys);
 	});
 
-	// 150 GiB stored against the hardcoded 100 GiB budget, so 50 GiB has to go and
+	// 150 GiB stored against the default 100 GiB budget, so 50 GiB has to go and
 	// the five least recently used entries are what covers it.
 	it("evicts the least recently used entries once the store is over budget", async () => {
 		const keys = await seedEntries(15, 10 * GIB);
@@ -151,6 +156,28 @@ describe("evictCachesLruTask", () => {
 		await expect(
 			storage.size(cacheKey("0".padStart(32, "0"))),
 		).rejects.toThrow();
+	});
+
+	// 150 GiB stored against a 40 GiB budget seeded into settings, so 110 GiB has
+	// to go and the eleven least recently used entries cover it.
+	it("evicts against the budget configured in settings", async () => {
+		await seedSettings(db, { cacheStorageBudget: 40 * GIB });
+
+		const keys = await seedEntries(15, 10 * GIB);
+
+		const task = await claimTask(db, evictCachesLruTask);
+
+		const outcome = await runTask({
+			db,
+			def: evictCachesLruTask,
+			task,
+			ctx,
+			logger,
+			signal: new AbortController().signal,
+		});
+
+		expect(outcome).toEqual({ status: "completed" });
+		expect(await remainingKeys()).toEqual(keys.slice(11));
 	});
 
 	it("fails the task and leaves every row when storage refuses a delete", async () => {

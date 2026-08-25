@@ -1,4 +1,4 @@
-// The jobs API's wire contract, shared by the routes in `apps/jobs-api` — the
+// The jobs API's wire contract, shared by the routes in `apps/internal` — the
 // control plane for running jobs — and the workflow runtime's HTTP client,
 // which is the only thing that calls them. Both sides import
 // these schemas: the routes parse incoming bodies with the same shapes the

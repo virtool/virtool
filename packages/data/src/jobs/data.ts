@@ -537,8 +537,8 @@ export async function startJobStep(
  *
  * The success half of the terminal transition, and the only one a runner makes.
  * There is deliberately no failure counterpart: a job fails by being cancelled
- * or by the stalled-job sweep in `apps/tasks`, neither of which the runner
- * drives.
+ * or by the stalled-job sweep in `apps/internal`'s `run` subcommand, neither of
+ * which the runner drives.
  *
  * @throws {JobNotFoundError} when no such job exists.
  * @throws {JobNotRunningError} when the job is in any other state, which is

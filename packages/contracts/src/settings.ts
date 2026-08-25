@@ -27,6 +27,11 @@ export type SampleGroup = (typeof sampleGroups)[number];
  * a workflow and carries no NCBI field at all.
  */
 export type Settings = {
+	/**
+	 * The object-storage budget, in bytes, the LRU cache eviction task keeps the
+	 * cache store under.
+	 */
+	cacheStorageBudget: number;
 	defaultSourceTypes: string[];
 	enableSentry: boolean;
 	hasNcbiApiKey: boolean;

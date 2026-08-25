@@ -8,6 +8,7 @@
 import type { SampleGroup } from "@virtool/contracts";
 import { sql } from "drizzle-orm";
 import {
+	bigint,
 	boolean,
 	check,
 	integer,
@@ -20,6 +21,12 @@ export const settings = pgTable(
 	"settings",
 	{
 		id: integer("id").primaryKey(),
+		// The object-storage budget, in bytes, the LRU cache eviction task keeps
+		// the cache store under. `mode: "number"` is safe up to 2^53, far above
+		// any realistic budget.
+		cacheStorageBudget: bigint("cache_storage_budget", {
+			mode: "number",
+		}).notNull(),
 		defaultSourceTypes: jsonb("default_source_types")
 			.$type<string[]>()
 			.notNull(),
@@ -38,6 +45,10 @@ export const settings = pgTable(
 	},
 	(table) => [
 		check("ck_settings_singleton", sql`${table.id} = 1`),
+		check(
+			"ck_settings_cache_storage_budget",
+			sql`${table.cacheStorageBudget} > 0`,
+		),
 		check(
 			"ck_settings_sample_group",
 			sql`${table.sampleGroup} in ('none', 'force_choice', 'users_primary_group')`,

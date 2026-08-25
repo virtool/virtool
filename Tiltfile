@@ -1,14 +1,16 @@
 local(['bash', 'dev/scripts/ensure-minikube.sh'], quiet=False)
 
 # Every live-edit target is a bool flag named after its Dockerfile stage, e.g.
-# `tilt up -- --web --jobs-api`. The web target is listed apart because it
+# `tilt up -- --web --internal`. The web target is listed apart because it
 # alone runs a dev server rather than the built artifact, so it needs an
 # entrypoint and sync rules; see its docker_build below.
 WEB_IMAGE = 'ghcr.io/virtool/web'
 
+# One image, three workloads. The `internal` stage builds once; the jobs-api
+# and tasks Deployments and the migration Job all run it, differentiated by the
+# subcommand each passes as an argument. So `--internal` rebuilds all three.
 SERVICE_TARGETS = [
-    ('jobs-api', 'ghcr.io/virtool/jobs-api'),
-    ('tasks', 'ghcr.io/virtool/tasks'),
+    ('internal', 'ghcr.io/virtool/internal'),
 ]
 
 # Every workflow is on manual trigger. A ScaledJob's pods are one-shot and only
@@ -62,9 +64,9 @@ k8s_resource("postgres", labels=['data'])
 k8s_yaml('dev/manifests/config.yaml')
 k8s_yaml('dev/manifests/ingress.yaml')
 
-# The migration Job temporarily runs the tasks image's Drizzle migrator
-# entrypoint. It stays a separate Job so the long-lived tasks process only
-# starts after schema changes have been applied.
+# The migration Job runs the internal image's `migrate` subcommand. It stays a
+# separate Job so the long-lived processes only start after schema changes have
+# been applied.
 k8s_yaml('dev/manifests/migration.yaml')
 
 # Anything in the build context that no sync below covers forces a full image

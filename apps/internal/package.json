@@ -1,5 +1,5 @@
 {
-	"name": "@virtool/tasks",
+	"name": "@virtool/internal",
 	"version": "0.0.0",
 	"private": true,
 	"type": "module",
@@ -8,11 +8,11 @@
 	],
 	"scripts": {
 		"build": "tsdown",
-		"start": "node --import @sentry/node/preload dist/index.mjs",
 		"test": "vitest run",
 		"typecheck": "tsc --noEmit"
 	},
 	"dependencies": {
+		"@hono/node-server": "^2.1.0",
 		"@sentry/node": "^10.70.0",
 		"@virtool/archive": "workspace:*",
 		"@virtool/contracts": "workspace:*",
@@ -22,6 +22,8 @@
 		"@virtool/service": "workspace:*",
 		"@virtool/sqlite": "workspace:*",
 		"@virtool/storage": "workspace:*",
+		"drizzle-orm": "^0.45.2",
+		"hono": "^4.13.0",
 		"pino": "^10.1.0",
 		"postgres": "^3.4.9",
 		"prom-client": "^15.1.3",
@@ -30,8 +32,7 @@
 	},
 	"devDependencies": {
 		"@types/tar-stream": "^3.1.4",
-		"drizzle-orm": "^0.45.2",
 		"tsdown": "^0.22.14",
-		"vitest": "^4.1.10"
+		"vitest": "^4.1.11"
 	}
 }
