@@ -122,6 +122,16 @@ function isActive(): SQL | undefined {
  */
 export type PeriodicSpawnOutcome = "spawned" | "skipped_locked" | "not_due";
 
+/**
+ * How long an outstanding row suppresses new spawns of its type before the gate
+ * treats it as wedged and lets a spawn through.
+ *
+ * Twelve times {@link TASK_LEASE_SECONDS}, and well above any periodic task's
+ * real runtime, so a healthy run never trips it and a stuck type frees itself
+ * within the hour rather than never.
+ */
+export const TASK_WEDGE_SECONDS = 3600;
+
 /** What {@link createPeriodicTask} did, and the row if it inserted one. */
 export type PeriodicSpawnResult =
 	| { outcome: "spawned"; task: Task }
@@ -161,18 +171,24 @@ export type PeriodicSpawnResult =
  * tick, and the caller moves on without retrying or escalating.
  *
  * **The spawn is gated on outstanding work as well as on recency.** A row of
- * the type that is still {@link isActive} suppresses the spawn *whatever its
- * age*, so a type has at most one outstanding row at a time. Gating on recency
- * alone would keep inserting once the last row ages out of the window however
- * wedged the runner is, and a fleet that comes back after an outage would find
- * a pile of identical periodic tasks to drain rather than one.
+ * the type that is still {@link isActive} suppresses the spawn until it reaches
+ * {@link TASK_WEDGE_SECONDS} of age, so a type has at most one outstanding row
+ * at a time in ordinary running. Gating on recency alone would keep inserting
+ * once the last row ages out of the window however wedged the runner is, and a
+ * fleet that comes back after an outage would find a pile of identical periodic
+ * tasks to drain rather than one.
  *
  * That an active row is what blocks — rather than an incomplete one — is what
  * keeps a failure from blocking the type forever: a row carrying an `error`
  * without being marked `complete` re-arms on the ordinary interval like any
- * other finished one. A row whose lease has gone stale *does* block, because a
+ * other finished one. A row whose lease has gone stale blocks too, because a
  * reclaim will run it and a second row would then be the duplicate this gate
  * exists to avoid.
+ *
+ * The age ceiling backstops a row nothing ever finishes — a runner wedged with
+ * a live heartbeat, or one that re-wedges on every reclaim — which would
+ * otherwise block the type for good. Past {@link TASK_WEDGE_SECONDS} the gate
+ * lets a spawn through, bounding the cost to one duplicate per ceiling window.
  *
  * The lock, the check and the insert are one transaction; the event is emitted
  * after it commits, so a rolled-back insert cannot announce a row that does not
@@ -206,7 +222,10 @@ export async function createPeriodicTask(
 					and(
 						eq(tasksTable.type, type),
 						or(
-							isActive(),
+							and(
+								isActive(),
+								gt(tasksTable.created_at, secondsAgo(TASK_WEDGE_SECONDS)),
+							),
 							gt(tasksTable.created_at, secondsAgo(intervalSeconds)),
 						),
 					),

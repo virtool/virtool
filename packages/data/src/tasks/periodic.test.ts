@@ -14,7 +14,7 @@ import type { Db, PgClient } from "../db/pg";
 import { tasks } from "../db/schema/tasks";
 import { createTestDatabase, type TestDatabase } from "../db/test/fixtures";
 import { collectFrames } from "../test/frames";
-import { createPeriodicTask } from "./data";
+import { createPeriodicTask, TASK_WEDGE_SECONDS } from "./data";
 
 let database: TestDatabase;
 let db: Db;
@@ -279,7 +279,7 @@ describe("the recency window", () => {
  */
 describe("the outstanding-work gate", () => {
 	it("suppresses a spawn while a queued task of the type is outstanding", async () => {
-		await seedTask("sweep_blast", 3600);
+		await seedTask("sweep_blast", 300);
 
 		expect(await createPeriodicTask(db, "sweep_blast", 30)).toEqual({
 			outcome: "not_due",
@@ -295,7 +295,7 @@ describe("the outstanding-work gate", () => {
 	 * here to avoid.
 	 */
 	it("suppresses a spawn while a claim of the type has gone stale", async () => {
-		await seedTask("sweep_blast", 3600, { acquiredSecondsAgo: 3600 });
+		await seedTask("sweep_blast", 300, { acquiredSecondsAgo: 300 });
 
 		expect((await createPeriodicTask(db, "sweep_blast", 30)).outcome).toBe(
 			"not_due",
@@ -303,7 +303,7 @@ describe("the outstanding-work gate", () => {
 	});
 
 	it("holds the backlog at one row however many ticks pass", async () => {
-		await seedTask("sweep_blast", 3600);
+		await seedTask("sweep_blast", 300);
 
 		for (let tick = 0; tick < 5; tick++) {
 			expect((await createPeriodicTask(db, "sweep_blast", 30)).outcome).toBe(
@@ -315,7 +315,7 @@ describe("the outstanding-work gate", () => {
 	});
 
 	it("re-arms once the outstanding task completes", async () => {
-		const taskId = await seedTask("sweep_blast", 3600);
+		const taskId = await seedTask("sweep_blast", 300);
 
 		expect((await createPeriodicTask(db, "sweep_blast", 30)).outcome).toBe(
 			"not_due",
@@ -344,6 +344,41 @@ describe("the outstanding-work gate", () => {
 
 	it("ignores outstanding tasks of other types", async () => {
 		await seedTask("refresh_hmms", 3600);
+
+		expect((await createPeriodicTask(db, "sweep_blast", 30)).outcome).toBe(
+			"spawned",
+		);
+	});
+});
+
+describe("the wedge ceiling", () => {
+	it("keeps suppressing an outstanding row just short of the ceiling", async () => {
+		await seedTask("sweep_blast", TASK_WEDGE_SECONDS - 60);
+
+		expect((await createPeriodicTask(db, "sweep_blast", 30)).outcome).toBe(
+			"not_due",
+		);
+	});
+
+	it("spawns once an outstanding row passes the ceiling", async () => {
+		await seedTask("sweep_blast", TASK_WEDGE_SECONDS + 60);
+
+		expect((await createPeriodicTask(db, "sweep_blast", 30)).outcome).toBe(
+			"spawned",
+		);
+
+		expect(await countTasks("sweep_blast")).toBe(2);
+	});
+
+	/**
+	 * A heartbeat renews the lease whatever the task is doing, so a live lease
+	 * on a wedged runner cannot be trusted to say the work is progressing. The
+	 * age ceiling is what frees the type regardless.
+	 */
+	it("spawns past the ceiling even with a fresh lease", async () => {
+		await seedTask("sweep_blast", TASK_WEDGE_SECONDS + 60, {
+			acquiredSecondsAgo: 5,
+		});
 
 		expect((await createPeriodicTask(db, "sweep_blast", 30)).outcome).toBe(
 			"spawned",
