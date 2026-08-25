@@ -133,10 +133,24 @@ const MODULES = [
 		)) as SplitServerFnModule,
 	},
 	{
+		path: "../otus-v2/functions.ts",
+		fns: await import("../otus-v2/functions"),
+		handlers: (await import(
+			"../otus-v2/functions.ts?tss-serverfn-split"
+		)) as SplitServerFnModule,
+	},
+	{
 		path: "../references/functions.ts",
 		fns: await import("../references/functions"),
 		handlers: (await import(
 			"../references/functions.ts?tss-serverfn-split"
+		)) as SplitServerFnModule,
+	},
+	{
+		path: "../references-v2/functions.ts",
+		fns: await import("../references-v2/functions"),
+		handlers: (await import(
+			"../references-v2/functions.ts?tss-serverfn-split"
 		)) as SplitServerFnModule,
 	},
 	{
