@@ -1,5 +1,18 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { postUpload } from "../uploader";
+import type { UploadInProgress } from "../types";
+import {
+	cancelAll,
+	cancelUpload,
+	postUpload,
+	retryUpload,
+	upload,
+	useUploaderStore,
+	watchUploadTiming,
+} from "../uploader";
+
+function flush(): Promise<void> {
+	return new Promise((resolve) => setTimeout(resolve, 0));
+}
 
 // A minimal, controllable stand-in for XMLHttpRequest. jsdom's real one would
 // try to hit the network (which the test setup blocks), so `postUpload`'s
@@ -40,6 +53,10 @@ class MockXhr {
 		this.events.dispatchEvent(new Event("abort"));
 	}
 
+	abort(): void {
+		this.emitAbort();
+	}
+
 	emitProgress(loaded: number, total: number): void {
 		this.upload.dispatchEvent(
 			new ProgressEvent("progress", { lengthComputable: true, loaded, total }),
@@ -57,6 +74,13 @@ beforeEach(() => {
 });
 
 afterEach(() => {
+	useUploaderStore.setState({
+		remaining: 0,
+		samples: [],
+		sampleIds: [],
+		speed: 0,
+		uploads: [],
+	});
 	vi.unstubAllGlobals();
 });
 
@@ -133,5 +157,160 @@ describe("postUpload", () => {
 			total: 10,
 			percent: 70,
 		});
+	});
+
+	it("aborts the request when its signal fires", () => {
+		const controller = new AbortController();
+		const promise = postUpload(
+			file(),
+			"reads.fq.gz",
+			"reads",
+			undefined,
+			controller.signal,
+		);
+		controller.abort();
+
+		return expect(promise).rejects.toThrow("Upload aborted.");
+	});
+});
+
+describe("upload lifecycle", () => {
+	function currentId(): string {
+		const id = useUploaderStore.getState().uploads[0]?.localId;
+		if (id === undefined) {
+			throw new Error("expected an upload");
+		}
+		return id;
+	}
+
+	it("records the server's message when an upload fails", async () => {
+		upload(file(), "reads");
+		xhr.emitLoad(
+			422,
+			JSON.stringify({ message: "A valid `name` is required." }),
+		);
+		await flush();
+
+		expect(useUploaderStore.getState().uploads[0]).toMatchObject({
+			error: "A valid `name` is required.",
+			failed: true,
+		});
+	});
+
+	it("marks an upload completed on success, keeping it until dismissed", async () => {
+		upload(file(), "reads");
+		xhr.emitLoad(201, JSON.stringify({ id: 1 }));
+		await flush();
+
+		expect(useUploaderStore.getState().uploads[0]).toMatchObject({
+			completed: true,
+			progress: 100,
+		});
+	});
+
+	it("cancels every upload at once", async () => {
+		upload(file(), "reads");
+		upload(file(), "reads");
+		cancelAll();
+		await flush();
+
+		expect(useUploaderStore.getState().uploads).toHaveLength(0);
+	});
+
+	it("cancels an in-progress upload, dropping it without failing", async () => {
+		upload(file(), "reads");
+		cancelUpload(currentId());
+		await flush();
+
+		expect(useUploaderStore.getState().uploads).toHaveLength(0);
+	});
+
+	it("retries a failed upload in place with the same file", async () => {
+		upload(file(), "reads");
+		const localId = currentId();
+		xhr.emitLoad(500, "Server Error");
+		await flush();
+
+		expect(useUploaderStore.getState().uploads[0]).toMatchObject({
+			failed: true,
+		});
+
+		retryUpload(localId);
+		expect(useUploaderStore.getState().uploads[0]).toMatchObject({
+			error: undefined,
+			failed: false,
+			progress: 0,
+		});
+
+		expect(xhr.body).toBeInstanceOf(File);
+
+		xhr.emitLoad(201, JSON.stringify({ id: 1 }));
+		await flush();
+		expect(useUploaderStore.getState().uploads[0]).toMatchObject({
+			completed: true,
+		});
+	});
+});
+
+describe("watchUploadTiming", () => {
+	it("derives speed from elapsed time between samples", () => {
+		const inProgress: UploadInProgress = {
+			completed: false,
+			failed: false,
+			fileType: "reads",
+			loaded: 1000,
+			localId: "a",
+			name: "reads.fq.gz",
+			progress: 50,
+			size: 2000,
+		};
+		useUploaderStore.setState({
+			samples: [0, 500],
+			sampleIds: ["a"],
+			uploads: [inProgress],
+		});
+
+		watchUploadTiming();
+
+		const { remaining, speed } = useUploaderStore.getState();
+		expect(speed).toBe(1000);
+		expect(remaining).toBe(1);
+	});
+
+	it("rebases samples when an upload leaves the active set", () => {
+		const active: UploadInProgress = {
+			completed: false,
+			failed: false,
+			fileType: "reads",
+			loaded: 1000,
+			localId: "a",
+			name: "a.fq.gz",
+			progress: 50,
+			size: 2000,
+		};
+		const finished: UploadInProgress = {
+			...active,
+			completed: true,
+			loaded: 2000,
+			localId: "b",
+			name: "b.fq.gz",
+			progress: 100,
+		};
+
+		// The samples still sum over both uploads when one has just completed.
+		useUploaderStore.setState({
+			samples: [0, 3000],
+			sampleIds: ["a", "b"],
+			uploads: [active, finished],
+		});
+
+		watchUploadTiming();
+
+		// The completed upload's bytes must not carry into the remaining one's
+		// speed, so the samples restart from the current active set.
+		const { samples, sampleIds, speed } = useUploaderStore.getState();
+		expect(sampleIds).toEqual(["a"]);
+		expect(samples).toEqual([1000]);
+		expect(speed).toBe(0);
 	});
 });

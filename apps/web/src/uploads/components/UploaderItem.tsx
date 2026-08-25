@@ -2,12 +2,17 @@ import { cn } from "@app/cn";
 import { byteSize } from "@app/format";
 import { IconButton } from "@base/Icon";
 import Loader from "@base/Loader";
-import ProgressBarAffixed from "@base/ProgressBarAffixed";
-import { Trash } from "lucide-react";
+import { Ban, Check, RotateCw, Trash } from "lucide-react";
 import type { ReactNode } from "react";
-import { useUploaderStore } from "../uploader";
+import { cancelUpload, retryUpload } from "../uploader";
 
 export type UploaderItemProps = {
+	/* Whether the upload finished successfully */
+	completed: boolean;
+
+	/* A human-readable reason the upload failed, when `failed` is true */
+	error?: string;
+
 	/* Whether the upload failed */
 	failed: boolean;
 
@@ -28,47 +33,90 @@ export type UploaderItemProps = {
  * Progress tracker for a single uploaded file
  */
 export function UploaderItem({
+	completed,
+	error,
 	failed,
 	localId,
 	name,
 	progress,
 	size,
 }: UploaderItemProps) {
-	const removeUpload = useUploaderStore((state) => state.removeUpload);
-
 	let end: ReactNode;
 
 	if (failed) {
 		end = (
-			<span className="flex font-medium gap-2">
-				<span>Failed</span>
+			<>
+				<span className="font-medium text-red-500">{error ?? "Failed"}</span>
+				<IconButton
+					IconComponent={RotateCw}
+					color="blue"
+					tip="Retry"
+					onClick={() => retryUpload(localId)}
+				/>
 				<IconButton
 					IconComponent={Trash}
 					color="red"
 					tip="Remove"
-					onClick={() => removeUpload(localId)}
+					onClick={() => cancelUpload(localId)}
 				/>
-			</span>
+			</>
+		);
+	} else if (completed) {
+		end = (
+			<>
+				<span className="tabular-nums text-gray-500">
+					{byteSize(size, true)}
+				</span>
+				<span className="flex items-center justify-center size-9 text-green-600">
+					<Check className="size-4" />
+				</span>
+			</>
 		);
 	} else if (progress === 100) {
-		end = <Loader className="size-4" />;
+		end = (
+			<>
+				<span className="tabular-nums text-gray-500">
+					{byteSize(size, true)}
+				</span>
+				<span className="flex items-center justify-center size-9">
+					<Loader className="size-4" />
+				</span>
+			</>
+		);
 	} else {
-		end = byteSize(size, true);
+		end = (
+			<>
+				<span className="tabular-nums text-gray-500">
+					{byteSize(size, true)}
+				</span>
+				<IconButton
+					IconComponent={Ban}
+					color="gray"
+					tip="Cancel"
+					onClick={() => cancelUpload(localId)}
+				/>
+			</>
+		);
 	}
 
 	return (
-		<div className="relative p-0">
-			<ProgressBarAffixed now={progress} color={failed ? "red" : "blue"} />
-			<div className="flex justify-between p-4">
-				<span className="font-medium">{name}</span>
+		<div className="relative overflow-hidden">
+			<div
+				className={cn(
+					"absolute inset-y-0 left-0 transition-[width] duration-200 ease-out",
+					failed ? "bg-red-100" : completed ? "bg-green-100" : "bg-blue-100",
+				)}
+				style={{ width: `${progress}%` }}
+			/>
+			<div className="relative flex gap-3 items-center justify-between min-h-13 px-3 py-1">
 				<span
-					className={cn({
+					className={cn("font-medium min-w-0 truncate", {
 						"text-red-500": failed,
-						"text-gray-500": !failed,
 					})}
 				>
-					{end}
+					{name}
 				</span>
+				<span className="flex gap-2 items-center shrink-0">{end}</span>
 			</div>
 		</div>
 	);
