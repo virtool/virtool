@@ -4,6 +4,7 @@ import { CreateLocalOtuCommand } from "@virtool/contracts";
 import {
 	createLocalOtu,
 	getLocalOtu,
+	getLocalOtus,
 	OtuV2ConflictError,
 	OtuV2NotFoundError,
 	OtuV2ReferenceNotWritableError,
@@ -19,6 +20,10 @@ import { ForbiddenError } from "../auth/middleware";
 import { authenticated } from "../auth/policy";
 import { db } from "../composition";
 import { ClientError } from "../errors";
+
+const referenceIdSchema = z.object({
+	referenceId: z.uuid(),
+});
 
 const otuReadSchema = z.object({
 	referenceId: z.uuid(),
@@ -78,6 +83,22 @@ export const createLocalOtuFn = createServerFn({ method: "POST" })
 			});
 			setResponseStatus(201);
 			return otu;
+		} catch (err) {
+			return rethrowAsHttp(err);
+		}
+	});
+
+export const getLocalOtusFn = createServerFn({ method: "GET" })
+	.middleware([authenticated()])
+	.validator(referenceIdSchema)
+	.handler(async ({ context, data }) => {
+		try {
+			// An invisible Reference surfaces as a 404, never an empty list.
+			const actor = await resolveReferenceActor(db, context.session.userId);
+			if (!(await checkReferenceV2Visibility(db, data.referenceId, actor))) {
+				throw new ReferenceV2NotFoundError();
+			}
+			return await getLocalOtus(db, data.referenceId);
 		} catch (err) {
 			return rethrowAsHttp(err);
 		}

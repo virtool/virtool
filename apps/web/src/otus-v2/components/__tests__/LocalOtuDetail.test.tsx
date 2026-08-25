@@ -22,7 +22,7 @@ describe("<LocalOtuDetail />", () => {
 		mockGetReferenceV2(reference);
 		mockGetLocalOtuV2(otu);
 
-		await renderRoute(`/refs-v2/${reference.id}/otus/${otu.id}`);
+		await renderRoute(`/refs/beta/${reference.id}/otus/${otu.id}`);
 
 		expect(
 			await screen.findByText("Cucumber mosaic virus (CMV)", {

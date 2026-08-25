@@ -9,6 +9,7 @@ import { createReferenceV2 } from "../references-v2/data";
 import {
 	createLocalOtu,
 	getLocalOtu,
+	getLocalOtus,
 	OtuV2ConflictError,
 	OtuV2NotFoundError,
 } from "./data";
@@ -282,5 +283,60 @@ describe("createLocalOtu", () => {
 			.where(eq(otuChanges.otuId, command.otuId));
 		expect(otuCount.value).toBe(0);
 		expect(changeCount.value).toBe(0);
+	});
+});
+
+describe("getLocalOtus", () => {
+	it("summarizes the Reference's OTUs ordered by name", async () => {
+		const reference = await createReference();
+
+		const zebra = createCommand("50000000-0000-4000-8000-000000000001");
+		zebra.payload.taxonomy.name = "Zebra virus";
+		zebra.payload.taxonomy.acronym = "ZV";
+		await createLocalOtu(db, {
+			referenceId: reference.id,
+			userId,
+			command: zebra,
+		});
+
+		const alpha = createCommand("51000000-0000-4000-8000-000000000001");
+		alpha.payload.taxonomy.name = "Alpha virus";
+		(alpha.payload.taxonomy as { acronym: string | null }).acronym = null;
+		await createLocalOtu(db, {
+			referenceId: reference.id,
+			userId,
+			command: alpha,
+		});
+
+		const summaries = await getLocalOtus(db, reference.id);
+
+		expect(summaries).toEqual([
+			{
+				id: alpha.otuId,
+				name: "Alpha virus",
+				acronym: null,
+				version: 1,
+				isolateCount: 1,
+			},
+			{
+				id: zebra.otuId,
+				name: "Zebra virus",
+				acronym: "ZV",
+				version: 1,
+				isolateCount: 1,
+			},
+		]);
+	});
+
+	it("scopes the summary to the parent Reference", async () => {
+		const reference = await createReference();
+		const otherReference = await createReference();
+		await createLocalOtu(db, {
+			referenceId: otherReference.id,
+			userId,
+			command: createCommand("52000000-0000-4000-8000-000000000001"),
+		});
+
+		expect(await getLocalOtus(db, reference.id)).toEqual([]);
 	});
 });

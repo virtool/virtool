@@ -9,7 +9,14 @@ import { type Mock, vi } from "vitest";
 export const referenceV2ServerFnMocks = {
 	createReferenceV2Fn: vi.fn(),
 	getReferenceV2Fn: vi.fn(),
+	getReferencesV2Fn: vi.fn(),
 };
+
+/** Sets up the v2 Reference list to resolve with the given References. */
+export function mockGetReferencesV2(references: ReferenceV2[]): Mock {
+	referenceV2ServerFnMocks.getReferencesV2Fn.mockResolvedValue(references);
+	return referenceV2ServerFnMocks.getReferencesV2Fn;
+}
 
 /** Sets up getReferenceV2 to resolve with the given Reference when matched. */
 export function mockGetReferenceV2(reference: ReferenceV2): Mock {

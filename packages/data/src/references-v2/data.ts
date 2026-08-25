@@ -4,7 +4,7 @@ import type {
 	ReferenceV2,
 	ReferenceV2CreateRequest,
 } from "@virtool/contracts";
-import { and, eq, inArray } from "drizzle-orm";
+import { and, asc, eq, inArray, or, type SQL } from "drizzle-orm";
 import type { Db, DbOrTx } from "../db/pg";
 import { takeFirst, takeFirstOrThrow } from "../db/rows";
 import {
@@ -89,6 +89,53 @@ export async function getReferenceV2(
 	}
 
 	return mapReference(row);
+}
+
+function referenceV2VisibilityFilter(
+	db: Db,
+	actor: ReferenceActor,
+): SQL | undefined {
+	if (actor.isAdmin) {
+		return undefined;
+	}
+
+	const clauses = [
+		inArray(
+			referenceRoots.id,
+			db
+				.select({ id: referenceUsers.referenceId })
+				.from(referenceUsers)
+				.where(eq(referenceUsers.userId, actor.userId)),
+		),
+	];
+
+	if (actor.groupIds.length > 0) {
+		clauses.push(
+			inArray(
+				referenceRoots.id,
+				db
+					.select({ id: referenceGroups.referenceId })
+					.from(referenceGroups)
+					.where(inArray(referenceGroups.groupId, actor.groupIds)),
+			),
+		);
+	}
+
+	return or(...clauses);
+}
+
+/** Get the v2 References visible to an actor, ordered by name. */
+export async function getReferencesV2(
+	db: Db,
+	actor: ReferenceActor,
+): Promise<ReferenceV2[]> {
+	const rows = await db
+		.select()
+		.from(referenceRoots)
+		.where(referenceV2VisibilityFilter(db, actor))
+		.orderBy(asc(referenceRoots.name), asc(referenceRoots.id));
+
+	return rows.map(mapReference);
 }
 
 /**

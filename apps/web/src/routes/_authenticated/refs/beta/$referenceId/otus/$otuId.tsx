@@ -3,7 +3,7 @@ import LocalOtuDetail from "@otus-v2/components/LocalOtuDetail";
 import { createFileRoute, notFound } from "@tanstack/react-router";
 
 export const Route = createFileRoute(
-	"/_authenticated/refs-v2/$referenceId/otus/$otuId",
+	"/_authenticated/refs/beta/$referenceId/otus/$otuId",
 )({
 	loader: async ({
 		context: { queryClient },
