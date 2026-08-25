@@ -31,7 +31,16 @@ allowBuilds:
 # range (minimatch@3 pins brace-expansion@1.x, minimatch@5/9 pin @2.x); one
 # entry can't cover both without forcing a consumer onto a major version it
 # never asked for.
+# `@smithy/core` and `@smithy/types` are not advisory entries: the AWS SDK
+# packages resolve them at several patch levels (client-s3 and
+# s3-request-presigner disagree), and two copies of `@smithy/core` — which owns
+# the base `Client` class and its private fields — give `getSignedUrl` and
+# `S3Client` structurally different `Client` types that will not assign. Dedupe
+# each to one version so the presigner accepts our client. Remove once the AWS
+# packages converge on their own.
 overrides:
+  '@smithy/core': 3.33.3
+  '@smithy/types': 4.17.2
   'brace-expansion@<1.1.18': ^1.1.18
   'brace-expansion@>=2.0.0 <2.1.4': ^2.1.4
   'undici@>=7.0.0 <7.29.0': ^7.29.0

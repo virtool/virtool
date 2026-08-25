@@ -22,4 +22,12 @@ export type StorageConfig =
 			container: string;
 			accessKey?: string;
 			endpoint?: string;
+			/**
+			 * Base URL a presigned download URL is built against, in place of the
+			 * blob endpoint — the public host that fronts the account, such as
+			 * `https://files.virtool.ca`. A user-delegation SAS signs the resource
+			 * path, not the host, so serving it through a different host still
+			 * validates. Unset means the blob endpoint is used as-is.
+			 */
+			downloadUrl?: string;
 	  };

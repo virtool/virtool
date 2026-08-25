@@ -20,6 +20,13 @@ export type ServerConfig = {
 	 */
 	sentryDsn: string | undefined;
 	storage: StorageConfig;
+	/**
+	 * How a file download route answers. `stream` sends the bytes through this
+	 * server; `redirect` mints a short-lived presigned URL and 302s the client
+	 * straight to storage, offloading the transfer. `redirect` falls back to
+	 * streaming when the backend cannot presign.
+	 */
+	downloadMode: "stream" | "redirect";
 };
 
 const ServerEnv = z.object({
@@ -54,6 +61,13 @@ const ServerEnv = z.object({
 	VT_STORAGE_AZURE_CONTAINER: z.string().optional(),
 	VT_STORAGE_AZURE_ACCESS_KEY: z.string().optional(),
 	VT_STORAGE_AZURE_ENDPOINT: z.string().optional(),
+	VT_STORAGE_AZURE_DOWNLOAD_URL: z.string().optional(),
+	// Unset — or empty, which deployment tooling injects — keeps downloads
+	// streaming through this server.
+	VT_STORAGE_DOWNLOAD_MODE: z.preprocess(
+		(value) => (value === "" ? undefined : value),
+		z.enum(["stream", "redirect"]).default("stream"),
+	),
 });
 
 type StorageEnv = z.infer<typeof ServerEnv>;
@@ -64,6 +78,7 @@ const ServerEnvSchema = ServerEnv.transform((raw, ctx) => ({
 	metricsToken: raw.VT_METRICS_TOKEN,
 	sentryDsn: raw.VT_SENTRY_DSN,
 	storage: buildStorage(raw, ctx),
+	downloadMode: raw.VT_STORAGE_DOWNLOAD_MODE,
 }));
 
 // Unset and empty are the same thing for storage variables. Deployment tooling
@@ -156,6 +171,7 @@ function buildStorage(raw: StorageEnv, ctx: z.RefinementCtx): StorageConfig {
 		container: raw.VT_STORAGE_AZURE_CONTAINER as string,
 		accessKey: present(raw.VT_STORAGE_AZURE_ACCESS_KEY),
 		endpoint: present(raw.VT_STORAGE_AZURE_ENDPOINT),
+		downloadUrl: present(raw.VT_STORAGE_AZURE_DOWNLOAD_URL),
 	};
 }
 

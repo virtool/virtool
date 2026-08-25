@@ -4,7 +4,7 @@ import {
 	resolveSampleActor,
 } from "@virtool/data/samples/data";
 import { requireAuthenticatedRequest } from "../auth/middleware";
-import { db, storage } from "../composition";
+import { db, downloadMode, storage } from "../composition";
 import { streamStorageObject, textResponse } from "../http";
 
 /**
@@ -50,5 +50,11 @@ export async function handleSampleReads(
 		return textResponse("Not found", 404);
 	}
 
-	return streamStorageObject(storage, key, filename, "application/gzip");
+	return streamStorageObject(
+		storage,
+		key,
+		filename,
+		"application/gzip",
+		downloadMode,
+	);
 }

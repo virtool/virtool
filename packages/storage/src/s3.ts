@@ -7,9 +7,14 @@ import {
 	S3Client,
 } from "@aws-sdk/client-s3";
 import { Upload } from "@aws-sdk/lib-storage";
+import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 import type { StorageConfig } from "./config";
 import { StorageError, StorageKeyNotFoundError } from "./errors";
-import type { StorageBackend, StorageObjectInfo } from "./types";
+import type {
+	PresignDownloadOptions,
+	StorageBackend,
+	StorageObjectInfo,
+} from "./types";
 
 type S3Config = Extract<StorageConfig, { kind: "s3" }>;
 
@@ -170,6 +175,28 @@ export function createS3Storage(config: S3Config): StorageBackend {
 				return response.ContentLength ?? 0;
 			} catch (error) {
 				rethrow(error, key);
+			}
+		},
+
+		async presignDownload(
+			key: string,
+			options: PresignDownloadOptions,
+		): Promise<string> {
+			try {
+				return await getSignedUrl(
+					client,
+					new GetObjectCommand({
+						Bucket: bucket,
+						Key: key,
+						ResponseContentDisposition: options.contentDisposition,
+						ResponseContentType: options.contentType,
+					}),
+					{ expiresIn: options.expiresIn },
+				);
+			} catch (error) {
+				throw new StorageError(
+					error instanceof Error ? error.message : String(error),
+				);
 			}
 		},
 	};

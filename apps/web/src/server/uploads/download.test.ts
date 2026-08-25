@@ -38,6 +38,7 @@ vi.mock("../composition", () => ({
 	get db() {
 		return db;
 	},
+	downloadMode: "stream",
 	storage,
 }));
 

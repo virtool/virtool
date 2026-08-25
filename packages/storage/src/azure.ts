@@ -1,17 +1,37 @@
 import { Readable } from "node:stream";
 import { DefaultAzureCredential } from "@azure/identity";
 import {
+	BlobSASPermissions,
 	BlobServiceClient,
+	type ContainerClient,
+	generateBlobSASQueryParameters,
+	SASProtocol,
 	StorageSharedKeyCredential,
+	type UserDelegationKey,
 } from "@azure/storage-blob";
 import type { StorageConfig } from "./config";
 import { StorageError, StorageKeyNotFoundError } from "./errors";
-import type { StorageBackend, StorageObjectInfo } from "./types";
+import type {
+	PresignDownloadOptions,
+	StorageBackend,
+	StorageObjectInfo,
+} from "./types";
 import { STORAGE_CHUNK_SIZE } from "./types";
 
 type AzureConfig = Extract<StorageConfig, { kind: "azure" }>;
 
 const UPLOAD_CONCURRENCY = 4;
+
+// A user-delegation key is an account-level round trip valid for up to seven
+// days, so one is requested for that long and reused. It is refreshed once it
+// falls inside the margin rather than on the tick it expires, so a download
+// never waits on a key that lapsed a second ago.
+const DELEGATION_KEY_TTL_MS = 7 * 24 * 60 * 60 * 1000;
+const DELEGATION_KEY_REFRESH_MARGIN_MS = 24 * 60 * 60 * 1000;
+
+// The signature is backdated a little so a presigned URL works despite modest
+// clock skew between this process and the storage service.
+const CLOCK_SKEW_MS = 5 * 60 * 1000;
 
 function isNotFound(error: unknown): boolean {
 	const { statusCode, code } = error as { statusCode?: number; code?: string };
@@ -29,28 +49,142 @@ function rethrow(error: unknown, key: string): never {
 	);
 }
 
-function createServiceClient(config: AzureConfig): BlobServiceClient {
+function createServiceClient(config: AzureConfig): {
+	service: BlobServiceClient;
+	sharedKey: StorageSharedKeyCredential | null;
+} {
 	const url =
 		config.endpoint ?? `https://${config.account}.blob.core.windows.net`;
 
 	// Without an access key the deployment is expected to carry a managed
 	// identity, which the default credential chain resolves.
 	if (!config.accessKey) {
-		return new BlobServiceClient(url, new DefaultAzureCredential());
+		return {
+			service: new BlobServiceClient(url, new DefaultAzureCredential()),
+			sharedKey: null,
+		};
 	}
 
-	return new BlobServiceClient(
-		url,
-		new StorageSharedKeyCredential(config.account, config.accessKey),
+	const sharedKey = new StorageSharedKeyCredential(
+		config.account,
+		config.accessKey,
 	);
+
+	return { service: new BlobServiceClient(url, sharedKey), sharedKey };
+}
+
+// Rehost a blob's SAS URL onto `config.downloadUrl` when one is set, so a
+// download is served through the public host that fronts the account rather
+// than the blob endpoint. Only the origin is swapped; the resource path the
+// signature covers is untouched.
+function buildDownloadUrl(
+	container: ContainerClient,
+	key: string,
+	config: AzureConfig,
+	sas: string,
+): string {
+	const url = new URL(container.getBlobClient(key).url);
+
+	if (config.downloadUrl) {
+		const host = new URL(config.downloadUrl);
+		url.protocol = host.protocol;
+		url.host = host.host;
+	}
+
+	return `${url.toString()}?${sas}`;
+}
+
+function createPresign(
+	config: AzureConfig,
+	service: BlobServiceClient,
+	container: ContainerClient,
+	sharedKey: StorageSharedKeyCredential | null,
+): StorageBackend["presignDownload"] {
+	let cached: { key: UserDelegationKey; expiresOn: Date } | null = null;
+	let inflight: Promise<UserDelegationKey> | null = null;
+
+	async function getDelegationKey(): Promise<UserDelegationKey> {
+		const now = new Date();
+
+		if (
+			cached &&
+			cached.expiresOn.getTime() - now.getTime() >
+				DELEGATION_KEY_REFRESH_MARGIN_MS
+		) {
+			return cached.key;
+		}
+
+		if (!inflight) {
+			const startsOn = new Date(now.getTime() - CLOCK_SKEW_MS);
+			const expiresOn = new Date(now.getTime() + DELEGATION_KEY_TTL_MS);
+
+			inflight = service
+				.getUserDelegationKey(startsOn, expiresOn)
+				.then((key) => {
+					cached = { key, expiresOn };
+					return key;
+				})
+				.finally(() => {
+					inflight = null;
+				});
+		}
+
+		return inflight;
+	}
+
+	return async function presignDownload(
+		key: string,
+		options: PresignDownloadOptions,
+	): Promise<string> {
+		const now = new Date();
+		const startsOn = new Date(now.getTime() - CLOCK_SKEW_MS);
+		const expiresOn = new Date(now.getTime() + options.expiresIn * 1000);
+
+		const values = {
+			containerName: config.container,
+			blobName: key,
+			permissions: BlobSASPermissions.parse("r"),
+			startsOn,
+			expiresOn,
+			contentDisposition: options.contentDisposition,
+			contentType: options.contentType,
+			// Real Azure is https-only; a plain-http endpoint or download host —
+			// Azurite in development — has to keep http allowed or the SAS refuses it.
+			protocol:
+				config.endpoint?.startsWith("http://") ||
+				config.downloadUrl?.startsWith("http://")
+					? SASProtocol.HttpsAndHttp
+					: SASProtocol.Https,
+		};
+
+		try {
+			// A shared key — Azurite in development — cannot mint a user-delegation
+			// SAS, so it signs the SAS directly. A managed identity has no signing
+			// key of its own and must go through the delegation key.
+			const sas = sharedKey
+				? generateBlobSASQueryParameters(values, sharedKey).toString()
+				: generateBlobSASQueryParameters(
+						values,
+						await getDelegationKey(),
+						config.account,
+					).toString();
+
+			return buildDownloadUrl(container, key, config, sas);
+		} catch (error) {
+			throw new StorageError(
+				error instanceof Error ? error.message : String(error),
+			);
+		}
+	};
 }
 
 export function createAzureStorage(config: AzureConfig): StorageBackend {
-	const container = createServiceClient(config).getContainerClient(
-		config.container,
-	);
+	const { service, sharedKey } = createServiceClient(config);
+	const container = service.getContainerClient(config.container);
 
 	return {
+		presignDownload: createPresign(config, service, container, sharedKey),
+
 		async *read(key: string): AsyncIterable<Uint8Array> {
 			let body: NodeJS.ReadableStream | undefined;
 

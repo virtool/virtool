@@ -5,6 +5,7 @@ export { createStorageBackend } from "./factory";
 export * from "./keys";
 export { MemoryStorage } from "./memory";
 export {
+	type PresignDownloadOptions,
 	STORAGE_CHUNK_SIZE,
 	type StorageBackend,
 	type StorageObjectInfo,

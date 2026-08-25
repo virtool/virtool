@@ -161,4 +161,30 @@ describe.each(BACKENDS)("$name storage", ({ config }) => {
 			StorageKeyNotFoundError,
 		);
 	});
+
+	it("presigns a download URL that serves the object with its headers", async () => {
+		if (!storage.presignDownload) {
+			throw new Error("backend does not presign");
+		}
+
+		const key = `${prefix}reads.fq`;
+		await storage.write(key, streamOf("ACGT"));
+
+		const url = await storage.presignDownload(key, {
+			contentDisposition: 'attachment; filename="reads.fq"',
+			contentType: "application/gzip",
+			expiresIn: 900,
+		});
+
+		const response = await fetch(url);
+
+		expect(response.status).toBe(200);
+		expect(await response.text()).toBe("ACGT");
+		// The name and type ride in the URL so the browser, which reaches storage
+		// directly, still names the download.
+		expect(response.headers.get("content-disposition")).toBe(
+			'attachment; filename="reads.fq"',
+		);
+		expect(response.headers.get("content-type")).toBe("application/gzip");
+	});
 });

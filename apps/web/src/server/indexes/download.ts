@@ -7,7 +7,7 @@ import {
 	resolveReferenceActor,
 } from "@virtool/data/references/data";
 import { requireAuthenticatedRequest } from "../auth/middleware";
-import { db, storage } from "../composition";
+import { db, downloadMode, storage } from "../composition";
 import { streamStorageObject, textResponse } from "../http";
 
 /**
@@ -65,5 +65,6 @@ export async function handleIndexFile(
 		key,
 		filename,
 		"application/octet-stream",
+		downloadMode,
 	);
 }
