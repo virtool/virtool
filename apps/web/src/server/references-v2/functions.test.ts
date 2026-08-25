@@ -224,3 +224,37 @@ describe("getReferenceV2", () => {
 		expect(reference.id).toBe(referenceId);
 	});
 });
+
+describe("getReferencesV2", () => {
+	it("returns only References visible to the caller", async () => {
+		const memberUserId = await signIn(db, getRequest, {
+			administratorRole: null,
+		});
+		const otherUserId = await seedUser(db, {
+			administratorRole: null,
+			handle: "bob",
+		});
+		const visibleId = await seedReferenceV2(memberUserId);
+		await seedReferenceV2(otherUserId);
+
+		const references = (await call("getReferencesV2Fn")) as Array<{
+			id: string;
+		}>;
+
+		expect(references.map((reference) => reference.id)).toEqual([visibleId]);
+	});
+
+	it("returns every Reference to a full administrator", async () => {
+		const ownerId = await seedUser(db, {
+			administratorRole: null,
+			handle: "bob",
+		});
+		await signIn(db, getRequest, { administratorRole: "full" });
+		await seedReferenceV2(ownerId);
+		await seedReferenceV2(ownerId);
+
+		const references = (await call("getReferencesV2Fn")) as unknown[];
+
+		expect(references).toHaveLength(2);
+	});
+});

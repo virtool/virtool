@@ -294,3 +294,34 @@ describe("getLocalOtu", () => {
 		expect(setResponseStatus).toHaveBeenCalledWith(404);
 	});
 });
+
+describe("getLocalOtus", () => {
+	it("summarizes the Reference's OTUs for a member", async () => {
+		const userId = await signIn(db, getRequest, { administratorRole: null });
+		const referenceId = await seedReferenceV2(userId);
+		const command = validCommand();
+		await call("createLocalOtuFn", { referenceId, command });
+
+		const summaries = (await call("getLocalOtusFn", { referenceId })) as {
+			id: string;
+			isolateCount: number;
+		}[];
+
+		expect(summaries).toEqual([
+			expect.objectContaining({ id: command.otuId, isolateCount: 1 }),
+		]);
+	});
+
+	it("hides an invisible reference behind a 404", async () => {
+		const ownerId = await signIn(db, getRequest, { administratorRole: null });
+		const referenceId = await seedReferenceV2(ownerId);
+
+		// A different signed-in user with no membership on the reference.
+		await signIn(db, getRequest, { administratorRole: null, handle: "bob" });
+
+		await expect(call("getLocalOtusFn", { referenceId })).rejects.toThrow(
+			"OTU not found.",
+		);
+		expect(setResponseStatus).toHaveBeenCalledWith(404);
+	});
+});

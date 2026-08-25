@@ -167,7 +167,9 @@ beforeEach(() => {
 		otuServerFnMocks.getOtuFn,
 		otuServerFnMocks.listOtuHistoryFn,
 		referenceV2ServerFnMocks.getReferenceV2Fn,
+		referenceV2ServerFnMocks.getReferencesV2Fn,
 		otuV2ServerFnMocks.getLocalOtuFn,
+		otuV2ServerFnMocks.getLocalOtusFn,
 	]) {
 		fn.mockReset();
 		// Default to a pending promise so an un-stubbed query renders its loading

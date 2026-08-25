@@ -1,6 +1,7 @@
 import { faker } from "@faker-js/faker";
 import {
 	type LocalOtuV2,
+	type LocalOtuV2Summary,
 	OtuV2IsolateNameType,
 	OtuV2MoleculeType,
 	OtuV2SegmentRule,
@@ -67,6 +68,21 @@ export function createFakeLocalOtuV2(
 			userId: faker.number.int(),
 			createdAt: faker.date.past(),
 		},
+	};
+
+	return { ...base, ...overrides };
+}
+
+/** Create a fake local v2 OTU list summary. */
+export function createFakeLocalOtuV2Summary(
+	overrides?: Partial<LocalOtuV2Summary>,
+): LocalOtuV2Summary {
+	const base: LocalOtuV2Summary = {
+		id: faker.string.uuid(),
+		name: faker.word.noun({ strategy: "any-length" }),
+		acronym: null,
+		version: 1,
+		isolateCount: 1,
 	};
 
 	return { ...base, ...overrides };

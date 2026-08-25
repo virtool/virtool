@@ -2,7 +2,6 @@ import Button from "@base/Button";
 import { InputError, InputGroup, InputLabel, InputSimple } from "@base/Input";
 import TextArea from "@base/TextArea";
 import { useCreateReferenceV2 } from "@references-v2/queries";
-import { useNavigate } from "@tanstack/react-router";
 import { useId } from "react";
 import { useForm } from "react-hook-form";
 
@@ -13,8 +12,11 @@ type FormValues = {
 };
 
 /** A minimal form for creating a local v2 Reference. */
-export default function CreateReferenceV2Form() {
-	const navigate = useNavigate();
+export default function CreateReferenceV2Form({
+	onSuccess,
+}: {
+	onSuccess?: () => void;
+}) {
 	const mutation = useCreateReferenceV2();
 
 	const nameId = useId();
@@ -41,12 +43,7 @@ export default function CreateReferenceV2Form() {
 				defaultSegmentLengthTolerance: values.defaultSegmentLengthTolerance,
 			},
 			{
-				onSuccess: (reference) => {
-					navigate({
-						to: "/refs-v2/$referenceId",
-						params: { referenceId: reference.id },
-					});
-				},
+				onSuccess,
 			},
 		);
 	}

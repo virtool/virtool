@@ -3,8 +3,9 @@ import {
 	CreateLocalOtuCommand,
 	type CreateLocalOtuCommandInput,
 	type LocalOtuV2,
+	type LocalOtuV2Summary,
 } from "@virtool/contracts";
-import { and, asc, eq, isNull } from "drizzle-orm";
+import { and, asc, count, eq, inArray, isNull } from "drizzle-orm";
 import type { Db, DbOrTx, Transaction } from "../db/pg";
 import { takeFirst } from "../db/rows";
 import {
@@ -207,6 +208,73 @@ async function insertLocalOtu(
 		userId,
 		createdAt: now,
 	});
+}
+
+/** Summarize the current local v2 OTUs in a Reference, ordered by name. */
+export async function getLocalOtus(
+	db: Db,
+	referenceId: string,
+): Promise<LocalOtuV2Summary[]> {
+	const rows = await db
+		.select({
+			id: otusV2.id,
+			version: otusV2.version,
+			name: otuLocalIdentityRevisions.name,
+			acronym: otuLocalIdentityRevisions.acronym,
+		})
+		.from(otusV2)
+		.innerJoin(otuTaxonomyVersions, eq(otuTaxonomyVersions.otuId, otusV2.id))
+		.innerJoin(
+			otuLocalIdentityRevisions,
+			eq(
+				otuTaxonomyVersions.localIdentityRevisionId,
+				otuLocalIdentityRevisions.id,
+			),
+		)
+		.where(
+			and(
+				eq(otusV2.referenceId, referenceId),
+				isNull(otusV2.ncbiFromVersion),
+				isNull(otusV2.deletedVersion),
+				eq(otuTaxonomyVersions.kind, "local"),
+				isNull(otuTaxonomyVersions.lastVersion),
+			),
+		)
+		.orderBy(asc(otuLocalIdentityRevisions.name), asc(otusV2.id));
+
+	if (rows.length === 0) {
+		return [];
+	}
+
+	const isolateCountRows = await db
+		.select({ otuId: otuIsolates.otuId, isolateCount: count() })
+		.from(otuIsolates)
+		.innerJoin(
+			otuIsolateVersions,
+			eq(otuIsolates.id, otuIsolateVersions.isolateId),
+		)
+		.where(
+			and(
+				inArray(
+					otuIsolates.otuId,
+					rows.map((row) => row.id),
+				),
+				isNull(otuIsolateVersions.lastVersion),
+			),
+		)
+		.groupBy(otuIsolates.otuId);
+
+	const isolateCounts = new Map(
+		isolateCountRows.map((row) => [row.otuId, row.isolateCount]),
+	);
+
+	return rows.map((row) => ({
+		id: row.id,
+		name: row.name,
+		acronym: row.acronym,
+		version: row.version,
+		isolateCount: isolateCounts.get(row.id) ?? 0,
+	}));
 }
 
 /** Assemble a complete current local v2 OTU from relational state. */

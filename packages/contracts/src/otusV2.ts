@@ -254,6 +254,15 @@ export type OtuV2Change = {
 	createdAt: Date;
 };
 
+/** A summary of a local v2 OTU for listing within a Reference. */
+export type LocalOtuV2Summary = {
+	id: string;
+	name: string;
+	acronym: string | null;
+	version: number;
+	isolateCount: number;
+};
+
 /** A complete local v2 OTU assembled from relational state. */
 export type LocalOtuV2 = {
 	id: string;

@@ -1,6 +1,7 @@
 import { referenceV2QueryKeys } from "@references-v2/keys";
 import {
 	createReferenceV2Fn,
+	getReferencesV2Fn,
 	getReferenceV2Fn,
 } from "@server/references-v2/functions";
 import {
@@ -24,6 +25,19 @@ export function referenceV2QueryOptions(referenceId: string) {
 				data: { referenceId },
 			}) as Promise<ReferenceV2>,
 	});
+}
+
+/** Query options for the visible v2 References. */
+export function referencesV2QueryOptions() {
+	return queryOptions<ReferenceV2[], Error>({
+		queryKey: referenceV2QueryKeys.list([]),
+		queryFn: () => getReferencesV2Fn() as Promise<ReferenceV2[]>,
+	});
+}
+
+/** Fetch the visible v2 References, suspending until they resolve. */
+export function useSuspenseReferencesV2() {
+	return useSuspenseQuery(referencesV2QueryOptions());
 }
 
 /**

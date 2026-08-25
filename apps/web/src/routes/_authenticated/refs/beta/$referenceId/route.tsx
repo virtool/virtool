@@ -2,7 +2,7 @@ import { getErrorStatus } from "@app/queryErrors";
 import { ContainerNarrow } from "@base/Container";
 import { createFileRoute, notFound, Outlet } from "@tanstack/react-router";
 
-export const Route = createFileRoute("/_authenticated/refs-v2/$referenceId")({
+export const Route = createFileRoute("/_authenticated/refs/beta/$referenceId")({
 	loader: async ({ context: { queryClient }, params: { referenceId } }) => {
 		const { referenceV2QueryOptions } = await import("@references-v2/queries");
 

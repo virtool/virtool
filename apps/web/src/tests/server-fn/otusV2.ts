@@ -1,4 +1,4 @@
-import type { LocalOtuV2 } from "@virtool/contracts";
+import type { LocalOtuV2, LocalOtuV2Summary } from "@virtool/contracts";
 import { type Mock, vi } from "vitest";
 
 /**
@@ -9,7 +9,14 @@ import { type Mock, vi } from "vitest";
 export const otuV2ServerFnMocks = {
 	createLocalOtuFn: vi.fn(),
 	getLocalOtuFn: vi.fn(),
+	getLocalOtusFn: vi.fn(),
 };
+
+/** Sets up getLocalOtus to resolve with the given OTU summaries. */
+export function mockGetLocalOtusV2(otus: LocalOtuV2Summary[]): Mock {
+	otuV2ServerFnMocks.getLocalOtusFn.mockResolvedValue(otus);
+	return otuV2ServerFnMocks.getLocalOtusFn;
+}
 
 /** Sets up getLocalOtu to resolve with the given OTU when matched. */
 export function mockGetLocalOtuV2(otu: LocalOtuV2): Mock {

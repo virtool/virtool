@@ -33,10 +33,17 @@ export default function ReferenceV2Detail({
 				</dl>
 			</Box>
 
-			<div className="mt-4">
+			<div className="mt-4 flex gap-2">
 				<Link
 					className={buttonVariants({ color: "blue" })}
-					to="/refs-v2/$referenceId/otus/new"
+					to="/refs/beta/$referenceId/otus"
+					params={{ referenceId }}
+				>
+					View OTUs
+				</Link>
+				<Link
+					className={buttonVariants({ color: "gray" })}
+					to="/refs/beta/$referenceId/otus/new"
 					params={{ referenceId }}
 				>
 					Create OTU

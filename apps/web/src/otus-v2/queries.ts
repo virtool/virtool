@@ -1,5 +1,9 @@
 import { otuV2QueryKeys } from "@otus-v2/keys";
-import { createLocalOtuFn, getLocalOtuFn } from "@server/otus-v2/functions";
+import {
+	createLocalOtuFn,
+	getLocalOtuFn,
+	getLocalOtusFn,
+} from "@server/otus-v2/functions";
 import {
 	queryOptions,
 	useMutation,
@@ -9,7 +13,28 @@ import {
 import type {
 	CreateLocalOtuCommandInput,
 	LocalOtuV2,
+	LocalOtuV2Summary,
 } from "@virtool/contracts";
+
+/**
+ * Query options for the local v2 OTUs in a Reference.
+ *
+ * @param referenceId - The UUID of the parent Reference
+ */
+export function localOtusV2QueryOptions(referenceId: string) {
+	return queryOptions<LocalOtuV2Summary[], Error>({
+		queryKey: otuV2QueryKeys.list([referenceId]),
+		queryFn: () =>
+			getLocalOtusFn({
+				data: { referenceId },
+			}) as Promise<LocalOtuV2Summary[]>,
+	});
+}
+
+/** Fetch the local v2 OTUs in a Reference, suspending until they resolve. */
+export function useSuspenseLocalOtusV2(referenceId: string) {
+	return useSuspenseQuery(localOtusV2QueryOptions(referenceId));
+}
 
 /**
  * Query options for a single local v2 OTU.
@@ -57,6 +82,9 @@ export function useCreateLocalOtu(referenceId: string) {
 			}) as Promise<LocalOtuV2>,
 		onSuccess: (otu) => {
 			queryClient.setQueryData(otuV2QueryKeys.detail(otu.id), otu);
+			queryClient.invalidateQueries({
+				queryKey: otuV2QueryKeys.list([referenceId]),
+			});
 		},
 	});
 }

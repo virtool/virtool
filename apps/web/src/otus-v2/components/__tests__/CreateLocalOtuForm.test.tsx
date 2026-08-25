@@ -26,13 +26,12 @@ describe("<CreateLocalOtuForm />", () => {
 		mockGetReferenceV2(reference);
 		const createLocalOtu = mockCreateLocalOtuV2(otu);
 
-		const { router } = await renderRoute(`/refs-v2/${reference.id}/otus/new`);
+		const { router } = await renderRoute(`/refs/beta/${reference.id}/otus/new`);
 
 		await userEvent.type(
 			await screen.findByLabelText("Name", { exact: true }),
 			"Tobacco mosaic virus",
 		);
-		await userEvent.type(screen.getByLabelText("Segment length"), "6");
 		await userEvent.type(
 			screen.getByLabelText("Sequence definition"),
 			"Complete genome",
@@ -43,7 +42,7 @@ describe("<CreateLocalOtuForm />", () => {
 
 		await waitFor(() => {
 			expect(router.state.location.pathname).toBe(
-				`/refs-v2/${reference.id}/otus/${otu.id}`,
+				`/refs/beta/${reference.id}/otus/${otu.id}`,
 			);
 		});
 
@@ -67,5 +66,6 @@ describe("<CreateLocalOtuForm />", () => {
 		expect(call.data.command.payload.isolate.sequences[0].segmentId).toBe(
 			call.data.command.payload.plan.segments[0].id,
 		);
+		expect(call.data.command.payload.plan.segments[0].length).toBe(6);
 	});
 });

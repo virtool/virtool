@@ -5,7 +5,7 @@ import { useSuspenseReferenceV2 } from "@references-v2/queries";
 import { createFileRoute } from "@tanstack/react-router";
 
 export const Route = createFileRoute(
-	"/_authenticated/refs-v2/$referenceId/otus/new",
+	"/_authenticated/refs/beta/$referenceId/otus/new",
 )({
 	component: CreateLocalOtuRoute,
 });

@@ -22,7 +22,6 @@ type FormValues = {
 	moleculeType: string;
 	strandedness: string;
 	topology: string;
-	segmentLength: number;
 	segmentLengthTolerance: number;
 	segmentRule: string;
 	isolateNameType: string;
@@ -67,7 +66,6 @@ export default function CreateLocalOtuForm({
 		moleculeType: useId(),
 		strandedness: useId(),
 		topology: useId(),
-		segmentLength: useId(),
 		segmentLengthTolerance: useId(),
 		segmentRule: useId(),
 		isolateNameType: useId(),
@@ -87,7 +85,6 @@ export default function CreateLocalOtuForm({
 			moleculeType: OtuV2MoleculeType.RNA,
 			strandedness: OtuV2Strandedness.single,
 			topology: OtuV2Topology.linear,
-			segmentLength: 0,
 			segmentLengthTolerance: defaultSegmentLengthTolerance,
 			segmentRule: OtuV2SegmentRule.required,
 			isolateNameType: OtuV2IsolateNameType.isolate,
@@ -101,6 +98,7 @@ export default function CreateLocalOtuForm({
 		const segmentId = crypto.randomUUID();
 		const acronym = values.acronym.trim();
 		const isolateNameValue = values.isolateNameValue.trim();
+		const segmentLength = values.sequence.replace(/\s/g, "").length;
 
 		const command: CreateLocalOtuCommandInput = {
 			type: "CreateOTU",
@@ -119,7 +117,7 @@ export default function CreateLocalOtuForm({
 						{
 							id: segmentId,
 							name: null,
-							length: values.segmentLength,
+							length: segmentLength,
 							lengthTolerance: values.segmentLengthTolerance,
 							rule: values.segmentRule as OtuV2SegmentRule,
 						},
@@ -156,7 +154,7 @@ export default function CreateLocalOtuForm({
 		mutation.mutate(command, {
 			onSuccess: (otu) => {
 				navigate({
-					to: "/refs-v2/$referenceId/otus/$otuId",
+					to: "/refs/beta/$referenceId/otus/$otuId",
 					params: { referenceId, otuId: otu.id },
 				});
 			},
@@ -215,22 +213,6 @@ export default function CreateLocalOtuForm({
 			</InputGroup>
 
 			<InputGroup>
-				<InputLabel htmlFor={ids.segmentLength}>Segment length</InputLabel>
-				<InputSimple
-					id={ids.segmentLength}
-					type="number"
-					min={1}
-					aria-invalid={Boolean(errors.segmentLength) || undefined}
-					{...register("segmentLength", {
-						valueAsNumber: true,
-						required: "Required Field",
-						min: { value: 1, message: "Must be at least 1" },
-					})}
-				/>
-				<InputError>{errors.segmentLength?.message}</InputError>
-			</InputGroup>
-
-			<InputGroup>
 				<InputLabel htmlFor={ids.segmentLengthTolerance}>
 					Segment length tolerance
 				</InputLabel>
@@ -255,24 +237,28 @@ export default function CreateLocalOtuForm({
 				</select>
 			</InputGroup>
 
-			<InputGroup>
-				<InputLabel htmlFor={ids.isolateNameType}>Isolate name type</InputLabel>
-				<select
-					id={ids.isolateNameType}
-					className={selectClasses}
-					{...register("isolateNameType")}
-				>
-					<Options values={Object.values(OtuV2IsolateNameType)} />
-				</select>
-			</InputGroup>
+			<div className="grid grid-cols-2 gap-4">
+				<InputGroup>
+					<InputLabel htmlFor={ids.isolateNameType}>
+						Isolate name type
+					</InputLabel>
+					<select
+						id={ids.isolateNameType}
+						className={selectClasses}
+						{...register("isolateNameType")}
+					>
+						<Options values={Object.values(OtuV2IsolateNameType)} />
+					</select>
+				</InputGroup>
 
-			<InputGroup>
-				<InputLabel htmlFor={ids.isolateNameValue}>Isolate name</InputLabel>
-				<InputSimple
-					id={ids.isolateNameValue}
-					{...register("isolateNameValue")}
-				/>
-			</InputGroup>
+				<InputGroup>
+					<InputLabel htmlFor={ids.isolateNameValue}>Isolate name</InputLabel>
+					<InputSimple
+						id={ids.isolateNameValue}
+						{...register("isolateNameValue")}
+					/>
+				</InputGroup>
+			</div>
 
 			<InputGroup>
 				<InputLabel htmlFor={ids.sequenceDefinition}>

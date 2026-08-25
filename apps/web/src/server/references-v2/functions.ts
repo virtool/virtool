@@ -5,6 +5,7 @@ import { resolveReferenceActor } from "@virtool/data/references/data";
 import {
 	checkReferenceV2Visibility,
 	createReferenceV2,
+	getReferencesV2,
 	getReferenceV2,
 	ReferenceV2NotFoundError,
 } from "@virtool/data/references-v2/data";
@@ -58,4 +59,11 @@ export const getReferenceV2Fn = createServerFn({ method: "GET" })
 		} catch (err) {
 			return rethrowAsHttp(err);
 		}
+	});
+
+export const getReferencesV2Fn = createServerFn({ method: "GET" })
+	.middleware([authenticated()])
+	.handler(async ({ context }) => {
+		const actor = await resolveReferenceActor(db, context.session.userId);
+		return getReferencesV2(db, actor);
 	});
