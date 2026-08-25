@@ -86,7 +86,7 @@ export default function UploadIndicator(): ReactElement | null {
 			</PopoverPrimitive.Trigger>
 			<PopoverContent
 				align="end"
-				className="w-96 p-0 text-base"
+				className="w-80 p-0"
 				onMouseEnter={clearAutoDismiss}
 			>
 				<UploaderPanel

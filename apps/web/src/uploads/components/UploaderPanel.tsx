@@ -42,18 +42,18 @@ export default function UploaderPanel({
 	const formattedSpeed = byteSize(speed, true);
 
 	return (
-		<div className="overflow-hidden rounded-md">
-			<div className="bg-slate-100 p-4">
-				<div className="flex items-center justify-between mb-2">
-					<div className="flex gap-1.5 font-medium items-center text-xl">
+		<div className="overflow-hidden rounded-md text-sm">
+			<div className="border-b border-slate-200 bg-slate-50 px-3 py-2.5">
+				<div className="flex items-center justify-between mb-1">
+					<div className="flex gap-1.5 font-medium items-center">
 						<span>Uploads</span>
 						<Badge>{uploads.length}</Badge>
 					</div>
 					<IconButton IconComponent={X} tip="Close" onClick={onClose} />
 				</div>
-				<div className="flex justify-between text-gray-500">
+				<div className="flex gap-3 justify-between text-gray-500">
 					{uploads.every((upload) => upload.progress === 100) ? (
-						<>Finishing uploads</>
+						<span>Finishing uploads</span>
 					) : (
 						<>
 							{formattedRemaining && (
@@ -64,7 +64,7 @@ export default function UploaderPanel({
 					)}
 				</div>
 			</div>
-			<div className="max-h-96 overflow-y-auto">
+			<div className="max-h-96 divide-y divide-slate-100 overflow-y-auto">
 				{uploads.map((upload) => (
 					<UploaderItem key={upload.localId} {...upload} />
 				))}

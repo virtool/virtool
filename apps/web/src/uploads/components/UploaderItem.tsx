@@ -42,8 +42,8 @@ export function UploaderItem({
 
 	if (failed) {
 		end = (
-			<span className="flex font-medium gap-2 items-center text-red-500">
-				<span>{error ?? "Failed"}</span>
+			<>
+				<span className="font-medium text-red-500">{error ?? "Failed"}</span>
 				<IconButton
 					IconComponent={RotateCw}
 					color="blue"
@@ -56,32 +56,38 @@ export function UploaderItem({
 					tip="Remove"
 					onClick={() => cancelUpload(localId)}
 				/>
-			</span>
+			</>
 		);
 	} else if (progress === 100) {
 		end = <Loader className="size-4" />;
 	} else {
 		end = (
-			<span className="flex gap-2 items-center text-gray-500">
-				<span>{byteSize(size, true)}</span>
+			<>
+				<span className="tabular-nums text-gray-500">
+					{byteSize(size, true)}
+				</span>
 				<IconButton
 					IconComponent={X}
 					color="gray"
 					tip="Cancel"
 					onClick={() => cancelUpload(localId)}
 				/>
-			</span>
+			</>
 		);
 	}
 
 	return (
-		<div className="relative p-0">
+		<div className="relative">
 			<ProgressBarAffixed now={progress} color={failed ? "red" : "blue"} />
-			<div className="flex justify-between p-4">
-				<span className={cn("font-medium", { "text-red-500": failed })}>
+			<div className="flex gap-3 items-center justify-between px-3 py-2">
+				<span
+					className={cn("font-medium min-w-0 truncate", {
+						"text-red-500": failed,
+					})}
+				>
 					{name}
 				</span>
-				{end}
+				<span className="flex gap-2 items-center shrink-0">{end}</span>
 			</div>
 		</div>
 	);
