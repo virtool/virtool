@@ -1,14 +1,20 @@
 import { randomUUID } from "node:crypto";
-import type { ReferenceV2, ReferenceV2CreateRequest } from "@virtool/contracts";
-import { eq } from "drizzle-orm";
+import type {
+	ReferenceRight,
+	ReferenceV2,
+	ReferenceV2CreateRequest,
+} from "@virtool/contracts";
+import { and, eq, inArray } from "drizzle-orm";
 import type { Db, DbOrTx } from "../db/pg";
 import { takeFirst, takeFirstOrThrow } from "../db/rows";
 import {
 	type ReferenceRootRow,
+	referenceGroups,
 	referenceRoots,
 	referenceUsers,
 } from "../db/schema/referencesV2";
 import { AppError } from "../errors";
+import type { ReferenceActor } from "../references/data";
 
 /** Thrown when a v2 Reference does not exist. */
 export class ReferenceV2NotFoundError extends AppError {}
@@ -83,4 +89,137 @@ export async function getReferenceV2(
 	}
 
 	return mapReference(row);
+}
+
+/**
+ * Whether `actor` holds `right` on a v2 Reference. A full administrator holds
+ * every right; otherwise a user membership row or any of the caller's group
+ * membership rows with the flag set grants it — additively, either can grant.
+ *
+ * Throws {@link ReferenceV2NotFoundError} for a non-administrator when the
+ * Reference does not exist, so a caller with no rights cannot tell a missing
+ * Reference from one they may not touch.
+ */
+export async function checkReferenceV2Right(
+	db: Db,
+	referenceId: string,
+	right: ReferenceRight,
+	actor: ReferenceActor,
+): Promise<boolean> {
+	if (actor.isAdmin) {
+		return true;
+	}
+
+	const [reference] = await db
+		.select({ id: referenceRoots.id })
+		.from(referenceRoots)
+		.where(eq(referenceRoots.id, referenceId))
+		.limit(1);
+
+	if (!reference) {
+		throw new ReferenceV2NotFoundError();
+	}
+
+	const userColumn =
+		right === "build"
+			? referenceUsers.build
+			: right === "modify"
+				? referenceUsers.modify
+				: referenceUsers.modifyOtu;
+
+	const [userRow] = await db
+		.select({ userId: referenceUsers.userId })
+		.from(referenceUsers)
+		.where(
+			and(
+				eq(referenceUsers.referenceId, referenceId),
+				eq(referenceUsers.userId, actor.userId),
+				eq(userColumn, true),
+			),
+		)
+		.limit(1);
+
+	if (userRow) {
+		return true;
+	}
+
+	if (actor.groupIds.length > 0) {
+		const groupColumn =
+			right === "build"
+				? referenceGroups.build
+				: right === "modify"
+					? referenceGroups.modify
+					: referenceGroups.modifyOtu;
+
+		const [groupRow] = await db
+			.select({ referenceId: referenceGroups.referenceId })
+			.from(referenceGroups)
+			.where(
+				and(
+					eq(referenceGroups.referenceId, referenceId),
+					inArray(referenceGroups.groupId, actor.groupIds),
+					eq(groupColumn, true),
+				),
+			)
+			.limit(1);
+
+		if (groupRow) {
+			return true;
+		}
+	}
+
+	return false;
+}
+
+/**
+ * Whether `actor` may see a v2 Reference at all. A full administrator sees every
+ * Reference; otherwise any user or group membership row grants visibility,
+ * regardless of the rights flags on that row. A v2 Reference has no separate
+ * owner column — its creator is a full-rights member row.
+ *
+ * Returns `false` for both a missing Reference and one the actor cannot see, so
+ * the caller can collapse the two into an indistinguishable 404.
+ */
+export async function checkReferenceV2Visibility(
+	db: Db,
+	referenceId: string,
+	actor: ReferenceActor,
+): Promise<boolean> {
+	if (actor.isAdmin) {
+		return true;
+	}
+
+	const [userRow] = await db
+		.select({ userId: referenceUsers.userId })
+		.from(referenceUsers)
+		.where(
+			and(
+				eq(referenceUsers.referenceId, referenceId),
+				eq(referenceUsers.userId, actor.userId),
+			),
+		)
+		.limit(1);
+
+	if (userRow) {
+		return true;
+	}
+
+	if (actor.groupIds.length > 0) {
+		const [groupRow] = await db
+			.select({ referenceId: referenceGroups.referenceId })
+			.from(referenceGroups)
+			.where(
+				and(
+					eq(referenceGroups.referenceId, referenceId),
+					inArray(referenceGroups.groupId, actor.groupIds),
+				),
+			)
+			.limit(1);
+
+		if (groupRow) {
+			return true;
+		}
+	}
+
+	return false;
 }

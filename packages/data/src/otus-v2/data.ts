@@ -163,30 +163,35 @@ async function insertLocalOtu(
 		firstVersion: 1,
 	});
 
+	const sequenceEntries = payload.isolate.sequences.map((sequence) => ({
+		sequence,
+		recordId: randomUUID(),
+	}));
+
 	await tx.insert(otuSequences).values(
-		payload.isolate.sequences.map((sequence) => ({
+		sequenceEntries.map(({ sequence }) => ({
 			id: sequence.id,
 			otuId: command.otuId,
 		})),
 	);
-
-	const records = payload.isolate.sequences.map((sequence) => ({
-		id: randomUUID(),
-		otuId: command.otuId,
-		sequenceId: sequence.id,
-		definition: sequence.definition,
-		sequence: sequence.sequence,
-		createdAt: now,
-	}));
-	await tx.insert(otuLocalSequenceRecords).values(records);
+	await tx.insert(otuLocalSequenceRecords).values(
+		sequenceEntries.map(({ sequence, recordId }) => ({
+			id: recordId,
+			otuId: command.otuId,
+			sequenceId: sequence.id,
+			definition: sequence.definition,
+			sequence: sequence.sequence,
+			createdAt: now,
+		})),
+	);
 	await tx.insert(otuSequenceVersions).values(
-		payload.isolate.sequences.map((sequence, index) => ({
+		sequenceEntries.map(({ sequence, recordId }) => ({
 			id: randomUUID(),
 			otuId: command.otuId,
 			sequenceId: sequence.id,
 			isolateId: payload.isolate.id,
 			segmentId: sequence.segmentId,
-			localRecordId: records[index].id,
+			localRecordId: recordId,
 			firstVersion: 1,
 		})),
 	);
@@ -321,16 +326,12 @@ export async function getLocalOtu(
 
 	const taxonomy = takeFirst(taxonomyRows);
 	const change = takeFirst(changeRows);
-	if (
-		!taxonomy ||
-		!change ||
-		planRows.length === 0 ||
-		isolateRows.length === 0
-	) {
+	const firstPlanRow = takeFirst(planRows);
+	if (!taxonomy || !change || !firstPlanRow || isolateRows.length === 0) {
 		throw new OtuV2NotFoundError();
 	}
 
-	const planId = planRows[0].planId;
+	const planId = firstPlanRow.planId;
 	const isolates = isolateRows.map((isolate) => ({
 		id: isolate.id,
 		name:
