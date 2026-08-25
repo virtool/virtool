@@ -1,7 +1,7 @@
 # `@virtool/logger`
 
-A thin wrapper over [pino](https://getpino.io), shared by `apps/web`,
-`apps/jobs-api` and `apps/tasks`. Server code logs through this, never
+A thin wrapper over [pino](https://getpino.io), shared by `apps/web` and
+`apps/internal`. Server code logs through this, never
 `console.*` — Biome's `noConsole` rule fails `pnpm check` on any that do.
 
 ```ts
@@ -47,5 +47,5 @@ out to an extra destination. `createSentryLogStream`
 stdout — see that module's doc comment for why it's a plain destination
 stream rather than `Sentry.pinoIntegration()`. Each process wires it up
 at its own composition root, only when a DSN is configured:
-`apps/web/src/server/logger.ts`, `apps/jobs-api/src/logger.ts`, and
-`apps/tasks/src/bootstrap.ts`.
+`apps/web/src/server/logger.ts`, `apps/internal/src/serve/logger.ts`, and
+`apps/internal/src/run/bootstrap.ts`.

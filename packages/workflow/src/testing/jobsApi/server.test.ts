@@ -218,7 +218,7 @@ describe("the lifecycle, end to end", () => {
 describe("the wire contract", () => {
 	// The reason this server is camelCase: spelled snake_case on both sides,
 	// server and client would agree with each other and the mismatch would
-	// surface only against the real `apps/jobs-api`.
+	// surface only against the real jobs API in `apps/internal`.
 	it("stamps a started step with startedAt, never started_at", async () => {
 		const { state, server } = await setup();
 		const client = connect(state, server.baseUrl);

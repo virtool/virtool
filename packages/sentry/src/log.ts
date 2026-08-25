@@ -5,7 +5,7 @@ type SentryLogMethod = "trace" | "debug" | "info" | "warn" | "error" | "fatal";
  *
  * Declared structurally and taken as an argument rather than imported, because
  * each service initialises a different SDK — `@sentry/tanstackstart-react` in
- * `apps/web`, `@sentry/node` in `apps/jobs-api` and `apps/tasks` — and only the
+ * `apps/web`, `@sentry/node` in `apps/internal` — and only the
  * one a process actually called `init` on will send anything. Importing one
  * here would either forward every service's records through an uninitialised
  * client or drag a second SDK into every bundle.

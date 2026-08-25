@@ -17,7 +17,7 @@ const FILE_SUFFIX = "_FILE";
  * Reached through the `@virtool/contracts/env` subpath rather than the package
  * barrel, so `node:fs` never enters the browser graph. Every server that parses
  * configuration shares this one implementation — `apps/web` over its zod
- * schema's keys, `apps/jobs-api` over its own much smaller list — because a
+ * schema's keys, `apps/internal` over its own much smaller lists — because a
  * second copy is free to drift on the precedence rule below.
  *
  * **The file wins over a plain variable of the same name.** A rollout moving to

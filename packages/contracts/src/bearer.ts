@@ -10,7 +10,7 @@ const BEARER_PREFIX = "bearer ";
  * package barrel, so `node:crypto` never enters the browser graph.
  *
  * Shared by every service that gates a Prometheus scrape — `apps/web` and
- * `apps/jobs-api` both call it — because two copies of a constant-time
+ * `apps/internal` both call it — because two copies of a constant-time
  * comparison are two chances to quietly regress one of them into `===`.
  *
  * `timingSafeEqual` throws on a length mismatch, so that case is screened

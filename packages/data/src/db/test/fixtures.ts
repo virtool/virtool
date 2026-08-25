@@ -56,7 +56,7 @@ function getDdl(): Promise<string[]> {
 	// drizzle-kit is a test-only dependency, imported lazily so it never reaches
 	// a production bundle. This materializes the schema into a throwaway
 	// database in one diff — it is not the migration path, which is
-	// `packages/data/drizzle` applied by `apps/tasks`' `migrate` entrypoint.
+	// `packages/data/drizzle` applied by `apps/internal`'s `migrate` subcommand.
 	ddl ??= import("drizzle-kit/api").then(
 		({ generateDrizzleJson, generateMigration }) =>
 			generateMigration(

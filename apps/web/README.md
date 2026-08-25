@@ -530,8 +530,9 @@ into the browser bundle.
 ## Metrics
 
 `GET /metrics` serves the Prometheus text exposition format from a single
-process-wide registry. It is one of three scrape targets — `apps/web`,
-`apps/jobs-api`, `apps/tasks` — each with its own process and its own
+process-wide registry. It is one of several scrape targets — `apps/web` and
+`apps/internal`'s `serve` and `run` subcommands — each with its own process and
+its own
 registry; see [docs/metrics.md](../../docs/metrics.md) for the handful of
 things only visible by comparing this implementation against the jobs
 API's.
@@ -848,7 +849,7 @@ expectNoViolations(element, {
 ### Server-only package imports
 
 `@virtool/data` and `@virtool/storage` may be imported by server-side apps,
-including `apps/jobs-api`, `apps/tasks`, and the workflow apps. Within the web
+including `apps/internal` and the workflow apps. Within the web
 app, however, they must not be imported into client-reachable code. A Biome
 `noRestrictedImports` override enforces this in `src/**` outside `src/server/**`.
 

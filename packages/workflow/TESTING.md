@@ -125,7 +125,7 @@ rather than hand-spelled, and every field crossing this wire is camelCase —
 The embedded server is the fixture the jobs API client is tested *against*. If
 server and client were both written snake_case they would agree with each other,
 every test would pass, and the mismatch would surface only against the real
-`apps/jobs-api` — the worst place to find it.
+jobs API in `apps/internal` — the worst place to find it.
 
 ### Cancellation is a 401, not a flag
 
