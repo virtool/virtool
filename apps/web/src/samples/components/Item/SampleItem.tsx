@@ -5,10 +5,10 @@ import Link from "@base/Link";
 import RelativeTime from "@base/RelativeTime";
 import UserLabel from "@base/UserLabel";
 import { useFetchJob } from "@jobs/queries";
-import { getLibraryTypeDisplayName } from "@samples/utils";
 import type { SampleMinimal } from "@virtool/contracts";
 import type { MouseEvent } from "react";
 import SampleLabel from "../Label/SampleLabel";
+import SampleLibraryTypeLabel from "../Label/SampleLibraryTypeLabel";
 import WorkflowTags from "../Tag/WorkflowTags";
 import EndIcon from "./EndIcon";
 
@@ -58,7 +58,7 @@ export default function SampleItem({
 					</Link>
 				</div>
 				<div className="hidden px-4 py-2 2xl:block" role="cell">
-					{getLibraryTypeDisplayName(sample.libraryType)}
+					<SampleLibraryTypeLabel libraryType={sample.libraryType} />
 				</div>
 				<div className="min-w-0 px-4 py-2" role="cell">
 					{sample.ready && (
