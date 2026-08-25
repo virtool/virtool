@@ -32,7 +32,8 @@ function SortableColumn({
 	onSort,
 	sort,
 }: SortableColumnProps) {
-	const active = sort === field;
+	const active =
+		sort === field || (sort === undefined && field === "createdAt");
 
 	return (
 		<div

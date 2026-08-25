@@ -20,7 +20,7 @@ const filterStates: Record<WorkflowState, WorkflowFilterState> = {
 const tagClassNames: Record<WorkflowFilterState, string> = {
 	ready: "bg-green-50 text-green-800 group-hover:bg-green-100",
 	pending: "bg-gray-100 text-gray-700 group-hover:bg-gray-200",
-	none: "bg-white text-gray-600 group-hover:bg-gray-50",
+	none: "bg-gray-100 text-gray-600 group-hover:bg-gray-200",
 };
 
 /**
