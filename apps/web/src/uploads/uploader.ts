@@ -9,6 +9,9 @@ import type { UploadInProgress } from "./types";
 
 const SAMPLE_INTERVAL_MS = 500;
 
+/** How long a completed upload lingers in the list before it is removed. */
+const COMPLETED_LINGER_MS = 4000;
+
 type UploaderState = {
 	/** The ID of the interval that tracks the upload progress. */
 	intervalId?: number;
@@ -30,6 +33,9 @@ type UploaderState = {
 
 	/** Add an upload to the list of uploads. */
 	addUpload: (file: UploadInProgress) => void;
+
+	/** Remove every completed upload from the list. */
+	clearCompleted: () => void;
 
 	/** Remove an upload from the list of uploads. */
 	removeUpload: (localId: string) => void;
@@ -63,6 +69,10 @@ export const useUploaderStore = create<UploaderState>()(
 		speed: 0,
 		addUpload: (upload) =>
 			set((state) => ({ uploads: [...state.uploads, upload] })),
+		clearCompleted: () =>
+			set((state) => ({
+				uploads: state.uploads.filter((upload) => !upload.completed),
+			})),
 		removeUpload: (localId) =>
 			set((state) => {
 				const uploads = state.uploads.filter(
@@ -224,6 +234,9 @@ function runUpload(localId: string, file: File, fileType: UploadType): void {
 		.then(() => {
 			tracked.delete(localId);
 			useUploaderStore.getState().setComplete(localId);
+			window.setTimeout(() => {
+				useUploaderStore.getState().removeUpload(localId);
+			}, COMPLETED_LINGER_MS);
 		})
 		.catch((error: Error) => {
 			if (controller.signal.aborted) {
@@ -241,6 +254,16 @@ function runUpload(localId: string, file: File, fileType: UploadType): void {
 export function upload(file: File, fileType: UploadType) {
 	const { name, size } = file;
 	const localId = createRandomString();
+
+	useUploaderStore.getState().clearCompleted();
+
+	const active = useUploaderStore
+		.getState()
+		.uploads.filter((upload) => !upload.completed && !upload.failed);
+
+	if (active.length === 0) {
+		useUploaderStore.setState({ samples: [] });
+	}
 
 	useUploaderStore.getState().addUpload({
 		completed: false,

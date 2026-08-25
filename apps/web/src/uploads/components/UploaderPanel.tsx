@@ -2,10 +2,10 @@ import { byteSize } from "@app/format";
 import { formatRoundedDuration } from "@app/utils";
 import Badge from "@base/Badge";
 import { IconButton } from "@base/Icon";
-import { Ban, X } from "lucide-react";
+import { ChevronDown } from "lucide-react";
 import type { ReactElement } from "react";
 import type { UploadInProgress } from "../types";
-import { cancelAll, setOpen } from "../uploader";
+import { setOpen } from "../uploader";
 import { UploaderItem } from "./UploaderItem";
 
 type UploaderPanelProps = {
@@ -65,27 +65,19 @@ export default function UploaderPanel({
 
 	return (
 		<div className="overflow-hidden rounded-md border border-slate-300 bg-white text-sm shadow-lg">
-			<div className="flex items-center justify-between gap-3 bg-slate-50 px-3 py-2 text-base">
+			<div className="flex items-center justify-between gap-3 bg-slate-50 px-3 pt-2 pb-1 text-base">
 				<div className="flex items-center gap-1.5 font-medium">
 					<span>Uploads</span>
 					<Badge>{uploads.length}</Badge>
 				</div>
-				<div className="flex items-center gap-2">
-					<IconButton
-						IconComponent={Ban}
-						color="gray"
-						tip="Cancel all"
-						onClick={() => cancelAll()}
-					/>
-					<IconButton
-						IconComponent={X}
-						color="gray"
-						tip="Hide"
-						onClick={() => setOpen(false)}
-					/>
-				</div>
+				<IconButton
+					IconComponent={ChevronDown}
+					color="gray"
+					tip="Hide"
+					onClick={() => setOpen(false)}
+				/>
 			</div>
-			<div className="flex items-center justify-between gap-3 border-b border-slate-200 bg-slate-50 px-3 py-1 text-gray-500">
+			<div className="flex items-center justify-between gap-3 border-b border-slate-200 bg-slate-50 px-3 pb-2 font-medium text-gray-500">
 				{status}
 			</div>
 			<div className="max-h-96 overflow-y-auto">

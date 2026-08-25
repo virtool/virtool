@@ -108,16 +108,6 @@ export function UploaderItem({
 				)}
 				style={{ width: `${progress}%` }}
 			/>
-			<div
-				className={cn(
-					"pointer-events-none absolute inset-0 ring-1 ring-inset",
-					failed
-						? "ring-red-300"
-						: completed
-							? "ring-green-300"
-							: "ring-blue-300",
-				)}
-			/>
 			<div className="relative flex gap-3 items-center justify-between min-h-13 px-3 py-1">
 				<span
 					className={cn("font-medium min-w-0 truncate", {
