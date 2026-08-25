@@ -52,11 +52,17 @@ async function describeSchema(client: PgClient) {
 		order by table_name, column_name
 	`;
 
+	// Deferrable constraints are excluded from the comparison. Drizzle's
+	// generator never emits DEFERRABLE, so the schema mirror cannot hold one;
+	// the settled schema's deferrable current-change relationship is hand-added
+	// to its migration and would otherwise show as permanent drift here. The
+	// `foreignKeys` test still pins every Drizzle-declared key by name.
 	const constraints = await client`
 		select conrelid::regclass::text as table_name, conname,
 		       pg_get_constraintdef(oid) as definition
 		from pg_constraint
 		where connamespace = 'public'::regnamespace
+		  and not condeferrable
 		order by table_name, conname
 	`;
 

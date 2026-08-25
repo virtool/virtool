@@ -173,7 +173,7 @@ export const otuLocalIdentityRevisions = pgTable(
 				otuLocalIdentities.otuId,
 				otuLocalIdentities.id,
 			],
-			name: "otu_local_identity_revisions_identity_fkey",
+			name: "otu_local_identity_revisions_reference_id_otu_id_identity_id_fkey",
 		}),
 		unique("otu_local_identity_revisions_reference_otu_id_key").on(
 			table.referenceId,
@@ -216,7 +216,7 @@ export const otuTaxonomyVersions = pgTable(
 				otuLocalIdentityRevisions.otuId,
 				otuLocalIdentityRevisions.id,
 			],
-			name: "otu_taxonomy_versions_local_identity_revision_fkey",
+			name: "otu_taxonomy_versions_reference_id_otu_id_local_identity_revision_id_fkey",
 		}),
 		uniqueIndex("otu_taxonomy_versions_current_key")
 			.on(table.otuId)
@@ -261,7 +261,7 @@ export const otuPlanSegments = pgTable(
 		foreignKey({
 			columns: [table.otuId, table.planId],
 			foreignColumns: [otuPlans.otuId, otuPlans.id],
-			name: "otu_plan_segments_plan_fkey",
+			name: "otu_plan_segments_otu_id_plan_id_fkey",
 		}),
 		unique("otu_plan_segments_otu_id_id_key").on(table.otuId, table.id),
 	],
@@ -287,7 +287,7 @@ export const otuPlanSegmentVersions = pgTable(
 		foreignKey({
 			columns: [table.otuId, table.segmentId],
 			foreignColumns: [otuPlanSegments.otuId, otuPlanSegments.id],
-			name: "otu_plan_segment_versions_segment_fkey",
+			name: "otu_plan_segment_versions_otu_id_segment_id_fkey",
 		}),
 		uniqueIndex("otu_plan_segment_versions_current_key")
 			.on(table.otuId, table.segmentId)
@@ -347,7 +347,7 @@ export const otuIsolateVersions = pgTable(
 		foreignKey({
 			columns: [table.otuId, table.isolateId],
 			foreignColumns: [otuIsolates.otuId, otuIsolates.id],
-			name: "otu_isolate_versions_isolate_fkey",
+			name: "otu_isolate_versions_otu_id_isolate_id_fkey",
 		}),
 		uniqueIndex("otu_isolate_versions_current_key")
 			.on(table.otuId, table.isolateId)
@@ -396,7 +396,7 @@ export const otuLocalSequenceRecords = pgTable(
 		foreignKey({
 			columns: [table.otuId, table.sequenceId],
 			foreignColumns: [otuSequences.otuId, otuSequences.id],
-			name: "otu_local_sequence_records_sequence_fkey",
+			name: "otu_local_sequence_records_otu_id_sequence_id_fkey",
 		}),
 		unique("otu_local_sequence_records_otu_sequence_id_key").on(
 			table.otuId,
@@ -430,17 +430,17 @@ export const otuSequenceVersions = pgTable(
 		foreignKey({
 			columns: [table.otuId, table.sequenceId],
 			foreignColumns: [otuSequences.otuId, otuSequences.id],
-			name: "otu_sequence_versions_sequence_fkey",
+			name: "otu_sequence_versions_otu_id_sequence_id_fkey",
 		}),
 		foreignKey({
 			columns: [table.otuId, table.isolateId],
 			foreignColumns: [otuIsolates.otuId, otuIsolates.id],
-			name: "otu_sequence_versions_isolate_fkey",
+			name: "otu_sequence_versions_otu_id_isolate_id_fkey",
 		}),
 		foreignKey({
 			columns: [table.otuId, table.segmentId],
 			foreignColumns: [otuPlanSegments.otuId, otuPlanSegments.id],
-			name: "otu_sequence_versions_segment_fkey",
+			name: "otu_sequence_versions_otu_id_segment_id_fkey",
 		}),
 		foreignKey({
 			columns: [table.otuId, table.sequenceId, table.localRecordId],
@@ -449,7 +449,7 @@ export const otuSequenceVersions = pgTable(
 				otuLocalSequenceRecords.sequenceId,
 				otuLocalSequenceRecords.id,
 			],
-			name: "otu_sequence_versions_local_record_fkey",
+			name: "otu_sequence_versions_otu_id_sequence_id_local_record_id_fkey",
 		}),
 		uniqueIndex("otu_sequence_versions_current_key")
 			.on(table.otuId, table.sequenceId)

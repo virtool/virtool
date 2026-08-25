@@ -2407,8 +2407,8 @@
         }
       },
       "foreignKeys": {
-        "otu_isolate_versions_isolate_fkey": {
-          "name": "otu_isolate_versions_isolate_fkey",
+        "otu_isolate_versions_otu_id_isolate_id_fkey": {
+          "name": "otu_isolate_versions_otu_id_isolate_id_fkey",
           "tableFrom": "otu_isolate_versions",
           "tableTo": "otu_isolates",
           "columnsFrom": [
@@ -2606,8 +2606,8 @@
       },
       "indexes": {},
       "foreignKeys": {
-        "otu_local_identity_revisions_identity_fkey": {
-          "name": "otu_local_identity_revisions_identity_fkey",
+        "otu_local_identity_revisions_reference_id_otu_id_identity_id_fkey": {
+          "name": "otu_local_identity_revisions_reference_id_otu_id_identity_id_fkey",
           "tableFrom": "otu_local_identity_revisions",
           "tableTo": "otu_local_identities",
           "columnsFrom": [
@@ -2692,8 +2692,8 @@
       },
       "indexes": {},
       "foreignKeys": {
-        "otu_local_sequence_records_sequence_fkey": {
-          "name": "otu_local_sequence_records_sequence_fkey",
+        "otu_local_sequence_records_otu_id_sequence_id_fkey": {
+          "name": "otu_local_sequence_records_otu_id_sequence_id_fkey",
           "tableFrom": "otu_local_sequence_records",
           "tableTo": "otu_sequences",
           "columnsFrom": [
@@ -2838,8 +2838,8 @@
         }
       },
       "foreignKeys": {
-        "otu_plan_segment_versions_segment_fkey": {
-          "name": "otu_plan_segment_versions_segment_fkey",
+        "otu_plan_segment_versions_otu_id_segment_id_fkey": {
+          "name": "otu_plan_segment_versions_otu_id_segment_id_fkey",
           "tableFrom": "otu_plan_segment_versions",
           "tableTo": "otu_plan_segments",
           "columnsFrom": [
@@ -2906,8 +2906,8 @@
       },
       "indexes": {},
       "foreignKeys": {
-        "otu_plan_segments_plan_fkey": {
-          "name": "otu_plan_segments_plan_fkey",
+        "otu_plan_segments_otu_id_plan_id_fkey": {
+          "name": "otu_plan_segments_otu_id_plan_id_fkey",
           "tableFrom": "otu_plan_segments",
           "tableTo": "otu_plans",
           "columnsFrom": [
@@ -3091,8 +3091,8 @@
         }
       },
       "foreignKeys": {
-        "otu_sequence_versions_sequence_fkey": {
-          "name": "otu_sequence_versions_sequence_fkey",
+        "otu_sequence_versions_otu_id_sequence_id_fkey": {
+          "name": "otu_sequence_versions_otu_id_sequence_id_fkey",
           "tableFrom": "otu_sequence_versions",
           "tableTo": "otu_sequences",
           "columnsFrom": [
@@ -3106,8 +3106,8 @@
           "onDelete": "no action",
           "onUpdate": "no action"
         },
-        "otu_sequence_versions_isolate_fkey": {
-          "name": "otu_sequence_versions_isolate_fkey",
+        "otu_sequence_versions_otu_id_isolate_id_fkey": {
+          "name": "otu_sequence_versions_otu_id_isolate_id_fkey",
           "tableFrom": "otu_sequence_versions",
           "tableTo": "otu_isolates",
           "columnsFrom": [
@@ -3121,8 +3121,8 @@
           "onDelete": "no action",
           "onUpdate": "no action"
         },
-        "otu_sequence_versions_segment_fkey": {
-          "name": "otu_sequence_versions_segment_fkey",
+        "otu_sequence_versions_otu_id_segment_id_fkey": {
+          "name": "otu_sequence_versions_otu_id_segment_id_fkey",
           "tableFrom": "otu_sequence_versions",
           "tableTo": "otu_plan_segments",
           "columnsFrom": [
@@ -3136,8 +3136,8 @@
           "onDelete": "no action",
           "onUpdate": "no action"
         },
-        "otu_sequence_versions_local_record_fkey": {
-          "name": "otu_sequence_versions_local_record_fkey",
+        "otu_sequence_versions_otu_id_sequence_id_local_record_id_fkey": {
+          "name": "otu_sequence_versions_otu_id_sequence_id_local_record_id_fkey",
           "tableFrom": "otu_sequence_versions",
           "tableTo": "otu_local_sequence_records",
           "columnsFrom": [
@@ -3300,8 +3300,8 @@
           "onDelete": "no action",
           "onUpdate": "no action"
         },
-        "otu_taxonomy_versions_local_identity_revision_fkey": {
-          "name": "otu_taxonomy_versions_local_identity_revision_fkey",
+        "otu_taxonomy_versions_reference_id_otu_id_local_identity_revision_id_fkey": {
+          "name": "otu_taxonomy_versions_reference_id_otu_id_local_identity_revision_id_fkey",
           "tableFrom": "otu_taxonomy_versions",
           "tableTo": "otu_local_identity_revisions",
           "columnsFrom": [
