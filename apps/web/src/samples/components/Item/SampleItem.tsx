@@ -43,7 +43,7 @@ export default function SampleItem({
 			role="rowgroup"
 		>
 			<div
-				className="grid grid-cols-subgrid col-span-full items-center pt-1 pb-3"
+				className="grid grid-cols-subgrid col-span-full items-center py-2"
 				role="row"
 			>
 				<div className="px-4" role="cell">
@@ -63,11 +63,11 @@ export default function SampleItem({
 						{sample.name}
 					</Link>
 				</div>
-				<div className="hidden px-4 xl:block" role="cell">
+				<div className="hidden px-4 2xl:block" role="cell">
 					<SampleLibraryTypeLabel libraryType={sample.libraryType} />
 				</div>
 				<div
-					className="hidden min-w-0 flex-wrap items-center gap-1 px-4 xl:flex"
+					className="hidden min-w-0 flex-wrap items-center gap-1 px-4 2xl:flex"
 					role="cell"
 				>
 					{sample.labels.map((label) => (
@@ -96,7 +96,7 @@ export default function SampleItem({
 				</div>
 				<div
 					aria-label="Labels"
-					className="col-start-2 col-end-3 row-start-2 flex min-w-0 flex-wrap items-center gap-1 px-4 xl:hidden"
+					className="col-start-2 col-end-3 row-start-2 flex min-w-0 flex-wrap items-center gap-1 px-4 pb-2 2xl:hidden"
 					role="cell"
 				>
 					<SampleLibraryTypeLabel libraryType={sample.libraryType} />
