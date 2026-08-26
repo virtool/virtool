@@ -73,6 +73,10 @@ function createCommand(otuId = IDS.otu) {
 				identityId,
 				name: "Novel virus",
 				acronym: "NV",
+				lineage: [
+					{ id: 10239, name: "Viruses", rank: "superkingdom" },
+					{ id: 3044, name: "Novel virus", rank: "species" },
+				],
 			},
 			promotedAccessions: [],
 			isolate: {
@@ -141,6 +145,10 @@ describe("createLocalOtu", () => {
 				identityId: IDS.identity,
 				name: "Novel virus",
 				acronym: "NV",
+				lineage: [
+					{ id: 10239, name: "Viruses", rank: "superkingdom" },
+					{ id: 3044, name: "Novel virus", rank: "species" },
+				],
 			},
 			plan: { id: IDS.plan },
 			isolates: [
@@ -187,6 +195,10 @@ describe("createLocalOtu", () => {
 			.where(eq(otuChanges.otuId, IDS.otu));
 		const assembledWithoutReplay = await getLocalOtu(db, reference.id, IDS.otu);
 		expect(assembledWithoutReplay.taxonomy.name).toBe("Novel virus");
+		expect(assembledWithoutReplay.taxonomy.lineage).toEqual([
+			{ id: 10239, name: "Viruses", rank: "superkingdom" },
+			{ id: 3044, name: "Novel virus", rank: "species" },
+		]);
 		expect(assembledWithoutReplay.isolates[0].sequences[0].sequence).toBe(
 			"ATCGNNRY",
 		);

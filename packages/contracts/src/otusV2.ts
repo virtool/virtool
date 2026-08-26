@@ -102,12 +102,21 @@ const planSchema = z
 	})
 	.strict();
 
+const lineageTaxonSchema = z
+	.object({
+		id: z.number().int().positive(),
+		name: z.string(),
+		rank: z.string(),
+	})
+	.strict();
+
 const localTaxonomySchema = z
 	.object({
 		kind: z.literal("local"),
 		identityId: uuidSchema,
 		name: trimmedTextSchema,
 		acronym: trimmedTextSchema.nullable().default(null),
+		lineage: z.array(lineageTaxonSchema).default([]),
 	})
 	.strict();
 
@@ -233,6 +242,9 @@ export type OtuV2Segment = z.output<typeof segmentSchema>;
 /** A stable v2 plan and its current segment state. */
 export type OtuV2Plan = z.output<typeof planSchema>;
 
+/** One taxon in an OTU's ordered NCBI lineage, from root to organism. */
+export type OtuV2LineageTaxon = z.output<typeof lineageTaxonSchema>;
+
 /** The local display identity of an assembled v2 OTU. */
 export type OtuV2LocalTaxonomy = z.output<typeof localTaxonomySchema>;
 
@@ -282,7 +294,11 @@ export type GenbankOtuDraftSegment = {
  */
 export type GenbankOtuDraft = {
 	molecule: OtuV2Molecule;
-	taxonomy: { name: string; acronym: string | null };
+	taxonomy: {
+		name: string;
+		acronym: string | null;
+		lineage: OtuV2LineageTaxon[];
+	};
 	isolate: { type: OtuV2IsolateNameType; value: string } | null;
 	segments: GenbankOtuDraftSegment[];
 };

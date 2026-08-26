@@ -65,7 +65,11 @@ describe("buildGenbankOtuDraft", () => {
 
 		expect(draft).toEqual({
 			molecule: { type: "RNA", strandedness: "single", topology: "linear" },
-			taxonomy: { name: "Tobacco mosaic virus", acronym: "TMV" },
+			taxonomy: {
+				name: "Tobacco mosaic virus",
+				acronym: "TMV",
+				lineage: [{ id: 12242, name: "Tobacco mosaic virus", rank: "species" }],
+			},
 			isolate: null,
 			segments: [
 				{
@@ -112,7 +116,24 @@ describe("buildGenbankOtuDraft", () => {
 		expect(draft.taxonomy).toEqual({
 			name: "Tobacco mosaic virus",
 			acronym: null,
+			lineage: [],
 		});
+	});
+
+	it("captures the full lineage, ending at the record's own taxon", () => {
+		const draft = buildGenbankOtuDraft([createRecord()], {
+			...taxonomy,
+			lineage: [
+				{ id: 10239, name: "Viruses", rank: "superkingdom" },
+				{ id: 675071, name: "Virgaviridae", rank: "family" },
+			],
+		});
+
+		expect(draft.taxonomy.lineage).toEqual([
+			{ id: 10239, name: "Viruses", rank: "superkingdom" },
+			{ id: 675071, name: "Virgaviridae", rank: "family" },
+			{ id: 12242, name: "Tobacco mosaic virus", rank: "species" },
+		]);
 	});
 
 	it("prefers strain then clone for the isolate name", () => {
