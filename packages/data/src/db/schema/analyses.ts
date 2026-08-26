@@ -35,6 +35,11 @@ export const analyses = pgTable(
 		created_at: timestamp("created_at").notNull(),
 		updated_at: timestamp("updated_at").notNull(),
 		workflow: text("workflow").notNull(),
+		// The version of the workflow image that finalized the analysis, stamped at
+		// finalize time as durable provenance. Nullable: an analysis finalized
+		// before this column existed, or by a worker that sends no version, has
+		// none, and a still-running analysis has not been finalized yet.
+		workflow_version: text("workflow_version"),
 		ready: boolean("ready").notNull(),
 		// The workflow's raw output, written by the jobs API. Opaque here: its
 		// internals are the worker's contract, not this server's.

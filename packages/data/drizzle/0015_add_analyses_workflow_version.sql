@@ -1,0 +1,1 @@
+ALTER TABLE "analyses" ADD COLUMN "workflow_version" text;

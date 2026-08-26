@@ -142,6 +142,12 @@ export type AnalysisFile = {
 export type Analysis = AnalysisMinimal & {
 	/** Files generated during the analysis that are available for download */
 	files: AnalysisFile[];
+
+	/**
+	 * The version of the workflow image that finalized the analysis, or null when
+	 * it was finalized before the version was recorded.
+	 */
+	workflowVersion: string | null;
 };
 
 /**
