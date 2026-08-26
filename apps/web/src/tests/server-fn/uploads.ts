@@ -11,8 +11,11 @@ import { type Mock, vi } from "vitest";
  * exercise uploading mock `@uploads/uploader` directly.
  */
 export const uploadServerFnMocks = {
+	cancelChunkedUploadFn: vi.fn(),
 	deleteUploadFn: vi.fn(),
+	finalizeChunkedUploadFn: vi.fn(),
 	findUploadsFn: vi.fn(),
+	initUploadFn: vi.fn(),
 };
 
 /** Sets up findUploads to resolve with a single page of the given uploads. */

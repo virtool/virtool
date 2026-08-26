@@ -10,6 +10,7 @@ import {
 	type TestDatabase,
 } from "@virtool/data/db/test/fixtures";
 import { MemoryStorage } from "@virtool/storage";
+import { eq } from "drizzle-orm";
 import {
 	afterAll,
 	beforeAll,
@@ -20,6 +21,10 @@ import {
 	vi,
 } from "vitest";
 import { callServerFn, type SplitServerFnModule } from "../test/serverFn";
+
+async function* bodyOf(text: string): AsyncIterable<Uint8Array> {
+	yield new TextEncoder().encode(text);
+}
 
 const getRequest = vi.fn();
 const setResponseStatus = vi.fn();
@@ -51,7 +56,15 @@ vi.mock("@virtool/data/events/emit", () => ({
 	emit: vi.fn(),
 }));
 
+vi.mock("../config", () => ({ config: testConfig }));
+
 const storage = new MemoryStorage();
+const presignUpload = vi.fn();
+(storage as unknown as { presignUpload: unknown }).presignUpload =
+	presignUpload;
+
+// Mutable so a test can flip the chunked-upload flag; reset in `beforeEach`.
+const testConfig = { uploadsChunked: false };
 
 const handlers = (await import(
 	"./functions.ts?tss-serverfn-split"
@@ -76,6 +89,7 @@ afterAll(async () => {
 
 beforeEach(async () => {
 	vi.clearAllMocks();
+	testConfig.uploadsChunked = false;
 	cookieHeader = "";
 	await db.delete(uploadsTable);
 	await db.delete(sessions);
@@ -226,5 +240,102 @@ describe("deleteUpload", () => {
 			"Upload is reserved and in use.",
 		);
 		expect(setResponseStatus).toHaveBeenCalledWith(409);
+	});
+});
+
+describe("initUpload", () => {
+	it("refuses a user without the upload_file permission", async () => {
+		await signIn(null);
+
+		await expect(
+			call("initUploadFn", { name: "reads.fq.gz", type: "reads" }),
+		).rejects.toBeInstanceOf(ForbiddenError);
+	});
+
+	it("returns proxied and reserves no row when chunked is off", async () => {
+		await signIn("full");
+
+		const result = await call("initUploadFn", {
+			name: "reads.fq.gz",
+			type: "reads",
+		});
+
+		expect(result).toEqual({ mode: "proxied" });
+		expect(await db.select().from(uploadsTable)).toHaveLength(0);
+		expect(presignUpload).not.toHaveBeenCalled();
+	});
+
+	it("reserves an unfinished row and returns the SAS when chunked is on", async () => {
+		testConfig.uploadsChunked = true;
+		presignUpload.mockResolvedValue("https://fd/c/blob?sig=x");
+		const userId = await signIn("full");
+
+		const result = (await call("initUploadFn", {
+			name: "reads.fq.gz",
+			type: "reads",
+		})) as { mode: string; uploadId: number; url: string; blockSize: number };
+
+		expect(result.mode).toBe("chunked");
+		expect(result.url).toBe("https://fd/c/blob?sig=x");
+		expect(result.blockSize).toBeGreaterThan(0);
+
+		const [row] = await db
+			.select()
+			.from(uploadsTable)
+			.where(eq(uploadsTable.id, result.uploadId));
+		expect(row?.ready).toBe(false);
+		expect(row?.userId).toBe(userId);
+		expect(presignUpload).toHaveBeenCalledWith(
+			row?.storageKey,
+			expect.objectContaining({ expiresIn: expect.any(Number) }),
+		);
+	});
+});
+
+describe("finalizeChunkedUpload", () => {
+	it("marks the caller's upload ready from the stored size", async () => {
+		const userId = await signIn("full");
+		const upload = await seedUpload(userId, {
+			ready: false,
+			storageKey: "uploads/finalize",
+		});
+		await storage.write("uploads/finalize", bodyOf("hello"));
+
+		const result = (await call("finalizeChunkedUploadFn", {
+			id: upload.id,
+		})) as { ready: boolean; size: number };
+
+		expect(result).toMatchObject({ ready: true, size: 5 });
+	});
+
+	it("maps an upload whose bytes never arrived to a 409", async () => {
+		const userId = await signIn("full");
+		const upload = await seedUpload(userId, {
+			ready: false,
+			storageKey: "uploads/missing",
+		});
+
+		await expect(
+			call("finalizeChunkedUploadFn", { id: upload.id }),
+		).rejects.toThrow("Upload is not complete.");
+		expect(setResponseStatus).toHaveBeenCalledWith(409);
+	});
+});
+
+describe("cancelChunkedUpload", () => {
+	it("soft-deletes the caller's unfinished upload", async () => {
+		const userId = await signIn("full");
+		const upload = await seedUpload(userId, {
+			ready: false,
+			storageKey: "uploads/cancel",
+		});
+
+		await call("cancelChunkedUploadFn", { id: upload.id });
+
+		const [row] = await db
+			.select()
+			.from(uploadsTable)
+			.where(eq(uploadsTable.id, upload.id));
+		expect(row?.removed).toBe(true);
 	});
 });

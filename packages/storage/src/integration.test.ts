@@ -187,4 +187,31 @@ describe.each(BACKENDS)("$name storage", ({ config }) => {
 		);
 		expect(response.headers.get("content-type")).toBe("application/gzip");
 	});
+
+	it("presigns an upload URL a client stages and commits blocks to", async () => {
+		// Only Azure presigns uploads; S3 leaves it undefined and the client uses
+		// the proxied route instead.
+		if (!storage.presignUpload) {
+			return;
+		}
+
+		const key = `${prefix}chunked.fq`;
+		const url = await storage.presignUpload(key, { expiresIn: 900 });
+		const blockId = btoa("000000");
+
+		const staged = await fetch(
+			`${url}&comp=block&blockid=${encodeURIComponent(blockId)}`,
+			{ method: "PUT", body: "ACGT" },
+		);
+		expect(staged.status).toBe(201);
+
+		const committed = await fetch(`${url}&comp=blocklist`, {
+			method: "PUT",
+			headers: { "content-type": "application/xml" },
+			body: `<?xml version="1.0" encoding="utf-8"?><BlockList><Latest>${blockId}</Latest></BlockList>`,
+		});
+		expect(committed.status).toBe(201);
+
+		expect(await readText(storage, key)).toBe("ACGT");
+	});
 });

@@ -20,11 +20,16 @@ import { createTestDatabase, type TestDatabase } from "../db/test/fixtures";
 import { createEmitter } from "../events/emit";
 import { testLogger } from "../test/logger";
 import {
+	cancelPendingUpload,
+	createPendingUpload,
 	createUpload,
 	deleteUpload,
+	finalizePendingUpload,
 	findUploads,
 	ORPHAN_AGE_SECONDS,
 	reapOrphanedUploads,
+	reapStalePendingUploads,
+	UploadIncompleteError,
 	UploadNotFoundError,
 	UploadReservedError,
 } from "./data";
@@ -622,5 +627,226 @@ describe("reapOrphanedUploads", () => {
 
 		await expect(reap()).resolves.toEqual({ found: 1, deleted: 1 });
 		expect(notify).not.toHaveBeenCalled();
+	});
+});
+
+describe("createPendingUpload", () => {
+	it("inserts an unfinished row that no list shows, minting its key", async () => {
+		const userId = await seedUser(db, { handle: "bob" });
+
+		const { upload, storageKey } = await createPendingUpload(db, {
+			name: "reads.fq.gz",
+			type: "reads",
+			userId,
+		});
+
+		expect(upload).toMatchObject({
+			name: "reads.fq.gz",
+			type: "reads",
+			ready: false,
+			removed: false,
+			reserved: false,
+			user: { id: userId, handle: "bob" },
+		});
+		expect(storageKey).toMatch(/^uploads\/[0-9a-f]{32}$/);
+
+		const [row] = await db
+			.select()
+			.from(uploadsTable)
+			.where(eq(uploadsTable.id, upload.id));
+		expect(row?.ready).toBe(false);
+		expect(row?.storageKey).toBe(storageKey);
+
+		const list = await findUploads(db, "reads", 1, 25);
+		expect(list.items).toHaveLength(0);
+	});
+});
+
+describe("finalizePendingUpload", () => {
+	it("records the storage size and marks the row ready", async () => {
+		const storage = new MemoryStorage();
+		const userId = await seedUser(db);
+
+		const { upload, storageKey } = await createPendingUpload(db, {
+			name: "reads.fq.gz",
+			type: "reads",
+			userId,
+		});
+		await storage.write(storageKey, bodyOf("hello"));
+
+		const finalized = await finalizePendingUpload(
+			db,
+			storage,
+			upload.id,
+			userId,
+		);
+
+		expect(finalized).toMatchObject({ ready: true, size: 5 });
+
+		const list = await findUploads(db, "reads", 1, 25);
+		expect(list.items).toHaveLength(1);
+	});
+
+	it("throws when the object was never committed, leaving the row unfinished", async () => {
+		const userId = await seedUser(db);
+		const { upload } = await createPendingUpload(db, {
+			name: "reads.fq.gz",
+			type: "reads",
+			userId,
+		});
+
+		await expect(
+			finalizePendingUpload(db, new MemoryStorage(), upload.id, userId),
+		).rejects.toBeInstanceOf(UploadIncompleteError);
+
+		const [row] = await db
+			.select()
+			.from(uploadsTable)
+			.where(eq(uploadsTable.id, upload.id));
+		expect(row?.ready).toBe(false);
+	});
+
+	it("does not finalize another user's upload", async () => {
+		const storage = new MemoryStorage();
+		const owner = await seedUser(db, { handle: "owner" });
+		const other = await seedUser(db, { handle: "other" });
+
+		const { upload, storageKey } = await createPendingUpload(db, {
+			name: "reads.fq.gz",
+			type: "reads",
+			userId: owner,
+		});
+		await storage.write(storageKey, bodyOf("hello"));
+
+		await expect(
+			finalizePendingUpload(db, storage, upload.id, other),
+		).rejects.toBeInstanceOf(UploadNotFoundError);
+	});
+
+	it("is idempotent for an already finalized upload", async () => {
+		const storage = new MemoryStorage();
+		const userId = await seedUser(db);
+
+		const { upload, storageKey } = await createPendingUpload(db, {
+			name: "reads.fq.gz",
+			type: "reads",
+			userId,
+		});
+		await storage.write(storageKey, bodyOf("hello"));
+
+		await finalizePendingUpload(db, storage, upload.id, userId);
+		const again = await finalizePendingUpload(db, storage, upload.id, userId);
+
+		expect(again).toMatchObject({ ready: true, size: 5 });
+	});
+});
+
+describe("cancelPendingUpload", () => {
+	it("soft-deletes the unfinished row and drops its object", async () => {
+		const storage = new MemoryStorage();
+		const userId = await seedUser(db);
+
+		const { upload, storageKey } = await createPendingUpload(db, {
+			name: "reads.fq.gz",
+			type: "reads",
+			userId,
+		});
+		await storage.write(storageKey, bodyOf("hello"));
+
+		await cancelPendingUpload(db, storage, testLogger, upload.id, userId);
+
+		const [row] = await db
+			.select()
+			.from(uploadsTable)
+			.where(eq(uploadsTable.id, upload.id));
+		expect(row?.removed).toBe(true);
+		await expect(storage.size(storageKey)).rejects.toThrow();
+	});
+
+	it("does not cancel a finalized upload", async () => {
+		const userId = await seedUser(db);
+		const ready = await seedUpload(userId, { ready: true });
+
+		await expect(
+			cancelPendingUpload(
+				db,
+				new MemoryStorage(),
+				testLogger,
+				ready.id,
+				userId,
+			),
+		).rejects.toBeInstanceOf(UploadNotFoundError);
+	});
+
+	it("does not cancel another user's upload", async () => {
+		const owner = await seedUser(db, { handle: "owner" });
+		const other = await seedUser(db, { handle: "other" });
+		const { upload } = await createPendingUpload(db, {
+			name: "reads.fq.gz",
+			type: "reads",
+			userId: owner,
+		});
+
+		await expect(
+			cancelPendingUpload(
+				db,
+				new MemoryStorage(),
+				testLogger,
+				upload.id,
+				other,
+			),
+		).rejects.toBeInstanceOf(UploadNotFoundError);
+	});
+});
+
+describe("reapStalePendingUploads", () => {
+	const WINDOW_SECONDS = 60;
+
+	function secondsAgoDate(seconds: number): Date {
+		return new Date(Date.now() - seconds * 1000);
+	}
+
+	it("reaps unfinished rows past the cutoff, sparing recent and ready ones", async () => {
+		const storage = new MemoryStorage();
+		const userId = await seedUser(db);
+
+		const stale = await seedUpload(userId, {
+			ready: false,
+			createdAt: secondsAgoDate(WINDOW_SECONDS * 2),
+			storageKey: "uploads/stale",
+		});
+		await storage.write("uploads/stale", bodyOf("reads"));
+
+		const recent = await seedUpload(userId, {
+			ready: false,
+			createdAt: new Date(),
+		});
+		const ready = await seedUpload(userId, {
+			ready: true,
+			createdAt: secondsAgoDate(WINDOW_SECONDS * 2),
+		});
+
+		await expect(
+			reapStalePendingUploads(db, storage, testLogger, WINDOW_SECONDS),
+		).resolves.toEqual({ found: 1, deleted: 1 });
+
+		const [staleRow] = await db
+			.select()
+			.from(uploadsTable)
+			.where(eq(uploadsTable.id, stale.id));
+		expect(staleRow?.removed).toBe(true);
+		await expect(storage.size("uploads/stale")).rejects.toThrow();
+
+		const [recentRow] = await db
+			.select()
+			.from(uploadsTable)
+			.where(eq(uploadsTable.id, recent.id));
+		expect(recentRow?.removed).toBe(false);
+
+		const [readyRow] = await db
+			.select()
+			.from(uploadsTable)
+			.where(eq(uploadsTable.id, ready.id));
+		expect(readyRow?.removed).toBe(false);
 	});
 });

@@ -408,6 +408,15 @@ or explicit whitelist first, then use that row's `storage_key`; never construct
 a key from URL parameters. Use the row's display name for
 `Content-Disposition`.
 
+Large uploads can go direct-to-blob instead of through the `POST /uploads`
+route. `initUploadFn` owns the choice so the client never carries the flag:
+with `VT_UPLOADS_CHUNKED` set and an Azure backend that can presign, it reserves
+the upload and returns a write SAS the client PUTs 4 MB blocks to (`@uploads/chunkedUpload`),
+then commits with a Put Block List and calls `finalizeChunkedUploadFn`;
+`cancelChunkedUploadFn` drops an abandoned reservation. Otherwise it returns
+`proxied` and the client streams through the raw `/uploads` route, which stays
+the fallback and the rollback path — unset the flag to revert.
+
 ### Server push
 
 Server-pushed cache invalidations arrive through the authenticated `/events`

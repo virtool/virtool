@@ -19,6 +19,24 @@ the browser and the filename has to come from the URL.
 - **`MemoryStorage`** leaves the method undefined, and a caller falls back to
   streaming.
 
+## Presigned uploads
+
+`StorageBackend.presignUpload` is an optional capability that mints a
+short-lived, write-only URL a browser uploads an object to directly, chunk by
+chunk. The URL grants only create and write on one key; the client appends the
+Azure Block Blob query parameters (`comp=block`, `comp=blocklist`) itself and
+commits the blocks with a Put Block List. This turns a multi-gigabyte upload
+into hundreds of short requests rather than one long stream, so no idle-timeout
+proxy in the path trips and no bytes pass through the server.
+
+- **Azure** signs the write SAS with the same user-delegation key as the
+  download SAS (`cw` permissions). `uploadUrl` rehosts the URL on the Front Door
+  origin that fronts the private storage account, falling back to `downloadUrl`
+  and then the blob endpoint.
+- **S3** and **`MemoryStorage`** leave the method undefined — chunked direct
+  upload is an Azure capability — and a caller falls back to the proxied upload
+  route.
+
 ## Testing
 
 The `unit` Vitest project covers behavior testable with `MemoryStorage`. The

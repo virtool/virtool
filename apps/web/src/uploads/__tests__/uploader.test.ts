@@ -185,6 +185,9 @@ describe("upload lifecycle", () => {
 
 	it("records the server's message when an upload fails", async () => {
 		upload(file(), "reads");
+		// The upload asks the server which transport to take before it posts, so
+		// the request the mock XHR stands in for is not made until that resolves.
+		await flush();
 		xhr.emitLoad(
 			422,
 			JSON.stringify({ message: "A valid `name` is required." }),
@@ -199,6 +202,7 @@ describe("upload lifecycle", () => {
 
 	it("marks an upload completed on success, keeping it until dismissed", async () => {
 		upload(file(), "reads");
+		await flush();
 		xhr.emitLoad(201, JSON.stringify({ id: 1 }));
 		await flush();
 
@@ -228,6 +232,7 @@ describe("upload lifecycle", () => {
 	it("retries a failed upload in place with the same file", async () => {
 		upload(file(), "reads");
 		const localId = currentId();
+		await flush();
 		xhr.emitLoad(500, "Server Error");
 		await flush();
 
@@ -242,6 +247,7 @@ describe("upload lifecycle", () => {
 			progress: 0,
 		});
 
+		await flush();
 		expect(xhr.body).toBeInstanceOf(File);
 
 		xhr.emitLoad(201, JSON.stringify({ id: 1 }));

@@ -13,6 +13,7 @@ import type { StorageConfig } from "./config";
 import { StorageError, StorageKeyNotFoundError } from "./errors";
 import type {
 	PresignDownloadOptions,
+	PresignUploadOptions,
 	StorageBackend,
 	StorageObjectInfo,
 } from "./types";
@@ -73,34 +74,48 @@ function createServiceClient(config: AzureConfig): {
 	return { service: new BlobServiceClient(url, sharedKey), sharedKey };
 }
 
-// Only swap the origin so the signed resource path remains unchanged.
-function buildDownloadUrl(
+// Only swap the origin so the signed resource path remains unchanged. A SAS
+// signs the container and blob names, not the host, so redirecting the request
+// through a different origin — Front Door — leaves the signature valid.
+function buildPresignedUrl(
 	container: ContainerClient,
 	key: string,
-	config: AzureConfig,
 	sas: string,
+	origin: string | undefined,
 ): string {
 	const url = new URL(container.getBlobClient(key).url);
 
-	if (config.downloadUrl) {
-		const origin = new URL(config.downloadUrl);
-		url.protocol = origin.protocol;
-		url.host = origin.host;
+	if (origin) {
+		const override = new URL(origin);
+		url.protocol = override.protocol;
+		url.host = override.host;
 	}
 
 	return `${url.toString()}?${sas}`;
 }
 
-function createPresign(
-	config: AzureConfig,
+// Real Azure is https-only; a plain-http endpoint or public origin — Azurite in
+// development — has to keep http allowed or the SAS refuses it.
+function sasProtocol(...origins: (string | undefined)[]): SASProtocol {
+	return origins.some((origin) => origin?.startsWith("http://"))
+		? SASProtocol.HttpsAndHttp
+		: SASProtocol.Https;
+}
+
+/**
+ * A cached provider of the account's user-delegation key.
+ *
+ * A managed identity has no signing key of its own, so both presigned downloads
+ * and presigned uploads sign through this one delegation key rather than each
+ * requesting its own.
+ */
+function createDelegationKeyProvider(
 	service: BlobServiceClient,
-	container: ContainerClient,
-	sharedKey: StorageSharedKeyCredential | null,
-): StorageBackend["presignDownload"] {
+): () => Promise<UserDelegationKey> {
 	let cached: { key: UserDelegationKey; expiresOn: Date } | null = null;
 	let inflight: Promise<UserDelegationKey> | null = null;
 
-	async function getDelegationKey(): Promise<UserDelegationKey> {
+	return async function getDelegationKey(): Promise<UserDelegationKey> {
 		const now = new Date();
 
 		if (
@@ -130,8 +145,15 @@ function createPresign(
 		}
 
 		return inflight;
-	}
+	};
+}
 
+function createPresignDownload(
+	config: AzureConfig,
+	container: ContainerClient,
+	sharedKey: StorageSharedKeyCredential | null,
+	getDelegationKey: () => Promise<UserDelegationKey>,
+): NonNullable<StorageBackend["presignDownload"]> {
 	return async function presignDownload(
 		key: string,
 		options: PresignDownloadOptions,
@@ -148,13 +170,7 @@ function createPresign(
 			expiresOn,
 			contentDisposition: options.contentDisposition,
 			contentType: options.contentType,
-			// Real Azure is https-only; a plain-http endpoint or download host —
-			// Azurite in development — has to keep http allowed or the SAS refuses it.
-			protocol:
-				config.endpoint?.startsWith("http://") ||
-				config.downloadUrl?.startsWith("http://")
-					? SASProtocol.HttpsAndHttp
-					: SASProtocol.Https,
+			protocol: sasProtocol(config.endpoint, config.downloadUrl),
 		};
 
 		try {
@@ -169,7 +185,54 @@ function createPresign(
 						config.account,
 					).toString();
 
-			return buildDownloadUrl(container, key, config, sas);
+			return buildPresignedUrl(container, key, sas, config.downloadUrl);
+		} catch (error) {
+			throw new StorageError(
+				error instanceof Error ? error.message : String(error),
+			);
+		}
+	};
+}
+
+function createPresignUpload(
+	config: AzureConfig,
+	container: ContainerClient,
+	sharedKey: StorageSharedKeyCredential | null,
+	getDelegationKey: () => Promise<UserDelegationKey>,
+): NonNullable<StorageBackend["presignUpload"]> {
+	// Front Door is the only route to the private storage account, so an upload
+	// URL prefers the Front Door origin, then the download origin, then the raw
+	// blob endpoint for a development backend reachable directly.
+	const origin = config.uploadUrl ?? config.downloadUrl;
+
+	return async function presignUpload(
+		key: string,
+		options: PresignUploadOptions,
+	): Promise<string> {
+		const now = new Date();
+		const startsOn = new Date(now.getTime() - CLOCK_SKEW_MS);
+		const expiresOn = new Date(now.getTime() + options.expiresIn * 1000);
+
+		const values = {
+			containerName: config.container,
+			blobName: key,
+			// Create and write cover staging blocks and committing the block list.
+			permissions: BlobSASPermissions.parse("cw"),
+			startsOn,
+			expiresOn,
+			protocol: sasProtocol(config.endpoint, origin),
+		};
+
+		try {
+			const sas = sharedKey
+				? generateBlobSASQueryParameters(values, sharedKey).toString()
+				: generateBlobSASQueryParameters(
+						values,
+						await getDelegationKey(),
+						config.account,
+					).toString();
+
+			return buildPresignedUrl(container, key, sas, origin);
 		} catch (error) {
 			throw new StorageError(
 				error instanceof Error ? error.message : String(error),
@@ -181,9 +244,22 @@ function createPresign(
 export function createAzureStorage(config: AzureConfig): StorageBackend {
 	const { service, sharedKey } = createServiceClient(config);
 	const container = service.getContainerClient(config.container);
+	const getDelegationKey = createDelegationKeyProvider(service);
 
 	return {
-		presignDownload: createPresign(config, service, container, sharedKey),
+		presignDownload: createPresignDownload(
+			config,
+			container,
+			sharedKey,
+			getDelegationKey,
+		),
+
+		presignUpload: createPresignUpload(
+			config,
+			container,
+			sharedKey,
+			getDelegationKey,
+		),
 
 		async *read(key: string): AsyncIterable<Uint8Array> {
 			let body: NodeJS.ReadableStream | undefined;

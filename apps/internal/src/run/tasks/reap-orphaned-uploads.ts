@@ -1,6 +1,7 @@
 import {
 	ORPHAN_AGE_SECONDS,
 	reapOrphanedUploads,
+	reapStalePendingUploads,
 } from "@virtool/data/uploads/data";
 import { z } from "zod";
 import { defineTask } from "../framework/define";
@@ -43,6 +44,23 @@ export const reapOrphanedUploadsTask = defineTask<typeof payload, TaskContext>({
 
 			if (found > 0) {
 				logger.info({ found, deleted }, "reaped orphaned reserved uploads");
+			}
+
+			// Chunked uploads reserved but never finalized leave unfinished rows the
+			// reserved sweep above does not match. Clear those in the same run.
+			const stale = await reapStalePendingUploads(
+				ctx.db,
+				ctx.storage,
+				logger,
+				ORPHAN_AGE_SECONDS,
+				signal,
+			);
+
+			if (stale.found > 0) {
+				logger.info(
+					{ found: stale.found, deleted: stale.deleted },
+					"reaped stale pending uploads",
+				);
 			}
 		});
 	},

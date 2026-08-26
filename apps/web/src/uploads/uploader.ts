@@ -2,9 +2,11 @@
  * Initiate and track uploads using Zustand.
  */
 import { createRandomString } from "@app/utils";
+import { initUploadFn } from "@server/uploads/functions";
 import type { Upload, UploadType } from "@virtool/contracts";
 import { create } from "zustand";
 import { subscribeWithSelector } from "zustand/middleware";
+import { uploadBlocks } from "./chunkedUpload";
 import type { UploadInProgress } from "./types";
 
 const SAMPLE_INTERVAL_MS = 500;
@@ -221,7 +223,32 @@ const tracked = new Map<
 >();
 
 /**
- * Post one tracked file, wiring its progress and outcome into the store.
+ * Post one file, taking whichever transport the server chooses.
+ *
+ * `initUploadFn` decides between the direct-to-blob and proxied paths — the
+ * client never carries the feature flag — and, for a chunked upload, hands back
+ * the write SAS to run it. A proxied result falls back to the `POST /uploads`
+ * route, which reserves its own row.
+ */
+async function performUpload(
+	file: File,
+	fileType: UploadType,
+	onProgress: (progress: UploadProgress) => void,
+	signal: AbortSignal,
+): Promise<Upload> {
+	const init = await initUploadFn({
+		data: { name: file.name, type: fileType },
+	});
+
+	if (init.mode === "chunked") {
+		return uploadBlocks(init, file, onProgress, signal);
+	}
+
+	return postUpload(file, file.name, fileType, onProgress, signal);
+}
+
+/**
+ * Run one tracked file, wiring its progress and outcome into the store.
  *
  * An aborted request is left to `cancelUpload`, which has already removed the
  * upload; any other rejection surfaces its message on the failed upload.
@@ -230,9 +257,8 @@ function runUpload(localId: string, file: File, fileType: UploadType): void {
 	const controller = new AbortController();
 	tracked.set(localId, { controller, file, fileType });
 
-	postUpload(
+	performUpload(
 		file,
-		file.name,
 		fileType,
 		({ loaded, percent }) => {
 			useUploaderStore.getState().setProgress(localId, loaded, percent);

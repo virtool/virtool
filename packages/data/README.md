@@ -58,6 +58,14 @@ deleting their rows, including child keys removed by database cascades.
 There is no prefix-based cleanup. Objects that were written without a key
 being recorded remain for a future orphan sweep.
 
+A chunked upload reserves an `uploads` row up front with `createPendingUpload`
+(`ready: false`, invisible to every list) and records the key its bytes will
+land at. The client writes the bytes straight to storage and calls
+`finalizePendingUpload`, which reads the real size from storage — a missing
+object means the commit never happened — and flips the row ready. `cancelPendingUpload`
+drops a reservation the client abandons; `reapStalePendingUploads` sweeps any it
+never cancelled, alongside the reserved-upload sweep.
+
 ### Keys
 
 Storage keys are recorded, never reconstructed. Every read path uses the full

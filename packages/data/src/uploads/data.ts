@@ -8,7 +8,7 @@ import type {
 } from "@virtool/contracts";
 import type { Logger } from "@virtool/logger";
 import type { StorageBackend } from "@virtool/storage";
-import { mintRootStorageKey } from "@virtool/storage";
+import { mintRootStorageKey, StorageKeyNotFoundError } from "@virtool/storage";
 import { and, asc, count, desc, eq, inArray, lt, notExists } from "drizzle-orm";
 import type { Db, DbOrTx } from "../db/pg";
 import { takeFirstOrThrow } from "../db/rows";
@@ -43,6 +43,15 @@ export class UploadNotFoundError extends AppError {}
 
 /** Thrown when a reserved upload is deleted while still in use. */
 export class UploadReservedError extends AppError {}
+
+/**
+ * Thrown when a chunked upload is finalized before its bytes reached storage.
+ *
+ * The client commits the block list directly to storage and then asks the
+ * server to finalize; if no object is there, the commit never happened and the
+ * row stays unfinished rather than being marked ready over nothing.
+ */
+export class UploadIncompleteError extends AppError {}
 
 function toUpload(row: UploadRow, user: UserNested | null): Upload {
 	return {
@@ -206,6 +215,220 @@ export async function createUpload(
 	await emit("uploads", row.id, "create");
 
 	return toUpload(row, await fetchUser(db, row.userId));
+}
+
+/** Fields needed to reserve a chunked upload before its bytes exist. */
+export type PendingUploadValues = {
+	name: string;
+	type: UploadType;
+	userId: number;
+};
+
+/** A reserved chunked upload and the storage key its bytes belong at. */
+export type PendingUpload = {
+	upload: Upload;
+	storageKey: string;
+};
+
+/**
+ * Reserve a chunked upload, minting the storage key its bytes will land at.
+ *
+ * Unlike {@link createUpload}, no bytes flow through this server: the client
+ * writes them straight to storage under {@link PendingUpload.storageKey} and
+ * calls {@link finalizePendingUpload} afterwards. The row is written `ready:
+ * false`, so no list shows it and no frame is emitted until it is finalized.
+ *
+ * The key is recorded on the row so finalize can locate the bytes and confirm
+ * they arrived. The row is also what a later finalize checks ownership against,
+ * which is why the reservation is persisted rather than the key just handed out.
+ */
+export async function createPendingUpload(
+	db: DbOrTx,
+	values: PendingUploadValues,
+): Promise<PendingUpload> {
+	const now = new Date();
+	const nameOnDisk = `${crypto.randomUUID()}-${values.name}`;
+	const storageKey = mintRootStorageKey("uploads");
+
+	const row = takeFirstOrThrow(
+		await db
+			.insert(uploadsTable)
+			.values({
+				createdAt: now,
+				name: values.name,
+				nameOnDisk,
+				ready: false,
+				removed: false,
+				reserved: false,
+				storageKey,
+				type: values.type,
+				userId: values.userId,
+			})
+			.returning(),
+	);
+
+	return {
+		upload: toUpload(row, await fetchUser(db, row.userId)),
+		storageKey,
+	};
+}
+
+/**
+ * Finalize a chunked upload once its bytes are committed to storage.
+ *
+ * The row must belong to `userId` and still be unfinished; a mismatch reads as
+ * {@link UploadNotFoundError}, so one user cannot finalize another's upload or
+ * probe which ids exist. The recorded size comes from storage, never the
+ * client, and a missing object means the block list was never committed —
+ * {@link UploadIncompleteError} — leaving the row unfinished for a retry.
+ *
+ * Idempotent: a row already finalized is returned unchanged, so a retried
+ * finalize after a dropped response does not double-emit or re-stamp it.
+ */
+export async function finalizePendingUpload(
+	db: DbOrTx,
+	storage: StorageBackend,
+	uploadId: number,
+	userId: number,
+): Promise<Upload> {
+	const [row] = await db
+		.select()
+		.from(uploadsTable)
+		.where(eq(uploadsTable.id, uploadId));
+
+	if (!row || row.removed || row.userId !== userId || !row.storageKey) {
+		throw new UploadNotFoundError();
+	}
+
+	if (row.ready) {
+		return toUpload(row, await fetchUser(db, row.userId));
+	}
+
+	let size: number;
+	try {
+		size = await storage.size(row.storageKey);
+	} catch (err) {
+		if (err instanceof StorageKeyNotFoundError) {
+			throw new UploadIncompleteError();
+		}
+		throw err;
+	}
+
+	const finalized = takeFirstOrThrow(
+		await db
+			.update(uploadsTable)
+			.set({ ready: true, size, uploadedAt: new Date() })
+			.where(eq(uploadsTable.id, uploadId))
+			.returning(),
+	);
+
+	await emit("uploads", finalized.id, "create");
+
+	return toUpload(finalized, await fetchUser(db, finalized.userId));
+}
+
+/**
+ * Cancel a chunked upload that was reserved but never finalized.
+ *
+ * Only the owner's own unfinished reservation is cancellable; anything else —
+ * another user's row, a finalized upload, an already-removed one — reads as
+ * {@link UploadNotFoundError}. The row is soft-deleted and its object dropped.
+ * No frame is emitted, since an unfinished upload was never in any list.
+ */
+export async function cancelPendingUpload(
+	db: DbOrTx,
+	storage: StorageBackend,
+	logger: Logger,
+	uploadId: number,
+	userId: number,
+): Promise<void> {
+	const [row] = await db
+		.select()
+		.from(uploadsTable)
+		.where(eq(uploadsTable.id, uploadId));
+
+	if (!row || row.removed || row.userId !== userId || row.ready) {
+		throw new UploadNotFoundError();
+	}
+
+	await db
+		.update(uploadsTable)
+		.set({ removed: true, removedAt: new Date() })
+		.where(eq(uploadsTable.id, uploadId));
+
+	if (row.storageKey) {
+		await storage.delete(row.storageKey);
+	} else {
+		logger.warn({ uploadId }, "cancelled upload has no storage_key to delete");
+	}
+}
+
+/**
+ * Delete chunked uploads reserved long ago that were never finalized.
+ *
+ * A reservation whose client never committed its block list, or never called
+ * finalize, leaves an unfinished row that no list shows. The cutoff is far
+ * longer than any real upload takes, so an in-flight upload is never swept.
+ * Azure expires uncommitted blocks on its own after a week; this clears the row
+ * and any object a stalled commit did land.
+ */
+export async function reapStalePendingUploads(
+	db: Db,
+	storage: StorageBackend,
+	logger: Logger,
+	olderThanSeconds: number,
+	signal?: AbortSignal,
+): Promise<ReapResult> {
+	const stale = await db
+		.select({ id: uploadsTable.id })
+		.from(uploadsTable)
+		.where(
+			and(
+				eq(uploadsTable.ready, false),
+				eq(uploadsTable.removed, false),
+				lt(uploadsTable.createdAt, secondsAgo(olderThanSeconds)),
+			),
+		)
+		.orderBy(asc(uploadsTable.id));
+
+	const found = stale.length;
+
+	if (found === 0) {
+		return { found, deleted: 0 };
+	}
+
+	let deleted = 0;
+
+	for (const upload of stale) {
+		signal?.throwIfAborted();
+
+		const [reaped] = await db
+			.update(uploadsTable)
+			.set({ removed: true, removedAt: nowUtc() })
+			.where(
+				and(eq(uploadsTable.id, upload.id), eq(uploadsTable.removed, false)),
+			)
+			.returning({ storageKey: uploadsTable.storageKey });
+
+		if (reaped === undefined) {
+			continue;
+		}
+
+		deleted += 1;
+
+		if (reaped.storageKey) {
+			try {
+				await storage.delete(reaped.storageKey);
+			} catch (err) {
+				logger.warn(
+					{ err, uploadId: upload.id, storageKey: reaped.storageKey },
+					"failed to delete stale upload object; object orphaned",
+				);
+			}
+		}
+	}
+
+	return { found, deleted };
 }
 
 /** The storage key of an upload's bytes, with the name to download them as. */

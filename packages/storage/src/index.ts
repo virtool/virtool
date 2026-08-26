@@ -6,6 +6,7 @@ export * from "./keys";
 export { MemoryStorage } from "./memory";
 export {
 	type PresignDownloadOptions,
+	type PresignUploadOptions,
 	STORAGE_CHUNK_SIZE,
 	type StorageBackend,
 	type StorageObjectInfo,
