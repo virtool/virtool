@@ -3,7 +3,6 @@ import Icon from "@base/Icon";
 import type { WorkflowFilterState } from "@samples/utils";
 import type { WorkflowState } from "@virtool/contracts";
 import { workflowStateIcons } from "../Filter/workflowStateIcons";
-import { BaseWorkflowTag } from "./BaseWorkflowTag";
 
 type SampleItemWorkflowTagProps = {
 	displayName: string;
@@ -38,9 +37,16 @@ export default function WorkflowTag({
 	const { className, icon } = workflowStateIcons[state];
 
 	return (
-		<BaseWorkflowTag className={tagClassNames[state]}>
+		<div
+			className={cn(
+				"flex items-center gap-1.5 text-sm font-medium px-2 py-1.5",
+				"first:rounded-l-sm last:rounded-r-sm",
+				"[&_svg]:leading-[inherit]",
+				tagClassNames[state],
+			)}
+		>
 			<Icon icon={icon} className={cn("size-4", className)} />
 			<span>{displayName}</span>
-		</BaseWorkflowTag>
+		</div>
 	);
 }
