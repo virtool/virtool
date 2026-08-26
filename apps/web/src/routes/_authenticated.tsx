@@ -5,6 +5,7 @@ import * as Sse from "@app/sse/SseConnection";
 import Banner from "@banner/components/Banner";
 import LoadingPlaceholder from "@base/LoadingPlaceholder";
 import SkipLink from "@base/SkipLink";
+import Toaster from "@base/Toaster";
 import Nav from "@nav/components/Nav";
 import Sidebar from "@nav/components/Sidebar";
 import * as Sentry from "@sentry/tanstackstart-react";
@@ -120,6 +121,8 @@ function AuthenticatedLayout() {
 			<Suspense fallback={null}>
 				<UploadOverlay />
 			</Suspense>
+
+			<Toaster />
 		</>
 	);
 }
