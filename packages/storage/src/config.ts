@@ -22,4 +22,9 @@ export type StorageConfig =
 			container: string;
 			accessKey?: string;
 			endpoint?: string;
+			/**
+			 * Public origin that replaces the blob endpoint origin in presigned URLs.
+			 * Unset preserves the blob endpoint origin.
+			 */
+			downloadUrl?: string;
 	  };

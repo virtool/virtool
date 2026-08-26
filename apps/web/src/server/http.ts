@@ -80,9 +80,15 @@ export function toStream(
 	});
 }
 
+/** Keep redirected downloads available long enough to start without prolonged access. */
+const DOWNLOAD_URL_TTL_SECONDS = 15 * 60;
+
 /**
- * Stream the object at `key` as a download named `filename`, or a 404 when it
+ * Serve the object at `key` as a download named `filename`, or a 404 when it
  * has no bytes in storage.
+ *
+ * With `mode` `redirect` and a backend that can presign, redirect the client to
+ * storage. Otherwise, stream the object through this server.
  *
  * Every file download ends this way, so the rule that makes it correct lives
  * here rather than in each handler: `Content-Length` comes from the object and
@@ -100,7 +106,18 @@ export async function streamStorageObject(
 	key: string,
 	filename: string,
 	contentType: string,
+	mode: "stream" | "redirect" = "stream",
 ): Promise<Response> {
+	if (mode === "redirect" && storage.presignDownload) {
+		const url = await storage.presignDownload(key, {
+			contentDisposition: contentDisposition(filename),
+			contentType,
+			expiresIn: DOWNLOAD_URL_TTL_SECONDS,
+		});
+
+		return new Response(null, { status: 302, headers: { location: url } });
+	}
+
 	let size: number;
 
 	try {

@@ -515,6 +515,8 @@ whitespace is trimmed, and an empty value is treated as unset.
 | `VT_STORAGE_AZURE_CONTAINER` | String | Required for Azure | Name the Azure Blob container. |
 | `VT_STORAGE_AZURE_ACCESS_KEY` | String | Unset | Set an Azure account key; leave unset to use managed identity. |
 | `VT_STORAGE_AZURE_ENDPOINT` | URL string | Unset | Override the Azure Blob endpoint. |
+| `VT_STORAGE_AZURE_DOWNLOAD_URL` | URL origin | Unset | Rehost redirected Azure downloads on a public origin, such as `https://files.virtool.ca`. Applies only in `redirect` download mode. |
+| `VT_STORAGE_DOWNLOAD_MODE` | `stream` \| `redirect` | `stream` | Serve file downloads by streaming the bytes through this server, or by 302-redirecting to a short-lived presigned storage URL. `redirect` falls back to streaming when the backend cannot presign. |
 
 The build and test tooling reads one additional variable. It is not a runtime
 server setting and has no `_FILE` variant.

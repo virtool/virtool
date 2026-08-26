@@ -24,6 +24,9 @@ import { logger } from "./logger";
  */
 export const storage: StorageBackend = createStorageBackend(config.storage);
 
+/** How file download routes answer: stream the bytes or redirect to storage. */
+export const downloadMode: "stream" | "redirect" = config.downloadMode;
+
 const handles = createDb(config, "web");
 
 /** The postgres-js connection pool for this process. */

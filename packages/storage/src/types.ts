@@ -13,12 +13,23 @@ export type StorageObjectInfo = {
 	lastModified: Date;
 };
 
+/** The response-header overrides and lifetime for a presigned download URL. */
+export type PresignDownloadOptions = {
+	/** The `Content-Disposition` response header. */
+	contentDisposition: string;
+	/** The `Content-Type` response header. */
+	contentType: string;
+	/** The URL lifetime in seconds from now. */
+	expiresIn: number;
+};
+
 /**
  * Streaming object storage, backed by S3 or Azure Blob.
  *
  * Keys are `/`-delimited with no leading slash, e.g.
- * `samples/abc123/reads_1.fq.gz`. There are deliberately no paths, file
- * handles, or presigned URLs — callers stream bytes and nothing else.
+ * `samples/abc123/reads_1.fq.gz`. There are deliberately no paths or file
+ * handles — callers stream bytes. The one exception is {@link presignDownload},
+ * an opt-in capability a backend may leave unimplemented.
  */
 export type StorageBackend = {
 	/** Stream the object at `key`. Throws StorageKeyNotFoundError if absent. */
@@ -35,4 +46,19 @@ export type StorageBackend = {
 
 	/** Size of the object at `key`. Throws StorageKeyNotFoundError if absent. */
 	size(key: string): Promise<number>;
+
+	/**
+	 * Mint a short-lived, read-only URL that serves the object at `key` directly
+	 * from the storage service, letting a caller redirect a download instead of
+	 * streaming the bytes through itself.
+	 *
+	 * Optional: a backend without a presigning mechanism — `MemoryStorage` —
+	 * leaves it undefined, and a caller falls back to streaming. The URL is not
+	 * checked against the object existing; a key with no bytes yields a URL that
+	 * 404s at the service.
+	 */
+	presignDownload?(
+		key: string,
+		options: PresignDownloadOptions,
+	): Promise<string>;
 };
