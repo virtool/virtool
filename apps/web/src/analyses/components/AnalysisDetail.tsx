@@ -19,6 +19,7 @@ import type {
 	FormattedNuvsAnalysis,
 	FormattedPathoscopeAnalysis,
 } from "../types";
+import { getWorkflowVersionLabel } from "../utils";
 import { PathoscopeViewer } from "./Pathoscope/PathoscopeViewer";
 
 const routeApi = getRouteApi(
@@ -72,7 +73,8 @@ export default function AnalysisDetail() {
 				</SubviewHeaderTitle>
 				<SubviewHeaderAttribution>
 					{analysis.user.handle} started{" "}
-					<RelativeTime time={analysis.createdAt} />
+					<RelativeTime time={analysis.createdAt} /> · workflow version{" "}
+					{getWorkflowVersionLabel(analysis.workflowVersion)}
 				</SubviewHeaderAttribution>
 			</SubviewHeader>
 
