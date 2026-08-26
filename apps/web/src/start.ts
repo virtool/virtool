@@ -4,13 +4,13 @@ import {
 	sentryGlobalRequestMiddleware,
 } from "@sentry/tanstackstart-react";
 import { createAuthenticationMiddleware } from "@server/auth/middleware";
-import { config } from "@server/config";
 import { buildContentSecurityPolicy, getRequestNonce } from "@server/csp";
 import { errorLoggingMiddleware } from "@server/error-logging";
 import { metricsMiddleware } from "@server/metrics/middleware";
 import {
 	createCsrfMiddleware,
 	createMiddleware,
+	createServerOnlyFn,
 	createStart,
 } from "@tanstack/react-start";
 
@@ -19,36 +19,6 @@ const authenticationMiddleware = createAuthenticationMiddleware();
 // Builds one response header for served HTML documents. Each builder receives
 // the per-response CSP nonce; those that don't need it ignore the argument.
 type DocumentHeader = (nonce: string) => [name: string, value: string];
-
-// Origins the browser talks to storage on directly: chunked uploads PUT their
-// blocks to the presigned URL, whose host is one of these. Derived once from
-// the storage config so `connect-src` allows them. A same-origin or unset
-// value contributes nothing.
-const storageConnectSrc = (() => {
-	const { storage } = config;
-	const candidates =
-		storage.kind === "azure"
-			? [storage.uploadUrl, storage.downloadUrl, storage.endpoint]
-			: [storage.endpoint];
-
-	const origins = new Set<string>();
-	for (const candidate of candidates) {
-		if (candidate) {
-			origins.add(new URL(candidate).origin);
-		}
-	}
-
-	return [...origins];
-})();
-
-function buildContentSecurityPolicyHeader(
-	nonce: string,
-): [name: string, value: string] {
-	return [
-		"Content-Security-Policy",
-		buildContentSecurityPolicy(nonce, storageConnectSrc),
-	];
-}
 
 // Opt the document into the JS Self-Profiling API so Sentry's browser profiling
 // integration can sample. A no-op in browsers without the API (Firefox, Safari),
@@ -64,12 +34,53 @@ function buildCacheControl(): [name: string, value: string] {
 }
 
 // Adding a document header is a new entry here, not another edit to the
-// middleware body.
+// middleware body. The CSP header is built separately below because it needs
+// the storage origins, which are resolved asynchronously.
 const documentHeaders: DocumentHeader[] = [
-	buildContentSecurityPolicyHeader,
 	buildDocumentPolicy,
 	buildCacheControl,
 ];
+
+// Origins the browser talks to storage on directly: chunked uploads PUT their
+// blocks to the presigned URL, whose host is one of these. Resolved once, on
+// the first document served, and cached. Behind a server-only dynamic import
+// so `@server/config` — which reads `process.env` and `node:fs` when it loads —
+// never enters the browser graph.
+let cachedStorageConnectSrc: readonly string[] | undefined;
+
+const getStorageConnectSrc = createServerOnlyFn(
+	async (): Promise<readonly string[]> => {
+		if (cachedStorageConnectSrc !== undefined) {
+			return cachedStorageConnectSrc;
+		}
+
+		const { config } = await import("@server/config");
+		const { storage } = config;
+
+		// The presigned upload origin is `uploadUrl ?? downloadUrl ?? endpoint`,
+		// and an Azure account with none of those set falls back to its blob
+		// endpoint, so allow-list every host a presigned URL could carry.
+		const candidates =
+			storage.kind === "azure"
+				? [
+						storage.uploadUrl,
+						storage.downloadUrl,
+						storage.endpoint,
+						`https://${storage.account}.blob.core.windows.net`,
+					]
+				: [storage.endpoint];
+
+		const origins = new Set<string>();
+		for (const candidate of candidates) {
+			if (candidate) {
+				origins.add(new URL(candidate).origin);
+			}
+		}
+
+		cachedStorageConnectSrc = [...origins];
+		return cachedStorageConnectSrc;
+	},
+);
 
 // Headers only — the body streams straight through. Every script in the
 // document already carries the nonce, because Router stamps it on from
@@ -87,6 +98,10 @@ const documentHeadersMiddleware = createMiddleware().server(
 
 		const nonce = getRequestNonce();
 		const headers = new Headers(response.headers);
+		headers.set(
+			"Content-Security-Policy",
+			buildContentSecurityPolicy(nonce, await getStorageConnectSrc()),
+		);
 		for (const build of documentHeaders) {
 			const [name, value] = build(nonce);
 			headers.set(name, value);
