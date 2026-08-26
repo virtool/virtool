@@ -1,4 +1,3 @@
-import Badge from "@base/Badge";
 import { BoxGroup, BoxGroupSection } from "@base/Box";
 import Link from "@base/Link";
 import ListEmpty from "@base/ListEmpty";
@@ -26,26 +25,18 @@ export default function LocalOtuV2List({
 	return (
 		<BoxGroup as="ul">
 			{otus.map((otu) => (
-				<BoxGroupSection
-					as="li"
-					className="grid grid-cols-[1fr_auto] items-center gap-4"
-					key={otu.id}
-				>
-					<div>
-						<Link
-							className="font-medium text-lg"
-							to="/refs/beta/$referenceId/otus/$otuId"
-							params={{ referenceId, otuId: otu.id }}
-						>
-							{otu.name}
-							{otu.acronym ? ` (${otu.acronym})` : ""}
-						</Link>
-						<p className="text-gray-500">
-							{otu.isolateCount}{" "}
-							{otu.isolateCount === 1 ? "isolate" : "isolates"}
-						</p>
-					</div>
-					<Badge color="gray">Version {otu.version}</Badge>
+				<BoxGroupSection as="li" key={otu.id}>
+					<Link
+						className="font-medium text-lg"
+						to="/refs/beta/$referenceId/otus/$otuId"
+						params={{ referenceId, otuId: otu.id }}
+					>
+						{otu.name}
+						{otu.acronym ? ` (${otu.acronym})` : ""}
+					</Link>
+					<p className="text-gray-500">
+						{otu.isolateCount} {otu.isolateCount === 1 ? "isolate" : "isolates"}
+					</p>
 				</BoxGroupSection>
 			))}
 		</BoxGroup>

@@ -1,7 +1,5 @@
 import { getErrorStatus } from "@app/queryErrors";
-import Badge from "@base/Badge";
 import { buttonVariants } from "@base/Button";
-import SectionHeader from "@base/SectionHeader";
 import LocalOtuV2List from "@otus-v2/components/LocalOtuV2List";
 import { createFileRoute, Link, notFound } from "@tanstack/react-router";
 
@@ -28,20 +26,13 @@ function LocalOtusRoute() {
 
 	return (
 		<div>
-			<SectionHeader>
-				<h2>
-					OTUs <Badge color="purple">Beta</Badge>
-				</h2>
-				<p>Browse the OTUs in this reference.</p>
-			</SectionHeader>
-
 			<div className="mb-4 flex justify-end">
 				<Link
 					className={buttonVariants({ color: "blue" })}
 					to="/refs/beta/$referenceId/otus/new"
 					params={{ referenceId }}
 				>
-					Create OTU
+					Create
 				</Link>
 			</div>
 

@@ -73,6 +73,7 @@ import { Route as AuthenticatedRefsRefIdIndexesIndexIdRouteImport } from './rout
 import { Route as AuthenticatedRefsRefIdOtusIndexRouteImport } from './routes/_authenticated/refs/$refId/otus/index'
 import { Route as AuthenticatedRefsRefIdOtusOtuIdRouteRouteImport } from './routes/_authenticated/refs/$refId/otus/$otuId/route'
 import { Route as AuthenticatedRefsBetaReferenceIdIndexRouteImport } from './routes/_authenticated/refs/beta/$referenceId/index'
+import { Route as AuthenticatedRefsBetaReferenceIdGeneralRouteImport } from './routes/_authenticated/refs/beta/$referenceId/general'
 import { Route as AuthenticatedSamplesSampleIdAnalysesIndexRouteImport } from './routes/_authenticated/samples/$sampleId/analyses/index'
 import { Route as AuthenticatedSamplesSampleIdAnalysesAnalysisIdRouteImport } from './routes/_authenticated/samples/$sampleId/analyses/$analysisId'
 import { Route as OtusOtuIdIsolatesIsolateIdFastaRouteImport } from './routes/otus.$otuId.isolates.$isolateId.fasta'
@@ -447,6 +448,12 @@ const AuthenticatedRefsBetaReferenceIdIndexRoute =
     path: '/',
     getParentRoute: () => AuthenticatedRefsBetaReferenceIdRouteRoute,
   } as any)
+const AuthenticatedRefsBetaReferenceIdGeneralRoute =
+  AuthenticatedRefsBetaReferenceIdGeneralRouteImport.update({
+    id: '/general',
+    path: '/general',
+    getParentRoute: () => AuthenticatedRefsBetaReferenceIdRouteRoute,
+  } as any)
 const AuthenticatedSamplesSampleIdAnalysesIndexRoute =
   AuthenticatedSamplesSampleIdAnalysesIndexRouteImport.update({
     id: '/',
@@ -587,6 +594,7 @@ export interface FileRoutesByFullPath {
   '/samples/$sampleId/': typeof AuthenticatedSamplesSampleIdIndexRoute
   '/refs/$refId/otus/$otuId': typeof AuthenticatedRefsRefIdOtusOtuIdRouteRouteWithChildren
   '/refs/$refId/indexes/$indexId': typeof AuthenticatedRefsRefIdIndexesIndexIdRoute
+  '/refs/beta/$referenceId/general': typeof AuthenticatedRefsBetaReferenceIdGeneralRoute
   '/samples/$sampleId/analyses/$analysisId': typeof AuthenticatedSamplesSampleIdAnalysesAnalysisIdRoute
   '/otus/$otuId/isolates/$isolateId/fasta': typeof OtusOtuIdIsolatesIsolateIdFastaRoute
   '/refs/$refId/indexes/': typeof AuthenticatedRefsRefIdIndexesIndexRoute
@@ -652,6 +660,7 @@ export interface FileRoutesByTo {
   '/refs/beta': typeof AuthenticatedRefsBetaIndexRoute
   '/samples/$sampleId': typeof AuthenticatedSamplesSampleIdIndexRoute
   '/refs/$refId/indexes/$indexId': typeof AuthenticatedRefsRefIdIndexesIndexIdRoute
+  '/refs/beta/$referenceId/general': typeof AuthenticatedRefsBetaReferenceIdGeneralRoute
   '/samples/$sampleId/analyses/$analysisId': typeof AuthenticatedSamplesSampleIdAnalysesAnalysisIdRoute
   '/otus/$otuId/isolates/$isolateId/fasta': typeof OtusOtuIdIsolatesIsolateIdFastaRoute
   '/refs/$refId/indexes': typeof AuthenticatedRefsRefIdIndexesIndexRoute
@@ -731,6 +740,7 @@ export interface FileRoutesById {
   '/_authenticated/samples/$sampleId/': typeof AuthenticatedSamplesSampleIdIndexRoute
   '/_authenticated/refs/$refId/otus/$otuId': typeof AuthenticatedRefsRefIdOtusOtuIdRouteRouteWithChildren
   '/_authenticated/refs/$refId/indexes/$indexId': typeof AuthenticatedRefsRefIdIndexesIndexIdRoute
+  '/_authenticated/refs/beta/$referenceId/general': typeof AuthenticatedRefsBetaReferenceIdGeneralRoute
   '/_authenticated/samples/$sampleId/analyses/$analysisId': typeof AuthenticatedSamplesSampleIdAnalysesAnalysisIdRoute
   '/otus/$otuId/isolates/$isolateId/fasta': typeof OtusOtuIdIsolatesIsolateIdFastaRoute
   '/_authenticated/refs/$refId/indexes/': typeof AuthenticatedRefsRefIdIndexesIndexRoute
@@ -811,6 +821,7 @@ export interface FileRouteTypes {
     | '/samples/$sampleId/'
     | '/refs/$refId/otus/$otuId'
     | '/refs/$refId/indexes/$indexId'
+    | '/refs/beta/$referenceId/general'
     | '/samples/$sampleId/analyses/$analysisId'
     | '/otus/$otuId/isolates/$isolateId/fasta'
     | '/refs/$refId/indexes/'
@@ -876,6 +887,7 @@ export interface FileRouteTypes {
     | '/refs/beta'
     | '/samples/$sampleId'
     | '/refs/$refId/indexes/$indexId'
+    | '/refs/beta/$referenceId/general'
     | '/samples/$sampleId/analyses/$analysisId'
     | '/otus/$otuId/isolates/$isolateId/fasta'
     | '/refs/$refId/indexes'
@@ -954,6 +966,7 @@ export interface FileRouteTypes {
     | '/_authenticated/samples/$sampleId/'
     | '/_authenticated/refs/$refId/otus/$otuId'
     | '/_authenticated/refs/$refId/indexes/$indexId'
+    | '/_authenticated/refs/beta/$referenceId/general'
     | '/_authenticated/samples/$sampleId/analyses/$analysisId'
     | '/otus/$otuId/isolates/$isolateId/fasta'
     | '/_authenticated/refs/$refId/indexes/'
@@ -1442,6 +1455,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedRefsBetaReferenceIdIndexRouteImport
       parentRoute: typeof AuthenticatedRefsBetaReferenceIdRouteRoute
     }
+    '/_authenticated/refs/beta/$referenceId/general': {
+      id: '/_authenticated/refs/beta/$referenceId/general'
+      path: '/general'
+      fullPath: '/refs/beta/$referenceId/general'
+      preLoaderRoute: typeof AuthenticatedRefsBetaReferenceIdGeneralRouteImport
+      parentRoute: typeof AuthenticatedRefsBetaReferenceIdRouteRoute
+    }
     '/_authenticated/samples/$sampleId/analyses/': {
       id: '/_authenticated/samples/$sampleId/analyses/'
       path: '/'
@@ -1635,6 +1655,7 @@ const AuthenticatedRefsRefIdRouteRouteWithChildren =
   )
 
 interface AuthenticatedRefsBetaReferenceIdRouteRouteChildren {
+  AuthenticatedRefsBetaReferenceIdGeneralRoute: typeof AuthenticatedRefsBetaReferenceIdGeneralRoute
   AuthenticatedRefsBetaReferenceIdIndexRoute: typeof AuthenticatedRefsBetaReferenceIdIndexRoute
   AuthenticatedRefsBetaReferenceIdOtusOtuIdRoute: typeof AuthenticatedRefsBetaReferenceIdOtusOtuIdRoute
   AuthenticatedRefsBetaReferenceIdOtusNewRoute: typeof AuthenticatedRefsBetaReferenceIdOtusNewRoute
@@ -1643,6 +1664,8 @@ interface AuthenticatedRefsBetaReferenceIdRouteRouteChildren {
 
 const AuthenticatedRefsBetaReferenceIdRouteRouteChildren: AuthenticatedRefsBetaReferenceIdRouteRouteChildren =
   {
+    AuthenticatedRefsBetaReferenceIdGeneralRoute:
+      AuthenticatedRefsBetaReferenceIdGeneralRoute,
     AuthenticatedRefsBetaReferenceIdIndexRoute:
       AuthenticatedRefsBetaReferenceIdIndexRoute,
     AuthenticatedRefsBetaReferenceIdOtusOtuIdRoute:
