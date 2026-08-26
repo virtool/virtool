@@ -47,14 +47,18 @@ async function fetchRepoReleases(repo: string): Promise<Array<object>> {
   let allReleases = [];
   let page = 1;
 
+  const headers = new Headers();
+
+  if (process.env.GITHUB_TOKEN) {
+    headers.set("Authorization", `Bearer ${process.env.GITHUB_TOKEN}`);
+  } else {
+    console.warn(
+      "GITHUB_TOKEN is not set; fetching releases unauthenticated (60 requests/hour/IP). Set it to avoid rate-limit build failures.",
+    );
+  }
+
   while (true) {
     const url = `https://api.github.com/repos/virtool/${repo}/releases?per_page=100&page=${page}`;
-
-    const headers = new Headers();
-
-    if (process.env.GITHUB_TOKEN) {
-      headers.set("Authorization", `Bearer ${process.env.GITHUB_TOKEN}`);
-    }
 
     const response = await fetch(url, {
       headers,
