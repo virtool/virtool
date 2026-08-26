@@ -24,6 +24,7 @@ import {
 	otuTaxonomyVersions,
 } from "../db/schema/otusV2";
 import { referenceRoots } from "../db/schema/referencesV2";
+import { users } from "../db/schema/users";
 import { AppError } from "../errors";
 
 /** Thrown when a v2 OTU does not exist in the requested Reference. */
@@ -385,8 +386,16 @@ export async function getLocalOtu(
 					),
 				),
 			db
-				.select()
+				.select({
+					version: otuChanges.version,
+					command: otuChanges.command,
+					commandSchemaVersion: otuChanges.commandSchemaVersion,
+					createdAt: otuChanges.createdAt,
+					userId: users.id,
+					userHandle: users.handle,
+				})
 				.from(otuChanges)
+				.innerJoin(users, eq(otuChanges.userId, users.id))
 				.where(
 					and(eq(otuChanges.otuId, otuId), eq(otuChanges.version, otu.version)),
 				),
@@ -446,7 +455,7 @@ export async function getLocalOtu(
 			command: change.command,
 			commandSchemaVersion: change.commandSchemaVersion,
 			source: "user",
-			userId: change.userId as number,
+			user: { id: change.userId, handle: change.userHandle },
 			createdAt: change.createdAt,
 		},
 	};

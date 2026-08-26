@@ -1,7 +1,10 @@
 import { getErrorStatus } from "@app/queryErrors";
-import { buttonVariants } from "@base/Button";
+import Button from "@base/Button";
+import CreateLocalOtuDialog from "@otus-v2/components/CreateLocalOtuDialog";
 import LocalOtuV2List from "@otus-v2/components/LocalOtuV2List";
-import { createFileRoute, Link, notFound } from "@tanstack/react-router";
+import { useSuspenseReferenceV2 } from "@references-v2/queries";
+import { createFileRoute, notFound } from "@tanstack/react-router";
+import { useState } from "react";
 
 export const Route = createFileRoute(
 	"/_authenticated/refs/beta/$referenceId/otus/",
@@ -23,18 +26,23 @@ export const Route = createFileRoute(
 
 function LocalOtusRoute() {
 	const { referenceId } = Route.useParams();
+	const { data: reference } = useSuspenseReferenceV2(referenceId);
+	const [open, setOpen] = useState(false);
 
 	return (
 		<div>
 			<div className="mb-4 flex justify-end">
-				<Link
-					className={buttonVariants({ color: "blue" })}
-					to="/refs/beta/$referenceId/otus/new"
-					params={{ referenceId }}
-				>
+				<Button color="blue" onClick={() => setOpen(true)}>
 					Create
-				</Link>
+				</Button>
 			</div>
+
+			<CreateLocalOtuDialog
+				open={open}
+				setOpen={setOpen}
+				referenceId={referenceId}
+				defaultSegmentLengthTolerance={reference.defaultSegmentLengthTolerance}
+			/>
 
 			<LocalOtuV2List referenceId={referenceId} />
 		</div>
