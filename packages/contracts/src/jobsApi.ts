@@ -279,6 +279,13 @@ export const FinalizeAnalysisRequest = z.object({
 	 * FASTA and HMM outputs. `results` is the guard on an analysis being usable.
 	 */
 	files: z.array(AnalysisFileManifest),
+
+	/**
+	 * The version of the workflow image producing this result, stamped onto the
+	 * analysis as durable provenance. Optional: a worker built before this field
+	 * existed sends none, and the column it lands in is nullable.
+	 */
+	workflowVersion: z.string().optional(),
 });
 
 export type FinalizeAnalysisRequest = z.infer<typeof FinalizeAnalysisRequest>;

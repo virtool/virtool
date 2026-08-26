@@ -115,6 +115,7 @@ export async function handleFinalizeAnalysis(
 		write: async ({ id: analysisId, jobId, values, files }) => {
 			const analysis = await finalizeAnalysis(deps.db, analysisId, jobId, {
 				results: values.results,
+				workflowVersion: values.workflowVersion,
 				files: files.map((file) => ({
 					name: file.name,
 					format: file.format,

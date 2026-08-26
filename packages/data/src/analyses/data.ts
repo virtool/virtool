@@ -84,6 +84,12 @@ export type FinalizeAnalysisValues = {
 	/** The workflow's output, opaque here and interpreted by the format layer. */
 	results: JsonObject;
 	files: AnalysisFileValues[];
+
+	/**
+	 * The version of the workflow image producing this result, recorded verbatim.
+	 * Absent from a worker built before the field existed.
+	 */
+	workflowVersion?: string;
 };
 
 /** Thrown when a requested analysis does not exist. */
@@ -421,6 +427,7 @@ export async function getAnalysis(
 	const [row] = await db
 		.select({
 			...minimalColumns,
+			workflowVersion: analyses.workflow_version,
 			indexVersion: indexes.version,
 			referenceName: legacyReferences.name,
 			sampleName: legacySamples.name,
@@ -450,7 +457,7 @@ export async function getAnalysis(
 		row.job_id != null ? (jobsById.get(row.job_id) ?? null) : null,
 	);
 
-	return { ...minimal, files };
+	return { ...minimal, files, workflowVersion: row.workflowVersion };
 }
 
 /**
@@ -729,7 +736,12 @@ export async function finalizeAnalysis(
 
 		const [updated] = await tx
 			.update(analyses)
-			.set({ ready: true, results: values.results, updated_at: now })
+			.set({
+				ready: true,
+				results: values.results,
+				workflow_version: values.workflowVersion ?? null,
+				updated_at: now,
+			})
 			.where(
 				and(
 					eq(analyses.id, analysisId),

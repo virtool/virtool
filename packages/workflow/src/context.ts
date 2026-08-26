@@ -20,6 +20,8 @@ export type BuildContextInput = {
 	workPath: string;
 	proc: number;
 	mem: number;
+	/** The workflow image's version, baked in at bundle time. */
+	workflowVersion: string;
 	logger: Logger;
 	signal: AbortSignal;
 	/**
@@ -61,6 +63,8 @@ export type WorkflowContext<TData, TState> = {
 	readonly workPath: string;
 	readonly proc: number;
 	readonly mem: number;
+	/** The workflow image's version, baked in at bundle time. */
+	readonly workflowVersion: string;
 	readonly logger: Logger;
 	/** Aborts on cancellation or SIGTERM. Forward it to anything long-running. */
 	readonly signal: AbortSignal;

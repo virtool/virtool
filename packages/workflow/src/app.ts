@@ -244,6 +244,7 @@ async function claimAndRun<TData, TState>({
 				workPath,
 				proc: config.proc,
 				mem: config.mem,
+				workflowVersion,
 				logger,
 				signal: signals.signal,
 				client,

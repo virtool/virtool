@@ -43,6 +43,7 @@ export const vfamStep: NuvsStep = {
 		runSubprocess,
 		state,
 		storage,
+		workflowVersion,
 		workPath,
 	}) {
 		const paths = workPaths(workPath);
@@ -92,6 +93,7 @@ export const vfamStep: NuvsStep = {
 			paths,
 			results: { hits: state.hits },
 			storage,
+			workflowVersion,
 		});
 
 		logger.info({ analysisId: data.analysisId }, "finalized analysis");
@@ -192,12 +194,14 @@ async function finalize({
 	paths,
 	results,
 	storage,
+	workflowVersion,
 }: {
 	analysisId: number;
 	client: JobsApiClient;
 	paths: NuvsPaths;
 	results: JsonObject;
 	storage: StorageBackend;
+	workflowVersion: string;
 }): Promise<void> {
 	const files: AnalysisFileManifest[] = await Promise.all(
 		RETAINED_FILES.map(async ({ format, name, path }) => {
@@ -215,7 +219,7 @@ async function finalize({
 		}),
 	);
 
-	const body: FinalizeAnalysisRequest = { files, results };
+	const body: FinalizeAnalysisRequest = { files, results, workflowVersion };
 
 	await client.request({
 		method: "PATCH",

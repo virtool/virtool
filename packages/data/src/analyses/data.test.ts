@@ -514,6 +514,7 @@ describe("getAnalysis", () => {
 			sample_id: sampleId,
 			job_id: jobId,
 			workflow: "pathoscope",
+			workflow_version: "3.2.1",
 			ready: false,
 		});
 
@@ -539,6 +540,7 @@ describe("getAnalysis", () => {
 
 		expect(analysis.id).toBe(analysisId);
 		expect(analysis.workflow).toBe("pathoscope");
+		expect(analysis.workflowVersion).toBe("3.2.1");
 		expect(analysis.ready).toBe(false);
 		expect(analysis.sample).toEqual({ id: sampleId, name: "Parent sample" });
 		expect(analysis.reference).toEqual({ id: referenceId, name: "Reference" });
@@ -564,6 +566,14 @@ describe("getAnalysis", () => {
 		]);
 		expect(analysis.createdAt).toBeInstanceOf(Date);
 		expect(analysis.updatedAt).toBeInstanceOf(Date);
+	});
+
+	it("leaves the workflow version null when the analysis has none", async () => {
+		const analysisId = await seedAnalysisOnNewSample({
+			workflow: "pathoscope",
+		});
+
+		expect((await getAnalysis(db, analysisId)).workflowVersion).toBeNull();
 	});
 
 	it("throws when the analysis does not exist", async () => {

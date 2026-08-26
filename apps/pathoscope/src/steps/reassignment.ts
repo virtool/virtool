@@ -23,13 +23,21 @@ const COVERAGE_PLACES = 3;
 export const reassignmentStep: PathoscopeStep = {
 	id: "reassignment",
 	description: "Run the Pathoscope reassignment algorithm.",
-	async run({ client, data, logger, runSubprocess, state, workPath }) {
+	async run({
+		client,
+		data,
+		logger,
+		runSubprocess,
+		state,
+		workflowVersion,
+		workPath,
+	}) {
 		const paths = workPaths(workPath);
 
 		if (state.candidateSequenceIds.length === 0) {
 			logger.info("no candidate otus found; uploading empty result");
 
-			await finalize(client, data.analysisId, {
+			await finalize(client, workflowVersion, data.analysisId, {
 				subtracted_count: state.subtractedCount,
 				read_count: 0,
 				hits: [],
@@ -83,7 +91,7 @@ export const reassignmentStep: PathoscopeStep = {
 			index.close();
 		}
 
-		await finalize(client, data.analysisId, {
+		await finalize(client, workflowVersion, data.analysisId, {
 			subtracted_count: state.subtractedCount,
 			read_count: results.read_count,
 			hits,
@@ -136,10 +144,11 @@ function summarizeCoverage(coverage: readonly number[]): {
  */
 async function finalize(
 	client: JobsApiClient,
+	workflowVersion: string,
 	analysisId: number,
 	results: JsonObject,
 ): Promise<void> {
-	const body: FinalizeAnalysisRequest = { results, files: [] };
+	const body: FinalizeAnalysisRequest = { results, files: [], workflowVersion };
 
 	await client.request({
 		method: "PATCH",

@@ -64,6 +64,7 @@ export function createFakeBuildContextInput(
 		workPath: "/tmp/workflow-test",
 		proc: 2,
 		mem: 4,
+		workflowVersion: "1.0.0",
 		logger: createRecordingLogger().logger,
 		signal: new AbortController().signal,
 		client: createUnreachableJobsApiClient(),

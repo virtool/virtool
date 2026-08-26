@@ -345,6 +345,16 @@ describe("the vfam finalize call", () => {
 		});
 	});
 
+	it("carries the workflow version so it is stamped on the analysis", async () => {
+		const { jobsApiState, run } = await runStep();
+
+		await run();
+
+		expect(jobsApiState.finalizeCalls[0]?.request).toMatchObject({
+			workflowVersion: "1.0.0",
+		});
+	});
+
 	// The key is minted here and sent; the jobs API checks it sits under this
 	// analysis's own prefix and records it verbatim, so there is one opinion about
 	// where the bytes went rather than two.

@@ -218,6 +218,43 @@ describe("handleFinalizeAnalysis", () => {
 		expect(analysis?.results).toStrictEqual(RESULTS);
 	});
 
+	it("records the workflow version the request carried", async () => {
+		const analysisId = await seedAnalysis();
+
+		const response = await handleFinalizeAnalysis(
+			deps,
+			patch(analysisId, {
+				results: RESULTS,
+				files: [],
+				workflowVersion: "4.5.6",
+			}),
+			String(analysisId),
+		);
+
+		expect(response.status).toBe(200);
+		expect((await response.json()).workflowVersion).toBe("4.5.6");
+
+		const [analysis] = await db
+			.select({ workflowVersion: analyses.workflow_version })
+			.from(analyses)
+			.where(eq(analyses.id, analysisId));
+
+		expect(analysis?.workflowVersion).toBe("4.5.6");
+	});
+
+	it("leaves the workflow version null when the request omits it", async () => {
+		const analysisId = await seedAnalysis();
+
+		await finalize(analysisId, []);
+
+		const [analysis] = await db
+			.select({ workflowVersion: analyses.workflow_version })
+			.from(analyses)
+			.where(eq(analyses.id, analysisId));
+
+		expect(analysis?.workflowVersion).toBeNull();
+	});
+
 	// `analysis_files.name_on_disk` is unique across the whole table, so it cannot
 	// be the workflow's filename. A uuid prefix keeps two analyses free to retain
 	// files of the same name.
