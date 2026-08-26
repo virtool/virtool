@@ -24,12 +24,10 @@ import type {
 	IndexOtuSequence,
 	WorkflowIndex,
 } from "@virtool/sqlite";
-import type { RunSubprocess } from "@virtool/workflow";
+import { CD_HIT_EST_TOOL, type RunSubprocess } from "@virtool/workflow";
 import { parseCdHitClusters } from "./clusters";
 
-export const CD_HIT_EST_TOOL = "cd-hit-est";
-
-/** The identity threshold every cd-hit-est run in this workflow uses. */
+/** The identity threshold the isolate-collapse runs use. */
 export const CD_HIT_EST_IDENTITY = "0.99";
 
 /** What collapsing did to one OTU. */
@@ -259,12 +257,6 @@ export async function collapseOtu(
 		limit,
 	);
 
-	const defaultSequenceIds = new Set(
-		otu.isolates
-			.filter((isolate) => isolate.default)
-			.flatMap((isolate) => isolate.sequences.map((sequence) => sequence.id)),
-	);
-
 	const seenRepresentativeSets = new Set<string>();
 	const collapsedIsolates: IndexOtuIsolate[] = [];
 
@@ -275,14 +267,7 @@ export async function collapseOtu(
 
 		seenRepresentativeSets.add(key);
 
-		// A no-op, and deliberately kept for now: a sequence has exactly one parent
-		// isolate, so this is true precisely when `isolate.default` is. VIR-2938
-		// deletes it.
-		const containsDefaultSequence = isolate.sequences.some((sequence) =>
-			defaultSequenceIds.has(sequence.id),
-		);
-
-		if (isolate.default || containsDefaultSequence || firstForSet) {
+		if (firstForSet) {
 			collapsedIsolates.push(isolate);
 		}
 	}

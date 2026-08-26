@@ -18,7 +18,11 @@ const REQUEST: CreateJobClaimRequest = {
 	runtimeVersion: "1.2.3",
 	workflowVersion: "4.5.6",
 	steps: [
-		{ id: "map_default_isolates", name: "Map Default", description: "d" },
+		{
+			id: "map_representatives",
+			name: "Map Representatives",
+			description: "d",
+		},
 	],
 };
 

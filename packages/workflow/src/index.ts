@@ -12,6 +12,7 @@ export * from "./files/transfer";
 export * from "./lifecycle/claim";
 export * from "./lifecycle/ping";
 export * from "./mapping/mappingIndex";
+export * from "./reference/representatives";
 export * from "./run";
 export * from "./serializable";
 export * from "./step";

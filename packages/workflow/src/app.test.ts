@@ -182,7 +182,7 @@ describe("a successful run", () => {
 		server = await startTestServer(createHandler({}));
 
 		const { code } = await run(
-			createWorkflow([step("prepare"), step("map_default_isolates")]),
+			createWorkflow([step("prepare"), step("map_representatives")]),
 		);
 
 		expect(code).toBe(EXIT_OK);
@@ -193,7 +193,7 @@ describe("a successful run", () => {
 
 		expect(paths).toContain(`POST /jobs/${JOB_ID}/steps/prepare/start`);
 		expect(paths).toContain(
-			`POST /jobs/${JOB_ID}/steps/map_default_isolates/start`,
+			`POST /jobs/${JOB_ID}/steps/map_representatives/start`,
 		);
 		expect(paths).toContain(`POST /jobs/${JOB_ID}/finish`);
 	});
@@ -201,11 +201,11 @@ describe("a successful run", () => {
 	it("reports the step's id rather than its display name", async () => {
 		server = await startTestServer(createHandler({}));
 
-		await run(createWorkflow([step("map_default_isolates")]));
+		await run(createWorkflow([step("map_representatives")]));
 
 		expect(
 			server.requests.some((request) =>
-				request.path.includes("/steps/Map Default Isolates/"),
+				request.path.includes("/steps/Map Representatives/"),
 			),
 		).toBe(false);
 	});

@@ -242,9 +242,8 @@ describe("collapseOtu", () => {
 		]);
 	});
 
-	// Iteration order decides which duplicate survives, and the default isolate
-	// is kept whatever its position.
-	it("keeps a default isolate that duplicates an earlier one", async () => {
+	// Iteration order alone decides which duplicate survives.
+	it("does not prefer a default isolate that duplicates an earlier one", async () => {
 		const otu = createOtu([
 			createIsolate("iso_1", [createSequence("seq_1")]),
 			createIsolate("iso_2", [createSequence("seq_2")], true),
@@ -252,10 +251,7 @@ describe("collapseOtu", () => {
 
 		const result = await collapseOtu(otu, await tempDir(), collapseTo("seq_1"));
 
-		expect(result.otu.isolates.map((isolate) => isolate.id)).toEqual([
-			"iso_1",
-			"iso_2",
-		]);
+		expect(result.otu.isolates.map((isolate) => isolate.id)).toEqual(["iso_1"]);
 	});
 
 	it("runs one cd-hit-est per segment, named after the OTU and segment", async () => {

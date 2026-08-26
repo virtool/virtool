@@ -10,80 +10,98 @@ import type { PathoscopeStep } from "./types";
  * Find the OTUs the sample's reads could plausibly belong to.
  *
  * `pathoscope-core` drives bowtie2 itself here and streams the SAM as it comes,
- * so a full alignment against every default isolate never lands on disk and
+ * so a full alignment against every source sequence never lands on disk and
  * never enters this process.
  */
-export const mapDefaultIsolatesStep: PathoscopeStep = {
-	id: "map_default_isolates",
+export const mapRepresentativesStep: PathoscopeStep = {
+	id: "map_representatives",
+	name: "Find Possible Viruses",
 	description:
-		"Map sample reads to all default isolates to identify candidate OTUs.",
+		"Compare sample reads with the screening reference to identify viruses for detailed analysis.",
 	async run({ data, logger, proc, runSubprocess, state, workPath }) {
 		const paths = workPaths(workPath);
 
-		state.candidateSequenceIds = await findCandidateSequenceIds(
+		const candidateSequenceIds = await findCandidateSequenceIds(
 			{ runSubprocess, outputPath: paths.coreResults("candidates") },
 			{
-				indexPrefix: paths.referenceIndexPrefix,
+				indexPrefix: paths.representativeIndexPrefix,
 				pScoreCutoff: data.pScoreCutoff,
 				proc,
 				readPaths: data.reads.map((read) => read.path),
 			},
 		);
 
+		const source = openWorkflowIndex({
+			id: data.index.id,
+			path: data.index.path,
+		});
+
+		try {
+			const otuRefs =
+				await source.getOtuRefsBySequenceIds(candidateSequenceIds);
+
+			state.candidateOtuIds = [
+				...new Set(Object.values(otuRefs).map((otuRef) => otuRef.id)),
+			].sort();
+		} finally {
+			source.close();
+		}
+
 		logger.info(
-			{ count: state.candidateSequenceIds.length },
-			"found candidate sequences",
+			{ count: state.candidateOtuIds.length },
+			"found candidate otus",
 		);
 	},
 };
 
 /**
- * Build a second index holding **every** isolate of every candidate OTU.
+ * Build a second index holding every surviving isolate of every candidate OTU.
  *
  * The first pass narrowed the reference to a handful of OTUs; this one restores
  * the isolate-level detail for just those, which is what makes an isolate-level
  * result affordable.
  */
-export const buildIsolateIndexStep: PathoscopeStep = {
-	id: "build_isolate_index",
+export const buildCandidateOtuIndexStep: PathoscopeStep = {
+	id: "build_candidate_otu_index",
+	name: "Prepare Detailed Reference",
 	description:
-		"Build a mapping index containing all isolates of candidate OTUs.",
+		"Build a reference containing the remaining isolates for the possible viruses.",
 	async run({ data, logger, proc, runSubprocess, state, workPath }) {
 		const paths = workPaths(workPath);
 
 		// `bowtie2-build` exits 1 on an empty FASTA, and every step after this one
 		// short-circuits on the same condition.
-		if (state.candidateSequenceIds.length === 0) {
+		if (state.candidateOtuIds.length === 0) {
 			logger.info("no candidate otus; skipping isolate index");
 
 			return;
 		}
 
-		const index = openWorkflowIndex({
+		const collapsed = openWorkflowIndex({
 			id: data.index.id,
 			path: paths.collapsedReference,
 		});
 
 		try {
-			const otuRefs = await index.getOtuRefsBySequenceIds(
-				state.candidateSequenceIds,
-			);
-
-			const otuIds = new Set(Object.values(otuRefs).map((otuRef) => otuRef.id));
-
 			await mkdir(paths.isolatesDir, { recursive: true });
 
-			await writeFasta(paths.isolateFasta, index.iterOtuSequences(otuIds));
+			await writeFasta(
+				paths.candidateOtuFasta,
+				collapsed.iterOtuSequences(state.candidateOtuIds),
+			);
 
-			logger.info({ otuCount: otuIds.size }, "wrote isolate fasta");
+			logger.info(
+				{ otuCount: state.candidateOtuIds.length },
+				"wrote isolate fasta",
+			);
 		} finally {
-			index.close();
+			collapsed.close();
 		}
 
 		await buildBowtie2Index(
 			runSubprocess,
-			paths.isolateFasta,
-			paths.isolateIndexPrefix,
+			paths.candidateOtuFasta,
+			paths.candidateOtuIndexPrefix,
 			proc,
 		);
 	},
@@ -102,11 +120,13 @@ export const buildIsolateIndexStep: PathoscopeStep = {
  */
 export const mapIsolatesStep: PathoscopeStep = {
 	id: "map_isolates",
-	description: "Map sample reads to the all isolate index.",
+	name: "Match Reads in Detail",
+	description:
+		"Compare sample reads with the possible viruses at isolate level.",
 	async run({ data, logger, proc, runSubprocess, state, workPath }) {
 		const paths = workPaths(workPath);
 
-		if (state.candidateSequenceIds.length === 0) {
+		if (state.candidateOtuIds.length === 0) {
 			logger.info("no candidate otus; skipping isolate mapping");
 
 			return;
@@ -127,7 +147,7 @@ export const mapIsolatesStep: PathoscopeStep = {
 			"-L 15",
 			"-k 100",
 			`--al ${quote(paths.isolateFastq)}`,
-			`-x ${quote(paths.isolateIndexPrefix)}`,
+			`-x ${quote(paths.candidateOtuIndexPrefix)}`,
 			`-U ${reads}`,
 		].join(" ");
 

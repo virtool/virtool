@@ -1,14 +1,17 @@
-import { mkdtemp, rm } from "node:fs/promises";
+import { mkdtemp, rename, rm, stat } from "node:fs/promises";
 import { join } from "node:path";
+import { performance } from "node:perf_hooks";
 import type { Logger } from "@virtool/logger";
 import { openWorkflowIndex, writeFasta } from "@virtool/sqlite";
 import {
 	type BuildContextInput,
 	createMappingIndex,
 	downloadToPath,
+	getCdHitEstVersion,
+	selectReferenceRepresentatives,
 } from "@virtool/workflow";
 import { cacheFor } from "../cache";
-import { REFERENCE_INDEX_EXTRA_PARAMS, WORKFLOW_NAME } from "../cacheParams";
+import { buildReferenceIndexExtraParams, WORKFLOW_NAME } from "../cacheParams";
 import { workPaths } from "../paths";
 import { APP_VERSION } from "../version";
 import type { PathoscopeStep } from "./types";
@@ -16,16 +19,19 @@ import type { PathoscopeStep } from "./types";
 /**
  * Build the bowtie2 index the candidate search maps against.
  *
- * Only the collapsed reference's **default isolates** go into it. The point of
- * this pass is to find which OTUs are present at all, and one representative per
- * OTU answers that far more cheaply than every isolate would.
+ * CD-HIT-EST representatives selected from every source OTU and declared
+ * segment go into it. The point of this pass is to find which OTUs are present
+ * without paying to map against every source sequence.
  */
-export const createReferenceIndexStep: PathoscopeStep = {
-	id: "create_reference_index",
-	description: "Ensure the reference Bowtie2 index exists locally.",
+export const createRepresentativeIndexStep: PathoscopeStep = {
+	id: "create_representative_index",
+	name: "Prepare Screening Reference",
+	description:
+		"Select a small set of reference sequences for quickly finding possible viruses.",
 	async run(context) {
 		const { data, logger, proc, runSubprocess, workPath } = context;
 		const paths = workPaths(workPath);
+		const cdHitEstVersion = await getCdHitEstVersion(runSubprocess);
 
 		// The FASTA is an input to `bowtie2-build` and nothing reads it again, so
 		// it is staged and removed rather than left in the work path.
@@ -35,18 +41,21 @@ export const createReferenceIndexStep: PathoscopeStep = {
 		try {
 			await createMappingIndex({
 				cache: cacheFor(context),
-				extraParams: REFERENCE_INDEX_EXTRA_PARAMS,
+				extraParams: buildReferenceIndexExtraParams(cdHitEstVersion),
 				fastaPath,
 				indexKind: "reference_mapping_index",
-				indexPrefix: paths.referenceIndexPrefix,
+				indexPrefix: paths.representativeIndexPrefix,
 				logger,
 				parentId: data.index.id,
 				prepareFasta: () =>
-					writeDefaultIsolateFasta({
+					writeRepresentativeFasta({
 						fastaPath,
 						indexId: data.index.id,
-						indexPath: paths.collapsedReference,
+						indexPath: data.index.path,
 						logger,
+						proc,
+						runSubprocess,
+						scratchPath: temp,
 					}),
 				proc,
 				runSubprocess,
@@ -60,36 +69,85 @@ export const createReferenceIndexStep: PathoscopeStep = {
 };
 
 /**
- * Write the collapsed reference's default isolates as one FASTA.
+ * Write source-reference CD-HIT-EST representatives as one FASTA.
  *
  * Handed to {@link createMappingIndex} as a producer rather than run before it:
  * the `reference_mapping_index` namespace is shared, so a hit is the common
- * outcome and the whole collapsed reference would otherwise be scanned into a
+ * outcome and the whole source reference would otherwise be scanned into a
  * file nothing then reads.
  */
-async function writeDefaultIsolateFasta({
+async function writeRepresentativeFasta({
 	fastaPath,
 	indexId,
 	indexPath,
 	logger,
+	proc,
+	runSubprocess,
+	scratchPath,
 }: {
 	fastaPath: string;
 	indexId: number;
 	indexPath: string;
 	logger: Logger;
+	proc: number;
+	runSubprocess: BuildContextInput["runSubprocess"];
+	scratchPath: string;
 }): Promise<void> {
 	const source = openWorkflowIndex({ id: indexId, path: indexPath });
+	const partialPath = `${fastaPath}.partial`;
+	const startedAt = performance.now();
+	let baseCount = 0;
+	let groupCount = 0;
+	let representativeCount = 0;
+	let previousOtuId: string | null = null;
+	let previousSegment: string | null = null;
+	let hasPreviousGroup = false;
 
-	try {
-		// Streamed from SQLite straight to disk. The sequence order is the index
-		// reader's, which decides the FASTA order and so every SAM line mapped
-		// against the built index.
-		await writeFasta(fastaPath, source.iterDefaultSequences());
-	} finally {
-		source.close();
+	async function* tallyRepresentatives() {
+		for await (const representative of selectReferenceRepresentatives({
+			concurrency: proc,
+			otus: source.iterOtus(),
+			runSubprocess,
+			scratchPath,
+		})) {
+			if (
+				!hasPreviousGroup ||
+				representative.otuId !== previousOtuId ||
+				representative.groupSegment !== previousSegment
+			) {
+				groupCount += 1;
+				previousOtuId = representative.otuId;
+				previousSegment = representative.groupSegment;
+				hasPreviousGroup = true;
+			}
+
+			representativeCount += 1;
+			baseCount += representative.sequence.length;
+
+			yield representative;
+		}
 	}
 
-	logger.info({ fastaPath }, "assembled default reference fasta");
+	try {
+		await writeFasta(partialPath, tallyRepresentatives());
+		await rename(partialPath, fastaPath);
+
+		const { size: fastaBytes } = await stat(fastaPath);
+
+		logger.info(
+			{
+				baseCount,
+				durationMs: Math.round(performance.now() - startedAt),
+				fastaBytes,
+				groupCount,
+				representativeCount,
+			},
+			"assembled representative reference fasta",
+		);
+	} finally {
+		source.close();
+		await rm(partialPath, { force: true });
+	}
 }
 
 /**
@@ -105,7 +163,9 @@ async function writeDefaultIsolateFasta({
  */
 export const createSubtractionIndexStep: PathoscopeStep = {
 	id: "create_subtraction_index",
-	description: "Ensure subtraction Bowtie2 indexes exist locally.",
+	name: "Prepare Host References",
+	description:
+		"Build the search data used later to remove reads from the sample's host.",
 	async run(context) {
 		const { data, logger, proc, runSubprocess, storage, workPath } = context;
 		const paths = workPaths(workPath);

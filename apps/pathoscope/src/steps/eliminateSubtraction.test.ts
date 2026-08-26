@@ -166,7 +166,7 @@ async function runStep(
 	};
 
 	const state: PathoscopeState = {
-		candidateSequenceIds: ["seq_a"],
+		candidateOtuIds: ["otu_a"],
 		subtractedCount: 0,
 	};
 

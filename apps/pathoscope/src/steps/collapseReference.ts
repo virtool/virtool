@@ -2,12 +2,13 @@ import { mkdir, mkdtemp, rm } from "node:fs/promises";
 import { dirname, join } from "node:path";
 import type { Logger } from "@virtool/logger";
 import { createIndexArtifact, openWorkflowIndex } from "@virtool/sqlite";
-import { deriveCacheKey, type RunSubprocess } from "@virtool/workflow";
-import { cacheFor } from "../cache";
 import {
-	buildCollapsedReferenceCacheParams,
+	deriveCacheKey,
 	getCdHitEstVersion,
-} from "../cacheParams";
+	type RunSubprocess,
+} from "@virtool/workflow";
+import { cacheFor } from "../cache";
+import { buildCollapsedReferenceCacheParams } from "../cacheParams";
 import { type PathoscopePaths, workPaths } from "../paths";
 import {
 	collapseOtus,
@@ -28,7 +29,9 @@ import type { PathoscopeStep } from "./types";
  */
 export const collapseReferenceStep: PathoscopeStep = {
 	id: "collapse_reference",
-	description: "Ensure a cd-hit-est collapsed reference index exists locally.",
+	name: "Remove Redundant Isolates",
+	description:
+		"Remove nearly identical virus isolates before detailed read matching.",
 	async run(context) {
 		const { data, logger, proc, runSubprocess, workPath } = context;
 		const paths = workPaths(workPath);
