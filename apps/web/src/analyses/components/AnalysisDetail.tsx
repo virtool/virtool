@@ -73,7 +73,7 @@ export default function AnalysisDetail() {
 				</SubviewHeaderTitle>
 				<SubviewHeaderAttribution>
 					{analysis.user.handle} started{" "}
-					<RelativeTime time={analysis.createdAt} /> · workflow version{" "}
+					<RelativeTime time={analysis.createdAt} /> · Workflow Version{" "}
 					{getWorkflowVersionLabel(analysis.workflowVersion)}
 				</SubviewHeaderAttribution>
 			</SubviewHeader>
