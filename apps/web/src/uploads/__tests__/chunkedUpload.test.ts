@@ -58,6 +58,7 @@ function init(overrides: Partial<ChunkedInit> = {}): ChunkedInit {
 		uploadId: 7,
 		url: "https://fd/c/blob?sig=x",
 		blockSize: 4,
+		concurrency: 4,
 		...overrides,
 	};
 }

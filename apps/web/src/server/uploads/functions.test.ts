@@ -64,7 +64,10 @@ const presignUpload = vi.fn();
 	presignUpload;
 
 // Mutable so a test can flip the chunked-upload flag; reset in `beforeEach`.
-const testConfig = { uploadsChunked: false };
+const testConfig = {
+	uploadsChunked: false,
+	uploadsChunkedConcurrency: 8,
+};
 
 const handlers = (await import(
 	"./functions.ts?tss-serverfn-split"
@@ -275,11 +278,18 @@ describe("initUpload", () => {
 			name: "reads.fq.gz",
 			type: "reads",
 			size: 4096,
-		})) as { mode: string; uploadId: number; url: string; blockSize: number };
+		})) as {
+			mode: string;
+			uploadId: number;
+			url: string;
+			blockSize: number;
+			concurrency: number;
+		};
 
 		expect(result.mode).toBe("chunked");
 		expect(result.url).toBe("https://fd/c/blob?sig=x");
-		expect(result.blockSize).toBe(4 * 1024 * 1024);
+		expect(result.blockSize).toBe(16 * 1024 * 1024);
+		expect(result.concurrency).toBe(8);
 
 		const [row] = await db
 			.select()
@@ -302,10 +312,10 @@ describe("initUpload", () => {
 		const result = (await call("initUploadFn", {
 			name: "reads.fq.gz",
 			type: "reads",
-			size: 4 * 1024 * 1024 * 50_000 + 1,
+			size: 16 * 1024 * 1024 * 50_000 + 1,
 		})) as { blockSize: number };
 
-		expect(result.blockSize).toBe(8 * 1024 * 1024);
+		expect(result.blockSize).toBe(32 * 1024 * 1024);
 	});
 
 	it("rejects files larger than Azure's maximum block blob size", async () => {
