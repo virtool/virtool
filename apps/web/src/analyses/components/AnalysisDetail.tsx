@@ -94,9 +94,6 @@ type CopyTextProps = {
 	/** What is rendered in place — the reader-facing form of the value. */
 	children: ReactNode;
 
-	/** The message shown in the toast once the value is on the clipboard. */
-	message: string;
-
 	/** A short label identifying this copy site, forwarded to Sentry on failure. */
 	tag: string;
 
@@ -111,7 +108,7 @@ type CopyTextProps = {
  * one, so a relative time can be shown while an absolute one is copied. Outside a
  * secure context, where the clipboard cannot be reached, the text renders plain.
  */
-function CopyText({ children, message, tag, value }: CopyTextProps) {
+function CopyText({ children, tag, value }: CopyTextProps) {
 	const isSecureContext = useIsSecureContext();
 
 	if (!isSecureContext) {
@@ -126,8 +123,12 @@ function CopyText({ children, message, tag, value }: CopyTextProps) {
 				toast({
 					description: (
 						<span className="flex items-start gap-2">
-							<ClipboardPaste className="mt-1 size-4 shrink-0" />
-							{message}
+							<span className="flex h-5 shrink-0 items-center">
+								<ClipboardPaste className="size-4" />
+							</span>
+							<span className="min-w-0">
+								{`"${value}" copied to clipboard.`}
+							</span>
 						</span>
 					),
 				}),
@@ -161,11 +162,7 @@ function CreatedAt({ time }: CreatedAtProps) {
 	const value = `${formatDate(time)} ${formatTime(time)}`;
 
 	return (
-		<CopyText
-			message={`"${value}" copied to clipboard.`}
-			tag="analysis-created-at"
-			value={value}
-		>
+		<CopyText tag="analysis-created-at" value={value}>
 			<time dateTime={time.toISOString()}>{label}</time>
 		</CopyText>
 	);
@@ -190,11 +187,7 @@ function WorkflowVersion({ version }: WorkflowVersionProps) {
 	}
 
 	return (
-		<CopyText
-			message={`"${version}" copied to clipboard.`}
-			tag="workflow-version"
-			value={version}
-		>
+		<CopyText tag="workflow-version" value={version}>
 			{label}
 		</CopyText>
 	);

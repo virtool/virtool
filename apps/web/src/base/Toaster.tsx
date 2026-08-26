@@ -24,7 +24,7 @@ export default function Toaster() {
 		<ToastProvider duration={TOAST_DURATION_MS} swipeDirection="right">
 			{toasts.map(({ id, title, description, action, ...props }) => (
 				<Toast key={id} {...props}>
-					<div className="grid gap-1">
+					<div className="grid min-w-0 gap-1">
 						{title && <ToastTitle>{title}</ToastTitle>}
 						{description && <ToastDescription>{description}</ToastDescription>}
 					</div>
