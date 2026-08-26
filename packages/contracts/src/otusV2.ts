@@ -1,4 +1,5 @@
 import { z } from "zod";
+import type { UserNested } from "./users";
 
 /** The molecule type stored by a v2 OTU. */
 export const OtuV2MoleculeType = {
@@ -250,7 +251,7 @@ export type OtuV2Change = {
 	command: "CreateOTU";
 	commandSchemaVersion: number;
 	source: "user";
-	userId: number;
+	user: UserNested;
 	createdAt: Date;
 };
 

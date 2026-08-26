@@ -65,7 +65,10 @@ export function createFakeLocalOtuV2(
 			command: "CreateOTU",
 			commandSchemaVersion: 1,
 			source: "user",
-			userId: faker.number.int(),
+			user: {
+				id: faker.number.int(),
+				handle: faker.internet.username(),
+			},
 			createdAt: faker.date.past(),
 		},
 	};

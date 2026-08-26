@@ -160,7 +160,7 @@ describe("createLocalOtu", () => {
 				command: "CreateOTU",
 				commandSchemaVersion: 1,
 				source: "user",
-				userId,
+				user: { id: userId, handle: "alice" },
 			},
 		});
 
