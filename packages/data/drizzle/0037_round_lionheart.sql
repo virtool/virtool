@@ -50,6 +50,7 @@ CREATE TABLE "otu_local_identity_revisions" (
 	"identity_id" uuid NOT NULL,
 	"name" text NOT NULL,
 	"acronym" text,
+	"lineage" jsonb,
 	"created_at" timestamp with time zone NOT NULL,
 	CONSTRAINT "otu_local_identity_revisions_reference_otu_id_key" UNIQUE("reference_id","otu_id","id"),
 	CONSTRAINT "otu_local_identity_revisions_name_check" CHECK (btrim("otu_local_identity_revisions"."name") <> ''),
@@ -214,6 +215,4 @@ CREATE INDEX "otu_plan_segment_versions_otu_id_idx" ON "otu_plan_segment_version
 CREATE UNIQUE INDEX "otu_sequence_versions_current_key" ON "otu_sequence_versions" USING btree ("otu_id","sequence_id") WHERE "otu_sequence_versions"."last_version" is null;--> statement-breakpoint
 CREATE INDEX "otu_sequence_versions_otu_isolate_idx" ON "otu_sequence_versions" USING btree ("otu_id","isolate_id");--> statement-breakpoint
 CREATE UNIQUE INDEX "otu_taxonomy_versions_current_key" ON "otu_taxonomy_versions" USING btree ("otu_id") WHERE "otu_taxonomy_versions"."last_version" is null;--> statement-breakpoint
-CREATE UNIQUE INDEX "otus_reference_id_remote_id_key" ON "otus" USING btree ("reference_id","remote_id") WHERE "otus"."remote_id" is not null;
---> statement-breakpoint
-ALTER TABLE "otus" ADD CONSTRAINT "otus_current_change_fkey" FOREIGN KEY ("id","version") REFERENCES "otu_changes"("otu_id","version") DEFERRABLE INITIALLY DEFERRED;
+CREATE UNIQUE INDEX "otus_reference_id_remote_id_key" ON "otus" USING btree ("reference_id","remote_id") WHERE "otus"."remote_id" is not null;--> statement-breakpoint

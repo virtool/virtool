@@ -232,6 +232,13 @@
       "when": 1789777792881,
       "tag": "0036_auth_rate_limits",
       "breakpoints": true
+    },
+    {
+      "idx": 37,
+      "version": "7",
+      "when": 1789599181768,
+      "tag": "0037_round_lionheart",
+      "breakpoints": true
     }
   ]
 }

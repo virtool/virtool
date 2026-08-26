@@ -16,6 +16,7 @@ describe("<LocalOtuDetail />", () => {
 			identityId: crypto.randomUUID(),
 			name: "Cucumber mosaic virus",
 			acronym: "CMV",
+			lineage: [],
 		},
 	});
 	const base = `/refs/beta/${reference.id}/otus/${otu.id}`;

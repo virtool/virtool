@@ -1,4 +1,7 @@
-import type { CreateLocalOtuCommand } from "@virtool/contracts";
+import type {
+	CreateLocalOtuCommand,
+	OtuV2LineageTaxon,
+} from "@virtool/contracts";
 import { sql } from "drizzle-orm";
 import {
 	bigint,
@@ -161,6 +164,7 @@ export const otuLocalIdentityRevisions = pgTable(
 		identityId: uuid("identity_id").notNull(),
 		name: text("name").notNull(),
 		acronym: text("acronym"),
+		lineage: jsonb("lineage").$type<OtuV2LineageTaxon[]>(),
 		createdAt: timestamp("created_at", { withTimezone: true })
 			.$defaultFn(() => new Date())
 			.notNull(),

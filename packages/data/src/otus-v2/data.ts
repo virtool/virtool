@@ -116,6 +116,7 @@ async function insertLocalOtu(
 		identityId: payload.taxonomy.identityId,
 		name: payload.taxonomy.name,
 		acronym: payload.taxonomy.acronym,
+		lineage: payload.taxonomy.lineage,
 		createdAt: now,
 	});
 	await tx.insert(otuTaxonomyVersions).values({
@@ -302,6 +303,7 @@ export async function getLocalOtu(
 					identityId: otuLocalIdentities.id,
 					name: otuLocalIdentityRevisions.name,
 					acronym: otuLocalIdentityRevisions.acronym,
+					lineage: otuLocalIdentityRevisions.lineage,
 				})
 				.from(otuTaxonomyVersions)
 				.innerJoin(
@@ -434,6 +436,7 @@ export async function getLocalOtu(
 			identityId: taxonomy.identityId,
 			name: taxonomy.name,
 			acronym: taxonomy.acronym,
+			lineage: taxonomy.lineage ?? [],
 		},
 		plan: {
 			id: planId,

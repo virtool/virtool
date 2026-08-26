@@ -51,6 +51,7 @@ export function buildCreateOtuCommandFromDraft(
 				identityId: crypto.randomUUID(),
 				name: draft.taxonomy.name,
 				acronym: draft.taxonomy.acronym,
+				lineage: draft.taxonomy.lineage,
 			},
 			promotedAccessions: [],
 			isolate: {

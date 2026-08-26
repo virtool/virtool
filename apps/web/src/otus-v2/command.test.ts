@@ -7,7 +7,15 @@ import { buildCreateOtuCommandFromDraft } from "./command";
 
 const draft: GenbankOtuDraft = {
 	molecule: { type: "RNA", strandedness: "single", topology: "linear" },
-	taxonomy: { name: "Tobacco mosaic virus", acronym: "TMV" },
+	taxonomy: {
+		name: "Tobacco mosaic virus",
+		acronym: "TMV",
+		lineage: [
+			{ id: 12234, name: "Virgaviridae", rank: "family" },
+			{ id: 12242, name: "Tobamovirus", rank: "genus" },
+			{ id: 12243, name: "Tobacco mosaic virus", rank: "species" },
+		],
+	},
 	isolate: { type: "isolate", value: "Fny" },
 	segments: [
 		{

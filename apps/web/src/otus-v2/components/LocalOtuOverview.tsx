@@ -29,6 +29,18 @@ export default function LocalOtuOverview({
 				</dl>
 			</Box>
 
+			{otu.taxonomy.lineage.length > 0 && (
+				<BoxGroup>
+					<BoxGroupHeader>Lineage</BoxGroupHeader>
+					{otu.taxonomy.lineage.map((taxon) => (
+						<BoxGroupSection key={taxon.id}>
+							<span className="font-semibold">{taxon.name}</span>
+							<span className="text-gray-500"> · {taxon.rank}</span>
+						</BoxGroupSection>
+					))}
+				</BoxGroup>
+			)}
+
 			<BoxGroup>
 				<BoxGroupHeader>Plan</BoxGroupHeader>
 				{otu.plan.segments.map((segment) => (

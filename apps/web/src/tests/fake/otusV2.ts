@@ -29,6 +29,7 @@ export function createFakeLocalOtuV2(
 			identityId: faker.string.uuid(),
 			name: faker.word.noun({ strategy: "any-length" }),
 			acronym: null,
+			lineage: [],
 		},
 		plan: {
 			id: faker.string.uuid(),

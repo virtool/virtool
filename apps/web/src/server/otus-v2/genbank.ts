@@ -1,4 +1,8 @@
-import type { GenbankOtuDraft, OtuV2IsolateNameType } from "@virtool/contracts";
+import type {
+	GenbankOtuDraft,
+	OtuV2IsolateNameType,
+	OtuV2LineageTaxon,
+} from "@virtool/contracts";
 import {
 	getSpecies,
 	type NcbiGenbank,
@@ -30,9 +34,9 @@ function deriveIsolateName(
 function deriveTaxonomy(
 	organism: string,
 	taxonomy: NcbiTaxonomy | null,
-): { name: string; acronym: string | null } {
+): { name: string; acronym: string | null; lineage: OtuV2LineageTaxon[] } {
 	if (!taxonomy) {
-		return { name: organism, acronym: null };
+		return { name: organism, acronym: null, lineage: [] };
 	}
 
 	const species = getSpecies(taxonomy);
@@ -41,7 +45,14 @@ function deriveTaxonomy(
 		taxonomy.other_names.genbank_acronym[0] ??
 		null;
 
-	return { name: species?.name ?? taxonomy.name, acronym };
+	// NCBI's LineageEx lists the ancestors above the record's own taxon, so
+	// append that taxon to complete the path down to the organism.
+	const lineage = [
+		...taxonomy.lineage,
+		{ id: taxonomy.id, name: taxonomy.name, rank: taxonomy.rank },
+	];
+
+	return { name: species?.name ?? taxonomy.name, acronym, lineage };
 }
 
 /**

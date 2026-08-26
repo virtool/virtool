@@ -20,6 +20,7 @@ describe("<CreateLocalOtuForm />", () => {
 				identityId: crypto.randomUUID(),
 				name: "Tobacco mosaic virus",
 				acronym: "TMV",
+				lineage: [],
 			},
 		});
 
