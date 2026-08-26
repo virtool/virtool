@@ -413,10 +413,9 @@ route. `initUploadFn` owns the choice so the client never carries the flag:
 with `VT_UPLOADS_CHUNKED` enabled and an Azure backend that can presign, it
 reserves the upload — recording the file size the client declares at init — and
 returns a write SAS the client PUTs blocks to (`@uploads/chunkedUpload`), then
-commits with a Put Block List and calls `finalizeChunkedUploadFn`. Blocks start
-at 4 MiB and grow in 4 MiB increments when necessary to keep the upload within
-Azure's 50,000-block limit. Finalize records the stored object's size only when
-it matches the declared size, so an empty or partial block list is rejected
+commits with a Put Block List and calls `finalizeChunkedUploadFn`. Finalize
+records the stored object's size only when it matches the declared size, so an
+empty or partial block list is rejected
 rather than recorded as ready; `cancelChunkedUploadFn` drops an abandoned or
 rejected reservation. Otherwise it returns `proxied` and the client streams
 through the raw `/uploads` route, which stays the fallback and the rollback path
@@ -523,6 +522,7 @@ whitespace is trimmed, and an empty value is treated as unset.
 | `VT_STORAGE_AZURE_UPLOAD_URL` | URL origin | Unset | Rehost presigned Azure uploads on a public origin, such as a Front Door route to a private storage account. Falls back to `VT_STORAGE_AZURE_DOWNLOAD_URL`, then the Azure Blob endpoint. |
 | `VT_STORAGE_DOWNLOAD_MODE` | `stream` \| `redirect` | `stream` | Serve file downloads by streaming the bytes through this server, or by 302-redirecting to a short-lived presigned storage URL. `redirect` falls back to streaming when the backend cannot presign. |
 | `VT_UPLOADS_CHUNKED` | `0` \| `1` \| `true` \| `false` \| `yes` \| `no` | Unset (`false`) | Enable direct-to-blob chunked uploads when the storage backend can presign them. Unset or disable it to use the proxied upload route. |
+| `VT_UPLOADS_CHUNKED_CONCURRENCY` | Positive integer | `8` | Set how many blocks a chunked upload PUTs at once. Raise it to lift throughput on a high-latency upload path. |
 
 The build and test tooling reads one additional variable. It is not a runtime
 server setting and has no `_FILE` variant.

@@ -221,6 +221,39 @@ describe("parseServerConfig", () => {
 		});
 	});
 
+	describe("chunked uploads", () => {
+		it("defaults the concurrency when unset", () => {
+			expect(parseServerConfig(minimalS3).uploadsChunkedConcurrency).toBe(8);
+		});
+
+		it("treats a blank concurrency as unset", () => {
+			const config = parseServerConfig({
+				...minimalS3,
+				VT_UPLOADS_CHUNKED_CONCURRENCY: "",
+			} as NodeJS.ProcessEnv);
+
+			expect(config.uploadsChunkedConcurrency).toBe(8);
+		});
+
+		it("reads the concurrency from the environment", () => {
+			const config = parseServerConfig({
+				...minimalS3,
+				VT_UPLOADS_CHUNKED_CONCURRENCY: "12",
+			} as NodeJS.ProcessEnv);
+
+			expect(config.uploadsChunkedConcurrency).toBe(12);
+		});
+
+		it("rejects a non-positive concurrency", () => {
+			expect(() =>
+				parseServerConfig({
+					...minimalS3,
+					VT_UPLOADS_CHUNKED_CONCURRENCY: "0",
+				} as NodeJS.ProcessEnv),
+			).toThrow(/VT_UPLOADS_CHUNKED_CONCURRENCY/);
+		});
+	});
+
 	describe("file-backed values", () => {
 		let directory: string;
 
