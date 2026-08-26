@@ -1,9 +1,11 @@
 import NuvsViewer from "@analyses/components/Nuvs/NuvsViewer";
+import { formatDate, formatTime } from "@app/date";
 import { getWorkflowDisplayName } from "@app/utils";
 import Box from "@base/Box";
+import CopyText from "@base/CopyText";
 import LoadingPlaceholder from "@base/LoadingPlaceholder";
 import QueryError from "@base/QueryError";
-import RelativeTime from "@base/RelativeTime";
+import { useRelativeTime } from "@base/RelativeTime";
 import {
 	SubviewHeader,
 	SubviewHeaderAttribution,
@@ -19,6 +21,7 @@ import type {
 	FormattedNuvsAnalysis,
 	FormattedPathoscopeAnalysis,
 } from "../types";
+import { getWorkflowVersionLabel } from "../utils";
 import { PathoscopeViewer } from "./Pathoscope/PathoscopeViewer";
 
 const routeApi = getRouteApi(
@@ -71,8 +74,9 @@ export default function AnalysisDetail() {
 					{getWorkflowDisplayName(analysis.workflow)} for {sample.name}
 				</SubviewHeaderTitle>
 				<SubviewHeaderAttribution>
-					{analysis.user.handle} started{" "}
-					<RelativeTime time={analysis.createdAt} />
+					{analysis.user.handle} started <CreatedAt time={analysis.createdAt} />{" "}
+					· Workflow Version{" "}
+					<WorkflowVersion version={analysis.workflowVersion} />
 				</SubviewHeaderAttribution>
 			</SubviewHeader>
 
@@ -80,6 +84,51 @@ export default function AnalysisDetail() {
 				<AnalysisResults analysis={analysis} sample={sample} />
 			</Suspense>
 		</div>
+	);
+}
+
+type CreatedAtProps = {
+	/** The instant the analysis was started. */
+	time: Date;
+};
+
+/**
+ * The relative start time, clickable to copy the exact instant in a form Excel
+ * reads as a date — `yyyy-MM-dd HH:mm:ss` in the reader's own time zone.
+ */
+function CreatedAt({ time }: CreatedAtProps) {
+	const label = useRelativeTime(time);
+	const value = `${formatDate(time)} ${formatTime(time)}`;
+
+	return (
+		<CopyText tag="analysis-created-at" value={value}>
+			<time dateTime={time.toISOString()}>{label}</time>
+		</CopyText>
+	);
+}
+
+type WorkflowVersionProps = {
+	/** The analysis's finalizing workflow version, or `null` if none was recorded. */
+	version: string | null;
+};
+
+/**
+ * The finalizing workflow version, clickable to copy the raw value.
+ *
+ * Only a real version is worth copying, so the absences — an unrecorded `null`
+ * and a captured `"UNKNOWN"` — stay plain text.
+ */
+function WorkflowVersion({ version }: WorkflowVersionProps) {
+	const label = getWorkflowVersionLabel(version);
+
+	if (version === null || version === "UNKNOWN") {
+		return <>{label}</>;
+	}
+
+	return (
+		<CopyText tag="workflow-version" value={version}>
+			{label}
+		</CopyText>
 	);
 }
 
