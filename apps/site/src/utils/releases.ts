@@ -61,7 +61,9 @@ async function fetchRepoReleases(repo: string): Promise<Array<object>> {
     });
 
     if (!response.ok) {
-      throw new Error("Failed to fetch releases from GitHub");
+      throw new Error(
+        `Failed to fetch releases for ${repo} from GitHub (page ${page}): ${response.status} ${response.statusText}`,
+      );
     }
 
     const releases = await response.json();
