@@ -26,6 +26,7 @@ import {
 	deleteUpload,
 	finalizePendingUpload,
 	findUploads,
+	getUploadFile,
 	ORPHAN_AGE_SECONDS,
 	reapUploads,
 	UploadIncompleteError,
@@ -144,6 +145,30 @@ describe("createUpload", () => {
 
 		const rows = await db.select().from(uploadsTable);
 		expect(rows).toHaveLength(0);
+	});
+});
+
+describe("getUploadFile", () => {
+	it("returns the file for a ready upload", async () => {
+		const userId = await seedUser(db);
+		const upload = await seedUpload(userId, {
+			name: "external.fa.gz",
+			storageKey: "uploads/ready",
+		});
+
+		await expect(getUploadFile(db, upload.id)).resolves.toEqual({
+			key: "uploads/ready",
+			name: "external.fa.gz",
+		});
+	});
+
+	it("returns null for pending and removed uploads", async () => {
+		const userId = await seedUser(db);
+		const pending = await seedUpload(userId, { ready: false });
+		const removed = await seedUpload(userId, { removed: true });
+
+		await expect(getUploadFile(db, pending.id)).resolves.toBeNull();
+		await expect(getUploadFile(db, removed.id)).resolves.toBeNull();
 	});
 });
 
@@ -770,6 +795,38 @@ describe("finalizePendingUpload", () => {
 
 		expect(again).toMatchObject({ ready: true, size: 5 });
 	});
+
+	it("does not finalize an upload removed while its object is inspected", async () => {
+		const userId = await seedUser(db);
+		const storage = new MemoryStorage();
+		const { upload, storageKey } = await createPendingUpload(db, {
+			name: "reads.fq.gz",
+			type: "reads",
+			userId,
+			expectedSize: 5,
+		});
+		await storage.write(storageKey, bodyOf("hello"));
+
+		const size = storage.size.bind(storage);
+		storage.size = vi.fn(async (key: string): Promise<number> => {
+			const result = await size(key);
+			await db
+				.update(uploadsTable)
+				.set({ removed: true, removedAt: new Date() })
+				.where(eq(uploadsTable.id, upload.id));
+			return result;
+		});
+
+		await expect(
+			finalizePendingUpload(db, storage, upload.id, userId),
+		).rejects.toBeInstanceOf(UploadNotFoundError);
+
+		const [row] = await db
+			.select()
+			.from(uploadsTable)
+			.where(eq(uploadsTable.id, upload.id));
+		expect(row).toMatchObject({ ready: false, removed: true });
+	});
 });
 
 describe("cancelPendingUpload", () => {
@@ -797,17 +854,17 @@ describe("cancelPendingUpload", () => {
 
 	it("does not cancel a finalized upload", async () => {
 		const userId = await seedUser(db);
-		const ready = await seedUpload(userId, { ready: true });
+		const storage = new MemoryStorage();
+		const ready = await seedUpload(userId, {
+			ready: true,
+			storageKey: "uploads/finalized",
+		});
+		await storage.write("uploads/finalized", bodyOf("hello"));
 
 		await expect(
-			cancelPendingUpload(
-				db,
-				new MemoryStorage(),
-				testLogger,
-				ready.id,
-				userId,
-			),
+			cancelPendingUpload(db, storage, testLogger, ready.id, userId),
 		).rejects.toBeInstanceOf(UploadNotFoundError);
+		expect(await storage.size("uploads/finalized")).toBe(5);
 	});
 
 	it("does not cancel another user's upload", async () => {

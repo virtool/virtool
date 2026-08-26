@@ -30,9 +30,9 @@ into hundreds of short requests rather than one long stream, so no idle-timeout
 proxy in the path trips and no bytes pass through the server.
 
 - **Azure** signs the write SAS with the same user-delegation key as the
-  download SAS (`cw` permissions). `uploadUrl` rehosts the URL on the Front Door
-  origin that fronts the private storage account, falling back to `downloadUrl`
-  and then the blob endpoint.
+  download SAS (`cw` permissions). `uploadUrl` rehosts the URL on a configured
+  public origin, such as a Front Door route to a private storage account. It
+  falls back to `downloadUrl` and then the blob endpoint.
 - **S3** and **`MemoryStorage`** leave the method undefined — chunked direct
   upload is an Azure capability — and a caller falls back to the proxied upload
   route.

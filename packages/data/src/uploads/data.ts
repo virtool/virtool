@@ -345,13 +345,18 @@ export async function finalizePendingUpload(
 		throw new UploadSizeMismatchError();
 	}
 
-	// Conditional on the row still being unfinished so two overlapping finalizes
-	// cannot both stamp it and both emit. The loser matches no row here and falls
-	// through to return the winner's already-finished row unchanged.
+	// Conditional on the row still being active and unfinished so cancellation,
+	// reaping, and overlapping finalizes cannot race this transition.
 	const [finalized] = await db
 		.update(uploadsTable)
 		.set({ ready: true, size, uploadedAt: new Date() })
-		.where(and(eq(uploadsTable.id, uploadId), eq(uploadsTable.ready, false)))
+		.where(
+			and(
+				eq(uploadsTable.id, uploadId),
+				eq(uploadsTable.ready, false),
+				eq(uploadsTable.removed, false),
+			),
+		)
 		.returning();
 
 	if (finalized === undefined) {
@@ -360,11 +365,20 @@ export async function finalizePendingUpload(
 			.from(uploadsTable)
 			.where(eq(uploadsTable.id, uploadId));
 
-		if (!current) {
+		if (
+			!current ||
+			current.removed ||
+			current.userId !== userId ||
+			!current.storageKey
+		) {
 			throw new UploadNotFoundError();
 		}
 
-		return toUpload(current, await fetchUser(db, current.userId));
+		if (current.ready) {
+			return toUpload(current, await fetchUser(db, current.userId));
+		}
+
+		throw new UploadNotFoundError();
 	}
 
 	await emit("uploads", finalized.id, "create");
@@ -396,13 +410,25 @@ export async function cancelPendingUpload(
 		throw new UploadNotFoundError();
 	}
 
-	await db
+	const [cancelled] = await db
 		.update(uploadsTable)
 		.set({ removed: true, removedAt: new Date() })
-		.where(eq(uploadsTable.id, uploadId));
+		.where(
+			and(
+				eq(uploadsTable.id, uploadId),
+				eq(uploadsTable.userId, userId),
+				eq(uploadsTable.ready, false),
+				eq(uploadsTable.removed, false),
+			),
+		)
+		.returning({ storageKey: uploadsTable.storageKey });
 
-	if (row.storageKey) {
-		await storage.delete(row.storageKey);
+	if (cancelled === undefined) {
+		throw new UploadNotFoundError();
+	}
+
+	if (cancelled.storageKey) {
+		await storage.delete(cancelled.storageKey);
 	} else {
 		logger.warn({ uploadId }, "cancelled upload has no storage_key to delete");
 	}
@@ -420,7 +446,7 @@ export type UploadFile = {
  *
  * `storage_key` locates the object and `name` is what the user chose and what
  * the download is named. Both columns are nullable at the database level, so a
- * row missing either has no downloadable file.
+ * row missing either or not yet ready has no downloadable file.
  */
 export async function getUploadFile(
 	db: DbOrTx,
@@ -429,7 +455,13 @@ export async function getUploadFile(
 	const [row] = await db
 		.select({ name: uploadsTable.name, storageKey: uploadsTable.storageKey })
 		.from(uploadsTable)
-		.where(and(eq(uploadsTable.id, uploadId), eq(uploadsTable.removed, false)))
+		.where(
+			and(
+				eq(uploadsTable.id, uploadId),
+				eq(uploadsTable.ready, true),
+				eq(uploadsTable.removed, false),
+			),
+		)
 		.limit(1);
 
 	if (!row?.name || !row.storageKey) {

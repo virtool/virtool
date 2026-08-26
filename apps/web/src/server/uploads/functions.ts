@@ -29,6 +29,10 @@ import { pageSchema, perPageSchema, rowIdSchema } from "../validation";
 // the write SAS lives in hours where a download redirect lives in minutes.
 const UPLOAD_SAS_TTL_SECONDS = 6 * 60 * 60;
 
+const AZURE_MAX_BLOCK_COUNT = 50_000;
+const AZURE_MAX_BLOCK_SIZE = 4_000 * 1024 * 1024;
+const AZURE_MAX_BLOB_SIZE = AZURE_MAX_BLOCK_COUNT * AZURE_MAX_BLOCK_SIZE;
+
 // The upload endpoint itself is not a server function — it streams a multi-GB
 // request body and is posted to with XMLHttpRequest so the client can report
 // progress. It lives in the `/uploads` route (`@server/uploads/upload`).
@@ -104,10 +108,17 @@ const initUploadSchema = z.object({
 	name: z.string().min(1),
 	type: z.enum(UPLOAD_TYPES),
 	// The file's byte length, locked here so finalize can reject a commit that
-	// does not land exactly this many bytes. `Number.MAX_SAFE_INTEGER` is the
-	// `bigint mode: "number"` ceiling the size column stores against.
-	size: z.number().int().nonnegative().max(Number.MAX_SAFE_INTEGER),
+	// does not land exactly this many bytes.
+	size: z.number().int().nonnegative().max(AZURE_MAX_BLOB_SIZE),
 });
+
+function getUploadBlockSize(size: number): number {
+	const minimumBlockSize = Math.ceil(size / AZURE_MAX_BLOCK_COUNT);
+	return Math.max(
+		STORAGE_CHUNK_SIZE,
+		Math.ceil(minimumBlockSize / STORAGE_CHUNK_SIZE) * STORAGE_CHUNK_SIZE,
+	);
+}
 
 /**
  * Begin an upload, deciding whether it goes direct-to-blob or through this
@@ -163,7 +174,7 @@ export const initUploadFn = createServerFn({ method: "POST" })
 			mode: "chunked" as const,
 			uploadId: upload.id,
 			url,
-			blockSize: STORAGE_CHUNK_SIZE,
+			blockSize: getUploadBlockSize(data.size),
 		};
 	});
 

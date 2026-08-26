@@ -279,7 +279,7 @@ describe("initUpload", () => {
 
 		expect(result.mode).toBe("chunked");
 		expect(result.url).toBe("https://fd/c/blob?sig=x");
-		expect(result.blockSize).toBeGreaterThan(0);
+		expect(result.blockSize).toBe(4 * 1024 * 1024);
 
 		const [row] = await db
 			.select()
@@ -292,6 +292,32 @@ describe("initUpload", () => {
 			row?.storageKey,
 			expect.objectContaining({ expiresIn: expect.any(Number) }),
 		);
+	});
+
+	it("increases the block size for files that need more than 50,000 blocks", async () => {
+		testConfig.uploadsChunked = true;
+		presignUpload.mockResolvedValue("https://fd/c/blob?sig=x");
+		await signIn("full");
+
+		const result = (await call("initUploadFn", {
+			name: "reads.fq.gz",
+			type: "reads",
+			size: 4 * 1024 * 1024 * 50_000 + 1,
+		})) as { blockSize: number };
+
+		expect(result.blockSize).toBe(8 * 1024 * 1024);
+	});
+
+	it("rejects files larger than Azure's maximum block blob size", async () => {
+		await signIn("full");
+
+		await expect(
+			call("initUploadFn", {
+				name: "reads.fq.gz",
+				type: "reads",
+				size: 4_000 * 1024 * 1024 * 50_000 + 1,
+			}),
+		).rejects.toThrow();
 	});
 
 	it("drops the reservation when presigning fails", async () => {
