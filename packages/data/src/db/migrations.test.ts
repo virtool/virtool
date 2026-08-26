@@ -1,4 +1,5 @@
 import { randomBytes } from "node:crypto";
+import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 
 import { drizzle } from "drizzle-orm/postgres-js";
@@ -13,6 +14,34 @@ import { createTestDatabase } from "./test/fixtures";
 const MIGRATIONS_FOLDER = fileURLToPath(
 	new URL("../../drizzle", import.meta.url),
 );
+
+const JOURNAL_PATH = fileURLToPath(
+	new URL("../../drizzle/meta/_journal.json", import.meta.url),
+);
+
+type JournalEntry = { idx: number; when: number; tag: string };
+
+// The migrator applies every journal entry whose `when` is greater than the
+// last `when` already recorded in `__drizzle_migrations`. A later entry with an
+// earlier `when` therefore never runs on a database that reached the earlier
+// one, so `when` must increase strictly with `idx` — not just be unique.
+it("keep journal timestamps strictly increasing by idx", () => {
+	const journal = JSON.parse(readFileSync(JOURNAL_PATH, "utf8")) as {
+		entries: JournalEntry[];
+	};
+
+	const entries = [...journal.entries].sort((a, b) => a.idx - b.idx);
+
+	for (let i = 1; i < entries.length; i++) {
+		const previous = entries[i - 1];
+		const current = entries[i];
+
+		expect(
+			current.when,
+			`${current.tag} (when ${current.when}) must sort after ${previous.tag} (when ${previous.when})`,
+		).toBeGreaterThan(previous.when);
+	}
+});
 
 async function describeSchema(client: PgClient) {
 	const columns = await client`
