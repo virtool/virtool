@@ -55,8 +55,8 @@ const findSamplesSchema = z.object({
 	users: z.array(rowIdSchema).default([]),
 	createdAfter: calendarDateSchema.optional(),
 	createdBefore: calendarDateSchema.optional(),
-	// A direction without a column has nothing to order by, so the pair is
-	// resolved into an optional sort below.
+	// A direction without a column falls back to the creation date below, so a
+	// shareable ``direction`` URL still orders the implicit column it marks.
 	sort: z.enum(SAMPLE_SORT_FIELDS).optional(),
 	direction: z.enum(SORT_DIRECTIONS).default("descending"),
 });
@@ -175,9 +175,7 @@ export const findSamplesFn = createServerFn({ method: "GET" })
 				createdBefore: data.createdBefore
 					? startOfNextUtcDay(data.createdBefore)
 					: null,
-				sort: data.sort
-					? { direction: data.direction, field: data.sort }
-					: undefined,
+				sort: { direction: data.direction, field: data.sort ?? "createdAt" },
 			},
 			actor,
 		);
