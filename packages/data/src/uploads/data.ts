@@ -408,74 +408,6 @@ export async function cancelPendingUpload(
 	}
 }
 
-/**
- * Delete chunked uploads reserved long ago that were never finalized.
- *
- * A reservation whose client never committed its block list, or never called
- * finalize, leaves an unfinished row that no list shows. The cutoff is far
- * longer than any real upload takes, so an in-flight upload is never swept.
- * Azure expires uncommitted blocks on its own after a week; this clears the row
- * and any object a stalled commit did land.
- */
-export async function reapStalePendingUploads(
-	db: Db,
-	storage: StorageBackend,
-	logger: Logger,
-	olderThanSeconds: number,
-	signal?: AbortSignal,
-): Promise<ReapResult> {
-	const stale = await db
-		.select({ id: uploadsTable.id })
-		.from(uploadsTable)
-		.where(
-			and(
-				eq(uploadsTable.ready, false),
-				eq(uploadsTable.removed, false),
-				lt(uploadsTable.createdAt, secondsAgo(olderThanSeconds)),
-			),
-		)
-		.orderBy(asc(uploadsTable.id));
-
-	const found = stale.length;
-
-	if (found === 0) {
-		return { found, deleted: 0 };
-	}
-
-	let deleted = 0;
-
-	for (const upload of stale) {
-		signal?.throwIfAborted();
-
-		const [reaped] = await db
-			.update(uploadsTable)
-			.set({ removed: true, removedAt: nowUtc() })
-			.where(
-				and(eq(uploadsTable.id, upload.id), eq(uploadsTable.removed, false)),
-			)
-			.returning({ storageKey: uploadsTable.storageKey });
-
-		if (reaped === undefined) {
-			continue;
-		}
-
-		deleted += 1;
-
-		if (reaped.storageKey) {
-			try {
-				await storage.delete(reaped.storageKey);
-			} catch (err) {
-				logger.warn(
-					{ err, uploadId: upload.id, storageKey: reaped.storageKey },
-					"failed to delete stale upload object; object orphaned",
-				);
-			}
-		}
-	}
-
-	return { found, deleted };
-}
-
 /** The storage key of an upload's bytes, with the name to download them as. */
 export type UploadFile = {
 	key: string;
@@ -631,26 +563,42 @@ export async function deleteUpload(
 	await emit("uploads", uploadId, "delete");
 }
 
-/** What one sweep of {@link reapOrphanedUploads} selected and what it removed. */
+/** What one sweep of {@link reapUploads} selected and what it removed. */
 export type ReapResult = {
-	/** Orphans the predicate selected. */
+	/** Rows the predicate selected. */
 	found: number;
-	/** Orphans this run flipped to `removed`. */
+	/** Rows this run flipped to `removed`. */
 	deleted: number;
 };
 
 /**
- * Delete reserved uploads that no sample claims.
+ * Which abandoned uploads a {@link reapUploads} sweep targets.
+ *
+ * - `orphaned`: a `reserved` upload no live sample claims — a sample creation
+ *   that never finished.
+ * - `stale`: an unfinished (`ready = false`) chunked reservation whose client
+ *   never committed its block list or never called finalize.
+ */
+export type ReapKind = "orphaned" | "stale";
+
+/**
+ * Delete abandoned uploads of one {@link ReapKind}, dropping their objects.
  *
  * The row goes before the object, unlike cache eviction: this is a soft delete,
  * so a refused delete leaves a row that still names the bytes. It emits no
- * frame, where `deleteUpload` does — every row it touches is `reserved`, which
- * `findUploads` filters out, so no client list held one.
+ * frame, where `deleteUpload` does — every row it touches is either `reserved`
+ * or `ready = false`, both of which `findUploads` filters out, so no client
+ * list held one.
+ *
+ * The cutoff is far longer than any real upload or sample creation takes, so an
+ * in-flight one is never swept. Azure expires uncommitted blocks on its own
+ * after a week; this clears the row and any object a stalled commit did land.
  */
-export async function reapOrphanedUploads(
+export async function reapUploads(
 	db: Db,
 	storage: StorageBackend,
 	logger: Logger,
+	kind: ReapKind,
 	olderThanSeconds: number,
 	onProgress?: (percent: number) => Promise<void>,
 	signal?: AbortSignal,
@@ -658,43 +606,50 @@ export async function reapOrphanedUploads(
 	/* The cutoff is Postgres's clock, not a bound `Date`, so the sweep selects
 	   against the same instant it stamps `removed_at` with. A NULL `created_at`
 	   is never selected. */
-	const orphans = await db
+	const predicate =
+		kind === "stale"
+			? and(
+					eq(uploadsTable.ready, false),
+					eq(uploadsTable.removed, false),
+					lt(uploadsTable.createdAt, secondsAgo(olderThanSeconds)),
+				)
+			: and(
+					eq(uploadsTable.reserved, true),
+					eq(uploadsTable.removed, false),
+					lt(uploadsTable.createdAt, secondsAgo(olderThanSeconds)),
+					notExists(
+						db
+							.select({ id: sampleReads.id })
+							.from(sampleReads)
+							.where(eq(sampleReads.upload, uploadsTable.id)),
+					),
+					/* `sample_reads` alone is not enough: those rows are written at
+					   finalize, so a sample that is still running looks exactly like an
+					   abandoned creation and has its inputs reaped out from under the
+					   workflow. The cutoff cannot rescue it — it measures the age of the
+					   upload rather than of the reservation, so an upload that sat in a
+					   user's list for a month is reapable the moment it is reserved.
+
+					   A `sample_uploads` row means a live sample claims the upload:
+					   `createSample` writes it in the transaction that reserves, and
+					   `deleteSample` clears it in the transaction that releases. What is
+					   left — a reservation no sample row names — is what this sweep is
+					   for. */
+					notExists(
+						db
+							.select({ id: sampleUploads.id })
+							.from(sampleUploads)
+							.where(eq(sampleUploads.upload_id, uploadsTable.id)),
+					),
+				);
+
+	const candidates = await db
 		.select({ id: uploadsTable.id })
 		.from(uploadsTable)
-		.where(
-			and(
-				eq(uploadsTable.reserved, true),
-				eq(uploadsTable.removed, false),
-				lt(uploadsTable.createdAt, secondsAgo(olderThanSeconds)),
-				notExists(
-					db
-						.select({ id: sampleReads.id })
-						.from(sampleReads)
-						.where(eq(sampleReads.upload, uploadsTable.id)),
-				),
-				/* `sample_reads` alone is not enough: those rows are written at
-				   finalize, so a sample that is still running looks exactly like an
-				   abandoned creation and has its inputs reaped out from under the
-				   workflow. The cutoff cannot rescue it — it measures the age of the
-				   upload rather than of the reservation, so an upload that sat in a
-				   user's list for a month is reapable the moment it is reserved.
-
-				   A `sample_uploads` row means a live sample claims the upload:
-				   `createSample` writes it in the transaction that reserves, and
-				   `deleteSample` clears it in the transaction that releases. What is
-				   left — a reservation no sample row names — is what this sweep is
-				   for. */
-				notExists(
-					db
-						.select({ id: sampleUploads.id })
-						.from(sampleUploads)
-						.where(eq(sampleUploads.upload_id, uploadsTable.id)),
-				),
-			),
-		)
+		.where(predicate)
 		.orderBy(asc(uploadsTable.id));
 
-	const found = orphans.length;
+	const found = candidates.length;
 
 	if (found === 0) {
 		return { found, deleted: 0 };
@@ -702,20 +657,21 @@ export async function reapOrphanedUploads(
 
 	let deleted = 0;
 
-	for (const [index, orphan] of orphans.entries()) {
+	for (const [index, candidate] of candidates.entries()) {
 		signal?.throwIfAborted();
 
 		/* Release and soft-delete in one statement. Never split these: releasing
 		   the batch and then looping an ordinary delete means anything
 		   interrupting that loop leaves the rest `reserved = false, removed =
-		   false` — which no later sweep matches, its predicate being
-		   `reserved = true`, and which no list shows. The guard is also what makes
-		   a reclaimed run a no-op against a sweep that committed. */
+		   false` — which the `orphaned` predicate no longer matches and which no
+		   list shows. The guard is also what makes a reclaimed run a no-op against
+		   a sweep that committed. `reserved` is already false on a `stale` row, so
+		   clearing it there is a harmless no-op. */
 		const [reaped] = await db
 			.update(uploadsTable)
 			.set({ reserved: false, removed: true, removedAt: nowUtc() })
 			.where(
-				and(eq(uploadsTable.id, orphan.id), eq(uploadsTable.removed, false)),
+				and(eq(uploadsTable.id, candidate.id), eq(uploadsTable.removed, false)),
 			)
 			.returning({ storageKey: uploadsTable.storageKey });
 
@@ -733,7 +689,7 @@ export async function reapOrphanedUploads(
 				await storage.delete(reaped.storageKey);
 			} catch (err) {
 				logger.warn(
-					{ err, uploadId: orphan.id, storageKey: reaped.storageKey },
+					{ err, uploadId: candidate.id, storageKey: reaped.storageKey },
 					"failed to delete reaped upload object; object orphaned",
 				);
 			}
@@ -741,7 +697,7 @@ export async function reapOrphanedUploads(
 			// Predates keys being recorded, as in `deleteUpload`. A composed key
 			// could reach another row's bytes.
 			logger.warn(
-				{ uploadId: orphan.id },
+				{ uploadId: candidate.id },
 				"reaped upload has no storage_key to delete",
 			);
 		}

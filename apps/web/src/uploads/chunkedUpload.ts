@@ -196,17 +196,46 @@ async function stageBlocks(
 	onProgress: ((progress: UploadProgress) => void) | undefined,
 	signal: AbortSignal | undefined,
 ): Promise<void> {
+	// Each block's highest reported byte count, and their running sum. A running
+	// sum is kept by delta rather than re-reduced on every progress event, which
+	// for the many-thousand-block files this path exists to serve would be
+	// quadratic. A block's value never decreases: a retry's fresh request reports
+	// from zero, and taking that literally would jump the total backward, so a
+	// lower value is ignored until the retry climbs past where it left off.
 	const loaded = new Array<number>(blockCount).fill(0);
+	let total = 0;
 
 	function report(index: number, value: number) {
+		const previous = loaded[index] ?? 0;
+		if (value <= previous) {
+			return;
+		}
+		total += value - previous;
 		loaded[index] = value;
 		if (onProgress) {
-			const total = loaded.reduce((sum, bytes) => sum + bytes, 0);
 			onProgress({
 				loaded: total,
 				total: file.size,
 				percent: file.size > 0 ? Math.round((total / file.size) * 100) : 100,
 			});
+		}
+	}
+
+	// A block that fails permanently must stop its siblings: the other in-flight
+	// PUTs would otherwise keep streaming to storage after the upload has already
+	// failed, and race the cancel that drops the reservation. This controller
+	// aborts them, and an external abort is chained into it.
+	const controller = new AbortController();
+
+	function onExternalAbort() {
+		controller.abort();
+	}
+
+	if (signal) {
+		if (signal.aborted) {
+			controller.abort();
+		} else {
+			signal.addEventListener("abort", onExternalAbort);
 		}
 	}
 
@@ -222,13 +251,28 @@ async function stageBlocks(
 			const start = index * blockSize;
 			const body = file.slice(start, Math.min(start + blockSize, file.size));
 
-			await putBlock(url, index, body, (value) => report(index, value), signal);
+			try {
+				await putBlock(
+					url,
+					index,
+					body,
+					(value) => report(index, value),
+					controller.signal,
+				);
+			} catch (error) {
+				controller.abort();
+				throw error;
+			}
 		}
 	}
 
-	await Promise.all(
-		Array.from({ length: Math.min(BLOCK_CONCURRENCY, blockCount) }, worker),
-	);
+	try {
+		await Promise.all(
+			Array.from({ length: Math.min(BLOCK_CONCURRENCY, blockCount) }, worker),
+		);
+	} finally {
+		signal?.removeEventListener("abort", onExternalAbort);
+	}
 }
 
 /**
@@ -251,6 +295,13 @@ export async function uploadBlocks(
 
 		await stageBlocks(url, file, blockSize, blockCount, onProgress, signal);
 		await putBlockList(url, blockCount, file.type, signal);
+
+		// The server marks the row ready and cannot un-mark it, so once finalize is
+		// dispatched a cancel can no longer take the upload back. Check here, the
+		// last point it is still a droppable reservation: a cancel up to now throws
+		// and the catch cancels the reservation, keeping the finalized upload out of
+		// a list the user believes they cancelled.
+		signal?.throwIfAborted();
 
 		return await finalizeChunkedUploadFn({ data: { id: uploadId } });
 	} catch (error) {

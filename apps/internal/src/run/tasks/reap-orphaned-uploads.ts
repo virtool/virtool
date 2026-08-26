@@ -1,8 +1,4 @@
-import {
-	ORPHAN_AGE_SECONDS,
-	reapOrphanedUploads,
-	reapStalePendingUploads,
-} from "@virtool/data/uploads/data";
+import { ORPHAN_AGE_SECONDS, reapUploads } from "@virtool/data/uploads/data";
 import { z } from "zod";
 import { defineTask } from "../framework/define";
 import type { TaskContext } from "./registry";
@@ -31,10 +27,11 @@ export const reapOrphanedUploadsTask = defineTask<typeof payload, TaskContext>({
 	steps: ["reap"],
 	async run({ ctx, helpers, logger, signal }) {
 		await helpers.runStep("reap", async (report) => {
-			const { found, deleted } = await reapOrphanedUploads(
+			const orphaned = await reapUploads(
 				ctx.db,
 				ctx.storage,
 				logger,
+				"orphaned",
 				ORPHAN_AGE_SECONDS,
 				async (percent) => {
 					report(percent / 100);
@@ -42,17 +39,22 @@ export const reapOrphanedUploadsTask = defineTask<typeof payload, TaskContext>({
 				signal,
 			);
 
-			if (found > 0) {
-				logger.info({ found, deleted }, "reaped orphaned reserved uploads");
+			if (orphaned.found > 0) {
+				logger.info(
+					{ found: orphaned.found, deleted: orphaned.deleted },
+					"reaped orphaned reserved uploads",
+				);
 			}
 
 			// Chunked uploads reserved but never finalized leave unfinished rows the
 			// reserved sweep above does not match. Clear those in the same run.
-			const stale = await reapStalePendingUploads(
+			const stale = await reapUploads(
 				ctx.db,
 				ctx.storage,
 				logger,
+				"stale",
 				ORPHAN_AGE_SECONDS,
+				undefined,
 				signal,
 			);
 

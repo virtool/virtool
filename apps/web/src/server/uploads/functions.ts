@@ -139,12 +139,30 @@ export const initUploadFn = createServerFn({ method: "POST" })
 			expectedSize: data.size,
 		});
 
+		// The reservation is written before the SAS is minted, so a presign failure
+		// would leave an unfinished row for the reaper to clear 30 days on. Drop it
+		// now; a failed cancel changes nothing the caller sees over the presign
+		// error already surfacing.
+		let url: string;
+		try {
+			url = await presignUpload(storageKey, {
+				expiresIn: UPLOAD_SAS_TTL_SECONDS,
+			});
+		} catch (err) {
+			await cancelPendingUpload(
+				db,
+				storage,
+				logger,
+				upload.id,
+				context.session.userId,
+			).catch(() => {});
+			throw err;
+		}
+
 		return {
 			mode: "chunked" as const,
 			uploadId: upload.id,
-			url: await presignUpload(storageKey, {
-				expiresIn: UPLOAD_SAS_TTL_SECONDS,
-			}),
+			url,
 			blockSize: STORAGE_CHUNK_SIZE,
 		};
 	});

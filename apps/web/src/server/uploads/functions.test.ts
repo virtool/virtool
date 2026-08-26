@@ -293,6 +293,20 @@ describe("initUpload", () => {
 			expect.objectContaining({ expiresIn: expect.any(Number) }),
 		);
 	});
+
+	it("drops the reservation when presigning fails", async () => {
+		testConfig.uploadsChunked = true;
+		presignUpload.mockRejectedValue(new Error("presign failed"));
+		await signIn("full");
+
+		await expect(
+			call("initUploadFn", { name: "reads.fq.gz", type: "reads", size: 4096 }),
+		).rejects.toThrow("presign failed");
+
+		const rows = await db.select().from(uploadsTable);
+		expect(rows).toHaveLength(1);
+		expect(rows[0]?.removed).toBe(true);
+	});
 });
 
 describe("finalizeChunkedUpload", () => {

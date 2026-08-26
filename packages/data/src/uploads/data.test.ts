@@ -27,8 +27,7 @@ import {
 	finalizePendingUpload,
 	findUploads,
 	ORPHAN_AGE_SECONDS,
-	reapOrphanedUploads,
-	reapStalePendingUploads,
+	reapUploads,
 	UploadIncompleteError,
 	UploadNotFoundError,
 	UploadReservedError,
@@ -343,7 +342,7 @@ describe("deleteUpload", () => {
 	});
 });
 
-describe("reapOrphanedUploads", () => {
+describe("reapUploads (orphaned)", () => {
 	// A minute-wide window rather than production's thirty days, which is what
 	// the age being an argument buys.
 	const WINDOW_SECONDS = 60;
@@ -393,10 +392,11 @@ describe("reapOrphanedUploads", () => {
 		onProgress?: (percent: number) => Promise<void>,
 		backend: MemoryStorage = storage,
 	) {
-		return reapOrphanedUploads(
+		return reapUploads(
 			db,
 			backend,
 			testLogger,
+			"orphaned",
 			WINDOW_SECONDS,
 			onProgress,
 		);
@@ -832,7 +832,7 @@ describe("cancelPendingUpload", () => {
 	});
 });
 
-describe("reapStalePendingUploads", () => {
+describe("reapUploads (stale)", () => {
 	const WINDOW_SECONDS = 60;
 
 	function secondsAgoDate(seconds: number): Date {
@@ -860,7 +860,7 @@ describe("reapStalePendingUploads", () => {
 		});
 
 		await expect(
-			reapStalePendingUploads(db, storage, testLogger, WINDOW_SECONDS),
+			reapUploads(db, storage, testLogger, "stale", WINDOW_SECONDS),
 		).resolves.toEqual({ found: 1, deleted: 1 });
 
 		const [staleRow] = await db

@@ -66,8 +66,8 @@ bytes are staged. The client writes the bytes straight to storage and calls
 object means the commit never happened, and a size other than `expected_size`
 means an empty or partial block list was committed — and flips the row ready
 only when the object matches. `cancelPendingUpload` drops a reservation the
-client abandons; `reapStalePendingUploads` sweeps any it never cancelled,
-alongside the reserved-upload sweep.
+client abandons; `reapUploads` sweeps any it never cancelled, in a `stale` pass
+alongside the `orphaned` reserved-upload pass.
 
 ### Keys
 
