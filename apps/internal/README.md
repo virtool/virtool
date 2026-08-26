@@ -140,7 +140,10 @@ Every task body must:
 
 The spawner checks `PERIODIC_TASKS` every 30 seconds. A task's interval is a
 minimum suppression window, not an exact schedule, and a new row is created
-only when no outstanding task of that type exists.
+only when no outstanding task of that type exists. An outstanding row that
+never finishes stops suppressing the type once it ages past the wedge ceiling
+(`TASK_WEDGE_SECONDS`), so a runner stuck without ever completing or failing
+its task cannot block the type for good.
 
 Each spawn attempt takes a transaction-scoped advisory lock derived from the
 bare task name. This prevents multiple replicas from inserting the same
