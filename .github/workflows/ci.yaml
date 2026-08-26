@@ -319,7 +319,7 @@ jobs:
             - name: Setup
               uses: ./.github/actions/setup
             # Its own job rather than part of Packages / Test, for the same
-            # reason as Data / Test: the job guard and the task probes are tested
+            # reason as Data & Storage / Test: the job guard and the task probes are tested
             # against a real Postgres testcontainer, and pulling that image does
             # not belong in the fast package loop.
             - name: Test
@@ -502,15 +502,16 @@ jobs:
               uses: ./.github/actions/setup
             # Exclusions rather than an inclusion list, so a new workspace that
             # declares `test` is covered without editing this job. The four
-            # excluded here have their own jobs.
+            # excluded here run in dedicated jobs: web, internal, and the two
+            # persistence packages that share Data & Storage / Test.
             - name: Test
               run: pnpm -r --filter "!@virtool/web" --filter "!@virtool/data" --filter "!@virtool/storage" --filter "!@virtool/internal" test
 
     # -------------------------------------------------------------------------
-    # Data (packages/data)
+    # Data and Storage (packages/data, packages/storage)
     # -------------------------------------------------------------------------
-    data-test:
-        name: Data / Test
+    data-storage-test:
+        name: Data & Storage / Test
         runs-on: ubuntu-24.04
         timeout-minutes: 15
         steps:
@@ -518,31 +519,16 @@ jobs:
               uses: actions/checkout@v7
             - name: Setup
               uses: ./.github/actions/setup
-            # Its own job rather than part of Packages / Test, for the same
-            # reason as Storage / Test: it starts a Postgres testcontainer, and
-            # pulling that image does not belong in the fast package loop.
+            # Its own job rather than part of Packages / Test: data starts a
+            # Postgres testcontainer and storage starts Garage and Azurite,
+            # and pulling those images does not belong in the fast package
+            # loop. The two persistence packages share one job because their
+            # testcontainer pulls run concurrently and neither fills the job's
+            # wall-clock budget.
             - name: Test
-              run: pnpm --filter @virtool/data test
+              run: pnpm --filter @virtool/data --filter @virtool/storage test
               env:
                   TZ: UTC
-
-    # -------------------------------------------------------------------------
-    # Storage (packages/storage)
-    # -------------------------------------------------------------------------
-    storage-test:
-        name: Storage / Test
-        runs-on: ubuntu-24.04
-        timeout-minutes: 15
-        steps:
-            - name: Checkout
-              uses: actions/checkout@v7
-            - name: Setup
-              uses: ./.github/actions/setup
-            # Its own job rather than part of Packages / Test: the integration
-            # project starts Garage and Azurite in testcontainers, and pulling
-            # those images does not belong in the fast package loop.
-            - name: Test
-              run: pnpm --filter @virtool/storage test
 
     # -------------------------------------------------------------------------
     # Release
@@ -557,13 +543,12 @@ jobs:
                 build-nuvs,
                 build-pathoscope,
                 checks,
-                data-test,
+                data-storage-test,
                 internal-test,
                 packages-test,
                 pathoscope-test,
                 quality-test,
                 site-build,
-                storage-test,
                 web-test,
                 web-test-a11y,
                 web-test-server,
