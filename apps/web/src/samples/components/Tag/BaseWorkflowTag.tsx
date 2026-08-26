@@ -24,7 +24,7 @@ export function BaseWorkflowTag<T extends ElementType = "div">({
 	return (
 		<Component
 			className={cn(
-				"flex items-center gap-1.5 text-sm font-bold px-2 py-1.5",
+				"flex items-center gap-1.5 text-sm font-medium px-2 py-1.5",
 				"first:rounded-l-sm last:rounded-r-sm",
 				"[&_svg]:leading-[inherit]",
 				className,
