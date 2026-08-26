@@ -263,6 +263,29 @@ export type LocalOtuV2Summary = {
 	isolateCount: number;
 };
 
+/** One segment of a GenBank-derived OTU draft, from a single record. */
+export type GenbankOtuDraftSegment = {
+	name: { prefix: string; key: string } | null;
+	definition: string;
+	sequence: string;
+	length: number;
+	accession: string;
+};
+
+/**
+ * A neutral OTU draft derived from one or more GenBank records.
+ *
+ * The server resolves NCBI records and taxonomy into this shape; the client
+ * mints the UUIDs and applies the Reference's default tolerance to turn it into
+ * a complete `CreateOTU` command. It carries no UUIDs and no persistence state.
+ */
+export type GenbankOtuDraft = {
+	molecule: OtuV2Molecule;
+	taxonomy: { name: string; acronym: string | null };
+	isolate: { type: OtuV2IsolateNameType; value: string } | null;
+	segments: GenbankOtuDraftSegment[];
+};
+
 /** A complete local v2 OTU assembled from relational state. */
 export type LocalOtuV2 = {
 	id: string;
