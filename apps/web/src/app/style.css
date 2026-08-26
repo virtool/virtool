@@ -50,6 +50,12 @@
 
 	--spacing: 0.21875rem;
 
+	--breakpoint-sm: 35rem;
+	--breakpoint-md: 42rem;
+	--breakpoint-lg: 56rem;
+	--breakpoint-xl: 70rem;
+	--breakpoint-2xl: 84rem;
+
 	--container-3xs: 14rem;
 	--container-2xs: 15.75rem;
 	--container-xs: 17.5rem;
