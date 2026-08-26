@@ -9,7 +9,7 @@ import type { SampleMinimal } from "@virtool/contracts";
 import type { MouseEvent } from "react";
 import SampleLabel from "../Label/SampleLabel";
 import SampleLibraryTypeLabel from "../Label/SampleLibraryTypeLabel";
-import WorkflowTags from "../Tag/WorkflowTags";
+import WorkflowTags from "../WorkflowTags";
 import EndIcon from "./EndIcon";
 
 type SampleItemProps = {

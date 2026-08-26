@@ -1,5 +1,5 @@
 import Link from "@base/Link";
-import WorkflowTags from "@samples/components/Tag/WorkflowTags";
+import WorkflowTags from "@samples/components/WorkflowTags";
 import { useSuspenseSamples } from "@samples/queries";
 import { FlaskConical } from "lucide-react";
 import { DASHBOARD_ITEM_COUNT } from "../constants";
