@@ -182,6 +182,14 @@ export function postUpload(
 	signal?: AbortSignal,
 ): Promise<Upload> {
 	return new Promise((resolve, reject) => {
+		// An already-aborted signal never fires `abort`, so a cancel that lands
+		// while `initUploadFn` is still choosing the transport would otherwise let
+		// the XHR send the whole file after the upload has left the UI.
+		if (signal?.aborted) {
+			reject(new Error("Upload aborted."));
+			return;
+		}
+
 		const xhr = new XMLHttpRequest();
 		const query = `?name=${encodeURIComponent(name)}&type=${fileType}`;
 		xhr.open("POST", `/uploads${query}`);

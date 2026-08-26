@@ -345,13 +345,27 @@ export async function finalizePendingUpload(
 		throw new UploadSizeMismatchError();
 	}
 
-	const finalized = takeFirstOrThrow(
-		await db
-			.update(uploadsTable)
-			.set({ ready: true, size, uploadedAt: new Date() })
-			.where(eq(uploadsTable.id, uploadId))
-			.returning(),
-	);
+	// Conditional on the row still being unfinished so two overlapping finalizes
+	// cannot both stamp it and both emit. The loser matches no row here and falls
+	// through to return the winner's already-finished row unchanged.
+	const [finalized] = await db
+		.update(uploadsTable)
+		.set({ ready: true, size, uploadedAt: new Date() })
+		.where(and(eq(uploadsTable.id, uploadId), eq(uploadsTable.ready, false)))
+		.returning();
+
+	if (finalized === undefined) {
+		const [current] = await db
+			.select()
+			.from(uploadsTable)
+			.where(eq(uploadsTable.id, uploadId));
+
+		if (!current) {
+			throw new UploadNotFoundError();
+		}
+
+		return toUpload(current, await fetchUser(db, current.userId));
+	}
 
 	await emit("uploads", finalized.id, "create");
 
