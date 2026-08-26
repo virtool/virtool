@@ -1,9 +1,8 @@
 import NuvsViewer from "@analyses/components/Nuvs/NuvsViewer";
-import { writeToClipboard } from "@app/clipboard";
 import { formatDate, formatTime } from "@app/date";
-import { useIsSecureContext } from "@app/hooks";
 import { getWorkflowDisplayName } from "@app/utils";
 import Box from "@base/Box";
+import CopyText from "@base/CopyText";
 import LoadingPlaceholder from "@base/LoadingPlaceholder";
 import QueryError from "@base/QueryError";
 import { useRelativeTime } from "@base/RelativeTime";
@@ -12,13 +11,11 @@ import {
 	SubviewHeaderAttribution,
 	SubviewHeaderTitle,
 } from "@base/Subview";
-import { toast } from "@base/useToast";
 import { useFetchSample } from "@samples/queries";
-import * as Sentry from "@sentry/tanstackstart-react";
 import { getRouteApi } from "@tanstack/react-router";
 import type { Analysis, Sample } from "@virtool/contracts";
-import { CircleAlert, ClipboardPaste } from "lucide-react";
-import { type ReactNode, Suspense } from "react";
+import { CircleAlert } from "lucide-react";
+import { Suspense } from "react";
 import { useGetAnalysis, useSuspenseAnalysisResults } from "../queries";
 import type {
 	FormattedNuvsAnalysis,
@@ -87,64 +84,6 @@ export default function AnalysisDetail() {
 				<AnalysisResults analysis={analysis} sample={sample} />
 			</Suspense>
 		</div>
-	);
-}
-
-type CopyTextProps = {
-	/** What is rendered in place — the reader-facing form of the value. */
-	children: ReactNode;
-
-	/** A short label identifying this copy site, forwarded to Sentry on failure. */
-	tag: string;
-
-	/** The exact text written to the clipboard, which need not match `children`. */
-	value: string;
-};
-
-/**
- * Inline text that copies an exact value to the clipboard when clicked.
- *
- * The rendered `children` are the friendly form and the copied `value` the exact
- * one, so a relative time can be shown while an absolute one is copied. Outside a
- * secure context, where the clipboard cannot be reached, the text renders plain.
- */
-function CopyText({ children, tag, value }: CopyTextProps) {
-	const isSecureContext = useIsSecureContext();
-
-	if (!isSecureContext) {
-		return <>{children}</>;
-	}
-
-	// Only a resolved write raises the toast, so a rejected one — a revoked
-	// permission, an unfocused document — cannot claim the value was copied.
-	function handleCopy() {
-		writeToClipboard(value).then(
-			() =>
-				toast({
-					description: (
-						<span className="flex items-start gap-2">
-							<span className="flex h-5 shrink-0 items-center">
-								<ClipboardPaste className="size-4" />
-							</span>
-							<span className="min-w-0">
-								{`"${value}" copied to clipboard.`}
-							</span>
-						</span>
-					),
-				}),
-			(error) => Sentry.captureException(error, { tags: { clipboard: tag } }),
-		);
-	}
-
-	return (
-		<button
-			type="button"
-			className="cursor-pointer underline decoration-dotted underline-offset-2"
-			title="Copy to clipboard"
-			onClick={handleCopy}
-		>
-			{children}
-		</button>
 	);
 }
 

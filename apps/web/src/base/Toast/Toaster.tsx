@@ -5,8 +5,8 @@ import {
 	ToastProvider,
 	ToastTitle,
 	ToastViewport,
-} from "@base/Toast";
-import { useToast } from "@base/useToast";
+} from "./Toast";
+import { useToast } from "./useToast";
 
 /** How long a toast stays on screen before it dismisses itself. */
 const TOAST_DURATION_MS = 2500;
