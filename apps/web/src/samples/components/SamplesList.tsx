@@ -311,19 +311,21 @@ export default function SamplesList({
 								}
 								selectedSamples={selectedSamples}
 							/>
-							<div
-								aria-label="Samples list"
-								className="grid grid-cols-[auto_minmax(0,1fr)_max-content_max-content_max-content_4rem] gap-x-12 2xl:grid-cols-[auto_minmax(0,1fr)_max-content_fit-content(24rem)_max-content_max-content_max-content_4rem]"
-								role="table"
-							>
-								<SampleTableHead
-									checked={selection.getVisibleState(items)}
-									direction={direction}
-									onSelectAll={() => selection.toggleVisible(items)}
-									onSort={handleSort}
-									sort={sort}
-								/>
-								{items.map(renderRow)}
+							<div className="overflow-x-auto">
+								<div
+									aria-label="Samples list"
+									className="grid grid-cols-[auto_minmax(8rem,1fr)_max-content_max-content_max-content_4rem] gap-x-12 2xl:grid-cols-[auto_minmax(8rem,1fr)_max-content_fit-content(24rem)_max-content_max-content_max-content_4rem]"
+									role="table"
+								>
+									<SampleTableHead
+										checked={selection.getVisibleState(items)}
+										direction={direction}
+										onSelectAll={() => selection.toggleVisible(items)}
+										onSort={handleSort}
+										sort={sort}
+									/>
+									{items.map(renderRow)}
+								</div>
 							</div>
 						</BoxGroup>
 					</Pagination>
