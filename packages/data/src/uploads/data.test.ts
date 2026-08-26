@@ -32,6 +32,7 @@ import {
 	UploadIncompleteError,
 	UploadNotFoundError,
 	UploadReservedError,
+	UploadSizeMismatchError,
 } from "./data";
 
 let database: TestDatabase;
@@ -638,6 +639,7 @@ describe("createPendingUpload", () => {
 			name: "reads.fq.gz",
 			type: "reads",
 			userId,
+			expectedSize: 5,
 		});
 
 		expect(upload).toMatchObject({
@@ -656,6 +658,7 @@ describe("createPendingUpload", () => {
 			.where(eq(uploadsTable.id, upload.id));
 		expect(row?.ready).toBe(false);
 		expect(row?.storageKey).toBe(storageKey);
+		expect(row?.expectedSize).toBe(5);
 
 		const list = await findUploads(db, "reads", 1, 25);
 		expect(list.items).toHaveLength(0);
@@ -671,6 +674,7 @@ describe("finalizePendingUpload", () => {
 			name: "reads.fq.gz",
 			type: "reads",
 			userId,
+			expectedSize: 5,
 		});
 		await storage.write(storageKey, bodyOf("hello"));
 
@@ -687,12 +691,37 @@ describe("finalizePendingUpload", () => {
 		expect(list.items).toHaveLength(1);
 	});
 
+	it("rejects a commit whose size differs from the declared size, leaving the row unfinished", async () => {
+		const storage = new MemoryStorage();
+		const userId = await seedUser(db);
+
+		const { upload, storageKey } = await createPendingUpload(db, {
+			name: "reads.fq.gz",
+			type: "reads",
+			userId,
+			expectedSize: 5,
+		});
+		// A partial block list: fewer bytes land than the client declared at init.
+		await storage.write(storageKey, bodyOf("hi"));
+
+		await expect(
+			finalizePendingUpload(db, storage, upload.id, userId),
+		).rejects.toBeInstanceOf(UploadSizeMismatchError);
+
+		const [row] = await db
+			.select()
+			.from(uploadsTable)
+			.where(eq(uploadsTable.id, upload.id));
+		expect(row?.ready).toBe(false);
+	});
+
 	it("throws when the object was never committed, leaving the row unfinished", async () => {
 		const userId = await seedUser(db);
 		const { upload } = await createPendingUpload(db, {
 			name: "reads.fq.gz",
 			type: "reads",
 			userId,
+			expectedSize: 5,
 		});
 
 		await expect(
@@ -715,6 +744,7 @@ describe("finalizePendingUpload", () => {
 			name: "reads.fq.gz",
 			type: "reads",
 			userId: owner,
+			expectedSize: 5,
 		});
 		await storage.write(storageKey, bodyOf("hello"));
 
@@ -731,6 +761,7 @@ describe("finalizePendingUpload", () => {
 			name: "reads.fq.gz",
 			type: "reads",
 			userId,
+			expectedSize: 5,
 		});
 		await storage.write(storageKey, bodyOf("hello"));
 
@@ -750,6 +781,7 @@ describe("cancelPendingUpload", () => {
 			name: "reads.fq.gz",
 			type: "reads",
 			userId,
+			expectedSize: 5,
 		});
 		await storage.write(storageKey, bodyOf("hello"));
 
@@ -785,6 +817,7 @@ describe("cancelPendingUpload", () => {
 			name: "reads.fq.gz",
 			type: "reads",
 			userId: owner,
+			expectedSize: 5,
 		});
 
 		await expect(

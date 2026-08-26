@@ -53,6 +53,17 @@ export class UploadReservedError extends AppError {}
  */
 export class UploadIncompleteError extends AppError {}
 
+/**
+ * Thrown when a finalized chunked upload's storage object is not the size the
+ * client declared at init.
+ *
+ * The declared size is locked on the row before any bytes are staged, so a
+ * client that commits an empty or partial block list finalizes an object whose
+ * size differs from it and is rejected rather than recorded as ready over a
+ * truncated file. The row is left unfinished; the client cancels it.
+ */
+export class UploadSizeMismatchError extends AppError {}
+
 function toUpload(row: UploadRow, user: UserNested | null): Upload {
 	return {
 		id: row.id,
@@ -222,6 +233,12 @@ export type PendingUploadValues = {
 	name: string;
 	type: UploadType;
 	userId: number;
+	/**
+	 * The file's byte length as the client reports it at init. Recorded on the
+	 * row and checked against the storage object at finalize, so the size the
+	 * upload commits to cannot be moved after the bytes are staged.
+	 */
+	expectedSize: number;
 };
 
 /** A reserved chunked upload and the storage key its bytes belong at. */
@@ -255,6 +272,7 @@ export async function createPendingUpload(
 			.insert(uploadsTable)
 			.values({
 				createdAt: now,
+				expectedSize: values.expectedSize,
 				name: values.name,
 				nameOnDisk,
 				ready: false,
@@ -281,6 +299,12 @@ export async function createPendingUpload(
  * probe which ids exist. The recorded size comes from storage, never the
  * client, and a missing object means the block list was never committed —
  * {@link UploadIncompleteError} — leaving the row unfinished for a retry.
+ *
+ * The storage object's size must equal the size the client declared at init and
+ * this row recorded; an empty or partial block list commits a smaller object
+ * and is rejected with {@link UploadSizeMismatchError} rather than recorded as
+ * ready over a truncated file. The row is left unfinished for the client to
+ * cancel.
  *
  * Idempotent: a row already finalized is returned unchanged, so a retried
  * finalize after a dropped response does not double-emit or re-stamp it.
@@ -312,6 +336,13 @@ export async function finalizePendingUpload(
 			throw new UploadIncompleteError();
 		}
 		throw err;
+	}
+
+	// The declared size is null only on rows that never took the chunked path,
+	// which never reach finalize; when present it is the contract the committed
+	// object must meet.
+	if (row.expectedSize !== null && size !== row.expectedSize) {
+		throw new UploadSizeMismatchError();
 	}
 
 	const finalized = takeFirstOrThrow(

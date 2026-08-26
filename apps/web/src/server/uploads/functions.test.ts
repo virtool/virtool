@@ -248,7 +248,7 @@ describe("initUpload", () => {
 		await signIn(null);
 
 		await expect(
-			call("initUploadFn", { name: "reads.fq.gz", type: "reads" }),
+			call("initUploadFn", { name: "reads.fq.gz", type: "reads", size: 5 }),
 		).rejects.toBeInstanceOf(ForbiddenError);
 	});
 
@@ -258,6 +258,7 @@ describe("initUpload", () => {
 		const result = await call("initUploadFn", {
 			name: "reads.fq.gz",
 			type: "reads",
+			size: 5,
 		});
 
 		expect(result).toEqual({ mode: "proxied" });
@@ -273,6 +274,7 @@ describe("initUpload", () => {
 		const result = (await call("initUploadFn", {
 			name: "reads.fq.gz",
 			type: "reads",
+			size: 4096,
 		})) as { mode: string; uploadId: number; url: string; blockSize: number };
 
 		expect(result.mode).toBe("chunked");
@@ -285,6 +287,7 @@ describe("initUpload", () => {
 			.where(eq(uploadsTable.id, result.uploadId));
 		expect(row?.ready).toBe(false);
 		expect(row?.userId).toBe(userId);
+		expect(row?.expectedSize).toBe(4096);
 		expect(presignUpload).toHaveBeenCalledWith(
 			row?.storageKey,
 			expect.objectContaining({ expiresIn: expect.any(Number) }),
@@ -318,6 +321,21 @@ describe("finalizeChunkedUpload", () => {
 		await expect(
 			call("finalizeChunkedUploadFn", { id: upload.id }),
 		).rejects.toThrow("Upload is not complete.");
+		expect(setResponseStatus).toHaveBeenCalledWith(409);
+	});
+
+	it("maps a commit that does not match the declared size to a 409", async () => {
+		const userId = await signIn("full");
+		const upload = await seedUpload(userId, {
+			ready: false,
+			storageKey: "uploads/short",
+			expectedSize: 5,
+		});
+		await storage.write("uploads/short", bodyOf("hi"));
+
+		await expect(
+			call("finalizeChunkedUploadFn", { id: upload.id }),
+		).rejects.toThrow("Upload size does not match the declared size.");
 		expect(setResponseStatus).toHaveBeenCalledWith(409);
 	});
 });

@@ -59,12 +59,15 @@ There is no prefix-based cleanup. Objects that were written without a key
 being recorded remain for a future orphan sweep.
 
 A chunked upload reserves an `uploads` row up front with `createPendingUpload`
-(`ready: false`, invisible to every list) and records the key its bytes will
-land at. The client writes the bytes straight to storage and calls
+(`ready: false`, invisible to every list) and records both the key its bytes
+will land at and the `expected_size` the client declared, locked before any
+bytes are staged. The client writes the bytes straight to storage and calls
 `finalizePendingUpload`, which reads the real size from storage — a missing
-object means the commit never happened — and flips the row ready. `cancelPendingUpload`
-drops a reservation the client abandons; `reapStalePendingUploads` sweeps any it
-never cancelled, alongside the reserved-upload sweep.
+object means the commit never happened, and a size other than `expected_size`
+means an empty or partial block list was committed — and flips the row ready
+only when the object matches. `cancelPendingUpload` drops a reservation the
+client abandons; `reapStalePendingUploads` sweeps any it never cancelled,
+alongside the reserved-upload sweep.
 
 ### Keys
 

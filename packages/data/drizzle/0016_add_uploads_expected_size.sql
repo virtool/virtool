@@ -1,0 +1,1 @@
+ALTER TABLE "uploads" ADD COLUMN "expected_size" bigint;

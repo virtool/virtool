@@ -14,6 +14,7 @@ import {
 	UploadIncompleteError,
 	UploadNotFoundError,
 	UploadReservedError,
+	UploadSizeMismatchError,
 } from "@virtool/data/uploads/data";
 import { STORAGE_CHUNK_SIZE } from "@virtool/storage";
 import { z } from "zod";
@@ -66,6 +67,10 @@ const rethrowAsHttp = createServerOnlyFn((err: unknown): never => {
 		setResponseStatus(409);
 		throw new ClientError("Upload is not complete.");
 	}
+	if (err instanceof UploadSizeMismatchError) {
+		setResponseStatus(409);
+		throw new ClientError("Upload size does not match the declared size.");
+	}
 	throw err;
 });
 
@@ -98,6 +103,10 @@ export const deleteUploadFn = createServerFn({ method: "POST" })
 const initUploadSchema = z.object({
 	name: z.string().min(1),
 	type: z.enum(UPLOAD_TYPES),
+	// The file's byte length, locked here so finalize can reject a commit that
+	// does not land exactly this many bytes. `Number.MAX_SAFE_INTEGER` is the
+	// `bigint mode: "number"` ceiling the size column stores against.
+	size: z.number().int().nonnegative().max(Number.MAX_SAFE_INTEGER),
 });
 
 /**
@@ -127,6 +136,7 @@ export const initUploadFn = createServerFn({ method: "POST" })
 			name: data.name,
 			type: data.type,
 			userId: context.session.userId,
+			expectedSize: data.size,
 		});
 
 		return {

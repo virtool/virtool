@@ -237,7 +237,7 @@ async function performUpload(
 	signal: AbortSignal,
 ): Promise<Upload> {
 	const init = await initUploadFn({
-		data: { name: file.name, type: fileType },
+		data: { name: file.name, type: fileType, size: file.size },
 	});
 
 	if (init.mode === "chunked") {

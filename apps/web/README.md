@@ -411,9 +411,12 @@ a key from URL parameters. Use the row's display name for
 Large uploads can go direct-to-blob instead of through the `POST /uploads`
 route. `initUploadFn` owns the choice so the client never carries the flag:
 with `VT_UPLOADS_CHUNKED` set and an Azure backend that can presign, it reserves
-the upload and returns a write SAS the client PUTs 4 MB blocks to (`@uploads/chunkedUpload`),
-then commits with a Put Block List and calls `finalizeChunkedUploadFn`;
-`cancelChunkedUploadFn` drops an abandoned reservation. Otherwise it returns
+the upload — recording the file size the client declares at init — and returns a
+write SAS the client PUTs 4 MB blocks to (`@uploads/chunkedUpload`), then commits
+with a Put Block List and calls `finalizeChunkedUploadFn`. Finalize records the
+stored object's size only when it matches the declared size, so an empty or
+partial block list is rejected rather than recorded as ready; `cancelChunkedUploadFn`
+drops an abandoned or rejected reservation. Otherwise it returns
 `proxied` and the client streams through the raw `/uploads` route, which stays
 the fallback and the rollback path — unset the flag to revert.
 

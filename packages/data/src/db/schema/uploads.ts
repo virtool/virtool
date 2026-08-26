@@ -35,6 +35,11 @@ export const uploads = pgTable(
 		// Read sizes routinely exceed 2 GiB, past the range of a 32-bit integer,
 		// hence `bigint`. `mode: "number"` is safe up to 2^53.
 		size: bigint("size", { mode: "number" }),
+		// The byte length the client declared at init for a chunked upload, locked
+		// before any bytes are staged. Finalize records the storage object's size
+		// only when it equals this, so a partial or empty block list cannot be
+		// recorded as ready. Null on rows that never went through the chunked path.
+		expectedSize: bigint("expected_size", { mode: "number" }),
 		// The upload's complete object-storage key. Nullable because it was
 		// backfilled from `name_on_disk`, which is itself nullable: a row without one
 		// names no retrievable object.
