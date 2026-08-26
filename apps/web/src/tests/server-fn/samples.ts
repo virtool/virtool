@@ -9,7 +9,9 @@ import { createFakeSample } from "../fake/samples";
  */
 export const sampleServerFnMocks = {
 	findSamplesFn: vi.fn(),
+	findRecentlyViewedSamplesFn: vi.fn(),
 	getSampleFn: vi.fn(),
+	recordSampleViewFn: vi.fn(),
 	createSampleFn: vi.fn(),
 	updateSampleFn: vi.fn(),
 	deleteSampleFn: vi.fn(),
@@ -37,6 +39,29 @@ export function mockFindSamples(
 		items: samples,
 	});
 	return sampleServerFnMocks.findSamplesFn;
+}
+
+/**
+ * Sets up findRecentlyViewedSamples to resolve with a single page of the given
+ * samples.
+ *
+ * @param samples - the samples on the page, newest-viewed first
+ * @param counts - overrides for the counts, which otherwise both match the
+ *   number of samples
+ */
+export function mockFindRecentlyViewedSamples(
+	samples: SampleMinimal[],
+	counts: { foundCount?: number; totalCount?: number } = {},
+): Mock {
+	sampleServerFnMocks.findRecentlyViewedSamplesFn.mockResolvedValue({
+		page: 1,
+		pageCount: 1,
+		perPage: 10,
+		totalCount: counts.totalCount ?? samples.length,
+		foundCount: counts.foundCount ?? samples.length,
+		items: samples,
+	});
+	return sampleServerFnMocks.findRecentlyViewedSamplesFn;
 }
 
 /**

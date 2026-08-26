@@ -1,11 +1,18 @@
 import { screen, waitFor, within } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import { createFakeAccount } from "@tests/fake/account";
 import { createFakeAnalysisMinimal } from "@tests/fake/analyses";
 import { createFakeJobMinimal } from "@tests/fake/jobs";
 import { createFakeSampleMinimal } from "@tests/fake/samples";
-import { mockFindAnalyses } from "@tests/server-fn/analyses";
+import {
+	mockFindAnalyses,
+	mockFindRecentlyViewedAnalyses,
+} from "@tests/server-fn/analyses";
 import { mockFindJobs } from "@tests/server-fn/jobs";
-import { mockFindSamples } from "@tests/server-fn/samples";
+import {
+	mockFindRecentlyViewedSamples,
+	mockFindSamples,
+} from "@tests/server-fn/samples";
 import { mockGetAccount } from "@tests/server-fn/users";
 import { renderWithRouter } from "@tests/setup";
 import { beforeEach, describe, expect, it } from "vitest";
@@ -37,6 +44,8 @@ describe("<Dashboard />", () => {
 
 	beforeEach(() => {
 		mockGetAccount(account);
+		mockFindRecentlyViewedSamples([]);
+		mockFindRecentlyViewedAnalyses([]);
 		mockFindSamples([]);
 		mockFindAnalyses([]);
 		mockFindJobs([]);
@@ -50,32 +59,59 @@ describe("<Dashboard />", () => {
 		).toBeInTheDocument();
 
 		expect(
-			await screen.findByRole("heading", { name: "My samples" }),
+			await screen.findByRole("heading", { name: "Samples" }),
 		).toBeInTheDocument();
 		expect(
-			await screen.findByRole("heading", { name: "My analyses" }),
+			await screen.findByRole("heading", { name: "Analyses" }),
 		).toBeInTheDocument();
 		expect(
 			await screen.findByRole("heading", { name: "Active jobs" }),
 		).toBeInTheDocument();
 	});
 
-	it("scopes samples and analyses to the signed-in user", async () => {
-		const findSamples = mockFindSamples([]);
-		const findAnalyses = mockFindAnalyses([]);
+	it("defaults each card to the reader's recently viewed items", async () => {
+		const findViewedSamples = mockFindRecentlyViewedSamples([]);
+		const findViewedAnalyses = mockFindRecentlyViewedAnalyses([]);
 
 		await renderWithRouter(<Dashboard />);
 
 		await waitFor(() => {
-			expect(findSamples).toHaveBeenCalledWith({
-				data: expect.objectContaining({ users: [account.id] }),
+			expect(findViewedSamples).toHaveBeenCalledWith({ data: { perPage: 10 } });
+		});
+		await waitFor(() => {
+			expect(findViewedAnalyses).toHaveBeenCalledWith({
+				data: { perPage: 10 },
 			});
 		});
+	});
 
-		await waitFor(() => {
-			expect(findAnalyses).toHaveBeenCalledWith({
-				data: { userIds: [account.id], page: 1, perPage: 10 },
-			});
+	it("toggles a card to the reader's created items", async () => {
+		mockFindRecentlyViewedSamples([
+			createFakeSampleMinimal({ name: "Viewed sample" }),
+		]);
+		const findSamples = mockFindSamples([
+			createFakeSampleMinimal({ name: "Created sample" }),
+		]);
+
+		await renderWithRouter(<Dashboard />);
+
+		expect(
+			await screen.findByRole("link", { name: "Viewed sample" }),
+		).toBeInTheDocument();
+
+		await userEvent.click(
+			within(screen.getByRole("region", { name: "Samples" })).getByRole(
+				"radio",
+				{ name: "Created" },
+			),
+		);
+
+		expect(
+			await screen.findByRole("link", { name: "Created sample" }),
+		).toBeInTheDocument();
+
+		expect(findSamples).toHaveBeenCalledWith({
+			data: expect.objectContaining({ users: [account.id] }),
 		});
 	});
 
@@ -91,9 +127,11 @@ describe("<Dashboard />", () => {
 		});
 	});
 
-	it("lists the recent samples, analyses, and active jobs", async () => {
-		mockFindSamples([createFakeSampleMinimal({ name: "Foo sample" })]);
-		mockFindAnalyses([
+	it("lists the recently viewed samples, analyses, and active jobs", async () => {
+		mockFindRecentlyViewedSamples([
+			createFakeSampleMinimal({ name: "Foo sample" }),
+		]);
+		mockFindRecentlyViewedAnalyses([
 			createFakeAnalysisMinimal({ id: 12, workflow: "pathoscope" }),
 		]);
 		mockFindJobs([createFakeJobMinimal({ id: 7, workflow: "nuvs" })]);
@@ -113,18 +151,18 @@ describe("<Dashboard />", () => {
 	});
 
 	it("names the columns of every card's table", async () => {
-		mockFindSamples([createFakeSampleMinimal()]);
-		mockFindAnalyses([createFakeAnalysisMinimal()]);
+		mockFindRecentlyViewedSamples([createFakeSampleMinimal()]);
+		mockFindRecentlyViewedAnalyses([createFakeAnalysisMinimal()]);
 		mockFindJobs([createFakeJobMinimal()]);
 
 		await renderWithRouter(<Dashboard />);
 
 		const [samples, analyses, jobs] = await findTables();
 
-		expect(samples).toHaveAccessibleName("My samples");
+		expect(samples).toHaveAccessibleName("Samples");
 		expect(getColumnLabels(samples)).toEqual(["Sample", "Analyses", "Created"]);
 
-		expect(analyses).toHaveAccessibleName("My analyses");
+		expect(analyses).toHaveAccessibleName("Analyses");
 		expect(getColumnLabels(analyses)).toEqual([
 			"Workflow",
 			"Sample",
@@ -136,8 +174,8 @@ describe("<Dashboard />", () => {
 	});
 
 	it("ends every card's table with the created time, and no attribution", async () => {
-		mockFindSamples([createFakeSampleMinimal()]);
-		mockFindAnalyses([createFakeAnalysisMinimal()]);
+		mockFindRecentlyViewedSamples([createFakeSampleMinimal()]);
+		mockFindRecentlyViewedAnalyses([createFakeAnalysisMinimal()]);
 		mockFindJobs([createFakeJobMinimal()]);
 
 		await renderWithRouter(<Dashboard />);
@@ -160,7 +198,7 @@ describe("<Dashboard />", () => {
 	it("names the parent sample of each analysis", async () => {
 		const sample = createFakeSampleMinimal({ name: "Parent sample" });
 
-		mockFindAnalyses([
+		mockFindRecentlyViewedAnalyses([
 			createFakeAnalysisMinimal({
 				sample: { id: sample.id, name: sample.name },
 			}),
@@ -173,37 +211,28 @@ describe("<Dashboard />", () => {
 		).toHaveAttribute("href", `/samples/${sample.id}`);
 	});
 
-	it("sends View all to the list view the card is a window onto", async () => {
+	it("sends Active jobs' View all to the account-wide jobs list", async () => {
 		await renderWithRouter(<Dashboard />);
 
-		const [samples, jobs] = await screen.findAllByRole("link", {
-			name: "View all",
-		});
-
-		// The card lists the reader's own samples, so its link keeps that filter.
-		expect(samples).toHaveAttribute(
-			"href",
-			`/samples?users=%5B${account.id}%5D`,
-		);
-
-		// Active jobs is account-wide, so its link is not filtered by user.
-		expect(jobs).toHaveAttribute("href", "/jobs");
+		expect(
+			await screen.findByRole("link", { name: "View all" }),
+		).toHaveAttribute("href", "/jobs");
 	});
 
-	it("accounts for the rows a card has no room for", async () => {
-		mockFindSamples([createFakeSampleMinimal()], { foundCount: 14 });
-		mockFindAnalyses([createFakeAnalysisMinimal()], 3);
+	it("accounts for the viewed rows a card has no room for", async () => {
+		mockFindRecentlyViewedSamples([createFakeSampleMinimal()], {
+			foundCount: 14,
+		});
+		mockFindRecentlyViewedAnalyses([createFakeAnalysisMinimal()], 3);
 		mockFindJobs([createFakeJobMinimal()], 2);
 
 		await renderWithRouter(<Dashboard />);
 
+		// No global "recently viewed" list to send the reader to, so the overflow
+		// rows are counts rather than links.
 		expect(
-			await screen.findByRole("link", {
-				name: "View 13 more samples of yours",
-			}),
-		).toHaveAttribute("href", `/samples?users=%5B${account.id}%5D`);
-
-		// No global analyses list to send the reader to, so this one is not a link.
+			await screen.findByText("13 more samples are not shown"),
+		).toBeInTheDocument();
 		expect(
 			await screen.findByText("2 more analyses are not shown"),
 		).toBeInTheDocument();
@@ -213,15 +242,35 @@ describe("<Dashboard />", () => {
 		).toBeInTheDocument();
 	});
 
+	it("links the created samples a card has no room for to the filtered list", async () => {
+		mockFindRecentlyViewedSamples([createFakeSampleMinimal()]);
+		mockFindSamples([createFakeSampleMinimal()], { foundCount: 14 });
+
+		await renderWithRouter(<Dashboard />);
+
+		await userEvent.click(
+			within(await screen.findByRole("region", { name: "Samples" })).getByRole(
+				"radio",
+				{ name: "Created" },
+			),
+		);
+
+		expect(
+			await screen.findByRole("link", {
+				name: "View 13 more samples of yours",
+			}),
+		).toHaveAttribute("href", `/samples?users=%5B${account.id}%5D`);
+	});
+
 	it("omits the overflow row when a card is showing everything", async () => {
-		mockFindSamples([createFakeSampleMinimal()]);
-		mockFindAnalyses([createFakeAnalysisMinimal()]);
+		mockFindRecentlyViewedSamples([createFakeSampleMinimal()]);
+		mockFindRecentlyViewedAnalyses([createFakeAnalysisMinimal()]);
 		mockFindJobs([createFakeJobMinimal()]);
 
 		await renderWithRouter(<Dashboard />);
 
 		expect(
-			await screen.findByRole("heading", { name: "My samples" }),
+			await screen.findByRole("heading", { name: "Samples" }),
 		).toBeInTheDocument();
 		expect(screen.queryByText(/more/)).toBeNull();
 	});
@@ -229,14 +278,20 @@ describe("<Dashboard />", () => {
 	it("shows an empty state per card when there is nothing to list", async () => {
 		await renderWithRouter(<Dashboard />);
 
-		expect(await screen.findByText("No samples yet")).toBeInTheDocument();
-		expect(await screen.findByText("No analyses yet")).toBeInTheDocument();
+		expect(
+			await screen.findByText("No samples viewed yet"),
+		).toBeInTheDocument();
+		expect(
+			await screen.findByText("No analyses viewed yet"),
+		).toBeInTheDocument();
 		expect(await screen.findByText("Nothing running")).toBeInTheDocument();
 	});
 
 	it("contains a failed card without taking down the rest of the dashboard", async () => {
-		mockFindAnalyses([]).mockRejectedValue(new Error("boom"));
-		mockFindSamples([createFakeSampleMinimal({ name: "Foo sample" })]);
+		mockFindRecentlyViewedAnalyses([]).mockRejectedValue(new Error("boom"));
+		mockFindRecentlyViewedSamples([
+			createFakeSampleMinimal({ name: "Foo sample" }),
+		]);
 
 		await renderWithRouter(<Dashboard />);
 

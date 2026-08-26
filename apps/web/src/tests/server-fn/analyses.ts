@@ -8,8 +8,10 @@ import { type Mock, vi } from "vitest";
  */
 export const analysisServerFnMocks = {
 	findAnalysesFn: vi.fn(),
+	findRecentlyViewedAnalysesFn: vi.fn(),
 	getAnalysisFn: vi.fn(),
 	getAnalysisResultsFn: vi.fn(),
+	recordAnalysisViewFn: vi.fn(),
 	createAnalysisFn: vi.fn(),
 	deleteAnalysisFn: vi.fn(),
 	blastNuvsFn: vi.fn(),
@@ -36,6 +38,29 @@ export function mockFindAnalyses(
 	});
 
 	return analysisServerFnMocks.findAnalysesFn;
+}
+
+/**
+ * Sets up findRecentlyViewedAnalyses to resolve with a single page of the given
+ * analyses.
+ *
+ * @param analyses - the analyses on the page, newest-viewed first
+ * @param foundCount - the total found, which defaults to the number on the page
+ */
+export function mockFindRecentlyViewedAnalyses(
+	analyses: AnalysisMinimal[],
+	foundCount?: number,
+): Mock {
+	analysisServerFnMocks.findRecentlyViewedAnalysesFn.mockResolvedValue({
+		page: 1,
+		pageCount: 1,
+		perPage: 10,
+		totalCount: analyses.length,
+		foundCount: foundCount ?? analyses.length,
+		items: analyses,
+	});
+
+	return analysisServerFnMocks.findRecentlyViewedAnalysesFn;
 }
 
 /**

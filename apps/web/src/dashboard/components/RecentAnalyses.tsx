@@ -1,12 +1,18 @@
-import { useSuspenseRecentAnalyses } from "@analyses/queries";
+import {
+	useSuspenseRecentAnalyses,
+	useSuspenseRecentlyViewedAnalyses,
+} from "@analyses/queries";
 import { checkSupportedWorkflow } from "@analyses/utils";
 import { getWorkflowDisplayName } from "@app/utils";
 import Link from "@base/Link";
+import type { AnalysisMinimal } from "@virtool/contracts";
 import { ChartArea } from "lucide-react";
+import { Suspense, useState } from "react";
 import { DASHBOARD_ITEM_COUNT } from "../constants";
 import DashboardCard, {
 	DashboardCardBoundary,
 	DashboardCardEmpty,
+	DashboardCardLoading,
 } from "./DashboardCard";
 import DashboardTable, {
 	DashboardTableCell,
@@ -14,29 +20,64 @@ import DashboardTable, {
 	DashboardTableMore,
 	DashboardTableRow,
 } from "./DashboardTable";
+import RecentModeToggle, { type RecentMode } from "./RecentModeToggle";
 
 type RecentAnalysesProps = {
-	/** The id of the signed-in user, whose analyses are listed. */
+	/** The id of the signed-in user, whose started analyses the "created" tab lists. */
 	userId: number;
 };
 
 /**
- * The signed-in user's most recently started analyses, across every sample.
+ * The signed-in user's analyses, across every sample — most recently viewed by
+ * default, or most recently started, chosen by the header toggle.
  *
- * There is no card action: analyses have no global list page to link to, so
- * each row links to the analysis itself.
+ * Each row links to the analysis itself; there is no global analyses list to
+ * offer a "view all" for.
  */
 export default function RecentAnalyses({ userId }: RecentAnalysesProps) {
+	const [mode, setMode] = useState<RecentMode>("viewed");
+
 	return (
-		<DashboardCard title="My analyses">
+		<DashboardCard
+			action={
+				<RecentModeToggle
+					aria-label="Which analyses to show"
+					mode={mode}
+					onChange={setMode}
+				/>
+			}
+			title="Analyses"
+		>
 			<DashboardCardBoundary noun="analyses">
-				<RecentAnalysesBody userId={userId} />
+				<Suspense fallback={<DashboardCardLoading />}>
+					{mode === "viewed" ? (
+						<ViewedAnalysesBody />
+					) : (
+						<CreatedAnalysesBody userId={userId} />
+					)}
+				</Suspense>
 			</DashboardCardBoundary>
 		</DashboardCard>
 	);
 }
 
-function RecentAnalysesBody({ userId }: RecentAnalysesProps) {
+function ViewedAnalysesBody() {
+	const { data } = useSuspenseRecentlyViewedAnalyses(DASHBOARD_ITEM_COUNT);
+
+	if (data.items.length === 0) {
+		return (
+			<DashboardCardEmpty
+				description="Analyses you open will appear here."
+				icon={ChartArea}
+				title="No analyses viewed yet"
+			/>
+		);
+	}
+
+	return <AnalysesTable analyses={data.items} remaining={data.foundCount} />;
+}
+
+function CreatedAnalysesBody({ userId }: RecentAnalysesProps) {
 	const { data } = useSuspenseRecentAnalyses(userId, DASHBOARD_ITEM_COUNT);
 
 	if (data.items.length === 0) {
@@ -49,11 +90,23 @@ function RecentAnalysesBody({ userId }: RecentAnalysesProps) {
 		);
 	}
 
-	const remaining = data.foundCount - data.items.length;
+	return <AnalysesTable analyses={data.items} remaining={data.foundCount} />;
+}
+
+type AnalysesTableProps = {
+	/** The analyses to list, already ordered. */
+	analyses: AnalysisMinimal[];
+
+	/** The total found, for the "N more not shown" footer. */
+	remaining: number;
+};
+
+function AnalysesTable({ analyses, remaining }: AnalysesTableProps) {
+	const hidden = remaining - analyses.length;
 
 	return (
 		<DashboardTable labels={["Workflow", "Sample", "Created"]}>
-			{data.items.map((analysis) => (
+			{analyses.map((analysis) => (
 				<DashboardTableRow key={analysis.id}>
 					<DashboardTableCell>
 						{checkSupportedWorkflow(analysis.workflow) ? (
@@ -85,10 +138,10 @@ function RecentAnalysesBody({ userId }: RecentAnalysesProps) {
 					<DashboardTableCreatedCell time={analysis.createdAt} />
 				</DashboardTableRow>
 			))}
-			{remaining > 0 && (
+			{hidden > 0 && (
 				<DashboardTableMore>
-					{remaining} more {remaining === 1 ? "analysis is" : "analyses are"}{" "}
-					not shown
+					{hidden} more {hidden === 1 ? "analysis is" : "analyses are"} not
+					shown
 				</DashboardTableMore>
 			)}
 		</DashboardTable>

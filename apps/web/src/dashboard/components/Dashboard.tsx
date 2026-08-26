@@ -8,9 +8,10 @@ import RecentSamples from "./RecentSamples";
 /**
  * The landing page at `/`.
  *
- * Every card suspends, so the route's `Suspense` covers the whole page with one
- * placeholder and the cards appear together rather than popping in one at a
- * time. A card that fails still fails alone — see `DashboardCardBoundary`.
+ * The account read suspends the whole page for the first paint. Beyond that,
+ * the "recently" cards own a `Suspense` apiece so a viewed/created toggle
+ * reloads only its own card; `ActiveJobs` still leans on the enclosing one. A
+ * card that fails still fails alone — see `DashboardCardBoundary`.
  */
 export default function Dashboard() {
 	const { data: account } = useSuspenseAccount();

@@ -5,8 +5,10 @@ import {
 	createAnalysisFn,
 	deleteAnalysisFn,
 	findAnalysesFn,
+	findRecentlyViewedAnalysesFn,
 	getAnalysisFn,
 	getAnalysisResultsFn,
+	recordAnalysisViewFn,
 } from "@server/analyses/functions";
 import {
 	keepPreviousData,
@@ -24,6 +26,7 @@ import type {
 	AnalysisWorkflow,
 	SortDirection,
 } from "@virtool/contracts";
+import { useEffect } from "react";
 
 /** The page, ordering, and filters {@link useListAnalyses} requests. */
 export type ListAnalysesOptions = {
@@ -98,6 +101,49 @@ export function useSuspenseRecentAnalyses(userId: number, perPage: number) {
 		queryFn: () =>
 			findAnalysesFn({ data: { userIds: [userId], page: 1, perPage } }),
 	});
+}
+
+/**
+ * Fetch the analyses the signed-in user has most recently viewed, suspending
+ * until it resolves.
+ *
+ * The server scopes the list to the caller's own views, so it takes no user id.
+ *
+ * @param perPage - The number of analyses to fetch
+ */
+export function useSuspenseRecentlyViewedAnalyses(perPage: number) {
+	return useSuspenseQuery<AnalysisSearchResult, Error>({
+		queryKey: analysesQueryKeys.list(["recentlyViewed", perPage]),
+		queryFn: () => findRecentlyViewedAnalysesFn({ data: { perPage } }),
+	});
+}
+
+/**
+ * Record, once per mount, that the signed-in user has viewed an analysis.
+ *
+ * Runs from an effect rather than the route loader, because the router preloads
+ * loaders on hover (`defaultPreload: "intent"`) — a view must count only when
+ * the analysis is actually opened, not merely pointed at.
+ *
+ * @param analysisId - The id of the viewed analysis
+ */
+export function useRecordAnalysisView(analysisId: number) {
+	const queryClient = useQueryClient();
+
+	const { mutate } = useMutation<null, Error, number>({
+		mutationFn: (id) => recordAnalysisViewFn({ data: { analysisId: id } }),
+		onSuccess: () => {
+			queryClient.invalidateQueries({
+				queryKey: analysesQueryKeys.list(["recentlyViewed"]),
+			});
+		},
+	});
+
+	useEffect(() => {
+		if (Number.isInteger(analysisId)) {
+			mutate(analysisId);
+		}
+	}, [analysisId, mutate]);
 }
 
 /**
