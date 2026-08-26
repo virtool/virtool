@@ -248,7 +248,7 @@ export default function SamplesList({
 				setOpen={setOpenQuickAnalyze}
 				samples={quickAnalyzeTarget.samples}
 			/>
-			<div className="container mx-auto">
+			<div className="container">
 				<ViewHeader title="Samples">
 					<ViewHeaderTitle>Samples</ViewHeaderTitle>
 				</ViewHeader>
