@@ -2,13 +2,11 @@ import { screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { createFakeAccount } from "@tests/fake/account";
 import { createFakeAnalysisMinimal } from "@tests/fake/analyses";
-import { createFakeJobMinimal } from "@tests/fake/jobs";
 import { createFakeSampleMinimal } from "@tests/fake/samples";
 import {
 	mockFindAnalyses,
 	mockFindRecentlyViewedAnalyses,
 } from "@tests/server-fn/analyses";
-import { mockFindJobs } from "@tests/server-fn/jobs";
 import {
 	mockFindRecentlyViewedSamples,
 	mockFindSamples,
@@ -18,16 +16,12 @@ import { renderWithRouter } from "@tests/setup";
 import { beforeEach, describe, expect, it } from "vitest";
 import Dashboard from "../Dashboard";
 
-type CardTables = [
-	samples: HTMLElement,
-	analyses: HTMLElement,
-	jobs: HTMLElement,
-];
+type CardTables = [samples: HTMLElement, analyses: HTMLElement];
 
-/** The three card tables, in page order, once every card has loaded. */
+/** The two card tables, in page order, once every card has loaded. */
 async function findTables(): Promise<CardTables> {
 	await waitFor(() => {
-		expect(screen.getAllByRole("table")).toHaveLength(3);
+		expect(screen.getAllByRole("table")).toHaveLength(2);
 	});
 
 	return screen.getAllByRole("table") as CardTables;
@@ -48,7 +42,6 @@ describe("<Dashboard />", () => {
 		mockFindRecentlyViewedAnalyses([]);
 		mockFindSamples([]);
 		mockFindAnalyses([]);
-		mockFindJobs([]);
 	});
 
 	it("renders every card under the view heading", async () => {
@@ -59,13 +52,10 @@ describe("<Dashboard />", () => {
 		).toBeInTheDocument();
 
 		expect(
-			await screen.findByRole("heading", { name: "Samples" }),
+			await screen.findByRole("heading", { name: "Recent Samples" }),
 		).toBeInTheDocument();
 		expect(
-			await screen.findByRole("heading", { name: "Analyses" }),
-		).toBeInTheDocument();
-		expect(
-			await screen.findByRole("heading", { name: "Active jobs" }),
+			await screen.findByRole("heading", { name: "Recent Analyses" }),
 		).toBeInTheDocument();
 	});
 
@@ -100,7 +90,7 @@ describe("<Dashboard />", () => {
 		).toBeInTheDocument();
 
 		await userEvent.click(
-			within(screen.getByRole("region", { name: "Samples" })).getByRole(
+			within(screen.getByRole("region", { name: "Recent Samples" })).getByRole(
 				"radio",
 				{ name: "Created" },
 			),
@@ -115,26 +105,13 @@ describe("<Dashboard />", () => {
 		});
 	});
 
-	it("asks for the pending and running jobs, account-wide", async () => {
-		const findJobs = mockFindJobs([]);
-
-		await renderWithRouter(<Dashboard />);
-
-		await waitFor(() => {
-			expect(findJobs).toHaveBeenCalledWith({
-				data: { page: 1, perPage: 10, states: ["pending", "running"] },
-			});
-		});
-	});
-
-	it("lists the recently viewed samples, analyses, and active jobs", async () => {
+	it("lists the recently viewed samples and analyses", async () => {
 		mockFindRecentlyViewedSamples([
 			createFakeSampleMinimal({ name: "Foo sample" }),
 		]);
 		mockFindRecentlyViewedAnalyses([
 			createFakeAnalysisMinimal({ id: 12, workflow: "pathoscope" }),
 		]);
-		mockFindJobs([createFakeJobMinimal({ id: 7, workflow: "nuvs" })]);
 
 		await renderWithRouter(<Dashboard />);
 
@@ -144,39 +121,36 @@ describe("<Dashboard />", () => {
 		expect(
 			await screen.findByRole("link", { name: "Pathoscope" }),
 		).toBeInTheDocument();
-		expect(await screen.findByRole("link", { name: "Nuvs" })).toHaveAttribute(
-			"href",
-			"/jobs/7",
-		);
 	});
 
 	it("names the columns of every card's table", async () => {
 		mockFindRecentlyViewedSamples([createFakeSampleMinimal()]);
 		mockFindRecentlyViewedAnalyses([createFakeAnalysisMinimal()]);
-		mockFindJobs([createFakeJobMinimal()]);
 
 		await renderWithRouter(<Dashboard />);
 
-		const [samples, analyses, jobs] = await findTables();
+		const [samples, analyses] = await findTables();
 
-		expect(samples).toHaveAccessibleName("Samples");
-		expect(getColumnLabels(samples)).toEqual(["Sample", "Analyses", "Created"]);
-
-		expect(analyses).toHaveAccessibleName("Analyses");
-		expect(getColumnLabels(analyses)).toEqual([
-			"Workflow",
+		expect(samples).toHaveAccessibleName("Recent Samples");
+		expect(getColumnLabels(samples)).toEqual([
 			"Sample",
+			"Analyses",
+			"User",
 			"Created",
 		]);
 
-		expect(jobs).toHaveAccessibleName("Active jobs");
-		expect(getColumnLabels(jobs)).toEqual(["Workflow", "State", "Created"]);
+		expect(analyses).toHaveAccessibleName("Recent Analyses");
+		expect(getColumnLabels(analyses)).toEqual([
+			"Workflow",
+			"Sample",
+			"User",
+			"Created",
+		]);
 	});
 
-	it("ends every card's table with the created time, and no attribution", async () => {
+	it("ends every card's table with the created time", async () => {
 		mockFindRecentlyViewedSamples([createFakeSampleMinimal()]);
 		mockFindRecentlyViewedAnalyses([createFakeAnalysisMinimal()]);
-		mockFindJobs([createFakeJobMinimal()]);
 
 		await renderWithRouter(<Dashboard />);
 
@@ -184,15 +158,30 @@ describe("<Dashboard />", () => {
 			// Skip the header row, which holds column headers rather than cells.
 			for (const row of within(table).getAllByRole("row").slice(1)) {
 				const cells = within(row).getAllByRole("cell");
-
-				expect(cells).toHaveLength(3);
+				const lastCell = cells[cells.length - 1];
 
 				// Just the time: the "created" the attribution used to read is now
 				// only in the column header.
-				expect(cells[2]).toHaveTextContent(/ago|just now/);
-				expect(cells[2]).not.toHaveTextContent(/created/i);
+				expect(lastCell).toHaveTextContent(/ago|just now/);
+				expect(lastCell).not.toHaveTextContent(/created/i);
 			}
 		}
+	});
+
+	it("names the account attached to each sample and analysis row", async () => {
+		mockFindRecentlyViewedSamples([
+			createFakeSampleMinimal({ user: { handle: "sample-owner", id: 1 } }),
+		]);
+		mockFindRecentlyViewedAnalyses([
+			createFakeAnalysisMinimal({
+				user: { handle: "analysis-owner", id: 2 },
+			}),
+		]);
+
+		await renderWithRouter(<Dashboard />);
+
+		expect(await screen.findByText("sample-owner")).toBeInTheDocument();
+		expect(await screen.findByText("analysis-owner")).toBeInTheDocument();
 	});
 
 	it("names the parent sample of each analysis", async () => {
@@ -211,20 +200,11 @@ describe("<Dashboard />", () => {
 		).toHaveAttribute("href", `/samples/${sample.id}`);
 	});
 
-	it("sends Active jobs' View all to the account-wide jobs list", async () => {
-		await renderWithRouter(<Dashboard />);
-
-		expect(
-			await screen.findByRole("link", { name: "View all" }),
-		).toHaveAttribute("href", "/jobs");
-	});
-
 	it("accounts for the viewed rows a card has no room for", async () => {
 		mockFindRecentlyViewedSamples([createFakeSampleMinimal()], {
 			foundCount: 14,
 		});
 		mockFindRecentlyViewedAnalyses([createFakeAnalysisMinimal()], 3);
-		mockFindJobs([createFakeJobMinimal()], 2);
 
 		await renderWithRouter(<Dashboard />);
 
@@ -236,10 +216,6 @@ describe("<Dashboard />", () => {
 		expect(
 			await screen.findByText("2 more analyses are not shown"),
 		).toBeInTheDocument();
-
-		expect(
-			await screen.findByRole("link", { name: "View 1 more active job" }),
-		).toBeInTheDocument();
 	});
 
 	it("links the created samples a card has no room for to the filtered list", async () => {
@@ -249,10 +225,9 @@ describe("<Dashboard />", () => {
 		await renderWithRouter(<Dashboard />);
 
 		await userEvent.click(
-			within(await screen.findByRole("region", { name: "Samples" })).getByRole(
-				"radio",
-				{ name: "Created" },
-			),
+			within(
+				await screen.findByRole("region", { name: "Recent Samples" }),
+			).getByRole("radio", { name: "Created" }),
 		);
 
 		expect(
@@ -265,12 +240,11 @@ describe("<Dashboard />", () => {
 	it("omits the overflow row when a card is showing everything", async () => {
 		mockFindRecentlyViewedSamples([createFakeSampleMinimal()]);
 		mockFindRecentlyViewedAnalyses([createFakeAnalysisMinimal()]);
-		mockFindJobs([createFakeJobMinimal()]);
 
 		await renderWithRouter(<Dashboard />);
 
 		expect(
-			await screen.findByRole("heading", { name: "Samples" }),
+			await screen.findByRole("heading", { name: "Recent Samples" }),
 		).toBeInTheDocument();
 		expect(screen.queryByText(/more/)).toBeNull();
 	});
@@ -284,7 +258,6 @@ describe("<Dashboard />", () => {
 		expect(
 			await screen.findByText("No analyses viewed yet"),
 		).toBeInTheDocument();
-		expect(await screen.findByText("Nothing running")).toBeInTheDocument();
 	});
 
 	it("contains a failed card without taking down the rest of the dashboard", async () => {

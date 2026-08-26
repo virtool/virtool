@@ -2,7 +2,10 @@ import {
 	useSuspenseRecentAnalyses,
 	useSuspenseRecentlyViewedAnalyses,
 } from "@analyses/queries";
-import { checkSupportedWorkflow } from "@analyses/utils";
+import {
+	checkSupportedWorkflow,
+	getWorkflowVersionLabel,
+} from "@analyses/utils";
 import { getWorkflowDisplayName } from "@app/utils";
 import Link from "@base/Link";
 import type { AnalysisMinimal } from "@virtool/contracts";
@@ -19,6 +22,7 @@ import DashboardTable, {
 	DashboardTableCreatedCell,
 	DashboardTableMore,
 	DashboardTableRow,
+	DashboardTableUserCell,
 } from "./DashboardTable";
 import RecentModeToggle, { type RecentMode } from "./RecentModeToggle";
 
@@ -46,7 +50,7 @@ export default function RecentAnalyses({ userId }: RecentAnalysesProps) {
 					onChange={setMode}
 				/>
 			}
-			title="Analyses"
+			title="Recent Analyses"
 		>
 			<DashboardCardBoundary noun="analyses">
 				<Suspense fallback={<DashboardCardLoading />}>
@@ -105,26 +109,31 @@ function AnalysesTable({ analyses, remaining }: AnalysesTableProps) {
 	const hidden = remaining - analyses.length;
 
 	return (
-		<DashboardTable labels={["Workflow", "Sample", "Created"]}>
+		<DashboardTable labels={["Workflow", "Sample", "User", "Created"]}>
 			{analyses.map((analysis) => (
 				<DashboardTableRow key={analysis.id}>
 					<DashboardTableCell>
-						{checkSupportedWorkflow(analysis.workflow) ? (
-							<Link
-								className="font-medium truncate"
-								params={{
-									analysisId: String(analysis.id),
-									sampleId: String(analysis.sample.id),
-								}}
-								to="/samples/$sampleId/analyses/$analysisId"
-							>
-								{getWorkflowDisplayName(analysis.workflow)}
-							</Link>
-						) : (
-							<span className="font-medium truncate">
-								{getWorkflowDisplayName(analysis.workflow)}
-							</span>
-						)}
+						<div className="min-w-0">
+							{checkSupportedWorkflow(analysis.workflow) ? (
+								<Link
+									className="font-medium truncate"
+									params={{
+										analysisId: String(analysis.id),
+										sampleId: String(analysis.sample.id),
+									}}
+									to="/samples/$sampleId/analyses/$analysisId"
+								>
+									{getWorkflowDisplayName(analysis.workflow)}
+								</Link>
+							) : (
+								<span className="font-medium truncate">
+									{getWorkflowDisplayName(analysis.workflow)}
+								</span>
+							)}
+							<div className="text-gray-600 text-sm truncate">
+								{getWorkflowVersionLabel(analysis.workflowVersion)}
+							</div>
+						</div>
 					</DashboardTableCell>
 					<DashboardTableCell>
 						<Link
@@ -135,6 +144,7 @@ function AnalysesTable({ analyses, remaining }: AnalysesTableProps) {
 							{analysis.sample.name}
 						</Link>
 					</DashboardTableCell>
+					<DashboardTableUserCell handle={analysis.user.handle} />
 					<DashboardTableCreatedCell time={analysis.createdAt} />
 				</DashboardTableRow>
 			))}

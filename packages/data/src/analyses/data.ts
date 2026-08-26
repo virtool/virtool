@@ -142,6 +142,7 @@ const minimalColumns = {
 	created_at: analyses.created_at,
 	updated_at: analyses.updated_at,
 	workflow: analyses.workflow,
+	workflow_version: analyses.workflow_version,
 	ready: analyses.ready,
 	sample_id: analyses.sample_id,
 	reference_id: indexes.reference_id,
@@ -155,6 +156,7 @@ type MinimalRow = {
 	created_at: Date;
 	updated_at: Date;
 	workflow: string;
+	workflow_version: string | null;
 	ready: boolean;
 	sample_id: number | null;
 	reference_id: number | null;
@@ -283,6 +285,7 @@ function mapMinimal(
 		updatedAt: row.updated_at,
 		user,
 		workflow: row.workflow as AnalysisWorkflow,
+		workflowVersion: row.workflow_version,
 	};
 }
 
@@ -522,7 +525,6 @@ export async function getAnalysis(
 	const [row] = await db
 		.select({
 			...minimalColumns,
-			workflowVersion: analyses.workflow_version,
 			indexVersion: indexes.version,
 			referenceName: legacyReferences.name,
 			sampleName: legacySamples.name,
@@ -552,7 +554,7 @@ export async function getAnalysis(
 		row.job_id != null ? (jobsById.get(row.job_id) ?? null) : null,
 	);
 
-	return { ...minimal, files, workflowVersion: row.workflowVersion };
+	return { ...minimal, files };
 }
 
 /**

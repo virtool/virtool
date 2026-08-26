@@ -18,6 +18,7 @@ import DashboardTable, {
 	DashboardTableCreatedCell,
 	DashboardTableMore,
 	DashboardTableRow,
+	DashboardTableUserCell,
 } from "./DashboardTable";
 import RecentModeToggle, { type RecentMode } from "./RecentModeToggle";
 
@@ -46,7 +47,7 @@ export default function RecentSamples({ userId }: RecentSamplesProps) {
 					onChange={setMode}
 				/>
 			}
-			title="Samples"
+			title="Recent Samples"
 		>
 			<DashboardCardBoundary noun="samples">
 				<Suspense fallback={<DashboardCardLoading />}>
@@ -131,7 +132,7 @@ type SamplesTableProps = {
 
 function SamplesTable({ children, samples }: SamplesTableProps) {
 	return (
-		<DashboardTable labels={["Sample", "Analyses", "Created"]}>
+		<DashboardTable labels={["Sample", "Analyses", "User", "Created"]}>
 			{samples.map((sample) => (
 				<DashboardTableRow key={sample.id}>
 					<DashboardTableCell>
@@ -146,6 +147,7 @@ function SamplesTable({ children, samples }: SamplesTableProps) {
 					<DashboardTableCell>
 						<WorkflowTags id={sample.id} workflows={sample.workflows} />
 					</DashboardTableCell>
+					<DashboardTableUserCell handle={sample.user.handle} />
 					<DashboardTableCreatedCell time={sample.createdAt} />
 				</DashboardTableRow>
 			))}
