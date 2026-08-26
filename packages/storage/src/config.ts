@@ -23,8 +23,14 @@ export type StorageConfig =
 			accessKey?: string;
 			endpoint?: string;
 			/**
-			 * Public origin that replaces the blob endpoint origin in presigned URLs.
-			 * Unset preserves the blob endpoint origin.
+			 * Public origin that replaces the blob endpoint origin in presigned
+			 * download URLs. Unset preserves the blob endpoint origin.
 			 */
 			downloadUrl?: string;
+			/**
+			 * Public origin that replaces the blob endpoint origin in presigned
+			 * upload URLs — the Front Door route to the private storage account.
+			 * Unset falls back to {@link downloadUrl}, then the blob endpoint origin.
+			 */
+			uploadUrl?: string;
 	  };

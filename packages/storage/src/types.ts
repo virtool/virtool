@@ -23,6 +23,16 @@ export type PresignDownloadOptions = {
 	expiresIn: number;
 };
 
+/** The lifetime for a presigned upload URL. */
+export type PresignUploadOptions = {
+	/**
+	 * The URL lifetime in seconds from now. A chunked upload can run for a long
+	 * time over hundreds of block writes, so this is measured in hours rather
+	 * than the minutes a download redirect lives for.
+	 */
+	expiresIn: number;
+};
+
 /**
  * Streaming object storage, backed by S3 or Azure Blob.
  *
@@ -61,4 +71,17 @@ export type StorageBackend = {
 		key: string,
 		options: PresignDownloadOptions,
 	): Promise<string>;
+
+	/**
+	 * Mint a short-lived, write-only URL a client uploads the object at `key`
+	 * to directly, chunk by chunk, instead of streaming the bytes through this
+	 * server. The URL grants only create and write on that one key; the caller
+	 * appends the block-blob query parameters (`comp=block`, `comp=blocklist`)
+	 * itself.
+	 *
+	 * Optional: only the Azure backend implements it — chunked direct upload is
+	 * an Azure Block Blob capability, and `MemoryStorage` and the S3 backend
+	 * leave it undefined. A caller falls back to the proxied upload route.
+	 */
+	presignUpload?(key: string, options: PresignUploadOptions): Promise<string>;
 };

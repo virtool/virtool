@@ -27,6 +27,14 @@ export type ServerConfig = {
 	 * streaming when the backend cannot presign.
 	 */
 	downloadMode: "stream" | "redirect";
+	/**
+	 * The global feature flag for chunked direct-to-blob uploads. When set — and
+	 * the storage backend can presign uploads — the client uploads files to
+	 * storage in blocks instead of streaming them through this server. Unset
+	 * keeps every upload on the proxied `POST /uploads` route, which is the
+	 * rollback path.
+	 */
+	uploadsChunked: boolean;
 };
 
 const ServerEnv = z.object({
@@ -67,11 +75,30 @@ const ServerEnv = z.object({
 		(value) => (value === "" ? undefined : value),
 		z.string().url().optional(),
 	),
+	// The Front Door origin chunked uploads PUT their blocks to. As with the
+	// download URL, a malformed value would reach `new URL()` at upload time, so
+	// validate it at startup.
+	VT_STORAGE_AZURE_UPLOAD_URL: z.preprocess(
+		(value) => (value === "" ? undefined : value),
+		z.string().url().optional(),
+	),
 	// Unset — or empty, which deployment tooling injects — keeps downloads
 	// streaming through this server.
 	VT_STORAGE_DOWNLOAD_MODE: z.preprocess(
 		(value) => (value === "" ? undefined : value),
 		z.enum(["stream", "redirect"]).default("stream"),
+	),
+	// The chunked-upload feature flag. `1`, `true`, or `yes` turns it on; unset —
+	// or empty, which deployment tooling injects — leaves it off, so an upgrade
+	// never switches upload paths by surprise. Rollback is unsetting it.
+	VT_UPLOADS_CHUNKED: z.preprocess(
+		(value) => (value === "" ? undefined : value),
+		z
+			.enum(["0", "1", "true", "false", "yes", "no"])
+			.optional()
+			.transform(
+				(value) => value === "1" || value === "true" || value === "yes",
+			),
 	),
 });
 
@@ -84,6 +111,7 @@ const ServerEnvSchema = ServerEnv.transform((raw, ctx) => ({
 	sentryDsn: raw.VT_SENTRY_DSN,
 	storage: buildStorage(raw, ctx),
 	downloadMode: raw.VT_STORAGE_DOWNLOAD_MODE,
+	uploadsChunked: raw.VT_UPLOADS_CHUNKED,
 }));
 
 // Unset and empty are the same thing for storage variables. Deployment tooling
@@ -177,6 +205,7 @@ function buildStorage(raw: StorageEnv, ctx: z.RefinementCtx): StorageConfig {
 		accessKey: present(raw.VT_STORAGE_AZURE_ACCESS_KEY),
 		endpoint: present(raw.VT_STORAGE_AZURE_ENDPOINT),
 		downloadUrl: present(raw.VT_STORAGE_AZURE_DOWNLOAD_URL),
+		uploadUrl: present(raw.VT_STORAGE_AZURE_UPLOAD_URL),
 	};
 }
 

@@ -45,6 +45,18 @@ Other failures throw `StorageError`. Both errors come from
 `lastModified` across backends or depend on it for ordering because its source
 differs between real buckets and `MemoryStorage`.
 
+### Pending uploads
+
+A chunked upload reserves an `uploads` row with `createPendingUpload` before
+any bytes are staged. The row records the storage key and declared
+`expected_size`, and remains `ready: false` so it is excluded from upload lists
+and downloads.
+
+After writing directly to storage, the client calls `finalizePendingUpload`.
+Finalization reads the stored size and marks the row ready only when it matches
+`expected_size`; a missing object or size mismatch leaves the row unfinished.
+`cancelPendingUpload` removes an unfinished reservation the client abandons.
+
 ### Cleanup
 
 Pass storage into data functions that remove stored objects. The argument
@@ -57,6 +69,9 @@ deleting their rows, including child keys removed by database cascades.
 
 There is no prefix-based cleanup. Objects that were written without a key
 being recorded remain for a future orphan sweep.
+
+`reapUploads` removes unfinished chunked uploads that clients never finalized
+or cancelled in a `stale` pass alongside the `orphaned` reserved-upload pass.
 
 ### Keys
 

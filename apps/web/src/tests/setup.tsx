@@ -172,6 +172,8 @@ beforeEach(() => {
 		referenceServerFnMocks.updateReferenceGroupFn,
 		referenceServerFnMocks.removeReferenceUserFn,
 		referenceServerFnMocks.removeReferenceGroupFn,
+		uploadServerFnMocks.finalizeChunkedUploadFn,
+		uploadServerFnMocks.cancelChunkedUploadFn,
 		sampleServerFnMocks.createSampleFn,
 		sampleServerFnMocks.updateSampleFn,
 		sampleServerFnMocks.deleteSampleFn,
@@ -200,6 +202,12 @@ beforeEach(() => {
 	// the fallback minimum in tests that mean to assert the configured one.
 	settingsServerFnMocks.getPasswordPolicyFn.mockReset();
 	mockGetPasswordPolicy();
+
+	// Every upload begins by asking the server which transport to take. Default
+	// to the proxied path so a test that just exercises uploading does not have
+	// to stub it; tests for the chunked path override this.
+	uploadServerFnMocks.initUploadFn.mockReset();
+	uploadServerFnMocks.initUploadFn.mockResolvedValue({ mode: "proxied" });
 });
 
 process.env.TZ = "UTC";

@@ -8,7 +8,7 @@ import type {
 } from "@virtool/contracts";
 import type { Logger } from "@virtool/logger";
 import type { StorageBackend } from "@virtool/storage";
-import { mintRootStorageKey } from "@virtool/storage";
+import { mintRootStorageKey, StorageKeyNotFoundError } from "@virtool/storage";
 import { and, asc, count, desc, eq, inArray, lt, notExists } from "drizzle-orm";
 import type { Db, DbOrTx } from "../db/pg";
 import { takeFirstOrThrow } from "../db/rows";
@@ -43,6 +43,26 @@ export class UploadNotFoundError extends AppError {}
 
 /** Thrown when a reserved upload is deleted while still in use. */
 export class UploadReservedError extends AppError {}
+
+/**
+ * Thrown when a chunked upload is finalized before its bytes reached storage.
+ *
+ * The client commits the block list directly to storage and then asks the
+ * server to finalize; if no object is there, the commit never happened and the
+ * row stays unfinished rather than being marked ready over nothing.
+ */
+export class UploadIncompleteError extends AppError {}
+
+/**
+ * Thrown when a finalized chunked upload's storage object is not the size the
+ * client declared at init.
+ *
+ * The declared size is locked on the row before any bytes are staged, so a
+ * client that commits an empty or partial block list finalizes an object whose
+ * size differs from it and is rejected rather than recorded as ready over a
+ * truncated file. The row is left unfinished; the client cancels it.
+ */
+export class UploadSizeMismatchError extends AppError {}
 
 function toUpload(row: UploadRow, user: UserNested | null): Upload {
 	return {
@@ -208,6 +228,212 @@ export async function createUpload(
 	return toUpload(row, await fetchUser(db, row.userId));
 }
 
+/** Fields needed to reserve a chunked upload before its bytes exist. */
+export type PendingUploadValues = {
+	name: string;
+	type: UploadType;
+	userId: number;
+	/**
+	 * The file's byte length as the client reports it at init. Recorded on the
+	 * row and checked against the storage object at finalize, so the size the
+	 * upload commits to cannot be moved after the bytes are staged.
+	 */
+	expectedSize: number;
+};
+
+/** A reserved chunked upload and the storage key its bytes belong at. */
+export type PendingUpload = {
+	upload: Upload;
+	storageKey: string;
+};
+
+/**
+ * Reserve a chunked upload, minting the storage key its bytes will land at.
+ *
+ * Unlike {@link createUpload}, no bytes flow through this server: the client
+ * writes them straight to storage under {@link PendingUpload.storageKey} and
+ * calls {@link finalizePendingUpload} afterwards. The row is written `ready:
+ * false`, so no list shows it and no frame is emitted until it is finalized.
+ *
+ * The key is recorded on the row so finalize can locate the bytes and confirm
+ * they arrived. The row is also what a later finalize checks ownership against,
+ * which is why the reservation is persisted rather than the key just handed out.
+ */
+export async function createPendingUpload(
+	db: DbOrTx,
+	values: PendingUploadValues,
+): Promise<PendingUpload> {
+	const now = new Date();
+	const nameOnDisk = `${crypto.randomUUID()}-${values.name}`;
+	const storageKey = mintRootStorageKey("uploads");
+
+	const row = takeFirstOrThrow(
+		await db
+			.insert(uploadsTable)
+			.values({
+				createdAt: now,
+				expectedSize: values.expectedSize,
+				name: values.name,
+				nameOnDisk,
+				ready: false,
+				removed: false,
+				reserved: false,
+				storageKey,
+				type: values.type,
+				userId: values.userId,
+			})
+			.returning(),
+	);
+
+	return {
+		upload: toUpload(row, await fetchUser(db, row.userId)),
+		storageKey,
+	};
+}
+
+/**
+ * Finalize a chunked upload once its bytes are committed to storage.
+ *
+ * The row must belong to `userId` and still be unfinished; a mismatch reads as
+ * {@link UploadNotFoundError}, so one user cannot finalize another's upload or
+ * probe which ids exist. The recorded size comes from storage, never the
+ * client, and a missing object means the block list was never committed —
+ * {@link UploadIncompleteError} — leaving the row unfinished for a retry.
+ *
+ * The storage object's size must equal the size the client declared at init and
+ * this row recorded; an empty or partial block list commits a smaller object
+ * and is rejected with {@link UploadSizeMismatchError} rather than recorded as
+ * ready over a truncated file. The row is left unfinished for the client to
+ * cancel.
+ *
+ * Idempotent: a row already finalized is returned unchanged, so a retried
+ * finalize after a dropped response does not double-emit or re-stamp it.
+ */
+export async function finalizePendingUpload(
+	db: DbOrTx,
+	storage: StorageBackend,
+	uploadId: number,
+	userId: number,
+): Promise<Upload> {
+	const [row] = await db
+		.select()
+		.from(uploadsTable)
+		.where(eq(uploadsTable.id, uploadId));
+
+	if (!row || row.removed || row.userId !== userId || !row.storageKey) {
+		throw new UploadNotFoundError();
+	}
+
+	if (row.ready) {
+		return toUpload(row, await fetchUser(db, row.userId));
+	}
+
+	let size: number;
+	try {
+		size = await storage.size(row.storageKey);
+	} catch (err) {
+		if (err instanceof StorageKeyNotFoundError) {
+			throw new UploadIncompleteError();
+		}
+		throw err;
+	}
+
+	// The declared size is null only on rows that never took the chunked path,
+	// which never reach finalize; when present it is the contract the committed
+	// object must meet.
+	if (row.expectedSize !== null && size !== row.expectedSize) {
+		throw new UploadSizeMismatchError();
+	}
+
+	// Conditional on the row still being active and unfinished so cancellation,
+	// reaping, and overlapping finalizes cannot race this transition.
+	const [finalized] = await db
+		.update(uploadsTable)
+		.set({ ready: true, size, uploadedAt: new Date() })
+		.where(
+			and(
+				eq(uploadsTable.id, uploadId),
+				eq(uploadsTable.ready, false),
+				eq(uploadsTable.removed, false),
+			),
+		)
+		.returning();
+
+	if (finalized === undefined) {
+		const [current] = await db
+			.select()
+			.from(uploadsTable)
+			.where(eq(uploadsTable.id, uploadId));
+
+		if (
+			!current ||
+			current.removed ||
+			current.userId !== userId ||
+			!current.storageKey
+		) {
+			throw new UploadNotFoundError();
+		}
+
+		if (current.ready) {
+			return toUpload(current, await fetchUser(db, current.userId));
+		}
+
+		throw new UploadNotFoundError();
+	}
+
+	await emit("uploads", finalized.id, "create");
+
+	return toUpload(finalized, await fetchUser(db, finalized.userId));
+}
+
+/**
+ * Cancel a chunked upload that was reserved but never finalized.
+ *
+ * Only the owner's own unfinished reservation is cancellable; anything else —
+ * another user's row, a finalized upload, an already-removed one — reads as
+ * {@link UploadNotFoundError}. The row is soft-deleted and its object dropped.
+ * No frame is emitted, since an unfinished upload was never in any list.
+ */
+export async function cancelPendingUpload(
+	db: DbOrTx,
+	storage: StorageBackend,
+	logger: Logger,
+	uploadId: number,
+	userId: number,
+): Promise<void> {
+	const [row] = await db
+		.select()
+		.from(uploadsTable)
+		.where(eq(uploadsTable.id, uploadId));
+
+	if (!row || row.removed || row.userId !== userId || row.ready) {
+		throw new UploadNotFoundError();
+	}
+
+	const [cancelled] = await db
+		.update(uploadsTable)
+		.set({ removed: true, removedAt: new Date() })
+		.where(
+			and(
+				eq(uploadsTable.id, uploadId),
+				eq(uploadsTable.userId, userId),
+				eq(uploadsTable.ready, false),
+				eq(uploadsTable.removed, false),
+			),
+		)
+		.returning({ storageKey: uploadsTable.storageKey });
+
+	if (cancelled === undefined) {
+		throw new UploadNotFoundError();
+	}
+
+	if (cancelled.storageKey) {
+		await storage.delete(cancelled.storageKey);
+	} else {
+		logger.warn({ uploadId }, "cancelled upload has no storage_key to delete");
+	}
+}
+
 /** The storage key of an upload's bytes, with the name to download them as. */
 export type UploadFile = {
 	key: string;
@@ -220,7 +446,7 @@ export type UploadFile = {
  *
  * `storage_key` locates the object and `name` is what the user chose and what
  * the download is named. Both columns are nullable at the database level, so a
- * row missing either has no downloadable file.
+ * row missing either or not yet ready has no downloadable file.
  */
 export async function getUploadFile(
 	db: DbOrTx,
@@ -229,7 +455,13 @@ export async function getUploadFile(
 	const [row] = await db
 		.select({ name: uploadsTable.name, storageKey: uploadsTable.storageKey })
 		.from(uploadsTable)
-		.where(and(eq(uploadsTable.id, uploadId), eq(uploadsTable.removed, false)))
+		.where(
+			and(
+				eq(uploadsTable.id, uploadId),
+				eq(uploadsTable.ready, true),
+				eq(uploadsTable.removed, false),
+			),
+		)
 		.limit(1);
 
 	if (!row?.name || !row.storageKey) {
@@ -363,26 +595,42 @@ export async function deleteUpload(
 	await emit("uploads", uploadId, "delete");
 }
 
-/** What one sweep of {@link reapOrphanedUploads} selected and what it removed. */
+/** What one sweep of {@link reapUploads} selected and what it removed. */
 export type ReapResult = {
-	/** Orphans the predicate selected. */
+	/** Rows the predicate selected. */
 	found: number;
-	/** Orphans this run flipped to `removed`. */
+	/** Rows this run flipped to `removed`. */
 	deleted: number;
 };
 
 /**
- * Delete reserved uploads that no sample claims.
+ * Which abandoned uploads a {@link reapUploads} sweep targets.
+ *
+ * - `orphaned`: a `reserved` upload no live sample claims — a sample creation
+ *   that never finished.
+ * - `stale`: an unfinished (`ready = false`) chunked reservation whose client
+ *   never committed its block list or never called finalize.
+ */
+export type ReapKind = "orphaned" | "stale";
+
+/**
+ * Delete abandoned uploads of one {@link ReapKind}, dropping their objects.
  *
  * The row goes before the object, unlike cache eviction: this is a soft delete,
  * so a refused delete leaves a row that still names the bytes. It emits no
- * frame, where `deleteUpload` does — every row it touches is `reserved`, which
- * `findUploads` filters out, so no client list held one.
+ * frame, where `deleteUpload` does — every row it touches is either `reserved`
+ * or `ready = false`, both of which `findUploads` filters out, so no client
+ * list held one.
+ *
+ * The cutoff is far longer than any real upload or sample creation takes, so an
+ * in-flight one is never swept. Azure expires uncommitted blocks on its own
+ * after a week; this clears the row and any object a stalled commit did land.
  */
-export async function reapOrphanedUploads(
+export async function reapUploads(
 	db: Db,
 	storage: StorageBackend,
 	logger: Logger,
+	kind: ReapKind,
 	olderThanSeconds: number,
 	onProgress?: (percent: number) => Promise<void>,
 	signal?: AbortSignal,
@@ -390,43 +638,50 @@ export async function reapOrphanedUploads(
 	/* The cutoff is Postgres's clock, not a bound `Date`, so the sweep selects
 	   against the same instant it stamps `removed_at` with. A NULL `created_at`
 	   is never selected. */
-	const orphans = await db
+	const predicate =
+		kind === "stale"
+			? and(
+					eq(uploadsTable.ready, false),
+					eq(uploadsTable.removed, false),
+					lt(uploadsTable.createdAt, secondsAgo(olderThanSeconds)),
+				)
+			: and(
+					eq(uploadsTable.reserved, true),
+					eq(uploadsTable.removed, false),
+					lt(uploadsTable.createdAt, secondsAgo(olderThanSeconds)),
+					notExists(
+						db
+							.select({ id: sampleReads.id })
+							.from(sampleReads)
+							.where(eq(sampleReads.upload, uploadsTable.id)),
+					),
+					/* `sample_reads` alone is not enough: those rows are written at
+					   finalize, so a sample that is still running looks exactly like an
+					   abandoned creation and has its inputs reaped out from under the
+					   workflow. The cutoff cannot rescue it — it measures the age of the
+					   upload rather than of the reservation, so an upload that sat in a
+					   user's list for a month is reapable the moment it is reserved.
+
+					   A `sample_uploads` row means a live sample claims the upload:
+					   `createSample` writes it in the transaction that reserves, and
+					   `deleteSample` clears it in the transaction that releases. What is
+					   left — a reservation no sample row names — is what this sweep is
+					   for. */
+					notExists(
+						db
+							.select({ id: sampleUploads.id })
+							.from(sampleUploads)
+							.where(eq(sampleUploads.upload_id, uploadsTable.id)),
+					),
+				);
+
+	const candidates = await db
 		.select({ id: uploadsTable.id })
 		.from(uploadsTable)
-		.where(
-			and(
-				eq(uploadsTable.reserved, true),
-				eq(uploadsTable.removed, false),
-				lt(uploadsTable.createdAt, secondsAgo(olderThanSeconds)),
-				notExists(
-					db
-						.select({ id: sampleReads.id })
-						.from(sampleReads)
-						.where(eq(sampleReads.upload, uploadsTable.id)),
-				),
-				/* `sample_reads` alone is not enough: those rows are written at
-				   finalize, so a sample that is still running looks exactly like an
-				   abandoned creation and has its inputs reaped out from under the
-				   workflow. The cutoff cannot rescue it — it measures the age of the
-				   upload rather than of the reservation, so an upload that sat in a
-				   user's list for a month is reapable the moment it is reserved.
-
-				   A `sample_uploads` row means a live sample claims the upload:
-				   `createSample` writes it in the transaction that reserves, and
-				   `deleteSample` clears it in the transaction that releases. What is
-				   left — a reservation no sample row names — is what this sweep is
-				   for. */
-				notExists(
-					db
-						.select({ id: sampleUploads.id })
-						.from(sampleUploads)
-						.where(eq(sampleUploads.upload_id, uploadsTable.id)),
-				),
-			),
-		)
+		.where(predicate)
 		.orderBy(asc(uploadsTable.id));
 
-	const found = orphans.length;
+	const found = candidates.length;
 
 	if (found === 0) {
 		return { found, deleted: 0 };
@@ -434,20 +689,21 @@ export async function reapOrphanedUploads(
 
 	let deleted = 0;
 
-	for (const [index, orphan] of orphans.entries()) {
+	for (const [index, candidate] of candidates.entries()) {
 		signal?.throwIfAborted();
 
 		/* Release and soft-delete in one statement. Never split these: releasing
 		   the batch and then looping an ordinary delete means anything
 		   interrupting that loop leaves the rest `reserved = false, removed =
-		   false` — which no later sweep matches, its predicate being
-		   `reserved = true`, and which no list shows. The guard is also what makes
-		   a reclaimed run a no-op against a sweep that committed. */
+		   false` — which the `orphaned` predicate no longer matches and which no
+		   list shows. The guard is also what makes a reclaimed run a no-op against
+		   a sweep that committed. `reserved` is already false on a `stale` row, so
+		   clearing it there is a harmless no-op. */
 		const [reaped] = await db
 			.update(uploadsTable)
 			.set({ reserved: false, removed: true, removedAt: nowUtc() })
 			.where(
-				and(eq(uploadsTable.id, orphan.id), eq(uploadsTable.removed, false)),
+				and(eq(uploadsTable.id, candidate.id), eq(uploadsTable.removed, false)),
 			)
 			.returning({ storageKey: uploadsTable.storageKey });
 
@@ -465,7 +721,7 @@ export async function reapOrphanedUploads(
 				await storage.delete(reaped.storageKey);
 			} catch (err) {
 				logger.warn(
-					{ err, uploadId: orphan.id, storageKey: reaped.storageKey },
+					{ err, uploadId: candidate.id, storageKey: reaped.storageKey },
 					"failed to delete reaped upload object; object orphaned",
 				);
 			}
@@ -473,7 +729,7 @@ export async function reapOrphanedUploads(
 			// Predates keys being recorded, as in `deleteUpload`. A composed key
 			// could reach another row's bytes.
 			logger.warn(
-				{ uploadId: orphan.id },
+				{ uploadId: candidate.id },
 				"reaped upload has no storage_key to delete",
 			);
 		}
