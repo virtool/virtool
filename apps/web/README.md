@@ -312,19 +312,9 @@ Use Tailwind utilities and `cn()` from `@app/cn`. Reuse or add design tokens in
 arbitrary utilities or hard-coded colors. Base component colors use the shared
 `PaletteColor` across all variants.
 
-The root font size stays at `100%` so browser font-size preferences work. To
-preserve the original 14px design at the default 16px root, the `@theme` text,
-spacing, container, breakpoint, and radius tokens are 0.875 of Tailwind's
-defaults. Line height and letter spacing are not scaled. Consequently, classes
-do not render at Tailwind's documented pixel values:
-
-| Class | Tailwind | Here |
-| --- | --- | --- |
-| `text-sm` | 14px | 12.25px |
-| `text-base`, `p-4` | 16px | 14px |
-| `gap-2` | 8px | 7px |
-| `md:` | 768px | 672px |
-| `2xl:` | 1536px | 1344px |
+The root font size is `0.875rem` (see `src/app/style.css`), so utility sizes
+render at 0.875 of Tailwind's documented pixels — `1rem` is 14px. Breakpoints
+are unaffected.
 
 `@base/Table` and `BoxGroupTable` (`@base/Box`) take a `variant`. `keyValue`, the
 default, is the detail-panel shape: a narrow first column of row labels, ruled

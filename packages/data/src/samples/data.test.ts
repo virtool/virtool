@@ -391,6 +391,81 @@ describe("findSamples", () => {
 
 		expect(result.items.map((s) => s.id)).toEqual([labelled]);
 	});
+
+	describe("sorting", () => {
+		it("defaults to newest first", async () => {
+			const older = await seedSample({
+				name: "Older",
+				created_at: new Date("2026-01-01T00:00:00.000Z"),
+			});
+			const newer = await seedSample({
+				name: "Newer",
+				created_at: new Date("2026-02-01T00:00:00.000Z"),
+			});
+
+			const result = await findSamples(db, options, adminActor);
+
+			expect(result.items.map((s) => s.id)).toEqual([newer, older]);
+		});
+
+		it("sorts by name in each direction", async () => {
+			const apple = await seedSample({ name: "Apple" });
+			const cherry = await seedSample({ name: "Cherry" });
+			const banana = await seedSample({ name: "Banana" });
+
+			const ascending = await findSamples(
+				db,
+				{ ...options, sort: { direction: "ascending", field: "name" } },
+				adminActor,
+			);
+			const descending = await findSamples(
+				db,
+				{ ...options, sort: { direction: "descending", field: "name" } },
+				adminActor,
+			);
+
+			expect(ascending.items.map((s) => s.id)).toEqual([apple, banana, cherry]);
+			expect(descending.items.map((s) => s.id)).toEqual([
+				cherry,
+				banana,
+				apple,
+			]);
+		});
+
+		it("sorts by the owner's handle", async () => {
+			const amelia = await seedUser(db, { handle: "amelia" });
+			const zoe = await seedUser(db, { handle: "zoe" });
+			const byZoe = await seedSample({ name: "Z", user_id: zoe });
+			const byAmelia = await seedSample({ name: "A", user_id: amelia });
+
+			const result = await findSamples(
+				db,
+				{ ...options, sort: { direction: "ascending", field: "user" } },
+				adminActor,
+			);
+
+			expect(result.items.map((s) => s.id)).toEqual([byAmelia, byZoe]);
+		});
+
+		// Offset pagination over a tied ordering can repeat or skip rows between
+		// pages, so the primary key has to break the ties the sorted column leaves.
+		it("breaks ties on a sorted column with the id", async () => {
+			const created_at = new Date("2026-03-01T00:00:00.000Z");
+			const ids = [
+				await seedSample({ name: "Same", created_at }),
+				await seedSample({ name: "Same", created_at }),
+				await seedSample({ name: "Same", created_at }),
+			];
+
+			const result = await findSamples(
+				db,
+				{ ...options, sort: { direction: "descending", field: "name" } },
+				adminActor,
+			);
+
+			expect(result.items.map((s) => s.id)).toEqual([...ids].reverse());
+		});
+	});
 });
 
 describe("workflow tags and filtering", () => {

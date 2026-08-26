@@ -136,6 +136,12 @@ export type Sample = SampleMinimal & {
 	subtractions: SubtractionNested[];
 };
 
+/** The columns a sample list can be sorted by. */
+export const SAMPLE_SORT_FIELDS = ["createdAt", "name", "user"] as const;
+
+/** A column a sample list can be sorted by. */
+export type SampleSortField = (typeof SAMPLE_SORT_FIELDS)[number];
+
 /** A page of samples with pagination metadata. */
 export type SampleSearchResult = SearchResult & {
 	items: SampleMinimal[];

@@ -1,16 +1,31 @@
 import { type Paginated, paginated } from "@app/pagination";
-import { calendarDate, numberArray, str, stringArray } from "@app/searchParams";
+import {
+	calendarDate,
+	numberArray,
+	oneOf,
+	oneOfOptional,
+	str,
+	stringArray,
+} from "@app/searchParams";
 import SamplesList from "@samples/components/SamplesList";
 import { getDateFilter } from "@samples/dateFilter";
 import type { SearchSchemaInput } from "@tanstack/react-router";
 import { createFileRoute } from "@tanstack/react-router";
+import {
+	SAMPLE_SORT_FIELDS,
+	type SampleSortField,
+	SORT_DIRECTIONS,
+	type SortDirection,
+} from "@virtool/contracts";
 
 /** Search params for the samples list. */
 type SamplesSearch = Paginated & {
 	createdAfter: string | undefined;
 	createdBefore: string | undefined;
+	direction: SortDirection;
 	term: string;
 	labels: number[];
+	sort: SampleSortField | undefined;
 	users: number[];
 	workflows: string[];
 };
@@ -22,8 +37,10 @@ function validateSamplesSearch(
 		...paginated(input),
 		createdAfter: calendarDate(input.createdAfter),
 		createdBefore: calendarDate(input.createdBefore),
+		direction: oneOf(input.direction, SORT_DIRECTIONS, "descending"),
 		term: str(input.term, ""),
 		labels: numberArray(input.labels, []),
+		sort: oneOfOptional(input.sort, SAMPLE_SORT_FIELDS),
 		users: numberArray(input.users, []),
 		workflows: stringArray(input.workflows, []),
 	};
@@ -41,8 +58,10 @@ function SamplesRoute() {
 	return (
 		<SamplesList
 			dateFilter={getDateFilter(search.createdAfter, search.createdBefore)}
+			direction={search.direction}
 			filterLabels={search.labels}
 			page={search.page}
+			sort={search.sort}
 			term={search.term}
 			users={search.users}
 			workflows={search.workflows}

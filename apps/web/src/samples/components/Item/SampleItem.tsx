@@ -1,13 +1,15 @@
-import Attribution from "@base/Attribution";
-import Box from "@base/Box";
+// biome-ignore-all lint/a11y/useFocusableInteractive: ARIA table rows and cells do not require independent focus.
+// biome-ignore-all lint/a11y/useSemanticElements: Grid layout requires div elements with explicit table roles.
 import Checkbox from "@base/Checkbox";
 import Link from "@base/Link";
+import RelativeTime from "@base/RelativeTime";
+import UserLabel from "@base/UserLabel";
 import { useFetchJob } from "@jobs/queries";
 import type { SampleMinimal } from "@virtool/contracts";
 import type { MouseEvent } from "react";
 import SampleLabel from "../Label/SampleLabel";
 import SampleLibraryTypeLabel from "../Label/SampleLibraryTypeLabel";
-import WorkflowTags from "../Tag/WorkflowTags";
+import WorkflowTags from "../WorkflowTags";
 import EndIcon from "./EndIcon";
 
 type SampleItemProps = {
@@ -25,7 +27,7 @@ type SampleItemProps = {
 };
 
 /**
- * A condensed sample item for use in a list of samples
+ * One sample in the table of samples.
  */
 export default function SampleItem({
 	sample,
@@ -36,42 +38,73 @@ export default function SampleItem({
 	const { data: job } = useFetchJob(sample.job?.id ?? Number.NaN, sample.job);
 
 	return (
-		<Box
-			as="li"
-			className="grid grid-cols-sample items-center gap-x-4 gap-y-2.5 border-0 mb-0 py-2.5 rounded-none"
+		<div
+			className="grid grid-cols-subgrid col-span-full border-gray-200 border-t"
+			role="rowgroup"
 		>
-			<Checkbox
-				ariaLabel={`Select ${sample.name}`}
-				checked={checked}
-				id={`SampleCheckbox${sample.id}`}
-				onClick={handleSelect}
-			/>
-			<Link
-				className="text-lg font-medium overflow-hidden text-ellipsis whitespace-nowrap"
-				to="/samples/$sampleId"
-				params={{ sampleId: String(sample.id) }}
+			<div
+				className="grid grid-cols-subgrid col-span-full items-center gap-y-1 py-2"
+				role="row"
 			>
-				{sample.name}
-			</Link>
-			<Attribution time={sample.createdAt} user={sample.user.handle} />
-			<div className="flex justify-end items-center gap-2">
-				{sample.ready && (
-					<WorkflowTags id={sample.id} workflows={sample.workflows} />
-				)}
-				<EndIcon
-					ariaLabel={`Quick analyze ${sample.name}`}
-					progress={job?.progress ?? 0}
-					state={job?.state}
-					onClick={onQuickAnalyze}
-					ready={sample.ready}
-				/>
+				<div className="pl-4" role="cell">
+					<Checkbox
+						ariaLabel={`Select ${sample.name}`}
+						checked={checked}
+						id={`SampleCheckbox${sample.id}`}
+						onClick={handleSelect}
+					/>
+				</div>
+				<div className="min-w-0" role="cell">
+					<Link
+						className="text-lg font-medium"
+						to="/samples/$sampleId"
+						params={{ sampleId: String(sample.id) }}
+					>
+						{sample.name}
+					</Link>
+				</div>
+				<div className="hidden 2xl:block" role="cell">
+					<SampleLibraryTypeLabel libraryType={sample.libraryType} />
+				</div>
+				<div
+					className="hidden min-w-0 flex-wrap items-center gap-1 2xl:flex"
+					role="cell"
+				>
+					{sample.labels.map((label) => (
+						<SampleLabel {...label} key={label.id} size="sm" />
+					))}
+				</div>
+				<div className="min-w-0" role="cell">
+					{sample.ready && (
+						<WorkflowTags id={sample.id} workflows={sample.workflows} />
+					)}
+				</div>
+				<div className="whitespace-nowrap" role="cell">
+					<RelativeTime time={sample.createdAt} />
+				</div>
+				<div className="min-w-0" role="cell">
+					<UserLabel handle={sample.user.handle} />
+				</div>
+				<div className="flex items-center justify-end pr-4" role="cell">
+					<EndIcon
+						ariaLabel={`Quick analyze ${sample.name}`}
+						progress={job?.progress ?? 0}
+						state={job?.state}
+						onClick={onQuickAnalyze}
+						ready={sample.ready}
+					/>
+				</div>
+				<div
+					aria-label="Labels"
+					className="col-start-2 col-end-3 row-start-2 flex min-w-0 flex-wrap items-center gap-1 pb-2 2xl:hidden"
+					role="cell"
+				>
+					<SampleLibraryTypeLabel libraryType={sample.libraryType} />
+					{sample.labels.map((label) => (
+						<SampleLabel {...label} key={label.id} size="sm" />
+					))}
+				</div>
 			</div>
-			<div className="col-start-2 col-span-3 flex gap-1">
-				<SampleLibraryTypeLabel libraryType={sample.libraryType} />
-				{sample.labels.map((label) => (
-					<SampleLabel {...label} key={label.id} size="sm" />
-				))}
-			</div>
-		</Box>
+		</div>
 	);
 }

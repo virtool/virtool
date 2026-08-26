@@ -23,6 +23,8 @@ import type {
 	SampleMinimal,
 	SampleRightsUpdate,
 	SampleSearchResult,
+	SampleSortField,
+	SortDirection,
 } from "@virtool/contracts";
 import { union } from "es-toolkit";
 import type { CreateSampleRequest, SampleUpdate } from "./types";
@@ -44,11 +46,17 @@ export type ListSamplesOptions = {
 	/** The ids of the labels to filter the samples by. */
 	labels?: number[];
 
+	/** The direction the sorted column is ordered in. */
+	direction?: SortDirection;
+
 	/** The page to fetch. */
 	page: number;
 
 	/** The number of samples to fetch per page. */
 	perPage: number;
+
+	/** The column to order by, or undefined for newest first. */
+	sort?: SampleSortField;
 
 	/** The search term to filter samples by. */
 	term?: string;
@@ -64,9 +72,11 @@ function samplesQueryOptions(options: ListSamplesOptions) {
 	const {
 		createdAfter,
 		createdBefore,
+		direction,
 		labels,
 		page,
 		perPage,
+		sort,
 		term,
 		users,
 		workflows,
@@ -82,6 +92,8 @@ function samplesQueryOptions(options: ListSamplesOptions) {
 			users,
 			createdAfter,
 			createdBefore,
+			sort,
+			direction,
 		]),
 		queryFn: () =>
 			findSamplesFn({
@@ -94,6 +106,8 @@ function samplesQueryOptions(options: ListSamplesOptions) {
 					users: users ?? [],
 					createdAfter,
 					createdBefore,
+					sort,
+					direction,
 				},
 			}) as Promise<SampleSearchResult>,
 	});
