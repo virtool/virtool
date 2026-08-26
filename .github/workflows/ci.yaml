@@ -522,11 +522,12 @@ jobs:
             # Its own job rather than part of Packages / Test: data starts a
             # Postgres testcontainer and storage starts Garage and Azurite,
             # and pulling those images does not belong in the fast package
-            # loop. The two persistence packages share one job because their
-            # testcontainer pulls run concurrently and neither fills the job's
+            # loop. The two persistence packages share one job, run with
+            # --parallel so their testcontainer pulls overlap despite the
+            # data-on-storage dependency, and neither fills the job's
             # wall-clock budget.
             - name: Test
-              run: pnpm --filter @virtool/data --filter @virtool/storage test
+              run: pnpm --parallel --filter @virtool/data --filter @virtool/storage test
               env:
                   TZ: UTC
 
