@@ -70,9 +70,11 @@ jobs:
                   # not, and one shared filter would rebuild each image for the
                   # other's inputs.
                   #
-                  # This file is in all three so that a change to the jobs
-                  # themselves is still gated by them. None uses
-                  # ./.github/actions/setup, so that action is not.
+                  # This file is in every filter so that a change to the jobs
+                  # themselves is still gated by them. The image and crate
+                  # filters build via Docker and do not use
+                  # ./.github/actions/setup, so that action is not in them;
+                  # nuvs-app runs it and so carries it and .nvmrc.
                   #
                   # `.dockerignore` is in the image filter: build-pathoscope
                   # builds with `context: .`, so a rule there decides what the
@@ -86,6 +88,8 @@ jobs:
                       # imports — so no data, ncbi or service.
                       nuvs-app:
                         - '.github/workflows/ci.yaml'
+                        - '.github/actions/setup/**'
+                        - '.nvmrc'
                         - 'apps/nuvs/**'
                         - 'packages/archive/**'
                         - 'packages/bio/**'
