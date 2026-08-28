@@ -534,22 +534,35 @@ describe("writeHmmAnnotations", () => {
 });
 
 describe("cleanHmmStatus", () => {
-	it("clears the install record", async () => {
+	it("clears the in-flight install record", async () => {
 		await seedPendingStatus();
+
+		await cleanHmmStatus(db);
+
+		const status = await readStatus();
+
+		expect(status?.task_id).toBeNull();
+		expect(status?.updates).toEqual([]);
+		// The release itself survives, so the install button still has one to offer.
+		expect(status?.release?.id).toBe(RELEASE_ID);
+	});
+
+	it("preserves the previous good install when a later one fails", async () => {
+		await seedPendingStatus();
+
+		const installed = { ready: true } as unknown as HmmUpdate;
 
 		await db
 			.update(legacyHmmStatus)
-			.set({ installed: { ready: true } as unknown as HmmUpdate })
+			.set({ installed })
 			.where(eq(legacyHmmStatus.id, HMM_STATUS_ID));
 
 		await cleanHmmStatus(db);
 
 		const status = await readStatus();
 
-		expect(status?.installed).toBeNull();
+		expect(status?.installed).toEqual(installed);
 		expect(status?.task_id).toBeNull();
 		expect(status?.updates).toEqual([]);
-		// The release itself survives, so the install button still has one to offer.
-		expect(status?.release?.id).toBe(RELEASE_ID);
 	});
 });

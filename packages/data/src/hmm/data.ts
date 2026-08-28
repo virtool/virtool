@@ -716,20 +716,21 @@ export async function writeHmmAnnotations(
 }
 
 /**
- * Clear the status singleton's install record.
+ * Clear the status singleton's in-flight install record.
  *
  * Run when an install **fails**. It is also the only thing that unwedges the
  * install button afterwards, because `isInstallInProgress` reads the pending
- * entry this removes.
+ * `updates` entry this removes.
  *
- * **It clears `installed` unconditionally**, so a failed install of release N
- * erases the record of a good N-1 whose rows and profiles are untouched. Left
- * that way deliberately; any repair has to keep making `isInstallInProgress`
- * false, which is what unwedges the install button.
+ * **`installed` is left untouched.** It is only ever written inside the
+ * committed install transaction, so it always names the last install that
+ * actually landed — a failed install of release N does not touch the rows or
+ * profiles of a good N-1, and must not erase its record. Clearing `task_id` and
+ * `updates` is enough to make `isInstallInProgress` false and free the button.
  */
 export async function cleanHmmStatus(db: DbOrTx): Promise<void> {
 	await db
 		.update(legacyHmmStatus)
-		.set({ installed: null, task_id: null, updates: [] })
+		.set({ task_id: null, updates: [] })
 		.where(eq(legacyHmmStatus.id, HMM_STATUS_ID));
 }
