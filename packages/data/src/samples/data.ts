@@ -1,4 +1,5 @@
 import type {
+	GroupMinimal,
 	LabelNested,
 	LibraryType,
 	Quality,
@@ -733,6 +734,30 @@ export async function findSamples(
 			),
 		),
 	};
+}
+
+/**
+ * List the groups that own at least one sample, ordered by name.
+ *
+ * The samples group filter offers only these, so it never presents a group
+ * that would narrow the list to nothing.
+ */
+export async function listSampleGroups(db: Db): Promise<GroupMinimal[]> {
+	const rows = await db
+		.selectDistinct({
+			id: groups.id,
+			legacyId: groups.legacyId,
+			name: groups.name,
+		})
+		.from(groups)
+		.innerJoin(legacySamples, eq(legacySamples.group_id, groups.id))
+		.orderBy(asc(groups.name));
+
+	return rows.map((row) => ({
+		id: row.id,
+		legacyId: row.legacyId,
+		name: row.name,
+	}));
 }
 
 export async function getSample(db: Db, sampleId: number): Promise<Sample> {

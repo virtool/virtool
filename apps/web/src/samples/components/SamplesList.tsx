@@ -10,10 +10,9 @@ import QueryError from "@base/QueryError";
 import { nextSortDirection } from "@base/sorting";
 import { useListSelection } from "@base/useListSelection";
 import { ViewHeader, ViewHeaderTitle } from "@base/View";
-import { useListGroups } from "@groups/queries";
 import { useFetchLabels } from "@labels/queries";
 import type { DateFilter } from "@samples/dateFilter";
-import { useListSamples } from "@samples/queries";
+import { useListSampleGroups, useListSamples } from "@samples/queries";
 import type {
 	Sample,
 	SampleMinimal,
@@ -132,7 +131,7 @@ export default function SamplesList({
 		data: groups = [],
 		isPending: isPendingGroups,
 		isError: isErrorGroups,
-	} = useListGroups();
+	} = useListSampleGroups();
 
 	// The samples themselves are held, not just their ids: the selection outlives
 	// the page they were checked on, and the bulk actions need their labels. It

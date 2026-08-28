@@ -13,6 +13,7 @@ import {
 	findSamples,
 	getSample,
 	getSampleOwnerId,
+	listSampleGroups,
 	resolveSampleActor,
 	SampleFileDuplicateError,
 	SampleGroupNotFoundError,
@@ -182,6 +183,10 @@ export const findSamplesFn = createServerFn({ method: "GET" })
 			actor,
 		);
 	});
+
+export const listSampleGroupsFn = createServerFn({ method: "GET" })
+	.middleware([authenticated()])
+	.handler(async () => listSampleGroups(db));
 
 export const getSampleFn = createServerFn({ method: "GET" })
 	.middleware([authenticated()])

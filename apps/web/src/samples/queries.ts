@@ -4,6 +4,7 @@ import {
 	deleteSampleFn,
 	findSamplesFn,
 	getSampleFn,
+	listSampleGroupsFn,
 	updateSampleFn,
 	updateSampleRightsFn,
 } from "@server/samples/functions";
@@ -17,6 +18,7 @@ import {
 } from "@tanstack/react-query";
 import { fileQueryKeys } from "@uploads/keys";
 import type {
+	GroupMinimal,
 	LabelNested,
 	LibraryType,
 	Sample,
@@ -142,6 +144,19 @@ export function useListSamples(options: ListSamplesOptions) {
  */
 export function useSuspenseSamples(options: ListSamplesOptions) {
 	return useSuspenseQuery(samplesQueryOptions(options));
+}
+
+/**
+ * Fetch the groups that own at least one sample.
+ *
+ * The samples group filter lists only these, so it never offers a group that
+ * would empty the list.
+ */
+export function useListSampleGroups() {
+	return useQuery<GroupMinimal[]>({
+		queryKey: samplesQueryKeys.list(["groups"]),
+		queryFn: () => listSampleGroupsFn() as Promise<GroupMinimal[]>,
+	});
 }
 
 export function sampleQueryOptions(sampleId: number) {

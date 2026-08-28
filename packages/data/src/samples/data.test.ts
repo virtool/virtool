@@ -33,6 +33,7 @@ import {
 	findSamples,
 	getSample,
 	hasSampleRight,
+	listSampleGroups,
 	resolveSampleActor,
 	type SampleActor,
 	SampleFileDuplicateError,
@@ -1008,5 +1009,32 @@ describe("resolveSampleActor", () => {
 
 		const plain = await resolveSampleActor(db, ownerId);
 		expect(plain.isAdmin).toBe(false);
+	});
+});
+
+describe("listSampleGroups", () => {
+	it("returns only groups that own a sample, ordered by name", async () => {
+		const techs = await seedGroup(db, { name: "techs" });
+		const admins = await seedGroup(db, { name: "admins" });
+		await seedGroup(db, { name: "unused" });
+
+		await seedSample({ group_id: techs, name: "A" });
+		await seedSample({ group_id: admins, name: "B" });
+		await seedSample({ name: "Ungrouped" });
+
+		const result = await listSampleGroups(db);
+
+		expect(result.map((group) => group.name)).toEqual(["admins", "techs"]);
+	});
+
+	it("lists a group once when it owns several samples", async () => {
+		const techs = await seedGroup(db, { name: "techs" });
+		await seedSample({ group_id: techs, name: "A" });
+		await seedSample({ group_id: techs, name: "B" });
+
+		const result = await listSampleGroups(db);
+
+		expect(result).toHaveLength(1);
+		expect(result[0]?.name).toBe("techs");
 	});
 });

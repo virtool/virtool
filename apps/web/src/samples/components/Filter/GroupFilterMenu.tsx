@@ -27,8 +27,8 @@ export default function GroupFilterMenu({
 	return (
 		<FilterMenuContent onClear={onClear} showClear={selected.length > 0}>
 			{groups.length === 0 ? (
-				<p className="px-2 py-1.5 text-gray-500 text-sm">
-					No groups have been created.
+				<p className="m-0 px-2 py-1.5 text-gray-500 text-sm">
+					No groups have samples.
 				</p>
 			) : (
 				groups.map((group) => (
