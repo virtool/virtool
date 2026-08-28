@@ -37,3 +37,23 @@ Developer-facing types can describe the implementation directly:
 
 Pull request titles follow the same format so the pull request can be
 squash-merged into one well-formed commit.
+
+## Changesets
+
+Releases are driven by [Changesets](https://github.com/changesets/changesets),
+not by commit types. A pull request that changes a versioned workspace must add
+a changeset, or the `Changeset` check fails.
+
+Run `pnpm changeset`, select the workspaces to bump and the bump level (`patch`,
+`minor`, or `major`), and write a one-line summary. The command writes a Markdown
+file under `.changeset/`; commit it with your change. A shared `packages/*` bump
+cascades a `patch` into every app that depends on it, so you only declare the
+package you changed.
+
+For a change that ships nothing to users — a refactor, a test, or a CI tweak —
+record an empty changeset with `pnpm changeset --empty`.
+
+Merging to `main` opens an automated **Version Packages** pull request that
+applies the pending bumps and updates each `CHANGELOG.md`; merging that pull
+request tags the bumped workspaces and publishes the affected images. See
+[docs/ci.md](docs/ci.md#releases).

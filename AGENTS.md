@@ -235,8 +235,10 @@ type(scope): description
 - Title: lowercase, no period, under 72 characters.
 - Scope is optional. Allowed scope: `deps` (dependency changes). Do not scope
   by domain.
-- Releases are automated with semantic-release. Only `feat` (minor) and `fix`
-  (patch) trigger a release; use them for every user-visible change.
+- Releases are automated with Changesets. A pull request that changes a
+  versioned workspace must add a changeset (`pnpm changeset`), or CI fails; a
+  change that ships nothing to users records an empty one
+  (`pnpm changeset --empty`). See [docs/ci.md](docs/ci.md#releases).
 - Don't push or create PRs unless asked.
 - Never amend or force-push a pushed branch. Add follow-up commits instead.
 - Don't include a Test plan section in pull request descriptions or comments.

@@ -218,7 +218,7 @@ jobs:
         runs-on: ubuntu-24.04
         timeout-minutes: 45
         needs: [changes]
-        # Unconditional on `push`, deliberately. `release-tag` lists this job in
+        # Unconditional on `push`, deliberately. `release` lists this job in
         # `needs`, and running it on every push to main keeps that gate complete
         # without the skipped-dependency handling
         # (`if: always() && !contains(needs.*.result, 'failure')`) a filtered
@@ -341,7 +341,7 @@ jobs:
         runs-on: ubuntu-24.04
         timeout-minutes: 60
         needs: [changes]
-        # Unconditional on `push`, deliberately. `release-tag` lists this job in
+        # Unconditional on `push`, deliberately. `release` lists this job in
         # `needs`, and running it on every push to main keeps that gate complete
         # without the skipped-dependency handling
         # (`if: always() && !contains(needs.*.result, 'failure')`) a filtered
@@ -369,7 +369,7 @@ jobs:
         timeout-minutes: 45
         needs: [changes]
         # See the note on `build-pathoscope`: filtered on pull requests,
-        # unconditional on `push` so the `release-tag` gate stays complete.
+        # unconditional on `push` so the `release` gate stays complete.
         if: github.event_name == 'push' || needs.changes.outputs.pathoscope-crate == 'true'
         steps:
             - name: Checkout
@@ -447,7 +447,7 @@ jobs:
         timeout-minutes: 15
         needs: [changes]
         # See the note on `build-pathoscope`: filtered on pull requests,
-        # unconditional on `push` so the `release-tag` gate stays complete.
+        # unconditional on `push` so the `release` gate stays complete.
         if: github.event_name == 'push' || needs.changes.outputs.quality-crate == 'true'
         steps:
             - name: Checkout
@@ -532,10 +532,44 @@ jobs:
                   TZ: UTC
 
     # -------------------------------------------------------------------------
+    # Changeset (pull requests)
+    # -------------------------------------------------------------------------
+    # Fails a pull request that changes a versioned workspace without adding a
+    # changeset. `changeset status --since` exits 1 when a changed package has
+    # no changeset and passes cleanly when nothing versioned changed, so a
+    # docs- or CI-only pull request is unaffected. A change that intentionally
+    # ships nothing to users records that with an empty changeset
+    # (`pnpm changeset --empty`).
+    changeset-check:
+        name: Changeset
+        runs-on: ubuntu-24.04
+        timeout-minutes: 10
+        if: github.event_name == 'pull_request'
+        steps:
+            - name: Checkout
+              uses: actions/checkout@v7
+              with:
+                  fetch-depth: 0
+            - name: Setup
+              uses: ./.github/actions/setup
+            # `--since` resolves the base branch as a local ref; the pull-request
+            # checkout only brings the head, so fetch main first.
+            - name: Status
+              run: |
+                  git fetch --no-tags origin main
+                  pnpm changeset status --since=origin/main
+
+    # -------------------------------------------------------------------------
     # Release
     # -------------------------------------------------------------------------
-    release-tag:
-        name: Release / Tag
+    # On push to main, `changesets/action` maintains a "Version Packages" pull
+    # request while unreleased changesets exist; merging that pull request lands
+    # the version bumps with no changesets left, and the next push runs the
+    # `publish` script, which tags each bumped workspace (`@virtool/web@1.2.3`).
+    # `release-ghcr-matrix` reads the tagged packages and `release-ghcr`
+    # publishes only the deployable apps among them.
+    release:
+        name: Release
         runs-on: ubuntu-24.04
         timeout-minutes: 15
         needs:
@@ -556,24 +590,75 @@ jobs:
             ]
         if: github.event_name == 'push'
         outputs:
-            git-tag: ${{ steps.semantic.outputs.git-tag }}
+            published: ${{ steps.changesets.outputs.published }}
+            published-packages: ${{ steps.changesets.outputs.publishedPackages }}
         permissions:
             contents: write
+            pull-requests: write
         steps:
             - name: Checkout
               uses: actions/checkout@v7
               with:
-                  # semantic-release resolves the last release from the tags
-                  # reachable from the branch; the default shallow checkout has
-                  # none, and it would publish 1.0.0 over the live series.
+                  # `changeset tag` skips a package whose tag already exists, so
+                  # publishing needs the full tag history, not the default
+                  # shallow checkout.
                   fetch-depth: 0
             - name: Setup
               uses: ./.github/actions/setup
-            - name: Run semantic-release
-              id: semantic
+            - name: Changesets
+              id: changesets
+              uses: changesets/action@v1
+              with:
+                  version: pnpm changeset version
+                  publish: pnpm changeset tag
+                  title: "chore: version packages"
+                  commit: "chore: version packages"
               env:
                   GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-              run: pnpm exec semantic-release
+    release-ghcr-matrix:
+        name: Release / Matrix
+        runs-on: ubuntu-24.04
+        timeout-minutes: 5
+        needs: [release]
+        if: needs.release.outputs.published == 'true'
+        outputs:
+            include: ${{ steps.matrix.outputs.include }}
+            any: ${{ steps.matrix.outputs.any }}
+        steps:
+            # Map the tagged packages to image builds, dropping any that are not
+            # a deployable app (a shared `packages/*` bump tags a package but
+            # ships no image). Keep this map in step with the `build` and
+            # `release-ghcr` matrices.
+            - name: Build matrix
+              id: matrix
+              env:
+                  PUBLISHED: ${{ needs.release.outputs.published-packages }}
+              run: |
+                  include=$(jq -c '
+                    {
+                      "@virtool/web":                {image:"web",                target:"dist"},
+                      "@virtool/internal":           {image:"internal",           target:"internal"},
+                      "@virtool/create-sample":      {image:"create-sample",      target:"create-sample"},
+                      "@virtool/create-subtraction": {image:"create-subtraction", target:"create-subtraction"},
+                      "@virtool/pathoscope":         {image:"pathoscope",         target:"pathoscope"},
+                      "@virtool/nuvs":               {image:"nuvs",               target:"nuvs"}
+                    } as $apps
+                    | [ .[]
+                        | . as $p
+                        | $apps[$p.name] as $m
+                        | select($m != null)
+                        | $m + {
+                            version: $p.version,
+                            tag: ($p.name + "@" + $p.version),
+                            images: ("ghcr.io/virtool/" + $m.image)
+                          }
+                      ]' <<< "$PUBLISHED")
+                  echo "include=$include" >> "$GITHUB_OUTPUT"
+                  if [ "$(jq 'length' <<< "$include")" -gt 0 ]; then
+                      echo "any=true" >> "$GITHUB_OUTPUT"
+                  else
+                      echo "any=false" >> "$GITHUB_OUTPUT"
+                  fi
     release-ghcr:
         # No `${{ matrix.image }}` in the name: this job's `if` is false on
         # every PR (it only runs post-merge, on push to main), and GitHub
@@ -583,65 +668,29 @@ jobs:
         name: Release / GHCR
         runs-on: ubuntu-24.04
         timeout-minutes: 20
-        if: github.repository_owner == 'Virtool' && github.event_name == 'push' && needs.release-tag.outputs.git-tag != ''
-        needs: [release-tag]
+        needs: [release, release-ghcr-matrix]
+        if: github.repository_owner == 'Virtool' && needs.release-ghcr-matrix.outputs.any == 'true'
         permissions:
             contents: read
             packages: write
         strategy:
             fail-fast: false
-            # Every image shares the repo version and is published every
-            # release. Keep in step with the matrix in the build job.
+            # Only the deployable apps whose version bumped this release, built
+            # from `release-ghcr-matrix`. The pathoscope and nuvs legs read the
+            # gha cache under the same scope build-pathoscope and build-nuvs
+            # write it to (matching pathoscope-test's bowtie2 scope too), so the
+            # release reuses what those 45/60-minute jobs already produced
+            # rather than rebuilding the Rust crate, the bioinformatics tools
+            # and SPAdes from scratch inside this job's shared 20-minute timeout.
             matrix:
-                include:
-                    # Matrix values are evaluated before the job's `env`
-                    # context exists, so these are literal `ghcr.io`, not
-                    # `${{ env.REGISTRY }}`.
-                    - image: web
-                      target: dist
-                      workspace: apps/web
-                      images: ghcr.io/virtool/web
-                    - image: internal
-                      target: internal
-                      workspace: apps/internal
-                      images: ghcr.io/virtool/internal
-                    # These four names previously came from separate legacy
-                    # repositories shipping the Python workflow of the same
-                    # name; this repository's release supersedes them.
-                    - image: create-sample
-                      target: create-sample
-                      workspace: apps/create-sample
-                      images: ghcr.io/virtool/create-sample
-                    - image: create-subtraction
-                      target: create-subtraction
-                      workspace: apps/create-subtraction
-                      images: ghcr.io/virtool/create-subtraction
-                    # These two read their gha cache under the same scope
-                    # build-pathoscope and build-nuvs write it to (matching
-                    # pathoscope-test's bowtie2 scope too), so the release
-                    # reuses what those 45/60-minute jobs already produced
-                    # rather than rebuilding the Rust crate, the
-                    # bioinformatics tools and SPAdes from scratch inside this
-                    # job's shared 20-minute timeout.
-                    - image: pathoscope
-                      target: pathoscope
-                      workspace: apps/pathoscope
-                      images: ghcr.io/virtool/pathoscope
-                    - image: nuvs
-                      target: nuvs
-                      workspace: apps/nuvs
-                      images: ghcr.io/virtool/nuvs
+                include: ${{ fromJSON(needs.release-ghcr-matrix.outputs.include) }}
         steps:
             - name: Checkout
               uses: actions/checkout@v7
               with:
-                  ref: ${{ needs.release-tag.outputs.git-tag }}
+                  ref: ${{ matrix.tag }}
             - name: Setup Buildx
               uses: docker/setup-buildx-action@v3
-            - name: Setup pnpm
-              uses: pnpm/action-setup@v6
-            - name: Set app version from release tag
-              run: pnpm -C ${{ matrix.workspace }} version "${{ needs.release-tag.outputs.git-tag }}" --no-git-tag-version
             - name: Login
               uses: docker/login-action@v4
               with:
@@ -652,8 +701,13 @@ jobs:
               id: meta
               uses: docker/metadata-action@v6
               with:
-                  context: git
                   images: ${{ matrix.images }}
+                  # The app version is already set in the checked-out tag, so
+                  # tag the image with it directly rather than deriving from the
+                  # scoped git ref.
+                  tags: |
+                      type=raw,value=${{ matrix.version }}
+                      type=raw,value=latest
             - name: Build & Push
               uses: docker/build-push-action@v7
               with:
