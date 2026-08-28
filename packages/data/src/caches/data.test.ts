@@ -406,34 +406,18 @@ describe("evictLruCaches", () => {
 		expect(await remainingKeys()).toEqual(["b"]);
 	});
 
-	it("leaves entries inside the grace period alone", async () => {
-		const storage = new MemoryStorage();
-
-		await seedEntry(storage, {
-			key: "young",
-			index: 1,
-			size: 10,
-			age: 30 * 60,
-		});
-		await seedEntry(storage, { key: "old", index: 2, size: 10, age: 3 * HOUR });
-
-		await evictLruCaches(db, storage, testLogger, 15);
-
-		expect(await remainingKeys()).toEqual(["young"]);
-	});
-
-	// Deliberate: the grace period filters the candidates but not the total, so
-	// a store over budget on nothing but fresh entries frees less than it needs,
-	// or nothing at all.
-	it("frees nothing when everything over budget is inside the grace period", async () => {
+	// A cache is rederivable, so recency buys no exemption: when the store is
+	// over budget on nothing but freshly read entries, the least recently used
+	// of them still go.
+	it("evicts recently accessed entries when nothing older can free the overage", async () => {
 		const storage = new MemoryStorage();
 
 		await seedEntry(storage, { key: "a", index: 1, size: 10, age: 20 * 60 });
 		await seedEntry(storage, { key: "b", index: 2, size: 10, age: 10 * 60 });
 
-		await evictLruCaches(db, storage, testLogger, 5);
+		await evictLruCaches(db, storage, testLogger, 15);
 
-		expect(await remainingKeys()).toEqual(["a", "b"]);
+		expect(await remainingKeys()).toEqual(["b"]);
 	});
 
 	it("breaks a last_accessed_at tie on id", async () => {

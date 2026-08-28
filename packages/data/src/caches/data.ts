@@ -2,10 +2,9 @@ import type { JsonObject } from "@virtool/contracts";
 import type { Logger } from "@virtool/logger";
 import type { StorageBackend } from "@virtool/storage";
 import { cacheKey, StorageKeyNotFoundError } from "@virtool/storage";
-import { asc, eq, lt, sql } from "drizzle-orm";
+import { asc, eq, sql } from "drizzle-orm";
 import type { Db } from "../db/pg";
 import { type CacheRow, caches } from "../db/schema/caches";
-import { secondsAgo } from "../db/time";
 import { AppError } from "../errors";
 
 /**
@@ -25,15 +24,6 @@ const LAST_ACCESSED_REFRESH_INTERVAL_MS = 5 * 60 * 1000;
  * present, kept here beside the eviction logic it feeds.
  */
 export const CACHE_STORAGE_BUDGET_BYTES = 100 * 1024 ** 3;
-
-/**
- * How old a cache must be before budget pressure can evict it.
- *
- * A cache is written by one workflow and read by the next, and the two can be
- * an hour apart, so a fresh entry is off limits however little it has been
- * used.
- */
-const CACHE_EVICTION_GRACE_PERIOD_SECONDS = 60 * 60;
 
 /**
  * How many cache objects eviction deletes at once.
@@ -230,12 +220,11 @@ type EvictionCandidate = {
  * negative and so no row can satisfy the comparison against a non-positive
  * target.
  *
- * **The grace period filters the candidates but not the total**, deliberately.
- * A store that is over budget on entries younger than the grace period
- * therefore frees less than it needs, or nothing at all, and waits for them to
- * age. Widening the total to the filtered set instead would understate the
- * overage and evict too little; the fix is a shorter grace period, not a
- * different sum.
+ * Every row is a candidate, regardless of how recently it was read. A cache is
+ * rederivable, so a reader that finds its entry gone recomputes it; that makes
+ * the least-recently-used ordering the whole of the protection a fresh entry
+ * needs, since a just-written row sorts last and is reached only once the store
+ * is over budget on nothing else.
  */
 async function selectEvictionCandidates(
 	db: Db,
@@ -254,12 +243,6 @@ async function selectEvictionCandidates(
 				),
 		})
 		.from(caches)
-		.where(
-			lt(
-				caches.last_accessed_at,
-				secondsAgo(CACHE_EVICTION_GRACE_PERIOD_SECONDS),
-			),
-		)
 		.as("candidates");
 
 	return db
