@@ -57,7 +57,7 @@ export default function RecentSamples({
 			}
 			title="Recent Samples"
 		>
-			<DashboardCardBoundary noun="samples">
+			<DashboardCardBoundary key={mode} noun="samples">
 				<Suspense fallback={<DashboardCardLoading />}>
 					{mode === "viewed" ? (
 						<ViewedSamplesBody />

@@ -60,7 +60,7 @@ export default function RecentAnalyses({
 			}
 			title="Recent Analyses"
 		>
-			<DashboardCardBoundary noun="analyses">
+			<DashboardCardBoundary key={mode} noun="analyses">
 				<Suspense fallback={<DashboardCardLoading />}>
 					{mode === "viewed" ? (
 						<ViewedAnalysesBody />

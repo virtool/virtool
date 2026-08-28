@@ -749,14 +749,12 @@ export async function recordSampleView(
 	userId: number,
 	sampleId: number,
 ): Promise<void> {
-	const viewedAt = new Date();
-
 	await db
 		.insert(sampleViews)
-		.values({ user_id: userId, sample_id: sampleId, viewed_at: viewedAt })
+		.values({ user_id: userId, sample_id: sampleId, viewed_at: sql`now()` })
 		.onConflictDoUpdate({
 			target: [sampleViews.user_id, sampleViews.sample_id],
-			set: { viewed_at: viewedAt },
+			set: { viewed_at: sql`now()` },
 		});
 }
 

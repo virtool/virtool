@@ -16,7 +16,7 @@ import type {
 import { isJobStateTerminal } from "@virtool/contracts";
 import type { Logger } from "@virtool/logger";
 import { deleteKeys, type StorageBackend } from "@virtool/storage";
-import { and, asc, count, desc, eq, inArray, type SQL } from "drizzle-orm";
+import { and, asc, count, desc, eq, inArray, type SQL, sql } from "drizzle-orm";
 import type { Db, DbOrTx } from "../db/pg";
 import { takeFirstOrThrow } from "../db/rows";
 import {
@@ -428,14 +428,12 @@ export async function recordAnalysisView(
 	userId: number,
 	analysisId: number,
 ): Promise<void> {
-	const viewedAt = new Date();
-
 	await db
 		.insert(analysisViews)
-		.values({ user_id: userId, analysis_id: analysisId, viewed_at: viewedAt })
+		.values({ user_id: userId, analysis_id: analysisId, viewed_at: sql`now()` })
 		.onConflictDoUpdate({
 			target: [analysisViews.user_id, analysisViews.analysis_id],
-			set: { viewed_at: viewedAt },
+			set: { viewed_at: sql`now()` },
 		});
 }
 
