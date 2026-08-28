@@ -159,7 +159,7 @@ importers:
     dependencies:
       '@hono/node-server':
         specifier: ^2.1.0
-        version: 2.1.0(hono@4.13.0)
+        version: 2.1.0(hono@4.13.5)
       '@sentry/node':
         specifier: ^10.70.0
         version: 10.70.0(@opentelemetry/core@2.10.0(@opentelemetry/api@1.9.1))(supports-color@10.2.2)
@@ -191,8 +191,8 @@ importers:
         specifier: ^0.45.2
         version: 0.45.2(@opentelemetry/api@1.9.1)(postgres@3.4.9)
       hono:
-        specifier: ^4.13.0
-        version: 4.13.0
+        specifier: ^4.13.5
+        version: 4.13.5
       pino:
         specifier: ^10.1.0
         version: 10.3.1
@@ -6496,8 +6496,8 @@ packages:
   highlight.js@10.7.3:
     resolution: {integrity: sha512-tzcUFauisWKNHaRkN4Wjl/ZA07gENAjFl3J/c480dprkGTg5EQstgaNFqBfUqCq54kZRIEcreTsAgF/m2quD7A==}
 
-  hono@4.13.0:
-    resolution: {integrity: sha512-jhunvfHWxd7J5EFfSgH4xsYJzSe/lfqbUCxiyyeaQasUsXeEHXtzVid+7EOGByc5JnFa23SSFL3Y2RV/z1T+eQ==}
+  hono@4.13.5:
+    resolution: {integrity: sha512-O6+/eCYRkzzzy0rPWwKLiGBR1nFuUPZynnwjxN1MBA62NNqbT0wQEzQyK2gSO5yDIDB336sXQleAhOHrzlYyKw==}
     engines: {node: '>=16.9.0'}
 
   hook-std@4.0.0:
@@ -10632,9 +10632,9 @@ snapshots:
       protobufjs: 7.6.5
       yargs: 17.7.3
 
-  '@hono/node-server@2.1.0(hono@4.13.0)':
+  '@hono/node-server@2.1.0(hono@4.13.5)':
     dependencies:
-      hono: 4.13.0
+      hono: 4.13.5
 
   '@hookform/resolvers@5.9.1(@standard-schema/spec@1.1.0)(react-hook-form@7.86.0(react@19.2.8))(zod@4.4.3)':
     dependencies:
@@ -15024,7 +15024,7 @@ snapshots:
 
   highlight.js@10.7.3: {}
 
-  hono@4.13.0: {}
+  hono@4.13.5: {}
 
   hook-std@4.0.0: {}
 
