@@ -406,9 +406,6 @@ describe("evictLruCaches", () => {
 		expect(await remainingKeys()).toEqual(["b"]);
 	});
 
-	// A cache is rederivable, so recency buys no exemption: when the store is
-	// over budget on nothing but freshly read entries, the least recently used
-	// of them still go.
 	it("evicts recently accessed entries when nothing older can free the overage", async () => {
 		const storage = new MemoryStorage();
 

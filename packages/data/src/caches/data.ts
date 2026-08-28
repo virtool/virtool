@@ -220,11 +220,7 @@ type EvictionCandidate = {
  * negative and so no row can satisfy the comparison against a non-positive
  * target.
  *
- * Every row is a candidate, regardless of how recently it was read. A cache is
- * rederivable, so a reader that finds its entry gone recomputes it; that makes
- * the least-recently-used ordering the whole of the protection a fresh entry
- * needs, since a just-written row sorts last and is reached only once the store
- * is over budget on nothing else.
+ * Recent rows remain eligible so eviction can always restore the budget.
  */
 async function selectEvictionCandidates(
 	db: Db,
