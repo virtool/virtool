@@ -1,4 +1,4 @@
-import type { AnalysisFileManifest } from "@virtool/contracts";
+import type { AnalysisFileManifest, StoredJobClaim } from "@virtool/contracts";
 import { seedUser } from "@virtool/data/auth/test/fixtures";
 import type { Db } from "@virtool/data/db/pg";
 import { analyses, analysisFiles } from "@virtool/data/db/schema/analyses";
@@ -88,6 +88,17 @@ beforeEach(async () => {
 
 async function* body(text: string): AsyncIterable<Uint8Array> {
 	yield new TextEncoder().encode(text);
+}
+
+function claim(workflowVersion: string): StoredJobClaim {
+	return {
+		runner_id: "runner",
+		mem: 8,
+		cpu: 2,
+		image: "virtool/nuvs:1.0.0",
+		runtime_version: "1.0.0",
+		workflow_version: workflowVersion,
+	};
 }
 
 async function seedSample(): Promise<number> {
@@ -253,6 +264,52 @@ describe("handleFinalizeAnalysis", () => {
 			.where(eq(analyses.id, analysisId));
 
 		expect(analysis?.workflowVersion).toBeNull();
+	});
+
+	it("recovers the version from the job claim when the request omits it", async () => {
+		const analysisId = await seedAnalysis();
+
+		await db
+			.update(jobs)
+			.set({ claim: claim("4.5.6") })
+			.where(eq(jobs.id, jobId));
+
+		await finalize(analysisId, []);
+
+		const [analysis] = await db
+			.select({ workflowVersion: analyses.workflow_version })
+			.from(analyses)
+			.where(eq(analyses.id, analysisId));
+
+		expect(analysis?.workflowVersion).toBe("4.5.6");
+	});
+
+	it("keeps the request version over the claim when both carry one", async () => {
+		const analysisId = await seedAnalysis();
+
+		await db
+			.update(jobs)
+			.set({ claim: claim("1.0.0") })
+			.where(eq(jobs.id, jobId));
+
+		const response = await handleFinalizeAnalysis(
+			deps,
+			patch(analysisId, {
+				results: RESULTS,
+				files: [],
+				workflowVersion: "4.5.6",
+			}),
+			String(analysisId),
+		);
+
+		expect(response.status).toBe(200);
+
+		const [analysis] = await db
+			.select({ workflowVersion: analyses.workflow_version })
+			.from(analyses)
+			.where(eq(analyses.id, analysisId));
+
+		expect(analysis?.workflowVersion).toBe("4.5.6");
 	});
 
 	// `analysis_files.name_on_disk` is unique across the whole table, so it cannot

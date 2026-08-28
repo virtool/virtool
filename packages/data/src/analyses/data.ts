@@ -819,6 +819,12 @@ export async function createAnalysis(
  * The sample update is emitted alongside the analysis one because a sample's
  * workflow tags are derived from its analyses — an analysis flipping ready
  * changes the row every sample list draws.
+ *
+ * A worker that omits `workflowVersion` — an older image predating the field —
+ * has its version recovered from the job's claim, the same source and non-empty
+ * semantics the one-time backfill migration uses. This keeps the provenance for
+ * an analysis that finalizes after that migration has already run, which the
+ * migration's single pass would otherwise miss.
  */
 export async function finalizeAnalysis(
 	db: Db,
@@ -834,7 +840,9 @@ export async function finalizeAnalysis(
 			.set({
 				ready: true,
 				results: values.results,
-				workflow_version: values.workflowVersion ?? null,
+				workflow_version:
+					values.workflowVersion ??
+					sql`(select nullif(${jobs.claim} ->> 'workflow_version', '') from ${jobs} where ${jobs.id} = ${jobId})`,
 				updated_at: now,
 			})
 			.where(
