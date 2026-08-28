@@ -40,8 +40,8 @@ docker build --target pathoscope .
 
 ## Path-filtered jobs
 
-Most CI jobs run for every pull request. Four expensive jobs use the `changes`
-job in `.github/workflows/ci.yaml` to run only when their inputs change:
+Most CI jobs run for every pull request. Five jobs use the `changes` job in
+`.github/workflows/ci.yaml` to run only when their inputs change:
 
 | Filter | Job | Inputs |
 | --- | --- | --- |
@@ -49,13 +49,18 @@ job in `.github/workflows/ci.yaml` to run only when their inputs change:
 | `quality-crate` | `quality-test` | The quality-statistics Rust crate |
 | `pathoscope-image` | `build-pathoscope` | The Pathoscope app, its Rust crate, and everything copied into its image |
 | `nuvs-image` | `build-nuvs` | The Nuvs app and everything copied into its image |
+| `nuvs-app` | `nuvs-test` | The Nuvs app and the workspace packages it imports |
 
-Keep a separate filter for each job. The crate jobs run Cargo and do not read
-TypeScript sources. The image jobs bundle different apps and have different
-Docker build inputs: Pathoscope copies `packages/pathoscope-core`, while Nuvs
-does not. Combining the filters would run the libclang-and-Cargo job for
-unrelated workspace changes and rebuild each image for inputs used only by the
-other image.
+The first four are expensive outliers — libclang, Cargo, and from-source
+bioinformatics compiles that would otherwise run on every PR. `nuvs-test` is
+cheap mocked vitest, filtered only for parity with the other workflow apps.
+
+Keep a separate filter for each job. The crate jobs run Cargo, not TypeScript.
+The image jobs copy different packages: Pathoscope copies
+`packages/pathoscope-core`; Nuvs does not. `nuvs-app` is narrower than
+`nuvs-image` — no `Dockerfile` or `.dockerignore`, and only the packages Nuvs
+imports (so no `data`, `ncbi`, or `service`). Sharing one filter would rebuild
+each image, and rerun Cargo, for inputs it does not use.
 
 Extend a filter in the same change that gives its job a new input. Every path a
 workflow image's Dockerfile stages `COPY` must appear under that image's

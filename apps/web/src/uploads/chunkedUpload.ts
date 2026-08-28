@@ -26,10 +26,9 @@ export type ChunkedInit = {
 	uploadId: number;
 	url: string;
 	blockSize: number;
+	/** How many blocks are PUT at once. */
+	concurrency: number;
 };
-
-/** How many blocks are PUT at once. */
-const BLOCK_CONCURRENCY = 4;
 
 /** How many times a single block PUT is retried before the upload fails. */
 const BLOCK_MAX_ATTEMPTS = 3;
@@ -185,14 +184,15 @@ function putBlockList(
 }
 
 /**
- * Stage every block, PUTting up to {@link BLOCK_CONCURRENCY} at once and summing
- * their progress across the whole file.
+ * Stage every block, PUTting up to `concurrency` at once and summing their
+ * progress across the whole file.
  */
 async function stageBlocks(
 	url: string,
 	file: File,
 	blockSize: number,
 	blockCount: number,
+	concurrency: number,
 	onProgress: ((progress: UploadProgress) => void) | undefined,
 	signal: AbortSignal | undefined,
 ): Promise<void> {
@@ -268,7 +268,7 @@ async function stageBlocks(
 
 	try {
 		await Promise.all(
-			Array.from({ length: Math.min(BLOCK_CONCURRENCY, blockCount) }, worker),
+			Array.from({ length: Math.min(concurrency, blockCount) }, worker),
 		);
 	} finally {
 		signal?.removeEventListener("abort", onExternalAbort);
@@ -288,12 +288,20 @@ export async function uploadBlocks(
 	onProgress?: (progress: UploadProgress) => void,
 	signal?: AbortSignal,
 ): Promise<Upload> {
-	const { uploadId, url, blockSize } = init;
+	const { uploadId, url, blockSize, concurrency } = init;
 
 	try {
 		const blockCount = Math.ceil(file.size / blockSize);
 
-		await stageBlocks(url, file, blockSize, blockCount, onProgress, signal);
+		await stageBlocks(
+			url,
+			file,
+			blockSize,
+			blockCount,
+			concurrency,
+			onProgress,
+			signal,
+		);
 		await putBlockList(url, blockCount, file.type, signal);
 
 		// The server marks the row ready and cannot un-mark it, so once finalize is

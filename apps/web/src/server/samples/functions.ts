@@ -14,6 +14,7 @@ import {
 	findSamples,
 	getSample,
 	getSampleOwnerId,
+	listSampleGroups,
 	recordSampleView,
 	resolveSampleActor,
 	SampleFileDuplicateError,
@@ -55,6 +56,7 @@ const findSamplesSchema = z.object({
 	labels: z.array(rowIdSchema).default([]),
 	workflows: z.array(z.string()).default([]),
 	users: z.array(rowIdSchema).default([]),
+	groups: z.array(rowIdSchema).default([]),
 	createdAfter: calendarDateSchema.optional(),
 	createdBefore: calendarDateSchema.optional(),
 	// A direction without a column falls back to the creation date below, so a
@@ -171,6 +173,7 @@ export const findSamplesFn = createServerFn({ method: "GET" })
 				labels: data.labels,
 				users: data.users,
 				workflows: data.workflows,
+				groups: data.groups,
 				createdAfter: data.createdAfter
 					? startOfUtcDay(data.createdAfter)
 					: null,
@@ -210,6 +213,13 @@ export const recordSampleViewFn = createServerFn({ method: "POST" })
 		} catch (err) {
 			return rethrowAsHttp(err);
 		}
+	});
+
+export const listSampleGroupsFn = createServerFn({ method: "GET" })
+	.middleware([authenticated()])
+	.handler(async ({ context }) => {
+		const actor = await resolveSampleActor(db, context.session.userId);
+		return listSampleGroups(db, actor);
 	});
 
 export const getSampleFn = createServerFn({ method: "GET" })

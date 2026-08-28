@@ -240,9 +240,9 @@ shutdown contracts are documented in
 Tests run as one Node Vitest project against a Postgres testcontainer. The
 project owns the shared container definition in `src/db/test/globalSetup.ts`;
 the web server project and `@virtool/internal` import that
-setup rather than defining another container. The project has its own CI job
-and is excluded from `Packages / Test`. Place tests beside their source as
-`*.test.ts`.
+setup rather than defining another container. The project runs in the shared
+`Data & Storage / Test` CI job and is excluded from `Packages / Test`. Place
+tests beside their source as `*.test.ts`.
 
 Call `createTestDatabase()` from `@virtool/data/db/test/fixtures` once per test
 file and drop it in `afterAll`. It creates an isolated database, applies the
@@ -252,7 +252,7 @@ both `emit` and `createEmitter` so fixture setup can still install the emitter.
 
 The shared container uses `withReuse()` and deliberately has no teardown, so
 local suites reuse it. Remove it with `docker rm -f` when it is no longer
-wanted; separate CI jobs still start separate containers.
+wanted; each CI job still starts its own containers.
 
 ## Commands
 

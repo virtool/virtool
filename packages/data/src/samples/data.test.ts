@@ -35,6 +35,7 @@ import {
 	findSamples,
 	getSample,
 	hasSampleRight,
+	listSampleGroups,
 	recordSampleView,
 	resolveSampleActor,
 	type SampleActor,
@@ -240,6 +241,7 @@ describe("findSamples", () => {
 		labels: [],
 		users: [],
 		workflows: [],
+		groups: [],
 		createdAfter: null,
 		createdBefore: null,
 	};
@@ -328,6 +330,20 @@ describe("findSamples", () => {
 		);
 
 		expect(result.items.map((s) => s.name)).toEqual(["Theirs"]);
+	});
+
+	it("filters by group", async () => {
+		const groupId = await seedGroup(db, { name: "techs" });
+		await seedSample({ group_id: groupId, name: "Grouped" });
+		await seedSample({ name: "Ungrouped" });
+
+		const result = await findSamples(
+			db,
+			{ ...options, groups: [groupId] },
+			adminActor,
+		);
+
+		expect(result.items.map((s) => s.name)).toEqual(["Grouped"]);
 	});
 
 	it("filters by a half-open created range", async () => {
@@ -505,6 +521,7 @@ describe("workflow tags and filtering", () => {
 				labels: [],
 				users: [],
 				workflows: [],
+				groups: [],
 				createdAfter: null,
 				createdBefore: null,
 			},
@@ -534,6 +551,7 @@ describe("workflow tags and filtering", () => {
 				labels: [],
 				users: [],
 				workflows: ["nuvs:ready"],
+				groups: [],
 				createdAfter: null,
 				createdBefore: null,
 			},
@@ -556,6 +574,7 @@ describe("workflow tags and filtering", () => {
 				labels: [],
 				users: [],
 				workflows: ["bogus:none"],
+				groups: [],
 				createdAfter: null,
 				createdBefore: null,
 			},
@@ -1096,5 +1115,46 @@ describe("findRecentlyViewedSamples", () => {
 
 		expect(result.items.map((sample) => sample.name)).toEqual(["Second"]);
 		expect(result.foundCount).toBe(2);
+	});
+});
+
+describe("listSampleGroups", () => {
+	it("returns only groups that own a sample, ordered by name", async () => {
+		const techs = await seedGroup(db, { name: "techs" });
+		const admins = await seedGroup(db, { name: "admins" });
+		await seedGroup(db, { name: "unused" });
+
+		await seedSample({ group_id: techs, name: "A" });
+		await seedSample({ group_id: admins, name: "B" });
+		await seedSample({ name: "Ungrouped" });
+
+		const result = await listSampleGroups(db, adminActor);
+
+		expect(result.map((group) => group.name)).toEqual(["admins", "techs"]);
+	});
+
+	it("lists a group once when it owns several samples", async () => {
+		const techs = await seedGroup(db, { name: "techs" });
+		await seedSample({ group_id: techs, name: "A" });
+		await seedSample({ group_id: techs, name: "B" });
+
+		const result = await listSampleGroups(db, adminActor);
+
+		expect(result).toHaveLength(1);
+		expect(result[0]?.name).toBe("techs");
+	});
+
+	it("omits groups whose samples the actor cannot read", async () => {
+		const other = await seedUser(db, { handle: "other" });
+		const mine = await seedGroup(db, { name: "mine" });
+		const theirs = await seedGroup(db, { name: "theirs" });
+
+		await seedSample({ user_id: ownerId, group_id: mine, name: "Mine" });
+		await seedSample({ user_id: other, group_id: theirs, name: "Theirs" });
+
+		const actor = await resolveSampleActor(db, ownerId);
+		const result = await listSampleGroups(db, actor);
+
+		expect(result.map((group) => group.name)).toEqual(["mine"]);
 	});
 });

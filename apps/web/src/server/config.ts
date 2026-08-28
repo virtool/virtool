@@ -5,6 +5,9 @@ import { z } from "zod";
 /** postgres-js pool size when `VT_POSTGRES_POOL_MAX` is unset. */
 const DEFAULT_POSTGRES_POOL_MAX = 10;
 
+/** How many blocks a chunked upload PUTs at once when unconfigured. */
+const DEFAULT_UPLOADS_CHUNKED_CONCURRENCY = 8;
+
 /** Server-side configuration parsed from process.env. */
 export type ServerConfig = {
 	postgresUrl: string;
@@ -35,6 +38,12 @@ export type ServerConfig = {
 	 * rollback path.
 	 */
 	uploadsChunked: boolean;
+	/**
+	 * How many blocks a chunked upload PUTs at once. Higher values raise
+	 * throughput on a high-latency path at the cost of more concurrent requests.
+	 * The server passes it to the client at upload init.
+	 */
+	uploadsChunkedConcurrency: number;
 };
 
 const ServerEnv = z.object({
@@ -100,6 +109,12 @@ const ServerEnv = z.object({
 				(value) => value === "1" || value === "true" || value === "yes",
 			),
 	),
+	// How many blocks a chunked upload PUTs at once. Unset — or empty, which
+	// deployment tooling injects — applies the default.
+	VT_UPLOADS_CHUNKED_CONCURRENCY: z.preprocess(
+		(value) => (value === "" ? undefined : value),
+		z.coerce.number().int().positive().optional(),
+	),
 });
 
 type StorageEnv = z.infer<typeof ServerEnv>;
@@ -112,6 +127,8 @@ const ServerEnvSchema = ServerEnv.transform((raw, ctx) => ({
 	storage: buildStorage(raw, ctx),
 	downloadMode: raw.VT_STORAGE_DOWNLOAD_MODE,
 	uploadsChunked: raw.VT_UPLOADS_CHUNKED,
+	uploadsChunkedConcurrency:
+		raw.VT_UPLOADS_CHUNKED_CONCURRENCY ?? DEFAULT_UPLOADS_CHUNKED_CONCURRENCY,
 }));
 
 // Unset and empty are the same thing for storage variables. Deployment tooling

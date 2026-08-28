@@ -1,4 +1,5 @@
 import type {
+	GroupMinimal,
 	LabelNested,
 	LibraryType,
 	Quality,
@@ -83,6 +84,7 @@ export type FindSamplesOptions = {
 	labels: number[];
 	users: number[];
 	workflows: string[];
+	groups: number[];
 
 	/** The column and direction to order by, or undefined for newest first. */
 	sort?: SampleSort;
@@ -658,6 +660,10 @@ export async function findSamples(
 		);
 	}
 
+	if (options.groups.length > 0) {
+		narrowing.push(inArray(legacySamples.group_id, options.groups));
+	}
+
 	if (options.createdAfter) {
 		narrowing.push(gte(legacySamples.created_at, options.createdAfter));
 	}
@@ -821,6 +827,28 @@ export async function findRecentlyViewedSamples(
 			),
 		),
 	};
+}
+
+export async function listSampleGroups(
+	db: Db,
+	actor: SampleActor,
+): Promise<GroupMinimal[]> {
+	const rows = await db
+		.selectDistinct({
+			id: groups.id,
+			legacyId: groups.legacyId,
+			name: groups.name,
+		})
+		.from(groups)
+		.innerJoin(legacySamples, eq(legacySamples.group_id, groups.id))
+		.where(sampleReadableFilter(actor))
+		.orderBy(asc(groups.name));
+
+	return rows.map((row) => ({
+		id: row.id,
+		legacyId: row.legacyId,
+		name: row.name,
+	}));
 }
 
 export async function getSample(db: Db, sampleId: number): Promise<Sample> {

@@ -41,8 +41,8 @@ proxy in the path trips and no bytes pass through the server.
 
 The `unit` Vitest project covers behavior testable with `MemoryStorage`. The
 `integration` project exercises the S3 and Azure backends against real Garage
-and Azurite containers and has its own CI job. Place tests beside their source
-as `*.test.ts`.
+and Azurite containers and runs in the shared `Data & Storage / Test` CI job.
+Place tests beside their source as `*.test.ts`.
 
 ## Commands
 

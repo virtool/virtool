@@ -13,7 +13,7 @@
 	},
 	"dependencies": {
 		"@hono/node-server": "^2.1.0",
-		"@sentry/node": "^10.70.0",
+		"@sentry/node": "^10.71.0",
 		"@virtool/archive": "workspace:*",
 		"@virtool/contracts": "workspace:*",
 		"@virtool/data": "workspace:*",
@@ -23,7 +23,7 @@
 		"@virtool/sqlite": "workspace:*",
 		"@virtool/storage": "workspace:*",
 		"drizzle-orm": "^0.45.2",
-		"hono": "^4.13.0",
+		"hono": "^4.13.5",
 		"pino": "^10.1.0",
 		"postgres": "^3.4.9",
 		"prom-client": "^15.1.3",

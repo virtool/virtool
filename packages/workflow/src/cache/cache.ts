@@ -31,7 +31,7 @@ import { join } from "node:path";
 import { extractTarToDir, writePathAsTar } from "@virtool/archive/tar";
 import { Cache, CacheRegistered } from "@virtool/contracts";
 import type { StorageBackend } from "@virtool/storage";
-import { cacheKey } from "@virtool/storage";
+import { cacheKey, StorageKeyNotFoundError } from "@virtool/storage";
 import type { JobsApiClient } from "../client/client";
 import { NotFoundError } from "../client/errors";
 import { downloadToPath, uploadFromPath } from "../files/transfer";
@@ -131,7 +131,15 @@ export function createWorkflowCache({
 			return withStaging(async (staging) => {
 				const archivePath = join(staging, "cache.tar");
 
-				await downloadToPath(storage, cache.storageKey, archivePath);
+				try {
+					await downloadToPath(storage, cache.storageKey, archivePath);
+				} catch (err) {
+					if (err instanceof StorageKeyNotFoundError) {
+						return null;
+					}
+
+					throw err;
+				}
 
 				return extractTarToDir(archivePath, directory);
 			});

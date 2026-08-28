@@ -70,9 +70,11 @@ export default function UserFilterMenu({
 			{isError && !users ? (
 				<QueryError noun="users" />
 			) : isPending ? (
-				<p className="px-2 py-1.5 text-gray-500 text-sm">Loading users...</p>
+				<p className="m-0 px-2 py-1.5 text-gray-500 text-sm">
+					Loading users...
+				</p>
 			) : matches.length === 0 ? (
-				<p className="px-2 py-1.5 text-gray-500 text-sm">No users found.</p>
+				<p className="m-0 px-2 py-1.5 text-gray-500 text-sm">No users found.</p>
 			) : (
 				<>
 					{self && (

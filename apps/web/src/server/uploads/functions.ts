@@ -16,7 +16,6 @@ import {
 	UploadReservedError,
 	UploadSizeMismatchError,
 } from "@virtool/data/uploads/data";
-import { STORAGE_CHUNK_SIZE } from "@virtool/storage";
 import { z } from "zod";
 import { authenticated, permission } from "../auth/policy";
 import { db, storage } from "../composition";
@@ -32,6 +31,11 @@ const UPLOAD_SAS_TTL_SECONDS = 6 * 60 * 60;
 const AZURE_MAX_BLOCK_COUNT = 50_000;
 const AZURE_MAX_BLOCK_SIZE = 4_000 * 1024 * 1024;
 const AZURE_MAX_BLOB_SIZE = AZURE_MAX_BLOCK_COUNT * AZURE_MAX_BLOCK_SIZE;
+
+// The smallest block a chunked upload cuts a file into. Larger blocks mean
+// fewer requests per file; the block only grows past this floor for a file too
+// large to fit in the block-count limit at this size (~781 GiB and up).
+const MIN_UPLOAD_BLOCK_SIZE = 16 * 1024 * 1024;
 
 // The upload endpoint itself is not a server function — it streams a multi-GB
 // request body and is posted to with XMLHttpRequest so the client can report
@@ -115,8 +119,8 @@ const initUploadSchema = z.object({
 function getUploadBlockSize(size: number): number {
 	const minimumBlockSize = Math.ceil(size / AZURE_MAX_BLOCK_COUNT);
 	return Math.max(
-		STORAGE_CHUNK_SIZE,
-		Math.ceil(minimumBlockSize / STORAGE_CHUNK_SIZE) * STORAGE_CHUNK_SIZE,
+		MIN_UPLOAD_BLOCK_SIZE,
+		Math.ceil(minimumBlockSize / MIN_UPLOAD_BLOCK_SIZE) * MIN_UPLOAD_BLOCK_SIZE,
 	);
 }
 
@@ -130,8 +134,9 @@ function getUploadBlockSize(size: number): number {
  * it returns `proxied` and the client falls back to the `POST /uploads` route.
  * A `proxied` result reserves nothing — that route creates its own row.
  *
- * `blockSize` is the block size the client cuts the file into. After committing
- * the block list the client calls {@link finalizeChunkedUploadFn}.
+ * `blockSize` is the block size the client cuts the file into and `concurrency`
+ * is how many blocks it PUTs at once, the latter from configuration. After
+ * committing the block list the client calls {@link finalizeChunkedUploadFn}.
  */
 export const initUploadFn = createServerFn({ method: "POST" })
 	.middleware([permission("upload_file")])
@@ -175,6 +180,7 @@ export const initUploadFn = createServerFn({ method: "POST" })
 			uploadId: upload.id,
 			url,
 			blockSize: getUploadBlockSize(data.size),
+			concurrency: config.uploadsChunkedConcurrency,
 		};
 	});
 
