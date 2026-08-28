@@ -14,7 +14,7 @@
 		"typecheck": "tsc --noEmit"
 	},
 	"dependencies": {
-		"@sentry/node": "^10.70.0",
+		"@sentry/node": "^10.71.0",
 		"@virtool/archive": "workspace:*",
 		"@virtool/contracts": "workspace:*",
 		"@virtool/logger": "workspace:*",
@@ -25,7 +25,7 @@
 		"zod": "^4.3.6"
 	},
 	"devDependencies": {
-		"@types/node": "^26.2.0",
+		"@types/node": "^26.4.0",
 		"vitest": "^4.1.11"
 	}
 }
