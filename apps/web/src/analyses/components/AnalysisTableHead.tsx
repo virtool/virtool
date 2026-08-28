@@ -35,6 +35,7 @@ export default function AnalysisTableHead({
 			>
 				Workflow
 			</SortableHead>
+			<th scope="col">Version</th>
 			<th scope="col">Reference</th>
 			<th scope="col">Subtractions</th>
 			<SortableHead

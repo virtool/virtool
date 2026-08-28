@@ -10,7 +10,7 @@ import { getWorkflowDisplayName } from "@app/utils";
 import Link from "@base/Link";
 import type { AnalysisMinimal } from "@virtool/contracts";
 import { ChartArea } from "lucide-react";
-import { Suspense, useState } from "react";
+import { Suspense } from "react";
 import { DASHBOARD_ITEM_COUNT } from "../constants";
 import DashboardCard, {
 	DashboardCardBoundary,
@@ -27,6 +27,12 @@ import DashboardTable, {
 import RecentModeToggle, { type RecentMode } from "./RecentModeToggle";
 
 type RecentAnalysesProps = {
+	/** Which set to list: what the user viewed or created. */
+	mode: RecentMode;
+
+	/** Switches between the viewed and created sets. */
+	onModeChange: (mode: RecentMode) => void;
+
 	/** The id of the signed-in user, whose started analyses the "created" tab lists. */
 	userId: number;
 };
@@ -38,16 +44,18 @@ type RecentAnalysesProps = {
  * Each row links to the analysis itself; there is no global analyses list to
  * offer a "view all" for.
  */
-export default function RecentAnalyses({ userId }: RecentAnalysesProps) {
-	const [mode, setMode] = useState<RecentMode>("viewed");
-
+export default function RecentAnalyses({
+	mode,
+	onModeChange,
+	userId,
+}: RecentAnalysesProps) {
 	return (
 		<DashboardCard
 			action={
 				<RecentModeToggle
 					aria-label="Which analyses to show"
 					mode={mode}
-					onChange={setMode}
+					onChange={onModeChange}
 				/>
 			}
 			title="Recent Analyses"
@@ -81,7 +89,7 @@ function ViewedAnalysesBody() {
 	return <AnalysesTable analyses={data.items} remaining={data.foundCount} />;
 }
 
-function CreatedAnalysesBody({ userId }: RecentAnalysesProps) {
+function CreatedAnalysesBody({ userId }: { userId: number }) {
 	const { data } = useSuspenseRecentAnalyses(userId, DASHBOARD_ITEM_COUNT);
 
 	if (data.items.length === 0) {
@@ -109,31 +117,33 @@ function AnalysesTable({ analyses, remaining }: AnalysesTableProps) {
 	const hidden = remaining - analyses.length;
 
 	return (
-		<DashboardTable labels={["Workflow", "Sample", "User", "Created"]}>
+		<DashboardTable
+			labels={["Workflow", "Version", "Sample", "User", "Created"]}
+		>
 			{analyses.map((analysis) => (
 				<DashboardTableRow key={analysis.id}>
 					<DashboardTableCell>
-						<div className="min-w-0">
-							{checkSupportedWorkflow(analysis.workflow) ? (
-								<Link
-									className="font-medium truncate"
-									params={{
-										analysisId: String(analysis.id),
-										sampleId: String(analysis.sample.id),
-									}}
-									to="/samples/$sampleId/analyses/$analysisId"
-								>
-									{getWorkflowDisplayName(analysis.workflow)}
-								</Link>
-							) : (
-								<span className="font-medium truncate">
-									{getWorkflowDisplayName(analysis.workflow)}
-								</span>
-							)}
-							<div className="text-gray-600 text-sm truncate">
-								{getWorkflowVersionLabel(analysis.workflowVersion)}
-							</div>
-						</div>
+						{checkSupportedWorkflow(analysis.workflow) ? (
+							<Link
+								className="text-lg font-medium truncate"
+								params={{
+									analysisId: String(analysis.id),
+									sampleId: String(analysis.sample.id),
+								}}
+								to="/samples/$sampleId/analyses/$analysisId"
+							>
+								{getWorkflowDisplayName(analysis.workflow)}
+							</Link>
+						) : (
+							<span className="text-lg font-medium truncate">
+								{getWorkflowDisplayName(analysis.workflow)}
+							</span>
+						)}
+					</DashboardTableCell>
+					<DashboardTableCell>
+						<span className="text-gray-600 text-sm truncate">
+							{getWorkflowVersionLabel(analysis.workflowVersion)}
+						</span>
 					</DashboardTableCell>
 					<DashboardTableCell>
 						<Link

@@ -6,7 +6,7 @@ import {
 } from "@samples/queries";
 import type { SampleMinimal } from "@virtool/contracts";
 import { FlaskConical } from "lucide-react";
-import { type ReactNode, Suspense, useState } from "react";
+import { type ReactNode, Suspense } from "react";
 import { DASHBOARD_ITEM_COUNT } from "../constants";
 import DashboardCard, {
 	DashboardCardBoundary,
@@ -23,6 +23,12 @@ import DashboardTable, {
 import RecentModeToggle, { type RecentMode } from "./RecentModeToggle";
 
 type RecentSamplesProps = {
+	/** Which set to list: what the user viewed or created. */
+	mode: RecentMode;
+
+	/** Switches between the viewed and created sets. */
+	onModeChange: (mode: RecentMode) => void;
+
 	/** The id of the signed-in user, whose created samples the "created" tab lists. */
 	userId: number;
 };
@@ -35,16 +41,18 @@ type RecentSamplesProps = {
  * rather than one that switches hooks. A local `Suspense` keeps a tab switch's
  * loading state inside the card.
  */
-export default function RecentSamples({ userId }: RecentSamplesProps) {
-	const [mode, setMode] = useState<RecentMode>("viewed");
-
+export default function RecentSamples({
+	mode,
+	onModeChange,
+	userId,
+}: RecentSamplesProps) {
 	return (
 		<DashboardCard
 			action={
 				<RecentModeToggle
 					aria-label="Which samples to show"
 					mode={mode}
-					onChange={setMode}
+					onChange={onModeChange}
 				/>
 			}
 			title="Recent Samples"
@@ -89,7 +97,7 @@ function ViewedSamplesBody() {
 	);
 }
 
-function CreatedSamplesBody({ userId }: RecentSamplesProps) {
+function CreatedSamplesBody({ userId }: { userId: number }) {
 	const { data } = useSuspenseSamples({
 		page: 1,
 		perPage: DASHBOARD_ITEM_COUNT,
@@ -137,7 +145,7 @@ function SamplesTable({ children, samples }: SamplesTableProps) {
 				<DashboardTableRow key={sample.id}>
 					<DashboardTableCell>
 						<Link
-							className="font-medium truncate"
+							className="text-lg font-medium truncate"
 							params={{ sampleId: String(sample.id) }}
 							to="/samples/$sampleId"
 						>

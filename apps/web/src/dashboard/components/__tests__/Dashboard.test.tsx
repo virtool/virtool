@@ -11,10 +11,8 @@ import {
 	mockFindRecentlyViewedSamples,
 	mockFindSamples,
 } from "@tests/server-fn/samples";
-import { mockGetAccount } from "@tests/server-fn/users";
-import { renderWithRouter } from "@tests/setup";
+import { renderRoute } from "@tests/setup";
 import { beforeEach, describe, expect, it } from "vitest";
-import Dashboard from "../Dashboard";
 
 type CardTables = [samples: HTMLElement, analyses: HTMLElement];
 
@@ -37,7 +35,6 @@ describe("<Dashboard />", () => {
 	const account = createFakeAccount();
 
 	beforeEach(() => {
-		mockGetAccount(account);
 		mockFindRecentlyViewedSamples([]);
 		mockFindRecentlyViewedAnalyses([]);
 		mockFindSamples([]);
@@ -45,7 +42,7 @@ describe("<Dashboard />", () => {
 	});
 
 	it("renders every card under the view heading", async () => {
-		await renderWithRouter(<Dashboard />);
+		await renderRoute("/", { account });
 
 		expect(
 			await screen.findByRole("heading", { name: "Dashboard" }),
@@ -63,7 +60,7 @@ describe("<Dashboard />", () => {
 		const findViewedSamples = mockFindRecentlyViewedSamples([]);
 		const findViewedAnalyses = mockFindRecentlyViewedAnalyses([]);
 
-		await renderWithRouter(<Dashboard />);
+		await renderRoute("/", { account });
 
 		await waitFor(() => {
 			expect(findViewedSamples).toHaveBeenCalledWith({ data: { perPage: 10 } });
@@ -83,7 +80,7 @@ describe("<Dashboard />", () => {
 			createFakeSampleMinimal({ name: "Created sample" }),
 		]);
 
-		await renderWithRouter(<Dashboard />);
+		await renderRoute("/", { account });
 
 		expect(
 			await screen.findByRole("link", { name: "Viewed sample" }),
@@ -113,7 +110,7 @@ describe("<Dashboard />", () => {
 			createFakeAnalysisMinimal({ id: 12, workflow: "pathoscope" }),
 		]);
 
-		await renderWithRouter(<Dashboard />);
+		await renderRoute("/", { account });
 
 		expect(
 			await screen.findByRole("link", { name: "Foo sample" }),
@@ -127,7 +124,7 @@ describe("<Dashboard />", () => {
 		mockFindRecentlyViewedSamples([createFakeSampleMinimal()]);
 		mockFindRecentlyViewedAnalyses([createFakeAnalysisMinimal()]);
 
-		await renderWithRouter(<Dashboard />);
+		await renderRoute("/", { account });
 
 		const [samples, analyses] = await findTables();
 
@@ -142,6 +139,7 @@ describe("<Dashboard />", () => {
 		expect(analyses).toHaveAccessibleName("Recent Analyses");
 		expect(getColumnLabels(analyses)).toEqual([
 			"Workflow",
+			"Version",
 			"Sample",
 			"User",
 			"Created",
@@ -152,7 +150,7 @@ describe("<Dashboard />", () => {
 		mockFindRecentlyViewedSamples([createFakeSampleMinimal()]);
 		mockFindRecentlyViewedAnalyses([createFakeAnalysisMinimal()]);
 
-		await renderWithRouter(<Dashboard />);
+		await renderRoute("/", { account });
 
 		for (const table of await findTables()) {
 			// Skip the header row, which holds column headers rather than cells.
@@ -178,7 +176,7 @@ describe("<Dashboard />", () => {
 			}),
 		]);
 
-		await renderWithRouter(<Dashboard />);
+		await renderRoute("/", { account });
 
 		expect(await screen.findByText("sample-owner")).toBeInTheDocument();
 		expect(await screen.findByText("analysis-owner")).toBeInTheDocument();
@@ -193,7 +191,7 @@ describe("<Dashboard />", () => {
 			}),
 		]);
 
-		await renderWithRouter(<Dashboard />);
+		await renderRoute("/", { account });
 
 		expect(
 			await screen.findByRole("link", { name: "Parent sample" }),
@@ -206,7 +204,7 @@ describe("<Dashboard />", () => {
 		});
 		mockFindRecentlyViewedAnalyses([createFakeAnalysisMinimal()], 3);
 
-		await renderWithRouter(<Dashboard />);
+		await renderRoute("/", { account });
 
 		// No global "recently viewed" list to send the reader to, so the overflow
 		// rows are counts rather than links.
@@ -222,7 +220,7 @@ describe("<Dashboard />", () => {
 		mockFindRecentlyViewedSamples([createFakeSampleMinimal()]);
 		mockFindSamples([createFakeSampleMinimal()], { foundCount: 14 });
 
-		await renderWithRouter(<Dashboard />);
+		await renderRoute("/", { account });
 
 		await userEvent.click(
 			within(
@@ -241,7 +239,7 @@ describe("<Dashboard />", () => {
 		mockFindRecentlyViewedSamples([createFakeSampleMinimal()]);
 		mockFindRecentlyViewedAnalyses([createFakeAnalysisMinimal()]);
 
-		await renderWithRouter(<Dashboard />);
+		await renderRoute("/", { account });
 
 		expect(
 			await screen.findByRole("heading", { name: "Recent Samples" }),
@@ -250,7 +248,7 @@ describe("<Dashboard />", () => {
 	});
 
 	it("shows an empty state per card when there is nothing to list", async () => {
-		await renderWithRouter(<Dashboard />);
+		await renderRoute("/", { account });
 
 		expect(
 			await screen.findByText("No samples viewed yet"),
@@ -266,7 +264,7 @@ describe("<Dashboard />", () => {
 			createFakeSampleMinimal({ name: "Foo sample" }),
 		]);
 
-		await renderWithRouter(<Dashboard />);
+		await renderRoute("/", { account });
 
 		expect(
 			await screen.findByText("Couldn't load analyses."),

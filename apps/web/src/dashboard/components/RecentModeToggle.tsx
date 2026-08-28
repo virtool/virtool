@@ -1,7 +1,10 @@
 import { ToggleGroup, ToggleGroupItem } from "@base/Toggle";
 
+/** The sets a "recently" dashboard card can list, in toggle order. */
+export const RECENT_MODES = ["viewed", "created"] as const;
+
 /** Which set a "recently" dashboard card lists: what the user viewed or created. */
-export type RecentMode = "viewed" | "created";
+export type RecentMode = (typeof RECENT_MODES)[number];
 
 type RecentModeToggleProps = {
 	/** Names the control for assistive technology, e.g. "Which samples to show". */
