@@ -186,7 +186,10 @@ export const findSamplesFn = createServerFn({ method: "GET" })
 
 export const listSampleGroupsFn = createServerFn({ method: "GET" })
 	.middleware([authenticated()])
-	.handler(async () => listSampleGroups(db));
+	.handler(async ({ context }) => {
+		const actor = await resolveSampleActor(db, context.session.userId);
+		return listSampleGroups(db, actor);
+	});
 
 export const getSampleFn = createServerFn({ method: "GET" })
 	.middleware([authenticated()])

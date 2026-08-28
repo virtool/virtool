@@ -143,6 +143,7 @@ beforeEach(() => {
 		referenceServerFnMocks.getReferenceFn,
 		sampleServerFnMocks.findSamplesFn,
 		sampleServerFnMocks.getSampleFn,
+		sampleServerFnMocks.listSampleGroupsFn,
 		analysisServerFnMocks.findAnalysesFn,
 		analysisServerFnMocks.getAnalysisFn,
 		analysisServerFnMocks.getAnalysisResultsFn,

@@ -107,7 +107,7 @@ export default function FilterBar({
 	const workflows = parseWorkflowFilters(selectedWorkflows);
 
 	return (
-		<BaseFilterBar className="mb-3">
+		<BaseFilterBar className="mb-3" label="Filters">
 			{term && (
 				<FilterGroup icon={<Search size={14} />} title="Search">
 					<FilterChip onRemove={onClearTerm} removeLabel="Clear search term">

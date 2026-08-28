@@ -128,7 +128,7 @@ export default function SamplesList({
 	} = useFetchLabels();
 
 	const {
-		data: groups = [],
+		data: groups,
 		isPending: isPendingGroups,
 		isError: isErrorGroups,
 	} = useListSampleGroups();
@@ -283,16 +283,16 @@ export default function SamplesList({
 					onClearUsers={() => setSearch({ users: [] })}
 					onClearWorkflows={() => setSearch({ workflows: [] })}
 					onToggleGroup={(groupId) =>
-						setSearch({ groups: xor(filterGroups, [groupId]) })
+						setSearch({ groups: xor(filterGroups, [groupId]), page: 1 })
 					}
 					onToggleLabel={(labelId) =>
-						setSearch({ labels: xor(filterLabels, [labelId]) })
+						setSearch({ labels: xor(filterLabels, [labelId]), page: 1 })
 					}
 					onToggleUser={(userId) =>
-						setSearch({ users: xor(filterUsers, [userId]) })
+						setSearch({ users: xor(filterUsers, [userId]), page: 1 })
 					}
 					onToggleWorkflow={(workflow) =>
-						setSearch({ workflows: xor(filterWorkflows, [workflow]) })
+						setSearch({ workflows: xor(filterWorkflows, [workflow]), page: 1 })
 					}
 					selectedGroups={filterGroups}
 					selectedLabels={filterLabels}

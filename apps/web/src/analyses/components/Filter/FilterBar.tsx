@@ -42,7 +42,7 @@ export default function FilterBar({
 	selectedWorkflows,
 }: FilterBarProps) {
 	return (
-		<BaseFilterBar>
+		<BaseFilterBar label="Filters">
 			<FilterGroup
 				icon={<Workflow size={14} />}
 				menu={

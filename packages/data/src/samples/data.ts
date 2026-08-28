@@ -736,7 +736,10 @@ export async function findSamples(
 	};
 }
 
-export async function listSampleGroups(db: Db): Promise<GroupMinimal[]> {
+export async function listSampleGroups(
+	db: Db,
+	actor: SampleActor,
+): Promise<GroupMinimal[]> {
 	const rows = await db
 		.selectDistinct({
 			id: groups.id,
@@ -745,6 +748,7 @@ export async function listSampleGroups(db: Db): Promise<GroupMinimal[]> {
 		})
 		.from(groups)
 		.innerJoin(legacySamples, eq(legacySamples.group_id, groups.id))
+		.where(sampleReadableFilter(actor))
 		.orderBy(asc(groups.name));
 
 	return rows.map((row) => ({

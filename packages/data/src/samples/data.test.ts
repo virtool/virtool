@@ -1022,7 +1022,7 @@ describe("listSampleGroups", () => {
 		await seedSample({ group_id: admins, name: "B" });
 		await seedSample({ name: "Ungrouped" });
 
-		const result = await listSampleGroups(db);
+		const result = await listSampleGroups(db, adminActor);
 
 		expect(result.map((group) => group.name)).toEqual(["admins", "techs"]);
 	});
@@ -1032,9 +1032,23 @@ describe("listSampleGroups", () => {
 		await seedSample({ group_id: techs, name: "A" });
 		await seedSample({ group_id: techs, name: "B" });
 
-		const result = await listSampleGroups(db);
+		const result = await listSampleGroups(db, adminActor);
 
 		expect(result).toHaveLength(1);
 		expect(result[0]?.name).toBe("techs");
+	});
+
+	it("omits groups whose samples the actor cannot read", async () => {
+		const other = await seedUser(db, { handle: "other" });
+		const mine = await seedGroup(db, { name: "mine" });
+		const theirs = await seedGroup(db, { name: "theirs" });
+
+		await seedSample({ user_id: ownerId, group_id: mine, name: "Mine" });
+		await seedSample({ user_id: other, group_id: theirs, name: "Theirs" });
+
+		const actor = await resolveSampleActor(db, ownerId);
+		const result = await listSampleGroups(db, actor);
+
+		expect(result.map((group) => group.name)).toEqual(["mine"]);
 	});
 });
