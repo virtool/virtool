@@ -1,43 +1,103 @@
 import Link from "@base/Link";
 import WorkflowTags from "@samples/components/WorkflowTags";
-import { useSuspenseSamples } from "@samples/queries";
+import {
+	useSuspenseRecentlyViewedSamples,
+	useSuspenseSamples,
+} from "@samples/queries";
+import type { SampleMinimal } from "@virtool/contracts";
 import { FlaskConical } from "lucide-react";
+import { type ReactNode, Suspense } from "react";
 import { DASHBOARD_ITEM_COUNT } from "../constants";
 import DashboardCard, {
 	DashboardCardBoundary,
 	DashboardCardEmpty,
+	DashboardCardLoading,
 } from "./DashboardCard";
 import DashboardTable, {
 	DashboardTableCell,
 	DashboardTableCreatedCell,
 	DashboardTableMore,
 	DashboardTableRow,
+	DashboardTableUserCell,
 } from "./DashboardTable";
+import RecentModeToggle, { type RecentMode } from "./RecentModeToggle";
 
 type RecentSamplesProps = {
-	/** The id of the signed-in user, whose samples are listed. */
+	/** Which set to list: what the user viewed or created. */
+	mode: RecentMode;
+
+	/** Switches between the viewed and created sets. */
+	onModeChange: (mode: RecentMode) => void;
+
+	/** The id of the signed-in user, whose created samples the "created" tab lists. */
 	userId: number;
 };
 
-/** The signed-in user's most recently created samples. */
-export default function RecentSamples({ userId }: RecentSamplesProps) {
+/**
+ * The signed-in user's samples — most recently viewed by default, or most
+ * recently created, chosen by the header toggle.
+ *
+ * The two tabs draw from different queries, so each has its own body component
+ * rather than one that switches hooks. A local `Suspense` keeps a tab switch's
+ * loading state inside the card.
+ */
+export default function RecentSamples({
+	mode,
+	onModeChange,
+	userId,
+}: RecentSamplesProps) {
 	return (
 		<DashboardCard
 			action={
-				<Link search={{ users: [userId] }} to="/samples">
-					View all
-				</Link>
+				<RecentModeToggle
+					aria-label="Which samples to show"
+					mode={mode}
+					onChange={onModeChange}
+				/>
 			}
-			title="My samples"
+			title="Recent Samples"
 		>
-			<DashboardCardBoundary noun="samples">
-				<RecentSamplesBody userId={userId} />
+			<DashboardCardBoundary key={mode} noun="samples">
+				<Suspense fallback={<DashboardCardLoading />}>
+					{mode === "viewed" ? (
+						<ViewedSamplesBody />
+					) : (
+						<CreatedSamplesBody userId={userId} />
+					)}
+				</Suspense>
 			</DashboardCardBoundary>
 		</DashboardCard>
 	);
 }
 
-function RecentSamplesBody({ userId }: RecentSamplesProps) {
+function ViewedSamplesBody() {
+	const { data } = useSuspenseRecentlyViewedSamples(DASHBOARD_ITEM_COUNT);
+
+	if (data.items.length === 0) {
+		return (
+			<DashboardCardEmpty
+				description="Samples you open will appear here."
+				icon={FlaskConical}
+				title="No samples viewed yet"
+			/>
+		);
+	}
+
+	const remaining = data.foundCount - data.items.length;
+
+	return (
+		<SamplesTable samples={data.items}>
+			{remaining > 0 && (
+				<DashboardTableMore>
+					{remaining} more {remaining === 1 ? "sample is" : "samples are"} not
+					shown
+				</DashboardTableMore>
+			)}
+		</SamplesTable>
+	);
+}
+
+function CreatedSamplesBody({ userId }: { userId: number }) {
 	const { data } = useSuspenseSamples({
 		page: 1,
 		perPage: DASHBOARD_ITEM_COUNT,
@@ -57,12 +117,35 @@ function RecentSamplesBody({ userId }: RecentSamplesProps) {
 	const remaining = data.foundCount - data.items.length;
 
 	return (
-		<DashboardTable labels={["Sample", "Analyses", "Created"]}>
-			{data.items.map((sample) => (
+		<SamplesTable samples={data.items}>
+			{remaining > 0 && (
+				<DashboardTableMore>
+					<Link search={{ users: [userId] }} to="/samples">
+						View {remaining} more {remaining === 1 ? "sample" : "samples"} of
+						yours
+					</Link>
+				</DashboardTableMore>
+			)}
+		</SamplesTable>
+	);
+}
+
+type SamplesTableProps = {
+	/** An optional `DashboardTableMore` footer row. */
+	children?: ReactNode;
+
+	/** The samples to list, already ordered. */
+	samples: SampleMinimal[];
+};
+
+function SamplesTable({ children, samples }: SamplesTableProps) {
+	return (
+		<DashboardTable labels={["Sample", "Analyses", "User", "Created"]}>
+			{samples.map((sample) => (
 				<DashboardTableRow key={sample.id}>
 					<DashboardTableCell>
 						<Link
-							className="font-medium truncate"
+							className="text-lg font-medium truncate"
 							params={{ sampleId: String(sample.id) }}
 							to="/samples/$sampleId"
 						>
@@ -72,17 +155,11 @@ function RecentSamplesBody({ userId }: RecentSamplesProps) {
 					<DashboardTableCell>
 						<WorkflowTags id={sample.id} workflows={sample.workflows} />
 					</DashboardTableCell>
+					<DashboardTableUserCell handle={sample.user.handle} />
 					<DashboardTableCreatedCell time={sample.createdAt} />
 				</DashboardTableRow>
 			))}
-			{remaining > 0 && (
-				<DashboardTableMore>
-					<Link search={{ users: [userId] }} to="/samples">
-						View {remaining} more {remaining === 1 ? "sample" : "samples"} of
-						yours
-					</Link>
-				</DashboardTableMore>
-			)}
+			{children}
 		</DashboardTable>
 	);
 }

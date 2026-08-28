@@ -53,6 +53,7 @@ import {
 import { subtractions } from "../db/schema/subtractions";
 import { uploads } from "../db/schema/uploads";
 import { users } from "../db/schema/users";
+import { sampleViews } from "../db/schema/views";
 import { AppError } from "../errors";
 import { emit } from "../events/emit";
 import { createJob, getJobs } from "../jobs/data";
@@ -722,6 +723,96 @@ export async function findSamples(
 		page: options.page,
 		perPage: options.perPage,
 		pageCount: foundCount ? Math.ceil(foundCount / options.perPage) : 0,
+		items: rows.map(({ sample, ownerHandle }) =>
+			mapMinimal(
+				sample,
+				labelsBySample.get(sample.id) ?? [],
+				tagsBySample.get(sample.id) ?? EMPTY_TAGS,
+				sample.job_id != null
+					? (jobsById.get(sample.job_id) ?? undefined)
+					: undefined,
+				resolveOwner(sample.user_id, ownerHandle),
+			),
+		),
+	};
+}
+
+/**
+ * Record that a user opened a sample, for the "recently viewed" dashboard card.
+ *
+ * One row per (user, sample): a repeat view bumps `viewed_at` in place rather
+ * than inserting a second row, so the history a user accumulates never grows
+ * past one row per sample they have seen.
+ */
+export async function recordSampleView(
+	db: Db,
+	userId: number,
+	sampleId: number,
+): Promise<void> {
+	await db
+		.insert(sampleViews)
+		.values({ user_id: userId, sample_id: sampleId, viewed_at: sql`now()` })
+		.onConflictDoUpdate({
+			target: [sampleViews.user_id, sampleViews.sample_id],
+			set: { viewed_at: sql`now()` },
+		});
+}
+
+/**
+ * The samples a user has most recently viewed, newest first.
+ *
+ * Scoped to what the caller may still read, so a sample they viewed but whose
+ * rights were since revoked drops out. Shares {@link findSamples}'s minimal
+ * shape, so the dashboard renders a viewed row exactly like a created one.
+ */
+export async function findRecentlyViewedSamples(
+	db: Db,
+	userId: number,
+	perPage: number,
+	actor: SampleActor,
+): Promise<SampleSearchResult> {
+	const readable = sampleReadableFilter(actor);
+	const scope = and(eq(sampleViews.user_id, userId), readable);
+
+	const [totalRows, rows] = await Promise.all([
+		db
+			.select({ value: count() })
+			.from(sampleViews)
+			.innerJoin(legacySamples, eq(legacySamples.id, sampleViews.sample_id))
+			.where(scope),
+		db
+			.select({ sample: legacySamples, ownerHandle: users.handle })
+			.from(sampleViews)
+			.innerJoin(legacySamples, eq(legacySamples.id, sampleViews.sample_id))
+			.leftJoin(users, eq(users.id, legacySamples.user_id))
+			.where(scope)
+			.orderBy(desc(sampleViews.viewed_at))
+			.limit(perPage),
+	]);
+
+	const totalCount = totalRows[0]?.value ?? 0;
+
+	const sampleIds = rows.map(({ sample }) => sample.id);
+	const jobIds = [
+		...new Set(
+			rows
+				.map(({ sample }) => sample.job_id)
+				.filter((id): id is number => id != null),
+		),
+	];
+
+	const [labelsBySample, tagsBySample, jobsById] = await Promise.all([
+		getLabelsBySample(db, sampleIds),
+		getWorkflowTagsBySample(db, sampleIds),
+		getSampleJobs(db, jobIds),
+	]);
+
+	return {
+		foundCount: totalCount,
+		totalCount,
+		page: 1,
+		perPage,
+		pageCount: totalCount ? Math.ceil(totalCount / perPage) : 0,
 		items: rows.map(({ sample, ownerHandle }) =>
 			mapMinimal(
 				sample,

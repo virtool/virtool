@@ -10,10 +10,12 @@ import {
 	checkSampleRight,
 	createSample,
 	deleteSample,
+	findRecentlyViewedSamples,
 	findSamples,
 	getSample,
 	getSampleOwnerId,
 	listSampleGroups,
+	recordSampleView,
 	resolveSampleActor,
 	SampleFileDuplicateError,
 	SampleGroupNotFoundError,
@@ -182,6 +184,35 @@ export const findSamplesFn = createServerFn({ method: "GET" })
 			},
 			actor,
 		);
+	});
+
+export const findRecentlyViewedSamplesFn = createServerFn({ method: "GET" })
+	.middleware([authenticated()])
+	.validator(z.object({ perPage: perPageSchema }))
+	.handler(async ({ context, data }) => {
+		const actor = await resolveSampleActor(db, context.session.userId);
+
+		return findRecentlyViewedSamples(
+			db,
+			context.session.userId,
+			data.perPage,
+			actor,
+		);
+	});
+
+export const recordSampleViewFn = createServerFn({ method: "POST" })
+	.middleware([authenticated()])
+	.validator(sampleIdSchema)
+	.handler(async ({ context, data }) => {
+		try {
+			// A view is only recorded for a sample the caller may read, so a probe
+			// of an id they cannot see leaves no trace.
+			await authorizeSample(data.sampleId, context.session.userId, "read");
+			await recordSampleView(db, context.session.userId, data.sampleId);
+			return null;
+		} catch (err) {
+			return rethrowAsHttp(err);
+		}
 	});
 
 export const listSampleGroupsFn = createServerFn({ method: "GET" })

@@ -1,5 +1,6 @@
 import Box from "@base/Box";
 import { Empty, EmptyDescription, EmptyMedia, EmptyTitle } from "@base/Empty";
+import Loader from "@base/Loader";
 import QueryError from "@base/QueryError";
 import { CatchBoundary } from "@tanstack/react-router";
 import type { LucideIcon } from "lucide-react";
@@ -80,6 +81,23 @@ export function DashboardCardBoundary({
 		>
 			{children}
 		</CatchBoundary>
+	);
+}
+
+/**
+ * The in-card placeholder shown while a card body re-fetches.
+ *
+ * At the empty state's box height, so toggling a card between its "viewed" and
+ * "created" lists holds the card's footprint steady rather than collapsing the
+ * page around it.
+ */
+export function DashboardCardLoading() {
+	return (
+		<Box className="mb-0">
+			<div className="flex justify-center py-8">
+				<Loader />
+			</div>
+		</Box>
 	);
 }
 

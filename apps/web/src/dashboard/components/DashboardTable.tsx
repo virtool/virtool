@@ -1,33 +1,35 @@
 import { cn } from "@app/cn";
 import { BoxGroup } from "@base/Box";
 import RelativeTime from "@base/RelativeTime";
-import type { ReactNode } from "react";
+import UserLabel from "@base/UserLabel";
+import { createContext, type ReactNode, use } from "react";
 import { useDashboardCardHeadingId } from "./DashboardCard";
 
 /** The padding every dashboard table cell shares. */
 const cellClassName = "px-6 py-3";
+
+/** How many columns the enclosing table has, for a footer row that spans all of them. */
+const ColumnCountContext = createContext(0);
 
 type DashboardTableProps = {
 	/** The `DashboardTableRow`s, plus an optional `DashboardTableMore`. */
 	children: ReactNode;
 
 	/** The column labels, in order. The last is aligned to the trailing edge. */
-	labels: [string, string, string];
+	labels: string[];
 };
 
 /**
  * The list body of a dashboard card.
  *
- * Every card gets the same three fixed-width columns, so a reader scanning down
- * the page finds each card's attribution in the same place rather than wherever
- * that card's content happened to push it.
+ * Every card gets even, fixed-width columns, so a reader scanning down the page
+ * finds each card's attribution in the same place rather than wherever that
+ * card's content happened to push it.
  */
 export default function DashboardTable({
 	children,
 	labels,
 }: DashboardTableProps) {
-	const [first, second, third] = labels;
-
 	return (
 		<BoxGroup className="mb-0 overflow-hidden">
 			<table
@@ -36,25 +38,32 @@ export default function DashboardTable({
 			>
 				<thead>
 					<tr className="bg-gray-50 border-b-1 border-gray-300 text-gray-600 text-sm">
-						<th className={cn(cellClassName, "font-medium text-left w-1/3")}>
-							{first}
-						</th>
-						<th className={cn(cellClassName, "font-medium text-left w-1/3")}>
-							{second}
-						</th>
-						<th className={cn(cellClassName, "font-medium text-right w-1/3")}>
-							{third}
-						</th>
+						{labels.map((label, index) => (
+							<th
+								className={cn(cellClassName, "font-medium", {
+									"text-left": index < labels.length - 1,
+									"text-right": index === labels.length - 1,
+								})}
+								key={label}
+								style={{ width: `${100 / labels.length}%` }}
+							>
+								{label}
+							</th>
+						))}
 					</tr>
 				</thead>
-				<tbody>{children}</tbody>
+				<tbody>
+					<ColumnCountContext value={labels.length}>
+						{children}
+					</ColumnCountContext>
+				</tbody>
 			</table>
 		</BoxGroup>
 	);
 }
 
 type DashboardTableRowProps = {
-	/** Exactly three `DashboardTableCell`s. */
+	/** One `DashboardTableCell` per column of the enclosing table. */
 	children: ReactNode;
 };
 
@@ -93,12 +102,7 @@ type DashboardTableCreatedCellProps = {
 	time: Date | null;
 };
 
-/**
- * The trailing column every dashboard table ends with.
- *
- * Just the time: the card lists the reader's own records, so an avatar and a
- * handle repeated down the column say nothing the heading has not already said.
- */
+/** The trailing column every dashboard table ends with: when the record was created. */
 export function DashboardTableCreatedCell({
 	time,
 }: DashboardTableCreatedCellProps) {
@@ -128,10 +132,26 @@ export function DashboardTableMore({ children }: DashboardTableMoreProps) {
 		<tr className="bg-gray-50">
 			<td
 				className={cn(cellClassName, "text-center text-gray-600 text-sm")}
-				colSpan={3}
+				colSpan={use(ColumnCountContext)}
 			>
 				{children}
 			</td>
 		</tr>
+	);
+}
+
+type DashboardTableUserCellProps = {
+	/** The account's handle. */
+	handle: string;
+};
+
+/** A column naming the account attached to the record. */
+export function DashboardTableUserCell({
+	handle,
+}: DashboardTableUserCellProps) {
+	return (
+		<DashboardTableCell>
+			<UserLabel handle={handle} />
+		</DashboardTableCell>
 	);
 }

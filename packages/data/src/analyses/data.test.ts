@@ -18,6 +18,7 @@ import { legacyReferences } from "../db/schema/references";
 import { legacySamples } from "../db/schema/samples";
 import { subtractions } from "../db/schema/subtractions";
 import { users } from "../db/schema/users";
+import { analysisViews } from "../db/schema/views";
 import { createTestDatabase, type TestDatabase } from "../db/test/fixtures";
 import { addToGroup, seedGroup } from "../groups/test/fixtures";
 import { resolveSampleActor, type SampleActor } from "../samples/data";
@@ -35,8 +36,10 @@ import {
 	deleteAnalysis,
 	findAnalyses,
 	findNuvsSequenceByIndex,
+	findRecentlyViewedAnalyses,
 	getAnalysis,
 	getAnalysisResults,
+	recordAnalysisView,
 } from "./data";
 
 let database: TestDatabase;
@@ -55,6 +58,7 @@ afterAll(async () => {
 });
 
 beforeEach(async () => {
+	await db.delete(analysisViews);
 	await db.delete(nuvsBlast);
 	await db.delete(analysisFiles);
 	await db.delete(analysisSubtractions);
@@ -179,6 +183,16 @@ async function seedAnalysisOnNewSample(
 	overrides: Partial<typeof analyses.$inferInsert> = {},
 ): Promise<number> {
 	return seedAnalysis({ sample_id: await seedSample(), ...overrides });
+}
+
+async function seedAnalysisView(
+	userId: number,
+	analysisId: number,
+	viewedAt: Date,
+): Promise<void> {
+	await db
+		.insert(analysisViews)
+		.values({ user_id: userId, analysis_id: analysisId, viewed_at: viewedAt });
 }
 
 async function* oneChunk(): AsyncIterable<Uint8Array> {
@@ -1069,5 +1083,114 @@ describe("findNuvsSequenceByIndex", () => {
 				0,
 			),
 		).toThrow("More than one sequence with index 0");
+	});
+});
+
+describe("recordAnalysisView", () => {
+	it("records a first view", async () => {
+		const analysisId = await seedAnalysisOnNewSample();
+
+		await recordAnalysisView(db, ownerId, analysisId);
+
+		const rows = await db
+			.select()
+			.from(analysisViews)
+			.where(eq(analysisViews.analysis_id, analysisId));
+
+		expect(rows).toHaveLength(1);
+		expect(rows[0]?.user_id).toBe(ownerId);
+	});
+
+	it("bumps the timestamp of a repeat view instead of inserting a row", async () => {
+		const analysisId = await seedAnalysisOnNewSample();
+		const earlier = new Date("2020-01-01T00:00:00.000Z");
+
+		await seedAnalysisView(ownerId, analysisId, earlier);
+		await recordAnalysisView(db, ownerId, analysisId);
+
+		const rows = await db
+			.select()
+			.from(analysisViews)
+			.where(eq(analysisViews.analysis_id, analysisId));
+
+		expect(rows).toHaveLength(1);
+		expect(rows[0]?.viewed_at.getTime()).toBeGreaterThan(earlier.getTime());
+	});
+});
+
+describe("findRecentlyViewedAnalyses", () => {
+	it("returns viewed analyses newest first", async () => {
+		const older = await seedAnalysisOnNewSample({ workflow: "nuvs" });
+		const newer = await seedAnalysisOnNewSample({ workflow: "pathoscope" });
+
+		await seedAnalysisView(
+			ownerId,
+			older,
+			new Date("2020-01-01T00:00:00.000Z"),
+		);
+		await seedAnalysisView(
+			ownerId,
+			newer,
+			new Date("2020-06-01T00:00:00.000Z"),
+		);
+
+		const actor = await resolveSampleActor(db, ownerId);
+		const result = await findRecentlyViewedAnalyses(db, ownerId, 10, actor);
+
+		expect(result.items.map((analysis) => analysis.id)).toEqual([newer, older]);
+		expect(result.foundCount).toBe(2);
+	});
+
+	it("excludes an analysis on a sample the viewer may no longer read", async () => {
+		const other = await seedUser(db, { handle: "other" });
+		const hidden = await seedAnalysis({ sample_id: await seedSample() });
+
+		await seedAnalysisView(other, hidden, new Date("2020-01-01T00:00:00.000Z"));
+
+		const actor = await resolveSampleActor(db, other);
+		const result = await findRecentlyViewedAnalyses(db, other, 10, actor);
+
+		expect(result.items).toHaveLength(0);
+		expect(result.foundCount).toBe(0);
+	});
+
+	it("scopes the list to the given user's own views", async () => {
+		const other = await seedUser(db, { handle: "other" });
+		const mine = await seedAnalysis({
+			sample_id: await seedSample({ all_read: true }),
+		});
+		const theirs = await seedAnalysis({
+			sample_id: await seedSample({ all_read: true }),
+		});
+
+		await seedAnalysisView(ownerId, mine, new Date("2020-01-01T00:00:00.000Z"));
+		await seedAnalysisView(other, theirs, new Date("2020-01-01T00:00:00.000Z"));
+
+		const actor = await resolveSampleActor(db, ownerId);
+		const result = await findRecentlyViewedAnalyses(db, ownerId, 10, actor);
+
+		expect(result.items.map((analysis) => analysis.id)).toEqual([mine]);
+	});
+
+	it("limits the page to perPage", async () => {
+		const first = await seedAnalysisOnNewSample();
+		const second = await seedAnalysisOnNewSample();
+
+		await seedAnalysisView(
+			ownerId,
+			first,
+			new Date("2020-01-01T00:00:00.000Z"),
+		);
+		await seedAnalysisView(
+			ownerId,
+			second,
+			new Date("2020-06-01T00:00:00.000Z"),
+		);
+
+		const actor = await resolveSampleActor(db, ownerId);
+		const result = await findRecentlyViewedAnalyses(db, ownerId, 1, actor);
+
+		expect(result.items.map((analysis) => analysis.id)).toEqual([second]);
+		expect(result.foundCount).toBe(2);
 	});
 });
