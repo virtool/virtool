@@ -19,10 +19,9 @@ export function getRouter() {
 		defaultOptions: {
 			queries: {
 				retry: shouldRetryQuery,
-				// SSE push invalidates caches as records change. This staleTime
-				// bounds how long a missed or wrong invalidation can leave a
-				// query stale, since refetchOnWindowFocus and refetchOnMount
-				// stay on to refresh it.
+				// SSE push keeps caches fresh, so this only bounds how long a
+				// missed invalidation can serve stale data before a focus or
+				// mount refetch corrects it.
 				staleTime: 30 * 1000,
 			},
 		},
