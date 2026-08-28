@@ -17,7 +17,7 @@ import { createTestDatabase, type TestDatabase } from "./test/fixtures";
 
 const MIGRATION_SQL = fileURLToPath(
 	new URL(
-		"../../drizzle/0017_backfill_analyses_workflow_version.sql",
+		"../../drizzle/0018_backfill_analyses_workflow_version.sql",
 		import.meta.url,
 	),
 );
