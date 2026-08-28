@@ -1,4 +1,4 @@
-import type { Sample, SampleMinimal } from "@virtool/contracts";
+import type { GroupMinimal, Sample, SampleMinimal } from "@virtool/contracts";
 import { type Mock, vi } from "vitest";
 import { createFakeSample } from "../fake/samples";
 
@@ -14,6 +14,7 @@ export const sampleServerFnMocks = {
 	updateSampleFn: vi.fn(),
 	deleteSampleFn: vi.fn(),
 	updateSampleRightsFn: vi.fn(),
+	listSampleGroupsFn: vi.fn(),
 };
 
 /**
@@ -61,6 +62,12 @@ export function mockFindSamplePages(pages: SampleMinimal[][]): Mock {
 		},
 	);
 	return sampleServerFnMocks.findSamplesFn;
+}
+
+/** Sets up listSampleGroups to resolve with the given groups. */
+export function mockListSampleGroups(groups: GroupMinimal[] = []): Mock {
+	sampleServerFnMocks.listSampleGroupsFn.mockResolvedValue(groups);
+	return sampleServerFnMocks.listSampleGroupsFn;
 }
 
 /** Sets up getSample to resolve with the given sample. */

@@ -13,9 +13,10 @@ import {
 	parseWorkflowFilters,
 } from "@samples/utils";
 import UserFilterGroup from "@users/components/UserFilterGroup";
-import type { Label } from "@virtool/contracts";
-import { CalendarDays, Search, Tag, Workflow } from "lucide-react";
+import type { GroupMinimal, Label } from "@virtool/contracts";
+import { CalendarDays, Search, Tag, Users, Workflow } from "lucide-react";
 import { lazy, Suspense } from "react";
+import GroupFilterMenu from "./GroupFilterMenu";
 import LabelFilterMenu from "./LabelFilterMenu";
 import WorkflowFilterMenu from "./WorkflowFilterMenu";
 import { workflowStateIcons } from "./workflowStateIcons";
@@ -27,11 +28,17 @@ type FilterBarProps = {
 	/** The days the list is narrowed to, if any. */
 	dateFilter?: DateFilter;
 
+	/** All available groups, used to resolve selected IDs to names. */
+	groups: GroupMinimal[];
+
 	/** All available labels, used to resolve selected IDs to names and colors. */
 	labels: Label[];
 
 	/** Applies a date filter, or clears it when passed nothing. */
 	onChangeDate: (filter: DateFilter | undefined) => void;
+
+	/** Deselects every group. */
+	onClearGroups: () => void;
 
 	/** Deselects every label. */
 	onClearLabels: () => void;
@@ -45,6 +52,9 @@ type FilterBarProps = {
 	/** Deselects every workflow state. */
 	onClearWorkflows: () => void;
 
+	/** Toggles a single group. */
+	onToggleGroup: (groupId: number) => void;
+
 	/** Toggles a single label. */
 	onToggleLabel: (labelId: number) => void;
 
@@ -53,6 +63,9 @@ type FilterBarProps = {
 
 	/** Toggles a single ``workflow:state`` filter. */
 	onToggleWorkflow: (value: string) => void;
+
+	/** Selected group IDs. */
+	selectedGroups: number[];
 
 	/** Selected label IDs. */
 	selectedLabels: number[];
@@ -72,15 +85,19 @@ type FilterBarProps = {
  */
 export default function FilterBar({
 	dateFilter,
+	groups,
 	labels,
 	onChangeDate,
+	onClearGroups,
 	onClearLabels,
 	onClearTerm,
 	onClearUsers,
 	onClearWorkflows,
+	onToggleGroup,
 	onToggleLabel,
 	onToggleUser,
 	onToggleWorkflow,
+	selectedGroups,
 	selectedLabels,
 	selectedUsers,
 	selectedWorkflows,
@@ -90,7 +107,7 @@ export default function FilterBar({
 	const workflows = parseWorkflowFilters(selectedWorkflows);
 
 	return (
-		<BaseFilterBar className="mb-3">
+		<BaseFilterBar className="mb-3" label="Filters">
 			{term && (
 				<FilterGroup icon={<Search size={14} />} title="Search">
 					<FilterChip onRemove={onClearTerm} removeLabel="Clear search term">
@@ -98,11 +115,6 @@ export default function FilterBar({
 					</FilterChip>
 				</FilterGroup>
 			)}
-			<UserFilterGroup
-				onClear={onClearUsers}
-				onToggle={onToggleUser}
-				selected={selectedUsers}
-			/>
 			<FilterGroup
 				icon={<Tag size={14} />}
 				menu={
@@ -172,16 +184,47 @@ export default function FilterBar({
 						<DateFilterMenu onChange={onChangeDate} value={dateFilter} />
 					</Suspense>
 				}
-				title="Date"
+				title="Created"
 			>
 				{dateFilter && (
 					<FilterChip
 						onRemove={() => onChangeDate(undefined)}
-						removeLabel="Clear date filter"
+						removeLabel="Clear created filter"
 					>
 						{getDateFilterLabel(dateFilter)}
 					</FilterChip>
 				)}
+			</FilterGroup>
+			<UserFilterGroup
+				onClear={onClearUsers}
+				onToggle={onToggleUser}
+				selected={selectedUsers}
+			/>
+			<FilterGroup
+				icon={<Users size={14} />}
+				menu={
+					<GroupFilterMenu
+						groups={groups}
+						onClear={onClearGroups}
+						onToggle={onToggleGroup}
+						selected={selectedGroups}
+					/>
+				}
+				title="Groups"
+			>
+				{selectedGroups.map((groupId) => {
+					const group = groups.find((g) => g.id === groupId);
+					if (!group) return null;
+					return (
+						<FilterChip
+							key={group.id}
+							onRemove={() => onToggleGroup(group.id)}
+							removeLabel={`Remove ${group.name} group filter`}
+						>
+							{group.name}
+						</FilterChip>
+					);
+				})}
 			</FilterGroup>
 		</BaseFilterBar>
 	);

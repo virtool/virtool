@@ -4,6 +4,7 @@ import {
 	deleteSampleFn,
 	findSamplesFn,
 	getSampleFn,
+	listSampleGroupsFn,
 	updateSampleFn,
 	updateSampleRightsFn,
 } from "@server/samples/functions";
@@ -17,6 +18,7 @@ import {
 } from "@tanstack/react-query";
 import { fileQueryKeys } from "@uploads/keys";
 import type {
+	GroupMinimal,
 	LabelNested,
 	LibraryType,
 	Sample,
@@ -46,6 +48,9 @@ export type ListSamplesOptions = {
 	/** The ids of the labels to filter the samples by. */
 	labels?: number[];
 
+	/** The ids of the groups to filter the samples by. */
+	groups?: number[];
+
 	/** The direction the sorted column is ordered in. */
 	direction?: SortDirection;
 
@@ -74,6 +79,7 @@ function samplesQueryOptions(options: ListSamplesOptions) {
 		createdBefore,
 		direction,
 		labels,
+		groups,
 		page,
 		perPage,
 		sort,
@@ -90,6 +96,7 @@ function samplesQueryOptions(options: ListSamplesOptions) {
 			labels,
 			workflows,
 			users,
+			groups,
 			createdAfter,
 			createdBefore,
 			sort,
@@ -104,6 +111,7 @@ function samplesQueryOptions(options: ListSamplesOptions) {
 					labels: labels ?? [],
 					workflows: workflows ?? [],
 					users: users ?? [],
+					groups: groups ?? [],
 					createdAfter,
 					createdBefore,
 					sort,
@@ -136,6 +144,16 @@ export function useListSamples(options: ListSamplesOptions) {
  */
 export function useSuspenseSamples(options: ListSamplesOptions) {
 	return useSuspenseQuery(samplesQueryOptions(options));
+}
+
+/**
+ * Fetch the groups that own at least one sample.
+ */
+export function useListSampleGroups() {
+	return useQuery<GroupMinimal[]>({
+		queryKey: samplesQueryKeys.list(["groups"]),
+		queryFn: () => listSampleGroupsFn() as Promise<GroupMinimal[]>,
+	});
 }
 
 export function sampleQueryOptions(sampleId: number) {
