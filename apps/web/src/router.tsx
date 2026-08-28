@@ -19,7 +19,11 @@ export function getRouter() {
 		defaultOptions: {
 			queries: {
 				retry: shouldRetryQuery,
-				staleTime: 2000,
+				// SSE push invalidates caches as records change. This staleTime
+				// is a backstop for a missed or wrong invalidation, not the main
+				// freshness mechanism.
+				staleTime: 5 * 60 * 1000,
+				refetchOnWindowFocus: false,
 			},
 		},
 	});
