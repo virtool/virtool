@@ -736,12 +736,6 @@ export async function findSamples(
 	};
 }
 
-/**
- * List the groups that own at least one sample, ordered by name.
- *
- * The samples group filter offers only these, so it never presents a group
- * that would narrow the list to nothing.
- */
 export async function listSampleGroups(db: Db): Promise<GroupMinimal[]> {
 	const rows = await db
 		.selectDistinct({

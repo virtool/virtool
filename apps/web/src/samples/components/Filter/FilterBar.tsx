@@ -115,11 +115,6 @@ export default function FilterBar({
 					</FilterChip>
 				</FilterGroup>
 			)}
-			<UserFilterGroup
-				onClear={onClearUsers}
-				onToggle={onToggleUser}
-				selected={selectedUsers}
-			/>
 			<FilterGroup
 				icon={<Tag size={14} />}
 				menu={
@@ -145,32 +140,6 @@ export default function FilterBar({
 						{label.name}
 					</FilterChip>
 				))}
-			</FilterGroup>
-			<FilterGroup
-				icon={<Users size={14} />}
-				menu={
-					<GroupFilterMenu
-						groups={groups}
-						onClear={onClearGroups}
-						onToggle={onToggleGroup}
-						selected={selectedGroups}
-					/>
-				}
-				title="Groups"
-			>
-				{selectedGroups.map((groupId) => {
-					const group = groups.find((g) => g.id === groupId);
-					if (!group) return null;
-					return (
-						<FilterChip
-							key={group.id}
-							onRemove={() => onToggleGroup(group.id)}
-							removeLabel={`Remove ${group.name} group filter`}
-						>
-							{group.name}
-						</FilterChip>
-					);
-				})}
 			</FilterGroup>
 			<FilterGroup
 				icon={<Workflow size={14} />}
@@ -215,16 +184,47 @@ export default function FilterBar({
 						<DateFilterMenu onChange={onChangeDate} value={dateFilter} />
 					</Suspense>
 				}
-				title="Date"
+				title="Created"
 			>
 				{dateFilter && (
 					<FilterChip
 						onRemove={() => onChangeDate(undefined)}
-						removeLabel="Clear date filter"
+						removeLabel="Clear created filter"
 					>
 						{getDateFilterLabel(dateFilter)}
 					</FilterChip>
 				)}
+			</FilterGroup>
+			<UserFilterGroup
+				onClear={onClearUsers}
+				onToggle={onToggleUser}
+				selected={selectedUsers}
+			/>
+			<FilterGroup
+				icon={<Users size={14} />}
+				menu={
+					<GroupFilterMenu
+						groups={groups}
+						onClear={onClearGroups}
+						onToggle={onToggleGroup}
+						selected={selectedGroups}
+					/>
+				}
+				title="Groups"
+			>
+				{selectedGroups.map((groupId) => {
+					const group = groups.find((g) => g.id === groupId);
+					if (!group) return null;
+					return (
+						<FilterChip
+							key={group.id}
+							onRemove={() => onToggleGroup(group.id)}
+							removeLabel={`Remove ${group.name} group filter`}
+						>
+							{group.name}
+						</FilterChip>
+					);
+				})}
 			</FilterGroup>
 		</BaseFilterBar>
 	);

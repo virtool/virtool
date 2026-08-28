@@ -148,9 +148,6 @@ export function useSuspenseSamples(options: ListSamplesOptions) {
 
 /**
  * Fetch the groups that own at least one sample.
- *
- * The samples group filter lists only these, so it never offers a group that
- * would empty the list.
  */
 export function useListSampleGroups() {
 	return useQuery<GroupMinimal[]>({
