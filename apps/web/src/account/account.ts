@@ -24,6 +24,10 @@ export function accountQueryOptions() {
 	return queryOptions<Account>({
 		queryKey: accountQueryKeys.all(),
 		queryFn: () => getAccountFn(),
+		// No SSE event carries a role or permission change for the signed-in
+		// user's own account, so this query needs the focus refetch that the
+		// global defaults otherwise skip.
+		refetchOnWindowFocus: true,
 	});
 }
 

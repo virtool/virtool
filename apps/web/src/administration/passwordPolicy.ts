@@ -15,5 +15,8 @@ export function passwordPolicyQueryOptions() {
 	return queryOptions({
 		queryKey: passwordPolicyQueryKeys.all(),
 		queryFn: () => getPasswordPolicyFn(),
+		// Password policy changes emit no SSE event, so this query needs the
+		// focus refetch that the global defaults otherwise skip.
+		refetchOnWindowFocus: true,
 	});
 }

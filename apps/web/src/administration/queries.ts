@@ -37,6 +37,9 @@ export function settingsQueryOptions() {
 	return queryOptions<Settings>({
 		queryKey: settingsQueryKeys.all(),
 		queryFn: () => getSettingsFn(),
+		// Settings changes emit no SSE event, so this query needs the focus
+		// refetch that the global defaults otherwise skip.
+		refetchOnWindowFocus: true,
 	});
 }
 
