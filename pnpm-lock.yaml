@@ -51,8 +51,8 @@ importers:
         specifier: ^3.1110.0
         version: 3.1110.0
       '@aws-sdk/lib-storage':
-        specifier: ^3.1094.0
-        version: 3.1094.0(@aws-sdk/client-s3@3.1110.0)
+        specifier: ^3.1119.0
+        version: 3.1119.0(@aws-sdk/client-s3@3.1110.0)
       '@azure/identity':
         specifier: ^4.13.1
         version: 4.13.1(supports-color@10.2.2)
@@ -106,8 +106,8 @@ importers:
         specifier: ^3.1110.0
         version: 3.1110.0
       '@aws-sdk/lib-storage':
-        specifier: ^3.1094.0
-        version: 3.1094.0(@aws-sdk/client-s3@3.1110.0)
+        specifier: ^3.1119.0
+        version: 3.1119.0(@aws-sdk/client-s3@3.1110.0)
       '@azure/identity':
         specifier: ^4.13.1
         version: 4.13.1(supports-color@10.2.2)
@@ -225,8 +225,8 @@ importers:
         specifier: ^3.1110.0
         version: 3.1110.0
       '@aws-sdk/lib-storage':
-        specifier: ^3.1094.0
-        version: 3.1094.0(@aws-sdk/client-s3@3.1110.0)
+        specifier: ^3.1119.0
+        version: 3.1119.0(@aws-sdk/client-s3@3.1110.0)
       '@azure/identity':
         specifier: ^4.13.1
         version: 4.13.1(supports-color@10.2.2)
@@ -283,8 +283,8 @@ importers:
         specifier: ^3.1110.0
         version: 3.1110.0
       '@aws-sdk/lib-storage':
-        specifier: ^3.1094.0
-        version: 3.1094.0(@aws-sdk/client-s3@3.1110.0)
+        specifier: ^3.1119.0
+        version: 3.1119.0(@aws-sdk/client-s3@3.1110.0)
       '@azure/identity':
         specifier: ^4.13.1
         version: 4.13.1(supports-color@10.2.2)
@@ -731,8 +731,8 @@ importers:
         specifier: ^3.1110.0
         version: 3.1110.0
       '@aws-sdk/lib-storage':
-        specifier: ^3.1094.0
-        version: 3.1094.0(@aws-sdk/client-s3@3.1110.0)
+        specifier: ^3.1119.0
+        version: 3.1119.0(@aws-sdk/client-s3@3.1110.0)
       '@aws-sdk/s3-request-presigner':
         specifier: ^3.1110.0
         version: 3.1110.0
@@ -969,11 +969,11 @@ packages:
     resolution: {integrity: sha512-0YfczxGXF3RjGj8z7QG/Ho2HnLGKDHfPSHiTs47UU1U/+mmwISDN+rvGKt2zh+3FX8NdT4xd95LGBGyhQw2dgQ==}
     engines: {node: '>=20.0.0'}
 
-  '@aws-sdk/lib-storage@3.1094.0':
-    resolution: {integrity: sha512-vt7NauvwnBqPxBDaJAlvpTsiu/6EvteK+NzfDA1/aKASa5jtekpUwSBHscx3UMfxi8UYs38qBArbHdyuZTTfOA==}
+  '@aws-sdk/lib-storage@3.1119.0':
+    resolution: {integrity: sha512-4dxJX2pueKHtFyxdtT/IH385NpAWjbNjpbbIN6L9YK58dbae6ldyiLSom1EV5nPoOxKtWLXiqch+yo3NjXfleQ==}
     engines: {node: '>=20.0.0'}
     peerDependencies:
-      '@aws-sdk/client-s3': ^3.1094.0
+      '@aws-sdk/client-s3': ^3.1119.0
 
   '@aws-sdk/middleware-sdk-s3@3.972.73':
     resolution: {integrity: sha512-oy7sRA5HvHcAvkcKX6F8RI240jcOf3c8y/Gqjs9qemIibdKQqGBIi0uwa+47ZRYqGLpdEO28TQU4G73yUzo06Q==}
@@ -9680,7 +9680,7 @@ snapshots:
       '@smithy/types': 4.17.2
       tslib: 2.8.1
 
-  '@aws-sdk/lib-storage@3.1094.0(@aws-sdk/client-s3@3.1110.0)':
+  '@aws-sdk/lib-storage@3.1119.0(@aws-sdk/client-s3@3.1110.0)':
     dependencies:
       '@aws-sdk/client-s3': 3.1110.0
       '@smithy/core': 3.33.3
