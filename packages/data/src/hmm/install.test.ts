@@ -565,4 +565,23 @@ describe("cleanHmmStatus", () => {
 		expect(status?.task_id).toBeNull();
 		expect(status?.updates).toEqual([]);
 	});
+
+	it("keeps a committed update so a retry can rebuild the annotations blob", async () => {
+		await seedPendingStatus();
+
+		const pending = (await readStatus())?.updates[0] as HmmUpdate;
+		const committed = { ...pending, id: 1111, ready: true };
+
+		await db
+			.update(legacyHmmStatus)
+			.set({ updates: [committed, pending] })
+			.where(eq(legacyHmmStatus.id, HMM_STATUS_ID));
+
+		await cleanHmmStatus(db);
+
+		const status = await readStatus();
+
+		// The committed marker stays; only the failed pending one is dropped.
+		expect(status?.updates).toEqual([committed]);
+	});
 });
