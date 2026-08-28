@@ -10,6 +10,7 @@ import QueryError from "@base/QueryError";
 import { nextSortDirection } from "@base/sorting";
 import { useListSelection } from "@base/useListSelection";
 import { ViewHeader, ViewHeaderTitle } from "@base/View";
+import { useListGroups } from "@groups/queries";
 import { useFetchLabels } from "@labels/queries";
 import type { DateFilter } from "@samples/dateFilter";
 import { useListSamples } from "@samples/queries";
@@ -44,6 +45,7 @@ function getFilterKey(
 	labels: number[],
 	workflows: string[],
 	users: number[],
+	groups: number[],
 	date: DateFilter | undefined,
 ): string {
 	return JSON.stringify([
@@ -51,6 +53,7 @@ function getFilterKey(
 		[...labels].sort((a, b) => a - b),
 		[...workflows].sort(),
 		[...users].sort((a, b) => a - b),
+		[...groups].sort((a, b) => a - b),
 		date ?? null,
 	]);
 }
@@ -61,12 +64,14 @@ type SamplesListProps = {
 	/** The direction the sorted column is ordered in */
 	direction?: SortDirection;
 
+	filterGroups?: number[];
 	filterLabels?: number[];
 	page?: number;
 	setSearch?: (next: {
 		createdAfter?: string;
 		createdBefore?: string;
 		direction?: SortDirection;
+		groups?: number[];
 		labels?: number[];
 		page?: number;
 		sort?: SampleSortField;
@@ -89,6 +94,7 @@ type SamplesListProps = {
 export default function SamplesList({
 	dateFilter,
 	direction = "descending",
+	filterGroups = [],
 	filterLabels = [],
 	page: urlPage = 1,
 	setSearch = () => {},
@@ -105,6 +111,7 @@ export default function SamplesList({
 		createdAfter: dateFilter?.after,
 		createdBefore: dateFilter?.before,
 		direction,
+		groups: filterGroups,
 		labels: filterLabels,
 		page: urlPage,
 		perPage: 25,
@@ -121,6 +128,12 @@ export default function SamplesList({
 		isError: isErrorLabels,
 	} = useFetchLabels();
 
+	const {
+		data: groups = [],
+		isPending: isPendingGroups,
+		isError: isErrorGroups,
+	} = useListGroups();
+
 	// The samples themselves are held, not just their ids: the selection outlives
 	// the page they were checked on, and the bulk actions need their labels. It
 	// survives pagination but resets when the filters change (via ``resetKey``),
@@ -131,6 +144,7 @@ export default function SamplesList({
 		filterLabels,
 		filterWorkflows,
 		filterUsers,
+		filterGroups,
 		dateFilter,
 	);
 	const selection = useListSelection<SampleMinimal>({
@@ -148,11 +162,15 @@ export default function SamplesList({
 		setOpenQuickAnalyze(true);
 	}
 
-	if ((isErrorSamples && !samples) || (isErrorLabels && !labels)) {
+	if (
+		(isErrorSamples && !samples) ||
+		(isErrorLabels && !labels) ||
+		(isErrorGroups && !groups)
+	) {
 		return <QueryError noun="samples" />;
 	}
 
-	if (isPendingSamples || isPendingLabels) {
+	if (isPendingSamples || isPendingLabels || isPendingGroups) {
 		return <LoadingPlaceholder />;
 	}
 
@@ -165,12 +183,14 @@ export default function SamplesList({
 		Boolean(dateFilter) ||
 		filterLabels.length > 0 ||
 		filterWorkflows.length > 0 ||
-		filterUsers.length > 0;
+		filterUsers.length > 0 ||
+		filterGroups.length > 0;
 
 	function clearFilters() {
 		setSearch({
 			createdAfter: undefined,
 			createdBefore: undefined,
+			groups: [],
 			labels: [],
 			page: 1,
 			term: "",
@@ -255,12 +275,17 @@ export default function SamplesList({
 				<SampleToolbar term={term} onChange={(term) => setSearch({ term })} />
 				<FilterBar
 					dateFilter={dateFilter}
+					groups={groups}
 					labels={labels}
 					onChangeDate={handleChangeDate}
+					onClearGroups={() => setSearch({ groups: [] })}
 					onClearLabels={() => setSearch({ labels: [] })}
 					onClearTerm={() => setSearch({ term: "" })}
 					onClearUsers={() => setSearch({ users: [] })}
 					onClearWorkflows={() => setSearch({ workflows: [] })}
+					onToggleGroup={(groupId) =>
+						setSearch({ groups: xor(filterGroups, [groupId]) })
+					}
 					onToggleLabel={(labelId) =>
 						setSearch({ labels: xor(filterLabels, [labelId]) })
 					}
@@ -270,6 +295,7 @@ export default function SamplesList({
 					onToggleWorkflow={(workflow) =>
 						setSearch({ workflows: xor(filterWorkflows, [workflow]) })
 					}
+					selectedGroups={filterGroups}
 					selectedLabels={filterLabels}
 					selectedUsers={filterUsers}
 					selectedWorkflows={filterWorkflows}

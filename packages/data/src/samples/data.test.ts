@@ -226,6 +226,7 @@ describe("findSamples", () => {
 		labels: [],
 		users: [],
 		workflows: [],
+		groups: [],
 		createdAfter: null,
 		createdBefore: null,
 	};
@@ -314,6 +315,20 @@ describe("findSamples", () => {
 		);
 
 		expect(result.items.map((s) => s.name)).toEqual(["Theirs"]);
+	});
+
+	it("filters by group", async () => {
+		const groupId = await seedGroup(db, { name: "techs" });
+		await seedSample({ group_id: groupId, name: "Grouped" });
+		await seedSample({ name: "Ungrouped" });
+
+		const result = await findSamples(
+			db,
+			{ ...options, groups: [groupId] },
+			adminActor,
+		);
+
+		expect(result.items.map((s) => s.name)).toEqual(["Grouped"]);
 	});
 
 	it("filters by a half-open created range", async () => {
@@ -491,6 +506,7 @@ describe("workflow tags and filtering", () => {
 				labels: [],
 				users: [],
 				workflows: [],
+				groups: [],
 				createdAfter: null,
 				createdBefore: null,
 			},
@@ -520,6 +536,7 @@ describe("workflow tags and filtering", () => {
 				labels: [],
 				users: [],
 				workflows: ["nuvs:ready"],
+				groups: [],
 				createdAfter: null,
 				createdBefore: null,
 			},
@@ -542,6 +559,7 @@ describe("workflow tags and filtering", () => {
 				labels: [],
 				users: [],
 				workflows: ["bogus:none"],
+				groups: [],
 				createdAfter: null,
 				createdBefore: null,
 			},

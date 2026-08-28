@@ -53,6 +53,7 @@ const findSamplesSchema = z.object({
 	labels: z.array(rowIdSchema).default([]),
 	workflows: z.array(z.string()).default([]),
 	users: z.array(rowIdSchema).default([]),
+	groups: z.array(rowIdSchema).default([]),
 	createdAfter: calendarDateSchema.optional(),
 	createdBefore: calendarDateSchema.optional(),
 	// A direction without a column falls back to the creation date below, so a
@@ -169,6 +170,7 @@ export const findSamplesFn = createServerFn({ method: "GET" })
 				labels: data.labels,
 				users: data.users,
 				workflows: data.workflows,
+				groups: data.groups,
 				createdAfter: data.createdAfter
 					? startOfUtcDay(data.createdAfter)
 					: null,

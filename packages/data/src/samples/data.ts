@@ -82,6 +82,7 @@ export type FindSamplesOptions = {
 	labels: number[];
 	users: number[];
 	workflows: string[];
+	groups: number[];
 
 	/** The column and direction to order by, or undefined for newest first. */
 	sort?: SampleSort;
@@ -655,6 +656,10 @@ export async function findSamples(
 					.where(inArray(legacySampleLabels.label_id, options.labels)),
 			),
 		);
+	}
+
+	if (options.groups.length > 0) {
+		narrowing.push(inArray(legacySamples.group_id, options.groups));
 	}
 
 	if (options.createdAfter) {
