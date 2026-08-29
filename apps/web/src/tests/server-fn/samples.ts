@@ -1,4 +1,4 @@
-import type { Sample, SampleMinimal } from "@virtool/contracts";
+import type { GroupMinimal, Sample, SampleMinimal } from "@virtool/contracts";
 import { type Mock, vi } from "vitest";
 import { createFakeSample } from "../fake/samples";
 
@@ -9,11 +9,14 @@ import { createFakeSample } from "../fake/samples";
  */
 export const sampleServerFnMocks = {
 	findSamplesFn: vi.fn(),
+	findRecentlyViewedSamplesFn: vi.fn(),
 	getSampleFn: vi.fn(),
+	recordSampleViewFn: vi.fn(),
 	createSampleFn: vi.fn(),
 	updateSampleFn: vi.fn(),
 	deleteSampleFn: vi.fn(),
 	updateSampleRightsFn: vi.fn(),
+	listSampleGroupsFn: vi.fn(),
 };
 
 /**
@@ -40,6 +43,29 @@ export function mockFindSamples(
 }
 
 /**
+ * Sets up findRecentlyViewedSamples to resolve with a single page of the given
+ * samples.
+ *
+ * @param samples - the samples on the page, newest-viewed first
+ * @param counts - overrides for the counts, which otherwise both match the
+ *   number of samples
+ */
+export function mockFindRecentlyViewedSamples(
+	samples: SampleMinimal[],
+	counts: { foundCount?: number; totalCount?: number } = {},
+): Mock {
+	sampleServerFnMocks.findRecentlyViewedSamplesFn.mockResolvedValue({
+		page: 1,
+		pageCount: 1,
+		perPage: 10,
+		totalCount: counts.totalCount ?? samples.length,
+		foundCount: counts.foundCount ?? samples.length,
+		items: samples,
+	});
+	return sampleServerFnMocks.findRecentlyViewedSamplesFn;
+}
+
+/**
  * Sets up findSamples to serve one page per entry in `pages`, selecting by the
  * requested `page`, so a selection made on one page can be asserted from
  * another.
@@ -61,6 +87,12 @@ export function mockFindSamplePages(pages: SampleMinimal[][]): Mock {
 		},
 	);
 	return sampleServerFnMocks.findSamplesFn;
+}
+
+/** Sets up listSampleGroups to resolve with the given groups. */
+export function mockListSampleGroups(groups: GroupMinimal[] = []): Mock {
+	sampleServerFnMocks.listSampleGroupsFn.mockResolvedValue(groups);
+	return sampleServerFnMocks.listSampleGroupsFn;
 }
 
 /** Sets up getSample to resolve with the given sample. */

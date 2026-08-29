@@ -282,6 +282,22 @@ jobs:
                       --set 'nuvs.cache-from=type=gha,scope=nuvs' \
                       --set 'nuvs.cache-to=type=gha,mode=max,scope=nuvs'
 
+    nuvs-test:
+        name: NuVs / Test
+        runs-on: ubuntu-24.04
+        timeout-minutes: 10
+        needs: [changes]
+        if: github.event_name == 'push' || contains(fromJSON(needs.changes.outputs.packages), '@virtool/nuvs')
+        steps:
+            - name: Checkout
+              uses: actions/checkout@v7
+            - name: Setup
+              uses: ./.github/actions/setup
+            - name: Test
+              run: pnpm --filter @virtool/nuvs test
+              env:
+                  TZ: UTC
+
     # -------------------------------------------------------------------------
     # Pathoscope (apps/pathoscope, packages/pathoscope-core)
     # -------------------------------------------------------------------------
@@ -500,6 +516,7 @@ jobs:
                 checks,
                 data-storage-test,
                 internal-test,
+                nuvs-test,
                 packages-test,
                 pathoscope-test,
                 quality-test,

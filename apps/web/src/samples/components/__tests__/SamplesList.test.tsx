@@ -14,6 +14,7 @@ import { mockFindLabels } from "@tests/server-fn/labels";
 import {
 	mockFindSamplePages,
 	mockFindSamples,
+	mockListSampleGroups,
 	sampleServerFnMocks,
 } from "@tests/server-fn/samples";
 import { mockListSubtractionsShortlist } from "@tests/server-fn/subtractions";
@@ -114,6 +115,7 @@ describe("<SamplesList />", () => {
 		mockListUsers(users);
 		mockFindLabels(labels);
 		mockFindSamples(samples);
+		mockListSampleGroups();
 		mockFindHmms(createFakeHmmSearchResults());
 		mockListReadyIndexes([createFakeIndexMinimal()]);
 		mockListSubtractionsShortlist([createFakeSubtractionNested()]);
@@ -231,8 +233,16 @@ describe("<SamplesList />", () => {
 	describe("date filtering", () => {
 		const lastYear = new Date().getFullYear() - 1;
 
+		// The Created sort column is also a button, so scope to the filter bar.
+		function openCreatedFilter() {
+			const filters = screen.getByRole("group", { name: "Filters" });
+			return userEvent.click(
+				within(filters).getByRole("button", { name: "Created" }),
+			);
+		}
+
 		async function pickLastJanuary() {
-			await userEvent.click(screen.getByRole("button", { name: "Date" }));
+			await openCreatedFilter();
 			await userEvent.click(
 				await screen.findByRole("button", { name: "Previous year" }),
 			);
@@ -250,7 +260,7 @@ describe("<SamplesList />", () => {
 			await pickLastJanuary();
 
 			expect(
-				await screen.findByRole("button", { name: "Clear date filter" }),
+				await screen.findByRole("button", { name: "Clear created filter" }),
 			).toHaveTextContent(`January ${lastYear}`);
 		});
 
@@ -262,7 +272,7 @@ describe("<SamplesList />", () => {
 
 			await pickLastJanuary();
 			expect(
-				await screen.findByRole("button", { name: "Clear date filter" }),
+				await screen.findByRole("button", { name: "Clear created filter" }),
 			).toBeInTheDocument();
 
 			expect(sampleServerFnMocks.findSamplesFn).toHaveBeenLastCalledWith(
@@ -281,14 +291,14 @@ describe("<SamplesList />", () => {
 			await renderWithRouter(<SamplesListHarness />, path);
 			expect(await screen.findByText("Samples")).toBeInTheDocument();
 
-			await userEvent.click(screen.getByRole("button", { name: "Date" }));
+			await openCreatedFilter();
 			await userEvent.click(await screen.findByRole("radio", { name: "Year" }));
 			await userEvent.click(
 				screen.getByRole("button", { name: String(lastYear) }),
 			);
 
 			expect(
-				await screen.findByRole("button", { name: "Clear date filter" }),
+				await screen.findByRole("button", { name: "Clear created filter" }),
 			).toHaveTextContent(String(lastYear));
 			expect(sampleServerFnMocks.findSamplesFn).toHaveBeenLastCalledWith(
 				expect.objectContaining({
@@ -317,7 +327,7 @@ describe("<SamplesList />", () => {
 			);
 			expect(await screen.findByText("Samples")).toBeInTheDocument();
 
-			await userEvent.click(screen.getByRole("button", { name: "Date" }));
+			await openCreatedFilter();
 
 			// Opened on the calendar, which keys each cell by its own ISO date — the
 			// only unambiguous handle when two months are shown side by side.
@@ -336,7 +346,7 @@ describe("<SamplesList />", () => {
 			await clickDay(`${lastYear}-03-20`);
 
 			expect(
-				await screen.findByRole("button", { name: "Clear date filter" }),
+				await screen.findByRole("button", { name: "Clear created filter" }),
 			).toHaveTextContent(`${lastYear}-03-02 – ${lastYear}-03-20`);
 			expect(sampleServerFnMocks.findSamplesFn).toHaveBeenLastCalledWith(
 				expect.objectContaining({
@@ -357,13 +367,13 @@ describe("<SamplesList />", () => {
 
 			await pickLastJanuary();
 			const chip = await screen.findByRole("button", {
-				name: "Clear date filter",
+				name: "Clear created filter",
 			});
 
 			await userEvent.click(chip);
 
 			expect(
-				screen.queryByRole("button", { name: "Clear date filter" }),
+				screen.queryByRole("button", { name: "Clear created filter" }),
 			).not.toBeInTheDocument();
 		});
 	});

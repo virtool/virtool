@@ -2,8 +2,11 @@ import { samplesQueryKeys } from "@samples/keys";
 import {
 	createSampleFn,
 	deleteSampleFn,
+	findRecentlyViewedSamplesFn,
 	findSamplesFn,
 	getSampleFn,
+	listSampleGroupsFn,
+	recordSampleViewFn,
 	updateSampleFn,
 	updateSampleRightsFn,
 } from "@server/samples/functions";
@@ -17,6 +20,7 @@ import {
 } from "@tanstack/react-query";
 import { fileQueryKeys } from "@uploads/keys";
 import type {
+	GroupMinimal,
 	LabelNested,
 	LibraryType,
 	Sample,
@@ -27,6 +31,7 @@ import type {
 	SortDirection,
 } from "@virtool/contracts";
 import { union } from "es-toolkit";
+import { useEffect } from "react";
 import type { CreateSampleRequest, SampleUpdate } from "./types";
 
 /** A label carried by at least one of the selected samples */
@@ -45,6 +50,9 @@ export type ListSamplesOptions = {
 
 	/** The ids of the labels to filter the samples by. */
 	labels?: number[];
+
+	/** The ids of the groups to filter the samples by. */
+	groups?: number[];
 
 	/** The direction the sorted column is ordered in. */
 	direction?: SortDirection;
@@ -74,6 +82,7 @@ function samplesQueryOptions(options: ListSamplesOptions) {
 		createdBefore,
 		direction,
 		labels,
+		groups,
 		page,
 		perPage,
 		sort,
@@ -90,6 +99,7 @@ function samplesQueryOptions(options: ListSamplesOptions) {
 			labels,
 			workflows,
 			users,
+			groups,
 			createdAfter,
 			createdBefore,
 			sort,
@@ -104,6 +114,7 @@ function samplesQueryOptions(options: ListSamplesOptions) {
 					labels: labels ?? [],
 					workflows: workflows ?? [],
 					users: users ?? [],
+					groups: groups ?? [],
 					createdAfter,
 					createdBefore,
 					sort,
@@ -136,6 +147,63 @@ export function useListSamples(options: ListSamplesOptions) {
  */
 export function useSuspenseSamples(options: ListSamplesOptions) {
 	return useSuspenseQuery(samplesQueryOptions(options));
+}
+
+/**
+ * Fetch the samples the signed-in user has most recently viewed, suspending
+ * until it resolves.
+ *
+ * The server scopes the list to the caller's own views, so it takes no user id.
+ *
+ * @param perPage - The number of samples to fetch
+ */
+export function useSuspenseRecentlyViewedSamples(perPage: number) {
+	return useSuspenseQuery<SampleSearchResult, Error>({
+		queryKey: samplesQueryKeys.list(["recentlyViewed", perPage]),
+		queryFn: () =>
+			findRecentlyViewedSamplesFn({
+				data: { perPage },
+			}) as Promise<SampleSearchResult>,
+	});
+}
+
+/**
+ * Record, once per mount, that the signed-in user has viewed a sample.
+ *
+ * Runs from an effect rather than the route loader, because the router preloads
+ * loaders on hover (`defaultPreload: "intent"`) — a view must count only when
+ * the sample is actually opened, not merely pointed at.
+ *
+ * @param sampleId - The id of the viewed sample
+ */
+export function useRecordSampleView(sampleId: number) {
+	const queryClient = useQueryClient();
+
+	const { mutate } = useMutation<null, Error, number>({
+		mutationFn: (id) =>
+			recordSampleViewFn({ data: { sampleId: id } }) as Promise<null>,
+		onSuccess: () => {
+			queryClient.invalidateQueries({
+				queryKey: samplesQueryKeys.list(["recentlyViewed"]),
+			});
+		},
+	});
+
+	useEffect(() => {
+		if (Number.isInteger(sampleId)) {
+			mutate(sampleId);
+		}
+	}, [sampleId, mutate]);
+}
+
+/**
+ * Fetch the groups that own at least one sample.
+ */
+export function useListSampleGroups() {
+	return useQuery<GroupMinimal[]>({
+		queryKey: samplesQueryKeys.list(["groups"]),
+		queryFn: () => listSampleGroupsFn() as Promise<GroupMinimal[]>,
+	});
 }
 
 export function sampleQueryOptions(sampleId: number) {

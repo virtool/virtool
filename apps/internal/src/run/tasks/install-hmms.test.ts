@@ -409,7 +409,7 @@ describe("installHmmsTask", () => {
 });
 
 describe("installHmmsTask cleanup", () => {
-	it("clears the status when the task fails", async () => {
+	it("clears the in-flight update when the task fails", async () => {
 		await seedPendingStatus();
 		stubFetch(Buffer.from("<html>nope</html>"), { status: 500 });
 
@@ -418,7 +418,27 @@ describe("installHmmsTask cleanup", () => {
 		const status = await readStatus();
 
 		expect(status?.updates).toEqual([]);
-		expect(status?.installed).toBeNull();
+		expect(status?.task_id).toBeNull();
+	});
+
+	it("keeps a previous good install when the task fails", async () => {
+		await seedPendingStatus();
+
+		const installed = { ready: true } as unknown as HmmUpdate;
+
+		await db
+			.update(legacyHmmStatus)
+			.set({ installed })
+			.where(eq(legacyHmmStatus.id, HMM_STATUS_ID));
+
+		stubFetch(Buffer.from("<html>nope</html>"), { status: 500 });
+
+		expect((await run(await claimInstall())).status).toBe("failed");
+
+		const status = await readStatus();
+
+		expect(status?.installed).toEqual(installed);
+		expect(status?.updates).toEqual([]);
 	});
 
 	/*

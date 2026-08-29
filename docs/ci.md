@@ -48,9 +48,10 @@ docker buildx bake -f packages/image-build/docker-bake.hcl pathoscope
 
 The `changes` job asks pnpm for workspaces selected by
 `...\[origin/main\]`. The leading ellipsis includes dependents, so an app is
-selected when either its own files or any workspace dependency changes. Image
-jobs build only selected apps on pull requests and remain unconditional on
-pushes to `main`.
+selected when either its own files or any workspace dependency changes. The
+expensive image and native-tool jobs, plus the per-app NuVs test job, run only
+for selected workspaces on pull requests and remain unconditional on pushes to
+`main`.
 
 CI first runs the app's build and then `pnpm --prod deploy`, making the Docker
 context exactly the production closure recorded in the workspace graph. The

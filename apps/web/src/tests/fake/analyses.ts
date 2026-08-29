@@ -37,6 +37,7 @@ export function createFakeAnalysisMinimal(
 		updatedAt: faker.date.past(),
 		user: createFakeUserNested(),
 		workflow: "pathoscope",
+		workflowVersion: faker.system.semver(),
 		...overrides,
 	};
 }

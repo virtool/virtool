@@ -16,8 +16,8 @@
 		"@biomejs/biome": "^2.5.8",
 		"@changesets/changelog-github": "^1.0.0",
 		"@changesets/cli": "^3.0.1",
-		"@types/node": "^26.2.0",
-		"knip": "^6.32.2",
+		"@types/node": "^26.4.0",
+		"knip": "^6.32.3",
 		"typescript": "^7.0.2"
 	}
 }

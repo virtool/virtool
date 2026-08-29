@@ -16,7 +16,7 @@ import type {
 import { isJobStateTerminal } from "@virtool/contracts";
 import type { Logger } from "@virtool/logger";
 import { deleteKeys, type StorageBackend } from "@virtool/storage";
-import { and, asc, count, desc, eq, inArray, type SQL } from "drizzle-orm";
+import { and, asc, count, desc, eq, inArray, type SQL, sql } from "drizzle-orm";
 import type { Db, DbOrTx } from "../db/pg";
 import { takeFirstOrThrow } from "../db/rows";
 import {
@@ -31,6 +31,7 @@ import { legacyReferences } from "../db/schema/references";
 import { legacySamples } from "../db/schema/samples";
 import { subtractions } from "../db/schema/subtractions";
 import { users } from "../db/schema/users";
+import { analysisViews } from "../db/schema/views";
 import { AppError } from "../errors";
 import { emit } from "../events/emit";
 import { createJob, getJobs } from "../jobs/data";
@@ -141,6 +142,7 @@ const minimalColumns = {
 	created_at: analyses.created_at,
 	updated_at: analyses.updated_at,
 	workflow: analyses.workflow,
+	workflow_version: analyses.workflow_version,
 	ready: analyses.ready,
 	sample_id: analyses.sample_id,
 	reference_id: indexes.reference_id,
@@ -154,6 +156,7 @@ type MinimalRow = {
 	created_at: Date;
 	updated_at: Date;
 	workflow: string;
+	workflow_version: string | null;
 	ready: boolean;
 	sample_id: number | null;
 	reference_id: number | null;
@@ -282,6 +285,7 @@ function mapMinimal(
 		updatedAt: row.updated_at,
 		user,
 		workflow: row.workflow as AnalysisWorkflow,
+		workflowVersion: row.workflow_version,
 	};
 }
 
@@ -413,6 +417,98 @@ export async function findAnalyses(
 }
 
 /**
+ * Record that a user opened an analysis, for the "recently viewed" dashboard
+ * card.
+ *
+ * One row per (user, analysis): a repeat view bumps `viewed_at` in place rather
+ * than inserting a second row. See {@link findRecentlyViewedAnalyses}.
+ */
+export async function recordAnalysisView(
+	db: Db,
+	userId: number,
+	analysisId: number,
+): Promise<void> {
+	await db
+		.insert(analysisViews)
+		.values({ user_id: userId, analysis_id: analysisId, viewed_at: sql`now()` })
+		.onConflictDoUpdate({
+			target: [analysisViews.user_id, analysisViews.analysis_id],
+			set: { viewed_at: sql`now()` },
+		});
+}
+
+/**
+ * The analyses a user has most recently viewed, newest first.
+ *
+ * Scoped to what the caller may still read through their sample rights, and
+ * sharing {@link findAnalyses}'s minimal shape so the dashboard renders a
+ * viewed row exactly like a started one.
+ */
+export async function findRecentlyViewedAnalyses(
+	db: Db,
+	userId: number,
+	perPage: number,
+	actor: SampleActor,
+): Promise<AnalysisSearchResult> {
+	const readable = analysisReadableFilter(db, actor);
+	const scope = and(eq(analysisViews.user_id, userId), readable);
+
+	const [totalRows, rows] = await Promise.all([
+		db
+			.select({ value: count() })
+			.from(analysisViews)
+			.innerJoin(analyses, eq(analyses.id, analysisViews.analysis_id))
+			.where(scope),
+		db
+			.select({
+				...minimalColumns,
+				indexVersion: indexes.version,
+				referenceName: legacyReferences.name,
+				sampleName: legacySamples.name,
+				userHandle: users.handle,
+			})
+			.from(analysisViews)
+			.innerJoin(analyses, eq(analyses.id, analysisViews.analysis_id))
+			.leftJoin(indexes, eq(indexes.id, analyses.index_id))
+			.leftJoin(legacyReferences, eq(legacyReferences.id, indexes.reference_id))
+			.leftJoin(legacySamples, eq(legacySamples.id, analyses.sample_id))
+			.leftJoin(users, eq(users.id, analyses.user_id))
+			.where(scope)
+			.orderBy(desc(analysisViews.viewed_at))
+			.limit(perPage),
+	]);
+
+	const totalCount = totalRows[0]?.value ?? 0;
+
+	const analysisIds = rows.map((row) => row.id);
+	const jobIds = [
+		...new Set(
+			rows.map((row) => row.job_id).filter((id): id is number => id != null),
+		),
+	];
+
+	const [subtractionsByAnalysis, jobsById] = await Promise.all([
+		getSubtractionsByAnalysis(db, analysisIds),
+		getAnalysisJobs(db, jobIds),
+	]);
+
+	return {
+		foundCount: totalCount,
+		totalCount,
+		page: 1,
+		perPage,
+		pageCount: totalCount ? Math.ceil(totalCount / perPage) : 0,
+		items: rows.map((row) =>
+			mapMinimal(
+				row,
+				subtractionsByAnalysis.get(row.id) ?? [],
+				row.job_id != null ? (jobsById.get(row.job_id) ?? null) : null,
+			),
+		),
+	};
+}
+
+/**
  * An analysis's metadata and its result files.
  *
  * The `results` blob is deliberately not read here — see
@@ -427,7 +523,6 @@ export async function getAnalysis(
 	const [row] = await db
 		.select({
 			...minimalColumns,
-			workflowVersion: analyses.workflow_version,
 			indexVersion: indexes.version,
 			referenceName: legacyReferences.name,
 			sampleName: legacySamples.name,
@@ -457,7 +552,7 @@ export async function getAnalysis(
 		row.job_id != null ? (jobsById.get(row.job_id) ?? null) : null,
 	);
 
-	return { ...minimal, files, workflowVersion: row.workflowVersion };
+	return { ...minimal, files };
 }
 
 /**
@@ -724,6 +819,12 @@ export async function createAnalysis(
  * The sample update is emitted alongside the analysis one because a sample's
  * workflow tags are derived from its analyses — an analysis flipping ready
  * changes the row every sample list draws.
+ *
+ * A worker that omits `workflowVersion` — an older image predating the field —
+ * has its version recovered from the job's claim, the same source and non-empty
+ * semantics the one-time backfill migration uses. This keeps the provenance for
+ * an analysis that finalizes after that migration has already run, which the
+ * migration's single pass would otherwise miss.
  */
 export async function finalizeAnalysis(
 	db: Db,
@@ -739,7 +840,9 @@ export async function finalizeAnalysis(
 			.set({
 				ready: true,
 				results: values.results,
-				workflow_version: values.workflowVersion ?? null,
+				workflow_version:
+					values.workflowVersion ??
+					sql`(select nullif(${jobs.claim} ->> 'workflow_version', '') from ${jobs} where ${jobs.id} = ${jobId})`,
 				updated_at: now,
 			})
 			.where(

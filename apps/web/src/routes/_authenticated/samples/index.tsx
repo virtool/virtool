@@ -25,6 +25,7 @@ type SamplesSearch = Paginated & {
 	direction: SortDirection;
 	term: string;
 	labels: number[];
+	groups: number[];
 	sort: SampleSortField | undefined;
 	users: number[];
 	workflows: string[];
@@ -40,6 +41,7 @@ function validateSamplesSearch(
 		direction: oneOf(input.direction, SORT_DIRECTIONS, "descending"),
 		term: str(input.term, ""),
 		labels: numberArray(input.labels, []),
+		groups: numberArray(input.groups, []),
 		sort: oneOfOptional(input.sort, SAMPLE_SORT_FIELDS),
 		users: numberArray(input.users, []),
 		workflows: stringArray(input.workflows, []),
@@ -59,6 +61,7 @@ function SamplesRoute() {
 		<SamplesList
 			dateFilter={getDateFilter(search.createdAfter, search.createdBefore)}
 			direction={search.direction}
+			filterGroups={search.groups}
 			filterLabels={search.labels}
 			page={search.page}
 			sort={search.sort}

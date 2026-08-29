@@ -28,7 +28,7 @@ export default function LabelFilterMenu({
 	return (
 		<FilterMenuContent onClear={onClear} showClear={selected.length > 0}>
 			{labels.length === 0 ? (
-				<p className="px-2 py-1.5 text-gray-500 text-sm">
+				<p className="m-0 px-2 py-1.5 text-gray-500 text-sm">
 					No labels have been created.
 				</p>
 			) : (

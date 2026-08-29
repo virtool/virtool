@@ -19,7 +19,10 @@ export function getRouter() {
 		defaultOptions: {
 			queries: {
 				retry: shouldRetryQuery,
-				staleTime: 2000,
+				// SSE push keeps caches fresh, so this only bounds how long a
+				// missed invalidation can serve stale data before a focus or
+				// mount refetch corrects it.
+				staleTime: 30 * 1000,
 			},
 		},
 	});

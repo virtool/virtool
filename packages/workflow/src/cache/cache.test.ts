@@ -64,6 +64,17 @@ describe("createWorkflowCache", () => {
 		).toBe("shard one");
 	});
 
+	it("reports a miss when the registered object was evicted", async () => {
+		const { cache, path, state, storage } = await setup();
+
+		await cache.put("key-1", await seedArtifact(path, "reference_index"), {});
+
+		const uuid = state.cacheRegistrations[0]?.uuid ?? "";
+		await storage.delete(cacheKey(uuid));
+
+		expect(await cache.get("key-1", join(path, "restore"))).toBeNull();
+	});
+
 	it("writes the blob before registering the row", async () => {
 		const { cache, path, state, storage } = await setup();
 

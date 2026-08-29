@@ -716,20 +716,32 @@ export async function writeHmmAnnotations(
 }
 
 /**
- * Clear the status singleton's install record.
+ * Clear the status singleton's in-flight install record.
  *
  * Run when an install **fails**. It is also the only thing that unwedges the
  * install button afterwards, because `isInstallInProgress` reads the pending
- * entry this removes.
+ * `updates` entry this removes.
  *
- * **It clears `installed` unconditionally**, so a failed install of release N
- * erases the record of a good N-1 whose rows and profiles are untouched. Left
- * that way deliberately; any repair has to keep making `isInstallInProgress`
- * false, which is what unwedges the install button.
+ * **Only the pending (`ready: false`) updates are dropped; `installed` and any
+ * committed (`ready: true`) markers stay.** `installed` and the ready marker are
+ * both written only inside the committed install transaction, so they name an
+ * install that actually landed — a pre-commit failure of release N leaves a
+ * good N-1's rows and profiles untouched and must not erase its record. Keeping
+ * the ready marker also lets a retry short-circuit in {@link installHmms} and
+ * rebuild the annotations blob, the recovery path for an install whose
+ * post-commit blob write failed. Removing the pending entry is enough to make
+ * `isInstallInProgress` false and free the button.
  */
 export async function cleanHmmStatus(db: DbOrTx): Promise<void> {
+	const [row] = await db
+		.select({ updates: legacyHmmStatus.updates })
+		.from(legacyHmmStatus)
+		.where(eq(legacyHmmStatus.id, HMM_STATUS_ID));
+
+	const updates = (row?.updates ?? []).filter((update) => update.ready);
+
 	await db
 		.update(legacyHmmStatus)
-		.set({ installed: null, task_id: null, updates: [] })
+		.set({ task_id: null, updates })
 		.where(eq(legacyHmmStatus.id, HMM_STATUS_ID));
 }

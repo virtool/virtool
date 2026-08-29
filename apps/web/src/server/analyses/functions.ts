@@ -17,9 +17,11 @@ import {
 	createAnalysis,
 	deleteAnalysis,
 	findAnalyses,
+	findRecentlyViewedAnalyses,
 	getAnalysis,
 	getAnalysisResults,
 	getAnalysisSampleRights,
+	recordAnalysisView,
 } from "@virtool/data/analyses/data";
 import {
 	checkSampleRight,
@@ -144,6 +146,37 @@ export const findAnalysesFn = createServerFn({ method: "GET" })
 			},
 			actor,
 		);
+	});
+
+export const findRecentlyViewedAnalysesFn = createServerFn({ method: "GET" })
+	.middleware([authenticated()])
+	.validator(z.object({ perPage: perPageSchema }))
+	.handler(async ({ context, data }) => {
+		const actor = await resolveSampleActor(db, context.session.userId);
+
+		return findRecentlyViewedAnalyses(
+			db,
+			context.session.userId,
+			data.perPage,
+			actor,
+		);
+	});
+
+export const recordAnalysisViewFn = createServerFn({ method: "POST" })
+	.middleware([authenticated()])
+	.validator(analysisIdSchema)
+	.handler(async ({ context, data }) => {
+		try {
+			// A view is only recorded for an analysis the caller may read, so a
+			// probe of an id they cannot see leaves no trace.
+			await authorizeAnalysis(data.analysisId, context.session.userId, [
+				"read",
+			]);
+			await recordAnalysisView(db, context.session.userId, data.analysisId);
+			return null;
+		} catch (err) {
+			return rethrowAsHttp(err);
+		}
 	});
 
 export const getAnalysisFn = createServerFn({ method: "GET" })

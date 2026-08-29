@@ -20,6 +20,7 @@ import {
 import { subtractions } from "../db/schema/subtractions";
 import { uploads } from "../db/schema/uploads";
 import { users } from "../db/schema/users";
+import { sampleViews } from "../db/schema/views";
 import { createTestDatabase, type TestDatabase } from "../db/test/fixtures";
 import { addToGroup, seedGroup } from "../groups/test/fixtures";
 import { seedIndex, seedReference } from "../indexes/test/fixtures";
@@ -30,9 +31,12 @@ import {
 	checkSampleRight,
 	createSample,
 	deleteSample,
+	findRecentlyViewedSamples,
 	findSamples,
 	getSample,
 	hasSampleRight,
+	listSampleGroups,
+	recordSampleView,
 	resolveSampleActor,
 	type SampleActor,
 	SampleFileDuplicateError,
@@ -62,6 +66,7 @@ afterAll(async () => {
 });
 
 beforeEach(async () => {
+	await db.delete(sampleViews);
 	await db.delete(analyses);
 	await db.delete(indexes);
 	await db.delete(legacyReferences);
@@ -119,6 +124,16 @@ async function seedAnalysis(
 			})
 			.returning({ id: analyses.id }),
 	).id;
+}
+
+async function seedSampleView(
+	userId: number,
+	sampleId: number,
+	viewedAt: Date,
+): Promise<void> {
+	await db
+		.insert(sampleViews)
+		.values({ user_id: userId, sample_id: sampleId, viewed_at: viewedAt });
 }
 
 async function seedLabel(name: string): Promise<number> {
@@ -226,6 +241,7 @@ describe("findSamples", () => {
 		labels: [],
 		users: [],
 		workflows: [],
+		groups: [],
 		createdAfter: null,
 		createdBefore: null,
 	};
@@ -314,6 +330,20 @@ describe("findSamples", () => {
 		);
 
 		expect(result.items.map((s) => s.name)).toEqual(["Theirs"]);
+	});
+
+	it("filters by group", async () => {
+		const groupId = await seedGroup(db, { name: "techs" });
+		await seedSample({ group_id: groupId, name: "Grouped" });
+		await seedSample({ name: "Ungrouped" });
+
+		const result = await findSamples(
+			db,
+			{ ...options, groups: [groupId] },
+			adminActor,
+		);
+
+		expect(result.items.map((s) => s.name)).toEqual(["Grouped"]);
 	});
 
 	it("filters by a half-open created range", async () => {
@@ -491,6 +521,7 @@ describe("workflow tags and filtering", () => {
 				labels: [],
 				users: [],
 				workflows: [],
+				groups: [],
 				createdAfter: null,
 				createdBefore: null,
 			},
@@ -520,6 +551,7 @@ describe("workflow tags and filtering", () => {
 				labels: [],
 				users: [],
 				workflows: ["nuvs:ready"],
+				groups: [],
 				createdAfter: null,
 				createdBefore: null,
 			},
@@ -542,6 +574,7 @@ describe("workflow tags and filtering", () => {
 				labels: [],
 				users: [],
 				workflows: ["bogus:none"],
+				groups: [],
 				createdAfter: null,
 				createdBefore: null,
 			},
@@ -990,5 +1023,138 @@ describe("resolveSampleActor", () => {
 
 		const plain = await resolveSampleActor(db, ownerId);
 		expect(plain.isAdmin).toBe(false);
+	});
+});
+
+describe("recordSampleView", () => {
+	it("records a first view", async () => {
+		const sampleId = await seedSample({ name: "Viewed" });
+
+		await recordSampleView(db, ownerId, sampleId);
+
+		const rows = await db
+			.select()
+			.from(sampleViews)
+			.where(eq(sampleViews.sample_id, sampleId));
+
+		expect(rows).toHaveLength(1);
+		expect(rows[0]?.user_id).toBe(ownerId);
+	});
+
+	it("bumps the timestamp of a repeat view instead of inserting a row", async () => {
+		const sampleId = await seedSample({ name: "Viewed" });
+		const earlier = new Date("2020-01-01T00:00:00.000Z");
+
+		await seedSampleView(ownerId, sampleId, earlier);
+		await recordSampleView(db, ownerId, sampleId);
+
+		const rows = await db
+			.select()
+			.from(sampleViews)
+			.where(eq(sampleViews.sample_id, sampleId));
+
+		expect(rows).toHaveLength(1);
+		expect(rows[0]?.viewed_at.getTime()).toBeGreaterThan(earlier.getTime());
+	});
+});
+
+describe("findRecentlyViewedSamples", () => {
+	it("returns viewed samples newest first", async () => {
+		const older = await seedSample({ name: "Older" });
+		const newer = await seedSample({ name: "Newer" });
+
+		await seedSampleView(ownerId, older, new Date("2020-01-01T00:00:00.000Z"));
+		await seedSampleView(ownerId, newer, new Date("2020-06-01T00:00:00.000Z"));
+
+		const actor = await resolveSampleActor(db, ownerId);
+		const result = await findRecentlyViewedSamples(db, ownerId, 10, actor);
+
+		expect(result.items.map((sample) => sample.name)).toEqual([
+			"Newer",
+			"Older",
+		]);
+		expect(result.foundCount).toBe(2);
+	});
+
+	it("excludes a sample the viewer may no longer read", async () => {
+		const other = await seedUser(db, { handle: "other" });
+		const hidden = await seedSample({ user_id: ownerId, name: "Hidden" });
+
+		await seedSampleView(other, hidden, new Date("2020-01-01T00:00:00.000Z"));
+
+		const actor = await resolveSampleActor(db, other);
+		const result = await findRecentlyViewedSamples(db, other, 10, actor);
+
+		expect(result.items).toHaveLength(0);
+		expect(result.foundCount).toBe(0);
+	});
+
+	it("scopes the list to the given user's own views", async () => {
+		const other = await seedUser(db, { handle: "other" });
+		const mine = await seedSample({ name: "Mine", all_read: true });
+		const theirs = await seedSample({ name: "Theirs", all_read: true });
+
+		await seedSampleView(ownerId, mine, new Date("2020-01-01T00:00:00.000Z"));
+		await seedSampleView(other, theirs, new Date("2020-01-01T00:00:00.000Z"));
+
+		const actor = await resolveSampleActor(db, ownerId);
+		const result = await findRecentlyViewedSamples(db, ownerId, 10, actor);
+
+		expect(result.items.map((sample) => sample.name)).toEqual(["Mine"]);
+	});
+
+	it("limits the page to perPage", async () => {
+		const first = await seedSample({ name: "First" });
+		const second = await seedSample({ name: "Second" });
+
+		await seedSampleView(ownerId, first, new Date("2020-01-01T00:00:00.000Z"));
+		await seedSampleView(ownerId, second, new Date("2020-06-01T00:00:00.000Z"));
+
+		const actor = await resolveSampleActor(db, ownerId);
+		const result = await findRecentlyViewedSamples(db, ownerId, 1, actor);
+
+		expect(result.items.map((sample) => sample.name)).toEqual(["Second"]);
+		expect(result.foundCount).toBe(2);
+	});
+});
+
+describe("listSampleGroups", () => {
+	it("returns only groups that own a sample, ordered by name", async () => {
+		const techs = await seedGroup(db, { name: "techs" });
+		const admins = await seedGroup(db, { name: "admins" });
+		await seedGroup(db, { name: "unused" });
+
+		await seedSample({ group_id: techs, name: "A" });
+		await seedSample({ group_id: admins, name: "B" });
+		await seedSample({ name: "Ungrouped" });
+
+		const result = await listSampleGroups(db, adminActor);
+
+		expect(result.map((group) => group.name)).toEqual(["admins", "techs"]);
+	});
+
+	it("lists a group once when it owns several samples", async () => {
+		const techs = await seedGroup(db, { name: "techs" });
+		await seedSample({ group_id: techs, name: "A" });
+		await seedSample({ group_id: techs, name: "B" });
+
+		const result = await listSampleGroups(db, adminActor);
+
+		expect(result).toHaveLength(1);
+		expect(result[0]?.name).toBe("techs");
+	});
+
+	it("omits groups whose samples the actor cannot read", async () => {
+		const other = await seedUser(db, { handle: "other" });
+		const mine = await seedGroup(db, { name: "mine" });
+		const theirs = await seedGroup(db, { name: "theirs" });
+
+		await seedSample({ user_id: ownerId, group_id: mine, name: "Mine" });
+		await seedSample({ user_id: other, group_id: theirs, name: "Theirs" });
+
+		const actor = await resolveSampleActor(db, ownerId);
+		const result = await listSampleGroups(db, actor);
+
+		expect(result.map((group) => group.name)).toEqual(["mine"]);
 	});
 });

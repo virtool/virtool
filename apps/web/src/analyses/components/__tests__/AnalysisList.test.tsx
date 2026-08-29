@@ -192,6 +192,7 @@ describe("<AnalysesList /> table", () => {
 
 		expect(headers.map((header) => header.textContent)).toEqual([
 			"Workflow",
+			"Version",
 			"Reference",
 			"Subtractions",
 			"User",
@@ -247,6 +248,7 @@ describe("<AnalysesList /> table", () => {
 
 		expect(headers.map((header) => header.getAttribute("aria-sort"))).toEqual([
 			"none",
+			null,
 			null,
 			null,
 			"none",

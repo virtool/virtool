@@ -1,5 +1,6 @@
 import AnalysisDetail from "@analyses/components/AnalysisDetail";
 import { AnalysisSearchProvider } from "@analyses/components/AnalysisSearchContext";
+import { useRecordAnalysisView } from "@analyses/queries";
 import {
 	type AnalysisSearch,
 	DEFAULT_ANALYSIS_SEARCH as DEFAULTS,
@@ -81,6 +82,9 @@ export const Route = createFileRoute(
 function AnalysisRoute() {
 	const search = Route.useSearch();
 	const navigate = Route.useNavigate();
+	const { analysisId } = Route.useParams();
+
+	useRecordAnalysisView(Number(analysisId));
 
 	return (
 		<AnalysisSearchProvider

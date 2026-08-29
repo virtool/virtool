@@ -20,7 +20,7 @@
     "@lucide/astro": "^1.33.0",
     "@tailwindcss/typography": "^0.5.19",
     "@tailwindcss/vite": "^4.2.2",
-    "@types/node": "^26.2.0",
+    "@types/node": "^26.4.0",
     "astro": "^7.2.0",
     "micromark": "^4.0.2",
     "micromark-extension-gfm": "^3.0.0",

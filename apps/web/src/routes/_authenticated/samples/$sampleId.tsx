@@ -10,7 +10,7 @@ import {
 import DeleteSample from "@samples/components/Detail/DeleteSample";
 import EditSample from "@samples/components/EditSample";
 import { useCheckCanEditSample } from "@samples/hooks";
-import { useSuspenseSample } from "@samples/queries";
+import { useRecordSampleView, useSuspenseSample } from "@samples/queries";
 import {
 	createFileRoute,
 	notFound,
@@ -51,6 +51,8 @@ function SampleDetailLayout() {
 	const location = useLocation();
 	const { data } = useSuspenseSample(numericSampleId);
 	const { hasPermission: canModify } = useCheckCanEditSample(numericSampleId);
+
+	useRecordSampleView(numericSampleId);
 	const [editOpen, setEditOpen] = useState(false);
 
 	const { createdAt, job, name, user } = data;

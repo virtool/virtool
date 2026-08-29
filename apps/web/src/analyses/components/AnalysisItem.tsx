@@ -11,7 +11,7 @@ import { useFetchJob } from "@jobs/queries";
 import { type AnalysisMinimal, isJobStateTerminal } from "@virtool/contracts";
 import { Trash } from "lucide-react";
 import { useDeleteAnalysis } from "../queries";
-import { checkSupportedWorkflow } from "../utils";
+import { checkSupportedWorkflow, getWorkflowVersionLabel } from "../utils";
 
 type AnalysisItemProps = {
 	analysis: AnalysisMinimal;
@@ -66,6 +66,9 @@ export default function AnalysisItem({ analysis }: AnalysisItemProps) {
 						</span>
 					</>
 				)}
+			</td>
+			<td className="text-gray-600 text-sm">
+				{getWorkflowVersionLabel(analysis.workflowVersion)}
 			</td>
 			<td>
 				<SlashList className="m-0">
