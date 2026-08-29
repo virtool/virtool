@@ -26,6 +26,7 @@
 		"postgres": "^3.4.9"
 	},
 	"devDependencies": {
+		"@virtool/tsconfig": "workspace:*",
 		"@testcontainers/postgresql": "^12.1.0",
 		"@types/bcrypt": "^6.0.0",
 		"drizzle-kit": "^0.31.10",

@@ -2,7 +2,7 @@
 
 The web-app frontend for Virtool
 
-The root Dockerfile's `dist` target is published as `ghcr.io/virtool/web`. See
+The app Dockerfile's `dist` target is published as `ghcr.io/virtool/web`. See
 [Continuous integration](../../docs/ci.md#images) for the shared image build
 and release pipeline.
 

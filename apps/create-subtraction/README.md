@@ -10,11 +10,13 @@ Two steps, `compute_gc_and_count` and `finalize`, and two external tools,
 
 ## Building the image
 
-The root Dockerfile builds SeqKit in its own stage and copies its binary into
-this app's runtime stage, which installs `pigz` from apt:
+The shared workflow-tools Dockerfile builds SeqKit and the app Dockerfile copies
+it into a runtime that installs `pigz` from apt:
 
 ```console
-docker build --target create-subtraction .
+pnpm --filter @virtool/create-subtraction build
+pnpm --filter @virtool/create-subtraction --prod deploy .docker-build/create-subtraction --force
+docker buildx bake -f packages/image-build/docker-bake.hcl create-subtraction
 ```
 
 ## Configuration

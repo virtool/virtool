@@ -19,6 +19,7 @@
 		"@virtool/contracts": "workspace:*"
 	},
 	"devDependencies": {
+		"@virtool/tsconfig": "workspace:*",
 		"vitest": "^4.1.11"
 	}
 }

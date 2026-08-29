@@ -1,14 +1,29 @@
 {
 	"$schema": "https://unpkg.com/knip@6/schema.json",
 	"ignoreExportsUsedInFile": true,
+	"ignoreDependencies": ["@virtool/tsconfig"],
 	"ignoreWorkspaces": [
 		"apps/site"
 	],
 	"ignore": [
-		".venv/**",
-		"packages/pathoscope-core/**"
+		".venv/**"
 	],
 	"workspaces": {
+		"apps/create-sample": {
+			"ignoreDependencies": ["@virtool/image-build", "@virtool/quality-core", "@virtool/workflow-tools"]
+		},
+		"apps/create-subtraction": {
+			"ignoreDependencies": ["@virtool/image-build", "@virtool/workflow-tools"]
+		},
+		"apps/internal": {
+			"ignoreDependencies": ["@virtool/image-build"]
+		},
+		"apps/nuvs": {
+			"ignoreDependencies": ["@virtool/image-build", "@virtool/workflow-tools"]
+		},
+		"apps/pathoscope": {
+			"ignoreDependencies": ["@virtool/image-build", "@virtool/pathoscope-core", "@virtool/workflow-tools"]
+		},
 		"apps/web": {
 			"entry": [
 				"src/instrument.server.ts",
@@ -19,9 +34,7 @@
 			"project": [
 				"src/**/*.{ts,tsx,css}"
 			],
-			"ignoreDependencies": [
-				"bcrypt"
-			]
+			"ignoreDependencies": ["@virtool/image-build", "bcrypt"]
 		},
 		"packages/bio": {
 			"entry": [

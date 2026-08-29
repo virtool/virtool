@@ -2,10 +2,12 @@
 
 ## Images
 
-Every image ships from a target in the root `Dockerfile`. Four targets use the
-`build` job matrix; Pathoscope and Nuvs have separate, longer path-filtered
-jobs. `release-ghcr` publishes only the targets whose app version bumped in a
-release (see [Releases](#releases)).
+Every image ships from its app's Dockerfile. The image-build Bake file preserves the
+existing target names and links workflow apps to the shared native-tool stages
+in `packages/workflow-tools/Dockerfile`. Four images use the `build` job matrix;
+Pathoscope and Nuvs have separate, longer affected-only jobs. `release-ghcr`
+publishes only the targets whose app version bumped in a release (see
+[Releases](#releases)).
 
 | Target | Published image(s) | Build job |
 | --- | --- | --- |
@@ -25,7 +27,7 @@ workflow of the same name; this repository's release supersedes them. The
 port and are no longer published; their existing tags stay in the registry
 but never move again.
 
-Adding an image requires a Dockerfile target and a release-matrix entry. For
+Adding an image requires an app Dockerfile, a Bake target, and a release-matrix entry. For
 the five targets in `build`, keep its matrix entry in step with
 `release-ghcr`. Pathoscope and Nuvs instead use the dedicated build jobs
 above, and their `matrix.image` values must match the cache scopes those jobs
@@ -33,54 +35,44 @@ write, so the release reuses the caches they populated rather than rebuilding
 the Rust crate, bioinformatics tools, or SPAdes inside the shared 20-minute
 release timeout.
 
-Build one image locally by naming its target:
+Build one image locally by building the app and preparing its pruned context,
+then naming its Bake target:
 
 ```console
-docker build --target pathoscope .
+pnpm --filter @virtool/pathoscope build
+pnpm --filter @virtool/pathoscope --prod deploy .docker-build/pathoscope --force
+docker buildx bake -f packages/image-build/docker-bake.hcl pathoscope
 ```
 
-## Path-filtered jobs
+## Affected jobs
 
-Most CI jobs run for every pull request. Four expensive jobs use the `changes`
-job in `.github/workflows/ci.yaml` to run only when their inputs change:
+The `changes` job asks pnpm for workspaces selected by
+`...\[origin/main\]`. The leading ellipsis includes dependents, so an app is
+selected when either its own files or any workspace dependency changes. Image
+jobs build only selected apps on pull requests and remain unconditional on
+pushes to `main`.
 
-| Filter | Job | Inputs |
-| --- | --- | --- |
-| `pathoscope-crate` | `pathoscope-test` | The Pathoscope Rust crate and the Dockerfile target that supplies Bowtie 2 |
-| `quality-crate` | `quality-test` | The quality-statistics Rust crate |
-| `pathoscope-image` | `build-pathoscope` | The Pathoscope app, its Rust crate, and everything copied into its image |
-| `nuvs-image` | `build-nuvs` | The Nuvs app and everything copied into its image |
-
-Keep a separate filter for each job. The crate jobs run Cargo and do not read
-TypeScript sources. The image jobs bundle different apps and have different
-Docker build inputs: Pathoscope copies `packages/pathoscope-core`, while Nuvs
-does not. Combining the filters would run the libclang-and-Cargo job for
-unrelated workspace changes and rebuild each image for inputs used only by the
-other image.
-
-Extend a filter in the same change that gives its job a new input. Every path a
-workflow image's Dockerfile stages `COPY` must appear under that image's
-filter, even when the app does not import it. The shared `base` stage copies
-`packages/data`, `packages/service`, and `packages/bio` for both targets, so
-both image filters include all three packages. Image filters also include
-`.dockerignore`, because its rules determine which files are available to
-those `COPY` instructions.
-
-A missing input can skip the affected build on the pull request that changes
-it. Pushes to `main` do not use the filters, so the same change can then fail
-after merging.
+CI first runs the app's build and then `pnpm --prod deploy`, making the Docker
+context exactly the production closure recorded in the workspace graph. The
+Rust crates and shared native-tool recipe are private pnpm workspaces used as
+development dependencies by the apps that consume their build products. This
+lets the same graph select Pathoscope for a Pathoscope crate change, Create
+Sample for a quality crate change, and both native workflows for a shared-tool
+recipe change without hand-maintained path lists.
 
 ## Releases
 
 Versioning and publishing run on [Changesets](https://github.com/changesets/changesets).
-Every app and package is `private`, so nothing publishes to npm; the config sets
+Every app and TypeScript package is `private`, so nothing publishes to npm; the config sets
 `privatePackages: { version: true, tag: true }` to version and tag them anyway.
 The `web` and `internal` images are a `fixed` group: they share one unified
 version and bump together, so a change to either publishes both at the same
 version. Create Sample, Create Subtraction, Pathoscope, and NuVs are versioned
 independently and publish only when they change. Shared `packages/*` are
 versioned on their own and cascade a `patch` into the apps that depend on them. `apps/site` is in `ignore` — it deploys
-elsewhere and ships no image.
+elsewhere and ships no image. The Rust crates, `workflow-tools`, and
+`image-build` and `tsconfig` build-input workspaces are also ignored: they exist in pnpm only
+to express image build edges and are released through their consuming apps.
 
 The `release` job runs `changesets/action` on every push to `main`, after the
 same build and test jobs that gate a pull request:

@@ -131,27 +131,17 @@ stay:
   Biome ignores `.rs`, `.toml` and the fixtures, but it does parse
   `tests/golden/vectors.json` and wants to reformat it. That file is machine
   generated; formatting it would only make the next regeneration fail the gate.
-- **knip** — `packages/pathoscope-core/**` in `knip.json`'s `ignore`. `hts-sys`
-  vendors htslib's C source into `target/`, and that tree carries a
-  `htscodecs/javascript/` directory which knip reports as unused files after any
-  local `cargo build`. knip itself emits a configuration hint asking for this
-  ignore to be removed, because in a checkout where the crate has never been
-  built `target/` does not exist and the pattern matches nothing. Do not act on
-  that hint: it is right about the clean checkout and wrong about every machine
-  that has run `cargo build`.
+- **knip** — the crate is a private workspace so pnpm can follow its image-build
+  consumers, but it has no JavaScript entry point for knip to scan.
 
-The root `Dockerfile` copies `packages/` **per package**, not as a blanket
-`COPY packages ./packages`. The UI image has no use for the crate, and a blanket
-copy would pull its `src/` and `Cargo.lock` in and bust that layer's cache on
-every Rust edit. Add a line there when a new TypeScript package appears.
-`**/target` is in `.dockerignore` for the same reason, from the other side.
+The shared workflow-tools Dockerfile copies this crate explicitly. Its
+Dockerfile-specific ignore excludes every Cargo `target/` tree so local output
+never enters the build context.
 
 ## The image build
 
-The root `Dockerfile`'s `pathoscope` target builds
-`ghcr.io/virtool/pathoscope`. The crate is compiled in the same Dockerfile as
-its only consumer, so there is no second release stream to coordinate and no
-window in which the workflow and its core disagree.
+The `pathoscope` Bake target builds `ghcr.io/virtool/pathoscope`. The crate and
+app are linked in the pnpm graph, so they remain one release stream.
 
 The `Pathoscope / Build` job compiles the Dockerfile on every run and
 `release-ghcr` pushes it on release. `ghcr.io/virtool/pathoscope` previously

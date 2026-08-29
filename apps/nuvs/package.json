@@ -4,7 +4,11 @@
 	"private": true,
 	"type": "module",
 	"files": [
-		"dist"
+		"dist",
+		"Dockerfile",
+		"src",
+		"tsconfig.json",
+		"tsdown.config.ts"
 	],
 	"scripts": {
 		"build": "tsdown",
@@ -31,6 +35,9 @@
 		"zod": "^4.3.6"
 	},
 	"devDependencies": {
+		"@virtool/image-build": "workspace:*",
+		"@virtool/tsconfig": "workspace:*",
+		"@virtool/workflow-tools": "workspace:*",
 		"@types/node": "^26.2.0",
 		"tsdown": "^0.22.14",
 		"vitest": "^4.1.11"

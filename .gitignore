@@ -28,3 +28,4 @@ tags
 
 # Sentry Config File
 .env.sentry-build-plugin
+.docker-build

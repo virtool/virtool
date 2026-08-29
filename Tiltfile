@@ -1,9 +1,6 @@
 local(['bash', 'dev/scripts/ensure-minikube.sh'], quiet=False)
 
-# Every live-edit target is a bool flag named after its Dockerfile stage, e.g.
-# `tilt up -- --web --internal`. The web target is listed apart because it
-# alone runs a dev server rather than the built artifact, so it needs an
-# entrypoint and sync rules; see its docker_build below.
+# Every local image target is a bool flag, e.g. `tilt up -- --web --internal`.
 WEB_IMAGE = 'ghcr.io/virtool/web'
 
 # One image, three workloads. The `internal` stage builds once; the jobs-api
@@ -24,7 +21,7 @@ WORKFLOW_TARGETS = [
     ('pathoscope', 'ghcr.io/virtool/pathoscope'),
 ]
 
-config.define_bool('web', usage='live edit web')
+config.define_bool('web', usage='build web locally')
 
 for target, image in SERVICE_TARGETS:
     config.define_bool(target, usage='live edit ' + target)
@@ -69,56 +66,20 @@ k8s_yaml('dev/manifests/ingress.yaml')
 # been applied.
 k8s_yaml('dev/manifests/migration.yaml')
 
-# Anything in the build context that no sync below covers forces a full image
-# rebuild, which replaces the pod and costs a cold start. These paths are all
-# either generated or irrelevant to the image, so a change to one must never do
-# that. Shared across every docker_build below.
-#
-# `_tmp_*` is the important one: every host-side pnpm invocation writes
-# `_tmp_<pid>_<hash>` into a folder it is about to write atomically, so a
-# bare `pnpm exec ...` at the repo root drops one here and rebuilds every
-# live-edited image.
-#
-# This file and `dev/` are excluded by `.dockerignore`, which both the daemon
-# and Tilt's file watcher read, so editing the Tiltfile or a manifest does not
-# rebuild seven images.
-ui_monorepo_ignore = [
-  '**/_tmp_*',
-  '.claude/',
-  '.tanstack/',
-  'apps/web/.nitro/',
-  'apps/web/.output/',
-  'coverage/',
-  '*.md',
-]
+def image_build(target, image):
+    package = '@virtool/' + target
+    context = '.docker-build/' + target
+    command = 'pnpm --filter ' + package + ' build && ' + \
+        'pnpm --filter ' + package + ' --prod deploy ' + context + ' --force && ' + \
+        'docker buildx bake -f packages/image-build/docker-bake.hcl ' + target + ' --load --set "' + target + '.tags=$EXPECTED_REF"'
+    custom_build(image, command, ['apps/' + target, 'packages', 'pnpm-lock.yaml'])
 
-# The web image is the one target that runs a dev server rather than the built
-# artifact, so it carries an entrypoint and sync rules the rest have no use
-# for. Tilt's `entrypoint` takes precedence over the container command in the
-# Deployment, so the manifest's `npm start` does not apply to this build.
 if cfg.get('web', False):
-    docker_build(
-      WEB_IMAGE,
-      '.',
-      entrypoint='pnpm --filter @virtool/web exec vite --host 0.0.0.0 --port 9900',
-      target='dev',
-      ignore=ui_monorepo_ignore,
-      live_update=[
-        fall_back_on([
-          './pnpm-lock.yaml',
-          './pnpm-workspace.yaml',
-          './package.json',
-          './apps/web/package.json',
-          './apps/web/vite.config.js',
-        ]),
-        sync('./apps/web/src', '/repo/apps/web/src'),
-        sync('./packages', '/repo/packages'),
-      ]
-    )
+    image_build('web', WEB_IMAGE)
 
 for target, image in SERVICE_TARGETS:
     if cfg.get(target, False):
-        docker_build(image, '.', target=target, ignore=ui_monorepo_ignore)
+        image_build(target, image)
 
 k8s_yaml(kustomize('dev/manifests/web'))
 k8s_yaml(kustomize('dev/manifests/virtool'))
@@ -180,7 +141,7 @@ k8s_yaml(kustomize('dev/manifests/workflows'))
 
 for target, image in WORKFLOW_TARGETS:
     if cfg.get(target, False):
-        docker_build(image, '.', target=target, ignore=ui_monorepo_ignore)
+        image_build(target, image)
 
     k8s_resource(
         'virtool-workflow-' + target,

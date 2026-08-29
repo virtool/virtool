@@ -20,7 +20,8 @@ never `npm` or `bun`.
 
 ## Packages
 
-`packages/` holds shared workspace libraries and two standalone Rust crates.
+`packages/` holds shared workspace libraries and two Rust crates represented as
+private workspaces so image affected-detection can follow their consumers.
 Apps bundle; packages stay source.
 
 | Package | Purpose |
@@ -30,12 +31,15 @@ Apps bundle; packages stay source.
 | [`@virtool/contracts`](packages/contracts/README.md) | Shared wire shapes and isolated server-only helpers. |
 | [`@virtool/data`](packages/data/README.md) | Server-only Drizzle schema mirror and Postgres queries. |
 | [`@virtool/logger`](packages/logger/README.md) | Shared pino configuration. |
+| `@virtool/image-build` | Buildx Bake graph for shipped images. |
 | [`@virtool/ncbi`](packages/ncbi/README.md) | NCBI Nucleotide and Taxonomy client. |
 | [`@virtool/sentry`](packages/sentry/README.md) | Shared browser and server Sentry wiring. |
 | [`@virtool/service`](packages/service/README.md) | Shared lifecycle utilities for long-lived services. |
 | [`@virtool/sqlite`](packages/sqlite/README.md) | Reference-index SQLite schema, reader, and writer. |
 | [`@virtool/storage`](packages/storage/README.md) | Server-only streaming object storage. |
+| `@virtool/tsconfig` | Shared TypeScript configurations. |
 | [`@virtool/workflow`](packages/workflow/README.md) | Workflow runtime and testing harness. |
+| `@virtool/workflow-tools` | Shared native-tool Docker build stages. |
 | [`pathoscope-core`](packages/pathoscope-core/README.md) | Rust implementation of Pathoscope reassignment. |
 | [`quality-core`](packages/quality-core/README.md) | Rust implementation of sample quality statistics. |
 
@@ -62,17 +66,19 @@ Apps bundle; packages stay source.
 | Test (one file) | `TZ=UTC pnpm --filter @virtool/web exec vitest run <path>` |
 | Rust crates | `cargo test` / `cargo fmt` (in `packages/pathoscope-core` and `packages/quality-core`) |
 
-Add every new workflow image or crate input, including each Dockerfile `COPY`
-source, to the corresponding filter in `.github/workflows/ci.yaml`. See
-[docs/ci.md](docs/ci.md) for the filter boundaries and rationale.
+Every shipped app owns `apps/<name>/Dockerfile`. CI builds from a
+`pnpm deploy`-pruned context and derives affected images from the pnpm workspace
+graph, so every non-package image input must be represented by a private
+workspace dependency. Shared native tools live in
+`packages/workflow-tools/Dockerfile` and are linked to app builds by
+`packages/image-build/docker-bake.hcl`.
 
-Every shipped image is a target in the root `Dockerfile` and builds from the
-repository root. Keep runtime stages on `node:24-bookworm-slim`; workflow tools
-are glibc-linked, so do not add an Alpine stage. Give each bioinformatics tool
-its own independent build stage so a target builds only the tools it uses.
-When adding a tool, inspect the pinned entry point and install every runtime
-interpreter and shared library it needs; a missing interpreter does not fail
-the image build and surfaces only when the workflow runs.
+Keep runtime stages on `node:24-bookworm-slim`; workflow tools are glibc-linked,
+so do not add an Alpine stage. Give each bioinformatics tool its own independent
+build stage so a target builds only the tools it uses. When adding a tool,
+inspect the pinned entry point and install every runtime interpreter and shared
+library it needs; a missing interpreter does not fail the image build and
+surfaces only when the workflow runs.
 
 ### When to run checks
 

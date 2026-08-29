@@ -1,0 +1,9 @@
+**/target
+**/node_modules
+**/dist
+*
+!packages/
+!packages/pathoscope-core/
+!packages/pathoscope-core/**
+!packages/quality-core/
+!packages/quality-core/**

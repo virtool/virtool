@@ -1,0 +1,9 @@
+{
+	"name": "@virtool/workflow-tools",
+	"version": "0.0.0",
+	"private": true,
+	"files": [
+		"Dockerfile",
+		"Dockerfile.dockerignore"
+	]
+}

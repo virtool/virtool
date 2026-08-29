@@ -90,6 +90,18 @@ importers:
       '@types/node':
         specifier: ^26.2.0
         version: 26.2.0
+      '@virtool/image-build':
+        specifier: workspace:*
+        version: link:../../packages/image-build
+      '@virtool/quality-core':
+        specifier: workspace:*
+        version: link:../../packages/quality-core
+      '@virtool/tsconfig':
+        specifier: workspace:*
+        version: link:../../packages/tsconfig
+      '@virtool/workflow-tools':
+        specifier: workspace:*
+        version: link:../../packages/workflow-tools
       tsdown:
         specifier: ^0.22.14
         version: 0.22.14(oxc-resolver@11.24.2)(tsx@4.23.0)(typescript@7.0.2)
@@ -145,6 +157,15 @@ importers:
       '@types/node':
         specifier: ^26.2.0
         version: 26.2.0
+      '@virtool/image-build':
+        specifier: workspace:*
+        version: link:../../packages/image-build
+      '@virtool/tsconfig':
+        specifier: workspace:*
+        version: link:../../packages/tsconfig
+      '@virtool/workflow-tools':
+        specifier: workspace:*
+        version: link:../../packages/workflow-tools
       tsdown:
         specifier: ^0.22.14
         version: 0.22.14(oxc-resolver@11.24.2)(tsx@4.23.0)(typescript@7.0.2)
@@ -209,6 +230,12 @@ importers:
       '@types/tar-stream':
         specifier: ^3.1.4
         version: 3.1.4
+      '@virtool/image-build':
+        specifier: workspace:*
+        version: link:../../packages/image-build
+      '@virtool/tsconfig':
+        specifier: workspace:*
+        version: link:../../packages/tsconfig
       tsdown:
         specifier: ^0.22.14
         version: 0.22.14(oxc-resolver@11.24.2)(tsx@4.23.0)(typescript@7.0.2)
@@ -267,6 +294,15 @@ importers:
       '@types/node':
         specifier: ^26.2.0
         version: 26.2.0
+      '@virtool/image-build':
+        specifier: workspace:*
+        version: link:../../packages/image-build
+      '@virtool/tsconfig':
+        specifier: workspace:*
+        version: link:../../packages/tsconfig
+      '@virtool/workflow-tools':
+        specifier: workspace:*
+        version: link:../../packages/workflow-tools
       tsdown:
         specifier: ^0.22.14
         version: 0.22.14(oxc-resolver@11.24.2)(tsx@4.23.0)(typescript@7.0.2)
@@ -319,6 +355,18 @@ importers:
       '@types/node':
         specifier: ^26.2.0
         version: 26.2.0
+      '@virtool/image-build':
+        specifier: workspace:*
+        version: link:../../packages/image-build
+      '@virtool/pathoscope-core':
+        specifier: workspace:*
+        version: link:../../packages/pathoscope-core
+      '@virtool/tsconfig':
+        specifier: workspace:*
+        version: link:../../packages/tsconfig
+      '@virtool/workflow-tools':
+        specifier: workspace:*
+        version: link:../../packages/workflow-tools
       tsdown:
         specifier: ^0.22.14
         version: 0.22.14(oxc-resolver@11.24.2)(tsx@4.23.0)(typescript@7.0.2)
@@ -543,6 +591,9 @@ importers:
       '@types/react-dom':
         specifier: ^19.2.4
         version: 19.2.4(@types/react@19.2.18)
+      '@virtool/image-build':
+        specifier: workspace:*
+        version: link:../../packages/image-build
       '@vitejs/plugin-react':
         specifier: ^6.1.0
         version: 6.1.0(@rolldown/plugin-babel@0.2.3(@babel/core@8.0.1)(@babel/runtime@7.29.7)(rolldown@1.2.3)(vite@8.2.2(@types/node@26.2.0)(esbuild@0.28.2)(jiti@2.7.0)(tsx@4.23.0)(yaml@2.9.0)))(babel-plugin-react-compiler@1.0.0)(vite@8.2.2(@types/node@26.2.0)(esbuild@0.28.2)(jiti@2.7.0)(tsx@4.23.0)(yaml@2.9.0))
@@ -593,6 +644,9 @@ importers:
       '@types/tar-stream':
         specifier: ^3.1.4
         version: 3.1.4
+      '@virtool/tsconfig':
+        specifier: workspace:*
+        version: link:../tsconfig
       vitest:
         specifier: ^4.1.11
         version: 4.1.11(@opentelemetry/api@1.9.1)(@types/node@26.2.0)(@vitest/browser-playwright@4.1.11)(jsdom@30.0.1)(vite@8.2.2(@types/node@26.2.0)(esbuild@0.28.2)(jiti@2.7.0)(tsx@4.23.0)(yaml@2.9.0))
@@ -603,6 +657,9 @@ importers:
         specifier: workspace:*
         version: link:../contracts
     devDependencies:
+      '@virtool/tsconfig':
+        specifier: workspace:*
+        version: link:../tsconfig
       vitest:
         specifier: ^4.1.11
         version: 4.1.11(@opentelemetry/api@1.9.1)(@types/node@26.2.0)(@vitest/browser-playwright@4.1.11)(jsdom@30.0.1)(vite@8.2.2(@types/node@26.2.0)(esbuild@0.28.2)(jiti@2.7.0)(tsx@4.23.0)(yaml@2.9.0))
@@ -616,6 +673,9 @@ importers:
       '@types/node':
         specifier: ^26.2.0
         version: 26.2.0
+      '@virtool/tsconfig':
+        specifier: workspace:*
+        version: link:../tsconfig
       vitest:
         specifier: ^4.1.11
         version: 4.1.11(@opentelemetry/api@1.9.1)(@types/node@26.2.0)(@vitest/browser-playwright@4.1.11)(jsdom@30.0.1)(vite@8.2.2(@types/node@26.2.0)(esbuild@0.28.2)(jiti@2.7.0)(tsx@4.23.0)(yaml@2.9.0))
@@ -656,6 +716,9 @@ importers:
       '@types/bcrypt':
         specifier: ^6.0.0
         version: 6.0.0
+      '@virtool/tsconfig':
+        specifier: workspace:*
+        version: link:../tsconfig
       drizzle-kit:
         specifier: ^0.31.10
         version: 0.31.10
@@ -666,12 +729,17 @@ importers:
         specifier: ^4.1.11
         version: 4.1.11(@opentelemetry/api@1.9.1)(@types/node@26.2.0)(@vitest/browser-playwright@4.1.11)(jsdom@30.0.1)(vite@8.2.2(@types/node@26.2.0)(esbuild@0.28.2)(jiti@2.7.0)(tsx@4.23.0)(yaml@2.9.0))
 
+  packages/image-build: {}
+
   packages/logger:
     dependencies:
       pino:
         specifier: ^10.1.0
         version: 10.3.1
     devDependencies:
+      '@virtool/tsconfig':
+        specifier: workspace:*
+        version: link:../tsconfig
       vitest:
         specifier: ^4.1.11
         version: 4.1.11(@opentelemetry/api@1.9.1)(@types/node@26.2.0)(@vitest/browser-playwright@4.1.11)(jsdom@30.0.1)(vite@8.2.2(@types/node@26.2.0)(esbuild@0.28.2)(jiti@2.7.0)(tsx@4.23.0)(yaml@2.9.0))
@@ -691,15 +759,25 @@ importers:
         specifier: ^4.3.6
         version: 4.4.3
     devDependencies:
+      '@virtool/tsconfig':
+        specifier: workspace:*
+        version: link:../tsconfig
       vitest:
         specifier: ^4.1.11
         version: 4.1.11(@opentelemetry/api@1.9.1)(@types/node@26.2.0)(@vitest/browser-playwright@4.1.11)(jsdom@30.0.1)(vite@8.2.2(@types/node@26.2.0)(esbuild@0.28.2)(jiti@2.7.0)(tsx@4.23.0)(yaml@2.9.0))
+
+  packages/pathoscope-core: {}
+
+  packages/quality-core: {}
 
   packages/sentry:
     devDependencies:
       '@virtool/logger':
         specifier: workspace:*
         version: link:../logger
+      '@virtool/tsconfig':
+        specifier: workspace:*
+        version: link:../tsconfig
       vitest:
         specifier: ^4.1.11
         version: 4.1.11(@opentelemetry/api@1.9.1)(@types/node@26.2.0)(@vitest/browser-playwright@4.1.11)(jsdom@30.0.1)(vite@8.2.2(@types/node@26.2.0)(esbuild@0.28.2)(jiti@2.7.0)(tsx@4.23.0)(yaml@2.9.0))
@@ -709,6 +787,9 @@ importers:
       '@virtool/logger':
         specifier: workspace:*
         version: link:../logger
+      '@virtool/tsconfig':
+        specifier: workspace:*
+        version: link:../tsconfig
       vitest:
         specifier: ^4.1.11
         version: 4.1.11(@opentelemetry/api@1.9.1)(@types/node@26.2.0)(@vitest/browser-playwright@4.1.11)(jsdom@30.0.1)(vite@8.2.2(@types/node@26.2.0)(esbuild@0.28.2)(jiti@2.7.0)(tsx@4.23.0)(yaml@2.9.0))
@@ -718,6 +799,9 @@ importers:
       '@types/node':
         specifier: ^26.2.0
         version: 26.2.0
+      '@virtool/tsconfig':
+        specifier: workspace:*
+        version: link:../tsconfig
       vitest:
         specifier: ^4.1.11
         version: 4.1.11(@opentelemetry/api@1.9.1)(@types/node@26.2.0)(@vitest/browser-playwright@4.1.11)(jsdom@30.0.1)(vite@8.2.2(@types/node@26.2.0)(esbuild@0.28.2)(jiti@2.7.0)(tsx@4.23.0)(yaml@2.9.0))
@@ -740,12 +824,17 @@ importers:
         specifier: ^12.33.0
         version: 12.33.0(supports-color@10.2.2)
     devDependencies:
+      '@virtool/tsconfig':
+        specifier: workspace:*
+        version: link:../tsconfig
       testcontainers:
         specifier: ^12.1.0
         version: 12.1.0(supports-color@10.2.2)
       vitest:
         specifier: ^4.1.11
         version: 4.1.11(@opentelemetry/api@1.9.1)(@types/node@26.2.0)(@vitest/browser-playwright@4.1.11)(jsdom@30.0.1)(vite@8.2.2(@types/node@26.2.0)(esbuild@0.28.2)(jiti@2.7.0)(tsx@4.23.0)(yaml@2.9.0))
+
+  packages/tsconfig: {}
 
   packages/workflow:
     dependencies:
@@ -780,9 +869,14 @@ importers:
       '@types/node':
         specifier: ^26.2.0
         version: 26.2.0
+      '@virtool/tsconfig':
+        specifier: workspace:*
+        version: link:../tsconfig
       vitest:
         specifier: ^4.1.11
         version: 4.1.11(@opentelemetry/api@1.9.1)(@types/node@26.2.0)(@vitest/browser-playwright@4.1.11)(jsdom@30.0.1)(vite@8.2.2(@types/node@26.2.0)(esbuild@0.28.2)(jiti@2.7.0)(tsx@4.23.0)(yaml@2.9.0))
+
+  packages/workflow-tools: {}
 
 packages:
 

@@ -69,14 +69,15 @@ the cluster does not stop cleanly. The `Tiltfile` calls
 `dev/scripts/ensure-minikube.sh` as it loads, so `tilt up` starts a stopped cluster
 on its own.
 
-## Live editing
+## Local image builds
 
-Every live-edit target builds from this repository's root `Dockerfile`, at the
-stage named after the target. Pass a flag to turn one on:
+Each enabled target builds its app, prepares a pruned `pnpm deploy` context,
+and invokes the matching `docker buildx bake` target. Pass a flag to turn one
+on:
 
-| Flag | Image | Dockerfile stage |
+| Flag | Image | Bake target |
 | --- | --- | --- |
-| `--web` | `ghcr.io/virtool/web` | `dev` |
+| `--web` | `ghcr.io/virtool/web` | `web` |
 | `--internal` | `ghcr.io/virtool/internal` | `internal` |
 | `--create-sample` | `ghcr.io/virtool/create-sample` | `create-sample` |
 | `--create-subtraction` | `ghcr.io/virtool/create-subtraction` | `create-subtraction` |
@@ -85,10 +86,10 @@ stage named after the target. Pass a flag to turn one on:
 
 Flags combine: `tilt up -- --web --internal`.
 
-`--web` runs Vite in the pod and syncs `apps/web/src` and `packages` into it,
-so an edit shows up without a rebuild. The rest rebuild the image on change,
-and `jobs-api`, `tasks` and every workflow are on manual trigger — update them
-from the Tilt UI when you want the build. `--internal` builds the one image the
+Enabled apps rebuild their image when their app, a shared package, the lockfile,
+or the Bake definition changes. The `jobs-api`, `tasks` and every workflow are
+on manual trigger — update them from the Tilt UI when you want the build.
+`--internal` builds the one image the
 `jobs-api` and `tasks` workloads and the migration Job all share, so a rebuild
 updates all three. A workflow's pods are one-shot and
 only start when something claims work, so nothing waits on a rebuild and an

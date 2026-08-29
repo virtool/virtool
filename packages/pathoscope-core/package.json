@@ -1,0 +1,10 @@
+{
+	"name": "@virtool/pathoscope-core",
+	"version": "0.0.0",
+	"private": true,
+	"files": [
+		"Cargo.lock",
+		"Cargo.toml",
+		"src"
+	]
+}
