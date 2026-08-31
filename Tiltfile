@@ -145,8 +145,9 @@ k8s_resource(
     objects=['virtool-env:configmap'],
 )
 
-# Host port 0 lets Tilt pick a free local port, so concurrent worktrees never
-# fight over one. The bound port shows in the Tilt UI.
+# The Tilt UI port is pinned per worktree by dev/scripts/up.sh. Kubernetes
+# resource forwards remain dynamically allocated so concurrent instances do
+# not fight over local service ports.
 k8s_resource(
     'virtool-jobs-api',
     labels=['virtool'],
