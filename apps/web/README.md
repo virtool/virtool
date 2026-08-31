@@ -871,5 +871,5 @@ Follow [the development guide](../../dev/README.md) to set up Tilt and Minikube,
 then start the web app's live-edit target from the repository root:
 
 ```shell
-tilt up -- --web
+bash dev/scripts/up.sh --web
 ```

@@ -1,5 +1,34 @@
 local(['bash', 'dev/scripts/ensure-minikube.sh'], quiet=False)
 
+# Each worktree runs its own dev instance in its own Kubernetes namespace. `WT`
+# names that namespace and `dev/scripts/up.sh` sets it before `tilt up`. Every
+# object this Tiltfile applies goes into that namespace, and the ingress host is
+# derived from it, so two worktrees never collide. KEDA, ingress-nginx and the
+# wildcard TLS certificate are cluster-wide singletons that
+# `dev/scripts/init.sh` installs once.
+WT = os.getenv('WT', '')
+if not WT:
+    fail('WT is not set. Start the dev instance with `bash dev/scripts/up.sh`.')
+
+MINIKUBE_IP = str(local('minikube ip', quiet=True)).strip()
+HOST = WT + '.' + MINIKUBE_IP + '.nip.io'
+
+load('ext://namespace', 'namespace_create', 'namespace_inject')
+load('ext://uibutton', 'cmd_button', 'location')
+
+# Rewrite the shared manifests for this worktree: put every object in the `WT`
+# namespace, repoint the hard-coded `default` service FQDNs at it, and swap the
+# `virtool.local` ingress host for the worktree's nip.io host. The manifests
+# keep `default` and `virtool.local` as literals so each stays valid on its own
+# under `kubectl apply -f`.
+def scoped(objects):
+    text = str(objects)
+    text = text.replace('default.svc.cluster.local', WT + '.svc.cluster.local')
+    text = text.replace('virtool.local', HOST)
+    return namespace_inject(blob(text), WT)
+
+namespace_create(WT)
+
 # Every live-edit target is a bool flag named after its Dockerfile stage, e.g.
 # `tilt up -- --web --internal`. The web target is listed apart because it
 # alone runs a dev server rather than the built artifact, so it needs an
@@ -34,40 +63,27 @@ for target, image in WORKFLOW_TARGETS:
 
 cfg = config.parse()
 
-load('ext://helm_resource', 'helm_resource', 'helm_repo')
-load('ext://uibutton', 'cmd_button', 'location')
-
 cmd_button('wipe',
-    argv=['bash', 'dev/scripts/wipe.sh'],
+    argv=['bash', 'dev/scripts/wipe.sh', WT],
     icon_name="delete_forever",
     location=location.NAV,
     text='Wipe',
     requires_confirmation=True,
 )
 
-helm_repo('kedacore', 'https://kedacore.github.io/charts', labels=['k8s'])
-
-helm_resource(
-    'keda',
-    'kedacore/keda',
-    labels=['k8s'],
-    resource_deps=['kedacore'],
-    flags=['--version=2.20.2']
-)
-
-k8s_yaml('dev/manifests/data/azurite.yaml')
-k8s_yaml('dev/manifests/data/postgres.yaml')
+k8s_yaml(scoped(read_file('dev/manifests/data/azurite.yaml')))
+k8s_yaml(scoped(read_file('dev/manifests/data/postgres.yaml')))
 
 k8s_resource("azurite", labels=['data'])
 k8s_resource("postgres", labels=['data'])
 
-k8s_yaml('dev/manifests/config.yaml')
-k8s_yaml('dev/manifests/ingress.yaml')
+k8s_yaml(scoped(read_file('dev/manifests/config.yaml')))
+k8s_yaml(scoped(read_file('dev/manifests/ingress.yaml')))
 
 # The migration Job runs the internal image's `migrate` subcommand. It stays a
 # separate Job so the long-lived processes only start after schema changes have
 # been applied.
-k8s_yaml('dev/manifests/migration.yaml')
+k8s_yaml(scoped(read_file('dev/manifests/migration.yaml')))
 
 # Anything in the build context that no sync below covers forces a full image
 # rebuild, which replaces the pod and costs a cold start. These paths are all
@@ -120,8 +136,8 @@ for target, image in SERVICE_TARGETS:
     if cfg.get(target, False):
         docker_build(image, '.', target=target, ignore=ui_monorepo_ignore)
 
-k8s_yaml(kustomize('dev/manifests/web'))
-k8s_yaml(kustomize('dev/manifests/virtool'))
+k8s_yaml(scoped(kustomize('dev/manifests/web')))
+k8s_yaml(scoped(kustomize('dev/manifests/virtool')))
 
 k8s_resource(
     labels=['data'],
@@ -129,10 +145,12 @@ k8s_resource(
     objects=['virtool-env:configmap'],
 )
 
+# Host port 0 lets Tilt pick a free local port, so concurrent worktrees never
+# fight over one. The bound port shows in the Tilt UI.
 k8s_resource(
     'virtool-jobs-api',
     labels=['virtool'],
-    port_forwards=["9960:9950"],
+    port_forwards=[port_forward(0, 9950)],
     new_name="jobs-api",
     resource_deps=["config", "migration"],
     trigger_mode=TRIGGER_MODE_MANUAL
@@ -157,7 +175,7 @@ k8s_resource(
     'virtool-tasks',
     labels=['virtool'],
     new_name="tasks",
-    port_forwards=["9970:9900"],
+    port_forwards=[port_forward(0, 9900)],
     resource_deps=["config", "migration"],
     trigger_mode=TRIGGER_MODE_MANUAL
 )
@@ -166,7 +184,7 @@ k8s_resource(
     'virtool-web',
     labels=['virtool'],
     new_name="web",
-    port_forwards=[9900],
+    port_forwards=[port_forward(0, 9900)],
     resource_deps=["config", "postgres"]
 )
 
@@ -176,7 +194,7 @@ k8s_kind(
     image_json_path='{.spec.jobTargetRef.template.spec.containers[0].image}'
 )
 
-k8s_yaml(kustomize('dev/manifests/workflows'))
+k8s_yaml(scoped(kustomize('dev/manifests/workflows')))
 
 for target, image in WORKFLOW_TARGETS:
     if cfg.get(target, False):
@@ -186,6 +204,6 @@ for target, image in WORKFLOW_TARGETS:
         'virtool-workflow-' + target,
         labels=["workflows"],
         new_name=target,
-        resource_deps=['config', 'keda', 'jobs-api'],
+        resource_deps=['config', 'jobs-api'],
         trigger_mode=TRIGGER_MODE_MANUAL
     )

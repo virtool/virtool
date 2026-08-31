@@ -1,6 +1,8 @@
 #!/bin/bash
 set -e
 
+source "$(dirname "$0")/lib.sh"
+
 current_context=$(kubectl config current-context 2>/dev/null || true)
 if [[ "$current_context" != "minikube" ]]; then
     echo "Refusing to wipe: kubectl current-context is '${current_context:-<none>}', expected 'minikube'."
@@ -13,11 +15,13 @@ if ! minikube status >/dev/null 2>&1; then
     exit 1
 fi
 
-echo "Deleting StatefulSets..."
-kubectl delete statefulset azurite postgres --ignore-not-found
+NS=$(wt_slug "$1")
 
-echo "Deleting PVCs..."
-kubectl delete pvc \
+echo "Deleting StatefulSets in namespace '$NS'..."
+kubectl -n "$NS" delete statefulset azurite postgres --ignore-not-found
+
+echo "Deleting PVCs in namespace '$NS'..."
+kubectl -n "$NS" delete pvc \
     data-azurite-0 \
     data-postgres-0 \
     --ignore-not-found

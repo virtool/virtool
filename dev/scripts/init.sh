@@ -1,39 +1,55 @@
 #!/bin/bash
 
+# One-time, cluster-wide setup shared by every worktree. It starts Minikube,
+# installs the singletons — metrics-server, the ingress addon and KEDA — and
+# issues one wildcard `*.<minikube-ip>.nip.io` certificate that every
+# worktree's ingress reuses. Per-worktree bring-up is `dev/scripts/up.sh`.
+#
+# Safe to re-run. It does not delete the cluster or any data; run
+# `minikube delete` by hand for a clean slate. Re-run it after a cluster
+# recreate to refresh the certificate against the new Minikube IP.
+
 set -e
 
-echo "Deleting any existing Minikube cluster..."
-minikube delete --purge=true
+CERT_STORE="${XDG_DATA_HOME:-$HOME/.local/share}/virtool-dev"
 
-echo "Starting Minikube for first time..."
-minikube start --cpus 8 --memory 16000
+echo "Starting Minikube..."
+if ! minikube status >/dev/null 2>&1; then
+    minikube start --cpus 8 --memory 16000
+fi
 
-echo "Enabling Minikube addons..."
+echo "Enabling metrics-server addon..."
 minikube addons enable metrics-server
 
-echo "Generating TLS certificate for virtool.local..."
-CERT_DIR=$(mktemp -d)
-mkcert -key-file "$CERT_DIR/key.pem" -cert-file "$CERT_DIR/cert.pem" virtool.local
+echo "Installing KEDA..."
+helm repo add kedacore https://kedacore.github.io/charts >/dev/null
+helm repo update kedacore >/dev/null
+helm upgrade --install keda kedacore/keda \
+    --namespace keda \
+    --create-namespace \
+    --version 2.20.2
 
-echo "Creating TLS secrets..."
+MINIKUBE_IP=$(minikube ip)
+
+echo "Generating wildcard TLS certificate for *.${MINIKUBE_IP}.nip.io..."
+echo "Run 'mkcert -install' once beforehand so the certificate is trusted."
+mkdir -p "$CERT_STORE"
+mkcert \
+    -key-file "$CERT_STORE/key.pem" \
+    -cert-file "$CERT_STORE/cert.pem" \
+    "*.${MINIKUBE_IP}.nip.io"
+
+echo "Installing the certificate as the ingress controller's default..."
 kubectl -n kube-system create secret tls mkcert \
-    --key "$CERT_DIR/key.pem" \
-    --cert "$CERT_DIR/cert.pem"
-kubectl create secret tls mkcert \
-    --key "$CERT_DIR/key.pem" \
-    --cert "$CERT_DIR/cert.pem"
+    --key "$CERT_STORE/key.pem" \
+    --cert "$CERT_STORE/cert.pem" \
+    --dry-run=client -o yaml | kubectl apply -f -
 
-echo "Cleaning up temporary certificate files..."
-rm -rf "$CERT_DIR"
-
-echo "Configuring ingress addon to use custom certificate..."
-minikube addons configure ingress <<< "kube-system/mkcert"
+echo "Configuring ingress addon to use the certificate..."
+# The second line answers the "overwrite existing cert? [y/n]" prompt that
+# minikube adds only when a custom cert is already set; on a first run there is
+# no such prompt and the extra line is harmlessly ignored.
+printf 'kube-system/mkcert\ny\n' | minikube addons configure ingress
 minikube addons enable ingress
 
-echo "Verifying ingress configuration..."
-kubectl -n ingress-nginx get deployment ingress-nginx-controller -o yaml | grep "kube-system"
-
-echo "Configuring /etc/hosts..."
-MINIKUBE_IP=$(minikube ip)
-sudo sed -i '/virtool.local/d' /etc/hosts
-echo -e "$MINIKUBE_IP\tvirtool.local" | sudo tee -a /etc/hosts
+echo "Done. Start a worktree instance with: bash dev/scripts/up.sh"
