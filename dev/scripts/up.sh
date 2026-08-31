@@ -20,6 +20,10 @@ fi
 NS=$(wt_slug)
 echo "Bringing up worktree instance in namespace '$NS'..."
 
+MINIKUBE_IP=$(minikube ip)
+DEV_URL="https://${NS}.${MINIKUBE_IP}.nip.io"
+printf 'Dev URL: \033]8;;%s\033\\%s\033]8;;\033\\\n' "$DEV_URL" "$DEV_URL"
+
 kubectl create namespace "$NS" --dry-run=client -o yaml | kubectl apply -f -
 
 kubectl create secret tls mkcert \
