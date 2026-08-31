@@ -9,6 +9,8 @@ set -e
 
 source "$(dirname "$0")/lib.sh"
 
+require_minikube_context
+
 NS=$(wt_slug "$1")
 echo "Tearing down worktree instance in namespace '$NS'..."
 

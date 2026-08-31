@@ -12,8 +12,8 @@ source "$(dirname "$0")/lib.sh"
 
 CERT_STORE="${XDG_DATA_HOME:-$HOME/.local/share}/virtool-dev"
 
-if [[ ! -f "$CERT_STORE/cert.pem" ]]; then
-    echo "No wildcard certificate found. Run 'bash dev/scripts/init.sh' first."
+if [[ ! -f "$CERT_STORE/cert.pem" || ! -f "$CERT_STORE/key.pem" ]]; then
+    echo "No wildcard certificate and key found. Run 'bash dev/scripts/init.sh' first."
     exit 1
 fi
 

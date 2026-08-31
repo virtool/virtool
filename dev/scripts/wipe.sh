@@ -3,12 +3,7 @@ set -e
 
 source "$(dirname "$0")/lib.sh"
 
-current_context=$(kubectl config current-context 2>/dev/null || true)
-if [[ "$current_context" != "minikube" ]]; then
-    echo "Refusing to wipe: kubectl current-context is '${current_context:-<none>}', expected 'minikube'."
-    echo "Switch contexts with: kubectl config use-context minikube"
-    exit 1
-fi
+require_minikube_context
 
 if ! minikube status >/dev/null 2>&1; then
     echo "Refusing to wipe: Minikube is not running."

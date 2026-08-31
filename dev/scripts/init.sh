@@ -34,6 +34,7 @@ MINIKUBE_IP=$(minikube ip)
 echo "Generating wildcard TLS certificate for *.${MINIKUBE_IP}.nip.io..."
 echo "Run 'mkcert -install' once beforehand so the certificate is trusted."
 mkdir -p "$CERT_STORE"
+rm -f "$CERT_STORE/key.pem" "$CERT_STORE/cert.pem"
 mkcert \
     -key-file "$CERT_STORE/key.pem" \
     -cert-file "$CERT_STORE/cert.pem" \
