@@ -10,6 +10,7 @@ WT = os.getenv('WT', '')
 if not WT:
     fail('WT is not set. Start the dev instance with `bash dev/scripts/up.sh`.')
 
+WORKTREE_NAME = str(local('git rev-parse --show-toplevel', quiet=True)).strip().rsplit('/', 1)[-1][:32]
 MINIKUBE_IP = str(local('minikube ip', quiet=True)).strip()
 HOST = WT + '.' + MINIKUBE_IP + '.nip.io'
 
@@ -69,6 +70,13 @@ cmd_button('wipe',
     location=location.NAV,
     text='Wipe',
     requires_confirmation=True,
+)
+
+cmd_button('worktree',
+    argv=['true'],
+    icon_name='account_tree',
+    location=location.NAV,
+    text=WORKTREE_NAME,
 )
 
 k8s_yaml(scoped(read_file('dev/manifests/data/azurite.yaml')))
