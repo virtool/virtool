@@ -1,0 +1,22 @@
+[tasks.init]
+description = "Set up the shared Minikube services and certificate"
+run = "bash dev/scripts/init.sh"
+
+[tasks."up:minikube"]
+description = "Start Minikube if it is not already running"
+run = "bash dev/scripts/ensure-minikube.sh"
+
+[tasks.up]
+description = "Bring up this worktree's instance and start Tilt"
+raw_args = true
+run = "bash dev/scripts/up.sh"
+
+[tasks.down]
+description = "Delete this worktree's namespace and data"
+raw_args = true
+run = "bash dev/scripts/down.sh"
+
+[tasks.wipe]
+description = "Delete this worktree's StatefulSets and PVCs"
+raw_args = true
+run = "bash dev/scripts/wipe.sh"

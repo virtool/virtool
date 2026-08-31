@@ -27,7 +27,7 @@ wildcard `*.<minikube-ip>.nip.io` certificate covers every worktree.
 
 ## Requirements
 
-Docker Engine, Helm, `kubectl`, `mkcert`, Minikube and Tilt.
+Docker Engine, Helm, `kubectl`, `mkcert`, Minikube, Tilt and mise.
 
 ## Stack
 
@@ -45,6 +45,7 @@ Docker Engine, Helm, `kubectl`, `mkcert`, Minikube and Tilt.
 
 ```
 Tiltfile                  at the repo root: resources, buttons, live-edit flags
+mise.toml                 at the repo root: convenient tasks for the dev scripts
 dev/
   manifests/              Kustomize manifests for every cluster resource
     config.yaml           the Postgres and Azurite env every service shares
@@ -65,49 +66,10 @@ dev/
 
 ## Getting started
 
-1. Run the one-time cluster setup:
-
-   ```shell
-   bash dev/scripts/init.sh
-   ```
-
-   This starts Minikube, enables the `metrics-server` and `ingress` addons,
-   installs KEDA, and issues a wildcard mkcert certificate for
-   `*.<minikube-ip>.nip.io` that it installs as the ingress controller's
-   default. It touches no worktree data and is safe to re-run — re-run it after
-   a `minikube delete` to refresh the certificate against the new IP.
-
-   Run `mkcert -install` once beforehand so the certificate is trusted.
-
-2. Bring up this worktree's instance:
-
-   ```shell
-   bash dev/scripts/up.sh
-   ```
-
-   This creates the namespace, installs the shared certificate into it, and
-   starts Tilt on an automatically chosen UI port. The namespace defaults to the
-   worktree directory name; set `WT` for a short, memorable slug:
-
-   ```shell
-   WT=vir3044 bash dev/scripts/up.sh
-   ```
-
-   The instance is then at `https://<WT>.<minikube-ip>.nip.io` — the Tilt UI
-   prints the exact host.
-
-3. Tear the instance down when you are done:
-
-   ```shell
-   bash dev/scripts/down.sh
-   ```
-
-   This deletes the namespace and its data. Other worktrees, KEDA, the ingress
-   controller and the certificate are untouched.
-
-The `Tiltfile` calls `dev/scripts/ensure-minikube.sh` as it loads, so `up.sh`
-starts a stopped cluster on its own. Run `tilt down` (or `down.sh`) before
-`minikube stop` so the cluster stops cleanly.
+See the root README for the development commands. The `Tiltfile` calls
+`dev/scripts/ensure-minikube.sh` as it loads, so bringing up an instance also
+starts a stopped Minikube cluster. Run `tilt down` before `minikube stop` so the
+cluster stops cleanly.
 
 ## Live editing
 
@@ -122,8 +84,6 @@ stage named after the target. Pass a flag through `up.sh` to turn one on:
 | `--create-subtraction` | `ghcr.io/virtool/create-subtraction` | `create-subtraction` |
 | `--nuvs` | `ghcr.io/virtool/nuvs` | `nuvs` |
 | `--pathoscope` | `ghcr.io/virtool/pathoscope` | `pathoscope` |
-
-Flags combine: `bash dev/scripts/up.sh --web --internal`.
 
 `--web` runs Vite in the pod and syncs `apps/web/src` and `packages` into it,
 so an edit shows up without a rebuild. The rest rebuild the image on change,
