@@ -230,11 +230,32 @@ export const CreateLocalOtuCommand = z
 	})
 	.strict();
 
+/** A command that adds one isolate to an existing local OTU. */
+export const CreateLocalOtuIsolateCommand = z
+	.object({
+		type: z.literal("CreateIsolate"),
+		schemaVersion: z.literal(1),
+		otuId: uuidSchema,
+		expectedVersion: z.number().int().positive(),
+		payload: z.object({ isolate: isolateSchema }).strict(),
+	})
+	.strict();
+
 /** Input accepted before a local `CreateOTU` command is normalized. */
 export type CreateLocalOtuCommandInput = z.input<typeof CreateLocalOtuCommand>;
 
 /** A parsed and normalized local `CreateOTU` command. */
 export type CreateLocalOtuCommand = z.output<typeof CreateLocalOtuCommand>;
+
+/** A parsed and normalized local `CreateIsolate` command. */
+export type CreateLocalOtuIsolateCommand = z.output<
+	typeof CreateLocalOtuIsolateCommand
+>;
+
+/** Input accepted before a local `CreateIsolate` command is normalized. */
+export type CreateLocalOtuIsolateCommandInput = z.input<
+	typeof CreateLocalOtuIsolateCommand
+>;
 
 /** A segment in an assembled v2 OTU plan. */
 export type OtuV2Segment = z.output<typeof segmentSchema>;
@@ -260,7 +281,7 @@ export type OtuV2Molecule = z.output<typeof moleculeSchema>;
 /** The creation history summary embedded in the tracer read model. */
 export type OtuV2Change = {
 	version: number;
-	command: "CreateOTU";
+	command: "CreateOTU" | "CreateIsolate";
 	commandSchemaVersion: number;
 	source: "user";
 	user: UserNested;
@@ -301,6 +322,12 @@ export type GenbankOtuDraft = {
 	};
 	isolate: { type: OtuV2IsolateNameType; value: string } | null;
 	segments: GenbankOtuDraftSegment[];
+};
+
+/** A GenBank-derived isolate preview for an existing OTU. */
+export type GenbankIsolateDraft = {
+	name: { type: OtuV2IsolateNameType; value: string } | null;
+	sequences: Array<GenbankOtuDraftSegment & { segmentId: string }>;
 };
 
 /** A complete local v2 OTU assembled from relational state. */

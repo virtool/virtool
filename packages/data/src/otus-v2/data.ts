@@ -2,6 +2,8 @@ import { randomUUID } from "node:crypto";
 import {
 	CreateLocalOtuCommand,
 	type CreateLocalOtuCommandInput,
+	CreateLocalOtuIsolateCommand,
+	type CreateLocalOtuIsolateCommandInput,
 	type LocalOtuV2,
 	type LocalOtuV2Summary,
 } from "@virtool/contracts";
@@ -35,6 +37,9 @@ export class OtuV2ReferenceNotWritableError extends AppError {}
 
 /** Thrown when a v2 OTU command conflicts with existing identity. */
 export class OtuV2ConflictError extends AppError {}
+
+/** Thrown when an OTU command is based on an outdated OTU version. */
+export class OtuV2VersionConflictError extends AppError {}
 
 /** Values needed to apply a user-authored local `CreateOTU` command. */
 export type CreateLocalOtuValues = {
@@ -81,6 +86,131 @@ export async function createLocalOtu(
 	}
 
 	return getLocalOtu(db, values.referenceId, command.otuId);
+}
+
+/** Values needed to add one isolate to a local OTU. */
+export type CreateLocalOtuIsolateValues = {
+	referenceId: string;
+	userId: number;
+	command: CreateLocalOtuIsolateCommandInput;
+};
+
+/** Add one isolate to a local OTU atomically at the expected version. */
+export async function createLocalOtuIsolate(
+	db: Db,
+	values: CreateLocalOtuIsolateValues,
+): Promise<LocalOtuV2> {
+	const command = CreateLocalOtuIsolateCommand.parse(values.command);
+
+	try {
+		await db.transaction(async (tx) => {
+			const otu = takeFirst(
+				await tx
+					.select({ version: otusV2.version, referenceId: otusV2.referenceId })
+					.from(otusV2)
+					.innerJoin(referenceRoots, eq(referenceRoots.id, otusV2.referenceId))
+					.where(
+						and(
+							eq(otusV2.id, command.otuId),
+							eq(otusV2.referenceId, values.referenceId),
+						),
+					)
+					.for("update"),
+			);
+
+			if (!otu) {
+				throw new OtuV2NotFoundError();
+			}
+			if (otu.version !== command.expectedVersion) {
+				throw new OtuV2VersionConflictError();
+			}
+
+			const reference = takeFirst(
+				await tx
+					.select({
+						archived: referenceRoots.archived,
+						kind: referenceRoots.kind,
+					})
+					.from(referenceRoots)
+					.where(eq(referenceRoots.id, values.referenceId)),
+			);
+			if (!reference || reference.archived || reference.kind !== "local") {
+				throw new OtuV2ReferenceNotWritableError();
+			}
+
+			const version = command.expectedVersion + 1;
+			await insertIsolate(tx, command.otuId, command.payload.isolate, version);
+			await tx
+				.update(otusV2)
+				.set({ version })
+				.where(eq(otusV2.id, command.otuId));
+			await tx.insert(otuChanges).values({
+				referenceId: values.referenceId,
+				otuId: command.otuId,
+				version,
+				command: command.type,
+				commandSchemaVersion: command.schemaVersion,
+				payload: command.payload,
+				source: "user",
+				userId: values.userId,
+				createdAt: new Date(),
+			});
+		});
+	} catch (error) {
+		if (isUniqueViolation(error)) {
+			throw new OtuV2ConflictError();
+		}
+		throw error;
+	}
+
+	return getLocalOtu(db, values.referenceId, command.otuId);
+}
+
+async function insertIsolate(
+	tx: Transaction,
+	otuId: string,
+	isolate: CreateLocalOtuIsolateCommand["payload"]["isolate"],
+	version: number,
+): Promise<void> {
+	const now = new Date();
+	await tx.insert(otuIsolates).values({ id: isolate.id, otuId });
+	await tx.insert(otuIsolateVersions).values({
+		id: randomUUID(),
+		otuId,
+		isolateId: isolate.id,
+		nameType: isolate.name?.type ?? null,
+		nameValue: isolate.name?.value ?? null,
+		firstVersion: version,
+	});
+
+	const entries = isolate.sequences.map((sequence) => ({
+		sequence,
+		recordId: randomUUID(),
+	}));
+	await tx
+		.insert(otuSequences)
+		.values(entries.map(({ sequence }) => ({ id: sequence.id, otuId })));
+	await tx.insert(otuLocalSequenceRecords).values(
+		entries.map(({ sequence, recordId }) => ({
+			id: recordId,
+			otuId,
+			sequenceId: sequence.id,
+			definition: sequence.definition,
+			sequence: sequence.sequence,
+			createdAt: now,
+		})),
+	);
+	await tx.insert(otuSequenceVersions).values(
+		entries.map(({ sequence, recordId }) => ({
+			id: randomUUID(),
+			otuId,
+			sequenceId: sequence.id,
+			isolateId: isolate.id,
+			segmentId: sequence.segmentId,
+			localRecordId: recordId,
+			firstVersion: version,
+		})),
+	);
 }
 
 async function insertLocalOtu(

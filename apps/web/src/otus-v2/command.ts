@@ -1,8 +1,35 @@
 import {
 	type CreateLocalOtuCommandInput,
+	type CreateLocalOtuIsolateCommandInput,
 	type GenbankOtuDraft,
 	OtuV2SegmentRule,
 } from "@virtool/contracts";
+
+/** Build a versioned command from an NCBI isolate preview. */
+export function buildCreateIsolateCommand(
+	draft: import("@virtool/contracts").GenbankIsolateDraft,
+	otuId: string,
+	expectedVersion: number,
+): CreateLocalOtuIsolateCommandInput {
+	return {
+		type: "CreateIsolate",
+		schemaVersion: 1,
+		otuId,
+		expectedVersion,
+		payload: {
+			isolate: {
+				id: crypto.randomUUID(),
+				name: draft.name,
+				sequences: draft.sequences.map((sequence) => ({
+					id: crypto.randomUUID(),
+					definition: sequence.definition,
+					sequence: sequence.sequence,
+					segmentId: sequence.segmentId,
+				})),
+			},
+		},
+	};
+}
 
 /**
  * Turn a GenBank-derived draft into a complete local `CreateOTU` command.

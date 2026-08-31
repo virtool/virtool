@@ -2,15 +2,19 @@ import { createServerFn, createServerOnlyFn } from "@tanstack/react-start";
 import { setResponseStatus } from "@tanstack/react-start/server";
 import {
 	CreateLocalOtuCommand,
+	CreateLocalOtuIsolateCommand,
+	type GenbankIsolateDraft,
 	type GenbankOtuDraft,
 } from "@virtool/contracts";
 import {
 	createLocalOtu,
+	createLocalOtuIsolate,
 	getLocalOtu,
 	getLocalOtus,
 	OtuV2ConflictError,
 	OtuV2NotFoundError,
 	OtuV2ReferenceNotWritableError,
+	OtuV2VersionConflictError,
 } from "@virtool/data/otus-v2/data";
 import { resolveReferenceActor } from "@virtool/data/references/data";
 import {
@@ -46,10 +50,31 @@ const createLocalOtuSchema = z.object({
 	command: CreateLocalOtuCommand,
 });
 
+const createLocalOtuIsolateSchema = z.object({
+	referenceId: z.uuid(),
+	command: CreateLocalOtuIsolateCommand,
+});
+
 // The accessions go into an outbound NCBI query string, so each is constrained
 // rather than passed through. Bounded at 500 to match one NCBI batch request.
 const genbankOtuDraftSchema = z.object({
 	referenceId: z.uuid(),
+	accessions: z
+		.array(
+			z
+				.string()
+				.trim()
+				.min(1)
+				.max(64)
+				.regex(/^[A-Za-z0-9._-]+$/),
+		)
+		.min(1)
+		.max(500),
+});
+
+const genbankIsolateDraftSchema = z.object({
+	referenceId: z.uuid(),
+	otuId: z.uuid(),
 	accessions: z
 		.array(
 			z
@@ -83,6 +108,10 @@ const rethrowAsHttp = createServerOnlyFn((err: unknown): never => {
 		setResponseStatus(409);
 		throw new ClientError("OTU already exists.", 409);
 	}
+	if (err instanceof OtuV2VersionConflictError) {
+		setResponseStatus(409);
+		throw new ClientError("OTU has changed. Review the isolate again.", 409);
+	}
 	throw err;
 });
 
@@ -105,6 +134,30 @@ export const createLocalOtuFn = createServerFn({ method: "POST" })
 			}
 
 			const otu = await createLocalOtu(db, {
+				referenceId: data.referenceId,
+				userId: context.session.userId,
+				command: data.command,
+			});
+			setResponseStatus(201);
+			return otu;
+		} catch (err) {
+			return rethrowAsHttp(err);
+		}
+	});
+
+export const createLocalOtuIsolateFn = createServerFn({ method: "POST" })
+	.middleware([authenticated()])
+	.validator(createLocalOtuIsolateSchema)
+	.handler(async ({ context, data }) => {
+		try {
+			const actor = await resolveReferenceActor(db, context.session.userId);
+			if (
+				!(await checkReferenceV2Right(db, data.referenceId, "modifyOtu", actor))
+			) {
+				setResponseStatus(403);
+				throw new ForbiddenError();
+			}
+			const otu = await createLocalOtuIsolate(db, {
 				referenceId: data.referenceId,
 				userId: context.session.userId,
 				command: data.command,
@@ -198,6 +251,94 @@ export const getGenbankOtuDraftFn = createServerFn({ method: "GET" })
 			}
 			throw err;
 		}
+	});
+
+/** Resolve accessions and match their records to an existing OTU plan. */
+export const getGenbankIsolateDraftFn = createServerFn({ method: "GET" })
+	.middleware([authenticated()])
+	.validator(genbankIsolateDraftSchema)
+	.handler(async ({ context, data }): Promise<GenbankIsolateDraft> => {
+		const actor = await resolveReferenceActor(db, context.session.userId);
+		if (
+			!(await checkReferenceV2Right(db, data.referenceId, "modifyOtu", actor))
+		) {
+			setResponseStatus(403);
+			throw new ForbiddenError();
+		}
+
+		const otu = await getLocalOtu(db, data.referenceId, data.otuId);
+		const { ncbiApiKey } = await getSettings(db);
+		const records = await createNcbiClient({ apiKey: ncbiApiKey, logger })
+			.fetchGenbankRecords(Array.from(new Set(data.accessions)))
+			.catch((err: unknown): never => {
+				if (err instanceof NcbiUnreachableError) {
+					setResponseStatus(502);
+					throw new ClientError("Could not reach NCBI.", 502);
+				}
+				throw err;
+			});
+
+		const found = new Set(
+			records.flatMap((record) => [
+				record.accession.toLowerCase(),
+				record.accession_version.toLowerCase(),
+			]),
+		);
+		const missing = data.accessions.filter(
+			(accession) => !found.has(accession.toLowerCase()),
+		);
+		if (missing.length > 0 || records.length === 0) {
+			setResponseStatus(404);
+			throw new ClientError(
+				`Accessions not found: ${(missing.length > 0 ? missing : data.accessions).join(", ")}.`,
+				404,
+			);
+		}
+
+		const used = new Set<string>();
+		const sequences = records.map((record) => {
+			const segment = otu.plan.segments.find((candidate) => {
+				if (used.has(candidate.id)) return false;
+				const name = record.source.segment?.toLowerCase();
+				return name
+					? candidate.name?.key.toLowerCase() === name
+					: otu.plan.segments.length === 1 ||
+							Math.abs(candidate.length - record.sequence.length) <=
+								candidate.length * candidate.lengthTolerance;
+			});
+			if (!segment) {
+				setResponseStatus(422);
+				throw new ClientError(
+					`Could not match ${record.accession_version} to an OTU segment.`,
+					422,
+				);
+			}
+			used.add(segment.id);
+			return {
+				name: segment.name,
+				definition: record.definition,
+				sequence: record.sequence,
+				length: record.sequence.length,
+				accession: record.accession_version,
+				segmentId: segment.id,
+			};
+		});
+
+		const first = records[0];
+		if (!first) {
+			setResponseStatus(404);
+			throw new ClientError("Accessions not found.", 404);
+		}
+		return {
+			name: first.source.isolate
+				? { type: "isolate", value: first.source.isolate }
+				: first.source.strain
+					? { type: "strain", value: first.source.strain }
+					: first.source.clone
+						? { type: "clone", value: first.source.clone }
+						: null,
+			sequences,
+		};
 	});
 
 export const getLocalOtusFn = createServerFn({ method: "GET" })

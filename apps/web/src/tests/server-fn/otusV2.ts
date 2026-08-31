@@ -7,7 +7,9 @@ import { type Mock, vi } from "vitest";
  * them without per-file `vi.mock` boilerplate.
  */
 export const otuV2ServerFnMocks = {
+	createLocalOtuIsolateFn: vi.fn(),
 	createLocalOtuFn: vi.fn(),
+	getGenbankIsolateDraftFn: vi.fn(),
 	getLocalOtuFn: vi.fn(),
 	getLocalOtusFn: vi.fn(),
 };

@@ -2,6 +2,8 @@ import { buildCreateOtuCommandFromDraft } from "@otus-v2/command";
 import { otuV2QueryKeys } from "@otus-v2/keys";
 import {
 	createLocalOtuFn,
+	createLocalOtuIsolateFn,
+	getGenbankIsolateDraftFn,
 	getGenbankOtuDraftFn,
 	getLocalOtuFn,
 	getLocalOtusFn,
@@ -14,6 +16,8 @@ import {
 } from "@tanstack/react-query";
 import type {
 	CreateLocalOtuCommandInput,
+	CreateLocalOtuIsolateCommandInput,
+	GenbankIsolateDraft,
 	GenbankOtuDraft,
 	LocalOtuV2,
 	LocalOtuV2Summary,
@@ -81,6 +85,33 @@ export function useCreateLocalOtu(referenceId: string) {
 	return useMutation<LocalOtuV2, Error, CreateLocalOtuCommandInput>({
 		mutationFn: (command) =>
 			createLocalOtuFn({
+				data: { referenceId, command },
+			}) as Promise<LocalOtuV2>,
+		onSuccess: (otu) => {
+			queryClient.setQueryData(otuV2QueryKeys.detail(otu.id), otu);
+			queryClient.invalidateQueries({
+				queryKey: otuV2QueryKeys.list([referenceId]),
+			});
+		},
+	});
+}
+
+/** Fetch an NCBI isolate preview for an existing OTU. */
+export function useGenbankIsolateDraft(referenceId: string, otuId: string) {
+	return useMutation<GenbankIsolateDraft, Error, string[]>({
+		mutationFn: (accessions) =>
+			getGenbankIsolateDraftFn({
+				data: { referenceId, otuId, accessions },
+			}) as Promise<GenbankIsolateDraft>,
+	});
+}
+
+/** Add a reviewed isolate to an existing OTU. */
+export function useCreateLocalOtuIsolate(referenceId: string) {
+	const queryClient = useQueryClient();
+	return useMutation<LocalOtuV2, Error, CreateLocalOtuIsolateCommandInput>({
+		mutationFn: (command) =>
+			createLocalOtuIsolateFn({
 				data: { referenceId, command },
 			}) as Promise<LocalOtuV2>,
 		onSuccess: (otu) => {
