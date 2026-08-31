@@ -8,24 +8,44 @@ The `Tiltfile` is at the **repo root**, where `tilt up` looks for it; this
 directory holds everything it reads. Run every command below from the repo
 root.
 
+## Per-worktree isolation
+
+Each git worktree runs its own dev instance in its own Kubernetes namespace, so
+parallel branches never collide over ports, data or images on one Minikube
+cluster. The `WT` environment variable names the namespace; `up.sh` sets it and
+the `Tiltfile` reads it. The 8 CPU / 16 GB node cannot fit two full clusters,
+so a few resources are shared singletons rather than per-worktree:
+
+| Scope | What |
+| --- | --- |
+| Cluster-wide, set up once by `init.sh` | Minikube, metrics-server, ingress-nginx, KEDA, the wildcard TLS certificate |
+| Per worktree, brought up by `up.sh` | The namespace and everything in it — web, jobs-api, tasks, migration, workflows, Postgres, Azurite |
+
+Each worktree is reachable at `https://<WT>.<minikube-ip>.nip.io`. nip.io
+resolves that host to the Minikube IP with no `/etc/hosts` entry, and the
+wildcard `*.<minikube-ip>.nip.io` certificate covers every worktree.
+
 ## Requirements
 
-Docker Engine, Helm, `kubectl`, `mkcert`, Minikube and Tilt.
+Docker Engine, Helm, `kubectl`, `mkcert`, Minikube, Tilt and mise.
 
 ## Stack
 
-- **Tilt** — orchestrates the cluster; the root `Tiltfile` is the entry point
-- **Minikube** — the cluster itself
-- **KEDA** — scales workflow pods off a `metrics-api` trigger pointing at
-  `jobs-api`'s `/jobs/counts`
-- **PostgreSQL** — persisted across `tilt up` / `tilt down` by a PVC
-- **Azurite** — Azure Blob Storage emulator, on the well-known dev account
-  `devstoreaccount1`, persisting blobs at `/data` by a PVC
+- **Tilt** — orchestrates one namespace per worktree; the root `Tiltfile` is the
+  entry point
+- **Minikube** — the shared cluster
+- **KEDA** — scales workflow pods off a `metrics-api` trigger pointing at the
+  worktree's `jobs-api` `/jobs/counts`; installed once, cluster-wide
+- **PostgreSQL** — one per worktree, persisted across `tilt up` / `tilt down` by
+  a PVC
+- **Azurite** — Azure Blob Storage emulator, one per worktree, on the well-known
+  dev account `devstoreaccount1`, persisting blobs at `/data` by a PVC
 
 ## Layout
 
 ```
 Tiltfile                  at the repo root: resources, buttons, live-edit flags
+mise.toml                 at the repo root: convenient tasks for the dev scripts
 dev/
   manifests/              Kustomize manifests for every cluster resource
     config.yaml           the Postgres and Azurite env every service shares
@@ -37,42 +57,24 @@ dev/
     workflows/            a ScaledJob per workflow
   scripts/
     ensure-minikube.sh    Start the cluster if it is not already running
-    init.sh               Create or reset the cluster
-    wipe.sh               Delete the StatefulSets and their PVCs
+    init.sh               One-time cluster-wide setup: addons, KEDA, certificate
+    up.sh                 Bring up this worktree's instance and start Tilt
+    down.sh               Delete this worktree's namespace
+    wipe.sh               Delete this worktree's StatefulSets and their PVCs
+    lib.sh                Shared helper: derive the worktree namespace slug
 ```
 
 ## Getting started
 
-1. Create the cluster:
-
-   ```shell
-   bash dev/scripts/init.sh
-   ```
-
-   This deletes any existing cluster, creates one with preset resource limits,
-   enables the `ingress` and `metrics-server` addons, issues an mkcert
-   certificate for `virtool.local` and installs it as the ingress controller's
-   default, and writes the cluster IP to `/etc/hosts` — which needs `sudo`.
-
-   Run `mkcert -install` once beforehand so the certificate is trusted.
-
-2. Start Tilt:
-
-   ```shell
-   tilt up
-   ```
-
-   Virtool is then at <https://virtool.local>.
-
-`tilt down` brings the resources back down; run it before `minikube stop` or
-the cluster does not stop cleanly. The `Tiltfile` calls
-`dev/scripts/ensure-minikube.sh` as it loads, so `tilt up` starts a stopped cluster
-on its own.
+See the root README for the development commands. The `Tiltfile` calls
+`dev/scripts/ensure-minikube.sh` as it loads, so bringing up an instance also
+starts a stopped Minikube cluster. Run `tilt down` before `minikube stop` so the
+cluster stops cleanly.
 
 ## Live editing
 
 Every live-edit target builds from this repository's root `Dockerfile`, at the
-stage named after the target. Pass a flag to turn one on:
+stage named after the target. Pass a flag through `up.sh` to turn one on:
 
 | Flag | Image | Dockerfile stage |
 | --- | --- | --- |
@@ -82,8 +84,6 @@ stage named after the target. Pass a flag to turn one on:
 | `--create-subtraction` | `ghcr.io/virtool/create-subtraction` | `create-subtraction` |
 | `--nuvs` | `ghcr.io/virtool/nuvs` | `nuvs` |
 | `--pathoscope` | `ghcr.io/virtool/pathoscope` | `pathoscope` |
-
-Flags combine: `tilt up -- --web --internal`.
 
 `--web` runs Vite in the pod and syncs `apps/web/src` and `packages` into it,
 so an edit shows up without a rebuild. The rest rebuild the image on change,
@@ -104,6 +104,21 @@ the newest release each time it starts and no tag is ever committed. The
 migration Job runs `ghcr.io/virtool/internal`'s `migrate` subcommand and follows
 the same tag or local Tilt build as the `jobs-api` and `tasks` Deployments,
 which run the same image.
+
+Worktrees share one Minikube Docker daemon but do not collide over images: Tilt
+tags each build with a content hash, so two worktrees building the same image
+name get distinct tags that coexist, and each injects its own tag into its own
+namespace.
+
+## Namespacing
+
+The manifests hard-code the `default` namespace in service FQDNs and
+`virtool.local` as the ingress host, so each file stays valid on its own under
+`kubectl apply -f`. The `Tiltfile` rewrites both for the worktree as it loads:
+`*.default.svc.cluster.local` becomes `*.<WT>.svc.cluster.local`, `virtool.local`
+becomes the worktree's nip.io host, and every object is placed in the `WT`
+namespace. The KEDA operator runs cluster-wide and resolves each workflow's
+trigger URL by its fully-qualified `<WT>` service name.
 
 ## Labels
 
@@ -135,10 +150,11 @@ the other is an OOMKill rather than a faster run.
 
 ## Wiping data
 
-`dev/scripts/wipe.sh` deletes the `postgres` and `azurite` StatefulSets and their
-PVCs; Tilt recreates them on the next trigger. It refuses to run unless
-`kubectl`'s current context is `minikube`. Run it directly or click **Wipe** in
-the Tilt UI.
+`dev/scripts/wipe.sh` deletes the `postgres` and `azurite` StatefulSets and
+their PVCs in one worktree's namespace; Tilt recreates them on the next
+trigger. It targets the namespace named by `WT` (or its first argument) and
+refuses to run unless `kubectl`'s current context is `minikube`. Run it directly
+or click **Wipe** in the Tilt UI, which passes the worktree namespace for you.
 
 ## Why none of this is linted or bundled
 
