@@ -1,5 +1,6 @@
-import { BoxGroup, BoxGroupHeader, BoxGroupSection } from "@base/Box";
+import { BoxGroup, BoxGroupSection } from "@base/Box";
 import Button from "@base/Button";
+import Link from "@base/Link";
 import CreateLocalOtuIsolateDialog from "@otus-v2/components/CreateLocalOtuIsolateDialog";
 import { useSuspenseLocalOtuV2 } from "@otus-v2/queries";
 import { useState } from "react";
@@ -19,7 +20,7 @@ export default function LocalOtuIsolates({
 		<>
 			<div className="mb-4 flex justify-end">
 				<Button color="blue" onClick={() => setOpen(true)}>
-					Create isolate
+					Create
 				</Button>
 			</div>
 			<CreateLocalOtuIsolateDialog
@@ -29,23 +30,21 @@ export default function LocalOtuIsolates({
 				otuId={otuId}
 				version={otu.version}
 			/>
-			{otu.isolates.map((isolate) => (
-				<BoxGroup key={isolate.id}>
-					<BoxGroupHeader>
-						{isolate.name
-							? `${isolate.name.type} ${isolate.name.value}`
-							: "Unnamed isolate"}
-					</BoxGroupHeader>
-					{isolate.sequences.map((sequence) => (
-						<BoxGroupSection key={sequence.id}>
-							<div className="font-semibold">{sequence.definition}</div>
-							<div className="break-all font-mono text-sm">
-								{sequence.sequence}
-							</div>
-						</BoxGroupSection>
-					))}
-				</BoxGroup>
-			))}
+			<BoxGroup as="ul">
+				{otu.isolates.map((isolate) => (
+					<BoxGroupSection as="li" key={isolate.id}>
+						<Link
+							className="font-medium text-lg"
+							to="/refs/beta/$referenceId/otus/$otuId/isolates/$isolateId"
+							params={{ referenceId, otuId, isolateId: isolate.id }}
+						>
+							{isolate.name
+								? `${isolate.name.type} ${isolate.name.value}`
+								: "Unnamed isolate"}
+						</Link>
+					</BoxGroupSection>
+				))}
+			</BoxGroup>
 		</>
 	);
 }

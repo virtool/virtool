@@ -69,7 +69,33 @@ describe("<LocalOtuDetail />", () => {
 		await renderRoute(`${base}/isolates`);
 
 		expect(
-			await screen.findByText(otu.isolates[0]?.sequences[0]?.sequence ?? ""),
+			await screen.findByRole("link", {
+				name: `${otu.isolates[0]?.name?.type} ${otu.isolates[0]?.name?.value}`,
+			}),
+		).toBeInTheDocument();
+	});
+
+	it("links an isolate to its detail view", async () => {
+		await renderRoute(`${base}/isolates`);
+
+		expect(
+			await screen.findByRole("link", {
+				name: `${otu.isolates[0]?.name?.type} ${otu.isolates[0]?.name?.value}`,
+			}),
+		).toHaveAttribute("href", `${base}/isolates/${otu.isolates[0]?.id}`);
+	});
+
+	it("renders an isolate detail view", async () => {
+		const isolate = otu.isolates[0];
+		await renderRoute(`${base}/isolates/${isolate?.id}`);
+
+		expect(
+			await screen.findByRole("heading", {
+				name: `${isolate?.name?.type} ${isolate?.name?.value}`,
+			}),
+		).toBeInTheDocument();
+		expect(
+			screen.getByText(isolate?.sequences[0]?.sequence ?? ""),
 		).toBeInTheDocument();
 	});
 
