@@ -171,7 +171,10 @@ export default defineConfig(({ command, mode }) => ({
 		],
 	},
 	server: {
-		allowedHosts: ["virtool.local"],
+		allowedHosts: [
+			"virtool.local",
+			process.env.VT_DEV_SERVER_ALLOWED_HOST,
+		].filter(Boolean),
 		warmup: {
 			// Pre-transform the app shell so the first navigation is warm. The `!`
 			// patterns keep the globs off `__tests__` files — those import
