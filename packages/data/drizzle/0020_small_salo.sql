@@ -1,0 +1,1 @@
+ALTER TABLE "otu_local_identity_revisions" ADD COLUMN "lineage" jsonb;

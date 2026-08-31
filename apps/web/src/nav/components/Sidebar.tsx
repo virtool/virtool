@@ -1,7 +1,7 @@
 import { useLocation } from "@tanstack/react-router";
 import type { AdministratorRoleName } from "@virtool/contracts";
 import { hasSufficientAdminRole } from "@virtool/contracts";
-import { FolderOpen, List, Settings, Tag } from "lucide-react";
+import { FlaskConical, FolderOpen, List, Settings, Tag } from "lucide-react";
 import type { ReactNode } from "react";
 import SidebarLink from "./SidebarLink";
 
@@ -56,11 +56,12 @@ export default function Sidebar({ administratorRole }: SidebarProps) {
 		links = (
 			<>
 				<SidebarLink
-					exclude={["/refs/settings"]}
+					exclude={["/refs/beta", "/refs/settings"]}
 					title="Browse"
 					link="/refs"
 					icon={List}
 				/>
+				<SidebarLink title="Beta" link="/refs/beta" icon={FlaskConical} />
 				{fullAdministrator ? (
 					<SidebarLink title="Settings" link="/refs/settings" icon={Settings} />
 				) : null}

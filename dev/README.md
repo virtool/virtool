@@ -69,7 +69,8 @@ dev/
 See the root README for the development commands. The `Tiltfile` calls
 `dev/scripts/ensure-minikube.sh` as it loads, so bringing up an instance also
 starts a stopped Minikube cluster. Run `tilt down` before `minikube stop` so the
-cluster stops cleanly.
+cluster stops cleanly. `mise up` prints the instance URL; in terminals that
+support OSC 8 it is clickable.
 
 ## Live editing
 

@@ -84,8 +84,10 @@ export default defineConfig(({ command, mode }) => ({
 			"@labels": path.resolve("src/labels"),
 			"@nav": path.resolve("src/nav"),
 			"@otus": path.resolve("src/otus"),
+			"@otus-v2": path.resolve("src/otus-v2"),
 			"@quality": path.resolve("src/quality"),
 			"@references": path.resolve("src/references"),
+			"@references-v2": path.resolve("src/references-v2"),
 			"@samples": path.resolve("src/samples"),
 			"@sequences": path.resolve("src/sequences"),
 			"@server": path.resolve("src/server"),
@@ -171,7 +173,10 @@ export default defineConfig(({ command, mode }) => ({
 		],
 	},
 	server: {
-		allowedHosts: ["virtool.local"],
+		allowedHosts: [
+			"virtool.local",
+			process.env.VT_DEV_SERVER_ALLOWED_HOST,
+		].filter(Boolean),
 		warmup: {
 			// Pre-transform the app shell so the first navigation is warm. The `!`
 			// patterns keep the globs off `__tests__` files — those import

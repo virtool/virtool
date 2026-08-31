@@ -30,7 +30,9 @@ import { indexServerFnMocks } from "./server-fn/indexes";
 import { jobServerFnMocks } from "./server-fn/jobs";
 import { labelServerFnMocks } from "./server-fn/labels";
 import { genbankServerFnMocks, otuServerFnMocks } from "./server-fn/otus";
+import { otuV2ServerFnMocks } from "./server-fn/otusV2";
 import { referenceServerFnMocks } from "./server-fn/references";
+import { referenceV2ServerFnMocks } from "./server-fn/referencesV2";
 import { rootServerFnMocks } from "./server-fn/root";
 import { sampleServerFnMocks } from "./server-fn/samples";
 import {
@@ -121,6 +123,16 @@ vi.mock("@server/indexes/functions", async () => {
 	return indexServerFnMocks;
 });
 
+vi.mock("@server/references-v2/functions", async () => {
+	const { referenceV2ServerFnMocks } = await import("./server-fn/referencesV2");
+	return referenceV2ServerFnMocks;
+});
+
+vi.mock("@server/otus-v2/functions", async () => {
+	const { otuV2ServerFnMocks } = await import("./server-fn/otusV2");
+	return otuV2ServerFnMocks;
+});
+
 beforeEach(() => {
 	for (const fn of Object.values(groupServerFnMocks)) {
 		fn.mockReset();
@@ -154,6 +166,10 @@ beforeEach(() => {
 		otuServerFnMocks.findOtusFn,
 		otuServerFnMocks.getOtuFn,
 		otuServerFnMocks.listOtuHistoryFn,
+		referenceV2ServerFnMocks.getReferenceV2Fn,
+		referenceV2ServerFnMocks.getReferencesV2Fn,
+		otuV2ServerFnMocks.getLocalOtuFn,
+		otuV2ServerFnMocks.getLocalOtusFn,
 	]) {
 		fn.mockReset();
 		// Default to a pending promise so an un-stubbed query renders its loading
@@ -198,6 +214,8 @@ beforeEach(() => {
 		otuServerFnMocks.updateSequenceFn,
 		otuServerFnMocks.deleteSequenceFn,
 		genbankServerFnMocks.getGenbankFn,
+		referenceV2ServerFnMocks.createReferenceV2Fn,
+		otuV2ServerFnMocks.createLocalOtuFn,
 	]) {
 		fn.mockReset();
 	}

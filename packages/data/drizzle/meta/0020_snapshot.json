@@ -1,6 +1,6 @@
 {
-  "id": "aa6ef0a8-9e6b-49cf-a750-0a98cb183473",
-  "prevId": "87efb73c-5e43-4905-a180-32e76c6c34f0",
+  "id": "c1ca94e8-5c27-44c7-b6dc-20ad758a6876",
+  "prevId": "1958476f-fbd6-4989-9e6e-b8ad7a138f6f",
   "version": "7",
   "dialect": "postgresql",
   "tables": {
@@ -48,6 +48,12 @@
           "type": "text",
           "primaryKey": false,
           "notNull": true
+        },
+        "workflow_version": {
+          "name": "workflow_version",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
         },
         "ready": {
           "name": "ready",
@@ -3814,6 +3820,12 @@
           "primaryKey": false,
           "notNull": false
         },
+        "expected_size": {
+          "name": "expected_size",
+          "type": "bigint",
+          "primaryKey": false,
+          "notNull": false
+        },
         "storage_key": {
           "name": "storage_key",
           "type": "text",
@@ -3992,6 +4004,1738 @@
           "value": "\"users\".\"administrator_role\" in ('full', 'settings', 'users', 'base')"
         }
       },
+      "isRLSEnabled": false
+    },
+    "public.analysis_views": {
+      "name": "analysis_views",
+      "schema": "",
+      "columns": {
+        "user_id": {
+          "name": "user_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "analysis_id": {
+          "name": "analysis_id",
+          "type": "bigint",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "viewed_at": {
+          "name": "viewed_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {
+        "ix_analysis_views_user_id_viewed_at": {
+          "name": "ix_analysis_views_user_id_viewed_at",
+          "columns": [
+            {
+              "expression": "user_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "viewed_at",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "analysis_views_user_id_fkey": {
+          "name": "analysis_views_user_id_fkey",
+          "tableFrom": "analysis_views",
+          "tableTo": "users",
+          "columnsFrom": [
+            "user_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "analysis_views_analysis_id_fkey": {
+          "name": "analysis_views_analysis_id_fkey",
+          "tableFrom": "analysis_views",
+          "tableTo": "analyses",
+          "columnsFrom": [
+            "analysis_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {
+        "analysis_views_pkey": {
+          "name": "analysis_views_pkey",
+          "columns": [
+            "user_id",
+            "analysis_id"
+          ]
+        }
+      },
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.sample_views": {
+      "name": "sample_views",
+      "schema": "",
+      "columns": {
+        "user_id": {
+          "name": "user_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "sample_id": {
+          "name": "sample_id",
+          "type": "bigint",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "viewed_at": {
+          "name": "viewed_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {
+        "ix_sample_views_user_id_viewed_at": {
+          "name": "ix_sample_views_user_id_viewed_at",
+          "columns": [
+            {
+              "expression": "user_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "viewed_at",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "sample_views_user_id_fkey": {
+          "name": "sample_views_user_id_fkey",
+          "tableFrom": "sample_views",
+          "tableTo": "users",
+          "columnsFrom": [
+            "user_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "sample_views_sample_id_fkey": {
+          "name": "sample_views_sample_id_fkey",
+          "tableFrom": "sample_views",
+          "tableTo": "legacy_samples",
+          "columnsFrom": [
+            "sample_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {
+        "sample_views_pkey": {
+          "name": "sample_views_pkey",
+          "columns": [
+            "user_id",
+            "sample_id"
+          ]
+        }
+      },
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.otu_changes": {
+      "name": "otu_changes",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "bigint",
+          "primaryKey": true,
+          "notNull": true,
+          "identity": {
+            "type": "always",
+            "name": "otu_changes_id_seq",
+            "schema": "public",
+            "increment": "1",
+            "startWith": "1",
+            "minValue": "1",
+            "maxValue": "9223372036854775807",
+            "cache": "1",
+            "cycle": false
+          }
+        },
+        "reference_id": {
+          "name": "reference_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "otu_id": {
+          "name": "otu_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "version": {
+          "name": "version",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "command": {
+          "name": "command",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "command_schema_version": {
+          "name": "command_schema_version",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "payload": {
+          "name": "payload",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "source": {
+          "name": "source",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "user_id": {
+          "name": "user_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "remote_event_id": {
+          "name": "remote_event_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "remote_author": {
+          "name": "remote_author",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {
+        "otu_changes_reference_id_remote_event_id_key": {
+          "name": "otu_changes_reference_id_remote_event_id_key",
+          "columns": [
+            {
+              "expression": "reference_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "remote_event_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "where": "\"otu_changes\".\"remote_event_id\" is not null",
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "otu_changes_reference_id_otu_id_fkey": {
+          "name": "otu_changes_reference_id_otu_id_fkey",
+          "tableFrom": "otu_changes",
+          "tableTo": "otus",
+          "columnsFrom": [
+            "reference_id",
+            "otu_id"
+          ],
+          "columnsTo": [
+            "reference_id",
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "otu_changes_user_id_fkey": {
+          "name": "otu_changes_user_id_fkey",
+          "tableFrom": "otu_changes",
+          "tableTo": "users",
+          "columnsFrom": [
+            "user_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "otu_changes_otu_id_version_key": {
+          "name": "otu_changes_otu_id_version_key",
+          "nullsNotDistinct": false,
+          "columns": [
+            "otu_id",
+            "version"
+          ]
+        }
+      },
+      "policies": {},
+      "checkConstraints": {
+        "otu_changes_command_schema_version_check": {
+          "name": "otu_changes_command_schema_version_check",
+          "value": "\"otu_changes\".\"command_schema_version\" >= 1"
+        },
+        "otu_changes_source_check": {
+          "name": "otu_changes_source_check",
+          "value": "\"otu_changes\".\"source\" in ('user', 'system', 'remote', 'copy')"
+        }
+      },
+      "isRLSEnabled": false
+    },
+    "public.otu_isolate_versions": {
+      "name": "otu_isolate_versions",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "otu_id": {
+          "name": "otu_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "isolate_id": {
+          "name": "isolate_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "name_type": {
+          "name": "name_type",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "name_value": {
+          "name": "name_value",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "first_version": {
+          "name": "first_version",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "last_version": {
+          "name": "last_version",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "indexes": {
+        "otu_isolate_versions_current_key": {
+          "name": "otu_isolate_versions_current_key",
+          "columns": [
+            {
+              "expression": "otu_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "isolate_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "where": "\"otu_isolate_versions\".\"last_version\" is null",
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "otu_isolate_versions_otu_id_isolate_id_fkey": {
+          "name": "otu_isolate_versions_otu_id_isolate_id_fkey",
+          "tableFrom": "otu_isolate_versions",
+          "tableTo": "otu_isolates",
+          "columnsFrom": [
+            "otu_id",
+            "isolate_id"
+          ],
+          "columnsTo": [
+            "otu_id",
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {
+        "otu_isolate_versions_name_check": {
+          "name": "otu_isolate_versions_name_check",
+          "value": "(\"otu_isolate_versions\".\"name_type\" is null and \"otu_isolate_versions\".\"name_value\" is null) or (\"otu_isolate_versions\".\"name_type\" is not null and btrim(\"otu_isolate_versions\".\"name_value\") <> '')"
+        },
+        "otu_isolate_versions_version_range_check": {
+          "name": "otu_isolate_versions_version_range_check",
+          "value": "\"otu_isolate_versions\".\"first_version\" >= 1 and (\"otu_isolate_versions\".\"last_version\" is null or \"otu_isolate_versions\".\"last_version\" > \"otu_isolate_versions\".\"first_version\")"
+        }
+      },
+      "isRLSEnabled": false
+    },
+    "public.otu_isolates": {
+      "name": "otu_isolates",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "otu_id": {
+          "name": "otu_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "otu_isolates_otu_id_fkey": {
+          "name": "otu_isolates_otu_id_fkey",
+          "tableFrom": "otu_isolates",
+          "tableTo": "otus",
+          "columnsFrom": [
+            "otu_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "otu_isolates_otu_id_id_key": {
+          "name": "otu_isolates_otu_id_id_key",
+          "nullsNotDistinct": false,
+          "columns": [
+            "otu_id",
+            "id"
+          ]
+        }
+      },
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.otu_local_identities": {
+      "name": "otu_local_identities",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "reference_id": {
+          "name": "reference_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "otu_id": {
+          "name": "otu_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "otu_local_identities_reference_id_otu_id_fkey": {
+          "name": "otu_local_identities_reference_id_otu_id_fkey",
+          "tableFrom": "otu_local_identities",
+          "tableTo": "otus",
+          "columnsFrom": [
+            "reference_id",
+            "otu_id"
+          ],
+          "columnsTo": [
+            "reference_id",
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "otu_local_identities_reference_id_otu_id_key": {
+          "name": "otu_local_identities_reference_id_otu_id_key",
+          "nullsNotDistinct": false,
+          "columns": [
+            "reference_id",
+            "otu_id"
+          ]
+        },
+        "otu_local_identities_reference_id_otu_id_id_key": {
+          "name": "otu_local_identities_reference_id_otu_id_id_key",
+          "nullsNotDistinct": false,
+          "columns": [
+            "reference_id",
+            "otu_id",
+            "id"
+          ]
+        }
+      },
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.otu_local_identity_revisions": {
+      "name": "otu_local_identity_revisions",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "reference_id": {
+          "name": "reference_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "otu_id": {
+          "name": "otu_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "identity_id": {
+          "name": "identity_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "name": {
+          "name": "name",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "acronym": {
+          "name": "acronym",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "lineage": {
+          "name": "lineage",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "otu_local_identity_revisions_reference_id_otu_id_identity_id_fkey": {
+          "name": "otu_local_identity_revisions_reference_id_otu_id_identity_id_fkey",
+          "tableFrom": "otu_local_identity_revisions",
+          "tableTo": "otu_local_identities",
+          "columnsFrom": [
+            "reference_id",
+            "otu_id",
+            "identity_id"
+          ],
+          "columnsTo": [
+            "reference_id",
+            "otu_id",
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "otu_local_identity_revisions_reference_otu_id_key": {
+          "name": "otu_local_identity_revisions_reference_otu_id_key",
+          "nullsNotDistinct": false,
+          "columns": [
+            "reference_id",
+            "otu_id",
+            "id"
+          ]
+        }
+      },
+      "policies": {},
+      "checkConstraints": {
+        "otu_local_identity_revisions_name_check": {
+          "name": "otu_local_identity_revisions_name_check",
+          "value": "btrim(\"otu_local_identity_revisions\".\"name\") <> ''"
+        },
+        "otu_local_identity_revisions_acronym_check": {
+          "name": "otu_local_identity_revisions_acronym_check",
+          "value": "\"otu_local_identity_revisions\".\"acronym\" is null or btrim(\"otu_local_identity_revisions\".\"acronym\") <> ''"
+        }
+      },
+      "isRLSEnabled": false
+    },
+    "public.otu_local_sequence_records": {
+      "name": "otu_local_sequence_records",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "otu_id": {
+          "name": "otu_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "sequence_id": {
+          "name": "sequence_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "definition": {
+          "name": "definition",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "sequence": {
+          "name": "sequence",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "otu_local_sequence_records_otu_id_sequence_id_fkey": {
+          "name": "otu_local_sequence_records_otu_id_sequence_id_fkey",
+          "tableFrom": "otu_local_sequence_records",
+          "tableTo": "otu_sequences",
+          "columnsFrom": [
+            "otu_id",
+            "sequence_id"
+          ],
+          "columnsTo": [
+            "otu_id",
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "otu_local_sequence_records_otu_sequence_id_key": {
+          "name": "otu_local_sequence_records_otu_sequence_id_key",
+          "nullsNotDistinct": false,
+          "columns": [
+            "otu_id",
+            "sequence_id",
+            "id"
+          ]
+        }
+      },
+      "policies": {},
+      "checkConstraints": {
+        "otu_local_sequence_records_definition_check": {
+          "name": "otu_local_sequence_records_definition_check",
+          "value": "btrim(\"otu_local_sequence_records\".\"definition\") <> ''"
+        },
+        "otu_local_sequence_records_sequence_check": {
+          "name": "otu_local_sequence_records_sequence_check",
+          "value": "\"otu_local_sequence_records\".\"sequence\" <> '' and \"otu_local_sequence_records\".\"sequence\" ~ '^[ATCGNRYKMSWBDHV]+$'"
+        }
+      },
+      "isRLSEnabled": false
+    },
+    "public.otu_plan_segment_versions": {
+      "name": "otu_plan_segment_versions",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "otu_id": {
+          "name": "otu_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "segment_id": {
+          "name": "segment_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "name_prefix": {
+          "name": "name_prefix",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "name_key": {
+          "name": "name_key",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "length": {
+          "name": "length",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "length_tolerance": {
+          "name": "length_tolerance",
+          "type": "double precision",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "rule": {
+          "name": "rule",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "first_version": {
+          "name": "first_version",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "last_version": {
+          "name": "last_version",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "indexes": {
+        "otu_plan_segment_versions_current_key": {
+          "name": "otu_plan_segment_versions_current_key",
+          "columns": [
+            {
+              "expression": "otu_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "segment_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "where": "\"otu_plan_segment_versions\".\"last_version\" is null",
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "otu_plan_segment_versions_otu_id_idx": {
+          "name": "otu_plan_segment_versions_otu_id_idx",
+          "columns": [
+            {
+              "expression": "otu_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "otu_plan_segment_versions_otu_id_segment_id_fkey": {
+          "name": "otu_plan_segment_versions_otu_id_segment_id_fkey",
+          "tableFrom": "otu_plan_segment_versions",
+          "tableTo": "otu_plan_segments",
+          "columnsFrom": [
+            "otu_id",
+            "segment_id"
+          ],
+          "columnsTo": [
+            "otu_id",
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {
+        "otu_plan_segment_versions_length_check": {
+          "name": "otu_plan_segment_versions_length_check",
+          "value": "\"otu_plan_segment_versions\".\"length\" > 0"
+        },
+        "otu_plan_segment_versions_tolerance_check": {
+          "name": "otu_plan_segment_versions_tolerance_check",
+          "value": "\"otu_plan_segment_versions\".\"length_tolerance\" between 0 and 1"
+        },
+        "otu_plan_segment_versions_name_check": {
+          "name": "otu_plan_segment_versions_name_check",
+          "value": "(\"otu_plan_segment_versions\".\"name_prefix\" is null and \"otu_plan_segment_versions\".\"name_key\" is null) or (\"otu_plan_segment_versions\".\"name_prefix\" is not null and \"otu_plan_segment_versions\".\"name_key\" is not null)"
+        },
+        "otu_plan_segment_versions_rule_check": {
+          "name": "otu_plan_segment_versions_rule_check",
+          "value": "\"otu_plan_segment_versions\".\"rule\" in ('required', 'recommended', 'optional')"
+        },
+        "otu_plan_segment_versions_version_range_check": {
+          "name": "otu_plan_segment_versions_version_range_check",
+          "value": "\"otu_plan_segment_versions\".\"first_version\" >= 1 and (\"otu_plan_segment_versions\".\"last_version\" is null or \"otu_plan_segment_versions\".\"last_version\" > \"otu_plan_segment_versions\".\"first_version\")"
+        }
+      },
+      "isRLSEnabled": false
+    },
+    "public.otu_plan_segments": {
+      "name": "otu_plan_segments",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "otu_id": {
+          "name": "otu_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "plan_id": {
+          "name": "plan_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "otu_plan_segments_otu_id_plan_id_fkey": {
+          "name": "otu_plan_segments_otu_id_plan_id_fkey",
+          "tableFrom": "otu_plan_segments",
+          "tableTo": "otu_plans",
+          "columnsFrom": [
+            "otu_id",
+            "plan_id"
+          ],
+          "columnsTo": [
+            "otu_id",
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "otu_plan_segments_otu_id_id_key": {
+          "name": "otu_plan_segments_otu_id_id_key",
+          "nullsNotDistinct": false,
+          "columns": [
+            "otu_id",
+            "id"
+          ]
+        }
+      },
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.otu_plans": {
+      "name": "otu_plans",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "otu_id": {
+          "name": "otu_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "otu_plans_otu_id_fkey": {
+          "name": "otu_plans_otu_id_fkey",
+          "tableFrom": "otu_plans",
+          "tableTo": "otus",
+          "columnsFrom": [
+            "otu_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "otu_plans_otu_id_key": {
+          "name": "otu_plans_otu_id_key",
+          "nullsNotDistinct": false,
+          "columns": [
+            "otu_id"
+          ]
+        },
+        "otu_plans_otu_id_id_key": {
+          "name": "otu_plans_otu_id_id_key",
+          "nullsNotDistinct": false,
+          "columns": [
+            "otu_id",
+            "id"
+          ]
+        }
+      },
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.otu_sequence_versions": {
+      "name": "otu_sequence_versions",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "otu_id": {
+          "name": "otu_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "sequence_id": {
+          "name": "sequence_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "isolate_id": {
+          "name": "isolate_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "segment_id": {
+          "name": "segment_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "local_record_id": {
+          "name": "local_record_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "first_version": {
+          "name": "first_version",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "last_version": {
+          "name": "last_version",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "indexes": {
+        "otu_sequence_versions_current_key": {
+          "name": "otu_sequence_versions_current_key",
+          "columns": [
+            {
+              "expression": "otu_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "sequence_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "where": "\"otu_sequence_versions\".\"last_version\" is null",
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "otu_sequence_versions_otu_isolate_idx": {
+          "name": "otu_sequence_versions_otu_isolate_idx",
+          "columns": [
+            {
+              "expression": "otu_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "isolate_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "otu_sequence_versions_otu_id_sequence_id_fkey": {
+          "name": "otu_sequence_versions_otu_id_sequence_id_fkey",
+          "tableFrom": "otu_sequence_versions",
+          "tableTo": "otu_sequences",
+          "columnsFrom": [
+            "otu_id",
+            "sequence_id"
+          ],
+          "columnsTo": [
+            "otu_id",
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "otu_sequence_versions_otu_id_isolate_id_fkey": {
+          "name": "otu_sequence_versions_otu_id_isolate_id_fkey",
+          "tableFrom": "otu_sequence_versions",
+          "tableTo": "otu_isolates",
+          "columnsFrom": [
+            "otu_id",
+            "isolate_id"
+          ],
+          "columnsTo": [
+            "otu_id",
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "otu_sequence_versions_otu_id_segment_id_fkey": {
+          "name": "otu_sequence_versions_otu_id_segment_id_fkey",
+          "tableFrom": "otu_sequence_versions",
+          "tableTo": "otu_plan_segments",
+          "columnsFrom": [
+            "otu_id",
+            "segment_id"
+          ],
+          "columnsTo": [
+            "otu_id",
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "otu_sequence_versions_otu_id_sequence_id_local_record_id_fkey": {
+          "name": "otu_sequence_versions_otu_id_sequence_id_local_record_id_fkey",
+          "tableFrom": "otu_sequence_versions",
+          "tableTo": "otu_local_sequence_records",
+          "columnsFrom": [
+            "otu_id",
+            "sequence_id",
+            "local_record_id"
+          ],
+          "columnsTo": [
+            "otu_id",
+            "sequence_id",
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {
+        "otu_sequence_versions_version_range_check": {
+          "name": "otu_sequence_versions_version_range_check",
+          "value": "\"otu_sequence_versions\".\"first_version\" >= 1 and (\"otu_sequence_versions\".\"last_version\" is null or \"otu_sequence_versions\".\"last_version\" > \"otu_sequence_versions\".\"first_version\")"
+        }
+      },
+      "isRLSEnabled": false
+    },
+    "public.otu_sequences": {
+      "name": "otu_sequences",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "otu_id": {
+          "name": "otu_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "otu_sequences_otu_id_fkey": {
+          "name": "otu_sequences_otu_id_fkey",
+          "tableFrom": "otu_sequences",
+          "tableTo": "otus",
+          "columnsFrom": [
+            "otu_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "otu_sequences_otu_id_id_key": {
+          "name": "otu_sequences_otu_id_id_key",
+          "nullsNotDistinct": false,
+          "columns": [
+            "otu_id",
+            "id"
+          ]
+        }
+      },
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.otu_taxonomy_versions": {
+      "name": "otu_taxonomy_versions",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "reference_id": {
+          "name": "reference_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "otu_id": {
+          "name": "otu_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "kind": {
+          "name": "kind",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "local_identity_revision_id": {
+          "name": "local_identity_revision_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "lineage_id": {
+          "name": "lineage_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "first_version": {
+          "name": "first_version",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "last_version": {
+          "name": "last_version",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "indexes": {
+        "otu_taxonomy_versions_current_key": {
+          "name": "otu_taxonomy_versions_current_key",
+          "columns": [
+            {
+              "expression": "otu_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "where": "\"otu_taxonomy_versions\".\"last_version\" is null",
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "otu_taxonomy_versions_reference_id_otu_id_fkey": {
+          "name": "otu_taxonomy_versions_reference_id_otu_id_fkey",
+          "tableFrom": "otu_taxonomy_versions",
+          "tableTo": "otus",
+          "columnsFrom": [
+            "reference_id",
+            "otu_id"
+          ],
+          "columnsTo": [
+            "reference_id",
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "otu_taxonomy_versions_reference_id_otu_id_local_identity_revision_id_fkey": {
+          "name": "otu_taxonomy_versions_reference_id_otu_id_local_identity_revision_id_fkey",
+          "tableFrom": "otu_taxonomy_versions",
+          "tableTo": "otu_local_identity_revisions",
+          "columnsFrom": [
+            "reference_id",
+            "otu_id",
+            "local_identity_revision_id"
+          ],
+          "columnsTo": [
+            "reference_id",
+            "otu_id",
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {
+        "otu_taxonomy_versions_shape_check": {
+          "name": "otu_taxonomy_versions_shape_check",
+          "value": "(\"otu_taxonomy_versions\".\"kind\" = 'local' and \"otu_taxonomy_versions\".\"local_identity_revision_id\" is not null and \"otu_taxonomy_versions\".\"lineage_id\" is null) or (\"otu_taxonomy_versions\".\"kind\" = 'ncbi' and \"otu_taxonomy_versions\".\"local_identity_revision_id\" is null and \"otu_taxonomy_versions\".\"lineage_id\" is not null)"
+        },
+        "otu_taxonomy_versions_version_range_check": {
+          "name": "otu_taxonomy_versions_version_range_check",
+          "value": "\"otu_taxonomy_versions\".\"first_version\" >= 1 and (\"otu_taxonomy_versions\".\"last_version\" is null or \"otu_taxonomy_versions\".\"last_version\" > \"otu_taxonomy_versions\".\"first_version\")"
+        }
+      },
+      "isRLSEnabled": false
+    },
+    "public.otus": {
+      "name": "otus",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "reference_id": {
+          "name": "reference_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "remote_id": {
+          "name": "remote_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "molecule_type": {
+          "name": "molecule_type",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "molecule_strandedness": {
+          "name": "molecule_strandedness",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "molecule_topology": {
+          "name": "molecule_topology",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "version": {
+          "name": "version",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "ncbi_from_version": {
+          "name": "ncbi_from_version",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "deleted_version": {
+          "name": "deleted_version",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {
+        "otus_reference_id_remote_id_key": {
+          "name": "otus_reference_id_remote_id_key",
+          "columns": [
+            {
+              "expression": "reference_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "remote_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "where": "\"otus\".\"remote_id\" is not null",
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "otus_reference_id_fkey": {
+          "name": "otus_reference_id_fkey",
+          "tableFrom": "otus",
+          "tableTo": "reference_roots",
+          "columnsFrom": [
+            "reference_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "otus_reference_id_id_key": {
+          "name": "otus_reference_id_id_key",
+          "nullsNotDistinct": false,
+          "columns": [
+            "reference_id",
+            "id"
+          ]
+        }
+      },
+      "policies": {},
+      "checkConstraints": {
+        "otus_version_check": {
+          "name": "otus_version_check",
+          "value": "\"otus\".\"version\" >= 1"
+        },
+        "otus_molecule_type_check": {
+          "name": "otus_molecule_type_check",
+          "value": "\"otus\".\"molecule_type\" in ('cRNA', 'DNA', 'mRNA', 'RNA', 'tRNA')"
+        },
+        "otus_molecule_strandedness_check": {
+          "name": "otus_molecule_strandedness_check",
+          "value": "\"otus\".\"molecule_strandedness\" in ('single', 'double')"
+        },
+        "otus_molecule_topology_check": {
+          "name": "otus_molecule_topology_check",
+          "value": "\"otus\".\"molecule_topology\" in ('linear', 'circular')"
+        },
+        "otus_ncbi_from_version_check": {
+          "name": "otus_ncbi_from_version_check",
+          "value": "\"otus\".\"ncbi_from_version\" is null or \"otus\".\"ncbi_from_version\" between 1 and \"otus\".\"version\""
+        },
+        "otus_deleted_version_check": {
+          "name": "otus_deleted_version_check",
+          "value": "\"otus\".\"deleted_version\" is null or \"otus\".\"deleted_version\" = \"otus\".\"version\""
+        }
+      },
+      "isRLSEnabled": false
+    },
+    "public.reference_groups": {
+      "name": "reference_groups",
+      "schema": "",
+      "columns": {
+        "reference_id": {
+          "name": "reference_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "group_id": {
+          "name": "group_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "build": {
+          "name": "build",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "modify": {
+          "name": "modify",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "modify_otu": {
+          "name": "modify_otu",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "reference_groups_reference_id_fkey": {
+          "name": "reference_groups_reference_id_fkey",
+          "tableFrom": "reference_groups",
+          "tableTo": "reference_roots",
+          "columnsFrom": [
+            "reference_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "reference_groups_group_id_fkey": {
+          "name": "reference_groups_group_id_fkey",
+          "tableFrom": "reference_groups",
+          "tableTo": "groups",
+          "columnsFrom": [
+            "group_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {
+        "reference_groups_pkey": {
+          "name": "reference_groups_pkey",
+          "columns": [
+            "reference_id",
+            "group_id"
+          ]
+        }
+      },
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.reference_roots": {
+      "name": "reference_roots",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "name": {
+          "name": "name",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "description": {
+          "name": "description",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "kind": {
+          "name": "kind",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "remote_url": {
+          "name": "remote_url",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "remote_cursor": {
+          "name": "remote_cursor",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "default_segment_length_tolerance": {
+          "name": "default_segment_length_tolerance",
+          "type": "double precision",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "archived": {
+          "name": "archived",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {
+        "reference_roots_kind_check": {
+          "name": "reference_roots_kind_check",
+          "value": "\"reference_roots\".\"kind\" in ('local', 'remote')"
+        },
+        "reference_roots_remote_shape_check": {
+          "name": "reference_roots_remote_shape_check",
+          "value": "(\"reference_roots\".\"kind\" = 'local' and \"reference_roots\".\"remote_url\" is null and \"reference_roots\".\"remote_cursor\" is null) or (\"reference_roots\".\"kind\" = 'remote' and \"reference_roots\".\"remote_url\" is not null)"
+        },
+        "reference_roots_default_tolerance_check": {
+          "name": "reference_roots_default_tolerance_check",
+          "value": "\"reference_roots\".\"default_segment_length_tolerance\" between 0 and 1"
+        }
+      },
+      "isRLSEnabled": false
+    },
+    "public.reference_users": {
+      "name": "reference_users",
+      "schema": "",
+      "columns": {
+        "reference_id": {
+          "name": "reference_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "user_id": {
+          "name": "user_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "build": {
+          "name": "build",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "modify": {
+          "name": "modify",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "modify_otu": {
+          "name": "modify_otu",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "reference_users_reference_id_fkey": {
+          "name": "reference_users_reference_id_fkey",
+          "tableFrom": "reference_users",
+          "tableTo": "reference_roots",
+          "columnsFrom": [
+            "reference_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "reference_users_user_id_fkey": {
+          "name": "reference_users_user_id_fkey",
+          "tableFrom": "reference_users",
+          "tableTo": "users",
+          "columnsFrom": [
+            "user_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {
+        "reference_users_pkey": {
+          "name": "reference_users_pkey",
+          "columns": [
+            "reference_id",
+            "user_id"
+          ]
+        }
+      },
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
       "isRLSEnabled": false
     }
   },
