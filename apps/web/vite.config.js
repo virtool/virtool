@@ -3,10 +3,15 @@ import babel from "@rolldown/plugin-babel";
 import { sentryTanstackStart } from "@sentry/tanstackstart-react/vite";
 import tailwindcss from "@tailwindcss/vite";
 import { tanstackStart } from "@tanstack/react-start/plugin/vite";
+import { resolveFileBacked } from "@virtool/contracts/env";
 import react, { reactCompilerPreset } from "@vitejs/plugin-react";
 import { nitro } from "nitro/vite";
 import { defineConfig } from "vite";
 import pkg from "./package.json" with { type: "json" };
+
+const { VT_DEV_SERVER_ALLOWED_HOST } = resolveFileBacked([
+	"VT_DEV_SERVER_ALLOWED_HOST",
+]);
 
 export default defineConfig(({ command, mode }) => ({
 	build: {
@@ -171,7 +176,7 @@ export default defineConfig(({ command, mode }) => ({
 		],
 	},
 	server: {
-		allowedHosts: ["virtool.local"],
+		allowedHosts: ["virtool.local", VT_DEV_SERVER_ALLOWED_HOST].filter(Boolean),
 		warmup: {
 			// Pre-transform the app shell so the first navigation is warm. The `!`
 			// patterns keep the globs off `__tests__` files — those import

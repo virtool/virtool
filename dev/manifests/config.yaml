@@ -17,6 +17,7 @@ metadata:
     app.kubernetes.io/component: config
     app.kubernetes.io/part-of: virtool
 data:
+  VT_DEV_SERVER_ALLOWED_HOST: "virtool.local"
   VT_POSTGRES_URL: "postgres://virtool:virtool@postgres.default.svc.cluster.local:5432/virtool"
   VT_STORAGE_BACKEND: "azure"
   VT_STORAGE_AZURE_ACCOUNT: "devstoreaccount1"
