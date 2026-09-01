@@ -1,6 +1,7 @@
-import { BoxGroup, BoxGroupHeader, BoxGroupSection } from "@base/Box";
+import { BoxGroup, BoxGroupSection } from "@base/Box";
 import { InputError, InputGroup, InputLabel, InputSimple } from "@base/Input";
 import SaveButton from "@base/SaveButton";
+import SectionHeader from "@base/SectionHeader";
 import { useForm } from "react-hook-form";
 import { useUpdateAccount } from "../queries";
 
@@ -29,32 +30,34 @@ export default function AccountEmail({ email }: EmailProps) {
 	}
 
 	return (
-		<BoxGroup>
-			<BoxGroupHeader>
+		<section>
+			<SectionHeader>
 				<h2>Email</h2>
-			</BoxGroupHeader>
-			<form onSubmit={handleSubmit(onSubmit)}>
-				<BoxGroupSection>
-					<InputGroup>
-						<InputLabel htmlFor="email">Email Address</InputLabel>
-						<InputSimple
-							id="email"
-							aria-invalid={Boolean(errors.email) || undefined}
-							aria-describedby={errors.email ? "email-error" : undefined}
-							{...register("email", {
-								pattern: {
-									value: /^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$/,
-									message: "Please provide a valid email address",
-								},
-							})}
-						/>
-						<InputError id="email-error">{errors.email?.message}</InputError>
-					</InputGroup>
-					<footer className="flex items-center justify-end mb-4">
-						<SaveButton altText="Change" />
-					</footer>
-				</BoxGroupSection>
-			</form>
-		</BoxGroup>
+			</SectionHeader>
+			<BoxGroup>
+				<form onSubmit={handleSubmit(onSubmit)}>
+					<BoxGroupSection>
+						<InputGroup>
+							<InputLabel htmlFor="email">Email Address</InputLabel>
+							<InputSimple
+								id="email"
+								aria-invalid={Boolean(errors.email) || undefined}
+								aria-describedby={errors.email ? "email-error" : undefined}
+								{...register("email", {
+									pattern: {
+										value: /^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$/,
+										message: "Please provide a valid email address",
+									},
+								})}
+							/>
+							<InputError id="email-error">{errors.email?.message}</InputError>
+						</InputGroup>
+						<footer className="flex items-center justify-end mb-4">
+							<SaveButton altText="Change" />
+						</footer>
+					</BoxGroupSection>
+				</form>
+			</BoxGroup>
+		</section>
 	);
 }

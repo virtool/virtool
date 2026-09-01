@@ -1,6 +1,7 @@
 import Badge from "@base/Badge";
-import { BoxGroup, BoxGroupHeader, BoxGroupSection } from "@base/Box";
+import { BoxGroup, BoxGroupSection } from "@base/Box";
 import { Empty, EmptyDescription, EmptyMedia, EmptyTitle } from "@base/Empty";
+import SectionHeader from "@base/SectionHeader";
 import type { IndexContributor } from "@virtool/contracts";
 import { sortBy } from "es-toolkit";
 import { Users } from "lucide-react";
@@ -37,14 +38,14 @@ export default function Contributors({ contributors }: ContributorsProps) {
 	}
 
 	return (
-		<BoxGroup>
-			<BoxGroupHeader>
-				<h2 className="flex gap-2">
+		<section>
+			<SectionHeader>
+				<h2 className="flex items-center gap-2">
 					<span>Contributors</span>
 					<Badge>{contributors.length}</Badge>
 				</h2>
-			</BoxGroupHeader>
-			{contributorComponents}
-		</BoxGroup>
+			</SectionHeader>
+			<BoxGroup>{contributorComponents}</BoxGroup>
+		</section>
 	);
 }

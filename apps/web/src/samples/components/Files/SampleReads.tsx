@@ -1,4 +1,5 @@
-import { BoxGroup, BoxGroupHeader } from "@base/Box";
+import { BoxGroup } from "@base/Box";
+import SectionHeader from "@base/SectionHeader";
 import type { Read } from "@virtool/contracts";
 import ReadItem from "./ReadItem";
 
@@ -32,12 +33,12 @@ export default function SampleReads({ reads, sampleName }: SampleReadsProps) {
 	));
 
 	return (
-		<BoxGroup>
-			<BoxGroupHeader>
-				<h2 className="flex justify-between">Reads</h2>
+		<section>
+			<SectionHeader>
+				<h2>Reads</h2>
 				<p>The input sequencing data used to create this sample.</p>
-			</BoxGroupHeader>
-			{fileComponents}
-		</BoxGroup>
+			</SectionHeader>
+			<BoxGroup>{fileComponents}</BoxGroup>
+		</section>
 	);
 }

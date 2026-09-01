@@ -1,6 +1,7 @@
 import { objectHasProperty } from "@app/common";
-import { BoxGroup, BoxGroupHeader, BoxGroupSection } from "@base/Box";
+import { BoxGroup, BoxGroupSection } from "@base/Box";
 import { Empty, EmptyDescription, EmptyMedia, EmptyTitle } from "@base/Empty";
+import SectionHeader from "@base/SectionHeader";
 import { useCheckReferenceRight } from "@references/hooks";
 import {
 	type ReferenceMemberNoun,
@@ -50,23 +51,26 @@ export default function ReferenceMembers({
 	const plural = `${noun}s`;
 
 	return (
-		<>
+		<section>
+			<SectionHeader className="[&_h2]:capitalize">
+				<h2 className="flex items-center">
+					{plural}
+					{canModify && (
+						<button
+							className="bg-transparent border-0 cursor-pointer ml-auto p-0 text-sm font-medium"
+							onClick={() => setOpenAdd(true)}
+							type="button"
+						>
+							Add {noun}
+						</button>
+					)}
+				</h2>
+				<p>
+					Manage membership and rights for {plural} who have access to this
+					reference.
+				</p>
+			</SectionHeader>
 			<BoxGroup>
-				<BoxGroupHeader className="pb-2.5 [&_h2]:capitalize">
-					<h2>
-						{plural}
-						{canModify && (
-							<button
-								className="bg-transparent border-0 cursor-pointer ml-auto p-0"
-								onClick={() => setOpenAdd(true)}
-								type="button"
-							>
-								Add {noun}
-							</button>
-						)}
-					</h2>
-					<p>Manage membership and rights for reference {plural}.</p>
-				</BoxGroupHeader>
 				{members.length ? (
 					members.map((member: ReferenceGroup | ReferenceUser) => {
 						const handleOrName = objectHasProperty(member, "handle")
@@ -122,6 +126,6 @@ export default function ReferenceMembers({
 				noun={noun}
 				refId={refId}
 			/>
-		</>
+		</section>
 	);
 }

@@ -1,4 +1,4 @@
-import { BoxGroup, BoxGroupHeader, BoxGroupSection } from "@base/Box";
+import { BoxGroup, BoxGroupSection } from "@base/Box";
 import Button from "@base/Button";
 import { IconButton } from "@base/Icon";
 import { InputError, InputLabel, InputSimple } from "@base/Input";
@@ -35,11 +35,6 @@ export function GlobalSourceTypes({ sourceTypes }: GlobalSourceTypesProps) {
 				</p>
 			</SectionHeader>
 			<BoxGroup>
-				<BoxGroupHeader>
-					<h2>Source Types</h2>
-					<p>Add or remove default source types.</p>
-				</BoxGroupHeader>
-
 				<SourceTypeList sourceTypes={sourceTypes} onRemove={handleRemove} />
 
 				{lastRemoved && (
