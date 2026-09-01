@@ -66,6 +66,17 @@ describe("<LocalOtuDetail />", () => {
 		).toBeInTheDocument();
 	});
 
+	it("links preview isolates to their detail views", async () => {
+		await renderRoute(base);
+
+		const isolate = otu.isolates[0];
+		expect(
+			await screen.findByRole("link", {
+				name: `${isolate?.name?.type} ${isolate?.name?.value}`,
+			}),
+		).toHaveAttribute("href", `${base}/isolates/${isolate?.id}`);
+	});
+
 	it("links lineage names to NCBI taxonomy", async () => {
 		const otuWithLineage = createFakeLocalOtuV2({
 			referenceId: reference.id,

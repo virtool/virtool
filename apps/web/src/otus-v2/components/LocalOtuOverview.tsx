@@ -1,3 +1,4 @@
+import Badge from "@base/Badge";
 import Box, { BoxGroup, BoxGroupHeader, BoxGroupSection } from "@base/Box";
 import {
 	Collapsible,
@@ -68,7 +69,7 @@ export default function LocalOtuOverview({
 			)}
 
 			<BoxGroup>
-				<BoxGroupHeader>Plan</BoxGroupHeader>
+				<BoxGroupHeader>Segments</BoxGroupHeader>
 				{otu.plan.segments.map((segment) => (
 					<BoxGroupSection key={segment.id}>
 						<span className="font-semibold">
@@ -82,12 +83,22 @@ export default function LocalOtuOverview({
 			</BoxGroup>
 
 			<BoxGroup>
-				<BoxGroupHeader>Isolates</BoxGroupHeader>
+				<BoxGroupHeader>
+					<h2 className="flex items-center gap-2">
+						Isolates
+						<Badge>{otu.isolateCount}</Badge>
+					</h2>
+				</BoxGroupHeader>
 				{previewIsolates.map((isolate) => (
 					<BoxGroupSection key={isolate.id}>
-						{isolate.name
-							? `${isolate.name.type} ${isolate.name.value}`
-							: "Unnamed isolate"}
+						<Link
+							to="/refs/beta/$referenceId/otus/$otuId/isolates/$isolateId"
+							params={{ referenceId, otuId, isolateId: isolate.id }}
+						>
+							{isolate.name
+								? `${isolate.name.type} ${isolate.name.value}`
+								: "Unnamed isolate"}
+						</Link>
 					</BoxGroupSection>
 				))}
 				{remaining > 0 && (
