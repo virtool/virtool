@@ -73,7 +73,7 @@ cmd_button('wipe',
 )
 
 cmd_button('worktree',
-    argv=['true'],
+    argv=['bash', 'dev/scripts/open.sh', 'https://' + HOST],
     icon_name='account_tree',
     location=location.NAV,
     text=WORKTREE_NAME,
