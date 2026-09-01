@@ -16,8 +16,7 @@ import {
 import { sendTestEmail } from "@virtool/data/email/testDelivery";
 import { z } from "zod";
 import { adminRole } from "../auth/policy";
-import { db } from "../composition";
-import { config } from "../config";
+import { db, keyring } from "../composition";
 
 const EMAIL_ADDRESS_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
@@ -34,10 +33,7 @@ const addressSchema = z
 const optionalAddressSchema = z.union([z.literal(""), addressSchema]);
 
 function toEmailSettings(settings: EmailDeliverySettings): EmailSettings {
-	const { availability } = resolveEmailDelivery(
-		settings,
-		config.emailMasterKeys,
-	);
+	const { availability } = resolveEmailDelivery(settings, keyring);
 
 	return {
 		availability,
@@ -74,9 +70,7 @@ export const updateEmailSettingsFn = createServerFn({ method: "POST" })
 	.validator(updateEmailSettingsSchema)
 	.handler(
 		async ({ data }): Promise<EmailSettings> =>
-			toEmailSettings(
-				await updateEmailDelivery(db, config.emailMasterKeys, data),
-			),
+			toEmailSettings(await updateEmailDelivery(db, keyring, data)),
 	);
 
 /** @public */
@@ -87,9 +81,7 @@ export const setEmailApiKeyFn = createServerFn({ method: "POST" })
 	)
 	.handler(
 		async ({ data }): Promise<EmailSettings> =>
-			toEmailSettings(
-				await setEmailApiKey(db, config.emailMasterKeys, data.apiKey),
-			),
+			toEmailSettings(await setEmailApiKey(db, keyring, data.apiKey)),
 	);
 
 /** @public */
@@ -105,7 +97,7 @@ export const reencryptEmailApiKeyFn = createServerFn({ method: "POST" })
 	.middleware([adminRole("full")])
 	.handler(
 		async (): Promise<EmailReencryptResult> =>
-			reencryptEmailApiKey(db, config.emailMasterKeys),
+			reencryptEmailApiKey(db, keyring),
 	);
 
 /** @public */
@@ -114,5 +106,5 @@ export const sendTestEmailFn = createServerFn({ method: "POST" })
 	.validator(z.object({ recipient: addressSchema }))
 	.handler(
 		async ({ data }): Promise<EmailTestResult> =>
-			sendTestEmail(db, config.emailMasterKeys, data.recipient),
+			sendTestEmail(db, keyring, data.recipient),
 	);

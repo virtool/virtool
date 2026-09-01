@@ -1,5 +1,10 @@
 import { randomBytes } from "node:crypto";
 import type { EmailAvailability } from "@virtool/contracts";
+import {
+	createKeyring,
+	type EncryptedValue,
+	type Keyring,
+} from "@virtool/data/crypto/keyring";
 import type { Db } from "@virtool/data/db/pg";
 import { emailOutbox } from "@virtool/data/db/schema/emailOutbox";
 import { settings } from "@virtool/data/db/schema/settings";
@@ -8,11 +13,6 @@ import {
 	createTestDatabase,
 	type TestDatabase,
 } from "@virtool/data/db/test/fixtures";
-import {
-	type EmailMasterKeyConfig,
-	encryptEmailApiKey,
-	parseEmailMasterKeys,
-} from "@virtool/data/email/crypto";
 import { enqueueEmail } from "@virtool/data/email/outbox";
 import { buildProviderIdempotencyKey } from "@virtool/data/email/send";
 import { seedSettings } from "@virtool/data/settings/test/fixtures";
@@ -48,20 +48,21 @@ afterAll(async () => {
 	await database.drop();
 });
 
-function keys(): EmailMasterKeyConfig {
-	const parsed = parseEmailMasterKeys(
-		randomBytes(32).toString("base64"),
-		undefined,
-	);
-
-	if (parsed.status !== "ok") {
-		throw new Error("expected valid master keys");
-	}
-
-	return parsed;
+function keys(): Keyring {
+	return createKeyring(randomBytes(32).toString("base64"), undefined);
 }
 
-const masterKeys = keys();
+function encrypt(keyring: Keyring, plaintext: string): EncryptedValue {
+	const result = keyring.encrypt("resend_api_key", plaintext);
+
+	if (!result.ok) {
+		throw new Error("expected ready keyring");
+	}
+
+	return result.value;
+}
+
+const keyring = keys();
 
 /** The metrics writers, recording every call for assertion. */
 type RecordedMetrics = {
@@ -90,7 +91,7 @@ beforeEach(async () => {
 
 	ctx = createTaskTestContext({
 		db,
-		emailMasterKeys: masterKeys,
+		keyring,
 		metrics: {
 			recordEmailAttempt: (template, outcome) => {
 				recorded.attempts.push([template, outcome]);
@@ -118,15 +119,9 @@ afterEach(() => {
 async function seedEmailSettings(
 	overrides: { enabled?: boolean; withKey?: boolean } = {},
 ): Promise<void> {
-	if (masterKeys.status !== "ok") {
-		throw new Error("unreachable");
-	}
-
 	await seedSettings(db, {
 		emailApiKey:
-			(overrides.withKey ?? true)
-				? encryptEmailApiKey(masterKeys.active, "re_secret")
-				: null,
+			(overrides.withKey ?? true) ? encrypt(keyring, "re_secret") : null,
 		emailEnabled: overrides.enabled ?? true,
 		emailSenderAddress: "noreply@virtool.example",
 		emailSenderName: "Virtool",
@@ -252,7 +247,7 @@ describe("deliverEmailTask", () => {
 
 	it("reports a configuration error and touches nothing when the key cannot be decrypted", async () => {
 		await seedEmailSettings();
-		ctx = { ...ctx, emailMasterKeys: keys() };
+		ctx = { ...ctx, keyring: keys() };
 
 		const { outboxId } = await enqueueEmail(db, {
 			idempotencyKey: "a",

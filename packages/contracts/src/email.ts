@@ -45,7 +45,7 @@ export type EmailTestResult =
 	| { ok: true }
 	| { ok: false; reason: EmailTestFailureReason; message: string };
 
-/** The outcome of re-encrypting the stored API key under the active master key. */
+/** The outcome of re-encrypting the stored API key under the active encryption key. */
 export type EmailReencryptResult =
 	| "reencrypted"
 	| "already_current"

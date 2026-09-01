@@ -64,6 +64,8 @@ describe("parseTasksConfig", () => {
 		expect(config.drainTimeout).toBe(25);
 		expect(config.metricsToken).toBeUndefined();
 		expect(config.sentryDsn).toBeUndefined();
+		expect(config.encryptionKey).toBeUndefined();
+		expect(config.encryptionKeyPrevious).toBeUndefined();
 	});
 
 	it("throws when a required key is missing", () => {
@@ -97,6 +99,20 @@ describe("parseTasksConfig", () => {
 	});
 
 	describe("<KEY>_FILE resolution", () => {
+		it("resolves both encryption keys from mounted files", () => {
+			const config = parseTasksConfig({
+				...baseEnv(),
+				VT_ENCRYPTION_KEY_FILE: writeSecret("encryption-key", "active"),
+				VT_ENCRYPTION_KEY_PREVIOUS_FILE: writeSecret(
+					"previous-encryption-key",
+					"previous",
+				),
+			});
+
+			expect(config.encryptionKey).toBe("active");
+			expect(config.encryptionKeyPrevious).toBe("previous");
+		});
+
 		it("reads the value from the named file", () => {
 			const config = parseTasksConfig({
 				...baseEnv(),

@@ -1,3 +1,4 @@
+import { createKeyring, type Keyring } from "@virtool/data/crypto/keyring";
 import {
 	createDb,
 	type Db,
@@ -23,6 +24,12 @@ import { logger } from "./logger";
  * the package's call graph.
  */
 export const storage: StorageBackend = createStorageBackend(config.storage);
+
+/** Process-wide encryption service for secrets stored by Virtool. */
+export const keyring: Keyring = createKeyring(
+	config.encryptionKey,
+	config.encryptionKeyPrevious,
+);
 
 /** How file download routes answer: stream the bytes or redirect to storage. */
 export const downloadMode: "stream" | "redirect" = config.downloadMode;

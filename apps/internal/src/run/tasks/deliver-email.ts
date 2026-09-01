@@ -185,7 +185,7 @@ export const deliverEmailTask = defineTask<typeof payload, TaskContext>({
 		await helpers.runStep("deliver", async () => {
 			const state = resolveEmailDelivery(
 				await getEmailSettings(ctx.db),
-				ctx.emailMasterKeys,
+				ctx.keyring,
 			);
 
 			ctx.metrics.setEmailAvailability(state.availability);

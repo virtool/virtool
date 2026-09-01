@@ -121,6 +121,7 @@ describe("getSettings", () => {
 			emailApiKey: {
 				version: 1,
 				algorithm: "aes-256-gcm",
+				purpose: "resend_api_key",
 				keyId: "abcdef0123456789",
 				nonce: "AAAAAAAAAAAAAAAA",
 				ciphertext: "c2VjcmV0LWNpcGhlcnRleHQ=",

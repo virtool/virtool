@@ -1,5 +1,5 @@
+import type { Keyring } from "@virtool/data/crypto/keyring";
 import type { Db } from "@virtool/data/db/pg";
-import type { EmailMasterKeyConfig } from "@virtool/data/email/crypto";
 import type { StorageBackend } from "@virtool/storage";
 import type { CompleteTaskRegistry } from "../framework/define";
 import type { Metrics } from "../metrics/registry";
@@ -25,8 +25,7 @@ import { timeoutJobsTask } from "./timeout-jobs";
 export type TaskContext = {
 	db: Db;
 	storage: StorageBackend;
-	/** Parsed at startup from `VT_EMAIL_MASTER_KEY` and its previous-key pair. */
-	emailMasterKeys: EmailMasterKeyConfig;
+	keyring: Keyring;
 	metrics: Metrics;
 };
 

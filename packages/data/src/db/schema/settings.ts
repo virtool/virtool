@@ -16,7 +16,7 @@ import {
 	pgTable,
 	text,
 } from "drizzle-orm/pg-core";
-import type { EmailApiKeyEnvelope } from "../../email/crypto";
+import type { EncryptedValue } from "../../crypto/keyring";
 
 export const settings = pgTable(
 	"settings",
@@ -31,8 +31,8 @@ export const settings = pgTable(
 		defaultSourceTypes: jsonb("default_source_types")
 			.$type<string[]>()
 			.notNull(),
-		// Encrypted under the environment-owned email master key.
-		emailApiKey: jsonb("email_api_key").$type<EmailApiKeyEnvelope>(),
+		// Encrypted under the environment-owned process encryption key.
+		emailApiKey: jsonb("email_api_key").$type<EncryptedValue>(),
 		emailEnabled: boolean("email_enabled").notNull(),
 		emailReplyToAddress: text("email_reply_to_address").notNull(),
 		emailSenderAddress: text("email_sender_address").notNull(),

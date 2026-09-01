@@ -4,13 +4,13 @@ import {
 } from "@virtool/contracts";
 import { eq } from "drizzle-orm";
 import { CACHE_STORAGE_BUDGET_BYTES } from "../caches/data";
+import type { EncryptedValue } from "../crypto/keyring";
 import type { Db } from "../db/pg";
 import { takeFirst, takeFirstOrThrow } from "../db/rows";
 import {
 	type SettingsRow,
 	settings as settingsTable,
 } from "../db/schema/settings";
-import type { EmailApiKeyEnvelope } from "../email/crypto";
 
 /** The `settings` table holds a single row, pinned to this id by a check constraint. */
 const SETTINGS_ID = 1;
@@ -30,7 +30,7 @@ export type Settings = {
 	 * A credential like {@link Settings.ncbiApiKey}, and treated the same way at
 	 * the transport boundary: a client learns only whether a key is stored.
 	 */
-	emailApiKey: EmailApiKeyEnvelope | null;
+	emailApiKey: EncryptedValue | null;
 	emailEnabled: boolean;
 	emailReplyToAddress: string;
 	emailSenderAddress: string;

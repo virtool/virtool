@@ -1,7 +1,7 @@
 import { randomUUID } from "node:crypto";
 import type { EmailTestResult } from "@virtool/contracts";
+import type { Keyring } from "../crypto/keyring";
 import type { Db } from "../db/pg";
-import type { EmailMasterKeyConfig } from "./crypto";
 import { sendEmailViaResend } from "./send";
 import { getEmailSettings, resolveEmailDelivery } from "./settings";
 import { renderEmailTemplate } from "./templates";
@@ -18,10 +18,10 @@ import { renderEmailTemplate } from "./templates";
  */
 export async function sendTestEmail(
 	db: Db,
-	masterKeys: EmailMasterKeyConfig,
+	keyring: Keyring,
 	recipient: string,
 ): Promise<EmailTestResult> {
-	const state = resolveEmailDelivery(await getEmailSettings(db), masterKeys);
+	const state = resolveEmailDelivery(await getEmailSettings(db), keyring);
 
 	if (state.availability === "unconfigured") {
 		return {
@@ -37,7 +37,7 @@ export async function sendTestEmail(
 			ok: false,
 			reason: "unavailable",
 			message:
-				"The stored API key cannot be decrypted with the configured master key.",
+				"The stored API key cannot be decrypted with the configured encryption key.",
 		};
 	}
 

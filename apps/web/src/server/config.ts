@@ -1,8 +1,4 @@
 import { resolveFileBacked } from "@virtool/contracts/env";
-import {
-	type EmailMasterKeyConfig,
-	parseEmailMasterKeys,
-} from "@virtool/data/email/crypto";
 import type { StorageConfig } from "@virtool/storage";
 import { z } from "zod";
 
@@ -26,8 +22,10 @@ export type ServerConfig = {
 	 * cannot be file-backed at all.
 	 */
 	sentryDsn: string | undefined;
-	/** Parsed email master-key configuration. */
-	emailMasterKeys: EmailMasterKeyConfig;
+	/** Active key for encrypting secrets stored by Virtool. */
+	encryptionKey: string | undefined;
+	/** Previous encryption key accepted during rotation. */
+	encryptionKeyPrevious: string | undefined;
 	storage: StorageConfig;
 	/**
 	 * How a file download route answers. `stream` sends the bytes through this
@@ -74,11 +72,11 @@ const ServerEnv = z.object({
 		(value) => (value === "" ? undefined : value),
 		z.string().optional(),
 	),
-	VT_EMAIL_MASTER_KEY: z.preprocess(
+	VT_ENCRYPTION_KEY: z.preprocess(
 		(value) => (value === "" ? undefined : value),
 		z.string().optional(),
 	),
-	VT_EMAIL_MASTER_KEY_PREVIOUS: z.preprocess(
+	VT_ENCRYPTION_KEY_PREVIOUS: z.preprocess(
 		(value) => (value === "" ? undefined : value),
 		z.string().optional(),
 	),
@@ -138,10 +136,8 @@ const ServerEnvSchema = ServerEnv.transform((raw, ctx) => ({
 	postgresPoolMax: raw.VT_POSTGRES_POOL_MAX ?? DEFAULT_POSTGRES_POOL_MAX,
 	metricsToken: raw.VT_METRICS_TOKEN,
 	sentryDsn: raw.VT_SENTRY_DSN,
-	emailMasterKeys: parseEmailMasterKeys(
-		raw.VT_EMAIL_MASTER_KEY,
-		raw.VT_EMAIL_MASTER_KEY_PREVIOUS,
-	),
+	encryptionKey: raw.VT_ENCRYPTION_KEY,
+	encryptionKeyPrevious: raw.VT_ENCRYPTION_KEY_PREVIOUS,
 	storage: buildStorage(raw, ctx),
 	downloadMode: raw.VT_STORAGE_DOWNLOAD_MODE,
 	uploadsChunked: raw.VT_UPLOADS_CHUNKED,

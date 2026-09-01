@@ -224,8 +224,8 @@ Disabled, unconfigured, or invalid email configuration does not prevent the
 services from running. Only `ready` permits delivery. Provider acceptance is
 not proof of mailbox delivery.
 
-The Resend API key is encrypted under the environment-owned master key
-documented in [docs/env.md](../../docs/env.md#email-master-key). Neither the
+The Resend API key is encrypted under the environment-owned encryption key
+documented in [docs/env.md](../../docs/env.md#encryption-key). Neither the
 plaintext key nor its envelope may cross a transport boundary or reach a log.
 
 Features enqueue mail through `enqueueEmail(db, input)` in

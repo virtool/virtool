@@ -1,4 +1,9 @@
 import { randomBytes } from "node:crypto";
+import {
+	createKeyring,
+	type EncryptedValue,
+	type Keyring,
+} from "@virtool/data/crypto/keyring";
 import type { Db } from "@virtool/data/db/pg";
 import { sessions } from "@virtool/data/db/schema/sessions";
 import { settings } from "@virtool/data/db/schema/settings";
@@ -7,11 +12,6 @@ import {
 	createTestDatabase,
 	type TestDatabase,
 } from "@virtool/data/db/test/fixtures";
-import {
-	type EmailMasterKeyConfig,
-	encryptEmailApiKey,
-	parseEmailMasterKeys,
-} from "@virtool/data/email/crypto";
 import {
 	afterAll,
 	beforeAll,
@@ -40,38 +40,29 @@ vi.mock("@sentry/tanstackstart-react", () => ({
 }));
 
 let db: Db;
+let keyring: Keyring;
 vi.mock("../composition", () => ({
 	client: {},
 	get db() {
 		return db;
 	},
-}));
-
-function parseKeys(active: string, previous?: string): EmailMasterKeyConfig {
-	const parsed = parseEmailMasterKeys(active, previous);
-
-	if (parsed.status !== "ok") {
-		throw new Error("expected valid master keys");
-	}
-
-	return parsed;
-}
-
-// The real config module parses the whole server environment at import time.
-// Only the master keys matter here, and tests swap them per case.
-let emailMasterKeys: EmailMasterKeyConfig = parseKeys(
-	randomBytes(32).toString("base64"),
-);
-
-const masterKeys = emailMasterKeys;
-
-vi.mock("../config", () => ({
-	config: {
-		get emailMasterKeys() {
-			return emailMasterKeys;
-		},
+	get keyring() {
+		return keyring;
 	},
 }));
+
+function encrypt(value: string): EncryptedValue {
+	const result = masterKeyring.encrypt("resend_api_key", value);
+
+	if (!result.ok) {
+		throw new Error("expected ready keyring");
+	}
+
+	return result.value;
+}
+
+const activeKey = randomBytes(32).toString("base64");
+const masterKeyring = createKeyring(activeKey, undefined);
 
 const handlers = (await import(
 	"./functions.ts?tss-serverfn-split"
@@ -96,7 +87,7 @@ afterAll(async () => {
 beforeEach(async () => {
 	vi.clearAllMocks();
 	vi.unstubAllGlobals();
-	emailMasterKeys = masterKeys;
+	keyring = masterKeyring;
 	await db.delete(sessions);
 	await db.delete(settings);
 	await db.delete(users);
@@ -110,12 +101,8 @@ function call(name: string, data?: unknown) {
 }
 
 async function seedConfigured(): Promise<void> {
-	if (masterKeys.status !== "ok") {
-		throw new Error("unreachable");
-	}
-
 	await seedSettings(db, {
-		emailApiKey: encryptEmailApiKey(masterKeys.active, "re_secret"),
+		emailApiKey: encrypt("re_secret"),
 		emailSenderAddress: "noreply@virtool.example",
 		emailSenderName: "Virtool",
 	});
@@ -159,11 +146,11 @@ describe("getEmailSettingsFn", () => {
 		expect(JSON.stringify(published)).not.toContain("re_secret");
 	});
 
-	it("reports a configuration error when the master key cannot decrypt", async () => {
+	it("reports a configuration error when the encryption key cannot decrypt", async () => {
 		await signIn(db, getRequest, { administratorRole: "full" });
 		await seedConfigured();
 
-		emailMasterKeys = { status: "unset" };
+		keyring = createKeyring(undefined, undefined);
 
 		await expect(call("getEmailSettingsFn")).resolves.toMatchObject({
 			availability: "configuration_error",
@@ -243,11 +230,11 @@ describe("setEmailApiKeyFn and clearEmailApiKeyFn", () => {
 		expect(JSON.stringify(row?.emailApiKey)).not.toContain("re_secret");
 	});
 
-	it("refuses to store a key without a master key configured", async () => {
+	it("refuses to store a key without an encryption key configured", async () => {
 		await signIn(db, getRequest, { administratorRole: "full" });
 		await seedSettings(db);
 
-		emailMasterKeys = { status: "unset" };
+		keyring = createKeyring(undefined, undefined);
 
 		await expect(
 			call("setEmailApiKeyFn", { apiKey: "re_secret" }),
@@ -280,16 +267,9 @@ describe("reencryptEmailApiKeyFn", () => {
 	it("re-encrypts an envelope written under the previous key", async () => {
 		await signIn(db, getRequest, { administratorRole: "full" });
 
-		if (masterKeys.status !== "ok") {
-			throw new Error("unreachable");
-		}
-
 		await seedConfigured();
 
-		emailMasterKeys = parseKeys(
-			randomBytes(32).toString("base64"),
-			masterKeys.active.key.toString("base64"),
-		);
+		keyring = createKeyring(randomBytes(32).toString("base64"), activeKey);
 
 		await expect(call("reencryptEmailApiKeyFn")).resolves.toBe("reencrypted");
 		await expect(call("getEmailSettingsFn")).resolves.toMatchObject({

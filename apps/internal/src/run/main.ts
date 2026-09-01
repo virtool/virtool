@@ -23,7 +23,7 @@ export async function startRun(): Promise<void> {
 		const ctx: TaskContext = {
 			db: context.db,
 			storage: context.storage,
-			emailMasterKeys: context.config.emailMasterKeys,
+			keyring: context.keyring,
 			metrics: context.metrics,
 		};
 

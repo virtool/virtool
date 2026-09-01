@@ -3,33 +3,30 @@ import type {
 	EmailReencryptResult,
 } from "@virtool/contracts";
 import { eq } from "drizzle-orm";
+import type { EncryptedValue, Keyring } from "../crypto/keyring";
 import type { Db } from "../db/pg";
 import { takeFirstOrThrow } from "../db/rows";
 import { settings as settingsTable } from "../db/schema/settings";
 import { AppError } from "../errors";
 import { getSettings, type Settings } from "../settings/data";
-import {
-	decryptEmailApiKey,
-	type EmailApiKeyEnvelope,
-	type EmailMasterKeyConfig,
-	encryptEmailApiKey,
-} from "./crypto";
 
 const SETTINGS_ID = 1;
+
+const RESEND_API_KEY_PURPOSE = "resend_api_key";
 
 /** Thrown when a write would leave email delivery in an unusable state. */
 export class EmailConfigurationError extends AppError {}
 
 /** The stored email delivery configuration, envelope included. Server-only. */
 export type EmailDeliverySettings = {
-	apiKeyEnvelope: EmailApiKeyEnvelope | null;
+	apiKeyEnvelope: EncryptedValue | null;
 	enabled: boolean;
 	replyToAddress: string;
 	senderAddress: string;
 	senderName: string;
 };
 
-/** Email delivery configuration resolved against the process master keys. */
+/** Email delivery configuration resolved against the process keyring. */
 export type EmailDeliveryState = {
 	availability: EmailAvailability;
 	apiKey: string | null;
@@ -51,20 +48,23 @@ export async function getEmailSettings(db: Db): Promise<EmailDeliverySettings> {
 	return toEmailDeliverySettings(await getSettings(db));
 }
 
-/** Resolve stored delivery settings against the process master keys. */
+/** Resolve stored delivery settings against the process keyring. */
 export function resolveEmailDelivery(
 	settings: EmailDeliverySettings,
-	masterKeys: EmailMasterKeyConfig,
+	keyring: Keyring,
 ): EmailDeliveryState {
 	if (settings.apiKeyEnvelope === null || settings.senderAddress === "") {
 		return { availability: "unconfigured", apiKey: null, settings };
 	}
 
-	if (masterKeys.status !== "ok") {
+	if (keyring.status.state !== "ready") {
 		return { availability: "configuration_error", apiKey: null, settings };
 	}
 
-	const decrypted = decryptEmailApiKey(masterKeys, settings.apiKeyEnvelope);
+	const decrypted = keyring.decrypt(
+		RESEND_API_KEY_PURPOSE,
+		settings.apiKeyEnvelope,
+	);
 
 	if (!decrypted.ok) {
 		return { availability: "configuration_error", apiKey: null, settings };
@@ -88,7 +88,7 @@ export type EmailDeliveryUpdate = Partial<{
 /** Update non-secret settings while locking the row across validation. */
 export async function updateEmailDelivery(
 	db: Db,
-	masterKeys: EmailMasterKeyConfig,
+	keyring: Keyring,
 	values: EmailDeliveryUpdate,
 ): Promise<EmailDeliverySettings> {
 	await getSettings(db);
@@ -111,7 +111,7 @@ export async function updateEmailDelivery(
 		};
 
 		if (merged.enabled) {
-			const state = resolveEmailDelivery(merged, masterKeys);
+			const state = resolveEmailDelivery(merged, keyring);
 
 			if (state.availability === "unconfigured") {
 				throw new EmailConfigurationError(
@@ -121,7 +121,7 @@ export async function updateEmailDelivery(
 
 			if (state.availability === "configuration_error") {
 				throw new EmailConfigurationError(
-					"the stored API key cannot be decrypted with the configured master key",
+					"the stored API key cannot be decrypted with the configured encryption key",
 				);
 			}
 		}
@@ -140,15 +140,17 @@ export async function updateEmailDelivery(
 	});
 }
 
-/** Encrypt and store an API key under the active master key. */
+/** Encrypt and store an API key under the active encryption key. */
 export async function setEmailApiKey(
 	db: Db,
-	masterKeys: EmailMasterKeyConfig,
+	keyring: Keyring,
 	apiKey: string,
 ): Promise<EmailDeliverySettings> {
-	if (masterKeys.status !== "ok") {
+	const encrypted = keyring.encrypt(RESEND_API_KEY_PURPOSE, apiKey);
+
+	if (!encrypted.ok) {
 		throw new EmailConfigurationError(
-			"an email master key must be configured before an API key can be stored",
+			"an encryption key must be configured before an API key can be stored",
 		);
 	}
 
@@ -157,7 +159,7 @@ export async function setEmailApiKey(
 	const row = takeFirstOrThrow(
 		await db
 			.update(settingsTable)
-			.set({ emailApiKey: encryptEmailApiKey(masterKeys.active, apiKey) })
+			.set({ emailApiKey: encrypted.value })
 			.where(eq(settingsTable.id, SETTINGS_ID))
 			.returning(),
 	);
@@ -192,10 +194,10 @@ export async function clearEmailApiKey(db: Db): Promise<EmailDeliverySettings> {
 	};
 }
 
-/** Re-encrypt the stored API key under the active master key. */
+/** Re-encrypt the stored API key under the active encryption key. */
 export async function reencryptEmailApiKey(
 	db: Db,
-	masterKeys: EmailMasterKeyConfig,
+	keyring: Keyring,
 ): Promise<EmailReencryptResult> {
 	await getSettings(db);
 
@@ -212,24 +214,33 @@ export async function reencryptEmailApiKey(
 			return "no_key";
 		}
 
-		if (masterKeys.status !== "ok") {
+		if (keyring.status.state !== "ready") {
 			return "unavailable";
 		}
 
-		if (row.emailApiKey.keyId === masterKeys.active.id) {
+		const decrypted = keyring.decrypt(RESEND_API_KEY_PURPOSE, row.emailApiKey);
+
+		if (!decrypted.ok) {
+			return "unavailable";
+		}
+
+		if (keyring.isCurrent(row.emailApiKey)) {
 			return "already_current";
 		}
 
-		const decrypted = decryptEmailApiKey(masterKeys, row.emailApiKey);
+		const encrypted = keyring.encrypt(
+			RESEND_API_KEY_PURPOSE,
+			decrypted.plaintext,
+		);
 
-		if (!decrypted.ok) {
+		if (!encrypted.ok) {
 			return "unavailable";
 		}
 
 		await tx
 			.update(settingsTable)
 			.set({
-				emailApiKey: encryptEmailApiKey(masterKeys.active, decrypted.plaintext),
+				emailApiKey: encrypted.value,
 			})
 			.where(eq(settingsTable.id, SETTINGS_ID));
 

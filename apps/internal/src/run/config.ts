@@ -1,8 +1,4 @@
 import { resolveFileBacked } from "@virtool/contracts/env";
-import {
-	type EmailMasterKeyConfig,
-	parseEmailMasterKeys,
-} from "@virtool/data/email/crypto";
 import type { StorageConfig } from "@virtool/storage";
 import { z } from "zod";
 
@@ -66,8 +62,10 @@ export type TasksConfig = {
 	metricsToken: string | undefined;
 	/** Unset disables Sentry entirely, which is what dev and CI want. */
 	sentryDsn: string | undefined;
-	/** Parsed email master-key configuration. */
-	emailMasterKeys: EmailMasterKeyConfig;
+	/** Active key for encrypting secrets stored by Virtool. */
+	encryptionKey: string | undefined;
+	/** Previous encryption key accepted during rotation. */
+	encryptionKeyPrevious: string | undefined;
 	storage: StorageConfig;
 };
 
@@ -108,8 +106,8 @@ const TasksEnv = z.object({
 	// would miss a `VT_SENTRY_DSN_FILE` mount, so the DSN is resolved here and
 	// passed to `Sentry.init` explicitly instead.
 	VT_SENTRY_DSN: optional(),
-	VT_EMAIL_MASTER_KEY: optional(),
-	VT_EMAIL_MASTER_KEY_PREVIOUS: optional(),
+	VT_ENCRYPTION_KEY: optional(),
+	VT_ENCRYPTION_KEY_PREVIOUS: optional(),
 	VT_STORAGE_BACKEND: z.enum(["s3", "azure"]),
 	VT_STORAGE_S3_BUCKET: optional(),
 	VT_STORAGE_S3_REGION: optional(),
@@ -252,10 +250,8 @@ const TasksEnvSchema = TasksEnv.transform((raw, ctx) => {
 		drainTimeout,
 		metricsToken: raw.VT_METRICS_TOKEN,
 		sentryDsn: raw.VT_SENTRY_DSN,
-		emailMasterKeys: parseEmailMasterKeys(
-			raw.VT_EMAIL_MASTER_KEY,
-			raw.VT_EMAIL_MASTER_KEY_PREVIOUS,
-		),
+		encryptionKey: raw.VT_ENCRYPTION_KEY,
+		encryptionKeyPrevious: raw.VT_ENCRYPTION_KEY_PREVIOUS,
 		storage: buildStorage(raw, ctx),
 	};
 });

@@ -281,6 +281,20 @@ describe("parseServerConfig", () => {
 			expect(config.metricsToken).toBe("from-file");
 		});
 
+		it("resolves both encryption keys from mounted files", () => {
+			const config = parseServerConfig({
+				...minimalS3,
+				VT_ENCRYPTION_KEY_FILE: write("encryption-key", "active"),
+				VT_ENCRYPTION_KEY_PREVIOUS_FILE: write(
+					"previous-encryption-key",
+					"previous",
+				),
+			} as NodeJS.ProcessEnv);
+
+			expect(config.encryptionKey).toBe("active");
+			expect(config.encryptionKeyPrevious).toBe("previous");
+		});
+
 		it("strips the trailing newline a mounted secret carries", () => {
 			const config = parseServerConfig({
 				...minimalS3,

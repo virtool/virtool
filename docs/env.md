@@ -72,15 +72,16 @@ Current integrations are:
 The resolver and its precedence tests live in `packages/contracts/src/env.ts`
 and `packages/contracts/src/env.test.ts`.
 
-## Email master key
+## Encryption key
 
-The Resend API key is stored in Postgres in an AES-256-GCM envelope. Its master
+Secrets managed by Virtool are stored in Postgres in purpose-bound AES-256-GCM
+envelopes. The Resend API key is the first consumer. The process-wide encryption
 key is supplied through the environment:
 
 | Variable | Value |
 | --- | --- |
-| `VT_EMAIL_MASTER_KEY` | 32 random bytes, standard base64 (44 characters). |
-| `VT_EMAIL_MASTER_KEY_PREVIOUS` | The prior master key, set only during rotation. |
+| `VT_ENCRYPTION_KEY` | 32 random bytes, standard base64 (44 characters). |
+| `VT_ENCRYPTION_KEY_PREVIOUS` | The prior encryption key, set only during rotation. |
 
 Both accept `_FILE` variants. Configure them identically for `apps/web` and the
 `apps/internal` `run` subcommand. Generate a key with:
@@ -89,15 +90,16 @@ Both accept `_FILE` variants. Configure them identically for `apps/web` and the
 openssl rand -base64 32
 ```
 
-An invalid or mismatched key makes email unavailable without preventing either
-service from starting. The stored API key is not changed on decryption failure.
+An invalid or mismatched key makes encrypted secrets unavailable without
+preventing either service from starting. Stored values are not changed on
+decryption failure.
 
 ### Rotation
 
-1. Set `VT_EMAIL_MASTER_KEY` to the new key and
-   `VT_EMAIL_MASTER_KEY_PREVIOUS` to the old key, then roll out both services.
+1. Set `VT_ENCRYPTION_KEY` to the new key and
+   `VT_ENCRYPTION_KEY_PREVIOUS` to the old key, then roll out both services.
 2. Run the administrator re-encryption operation.
 3. Confirm email is available, then unset
-   `VT_EMAIL_MASTER_KEY_PREVIOUS` and roll out again.
+   `VT_ENCRYPTION_KEY_PREVIOUS` and roll out again.
 
 Keep the previous key configured until re-encryption succeeds.

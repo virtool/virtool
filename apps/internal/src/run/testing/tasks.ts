@@ -1,6 +1,6 @@
+import { createKeyring, type Keyring } from "@virtool/data/crypto/keyring";
 import type { Db } from "@virtool/data/db/pg";
 import { type TaskRow, tasks } from "@virtool/data/db/schema/tasks";
-import type { EmailMasterKeyConfig } from "@virtool/data/email/crypto";
 import { acquireTask, type ClaimedTask } from "@virtool/data/tasks/data";
 import { MemoryStorage, type StorageBackend } from "@virtool/storage";
 import { eq } from "drizzle-orm";
@@ -90,18 +90,18 @@ export async function readTaskRow(db: Db, taskId: number): Promise<TaskRow> {
 /** Build a complete task context with isolated test infrastructure. */
 export function createTaskTestContext({
 	db,
-	emailMasterKeys = { status: "unset" },
+	keyring = createKeyring(undefined, undefined),
 	metrics = {},
 	storage = new MemoryStorage(),
 }: {
 	db: Db;
-	emailMasterKeys?: EmailMasterKeyConfig;
+	keyring?: Keyring;
 	metrics?: Partial<Metrics>;
 	storage?: StorageBackend;
 }): TaskContext {
 	return {
 		db,
-		emailMasterKeys,
+		keyring,
 		metrics: Object.assign(createMetrics("test", 1), metrics),
 		storage,
 	};
