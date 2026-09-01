@@ -15,7 +15,7 @@ export default function LocalOtuOverview({
 	const { data: otu } = useSuspenseLocalOtuV2(referenceId, otuId);
 
 	const previewIsolates = otu.isolates.slice(0, ISOLATE_PREVIEW_COUNT);
-	const remaining = otu.isolates.length - previewIsolates.length;
+	const remaining = otu.isolateCount - previewIsolates.length;
 
 	return (
 		<>

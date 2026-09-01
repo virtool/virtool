@@ -275,6 +275,26 @@ export type OtuV2LocalSequence = z.output<typeof localSequenceSchema>;
 /** An isolate in an assembled v2 OTU. */
 export type OtuV2Isolate = z.output<typeof isolateSchema>;
 
+/** A lightweight isolate summary used by OTU navigation views. */
+export type LocalOtuV2IsolateSummary = {
+	id: string;
+	name: OtuV2Isolate["name"];
+};
+
+/** A sequence summary that excludes the sequence body. */
+export type LocalOtuV2SequenceSummary = {
+	id: string;
+	definition: string;
+	segmentId: string;
+};
+
+/** One isolate with sequence metadata but without sequence bodies. */
+export type LocalOtuV2IsolateDetail = {
+	id: string;
+	name: OtuV2Isolate["name"];
+	sequences: LocalOtuV2SequenceSummary[];
+};
+
 /** A v2 OTU molecule. */
 export type OtuV2Molecule = z.output<typeof moleculeSchema>;
 
@@ -342,3 +362,12 @@ export type LocalOtuV2 = {
 	createdAt: Date;
 	mostRecentChange: OtuV2Change;
 };
+
+/** The metadata needed to render the local v2 OTU overview. */
+export type LocalOtuV2Overview = Omit<LocalOtuV2, "isolates"> & {
+	isolates: LocalOtuV2IsolateSummary[];
+	isolateCount: number;
+};
+
+/** The body of one local v2 sequence, fetched on demand. */
+export type LocalOtuV2Sequence = OtuV2LocalSequence;

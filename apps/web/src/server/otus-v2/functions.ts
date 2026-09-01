@@ -10,6 +10,10 @@ import {
 	createLocalOtu,
 	createLocalOtuIsolate,
 	getLocalOtu,
+	getLocalOtuIsolate,
+	getLocalOtuIsolates,
+	getLocalOtuOverview,
+	getLocalOtuSequence,
 	getLocalOtus,
 	OtuV2ConflictError,
 	OtuV2NotFoundError,
@@ -44,6 +48,9 @@ const otuReadSchema = z.object({
 	referenceId: z.uuid(),
 	otuId: z.uuid(),
 });
+
+const isolateReadSchema = otuReadSchema.extend({ isolateId: z.uuid() });
+const sequenceReadSchema = isolateReadSchema.extend({ sequenceId: z.uuid() });
 
 const createLocalOtuSchema = z.object({
 	referenceId: z.uuid(),
@@ -367,7 +374,63 @@ export const getLocalOtuFn = createServerFn({ method: "GET" })
 			if (!(await checkReferenceV2Visibility(db, data.referenceId, actor))) {
 				throw new ReferenceV2NotFoundError();
 			}
-			return await getLocalOtu(db, data.referenceId, data.otuId);
+			return await getLocalOtuOverview(db, data.referenceId, data.otuId);
+		} catch (err) {
+			return rethrowAsHttp(err);
+		}
+	});
+
+export const getLocalOtuIsolatesFn = createServerFn({ method: "GET" })
+	.middleware([authenticated()])
+	.validator(otuReadSchema)
+	.handler(async ({ context, data }) => {
+		try {
+			const actor = await resolveReferenceActor(db, context.session.userId);
+			if (!(await checkReferenceV2Visibility(db, data.referenceId, actor))) {
+				throw new ReferenceV2NotFoundError();
+			}
+			return await getLocalOtuIsolates(db, data.referenceId, data.otuId);
+		} catch (err) {
+			return rethrowAsHttp(err);
+		}
+	});
+
+export const getLocalOtuIsolateFn = createServerFn({ method: "GET" })
+	.middleware([authenticated()])
+	.validator(isolateReadSchema)
+	.handler(async ({ context, data }) => {
+		try {
+			const actor = await resolveReferenceActor(db, context.session.userId);
+			if (!(await checkReferenceV2Visibility(db, data.referenceId, actor))) {
+				throw new ReferenceV2NotFoundError();
+			}
+			return await getLocalOtuIsolate(
+				db,
+				data.referenceId,
+				data.otuId,
+				data.isolateId,
+			);
+		} catch (err) {
+			return rethrowAsHttp(err);
+		}
+	});
+
+export const getLocalOtuSequenceFn = createServerFn({ method: "GET" })
+	.middleware([authenticated()])
+	.validator(sequenceReadSchema)
+	.handler(async ({ context, data }) => {
+		try {
+			const actor = await resolveReferenceActor(db, context.session.userId);
+			if (!(await checkReferenceV2Visibility(db, data.referenceId, actor))) {
+				throw new ReferenceV2NotFoundError();
+			}
+			return await getLocalOtuSequence(
+				db,
+				data.referenceId,
+				data.otuId,
+				data.isolateId,
+				data.sequenceId,
+			);
 		} catch (err) {
 			return rethrowAsHttp(err);
 		}

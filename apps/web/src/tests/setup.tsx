@@ -186,6 +186,9 @@ beforeEach(() => {
 		referenceV2ServerFnMocks.getReferenceV2Fn,
 		referenceV2ServerFnMocks.getReferencesV2Fn,
 		otuV2ServerFnMocks.getLocalOtuFn,
+		otuV2ServerFnMocks.getLocalOtuIsolateFn,
+		otuV2ServerFnMocks.getLocalOtuIsolatesFn,
+		otuV2ServerFnMocks.getLocalOtuSequenceFn,
 		otuV2ServerFnMocks.getLocalOtusFn,
 	]) {
 		fn.mockReset();

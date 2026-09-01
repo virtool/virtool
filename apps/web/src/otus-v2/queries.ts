@@ -6,6 +6,9 @@ import {
 	getGenbankIsolateDraftFn,
 	getGenbankOtuDraftFn,
 	getLocalOtuFn,
+	getLocalOtuIsolateFn,
+	getLocalOtuIsolatesFn,
+	getLocalOtuSequenceFn,
 	getLocalOtusFn,
 } from "@server/otus-v2/functions";
 import {
@@ -20,6 +23,10 @@ import type {
 	GenbankIsolateDraft,
 	GenbankOtuDraft,
 	LocalOtuV2,
+	LocalOtuV2IsolateDetail,
+	LocalOtuV2IsolateSummary,
+	LocalOtuV2Overview,
+	LocalOtuV2Sequence,
 	LocalOtuV2Summary,
 } from "@virtool/contracts";
 
@@ -50,12 +57,12 @@ export function useSuspenseLocalOtusV2(referenceId: string) {
  * @param otuId - The UUID of the OTU to fetch
  */
 export function localOtuV2QueryOptions(referenceId: string, otuId: string) {
-	return queryOptions<LocalOtuV2, Error>({
+	return queryOptions<LocalOtuV2Overview, Error>({
 		queryKey: otuV2QueryKeys.detail(otuId),
 		queryFn: () =>
 			getLocalOtuFn({
 				data: { referenceId, otuId },
-			}) as Promise<LocalOtuV2>,
+			}) as Promise<LocalOtuV2Overview>,
 	});
 }
 
@@ -68,6 +75,83 @@ export function localOtuV2QueryOptions(referenceId: string, otuId: string) {
  */
 export function useSuspenseLocalOtuV2(referenceId: string, otuId: string) {
 	return useSuspenseQuery(localOtuV2QueryOptions(referenceId, otuId));
+}
+
+export function localOtuV2IsolatesQueryOptions(
+	referenceId: string,
+	otuId: string,
+) {
+	return queryOptions<LocalOtuV2IsolateSummary[], Error>({
+		queryKey: [...otuV2QueryKeys.detail(otuId), "isolates"],
+		queryFn: () =>
+			getLocalOtuIsolatesFn({
+				data: { referenceId, otuId },
+			}) as Promise<LocalOtuV2IsolateSummary[]>,
+	});
+}
+
+export function useSuspenseLocalOtuV2Isolates(
+	referenceId: string,
+	otuId: string,
+) {
+	return useSuspenseQuery(localOtuV2IsolatesQueryOptions(referenceId, otuId));
+}
+
+export function localOtuV2IsolateQueryOptions(
+	referenceId: string,
+	otuId: string,
+	isolateId: string,
+) {
+	return queryOptions<LocalOtuV2IsolateDetail, Error>({
+		queryKey: [...otuV2QueryKeys.detail(otuId), "isolates", isolateId],
+		queryFn: () =>
+			getLocalOtuIsolateFn({
+				data: { referenceId, otuId, isolateId },
+			}) as Promise<LocalOtuV2IsolateDetail>,
+	});
+}
+
+export function useSuspenseLocalOtuV2Isolate(
+	referenceId: string,
+	otuId: string,
+	isolateId: string,
+) {
+	return useSuspenseQuery(
+		localOtuV2IsolateQueryOptions(referenceId, otuId, isolateId),
+	);
+}
+
+export function localOtuV2SequenceQueryOptions(
+	referenceId: string,
+	otuId: string,
+	isolateId: string,
+	sequenceId: string,
+) {
+	return queryOptions<LocalOtuV2Sequence, Error>({
+		queryKey: [
+			...otuV2QueryKeys.detail(otuId),
+			"isolates",
+			isolateId,
+			"sequences",
+			sequenceId,
+		],
+		queryFn: () =>
+			getLocalOtuSequenceFn({
+				data: { referenceId, otuId, isolateId, sequenceId },
+			}) as Promise<LocalOtuV2Sequence>,
+	});
+}
+
+function cacheLocalOtuOverview(
+	queryClient: ReturnType<typeof useQueryClient>,
+	otu: LocalOtuV2,
+) {
+	const overview: LocalOtuV2Overview = {
+		...otu,
+		isolates: otu.isolates.slice(0, 5).map(({ id, name }) => ({ id, name })),
+		isolateCount: otu.isolates.length,
+	};
+	queryClient.setQueryData(otuV2QueryKeys.detail(otu.id), overview);
 }
 
 /**
@@ -88,7 +172,7 @@ export function useCreateLocalOtu(referenceId: string) {
 				data: { referenceId, command },
 			}) as Promise<LocalOtuV2>,
 		onSuccess: (otu) => {
-			queryClient.setQueryData(otuV2QueryKeys.detail(otu.id), otu);
+			cacheLocalOtuOverview(queryClient, otu);
 			queryClient.invalidateQueries({
 				queryKey: otuV2QueryKeys.list([referenceId]),
 			});
@@ -115,7 +199,10 @@ export function useCreateLocalOtuIsolate(referenceId: string) {
 				data: { referenceId, command },
 			}) as Promise<LocalOtuV2>,
 		onSuccess: (otu) => {
-			queryClient.setQueryData(otuV2QueryKeys.detail(otu.id), otu);
+			cacheLocalOtuOverview(queryClient, otu);
+			queryClient.invalidateQueries({
+				queryKey: [...otuV2QueryKeys.detail(otu.id), "isolates"],
+			});
 			queryClient.invalidateQueries({
 				queryKey: otuV2QueryKeys.list([referenceId]),
 			});
@@ -156,7 +243,7 @@ export function useCreateLocalOtuFromAccessions(
 			}) as Promise<LocalOtuV2>;
 		},
 		onSuccess: (otu) => {
-			queryClient.setQueryData(otuV2QueryKeys.detail(otu.id), otu);
+			cacheLocalOtuOverview(queryClient, otu);
 			queryClient.invalidateQueries({
 				queryKey: otuV2QueryKeys.list([referenceId]),
 			});

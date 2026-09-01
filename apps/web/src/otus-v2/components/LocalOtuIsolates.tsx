@@ -2,7 +2,10 @@ import { BoxGroup, BoxGroupSection } from "@base/Box";
 import Button from "@base/Button";
 import Link from "@base/Link";
 import CreateLocalOtuIsolateDialog from "@otus-v2/components/CreateLocalOtuIsolateDialog";
-import { useSuspenseLocalOtuV2 } from "@otus-v2/queries";
+import {
+	useSuspenseLocalOtuV2,
+	useSuspenseLocalOtuV2Isolates,
+} from "@otus-v2/queries";
 import { useState } from "react";
 
 /** The Isolates tab of the local v2 OTU detail view. */
@@ -13,6 +16,7 @@ export default function LocalOtuIsolates({
 	referenceId: string;
 	otuId: string;
 }) {
+	const { data: isolates } = useSuspenseLocalOtuV2Isolates(referenceId, otuId);
 	const { data: otu } = useSuspenseLocalOtuV2(referenceId, otuId);
 	const [open, setOpen] = useState(false);
 
@@ -31,7 +35,7 @@ export default function LocalOtuIsolates({
 				version={otu.version}
 			/>
 			<BoxGroup as="ul">
-				{otu.isolates.map((isolate) => (
+				{isolates.map((isolate) => (
 					<BoxGroupSection as="li" key={isolate.id}>
 						<Link
 							className="font-medium text-lg"

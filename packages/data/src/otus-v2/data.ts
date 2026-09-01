@@ -5,6 +5,11 @@ import {
 	CreateLocalOtuIsolateCommand,
 	type CreateLocalOtuIsolateCommandInput,
 	type LocalOtuV2,
+	type LocalOtuV2IsolateDetail,
+	type LocalOtuV2IsolateSummary,
+	type LocalOtuV2Overview,
+	type LocalOtuV2Sequence,
+	type LocalOtuV2SequenceSummary,
 	type LocalOtuV2Summary,
 } from "@virtool/contracts";
 import { and, asc, count, eq, inArray, isNull } from "drizzle-orm";
@@ -407,6 +412,357 @@ export async function getLocalOtus(
 		version: row.version,
 		isolateCount: isolateCounts.get(row.id) ?? 0,
 	}));
+}
+
+/** Read the current local v2 OTU metadata without isolates or sequences. */
+async function getLocalOtuMetadata(
+	db: DbOrTx,
+	referenceId: string,
+	otuId: string,
+): Promise<Omit<LocalOtuV2, "isolates">> {
+	const otu = takeFirst(
+		await db
+			.select()
+			.from(otusV2)
+			.where(and(eq(otusV2.referenceId, referenceId), eq(otusV2.id, otuId))),
+	);
+
+	if (!otu || otu.ncbiFromVersion !== null || otu.deletedVersion !== null) {
+		throw new OtuV2NotFoundError();
+	}
+
+	const [taxonomyRows, planRows, changeRows] = await Promise.all([
+		db
+			.select({
+				identityId: otuLocalIdentities.id,
+				name: otuLocalIdentityRevisions.name,
+				acronym: otuLocalIdentityRevisions.acronym,
+				lineage: otuLocalIdentityRevisions.lineage,
+			})
+			.from(otuTaxonomyVersions)
+			.innerJoin(
+				otuLocalIdentityRevisions,
+				eq(
+					otuTaxonomyVersions.localIdentityRevisionId,
+					otuLocalIdentityRevisions.id,
+				),
+			)
+			.innerJoin(
+				otuLocalIdentities,
+				eq(otuLocalIdentityRevisions.identityId, otuLocalIdentities.id),
+			)
+			.where(
+				and(
+					eq(otuTaxonomyVersions.otuId, otuId),
+					eq(otuTaxonomyVersions.kind, "local"),
+					isNull(otuTaxonomyVersions.lastVersion),
+				),
+			),
+		db
+			.select({
+				planId: otuPlans.id,
+				segmentId: otuPlanSegments.id,
+				namePrefix: otuPlanSegmentVersions.namePrefix,
+				nameKey: otuPlanSegmentVersions.nameKey,
+				length: otuPlanSegmentVersions.length,
+				lengthTolerance: otuPlanSegmentVersions.lengthTolerance,
+				rule: otuPlanSegmentVersions.rule,
+			})
+			.from(otuPlans)
+			.innerJoin(otuPlanSegments, eq(otuPlans.id, otuPlanSegments.planId))
+			.innerJoin(
+				otuPlanSegmentVersions,
+				eq(otuPlanSegments.id, otuPlanSegmentVersions.segmentId),
+			)
+			.where(
+				and(
+					eq(otuPlans.otuId, otuId),
+					isNull(otuPlanSegmentVersions.lastVersion),
+				),
+			)
+			.orderBy(asc(otuPlanSegmentVersions.id)),
+		db
+			.select({
+				version: otuChanges.version,
+				command: otuChanges.command,
+				commandSchemaVersion: otuChanges.commandSchemaVersion,
+				createdAt: otuChanges.createdAt,
+				userId: users.id,
+				userHandle: users.handle,
+			})
+			.from(otuChanges)
+			.innerJoin(users, eq(otuChanges.userId, users.id))
+			.where(
+				and(eq(otuChanges.otuId, otuId), eq(otuChanges.version, otu.version)),
+			),
+	]);
+
+	const taxonomy = takeFirst(taxonomyRows);
+	const change = takeFirst(changeRows);
+	const firstPlanRow = takeFirst(planRows);
+	if (!taxonomy || !change || !firstPlanRow) {
+		throw new OtuV2NotFoundError();
+	}
+
+	return {
+		id: otu.id,
+		referenceId: otu.referenceId,
+		version: otu.version,
+		molecule: {
+			type: otu.moleculeType,
+			strandedness: otu.moleculeStrandedness,
+			topology: otu.moleculeTopology,
+		},
+		taxonomy: {
+			kind: "local",
+			identityId: taxonomy.identityId,
+			name: taxonomy.name,
+			acronym: taxonomy.acronym,
+			lineage: taxonomy.lineage ?? [],
+		},
+		plan: {
+			id: firstPlanRow.planId,
+			segments: planRows.map((segment) => ({
+				id: segment.segmentId,
+				name:
+					segment.namePrefix && segment.nameKey
+						? { prefix: segment.namePrefix, key: segment.nameKey }
+						: null,
+				length: segment.length,
+				lengthTolerance: segment.lengthTolerance,
+				rule: segment.rule,
+			})),
+		},
+		createdAt: otu.createdAt,
+		mostRecentChange: {
+			version: change.version,
+			command: change.command,
+			commandSchemaVersion: change.commandSchemaVersion,
+			source: "user",
+			user: { id: change.userId, handle: change.userHandle },
+			createdAt: change.createdAt,
+		},
+	};
+}
+
+async function assertLocalOtuExists(
+	db: DbOrTx,
+	referenceId: string,
+	otuId: string,
+): Promise<void> {
+	const row = takeFirst(
+		await db
+			.select({ id: otusV2.id })
+			.from(otusV2)
+			.where(
+				and(
+					eq(otusV2.referenceId, referenceId),
+					eq(otusV2.id, otuId),
+					isNull(otusV2.ncbiFromVersion),
+					isNull(otusV2.deletedVersion),
+				),
+			),
+	);
+
+	if (!row) {
+		throw new OtuV2NotFoundError();
+	}
+}
+
+/** Read the local v2 OTU overview without sequence bodies. */
+export async function getLocalOtuOverview(
+	db: DbOrTx,
+	referenceId: string,
+	otuId: string,
+): Promise<LocalOtuV2Overview> {
+	const [metadata, isolateRows, countRows] = await Promise.all([
+		getLocalOtuMetadata(db, referenceId, otuId),
+		db
+			.select({
+				id: otuIsolates.id,
+				nameType: otuIsolateVersions.nameType,
+				nameValue: otuIsolateVersions.nameValue,
+			})
+			.from(otuIsolates)
+			.innerJoin(
+				otuIsolateVersions,
+				eq(otuIsolates.id, otuIsolateVersions.isolateId),
+			)
+			.where(
+				and(
+					eq(otuIsolates.otuId, otuId),
+					isNull(otuIsolateVersions.lastVersion),
+				),
+			)
+			.orderBy(asc(otuIsolates.id))
+			.limit(5),
+		db
+			.select({ count: count(otuIsolates.id) })
+			.from(otuIsolates)
+			.innerJoin(
+				otuIsolateVersions,
+				eq(otuIsolates.id, otuIsolateVersions.isolateId),
+			)
+			.where(
+				and(
+					eq(otuIsolates.otuId, otuId),
+					isNull(otuIsolateVersions.lastVersion),
+				),
+			),
+	]);
+
+	return {
+		...metadata,
+		isolates: isolateRows.map((isolate) => ({
+			id: isolate.id,
+			name:
+				isolate.nameType && isolate.nameValue
+					? { type: isolate.nameType, value: isolate.nameValue }
+					: null,
+		})),
+		isolateCount: Number(countRows[0]?.count ?? 0),
+	};
+}
+
+/** Read all current isolates in a local v2 OTU without sequences. */
+export async function getLocalOtuIsolates(
+	db: DbOrTx,
+	referenceId: string,
+	otuId: string,
+): Promise<LocalOtuV2IsolateSummary[]> {
+	await assertLocalOtuExists(db, referenceId, otuId);
+	const rows = await db
+		.select({
+			id: otuIsolates.id,
+			nameType: otuIsolateVersions.nameType,
+			nameValue: otuIsolateVersions.nameValue,
+		})
+		.from(otuIsolates)
+		.innerJoin(
+			otuIsolateVersions,
+			eq(otuIsolates.id, otuIsolateVersions.isolateId),
+		)
+		.where(
+			and(eq(otuIsolates.otuId, otuId), isNull(otuIsolateVersions.lastVersion)),
+		)
+		.orderBy(asc(otuIsolates.id));
+
+	return rows.map((isolate) => ({
+		id: isolate.id,
+		name:
+			isolate.nameType && isolate.nameValue
+				? { type: isolate.nameType, value: isolate.nameValue }
+				: null,
+	}));
+}
+
+/** Read one current isolate and its sequence metadata without sequence bodies. */
+export async function getLocalOtuIsolate(
+	db: DbOrTx,
+	referenceId: string,
+	otuId: string,
+	isolateId: string,
+): Promise<LocalOtuV2IsolateDetail> {
+	await assertLocalOtuExists(db, referenceId, otuId);
+	const [isolate, sequences] = await Promise.all([
+		db
+			.select({
+				id: otuIsolates.id,
+				nameType: otuIsolateVersions.nameType,
+				nameValue: otuIsolateVersions.nameValue,
+			})
+			.from(otuIsolates)
+			.innerJoin(
+				otuIsolateVersions,
+				eq(otuIsolates.id, otuIsolateVersions.isolateId),
+			)
+			.where(
+				and(
+					eq(otuIsolates.id, isolateId),
+					eq(otuIsolates.otuId, otuId),
+					isNull(otuIsolateVersions.lastVersion),
+				),
+			),
+		db
+			.select({
+				id: otuSequences.id,
+				definition: otuLocalSequenceRecords.definition,
+				segmentId: otuSequenceVersions.segmentId,
+			})
+			.from(otuSequences)
+			.innerJoin(
+				otuSequenceVersions,
+				eq(otuSequences.id, otuSequenceVersions.sequenceId),
+			)
+			.innerJoin(
+				otuLocalSequenceRecords,
+				eq(otuSequenceVersions.localRecordId, otuLocalSequenceRecords.id),
+			)
+			.where(
+				and(
+					eq(otuSequences.otuId, otuId),
+					eq(otuSequenceVersions.isolateId, isolateId),
+					isNull(otuSequenceVersions.lastVersion),
+				),
+			),
+	]);
+
+	const row = takeFirst(isolate);
+	if (!row) {
+		throw new OtuV2NotFoundError();
+	}
+
+	return {
+		id: row.id,
+		name:
+			row.nameType && row.nameValue
+				? { type: row.nameType, value: row.nameValue }
+				: null,
+		sequences: sequences as LocalOtuV2SequenceSummary[],
+	};
+}
+
+/** Read one local v2 sequence body after validating its full ownership path. */
+export async function getLocalOtuSequence(
+	db: DbOrTx,
+	referenceId: string,
+	otuId: string,
+	isolateId: string,
+	sequenceId: string,
+): Promise<LocalOtuV2Sequence> {
+	await assertLocalOtuExists(db, referenceId, otuId);
+	const row = takeFirst(
+		await db
+			.select({
+				id: otuSequences.id,
+				definition: otuLocalSequenceRecords.definition,
+				sequence: otuLocalSequenceRecords.sequence,
+				segmentId: otuSequenceVersions.segmentId,
+			})
+			.from(otuSequences)
+			.innerJoin(
+				otuSequenceVersions,
+				eq(otuSequences.id, otuSequenceVersions.sequenceId),
+			)
+			.innerJoin(
+				otuLocalSequenceRecords,
+				eq(otuSequenceVersions.localRecordId, otuLocalSequenceRecords.id),
+			)
+			.where(
+				and(
+					eq(otuSequences.id, sequenceId),
+					eq(otuSequences.otuId, otuId),
+					eq(otuSequenceVersions.isolateId, isolateId),
+					isNull(otuSequenceVersions.lastVersion),
+				),
+			),
+	);
+
+	if (!row) {
+		throw new OtuV2NotFoundError();
+	}
+
+	return row;
 }
 
 /** Assemble a complete current local v2 OTU from relational state. */

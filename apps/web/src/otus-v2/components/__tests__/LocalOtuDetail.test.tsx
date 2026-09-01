@@ -94,8 +94,16 @@ describe("<LocalOtuDetail />", () => {
 				name: `${isolate?.name?.type} ${isolate?.name?.value}`,
 			}),
 		).toBeInTheDocument();
+		await screen.findByRole("button", {
+			name: isolate?.sequences[0]?.definition,
+		});
+		await screen
+			.getByRole("button", {
+				name: isolate?.sequences[0]?.definition,
+			})
+			.click();
 		expect(
-			screen.getByText(isolate?.sequences[0]?.sequence ?? ""),
+			await screen.findByText(isolate?.sequences[0]?.sequence ?? ""),
 		).toBeInTheDocument();
 	});
 
