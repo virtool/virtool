@@ -26,7 +26,7 @@ import {
 	vi,
 } from "vitest";
 import { runTask } from "../framework/run";
-import { claimTask, readTaskRow } from "../testing/tasks";
+import { claimTask, emailTestContext, readTaskRow } from "../testing/tasks";
 import type { TaskContext } from "./registry";
 import { sweepBlastTask } from "./sweep-blast";
 
@@ -58,7 +58,7 @@ beforeEach(async () => {
 	await db.delete(users);
 	await db.delete(tasks);
 
-	ctx = { db, storage: new MemoryStorage() };
+	ctx = { db, storage: new MemoryStorage(), ...emailTestContext() };
 	userId = await seedUser(db);
 	referenceId = await seedReference(db, userId);
 	indexId = await seedIndex(db, { referenceId, userId, version: 0 });

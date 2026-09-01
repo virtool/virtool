@@ -4,6 +4,7 @@ export * from "./apiKeys";
 export * from "./auth";
 export * from "./banners";
 export * from "./caches";
+export * from "./email";
 export * from "./errors";
 export * from "./groups";
 export * from "./hmms";

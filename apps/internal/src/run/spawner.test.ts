@@ -84,10 +84,10 @@ function build(
 
 describe("PERIODIC_TASKS", () => {
 	/**
-	 * Pinning the list means adding a seventh type breaks a test, and so stays a
+	 * Pinning the list means adding an eighth type breaks a test, and so stays a
 	 * deliberate act rather than a line someone appends.
 	 */
-	it("registers exactly the six periodic names", () => {
+	it("registers exactly the seven periodic names", () => {
 		expect(PERIODIC_TASKS.map(({ type }) => type).toSorted()).toEqual(
 			[...PeriodicTaskName.options].toSorted(),
 		);
@@ -121,6 +121,7 @@ describe("PERIODIC_TASKS", () => {
 			),
 		).toEqual({
 			sweep_blast: 30,
+			deliver_email: 30,
 			refresh_hmms: 600,
 			timeout_jobs: 600,
 			evict_caches_lru: 3600,

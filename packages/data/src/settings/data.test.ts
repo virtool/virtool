@@ -156,6 +156,11 @@ describe("DEFAULT_SETTINGS", () => {
 		expect(DEFAULT_SETTINGS).toEqual({
 			cacheStorageBudget: 100 * 1024 ** 3,
 			defaultSourceTypes: ["isolate", "strain"],
+			emailApiKey: null,
+			emailEnabled: false,
+			emailReplyToAddress: "",
+			emailSenderAddress: "",
+			emailSenderName: "",
 			enableSentry: true,
 			minimumPasswordLength: 8,
 			ncbiApiKey: "",

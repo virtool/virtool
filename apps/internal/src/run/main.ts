@@ -20,7 +20,18 @@ export async function startRun(): Promise<void> {
 	try {
 		const context = await bootstrap({ version: APP_VERSION });
 
-		const ctx: TaskContext = { db: context.db, storage: context.storage };
+		const ctx: TaskContext = {
+			db: context.db,
+			storage: context.storage,
+			emailMasterKeys: context.config.emailMasterKeys,
+			emailMetrics: {
+				recordEmailAttempt: context.metrics.recordEmailAttempt,
+				recordEmailRetryScheduled: context.metrics.recordEmailRetryScheduled,
+				observeEmailAcceptedAge: context.metrics.observeEmailAcceptedAge,
+				setEmailOutbox: context.metrics.setEmailOutbox,
+				setEmailAvailability: context.metrics.setEmailAvailability,
+			},
+		};
 
 		const drainTimeoutMs = context.config.drainTimeout * 1_000;
 

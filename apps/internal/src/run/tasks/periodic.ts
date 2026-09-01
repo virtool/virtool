@@ -44,12 +44,20 @@ export const SPAWN_TICK_INTERVAL_MS = 30_000;
  * type rather than a backlog, which is what makes the mistake survivable rather
  * than invisible.
  *
- * A test pins this list to exactly these six, so a seventh is a deliberate act.
+ * A test pins this list to exactly these seven, so an eighth is a deliberate
+ * act.
  *
  * The order is the order each tick walks.
  */
 export const PERIODIC_TASKS: PeriodicTaskRegistration[] = [
 	{ type: "sweep_blast", intervalSeconds: 30 },
+	/*
+	 * The floor, which in practice means every spawn tick. The outbox carries
+	 * its own scheduling — `next_attempt_at` and capped backoff — so the task's
+	 * cadence only bounds how quickly a freshly enqueued or newly due row is
+	 * noticed, and auth emails are exactly the mail people wait on.
+	 */
+	{ type: "deliver_email", intervalSeconds: 30 },
 	{ type: "refresh_hmms", intervalSeconds: 600 },
 	{ type: "timeout_jobs", intervalSeconds: 600 },
 	{ type: "evict_caches_lru", intervalSeconds: 3600 },

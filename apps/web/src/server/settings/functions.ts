@@ -25,8 +25,20 @@ export type PasswordPolicy = {
  * so returning the row as stored would put the NCBI API key in a browser
  * payload. Narrowing here rather than in the data layer keeps the redaction on
  * the transport boundary, where the row is published.
+ *
+ * The email columns are stripped as well: they belong to the full-administrator
+ * email functions, and the API-key envelope must never reach a `settings`-role
+ * client even encrypted.
  */
-function toSettings({ ncbiApiKey, ...rest }: StoredSettings): Settings {
+function toSettings({
+	emailApiKey: _emailApiKey,
+	emailEnabled: _emailEnabled,
+	emailReplyToAddress: _emailReplyToAddress,
+	emailSenderAddress: _emailSenderAddress,
+	emailSenderName: _emailSenderName,
+	ncbiApiKey,
+	...rest
+}: StoredSettings): Settings {
 	return { ...rest, hasNcbiApiKey: ncbiApiKey !== "" };
 }
 

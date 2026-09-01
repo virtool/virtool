@@ -18,7 +18,12 @@ import { MemoryStorage, type StorageBackend } from "@virtool/storage";
 import { eq } from "drizzle-orm";
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
 import { runTask } from "../framework/run";
-import { acquireOrThrow, readTaskRow, seedTaskRow } from "../testing/tasks";
+import {
+	acquireOrThrow,
+	emailTestContext,
+	readTaskRow,
+	seedTaskRow,
+} from "../testing/tasks";
 import { createIndexTask } from "./create-index";
 import type { TaskContext } from "./registry";
 
@@ -49,7 +54,7 @@ beforeEach(async () => {
 	await db.delete(users);
 
 	storage = new MemoryStorage();
-	ctx = { db, storage };
+	ctx = { db, storage, ...emailTestContext() };
 });
 
 let handleCounter = 0;

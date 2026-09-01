@@ -23,3 +23,8 @@ data:
   VT_STORAGE_AZURE_CONTAINER: "virtool"
   VT_STORAGE_AZURE_ACCESS_KEY: "Eby8vdM02xNOcqFlqUwJPLlmEtlCDXJ1OUzFT50uSRZ6IFsuFq2UVErCz4I6tq/K1SZFPTOtr/KBHBeksoGMGw=="
   VT_STORAGE_AZURE_ENDPOINT: "http://azurite.default.svc.cluster.local:10000/devstoreaccount1"
+  # A fixed dev-only email master key, like the Azurite credentials above. It
+  # lets a dev instance store an encrypted Resend API key; without a real
+  # Resend key configured through the app, email stays in its supported
+  # unconfigured state.
+  VT_EMAIL_MASTER_KEY: "kh+tHF0cfeestLILKMmWwfczAFrKP/92WrobKA/Md6k="

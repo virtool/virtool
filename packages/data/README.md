@@ -214,6 +214,53 @@ that answers with HTML, plain text, and zip archives, so it stays here.
 Nucleotide records and taxonomy come from `@virtool/ncbi`, which speaks to
 E-utilities. Do not add a second E-utilities client to this package.
 
+## Email delivery
+
+`src/email/` owns transactional email: the encrypted-credential settings, the
+durable outbox, template rendering, the retry policy, and the one Resend
+integration point. Delivery runs in `apps/internal`'s `run` subcommand as the
+periodic `deliver_email` task; configuration and test delivery are full-
+administrator server functions in `apps/web`.
+
+Disabled or unconfigured email is a supported state. A disconnected
+installation runs without it, and auth features fall back to copyable links.
+`resolveEmailDelivery` reports one of `disabled`, `unconfigured`, `ready`, or
+`configuration_error`; callers must treat anything but `ready` as "do not
+send" and never treat a configuration failure as a successful send. Sending
+through Resend requires a verified sending domain on the Resend account, and
+provider acceptance means Resend took the message — not that it reached a
+mailbox.
+
+The Resend API key is stored on the `settings` singleton inside a versioned
+AES-256-GCM envelope (`src/email/crypto.ts`), encrypted under the
+environment-owned master key documented in
+[docs/env.md](../../docs/env.md#email-master-key). No form of the key —
+plaintext or envelope — may cross a transport boundary or reach a log.
+
+Features enqueue mail through `enqueueEmail(db, input)` in
+`src/email/outbox.ts` and nothing else:
+
+- Callers pass a finite `EmailTemplate` (from `@virtool/contracts`) and a
+  stable domain idempotency key, never HTML. Templates render centrally in
+  `src/email/templates.ts`, which escapes every payload value and always
+  produces both text and HTML bodies.
+- `enqueueEmail` accepts `DbOrTx`, so domain state and its email commit
+  together, and a duplicate key returns the existing row instead of a second
+  message.
+- Callers never see provider errors, retries, or the Resend SDK. Claiming,
+  fenced result writes, capped-backoff retry, and terminal failure belong to
+  the outbox and the `deliver_email` task.
+
+Terminal rows are pruned on a schedule: accepted rows after seven days, failed
+rows after thirty. The queued template payload is what carries an auth link's
+URL, so a token can sit in this table until its row is delivered and pruned —
+auth features must size token lifetimes knowing the payload outlives the send
+by the retention window, and must not put anything in a payload that cannot
+tolerate that.
+
+`sendEmailViaResend` in `src/email/send.ts` is the only module that talks to
+Resend, and its unit tests stub global `fetch` rather than the network.
+
 ## Task queue
 
 `src/tasks/data.ts` owns persistence for the Postgres task queue shared by task
