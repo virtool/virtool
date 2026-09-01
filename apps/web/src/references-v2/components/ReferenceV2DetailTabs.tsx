@@ -8,8 +8,8 @@ export default function ReferenceV2DetailTabs({
 }) {
 	return (
 		<NavTabs>
-			<NavTab to={`/refs/beta/${referenceId}/general`}>General</NavTab>
-			<NavTab to={`/refs/beta/${referenceId}/otus`}>OTUs</NavTab>
+			<NavTab to={`/refs/alpha/${referenceId}/general`}>General</NavTab>
+			<NavTab to={`/refs/alpha/${referenceId}/otus`}>OTUs</NavTab>
 		</NavTabs>
 	);
 }

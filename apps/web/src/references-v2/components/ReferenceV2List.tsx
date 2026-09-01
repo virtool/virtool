@@ -29,8 +29,8 @@ export default function ReferenceV2List() {
 			{references.length === 0 ? (
 				<ListEmpty
 					icon={Library}
-					title="No beta references found"
-					description="No beta references have been created yet."
+					title="No alpha references found"
+					description="No alpha references have been created yet."
 				/>
 			) : (
 				<BoxGroup as="ul">
@@ -43,7 +43,7 @@ export default function ReferenceV2List() {
 							<div>
 								<Link
 									className="font-medium text-lg"
-									to="/refs/beta/$referenceId"
+									to="/refs/alpha/$referenceId"
 									params={{ referenceId: reference.id }}
 								>
 									{reference.name}

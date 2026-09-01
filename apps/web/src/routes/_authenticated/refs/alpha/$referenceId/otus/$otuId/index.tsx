@@ -2,7 +2,7 @@ import LocalOtuOverview from "@otus-v2/components/LocalOtuOverview";
 import { createFileRoute } from "@tanstack/react-router";
 
 export const Route = createFileRoute(
-	"/_authenticated/refs/beta/$referenceId/otus/$otuId/",
+	"/_authenticated/refs/alpha/$referenceId/otus/$otuId/",
 )({
 	component: LocalOtuOverviewRoute,
 });

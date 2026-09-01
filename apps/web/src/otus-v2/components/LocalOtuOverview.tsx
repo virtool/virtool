@@ -92,7 +92,7 @@ export default function LocalOtuOverview({
 				{previewIsolates.map((isolate) => (
 					<BoxGroupSection key={isolate.id}>
 						<Link
-							to="/refs/beta/$referenceId/otus/$otuId/isolates/$isolateId"
+							to="/refs/alpha/$referenceId/otus/$otuId/isolates/$isolateId"
 							params={{ referenceId, otuId, isolateId: isolate.id }}
 						>
 							{isolate.name
@@ -104,7 +104,7 @@ export default function LocalOtuOverview({
 				{remaining > 0 && (
 					<BoxGroupSection>
 						<Link
-							to="/refs/beta/$referenceId/otus/$otuId/isolates"
+							to="/refs/alpha/$referenceId/otus/$otuId/isolates"
 							params={{ referenceId, otuId }}
 						>
 							View {remaining} more {remaining === 1 ? "isolate" : "isolates"}

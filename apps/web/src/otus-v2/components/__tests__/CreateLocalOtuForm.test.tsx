@@ -27,7 +27,9 @@ describe("<CreateLocalOtuForm />", () => {
 		mockGetReferenceV2(reference);
 		const createLocalOtu = mockCreateLocalOtuV2(otu);
 
-		const { router } = await renderRoute(`/refs/beta/${reference.id}/otus/new`);
+		const { router } = await renderRoute(
+			`/refs/alpha/${reference.id}/otus/new`,
+		);
 
 		await userEvent.type(
 			await screen.findByLabelText("Name", { exact: true }),
@@ -43,7 +45,7 @@ describe("<CreateLocalOtuForm />", () => {
 
 		await waitFor(() => {
 			expect(router.state.location.pathname).toBe(
-				`/refs/beta/${reference.id}/otus/${otu.id}`,
+				`/refs/alpha/${reference.id}/otus/${otu.id}`,
 			);
 		});
 

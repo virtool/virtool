@@ -56,12 +56,12 @@ export default function Sidebar({ administratorRole }: SidebarProps) {
 		links = (
 			<>
 				<SidebarLink
-					exclude={["/refs/beta", "/refs/settings"]}
+					exclude={["/refs/alpha", "/refs/settings"]}
 					title="Browse"
 					link="/refs"
 					icon={List}
 				/>
-				<SidebarLink title="Beta" link="/refs/beta" icon={FlaskConical} />
+				<SidebarLink title="Alpha" link="/refs/alpha" icon={FlaskConical} />
 				{fullAdministrator ? (
 					<SidebarLink title="Settings" link="/refs/settings" icon={Settings} />
 				) : null}

@@ -24,7 +24,7 @@ describe("<CreateReferenceV2Form />", () => {
 			permissions: createFakePermissions({ create_ref: true }),
 		});
 		mockGetAccount(account);
-		await renderWithRouter(<ReferenceV2List />, "/refs/beta");
+		await renderWithRouter(<ReferenceV2List />, "/refs/alpha");
 		await userEvent.click(
 			await screen.findByRole("button", { name: "Create" }),
 		);

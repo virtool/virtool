@@ -8,7 +8,7 @@ import { useSuspenseReferenceV2 } from "@references-v2/queries";
 import { createFileRoute, notFound, Outlet } from "@tanstack/react-router";
 
 export const Route = createFileRoute(
-	"/_authenticated/refs/beta/$referenceId/otus/$otuId",
+	"/_authenticated/refs/alpha/$referenceId/otus/$otuId",
 )({
 	loader: async ({
 		context: { queryClient },
@@ -38,16 +38,16 @@ function LocalOtuDetailLayout() {
 	return (
 		<>
 			<p className="flex font-medium items-center gap-2 py-2">
-				<Link to="/refs/beta/$referenceId" params={{ referenceId }}>
+				<Link to="/refs/alpha/$referenceId" params={{ referenceId }}>
 					{reference.name}
 				</Link>
 				<span className="text-slate-600">/</span>
-				<Link to="/refs/beta/$referenceId/otus" params={{ referenceId }}>
+				<Link to="/refs/alpha/$referenceId/otus" params={{ referenceId }}>
 					OTUs
 				</Link>
 				<span className="text-slate-600">/</span>
 				<Link
-					to="/refs/beta/$referenceId/otus/$otuId"
+					to="/refs/alpha/$referenceId/otus/$otuId"
 					params={{ referenceId, otuId }}
 				>
 					{otu.taxonomy.name}

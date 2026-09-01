@@ -8,7 +8,7 @@ export default function LocalOtuDetailTabs({
 	referenceId: string;
 	otuId: string;
 }) {
-	const base = `/refs/beta/${referenceId}/otus/${otuId}`;
+	const base = `/refs/alpha/${referenceId}/otus/${otuId}`;
 
 	return (
 		<NavTabs>

@@ -1,4 +1,3 @@
-import Badge from "@base/Badge";
 import {
 	Dialog,
 	DialogContent,
@@ -24,9 +23,7 @@ export default function CreateLocalOtuDialog({
 	return (
 		<Dialog open={open} onOpenChange={setOpen}>
 			<DialogContent>
-				<DialogTitle>
-					Create OTU <Badge color="purple">Beta</Badge>
-				</DialogTitle>
+				<DialogTitle>Create OTU</DialogTitle>
 				<DialogDescription>Create one complete local OTU.</DialogDescription>
 
 				<Tabs defaultValue="genbank">

@@ -48,7 +48,7 @@ export default function CreateLocalOtuFromAccessionForm({
 		mutation.mutate(accessions, {
 			onSuccess: (otu) => {
 				navigate({
-					to: "/refs/beta/$referenceId/otus/$otuId",
+					to: "/refs/alpha/$referenceId/otus/$otuId",
 					params: { referenceId, otuId: otu.id },
 				});
 			},

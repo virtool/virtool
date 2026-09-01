@@ -20,7 +20,7 @@ describe("<LocalOtuDetail />", () => {
 			lineage: [],
 		},
 	});
-	const base = `/refs/beta/${reference.id}/otus/${otu.id}`;
+	const base = `/refs/alpha/${reference.id}/otus/${otu.id}`;
 
 	beforeEach(() => {
 		mockGetReferenceV2(reference);
@@ -57,7 +57,7 @@ describe("<LocalOtuDetail />", () => {
 		});
 		mockGetLocalOtuV2(otuWithIsolates);
 
-		await renderRoute(`/refs/beta/${reference.id}/otus/${otuWithIsolates.id}`);
+		await renderRoute(`/refs/alpha/${reference.id}/otus/${otuWithIsolates.id}`);
 
 		expect(await screen.findByText(/isolate preview-0/)).toBeInTheDocument();
 		expect(screen.getByText(/isolate preview-4/)).toBeInTheDocument();
@@ -94,7 +94,7 @@ describe("<LocalOtuDetail />", () => {
 		});
 		mockGetLocalOtuV2(otuWithLineage);
 
-		await renderRoute(`/refs/beta/${reference.id}/otus/${otuWithLineage.id}`);
+		await renderRoute(`/refs/alpha/${reference.id}/otus/${otuWithLineage.id}`);
 
 		expect(
 			await screen.findByRole("button", { name: "Show higher taxa" }),
@@ -138,7 +138,7 @@ describe("<LocalOtuDetail />", () => {
 		mockGetLocalOtuV2(otuWithIsolates);
 
 		await renderRoute(
-			`/refs/beta/${reference.id}/otus/${otuWithIsolates.id}/isolates`,
+			`/refs/alpha/${reference.id}/otus/${otuWithIsolates.id}/isolates`,
 		);
 
 		await userEvent.type(

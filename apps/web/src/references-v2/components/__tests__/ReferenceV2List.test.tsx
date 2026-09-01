@@ -21,11 +21,11 @@ describe("<ReferenceV2List />", () => {
 		});
 		mockGetReferencesV2([active, archived]);
 
-		await renderRoute("/refs/beta");
+		await renderRoute("/refs/alpha");
 
 		expect(
 			await screen.findByRole("link", { name: active.name }),
-		).toHaveAttribute("href", `/refs/beta/${active.id}`);
+		).toHaveAttribute("href", `/refs/alpha/${active.id}`);
 		expect(screen.getByText("Active description")).toBeInTheDocument();
 		expect(screen.getByText("Archived")).toBeInTheDocument();
 	});
@@ -33,10 +33,10 @@ describe("<ReferenceV2List />", () => {
 	it("renders an empty state", async () => {
 		mockGetReferencesV2([]);
 
-		await renderRoute("/refs/beta");
+		await renderRoute("/refs/alpha");
 
 		expect(
-			await screen.findByText("No beta references found"),
+			await screen.findByText("No alpha references found"),
 		).toBeInTheDocument();
 	});
 
@@ -46,7 +46,7 @@ describe("<ReferenceV2List />", () => {
 			permissions: createFakePermissions({ create_ref: true }),
 		});
 		mockGetAccount(account);
-		await renderWithRouter(<ReferenceV2List />, "/refs/beta");
+		await renderWithRouter(<ReferenceV2List />, "/refs/alpha");
 
 		await userEvent.click(
 			await screen.findByRole("button", { name: "Create" }),

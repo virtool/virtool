@@ -19,11 +19,11 @@ describe("<LocalOtuV2List />", () => {
 		});
 		mockGetLocalOtusV2([otu]);
 
-		await renderRoute(`/refs/beta/${reference.id}/otus`);
+		await renderRoute(`/refs/alpha/${reference.id}/otus`);
 
 		expect(
 			await screen.findByRole("link", { name: "Tobacco mosaic virus (TMV)" }),
-		).toHaveAttribute("href", `/refs/beta/${reference.id}/otus/${otu.id}`);
+		).toHaveAttribute("href", `/refs/alpha/${reference.id}/otus/${otu.id}`);
 		expect(screen.getByText("2 isolates")).toBeInTheDocument();
 		expect(screen.getByText("Version 3")).toBeInTheDocument();
 	});
@@ -33,7 +33,7 @@ describe("<LocalOtuV2List />", () => {
 		mockGetReferenceV2(reference);
 		mockGetLocalOtusV2([]);
 
-		await renderRoute(`/refs/beta/${reference.id}/otus`);
+		await renderRoute(`/refs/alpha/${reference.id}/otus`);
 
 		expect(await screen.findByText("No OTUs found")).toBeInTheDocument();
 	});
@@ -51,7 +51,7 @@ describe("<LocalOtuV2List />", () => {
 		});
 		mockGetLocalOtusV2([matchingOtu, otherOtu]);
 
-		await renderRoute(`/refs/beta/${reference.id}/otus`);
+		await renderRoute(`/refs/alpha/${reference.id}/otus`);
 
 		const user = userEvent.setup();
 		await user.type(

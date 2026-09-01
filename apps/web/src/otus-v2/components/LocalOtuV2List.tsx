@@ -59,7 +59,7 @@ export default function LocalOtuV2List({
 						<BoxGroupSection as="li" key={otu.id}>
 							<Link
 								className="font-medium text-lg"
-								to="/refs/beta/$referenceId/otus/$otuId"
+								to="/refs/alpha/$referenceId/otus/$otuId"
 								params={{ referenceId, otuId: otu.id }}
 							>
 								{otu.name}

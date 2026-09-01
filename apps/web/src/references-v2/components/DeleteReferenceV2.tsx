@@ -16,7 +16,7 @@ export default function DeleteReferenceV2({
 
 	async function handleConfirm() {
 		await mutation.mutateAsync(reference.id);
-		await navigate({ to: "/refs/beta" });
+		await navigate({ to: "/refs/alpha" });
 	}
 
 	return (

@@ -18,7 +18,7 @@ describe("<DeleteReferenceV2 />", () => {
 		mockDeleteReferenceV2();
 		mockGetReferencesV2([]);
 
-		const { router } = await renderRoute(`/refs/beta/${reference.id}/general`);
+		const { router } = await renderRoute(`/refs/alpha/${reference.id}/general`);
 		await userEvent.click(
 			await screen.findByRole("button", { name: "Delete" }),
 		);
@@ -31,6 +31,6 @@ describe("<DeleteReferenceV2 />", () => {
 		expect(referenceV2ServerFnMocks.deleteReferenceV2Fn).toHaveBeenCalledWith({
 			data: { referenceId: reference.id },
 		});
-		expect(router.state.location.pathname).toBe("/refs/beta");
+		expect(router.state.location.pathname).toBe("/refs/alpha");
 	});
 });

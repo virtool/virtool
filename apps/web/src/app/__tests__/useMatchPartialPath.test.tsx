@@ -96,8 +96,8 @@ describe("useMatchPartialPath (tanstack)", () => {
 
 	it("returns false when location is below an excluded path", async () => {
 		await renderWithTanStackRouter(
-			<TestHarness path="/refs" exclude={["/refs/beta"]} />,
-			"/refs/beta/reference-id",
+			<TestHarness path="/refs" exclude={["/refs/alpha"]} />,
+			"/refs/alpha/reference-id",
 		);
 
 		expect(await getResult()).toBe(false);

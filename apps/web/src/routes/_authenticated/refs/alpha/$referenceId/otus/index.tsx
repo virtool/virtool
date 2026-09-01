@@ -7,7 +7,7 @@ import { createFileRoute, notFound } from "@tanstack/react-router";
 import { useState } from "react";
 
 export const Route = createFileRoute(
-	"/_authenticated/refs/beta/$referenceId/otus/",
+	"/_authenticated/refs/alpha/$referenceId/otus/",
 )({
 	loader: async ({ context: { queryClient }, params: { referenceId } }) => {
 		const { localOtusV2QueryOptions } = await import("@otus-v2/queries");

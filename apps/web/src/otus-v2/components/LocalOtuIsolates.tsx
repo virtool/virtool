@@ -50,7 +50,7 @@ export default function LocalOtuIsolates({
 					<BoxGroupSection as="li" key={isolate.id}>
 						<Link
 							className="font-medium text-lg"
-							to="/refs/beta/$referenceId/otus/$otuId/isolates/$isolateId"
+							to="/refs/alpha/$referenceId/otus/$otuId/isolates/$isolateId"
 							params={{ referenceId, otuId, isolateId: isolate.id }}
 						>
 							{isolate.name

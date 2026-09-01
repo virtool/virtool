@@ -14,7 +14,7 @@ import { getRouteApi } from "@tanstack/react-router";
 import { useState } from "react";
 
 const routeApi = getRouteApi(
-	"/_authenticated/refs/beta/$referenceId/otus/$otuId/isolates/$isolateId",
+	"/_authenticated/refs/alpha/$referenceId/otus/$otuId/isolates/$isolateId",
 );
 
 /** Displays one local v2 isolate and loads sequence bodies on expansion. */
@@ -34,7 +34,7 @@ export default function LocalOtuIsolateDetail() {
 		<>
 			<p className="mb-4">
 				<Link
-					to="/refs/beta/$referenceId/otus/$otuId/isolates"
+					to="/refs/alpha/$referenceId/otus/$otuId/isolates"
 					params={{ referenceId, otuId }}
 				>
 					← Isolates
