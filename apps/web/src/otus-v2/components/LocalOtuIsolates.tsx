@@ -1,5 +1,7 @@
+import { useFuse } from "@app/fuse";
 import { BoxGroup, BoxGroupSection } from "@base/Box";
 import Button from "@base/Button";
+import { InputSearch } from "@base/Input";
 import Link from "@base/Link";
 import CreateLocalOtuIsolateDialog from "@otus-v2/components/CreateLocalOtuIsolateDialog";
 import {
@@ -7,6 +9,8 @@ import {
 	useSuspenseLocalOtuV2Isolates,
 } from "@otus-v2/queries";
 import { useState } from "react";
+
+const ISOLATE_SEARCH_KEYS = ["name.value"];
 
 /** The Isolates tab of the local v2 OTU detail view. */
 export default function LocalOtuIsolates({
@@ -19,10 +23,17 @@ export default function LocalOtuIsolates({
 	const { data: isolates } = useSuspenseLocalOtuV2Isolates(referenceId, otuId);
 	const { data: otu } = useSuspenseLocalOtuV2(referenceId, otuId);
 	const [open, setOpen] = useState(false);
+	const [results, term, setTerm] = useFuse(isolates, ISOLATE_SEARCH_KEYS);
 
 	return (
 		<>
-			<div className="mb-4 flex justify-end">
+			<div className="mb-4 flex gap-2">
+				<InputSearch
+					aria-label="Search isolates"
+					placeholder="Search isolates"
+					value={term}
+					onChange={(event) => setTerm(event.target.value)}
+				/>
 				<Button color="blue" onClick={() => setOpen(true)}>
 					Create
 				</Button>
@@ -35,7 +46,7 @@ export default function LocalOtuIsolates({
 				version={otu.version}
 			/>
 			<BoxGroup as="ul">
-				{isolates.map((isolate) => (
+				{results.map((isolate) => (
 					<BoxGroupSection as="li" key={isolate.id}>
 						<Link
 							className="font-medium text-lg"

@@ -122,6 +122,39 @@ describe("<LocalOtuDetail />", () => {
 		).toBeInTheDocument();
 	});
 
+	it("filters isolates by name", async () => {
+		const matchingIsolate = {
+			...otu.isolates[0],
+			id: crypto.randomUUID(),
+			name: {
+				type: OtuV2IsolateNameType.isolate,
+				value: "matching isolate",
+			},
+		};
+		const otuWithIsolates = createFakeLocalOtuV2({
+			referenceId: reference.id,
+			isolates: [matchingIsolate, otu.isolates[0]],
+		});
+		mockGetLocalOtuV2(otuWithIsolates);
+
+		await renderRoute(
+			`/refs/beta/${reference.id}/otus/${otuWithIsolates.id}/isolates`,
+		);
+
+		await userEvent.type(
+			await screen.findByRole("textbox", { name: "Search isolates" }),
+			"matching",
+		);
+		expect(
+			await screen.findByRole("link", { name: "isolate matching isolate" }),
+		).toBeInTheDocument();
+		expect(
+			screen.queryByRole("link", {
+				name: `${otu.isolates[0]?.name?.type} ${otu.isolates[0]?.name?.value}`,
+			}),
+		).not.toBeInTheDocument();
+	});
+
 	it("links an isolate to its detail view", async () => {
 		await renderRoute(`${base}/isolates`);
 
