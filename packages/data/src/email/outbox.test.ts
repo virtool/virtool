@@ -297,7 +297,7 @@ describe("fenced result writes", () => {
 
 		expect(row.status).toBe("queued");
 		expect(row.claim_token).toBeNull();
-		expect(row.attempt_count).toBe(1);
+		expect(row.attempt_count).toBe(0);
 		expect(await claimDueEmails(db, claimOptions)).toHaveLength(1);
 	});
 });

@@ -369,6 +369,12 @@ describe("deliverEmailTask", () => {
 
 		expect(row.status).toBe("queued");
 		expect(row.claim_token).toBeNull();
+		expect(row.attempt_count).toBe(0);
+		expect(
+			(await db.select().from(emailOutbox)).every(
+				(item) => item.attempt_count === 0,
+			),
+		).toBe(true);
 	});
 
 	it("stops the drain after a rate limit, leaving the rest for the next run", async () => {
@@ -393,6 +399,38 @@ describe("deliverEmailTask", () => {
 		expect(recorded.attempts).toEqual([["email_verification", "rate_limited"]]);
 
 		expect((await readOutboxRow(first.outboxId)).status).toBe("queued");
+		expect((await readOutboxRow(first.outboxId)).attempt_count).toBe(1);
+		expect(
+			(await db.select().from(emailOutbox)).find(
+				(item) => item.id !== first.outboxId,
+			)?.attempt_count,
+		).toBe(0);
+	});
+
+	it("fails queued rows with unsupported template versions", async () => {
+		await seedEmailSettings();
+
+		const { outboxId } = await enqueueEmail(db, {
+			idempotencyKey: "unsupported-version",
+			recipient: "someone@example.com",
+			template,
+		});
+
+		await db
+			.update(emailOutbox)
+			.set({ template_version: 0 })
+			.where(eq(emailOutbox.id, outboxId));
+
+		const fetchMock = stubSend();
+
+		await runDrain();
+
+		expect(fetchMock).not.toHaveBeenCalled();
+		expect((await readOutboxRow(outboxId)).status).toBe("failed");
+		expect((await readOutboxRow(outboxId)).last_error).toContain(
+			"unsupported email template version",
+		);
+		expect(recorded.attempts).toEqual([["email_verification", "permanent"]]);
 	});
 
 	it("drains multiple due rows in one run", async () => {

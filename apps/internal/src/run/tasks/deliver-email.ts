@@ -23,7 +23,10 @@ import {
 	getEmailSettings,
 	resolveEmailDelivery,
 } from "@virtool/data/email/settings";
-import { renderEmailTemplate } from "@virtool/data/email/templates";
+import {
+	EMAIL_TEMPLATE_VERSION,
+	renderEmailTemplate,
+} from "@virtool/data/email/templates";
 import type { Logger } from "@virtool/logger";
 import { z } from "zod";
 import { defineTask } from "../framework/define";
@@ -77,6 +80,21 @@ async function deliverOne(
 		template,
 		attempt: item.attemptCount,
 	};
+
+	if (item.templateVersion !== EMAIL_TEMPLATE_VERSION) {
+		await failEmail(
+			ctx.db,
+			target,
+			`unsupported email template version: ${item.templateVersion}`,
+		);
+		ctx.emailMetrics.recordEmailAttempt(template, "permanent");
+		logger.error(
+			{ ...base, templateVersion: item.templateVersion },
+			"email template version is unsupported",
+		);
+
+		return "failed";
+	}
 
 	let outcome: EmailSendOutcome;
 
@@ -244,8 +262,16 @@ export const deliverEmailTask = defineTask<typeof payload, TaskContext>({
 					break;
 				}
 
-				for (const item of batch) {
+				for (const [index, item] of batch.entries()) {
 					if (signal.aborted) {
+						await Promise.all(
+							batch.slice(index).map((unprocessed) =>
+								releaseEmailClaim(ctx.db, {
+									claimToken,
+									outboxId: unprocessed.id,
+								}),
+							),
+						);
 						break drain;
 					}
 
@@ -259,6 +285,14 @@ export const deliverEmailTask = defineTask<typeof payload, TaskContext>({
 					);
 
 					if (result === "stop") {
+						await Promise.all(
+							batch.slice(index + 1).map((unprocessed) =>
+								releaseEmailClaim(ctx.db, {
+									claimToken,
+									outboxId: unprocessed.id,
+								}),
+							),
+						);
 						break drain;
 					}
 				}

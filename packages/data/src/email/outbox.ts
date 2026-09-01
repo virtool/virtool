@@ -306,7 +306,8 @@ export async function failEmail(
  *
  * The path for an outcome that says nothing about the message — the API key
  * stopped working mid-drain — where burning a retry slot or a backoff delay
- * would punish the row for a configuration problem.
+ * would punish the row for a configuration problem. Because claiming
+ * increments the attempt count, releasing also restores that increment.
  */
 export async function releaseEmailClaim(
 	db: Db,
@@ -314,7 +315,11 @@ export async function releaseEmailClaim(
 ): Promise<boolean> {
 	const rows = await db
 		.update(emailOutbox)
-		.set({ claim_expires_at: null, claim_token: null })
+		.set({
+			attempt_count: sql`${emailOutbox.attempt_count} - 1`,
+			claim_expires_at: null,
+			claim_token: null,
+		})
 		.where(isHeld(target.outboxId, target.claimToken))
 		.returning({ id: emailOutbox.id });
 
