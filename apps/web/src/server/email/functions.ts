@@ -1,10 +1,3 @@
-// Full-administrator server functions for email delivery configuration.
-//
-// Every function here requires the `full` role — deliberately above the
-// `settings` role the broader settings functions accept, because these manage
-// a credential and a delivery channel. Reads return only masked state: no
-// form of the API key, encrypted or not, ever crosses the wire.
-
 import { createServerFn } from "@tanstack/react-start";
 import type {
 	EmailReencryptResult,
@@ -26,23 +19,10 @@ import { adminRole } from "../auth/policy";
 import { db } from "../composition";
 import { config } from "../config";
 
-/**
- * The address format accepted for senders, reply-to, and test recipients.
- *
- * The same deliberately loose shape the account email uses: something at
- * something with a dot. The provider is the real validator; this only stops
- * obvious garbage reaching it.
- */
 const EMAIL_ADDRESS_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
-/** Generous bound for an address or display name reaching a column. */
 const MAX_FIELD_LENGTH = 254;
 
-/**
- * Resend secret keys are `re_`-prefixed strings well under this; the bound is
- * generous rather than exact so a format change does not lock administrators
- * out of saving one.
- */
 const MAX_API_KEY_LENGTH = 256;
 
 const addressSchema = z
@@ -51,7 +31,6 @@ const addressSchema = z
 	.max(MAX_FIELD_LENGTH)
 	.regex(EMAIL_ADDRESS_PATTERN, "Invalid email address.");
 
-// Empty is how an optional address is cleared.
 const optionalAddressSchema = z.union([z.literal(""), addressSchema]);
 
 function toEmailSettings(settings: EmailDeliverySettings): EmailSettings {
@@ -70,7 +49,7 @@ function toEmailSettings(settings: EmailDeliverySettings): EmailSettings {
 	};
 }
 
-/** @public Consumed by the administrator email-settings UI. */
+/** @public */
 export const getEmailSettingsFn = createServerFn({ method: "GET" })
 	.middleware([adminRole("full")])
 	.handler(
@@ -89,7 +68,7 @@ const updateEmailSettingsSchema = z
 		message: "At least one setting must be provided.",
 	});
 
-/** @public Consumed by the administrator email-settings UI. */
+/** @public */
 export const updateEmailSettingsFn = createServerFn({ method: "POST" })
 	.middleware([adminRole("full")])
 	.validator(updateEmailSettingsSchema)
@@ -100,7 +79,7 @@ export const updateEmailSettingsFn = createServerFn({ method: "POST" })
 			),
 	);
 
-/** @public Consumed by the administrator email-settings UI. */
+/** @public */
 export const setEmailApiKeyFn = createServerFn({ method: "POST" })
 	.middleware([adminRole("full")])
 	.validator(
@@ -113,7 +92,7 @@ export const setEmailApiKeyFn = createServerFn({ method: "POST" })
 			),
 	);
 
-/** @public Consumed by the administrator email-settings UI. */
+/** @public */
 export const clearEmailApiKeyFn = createServerFn({ method: "POST" })
 	.middleware([adminRole("full")])
 	.handler(
@@ -121,7 +100,7 @@ export const clearEmailApiKeyFn = createServerFn({ method: "POST" })
 			toEmailSettings(await clearEmailApiKey(db)),
 	);
 
-/** @public Consumed by the administrator email-settings UI during master-key rotation. */
+/** @public */
 export const reencryptEmailApiKeyFn = createServerFn({ method: "POST" })
 	.middleware([adminRole("full")])
 	.handler(
@@ -129,7 +108,7 @@ export const reencryptEmailApiKeyFn = createServerFn({ method: "POST" })
 			reencryptEmailApiKey(db, config.emailMasterKeys),
 	);
 
-/** @public Consumed by the administrator email-settings UI. */
+/** @public */
 export const sendTestEmailFn = createServerFn({ method: "POST" })
 	.middleware([adminRole("full")])
 	.validator(z.object({ recipient: addressSchema }))

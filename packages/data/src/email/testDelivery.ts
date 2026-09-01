@@ -1,5 +1,3 @@
-// Test delivery: one send, straight through the provider, no outbox.
-
 import { randomUUID } from "node:crypto";
 import type { EmailTestResult } from "@virtool/contracts";
 import type { Db } from "../db/pg";

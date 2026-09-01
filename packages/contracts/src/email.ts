@@ -1,9 +1,4 @@
-/**
- * The template names transactional email can be sent with.
- *
- * A finite union rather than caller-supplied HTML: templates render centrally,
- * so a dependent feature can enqueue mail without owning markup or escaping.
- */
+/** The supported transactional email template names. */
 export const emailTemplateTypes = [
 	"account_setup",
 	"email_verification",
@@ -21,26 +16,14 @@ export type EmailTemplate =
 	| { type: "password_recovery"; username: string; recoveryUrl: string }
 	| { type: "test" };
 
-/**
- * Whether transactional email delivery can currently send.
- *
- * `disabled` and `unconfigured` are supported states — a disconnected
- * installation runs without email and auth workflows fall back to copyable
- * links. `configuration_error` is the one that needs an operator: a stored API
- * key exists but cannot be decrypted with the master keys this process holds.
- */
+/** Whether transactional email can currently be delivered. */
 export type EmailAvailability =
 	| "disabled"
 	| "unconfigured"
 	| "ready"
 	| "configuration_error";
 
-/**
- * The email delivery settings as an administration client reads them.
- *
- * The Resend API key never crosses the wire in any recoverable form:
- * `hasApiKey` reports only whether one is stored.
- */
+/** The non-secret email delivery settings exposed to administrators. */
 export type EmailSettings = {
 	availability: EmailAvailability;
 	enabled: boolean;

@@ -31,11 +31,7 @@ export const settings = pgTable(
 		defaultSourceTypes: jsonb("default_source_types")
 			.$type<string[]>()
 			.notNull(),
-		// The Resend API key, authenticated-encrypted under the instance master
-		// key. Never published to a client in any form: the transport boundary
-		// reduces it to a boolean. Null means no key is stored. The only nullable
-		// email column, because "unset" for an envelope is the absence of one
-		// rather than an empty string.
+		// Encrypted under the environment-owned email master key.
 		emailApiKey: jsonb("email_api_key").$type<EmailApiKeyEnvelope>(),
 		emailEnabled: boolean("email_enabled").notNull(),
 		emailReplyToAddress: text("email_reply_to_address").notNull(),

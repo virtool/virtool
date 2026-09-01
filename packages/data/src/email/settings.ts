@@ -1,12 +1,3 @@
-// Email delivery configuration over the `settings` singleton.
-//
-// These functions own every write that touches the encrypted API-key envelope,
-// so the envelope's invariants — encrypted under the active master key, never
-// silently cleared, never overwritten on a decryption failure — live in one
-// place. Reads and writes of the non-secret delivery fields go through here
-// too, because enabling delivery is only valid against the stored key and the
-// two must be checked and written in one transaction.
-
 import type {
 	EmailAvailability,
 	EmailReencryptResult,
@@ -24,7 +15,6 @@ import {
 	encryptEmailApiKey,
 } from "./crypto";
 
-/** The `settings` table holds a single row, pinned to this id by a check constraint. */
 const SETTINGS_ID = 1;
 
 /** Thrown when a write would leave email delivery in an unusable state. */
@@ -39,14 +29,7 @@ export type EmailDeliverySettings = {
 	senderName: string;
 };
 
-/**
- * The delivery configuration resolved against this process's master keys.
- *
- * `apiKey` is the decrypted Resend key whenever the stored envelope is
- * decryptable — including while delivery is disabled, which is what lets a
- * test send validate a configuration before it is enabled. It must never
- * cross a transport boundary or reach a log.
- */
+/** Email delivery configuration resolved against the process master keys. */
 export type EmailDeliveryState = {
 	availability: EmailAvailability;
 	apiKey: string | null;
@@ -68,19 +51,7 @@ export async function getEmailSettings(db: Db): Promise<EmailDeliverySettings> {
 	return toEmailDeliverySettings(await getSettings(db));
 }
 
-/**
- * Resolve the stored configuration against the master keys this process holds.
- *
- * The availability rules, in order:
- *
- * - no stored key or no sender address: `unconfigured`, whatever the master
- *   key situation — there is nothing to decrypt or send as;
- * - stored key but master keys unset, invalid, or unable to decrypt the
- *   envelope: `configuration_error`. The stored envelope is left exactly as it
- *   is — an undecryptable configuration is unavailable, not clearable;
- * - decryptable key and sender, delivery off: `disabled`;
- * - all of the above and delivery on: `ready`.
- */
+/** Resolve stored delivery settings against the process master keys. */
 export function resolveEmailDelivery(
 	settings: EmailDeliverySettings,
 	masterKeys: EmailMasterKeyConfig,
@@ -114,15 +85,7 @@ export type EmailDeliveryUpdate = Partial<{
 	senderName: string;
 }>;
 
-/**
- * Update the non-secret delivery fields, holding the row lock across the
- * validity check.
- *
- * Enabling delivery fails unless the merged result carries a sender address
- * and a stored key the active master keys can decrypt — checked inside the
- * transaction so a concurrent key clear cannot slip an enabled-but-keyless
- * configuration through. Disabling never touches the stored key.
- */
+/** Update non-secret settings while locking the row across validation. */
 export async function updateEmailDelivery(
 	db: Db,
 	masterKeys: EmailMasterKeyConfig,
@@ -177,13 +140,7 @@ export async function updateEmailDelivery(
 	});
 }
 
-/**
- * Encrypt `apiKey` under the active master key and store the envelope.
- *
- * Requires usable master keys: a key stored without them could never be read
- * back, and refusing here is what surfaces the misconfiguration at the moment
- * an administrator can act on it.
- */
+/** Encrypt and store an API key under the active master key. */
 export async function setEmailApiKey(
 	db: Db,
 	masterKeys: EmailMasterKeyConfig,
@@ -214,12 +171,7 @@ export async function setEmailApiKey(
 	};
 }
 
-/**
- * Clear the stored API key, disabling delivery in the same write.
- *
- * The two move together because an enabled configuration without a key is a
- * state nothing can act on — every send would fail as unconfigured.
- */
+/** Clear the stored API key and disable delivery. */
 export async function clearEmailApiKey(db: Db): Promise<EmailDeliverySettings> {
 	await getSettings(db);
 
@@ -240,15 +192,7 @@ export async function clearEmailApiKey(db: Db): Promise<EmailDeliverySettings> {
 	};
 }
 
-/**
- * Re-encrypt the stored API key under the active master key.
- *
- * The rotation step run after the new key is deployed and before the old one
- * is removed. Idempotent: an envelope already under the active key reports
- * `already_current` and is not rewritten. A key that cannot be decrypted —
- * unusable master keys, an unknown identifier, or an authentication failure —
- * reports `unavailable` and leaves the envelope untouched.
- */
+/** Re-encrypt the stored API key under the active master key. */
 export async function reencryptEmailApiKey(
 	db: Db,
 	masterKeys: EmailMasterKeyConfig,

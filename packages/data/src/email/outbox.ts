@@ -1,11 +1,3 @@
-// The durable email outbox.
-//
-// Enqueue is idempotent on a caller-supplied domain key and transaction-
-// compatible, so auth state and its email commit together. Claiming hands
-// bounded batches to exactly one holder at a time, and every result write is
-// fenced on the claim token, so a runner that lost its claim cannot commit a
-// send result over the new holder's.
-
 import type { EmailTemplate } from "@virtool/contracts";
 import {
 	and,
@@ -43,15 +35,7 @@ export type EnqueueEmailResult = {
 	outboxId: number;
 };
 
-/**
- * Queue one logical message, or return the row an earlier enqueue created.
- *
- * `DbOrTx` so a caller can insert atomically with the domain state the email
- * announces. The conflict target is the unique domain idempotency key;
- * `onConflictDoNothing` plus the follow-up read is what makes a duplicate —
- * concurrent included — resolve to the existing row rather than a second
- * message.
- */
+/** Queue one message, returning the existing row for a duplicate key. */
 export async function enqueueEmail(
 	db: DbOrTx,
 	input: EnqueueEmailInput,
@@ -107,13 +91,6 @@ export type ClaimDueEmailsOptions = {
 	limit: number;
 };
 
-/**
- * Match a row that is due and that no live claim holds.
- *
- * A claim is live while `claim_expires_at` is in the future; an expired one is
- * a runner that died mid-send, and the row is claimable again — which is the
- * reclaim path, so there is deliberately no attempt-count guard here.
- */
 function isDue(): SQL | undefined {
 	return and(
 		eq(emailOutbox.status, "queued"),
@@ -129,22 +106,9 @@ function isDue(): SQL | undefined {
  * Claim up to `limit` due rows for `claimToken`, incrementing each row's
  * attempt count.
  *
- * The candidate ids are read under `FOR UPDATE SKIP LOCKED` and **materialised
- * into the update as literals**, in one transaction that holds the row locks
- * across both statements. An inlined subquery is not an option here: `isDue`
- * carries `clock_timestamp()`, which is volatile, so the planner re-executes
- * the subquery per candidate row — and each re-execution takes a fresh
- * LIMIT-sized window past the rows the statement already claimed, claiming a
- * rolling multiple of the batch size.
- *
- * `SKIP LOCKED` is what keeps concurrent claimers on disjoint batches, and the
- * held locks are what make the repeated `isDue` on the update a formality
- * rather than a race.
- *
- * The attempt increments at claim rather than at result, so an attempt whose
- * outcome is never learned — process death mid-send — still counts against the
- * bound. Resend's idempotency key is what keeps such an ambiguous attempt from
- * becoming a duplicate message.
+ * Candidate IDs are materialized before the update because an inline query
+ * containing `clock_timestamp()` can be re-evaluated and exceed the limit.
+ * Row locks and `SKIP LOCKED` keep concurrent claimers on separate batches.
  */
 export async function claimDueEmails(
 	db: Db,
@@ -201,13 +165,7 @@ export async function claimDueEmails(
 	}));
 }
 
-/**
- * The fencing guard every result write carries.
- *
- * A write matches only while the row is still queued and still carries this
- * claim's token, so a claim that expired and was retaken elsewhere makes the
- * stale holder's write a no-op rather than an overwrite.
- */
+/** Match a queued row only while the caller still holds its claim. */
 function isHeld(outboxId: number, claimToken: string): SQL | undefined {
 	return and(
 		eq(emailOutbox.id, outboxId),
@@ -222,13 +180,7 @@ export type EmailResultTarget = {
 	outboxId: number;
 };
 
-/**
- * Record that the provider accepted the message.
- *
- * Acceptance is the provider taking responsibility for the message, not proof
- * it reached a mailbox. Returns `false` when the claim was lost, in which case
- * nothing was written.
- */
+/** Record provider acceptance, or return `false` if the claim was lost. */
 export async function markEmailAccepted(
 	db: Db,
 	target: EmailResultTarget,
@@ -251,11 +203,7 @@ export async function markEmailAccepted(
 	return rows.length > 0;
 }
 
-/**
- * Schedule the next attempt after a retryable failure, releasing the claim.
- *
- * Returns `false` when the claim was lost.
- */
+/** Schedule a retry, or return `false` if the claim was lost. */
 export async function scheduleEmailRetry(
 	db: Db,
 	target: EmailResultTarget,
@@ -276,11 +224,7 @@ export async function scheduleEmailRetry(
 	return rows.length > 0;
 }
 
-/**
- * Mark the row terminally failed, preserving `error` for operator visibility.
- *
- * Returns `false` when the claim was lost.
- */
+/** Mark a row failed, or return `false` if the claim was lost. */
 export async function failEmail(
 	db: Db,
 	target: EmailResultTarget,
@@ -301,14 +245,7 @@ export async function failEmail(
 	return rows.length > 0;
 }
 
-/**
- * Release one claimed row without recording a result, leaving it due.
- *
- * The path for an outcome that says nothing about the message — the API key
- * stopped working mid-drain — where burning a retry slot or a backoff delay
- * would punish the row for a configuration problem. Because claiming
- * increments the attempt count, releasing also restores that increment.
- */
+/** Release a claim and undo its attempt increment. */
 export async function releaseEmailClaim(
 	db: Db,
 	target: EmailResultTarget,
@@ -366,15 +303,7 @@ export type EmailRetention = {
 	failedSeconds: number;
 };
 
-/**
- * Delete terminal rows older than their retention window.
- *
- * Accepted rows age out faster than failed ones: a failed row is the only
- * record an operator has of a message that never went out, while an accepted
- * row's job is done once troubleshooting windows have passed. Deleting a row
- * also deletes its template payload, which is what bounds how long an
- * auth-link token can sit in this table.
- */
+/** Delete terminal rows older than their retention window. */
 export async function pruneEmailOutbox(
 	db: Db,
 	retention: EmailRetention,

@@ -1,16 +1,6 @@
-// Central rendering for every transactional email template.
-//
-// Callers hand over a typed payload and never markup, so escaping happens in
-// exactly one place. Every template renders both a text and an HTML body.
-
 import type { EmailTemplate } from "@virtool/contracts";
 
-/**
- * The template revision stamped onto queued rows.
- *
- * Bump when a template's required payload changes shape, so a retry of a row
- * queued before the change is renderable — or rejectable — on sight.
- */
+/** The template payload revision stored on queued email. */
 export const EMAIL_TEMPLATE_VERSION = 1;
 
 /** A rendered message: subject line plus text and HTML bodies. */

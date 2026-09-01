@@ -76,10 +76,8 @@ const TASK_DURATION_BUCKETS = [
  */
 const OTHER_TEMPLATE = "other";
 
-/** The template names that keep their own label. */
 const KNOWN_TEMPLATES = new Set<string>(emailTemplateTypes);
 
-/** Every template label this process will ever emit. */
 const TEMPLATE_LABELS = [...emailTemplateTypes, OTHER_TEMPLATE];
 
 /** How one delivery attempt ended, as the attempts counter labels it. */
@@ -90,7 +88,6 @@ export type EmailAttemptOutcome =
 	| "permanent"
 	| "exhausted";
 
-/** Every attempt outcome, for pre-declaring the counter's label set. */
 const EMAIL_ATTEMPT_OUTCOMES: EmailAttemptOutcome[] = [
 	"accepted",
 	"retryable",
@@ -99,7 +96,6 @@ const EMAIL_ATTEMPT_OUTCOMES: EmailAttemptOutcome[] = [
 	"exhausted",
 ];
 
-/** Every availability state, for pre-declaring the gauge's label set. */
 const EMAIL_AVAILABILITIES: EmailAvailability[] = [
 	"disabled",
 	"unconfigured",
@@ -107,13 +103,7 @@ const EMAIL_AVAILABILITIES: EmailAvailability[] = [
 	"configuration_error",
 ];
 
-/**
- * Bucket boundaries for enqueue-to-acceptance latency, in seconds: 1 s to a
- * day.
- *
- * Wider than the task buckets because a retried message legitimately waits out
- * capped backoff windows, and the tail is exactly what the histogram is for.
- */
+/** Enqueue-to-acceptance histogram buckets, in seconds. */
 const EMAIL_ACCEPTED_AGE_BUCKETS = [
 	1, 5, 15, 30, 60, 300, 900, 3600, 14_400, 86_400,
 ];
@@ -131,12 +121,7 @@ export type TaskRunSample = {
 	durationSeconds: number;
 };
 
-/**
- * The email-delivery slice of the metrics surface.
- *
- * Split out so the delivery task's context can carry exactly these writers
- * without holding the whole registry.
- */
+/** The email-delivery metrics writers. */
 export type EmailMetrics = {
 	recordEmailAttempt: (template: string, outcome: EmailAttemptOutcome) => void;
 	recordEmailRetryScheduled: (template: string) => void;

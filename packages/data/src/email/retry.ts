@@ -1,5 +1,3 @@
-// Deterministic retry policy for outbox delivery.
-
 /**
  * How many delivery attempts a row gets before it fails terminally.
  *

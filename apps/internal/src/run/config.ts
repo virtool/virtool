@@ -66,13 +66,7 @@ export type TasksConfig = {
 	metricsToken: string | undefined;
 	/** Unset disables Sentry entirely, which is what dev and CI want. */
 	sentryDsn: string | undefined;
-	/**
-	 * The instance email master keys, already parsed and fingerprinted.
-	 *
-	 * Never a parse failure: an invalid key value becomes the `invalid` state,
-	 * which the delivery task reports as unavailable, rather than a config error
-	 * that would stop every other task running.
-	 */
+	/** Parsed email master-key configuration. */
 	emailMasterKeys: EmailMasterKeyConfig;
 	storage: StorageConfig;
 };
@@ -114,9 +108,6 @@ const TasksEnv = z.object({
 	// would miss a `VT_SENTRY_DSN_FILE` mount, so the DSN is resolved here and
 	// passed to `Sentry.init` explicitly instead.
 	VT_SENTRY_DSN: optional(),
-	// Deliberately not validated here: a malformed master key must degrade to
-	// email being unavailable, not crash the runner, so the strict parse happens
-	// in `parseEmailMasterKeys` and produces a state rather than an issue.
 	VT_EMAIL_MASTER_KEY: optional(),
 	VT_EMAIL_MASTER_KEY_PREVIOUS: optional(),
 	VT_STORAGE_BACKEND: z.enum(["s3", "azure"]),

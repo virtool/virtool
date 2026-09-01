@@ -1,10 +1,3 @@
-// Schema for the `email_outbox` table.
-//
-// One row per logical outbound message. The unique domain idempotency key is
-// what makes enqueue idempotent; `next_attempt_at` under the partial index is
-// what makes due-row claiming efficient; and the claim token pair is what
-// keeps two runners from sending the same row.
-
 import type { EmailTemplate } from "@virtool/contracts";
 import { sql } from "drizzle-orm";
 import {
@@ -18,13 +11,7 @@ import {
 	unique,
 } from "drizzle-orm/pg-core";
 
-/**
- * Where an outbox row is in its life.
- *
- * `queued` covers everything that may still send — waiting, due, claimed, and
- * scheduled for retry. `accepted` means the provider accepted the message,
- * which is not proof of mailbox delivery. `failed` is terminal.
- */
+/** The delivery state of an email outbox row. */
 export type EmailOutboxStatus = "queued" | "accepted" | "failed";
 
 export const emailOutbox = pgTable(

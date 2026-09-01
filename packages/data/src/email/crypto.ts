@@ -1,10 +1,3 @@
-// The authenticated-encryption envelope the stored Resend API key lives in.
-//
-// The master key is environment-owned (`VT_EMAIL_MASTER_KEY`); only the
-// Resend key is Postgres-owned, and only ever inside an envelope produced
-// here. Nothing in this module logs, and nothing returns secret material on a
-// failure path.
-
 import {
 	createCipheriv,
 	createDecipheriv,
@@ -12,49 +5,25 @@ import {
 	randomBytes,
 } from "node:crypto";
 
-/** AES-256 key length. */
 const MASTER_KEY_BYTES = 32;
 
-/** The GCM nonce length NIST SP 800-38D recommends. */
 const NONCE_BYTES = 12;
 
-/** Full-length GCM authentication tag. */
 const AUTH_TAG_BYTES = 16;
 
-/**
- * A parsed master key with its non-secret identifier.
- *
- * The identifier is a truncated SHA-256 fingerprint of the key material —
- * derived rather than operator-supplied, so it cannot drift from the key it
- * names, and safe to store and log because the key is 32 random bytes no
- * fingerprint preimage search can recover.
- */
+/** A parsed master key and its derived identifier. */
 export type EmailMasterKey = {
 	id: string;
 	key: Buffer;
 };
 
-/**
- * The master-key material available to this process, as configuration parsing
- * produced it.
- *
- * `invalid` is a state rather than a thrown error because a bad master key
- * must not crash the process: the service starts with email unavailable and
- * everything else working. `reason` carries no secret material.
- */
+/** The parsed email master-key configuration. */
 export type EmailMasterKeyConfig =
 	| { status: "unset" }
 	| { status: "invalid"; reason: string }
 	| { status: "ok"; active: EmailMasterKey; previous: EmailMasterKey | null };
 
-/**
- * A versioned authenticated-encryption envelope, as the `settings` row stores
- * it.
- *
- * `keyId` names the master key that produced the envelope, which is what makes
- * rotation deterministic: decryption picks its key by identifier and never
- * guesses or falls back after an authenticated decryption fails.
- */
+/** A versioned authenticated-encryption envelope for an email API key. */
 export type EmailApiKeyEnvelope = {
 	version: 1;
 	algorithm: "aes-256-gcm";
@@ -76,13 +45,6 @@ function fingerprint(key: Buffer): string {
 	return createHash("sha256").update(key).digest("hex").slice(0, 16);
 }
 
-/**
- * Parse one base64-encoded 32-byte master key, or explain why it is not one.
- *
- * The round-trip comparison is the strictness: `Buffer.from` tolerates
- * whitespace, missing padding, and trailing garbage, and a value that only
- * decodes under that tolerance is a mistyped key, not a key.
- */
 function parseOneMasterKey(
 	value: string,
 ): { ok: true; key: EmailMasterKey } | { ok: false; reason: string } {
@@ -101,16 +63,7 @@ function parseOneMasterKey(
 	return { ok: true, key: { id: fingerprint(decoded), key: decoded } };
 }
 
-/**
- * Parse the active and optional previous master keys from their environment
- * values.
- *
- * Never throws: an unusable value produces the `invalid` state, which callers
- * surface as email being unavailable rather than as a crashed process. A
- * previous key without an active one is invalid — the rotation flow always
- * writes under the active key, so there is nothing a lone previous key could
- * mean but a misconfiguration.
- */
+/** Parse active and optional previous email master keys. */
 export function parseEmailMasterKeys(
 	active: string | undefined,
 	previous: string | undefined,
@@ -179,15 +132,7 @@ export function encryptEmailApiKey(
 	};
 }
 
-/**
- * Decrypt `envelope` with whichever configured key its identifier names.
- *
- * `unknown_key` means neither the active nor the previous key matches the
- * envelope's identifier. `auth_failed` means the matching key exists but
- * authentication failed — the envelope is corrupt or the key is not the one
- * its fingerprint claims — and deliberately does **not** fall through to any
- * other key.
- */
+/** Decrypt an API-key envelope with the master key named by its identifier. */
 export function decryptEmailApiKey(
 	keys: { active: EmailMasterKey; previous: EmailMasterKey | null },
 	envelope: EmailApiKeyEnvelope,
