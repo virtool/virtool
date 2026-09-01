@@ -2,7 +2,7 @@ import type { Db } from "@virtool/data/db/pg";
 import type { EmailMasterKeyConfig } from "@virtool/data/email/crypto";
 import type { StorageBackend } from "@virtool/storage";
 import type { CompleteTaskRegistry } from "../framework/define";
-import type { EmailMetrics } from "../metrics/registry";
+import type { Metrics } from "../metrics/registry";
 import { cleanupSessionsTask } from "./cleanup-sessions";
 import { cloneReferenceTask } from "./clone-reference";
 import { createIndexTask } from "./create-index";
@@ -27,8 +27,7 @@ export type TaskContext = {
 	storage: StorageBackend;
 	/** Parsed at startup from `VT_EMAIL_MASTER_KEY` and its previous-key pair. */
 	emailMasterKeys: EmailMasterKeyConfig;
-	/** The email slice of this process's metrics registry. */
-	emailMetrics: EmailMetrics;
+	metrics: Metrics;
 };
 
 /**

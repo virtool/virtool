@@ -15,7 +15,11 @@ import { MemoryStorage } from "@virtool/storage";
 import { eq } from "drizzle-orm";
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
 import { runTask } from "../framework/run";
-import { claimTask, emailTestContext, readTaskRow } from "../testing/tasks";
+import {
+	claimTask,
+	createTaskTestContext,
+	readTaskRow,
+} from "../testing/tasks";
 import { reapOrphanedUploadsTask } from "./reap-orphaned-uploads";
 import type { TaskContext } from "./registry";
 
@@ -44,7 +48,7 @@ beforeEach(async () => {
 	await db.delete(tasks);
 
 	storage = new MemoryStorage();
-	ctx = { db, storage, ...emailTestContext() };
+	ctx = createTaskTestContext({ db, storage });
 	userId = await seedUser(db);
 });
 
@@ -170,7 +174,7 @@ describe("reapOrphanedUploadsTask", () => {
 			db,
 			def: reapOrphanedUploadsTask,
 			task: await claimTask(db, reapOrphanedUploadsTask),
-			ctx: { db, storage: refusing, ...emailTestContext() },
+			ctx: createTaskTestContext({ db, storage: refusing }),
 			logger,
 			signal: new AbortController().signal,
 		});
@@ -209,7 +213,7 @@ describe("reapOrphanedUploadsTask", () => {
 			db,
 			def: reapOrphanedUploadsTask,
 			task: await claimTask(db, reapOrphanedUploadsTask),
-			ctx: { db, storage: abortingOnDelete, ...emailTestContext() },
+			ctx: createTaskTestContext({ db, storage: abortingOnDelete }),
 			logger,
 			signal: controller.signal,
 		});

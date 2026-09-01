@@ -20,7 +20,7 @@ import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
 import { runTask } from "../framework/run";
 import {
 	acquireOrThrow,
-	emailTestContext,
+	createTaskTestContext,
 	readTaskRow,
 	seedTaskRow,
 } from "../testing/tasks";
@@ -54,7 +54,7 @@ beforeEach(async () => {
 	await db.delete(users);
 
 	storage = new MemoryStorage();
-	ctx = { db, storage, ...emailTestContext() };
+	ctx = createTaskTestContext({ db, storage });
 });
 
 let handleCounter = 0;

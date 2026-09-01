@@ -39,7 +39,7 @@ import {
 import { runTask } from "../framework/run";
 import {
 	acquireOrThrow,
-	emailTestContext,
+	createTaskTestContext,
 	readTaskRow,
 	seedTaskRow,
 } from "../testing/tasks";
@@ -80,7 +80,7 @@ beforeEach(async () => {
 	await db.delete(users);
 
 	storage = new MemoryStorage();
-	ctx = { db, storage, ...emailTestContext() };
+	ctx = createTaskTestContext({ db, storage });
 
 	userId = await seedUser(db, { handle: "curator" });
 	referenceId = await seedReference(userId);

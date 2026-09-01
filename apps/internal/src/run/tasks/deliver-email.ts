@@ -65,7 +65,7 @@ async function deliverOne(
 			target,
 			`unsupported email template version: ${item.templateVersion}`,
 		);
-		ctx.emailMetrics.recordEmailAttempt(template, "permanent");
+		ctx.metrics.recordEmailAttempt(template, "permanent");
 		logger.error(
 			{ ...base, templateVersion: item.templateVersion },
 			"email template version is unsupported",
@@ -93,7 +93,7 @@ async function deliverOne(
 		});
 	} catch (err) {
 		await failEmail(ctx.db, target, "the template payload failed to render");
-		ctx.emailMetrics.recordEmailAttempt(template, "permanent");
+		ctx.metrics.recordEmailAttempt(template, "permanent");
 		logger.error({ ...base, err }, "email template failed to render");
 
 		return "failed";
@@ -113,8 +113,8 @@ async function deliverOne(
 				return "sent";
 			}
 
-			ctx.emailMetrics.recordEmailAttempt(template, "accepted");
-			ctx.emailMetrics.observeEmailAcceptedAge(
+			ctx.metrics.recordEmailAttempt(template, "accepted");
+			ctx.metrics.observeEmailAcceptedAge(
 				(Date.now() - item.createdAt.getTime()) / 1000,
 			);
 			logger.info(
@@ -127,7 +127,7 @@ async function deliverOne(
 
 		case "configuration": {
 			await releaseEmailClaim(ctx.db, target);
-			ctx.emailMetrics.setEmailAvailability("configuration_error");
+			ctx.metrics.setEmailAvailability("configuration_error");
 			logger.error(
 				{ ...base },
 				"email delivery stopped: the provider rejected the api key",
@@ -138,7 +138,7 @@ async function deliverOne(
 
 		case "permanent": {
 			await failEmail(ctx.db, target, outcome.error);
-			ctx.emailMetrics.recordEmailAttempt(template, "permanent");
+			ctx.metrics.recordEmailAttempt(template, "permanent");
 			logger.error({ ...base }, "email failed permanently");
 
 			return "failed";
@@ -152,7 +152,7 @@ async function deliverOne(
 					target,
 					`retries exhausted after ${item.attemptCount} attempts: ${outcome.error}`,
 				);
-				ctx.emailMetrics.recordEmailAttempt(template, "exhausted");
+				ctx.metrics.recordEmailAttempt(template, "exhausted");
 				logger.error({ ...base }, "email failed terminally: retries exhausted");
 
 				return "failed";
@@ -164,8 +164,8 @@ async function deliverOne(
 			);
 
 			await scheduleEmailRetry(ctx.db, target, delaySeconds, outcome.error);
-			ctx.emailMetrics.recordEmailAttempt(template, outcome.outcome);
-			ctx.emailMetrics.recordEmailRetryScheduled(template);
+			ctx.metrics.recordEmailAttempt(template, outcome.outcome);
+			ctx.metrics.recordEmailRetryScheduled(template);
 			logger.warn(
 				{ ...base, outcome: outcome.outcome, delaySeconds },
 				"email attempt failed, retry scheduled",
@@ -188,7 +188,7 @@ export const deliverEmailTask = defineTask<typeof payload, TaskContext>({
 				ctx.emailMasterKeys,
 			);
 
-			ctx.emailMetrics.setEmailAvailability(state.availability);
+			ctx.metrics.setEmailAvailability(state.availability);
 
 			if (state.availability === "configuration_error") {
 				logger.error(
@@ -198,7 +198,7 @@ export const deliverEmailTask = defineTask<typeof payload, TaskContext>({
 			}
 
 			if (state.availability !== "ready" || state.apiKey === null) {
-				ctx.emailMetrics.setEmailOutbox(await countEmailOutbox(ctx.db));
+				ctx.metrics.setEmailOutbox(await countEmailOutbox(ctx.db));
 
 				return;
 			}
@@ -252,7 +252,7 @@ export const deliverEmailTask = defineTask<typeof payload, TaskContext>({
 				}
 			}
 
-			ctx.emailMetrics.setEmailOutbox(await countEmailOutbox(ctx.db));
+			ctx.metrics.setEmailOutbox(await countEmailOutbox(ctx.db));
 		});
 
 		await helpers.runStep("prune", async () => {

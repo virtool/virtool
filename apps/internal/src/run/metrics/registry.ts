@@ -121,17 +121,13 @@ export type TaskRunSample = {
 	durationSeconds: number;
 };
 
-/** The email-delivery metrics writers. */
-export type EmailMetrics = {
+/** The metrics surface this process exposes, as returned by {@link createMetrics}. */
+export type Metrics = {
 	recordEmailAttempt: (template: string, outcome: EmailAttemptOutcome) => void;
 	recordEmailRetryScheduled: (template: string) => void;
 	observeEmailAcceptedAge: (seconds: number) => void;
 	setEmailOutbox: (counts: EmailOutboxCounts) => void;
 	setEmailAvailability: (availability: EmailAvailability) => void;
-};
-
-/** The metrics surface this process exposes, as returned by {@link createMetrics}. */
-export type Metrics = EmailMetrics & {
 	recordSpawn: (type: PeriodicTaskName, outcome: PeriodicSpawnOutcome) => void;
 	recordRun: (sample: TaskRunSample) => void;
 	setTaskQueue: (snapshot: TaskQueueSnapshot) => void;

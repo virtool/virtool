@@ -1,7 +1,10 @@
 import type { Db } from "@virtool/data/db/pg";
 import { type TaskRow, tasks } from "@virtool/data/db/schema/tasks";
+import type { EmailMasterKeyConfig } from "@virtool/data/email/crypto";
 import { acquireTask, type ClaimedTask } from "@virtool/data/tasks/data";
+import { MemoryStorage, type StorageBackend } from "@virtool/storage";
 import { eq } from "drizzle-orm";
+import { createMetrics, type Metrics } from "../metrics/registry";
 import type { TaskContext } from "../tasks/registry";
 
 /** The runner id a task test claims under. */
@@ -84,22 +87,22 @@ export async function readTaskRow(db: Db, taskId: number): Promise<TaskRow> {
 	return row;
 }
 
-/**
- * The email context fields a task test that is not about email needs to fill
- * in: no master key, and metrics writers that record nowhere.
- */
-export function emailTestContext(): Pick<
-	TaskContext,
-	"emailMasterKeys" | "emailMetrics"
-> {
+/** Build a complete task context with isolated test infrastructure. */
+export function createTaskTestContext({
+	db,
+	emailMasterKeys = { status: "unset" },
+	metrics = {},
+	storage = new MemoryStorage(),
+}: {
+	db: Db;
+	emailMasterKeys?: EmailMasterKeyConfig;
+	metrics?: Partial<Metrics>;
+	storage?: StorageBackend;
+}): TaskContext {
 	return {
-		emailMasterKeys: { status: "unset" },
-		emailMetrics: {
-			recordEmailAttempt: () => {},
-			recordEmailRetryScheduled: () => {},
-			observeEmailAcceptedAge: () => {},
-			setEmailOutbox: () => {},
-			setEmailAvailability: () => {},
-		},
+		db,
+		emailMasterKeys,
+		metrics: Object.assign(createMetrics("test", 1), metrics),
+		storage,
 	};
 }

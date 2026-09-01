@@ -17,7 +17,6 @@ import { enqueueEmail } from "@virtool/data/email/outbox";
 import { buildProviderIdempotencyKey } from "@virtool/data/email/send";
 import { seedSettings } from "@virtool/data/settings/test/fixtures";
 import { createLogger, type Logger } from "@virtool/logger";
-import { MemoryStorage } from "@virtool/storage";
 import { eq, sql } from "drizzle-orm";
 import {
 	afterAll,
@@ -31,7 +30,7 @@ import {
 } from "vitest";
 import { runTask } from "../framework/run";
 import type { EmailAttemptOutcome } from "../metrics/registry";
-import { claimTask } from "../testing/tasks";
+import { claimTask, createTaskTestContext } from "../testing/tasks";
 import { deliverEmailTask } from "./deliver-email";
 import type { TaskContext } from "./registry";
 
@@ -89,11 +88,10 @@ beforeEach(async () => {
 		outboxSets: 0,
 	};
 
-	ctx = {
+	ctx = createTaskTestContext({
 		db,
-		storage: new MemoryStorage(),
 		emailMasterKeys: masterKeys,
-		emailMetrics: {
+		metrics: {
 			recordEmailAttempt: (template, outcome) => {
 				recorded.attempts.push([template, outcome]);
 			},
@@ -110,7 +108,7 @@ beforeEach(async () => {
 				recorded.availabilities.push(availability);
 			},
 		},
-	};
+	});
 });
 
 afterEach(() => {

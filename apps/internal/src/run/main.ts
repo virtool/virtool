@@ -24,13 +24,7 @@ export async function startRun(): Promise<void> {
 			db: context.db,
 			storage: context.storage,
 			emailMasterKeys: context.config.emailMasterKeys,
-			emailMetrics: {
-				recordEmailAttempt: context.metrics.recordEmailAttempt,
-				recordEmailRetryScheduled: context.metrics.recordEmailRetryScheduled,
-				observeEmailAcceptedAge: context.metrics.observeEmailAcceptedAge,
-				setEmailOutbox: context.metrics.setEmailOutbox,
-				setEmailAvailability: context.metrics.setEmailAvailability,
-			},
+			metrics: context.metrics,
 		};
 
 		const drainTimeoutMs = context.config.drainTimeout * 1_000;
