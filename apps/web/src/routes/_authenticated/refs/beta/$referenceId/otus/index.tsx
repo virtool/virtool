@@ -31,12 +31,6 @@ function LocalOtusRoute() {
 
 	return (
 		<div>
-			<div className="mb-4 flex justify-end">
-				<Button color="blue" onClick={() => setOpen(true)}>
-					Create
-				</Button>
-			</div>
-
 			<CreateLocalOtuDialog
 				open={open}
 				setOpen={setOpen}
@@ -44,7 +38,14 @@ function LocalOtusRoute() {
 				defaultSegmentLengthTolerance={reference.defaultSegmentLengthTolerance}
 			/>
 
-			<LocalOtuV2List referenceId={referenceId} />
+			<LocalOtuV2List
+				referenceId={referenceId}
+				toolbar={
+					<Button color="blue" onClick={() => setOpen(true)}>
+						Create
+					</Button>
+				}
+			/>
 		</div>
 	);
 }
