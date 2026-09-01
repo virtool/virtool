@@ -508,6 +508,8 @@ whitespace is trimmed, and an empty value is treated as unset.
 | `VT_POSTGRES_POOL_MAX` | Positive integer | `10` | Limit the Postgres connection pool. |
 | `VT_METRICS_TOKEN` | String | Unset | Enable `/metrics` and authenticate scrapes with a bearer token. When unset, `/metrics` returns 404. |
 | `VT_SENTRY_DSN` | URL string | Unset | Send server errors to Sentry. Vite also embeds this value in the client at build time; that client value cannot use `_FILE`. |
+| `VT_EMAIL_MASTER_KEY` | Base64 string (32 bytes) | Unset | Decrypt and encrypt the stored Resend API key. When unset or invalid, email is unavailable but the server runs. See [the master-key guide](../../docs/env.md#email-master-key). |
+| `VT_EMAIL_MASTER_KEY_PREVIOUS` | Base64 string (32 bytes) | Unset | Accept envelopes written under the prior master key during rotation. |
 | `VT_STORAGE_BACKEND` | `s3` \| `azure` | Required | Select the object-storage backend shared with the other Virtool services. |
 | `VT_STORAGE_S3_BUCKET` | String | Required for S3 | Name the S3 bucket. |
 | `VT_STORAGE_S3_REGION` | String | Unset | Set the S3 region. |

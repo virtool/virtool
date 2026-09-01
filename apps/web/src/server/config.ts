@@ -1,4 +1,8 @@
 import { resolveFileBacked } from "@virtool/contracts/env";
+import {
+	type EmailMasterKeyConfig,
+	parseEmailMasterKeys,
+} from "@virtool/data/email/crypto";
 import type { StorageConfig } from "@virtool/storage";
 import { z } from "zod";
 
@@ -22,6 +26,14 @@ export type ServerConfig = {
 	 * cannot be file-backed at all.
 	 */
 	sentryDsn: string | undefined;
+	/**
+	 * The instance email master keys, already parsed and fingerprinted.
+	 *
+	 * Never a parse failure: an invalid key value becomes the `invalid` state,
+	 * which the email feature reports as unavailable, rather than a config error
+	 * that would take the whole server down with it.
+	 */
+	emailMasterKeys: EmailMasterKeyConfig;
 	storage: StorageConfig;
 	/**
 	 * How a file download route answers. `stream` sends the bytes through this
@@ -65,6 +77,17 @@ const ServerEnv = z.object({
 	// Listed here so it picks up the `<KEY>_FILE` resolution every other key
 	// gets. Unset — or empty, which deployment tooling injects — disables Sentry.
 	VT_SENTRY_DSN: z.preprocess(
+		(value) => (value === "" ? undefined : value),
+		z.string().optional(),
+	),
+	// Deliberately not validated here: a malformed master key must degrade to
+	// email being unavailable, not crash the server, so the strict parse happens
+	// in `parseEmailMasterKeys` and produces a state rather than an issue.
+	VT_EMAIL_MASTER_KEY: z.preprocess(
+		(value) => (value === "" ? undefined : value),
+		z.string().optional(),
+	),
+	VT_EMAIL_MASTER_KEY_PREVIOUS: z.preprocess(
 		(value) => (value === "" ? undefined : value),
 		z.string().optional(),
 	),
@@ -124,6 +147,10 @@ const ServerEnvSchema = ServerEnv.transform((raw, ctx) => ({
 	postgresPoolMax: raw.VT_POSTGRES_POOL_MAX ?? DEFAULT_POSTGRES_POOL_MAX,
 	metricsToken: raw.VT_METRICS_TOKEN,
 	sentryDsn: raw.VT_SENTRY_DSN,
+	emailMasterKeys: parseEmailMasterKeys(
+		raw.VT_EMAIL_MASTER_KEY,
+		raw.VT_EMAIL_MASTER_KEY_PREVIOUS,
+	),
 	storage: buildStorage(raw, ctx),
 	downloadMode: raw.VT_STORAGE_DOWNLOAD_MODE,
 	uploadsChunked: raw.VT_UPLOADS_CHUNKED,

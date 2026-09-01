@@ -36,7 +36,7 @@ import {
 	vi,
 } from "vitest";
 import { runTask } from "../framework/run";
-import { claimTask, readTaskRow } from "../testing/tasks";
+import { claimTask, emailTestContext, readTaskRow } from "../testing/tasks";
 import { installHmmsTask } from "./install-hmms";
 import type { TaskContext } from "./registry";
 
@@ -62,7 +62,7 @@ beforeEach(async () => {
 	await db.delete(tasks);
 
 	storage = new MemoryStorage();
-	ctx = { db, storage };
+	ctx = { db, storage, ...emailTestContext() };
 });
 
 afterEach(() => {

@@ -15,7 +15,7 @@ import { MemoryStorage } from "@virtool/storage";
 import { eq } from "drizzle-orm";
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
 import { runTask } from "../framework/run";
-import { claimTask, readTaskRow } from "../testing/tasks";
+import { claimTask, emailTestContext, readTaskRow } from "../testing/tasks";
 import type { TaskContext } from "./registry";
 import { timeoutJobsTask } from "./timeout-jobs";
 
@@ -40,7 +40,7 @@ beforeEach(async () => {
 	await db.delete(users);
 	await db.delete(tasks);
 
-	ctx = { db, storage: new MemoryStorage() };
+	ctx = { db, storage: new MemoryStorage(), ...emailTestContext() };
 	userId = await seedUser(db);
 });
 

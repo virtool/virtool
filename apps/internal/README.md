@@ -249,6 +249,8 @@ unset.
 | `VT_POSTGRES_POOL_MAX` | Positive integer | `10` | Limit the Postgres connection pool (`serve` and `run`; `migrate` always uses one connection). |
 | `VT_METRICS_TOKEN` | String | Unset | Enable `/metrics` and authenticate scrapes with a bearer token. When unset, `/metrics` returns 404. |
 | `VT_SENTRY_DSN` | URL string | Unset | Send errors to Sentry. When unset, Sentry is disabled. |
+| `VT_EMAIL_MASTER_KEY` | Base64 string (32 bytes) | Unset | `run`: decrypt the stored Resend API key for the `deliver_email` task. When unset or invalid, the task reports email unavailable and sends nothing; every other task runs normally. See [the master-key guide](../../docs/env.md#email-master-key). |
+| `VT_EMAIL_MASTER_KEY_PREVIOUS` | Base64 string (32 bytes) | Unset | `run`: accept envelopes written under the prior master key during rotation. |
 | `VT_STORAGE_BACKEND` | `s3` \| `azure` | Required | Select the object-storage backend shared with the other Virtool services. |
 | `VT_STORAGE_S3_BUCKET` | String | Required for S3 | Name the S3 bucket. |
 | `VT_STORAGE_S3_REGION` | String | Unset | Set the S3 region. |

@@ -12,7 +12,7 @@ import { MemoryStorage } from "@virtool/storage";
 
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
 import { runTask } from "../framework/run";
-import { claimTask, readTaskRow } from "../testing/tasks";
+import { claimTask, emailTestContext, readTaskRow } from "../testing/tasks";
 import { cleanupSessionsTask } from "./cleanup-sessions";
 import type { TaskContext } from "./registry";
 
@@ -36,7 +36,7 @@ beforeEach(async () => {
 	await db.delete(users);
 	await db.delete(tasks);
 
-	ctx = { db, storage: new MemoryStorage() };
+	ctx = { db, storage: new MemoryStorage(), ...emailTestContext() };
 });
 
 function minutesFromNow(minutes: number): Date {

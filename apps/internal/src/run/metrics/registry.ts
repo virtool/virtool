@@ -1,4 +1,10 @@
-import { PeriodicTaskName, TaskName } from "@virtool/contracts";
+import {
+	type EmailAvailability,
+	emailTemplateTypes,
+	PeriodicTaskName,
+	TaskName,
+} from "@virtool/contracts";
+import type { EmailOutboxCounts } from "@virtool/data/email/outbox";
 import type { ConnectionCounts } from "@virtool/data/metrics/data";
 import type {
 	PeriodicSpawnOutcome,
@@ -62,6 +68,56 @@ const TASK_DURATION_BUCKETS = [
 	1, 5, 15, 30, 60, 120, 300, 600, 1800, 3600, 7200,
 ];
 
+/**
+ * The label an unrecognised template type is folded into.
+ *
+ * `template` on an outbox row is a jsonb payload nothing constrains
+ * database-side, so as with task types the boundedness is enforced here.
+ */
+const OTHER_TEMPLATE = "other";
+
+/** The template names that keep their own label. */
+const KNOWN_TEMPLATES = new Set<string>(emailTemplateTypes);
+
+/** Every template label this process will ever emit. */
+const TEMPLATE_LABELS = [...emailTemplateTypes, OTHER_TEMPLATE];
+
+/** How one delivery attempt ended, as the attempts counter labels it. */
+export type EmailAttemptOutcome =
+	| "accepted"
+	| "retryable"
+	| "rate_limited"
+	| "permanent"
+	| "exhausted";
+
+/** Every attempt outcome, for pre-declaring the counter's label set. */
+const EMAIL_ATTEMPT_OUTCOMES: EmailAttemptOutcome[] = [
+	"accepted",
+	"retryable",
+	"rate_limited",
+	"permanent",
+	"exhausted",
+];
+
+/** Every availability state, for pre-declaring the gauge's label set. */
+const EMAIL_AVAILABILITIES: EmailAvailability[] = [
+	"disabled",
+	"unconfigured",
+	"ready",
+	"configuration_error",
+];
+
+/**
+ * Bucket boundaries for enqueue-to-acceptance latency, in seconds: 1 s to a
+ * day.
+ *
+ * Wider than the task buckets because a retried message legitimately waits out
+ * capped backoff windows, and the tail is exactly what the histogram is for.
+ */
+const EMAIL_ACCEPTED_AGE_BUCKETS = [
+	1, 5, 15, 30, 60, 300, 900, 3600, 14_400, 86_400,
+];
+
 /** One finished task run, as the claim loop observed it. */
 export type TaskRunSample = {
 	/**
@@ -75,8 +131,22 @@ export type TaskRunSample = {
 	durationSeconds: number;
 };
 
+/**
+ * The email-delivery slice of the metrics surface.
+ *
+ * Split out so the delivery task's context can carry exactly these writers
+ * without holding the whole registry.
+ */
+export type EmailMetrics = {
+	recordEmailAttempt: (template: string, outcome: EmailAttemptOutcome) => void;
+	recordEmailRetryScheduled: (template: string) => void;
+	observeEmailAcceptedAge: (seconds: number) => void;
+	setEmailOutbox: (counts: EmailOutboxCounts) => void;
+	setEmailAvailability: (availability: EmailAvailability) => void;
+};
+
 /** The metrics surface this process exposes, as returned by {@link createMetrics}. */
-export type Metrics = {
+export type Metrics = EmailMetrics & {
 	recordSpawn: (type: PeriodicTaskName, outcome: PeriodicSpawnOutcome) => void;
 	recordRun: (sample: TaskRunSample) => void;
 	setTaskQueue: (snapshot: TaskQueueSnapshot) => void;
@@ -185,6 +255,59 @@ export function createMetrics(version: string, poolMax: number): Metrics {
 		registers: [registry],
 	});
 
+	const emailAttempts = new Counter({
+		name: "virtool_email_delivery_attempts_total",
+		help: "Email delivery attempts, by template type and outcome.",
+		labelNames: ["template", "outcome"],
+		registers: [registry],
+	});
+
+	// Pre-declared over the whole cross product for the same reasons the spawn
+	// counter is: `rate()` needs a prior sample, and a permanent-failure series
+	// holding at zero is evidence, not absence.
+	for (const template of TEMPLATE_LABELS) {
+		for (const outcome of EMAIL_ATTEMPT_OUTCOMES) {
+			emailAttempts.inc({ template, outcome }, 0);
+		}
+	}
+
+	const emailRetries = new Counter({
+		name: "virtool_email_retries_scheduled_total",
+		help: "Email delivery retries scheduled, by template type.",
+		labelNames: ["template"],
+		registers: [registry],
+	});
+
+	for (const template of TEMPLATE_LABELS) {
+		emailRetries.inc({ template }, 0);
+	}
+
+	// Deliberately unlabelled: splitting a latency histogram by template halves
+	// the samples behind every quantile, and the attempts counter already
+	// carries the template dimension.
+	const emailAcceptedAge = new Histogram({
+		name: "virtool_email_accepted_age_seconds",
+		help: "Time from enqueue to provider acceptance for an email, in seconds.",
+		buckets: EMAIL_ACCEPTED_AGE_BUCKETS,
+		registers: [registry],
+	});
+
+	const emailOutbox = new Gauge({
+		name: "virtool_email_outbox",
+		help: "Email outbox rows, by state.",
+		labelNames: ["state"],
+		registers: [registry],
+	});
+
+	// A one-hot gauge rather than an enum-valued one: `state` is bounded, and
+	// `virtool_email_availability{state="ready"} == 1` is directly alertable.
+	const emailAvailability = new Gauge({
+		name: "virtool_email_availability",
+		help: "Email delivery availability, 1 on the current state's label.",
+		labelNames: ["state"],
+		registers: [registry],
+	});
+
 	const postgresConnections = new Gauge({
 		name: "virtool_postgres_connections",
 		help: "Open Postgres backends belonging to this process, by backend state.",
@@ -200,10 +323,39 @@ export function createMetrics(version: string, poolMax: number): Metrics {
 		registers: [registry],
 	}).set(poolMax);
 
+	function templateLabel(template: string): string {
+		return KNOWN_TEMPLATES.has(template) ? template : OTHER_TEMPLATE;
+	}
+
 	return {
 		recordSpawn(type, outcome) {
 			// No fold: the caller's type is the schedule, which this union is.
 			spawns.inc({ type, outcome });
+		},
+
+		recordEmailAttempt(template, outcome) {
+			emailAttempts.inc({ template: templateLabel(template), outcome });
+		},
+
+		recordEmailRetryScheduled(template) {
+			emailRetries.inc({ template: templateLabel(template) });
+		},
+
+		observeEmailAcceptedAge(seconds) {
+			emailAcceptedAge.observe(seconds);
+		},
+
+		setEmailOutbox(counts) {
+			emailOutbox.set({ state: "queued" }, counts.queued);
+			emailOutbox.set({ state: "in_flight" }, counts.inFlight);
+			emailOutbox.set({ state: "accepted" }, counts.accepted);
+			emailOutbox.set({ state: "failed" }, counts.failed);
+		},
+
+		setEmailAvailability(availability) {
+			for (const state of EMAIL_AVAILABILITIES) {
+				emailAvailability.set({ state }, state === availability ? 1 : 0);
+			}
 		},
 
 		recordRun(sample) {
