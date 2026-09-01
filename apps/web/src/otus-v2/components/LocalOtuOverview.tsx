@@ -1,4 +1,10 @@
 import Box, { BoxGroup, BoxGroupHeader, BoxGroupSection } from "@base/Box";
+import {
+	Collapsible,
+	CollapsibleContent,
+	CollapsibleTrigger,
+} from "@base/Collapsible";
+import ExternalLink from "@base/ExternalLink";
 import Link from "@base/Link";
 import { useSuspenseLocalOtuV2 } from "@otus-v2/queries";
 
@@ -16,6 +22,15 @@ export default function LocalOtuOverview({
 
 	const previewIsolates = otu.isolates.slice(0, ISOLATE_PREVIEW_COUNT);
 	const remaining = otu.isolateCount - previewIsolates.length;
+	const speciesIndex = otu.taxonomy.lineage.findIndex(
+		(taxon) => taxon.rank === "species",
+	);
+	const higherTaxa =
+		speciesIndex > 0 ? otu.taxonomy.lineage.slice(0, speciesIndex) : [];
+	const speciesAndBelow =
+		speciesIndex >= 0
+			? otu.taxonomy.lineage.slice(speciesIndex)
+			: otu.taxonomy.lineage;
 
 	return (
 		<>
@@ -32,11 +47,22 @@ export default function LocalOtuOverview({
 			{otu.taxonomy.lineage.length > 0 && (
 				<BoxGroup>
 					<BoxGroupHeader>Lineage</BoxGroupHeader>
-					{otu.taxonomy.lineage.map((taxon) => (
-						<BoxGroupSection key={taxon.id}>
-							<span className="font-semibold">{taxon.name}</span>
-							<span className="text-gray-500"> · {taxon.rank}</span>
+					{higherTaxa.length > 0 && (
+						<BoxGroupSection className="p-0">
+							<Collapsible>
+								<CollapsibleTrigger className="px-6 py-3">
+									Show higher taxa
+								</CollapsibleTrigger>
+								<CollapsibleContent>
+									{higherTaxa.map((taxon) => (
+										<LineageTaxon key={taxon.id} taxon={taxon} />
+									))}
+								</CollapsibleContent>
+							</Collapsible>
 						</BoxGroupSection>
+					)}
+					{speciesAndBelow.map((taxon) => (
+						<LineageTaxon key={taxon.id} taxon={taxon} />
 					))}
 				</BoxGroup>
 			)}
@@ -76,5 +102,23 @@ export default function LocalOtuOverview({
 				)}
 			</BoxGroup>
 		</>
+	);
+}
+
+function LineageTaxon({
+	taxon,
+}: {
+	taxon: { id: number; name: string; rank: string };
+}) {
+	return (
+		<BoxGroupSection>
+			<ExternalLink
+				className="font-semibold"
+				href={`https://www.ncbi.nlm.nih.gov/datasets/taxonomy/${taxon.id}/`}
+			>
+				{taxon.name}
+			</ExternalLink>
+			<span className="text-gray-500"> · {taxon.rank}</span>
+		</BoxGroupSection>
 	);
 }

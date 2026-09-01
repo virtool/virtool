@@ -35,6 +35,7 @@ describe("<LocalOtuDetail />", () => {
 			}),
 		).toBeInTheDocument();
 		expect(screen.getByText(otu.id)).toBeInTheDocument();
+		expect(screen.queryByText(`OTU ${otu.id}`)).not.toBeInTheDocument();
 		expect(screen.getByRole("link", { name: "OTU" })).toBeInTheDocument();
 		expect(screen.getByRole("link", { name: "Isolates" })).toBeInTheDocument();
 		expect(screen.getByRole("link", { name: "History" })).toBeInTheDocument();
@@ -63,6 +64,40 @@ describe("<LocalOtuDetail />", () => {
 		expect(
 			screen.getByRole("link", { name: "View 2 more isolates" }),
 		).toBeInTheDocument();
+	});
+
+	it("links lineage names to NCBI taxonomy", async () => {
+		const otuWithLineage = createFakeLocalOtuV2({
+			referenceId: reference.id,
+			taxonomy: {
+				kind: "local",
+				identityId: crypto.randomUUID(),
+				name: "Cucumber mosaic virus",
+				acronym: "CMV",
+				lineage: [
+					{ id: 10239, name: "Viruses", rank: "superkingdom" },
+					{ id: 12242, name: "Cucumber mosaic virus", rank: "species" },
+				],
+			},
+		});
+		mockGetLocalOtuV2(otuWithLineage);
+
+		await renderRoute(`/refs/beta/${reference.id}/otus/${otuWithLineage.id}`);
+
+		expect(
+			await screen.findByRole("button", { name: "Show higher taxa" }),
+		).toHaveAttribute("aria-expanded", "false");
+		expect(
+			screen.queryByRole("link", { name: "Viruses" }),
+		).not.toBeInTheDocument();
+		expect(
+			screen
+				.getAllByRole("link", { name: "Cucumber mosaic virus" })
+				.find((link) => link.getAttribute("href")?.includes("taxonomy/12242/")),
+		).toHaveAttribute(
+			"href",
+			"https://www.ncbi.nlm.nih.gov/datasets/taxonomy/12242/",
+		);
 	});
 
 	it("renders isolates on the isolates tab", async () => {
@@ -107,9 +142,32 @@ describe("<LocalOtuDetail />", () => {
 		).toBeInTheDocument();
 	});
 
-	it("renders the change on the history tab", async () => {
+	it("renders every change on the history tab", async () => {
+		const firstChangeAt = new Date("2024-01-02T03:04:05Z");
+		const secondChangeAt = new Date("2024-02-03T04:05:06Z");
+		const changedOtu = createFakeLocalOtuV2({
+			id: otu.id,
+			referenceId: reference.id,
+			version: 2,
+			changes: [
+				{
+					version: 2,
+					command: "CreateIsolate",
+					commandSchemaVersion: 1,
+					payload: { isolate: otu.isolates[0] },
+					source: "user",
+					user: otu.mostRecentChange.user,
+					createdAt: firstChangeAt,
+				},
+				{ ...otu.mostRecentChange, createdAt: secondChangeAt },
+			],
+		});
+		mockGetLocalOtuV2(changedOtu);
 		await renderRoute(`${base}/history`);
 
-		expect(await screen.findByText(/CreateOTU/)).toBeInTheDocument();
+		expect(await screen.findByText(/Created isolate/)).toBeInTheDocument();
+		expect(screen.getByText(/Created OTU/)).toBeInTheDocument();
+		expect(screen.getByText("2024-01-02 03:04:05")).toBeInTheDocument();
+		expect(screen.getByText("2024-02-03 04:05:06")).toBeInTheDocument();
 	});
 });

@@ -1,4 +1,6 @@
+import { formatDate, formatTime } from "@app/date";
 import Box from "@base/Box";
+import { formatOtuV2Change } from "@otus-v2/history";
 import { useSuspenseLocalOtuV2 } from "@otus-v2/queries";
 
 /** The History tab of the local v2 OTU detail view. */
@@ -14,11 +16,15 @@ export default function LocalOtuHistory({
 	return (
 		<Box>
 			<h3 className="font-semibold">History</h3>
-			<p>
-				{otu.mostRecentChange.command} (schema v
-				{otu.mostRecentChange.commandSchemaVersion}) created version{" "}
-				{otu.mostRecentChange.version} by {otu.mostRecentChange.user.handle}.
-			</p>
+			{otu.changes.map((change) => (
+				<p key={change.version}>
+					{formatOtuV2Change(change)} Version {change.version} by{" "}
+					{change.user.handle}.{" "}
+					<time dateTime={change.createdAt.toISOString()}>
+						{formatDate(change.createdAt)} {formatTime(change.createdAt)}
+					</time>
+				</p>
+			))}
 		</Box>
 	);
 }

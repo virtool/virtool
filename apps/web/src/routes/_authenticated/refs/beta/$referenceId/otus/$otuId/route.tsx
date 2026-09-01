@@ -1,4 +1,5 @@
 import { getErrorStatus } from "@app/queryErrors";
+import CopyText from "@base/CopyText";
 import Link from "@base/Link";
 import SectionHeader from "@base/SectionHeader";
 import LocalOtuDetailTabs from "@otus-v2/components/LocalOtuDetailTabs";
@@ -59,7 +60,9 @@ function LocalOtuDetailLayout() {
 					{otu.taxonomy.acronym ? ` (${otu.taxonomy.acronym})` : ""}
 				</h2>
 				<p>
-					OTU <span className="font-mono">{otu.id}</span>
+					<CopyText tag="otu-id" value={otu.id}>
+						<span className="font-mono">{otu.id}</span>
+					</CopyText>
 				</p>
 			</SectionHeader>
 

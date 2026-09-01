@@ -2,6 +2,7 @@ import { faker } from "@faker-js/faker";
 import {
 	type LocalOtuV2,
 	type LocalOtuV2Summary,
+	type OtuV2Change,
 	OtuV2IsolateNameType,
 	OtuV2MoleculeType,
 	OtuV2SegmentRule,
@@ -14,6 +15,56 @@ export function createFakeLocalOtuV2(
 	overrides?: Partial<LocalOtuV2>,
 ): LocalOtuV2 {
 	const segmentId = faker.string.uuid();
+	const change: OtuV2Change = {
+		version: 1,
+		command: "CreateOTU",
+		commandSchemaVersion: 1,
+		payload: {
+			molecule: {
+				type: OtuV2MoleculeType.RNA,
+				strandedness: OtuV2Strandedness.single,
+				topology: OtuV2Topology.linear,
+			},
+			plan: {
+				id: faker.string.uuid(),
+				segments: [
+					{
+						id: segmentId,
+						name: null,
+						length: 6,
+						lengthTolerance: 0.05,
+						rule: OtuV2SegmentRule.required,
+					},
+				],
+			},
+			taxonomy: {
+				kind: "local",
+				identityId: faker.string.uuid(),
+				name: faker.word.noun({ strategy: "any-length" }),
+				acronym: null,
+				lineage: [],
+			},
+			promotedAccessions: [],
+			isolate: {
+				id: faker.string.uuid(),
+				name: null,
+				sequences: [
+					{
+						id: faker.string.uuid(),
+						definition: faker.lorem.sentence(),
+						sequence: "ATCGAT",
+						segmentId,
+					},
+				],
+			},
+		},
+		source: "user",
+		user: {
+			id: faker.number.int(),
+			handle: faker.internet.username(),
+		},
+		createdAt: faker.date.past(),
+	};
 
 	const base: LocalOtuV2 = {
 		id: faker.string.uuid(),
@@ -61,17 +112,8 @@ export function createFakeLocalOtuV2(
 			},
 		],
 		createdAt: faker.date.past(),
-		mostRecentChange: {
-			version: 1,
-			command: "CreateOTU",
-			commandSchemaVersion: 1,
-			source: "user",
-			user: {
-				id: faker.number.int(),
-				handle: faker.internet.username(),
-			},
-			createdAt: faker.date.past(),
-		},
+		changes: [change],
+		mostRecentChange: change,
 	};
 
 	return { ...base, ...overrides };

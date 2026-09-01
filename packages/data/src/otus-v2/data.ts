@@ -12,7 +12,7 @@ import {
 	type LocalOtuV2SequenceSummary,
 	type LocalOtuV2Summary,
 } from "@virtool/contracts";
-import { and, asc, count, eq, inArray, isNull } from "drizzle-orm";
+import { and, asc, count, desc, eq, inArray, isNull } from "drizzle-orm";
 import type { Db, DbOrTx, Transaction } from "../db/pg";
 import { takeFirst } from "../db/rows";
 import {
@@ -486,15 +486,15 @@ async function getLocalOtuMetadata(
 				version: otuChanges.version,
 				command: otuChanges.command,
 				commandSchemaVersion: otuChanges.commandSchemaVersion,
+				payload: otuChanges.payload,
 				createdAt: otuChanges.createdAt,
 				userId: users.id,
 				userHandle: users.handle,
 			})
 			.from(otuChanges)
 			.innerJoin(users, eq(otuChanges.userId, users.id))
-			.where(
-				and(eq(otuChanges.otuId, otuId), eq(otuChanges.version, otu.version)),
-			),
+			.where(eq(otuChanges.otuId, otuId))
+			.orderBy(desc(otuChanges.version)),
 	]);
 
 	const taxonomy = takeFirst(taxonomyRows);
@@ -534,10 +534,20 @@ async function getLocalOtuMetadata(
 			})),
 		},
 		createdAt: otu.createdAt,
+		changes: changeRows.map((row) => ({
+			version: row.version,
+			command: row.command,
+			commandSchemaVersion: row.commandSchemaVersion,
+			payload: row.payload,
+			source: "user",
+			user: { id: row.userId, handle: row.userHandle },
+			createdAt: row.createdAt,
+		})),
 		mostRecentChange: {
 			version: change.version,
 			command: change.command,
 			commandSchemaVersion: change.commandSchemaVersion,
+			payload: change.payload,
 			source: "user",
 			user: { id: change.userId, handle: change.userHandle },
 			createdAt: change.createdAt,
@@ -878,15 +888,15 @@ export async function getLocalOtu(
 					version: otuChanges.version,
 					command: otuChanges.command,
 					commandSchemaVersion: otuChanges.commandSchemaVersion,
+					payload: otuChanges.payload,
 					createdAt: otuChanges.createdAt,
 					userId: users.id,
 					userHandle: users.handle,
 				})
 				.from(otuChanges)
 				.innerJoin(users, eq(otuChanges.userId, users.id))
-				.where(
-					and(eq(otuChanges.otuId, otuId), eq(otuChanges.version, otu.version)),
-				),
+				.where(eq(otuChanges.otuId, otuId))
+				.orderBy(desc(otuChanges.version)),
 		]);
 
 	const taxonomy = takeFirst(taxonomyRows);
@@ -939,10 +949,20 @@ export async function getLocalOtu(
 		},
 		isolates,
 		createdAt: otu.createdAt,
+		changes: changeRows.map((row) => ({
+			version: row.version,
+			command: row.command,
+			commandSchemaVersion: row.commandSchemaVersion,
+			payload: row.payload,
+			source: "user",
+			user: { id: row.userId, handle: row.userHandle },
+			createdAt: row.createdAt,
+		})),
 		mostRecentChange: {
 			version: change.version,
 			command: change.command,
 			commandSchemaVersion: change.commandSchemaVersion,
+			payload: change.payload,
 			source: "user",
 			user: { id: change.userId, handle: change.userHandle },
 			createdAt: change.createdAt,

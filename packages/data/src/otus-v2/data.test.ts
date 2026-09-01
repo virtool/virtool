@@ -8,6 +8,7 @@ import { createTestDatabase, type TestDatabase } from "../db/test/fixtures";
 import { createReferenceV2 } from "../references-v2/data";
 import {
 	createLocalOtu,
+	createLocalOtuIsolate,
 	getLocalOtu,
 	getLocalOtus,
 	OtuV2ConflictError,
@@ -128,6 +129,46 @@ describe("createReferenceV2", () => {
 });
 
 describe("createLocalOtu", () => {
+	it("returns the complete change history newest first", async () => {
+		const reference = await createReference();
+		const otuId = "90000000-0000-4000-8000-000000000001";
+		await createLocalOtu(db, {
+			referenceId: reference.id,
+			userId,
+			command: createCommand(otuId),
+		});
+
+		const otu = await createLocalOtuIsolate(db, {
+			referenceId: reference.id,
+			userId,
+			command: {
+				type: "CreateIsolate",
+				schemaVersion: 1,
+				otuId,
+				expectedVersion: 1,
+				payload: {
+					isolate: {
+						id: "90000000-0000-4000-8000-000000000007",
+						name: { type: "isolate", value: "Lab 2" },
+						sequences: [
+							{
+								id: "90000000-0000-4000-8000-000000000008",
+								definition: "Complete genome",
+								sequence: "ATCGNNRY",
+								segmentId: "90000000-0000-4000-8000-000000000004",
+							},
+						],
+					},
+				},
+			},
+		});
+
+		expect(otu.changes).toMatchObject([
+			{ version: 2, command: "CreateIsolate" },
+			{ version: 1, command: "CreateOTU" },
+		]);
+	});
+
 	it("commits and assembles one complete version with semantic history", async () => {
 		const reference = await createReference();
 		const otu = await createLocalOtu(db, {

@@ -301,12 +301,20 @@ export type OtuV2Molecule = z.output<typeof moleculeSchema>;
 /** The creation history summary embedded in the tracer read model. */
 export type OtuV2Change = {
 	version: number;
-	command: "CreateOTU" | "CreateIsolate";
 	commandSchemaVersion: number;
 	source: "user";
 	user: UserNested;
 	createdAt: Date;
-};
+} & (
+	| {
+			command: "CreateOTU";
+			payload: CreateLocalOtuCommand["payload"];
+	  }
+	| {
+			command: "CreateIsolate";
+			payload: CreateLocalOtuIsolateCommand["payload"];
+	  }
+);
 
 /** A summary of a local v2 OTU for listing within a Reference. */
 export type LocalOtuV2Summary = {
@@ -360,6 +368,7 @@ export type LocalOtuV2 = {
 	plan: OtuV2Plan;
 	isolates: OtuV2Isolate[];
 	createdAt: Date;
+	changes: OtuV2Change[];
 	mostRecentChange: OtuV2Change;
 };
 
