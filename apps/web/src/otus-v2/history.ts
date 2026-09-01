@@ -15,16 +15,20 @@ function assertNever(value: never): never {
 	throw new Error(`Unhandled OTU history change: ${JSON.stringify(value)}`);
 }
 
-/** Render a v2 OTU history change as a human-readable message. */
-export function formatOtuV2Change(change: OtuV2Change): string {
+/** Get the human-readable action and subject for a v2 OTU history change. */
+export function getOtuV2ChangeDescription(change: OtuV2Change) {
 	switch (change.command) {
 		case "CreateOTU":
-			return `Created OTU '${change.payload.taxonomy.name}'.`;
+			return {
+				action: "created OTU",
+				subject: change.payload.taxonomy.name,
+			};
 		case "CreateIsolate": {
 			const isolateName = formatIsolateName(change);
-			return isolateName
-				? `Created isolate '${isolateName}'.`
-				: "Created an unnamed isolate.";
+			return {
+				action: isolateName ? "created isolate" : "created an unnamed isolate",
+				subject: isolateName,
+			};
 		}
 		default:
 			return assertNever(change);

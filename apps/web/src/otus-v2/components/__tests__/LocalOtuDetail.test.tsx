@@ -1,4 +1,5 @@
-import { screen } from "@testing-library/react";
+import { screen, within } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import { createFakeLocalOtuV2 } from "@tests/fake/otusV2";
 import { createFakeReferenceV2 } from "@tests/fake/referencesV2";
 import { mockGetLocalOtuV2 } from "@tests/server-fn/otusV2";
@@ -176,9 +177,21 @@ describe("<LocalOtuDetail />", () => {
 		mockGetLocalOtuV2(changedOtu);
 		await renderRoute(`${base}/history`);
 
-		expect(await screen.findByText(/Created isolate/)).toBeInTheDocument();
-		expect(screen.getByText(/Created OTU/)).toBeInTheDocument();
-		expect(screen.getByText("2024-01-02 03:04:05")).toBeInTheDocument();
-		expect(screen.getByText("2024-02-03 04:05:06")).toBeInTheDocument();
+		const history = await screen.findByRole("list", {
+			name: "OTU change history",
+		});
+		const items = within(history).getAllByRole("listitem");
+
+		expect(items).toHaveLength(2);
+		expect(items[0]).toHaveTextContent(/created isolate/);
+		expect(items[0]).toHaveTextContent("Version 2");
+		expect(items[1]).toHaveTextContent(/created OTU/);
+		expect(items[1]).toHaveTextContent("Version 1");
+
+		const times = within(history).getAllByRole("button");
+		await userEvent.hover(times[0]);
+		expect(await screen.findByRole("tooltip")).toHaveTextContent(
+			"January 2, 2024 at 03:04:05",
+		);
 	});
 });
