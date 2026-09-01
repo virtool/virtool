@@ -65,7 +65,10 @@ export default function ReferenceMembers({
 						</button>
 					)}
 				</h2>
-				<p>Manage membership and rights for reference {plural}.</p>
+				<p>
+					Manage membership and rights for {plural} who have access to this
+					reference.
+				</p>
 			</SectionHeader>
 			<BoxGroup>
 				{members.length ? (
