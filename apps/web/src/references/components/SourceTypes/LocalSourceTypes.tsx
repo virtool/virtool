@@ -1,10 +1,5 @@
 import SettingsCheckbox from "@administration/components/SettingsCheckbox";
-import {
-	BoxGroup,
-	BoxGroupDisabled,
-	BoxGroupHeader,
-	BoxGroupSection,
-} from "@base/Box";
+import { BoxGroup, BoxGroupDisabled, BoxGroupSection } from "@base/Box";
 import Button from "@base/Button";
 import { IconButton } from "@base/Icon";
 import { InputContainer, InputError, InputSimple } from "@base/Input";
@@ -67,11 +62,6 @@ export function LocalSourceTypes() {
 				</small>
 			</SettingsCheckbox>
 			<BoxGroup>
-				<BoxGroupHeader>
-					<h2>Manage Source Types</h2>
-					<p>Add or remove source types for this reference.</p>
-				</BoxGroupHeader>
-
 				<BoxGroupDisabled disabled={!restrictSourceTypes}>
 					<SourceTypeList sourceTypes={sourceTypes} onRemove={handleRemove} />
 					{lastRemoved && (

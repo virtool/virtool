@@ -1,5 +1,6 @@
-import { BoxGroup, BoxGroupHeader, BoxGroupSection } from "@base/Box";
+import { BoxGroup, BoxGroupSection } from "@base/Box";
 import LoadingPlaceholder from "@base/LoadingPlaceholder";
+import SectionHeader from "@base/SectionHeader";
 import type { UnbuiltChangesSearchResult } from "@virtool/contracts";
 import { sortBy } from "es-toolkit";
 import type { ReactNode } from "react";
@@ -62,9 +63,11 @@ export default function RebuildHistory({ unbuilt }: RebuildHistoryProps) {
 	}
 
 	return (
-		<BoxGroup>
-			<BoxGroupHeader>Changes</BoxGroupHeader>
-			{content}
-		</BoxGroup>
+		<section>
+			<SectionHeader>
+				<h2>Changes</h2>
+			</SectionHeader>
+			<BoxGroup>{content}</BoxGroup>
+		</section>
 	);
 }

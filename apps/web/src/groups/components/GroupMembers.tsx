@@ -1,5 +1,6 @@
-import { BoxGroup, BoxGroupHeader, BoxGroupSection } from "@base/Box";
+import { BoxGroup, BoxGroupSection } from "@base/Box";
 import { InitialIcon } from "@base/Icon";
+import SectionHeader from "@base/SectionHeader";
 import type { UserNested } from "@virtool/contracts";
 
 type MemberProps = {
@@ -17,19 +18,20 @@ export function GroupMembers({ members }: MemberProps) {
 	));
 
 	return (
-		<BoxGroup>
-			<BoxGroupHeader>
+		<section>
+			<SectionHeader>
 				<h2>Members</h2>
-			</BoxGroupHeader>
-
-			{memberComponents}
-			{Boolean(memberComponents.length) || (
-				<BoxGroupSection key="no-members">
-					<div className="flex items-center justify-center py-6">
-						No Group Members
-					</div>
-				</BoxGroupSection>
-			)}
-		</BoxGroup>
+			</SectionHeader>
+			<BoxGroup>
+				{memberComponents}
+				{Boolean(memberComponents.length) || (
+					<BoxGroupSection key="no-members">
+						<div className="flex items-center justify-center py-6">
+							No Group Members
+						</div>
+					</BoxGroupSection>
+				)}
+			</BoxGroup>
+		</section>
 	);
 }

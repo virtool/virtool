@@ -3,12 +3,13 @@ import type { BlastHit, FormattedNuvsHit } from "@analyses/types";
 import { addSeconds, formatDistanceStrict } from "@app/date";
 import { useNow } from "@app/hooks";
 import Alert from "@base/Alert";
-import Box, { BoxGroup, BoxGroupHeader, BoxGroupTable } from "@base/Box";
+import Box, { BoxGroup, BoxGroupTable } from "@base/Box";
 import Button from "@base/Button";
 import ExternalLink from "@base/ExternalLink";
 import Icon from "@base/Icon";
 import Loader from "@base/Loader";
 import RelativeTime from "@base/RelativeTime";
+import SectionHeader from "@base/SectionHeader";
 import { ExternalLink as ExternalLinkIcon, Info, Redo2 } from "lucide-react";
 
 const ridRoot =
@@ -127,28 +128,32 @@ function BlastResults({ hits, onBlast }: BlastResultsProps) {
 	));
 
 	return (
-		<BoxGroup>
-			<BoxGroupHeader className="flex-row items-center justify-between px-4 py-2.5 [&_svg]:mr-1">
-				<strong>NCBI BLAST</strong>
-				<Button onClick={onBlast}>
-					<Icon icon={Redo2} />
-					Retry
-				</Button>
-			</BoxGroupHeader>
-			<BoxGroupTable>
-				<caption className="sr-only">BLAST hits</caption>
-				<thead>
-					<tr>
-						<th scope="col">Accession</th>
-						<th scope="col">Name</th>
-						<th scope="col">E-value</th>
-						<th scope="col">Score</th>
-						<th scope="col">Identity</th>
-					</tr>
-				</thead>
-				<tbody>{components}</tbody>
-			</BoxGroupTable>
-		</BoxGroup>
+		<section>
+			<SectionHeader className="[&_svg]:mr-1">
+				<h2 className="flex items-center justify-between">
+					NCBI BLAST
+					<Button onClick={onBlast}>
+						<Icon icon={Redo2} />
+						Retry
+					</Button>
+				</h2>
+			</SectionHeader>
+			<BoxGroup>
+				<BoxGroupTable>
+					<caption className="sr-only">BLAST hits</caption>
+					<thead>
+						<tr>
+							<th scope="col">Accession</th>
+							<th scope="col">Name</th>
+							<th scope="col">E-value</th>
+							<th scope="col">Score</th>
+							<th scope="col">Identity</th>
+						</tr>
+					</thead>
+					<tbody>{components}</tbody>
+				</BoxGroupTable>
+			</BoxGroup>
+		</section>
 	);
 }
 

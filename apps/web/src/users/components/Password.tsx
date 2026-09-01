@@ -1,4 +1,4 @@
-import { BoxGroup, BoxGroupHeader, BoxGroupSection } from "@base/Box";
+import { BoxGroup, BoxGroupSection } from "@base/Box";
 import Checkbox from "@base/Checkbox";
 import {
 	InputContainer,
@@ -8,6 +8,7 @@ import {
 } from "@base/Input";
 import RelativeTime from "@base/RelativeTime";
 import SaveButton from "@base/SaveButton";
+import SectionHeader from "@base/SectionHeader";
 import { usePasswordRules } from "@forms/password";
 import { useUpdateUser } from "@users/queries";
 import { useForm } from "react-hook-form";
@@ -47,59 +48,60 @@ export default function Password({
 	}
 
 	return (
-		<BoxGroup>
-			<BoxGroupHeader>
+		<section>
+			<SectionHeader>
 				<h2>Change Password</h2>
 				<p>
 					Last changed <RelativeTime time={lastPasswordChange} />
 				</p>
-			</BoxGroupHeader>
+			</SectionHeader>
+			<BoxGroup>
+				<BoxGroupSection>
+					<form
+						onSubmit={handleSubmit((values) =>
+							mutation.mutate({
+								userId: id,
+								update: { password: values.password },
+							}),
+						)}
+					>
+						<InputGroup>
+							<InputContainer>
+								<InputSimple
+									aria-label="password"
+									id="password"
+									type="password"
+									autoComplete="new-password-for-other-user"
+									aria-required
+									aria-invalid={
+										Boolean(errors.password) || mutation.isError || undefined
+									}
+									aria-describedby={
+										errors.password || mutation.isError
+											? "password-error"
+											: undefined
+									}
+									{...register("password", passwordRules)}
+								/>
+								<InputError id="password-error">
+									{errors.password?.message ||
+										(mutation.isError && mutation.error.message)}
+								</InputError>
+							</InputContainer>
+						</InputGroup>
 
-			<BoxGroupSection>
-				<form
-					onSubmit={handleSubmit((values) =>
-						mutation.mutate({
-							userId: id,
-							update: { password: values.password },
-						}),
-					)}
-				>
-					<InputGroup>
-						<InputContainer>
-							<InputSimple
-								aria-label="password"
-								id="password"
-								type="password"
-								autoComplete="new-password-for-other-user"
-								aria-required
-								aria-invalid={
-									Boolean(errors.password) || mutation.isError || undefined
-								}
-								aria-describedby={
-									errors.password || mutation.isError
-										? "password-error"
-										: undefined
-								}
-								{...register("password", passwordRules)}
+						<div className="flex items-center justify-between">
+							<Checkbox
+								checked={forceReset}
+								id="ForceReset"
+								label="Force user to reset password on next login"
+								onClick={handleSetForceReset}
 							/>
-							<InputError id="password-error">
-								{errors.password?.message ||
-									(mutation.isError && mutation.error.message)}
-							</InputError>
-						</InputContainer>
-					</InputGroup>
-
-					<div className="flex items-center justify-between">
-						<Checkbox
-							checked={forceReset}
-							id="ForceReset"
-							label="Force user to reset password on next login"
-							onClick={handleSetForceReset}
-						/>
-						<SaveButton />
-					</div>
-				</form>
-			</BoxGroupSection>
-		</BoxGroup>
+							<SaveButton />
+						</div>
+					</form>
+				</BoxGroupSection>
+			</BoxGroup>
+		</section>
 	);
 }

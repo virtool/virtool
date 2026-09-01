@@ -1,10 +1,11 @@
 import { useFetchAccount } from "@account/account";
 import { useCheckAdminRole } from "@administration/hooks";
-import Box, { BoxGroup, BoxGroupHeader, BoxGroupSection } from "@base/Box";
+import Box, { BoxGroup, BoxGroupSection } from "@base/Box";
 import { ContainerNarrow } from "@base/Container";
 import { InputGroup, InputLabel } from "@base/Input";
 import LoadingPlaceholder from "@base/LoadingPlaceholder";
 import QueryError from "@base/QueryError";
+import SectionHeader from "@base/SectionHeader";
 import Select, { SelectButton, SelectContent, SelectItem } from "@base/Select";
 import { useListGroups } from "@groups/queries";
 import RightsSelect from "@samples/components/RightsSelect";
@@ -113,56 +114,62 @@ export default function SampleRights({ sampleId }: SampleRightsProps) {
 
 	return (
 		<ContainerNarrow>
-			<BoxGroup>
-				<BoxGroupHeader>
+			<section>
+				<SectionHeader>
 					<h2>Sample Rights</h2>
 					<p>
 						Control who can read and write this sample and which user group owns
 						the sample.
 					</p>
-				</BoxGroupHeader>
-				<BoxGroupSection>
-					<InputGroup>
-						<InputLabel htmlFor="group">Group</InputLabel>
-						<Select
-							value={selectedGroupId || noGroup}
-							onValueChange={(value) =>
-								handleChangeGroup(value === noGroup ? "" : value)
-							}
-						>
-							<SelectButton className="w-full" icon={ChevronDown} id="group" />
-							<SelectContent>
-								<SelectItem key={noGroup} value={noGroup}>
-									None
-								</SelectItem>
-								{groups.map((group) => (
-									<SelectItem key={group.id} value={group.id.toString()}>
-										{group.name}
+				</SectionHeader>
+				<BoxGroup>
+					<BoxGroupSection>
+						<InputGroup>
+							<InputLabel htmlFor="group">Group</InputLabel>
+							<Select
+								value={selectedGroupId || noGroup}
+								onValueChange={(value) =>
+									handleChangeGroup(value === noGroup ? "" : value)
+								}
+							>
+								<SelectButton
+									className="w-full"
+									icon={ChevronDown}
+									id="group"
+								/>
+								<SelectContent>
+									<SelectItem key={noGroup} value={noGroup}>
+										None
 									</SelectItem>
-								))}
-							</SelectContent>
-						</Select>
-					</InputGroup>
+									{groups.map((group) => (
+										<SelectItem key={group.id} value={group.id.toString()}>
+											{group.name}
+										</SelectItem>
+									))}
+								</SelectContent>
+							</Select>
+						</InputGroup>
 
-					<InputGroup>
-						<InputLabel htmlFor="groupRights">Group Rights</InputLabel>
-						<RightsSelect
-							id="groupRights"
-							value={groupRights}
-							onChange={(value) => handleChangeRights(value, "group")}
-						/>
-					</InputGroup>
+						<InputGroup>
+							<InputLabel htmlFor="groupRights">Group Rights</InputLabel>
+							<RightsSelect
+								id="groupRights"
+								value={groupRights}
+								onChange={(value) => handleChangeRights(value, "group")}
+							/>
+						</InputGroup>
 
-					<InputGroup>
-						<InputLabel htmlFor="allUsers">All {"Users'"} Rights</InputLabel>
-						<RightsSelect
-							id="allUsers"
-							value={allRights}
-							onChange={(value) => handleChangeRights(value, "all")}
-						/>
-					</InputGroup>
-				</BoxGroupSection>
-			</BoxGroup>
+						<InputGroup>
+							<InputLabel htmlFor="allUsers">All {"Users'"} Rights</InputLabel>
+							<RightsSelect
+								id="allUsers"
+								value={allRights}
+								onChange={(value) => handleChangeRights(value, "all")}
+							/>
+						</InputGroup>
+					</BoxGroupSection>
+				</BoxGroup>
+			</section>
 		</ContainerNarrow>
 	);
 }
