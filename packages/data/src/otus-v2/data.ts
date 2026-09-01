@@ -4,6 +4,8 @@ import {
 	type CreateLocalOtuCommandInput,
 	CreateLocalOtuIsolateCommand,
 	type CreateLocalOtuIsolateCommandInput,
+	DeleteLocalOtuCommand,
+	type DeleteLocalOtuCommandInput,
 	type LocalOtuV2,
 	type LocalOtuV2IsolateDetail,
 	type LocalOtuV2IsolateSummary,
@@ -11,6 +13,7 @@ import {
 	type LocalOtuV2Sequence,
 	type LocalOtuV2SequenceSummary,
 	type LocalOtuV2Summary,
+	type OtuV2Change,
 } from "@virtool/contracts";
 import { and, asc, count, desc, eq, inArray, isNull } from "drizzle-orm";
 import type { Db, DbOrTx, Transaction } from "../db/pg";
@@ -99,6 +102,69 @@ export type CreateLocalOtuIsolateValues = {
 	userId: number;
 	command: CreateLocalOtuIsolateCommandInput;
 };
+
+/** Values needed to delete a local OTU. */
+export type DeleteLocalOtuValues = {
+	referenceId: string;
+	userId: number;
+	command: DeleteLocalOtuCommandInput;
+};
+
+/** Soft-delete one local OTU atomically at the expected version. */
+export async function deleteLocalOtu(
+	db: Db,
+	values: DeleteLocalOtuValues,
+): Promise<void> {
+	const command = DeleteLocalOtuCommand.parse(values.command);
+
+	await db.transaction(async (tx) => {
+		const otu = takeFirst(
+			await tx
+				.select({
+					version: otusV2.version,
+					deletedVersion: otusV2.deletedVersion,
+					archived: referenceRoots.archived,
+					kind: referenceRoots.kind,
+				})
+				.from(otusV2)
+				.innerJoin(referenceRoots, eq(referenceRoots.id, otusV2.referenceId))
+				.where(
+					and(
+						eq(otusV2.id, command.otuId),
+						eq(otusV2.referenceId, values.referenceId),
+					),
+				)
+				.for("update"),
+		);
+
+		if (!otu || otu.deletedVersion !== null) {
+			throw new OtuV2NotFoundError();
+		}
+		if (otu.archived || otu.kind !== "local") {
+			throw new OtuV2ReferenceNotWritableError();
+		}
+		if (otu.version !== command.expectedVersion) {
+			throw new OtuV2VersionConflictError();
+		}
+
+		const version = command.expectedVersion + 1;
+		await tx
+			.update(otusV2)
+			.set({ version, deletedVersion: version })
+			.where(eq(otusV2.id, command.otuId));
+		await tx.insert(otuChanges).values({
+			referenceId: values.referenceId,
+			otuId: command.otuId,
+			version,
+			command: command.type,
+			commandSchemaVersion: command.schemaVersion,
+			payload: command.payload,
+			source: "user",
+			userId: values.userId,
+			createdAt: new Date(),
+		});
+	});
+}
 
 /** Add one isolate to a local OTU atomically at the expected version. */
 export async function createLocalOtuIsolate(
@@ -542,7 +608,7 @@ async function getLocalOtuMetadata(
 			source: "user",
 			user: { id: row.userId, handle: row.userHandle },
 			createdAt: row.createdAt,
-		})),
+		})) as OtuV2Change[],
 		mostRecentChange: {
 			version: change.version,
 			command: change.command,
@@ -551,7 +617,7 @@ async function getLocalOtuMetadata(
 			source: "user",
 			user: { id: change.userId, handle: change.userHandle },
 			createdAt: change.createdAt,
-		},
+		} as OtuV2Change,
 	};
 }
 
@@ -957,7 +1023,7 @@ export async function getLocalOtu(
 			source: "user",
 			user: { id: row.userId, handle: row.userHandle },
 			createdAt: row.createdAt,
-		})),
+		})) as OtuV2Change[],
 		mostRecentChange: {
 			version: change.version,
 			command: change.command,
@@ -966,7 +1032,7 @@ export async function getLocalOtu(
 			source: "user",
 			user: { id: change.userId, handle: change.userHandle },
 			createdAt: change.createdAt,
-		},
+		} as OtuV2Change,
 	};
 
 	CreateLocalOtuCommand.parse({

@@ -2,6 +2,7 @@ import { getErrorStatus } from "@app/queryErrors";
 import CopyText from "@base/CopyText";
 import Link from "@base/Link";
 import SectionHeader from "@base/SectionHeader";
+import DeleteLocalOtu from "@otus-v2/components/DeleteLocalOtu";
 import LocalOtuDetailTabs from "@otus-v2/components/LocalOtuDetailTabs";
 import { useSuspenseLocalOtuV2 } from "@otus-v2/queries";
 import { useSuspenseReferenceV2 } from "@references-v2/queries";
@@ -54,16 +55,19 @@ function LocalOtuDetailLayout() {
 				</Link>
 			</p>
 
-			<SectionHeader>
-				<h2>
-					{otu.taxonomy.name}
-					{otu.taxonomy.acronym ? ` (${otu.taxonomy.acronym})` : ""}
-				</h2>
-				<p>
-					<CopyText tag="otu-id" value={otu.id}>
-						<span className="font-mono">{otu.id}</span>
-					</CopyText>
-				</p>
+			<SectionHeader className="flex items-start justify-between">
+				<div>
+					<h2>
+						{otu.taxonomy.name}
+						{otu.taxonomy.acronym ? ` (${otu.taxonomy.acronym})` : ""}
+					</h2>
+					<p>
+						<CopyText tag="otu-id" value={otu.id}>
+							<span className="font-mono">{otu.id}</span>
+						</CopyText>
+					</p>
+				</div>
+				<DeleteLocalOtu otu={otu} />
 			</SectionHeader>
 
 			<LocalOtuDetailTabs referenceId={referenceId} otuId={otuId} />

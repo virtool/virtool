@@ -3,12 +3,14 @@ import { setResponseStatus } from "@tanstack/react-start/server";
 import {
 	CreateLocalOtuCommand,
 	CreateLocalOtuIsolateCommand,
+	DeleteLocalOtuCommand,
 	type GenbankIsolateDraft,
 	type GenbankOtuDraft,
 } from "@virtool/contracts";
 import {
 	createLocalOtu,
 	createLocalOtuIsolate,
+	deleteLocalOtu,
 	getLocalOtu,
 	getLocalOtuIsolate,
 	getLocalOtuIsolates,
@@ -60,6 +62,11 @@ const createLocalOtuSchema = z.object({
 const createLocalOtuIsolateSchema = z.object({
 	referenceId: z.uuid(),
 	command: CreateLocalOtuIsolateCommand,
+});
+
+const deleteLocalOtuSchema = z.object({
+	referenceId: z.uuid(),
+	command: DeleteLocalOtuCommand,
 });
 
 // The accessions go into an outbound NCBI query string, so each is constrained
@@ -171,6 +178,29 @@ export const createLocalOtuIsolateFn = createServerFn({ method: "POST" })
 			});
 			setResponseStatus(201);
 			return otu;
+		} catch (err) {
+			return rethrowAsHttp(err);
+		}
+	});
+
+export const deleteLocalOtuFn = createServerFn({ method: "POST" })
+	.middleware([authenticated()])
+	.validator(deleteLocalOtuSchema)
+	.handler(async ({ context, data }) => {
+		try {
+			const actor = await resolveReferenceActor(db, context.session.userId);
+			if (
+				!(await checkReferenceV2Right(db, data.referenceId, "modifyOtu", actor))
+			) {
+				setResponseStatus(403);
+				throw new ForbiddenError();
+			}
+			await deleteLocalOtu(db, {
+				referenceId: data.referenceId,
+				userId: context.session.userId,
+				command: data.command,
+			});
+			return null;
 		} catch (err) {
 			return rethrowAsHttp(err);
 		}

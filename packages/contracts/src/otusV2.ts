@@ -241,6 +241,17 @@ export const CreateLocalOtuIsolateCommand = z
 	})
 	.strict();
 
+/** A command that deletes an existing local OTU. */
+export const DeleteLocalOtuCommand = z
+	.object({
+		type: z.literal("DeleteOTU"),
+		schemaVersion: z.literal(1),
+		otuId: uuidSchema,
+		expectedVersion: z.number().int().positive(),
+		payload: z.object({}).strict(),
+	})
+	.strict();
+
 /** Input accepted before a local `CreateOTU` command is normalized. */
 export type CreateLocalOtuCommandInput = z.input<typeof CreateLocalOtuCommand>;
 
@@ -256,6 +267,12 @@ export type CreateLocalOtuIsolateCommand = z.output<
 export type CreateLocalOtuIsolateCommandInput = z.input<
 	typeof CreateLocalOtuIsolateCommand
 >;
+
+/** Input accepted for a local `DeleteOTU` command. */
+export type DeleteLocalOtuCommandInput = z.input<typeof DeleteLocalOtuCommand>;
+
+/** A parsed and normalized local `DeleteOTU` command. */
+export type DeleteLocalOtuCommand = z.output<typeof DeleteLocalOtuCommand>;
 
 /** A segment in an assembled v2 OTU plan. */
 export type OtuV2Segment = z.output<typeof segmentSchema>;
@@ -313,6 +330,10 @@ export type OtuV2Change = {
 	| {
 			command: "CreateIsolate";
 			payload: CreateLocalOtuIsolateCommand["payload"];
+	  }
+	| {
+			command: "DeleteOTU";
+			payload: DeleteLocalOtuCommand["payload"];
 	  }
 );
 

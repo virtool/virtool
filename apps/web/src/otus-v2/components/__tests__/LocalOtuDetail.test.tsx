@@ -2,7 +2,11 @@ import { screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { createFakeLocalOtuV2 } from "@tests/fake/otusV2";
 import { createFakeReferenceV2 } from "@tests/fake/referencesV2";
-import { mockGetLocalOtuV2 } from "@tests/server-fn/otusV2";
+import {
+	mockDeleteLocalOtuV2,
+	mockGetLocalOtusV2,
+	mockGetLocalOtuV2,
+} from "@tests/server-fn/otusV2";
 import { mockGetReferenceV2 } from "@tests/server-fn/referencesV2";
 import { renderRoute } from "@tests/setup";
 import { OtuV2IsolateNameType } from "@virtool/contracts";
@@ -40,6 +44,36 @@ describe("<LocalOtuDetail />", () => {
 		expect(screen.getByRole("link", { name: "OTU" })).toBeInTheDocument();
 		expect(screen.getByRole("link", { name: "Isolates" })).toBeInTheDocument();
 		expect(screen.getByRole("link", { name: "History" })).toBeInTheDocument();
+	});
+
+	it("deletes the OTU and returns to its Reference OTU list", async () => {
+		const deleteOtu = mockDeleteLocalOtuV2();
+		mockGetLocalOtusV2([]);
+		const { router } = await renderRoute(base);
+
+		await userEvent.click(
+			await screen.findByRole("button", { name: "Delete" }),
+		);
+		const dialog = await screen.findByRole("alertdialog");
+		await userEvent.click(
+			within(dialog).getByRole("button", { name: "Confirm" }),
+		);
+
+		expect(deleteOtu).toHaveBeenCalledWith({
+			data: {
+				referenceId: reference.id,
+				command: {
+					type: "DeleteOTU",
+					schemaVersion: 1,
+					otuId: otu.id,
+					expectedVersion: otu.version,
+					payload: {},
+				},
+			},
+		});
+		expect(router.state.location.pathname).toBe(
+			`/refs/alpha/${reference.id}/otus`,
+		);
 	});
 
 	it("previews five isolates on the OTU tab with a link to the rest", async () => {

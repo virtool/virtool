@@ -3,6 +3,7 @@ import { otuV2QueryKeys } from "@otus-v2/keys";
 import {
 	createLocalOtuFn,
 	createLocalOtuIsolateFn,
+	deleteLocalOtuFn,
 	getGenbankIsolateDraftFn,
 	getGenbankOtuDraftFn,
 	getLocalOtuFn,
@@ -20,6 +21,7 @@ import {
 import type {
 	CreateLocalOtuCommandInput,
 	CreateLocalOtuIsolateCommandInput,
+	DeleteLocalOtuCommandInput,
 	GenbankIsolateDraft,
 	GenbankOtuDraft,
 	LocalOtuV2,
@@ -202,6 +204,23 @@ export function useCreateLocalOtuIsolate(referenceId: string) {
 			cacheLocalOtuOverview(queryClient, otu);
 			queryClient.invalidateQueries({
 				queryKey: [...otuV2QueryKeys.detail(otu.id), "isolates"],
+			});
+			queryClient.invalidateQueries({
+				queryKey: otuV2QueryKeys.list([referenceId]),
+			});
+		},
+	});
+}
+
+/** Delete a local v2 OTU at its current version. */
+export function useDeleteLocalOtu(referenceId: string) {
+	const queryClient = useQueryClient();
+	return useMutation<null, Error, DeleteLocalOtuCommandInput>({
+		mutationFn: (command) =>
+			deleteLocalOtuFn({ data: { referenceId, command } }) as Promise<null>,
+		onSuccess: (_result, command) => {
+			queryClient.removeQueries({
+				queryKey: otuV2QueryKeys.detail(command.otuId),
 			});
 			queryClient.invalidateQueries({
 				queryKey: otuV2QueryKeys.list([referenceId]),

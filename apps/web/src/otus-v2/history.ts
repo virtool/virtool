@@ -30,6 +30,8 @@ export function getOtuV2ChangeDescription(change: OtuV2Change) {
 				subject: isolateName,
 			};
 		}
+		case "DeleteOTU":
+			return { action: "deleted OTU", subject: null };
 		default:
 			return assertNever(change);
 	}

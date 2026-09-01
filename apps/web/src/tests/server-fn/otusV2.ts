@@ -9,6 +9,7 @@ import { type Mock, vi } from "vitest";
 export const otuV2ServerFnMocks = {
 	createLocalOtuIsolateFn: vi.fn(),
 	createLocalOtuFn: vi.fn(),
+	deleteLocalOtuFn: vi.fn(),
 	getGenbankIsolateDraftFn: vi.fn(),
 	getLocalOtuFn: vi.fn(),
 	getLocalOtuIsolateFn: vi.fn(),
@@ -16,6 +17,12 @@ export const otuV2ServerFnMocks = {
 	getLocalOtuSequenceFn: vi.fn(),
 	getLocalOtusFn: vi.fn(),
 };
+
+/** Sets up deleteLocalOtu to resolve successfully. */
+export function mockDeleteLocalOtuV2(): Mock {
+	otuV2ServerFnMocks.deleteLocalOtuFn.mockResolvedValue(null);
+	return otuV2ServerFnMocks.deleteLocalOtuFn;
+}
 
 /** Sets up getLocalOtus to resolve with the given OTU summaries. */
 export function mockGetLocalOtusV2(otus: LocalOtuV2Summary[]): Mock {

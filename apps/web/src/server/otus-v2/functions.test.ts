@@ -249,6 +249,69 @@ describe("createLocalOtu", () => {
 	});
 });
 
+describe("deleteLocalOtu", () => {
+	it("soft-deletes an OTU for a member with modifyOtu", async () => {
+		const userId = await signIn(db, getRequest, { administratorRole: null });
+		const referenceId = await seedReferenceV2(userId);
+		const command = validCommand();
+		await call("createLocalOtuFn", { referenceId, command });
+
+		expect(
+			await call("deleteLocalOtuFn", {
+				referenceId,
+				command: {
+					type: "DeleteOTU",
+					schemaVersion: 1,
+					otuId: command.otuId,
+					expectedVersion: 1,
+					payload: {},
+				},
+			}),
+		).toBeNull();
+		await expect(
+			call("getLocalOtuFn", { referenceId, otuId: command.otuId }),
+		).rejects.toMatchObject({ status: 404 });
+	});
+
+	it("rejects deletion without modifyOtu", async () => {
+		const userId = await signIn(db, getRequest, { administratorRole: null });
+		const referenceId = await seedReferenceV2(userId, { modifyOtu: false });
+
+		await expect(
+			call("deleteLocalOtuFn", {
+				referenceId,
+				command: {
+					type: "DeleteOTU",
+					schemaVersion: 1,
+					otuId: randomUUID(),
+					expectedVersion: 1,
+					payload: {},
+				},
+			}),
+		).rejects.toBeInstanceOf(ForbiddenError);
+	});
+
+	it("rejects a stale expected version", async () => {
+		const userId = await signIn(db, getRequest, { administratorRole: null });
+		const referenceId = await seedReferenceV2(userId);
+		const command = validCommand();
+		await call("createLocalOtuFn", { referenceId, command });
+
+		await expect(
+			call("deleteLocalOtuFn", {
+				referenceId,
+				command: {
+					type: "DeleteOTU",
+					schemaVersion: 1,
+					otuId: command.otuId,
+					expectedVersion: 2,
+					payload: {},
+				},
+			}),
+		).rejects.toMatchObject({ status: 409 });
+	});
+});
+
 describe("getLocalOtu", () => {
 	async function createOtu(referenceId: string) {
 		const command = validCommand();

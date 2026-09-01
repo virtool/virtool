@@ -4,7 +4,7 @@ import Tooltip from "@base/Tooltip";
 import { getOtuV2ChangeDescription } from "@otus-v2/history";
 import { useSuspenseLocalOtuV2 } from "@otus-v2/queries";
 import type { OtuV2Change } from "@virtool/contracts";
-import { Dna, FlaskConical, type LucideIcon } from "lucide-react";
+import { Dna, FlaskConical, type LucideIcon, Trash } from "lucide-react";
 
 function getChangeIcon(change: OtuV2Change): LucideIcon {
 	switch (change.command) {
@@ -12,6 +12,8 @@ function getChangeIcon(change: OtuV2Change): LucideIcon {
 			return Dna;
 		case "CreateIsolate":
 			return FlaskConical;
+		case "DeleteOTU":
+			return Trash;
 	}
 }
 
