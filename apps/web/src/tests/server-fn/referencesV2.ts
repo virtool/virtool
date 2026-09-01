@@ -8,9 +8,16 @@ import { type Mock, vi } from "vitest";
  */
 export const referenceV2ServerFnMocks = {
 	createReferenceV2Fn: vi.fn(),
+	deleteReferenceV2Fn: vi.fn(),
 	getReferenceV2Fn: vi.fn(),
 	getReferencesV2Fn: vi.fn(),
 };
+
+/** Sets up deleteReferenceV2 to resolve successfully. */
+export function mockDeleteReferenceV2(): Mock {
+	referenceV2ServerFnMocks.deleteReferenceV2Fn.mockResolvedValue(undefined);
+	return referenceV2ServerFnMocks.deleteReferenceV2Fn;
+}
 
 /** Sets up the v2 Reference list to resolve with the given References. */
 export function mockGetReferencesV2(references: ReferenceV2[]): Mock {

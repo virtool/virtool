@@ -258,3 +258,42 @@ describe("getReferencesV2", () => {
 		expect(references).toHaveLength(2);
 	});
 });
+
+describe("deleteReferenceV2", () => {
+	it("deletes a Reference for a member with modify rights", async () => {
+		const userId = await signIn(db, getRequest, { administratorRole: null });
+		const referenceId = await seedReferenceV2(userId);
+
+		await call("deleteReferenceV2Fn", { referenceId });
+
+		expect(setResponseStatus).toHaveBeenCalledWith(204);
+		const rows = await db
+			.select()
+			.from(referenceRoots)
+			.where(sql`${referenceRoots.id} = ${referenceId}`);
+		expect(rows).toHaveLength(0);
+	});
+
+	it("refuses a member without modify rights", async () => {
+		const userId = await signIn(db, getRequest, { administratorRole: null });
+		const referenceId = await seedReferenceV2(userId);
+		await db
+			.update(referenceUsers)
+			.set({ modify: false })
+			.where(sql`${referenceUsers.referenceId} = ${referenceId}`);
+
+		await expect(
+			call("deleteReferenceV2Fn", { referenceId }),
+		).rejects.toBeInstanceOf(ForbiddenError);
+		expect(setResponseStatus).toHaveBeenCalledWith(403);
+	});
+
+	it("maps a missing Reference to a 404", async () => {
+		await signIn(db, getRequest, { administratorRole: "full" });
+
+		await expect(
+			call("deleteReferenceV2Fn", { referenceId: randomUUID() }),
+		).rejects.toThrow("Reference not found.");
+		expect(setResponseStatus).toHaveBeenCalledWith(404);
+	});
+});

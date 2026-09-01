@@ -8,6 +8,21 @@ import { and, asc, eq, inArray, or, type SQL } from "drizzle-orm";
 import type { Db, DbOrTx } from "../db/pg";
 import { takeFirst, takeFirstOrThrow } from "../db/rows";
 import {
+	otuChanges,
+	otuIsolates,
+	otuIsolateVersions,
+	otuLocalIdentities,
+	otuLocalIdentityRevisions,
+	otuLocalSequenceRecords,
+	otuPlanSegments,
+	otuPlanSegmentVersions,
+	otuPlans,
+	otuSequences,
+	otuSequenceVersions,
+	otusV2,
+	otuTaxonomyVersions,
+} from "../db/schema/otusV2";
+import {
 	type ReferenceRootRow,
 	referenceGroups,
 	referenceRoots,
@@ -89,6 +104,58 @@ export async function getReferenceV2(
 	}
 
 	return mapReference(row);
+}
+
+/** Permanently delete a v2 Reference and its complete OTU history. */
+export async function deleteReferenceV2(
+	db: Db,
+	referenceId: string,
+): Promise<void> {
+	await db.transaction(async (tx) => {
+		const otuIds = tx
+			.select({ id: otusV2.id })
+			.from(otusV2)
+			.where(eq(otusV2.referenceId, referenceId));
+
+		await tx
+			.delete(otuSequenceVersions)
+			.where(inArray(otuSequenceVersions.otuId, otuIds));
+		await tx
+			.delete(otuLocalSequenceRecords)
+			.where(inArray(otuLocalSequenceRecords.otuId, otuIds));
+		await tx.delete(otuSequences).where(inArray(otuSequences.otuId, otuIds));
+		await tx
+			.delete(otuIsolateVersions)
+			.where(inArray(otuIsolateVersions.otuId, otuIds));
+		await tx.delete(otuIsolates).where(inArray(otuIsolates.otuId, otuIds));
+		await tx
+			.delete(otuPlanSegmentVersions)
+			.where(inArray(otuPlanSegmentVersions.otuId, otuIds));
+		await tx
+			.delete(otuPlanSegments)
+			.where(inArray(otuPlanSegments.otuId, otuIds));
+		await tx.delete(otuPlans).where(inArray(otuPlans.otuId, otuIds));
+		await tx
+			.delete(otuTaxonomyVersions)
+			.where(inArray(otuTaxonomyVersions.otuId, otuIds));
+		await tx
+			.delete(otuLocalIdentityRevisions)
+			.where(inArray(otuLocalIdentityRevisions.otuId, otuIds));
+		await tx
+			.delete(otuLocalIdentities)
+			.where(inArray(otuLocalIdentities.otuId, otuIds));
+		await tx.delete(otuChanges).where(inArray(otuChanges.otuId, otuIds));
+		await tx.delete(otusV2).where(eq(otusV2.referenceId, referenceId));
+
+		const deleted = await tx
+			.delete(referenceRoots)
+			.where(eq(referenceRoots.id, referenceId))
+			.returning({ id: referenceRoots.id });
+
+		if (deleted.length === 0) {
+			throw new ReferenceV2NotFoundError();
+		}
+	});
 }
 
 function referenceV2VisibilityFilter(

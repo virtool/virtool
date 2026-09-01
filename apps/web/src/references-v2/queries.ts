@@ -1,6 +1,7 @@
 import { referenceV2QueryKeys } from "@references-v2/keys";
 import {
 	createReferenceV2Fn,
+	deleteReferenceV2Fn,
 	getReferencesV2Fn,
 	getReferenceV2Fn,
 } from "@server/references-v2/functions";
@@ -62,6 +63,24 @@ export function useCreateReferenceV2() {
 	return useMutation<ReferenceV2, Error, ReferenceV2CreateRequest>({
 		mutationFn: (data) => createReferenceV2Fn({ data }) as Promise<ReferenceV2>,
 		onSuccess: () => {
+			queryClient.invalidateQueries({
+				queryKey: referenceV2QueryKeys.lists(),
+			});
+		},
+	});
+}
+
+/** Initializes a mutator for permanently deleting a v2 Reference. */
+export function useDeleteReferenceV2() {
+	const queryClient = useQueryClient();
+
+	return useMutation<void, Error, string>({
+		mutationFn: (referenceId) =>
+			deleteReferenceV2Fn({ data: { referenceId } }) as Promise<void>,
+		onSuccess: (_data, referenceId) => {
+			queryClient.removeQueries({
+				queryKey: referenceV2QueryKeys.detail(referenceId),
+			});
 			queryClient.invalidateQueries({
 				queryKey: referenceV2QueryKeys.lists(),
 			});

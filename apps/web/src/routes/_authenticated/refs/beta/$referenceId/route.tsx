@@ -2,6 +2,7 @@ import { getErrorStatus } from "@app/queryErrors";
 import Badge from "@base/Badge";
 import { ContainerNarrow } from "@base/Container";
 import SectionHeader from "@base/SectionHeader";
+import DeleteReferenceV2 from "@references-v2/components/DeleteReferenceV2";
 import ReferenceV2DetailTabs from "@references-v2/components/ReferenceV2DetailTabs";
 import { useSuspenseReferenceV2 } from "@references-v2/queries";
 import {
@@ -40,9 +41,12 @@ function ReferenceV2DetailLayout() {
 			{!isOtuDetail && (
 				<>
 					<SectionHeader>
-						<h2>
-							{reference.name} <Badge color="purple">Beta</Badge>
-						</h2>
+						<div className="flex items-center justify-between">
+							<h2>
+								{reference.name} <Badge color="purple">Beta</Badge>
+							</h2>
+							<DeleteReferenceV2 reference={reference} />
+						</div>
 						<p>{reference.description || "No description."}</p>
 					</SectionHeader>
 					<ReferenceV2DetailTabs referenceId={referenceId} />

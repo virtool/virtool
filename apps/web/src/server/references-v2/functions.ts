@@ -3,13 +3,16 @@ import { setResponseStatus } from "@tanstack/react-start/server";
 import { ReferenceV2CreateRequest } from "@virtool/contracts";
 import { resolveReferenceActor } from "@virtool/data/references/data";
 import {
+	checkReferenceV2Right,
 	checkReferenceV2Visibility,
 	createReferenceV2,
+	deleteReferenceV2,
 	getReferencesV2,
 	getReferenceV2,
 	ReferenceV2NotFoundError,
 } from "@virtool/data/references-v2/data";
 import { z } from "zod";
+import { ForbiddenError } from "../auth/middleware";
 import { authenticated, permission } from "../auth/policy";
 import { db } from "../composition";
 import { ClientError } from "../errors";
@@ -66,4 +69,23 @@ export const getReferencesV2Fn = createServerFn({ method: "GET" })
 	.handler(async ({ context }) => {
 		const actor = await resolveReferenceActor(db, context.session.userId);
 		return getReferencesV2(db, actor);
+	});
+
+export const deleteReferenceV2Fn = createServerFn({ method: "POST" })
+	.middleware([authenticated()])
+	.validator(referenceIdSchema)
+	.handler(async ({ context, data }) => {
+		try {
+			const actor = await resolveReferenceActor(db, context.session.userId);
+			if (
+				!(await checkReferenceV2Right(db, data.referenceId, "modify", actor))
+			) {
+				setResponseStatus(403);
+				throw new ForbiddenError();
+			}
+			await deleteReferenceV2(db, data.referenceId);
+			setResponseStatus(204);
+		} catch (err) {
+			return rethrowAsHttp(err);
+		}
 	});

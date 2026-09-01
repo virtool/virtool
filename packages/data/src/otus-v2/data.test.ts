@@ -5,7 +5,12 @@ import type { Db } from "../db/pg";
 import { otuChanges, otusV2 } from "../db/schema/otusV2";
 import { referenceUsers } from "../db/schema/referencesV2";
 import { createTestDatabase, type TestDatabase } from "../db/test/fixtures";
-import { createReferenceV2 } from "../references-v2/data";
+import {
+	createReferenceV2,
+	deleteReferenceV2,
+	getReferenceV2,
+	ReferenceV2NotFoundError,
+} from "../references-v2/data";
 import {
 	createLocalOtu,
 	createLocalOtuIsolate,
@@ -125,6 +130,32 @@ describe("createReferenceV2", () => {
 			modify: true,
 			modifyOtu: true,
 		});
+	});
+
+	it("deletes a Reference and its complete OTU graph", async () => {
+		const reference = await createReference();
+		await createLocalOtu(db, {
+			referenceId: reference.id,
+			userId,
+			command: createCommand("80000000-0000-4000-8000-000000000001"),
+		});
+
+		await deleteReferenceV2(db, reference.id);
+
+		await expect(getReferenceV2(db, reference.id)).rejects.toBeInstanceOf(
+			ReferenceV2NotFoundError,
+		);
+		const [otuCount] = await db
+			.select({ value: count() })
+			.from(otusV2)
+			.where(eq(otusV2.referenceId, reference.id));
+		expect(otuCount.value).toBe(0);
+	});
+
+	it("rejects deletion of a missing Reference", async () => {
+		await expect(
+			deleteReferenceV2(db, "70000000-0000-4000-8000-000000000001"),
+		).rejects.toBeInstanceOf(ReferenceV2NotFoundError);
 	});
 });
 
