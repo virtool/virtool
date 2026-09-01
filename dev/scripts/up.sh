@@ -12,6 +12,7 @@ source "$(dirname "$0")/lib.sh"
 
 REPO_ROOT=$(git rev-parse --show-toplevel)
 TILT_PORT_FILE="$REPO_ROOT/.TILT_PORT"
+TILT_PORT_LOCK="$(git rev-parse --path-format=absolute --git-common-dir)/virtool-tilt-port.lock"
 
 CERT_STORE="${XDG_DATA_HOME:-$HOME/.local/share}/virtool-dev"
 
@@ -34,16 +35,22 @@ kubectl create secret tls mkcert \
     --key "$CERT_STORE/key.pem" \
     -n "$NS" --dry-run=client -o yaml | kubectl apply -f -
 
-if ! command -v ss >/dev/null; then
-    echo "Cannot choose a Tilt port: 'ss' is required to check listening ports." >&2
+if command -v ss >/dev/null; then
+    is_tilt_port_available() {
+        local port="$1"
+
+        ! ss -H -ltn | awk -v port=":$port" 'substr($4, length($4) - length(port) + 1) == port { found = 1 } END { exit found ? 0 : 1 }'
+    }
+elif command -v lsof >/dev/null; then
+    is_tilt_port_available() {
+        local port="$1"
+
+        ! lsof -nP -iTCP:"$port" -sTCP:LISTEN >/dev/null 2>&1
+    }
+else
+    echo "Cannot choose a Tilt port: 'ss' or 'lsof' is required to check listening ports." >&2
     exit 1
 fi
-
-is_tilt_port_available() {
-    local port="$1"
-
-    ! ss -H -ltn | awk -v port=":$port" 'substr($4, length($4) - length(port) + 1) == port { found = 1 } END { exit found ? 0 : 1 }'
-}
 
 is_tilt_port_reserved() {
     local candidate="$1"
@@ -82,6 +89,28 @@ find_tilt_port() {
     return 1
 }
 
+release_tilt_port_lock() {
+    rmdir "$TILT_PORT_LOCK" 2>/dev/null || true
+}
+
+# Selecting a port and writing it to `.TILT_PORT` must be atomic across
+# worktrees. Without the lock, two concurrent `up.sh` runs can both see the same
+# port free and pin it, which leaves each worktree permanently reserved by the
+# other. `mkdir` is the portable atomic test-and-set; the lock lives in the
+# common git directory, which every worktree shares.
+for attempt in {1..100}; do
+    if mkdir "$TILT_PORT_LOCK" 2>/dev/null; then
+        trap release_tilt_port_lock EXIT
+        break
+    fi
+    if [[ "$attempt" == 100 ]]; then
+        echo "Timed out waiting for the Tilt port lock at '$TILT_PORT_LOCK'." >&2
+        echo "Remove it if no other 'up.sh' is running." >&2
+        exit 1
+    fi
+    sleep 0.1
+done
+
 if [[ -f "$TILT_PORT_FILE" ]]; then
     TILT_PORT=$(tr -d '[:space:]' < "$TILT_PORT_FILE")
     if [[ ! "$TILT_PORT" =~ ^[0-9]+$ || "$TILT_PORT" -lt 10350 || "$TILT_PORT" -gt 10370 ]]; then
@@ -103,6 +132,10 @@ else
     printf '%s\n' "$TILT_PORT" > "$TILT_PORT_FILE"
     echo "Pinned Tilt port $TILT_PORT in $TILT_PORT_FILE."
 fi
+
+# `exec` below replaces this process, so the EXIT trap never fires.
+trap - EXIT
+release_tilt_port_lock
 
 echo "Starting Tilt on port $TILT_PORT..."
 exec env WT="$NS" tilt up --port "$TILT_PORT" -- "$@"

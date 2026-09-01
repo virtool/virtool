@@ -27,7 +27,8 @@ wildcard `*.<minikube-ip>.nip.io` certificate covers every worktree.
 
 ## Requirements
 
-Docker Engine, Helm, `kubectl`, `mkcert`, Minikube, Tilt and mise.
+Docker Engine, Helm, `kubectl`, `mkcert`, Minikube, Tilt, mise and either
+`ss` or `lsof` to check which Tilt ports are free.
 
 ## Stack
 
