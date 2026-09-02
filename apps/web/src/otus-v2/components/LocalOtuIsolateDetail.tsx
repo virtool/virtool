@@ -1,10 +1,11 @@
-import { BoxGroup, BoxGroupHeader, BoxGroupSection } from "@base/Box";
+import { BoxGroup, BoxGroupSection } from "@base/Box";
 import {
 	Collapsible,
 	CollapsibleContent,
 	CollapsibleTrigger,
 } from "@base/Collapsible";
 import Link from "@base/Link";
+import SectionHeader from "@base/SectionHeader";
 import {
 	localOtuV2SequenceQueryOptions,
 	useSuspenseLocalOtuV2Isolate,
@@ -40,20 +41,26 @@ export default function LocalOtuIsolateDetail() {
 					← Isolates
 				</Link>
 			</p>
-			<h2 className="mb-4 text-xl font-semibold">{name}</h2>
-			<BoxGroup>
-				<BoxGroupHeader>Sequences</BoxGroupHeader>
-				{isolate.sequences.map((sequence) => (
-					<LazySequence
-						key={sequence.id}
-						referenceId={referenceId}
-						otuId={otuId}
-						isolateId={isolateId}
-						sequenceId={sequence.id}
-						definition={sequence.definition}
-					/>
-				))}
-			</BoxGroup>
+			<SectionHeader>
+				<h2>{name}</h2>
+			</SectionHeader>
+			<section>
+				<SectionHeader>
+					<h2>Sequences</h2>
+				</SectionHeader>
+				<BoxGroup>
+					{isolate.sequences.map((sequence) => (
+						<LazySequence
+							key={sequence.id}
+							referenceId={referenceId}
+							otuId={otuId}
+							isolateId={isolateId}
+							sequenceId={sequence.id}
+							definition={sequence.definition}
+						/>
+					))}
+				</BoxGroup>
+			</section>
 		</>
 	);
 }

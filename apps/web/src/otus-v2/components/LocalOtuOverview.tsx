@@ -1,5 +1,5 @@
 import Badge from "@base/Badge";
-import Box, { BoxGroup, BoxGroupHeader, BoxGroupSection } from "@base/Box";
+import Box, { BoxGroup, BoxGroupSection } from "@base/Box";
 import {
 	Collapsible,
 	CollapsibleContent,
@@ -7,6 +7,7 @@ import {
 } from "@base/Collapsible";
 import ExternalLink from "@base/ExternalLink";
 import Link from "@base/Link";
+import SectionHeader from "@base/SectionHeader";
 import { useSuspenseLocalOtuV2 } from "@otus-v2/queries";
 
 const ISOLATE_PREVIEW_COUNT = 5;
@@ -46,72 +47,82 @@ export default function LocalOtuOverview({
 			</Box>
 
 			{otu.taxonomy.lineage.length > 0 && (
-				<BoxGroup>
-					<BoxGroupHeader>Lineage</BoxGroupHeader>
-					{higherTaxa.length > 0 && (
-						<BoxGroupSection className="p-0">
-							<Collapsible>
-								<CollapsibleTrigger className="px-6 py-3">
-									Show higher taxa
-								</CollapsibleTrigger>
-								<CollapsibleContent>
-									{higherTaxa.map((taxon) => (
-										<LineageTaxon key={taxon.id} taxon={taxon} />
-									))}
-								</CollapsibleContent>
-							</Collapsible>
-						</BoxGroupSection>
-					)}
-					{speciesAndBelow.map((taxon) => (
-						<LineageTaxon key={taxon.id} taxon={taxon} />
-					))}
-				</BoxGroup>
+				<section>
+					<SectionHeader>
+						<h2>Lineage</h2>
+					</SectionHeader>
+					<BoxGroup>
+						{higherTaxa.length > 0 && (
+							<BoxGroupSection className="p-0">
+								<Collapsible>
+									<CollapsibleTrigger className="px-6 py-3">
+										Show higher taxa
+									</CollapsibleTrigger>
+									<CollapsibleContent>
+										{higherTaxa.map((taxon) => (
+											<LineageTaxon key={taxon.id} taxon={taxon} />
+										))}
+									</CollapsibleContent>
+								</Collapsible>
+							</BoxGroupSection>
+						)}
+						{speciesAndBelow.map((taxon) => (
+							<LineageTaxon key={taxon.id} taxon={taxon} />
+						))}
+					</BoxGroup>
+				</section>
 			)}
 
-			<BoxGroup>
-				<BoxGroupHeader>Segments</BoxGroupHeader>
-				{otu.plan.segments.map((segment) => (
-					<BoxGroupSection key={segment.id}>
-						<span className="font-semibold">
-							{segment.name
-								? `${segment.name.prefix} ${segment.name.key}`
-								: "Unnamed segment"}
-						</span>{" "}
-						— {segment.length} nt · {segment.rule}
-					</BoxGroupSection>
-				))}
-			</BoxGroup>
+			<section>
+				<SectionHeader>
+					<h2>Segments</h2>
+				</SectionHeader>
+				<BoxGroup>
+					{otu.plan.segments.map((segment) => (
+						<BoxGroupSection key={segment.id}>
+							<span className="font-semibold">
+								{segment.name
+									? `${segment.name.prefix} ${segment.name.key}`
+									: "Unnamed segment"}
+							</span>{" "}
+							— {segment.length} nt · {segment.rule}
+						</BoxGroupSection>
+					))}
+				</BoxGroup>
+			</section>
 
-			<BoxGroup>
-				<BoxGroupHeader>
+			<section>
+				<SectionHeader>
 					<h2 className="flex items-center gap-2">
 						Isolates
 						<Badge>{otu.isolateCount}</Badge>
 					</h2>
-				</BoxGroupHeader>
-				{previewIsolates.map((isolate) => (
-					<BoxGroupSection key={isolate.id}>
-						<Link
-							to="/refs/alpha/$referenceId/otus/$otuId/isolates/$isolateId"
-							params={{ referenceId, otuId, isolateId: isolate.id }}
-						>
-							{isolate.name
-								? `${isolate.name.type} ${isolate.name.value}`
-								: "Unnamed isolate"}
-						</Link>
-					</BoxGroupSection>
-				))}
-				{remaining > 0 && (
-					<BoxGroupSection>
-						<Link
-							to="/refs/alpha/$referenceId/otus/$otuId/isolates"
-							params={{ referenceId, otuId }}
-						>
-							View {remaining} more {remaining === 1 ? "isolate" : "isolates"}
-						</Link>
-					</BoxGroupSection>
-				)}
-			</BoxGroup>
+				</SectionHeader>
+				<BoxGroup>
+					{previewIsolates.map((isolate) => (
+						<BoxGroupSection key={isolate.id}>
+							<Link
+								to="/refs/alpha/$referenceId/otus/$otuId/isolates/$isolateId"
+								params={{ referenceId, otuId, isolateId: isolate.id }}
+							>
+								{isolate.name
+									? `${isolate.name.type} ${isolate.name.value}`
+									: "Unnamed isolate"}
+							</Link>
+						</BoxGroupSection>
+					))}
+					{remaining > 0 && (
+						<BoxGroupSection>
+							<Link
+								to="/refs/alpha/$referenceId/otus/$otuId/isolates"
+								params={{ referenceId, otuId }}
+							>
+								View {remaining} more {remaining === 1 ? "isolate" : "isolates"}
+							</Link>
+						</BoxGroupSection>
+					)}
+				</BoxGroup>
+			</section>
 		</>
 	);
 }
