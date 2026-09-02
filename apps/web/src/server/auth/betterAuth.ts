@@ -12,13 +12,18 @@ import {
 import { users } from "@virtool/data/db/schema/users";
 import { betterAuth } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
+import { APIError, createAuthMiddleware } from "better-auth/api";
 import { twoFactor, username } from "better-auth/plugins";
 import { tanstackStartCookies } from "better-auth/tanstack-start";
+import { eq } from "drizzle-orm";
 import { db } from "../composition";
 import { config } from "../config";
 
 /** Where the Better Auth handler is mounted. */
 export const AUTH_BASE_PATH = "/api/auth";
+
+/** The email sign-in endpoint, which this instance refuses. */
+const EMAIL_SIGN_IN_PATH = "/sign-in/email";
 
 /** What {@link createAuth} needs to build an instance. */
 export type AuthOptions = {
@@ -105,6 +110,55 @@ export function createAuth({
 					(await hashPassword(password)).toString("utf8"),
 				verify: async ({ hash, password }) =>
 					verifyPassword(password, Buffer.from(hash, "utf8")),
+			},
+		},
+		hooks: {
+			// `emailAndPassword` is enabled for its password hashing, but it also
+			// mounts `/sign-in/email`, and `disableSignUp` does not take that
+			// endpoint down. Virtool signs in by handle: `users.email` carries no
+			// unique constraint and duplicate addresses exist, so an email lookup
+			// would resolve to an arbitrary one of the holders. `NOT_FOUND` because
+			// the endpoint is not part of this instance's surface at all.
+			before: createAuthMiddleware(async (ctx) => {
+				if (ctx.path === EMAIL_SIGN_IN_PATH) {
+					throw new APIError("NOT_FOUND");
+				}
+			}),
+		},
+		databaseHooks: {
+			session: {
+				create: {
+					// Better Auth answers *who*, so the two Virtool states that gate a
+					// sign-in are enforced at the one point every password, passkey and
+					// two-factor path has to pass through. `login()` in `./core` refuses
+					// the same pair; without this the Better Auth endpoints would be the
+					// looser of the two doors on the same accounts.
+					//
+					// A deactivated user gets the same 401 the wrong password gets: that
+					// an account exists but is switched off is not something an
+					// unauthenticated caller should be able to read off the response.
+					before: async (session) => {
+						const [user] = await db
+							.select({ active: users.active, forceReset: users.forceReset })
+							.from(users)
+							.where(eq(users.id, Number(session.userId)))
+							.limit(1);
+
+						if (!user?.active) {
+							throw new APIError("UNAUTHORIZED", {
+								message: "Invalid credentials",
+								code: "INVALID_CREDENTIALS",
+							});
+						}
+
+						if (user.forceReset) {
+							throw new APIError("FORBIDDEN", {
+								message: "Password reset required",
+								code: "PASSWORD_RESET_REQUIRED",
+							});
+						}
+					},
+				},
 			},
 		},
 		plugins: [

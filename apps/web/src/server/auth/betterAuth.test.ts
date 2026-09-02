@@ -65,7 +65,10 @@ function post(path: string, body: unknown, origin = ORIGIN): Request {
  * Seed a user the way the legacy migration will: the Virtool row, plus one
  * `credential` account carrying the bcrypt hash verbatim.
  */
-async function seedMigratedUser(hash = LEGACY_HASH): Promise<number> {
+async function seedMigratedUser(
+	hash = LEGACY_HASH,
+	state: { active?: boolean; forceReset?: boolean } = {},
+): Promise<number> {
 	const [user] = await db
 		.insert(users)
 		.values({
@@ -77,6 +80,8 @@ async function seedMigratedUser(hash = LEGACY_HASH): Promise<number> {
 			password: Buffer.from(hash, "utf8"),
 			lastPasswordChange: new Date(),
 			settings: {},
+			active: state.active ?? true,
+			forceReset: state.forceReset ?? false,
 		})
 		.returning({ id: users.id });
 
@@ -235,6 +240,52 @@ describe("the mounted handler", () => {
 		expect(cookie).toContain("HttpOnly");
 		expect(cookie).toContain("Secure");
 		expect(cookie).toContain("SameSite=Lax");
+	});
+});
+
+describe("virtool account state", () => {
+	it("refuses a deactivated user with the wrong-password response", async () => {
+		await seedMigratedUser(LEGACY_HASH, { active: false });
+
+		const response = await auth.handler(
+			post("/sign-in/username", {
+				username: "alice",
+				password: LEGACY_PASSWORD,
+			}),
+		);
+
+		expect(response.status).toBe(401);
+		expect(await db.select().from(authSessions)).toHaveLength(0);
+	});
+
+	it("refuses a user who has to reset their password", async () => {
+		await seedMigratedUser(LEGACY_HASH, { forceReset: true });
+
+		const response = await auth.handler(
+			post("/sign-in/username", {
+				username: "alice",
+				password: LEGACY_PASSWORD,
+			}),
+		);
+
+		expect(response.status).toBe(403);
+		expect(await db.select().from(authSessions)).toHaveLength(0);
+	});
+});
+
+describe("email sign-in", () => {
+	it("is not mounted, because users.email is not unique", async () => {
+		await seedMigratedUser();
+
+		const response = await auth.handler(
+			post("/sign-in/email", {
+				email: "alice@virtool.test",
+				password: LEGACY_PASSWORD,
+			}),
+		);
+
+		expect(response.status).toBe(404);
+		expect(await db.select().from(authSessions)).toHaveLength(0);
 	});
 });
 

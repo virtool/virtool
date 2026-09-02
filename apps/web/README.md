@@ -425,6 +425,15 @@ global CSRF middleware in `start.ts` is likewise scoped to
 own origin check against `VT_PUBLIC_ORIGIN`, which
 `@server/auth/betterAuth.test.ts` pins.
 
+Two Virtool states still gate every Better Auth sign-in. A `session.create`
+database hook refuses a user who is not `active` — with the same 401 a wrong
+password gets — and refuses one carrying `force_reset` with a 403, so the
+password, passkey and two-factor endpoints are no looser than `login()` in
+`@server/auth/core`. `/sign-in/email` is answered 404 by a `before` hook:
+`emailAndPassword` is enabled only for its bcrypt hashing, and `users.email`
+carries no unique constraint, so an email lookup could resolve to an arbitrary
+one of several holders. Virtool signs in by handle.
+
 Better Auth's tables live in `@virtool/data` as `auth_*` and are keyed by
 integer identity columns, because `advanced.database.generateId: "serial"` is
 what keeps `users.id` the integer the rest of the schema references. The setting
