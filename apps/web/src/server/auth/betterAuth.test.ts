@@ -301,6 +301,18 @@ describe("the username availability endpoint", () => {
 	});
 });
 
+describe("the user update endpoint", () => {
+	it("is not mounted, so username cannot drift from handle", async () => {
+		await seedMigratedUser();
+
+		const response = await auth.handler(
+			post("/update-user", { username: "someone-else" }),
+		);
+
+		expect(response.status).toBe(404);
+	});
+});
+
 describe("the integer user id", () => {
 	it("leaves users.id to the identity column", async () => {
 		const first = await seedMigratedUser();

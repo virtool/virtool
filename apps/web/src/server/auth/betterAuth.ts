@@ -35,8 +35,18 @@ export const AUTH_BASE_PATH = "/api/auth";
  * `/is-username-available`: the `username` plugin mounts this unauthenticated,
  * and Virtool has no public sign-up for it to serve. It would answer whether a
  * handle exists — the enumeration the sign-in paths are shaped to withhold.
+ *
+ * `/update-user`: with the `username` plugin registered this writes `username`
+ * and `displayUsername` straight to the row, which would drift the name a user
+ * signs in with away from `users.handle` and around the case-insensitive
+ * uniqueness that `users_handle_lower_unique` holds. Virtool owns account
+ * updates through its own server functions.
  */
-const REFUSED_PATHS = new Set(["/sign-in/email", "/is-username-available"]);
+const REFUSED_PATHS = new Set([
+	"/sign-in/email",
+	"/is-username-available",
+	"/update-user",
+]);
 
 /** What {@link createAuth} needs to build an instance. */
 export type AuthOptions = {
