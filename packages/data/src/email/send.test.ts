@@ -1,5 +1,9 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { buildProviderIdempotencyKey, sendEmailViaResend } from "./send";
+import {
+	buildProviderIdempotencyKey,
+	formatSender,
+	sendEmailViaResend,
+} from "./send";
 
 /** The base request every test sends, minus whatever it overrides. */
 const request = {
@@ -288,5 +292,37 @@ describe("sendEmailViaResend", () => {
 		const outcome = await sendEmailViaResend(request);
 
 		expect(JSON.stringify(outcome)).not.toContain("re_test_key");
+	});
+});
+
+describe("formatSender", () => {
+	it("uses the bare address when the name is empty", () => {
+		expect(formatSender("", "noreply@virtool.example")).toBe(
+			"noreply@virtool.example",
+		);
+	});
+
+	it("leaves a plain name unquoted", () => {
+		expect(formatSender("Virtool", "noreply@virtool.example")).toBe(
+			"Virtool <noreply@virtool.example>",
+		);
+	});
+
+	it("quotes a name holding a comma or angle brackets", () => {
+		expect(formatSender("Virtool, Inc.", "noreply@virtool.example")).toBe(
+			'"Virtool, Inc." <noreply@virtool.example>',
+		);
+		expect(formatSender("a <b>", "noreply@virtool.example")).toBe(
+			'"a <b>" <noreply@virtool.example>',
+		);
+	});
+
+	it("escapes a quote and a backslash inside a quoted name", () => {
+		expect(formatSender('a "b" c', "noreply@virtool.example")).toBe(
+			'"a \\"b\\" c" <noreply@virtool.example>',
+		);
+		expect(formatSender("a\\b, c", "noreply@virtool.example")).toBe(
+			'"a\\\\b, c" <noreply@virtool.example>',
+		);
 	});
 });

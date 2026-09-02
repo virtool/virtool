@@ -186,6 +186,23 @@ describe("updateEmailSettingsFn", () => {
 		).rejects.toThrow();
 	});
 
+	it("rejects a sender name holding a control character", async () => {
+		await signIn(db, getRequest, { administratorRole: "full" });
+
+		await expect(
+			call("updateEmailSettingsFn", { senderName: "Virtool\nX" }),
+		).rejects.toThrow();
+	});
+
+	it("accepts a sender name holding a comma", async () => {
+		await signIn(db, getRequest, { administratorRole: "full" });
+		await seedSettings(db);
+
+		await expect(
+			call("updateEmailSettingsFn", { senderName: "Virtool, Inc." }),
+		).resolves.toMatchObject({ senderName: "Virtool, Inc." });
+	});
+
 	it("refuses to enable an unconfigured instance", async () => {
 		await signIn(db, getRequest, { administratorRole: "full" });
 		await seedSettings(db);

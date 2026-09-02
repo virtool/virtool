@@ -95,8 +95,28 @@ function parseRetryAfter(
 	return Number.isFinite(seconds) && seconds > 0 ? seconds : undefined;
 }
 
-function formatSender(name: string, address: string): string {
-	return name === "" ? address : `${name} <${address}>`;
+const PLAIN_SENDER_NAME = /^[A-Za-z0-9 !#$%&'*+\-/=?^_`{|}~.]*$/;
+
+/**
+ * Compose the `From` value.
+ *
+ * A name holding `<`, `>`, `"` or a comma is not a valid unquoted display
+ * name, and the provider rejects the whole message as a validation error. Such
+ * a name is quoted, with the two characters that cannot appear inside a quoted
+ * string escaped.
+ */
+export function formatSender(name: string, address: string): string {
+	if (name === "") {
+		return address;
+	}
+
+	if (PLAIN_SENDER_NAME.test(name)) {
+		return `${name} <${address}>`;
+	}
+
+	const quoted = name.replace(/[\\"]/g, "\\$&");
+
+	return `"${quoted}" <${address}>`;
 }
 
 /** Send one email through Resend and classify the result. */

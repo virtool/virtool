@@ -27,6 +27,16 @@ const MAX_FIELD_LENGTH = 254;
 
 const MAX_API_KEY_LENGTH = 256;
 
+const CONTROL_CHARACTER_PATTERN = /\p{Cc}/u;
+
+const senderNameSchema = z
+	.string()
+	.trim()
+	.max(MAX_FIELD_LENGTH)
+	.refine((value) => !CONTROL_CHARACTER_PATTERN.test(value), {
+		message: "Sender name cannot contain control characters.",
+	});
+
 const addressSchema = z
 	.string()
 	.trim()
@@ -69,7 +79,7 @@ const updateEmailSettingsSchema = z
 		enabled: z.boolean().optional(),
 		replyToAddress: optionalAddressSchema.optional(),
 		senderAddress: optionalAddressSchema.optional(),
-		senderName: z.string().trim().max(MAX_FIELD_LENGTH).optional(),
+		senderName: senderNameSchema.optional(),
 	})
 	.refine((data) => Object.keys(data).length > 0, {
 		message: "At least one setting must be provided.",
