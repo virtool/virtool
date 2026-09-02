@@ -1,9 +1,15 @@
 import { referenceV2QueryKeys } from "@references-v2/keys";
 import {
+	addReferenceV2GroupFn,
+	addReferenceV2UserFn,
 	createReferenceV2Fn,
 	deleteReferenceV2Fn,
 	getReferencesV2Fn,
 	getReferenceV2Fn,
+	removeReferenceV2GroupFn,
+	removeReferenceV2UserFn,
+	updateReferenceV2GroupFn,
+	updateReferenceV2UserFn,
 } from "@server/references-v2/functions";
 import {
 	queryOptions,
@@ -11,7 +17,16 @@ import {
 	useQueryClient,
 	useSuspenseQuery,
 } from "@tanstack/react-query";
-import type { ReferenceV2, ReferenceV2CreateRequest } from "@virtool/contracts";
+import type {
+	ReferenceV2,
+	ReferenceV2CreateRequest,
+	ReferenceV2Group,
+	ReferenceV2Rights,
+	ReferenceV2User,
+} from "@virtool/contracts";
+
+/** A kind of member that can be granted v2 Reference rights. */
+export type ReferenceV2MemberNoun = "user" | "group";
 
 /**
  * Query options for a single v2 Reference.
@@ -83,6 +98,79 @@ export function useDeleteReferenceV2() {
 			});
 			queryClient.invalidateQueries({
 				queryKey: referenceV2QueryKeys.lists(),
+			});
+		},
+	});
+}
+
+/** Add a user or group to a v2 Reference. */
+export function useAddReferenceV2Member(
+	referenceId: string,
+	noun: ReferenceV2MemberNoun,
+) {
+	const queryClient = useQueryClient();
+	return useMutation<ReferenceV2User | ReferenceV2Group, Error, number>({
+		mutationFn: (id) =>
+			noun === "user"
+				? (addReferenceV2UserFn({
+						data: { referenceId, userId: id },
+					}) as Promise<ReferenceV2User>)
+				: (addReferenceV2GroupFn({
+						data: { referenceId, groupId: id },
+					}) as Promise<ReferenceV2Group>),
+		onSuccess: () => {
+			queryClient.invalidateQueries({
+				queryKey: referenceV2QueryKeys.detail(referenceId),
+			});
+		},
+	});
+}
+
+/** Update a user or group's rights on a v2 Reference. */
+export function useUpdateReferenceV2Member(
+	referenceId: string,
+	noun: ReferenceV2MemberNoun,
+) {
+	const queryClient = useQueryClient();
+	return useMutation<
+		ReferenceV2User | ReferenceV2Group,
+		Error,
+		{ id: number; update: Partial<ReferenceV2Rights> }
+	>({
+		mutationFn: ({ id, update }) =>
+			noun === "user"
+				? (updateReferenceV2UserFn({
+						data: { referenceId, userId: id, ...update },
+					}) as Promise<ReferenceV2User>)
+				: (updateReferenceV2GroupFn({
+						data: { referenceId, groupId: id, ...update },
+					}) as Promise<ReferenceV2Group>),
+		onSuccess: () => {
+			queryClient.invalidateQueries({
+				queryKey: referenceV2QueryKeys.detail(referenceId),
+			});
+		},
+	});
+}
+
+/** Remove a user or group from a v2 Reference. */
+export function useRemoveReferenceV2Member(
+	referenceId: string,
+	noun: ReferenceV2MemberNoun,
+) {
+	const queryClient = useQueryClient();
+	return useMutation<null, Error, number>({
+		mutationFn: (id) =>
+			noun === "user"
+				? (removeReferenceV2UserFn({
+						data: { referenceId, userId: id },
+					}) as Promise<null>)
+				: (removeReferenceV2GroupFn({
+						data: { referenceId, groupId: id },
+					}) as Promise<null>),
+		onSuccess: () => {
+			queryClient.invalidateQueries({
+				queryKey: referenceV2QueryKeys.detail(referenceId),
 			});
 		},
 	});

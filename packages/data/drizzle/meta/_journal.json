@@ -239,6 +239,13 @@
       "when": 1789599181768,
       "tag": "0037_round_lionheart",
       "breakpoints": true
+    },
+    {
+      "idx": 38,
+      "version": "7",
+      "when": 1789600000000,
+      "tag": "0038_nostalgic_mesmero",
+      "breakpoints": true
     }
   ]
 }

@@ -1,5 +1,27 @@
 import { z } from "zod";
 
+/** The per-reference rights granted to a v2 Reference member. */
+export type ReferenceV2Rights = {
+	publishVersion: boolean;
+	modify: boolean;
+	modifyOtu: boolean;
+};
+
+/** The name of a single v2 Reference right. */
+export type ReferenceV2Right = keyof ReferenceV2Rights;
+
+/** A user granted rights on a v2 Reference. */
+export type ReferenceV2User = ReferenceV2Rights & {
+	id: number;
+	handle: string;
+};
+
+/** A group granted rights on a v2 Reference. */
+export type ReferenceV2Group = ReferenceV2Rights & {
+	id: number;
+	name: string;
+};
+
 /** The kind of backing source used by a v2 Reference. */
 export const ReferenceV2Kind = {
 	local: "local",
@@ -32,4 +54,6 @@ export type ReferenceV2 = {
 	archived: boolean;
 	createdAt: Date;
 	updatedAt: Date;
+	users: ReferenceV2User[];
+	groups: ReferenceV2Group[];
 };

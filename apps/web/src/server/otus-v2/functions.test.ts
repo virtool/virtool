@@ -97,7 +97,7 @@ async function seedReferenceV2(
 	await db.insert(referenceUsers).values({
 		referenceId: id,
 		userId: memberUserId,
-		build: true,
+		publishVersion: true,
 		modify: true,
 		modifyOtu,
 	});

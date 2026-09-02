@@ -57,7 +57,7 @@ export const referenceUsers = pgTable(
 	{
 		referenceId: uuid("reference_id").notNull(),
 		userId: integer("user_id").notNull(),
-		build: boolean("build").notNull(),
+		publishVersion: boolean("publish_version").notNull(),
 		modify: boolean("modify").notNull(),
 		modifyOtu: boolean("modify_otu").notNull(),
 	},
@@ -84,7 +84,7 @@ export const referenceGroups = pgTable(
 	{
 		referenceId: uuid("reference_id").notNull(),
 		groupId: integer("group_id").notNull(),
-		build: boolean("build").notNull(),
+		publishVersion: boolean("publish_version").notNull(),
 		modify: boolean("modify").notNull(),
 		modifyOtu: boolean("modify_otu").notNull(),
 	},

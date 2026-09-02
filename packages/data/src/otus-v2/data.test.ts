@@ -129,7 +129,7 @@ describe("createReferenceV2", () => {
 		expect(membership).toEqual({
 			referenceId: reference.id,
 			userId,
-			build: true,
+			publishVersion: true,
 			modify: true,
 			modifyOtu: true,
 		});

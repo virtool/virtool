@@ -14,6 +14,8 @@ export function createFakeReferenceV2(
 		archived: false,
 		createdAt: faker.date.past(),
 		updatedAt: faker.date.past(),
+		users: [],
+		groups: [],
 	};
 
 	return { ...base, ...overrides };

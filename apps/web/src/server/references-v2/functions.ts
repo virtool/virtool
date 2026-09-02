@@ -1,15 +1,26 @@
 import { createServerFn, createServerOnlyFn } from "@tanstack/react-start";
 import { setResponseStatus } from "@tanstack/react-start/server";
-import { ReferenceV2CreateRequest } from "@virtool/contracts";
+import {
+	ReferenceV2CreateRequest,
+	type ReferenceV2Right,
+} from "@virtool/contracts";
 import { resolveReferenceActor } from "@virtool/data/references/data";
 import {
+	addReferenceV2Group,
+	addReferenceV2User,
 	checkReferenceV2Right,
 	checkReferenceV2Visibility,
 	createReferenceV2,
 	deleteReferenceV2,
 	getReferencesV2,
 	getReferenceV2,
+	ReferenceV2MemberConflictError,
+	ReferenceV2MemberNotFoundError,
 	ReferenceV2NotFoundError,
+	removeReferenceV2Group,
+	removeReferenceV2User,
+	updateReferenceV2Group,
+	updateReferenceV2User,
 } from "@virtool/data/references-v2/data";
 import { z } from "zod";
 import { ForbiddenError } from "../auth/middleware";
@@ -21,6 +32,19 @@ const referenceIdSchema = z.object({
 	referenceId: z.uuid(),
 });
 
+const rightsSchema = z.object({
+	publishVersion: z.boolean().optional(),
+	modify: z.boolean().optional(),
+	modifyOtu: z.boolean().optional(),
+});
+
+const referenceUserSchema = referenceIdSchema.extend({
+	userId: z.number().int().positive(),
+});
+const referenceGroupSchema = referenceIdSchema.extend({
+	groupId: z.number().int().positive(),
+});
+
 // Wrapped in createServerOnlyFn so the compiler can strip these bodies — and the
 // ./data imports they reference — from the client bundle. A plain top-level
 // helper would pin ./data and its postgres transitive dependency in the client
@@ -30,8 +54,30 @@ const rethrowAsHttp = createServerOnlyFn((err: unknown): never => {
 		setResponseStatus(404);
 		throw new ClientError("Reference not found.", 404);
 	}
+	if (err instanceof ReferenceV2MemberNotFoundError) {
+		setResponseStatus(404);
+		throw new ClientError("Member not found.", 404);
+	}
+	if (err instanceof ReferenceV2MemberConflictError) {
+		setResponseStatus(400);
+		throw new ClientError(err.message, 400);
+	}
 	throw err;
 });
+
+const authorizeReferenceV2 = createServerOnlyFn(
+	async (
+		referenceId: string,
+		userId: number,
+		right: ReferenceV2Right,
+	): Promise<void> => {
+		const actor = await resolveReferenceActor(db, userId);
+		if (!(await checkReferenceV2Right(db, referenceId, right, actor))) {
+			setResponseStatus(403);
+			throw new ForbiddenError();
+		}
+	},
+);
 
 export const createReferenceV2Fn = createServerFn({ method: "POST" })
 	.middleware([permission("create_ref")])
@@ -85,6 +131,101 @@ export const deleteReferenceV2Fn = createServerFn({ method: "POST" })
 			}
 			await deleteReferenceV2(db, data.referenceId);
 			setResponseStatus(204);
+		} catch (err) {
+			return rethrowAsHttp(err);
+		}
+	});
+
+export const addReferenceV2UserFn = createServerFn({ method: "POST" })
+	.middleware([authenticated()])
+	.validator(referenceUserSchema.merge(rightsSchema))
+	.handler(async ({ context, data }) => {
+		const { referenceId, userId, ...rights } = data;
+		try {
+			await authorizeReferenceV2(referenceId, context.session.userId, "modify");
+			const member = await addReferenceV2User(db, referenceId, userId, rights);
+			setResponseStatus(201);
+			return member;
+		} catch (err) {
+			return rethrowAsHttp(err);
+		}
+	});
+
+export const addReferenceV2GroupFn = createServerFn({ method: "POST" })
+	.middleware([authenticated()])
+	.validator(referenceGroupSchema.merge(rightsSchema))
+	.handler(async ({ context, data }) => {
+		const { referenceId, groupId, ...rights } = data;
+		try {
+			await authorizeReferenceV2(referenceId, context.session.userId, "modify");
+			const member = await addReferenceV2Group(
+				db,
+				referenceId,
+				groupId,
+				rights,
+			);
+			setResponseStatus(201);
+			return member;
+		} catch (err) {
+			return rethrowAsHttp(err);
+		}
+	});
+
+export const updateReferenceV2UserFn = createServerFn({ method: "POST" })
+	.middleware([authenticated()])
+	.validator(referenceUserSchema.merge(rightsSchema))
+	.handler(async ({ context, data }) => {
+		const { referenceId, userId, ...rights } = data;
+		try {
+			await authorizeReferenceV2(referenceId, context.session.userId, "modify");
+			return await updateReferenceV2User(db, referenceId, userId, rights);
+		} catch (err) {
+			return rethrowAsHttp(err);
+		}
+	});
+
+export const updateReferenceV2GroupFn = createServerFn({ method: "POST" })
+	.middleware([authenticated()])
+	.validator(referenceGroupSchema.merge(rightsSchema))
+	.handler(async ({ context, data }) => {
+		const { referenceId, groupId, ...rights } = data;
+		try {
+			await authorizeReferenceV2(referenceId, context.session.userId, "modify");
+			return await updateReferenceV2Group(db, referenceId, groupId, rights);
+		} catch (err) {
+			return rethrowAsHttp(err);
+		}
+	});
+
+export const removeReferenceV2UserFn = createServerFn({ method: "POST" })
+	.middleware([authenticated()])
+	.validator(referenceUserSchema)
+	.handler(async ({ context, data }) => {
+		try {
+			await authorizeReferenceV2(
+				data.referenceId,
+				context.session.userId,
+				"modify",
+			);
+			await removeReferenceV2User(db, data.referenceId, data.userId);
+			return null;
+		} catch (err) {
+			return rethrowAsHttp(err);
+		}
+	});
+
+export const removeReferenceV2GroupFn = createServerFn({ method: "POST" })
+	.middleware([authenticated()])
+	.validator(referenceGroupSchema)
+	.handler(async ({ context, data }) => {
+		try {
+			await authorizeReferenceV2(
+				data.referenceId,
+				context.session.userId,
+				"modify",
+			);
+			await removeReferenceV2Group(db, data.referenceId, data.groupId);
+			return null;
 		} catch (err) {
 			return rethrowAsHttp(err);
 		}

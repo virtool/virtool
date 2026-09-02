@@ -90,7 +90,7 @@ async function seedReferenceV2(memberUserId: number): Promise<string> {
 	await db.insert(referenceUsers).values({
 		referenceId: id,
 		userId: memberUserId,
-		build: true,
+		publishVersion: true,
 		modify: true,
 		modifyOtu: true,
 	});
@@ -129,7 +129,7 @@ describe("createReferenceV2", () => {
 		expect(membership).toEqual({
 			referenceId: reference.id,
 			userId,
-			build: true,
+			publishVersion: true,
 			modify: true,
 			modifyOtu: true,
 		});
@@ -160,9 +160,15 @@ describe("getReferenceV2", () => {
 
 		const reference = (await call("getReferenceV2Fn", { referenceId })) as {
 			id: string;
+			users: Array<{ id: number; publishVersion: boolean }>;
+			groups: unknown[];
 		};
 
 		expect(reference.id).toBe(referenceId);
+		expect(reference.users).toEqual([
+			expect.objectContaining({ id: userId, publishVersion: true }),
+		]);
+		expect(reference.groups).toEqual([]);
 	});
 
 	it("hides a reference the caller cannot see behind a 404", async () => {
@@ -212,7 +218,7 @@ describe("getReferenceV2", () => {
 		await db.insert(referenceGroups).values({
 			referenceId,
 			groupId: group.id,
-			build: false,
+			publishVersion: false,
 			modify: false,
 			modifyOtu: false,
 		});

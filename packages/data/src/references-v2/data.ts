@@ -1,12 +1,16 @@
 import { randomUUID } from "node:crypto";
 import type {
-	ReferenceRight,
 	ReferenceV2,
 	ReferenceV2CreateRequest,
+	ReferenceV2Group,
+	ReferenceV2Right,
+	ReferenceV2Rights,
+	ReferenceV2User,
 } from "@virtool/contracts";
 import { and, asc, eq, inArray, or, type SQL } from "drizzle-orm";
 import type { Db, DbOrTx } from "../db/pg";
 import { takeFirst, takeFirstOrThrow } from "../db/rows";
+import { groups } from "../db/schema/groups";
 import {
 	otuChanges,
 	otuIsolates,
@@ -28,18 +32,29 @@ import {
 	referenceRoots,
 	referenceUsers,
 } from "../db/schema/referencesV2";
+import { users } from "../db/schema/users";
 import { AppError } from "../errors";
 import type { ReferenceActor } from "../references/data";
 
 /** Thrown when a v2 Reference does not exist. */
 export class ReferenceV2NotFoundError extends AppError {}
 
+/** Thrown when a v2 Reference member does not exist. */
+export class ReferenceV2MemberNotFoundError extends AppError {}
+
+/** Thrown when a v2 Reference member cannot be added. */
+export class ReferenceV2MemberConflictError extends AppError {}
+
 /** Values needed to create a local v2 Reference. */
 export type CreateReferenceV2Values = ReferenceV2CreateRequest & {
 	userId: number;
 };
 
-function mapReference(row: ReferenceRootRow): ReferenceV2 {
+function mapReference(
+	row: ReferenceRootRow,
+	users: ReferenceV2User[] = [],
+	groups: ReferenceV2Group[] = [],
+): ReferenceV2 {
 	return {
 		id: row.id,
 		name: row.name,
@@ -49,6 +64,8 @@ function mapReference(row: ReferenceRootRow): ReferenceV2 {
 		archived: row.archived,
 		createdAt: row.createdAt,
 		updatedAt: row.updatedAt,
+		users,
+		groups,
 	};
 }
 
@@ -78,7 +95,7 @@ export async function createReferenceV2(
 		await tx.insert(referenceUsers).values({
 			referenceId: reference.id,
 			userId: values.userId,
-			build: true,
+			publishVersion: true,
 			modify: true,
 			modifyOtu: true,
 		});
@@ -103,7 +120,32 @@ export async function getReferenceV2(
 		throw new ReferenceV2NotFoundError();
 	}
 
-	return mapReference(row);
+	const [referenceUserRows, referenceGroupRows] = await Promise.all([
+		db
+			.select({
+				id: users.id,
+				handle: users.handle,
+				publishVersion: referenceUsers.publishVersion,
+				modify: referenceUsers.modify,
+				modifyOtu: referenceUsers.modifyOtu,
+			})
+			.from(referenceUsers)
+			.innerJoin(users, eq(referenceUsers.userId, users.id))
+			.where(eq(referenceUsers.referenceId, referenceId)),
+		db
+			.select({
+				id: groups.id,
+				name: groups.name,
+				publishVersion: referenceGroups.publishVersion,
+				modify: referenceGroups.modify,
+				modifyOtu: referenceGroups.modifyOtu,
+			})
+			.from(referenceGroups)
+			.innerJoin(groups, eq(referenceGroups.groupId, groups.id))
+			.where(eq(referenceGroups.referenceId, referenceId)),
+	]);
+
+	return mapReference(row, referenceUserRows, referenceGroupRows);
 }
 
 /** Permanently delete a v2 Reference and its complete OTU history. */
@@ -202,7 +244,7 @@ export async function getReferencesV2(
 		.where(referenceV2VisibilityFilter(db, actor))
 		.orderBy(asc(referenceRoots.name), asc(referenceRoots.id));
 
-	return rows.map(mapReference);
+	return rows.map((row) => mapReference(row));
 }
 
 /**
@@ -217,7 +259,7 @@ export async function getReferencesV2(
 export async function checkReferenceV2Right(
 	db: Db,
 	referenceId: string,
-	right: ReferenceRight,
+	right: ReferenceV2Right,
 	actor: ReferenceActor,
 ): Promise<boolean> {
 	if (actor.isAdmin) {
@@ -235,8 +277,8 @@ export async function checkReferenceV2Right(
 	}
 
 	const userColumn =
-		right === "build"
-			? referenceUsers.build
+		right === "publishVersion"
+			? referenceUsers.publishVersion
 			: right === "modify"
 				? referenceUsers.modify
 				: referenceUsers.modifyOtu;
@@ -259,8 +301,8 @@ export async function checkReferenceV2Right(
 
 	if (actor.groupIds.length > 0) {
 		const groupColumn =
-			right === "build"
-				? referenceGroups.build
+			right === "publishVersion"
+				? referenceGroups.publishVersion
 				: right === "modify"
 					? referenceGroups.modify
 					: referenceGroups.modifyOtu;
@@ -336,4 +378,188 @@ export async function checkReferenceV2Visibility(
 	}
 
 	return false;
+}
+
+function resolveRights(rights: Partial<ReferenceV2Rights>): ReferenceV2Rights {
+	return {
+		publishVersion: rights.publishVersion ?? false,
+		modify: rights.modify ?? false,
+		modifyOtu: rights.modifyOtu ?? false,
+	};
+}
+
+/** Add a user to a v2 Reference. */
+export async function addReferenceV2User(
+	db: Db,
+	referenceId: string,
+	userId: number,
+	rights: Partial<ReferenceV2Rights>,
+): Promise<ReferenceV2User> {
+	await getReferenceV2(db, referenceId);
+	const [user] = await db
+		.select({ id: users.id, handle: users.handle })
+		.from(users)
+		.where(eq(users.id, userId))
+		.limit(1);
+
+	if (!user) {
+		throw new ReferenceV2MemberConflictError("User does not exist.");
+	}
+
+	const resolved = resolveRights(rights);
+	try {
+		await db
+			.insert(referenceUsers)
+			.values({ referenceId, userId, ...resolved });
+	} catch (err) {
+		if ((err as { code?: string }).code === "23505") {
+			throw new ReferenceV2MemberConflictError("User is already a member.");
+		}
+		throw err;
+	}
+
+	return { ...user, ...resolved };
+}
+
+/** Add a group to a v2 Reference. */
+export async function addReferenceV2Group(
+	db: Db,
+	referenceId: string,
+	groupId: number,
+	rights: Partial<ReferenceV2Rights>,
+): Promise<ReferenceV2Group> {
+	await getReferenceV2(db, referenceId);
+	const [group] = await db
+		.select({ id: groups.id, name: groups.name })
+		.from(groups)
+		.where(eq(groups.id, groupId))
+		.limit(1);
+
+	if (!group) {
+		throw new ReferenceV2MemberConflictError("Group does not exist.");
+	}
+
+	const resolved = resolveRights(rights);
+	try {
+		await db
+			.insert(referenceGroups)
+			.values({ referenceId, groupId, ...resolved });
+	} catch (err) {
+		if ((err as { code?: string }).code === "23505") {
+			throw new ReferenceV2MemberConflictError("Group is already a member.");
+		}
+		throw err;
+	}
+
+	return { ...group, ...resolved };
+}
+
+/** Update a user's rights on a v2 Reference. */
+export async function updateReferenceV2User(
+	db: Db,
+	referenceId: string,
+	userId: number,
+	rights: Partial<ReferenceV2Rights>,
+): Promise<ReferenceV2User> {
+	const [member] = await db
+		.update(referenceUsers)
+		.set(rights)
+		.where(
+			and(
+				eq(referenceUsers.referenceId, referenceId),
+				eq(referenceUsers.userId, userId),
+			),
+		)
+		.returning({
+			publishVersion: referenceUsers.publishVersion,
+			modify: referenceUsers.modify,
+			modifyOtu: referenceUsers.modifyOtu,
+		});
+
+	if (!member) {
+		throw new ReferenceV2MemberNotFoundError();
+	}
+
+	const user = takeFirstOrThrow(
+		await db
+			.select({ id: users.id, handle: users.handle })
+			.from(users)
+			.where(eq(users.id, userId)),
+	);
+	return { ...user, ...member };
+}
+
+/** Update a group's rights on a v2 Reference. */
+export async function updateReferenceV2Group(
+	db: Db,
+	referenceId: string,
+	groupId: number,
+	rights: Partial<ReferenceV2Rights>,
+): Promise<ReferenceV2Group> {
+	const [member] = await db
+		.update(referenceGroups)
+		.set(rights)
+		.where(
+			and(
+				eq(referenceGroups.referenceId, referenceId),
+				eq(referenceGroups.groupId, groupId),
+			),
+		)
+		.returning({
+			publishVersion: referenceGroups.publishVersion,
+			modify: referenceGroups.modify,
+			modifyOtu: referenceGroups.modifyOtu,
+		});
+
+	if (!member) {
+		throw new ReferenceV2MemberNotFoundError();
+	}
+
+	const group = takeFirstOrThrow(
+		await db
+			.select({ id: groups.id, name: groups.name })
+			.from(groups)
+			.where(eq(groups.id, groupId)),
+	);
+	return { ...group, ...member };
+}
+
+/** Remove a user from a v2 Reference. */
+export async function removeReferenceV2User(
+	db: Db,
+	referenceId: string,
+	userId: number,
+): Promise<void> {
+	const removed = await db
+		.delete(referenceUsers)
+		.where(
+			and(
+				eq(referenceUsers.referenceId, referenceId),
+				eq(referenceUsers.userId, userId),
+			),
+		)
+		.returning({ userId: referenceUsers.userId });
+	if (removed.length === 0) {
+		throw new ReferenceV2MemberNotFoundError();
+	}
+}
+
+/** Remove a group from a v2 Reference. */
+export async function removeReferenceV2Group(
+	db: Db,
+	referenceId: string,
+	groupId: number,
+): Promise<void> {
+	const removed = await db
+		.delete(referenceGroups)
+		.where(
+			and(
+				eq(referenceGroups.referenceId, referenceId),
+				eq(referenceGroups.groupId, groupId),
+			),
+		)
+		.returning({ groupId: referenceGroups.groupId });
+	if (removed.length === 0) {
+		throw new ReferenceV2MemberNotFoundError();
+	}
 }
