@@ -1,6 +1,4 @@
-import type {
-	EmailAvailability,
-} from "@virtool/contracts";
+import type { EmailAvailability } from "@virtool/contracts";
 import { eq } from "drizzle-orm";
 import type { EncryptedValue, Keyring } from "../crypto/keyring";
 import type { Db } from "../db/pg";

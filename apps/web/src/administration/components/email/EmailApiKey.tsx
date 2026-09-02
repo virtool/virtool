@@ -1,4 +1,7 @@
-import { useClearEmailApiKey, useSetEmailApiKey } from "@administration/queries";
+import {
+	useClearEmailApiKey,
+	useSetEmailApiKey,
+} from "@administration/queries";
 import { BoxGroup, BoxGroupSection } from "@base/Box";
 import Button from "@base/Button";
 import DeleteDialog from "@base/DeleteDialog";
@@ -68,7 +71,10 @@ export default function EmailApiKey({ settings }: { settings: EmailSettings }) {
 										},
 									})}
 								/>
-								<p className="mt-1 text-gray-600 text-sm" id="emailApiKey-status">
+								<p
+									className="mt-1 text-gray-600 text-sm"
+									id="emailApiKey-status"
+								>
 									{settings.hasApiKey
 										? "A key is configured."
 										: "No key is configured."}

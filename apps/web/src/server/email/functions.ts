@@ -1,9 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
 import { setResponseStatus } from "@tanstack/react-start/server";
-import type {
-	EmailSettings,
-	EmailTestResult,
-} from "@virtool/contracts";
+import type { EmailSettings, EmailTestResult } from "@virtool/contracts";
 import {
 	clearEmailApiKey,
 	EmailConfigurationError,
@@ -18,6 +15,7 @@ import { z } from "zod";
 import { adminRole } from "../auth/policy";
 import { db, keyring } from "../composition";
 import { ClientError } from "../errors";
+import { logger } from "../logger";
 
 const EMAIL_ADDRESS_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
@@ -123,5 +121,5 @@ export const sendTestEmailFn = createServerFn({ method: "POST" })
 	.validator(z.object({ recipient: addressSchema }))
 	.handler(
 		async ({ data }): Promise<EmailTestResult> =>
-			sendTestEmail(db, keyring, data.recipient),
+			sendTestEmail(db, keyring, logger, data.recipient),
 	);

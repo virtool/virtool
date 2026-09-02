@@ -3,7 +3,12 @@ import ExternalLink from "@base/ExternalLink";
 import type { PaletteColor } from "@base/types";
 import type { EmailAvailability, EmailSettings } from "@virtool/contracts";
 import type { LucideIcon } from "lucide-react";
-import { CircleAlert, CircleCheck, CircleSlash, TriangleAlert } from "lucide-react";
+import {
+	CircleAlert,
+	CircleCheck,
+	CircleSlash,
+	TriangleAlert,
+} from "lucide-react";
 
 const ENCRYPTION_KEY_DOCS =
 	"https://github.com/virtool/virtool/blob/main/docs/env.md#encryption-key";
@@ -14,7 +19,10 @@ type StatusPresentation = {
 	label: string;
 };
 
-const presentations: Record<EmailAvailability | "disabled", StatusPresentation> = {
+const presentations: Record<
+	EmailAvailability | "disabled",
+	StatusPresentation
+> = {
 	configuration_error: {
 		color: "red",
 		icon: TriangleAlert,

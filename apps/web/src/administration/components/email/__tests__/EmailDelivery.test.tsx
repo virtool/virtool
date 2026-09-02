@@ -243,7 +243,7 @@ describe("<EmailDelivery>", () => {
 
 			renderWithProviders(<EmailDelivery />);
 
-		expect(await screen.findByText("No key is configured.")).toBeVisible();
+			expect(await screen.findByText("No key is configured.")).toBeVisible();
 			expect(
 				screen.queryByRole("button", { name: "Remove" }),
 			).not.toBeInTheDocument();

@@ -5,8 +5,8 @@ import QueryError from "@base/QueryError";
 import SectionHeader from "@base/SectionHeader";
 import { useState } from "react";
 import EmailApiKey from "./EmailApiKey";
-import EmailDeliveryStatus from "./EmailDeliveryStatus";
 import EmailDeliverySending from "./EmailDeliverySending";
+import EmailDeliveryStatus from "./EmailDeliveryStatus";
 import EmailSender from "./EmailSender";
 import EmailTest from "./EmailTest";
 
