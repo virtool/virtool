@@ -245,7 +245,11 @@ payloads remain stored until their rows are pruned; do not enqueue data that
 cannot tolerate that retention.
 
 `sendEmailViaResend` in `src/email/send.ts` is the only module that talks to
-Resend, and its unit tests stub global `fetch` rather than the network.
+Resend, and its unit tests stub global `fetch` rather than the network. A failed
+send carries both the provider's own error identifier, which is drawn from a
+closed set and may be shown, and its free-text message, which is for logs only.
+`sendTestEmail` in `src/email/testDelivery.ts` maps the identifier onto the
+bounded `EmailTestFailureCode`, so no provider text reaches a browser.
 
 ## Task queue
 

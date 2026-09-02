@@ -115,7 +115,6 @@ describe("authorization", () => {
 		["updateEmailSettingsFn", { senderName: "Virtool" }],
 		["setEmailApiKeyFn", { apiKey: "re_secret" }],
 		["clearEmailApiKeyFn", undefined],
-		["reencryptEmailApiKeyFn", undefined],
 		["sendTestEmailFn", { recipient: "someone@example.com" }],
 	];
 
@@ -123,8 +122,16 @@ describe("authorization", () => {
 		await expect(call(name, data)).rejects.toBeInstanceOf(UnauthorizedError);
 	});
 
-	it.each(calls)("%s refuses a settings administrator", async (name, data) => {
-		await signIn(db, getRequest, { administratorRole: "settings" });
+	// Email configuration is recovery authority, so every administrator short of
+	// a full one is refused, not only the ones without a settings role.
+	const lesserRoles = ["settings", "users", "base", null] as const;
+
+	it.each(
+		lesserRoles.flatMap((role) =>
+			calls.map(([name, data]) => [role, name, data] as const),
+		),
+	)("%s administrator is refused by %s", async (role, name, data) => {
+		await signIn(db, getRequest, { administratorRole: role });
 		await expect(call(name, data)).rejects.toBeInstanceOf(ForbiddenError);
 	});
 });
@@ -137,7 +144,7 @@ describe("getEmailSettingsFn", () => {
 		const published = await call("getEmailSettingsFn");
 
 		expect(published).toEqual({
-			availability: "disabled",
+			availability: "ready",
 			enabled: false,
 			hasApiKey: true,
 			replyToAddress: "",
@@ -226,7 +233,7 @@ describe("updateEmailSettingsFn", () => {
 		).resolves.toMatchObject({
 			enabled: false,
 			hasApiKey: true,
-			availability: "disabled",
+			availability: "ready",
 		});
 	});
 });
@@ -274,30 +281,6 @@ describe("setEmailApiKeyFn and clearEmailApiKeyFn", () => {
 	});
 });
 
-describe("reencryptEmailApiKeyFn", () => {
-	it("reports already_current for an envelope under the active key", async () => {
-		await signIn(db, getRequest, { administratorRole: "full" });
-		await seedConfigured();
-
-		await expect(call("reencryptEmailApiKeyFn")).resolves.toBe(
-			"already_current",
-		);
-	});
-
-	it("re-encrypts an envelope written under the previous key", async () => {
-		await signIn(db, getRequest, { administratorRole: "full" });
-
-		await seedConfigured();
-
-		keyring = createKeyring(randomBytes(32).toString("base64"), activeKey);
-
-		await expect(call("reencryptEmailApiKeyFn")).resolves.toBe("reencrypted");
-		await expect(call("getEmailSettingsFn")).resolves.toMatchObject({
-			availability: "disabled",
-		});
-	});
-});
-
 describe("sendTestEmailFn", () => {
 	it("sends the test template and reports success", async () => {
 		await signIn(db, getRequest, { administratorRole: "full" });
@@ -313,7 +296,7 @@ describe("sendTestEmailFn", () => {
 
 		await expect(
 			call("sendTestEmailFn", { recipient: "someone@example.com" }),
-		).resolves.toEqual({ ok: true });
+		).resolves.toEqual({ ok: true, providerMessageId: "msg_1" });
 
 		const [, init] = fetchMock.mock.calls[0] as [string, RequestInit];
 		const body = JSON.parse(init.body as string);
@@ -331,8 +314,54 @@ describe("sendTestEmailFn", () => {
 
 		await expect(
 			call("sendTestEmailFn", { recipient: "someone@example.com" }),
-		).resolves.toMatchObject({ ok: false, reason: "unavailable" });
+		).resolves.toEqual({ ok: false, code: "unavailable" });
 		expect(fetchMock).not.toHaveBeenCalled();
+	});
+
+	it("reports a bounded code and no provider text when Resend refuses", async () => {
+		await signIn(db, getRequest, { administratorRole: "full" });
+		await seedConfigured();
+
+		vi.stubGlobal(
+			"fetch",
+			vi.fn().mockResolvedValue(
+				new Response(
+					JSON.stringify({
+						name: "validation_error",
+						message: "The virtool.example domain is not verified",
+						statusCode: 422,
+					}),
+					{ status: 422, headers: { "content-type": "application/json" } },
+				),
+			),
+		);
+
+		await expect(
+			call("sendTestEmailFn", { recipient: "someone@example.com" }),
+		).resolves.toEqual({ ok: false, code: "invalid_request" });
+	});
+
+	it("reports an authentication failure when the provider rejects the key", async () => {
+		await signIn(db, getRequest, { administratorRole: "full" });
+		await seedConfigured();
+
+		vi.stubGlobal(
+			"fetch",
+			vi.fn().mockResolvedValue(
+				new Response(
+					JSON.stringify({
+						name: "invalid_api_key",
+						message: "API key is invalid",
+						statusCode: 401,
+					}),
+					{ status: 401, headers: { "content-type": "application/json" } },
+				),
+			),
+		);
+
+		await expect(
+			call("sendTestEmailFn", { recipient: "someone@example.com" }),
+		).resolves.toEqual({ ok: false, code: "authentication" });
 	});
 
 	it("rejects a malformed recipient", async () => {

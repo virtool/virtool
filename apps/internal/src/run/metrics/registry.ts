@@ -98,7 +98,15 @@ const EMAIL_ATTEMPT_OUTCOMES: EmailAttemptOutcome[] = [
 	"expired",
 ];
 
-const EMAIL_AVAILABILITIES: EmailAvailability[] = [
+/**
+ * The delivery states this process reports, `disabled` included.
+ *
+ * The wire contract has no `disabled` state: the settings UI derives it from
+ * `enabled`. An operator watching the gauge needs the distinction directly.
+ */
+export type EmailAvailabilityLabel = EmailAvailability | "disabled";
+
+const EMAIL_AVAILABILITIES: EmailAvailabilityLabel[] = [
 	"disabled",
 	"unconfigured",
 	"ready",
@@ -129,7 +137,7 @@ export type Metrics = {
 	recordEmailRetryScheduled: (template: string) => void;
 	observeEmailAcceptedAge: (seconds: number) => void;
 	setEmailOutbox: (counts: EmailOutboxCounts) => void;
-	setEmailAvailability: (availability: EmailAvailability) => void;
+	setEmailAvailability: (availability: EmailAvailabilityLabel) => void;
 	recordSpawn: (type: PeriodicTaskName, outcome: PeriodicSpawnOutcome) => void;
 	recordRun: (sample: TaskRunSample) => void;
 	setTaskQueue: (snapshot: TaskQueueSnapshot) => void;

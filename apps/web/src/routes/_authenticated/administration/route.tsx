@@ -1,4 +1,4 @@
-import AdministrationTabs from "@administration/components/AdministrationTabs";
+import AdministrationSidebar from "@administration/components/AdministrationSidebar";
 import { ContainerNarrow, ContainerWide } from "@base/Container";
 import { ViewHeader, ViewHeaderTitle } from "@base/View";
 import { createFileRoute, Outlet, redirect } from "@tanstack/react-router";
@@ -28,10 +28,12 @@ function AdministrationLayout() {
 			<ViewHeader title="Administration">
 				<ViewHeaderTitle>Administration</ViewHeaderTitle>
 			</ViewHeader>
-			<AdministrationTabs administratorRole={account.administratorRole} />
-			<ContainerNarrow>
-				<Outlet />
-			</ContainerNarrow>
+			<div className="flex flex-col items-stretch gap-6 lg:flex-row lg:items-start lg:gap-10">
+				<AdministrationSidebar administratorRole={account.administratorRole} />
+				<ContainerNarrow>
+					<Outlet />
+				</ContainerNarrow>
+			</div>
 		</ContainerWide>
 	);
 }

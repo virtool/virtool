@@ -1,4 +1,5 @@
 import { createHash } from "node:crypto";
+import type { ErrorResponse } from "resend";
 import { type CreateEmailRequestOptions, Resend } from "resend";
 
 export const EMAIL_SEND_TIMEOUT_MS = 15_000;
@@ -16,15 +17,36 @@ export type EmailSendRequest = {
 	signal?: AbortSignal;
 	subject: string;
 	text: string;
+	timeoutMs?: number;
 };
+
+/**
+ * The provider's own error identifier, or `unknown` when it sent none.
+ *
+ * Resend draws these from a closed set, so a caller may show one to an
+ * administrator. The accompanying `error` string carries the provider's free
+ * text and belongs in logs only.
+ */
+export type EmailSendErrorCode = ErrorResponse["name"] | "unknown";
 
 /** The classified outcome of a provider send. */
 export type EmailSendOutcome =
 	| { outcome: "accepted"; providerMessageId: string }
-	| { outcome: "retryable"; error: string; retryAfterSeconds?: number }
-	| { outcome: "rate_limited"; error: string; retryAfterSeconds?: number }
-	| { outcome: "configuration"; error: string }
-	| { outcome: "permanent"; error: string };
+	| {
+			outcome: "retryable";
+			code: EmailSendErrorCode;
+			error: string;
+			retryAfterSeconds?: number;
+			timedOut?: boolean;
+	  }
+	| {
+			outcome: "rate_limited";
+			code: EmailSendErrorCode;
+			error: string;
+			retryAfterSeconds?: number;
+	  }
+	| { outcome: "configuration"; code: EmailSendErrorCode; error: string }
+	| { outcome: "permanent"; code: EmailSendErrorCode; error: string };
 
 /** The sender fields that Resend sees in the message body. */
 export type EmailSenderEnvelope = {
@@ -125,7 +147,9 @@ export async function sendEmailViaResend(
 ): Promise<EmailSendOutcome> {
 	const resend = new Resend(request.apiKey);
 
-	const timeout = AbortSignal.timeout(EMAIL_SEND_TIMEOUT_MS);
+	const timeout = AbortSignal.timeout(
+		request.timeoutMs ?? EMAIL_SEND_TIMEOUT_MS,
+	);
 	const signal = request.signal
 		? AbortSignal.any([request.signal, timeout])
 		: timeout;
@@ -146,40 +170,55 @@ export async function sendEmailViaResend(
 			signal,
 		} as CreateEmailRequestOptions,
 	);
+	const timedOut = timeout.aborted && !request.signal?.aborted;
 
 	if (data) {
 		return { outcome: "accepted", providerMessageId: data.id };
 	}
 
 	if (error === null) {
-		return { outcome: "retryable", error: "the provider returned no result" };
+		return {
+			outcome: "retryable",
+			code: "unknown",
+			error: "the provider returned no result",
+			...(timedOut && { timedOut: true }),
+		};
 	}
 
-	const message = `${error.name}: ${error.message}`.slice(0, 500);
+	const code = error.name;
+	const message = `${code}: ${error.message}`.slice(0, 500);
 
-	if (CONFIGURATION_ERRORS.has(error.name)) {
-		return { outcome: "configuration", error: message };
+	if (CONFIGURATION_ERRORS.has(code)) {
+		return { outcome: "configuration", code, error: message };
 	}
 
-	if (RATE_LIMIT_ERRORS.has(error.name)) {
+	if (RATE_LIMIT_ERRORS.has(code)) {
 		return {
 			outcome: "rate_limited",
+			code,
 			error: message,
 			retryAfterSeconds: parseRetryAfter(headers),
 		};
 	}
 
-	if (RETRYABLE_ERRORS.has(error.name)) {
+	if (RETRYABLE_ERRORS.has(code)) {
 		return {
 			outcome: "retryable",
+			code,
 			error: message,
 			retryAfterSeconds: parseRetryAfter(headers),
+			...(timedOut && { timedOut: true }),
 		};
 	}
 
 	if (error.statusCode === null || error.statusCode >= 500) {
-		return { outcome: "retryable", error: message };
+		return {
+			outcome: "retryable",
+			code,
+			error: message,
+			...(timedOut && { timedOut: true }),
+		};
 	}
 
-	return { outcome: "permanent", error: message };
+	return { outcome: "permanent", code, error: message };
 }

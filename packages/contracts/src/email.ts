@@ -18,7 +18,6 @@ export type EmailTemplate =
 
 /** Whether transactional email can currently be delivered. */
 export type EmailAvailability =
-	| "disabled"
 	| "unconfigured"
 	| "ready"
 	| "configuration_error";
@@ -34,20 +33,28 @@ export type EmailSettings = {
 	senderName: string;
 };
 
-/** Why a test delivery did not go through. */
-export type EmailTestFailureReason =
+/**
+ * Why a test delivery did not go through.
+ *
+ * A closed set, so the settings UI owns the wording and no provider text
+ * reaches the browser.
+ */
+export type EmailTestFailureCode =
 	| "unavailable"
-	| "provider_rejected"
-	| "provider_unavailable";
+	| "authentication"
+	| "invalid_sender"
+	| "invalid_request"
+	| "rate_limited"
+	| "provider_unavailable"
+	| "timeout"
+	| "unknown";
 
-/** The outcome of a test delivery, narrow enough for a settings UI. */
+/**
+ * The outcome of a test delivery, narrow enough for a settings UI.
+ *
+ * Acceptance is the provider taking the message, not proof it reached a
+ * mailbox. The message id is a diagnostic handle for support, nothing more.
+ */
 export type EmailTestResult =
-	| { ok: true }
-	| { ok: false; reason: EmailTestFailureReason; message: string };
-
-/** The outcome of re-encrypting the stored API key under the active encryption key. */
-export type EmailReencryptResult =
-	| "reencrypted"
-	| "already_current"
-	| "no_key"
-	| "unavailable";
+	| { ok: true; providerMessageId: string }
+	| { ok: false; code: EmailTestFailureCode };

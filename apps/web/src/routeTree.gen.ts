@@ -31,7 +31,11 @@ import { Route as AuthenticatedAccountIndexRouteImport } from './routes/_authent
 import { Route as AuthenticatedAccountApiRouteImport } from './routes/_authenticated/account/api'
 import { Route as AuthenticatedAccountProfileRouteImport } from './routes/_authenticated/account/profile'
 import { Route as AuthenticatedAdministrationIndexRouteImport } from './routes/_authenticated/administration/index'
+import { Route as AuthenticatedAdministrationBannersRouteImport } from './routes/_authenticated/administration/banners'
+import { Route as AuthenticatedAdministrationCachingRouteImport } from './routes/_authenticated/administration/caching'
+import { Route as AuthenticatedAdministrationEmailRouteImport } from './routes/_authenticated/administration/email'
 import { Route as AuthenticatedAdministrationGroupsRouteImport } from './routes/_authenticated/administration/groups'
+import { Route as AuthenticatedAdministrationNcbiRouteImport } from './routes/_authenticated/administration/ncbi'
 import { Route as AuthenticatedAdministrationSettingsRouteImport } from './routes/_authenticated/administration/settings'
 import { Route as AuthenticatedHmmsIndexRouteImport } from './routes/_authenticated/hmms/index'
 import { Route as AuthenticatedHmmsHmmIdRouteImport } from './routes/_authenticated/hmms/$hmmId'
@@ -194,10 +198,34 @@ const AuthenticatedAdministrationIndexRoute =
     path: '/',
     getParentRoute: () => AuthenticatedAdministrationRouteRoute,
   } as any)
+const AuthenticatedAdministrationBannersRoute =
+  AuthenticatedAdministrationBannersRouteImport.update({
+    id: '/banners',
+    path: '/banners',
+    getParentRoute: () => AuthenticatedAdministrationRouteRoute,
+  } as any)
+const AuthenticatedAdministrationCachingRoute =
+  AuthenticatedAdministrationCachingRouteImport.update({
+    id: '/caching',
+    path: '/caching',
+    getParentRoute: () => AuthenticatedAdministrationRouteRoute,
+  } as any)
+const AuthenticatedAdministrationEmailRoute =
+  AuthenticatedAdministrationEmailRouteImport.update({
+    id: '/email',
+    path: '/email',
+    getParentRoute: () => AuthenticatedAdministrationRouteRoute,
+  } as any)
 const AuthenticatedAdministrationGroupsRoute =
   AuthenticatedAdministrationGroupsRouteImport.update({
     id: '/groups',
     path: '/groups',
+    getParentRoute: () => AuthenticatedAdministrationRouteRoute,
+  } as any)
+const AuthenticatedAdministrationNcbiRoute =
+  AuthenticatedAdministrationNcbiRouteImport.update({
+    id: '/ncbi',
+    path: '/ncbi',
     getParentRoute: () => AuthenticatedAdministrationRouteRoute,
   } as any)
 const AuthenticatedAdministrationSettingsRoute =
@@ -498,7 +526,11 @@ export interface FileRoutesByFullPath {
   '/refs/$refId': typeof AuthenticatedRefsRefIdRouteRouteWithChildren
   '/account/api': typeof AuthenticatedAccountApiRoute
   '/account/profile': typeof AuthenticatedAccountProfileRoute
+  '/administration/banners': typeof AuthenticatedAdministrationBannersRoute
+  '/administration/caching': typeof AuthenticatedAdministrationCachingRoute
+  '/administration/email': typeof AuthenticatedAdministrationEmailRoute
   '/administration/groups': typeof AuthenticatedAdministrationGroupsRoute
+  '/administration/ncbi': typeof AuthenticatedAdministrationNcbiRoute
   '/administration/settings': typeof AuthenticatedAdministrationSettingsRoute
   '/hmms/$hmmId': typeof AuthenticatedHmmsHmmIdRoute
   '/jobs/$jobId': typeof AuthenticatedJobsJobIdRoute
@@ -561,7 +593,11 @@ export interface FileRoutesByTo {
   '/': typeof AuthenticatedIndexRoute
   '/account/api': typeof AuthenticatedAccountApiRoute
   '/account/profile': typeof AuthenticatedAccountProfileRoute
+  '/administration/banners': typeof AuthenticatedAdministrationBannersRoute
+  '/administration/caching': typeof AuthenticatedAdministrationCachingRoute
+  '/administration/email': typeof AuthenticatedAdministrationEmailRoute
   '/administration/groups': typeof AuthenticatedAdministrationGroupsRoute
+  '/administration/ncbi': typeof AuthenticatedAdministrationNcbiRoute
   '/administration/settings': typeof AuthenticatedAdministrationSettingsRoute
   '/hmms/$hmmId': typeof AuthenticatedHmmsHmmIdRoute
   '/jobs/$jobId': typeof AuthenticatedJobsJobIdRoute
@@ -630,7 +666,11 @@ export interface FileRoutesById {
   '/_authenticated/refs/$refId': typeof AuthenticatedRefsRefIdRouteRouteWithChildren
   '/_authenticated/account/api': typeof AuthenticatedAccountApiRoute
   '/_authenticated/account/profile': typeof AuthenticatedAccountProfileRoute
+  '/_authenticated/administration/banners': typeof AuthenticatedAdministrationBannersRoute
+  '/_authenticated/administration/caching': typeof AuthenticatedAdministrationCachingRoute
+  '/_authenticated/administration/email': typeof AuthenticatedAdministrationEmailRoute
   '/_authenticated/administration/groups': typeof AuthenticatedAdministrationGroupsRoute
+  '/_authenticated/administration/ncbi': typeof AuthenticatedAdministrationNcbiRoute
   '/_authenticated/administration/settings': typeof AuthenticatedAdministrationSettingsRoute
   '/_authenticated/hmms/$hmmId': typeof AuthenticatedHmmsHmmIdRoute
   '/_authenticated/jobs/$jobId': typeof AuthenticatedJobsJobIdRoute
@@ -703,7 +743,11 @@ export interface FileRouteTypes {
     | '/refs/$refId'
     | '/account/api'
     | '/account/profile'
+    | '/administration/banners'
+    | '/administration/caching'
+    | '/administration/email'
     | '/administration/groups'
+    | '/administration/ncbi'
     | '/administration/settings'
     | '/hmms/$hmmId'
     | '/jobs/$jobId'
@@ -766,7 +810,11 @@ export interface FileRouteTypes {
     | '/'
     | '/account/api'
     | '/account/profile'
+    | '/administration/banners'
+    | '/administration/caching'
+    | '/administration/email'
     | '/administration/groups'
+    | '/administration/ncbi'
     | '/administration/settings'
     | '/hmms/$hmmId'
     | '/jobs/$jobId'
@@ -834,7 +882,11 @@ export interface FileRouteTypes {
     | '/_authenticated/refs/$refId'
     | '/_authenticated/account/api'
     | '/_authenticated/account/profile'
+    | '/_authenticated/administration/banners'
+    | '/_authenticated/administration/caching'
+    | '/_authenticated/administration/email'
     | '/_authenticated/administration/groups'
+    | '/_authenticated/administration/ncbi'
     | '/_authenticated/administration/settings'
     | '/_authenticated/hmms/$hmmId'
     | '/_authenticated/jobs/$jobId'
@@ -1061,11 +1113,39 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAdministrationIndexRouteImport
       parentRoute: typeof AuthenticatedAdministrationRouteRoute
     }
+    '/_authenticated/administration/banners': {
+      id: '/_authenticated/administration/banners'
+      path: '/banners'
+      fullPath: '/administration/banners'
+      preLoaderRoute: typeof AuthenticatedAdministrationBannersRouteImport
+      parentRoute: typeof AuthenticatedAdministrationRouteRoute
+    }
+    '/_authenticated/administration/caching': {
+      id: '/_authenticated/administration/caching'
+      path: '/caching'
+      fullPath: '/administration/caching'
+      preLoaderRoute: typeof AuthenticatedAdministrationCachingRouteImport
+      parentRoute: typeof AuthenticatedAdministrationRouteRoute
+    }
+    '/_authenticated/administration/email': {
+      id: '/_authenticated/administration/email'
+      path: '/email'
+      fullPath: '/administration/email'
+      preLoaderRoute: typeof AuthenticatedAdministrationEmailRouteImport
+      parentRoute: typeof AuthenticatedAdministrationRouteRoute
+    }
     '/_authenticated/administration/groups': {
       id: '/_authenticated/administration/groups'
       path: '/groups'
       fullPath: '/administration/groups'
       preLoaderRoute: typeof AuthenticatedAdministrationGroupsRouteImport
+      parentRoute: typeof AuthenticatedAdministrationRouteRoute
+    }
+    '/_authenticated/administration/ncbi': {
+      id: '/_authenticated/administration/ncbi'
+      path: '/ncbi'
+      fullPath: '/administration/ncbi'
+      preLoaderRoute: typeof AuthenticatedAdministrationNcbiRouteImport
       parentRoute: typeof AuthenticatedAdministrationRouteRoute
     }
     '/_authenticated/administration/settings': {
@@ -1401,7 +1481,11 @@ declare module '@tanstack/react-router' {
 }
 
 interface AuthenticatedAdministrationRouteRouteChildren {
+  AuthenticatedAdministrationBannersRoute: typeof AuthenticatedAdministrationBannersRoute
+  AuthenticatedAdministrationCachingRoute: typeof AuthenticatedAdministrationCachingRoute
+  AuthenticatedAdministrationEmailRoute: typeof AuthenticatedAdministrationEmailRoute
   AuthenticatedAdministrationGroupsRoute: typeof AuthenticatedAdministrationGroupsRoute
+  AuthenticatedAdministrationNcbiRoute: typeof AuthenticatedAdministrationNcbiRoute
   AuthenticatedAdministrationSettingsRoute: typeof AuthenticatedAdministrationSettingsRoute
   AuthenticatedAdministrationIndexRoute: typeof AuthenticatedAdministrationIndexRoute
   AuthenticatedAdministrationUsersUserIdRoute: typeof AuthenticatedAdministrationUsersUserIdRoute
@@ -1410,8 +1494,15 @@ interface AuthenticatedAdministrationRouteRouteChildren {
 
 const AuthenticatedAdministrationRouteRouteChildren: AuthenticatedAdministrationRouteRouteChildren =
   {
+    AuthenticatedAdministrationBannersRoute:
+      AuthenticatedAdministrationBannersRoute,
+    AuthenticatedAdministrationCachingRoute:
+      AuthenticatedAdministrationCachingRoute,
+    AuthenticatedAdministrationEmailRoute:
+      AuthenticatedAdministrationEmailRoute,
     AuthenticatedAdministrationGroupsRoute:
       AuthenticatedAdministrationGroupsRoute,
+    AuthenticatedAdministrationNcbiRoute: AuthenticatedAdministrationNcbiRoute,
     AuthenticatedAdministrationSettingsRoute:
       AuthenticatedAdministrationSettingsRoute,
     AuthenticatedAdministrationIndexRoute:

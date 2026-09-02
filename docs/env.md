@@ -98,8 +98,10 @@ decryption failure.
 
 1. Set `VT_ENCRYPTION_KEY` to the new key and
    `VT_ENCRYPTION_KEY_PREVIOUS` to the old key, then roll out both services.
-2. Run the administrator re-encryption operation.
-3. Confirm email is available, then unset
-   `VT_ENCRYPTION_KEY_PREVIOUS` and roll out again.
+2. Confirm email is available.
+3. Keep both keys configured.
 
-Keep the previous key configured until re-encryption succeeds.
+Nothing re-encrypts stored secrets yet, so they stay readable only through
+`VT_ENCRYPTION_KEY_PREVIOUS`. Unsetting it makes the stored API key
+undecryptable and stops email delivery. Background re-encryption is tracked in
+[VIR-3114](https://linear.app/virtool/issue/VIR-3114/handle-encryption-key-rotation-automatically).

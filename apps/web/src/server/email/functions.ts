@@ -1,16 +1,11 @@
 import { createServerFn } from "@tanstack/react-start";
 import { setResponseStatus } from "@tanstack/react-start/server";
-import type {
-	EmailReencryptResult,
-	EmailSettings,
-	EmailTestResult,
-} from "@virtool/contracts";
+import type { EmailSettings, EmailTestResult } from "@virtool/contracts";
 import {
 	clearEmailApiKey,
 	EmailConfigurationError,
 	type EmailDeliverySettings,
 	getEmailSettings,
-	reencryptEmailApiKey,
 	resolveEmailDelivery,
 	setEmailApiKey,
 	updateEmailDelivery,
@@ -20,6 +15,7 @@ import { z } from "zod";
 import { adminRole } from "../auth/policy";
 import { db, keyring } from "../composition";
 import { ClientError } from "../errors";
+import { logger } from "../logger";
 
 const EMAIL_ADDRESS_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
@@ -120,18 +116,10 @@ export const clearEmailApiKeyFn = createServerFn({ method: "POST" })
 	);
 
 /** @public */
-export const reencryptEmailApiKeyFn = createServerFn({ method: "POST" })
-	.middleware([adminRole("full")])
-	.handler(
-		async (): Promise<EmailReencryptResult> =>
-			reencryptEmailApiKey(db, keyring),
-	);
-
-/** @public */
 export const sendTestEmailFn = createServerFn({ method: "POST" })
 	.middleware([adminRole("full")])
 	.validator(z.object({ recipient: addressSchema }))
 	.handler(
 		async ({ data }): Promise<EmailTestResult> =>
-			sendTestEmail(db, keyring, data.recipient),
+			sendTestEmail(db, keyring, logger, data.recipient),
 	);
