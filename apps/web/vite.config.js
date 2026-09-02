@@ -112,6 +112,11 @@ export default defineConfig(({ command, mode }) => ({
 		// that stall Vitest's shutdown for ten seconds after the last test passes.
 		mode !== "test" &&
 			nitro({
+				// Nitro runs its plugins as it constructs the app, which the Node
+				// preset does before it binds the port. `startup.ts` explains why
+				// the environment check has to run from here. Paths resolve against
+				// this app's root.
+				plugins: ["./src/server/startup.ts"],
 				// `@sentry/profiling-node` ships native `.node` addons the bundler can't
 				// inline, and Nitro's builtin native-package list does not cover it.
 				// Tracing it (and its native helper) keeps the packages external and

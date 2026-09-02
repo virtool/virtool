@@ -61,9 +61,16 @@ to downstream code. Avoid direct `process.env` reads elsewhere: they bypass
 validation and `_FILE` resolution. This is especially important for early
 instrumentation such as Sentry initialization.
 
+Parse before the process starts serving. A misconfigured service must exit
+non-zero at boot rather than start and fail each request, which reads as a
+healthy-but-dead instance. The `apps/internal` subcommands parse inside
+`main()`; `apps/web` parses in a Nitro startup plugin, because its server entry
+is loaded on the first request. Report every invalid key in one message, and
+report key names and reasons only — never a configured value.
+
 Current integrations are:
 
-- `apps/web/src/server/config.ts`
+- `apps/web/src/server/configSchema.ts`
 - `apps/internal/src/serve/config.ts`
 - `apps/internal/src/run/config.ts`
 - `apps/internal/src/migrate/main.ts`

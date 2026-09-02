@@ -502,6 +502,14 @@ Server variables are read at startup. Each also accepts a `<VARIABLE>_FILE`
 variant containing the value; the file takes precedence, surrounding
 whitespace is trimmed, and an empty value is treated as unset.
 
+`src/server/configSchema.ts` holds the schema and `parseServerConfig`, and
+`src/server/config.ts` is the parsed singleton the rest of the server imports.
+`src/server/startup.ts`, registered as a Nitro plugin in `vite.config.js`,
+parses the environment before the port binds. An invalid environment logs one
+record naming every offending key and its reason — never a value — and exits
+non-zero, so a misconfigured instance never reaches the listener or the health
+probes.
+
 | Variable | Type | Default | Use |
 | --- | --- | --- | --- |
 | `VT_POSTGRES_URL` | URL | Required | Connect to the Virtool Postgres database. |
