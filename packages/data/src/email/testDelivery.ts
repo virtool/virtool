@@ -1,5 +1,6 @@
 import { randomUUID } from "node:crypto";
 import type { EmailTestFailureCode, EmailTestResult } from "@virtool/contracts";
+import type { Logger } from "@virtool/logger";
 import type { Keyring } from "../crypto/keyring";
 import type { Db } from "../db/pg";
 import {
@@ -53,10 +54,13 @@ function toFailureCode(outcome: EmailSendOutcome): EmailTestFailureCode {
  * Each call carries a fresh idempotency key, so an explicit retry really does
  * send again. The result is narrow enough for a settings UI: a bounded code the
  * caller words itself, never the provider's own text, and never credentials.
+ * The provider's own diagnostic is logged instead, so support can read what the
+ * administrator was not shown.
  */
 export async function sendTestEmail(
 	db: Db,
 	keyring: Keyring,
+	logger: Logger,
 	recipient: string,
 ): Promise<EmailTestResult> {
 	const state = resolveEmailDelivery(await getEmailSettings(db), keyring);
@@ -92,12 +96,31 @@ export async function sendTestEmail(
 			err instanceof Error &&
 			(err.name === "TimeoutError" || err.name === "AbortError");
 
-		return { ok: false, code: aborted ? "timeout" : "provider_unavailable" };
+		const code = aborted ? "timeout" : "provider_unavailable";
+
+		logger.error(
+			{ code, err },
+			"test email failed before the provider replied",
+		);
+
+		return { ok: false, code };
 	}
 
 	if (outcome.outcome === "accepted") {
 		return { ok: true, providerMessageId: outcome.providerMessageId };
 	}
 
-	return { ok: false, code: toFailureCode(outcome) };
+	const code = toFailureCode(outcome);
+
+	logger.error(
+		{
+			code,
+			outcome: outcome.outcome,
+			providerCode: outcome.code,
+			error: outcome.error,
+		},
+		"test email rejected by the provider",
+	);
+
+	return { ok: false, code };
 }
