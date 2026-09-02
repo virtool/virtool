@@ -35,12 +35,11 @@ export function resolveLevel(env: Env): LogLevel {
  * Keys redacted from log records by default. Covers the obvious secret-bearing
  * fields, the session-credential field names this codebase actually uses
  * (`sessionToken` / `session_token` / `tokenHash` / `resetCode` / `ncbiApiKey`),
- * the Better Auth material that is equivalent to a credential — TOTP secrets
- * ride on `secret`, while recovery codes, WebAuthn challenges and passkey
- * public keys need names of their own — and common
- * HTTP shapes (`req.headers.authorization`, `headers.cookie`) so that incidental
- * request logging does not leak credentials. Redaction runs before any
- * destination — including the Sentry forwarding stream — sees the record.
+ * Better Auth material equivalent to a credential (TOTP secrets use `secret`,
+ * while recovery codes, WebAuthn challenges and passkey public keys need their
+ * own names), and common HTTP shapes (`req.headers.authorization`,
+ * `headers.cookie`). Redaction runs before any destination, including Sentry,
+ * sees the record.
  */
 export const DEFAULT_REDACT_PATHS: readonly string[] = [
 	"password",

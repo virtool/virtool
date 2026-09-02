@@ -36,12 +36,9 @@ export type AuthOptions = {
 /**
  * Build the Better Auth instance.
  *
- * Better Auth answers *who is signing in*, and nothing else. Virtool keeps
- * `users.active`, administrator roles, groups, permissions, instance settings,
- * API keys and first-user detection, and `./policy` remains the only thing that
- * decides what a caller may do. Better Auth's own admin, ban and role features
- * are deliberately not registered — a second authorization system that
- * disagreed with the first would be worse than either alone.
+ * Better Auth handles authentication only. Virtool keeps account state,
+ * authorization, API keys and first-user detection; `./policy` remains the
+ * only authority for what a caller may do.
  *
  * Takes its dependencies as arguments so tests can build an instance against a
  * throwaway database. The process-wide one is {@link auth}.

@@ -232,11 +232,8 @@ function requirePresent(
 /**
  * Parse `VT_PUBLIC_ORIGIN` into a bare origin, or report why it is not one.
  *
- * Anything beyond scheme, host and port is rejected rather than trimmed away. A
- * value carrying a path, a query, a fragment or credentials means whoever set it
- * believed Virtool was mounted somewhere it is not, and silently discarding the
- * extra would leave that belief intact while callbacks and WebAuthn quietly used
- * a different origin.
+ * Anything beyond scheme, host and port is rejected rather than discarded, so
+ * callbacks and WebAuthn cannot silently use a different origin than configured.
  */
 function parsePublicOrigin(
 	raw: StorageEnv,

@@ -84,13 +84,10 @@ no safe default:
 
 Both accept `_FILE` variants. Configure them for `apps/web`.
 
-`VT_PUBLIC_ORIGIN` is deliberately not inferred from the request `Host` or the
-forwarded headers, and only one origin is accepted. WebAuthn binds a passkey to
-the origin and Relying Party ID it was registered under, and those are the only
-thing separating a real credential from a site that phished it — a value an
-attacker can set in a header cannot carry that weight. The RP ID is the
-configured origin's hostname, so moving an instance to a new domain invalidates
-every passkey registered under the old one.
+`VT_PUBLIC_ORIGIN` is deliberately not inferred from the request `Host` or
+forwarded headers. WebAuthn binds a passkey to the configured origin and Relying
+Party ID, whose hostname is derived from that origin. Moving an instance to a
+new domain invalidates passkeys registered under the old one.
 
 Plain `http` is rejected except on `localhost`, `127.0.0.1` and `[::1]`, which
 are the only hosts a browser treats as a secure context without TLS.
