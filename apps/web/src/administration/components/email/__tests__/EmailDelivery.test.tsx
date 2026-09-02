@@ -51,12 +51,8 @@ describe("<EmailDelivery>", () => {
 
 			renderWithProviders(<EmailDelivery />);
 
-			const status = await findStatus();
-
-			expect(status).toHaveTextContent("Disabled");
-			expect(status).toHaveTextContent(
-				"New email is discarded, not held for later.",
-			);
+			expect(await findStatus()).toHaveTextContent("Disabled");
+			expect(screen.getByText(/new email is not sent/i)).toBeVisible();
 		});
 
 		it("names the fields an unconfigured instance is missing", async () => {

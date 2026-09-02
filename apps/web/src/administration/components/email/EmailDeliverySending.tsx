@@ -22,10 +22,7 @@ export default function EmailDeliverySending({
 			<div className="flex items-center justify-between gap-5">
 				<div>
 					<p className="font-semibold">Enable</p>
-					<p className="text-gray-600 text-sm">
-						Turn this setting off and new email is discarded rather than held.
-						Email already queued still goes out.
-					</p>
+					<p className="text-gray-600 text-sm">New email is not sent when disabled.</p>
 					{mutation.isError ? (
 						<p className="text-red-600 text-sm" role="alert">
 							{getEmailErrorMessage(mutation.error)}
