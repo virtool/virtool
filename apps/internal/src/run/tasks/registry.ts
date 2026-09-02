@@ -1,9 +1,12 @@
+import type { Keyring } from "@virtool/data/crypto/keyring";
 import type { Db } from "@virtool/data/db/pg";
 import type { StorageBackend } from "@virtool/storage";
 import type { CompleteTaskRegistry } from "../framework/define";
+import type { Metrics } from "../metrics/registry";
 import { cleanupSessionsTask } from "./cleanup-sessions";
 import { cloneReferenceTask } from "./clone-reference";
 import { createIndexTask } from "./create-index";
+import { deliverEmailTask } from "./deliver-email";
 import { evictCachesLruTask } from "./evict-caches-lru";
 import { importReferenceTask } from "./import-reference";
 import { installHmmsTask } from "./install-hmms";
@@ -22,6 +25,8 @@ import { timeoutJobsTask } from "./timeout-jobs";
 export type TaskContext = {
 	db: Db;
 	storage: StorageBackend;
+	keyring: Keyring;
+	metrics: Metrics;
 };
 
 /**
@@ -42,6 +47,7 @@ export const taskRegistry: CompleteTaskRegistry<TaskContext> = {
 	cleanup_sessions: cleanupSessionsTask,
 	clone_reference: cloneReferenceTask,
 	create_index: createIndexTask,
+	deliver_email: deliverEmailTask,
 	evict_caches_lru: evictCachesLruTask,
 	import_reference: importReferenceTask,
 	install_hmms: installHmmsTask,

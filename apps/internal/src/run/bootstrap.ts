@@ -1,6 +1,11 @@
 import type { Server } from "node:http";
 import * as Sentry from "@sentry/node";
 import {
+	createKeyring,
+	type Keyring,
+	logKeyringStatus,
+} from "@virtool/data/crypto/keyring";
+import {
 	createDb,
 	type Db,
 	logPostgresVersion,
@@ -30,6 +35,8 @@ export type AppContext = {
 	db: Db;
 	client: PgClient;
 	storage: StorageBackend;
+	/** Process-wide encryption service for secrets stored by Virtool. */
+	keyring: Keyring;
 	/**
 	 * The write side of this process's Prometheus registry.
 	 *
@@ -141,6 +148,12 @@ export async function bootstrap(
 	logPostgresVersion(client, logger);
 
 	const storage = createStorageBackend(config.storage);
+	const keyring = createKeyring(
+		config.encryptionKey,
+		config.encryptionKeyPrevious,
+	);
+
+	logKeyringStatus(keyring.status, logger);
 
 	let ready = true;
 
@@ -206,6 +219,7 @@ export async function bootstrap(
 		db,
 		client,
 		storage,
+		keyring,
 		metrics,
 		onShutdown: shutdown.onShutdown,
 		setReady,

@@ -115,6 +115,29 @@ describe("getSettings", () => {
 		expect(JSON.stringify(published)).not.toContain("secret-key");
 	});
 
+	it("never sends the email columns to a settings administrator", async () => {
+		await signIn(db, getRequest, { administratorRole: "settings" });
+		await seedSettings(db, {
+			emailApiKey: {
+				version: 1,
+				algorithm: "aes-256-gcm",
+				purpose: "resend_api_key",
+				keyId: "abcdef0123456789",
+				nonce: "AAAAAAAAAAAAAAAA",
+				ciphertext: "c2VjcmV0LWNpcGhlcnRleHQ=",
+				tag: "AAAAAAAAAAAAAAAAAAAAAA==",
+			},
+			emailSenderAddress: "noreply@virtool.example",
+		});
+
+		const published = await call("getSettingsFn");
+
+		expect(published).not.toHaveProperty("emailApiKey");
+		expect(published).not.toHaveProperty("emailEnabled");
+		expect(published).not.toHaveProperty("emailSenderAddress");
+		expect(JSON.stringify(published)).not.toContain("ciphertext");
+	});
+
 	it("reports no NCBI API key when the stored one is empty", async () => {
 		await signIn(db, getRequest, { administratorRole: "settings" });
 		await seedSettings(db, { ncbiApiKey: "" });

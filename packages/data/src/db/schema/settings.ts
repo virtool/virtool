@@ -16,6 +16,7 @@ import {
 	pgTable,
 	text,
 } from "drizzle-orm/pg-core";
+import type { EncryptedValue } from "../../crypto/keyring";
 
 export const settings = pgTable(
 	"settings",
@@ -30,6 +31,12 @@ export const settings = pgTable(
 		defaultSourceTypes: jsonb("default_source_types")
 			.$type<string[]>()
 			.notNull(),
+		// Encrypted under the environment-owned process encryption key.
+		emailApiKey: jsonb("email_api_key").$type<EncryptedValue>(),
+		emailEnabled: boolean("email_enabled").notNull(),
+		emailReplyToAddress: text("email_reply_to_address").notNull(),
+		emailSenderAddress: text("email_sender_address").notNull(),
+		emailSenderName: text("email_sender_name").notNull(),
 		enableSentry: boolean("enable_sentry").notNull(),
 		minimumPasswordLength: integer("minimum_password_length").notNull(),
 		// A credential, unlike every other column here. It is never published to

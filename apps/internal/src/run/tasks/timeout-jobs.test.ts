@@ -11,11 +11,14 @@ import {
 import type { ClaimedTask } from "@virtool/data/tasks/data";
 import { collectFrames } from "@virtool/data/test/frames";
 import { createLogger, type Logger } from "@virtool/logger";
-import { MemoryStorage } from "@virtool/storage";
 import { eq } from "drizzle-orm";
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
 import { runTask } from "../framework/run";
-import { claimTask, readTaskRow } from "../testing/tasks";
+import {
+	claimTask,
+	createTaskTestContext,
+	readTaskRow,
+} from "../testing/tasks";
 import type { TaskContext } from "./registry";
 import { timeoutJobsTask } from "./timeout-jobs";
 
@@ -40,7 +43,7 @@ beforeEach(async () => {
 	await db.delete(users);
 	await db.delete(tasks);
 
-	ctx = { db, storage: new MemoryStorage() };
+	ctx = createTaskTestContext({ db });
 	userId = await seedUser(db);
 });
 

@@ -4,6 +4,7 @@ import {
 } from "@virtool/contracts";
 import { eq } from "drizzle-orm";
 import { CACHE_STORAGE_BUDGET_BYTES } from "../caches/data";
+import type { EncryptedValue } from "../crypto/keyring";
 import type { Db } from "../db/pg";
 import { takeFirst, takeFirstOrThrow } from "../db/rows";
 import {
@@ -22,6 +23,18 @@ export type Settings = {
 	 */
 	cacheStorageBudget: number;
 	defaultSourceTypes: string[];
+	/**
+	 * The stored Resend API key's encrypted envelope, or `null` when none is
+	 * configured.
+	 *
+	 * A credential like {@link Settings.ncbiApiKey}, and treated the same way at
+	 * the transport boundary: a client learns only whether a key is stored.
+	 */
+	emailApiKey: EncryptedValue | null;
+	emailEnabled: boolean;
+	emailReplyToAddress: string;
+	emailSenderAddress: string;
+	emailSenderName: string;
 	enableSentry: boolean;
 	minimumPasswordLength: number;
 	/**
@@ -48,6 +61,11 @@ export type Settings = {
 export const DEFAULT_SETTINGS: Settings = {
 	cacheStorageBudget: CACHE_STORAGE_BUDGET_BYTES,
 	defaultSourceTypes: ["isolate", "strain"],
+	emailApiKey: null,
+	emailEnabled: false,
+	emailReplyToAddress: "",
+	emailSenderAddress: "",
+	emailSenderName: "",
 	enableSentry: true,
 	minimumPasswordLength: DEFAULT_MINIMUM_PASSWORD_LENGTH,
 	ncbiApiKey: "",
@@ -62,6 +80,11 @@ function toSettings(row: SettingsRow): Settings {
 	return {
 		cacheStorageBudget: row.cacheStorageBudget,
 		defaultSourceTypes: row.defaultSourceTypes,
+		emailApiKey: row.emailApiKey,
+		emailEnabled: row.emailEnabled,
+		emailReplyToAddress: row.emailReplyToAddress,
+		emailSenderAddress: row.emailSenderAddress,
+		emailSenderName: row.emailSenderName,
 		enableSentry: row.enableSentry,
 		minimumPasswordLength: row.minimumPasswordLength,
 		ncbiApiKey: row.ncbiApiKey,

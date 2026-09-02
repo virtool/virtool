@@ -17,11 +17,15 @@ import {
 } from "@virtool/data/db/test/fixtures";
 import type { ClaimedTask } from "@virtool/data/tasks/data";
 import { createLogger, type Logger } from "@virtool/logger";
-import { MemoryStorage } from "@virtool/storage";
 import { eq } from "drizzle-orm";
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
 import { runTask } from "../framework/run";
-import { acquireOrThrow, readTaskRow, seedTaskRow } from "../testing/tasks";
+import {
+	acquireOrThrow,
+	createTaskTestContext,
+	readTaskRow,
+	seedTaskRow,
+} from "../testing/tasks";
 import { cloneReferenceTask } from "./clone-reference";
 import type { TaskContext } from "./registry";
 
@@ -50,7 +54,7 @@ beforeEach(async () => {
 	await db.delete(tasks);
 	await db.delete(users);
 
-	ctx = { db, storage: new MemoryStorage() };
+	ctx = createTaskTestContext({ db });
 });
 
 async function seedReference(userId: number, name: string): Promise<number> {

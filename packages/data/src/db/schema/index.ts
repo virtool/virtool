@@ -7,6 +7,7 @@ export * from "./analyses";
 export * from "./apiKeys";
 export * from "./banners";
 export * from "./caches";
+export * from "./emailOutbox";
 export * from "./groups";
 export * from "./history";
 export * from "./hmms";

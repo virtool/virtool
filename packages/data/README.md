@@ -214,6 +214,39 @@ that answers with HTML, plain text, and zip archives, so it stays here.
 Nucleotide records and taxonomy come from `@virtool/ncbi`, which speaks to
 E-utilities. Do not add a second E-utilities client to this package.
 
+## Email delivery
+
+`src/email/` owns transactional email configuration, the durable outbox,
+templates, retries, and the Resend integration. The periodic `deliver_email`
+task in `apps/internal` performs delivery.
+
+Disabled, unconfigured, or invalid email configuration does not prevent the
+services from running. Only `ready` permits delivery. Provider acceptance is
+not proof of mailbox delivery.
+
+The Resend API key is encrypted under the environment-owned encryption key
+documented in [docs/env.md](../../docs/env.md#encryption-key). Neither the
+plaintext key nor its envelope may cross a transport boundary or reach a log.
+
+Features enqueue mail through `enqueueEmail(db, input)` in
+`src/email/outbox.ts` and nothing else:
+
+- Pass an `EmailTemplate` and a stable domain idempotency key, never HTML.
+- Use a transaction when domain state and its email must commit together.
+- Keep provider errors, retries, and the Resend SDK behind the email package.
+
+A failing row is retried with jittered exponential backoff, or on the
+provider's `Retry-After` when it sends one. Retries stop at the delivery
+deadline in `src/email/retry.ts`, which stays inside the lifetime of the tokens
+in the auth-link templates; the attempt cap is only a backstop.
+
+Terminal rows are pruned after their configured retention periods. Template
+payloads remain stored until their rows are pruned; do not enqueue data that
+cannot tolerate that retention.
+
+`sendEmailViaResend` in `src/email/send.ts` is the only module that talks to
+Resend, and its unit tests stub global `fetch` rather than the network.
+
 ## Task queue
 
 `src/tasks/data.ts` owns persistence for the Postgres task queue shared by task

@@ -23,7 +23,8 @@
 		"bcrypt": "^6.0.0",
 		"drizzle-orm": "^0.45.2",
 		"es-toolkit": "^1.51.0",
-		"postgres": "^3.4.9"
+		"postgres": "^3.4.9",
+		"resend": "^6.25.0"
 	},
 	"devDependencies": {
 		"@testcontainers/postgresql": "^12.1.0",

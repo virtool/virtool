@@ -13,7 +13,6 @@ import { seedIndex, seedReference } from "@virtool/data/indexes/test/fixtures";
 import type { ClaimedTask } from "@virtool/data/tasks/data";
 import { collectFrames } from "@virtool/data/test/frames";
 import { createLogger, type Logger } from "@virtool/logger";
-import { MemoryStorage } from "@virtool/storage";
 import { eq } from "drizzle-orm";
 import {
 	afterAll,
@@ -26,7 +25,11 @@ import {
 	vi,
 } from "vitest";
 import { runTask } from "../framework/run";
-import { claimTask, readTaskRow } from "../testing/tasks";
+import {
+	claimTask,
+	createTaskTestContext,
+	readTaskRow,
+} from "../testing/tasks";
 import type { TaskContext } from "./registry";
 import { sweepBlastTask } from "./sweep-blast";
 
@@ -58,7 +61,7 @@ beforeEach(async () => {
 	await db.delete(users);
 	await db.delete(tasks);
 
-	ctx = { db, storage: new MemoryStorage() };
+	ctx = createTaskTestContext({ db });
 	userId = await seedUser(db);
 	referenceId = await seedReference(db, userId);
 	indexId = await seedIndex(db, { referenceId, userId, version: 0 });

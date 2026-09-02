@@ -22,6 +22,10 @@ export type ServerConfig = {
 	 * cannot be file-backed at all.
 	 */
 	sentryDsn: string | undefined;
+	/** Active key for encrypting secrets stored by Virtool. */
+	encryptionKey: string | undefined;
+	/** Previous encryption key accepted during rotation. */
+	encryptionKeyPrevious: string | undefined;
 	storage: StorageConfig;
 	/**
 	 * How a file download route answers. `stream` sends the bytes through this
@@ -65,6 +69,14 @@ const ServerEnv = z.object({
 	// Listed here so it picks up the `<KEY>_FILE` resolution every other key
 	// gets. Unset — or empty, which deployment tooling injects — disables Sentry.
 	VT_SENTRY_DSN: z.preprocess(
+		(value) => (value === "" ? undefined : value),
+		z.string().optional(),
+	),
+	VT_ENCRYPTION_KEY: z.preprocess(
+		(value) => (value === "" ? undefined : value),
+		z.string().optional(),
+	),
+	VT_ENCRYPTION_KEY_PREVIOUS: z.preprocess(
 		(value) => (value === "" ? undefined : value),
 		z.string().optional(),
 	),
@@ -124,6 +136,8 @@ const ServerEnvSchema = ServerEnv.transform((raw, ctx) => ({
 	postgresPoolMax: raw.VT_POSTGRES_POOL_MAX ?? DEFAULT_POSTGRES_POOL_MAX,
 	metricsToken: raw.VT_METRICS_TOKEN,
 	sentryDsn: raw.VT_SENTRY_DSN,
+	encryptionKey: raw.VT_ENCRYPTION_KEY,
+	encryptionKeyPrevious: raw.VT_ENCRYPTION_KEY_PREVIOUS,
 	storage: buildStorage(raw, ctx),
 	downloadMode: raw.VT_STORAGE_DOWNLOAD_MODE,
 	uploadsChunked: raw.VT_UPLOADS_CHUNKED,

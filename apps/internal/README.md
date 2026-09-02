@@ -215,11 +215,25 @@ the KEDA `ScaledJob` scales on. `run` additionally exports the task series:
 | `virtool_task_duration_seconds` | histogram | `type` |
 | `virtool_tasks` | gauge | `type`, `state` |
 | `virtool_tasks_oldest_queued_age_seconds` | gauge | `type` |
+| `virtool_email_delivery_attempts_total` | counter | `template`, `outcome` |
+| `virtool_email_retries_scheduled_total` | counter | `template` |
+| `virtool_email_accepted_age_seconds` | histogram | none |
+| `virtool_email_outbox` | gauge | `state` |
+| `virtool_email_availability` | gauge | `state` |
 
 Task names outside `TaskName` fold into the bounded `other` label. Queue reads
 use the active predicate `complete = false AND error IS NULL`, are bounded by a
 two-second deadline, and are cached for ten seconds. A failed read omits the
 queue series rather than reporting a false zero or repeating stale values.
+
+The email series carry bounded labels only. `template` is the template type,
+`outcome` is one of `accepted`, `retryable`, `rate_limited`, `permanent`,
+`exhausted` or `expired`, and the whole cross product is pre-declared at zero so
+a rate has a prior sample and a failure series at zero reads as evidence.
+`virtool_email_accepted_age_seconds` is deliberately unlabelled, because
+splitting it by template would thin the samples behind every quantile.
+`virtool_email_availability` is one-hot, so
+`virtool_email_availability{state="ready"} == 1` is directly alertable.
 
 The probe listener (`run`) accepts only `GET`. `/health/live` returns a static
 success and never checks Postgres — a database outage must not restart every pod
@@ -249,6 +263,8 @@ unset.
 | `VT_POSTGRES_POOL_MAX` | Positive integer | `10` | Limit the Postgres connection pool (`serve` and `run`; `migrate` always uses one connection). |
 | `VT_METRICS_TOKEN` | String | Unset | Enable `/metrics` and authenticate scrapes with a bearer token. When unset, `/metrics` returns 404. |
 | `VT_SENTRY_DSN` | URL string | Unset | Send errors to Sentry. When unset, Sentry is disabled. |
+| `VT_ENCRYPTION_KEY` | Base64 string (32 bytes) | Unset | `run`: decrypt secrets stored by Virtool, currently the Resend API key for `deliver_email`. When unset or invalid, email is unavailable and every other task runs normally. See [the encryption-key guide](../../docs/env.md#encryption-key). |
+| `VT_ENCRYPTION_KEY_PREVIOUS` | Base64 string (32 bytes) | Unset | `run`: accept encrypted values written under the prior key during rotation. |
 | `VT_STORAGE_BACKEND` | `s3` \| `azure` | Required | Select the object-storage backend shared with the other Virtool services. |
 | `VT_STORAGE_S3_BUCKET` | String | Required for S3 | Name the S3 bucket. |
 | `VT_STORAGE_S3_REGION` | String | Unset | Set the S3 region. |

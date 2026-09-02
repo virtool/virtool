@@ -8,11 +8,13 @@ import {
 	type TestDatabase,
 } from "@virtool/data/db/test/fixtures";
 import { createLogger, type Logger } from "@virtool/logger";
-import { MemoryStorage } from "@virtool/storage";
-
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
 import { runTask } from "../framework/run";
-import { claimTask, readTaskRow } from "../testing/tasks";
+import {
+	claimTask,
+	createTaskTestContext,
+	readTaskRow,
+} from "../testing/tasks";
 import { cleanupSessionsTask } from "./cleanup-sessions";
 import type { TaskContext } from "./registry";
 
@@ -36,7 +38,7 @@ beforeEach(async () => {
 	await db.delete(users);
 	await db.delete(tasks);
 
-	ctx = { db, storage: new MemoryStorage() };
+	ctx = createTaskTestContext({ db });
 });
 
 function minutesFromNow(minutes: number): Date {

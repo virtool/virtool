@@ -13,7 +13,11 @@ import { cacheKey, MemoryStorage } from "@virtool/storage";
 import { asc } from "drizzle-orm";
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
 import { runTask } from "../framework/run";
-import { claimTask, readTaskRow } from "../testing/tasks";
+import {
+	claimTask,
+	createTaskTestContext,
+	readTaskRow,
+} from "../testing/tasks";
 import { evictCachesLruTask } from "./evict-caches-lru";
 import type { TaskContext } from "./registry";
 
@@ -43,7 +47,7 @@ beforeEach(async () => {
 	await db.delete(settings);
 
 	storage = new MemoryStorage();
-	ctx = { db, storage };
+	ctx = createTaskTestContext({ db, storage });
 });
 
 async function* body(text: string): AsyncIterable<Uint8Array> {
@@ -189,7 +193,7 @@ describe("evictCachesLruTask", () => {
 			db,
 			def: evictCachesLruTask,
 			task,
-			ctx: { db, storage: refusingDeletes() },
+			ctx: createTaskTestContext({ db, storage: refusingDeletes() }),
 			logger,
 			signal: new AbortController().signal,
 		});
@@ -244,7 +248,7 @@ describe("evictCachesLruTask", () => {
 			db,
 			def: evictCachesLruTask,
 			task,
-			ctx: { db, storage: aborting },
+			ctx: createTaskTestContext({ db, storage: aborting }),
 			logger,
 			signal: controller.signal,
 		});

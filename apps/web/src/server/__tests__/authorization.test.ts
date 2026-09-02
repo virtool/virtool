@@ -126,6 +126,13 @@ const MODULES = [
 		)) as SplitServerFnModule,
 	},
 	{
+		path: "../email/functions.ts",
+		fns: await import("../email/functions"),
+		handlers: (await import(
+			"../email/functions.ts?tss-serverfn-split"
+		)) as SplitServerFnModule,
+	},
+	{
 		path: "../otus/functions.ts",
 		fns: await import("../otus/functions"),
 		handlers: (await import(
