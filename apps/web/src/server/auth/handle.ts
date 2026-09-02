@@ -39,3 +39,17 @@ export function checkHandle(handle: string): void {
 		);
 	}
 }
+
+/**
+ * Reject the reserved handle.
+ *
+ * Checked before the database so the caller gets this message rather than a
+ * unique-constraint error. Trims defensively so a padded variant like
+ * `" virtool"` cannot slip past a caller that skips the schema's trim.
+ */
+export function checkReservedHandle(handle: string): void {
+	if (handle.trim().toLowerCase() === "virtool") {
+		setResponseStatus(400);
+		throw new ClientError("Reserved user name: virtool");
+	}
+}

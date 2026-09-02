@@ -23,7 +23,7 @@ import {
 } from "@virtool/data/users/data";
 import { z } from "zod";
 import { realCookies } from "../auth/cookies";
-import { checkHandle } from "../auth/handle";
+import { checkHandle, checkReservedHandle } from "../auth/handle";
 import { getClientIp } from "../auth/ip";
 import { requireAdminRole } from "../auth/middleware";
 import { adminRole, authenticated } from "../auth/policy";
@@ -100,17 +100,6 @@ function checkEmail(email: string): void {
 	if (email !== "" && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
 		setResponseStatus(400);
 		throw new ClientError("The format of the email is invalid");
-	}
-}
-
-// Reserved handle; rejected before hitting the database so we return a clear
-// message rather than a unique-constraint error.
-// Trim defensively so whitespace-padded variants like " virtool" can't slip
-// past the check even if a caller skips the schema's trim.
-function checkReservedHandle(handle: string): void {
-	if (handle.trim().toLowerCase() === "virtool") {
-		setResponseStatus(400);
-		throw new ClientError("Reserved user name: virtool");
 	}
 }
 
