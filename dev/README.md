@@ -63,6 +63,7 @@ dev/
     down.sh               Tear down workloads while retaining data
     destroy.sh            Delete this worktree's namespace and data
     wipe.sh               Delete this worktree's StatefulSets and their PVCs
+    status.sh             Report Minikube, Tilt, and worktree namespace status
     lib.sh                Shared helper: derive the worktree namespace slug
 ```
 

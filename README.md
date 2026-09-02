@@ -13,6 +13,7 @@ mise run up:minikube   # start Minikube only
 mise run down           # tear down workloads, keeping data
 mise run destroy        # delete the namespace, workloads, and data
 mise run wipe           # wipe this worktree's data
+mise run tilt           # show Minikube, Tilt, and worktree namespace status
 ```
 
 Set `WT` to use a short, memorable namespace slug:

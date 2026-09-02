@@ -25,3 +25,7 @@ run = "bash dev/scripts/destroy.sh"
 description = "Wipe this worktree's data"
 raw_args = true
 run = "bash dev/scripts/wipe.sh"
+
+[tasks.tilt]
+description = "Show Minikube, Tilt, and worktree namespace status"
+run = "bash dev/scripts/status.sh"
