@@ -23,6 +23,7 @@ config.json
 .cache
 .DS_store
 .TILT_PORT
+.WT
 env
 tags
 .vscode

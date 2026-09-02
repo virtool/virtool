@@ -22,6 +22,7 @@ if [[ ! -f "$CERT_STORE/cert.pem" || ! -f "$CERT_STORE/key.pem" ]]; then
 fi
 
 NS=$(wt_slug)
+printf '%s\n' "$NS" > "$REPO_ROOT/.WT"
 echo "Bringing up worktree instance in namespace '$NS'..."
 
 MINIKUBE_IP=$(minikube ip)

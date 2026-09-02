@@ -15,15 +15,22 @@ WT_RESERVED_NAMESPACES=(
 )
 
 # Print the namespace slug for this worktree. Source order: an explicit
-# argument, then `$WT`, then the worktree directory name. The result is a valid
-# DNS-1123 label — lowercased, non-alphanumerics collapsed to hyphens, trimmed
-# to 63 characters with no leading or trailing hyphen. Set `WT` to a short,
-# memorable slug; the directory-name fallback can be long and truncated. Exits
-# non-zero if the slug is empty or names a reserved shared namespace.
+# argument, then `$WT`, then the slug pinned in `.WT` by a prior `up.sh` run,
+# then the worktree directory name. The result is a valid DNS-1123 label —
+# lowercased, non-alphanumerics collapsed to hyphens, trimmed to 63 characters
+# with no leading or trailing hyphen. Set `WT` to a short, memorable slug; the
+# directory-name fallback can be long and truncated. Exits non-zero if the
+# slug is empty or names a reserved shared namespace.
 wt_slug() {
     local raw="${1:-${WT:-}}"
     if [[ -z "$raw" ]]; then
-        raw=$(basename "$(git rev-parse --show-toplevel)")
+        local repo_root
+        repo_root=$(git rev-parse --show-toplevel)
+        if [[ -f "$repo_root/.WT" ]]; then
+            raw=$(tr -d '[:space:]' < "$repo_root/.WT")
+        else
+            raw=$(basename "$repo_root")
+        fi
     fi
     raw=$(printf '%s' "$raw" | tr '[:upper:]' '[:lower:]' | sed -E 's/[^a-z0-9-]+/-/g')
     raw=${raw:0:63}
