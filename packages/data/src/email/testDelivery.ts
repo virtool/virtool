@@ -37,7 +37,7 @@ function toFailureCode(outcome: EmailSendOutcome): EmailTestFailureCode {
 			return "rate_limited";
 
 		case "retryable":
-			return "provider_unavailable";
+			return outcome.timedOut ? "timeout" : "provider_unavailable";
 
 		case "permanent":
 			return FAILURE_CODES_BY_PROVIDER_CODE[outcome.code] ?? "unknown";
@@ -61,8 +61,12 @@ export async function sendTestEmail(
 ): Promise<EmailTestResult> {
 	const state = resolveEmailDelivery(await getEmailSettings(db), keyring);
 
-	if (state.apiKey === null) {
+	if (state.availability === "unconfigured") {
 		return { ok: false, code: "unavailable" };
+	}
+
+	if (state.apiKey === null) {
+		return { ok: false, code: "authentication" };
 	}
 
 	const rendered = renderEmailTemplate({ type: "test" });

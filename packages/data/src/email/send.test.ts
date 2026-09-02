@@ -36,6 +36,7 @@ function stubFetch(response: Response | Promise<Response>) {
 }
 
 afterEach(() => {
+	vi.useRealTimers();
 	vi.unstubAllGlobals();
 });
 
@@ -279,6 +280,27 @@ describe("sendEmailViaResend", () => {
 		const outcome = await pending;
 
 		expect(outcome.outcome).toBe("retryable");
+		expect(outcome).not.toMatchObject({ timedOut: true });
+	});
+
+	it("marks the internal deadline as a timeout", async () => {
+		vi.stubGlobal(
+			"fetch",
+			vi.fn().mockImplementation((_url, init: RequestInit) => {
+				return new Promise((_resolve, reject) => {
+					init.signal?.addEventListener("abort", () =>
+						reject(new DOMException("aborted", "AbortError")),
+					);
+				});
+			}),
+		);
+
+		await expect(
+			sendEmailViaResend({ ...request, timeoutMs: 1 }),
+		).resolves.toMatchObject({
+			outcome: "retryable",
+			timedOut: true,
+		});
 	});
 
 	it("never puts the API key in an outcome's error text", async () => {

@@ -3,6 +3,7 @@ import ExternalLink from "@base/ExternalLink";
 import LoadingPlaceholder from "@base/LoadingPlaceholder";
 import QueryError from "@base/QueryError";
 import SectionHeader from "@base/SectionHeader";
+import { useState } from "react";
 import EmailApiKey from "./EmailApiKey";
 import EmailDeliveryStatus from "./EmailDeliveryStatus";
 import EmailSender from "./EmailSender";
@@ -24,6 +25,7 @@ const RESEND_DOMAINS_DOCS =
  */
 export default function EmailDelivery() {
 	const { data, isPending, isError } = useFetchEmailSettings();
+	const [testResetToken, setTestResetToken] = useState(0);
 
 	if (isError && !data) {
 		return <QueryError noun="email settings" />;
@@ -48,9 +50,12 @@ export default function EmailDelivery() {
 				</p>
 			</SectionHeader>
 			<EmailDeliveryStatus settings={data} />
-			<EmailSender settings={data} />
+			<EmailSender
+				onSaved={() => setTestResetToken((token) => token + 1)}
+				settings={data}
+			/>
 			<EmailApiKey settings={data} />
-			<EmailTest settings={data} />
+			<EmailTest resetToken={testResetToken} settings={data} />
 		</section>
 	);
 }

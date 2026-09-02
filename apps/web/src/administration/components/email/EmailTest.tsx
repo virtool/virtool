@@ -3,13 +3,14 @@ import { BoxGroup, BoxGroupSection } from "@base/Box";
 import Button from "@base/Button";
 import Input, { InputError, InputGroup, InputLabel } from "@base/Input";
 import type { EmailSettings, EmailTestFailureCode } from "@virtool/contracts";
+import { useEffect } from "react";
 import { useForm } from "react-hook-form";
 
 const EMAIL_ADDRESS_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 const failureMessages: Record<EmailTestFailureCode, string> = {
 	authentication:
-		"Resend rejected the stored API key. Save a key that is still valid.",
+		"The stored API key could not be used. Save a valid key or check the instance encryption key.",
 	invalid_request:
 		"Resend rejected the message. Check the sender address and that its domain is verified in Resend.",
 	invalid_sender:
@@ -34,8 +35,18 @@ type EmailTestFormValues = {
  * which is every state but unconfigured and broken — delivery being switched
  * off is exactly when an administrator wants to try it.
  */
-export default function EmailTest({ settings }: { settings: EmailSettings }) {
+export default function EmailTest({
+	resetToken,
+	settings,
+}: {
+	resetToken: number;
+	settings: EmailSettings;
+}) {
 	const mutation = useSendTestEmail();
+
+	useEffect(() => {
+		mutation.reset();
+	}, [mutation.reset, resetToken]);
 
 	const {
 		formState: { errors },
@@ -67,6 +78,7 @@ export default function EmailTest({ settings }: { settings: EmailSettings }) {
 							disabled={!isUsable}
 							{...register("recipient", {
 								required: "A recipient is required.",
+								setValueAs: (value: string) => value.trim(),
 								pattern: {
 									value: EMAIL_ADDRESS_PATTERN,
 									message: "Invalid email address.",

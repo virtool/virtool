@@ -27,7 +27,13 @@ type EmailSenderFormValues = {
  * which is the only state that reports as disabled rather than unconfigured or
  * broken.
  */
-export default function EmailSender({ settings }: { settings: EmailSettings }) {
+export default function EmailSender({
+	onSaved,
+	settings,
+}: {
+	onSaved: () => void;
+	settings: EmailSettings;
+}) {
 	const mutation = useUpdateEmailSettings();
 
 	const {
@@ -45,7 +51,7 @@ export default function EmailSender({ settings }: { settings: EmailSettings }) {
 	const canEnable = settings.enabled || settings.availability === "disabled";
 
 	function update(values: EmailSettingsUpdate) {
-		mutation.mutate(values);
+		mutation.mutate(values, { onSuccess: onSaved });
 	}
 
 	return (

@@ -281,6 +281,25 @@ describe("<EmailDelivery>", () => {
 			expect(clearEmailApiKey).not.toHaveBeenCalled();
 		});
 
+		it("refuses to submit a whitespace-only key", async () => {
+			const { setEmailApiKey } = mockEmailSettingsStore(
+				createFakeEmailSettings(),
+			);
+
+			renderWithProviders(<EmailDelivery />);
+
+			await userEvent.type(
+				await screen.findByLabelText("Resend API Key"),
+				"   ",
+			);
+			await userEvent.click(
+				screen.getByRole("button", { name: "Replace Key" }),
+			);
+
+			expect(await screen.findByText("An API key is required.")).toBeVisible();
+			expect(setEmailApiKey).not.toHaveBeenCalled();
+		});
+
 		it("confirms before removing a stored key", async () => {
 			const { clearEmailApiKey } = mockEmailSettingsStore(
 				createFakeEmailSettings(),
@@ -405,6 +424,61 @@ describe("<EmailDelivery>", () => {
 
 			expect(await screen.findByText("Invalid email address.")).toBeVisible();
 			expect(emailServerFnMocks.sendTestEmailFn).not.toHaveBeenCalled();
+		});
+
+		it("trims a pasted recipient before validating and sending", async () => {
+			mockEmailSettingsStore(createFakeEmailSettings());
+			emailServerFnMocks.sendTestEmailFn.mockResolvedValue({
+				ok: true,
+				providerMessageId: "msg_1",
+			});
+
+			renderWithProviders(<EmailDelivery />);
+
+			await userEvent.type(
+				await screen.findByLabelText("Recipient"),
+				" someone@example.com ",
+			);
+			await userEvent.click(
+				screen.getByRole("button", { name: "Send Test Email" }),
+			);
+
+			await waitFor(() => {
+				expect(emailServerFnMocks.sendTestEmailFn).toHaveBeenCalledWith({
+					data: { recipient: "someone@example.com" },
+				});
+			});
+		});
+
+		it("clears an earlier test result after sender settings are saved", async () => {
+			mockEmailSettingsStore(createFakeEmailSettings());
+			emailServerFnMocks.sendTestEmailFn.mockResolvedValue({
+				ok: true,
+				providerMessageId: "msg_1",
+			});
+
+			renderWithProviders(<EmailDelivery />);
+
+			await userEvent.type(
+				await screen.findByLabelText("Recipient"),
+				"someone@example.com",
+			);
+			await userEvent.click(
+				screen.getByRole("button", { name: "Send Test Email" }),
+			);
+			expect(
+				await screen.findByText(/Resend accepted the test message/),
+			).toBeVisible();
+
+			await userEvent.clear(screen.getByLabelText("Sender Name"));
+			await userEvent.type(screen.getByLabelText("Sender Name"), "New Name");
+			await userEvent.click(screen.getByRole("button", { name: "Save" }));
+
+			await waitFor(() => {
+				expect(
+					screen.queryByText(/Resend accepted the test message/),
+				).not.toBeInTheDocument();
+			});
 		});
 
 		// Sending works while delivery is switched off — validating the

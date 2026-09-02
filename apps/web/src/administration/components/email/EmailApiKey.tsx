@@ -47,7 +47,16 @@ export default function EmailApiKey({ settings }: { settings: EmailSettings }) {
 	} = useForm<EmailApiKeyFormValues>({ defaultValues: { apiKey: "" } });
 
 	function save({ apiKey }: EmailApiKeyFormValues) {
-		setKey.mutate(apiKey.trim(), { onSuccess: () => reset() });
+		setKey.mutate(apiKey.trim(), {
+			onSuccess: () => {
+				reencrypt.reset();
+				reset();
+			},
+		});
+	}
+
+	function reencryptKey() {
+		reencrypt.mutate(undefined, { onSuccess: () => setKey.reset() });
 	}
 
 	const failure = [setKey, reencrypt].find((mutation) => mutation.isError);
@@ -72,7 +81,8 @@ export default function EmailApiKey({ settings }: { settings: EmailSettings }) {
 								settings.hasApiKey ? "A key is configured" : "No key configured"
 							}
 							{...register("apiKey", {
-								required: "An API key is required.",
+								validate: (value) =>
+									value.trim() !== "" || "An API key is required.",
 								maxLength: {
 									value: MAX_API_KEY_LENGTH,
 									message: "That key is too long.",
@@ -98,7 +108,7 @@ export default function EmailApiKey({ settings }: { settings: EmailSettings }) {
 							<>
 								<Button
 									disabled={reencrypt.isPending}
-									onClick={() => reencrypt.mutate()}
+									onClick={reencryptKey}
 									type="button"
 								>
 									Re-encrypt

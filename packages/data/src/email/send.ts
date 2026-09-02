@@ -17,6 +17,7 @@ export type EmailSendRequest = {
 	signal?: AbortSignal;
 	subject: string;
 	text: string;
+	timeoutMs?: number;
 };
 
 /**
@@ -36,6 +37,7 @@ export type EmailSendOutcome =
 			code: EmailSendErrorCode;
 			error: string;
 			retryAfterSeconds?: number;
+			timedOut?: boolean;
 	  }
 	| {
 			outcome: "rate_limited";
@@ -145,7 +147,9 @@ export async function sendEmailViaResend(
 ): Promise<EmailSendOutcome> {
 	const resend = new Resend(request.apiKey);
 
-	const timeout = AbortSignal.timeout(EMAIL_SEND_TIMEOUT_MS);
+	const timeout = AbortSignal.timeout(
+		request.timeoutMs ?? EMAIL_SEND_TIMEOUT_MS,
+	);
 	const signal = request.signal
 		? AbortSignal.any([request.signal, timeout])
 		: timeout;
@@ -166,6 +170,7 @@ export async function sendEmailViaResend(
 			signal,
 		} as CreateEmailRequestOptions,
 	);
+	const timedOut = timeout.aborted && !request.signal?.aborted;
 
 	if (data) {
 		return { outcome: "accepted", providerMessageId: data.id };
@@ -176,6 +181,7 @@ export async function sendEmailViaResend(
 			outcome: "retryable",
 			code: "unknown",
 			error: "the provider returned no result",
+			...(timedOut && { timedOut: true }),
 		};
 	}
 
@@ -201,11 +207,17 @@ export async function sendEmailViaResend(
 			code,
 			error: message,
 			retryAfterSeconds: parseRetryAfter(headers),
+			...(timedOut && { timedOut: true }),
 		};
 	}
 
 	if (error.statusCode === null || error.statusCode >= 500) {
-		return { outcome: "retryable", code, error: message };
+		return {
+			outcome: "retryable",
+			code,
+			error: message,
+			...(timedOut && { timedOut: true }),
+		};
 	}
 
 	return { outcome: "permanent", code, error: message };
