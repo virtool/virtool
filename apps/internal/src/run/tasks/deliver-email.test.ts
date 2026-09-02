@@ -137,11 +137,13 @@ const envelope = {
 };
 
 async function seedEmailSettings(
-	overrides: { enabled?: boolean; withKey?: boolean } = {},
+	overrides: { apiKey?: string; enabled?: boolean; withKey?: boolean } = {},
 ): Promise<void> {
 	await seedSettings(db, {
 		emailApiKey:
-			(overrides.withKey ?? true) ? encrypt(keyring, "re_secret") : null,
+			(overrides.withKey ?? true)
+				? encrypt(keyring, overrides.apiKey ?? "re_secret")
+				: null,
 		emailEnabled: overrides.enabled ?? true,
 		emailSenderAddress: "noreply@virtool.example",
 		emailSenderName: "Virtool",
@@ -496,6 +498,38 @@ describe("deliverEmailTask", () => {
 		expect(row.status).toBe("queued");
 		expect(waitSeconds).toBeGreaterThan(0);
 		expect(waitSeconds).toBeLessThanOrEqual(remainingSeconds);
+	});
+
+	it("stops the drain and releases the rows when the stored key is empty", async () => {
+		await seedEmailSettings({ apiKey: "" });
+
+		const first = await enqueueEmail(db, {
+			idempotencyKey: "a",
+			recipient: "someone@example.com",
+			template,
+		});
+		await enqueueEmail(db, {
+			idempotencyKey: "b",
+			recipient: "someone@example.com",
+			template,
+		});
+
+		const fetchMock = stubSend(jsonResponse(200, { id: "msg_1" }));
+
+		await runDrain();
+
+		expect(fetchMock).not.toHaveBeenCalled();
+		expect(recorded.availabilities).toEqual(["ready", "configuration_error"]);
+
+		const row = await readOutboxRow(first.outboxId);
+
+		expect(row.status).toBe("queued");
+		expect(row.claim_token).toBeNull();
+		expect(
+			(await db.select().from(emailOutbox)).every(
+				(item) => item.status === "queued" && item.attempt_count === 0,
+			),
+		).toBe(true);
 	});
 
 	it("stops the drain and releases the row when the provider rejects the API key", async () => {

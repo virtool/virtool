@@ -28,6 +28,7 @@ import {
 } from "@virtool/data/email/settings";
 import {
 	EMAIL_TEMPLATE_VERSION,
+	type RenderedEmail,
 	renderEmailTemplate,
 } from "@virtool/data/email/templates";
 import type { Logger } from "@virtool/logger";
@@ -108,11 +109,21 @@ async function deliverOne(
 		return "failed";
 	}
 
+	let rendered: RenderedEmail;
+
+	try {
+		rendered = renderEmailTemplate(item.template);
+	} catch (err) {
+		await failEmail(ctx.db, target, "the template payload failed to render");
+		ctx.metrics.recordEmailAttempt(template, "permanent");
+		logger.error({ ...base, err }, "email template failed to render");
+
+		return "failed";
+	}
+
 	let outcome: EmailSendOutcome;
 
 	try {
-		const rendered = renderEmailTemplate(item.template);
-
 		outcome = await sendEmailViaResend({
 			apiKey: state.apiKey,
 			html: rendered.html,
@@ -130,11 +141,17 @@ async function deliverOne(
 			text: rendered.text,
 		});
 	} catch (err) {
-		await failEmail(ctx.db, target, "the template payload failed to render");
-		ctx.metrics.recordEmailAttempt(template, "permanent");
-		logger.error({ ...base, err }, "email template failed to render");
+		// The provider client throws on an unusable API key. That is a fault of
+		// the configuration, not of this row, so the row stays claimable and the
+		// run stops instead of failing the whole batch one row at a time.
+		await releaseEmailClaim(ctx.db, target);
+		ctx.metrics.setEmailAvailability("configuration_error");
+		logger.error(
+			{ ...base, err },
+			"email delivery stopped: the provider client rejected the api key",
+		);
 
-		return "failed";
+		return "stop";
 	}
 
 	switch (outcome.outcome) {
