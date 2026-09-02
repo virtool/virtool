@@ -29,3 +29,11 @@ data:
   # Resend key configured through the app, email stays in its supported
   # unconfigured state.
   VT_ENCRYPTION_KEY: "kh+tHF0cfeestLILKMmWwfczAFrKP/92WrobKA/Md6k="
+  # The origin Better Auth builds callbacks from and WebAuthn validates
+  # ceremonies against. `virtool.local` is a literal the Tiltfile rewrites to
+  # the worktree's nip.io host, exactly as it does for the ingress. The scheme
+  # is https because the dev ingress terminates TLS, and because a browser
+  # gives a passkey no secure context without it.
+  VT_PUBLIC_ORIGIN: "https://virtool.local"
+  # A fixed dev-only auth secret, like the encryption key above.
+  VT_AUTH_SECRET: "dev-auth-secret-dev-auth-secret-dev"

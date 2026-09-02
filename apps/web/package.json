@@ -12,11 +12,13 @@
 		"typecheck": "tsc -p tsconfig.server.json && tsc -p tsconfig.app.json"
 	},
 	"dependencies": {
+		"@better-auth/passkey": "1.6.30",
 		"@dnd-kit/core": "^6.3.1",
 		"@dnd-kit/sortable": "^10.0.0",
 		"@dnd-kit/utilities": "^3.2.2",
 		"@fontsource-variable/inter": "^5.3.0",
 		"@hookform/resolvers": "^5.9.1",
+		"@simplewebauthn/server": "13.3.3",
 		"@sentry/profiling-node": "10.71.0",
 		"@sentry/replay": "10.71.0",
 		"@sentry/tanstackstart-react": "^10.71.0",
@@ -32,6 +34,7 @@
 		"@virtool/sentry": "workspace:*",
 		"@virtool/storage": "workspace:*",
 		"bcrypt": "^6.0.0",
+		"better-auth": "1.6.30",
 		"class-variance-authority": "^0.7.1",
 		"clsx": "^2.1.1",
 		"d3": "^7.9.0",

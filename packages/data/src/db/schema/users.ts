@@ -31,20 +31,33 @@ export const users = pgTable(
 			.notNull(),
 		administratorRole:
 			text("administrator_role").$type<AdministratorRoleName>(),
+		createdAt: timestamp("created_at")
+			.notNull()
+			.default(sql`timezone('utc', now())`),
+		displayUsername: text("display_username"),
 		email: text("email")
 			.$defaultFn(() => "")
 			.notNull(),
+		emailVerified: boolean("email_verified").notNull().default(false),
 		forceReset: boolean("force_reset")
 			.$defaultFn(() => false)
 			.notNull(),
 		handle: text("handle").notNull(),
+		image: text("image"),
 		lastPasswordChange: timestamp("last_password_change").notNull(),
 		legacyId: text("legacy_id"),
+		name: text("name").notNull().default(""),
 		password: bytea("password").notNull(),
 		settings: jsonb("settings").$type<Record<string, unknown>>().notNull(),
+		twoFactorEnabled: boolean("two_factor_enabled"),
+		updatedAt: timestamp("updated_at")
+			.notNull()
+			.default(sql`timezone('utc', now())`),
+		username: text("username"),
 	},
 	(table) => [
 		unique("users_legacy_id_key").on(table.legacyId),
+		unique("users_username_key").on(table.username),
 		uniqueIndex("users_handle_lower_unique").on(lower(table.handle)),
 		check(
 			"administrator_role_valid",

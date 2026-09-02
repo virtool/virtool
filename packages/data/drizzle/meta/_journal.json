@@ -141,6 +141,13 @@
       "when": 1788282257786,
       "tag": "0019_add_email_delivery",
       "breakpoints": true
+    },
+    {
+      "idx": 20,
+      "version": "7",
+      "when": 1788382353037,
+      "tag": "0020_add_better_auth",
+      "breakpoints": true
     }
   ]
 }

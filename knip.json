@@ -23,7 +23,8 @@
 				"src/**/*.{ts,tsx,css}"
 			],
 			"ignoreDependencies": [
-				"bcrypt"
+				"bcrypt",
+				"@simplewebauthn/server"
 			]
 		},
 		"packages/bio": {

@@ -50,6 +50,7 @@ import { Route as AuthenticatedSubtractionsIndexRouteImport } from './routes/_au
 import { Route as AuthenticatedSubtractionsSubtractionIdRouteImport } from './routes/_authenticated/subtractions/$subtractionId'
 import { Route as AuthenticatedSubtractionsFilesRouteImport } from './routes/_authenticated/subtractions/files'
 import { Route as AnalysesDocumentsDocumentRouteImport } from './routes/analyses.documents.$document'
+import { Route as ApiAuthSplatRouteImport } from './routes/api.auth.$'
 import { Route as OtusOtuIdFastaRouteImport } from './routes/otus.$otuId.fasta'
 import { Route as AuthenticatedAdministrationUsersIndexRouteImport } from './routes/_authenticated/administration/users/index'
 import { Route as AuthenticatedAdministrationUsersUserIdRouteImport } from './routes/_authenticated/administration/users/$userId'
@@ -303,6 +304,11 @@ const AnalysesDocumentsDocumentRoute =
     path: '/analyses/documents/$document',
     getParentRoute: () => rootRouteImport,
   } as any)
+const ApiAuthSplatRoute = ApiAuthSplatRouteImport.update({
+  id: '/api/auth/$',
+  path: '/api/auth/$',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const OtusOtuIdFastaRoute = OtusOtuIdFastaRouteImport.update({
   id: '/otus/$otuId/fasta',
   path: '/otus/$otuId/fasta',
@@ -511,6 +517,7 @@ export interface FileRoutesByFullPath {
   '/subtractions/$subtractionId': typeof AuthenticatedSubtractionsSubtractionIdRoute
   '/subtractions/files': typeof AuthenticatedSubtractionsFilesRoute
   '/analyses/documents/$document': typeof AnalysesDocumentsDocumentRoute
+  '/api/auth/$': typeof ApiAuthSplatRoute
   '/otus/$otuId/fasta': typeof OtusOtuIdFastaRoute
   '/account/': typeof AuthenticatedAccountIndexRoute
   '/administration/': typeof AuthenticatedAdministrationIndexRoute
@@ -573,6 +580,7 @@ export interface FileRoutesByTo {
   '/subtractions/$subtractionId': typeof AuthenticatedSubtractionsSubtractionIdRoute
   '/subtractions/files': typeof AuthenticatedSubtractionsFilesRoute
   '/analyses/documents/$document': typeof AnalysesDocumentsDocumentRoute
+  '/api/auth/$': typeof ApiAuthSplatRoute
   '/otus/$otuId/fasta': typeof OtusOtuIdFastaRoute
   '/account': typeof AuthenticatedAccountIndexRoute
   '/administration': typeof AuthenticatedAdministrationIndexRoute
@@ -643,6 +651,7 @@ export interface FileRoutesById {
   '/_authenticated/subtractions/$subtractionId': typeof AuthenticatedSubtractionsSubtractionIdRoute
   '/_authenticated/subtractions/files': typeof AuthenticatedSubtractionsFilesRoute
   '/analyses/documents/$document': typeof AnalysesDocumentsDocumentRoute
+  '/api/auth/$': typeof ApiAuthSplatRoute
   '/otus/$otuId/fasta': typeof OtusOtuIdFastaRoute
   '/_authenticated/account/': typeof AuthenticatedAccountIndexRoute
   '/_authenticated/administration/': typeof AuthenticatedAdministrationIndexRoute
@@ -716,6 +725,7 @@ export interface FileRouteTypes {
     | '/subtractions/$subtractionId'
     | '/subtractions/files'
     | '/analyses/documents/$document'
+    | '/api/auth/$'
     | '/otus/$otuId/fasta'
     | '/account/'
     | '/administration/'
@@ -778,6 +788,7 @@ export interface FileRouteTypes {
     | '/subtractions/$subtractionId'
     | '/subtractions/files'
     | '/analyses/documents/$document'
+    | '/api/auth/$'
     | '/otus/$otuId/fasta'
     | '/account'
     | '/administration'
@@ -847,6 +858,7 @@ export interface FileRouteTypes {
     | '/_authenticated/subtractions/$subtractionId'
     | '/_authenticated/subtractions/files'
     | '/analyses/documents/$document'
+    | '/api/auth/$'
     | '/otus/$otuId/fasta'
     | '/_authenticated/account/'
     | '/_authenticated/administration/'
@@ -897,6 +909,7 @@ export interface RootRouteChildren {
   HealthReadyRoute: typeof HealthReadyRoute
   UploadsUploadIdRoute: typeof UploadsUploadIdRoute
   AnalysesDocumentsDocumentRoute: typeof AnalysesDocumentsDocumentRoute
+  ApiAuthSplatRoute: typeof ApiAuthSplatRoute
   OtusOtuIdFastaRoute: typeof OtusOtuIdFastaRoute
   IndexesIndexIdFilesFilenameRoute: typeof IndexesIndexIdFilesFilenameRoute
   SamplesSampleIdReadsFilenameRoute: typeof SamplesSampleIdReadsFilenameRoute
@@ -1192,6 +1205,13 @@ declare module '@tanstack/react-router' {
       path: '/analyses/documents/$document'
       fullPath: '/analyses/documents/$document'
       preLoaderRoute: typeof AnalysesDocumentsDocumentRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/auth/$': {
+      id: '/api/auth/$'
+      path: '/api/auth/$'
+      fullPath: '/api/auth/$'
+      preLoaderRoute: typeof ApiAuthSplatRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/otus/$otuId/fasta': {
@@ -1686,6 +1706,7 @@ const rootRouteChildren: RootRouteChildren = {
   HealthReadyRoute: HealthReadyRoute,
   UploadsUploadIdRoute: UploadsUploadIdRoute,
   AnalysesDocumentsDocumentRoute: AnalysesDocumentsDocumentRoute,
+  ApiAuthSplatRoute: ApiAuthSplatRoute,
   OtusOtuIdFastaRoute: OtusOtuIdFastaRoute,
   IndexesIndexIdFilesFilenameRoute: IndexesIndexIdFilesFilenameRoute,
   SamplesSampleIdReadsFilenameRoute: SamplesSampleIdReadsFilenameRoute,

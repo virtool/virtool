@@ -193,6 +193,31 @@ Keep `drizzle-orm` and `drizzle-kit` on compatible versions. Check both release
 notes when updating either package because their schema-generation internals
 change together.
 
+### Better Auth tables
+
+`src/db/schema/auth.ts` mirrors the tables Better Auth owns: `auth_accounts`,
+`auth_sessions`, `auth_verifications`, `auth_two_factors` and `auth_passkeys`.
+`users` is shared — Better Auth uses it as its user model — and carries the
+columns it needs alongside Virtool's own.
+
+Two rules hold this together:
+
+- **`users.id` stays a database-generated integer.** Better Auth is configured
+  with `advanced.database.generateId: "serial"`, which is what makes it omit
+  `id` on insert and treat it as a number. That setting is instance-wide in 1.6,
+  so every `auth_*` table takes an identity primary key too. Composition lives
+  in `apps/web`; see `@server/auth/betterAuth`.
+- **The legacy `sessions` table is not Better Auth's.** It still carries the
+  current cookie pair and its cleanup task, and nothing in Better Auth reads or
+  writes it. `auth_sessions` is a separate table.
+
+A Drizzle property name in `auth.ts` is a Better Auth *field* name — the adapter
+looks fields up by property — so `userId` and `credentialID` keep their exact
+spelling while their columns stay snake_case.
+
+`users.email` is deliberately not unique, though Better Auth declares it so.
+Legacy rows share an empty email, and normalizing them is separate work.
+
 ## Outbound requests
 
 Third-party requests use `USER_AGENT` from `@virtool/contracts/userAgent`,
