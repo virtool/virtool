@@ -286,26 +286,27 @@ describe("parseServerConfig", () => {
 			).toThrow(/VT_PUBLIC_ORIGIN/);
 		});
 
-		it("rejects plain http on a remote host", () => {
+		it.each([
+			["a remote host", "http://virtool.example"],
+			["an IPv4 loopback address", "http://127.0.0.1:5173"],
+			["an IPv6 loopback address", "http://[::1]:5173"],
+		])("rejects plain http on %s", (_label, value) => {
 			expect(() =>
 				parseServerConfig({
 					...minimalS3,
-					VT_PUBLIC_ORIGIN: "http://virtool.example",
+					VT_PUBLIC_ORIGIN: value,
 				} as NodeJS.ProcessEnv),
 			).toThrow(/VT_PUBLIC_ORIGIN/);
 		});
 
-		it.each(["http://localhost:5173", "http://127.0.0.1:5173"])(
-			"allows plain http on %s",
-			(value) => {
-				const config = parseServerConfig({
-					...minimalS3,
-					VT_PUBLIC_ORIGIN: value,
-				} as NodeJS.ProcessEnv);
+		it.each(["http://localhost:5173"])("allows plain http on %s", (value) => {
+			const config = parseServerConfig({
+				...minimalS3,
+				VT_PUBLIC_ORIGIN: value,
+			} as NodeJS.ProcessEnv);
 
-				expect(config.publicOrigin).toBe(value);
-			},
-		);
+			expect(config.publicOrigin).toBe(value);
+		});
 
 		it("reads the auth secret from the environment", () => {
 			expect(parseServerConfig(minimalS3).authSecret).toBe(authSecret);

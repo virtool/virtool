@@ -16,14 +16,15 @@ const MINIMUM_AUTH_SECRET_LENGTH = 32;
  *
  * Everywhere else must be HTTPS: WebAuthn refuses a non-secure context, and a
  * session cookie sent in the clear is a session anyone on the path can take.
- * These three are the secure-context exceptions browsers already make, which is
+ * `localhost` is the secure-context exception browsers already make, which is
  * what lets local development and the test suite run without a certificate.
+ *
+ * The loopback addresses are secure contexts too, but they are excluded: the
+ * WebAuthn RP ID is this origin's hostname, an RP ID must be a domain, and no
+ * browser accepts an IP literal as one. Allowing them would produce an origin
+ * that starts but on which no passkey can ever register.
  */
-const INSECURE_ORIGIN_HOSTS: ReadonlySet<string> = new Set([
-	"localhost",
-	"127.0.0.1",
-	"[::1]",
-]);
+const INSECURE_ORIGIN_HOSTS: ReadonlySet<string> = new Set(["localhost"]);
 
 /** Server-side configuration parsed from process.env. */
 export type ServerConfig = {

@@ -89,8 +89,10 @@ forwarded headers. WebAuthn binds a passkey to the configured origin and Relying
 Party ID, whose hostname is derived from that origin. Moving an instance to a
 new domain invalidates passkeys registered under the old one.
 
-Plain `http` is rejected except on `localhost`, `127.0.0.1` and `[::1]`, which
-are the only hosts a browser treats as a secure context without TLS.
+Plain `http` is rejected except on `localhost`. The loopback addresses are
+secure contexts as well, but an RP ID must be a domain and no browser accepts an
+IP literal as one, so an origin such as `http://127.0.0.1:5173` could never
+register a passkey. Use `http://localhost` in development.
 
 Changing `VT_AUTH_SECRET` invalidates every Better Auth session and makes stored
 recovery codes undecryptable, so rotate it deliberately.
