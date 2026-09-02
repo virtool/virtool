@@ -12,11 +12,16 @@ raw_args = true
 run = "bash dev/scripts/up.sh"
 
 [tasks.down]
-description = "Delete this worktree's namespace and data"
+description = "Tear down this worktree's workloads and keep its data"
 raw_args = true
 run = "bash dev/scripts/down.sh"
 
+[tasks.destroy]
+description = "Delete this worktree's namespace, workloads, and data"
+raw_args = true
+run = "bash dev/scripts/destroy.sh"
+
 [tasks.wipe]
-description = "Delete this worktree's StatefulSets and PVCs"
+description = "Wipe this worktree's data"
 raw_args = true
 run = "bash dev/scripts/wipe.sh"

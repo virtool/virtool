@@ -60,7 +60,8 @@ dev/
     ensure-minikube.sh    Start the cluster if it is not already running
     init.sh               One-time cluster-wide setup: addons, KEDA, certificate
     up.sh                 Bring up this worktree's instance and start Tilt
-    down.sh               Delete this worktree's namespace
+    down.sh               Tear down workloads while retaining data
+    destroy.sh            Delete this worktree's namespace and data
     wipe.sh               Delete this worktree's StatefulSets and their PVCs
     lib.sh                Shared helper: derive the worktree namespace slug
 ```
@@ -149,6 +150,12 @@ which leaves room for any one workflow — or both small ones — to schedule.
 Requests are dev-sized reservations and limits carry the headroom, so a
 workflow's `VT_PROC` and `VT_MEM` track its **limits**; raising either without
 the other is an OOMKill rather than a faster run.
+
+## Lifecycle commands
+
+`mise run down` tears down the worktree's workloads while retaining its
+namespace and Postgres/Azurite PVCs. `mise run destroy` deletes the namespace,
+which also deletes all workloads and data; use it when deleting the worktree.
 
 ## Wiping data
 

@@ -10,8 +10,9 @@ then run these commands from the repository root:
 mise run init          # one-time cluster setup
 mise run up            # bring up this worktree and start Tilt
 mise run up:minikube   # start Minikube only
-mise run down          # delete this worktree's namespace and data
-mise run wipe          # delete this worktree's StatefulSets and PVCs
+mise run down           # tear down workloads, keeping data
+mise run destroy        # delete the namespace, workloads, and data
+mise run wipe           # wipe this worktree's data
 ```
 
 Set `WT` to use a short, memorable namespace slug:
