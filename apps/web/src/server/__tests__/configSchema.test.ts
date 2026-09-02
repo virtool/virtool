@@ -2,7 +2,7 @@ import { mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
-import { parseServerConfig } from "../config";
+import { parseServerConfig } from "../configSchema";
 
 const postgresUrl = "postgres://virtool:virtool@localhost:5432/virtool";
 
