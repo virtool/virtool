@@ -1,22 +1,27 @@
 import { formatTime } from "@app/date";
+import Icon from "@base/Icon";
 import RelativeTime from "@base/RelativeTime";
 import Tooltip from "@base/Tooltip";
+import type { IconColor } from "@base/types";
 import { getOtuV2ChangeDescription } from "@otus-v2/history";
 import { useSuspenseLocalOtuV2 } from "@otus-v2/queries";
 import type { OtuV2Change } from "@virtool/contracts";
-import { Dna, FlaskConical, type LucideIcon, Trash } from "lucide-react";
+import { FlaskConical, GitBranch, type LucideIcon } from "lucide-react";
 
-function getChangeIcon(change: OtuV2Change): LucideIcon {
-	switch (change.command) {
-		case "CreateOTU":
-			return Dna;
-		case "CreateIsolate":
-			return FlaskConical;
-		case "DeleteIsolate":
-			return Trash;
-		case "DeleteOTU":
-			return Trash;
-	}
+type ChangeStyle = {
+	color: IconColor;
+	icon: LucideIcon;
+};
+
+const changeStyles: Record<OtuV2Change["command"], ChangeStyle> = {
+	CreateOTU: { icon: GitBranch, color: "blue" },
+	CreateIsolate: { icon: FlaskConical, color: "blue" },
+	DeleteIsolate: { icon: FlaskConical, color: "red" },
+	DeleteOTU: { icon: GitBranch, color: "red" },
+};
+
+function getChangeStyle(change: OtuV2Change): ChangeStyle {
+	return changeStyles[change.command];
 }
 
 function formatExactTime(date: Date): string {
@@ -42,7 +47,7 @@ export default function LocalOtuHistory({
 		<div className="py-4">
 			<ol aria-label="OTU change history">
 				{changes.map((change, index) => {
-					const ChangeIcon = getChangeIcon(change);
+					const { color, icon } = getChangeStyle(change);
 					const description = getOtuV2ChangeDescription(change);
 					const exactTime = formatExactTime(change.createdAt);
 
@@ -57,8 +62,13 @@ export default function LocalOtuHistory({
 									className="absolute bottom-0 left-[0.9375rem] top-8 w-px bg-gray-200"
 								/>
 							)}
-							<span className="relative z-10 flex size-8 items-center justify-center rounded-full border border-blue-200 bg-blue-50 text-blue-600">
-								<ChangeIcon aria-hidden="true" className="size-4" />
+							<span className="relative z-10 flex size-8 items-center justify-center rounded-full border border-gray-200 bg-gray-50">
+								<Icon
+									icon={icon}
+									color={color}
+									aria-hidden="true"
+									className="size-4"
+								/>
 							</span>
 							<div className="min-w-0 pt-1">
 								<p className="leading-6">

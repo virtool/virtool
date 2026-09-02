@@ -317,6 +317,7 @@ export type OtuV2Isolate = z.output<typeof isolateSchema>;
 export type LocalOtuV2IsolateSummary = {
 	id: string;
 	name: OtuV2Isolate["name"];
+	createdAt: Date;
 };
 
 /** A sequence summary that excludes the sequence body. */
@@ -420,7 +421,7 @@ export type LocalOtuV2 = {
 
 /** The metadata needed to render the local v2 OTU overview. */
 export type LocalOtuV2Overview = Omit<LocalOtuV2, "isolates"> & {
-	isolates: LocalOtuV2IsolateSummary[];
+	isolates: Array<Omit<LocalOtuV2IsolateSummary, "createdAt">>;
 	isolateCount: number;
 };
 

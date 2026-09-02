@@ -823,29 +823,60 @@ export async function getLocalOtuIsolates(
 	otuId: string,
 ): Promise<LocalOtuV2IsolateSummary[]> {
 	await assertLocalOtuExists(db, referenceId, otuId);
-	const rows = await db
-		.select({
-			id: otuIsolates.id,
-			nameType: otuIsolateVersions.nameType,
-			nameValue: otuIsolateVersions.nameValue,
-		})
-		.from(otuIsolates)
-		.innerJoin(
-			otuIsolateVersions,
-			eq(otuIsolates.id, otuIsolateVersions.isolateId),
-		)
-		.where(
-			and(eq(otuIsolates.otuId, otuId), isNull(otuIsolateVersions.lastVersion)),
-		)
-		.orderBy(asc(otuIsolates.id));
+	const [rows, creationChanges] = await Promise.all([
+		db
+			.select({
+				id: otuIsolates.id,
+				nameType: otuIsolateVersions.nameType,
+				nameValue: otuIsolateVersions.nameValue,
+			})
+			.from(otuIsolates)
+			.innerJoin(
+				otuIsolateVersions,
+				eq(otuIsolates.id, otuIsolateVersions.isolateId),
+			)
+			.where(
+				and(
+					eq(otuIsolates.otuId, otuId),
+					isNull(otuIsolateVersions.lastVersion),
+				),
+			)
+			.orderBy(asc(otuIsolates.id)),
+		db
+			.select({
+				payload: otuChanges.payload,
+				createdAt: otuChanges.createdAt,
+			})
+			.from(otuChanges)
+			.where(
+				and(
+					eq(otuChanges.otuId, otuId),
+					inArray(otuChanges.command, ["CreateOTU", "CreateIsolate"]),
+				),
+			),
+	]);
+	const createdAtByIsolateId = new Map(
+		creationChanges.map((change) => [
+			(change.payload as { isolate: { id: string } }).isolate.id,
+			change.createdAt,
+		]),
+	);
 
-	return rows.map((isolate) => ({
-		id: isolate.id,
-		name:
-			isolate.nameType && isolate.nameValue
-				? { type: isolate.nameType, value: isolate.nameValue }
-				: null,
-	}));
+	return rows.map((isolate) => {
+		const createdAt = createdAtByIsolateId.get(isolate.id);
+		if (!createdAt) {
+			throw new Error(`Missing creation change for isolate ${isolate.id}`);
+		}
+
+		return {
+			id: isolate.id,
+			name:
+				isolate.nameType && isolate.nameValue
+					? { type: isolate.nameType, value: isolate.nameValue }
+					: null,
+			createdAt,
+		};
+	});
 }
 
 /** Read one current isolate and its sequence metadata without sequence bodies. */

@@ -155,6 +155,9 @@ describe("<LocalOtuDetail />", () => {
 				name: `${otu.isolates[0]?.name?.type} ${otu.isolates[0]?.name?.value}`,
 			}),
 		).toBeInTheDocument();
+		expect(
+			screen.getByText(`Created ${otu.createdAt.toISOString().slice(0, 10)}`),
+		).toBeInTheDocument();
 	});
 
 	it("filters isolates by name", async () => {

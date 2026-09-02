@@ -54,7 +54,11 @@ export function mockGetLocalOtuV2(otu: LocalOtuV2): Mock {
 		},
 	);
 	otuV2ServerFnMocks.getLocalOtuIsolatesFn.mockResolvedValue(
-		otu.isolates.map(({ id, name }) => ({ id, name })),
+		otu.isolates.map(({ id, name }) => ({
+			id,
+			name,
+			createdAt: otu.createdAt,
+		})),
 	);
 	otuV2ServerFnMocks.getLocalOtuIsolateFn.mockImplementation(
 		async ({ data }: { data: { isolateId: string } }) => {

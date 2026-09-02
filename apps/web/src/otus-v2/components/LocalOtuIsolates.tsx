@@ -1,14 +1,17 @@
 import { useFuse } from "@app/fuse";
-import { BoxGroup, BoxGroupSection } from "@base/Box";
+import { BoxGroup, BoxGroupTable } from "@base/Box";
 import Button from "@base/Button";
 import { InputSearch } from "@base/Input";
 import Link from "@base/Link";
+import RelativeTime from "@base/RelativeTime";
+import { TableActionsCell, TableActionsHead, TableHead } from "@base/Table";
 import CreateLocalOtuIsolateDialog from "@otus-v2/components/CreateLocalOtuIsolateDialog";
 import DeleteLocalOtuIsolate from "@otus-v2/components/DeleteLocalOtuIsolate";
 import {
 	useSuspenseLocalOtuV2,
 	useSuspenseLocalOtuV2Isolates,
 } from "@otus-v2/queries";
+import type { LocalOtuV2IsolateSummary } from "@virtool/contracts";
 import { useState } from "react";
 
 const ISOLATE_SEARCH_KEYS = ["name.value"];
@@ -46,31 +49,69 @@ export default function LocalOtuIsolates({
 				otuId={otuId}
 				version={otu.version}
 			/>
-			<BoxGroup as="ul">
-				{results.map((isolate) => (
-					<BoxGroupSection
-						as="li"
-						className="flex items-center justify-between gap-3"
-						key={isolate.id}
-					>
-						<Link
-							className="font-medium text-lg"
-							to="/refs/alpha/$referenceId/otus/$otuId/isolates/$isolateId"
-							params={{ referenceId, otuId, isolateId: isolate.id }}
-						>
-							{isolate.name
-								? `${isolate.name.type} ${isolate.name.value}`
-								: "Unnamed isolate"}
-						</Link>
-						<DeleteLocalOtuIsolate
-							referenceId={referenceId}
-							otuId={otuId}
-							version={otu.version}
-							isolate={isolate}
-						/>
-					</BoxGroupSection>
-				))}
+			<BoxGroup>
+				<BoxGroupTable variant="data">
+					<caption className="sr-only">Isolates</caption>
+					<TableHead>
+						<th scope="col">Name</th>
+						<th scope="col">Created</th>
+						<TableActionsHead />
+					</TableHead>
+					<tbody>
+						{results.map((isolate) => (
+							<LocalOtuIsolateRow
+								isolate={isolate}
+								key={isolate.id}
+								referenceId={referenceId}
+								otuId={otuId}
+								version={otu.version}
+							/>
+						))}
+					</tbody>
+				</BoxGroupTable>
 			</BoxGroup>
 		</>
+	);
+}
+
+type LocalOtuIsolateRowProps = {
+	isolate: LocalOtuV2IsolateSummary;
+	otuId: string;
+	referenceId: string;
+	version: number;
+};
+
+function LocalOtuIsolateRow({
+	isolate,
+	otuId,
+	referenceId,
+	version,
+}: LocalOtuIsolateRowProps) {
+	const name = isolate.name
+		? `${isolate.name.type} ${isolate.name.value}`
+		: "Unnamed isolate";
+
+	return (
+		<tr>
+			<td className="font-medium">
+				<Link
+					to="/refs/alpha/$referenceId/otus/$otuId/isolates/$isolateId"
+					params={{ referenceId, otuId, isolateId: isolate.id }}
+				>
+					{name}
+				</Link>
+			</td>
+			<td className="whitespace-nowrap text-gray-600 text-sm">
+				<RelativeTime time={isolate.createdAt} />
+			</td>
+			<TableActionsCell>
+				<DeleteLocalOtuIsolate
+					referenceId={referenceId}
+					otuId={otuId}
+					version={version}
+					isolate={isolate}
+				/>
+			</TableActionsCell>
+		</tr>
 	);
 }

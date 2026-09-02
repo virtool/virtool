@@ -8,7 +8,7 @@ type DeleteLocalOtuIsolateProps = {
 	referenceId: string;
 	otuId: string;
 	version: number;
-	isolate: LocalOtuV2IsolateSummary;
+	isolate: Pick<LocalOtuV2IsolateSummary, "id" | "name">;
 	onDeleted?: () => Promise<void> | void;
 };
 
