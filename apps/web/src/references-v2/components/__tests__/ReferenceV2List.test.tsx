@@ -40,6 +40,39 @@ describe("<ReferenceV2List />", () => {
 		).toBeInTheDocument();
 	});
 
+	it("filters References by name", async () => {
+		const matching = createFakeReferenceV2({ name: "Plant Viruses" });
+		const hidden = createFakeReferenceV2({ name: "Fungal Viruses" });
+		mockGetReferencesV2([matching, hidden]);
+
+		await renderRoute("/refs/alpha");
+		await userEvent.type(
+			await screen.findByRole("textbox", { name: "Search references" }),
+			"plant",
+		);
+
+		expect(
+			screen.getByRole("link", { name: matching.name }),
+		).toBeInTheDocument();
+		expect(
+			screen.queryByRole("link", { name: hidden.name }),
+		).not.toBeInTheDocument();
+	});
+
+	it("renders an empty search state when no References match", async () => {
+		mockGetReferencesV2([createFakeReferenceV2({ name: "Plant Viruses" })]);
+
+		await renderRoute("/refs/alpha");
+		await userEvent.type(
+			await screen.findByRole("textbox", { name: "Search references" }),
+			"bacteria",
+		);
+
+		expect(
+			screen.getByText("No references match your search."),
+		).toBeInTheDocument();
+	});
+
 	it("opens Reference creation in a dialog", async () => {
 		mockGetReferencesV2([]);
 		const account = createFakeAccount({
