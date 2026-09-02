@@ -3,6 +3,7 @@ import {
 	computeEmailRetryDelay,
 	EMAIL_DELIVERY_DEADLINE_SECONDS,
 	EMAIL_MAX_ATTEMPTS,
+	getEmailDeliveryRemainingSeconds,
 	isEmailDeliveryExpired,
 } from "./retry";
 
@@ -86,5 +87,34 @@ describe("isEmailDeliveryExpired", () => {
 				now,
 			),
 		).toBe(true);
+	});
+});
+
+describe("getEmailDeliveryRemainingSeconds", () => {
+	const now = new Date("2026-01-01T12:00:00.000Z");
+
+	function ageSeconds(seconds: number): Date {
+		return new Date(now.getTime() - seconds * 1000);
+	}
+
+	it("returns the full deadline for a row created now", () => {
+		expect(getEmailDeliveryRemainingSeconds(now, now)).toBe(
+			EMAIL_DELIVERY_DEADLINE_SECONDS,
+		);
+	});
+
+	it("counts down as the row ages", () => {
+		expect(getEmailDeliveryRemainingSeconds(ageSeconds(600), now)).toBe(
+			EMAIL_DELIVERY_DEADLINE_SECONDS - 600,
+		);
+	});
+
+	it("floors at zero past the deadline", () => {
+		expect(
+			getEmailDeliveryRemainingSeconds(
+				ageSeconds(EMAIL_DELIVERY_DEADLINE_SECONDS * 2),
+				now,
+			),
+		).toBe(0);
 	});
 });

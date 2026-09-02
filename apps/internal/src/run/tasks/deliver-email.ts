@@ -12,6 +12,7 @@ import {
 import {
 	computeEmailRetryDelay,
 	EMAIL_MAX_ATTEMPTS,
+	getEmailDeliveryRemainingSeconds,
 	isEmailDeliveryExpired,
 } from "@virtool/data/email/retry";
 import {
@@ -181,9 +182,12 @@ async function deliverOne(
 				return drainResult;
 			}
 
-			const delaySeconds = computeEmailRetryDelay(
-				item.attemptCount,
-				outcome.retryAfterSeconds,
+			// A long provider `Retry-After` can reach past the deadline. Waking at
+			// the deadline instead fails the row then, rather than leaving it
+			// counted as queued for hours after it is already dead.
+			const delaySeconds = Math.min(
+				computeEmailRetryDelay(item.attemptCount, outcome.retryAfterSeconds),
+				Math.ceil(getEmailDeliveryRemainingSeconds(item.createdAt)),
 			);
 
 			await scheduleEmailRetry(ctx.db, target, delaySeconds, outcome.error);

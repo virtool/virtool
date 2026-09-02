@@ -37,15 +37,22 @@ const MAX_RETRY_AFTER_SECONDS = 24 * 3600;
 /** Jitter fraction: each delay lands within ±20% of its nominal value. */
 const JITTER = 0.2;
 
+/** Seconds left before the deadline passes for a row created at `createdAt`. */
+export function getEmailDeliveryRemainingSeconds(
+	createdAt: Date,
+	now: Date = new Date(),
+): number {
+	const elapsed = (now.getTime() - createdAt.getTime()) / 1000;
+
+	return Math.max(0, EMAIL_DELIVERY_DEADLINE_SECONDS - elapsed);
+}
+
 /** Whether `createdAt` is older than {@link EMAIL_DELIVERY_DEADLINE_SECONDS}. */
 export function isEmailDeliveryExpired(
 	createdAt: Date,
 	now: Date = new Date(),
 ): boolean {
-	return (
-		now.getTime() - createdAt.getTime() >=
-		EMAIL_DELIVERY_DEADLINE_SECONDS * 1000
-	);
+	return getEmailDeliveryRemainingSeconds(createdAt, now) === 0;
 }
 
 /**
@@ -54,7 +61,8 @@ export function isEmailDeliveryExpired(
  * Provider guidance wins when present: a `Retry-After` is what the provider
  * asked for, so it is honored as given, never jittered, and clamped only at
  * {@link MAX_RETRY_AFTER_SECONDS}. A quota reset a day out is therefore waited
- * on instead of retried against. Otherwise the delay doubles per attempt from
+ * on instead of retried against, though the caller clamps the wait to what is
+ * left of the deadline. Otherwise the delay doubles per attempt from
  * {@link BASE_DELAY_SECONDS}, clamped at {@link MAX_DELAY_SECONDS}, with full
  * ±{@link JITTER} spread so a burst of failures does not retry as a burst.
  *

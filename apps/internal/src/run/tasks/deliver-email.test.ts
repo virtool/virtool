@@ -159,8 +159,22 @@ function stubSend(...responses: Response[]) {
 	return fetchMock;
 }
 
-function providerError(status: number, name: string): Response {
-	return jsonResponse(status, { name, message: name, statusCode: status });
+function providerError(
+	status: number,
+	name: string,
+	retryAfterSeconds?: number,
+): Response {
+	const response = jsonResponse(status, {
+		name,
+		message: name,
+		statusCode: status,
+	});
+
+	if (retryAfterSeconds !== undefined) {
+		response.headers.set("retry-after", String(retryAfterSeconds));
+	}
+
+	return response;
 }
 
 async function runDrain(): Promise<void> {
@@ -420,6 +434,31 @@ describe("deliverEmailTask", () => {
 		expect(row.next_attempt_at.getTime()).toBeGreaterThan(Date.now());
 		expect(recorded.attempts).toEqual([["email_verification", "rate_limited"]]);
 		expect(recorded.retries).toEqual(["email_verification"]);
+	});
+
+	it("clamps a long provider retry-after to the remaining deadline", async () => {
+		await seedEmailSettings();
+
+		const { outboxId } = await enqueueEmail(db, {
+			idempotencyKey: "a",
+			recipient: "someone@example.com",
+			template,
+		});
+
+		const remainingSeconds = 600;
+
+		await ageRow(outboxId, EMAIL_DELIVERY_DEADLINE_SECONDS - remainingSeconds);
+
+		stubSend(providerError(429, "daily_quota_exceeded", 24 * 3600));
+
+		await runDrain();
+
+		const row = await readOutboxRow(outboxId);
+		const waitSeconds = (row.next_attempt_at.getTime() - Date.now()) / 1000;
+
+		expect(row.status).toBe("queued");
+		expect(waitSeconds).toBeGreaterThan(0);
+		expect(waitSeconds).toBeLessThanOrEqual(remainingSeconds);
 	});
 
 	it("stops the drain and releases the row when the provider rejects the API key", async () => {
