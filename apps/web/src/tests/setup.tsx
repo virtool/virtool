@@ -205,6 +205,8 @@ beforeEach(() => {
 		referenceServerFnMocks.updateReferenceFn,
 		referenceServerFnMocks.archiveReferenceFn,
 		referenceServerFnMocks.unarchiveReferenceFn,
+		referenceV2ServerFnMocks.archiveReferenceV2Fn,
+		referenceV2ServerFnMocks.unarchiveReferenceV2Fn,
 		referenceServerFnMocks.addReferenceUserFn,
 		referenceServerFnMocks.addReferenceGroupFn,
 		referenceServerFnMocks.updateReferenceUserFn,
@@ -451,6 +453,7 @@ export async function renderRoute(path: string, opts?: RenderRouteOptions) {
 		<QueryClientProvider client={queryClient}>
 			<RouterProvider router={router} />
 		</QueryClientProvider>,
+		{ container: document },
 	);
 
 	return { ...result, router, queryClient };

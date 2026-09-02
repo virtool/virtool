@@ -255,13 +255,15 @@ export default function ReferenceV2Members({
 					</BoxGroupSection>
 				)}
 			</BoxGroup>
-			<AddMember
-				members={members}
-				noun={noun}
-				referenceId={referenceId}
-				show={isAdding}
-				onClose={() => setIsAdding(false)}
-			/>
+			{isAdding && (
+				<AddMember
+					members={members}
+					noun={noun}
+					referenceId={referenceId}
+					show
+					onClose={() => setIsAdding(false)}
+				/>
+			)}
 			<EditMember
 				member={members.find((member) => member.id === editId)}
 				noun={noun}

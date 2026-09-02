@@ -247,6 +247,25 @@ export async function getReferencesV2(
 	return rows.map((row) => mapReference(row));
 }
 
+/** Set whether a v2 Reference is archived. */
+export async function setReferenceV2Archived(
+	db: Db,
+	referenceId: string,
+	archived: boolean,
+): Promise<ReferenceV2> {
+	const [reference] = await db
+		.update(referenceRoots)
+		.set({ archived, updatedAt: new Date() })
+		.where(eq(referenceRoots.id, referenceId))
+		.returning({ id: referenceRoots.id });
+
+	if (!reference) {
+		throw new ReferenceV2NotFoundError();
+	}
+
+	return getReferenceV2(db, referenceId);
+}
+
 /**
  * Whether `actor` holds `right` on a v2 Reference. A full administrator holds
  * every right; otherwise a user membership row or any of the caller's group

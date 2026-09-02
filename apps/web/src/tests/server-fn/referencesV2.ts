@@ -7,11 +7,25 @@ import { type Mock, vi } from "vitest";
  * can stub them without per-file `vi.mock` boilerplate.
  */
 export const referenceV2ServerFnMocks = {
+	archiveReferenceV2Fn: vi.fn(),
 	createReferenceV2Fn: vi.fn(),
 	deleteReferenceV2Fn: vi.fn(),
 	getReferenceV2Fn: vi.fn(),
 	getReferencesV2Fn: vi.fn(),
+	unarchiveReferenceV2Fn: vi.fn(),
 };
+
+/** Sets up archiveReferenceV2 to resolve with the given Reference. */
+export function mockArchiveReferenceV2(reference: ReferenceV2): Mock {
+	referenceV2ServerFnMocks.archiveReferenceV2Fn.mockResolvedValue(reference);
+	return referenceV2ServerFnMocks.archiveReferenceV2Fn;
+}
+
+/** Sets up unarchiveReferenceV2 to resolve with the given Reference. */
+export function mockUnarchiveReferenceV2(reference: ReferenceV2): Mock {
+	referenceV2ServerFnMocks.unarchiveReferenceV2Fn.mockResolvedValue(reference);
+	return referenceV2ServerFnMocks.unarchiveReferenceV2Fn;
+}
 
 /** Sets up deleteReferenceV2 to resolve successfully. */
 export function mockDeleteReferenceV2(): Mock {

@@ -2,12 +2,14 @@ import { referenceV2QueryKeys } from "@references-v2/keys";
 import {
 	addReferenceV2GroupFn,
 	addReferenceV2UserFn,
+	archiveReferenceV2Fn,
 	createReferenceV2Fn,
 	deleteReferenceV2Fn,
 	getReferencesV2Fn,
 	getReferenceV2Fn,
 	removeReferenceV2GroupFn,
 	removeReferenceV2UserFn,
+	unarchiveReferenceV2Fn,
 	updateReferenceV2GroupFn,
 	updateReferenceV2UserFn,
 } from "@server/references-v2/functions";
@@ -96,6 +98,30 @@ export function useDeleteReferenceV2() {
 			queryClient.removeQueries({
 				queryKey: referenceV2QueryKeys.detail(referenceId),
 			});
+			queryClient.invalidateQueries({
+				queryKey: referenceV2QueryKeys.lists(),
+			});
+		},
+	});
+}
+
+/** Initialize a mutator for archiving or unarchiving a v2 Reference. */
+export function useSetReferenceV2Archived(
+	referenceId: string,
+	archived: boolean,
+) {
+	const queryClient = useQueryClient();
+
+	return useMutation<ReferenceV2, Error, void>({
+		mutationFn: () =>
+			(archived ? archiveReferenceV2Fn : unarchiveReferenceV2Fn)({
+				data: { referenceId },
+			}) as Promise<ReferenceV2>,
+		onSuccess: (reference) => {
+			queryClient.setQueryData(
+				referenceV2QueryKeys.detail(referenceId),
+				reference,
+			);
 			queryClient.invalidateQueries({
 				queryKey: referenceV2QueryKeys.lists(),
 			});

@@ -1,5 +1,7 @@
 import Box from "@base/Box";
+import SectionHeader from "@base/SectionHeader";
 import { useSuspenseReferenceV2 } from "@references-v2/queries";
+import ArchiveReferenceV2 from "./ArchiveReferenceV2";
 import DeleteReferenceV2 from "./DeleteReferenceV2";
 import ReferenceV2Members from "./ReferenceV2Members";
 
@@ -24,10 +26,25 @@ export default function ReferenceV2Settings({
 				referenceId={referenceId}
 			/>
 			<section aria-labelledby="danger-zone-heading">
-				<h3 id="danger-zone-heading" className="mb-3">
-					Danger zone
-				</h3>
-				<Box className="flex items-center justify-between border-red-200">
+				<SectionHeader>
+					<h2 id="danger-zone-heading">Danger zone</h2>
+				</SectionHeader>
+				<Box className="flex items-center justify-between rounded-b-none border-red-200">
+					<div>
+						<h4 className="font-semibold">
+							{reference.archived
+								? "Unarchive this reference"
+								: "Archive this reference"}
+						</h4>
+						<p className="text-gray-600">
+							{reference.archived
+								? "Return the reference to active use and allow modifications."
+								: "Make the reference read-only without deleting its data."}
+						</p>
+					</div>
+					<ArchiveReferenceV2 reference={reference} />
+				</Box>
+				<Box className="flex items-center justify-between rounded-t-none border-t-0 border-red-200">
 					<div>
 						<h4 className="font-semibold">Delete this reference</h4>
 						<p className="text-gray-600">

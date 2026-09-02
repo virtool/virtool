@@ -19,6 +19,7 @@ import {
 	ReferenceV2NotFoundError,
 	removeReferenceV2Group,
 	removeReferenceV2User,
+	setReferenceV2Archived,
 	updateReferenceV2Group,
 	updateReferenceV2User,
 } from "@virtool/data/references-v2/data";
@@ -131,6 +132,38 @@ export const deleteReferenceV2Fn = createServerFn({ method: "POST" })
 			}
 			await deleteReferenceV2(db, data.referenceId);
 			setResponseStatus(204);
+		} catch (err) {
+			return rethrowAsHttp(err);
+		}
+	});
+
+export const archiveReferenceV2Fn = createServerFn({ method: "POST" })
+	.middleware([authenticated()])
+	.validator(referenceIdSchema)
+	.handler(async ({ context, data }) => {
+		try {
+			await authorizeReferenceV2(
+				data.referenceId,
+				context.session.userId,
+				"modify",
+			);
+			return await setReferenceV2Archived(db, data.referenceId, true);
+		} catch (err) {
+			return rethrowAsHttp(err);
+		}
+	});
+
+export const unarchiveReferenceV2Fn = createServerFn({ method: "POST" })
+	.middleware([authenticated()])
+	.validator(referenceIdSchema)
+	.handler(async ({ context, data }) => {
+		try {
+			await authorizeReferenceV2(
+				data.referenceId,
+				context.session.userId,
+				"modify",
+			);
+			return await setReferenceV2Archived(db, data.referenceId, false);
 		} catch (err) {
 			return rethrowAsHttp(err);
 		}

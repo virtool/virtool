@@ -303,3 +303,56 @@ describe("deleteReferenceV2", () => {
 		expect(setResponseStatus).toHaveBeenCalledWith(404);
 	});
 });
+
+describe("archiveReferenceV2", () => {
+	it("archives a Reference for a member with modify rights", async () => {
+		const userId = await signIn(db, getRequest, { administratorRole: null });
+		const referenceId = await seedReferenceV2(userId);
+
+		const reference = (await call("archiveReferenceV2Fn", { referenceId })) as {
+			archived: boolean;
+		};
+
+		expect(reference.archived).toBe(true);
+	});
+
+	it("unarchives a Reference for a member with modify rights", async () => {
+		const userId = await signIn(db, getRequest, { administratorRole: null });
+		const referenceId = await seedReferenceV2(userId);
+		await db
+			.update(referenceRoots)
+			.set({ archived: true })
+			.where(sql`${referenceRoots.id} = ${referenceId}`);
+
+		const reference = (await call("unarchiveReferenceV2Fn", {
+			referenceId,
+		})) as {
+			archived: boolean;
+		};
+
+		expect(reference.archived).toBe(false);
+	});
+
+	it("refuses a member without modify rights", async () => {
+		const userId = await signIn(db, getRequest, { administratorRole: null });
+		const referenceId = await seedReferenceV2(userId);
+		await db
+			.update(referenceUsers)
+			.set({ modify: false })
+			.where(sql`${referenceUsers.referenceId} = ${referenceId}`);
+
+		await expect(
+			call("archiveReferenceV2Fn", { referenceId }),
+		).rejects.toBeInstanceOf(ForbiddenError);
+		expect(setResponseStatus).toHaveBeenCalledWith(403);
+	});
+
+	it("maps a missing Reference to a 404", async () => {
+		await signIn(db, getRequest, { administratorRole: "full" });
+
+		await expect(
+			call("archiveReferenceV2Fn", { referenceId: randomUUID() }),
+		).rejects.toThrow("Reference not found.");
+		expect(setResponseStatus).toHaveBeenCalledWith(404);
+	});
+});
