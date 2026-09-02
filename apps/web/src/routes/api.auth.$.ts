@@ -1,4 +1,4 @@
-import { handleAuthRequest } from "@server/auth/betterAuth";
+import { handleAuthRequest } from "@server/auth/instance";
 import { createFileRoute } from "@tanstack/react-router";
 
 // Better Auth owns the wire format under `/api/auth/*`, including WebAuthn
