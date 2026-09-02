@@ -10,6 +10,7 @@ export default function ReferenceV2DetailTabs({
 		<NavTabs>
 			<NavTab to={`/refs/alpha/${referenceId}/general`}>General</NavTab>
 			<NavTab to={`/refs/alpha/${referenceId}/otus`}>OTUs</NavTab>
+			<NavTab to={`/refs/alpha/${referenceId}/settings`}>Settings</NavTab>
 		</NavTabs>
 	);
 }

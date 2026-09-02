@@ -18,9 +18,11 @@ describe("<DeleteReferenceV2 />", () => {
 		mockDeleteReferenceV2();
 		mockGetReferencesV2([]);
 
-		const { router } = await renderRoute(`/refs/alpha/${reference.id}/general`);
+		const { router } = await renderRoute(
+			`/refs/alpha/${reference.id}/settings`,
+		);
 		await userEvent.click(
-			await screen.findByRole("button", { name: "Delete" }),
+			await screen.findByRole("button", { name: "Delete reference" }),
 		);
 		expect(
 			screen.getByRole("alertdialog", { name: "Delete Reference" }),

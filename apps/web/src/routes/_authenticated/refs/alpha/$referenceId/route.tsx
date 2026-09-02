@@ -1,7 +1,6 @@
 import { getErrorStatus } from "@app/queryErrors";
 import { ContainerNarrow } from "@base/Container";
 import SectionHeader from "@base/SectionHeader";
-import DeleteReferenceV2 from "@references-v2/components/DeleteReferenceV2";
 import ReferenceV2DetailTabs from "@references-v2/components/ReferenceV2DetailTabs";
 import { useSuspenseReferenceV2 } from "@references-v2/queries";
 import {
@@ -44,10 +43,7 @@ function ReferenceV2DetailLayout() {
 			{!isOtuDetail && (
 				<>
 					<SectionHeader>
-						<div className="flex items-center justify-between">
-							<h2>{reference.name}</h2>
-							<DeleteReferenceV2 reference={reference} />
-						</div>
+						<h2>{reference.name}</h2>
 						<p>{reference.description || "No description."}</p>
 					</SectionHeader>
 					<ReferenceV2DetailTabs referenceId={referenceId} />
