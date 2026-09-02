@@ -4,7 +4,7 @@ import Switch from "@base/Switch";
 import type { EmailSettings } from "@virtool/contracts";
 import { getEmailErrorMessage } from "./errors";
 
-/** Control whether queued email is sent. */
+/** Control whether this instance accepts new email for delivery. */
 export default function EmailDeliverySending({
 	settings,
 }: {
@@ -23,7 +23,8 @@ export default function EmailDeliverySending({
 				<div>
 					<p className="font-semibold">Enable</p>
 					<p className="text-gray-600 text-sm">
-						Turn on this setting to send email.
+						Turn this setting off and new email is discarded rather than held.
+						Email already queued still goes out.
 					</p>
 					{mutation.isError ? (
 						<p className="text-red-600 text-sm" role="alert">

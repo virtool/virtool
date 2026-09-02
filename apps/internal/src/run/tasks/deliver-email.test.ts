@@ -12,7 +12,10 @@ import {
 	createTestDatabase,
 	type TestDatabase,
 } from "@virtool/data/db/test/fixtures";
-import { enqueueEmail } from "@virtool/data/email/outbox";
+import {
+	type EnqueueEmailInput,
+	enqueueEmail,
+} from "@virtool/data/email/outbox";
 import {
 	EMAIL_DELIVERY_DEADLINE_SECONDS,
 	EMAIL_MAX_ATTEMPTS,
@@ -261,15 +264,33 @@ const template = {
 	verifyUrl: "https://virtool.example/verify?token=abc",
 } as const;
 
+/** Enqueue a fixture message, failing the test if it was discarded. */
+async function queue(
+	overrides: Partial<EnqueueEmailInput> = {},
+): Promise<{ created: boolean; outboxId: number }> {
+	const result = await enqueueEmail(db, {
+		idempotencyKey: "email_verification/1/1",
+		recipient: "someone@example.com",
+		template,
+		...overrides,
+	});
+
+	if (result.status !== "queued") {
+		throw new Error("expected the message to be queued");
+	}
+
+	return result;
+}
+
+async function disableSending(): Promise<void> {
+	await db.update(settings).set({ emailEnabled: false });
+}
+
 describe("deliverEmailTask", () => {
 	it("sends a due row and records provider acceptance", async () => {
 		await seedEmailSettings();
 
-		const { outboxId } = await enqueueEmail(db, {
-			idempotencyKey: "email_verification/1/1",
-			recipient: "someone@example.com",
-			template,
-		});
+		const { outboxId } = await queue();
 
 		const fetchMock = stubSend(jsonResponse(200, { id: "msg_1" }));
 
@@ -291,13 +312,24 @@ describe("deliverEmailTask", () => {
 		expect(recorded.acceptedAges).toHaveLength(1);
 	});
 
-	it("leaves rows queued and sends nothing while delivery is disabled", async () => {
+	it("drains the backlog while sending is disabled", async () => {
+		await seedEmailSettings();
+
+		const { outboxId } = await queue({ idempotencyKey: "a" });
+
+		await disableSending();
+
+		const fetchMock = stubSend(jsonResponse(200, { id: "msg_1" }));
+
+		await runDrain();
+
+		expect(fetchMock).toHaveBeenCalledTimes(1);
+		expect((await readOutboxRow(outboxId)).status).toBe("accepted");
+		expect(recorded.availabilities).toEqual(["disabled"]);
+	});
+
+	it("sends nothing while disabled once the backlog is empty", async () => {
 		await seedEmailSettings({ enabled: false });
-		await enqueueEmail(db, {
-			idempotencyKey: "a",
-			recipient: "someone@example.com",
-			template,
-		});
 
 		const fetchMock = stubSend();
 
@@ -305,7 +337,6 @@ describe("deliverEmailTask", () => {
 
 		expect(fetchMock).not.toHaveBeenCalled();
 		expect(recorded.availabilities).toEqual(["disabled"]);
-		expect(recorded.outboxSets).toBe(1);
 	});
 
 	it("reports unconfigured and sends nothing without a stored key", async () => {
@@ -323,11 +354,7 @@ describe("deliverEmailTask", () => {
 		await seedEmailSettings();
 		ctx = { ...ctx, keyring: keys() };
 
-		const { outboxId } = await enqueueEmail(db, {
-			idempotencyKey: "a",
-			recipient: "someone@example.com",
-			template,
-		});
+		const { outboxId } = await queue({ idempotencyKey: "a" });
 
 		const fetchMock = stubSend();
 
@@ -345,11 +372,7 @@ describe("deliverEmailTask", () => {
 	it("schedules a retry for a retryable provider failure", async () => {
 		await seedEmailSettings();
 
-		const { outboxId } = await enqueueEmail(db, {
-			idempotencyKey: "a",
-			recipient: "someone@example.com",
-			template,
-		});
+		const { outboxId } = await queue({ idempotencyKey: "a" });
 
 		stubSend(providerError(500, "internal_server_error"));
 
@@ -369,11 +392,7 @@ describe("deliverEmailTask", () => {
 	it("fails a row terminally on a permanent provider rejection", async () => {
 		await seedEmailSettings();
 
-		const { outboxId } = await enqueueEmail(db, {
-			idempotencyKey: "a",
-			recipient: "someone@example.com",
-			template,
-		});
+		const { outboxId } = await queue({ idempotencyKey: "a" });
 
 		stubSend(providerError(422, "validation_error"));
 
@@ -389,11 +408,7 @@ describe("deliverEmailTask", () => {
 	it("fails a row terminally once its attempts are exhausted", async () => {
 		await seedEmailSettings();
 
-		const { outboxId } = await enqueueEmail(db, {
-			idempotencyKey: "a",
-			recipient: "someone@example.com",
-			template,
-		});
+		const { outboxId } = await queue({ idempotencyKey: "a" });
 
 		await db
 			.update(emailOutbox)
@@ -414,11 +429,7 @@ describe("deliverEmailTask", () => {
 	it("fails a row terminally once its delivery deadline has passed", async () => {
 		await seedEmailSettings();
 
-		const { outboxId } = await enqueueEmail(db, {
-			idempotencyKey: "a",
-			recipient: "someone@example.com",
-			template,
-		});
+		const { outboxId } = await queue({ idempotencyKey: "a" });
 
 		await ageRow(outboxId, EMAIL_DELIVERY_DEADLINE_SECONDS + 3600);
 
@@ -437,11 +448,7 @@ describe("deliverEmailTask", () => {
 	it("fails a rate-limited row past its deadline instead of waiting out the quota", async () => {
 		await seedEmailSettings();
 
-		const { outboxId } = await enqueueEmail(db, {
-			idempotencyKey: "a",
-			recipient: "someone@example.com",
-			template,
-		});
+		const { outboxId } = await queue({ idempotencyKey: "a" });
 
 		await ageRow(outboxId, EMAIL_DELIVERY_DEADLINE_SECONDS + 3600);
 
@@ -456,11 +463,7 @@ describe("deliverEmailTask", () => {
 	it("keeps retrying a rate-limited row inside its deadline", async () => {
 		await seedEmailSettings();
 
-		const { outboxId } = await enqueueEmail(db, {
-			idempotencyKey: "a",
-			recipient: "someone@example.com",
-			template,
-		});
+		const { outboxId } = await queue({ idempotencyKey: "a" });
 
 		await ageRow(outboxId, EMAIL_DELIVERY_DEADLINE_SECONDS - 3600);
 
@@ -480,11 +483,7 @@ describe("deliverEmailTask", () => {
 	it("clamps a long provider retry-after to the remaining deadline", async () => {
 		await seedEmailSettings();
 
-		const { outboxId } = await enqueueEmail(db, {
-			idempotencyKey: "a",
-			recipient: "someone@example.com",
-			template,
-		});
+		const { outboxId } = await queue({ idempotencyKey: "a" });
 
 		const remainingSeconds = 600;
 
@@ -505,16 +504,8 @@ describe("deliverEmailTask", () => {
 	it("stops the drain and releases the rows when the stored key is empty", async () => {
 		await seedEmailSettings({ apiKey: "" });
 
-		const first = await enqueueEmail(db, {
-			idempotencyKey: "a",
-			recipient: "someone@example.com",
-			template,
-		});
-		await enqueueEmail(db, {
-			idempotencyKey: "b",
-			recipient: "someone@example.com",
-			template,
-		});
+		const first = await queue({ idempotencyKey: "a" });
+		await queue({ idempotencyKey: "b" });
 
 		const fetchMock = stubSend(jsonResponse(200, { id: "msg_1" }));
 
@@ -537,16 +528,8 @@ describe("deliverEmailTask", () => {
 	it("stops the drain and releases the row when the provider rejects the API key", async () => {
 		await seedEmailSettings();
 
-		const first = await enqueueEmail(db, {
-			idempotencyKey: "a",
-			recipient: "someone@example.com",
-			template,
-		});
-		await enqueueEmail(db, {
-			idempotencyKey: "b",
-			recipient: "someone@example.com",
-			template,
-		});
+		const first = await queue({ idempotencyKey: "a" });
+		await queue({ idempotencyKey: "b" });
 
 		const fetchMock = stubSend(providerError(401, "invalid_api_key"));
 
@@ -570,16 +553,8 @@ describe("deliverEmailTask", () => {
 	it("stops the drain after a rate limit, leaving the rest for the next run", async () => {
 		await seedEmailSettings();
 
-		const first = await enqueueEmail(db, {
-			idempotencyKey: "a",
-			recipient: "someone@example.com",
-			template,
-		});
-		await enqueueEmail(db, {
-			idempotencyKey: "b",
-			recipient: "someone@example.com",
-			template,
-		});
+		const first = await queue({ idempotencyKey: "a" });
+		await queue({ idempotencyKey: "b" });
 
 		const fetchMock = stubSend(providerError(429, "rate_limit_exceeded"));
 
@@ -600,11 +575,7 @@ describe("deliverEmailTask", () => {
 	it("fails queued rows with unsupported template versions", async () => {
 		await seedEmailSettings();
 
-		const { outboxId } = await enqueueEmail(db, {
-			idempotencyKey: "unsupported-version",
-			recipient: "someone@example.com",
-			template,
-		});
+		const { outboxId } = await queue({ idempotencyKey: "unsupported-version" });
 
 		await db
 			.update(emailOutbox)
@@ -627,11 +598,7 @@ describe("deliverEmailTask", () => {
 		await seedEmailSettings();
 
 		for (let i = 0; i < 3; i++) {
-			await enqueueEmail(db, {
-				idempotencyKey: `key/${i}`,
-				recipient: "someone@example.com",
-				template,
-			});
+			await queue({ idempotencyKey: `key/${i}` });
 		}
 
 		const fetchMock = stubSend(jsonResponse(200, { id: "msg" }));
@@ -663,11 +630,7 @@ describe("deliverEmailTask", () => {
 		await seedEmailSettings();
 
 		for (let i = 0; i < CLAIM_BATCH_SIZE + 1; i++) {
-			await enqueueEmail(db, {
-				idempotencyKey: `budget/${i}`,
-				recipient: "someone@example.com",
-				template,
-			});
+			await queue({ idempotencyKey: `budget/${i}` });
 		}
 
 		const clock = stubElapsed();
@@ -705,13 +668,9 @@ describe("deliverEmailTask", () => {
 	});
 
 	it("prunes terminal rows past retention", async () => {
-		await seedEmailSettings({ enabled: false });
+		await seedEmailSettings();
 
-		const { outboxId } = await enqueueEmail(db, {
-			idempotencyKey: "old",
-			recipient: "someone@example.com",
-			template,
-		});
+		const { outboxId } = await queue({ idempotencyKey: "old" });
 
 		await db
 			.update(emailOutbox)

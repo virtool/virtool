@@ -14,6 +14,7 @@ import type { Db, DbOrTx } from "../db/pg";
 import { takeFirst, takeFirstOrThrow } from "../db/rows";
 import { emailOutbox } from "../db/schema/emailOutbox";
 import { nowUtc, secondsAgo } from "../db/time";
+import { isEmailEnabled } from "./settings";
 import { EMAIL_TEMPLATE_VERSION } from "./templates";
 
 /** What {@link enqueueEmail} needs to queue one logical message. */
@@ -29,17 +30,27 @@ export type EnqueueEmailInput = {
 	template: EmailTemplate;
 };
 
-/** What {@link enqueueEmail} returns: the row's identity and whether it is new. */
-export type EnqueueEmailResult = {
-	created: boolean;
-	outboxId: number;
-};
+/** What {@link enqueueEmail} returns: a queued row's identity, or a discard. */
+export type EnqueueEmailResult =
+	| { status: "queued"; created: boolean; outboxId: number }
+	| { status: "discarded" };
 
-/** Queue one message, returning the existing row for a duplicate key. */
+/**
+ * Queue one message, returning the existing row for a duplicate key.
+ *
+ * While sending is switched off the message is discarded and no row is
+ * written. Holding it instead would let an administrator re-enable delivery
+ * days later and send an authentication link nobody is waiting for. Discarding
+ * is an ordinary outcome, not a failure.
+ */
 export async function enqueueEmail(
 	db: DbOrTx,
 	input: EnqueueEmailInput,
 ): Promise<EnqueueEmailResult> {
+	if (!(await isEmailEnabled(db))) {
+		return { status: "discarded" };
+	}
+
 	const inserted = takeFirst(
 		await db
 			.insert(emailOutbox)
@@ -58,7 +69,7 @@ export async function enqueueEmail(
 	);
 
 	if (inserted) {
-		return { created: true, outboxId: inserted.id };
+		return { status: "queued", created: true, outboxId: inserted.id };
 	}
 
 	const existing = takeFirstOrThrow(
@@ -68,7 +79,7 @@ export async function enqueueEmail(
 			.where(eq(emailOutbox.idempotency_key, input.idempotencyKey)),
 	);
 
-	return { created: false, outboxId: existing.id };
+	return { status: "queued", created: false, outboxId: existing.id };
 }
 
 /** A row handed to the delivery loop by {@link claimDueEmails}. */

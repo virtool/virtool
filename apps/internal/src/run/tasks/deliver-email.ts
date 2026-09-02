@@ -282,7 +282,10 @@ export const deliverEmailTask = defineTask<typeof payload, TaskContext>({
 				);
 			}
 
-			if (availability !== "ready" || state.apiKey === null) {
+			// Delivery turns on the resolved configuration, not on `enabled`. That
+			// flag gates intake, so this task drains what was queued before sending
+			// was switched off.
+			if (state.availability !== "ready" || state.apiKey === null) {
 				ctx.metrics.setEmailOutbox(await countEmailOutbox(ctx.db));
 
 				return;

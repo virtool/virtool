@@ -221,8 +221,12 @@ templates, retries, and the Resend integration. The periodic `deliver_email`
 task in `apps/internal` performs delivery.
 
 Disabled, unconfigured, or invalid email configuration does not prevent the
-services from running. Only `ready` permits delivery. Provider acceptance is
-not proof of mailbox delivery.
+services from running. Only a `ready` configuration permits delivery. Provider
+acceptance is not proof of mailbox delivery.
+
+The `enabled` flag gates intake, not delivery. While sending is off,
+`enqueueEmail` writes no row and answers `{ status: "discarded" }`, and
+`deliver_email` drains whatever was queued before the switch.
 
 The Resend API key is encrypted under the environment-owned encryption key
 documented in [docs/env.md](../../docs/env.md#encryption-key). Neither the
@@ -234,6 +238,9 @@ Features enqueue mail through `enqueueEmail(db, input)` in
 - Pass an `EmailTemplate` and a stable domain idempotency key, never HTML.
 - Use a transaction when domain state and its email must commit together.
 - Keep provider errors, retries, and the Resend SDK behind the email package.
+- Handle `{ status: "discarded" }`. It is an ordinary outcome, not an error:
+  a flow that depends on the email must offer the user another route rather
+  than fail.
 
 A failing row is retried with jittered exponential backoff, or on the
 provider's `Retry-After` when it sends one. Retries stop at the delivery

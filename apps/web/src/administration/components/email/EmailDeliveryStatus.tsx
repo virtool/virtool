@@ -68,7 +68,10 @@ function Detail({ settings }: { settings: EmailSettings }) {
 			return settings.enabled ? (
 				<p>Email is configured and sending is enabled.</p>
 			) : (
-				<p>Email is configured, but sending is turned off.</p>
+				<p>
+					Email is configured, but sending is turned off. New email is
+					discarded, not held for later. Anything already queued still goes out.
+				</p>
 			);
 
 		case "unconfigured":

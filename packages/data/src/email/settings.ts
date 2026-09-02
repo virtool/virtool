@@ -1,8 +1,8 @@
 import type { EmailAvailability } from "@virtool/contracts";
 import { eq } from "drizzle-orm";
 import type { EncryptedValue, Keyring } from "../crypto/keyring";
-import type { Db } from "../db/pg";
-import { takeFirstOrThrow } from "../db/rows";
+import type { Db, DbOrTx } from "../db/pg";
+import { takeFirst, takeFirstOrThrow } from "../db/rows";
 import { settings as settingsTable } from "../db/schema/settings";
 import { AppError } from "../errors";
 import { getSettings, type Settings } from "../settings/data";
@@ -43,6 +43,28 @@ function toEmailDeliverySettings(settings: Settings): EmailDeliverySettings {
 /** Read the stored email delivery configuration, seeding defaults if absent. */
 export async function getEmailSettings(db: Db): Promise<EmailDeliverySettings> {
 	return toEmailDeliverySettings(await getSettings(db));
+}
+
+/**
+ * Whether new mail may enter the outbox.
+ *
+ * This reads the one flag rather than the whole row, and seeds nothing, so it
+ * can run inside a caller's transaction. A database with no settings row has
+ * never been configured, so the answer is `false`.
+ *
+ * The flag alone decides intake: {@link updateEmailDelivery} refuses to set it
+ * while the configuration does not resolve, and {@link clearEmailApiKey} turns
+ * it off, so `true` already implies a stored key and a sender address.
+ */
+export async function isEmailEnabled(db: DbOrTx): Promise<boolean> {
+	const row = takeFirst(
+		await db
+			.select({ enabled: settingsTable.emailEnabled })
+			.from(settingsTable)
+			.where(eq(settingsTable.id, SETTINGS_ID)),
+	);
+
+	return row?.enabled ?? false;
 }
 
 /** Resolve stored delivery settings against the process keyring. */
