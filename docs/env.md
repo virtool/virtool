@@ -29,7 +29,8 @@ the keys listed by the caller:
 2. Otherwise, the referenced file is read as UTF-8 and trimmed.
 3. The file value replaces `<KEY>`, even when the plain variable is also set.
 4. An unreadable file throws during startup; there is no fallback to a possibly
-   stale plain variable.
+   stale plain variable. The error names the key and the errno but not the
+   configured path, which an operator can set to the secret itself by mistake.
 5. A file containing only whitespace resolves to an empty string, which the
    service's schema handles as unset or invalid.
 
