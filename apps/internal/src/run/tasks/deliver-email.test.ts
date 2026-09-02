@@ -1,5 +1,4 @@
 import { randomBytes } from "node:crypto";
-import type { EmailAvailability } from "@virtool/contracts";
 import {
 	createKeyring,
 	type EncryptedValue,
@@ -37,7 +36,10 @@ import {
 	vi,
 } from "vitest";
 import { runTask } from "../framework/run";
-import type { EmailAttemptOutcome } from "../metrics/registry";
+import type {
+	EmailAttemptOutcome,
+	EmailAvailabilityLabel,
+} from "../metrics/registry";
 import { claimTask, createTaskTestContext } from "../testing/tasks";
 import {
 	CLAIM_BATCH_SIZE,
@@ -80,7 +82,7 @@ const keyring = keys();
 /** The metrics writers, recording every call for assertion. */
 type RecordedMetrics = {
 	attempts: [string, EmailAttemptOutcome][];
-	availabilities: EmailAvailability[];
+	availabilities: EmailAvailabilityLabel[];
 	retries: string[];
 	acceptedAges: number[];
 	outboxSets: number;

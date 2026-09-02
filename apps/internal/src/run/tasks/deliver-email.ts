@@ -264,16 +264,25 @@ export const deliverEmailTask = defineTask<typeof payload, TaskContext>({
 				ctx.keyring,
 			);
 
-			ctx.metrics.setEmailAvailability(state.availability);
+			// A configuration that resolves cleanly but has sending switched off is
+			// reported as disabled rather than ready. The wire contract carries no
+			// such state, so both this task and the settings UI derive it the same
+			// way, from `enabled`.
+			const availability =
+				state.availability === "ready" && !state.settings.enabled
+					? "disabled"
+					: state.availability;
 
-			if (state.availability === "configuration_error") {
+			ctx.metrics.setEmailAvailability(availability);
+
+			if (availability === "configuration_error") {
 				logger.error(
-					{ availability: state.availability },
+					{ availability },
 					"email delivery unavailable: stored api key cannot be decrypted",
 				);
 			}
 
-			if (state.availability !== "ready" || state.apiKey === null) {
+			if (availability !== "ready" || state.apiKey === null) {
 				ctx.metrics.setEmailOutbox(await countEmailOutbox(ctx.db));
 
 				return;
