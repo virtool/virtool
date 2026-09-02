@@ -12,40 +12,30 @@ import { renderRoute } from "@tests/setup";
 import { describe, expect, it } from "vitest";
 
 describe("<Settings />", () => {
-	const path = "/administration/settings";
-
-	it("should render", async () => {
+	it("redirects the legacy settings route to banners", async () => {
 		const account = createFakeAccount({ administratorRole: "full" });
-		await renderRoute(path, {
+		await renderRoute("/administration/settings", {
 			account,
 			seed: (queryClient) => {
 				queryClient.setQueryData(bannerQueryKeys.lists(), []);
 			},
 		});
 
-		expect(await screen.findByText("Banners")).toBeInTheDocument();
-		expect(screen.getByText("Settings")).toBeInTheDocument();
+		expect(
+			await screen.findByRole("heading", { name: "Banners" }),
+		).toBeInTheDocument();
 		expect(screen.getByRole("button", { name: "Create" })).toBeInTheDocument();
 	});
 
-	it("should render all options for full administrators", async () => {
+	it("renders all navigation options for full administrators", async () => {
 		const account = createFakeAccount({ administratorRole: "full" });
-		await renderRoute(path, { account });
+		await renderRoute("/administration/banners", { account });
 
 		expect(await screen.findByText("Users")).toBeInTheDocument();
-		expect(screen.getByText("Settings")).toBeInTheDocument();
 		expect(screen.getByText("Groups")).toBeInTheDocument();
-		expect(screen.queryByText("Administrators")).not.toBeInTheDocument();
-	});
-
-	it("should render only groups and users for users administrators", async () => {
-		const account = createFakeAccount({ administratorRole: "users" });
-		await renderRoute(path, { account });
-
-		expect(await screen.findByText("Users")).toBeInTheDocument();
-		expect(screen.queryByText("Settings")).not.toBeInTheDocument();
-		expect(screen.queryByText("Administrators")).not.toBeInTheDocument();
-		expect(screen.getByText("Groups")).toBeInTheDocument();
+		expect(screen.getByText("Caching")).toBeInTheDocument();
+		expect(screen.getByText("Email Delivery")).toBeInTheDocument();
+		expect(screen.getByText("NCBI")).toBeInTheDocument();
 	});
 
 	// Email configuration is recovery authority. Hiding the section is only
@@ -57,7 +47,7 @@ describe("<Settings />", () => {
 			mockSettingsStore(createFakeSettings());
 			mockEmailSettingsStore(createFakeEmailSettings());
 
-			await renderRoute(path, {
+			await renderRoute("/administration/email", {
 				account: createFakeAccount({ administratorRole: "full" }),
 			});
 
@@ -68,7 +58,7 @@ describe("<Settings />", () => {
 			mockSettingsStore(createFakeSettings());
 			mockEmailSettingsStore(createFakeEmailSettings());
 
-			await renderRoute(path, {
+			await renderRoute("/administration/ncbi", {
 				account: createFakeAccount({ administratorRole: "settings" }),
 			});
 
