@@ -5,7 +5,9 @@
 # in the cluster, whether each side still exists and whether its Tilt server
 # is running. A namespace with no matching worktree means removal never
 # tore it down, whether by `wt remove` failing its pre-remove hook or by a
-# worktree that predates that hook.
+# worktree that predates that hook. Namespace state prints "unknown" rather
+# than "missing" when Minikube is down or the current kubectl context is not
+# `minikube`, since the cluster was never queried.
 
 set -e
 
@@ -26,9 +28,14 @@ else
     exit 1
 fi
 
-# Mirrors the default slug in lib.sh's wt_slug, but a worktree brought up
-# with a custom WT will show under its directory name here instead.
+# Mirrors lib.sh's wt_slug default: the slug pinned in the worktree's .WT by
+# a prior `up.sh` run, falling back to the directory name.
 slug_for() {
+    if [[ -f "$1/.WT" ]]; then
+        tr -d '[:space:]' < "$1/.WT"
+        return
+    fi
+
     local raw
     raw=$(basename "$1" | tr '[:upper:]' '[:lower:]' | sed -E 's/[^a-z0-9-]+/-/g')
     raw=${raw:0:63}
@@ -61,7 +68,9 @@ while IFS= read -r worktree; do
 done < <(git worktree list --porcelain | sed -n 's/^worktree //p')
 
 declare -A NAMESPACE_EXISTS
+NAMESPACES_QUERIED=0
 if [[ "$MINIKUBE_STATUS" == "up" && "$(kubectl config current-context 2>/dev/null)" == "minikube" ]]; then
+    NAMESPACES_QUERIED=1
     while IFS= read -r namespace; do
         is_reserved_namespace "$namespace" || NAMESPACE_EXISTS[$namespace]=1
     done < <(kubectl get namespaces -o jsonpath='{range .items[*]}{.metadata.name}{"\n"}{end}')
@@ -75,7 +84,9 @@ SLUGS=$( { printf '%s\n' "${!WORKTREE_FOR_SLUG[@]}"; printf '%s\n' "${!NAMESPACE
         [[ -z "$slug" ]] && continue
 
         worktree="${WORKTREE_FOR_SLUG[$slug]:-}"
-        if [[ -n "${NAMESPACE_EXISTS[$slug]:-}" ]]; then
+        if [[ "$NAMESPACES_QUERIED" == 0 ]]; then
+            ns_state="unknown"
+        elif [[ -n "${NAMESPACE_EXISTS[$slug]:-}" ]]; then
             ns_state="exists"
         else
             ns_state="missing"
@@ -104,7 +115,7 @@ SLUGS=$( { printf '%s\n' "${!WORKTREE_FOR_SLUG[@]}"; printf '%s\n' "${!NAMESPACE
 
         printf '%s\t%s\t%s\t%s\n' "$slug" "$wt_state" "$ns_state" "$tilt_state"
     done <<< "$SLUGS"
-} | column -t -s $'\t'
+} | if command -v column >/dev/null; then column -t -s $'\t'; else cat; fi
 
 if [[ "$MINIKUBE_STATUS" == "up" ]]; then
     for slug in "${!NAMESPACE_EXISTS[@]}"; do
