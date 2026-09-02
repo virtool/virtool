@@ -141,29 +141,6 @@ const ServerEnv = z.object({
 	),
 });
 
-type StorageEnv = z.infer<typeof ServerEnv>;
-
-const ServerEnvSchema = ServerEnv.transform((raw, ctx) => {
-	const publicOrigin = parsePublicOrigin(raw, ctx);
-
-	return {
-		postgresUrl: raw.VT_POSTGRES_URL,
-		postgresPoolMax: raw.VT_POSTGRES_POOL_MAX ?? DEFAULT_POSTGRES_POOL_MAX,
-		publicOrigin: publicOrigin ? publicOrigin.origin : z.NEVER,
-		webauthnRpId: publicOrigin ? publicOrigin.hostname : z.NEVER,
-		authSecret: raw.VT_AUTH_SECRET,
-		metricsToken: raw.VT_METRICS_TOKEN,
-		sentryDsn: raw.VT_SENTRY_DSN,
-		encryptionKey: raw.VT_ENCRYPTION_KEY,
-		encryptionKeyPrevious: raw.VT_ENCRYPTION_KEY_PREVIOUS,
-		storage: buildStorage(raw, ctx),
-		downloadMode: raw.VT_STORAGE_DOWNLOAD_MODE,
-		uploadsChunked: raw.VT_UPLOADS_CHUNKED,
-		uploadsChunkedConcurrency:
-			raw.VT_UPLOADS_CHUNKED_CONCURRENCY ?? DEFAULT_UPLOADS_CHUNKED_CONCURRENCY,
-	};
-});
-
 // Unset and empty are the same thing for storage variables. Deployment tooling
 // routinely injects an empty string for a value it has nothing to put in, and
 // an empty access key must fall back to the credential chain rather than be
@@ -172,42 +149,43 @@ function present(value: string | undefined): string | undefined {
 	return value ? value : undefined;
 }
 
-function requirePresent(
-	ctx: z.RefinementCtx,
-	key: keyof StorageEnv,
-	value: string | undefined,
-	backend: string,
-): boolean {
-	if (present(value)) {
-		return true;
-	}
+/** A storage configuration, or the issues that stopped one being built. */
+type StorageResult = {
+	config: StorageConfig | undefined;
+	issues: z.core.$ZodIssue[];
+};
 
-	ctx.addIssue({
+type PublicOriginResult = {
+	url: URL | undefined;
+	issues: z.core.$ZodIssue[];
+};
+
+function requiredIssue(key: string, backend: string): z.core.$ZodIssue {
+	return {
 		code: "custom",
 		path: [key],
 		message: `${key} is required when VT_STORAGE_BACKEND=${backend}`,
-	});
-
-	return false;
+		input: undefined,
+	};
 }
 
-function parsePublicOrigin(
-	raw: StorageEnv,
-	ctx: z.RefinementCtx,
-): URL | undefined {
-	function reject(message: string): undefined {
-		ctx.addIssue({
+function parsePublicOrigin(env: NodeJS.ProcessEnv): PublicOriginResult {
+	function reject(message: string): PublicOriginResult {
+		return {
+			url: undefined,
+			issues: [{
 			code: "custom",
 			path: ["VT_PUBLIC_ORIGIN"],
 			message: `VT_PUBLIC_ORIGIN ${message}`,
-		});
-		return undefined;
+			input: undefined,
+			}],
+		};
 	}
 
 	let url: URL;
 
 	try {
-		url = new URL(raw.VT_PUBLIC_ORIGIN);
+		url = new URL(env.VT_PUBLIC_ORIGIN ?? "");
 	} catch {
 		return reject("must be an absolute URL, such as https://virtool.example");
 	}
@@ -234,74 +212,92 @@ function parsePublicOrigin(
 		);
 	}
 
-	return url;
+	return { url, issues: [] };
 }
 
-function buildStorage(raw: StorageEnv, ctx: z.RefinementCtx): StorageConfig {
-	if (raw.VT_STORAGE_BACKEND === "s3") {
-		const accessKeyId = present(raw.VT_STORAGE_S3_ACCESS_KEY_ID);
-		const secretAccessKey = present(raw.VT_STORAGE_S3_SECRET_ACCESS_KEY);
+/**
+ * Validate the variables the chosen backend needs and assemble its config.
+ *
+ * Runs against the resolved environment rather than inside a schema transform.
+ * Zod skips a transform once any field has failed, so a malformed
+ * `VT_POSTGRES_URL` would hide every storage issue and cost the operator a
+ * restart to see the next one.
+ */
+function buildStorage(env: NodeJS.ProcessEnv): StorageResult {
+	const issues: z.core.$ZodIssue[] = [];
 
-		let ok = requirePresent(
-			ctx,
-			"VT_STORAGE_S3_BUCKET",
-			raw.VT_STORAGE_S3_BUCKET,
-			"s3",
-		);
+	if (env.VT_STORAGE_BACKEND === "s3") {
+		const bucket = present(env.VT_STORAGE_S3_BUCKET);
+		const accessKeyId = present(env.VT_STORAGE_S3_ACCESS_KEY_ID);
+		const secretAccessKey = present(env.VT_STORAGE_S3_SECRET_ACCESS_KEY);
+
+		if (!bucket) {
+			issues.push(requiredIssue("VT_STORAGE_S3_BUCKET", "s3"));
+		}
 
 		// Both empty means the AWS credential chain supplies an IAM role. Exactly
 		// one set is always a mistake, and silently ignoring the odd one out would
 		// send the process to production authenticating as the wrong principal.
 		if (Boolean(accessKeyId) !== Boolean(secretAccessKey)) {
-			ctx.addIssue({
+			issues.push({
 				code: "custom",
 				path: ["VT_STORAGE_S3_ACCESS_KEY_ID"],
 				message:
 					"VT_STORAGE_S3_ACCESS_KEY_ID and VT_STORAGE_S3_SECRET_ACCESS_KEY must be set together, or both left empty to use IAM role credentials",
+				input: undefined,
 			});
-			ok = false;
 		}
 
-		if (!ok) {
-			return z.NEVER;
+		if (!bucket || issues.length > 0) {
+			return { config: undefined, issues };
 		}
 
 		return {
-			kind: "s3",
-			bucket: raw.VT_STORAGE_S3_BUCKET as string,
-			region: present(raw.VT_STORAGE_S3_REGION),
-			// Left unset for real AWS, which the SDK resolves from the region.
-			endpoint: present(raw.VT_STORAGE_S3_ENDPOINT),
-			accessKeyId,
-			secretAccessKey,
+			config: {
+				kind: "s3",
+				bucket,
+				region: present(env.VT_STORAGE_S3_REGION),
+				// Left unset for real AWS, which the SDK resolves from the region.
+				endpoint: present(env.VT_STORAGE_S3_ENDPOINT),
+				accessKeyId,
+				secretAccessKey,
+			},
+			issues,
 		};
 	}
 
-	const account = requirePresent(
-		ctx,
-		"VT_STORAGE_AZURE_ACCOUNT",
-		raw.VT_STORAGE_AZURE_ACCOUNT,
-		"azure",
-	);
-	const container = requirePresent(
-		ctx,
-		"VT_STORAGE_AZURE_CONTAINER",
-		raw.VT_STORAGE_AZURE_CONTAINER,
-		"azure",
-	);
+	// A missing or unrecognised backend is the base schema's issue to report,
+	// and leaves no branch to validate here.
+	if (env.VT_STORAGE_BACKEND !== "azure") {
+		return { config: undefined, issues };
+	}
+
+	const account = present(env.VT_STORAGE_AZURE_ACCOUNT);
+	const container = present(env.VT_STORAGE_AZURE_CONTAINER);
+
+	if (!account) {
+		issues.push(requiredIssue("VT_STORAGE_AZURE_ACCOUNT", "azure"));
+	}
+
+	if (!container) {
+		issues.push(requiredIssue("VT_STORAGE_AZURE_CONTAINER", "azure"));
+	}
 
 	if (!account || !container) {
-		return z.NEVER;
+		return { config: undefined, issues };
 	}
 
 	return {
-		kind: "azure",
-		account: raw.VT_STORAGE_AZURE_ACCOUNT as string,
-		container: raw.VT_STORAGE_AZURE_CONTAINER as string,
-		accessKey: present(raw.VT_STORAGE_AZURE_ACCESS_KEY),
-		endpoint: present(raw.VT_STORAGE_AZURE_ENDPOINT),
-		downloadUrl: present(raw.VT_STORAGE_AZURE_DOWNLOAD_URL),
-		uploadUrl: present(raw.VT_STORAGE_AZURE_UPLOAD_URL),
+		config: {
+			kind: "azure",
+			account,
+			container,
+			accessKey: present(env.VT_STORAGE_AZURE_ACCESS_KEY),
+			endpoint: present(env.VT_STORAGE_AZURE_ENDPOINT),
+			downloadUrl: present(env.VT_STORAGE_AZURE_DOWNLOAD_URL),
+			uploadUrl: present(env.VT_STORAGE_AZURE_UPLOAD_URL),
+		},
+		issues,
 	};
 }
 
@@ -310,10 +306,42 @@ function buildStorage(raw: StorageEnv, ctx: z.RefinementCtx): StorageConfig {
 // `@virtool/contracts/env` rather than copied, so the precedence rule — the
 // file wins over a plain variable of the same name — cannot drift between the
 // two services.
+//
+// The base schema and the storage checks both run against the resolved
+// environment before either result is used, so one report names every offending
+// key instead of one per restart.
 export function parseServerConfig(
 	env: NodeJS.ProcessEnv = process.env,
 ): ServerConfig {
-	return ServerEnvSchema.parse(
-		resolveFileBacked(Object.keys(ServerEnv.shape), env),
-	);
+	const resolved = resolveFileBacked(Object.keys(ServerEnv.shape), env);
+	const parsed = ServerEnv.safeParse(resolved);
+	const storage = buildStorage(resolved);
+	const publicOrigin = parsePublicOrigin(resolved);
+
+	if (!parsed.success || !storage.config || !publicOrigin.url) {
+		throw new z.ZodError([
+			...(parsed.success ? [] : parsed.error.issues),
+			...storage.issues,
+			...publicOrigin.issues,
+		]);
+	}
+
+	const raw = parsed.data;
+
+	return {
+		postgresUrl: raw.VT_POSTGRES_URL,
+		postgresPoolMax: raw.VT_POSTGRES_POOL_MAX ?? DEFAULT_POSTGRES_POOL_MAX,
+		publicOrigin: publicOrigin.url.origin,
+		webauthnRpId: publicOrigin.url.hostname,
+		authSecret: raw.VT_AUTH_SECRET,
+		metricsToken: raw.VT_METRICS_TOKEN,
+		sentryDsn: raw.VT_SENTRY_DSN,
+		encryptionKey: raw.VT_ENCRYPTION_KEY,
+		encryptionKeyPrevious: raw.VT_ENCRYPTION_KEY_PREVIOUS,
+		storage: storage.config,
+		downloadMode: raw.VT_STORAGE_DOWNLOAD_MODE,
+		uploadsChunked: raw.VT_UPLOADS_CHUNKED,
+		uploadsChunkedConcurrency:
+			raw.VT_UPLOADS_CHUNKED_CONCURRENCY ?? DEFAULT_UPLOADS_CHUNKED_CONCURRENCY,
+	};
 }

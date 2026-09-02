@@ -82,6 +82,18 @@ describe("parseServerConfig", () => {
 		).toThrow(/VT_POSTGRES_POOL_MAX/);
 	});
 
+	// Zod skips a transform once any field has failed. Validating storage there
+	// would hide every backend issue behind an unrelated malformed key and cost
+	// the operator a restart to see the next one.
+	it("reports base and backend issues in one error", () => {
+		expect(() =>
+			parseServerConfig({
+				VT_POSTGRES_URL: "not-a-url",
+				VT_STORAGE_BACKEND: "s3",
+			} as NodeJS.ProcessEnv),
+		).toThrow(/VT_POSTGRES_URL[\s\S]*VT_STORAGE_S3_BUCKET/);
+	});
+
 	it("rejects the removed local backend", () => {
 		expect(() =>
 			parseServerConfig({
