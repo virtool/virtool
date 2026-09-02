@@ -86,7 +86,8 @@ export type EmailAttemptOutcome =
 	| "retryable"
 	| "rate_limited"
 	| "permanent"
-	| "exhausted";
+	| "exhausted"
+	| "expired";
 
 const EMAIL_ATTEMPT_OUTCOMES: EmailAttemptOutcome[] = [
 	"accepted",
@@ -94,6 +95,7 @@ const EMAIL_ATTEMPT_OUTCOMES: EmailAttemptOutcome[] = [
 	"rate_limited",
 	"permanent",
 	"exhausted",
+	"expired",
 ];
 
 const EMAIL_AVAILABILITIES: EmailAvailability[] = [

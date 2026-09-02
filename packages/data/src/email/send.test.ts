@@ -36,24 +36,67 @@ afterEach(() => {
 });
 
 describe("buildProviderIdempotencyKey", () => {
-	it("is deterministic for the same row and domain key", () => {
-		expect(buildProviderIdempotencyKey(7, "verify/3/9")).toBe(
-			buildProviderIdempotencyKey(7, "verify/3/9"),
+	const envelope = {
+		replyToAddress: "",
+		senderAddress: "noreply@virtool.example",
+		senderName: "Virtool",
+	};
+
+	it("is deterministic for the same row, domain key, and envelope", () => {
+		expect(buildProviderIdempotencyKey(7, "verify/3/9", envelope)).toBe(
+			buildProviderIdempotencyKey(7, "verify/3/9", envelope),
 		);
 	});
 
 	it("differs by row and by domain key", () => {
-		expect(buildProviderIdempotencyKey(7, "a")).not.toBe(
-			buildProviderIdempotencyKey(8, "a"),
+		expect(buildProviderIdempotencyKey(7, "a", envelope)).not.toBe(
+			buildProviderIdempotencyKey(8, "a", envelope),
 		);
-		expect(buildProviderIdempotencyKey(7, "a")).not.toBe(
-			buildProviderIdempotencyKey(7, "b"),
+		expect(buildProviderIdempotencyKey(7, "a", envelope)).not.toBe(
+			buildProviderIdempotencyKey(7, "b", envelope),
+		);
+	});
+
+	it("differs when any envelope field changes", () => {
+		const key = buildProviderIdempotencyKey(7, "a", envelope);
+
+		expect(
+			buildProviderIdempotencyKey(7, "a", {
+				...envelope,
+				replyToAddress: "help@virtool.example",
+			}),
+		).not.toBe(key);
+		expect(
+			buildProviderIdempotencyKey(7, "a", {
+				...envelope,
+				senderAddress: "other@virtool.example",
+			}),
+		).not.toBe(key);
+		expect(
+			buildProviderIdempotencyKey(7, "a", { ...envelope, senderName: "Other" }),
+		).not.toBe(key);
+	});
+
+	it("separates envelope fields that concatenate to the same text", () => {
+		expect(
+			buildProviderIdempotencyKey(7, "a", {
+				...envelope,
+				senderAddress: "ab",
+				senderName: "c",
+			}),
+		).not.toBe(
+			buildProviderIdempotencyKey(7, "a", {
+				...envelope,
+				senderAddress: "a",
+				senderName: "bc",
+			}),
 		);
 	});
 
 	it("stays under the provider's 256-character limit for a long domain key", () => {
 		expect(
-			buildProviderIdempotencyKey(2_147_483_647, "x".repeat(4096)).length,
+			buildProviderIdempotencyKey(2_147_483_647, "x".repeat(4096), envelope)
+				.length,
 		).toBeLessThanOrEqual(256);
 	});
 });
@@ -154,6 +197,20 @@ describe("sendEmailViaResend", () => {
 				name: "internal_server_error",
 				message: "boom",
 				statusCode: 500,
+			}),
+		);
+
+		const outcome = await sendEmailViaResend(request);
+
+		expect(outcome.outcome).toBe("retryable");
+	});
+
+	it("classifies a reused idempotency key with a changed payload as retryable", async () => {
+		stubFetch(
+			jsonResponse(400, {
+				name: "invalid_idempotent_request",
+				message: "same idempotency key used with a different payload",
+				statusCode: 400,
 			}),
 		);
 

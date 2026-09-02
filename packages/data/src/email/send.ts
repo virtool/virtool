@@ -26,13 +26,35 @@ export type EmailSendOutcome =
 	| { outcome: "configuration"; error: string }
 	| { outcome: "permanent"; error: string };
 
-/** Build the stable provider idempotency key for an outbox row. */
+/** The sender fields that Resend sees in the message body. */
+export type EmailSenderEnvelope = {
+	replyToAddress: string;
+	senderAddress: string;
+	senderName: string;
+};
+
+/**
+ * Build the provider idempotency key for an outbox row.
+ *
+ * The key stays the same across retries of one message, so an ambiguous
+ * outcome cannot double-send. A changed sender envelope is a different
+ * message and gets its own key, because the provider rejects a reused key
+ * that carries a different payload.
+ */
 export function buildProviderIdempotencyKey(
 	outboxId: number,
 	domainKey: string,
+	envelope: EmailSenderEnvelope,
 ): string {
 	const digest = createHash("sha256")
-		.update(domainKey)
+		.update(
+			JSON.stringify([
+				domainKey,
+				envelope.replyToAddress,
+				envelope.senderAddress,
+				envelope.senderName,
+			]),
+		)
 		.digest("hex")
 		.slice(0, 32);
 
@@ -56,6 +78,7 @@ const RETRYABLE_ERRORS = new Set([
 	"application_error",
 	"concurrent_idempotent_requests",
 	"internal_server_error",
+	"invalid_idempotent_request",
 ]);
 
 function parseRetryAfter(

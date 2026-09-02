@@ -12,6 +12,7 @@ import {
 import {
 	computeEmailRetryDelay,
 	EMAIL_MAX_ATTEMPTS,
+	isEmailDeliveryExpired,
 } from "@virtool/data/email/retry";
 import {
 	buildProviderIdempotencyKey,
@@ -82,7 +83,11 @@ async function deliverOne(
 		outcome = await sendEmailViaResend({
 			apiKey: state.apiKey,
 			html: rendered.html,
-			idempotencyKey: buildProviderIdempotencyKey(item.id, item.idempotencyKey),
+			idempotencyKey: buildProviderIdempotencyKey(
+				item.id,
+				item.idempotencyKey,
+				state.settings,
+			),
 			recipient: item.recipient,
 			replyToAddress: state.settings.replyToAddress,
 			senderAddress: state.settings.senderAddress,
@@ -146,6 +151,24 @@ async function deliverOne(
 
 		case "rate_limited":
 		case "retryable": {
+			const drainResult =
+				outcome.outcome === "rate_limited" ? "stop" : "failed";
+
+			if (isEmailDeliveryExpired(item.createdAt)) {
+				await failEmail(
+					ctx.db,
+					target,
+					`delivery deadline passed after ${item.attemptCount} attempts: ${outcome.error}`,
+				);
+				ctx.metrics.recordEmailAttempt(template, "expired");
+				logger.error(
+					{ ...base },
+					"email failed terminally: delivery deadline passed",
+				);
+
+				return drainResult;
+			}
+
 			if (item.attemptCount >= EMAIL_MAX_ATTEMPTS) {
 				await failEmail(
 					ctx.db,
@@ -155,7 +178,7 @@ async function deliverOne(
 				ctx.metrics.recordEmailAttempt(template, "exhausted");
 				logger.error({ ...base }, "email failed terminally: retries exhausted");
 
-				return "failed";
+				return drainResult;
 			}
 
 			const delaySeconds = computeEmailRetryDelay(
@@ -171,7 +194,7 @@ async function deliverOne(
 				"email attempt failed, retry scheduled",
 			);
 
-			return outcome.outcome === "rate_limited" ? "stop" : "failed";
+			return drainResult;
 		}
 	}
 }

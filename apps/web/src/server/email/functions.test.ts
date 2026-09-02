@@ -70,6 +70,7 @@ const handlers = (await import(
 const { ForbiddenError, UnauthorizedError } = await import(
 	"../auth/middleware"
 );
+const { ClientError } = await import("../errors");
 const { signIn } = await import("../auth/test/fixtures");
 const { seedSettings } = await import("@virtool/data/settings/test/fixtures");
 
@@ -191,7 +192,8 @@ describe("updateEmailSettingsFn", () => {
 
 		await expect(
 			call("updateEmailSettingsFn", { enabled: true }),
-		).rejects.toThrow();
+		).rejects.toBeInstanceOf(ClientError);
+		expect(setResponseStatus).toHaveBeenCalledWith(400);
 	});
 
 	it("enables a configured instance and disabling preserves the key", async () => {
@@ -238,7 +240,8 @@ describe("setEmailApiKeyFn and clearEmailApiKeyFn", () => {
 
 		await expect(
 			call("setEmailApiKeyFn", { apiKey: "re_secret" }),
-		).rejects.toThrow();
+		).rejects.toBeInstanceOf(ClientError);
+		expect(setResponseStatus).toHaveBeenCalledWith(400);
 	});
 
 	it("clearing removes the key and disables delivery", async () => {

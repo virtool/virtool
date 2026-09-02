@@ -14,6 +14,10 @@ import {
 	type TestDatabase,
 } from "@virtool/data/db/test/fixtures";
 import { enqueueEmail } from "@virtool/data/email/outbox";
+import {
+	EMAIL_DELIVERY_DEADLINE_SECONDS,
+	EMAIL_MAX_ATTEMPTS,
+} from "@virtool/data/email/retry";
 import { buildProviderIdempotencyKey } from "@virtool/data/email/send";
 import { seedSettings } from "@virtool/data/settings/test/fixtures";
 import { createLogger, type Logger } from "@virtool/logger";
@@ -116,6 +120,12 @@ afterEach(() => {
 	vi.unstubAllGlobals();
 });
 
+const envelope = {
+	replyToAddress: "",
+	senderAddress: "noreply@virtool.example",
+	senderName: "Virtool",
+};
+
 async function seedEmailSettings(
 	overrides: { enabled?: boolean; withKey?: boolean } = {},
 ): Promise<void> {
@@ -168,6 +178,15 @@ async function runDrain(): Promise<void> {
 	expect(outcome).toEqual({ status: "completed" });
 }
 
+async function ageRow(outboxId: number, seconds: number): Promise<void> {
+	await db
+		.update(emailOutbox)
+		.set({
+			created_at: sql`timezone('utc', clock_timestamp()) - make_interval(secs => ${seconds}::double precision)`,
+		})
+		.where(eq(emailOutbox.id, outboxId));
+}
+
 async function readOutboxRow(outboxId: number) {
 	const [row] = await db
 		.select()
@@ -209,7 +228,7 @@ describe("deliverEmailTask", () => {
 		const [, init] = fetchMock.mock.calls[0] as [string, RequestInit];
 
 		expect(new Headers(init.headers).get("Idempotency-Key")).toBe(
-			buildProviderIdempotencyKey(outboxId, "email_verification/1/1"),
+			buildProviderIdempotencyKey(outboxId, "email_verification/1/1", envelope),
 		);
 
 		expect(recorded.availabilities).toEqual(["ready"]);
@@ -323,7 +342,7 @@ describe("deliverEmailTask", () => {
 
 		await db
 			.update(emailOutbox)
-			.set({ attempt_count: 7 })
+			.set({ attempt_count: EMAIL_MAX_ATTEMPTS - 1 })
 			.where(eq(emailOutbox.id, outboxId));
 
 		stubSend(providerError(500, "internal_server_error"));
@@ -335,6 +354,72 @@ describe("deliverEmailTask", () => {
 		expect(row.status).toBe("failed");
 		expect(row.last_error).toContain("retries exhausted");
 		expect(recorded.attempts).toEqual([["email_verification", "exhausted"]]);
+	});
+
+	it("fails a row terminally once its delivery deadline has passed", async () => {
+		await seedEmailSettings();
+
+		const { outboxId } = await enqueueEmail(db, {
+			idempotencyKey: "a",
+			recipient: "someone@example.com",
+			template,
+		});
+
+		await ageRow(outboxId, EMAIL_DELIVERY_DEADLINE_SECONDS + 3600);
+
+		stubSend(providerError(500, "internal_server_error"));
+
+		await runDrain();
+
+		const row = await readOutboxRow(outboxId);
+
+		expect(row.status).toBe("failed");
+		expect(row.last_error).toContain("delivery deadline passed");
+		expect(recorded.attempts).toEqual([["email_verification", "expired"]]);
+		expect(recorded.retries).toEqual([]);
+	});
+
+	it("fails a rate-limited row past its deadline instead of waiting out the quota", async () => {
+		await seedEmailSettings();
+
+		const { outboxId } = await enqueueEmail(db, {
+			idempotencyKey: "a",
+			recipient: "someone@example.com",
+			template,
+		});
+
+		await ageRow(outboxId, EMAIL_DELIVERY_DEADLINE_SECONDS + 3600);
+
+		stubSend(providerError(429, "daily_quota_exceeded"));
+
+		await runDrain();
+
+		expect((await readOutboxRow(outboxId)).status).toBe("failed");
+		expect(recorded.attempts).toEqual([["email_verification", "expired"]]);
+	});
+
+	it("keeps retrying a rate-limited row inside its deadline", async () => {
+		await seedEmailSettings();
+
+		const { outboxId } = await enqueueEmail(db, {
+			idempotencyKey: "a",
+			recipient: "someone@example.com",
+			template,
+		});
+
+		await ageRow(outboxId, EMAIL_DELIVERY_DEADLINE_SECONDS - 3600);
+
+		stubSend(providerError(429, "daily_quota_exceeded"));
+
+		await runDrain();
+
+		const row = await readOutboxRow(outboxId);
+
+		expect(row.status).toBe("queued");
+		expect(row.attempt_count).toBe(1);
+		expect(row.next_attempt_at.getTime()).toBeGreaterThan(Date.now());
+		expect(recorded.attempts).toEqual([["email_verification", "rate_limited"]]);
+		expect(recorded.retries).toEqual(["email_verification"]);
 	});
 
 	it("stops the drain and releases the row when the provider rejects the API key", async () => {

@@ -235,6 +235,11 @@ Features enqueue mail through `enqueueEmail(db, input)` in
 - Use a transaction when domain state and its email must commit together.
 - Keep provider errors, retries, and the Resend SDK behind the email package.
 
+A failing row is retried with jittered exponential backoff, or on the
+provider's `Retry-After` when it sends one. Retries stop at the delivery
+deadline in `src/email/retry.ts`, which stays inside the lifetime of the tokens
+in the auth-link templates; the attempt cap is only a backstop.
+
 Terminal rows are pruned after their configured retention periods. Template
 payloads remain stored until their rows are pruned; do not enqueue data that
 cannot tolerate that retention.

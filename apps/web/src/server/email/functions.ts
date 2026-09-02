@@ -1,4 +1,5 @@
 import { createServerFn } from "@tanstack/react-start";
+import { setResponseStatus } from "@tanstack/react-start/server";
 import type {
 	EmailReencryptResult,
 	EmailSettings,
@@ -6,6 +7,7 @@ import type {
 } from "@virtool/contracts";
 import {
 	clearEmailApiKey,
+	EmailConfigurationError,
 	type EmailDeliverySettings,
 	getEmailSettings,
 	reencryptEmailApiKey,
@@ -17,6 +19,7 @@ import { sendTestEmail } from "@virtool/data/email/testDelivery";
 import { z } from "zod";
 import { adminRole } from "../auth/policy";
 import { db, keyring } from "../composition";
+import { ClientError } from "../errors";
 
 const EMAIL_ADDRESS_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
@@ -31,6 +34,14 @@ const addressSchema = z
 	.regex(EMAIL_ADDRESS_PATTERN, "Invalid email address.");
 
 const optionalAddressSchema = z.union([z.literal(""), addressSchema]);
+
+function rethrowAsHttp(err: unknown): never {
+	if (err instanceof EmailConfigurationError) {
+		setResponseStatus(400);
+		throw new ClientError(err.message, 400);
+	}
+	throw err;
+}
 
 function toEmailSettings(settings: EmailDeliverySettings): EmailSettings {
 	const { availability } = resolveEmailDelivery(settings, keyring);
@@ -68,10 +79,13 @@ const updateEmailSettingsSchema = z
 export const updateEmailSettingsFn = createServerFn({ method: "POST" })
 	.middleware([adminRole("full")])
 	.validator(updateEmailSettingsSchema)
-	.handler(
-		async ({ data }): Promise<EmailSettings> =>
-			toEmailSettings(await updateEmailDelivery(db, keyring, data)),
-	);
+	.handler(async ({ data }): Promise<EmailSettings> => {
+		try {
+			return toEmailSettings(await updateEmailDelivery(db, keyring, data));
+		} catch (err) {
+			return rethrowAsHttp(err);
+		}
+	});
 
 /** @public */
 export const setEmailApiKeyFn = createServerFn({ method: "POST" })
@@ -79,10 +93,13 @@ export const setEmailApiKeyFn = createServerFn({ method: "POST" })
 	.validator(
 		z.object({ apiKey: z.string().trim().min(1).max(MAX_API_KEY_LENGTH) }),
 	)
-	.handler(
-		async ({ data }): Promise<EmailSettings> =>
-			toEmailSettings(await setEmailApiKey(db, keyring, data.apiKey)),
-	);
+	.handler(async ({ data }): Promise<EmailSettings> => {
+		try {
+			return toEmailSettings(await setEmailApiKey(db, keyring, data.apiKey));
+		} catch (err) {
+			return rethrowAsHttp(err);
+		}
+	});
 
 /** @public */
 export const clearEmailApiKeyFn = createServerFn({ method: "POST" })

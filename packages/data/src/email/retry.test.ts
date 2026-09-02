@@ -1,5 +1,10 @@
 import { describe, expect, it } from "vitest";
-import { computeEmailRetryDelay, EMAIL_MAX_ATTEMPTS } from "./retry";
+import {
+	computeEmailRetryDelay,
+	EMAIL_DELIVERY_DEADLINE_SECONDS,
+	EMAIL_MAX_ATTEMPTS,
+	isEmailDeliveryExpired,
+} from "./retry";
 
 describe("computeEmailRetryDelay", () => {
 	it("doubles from the base per attempt at the jitter midpoint", () => {
@@ -27,15 +32,59 @@ describe("computeEmailRetryDelay", () => {
 		expect(computeEmailRetryDelay(1, 0.4, () => 0.5)).toBe(1);
 	});
 
-	it("caps provider retry guidance", () => {
-		expect(computeEmailRetryDelay(1, 999_999)).toBe(3600);
+	it("honors provider retry guidance well past the computed ceiling", () => {
+		expect(computeEmailRetryDelay(1, 7200)).toBe(7200);
+	});
+
+	it("caps provider retry guidance at a day", () => {
+		expect(computeEmailRetryDelay(1, 999_999)).toBe(86_400);
 	});
 
 	it("ignores non-positive retry guidance", () => {
 		expect(computeEmailRetryDelay(1, 0, () => 0.5)).toBe(30);
 	});
 
-	it("exports a positive attempt bound", () => {
-		expect(EMAIL_MAX_ATTEMPTS).toBeGreaterThan(0);
+	it("exports an attempt bound that outlasts the deadline", () => {
+		const midpoint = () => 0.5;
+
+		let elapsed = 0;
+
+		for (let attempt = 1; attempt < EMAIL_MAX_ATTEMPTS; attempt++) {
+			elapsed += computeEmailRetryDelay(attempt, undefined, midpoint);
+		}
+
+		expect(elapsed).toBeGreaterThan(EMAIL_DELIVERY_DEADLINE_SECONDS);
+	});
+});
+
+describe("isEmailDeliveryExpired", () => {
+	const now = new Date("2026-01-01T12:00:00.000Z");
+
+	function ageSeconds(seconds: number): Date {
+		return new Date(now.getTime() - seconds * 1000);
+	}
+
+	it("passes a row younger than the deadline", () => {
+		expect(
+			isEmailDeliveryExpired(
+				ageSeconds(EMAIL_DELIVERY_DEADLINE_SECONDS - 1),
+				now,
+			),
+		).toBe(false);
+	});
+
+	it("expires a row at the deadline", () => {
+		expect(
+			isEmailDeliveryExpired(ageSeconds(EMAIL_DELIVERY_DEADLINE_SECONDS), now),
+		).toBe(true);
+	});
+
+	it("expires a row past the deadline", () => {
+		expect(
+			isEmailDeliveryExpired(
+				ageSeconds(EMAIL_DELIVERY_DEADLINE_SECONDS * 2),
+				now,
+			),
+		).toBe(true);
 	});
 });
