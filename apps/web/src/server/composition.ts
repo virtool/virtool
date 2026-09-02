@@ -1,4 +1,8 @@
-import { createKeyring, type Keyring } from "@virtool/data/crypto/keyring";
+import {
+	createKeyring,
+	type Keyring,
+	logKeyringStatus,
+} from "@virtool/data/crypto/keyring";
 import {
 	createDb,
 	type Db,
@@ -30,6 +34,8 @@ export const keyring: Keyring = createKeyring(
 	config.encryptionKey,
 	config.encryptionKeyPrevious,
 );
+
+logKeyringStatus(keyring.status, logger);
 
 /** How file download routes answer: stream the bytes or redirect to storage. */
 export const downloadMode: "stream" | "redirect" = config.downloadMode;

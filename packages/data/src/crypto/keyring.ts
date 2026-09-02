@@ -4,6 +4,7 @@ import {
 	createHash,
 	randomBytes,
 } from "node:crypto";
+import type { Logger } from "@virtool/logger";
 
 const KEY_BYTES = 32;
 const NONCE_BYTES = 12;
@@ -48,6 +49,35 @@ export type KeyringStatus =
 	| { state: "ready" }
 	| { state: "unset" }
 	| { state: "invalid"; reason: string };
+
+/**
+ * Report the keyring status at startup.
+ *
+ * An unset or invalid key does not stop a service, so without this line the
+ * first sign of a bad key is a much later message about a secret that cannot
+ * be decrypted, which points at the stored value rather than at the key.
+ */
+export function logKeyringStatus(status: KeyringStatus, logger: Logger): void {
+	if (status.state === "ready") {
+		logger.info({ state: status.state }, "encryption keyring ready");
+
+		return;
+	}
+
+	if (status.state === "unset") {
+		logger.warn(
+			{ state: status.state },
+			"no encryption key configured: stored secrets are unavailable",
+		);
+
+		return;
+	}
+
+	logger.error(
+		{ reason: status.reason, state: status.state },
+		"encryption key is invalid: stored secrets are unavailable",
+	);
+}
 
 /** A process-wide service for purpose-bound encryption of stored secrets. */
 export type Keyring = {

@@ -1,6 +1,10 @@
 import type { Server } from "node:http";
 import * as Sentry from "@sentry/node";
-import { createKeyring, type Keyring } from "@virtool/data/crypto/keyring";
+import {
+	createKeyring,
+	type Keyring,
+	logKeyringStatus,
+} from "@virtool/data/crypto/keyring";
 import {
 	createDb,
 	type Db,
@@ -148,6 +152,8 @@ export async function bootstrap(
 		config.encryptionKey,
 		config.encryptionKeyPrevious,
 	);
+
+	logKeyringStatus(keyring.status, logger);
 
 	let ready = true;
 

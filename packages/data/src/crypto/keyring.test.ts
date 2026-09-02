@@ -1,6 +1,11 @@
 import { randomBytes } from "node:crypto";
-import { describe, expect, test } from "vitest";
-import { createKeyring, type EncryptedValue } from "./keyring";
+import type { Logger } from "@virtool/logger";
+import { describe, expect, test, vi } from "vitest";
+import {
+	createKeyring,
+	type EncryptedValue,
+	logKeyringStatus,
+} from "./keyring";
 
 function key(): string {
 	return randomBytes(32).toString("base64");
@@ -99,5 +104,53 @@ describe("encryption", () => {
 		expect(
 			keyring.decrypt("resend_api_key", { ...value, tag: "AAAA" }),
 		).toEqual({ ok: false, reason: "malformed" });
+	});
+});
+
+describe("logKeyringStatus", () => {
+	function fakeLogger() {
+		return {
+			error: vi.fn(),
+			info: vi.fn(),
+			warn: vi.fn(),
+		};
+	}
+
+	test("reports a ready keyring at info", () => {
+		const logger = fakeLogger();
+
+		logKeyringStatus(
+			createKeyring(key(), undefined).status,
+			logger as unknown as Logger,
+		);
+
+		expect(logger.info).toHaveBeenCalledTimes(1);
+		expect(logger.error).not.toHaveBeenCalled();
+	});
+
+	test("reports an unset key at warn", () => {
+		const logger = fakeLogger();
+
+		logKeyringStatus(
+			createKeyring(undefined, undefined).status,
+			logger as unknown as Logger,
+		);
+
+		expect(logger.warn).toHaveBeenCalledTimes(1);
+	});
+
+	test("reports an invalid key at error with its reason", () => {
+		const logger = fakeLogger();
+
+		logKeyringStatus(
+			createKeyring("not-base64", undefined).status,
+			logger as unknown as Logger,
+		);
+
+		expect(logger.error).toHaveBeenCalledTimes(1);
+
+		const [fields] = logger.error.mock.calls[0] as [{ reason: string }];
+
+		expect(fields.reason).toBeTruthy();
 	});
 });
