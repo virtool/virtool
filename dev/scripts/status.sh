@@ -1,8 +1,8 @@
 #!/bin/bash
 
-# Report the shared dev cluster's status: whether Minikube is running,
-# whether each worktree's Tilt server is running, and which worktrees have a
-# namespace in the cluster.
+# Report the shared dev cluster's status: whether Minikube is running, and
+# for each worktree's namespace, whether it exists in the cluster and
+# whether its Tilt server is running.
 
 set -e
 
@@ -43,7 +43,7 @@ if [[ "$MINIKUBE_STATUS" == "up" && "$(kubectl config current-context 2>/dev/nul
     NAMESPACES=" $(kubectl get namespaces -o jsonpath='{.items[*].metadata.name}') "
 fi
 
-printf '%-25s %-25s %-10s %s\n' "WORKTREE" "NAMESPACE" "IN TILT" "TILT SERVER"
+printf '%-25s %-10s %s\n' "NAMESPACE" "IN TILT" "TILT SERVER"
 while IFS= read -r worktree; do
     slug=$(slug_for "$worktree")
 
@@ -65,5 +65,5 @@ while IFS= read -r worktree; do
         tilt_state="never started"
     fi
 
-    printf '%-25s %-25s %-10s %s\n' "$(basename "$worktree")" "$slug" "$ns_state" "$tilt_state"
+    printf '%-25s %-10s %s\n' "$slug" "$ns_state" "$tilt_state"
 done < <(git worktree list --porcelain | sed -n 's/^worktree //p')
