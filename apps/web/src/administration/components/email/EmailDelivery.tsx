@@ -1,4 +1,5 @@
 import { useFetchEmailSettings } from "@administration/queries";
+import { BoxGroup } from "@base/Box";
 import LoadingPlaceholder from "@base/LoadingPlaceholder";
 import QueryError from "@base/QueryError";
 import SectionHeader from "@base/SectionHeader";
@@ -36,9 +37,7 @@ export default function EmailDelivery() {
 		<section className="flex flex-col gap-4">
 			<SectionHeader className="mb-0" level={2}>
 				<h2>Email Delivery</h2>
-				<p>
-					Send account setup, verification, and password recovery mail.
-				</p>
+				<p>Send account setup, verification, and password recovery mail.</p>
 			</SectionHeader>
 			<EmailDeliveryStatus settings={data} />
 			<section>
@@ -46,7 +45,10 @@ export default function EmailDelivery() {
 					<h3>Sending</h3>
 					<p>Choose whether queued email is sent.</p>
 				</SectionHeader>
-				<EmailDeliverySending settings={data} />
+				<BoxGroup>
+					<EmailDeliverySending settings={data} />
+					<EmailTest resetToken={testResetToken} settings={data} />
+				</BoxGroup>
 			</section>
 			<section>
 				<SectionHeader level={3}>
@@ -63,13 +65,6 @@ export default function EmailDelivery() {
 					onSaved={() => setTestResetToken((token) => token + 1)}
 					settings={data}
 				/>
-			</section>
-			<section>
-				<SectionHeader level={3}>
-					<h3>Test</h3>
-					<p>Send a test email to verify the delivery configuration.</p>
-				</SectionHeader>
-				<EmailTest resetToken={testResetToken} settings={data} />
 			</section>
 		</section>
 	);

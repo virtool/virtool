@@ -52,35 +52,29 @@ export default function EmailApiKey({ settings }: { settings: EmailSettings }) {
 							Your key is kept secure and is not shown here. Enter a new key to
 							replace the current one.
 						</p>
-						<InputPassword
-							id="emailApiKey"
-							aria-describedby="emailApiKey-hint emailApiKey-error"
-							aria-invalid={Boolean(errors.apiKey) || undefined}
-							autoComplete="off"
-							placeholder={
-								settings.hasApiKey ? "A key is configured" : "No key configured"
-							}
-							{...register("apiKey", {
-								validate: (value) =>
-									value.trim() !== "" || "An API key is required.",
-								maxLength: {
-									value: MAX_API_KEY_LENGTH,
-									message: "That key is too long.",
-								},
-							})}
-						/>
-						<InputError id="emailApiKey-error">
-							{errors.apiKey?.message}
-						</InputError>
-					</InputGroup>
-					{error ? (
-						<p className="mb-2 text-red-600 text-sm" role="alert">
-							{error}
-						</p>
-					) : null}
-					<div className="flex justify-end gap-2">
-						{settings.hasApiKey ? (
-							<>
+						<div className="flex items-start gap-3">
+							<div className="min-w-0 flex-1">
+								<InputPassword
+									id="emailApiKey"
+									aria-describedby="emailApiKey-hint emailApiKey-status emailApiKey-error"
+									aria-invalid={Boolean(errors.apiKey) || undefined}
+									autoComplete="off"
+									{...register("apiKey", {
+										validate: (value) =>
+											value.trim() !== "" || "An API key is required.",
+										maxLength: {
+											value: MAX_API_KEY_LENGTH,
+											message: "That key is too long.",
+										},
+									})}
+								/>
+								<p className="mt-1 text-gray-600 text-sm" id="emailApiKey-status">
+									{settings.hasApiKey
+										? "A key is configured."
+										: "No key is configured."}
+								</p>
+							</div>
+							{settings.hasApiKey ? (
 								<DeleteDialog
 									message={
 										<>
@@ -93,12 +87,20 @@ export default function EmailApiKey({ settings }: { settings: EmailSettings }) {
 									onConfirm={() => clearKey.mutateAsync()}
 									trigger={<Button color="red">Remove</Button>}
 								/>
-							</>
-						) : null}
-						<Button color="blue" disabled={setKey.isPending} type="submit">
-							{settings.hasApiKey ? "Replace Key" : "Save Key"}
-						</Button>
-					</div>
+							) : null}
+							<Button color="blue" disabled={setKey.isPending} type="submit">
+								{settings.hasApiKey ? "Replace Key" : "Save Key"}
+							</Button>
+						</div>
+						<InputError id="emailApiKey-error">
+							{errors.apiKey?.message}
+						</InputError>
+					</InputGroup>
+					{error ? (
+						<p className="mb-2 text-red-600 text-sm" role="alert">
+							{error}
+						</p>
+					) : null}
 				</form>
 			</BoxGroupSection>
 		</BoxGroup>

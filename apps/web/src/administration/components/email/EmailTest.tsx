@@ -1,4 +1,5 @@
 import { useSendTestEmail } from "@administration/queries";
+import { BoxGroupSection } from "@base/Box";
 import Button from "@base/Button";
 import Input, { InputError, InputGroup, InputLabel } from "@base/Input";
 import type { EmailSettings, EmailTestFailureCode } from "@virtool/contracts";
@@ -60,50 +61,57 @@ export default function EmailTest({
 	}
 
 	return (
-		<form onSubmit={handleSubmit(send)}>
-			<InputGroup>
-				<InputLabel htmlFor="testRecipient">Recipient</InputLabel>
-				<Input
-					id="testRecipient"
-					aria-describedby="testRecipient-error"
-					aria-invalid={Boolean(errors.recipient) || undefined}
-					disabled={!isUsable}
-					{...register("recipient", {
-						required: "A recipient is required.",
-						setValueAs: (value: string) => value.trim(),
-						pattern: {
-							value: EMAIL_ADDRESS_PATTERN,
-							message: "Invalid email address.",
-						},
-					})}
-				/>
-				<InputError id="testRecipient-error">
-					{errors.recipient?.message}
-				</InputError>
-			</InputGroup>
-			<div aria-live="polite" role="status">
-				{mutation.isSuccess ? (
-					<p className="mb-2 text-sm">
-						{mutation.data.ok
-							? "Resend accepted the test message. Check the recipient's mailbox to confirm it arrived."
-							: failureMessages[mutation.data.code]}
-					</p>
-				) : null}
-				{mutation.isError ? (
-					<p className="mb-2 text-red-600 text-sm">
-						Something went wrong. Please try again.
-					</p>
-				) : null}
-			</div>
-			<div className="flex justify-end">
-				<Button
-					color="blue"
-					disabled={!isUsable || mutation.isPending}
-					type="submit"
-				>
-					{mutation.isPending ? "Sending" : "Send Test Email"}
-				</Button>
-			</div>
-		</form>
+		<BoxGroupSection>
+			<p className="font-semibold">Test</p>
+			<p className="mb-4 text-gray-600 text-sm">
+				Send a test email to verify the delivery configuration.
+			</p>
+			<form onSubmit={handleSubmit(send)}>
+				<InputGroup>
+					<InputLabel htmlFor="testRecipient">Email Address</InputLabel>
+					<div className="flex items-start gap-3">
+						<Input
+							className="min-w-0 flex-1"
+							id="testRecipient"
+							aria-describedby="testRecipient-error"
+							aria-invalid={Boolean(errors.recipient) || undefined}
+							disabled={!isUsable}
+							{...register("recipient", {
+								required: "A recipient is required.",
+								setValueAs: (value: string) => value.trim(),
+								pattern: {
+									value: EMAIL_ADDRESS_PATTERN,
+									message: "Invalid email address.",
+								},
+							})}
+						/>
+						<Button
+							color="blue"
+							disabled={!isUsable || mutation.isPending}
+							type="submit"
+						>
+							{mutation.isPending ? "Sending" : "Send"}
+						</Button>
+					</div>
+					<InputError id="testRecipient-error">
+						{errors.recipient?.message}
+					</InputError>
+				</InputGroup>
+				<div aria-live="polite" role="status">
+					{mutation.isSuccess ? (
+						<p className="mb-2 text-sm">
+							{mutation.data.ok
+								? "Resend accepted the test message. Check the recipient's mailbox to confirm it arrived."
+								: failureMessages[mutation.data.code]}
+						</p>
+					) : null}
+					{mutation.isError ? (
+						<p className="mb-2 text-red-600 text-sm">
+							Something went wrong. Please try again.
+						</p>
+					) : null}
+				</div>
+			</form>
+		</BoxGroupSection>
 	);
 }

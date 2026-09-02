@@ -47,16 +47,14 @@ describe("<EmailDelivery>", () => {
 		});
 
 		it("reports a configured instance even when sending is switched off", async () => {
-			mockEmailSettingsStore(
-				createFakeEmailSettings({ enabled: false }),
-			);
+			mockEmailSettingsStore(createFakeEmailSettings({ enabled: false }));
 
 			renderWithProviders(<EmailDelivery />);
 
 			expect(await findStatus()).toHaveTextContent("Disabled");
 			expect(
-				screen.getByText("Email is configured but sending is turned off."),
-		).toBeVisible();
+				screen.getByText("Turn on this setting to send email."),
+			).toBeVisible();
 		});
 
 		it("names the fields an unconfigured instance is missing", async () => {
@@ -230,7 +228,7 @@ describe("<EmailDelivery>", () => {
 			const input = await screen.findByLabelText("Resend API Key");
 
 			expect(input).toHaveValue("");
-			expect(input).toHaveAttribute("placeholder", "A key is configured");
+			expect(screen.getByText("A key is configured.")).toBeVisible();
 			expect(screen.getByRole("button", { name: "Replace Key" })).toBeVisible();
 		});
 
@@ -245,10 +243,7 @@ describe("<EmailDelivery>", () => {
 
 			renderWithProviders(<EmailDelivery />);
 
-			expect(await screen.findByLabelText("Resend API Key")).toHaveAttribute(
-				"placeholder",
-				"No key configured",
-			);
+		expect(await screen.findByText("No key is configured.")).toBeVisible();
 			expect(
 				screen.queryByRole("button", { name: "Remove" }),
 			).not.toBeInTheDocument();
@@ -335,18 +330,15 @@ describe("<EmailDelivery>", () => {
 
 			await waitFor(() => expect(clearEmailApiKey).toHaveBeenCalled());
 		});
-
 	});
 
 	describe("test delivery", () => {
-		it("shows the test section", async () => {
+		it("shows the test widget under sending", async () => {
 			mockEmailSettingsStore(createFakeEmailSettings());
 
 			renderWithProviders(<EmailDelivery />);
 
-			expect(
-				await screen.findByRole("heading", { name: "Test" }),
-			).toBeVisible();
+			expect(await screen.findByText("Test")).toBeVisible();
 		});
 
 		it("reports acceptance without claiming the message arrived", async () => {
@@ -359,12 +351,10 @@ describe("<EmailDelivery>", () => {
 			renderWithProviders(<EmailDelivery />);
 
 			await userEvent.type(
-				await screen.findByLabelText("Recipient"),
+				await screen.findByLabelText("Email Address"),
 				"someone@example.com",
 			);
-			await userEvent.click(
-				screen.getByRole("button", { name: "Send Test Email" }),
-			);
+			await userEvent.click(screen.getByRole("button", { name: "Send" }));
 
 			await waitFor(() => {
 				expect(emailServerFnMocks.sendTestEmailFn).toHaveBeenCalledWith({
@@ -387,12 +377,10 @@ describe("<EmailDelivery>", () => {
 			renderWithProviders(<EmailDelivery />);
 
 			await userEvent.type(
-				await screen.findByLabelText("Recipient"),
+				await screen.findByLabelText("Email Address"),
 				"someone@example.com",
 			);
-			await userEvent.click(
-				screen.getByRole("button", { name: "Send Test Email" }),
-			);
+			await userEvent.click(screen.getByRole("button", { name: "Send" }));
 
 			expect(
 				await screen.findByText(/Resend rejected the sender address/),
@@ -408,11 +396,9 @@ describe("<EmailDelivery>", () => {
 
 			renderWithProviders(<EmailDelivery />);
 
-			const input = await screen.findByLabelText("Recipient");
+			const input = await screen.findByLabelText("Email Address");
 			await userEvent.type(input, "someone@example.com");
-			await userEvent.click(
-				screen.getByRole("button", { name: "Send Test Email" }),
-			);
+			await userEvent.click(screen.getByRole("button", { name: "Send" }));
 
 			await screen.findByText(/rate limiting/);
 
@@ -424,10 +410,11 @@ describe("<EmailDelivery>", () => {
 
 			renderWithProviders(<EmailDelivery />);
 
-			await userEvent.type(await screen.findByLabelText("Recipient"), "nope");
-			await userEvent.click(
-				screen.getByRole("button", { name: "Send Test Email" }),
+			await userEvent.type(
+				await screen.findByLabelText("Email Address"),
+				"nope",
 			);
+			await userEvent.click(screen.getByRole("button", { name: "Send" }));
 
 			expect(await screen.findByText("Invalid email address.")).toBeVisible();
 			expect(emailServerFnMocks.sendTestEmailFn).not.toHaveBeenCalled();
@@ -443,12 +430,10 @@ describe("<EmailDelivery>", () => {
 			renderWithProviders(<EmailDelivery />);
 
 			await userEvent.type(
-				await screen.findByLabelText("Recipient"),
+				await screen.findByLabelText("Email Address"),
 				" someone@example.com ",
 			);
-			await userEvent.click(
-				screen.getByRole("button", { name: "Send Test Email" }),
-			);
+			await userEvent.click(screen.getByRole("button", { name: "Send" }));
 
 			await waitFor(() => {
 				expect(emailServerFnMocks.sendTestEmailFn).toHaveBeenCalledWith({
@@ -467,12 +452,10 @@ describe("<EmailDelivery>", () => {
 			renderWithProviders(<EmailDelivery />);
 
 			await userEvent.type(
-				await screen.findByLabelText("Recipient"),
+				await screen.findByLabelText("Email Address"),
 				"someone@example.com",
 			);
-			await userEvent.click(
-				screen.getByRole("button", { name: "Send Test Email" }),
-			);
+			await userEvent.click(screen.getByRole("button", { name: "Send" }));
 			expect(
 				await screen.findByText(/Resend accepted the test message/),
 			).toBeVisible();
@@ -491,16 +474,12 @@ describe("<EmailDelivery>", () => {
 		// Sending works while delivery is switched off — validating the
 		// configuration before turning it on is the point of the test message.
 		it("is available while delivery is switched off", async () => {
-			mockEmailSettingsStore(
-				createFakeEmailSettings({ enabled: false }),
-			);
+			mockEmailSettingsStore(createFakeEmailSettings({ enabled: false }));
 
 			renderWithProviders(<EmailDelivery />);
 
-			expect(await screen.findByLabelText("Recipient")).toBeEnabled();
-			expect(
-				screen.getByRole("button", { name: "Send Test Email" }),
-			).toBeEnabled();
+			expect(await screen.findByLabelText("Email Address")).toBeEnabled();
+			expect(screen.getByRole("button", { name: "Send" })).toBeEnabled();
 		});
 
 		it("is unavailable while the stored key cannot be used", async () => {
@@ -513,10 +492,8 @@ describe("<EmailDelivery>", () => {
 
 			renderWithProviders(<EmailDelivery />);
 
-			expect(await screen.findByLabelText("Recipient")).toBeDisabled();
-			expect(
-				screen.getByRole("button", { name: "Send Test Email" }),
-			).toBeDisabled();
+			expect(await screen.findByLabelText("Email Address")).toBeDisabled();
+			expect(screen.getByRole("button", { name: "Send" })).toBeDisabled();
 		});
 
 		it("refuses a second submission while one is pending", async () => {
@@ -528,12 +505,10 @@ describe("<EmailDelivery>", () => {
 			renderWithProviders(<EmailDelivery />);
 
 			await userEvent.type(
-				await screen.findByLabelText("Recipient"),
+				await screen.findByLabelText("Email Address"),
 				"someone@example.com",
 			);
-			await userEvent.click(
-				screen.getByRole("button", { name: "Send Test Email" }),
-			);
+			await userEvent.click(screen.getByRole("button", { name: "Send" }));
 
 			const pending = await screen.findByRole("button", { name: "Sending" });
 

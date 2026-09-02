@@ -1,5 +1,5 @@
 import { useUpdateEmailSettings } from "@administration/queries";
-import { BoxGroup, BoxGroupSection } from "@base/Box";
+import { BoxGroupSection } from "@base/Box";
 import Switch from "@base/Switch";
 import type { EmailSettings } from "@virtool/contracts";
 import { getEmailErrorMessage } from "./errors";
@@ -18,30 +18,26 @@ export default function EmailDeliverySending({
 	}
 
 	return (
-		<BoxGroup>
-			<BoxGroupSection>
-				<div className="flex items-center justify-between gap-5">
-					<div>
-						<p className="font-semibold">Send email</p>
-						<p className="text-gray-600 text-sm">
-							{settings.enabled
-								? "Queued email is currently being sent."
-								: "Email is configured but sending is turned off."}
+		<BoxGroupSection>
+			<div className="flex items-center justify-between gap-5">
+				<div>
+					<p className="font-semibold">Enable</p>
+					<p className="text-gray-600 text-sm">
+						Turn on this setting to send email.
+					</p>
+					{mutation.isError ? (
+						<p className="text-red-600 text-sm" role="alert">
+							{getEmailErrorMessage(mutation.error)}
 						</p>
-						{mutation.isError ? (
-							<p className="text-red-600 text-sm" role="alert">
-								{getEmailErrorMessage(mutation.error)}
-							</p>
-						) : null}
-					</div>
-					<Switch
-						aria-label="Send email"
-						checked={settings.enabled}
-						disabled={(!settings.enabled && !canEnable) || mutation.isPending}
-						onCheckedChange={update}
-					/>
+					) : null}
 				</div>
-			</BoxGroupSection>
-		</BoxGroup>
+				<Switch
+					aria-label="Send email"
+					checked={settings.enabled}
+					disabled={(!settings.enabled && !canEnable) || mutation.isPending}
+					onCheckedChange={update}
+				/>
+			</div>
+		</BoxGroupSection>
 	);
 }
