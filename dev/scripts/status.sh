@@ -43,27 +43,29 @@ if [[ "$MINIKUBE_STATUS" == "up" && "$(kubectl config current-context 2>/dev/nul
     NAMESPACES=" $(kubectl get namespaces -o jsonpath='{.items[*].metadata.name}') "
 fi
 
-printf '%-25s %-10s %s\n' "NAMESPACE" "IN TILT" "TILT SERVER"
-while IFS= read -r worktree; do
-    slug=$(slug_for "$worktree")
+{
+    printf 'NAMESPACE\tIN TILT\tTILT SERVER\n'
+    while IFS= read -r worktree; do
+        slug=$(slug_for "$worktree")
 
-    if [[ "$NAMESPACES" == *" $slug "* ]]; then
-        ns_state="exists"
-    else
-        ns_state="missing"
-    fi
-
-    port_file="$worktree/.TILT_PORT"
-    if [[ -f "$port_file" ]]; then
-        port=$(tr -d '[:space:]' < "$port_file")
-        if is_port_listening "$port"; then
-            tilt_state="up (port $port)"
+        if [[ "$NAMESPACES" == *" $slug "* ]]; then
+            ns_state="exists"
         else
-            tilt_state="down (port $port)"
+            ns_state="missing"
         fi
-    else
-        tilt_state="never started"
-    fi
 
-    printf '%-25s %-10s %s\n' "$slug" "$ns_state" "$tilt_state"
-done < <(git worktree list --porcelain | sed -n 's/^worktree //p')
+        port_file="$worktree/.TILT_PORT"
+        if [[ -f "$port_file" ]]; then
+            port=$(tr -d '[:space:]' < "$port_file")
+            if is_port_listening "$port"; then
+                tilt_state="up (port $port)"
+            else
+                tilt_state="down (port $port)"
+            fi
+        else
+            tilt_state="never started"
+        fi
+
+        printf '%s\t%s\t%s\n' "$slug" "$ns_state" "$tilt_state"
+    done < <(git worktree list --porcelain | sed -n 's/^worktree //p')
+} | column -t -s $'\t'
