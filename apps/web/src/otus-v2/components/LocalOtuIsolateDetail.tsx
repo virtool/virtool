@@ -6,8 +6,10 @@ import {
 } from "@base/Collapsible";
 import Link from "@base/Link";
 import SectionHeader from "@base/SectionHeader";
+import DeleteLocalOtuIsolate from "@otus-v2/components/DeleteLocalOtuIsolate";
 import {
 	localOtuV2SequenceQueryOptions,
+	useSuspenseLocalOtuV2,
 	useSuspenseLocalOtuV2Isolate,
 } from "@otus-v2/queries";
 import { useQuery } from "@tanstack/react-query";
@@ -26,6 +28,8 @@ export default function LocalOtuIsolateDetail() {
 		otuId,
 		isolateId,
 	);
+	const { data: otu } = useSuspenseLocalOtuV2(referenceId, otuId);
+	const navigate = routeApi.useNavigate();
 
 	const name = isolate.name
 		? `${isolate.name.type} ${isolate.name.value}`
@@ -41,8 +45,20 @@ export default function LocalOtuIsolateDetail() {
 					← Isolates
 				</Link>
 			</p>
-			<SectionHeader>
+			<SectionHeader className="flex items-center justify-between gap-3">
 				<h2>{name}</h2>
+				<DeleteLocalOtuIsolate
+					referenceId={referenceId}
+					otuId={otuId}
+					version={otu.version}
+					isolate={isolate}
+					onDeleted={() =>
+						navigate({
+							to: "/refs/alpha/$referenceId/otus/$otuId/isolates",
+							params: { referenceId, otuId },
+						})
+					}
+				/>
 			</SectionHeader>
 			<section>
 				<SectionHeader>

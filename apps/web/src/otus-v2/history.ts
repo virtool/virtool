@@ -30,6 +30,8 @@ export function getOtuV2ChangeDescription(change: OtuV2Change) {
 				subject: isolateName,
 			};
 		}
+		case "DeleteIsolate":
+			return { action: "deleted isolate", subject: null };
 		case "DeleteOTU":
 			return { action: "deleted OTU", subject: null };
 		default:

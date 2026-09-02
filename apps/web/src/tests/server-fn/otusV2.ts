@@ -10,6 +10,7 @@ export const otuV2ServerFnMocks = {
 	createLocalOtuIsolateFn: vi.fn(),
 	createLocalOtuFn: vi.fn(),
 	deleteLocalOtuFn: vi.fn(),
+	deleteLocalOtuIsolateFn: vi.fn(),
 	getGenbankIsolateDraftFn: vi.fn(),
 	getLocalOtuFn: vi.fn(),
 	getLocalOtuIsolateFn: vi.fn(),
@@ -22,6 +23,12 @@ export const otuV2ServerFnMocks = {
 export function mockDeleteLocalOtuV2(): Mock {
 	otuV2ServerFnMocks.deleteLocalOtuFn.mockResolvedValue(null);
 	return otuV2ServerFnMocks.deleteLocalOtuFn;
+}
+
+/** Sets up deleteLocalOtuIsolate to resolve successfully. */
+export function mockDeleteLocalOtuIsolateV2(otu: LocalOtuV2): Mock {
+	otuV2ServerFnMocks.deleteLocalOtuIsolateFn.mockResolvedValue(otu);
+	return otuV2ServerFnMocks.deleteLocalOtuIsolateFn;
 }
 
 /** Sets up getLocalOtus to resolve with the given OTU summaries. */

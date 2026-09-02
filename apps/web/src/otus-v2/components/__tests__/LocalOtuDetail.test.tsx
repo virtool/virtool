@@ -3,6 +3,7 @@ import userEvent from "@testing-library/user-event";
 import { createFakeLocalOtuV2 } from "@tests/fake/otusV2";
 import { createFakeReferenceV2 } from "@tests/fake/referencesV2";
 import {
+	mockDeleteLocalOtuIsolateV2,
 	mockDeleteLocalOtuV2,
 	mockGetLocalOtusV2,
 	mockGetLocalOtuV2,
@@ -157,8 +158,12 @@ describe("<LocalOtuDetail />", () => {
 	});
 
 	it("filters isolates by name", async () => {
+		const existingIsolate = otu.isolates[0];
+		if (!existingIsolate) {
+			throw new Error("Expected fake OTU to contain an isolate.");
+		}
 		const matchingIsolate = {
-			...otu.isolates[0],
+			...existingIsolate,
 			id: crypto.randomUUID(),
 			name: {
 				type: OtuV2IsolateNameType.isolate,
@@ -167,7 +172,7 @@ describe("<LocalOtuDetail />", () => {
 		};
 		const otuWithIsolates = createFakeLocalOtuV2({
 			referenceId: reference.id,
-			isolates: [matchingIsolate, otu.isolates[0]],
+			isolates: [matchingIsolate, existingIsolate],
 		});
 		mockGetLocalOtuV2(otuWithIsolates);
 
@@ -199,6 +204,52 @@ describe("<LocalOtuDetail />", () => {
 		).toHaveAttribute("href", `${base}/isolates/${otu.isolates[0]?.id}`);
 	});
 
+	it("shows isolate delete buttons in the list and detail views", async () => {
+		const isolate = otu.isolates[0];
+		await renderRoute(`${base}/isolates`);
+
+		expect(
+			await screen.findByRole("button", { name: "Delete isolate" }),
+		).toBeInTheDocument();
+
+		await renderRoute(`${base}/isolates/${isolate?.id}`);
+		expect(
+			await screen.findByRole("button", { name: "Delete isolate" }),
+		).toBeInTheDocument();
+	});
+
+	it("deletes an isolate and returns from its detail to the isolate list", async () => {
+		const isolate = otu.isolates[0];
+		if (!isolate) {
+			throw new Error("Expected fake OTU to contain an isolate.");
+		}
+		const updatedOtu = { ...otu, version: otu.version + 1, isolates: [] };
+		const deleteIsolate = mockDeleteLocalOtuIsolateV2(updatedOtu);
+		const { router } = await renderRoute(`${base}/isolates/${isolate.id}`);
+
+		await userEvent.click(
+			await screen.findByRole("button", { name: "Delete isolate" }),
+		);
+		const dialog = await screen.findByRole("alertdialog");
+		await userEvent.click(
+			within(dialog).getByRole("button", { name: "Confirm" }),
+		);
+
+		expect(deleteIsolate).toHaveBeenCalledWith({
+			data: {
+				referenceId: reference.id,
+				command: {
+					type: "DeleteIsolate",
+					schemaVersion: 1,
+					otuId: otu.id,
+					expectedVersion: otu.version,
+					payload: { isolateId: isolate.id },
+				},
+			},
+		});
+		expect(router.state.location.pathname).toBe(`${base}/isolates`);
+	});
+
 	it("renders an isolate detail view", async () => {
 		const isolate = otu.isolates[0];
 		await renderRoute(`${base}/isolates/${isolate?.id}`);
@@ -222,6 +273,10 @@ describe("<LocalOtuDetail />", () => {
 	});
 
 	it("renders every change on the history tab", async () => {
+		const isolate = otu.isolates[0];
+		if (!isolate) {
+			throw new Error("Expected fake OTU to contain an isolate.");
+		}
 		const firstChangeAt = new Date("2024-01-02T03:04:05Z");
 		const secondChangeAt = new Date("2024-02-03T04:05:06Z");
 		const changedOtu = createFakeLocalOtuV2({
@@ -233,7 +288,7 @@ describe("<LocalOtuDetail />", () => {
 					version: 2,
 					command: "CreateIsolate",
 					commandSchemaVersion: 1,
-					payload: { isolate: otu.isolates[0] },
+					payload: { isolate },
 					source: "user",
 					user: otu.mostRecentChange.user,
 					createdAt: firstChangeAt,
@@ -256,7 +311,11 @@ describe("<LocalOtuDetail />", () => {
 		expect(items[1]).toHaveTextContent("Version 1");
 
 		const times = within(history).getAllByRole("button");
-		await userEvent.hover(times[0]);
+		const latestTime = times[0];
+		if (!latestTime) {
+			throw new Error("Expected history to contain a timestamp.");
+		}
+		await userEvent.hover(latestTime);
 		expect(await screen.findByRole("tooltip")).toHaveTextContent(
 			"January 2, 2024 at 03:04:05",
 		);

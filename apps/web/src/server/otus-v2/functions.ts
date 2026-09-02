@@ -4,6 +4,7 @@ import {
 	CreateLocalOtuCommand,
 	CreateLocalOtuIsolateCommand,
 	DeleteLocalOtuCommand,
+	DeleteLocalOtuIsolateCommand,
 	type GenbankIsolateDraft,
 	type GenbankOtuDraft,
 } from "@virtool/contracts";
@@ -11,6 +12,7 @@ import {
 	createLocalOtu,
 	createLocalOtuIsolate,
 	deleteLocalOtu,
+	deleteLocalOtuIsolate,
 	getLocalOtu,
 	getLocalOtuIsolate,
 	getLocalOtuIsolates,
@@ -18,6 +20,7 @@ import {
 	getLocalOtuSequence,
 	getLocalOtus,
 	OtuV2ConflictError,
+	OtuV2LastIsolateError,
 	OtuV2NotFoundError,
 	OtuV2ReferenceNotWritableError,
 	OtuV2VersionConflictError,
@@ -67,6 +70,11 @@ const createLocalOtuIsolateSchema = z.object({
 const deleteLocalOtuSchema = z.object({
 	referenceId: z.uuid(),
 	command: DeleteLocalOtuCommand,
+});
+
+const deleteLocalOtuIsolateSchema = z.object({
+	referenceId: z.uuid(),
+	command: DeleteLocalOtuIsolateCommand,
 });
 
 // The accessions go into an outbound NCBI query string, so each is constrained
@@ -125,6 +133,10 @@ const rethrowAsHttp = createServerOnlyFn((err: unknown): never => {
 	if (err instanceof OtuV2VersionConflictError) {
 		setResponseStatus(409);
 		throw new ClientError("OTU has changed. Review the isolate again.", 409);
+	}
+	if (err instanceof OtuV2LastIsolateError) {
+		setResponseStatus(409);
+		throw new ClientError("An OTU must have at least one isolate.", 409);
 	}
 	throw err;
 });
@@ -201,6 +213,28 @@ export const deleteLocalOtuFn = createServerFn({ method: "POST" })
 				command: data.command,
 			});
 			return null;
+		} catch (err) {
+			return rethrowAsHttp(err);
+		}
+	});
+
+export const deleteLocalOtuIsolateFn = createServerFn({ method: "POST" })
+	.middleware([authenticated()])
+	.validator(deleteLocalOtuIsolateSchema)
+	.handler(async ({ context, data }) => {
+		try {
+			const actor = await resolveReferenceActor(db, context.session.userId);
+			if (
+				!(await checkReferenceV2Right(db, data.referenceId, "modifyOtu", actor))
+			) {
+				setResponseStatus(403);
+				throw new ForbiddenError();
+			}
+			return await deleteLocalOtuIsolate(db, {
+				referenceId: data.referenceId,
+				userId: context.session.userId,
+				command: data.command,
+			});
 		} catch (err) {
 			return rethrowAsHttp(err);
 		}

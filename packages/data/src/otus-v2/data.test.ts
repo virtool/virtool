@@ -14,9 +14,12 @@ import {
 import {
 	createLocalOtu,
 	createLocalOtuIsolate,
+	deleteLocalOtuIsolate,
 	getLocalOtu,
+	getLocalOtuIsolate,
 	getLocalOtus,
 	OtuV2ConflictError,
+	OtuV2LastIsolateError,
 	OtuV2NotFoundError,
 } from "./data";
 
@@ -160,6 +163,83 @@ describe("createReferenceV2", () => {
 });
 
 describe("createLocalOtu", () => {
+	it("soft-deletes an isolate and its sequences in a new version", async () => {
+		const reference = await createReference();
+		const command = createCommand("60000000-0000-4000-8000-000000000001");
+		await createLocalOtu(db, { referenceId: reference.id, userId, command });
+		const isolateId = "60000000-0000-4000-8000-000000000007";
+		await createLocalOtuIsolate(db, {
+			referenceId: reference.id,
+			userId,
+			command: {
+				type: "CreateIsolate",
+				schemaVersion: 1,
+				otuId: command.otuId,
+				expectedVersion: 1,
+				payload: {
+					isolate: {
+						id: isolateId,
+						name: { type: "isolate", value: "Lab 2" },
+						sequences: [
+							{
+								id: "60000000-0000-4000-8000-000000000008",
+								definition: "Complete genome",
+								sequence: "ATCGNNRY",
+								segmentId: command.payload.plan.segments[0].id,
+							},
+						],
+					},
+				},
+			},
+		});
+
+		const otu = await deleteLocalOtuIsolate(db, {
+			referenceId: reference.id,
+			userId,
+			command: {
+				type: "DeleteIsolate",
+				schemaVersion: 1,
+				otuId: command.otuId,
+				expectedVersion: 2,
+				payload: { isolateId },
+			},
+		});
+
+		expect(otu.version).toBe(3);
+		expect(otu.isolates).toHaveLength(1);
+		expect(otu.mostRecentChange).toMatchObject({
+			version: 3,
+			command: "DeleteIsolate",
+			payload: { isolateId },
+		});
+		await expect(
+			getLocalOtuIsolate(db, reference.id, command.otuId, isolateId),
+		).rejects.toBeInstanceOf(OtuV2NotFoundError);
+	});
+
+	it("does not delete an OTU's last isolate", async () => {
+		const reference = await createReference();
+		const command = createCommand("61000000-0000-4000-8000-000000000001");
+		await createLocalOtu(db, { referenceId: reference.id, userId, command });
+
+		await expect(
+			deleteLocalOtuIsolate(db, {
+				referenceId: reference.id,
+				userId,
+				command: {
+					type: "DeleteIsolate",
+					schemaVersion: 1,
+					otuId: command.otuId,
+					expectedVersion: 1,
+					payload: { isolateId: command.payload.isolate.id },
+				},
+			}),
+		).rejects.toBeInstanceOf(OtuV2LastIsolateError);
+		expect((await getLocalOtu(db, reference.id, command.otuId)).version).toBe(
+			1,
+		);
+	});
+
 	it("returns the complete change history newest first", async () => {
 		const reference = await createReference();
 		const otuId = "90000000-0000-4000-8000-000000000001";

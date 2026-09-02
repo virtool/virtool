@@ -4,6 +4,7 @@ import {
 	createLocalOtuFn,
 	createLocalOtuIsolateFn,
 	deleteLocalOtuFn,
+	deleteLocalOtuIsolateFn,
 	getGenbankIsolateDraftFn,
 	getGenbankOtuDraftFn,
 	getLocalOtuFn,
@@ -22,6 +23,7 @@ import type {
 	CreateLocalOtuCommandInput,
 	CreateLocalOtuIsolateCommandInput,
 	DeleteLocalOtuCommandInput,
+	DeleteLocalOtuIsolateCommandInput,
 	GenbankIsolateDraft,
 	GenbankOtuDraft,
 	LocalOtuV2,
@@ -221,6 +223,33 @@ export function useDeleteLocalOtu(referenceId: string) {
 		onSuccess: (_result, command) => {
 			queryClient.removeQueries({
 				queryKey: otuV2QueryKeys.detail(command.otuId),
+			});
+			queryClient.invalidateQueries({
+				queryKey: otuV2QueryKeys.list([referenceId]),
+			});
+		},
+	});
+}
+
+/** Delete one local v2 isolate at the OTU's current version. */
+export function useDeleteLocalOtuIsolate(referenceId: string) {
+	const queryClient = useQueryClient();
+	return useMutation<LocalOtuV2, Error, DeleteLocalOtuIsolateCommandInput>({
+		mutationFn: (command) =>
+			deleteLocalOtuIsolateFn({
+				data: { referenceId, command },
+			}) as Promise<LocalOtuV2>,
+		onSuccess: (otu, command) => {
+			cacheLocalOtuOverview(queryClient, otu);
+			queryClient.removeQueries({
+				queryKey: [
+					...otuV2QueryKeys.detail(otu.id),
+					"isolates",
+					command.payload.isolateId,
+				],
+			});
+			queryClient.invalidateQueries({
+				queryKey: [...otuV2QueryKeys.detail(otu.id), "isolates"],
 			});
 			queryClient.invalidateQueries({
 				queryKey: otuV2QueryKeys.list([referenceId]),

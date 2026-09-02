@@ -6,6 +6,8 @@ import {
 	type CreateLocalOtuIsolateCommandInput,
 	DeleteLocalOtuCommand,
 	type DeleteLocalOtuCommandInput,
+	DeleteLocalOtuIsolateCommand,
+	type DeleteLocalOtuIsolateCommandInput,
 	type LocalOtuV2,
 	type LocalOtuV2IsolateDetail,
 	type LocalOtuV2IsolateSummary,
@@ -48,6 +50,9 @@ export class OtuV2ConflictError extends AppError {}
 
 /** Thrown when an OTU command is based on an outdated OTU version. */
 export class OtuV2VersionConflictError extends AppError {}
+
+/** Thrown when deletion would leave a v2 OTU without an isolate. */
+export class OtuV2LastIsolateError extends AppError {}
 
 /** Values needed to apply a user-authored local `CreateOTU` command. */
 export type CreateLocalOtuValues = {
@@ -109,6 +114,117 @@ export type DeleteLocalOtuValues = {
 	userId: number;
 	command: DeleteLocalOtuCommandInput;
 };
+
+/** Values needed to delete one isolate from a local OTU. */
+export type DeleteLocalOtuIsolateValues = {
+	referenceId: string;
+	userId: number;
+	command: DeleteLocalOtuIsolateCommandInput;
+};
+
+/** Soft-delete one local isolate and its sequences at the expected version. */
+export async function deleteLocalOtuIsolate(
+	db: Db,
+	values: DeleteLocalOtuIsolateValues,
+): Promise<LocalOtuV2> {
+	const command = DeleteLocalOtuIsolateCommand.parse(values.command);
+
+	await db.transaction(async (tx) => {
+		const otu = takeFirst(
+			await tx
+				.select({
+					version: otusV2.version,
+					deletedVersion: otusV2.deletedVersion,
+					archived: referenceRoots.archived,
+					kind: referenceRoots.kind,
+				})
+				.from(otusV2)
+				.innerJoin(referenceRoots, eq(referenceRoots.id, otusV2.referenceId))
+				.where(
+					and(
+						eq(otusV2.id, command.otuId),
+						eq(otusV2.referenceId, values.referenceId),
+					),
+				)
+				.for("update"),
+		);
+
+		if (!otu || otu.deletedVersion !== null) {
+			throw new OtuV2NotFoundError();
+		}
+		if (otu.archived || otu.kind !== "local") {
+			throw new OtuV2ReferenceNotWritableError();
+		}
+		if (otu.version !== command.expectedVersion) {
+			throw new OtuV2VersionConflictError();
+		}
+
+		const isolate = takeFirst(
+			await tx
+				.select({ id: otuIsolateVersions.id })
+				.from(otuIsolateVersions)
+				.where(
+					and(
+						eq(otuIsolateVersions.otuId, command.otuId),
+						eq(otuIsolateVersions.isolateId, command.payload.isolateId),
+						isNull(otuIsolateVersions.lastVersion),
+					),
+				),
+		);
+		if (!isolate) {
+			throw new OtuV2NotFoundError();
+		}
+		const isolateCount = takeFirst(
+			await tx
+				.select({ value: count() })
+				.from(otuIsolateVersions)
+				.where(
+					and(
+						eq(otuIsolateVersions.otuId, command.otuId),
+						isNull(otuIsolateVersions.lastVersion),
+					),
+				),
+		);
+		if (Number(isolateCount?.value ?? 0) <= 1) {
+			throw new OtuV2LastIsolateError();
+		}
+
+		const version = command.expectedVersion + 1;
+		await Promise.all([
+			tx
+				.update(otuIsolateVersions)
+				.set({ lastVersion: version })
+				.where(eq(otuIsolateVersions.id, isolate.id)),
+			tx
+				.update(otuSequenceVersions)
+				.set({ lastVersion: version })
+				.where(
+					and(
+						eq(otuSequenceVersions.otuId, command.otuId),
+						eq(otuSequenceVersions.isolateId, command.payload.isolateId),
+						isNull(otuSequenceVersions.lastVersion),
+					),
+				),
+		]);
+		await tx
+			.update(otusV2)
+			.set({ version })
+			.where(eq(otusV2.id, command.otuId));
+		await tx.insert(otuChanges).values({
+			referenceId: values.referenceId,
+			otuId: command.otuId,
+			version,
+			command: command.type,
+			commandSchemaVersion: command.schemaVersion,
+			payload: command.payload,
+			source: "user",
+			userId: values.userId,
+			createdAt: new Date(),
+		});
+	});
+
+	return getLocalOtu(db, values.referenceId, command.otuId);
+}
 
 /** Soft-delete one local OTU atomically at the expected version. */
 export async function deleteLocalOtu(

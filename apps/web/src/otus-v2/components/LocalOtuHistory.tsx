@@ -12,6 +12,8 @@ function getChangeIcon(change: OtuV2Change): LucideIcon {
 			return Dna;
 		case "CreateIsolate":
 			return FlaskConical;
+		case "DeleteIsolate":
+			return Trash;
 		case "DeleteOTU":
 			return Trash;
 	}

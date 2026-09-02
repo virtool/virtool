@@ -4,6 +4,7 @@ import Button from "@base/Button";
 import { InputSearch } from "@base/Input";
 import Link from "@base/Link";
 import CreateLocalOtuIsolateDialog from "@otus-v2/components/CreateLocalOtuIsolateDialog";
+import DeleteLocalOtuIsolate from "@otus-v2/components/DeleteLocalOtuIsolate";
 import {
 	useSuspenseLocalOtuV2,
 	useSuspenseLocalOtuV2Isolates,
@@ -47,7 +48,11 @@ export default function LocalOtuIsolates({
 			/>
 			<BoxGroup as="ul">
 				{results.map((isolate) => (
-					<BoxGroupSection as="li" key={isolate.id}>
+					<BoxGroupSection
+						as="li"
+						className="flex items-center justify-between gap-3"
+						key={isolate.id}
+					>
 						<Link
 							className="font-medium text-lg"
 							to="/refs/alpha/$referenceId/otus/$otuId/isolates/$isolateId"
@@ -57,6 +62,12 @@ export default function LocalOtuIsolates({
 								? `${isolate.name.type} ${isolate.name.value}`
 								: "Unnamed isolate"}
 						</Link>
+						<DeleteLocalOtuIsolate
+							referenceId={referenceId}
+							otuId={otuId}
+							version={otu.version}
+							isolate={isolate}
+						/>
 					</BoxGroupSection>
 				))}
 			</BoxGroup>
