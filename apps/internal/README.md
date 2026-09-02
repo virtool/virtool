@@ -215,11 +215,25 @@ the KEDA `ScaledJob` scales on. `run` additionally exports the task series:
 | `virtool_task_duration_seconds` | histogram | `type` |
 | `virtool_tasks` | gauge | `type`, `state` |
 | `virtool_tasks_oldest_queued_age_seconds` | gauge | `type` |
+| `virtool_email_delivery_attempts_total` | counter | `template`, `outcome` |
+| `virtool_email_retries_scheduled_total` | counter | `template` |
+| `virtool_email_accepted_age_seconds` | histogram | none |
+| `virtool_email_outbox` | gauge | `state` |
+| `virtool_email_availability` | gauge | `state` |
 
 Task names outside `TaskName` fold into the bounded `other` label. Queue reads
 use the active predicate `complete = false AND error IS NULL`, are bounded by a
 two-second deadline, and are cached for ten seconds. A failed read omits the
 queue series rather than reporting a false zero or repeating stale values.
+
+The email series carry bounded labels only. `template` is the template type,
+`outcome` is one of `accepted`, `retryable`, `rate_limited`, `permanent`,
+`exhausted` or `expired`, and the whole cross product is pre-declared at zero so
+a rate has a prior sample and a failure series at zero reads as evidence.
+`virtool_email_accepted_age_seconds` is deliberately unlabelled, because
+splitting it by template would thin the samples behind every quantile.
+`virtool_email_availability` is one-hot, so
+`virtool_email_availability{state="ready"} == 1` is directly alertable.
 
 The probe listener (`run`) accepts only `GET`. `/health/live` returns a static
 success and never checks Postgres — a database outage must not restart every pod
