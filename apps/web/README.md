@@ -537,6 +537,59 @@ Client code must read individual `import.meta.env` properties. Reading the
 whole object would serialize every `VT_` variable, including storage secrets,
 into the browser bundle.
 
+## Administering email delivery
+
+`/administration/settings` carries an **Email Delivery** section, rendered only
+for full administrators. Hiding it is presentation: every email server function
+demands `adminRole("full")` of its own accord, so a direct call from a lesser
+administrator is refused whatever the page shows.
+
+The section is four independent forms, so no action can submit another's
+values:
+
+- **Send email** switches delivery on and off on its own. Turning it off keeps
+  the stored key and every other setting; it only stops queued mail from being
+  sent. Turning it on needs a configuration the server has already resolved.
+- **Sender identity** saves the sender name, the sender address, and an optional
+  reply-to address. An empty reply-to sends replies to the sender address. The
+  server validates authoritatively and the fields re-render from its response.
+- **Resend API key** is write-only. The field starts empty however the key is
+  stored, because the server reports only whether one is configured. Saving
+  replaces what is stored, and the replaced value cannot be read back. An empty
+  field is refused rather than treated as a removal — removing a key is the
+  separate **Remove** action, which asks for confirmation and also switches
+  delivery off. **Re-encrypt** is step 2 of the
+  [encryption key rotation](../../docs/env.md#rotation).
+- **Test delivery** sends the dedicated test template to one recipient with the
+  stored configuration. It never enqueues an authentication template and never
+  changes any setting. Acceptance means Resend took the message, not that it
+  reached a mailbox.
+
+Four availability states render distinctly:
+
+| State | Meaning |
+| --- | --- |
+| Ready | The configuration decrypts and queued mail is being sent. |
+| Disabled | The configuration is complete and kept, but nothing is being sent. |
+| Needs configuration | An API key, a sender address, or both are still missing. |
+| Configuration error | The stored key cannot be decrypted with the encryption key this instance is running with. |
+
+A configuration error is never reported as a missing key. The stored value is
+intact and is not changed, so the fix is the encryption key rather than the API
+key; the section links to [the encryption-key
+guide](../../docs/env.md#encryption-key) and disables enabling and test delivery
+until the instance is healthy. Saving a replacement key is the other way out,
+and it is deliberate rather than automatic.
+
+Delivery needs a Resend account and a sending domain verified with Resend.
+While delivery is unavailable, the authentication views still offer copyable
+setup links.
+
+Provider failures reach the browser as a bounded code, never as Resend's own
+text; the wording lives in `EmailTest.tsx` and the detail stays in the server
+logs. No API key, envelope, or recipient crosses the wire back to the page or
+becomes a metric label.
+
 ## Metrics
 
 `GET /metrics` serves the Prometheus text exposition format from a single

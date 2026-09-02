@@ -24,6 +24,7 @@ import { createFakeAccount } from "./fake/account";
 import { accountServerFnMocks } from "./server-fn/account";
 import { analysisServerFnMocks } from "./server-fn/analyses";
 import { authServerFnMocks } from "./server-fn/auth";
+import { emailServerFnMocks } from "./server-fn/email";
 import { groupServerFnMocks } from "./server-fn/groups";
 import { hmmServerFnMocks } from "./server-fn/hmm";
 import { indexServerFnMocks } from "./server-fn/indexes";
@@ -78,6 +79,10 @@ vi.mock("@server/jobs/functions", async () => {
 vi.mock("@server/tasks/functions", async () => {
 	const { taskServerFnMocks } = await import("./server-fn/tasks");
 	return taskServerFnMocks;
+});
+vi.mock("@server/email/functions", async () => {
+	const { emailServerFnMocks } = await import("./server-fn/email");
+	return emailServerFnMocks;
 });
 vi.mock("@server/settings/functions", async () => {
 	const { settingsServerFnMocks } = await import("./server-fn/settings");
@@ -150,6 +155,7 @@ beforeEach(() => {
 		analysisServerFnMocks.getAnalysisFn,
 		analysisServerFnMocks.getAnalysisResultsFn,
 		settingsServerFnMocks.getSettingsFn,
+		emailServerFnMocks.getEmailSettingsFn,
 		...Object.values(indexServerFnMocks),
 		otuServerFnMocks.findOtusFn,
 		otuServerFnMocks.getOtuFn,
@@ -187,6 +193,11 @@ beforeEach(() => {
 		analysisServerFnMocks.recordAnalysisViewFn,
 		analysisServerFnMocks.blastNuvsFn,
 		settingsServerFnMocks.updateSettingsFn,
+		emailServerFnMocks.clearEmailApiKeyFn,
+		emailServerFnMocks.reencryptEmailApiKeyFn,
+		emailServerFnMocks.sendTestEmailFn,
+		emailServerFnMocks.setEmailApiKeyFn,
+		emailServerFnMocks.updateEmailSettingsFn,
 		otuServerFnMocks.createOtuFn,
 		otuServerFnMocks.updateOtuFn,
 		otuServerFnMocks.deleteOtuFn,

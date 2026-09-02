@@ -176,6 +176,7 @@ describe("sendEmailViaResend", () => {
 
 		await expect(sendEmailViaResend(request)).resolves.toEqual({
 			outcome: "rate_limited",
+			code: "rate_limit_exceeded",
 			error: expect.stringContaining("rate_limit_exceeded"),
 			retryAfterSeconds: 12,
 		});
