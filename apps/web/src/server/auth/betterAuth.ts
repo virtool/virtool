@@ -23,8 +23,20 @@ import { HANDLE_MAX_LENGTH, HANDLE_MIN_LENGTH, isValidHandle } from "./handle";
 /** Where the Better Auth handler is mounted. */
 export const AUTH_BASE_PATH = "/api/auth";
 
-/** The email sign-in endpoint, which this instance refuses. */
-const EMAIL_SIGN_IN_PATH = "/sign-in/email";
+/**
+ * The endpoints this instance refuses.
+ *
+ * `/sign-in/email`: `emailAndPassword` is enabled for its password hashing, but
+ * it also mounts this, and `disableSignUp` does not take it down. Virtool signs
+ * in by handle: `users.email` carries no unique constraint and duplicate
+ * addresses exist, so an email lookup would resolve to an arbitrary one of the
+ * holders.
+ *
+ * `/is-username-available`: the `username` plugin mounts this unauthenticated,
+ * and Virtool has no public sign-up for it to serve. It would answer whether a
+ * handle exists — the enumeration the sign-in paths are shaped to withhold.
+ */
+const REFUSED_PATHS = new Set(["/sign-in/email", "/is-username-available"]);
 
 /** What {@link createAuth} needs to build an instance. */
 export type AuthOptions = {
@@ -111,14 +123,11 @@ export function createAuth({
 			},
 		},
 		hooks: {
-			// `emailAndPassword` is enabled for its password hashing, but it also
-			// mounts `/sign-in/email`, and `disableSignUp` does not take that
-			// endpoint down. Virtool signs in by handle: `users.email` carries no
-			// unique constraint and duplicate addresses exist, so an email lookup
-			// would resolve to an arbitrary one of the holders. `NOT_FOUND` because
-			// the endpoint is not part of this instance's surface at all.
+			// `NOT_FOUND` because a refused endpoint is not part of this instance's
+			// surface at all. See REFUSED_PATHS for what each one would otherwise
+			// expose.
 			before: createAuthMiddleware(async (ctx) => {
-				if (ctx.path === EMAIL_SIGN_IN_PATH) {
+				if (REFUSED_PATHS.has(ctx.path)) {
 					throw new APIError("NOT_FOUND");
 				}
 			}),

@@ -289,6 +289,18 @@ describe("email sign-in", () => {
 	});
 });
 
+describe("the username availability endpoint", () => {
+	it("is not mounted, so it cannot enumerate handles", async () => {
+		await seedMigratedUser();
+
+		const response = await auth.handler(
+			post("/is-username-available", { username: "alice" }),
+		);
+
+		expect(response.status).toBe(404);
+	});
+});
+
 describe("the integer user id", () => {
 	it("leaves users.id to the identity column", async () => {
 		const first = await seedMigratedUser();
