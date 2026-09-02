@@ -17,6 +17,7 @@ import {
 } from "@virtool/data/email/retry";
 import {
 	buildProviderIdempotencyKey,
+	EMAIL_SEND_TIMEOUT_MS,
 	type EmailSendOutcome,
 	sendEmailViaResend,
 } from "@virtool/data/email/send";
@@ -36,8 +37,39 @@ import type { TaskContext } from "./registry";
 
 const payload = z.object({});
 
-const CLAIM_BATCH_SIZE = 10;
-const CLAIM_LEASE_SECONDS = 120;
+/** How many due rows one claim takes. */
+export const CLAIM_BATCH_SIZE = 10;
+
+/**
+ * Extra lease time over the worst-case batch, covering the render, the claim
+ * itself, and the result write around each send. Thirty seconds is three
+ * database round trips per row for a full batch, with room to spare.
+ */
+const CLAIM_LEASE_SLACK_SECONDS = 30;
+
+/**
+ * How long a claim holds its batch.
+ *
+ * A batch is sent one row at a time, so the lease has to outlast every row in
+ * it reaching {@link EMAIL_SEND_TIMEOUT_MS}. Deriving it from the batch size
+ * and the send timeout keeps the three in agreement when any one of them
+ * changes. A shorter lease lets a second run re-claim rows the first run is
+ * still sending: the message goes twice, and the first run's fenced result
+ * write finds no claim and silently does nothing.
+ */
+export const CLAIM_LEASE_SECONDS =
+	CLAIM_BATCH_SIZE * (EMAIL_SEND_TIMEOUT_MS / 1000) + CLAIM_LEASE_SLACK_SECONDS;
+
+/**
+ * How long one run keeps claiming new batches.
+ *
+ * The budget plus the batch in flight when it passes plus the prune step stay
+ * well inside `TASK_WEDGE_SECONDS`, past which an unfinished `deliver_email`
+ * row stops suppressing new ones and a second run can exist at all. The type
+ * spawns every 30 s, so a backlog this defers waits seconds for the next run.
+ */
+export const RUN_BUDGET_MS = 300_000;
+
 const ACCEPTED_RETENTION_SECONDS = 7 * 86_400;
 const FAILED_RETENTION_SECONDS = 30 * 86_400;
 
@@ -231,8 +263,16 @@ export const deliverEmailTask = defineTask<typeof payload, TaskContext>({
 			}
 
 			const claimToken = randomUUID();
+			const startedAt = performance.now();
+
+			let budgetPassed = false;
 
 			drain: while (!signal.aborted) {
+				if (performance.now() - startedAt >= RUN_BUDGET_MS) {
+					budgetPassed = true;
+					break;
+				}
+
 				const batch = await claimDueEmails(ctx.db, {
 					claimToken,
 					leaseSeconds: CLAIM_LEASE_SECONDS,
@@ -279,7 +319,16 @@ export const deliverEmailTask = defineTask<typeof payload, TaskContext>({
 				}
 			}
 
-			ctx.metrics.setEmailOutbox(await countEmailOutbox(ctx.db));
+			const counts = await countEmailOutbox(ctx.db);
+
+			ctx.metrics.setEmailOutbox(counts);
+
+			if (budgetPassed && counts.queued > 0) {
+				logger.info(
+					{ queued: counts.queued, budgetMs: RUN_BUDGET_MS },
+					"email delivery stopped at its run budget, the next run continues",
+				);
+			}
 		});
 
 		await helpers.runStep("prune", async () => {

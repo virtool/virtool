@@ -18,8 +18,12 @@ import {
 	EMAIL_DELIVERY_DEADLINE_SECONDS,
 	EMAIL_MAX_ATTEMPTS,
 } from "@virtool/data/email/retry";
-import { buildProviderIdempotencyKey } from "@virtool/data/email/send";
+import {
+	buildProviderIdempotencyKey,
+	EMAIL_SEND_TIMEOUT_MS,
+} from "@virtool/data/email/send";
 import { seedSettings } from "@virtool/data/settings/test/fixtures";
+import { TASK_WEDGE_SECONDS } from "@virtool/data/tasks/data";
 import { createLogger, type Logger } from "@virtool/logger";
 import { eq, sql } from "drizzle-orm";
 import {
@@ -35,7 +39,12 @@ import {
 import { runTask } from "../framework/run";
 import type { EmailAttemptOutcome } from "../metrics/registry";
 import { claimTask, createTaskTestContext } from "../testing/tasks";
-import { deliverEmailTask } from "./deliver-email";
+import {
+	CLAIM_BATCH_SIZE,
+	CLAIM_LEASE_SECONDS,
+	deliverEmailTask,
+	RUN_BUDGET_MS,
+} from "./deliver-email";
 import type { TaskContext } from "./registry";
 
 const logger: Logger = createLogger({ name: "test", level: "silent" });
@@ -118,6 +127,7 @@ beforeEach(async () => {
 
 afterEach(() => {
 	vi.unstubAllGlobals();
+	vi.restoreAllMocks();
 });
 
 const envelope = {
@@ -199,6 +209,33 @@ async function ageRow(outboxId: number, seconds: number): Promise<void> {
 			created_at: sql`timezone('utc', clock_timestamp()) - make_interval(secs => ${seconds}::double precision)`,
 		})
 		.where(eq(emailOutbox.id, outboxId));
+}
+
+/**
+ * Move `performance.now` forward on demand, which is the clock the drain loop
+ * measures its run budget on. The offset rides on the real reading, so nothing
+ * else reading the same clock sees it go backwards.
+ */
+function stubElapsed(): {
+	advance: (ms: number) => void;
+	restore: () => void;
+} {
+	const real = performance.now.bind(performance);
+
+	let offset = 0;
+
+	const spy = vi
+		.spyOn(performance, "now")
+		.mockImplementation(() => real() + offset);
+
+	return {
+		advance(ms: number) {
+			offset += ms;
+		},
+		restore() {
+			spy.mockRestore();
+		},
+	};
 }
 
 async function readOutboxRow(outboxId: number) {
@@ -572,6 +609,63 @@ describe("deliverEmailTask", () => {
 				.from(emailOutbox)
 				.where(eq(emailOutbox.status, "accepted")),
 		).toHaveLength(3);
+	});
+
+	it("leases a claim for at least the worst case of sending its whole batch", () => {
+		expect(CLAIM_LEASE_SECONDS).toBeGreaterThanOrEqual(
+			CLAIM_BATCH_SIZE * (EMAIL_SEND_TIMEOUT_MS / 1000),
+		);
+	});
+
+	it("keeps a whole run inside the wedge ceiling, budget and last batch alike", () => {
+		expect(RUN_BUDGET_MS / 1000 + CLAIM_LEASE_SECONDS).toBeLessThan(
+			TASK_WEDGE_SECONDS,
+		);
+	});
+
+	it("stops claiming new batches once the run budget passes", async () => {
+		await seedEmailSettings();
+
+		for (let i = 0; i < CLAIM_BATCH_SIZE + 1; i++) {
+			await enqueueEmail(db, {
+				idempotencyKey: `budget/${i}`,
+				recipient: "someone@example.com",
+				template,
+			});
+		}
+
+		const clock = stubElapsed();
+
+		const fetchMock = vi.fn().mockImplementation(() => {
+			clock.advance(RUN_BUDGET_MS);
+
+			return Promise.resolve(jsonResponse(200, { id: "msg" }));
+		});
+
+		vi.stubGlobal("fetch", fetchMock);
+
+		await runDrain();
+
+		expect(fetchMock).toHaveBeenCalledTimes(CLAIM_BATCH_SIZE);
+
+		const remaining = (await db.select().from(emailOutbox)).filter(
+			(row) => row.status === "queued",
+		);
+
+		expect(remaining).toHaveLength(1);
+		expect(remaining[0]?.attempt_count).toBe(0);
+		expect(remaining[0]?.claim_token).toBeNull();
+
+		clock.restore();
+
+		await runDrain();
+
+		expect(
+			await db
+				.select({ id: emailOutbox.id })
+				.from(emailOutbox)
+				.where(eq(emailOutbox.status, "accepted")),
+		).toHaveLength(CLAIM_BATCH_SIZE + 1);
 	});
 
 	it("prunes terminal rows past retention", async () => {
