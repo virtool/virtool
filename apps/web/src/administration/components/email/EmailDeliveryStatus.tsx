@@ -3,12 +3,7 @@ import ExternalLink from "@base/ExternalLink";
 import type { PaletteColor } from "@base/types";
 import type { EmailAvailability, EmailSettings } from "@virtool/contracts";
 import type { LucideIcon } from "lucide-react";
-import {
-	CircleAlert,
-	CircleCheck,
-	CircleSlash,
-	TriangleAlert,
-} from "lucide-react";
+import { CircleAlert, CircleCheck, CircleSlash, TriangleAlert } from "lucide-react";
 
 const ENCRYPTION_KEY_DOCS =
 	"https://github.com/virtool/virtool/blob/main/docs/env.md#encryption-key";
@@ -19,18 +14,18 @@ type StatusPresentation = {
 	label: string;
 };
 
-const presentations: Record<EmailAvailability, StatusPresentation> = {
+const presentations: Record<EmailAvailability | "disabled", StatusPresentation> = {
 	configuration_error: {
 		color: "red",
 		icon: TriangleAlert,
-		label: "Configuration error",
+		label: "Configuration Error",
 	},
 	disabled: { color: "gray", icon: CircleSlash, label: "Disabled" },
-	ready: { color: "green", icon: CircleCheck, label: "Ready" },
+	ready: { color: "green", icon: CircleCheck, label: "Active" },
 	unconfigured: {
 		color: "orange",
 		icon: CircleAlert,
-		label: "Needs configuration",
+		label: "Needs Configuration",
 	},
 };
 
@@ -61,16 +56,12 @@ function Detail({ settings }: { settings: EmailSettings }) {
 				</p>
 			);
 
-		case "disabled":
-			return (
-				<p>
-					The configuration is kept, but nothing queued will be sent while
-					delivery is off.
-				</p>
-			);
-
 		case "ready":
-			return <p>Queued mail is being sent with the configuration below.</p>;
+			return settings.enabled ? (
+				<p>Email is configured and sending is enabled.</p>
+			) : (
+				<p>Email is configured, but sending is turned off.</p>
+			);
 
 		case "unconfigured":
 			return <p>Email delivery still needs {listMissingFields(settings)}.</p>;
@@ -89,7 +80,11 @@ export default function EmailDeliveryStatus({
 }: {
 	settings: EmailSettings;
 }) {
-	const { color, icon, label } = presentations[settings.availability];
+	const presentation =
+		settings.availability === "ready" && !settings.enabled
+			? presentations.disabled
+			: presentations[settings.availability];
+	const { color, icon, label } = presentation;
 
 	return (
 		<Alert color={color} icon={icon} outerClassName="mb-0">

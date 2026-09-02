@@ -18,7 +18,6 @@ export type EmailTemplate =
 
 /** Whether transactional email can currently be delivered. */
 export type EmailAvailability =
-	| "disabled"
 	| "unconfigured"
 	| "ready"
 	| "configuration_error";
@@ -59,10 +58,3 @@ export type EmailTestFailureCode =
 export type EmailTestResult =
 	| { ok: true; providerMessageId: string }
 	| { ok: false; code: EmailTestFailureCode };
-
-/** The outcome of re-encrypting the stored API key under the active encryption key. */
-export type EmailReencryptResult =
-	| "reencrypted"
-	| "already_current"
-	| "no_key"
-	| "unavailable";

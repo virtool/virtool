@@ -1,7 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
 import { setResponseStatus } from "@tanstack/react-start/server";
 import type {
-	EmailReencryptResult,
 	EmailSettings,
 	EmailTestResult,
 } from "@virtool/contracts";
@@ -10,7 +9,6 @@ import {
 	EmailConfigurationError,
 	type EmailDeliverySettings,
 	getEmailSettings,
-	reencryptEmailApiKey,
 	resolveEmailDelivery,
 	setEmailApiKey,
 	updateEmailDelivery,
@@ -117,14 +115,6 @@ export const clearEmailApiKeyFn = createServerFn({ method: "POST" })
 	.handler(
 		async (): Promise<EmailSettings> =>
 			toEmailSettings(await clearEmailApiKey(db)),
-	);
-
-/** @public */
-export const reencryptEmailApiKeyFn = createServerFn({ method: "POST" })
-	.middleware([adminRole("full")])
-	.handler(
-		async (): Promise<EmailReencryptResult> =>
-			reencryptEmailApiKey(db, keyring),
 	);
 
 /** @public */

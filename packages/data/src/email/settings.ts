@@ -1,6 +1,5 @@
 import type {
 	EmailAvailability,
-	EmailReencryptResult,
 } from "@virtool/contracts";
 import { eq } from "drizzle-orm";
 import type { EncryptedValue, Keyring } from "../crypto/keyring";
@@ -71,7 +70,7 @@ export function resolveEmailDelivery(
 	}
 
 	return {
-		availability: settings.enabled ? "ready" : "disabled",
+		availability: "ready",
 		apiKey: decrypted.plaintext,
 		settings,
 	};
@@ -192,58 +191,4 @@ export async function clearEmailApiKey(db: Db): Promise<EmailDeliverySettings> {
 		senderAddress: row.emailSenderAddress,
 		senderName: row.emailSenderName,
 	};
-}
-
-/** Re-encrypt the stored API key under the active encryption key. */
-export async function reencryptEmailApiKey(
-	db: Db,
-	keyring: Keyring,
-): Promise<EmailReencryptResult> {
-	await getSettings(db);
-
-	return db.transaction(async (tx) => {
-		const row = takeFirstOrThrow(
-			await tx
-				.select({ emailApiKey: settingsTable.emailApiKey })
-				.from(settingsTable)
-				.where(eq(settingsTable.id, SETTINGS_ID))
-				.for("update"),
-		);
-
-		if (row.emailApiKey === null) {
-			return "no_key";
-		}
-
-		if (keyring.status.state !== "ready") {
-			return "unavailable";
-		}
-
-		const decrypted = keyring.decrypt(RESEND_API_KEY_PURPOSE, row.emailApiKey);
-
-		if (!decrypted.ok) {
-			return "unavailable";
-		}
-
-		if (keyring.isCurrent(row.emailApiKey)) {
-			return "already_current";
-		}
-
-		const encrypted = keyring.encrypt(
-			RESEND_API_KEY_PURPOSE,
-			decrypted.plaintext,
-		);
-
-		if (!encrypted.ok) {
-			return "unavailable";
-		}
-
-		await tx
-			.update(settingsTable)
-			.set({
-				emailApiKey: encrypted.value,
-			})
-			.where(eq(settingsTable.id, SETTINGS_ID));
-
-		return "reencrypted";
-	});
 }

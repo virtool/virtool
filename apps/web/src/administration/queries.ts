@@ -7,7 +7,6 @@ import {
 import {
 	clearEmailApiKeyFn,
 	getEmailSettingsFn,
-	reencryptEmailApiKeyFn,
 	sendTestEmailFn,
 	setEmailApiKeyFn,
 	updateEmailSettingsFn,
@@ -22,7 +21,6 @@ import {
 	useSuspenseQuery,
 } from "@tanstack/react-query";
 import type {
-	EmailReencryptResult,
 	EmailSettings,
 	EmailTestResult,
 	Settings,
@@ -186,16 +184,6 @@ export function useClearEmailApiKey() {
 
 	return useMutation<EmailSettings, Error, void>({
 		mutationFn: () => clearEmailApiKeyFn(),
-		onSuccess: invalidate,
-	});
-}
-
-/** Re-encrypt the stored API key under the active encryption key. */
-export function useReencryptEmailApiKey() {
-	const invalidate = useEmailInvalidation();
-
-	return useMutation<EmailReencryptResult, Error, void>({
-		mutationFn: () => reencryptEmailApiKeyFn(),
 		onSuccess: invalidate,
 	});
 }

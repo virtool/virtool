@@ -115,7 +115,6 @@ describe("authorization", () => {
 		["updateEmailSettingsFn", { senderName: "Virtool" }],
 		["setEmailApiKeyFn", { apiKey: "re_secret" }],
 		["clearEmailApiKeyFn", undefined],
-		["reencryptEmailApiKeyFn", undefined],
 		["sendTestEmailFn", { recipient: "someone@example.com" }],
 	];
 
@@ -145,7 +144,7 @@ describe("getEmailSettingsFn", () => {
 		const published = await call("getEmailSettingsFn");
 
 		expect(published).toEqual({
-			availability: "disabled",
+			availability: "ready",
 			enabled: false,
 			hasApiKey: true,
 			replyToAddress: "",
@@ -234,7 +233,7 @@ describe("updateEmailSettingsFn", () => {
 		).resolves.toMatchObject({
 			enabled: false,
 			hasApiKey: true,
-			availability: "disabled",
+			availability: "ready",
 		});
 	});
 });
@@ -278,30 +277,6 @@ describe("setEmailApiKeyFn and clearEmailApiKeyFn", () => {
 			enabled: false,
 			hasApiKey: false,
 			availability: "unconfigured",
-		});
-	});
-});
-
-describe("reencryptEmailApiKeyFn", () => {
-	it("reports already_current for an envelope under the active key", async () => {
-		await signIn(db, getRequest, { administratorRole: "full" });
-		await seedConfigured();
-
-		await expect(call("reencryptEmailApiKeyFn")).resolves.toBe(
-			"already_current",
-		);
-	});
-
-	it("re-encrypts an envelope written under the previous key", async () => {
-		await signIn(db, getRequest, { administratorRole: "full" });
-
-		await seedConfigured();
-
-		keyring = createKeyring(randomBytes(32).toString("base64"), activeKey);
-
-		await expect(call("reencryptEmailApiKeyFn")).resolves.toBe("reencrypted");
-		await expect(call("getEmailSettingsFn")).resolves.toMatchObject({
-			availability: "disabled",
 		});
 	});
 });

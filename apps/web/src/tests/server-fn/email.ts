@@ -5,7 +5,6 @@ import { type Mock, vi } from "vitest";
 export const emailServerFnMocks = {
 	clearEmailApiKeyFn: vi.fn(),
 	getEmailSettingsFn: vi.fn(),
-	reencryptEmailApiKeyFn: vi.fn(),
 	sendTestEmailFn: vi.fn(),
 	setEmailApiKeyFn: vi.fn(),
 	updateEmailSettingsFn: vi.fn(),

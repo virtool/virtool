@@ -194,7 +194,6 @@ beforeEach(() => {
 		analysisServerFnMocks.blastNuvsFn,
 		settingsServerFnMocks.updateSettingsFn,
 		emailServerFnMocks.clearEmailApiKeyFn,
-		emailServerFnMocks.reencryptEmailApiKeyFn,
 		emailServerFnMocks.sendTestEmailFn,
 		emailServerFnMocks.setEmailApiKeyFn,
 		emailServerFnMocks.updateEmailSettingsFn,

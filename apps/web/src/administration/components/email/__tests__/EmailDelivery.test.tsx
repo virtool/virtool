@@ -43,17 +43,20 @@ describe("<EmailDelivery>", () => {
 
 			renderWithProviders(<EmailDelivery />);
 
-			expect(await findStatus()).toHaveTextContent("Ready");
+			expect(await findStatus()).toHaveTextContent("Active");
 		});
 
-		it("reports a configured instance that is switched off", async () => {
+		it("reports a configured instance even when sending is switched off", async () => {
 			mockEmailSettingsStore(
-				createFakeEmailSettings({ availability: "disabled", enabled: false }),
+				createFakeEmailSettings({ enabled: false }),
 			);
 
 			renderWithProviders(<EmailDelivery />);
 
 			expect(await findStatus()).toHaveTextContent("Disabled");
+			expect(
+				screen.getByText("Email is configured but sending is turned off."),
+		).toBeVisible();
 		});
 
 		it("names the fields an unconfigured instance is missing", async () => {
@@ -88,7 +91,7 @@ describe("<EmailDelivery>", () => {
 
 			const status = await findStatus();
 
-			expect(status).toHaveTextContent("Configuration error");
+			expect(status).toHaveTextContent("Configuration Error");
 			expect(status).toHaveTextContent("has not been changed");
 			expect(status).not.toHaveTextContent("needs an API key");
 		});
@@ -97,7 +100,7 @@ describe("<EmailDelivery>", () => {
 	describe("the send switch", () => {
 		it("turns delivery on for a configuration the server has resolved", async () => {
 			const { updateEmailSettings } = mockEmailSettingsStore(
-				createFakeEmailSettings({ availability: "disabled", enabled: false }),
+				createFakeEmailSettings({ enabled: false }),
 			);
 
 			renderWithProviders(<EmailDelivery />);
@@ -150,6 +153,16 @@ describe("<EmailDelivery>", () => {
 	});
 
 	describe("the sender identity", () => {
+		it("shows the sender section", async () => {
+			mockEmailSettingsStore(createFakeEmailSettings());
+
+			renderWithProviders(<EmailDelivery />);
+
+			expect(
+				await screen.findByRole("heading", { name: "Sender" }),
+			).toBeVisible();
+		});
+
 		it("saves the fields the server last returned", async () => {
 			const { updateEmailSettings } = mockEmailSettingsStore(
 				createFakeEmailSettings(),
@@ -323,25 +336,19 @@ describe("<EmailDelivery>", () => {
 			await waitFor(() => expect(clearEmailApiKey).toHaveBeenCalled());
 		});
 
-		it("reports the outcome of a re-encryption", async () => {
-			mockEmailSettingsStore(createFakeEmailSettings());
-			emailServerFnMocks.reencryptEmailApiKeyFn.mockResolvedValue(
-				"already_current",
-			);
-
-			renderWithProviders(<EmailDelivery />);
-
-			await userEvent.click(
-				await screen.findByRole("button", { name: "Re-encrypt" }),
-			);
-
-			expect(
-				await screen.findByText(/already under the active encryption key/),
-			).toBeVisible();
-		});
 	});
 
 	describe("test delivery", () => {
+		it("shows the test section", async () => {
+			mockEmailSettingsStore(createFakeEmailSettings());
+
+			renderWithProviders(<EmailDelivery />);
+
+			expect(
+				await screen.findByRole("heading", { name: "Test" }),
+			).toBeVisible();
+		});
+
 		it("reports acceptance without claiming the message arrived", async () => {
 			mockEmailSettingsStore(createFakeEmailSettings());
 			emailServerFnMocks.sendTestEmailFn.mockResolvedValue({
@@ -485,7 +492,7 @@ describe("<EmailDelivery>", () => {
 		// configuration before turning it on is the point of the test message.
 		it("is available while delivery is switched off", async () => {
 			mockEmailSettingsStore(
-				createFakeEmailSettings({ availability: "disabled", enabled: false }),
+				createFakeEmailSettings({ enabled: false }),
 			);
 
 			renderWithProviders(<EmailDelivery />);

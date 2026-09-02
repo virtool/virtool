@@ -1,16 +1,13 @@
 import { useFetchEmailSettings } from "@administration/queries";
-import ExternalLink from "@base/ExternalLink";
 import LoadingPlaceholder from "@base/LoadingPlaceholder";
 import QueryError from "@base/QueryError";
 import SectionHeader from "@base/SectionHeader";
 import { useState } from "react";
 import EmailApiKey from "./EmailApiKey";
 import EmailDeliveryStatus from "./EmailDeliveryStatus";
+import EmailDeliverySending from "./EmailDeliverySending";
 import EmailSender from "./EmailSender";
 import EmailTest from "./EmailTest";
-
-const RESEND_DOMAINS_DOCS =
-	"https://resend.com/docs/dashboard/domains/introduction";
 
 /**
  * Configure how this instance sends transactional email.
@@ -37,25 +34,43 @@ export default function EmailDelivery() {
 
 	return (
 		<section className="flex flex-col gap-4">
-			<SectionHeader className="mb-0">
+			<SectionHeader className="mb-0" level={2}>
 				<h2>Email Delivery</h2>
 				<p>
-					Send account setup, verification, and password recovery mail through
-					Resend. Delivery needs a Resend API key and a{" "}
-					<ExternalLink className="underline" href={RESEND_DOMAINS_DOCS}>
-						verified sending domain
-					</ExternalLink>
-					. While delivery is unavailable, the authentication views still offer
-					copyable setup links.
+					Send account setup, verification, and password recovery mail.
 				</p>
 			</SectionHeader>
 			<EmailDeliveryStatus settings={data} />
-			<EmailSender
-				onSaved={() => setTestResetToken((token) => token + 1)}
-				settings={data}
-			/>
-			<EmailApiKey settings={data} />
-			<EmailTest resetToken={testResetToken} settings={data} />
+			<section>
+				<SectionHeader level={3}>
+					<h3>Sending</h3>
+					<p>Choose whether queued email is sent.</p>
+				</SectionHeader>
+				<EmailDeliverySending settings={data} />
+			</section>
+			<section>
+				<SectionHeader level={3}>
+					<h3>Resend API Key</h3>
+				</SectionHeader>
+				<EmailApiKey settings={data} />
+			</section>
+			<section>
+				<SectionHeader level={3}>
+					<h3>Sender</h3>
+					<p>Configure the identity used for outgoing email.</p>
+				</SectionHeader>
+				<EmailSender
+					onSaved={() => setTestResetToken((token) => token + 1)}
+					settings={data}
+				/>
+			</section>
+			<section>
+				<SectionHeader level={3}>
+					<h3>Test</h3>
+					<p>Send a test email to verify the delivery configuration.</p>
+				</SectionHeader>
+				<EmailTest resetToken={testResetToken} settings={data} />
+			</section>
 		</section>
 	);
 }

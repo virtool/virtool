@@ -558,21 +558,24 @@ values:
   replaces what is stored, and the replaced value cannot be read back. An empty
   field is refused rather than treated as a removal — removing a key is the
   separate **Remove** action, which asks for confirmation and also switches
-  delivery off. **Re-encrypt** is step 2 of the
-  [encryption key rotation](../../docs/env.md#rotation).
+  delivery off. Encryption-key rotation is documented separately and will be
+  automated in a future change.
 - **Test delivery** sends the dedicated test template to one recipient with the
   stored configuration. It never enqueues an authentication template and never
   changes any setting. Acceptance means Resend took the message, not that it
   reached a mailbox.
 
-Four availability states render distinctly:
+Four status states render distinctly:
 
 | State | Meaning |
 | --- | --- |
-| Ready | The configuration decrypts and queued mail is being sent. |
-| Disabled | The configuration is complete and kept, but nothing is being sent. |
-| Needs configuration | An API key, a sender address, or both are still missing. |
-| Configuration error | The stored key cannot be decrypted with the encryption key this instance is running with. |
+| Active | The configuration is valid and email sending is enabled. |
+| Disabled | The configuration is valid, but email sending is turned off. |
+| Needs Configuration | An API key, a sender address, or both are still missing. |
+| Configuration Error | The stored key cannot be decrypted with the encryption key this instance is running with. |
+
+The **Sending** control is separate from the status presentation. Disabling it
+preserves the configuration but stops queued mail from being sent.
 
 A configuration error is never reported as a missing key. The stored value is
 intact and is not changed, so the fix is the encryption key rather than the API

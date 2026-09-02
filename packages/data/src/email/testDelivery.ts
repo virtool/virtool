@@ -48,7 +48,7 @@ function toFailureCode(outcome: EmailSendOutcome): EmailTestFailureCode {
  * Send the dedicated test template to `recipient` using the stored
  * configuration.
  *
- * Works while delivery is disabled — that is the point: an administrator
+ * Works while sending is disabled — that is the point: an administrator
  * validates the configuration before enabling it — and never enables anything.
  * Each call carries a fresh idempotency key, so an explicit retry really does
  * send again. The result is narrow enough for a settings UI: a bounded code the

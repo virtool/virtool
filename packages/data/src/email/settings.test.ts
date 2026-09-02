@@ -14,7 +14,6 @@ import {
 	clearEmailApiKey,
 	EmailConfigurationError,
 	getEmailSettings,
-	reencryptEmailApiKey,
 	resolveEmailDelivery,
 	setEmailApiKey,
 	updateEmailDelivery,
@@ -125,12 +124,12 @@ describe("resolveEmailDelivery", () => {
 		expect(state.apiKey).toBeNull();
 	});
 
-	it("is disabled with a decryptable key and sender while delivery is off", async () => {
+	it("is ready with a decryptable key and sender while delivery is off", async () => {
 		await seedConfigured();
 
 		const state = resolveEmailDelivery(await getEmailSettings(db), keyring);
 
-		expect(state.availability).toBe("disabled");
+		expect(state.availability).toBe("ready");
 		expect(state.apiKey).toBe("re_secret");
 	});
 
@@ -255,61 +254,5 @@ describe("setEmailApiKey and clearEmailApiKey", () => {
 
 		expect(cleared.apiKeyEnvelope).toBeNull();
 		expect(cleared.enabled).toBe(false);
-	});
-});
-
-describe("reencryptEmailApiKey", () => {
-	it("reads under the old key and rewrites under the new one", async () => {
-		const oldKey = key();
-		await seedConfigured(createKeyring(oldKey, undefined));
-		const newKey = key();
-		const rotated = createKeyring(newKey, oldKey);
-
-		await expect(reencryptEmailApiKey(db, rotated)).resolves.toBe(
-			"reencrypted",
-		);
-
-		// The old key is gone, and the envelope still reads under the new one.
-		const withoutOld = createKeyring(newKey, undefined);
-		const stored = await getEmailSettings(db);
-
-		expect(
-			stored.apiKeyEnvelope && rotated.isCurrent(stored.apiKeyEnvelope),
-		).toBe(true);
-		expect(resolveEmailDelivery(stored, withoutOld).apiKey).toBe("re_secret");
-	});
-
-	it("is idempotent: a second run reports already_current", async () => {
-		const oldKey = key();
-		await seedConfigured(createKeyring(oldKey, undefined));
-		const rotated = createKeyring(key(), oldKey);
-
-		await expect(reencryptEmailApiKey(db, rotated)).resolves.toBe(
-			"reencrypted",
-		);
-		await expect(reencryptEmailApiKey(db, rotated)).resolves.toBe(
-			"already_current",
-		);
-	});
-
-	it("reports no_key when nothing is stored", async () => {
-		await seedSettings(db);
-
-		await expect(reencryptEmailApiKey(db, keyring)).resolves.toBe("no_key");
-	});
-
-	it("reports unavailable for missing or wrong encryption keys and leaves the envelope alone", async () => {
-		await seedConfigured();
-
-		await expect(
-			reencryptEmailApiKey(db, createKeyring(undefined, undefined)),
-		).resolves.toBe("unavailable");
-		await expect(
-			reencryptEmailApiKey(db, createKeyring(key(), undefined)),
-		).resolves.toBe("unavailable");
-
-		const stored = await getEmailSettings(db);
-
-		expect(resolveEmailDelivery(stored, keyring).apiKey).toBe("re_secret");
 	});
 });

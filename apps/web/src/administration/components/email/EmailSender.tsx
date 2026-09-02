@@ -5,7 +5,6 @@ import {
 import { BoxGroup, BoxGroupSection } from "@base/Box";
 import Input, { InputError, InputGroup, InputLabel } from "@base/Input";
 import SaveButton from "@base/SaveButton";
-import Switch from "@base/Switch";
 import type { EmailSettings } from "@virtool/contracts";
 import { useForm } from "react-hook-form";
 import { getEmailErrorMessage } from "./errors";
@@ -19,13 +18,10 @@ type EmailSenderFormValues = {
 };
 
 /**
- * The identity mail is sent under, and the switch that turns delivery on.
+ * The identity mail is sent under.
  *
- * The switch is its own mutation rather than a form field, so flipping it can
- * never carry half-typed sender values along with it. It can always be turned
- * off; turning it on needs a configuration the server has already resolved,
- * which is the only state that reports as disabled rather than unconfigured or
- * broken.
+ * Saving the identity is its own mutation, so it cannot carry a half-typed API
+ * key or test recipient along with it.
  */
 export default function EmailSender({
 	onSaved,
@@ -48,29 +44,12 @@ export default function EmailSender({
 		},
 	});
 
-	const canEnable = settings.enabled || settings.availability === "disabled";
-
 	function update(values: EmailSettingsUpdate) {
 		mutation.mutate(values, { onSuccess: onSaved });
 	}
 
 	return (
 		<BoxGroup>
-			<BoxGroupSection className="flex items-center justify-between gap-5">
-				<div>
-					<h3 className="font-medium">Send email</h3>
-					<p className="text-gray-600 text-sm">
-						Turning delivery off keeps the configuration and the stored key. It
-						stops queued mail from being sent.
-					</p>
-				</div>
-				<Switch
-					aria-label="Send email"
-					checked={settings.enabled}
-					disabled={!canEnable || mutation.isPending}
-					onCheckedChange={(enabled) => update({ enabled })}
-				/>
-			</BoxGroupSection>
 			<BoxGroupSection>
 				<form onSubmit={handleSubmit(update)}>
 					<InputGroup>
