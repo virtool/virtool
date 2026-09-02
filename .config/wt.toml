@@ -1,4 +1,10 @@
 pre-start = "pnpm install"
 
+# Tear down this worktree's Tilt namespace before the worktree itself is
+# removed, so a leftover namespace does not linger on the shared Minikube
+# cluster. `|| true` keeps a stopped cluster or missing namespace from
+# blocking removal, since teardown here is best-effort cleanup.
+pre-remove = "mise run down || true"
+
 [list]
 url = "http://localhost:{{ branch | hash_port }}"
