@@ -220,7 +220,11 @@ describe("<UserDetail />", () => {
 			const form = input.closest("form") as HTMLElement;
 			await userEvent.click(within(form).getByRole("button", { name: "Save" }));
 
-			await waitFor(() => expect(updateUser).toHaveBeenCalled());
+			await waitFor(() =>
+				expect(updateUser).toHaveBeenCalledWith({
+					data: { userId: user.id, handle: "new_handle" },
+				}),
+			);
 		});
 
 		it("should show a conflict error when the handle is taken", async () => {
