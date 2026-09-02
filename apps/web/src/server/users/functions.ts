@@ -23,6 +23,7 @@ import {
 } from "@virtool/data/users/data";
 import { z } from "zod";
 import { realCookies } from "../auth/cookies";
+import { checkHandle } from "../auth/handle";
 import { getClientIp } from "../auth/ip";
 import { requireAdminRole } from "../auth/middleware";
 import { adminRole, authenticated } from "../auth/policy";
@@ -208,6 +209,7 @@ export const createUserFn = createServerFn({ method: "POST" })
 	.middleware([adminRole("users")])
 	.validator(createUserSchema)
 	.handler(async ({ data }) => {
+		checkHandle(data.handle);
 		checkReservedHandle(data.handle);
 
 		try {
@@ -239,6 +241,7 @@ export const updateUserFn = createServerFn({ method: "POST" })
 
 		const { userId, ...values } = data;
 		if (values.handle !== undefined) {
+			checkHandle(values.handle);
 			checkReservedHandle(values.handle);
 		}
 		try {
@@ -255,6 +258,7 @@ export const updateAccountHandleFn = createServerFn({ method: "POST" })
 	.middleware([authenticated()])
 	.validator(accountHandleSchema)
 	.handler(async ({ context, data }) => {
+		checkHandle(data.handle);
 		checkReservedHandle(data.handle);
 
 		try {

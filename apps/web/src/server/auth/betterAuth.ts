@@ -18,6 +18,7 @@ import { tanstackStartCookies } from "better-auth/tanstack-start";
 import { eq } from "drizzle-orm";
 import { db } from "../composition";
 import { config } from "../config";
+import { HANDLE_MAX_LENGTH, HANDLE_MIN_LENGTH, isValidHandle } from "./handle";
 
 /** Where the Better Auth handler is mounted. */
 export const AUTH_BASE_PATH = "/api/auth";
@@ -163,7 +164,15 @@ export function createAuth({
 			// display, which is exactly the split this plugin draws between the
 			// normalized `username` it matches on and the `displayUsername` it
 			// shows.
-			username(),
+			//
+			// The rule is stated once in `./handle` and enforced again where a
+			// handle is set. The plugin checks it before the user lookup, so a
+			// handle it rejects is one that could exist but never sign in.
+			username({
+				usernameValidator: isValidHandle,
+				minUsernameLength: HANDLE_MIN_LENGTH,
+				maxUsernameLength: HANDLE_MAX_LENGTH,
+			}),
 			twoFactor({
 				issuer: "Virtool",
 				// Recovery codes are not optional in this plugin — enrolling in TOTP
