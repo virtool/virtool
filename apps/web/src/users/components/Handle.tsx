@@ -8,7 +8,6 @@ import {
 import SaveButton from "@base/SaveButton";
 import SectionHeader from "@base/SectionHeader";
 import { useUpdateUser } from "@users/queries";
-import { useEffect } from "react";
 import { useForm } from "react-hook-form";
 
 type HandleProps = {
@@ -31,14 +30,7 @@ export default function Handle({ id, handle }: HandleProps) {
 		formState: { errors },
 		handleSubmit,
 		register,
-		reset,
-	} = useForm<FormValues>({ defaultValues: { handle } });
-
-	// Keep the input in sync when the handle prop changes after a successful
-	// update and refetch.
-	useEffect(() => {
-		reset({ handle });
-	}, [handle, reset]);
+	} = useForm<FormValues>({ values: { handle } });
 
 	return (
 		<section>
