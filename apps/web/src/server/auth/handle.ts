@@ -2,7 +2,7 @@ import { setResponseStatus } from "@tanstack/react-start/server";
 import { ClientError } from "../errors";
 
 /** The characters a handle may contain. */
-const HANDLE_PATTERN = /^[a-zA-Z0-9_.-]+$/;
+const HANDLE_PATTERN = /^[a-zA-Z0-9_.]+$/;
 
 /** The fewest characters a handle may have. */
 export const HANDLE_MIN_LENGTH = 3;
@@ -35,7 +35,7 @@ export function checkHandle(handle: string): void {
 	if (!isValidHandle(handle.trim())) {
 		setResponseStatus(400);
 		throw new ClientError(
-			`User name must have ${HANDLE_MIN_LENGTH} to ${HANDLE_MAX_LENGTH} characters, and use only letters, numbers, and _ . -`,
+			`User name must have ${HANDLE_MIN_LENGTH} to ${HANDLE_MAX_LENGTH} characters, and use only letters, numbers, and _ .`,
 		);
 	}
 }
