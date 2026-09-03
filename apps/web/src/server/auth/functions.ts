@@ -16,6 +16,7 @@ import {
 	PasswordReuseError,
 	resetPassword,
 } from "./core";
+import { checkHandle, checkReservedHandle } from "./handle";
 import { getClientIp } from "./ip";
 import { open } from "./policy";
 import { checkConfiguredPasswordLength } from "./service";
@@ -79,6 +80,9 @@ export const createFirstUserFn = createServerFn({ method: "POST" })
 	.middleware([open()])
 	.validator(createFirstUserSchema)
 	.handler(async ({ data }) => {
+		checkHandle(data.handle);
+		checkReservedHandle(data.handle);
+
 		try {
 			await checkConfiguredPasswordLength(db, data.password);
 

@@ -72,6 +72,31 @@ Current integrations are:
 The resolver and its precedence tests live in `packages/contracts/src/env.ts`
 and `packages/contracts/src/env.test.ts`.
 
+## Authentication
+
+Interactive authentication is Better Auth's, and it needs two values that have
+no safe default:
+
+| Variable | Value |
+| --- | --- |
+| `VT_PUBLIC_ORIGIN` | The one public origin the instance is served on, scheme and host only, such as `https://virtool.example`. |
+| `VT_AUTH_SECRET` | At least 32 characters. Generate with `openssl rand -base64 32`. |
+
+Both accept `_FILE` variants. Configure them for `apps/web`.
+
+`VT_PUBLIC_ORIGIN` is deliberately not inferred from the request `Host` or
+forwarded headers. WebAuthn binds a passkey to the configured origin and Relying
+Party ID, whose hostname is derived from that origin. Moving an instance to a
+new domain invalidates passkeys registered under the old one.
+
+Plain `http` is rejected except on `localhost`. The loopback addresses are
+secure contexts as well, but an RP ID must be a domain and no browser accepts an
+IP literal as one, so an origin such as `http://127.0.0.1:5173` could never
+register a passkey. Use `http://localhost` in development.
+
+Changing `VT_AUTH_SECRET` invalidates every Better Auth session and makes stored
+recovery codes undecryptable, so rotate it deliberately.
+
 ## Encryption key
 
 Secrets managed by Virtool are stored in Postgres in purpose-bound AES-256-GCM

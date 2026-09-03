@@ -8,10 +8,48 @@ const DEFAULT_POSTGRES_POOL_MAX = 10;
 /** How many blocks a chunked upload PUTs at once when unconfigured. */
 const DEFAULT_UPLOADS_CHUNKED_CONCURRENCY = 8;
 
+/** The shortest `VT_AUTH_SECRET` accepted, in characters. */
+const MINIMUM_AUTH_SECRET_LENGTH = 32;
+
+/**
+ * Hosts allowed to serve this instance over plain HTTP.
+ *
+ * Everywhere else must be HTTPS: WebAuthn refuses a non-secure context, and a
+ * session cookie sent in the clear is a session anyone on the path can take.
+ * `localhost` is the secure-context exception browsers already make, which is
+ * what lets local development and the test suite run without a certificate.
+ *
+ * The loopback addresses are secure contexts too, but they are excluded: the
+ * WebAuthn RP ID is this origin's hostname, an RP ID must be a domain, and no
+ * browser accepts an IP literal as one. Allowing them would produce an origin
+ * that starts but on which no passkey can ever register.
+ */
+const INSECURE_ORIGIN_HOSTS: ReadonlySet<string> = new Set(["localhost"]);
+
 /** Server-side configuration parsed from process.env. */
 export type ServerConfig = {
 	postgresUrl: string;
 	postgresPoolMax: number;
+	/**
+	 * The one public origin this instance is reached on, normalized to scheme,
+	 * host and port. Better Auth builds its callback URLs from it and WebAuthn
+	 * validates ceremony origins against it.
+	 *
+	 * It is configured rather than inferred from `Host` or the forwarded headers,
+	 * because an attacker controls those and WebAuthn's origin check is the only
+	 * thing standing between a passkey and the site that phished it.
+	 */
+	publicOrigin: string;
+	/**
+	 * The WebAuthn Relying Party ID: the hostname of {@link publicOrigin}.
+	 *
+	 * Derived rather than configured. A credential is bound to the RP ID it was
+	 * registered under, so an RP ID that disagreed with the origin would register
+	 * passkeys that never authenticate.
+	 */
+	webauthnRpId: string;
+	/** Signs and encrypts the authentication state Better Auth issues. */
+	authSecret: string;
 	metricsToken: string | undefined;
 	/**
 	 * Server-side Sentry DSN.
@@ -59,6 +97,14 @@ const ServerEnv = z.object({
 		(value) => (value === "" ? undefined : value),
 		z.coerce.number().int().positive().optional(),
 	),
+	// Validated and normalized by `buildPublicOrigin` below, which is where the
+	// scheme, path and credential rules live.
+	VT_PUBLIC_ORIGIN: z.string().min(1),
+	// Better Auth derives every signing and encryption key it uses from this, so
+	// a short value weakens all of them at once.
+	VT_AUTH_SECRET: z.string().min(MINIMUM_AUTH_SECRET_LENGTH, {
+		message: `VT_AUTH_SECRET must be at least ${MINIMUM_AUTH_SECRET_LENGTH} characters`,
+	}),
 	// Gates the Prometheus scrape endpoint. Unset — or empty, which deployment
 	// tooling injects for a value it has nothing to put in — leaves `/metrics`
 	// returning 404, so upgrading never starts exposing internals by surprise.
@@ -131,19 +177,31 @@ const ServerEnv = z.object({
 
 type StorageEnv = z.infer<typeof ServerEnv>;
 
-const ServerEnvSchema = ServerEnv.transform((raw, ctx) => ({
-	postgresUrl: raw.VT_POSTGRES_URL,
-	postgresPoolMax: raw.VT_POSTGRES_POOL_MAX ?? DEFAULT_POSTGRES_POOL_MAX,
-	metricsToken: raw.VT_METRICS_TOKEN,
-	sentryDsn: raw.VT_SENTRY_DSN,
-	encryptionKey: raw.VT_ENCRYPTION_KEY,
-	encryptionKeyPrevious: raw.VT_ENCRYPTION_KEY_PREVIOUS,
-	storage: buildStorage(raw, ctx),
-	downloadMode: raw.VT_STORAGE_DOWNLOAD_MODE,
-	uploadsChunked: raw.VT_UPLOADS_CHUNKED,
-	uploadsChunkedConcurrency:
-		raw.VT_UPLOADS_CHUNKED_CONCURRENCY ?? DEFAULT_UPLOADS_CHUNKED_CONCURRENCY,
-}));
+const ServerEnvSchema = ServerEnv.transform((raw, ctx) => {
+	// Parsed once and read twice: the origin Better Auth builds callbacks from
+	// and the RP ID WebAuthn validates against are the same value, and deriving
+	// the second from the first is what keeps them from ever disagreeing.
+	const publicOrigin = parsePublicOrigin(raw, ctx);
+
+	return {
+		postgresUrl: raw.VT_POSTGRES_URL,
+		postgresPoolMax: raw.VT_POSTGRES_POOL_MAX ?? DEFAULT_POSTGRES_POOL_MAX,
+		publicOrigin: publicOrigin ? publicOrigin.origin : z.NEVER,
+		// `hostname` rather than `host`: the RP ID is a domain, and a port in it
+		// makes every registration fail validation.
+		webauthnRpId: publicOrigin ? publicOrigin.hostname : z.NEVER,
+		authSecret: raw.VT_AUTH_SECRET,
+		metricsToken: raw.VT_METRICS_TOKEN,
+		sentryDsn: raw.VT_SENTRY_DSN,
+		encryptionKey: raw.VT_ENCRYPTION_KEY,
+		encryptionKeyPrevious: raw.VT_ENCRYPTION_KEY_PREVIOUS,
+		storage: buildStorage(raw, ctx),
+		downloadMode: raw.VT_STORAGE_DOWNLOAD_MODE,
+		uploadsChunked: raw.VT_UPLOADS_CHUNKED,
+		uploadsChunkedConcurrency:
+			raw.VT_UPLOADS_CHUNKED_CONCURRENCY ?? DEFAULT_UPLOADS_CHUNKED_CONCURRENCY,
+	};
+});
 
 // Unset and empty are the same thing for storage variables. Deployment tooling
 // routinely injects an empty string for a value it has nothing to put in, and
@@ -170,6 +228,58 @@ function requirePresent(
 	});
 
 	return false;
+}
+
+/**
+ * Parse `VT_PUBLIC_ORIGIN` into a bare origin, or report why it is not one.
+ *
+ * Anything beyond scheme, host and port is rejected rather than discarded, so
+ * callbacks and WebAuthn cannot silently use a different origin than configured.
+ */
+function parsePublicOrigin(
+	raw: StorageEnv,
+	ctx: z.RefinementCtx,
+): URL | undefined {
+	function reject(message: string): undefined {
+		ctx.addIssue({
+			code: "custom",
+			path: ["VT_PUBLIC_ORIGIN"],
+			message: `VT_PUBLIC_ORIGIN ${message}`,
+		});
+		return undefined;
+	}
+
+	let url: URL;
+
+	try {
+		url = new URL(raw.VT_PUBLIC_ORIGIN);
+	} catch {
+		return reject("must be an absolute URL, such as https://virtool.example");
+	}
+
+	if (url.protocol !== "https:" && url.protocol !== "http:") {
+		return reject("must use http or https");
+	}
+
+	if (url.username || url.password) {
+		return reject("must not contain credentials");
+	}
+
+	if (url.search || url.hash) {
+		return reject("must not contain a query string or fragment");
+	}
+
+	if (url.pathname !== "/") {
+		return reject("must not contain a path");
+	}
+
+	if (url.protocol === "http:" && !INSECURE_ORIGIN_HOSTS.has(url.hostname)) {
+		return reject(
+			`must use https outside ${[...INSECURE_ORIGIN_HOSTS].join(", ")}`,
+		);
+	}
+
+	return url;
 }
 
 function buildStorage(raw: StorageEnv, ctx: z.RefinementCtx): StorageConfig {

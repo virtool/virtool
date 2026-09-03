@@ -104,6 +104,41 @@ describe("createLogger", () => {
 		expect(row.resetCode).toBe("[redacted]");
 	});
 
+	it("redacts Better Auth two-factor and passkey material", () => {
+		const sink = makeSink();
+		const log = createLogger({
+			name: "web",
+			level: "info",
+			destination: sink.stream,
+		});
+
+		log.info(
+			{
+				// The TOTP secret rides on the existing `secret` path.
+				secret: "JBSWY3DPEHPK3PXP",
+				challenge: "ch",
+				row: {
+					backupCodes: "bc",
+					backup_codes: "b_c",
+					recoveryCodes: "rc",
+					publicKey: "pk",
+					public_key: "p_k",
+				},
+			},
+			"enrolled",
+		);
+
+		const [record] = sink.records();
+		expect(record.secret).toBe("[redacted]");
+		expect(record.challenge).toBe("[redacted]");
+		const row = record.row as Record<string, string>;
+		expect(row.backupCodes).toBe("[redacted]");
+		expect(row.backup_codes).toBe("[redacted]");
+		expect(row.recoveryCodes).toBe("[redacted]");
+		expect(row.publicKey).toBe("[redacted]");
+		expect(row.public_key).toBe("[redacted]");
+	});
+
 	it("merges caller-supplied redact paths with the defaults", () => {
 		const sink = makeSink();
 		const log = createLogger({
