@@ -548,8 +548,9 @@ The section is four independent forms, so no action can submit another's
 values:
 
 - **Send email** switches delivery on and off on its own. Turning it off keeps
-  the stored key and every other setting; it only stops queued mail from being
-  sent. Turning it on needs a configuration the server has already resolved.
+  the stored key and every other setting; it stops new mail entering the outbox,
+  and mail queued before the switch is still sent. Turning it on needs a
+  configuration the server has already resolved.
 - **Sender identity** saves the sender name, the sender address, and an optional
   reply-to address. An empty reply-to sends replies to the sender address. The
   server validates authoritatively and the fields re-render from its response.
@@ -575,7 +576,8 @@ Four status states render distinctly:
 | Configuration Error | The stored key cannot be decrypted with the encryption key this instance is running with. |
 
 The **Sending** control is separate from the status presentation. Disabling it
-preserves the configuration but stops queued mail from being sent.
+preserves the configuration and discards new mail rather than holding it. The
+backlog queued before the switch still goes out.
 
 A configuration error is never reported as a missing key. The stored value is
 intact and is not changed, so the fix is the encryption key rather than the API
