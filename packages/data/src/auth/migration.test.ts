@@ -165,6 +165,21 @@ describe("classification", () => {
 		expect(classificationOf(report, userId)).toBe("invalidPassword");
 		expect(await readCredentials(userId)).toHaveLength(0);
 	});
+
+	it("reports a handle Better Auth cannot authenticate", async () => {
+		const userId = await seedUser(db, {
+			handle: "not valid",
+			email: "alice@example.com",
+			password: legacyPassword(),
+		});
+
+		const report = await apply();
+
+		expect(report.counts.invalidHandle).toEqual({ active: 1, deactivated: 0 });
+		expect(classificationOf(report, userId)).toBe("invalidHandle");
+		expect(await readCredentials(userId)).toHaveLength(0);
+		expect((await readUser(userId))?.authMigratedAt).toBeNull();
+	});
 });
 
 describe("audit", () => {
