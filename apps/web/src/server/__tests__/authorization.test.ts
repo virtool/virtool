@@ -48,6 +48,11 @@ vi.mock("@virtool/data/events/emit", () => ({
 
 const { UnauthorizedError } = await import("../auth/middleware");
 const { authenticationExceptions } = await import("../auth/exceptions");
+const { setupEndpoints } = await import("../auth/setupExceptions");
+const { seedSetupSession, seedUser } = await import(
+	"@virtool/data/auth/test/fixtures"
+);
+const { setupSessionCookie } = await import("../auth/test/fixtures");
 
 /**
  * Every module that defines server functions, paired with the split module
@@ -217,8 +222,12 @@ beforeEach(() => {
 });
 
 const openUrls = new Set(authenticationExceptions.map((fn) => fn.url));
+const setupUrls = new Set(setupEndpoints.map(({ fn }) => fn.url));
 
-/** Every exported server function, paired with whether it is declared open. */
+/**
+ * Every exported server function, paired with which of the three reaches it:
+ * anyone, an application session, or a restricted setup principal.
+ */
 const endpoints = MODULES.flatMap(({ fns, handlers, path }) =>
 	Object.entries(fns as Record<string, unknown>).flatMap((entry) => {
 		const [name, value] = entry;
@@ -230,7 +239,15 @@ const endpoints = MODULES.flatMap(({ fns, handlers, path }) =>
 			return [];
 		}
 
-		return [{ handlers, isOpen: openUrls.has(url), name, path }];
+		return [
+			{
+				handlers,
+				isOpen: openUrls.has(url),
+				isSetup: setupUrls.has(url),
+				name,
+				path,
+			},
+		];
 	}),
 );
 
@@ -292,6 +309,86 @@ describe("the open endpoints are reachable without a session", () => {
 	it.each(open.map((endpoint) => [endpoint.name, endpoint] as const))(
 		"%s is not refused for want of a session",
 		async (_name, endpoint) => {
+			const error = await callServerFn(
+				endpoint.handlers,
+				endpoint.name,
+				undefined,
+			).then(
+				() => null,
+				(err: unknown) => err,
+			);
+
+			expect(error).not.toBeInstanceOf(UnauthorizedError);
+		},
+	);
+});
+
+/**
+ * Point the request at a restricted setup credential and nothing else.
+ *
+ * A restricted caller holds neither half of the session cookie pair, which is
+ * why every policy below refuses them without knowing the concept exists.
+ */
+let restrictedUsers = 0;
+
+async function restrictNextCall(): Promise<void> {
+	// A distinct handle per call: `users.handle` is unique case-insensitively
+	// and this runs once per endpoint.
+	restrictedUsers += 1;
+	const userId = await seedUser(db, {
+		handle: `pending${restrictedUsers}`,
+		lifecycleState: "pending",
+	});
+	const session = await seedSetupSession(db, userId, "account_completion");
+
+	getRequest.mockReturnValue(
+		new Request("https://virtool.test/_serverFn/test", {
+			headers: { cookie: setupSessionCookie(session) },
+		}),
+	);
+}
+
+// The other half of the setup boundary. The global middleware refuses a
+// restricted caller anything outside `setupEndpoints` before a policy runs;
+// this proves each policy refuses them on its own too, so the two are not one
+// mistake away from an in-progress setup becoming an ordinary session.
+describe("every server function refuses a restricted setup principal", () => {
+	const guarded = endpoints.filter(
+		(endpoint) => !endpoint.isOpen && !endpoint.isSetup,
+	);
+
+	it.each(guarded.map((endpoint) => [endpoint.name, endpoint] as const))(
+		"%s rejects a restricted caller",
+		async (_name, endpoint) => {
+			await restrictNextCall();
+
+			await expect(
+				callServerFn(endpoint.handlers, endpoint.name, undefined),
+			).rejects.toBeInstanceOf(UnauthorizedError);
+		},
+	);
+});
+
+describe("the setup endpoints are the only ones a restricted caller reaches", () => {
+	const setup = endpoints.filter((endpoint) => endpoint.isSetup);
+
+	// A url in `setupEndpoints` that matches no exported server function is a
+	// stale entry widening the allowlist for nothing.
+	//
+	// The other direction needs no assertion of its own: a function declaring
+	// `setupOnly()` but left out of the list would not refuse the restricted
+	// caller above, and fails there by name.
+	it("resolves every declared entry to an exported server function", () => {
+		expect(setup).toHaveLength(setupEndpoints.length);
+	});
+
+	// They may fail on validation or on missing data — they must not fail for
+	// want of a credential they were never going to be given.
+	it.each(setup.map((endpoint) => [endpoint.name, endpoint] as const))(
+		"%s is not refused for want of an application session",
+		async (_name, endpoint) => {
+			await restrictNextCall();
+
 			const error = await callServerFn(
 				endpoint.handlers,
 				endpoint.name,

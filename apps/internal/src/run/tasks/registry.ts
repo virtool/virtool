@@ -4,6 +4,7 @@ import type { StorageBackend } from "@virtool/storage";
 import type { CompleteTaskRegistry } from "../framework/define";
 import type { Metrics } from "../metrics/registry";
 import { cleanupSessionsTask } from "./cleanup-sessions";
+import { cleanupSetupStateTask } from "./cleanup-setup-state";
 import { cloneReferenceTask } from "./clone-reference";
 import { createIndexTask } from "./create-index";
 import { deliverEmailTask } from "./deliver-email";
@@ -45,6 +46,7 @@ export type TaskContext = {
  */
 export const taskRegistry: CompleteTaskRegistry<TaskContext> = {
 	cleanup_sessions: cleanupSessionsTask,
+	cleanup_setup_state: cleanupSetupStateTask,
 	clone_reference: cloneReferenceTask,
 	create_index: createIndexTask,
 	deliver_email: deliverEmailTask,

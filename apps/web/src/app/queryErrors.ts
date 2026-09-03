@@ -2,6 +2,7 @@ import { endSession } from "@app/session";
 import * as Sentry from "@sentry/tanstackstart-react";
 import {
 	FORBIDDEN_ERROR_NAME,
+	SETUP_REQUIRED_ERROR_NAME,
 	UNAUTHORIZED_ERROR_NAME,
 } from "@virtool/contracts";
 
@@ -72,7 +73,10 @@ function reportContractDrift(error: Error): void {
 // ShallowErrorPlugin, so a 401 is matched by name here.
 //
 // A 403 is deliberately not handled: the session is valid, the user just lacks
-// the role, so bouncing them to the login wall would be wrong.
+// the role, so bouncing them to the login wall would be wrong. Nor is a
+// `SetupRequiredError`, for a stronger version of the same reason — the caller
+// holds a live setup credential, and ending their session would take it with
+// it and strand them part-way through a flow.
 export function handleQueryError(error: Error): void {
 	if (error.name === UNAUTHORIZED_ERROR_NAME) {
 		endSession();
@@ -102,7 +106,8 @@ export function shouldRetryQuery(
 	// /login.
 	if (
 		error.name === UNAUTHORIZED_ERROR_NAME ||
-		error.name === FORBIDDEN_ERROR_NAME
+		error.name === FORBIDDEN_ERROR_NAME ||
+		error.name === SETUP_REQUIRED_ERROR_NAME
 	) {
 		return false;
 	}

@@ -1,16 +1,23 @@
 import { createMiddleware, createServerOnlyFn } from "@tanstack/react-start";
-import { setResponseStatus } from "@tanstack/react-start/server";
+import { getRequest, setResponseStatus } from "@tanstack/react-start/server";
 import {
 	AdministratorPermissions,
 	type AdministratorRoleName,
 	hasSufficientAdminRole,
 	type Permission,
+	type RestrictedSetup,
+	type SetupPurpose,
 } from "@virtool/contracts";
 import { groups, userGroups } from "@virtool/data/db/schema/groups";
 import { users } from "@virtool/data/db/schema/users";
 import { eq } from "drizzle-orm";
 import { db } from "../composition";
-import { ForbiddenError, requireSession } from "./middleware";
+import {
+	ForbiddenError,
+	requireSession,
+	UnauthorizedError,
+} from "./middleware";
+import { resolveRestrictedSetup } from "./restricted";
 import type { AuthenticatedSession } from "./verify";
 
 // Every server function declares one of the policies below with `.middleware()`.
@@ -29,7 +36,10 @@ import type { AuthenticatedSession } from "./verify";
 
 // The global authentication middleware has already resolved the session and put
 // it here. Reusing it keeps an authenticated call to a single session lookup.
-type UpstreamContext = { session?: AuthenticatedSession | null };
+type UpstreamContext = {
+	session?: AuthenticatedSession | null;
+	restricted?: RestrictedSetup | null;
+};
 
 // Absent only in tests, which run a handler without the global middleware.
 const resolveSession = createServerOnlyFn(
@@ -42,6 +52,25 @@ const forbid = createServerOnlyFn((): never => {
 	setResponseStatus(403);
 	throw new ForbiddenError();
 });
+
+// Absent only in tests, which run a handler without the global middleware.
+//
+// 401, not 403: with no restricted credential resolved there is no caller to
+// forbid, and this is the answer every other policy gives an anonymous call.
+const resolveRestricted = createServerOnlyFn(
+	async (context: unknown): Promise<RestrictedSetup> => {
+		const restricted =
+			(context as UpstreamContext).restricted ??
+			(await resolveRestrictedSetup(getRequest()));
+
+		if (!restricted) {
+			setResponseStatus(401);
+			throw new UnauthorizedError();
+		}
+
+		return restricted;
+	},
+);
 
 /**
  * Whether the user holds `name` — through the union of their groups'
@@ -161,6 +190,40 @@ export function permission(name: Permission) {
 			}
 
 			return next({ context: { session } });
+		},
+	);
+}
+
+/**
+ * Callable only by a restricted setup principal whose credential is for
+ * `purpose`, and by nobody else.
+ *
+ * The counterpart to the global middleware's allowlist, and both are required.
+ * The middleware decides whether a restricted caller may reach this function
+ * at all; this decides whether the purpose they hold is the one the function
+ * completes, so an `email_remediation` credential cannot be spent on a TOTP
+ * enrollment endpoint.
+ *
+ * An ordinary authenticated user is refused too. Reaching a setup surface
+ * means a transition is outstanding, and for a user who has completed setup
+ * none is — offering them one would be offering a second way to change a
+ * credential they can already change through their account.
+ *
+ * A function declaring this must appear in `./setupExceptions`, and one that
+ * appears there must declare it. `authorization.test.ts` pins both directions.
+ *
+ * @public
+ */
+export function setupOnly(purpose: SetupPurpose) {
+	return createMiddleware({ type: "function" }).server(
+		async ({ context, next }) => {
+			const restricted = await resolveRestricted(context);
+
+			if (restricted.purpose !== purpose) {
+				forbid();
+			}
+
+			return next({ context: { restricted } });
 		},
 	);
 }

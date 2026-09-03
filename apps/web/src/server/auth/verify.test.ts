@@ -62,6 +62,15 @@ describe("verifyAuthenticatedSession", () => {
 		expect(await verifyAuthenticatedSession(db, sessionId, token)).toBeNull();
 	});
 
+	// An account that has not completed setup is not an application principal,
+	// whatever session row happens to name it.
+	it("rejects a session whose user is still pending", async () => {
+		const userId = await seedUser(db, { lifecycleState: "pending" });
+		const { sessionId, token } = await seedSession(db, userId);
+
+		expect(await verifyAuthenticatedSession(db, sessionId, token)).toBeNull();
+	});
+
 	it("rejects a session deactivated after it was issued", async () => {
 		const userId = await seedUser(db);
 		const { sessionId, token } = await seedSession(db, userId);
@@ -293,6 +302,16 @@ describe("verifyApiKey", () => {
 			userId,
 			keyPermissions: { ...emptyPermissions(), upload_file: true },
 		});
+	});
+
+	// A restricted setup credential must never turn into a machine one.
+	it("rejects a key whose owner is still pending", async () => {
+		const userId = await seedUser(db);
+		const key = await seedApiKey(db, userId);
+
+		await db.update(users).set({ lifecycleState: "pending", password: null });
+
+		expect(await verifyApiKey(db, "alice", key)).toBeNull();
 	});
 
 	it("rejects an unknown handle", async () => {

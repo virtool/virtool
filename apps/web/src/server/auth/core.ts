@@ -8,6 +8,7 @@ import {
 	invalidateSession,
 	invalidateUserSessions,
 } from "@virtool/data/auth/session";
+import { invalidateSetupSession } from "@virtool/data/auth/setup";
 import type { Db } from "@virtool/data/db/pg";
 import { sessions } from "@virtool/data/db/schema/sessions";
 import { users } from "@virtool/data/db/schema/users";
@@ -152,7 +153,12 @@ export async function login(
 		.where(sql`lower(${users.handle}) = ${handle}`)
 		.limit(1);
 
-	if (!user?.active) {
+	// An account that has not completed setup is refused here too, and with the
+	// same answer. It has no password to verify against — the two conditions
+	// cannot come apart, which `pending_has_no_password` is what holds — and
+	// that an invitation is outstanding is not something an unauthenticated
+	// caller should be able to read off a login response.
+	if (!user?.active || user.lifecycleState !== "normal" || !user.password) {
 		await verifyPassword(input.password, TIMING_DUMMY_HASH);
 		throw new InvalidCredentialsError();
 	}
@@ -183,17 +189,31 @@ export async function login(
 }
 
 /**
- * Delete the session named by the `session_id` cookie and clear both cookies.
+ * Delete the session named by the `session_id` cookie, delete the restricted
+ * setup session named by the `setup_session_id` cookie, and clear every one of
+ * those cookies.
  *
  * Safe to call with no session, or with a stale one: the cookies are cleared
  * either way, which is why `logoutFn` is exempt from authentication.
+ *
+ * This is also the abandon path for a setup flow. A holder who walks away from
+ * an invitation or an enrollment has to be able to drop the credential, and
+ * doing it here means there is one way to end a browser's authority rather
+ * than one per kind.
  */
 export async function logout(db: Db, cookies: CookieAdapter): Promise<void> {
 	const sessionId = cookies.getSessionId();
 	if (sessionId) {
 		await invalidateSession(db, sessionId);
 	}
+
+	const setupSessionId = cookies.getSetupSessionId();
+	if (setupSessionId) {
+		await invalidateSetupSession(db, setupSessionId);
+	}
+
 	cookies.clear();
+	cookies.clearSetup();
 }
 
 /** Inputs to complete a forced-reset password change. */
@@ -275,7 +295,10 @@ export async function resetPassword(
 		.where(eq(users.id, userId))
 		.limit(1);
 
-	if (!user) {
+	// A null password means the account never completed setup, so there is no
+	// forced reset to be part-way through. Nothing can mint a reset session for
+	// one — `login` refuses it before that — so this is a floor.
+	if (!user?.password) {
 		throw new InvalidResetSessionError();
 	}
 

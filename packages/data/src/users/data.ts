@@ -1,5 +1,6 @@
 import {
 	type Account,
+	type AccountLifecycleState,
 	type AccountSettings,
 	type AdministratorRoleName,
 	emptyPermissions,
@@ -96,6 +97,15 @@ export type FindUsersFilters = {
 	perPage?: number;
 	administrator?: boolean;
 	active?: boolean;
+	/**
+	 * Which lifecycle states to return. Defaults to `"normal"`, so a caller
+	 * that has not thought about pending accounts does not publish them.
+	 *
+	 * `"any"` is for the user administration views, which are the one place a
+	 * pending account has to be visible — an administrator needs to see the
+	 * invitation they issued and to be able to re-issue it.
+	 */
+	lifecycleState?: AccountLifecycleState | "any";
 };
 
 /** Values accepted when creating a user. */
@@ -104,6 +114,13 @@ export type CreateUserValues = {
 	password: string;
 	forceReset: boolean;
 	administratorRole?: AdministratorRoleName | null;
+};
+
+/** Values accepted when creating a pending user. */
+export type CreatePendingUserValues = {
+	handle: string;
+	administratorRole?: AdministratorRoleName | null;
+	groups?: number[];
 };
 
 /** Partial values accepted when updating a user. */
@@ -152,6 +169,12 @@ export class UserConflictError extends AppError {}
 
 /** Thrown when a primary group is set to a group the user does not belong to. */
 export class GroupMembershipError extends AppError {}
+
+/**
+ * Thrown when an operation that assumes a usable account is aimed at one that
+ * has not completed setup.
+ */
+export class PendingAccountError extends AppError {}
 
 // The settings every newly created account starts with, and the fallback for
 // any key a stored blob is missing.
@@ -263,6 +286,7 @@ function buildUser(row: UserRow, memberships: GroupMembershipRow[]): User {
 		forceReset: row.forceReset,
 		groups,
 		lastPasswordChange: row.lastPasswordChange,
+		lifecycleState: row.lifecycleState,
 		permissions: mergePermissions(
 			memberships.map((membership) => membership.permissions),
 		),
@@ -299,12 +323,19 @@ export async function getUserCount(db: Db): Promise<number> {
 	return row?.value ?? 0;
 }
 
-/** List every active user, for populating selectors and filters. */
+/**
+ * List every usable user, for populating selectors and filters.
+ *
+ * Pending accounts are left out. This answers "who can something be assigned
+ * to", and an account that cannot sign in yet is not an answer to that.
+ */
 export async function listUsers(db: Db): Promise<UserNested[]> {
 	return db
 		.select({ id: usersTable.id, handle: usersTable.handle })
 		.from(usersTable)
-		.where(eq(usersTable.active, true))
+		.where(
+			and(eq(usersTable.active, true), eq(usersTable.lifecycleState, "normal")),
+		)
 		.orderBy(asc(sql`lower(${usersTable.handle})`));
 }
 
@@ -318,9 +349,13 @@ export async function findUsers(
 		perPage = 25,
 		administrator,
 		active = true,
+		lifecycleState = "normal",
 	} = filters;
 
 	const conditions = [eq(usersTable.active, active)];
+	if (lifecycleState !== "any") {
+		conditions.push(eq(usersTable.lifecycleState, lifecycleState));
+	}
 	if (administrator === true) {
 		conditions.push(isNotNull(usersTable.administratorRole));
 	}
@@ -444,7 +479,16 @@ export async function changePassword(
 		throw new UserNotFoundError();
 	}
 
-	if (!(await verifyPassword(oldPassword, existing.password))) {
+	// A pending account has no password to verify against and no session to
+	// have reached this from. Reported as a bad credential rather than as a
+	// lifecycle state, which is all the caller of a password form needs.
+	if (existing.password === null) {
+		throw new InvalidPasswordError();
+	}
+
+	const currentPassword = existing.password;
+
+	if (!(await verifyPassword(oldPassword, currentPassword))) {
 		throw new InvalidPasswordError();
 	}
 
@@ -477,7 +521,7 @@ export async function changePassword(
 			.where(
 				and(
 					eq(usersTable.id, userId),
-					eq(usersTable.password, existing.password),
+					eq(usersTable.password, currentPassword),
 				),
 			)
 			.returning({ id: usersTable.id });
@@ -511,6 +555,69 @@ export async function getAdministratorRole(
 		.limit(1);
 
 	return row?.administratorRole ?? null;
+}
+
+/**
+ * Create an account that exists but cannot yet be signed in as.
+ *
+ * The handle, the administrator role and the group memberships are all set
+ * here, so an administrator states who the person is and what they may do at
+ * the moment of invitation rather than after they accept. What is missing is
+ * the credential: `password` stays null and `lifecycle_state` is `pending`,
+ * which the `pending_has_no_password` constraint holds together.
+ *
+ * No password is generated and none is transmitted. Completing the account is
+ * `completeAccountSetup`'s job, authorized by a setup token.
+ *
+ * `active` is left at its default of true. Activation is the administrator's
+ * separate switch, and a pending account is already unusable — conflating the
+ * two would make deactivating an invited user indistinguishable from never
+ * having invited them.
+ */
+export async function createPendingUser(
+	db: Db,
+	values: CreatePendingUserValues,
+): Promise<User> {
+	const groupIds = Array.from(new Set(values.groups ?? []));
+
+	try {
+		const userId = await db.transaction(async (tx) => {
+			const row = takeFirstOrThrow(
+				await tx
+					.insert(usersTable)
+					.values({
+						handle: values.handle,
+						lifecycleState: "pending",
+						administratorRole: values.administratorRole ?? null,
+						lastPasswordChange: new Date(),
+						legacyId: null,
+						settings: toStoredAccountSettings(DEFAULT_USER_SETTINGS),
+					})
+					.returning({ id: usersTable.id }),
+			);
+
+			if (groupIds.length > 0) {
+				await tx.insert(userGroupsTable).values(
+					groupIds.map((groupId) => ({
+						userId: row.id,
+						groupId,
+						primary: false,
+					})),
+				);
+			}
+
+			return row.id;
+		});
+
+		await emit("users", userId, "create");
+
+		return getUser(db, userId);
+	} catch (error) {
+		if (isUniqueViolation(error)) {
+			throw new UserConflictError();
+		}
+		throw error;
+	}
 }
 
 export async function createUser(
@@ -552,13 +659,25 @@ export async function updateUser(
 	values: UserUpdateValues,
 ): Promise<User> {
 	const [existing] = await db
-		.select({ id: usersTable.id })
+		.select({
+			id: usersTable.id,
+			lifecycleState: usersTable.lifecycleState,
+		})
 		.from(usersTable)
 		.where(eq(usersTable.id, userId))
 		.limit(1);
 
 	if (!existing) {
 		throw new UserNotFoundError();
+	}
+
+	// Setting a password on a pending account would complete its setup without
+	// the token that authorizes the transition, and leave a `pending` row
+	// carrying a credential the `pending_has_no_password` constraint forbids.
+	// Refused here so the caller gets a stated reason rather than a check
+	// violation.
+	if (values.password !== undefined && existing.lifecycleState === "pending") {
+		throw new PendingAccountError();
 	}
 
 	// Changing credentials or activation revokes every existing session for the

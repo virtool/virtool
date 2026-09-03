@@ -23,8 +23,9 @@ export type AuthenticatedSession = {
 /**
  * Resolve an authenticated session from cookie values. Returns `null` for any
  * non-fatal failure (missing cookies, unknown session, wrong type, expired,
- * deactivated user, or token mismatch) so callers can respond with a single 401
- * without leaking which check failed.
+ * deactivated user, an account that has not completed setup, or token
+ * mismatch) so callers can respond with a single 401 without leaking which
+ * check failed.
  */
 export async function verifyAuthenticatedSession(
 	db: Db,
@@ -40,6 +41,10 @@ export async function verifyAuthenticatedSession(
 	// checked on every request rather than trusted at login — such a session must
 	// stop verifying the moment the user goes inactive. The inner join only drops
 	// anonymous sessions, which carry no user_id and are rejected anyway.
+	//
+	// `lifecycle_state` is read for the same reason: an account that has not
+	// completed setup is not an application principal, whatever session row
+	// happens to name it.
 	const [row] = await db
 		.select({
 			userId: sessions.userId,
@@ -47,6 +52,7 @@ export async function verifyAuthenticatedSession(
 			tokenHash: sessions.tokenHash,
 			expiresAt: sessions.expiresAt,
 			active: users.active,
+			lifecycleState: users.lifecycleState,
 		})
 		.from(sessions)
 		.innerJoin(users, eq(users.id, sessions.userId))
@@ -57,7 +63,8 @@ export async function verifyAuthenticatedSession(
 		row?.sessionType !== "authenticated" ||
 		!row.tokenHash ||
 		row.userId === null ||
-		!row.active
+		!row.active ||
+		row.lifecycleState !== "normal"
 	) {
 		return null;
 	}
@@ -146,8 +153,9 @@ export function parseBasicAuthHeader(header: string): BasicCredentials | null {
 
 /**
  * Resolve an identity from a user handle and a raw API key. Returns `null` for
- * any failure — unknown handle, deactivated user, or a key that is not that
- * user's — so callers answer a single 401 without saying which check failed.
+ * any failure — unknown handle, deactivated user, an account that has not
+ * completed setup, or a key that is not that user's — so callers answer a
+ * single 401 without saying which check failed.
  *
  * Handles are matched case-insensitively, as they are at login. Only the key's
  * SHA-256 is stored, so the lookup hashes the supplied secret and matches on
@@ -175,6 +183,7 @@ export async function verifyApiKey(
 		.select({
 			userId: users.id,
 			active: users.active,
+			lifecycleState: users.lifecycleState,
 			permissions: apiKeys.permissions,
 		})
 		.from(users)
@@ -187,7 +196,10 @@ export async function verifyApiKey(
 		)
 		.limit(1);
 
-	if (!row?.active) {
+	// A pending account has no keys to find, so this is a floor rather than a
+	// live case: a restricted setup credential must never turn into a machine
+	// one, and the rule belongs where it can be read off the code.
+	if (!row?.active || row.lifecycleState !== "normal") {
 		return null;
 	}
 

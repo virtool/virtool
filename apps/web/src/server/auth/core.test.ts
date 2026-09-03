@@ -1,8 +1,13 @@
 import { hashPassword, verifyPassword } from "@virtool/data/auth/password";
 import * as sessionModule from "@virtool/data/auth/session";
-import { seedSession, seedUser } from "@virtool/data/auth/test/fixtures";
+import {
+	seedSession,
+	seedSetupSession,
+	seedUser,
+} from "@virtool/data/auth/test/fixtures";
 import type { Db } from "@virtool/data/db/pg";
 import { sessions } from "@virtool/data/db/schema/sessions";
+import { setupSessions } from "@virtool/data/db/schema/setup";
 import { users } from "@virtool/data/db/schema/users";
 import {
 	createTestDatabase,
@@ -54,12 +59,16 @@ const NEW_PASSWORD = "new-password";
 type FakeCookies = CookieAdapter & {
 	sessionId: string | undefined;
 	token: string | undefined;
+	setupSessionId: string | undefined;
+	setupToken: string | undefined;
 };
 
 function fakeCookies(sessionId?: string): FakeCookies {
 	return {
 		sessionId,
 		token: undefined,
+		setupSessionId: undefined,
+		setupToken: undefined,
 		getSessionId() {
 			return this.sessionId;
 		},
@@ -75,6 +84,20 @@ function fakeCookies(sessionId?: string): FakeCookies {
 		clear() {
 			this.sessionId = undefined;
 			this.token = undefined;
+		},
+		getSetupSessionId() {
+			return this.setupSessionId;
+		},
+		getSetupSessionToken() {
+			return this.setupToken;
+		},
+		setSetupSession(sessionId: string, token: string) {
+			this.setupSessionId = sessionId;
+			this.setupToken = token;
+		},
+		clearSetup() {
+			this.setupSessionId = undefined;
+			this.setupToken = undefined;
 		},
 	};
 }
@@ -94,6 +117,7 @@ afterAll(async () => {
 beforeEach(async () => {
 	vi.mocked(createAuthenticatedSession).mockClear();
 	await db.delete(sessions);
+	await db.delete(setupSessions);
 	await db.delete(users);
 });
 
@@ -335,6 +359,24 @@ describe("createFirstUser", () => {
 });
 
 describe("login", () => {
+	// That an invitation is outstanding is not something an unauthenticated
+	// caller should be able to read off a login response, so a pending account
+	// gets exactly the answer a wrong password gets.
+	it("refuses a pending account as a bad credential", async () => {
+		await seedUser(db, { handle: "alice", lifecycleState: "pending" });
+		const cookies = fakeCookies();
+
+		await expect(
+			login(db, cookies, {
+				handle: "alice",
+				password: OLD_PASSWORD,
+				remember: false,
+				ip: "127.0.0.1",
+			}),
+		).rejects.toBeInstanceOf(InvalidCredentialsError);
+		expect(cookies.sessionId).toBeUndefined();
+	});
+
 	it("authenticates a valid credential and sets both cookies", async () => {
 		const userId = await seedUser(db, {
 			handle: "alice",
@@ -479,5 +521,20 @@ describe("logout", () => {
 		await logout(db, cookies);
 
 		expect(cookies.sessionId).toBeUndefined();
+	});
+
+	// Logout is the abandon path for a setup flow, so it has to end a
+	// restricted credential as thoroughly as it ends an ordinary session.
+	it("invalidates a restricted setup session and clears its cookies", async () => {
+		const userId = await seedUser(db, { lifecycleState: "pending" });
+		const setup = await seedSetupSession(db, userId, "account_completion");
+		const cookies = fakeCookies();
+		cookies.setSetupSession(setup.sessionId, setup.token);
+
+		await logout(db, cookies);
+
+		expect(await db.select().from(setupSessions)).toHaveLength(0);
+		expect(cookies.setupSessionId).toBeUndefined();
+		expect(cookies.setupToken).toBeUndefined();
 	});
 });

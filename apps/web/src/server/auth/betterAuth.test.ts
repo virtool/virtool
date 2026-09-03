@@ -1,3 +1,4 @@
+import type { AccountLifecycleState } from "@virtool/contracts";
 import type { Db } from "@virtool/data/db/pg";
 import { authAccounts, authSessions } from "@virtool/data/db/schema/auth";
 import { users } from "@virtool/data/db/schema/users";
@@ -67,8 +68,16 @@ function post(path: string, body: unknown, origin = ORIGIN): Request {
  */
 async function seedMigratedUser(
 	hash = LEGACY_HASH,
-	state: { active?: boolean; forceReset?: boolean } = {},
+	state: {
+		active?: boolean;
+		forceReset?: boolean;
+		lifecycleState?: AccountLifecycleState;
+	} = {},
 ): Promise<number> {
+	// A pending row carries no legacy password — `pending_has_no_password`
+	// refuses the pair — so the credential exists only on the Better Auth side,
+	// which is the state a half-finished completion would leave behind.
+	const pending = state.lifecycleState === "pending";
 	const [user] = await db
 		.insert(users)
 		.values({
@@ -77,11 +86,12 @@ async function seedMigratedUser(
 			displayUsername: "Alice",
 			name: "Alice",
 			email: "alice@virtool.test",
-			password: Buffer.from(hash, "utf8"),
+			password: pending ? null : Buffer.from(hash, "utf8"),
 			lastPasswordChange: new Date(),
 			settings: {},
 			active: state.active ?? true,
 			forceReset: state.forceReset ?? false,
+			lifecycleState: state.lifecycleState ?? "normal",
 		})
 		.returning({ id: users.id });
 
@@ -246,6 +256,23 @@ describe("the mounted handler", () => {
 describe("virtool account state", () => {
 	it("refuses a deactivated user with the wrong-password response", async () => {
 		await seedMigratedUser(LEGACY_HASH, { active: false });
+
+		const response = await auth.handler(
+			post("/sign-in/username", {
+				username: "alice",
+				password: LEGACY_PASSWORD,
+			}),
+		);
+
+		expect(response.status).toBe(401);
+		expect(await db.select().from(authSessions)).toHaveLength(0);
+	});
+
+	// A completion transaction moves the account out of `pending` before its
+	// caller mints any session, so an ordinary session can only ever be issued
+	// to an account that is already eligible for one.
+	it("refuses an account that has not completed setup", async () => {
+		await seedMigratedUser(LEGACY_HASH, { lifecycleState: "pending" });
 
 		const response = await auth.handler(
 			post("/sign-in/username", {

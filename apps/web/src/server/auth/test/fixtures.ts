@@ -1,12 +1,20 @@
+import type { SetupPurpose } from "@virtool/contracts";
 import {
 	type SeededSession,
+	type SeededSetupSession,
 	type SeedUserOptions,
 	seedSession,
+	seedSetupSession,
 	seedUser,
 } from "@virtool/data/auth/test/fixtures";
 import type { Db } from "@virtool/data/db/pg";
 import type { Mock } from "vitest";
-import { SESSION_ID_COOKIE, SESSION_TOKEN_COOKIE } from "../cookies";
+import {
+	SESSION_ID_COOKIE,
+	SESSION_TOKEN_COOKIE,
+	SETUP_SESSION_ID_COOKIE,
+	SETUP_SESSION_TOKEN_COOKIE,
+} from "../cookies";
 
 /**
  * Encode a seeded session as the `Cookie` header value that authenticates it.
@@ -62,4 +70,43 @@ export async function signIn(
 /** Encode `handle` and `key` as an HTTP Basic `Authorization` header value. */
 export function basicAuthHeader(handle: string, key: string): string {
 	return `Basic ${Buffer.from(`${handle}:${key}`, "utf8").toString("base64")}`;
+}
+
+/**
+ * Encode a seeded restricted setup session as the `Cookie` header value that
+ * presents it.
+ *
+ * Deliberately a different pair from {@link sessionCookie}: a restricted
+ * credential is not an application session, and a test that could substitute
+ * one for the other would prove nothing about the boundary between them.
+ */
+export function setupSessionCookie({
+	sessionId,
+	token,
+}: Pick<SeededSetupSession, "sessionId" | "token">): string {
+	return `${SETUP_SESSION_ID_COOKIE}=${sessionId}; ${SETUP_SESSION_TOKEN_COOKIE}=${token}`;
+}
+
+/**
+ * Open a restricted setup session for an already-seeded user and point
+ * `getRequest` at a request carrying its cookies.
+ *
+ * The caller is then a restricted principal: it holds a credential for exactly
+ * `purpose` and no application session at all.
+ */
+export async function restrictTo(
+	db: Db,
+	getRequest: Mock,
+	userId: number,
+	purpose: SetupPurpose,
+): Promise<SeededSetupSession> {
+	const session = await seedSetupSession(db, userId, purpose);
+
+	getRequest.mockReturnValue(
+		new Request("https://virtool.test/_serverFn/test", {
+			headers: { cookie: setupSessionCookie(session) },
+		}),
+	);
+
+	return session;
 }

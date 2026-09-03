@@ -12,6 +12,7 @@ import { createTestDatabase, type TestDatabase } from "../db/test/fixtures";
 import { addToGroup, seedGroup } from "../groups/test/fixtures";
 import {
 	changePassword,
+	createPendingUser,
 	createUser,
 	findUsers,
 	GroupMembershipError,
@@ -22,6 +23,7 @@ import {
 	InvalidPasswordError,
 	listAdministratorRoles,
 	listUsers,
+	PendingAccountError,
 	setAdministratorRole,
 	UserConflictError,
 	UserNotFoundError,
@@ -479,9 +481,39 @@ describe("listUsers", () => {
 
 		expect(result.map((user) => user.handle)).toEqual(["alice", "Charlie"]);
 	});
+
+	// This answers "who can something be assigned to", and an account that
+	// cannot sign in yet is not an answer to it.
+	it("leaves out a pending account", async () => {
+		await seedUser(db, { handle: "alice" });
+		await seedUser(db, { handle: "bob", lifecycleState: "pending" });
+
+		expect((await listUsers(db)).map((user) => user.handle)).toEqual(["alice"]);
+	});
 });
 
 describe("findUsers", () => {
+	// Default-deny: a caller that has not thought about pending accounts does
+	// not publish them, and the administration views opt in explicitly.
+	it("hides pending accounts unless asked for them", async () => {
+		await seedUser(db, { handle: "alice" });
+		await seedUser(db, { handle: "bob", lifecycleState: "pending" });
+
+		expect((await findUsers(db, {})).items.map((user) => user.handle)).toEqual([
+			"alice",
+		]);
+		expect(
+			(await findUsers(db, { lifecycleState: "any" })).items
+				.map((user) => user.handle)
+				.toSorted(),
+		).toEqual(["alice", "bob"]);
+		expect(
+			(await findUsers(db, { lifecycleState: "pending" })).items.map(
+				(user) => user.handle,
+			),
+		).toEqual(["bob"]);
+	});
+
 	it("filters by handle substring", async () => {
 		await seedUser(db, { handle: "alice" });
 		await seedUser(db, { handle: "malice" });
@@ -561,6 +593,44 @@ describe("getUser", () => {
 
 	it("throws when the user does not exist", async () => {
 		await expect(getUser(db, 404)).rejects.toBeInstanceOf(UserNotFoundError);
+	});
+});
+
+describe("createPendingUser", () => {
+	it("creates an account with no credential and pending lifecycle", async () => {
+		const group = await seedGroup(db, { name: "researchers" });
+
+		const user = await createPendingUser(db, {
+			handle: "alice",
+			administratorRole: "users",
+			groups: [group],
+		});
+
+		expect(user).toMatchObject({
+			handle: "alice",
+			administratorRole: "users",
+			active: true,
+			forceReset: false,
+			lifecycleState: "pending",
+		});
+		expect(user.groups.map((entry) => entry.name)).toEqual(["researchers"]);
+
+		const [row] = await db.select().from(users).where(eq(users.id, user.id));
+		expect(row?.password).toBeNull();
+		expect(row?.settings).toEqual({
+			skip_quick_analyze_dialog: true,
+			show_ids: true,
+			show_versions: true,
+			quick_analyze_workflow: "pathoscope",
+		});
+	});
+
+	it("rejects a duplicate handle", async () => {
+		await seedUser(db, { handle: "alice" });
+
+		await expect(
+			createPendingUser(db, { handle: "Alice" }),
+		).rejects.toBeInstanceOf(UserConflictError);
 	});
 });
 
@@ -655,5 +725,50 @@ describe("listAdministratorRoles", () => {
 			"users",
 			"base",
 		]);
+	});
+});
+
+describe("updateUser on a pending account", () => {
+	// Setting a password here would complete the setup without the token that
+	// authorizes the transition.
+	it("refuses to set a password", async () => {
+		const user = await createPendingUser(db, { handle: "alice" });
+
+		await expect(
+			updateUser(db, user.id, { password: "a-real-password" }),
+		).rejects.toBeInstanceOf(PendingAccountError);
+
+		const [row] = await db.select().from(users).where(eq(users.id, user.id));
+		expect(row?.password).toBeNull();
+		expect(row?.lifecycleState).toBe("pending");
+	});
+
+	it("still assigns a handle, a role and groups", async () => {
+		const user = await createPendingUser(db, { handle: "alice" });
+		const group = await seedGroup(db, { name: "researchers" });
+
+		const updated = await updateUser(db, user.id, {
+			handle: "ada",
+			groups: [group],
+		});
+
+		expect(updated.handle).toBe("ada");
+		expect(updated.groups.map((entry) => entry.name)).toEqual(["researchers"]);
+		expect(updated.lifecycleState).toBe("pending");
+	});
+});
+
+describe("changePassword on a pending account", () => {
+	it("reports a bad credential rather than a lifecycle state", async () => {
+		const user = await createPendingUser(db, { handle: "alice" });
+
+		await expect(
+			changePassword(db, {
+				userId: user.id,
+				oldPassword: "anything",
+				password: "a-real-password",
+				ip: "127.0.0.1",
+			}),
+		).rejects.toBeInstanceOf(InvalidPasswordError);
 	});
 });

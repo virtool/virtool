@@ -1,14 +1,17 @@
 import { randomBytes } from "node:crypto";
 
 import {
+	type AccountLifecycleState,
 	type AdministratorRoleName,
 	emptyPermissions,
 	type Permissions,
+	type SetupPurpose,
 } from "@virtool/contracts";
 
 import type { Db } from "../../db/pg";
 import { apiKeys } from "../../db/schema/apiKeys";
 import { sessions } from "../../db/schema/sessions";
+import { setupSessions, setupTokens } from "../../db/schema/setup";
 import { users } from "../../db/schema/users";
 import { hashToken, newSessionId, newSessionToken } from "../tokens";
 
@@ -19,7 +22,8 @@ export type SeedUserOptions = {
 	email?: string;
 	forceReset?: boolean;
 	handle?: string;
-	password?: Buffer;
+	lifecycleState?: AccountLifecycleState;
+	password?: Buffer | null;
 	settings?: Record<string, unknown>;
 };
 
@@ -40,6 +44,10 @@ export type SeededSession = {
  * `password` defaults to a placeholder that is not a real bcrypt hash. A test
  * that exercises a code path which verifies the stored password must pass a
  * hash from `hashPassword`.
+ *
+ * `lifecycleState: "pending"` forces `password` to null, because the
+ * `pending_has_no_password` constraint refuses the pair — a pending account is
+ * one that has no credential at all.
  */
 export async function seedUser(
 	db: Db,
@@ -49,6 +57,7 @@ export async function seedUser(
 		email = "",
 		forceReset = false,
 		handle = "alice",
+		lifecycleState = "normal",
 		password = Buffer.from("not-a-real-hash"),
 		settings = {},
 	}: SeedUserOptions = {},
@@ -62,7 +71,8 @@ export async function seedUser(
 			forceReset,
 			handle,
 			lastPasswordChange: new Date(),
-			password,
+			lifecycleState,
+			password: lifecycleState === "pending" ? null : password,
 			settings,
 		})
 		.returning({ id: users.id });
@@ -132,4 +142,68 @@ export async function seedApiKey(
 	});
 
 	return key;
+}
+
+/** A seeded setup token and the plaintext that spends it. */
+export type SeededSetupToken = {
+	token: string;
+	userId: number;
+};
+
+/**
+ * Insert a setup token for `userId`. Only its digest is stored, so the
+ * plaintext is returned — it is the only way a caller can spend it afterwards.
+ */
+export async function seedSetupToken(
+	db: Db,
+	userId: number,
+	purpose: SetupPurpose,
+	{
+		expiresAt = new Date(Date.now() + 60_000),
+		consumedAt = null,
+	}: { expiresAt?: Date; consumedAt?: Date | null } = {},
+): Promise<SeededSetupToken> {
+	const token = randomBytes(32).toString("hex");
+
+	await db.insert(setupTokens).values({
+		consumedAt,
+		expiresAt,
+		purpose,
+		tokenHash: hashToken(token),
+		userId,
+	});
+
+	return { token, userId };
+}
+
+/** A seeded restricted setup session and the secret that proves it. */
+export type SeededSetupSession = {
+	sessionId: string;
+	token: string;
+	userId: number;
+};
+
+/**
+ * Insert a restricted setup session for `userId`. Only the secret's digest is
+ * stored, so the plaintext is returned.
+ */
+export async function seedSetupSession(
+	db: Db,
+	userId: number,
+	purpose: SetupPurpose,
+	{ expiresAt = new Date(Date.now() + 60_000) }: { expiresAt?: Date } = {},
+): Promise<SeededSetupSession> {
+	const sessionId = `setup_${randomBytes(24).toString("hex")}`;
+	const token = randomBytes(32).toString("hex");
+
+	await db.insert(setupSessions).values({
+		expiresAt,
+		ip: "127.0.0.1",
+		purpose,
+		sessionId,
+		tokenHash: hashToken(token),
+		userId,
+	});
+
+	return { sessionId, token, userId };
 }
