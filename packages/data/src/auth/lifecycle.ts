@@ -7,6 +7,7 @@ import { users } from "../db/schema/users";
 import { AppError } from "../errors";
 import { emit } from "../events/emit";
 import { getUser } from "../users/data";
+import { CREDENTIAL_PROVIDER_ID, updateAuthUsername } from "./identity";
 import { hashPassword } from "./password";
 import {
 	consumeSetupToken,
@@ -14,16 +15,6 @@ import {
 	SetupCredentialError,
 	supersedeSetupTokens,
 } from "./setup";
-
-/**
- * The Better Auth provider a Virtool handle-and-password identity is held
- * under.
- *
- * Better Auth resolves a credential by `(providerId, accountId)`, and
- * `accountId` is the Virtool user id, so a user has at most one of these — a
- * rule the `auth_accounts_provider_id_account_id_key` constraint holds.
- */
-const CREDENTIAL_PROVIDER_ID = "credential";
 
 /** Thrown when a completion is aimed at an account that is not eligible. */
 export class SetupNotEligibleError extends AppError {}
@@ -120,10 +111,7 @@ async function establishAuthIdentity(
 			target: [authAccounts.providerId, authAccounts.accountId],
 		});
 
-	await tx
-		.update(users)
-		.set({ username: handle.toLowerCase(), displayUsername: handle })
-		.where(eq(users.id, userId));
+	await updateAuthUsername(tx, userId, handle);
 }
 
 /** What {@link completeAccountSetup} accepts. */

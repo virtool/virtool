@@ -23,11 +23,17 @@ import {
 	sql,
 } from "drizzle-orm";
 import type { PostgresError } from "postgres";
+import { updateAuthPassword, updateAuthUsername } from "../auth/identity";
 import { hashPassword, verifyPassword } from "../auth/password";
 import {
 	createAuthenticatedSession,
 	invalidateUserSessions,
 } from "../auth/session";
+import {
+	invalidateUserSetupSessions,
+	invalidateUserSetupTokens,
+	lockUserSetupCredentials,
+} from "../auth/setup";
 import type { Db } from "../db/pg";
 import { takeFirstOrThrow } from "../db/rows";
 import {
@@ -530,6 +536,8 @@ export async function changePassword(
 			throw new InvalidPasswordError();
 		}
 
+		await updateAuthPassword(tx, userId, hashed);
+
 		await invalidateUserSessions(tx, userId);
 
 		return createAuthenticatedSession(tx, { userId, ip, remember: false });
@@ -715,8 +723,22 @@ export async function updateUser(
 			}
 		}
 
+		if (values.password !== undefined && patch.password) {
+			await updateAuthPassword(tx, userId, patch.password);
+		}
+
+		if (values.handle !== undefined) {
+			await updateAuthUsername(tx, userId, values.handle);
+		}
+
 		if (revokeSessions) {
 			await invalidateUserSessions(tx, userId);
+		}
+
+		if (values.active === false) {
+			await lockUserSetupCredentials(tx, userId);
+			await invalidateUserSetupTokens(tx, userId);
+			await invalidateUserSetupSessions(tx, userId);
 		}
 
 		if (values.groups !== undefined) {

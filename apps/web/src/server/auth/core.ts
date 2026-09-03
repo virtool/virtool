@@ -1,5 +1,6 @@
 import { timingSafeEqual } from "node:crypto";
 import type { User } from "@virtool/contracts";
+import { updateAuthPassword } from "@virtool/data/auth/identity";
 import { hashPassword, verifyPassword } from "@virtool/data/auth/password";
 import {
 	consumeResetSession,
@@ -338,6 +339,8 @@ export async function resetPassword(
 					lastPasswordChange: new Date(),
 				})
 				.where(eq(users.id, userId));
+
+			await updateAuthPassword(tx, userId, newHash);
 
 			return createAuthenticatedSession(tx, {
 				userId,

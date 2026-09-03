@@ -80,6 +80,7 @@ export async function issueSetupToken(
 	const expiresAt = new Date(Date.now() + lifetimeMs);
 
 	await db.transaction(async (tx) => {
+		await lockUserSetupCredentials(tx, userId);
 		await supersedeSetupTokens(tx, userId, purpose);
 
 		await tx.insert(setupTokens).values({
@@ -118,6 +119,14 @@ export async function supersedeSetupTokens(
 		.returning({ id: setupTokens.id });
 
 	return deleted.length;
+}
+
+/** Delete every setup token held by a user. */
+export async function invalidateUserSetupTokens(
+	db: DbOrTx,
+	userId: number,
+): Promise<void> {
+	await db.delete(setupTokens).where(eq(setupTokens.userId, userId));
 }
 
 /** The user a consumed setup token names. */
@@ -216,6 +225,7 @@ export async function createSetupSession(
 	const expiresAt = new Date(Date.now() + lifetimeMs);
 
 	const row = await db.transaction(async (tx) => {
+		await lockUserSetupCredentials(tx, userId);
 		await invalidateUserSetupSessions(tx, userId);
 
 		return takeFirstOrThrow(
@@ -234,6 +244,16 @@ export async function createSetupSession(
 	});
 
 	return { sessionId, token, row };
+}
+
+/** Serialize replacement or revocation of a user's setup credentials. */
+export async function lockUserSetupCredentials(
+	db: DbOrTx,
+	userId: number,
+): Promise<void> {
+	await db.execute(
+		sql`select pg_advisory_xact_lock(hashtext(${`setup:${userId}`}))`,
+	);
 }
 
 /**
