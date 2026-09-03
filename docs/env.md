@@ -29,7 +29,8 @@ the keys listed by the caller:
 2. Otherwise, the referenced file is read as UTF-8 and trimmed.
 3. The file value replaces `<KEY>`, even when the plain variable is also set.
 4. An unreadable file throws during startup; there is no fallback to a possibly
-   stale plain variable.
+   stale plain variable. The error names the key and the errno but not the
+   configured path, which an operator can set to the secret itself by mistake.
 5. A file containing only whitespace resolves to an empty string, which the
    service's schema handles as unset or invalid.
 
@@ -61,9 +62,16 @@ to downstream code. Avoid direct `process.env` reads elsewhere: they bypass
 validation and `_FILE` resolution. This is especially important for early
 instrumentation such as Sentry initialization.
 
+Parse before the process starts serving. A misconfigured service must exit
+non-zero at boot rather than start and fail each request, which reads as a
+healthy-but-dead instance. The `apps/internal` subcommands parse inside
+`main()`; `apps/web` parses in a Nitro startup plugin, because its server entry
+is loaded on the first request. Report every invalid key in one message, and
+report key names and reasons only — never a configured value.
+
 Current integrations are:
 
-- `apps/web/src/server/config.ts`
+- `apps/web/src/server/configSchema.ts`
 - `apps/internal/src/serve/config.ts`
 - `apps/internal/src/run/config.ts`
 - `apps/internal/src/migrate/main.ts`

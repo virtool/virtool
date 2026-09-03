@@ -232,12 +232,12 @@ describe("parseWorkflowRunConfig", () => {
 		expect(config.jobsApiUrl).toBe("http://current:9950");
 	});
 
-	it("throws naming the key and path when a _FILE path cannot be read", () => {
+	it("throws naming the key when a _FILE path cannot be read", () => {
 		expect(() =>
 			parseWorkflowRunConfig(
 				minimalEnv({ VT_WORK_PATH_FILE: "/nonexistent/work-path" }),
 			),
-		).toThrow(/VT_WORK_PATH_FILE points at \/nonexistent\/work-path/);
+		).toThrow(/VT_WORK_PATH_FILE names a file that could not be read/);
 	});
 
 	it("treats an empty file as an unset value", () => {
