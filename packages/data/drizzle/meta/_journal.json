@@ -190,6 +190,20 @@
       "when": 1789058051922,
       "tag": "0026_add_data_migrations",
       "breakpoints": true
+    },
+    {
+      "idx": 27,
+      "version": "7",
+      "when": 1789058051923,
+      "tag": "0027_add_auth_migration_state",
+      "breakpoints": true
+    },
+    {
+      "idx": 28,
+      "version": "7",
+      "when": 1789058051924,
+      "tag": "0028_audit_legacy_identities",
+      "breakpoints": true
     }
   ]
 }
