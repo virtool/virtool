@@ -18,12 +18,12 @@ export default function Tooltip({
 				<TooltipPrimitive.Trigger asChild>{children}</TooltipPrimitive.Trigger>
 				<TooltipPrimitive.Portal>
 					<TooltipPrimitive.Content
-						className="rounded px-4 py-2 text-sm leading-none bg-black/80 text-white shadow-lg will-change-[transform,opacity] capitalize z-popover data-[state=delayed-open]:data-[side=top]:animate-slideDownAndFade data-[state=delayed-open]:data-[side=right]:animate-slideLeftAndFade data-[state=delayed-open]:data-[side=bottom]:animate-slideUpAndFade data-[state=delayed-open]:data-[side=left]:animate-slideRightAndFade"
+						className="rounded px-4 py-2 text-sm leading-none bg-gray-800 text-white shadow-lg will-change-[transform,opacity] capitalize z-popover data-[state=delayed-open]:data-[side=top]:animate-slideDownAndFade data-[state=delayed-open]:data-[side=right]:animate-slideLeftAndFade data-[state=delayed-open]:data-[side=bottom]:animate-slideUpAndFade data-[state=delayed-open]:data-[side=left]:animate-slideRightAndFade"
 						side={position}
 						sideOffset={5}
 					>
 						{tip}
-						<TooltipPrimitive.Arrow />
+						<TooltipPrimitive.Arrow className="fill-gray-800" />
 					</TooltipPrimitive.Content>
 				</TooltipPrimitive.Portal>
 			</TooltipPrimitive.Root>
