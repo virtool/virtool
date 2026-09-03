@@ -5,6 +5,7 @@ import {
 	createTestDatabase,
 	type TestDatabase,
 } from "@virtool/data/db/test/fixtures";
+import { changePassword } from "@virtool/data/users/data";
 import { eq } from "drizzle-orm";
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
 import { AUTH_BASE_PATH, createAuth } from "./betterAuth";
@@ -82,6 +83,7 @@ async function seedMigratedUser(
 			settings: {},
 			active: state.active ?? true,
 			forceReset: state.forceReset ?? false,
+			authMigratedAt: new Date(),
 		})
 		.returning({ id: users.id });
 
@@ -150,6 +152,26 @@ describe("legacy bcrypt credentials", () => {
 
 		expect(response.status).toBe(401);
 		expect(await db.select().from(authSessions)).toHaveLength(0);
+	});
+
+	it("accepts a password changed after the backfill", async () => {
+		const userId = await seedMigratedUser();
+
+		await changePassword(db, {
+			userId,
+			oldPassword: LEGACY_PASSWORD,
+			password: "a-password-set-before-cutover",
+			ip: "127.0.0.1",
+		});
+
+		const response = await auth.handler(
+			post("/sign-in/username", {
+				username: "alice",
+				password: "a-password-set-before-cutover",
+			}),
+		);
+
+		expect(response.status).toBe(200);
 	});
 
 	it("refuses a corrupt hash without saying the account exists", async () => {

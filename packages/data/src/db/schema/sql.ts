@@ -14,3 +14,15 @@ import type { AnyPgColumn } from "drizzle-orm/pg-core";
 export function lower(column: AnyPgColumn): SQL {
 	return sql`lower(${column})`;
 }
+
+/**
+ * A column trimmed and folded to lower case — the normalized form of an email
+ * address, as an index expression.
+ *
+ * Matches `normalizeEmail` in `src/auth/email.ts`. The two must agree: the
+ * index decides which pairs of rows collide, and the function decides which
+ * pairs the migration refuses to migrate.
+ */
+export function lowerTrim(column: AnyPgColumn): SQL {
+	return sql`lower(btrim(${column}))`;
+}

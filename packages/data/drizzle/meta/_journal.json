@@ -148,6 +148,13 @@
       "when": 1788382353037,
       "tag": "0020_add_better_auth",
       "breakpoints": true
+    },
+    {
+      "idx": 21,
+      "version": "7",
+      "when": 1788456589857,
+      "tag": "0021_add_auth_migration_state",
+      "breakpoints": true
     }
   ]
 }

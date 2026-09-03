@@ -1,6 +1,6 @@
 # @virtool/internal
 
-Virtool's internal service: **one** image carrying three processes that share a
+Virtool's internal service: **one** image carrying four processes that share a
 schema, a data layer and an object store but not a lifecycle. The subcommand is
 the first argument to the bundle (`node dist/index.mjs <command>`):
 
@@ -9,6 +9,7 @@ the first argument to the bundle (`node dist/index.mjs <command>`):
 | `serve` | The jobs API HTTP server workflow runners claim, update, and finish jobs through. |
 | `run` | The periodic task spawner and the task runner, in one long-lived process. |
 | `migrate` | Applies pending Drizzle migrations, then exits. Run as an init Job. |
+| `auth` | Audits and migrates legacy identities, then exits. Run by hand. |
 
 Image: `ghcr.io/virtool/internal`. The image is fused; the processes are not.
 `serve` scales to N request replicas, while `run` is a lease singleton — folding
@@ -19,8 +20,9 @@ each passes.
 `src/index.ts` is the dispatcher: it reads `argv[2]` and dynamically imports the
 selected command's graph, so the migration Job never loads Hono and the HTTP
 server never loads the task registry. Each command lives under its own
-directory — `src/serve/`, `src/run/`, `src/migrate/` — and owns its own config,
-Sentry service name (`jobs-api`, `tasks`, `migrate`) and fatal logging.
+directory — `src/serve/`, `src/run/`, `src/migrate/`, `src/auth/` — and owns its
+own config, Sentry service name (`jobs-api`, `tasks`, `migrate`, `auth`) and
+fatal logging.
 
 ## `serve` — the jobs API
 
@@ -197,6 +199,72 @@ The migration SQL is read off disk, not from the bundle: the Dockerfile copies
 `src/migrate/main.ts`. `VT_MIGRATIONS_PATH` overrides that so a migration can
 run outside the image against the working tree's own `packages/data/drizzle`.
 
+## `auth` — legacy identity audit and backfill
+
+Audits the legacy user population and, when told to, backfills a Better Auth
+credential account for every user whose identity is complete. It reads
+`VT_POSTGRES_URL` and nothing else, opens one connection, and exits.
+
+Run by hand, not by a Job. It is an administrative step in a release that moves
+authentication, and the operator reads its report before deciding to apply.
+
+```
+node dist/index.mjs auth [audit|apply] [--report <path>] [--batch-size <n>]
+```
+
+| Argument | Meaning |
+| --- | --- |
+| `audit` | Classify every user and write no changes. The default. |
+| `apply` | Classify, then migrate the eligible users. |
+| `--report <path>` | Write the JSON report to this path, mode `0600`. |
+| `--batch-size <n>` | Users per batch. Defaults to 500. |
+
+Applying takes the word `apply`. A mode that rewrites production identities is
+not something a deployment can reach by leaving an argument out.
+
+The report is the machine-readable output: a format version, the generation
+time, the mode, the user total, the count of every classification split by
+activation state, one row per user an operator has to act on, the
+normalized-email collision groups, and what the run did to `auth_accounts`. It
+never carries a password hash, a session token or any other credential, and
+neither do the logs. It does carry user ids, handles and email addresses, so
+retain it the way you would any other account data.
+
+Logs go to stdout, which is why the report goes to a file rather than sharing
+that stream.
+
+Exit codes:
+
+| Code | Cause |
+| --- | --- |
+| 0 | The run finished and left nothing for an operator to resolve. Incomplete users are reported, not failed on — they are the population the remediation window exists for. |
+| 1 | A configuration or argument error, a database missing the expected schema, a user whose password bytes are not a bcrypt hash, or a conflicting Better Auth row. |
+
+Deployment sequence:
+
+1. `migrate`, so the Better Auth tables and `users.auth_migrated_at` exist.
+2. `auth --report <path>`, and read the report.
+3. Resolve any conflict or unusable password it names, then audit again.
+   Remediation is always followed by a fresh audit before apply is retried.
+4. `auth apply --report <path>`.
+5. `auth --report <path>` once more. That report is the authoritative remaining
+   count, and it stays the way to watch the remaining population for the length
+   of the legacy-password support window.
+
+A run that dies partway leaves committed users migrated and the rest untouched;
+rerunning resumes. Rerunning over a correctly migrated user writes nothing.
+
+To recover a conflict, read the report's row for the user and compare their
+`users` row with the `auth_accounts` row that names them. A credential account
+that no user should hold is deleted; a `users.auth_migrated_at` with no
+credential behind it is cleared, which returns the user to the population apply
+migrates. Never edit a credential to make it agree — correct the row that is
+wrong, then audit again. Apply is retried only after a fresh audit reports the
+conflict gone.
+
+The classification rules, the credential contract and the support window are
+documented in [`packages/data/README.md`](../../packages/data/README.md).
+
 ## Metrics
 
 Both long-lived subcommands own a private Prometheus registry and a token-gated
@@ -251,7 +319,8 @@ precedence, surrounding whitespace is trimmed, and an empty value is treated as
 unset.
 
 `VT_JOBS_API_*` apply to `serve`; `VT_TASKS_*` apply to `run`;
-`VT_MIGRATIONS_PATH` applies to `migrate`; the rest are shared.
+`VT_MIGRATIONS_PATH` applies to `migrate`; the rest are shared. `auth` reads
+`VT_POSTGRES_URL` alone.
 
 | Variable | Type | Default | Use |
 | --- | --- | --- | --- |
@@ -263,7 +332,7 @@ unset.
 | `VT_TASKS_DRAIN_TIMEOUT` | Positive integer (seconds) | `25` | `run`: allow an in-flight task to finish before releasing its claim. This must be less than `VT_TASKS_SHUTDOWN_TIMEOUT` and is part of that budget. |
 | `VT_MIGRATIONS_PATH` | String | Bundled `drizzle/` | `migrate`: override the migrations folder, e.g. to run against the working tree. |
 | `VT_POSTGRES_URL` | URL | Required | Connect to the Virtool Postgres database. |
-| `VT_POSTGRES_POOL_MAX` | Positive integer | `10` | Limit the Postgres connection pool (`serve` and `run`; `migrate` always uses one connection). |
+| `VT_POSTGRES_POOL_MAX` | Positive integer | `10` | Limit the Postgres connection pool (`serve` and `run`; `migrate` and `auth` always use one connection). |
 | `VT_METRICS_TOKEN` | String | Unset | Enable `/metrics` and authenticate scrapes with a bearer token. When unset, `/metrics` returns 404. |
 | `VT_SENTRY_DSN` | URL string | Unset | Send errors to Sentry. When unset, Sentry is disabled. |
 | `VT_ENCRYPTION_KEY` | Base64 string (32 bytes) | Unset | `run`: decrypt secrets stored by Virtool, currently the Resend API key for `deliver_email`. When unset or invalid, email is unavailable and every other task runs normally. See [the encryption-key guide](../../docs/env.md#encryption-key). |
@@ -293,7 +362,8 @@ Run from the monorepo root.
 | `pnpm --filter @virtool/internal typecheck` | Run `tsc --noEmit`. |
 
 Run a subcommand from the built bundle with `node dist/index.mjs serve`,
-`node dist/index.mjs run`, or `node dist/index.mjs migrate`.
+`node dist/index.mjs run`, `node dist/index.mjs migrate`, or
+`node dist/index.mjs auth`.
 
 ## Testing
 

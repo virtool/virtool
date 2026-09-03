@@ -3,12 +3,13 @@ import { createLogger } from "@virtool/logger";
 /**
  * The merged internal binary's command dispatcher.
  *
- * One image carries three processes that share a schema, a data layer and an
+ * One image carries four processes that share a schema, a data layer and an
  * object store but not a lifecycle: `serve` is the jobs API HTTP server, scaled
  * to N request replicas; `run` is the spawner-and-runner pair, a lease
- * singleton; `migrate` applies pending Drizzle migrations as an init Job. They
- * stay separate containers so HTTP scaling never multiplies task-lease
- * contention — the image is fused, the processes are not.
+ * singleton; `migrate` applies pending Drizzle migrations as an init Job; and
+ * `auth` audits and migrates legacy identities, run by hand. They stay separate
+ * containers so HTTP scaling never multiplies task-lease contention — the image
+ * is fused, the processes are not.
  *
  * The command's module is loaded with a dynamic `import` rather than a static
  * one so only the selected process's graph is evaluated: the migration Job
@@ -33,9 +34,14 @@ async function dispatch(command: string | undefined): Promise<void> {
 			await startMigrate();
 			return;
 		}
+		case "auth": {
+			const { startAuth } = await import("./auth/main");
+			await startAuth(process.argv.slice(3));
+			return;
+		}
 		default:
 			throw new Error(
-				`unknown command ${command ? `"${command}"` : "(none)"}; expected one of serve, run, migrate`,
+				`unknown command ${command ? `"${command}"` : "(none)"}; expected one of serve, run, migrate, auth`,
 			);
 	}
 }

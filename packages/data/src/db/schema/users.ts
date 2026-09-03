@@ -14,7 +14,7 @@ import {
 	unique,
 	uniqueIndex,
 } from "drizzle-orm/pg-core";
-import { lower } from "./sql";
+import { lower, lowerTrim } from "./sql";
 
 const bytea = customType<{ data: Buffer; default: false }>({
 	dataType() {
@@ -31,6 +31,7 @@ export const users = pgTable(
 			.notNull(),
 		administratorRole:
 			text("administrator_role").$type<AdministratorRoleName>(),
+		authMigratedAt: timestamp("auth_migrated_at"),
 		createdAt: timestamp("created_at")
 			.notNull()
 			.default(sql`timezone('utc', now())`),
@@ -59,6 +60,17 @@ export const users = pgTable(
 		unique("users_legacy_id_key").on(table.legacyId),
 		unique("users_username_key").on(table.username),
 		uniqueIndex("users_handle_lower_unique").on(lower(table.handle)),
+		// Normalized email is unique among migrated identities only. A plain
+		// unique index could not be created: legacy rows share the empty string
+		// and hold duplicate addresses, which is the population the audit exists
+		// to report. `auth_migrated_at` is null for every row when this index is
+		// created, so the constraint starts empty and each reconciled user joins
+		// it one at a time.
+		uniqueIndex("users_migrated_email_unique")
+			.on(lowerTrim(table.email))
+			.where(
+				sql`${table.authMigratedAt} is not null and btrim(${table.email}) <> ''`,
+			),
 		check(
 			"administrator_role_valid",
 			sql`${table.administratorRole} in ('full', 'settings', 'users', 'base')`,

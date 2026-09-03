@@ -22,6 +22,7 @@ import {
 	sql,
 } from "drizzle-orm";
 import type { PostgresError } from "postgres";
+import { syncCredentialPassword } from "../auth/credential";
 import { hashPassword, verifyPassword } from "../auth/password";
 import {
 	createAuthenticatedSession,
@@ -149,6 +150,9 @@ export class InvalidPasswordError extends AppError {}
 
 /** Thrown when a user handle conflicts with an existing user. */
 export class UserConflictError extends AppError {}
+
+/** Thrown when an email address is already held by another migrated user. */
+export class EmailConflictError extends AppError {}
 
 /** Thrown when a primary group is set to a group the user does not belong to. */
 export class GroupMembershipError extends AppError {}
@@ -397,17 +401,30 @@ export async function getAccount(db: Db, userId: number): Promise<Account> {
  *
  * An empty string clears it, which is what a user who wants no address on file
  * submits and what the email check deliberately allows.
+ *
+ * A migrated user's address is unique among migrated users, held by
+ * `users_migrated_email_unique`, so an address another migrated account already
+ * normalizes to is refused here rather than silently taken.
  */
 export async function updateAccountEmail(
 	db: Db,
 	userId: number,
 	email: string,
 ): Promise<Account> {
-	const [row] = await db
-		.update(usersTable)
-		.set({ email })
-		.where(eq(usersTable.id, userId))
-		.returning({ id: usersTable.id });
+	let row: { id: number } | undefined;
+
+	try {
+		[row] = await db
+			.update(usersTable)
+			.set({ email })
+			.where(eq(usersTable.id, userId))
+			.returning({ id: usersTable.id });
+	} catch (error) {
+		if (isUniqueViolation(error)) {
+			throw new EmailConflictError();
+		}
+		throw error;
+	}
 
 	if (!row) {
 		throw new UserNotFoundError();
@@ -485,6 +502,11 @@ export async function changePassword(
 		if (updated.length === 0) {
 			throw new InvalidPasswordError();
 		}
+
+		// The credential account carries the same hash, and the legacy path stays
+		// authoritative until the boundary cutover, so a change written only to
+		// `users` would leave the credential holding the previous password.
+		await syncCredentialPassword(tx, userId, hashed);
 
 		await invalidateUserSessions(tx, userId);
 
@@ -594,6 +616,12 @@ export async function updateUser(
 				}
 				throw error;
 			}
+		}
+
+		// An administrator reset writes the same hash the credential account holds.
+		// See `changePassword` for why it cannot be left behind.
+		if (patch.password !== undefined) {
+			await syncCredentialPassword(tx, userId, patch.password);
 		}
 
 		if (revokeSessions) {
