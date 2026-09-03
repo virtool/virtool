@@ -52,9 +52,7 @@ describe("<EmailDelivery>", () => {
 			renderWithProviders(<EmailDelivery />);
 
 			expect(await findStatus()).toHaveTextContent("Disabled");
-			expect(
-				screen.getByText("Turn on this setting to send email."),
-			).toBeVisible();
+			expect(screen.getByText(/new email is not sent/i)).toBeVisible();
 		});
 
 		it("names the fields an unconfigured instance is missing", async () => {

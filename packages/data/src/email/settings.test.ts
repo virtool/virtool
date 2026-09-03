@@ -14,6 +14,7 @@ import {
 	clearEmailApiKey,
 	EmailConfigurationError,
 	getEmailSettings,
+	isEmailEnabled,
 	resolveEmailDelivery,
 	setEmailApiKey,
 	updateEmailDelivery,
@@ -254,5 +255,29 @@ describe("setEmailApiKey and clearEmailApiKey", () => {
 
 		expect(cleared.apiKeyEnvelope).toBeNull();
 		expect(cleared.enabled).toBe(false);
+	});
+});
+
+describe("isEmailEnabled", () => {
+	it("is false when no settings row exists", async () => {
+		await expect(isEmailEnabled(db)).resolves.toBe(false);
+	});
+
+	it("is false while sending is switched off", async () => {
+		await seedSettings(db, { emailEnabled: false });
+
+		await expect(isEmailEnabled(db)).resolves.toBe(false);
+	});
+
+	it("is true while sending is switched on", async () => {
+		await seedSettings(db, { emailEnabled: true });
+
+		await expect(isEmailEnabled(db)).resolves.toBe(true);
+	});
+
+	it("does not seed the settings row", async () => {
+		await isEmailEnabled(db);
+
+		expect(await db.select().from(settings)).toHaveLength(0);
 	});
 });

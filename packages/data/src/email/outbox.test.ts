@@ -1,8 +1,10 @@
 import { eq, sql } from "drizzle-orm";
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
-import type { Db } from "../db/pg";
+import type { Db, DbOrTx } from "../db/pg";
 import { type EmailOutboxRow, emailOutbox } from "../db/schema/emailOutbox";
+import { settings } from "../db/schema/settings";
 import { createTestDatabase, type TestDatabase } from "../db/test/fixtures";
+import { seedSettings } from "../settings/test/fixtures";
 import {
 	claimDueEmails,
 	countEmailOutbox,
@@ -29,7 +31,13 @@ afterAll(async () => {
 
 beforeEach(async () => {
 	await db.delete(emailOutbox);
+	await db.delete(settings);
+	await seedSettings(db, { emailEnabled: true });
 });
+
+async function disableSending(): Promise<void> {
+	await db.update(settings).set({ emailEnabled: false });
+}
 
 function input(overrides: Partial<EnqueueEmailInput> = {}): EnqueueEmailInput {
 	return {
@@ -42,6 +50,20 @@ function input(overrides: Partial<EnqueueEmailInput> = {}): EnqueueEmailInput {
 		},
 		...overrides,
 	};
+}
+
+/** Enqueue a fixture message, failing the test if it was discarded. */
+async function queue(
+	overrides: Partial<EnqueueEmailInput> = {},
+	on: DbOrTx = db,
+): Promise<{ created: boolean; outboxId: number }> {
+	const result = await enqueueEmail(on, input(overrides));
+
+	if (result.status !== "queued") {
+		throw new Error("expected the message to be queued");
+	}
+
+	return result;
 }
 
 async function readRow(outboxId: number): Promise<EmailOutboxRow> {
@@ -63,7 +85,15 @@ describe("enqueueEmail", () => {
 	it("creates a queued row with the template and version", async () => {
 		const result = await enqueueEmail(db, input());
 
-		expect(result.created).toBe(true);
+		expect(result).toEqual({
+			status: "queued",
+			created: true,
+			outboxId: expect.any(Number),
+		});
+
+		if (result.status !== "queued") {
+			throw new Error("expected the message to be queued");
+		}
 
 		const row = await readRow(result.outboxId);
 
@@ -74,22 +104,24 @@ describe("enqueueEmail", () => {
 	});
 
 	it("returns the existing row for a duplicate idempotency key", async () => {
-		const first = await enqueueEmail(db, input());
+		const first = await queue();
 		const second = await enqueueEmail(
 			db,
 			input({ recipient: "other@example.com" }),
 		);
 
-		expect(second).toEqual({ created: false, outboxId: first.outboxId });
+		expect(second).toEqual({
+			status: "queued",
+			created: false,
+			outboxId: first.outboxId,
+		});
 		expect(
 			await db.select({ id: emailOutbox.id }).from(emailOutbox),
 		).toHaveLength(1);
 	});
 
 	it("resolves concurrent duplicate enqueues to one row", async () => {
-		const results = await Promise.all(
-			Array.from({ length: 8 }, () => enqueueEmail(db, input())),
-		);
+		const results = await Promise.all(Array.from({ length: 8 }, () => queue()));
 
 		const ids = new Set(results.map((result) => result.outboxId));
 
@@ -100,7 +132,7 @@ describe("enqueueEmail", () => {
 	it("participates in a caller's transaction", async () => {
 		await db
 			.transaction(async (tx) => {
-				await enqueueEmail(tx, input());
+				await queue({}, tx);
 				throw new Error("roll it back");
 			})
 			.catch(() => {});
@@ -113,15 +145,65 @@ describe("enqueueEmail", () => {
 	it("honors notBefore", async () => {
 		const future = new Date(Date.now() + 60 * 60 * 1000);
 
-		await enqueueEmail(db, input({ notBefore: future }));
+		await queue({ notBefore: future });
 
 		expect(await claimDueEmails(db, claimOptions)).toEqual([]);
+	});
+
+	it("discards the message while sending is disabled", async () => {
+		await disableSending();
+
+		expect(await enqueueEmail(db, input())).toEqual({ status: "discarded" });
+		expect(
+			await db.select({ id: emailOutbox.id }).from(emailOutbox),
+		).toHaveLength(0);
+	});
+
+	it("discards the message when no settings row exists", async () => {
+		await db.delete(settings);
+
+		expect(await enqueueEmail(db, input())).toEqual({ status: "discarded" });
+		expect(
+			await db.select({ id: emailOutbox.id }).from(emailOutbox),
+		).toHaveLength(0);
+	});
+
+	it("discards inside a caller's transaction without failing it", async () => {
+		await disableSending();
+
+		const result = await db.transaction((tx) => enqueueEmail(tx, input()));
+
+		expect(result).toEqual({ status: "discarded" });
+	});
+
+	it("leaves rows queued before sending was disabled alone", async () => {
+		const { outboxId } = await queue();
+
+		await disableSending();
+
+		expect(await enqueueEmail(db, input({ idempotencyKey: "other" }))).toEqual({
+			status: "discarded",
+		});
+		expect((await readRow(outboxId)).status).toBe("queued");
+	});
+
+	it("queues again once sending is re-enabled", async () => {
+		await disableSending();
+
+		expect(await enqueueEmail(db, input())).toEqual({ status: "discarded" });
+
+		await db.update(settings).set({ emailEnabled: true });
+
+		const result = await queue();
+
+		expect(result.created).toBe(true);
+		expect((await readRow(result.outboxId)).status).toBe("queued");
 	});
 });
 
 describe("claimDueEmails", () => {
 	it("claims a due row, incrementing its attempt count", async () => {
-		const { outboxId } = await enqueueEmail(db, input());
+		const { outboxId } = await queue();
 
 		const claimed = await claimDueEmails(db, claimOptions);
 
@@ -136,7 +218,7 @@ describe("claimDueEmails", () => {
 	});
 
 	it("does not hand a live claim to a second claimer", async () => {
-		await enqueueEmail(db, input());
+		await queue();
 
 		await claimDueEmails(db, claimOptions);
 
@@ -146,7 +228,7 @@ describe("claimDueEmails", () => {
 	});
 
 	it("reclaims a row whose claim expired", async () => {
-		const { outboxId } = await enqueueEmail(db, input());
+		const { outboxId } = await queue();
 
 		await claimDueEmails(db, { ...claimOptions, leaseSeconds: 1 });
 
@@ -168,7 +250,7 @@ describe("claimDueEmails", () => {
 
 	it("bounds the batch and takes the oldest-due rows first", async () => {
 		for (let i = 0; i < 5; i++) {
-			await enqueueEmail(db, input({ idempotencyKey: `key/${i}` }));
+			await queue({ idempotencyKey: `key/${i}` });
 		}
 
 		const claimed = await claimDueEmails(db, { ...claimOptions, limit: 3 });
@@ -182,7 +264,7 @@ describe("claimDueEmails", () => {
 	});
 
 	it("ignores terminal rows", async () => {
-		const { outboxId } = await enqueueEmail(db, input());
+		const { outboxId } = await queue();
 		const [claimed] = await claimDueEmails(db, claimOptions);
 
 		if (!claimed) {
@@ -199,7 +281,7 @@ describe("claimDueEmails", () => {
 
 describe("fenced result writes", () => {
 	async function claimOne(): Promise<number> {
-		const { outboxId } = await enqueueEmail(db, input());
+		const { outboxId } = await queue();
 		const claimed = await claimDueEmails(db, claimOptions);
 
 		expect(claimed).toHaveLength(1);
@@ -304,10 +386,10 @@ describe("fenced result writes", () => {
 
 describe("countEmailOutbox", () => {
 	it("splits rows into queued, in-flight, accepted, and failed", async () => {
-		await enqueueEmail(db, input({ idempotencyKey: "a" }));
-		await enqueueEmail(db, input({ idempotencyKey: "b" }));
-		await enqueueEmail(db, input({ idempotencyKey: "c" }));
-		await enqueueEmail(db, input({ idempotencyKey: "d" }));
+		await queue({ idempotencyKey: "a" });
+		await queue({ idempotencyKey: "b" });
+		await queue({ idempotencyKey: "c" });
+		await queue({ idempotencyKey: "d" });
 
 		const claimed = await claimDueEmails(db, { ...claimOptions, limit: 2 });
 
@@ -333,7 +415,7 @@ describe("countEmailOutbox", () => {
 	});
 
 	it("counts a live claim as in flight", async () => {
-		await enqueueEmail(db, input());
+		await queue();
 		await claimDueEmails(db, claimOptions);
 
 		await expect(countEmailOutbox(db)).resolves.toEqual({
@@ -354,10 +436,7 @@ describe("pruneEmailOutbox", () => {
 			status: "accepted" | "failed",
 			ageSeconds: number,
 		): Promise<number> {
-			const { outboxId } = await enqueueEmail(
-				db,
-				input({ idempotencyKey: key }),
-			);
+			const { outboxId } = await queue({ idempotencyKey: key });
 
 			await db
 				.update(emailOutbox)
@@ -374,10 +453,9 @@ describe("pruneEmailOutbox", () => {
 		const freshAccepted = await seedTerminal("fresh-accepted", "accepted", 60);
 		await seedTerminal("old-failed", "failed", 10_000);
 		const agingFailed = await seedTerminal("aging-failed", "failed", 7000);
-		const { outboxId: queued } = await enqueueEmail(
-			db,
-			input({ idempotencyKey: "still-queued" }),
-		);
+		const { outboxId: queued } = await queue({
+			idempotencyKey: "still-queued",
+		});
 
 		await expect(pruneEmailOutbox(db, retention)).resolves.toBe(2);
 
