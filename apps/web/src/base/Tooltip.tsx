@@ -23,7 +23,7 @@ export default function Tooltip({
 						sideOffset={5}
 					>
 						{tip}
-						<TooltipPrimitive.Arrow />
+						<TooltipPrimitive.Arrow className="fill-gray-800" />
 					</TooltipPrimitive.Content>
 				</TooltipPrimitive.Portal>
 			</TooltipPrimitive.Root>
