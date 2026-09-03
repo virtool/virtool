@@ -239,6 +239,19 @@ that answers with HTML, plain text, and zip archives, so it stays here.
 Nucleotide records and taxonomy come from `@virtool/ncbi`, which speaks to
 E-utilities. Do not add a second E-utilities client to this package.
 
+The instance NCBI API key raises the rate limit E-utilities applies to the
+deployment. `src/settings/ncbi.ts` owns it, encrypted under the
+environment-owned encryption key documented in
+[docs/env.md](../../docs/env.md#encryption-key) with the purpose
+`ncbi_api_key`. Neither the plaintext key nor its envelope may cross a
+transport boundary or reach a log; a caller learns only whether a key is stored
+and whether it can be decrypted.
+
+Decrypt at client construction and nowhere else. A key that will not decrypt is
+a configuration error to report, not a value to replace: `resolveNcbiApiKey`
+writes nothing, so the stored key survives a bad encryption key, and lookups
+fall back to the anonymous rate limit rather than failing.
+
 ## Email delivery
 
 `src/email/` owns transactional email configuration, the durable outbox,

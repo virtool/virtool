@@ -16,12 +16,22 @@ export const sampleGroups = [
 export type SampleGroup = (typeof sampleGroups)[number];
 
 /**
+ * Whether the stored NCBI API key can be used.
+ *
+ * `configuration_error` means a key is stored but the encryption key this
+ * instance runs with cannot decrypt it. GenBank lookups fall back to the
+ * anonymous rate limit, so the state is reported rather than thrown.
+ */
+export type NcbiAvailability = "unconfigured" | "ready" | "configuration_error";
+
+/**
  * The instance settings singleton, as an administration client reads it.
  *
  * Every stored setting except the NCBI API key, which is a credential:
- * `hasNcbiApiKey` reports only whether one is configured, and the key itself
- * never crosses the wire. A client writes a new key or clears it, and never
- * reads one back. `apps/web`'s settings server functions do that narrowing.
+ * `hasNcbiApiKey` reports only whether one is configured, `ncbiAvailability`
+ * whether it can be decrypted, and the key itself never crosses the wire in
+ * either form. A client writes a new key or clears it, and never reads one
+ * back. `apps/web`'s settings server functions do that narrowing.
  *
  * Distinct from {@link WorkflowSettings}, which is what the jobs API serves to
  * a workflow and carries no NCBI field at all.
@@ -36,6 +46,7 @@ export type Settings = {
 	enableSentry: boolean;
 	hasNcbiApiKey: boolean;
 	minimumPasswordLength: number;
+	ncbiAvailability: NcbiAvailability;
 	sampleAllRead: boolean;
 	sampleAllWrite: boolean;
 	sampleGroup: SampleGroup;

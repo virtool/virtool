@@ -38,13 +38,14 @@ export type Settings = {
 	enableSentry: boolean;
 	minimumPasswordLength: number;
 	/**
-	 * The instance's NCBI API key, or `""` when none is configured.
+	 * The stored NCBI API key's encrypted envelope, or `null` when none is
+	 * configured.
 	 *
 	 * A credential, so it never leaves the server as-is —
 	 * `apps/web/src/server/settings/functions.ts` reduces it to a boolean before
 	 * publishing the row.
 	 */
-	ncbiApiKey: string;
+	ncbiApiKey: EncryptedValue | null;
 	sampleAllRead: boolean;
 	sampleAllWrite: boolean;
 	sampleGroup: SampleGroup;
@@ -68,7 +69,7 @@ export const DEFAULT_SETTINGS: Settings = {
 	emailSenderName: "",
 	enableSentry: true,
 	minimumPasswordLength: DEFAULT_MINIMUM_PASSWORD_LENGTH,
-	ncbiApiKey: "",
+	ncbiApiKey: null,
 	sampleAllRead: true,
 	sampleAllWrite: false,
 	sampleGroup: "none",

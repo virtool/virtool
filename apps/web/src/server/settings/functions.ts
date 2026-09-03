@@ -1,4 +1,5 @@
 import { createServerFn } from "@tanstack/react-start";
+import { setResponseStatus } from "@tanstack/react-start/server";
 import {
 	type SampleGroup,
 	type Settings,
@@ -9,9 +10,16 @@ import {
 	type Settings as StoredSettings,
 	updateSettings,
 } from "@virtool/data/settings/data";
+import {
+	clearNcbiApiKey,
+	NcbiConfigurationError,
+	resolveNcbiApiKey,
+	setNcbiApiKey,
+} from "@virtool/data/settings/ncbi";
 import { z } from "zod";
 import { adminRole, open } from "../auth/policy";
-import { db } from "../composition";
+import { db, keyring } from "../composition";
+import { ClientError } from "../errors";
 
 /** The password rules a client needs to validate a new password before submitting it. */
 export type PasswordPolicy = {
@@ -22,9 +30,9 @@ export type PasswordPolicy = {
  * Reduce the stored settings to what may cross the wire.
  *
  * Both settings functions answer any administrator holding the `settings` role,
- * so returning the row as stored would put the NCBI API key in a browser
- * payload. Narrowing here rather than in the data layer keeps the redaction on
- * the transport boundary, where the row is published.
+ * so returning the row as stored would put the NCBI API-key envelope in a
+ * browser payload. Narrowing here rather than in the data layer keeps the
+ * redaction on the transport boundary, where the row is published.
  *
  * The email columns are stripped as well: they belong to the full-administrator
  * email functions, and the API-key envelope must never reach a `settings`-role
@@ -39,7 +47,20 @@ function toSettings({
 	ncbiApiKey,
 	...rest
 }: StoredSettings): Settings {
-	return { ...rest, hasNcbiApiKey: ncbiApiKey !== "" };
+	return {
+		...rest,
+		hasNcbiApiKey: ncbiApiKey !== null,
+		ncbiAvailability: resolveNcbiApiKey(ncbiApiKey, keyring).availability,
+	};
+}
+
+function rethrowAsHttp(err: unknown): never {
+	if (err instanceof NcbiConfigurationError) {
+		setResponseStatus(400);
+		throw new ClientError(err.message, 400);
+	}
+
+	throw err;
 }
 
 /**
@@ -73,10 +94,6 @@ const updateSettingsSchema = z
 		defaultSourceTypes: z.array(z.string()).optional(),
 		enableSentry: z.boolean().optional(),
 		minimumPasswordLength: z.number().int().min(1).optional(),
-		// Trimmed, so a pasted key carrying whitespace is stored as the key
-		// itself. Empty is how a key is cleared, and is what the request layer
-		// reads as unset.
-		ncbiApiKey: z.string().trim().max(MAX_NCBI_API_KEY_LENGTH).optional(),
 		sampleAllRead: z.boolean().optional(),
 		sampleAllWrite: z.boolean().optional(),
 		sampleGroup: z
@@ -104,4 +121,34 @@ export const updateSettingsFn = createServerFn({ method: "POST" })
 	.handler(
 		async ({ data }): Promise<Settings> =>
 			toSettings(await updateSettings(db, data)),
+	);
+
+/**
+ * Store a new NCBI API key, replacing whatever is stored.
+ *
+ * A credential, so it has its own function rather than a field on
+ * {@link updateSettingsFn}: the write goes through the keyring, and a plain
+ * settings patch has no encryption key to hand.
+ */
+export const setNcbiApiKeyFn = createServerFn({ method: "POST" })
+	.middleware([adminRole("settings")])
+	.validator(
+		z.object({
+			// Trimmed, so a pasted key carrying whitespace is stored as the key
+			// itself.
+			apiKey: z.string().trim().min(1).max(MAX_NCBI_API_KEY_LENGTH),
+		}),
+	)
+	.handler(async ({ data }): Promise<Settings> => {
+		try {
+			return toSettings(await setNcbiApiKey(db, keyring, data.apiKey));
+		} catch (err) {
+			return rethrowAsHttp(err);
+		}
+	});
+
+export const clearNcbiApiKeyFn = createServerFn({ method: "POST" })
+	.middleware([adminRole("settings")])
+	.handler(
+		async (): Promise<Settings> => toSettings(await clearNcbiApiKey(db)),
 	);

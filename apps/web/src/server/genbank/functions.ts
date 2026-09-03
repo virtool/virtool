@@ -2,6 +2,7 @@ import { createServerFn, createServerOnlyFn } from "@tanstack/react-start";
 import { setResponseStatus } from "@tanstack/react-start/server";
 import type { Genbank } from "@virtool/contracts";
 import { getSettings } from "@virtool/data/settings/data";
+import { resolveNcbiApiKey } from "@virtool/data/settings/ncbi";
 import {
 	createNcbiClient,
 	NcbiUnreachableError,
@@ -9,7 +10,7 @@ import {
 } from "@virtool/ncbi/client";
 import { z } from "zod";
 import { authenticated } from "../auth/policy";
-import { db } from "../composition";
+import { db, keyring } from "../composition";
 import { ClientError } from "../errors";
 import { logger } from "../logger";
 
@@ -50,7 +51,12 @@ const rethrowAsHttp = createServerOnlyFn((err: unknown): never => {
  *
  * The one database read gets the instance's NCBI API key. The key increases
  * the rate limit that NCBI applies to the deployment. The client goes here and
- * not in a module constant, because the key can change while the server runs.
+ * not in a module constant, because the key can change while the server runs,
+ * and because this is the only place the stored credential is decrypted.
+ *
+ * A key that will not decrypt costs the deployment its raised rate limit, not
+ * its GenBank lookups: the client is built without one and the state is
+ * reported to administrators as `configuration_error` on the settings row.
  *
  * This function stays behind a session. An open endpoint would let any person
  * use the deployment as an unmetered relay to NCBI, under Virtool's `tool` and
@@ -61,8 +67,16 @@ export const getGenbankFn = createServerFn({ method: "GET" })
 	.validator(accessionSchema)
 	.handler(async ({ data }): Promise<Genbank> => {
 		const { ncbiApiKey } = await getSettings(db);
+		const { availability, apiKey } = resolveNcbiApiKey(ncbiApiKey, keyring);
 
-		const record = await createNcbiClient({ apiKey: ncbiApiKey, logger })
+		if (availability === "configuration_error") {
+			logger.warn(
+				{ availability },
+				"stored NCBI API key could not be decrypted",
+			);
+		}
+
+		const record = await createNcbiClient({ apiKey: apiKey ?? "", logger })
 			.fetchGenbankRecord(data.accession)
 			.catch(rethrowAsHttp);
 
