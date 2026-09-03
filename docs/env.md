@@ -29,7 +29,8 @@ the keys listed by the caller:
 2. Otherwise, the referenced file is read as UTF-8 and trimmed.
 3. The file value replaces `<KEY>`, even when the plain variable is also set.
 4. An unreadable file throws during startup; there is no fallback to a possibly
-   stale plain variable.
+   stale plain variable. The error names the key and the errno but not the
+   configured path, which an operator can set to the secret itself by mistake.
 5. A file containing only whitespace resolves to an empty string, which the
    service's schema handles as unset or invalid.
 
@@ -61,9 +62,16 @@ to downstream code. Avoid direct `process.env` reads elsewhere: they bypass
 validation and `_FILE` resolution. This is especially important for early
 instrumentation such as Sentry initialization.
 
+Parse before the process starts serving. A misconfigured service must exit
+non-zero at boot rather than start and fail each request, which reads as a
+healthy-but-dead instance. The `apps/internal` subcommands parse inside
+`main()`; `apps/web` parses in a Nitro startup plugin, because its server entry
+is loaded on the first request. Report every invalid key in one message, and
+report key names and reasons only — never a configured value.
+
 Current integrations are:
 
-- `apps/web/src/server/config.ts`
+- `apps/web/src/server/configSchema.ts`
 - `apps/internal/src/serve/config.ts`
 - `apps/internal/src/run/config.ts`
 - `apps/internal/src/migrate/main.ts`
@@ -71,6 +79,31 @@ Current integrations are:
 
 The resolver and its precedence tests live in `packages/contracts/src/env.ts`
 and `packages/contracts/src/env.test.ts`.
+
+## Authentication
+
+Interactive authentication is Better Auth's, and it needs two values that have
+no safe default:
+
+| Variable | Value |
+| --- | --- |
+| `VT_PUBLIC_ORIGIN` | The one public origin the instance is served on, scheme and host only, such as `https://virtool.example`. |
+| `VT_AUTH_SECRET` | At least 32 characters. Generate with `openssl rand -base64 32`. |
+
+Both accept `_FILE` variants. Configure them for `apps/web`.
+
+`VT_PUBLIC_ORIGIN` is deliberately not inferred from the request `Host` or
+forwarded headers. WebAuthn binds a passkey to the configured origin and Relying
+Party ID, whose hostname is derived from that origin. Moving an instance to a
+new domain invalidates passkeys registered under the old one.
+
+Plain `http` is rejected except on `localhost`. The loopback addresses are
+secure contexts as well, but an RP ID must be a domain and no browser accepts an
+IP literal as one, so an origin such as `http://127.0.0.1:5173` could never
+register a passkey. Use `http://localhost` in development.
+
+Changing `VT_AUTH_SECRET` invalidates every Better Auth session and makes stored
+recovery codes undecryptable, so rotate it deliberately.
 
 ## Encryption key
 

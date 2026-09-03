@@ -15,6 +15,7 @@
 		"apps/web": {
 			"entry": [
 				"src/instrument.server.ts",
+				"src/server/startup.ts",
 				"src/routes/**/*.{ts,tsx}",
 				"src/types/window.ts",
 				"src/tests/postgresGuard.ts"
@@ -23,7 +24,8 @@
 				"src/**/*.{ts,tsx,css}"
 			],
 			"ignoreDependencies": [
-				"bcrypt"
+				"bcrypt",
+				"@simplewebauthn/server"
 			]
 		},
 		"packages/bio": {

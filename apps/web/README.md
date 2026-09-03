@@ -23,6 +23,15 @@ and release pipeline.
 - **exceljs** for the analysis XLSX export — server-only, and reached through a
   dynamic `import()` inside `@server/analyses/export` so it stays out of every
   other bundle
+- **Better Auth** (`better-auth`) with **`@better-auth/passkey`** for
+  interactive human authentication, both pinned to the exact release `1.6.30`.
+  1.7 is a deliberate future migration, not a version to float onto: it changes
+  the account-identity model, and this integration depends on 1.6's
+  `advanced.database.generateId: "serial"` to keep `users.id` the
+  database-generated integer every domain foreign key and wire contract already
+  references. `@simplewebauthn/server` is a direct dependency only so the
+  passkey plugin's inferred types are nameable from this package; nothing here
+  imports it. Server-only — see `@server/auth/betterAuth`
 
 ## Client development
 
@@ -397,11 +406,40 @@ Keep `createServerFn` at the definition site. The Vite transform recognizes
 the call syntactically and will not recognize a wrapper factory.
 
 Use a raw `createFileRoute` handler only when RPC cannot provide the required
-transport: upload progress, streaming downloads, SSE, health probes, or
-Prometheus. Raw handlers do not receive policy middleware and must enforce
-their own authorization. `requireAuthenticatedRequest` supports sessions and
-API keys; server functions remain session-only. The Sentry tunnel and health
-probes are deliberately public, while `/metrics` uses its bearer-token gate.
+transport: upload progress, streaming downloads, SSE, health probes, Prometheus,
+or the Better Auth surface at `/api/auth/*`. Raw handlers do not receive policy
+middleware and must enforce their own authorization.
+`requireAuthenticatedRequest` supports sessions and API keys; server functions
+remain session-only. The Sentry tunnel and health probes are deliberately
+public, while `/metrics` uses its bearer-token gate.
+
+Better Auth is mounted at `/api/auth/$` and composed in
+`@server/auth/betterAuth`. It answers *who is signing in* and nothing else:
+`users.active`, administrator roles, groups, permissions, API keys and
+first-user detection all stay Virtool's, and `@server/auth/policy` remains the
+only thing that decides what a caller may do. Its handler is deliberately not
+listed in `@server/auth/exceptions`, which exempts *server functions* from the
+global authentication middleware — a raw route was never subject to it. The
+global CSRF middleware in `start.ts` is likewise scoped to
+`handlerType === "serverFn"`, so it does not apply either; Better Auth does its
+own origin check against `VT_PUBLIC_ORIGIN`, which
+`@server/auth/betterAuth.test.ts` pins.
+
+Two Virtool states still gate every Better Auth sign-in. A `session.create`
+database hook refuses a user who is not `active` — with the same 401 a wrong
+password gets — and refuses one carrying `force_reset` with a 403, so the
+password, passkey and two-factor endpoints are no looser than `login()` in
+`@server/auth/core`. `/sign-in/email` is answered 404 by a `before` hook:
+`emailAndPassword` is enabled only for its bcrypt hashing, and `users.email`
+carries no unique constraint, so an email lookup could resolve to an arbitrary
+one of several holders. Virtool signs in by handle.
+
+Better Auth's tables live in `@virtool/data` as `auth_*` and are keyed by
+integer identity columns, because `advanced.database.generateId: "serial"` is
+what keeps `users.id` the integer the rest of the schema references. The setting
+is instance-wide in 1.6, so the auxiliary tables share the key type. The legacy
+`sessions` table still carries the current cookie pair and Better Auth never
+reads or writes it.
 
 Uploads and downloads must stream. Resolve a requested file to a database row
 or explicit whitelist first, then use that row's `storage_key`; never construct
@@ -502,10 +540,20 @@ Server variables are read at startup. Each also accepts a `<VARIABLE>_FILE`
 variant containing the value; the file takes precedence, surrounding
 whitespace is trimmed, and an empty value is treated as unset.
 
+`src/server/configSchema.ts` holds the schema and `parseServerConfig`, and
+`src/server/config.ts` is the parsed singleton the rest of the server imports.
+`src/server/startup.ts`, registered as a Nitro plugin in `vite.config.js`,
+parses the environment before the port binds. An invalid environment logs one
+record naming every offending key and its reason — never a value — and exits
+non-zero, so a misconfigured instance never reaches the listener or the health
+probes.
+
 | Variable | Type | Default | Use |
 | --- | --- | --- | --- |
 | `VT_POSTGRES_URL` | URL | Required | Connect to the Virtool Postgres database. |
 | `VT_POSTGRES_POOL_MAX` | Positive integer | `10` | Limit the Postgres connection pool. |
+| `VT_PUBLIC_ORIGIN` | URL origin | Required | Name the one public origin this instance is served on, such as `https://virtool.example`. Better Auth builds its callbacks from it and WebAuthn validates ceremony origins against it, and the WebAuthn RP ID is its hostname. It must carry no path, query, fragment or credentials, and must be `https` anywhere but `localhost`, because the RP ID is a domain and no browser accepts an IP literal as one. It is never inferred from `Host` or the forwarded headers, so a deployment behind a proxy or a renamed domain must set it to the address users actually type. |
+| `VT_AUTH_SECRET` | String (32+ characters) | Required | Sign and encrypt the authentication state Better Auth issues, including stored recovery codes. Generate with `openssl rand -base64 32`. Changing it invalidates every Better Auth session. |
 | `VT_METRICS_TOKEN` | String | Unset | Enable `/metrics` and authenticate scrapes with a bearer token. When unset, `/metrics` returns 404. |
 | `VT_SENTRY_DSN` | URL string | Unset | Send server errors to Sentry. Vite also embeds this value in the client at build time; that client value cannot use `_FILE`. |
 | `VT_ENCRYPTION_KEY` | Base64 string (32 bytes) | Unset | Encrypt secrets stored by Virtool, currently the Resend API key. When unset or invalid, email is unavailable but the server runs. See [the encryption-key guide](../../docs/env.md#encryption-key). |
@@ -548,8 +596,9 @@ The section is four independent forms, so no action can submit another's
 values:
 
 - **Send email** switches delivery on and off on its own. Turning it off keeps
-  the stored key and every other setting; it only stops queued mail from being
-  sent. Turning it on needs a configuration the server has already resolved.
+  the stored key and every other setting; it stops new mail entering the outbox,
+  and mail queued before the switch is still sent. Turning it on needs a
+  configuration the server has already resolved.
 - **Sender identity** saves the sender name, the sender address, and an optional
   reply-to address. An empty reply-to sends replies to the sender address. The
   server validates authoritatively and the fields re-render from its response.
@@ -575,7 +624,8 @@ Four status states render distinctly:
 | Configuration Error | The stored key cannot be decrypted with the encryption key this instance is running with. |
 
 The **Sending** control is separate from the status presentation. Disabling it
-preserves the configuration but stops queued mail from being sent.
+preserves the configuration and discards new mail rather than holding it. The
+backlog queued before the switch still goes out.
 
 A configuration error is never reported as a missing key. The stored value is
 intact and is not changed, so the fix is the encryption key rather than the API

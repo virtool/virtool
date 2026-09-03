@@ -43,7 +43,7 @@ export default function EmailDelivery() {
 			<section>
 				<SectionHeader level={3}>
 					<h3>Sending</h3>
-					<p>Choose whether queued email is sent.</p>
+					<p>Choose whether this instance accepts email for delivery.</p>
 				</SectionHeader>
 				<BoxGroup>
 					<EmailDeliverySending settings={data} />

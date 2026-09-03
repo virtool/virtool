@@ -2,17 +2,29 @@ import { mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
-import { parseServerConfig } from "../config";
+import { parseServerConfig } from "../configSchema";
 
 const postgresUrl = "postgres://virtool:virtool@localhost:5432/virtool";
 
+const publicOrigin = "https://virtool.example";
+
+// 32 characters, the shortest the schema accepts.
+const authSecret = "0123456789abcdef0123456789abcdef";
+
+const auth = {
+	VT_PUBLIC_ORIGIN: publicOrigin,
+	VT_AUTH_SECRET: authSecret,
+};
+
 const minimalS3 = {
+	...auth,
 	VT_POSTGRES_URL: postgresUrl,
 	VT_STORAGE_BACKEND: "s3",
 	VT_STORAGE_S3_BUCKET: "virtool",
 } as NodeJS.ProcessEnv;
 
 const minimalAzure = {
+	...auth,
 	VT_POSTGRES_URL: postgresUrl,
 	VT_STORAGE_BACKEND: "azure",
 	VT_STORAGE_AZURE_ACCOUNT: "devstoreaccount1",
@@ -23,6 +35,7 @@ describe("parseServerConfig", () => {
 	it("errors when the postgres url is missing", () => {
 		expect(() =>
 			parseServerConfig({
+				...auth,
 				VT_STORAGE_BACKEND: "s3",
 				VT_STORAGE_S3_BUCKET: "virtool",
 			} as NodeJS.ProcessEnv),
@@ -31,7 +44,10 @@ describe("parseServerConfig", () => {
 
 	it("errors when the storage backend is missing", () => {
 		expect(() =>
-			parseServerConfig({ VT_POSTGRES_URL: postgresUrl } as NodeJS.ProcessEnv),
+			parseServerConfig({
+				...auth,
+				VT_POSTGRES_URL: postgresUrl,
+			} as NodeJS.ProcessEnv),
 		).toThrow(/VT_STORAGE_BACKEND/);
 	});
 
@@ -66,9 +82,22 @@ describe("parseServerConfig", () => {
 		).toThrow(/VT_POSTGRES_POOL_MAX/);
 	});
 
+	// Zod skips a transform once any field has failed. Validating storage there
+	// would hide every backend issue behind an unrelated malformed key and cost
+	// the operator a restart to see the next one.
+	it("reports base and backend issues in one error", () => {
+		expect(() =>
+			parseServerConfig({
+				VT_POSTGRES_URL: "not-a-url",
+				VT_STORAGE_BACKEND: "s3",
+			} as NodeJS.ProcessEnv),
+		).toThrow(/VT_POSTGRES_URL[\s\S]*VT_STORAGE_S3_BUCKET/);
+	});
+
 	it("rejects the removed local backend", () => {
 		expect(() =>
 			parseServerConfig({
+				...auth,
 				VT_POSTGRES_URL: postgresUrl,
 				VT_STORAGE_BACKEND: "local",
 				VT_STORAGE_LOCAL_PATH: "/var/lib/virtool/storage",
@@ -113,6 +142,7 @@ describe("parseServerConfig", () => {
 		it("errors when the bucket is missing", () => {
 			expect(() =>
 				parseServerConfig({
+					...auth,
 					VT_POSTGRES_URL: postgresUrl,
 					VT_STORAGE_BACKEND: "s3",
 				} as NodeJS.ProcessEnv),
@@ -183,6 +213,7 @@ describe("parseServerConfig", () => {
 		it("errors when the account is missing", () => {
 			expect(() =>
 				parseServerConfig({
+					...auth,
 					VT_POSTGRES_URL: postgresUrl,
 					VT_STORAGE_BACKEND: "azure",
 					VT_STORAGE_AZURE_CONTAINER: "virtool",
@@ -193,6 +224,7 @@ describe("parseServerConfig", () => {
 		it("errors when the container is missing", () => {
 			expect(() =>
 				parseServerConfig({
+					...auth,
 					VT_POSTGRES_URL: postgresUrl,
 					VT_STORAGE_BACKEND: "azure",
 					VT_STORAGE_AZURE_ACCOUNT: "devstoreaccount1",
@@ -218,6 +250,95 @@ describe("parseServerConfig", () => {
 			} as NodeJS.ProcessEnv);
 
 			expect(config.metricsToken).toBeUndefined();
+		});
+	});
+
+	describe("authentication", () => {
+		it("normalizes the public origin and derives the rp id", () => {
+			const config = parseServerConfig({
+				...minimalS3,
+				VT_PUBLIC_ORIGIN: "https://virtool.example:8443",
+			} as NodeJS.ProcessEnv);
+
+			expect(config.publicOrigin).toBe("https://virtool.example:8443");
+			// The port belongs to the origin and never to the RP ID.
+			expect(config.webauthnRpId).toBe("virtool.example");
+		});
+
+		it("drops the default port from the origin", () => {
+			const config = parseServerConfig({
+				...minimalS3,
+				VT_PUBLIC_ORIGIN: "https://virtool.example:443",
+			} as NodeJS.ProcessEnv);
+
+			expect(config.publicOrigin).toBe("https://virtool.example");
+		});
+
+		it("errors when the public origin is missing", () => {
+			const { VT_PUBLIC_ORIGIN, ...env } = minimalS3;
+
+			expect(() => parseServerConfig(env as NodeJS.ProcessEnv)).toThrow(
+				/VT_PUBLIC_ORIGIN/,
+			);
+		});
+
+		it.each([
+			["a path", "https://virtool.example/app"],
+			["a query string", "https://virtool.example/?a=b"],
+			["a fragment", "https://virtool.example/#top"],
+			["credentials", "https://user:pass@virtool.example"],
+			["a relative value", "/virtool"],
+			["a non-http scheme", "ftp://virtool.example"],
+		])("rejects %s", (_label, value) => {
+			expect(() =>
+				parseServerConfig({
+					...minimalS3,
+					VT_PUBLIC_ORIGIN: value,
+				} as NodeJS.ProcessEnv),
+			).toThrow(/VT_PUBLIC_ORIGIN/);
+		});
+
+		it.each([
+			["a remote host", "http://virtool.example"],
+			["an IPv4 loopback address", "http://127.0.0.1:5173"],
+			["an IPv6 loopback address", "http://[::1]:5173"],
+		])("rejects plain http on %s", (_label, value) => {
+			expect(() =>
+				parseServerConfig({
+					...minimalS3,
+					VT_PUBLIC_ORIGIN: value,
+				} as NodeJS.ProcessEnv),
+			).toThrow(/VT_PUBLIC_ORIGIN/);
+		});
+
+		it.each(["http://localhost:5173"])("allows plain http on %s", (value) => {
+			const config = parseServerConfig({
+				...minimalS3,
+				VT_PUBLIC_ORIGIN: value,
+			} as NodeJS.ProcessEnv);
+
+			expect(config.publicOrigin).toBe(value);
+		});
+
+		it("reads the auth secret from the environment", () => {
+			expect(parseServerConfig(minimalS3).authSecret).toBe(authSecret);
+		});
+
+		it("errors when the auth secret is missing", () => {
+			const { VT_AUTH_SECRET, ...env } = minimalS3;
+
+			expect(() => parseServerConfig(env as NodeJS.ProcessEnv)).toThrow(
+				/VT_AUTH_SECRET/,
+			);
+		});
+
+		it("rejects an auth secret that is too short", () => {
+			expect(() =>
+				parseServerConfig({
+					...minimalS3,
+					VT_AUTH_SECRET: "short",
+				} as NodeJS.ProcessEnv),
+			).toThrow(/VT_AUTH_SECRET/);
 		});
 	});
 
@@ -281,6 +402,20 @@ describe("parseServerConfig", () => {
 			expect(config.metricsToken).toBe("from-file");
 		});
 
+		it("resolves the auth secret and public origin from mounted files", () => {
+			const { VT_AUTH_SECRET, VT_PUBLIC_ORIGIN, ...env } = minimalS3;
+
+			const config = parseServerConfig({
+				...env,
+				VT_AUTH_SECRET_FILE: write("auth-secret", authSecret),
+				VT_PUBLIC_ORIGIN_FILE: write("public-origin", publicOrigin),
+			} as NodeJS.ProcessEnv);
+
+			expect(config.authSecret).toBe(authSecret);
+			expect(config.publicOrigin).toBe(publicOrigin);
+			expect(config.webauthnRpId).toBe("virtool.example");
+		});
+
 		it("resolves both encryption keys from mounted files", () => {
 			const config = parseServerConfig({
 				...minimalS3,
@@ -336,6 +471,7 @@ describe("parseServerConfig", () => {
 
 		it("applies to every key, not only the metrics token", () => {
 			const config = parseServerConfig({
+				...auth,
 				VT_POSTGRES_URL: postgresUrl,
 				VT_STORAGE_BACKEND: "s3",
 				VT_STORAGE_S3_BUCKET: "virtool",

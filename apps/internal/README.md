@@ -233,7 +233,10 @@ a rate has a prior sample and a failure series at zero reads as evidence.
 `virtool_email_accepted_age_seconds` is deliberately unlabelled, because
 splitting it by template would thin the samples behind every quantile.
 `virtool_email_availability` is one-hot, so
-`virtool_email_availability{state="ready"} == 1` is directly alertable.
+`virtool_email_availability{state="ready"} == 1` is directly alertable. The
+`disabled` state still delivers: switching sending off stops new mail entering
+the outbox, and `deliver_email` drains what was already queued, so the outbox
+gauge falls to zero instead of holding until sending returns.
 
 The probe listener (`run`) accepts only `GET`. `/health/live` returns a static
 success and never checks Postgres — a database outage must not restart every pod
