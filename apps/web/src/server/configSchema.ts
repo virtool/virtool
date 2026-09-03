@@ -173,12 +173,14 @@ function parsePublicOrigin(env: NodeJS.ProcessEnv): PublicOriginResult {
 	function reject(message: string): PublicOriginResult {
 		return {
 			url: undefined,
-			issues: [{
-			code: "custom",
-			path: ["VT_PUBLIC_ORIGIN"],
-			message: `VT_PUBLIC_ORIGIN ${message}`,
-			input: undefined,
-			}],
+			issues: [
+				{
+					code: "custom",
+					path: ["VT_PUBLIC_ORIGIN"],
+					message: `VT_PUBLIC_ORIGIN ${message}`,
+					input: undefined,
+				},
+			],
 		};
 	}
 

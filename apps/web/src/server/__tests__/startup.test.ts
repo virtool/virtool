@@ -11,6 +11,11 @@ const entry = join(appDir, ".output", "server", "index.mjs");
 
 const postgresUrl = "postgres://virtool:virtool@localhost:5432/virtool";
 
+const auth = {
+	VT_PUBLIC_ORIGIN: "http://localhost:3000",
+	VT_AUTH_SECRET: "0123456789abcdef0123456789abcdef",
+};
+
 // The behaviour under test is a property of the production bundle: `server.ts`
 // lands in an SSR chunk Nitro loads on the first request, so a parse there
 // would never run at startup. Only the built server can show that the check
@@ -126,6 +131,7 @@ describe("startup validation", () => {
 		"names the invalid key without reporting its value",
 		async () => {
 			const result = await start({
+				...auth,
 				VT_POSTGRES_URL: "not-a-url-sentinel",
 				VT_STORAGE_BACKEND: "s3",
 				VT_STORAGE_S3_BUCKET: "virtool-test",
@@ -142,6 +148,7 @@ describe("startup validation", () => {
 		"listens when the configuration is valid",
 		async () => {
 			const result = await start({
+				...auth,
 				VT_POSTGRES_URL: postgresUrl,
 				VT_STORAGE_BACKEND: "s3",
 				VT_STORAGE_S3_BUCKET: "virtool-test",
