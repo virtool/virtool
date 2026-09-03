@@ -1,12 +1,3 @@
-// The legacy identity audit and the eager Better Auth credential backfill.
-//
-// Framework-free: everything here takes a database handle and a logger. The
-// `auth` subcommand in `apps/internal` owns process concerns — environment,
-// report file, exit code — and nothing in this module knows they exist.
-//
-// The classification rules and their operational meaning are documented in
-// `packages/data/README.md`.
-
 import type { Logger } from "@virtool/logger";
 import { and, asc, eq, gt, inArray, isNull, sql } from "drizzle-orm";
 import type { Db } from "../db/pg";
@@ -109,13 +100,7 @@ export type IdentityReportRow = {
 	handle: string;
 	active: boolean;
 	classification: IdentityClassification;
-	/**
-	 * The normalized address, present only for a duplicate.
-	 *
-	 * A collision cannot be resolved without seeing the value that collides. No
-	 * other row carries one: a blank address says nothing, and a malformed one
-	 * is unvalidated text that only widens what the report spreads.
-	 */
+	/** The normalized address, present only for duplicate-email findings. */
 	normalizedEmail?: string;
 };
 
@@ -181,8 +166,7 @@ export function isBcryptHash(password: Buffer): boolean {
 /**
  * Decide what one user is.
  *
- * Pure, so the rules can be exercised without a database. `duplicateEmails`
- * holds every normalized address that more than one user carries.
+ * `duplicateEmails` contains every normalized address held by multiple users.
  */
 export function classifyIdentity(
 	user: UserRecord,
@@ -202,9 +186,7 @@ export function classifyIdentity(
 			return "conflict";
 		}
 
-		// A credential the migration did not write. Both rows are written in one
-		// transaction, so a credential without the state that accompanies it came
-		// from somewhere this contract does not describe.
+		// Migration state and its credential are written atomically.
 		if (user.authMigratedAt === null) {
 			return "conflict";
 		}
@@ -232,8 +214,6 @@ export function classifyIdentity(
 		return "duplicateEmail";
 	}
 
-	// Checked last so it means what it says: this user would migrate but for the
-	// bytes in their password column.
 	if (!isBcryptHash(user.password)) {
 		return "invalidPassword";
 	}
@@ -280,10 +260,8 @@ export async function checkAuthSchema(db: Db): Promise<void> {
 /**
  * Find every normalized address that more than one user holds.
  *
- * Its own pass over the table, because a collision is a property of the whole
- * population and a batch cannot see it. Only the normalized values that repeat
- * are kept, so the memory this holds is bounded by the collisions rather than
- * by the user count.
+ * This requires a separate pass because a batch cannot detect collisions with
+ * users in other batches.
  */
 async function findDuplicateEmails(
 	db: Db,

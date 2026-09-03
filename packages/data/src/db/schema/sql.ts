@@ -16,12 +16,8 @@ export function lower(column: AnyPgColumn): SQL {
 }
 
 /**
- * A column trimmed and folded to lower case — the normalized form of an email
- * address, as an index expression.
- *
- * Matches `normalizeEmail` in `src/auth/email.ts`. The two must agree: the
- * index decides which pairs of rows collide, and the function decides which
- * pairs the migration refuses to migrate.
+ * A column trimmed and folded to lower case for normalized-email indexes.
+ * Must match `normalizeEmail` in `src/auth/email.ts`.
  */
 export function lowerTrim(column: AnyPgColumn): SQL {
 	return sql`lower(btrim(${column}))`;

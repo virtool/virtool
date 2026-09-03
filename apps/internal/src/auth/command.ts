@@ -17,13 +17,7 @@ export type AuthCommand = {
 /** An argument the command cannot act on. */
 export class AuthArgumentError extends Error {}
 
-/**
- * Read the arguments that follow `auth`.
- *
- * Audit is what a bare `auth` does. Writing takes the word `apply`, because the
- * mode that mutates production identities is not something a deployment should
- * be able to reach by omitting an argument.
- */
+/** Read the arguments after `auth`, defaulting to the read-only audit mode. */
 export function parseAuthCommand(argv: readonly string[]): AuthCommand {
 	const [first, ...rest] = argv;
 	const flags = first === undefined || first.startsWith("--") ? argv : rest;
@@ -70,12 +64,7 @@ export function parseAuthCommand(argv: readonly string[]): AuthCommand {
 	return command;
 }
 
-/**
- * Write the report where deployment automation can capture it.
- *
- * `0600`, and never to stdout: the logger owns that stream, and the report
- * names users and carries their email addresses.
- */
+/** Write the sensitive report with owner-only permissions. */
 async function writeReport(
 	path: string,
 	report: IdentityReport,
@@ -94,8 +83,6 @@ async function writeReport(
  * remediation window exists for — but a conflict or an unusable password hash
  * is, and so is a schema or argument error.
  *
- * Takes its database and logger rather than building them, so the whole command
- * can be exercised against a throwaway database.
  */
 export async function runAuthCommand(
 	db: Db,
