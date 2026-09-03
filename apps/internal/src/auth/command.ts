@@ -1,4 +1,4 @@
-import { writeFile } from "node:fs/promises";
+import { open } from "node:fs/promises";
 import {
 	hasActionableFindings,
 	type IdentityReport,
@@ -69,10 +69,14 @@ async function writeReport(
 	path: string,
 	report: IdentityReport,
 ): Promise<void> {
-	await writeFile(path, `${JSON.stringify(report, null, 2)}\n`, {
-		encoding: "utf8",
-		mode: 0o600,
-	});
+	const file = await open(path, "w", 0o600);
+
+	try {
+		await file.chmod(0o600);
+		await file.writeFile(`${JSON.stringify(report, null, 2)}\n`, "utf8");
+	} finally {
+		await file.close();
+	}
 }
 
 /**
@@ -119,6 +123,7 @@ export async function runAuthCommand(
 		logger.error(
 			{
 				conflict: report.counts.conflict,
+				invalidHandle: report.counts.invalidHandle,
 				invalidPassword: report.counts.invalidPassword,
 			},
 			"legacy identities need operator attention",

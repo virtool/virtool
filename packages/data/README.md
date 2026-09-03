@@ -243,13 +243,14 @@ that stays blocked.
 
 | Classification | Meaning | What apply does |
 | --- | --- | --- |
-| `eligible` | Address present, valid, and unique once normalized. | Normalizes the address, sets `username`/`display_username` from the handle, stamps `auth_migrated_at`, and inserts the credential account. |
+| `eligible` | Address present, valid, and unique once normalized, with a handle Better Auth accepts. | Normalizes the address, sets `username`/`display_username` from the handle, stamps `auth_migrated_at`, and inserts the credential account. |
 | `migrated` | Credential account present and agreeing with `users.password`. | Nothing. |
 | `stale` | Credential account present, holding a password `users.password` has since replaced. | Copies the current hash onto the credential. |
 | `conflict` | The `users` and `auth_accounts` rows disagree with this contract. | Nothing. Reported for an operator. |
 | `blankEmail` | No address on file. | Nothing. |
 | `invalidEmail` | Address does not parse. | Nothing. |
 | `duplicateEmail` | Address normalizes to one another user also holds. | Nothing, for every member of the group. |
+| `invalidHandle` | Handle does not have the shape Better Auth accepts. | Nothing. Reported for an operator. |
 | `invalidPassword` | Identity is complete, but `users.password` does not decode to a bcrypt hash. | Nothing. Reported for an operator. |
 
 No member of a duplicate group is migrated. Choosing a winner by row order,

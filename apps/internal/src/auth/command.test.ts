@@ -1,4 +1,4 @@
-import { mkdtemp, readFile, stat } from "node:fs/promises";
+import { chmod, mkdtemp, readFile, stat, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { seedUser } from "@virtool/data/auth/test/fixtures";
@@ -124,7 +124,7 @@ describe("runAuthCommand", () => {
 		const report = JSON.parse(await readFile(path, "utf8"));
 
 		expect(report).toMatchObject({
-			version: 1,
+			version: 2,
 			mode: "audit",
 			users: 2,
 			counts: {
@@ -137,6 +137,17 @@ describe("runAuthCommand", () => {
 		const mode = (await stat(path)).mode & 0o777;
 
 		expect(mode).toBe(0o600);
+	});
+
+	it("restricts an existing report before returning", async () => {
+		await seedEligible("alice", "alice@example.com");
+		const path = reportPath("existing");
+		await writeFile(path, "old report");
+		await chmod(path, 0o644);
+
+		expect(await runAuthCommand(db, logger, ["--report", path])).toBe(0);
+
+		expect((await stat(path)).mode & 0o777).toBe(0o600);
 	});
 
 	it("names no password hash in the report", async () => {

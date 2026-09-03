@@ -10,6 +10,7 @@ import {
 	syncCredentialPassword,
 } from "./credential";
 import { isValidEmail, normalizeEmail } from "./email";
+import { isValidHandle } from "./handle";
 
 /** The expected Better Auth schema is not present. */
 export class AuthSchemaError extends AppError {}
@@ -20,7 +21,7 @@ export class AuthSchemaError extends AppError {}
  * Deployment automation reads these reports; a change to the shape of one is a
  * change to that contract and moves this number.
  */
-export const IDENTITY_REPORT_VERSION = 1;
+export const IDENTITY_REPORT_VERSION = 2;
 
 /** How many users one batch reads and reconciles. */
 const DEFAULT_BATCH_SIZE = 500;
@@ -47,6 +48,7 @@ export type IdentityClassification =
 	| "blankEmail"
 	| "invalidEmail"
 	| "duplicateEmail"
+	| "invalidHandle"
 	| "invalidPassword"
 	| "eligible";
 
@@ -64,6 +66,7 @@ export const IDENTITY_CLASSIFICATIONS: readonly IdentityClassification[] = [
 	"blankEmail",
 	"invalidEmail",
 	"duplicateEmail",
+	"invalidHandle",
 	"invalidPassword",
 ];
 
@@ -73,6 +76,7 @@ export const IDENTITY_CLASSIFICATIONS: readonly IdentityClassification[] = [
  */
 const ACTIONABLE: readonly IdentityClassification[] = [
 	"conflict",
+	"invalidHandle",
 	"invalidPassword",
 ];
 
@@ -85,6 +89,7 @@ const REPORTED: readonly IdentityClassification[] = [
 	"blankEmail",
 	"invalidEmail",
 	"duplicateEmail",
+	"invalidHandle",
 	"invalidPassword",
 ];
 
@@ -212,6 +217,10 @@ export function classifyIdentity(
 
 	if (duplicateEmails.has(normalized)) {
 		return "duplicateEmail";
+	}
+
+	if (!isValidHandle(user.handle)) {
+		return "invalidHandle";
 	}
 
 	if (!isBcryptHash(user.password)) {

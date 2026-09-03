@@ -610,6 +610,21 @@ export async function updateUser(
 		if (Object.keys(patch).length > 0) {
 			try {
 				await tx.update(usersTable).set(patch).where(eq(usersTable.id, userId));
+
+				if (values.handle !== undefined) {
+					await tx
+						.update(usersTable)
+						.set({
+							username: values.handle.toLowerCase(),
+							displayUsername: values.handle,
+						})
+						.where(
+							and(
+								eq(usersTable.id, userId),
+								isNotNull(usersTable.authMigratedAt),
+							),
+						);
+				}
 			} catch (error) {
 				if (isUniqueViolation(error)) {
 					throw new UserConflictError();
