@@ -222,7 +222,12 @@ beforeEach(() => {
 	// to the proxied path so a test that just exercises uploading does not have
 	// to stub it; tests for the chunked path override this.
 	uploadServerFnMocks.initUploadFn.mockReset();
-	uploadServerFnMocks.initUploadFn.mockResolvedValue({ mode: "proxied" });
+	uploadServerFnMocks.initUploadFn.mockResolvedValue({
+		uploadId: 1,
+		url: "https://storage.test/blob?sig=test",
+		blockSize: 16 * 1024 * 1024,
+		concurrency: 1,
+	});
 });
 
 process.env.TZ = "UTC";

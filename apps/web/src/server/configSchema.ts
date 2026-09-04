@@ -43,11 +43,8 @@ export type ServerConfig = {
 	 */
 	downloadMode: "stream" | "redirect";
 	/**
-	 * The global feature flag for chunked direct-to-blob uploads. When set — and
-	 * the storage backend can presign uploads — the client uploads files to
-	 * storage in blocks instead of streaming them through this server. Unset
-	 * keeps every upload on the proxied `POST /uploads` route, which is the
-	 * rollback path.
+	 * The global feature flag for direct-to-blob uploads. When unset, upload
+	 * initialization returns 503; there is no proxied fallback.
 	 */
 	uploadsChunked: boolean;
 	/**

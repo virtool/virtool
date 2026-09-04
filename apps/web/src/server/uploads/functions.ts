@@ -6,10 +6,7 @@ import {
 	UPLOAD_TYPES,
 } from "@virtool/contracts";
 import {
-	cancelPendingUpload,
-	createPendingUpload,
 	deleteUpload,
-	finalizePendingUpload,
 	findUploads,
 	UploadIncompleteError,
 	UploadNotFoundError,
@@ -19,27 +16,15 @@ import {
 import { z } from "zod";
 import { authenticated, permission } from "../auth/policy";
 import { db, storage } from "../composition";
-import { config } from "../config";
 import { ClientError } from "../errors";
 import { logger } from "../logger";
 import { pageSchema, perPageSchema, rowIdSchema } from "../validation";
-
-// A chunked upload can run for a long time across hundreds of block writes, so
-// the write SAS lives in hours where a download redirect lives in minutes.
-const UPLOAD_SAS_TTL_SECONDS = 6 * 60 * 60;
-
-const AZURE_MAX_BLOCK_COUNT = 50_000;
-const AZURE_MAX_BLOCK_SIZE = 4_000 * 1024 * 1024;
-const AZURE_MAX_BLOB_SIZE = AZURE_MAX_BLOCK_COUNT * AZURE_MAX_BLOCK_SIZE;
-
-// The smallest block a chunked upload cuts a file into. Larger blocks mean
-// fewer requests per file; the block only grows past this floor for a file too
-// large to fit in the block-count limit at this size (~781 GiB and up).
-const MIN_UPLOAD_BLOCK_SIZE = 16 * 1024 * 1024;
-
-// The upload endpoint itself is not a server function — it streams a multi-GB
-// request body and is posted to with XMLHttpRequest so the client can report
-// progress. It lives in the `/uploads` route (`@server/uploads/upload`).
+import {
+	AZURE_MAX_BLOB_SIZE,
+	cancelUpload,
+	finalizeUpload,
+	initializeUpload,
+} from "./service";
 
 const findUploadsSchema = z
 	.object({
@@ -116,73 +101,13 @@ const initUploadSchema = z.object({
 	size: z.number().int().nonnegative().max(AZURE_MAX_BLOB_SIZE),
 });
 
-function getUploadBlockSize(size: number): number {
-	const minimumBlockSize = Math.ceil(size / AZURE_MAX_BLOCK_COUNT);
-	return Math.max(
-		MIN_UPLOAD_BLOCK_SIZE,
-		Math.ceil(minimumBlockSize / MIN_UPLOAD_BLOCK_SIZE) * MIN_UPLOAD_BLOCK_SIZE,
-	);
-}
-
-/**
- * Begin an upload, deciding whether it goes direct-to-blob or through this
- * server.
- *
- * The server owns the choice so the client never carries the feature flag:
- * when chunked uploads are enabled and the backend can presign, this reserves
- * the upload and returns the write SAS the client PUTs its blocks to; otherwise
- * it returns `proxied` and the client falls back to the `POST /uploads` route.
- * A `proxied` result reserves nothing — that route creates its own row.
- *
- * `blockSize` is the block size the client cuts the file into and `concurrency`
- * is how many blocks it PUTs at once, the latter from configuration. After
- * committing the block list the client calls {@link finalizeChunkedUploadFn}.
- */
+/** Begin a direct upload for the browser client. */
 export const initUploadFn = createServerFn({ method: "POST" })
 	.middleware([permission("upload_file")])
 	.validator(initUploadSchema)
-	.handler(async ({ data, context }) => {
-		const presignUpload = storage.presignUpload;
-
-		if (!config.uploadsChunked || !presignUpload) {
-			return { mode: "proxied" as const };
-		}
-
-		const { upload, storageKey } = await createPendingUpload(db, {
-			name: data.name,
-			type: data.type,
-			userId: context.session.userId,
-			expectedSize: data.size,
-		});
-
-		// The reservation is written before the SAS is minted, so a presign failure
-		// would leave an unfinished row for the reaper to clear 30 days on. Drop it
-		// now; a failed cancel changes nothing the caller sees over the presign
-		// error already surfacing.
-		let url: string;
-		try {
-			url = await presignUpload(storageKey, {
-				expiresIn: UPLOAD_SAS_TTL_SECONDS,
-			});
-		} catch (err) {
-			await cancelPendingUpload(
-				db,
-				storage,
-				logger,
-				upload.id,
-				context.session.userId,
-			).catch(() => {});
-			throw err;
-		}
-
-		return {
-			mode: "chunked" as const,
-			uploadId: upload.id,
-			url,
-			blockSize: getUploadBlockSize(data.size),
-			concurrency: config.uploadsChunkedConcurrency,
-		};
-	});
+	.handler(async ({ data, context }) =>
+		initializeUpload(data, context.session.userId),
+	);
 
 /**
  * Finalize a chunked upload once its blocks are committed, returning the upload.
@@ -192,12 +117,7 @@ export const finalizeChunkedUploadFn = createServerFn({ method: "POST" })
 	.validator(uploadIdSchema)
 	.handler(async ({ data, context }) => {
 		try {
-			return await finalizePendingUpload(
-				db,
-				storage,
-				data.id,
-				context.session.userId,
-			);
+			return await finalizeUpload(data.id, context.session.userId);
 		} catch (err) {
 			return rethrowAsHttp(err);
 		}
@@ -211,13 +131,7 @@ export const cancelChunkedUploadFn = createServerFn({ method: "POST" })
 	.validator(uploadIdSchema)
 	.handler(async ({ data, context }) => {
 		try {
-			await cancelPendingUpload(
-				db,
-				storage,
-				logger,
-				data.id,
-				context.session.userId,
-			);
+			await cancelUpload(data.id, context.session.userId);
 			return null;
 		} catch (err) {
 			return rethrowAsHttp(err);

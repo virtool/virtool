@@ -446,18 +446,36 @@ or explicit whitelist first, then use that row's `storage_key`; never construct
 a key from URL parameters. Use the row's display name for
 `Content-Disposition`.
 
-Large uploads can go direct-to-blob instead of through the `POST /uploads`
-route. `initUploadFn` owns the choice so the client never carries the flag:
-with `VT_UPLOADS_CHUNKED` enabled and an Azure backend that can presign, it
-reserves the upload — recording the file size the client declares at init — and
-returns a write SAS the client PUTs blocks to (`@uploads/chunkedUpload`), then
-commits with a Put Block List and calls `finalizeChunkedUploadFn`. Finalize
-records the stored object's size only when it matches the declared size, so an
-empty or partial block list is rejected
-rather than recorded as ready; `cancelChunkedUploadFn` drops an abandoned or
-rejected reservation. Otherwise it returns `proxied` and the client streams
-through the raw `/uploads` route, which stays the fallback and the rollback path
-— disable the flag to revert.
+Uploads use a direct Azure Block Blob protocol. The browser adapters and public
+REST routes share the reservation and finalization service in
+`@server/uploads/service`; file bytes never pass through the web server.
+
+API clients authenticate each Virtool request with their normal HTTP Basic API
+key credentials and follow this lifecycle:
+
+1. `POST /api/v1/uploads` with JSON `{ "name": string, "type": "reads" |
+   "reference" | "subtraction", "size": number }`. A `201` response contains
+   `{ "uploadId", "url", "blockSize", "concurrency" }`. The URL is a
+   short-lived write-only SAS for one blob.
+2. Split the file into `blockSize` byte pieces. For each zero-based index,
+   base64-encode its six-character, zero-padded decimal representation (for
+   example, index 0 is `MDAwMDAw`) and `PUT` the bytes to
+   `{url}&comp=block&blockid={encodedBlockId}`. At most `concurrency` requests
+   should run at once. This uses ordinary HTTP and requires no Azure SDK.
+3. Commit the ordered blocks by `PUT`ting an XML `BlockList` containing one
+   `<Latest>` entry per block to `{url}&comp=blocklist` with content type
+   `application/xml`.
+4. `POST /api/v1/uploads/{uploadId}/finalize` with an empty body. Finalization returns
+   the completed upload. It is idempotent and rejects a missing object or one
+   whose stored byte size differs from the declared `size` with `409`.
+5. On any transfer or commit failure, `DELETE /api/v1/uploads/{uploadId}`. Cancellation
+   returns `204` and is valid only for the caller's unfinished upload.
+
+The former `POST /uploads` raw-body endpoint has been removed. This is an intentional
+breaking change: there is no proxied upload or supported legacy size limit.
+When direct uploads are disabled or the storage backend cannot issue an upload
+SAS, initialization returns `503` instead of falling back. The maximum declared
+size is 209,715,200,000,000 bytes, the Azure block-count and block-size limit.
 
 ### Server push
 
