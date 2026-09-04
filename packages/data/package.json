@@ -22,7 +22,7 @@
 		"@virtool/storage": "workspace:*",
 		"bcrypt": "^6.0.0",
 		"drizzle-orm": "^0.45.2",
-		"es-toolkit": "^1.51.0",
+		"es-toolkit": "^1.52.0",
 		"postgres": "^3.4.9",
 		"resend": "^6.25.0"
 	},
