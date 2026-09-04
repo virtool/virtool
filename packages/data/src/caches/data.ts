@@ -16,14 +16,12 @@ import { AppError } from "../errors";
 const LAST_ACCESSED_REFRESH_INTERVAL_MS = 5 * 60 * 1000;
 
 /**
- * The default object storage the cache store is allowed to occupy.
+ * The default cache storage budget in bytes, equivalent to 100 decimal GB.
  *
- * The live budget is a stored setting — `settings.cache_storage_budget`, read
- * through `getSettings` — so an operator can raise or lower it without a
- * deploy. This is only the value seeded into the settings row when none is
- * present, kept here beside the eviction logic it feeds.
+ * Seeds missing settings rows. Eviction reads the live budget through
+ * `getSettings`, so operators can change it without a deploy.
  */
-export const CACHE_STORAGE_BUDGET_BYTES = 100 * 1024 ** 3;
+export const CACHE_STORAGE_BUDGET_BYTES = 100 * 1000 ** 3;
 
 /**
  * How many cache objects eviction deletes at once.

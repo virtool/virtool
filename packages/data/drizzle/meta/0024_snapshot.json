@@ -1,6 +1,6 @@
 {
-  "id": "553af7af-42de-4806-aaf6-b587cce66fb1",
-  "prevId": "eb9d4c24-b1f7-495b-b098-9379439b7a7a",
+  "id": "5f9ebea2-24da-4e33-b099-a50ac1ef578a",
+  "prevId": "553af7af-42de-4806-aaf6-b587cce66fb1",
   "version": "7",
   "dialect": "postgresql",
   "tables": {
@@ -4081,6 +4081,12 @@
           "primaryKey": false,
           "notNull": true
         },
+        "max_upload_size": {
+          "name": "max_upload_size",
+          "type": "bigint",
+          "primaryKey": false,
+          "notNull": true
+        },
         "minimum_password_length": {
           "name": "minimum_password_length",
           "type": "integer",
@@ -4137,6 +4143,10 @@
         "ck_settings_cache_storage_budget": {
           "name": "ck_settings_cache_storage_budget",
           "value": "\"settings\".\"cache_storage_budget\" > 0"
+        },
+        "ck_settings_max_upload_size": {
+          "name": "ck_settings_max_upload_size",
+          "value": "\"settings\".\"max_upload_size\" > 0"
         },
         "ck_settings_sample_group": {
           "name": "ck_settings_sample_group",

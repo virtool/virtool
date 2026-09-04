@@ -9,7 +9,7 @@ import { AZURE_MAX_BLOB_SIZE } from "@virtool/contracts";
 import { useForm } from "react-hook-form";
 
 /** The field is entered and shown in gigabytes; the setting is stored in bytes. */
-const BYTES_PER_GIGABYTE = 1_000_000_000;
+const BYTES_PER_GIGABYTE = 1000 ** 3;
 
 /** The largest maximum the Azure block blob protocol can honour, in gigabytes. */
 const MAX_GIGABYTES = AZURE_MAX_BLOB_SIZE / BYTES_PER_GIGABYTE;
