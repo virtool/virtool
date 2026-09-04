@@ -16,7 +16,7 @@
 		"typecheck": "tsc -p tsconfig.json && tsc -p tsconfig.node.json"
 	},
 	"dependencies": {
-		"zod": "^4.3.6"
+		"zod": "^4.5.4"
 	},
 	"devDependencies": {
 		"@types/node": "^26.4.1",
