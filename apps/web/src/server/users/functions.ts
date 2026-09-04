@@ -4,9 +4,11 @@ import {
 	ADMINISTRATOR_ROLE_NAMES,
 	PasswordTooShortError,
 } from "@virtool/contracts";
+import { isValidEmail } from "@virtool/data/auth/email";
 import {
 	changePassword,
 	createUser,
+	EmailConflictError,
 	findUsers,
 	GroupMembershipError,
 	getAccount,
@@ -96,8 +98,11 @@ const changePasswordSchema = z.object({
 // rather than in the validator because a zod rejection surfaces as a 500
 // carrying the issue list, which is not something a form can put in front of a
 // user.
+//
+// `isValidEmail` is the same rule the legacy identity audit applies, so an
+// address accepted here is one that migration would also accept.
 function checkEmail(email: string): void {
-	if (email !== "" && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+	if (email !== "" && !isValidEmail(email)) {
 		setResponseStatus(400);
 		throw new ClientError("The format of the email is invalid");
 	}
@@ -127,6 +132,10 @@ const rethrowAsHttp = createServerOnlyFn((err: unknown): never => {
 	if (err instanceof UserConflictError) {
 		setResponseStatus(409);
 		throw new ClientError("User already exists.");
+	}
+	if (err instanceof EmailConflictError) {
+		setResponseStatus(409);
+		throw new ClientError("Email address already in use.");
 	}
 	if (err instanceof GroupMembershipError) {
 		setResponseStatus(400);

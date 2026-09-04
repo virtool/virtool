@@ -1,5 +1,6 @@
 import { timingSafeEqual } from "node:crypto";
 import type { User } from "@virtool/contracts";
+import { syncCredentialPassword } from "@virtool/data/auth/credential";
 import { hashPassword, verifyPassword } from "@virtool/data/auth/password";
 import {
 	consumeResetSession,
@@ -315,6 +316,12 @@ export async function resetPassword(
 					lastPasswordChange: new Date(),
 				})
 				.where(eq(users.id, userId));
+
+			// A migrated user holds the same hash in their credential account, and
+			// the legacy path stays authoritative until the boundary cutover, so a
+			// reset written only to `users` would strand the credential on the
+			// password this one replaced.
+			await syncCredentialPassword(tx, userId, newHash);
 
 			return createAuthenticatedSession(tx, {
 				userId,

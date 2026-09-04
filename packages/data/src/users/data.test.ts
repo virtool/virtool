@@ -182,6 +182,25 @@ describe("updateUser", () => {
 		expect((await readUser(userId))?.handle).toBe("renamed");
 	});
 
+	it("synchronizes Better Auth usernames when a migrated handle changes", async () => {
+		const userId = await seedUser(db, { handle: "Alice" });
+		await db
+			.update(users)
+			.set({
+				username: "alice",
+				displayUsername: "Alice",
+				authMigratedAt: new Date(),
+			})
+			.where(eq(users.id, userId));
+
+		await updateUser(db, userId, { handle: "Renamed" });
+
+		const user = await readUser(userId);
+		expect(user?.handle).toBe("Renamed");
+		expect(user?.username).toBe("renamed");
+		expect(user?.displayUsername).toBe("Renamed");
+	});
+
 	it("leaves sessions alone when only group membership changes", async () => {
 		const userId = await seedUser(db);
 		await seedSession(db, userId);

@@ -216,7 +216,106 @@ looks fields up by property — so `userId` and `credentialID` keep their exact
 spelling while their columns stay snake_case.
 
 `users.email` is deliberately not unique, though Better Auth declares it so.
-Legacy rows share an empty email, and normalizing them is separate work.
+Legacy rows share an empty email and hold duplicate addresses.
+`users_migrated_email_unique` holds uniqueness where it can: over
+`lower(btrim(email))`, for rows that have been migrated and hold an address. A
+row that is not migrated is exempt, which is what lets the constraint exist at
+all against a legacy population.
+
+### Legacy identity migration
+
+`src/auth/migration.ts` audits the legacy user population and backfills a Better
+Auth credential account for each user whose identity is complete. It takes a
+database handle and a logger; `apps/internal`'s `auth` subcommand owns the
+process, the report file and the exit code.
+
+`normalizeEmail` in `src/auth/email.ts` is the one definition of what makes two
+addresses the same address. It trims and folds case, and does nothing else:
+dot removal and plus-address stripping are provider-specific, and a provider
+outside that convention delivers those to different people. The
+`users_migrated_email_unique` index expression is the same rule in SQL.
+
+Every user falls into exactly one classification. They are decided in this
+order — the state of the Better Auth rows first, then the identity, then the
+credential bytes — and each of them is counted split by `users.active`, so an
+operator can tell an active user awaiting remediation from a deactivated one
+that stays blocked.
+
+| Classification | Meaning | What apply does |
+| --- | --- | --- |
+| `eligible` | Address present, valid, and unique once normalized, with a handle Better Auth accepts. | Normalizes the address, sets `username`/`display_username` from the handle, stamps `auth_migrated_at`, and inserts the credential account. |
+| `migrated` | Credential account present and agreeing with `users.password`. | Nothing. |
+| `stale` | Credential account present, holding a password `users.password` has since replaced. | Copies the current hash onto the credential. |
+| `conflict` | The `users` and `auth_accounts` rows disagree with this contract. | Nothing. Reported for an operator. |
+| `blankEmail` | No address on file. | Nothing. |
+| `invalidEmail` | Address does not parse. | Nothing. |
+| `duplicateEmail` | Address normalizes to one another user also holds. | Nothing, for every member of the group. |
+| `invalidHandle` | Handle does not have the shape Better Auth accepts. | Nothing. Reported for an operator. |
+| `invalidPassword` | Identity is complete, but `users.password` does not decode to a bcrypt hash. | Nothing. Reported for an operator. |
+
+No member of a duplicate group is migrated. Choosing a winner by row order,
+activation state or last activity would hand one person's address — and with it
+their password recovery — to whichever row sorted first.
+
+No address is ever fabricated. A user with no usable address stays incomplete,
+which is the population the bounded legacy-password support window exists for.
+
+The bcrypt hash is copied out of the `bytea` column verbatim. Nothing rehashes
+it, nothing compares it, and no report or log line carries it: Better Auth is
+configured with a bcrypt verifier at the same cost, so the stored bytes are
+already what it expects.
+
+#### What the boundary can rely on
+
+`auth_migrated_at` is the durable, queryable answer. A row carrying it has one
+`credential` account keyed to the same integer `users.id` and an address unique
+among migrated rows; a row without it has no credential account and cannot
+authenticate through Better Auth. Split the second group by `users.active` to
+tell an active user awaiting remediation from a deactivated one. Conflicts are
+derivable the same way — a `users` row and an `auth_accounts` row that disagree
+— and a fresh audit is what enumerates them.
+
+Completeness must not be inferred from a non-empty `users.email`. An address
+can be present and unusable, and clearing an address does not undo a migration.
+
+#### Password writes before cutover
+
+The legacy login path stays authoritative until the authentication boundary
+moves, so every password write lands in `users.password` first.
+`syncCredentialPassword` in `src/auth/credential.ts` carries that write onto an
+existing credential account in the same transaction, and the account password
+change, the administrator reset and the forced-reset completion all call it. A
+user with no credential account is left alone: a password write never creates
+one.
+
+A credential holding a password `users.password` has since replaced is `stale`,
+not a conflict, and a rerun corrects it. After cutover that rule inverts — a
+credential can then diverge because it was changed through Better Auth, and
+overwriting it would undo a password its owner set.
+
+#### The legacy-password support window
+
+The window opens when the authentication boundary moves to Better Auth. Until
+then nothing reads the credential accounts and the legacy path serves everyone.
+
+Inside the window, legacy bcrypt verification survives for one purpose: an
+**active** incomplete user proving who they are so they can enter the restricted
+email-remediation flow. It never mints an ordinary application session, and it
+admits nobody else — a deactivated user stays blocked, and a migration conflict
+is for an operator to resolve, not a fallback to sign in through.
+
+The audit report is what measures the window. Rerun it to get the authoritative
+remaining count at any point. The window closes when the active incomplete count
+reaches zero, or on an explicit operator and product decision to close it with
+users still outstanding.
+
+#### Rollback
+
+Before the boundary is switched over, the backfill is additive and can stay in
+place while the legacy login path runs: nothing reads the credential accounts
+yet. After cutover, a rollback must not delete credential rows or overwrite a
+credential changed through Better Auth, because `users.password` is then the
+stale copy of the pair.
 
 ## Outbound requests
 

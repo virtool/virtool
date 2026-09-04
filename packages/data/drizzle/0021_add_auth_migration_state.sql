@@ -1,0 +1,2 @@
+ALTER TABLE "users" ADD COLUMN "auth_migrated_at" timestamp;--> statement-breakpoint
+CREATE UNIQUE INDEX "users_migrated_email_unique" ON "users" USING btree (lower(btrim("email"))) WHERE "users"."auth_migrated_at" is not null and btrim("users"."email") <> '';
