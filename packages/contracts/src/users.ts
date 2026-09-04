@@ -3,6 +3,7 @@ import type { AdministratorRoleName } from "./administrators";
 import type { GroupMinimal } from "./groups";
 import type { Permissions } from "./permissions";
 import type { SearchResult } from "./search";
+import type { AccountLifecycleState } from "./setup";
 
 /** A user reduced to the fields shown alongside another resource. */
 export const UserNested = z.object({
@@ -31,6 +32,15 @@ export type User = UserNested & {
 
 	/** When they last changed their password */
 	lastPasswordChange: Date;
+
+	/**
+	 * Whether the account is usable as an application account yet.
+	 *
+	 * Separate from {@link User.active}: a `pending` account has a handle, a
+	 * role and group memberships but no credential, and a deactivated account
+	 * is unusable whatever this says.
+	 */
+	lifecycleState: AccountLifecycleState;
 
 	/** What they may do, their groups' grants folded in */
 	permissions: Permissions;

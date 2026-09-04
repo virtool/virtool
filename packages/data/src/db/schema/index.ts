@@ -20,6 +20,7 @@ export * from "./references";
 export * from "./samples";
 export * from "./sessions";
 export * from "./settings";
+export * from "./setup";
 export * from "./subtractions";
 export * from "./tasks";
 export * from "./uploads";

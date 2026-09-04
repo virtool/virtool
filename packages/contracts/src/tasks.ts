@@ -9,6 +9,7 @@ import { z } from "zod";
  */
 export const PeriodicTaskName = z.enum([
 	"cleanup_sessions",
+	"cleanup_setup_state",
 	"deliver_email",
 	"evict_caches_lru",
 	"reap_orphaned_uploads",

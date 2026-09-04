@@ -396,9 +396,10 @@ by rewriting the response body, because doing so buffers the HTML stream.
 ### Authorization and raw routes
 
 Every exported server function declares exactly one policy from
-`@server/auth/policy`: `open()`, `authenticated()`, `adminRole(role)`, or
-`permission(name)`. Read the resolved session from `context.session`; do not
-perform a second session lookup. Row-dependent authorization remains in the
+`@server/auth/policy`: `open()`, `authenticated()`, `adminRole(role)`,
+`permission(name)`, or `setupOnly(purpose)`. Read the resolved session from
+`context.session` — or the restricted credential from `context.restricted` —
+and do not perform a second lookup. Row-dependent authorization remains in the
 handler. Register each new `functions.ts` module in
 `server/__tests__/authorization.test.ts`.
 
@@ -425,9 +426,11 @@ global CSRF middleware in `start.ts` is likewise scoped to
 own origin check against `VT_PUBLIC_ORIGIN`, which
 `@server/auth/betterAuth.test.ts` pins.
 
-Two Virtool states still gate every Better Auth sign-in. A `session.create`
-database hook refuses a user who is not `active` — with the same 401 a wrong
-password gets — and refuses one carrying `force_reset` with a 403, so the
+Three Virtool states still gate every Better Auth sign-in. A `session.create`
+database hook refuses a user who is not `active`, and one whose
+`lifecycle_state` is still `pending` — both with the same 401 a wrong password
+gets, because neither a switched-off account nor an outstanding invitation is
+public information — and refuses one carrying `force_reset` with a 403, so the
 password, passkey and two-factor endpoints are no looser than `login()` in
 `@server/auth/core`. `/sign-in/email` is answered 404 by a `before` hook:
 `emailAndPassword` is enabled only for its bcrypt hashing, and `users.email`
@@ -462,6 +465,55 @@ size limit.
 When direct uploads are disabled or the storage backend cannot issue an upload
 SAS, initialization returns `503` instead of falling back. The maximum declared
 size is 209,715,200,000,000 bytes, the Azure block-count and block-size limit.
+
+### The setup boundary
+
+Some accounts are neither anonymous nor fully authenticated: an
+administrator-created account that has not been claimed, an active legacy
+account with no usable unique email, and a user under a `required` MFA policy
+who has not enrolled. Each holds a **restricted setup credential** that
+completes exactly one named transition and reaches nothing else.
+
+The credential is its own cookie pair, `setup_session_id` and
+`setup_session_token`, deliberately not the session pair. `@virtool/data` owns
+the rows and the purposes; this app owns the transport and the boundary.
+
+- `@server/auth/restricted` is the **one** authority for what a restricted
+  caller is. `resolveRestrictedSetup` turns the cookies into a credential
+  carrying a user id, a non-secret session id, one purpose and an expiry —
+  no roles, no permissions, no API-key cap. A second reader would be a second
+  chance to widen it.
+- The **global authentication middleware** enforces the restriction, before
+  any policy runs. An application session wins outright; only then is the
+  restricted credential considered, and a restricted caller is refused
+  anything absent from `@server/auth/setupExceptions` with a 403
+  `SetupRequiredError` naming the purpose. That error crosses the boundary
+  through `serverErrorSerializationAdapter`, and is what tells the router
+  which setup surface the caller belongs on — it carries no token and no
+  authorization data.
+- `setupOnly(purpose)` is the other half. The middleware decides whether a
+  restricted caller may reach a function at all; the policy decides whether
+  the purpose they hold is the one it completes, and refuses an ordinary
+  authenticated caller too.
+- A function listed in `setupExceptions` must declare `setupOnly()` and vice
+  versa. `authorization.test.ts` pins both directions, and separately proves
+  every ordinary server function refuses a restricted principal on its own.
+
+`setupExceptions` is currently empty: the setup surfaces themselves belong to
+the invitation, recovery and required-MFA work, so a restricted principal
+reaches nothing yet.
+
+Raw routes reject restricted principals and always will:
+`requireAuthenticatedRequest` reads the session cookies or an `Authorization`
+header and never the setup pair, so SSE, uploads, downloads and streamed files
+answer a restricted holder the same 401 they answer anyone else. API-key Basic
+authentication is untouched — a restricted credential can never mint, accept
+or inherit a key, and `verifyApiKey` refuses a key whose owner has not
+completed setup.
+
+`logout` is the abandon path. It deletes the restricted session and clears its
+cookies alongside the application pair, so there is one way to end a browser's
+authority rather than one per kind.
 
 ### Server push
 
