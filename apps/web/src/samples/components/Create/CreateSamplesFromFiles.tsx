@@ -4,11 +4,6 @@ import Alert from "@base/Alert";
 import { BoxGroup, BoxGroupTable } from "@base/Box";
 import Button from "@base/Button";
 import {
-	Collapsible,
-	CollapsibleContent,
-	CollapsibleTrigger,
-} from "@base/Collapsible";
-import {
 	Dialog,
 	DialogContent,
 	DialogDescription,
@@ -17,7 +12,7 @@ import {
 	DialogTrigger,
 } from "@base/Dialog";
 import { IconButton } from "@base/Icon";
-import { InputError, InputGroup, InputLabel, InputSimple } from "@base/Input";
+import { InputError, InputSimple } from "@base/Input";
 import LoadingPlaceholder from "@base/LoadingPlaceholder";
 import QueryError from "@base/QueryError";
 import SaveButton from "@base/SaveButton";
@@ -34,11 +29,9 @@ import type { Label, Upload } from "@virtool/contracts";
 import { AlertCircle, X } from "lucide-react";
 import { useEffect, useState } from "react";
 import { Controller, useFieldArray, useForm } from "react-hook-form";
-import DefaultSubtractionSelector from "./DefaultSubtractionSelector";
-import LabelSelector from "./LabelSelector";
-import LibraryTypeSelector from "./LibraryTypeSelector";
 import ReadPairBadge from "./ReadPairBadge";
-import SampleUserGroup from "./SampleUserGroup";
+import SampleSettingsFields from "./SampleSettingsFields";
+import { type SampleSettingsValues, sampleSettingsDefaults } from "./settings";
 
 /** One sample in the batch: its name and the reads it is created from. */
 type SampleRow = {
@@ -52,14 +45,8 @@ type SampleRow = {
 };
 
 type FormValues = {
-	group: string;
-	host: string;
-	isolate: string;
-	labels: number[];
-	libraryType: string;
-	locale: string;
+	settings: SampleSettingsValues;
 	samples: SampleRow[];
-	subtractionIds: number[];
 };
 
 /**
@@ -119,14 +106,8 @@ function CreateSamplesForm({
 		setValue,
 	} = useForm<FormValues>({
 		defaultValues: {
-			group: "",
-			host: "",
-			isolate: "",
-			labels: [],
-			libraryType: "normal",
-			locale: "",
+			settings: sampleSettingsDefaults,
 			samples: buildSampleRows(selected),
-			subtractionIds: [],
 		},
 	});
 
@@ -137,26 +118,16 @@ function CreateSamplesForm({
 
 	const mutation = useCreateSamples();
 
-	const [showMetadata, setShowMetadata] = useState(false);
 	const [failedCount, setFailedCount] = useState(0);
 
 	useEffect(() => {
-		setValue("group", String(account?.primaryGroup?.id ?? ""));
+		setValue("settings.group", String(account?.primaryGroup?.id ?? ""));
 	}, [account, setValue]);
 
 	function onSubmit(values: FormValues) {
 		const requests = values.samples.map((sample) =>
 			getCreateSampleRequest(
-				{
-					group: values.group,
-					host: values.host,
-					isolate: values.isolate,
-					labels: values.labels,
-					libraryType: values.libraryType,
-					locale: values.locale,
-					name: sample.name,
-					subtractionIds: values.subtractionIds,
-				},
+				{ ...values.settings, name: sample.name },
 				sample.reads.map((read) => read.id),
 			),
 		);
@@ -278,69 +249,15 @@ function CreateSamplesForm({
 					<p className="mb-4 text-sm text-gray-500">Applies to every sample.</p>
 					<Controller
 						control={control}
-						render={({ field: { onChange, value } }) => (
-							<SampleUserGroup
-								selected={value}
+						name="settings"
+						render={({ field }) => (
+							<SampleSettingsFields
 								groups={groups}
-								onChange={onChange}
-							/>
-						)}
-						name="group"
-					/>
-
-					<Collapsible
-						className="mb-4"
-						open={showMetadata}
-						onOpenChange={setShowMetadata}
-					>
-						<CollapsibleTrigger>Show Metadata Fields</CollapsibleTrigger>
-						<CollapsibleContent className="grid grid-cols-3 gap-x-4 pt-4">
-							<InputGroup>
-								<InputLabel htmlFor="locale">Locale</InputLabel>
-								<InputSimple id="locale" {...register("locale")} />
-							</InputGroup>
-
-							<InputGroup>
-								<InputLabel htmlFor="isolate">Isolate</InputLabel>
-								<InputSimple id="isolate" {...register("isolate")} />
-							</InputGroup>
-
-							<InputGroup>
-								<InputLabel htmlFor="host">Host</InputLabel>
-								<InputSimple id="host" {...register("host")} />
-							</InputGroup>
-						</CollapsibleContent>
-					</Collapsible>
-
-					<Controller
-						control={control}
-						render={({ field: { onChange, value } }) => (
-							<LibraryTypeSelector libraryType={value} onSelect={onChange} />
-						)}
-						name="libraryType"
-					/>
-
-					<Controller
-						control={control}
-						render={({ field: { onChange, value } }) => (
-							<LabelSelector
 								labels={labels}
-								selected={value}
-								onChange={onChange}
+								value={field.value}
+								onChange={field.onChange}
 							/>
 						)}
-						name="labels"
-					/>
-
-					<Controller
-						control={control}
-						render={({ field: { onChange, value } }) => (
-							<DefaultSubtractionSelector
-								selected={value}
-								onChange={onChange}
-							/>
-						)}
-						name="subtractionIds"
 					/>
 				</div>
 			</div>
