@@ -7,3 +7,6 @@ import { createQueryKeys } from "@app/queryKeys";
  * a common prefix.
  */
 export const fileQueryKeys = createQueryKeys("uploads");
+
+/** Query keys for the instance upload policy. */
+export const uploadPolicyQueryKeys = createQueryKeys("uploadPolicy");

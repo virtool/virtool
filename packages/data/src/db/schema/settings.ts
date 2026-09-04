@@ -5,7 +5,7 @@
 // is why `DEFAULT_SETTINGS` in `../../settings/data.ts` carries them rather
 // than this file.
 
-import type { SampleGroup } from "@virtool/contracts";
+import { AZURE_MAX_BLOB_SIZE, type SampleGroup } from "@virtool/contracts";
 import { sql } from "drizzle-orm";
 import {
 	bigint,
@@ -57,7 +57,10 @@ export const settings = pgTable(
 			"ck_settings_cache_storage_budget",
 			sql`${table.cacheStorageBudget} > 0`,
 		),
-		check("ck_settings_max_upload_size", sql`${table.maxUploadSize} > 0`),
+		check(
+			"ck_settings_max_upload_size",
+			sql`${table.maxUploadSize} > 0 AND ${table.maxUploadSize} <= ${sql.raw(String(AZURE_MAX_BLOB_SIZE))}`,
+		),
 		check(
 			"ck_settings_sample_group",
 			sql`${table.sampleGroup} in ('none', 'force_choice', 'users_primary_group')`,

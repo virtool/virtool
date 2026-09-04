@@ -1,8 +1,4 @@
-import {
-	AZURE_MAX_BLOB_SIZE,
-	UPLOAD_TYPES,
-	UploadTooLargeError,
-} from "@virtool/contracts";
+import { UPLOAD_TYPES, UploadTooLargeError } from "@virtool/contracts";
 import {
 	UploadIncompleteError,
 	UploadNotFoundError,
@@ -21,7 +17,7 @@ import {
 const initUploadSchema = z.object({
 	name: z.string().min(1),
 	type: z.enum(UPLOAD_TYPES),
-	size: z.number().int().nonnegative().max(AZURE_MAX_BLOB_SIZE),
+	size: z.number().int().nonnegative(),
 });
 
 function jsonResponse(body: unknown, status: number): Response {

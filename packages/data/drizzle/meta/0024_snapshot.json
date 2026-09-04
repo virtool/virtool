@@ -4146,7 +4146,7 @@
         },
         "ck_settings_max_upload_size": {
           "name": "ck_settings_max_upload_size",
-          "value": "\"settings\".\"max_upload_size\" > 0"
+          "value": "\"settings\".\"max_upload_size\" > 0 AND \"settings\".\"max_upload_size\" <= 209715200000000"
         },
         "ck_settings_sample_group": {
           "name": "ck_settings_sample_group",

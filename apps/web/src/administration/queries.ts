@@ -25,6 +25,7 @@ import {
 	useQueryClient,
 	useSuspenseQuery,
 } from "@tanstack/react-query";
+import { uploadPolicyQueryKeys } from "@uploads/keys";
 import type {
 	EmailSettings,
 	EmailTestResult,
@@ -93,6 +94,9 @@ export function useUpdateSettings() {
 		onSuccess: () => {
 			queryClient.invalidateQueries({
 				queryKey: settingsQueryKeys.all(),
+			});
+			queryClient.invalidateQueries({
+				queryKey: uploadPolicyQueryKeys.all(),
 			});
 			// The minimum password length lives in these settings, so the policy the
 			// password forms validate against has just gone stale.

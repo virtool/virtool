@@ -10,7 +10,7 @@ import {
 	useQuery,
 	useQueryClient,
 } from "@tanstack/react-query";
-import { fileQueryKeys } from "@uploads/keys";
+import { fileQueryKeys, uploadPolicyQueryKeys } from "@uploads/keys";
 import type {
 	SortDirection,
 	UploadPolicy,
@@ -22,7 +22,7 @@ import type {
 /** Fetch the upload limit for client validation; initialization enforces it again. */
 export function useUploadPolicy() {
 	return useQuery<UploadPolicy>({
-		queryKey: [...fileQueryKeys.all(), "policy"],
+		queryKey: uploadPolicyQueryKeys.all(),
 		queryFn: () => getUploadPolicyFn(),
 	});
 }
