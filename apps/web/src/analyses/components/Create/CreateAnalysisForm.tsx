@@ -1,13 +1,12 @@
-import { useCompatibleIndexes, useSubtractionOptions } from "@analyses/hooks";
 import { useCreateAnalysis } from "@analyses/queries";
 import Button from "@base/Button";
 import CreatedCount from "@base/CreatedCount";
 import { DialogFooter } from "@base/Dialog";
 import { InputError } from "@base/Input";
-import QueryError from "@base/QueryError";
 import Switch from "@base/Switch";
 import SubtractionSelector from "@subtraction/components/SubtractionSelector";
-import type { AnalysisWorkflow } from "@virtool/contracts";
+import type { SubtractionOption } from "@subtraction/types";
+import type { AnalysisWorkflow, IndexMinimal } from "@virtool/contracts";
 import { useState } from "react";
 import { Controller, useForm } from "react-hook-form";
 import { CreateAnalysisSummary } from "./CreateAnalysisSummary";
@@ -25,6 +24,11 @@ type CreateAnalysisFormProps = {
 	/** The workflows compatible with the selected sample(s) */
 	compatibleWorkflows: workflow[];
 
+	/** The subtractions selected when the form opens */
+	defaultSubtractions: SubtractionOption[];
+
+	indexes: IndexMinimal[];
+
 	/** Closes the enclosing dialog. */
 	onClose: () => void;
 
@@ -33,6 +37,8 @@ type CreateAnalysisFormProps = {
 
 	/** The ids of the samples being analyzed */
 	sampleIds: number[];
+
+	subtractions: SubtractionOption[];
 };
 
 /**
@@ -42,23 +48,13 @@ type CreateAnalysisFormProps = {
  */
 export default function CreateAnalysisForm({
 	compatibleWorkflows,
+	defaultSubtractions,
+	indexes,
 	onClose,
 	sampleCount,
 	sampleIds,
+	subtractions,
 }: CreateAnalysisFormProps) {
-	const {
-		indexes,
-		isPending: isPendingIndexes,
-		isError: isErrorIndexes,
-	} = useCompatibleIndexes();
-
-	const {
-		defaultSubtractions,
-		subtractions,
-		isPending: isPendingSubtractions,
-		isError: isErrorSubtractions,
-	} = useSubtractionOptions(sampleIds);
-
 	const createAnalysis = useCreateAnalysis();
 
 	const defaultValues = {
@@ -77,14 +73,6 @@ export default function CreateAnalysisForm({
 
 	const [createMore, setCreateMore] = useState(false);
 	const [createdCount, setCreatedCount] = useState(0);
-
-	if (isErrorIndexes || isErrorSubtractions) {
-		return <QueryError noun="analysis options" />;
-	}
-
-	if (isPendingIndexes || isPendingSubtractions) {
-		return null;
-	}
 
 	async function onSubmit(values: CreateAnalysisFormValues) {
 		const { indexId, subtractionIds, workflow } = values;
