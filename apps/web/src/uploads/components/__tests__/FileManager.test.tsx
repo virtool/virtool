@@ -9,6 +9,8 @@ import { upload } from "@uploads/uploader";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { FileManager, type FileManagerProps } from "../FileManager";
 
+vi.mock("@uploads/uploader");
+
 describe("<FileManager>", () => {
 	let props: FileManagerProps;
 	let path: string;
@@ -44,8 +46,6 @@ describe("<FileManager>", () => {
 			}),
 		);
 		mockFindUploads([createFakeFile({ name: "subtraction.fq.gz" })]);
-
-		vi.mock("@uploads/uploader");
 
 		await renderWithRouter(
 			<FileManager {...props} regex={/.(?:fa|fasta)(?:.gz|.gzip)?$/} />,
