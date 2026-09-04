@@ -22,8 +22,10 @@ const LAST_ACCESSED_REFRESH_INTERVAL_MS = 5 * 60 * 1000;
  * through `getSettings` — so an operator can raise or lower it without a
  * deploy. This is only the value seeded into the settings row when none is
  * present, kept here beside the eviction logic it feeds.
+ *
+ * Decimal gigabytes, the unit the budget is entered and shown in.
  */
-export const CACHE_STORAGE_BUDGET_BYTES = 100 * 1024 ** 3;
+export const CACHE_STORAGE_BUDGET_BYTES = 100 * 1000 ** 3;
 
 /**
  * How many cache objects eviction deletes at once.

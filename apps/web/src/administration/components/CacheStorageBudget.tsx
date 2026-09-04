@@ -7,18 +7,18 @@ import SaveButton from "@base/SaveButton";
 import SectionHeader from "@base/SectionHeader";
 import { useForm } from "react-hook-form";
 
-/** The budget field is entered and shown in gibibytes; the setting is stored in bytes. */
-const BYTES_PER_GIBIBYTE = 1024 ** 3;
+/** The budget field is entered and shown in gigabytes; the setting is stored in bytes. */
+const BYTES_PER_GIGABYTE = 1000 ** 3;
 
 type CacheStorageBudgetFormValues = {
-	budgetGibibytes: number;
+	budgetGigabytes: number;
 };
 
 /**
  * Set how much object storage the cache store may occupy.
  *
  * The eviction task evicts least-recently-used caches until the store is back
- * under this budget. The setting is stored in bytes; the field is in gibibytes,
+ * under this budget. The setting is stored in bytes; the field is in gigabytes,
  * which is the unit the budget is reasoned about in.
  */
 export default function CacheStorageBudget() {
@@ -31,7 +31,7 @@ export default function CacheStorageBudget() {
 		register,
 	} = useForm<CacheStorageBudgetFormValues>({
 		values: {
-			budgetGibibytes: data ? data.cacheStorageBudget / BYTES_PER_GIBIBYTE : 0,
+			budgetGigabytes: data ? data.cacheStorageBudget / BYTES_PER_GIGABYTE : 0,
 		},
 	});
 
@@ -43,9 +43,9 @@ export default function CacheStorageBudget() {
 		return <LoadingPlaceholder />;
 	}
 
-	function save({ budgetGibibytes }: CacheStorageBudgetFormValues) {
+	function save({ budgetGigabytes }: CacheStorageBudgetFormValues) {
 		mutation.mutate({
-			cacheStorageBudget: Math.round(budgetGibibytes * BYTES_PER_GIBIBYTE),
+			cacheStorageBudget: Math.round(budgetGigabytes * BYTES_PER_GIGABYTE),
 		});
 	}
 
@@ -62,25 +62,25 @@ export default function CacheStorageBudget() {
 				<BoxGroupSection>
 					<form onSubmit={handleSubmit(save)}>
 						<InputGroup>
-							<InputLabel htmlFor="cacheStorageBudget">Budget (GiB)</InputLabel>
+							<InputLabel htmlFor="cacheStorageBudget">Budget (GB)</InputLabel>
 							<Input
 								id="cacheStorageBudget"
 								aria-describedby="cacheStorageBudget-error"
-								aria-invalid={Boolean(errors.budgetGibibytes) || undefined}
+								aria-invalid={Boolean(errors.budgetGigabytes) || undefined}
 								min={1}
 								step={1}
 								type="number"
-								{...register("budgetGibibytes", {
+								{...register("budgetGigabytes", {
 									valueAsNumber: true,
 									required: "A budget is required.",
 									min: {
 										value: 1,
-										message: "The budget must be at least 1 GiB.",
+										message: "The budget must be at least 1 GB.",
 									},
 								})}
 							/>
 							<InputError id="cacheStorageBudget-error">
-								{errors.budgetGibibytes?.message}
+								{errors.budgetGigabytes?.message}
 							</InputError>
 						</InputGroup>
 						<div className="flex justify-end">

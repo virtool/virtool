@@ -21,7 +21,7 @@ import {
 import { evictCachesLruTask } from "./evict-caches-lru";
 import type { TaskContext } from "./registry";
 
-const GIB = 1024 ** 3;
+const GB = 1000 ** 3;
 
 const logger: Logger = createLogger({ name: "test", level: "silent" });
 
@@ -113,7 +113,7 @@ function refusingDeletes(): StorageBackend {
 
 describe("evictCachesLruTask", () => {
 	it("completes without evicting when the store is under budget", async () => {
-		const keys = await seedEntries(5, 10 * GIB);
+		const keys = await seedEntries(5, 10 * GB);
 
 		const task = await claimTask(db, evictCachesLruTask);
 
@@ -138,10 +138,10 @@ describe("evictCachesLruTask", () => {
 		expect(await remainingKeys()).toEqual(keys);
 	});
 
-	// 150 GiB stored against the default 100 GiB budget, so 50 GiB has to go and
+	// 150 GB stored against the default 100 GB budget, so 50 GB has to go and
 	// the five least recently used entries are what covers it.
 	it("evicts the least recently used entries once the store is over budget", async () => {
-		const keys = await seedEntries(15, 10 * GIB);
+		const keys = await seedEntries(15, 10 * GB);
 
 		const task = await claimTask(db, evictCachesLruTask);
 
@@ -162,12 +162,12 @@ describe("evictCachesLruTask", () => {
 		).rejects.toThrow();
 	});
 
-	// 150 GiB stored against a 40 GiB budget seeded into settings, so 110 GiB has
+	// 150 GB stored against a 40 GB budget seeded into settings, so 110 GB has
 	// to go and the eleven least recently used entries cover it.
 	it("evicts against the budget configured in settings", async () => {
-		await seedSettings(db, { cacheStorageBudget: 40 * GIB });
+		await seedSettings(db, { cacheStorageBudget: 40 * GB });
 
-		const keys = await seedEntries(15, 10 * GIB);
+		const keys = await seedEntries(15, 10 * GB);
 
 		const task = await claimTask(db, evictCachesLruTask);
 
@@ -185,7 +185,7 @@ describe("evictCachesLruTask", () => {
 	});
 
 	it("fails the task and leaves every row when storage refuses a delete", async () => {
-		const keys = await seedEntries(15, 10 * GIB);
+		const keys = await seedEntries(15, 10 * GB);
 
 		const task = await claimTask(db, evictCachesLruTask);
 
@@ -215,7 +215,7 @@ describe("evictCachesLruTask", () => {
 	// walk hundreds of objects would hold the drain open for as long as that
 	// takes, and could reach the row delete after the claim was released.
 	it("stops deleting and leaves every row when the run is aborted", async () => {
-		const keys = await seedEntries(20, 10 * GIB);
+		const keys = await seedEntries(20, 10 * GB);
 
 		const controller = new AbortController();
 
