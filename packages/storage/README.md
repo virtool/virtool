@@ -39,7 +39,8 @@ proxy in the path trips and no bytes pass through the server.
 
 ## Testing
 
-The `unit` Vitest project covers behavior testable with `MemoryStorage`. The
+The `unit` Vitest project covers `MemoryStorage` and Azure URL signing without
+network requests. The
 `integration` project exercises the S3 and Azure backends against real Garage
 and Azurite containers and runs in the shared `Data & Storage / Test` CI job.
 Place tests beside their source as `*.test.ts`.
