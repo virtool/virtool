@@ -52,6 +52,11 @@ export type FileManagerProps = {
 	   files listed with it. */
 	renderItemAction?: (upload: Upload, uploads: Upload[]) => ReactNode;
 
+	/* Renders a control acting on the whole selection, shown in the list header
+	   while at least one file is selected. Providing it makes the list
+	   selectable even when the account can't delete files. */
+	renderSelectionAction?: (selected: Upload[], clear: () => void) => ReactNode;
+
 	setPage?: (page: number) => void;
 
 	setSort?: (sort: UploadSortField, direction: SortDirection) => void;
@@ -68,6 +73,7 @@ export function FileManager({
 	page = 1,
 	regex,
 	renderItemAction,
+	renderSelectionAction,
 	setPage = () => {},
 	setSort = () => {},
 	sort,
@@ -113,6 +119,7 @@ export function FileManager({
 		account,
 		"remove_file",
 	);
+	const canSelect = canDelete || Boolean(renderSelectionAction);
 
 	const title = `${fileType === "reads" ? "Read" : capitalize(fileType)} Files`;
 
@@ -205,10 +212,15 @@ export function FileManager({
 									: pluralize(files.foundCount, "file")
 							}
 						>
-							{canDelete && selection.selected.length > 0 && (
-								<Button color="red" size="small" onClick={handleDelete}>
-									<Icon icon={Trash} /> Delete
-								</Button>
+							{selection.selected.length > 0 && (
+								<>
+									{renderSelectionAction?.(selection.selected, selection.clear)}
+									{canDelete && (
+										<Button color="red" size="small" onClick={handleDelete}>
+											<Icon icon={Trash} /> Delete
+										</Button>
+									)}
+								</>
 							)}
 						</ListHeader>
 						<BoxGroupTable className="table-fixed" variant="data">
@@ -217,7 +229,7 @@ export function FileManager({
 								checked={selection.getVisibleState(files.items)}
 								direction={direction}
 								onSelectAll={
-									canDelete
+									canSelect
 										? () => selection.toggleVisible(files.items)
 										: undefined
 								}
@@ -233,7 +245,7 @@ export function FileManager({
 										checked={selection.isSelected(item)}
 										key={item.id}
 										onSelect={
-											canDelete
+											canSelect
 												? (event: MouseEvent<HTMLButtonElement>) =>
 														selection.select(item, {
 															shiftKey: event.shiftKey,

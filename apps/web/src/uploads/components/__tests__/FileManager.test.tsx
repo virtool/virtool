@@ -212,6 +212,99 @@ describe("<FileManager>", () => {
 	});
 
 	describe("selection", () => {
+		const noDeletePermissions = {
+			cancel_job: false,
+			create_ref: false,
+			create_sample: true,
+			modify_hmm: false,
+			modify_subtraction: false,
+			remove_file: false,
+			remove_job: false,
+			upload_file: true,
+		};
+
+		it("should hide the checkboxes when the account can neither delete nor act on a selection", async () => {
+			mockGetAccount(
+				createFakeAccount({
+					administratorRole: null,
+					permissions: noDeletePermissions,
+				}),
+			);
+			mockFindUploads([createFakeFile({ name: "one.fq.gz" })]);
+
+			await renderWithRouter(<FileManager {...props} />, path);
+
+			expect(await screen.findByText("one.fq.gz")).toBeInTheDocument();
+			expect(
+				screen.queryByRole("checkbox", { name: "Select one.fq.gz" }),
+			).not.toBeInTheDocument();
+		});
+
+		it("should show the checkboxes for a selection action even when the account can't delete", async () => {
+			mockGetAccount(
+				createFakeAccount({
+					administratorRole: null,
+					permissions: noDeletePermissions,
+				}),
+			);
+			mockFindUploads([createFakeFile({ name: "one.fq.gz" })]);
+
+			await renderWithRouter(
+				<FileManager
+					{...props}
+					renderSelectionAction={(selected) => (
+						<button type="button">Create {selected.length}</button>
+					)}
+				/>,
+				path,
+			);
+
+			await userEvent.click(
+				await screen.findByRole("checkbox", { name: "Select one.fq.gz" }),
+			);
+
+			expect(
+				screen.getByRole("button", { name: "Create 1" }),
+			).toBeInTheDocument();
+			expect(
+				screen.queryByRole("button", { name: "Delete" }),
+			).not.toBeInTheDocument();
+		});
+
+		it("should pass the selection and a way to clear it to the selection action", async () => {
+			const first = createFakeFile({ name: "one.fq.gz" });
+			const second = createFakeFile({ name: "two.fq.gz" });
+
+			mockGetAccount(createFakeAccount({ administratorRole: "full" }));
+			mockFindUploads([first, second]);
+
+			await renderWithRouter(
+				<FileManager
+					{...props}
+					renderSelectionAction={(selected, clear) => (
+						<button onClick={clear} type="button">
+							Create {selected.map((item) => item.name).join(", ")}
+						</button>
+					)}
+				/>,
+				path,
+			);
+
+			await userEvent.click(
+				await screen.findByRole("checkbox", { name: "Select one.fq.gz" }),
+			);
+			await userEvent.click(
+				screen.getByRole("checkbox", { name: "Select two.fq.gz" }),
+			);
+
+			await userEvent.click(
+				screen.getByRole("button", { name: "Create one.fq.gz, two.fq.gz" }),
+			);
+
+			expect(screen.getByText("2 files")).toBeInTheDocument();
+			expect(screen.queryByText("2 selected")).not.toBeInTheDocument();
+		});
+
 		it("should delete every selected file", async () => {
 			const first = createFakeFile({ name: "one.fq.gz" });
 			const second = createFakeFile({ name: "two.fq.gz" });
