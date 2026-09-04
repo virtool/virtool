@@ -30,7 +30,7 @@
 		"undici": "^8.10.0"
 	},
 	"devDependencies": {
-		"@types/node": "^26.4.0",
+		"@types/node": "^26.4.1",
 		"tsdown": "^0.22.14",
 		"vitest": "^4.1.11"
 	}
