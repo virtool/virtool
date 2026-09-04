@@ -131,11 +131,11 @@ describe("updateSettings", () => {
 		await seedSettings(db);
 
 		await expect(
-			updateSettings(db, { cacheStorageBudget: 50 * 1024 ** 3 }),
-		).resolves.toMatchObject({ cacheStorageBudget: 50 * 1024 ** 3 });
+			updateSettings(db, { cacheStorageBudget: 50 * 1000 ** 3 }),
+		).resolves.toMatchObject({ cacheStorageBudget: 50 * 1000 ** 3 });
 
 		await expect(getSettings(db)).resolves.toMatchObject({
-			cacheStorageBudget: 50 * 1024 ** 3,
+			cacheStorageBudget: 50 * 1000 ** 3,
 		});
 	});
 
@@ -154,7 +154,7 @@ describe("DEFAULT_SETTINGS", () => {
 	// migration or this seeded the row.
 	it("declares the values the settings row is seeded with", () => {
 		expect(DEFAULT_SETTINGS).toEqual({
-			cacheStorageBudget: 100 * 1024 ** 3,
+			cacheStorageBudget: 100 * 1000 ** 3,
 			defaultSourceTypes: ["isolate", "strain"],
 			emailApiKey: null,
 			emailEnabled: false,

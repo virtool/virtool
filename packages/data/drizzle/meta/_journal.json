@@ -162,6 +162,13 @@
       "when": 1788545926294,
       "tag": "0022_encrypt_settings_ncbi_api_key",
       "breakpoints": true
+    },
+    {
+      "idx": 23,
+      "version": "7",
+      "when": 1788632326294,
+      "tag": "0023_convert_settings_cache_storage_budget_to_gb",
+      "breakpoints": true
     }
   ]
 }
