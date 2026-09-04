@@ -1,22 +1,6 @@
 import { createLogger } from "@virtool/logger";
 
-/**
- * The merged internal binary's command dispatcher.
- *
- * One image carries four processes that share a schema, a data layer and an
- * object store but not a lifecycle: `serve` is the jobs API HTTP server, scaled
- * to N request replicas; `run` is the spawner-and-runner pair, a lease
- * singleton; `migrate` applies pending Drizzle migrations as an init Job; and
- * `operations` runs the audits and data migrations those migrations are gated
- * on, as a Job of its own. They stay separate containers so HTTP scaling never
- * multiplies task-lease contention — the image is fused, the processes are not.
- *
- * The command's module is loaded with a dynamic `import` rather than a static
- * one so only the selected process's graph is evaluated: the migration Job
- * never imports Hono, and the HTTP server never imports the task registry. Each
- * `start*` owns its own fatal logging under its own service name, so this
- * dispatcher only has to report an unknown command and a `serve` failure.
- */
+// Load only the selected process so migration Jobs do not initialize services.
 async function dispatch(command: string | undefined): Promise<void> {
 	switch (command) {
 		case "serve": {
@@ -34,14 +18,14 @@ async function dispatch(command: string | undefined): Promise<void> {
 			await startMigrate();
 			return;
 		}
-		case "operations": {
-			const { startOperations } = await import("./operations/main");
-			await startOperations(process.argv.slice(3));
+		case "data-migrations": {
+			const { startDataMigrations } = await import("./data-migrations/main");
+			await startDataMigrations(process.argv.slice(3));
 			return;
 		}
 		default:
 			throw new Error(
-				`unknown command ${command ? `"${command}"` : "(none)"}; expected one of serve, run, migrate, operations`,
+				`unknown command ${command ? `"${command}"` : "(none)"}; expected one of serve, run, migrate, data-migrations`,
 			);
 	}
 }

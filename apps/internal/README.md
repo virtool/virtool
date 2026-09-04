@@ -9,7 +9,7 @@ the first argument to the bundle (`node dist/index.mjs <command>`):
 | `serve` | The jobs API HTTP server workflow runners claim, update, and finish jobs through. |
 | `run` | The periodic task spawner and the task runner, in one long-lived process. |
 | `migrate` | Applies pending Drizzle migrations, then exits. Run as an init Job. |
-| `operations` | Inspects and runs the database audits and data migrations `migrate` is gated on. Run as a Job. |
+| `data-migrations` | Inspects recorded audits and backfills. Run as a Job. |
 
 Image: `ghcr.io/virtool/internal`. The image is fused; the processes are not.
 `serve` scales to N request replicas, while `run` is a lease singleton — folding
@@ -20,9 +20,9 @@ each passes.
 `src/index.ts` is the dispatcher: it reads `argv[2]` and dynamically imports the
 selected command's graph, so the migration Job never loads Hono and the HTTP
 server never loads the task registry. Each command lives under its own
-directory — `src/serve/`, `src/run/`, `src/migrate/`, `src/operations/` — and
+directory — `src/serve/`, `src/run/`, `src/migrate/`, `src/data-migrations/` — and
 owns its own config, Sentry service name (`jobs-api`, `tasks`, `migrate`,
-`operations`) and fatal logging.
+`data-migrations`) and fatal logging.
 
 ## `serve` — the jobs API
 
@@ -199,112 +199,108 @@ The migration SQL is read off disk, not from the bundle: the Dockerfile copies
 `src/migrate/main.ts`. `VT_MIGRATIONS_PATH` overrides that so a migration can
 run outside the image against the working tree's own `packages/data/drizzle`.
 
-### Gating
+### Paired data migrations
 
-A migration may declare database operations it requires. `MIGRATION_GATES` in
-`src/operations/gates.ts` maps a migration tag to the operation keys that must
-have passed before it is applied:
+`src/migrate/apply.ts` walks the Drizzle journal in order. A TypeScript data
+migration pairs with one SQL migration and runs immediately before it. The
+runner commits the preceding SQL prefix first, so the body sees the schema at
+its own position in the chain. An audit with no schema changes still gets an
+assertion-only SQL file.
 
-```ts
-export const MIGRATION_GATES: MigrationGates = {
-  "0031_drop_legacy_password": ["audit_legacy_identities"],
-};
-```
+Only pending pairs are examined. A recorded pass at the exact required version
+is reused; otherwise the runner attempts the body once. This includes previous
+`failed`, `errored`, and abandoned `running` attempts. A new failure stops the
+chain, leaves the paired SQL and every later migration unapplied, and exits
+non-zero. After remediation, rerunning `migrate` retries at that boundary.
+Fresh installations complete in one invocation when all bodies pass.
 
-`src/migrate/apply.ts` walks the journal in order and applies migrations in
-segments. Reaching a gated migration, it applies everything before it, then
-evaluates the gate against the `database_operations` table. Every requirement
-satisfied, it carries on; otherwise it logs one line per unsatisfied
-requirement, leaves that migration **and every migration after it** unapplied,
-and exits non-zero.
+`0026_add_data_migrations` creates the framework tables. Pairs must follow this
+bootstrap migration. The runner holds a session advisory lock across SQL and
+bodies, using one connection with idle and lifetime rotation disabled. Another
+runner exits without doing work if the lock is held. A lost connection stops
+the runner instead of reconnecting without its lock. SIGTERM and SIGINT stop
+execution at the next body/batch or SQL-segment boundary.
 
-A requirement is satisfied only by a row that is `passed` **at the version the
-registry declares**. Bumping an implementation's version leaves the outstanding
-pass describing work the patched implementation has not done, so the gate goes
-stale and the operation runs again.
+The direct `@virtool/data` `db:migrate` command cannot execute TypeScript bodies.
+SQL assertions still prevent it from applying an unsatisfied pair, but its
+single pending-migration transaction can roll back the preceding SQL too. Use
+this app's segmented `migrate` command for deployment.
 
-Only migrations after `0023_add_database_operations` may be gated: that
-migration creates the tables a gate is read from. Both that rule and a gate
-naming a migration the journal does not have are rejected at startup rather
-than discovered part way through a deploy.
+## `data-migrations` — inspection
 
-Deploying a gated migration is therefore two passes. `migrate` blocks and
-reports what it needs, an operator runs the operations, and `migrate` runs
-again and applies the rest.
+An **audit** reads and reports findings. A **backfill** writes in bounded,
+idempotent batches and retains a cursor. Both are data migrations. Any finding
+fails an attempt; an exception records it as errored. Outcomes are stored in
+`data_migrations`, with bounded finding details in `data_migration_findings`.
 
-## `operations` — audits and data migrations
-
-Some work has to happen to the data before a schema change is safe, and a
-`.sql` file cannot express it: it needs to read a whole table without holding
-it, to write in batches it can resume, or to report what it objected to in a
-form an operator can act on. An operation is that work, and its outcome is
-recorded in `database_operations` — never inferred from logs.
-
-Two kinds. An **audit** only reads, and passes when it reports nothing. A **data
-migration** writes, in bounded batches, from a cursor it resumes from, and
-passes when it runs to completion. Either kind that reports a finding is
-`failed`; either kind that throws is `errored`, which says nothing about the
-data and calls for a re-run rather than remediation.
-
-| Subcommand | Action |
+| Command | Action |
 | --- | --- |
-| `operations list` | Report every registered operation and every recorded outcome. |
-| `operations run [key…]` | Run the named operations, or all of them. Exits non-zero unless all pass. |
-| `operations export <key>` | Write one operation's outcome and findings to stdout as JSON. |
+| `data-migrations list` | Report registered migrations and recorded versions. |
+| `data-migrations export <key>` | Write the current version's outcome and findings as JSON. |
+| `migrate` | Apply pending SQL and execute or retry its paired bodies. |
 
-Run it as a Job from the same image, with the same lean environment `migrate`
-reads:
+Inspection reads only `VT_POSTGRES_URL` (or its `_FILE` variant). Before
+bootstrap exists, it reports that `migrate` must initialize the database and
+exits non-zero. Export also exits non-zero for an unrun or non-passing attempt.
+Bodies cannot be run individually against an arbitrary schema.
 
-```yaml
-spec:
-  template:
-    spec:
-      restartPolicy: Never
-      containers:
-        - image: ghcr.io/virtool/internal:latest
-          name: virtool-operations
-          args: ["operations", "run"]
-          envFrom:
-            - configMapRef:
-                name: virtool-env
+### Writing a data migration
+
+Define an audit with `defineAudit` or a backfill with `defineBackfill` in
+`src/data-migrations/define.ts`. Add it to `DATA_MIGRATIONS` in
+`src/data-migrations/registry.ts`, indexed by its stable `key`. Each definition
+also names its exact `migrationTag`, positive integer `version`, and description.
+Keys use lowercase letters, digits, and underscores, beginning with a letter.
+Registry insertion order does not determine execution order; the journal does.
+Retain historical implementations for databases that have not reached them yet.
+
+The paired SQL file must start with this assertion as a separate statement,
+using the definition's key and version (here `legacy_identities` and `1`):
+
+```sql
+DO $$ BEGIN
+  IF NOT EXISTS (SELECT 1 FROM public.data_migrations
+                 WHERE key = 'legacy_identities' AND version = 1 AND status = 'passed')
+  THEN RAISE EXCEPTION 'data migration legacy_identities@1 has not passed';
+  END IF;
+END $$;
+--> statement-breakpoint
+-- Schema changes follow, if needed.
 ```
 
-`run` takes the same session-level advisory lock `migrate` does, so a second
-Job started while one is in flight exits non-zero rather than duplicating the
-work. The lock is released when the process ends or, if it is killed, when
-Postgres reaps the backend — which is how a run left recorded as `running` is
-taken over.
+The runner validates this template, ignoring whitespace, and rejects missing
+implementations, duplicate pairs, and key/version mismatches. Keep the assertion
+first; put schema changes after the statement breakpoint. An assertion-only
+migration needs no breakpoint. TypeScript alone writes attempt rows; SQL reads
+them as preconditions. Bump the definition and assertion versions together when
+the body changes what it accepts or writes. Already-applied pairs are not rerun;
+a change needed on those databases requires a new pair.
 
-SIGTERM stops a data migration at the next batch boundary. The attempt is
-recorded as `errored` with its resume point intact, and the retry continues
-from it rather than starting over.
+Bodies receive a raw `PgClient`, logger, abort signal, and synchronous `report`
+callback. Use SQL pinned to the schema at that boundary, or table definitions
+frozen alongside the body. Do not import the current domain schema mirror or
+data helpers that depend on it. Framework persistence owns its own mirror and
+bookkeeping tables; bodies must not write those tables.
 
-### Writing one
+Backfills also receive a parsed cursor and positive `batchSize`. They own their
+transactions and return `{ cursor, processed }` after a batch commits, or `null`
+when complete. The framework checkpoints only clean batches. A batch reporting
+findings ends the attempt without advancing its cursor; retry replays that
+batch after remediation, retaining earlier clean checkpoints. Findings from the
+previous attempt are cleared when a retry starts. Audit retries scan again.
 
-`src/operations/define.ts` is the authoring surface, and `src/operations/registry.ts`
-is where an operation is registered under the key a gate names. A body receives
-a database handle, a logger, an abort signal and a `report` callback, and
-touches none of the framework's own tables.
+Every batch must tolerate replay: a crash after writes commit but before the
+checkpoint persists repeats those writes. A stored cursor that no longer parses
+restarts from `initialCursor`. Progress is isolated by version and cleared on
+success. Long bodies must observe their abort signal. Finding details are stored
+verbatim and must contain no credentials; persisted errors are redacted. At most
+5,000 finding details are retained per attempt, while all findings are counted.
 
-**A body may run more than once for the same key and version.** The cursor is
-persisted after a batch returns, not inside it, so a process killed between a
-commit and that write resumes from at or before the last committed batch. Every
-batch must therefore be idempotent — by predicate, ideally, selecting only rows
-it has not already handled.
+### Remediation
 
-Bump `version` whenever an implementation changes what it accepts or what it
-writes. Findings carry no credential material: `detail` is stored verbatim, and
-only the error path is redacted.
-
-### Inspecting and remediating
-
-1. `operations list` — what is registered, and what each has recorded.
-2. `operations export <key>` — the findings, as JSON, for the failing operation
-   a blocked `migrate` named.
-3. Remediate the data, or patch the implementation and bump its version.
-4. `operations run <key>` — the retry clears the previous attempt's findings and
-   counts the attempt.
-5. `migrate` — the gate is satisfied and the chain continues.
+1. Inspect `data-migrations list` and export the failing key's findings.
+2. Remediate the data, or correct the body and bump its version and SQL assertion.
+3. Rerun `migrate`. It retries the pending pair and continues only after a pass.
 
 ## Metrics
 
@@ -389,7 +385,7 @@ unset.
 | `VT_STORAGE_AZURE_ENDPOINT` | URL string | Unset | Override the Azure Blob endpoint. |
 
 `migrate` reads only `VT_POSTGRES_URL` and `VT_MIGRATIONS_PATH`, and
-`operations` reads only `VT_POSTGRES_URL`. Neither reads the storage or metrics
+`data-migrations` reads only `VT_POSTGRES_URL`. Neither reads the storage or metrics
 keys.
 
 ## Commands
@@ -407,7 +403,7 @@ Migrations remain a one-shot startup step; see [the development guide](../../dev
 
 Run a subcommand from the built bundle with `node dist/index.mjs serve`,
 `node dist/index.mjs run`, `node dist/index.mjs migrate`, or
-`node dist/index.mjs operations <list|run|export>`.
+`node dist/index.mjs data-migrations <list|export>`.
 
 ## Testing
 

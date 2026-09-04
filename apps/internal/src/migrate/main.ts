@@ -1,16 +1,15 @@
 import { fileURLToPath } from "node:url";
 import { resolveFileBacked } from "@virtool/contracts/env";
-import { createDb } from "@virtool/data/db/pg";
 import {
-	acquireOperationsLock,
-	releaseOperationsLock,
-} from "@virtool/data/operations/data";
+	acquireDataMigrationsLock,
+	releaseDataMigrationsLock,
+} from "@virtool/data/data-migrations/data";
 import { createLogger } from "@virtool/logger";
 import { z } from "zod";
 
-import { MIGRATION_GATES } from "../operations/gates";
-import { OPERATIONS } from "../operations/registry";
+import { DATA_MIGRATIONS } from "../data-migrations/registry";
 import { applyGatedMigrations } from "./apply";
+import { createMigrationDb } from "./connection";
 
 /**
  * The name this entrypoint reports under, in logs and in `application_name`.
@@ -61,25 +60,19 @@ async function doMigrate(): Promise<void> {
 
 	const migrationsFolder = env.VT_MIGRATIONS_PATH ?? DEFAULT_MIGRATIONS_PATH;
 
-	// One connection: migrations are serial by construction, a pool would leave
-	// idle backends open for the length of a DDL statement that may hold locks
-	// the rest of the fleet is waiting on, and the run lock below is held on a
-	// single backend for the length of the run.
-	const { client, db } = createDb(
-		{ postgresUrl: env.VT_POSTGRES_URL, postgresPoolMax: 1 },
-		SERVICE,
-	);
+	const controller = new AbortController();
+	const { client, db } = createMigrationDb(env.VT_POSTGRES_URL, controller);
+	function abort(): void {
+		logger.warn("stopping migrations at the next boundary");
+		controller.abort();
+	}
+	process.once("SIGTERM", abort);
+	process.once("SIGINT", abort);
 
 	try {
-		/*
-		 The same lock an operations run takes. A gate is a decision about what
-		 the database contains, so evaluating one while an operation is changing
-		 that answer — or applying a migration underneath an operation that is
-		 still reading — is exactly what the lock exists to prevent.
-		*/
-		if (!(await acquireOperationsLock(client))) {
+		if (!(await acquireDataMigrationsLock(client))) {
 			logger.error(
-				"another migration or operations run holds the lock; not applying migrations",
+				"another migration run holds the lock; not applying migrations",
 			);
 			process.exitCode = 1;
 			return;
@@ -97,12 +90,13 @@ async function doMigrate(): Promise<void> {
 			*/
 			const result = await applyGatedMigrations({
 				db,
+				client,
+				signal: controller.signal,
 				logger,
 				migrationsFolder,
 				migrationsSchema: "drizzle",
 				migrationsTable: "__drizzle_migrations",
-				gates: MIGRATION_GATES,
-				registry: OPERATIONS,
+				registry: DATA_MIGRATIONS,
 			});
 
 			if (result.blockedAt === undefined) {
@@ -113,45 +107,27 @@ async function doMigrate(): Promise<void> {
 				return;
 			}
 
-			for (const blocker of result.blockers) {
-				logger.error(
-					{
-						tag: blocker.tag,
-						operation: blocker.key,
-						version: blocker.version,
-						reason: blocker.reason,
-					},
-					blocker.detail,
-				);
-			}
-
 			logger.error(
 				{
 					blocked_at: result.blockedAt,
 					applied_through: result.appliedThrough,
+					...result.outcome,
 				},
-				"stopped at a gated migration whose required operations have not passed",
+				"data migration did not pass; inspect its findings, remediate, and rerun migrate",
 			);
 
 			process.exitCode = 1;
 		} finally {
-			await releaseOperationsLock(client);
+			await releaseDataMigrationsLock(client);
 		}
 	} finally {
+		process.off("SIGTERM", abort);
+		process.off("SIGINT", abort);
 		await client.end();
 	}
 }
 
-/**
- * Apply pending Drizzle migrations — the `migrate` subcommand.
- *
- * Stops at the first migration whose required database operations have not
- * passed and exits non-zero, leaving that migration and every one after it
- * unapplied. See `./apply` for what a gate is evaluated against.
- *
- * A function rather than module-scope side effects so the merged binary's
- * dispatcher decides when it runs, and so importing this module costs nothing.
- */
+/** Apply pending SQL and paired data migrations, stopping at the first failed attempt. */
 export async function startMigrate(): Promise<void> {
 	try {
 		await doMigrate();

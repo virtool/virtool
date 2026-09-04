@@ -1,6 +1,6 @@
 /**
  * Strip credential material out of a message before it is written to the
- * `database_operations` row or to a log.
+ * `data_migrations` row or to a log.
  *
  * An operation's error reaches an operator through a table anyone with
  * database access can read and through logs that leave the cluster. The two

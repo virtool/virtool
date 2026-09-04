@@ -1,41 +1,27 @@
-import type { Db } from "@virtool/data/db/pg";
 import {
-	type DatabaseOperationFinding,
-	type DatabaseOperationRow,
-	finishOperation,
-	recordOperationFindings,
-	startOperationAttempt,
-	updateOperationProgress,
-} from "@virtool/data/operations/data";
+	type DataMigrationFinding,
+	type DataMigrationRow,
+	finishDataMigration,
+	recordDataMigrationFindings,
+	startDataMigrationAttempt,
+	updateDataMigrationProgress,
+} from "@virtool/data/data-migrations/data";
+import type { Db, PgClient } from "@virtool/data/db/pg";
 import type { Logger } from "@virtool/logger";
 import { z } from "zod";
 
 import type {
 	AuditDefinition,
-	DataMigrationDefinition,
+	BackfillDefinition,
+	DataMigrationArgs,
 	FindingReporter,
-	OperationArgs,
-	RegisteredOperation,
+	RegisteredDataMigration,
 } from "./define";
 import { describeError } from "./redact";
 
-/**
- * How many findings accumulate before a write is queued.
- *
- * Large enough that an audit over a healthy table pays one insert, small
- * enough that an audit over a broken one does not hold its whole objection in
- * memory before any of it reaches the table an operator is watching.
- */
 const FINDING_FLUSH_SIZE = 200;
 
-/**
- * The most findings any one attempt writes.
- *
- * An audit whose predicate is wrong reports every row in the table, and the
- * hundred-thousandth copy of one finding tells an operator nothing the first
- * hundred did not. Everything reported past the cap is still counted, so the
- * scale of the problem survives even though its detail does not.
- */
+// Count every finding, but retain only bounded detail for inspection.
 const MAX_RECORDED_FINDINGS = 5_000;
 
 /** The persisted resume point of a data migration. */
@@ -56,23 +42,12 @@ type FindingSink = {
 	written: () => number;
 };
 
-/**
- * Build the sink an attempt reports findings through.
- *
- * Writes are chained rather than awaited by the reporter, which is what lets
- * `report` stay synchronous: a body reporting per row would otherwise pay a
- * round trip per row, and taking a callback it has to await would put the
- * framework's persistence back inside the body.
- *
- * A failed write is held rather than thrown from the chain. Nothing awaits an
- * individual write, so throwing there is an unhandled rejection; the error
- * surfaces from `drain`, which the executor does await.
- */
-function createFindingSink(db: Db, operationId: number): FindingSink {
+/** Buffer synchronous reports and defer write failures until the executor drains them. */
+function createFindingSink(db: Db, migrationId: number): FindingSink {
 	let found = 0;
 	let queued = 0;
 	let written = 0;
-	let buffer: DatabaseOperationFinding[] = [];
+	let buffer: DataMigrationFinding[] = [];
 	let chain: Promise<void> = Promise.resolve();
 	let failure: unknown;
 
@@ -86,7 +61,7 @@ function createFindingSink(db: Db, operationId: number): FindingSink {
 			}
 
 			try {
-				await recordOperationFindings(db, operationId, pending);
+				await recordDataMigrationFindings(db, migrationId, pending);
 				written += pending.length;
 			} catch (err) {
 				failure = err;
@@ -127,59 +102,61 @@ function createFindingSink(db: Db, operationId: number): FindingSink {
 	};
 }
 
-/** What {@link runOperation} needs to execute one operation. */
-export type RunOperationOptions = {
+/** What {@link executeDataMigration} needs to execute one data migration. */
+export type RunDataMigrationOptions = {
 	db: Db;
+	client: PgClient;
 	logger: Logger;
 	signal: AbortSignal;
 };
 
 /**
- * Run one operation and record what it concluded.
+ * Run one data migration and record what it concluded.
  *
  * **The caller must already hold the framework's advisory lock.** Nothing here
  * takes it: the lock is per process and covers a whole run, so taking it per
- * operation would let a second process interleave between two of them.
+ * body would let a second process interleave between two of them.
  *
- * Returns the finished row. It never throws for an operation that objects or
+ * Returns the finished row. It never throws for a body that objects or
  * one that breaks — both are outcomes this records — and throws only when the
  * framework itself cannot write the outcome down.
  */
-export async function runOperation(
-	options: RunOperationOptions,
-	definition: RegisteredOperation,
-): Promise<DatabaseOperationRow> {
+export async function executeDataMigration(
+	options: RunDataMigrationOptions,
+	definition: RegisteredDataMigration,
+): Promise<DataMigrationRow> {
 	const { db, signal } = options;
 	const { key, kind, version } = definition;
 
-	const logger = options.logger.child({ operation: key, version });
+	const logger = options.logger.child({ migration: key, version });
 
-	const row = await startOperationAttempt(db, key, version, kind);
+	const row = await startDataMigrationAttempt(db, key, version, kind);
 
 	logger.info(
 		{ attempt: row.attempts, kind },
-		"started a database operation attempt",
+		"started a data migration attempt",
 	);
 
 	const sink = createFindingSink(db, row.id);
 
-	const args: OperationArgs = { db, logger, signal, report: sink.report };
+	const args: DataMigrationArgs = {
+		client: options.client,
+		logger,
+		signal,
+		report: sink.report,
+	};
 
 	try {
+		signal.throwIfAborted();
 		const summary =
 			definition.kind === "audit"
 				? await runAudit(definition, args)
-				: await runDataMigration(definition, args, row, sink);
+				: await runBackfill(db, definition, args, row, sink);
 
 		await sink.drain();
+		signal.throwIfAborted();
 
-		/*
-		 A body that reported anything has not passed, whichever kind it is. An
-		 audit's findings are its whole output; a data migration's are the records
-		 it could not migrate, and a schema change applied over those is no safer
-		 than one applied over an audit nobody ran.
-		*/
-		const finished = await finishOperation(db, row.id, {
+		const finished = await finishDataMigration(db, row.id, {
 			status: sink.found() === 0 ? "passed" : "failed",
 			summary: { ...summary, findings: sink.found(), recorded: sink.written() },
 		});
@@ -190,7 +167,7 @@ export async function runOperation(
 				findings: sink.found(),
 				recorded: sink.written(),
 			},
-			"finished a database operation attempt",
+			"finished a data migration attempt",
 		);
 
 		return finished;
@@ -204,44 +181,37 @@ export async function runOperation(
 
 		const error = describeError(err);
 
-		const finished = await finishOperation(db, row.id, {
+		const finished = await finishDataMigration(db, row.id, {
 			status: "errored",
 			error,
 			summary: { findings: sink.found(), recorded: sink.written() },
 		});
 
-		logger.error({ err, error }, "a database operation attempt errored");
+		logger.error({ err, error }, "a data migration attempt errored");
 
 		return finished;
 	}
 }
 
 /** Thrown when an attempt is cut short by the process shutting down. */
-class OperationAbortedError extends Error {}
+class DataMigrationAbortedError extends Error {}
 
 /** Run an audit body to completion. */
 async function runAudit(
 	definition: AuditDefinition,
-	args: OperationArgs,
+	args: DataMigrationArgs,
 ): Promise<Record<string, unknown>> {
 	await definition.run(args);
 
 	return {};
 }
 
-/**
- * Drive a data migration's batches, persisting the resume point after each.
- *
- * The cursor is written after the batch returns rather than inside it: a cursor
- * committed with the batch would be rolled back with the batch, and the
- * framework would then resume from a point later than the work that actually
- * landed. Resuming from earlier is recoverable because every batch is required
- * to be idempotent; resuming from later silently skips rows.
- */
-async function runDataMigration(
-	definition: DataMigrationDefinition<unknown>,
-	args: OperationArgs,
-	row: DatabaseOperationRow,
+/** Checkpoint only clean batches; committed writes may be replayed after interruption. */
+async function runBackfill(
+	db: Db,
+	definition: BackfillDefinition<unknown>,
+	args: DataMigrationArgs,
+	row: DataMigrationRow,
 	sink: FindingSink,
 ): Promise<Record<string, unknown>> {
 	let cursor: unknown = definition.initialCursor;
@@ -271,7 +241,7 @@ async function runDataMigration(
 
 	for (;;) {
 		if (args.signal.aborted) {
-			throw new OperationAbortedError(
+			throw new DataMigrationAbortedError(
 				"interrupted before the data migration finished",
 			);
 		}
@@ -282,7 +252,9 @@ async function runDataMigration(
 			batchSize: definition.batchSize,
 		});
 
-		if (result === null) {
+		await sink.drain();
+
+		if (sink.found() > 0 || result === null) {
 			break;
 		}
 
@@ -290,13 +262,11 @@ async function runDataMigration(
 		processed += result.processed;
 		batches += 1;
 
-		await updateOperationProgress(args.db, row.id, {
+		await updateDataMigrationProgress(db, row.id, {
 			cursor,
 			processed,
 			batches,
 		});
-
-		await sink.drain();
 
 		args.logger.debug({ processed, batches }, "committed a batch");
 	}
