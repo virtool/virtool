@@ -5,12 +5,12 @@ import LoadingPlaceholder from "@base/LoadingPlaceholder";
 import QueryError from "@base/QueryError";
 import SaveButton from "@base/SaveButton";
 import SectionHeader from "@base/SectionHeader";
-import { AZURE_MAX_BLOB_SIZE } from "@virtool/contracts";
+import { MAX_UPLOAD_SIZE } from "@virtool/contracts";
 import { useForm } from "react-hook-form";
 
 const BYTES_PER_GIGABYTE = 1000 ** 3;
 
-const MAX_GIGABYTES = AZURE_MAX_BLOB_SIZE / BYTES_PER_GIGABYTE;
+const MAX_GIGABYTES = MAX_UPLOAD_SIZE / BYTES_PER_GIGABYTE;
 
 type MaxUploadSizeFormValues = {
 	maximumGigabytes: number;

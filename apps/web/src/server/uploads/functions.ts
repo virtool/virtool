@@ -1,7 +1,7 @@
 import { createServerFn, createServerOnlyFn } from "@tanstack/react-start";
 import { setResponseStatus } from "@tanstack/react-start/server";
 import {
-	AZURE_MAX_BLOB_SIZE,
+	MAX_UPLOAD_SIZE,
 	SORT_DIRECTIONS,
 	UPLOAD_SORT_FIELDS,
 	UPLOAD_TYPES,
@@ -101,7 +101,7 @@ const initUploadSchema = z.object({
 	type: z.enum(UPLOAD_TYPES),
 	// The file's byte length, locked here so finalize can reject a commit that
 	// does not land exactly this many bytes.
-	size: z.number().int().nonnegative().max(AZURE_MAX_BLOB_SIZE),
+	size: z.number().int().nonnegative().max(MAX_UPLOAD_SIZE),
 });
 
 /** Begin a direct upload for the browser client. */

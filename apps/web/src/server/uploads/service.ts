@@ -1,8 +1,4 @@
-import {
-	AZURE_MAX_BLOCK_COUNT,
-	checkUploadSize,
-	type UploadType,
-} from "@virtool/contracts";
+import { checkUploadSize, type UploadType } from "@virtool/contracts";
 import { getSettings } from "@virtool/data/settings/data";
 import {
 	cancelPendingUpload,
@@ -14,7 +10,7 @@ import { config } from "../config";
 import { logger } from "../logger";
 
 const UPLOAD_SAS_TTL_SECONDS = 6 * 60 * 60;
-const MIN_UPLOAD_BLOCK_SIZE = 16 * 1024 * 1024;
+const UPLOAD_BLOCK_SIZE = 16 * 1024 * 1024;
 
 /** Thrown when this deployment cannot issue direct-upload credentials. */
 export class DirectUploadUnavailableError extends Error {}
@@ -33,14 +29,6 @@ export type UploadInstructions = {
 	blockSize: number;
 	concurrency: number;
 };
-
-function getUploadBlockSize(size: number): number {
-	const minimumBlockSize = Math.ceil(size / AZURE_MAX_BLOCK_COUNT);
-	return Math.max(
-		MIN_UPLOAD_BLOCK_SIZE,
-		Math.ceil(minimumBlockSize / MIN_UPLOAD_BLOCK_SIZE) * MIN_UPLOAD_BLOCK_SIZE,
-	);
-}
 
 /** Reserve an upload and issue the instructions for writing it to storage. */
 export async function initializeUpload(
@@ -80,7 +68,7 @@ export async function initializeUpload(
 	return {
 		uploadId: upload.id,
 		url,
-		blockSize: getUploadBlockSize(values.size),
+		blockSize: UPLOAD_BLOCK_SIZE,
 		concurrency: config.uploadsChunkedConcurrency,
 	};
 }

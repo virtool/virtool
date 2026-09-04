@@ -51,14 +51,8 @@ export type UploadSearchResult = SearchResult & {
 	items: Upload[];
 };
 
-/** The maximum number of blocks in an Azure block blob. */
-export const AZURE_MAX_BLOCK_COUNT = 50_000;
-
-/** The largest single block Azure Blob Storage admits, in bytes. */
-const AZURE_MAX_BLOCK_SIZE = 4_000 * 1024 * 1024;
-
-/** The largest block blob Azure Blob Storage admits, in bytes. */
-export const AZURE_MAX_BLOB_SIZE = AZURE_MAX_BLOCK_COUNT * AZURE_MAX_BLOCK_SIZE;
+/** The application-wide upload size ceiling, in bytes (120 GB). */
+export const MAX_UPLOAD_SIZE = 120_000_000_000;
 
 /** The default maximum upload size, in bytes (5 GB). */
 export const DEFAULT_MAX_UPLOAD_SIZE = 5_000_000_000;

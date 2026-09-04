@@ -471,8 +471,8 @@ before a reservation or SAS is created. The limit is read on every initializatio
 so changes apply to the next upload without a restart. `getUploadPolicyFn` exposes
 the limit to authenticated users for client validation.
 
-The setting and declared sizes are capped at 209,715,200,000,000 bytes, the Azure
-block-count and block-size limit.
+The setting and declared sizes are capped at the application ceiling of
+120,000,000,000 bytes (120 GB), independent of the storage backend.
 
 ### The setup boundary
 

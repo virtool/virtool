@@ -53,9 +53,9 @@ curl --user "$VT_HANDLE:$VT_API_KEY" \
 | `size` | integer | Exact file size in bytes, from 0 to the instance's maximum upload size. |
 
 An administrator sets the maximum upload size, which is 5,000,000,000 bytes on a
-new instance and can be raised to 209,715,200,000,000 bytes, the Azure block
-blob ceiling. A `size` above the configured maximum returns `413`; a size above
-the Azure ceiling fails validation with `422`. Check the initialization response
+new instance and can be raised to 120,000,000,000 bytes (120 GB), the application
+ceiling. A `size` above the configured maximum returns `413`; a size above
+the application ceiling fails validation with `422`. Check the initialization response
 before starting the block uploads.
 
 The server sends back a `201` response.
@@ -162,6 +162,6 @@ pending upload does not remain until automatic cleanup.
 | `403` | The API key or its owner lacks `upload_file`. |
 | `404` | The upload does not exist, is not owned by the caller, or is not in the required unfinished state. |
 | `409` | Finalization found no committed blob or its byte size differs from `size`. |
-| `413` | The declared `size` exceeds the configured maximum but is within the Azure ceiling. |
+| `413` | The declared `size` exceeds the configured maximum but is within the application ceiling. |
 | `422` | The initialization fields are invalid. |
 | `503` | Direct upload support is unavailable on this deployment. |

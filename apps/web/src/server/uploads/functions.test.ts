@@ -78,7 +78,7 @@ const { seedSession, seedUser } = await import(
 );
 const { sessionCookie } = await import("../auth/test/fixtures");
 const { updateSettings } = await import("@virtool/data/settings/data");
-const { AZURE_MAX_BLOB_SIZE, DEFAULT_MAX_UPLOAD_SIZE } = await import(
+const { MAX_UPLOAD_SIZE, DEFAULT_MAX_UPLOAD_SIZE } = await import(
 	"@virtool/contracts"
 );
 
@@ -309,29 +309,29 @@ describe("initUpload", () => {
 		);
 	});
 
-	it("increases the block size for files that need more than 50,000 blocks", async () => {
+	it("accepts a file at the application upload ceiling", async () => {
 		testConfig.uploadsChunked = true;
 		presignUpload.mockResolvedValue("https://fd/c/blob?sig=x");
 		await signIn("full");
-		await updateSettings(db, { maxUploadSize: AZURE_MAX_BLOB_SIZE });
+		await updateSettings(db, { maxUploadSize: MAX_UPLOAD_SIZE });
 
 		const result = (await call("initUploadFn", {
 			name: "reads.fq.gz",
 			type: "reads",
-			size: 16 * 1024 * 1024 * 50_000 + 1,
+			size: MAX_UPLOAD_SIZE,
 		})) as { blockSize: number };
 
-		expect(result.blockSize).toBe(32 * 1024 * 1024);
+		expect(result.blockSize).toBe(16 * 1024 * 1024);
 	});
 
-	it("rejects files larger than Azure's maximum block blob size", async () => {
+	it("rejects files larger than the application upload ceiling", async () => {
 		await signIn("full");
 
 		await expect(
 			call("initUploadFn", {
 				name: "reads.fq.gz",
 				type: "reads",
-				size: 4_000 * 1024 * 1024 * 50_000 + 1,
+				size: MAX_UPLOAD_SIZE + 1,
 			}),
 		).rejects.toThrow();
 	});

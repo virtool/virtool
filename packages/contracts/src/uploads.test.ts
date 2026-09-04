@@ -1,10 +1,10 @@
 import { describe, expect, it } from "vitest";
 
 import {
-	AZURE_MAX_BLOB_SIZE,
 	checkUploadSize,
 	DEFAULT_MAX_UPLOAD_SIZE,
 	formatMaxUploadSizeMessage,
+	MAX_UPLOAD_SIZE,
 	UploadTooLargeError,
 } from "./uploads";
 
@@ -17,7 +17,7 @@ describe("formatMaxUploadSizeMessage", () => {
 });
 
 describe("checkUploadSize", () => {
-	it.each([1, DEFAULT_MAX_UPLOAD_SIZE, AZURE_MAX_BLOB_SIZE])(
+	it.each([1, DEFAULT_MAX_UPLOAD_SIZE, MAX_UPLOAD_SIZE])(
 		"rejects a file one byte over a maximum of %i",
 		(maximum) => {
 			expect(() => checkUploadSize(maximum + 1, maximum)).toThrow(

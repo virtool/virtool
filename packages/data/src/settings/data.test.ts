@@ -1,4 +1,4 @@
-import { AZURE_MAX_BLOB_SIZE } from "@virtool/contracts";
+import { MAX_UPLOAD_SIZE } from "@virtool/contracts";
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
 
 import type { Db } from "../db/pg";
@@ -152,13 +152,13 @@ describe("updateSettings", () => {
 		});
 	});
 
-	it("accepts the storage ceiling as the maximum upload size", async () => {
+	it("accepts the application ceiling as the maximum upload size", async () => {
 		await expect(
-			updateSettings(db, { maxUploadSize: AZURE_MAX_BLOB_SIZE }),
-		).resolves.toMatchObject({ maxUploadSize: AZURE_MAX_BLOB_SIZE });
+			updateSettings(db, { maxUploadSize: MAX_UPLOAD_SIZE }),
+		).resolves.toMatchObject({ maxUploadSize: MAX_UPLOAD_SIZE });
 	});
 
-	it.each([0, -1, AZURE_MAX_BLOB_SIZE + 1])(
+	it.each([0, -1, MAX_UPLOAD_SIZE + 1])(
 		"rejects an invalid maximum upload size of %s",
 		async (maxUploadSize) => {
 			await seedSettings(db);

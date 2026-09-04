@@ -1,7 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { setResponseStatus } from "@tanstack/react-start/server";
 import {
-	AZURE_MAX_BLOB_SIZE,
+	MAX_UPLOAD_SIZE,
 	type SampleGroup,
 	type Settings,
 	sampleGroups,
@@ -94,12 +94,7 @@ const updateSettingsSchema = z
 		cacheStorageBudget: z.number().int().positive().optional(),
 		defaultSourceTypes: z.array(z.string()).optional(),
 		enableSentry: z.boolean().optional(),
-		maxUploadSize: z
-			.number()
-			.int()
-			.positive()
-			.max(AZURE_MAX_BLOB_SIZE)
-			.optional(),
+		maxUploadSize: z.number().int().positive().max(MAX_UPLOAD_SIZE).optional(),
 		minimumPasswordLength: z.number().int().min(1).optional(),
 		sampleAllRead: z.boolean().optional(),
 		sampleAllWrite: z.boolean().optional(),

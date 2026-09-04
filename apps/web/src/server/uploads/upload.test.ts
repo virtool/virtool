@@ -54,7 +54,7 @@ const { seedApiKey, seedUser } = await import(
 	"@virtool/data/auth/test/fixtures"
 );
 const { updateSettings } = await import("@virtool/data/settings/data");
-const { AZURE_MAX_BLOB_SIZE, DEFAULT_MAX_UPLOAD_SIZE } = await import(
+const { MAX_UPLOAD_SIZE, DEFAULT_MAX_UPLOAD_SIZE } = await import(
 	"@virtool/contracts"
 );
 const { basicAuthHeader } = await import("../auth/test/fixtures");
@@ -113,7 +113,7 @@ describe("public upload lifecycle", () => {
 		expect(row).toMatchObject({ expectedSize: 5, ready: false, userId });
 	});
 
-	it.each([1025, AZURE_MAX_BLOB_SIZE + 1])(
+	it.each([1025, MAX_UPLOAD_SIZE + 1])(
 		"refuses a declared size of %s above the configured maximum before reserving it",
 		async (size) => {
 			await updateSettings(db, { maxUploadSize: 1024 });
