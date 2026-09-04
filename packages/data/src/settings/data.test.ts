@@ -139,6 +139,18 @@ describe("updateSettings", () => {
 		});
 	});
 
+	it("stores a new maximum upload size", async () => {
+		await seedSettings(db);
+
+		await expect(
+			updateSettings(db, { maxUploadSize: 20_000_000_000 }),
+		).resolves.toMatchObject({ maxUploadSize: 20_000_000_000 });
+
+		await expect(getSettings(db)).resolves.toMatchObject({
+			maxUploadSize: 20_000_000_000,
+		});
+	});
+
 	it("returns the stored settings when given no values", async () => {
 		await seedSettings(db, { minimumPasswordLength: 15 });
 
@@ -162,6 +174,7 @@ describe("DEFAULT_SETTINGS", () => {
 			emailSenderAddress: "",
 			emailSenderName: "",
 			enableSentry: true,
+			maxUploadSize: 5_000_000_000,
 			minimumPasswordLength: 8,
 			ncbiApiKey: null,
 			sampleAllRead: true,

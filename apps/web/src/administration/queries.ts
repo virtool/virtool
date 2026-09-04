@@ -37,6 +37,8 @@ export type SettingsUpdate = {
 	cacheStorageBudget?: number;
 	defaultSourceTypes?: string[];
 	enableSentry?: boolean;
+	/** A new maximum accepted upload size, in bytes. */
+	maxUploadSize?: number;
 	minimumPasswordLength?: number;
 	sampleAllRead?: boolean;
 	sampleAllWrite?: boolean;

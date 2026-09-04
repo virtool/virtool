@@ -1,6 +1,6 @@
 import { useFetchAccount } from "@account/account";
 import { checkAdminRoleOrPermissionsFromAccount } from "@administration/utils";
-import { pluralize } from "@app/format";
+import { byteSize, pluralize } from "@app/format";
 import Alert from "@base/Alert";
 import { BoxGroup, BoxGroupTable } from "@base/Box";
 import Button from "@base/Button";
@@ -22,8 +22,9 @@ import type {
 import { capitalize } from "es-toolkit";
 import { AlertCircle, FileUp, Trash } from "lucide-react";
 import type { MouseEvent, ReactNode } from "react";
+import { useState } from "react";
 import type { Accept } from "react-dropzone";
-import { useDeleteFiles, useListFiles } from "../queries";
+import { useDeleteFiles, useListFiles, useUploadPolicy } from "../queries";
 import { upload } from "../uploader";
 import { UploadBar } from "./UploadBar";
 import UploadItem from "./UploadItem";
@@ -89,6 +90,8 @@ export function FileManager({
 		resetKey: fileType,
 	});
 	const { mutate: deleteFiles } = useDeleteFiles();
+	const { data: policy } = useUploadPolicy();
+	const [rejected, setRejected] = useState<string[]>([]);
 
 	if (isErrorAccount && !account) {
 		return <QueryError noun="account" />;
@@ -113,9 +116,22 @@ export function FileManager({
 
 	const title = `${fileType === "reads" ? "Read" : capitalize(fileType)} Files`;
 
+	// The policy is the server's, and the server checks again at initialization.
+	// Until it resolves, every file is offered: the upload then fails with the
+	// same message rather than being silently held back.
 	function handleDrop(acceptedFiles: File[]) {
+		const maximum = policy?.maxUploadSize;
+		const tooLarge =
+			maximum === undefined
+				? []
+				: acceptedFiles.filter((file) => file.size > maximum);
+
+		setRejected(tooLarge.map((file) => file.name));
+
 		for (const file of acceptedFiles) {
-			upload(file, fileType);
+			if (!tooLarge.includes(file)) {
+				upload(file, fileType);
+			}
 		}
 	}
 
@@ -138,12 +154,25 @@ export function FileManager({
 			</ViewHeader>
 
 			{canUpload ? (
-				<UploadBar
-					accept={accept}
-					onDrop={handleDrop}
-					hint={hint}
-					regex={regex}
-				/>
+				<>
+					<UploadBar
+						accept={accept}
+						onDrop={handleDrop}
+						hint={hint}
+						regex={regex}
+					/>
+					{rejected.length > 0 && policy && (
+						<Alert color="red" level icon={AlertCircle}>
+							<span>
+								<strong>
+									{pluralize(rejected.length, "file")} exceeded the{" "}
+									{byteSize(policy.maxUploadSize, true)} maximum upload size:
+								</strong>
+								<span> {rejected.join(", ")}</span>
+							</span>
+						</Alert>
+					)}
+				</>
 			) : (
 				<Alert color="orange" level icon={AlertCircle}>
 					<span>

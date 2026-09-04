@@ -1,4 +1,8 @@
-import { UPLOAD_TYPES } from "@virtool/contracts";
+import {
+	AZURE_MAX_BLOB_SIZE,
+	UPLOAD_TYPES,
+	UploadTooLargeError,
+} from "@virtool/contracts";
 import {
 	UploadIncompleteError,
 	UploadNotFoundError,
@@ -8,7 +12,6 @@ import { z } from "zod";
 import { requireAuthenticatedRequest } from "../auth/middleware";
 import { hasPermission } from "../auth/policy";
 import {
-	AZURE_MAX_BLOB_SIZE,
 	cancelUpload,
 	DirectUploadUnavailableError,
 	finalizeUpload,
@@ -48,6 +51,9 @@ function uploadErrorResponse(err: unknown): Response | null {
 			{ message: "Upload size does not match the declared size." },
 			409,
 		);
+	}
+	if (err instanceof UploadTooLargeError) {
+		return jsonResponse({ message: err.message }, 413);
 	}
 	if (err instanceof DirectUploadUnavailableError) {
 		return jsonResponse({ message: err.message }, 503);

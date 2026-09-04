@@ -463,8 +463,16 @@ intentional breaking change: there is no proxied upload or supported legacy
 size limit.
 
 When direct uploads are disabled or the storage backend cannot issue an upload
-SAS, initialization returns `503` instead of falling back. The maximum declared
-size is 209,715,200,000,000 bytes, the Azure block-count and block-size limit.
+SAS, initialization returns `503` instead of falling back.
+
+A declared size above `settings.max_upload_size` is refused with a `413` before
+the upload is reserved or a SAS is issued, so no bytes are transferred. The
+maximum is read from the settings row on every initialization, so lowering it
+takes effect on the next upload rather than the next restart. Both upload paths
+enforce it through `initializeUpload`, and `getUploadPolicyFn` publishes it to
+any authenticated user so a drop zone can refuse a file without a round trip.
+The setting is capped at 209,715,200,000,000 bytes, the Azure block-count and
+block-size limit, which is the absolute ceiling on a declared size.
 
 ### The setup boundary
 
@@ -640,6 +648,12 @@ server setting and has no `_FILE` variant.
 Client code must read individual `import.meta.env` properties. Reading the
 whole object would serialize every `VT_` variable, including storage secrets,
 into the browser bundle.
+
+## Administering uploads
+
+`/administration/uploads` sets the maximum upload size. The setting is stored in
+bytes and entered in gigabytes, and is 5 GB on a new instance. It applies to the
+browser client and to API clients alike.
 
 ## Administering email delivery
 

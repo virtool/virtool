@@ -1,10 +1,14 @@
 import { createServerFn, createServerOnlyFn } from "@tanstack/react-start";
 import { setResponseStatus } from "@tanstack/react-start/server";
 import {
+	AZURE_MAX_BLOB_SIZE,
 	SORT_DIRECTIONS,
 	UPLOAD_SORT_FIELDS,
 	UPLOAD_TYPES,
+	type UploadPolicy,
+	UploadTooLargeError,
 } from "@virtool/contracts";
+import { getSettings } from "@virtool/data/settings/data";
 import {
 	deleteUpload,
 	findUploads,
@@ -19,12 +23,7 @@ import { db, storage } from "../composition";
 import { ClientError } from "../errors";
 import { logger } from "../logger";
 import { pageSchema, perPageSchema, rowIdSchema } from "../validation";
-import {
-	AZURE_MAX_BLOB_SIZE,
-	cancelUpload,
-	finalizeUpload,
-	initializeUpload,
-} from "./service";
+import { cancelUpload, finalizeUpload, initializeUpload } from "./service";
 
 const findUploadsSchema = z
 	.object({
@@ -63,6 +62,10 @@ const rethrowAsHttp = createServerOnlyFn((err: unknown): never => {
 	if (err instanceof UploadSizeMismatchError) {
 		setResponseStatus(409);
 		throw new ClientError("Upload size does not match the declared size.");
+	}
+	if (err instanceof UploadTooLargeError) {
+		setResponseStatus(413);
+		throw new ClientError(err.message);
 	}
 	throw err;
 });
@@ -105,9 +108,28 @@ const initUploadSchema = z.object({
 export const initUploadFn = createServerFn({ method: "POST" })
 	.middleware([permission("upload_file")])
 	.validator(initUploadSchema)
-	.handler(async ({ data, context }) =>
-		initializeUpload(data, context.session.userId),
-	);
+	.handler(async ({ data, context }) => {
+		try {
+			return await initializeUpload(data, context.session.userId);
+		} catch (err) {
+			return rethrowAsHttp(err);
+		}
+	});
+
+/**
+ * The upload rule the browser needs before it starts transferring a file.
+ *
+ * Authenticated rather than `settings`-gated, because every uploading user has
+ * to know the limit to be refused a file at the drop zone rather than after it
+ * has been listed. It returns the maximum alone: the rest of the settings row
+ * is instance configuration a non-administrator has no business reading.
+ */
+export const getUploadPolicyFn = createServerFn({ method: "GET" })
+	.middleware([authenticated()])
+	.handler(async (): Promise<UploadPolicy> => {
+		const { maxUploadSize } = await getSettings(db);
+		return { maxUploadSize };
+	});
 
 /**
  * Finalize a chunked upload once its blocks are committed, returning the upload.

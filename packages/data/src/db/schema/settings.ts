@@ -38,6 +38,10 @@ export const settings = pgTable(
 		emailSenderAddress: text("email_sender_address").notNull(),
 		emailSenderName: text("email_sender_name").notNull(),
 		enableSentry: boolean("enable_sentry").notNull(),
+		// The largest declared upload size, in bytes, initialization accepts.
+		// `mode: "number"` is safe up to 2^53, above the Azure block blob ceiling
+		// this is bounded by.
+		maxUploadSize: bigint("max_upload_size", { mode: "number" }).notNull(),
 		minimumPasswordLength: integer("minimum_password_length").notNull(),
 		// Encrypted under the environment-owned process encryption key. Null
 		// means unset, and the GenBank request layer omits `api_key` rather than
@@ -55,6 +59,7 @@ export const settings = pgTable(
 			"ck_settings_cache_storage_budget",
 			sql`${table.cacheStorageBudget} > 0`,
 		),
+		check("ck_settings_max_upload_size", sql`${table.maxUploadSize} > 0`),
 		check(
 			"ck_settings_sample_group",
 			sql`${table.sampleGroup} in ('none', 'force_choice', 'users_primary_group')`,

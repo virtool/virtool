@@ -38,6 +38,7 @@ export function createFakeSettings(overrides?: Partial<Settings>): Settings {
 		enableSentry: faker.datatype.boolean(),
 		hasNcbiApiKey: false,
 		ncbiAvailability: "unconfigured",
+		maxUploadSize: 5_000_000_000,
 		minimumPasswordLength: 8,
 		sampleAllRead: faker.datatype.boolean(),
 		sampleAllWrite: faker.datatype.boolean(),

@@ -36,6 +36,7 @@ import { Route as AuthenticatedAdministrationEmailRouteImport } from './routes/_
 import { Route as AuthenticatedAdministrationGroupsRouteImport } from './routes/_authenticated/administration/groups'
 import { Route as AuthenticatedAdministrationNcbiRouteImport } from './routes/_authenticated/administration/ncbi'
 import { Route as AuthenticatedAdministrationSettingsRouteImport } from './routes/_authenticated/administration/settings'
+import { Route as AuthenticatedAdministrationUploadsRouteImport } from './routes/_authenticated/administration/uploads'
 import { Route as AuthenticatedHmmsIndexRouteImport } from './routes/_authenticated/hmms/index'
 import { Route as AuthenticatedHmmsHmmIdRouteImport } from './routes/_authenticated/hmms/$hmmId'
 import { Route as AuthenticatedJobsIndexRouteImport } from './routes/_authenticated/jobs/index'
@@ -230,6 +231,12 @@ const AuthenticatedAdministrationSettingsRoute =
   AuthenticatedAdministrationSettingsRouteImport.update({
     id: '/settings',
     path: '/settings',
+    getParentRoute: () => AuthenticatedAdministrationRouteRoute,
+  } as any)
+const AuthenticatedAdministrationUploadsRoute =
+  AuthenticatedAdministrationUploadsRouteImport.update({
+    id: '/uploads',
+    path: '/uploads',
     getParentRoute: () => AuthenticatedAdministrationRouteRoute,
   } as any)
 const AuthenticatedHmmsIndexRoute = AuthenticatedHmmsIndexRouteImport.update({
@@ -550,6 +557,7 @@ export interface FileRoutesByFullPath {
   '/administration/groups': typeof AuthenticatedAdministrationGroupsRoute
   '/administration/ncbi': typeof AuthenticatedAdministrationNcbiRoute
   '/administration/settings': typeof AuthenticatedAdministrationSettingsRoute
+  '/administration/uploads': typeof AuthenticatedAdministrationUploadsRoute
   '/hmms/$hmmId': typeof AuthenticatedHmmsHmmIdRoute
   '/jobs/$jobId': typeof AuthenticatedJobsJobIdRoute
   '/refs/settings': typeof AuthenticatedRefsSettingsRoute
@@ -620,6 +628,7 @@ export interface FileRoutesByTo {
   '/administration/groups': typeof AuthenticatedAdministrationGroupsRoute
   '/administration/ncbi': typeof AuthenticatedAdministrationNcbiRoute
   '/administration/settings': typeof AuthenticatedAdministrationSettingsRoute
+  '/administration/uploads': typeof AuthenticatedAdministrationUploadsRoute
   '/hmms/$hmmId': typeof AuthenticatedHmmsHmmIdRoute
   '/jobs/$jobId': typeof AuthenticatedJobsJobIdRoute
   '/refs/settings': typeof AuthenticatedRefsSettingsRoute
@@ -696,6 +705,7 @@ export interface FileRoutesById {
   '/_authenticated/administration/groups': typeof AuthenticatedAdministrationGroupsRoute
   '/_authenticated/administration/ncbi': typeof AuthenticatedAdministrationNcbiRoute
   '/_authenticated/administration/settings': typeof AuthenticatedAdministrationSettingsRoute
+  '/_authenticated/administration/uploads': typeof AuthenticatedAdministrationUploadsRoute
   '/_authenticated/hmms/$hmmId': typeof AuthenticatedHmmsHmmIdRoute
   '/_authenticated/jobs/$jobId': typeof AuthenticatedJobsJobIdRoute
   '/_authenticated/refs/settings': typeof AuthenticatedRefsSettingsRoute
@@ -776,6 +786,7 @@ export interface FileRouteTypes {
     | '/administration/groups'
     | '/administration/ncbi'
     | '/administration/settings'
+    | '/administration/uploads'
     | '/hmms/$hmmId'
     | '/jobs/$jobId'
     | '/refs/settings'
@@ -846,6 +857,7 @@ export interface FileRouteTypes {
     | '/administration/groups'
     | '/administration/ncbi'
     | '/administration/settings'
+    | '/administration/uploads'
     | '/hmms/$hmmId'
     | '/jobs/$jobId'
     | '/refs/settings'
@@ -921,6 +933,7 @@ export interface FileRouteTypes {
     | '/_authenticated/administration/groups'
     | '/_authenticated/administration/ncbi'
     | '/_authenticated/administration/settings'
+    | '/_authenticated/administration/uploads'
     | '/_authenticated/hmms/$hmmId'
     | '/_authenticated/jobs/$jobId'
     | '/_authenticated/refs/settings'
@@ -1185,6 +1198,13 @@ declare module '@tanstack/react-router' {
       path: '/settings'
       fullPath: '/administration/settings'
       preLoaderRoute: typeof AuthenticatedAdministrationSettingsRouteImport
+      parentRoute: typeof AuthenticatedAdministrationRouteRoute
+    }
+    '/_authenticated/administration/uploads': {
+      id: '/_authenticated/administration/uploads'
+      path: '/uploads'
+      fullPath: '/administration/uploads'
+      preLoaderRoute: typeof AuthenticatedAdministrationUploadsRouteImport
       parentRoute: typeof AuthenticatedAdministrationRouteRoute
     }
     '/_authenticated/hmms/': {
@@ -1547,6 +1567,7 @@ interface AuthenticatedAdministrationRouteRouteChildren {
   AuthenticatedAdministrationGroupsRoute: typeof AuthenticatedAdministrationGroupsRoute
   AuthenticatedAdministrationNcbiRoute: typeof AuthenticatedAdministrationNcbiRoute
   AuthenticatedAdministrationSettingsRoute: typeof AuthenticatedAdministrationSettingsRoute
+  AuthenticatedAdministrationUploadsRoute: typeof AuthenticatedAdministrationUploadsRoute
   AuthenticatedAdministrationIndexRoute: typeof AuthenticatedAdministrationIndexRoute
   AuthenticatedAdministrationUsersUserIdRoute: typeof AuthenticatedAdministrationUsersUserIdRoute
   AuthenticatedAdministrationUsersIndexRoute: typeof AuthenticatedAdministrationUsersIndexRoute
@@ -1565,6 +1586,8 @@ const AuthenticatedAdministrationRouteRouteChildren: AuthenticatedAdministration
     AuthenticatedAdministrationNcbiRoute: AuthenticatedAdministrationNcbiRoute,
     AuthenticatedAdministrationSettingsRoute:
       AuthenticatedAdministrationSettingsRoute,
+    AuthenticatedAdministrationUploadsRoute:
+      AuthenticatedAdministrationUploadsRoute,
     AuthenticatedAdministrationIndexRoute:
       AuthenticatedAdministrationIndexRoute,
     AuthenticatedAdministrationUsersUserIdRoute:

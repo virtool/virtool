@@ -1,3 +1,4 @@
+import { byteSize } from "@app/format";
 import { DialogFooter } from "@base/Dialog";
 import { InputError, InputGroup, InputLabel, InputSimple } from "@base/Input";
 import ProgressBarAffixed from "@base/ProgressBarAffixed";
@@ -5,6 +6,7 @@ import SaveButton from "@base/SaveButton";
 import TextArea from "@base/TextArea";
 import { useNavigate } from "@tanstack/react-router";
 import { UploadBar } from "@uploads/components/UploadBar";
+import { useUploadPolicy } from "@uploads/queries";
 import { useId } from "react";
 import { Controller, useForm } from "react-hook-form";
 import {
@@ -37,6 +39,7 @@ export function CreateReferenceForm({
 	const createMutation = useCreateReference();
 	const importMutation = useImportReference();
 	const { uploadMutation, fileName, uploadId, progress } = useUploadReference();
+	const { data: policy } = useUploadPolicy();
 
 	const nameId = useId();
 	const organismId = useId();
@@ -57,13 +60,24 @@ export function CreateReferenceForm({
 		},
 	});
 
-	function handleDrop(acceptedFiles: File[]) {
+	// Refused here rather than after the transfer starts. Until the policy
+	// resolves the file is offered, and upload initialization refuses it with the
+	// same message.
+	function handleDrop(acceptedFiles: File[]): boolean {
 		const file = acceptedFiles[0];
 		if (file === undefined) {
-			return;
+			return false;
+		}
+
+		if (policy && file.size > policy.maxUploadSize) {
+			setError("upload", {
+				message: `The file exceeds the ${byteSize(policy.maxUploadSize, true)} maximum upload size`,
+			});
+			return false;
 		}
 
 		uploadMutation.mutate(file);
+		return true;
 	}
 
 	function onSubmit(values: FormValues) {
@@ -123,9 +137,8 @@ export function CreateReferenceForm({
 							<UploadBar
 								message={uploadBarMessage}
 								onDrop={(acceptedFiles) => {
-									handleDrop(acceptedFiles);
 									const file = acceptedFiles[0];
-									if (file) {
+									if (handleDrop(acceptedFiles) && file) {
 										onChange(file.name);
 									}
 								}}

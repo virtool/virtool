@@ -77,6 +77,10 @@ const { seedSession, seedUser } = await import(
 	"@virtool/data/auth/test/fixtures"
 );
 const { sessionCookie } = await import("../auth/test/fixtures");
+const { updateSettings } = await import("@virtool/data/settings/data");
+const { AZURE_MAX_BLOB_SIZE, DEFAULT_MAX_UPLOAD_SIZE } = await import(
+	"@virtool/contracts"
+);
 
 let database: TestDatabase;
 let cookieHeader = "";
@@ -97,6 +101,9 @@ beforeEach(async () => {
 	await db.delete(uploadsTable);
 	await db.delete(sessions);
 	await db.delete(users);
+	// The settings row outlives the tables cleared above, so a test that moves
+	// the maximum would otherwise leave it moved for its successors.
+	await updateSettings(db, { maxUploadSize: DEFAULT_MAX_UPLOAD_SIZE });
 	getRequest.mockImplementation(
 		() =>
 			new Request("https://virtool.test/_serverFn/test", {
@@ -306,6 +313,7 @@ describe("initUpload", () => {
 		testConfig.uploadsChunked = true;
 		presignUpload.mockResolvedValue("https://fd/c/blob?sig=x");
 		await signIn("full");
+		await updateSettings(db, { maxUploadSize: AZURE_MAX_BLOB_SIZE });
 
 		const result = (await call("initUploadFn", {
 			name: "reads.fq.gz",
@@ -326,6 +334,29 @@ describe("initUpload", () => {
 				size: 4_000 * 1024 * 1024 * 50_000 + 1,
 			}),
 		).rejects.toThrow();
+	});
+
+	it("refuses a file above the configured maximum before reserving it", async () => {
+		testConfig.uploadsChunked = true;
+		await signIn("full");
+		await updateSettings(db, { maxUploadSize: 1024 });
+
+		await expect(
+			call("initUploadFn", { name: "reads.fq.gz", type: "reads", size: 1025 }),
+		).rejects.toThrow("File exceeds the maximum upload size of 1,024 bytes.");
+
+		expect(setResponseStatus).toHaveBeenCalledWith(413);
+		expect(await db.select().from(uploadsTable)).toHaveLength(0);
+		expect(presignUpload).not.toHaveBeenCalled();
+	});
+
+	it("publishes the configured maximum as the upload policy", async () => {
+		await signIn(null);
+		await updateSettings(db, { maxUploadSize: 1024 });
+
+		await expect(call("getUploadPolicyFn")).resolves.toEqual({
+			maxUploadSize: 1024,
+		});
 	});
 
 	it("drops the reservation when presigning fails", async () => {

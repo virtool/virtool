@@ -1,4 +1,9 @@
-import type { UploadType } from "@virtool/contracts";
+import {
+	AZURE_MAX_BLOCK_COUNT,
+	checkUploadSize,
+	type UploadType,
+} from "@virtool/contracts";
+import { getSettings } from "@virtool/data/settings/data";
 import {
 	cancelPendingUpload,
 	createPendingUpload,
@@ -9,9 +14,6 @@ import { config } from "../config";
 import { logger } from "../logger";
 
 const UPLOAD_SAS_TTL_SECONDS = 6 * 60 * 60;
-export const AZURE_MAX_BLOCK_COUNT = 50_000;
-const AZURE_MAX_BLOCK_SIZE = 4_000 * 1024 * 1024;
-export const AZURE_MAX_BLOB_SIZE = AZURE_MAX_BLOCK_COUNT * AZURE_MAX_BLOCK_SIZE;
 const MIN_UPLOAD_BLOCK_SIZE = 16 * 1024 * 1024;
 
 /** Thrown when this deployment cannot issue direct-upload credentials. */
@@ -51,6 +53,13 @@ export async function initializeUpload(
 			"Direct uploads are unavailable on this deployment.",
 		);
 	}
+
+	// Checked before anything is reserved, so an oversized file costs a row and a
+	// SAS neither. The configured maximum is read per initialization rather than
+	// cached: an administrator lowering it must take effect on the next upload,
+	// not on the next restart.
+	const { maxUploadSize } = await getSettings(db);
+	checkUploadSize(values.size, maxUploadSize);
 
 	const { upload, storageKey } = await createPendingUpload(db, {
 		name: values.name,

@@ -1,4 +1,8 @@
-import { deleteUploadFn, findUploadsFn } from "@server/uploads/functions";
+import {
+	deleteUploadFn,
+	findUploadsFn,
+	getUploadPolicyFn,
+} from "@server/uploads/functions";
 import {
 	keepPreviousData,
 	useInfiniteQuery,
@@ -9,10 +13,25 @@ import {
 import { fileQueryKeys } from "@uploads/keys";
 import type {
 	SortDirection,
+	UploadPolicy,
 	UploadSearchResult,
 	UploadSortField,
 	UploadType,
 } from "@virtool/contracts";
+
+/**
+ * Fetch the maximum upload size, so a drop zone can refuse an oversized file
+ * before any of its bytes are transferred.
+ *
+ * The server enforces the same limit at initialization and is the authority;
+ * this only spares the user a failed upload.
+ */
+export function useUploadPolicy() {
+	return useQuery<UploadPolicy>({
+		queryKey: [...fileQueryKeys.all(), "policy"],
+		queryFn: () => getUploadPolicyFn(),
+	});
+}
 
 export function useListFiles(
 	type: UploadType,
