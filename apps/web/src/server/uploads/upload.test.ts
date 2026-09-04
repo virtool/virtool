@@ -1,7 +1,6 @@
 import type { Db } from "@virtool/data/db/pg";
 import { apiKeys } from "@virtool/data/db/schema/apiKeys";
-import { sessions } from "@virtool/data/db/schema/sessions";
-import { uploads as uploadsTable } from "@virtool/data/db/schema/uploads";
+import { uploads } from "@virtool/data/db/schema/uploads";
 import { users } from "@virtool/data/db/schema/users";
 import {
 	createTestDatabase,
@@ -23,15 +22,21 @@ vi.mock("@tanstack/react-start/server", () => ({
 	getCookie: vi.fn(),
 	getRequest: vi.fn(),
 	setCookie: vi.fn(),
-	setResponseStatus: vi.fn(),
 }));
-
 vi.mock("@sentry/tanstackstart-react", () => ({
 	captureException: vi.fn(),
 	setUser: vi.fn(),
 }));
+vi.mock("@virtool/data/events/emit", () => ({
+	createEmitter: vi.fn(),
+	emit: vi.fn(),
+}));
 
 let db: Db;
+const storage = new MemoryStorage();
+const presignUpload = vi.fn();
+(storage as unknown as { presignUpload: unknown }).presignUpload =
+	presignUpload;
 vi.mock("../composition", () => ({
 	client: {},
 	get db() {
@@ -39,22 +44,16 @@ vi.mock("../composition", () => ({
 	},
 	storage,
 }));
-
-vi.mock("@virtool/data/events/emit", () => ({
-	createEmitter: vi.fn(),
-	emit: vi.fn(),
+vi.mock("../config", () => ({
+	config: { uploadsChunked: true, uploadsChunkedConcurrency: 4 },
 }));
 
-const storage = new MemoryStorage();
-
-const { handleUpload } = await import("./upload");
-const { seedApiKey, seedSession, seedUser } = await import(
+const { handleUploadCancel, handleUploadFinalize, handleUploadInitialize } =
+	await import("./upload");
+const { seedApiKey, seedUser } = await import(
 	"@virtool/data/auth/test/fixtures"
 );
-const { basicAuthHeader, sessionCookie } = await import(
-	"../auth/test/fixtures"
-);
-
+const { basicAuthHeader } = await import("../auth/test/fixtures");
 let database: TestDatabase;
 
 beforeAll(async () => {
@@ -62,168 +61,103 @@ beforeAll(async () => {
 	db = database.db;
 }, 60_000);
 
-afterAll(async () => {
-	await database.drop();
-});
+afterAll(async () => database.drop());
 
 beforeEach(async () => {
 	vi.clearAllMocks();
-	await db.delete(uploadsTable);
+	await db.delete(uploads);
 	await db.delete(apiKeys);
-	await db.delete(sessions);
 	await db.delete(users);
+	presignUpload.mockResolvedValue("https://storage.test/blob?sig=test");
 });
 
-/** Build a `POST /uploads` request authenticated as the given user. */
-async function request(
-	userId: number | null,
-	query: string,
-	body: string | null = "hello",
-): Promise<Request> {
-	const headers: Record<string, string> = {};
-	if (userId !== null) {
-		const { sessionId, token } = await seedSession(db, userId);
-		headers.cookie = sessionCookie({ sessionId, token });
-	}
-	return new Request(`https://virtool.test/uploads${query}`, {
-		method: "POST",
-		body,
-		headers,
-	});
+async function authenticatedRequest(method: string, body?: unknown) {
+	const userId = await seedUser(db, { administratorRole: "full" });
+	const key = await seedApiKey(db, userId, { upload_file: true });
+	return {
+		request: new Request("https://virtool.test/api/v1/uploads", {
+			method,
+			headers: {
+				authorization: basicAuthHeader("alice", key),
+				"content-type": "application/json",
+			},
+			body: body === undefined ? undefined : JSON.stringify(body),
+		}),
+		userId,
+	};
 }
 
-describe("handleUpload", () => {
-	it("streams the body to storage and returns the created upload", async () => {
-		const userId = await seedUser(db, { administratorRole: "full" });
-
-		const response = await handleUpload(
-			await request(userId, "?name=external.fa.gz&type=reference"),
-		);
-
-		expect(response.status).toBe(201);
-		const body = (await response.json()) as { name: string; size: number };
-		expect(body).toMatchObject({ name: "external.fa.gz", size: 5 });
-		expect(await db.select().from(uploadsTable)).toHaveLength(1);
-	});
-
-	it("rejects an anonymous caller with a 401", async () => {
-		const response = await handleUpload(
-			await request(null, "?name=x&type=reference"),
-		);
-
-		expect(response.status).toBe(401);
-		expect(await db.select().from(uploadsTable)).toHaveLength(0);
-	});
-
-	it("rejects a user without the upload_file permission with a 403", async () => {
-		const userId = await seedUser(db, { administratorRole: null });
-
-		const response = await handleUpload(
-			await request(userId, "?name=x&type=reference"),
-		);
-
-		expect(response.status).toBe(403);
-		expect(await db.select().from(uploadsTable)).toHaveLength(0);
-	});
-
-	it("rejects an invalid type with a 422", async () => {
-		const userId = await seedUser(db, { administratorRole: "full" });
-
-		const response = await handleUpload(
-			await request(userId, "?name=x&type=bogus"),
-		);
-
-		expect(response.status).toBe(422);
-	});
-
-	it("rejects a request with no body with a 400", async () => {
-		const userId = await seedUser(db, { administratorRole: "full" });
-
-		const response = await handleUpload(
-			await request(userId, "?name=x&type=reference", null),
-		);
-
-		expect(response.status).toBe(400);
-	});
-});
-
-describe("handleUpload with an api key", () => {
-	/** Build a `POST /uploads` request authenticated with an Authorization header. */
-	function keyRequest(authorization: string): Request {
-		return new Request(
-			"https://virtool.test/uploads?name=external.fa.gz&type=reference",
-			{ method: "POST", body: "hello", headers: { authorization } },
-		);
-	}
-
-	it("accepts a key granted upload_file", async () => {
-		const userId = await seedUser(db, { administratorRole: "full" });
-		const key = await seedApiKey(db, userId, { upload_file: true });
-
-		const response = await handleUpload(
-			keyRequest(basicAuthHeader("alice", key)),
-		);
-
-		expect(response.status).toBe(201);
-		const [row] = await db.select().from(uploadsTable);
-		expect(row?.userId).toBe(userId);
-	});
-
-	it("rejects a key without upload_file with a 403", async () => {
-		const userId = await seedUser(db, { administratorRole: "full" });
-		const key = await seedApiKey(db, userId, { create_sample: true });
-
-		const response = await handleUpload(
-			keyRequest(basicAuthHeader("alice", key)),
-		);
-
-		expect(response.status).toBe(403);
-		expect(await db.select().from(uploadsTable)).toHaveLength(0);
-	});
-
-	// The key permits it, but the user themself does not, so neither does the
-	// intersection.
-	it("rejects a key whose owner lacks upload_file with a 403", async () => {
-		const userId = await seedUser(db);
-		const key = await seedApiKey(db, userId, { upload_file: true });
-
-		const response = await handleUpload(
-			keyRequest(basicAuthHeader("alice", key)),
-		);
-
-		expect(response.status).toBe(403);
-	});
-
-	it("rejects an unknown key with a 401", async () => {
-		await seedUser(db, { administratorRole: "full" });
-
-		const response = await handleUpload(
-			keyRequest(basicAuthHeader("alice", "not-a-key")),
-		);
-
-		expect(response.status).toBe(401);
-	});
-
-	it("rejects a key belonging to a deactivated user with a 401", async () => {
-		const userId = await seedUser(db, {
-			active: false,
-			administratorRole: "full",
+describe("public upload lifecycle", () => {
+	it("initializes a direct upload for an API key", async () => {
+		const { request, userId } = await authenticatedRequest("POST", {
+			name: "reads.fq.gz",
+			type: "reads",
+			size: 5,
 		});
-		const key = await seedApiKey(db, userId, { upload_file: true });
+		const response = await handleUploadInitialize(request);
 
-		const response = await handleUpload(
-			keyRequest(basicAuthHeader("alice", key)),
-		);
-
-		expect(response.status).toBe(401);
+		expect(response.status).toBe(201);
+		expect(await response.json()).toMatchObject({
+			url: "https://storage.test/blob?sig=test",
+			blockSize: 16 * 1024 * 1024,
+			concurrency: 4,
+		});
+		const [row] = await db.select().from(uploads);
+		expect(row).toMatchObject({ expectedSize: 5, ready: false, userId });
 	});
 
-	it("rejects a malformed authorization header with a 401", async () => {
-		const userId = await seedUser(db, { administratorRole: "full" });
-		await seedApiKey(db, userId, { upload_file: true });
+	it("rejects the removed raw-body contract", async () => {
+		const { request } = await authenticatedRequest("POST", "file bytes");
+		expect((await handleUploadInitialize(request)).status).toBe(422);
+	});
 
-		const response = await handleUpload(keyRequest("Bearer nonsense"));
+	it("finalizes a complete upload", async () => {
+		const { request: initRequest, userId } = await authenticatedRequest(
+			"POST",
+			{ name: "reads.fq.gz", type: "reads", size: 5 },
+		);
+		const init = (await (await handleUploadInitialize(initRequest)).json()) as {
+			uploadId: number;
+		};
+		const [row] = await db.select().from(uploads);
+		await storage.write(
+			row?.storageKey ?? "",
+			(async function* () {
+				yield new TextEncoder().encode("hello");
+			})(),
+		);
+		const key = await seedApiKey(db, userId, { upload_file: true });
+		const request = new Request(
+			"https://virtool.test/api/v1/uploads/1/finalize",
+			{
+				method: "POST",
+				headers: { authorization: basicAuthHeader("alice", key) },
+			},
+		);
 
-		expect(response.status).toBe(401);
+		const response = await handleUploadFinalize(request, String(init.uploadId));
+		expect(response.status).toBe(200);
+		expect(await response.json()).toMatchObject({ ready: true, size: 5 });
+	});
+
+	it("cancels an unfinished upload", async () => {
+		const { request: initRequest, userId } = await authenticatedRequest(
+			"POST",
+			{ name: "reads.fq.gz", type: "reads", size: 5 },
+		);
+		const init = (await (await handleUploadInitialize(initRequest)).json()) as {
+			uploadId: number;
+		};
+		const key = await seedApiKey(db, userId, { upload_file: true });
+		const request = new Request("https://virtool.test/api/v1/uploads/1", {
+			method: "DELETE",
+			headers: { authorization: basicAuthHeader("alice", key) },
+		});
+
+		expect(
+			(await handleUploadCancel(request, String(init.uploadId))).status,
+		).toBe(204);
+		const [row] = await db.select().from(uploads);
+		expect(row?.removed).toBe(true);
 	});
 });

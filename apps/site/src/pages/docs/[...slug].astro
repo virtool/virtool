@@ -23,7 +23,7 @@ export async function getStaticPaths() {
 
 const sections = getMenuSectionsFromCollection(
   await getCollection("manual"),
-  ["start", "tutorials", "guide", "science"]
+  ["start", "tutorials", "guide", "api", "science"]
 );
 
 const { entry } = Astro.props;

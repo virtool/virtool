@@ -255,16 +255,16 @@ describe("initUpload", () => {
 		).rejects.toBeInstanceOf(ForbiddenError);
 	});
 
-	it("returns proxied and reserves no row when chunked is off", async () => {
+	it("rejects initialization when direct uploads are off", async () => {
 		await signIn("full");
 
-		const result = await call("initUploadFn", {
-			name: "reads.fq.gz",
-			type: "reads",
-			size: 5,
-		});
-
-		expect(result).toEqual({ mode: "proxied" });
+		await expect(
+			call("initUploadFn", {
+				name: "reads.fq.gz",
+				type: "reads",
+				size: 5,
+			}),
+		).rejects.toThrow("Direct uploads are unavailable");
 		expect(await db.select().from(uploadsTable)).toHaveLength(0);
 		expect(presignUpload).not.toHaveBeenCalled();
 	});
@@ -279,14 +279,12 @@ describe("initUpload", () => {
 			type: "reads",
 			size: 4096,
 		})) as {
-			mode: string;
 			uploadId: number;
 			url: string;
 			blockSize: number;
 			concurrency: number;
 		};
 
-		expect(result.mode).toBe("chunked");
 		expect(result.url).toBe("https://fd/c/blob?sig=x");
 		expect(result.blockSize).toBe(16 * 1024 * 1024);
 		expect(result.concurrency).toBe(8);

@@ -8,10 +8,9 @@
  * bytes pass through the Node process. The server is told when the blocks are
  * committed so it can record the upload as ready.
  *
- * The decision to take this path, and the SAS itself, come from `initUploadFn`;
- * this module runs the block upload the server handed it. Blocks are PUT with
- * `XMLHttpRequest`, not `fetch`, for the same reason `postUpload` is: only XHR
- * reports upload progress, and the file is sliced so each request streams a
+ * The SAS comes from `initUploadFn`; this module runs the block upload the
+ * server handed it. Blocks are PUT with `XMLHttpRequest` so upload progress can
+ * be reported, and the file is sliced so each request streams a
  * `Blob` from disk without buffering it in JS.
  */
 import {

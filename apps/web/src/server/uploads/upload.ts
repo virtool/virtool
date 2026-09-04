@@ -1,94 +1,140 @@
-import { UPLOAD_TYPES, type UploadType } from "@virtool/contracts";
-import { createUpload } from "@virtool/data/uploads/data";
+import { UPLOAD_TYPES } from "@virtool/contracts";
+import {
+	UploadIncompleteError,
+	UploadNotFoundError,
+	UploadSizeMismatchError,
+} from "@virtool/data/uploads/data";
+import { z } from "zod";
 import { requireAuthenticatedRequest } from "../auth/middleware";
 import { hasPermission } from "../auth/policy";
-import { db, storage } from "../composition";
-import { logger } from "../logger";
+import {
+	AZURE_MAX_BLOB_SIZE,
+	cancelUpload,
+	DirectUploadUnavailableError,
+	finalizeUpload,
+	initializeUpload,
+} from "./service";
+
+const initUploadSchema = z.object({
+	name: z.string().min(1),
+	type: z.enum(UPLOAD_TYPES),
+	size: z.number().int().nonnegative().max(AZURE_MAX_BLOB_SIZE),
+});
 
 function jsonResponse(body: unknown, status: number): Response {
-	return new Response(JSON.stringify(body), {
-		status,
-		headers: { "content-type": "application/json" },
-	});
+	return Response.json(body, { status });
 }
 
-async function* streamBytes(
-	stream: ReadableStream<Uint8Array>,
-): AsyncIterable<Uint8Array> {
-	const reader = stream.getReader();
-	try {
-		while (true) {
-			const { done, value } = await reader.read();
-			if (done) {
-				break;
-			}
-			if (value) {
-				yield value;
-			}
-		}
-	} finally {
-		reader.releaseLock();
-	}
-}
-
-/**
- * Handle a streaming file upload, backing the `POST /uploads` route.
- *
- * This is a raw route handler rather than a server function on purpose. The
- * client posts the file with `XMLHttpRequest` so it can report upload progress
- * — `fetch`, and so the generated server-function client, cannot — and read
- * files can run to many gigabytes. The body is read as a stream and handed
- * straight to storage, so a multi-GB file never sits in the Node heap; `name`
- * and `type` travel in the query string.
- *
- * Being a route means no policy middleware runs, so the authorization floor is
- * enforced here: a valid session, then the `upload_file` permission.
- */
-export async function handleUpload(request: Request): Promise<Response> {
+async function authorize(request: Request) {
 	const session = await requireAuthenticatedRequest(request);
 	if (session instanceof Response) {
 		return session;
 	}
-
 	if (!(await hasPermission(session, "upload_file"))) {
 		return new Response("Forbidden", { status: 403 });
 	}
+	return session;
+}
 
-	const params = new URL(request.url).searchParams;
-	const name = params.get("name") ?? "";
-	const type = params.get("type") ?? "";
-
-	if (!name || !UPLOAD_TYPES.includes(type as UploadType)) {
+function uploadErrorResponse(err: unknown): Response | null {
+	if (err instanceof UploadNotFoundError) {
+		return jsonResponse({ message: "Upload not found." }, 404);
+	}
+	if (err instanceof UploadIncompleteError) {
+		return jsonResponse({ message: "Upload is not complete." }, 409);
+	}
+	if (err instanceof UploadSizeMismatchError) {
 		return jsonResponse(
-			{ message: "A valid `name` and `type` are required." },
-			422,
+			{ message: "Upload size does not match the declared size." },
+			409,
 		);
 	}
+	if (err instanceof DirectUploadUnavailableError) {
+		return jsonResponse({ message: err.message }, 503);
+	}
+	return null;
+}
 
-	if (!request.body) {
-		return jsonResponse({ message: "A file body is required." }, 400);
+/** Initialize a direct upload for `POST /api/v1/uploads`. */
+export async function handleUploadInitialize(
+	request: Request,
+): Promise<Response> {
+	const session = await authorize(request);
+	if (session instanceof Response) {
+		return session;
 	}
 
-	logger.info({ name, type, userId: session.userId }, "handling file upload");
+	let input: unknown;
+	try {
+		input = await request.json();
+	} catch {
+		return jsonResponse({ message: "A JSON body is required." }, 400);
+	}
+
+	const parsed = initUploadSchema.safeParse(input);
+	if (!parsed.success) {
+		return jsonResponse({ message: "Invalid upload initialization." }, 422);
+	}
 
 	try {
-		const upload = await createUpload(db, storage, {
-			name,
-			type: type as UploadType,
-			userId: session.userId,
-			body: streamBytes(request.body),
-			signal: request.signal,
-		});
-
-		return jsonResponse(upload, 201);
+		return jsonResponse(
+			await initializeUpload(parsed.data, session.userId),
+			201,
+		);
 	} catch (err) {
-		// A client that cancels its upload aborts the request; that is expected,
-		// not a failure, so there is nothing to log and no response to deliver.
-		if (request.signal.aborted) {
-			return new Response(null, { status: 499 });
+		const response = uploadErrorResponse(err);
+		if (response) {
+			return response;
 		}
+		throw err;
+	}
+}
 
-		logger.error({ err }, "upload failed");
-		return jsonResponse({ message: "Upload failed." }, 500);
+/** Finalize a direct upload for `POST /api/v1/uploads/{id}/finalize`. */
+export async function handleUploadFinalize(
+	request: Request,
+	uploadId: string,
+): Promise<Response> {
+	const session = await authorize(request);
+	if (session instanceof Response) {
+		return session;
+	}
+	const id = Number(uploadId);
+	if (!Number.isInteger(id) || id <= 0) {
+		return jsonResponse({ message: "Invalid upload id." }, 400);
+	}
+	try {
+		return jsonResponse(await finalizeUpload(id, session.userId), 200);
+	} catch (err) {
+		const response = uploadErrorResponse(err);
+		if (response) {
+			return response;
+		}
+		throw err;
+	}
+}
+
+/** Cancel a direct upload for `DELETE /api/v1/uploads/{id}`. */
+export async function handleUploadCancel(
+	request: Request,
+	uploadId: string,
+): Promise<Response> {
+	const session = await authorize(request);
+	if (session instanceof Response) {
+		return session;
+	}
+	const id = Number(uploadId);
+	if (!Number.isInteger(id) || id <= 0) {
+		return jsonResponse({ message: "Invalid upload id." }, 400);
+	}
+	try {
+		await cancelUpload(id, session.userId);
+		return new Response(null, { status: 204 });
+	} catch (err) {
+		const response = uploadErrorResponse(err);
+		if (response) {
+			return response;
+		}
+		throw err;
 	}
 }

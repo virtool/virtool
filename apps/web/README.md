@@ -446,18 +446,22 @@ or explicit whitelist first, then use that row's `storage_key`; never construct
 a key from URL parameters. Use the row's display name for
 `Content-Disposition`.
 
-Large uploads can go direct-to-blob instead of through the `POST /uploads`
-route. `initUploadFn` owns the choice so the client never carries the flag:
-with `VT_UPLOADS_CHUNKED` enabled and an Azure backend that can presign, it
-reserves the upload — recording the file size the client declares at init — and
-returns a write SAS the client PUTs blocks to (`@uploads/chunkedUpload`), then
-commits with a Put Block List and calls `finalizeChunkedUploadFn`. Finalize
-records the stored object's size only when it matches the declared size, so an
-empty or partial block list is rejected
-rather than recorded as ready; `cancelChunkedUploadFn` drops an abandoned or
-rejected reservation. Otherwise it returns `proxied` and the client streams
-through the raw `/uploads` route, which stays the fallback and the rollback path
-— disable the flag to revert.
+Uploads use a direct Azure Block Blob protocol. The browser adapters and public
+REST routes share the reservation and finalization service in
+`@server/uploads/service`; file bytes never pass through the web server.
+
+API clients reserve an upload, transfer and commit its blocks using the returned
+write-only SAS, then finalize it. See the [upload API guide on the Virtool
+website](../site/src/content/manual/api/uploads.mdx) for request shapes and the
+complete protocol.
+
+The former `POST /uploads` raw-body endpoint has been removed. This is an
+intentional breaking change: there is no proxied upload or supported legacy
+size limit.
+
+When direct uploads are disabled or the storage backend cannot issue an upload
+SAS, initialization returns `503` instead of falling back. The maximum declared
+size is 209,715,200,000,000 bytes, the Azure block-count and block-size limit.
 
 ### Server push
 
