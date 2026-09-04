@@ -1,4 +1,5 @@
-import type { UploadType } from "@virtool/contracts";
+import { checkUploadSize, type UploadType } from "@virtool/contracts";
+import { getSettings } from "@virtool/data/settings/data";
 import {
 	cancelPendingUpload,
 	createPendingUpload,
@@ -9,10 +10,7 @@ import { config } from "../config";
 import { logger } from "../logger";
 
 const UPLOAD_SAS_TTL_SECONDS = 6 * 60 * 60;
-export const AZURE_MAX_BLOCK_COUNT = 50_000;
-const AZURE_MAX_BLOCK_SIZE = 4_000 * 1024 * 1024;
-export const AZURE_MAX_BLOB_SIZE = AZURE_MAX_BLOCK_COUNT * AZURE_MAX_BLOCK_SIZE;
-const MIN_UPLOAD_BLOCK_SIZE = 16 * 1024 * 1024;
+const UPLOAD_BLOCK_SIZE = 16 * 1024 * 1024;
 
 /** Thrown when this deployment cannot issue direct-upload credentials. */
 export class DirectUploadUnavailableError extends Error {}
@@ -32,14 +30,6 @@ export type UploadInstructions = {
 	concurrency: number;
 };
 
-function getUploadBlockSize(size: number): number {
-	const minimumBlockSize = Math.ceil(size / AZURE_MAX_BLOCK_COUNT);
-	return Math.max(
-		MIN_UPLOAD_BLOCK_SIZE,
-		Math.ceil(minimumBlockSize / MIN_UPLOAD_BLOCK_SIZE) * MIN_UPLOAD_BLOCK_SIZE,
-	);
-}
-
 /** Reserve an upload and issue the instructions for writing it to storage. */
 export async function initializeUpload(
 	values: UploadInit,
@@ -51,6 +41,10 @@ export async function initializeUpload(
 			"Direct uploads are unavailable on this deployment.",
 		);
 	}
+
+	// Read on every initialization so setting changes apply to the next upload.
+	const { maxUploadSize } = await getSettings(db);
+	checkUploadSize(values.size, maxUploadSize);
 
 	const { upload, storageKey } = await createPendingUpload(db, {
 		name: values.name,
@@ -74,7 +68,7 @@ export async function initializeUpload(
 	return {
 		uploadId: upload.id,
 		url,
-		blockSize: getUploadBlockSize(values.size),
+		blockSize: UPLOAD_BLOCK_SIZE,
 		concurrency: config.uploadsChunkedConcurrency,
 	};
 }

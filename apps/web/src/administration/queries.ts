@@ -25,6 +25,7 @@ import {
 	useQueryClient,
 	useSuspenseQuery,
 } from "@tanstack/react-query";
+import { uploadPolicyQueryKeys } from "@uploads/keys";
 import type {
 	EmailSettings,
 	EmailTestResult,
@@ -37,6 +38,8 @@ export type SettingsUpdate = {
 	cacheStorageBudget?: number;
 	defaultSourceTypes?: string[];
 	enableSentry?: boolean;
+	/** A new maximum accepted upload size, in bytes. */
+	maxUploadSize?: number;
 	minimumPasswordLength?: number;
 	sampleAllRead?: boolean;
 	sampleAllWrite?: boolean;
@@ -53,18 +56,6 @@ export function settingsQueryOptions() {
 		queryKey: settingsQueryKeys.all(),
 		queryFn: () => getSettingsFn(),
 	});
-}
-
-/**
- * Fetch the API settings without suspending.
- *
- * For components on routes that do not prefetch the settings, and for the
- * settings route itself, which any `users` administrator can reach but only a
- * `settings` administrator may read — so the query has to be allowed to fail
- * beside the parts of the view that do render.
- */
-export function useFetchSettings() {
-	return useQuery(settingsQueryOptions());
 }
 
 /**
@@ -91,6 +82,9 @@ export function useUpdateSettings() {
 		onSuccess: () => {
 			queryClient.invalidateQueries({
 				queryKey: settingsQueryKeys.all(),
+			});
+			queryClient.invalidateQueries({
+				queryKey: uploadPolicyQueryKeys.all(),
 			});
 			// The minimum password length lives in these settings, so the policy the
 			// password forms validate against has just gone stale.
@@ -158,23 +152,16 @@ export function useGetAdministratorRoles() {
  * The response carries non-secret fields and a flag saying whether a key is
  * stored; the key itself never leaves the server.
  */
-function emailSettingsQueryOptions() {
+export function emailSettingsQueryOptions() {
 	return queryOptions<EmailSettings>({
 		queryKey: emailQueryKeys.all(),
 		queryFn: () => getEmailSettingsFn(),
 	});
 }
 
-/**
- * Fetch the email delivery configuration without suspending.
- *
- * Only a full administrator may read it, so this is called from a subtree that
- * is already gated on that role. Every mutation below refetches it rather than
- * writing its own result into the cache: availability depends on decryption,
- * which only the server can judge.
- */
-export function useFetchEmailSettings() {
-	return useQuery(emailSettingsQueryOptions());
+/** Fetch the email delivery configuration prefetched by the route loader. */
+export function useSuspenseEmailSettings() {
+	return useSuspenseQuery(emailSettingsQueryOptions());
 }
 
 /** The non-secret email delivery fields that can be changed. */

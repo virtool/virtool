@@ -1,10 +1,14 @@
 import { createServerFn, createServerOnlyFn } from "@tanstack/react-start";
 import { setResponseStatus } from "@tanstack/react-start/server";
 import {
+	MAX_UPLOAD_SIZE,
 	SORT_DIRECTIONS,
 	UPLOAD_SORT_FIELDS,
 	UPLOAD_TYPES,
+	type UploadPolicy,
+	UploadTooLargeError,
 } from "@virtool/contracts";
+import { getSettings } from "@virtool/data/settings/data";
 import {
 	deleteUpload,
 	findUploads,
@@ -19,12 +23,7 @@ import { db, storage } from "../composition";
 import { ClientError } from "../errors";
 import { logger } from "../logger";
 import { pageSchema, perPageSchema, rowIdSchema } from "../validation";
-import {
-	AZURE_MAX_BLOB_SIZE,
-	cancelUpload,
-	finalizeUpload,
-	initializeUpload,
-} from "./service";
+import { cancelUpload, finalizeUpload, initializeUpload } from "./service";
 
 const findUploadsSchema = z
 	.object({
@@ -64,6 +63,10 @@ const rethrowAsHttp = createServerOnlyFn((err: unknown): never => {
 		setResponseStatus(409);
 		throw new ClientError("Upload size does not match the declared size.");
 	}
+	if (err instanceof UploadTooLargeError) {
+		setResponseStatus(413);
+		throw new ClientError(err.message);
+	}
 	throw err;
 });
 
@@ -98,16 +101,28 @@ const initUploadSchema = z.object({
 	type: z.enum(UPLOAD_TYPES),
 	// The file's byte length, locked here so finalize can reject a commit that
 	// does not land exactly this many bytes.
-	size: z.number().int().nonnegative().max(AZURE_MAX_BLOB_SIZE),
+	size: z.number().int().nonnegative().max(MAX_UPLOAD_SIZE),
 });
 
 /** Begin a direct upload for the browser client. */
 export const initUploadFn = createServerFn({ method: "POST" })
 	.middleware([permission("upload_file")])
 	.validator(initUploadSchema)
-	.handler(async ({ data, context }) =>
-		initializeUpload(data, context.session.userId),
-	);
+	.handler(async ({ data, context }) => {
+		try {
+			return await initializeUpload(data, context.session.userId);
+		} catch (err) {
+			return rethrowAsHttp(err);
+		}
+	});
+
+/** Expose the upload limit to authenticated users without exposing other settings. */
+export const getUploadPolicyFn = createServerFn({ method: "GET" })
+	.middleware([authenticated()])
+	.handler(async (): Promise<UploadPolicy> => {
+		const { maxUploadSize } = await getSettings(db);
+		return { maxUploadSize };
+	});
 
 /**
  * Finalize a chunked upload once its blocks are committed, returning the upload.

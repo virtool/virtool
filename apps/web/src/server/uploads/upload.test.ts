@@ -53,6 +53,10 @@ const { handleUploadCancel, handleUploadFinalize, handleUploadInitialize } =
 const { seedApiKey, seedUser } = await import(
 	"@virtool/data/auth/test/fixtures"
 );
+const { updateSettings } = await import("@virtool/data/settings/data");
+const { MAX_UPLOAD_SIZE, DEFAULT_MAX_UPLOAD_SIZE } = await import(
+	"@virtool/contracts"
+);
 const { basicAuthHeader } = await import("../auth/test/fixtures");
 let database: TestDatabase;
 
@@ -69,6 +73,9 @@ beforeEach(async () => {
 	await db.delete(apiKeys);
 	await db.delete(users);
 	presignUpload.mockResolvedValue("https://storage.test/blob?sig=test");
+	// The settings row outlives the tables cleared above, so a test that lowers
+	// the maximum would otherwise leave it lowered for its successors.
+	await updateSettings(db, { maxUploadSize: DEFAULT_MAX_UPLOAD_SIZE });
 });
 
 async function authenticatedRequest(method: string, body?: unknown) {
@@ -105,6 +112,27 @@ describe("public upload lifecycle", () => {
 		const [row] = await db.select().from(uploads);
 		expect(row).toMatchObject({ expectedSize: 5, ready: false, userId });
 	});
+
+	it.each([1025, MAX_UPLOAD_SIZE + 1])(
+		"refuses a declared size of %s above the configured maximum before reserving it",
+		async (size) => {
+			await updateSettings(db, { maxUploadSize: 1024 });
+
+			const { request } = await authenticatedRequest("POST", {
+				name: "reads.fq.gz",
+				type: "reads",
+				size,
+			});
+			const response = await handleUploadInitialize(request);
+
+			expect(response.status).toBe(413);
+			expect(await response.json()).toEqual({
+				message: "File exceeds the maximum upload size of 1,024 bytes.",
+			});
+			await expect(db.select().from(uploads)).resolves.toHaveLength(0);
+			expect(presignUpload).not.toHaveBeenCalled();
+		},
+	);
 
 	it("rejects the removed raw-body contract", async () => {
 		const { request } = await authenticatedRequest("POST", "file bytes");

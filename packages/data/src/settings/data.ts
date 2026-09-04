@@ -1,4 +1,5 @@
 import {
+	DEFAULT_MAX_UPLOAD_SIZE,
 	DEFAULT_MINIMUM_PASSWORD_LENGTH,
 	type SampleGroup,
 } from "@virtool/contracts";
@@ -36,6 +37,8 @@ export type Settings = {
 	emailSenderAddress: string;
 	emailSenderName: string;
 	enableSentry: boolean;
+	/** The maximum accepted upload size, in bytes. */
+	maxUploadSize: number;
 	minimumPasswordLength: number;
 	/**
 	 * The stored NCBI API key's encrypted envelope, or `null` when none is
@@ -68,6 +71,7 @@ export const DEFAULT_SETTINGS: Settings = {
 	emailSenderAddress: "",
 	emailSenderName: "",
 	enableSentry: true,
+	maxUploadSize: DEFAULT_MAX_UPLOAD_SIZE,
 	minimumPasswordLength: DEFAULT_MINIMUM_PASSWORD_LENGTH,
 	ncbiApiKey: null,
 	sampleAllRead: true,
@@ -87,6 +91,7 @@ function toSettings(row: SettingsRow): Settings {
 		emailSenderAddress: row.emailSenderAddress,
 		emailSenderName: row.emailSenderName,
 		enableSentry: row.enableSentry,
+		maxUploadSize: row.maxUploadSize,
 		minimumPasswordLength: row.minimumPasswordLength,
 		ncbiApiKey: row.ncbiApiKey,
 		sampleAllRead: row.sampleAllRead,

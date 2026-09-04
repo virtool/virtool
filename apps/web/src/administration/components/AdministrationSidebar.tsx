@@ -6,6 +6,7 @@ import { hasSufficientAdminRole } from "@virtool/contracts";
 import type { LucideIcon } from "lucide-react";
 import {
 	Database,
+	FileUp,
 	Mail,
 	Megaphone,
 	Menu,
@@ -113,6 +114,7 @@ export default function AdministrationSidebar({
 			label: "Storage",
 			items: [
 				{ icon: Database, label: "Caching", to: "/administration/caching" },
+				{ icon: FileUp, label: "Uploads", to: "/administration/uploads" },
 			],
 		});
 	}

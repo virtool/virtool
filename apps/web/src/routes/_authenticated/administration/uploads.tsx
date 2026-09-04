@@ -1,8 +1,8 @@
-import NcbiApiKey from "@administration/components/NcbiApiKey";
+import MaxUploadSize from "@administration/components/MaxUploadSize";
 import { createFileRoute, redirect } from "@tanstack/react-router";
 import { hasSufficientAdminRole } from "@virtool/contracts";
 
-export const Route = createFileRoute("/_authenticated/administration/ncbi")({
+export const Route = createFileRoute("/_authenticated/administration/uploads")({
 	beforeLoad: ({ context }) => {
 		if (
 			!hasSufficientAdminRole("settings", context.account.administratorRole)
@@ -14,5 +14,5 @@ export const Route = createFileRoute("/_authenticated/administration/ncbi")({
 		const { settingsQueryOptions } = await import("@administration/queries");
 		await queryClient.ensureQueryData(settingsQueryOptions());
 	},
-	component: NcbiApiKey,
+	component: MaxUploadSize,
 });
