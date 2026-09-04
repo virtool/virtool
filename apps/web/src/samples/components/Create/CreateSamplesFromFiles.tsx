@@ -1,6 +1,7 @@
 import { useFetchAccount } from "@account/account";
 import { pluralize } from "@app/format";
 import Alert from "@base/Alert";
+import { BoxGroup, BoxGroupTable } from "@base/Box";
 import Button from "@base/Button";
 import {
 	Collapsible,
@@ -20,6 +21,8 @@ import { InputError, InputGroup, InputLabel, InputSimple } from "@base/Input";
 import LoadingPlaceholder from "@base/LoadingPlaceholder";
 import QueryError from "@base/QueryError";
 import SaveButton from "@base/SaveButton";
+import { TableActionsCell, TableActionsHead, TableHead } from "@base/Table";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@base/Tabs";
 import { useListGroups } from "@groups/queries";
 import { useCreateSamples } from "@samples/queries";
 import { getCreateSampleRequest, getSampleNameFromReads } from "@samples/utils";
@@ -135,6 +138,7 @@ function CreateSamplesForm({
 
 	const mutation = useCreateSamples();
 
+	const [tab, setTab] = useState("samples");
 	const [showMetadata, setShowMetadata] = useState(false);
 	const [failedCount, setFailedCount] = useState(0);
 
@@ -178,6 +182,7 @@ function CreateSamplesForm({
 				);
 
 				setFailedCount(failed.length);
+				setTab("samples");
 				replace(
 					values.samples.filter((sample) =>
 						failedKeys.has(sample.reads.map((read) => read.id).join()),
@@ -196,7 +201,7 @@ function CreateSamplesForm({
 	}
 
 	return (
-		<form onSubmit={handleSubmit(onSubmit)}>
+		<form onSubmit={handleSubmit(onSubmit, () => setTab("samples"))}>
 			{failedCount > 0 && (
 				<Alert color="red" icon={AlertCircle}>
 					<span>
@@ -212,110 +217,148 @@ function CreateSamplesForm({
 				{mutation.isError && mutation.error.message}
 			</InputError>
 
-			<InputGroup>
-				<InputLabel>Samples</InputLabel>
-				<ul className="flex flex-col gap-2">
-					{fields.map((field, index) => {
-						const error = errors.samples?.[index]?.name;
+			<Tabs value={tab} onValueChange={setTab}>
+				<TabsList aria-label="Sample creation" className="mb-4">
+					<TabsTrigger value="samples">Samples</TabsTrigger>
+					<TabsTrigger value="settings">Settings</TabsTrigger>
+				</TabsList>
+				<TabsContent
+					value="samples"
+					forceMount
+					className="data-[state=inactive]:hidden"
+				>
+					<BoxGroup className="overflow-x-auto">
+						<BoxGroupTable className="table-fixed min-w-128" variant="data">
+							<caption className="sr-only">Samples</caption>
+							<TableHead>
+								<th scope="col">Name</th>
+								<th scope="col">Read Files</th>
+								<th className="w-28" scope="col">
+									Pairing
+								</th>
+								<TableActionsHead className="w-14" />
+							</TableHead>
+							<tbody>
+								{fields.map((field, index) => {
+									const error = errors.samples?.[index]?.name;
 
-						return (
-							<li
-								className="flex items-start gap-3 rounded-md border border-gray-300 p-3"
-								key={field.id}
-							>
-								<div className="flex-1 min-w-0">
-									<InputSimple
-										aria-invalid={Boolean(error) || undefined}
-										aria-label={`Name for ${field.reads[0]?.name}`}
-										{...register(`samples.${index}.name`, {
-											required: "Required Field",
-										})}
-									/>
-									<InputError>{error?.message}</InputError>
-								</div>
-								<div className="flex flex-col items-end gap-1 min-w-0">
-									<ReadPairBadge count={field.reads.length} />
-									{field.reads.map((read) => (
-										<span
-											className="truncate font-mono text-xs text-gray-500"
-											key={read.id}
-										>
-											{read.name}
-										</span>
-									))}
-								</div>
-								<IconButton
-									ariaLabel={`Remove ${field.reads[0]?.name}`}
-									color="gray"
-									IconComponent={X}
-									onClick={() => remove(index)}
-									tip="remove"
-								/>
-							</li>
-						);
-					})}
-				</ul>
-			</InputGroup>
-
-			<Controller
-				control={control}
-				render={({ field: { onChange, value } }) => (
-					<SampleUserGroup
-						selected={value}
-						groups={groups}
-						onChange={onChange}
+									return (
+										<tr key={field.id}>
+											<td>
+												<InputSimple
+													aria-invalid={Boolean(error) || undefined}
+													aria-label={`Name for ${field.reads[0]?.name}`}
+													{...register(`samples.${index}.name`, {
+														required: "Required Field",
+													})}
+												/>
+												<InputError>{error?.message}</InputError>
+											</td>
+											<td>
+												<div className="flex flex-col gap-1">
+													{field.reads.map((read) => (
+														<span
+															className="break-all font-mono text-xs text-gray-500"
+															key={read.id}
+														>
+															{read.name}
+														</span>
+													))}
+												</div>
+											</td>
+											<td>
+												<ReadPairBadge count={field.reads.length} />
+											</td>
+											<TableActionsCell>
+												<IconButton
+													ariaLabel={`Remove ${field.reads[0]?.name}`}
+													color="gray"
+													IconComponent={X}
+													onClick={() => remove(index)}
+													tip="remove"
+												/>
+											</TableActionsCell>
+										</tr>
+									);
+								})}
+							</tbody>
+						</BoxGroupTable>
+					</BoxGroup>
+				</TabsContent>
+				<TabsContent
+					value="settings"
+					forceMount
+					className="data-[state=inactive]:hidden"
+				>
+					<p className="mb-4 text-sm text-gray-500">Applies to every sample.</p>
+					<Controller
+						control={control}
+						render={({ field: { onChange, value } }) => (
+							<SampleUserGroup
+								selected={value}
+								groups={groups}
+								onChange={onChange}
+							/>
+						)}
+						name="group"
 					/>
-				)}
-				name="group"
-			/>
 
-			<Collapsible
-				className="mb-4"
-				open={showMetadata}
-				onOpenChange={setShowMetadata}
-			>
-				<CollapsibleTrigger>Show Metadata Fields</CollapsibleTrigger>
-				<CollapsibleContent className="grid grid-cols-3 gap-x-4 pt-4">
-					<InputGroup>
-						<InputLabel htmlFor="locale">Locale</InputLabel>
-						<InputSimple id="locale" {...register("locale")} />
-					</InputGroup>
+					<Collapsible
+						className="mb-4"
+						open={showMetadata}
+						onOpenChange={setShowMetadata}
+					>
+						<CollapsibleTrigger>Show Metadata Fields</CollapsibleTrigger>
+						<CollapsibleContent className="grid grid-cols-3 gap-x-4 pt-4">
+							<InputGroup>
+								<InputLabel htmlFor="locale">Locale</InputLabel>
+								<InputSimple id="locale" {...register("locale")} />
+							</InputGroup>
 
-					<InputGroup>
-						<InputLabel htmlFor="isolate">Isolate</InputLabel>
-						<InputSimple id="isolate" {...register("isolate")} />
-					</InputGroup>
+							<InputGroup>
+								<InputLabel htmlFor="isolate">Isolate</InputLabel>
+								<InputSimple id="isolate" {...register("isolate")} />
+							</InputGroup>
 
-					<InputGroup>
-						<InputLabel htmlFor="host">Host</InputLabel>
-						<InputSimple id="host" {...register("host")} />
-					</InputGroup>
-				</CollapsibleContent>
-			</Collapsible>
+							<InputGroup>
+								<InputLabel htmlFor="host">Host</InputLabel>
+								<InputSimple id="host" {...register("host")} />
+							</InputGroup>
+						</CollapsibleContent>
+					</Collapsible>
 
-			<Controller
-				control={control}
-				render={({ field: { onChange, value } }) => (
-					<LibraryTypeSelector libraryType={value} onSelect={onChange} />
-				)}
-				name="libraryType"
-			/>
+					<Controller
+						control={control}
+						render={({ field: { onChange, value } }) => (
+							<LibraryTypeSelector libraryType={value} onSelect={onChange} />
+						)}
+						name="libraryType"
+					/>
 
-			<Controller
-				control={control}
-				render={({ field: { onChange, value } }) => (
-					<LabelSelector labels={labels} selected={value} onChange={onChange} />
-				)}
-				name="labels"
-			/>
+					<Controller
+						control={control}
+						render={({ field: { onChange, value } }) => (
+							<LabelSelector
+								labels={labels}
+								selected={value}
+								onChange={onChange}
+							/>
+						)}
+						name="labels"
+					/>
 
-			<Controller
-				control={control}
-				render={({ field: { onChange, value } }) => (
-					<DefaultSubtractionSelector selected={value} onChange={onChange} />
-				)}
-				name="subtractionIds"
-			/>
+					<Controller
+						control={control}
+						render={({ field: { onChange, value } }) => (
+							<DefaultSubtractionSelector
+								selected={value}
+								onChange={onChange}
+							/>
+						)}
+						name="subtractionIds"
+					/>
+				</TabsContent>
+			</Tabs>
 
 			<DialogFooter>
 				<SaveButton disabled={fields.length === 0} />
@@ -355,8 +398,7 @@ export default function CreateSamplesFromFiles({
 			<DialogContent size="lg">
 				<DialogTitle>Create Samples</DialogTitle>
 				<DialogDescription>
-					One sample is created for each row. Detected mate pairs are already
-					paired, and the fields below apply to every sample in the batch.
+					Create samples from the selected read files.
 				</DialogDescription>
 				<CreateSamplesForm
 					labels={labels}
