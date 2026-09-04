@@ -73,8 +73,8 @@ export async function clearNcbiApiKey(db: Db): Promise<Settings> {
  *
  * The read-old/write-new half of a key rotation: run it while both keys are
  * configured and the previous key can then be removed. Idempotent — an
- * envelope already written under the active key is left alone, so a repeated
- * run costs one read and writes nothing.
+ * envelope that already decrypts under the active key is left alone, so a
+ * repeated run costs one read and writes nothing.
  *
  * A key that cannot be decrypted is a configuration error rather than a value
  * to replace. Throwing leaves the stored envelope intact, so an operator who
@@ -88,7 +88,7 @@ export async function reencryptNcbiApiKey(
 ): Promise<Settings> {
 	const settings = await getSettings(db);
 
-	if (settings.ncbiApiKey === null || keyring.isCurrent(settings.ncbiApiKey)) {
+	if (settings.ncbiApiKey === null) {
 		return settings;
 	}
 
@@ -98,6 +98,10 @@ export async function reencryptNcbiApiKey(
 		throw new NcbiConfigurationError(
 			"the stored API key cannot be decrypted with the configured encryption key",
 		);
+	}
+
+	if (keyring.isCurrent(settings.ncbiApiKey)) {
+		return settings;
 	}
 
 	return setNcbiApiKey(db, keyring, apiKey);

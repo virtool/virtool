@@ -259,4 +259,20 @@ describe("reencryptNcbiApiKey", () => {
 
 		expect(await storedEnvelope()).toEqual(envelope);
 	});
+
+	// The active key id alone says nothing about the rest of the envelope. A
+	// tampered value that carries it must not be reported as already rotated.
+	it("rejects an unreadable envelope written under the active key", async () => {
+		const envelope = encrypt(keyring, "secret-key");
+		await seedSettings(db, {
+			ncbiApiKey: {
+				...envelope,
+				ciphertext: encrypt(keyring, "other").ciphertext,
+			},
+		});
+
+		await expect(reencryptNcbiApiKey(db, keyring)).rejects.toBeInstanceOf(
+			NcbiConfigurationError,
+		);
+	});
 });
