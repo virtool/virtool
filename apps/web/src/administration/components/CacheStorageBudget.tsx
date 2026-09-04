@@ -7,7 +7,6 @@ import SaveButton from "@base/SaveButton";
 import SectionHeader from "@base/SectionHeader";
 import { useForm } from "react-hook-form";
 
-/** The budget field is entered and shown in gigabytes; the setting is stored in bytes. */
 const BYTES_PER_GIGABYTE = 1000 ** 3;
 
 type CacheStorageBudgetFormValues = {
@@ -17,9 +16,8 @@ type CacheStorageBudgetFormValues = {
 /**
  * Set how much object storage the cache store may occupy.
  *
- * The eviction task evicts least-recently-used caches until the store is back
- * under this budget. The setting is stored in bytes; the field is in gigabytes,
- * which is the unit the budget is reasoned about in.
+ * Eviction removes least recently used caches to meet this budget.
+ * The field uses decimal gigabytes; the setting stores bytes.
  */
 export default function CacheStorageBudget() {
 	const { data, isPending, isError } = useFetchSettings();
