@@ -68,7 +68,7 @@ export default function CacheStorageBudget() {
 								aria-describedby="cacheStorageBudget-error"
 								aria-invalid={Boolean(errors.budgetGigabytes) || undefined}
 								min={1}
-								step={1}
+								step="any"
 								type="number"
 								{...register("budgetGigabytes", {
 									valueAsNumber: true,
