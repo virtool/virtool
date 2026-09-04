@@ -221,14 +221,11 @@ function CreateSamplesForm({
 
 			<div className="flex flex-col gap-6 lg:flex-row">
 				<div className="min-w-0 flex-1">
-					<BulkRename
-						names={samples.map((sample) => sample.name)}
-						onRename={renameSamples}
-					/>
-					<p className="mb-3 font-medium" aria-live="polite">
-						{pluralize(fields.length, "sample")}
-					</p>
 					<BoxGroup className="max-h-192 overflow-y-auto">
+						<BulkRename
+							names={samples.map((sample) => sample.name)}
+							onRename={renameSamples}
+						/>
 						<BoxGroupTable className="table-fixed" variant="data">
 							<caption className="sr-only">Samples</caption>
 							<TableHead className="sticky top-0 z-10">

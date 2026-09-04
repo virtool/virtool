@@ -320,7 +320,7 @@ describe("<CreateSamplesFromFiles>", () => {
 			screen.getByRole("textbox", { name: "Match text" }),
 			"_batch*_end",
 		);
-		await userEvent.click(screen.getByRole("button", { name: "Apply rename" }));
+		await userEvent.click(screen.getByRole("button", { name: "Replace all" }));
 
 		expect(
 			screen.getByRole("textbox", {
@@ -347,10 +347,10 @@ describe("<CreateSamplesFromFiles>", () => {
 			".a+",
 		);
 		await userEvent.type(
-			screen.getByRole("textbox", { name: "Replace with" }),
+			screen.getByRole("textbox", { name: "Replacement" }),
 			"$&",
 		);
-		await userEvent.click(screen.getByRole("button", { name: "Apply rename" }));
+		await userEvent.click(screen.getByRole("button", { name: "Replace all" }));
 
 		expect(
 			screen.getByRole("textbox", {
@@ -372,10 +372,10 @@ describe("<CreateSamplesFromFiles>", () => {
 			"*",
 		);
 		await userEvent.type(
-			screen.getByRole("textbox", { name: "Replace with" }),
+			screen.getByRole("textbox", { name: "Replacement" }),
 			"renamed",
 		);
-		await userEvent.click(screen.getByRole("button", { name: "Apply rename" }));
+		await userEvent.click(screen.getByRole("button", { name: "Replace all" }));
 
 		expect(
 			screen.getByRole("textbox", {
@@ -392,7 +392,7 @@ describe("<CreateSamplesFromFiles>", () => {
 			screen.getByRole("textbox", { name: "Match text" }),
 			"*",
 		);
-		await userEvent.click(screen.getByRole("button", { name: "Apply rename" }));
+		await userEvent.click(screen.getByRole("button", { name: "Replace all" }));
 
 		expect(
 			screen.getByRole("textbox", {
