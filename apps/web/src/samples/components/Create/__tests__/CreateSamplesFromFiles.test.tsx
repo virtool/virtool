@@ -66,6 +66,7 @@ describe("<CreateSamplesFromFiles>", () => {
 			screen.getByRole("textbox", { name: "Name for sample_two.fastq.gz" }),
 		).toHaveValue("sample_two");
 		expect(screen.getAllByText("Unpaired")).toHaveLength(2);
+		expect(screen.getByText("2 samples")).toBeInTheDocument();
 	});
 
 	it("should collapse a detected mate pair into one paired row", async () => {
@@ -216,6 +217,193 @@ describe("<CreateSamplesFromFiles>", () => {
 		expect(createSample).toHaveBeenCalledWith({
 			data: expect.objectContaining({ name: "sample_two" }),
 		});
+	});
+
+	it("should highlight trimmed duplicate names and allow submission after editing", async () => {
+		const first = createFakeFile({ name: "sample_one.fastq.gz" });
+		const second = createFakeFile({ name: "sample_two.fastq.gz" });
+		const createSample = mockCreateSample();
+
+		await renderDialog([first, second]);
+
+		const firstName = screen.getByRole("textbox", {
+			name: "Name for sample_one.fastq.gz",
+		});
+		const secondName = screen.getByRole("textbox", {
+			name: "Name for sample_two.fastq.gz",
+		});
+		await userEvent.clear(secondName);
+		await userEvent.type(secondName, " sample_one ");
+
+		expect(firstName).toHaveAttribute("aria-invalid", "true");
+		expect(secondName).toHaveAttribute("aria-invalid", "true");
+		expect(screen.getAllByText("Duplicate sample name")).toHaveLength(2);
+		expect(screen.getByRole("button", { name: "Save" })).toBeDisabled();
+		await submitForm();
+		expect(createSample).not.toHaveBeenCalled();
+
+		await userEvent.clear(secondName);
+		await userEvent.type(secondName, "unique");
+
+		expect(screen.queryByText("Duplicate sample name")).not.toBeInTheDocument();
+		expect(firstName).not.toHaveAttribute("aria-invalid", "true");
+		expect(secondName).not.toHaveAttribute("aria-invalid", "true");
+		expect(screen.getByRole("button", { name: "Save" })).toBeEnabled();
+
+		await submitForm();
+		await waitFor(() => expect(createSample).toHaveBeenCalledTimes(2));
+	});
+
+	it("should clear duplicate errors and update the count when a row is removed", async () => {
+		await renderDialog([
+			createFakeFile({ name: "sample.fastq.gz" }),
+			createFakeFile({ name: "sample.fq.gz" }),
+		]);
+
+		expect(screen.getByText("2 samples")).toBeInTheDocument();
+		expect(screen.getAllByText("Duplicate sample name")).toHaveLength(2);
+		expect(screen.getByRole("button", { name: "Save" })).toBeDisabled();
+
+		await userEvent.click(
+			screen.getByRole("button", { name: "Remove sample.fastq.gz" }),
+		);
+
+		expect(screen.getByText("1 sample")).toBeInTheDocument();
+		expect(screen.queryByText("Duplicate sample name")).not.toBeInTheDocument();
+		expect(screen.getByRole("button", { name: "Save" })).toBeEnabled();
+	});
+
+	it("should reset an edited name to its own initial value after removing another row", async () => {
+		await renderDialog([
+			createFakeFile({ name: "sample_one.fastq.gz" }),
+			createFakeFile({ name: "sample_two.fastq.gz" }),
+		]);
+
+		expect(
+			screen.queryByRole("button", {
+				name: "Reset name for sample_two.fastq.gz",
+			}),
+		).not.toBeInTheDocument();
+		const name = screen.getByRole("textbox", {
+			name: "Name for sample_two.fastq.gz",
+		});
+		await userEvent.clear(name);
+		await userEvent.type(name, "Edited");
+		await userEvent.click(
+			screen.getByRole("button", { name: "Remove sample_one.fastq.gz" }),
+		);
+		await userEvent.click(
+			screen.getByRole("button", {
+				name: "Reset name for sample_two.fastq.gz",
+			}),
+		);
+
+		expect(
+			screen.getByRole("textbox", {
+				name: "Name for sample_two.fastq.gz",
+			}),
+		).toHaveValue("sample_two");
+		expect(
+			screen.queryByRole("button", {
+				name: "Reset name for sample_two.fastq.gz",
+			}),
+		).not.toBeInTheDocument();
+	});
+
+	it("should delete wildcard matches from every name and guard the resulting duplicates", async () => {
+		await renderDialog([
+			createFakeFile({ name: "sample_batch-one_end.fastq.gz" }),
+			createFakeFile({ name: "sample_batch_end.fastq.gz" }),
+		]);
+
+		await userEvent.type(
+			screen.getByRole("textbox", { name: "Match text" }),
+			"_batch*_end",
+		);
+		await userEvent.click(screen.getByRole("button", { name: "Apply rename" }));
+
+		expect(
+			screen.getByRole("textbox", {
+				name: "Name for sample_batch-one_end.fastq.gz",
+			}),
+		).toHaveValue("sample");
+		expect(
+			screen.getByRole("textbox", {
+				name: "Name for sample_batch_end.fastq.gz",
+			}),
+		).toHaveValue("sample");
+		expect(screen.getAllByText("Duplicate sample name")).toHaveLength(2);
+		expect(screen.getByRole("button", { name: "Save" })).toBeDisabled();
+	});
+
+	it("should replace all literal matches with literal replacement text", async () => {
+		await renderDialog([
+			createFakeFile({ name: "sample.a+.a+.fastq.gz" }),
+			createFakeFile({ name: "sample.A+.fastq.gz" }),
+		]);
+
+		await userEvent.type(
+			screen.getByRole("textbox", { name: "Match text" }),
+			".a+",
+		);
+		await userEvent.type(
+			screen.getByRole("textbox", { name: "Replace with" }),
+			"$&",
+		);
+		await userEvent.click(screen.getByRole("button", { name: "Apply rename" }));
+
+		expect(
+			screen.getByRole("textbox", {
+				name: "Name for sample.a+.a+.fastq.gz",
+			}),
+		).toHaveValue("sample$&$&");
+		expect(
+			screen.getByRole("textbox", {
+				name: "Name for sample.A+.fastq.gz",
+			}),
+		).toHaveValue("sample.A+");
+	});
+
+	it("should replace the whole name once with a standalone wildcard", async () => {
+		await renderDialog([createFakeFile({ name: "sample_one.fastq.gz" })]);
+
+		await userEvent.type(
+			screen.getByRole("textbox", { name: "Match text" }),
+			"*",
+		);
+		await userEvent.type(
+			screen.getByRole("textbox", { name: "Replace with" }),
+			"renamed",
+		);
+		await userEvent.click(screen.getByRole("button", { name: "Apply rename" }));
+
+		expect(
+			screen.getByRole("textbox", {
+				name: "Name for sample_one.fastq.gz",
+			}),
+		).toHaveValue("renamed");
+	});
+
+	it("should require a name after deleting it with a standalone wildcard", async () => {
+		const createSample = mockCreateSample();
+		await renderDialog([createFakeFile({ name: "sample_one.fastq.gz" })]);
+
+		await userEvent.type(
+			screen.getByRole("textbox", { name: "Match text" }),
+			"*",
+		);
+		await userEvent.click(screen.getByRole("button", { name: "Apply rename" }));
+
+		expect(
+			screen.getByRole("textbox", {
+				name: "Name for sample_one.fastq.gz",
+			}),
+		).toHaveValue("");
+		expect(await screen.findByText("Required Field")).toBeInTheDocument();
+
+		await submitForm();
+
+		expect(createSample).not.toHaveBeenCalled();
 	});
 
 	it("should require a name for every row", async () => {

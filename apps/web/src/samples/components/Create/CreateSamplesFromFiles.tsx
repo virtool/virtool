@@ -12,7 +12,12 @@ import {
 	DialogTrigger,
 } from "@base/Dialog";
 import { IconButton } from "@base/Icon";
-import { InputError, InputSimple } from "@base/Input";
+import {
+	InputContainer,
+	InputError,
+	InputIconButton,
+	InputSimple,
+} from "@base/Input";
 import LoadingPlaceholder from "@base/LoadingPlaceholder";
 import QueryError from "@base/QueryError";
 import SaveButton from "@base/SaveButton";
@@ -26,9 +31,10 @@ import {
 	getReadRowReads,
 } from "@uploads/pairing";
 import type { Label, Upload } from "@virtool/contracts";
-import { AlertCircle, X } from "lucide-react";
-import { useEffect, useState } from "react";
-import { Controller, useFieldArray, useForm } from "react-hook-form";
+import { AlertCircle, PencilOff, X } from "lucide-react";
+import { useEffect, useId, useState } from "react";
+import { Controller, useFieldArray, useForm, useWatch } from "react-hook-form";
+import BulkRename from "./BulkRename";
 import ReadPairBadge from "./ReadPairBadge";
 import SampleSettingsFields from "./SampleSettingsFields";
 import { type SampleSettingsValues, sampleSettingsDefaults } from "./settings";
@@ -116,6 +122,26 @@ function CreateSamplesForm({
 		name: "samples",
 	});
 
+	const nameErrorPrefix = useId();
+	const samples = useWatch({ control, name: "samples" });
+	const nameCounts = new Map<string, number>();
+	for (const sample of samples) {
+		const name = sample.name.trim();
+		nameCounts.set(name, (nameCounts.get(name) ?? 0) + 1);
+	}
+	const hasDuplicates = samples.some(
+		(sample) => (nameCounts.get(sample.name.trim()) ?? 0) > 1,
+	);
+
+	function renameSamples(names: string[]) {
+		for (const [index, name] of names.entries()) {
+			setValue(`samples.${index}.name`, name, {
+				shouldDirty: true,
+				shouldValidate: true,
+			});
+		}
+	}
+
 	const mutation = useCreateSamples();
 
 	const [failedCount, setFailedCount] = useState(0);
@@ -125,6 +151,14 @@ function CreateSamplesForm({
 	}, [account, setValue]);
 
 	function onSubmit(values: FormValues) {
+		const names = values.samples.map((sample) => sample.name.trim());
+		if (
+			new Set(names).size !== names.length ||
+			!names.length ||
+			mutation.isPending
+		) {
+			return;
+		}
 		const requests = values.samples.map((sample) =>
 			getCreateSampleRequest(
 				{ ...values.settings, name: sample.name },
@@ -187,6 +221,13 @@ function CreateSamplesForm({
 
 			<div className="flex flex-col gap-6 lg:flex-row">
 				<div className="min-w-0 flex-1">
+					<BulkRename
+						names={samples.map((sample) => sample.name)}
+						onRename={renameSamples}
+					/>
+					<p className="mb-3 font-medium" aria-live="polite">
+						{pluralize(fields.length, "sample")}
+					</p>
 					<BoxGroup className="max-h-192 overflow-y-auto">
 						<BoxGroupTable className="table-fixed" variant="data">
 							<caption className="sr-only">Samples</caption>
@@ -200,19 +241,43 @@ function CreateSamplesForm({
 							</TableHead>
 							<tbody>
 								{fields.map((field, index) => {
-									const error = errors.samples?.[index]?.name;
+									const isDuplicate =
+										(nameCounts.get(samples[index]?.name.trim() ?? "") ?? 0) >
+										1;
+									const error = isDuplicate
+										? "Duplicate sample name"
+										: errors.samples?.[index]?.name?.message;
+									const initialName = getSampleNameFromReads(field.reads);
+									const errorId = `${nameErrorPrefix}-${index}`;
 
 									return (
 										<tr key={field.id}>
 											<td>
-												<InputSimple
-													aria-invalid={Boolean(error) || undefined}
-													aria-label={`Name for ${field.reads[0]?.name}`}
-													{...register(`samples.${index}.name`, {
-														required: "Required Field",
-													})}
-												/>
-												<InputError>{error?.message}</InputError>
+												<InputContainer align="right" className="items-center">
+													<InputSimple
+														aria-describedby={error ? errorId : undefined}
+														aria-invalid={Boolean(error) || undefined}
+														aria-label={`Name for ${field.reads[0]?.name}`}
+														{...register(`samples.${index}.name`, {
+															validate: (name) =>
+																Boolean(name.trim()) || "Required Field",
+														})}
+													/>
+													{samples[index]?.name !== initialName && (
+														<InputIconButton
+															IconComponent={PencilOff}
+															ariaLabel={`Reset name for ${field.reads[0]?.name}`}
+															tip="Reset name"
+															onClick={() =>
+																setValue(`samples.${index}.name`, initialName, {
+																	shouldDirty: true,
+																	shouldValidate: true,
+																})
+															}
+														/>
+													)}
+												</InputContainer>
+												<InputError id={errorId}>{error}</InputError>
 											</td>
 											<td>
 												<div className="flex flex-col gap-1">
@@ -263,7 +328,9 @@ function CreateSamplesForm({
 			</div>
 
 			<DialogFooter>
-				<SaveButton disabled={fields.length === 0} />
+				<SaveButton
+					disabled={fields.length === 0 || hasDuplicates || mutation.isPending}
+				/>
 			</DialogFooter>
 		</form>
 	);
