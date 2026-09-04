@@ -5,15 +5,14 @@ description: "Upload a file to Virtool through the API."
 
 ## Overview
 
-Virtool uploads a file in three steps.
+Upload a file in three steps:
 
-1. You send a request to start the upload. The server sends back a URL.
-2. You send the file to that URL. You send it directly to the storage
-   backend. You do not send it through the Virtool API.
-3. You send a request to finish the upload.
+1. Start the upload and receive a temporary storage URL.
+2. Send the file directly to storage at that URL.
+3. Tell Virtool to finalize the upload.
 
-This method lets Virtool accept very large files without sending the file bytes
-through the Virtool server.
+The file bytes never pass through the Virtool server, allowing very large
+uploads.
 
 ## Authenticate
 
@@ -49,9 +48,9 @@ curl --user "$VT_HANDLE:$VT_API_KEY" \
 
 | Field | Type | Rule |
 | --- | --- | --- |
-| `name` | string | Give a name for the file. |
-| `type` | string | Give one of `reference`, `reads`, `subtraction`. |
-| `size` | integer | Give the exact file size in bytes. It cannot be negative or exceed 209,715,200,000,000 bytes. |
+| `name` | string | File name. |
+| `type` | string | One of `reference`, `reads`, or `subtraction`. |
+| `size` | integer | Exact file size in bytes, from 0 to 209,715,200,000,000. |
 
 The server sends back a `201` response.
 
@@ -80,7 +79,6 @@ upload API; contact its administrator.
 ## Upload the file
 
 Use the `url`, `blockSize`, and `concurrency` values from the start response.
-The `url` expires after six hours.
 
 1. Divide the file into pieces no larger than `blockSize` bytes.
 2. Number the pieces from zero. Turn each number into a block ID by padding it
@@ -128,11 +126,9 @@ curl --user "$VT_HANDLE:$VT_API_KEY" \
   "$VT_URL/api/v1/uploads/123/finalize"
 ```
 
-The server checks the size of the stored file against the size you gave in
-step 1. When the sizes match, the server marks the upload ready and sends
-back a `200` response with the upload record. Finalization is idempotent, so it
-is safe to retry if the response is lost. The server sends back `409` when the
-block list has not been committed or the stored size does not match.
+The server verifies the stored file size, marks the upload ready, and returns
+the upload record. Finalization is idempotent, so it is safe to retry if the
+response is lost. A missing block list or mismatched size returns `409`.
 
 ## Cancel an upload
 
@@ -144,12 +140,9 @@ curl --user "$VT_HANDLE:$VT_API_KEY" \
   "$VT_URL/api/v1/uploads/123"
 ```
 
-Send this request to cancel an upload before you finish it. The server
-removes the stored file and sends back a `204` response.
-
-Cancellation applies only to an unfinished upload owned by the caller. Call it
-after a permanent block-transfer, commit, or finalization failure so the pending
-upload does not remain until automatic cleanup.
+Cancellation removes an unfinished upload owned by the caller and returns
+`204`. Use it after a permanent transfer, commit, or finalization failure so the
+pending upload does not remain until automatic cleanup.
 
 ## Responses
 
