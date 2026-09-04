@@ -7,7 +7,11 @@ import {
 	emailServerFnMocks,
 	mockEmailSettingsStore,
 } from "@tests/server-fn/email";
-import { mockSettingsStore } from "@tests/server-fn/settings";
+import {
+	mockSettingsStore,
+	settingsServerFnMocks,
+} from "@tests/server-fn/settings";
+import { mockFindUsers } from "@tests/server-fn/users";
 import { renderRoute } from "@tests/setup";
 import { describe, expect, it } from "vitest";
 
@@ -38,6 +42,63 @@ describe("<Settings />", () => {
 		expect(screen.getByText("NCBI")).toBeInTheDocument();
 	});
 
+	const settingsPages = [
+		{ path: "/administration/uploads", heading: "Maximum Upload Size" },
+		{ path: "/administration/caching", heading: "Cache Storage Budget" },
+		{ path: "/administration/ncbi", heading: "NCBI API Key" },
+		{ path: "/administration/email", heading: "Email Delivery" },
+	];
+
+	it.each(settingsPages)(
+		"loads primary settings for $path",
+		async ({ path, heading }) => {
+			mockSettingsStore(createFakeSettings());
+			mockEmailSettingsStore(createFakeEmailSettings());
+
+			await renderRoute(path, {
+				account: createFakeAccount({ administratorRole: "full" }),
+			});
+
+			expect(
+				await screen.findByRole("heading", { name: heading }),
+			).toBeVisible();
+		},
+	);
+
+	it.each(settingsPages)(
+		"handles failed settings at the route boundary for $path",
+		async ({ path }) => {
+			settingsServerFnMocks.getSettingsFn.mockRejectedValue(
+				new Error("Unavailable"),
+			);
+			emailServerFnMocks.getEmailSettingsFn.mockRejectedValue(
+				new Error("Unavailable"),
+			);
+
+			await renderRoute(path, {
+				account: createFakeAccount({ administratorRole: "full" }),
+			});
+
+			expect(
+				await screen.findByRole("button", { name: "Try again" }),
+			).toBeVisible();
+		},
+	);
+
+	it.each(settingsPages)(
+		"redirects users administrators before fetching $path",
+		async ({ path }) => {
+			mockFindUsers([]);
+			const { router } = await renderRoute(path, {
+				account: createFakeAccount({ administratorRole: "users" }),
+			});
+
+			expect(router.state.location.pathname).toBe("/administration/users");
+			expect(settingsServerFnMocks.getSettingsFn).not.toHaveBeenCalled();
+			expect(emailServerFnMocks.getEmailSettingsFn).not.toHaveBeenCalled();
+		},
+	);
+
 	// Email configuration is recovery authority. Hiding the section is only
 	// presentation — every server function behind it demands a full
 	// administrator — but a lesser administrator should not send a request that
@@ -51,7 +112,9 @@ describe("<Settings />", () => {
 				account: createFakeAccount({ administratorRole: "full" }),
 			});
 
-			expect(await screen.findByText("Email Delivery")).toBeInTheDocument();
+			expect(
+				await screen.findByRole("heading", { name: "Email Delivery" }),
+			).toBeInTheDocument();
 		});
 
 		it("is absent for a settings administrator, and asks for nothing", async () => {

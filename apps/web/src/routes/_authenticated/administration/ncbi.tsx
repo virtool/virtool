@@ -10,5 +10,9 @@ export const Route = createFileRoute("/_authenticated/administration/ncbi")({
 			throw redirect({ to: "/administration/users" });
 		}
 	},
+	loader: async ({ context: { queryClient } }) => {
+		const { settingsQueryOptions } = await import("@administration/queries");
+		await queryClient.ensureQueryData(settingsQueryOptions());
+	},
 	component: NcbiApiKey,
 });

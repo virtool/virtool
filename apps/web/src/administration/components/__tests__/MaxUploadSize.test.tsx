@@ -1,10 +1,7 @@
 import { screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { createFakeSettings } from "@tests/fake/administrator";
-import {
-	mockSettingsStore,
-	settingsServerFnMocks,
-} from "@tests/server-fn/settings";
+import { mockSettingsStore } from "@tests/server-fn/settings";
 import { renderWithProviders } from "@tests/setup";
 import { describe, expect, it } from "vitest";
 
@@ -40,9 +37,7 @@ describe("<MaxUploadSize>", () => {
 		);
 	});
 
-	// A larger maximum could never be honoured: the Azure block blob protocol
-	// refuses the upload whatever the setting says.
-	it("refuses a maximum above the protocol ceiling", async () => {
+	it("refuses a maximum above the supported limit", async () => {
 		const { updateSettings } = mockSettingsStore(
 			createFakeSettings({ maxUploadSize: 5_000_000_000 }),
 		);
@@ -51,32 +46,12 @@ describe("<MaxUploadSize>", () => {
 
 		const field = await screen.findByLabelText("Maximum (GB)");
 		await userEvent.clear(field);
-		await userEvent.type(field, "300000");
+		await userEvent.type(field, "121");
 		await userEvent.click(screen.getByRole("button", { name: "Save" }));
 
 		expect(
-			await screen.findByText("The maximum cannot exceed 209715.2 GB."),
+			await screen.findByText("The maximum cannot exceed 120 GB."),
 		).toBeVisible();
 		expect(updateSettings).not.toHaveBeenCalled();
-	});
-
-	it("shows a loader while the settings are pending", () => {
-		settingsServerFnMocks.getSettingsFn.mockReturnValue(
-			new Promise(() => undefined),
-		);
-
-		renderWithProviders(<MaxUploadSize />);
-
-		expect(screen.getByRole("status", { name: "loading" })).toBeInTheDocument();
-	});
-
-	it("shows an error when the settings cannot be read", async () => {
-		settingsServerFnMocks.getSettingsFn.mockRejectedValue(
-			new Error("Forbidden"),
-		);
-
-		renderWithProviders(<MaxUploadSize />);
-
-		expect(await screen.findByText(/couldn't load settings/i)).toBeVisible();
 	});
 });

@@ -1,8 +1,9 @@
-import { useFetchSettings, useUpdateSettings } from "@administration/queries";
+import {
+	useSuspenseSettings,
+	useUpdateSettings,
+} from "@administration/queries";
 import { BoxGroup, BoxGroupSection } from "@base/Box";
 import Input, { InputError, InputGroup, InputLabel } from "@base/Input";
-import LoadingPlaceholder from "@base/LoadingPlaceholder";
-import QueryError from "@base/QueryError";
 import SaveButton from "@base/SaveButton";
 import SectionHeader from "@base/SectionHeader";
 import { MAX_UPLOAD_SIZE } from "@virtool/contracts";
@@ -17,7 +18,7 @@ type MaxUploadSizeFormValues = {
 };
 
 export default function MaxUploadSize() {
-	const { data, isPending, isError } = useFetchSettings();
+	const { data } = useSuspenseSettings();
 	const mutation = useUpdateSettings();
 
 	const {
@@ -26,17 +27,9 @@ export default function MaxUploadSize() {
 		register,
 	} = useForm<MaxUploadSizeFormValues>({
 		values: {
-			maximumGigabytes: data ? data.maxUploadSize / BYTES_PER_GIGABYTE : 0,
+			maximumGigabytes: data.maxUploadSize / BYTES_PER_GIGABYTE,
 		},
 	});
-
-	if (isError && !data) {
-		return <QueryError noun="settings" />;
-	}
-
-	if (isPending) {
-		return <LoadingPlaceholder />;
-	}
 
 	function save({ maximumGigabytes }: MaxUploadSizeFormValues) {
 		mutation.mutate({
