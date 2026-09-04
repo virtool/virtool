@@ -364,6 +364,77 @@ describe("<CreateSamplesFromFiles>", () => {
 		).toHaveValue("sample.A+");
 	});
 
+	it.each([
+		["(sample)_(\\d+)", "$2-$1", "12-sample_34"],
+		["\\d+", "batch", "sample_batch_batch"],
+		["^sample_", "", "12_34"],
+		["$", "_end", "sample_12_34_end"],
+	])(
+		"should replace regex %s with %s",
+		async (pattern, replacement, expected) => {
+			await renderDialog([createFakeFile({ name: "sample_12_34.fastq.gz" })]);
+
+			await userEvent.click(
+				screen.getByRole("button", { name: "Use regular expression" }),
+			);
+			await userEvent.type(
+				screen.getByRole("textbox", { name: "Match text" }),
+				pattern,
+			);
+			if (replacement) {
+				await userEvent.type(
+					screen.getByRole("textbox", { name: "Replacement" }),
+					replacement,
+				);
+			}
+			await userEvent.click(
+				screen.getByRole("button", { name: "Replace all" }),
+			);
+
+			expect(
+				screen.getByRole("textbox", { name: "Name for sample_12_34.fastq.gz" }),
+			).toHaveValue(expected);
+		},
+	);
+
+	it("should block invalid regex and recover when corrected or disabled", async () => {
+		await renderDialog([createFakeFile({ name: "sample_one.fastq.gz" })]);
+		const toggle = screen.getByRole("button", {
+			name: "Use regular expression",
+		});
+		const match = screen.getByRole("textbox", { name: "Match text" });
+		const replace = screen.getByRole("button", { name: "Replace all" });
+
+		await userEvent.click(toggle);
+		expect(replace).toBeDisabled();
+		await userEvent.type(match, "(");
+		expect(match).toHaveAccessibleDescription(
+			"Enter a valid regular expression.",
+		);
+		expect(match).toHaveAttribute("aria-invalid", "true");
+		expect(replace).toBeDisabled();
+		expect(
+			screen.getByRole("textbox", { name: "Name for sample_one.fastq.gz" }),
+		).toHaveValue("sample_one");
+
+		await userEvent.click(toggle);
+		expect(
+			screen.queryByText("Enter a valid regular expression."),
+		).not.toBeInTheDocument();
+		expect(match).toHaveAttribute("aria-invalid", "false");
+		await userEvent.click(toggle);
+		await userEvent.clear(match);
+		await userEvent.type(match, "^sample_");
+		expect(
+			screen.queryByText("Enter a valid regular expression."),
+		).not.toBeInTheDocument();
+		expect(replace).toBeEnabled();
+		await userEvent.click(replace);
+		expect(
+			screen.getByRole("textbox", { name: "Name for sample_one.fastq.gz" }),
+		).toHaveValue("one");
+	});
+
 	it("should replace the whole name once with a standalone wildcard", async () => {
 		await renderDialog([createFakeFile({ name: "sample_one.fastq.gz" })]);
 

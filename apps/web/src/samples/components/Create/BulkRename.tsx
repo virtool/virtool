@@ -1,11 +1,11 @@
 import { pluralize } from "@app/format";
 import { BoxGroupSection } from "@base/Box";
-import Button from "@base/Button";
+import Button, { ButtonToggle } from "@base/Button";
 import { InputSimple } from "@base/Input";
 import Popover from "@base/Popover";
 import Tooltip from "@base/Tooltip";
-import { Info, ReplaceAll } from "lucide-react";
-import { useState } from "react";
+import { Info, Regex, ReplaceAll } from "lucide-react";
+import { useId, useState } from "react";
 
 type BulkRenameProps = {
 	names: string[];
@@ -15,24 +15,23 @@ type BulkRenameProps = {
 export default function BulkRename({ names, onRename }: BulkRenameProps) {
 	const [match, setMatch] = useState("");
 	const [replacement, setReplacement] = useState("");
-	const pattern = new RegExp(
-		match
-			.split(/\*+/)
-			.map((text) => text.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"))
-			.join(".*"),
-		"g",
-	);
-	const renamed = names.map((name) =>
-		match
-			? name.replace(pattern, (matched) => (matched ? replacement : ""))
-			: name,
-	);
+	const [isRegex, setIsRegex] = useState(false);
+	const errorId = useId();
+	const { pattern, error } = getPattern(match, isRegex);
+	const renamed = names.map((name) => {
+		if (!match || !pattern) {
+			return name;
+		}
+		return isRegex
+			? name.replace(pattern, replacement)
+			: name.replace(pattern, (matched) => (matched ? replacement : ""));
+	});
 	const changedCount = renamed.filter(
 		(name, index) => name !== names[index],
 	).length;
 
 	return (
-		<BoxGroupSection className="flex h-14 items-center gap-2 bg-gray-50 py-0 text-sm text-gray-600">
+		<BoxGroupSection className="flex min-h-14 flex-wrap items-center gap-2 bg-gray-50 py-2 text-sm text-gray-600">
 			<span className="mr-2 shrink-0 font-medium" aria-live="polite">
 				{pluralize(names.length, "sample")}
 			</span>
@@ -42,6 +41,8 @@ export default function BulkRename({ names, onRename }: BulkRenameProps) {
 			>
 				<InputSimple
 					aria-label="Match text"
+					aria-invalid={Boolean(error)}
+					aria-describedby={error ? errorId : undefined}
 					className="h-9 w-50 min-w-0 max-w-50 rounded-r-none focus-visible:z-10"
 					placeholder="Match"
 					value={match}
@@ -54,6 +55,16 @@ export default function BulkRename({ names, onRename }: BulkRenameProps) {
 					value={replacement}
 					onChange={(event) => setReplacement(event.target.value)}
 				/>
+				<Tooltip tip="Use regular expression">
+					<ButtonToggle
+						aria-label="Use regular expression"
+						pressed={isRegex}
+						onPressedChange={setIsRegex}
+						className="relative -ml-px h-9 min-h-9 w-9 shrink-0 justify-center rounded-none border border-gray-300 bg-white px-0 text-sm text-gray-600 hover:bg-gray-100 hover:text-gray-900 focus-visible:z-10 focus-visible:ring-offset-0"
+					>
+						<Regex aria-hidden="true" size={16} />
+					</ButtonToggle>
+				</Tooltip>
 				<Tooltip tip="Replace all">
 					<Button
 						size="small"
@@ -82,9 +93,30 @@ export default function BulkRename({ names, onRename }: BulkRenameProps) {
 				<p className="p-3 text-sm text-gray-600">
 					Replace matching text in all sample names. Matching is case-sensitive.
 					Use * for any number of characters. Leave the replacement empty to
-					delete matches.
+					delete matches. Enable regular expressions to use patterns such as
+					^sample_ or (.*)_batch. Enter patterns without slash delimiters. Use
+					$1, $2, and so on in the replacement for captured groups.
 				</p>
 			</Popover>
+			{error && (
+				<p id={errorId} role="alert" className="w-full text-red-600">
+					{error}
+				</p>
+			)}
 		</BoxGroupSection>
 	);
+}
+
+function getPattern(match: string, isRegex: boolean) {
+	try {
+		const source = isRegex
+			? match
+			: match
+					.split(/\*+/)
+					.map((text) => text.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"))
+					.join(".*");
+		return { pattern: new RegExp(source, "g"), error: null };
+	} catch {
+		return { pattern: null, error: "Enter a valid regular expression." };
+	}
 }
