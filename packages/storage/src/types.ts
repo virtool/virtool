@@ -81,7 +81,7 @@ export type StorageBackend = {
 	 *
 	 * Optional: only the Azure backend implements it — chunked direct upload is
 	 * an Azure Block Blob capability, and `MemoryStorage` and the S3 backend
-	 * leave it undefined. A caller falls back to the proxied upload route.
+	 * leave it undefined. Upload initialization fails when it is unavailable.
 	 */
 	presignUpload?(key: string, options: PresignUploadOptions): Promise<string>;
 };

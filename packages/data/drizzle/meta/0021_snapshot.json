@@ -1,5 +1,5 @@
 {
-  "id": "17a55ce4-df37-42c4-ac16-9323c4b67e36",
+  "id": "c88e6d8f-2b97-40ee-ad51-0b4304001fd8",
   "prevId": "69af3c5a-6387-40d0-94b3-bc382515d11c",
   "version": "7",
   "dialect": "postgresql",
@@ -4089,9 +4089,9 @@
         },
         "ncbi_api_key": {
           "name": "ncbi_api_key",
-          "type": "jsonb",
+          "type": "text",
           "primaryKey": false,
-          "notNull": false
+          "notNull": true
         },
         "sample_all_read": {
           "name": "sample_all_read",
@@ -4141,6 +4141,268 @@
         "ck_settings_sample_group": {
           "name": "ck_settings_sample_group",
           "value": "\"settings\".\"sample_group\" in ('none', 'force_choice', 'users_primary_group')"
+        }
+      },
+      "isRLSEnabled": false
+    },
+    "public.setup_sessions": {
+      "name": "setup_sessions",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "integer",
+          "primaryKey": true,
+          "notNull": true,
+          "identity": {
+            "type": "always",
+            "name": "setup_sessions_id_seq",
+            "schema": "public",
+            "increment": "1",
+            "startWith": "1",
+            "minValue": "1",
+            "maxValue": "2147483647",
+            "cache": "1",
+            "cycle": false
+          }
+        },
+        "session_id": {
+          "name": "session_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "token_hash": {
+          "name": "token_hash",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "user_id": {
+          "name": "user_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "purpose": {
+          "name": "purpose",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "ip": {
+          "name": "ip",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "timezone('utc', now())"
+        },
+        "expires_at": {
+          "name": "expires_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {
+        "idx_setup_sessions_expires_at": {
+          "name": "idx_setup_sessions_expires_at",
+          "columns": [
+            {
+              "expression": "expires_at",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "idx_setup_sessions_user_id": {
+          "name": "idx_setup_sessions_user_id",
+          "columns": [
+            {
+              "expression": "user_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "setup_sessions_user_id_fkey": {
+          "name": "setup_sessions_user_id_fkey",
+          "tableFrom": "setup_sessions",
+          "tableTo": "users",
+          "columnsFrom": [
+            "user_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "setup_sessions_session_id_key": {
+          "name": "setup_sessions_session_id_key",
+          "nullsNotDistinct": false,
+          "columns": [
+            "session_id"
+          ]
+        }
+      },
+      "policies": {},
+      "checkConstraints": {
+        "setup_sessions_purpose_valid": {
+          "name": "setup_sessions_purpose_valid",
+          "value": "purpose in ('account_completion', 'email_remediation', 'totp_enrollment')"
+        }
+      },
+      "isRLSEnabled": false
+    },
+    "public.setup_tokens": {
+      "name": "setup_tokens",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "integer",
+          "primaryKey": true,
+          "notNull": true,
+          "identity": {
+            "type": "always",
+            "name": "setup_tokens_id_seq",
+            "schema": "public",
+            "increment": "1",
+            "startWith": "1",
+            "minValue": "1",
+            "maxValue": "2147483647",
+            "cache": "1",
+            "cycle": false
+          }
+        },
+        "user_id": {
+          "name": "user_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "purpose": {
+          "name": "purpose",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "token_hash": {
+          "name": "token_hash",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "timezone('utc', now())"
+        },
+        "expires_at": {
+          "name": "expires_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "consumed_at": {
+          "name": "consumed_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "indexes": {
+        "idx_setup_tokens_expires_at": {
+          "name": "idx_setup_tokens_expires_at",
+          "columns": [
+            {
+              "expression": "expires_at",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "idx_setup_tokens_user_id_purpose": {
+          "name": "idx_setup_tokens_user_id_purpose",
+          "columns": [
+            {
+              "expression": "user_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "purpose",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "setup_tokens_user_id_fkey": {
+          "name": "setup_tokens_user_id_fkey",
+          "tableFrom": "setup_tokens",
+          "tableTo": "users",
+          "columnsFrom": [
+            "user_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "setup_tokens_token_hash_key": {
+          "name": "setup_tokens_token_hash_key",
+          "nullsNotDistinct": false,
+          "columns": [
+            "token_hash"
+          ]
+        }
+      },
+      "policies": {},
+      "checkConstraints": {
+        "setup_tokens_purpose_valid": {
+          "name": "setup_tokens_purpose_valid",
+          "value": "purpose in ('account_completion', 'email_remediation', 'totp_enrollment')"
         }
       },
       "isRLSEnabled": false
@@ -4751,6 +5013,13 @@
           "primaryKey": false,
           "notNull": false
         },
+        "lifecycle_state": {
+          "name": "lifecycle_state",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'normal'"
+        },
         "name": {
           "name": "name",
           "type": "text",
@@ -4762,7 +5031,7 @@
           "name": "password",
           "type": "bytea",
           "primaryKey": false,
-          "notNull": true
+          "notNull": false
         },
         "settings": {
           "name": "settings",
@@ -4830,6 +5099,14 @@
         "administrator_role_valid": {
           "name": "administrator_role_valid",
           "value": "\"users\".\"administrator_role\" in ('full', 'settings', 'users', 'base')"
+        },
+        "lifecycle_state_valid": {
+          "name": "lifecycle_state_valid",
+          "value": "\"users\".\"lifecycle_state\" in ('pending', 'normal')"
+        },
+        "pending_has_no_password": {
+          "name": "pending_has_no_password",
+          "value": "\"users\".\"lifecycle_state\" <> 'pending' or \"users\".\"password\" is null"
         }
       },
       "isRLSEnabled": false

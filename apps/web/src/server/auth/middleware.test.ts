@@ -1,7 +1,11 @@
-import { emptyPermissions } from "@virtool/contracts";
+import {
+	emptyPermissions,
+	SETUP_REQUIRED_ERROR_NAME,
+} from "@virtool/contracts";
 import type { Db } from "@virtool/data/db/pg";
 import { apiKeys } from "@virtool/data/db/schema/apiKeys";
 import { sessions } from "@virtool/data/db/schema/sessions";
+import { setupSessions } from "@virtool/data/db/schema/setup";
 import { users } from "@virtool/data/db/schema/users";
 import {
 	createTestDatabase,
@@ -16,6 +20,7 @@ import {
 	it,
 	vi,
 } from "vitest";
+import type { SetupEndpoint } from "./setupExceptions";
 
 const getRequest = vi.fn();
 const setResponseStatus = vi.fn();
@@ -60,10 +65,11 @@ const { createFirstUserFn, loginFn, logoutFn, resetPasswordFn } = await import(
 );
 const { getPasswordPolicyFn } = await import("../settings/functions");
 const { getRootFn } = await import("../root/functions");
-const { seedApiKey, seedSession, seedUser } = await import(
+const { seedApiKey, seedSession, seedSetupSession, seedUser } = await import(
 	"@virtool/data/auth/test/fixtures"
 );
-const { basicAuthHeader, sessionCookie } = await import("./test/fixtures");
+const { basicAuthHeader, restrictTo, sessionCookie, setupSessionCookie } =
+	await import("./test/fixtures");
 
 let database: TestDatabase;
 
@@ -80,6 +86,7 @@ beforeEach(async () => {
 	vi.clearAllMocks();
 	await db.delete(apiKeys);
 	await db.delete(sessions);
+	await db.delete(setupSessions);
 	await db.delete(users);
 });
 
@@ -89,8 +96,14 @@ type ServerHandler = (options: {
 	serverFnMeta: { id: string };
 }) => Promise<unknown>;
 
-function serverHandler(exceptions: ReadonlyArray<{ url: string }>) {
-	const middleware = createAuthenticationMiddleware(async () => exceptions);
+function serverHandler(
+	exceptions: ReadonlyArray<{ url: string }>,
+	setup: ReadonlyArray<SetupEndpoint> = [],
+) {
+	const middleware = createAuthenticationMiddleware(
+		async () => exceptions,
+		async () => setup,
+	);
 	return (middleware as unknown as { options: { server: ServerHandler } })
 		.options.server;
 }
@@ -168,7 +181,9 @@ describe("createAuthenticationMiddleware", () => {
 			serverFnMeta: metaFor(get()),
 		});
 
-		expect(next).toHaveBeenCalledWith({ context: { session: null } });
+		expect(next).toHaveBeenCalledWith({
+			context: { session: null, restricted: null },
+		});
 		expect(setUser).not.toHaveBeenCalled();
 	});
 
@@ -185,7 +200,9 @@ describe("createAuthenticationMiddleware", () => {
 			serverFnMeta: metaFor(getRootFn),
 		});
 
-		expect(next).toHaveBeenCalledWith({ context: { session: null } });
+		expect(next).toHaveBeenCalledWith({
+			context: { session: null, restricted: null },
+		});
 	});
 
 	it("rejects an unauthenticated call to a fn that is not excepted", async () => {
@@ -217,7 +234,9 @@ describe("createAuthenticationMiddleware", () => {
 			serverFnMeta: { id: "somethingElse" },
 		});
 
-		expect(next).toHaveBeenCalledWith({ context: { session: { userId } } });
+		expect(next).toHaveBeenCalledWith({
+			context: { session: { userId }, restricted: null },
+		});
 	});
 
 	it("ties the acting user to the sentry scope", async () => {
@@ -274,6 +293,140 @@ describe("createAuthenticationMiddleware", () => {
 				next: vi.fn(),
 				serverFnMeta: { id: `${metaFor(loginFn).id}Extra` },
 			}),
+		).rejects.toBeInstanceOf(UnauthorizedError);
+	});
+});
+
+describe("the setup boundary", () => {
+	// This is the whole restriction. A restricted caller is refused at the door,
+	// before the function's own policy could resolve them as an ordinary user,
+	// and the refusal names the flow they belong on rather than the login wall.
+	it("refuses a restricted caller an ordinary fn, naming the purpose", async () => {
+		const userId = await seedUser(db, { lifecycleState: "pending" });
+		await restrictTo(db, getRequest, userId, "account_completion");
+		const next = vi.fn();
+
+		const error = await serverHandler(authenticationExceptions)({
+			next,
+			serverFnMeta: { id: "somethingElse" },
+		}).then(
+			() => null,
+			(err: unknown) => err,
+		);
+
+		expect((error as Error).name).toBe(SETUP_REQUIRED_ERROR_NAME);
+		expect((error as { purpose?: string }).purpose).toBe("account_completion");
+		expect(setResponseStatus).toHaveBeenCalledWith(403);
+		expect(next).not.toHaveBeenCalled();
+	});
+
+	it("lets a restricted caller reach an allowlisted fn", async () => {
+		const userId = await seedUser(db, { lifecycleState: "pending" });
+		const session = await restrictTo(
+			db,
+			getRequest,
+			userId,
+			"account_completion",
+		);
+		const next = vi.fn().mockResolvedValue("result");
+
+		await serverHandler(authenticationExceptions, [
+			{
+				fn: { url: "/_serverFn/completeSetup" },
+				purpose: "account_completion",
+			},
+		])({ next, serverFnMeta: { id: "completeSetup" } });
+
+		expect(next).toHaveBeenCalledWith({
+			context: {
+				session: null,
+				restricted: {
+					userId,
+					sessionId: session.sessionId,
+					purpose: "account_completion",
+					expiresAt: expect.any(Date),
+				},
+			},
+		});
+	});
+
+	// Only the user id, never the session secret.
+	it("attributes a restricted caller by user id alone", async () => {
+		const userId = await seedUser(db, { lifecycleState: "pending" });
+		await restrictTo(db, getRequest, userId, "account_completion");
+
+		await serverHandler(authenticationExceptions)({
+			next: vi.fn(),
+			serverFnMeta: { id: "somethingElse" },
+		}).catch(() => null);
+
+		expect(setUser).toHaveBeenCalledWith({ id: userId });
+	});
+
+	// An application session and a leftover setup cookie describe an ordinary
+	// user, and the session is the half that says so.
+	it("prefers an application session over a setup credential", async () => {
+		const userId = await seedUser(db);
+		const session = await seedSession(db, userId);
+		const setup = await seedSetupSession(db, userId, "totp_enrollment");
+
+		getRequest.mockReturnValue(
+			new Request("https://virtool.test/_serverFn/somethingElse", {
+				headers: {
+					cookie: `${sessionCookie(session)}; ${setupSessionCookie(setup)}`,
+				},
+			}),
+		);
+		const next = vi.fn().mockResolvedValue("result");
+
+		await serverHandler(authenticationExceptions)({
+			next,
+			serverFnMeta: { id: "somethingElse" },
+		});
+
+		expect(next).toHaveBeenCalledWith({
+			context: { session: { userId }, restricted: null },
+		});
+	});
+
+	it("refuses an expired restricted credential as anonymous", async () => {
+		const userId = await seedUser(db, { lifecycleState: "pending" });
+		const setup = await seedSetupSession(db, userId, "account_completion", {
+			expiresAt: new Date(Date.now() - 1_000),
+		});
+
+		getRequest.mockReturnValue(
+			requestFor("/_serverFn/somethingElse", setupSessionCookie(setup)),
+		);
+
+		await expect(
+			serverHandler(authenticationExceptions)({
+				next: vi.fn(),
+				serverFnMeta: { id: "somethingElse" },
+			}),
+		).rejects.toBeInstanceOf(UnauthorizedError);
+	});
+
+	// Deactivation is authoritative, and a setup credential must not be the
+	// looser of the two doors.
+	it("refuses a restricted credential once its user is deactivated", async () => {
+		const userId = await seedUser(db, {
+			active: false,
+			lifecycleState: "pending",
+		});
+		const setup = await seedSetupSession(db, userId, "account_completion");
+
+		getRequest.mockReturnValue(
+			requestFor("/_serverFn/somethingElse", setupSessionCookie(setup)),
+		);
+
+		await expect(
+			serverHandler(authenticationExceptions, [
+				{
+					fn: { url: "/_serverFn/completeSetup" },
+					purpose: "account_completion",
+				},
+			])({ next: vi.fn(), serverFnMeta: { id: "completeSetup" } }),
 		).rejects.toBeInstanceOf(UnauthorizedError);
 	});
 });
@@ -338,6 +491,48 @@ describe("requireAuthenticatedRequest", () => {
 
 		const result = await requireAuthenticatedRequest(
 			authorizedRequestFor("/uploads", basicAuthHeader("alice", "wrong")),
+		);
+
+		expect((result as Response).status).toBe(401);
+	});
+
+	// SSE, uploads, downloads and every streamed file go through here, and a
+	// restricted setup credential must reach none of them.
+	it("returns a 401 for a restricted setup credential", async () => {
+		const userId = await seedUser(db, { lifecycleState: "pending" });
+		const setup = await seedSetupSession(db, userId, "account_completion");
+
+		const result = await requireAuthenticatedRequest(
+			requestFor("/events", setupSessionCookie(setup)),
+		);
+
+		expect((result as Response).status).toBe(401);
+	});
+
+	// The restriction must not become a way to reach the key path either.
+	it("returns a 401 for a restricted credential presented with an api key header", async () => {
+		const userId = await seedUser(db, { lifecycleState: "pending" });
+		const setup = await seedSetupSession(db, userId, "account_completion");
+
+		const request = new Request("https://virtool.test/uploads", {
+			headers: {
+				authorization: basicAuthHeader("alice", "wrong"),
+				cookie: setupSessionCookie(setup),
+			},
+		});
+
+		expect(
+			((await requireAuthenticatedRequest(request)) as Response).status,
+		).toBe(401);
+	});
+
+	it("returns a 401 for an api key belonging to a pending account", async () => {
+		const userId = await seedUser(db, { handle: "ada" });
+		const key = await seedApiKey(db, userId, { upload_file: true });
+		await db.update(users).set({ lifecycleState: "pending", password: null });
+
+		const result = await requireAuthenticatedRequest(
+			authorizedRequestFor("/uploads", basicAuthHeader("ada", key)),
 		);
 
 		expect((result as Response).status).toBe(401);

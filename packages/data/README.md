@@ -216,7 +216,64 @@ looks fields up by property — so `userId` and `credentialID` keep their exact
 spelling while their columns stay snake_case.
 
 `users.email` is deliberately not unique, though Better Auth declares it so.
-Legacy rows share an empty email, and normalizing them is separate work.
+Legacy rows share an empty email, and normalizing them is separate work. Until
+that lands, `src/auth/lifecycle.ts` holds uniqueness for the addresses it
+establishes with a transaction-scoped advisory lock on the normalized address
+rather than an index.
+
+### Account lifecycle and setup state
+
+`users.lifecycle_state` is the persisted half of the account lifecycle:
+`pending` for an account that exists but holds no credential, `normal` for one
+that can be used. It is **not** `users.active`. Activation remains the
+administrator's switch and stays authoritative — a deactivated account is
+unusable whatever its lifecycle state, and completing setup never activates
+anyone.
+
+A pending account keeps its handle, administrator role and group memberships,
+so an administrator states who a person is and what they may do at the moment
+of invitation. What it does not have is a credential: `users.password` is null,
+which the `pending_has_no_password` constraint holds, and `createPendingUser`
+is the only thing that writes the state.
+
+Every reader that assumes an account is usable checks the state, not just
+`active`: `listUsers`, `findUsers` (which defaults to `normal` and takes
+`lifecycleState: "any"` for the administration views), and the app's session
+and API-key resolution.
+
+`setup_tokens` and `setup_sessions` carry the two setup credentials, and
+`src/auth/setup.ts` owns both:
+
+- A **setup token** is the bearer secret in an invitation, bootstrap or
+  remediation link. Only its SHA-256 is stored; the plaintext is returned to
+  the issuing caller once and is never readable back. It is purpose-bound,
+  expiring, single-use — `consumeSetupToken` is one conditional `UPDATE ...
+  RETURNING`, so concurrent submissions of one token produce exactly one
+  winner — and superseded when a replacement is issued.
+- A **restricted setup session** is what a holder gets in exchange: a
+  non-secret `session_id` for attribution plus a secret whose digest is
+  stored, bound to one purpose and expiring. `verifySetupSession` re-reads
+  `users.active` on every request, so deactivation revokes it at once. It is
+  never an application session, which is why it is a table of its own rather
+  than another `sessions.session_type`.
+
+`src/auth/lifecycle.ts` holds one transactional completion primitive per
+purpose. Each spends the token, writes the credential and identity state,
+moves the account, and revokes every setup credential the user held — in one
+transaction, so a failure rolls the whole transition back and a spent token
+never outlives the change it paid for. None of them mints a session; which
+session a completed holder gets is the calling flow's decision, and cookies
+belong to `apps/web`.
+
+Credential state is written on both sides during the Better Auth migration:
+`users.password` for the boundary `apps/web`'s `login()` still reads, and
+`auth_accounts.password` plus `users.username`/`display_username` for Better
+Auth. An account credentialed against only one of them cannot sign in under
+the other.
+
+Expiry cleanup is the internal runner's `cleanup_setup_state` periodic task.
+Nothing waits on it — both readers refuse an expired row on sight — so there
+are no request-path scans.
 
 ## Outbound requests
 

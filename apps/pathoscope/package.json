@@ -18,7 +18,7 @@
 		"@aws-sdk/lib-storage": "^3.1119.0",
 		"@azure/identity": "^4.13.2",
 		"@azure/storage-blob": "^12.33.0",
-		"@sentry/node": "^10.71.0",
+		"@sentry/node": "^10.73.0",
 		"@virtool/contracts": "workspace:*",
 		"@virtool/logger": "workspace:*",
 		"@virtool/sqlite": "workspace:*",
@@ -29,8 +29,8 @@
 		"undici": "^8.10.0"
 	},
 	"devDependencies": {
-		"@types/node": "^26.4.0",
+		"@types/node": "^26.4.1",
 		"tsdown": "^0.22.14",
-		"vitest": "^4.1.11"
+		"vitest": "^5.0.0"
 	}
 }

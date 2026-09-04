@@ -37,6 +37,7 @@ export function createFakeUser(overrides?: Partial<User>): User {
 		forceReset: false,
 		groups,
 		lastPasswordChange: faker.date.past(),
+		lifecycleState: "normal",
 		permissions: createFakePermissions(permissions),
 		primaryGroup:
 			primaryGroup === undefined ? (groups[0] ?? null) : primaryGroup,

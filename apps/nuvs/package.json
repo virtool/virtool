@@ -18,7 +18,7 @@
 		"@aws-sdk/lib-storage": "^3.1119.0",
 		"@azure/identity": "^4.13.2",
 		"@azure/storage-blob": "^12.33.0",
-		"@sentry/node": "^10.71.0",
+		"@sentry/node": "^10.73.0",
 		"@virtool/bio": "workspace:*",
 		"@virtool/contracts": "workspace:*",
 		"@virtool/sqlite": "workspace:*",
@@ -28,11 +28,11 @@
 		"pino": "^10.1.0",
 		"tar-stream": "^3.2.0",
 		"undici": "^8.10.0",
-		"zod": "^4.3.6"
+		"zod": "^4.5.4"
 	},
 	"devDependencies": {
-		"@types/node": "^26.4.0",
+		"@types/node": "^26.4.1",
 		"tsdown": "^0.22.14",
-		"vitest": "^4.1.11"
+		"vitest": "^5.0.0"
 	}
 }

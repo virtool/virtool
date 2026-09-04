@@ -1,0 +1,160 @@
+---
+title: "Uploads"
+description: "Upload a file to Virtool through the API."
+---
+
+## Overview
+
+Upload a file in three steps:
+
+1. Start the upload and receive a temporary storage URL.
+2. Send the file directly to storage at that URL.
+3. Tell Virtool to finalize the upload.
+
+The file bytes never pass through the Virtool server, allowing very large
+uploads.
+
+## Authenticate
+
+Authenticate requests to Virtool with HTTP Basic authentication. Use your user
+handle as the username and an API key as the password. The API key and its owner
+must both have the `upload_file` permission.
+
+The signed storage requests in the transfer step do not use the API key. The
+temporary storage URL contains all authorization needed to write that one file.
+
+## Start an upload
+
+Send a `POST` request to `/api/v1/uploads`.
+
+```bash
+VT_URL="https://virtool.example.com"
+VT_HANDLE="alice"
+VT_API_KEY="your-api-key"
+
+curl --user "$VT_HANDLE:$VT_API_KEY" \
+  --header "Content-Type: application/json" \
+  --data '{"name":"reads_1.fq.gz","type":"reads","size":10737418240}' \
+  "$VT_URL/api/v1/uploads"
+```
+
+```json
+{
+  "name": "reads_1.fq.gz",
+  "type": "reads",
+  "size": 10737418240
+}
+```
+
+| Field | Type | Rule |
+| --- | --- | --- |
+| `name` | string | File name. |
+| `type` | string | One of `reference`, `reads`, or `subtraction`. |
+| `size` | integer | Exact file size in bytes, from 0 to 209,715,200,000,000. |
+
+The server sends back a `201` response.
+
+```json
+{
+  "uploadId": 123,
+  "url": "https://...",
+  "blockSize": 16777216,
+  "concurrency": 4
+}
+```
+
+| Field | Meaning |
+| --- | --- |
+| `uploadId` | Use this ID in the finish and cancel requests. |
+| `url` | Send the file to this URL. The URL expires after 6 hours. |
+| `blockSize` | Split the file into blocks of this size in bytes. |
+| `concurrency` | Send up to this many blocks at the same time. |
+
+<Note type="warning">
+The upload API requires a Virtool instance configured for direct uploads to
+Azure Blob Storage. A `503` response means this instance does not support the
+upload API; contact its administrator.
+</Note>
+
+## Upload the file
+
+Use the `url`, `blockSize`, and `concurrency` values from the start response.
+
+1. Divide the file into pieces no larger than `blockSize` bytes.
+2. Number the pieces from zero. Turn each number into a block ID by padding it
+   to six digits and base64-encoding it. The first two IDs are `MDAwMDAw` and
+   `MDAwMDAx`.
+3. Upload each piece with `PUT` to:
+
+   ```text
+   {url}&comp=block&blockid={blockId}
+   ```
+
+   Pieces can upload in parallel, but do not run more than `concurrency`
+   requests at once.
+4. After every piece has uploaded, commit the file with `PUT` to:
+
+   ```text
+   {url}&comp=blocklist
+   ```
+
+   Set `Content-Type` to `application/xml`. The body lists the block IDs in file
+   order:
+
+```xml
+<?xml version="1.0" encoding="utf-8"?>
+<BlockList>
+  <Latest>MDAwMDAw</Latest>
+  <Latest>MDAwMDAx</Latest>
+</BlockList>
+```
+
+   Set `x-ms-blob-content-type` to the file's media type, or
+   `application/octet-stream` when it is unknown.
+
+These are standard HTTP requests and do not require an Azure SDK. If a request
+fails because of a network or server error, retry it. Cancel the upload if it
+cannot be completed.
+
+## Finish an upload
+
+Send a `POST` request to `/api/v1/uploads/{uploadId}/finalize`.
+
+```bash
+curl --user "$VT_HANDLE:$VT_API_KEY" \
+  --request POST \
+  "$VT_URL/api/v1/uploads/123/finalize"
+```
+
+The server verifies the stored file size, marks the upload ready, and returns
+the upload record. Finalization is idempotent, so it is safe to retry if the
+response is lost. A missing block list or mismatched size returns `409`.
+
+## Cancel an upload
+
+Send a `DELETE` request to `/api/v1/uploads/{uploadId}`.
+
+```bash
+curl --user "$VT_HANDLE:$VT_API_KEY" \
+  --request DELETE \
+  "$VT_URL/api/v1/uploads/123"
+```
+
+Cancellation removes an unfinished upload owned by the caller and returns
+`204`. Use it after a permanent transfer, commit, or finalization failure so the
+pending upload does not remain until automatic cleanup.
+
+## Responses
+
+| Status | Meaning |
+| --- | --- |
+| `200` | The upload was finalized. |
+| `201` | The upload was initialized. |
+| `204` | The unfinished upload was cancelled. |
+| `400` | The JSON body or upload ID is malformed. |
+| `401` | The API credentials are missing or invalid. |
+| `403` | The API key or its owner lacks `upload_file`. |
+| `404` | The upload does not exist, is not owned by the caller, or is not in the required unfinished state. |
+| `409` | Finalization found no committed blob or its byte size differs from `size`. |
+| `422` | The initialization fields are invalid. |
+| `503` | Direct upload support is unavailable on this deployment. |

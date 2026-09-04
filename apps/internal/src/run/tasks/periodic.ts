@@ -44,7 +44,7 @@ export const SPAWN_TICK_INTERVAL_MS = 30_000;
  * type rather than a backlog, which is what makes the mistake survivable rather
  * than invisible.
  *
- * A test pins this list to exactly these seven, so an eighth is a deliberate
+ * A test pins this list to exactly these eight, so a ninth is a deliberate
  * act.
  *
  * The order is the order each tick walks.
@@ -76,5 +76,14 @@ export const PERIODIC_TASKS: PeriodicTaskRegistration[] = [
 	 * accumulation makes each run a larger delete for no benefit.
 	 */
 	{ type: "cleanup_sessions", intervalSeconds: 3600 },
+	/*
+	 * Hourly, for the same reasons `cleanup_sessions` is. Correctness never
+	 * waits on it either: `consumeSetupToken` and `verifySetupSession` both
+	 * refuse an expired row on sight, so a row lingering between sweeps is
+	 * inert. A restricted setup session lives 30 minutes and a setup link 72
+	 * hours, so hourly keeps the shorter of the two from outliving its expiry
+	 * by much.
+	 */
+	{ type: "cleanup_setup_state", intervalSeconds: 3600 },
 	{ type: "reap_orphaned_uploads", intervalSeconds: 86_400 },
 ];

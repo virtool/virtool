@@ -142,23 +142,34 @@ export function createAuth({
 		databaseHooks: {
 			session: {
 				create: {
-					// Better Auth answers *who*, so the two Virtool states that gate a
+					// Better Auth answers *who*, so the Virtool states that gate a
 					// sign-in are enforced at the one point every password, passkey and
 					// two-factor path has to pass through. `login()` in `./core` refuses
-					// the same pair; without this the Better Auth endpoints would be the
+					// the same set; without this the Better Auth endpoints would be the
 					// looser of the two doors on the same accounts.
 					//
 					// A deactivated user gets the same 401 the wrong password gets: that
 					// an account exists but is switched off is not something an
-					// unauthenticated caller should be able to read off the response.
+					// unauthenticated caller should be able to read off the response. An
+					// account that has not completed setup gets it too, and for the same
+					// reason — an outstanding invitation is not public information.
+					//
+					// This is also what keeps a setup flow from short-circuiting itself.
+					// A completion transaction moves the account out of `pending` before
+					// its caller mints any session, so an ordinary session can only ever
+					// be issued to an account that is already eligible for one.
 					before: async (session) => {
 						const [user] = await db
-							.select({ active: users.active, forceReset: users.forceReset })
+							.select({
+								active: users.active,
+								forceReset: users.forceReset,
+								lifecycleState: users.lifecycleState,
+							})
 							.from(users)
 							.where(eq(users.id, Number(session.userId)))
 							.limit(1);
 
-						if (!user?.active) {
+						if (!user?.active || user.lifecycleState !== "normal") {
 							throw new APIError("UNAUTHORIZED", {
 								message: "Invalid credentials",
 								code: "INVALID_CREDENTIALS",

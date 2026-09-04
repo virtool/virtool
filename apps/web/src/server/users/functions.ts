@@ -15,6 +15,7 @@ import {
 	InvalidPasswordError,
 	listAdministratorRoles,
 	listUsers,
+	PendingAccountError,
 	setAdministratorRole,
 	UserConflictError,
 	UserNotFoundError,
@@ -132,6 +133,10 @@ const rethrowAsHttp = createServerOnlyFn((err: unknown): never => {
 		setResponseStatus(400);
 		throw new ClientError("User is not a member of group.");
 	}
+	if (err instanceof PendingAccountError) {
+		setResponseStatus(409);
+		throw new ClientError("User has not completed account setup.");
+	}
 	throw err;
 });
 
@@ -155,6 +160,11 @@ export const findUsersFn = createServerFn({ method: "GET" })
 			perPage: data?.perPage ?? 25,
 			administrator: data?.administrator,
 			active: data?.active ?? true,
+			// The one caller that asks for pending accounts. An administrator has
+			// to see the invitation they issued in order to re-issue or revoke it,
+			// and `findUsers` defaults to hiding them so nothing else has to
+			// remember to.
+			lifecycleState: "any",
 		});
 	});
 

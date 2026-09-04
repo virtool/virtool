@@ -20,7 +20,7 @@
     "@lucide/astro": "^1.33.0",
     "@tailwindcss/typography": "^0.5.19",
     "@tailwindcss/vite": "^4.2.2",
-    "@types/node": "^26.4.0",
+    "@types/node": "^26.4.1",
     "astro": "^7.2.0",
     "micromark": "^4.0.2",
     "micromark-extension-gfm": "^3.0.0",
@@ -28,11 +28,11 @@
     "prettier": "^3.9.6",
     "prismjs": "^1.30.0",
     "rehype-rewrite": "^4.0.4",
-    "sharp": "^0.35.3",
+    "sharp": "^0.35.4",
     "tailwindcss": "^4.2.2"
   },
   "devDependencies": {
-    "vitest": "^4.1.11",
+    "vitest": "^5.0.0",
     "wrangler": "^4.119.0"
   }
 }

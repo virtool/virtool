@@ -13,7 +13,7 @@
 	},
 	"dependencies": {
 		"@hono/node-server": "^2.1.0",
-		"@sentry/node": "^10.71.0",
+		"@sentry/node": "^10.73.0",
 		"@virtool/archive": "workspace:*",
 		"@virtool/contracts": "workspace:*",
 		"@virtool/data": "workspace:*",
@@ -28,11 +28,11 @@
 		"postgres": "^3.4.9",
 		"prom-client": "^15.1.3",
 		"tar-stream": "^3.2.0",
-		"zod": "^4.3.5"
+		"zod": "^4.5.4"
 	},
 	"devDependencies": {
 		"@types/tar-stream": "^3.1.4",
 		"tsdown": "^0.22.14",
-		"vitest": "^4.1.11"
+		"vitest": "^5.0.0"
 	}
 }

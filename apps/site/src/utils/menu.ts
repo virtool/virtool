@@ -1,3 +1,7 @@
+const SECTION_TITLES: Record<string, string> = {
+  api: "API",
+};
+
 export function getMenuSectionsFromCollection(
   collection: any[],
   sections?: string[]
@@ -9,7 +13,7 @@ export function getMenuSectionsFromCollection(
 
     if (!section) {
       section = {
-        title: key,
+        title: SECTION_TITLES[key] ?? key,
         items: [],
       };
       menu[key] = section;

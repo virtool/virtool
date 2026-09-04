@@ -145,79 +145,18 @@ export type UploadProgress = {
 	percent: number;
 };
 
-/**
- * Read a human-readable error message from a failed upload response.
- *
- * The route returns a JSON `{ message }` body for its 4xx/5xx responses, so
- * surface that when it parses; otherwise fall back to the status code (e.g. the
- * plain-text `Forbidden` a 403 returns).
- */
-function readErrorMessage(xhr: XMLHttpRequest): string {
-	try {
-		const body = JSON.parse(xhr.responseText) as { message?: unknown };
-		if (typeof body.message === "string") {
-			return body.message;
-		}
-	} catch {
-		// Non-JSON body; fall through to the status-code message.
-	}
-
-	return `Upload failed with status ${xhr.status}.`;
-}
-
-/**
- * Post a file to the `POST /uploads` route, reporting upload progress.
- *
- * The file is posted with `XMLHttpRequest` rather than `fetch`, because `fetch`
- * cannot report upload progress and read files can run to many gigabytes. The
- * browser streams the raw `File` body from disk (never buffering it in JS), and
- * the route reads it as a stream too, so nothing large sits in memory on either
- * side. `name` and `type` travel in the query string.
- */
-export function postUpload(
+/** Initialize and perform a direct block upload. */
+export async function postUpload(
 	file: File,
 	name: string,
 	fileType: UploadType,
 	onProgress?: (progress: UploadProgress) => void,
 	signal?: AbortSignal,
 ): Promise<Upload> {
-	return new Promise((resolve, reject) => {
-		// An already-aborted signal never fires `abort`, so a cancel that lands
-		// while `initUploadFn` is still choosing the transport would otherwise let
-		// the XHR send the whole file after the upload has left the UI.
-		if (signal?.aborted) {
-			reject(new Error("Upload aborted."));
-			return;
-		}
-
-		const xhr = new XMLHttpRequest();
-		const query = `?name=${encodeURIComponent(name)}&type=${fileType}`;
-		xhr.open("POST", `/uploads${query}`);
-
-		signal?.addEventListener("abort", () => xhr.abort());
-
-		xhr.upload.addEventListener("progress", (event) => {
-			if (event.lengthComputable && onProgress) {
-				onProgress({
-					loaded: event.loaded,
-					total: event.total,
-					percent: Math.round((event.loaded / event.total) * 100),
-				});
-			}
-		});
-
-		xhr.addEventListener("load", () => {
-			if (xhr.status >= 200 && xhr.status < 300) {
-				resolve(JSON.parse(xhr.responseText) as Upload);
-			} else {
-				reject(new Error(readErrorMessage(xhr)));
-			}
-		});
-		xhr.addEventListener("error", () => reject(new Error("Upload failed.")));
-		xhr.addEventListener("abort", () => reject(new Error("Upload aborted.")));
-
-		xhr.send(file);
+	const init = await initUploadFn({
+		data: { name, type: fileType, size: file.size },
 	});
+	return uploadBlocks(init, file, onProgress, signal);
 }
 
 /**
@@ -231,12 +170,7 @@ const tracked = new Map<
 >();
 
 /**
- * Post one file, taking whichever transport the server chooses.
- *
- * `initUploadFn` decides between the direct-to-blob and proxied paths — the
- * client never carries the feature flag — and, for a chunked upload, hands back
- * the write SAS to run it. A proxied result falls back to the `POST /uploads`
- * route, which reserves its own row.
+ * Initialize and upload one file through the direct block protocol.
  */
 async function performUpload(
 	file: File,
@@ -244,14 +178,6 @@ async function performUpload(
 	onProgress: (progress: UploadProgress) => void,
 	signal: AbortSignal,
 ): Promise<Upload> {
-	const init = await initUploadFn({
-		data: { name: file.name, type: fileType, size: file.size },
-	});
-
-	if (init.mode === "chunked") {
-		return uploadBlocks(init, file, onProgress, signal);
-	}
-
 	return postUpload(file, file.name, fileType, onProgress, signal);
 }
 
