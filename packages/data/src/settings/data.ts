@@ -37,10 +37,7 @@ export type Settings = {
 	emailSenderAddress: string;
 	emailSenderName: string;
 	enableSentry: boolean;
-	/**
-	 * The largest declared upload size, in bytes, that upload initialization
-	 * accepts. Bounded above by the Azure block blob ceiling.
-	 */
+	/** The maximum accepted upload size, in bytes. */
 	maxUploadSize: number;
 	minimumPasswordLength: number;
 	/**

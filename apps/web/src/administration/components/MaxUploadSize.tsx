@@ -8,24 +8,14 @@ import SectionHeader from "@base/SectionHeader";
 import { AZURE_MAX_BLOB_SIZE } from "@virtool/contracts";
 import { useForm } from "react-hook-form";
 
-/** The field is entered and shown in gigabytes; the setting is stored in bytes. */
 const BYTES_PER_GIGABYTE = 1000 ** 3;
 
-/** The largest maximum the Azure block blob protocol can honour, in gigabytes. */
 const MAX_GIGABYTES = AZURE_MAX_BLOB_SIZE / BYTES_PER_GIGABYTE;
 
 type MaxUploadSizeFormValues = {
 	maximumGigabytes: number;
 };
 
-/**
- * Set the largest file the instance accepts.
- *
- * Upload initialization refuses anything larger, so an oversized file is
- * rejected before any of its bytes are transferred. The setting is stored in
- * bytes; the field is in gigabytes, which is the unit uploads are reasoned
- * about in.
- */
 export default function MaxUploadSize() {
 	const { data, isPending, isError } = useFetchSettings();
 	const mutation = useUpdateSettings();
@@ -83,8 +73,6 @@ export default function MaxUploadSize() {
 										value: 1,
 										message: "The maximum must be at least 1 GB.",
 									},
-									// The protocol cannot carry a larger blob, so a larger
-									// maximum would only ever fail at upload time.
 									max: {
 										value: MAX_GIGABYTES,
 										message: `The maximum cannot exceed ${MAX_GIGABYTES} GB.`,

@@ -116,9 +116,7 @@ export function FileManager({
 
 	const title = `${fileType === "reads" ? "Read" : capitalize(fileType)} Files`;
 
-	// The policy is the server's, and the server checks again at initialization.
-	// Until it resolves, every file is offered: the upload then fails with the
-	// same message rather than being silently held back.
+	// Upload initialization enforces the limit even while the policy is loading.
 	function handleDrop(acceptedFiles: File[]) {
 		const maximum = policy?.maxUploadSize;
 		const tooLarge =

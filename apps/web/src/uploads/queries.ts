@@ -19,13 +19,7 @@ import type {
 	UploadType,
 } from "@virtool/contracts";
 
-/**
- * Fetch the maximum upload size, so a drop zone can refuse an oversized file
- * before any of its bytes are transferred.
- *
- * The server enforces the same limit at initialization and is the authority;
- * this only spares the user a failed upload.
- */
+/** Fetch the upload limit for client validation; initialization enforces it again. */
 export function useUploadPolicy() {
 	return useQuery<UploadPolicy>({
 		queryKey: [...fileQueryKeys.all(), "policy"],

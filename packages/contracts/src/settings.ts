@@ -45,10 +45,7 @@ export type Settings = {
 	defaultSourceTypes: string[];
 	enableSentry: boolean;
 	hasNcbiApiKey: boolean;
-	/**
-	 * The largest declared upload size, in bytes, that upload initialization
-	 * accepts.
-	 */
+	/** The maximum accepted upload size, in bytes. */
 	maxUploadSize: number;
 	minimumPasswordLength: number;
 	ncbiAvailability: NcbiAvailability;

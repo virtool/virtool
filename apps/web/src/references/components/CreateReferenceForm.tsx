@@ -60,9 +60,7 @@ export function CreateReferenceForm({
 		},
 	});
 
-	// Refused here rather than after the transfer starts. Until the policy
-	// resolves the file is offered, and upload initialization refuses it with the
-	// same message.
+	// Upload initialization enforces the limit even while the policy is loading.
 	function handleDrop(acceptedFiles: File[]): boolean {
 		const file = acceptedFiles[0];
 		if (file === undefined) {

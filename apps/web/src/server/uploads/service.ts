@@ -54,10 +54,7 @@ export async function initializeUpload(
 		);
 	}
 
-	// Checked before anything is reserved, so an oversized file costs a row and a
-	// SAS neither. The configured maximum is read per initialization rather than
-	// cached: an administrator lowering it must take effect on the next upload,
-	// not on the next restart.
+	// Read on every initialization so setting changes apply to the next upload.
 	const { maxUploadSize } = await getSettings(db);
 	checkUploadSize(values.size, maxUploadSize);
 

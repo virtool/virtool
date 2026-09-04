@@ -116,14 +116,7 @@ export const initUploadFn = createServerFn({ method: "POST" })
 		}
 	});
 
-/**
- * The upload rule the browser needs before it starts transferring a file.
- *
- * Authenticated rather than `settings`-gated, because every uploading user has
- * to know the limit to be refused a file at the drop zone rather than after it
- * has been listed. It returns the maximum alone: the rest of the settings row
- * is instance configuration a non-administrator has no business reading.
- */
+/** Expose the upload limit to authenticated users without exposing other settings. */
 export const getUploadPolicyFn = createServerFn({ method: "GET" })
 	.middleware([authenticated()])
 	.handler(async (): Promise<UploadPolicy> => {

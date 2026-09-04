@@ -465,14 +465,14 @@ size limit.
 When direct uploads are disabled or the storage backend cannot issue an upload
 SAS, initialization returns `503` instead of falling back.
 
-A declared size above `settings.max_upload_size` is refused with a `413` before
-the upload is reserved or a SAS is issued, so no bytes are transferred. The
-maximum is read from the settings row on every initialization, so lowering it
-takes effect on the next upload rather than the next restart. Both upload paths
-enforce it through `initializeUpload`, and `getUploadPolicyFn` publishes it to
-any authenticated user so a drop zone can refuse a file without a round trip.
-The setting is capped at 209,715,200,000,000 bytes, the Azure block-count and
-block-size limit, which is the absolute ceiling on a declared size.
+Both browser and API uploads enforce `settings.max_upload_size` through
+`initializeUpload`. A valid declared size above the configured limit returns `413`
+before a reservation or SAS is created. The limit is read on every initialization,
+so changes apply to the next upload without a restart. `getUploadPolicyFn` exposes
+the limit to authenticated users for client validation.
+
+The setting and declared sizes are capped at 209,715,200,000,000 bytes, the Azure
+block-count and block-size limit.
 
 ### The setup boundary
 

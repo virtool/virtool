@@ -94,8 +94,6 @@ const updateSettingsSchema = z
 		cacheStorageBudget: z.number().int().positive().optional(),
 		defaultSourceTypes: z.array(z.string()).optional(),
 		enableSentry: z.boolean().optional(),
-		// Capped at the Azure block blob ceiling. A larger maximum could never be
-		// honoured: the protocol itself refuses the upload.
 		maxUploadSize: z
 			.number()
 			.int()

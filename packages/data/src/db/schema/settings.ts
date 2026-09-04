@@ -38,9 +38,7 @@ export const settings = pgTable(
 		emailSenderAddress: text("email_sender_address").notNull(),
 		emailSenderName: text("email_sender_name").notNull(),
 		enableSentry: boolean("enable_sentry").notNull(),
-		// The largest declared upload size, in bytes, initialization accepts.
-		// `mode: "number"` is safe up to 2^53, above the Azure block blob ceiling
-		// this is bounded by.
+		// The upload limit in bytes fits within JavaScript's safe integer range.
 		maxUploadSize: bigint("max_upload_size", { mode: "number" }).notNull(),
 		minimumPasswordLength: integer("minimum_password_length").notNull(),
 		// Encrypted under the environment-owned process encryption key. Null
