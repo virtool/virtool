@@ -1,5 +1,10 @@
+import { randomBytes } from "node:crypto";
 import { WorkflowSettings } from "@virtool/contracts";
 import { seedUser } from "@virtool/data/auth/test/fixtures";
+import {
+	createKeyring,
+	type EncryptedValue,
+} from "@virtool/data/crypto/keyring";
 import type { Db } from "@virtool/data/db/pg";
 import { jobs } from "@virtool/data/db/schema/jobs";
 import { settings } from "@virtool/data/db/schema/settings";
@@ -50,6 +55,19 @@ beforeEach(async () => {
  */
 const DEFAULT_WORKFLOW_SETTINGS = WorkflowSettings.parse(DEFAULT_SETTINGS);
 
+function encryptedNcbiApiKey(plaintext: string): EncryptedValue {
+	const result = createKeyring(
+		randomBytes(32).toString("base64"),
+		undefined,
+	).encrypt("ncbi_api_key", plaintext);
+
+	if (!result.ok) {
+		throw new Error("expected ready keyring");
+	}
+
+	return result.value;
+}
+
 function get(authenticated = true): Request {
 	return new Request("https://jobs.virtool.test/settings", {
 		headers: authenticated ? { authorization: `Basic ${credential}` } : {},
@@ -88,12 +106,15 @@ describe("handleGetSettings", () => {
 
 	// The NCBI API key is a credential. `toWorkflowSettings` names the fields it
 	// serves rather than spreading the row, so it cannot pick one up by accident
-	// — this holds that mapping to it.
+	// — this holds that mapping to it. The stored value is an envelope, so the
+	// ciphertext is what must not appear rather than the key itself.
 	it("never serves the NCBI API key", async () => {
+		const envelope = encryptedNcbiApiKey("secret-key");
+
 		await db.insert(settings).values({
 			id: 1,
 			...DEFAULT_SETTINGS,
-			ncbiApiKey: "secret-key",
+			ncbiApiKey: envelope,
 		});
 
 		const response = await handleGetSettings(deps, get());
@@ -101,7 +122,7 @@ describe("handleGetSettings", () => {
 		const body = await response.json();
 
 		expect(body).not.toHaveProperty("ncbiApiKey");
-		expect(JSON.stringify(body)).not.toContain("secret-key");
+		expect(JSON.stringify(body)).not.toContain(envelope.ciphertext);
 	});
 
 	it("refuses an unauthenticated request", async () => {

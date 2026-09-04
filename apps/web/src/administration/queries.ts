@@ -11,7 +11,12 @@ import {
 	setEmailApiKeyFn,
 	updateEmailSettingsFn,
 } from "@server/email/functions";
-import { getSettingsFn, updateSettingsFn } from "@server/settings/functions";
+import {
+	clearNcbiApiKeyFn,
+	getSettingsFn,
+	setNcbiApiKeyFn,
+	updateSettingsFn,
+} from "@server/settings/functions";
 import { listAdministratorRolesFn } from "@server/users/functions";
 import {
 	queryOptions,
@@ -33,8 +38,6 @@ export type SettingsUpdate = {
 	defaultSourceTypes?: string[];
 	enableSentry?: boolean;
 	minimumPasswordLength?: number;
-	/** A new NCBI API key, or `""` to clear the configured one. */
-	ncbiApiKey?: string;
 	sampleAllRead?: boolean;
 	sampleAllWrite?: boolean;
 	sampleGroup?: string;
@@ -95,6 +98,38 @@ export function useUpdateSettings() {
 				queryKey: passwordPolicyQueryKeys.all(),
 			});
 		},
+	});
+}
+
+function useSettingsInvalidation() {
+	const queryClient = useQueryClient();
+
+	return () =>
+		queryClient.invalidateQueries({ queryKey: settingsQueryKeys.all() });
+}
+
+/**
+ * Store a new NCBI API key, replacing any already stored.
+ *
+ * The settings are refetched rather than written from the result: availability
+ * depends on decryption, which only the server can judge.
+ */
+export function useSetNcbiApiKey() {
+	const invalidate = useSettingsInvalidation();
+
+	return useMutation<Settings, Error, string>({
+		mutationFn: (apiKey) => setNcbiApiKeyFn({ data: { apiKey } }),
+		onSuccess: invalidate,
+	});
+}
+
+/** Remove the stored NCBI API key. */
+export function useClearNcbiApiKey() {
+	const invalidate = useSettingsInvalidation();
+
+	return useMutation<Settings, Error, void>({
+		mutationFn: () => clearNcbiApiKeyFn(),
+		onSuccess: invalidate,
 	});
 }
 

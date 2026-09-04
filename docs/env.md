@@ -108,8 +108,8 @@ recovery codes undecryptable, so rotate it deliberately.
 ## Encryption key
 
 Secrets managed by Virtool are stored in Postgres in purpose-bound AES-256-GCM
-envelopes. The Resend API key is the first consumer. The process-wide encryption
-key is supplied through the environment:
+envelopes. The Resend API key and the NCBI API key are the consumers today. The
+process-wide encryption key is supplied through the environment:
 
 | Variable | Value |
 | --- | --- |
@@ -131,10 +131,14 @@ decryption failure.
 
 1. Set `VT_ENCRYPTION_KEY` to the new key and
    `VT_ENCRYPTION_KEY_PREVIOUS` to the old key, then roll out both services.
-2. Confirm email is available.
+2. Confirm email is available and the NCBI API key does not report a
+   configuration error.
 3. Keep both keys configured.
 
-Nothing re-encrypts stored secrets yet, so they stay readable only through
-`VT_ENCRYPTION_KEY_PREVIOUS`. Unsetting it makes the stored API key
-undecryptable and stops email delivery. Background re-encryption is tracked in
+Nothing re-encrypts stored secrets on its own yet, so they stay readable only
+through `VT_ENCRYPTION_KEY_PREVIOUS`. Unsetting it stops email delivery and
+drops GenBank lookups to the rate limit NCBI applies without a key. Saving a
+replacement API key rewrites that one secret under the active key;
+`reencryptNcbiApiKey` does the same without the plaintext, and is idempotent.
+Doing it for every secret in the background is tracked in
 [VIR-3114](https://linear.app/virtool/issue/VIR-3114/handle-encryption-key-rotation-automatically).

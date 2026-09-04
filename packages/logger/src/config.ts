@@ -34,7 +34,9 @@ export function resolveLevel(env: Env): LogLevel {
 /**
  * Keys redacted from log records by default. Covers the obvious secret-bearing
  * fields, the session-credential field names this codebase actually uses
- * (`sessionToken` / `session_token` / `tokenHash` / `resetCode` / `ncbiApiKey`),
+ * (`sessionToken` / `session_token` / `tokenHash` / `resetCode`), the stored
+ * credentials and the envelopes they are kept in (`ncbiApiKey` / `apiKey` /
+ * `api_key`),
  * Better Auth material equivalent to a credential (TOTP secrets use `secret`,
  * while recovery codes, WebAuthn challenges and passkey public keys need their
  * own names), and common HTTP shapes (`req.headers.authorization`,
@@ -52,6 +54,8 @@ export const DEFAULT_REDACT_PATHS: readonly string[] = [
 	"tokenHash",
 	"resetCode",
 	"ncbiApiKey",
+	"apiKey",
+	"api_key",
 	"backupCodes",
 	"backup_codes",
 	"recoveryCodes",
@@ -68,6 +72,8 @@ export const DEFAULT_REDACT_PATHS: readonly string[] = [
 	"*.tokenHash",
 	"*.resetCode",
 	"*.ncbiApiKey",
+	"*.apiKey",
+	"*.api_key",
 	"*.backupCodes",
 	"*.backup_codes",
 	"*.recoveryCodes",

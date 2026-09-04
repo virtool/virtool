@@ -37,6 +37,7 @@ export function createFakeSettings(overrides?: Partial<Settings>): Settings {
 		defaultSourceTypes: [faker.word.noun({ strategy: "any-length" })],
 		enableSentry: faker.datatype.boolean(),
 		hasNcbiApiKey: false,
+		ncbiAvailability: "unconfigured",
 		minimumPasswordLength: 8,
 		sampleAllRead: faker.datatype.boolean(),
 		sampleAllWrite: faker.datatype.boolean(),

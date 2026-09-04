@@ -10,8 +10,10 @@ import { type Mock, vi } from "vitest";
  * policy, including the unauthenticated ones.
  */
 export const settingsServerFnMocks = {
+	clearNcbiApiKeyFn: vi.fn(),
 	getPasswordPolicyFn: vi.fn(),
 	getSettingsFn: vi.fn(),
+	setNcbiApiKeyFn: vi.fn(),
 	updateSettingsFn: vi.fn(),
 };
 
@@ -38,14 +40,21 @@ export function mockUpdateSettings(settings: Settings): Mock {
 }
 
 /**
- * Wire `getSettings` and `updateSettings` against a shared, mutable settings
- * record so a read after a write reflects the change. An update merges its
- * `data` patch into the record and resolves with the merged result, and a later
+ * Wire the settings server functions against a shared, mutable settings record
+ * so a read after a write reflects the change. An update merges its `data`
+ * patch into the record and resolves with the merged result, and a later
  * `getSettings` returns that same record — matching how a component that
  * invalidates the settings cache refetches the patched values.
+ *
+ * The NCBI API key is write-only here as it is on the server: storing one only
+ * flips `hasNcbiApiKey` and reports the key as usable. A test that needs
+ * `configuration_error` passes it in, because availability is the server's to
+ * decide.
  */
 export function mockSettingsStore(initial: Settings): {
+	clearNcbiApiKey: Mock;
 	getSettings: Mock;
+	setNcbiApiKey: Mock;
 	updateSettings: Mock;
 } {
 	let current = initial;
@@ -58,8 +67,24 @@ export function mockSettingsStore(initial: Settings): {
 		},
 	);
 
+	settingsServerFnMocks.setNcbiApiKeyFn.mockImplementation(async () => {
+		current = { ...current, hasNcbiApiKey: true, ncbiAvailability: "ready" };
+		return current;
+	});
+
+	settingsServerFnMocks.clearNcbiApiKeyFn.mockImplementation(async () => {
+		current = {
+			...current,
+			hasNcbiApiKey: false,
+			ncbiAvailability: "unconfigured",
+		};
+		return current;
+	});
+
 	return {
+		clearNcbiApiKey: settingsServerFnMocks.clearNcbiApiKeyFn,
 		getSettings: settingsServerFnMocks.getSettingsFn,
+		setNcbiApiKey: settingsServerFnMocks.setNcbiApiKeyFn,
 		updateSettings: settingsServerFnMocks.updateSettingsFn,
 	};
 }

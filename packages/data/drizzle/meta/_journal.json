@@ -155,6 +155,13 @@
       "when": 1788450372090,
       "tag": "0021_add_setup_state",
       "breakpoints": true
+    },
+    {
+      "idx": 22,
+      "version": "7",
+      "when": 1788545926294,
+      "tag": "0022_encrypt_settings_ncbi_api_key",
+      "breakpoints": true
     }
   ]
 }

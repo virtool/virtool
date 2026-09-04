@@ -163,7 +163,7 @@ describe("DEFAULT_SETTINGS", () => {
 			emailSenderName: "",
 			enableSentry: true,
 			minimumPasswordLength: 8,
-			ncbiApiKey: "",
+			ncbiApiKey: null,
 			sampleAllRead: true,
 			sampleAllWrite: false,
 			sampleGroup: "none",

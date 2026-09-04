@@ -1,3 +1,9 @@
+import { randomBytes } from "node:crypto";
+import {
+	createKeyring,
+	type EncryptedValue,
+	type Keyring,
+} from "@virtool/data/crypto/keyring";
 import type { Db } from "@virtool/data/db/pg";
 import { sessions } from "@virtool/data/db/schema/sessions";
 import { settings } from "@virtool/data/db/schema/settings";
@@ -33,11 +39,28 @@ vi.mock("@sentry/tanstackstart-react", () => ({
 	setUser: vi.fn(),
 }));
 
+function key(): string {
+	return randomBytes(32).toString("base64");
+}
+
+const activeKey = key();
+
+/*
+ Reassigned by the tests that need a keyring other than the one the credential
+ was written under. The mock reads it on every access, so a test can swap the
+ process keyring the way redeploying with a different `VT_ENCRYPTION_KEY`
+ would.
+*/
+let keyring: Keyring = createKeyring(activeKey, undefined);
+
 let db: Db;
 vi.mock("../composition", () => ({
 	client: {},
 	get db() {
 		return db;
+	},
+	get keyring() {
+		return keyring;
 	},
 }));
 
@@ -61,8 +84,19 @@ afterAll(async () => {
 	await database.drop();
 });
 
+function encryptNcbiApiKey(plaintext: string): EncryptedValue {
+	const result = keyring.encrypt("ncbi_api_key", plaintext);
+
+	if (!result.ok) {
+		throw new Error("expected ready keyring");
+	}
+
+	return result.value;
+}
+
 beforeEach(async () => {
 	vi.clearAllMocks();
+	keyring = createKeyring(activeKey, undefined);
 	await db.delete(sessions);
 	await db.delete(settings);
 	await db.delete(users);
@@ -73,6 +107,17 @@ beforeEach(async () => {
 
 function call(name: string, data?: unknown) {
 	return callServerFn(handlers, name, data);
+}
+
+/** The stored envelope, which every NCBI assertion below has to read back. */
+async function storedNcbiApiKey(): Promise<EncryptedValue | null> {
+	const [row] = await db.select().from(settings);
+
+	if (!row) {
+		throw new Error("expected a settings row");
+	}
+
+	return row.ncbiApiKey;
 }
 
 describe("getSettings", () => {
@@ -106,13 +151,18 @@ describe("getSettings", () => {
 
 	it("reports the NCBI API key as a flag and never sends the key", async () => {
 		await signIn(db, getRequest, { administratorRole: "settings" });
-		await seedSettings(db, { ncbiApiKey: "secret-key" });
+		const envelope = encryptNcbiApiKey("secret-key");
+		await seedSettings(db, { ncbiApiKey: envelope });
 
 		const published = await call("getSettingsFn");
 
-		expect(published).toMatchObject({ hasNcbiApiKey: true });
+		expect(published).toMatchObject({
+			hasNcbiApiKey: true,
+			ncbiAvailability: "ready",
+		});
 		expect(published).not.toHaveProperty("ncbiApiKey");
 		expect(JSON.stringify(published)).not.toContain("secret-key");
+		expect(JSON.stringify(published)).not.toContain(envelope.ciphertext);
 	});
 
 	it("never sends the email columns to a settings administrator", async () => {
@@ -138,12 +188,29 @@ describe("getSettings", () => {
 		expect(JSON.stringify(published)).not.toContain("ciphertext");
 	});
 
-	it("reports no NCBI API key when the stored one is empty", async () => {
+	it("reports no NCBI API key when none is stored", async () => {
 		await signIn(db, getRequest, { administratorRole: "settings" });
-		await seedSettings(db, { ncbiApiKey: "" });
+		await seedSettings(db, { ncbiApiKey: null });
 
 		await expect(call("getSettingsFn")).resolves.toMatchObject({
 			hasNcbiApiKey: false,
+			ncbiAvailability: "unconfigured",
+		});
+	});
+
+	// A key written under an encryption key this process no longer holds is
+	// still a stored key. The flag says so and the availability says why it
+	// cannot be used, which is what separates a rotation mistake from a missing
+	// key in the administration view.
+	it("reports a configuration error when the stored key will not decrypt", async () => {
+		await signIn(db, getRequest, { administratorRole: "settings" });
+		await seedSettings(db, { ncbiApiKey: encryptNcbiApiKey("secret-key") });
+
+		keyring = createKeyring(key(), undefined);
+
+		await expect(call("getSettingsFn")).resolves.toMatchObject({
+			hasNcbiApiKey: true,
+			ncbiAvailability: "configuration_error",
 		});
 	});
 });
@@ -195,37 +262,138 @@ describe("updateSettings", () => {
 		await expect(call("updateSettingsFn", {})).rejects.toThrow();
 	});
 
-	it("stores an NCBI API key without echoing it back", async () => {
+	// The credential moved to its own function when it became an envelope. A
+	// patch carrying it would have to reach the keyring, and a settings patch
+	// has none.
+	it("ignores an NCBI API key in the patch", async () => {
 		await signIn(db, getRequest, { administratorRole: "settings" });
 		await seedSettings(db);
 
-		const published = await call("updateSettingsFn", {
-			ncbiApiKey: "  secret-key  ",
+		await expect(
+			call("updateSettingsFn", { ncbiApiKey: "secret-key" }),
+		).rejects.toThrow();
+
+		expect(await storedNcbiApiKey()).toBeNull();
+	});
+});
+
+describe("setNcbiApiKey", () => {
+	it("refuses an unauthenticated caller", async () => {
+		await expect(
+			call("setNcbiApiKeyFn", { apiKey: "secret-key" }),
+		).rejects.toBeInstanceOf(UnauthorizedError);
+	});
+
+	it("refuses a caller without the settings role", async () => {
+		await signIn(db, getRequest, { administratorRole: "base" });
+		await expect(
+			call("setNcbiApiKeyFn", { apiKey: "secret-key" }),
+		).rejects.toBeInstanceOf(ForbiddenError);
+	});
+
+	it("stores the key encrypted without echoing it back", async () => {
+		await signIn(db, getRequest, { administratorRole: "settings" });
+		await seedSettings(db);
+
+		const published = await call("setNcbiApiKeyFn", {
+			apiKey: "  secret-key  ",
 		});
 
-		expect(published).toMatchObject({ hasNcbiApiKey: true });
+		expect(published).toMatchObject({
+			hasNcbiApiKey: true,
+			ncbiAvailability: "ready",
+		});
 		expect(JSON.stringify(published)).not.toContain("secret-key");
 
-		const [row] = await db.select().from(settings);
-		expect(row).toMatchObject({ ncbiApiKey: "secret-key" });
+		const stored = await storedNcbiApiKey();
+
+		if (stored === null) {
+			throw new Error("expected a stored envelope");
+		}
+
+		// The trim is what makes a pasted key with trailing whitespace the key
+		// itself, and it can only be checked through a decryption.
+		expect(JSON.stringify(stored)).not.toContain("secret-key");
+		expect(keyring.decrypt("ncbi_api_key", stored)).toEqual({
+			ok: true,
+			plaintext: "secret-key",
+		});
 	});
 
-	it("clears the NCBI API key when given an empty string", async () => {
+	it("replaces a stored key", async () => {
 		await signIn(db, getRequest, { administratorRole: "settings" });
-		await seedSettings(db, { ncbiApiKey: "secret-key" });
+		await seedSettings(db, { ncbiApiKey: encryptNcbiApiKey("old-key") });
 
-		await expect(
-			call("updateSettingsFn", { ncbiApiKey: "" }),
-		).resolves.toMatchObject({ hasNcbiApiKey: false });
+		await call("setNcbiApiKeyFn", { apiKey: "new-key" });
 
-		const [row] = await db.select().from(settings);
-		expect(row).toMatchObject({ ncbiApiKey: "" });
+		const stored = await storedNcbiApiKey();
+
+		if (stored === null) {
+			throw new Error("expected a stored envelope");
+		}
+
+		expect(keyring.decrypt("ncbi_api_key", stored)).toEqual({
+			ok: true,
+			plaintext: "new-key",
+		});
 	});
 
-	it("rejects an NCBI API key longer than the column should hold", async () => {
+	it("refuses an empty key", async () => {
+		await signIn(db, getRequest, { administratorRole: "settings" });
+		await expect(call("setNcbiApiKeyFn", { apiKey: "" })).rejects.toThrow();
+	});
+
+	it("refuses a key longer than the column should hold", async () => {
 		await signIn(db, getRequest, { administratorRole: "settings" });
 		await expect(
-			call("updateSettingsFn", { ncbiApiKey: "a".repeat(129) }),
+			call("setNcbiApiKeyFn", { apiKey: "a".repeat(129) }),
 		).rejects.toThrow();
+	});
+
+	it("refuses to store a key with no encryption key configured", async () => {
+		await signIn(db, getRequest, { administratorRole: "settings" });
+		await seedSettings(db);
+
+		keyring = createKeyring(undefined, undefined);
+
+		await expect(
+			call("setNcbiApiKeyFn", { apiKey: "secret-key" }),
+		).rejects.toThrow();
+
+		expect(await storedNcbiApiKey()).toBeNull();
+	});
+});
+
+describe("clearNcbiApiKey", () => {
+	it("refuses a caller without the settings role", async () => {
+		await signIn(db, getRequest, { administratorRole: "base" });
+		await expect(call("clearNcbiApiKeyFn")).rejects.toBeInstanceOf(
+			ForbiddenError,
+		);
+	});
+
+	it("removes the stored key", async () => {
+		await signIn(db, getRequest, { administratorRole: "settings" });
+		await seedSettings(db, { ncbiApiKey: encryptNcbiApiKey("secret-key") });
+
+		await expect(call("clearNcbiApiKeyFn")).resolves.toMatchObject({
+			hasNcbiApiKey: false,
+			ncbiAvailability: "unconfigured",
+		});
+
+		expect(await storedNcbiApiKey()).toBeNull();
+	});
+
+	// Removing a key that cannot be read is the way out of a lost encryption
+	// key, so it must not depend on decrypting the value first.
+	it("removes a key that will not decrypt", async () => {
+		await signIn(db, getRequest, { administratorRole: "settings" });
+		await seedSettings(db, { ncbiApiKey: encryptNcbiApiKey("secret-key") });
+
+		keyring = createKeyring(key(), undefined);
+
+		await expect(call("clearNcbiApiKeyFn")).resolves.toMatchObject({
+			hasNcbiApiKey: false,
+		});
 	});
 });

@@ -193,6 +193,8 @@ beforeEach(() => {
 		analysisServerFnMocks.recordAnalysisViewFn,
 		analysisServerFnMocks.blastNuvsFn,
 		settingsServerFnMocks.updateSettingsFn,
+		settingsServerFnMocks.clearNcbiApiKeyFn,
+		settingsServerFnMocks.setNcbiApiKeyFn,
 		emailServerFnMocks.clearEmailApiKeyFn,
 		emailServerFnMocks.sendTestEmailFn,
 		emailServerFnMocks.setEmailApiKeyFn,
