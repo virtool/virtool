@@ -16,13 +16,12 @@ import {
 	DialogTitle,
 	DialogTrigger,
 } from "@base/Dialog";
-import Icon, { IconButton } from "@base/Icon";
+import { IconButton } from "@base/Icon";
 import { InputError, InputGroup, InputLabel, InputSimple } from "@base/Input";
 import LoadingPlaceholder from "@base/LoadingPlaceholder";
 import QueryError from "@base/QueryError";
 import SaveButton from "@base/SaveButton";
 import { TableActionsCell, TableActionsHead, TableHead } from "@base/Table";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@base/Tabs";
 import { useListGroups } from "@groups/queries";
 import { useCreateSamples } from "@samples/queries";
 import { getCreateSampleRequest, getSampleNameFromReads } from "@samples/utils";
@@ -32,7 +31,7 @@ import {
 	getReadRowReads,
 } from "@uploads/pairing";
 import type { Label, Upload } from "@virtool/contracts";
-import { AlertCircle, CirclePlus, X } from "lucide-react";
+import { AlertCircle, X } from "lucide-react";
 import { useEffect, useState } from "react";
 import { Controller, useFieldArray, useForm } from "react-hook-form";
 import DefaultSubtractionSelector from "./DefaultSubtractionSelector";
@@ -138,7 +137,6 @@ function CreateSamplesForm({
 
 	const mutation = useCreateSamples();
 
-	const [tab, setTab] = useState("samples");
 	const [showMetadata, setShowMetadata] = useState(false);
 	const [failedCount, setFailedCount] = useState(0);
 
@@ -182,7 +180,6 @@ function CreateSamplesForm({
 				);
 
 				setFailedCount(failed.length);
-				setTab("samples");
 				replace(
 					values.samples.filter((sample) =>
 						failedKeys.has(sample.reads.map((read) => read.id).join()),
@@ -201,7 +198,7 @@ function CreateSamplesForm({
 	}
 
 	return (
-		<form onSubmit={handleSubmit(onSubmit, () => setTab("samples"))}>
+		<form onSubmit={handleSubmit(onSubmit)}>
 			{failedCount > 0 && (
 				<Alert color="red" icon={AlertCircle}>
 					<span>
@@ -217,20 +214,12 @@ function CreateSamplesForm({
 				{mutation.isError && mutation.error.message}
 			</InputError>
 
-			<Tabs value={tab} onValueChange={setTab}>
-				<TabsList aria-label="Sample creation" className="mb-4">
-					<TabsTrigger value="samples">Samples</TabsTrigger>
-					<TabsTrigger value="settings">Settings</TabsTrigger>
-				</TabsList>
-				<TabsContent
-					value="samples"
-					forceMount
-					className="data-[state=inactive]:hidden"
-				>
-					<BoxGroup className="overflow-x-auto">
-						<BoxGroupTable className="table-fixed min-w-128" variant="data">
+			<div className="flex flex-col gap-6 lg:flex-row">
+				<div className="min-w-0 flex-1">
+					<BoxGroup className="max-h-[60vh] overflow-y-auto">
+						<BoxGroupTable className="table-fixed" variant="data">
 							<caption className="sr-only">Samples</caption>
-							<TableHead>
+							<TableHead className="sticky top-0 z-10">
 								<th scope="col">Name</th>
 								<th scope="col">Read Files</th>
 								<th className="w-28" scope="col">
@@ -284,12 +273,8 @@ function CreateSamplesForm({
 							</tbody>
 						</BoxGroupTable>
 					</BoxGroup>
-				</TabsContent>
-				<TabsContent
-					value="settings"
-					forceMount
-					className="data-[state=inactive]:hidden"
-				>
+				</div>
+				<div className="w-full min-w-0 lg:w-80 lg:shrink-0">
 					<p className="mb-4 text-sm text-gray-500">Applies to every sample.</p>
 					<Controller
 						control={control}
@@ -357,8 +342,8 @@ function CreateSamplesForm({
 						)}
 						name="subtractionIds"
 					/>
-				</TabsContent>
-			</Tabs>
+				</div>
+			</div>
 
 			<DialogFooter>
 				<SaveButton disabled={fields.length === 0} />
@@ -393,9 +378,9 @@ export default function CreateSamplesFromFiles({
 	return (
 		<Dialog open={open} onOpenChange={setOpen}>
 			<Button as={DialogTrigger} color="blue" size="small">
-				<Icon icon={CirclePlus} /> Create Samples
+				Create Samples
 			</Button>
-			<DialogContent size="lg">
+			<DialogContent className="w-11/12 max-w-7xl">
 				<DialogTitle>Create Samples</DialogTitle>
 				<DialogDescription>
 					Create samples from the selected read files.

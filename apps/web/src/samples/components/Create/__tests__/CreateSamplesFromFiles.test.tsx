@@ -132,9 +132,8 @@ describe("<CreateSamplesFromFiles>", () => {
 
 		await renderDialog([first, second]);
 
-		await userEvent.click(await screen.findByRole("tab", { name: "Settings" }));
 		await userEvent.click(
-			screen.getByRole("button", { name: "Show Metadata Fields" }),
+			await screen.findByRole("button", { name: "Show Metadata Fields" }),
 		);
 		await userEvent.type(await screen.findByLabelText("Isolate"), "Clone AB");
 		await userEvent.type(screen.getByLabelText("Host"), "Apple");
@@ -182,8 +181,6 @@ describe("<CreateSamplesFromFiles>", () => {
 		});
 		await userEvent.clear(field);
 		await userEvent.type(field, "Sample A");
-		await userEvent.click(screen.getByRole("tab", { name: "Settings" }));
-		await userEvent.click(screen.getByRole("tab", { name: "Samples" }));
 		expect(
 			screen.getByRole("textbox", { name: "Name for sample_one.fastq.gz" }),
 		).toHaveValue("Sample A");
@@ -234,13 +231,8 @@ describe("<CreateSamplesFromFiles>", () => {
 			}),
 		);
 
-		await userEvent.click(screen.getByRole("tab", { name: "Settings" }));
 		await submitForm();
 
-		expect(screen.getByRole("tab", { name: "Samples" })).toHaveAttribute(
-			"aria-selected",
-			"true",
-		);
 		expect(await screen.findByText("Required Field")).toBeInTheDocument();
 		expect(createSample).not.toHaveBeenCalled();
 	});

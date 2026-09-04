@@ -4,7 +4,6 @@ import { byteSize, pluralize } from "@app/format";
 import Alert from "@base/Alert";
 import { BoxGroup, BoxGroupTable } from "@base/Box";
 import Button from "@base/Button";
-import Icon from "@base/Icon";
 import ListEmpty from "@base/ListEmpty";
 import ListHeader from "@base/ListHeader";
 import LoadingPlaceholder from "@base/LoadingPlaceholder";
@@ -20,7 +19,7 @@ import type {
 	UploadType,
 } from "@virtool/contracts";
 import { capitalize } from "es-toolkit";
-import { AlertCircle, FileUp, Trash } from "lucide-react";
+import { AlertCircle, FileUp } from "lucide-react";
 import type { MouseEvent, ReactNode } from "react";
 import { useState } from "react";
 import type { Accept } from "react-dropzone";
@@ -217,7 +216,7 @@ export function FileManager({
 									{renderSelectionAction?.(selection.selected, selection.clear)}
 									{canDelete && (
 										<Button color="red" size="small" onClick={handleDelete}>
-											<Icon icon={Trash} /> Delete
+											Delete
 										</Button>
 									)}
 								</>
