@@ -4,9 +4,6 @@ import { createFakeAnalysisMinimal } from "@tests/fake/analyses";
 import { createFakeIndexMinimal } from "@tests/fake/indexes";
 import { createFakeSample } from "@tests/fake/samples";
 import { mockCreateAnalysis } from "@tests/server-fn/analyses";
-import { mockListReadyIndexes } from "@tests/server-fn/indexes";
-import { mockGetSample } from "@tests/server-fn/samples";
-import { mockListSubtractionsShortlist } from "@tests/server-fn/subtractions";
 import { renderWithRouter } from "@tests/setup";
 import { describe, expect, it, vi } from "vitest";
 import CreateAnalysisForm from "../CreateAnalysisForm";
@@ -21,16 +18,15 @@ async function renderForm(indexId?: number) {
 		reference: { id: 1, name: "Plant Viruses" },
 	});
 
-	mockListReadyIndexes([index]);
-	mockListSubtractionsShortlist([]);
-	mockGetSample(sample);
-
 	await renderWithRouter(
 		<CreateAnalysisForm
 			compatibleWorkflows={getCompatibleWorkflows(false)}
+			defaultSubtractions={[]}
+			indexes={[index]}
 			onClose={onClose}
 			sampleCount={1}
 			sampleIds={[sample.id]}
+			subtractions={[]}
 		/>,
 	);
 
