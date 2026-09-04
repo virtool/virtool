@@ -216,7 +216,7 @@ function CreateSamplesForm({
 
 			<div className="flex flex-col gap-6 lg:flex-row">
 				<div className="min-w-0 flex-1">
-					<BoxGroup className="max-h-[60vh] overflow-y-auto">
+					<BoxGroup className="max-h-192 overflow-y-auto">
 						<BoxGroupTable className="table-fixed" variant="data">
 							<caption className="sr-only">Samples</caption>
 							<TableHead className="sticky top-0 z-10">
