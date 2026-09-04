@@ -28,7 +28,7 @@
 		"pino": "^10.1.0",
 		"tar-stream": "^3.2.0",
 		"undici": "^8.10.0",
-		"zod": "^4.3.6"
+		"zod": "^4.5.4"
 	},
 	"devDependencies": {
 		"@types/node": "^26.4.1",

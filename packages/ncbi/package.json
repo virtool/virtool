@@ -21,7 +21,7 @@
 		"@virtool/contracts": "workspace:*",
 		"@virtool/logger": "workspace:*",
 		"fast-xml-parser": "^5.10.1",
-		"zod": "^4.3.6"
+		"zod": "^4.5.4"
 	},
 	"devDependencies": {
 		"vitest": "^4.1.11"
