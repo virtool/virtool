@@ -1,6 +1,6 @@
 # @virtool/internal
 
-Virtool's internal service: **one** image carrying three processes that share a
+Virtool's internal service: **one** image carrying four processes that share a
 schema, a data layer and an object store but not a lifecycle. The subcommand is
 the first argument to the bundle (`node dist/index.mjs <command>`):
 
@@ -9,6 +9,7 @@ the first argument to the bundle (`node dist/index.mjs <command>`):
 | `serve` | The jobs API HTTP server workflow runners claim, update, and finish jobs through. |
 | `run` | The periodic task spawner and the task runner, in one long-lived process. |
 | `migrate` | Applies pending Drizzle migrations, then exits. Run as an init Job. |
+| `operations` | Inspects and runs the database audits and data migrations `migrate` is gated on. Run as a Job. |
 
 Image: `ghcr.io/virtool/internal`. The image is fused; the processes are not.
 `serve` scales to N request replicas, while `run` is a lease singleton — folding
@@ -19,8 +20,9 @@ each passes.
 `src/index.ts` is the dispatcher: it reads `argv[2]` and dynamically imports the
 selected command's graph, so the migration Job never loads Hono and the HTTP
 server never loads the task registry. Each command lives under its own
-directory — `src/serve/`, `src/run/`, `src/migrate/` — and owns its own config,
-Sentry service name (`jobs-api`, `tasks`, `migrate`) and fatal logging.
+directory — `src/serve/`, `src/run/`, `src/migrate/`, `src/operations/` — and
+owns its own config, Sentry service name (`jobs-api`, `tasks`, `migrate`,
+`operations`) and fatal logging.
 
 ## `serve` — the jobs API
 
@@ -197,6 +199,113 @@ The migration SQL is read off disk, not from the bundle: the Dockerfile copies
 `src/migrate/main.ts`. `VT_MIGRATIONS_PATH` overrides that so a migration can
 run outside the image against the working tree's own `packages/data/drizzle`.
 
+### Gating
+
+A migration may declare database operations it requires. `MIGRATION_GATES` in
+`src/operations/gates.ts` maps a migration tag to the operation keys that must
+have passed before it is applied:
+
+```ts
+export const MIGRATION_GATES: MigrationGates = {
+  "0031_drop_legacy_password": ["audit_legacy_identities"],
+};
+```
+
+`src/migrate/apply.ts` walks the journal in order and applies migrations in
+segments. Reaching a gated migration, it applies everything before it, then
+evaluates the gate against the `database_operations` table. Every requirement
+satisfied, it carries on; otherwise it logs one line per unsatisfied
+requirement, leaves that migration **and every migration after it** unapplied,
+and exits non-zero.
+
+A requirement is satisfied only by a row that is `passed` **at the version the
+registry declares**. Bumping an implementation's version leaves the outstanding
+pass describing work the patched implementation has not done, so the gate goes
+stale and the operation runs again.
+
+Only migrations after `0023_add_database_operations` may be gated: that
+migration creates the tables a gate is read from. Both that rule and a gate
+naming a migration the journal does not have are rejected at startup rather
+than discovered part way through a deploy.
+
+Deploying a gated migration is therefore two passes. `migrate` blocks and
+reports what it needs, an operator runs the operations, and `migrate` runs
+again and applies the rest.
+
+## `operations` — audits and data migrations
+
+Some work has to happen to the data before a schema change is safe, and a
+`.sql` file cannot express it: it needs to read a whole table without holding
+it, to write in batches it can resume, or to report what it objected to in a
+form an operator can act on. An operation is that work, and its outcome is
+recorded in `database_operations` — never inferred from logs.
+
+Two kinds. An **audit** only reads, and passes when it reports nothing. A **data
+migration** writes, in bounded batches, from a cursor it resumes from, and
+passes when it runs to completion. Either kind that reports a finding is
+`failed`; either kind that throws is `errored`, which says nothing about the
+data and calls for a re-run rather than remediation.
+
+| Subcommand | Action |
+| --- | --- |
+| `operations list` | Report every registered operation and every recorded outcome. |
+| `operations run [key…]` | Run the named operations, or all of them. Exits non-zero unless all pass. |
+| `operations export <key>` | Write one operation's outcome and findings to stdout as JSON. |
+
+Run it as a Job from the same image, with the same lean environment `migrate`
+reads:
+
+```yaml
+spec:
+  template:
+    spec:
+      restartPolicy: Never
+      containers:
+        - image: ghcr.io/virtool/internal:latest
+          name: virtool-operations
+          args: ["operations", "run"]
+          envFrom:
+            - configMapRef:
+                name: virtool-env
+```
+
+`run` takes the same session-level advisory lock `migrate` does, so a second
+Job started while one is in flight exits non-zero rather than duplicating the
+work. The lock is released when the process ends or, if it is killed, when
+Postgres reaps the backend — which is how a run left recorded as `running` is
+taken over.
+
+SIGTERM stops a data migration at the next batch boundary. The attempt is
+recorded as `errored` with its resume point intact, and the retry continues
+from it rather than starting over.
+
+### Writing one
+
+`src/operations/define.ts` is the authoring surface, and `src/operations/registry.ts`
+is where an operation is registered under the key a gate names. A body receives
+a database handle, a logger, an abort signal and a `report` callback, and
+touches none of the framework's own tables.
+
+**A body may run more than once for the same key and version.** The cursor is
+persisted after a batch returns, not inside it, so a process killed between a
+commit and that write resumes from at or before the last committed batch. Every
+batch must therefore be idempotent — by predicate, ideally, selecting only rows
+it has not already handled.
+
+Bump `version` whenever an implementation changes what it accepts or what it
+writes. Findings carry no credential material: `detail` is stored verbatim, and
+only the error path is redacted.
+
+### Inspecting and remediating
+
+1. `operations list` — what is registered, and what each has recorded.
+2. `operations export <key>` — the findings, as JSON, for the failing operation
+   a blocked `migrate` named.
+3. Remediate the data, or patch the implementation and bump its version.
+4. `operations run <key>` — the retry clears the previous attempt's findings and
+   counts the attempt.
+5. `migrate` — the gate is satisfied and the chain continues.
+
 ## Metrics
 
 Both long-lived subcommands own a private Prometheus registry and a token-gated
@@ -279,8 +388,9 @@ unset.
 | `VT_STORAGE_AZURE_ACCESS_KEY` | String | Unset | Set an Azure account key; leave unset to use managed identity. |
 | `VT_STORAGE_AZURE_ENDPOINT` | URL string | Unset | Override the Azure Blob endpoint. |
 
-`migrate` reads only `VT_POSTGRES_URL` and `VT_MIGRATIONS_PATH`, not the storage
-or metrics keys.
+`migrate` reads only `VT_POSTGRES_URL` and `VT_MIGRATIONS_PATH`, and
+`operations` reads only `VT_POSTGRES_URL`. Neither reads the storage or metrics
+keys.
 
 ## Commands
 
@@ -296,7 +406,8 @@ Run from the monorepo root.
 Migrations remain a one-shot startup step; see [the development guide](../../dev/README.md#builds-dependencies-and-rollout).
 
 Run a subcommand from the built bundle with `node dist/index.mjs serve`,
-`node dist/index.mjs run`, or `node dist/index.mjs migrate`.
+`node dist/index.mjs run`, `node dist/index.mjs migrate`, or
+`node dist/index.mjs operations <list|run|export>`.
 
 ## Testing
 

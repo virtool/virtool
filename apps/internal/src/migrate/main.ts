@@ -1,9 +1,16 @@
 import { fileURLToPath } from "node:url";
 import { resolveFileBacked } from "@virtool/contracts/env";
 import { createDb } from "@virtool/data/db/pg";
+import {
+	acquireOperationsLock,
+	releaseOperationsLock,
+} from "@virtool/data/operations/data";
 import { createLogger } from "@virtool/logger";
-import { migrate } from "drizzle-orm/postgres-js/migrator";
 import { z } from "zod";
+
+import { MIGRATION_GATES } from "../operations/gates";
+import { OPERATIONS } from "../operations/registry";
+import { applyGatedMigrations } from "./apply";
 
 /**
  * The name this entrypoint reports under, in logs and in `application_name`.
@@ -54,31 +61,82 @@ async function doMigrate(): Promise<void> {
 
 	const migrationsFolder = env.VT_MIGRATIONS_PATH ?? DEFAULT_MIGRATIONS_PATH;
 
-	// One connection: migrations are serial by construction, and a pool would
-	// leave idle backends open for the length of a DDL statement that may hold
-	// locks the rest of the fleet is waiting on.
+	// One connection: migrations are serial by construction, a pool would leave
+	// idle backends open for the length of a DDL statement that may hold locks
+	// the rest of the fleet is waiting on, and the run lock below is held on a
+	// single backend for the length of the run.
 	const { client, db } = createDb(
 		{ postgresUrl: env.VT_POSTGRES_URL, postgresPoolMax: 1 },
 		SERVICE,
 	);
 
 	try {
-		logger.info({ migrationsFolder }, "applying migrations");
-
 		/*
-		 The table and schema are pinned to the same values `drizzle.config.ts`
-		 sets, and to the ones production's baseline row was stamped into by hand.
-		 They are drizzle-orm's defaults today; naming them here means a default
-		 moving on either side cannot orphan that stamp and re-run `0000` against a
-		 database that already has every table in it.
+		 The same lock an operations run takes. A gate is a decision about what
+		 the database contains, so evaluating one while an operation is changing
+		 that answer — or applying a migration underneath an operation that is
+		 still reading — is exactly what the lock exists to prevent.
 		*/
-		await migrate(db, {
-			migrationsFolder,
-			migrationsSchema: "drizzle",
-			migrationsTable: "__drizzle_migrations",
-		});
+		if (!(await acquireOperationsLock(client))) {
+			logger.error(
+				"another migration or operations run holds the lock; not applying migrations",
+			);
+			process.exitCode = 1;
+			return;
+		}
 
-		logger.info("migrations applied");
+		try {
+			logger.info({ migrationsFolder }, "applying migrations");
+
+			/*
+			 The table and schema are pinned to the same values `drizzle.config.ts`
+			 sets, and to the ones production's baseline row was stamped into by
+			 hand. They are drizzle-orm's defaults today; naming them here means a
+			 default moving on either side cannot orphan that stamp and re-run
+			 `0000` against a database that already has every table in it.
+			*/
+			const result = await applyGatedMigrations({
+				db,
+				logger,
+				migrationsFolder,
+				migrationsSchema: "drizzle",
+				migrationsTable: "__drizzle_migrations",
+				gates: MIGRATION_GATES,
+				registry: OPERATIONS,
+			});
+
+			if (result.blockedAt === undefined) {
+				logger.info(
+					{ applied_through: result.appliedThrough },
+					"migrations applied",
+				);
+				return;
+			}
+
+			for (const blocker of result.blockers) {
+				logger.error(
+					{
+						tag: blocker.tag,
+						operation: blocker.key,
+						version: blocker.version,
+						reason: blocker.reason,
+					},
+					blocker.detail,
+				);
+			}
+
+			logger.error(
+				{
+					blocked_at: result.blockedAt,
+					applied_through: result.appliedThrough,
+				},
+				"stopped at a gated migration whose required operations have not passed",
+			);
+
+			process.exitCode = 1;
+		} finally {
+			await releaseOperationsLock(client);
+		}
 	} finally {
 		await client.end();
 	}
@@ -86,6 +144,10 @@ async function doMigrate(): Promise<void> {
 
 /**
  * Apply pending Drizzle migrations — the `migrate` subcommand.
+ *
+ * Stops at the first migration whose required database operations have not
+ * passed and exits non-zero, leaving that migration and every one after it
+ * unapplied. See `./apply` for what a gate is evaluated against.
  *
  * A function rather than module-scope side effects so the merged binary's
  * dispatcher decides when it runs, and so importing this module costs nothing.

@@ -374,6 +374,24 @@ visible state publishes the corresponding `tasks` event. The execution and
 shutdown contracts are documented in
 [`apps/internal/README.md`](../../apps/internal/README.md).
 
+## Database operations
+
+`src/operations/data.ts` owns persistence for the gated database operations
+framework: the `database_operations` row recording what an audit or data
+migration concluded, the `database_operation_findings` rows it objected with,
+the resume point a data migration continues from, and the session-level
+advisory lock that serializes runs.
+
+A row is keyed by `(key, version)`. A gate is satisfied only by a passing row at
+the version the running image declares, so patching an implementation and
+bumping its version leaves the outstanding pass describing work that
+implementation has not done.
+
+`0023_add_database_operations` creates both tables and is the framework's
+bootstrap: no migration at or before it may be gated. The definitions, the
+executor, the gate and the operator workflow live in
+[`apps/internal/README.md`](../../apps/internal/README.md#operations--audits-and-data-migrations).
+
 ## Testing
 
 Tests run as one Node Vitest project against a Postgres testcontainer. The

@@ -15,6 +15,7 @@ export * from "./hmms";
 export * from "./indexes";
 export * from "./jobs";
 export * from "./labels";
+export * from "./operations";
 export * from "./otus";
 export * from "./references";
 export * from "./samples";
