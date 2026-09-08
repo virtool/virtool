@@ -43,11 +43,7 @@ const findUnbuiltChangesSchema = referenceIdSchema.extend({
 	perPage: perPageSchema,
 });
 
-// Wrapped in createServerOnlyFn so the compiler can strip these bodies — and the
-// ./data imports they reference — from the client bundle. A plain top-level
-// helper would pin ./data and its postgres transitive dependency in the client
-// graph.
-const rethrowAsHttp = createServerOnlyFn((err: unknown): never => {
+function rethrowAsHttp(err: unknown): never {
 	if (err instanceof IndexNotFoundError) {
 		setResponseStatus(404);
 		throw new ClientError("Index not found.", 404);
@@ -73,7 +69,7 @@ const rethrowAsHttp = createServerOnlyFn((err: unknown): never => {
 		throw new ClientError(err.message, 400);
 	}
 	throw err;
-});
+}
 
 const authorizeBuild = createServerOnlyFn(
 	async (referenceId: number, userId: number): Promise<void> => {

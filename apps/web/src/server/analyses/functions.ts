@@ -65,9 +65,7 @@ const blastSchema = analysisIdSchema.extend({
 	sequenceIndex: z.number().int().nonnegative(),
 });
 
-// Wrapped in createServerOnlyFn so the compiler can strip this body — and the
-// ./data imports it references — from the client bundle.
-const rethrowAsHttp = createServerOnlyFn((err: unknown): never => {
+function rethrowAsHttp(err: unknown): never {
 	if (err instanceof AnalysisNotFoundError) {
 		setResponseStatus(404);
 		throw new ClientError("Analysis not found.", 404);
@@ -95,7 +93,7 @@ const rethrowAsHttp = createServerOnlyFn((err: unknown): never => {
 	// HMM annotation — is a data-integrity failure rather than a client mistake,
 	// and surfaces as a 500 that reaches Sentry.
 	throw err;
-});
+}
 
 // The `authenticated()` floor guarantees a signed-in caller; an analysis's own
 // visibility is entirely its parent sample's, so this resolves that sample's

@@ -1,4 +1,4 @@
-import { createServerFn, createServerOnlyFn } from "@tanstack/react-start";
+import { createServerFn } from "@tanstack/react-start";
 import { setResponseStatus } from "@tanstack/react-start/server";
 import type { Genbank } from "@virtool/contracts";
 import { getSettings } from "@virtool/data/settings/data";
@@ -26,7 +26,7 @@ const accessionSchema = z.object({
 		.regex(/^[A-Za-z0-9._-]+$/),
 });
 
-const rethrowAsHttp = createServerOnlyFn((err: unknown): never => {
+function rethrowAsHttp(err: unknown): never {
 	if (err instanceof NcbiUnreachableError) {
 		setResponseStatus(502);
 		throw new ClientError("Could not reach NCBI.", 502);
@@ -43,7 +43,7 @@ const rethrowAsHttp = createServerOnlyFn((err: unknown): never => {
 	}
 
 	throw err;
-});
+}
 
 /**
  * Find a sequence in GenBank by accession, so that the sequence form can fill
