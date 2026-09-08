@@ -32,6 +32,12 @@ class FakeCoast:
     def certificate(self, name):
         return "test certificate"
 
+    def is_running(self, name):
+        return self.items[name]["status"] != "stopped"
+
+    def resume(self, name, status):
+        self.command("start", name)
+
     def clear_url(self, record):
         self.events.append(("clear_url", record["name"]))
 
@@ -118,6 +124,73 @@ class LifecycleTests(unittest.TestCase):
         self.assertIn(first["data_id"], self.backend.databases)
         self.assertIn(first["data_id"], self.backend.blobs)
         self.assertIn(("start", first["name"]), self.backend.events)
+
+    def test_stale_running_status_resumes_without_recreating_data(self):
+        first = self.ensure()
+        with patch.object(self.backend, "ready", side_effect=[False, True]), \
+                patch.object(self.backend, "is_running", return_value=False), \
+                patch.object(self.backend, "resume") as resume:
+            second = self.ensure()
+        resume.assert_called_once_with(first["name"], "running")
+        self.assertEqual(second["data_id"], first["data_id"])
+
+    def test_resume_clears_previous_boot_proxy_pids_before_coast_start(self):
+        backend = coast.Coast(self.root, "virtool")
+        with patch.object(backend, "is_running", side_effect=[False, True]), \
+                patch.object(backend, "check_resume_ports"), \
+                patch.object(backend, "restore_bridge"), \
+                patch.object(coast, "run", return_value="") as command:
+            backend.resume("secondary", "running")
+        calls = [call.args[0] for call in command.call_args_list]
+        self.assertEqual(calls[0][-2:], ["stop", "secondary"])
+        self.assertEqual(calls[1], ["docker", "start", "virtool-coasts-secondary"])
+        self.assertIn("shared-service-proxies/*.pid", calls[2][-1])
+        self.assertEqual(calls[3][-2:], ["start", "secondary"])
+
+    def test_resume_rejects_false_success(self):
+        backend = coast.Coast(self.root, "virtool")
+        with patch.object(backend, "is_running", return_value=False), \
+                patch.object(backend, "check_resume_ports"), \
+                patch.object(backend, "restore_bridge"), \
+                patch.object(coast, "run", return_value=""):
+            with self.assertRaisesRegex(RuntimeError, "outer container exited"):
+                backend.resume("secondary", "stopped")
+
+    def test_occupied_port_fails_before_starting_or_changing_networks(self):
+        backend = coast.Coast(self.root, "virtool")
+        with coast.socket.socket() as listener:
+            listener.bind(("0.0.0.0", 0))
+            listener.listen()
+            port = listener.getsockname()[1]
+            with patch.object(backend, "ports", return_value=[{"dynamic_port": port}]), \
+                    patch.object(backend, "is_running", return_value=False), \
+                    patch.object(coast, "run") as command:
+                with self.assertRaisesRegex(RuntimeError, f"reserved host port {port}"):
+                    backend.resume("secondary", "stopped")
+            command.assert_not_called()
+
+    def test_missing_bridge_is_restored_without_touching_shared_networks(self):
+        backend = coast.Coast(self.root, "virtool")
+        configuration = [{"HostConfig": {"NetworkMode": "bridge"},
+                          "NetworkSettings": {"Networks": {"coast-shared-virtool": {}}}}]
+        with patch.object(coast, "run", return_value=coast.json.dumps(configuration)) as command:
+            backend.restore_bridge("secondary")
+        self.assertEqual(command.call_args_list[-1].args[0],
+                         ["docker", "network", "connect", "bridge", "virtool-coasts-secondary"])
+
+    def test_discovery_excludes_orphans_and_private_data_and_tracks_removal(self):
+        first = self.ensure()
+        second = self.ensure("second", "feature/second")
+        directory = Path(first["worktree"]) / "apps/web/src"
+        directory.mkdir(parents=True)
+        with patch.object(coast, "worktree_key", side_effect=["first", None]):
+            self.lifecycle.publish_instances()
+        self.assertEqual(coast.read_json(directory / ".dev-instances.json"), [
+            {key: first[key] for key in ("name", "branch", "url", "state")}
+        ])
+        with patch.object(coast, "worktree_key", return_value="first"):
+            self.lifecycle.remove("second")
+        self.assertNotIn(second["name"], (directory / ".dev-instances.json").read_text())
 
     def test_primary_starts_provisioned_images_without_rebuilding_idle_instance(self):
         record = self.ensure(worktree=self.root)

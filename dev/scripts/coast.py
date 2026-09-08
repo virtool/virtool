@@ -179,6 +179,41 @@ class Coast:
     def compose(self, name, *args):
         return self.command("docker", "--root", name, "compose", *args)
 
+    def is_running(self, name):
+        return run(["docker", "inspect", "--format", "{{.State.Running}}",
+                    f"{self.project}-coasts-{name}"], self.root) == "true"
+
+    def check_resume_ports(self, name):
+        for mapping in self.ports(name):
+            port = mapping["dynamic_port"]
+            with socket.socket() as listener:
+                listener.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+                try:
+                    listener.bind(("0.0.0.0", port))
+                except OSError as error:
+                    raise RuntimeError(f"Cannot resume {name}: reserved host port {port} is unavailable. Release it and retry ensure; the instance URL and data are unchanged.") from error
+
+    def restore_bridge(self, name):
+        outer = f"{self.project}-coasts-{name}"
+        configuration = json.loads(run(["docker", "inspect", outer], self.root))[0]
+        if (configuration["HostConfig"]["NetworkMode"] == "bridge"
+                and "bridge" not in configuration["NetworkSettings"]["Networks"]):
+            run(["docker", "network", "connect", "bridge", outer], self.root, self.log)
+
+    def resume(self, name, status):
+        if not self.is_running(name):
+            self.check_resume_ports(name)
+            if status != "stopped":
+                self.command("stop", name)
+            self.restore_bridge(name)
+            outer = f"{self.project}-coasts-{name}"
+            run(["docker", "start", outer], self.root, self.log)
+            run(["docker", "exec", outer, "sh", "-ec",
+                 "rm -f /var/run/coast/shared-service-proxies/*.pid"], self.root, self.log)
+        self.command("start", name)
+        if not self.is_running(name):
+            raise RuntimeError(f"Coast reported startup success but {name}'s outer container exited; inspect docker logs and retry ensure")
+
     def check_worktree(self, record):
         branch = run(["docker", "exec", f"{self.project}-coasts-{record['name']}",
                       "git", "-c", "safe.directory=/workspace", "-C", "/workspace",
@@ -238,6 +273,8 @@ class Coast:
              "--connection-string", connection, "--output", "none"], self.root, self.log)
 
     def ready(self, record):
+        if not self.is_running(record["name"]):
+            return False
         services = self.api("/ps", {"project": self.project, "name": record["name"]})["services"]
         running = {service["name"] for service in services if service["status"] == "running"}
         if not {"web", "jobs-api", "tasks", "proxy"}.issubset(running):
@@ -262,6 +299,24 @@ class Lifecycle:
 
     def save(self, key, record):
         write_json(self.registry / "instances" / f"{key}.json", record)
+        self.publish_instances()
+
+    def publish_instances(self):
+        with lock(self.registry / "discovery.lock"):
+            active = []
+            for path in sorted((self.registry / "instances").glob("*.json")):
+                record = read_json(path)
+                try:
+                    if worktree_key(Path(record["worktree"]), self.registry) == record["key"]:
+                        active.append(record)
+                except (OSError, RuntimeError, KeyError):
+                    continue
+            listing = [{key: record[key] for key in ("name", "branch", "url", "state")}
+                       for record in active if record.get("url")]
+            for record in active:
+                directory = Path(record["worktree"]) / "apps/web/src"
+                if directory.is_dir():
+                    write_json(directory / ".dev-instances.json", listing)
 
     def build(self, primary):
         build_hash = fingerprint(primary)
@@ -318,8 +373,8 @@ class Lifecycle:
             record["provisioned"] = True
             record["image_hash"] = build_hash
             self.save(key, record)
-        if instance["status"] == "stopped":
-            self.coast.command("start", record["name"])
+        if instance["status"] == "stopped" or not self.coast.is_running(record["name"]):
+            self.coast.resume(record["name"], instance["status"])
         ports = self.coast.ports(record["name"])
         port = next(port["dynamic_port"] for port in ports if port["logical_name"] == "https")
         record["url"] = f"https://{record['hostname']}:{port}"
@@ -376,6 +431,7 @@ class Lifecycle:
             self.coast.command("rm", record["name"])
         self.coast.clear_url(record)
         path.unlink()
+        self.publish_instances()
         print(f"Removed {record['name']}, its database, and its blobs")
 
 

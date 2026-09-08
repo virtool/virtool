@@ -41,7 +41,14 @@ Coast development supplies `VT_DEV_INSTANCE_FILE`, containing the instance
 name, branch, worktree path, and browser URL. Vite resolves the file-backed
 `VT_DEV_INSTANCE` key and defines `__DEV_INSTANCE__` only while serving in
 development. Production builds and tests define it as `null`. The development
-badge links to Coastguard; document titles include the branch and instance.
+badge links directly to other managed instances in new tabs and to Coastguard;
+document titles include the branch and instance. The lifecycle controller
+publishes a Git- and Docker-ignored `src/.dev-instances.json` containing only
+names, branches, URLs, and last reported lifecycle states. Vite serves it at
+`/__dev/instances` only during managed development, accepts only same-origin
+GET requests, and excludes it from file watching so lifecycle updates do not
+reload open tabs. The badge polls every five seconds while expanded. Neither
+the browser nor Vite receives access to Docker or the Coast control API.
 See [the development environment guide](../../dev/README.md#coasts-and-worktrunk)
 for lifecycle commands and HTTPS certificate setup.
 

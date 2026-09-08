@@ -97,29 +97,43 @@ concurrent requests, and names containing slashes or spaces.
 
 Managed instances use Caddy and the shared Coast CA, with a fixed HTTPS origin
 at their unique hostname and dynamic port. Legacy manually started trials still
-authenticate at `http://localhost:9900`. Browser validation is required before
-marking the multi-tab acceptance complete.
+authenticate at `http://localhost:9900`. Validation evidence and remaining
+limitations are recorded in [the development guide](dev/README.md#section-2-validation).
 
-- [ ] Choose and implement a stable per-instance origin, using Coasts routing
+- [x] Choose and implement a stable per-instance origin, using Coasts routing
   if sufficient or a shared local proxy if needed. Resolve HTTPS and passkey
   requirements before choosing a hostname scheme.
-- [ ] Configure `VT_PUBLIC_ORIGIN`, auth callbacks, and cookie isolation per
+- [x] Configure `VT_PUBLIC_ORIGIN`, auth callbacks, and cookie isolation per
   instance. Switching the checked-out Coast must not change another tab's
   application or session.
-- [ ] Verify HMR, authenticated requests, uploads/downloads, and event streams
+- [x] Verify HMR, authenticated requests, uploads/downloads, and event streams
   through the chosen origin.
-- [ ] Display the worktree/branch and Coast instance in Virtool's development
+- [x] Display the worktree/branch and Coast instance in Virtool's development
   UI and tab title. Add a development-only switcher linking to other instances;
   keep discovery/control access local and out of production builds.
-- [ ] Reuse `wt list` and the Coast dashboard for overview initially. Evaluate
+- [x] Reuse `wt list` and the Coast dashboard for overview initially. Evaluate
   whether a separate TUI adds anything after lifecycle and browser switching
   work reliably.
-- [ ] Verify occupied-port handling, including fixed shared-service ports,
+- [x] Verify occupied-port handling, including fixed shared-service ports,
   alongside the existing test Compose stack and optional Minikube environment.
 
 Acceptance: two authenticated tabs stay on their respective worktrees while
 the terminal switches between them; identity is visible and links open the
 intended instance without port conflicts.
+
+The overview decision is `wt list` plus Coastguard, with the badge handling
+browser switching; no separate TUI is needed for this scope. The root Compose
+test stack remained running during the two-instance checks. Fixed occupied
+ports rejected another listener, and an occupied reserved HTTPS port failed
+before startup without changing the instance URL or data identity.
+
+Additional validation remains outside the password-session acceptance:
+
+- [ ] Complete passkey enrollment and sign-in through the application's auth
+  integration. Chromium accepts the secondary instance's RP hostname, but
+  registration currently returns 401 with the legacy login session.
+- [ ] Repeat coexistence checks with optional Minikube running. It was stopped;
+  available memory was below its configured 16 GiB, so it was left stopped.
 
 ## 3. Shorten feedback loops
 

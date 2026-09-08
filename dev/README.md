@@ -57,6 +57,23 @@ Downloads stream through the authenticated web route. Authentication uses this e
 port; cookies are host-only and passkeys use the instance hostname as their RP
 ID. Terminal switches never call `coast checkout` or redirect existing tabs.
 The development badge and tab title identify the branch and instance.
+Expand the badge to open another managed instance in a new tab. The list
+refreshes every five seconds while expanded and shows the controller's last
+reported state, not a live health check. Lifecycle operations refresh discovery
+for all existing managed worktrees; orphaned records and unmanaged trials are
+excluded. Raw Coast operations bypass this publication; run `ensure` to refresh
+it. Stopped instances retain their links but must be resumed from the terminal.
+
+Discovery is a read-only, same-origin Vite endpoint backed by an ignored local
+file. It publishes no data IDs, credentials, or worktree paths, and has no
+start/stop/remove operations. The endpoint and switcher are absent from
+production output. The generated file is excluded from Docker build contexts
+and Vite watching, so switching terminals does not trigger page reloads.
+
+Use `wt list` for branch/worktree status and application links, Coastguard for
+live service status and logs, and the badge for browser switching. These cover
+the section 2 overview needs; a separate TUI would duplicate them and is not
+planned. Revisit only if a concrete missing operation appears in daily use.
 
 Coasts shares its local Caddy CA across instances. After the first successful
 startup, the controller copies the public certificate to
@@ -102,6 +119,15 @@ worktree removal and preserves a pending record for retry. Starting an instance
 with pending cleanup is refused. Only that instance's data is deleted; shared
 service volumes are never reset. Stopping an instance preserves its data.
 
+Resume checks Docker's outer-container state as well as Coast's recorded state.
+Coasts 0.1.53 can report successful startup even after the outer container has
+exited. Its shared-service setup kills PIDs saved by an earlier boot without
+checking process identity. The controller starts the stopped outer container,
+clears those obsolete proxy PID files, then lets Coast restore mounts, proxies,
+and services. It checks the outer container again and still requires application
+readiness before reporting success. This never recreates the configuration
+volume or changes the data identity.
+
 Do not use raw `coast rm` for managed instances: it leaves their database and
 blobs behind. If it was used, run the lifecycle `remove` command before
 recreating the instance. Legacy manually created trial instances are not
@@ -113,6 +139,20 @@ Azurite uses `virtool-coasts-azurite` and host port 11000. Both stay running whe
 instances stop. These ports must be free on first startup and are independent
 of Minikube and the root Compose test databases. Data separation is for
 development: instances share service credentials.
+
+If another process takes a stopped instance's reserved dynamic port, `ensure`
+reports the occupied port before starting Docker, instead of changing its
+origin. A bind race can still fail in Docker; its detailed error is in the
+lifecycle log. Release that port and retry `ensure`; do not
+remove the instance or reset its data. The root test stack uses 5432 and 27017,
+so it can run alongside the shared Coast services on 15432 and 11000. Those
+fixed shared-service ports must remain available to Coast; there is no automatic
+fallback to another port.
+
+A failed Docker port bind can also drop the stopped container's default bridge
+attachment. Resume restores a missing default bridge before starting the inner
+daemon, preserving the host-gateway route to the shared services. It does not
+disconnect shared-service networks or reset their volumes.
 
 ### Builds, dependencies, and rollout
 
@@ -159,6 +199,54 @@ Run lifecycle regression tests without Docker:
 ```bash
 PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover -s dev/scripts -p 'test_coast.py'
 ```
+
+### Section 2 validation
+
+On 2026-09-08, headless Chromium exercised the two managed instances
+`chore-coasts-dev-1afb6a5ba9` (HTTPS 57804) and
+`test-coast-integration-87d274966a` (HTTPS 53438) in one browser context:
+
+- Distinct authenticated users and host-only cookies persisted in both tabs.
+- Both switchers discovered the other instance and opened its exact application
+  URL in a new tab. Four Worktrunk switches preserved both original tabs and
+  authenticated users without navigation.
+- A source edit updated the primary tab through HMR without navigation or a
+  corresponding change in the secondary tab.
+- Both origins supported authenticated upload creation, signed Azure block
+  uploads and finalization, byte-for-byte authenticated downloads, and SSE
+  responses delivering event-stream bytes.
+- The root Compose Postgres and Mongo services remained healthy on 5432 and
+  27017 alongside Coast's shared Postgres and Azurite on 15432 and 11000.
+  Each occupied fixed port rejected a second listener. Holding the secondary's
+  reserved HTTPS port made `ensure` fail before startup, preserving its bridge,
+  URL, and data identity.
+- A controlled stale proxy PID pointing at init reproduced Coast's successful
+  start response followed by an exited outer container. The updated controller
+  recovered the same instance from Coast's stale running status. The original
+  incident's historical PID value was not retained.
+- A second stopped-instance resume with the injected stale PID also succeeded.
+  Both existing browser sessions and previously uploaded bytes survived, with
+  unchanged origins and data IDs; primary health probes stayed successful
+  throughout the secondary's fault and recovery tests.
+- The production web build contained no discovery endpoint or switcher strings,
+  including in its source maps. The development endpoint rejected foreign
+  origins, incorrect hosts, and POST requests with 403.
+
+Chromium used `ignoreHTTPSErrors` for this automated run; separate HTTPS probes
+validated the exported CA and instance hostname. OS/browser trust-store setup
+was not changed. WebAuthn accepted the application's RP hostname in a virtual
+authenticator ceremony, but full enrollment returned 401: the existing legacy
+login session is not accepted by the passkey registration endpoint. End-to-end
+passkey enrollment/sign-in and physical authenticators remain unverified.
+
+Minikube was stopped and was left stopped because available memory was below
+its configured 16 GiB. This validates coexistence with the root test Compose
+stack, not a running Kubernetes environment or first-time shared-service
+provisioning against an unrelated process occupying a fixed port.
+
+The lifecycle regression suite, production web build, `pnpm check`,
+`pnpm typecheck`, and `pnpm knip` passed. Knip reported only its existing
+`packages/pathoscope-core/**` ignore configuration hint.
 
 ## Tilt and Minikube
 

@@ -26,6 +26,7 @@ config.json
 .WT
 .coasts
 .worktrees
+**/.dev-instances.json
 env
 tags
 .vscode

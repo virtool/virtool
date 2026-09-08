@@ -1,3 +1,4 @@
+import { readFile } from "node:fs/promises";
 import path from "node:path";
 import babel from "@rolldown/plugin-babel";
 import { sentryTanstackStart } from "@sentry/tanstackstart-react/vite";
@@ -109,6 +110,44 @@ export default defineConfig(({ command, mode }) => ({
 		},
 	},
 	plugins: [
+		command === "serve" &&
+			mode !== "test" &&
+			VT_DEV_INSTANCE && {
+				name: "development-instances",
+				apply: "serve",
+				configureServer(server) {
+					const instance = JSON.parse(VT_DEV_INSTANCE);
+					server.middlewares.use(
+						async function instances(request, response, next) {
+							if (request.url !== "/__dev/instances") {
+								return next();
+							}
+							response.setHeader("Cache-Control", "no-store");
+							if (
+								request.method !== "GET" ||
+								request.headers.host !== new URL(instance.url).host ||
+								(request.headers.origin &&
+									request.headers.origin !== instance.url) ||
+								request.headers["sec-fetch-site"] === "cross-site"
+							) {
+								response.statusCode = 403;
+								return response.end();
+							}
+							try {
+								const listing = await readFile(
+									path.join(server.config.root, "src/.dev-instances.json"),
+									"utf8",
+								);
+								response.setHeader("Content-Type", "application/json");
+								response.end(listing);
+							} catch {
+								response.statusCode = 503;
+								response.end();
+							}
+						},
+					);
+				},
+			},
 		tanstackStart({
 			router: {
 				autoCodeSplitting: true,
@@ -187,6 +226,9 @@ export default defineConfig(({ command, mode }) => ({
 		],
 	},
 	server: {
+		watch: {
+			ignored: ["**/.dev-instances.json"],
+		},
 		allowedHosts: ["virtool.local", VT_DEV_SERVER_ALLOWED_HOST].filter(Boolean),
 		warmup: {
 			// Pre-transform the app shell so the first navigation is warm. The `!`
