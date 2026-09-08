@@ -83,11 +83,7 @@ const updateRightsSchema = sampleIdSchema.extend({
 // creation job is finished and will not resume.
 const DELETABLE_JOB_STATES = new Set(["cancelled", "failed", "succeeded"]);
 
-// Wrapped in createServerOnlyFn so the compiler can strip this body — and the
-// ./data imports it references — from the client bundle. A plain top-level
-// helper would pin ./data and its postgres transitive dependency in the client
-// graph.
-const rethrowAsHttp = createServerOnlyFn((err: unknown): never => {
+function rethrowAsHttp(err: unknown): never {
 	if (err instanceof SampleNotFoundError) {
 		setResponseStatus(404);
 		throw new ClientError("Sample not found.", 404);
@@ -115,7 +111,7 @@ const rethrowAsHttp = createServerOnlyFn((err: unknown): never => {
 		throw new ClientError("File is already reserved.", 400);
 	}
 	throw err;
-});
+}
 
 // The `authenticated()` floor guarantees a signed-in caller; this enforces the
 // per-sample right the operation needs on top of it. A lookup for a nonexistent

@@ -369,6 +369,28 @@ Expected 4xx outcomes set the response status and throw `ClientError` from
 not set 204, 205, or 304 because TanStack Start serializes an RPC body. Return
 `null` with 200 for deletion instead.
 
+Map domain errors in one plain, module-local
+`function rethrowAsHttp(err: unknown): never` per `functions.ts`. Hand caught
+errors to it, match known error classes with `instanceof`, and end with
+`throw err` so unknown failures retain their identity and cause. Each expected
+4xx branch sets `setResponseStatus(status)` and throws
+`new ClientError(message, status)` with the same status. Preserve feature-specific
+messages and statuses: a missing upload can be a 404 when fetched and a 400
+when selected as an input to another operation.
+
+TanStack Start serializes thrown errors, but its default error serializer keeps
+only the message. `ClientError` and our `serverErrorSerializationAdapter` preserve
+the name and status needed by query handling and Sentry filtering; setting the
+HTTP response status alone does not carry it onto the client-side error. Router
+`notFound()` and raw `Response` values do not replace this contract.
+
+Do not wrap these local mappers in `createServerOnlyFn`: the Start compiler
+removes them and their imports when it removes the handlers that call them.
+Use `createServerOnlyFn` when code remains reachable from the browser graph and
+its body must be stripped, as in the global auth and metrics middleware.
+Keep upstream-service error handling explicit, including its existing reporting
+behavior; a 502 is not an expected client 4xx.
+
 ### Server and client boundaries
 
 `apps/web` type-checks server and browser code as separate projects. Browser

@@ -1,4 +1,4 @@
-import { createServerFn, createServerOnlyFn } from "@tanstack/react-start";
+import { createServerFn } from "@tanstack/react-start";
 import { setResponseStatus } from "@tanstack/react-start/server";
 import { permissionsSchema } from "@virtool/contracts";
 import {
@@ -38,21 +38,17 @@ const updateGroupSchema = groupIdSchema.extend({
 	permissions: permissionsSchema.partial().optional(),
 });
 
-// Wrapped in createServerOnlyFn so the compiler can strip this body — and the
-// GroupNotFoundError / GroupConflictError imports it references — from the
-// client bundle. A plain top-level helper would pin ./data and its postgres
-// transitive dependency in the client graph.
-const rethrowAsHttp = createServerOnlyFn((err: unknown): never => {
+function rethrowAsHttp(err: unknown): never {
 	if (err instanceof GroupNotFoundError) {
 		setResponseStatus(404);
-		throw new ClientError("Group not found.");
+		throw new ClientError("Group not found.", 404);
 	}
 	if (err instanceof GroupConflictError) {
 		setResponseStatus(409);
-		throw new ClientError("Group name already exists.");
+		throw new ClientError("Group name already exists.", 409);
 	}
 	throw err;
-});
+}
 
 // Ordinary users need the group list to set sample rights and to pick a primary
 // group, so the reads are open to any signed-in user.

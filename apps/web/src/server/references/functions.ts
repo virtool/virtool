@@ -75,11 +75,7 @@ const addReferenceGroupSchema = referenceGroupSchema.merge(rightsSchema);
 const updateReferenceUserSchema = referenceUserSchema.merge(rightsSchema);
 const updateReferenceGroupSchema = referenceGroupSchema.merge(rightsSchema);
 
-// Wrapped in createServerOnlyFn so the compiler can strip these bodies — and the
-// ./data imports they reference — from the client bundle. A plain top-level
-// helper would pin ./data and its postgres transitive dependency in the client
-// graph.
-const rethrowAsHttp = createServerOnlyFn((err: unknown): never => {
+function rethrowAsHttp(err: unknown): never {
 	if (err instanceof ReferenceNotFoundError) {
 		setResponseStatus(404);
 		throw new ClientError("Reference not found.", 404);
@@ -105,7 +101,7 @@ const rethrowAsHttp = createServerOnlyFn((err: unknown): never => {
 		throw new ClientError(err.message, 400);
 	}
 	throw err;
-});
+}
 
 // The `authenticated()` floor guarantees a signed-in caller; this enforces the
 // per-reference right the operation needs on top of it. A full administrator

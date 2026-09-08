@@ -1,4 +1,4 @@
-import { createServerFn, createServerOnlyFn } from "@tanstack/react-start";
+import { createServerFn } from "@tanstack/react-start";
 import { setResponseStatus } from "@tanstack/react-start/server";
 import {
 	SORT_DIRECTIONS,
@@ -43,29 +43,25 @@ const uploadIdSchema = z.object({
 	id: rowIdSchema,
 });
 
-// Wrapped in createServerOnlyFn so the compiler can strip this body — and the
-// UploadNotFoundError / UploadReservedError imports it references — from the
-// client bundle. A plain top-level helper would pin ./data and its postgres
-// transitive dependency in the client graph.
-const rethrowAsHttp = createServerOnlyFn((err: unknown): never => {
+function rethrowAsHttp(err: unknown): never {
 	if (err instanceof UploadNotFoundError) {
 		setResponseStatus(404);
-		throw new ClientError("Upload not found.");
+		throw new ClientError("Upload not found.", 404);
 	}
 	if (err instanceof UploadReservedError) {
 		setResponseStatus(409);
-		throw new ClientError("Upload is reserved and in use.");
+		throw new ClientError("Upload is reserved and in use.", 409);
 	}
 	if (err instanceof UploadIncompleteError) {
 		setResponseStatus(409);
-		throw new ClientError("Upload is not complete.");
+		throw new ClientError("Upload is not complete.", 409);
 	}
 	if (err instanceof UploadSizeMismatchError) {
 		setResponseStatus(409);
-		throw new ClientError("Upload size does not match the declared size.");
+		throw new ClientError("Upload size does not match the declared size.", 409);
 	}
 	throw err;
-});
+}
 
 export const findUploadsFn = createServerFn({ method: "GET" })
 	.middleware([authenticated()])

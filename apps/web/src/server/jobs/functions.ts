@@ -1,4 +1,4 @@
-import { createServerFn, createServerOnlyFn } from "@tanstack/react-start";
+import { createServerFn } from "@tanstack/react-start";
 import { setResponseStatus } from "@tanstack/react-start/server";
 import {
 	fromStoredJobClaim,
@@ -41,17 +41,13 @@ const jobIdsSchema = z.object({
 	jobIds: z.array(rowIdSchema).min(1).max(100),
 });
 
-// Wrapped in createServerOnlyFn so the compiler can strip this body — and the
-// JobNotFoundError import it references — from the client bundle. A plain
-// top-level helper would pin ./data and its postgres transitive dependency in
-// the client graph.
-const rethrowAsHttp = createServerOnlyFn((err: unknown): never => {
+function rethrowAsHttp(err: unknown): never {
 	if (err instanceof JobNotFoundError) {
 		setResponseStatus(404);
-		throw new ClientError("Job not found.");
+		throw new ClientError("Job not found.", 404);
 	}
 	throw err;
-});
+}
 
 /**
  * Narrow a row's `workflow` onto the union the SPA reads.

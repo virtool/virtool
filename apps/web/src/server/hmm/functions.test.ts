@@ -184,7 +184,11 @@ describe("installHmm", () => {
 		await seedStatus({ updates: [{ ready: false } as HmmUpdate] });
 		const fetchSpy = vi.spyOn(globalThis, "fetch");
 
-		await expect(call("installHmmFn")).rejects.toThrow();
+		await expect(call("installHmmFn")).rejects.toMatchObject({
+			name: "ClientError",
+			message: "Install already in progress.",
+			status: 409,
+		});
 		expect(setResponseStatus).toHaveBeenCalledWith(409);
 		expect(fetchSpy).not.toHaveBeenCalled();
 		expect(await db.select().from(tasks)).toHaveLength(0);
@@ -205,7 +209,11 @@ describe("getHmm", () => {
 	it("responds 404 when the HMM is absent", async () => {
 		await signIn(db, getRequest, { administratorRole: "base" });
 
-		await expect(call("getHmmFn", { hmmId: 5000 })).rejects.toThrow();
+		await expect(call("getHmmFn", { hmmId: 5000 })).rejects.toMatchObject({
+			name: "ClientError",
+			message: "HMM not found.",
+			status: 404,
+		});
 		expect(setResponseStatus).toHaveBeenCalledWith(404);
 	});
 });

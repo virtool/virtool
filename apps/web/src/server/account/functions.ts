@@ -1,4 +1,4 @@
-import { createServerFn, createServerOnlyFn } from "@tanstack/react-start";
+import { createServerFn } from "@tanstack/react-start";
 import { setResponseStatus } from "@tanstack/react-start/server";
 import { permissionsSchema } from "@virtool/contracts";
 import {
@@ -27,17 +27,13 @@ const updateApiKeySchema = keyIdSchema.extend({
 	permissions: permissionsSchema.partial().default({}),
 });
 
-// Wrapped in createServerOnlyFn so the compiler can strip this body — and the
-// ApiKeyNotFoundError import it references — from the client bundle. A plain
-// top-level helper would pin ./data and its postgres transitive dependency in
-// the client graph.
-const rethrowAsHttp = createServerOnlyFn((err: unknown): never => {
+function rethrowAsHttp(err: unknown): never {
 	if (err instanceof ApiKeyNotFoundError) {
 		setResponseStatus(404);
-		throw new ClientError("API key not found.");
+		throw new ClientError("API key not found.", 404);
 	}
 	throw err;
-});
+}
 
 export const findApiKeysFn = createServerFn({ method: "GET" })
 	.middleware([authenticated()])
