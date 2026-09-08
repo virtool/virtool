@@ -1,0 +1,119 @@
+x-environment: &environment
+  VT_POSTGRES_URL: postgres://virtool:virtool@postgres:5432/virtool
+  VT_STORAGE_BACKEND: azure
+  VT_STORAGE_AZURE_ACCOUNT: devstoreaccount1
+  VT_STORAGE_AZURE_CONTAINER: virtool
+  VT_STORAGE_AZURE_ACCESS_KEY: Eby8vdM02xNOcqFlqUwJPLlmEtlCDXJ1OUzFT50uSRZ6IFsuFq2UVErCz4I6tq/K1SZFPTOtr/KBHBeksoGMGw==
+  VT_STORAGE_AZURE_ENDPOINT: http://azurite:10000/devstoreaccount1
+  VT_ENCRYPTION_KEY: kh+tHF0cfeestLILKMmWwfczAFrKP/92WrobKA/Md6k=
+  VT_AUTH_SECRET: dev-auth-secret-dev-auth-secret-dev
+  VT_PUBLIC_ORIGIN: http://localhost:9900
+
+x-internal-build: &internal-build
+  context: ..
+  target: internal
+
+services:
+  postgres:
+    image: postgres:18
+    environment:
+      POSTGRES_USER: virtool
+      POSTGRES_PASSWORD: virtool
+      POSTGRES_DB: virtool
+    volumes:
+      - postgres:/var/lib/postgresql
+    healthcheck:
+      test: [CMD-SHELL, pg_isready -U virtool -d virtool]
+      interval: 2s
+      timeout: 5s
+      retries: 30
+
+  azurite:
+    image: mcr.microsoft.com/azure-storage/azurite:3.36.0
+    command: azurite --blobHost 0.0.0.0 --location /data --skipApiVersionCheck --disableProductStyleUrl
+    volumes:
+      - azurite:/data
+
+  storage-init:
+    image: mcr.microsoft.com/azure-cli:2.89.1
+    environment:
+      AZURE_STORAGE_CONNECTION_STRING: DefaultEndpointsProtocol=http;AccountName=devstoreaccount1;AccountKey=Eby8vdM02xNOcqFlqUwJPLlmEtlCDXJ1OUzFT50uSRZ6IFsuFq2UVErCz4I6tq/K1SZFPTOtr/KBHBeksoGMGw==;BlobEndpoint=http://azurite:10000/devstoreaccount1;
+    entrypoint: [/bin/sh, -ec]
+    command:
+      - |
+        for attempt in $$(seq 1 60); do
+          if az storage container create --name virtool --output none; then exit 0; fi
+          sleep 2
+        done
+        exit 1
+    depends_on:
+      azurite:
+        condition: service_started
+
+  migration:
+    build: *internal-build
+    environment: *environment
+    command: [migrate]
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  jobs-api:
+    build: *internal-build
+    environment: *environment
+    command: [serve]
+    ports:
+      - "9950:9950"
+    depends_on:
+      migration:
+        condition: service_completed_successfully
+      storage-init:
+        condition: service_completed_successfully
+
+  tasks:
+    build: *internal-build
+    environment: *environment
+    command: [run]
+    depends_on:
+      migration:
+        condition: service_completed_successfully
+      storage-init:
+        condition: service_completed_successfully
+
+  web:
+    build:
+      context: ..
+      target: dev-coast
+    entrypoint: [/bin/sh, -ec]
+    command:
+      - |
+        dev_uid=$$(stat -c %u /repo/apps/web/src)
+        dev_gid=$$(stat -c %g /repo/apps/web/src)
+        mkdir -p /tmp/virtool-home /repo/apps/web/.tanstack
+        chown "$$dev_uid:$$dev_gid" /tmp/virtool-home /repo/apps/web /repo/apps/web/.tanstack /repo/apps/web/node_modules /repo/node_modules
+        exec setpriv --reuid="$$dev_uid" --regid="$$dev_gid" --clear-groups env HOME=/tmp/virtool-home pnpm --filter @virtool/web exec vite --host 0.0.0.0 --port 9900 --strictPort
+    environment: *environment
+    ports:
+      - "9900:9900"
+    volumes:
+      - ../apps/web/src:/repo/apps/web/src
+      - ../apps/web/public:/repo/apps/web/public:ro
+      - ../packages/archive/src:/repo/packages/archive/src:ro
+      - ../packages/bio/src:/repo/packages/bio/src:ro
+      - ../packages/contracts/src:/repo/packages/contracts/src:ro
+      - ../packages/data/src:/repo/packages/data/src:ro
+      - ../packages/logger/src:/repo/packages/logger/src:ro
+      - ../packages/ncbi/src:/repo/packages/ncbi/src:ro
+      - ../packages/sentry/src:/repo/packages/sentry/src:ro
+      - ../packages/service/src:/repo/packages/service/src:ro
+      - ../packages/sqlite/src:/repo/packages/sqlite/src:ro
+      - ../packages/storage/src:/repo/packages/storage/src:ro
+    depends_on:
+      migration:
+        condition: service_completed_successfully
+      storage-init:
+        condition: service_completed_successfully
+
+volumes:
+  postgres:
+  azurite:

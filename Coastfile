@@ -1,0 +1,29 @@
+[coast]
+name = "virtool"
+compose = "dev/compose.yaml"
+primary_port = "web"
+worktree_dir = [".worktrees", "${HOME}/Projects"]
+default_worktree_dir = ".worktrees"
+
+[ports]
+web = 9900
+jobs-api = 9950
+
+[volumes.postgres]
+strategy = "isolated"
+service = "postgres"
+mount = "/var/lib/postgresql"
+
+[volumes.azurite]
+strategy = "isolated"
+service = "azurite"
+mount = "/data"
+
+[assign]
+default = "none"
+
+[assign.services]
+web = "rebuild"
+migration = "rebuild"
+jobs-api = "rebuild"
+tasks = "rebuild"

@@ -24,6 +24,8 @@ config.json
 .DS_store
 .TILT_PORT
 .WT
+.coasts
+.worktrees
 env
 tags
 .vscode

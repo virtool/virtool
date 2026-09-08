@@ -1,5 +1,54 @@
 # Dev cluster
 
+## Coasts trial
+
+The root `Coastfile` uses `dev/compose.yaml` to run the core application in
+Docker through Coasts, without Tilt or Kubernetes. The root
+`docker-compose.yml` remains the disposable database test environment.
+
+With Coasts installed and Docker running, from the repository root:
+
+```bash
+coast daemon start
+coast build
+coast run trial
+coast checkout trial
+coast ui
+```
+
+Open `http://localhost:9900`. Authentication is configured for this exact
+origin: use the checked-out instance on port 9900, not its dynamic port or a
+subdomain link. Per-instance browser origins are not configured in this trial.
+If `coast` is not on PATH, the default installation is `~/.coast/bin/coast`.
+
+The stack includes web, jobs API, tasks, migrations, Postgres, and Azurite.
+Database migrations and blob-container initialization complete before the
+application starts. Web source and its shared package sources are mounted for
+live editing; dependencies and internal services are built into images. Use
+`coast rebuild trial` after changing those inputs.
+
+The web entrypoint uses the mounted source directory's UID/GID for the Vite
+process. It changes ownership only on container-local cache directories, never
+on mounted source. The web source stays writable for route-tree generation;
+public assets and shared package source are mounted read-only. Dependencies,
+caches, and database files stay in containers or Docker volumes. Commands run
+manually through `coast exec` can still write as root to its shared workspace.
+
+Each instance has isolated database and blob volumes. `coast stop trial` keeps
+the instance and its data; `coast start trial` resumes it. `coast rm trial`
+removes the instance and its isolated data. This data is independent of both
+Minikube and the root Compose test databases.
+
+Existing sibling worktrees under `~/Projects` are discoverable. Assignment
+rebuilds application images to avoid retaining another branch's bundled code.
+Use one instance per worktree when data must remain branch-specific; assigning
+a different worktree to an existing instance retains that instance's data.
+
+Workflow execution and KEDA are not included yet. Jobs requiring a workflow
+executor remain pending. Use the Minikube environment below for those tasks.
+
+## Tilt and Minikube
+
 The local Kubernetes development environment, run with Tilt on Minikube. Every
 service and workflow it deploys builds from this repository, which is why the
 tooling lives here rather than in a repository of its own.

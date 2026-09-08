@@ -7,6 +7,9 @@ data
 # without these rules, editing a manifest or the Tiltfile itself would rebuild
 # every live-edited image.
 Tiltfile
+Coastfile
+.coasts
+.worktrees
 dev
 **/dist
 docker
