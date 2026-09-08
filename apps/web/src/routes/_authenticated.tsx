@@ -1,4 +1,5 @@
 import { useFetchAccount } from "@account/account";
+import { getDocumentTitle } from "@app/development";
 import { CONTENT_SCROLL_ID } from "@app/scroll";
 import { armSessionEnd } from "@app/session";
 import * as Sse from "@app/sse/SseConnection";
@@ -89,7 +90,7 @@ function AuthenticatedLayout() {
 
 	return (
 		<>
-			<title>Virtool</title>
+			<title>{getDocumentTitle("Virtool")}</title>
 			<meta charSet="utf-8" />
 
 			<SkipLink />

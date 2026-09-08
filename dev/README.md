@@ -1,77 +1,164 @@
 # Dev cluster
 
-## Coasts trial
+## Coasts and Worktrunk
 
-The root `Coastfile` uses `dev/compose.yaml` to run the core application in
-Docker through Coasts, without Tilt or Kubernetes. The root
-`docker-compose.yml` remains the disposable database test environment.
+The root `Coastfile` uses `dev/compose.yaml` for an isolated core application
+per worktree. Postgres and Azurite are shared; each instance owns a database
+and blob container. Workflow executors still require the Minikube environment
+below. The root `docker-compose.yml` remains the database test environment.
 
-With Coasts installed and Docker running, from the repository root:
+Requires Docker Engine, Python 3.11+, Worktrunk 0.75.0, and Coasts 0.1.53.
+The integration checks the Coast version because it uses that release's local
+JSON API for state and readiness. Coasts 0.1.53 interpolates assignment paths
+into shell commands without quoting them. The controller therefore accepts
+only letters, numbers, `/`, `_`, `.`, `+`, and `-` in repository/worktree paths
+and branch names, rejecting spaces or shell metacharacters before provisioning. `coast` can be on PATH or installed at
+`~/.coast/bin/coast`.
+
+Start the daemon once, then start the current worktree:
 
 ```bash
 coast daemon start
-coast build
-coast run trial
-coast checkout trial
+python3 dev/scripts/coast.py ensure
 coast ui
 ```
 
-Open `http://localhost:9900`. Authentication is configured for this exact
-origin: use the checked-out instance on port 9900, not its dynamic port or a
-subdomain link. Per-instance browser origins are not configured in this trial.
-If `coast` is not on PATH, the default installation is `~/.coast/bin/coast`.
-
-The stack includes web, jobs API, tasks, migrations, and initialization jobs.
-Postgres and Azurite are shared services on the host Docker daemon. Database
-creation, migrations, and blob-container initialization complete before the
-application starts. Web source and its shared package sources are mounted for
-live editing; dependencies and internal services are built into images. Use
-`coast rebuild trial` after changing those inputs.
-
-The web entrypoint uses the mounted source directory's UID/GID for the Vite
-process. It changes ownership only on container-local cache directories, never
-on mounted source. The web source stays writable for route-tree generation;
-public assets and shared package source are mounted read-only. Dependencies,
-caches, and database files stay in containers or Docker volumes. Commands run
-manually through `coast exec` can still write as root to its shared workspace.
-
-Postgres uses the host volume `virtool-coasts-postgres` and port 15432; Azurite
-uses `virtool-coasts-azurite` and blob port 11000. These are independent of
-Minikube and the root Compose test databases. Coasts routes the service names
-`postgres:5432` and `azurite:10000` from each instance to these shared servers.
-Azurite 3.37.0 supports the SDK's `2026-06-06` API version without bypassing
-version checks.
-
-Each instance gets its own database and blob container, both named with a
-random `vt`-prefixed instance data ID. `database-init` persists that identity in
-the instance's `instance-config` volume and creates the database idempotently.
-The application reads its connection URL and blob-container name through the
-existing file-backed environment configuration. Coasts 0.1.53 does not wire
-its documented `auto_create_db` and connection injection into startup, so
-initialization is explicit here.
-
-`coast stop trial` keeps the instance and its data; `coast start trial` resumes
-it. `coast rm trial` removes the instance's configuration volume, but its
-database and blobs remain in the shared services. Record the instance data ID
-before removing an instance if you want to delete or recover its data later:
+After approving the project's Worktrunk hooks, `wt switch -c fix-thing` starts
+its Coast in the background. Switching to an existing worktree resumes its
+instance if stopped and leaves a healthy instance alone. Other instances keep
+running. `wt switch --no-hooks` skips automatic startup. A successful switch
+means the background operation was launched; wait for readiness before opening
+the application.
 
 ```bash
-coast docker trial compose exec -T web cat /run/virtool-dev/namespace
+python3 dev/scripts/coast.py status
+python3 dev/scripts/coast.py list
+python3 dev/scripts/coast.py ensure                 # Retry startup
+python3 dev/scripts/coast.py ensure --rebuild       # Force an image rebuild
+python3 dev/scripts/coast.py stop                  # Keep data for resume
+python3 dev/scripts/coast.py remove                # Delete instance and data
 ```
 
-Recreating a removed instance generates a new data ID. Shared services keep
-running after all instances stop. View them with `coast shared-services ps` or
-the dashboard's Shared Services view; remove them only when their data is no
-longer needed. Data separation is for development: instances share service
-credentials and can access one another's data if explicitly directed to it.
+`status` prints the last lifecycle result and the log path. Coastguard shows
+live service status. Logs are replaced on each operation; Worktrunk also keeps
+background hook output in `wt config state logs`. `--worktree <path>` targets
+another worktree. To clean an instance whose worktree was already deleted, use
+`remove --instance <name>` from any remaining worktree. `list` includes these
+pending records so bypassed hooks do not hide leftover data.
 
-Existing sibling worktrees under `~/Projects` are discoverable. Assignment
-rebuilds application images to avoid retaining another branch's bundled code.
-Use one instance per worktree when data must remain branch-specific; assigning
-a different worktree to an existing instance retains that instance's data.
+### Browser access
 
-Workflow execution and KEDA are not included yet. Jobs requiring a workflow
-executor remain pending. Use the Minikube environment below for those tasks.
+Use the HTTPS URL printed by `ensure` or shown in `wt list`. Each instance has
+a unique `*.localhost` hostname and a dynamic HTTPS port that survives
+stop/start. Caddy proxies HTTPS, HMR WebSockets, and streaming responses to
+Vite inside that Coast. Signed uploads use the same HTTPS origin: Caddy proxies
+`/devstoreaccount1/` to shared Azurite while preserving the signed resource path.
+Downloads stream through the authenticated web route. Authentication uses this exact origin, including its
+port; cookies are host-only and passkeys use the instance hostname as their RP
+ID. Terminal switches never call `coast checkout` or redirect existing tabs.
+The development badge and tab title identify the branch and instance.
+
+Coasts shares its local Caddy CA across instances. After the first successful
+startup, the controller copies the public certificate to
+`<git-common-dir>/virtool-coasts/root.crt`. Trust that certificate in your
+OS/browser once. No private key is exported and the controller does not change
+your trust store. It reads the public certificate through the proxy because
+Coasts 0.1.53 can leave the host CA directory unreadable to the developer.
+
+The root is created when the first proxy starts. Browsers normally resolve
+`*.localhost` to loopback without DNS setup. Command-line clients may need an
+explicit mapping, for example `curl --resolve <hostname>:<port>:127.0.0.1
+--cacert <root.crt> https://<hostname>:<port>/health/ready`.
+
+The controller enables project subdomain links in Coastguard and sets the
+HTTPS service's URL template. Its primary badge opens the managed instance.
+If you manually check out an instance, Coastguard may show its canonical port;
+use `wt list` or the dynamic HTTPS link on the Ports tab for the configured
+origin. Raw Vite port 9900 is not the configured authentication origin. Legacy
+trial instances still require their original `http://localhost:9900` URL.
+
+### Lifecycle and data
+
+The registry, operation locks, build cache record, and logs live in
+`<git-common-dir>/virtool-coasts/`, outside individual worktrees and Coast
+volumes. A generation marker in each worktree's Git directory survives branch
+renames and worktree moves. Git removes that marker when deleting a worktree,
+so reusing the same path cannot inherit its old data even if hooks were bypassed.
+Instance names combine a readable branch slug with a random suffix; recreating
+a removed worktree creates a new data identity. `list` flags unmatched records
+as orphaned; clean them with `remove --instance <name>`.
+
+Provisioning runs with Compose autostart disabled. The lifecycle script first
+records an instance's data ID, then writes its identity and origin into the
+isolated configuration volume before starting initialization or application
+services. Database creation, migrations, and blob-container initialization
+complete before the application starts. Coasts 0.1.53 does not wire its
+documented automatic database injection into startup, so initialization remains
+explicit.
+
+Removing a worktree through Worktrunk stops its Coast, drops its database,
+deletes its blob container, and removes the Coast. Cleanup failure blocks
+worktree removal and preserves a pending record for retry. Starting an instance
+with pending cleanup is refused. Only that instance's data is deleted; shared
+service volumes are never reset. Stopping an instance preserves its data.
+
+Do not use raw `coast rm` for managed instances: it leaves their database and
+blobs behind. If it was used, run the lifecycle `remove` command before
+recreating the instance. Legacy manually created trial instances are not
+adopted or deleted by the hooks; clean those separately after identifying their
+data ID in `/run/virtool-dev/namespace`.
+
+Shared Postgres uses `virtool-coasts-postgres` and host port 15432. Shared
+Azurite uses `virtool-coasts-azurite` and host port 11000. Both stay running when
+instances stop. These ports must be free on first startup and are independent
+of Minikube and the root Compose test databases. Data separation is for
+development: instances share service credentials.
+
+### Builds, dependencies, and rollout
+
+Hooks call the controller in the primary worktree. Keep that worktree on a
+branch containing this integration. The primary and destination worktrees must
+have matching Coast configuration; a mismatch produces an actionable failure.
+Worktrunk reads hook configuration from the invoking worktree, so older branches
+can still invoke their Tilt hooks. Merge the integration into those branches
+before relying on automatic startup or cleanup. Manual controller commands from
+the primary worktree remain available.
+
+Initial Coast builds are serialized and reused while their inputs and latest
+build ID match. Assignment changes the source mount; the controller builds
+bundled services on the host, caches them by input hash, and loads them into the
+owning Coast. Later switches rebuild when bundled source or dependency inputs
+change, but mounted web-source edits remain live. Internal services still need
+an image rebuild after edits; `ensure --rebuild` reapplies the cached images or
+builds changed inputs. Changing Coast configuration requires removing and
+recreating the instance with fresh data.
+
+Do not use `coast rebuild` with this stack. In Coasts 0.1.53 it bypasses the
+shared-service override and can launch an unintended second Compose project.
+The controller uses `coast docker ... compose` to preserve the effective
+configuration and explicitly builds the root Dockerfile's `internal` and
+`dev-coast` targets.
+
+Host dependencies are no longer installed by a blocking Worktrunk hook. Run
+`pnpm install` explicitly in worktrees where editors or host checks need them;
+container builds install their own dependencies.
+
+Vite runs as the mounted source owner's UID/GID. Source mounts stay writable
+only where generated files require it; shared package sources are read-only,
+and dependencies and caches live in containers. Prefer `coast exec <instance>
+--service web <command>` for a mapped-user shell; the controller uses root only
+for provisioning and Compose administration.
+
+`VT_COAST_BIN` overrides the executable and `VT_COAST_API` overrides the local
+API address (default `http://127.0.0.1:31415`). Both accept a `_FILE` variant.
+The API override must remain on loopback. The development UI link assumes the
+default Coastguard port.
+
+Run lifecycle regression tests without Docker:
+
+```bash
+PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover -s dev/scripts -p 'test_coast.py'
+```
 
 ## Tilt and Minikube
 

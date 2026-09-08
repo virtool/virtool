@@ -12,6 +12,7 @@ import pkg from "./package.json" with { type: "json" };
 const { VT_DEV_SERVER_ALLOWED_HOST } = resolveFileBacked([
 	"VT_DEV_SERVER_ALLOWED_HOST",
 ]);
+const { VT_DEV_INSTANCE } = resolveFileBacked(["VT_DEV_INSTANCE"]);
 
 export default defineConfig(({ command, mode }) => ({
 	build: {
@@ -51,6 +52,11 @@ export default defineConfig(({ command, mode }) => ({
 	},
 	define: {
 		__APP_VERSION__: JSON.stringify(pkg.version),
+		__DEV_INSTANCE__: JSON.stringify(
+			command === "serve" && mode !== "test" && VT_DEV_INSTANCE
+				? JSON.parse(VT_DEV_INSTANCE)
+				: null,
+		),
 	},
 	environments: {
 		ssr: {

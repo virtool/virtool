@@ -7,7 +7,9 @@ x-environment: &environment
   VT_STORAGE_AZURE_ENDPOINT: http://azurite:10000/devstoreaccount1
   VT_ENCRYPTION_KEY: kh+tHF0cfeestLILKMmWwfczAFrKP/92WrobKA/Md6k=
   VT_AUTH_SECRET: dev-auth-secret-dev-auth-secret-dev
-  VT_PUBLIC_ORIGIN: http://localhost:9900
+  VT_PUBLIC_ORIGIN_FILE: /run/virtool-dev/public-origin
+  VT_UPLOADS_CHUNKED: "true"
+  VT_STORAGE_AZURE_UPLOAD_URL_FILE: /run/virtool-dev/public-origin
 
 x-internal-build: &internal-build
   context: ..
@@ -117,7 +119,10 @@ services:
         mkdir -p /tmp/virtool-home /repo/apps/web/.tanstack
         chown "$$dev_uid:$$dev_gid" /tmp/virtool-home /repo/apps/web /repo/apps/web/.tanstack /repo/apps/web/node_modules /repo/node_modules
         exec setpriv --reuid="$$dev_uid" --regid="$$dev_gid" --clear-groups env HOME=/tmp/virtool-home pnpm --filter @virtool/web exec vite --host 0.0.0.0 --port 9900 --strictPort
-    environment: *environment
+    environment:
+      <<: *environment
+      VT_DEV_INSTANCE_FILE: /run/virtool-dev/instance
+      VT_DEV_SERVER_ALLOWED_HOST_FILE: /run/virtool-dev/hostname
     ports:
       - "9900:9900"
     volumes:
@@ -140,7 +145,27 @@ services:
       storage-init:
         condition: service_completed_successfully
 
+  proxy:
+    image: caddy:2.10.2
+    entrypoint: [/bin/sh, -ec]
+    command:
+      - |
+        export VT_DEV_HOSTNAME="$$(cat /run/virtool-dev/hostname)"
+        exec caddy run --config /etc/caddy/Caddyfile --adapter caddyfile
+    ports:
+      - "9443:9443"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - instance-config:/run/virtool-dev:ro
+      - caddy-data:/data
+      - caddy-config:/config
+    depends_on:
+      web:
+        condition: service_started
+
 volumes:
   instance-config:
   postgres:
   azurite:
+  caddy-data:
+  caddy-config:

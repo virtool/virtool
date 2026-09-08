@@ -35,6 +35,16 @@ and release pipeline.
 
 ## Client development
 
+### Coast instance identity
+
+Coast development supplies `VT_DEV_INSTANCE_FILE`, containing the instance
+name, branch, worktree path, and browser URL. Vite resolves the file-backed
+`VT_DEV_INSTANCE` key and defines `__DEV_INSTANCE__` only while serving in
+development. Production builds and tests define it as `null`. The development
+badge links to Coastguard; document titles include the branch and instance.
+See [the development environment guide](../../dev/README.md#coasts-and-worktrunk)
+for lifecycle commands and HTTPS certificate setup.
+
 ### Imports and bundles
 
 - Use an existing specific path alias across directories; reserve `@/*` for
