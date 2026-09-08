@@ -44,8 +44,8 @@ const analysisIdSchema = z.object({
 
 const findAnalysesSchema = z.object({
 	sampleId: rowIdSchema.optional(),
-	userIds: z.array(rowIdSchema).default([]),
-	workflows: z.array(AnalysisWorkflow).default([]),
+	userIds: z.array(rowIdSchema).max(100).default([]),
+	workflows: z.array(AnalysisWorkflow).max(100).default([]),
 	page: pageSchema,
 	perPage: perPageSchema,
 	// A direction without a column has nothing to order by, so the pair is
@@ -124,7 +124,7 @@ const authorizeAnalysis = createServerOnlyFn(
 	},
 );
 
-export const findAnalysesFn = createServerFn({ method: "GET" })
+export const findAnalysesFn = createServerFn({ method: "POST" })
 	.middleware([authenticated()])
 	.validator(findAnalysesSchema)
 	.handler(async ({ context, data }) => {

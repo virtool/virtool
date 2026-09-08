@@ -144,7 +144,7 @@ export const findJobsFn = createServerFn({ method: "GET" })
 		};
 	});
 
-export const getJobsFn = createServerFn({ method: "GET" })
+export const getJobsFn = createServerFn({ method: "POST" })
 	.middleware([authenticated()])
 	.validator(jobIdsSchema)
 	.handler(async ({ data }): Promise<Job[]> => {

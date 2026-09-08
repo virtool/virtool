@@ -11,13 +11,13 @@ import { z } from "zod";
 import { authenticated, permission } from "../auth/policy";
 import { db } from "../composition";
 import { ClientError } from "../errors";
-import { rowIdSchema } from "../validation";
+import { rowIdSchema, searchTermSchema } from "../validation";
 import { installUpdate } from "./service";
 
 const findHmmsSchema = z.object({
 	page: z.number().int().min(1).default(1),
 	perPage: z.number().int().min(1).max(100).default(25),
-	term: z.string().default(""),
+	term: searchTermSchema,
 });
 
 const hmmIdSchema = z.object({
@@ -40,7 +40,7 @@ function rethrowAsHttp(err: unknown): never {
 	throw err;
 }
 
-export const findHmmsFn = createServerFn({ method: "GET" })
+export const findHmmsFn = createServerFn({ method: "POST" })
 	.middleware([authenticated()])
 	.validator(findHmmsSchema)
 	.handler(async ({ data }) => findHmms(db, data));

@@ -26,7 +26,7 @@ function rethrowAsHttp(err: unknown): never {
 	throw err;
 }
 
-export const getTasksFn = createServerFn({ method: "GET" })
+export const getTasksFn = createServerFn({ method: "POST" })
 	.middleware([authenticated()])
 	.validator(taskIdsSchema)
 	.handler(async ({ data }) => getTasks(db, data.taskIds));

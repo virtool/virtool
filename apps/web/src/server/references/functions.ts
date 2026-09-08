@@ -32,7 +32,12 @@ import { ForbiddenError } from "../auth/middleware";
 import { authenticated, permission } from "../auth/policy";
 import { db } from "../composition";
 import { ClientError } from "../errors";
-import { pageSchema, perPageSchema, rowIdSchema } from "../validation";
+import {
+	pageSchema,
+	perPageSchema,
+	rowIdSchema,
+	searchTermSchema,
+} from "../validation";
 
 const referenceIdSchema = z.object({
 	referenceId: rowIdSchema,
@@ -41,7 +46,7 @@ const referenceIdSchema = z.object({
 const findReferencesSchema = z.object({
 	page: pageSchema,
 	perPage: perPageSchema,
-	term: z.string().default(""),
+	term: searchTermSchema,
 	archived: z.boolean().optional(),
 });
 
@@ -122,7 +127,7 @@ const authorizeReference = createServerOnlyFn(
 	},
 );
 
-export const findReferencesFn = createServerFn({ method: "GET" })
+export const findReferencesFn = createServerFn({ method: "POST" })
 	.middleware([authenticated()])
 	.validator(findReferencesSchema)
 	.handler(async ({ context, data }) => {
