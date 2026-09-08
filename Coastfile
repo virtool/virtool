@@ -9,15 +9,21 @@ default_worktree_dir = ".worktrees"
 web = 9900
 jobs-api = 9950
 
-[volumes.postgres]
-strategy = "isolated"
-service = "postgres"
-mount = "/var/lib/postgresql"
+[shared_services.postgres]
+image = "postgres:18"
+ports = ["15432:5432"]
+volumes = ["virtool-coasts-postgres:/var/lib/postgresql"]
+env = { POSTGRES_USER = "virtool", POSTGRES_PASSWORD = "virtool", POSTGRES_DB = "postgres" }
 
-[volumes.azurite]
+[shared_services.azurite]
+image = "mcr.microsoft.com/azure-storage/azurite:3.37.0"
+ports = ["11000:10000"]
+volumes = ["virtool-coasts-azurite:/data"]
+
+[volumes.instance-config]
 strategy = "isolated"
-service = "azurite"
-mount = "/data"
+service = "database-init"
+mount = "/run/virtool-dev"
 
 [assign]
 default = "none"

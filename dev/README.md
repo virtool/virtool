@@ -21,8 +21,9 @@ origin: use the checked-out instance on port 9900, not its dynamic port or a
 subdomain link. Per-instance browser origins are not configured in this trial.
 If `coast` is not on PATH, the default installation is `~/.coast/bin/coast`.
 
-The stack includes web, jobs API, tasks, migrations, Postgres, and Azurite.
-Database migrations and blob-container initialization complete before the
+The stack includes web, jobs API, tasks, migrations, and initialization jobs.
+Postgres and Azurite are shared services on the host Docker daemon. Database
+creation, migrations, and blob-container initialization complete before the
 application starts. Web source and its shared package sources are mounted for
 live editing; dependencies and internal services are built into images. Use
 `coast rebuild trial` after changing those inputs.
@@ -34,10 +35,35 @@ public assets and shared package source are mounted read-only. Dependencies,
 caches, and database files stay in containers or Docker volumes. Commands run
 manually through `coast exec` can still write as root to its shared workspace.
 
-Each instance has isolated database and blob volumes. `coast stop trial` keeps
-the instance and its data; `coast start trial` resumes it. `coast rm trial`
-removes the instance and its isolated data. This data is independent of both
-Minikube and the root Compose test databases.
+Postgres uses the host volume `virtool-coasts-postgres` and port 15432; Azurite
+uses `virtool-coasts-azurite` and blob port 11000. These are independent of
+Minikube and the root Compose test databases. Coasts routes the service names
+`postgres:5432` and `azurite:10000` from each instance to these shared servers.
+Azurite 3.37.0 supports the SDK's `2026-06-06` API version without bypassing
+version checks.
+
+Each instance gets its own database and blob container, both named with a
+random `vt`-prefixed instance data ID. `database-init` persists that identity in
+the instance's `instance-config` volume and creates the database idempotently.
+The application reads its connection URL and blob-container name through the
+existing file-backed environment configuration. Coasts 0.1.53 does not wire
+its documented `auto_create_db` and connection injection into startup, so
+initialization is explicit here.
+
+`coast stop trial` keeps the instance and its data; `coast start trial` resumes
+it. `coast rm trial` removes the instance's configuration volume, but its
+database and blobs remain in the shared services. Record the instance data ID
+before removing an instance if you want to delete or recover its data later:
+
+```bash
+coast docker trial compose exec -T web cat /run/virtool-dev/namespace
+```
+
+Recreating a removed instance generates a new data ID. Shared services keep
+running after all instances stop. View them with `coast shared-services ps` or
+the dashboard's Shared Services view; remove them only when their data is no
+longer needed. Data separation is for development: instances share service
+credentials and can access one another's data if explicitly directed to it.
 
 Existing sibling worktrees under `~/Projects` are discoverable. Assignment
 rebuilds application images to avoid retaining another branch's bundled code.

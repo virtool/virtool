@@ -1,8 +1,8 @@
 x-environment: &environment
-  VT_POSTGRES_URL: postgres://virtool:virtool@postgres:5432/virtool
+  VT_POSTGRES_URL_FILE: /run/virtool-dev/postgres-url
   VT_STORAGE_BACKEND: azure
   VT_STORAGE_AZURE_ACCOUNT: devstoreaccount1
-  VT_STORAGE_AZURE_CONTAINER: virtool
+  VT_STORAGE_AZURE_CONTAINER_FILE: /run/virtool-dev/namespace
   VT_STORAGE_AZURE_ACCESS_KEY: Eby8vdM02xNOcqFlqUwJPLlmEtlCDXJ1OUzFT50uSRZ6IFsuFq2UVErCz4I6tq/K1SZFPTOtr/KBHBeksoGMGw==
   VT_STORAGE_AZURE_ENDPOINT: http://azurite:10000/devstoreaccount1
   VT_ENCRYPTION_KEY: kh+tHF0cfeestLILKMmWwfczAFrKP/92WrobKA/Md6k=
@@ -28,9 +28,24 @@ services:
       timeout: 5s
       retries: 30
 
+  database-init:
+    image: postgres:18
+    environment:
+      PGHOST: postgres
+      PGUSER: virtool
+      PGPASSWORD: virtool
+      PGDATABASE: postgres
+    entrypoint: [/bin/sh, /usr/local/bin/init-coast-data.sh]
+    volumes:
+      - ./scripts/init-coast-data.sh:/usr/local/bin/init-coast-data.sh:ro
+      - instance-config:/run/virtool-dev
+    depends_on:
+      postgres:
+        condition: service_healthy
+
   azurite:
-    image: mcr.microsoft.com/azure-storage/azurite:3.36.0
-    command: azurite --blobHost 0.0.0.0 --location /data --skipApiVersionCheck --disableProductStyleUrl
+    image: mcr.microsoft.com/azure-storage/azurite:3.37.0
+    command: azurite --blobHost 0.0.0.0 --location /data --disableProductStyleUrl
     volumes:
       - azurite:/data
 
@@ -42,26 +57,34 @@ services:
     command:
       - |
         for attempt in $$(seq 1 60); do
-          if az storage container create --name virtool --output none; then exit 0; fi
+          if az storage container create --name "$$(cat /run/virtool-dev/namespace)" --output none; then exit 0; fi
           sleep 2
         done
         exit 1
     depends_on:
       azurite:
         condition: service_started
+      database-init:
+        condition: service_completed_successfully
+    volumes:
+      - instance-config:/run/virtool-dev:ro
 
   migration:
     build: *internal-build
     environment: *environment
     command: [migrate]
+    volumes:
+      - instance-config:/run/virtool-dev:ro
     depends_on:
-      postgres:
-        condition: service_healthy
+      database-init:
+        condition: service_completed_successfully
 
   jobs-api:
     build: *internal-build
     environment: *environment
     command: [serve]
+    volumes:
+      - instance-config:/run/virtool-dev:ro
     ports:
       - "9950:9950"
     depends_on:
@@ -74,6 +97,8 @@ services:
     build: *internal-build
     environment: *environment
     command: [run]
+    volumes:
+      - instance-config:/run/virtool-dev:ro
     depends_on:
       migration:
         condition: service_completed_successfully
@@ -96,6 +121,7 @@ services:
     ports:
       - "9900:9900"
     volumes:
+      - instance-config:/run/virtool-dev:ro
       - ../apps/web/src:/repo/apps/web/src
       - ../apps/web/public:/repo/apps/web/public:ro
       - ../packages/archive/src:/repo/packages/archive/src:ro
@@ -115,5 +141,6 @@ services:
         condition: service_completed_successfully
 
 volumes:
+  instance-config:
   postgres:
   azurite:
