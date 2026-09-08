@@ -157,7 +157,7 @@ function useCompatibleIndexes(): UseCompatibleIndexesResult {
 		.map((group) => maxBy(group, (item) => Number(item.version)))
 		.filter((index): index is IndexMinimal => index !== undefined);
 
-	return { indexes, isPending, isError };
+	return { indexes, isPending, isError: isError && data === undefined };
 }
 
 type UseSubtractionOptionsResult = {
@@ -195,7 +195,10 @@ function useSubtractionOptions(
 		isError: isErrorSample,
 	} = useFetchSample(sampleId);
 
-	if (isErrorSample || isErrorSubtractionShortlist) {
+	if (
+		(isErrorSample && !sample) ||
+		(isErrorSubtractionShortlist && !subtractionShortlist)
+	) {
 		return {
 			defaultSubtractions: [],
 			subtractions: [],
