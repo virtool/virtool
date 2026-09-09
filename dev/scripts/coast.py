@@ -28,9 +28,8 @@ import uuid
 VERSION = "0.1.53"
 AZURE_IMAGE = "mcr.microsoft.com/azure-cli:2.89.1"
 AZURE_KEY = "Eby8vdM02xNOcqFlqUwJPLlmEtlCDXJ1OUzFT50uSRZ6IFsuFq2UVErCz4I6tq/K1SZFPTOtr/KBHBeksoGMGw=="
-MOUNTED_SOURCES = ("apps/web/src/", "apps/web/public/", "apps/internal/src/",
-                   *(f"packages/{name}/src/" for name in ("archive", "bio", "contracts", "data",
-                     "logger", "ncbi", "sentry", "service", "sqlite", "storage")))
+LIVE_ONLY_SOURCES = ("apps/web/src/", "apps/web/public/", "apps/internal/src/")
+WORKFLOW_TARGETS = ("create-sample", "create-subtraction", "pathoscope", "nuvs")
 CONFIG_INPUTS = ("Coastfile", "dev/compose.yaml", "dev/Caddyfile", "dev/scripts/init-coast-data.sh")
 
 
@@ -115,7 +114,7 @@ def fingerprint(root, config_only=False):
     if not config_only:
         candidates = git(root, "ls-files", "--cached", "--others", "--exclude-standard", "-z").split("\0")
         for name in candidates:
-            if name.startswith(MOUNTED_SOURCES):
+            if name.startswith(LIVE_ONLY_SOURCES):
                 continue
             if (name in ("Dockerfile", ".dockerignore", "package.json", "pnpm-lock.yaml", "pnpm-workspace.yaml", "biome.json", "dev/scripts/coast.py")
                     or name.startswith("packages/")
@@ -283,15 +282,29 @@ class Coast:
         self.compose(record["name"], "run", "--rm", "--no-deps", "-T", "--entrypoint", "sh", "database-init", "-ec", "; ".join(commands))
 
     def rebuild(self, record, source_hash):
-        worktree = Path(record["worktree"])
         configuration = json.loads(run([self.binary, "--project", self.project, "docker", "--root",
                                        record["name"], "compose", "config", "--format", "json"], self.root))
-        tag = f"virtool-worktree/dev-coast:{source_hash}"
+        images = [("dev-coast", ".coasts/Dockerfile", ("web", "migration", "jobs-api", "tasks")),
+                  *((target, "Dockerfile", (f"workflow-{target}",)) for target in WORKFLOW_TARGETS)]
+        replacements = []
+        for target, dockerfile, services in images:
+            image_id = self.load_image(record, source_hash, target, dockerfile)
+            replacements.extend((service, image_id) for service in services)
+        for service, image_id in replacements:
+            self.command("docker", "--root", record["name"], "tag", image_id, configuration["services"][service]["image"])
+        workflows = tuple(f"workflow-{target}" for target in WORKFLOW_TARGETS)
+        self.compose(record["name"], "stop", *workflows, "proxy", "web", "jobs-api", "tasks")
+        self.compose(record["name"], "up", "-d", "--force-recreate", "migration", "web", "jobs-api", "tasks", "proxy", *workflows)
+
+    def load_image(self, record, source_hash, target, dockerfile):
+        worktree = Path(record["worktree"])
+        tag = f"virtool-worktree/{target}:{source_hash}"
         cached = subprocess.run(["docker", "image", "inspect", tag], stdout=subprocess.DEVNULL,
                                 stderr=subprocess.DEVNULL).returncode == 0
         if not cached:
-            prepare_development_dockerfile(worktree)
-            run(["docker", "build", "-f", ".coasts/Dockerfile", "--target", "dev-coast",
+            if target == "dev-coast":
+                prepare_development_dockerfile(worktree)
+            run(["docker", "build", "-f", dockerfile, "--target", target,
                  "-t", tag, "."], worktree, self.log)
         outer = f"{self.project}-coasts-{record['name']}"
         image_id = run(["docker", "image", "inspect", "--format", "{{.Id}}", tag], worktree)
@@ -305,10 +318,7 @@ class Coast:
                 save.stdout.close()
                 if save.wait() or loaded.returncode:
                     raise RuntimeError("Failed to load worktree images into Coast")
-        for service in ("web", "migration", "jobs-api", "tasks"):
-            self.command("docker", "--root", record["name"], "tag", image_id, configuration["services"][service]["image"])
-        self.compose(record["name"], "stop", "proxy", "web", "jobs-api", "tasks")
-        self.compose(record["name"], "up", "-d", "--force-recreate", "migration", "web", "jobs-api", "tasks", "proxy")
+        return image_id
 
     def delete_data(self, record):
         data_id = record["data_id"]
@@ -560,7 +570,8 @@ def main():
                     record = read_json(path)
                     if record:
                         coast.command("stop", record["name"])
-                        record["state"] = "stopped"
+                        if record["state"] != "removing":
+                            record["state"] = "stopped"
                         lifecycle.save(key, record)
             except Exception as error:
                 record = read_json(path)

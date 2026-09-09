@@ -6,6 +6,7 @@ import shutil
 import subprocess
 import json
 import unittest
+import sys
 from unittest.mock import patch
 
 
@@ -202,6 +203,24 @@ class LifecycleTests(unittest.TestCase):
         self.assertIn(("start", record["name"]), self.backend.events)
         self.assertNotIn(("rebuild", record["name"]), self.backend.events)
 
+    def test_new_worktree_refreshes_images_when_its_sources_differ(self):
+        def fingerprint(root, config_only=False):
+            return "config" if config_only else ("primary" if root == self.root else "assigned")
+
+        with patch.object(coast, "fingerprint", side_effect=fingerprint):
+            record = self.ensure()
+        self.assertIn(("rebuild", record["name"]), self.backend.events)
+        self.assertEqual(record["image_hash"], "assigned")
+
+    def test_failed_refresh_does_not_record_the_new_image_hash(self):
+        record = self.ensure()
+        with patch.object(coast, "fingerprint", side_effect=lambda root, config_only=False: "hash" if config_only else "changed"), \
+                patch.object(self.backend, "rebuild", side_effect=RuntimeError("workflow build failed")):
+            with self.assertRaisesRegex(RuntimeError, "workflow build failed"):
+                self.ensure()
+        self.assertEqual(self.record()["image_hash"], record["image_hash"])
+        self.assertEqual(self.record()["build_hash"], record["build_hash"])
+
     def test_remove_deletes_only_its_own_data_and_recreation_is_fresh(self):
         first = self.ensure()
         second = self.ensure("second", "feature/second")
@@ -228,6 +247,29 @@ class LifecycleTests(unittest.TestCase):
         self.lifecycle.remove("first")
         self.assertFalse(self.backend.blobs)
         self.assertIsNone(self.record())
+
+    def test_stop_preserves_pending_cleanup_and_startup_guard(self):
+        record = self.ensure()
+        self.backend.fail_delete = True
+        with self.assertRaisesRegex(RuntimeError, "blob deletion"):
+            self.lifecycle.remove("first")
+        common = self.root / "git"
+        common.mkdir()
+        (common / "virtool-coasts").symlink_to(self.root / "registry", target_is_directory=True)
+        (self.root / "Coastfile").write_text('[coast]\nname = "virtool"\n')
+        with patch.object(sys, "argv", ["coasts", "stop", "--worktree", record["worktree"]]), \
+                patch.object(coast, "git", side_effect=[str(common), f"worktree {self.root}\0"]), \
+                patch.object(coast, "worktree_key", return_value="first"), \
+                patch.object(coast, "Coast", return_value=self.backend), \
+                patch.object(self.backend, "check", create=True):
+            coast.main()
+        self.assertEqual(self.record()["state"], "removing")
+        with self.assertRaisesRegex(RuntimeError, "Cleanup is pending"):
+            self.ensure()
+        self.backend.fail_delete = False
+        self.lifecycle.remove("first")
+        self.assertIsNone(self.record())
+        self.assertFalse(self.backend.blobs)
 
     def test_failed_stop_does_not_delete_data(self):
         record = self.ensure()
@@ -316,10 +358,10 @@ class LifecycleTests(unittest.TestCase):
 
 
 class FingerprintTests(unittest.TestCase):
-    def test_mounted_source_edits_do_not_rebuild_images(self):
+    def test_web_and_internal_source_edits_do_not_rebuild_images(self):
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
-            files = ["apps/internal/src/index.ts", "packages/data/src/db/pg.ts", "apps/web/src/main.tsx"]
+            files = ["apps/internal/src/index.ts", "apps/web/src/main.tsx"]
             with patch.object(coast, "git", return_value="\0".join(files)):
                 before = coast.fingerprint(root)
                 for name in files:
@@ -332,7 +374,8 @@ class FingerprintTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
             files = ["pnpm-lock.yaml", "apps/internal/package.json", "apps/internal/dev/main.ts",
-                     "packages/data/drizzle/0001.sql", "packages/data/package.json", "dev/scripts/coast.py"]
+                     "packages/data/drizzle/0001.sql", "packages/data/package.json",
+                     "packages/bio/src/index.ts", "dev/scripts/coast.py"]
             with patch.object(coast, "git", return_value="\0".join(files)):
                 for name in files:
                     before = coast.fingerprint(root)
@@ -396,37 +439,75 @@ class DevelopmentDockerfileTests(unittest.TestCase):
 
 
 class ImageTransferTests(unittest.TestCase):
-    def rebuild(self, present_id, present_status=0, load_status=0):
+    def load(self, present_id, present_status=0, load_status=0):
         backend = coast.Coast(Path.cwd(), "virtool")
-        configuration = {"services": {name: {"image": f"image/{name}"}
-                                      for name in ("web", "migration", "jobs-api", "tasks")}}
-        with patch.object(coast, "run", side_effect=[json.dumps(configuration), "sha256:expected"]), \
+        with patch.object(coast, "run", return_value="sha256:expected"), \
                 patch.object(coast.subprocess, "run", side_effect=[
                     subprocess.CompletedProcess([], 0),
                     subprocess.CompletedProcess([], present_status, present_id),
                     subprocess.CompletedProcess([], load_status),
                 ]), \
-                patch.object(coast.subprocess, "Popen") as save, \
-                patch.object(backend, "command"), patch.object(backend, "compose") as compose:
+                patch.object(coast.subprocess, "Popen") as save:
             save.return_value.__enter__.return_value.wait.return_value = 0
-            backend.rebuild({"name": "test", "worktree": str(Path.cwd())}, "hash")
-            return save.call_count, compose.call_args_list
+            result = backend.load_image({"name": "test", "worktree": str(Path.cwd())},
+                                        "hash", "nuvs", "Dockerfile")
+            self.assertEqual(result, "sha256:expected")
+            return save.call_count
 
-    def test_identical_image_skips_transfer_but_restarts_services(self):
-        transfers, calls = self.rebuild("sha256:expected\n")
-        self.assertEqual(transfers, 0)
-        self.assertEqual(len(calls), 2)
-        self.assertIn("--force-recreate", calls[1].args)
+    def test_identical_image_skips_transfer(self):
+        self.assertEqual(self.load("sha256:expected\n"), 0)
 
     def test_missing_or_different_image_is_loaded(self):
         for image_id, status in (("", 1), ("sha256:other", 0)):
             with self.subTest(image_id=image_id):
-                transfers, _ = self.rebuild(image_id, status)
-                self.assertEqual(transfers, 1)
+                self.assertEqual(self.load(image_id, status), 1)
 
     def test_failed_load_does_not_report_success(self):
         with self.assertRaisesRegex(RuntimeError, "Failed to load"):
-            self.rebuild("", 1, 1)
+            self.load("", 1, 1)
+
+    def test_workflow_build_uses_assigned_worktree_and_root_dockerfile(self):
+        backend = coast.Coast(Path.cwd(), "virtool")
+        with patch.object(coast, "run", side_effect=["", "sha256:nuvs"]) as run, \
+                patch.object(coast.subprocess, "run", side_effect=[
+                    subprocess.CompletedProcess([], 1),
+                    subprocess.CompletedProcess([], 0, "sha256:nuvs"),
+                ]):
+            backend.load_image({"name": "test", "worktree": "/assigned"},
+                               "hash", "nuvs", "Dockerfile")
+        self.assertEqual(run.call_args_list[0].args[:2],
+                         (["docker", "build", "-f", "Dockerfile", "--target", "nuvs",
+                           "-t", "virtool-worktree/nuvs:hash", "."], Path("/assigned")))
+
+    def test_refresh_replaces_all_workflow_images_before_restarting(self):
+        backend = coast.Coast(Path.cwd(), "virtool")
+        workflows = ("create-sample", "create-subtraction", "pathoscope", "nuvs")
+        services = ("web", "migration", "jobs-api", "tasks", *(f"workflow-{target}" for target in workflows))
+        configuration = {"services": {name: {"image": f"image/{name}"} for name in services}}
+        record = {"name": "test", "worktree": "/assigned"}
+        with patch.object(coast, "run", return_value=json.dumps(configuration)), \
+                patch.object(backend, "load_image", side_effect=lambda record, hash, target, file: target) as load, \
+                patch.object(backend, "command") as command, \
+                patch.object(backend, "compose") as compose:
+            backend.rebuild(record, "hash")
+        self.assertEqual(load.call_count, 5)
+        for target in workflows:
+            load.assert_any_call(record, "hash", target, "Dockerfile")
+            command.assert_any_call("docker", "--root", "test", "tag", target, f"image/workflow-{target}")
+            self.assertIn(f"workflow-{target}", compose.call_args_list[0].args)
+            self.assertIn(f"workflow-{target}", compose.call_args_list[1].args)
+        self.assertIn("--force-recreate", compose.call_args_list[1].args)
+
+    def test_failed_workflow_load_leaves_running_services_untouched(self):
+        backend = coast.Coast(Path.cwd(), "virtool")
+        with patch.object(coast, "run", return_value='{"services": {}}'), \
+                patch.object(backend, "load_image", side_effect=["dev", RuntimeError("load failed")]), \
+                patch.object(backend, "command") as command, \
+                patch.object(backend, "compose") as compose:
+            with self.assertRaisesRegex(RuntimeError, "load failed"):
+                backend.rebuild({"name": "test", "worktree": "/assigned"}, "hash")
+        command.assert_not_called()
+        compose.assert_not_called()
 
 
 class ReadinessTests(unittest.TestCase):

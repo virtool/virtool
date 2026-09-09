@@ -139,8 +139,9 @@ explicit.
 
 Removing a worktree through Worktrunk still stops its Coast, drops its database,
 deletes its blob container, and removes the Coast. Cleanup failure blocks
-worktree removal and preserves a pending record for retry. Starting an instance
-with pending cleanup is refused. Only that instance's data is deleted; shared
+worktree removal and preserves a pending record for retry. Stopping an instance
+with pending cleanup preserves that state; starting it is refused until removal
+succeeds. Only that instance's data is deleted; shared
 service volumes are never reset. Stopping an instance preserves its data.
 
 Resume checks Docker's outer-container state as well as Coast's recorded state.
@@ -192,10 +193,12 @@ Initial Coast builds are serialized and reused while their inputs and latest
 build ID match. Assignment changes the source mount; the controller builds the
 development image on the host, caches it by input hash, and loads it into the
 owning Coast. Dependency manifests, lockfiles, build configuration, migration
-SQL, workflow sources, and workflow Rust crates invalidate that cache. Mounted
-web, internal, and shared package source edits do not. `ensure --rebuild` reapplies
-the cached image or builds changed inputs. Changing Coast configuration requires
-removing and recreating the instance with fresh data. Existing instances keep
+SQL, workflow sources, shared package sources, and workflow Rust crates
+invalidate that cache. Mounted web and internal source edits do not. Shared
+package edits reach the running web and internal watchers immediately; run
+`coasts up` to rebuild their bundled copies in workflow images.
+`coasts up --rebuild` reapplies cached images or builds changed inputs. Changing
+Coast configuration requires removing and recreating the instance with fresh data. Existing instances keep
 running on their previous configuration until explicitly recreated.
 
 Do not use `coast rebuild` with this stack. In Coasts 0.1.53 it bypasses the
@@ -205,7 +208,9 @@ configuration and builds the root Dockerfile's `dev-coast`
 target for web, jobs API, tasks, and migrations. Before building, it generates
 ignored `.coasts/Dockerfile` from that target's parent and `COPY --from` stages.
 This keeps the root Dockerfile as the source of truth for the development
-image. The workflow services build their root Dockerfile targets independently.
+image. Every refresh also builds and loads all four workflow targets from the
+assigned worktree using the root Dockerfile, then replaces their containers.
+All images finish loading before any service is stopped or retagged.
 Stage declarations must be named, single-line `FROM <image> AS <name>`
 instructions with literal images, named `COPY --from` dependencies, and no
 build-mount dependencies; unsupported forms fail before building. Use the
