@@ -5,8 +5,8 @@ x-environment: &environment
   VT_STORAGE_AZURE_CONTAINER_FILE: /run/virtool-dev/namespace
   VT_STORAGE_AZURE_ACCESS_KEY: Eby8vdM02xNOcqFlqUwJPLlmEtlCDXJ1OUzFT50uSRZ6IFsuFq2UVErCz4I6tq/K1SZFPTOtr/KBHBeksoGMGw==
   VT_STORAGE_AZURE_ENDPOINT: http://azurite:10000/devstoreaccount1
-  VT_ENCRYPTION_KEY: kh+tHF0cfeestLILKMmWwfczAFrKP/92WrobKA/Md6k=
-  VT_AUTH_SECRET: dev-auth-secret-dev-auth-secret-dev
+  VT_ENCRYPTION_KEY_FILE: /run/secrets/virtool-encryption-key
+  VT_AUTH_SECRET_FILE: /run/secrets/virtool-auth-secret
   VT_PUBLIC_ORIGIN_FILE: /run/virtool-dev/public-origin
   VT_UPLOADS_CHUNKED: "true"
   VT_STORAGE_AZURE_UPLOAD_URL_FILE: /run/virtool-dev/public-origin

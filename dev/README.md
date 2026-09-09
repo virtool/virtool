@@ -165,6 +165,20 @@ stay running when instances stop. These ports must be free on first startup and
 are independent of the root Compose test databases. Data
 separation is for development: instances share service credentials.
 
+The `Coastfile` generates the auth secret and encryption key with Python's
+cryptographic random generator. Coast stores them in its encrypted keystore
+and mounts them into application containers under `/run/secrets`; services
+read them through `VT_AUTH_SECRET_FILE` and `VT_ENCRYPTION_KEY_FILE`.
+
+Coasts 0.1.53 extracts fresh values on each Coast build and injects the current
+values when creating an instance. Instances created from the same extraction
+share these secrets. Existing instances retain their injected values across
+stop/start and application image rebuilds. Re-running secrets on an existing
+instance rotates its keys, invalidating sessions and making encrypted data
+unreadable without the old keys. See [environment configuration](../docs/env.md).
+As with other Coast configuration changes, existing instances must be removed
+and recreated to adopt these mounts; removal deletes their development data.
+
 If another process takes a stopped instance's reserved dynamic port, `ensure`
 reports the occupied port before starting Docker, instead of changing its
 origin. A bind race can still fail in Docker; its detailed error is in the

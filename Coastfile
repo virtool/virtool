@@ -6,6 +6,16 @@ autostart = false
 worktree_dir = [".worktrees", "${HOME}/Projects"]
 default_worktree_dir = ".worktrees"
 
+[secrets.auth_secret]
+extractor = "command"
+run = 'python3 -c "import base64, secrets; print(base64.b64encode(secrets.token_bytes(32)).decode())"'
+inject = "file:/run/secrets/virtool-auth-secret"
+
+[secrets.encryption_key]
+extractor = "command"
+run = 'python3 -c "import base64, secrets; print(base64.b64encode(secrets.token_bytes(32)).decode())"'
+inject = "file:/run/secrets/virtool-encryption-key"
+
 [ports]
 web = 9900
 jobs-api = 9950
