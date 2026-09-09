@@ -2,31 +2,17 @@
 
 ## Development
 
-The local Kubernetes development environment uses Tilt on Minikube. Install
-the tools listed in [the dev cluster documentation](dev/README.md#requirements),
-then run these commands from the repository root:
+The local development environment uses Coasts and Docker Compose. Install the
+tools listed in [the development documentation](dev/README.md), then run these
+commands from the repository root:
 
 ```shell
-mise run init          # one-time cluster setup
-mise run up            # bring up this worktree and start Tilt
-mise run up:minikube   # start Minikube only
-mise run down           # tear down workloads, keeping data
-mise run destroy        # delete the namespace, workloads, and data
-mise run wipe           # wipe this worktree's data
-mise run tilt           # show Minikube, Tilt, and worktree namespace status
+coast daemon start
+coasts up               # create or resume this worktree's Coast
+coasts status
+coasts stop             # stop the Coast and keep its data
+coasts remove           # remove the Coast and its data
 ```
 
-Set `WT` to use a short, memorable namespace slug:
-
-```shell
-WT=vir3044 mise run up
-```
-
-Arguments after `up` are passed to Tilt, so live-edit targets can be combined:
-
-```shell
-mise run up --web --internal
-```
-
-See [the dev cluster documentation](dev/README.md) for the architecture,
-worktree isolation, manifests, live editing, and data-wiping details.
+See [the development documentation](dev/README.md) for the architecture,
+worktree isolation, live editing, and lifecycle details.

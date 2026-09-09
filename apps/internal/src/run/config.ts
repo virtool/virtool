@@ -10,8 +10,7 @@ const DEFAULT_POSTGRES_POOL_MAX = 10;
  * unset.
  *
  * The value is arbitrary — this process serves no traffic and has no Service —
- * but it is hardcoded in the deployment manifests, so it is fixed here and
- * documented rather than left to drift.
+ * but it is fixed here and documented rather than left to drift.
  */
 const DEFAULT_PROBE_PORT = 9900;
 
@@ -19,10 +18,8 @@ const DEFAULT_PROBE_PORT = 9900;
  * Seconds the shutdown sequence may take before the backstop gives up, when
  * `VT_TASKS_SHUTDOWN_TIMEOUT` is unset.
  *
- * It must sit strictly under `terminationGracePeriodSeconds`, which covers
- * `preStop` and shutdown combined. The manifests use a 60 s grace period behind
- * a 10 s `preStop` sleep, leaving 50 s; 40 s is inside that, so an overrun is
- * reported by this process rather than cut short by SIGKILL.
+ * It must sit below the container's shutdown grace period, leaving enough time
+ * for the listener close, pool drain, and Sentry flush after the pre-stop hook.
  *
  * It has to cover {@link DEFAULT_DRAIN_TIMEOUT} and leave enough behind for the
  * listener close, the pool drain and the Sentry flush, which divide the

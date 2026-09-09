@@ -1048,9 +1048,9 @@ transform.
 
 ### Working on the web app
 
-Follow [the development guide](../../dev/README.md) to set up Tilt and Minikube,
-then start the web app's live-edit target from the repository root:
+Follow [the development guide](../../dev/README.md) to set up Coasts, then start
+the web app from the repository root:
 
 ```shell
-bash dev/scripts/up.sh --web
+coasts up
 ```

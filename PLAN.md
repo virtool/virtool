@@ -2,8 +2,7 @@
 
 Make parallel worktrees inexpensive to start, easy to identify in the browser,
 and independent in application state. Use Compose through Coasts for everyday
-development. Keep Tilt/Minikube available until workflow execution and the
-normal development loop have replacements.
+development.
 
 This file tracks continuing work. Unchecked items are proposed work, not
 implemented behavior. Setup and operational instructions live in
@@ -14,7 +13,7 @@ implemented behavior. Setup and operational instructions live in
 - [x] Checkpoint the initial trial on `chore/coasts-dev`: `fc1d405a7`.
 - [x] Commit shared-service support: `74fa5ba2a`.
 - [x] Run web, jobs API, tasks, migrations, and initialization with Compose
-  through Coasts, without Kubernetes.
+  through Coasts.
 - [x] Share Postgres 18 and Azurite 3.37.0 across instances while giving each
   instance a separate database and blob container.
 - [x] Persist a random instance data ID in an isolated configuration volume.
@@ -70,16 +69,15 @@ Compose configuration.
   provide actionable errors and a manual retry command. Expose readiness and
   background failure logs rather than treating successful `wt switch` as
   proof the application is ready.
-- [x] Replace the previous `pre-remove = "mise run destroy || true"` Minikube
+- [x] Replace the previous `pre-remove = "mise run destroy || true"` development
   hook with cleanup of the worktree's Coast, database, and blob container.
   Stop instance writers before deleting data. Keep the data mapping until all
   cleanup succeeds, including across partial failures and retries. Report
   failures and block worktree removal rather than silently leaving old data.
   Serialize cleanup with startup/resume for the same instance.
-- [x] Handle switching from older branches whose project config or scripts
-  still use Tilt. Worktrunk reads project hooks from the invoking worktree;
-  document rollout and fallback behavior rather than assuming every branch
-  already has this integration.
+- [x] Handle switching from older branches whose project config or scripts use
+  the previous development environment. Worktrunk reads project hooks from the
+  invoking worktree; document rollout and fallback behavior.
 - [x] Remove the blocking `pre-start = "pnpm install"`: retain host dependencies
   needed by editors/checks, but avoid making unnecessary installation a
   prerequisite for container startup.
@@ -121,7 +119,7 @@ limitations are recorded in [the development guide](dev/README.md#section-2-vali
   whether a separate TUI adds anything after lifecycle and browser switching
   work reliably.
 - [x] Verify occupied-port handling, including fixed shared-service ports,
-  alongside the existing test Compose stack and optional Minikube environment.
+  alongside the existing test Compose stack.
 
 Acceptance: two authenticated tabs stay on their respective worktrees while
 the terminal switches between them; identity is visible and links open the
@@ -138,8 +136,6 @@ Additional validation remains outside the password-session acceptance:
 - [ ] Complete passkey enrollment and sign-in through the application's auth
   integration. Chromium accepts the secondary instance's RP hostname, but
   registration currently returns 401 with the legacy login session.
-- [ ] Repeat coexistence checks with optional Minikube running. It was stopped;
-  available memory was below its configured 16 GiB, so it was left stopped.
 
 ## 3. Shorten feedback loops
 
@@ -172,7 +168,7 @@ Acceptance: web and internal source edits reach the running application
 without manual image rebuilds; dependency changes remain correct; source
 mounts acquire no root-owned files during supported development commands.
 
-## 4. Restore workflow execution without local Kubernetes
+## 4. Run workflow execution in Coasts
 
 - [x] Run one restartable Compose worker per workflow type. Match job claim,
   ping, cancellation, finalization, and exit contracts; local KEDA scaling is
@@ -187,7 +183,7 @@ mounts acquire no root-owned files during supported development commands.
   including cancellation and failure cleanup.
 
 Acceptance: representative workflows complete end to end in Coasts, with no
-cross-instance job claims or storage writes and no Minikube dependency.
+cross-instance job claims or storage writes.
 
 ## 5. Make data management routine
 
@@ -213,11 +209,8 @@ with valid stored-object references.
 
 ## 6. Finish the transition
 
-- [ ] Update root development commands, Worktrunk configuration, and docs to
-  make Coasts the normal path once browser and workflow parity are validated.
-- [ ] Decide whether to retain Tilt/Minikube as an optional Kubernetes/KEDA
-  validation environment or remove it. Do not remove it before its remaining
-  development uses have a replacement.
+- [x] Update root development commands, Worktrunk configuration, and docs to
+  make Coasts the normal development path.
 - [ ] Document fresh-machine setup and validate it from a clean worktree,
   including shared services, data initialization, browser access, and cleanup.
 
