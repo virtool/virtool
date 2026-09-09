@@ -189,6 +189,7 @@ COPY apps/web ./apps/web
 # Coasts runs the web process with the source owner's UID, which cannot read
 # root's Corepack cache. Keep the downloaded package manager readable by it.
 FROM dev AS dev-coast
+COPY apps/internal ./apps/internal
 RUN mkdir -p /opt/corepack \
     && cp -a /root/.cache/node/corepack/. /opt/corepack/ \
     && chmod -R a+rX /opt/corepack

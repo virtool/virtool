@@ -28,6 +28,9 @@ import uuid
 VERSION = "0.1.53"
 AZURE_IMAGE = "mcr.microsoft.com/azure-cli:2.89.1"
 AZURE_KEY = "Eby8vdM02xNOcqFlqUwJPLlmEtlCDXJ1OUzFT50uSRZ6IFsuFq2UVErCz4I6tq/K1SZFPTOtr/KBHBeksoGMGw=="
+MOUNTED_SOURCES = ("apps/web/src/", "apps/web/public/", "apps/internal/src/",
+                   *(f"packages/{name}/src/" for name in ("archive", "bio", "contracts", "data",
+                     "logger", "ncbi", "sentry", "service", "sqlite", "storage")))
 CONFIG_INPUTS = ("Coastfile", "dev/compose.yaml", "dev/Caddyfile", "dev/scripts/init-coast-data.sh")
 
 
@@ -68,12 +71,53 @@ def lock(path):
         yield
 
 
+def development_dockerfile(root):
+    source = (root / "Dockerfile").read_text()
+    starts = list(re.finditer(r"(?im)^FROM\s+(\S+)\s+AS\s+(\S+)\s*$", source))
+    if len(starts) != len(re.findall(r"(?im)^FROM\s", source)):
+        raise RuntimeError("Coasts development builds require named, single-line FROM stages")
+    stages = {}
+    for index, match in enumerate(starts):
+        end = starts[index + 1].start() if index + 1 < len(starts) else len(source)
+        name = match[2].lower()
+        if name in stages or "$" in match[1]:
+            raise RuntimeError("Coasts development builds require unique stages and literal FROM images")
+        stages[name] = (match[1].lower(), source[match.start():end])
+    required = set()
+
+    def include(name):
+        if name in required or name not in stages:
+            return
+        required.add(name)
+        parent, body = stages[name]
+        include(parent)
+        if re.search(r"--mount=[^\s]*from=", body):
+            raise RuntimeError("Coasts development builds do not support mount dependencies")
+        for dependency in re.findall(r"(?i)--from=(\S+)", body):
+            if dependency.isdigit() or "$" in dependency:
+                raise RuntimeError("Coasts development builds require named COPY dependencies")
+            include(dependency.lower())
+
+    if "dev-coast" not in stages:
+        raise RuntimeError("Root Dockerfile has no dev-coast stage")
+    include("dev-coast")
+    return source[:starts[0].start()] + "".join(body for name, (_, body) in stages.items() if name in required)
+
+
+def prepare_development_dockerfile(root):
+    path = root / ".coasts/Dockerfile"
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(development_dockerfile(root))
+
+
 def fingerprint(root, config_only=False):
     paths = set(CONFIG_INPUTS)
     if not config_only:
         candidates = git(root, "ls-files", "--cached", "--others", "--exclude-standard", "-z").split("\0")
         for name in candidates:
-            if (name in ("Dockerfile", ".dockerignore", "package.json", "pnpm-lock.yaml", "pnpm-workspace.yaml", "biome.json")
+            if name.startswith((*MOUNTED_SOURCES, "packages/pathoscope-core/", "packages/quality-core/")):
+                continue
+            if (name in ("Dockerfile", ".dockerignore", "package.json", "pnpm-lock.yaml", "pnpm-workspace.yaml", "biome.json", "dev/scripts/coast.py")
                     or name.startswith("packages/")
                     or name.startswith("apps/internal/")
                     or name.startswith("apps/web/") and not name.startswith(("apps/web/src/", "apps/web/public/"))
@@ -84,7 +128,8 @@ def fingerprint(root, config_only=False):
     for name in sorted(paths):
         path = root / name
         digest.update(name.encode() + b"\0")
-        digest.update(path.read_bytes() if path.is_file() else b"missing")
+        digest.update(development_dockerfile(root).encode() if name == "Dockerfile" and path.is_file()
+                      else path.read_bytes() if path.is_file() else b"missing")
     return digest.hexdigest()
 
 
@@ -238,24 +283,26 @@ class Coast:
         worktree = Path(record["worktree"])
         configuration = json.loads(run([self.binary, "--project", self.project, "docker", "--root",
                                        record["name"], "compose", "config", "--format", "json"], self.root))
-        images = {}
-        for target in ("internal", "dev-coast"):
-            tag = f"virtool-worktree/{target}:{source_hash}"
-            cached = subprocess.run(["docker", "image", "inspect", tag], stdout=subprocess.DEVNULL,
-                                    stderr=subprocess.DEVNULL).returncode == 0
-            if not cached:
-                run(["docker", "build", "--target", target, "-t", tag, "."], worktree, self.log)
-            images[target] = tag
+        tag = f"virtool-worktree/dev-coast:{source_hash}"
+        cached = subprocess.run(["docker", "image", "inspect", tag], stdout=subprocess.DEVNULL,
+                                stderr=subprocess.DEVNULL).returncode == 0
+        if not cached:
+            prepare_development_dockerfile(worktree)
+            run(["docker", "build", "-f", ".coasts/Dockerfile", "--target", "dev-coast", "-t", tag, "."], worktree, self.log)
         outer = f"{self.project}-coasts-{record['name']}"
-        with subprocess.Popen(["docker", "save", *images.values()], stdout=subprocess.PIPE, stderr=self.log) as save:
-            loaded = subprocess.run(["docker", "exec", "-i", outer, "docker", "load"],
-                                    stdin=save.stdout, stdout=self.log, stderr=self.log)
-            save.stdout.close()
-            if save.wait() or loaded.returncode:
-                raise RuntimeError("Failed to load worktree images into Coast")
-        for service, target in (("web", "dev-coast"), ("migration", "internal"),
-                                ("jobs-api", "internal"), ("tasks", "internal")):
-            self.command("docker", "--root", record["name"], "tag", images[target], configuration["services"][service]["image"])
+        image_id = run(["docker", "image", "inspect", "--format", "{{.Id}}", tag], worktree)
+        present = subprocess.run(["docker", "exec", outer, "docker", "image", "inspect",
+                                  "--format", "{{.Id}}", image_id], text=True,
+                                 stdout=subprocess.PIPE, stderr=subprocess.DEVNULL)
+        if present.returncode or present.stdout.strip() != image_id:
+            with subprocess.Popen(["docker", "save", tag], stdout=subprocess.PIPE, stderr=self.log) as save:
+                loaded = subprocess.run(["docker", "exec", "-i", outer, "docker", "load"],
+                                        stdin=save.stdout, stdout=self.log, stderr=self.log)
+                save.stdout.close()
+                if save.wait() or loaded.returncode:
+                    raise RuntimeError("Failed to load worktree images into Coast")
+        for service in ("web", "migration", "jobs-api", "tasks"):
+            self.command("docker", "--root", record["name"], "tag", image_id, configuration["services"][service]["image"])
         self.compose(record["name"], "stop", "proxy", "web", "jobs-api", "tasks")
         self.compose(record["name"], "up", "-d", "--force-recreate", "migration", "web", "jobs-api", "tasks", "proxy")
 
@@ -278,6 +325,16 @@ class Coast:
         services = self.api("/ps", {"project": self.project, "name": record["name"]})["services"]
         running = {service["name"] for service in services if service["status"] == "running"}
         if not {"web", "jobs-api", "tasks", "proxy"}.issubset(running):
+            return False
+        # Watchers stay alive after a failed build, so container state is insufficient.
+        try:
+            run([self.binary, "--project", self.project, "docker", "--root", record["name"],
+                 "compose", "exec", "-T", "web", "node", "-e",
+                 "Promise.all(['http://jobs-api:9950','http://tasks:9900'].map(async url => {"
+                 "const response = await fetch(url + '/health/ready', {signal: AbortSignal.timeout(2000)});"
+                 "if (!response.ok) throw new Error('Service is not ready');"
+                 "})).catch(() => process.exit(1))"], self.root)
+        except RuntimeError:
             return False
         port = urllib.parse.urlparse(record["url"]).port
         try:
@@ -322,6 +379,7 @@ class Lifecycle:
         build_hash = fingerprint(primary)
         build = read_json(self.registry / "build.json", {})
         if build.get("hash") != build_hash or build.get("id") != self.coast.latest_build():
+            prepare_development_dockerfile(primary)
             self.coast.command("build")
             write_json(self.registry / "build.json", {"hash": build_hash, "id": self.coast.latest_build()})
         return build_hash

@@ -41,7 +41,7 @@ failure and must never delete another instance's data or shared-service volumes.
 | --- | --- | --- |
 | What data should a new worktree start with? | A reusable development seed. | Requires a maintained seed containing matching database rows and blobs. Empty setup remains useful for onboarding tests. |
 
-Proposed interaction: `wt switch -c fix-thing` starts that worktree's Coast in
+Current interaction: `wt switch -c fix-thing` starts that worktree's Coast in
 the background. Returning with `wt switch fix-thing` resumes the same instance
 if stopped. Switching terminals leaves other instances running and does not
 redirect existing browser tabs. Worktrunk's `--no-hooks` provides an explicit
@@ -50,40 +50,41 @@ way to create a worktree without starting services.
 ## 1. Integrate Worktrunk lifecycle
 
 Worktrunk 0.75.0 is installed. Its switch hook runs startup in the background;
-`pre-remove` runs while the worktree still exists. The controller provisions a
-Coast with autostart disabled, writes its data identity, and assigns its worktree
+`pre-remove` runs while the worktree still exists. The lifecycle integration is
+implemented; the checks below track implementation. The controller provisions
+a Coast with autostart disabled, writes its data identity, and assigns its worktree
 before starting services. In Coasts 0.1.53, raw rebuild bypasses shared-service
 overrides, so the controller builds images explicitly and uses the effective
 Compose configuration.
 
-- [ ] Define and persist the mapping between repository, worktree, Coast
+- [x] Define and persist the mapping between repository, worktree, Coast
   instance, data ID, and browser URL. Use readable names with collision checks;
   do not rely solely on replacing slashes in branch names. Account for branch
   renames and removal/recreation of a worktree.
-- [ ] Implement an idempotent ensure-running operation: create if missing,
+- [x] Implement an idempotent ensure-running operation: create if missing,
   resume if stopped, leave a healthy instance alone. Serialize concurrent
   requests for the same instance and avoid duplicate builds across worktrees.
-- [ ] Connect background startup/resume to `.config/wt.toml`. Both `post-start`
+- [x] Connect background startup/resume to `.config/wt.toml`. Both `post-start`
   and `post-switch` fire on creation; choose one owner for startup or guard
   duplicate calls. Do not rebuild unchanged images on every switch.
-- [ ] Check daemon availability, installed Coast version, and executable path;
+- [x] Check daemon availability, installed Coast version, and executable path;
   provide actionable errors and a manual retry command. Expose readiness and
   background failure logs rather than treating successful `wt switch` as
   proof the application is ready.
-- [ ] Replace the current `pre-remove = "mise run destroy || true"` Minikube
+- [x] Replace the previous `pre-remove = "mise run destroy || true"` Minikube
   hook with cleanup of the worktree's Coast, database, and blob container.
   Stop instance writers before deleting data. Keep the data mapping until all
   cleanup succeeds, including across partial failures and retries. Report
   failures and block worktree removal rather than silently leaving old data.
   Serialize cleanup with startup/resume for the same instance.
-- [ ] Handle switching from older branches whose project config or scripts
+- [x] Handle switching from older branches whose project config or scripts
   still use Tilt. Worktrunk reads project hooks from the invoking worktree;
   document rollout and fallback behavior rather than assuming every branch
   already has this integration.
-- [ ] Review the blocking `pre-start = "pnpm install"`: retain host dependencies
+- [x] Remove the blocking `pre-start = "pnpm install"`: retain host dependencies
   needed by editors/checks, but avoid making unnecessary installation a
   prerequisite for container startup.
-- [ ] Replace the hash-port URL in `wt list` with the instance's actual URL
+- [x] Replace the hash-port URL in `wt list` with the instance's actual URL
   once browser origins are ready. Verify support for persisted URL metadata
   in the installed Worktrunk version.
 
@@ -91,7 +92,13 @@ Acceptance: create two worktrees, start both, switch repeatedly, stop/resume
 one, and remove one. Each operation targets the correct instance, preserves
 the other instance, preserves data on stop/resume, and deletes the removed
 instance's data. Exercise startup and partial cleanup failures, retry,
-concurrent requests, and names containing slashes or spaces.
+concurrent requests, and names containing slashes. Paths or branch names with
+spaces are rejected before provisioning because Coasts 0.1.53 interpolates them
+without quoting. Supporting spaces requires an upstream fix.
+
+- [ ] Record a complete live Worktrunk acceptance run, including failed cleanup
+  and retry. Regression tests cover the lifecycle transitions and concurrency;
+  section 2 records the two-instance browser and stop/resume checks.
 
 ## 2. Give every browser tab a stable instance
 
@@ -137,21 +144,30 @@ Additional validation remains outside the password-session acceptance:
 
 ## 3. Shorten feedback loops
 
-- [ ] Record cold build, cached build, new-instance startup, stopped-instance
-  resume, web edit, and internal-service edit times before optimizing.
-- [ ] Reduce core-stack build/export overhead. Coasts currently scans base
-  images from the root Dockerfile, including Rust/Python/tool stages that the
-  core UI loop does not need. Verify the installed release's behavior and
-  narrow the development build inputs without duplicating shipped image logic.
-- [ ] Add watch/restart development execution for jobs API and tasks; internal
-  source is currently baked into images. Preserve correct branch assignment,
-  graceful shutdown, and explicit migration behavior.
-- [ ] Make dependency changes trigger the necessary install/rebuild while
+- [x] Record uncached and cached builds, new-instance startup, stopped-instance
+  resume, web edit, and internal-service edit times, with build/export controls.
+- [x] Reduce core-stack build/export overhead. Generate the development target's
+  stage dependencies from the root Dockerfile so Coasts skips unrelated base
+  images. Reuse matching image IDs already loaded in an instance on refresh.
+  Coasts 0.1.53 still exports once per service during artifact creation.
+- [x] Add watch/restart development execution for jobs API and tasks with mounted
+  source, graceful shutdown, and explicit migration behavior.
+- [x] Make dependency changes trigger the necessary install/rebuild while
   ordinary source edits avoid it. Keep generated files owned by the developer.
-- [ ] Provide a documented non-root shell/exec path. Automatic Vite startup is
-  non-root, but manual Coast shells and Docker exec can still write as root.
-- [ ] Repeat the timing measurements and record improvements and remaining
+- [x] Provide a documented non-root shell/exec path through `coast exec`. Raw
+  Docker exec still defaults to root.
+- [x] Repeat the timing measurements and record improvements and remaining
   costs in the development documentation.
+
+The watch loop and source ownership were validated in a disposable Coast on
+2026-09-08, including shared-package edits and build-error recovery. Partial
+measurements are in [the development guide](dev/README.md#feedback-loop-measurements).
+On 2026-09-09, narrowing the generated Dockerfile reduced a warmed Coast artifact
+build from 126.53 s to 47.86 s; reusing a loaded image reduced refresh from
+22.68 s to 13.82 s. Uncached application-layer builds, cached builds, startup,
+resume, and both edit loops were measured. The development guide records the
+controls, timings, and remaining per-service exports. Uncached builds retained
+the local Node base image; fresh-machine downloads belong to section 6.
 
 Acceptance: web and internal source edits reach the running application
 without manual image rebuilds; dependency changes remain correct; source
@@ -179,14 +195,15 @@ Seed/import work can follow core lifecycle integration.
 
 - [ ] Add list and reset operations targeting one instance's database and blob
   container. Never reset shared-service volumes to reset a single worktree.
-- [ ] Keep pending cleanup identities outside Coast configuration volumes and
+- [x] Keep pending cleanup identities outside Coast configuration volumes and
   Worktrunk branch state that may be deleted during removal. Delete their
   mappings once the instance and its data are gone.
 - [ ] Implement the chosen new-worktree data policy, keeping database records
   and referenced blobs consistent. Make schema compatibility failures clear.
-- [ ] Identify and clean up orphaned databases/blob containers from failed or
-  bypassed hooks and manual Coast removal. Show their origin before cleanup.
-  Document shared-service upgrade procedures.
+- [x] Identify registry-backed orphaned instances from failed or bypassed hooks
+  and manual Coast removal; show their worktree and support targeted cleanup.
+- [ ] Discover databases/blob containers absent from the registry and document
+  shared-service upgrade procedures.
 
 Acceptance: removing a worktree leaves no database or blob container for that
 instance; recreating it starts with fresh data. Partial cleanup can be retried

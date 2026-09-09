@@ -3,6 +3,8 @@ from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 import tempfile
 import shutil
+import subprocess
+import json
 import unittest
 from unittest.mock import patch
 
@@ -95,6 +97,7 @@ class LifecycleTests(unittest.TestCase):
         self.temporary = tempfile.TemporaryDirectory()
         self.addCleanup(self.temporary.cleanup)
         self.root = Path(self.temporary.name)
+        (self.root / "Dockerfile").write_text("FROM node:24 AS dev-coast\n")
         self.backend = FakeCoast()
         self.lifecycle = coast.Lifecycle(self.root / "registry", self.backend)
         self.hash = patch.object(coast, "fingerprint", return_value="hash")
@@ -308,6 +311,123 @@ class LifecycleTests(unittest.TestCase):
             shutil.rmtree(git_dir)
             git_dir.mkdir()
             self.assertNotEqual(coast.worktree_key(self.root, registry, create=True), first)
+
+
+class FingerprintTests(unittest.TestCase):
+    def test_mounted_source_edits_do_not_rebuild_images(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            files = ["apps/internal/src/index.ts", "packages/data/src/db/pg.ts", "apps/web/src/main.tsx"]
+            with patch.object(coast, "git", return_value="\0".join(files)):
+                before = coast.fingerprint(root)
+                for name in files:
+                    path = root / name
+                    path.parent.mkdir(parents=True, exist_ok=True)
+                    path.write_text("changed source")
+                self.assertEqual(coast.fingerprint(root), before)
+
+    def test_dependencies_migrations_and_watcher_changes_rebuild_images(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            files = ["pnpm-lock.yaml", "apps/internal/package.json", "apps/internal/dev/main.ts",
+                     "packages/data/drizzle/0001.sql", "packages/data/package.json", "dev/scripts/coast.py"]
+            with patch.object(coast, "git", return_value="\0".join(files)):
+                for name in files:
+                    before = coast.fingerprint(root)
+                    path = root / name
+                    path.parent.mkdir(parents=True, exist_ok=True)
+                    path.write_text("changed build input")
+                    self.assertNotEqual(coast.fingerprint(root), before, name)
+
+
+class DevelopmentDockerfileTests(unittest.TestCase):
+    def test_includes_parent_and_copy_dependencies_but_excludes_workflow_stages(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            (root / "Dockerfile").write_text(
+                "# syntax=docker/dockerfile:1-labs\n"
+                "FROM node:24 AS base\nRUN corepack enable\n"
+                "FROM rust:1 AS workflow\nRUN cargo build\n"
+                "FROM debian:12 AS helper\nRUN touch /helper\n"
+                "FROM base AS dev\nCOPY apps/web /repo/apps/web\n"
+                "FROM dev AS dev-coast\nCOPY --from=helper /helper /helper\n")
+            result = coast.development_dockerfile(root)
+            self.assertTrue(result.startswith("# syntax=docker/dockerfile:1-labs\n"))
+            self.assertIn("FROM node:24 AS base", result)
+            self.assertIn("FROM debian:12 AS helper", result)
+            self.assertIn("FROM base AS dev", result)
+            self.assertNotIn("rust", result)
+            self.assertNotIn("cargo", result)
+
+    def test_unsupported_stage_dependencies_fail_before_building(self):
+        for source in ("FROM node:24\n", "FROM node:24 AS dev-coast\nCOPY --from=0 /a /a\n",
+                       "FROM node:24 AS dev-coast\nRUN --mount=from=builder echo test\n"):
+            with self.subTest(source=source), tempfile.TemporaryDirectory() as directory:
+                root = Path(directory)
+                (root / "Dockerfile").write_text(source)
+                with self.assertRaises(RuntimeError):
+                    coast.development_dockerfile(root)
+
+    def test_workflow_only_changes_preserve_fingerprint(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            path = root / "Dockerfile"
+            path.write_text("FROM node:24 AS dev-coast\nFROM rust:1 AS workflow\n")
+            with patch.object(coast, "git", return_value="Dockerfile\0packages/quality-core/src/lib.rs"):
+                before = coast.fingerprint(root)
+                crate = root / "packages/quality-core/src/lib.rs"
+                crate.parent.mkdir(parents=True)
+                crate.write_text("pub fn changed() {}")
+                self.assertEqual(coast.fingerprint(root), before)
+                path.write_text(path.read_text().replace("rust:1", "rust:2"))
+                self.assertEqual(coast.fingerprint(root), before)
+                path.write_text(path.read_text().replace("node:24", "node:26"))
+                self.assertNotEqual(coast.fingerprint(root), before)
+
+
+class ImageTransferTests(unittest.TestCase):
+    def rebuild(self, present_id, present_status=0, load_status=0):
+        backend = coast.Coast(Path.cwd(), "virtool")
+        configuration = {"services": {name: {"image": f"image/{name}"}
+                                      for name in ("web", "migration", "jobs-api", "tasks")}}
+        with patch.object(coast, "run", side_effect=[json.dumps(configuration), "sha256:expected"]), \
+                patch.object(coast.subprocess, "run", side_effect=[
+                    subprocess.CompletedProcess([], 0),
+                    subprocess.CompletedProcess([], present_status, present_id),
+                    subprocess.CompletedProcess([], load_status),
+                ]), \
+                patch.object(coast.subprocess, "Popen") as save, \
+                patch.object(backend, "command"), patch.object(backend, "compose") as compose:
+            save.return_value.__enter__.return_value.wait.return_value = 0
+            backend.rebuild({"name": "test", "worktree": str(Path.cwd())}, "hash")
+            return save.call_count, compose.call_args_list
+
+    def test_identical_image_skips_transfer_but_restarts_services(self):
+        transfers, calls = self.rebuild("sha256:expected\n")
+        self.assertEqual(transfers, 0)
+        self.assertEqual(len(calls), 2)
+        self.assertIn("--force-recreate", calls[1].args)
+
+    def test_missing_or_different_image_is_loaded(self):
+        for image_id, status in (("", 1), ("sha256:other", 0)):
+            with self.subTest(image_id=image_id):
+                transfers, _ = self.rebuild(image_id, status)
+                self.assertEqual(transfers, 1)
+
+    def test_failed_load_does_not_report_success(self):
+        with self.assertRaisesRegex(RuntimeError, "Failed to load"):
+            self.rebuild("", 1, 1)
+
+
+class ReadinessTests(unittest.TestCase):
+    def test_running_watchers_do_not_hide_failed_services(self):
+        backend = coast.Coast(Path.cwd(), "virtool")
+        services = {"services": [{"name": name, "status": "running"}
+                                  for name in ("web", "jobs-api", "tasks", "proxy")]}
+        with patch.object(backend, "is_running", return_value=True), \
+                patch.object(backend, "api", return_value=services), \
+                patch.object(coast, "run", side_effect=RuntimeError("probe failed")):
+            self.assertFalse(backend.ready({"name": "watcher"}))
 
 
 if __name__ == "__main__":

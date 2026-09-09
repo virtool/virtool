@@ -165,19 +165,52 @@ before relying on automatic startup or cleanup. Manual controller commands from
 the primary worktree remain available.
 
 Initial Coast builds are serialized and reused while their inputs and latest
-build ID match. Assignment changes the source mount; the controller builds
-bundled services on the host, caches them by input hash, and loads them into the
-owning Coast. Later switches rebuild when bundled source or dependency inputs
-change, but mounted web-source edits remain live. Internal services still need
-an image rebuild after edits; `ensure --rebuild` reapplies the cached images or
-builds changed inputs. Changing Coast configuration requires removing and
-recreating the instance with fresh data.
+build ID match. Assignment changes the source mount; the controller builds the
+development image on the host, caches it by input hash, and loads it into the
+owning Coast. Dependency manifests, lockfiles, build configuration, migration
+SQL, and development launcher changes invalidate that cache. Mounted web,
+internal, and shared package source edits do not. `ensure --rebuild` reapplies
+the cached image or builds changed inputs. Changing Coast configuration requires
+removing and recreating the instance with fresh data. Existing instances keep
+running on their previous configuration until explicitly recreated.
 
 Do not use `coast rebuild` with this stack. In Coasts 0.1.53 it bypasses the
 shared-service override and can launch an unintended second Compose project.
 The controller uses `coast docker ... compose` to preserve the effective
-configuration and explicitly builds the root Dockerfile's `internal` and
-`dev-coast` targets.
+configuration and builds the root Dockerfile's `dev-coast`
+target for web, jobs API, tasks, and migrations. Before building, it generates
+ignored `.coasts/Dockerfile` from that target's parent and `COPY --from` stages.
+This keeps the root Dockerfile as the source of truth while preventing Coasts
+from pulling/exporting unrelated bioinformatics base images. Stage declarations
+must be named, single-line `FROM <image> AS <name>` instructions with literal
+images, named `COPY --from` dependencies, and no build-mount dependencies;
+unsupported forms fail before building. Use the controller to build so
+the generated file is current. Workflow-only Dockerfile stages and Rust crate
+edits do not invalidate the core development image.
+
+An instance refresh compares the host image ID with images already loaded in
+that Coast. Matching images are retagged and services recreated without another
+`docker save`/`load`; missing images are transferred before services stop.
+Coasts 0.1.53 still builds/exports the same development target once per service
+when creating an artifact, and exports the Node base once per build directive.
+Removing that remaining duplication requires a different artifact mechanism or
+an upstream change. Keep each service's `build` and
+`volumes` keys explicit: Coasts 0.1.53 does not discover these through a
+service-level YAML merge. Aliases for their values are supported.
+
+Jobs API and tasks bundle mounted source with tsdown watch mode. A source edit
+sends `SIGTERM` to the old service; its replacement waits for exit, preserving
+HTTP shutdown and task draining/lease release. Rapid edits skip superseded
+builds. Build failures remain visible in service logs; a successful later edit
+starts the service again. Readiness checks probe both internal services because
+a running watcher can outlive a failed build. Each container owns its build
+output and dependencies.
+Compose allows 50 seconds for shutdown, above the default task budget of 40
+seconds; increase that grace period if you increase the application budget.
+
+Migrations run once as a prerequisite at startup, without a watcher. After
+editing migration code or SQL, use `ensure --rebuild` explicitly. Ordinary
+service edits never apply migrations.
 
 Host dependencies are no longer installed by a blocking Worktrunk hook. Run
 `pnpm install` explicitly in worktrees where editors or host checks need them;
@@ -186,8 +219,16 @@ container builds install their own dependencies.
 Vite runs as the mounted source owner's UID/GID. Source mounts stay writable
 only where generated files require it; shared package sources are read-only,
 and dependencies and caches live in containers. Prefer `coast exec <instance>
---service web <command>` for a mapped-user shell; the controller uses root only
-for provisioning and Compose administration.
+--service web <command>` for the web service. For an internal service shell, use:
+
+```bash
+coast exec <instance> --service jobs-api sh
+```
+
+`coast exec` maps the host user into the service. Raw Docker exec still defaults
+to root. Internal source mounts are read-only and generated bundles stay inside
+their containers. The controller uses root only for provisioning and Compose
+administration.
 
 `VT_COAST_BIN` overrides the executable and `VT_COAST_API` overrides the local
 API address (default `http://127.0.0.1:31415`). Both accept a `_FILE` variant.
@@ -199,6 +240,91 @@ Run lifecycle regression tests without Docker:
 ```bash
 PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover -s dev/scripts -p 'test_coast.py'
 ```
+
+### Feedback-loop measurements
+
+Measured on 2026-09-08 with the existing test stack and two managed Coasts
+running. These are single observations, not a complete controlled before/after
+benchmark. No shared Docker caches were cleared.
+
+| Operation | Elapsed |
+| --- | --- |
+| Existing instance image refresh before the watch change | 53.51 s |
+| Development image build with an uncached dependency layer | 149.74 s |
+| Unchanged cached development image build | 2.32 s |
+| New watch instance, including Coast artifact build/import | 371.95 s |
+| Healthy instance `ensure`, including service readiness probes | 1.99 s |
+| Stop an idle watch instance | 3.06 s |
+| Resume the stopped watch instance to readiness | 41.42 s |
+| Internal source edit to both services ready | 4.21 s |
+| Shared logger source edit to both services ready | 4.22 s |
+| Web source edit to updated Vite module response | 0.53 s |
+
+Edit measurements include polling and Docker exec overhead. The web measurement
+checks the served module, not browser paint or HMR delivery. Both internal
+services logged clean shutdown on source edits. An invalid TypeScript edit made
+controller readiness fail; restoring valid source recovered both services.
+The service children and `coast exec` used the source owner's UID, and the
+validation worktree had no files owned by a different user. Stop/resume
+preserved a test database row, the data identity, and the browser URL. The
+validation Coast, its data, and its worktree were removed afterward; both
+existing managed instances remained ready.
+
+The 149.74-second image build spent 85.3 seconds exporting layers and 41 seconds
+unpacking them. It overlapped the first Coast validation build, so do not treat
+it as an isolated cold-build baseline. Coasts scanned the root Dockerfile's
+Node, Debian, Rust, and Python base images for every service build declaration;
+the corrected artifact reported 29 cached entries and four builds. Narrowing
+those inputs and reducing repeated export/import remains unfinished.
+
+#### Build/export comparison, 2026-09-09
+
+Compared the full root Dockerfile with the generated development stages using
+Coasts 0.1.53 on the same host. Both artifact builds used warm Docker layers;
+no shared caches were pruned. The full-file control temporarily occupied the
+ignored generated Dockerfile path, keeping Compose and the build target
+identical. The generated file was restored before the second build.
+
+| Operation | Full-file / forced-transfer control | Optimized |
+| --- | --- | --- |
+| Development image, uncached application layers | 75.76 s | 77.33 s |
+| Coast artifact build | 126.53 s | 47.86 s |
+| Existing instance refresh to readiness | 22.68 s | 13.82 s |
+
+The uncached image controls used `docker build --no-cache --target dev-coast`
+with the root and generated Dockerfiles, in that order, retaining the same
+local Node base image. This measures uncached application layers, not a
+fresh-machine download. Their similar times are expected: BuildKit already
+prunes unreachable stages. A subsequent cached generated-file build took
+1.99 s (an earlier observation was 1.90 s).
+
+Artifact creation improved by 62%. Its manifest's base images went from Node,
+Debian bookworm/bullseye, Rust, and Python to Node alone; reported cached-image
+operations fell from 29 to 13. The refresh control forced a transfer through
+the same controller path; the optimized refresh reused the loaded image ID.
+The first refresh also needed a cached host build, so this comparison includes
+that small extra cost.
+
+| Development loop with a cached Coast artifact | Elapsed |
+| --- | --- |
+| New instance to readiness, shared services already running | 67.65–79.33 s (three runs) |
+| Healthy instance `ensure` | 0.68–0.70 s |
+| Stop | 1.96–2.43 s |
+| Resume to readiness | 28.60–28.61 s |
+| Internal edit to both updated bundles and healthy services | 2.64 s |
+| New web source module to Vite response | 0.03 s |
+
+The edit probes include command/polling overhead and do not measure browser
+paint or HMR delivery. Temporary edits were restored, and every disposable
+instance, database, and blob container was removed after validation.
+
+The first startup observation is excluded: shared Azurite was stopped,
+and Coasts did not resume it. Azurite was started before continuing. Existing
+managed Coasts and Minikube remained stopped throughout these measurements.
+
+The stage-scanning and repeated export behavior was checked against the
+[pinned Coasts build implementation](https://github.com/coast-guard/coasts/blob/v0.1.53/coast-daemon/src/handlers/build/images.rs).
+These are individual observations, not a statistical benchmark.
 
 ### Section 2 validation
 

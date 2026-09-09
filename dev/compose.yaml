@@ -13,7 +13,23 @@ x-environment: &environment
 
 x-internal-build: &internal-build
   context: ..
-  target: internal
+  dockerfile: .coasts/Dockerfile
+  target: dev-coast
+
+x-internal-volumes: &internal-volumes
+  - instance-config:/run/virtool-dev:ro
+  - ../apps/internal/src:/repo/apps/internal/src:ro
+  - ../packages/archive/src:/repo/packages/archive/src:ro
+  - ../packages/bio/src:/repo/packages/bio/src:ro
+  - ../packages/contracts/src:/repo/packages/contracts/src:ro
+  - ../packages/data/src:/repo/packages/data/src:ro
+  - ../packages/logger/src:/repo/packages/logger/src:ro
+  - ../packages/ncbi/src:/repo/packages/ncbi/src:ro
+  - ../packages/sentry/src:/repo/packages/sentry/src:ro
+  - ../packages/service/src:/repo/packages/service/src:ro
+  - ../packages/sqlite/src:/repo/packages/sqlite/src:ro
+  - ../packages/storage/src:/repo/packages/storage/src:ro
+  - ../packages/data/drizzle:/repo/packages/data/drizzle:ro
 
 services:
   postgres:
@@ -73,20 +89,30 @@ services:
 
   migration:
     build: *internal-build
-    environment: *environment
+    working_dir: /repo/apps/internal
+    init: true
+    stop_grace_period: 50s
+    entrypoint: [/bin/sh, /repo/apps/internal/dev/entrypoint.sh]
+    volumes: *internal-volumes
+    environment:
+      <<: *environment
+      VT_MIGRATIONS_PATH: /repo/packages/data/drizzle
     command: [migrate]
-    volumes:
-      - instance-config:/run/virtool-dev:ro
     depends_on:
       database-init:
         condition: service_completed_successfully
 
   jobs-api:
     build: *internal-build
-    environment: *environment
+    working_dir: /repo/apps/internal
+    init: true
+    stop_grace_period: 50s
+    entrypoint: [/bin/sh, /repo/apps/internal/dev/entrypoint.sh]
+    volumes: *internal-volumes
     command: [serve]
-    volumes:
-      - instance-config:/run/virtool-dev:ro
+    environment:
+      <<: *environment
+      VT_JOBS_API_HOST: 0.0.0.0
     ports:
       - "9950:9950"
     depends_on:
@@ -97,10 +123,14 @@ services:
 
   tasks:
     build: *internal-build
-    environment: *environment
+    working_dir: /repo/apps/internal
+    init: true
+    stop_grace_period: 50s
+    entrypoint: [/bin/sh, /repo/apps/internal/dev/entrypoint.sh]
+    volumes: *internal-volumes
     command: [run]
-    volumes:
-      - instance-config:/run/virtool-dev:ro
+    environment:
+      <<: *environment
     depends_on:
       migration:
         condition: service_completed_successfully
@@ -110,6 +140,7 @@ services:
   web:
     build:
       context: ..
+      dockerfile: .coasts/Dockerfile
       target: dev-coast
     entrypoint: [/bin/sh, -ec]
     command:

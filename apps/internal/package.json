@@ -8,6 +8,7 @@
 	],
 	"scripts": {
 		"build": "tsdown",
+		"develop": "node dev/main.ts",
 		"test": "vitest run",
 		"typecheck": "tsc --noEmit"
 	},
