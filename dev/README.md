@@ -48,37 +48,26 @@ pending records so bypassed hooks do not hide leftover data.
 
 ### Workflow execution
 
-Run the local workflow launcher in a terminal while developing workflows:
+Each Coast starts one Compose service for each workflow type. An executor polls
+only its own queue, claims at most one job, and exits after that job or after
+120 seconds without one. Compose restarts it unless the Coast was stopped.
+There is no separate workflow launcher to run.
 
-```bash
-python3 dev/scripts/coast.py workflows
-```
+The executors still use the production claim, ping, cancellation, finalization,
+failure, and exit paths. Each one connects directly to its Coast's private jobs
+API and blob container. Compose retains the same per-executor CPU and memory
+limits as the Minikube manifests, and stopping a Coast stops its executors.
 
-The Coast must be live and ready; run `python3 dev/scripts/coast.py ensure`
-first if the launcher reports otherwise.
+This deliberately does not reproduce KEDA. There is always one polling
+executor per workflow type, queue depth does not add parallel workers, and
+there is no global concurrency limit across Coasts. Up to four jobs can run in
+each active Coast, including several memory-heavy jobs at once. Stop unused
+Coasts before exercising heavy workflows on a constrained host.
 
-It reads the owning instance's job counts and builds and starts only the image
-needed by the next pending job. Each executor still claims through the jobs API
-and owns the normal ping, cancellation, finalization, failure, and exit
-contracts. Images use that instance's private jobs API, database-backed job
-queue, and blob container; the jobs API is never reached through another
-worktree's browser origin.
-
-Only one locally launched workflow runs across all managed worktrees at a time.
-The launcher holds a lock in the shared Coast registry until the one-shot
-executor exits, which bounds CPU and memory even when several worktrees have a
-launcher open. Compose also applies the same per-workflow CPU and memory limits
-as the Minikube manifests. Waiting launchers poll without holding the slot.
-
-Use `--workflow nuvs` to restrict the queue types; repeat the option to select
-several. `--once` checks once and runs at most one job, which is useful for a
-controlled failure or cancellation test. Stop the foreground launcher with
-Ctrl-C. Workflow services are behind a Compose profile and reference preloaded
-image tags, so ordinary `ensure` does not scan or build their bioinformatics
-stages. The launcher builds the selected root Dockerfile target on the host,
-transfers it only when its image ID is absent from the Coast, and then starts
-it. Docker caches each tool's independent stage and refreshes only the selected
-target and its dependencies.
+All four workflow targets are part of the Coast build instead of being built
+on demand. Docker still caches their independent tool stages, but a new artifact
+includes every executor and can take substantially longer to build than the
+core application alone.
 
 ### Browser access
 
@@ -202,8 +191,8 @@ Initial Coast builds are serialized and reused while their inputs and latest
 build ID match. Assignment changes the source mount; the controller builds the
 development image on the host, caches it by input hash, and loads it into the
 owning Coast. Dependency manifests, lockfiles, build configuration, migration
-SQL, and development launcher changes invalidate that cache. Mounted web,
-internal, and shared package source edits do not. `ensure --rebuild` reapplies
+SQL, workflow sources, and workflow Rust crates invalidate that cache. Mounted
+web, internal, and shared package source edits do not. `ensure --rebuild` reapplies
 the cached image or builds changed inputs. Changing Coast configuration requires
 removing and recreating the instance with fresh data. Existing instances keep
 running on their previous configuration until explicitly recreated.
@@ -214,13 +203,12 @@ The controller uses `coast docker ... compose` to preserve the effective
 configuration and builds the root Dockerfile's `dev-coast`
 target for web, jobs API, tasks, and migrations. Before building, it generates
 ignored `.coasts/Dockerfile` from that target's parent and `COPY --from` stages.
-This keeps the root Dockerfile as the source of truth while preventing Coasts
-from pulling/exporting unrelated bioinformatics base images. Stage declarations
-must be named, single-line `FROM <image> AS <name>` instructions with literal
-images, named `COPY --from` dependencies, and no build-mount dependencies;
-unsupported forms fail before building. Use the controller to build so
-the generated file is current. Workflow-only Dockerfile stages and Rust crate
-edits do not invalidate the core development image.
+This keeps the root Dockerfile as the source of truth for the development
+image. The workflow services build their root Dockerfile targets independently.
+Stage declarations must be named, single-line `FROM <image> AS <name>`
+instructions with literal images, named `COPY --from` dependencies, and no
+build-mount dependencies; unsupported forms fail before building. Use the
+controller to build so the generated file is current.
 
 An instance refresh compares the host image ID with images already loaded in
 that Coast. Matching images are retagged and services recreated without another

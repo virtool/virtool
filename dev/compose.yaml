@@ -208,8 +208,10 @@ services:
         condition: service_started
 
   workflow-create-sample:
-    profiles: [workflows]
-    image: virtool-worktree/create-sample:dev
+    build:
+      context: ..
+      target: create-sample
+    restart: unless-stopped
     environment:
       <<: *workflow-environment
       VT_IMAGE: virtool-dev/create-sample
@@ -217,12 +219,17 @@ services:
       VT_PROC: "2"
       VT_WORKFLOW: create_sample
     volumes: *workflow-volumes
+    depends_on:
+      jobs-api:
+        condition: service_started
     cpus: 2.5
     mem_limit: 5g
 
   workflow-create-subtraction:
-    profiles: [workflows]
-    image: virtool-worktree/create-subtraction:dev
+    build:
+      context: ..
+      target: create-subtraction
+    restart: unless-stopped
     environment:
       <<: *workflow-environment
       VT_IMAGE: virtool-dev/create-subtraction
@@ -230,12 +237,17 @@ services:
       VT_PROC: "2"
       VT_WORKFLOW: create_subtraction
     volumes: *workflow-volumes
+    depends_on:
+      jobs-api:
+        condition: service_started
     cpus: 2
     mem_limit: 3g
 
   workflow-pathoscope:
-    profiles: [workflows]
-    image: virtool-worktree/pathoscope:dev
+    build:
+      context: ..
+      target: pathoscope
+    restart: unless-stopped
     environment:
       <<: *workflow-environment
       VT_IMAGE: virtool-dev/pathoscope
@@ -243,12 +255,17 @@ services:
       VT_PROC: "2"
       VT_WORKFLOW: pathoscope
     volumes: *workflow-volumes
+    depends_on:
+      jobs-api:
+        condition: service_started
     cpus: 3
     mem_limit: 7g
 
   workflow-nuvs:
-    profiles: [workflows]
-    image: virtool-worktree/nuvs:dev
+    build:
+      context: ..
+      target: nuvs
+    restart: unless-stopped
     environment:
       <<: *workflow-environment
       VT_IMAGE: virtool-dev/nuvs
@@ -256,6 +273,9 @@ services:
       VT_PROC: "2"
       VT_WORKFLOW: nuvs
     volumes: *workflow-volumes
+    depends_on:
+      jobs-api:
+        condition: service_started
     cpus: 3
     mem_limit: 7g
 

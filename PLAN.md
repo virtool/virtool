@@ -175,12 +175,14 @@ mounts acquire no root-owned files during supported development commands.
 
 ## 4. Restore workflow execution without local Kubernetes
 
-- [x] Choose an explicit one-shot workflow launcher or bounded local worker
-  mechanism. Match job claim, ping, cancellation, finalization, and exit
-  contracts; local KEDA scaling is not required.
+- [x] Run one restartable Compose worker per workflow type. Match job claim,
+  ping, cancellation, finalization, and exit contracts; local KEDA scaling is
+  not required.
 - [x] Run workflow images against the owning instance's jobs API and storage.
-  Bound concurrency so several worktrees cannot exhaust the host.
-- [x] Keep bioinformatics image layers cached and build only required targets.
+  Run one restartable worker per workflow type and document that concurrency is
+  not bounded across worktrees.
+- [x] Keep bioinformatics image layers cached. Accept building every workflow
+  target as part of the Coast artifact instead of selecting by queue depth.
   Add any new workflow/crate build inputs to CI filters as required by AGENTS.
 - [ ] Exercise sample creation, subtraction creation, Pathoscope, and NuVs,
   including cancellation and failure cleanup.

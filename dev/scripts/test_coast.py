@@ -368,21 +368,29 @@ class DevelopmentDockerfileTests(unittest.TestCase):
                 with self.assertRaises(RuntimeError):
                     coast.development_dockerfile(root)
 
-    def test_workflow_only_changes_preserve_fingerprint(self):
+    def test_workflow_changes_invalidate_fingerprint(self):
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
             path = root / "Dockerfile"
             path.write_text("FROM node:24 AS dev-coast\nFROM rust:1 AS workflow\n")
-            with patch.object(coast, "git", return_value="Dockerfile\0packages/quality-core/src/lib.rs"):
+            files = ["Dockerfile", "packages/quality-core/src/lib.rs", "apps/nuvs/src/index.ts"]
+            with patch.object(coast, "git", return_value="\0".join(files)):
                 before = coast.fingerprint(root)
                 crate = root / "packages/quality-core/src/lib.rs"
                 crate.parent.mkdir(parents=True)
                 crate.write_text("pub fn changed() {}")
-                self.assertEqual(coast.fingerprint(root), before)
+                after_crate = coast.fingerprint(root)
+                self.assertNotEqual(after_crate, before)
+                app = root / "apps/nuvs/src/index.ts"
+                app.parent.mkdir(parents=True)
+                app.write_text("export const changed = true")
+                after_app = coast.fingerprint(root)
+                self.assertNotEqual(after_app, after_crate)
                 path.write_text(path.read_text().replace("rust:1", "rust:2"))
-                self.assertEqual(coast.fingerprint(root), before)
+                after_workflow_stage = coast.fingerprint(root)
+                self.assertNotEqual(after_workflow_stage, after_app)
                 path.write_text(path.read_text().replace("node:24", "node:26"))
-                self.assertNotEqual(coast.fingerprint(root), before)
+                self.assertNotEqual(coast.fingerprint(root), after_workflow_stage)
 
 
 class ImageTransferTests(unittest.TestCase):
@@ -428,38 +436,6 @@ class ReadinessTests(unittest.TestCase):
                 patch.object(backend, "api", return_value=services), \
                 patch.object(coast, "run", side_effect=RuntimeError("probe failed")):
             self.assertFalse(backend.ready({"name": "watcher"}))
-
-
-class WorkflowLauncherTests(unittest.TestCase):
-    def test_selects_the_first_pending_allowed_workflow(self):
-        counts = {"pending": {workflow: 0 for workflow in coast.WORKFLOWS}}
-        counts["pending"]["pathoscope"] = 2
-        counts["pending"]["nuvs"] = 1
-        self.assertEqual(
-            coast.next_pending_workflow(counts, ("nuvs", "pathoscope")),
-            "nuvs",
-        )
-
-    def test_rejects_an_incomplete_counts_response(self):
-        with self.assertRaisesRegex(RuntimeError, "pending.nuvs"):
-            coast.next_pending_workflow({"pending": {}}, ("nuvs",))
-
-    def test_once_runs_one_image_while_holding_the_global_slot(self):
-        backend = FakeCoast()
-        backend.job_counts = lambda name: {
-            "pending": {workflow: int(workflow == "create_sample")
-                        for workflow in coast.WORKFLOWS}
-        }
-        backend.run_workflow = unittest.mock.Mock()
-        with tempfile.TemporaryDirectory() as directory:
-            coast.run_workflows(
-                backend,
-                Path(directory),
-                {"name": "first"},
-                coast.WORKFLOWS,
-                once=True,
-            )
-        backend.run_workflow.assert_called_once_with({"name": "first"}, "create_sample")
 
 
 if __name__ == "__main__":
