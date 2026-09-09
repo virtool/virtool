@@ -49,7 +49,7 @@ way to create a worktree without starting services.
 
 ## 1. Integrate Worktrunk lifecycle
 
-Worktrunk 0.75.0 is installed. Its switch hook runs startup in the background;
+Worktrunk 0.77.0 is installed. Its switch hook runs startup in the background;
 `pre-remove` runs while the worktree still exists. The lifecycle integration is
 implemented; the checks below track implementation. The controller provisions
 a Coast with autostart disabled, writes its data identity, and assigns its worktree
@@ -96,7 +96,7 @@ concurrent requests, and names containing slashes. Paths or branch names with
 spaces are rejected before provisioning because Coasts 0.1.53 interpolates them
 without quoting. Supporting spaces requires an upstream fix.
 
-- [ ] Record a complete live Worktrunk acceptance run, including failed cleanup
+- [x] Record a complete live Worktrunk acceptance run, including failed cleanup
   and retry. Regression tests cover the lifecycle transitions and concurrency;
   section 2 records the two-instance browser and stop/resume checks.
 

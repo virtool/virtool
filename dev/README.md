@@ -7,7 +7,7 @@ per worktree. Postgres and Azurite are shared; each instance owns a database
 and blob container. Workflow executors still require the Minikube environment
 below. The root `docker-compose.yml` remains the database test environment.
 
-Requires Docker Engine, Python 3.11+, Worktrunk 0.75.0, and Coasts 0.1.53.
+Requires Docker Engine, Python 3.11+, Worktrunk 0.77.0, and Coasts 0.1.53.
 The integration checks the Coast version because it uses that release's local
 JSON API for state and readiness. Coasts 0.1.53 interpolates assignment paths
 into shell commands without quoting them. The controller therefore accepts
@@ -134,11 +134,11 @@ recreating the instance. Legacy manually created trial instances are not
 adopted or deleted by the hooks; clean those separately after identifying their
 data ID in `/run/virtool-dev/namespace`.
 
-Shared Postgres uses `virtool-coasts-postgres` and host port 15432. Shared
-Azurite uses `virtool-coasts-azurite` and host port 11000. Both stay running when
-instances stop. These ports must be free on first startup and are independent
-of Minikube and the root Compose test databases. Data separation is for
-development: instances share service credentials.
+Shared Postgres uses `virtool-shared-services-postgres` and host port 15432.
+Shared Azurite uses `virtool-shared-services-azurite` and host port 11000. Both
+stay running when instances stop. These ports must be free on first startup and
+are independent of Minikube and the root Compose test databases. Data
+separation is for development: instances share service credentials.
 
 If another process takes a stopped instance's reserved dynamic port, `ensure`
 reports the occupied port before starting Docker, instead of changing its
@@ -240,6 +240,26 @@ Run lifecycle regression tests without Docker:
 ```bash
 PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover -s dev/scripts -p 'test_coast.py'
 ```
+
+### Lifecycle acceptance, 2026-09-09
+
+A live Worktrunk 0.77.0 run created two branches containing slashes and launched
+their background `post-switch` hooks concurrently. Both instances reached
+distinct HTTPS origins with distinct databases and blob containers. Only one
+hook ran `coast build`; the other waited for and reused the shared build. Three
+immediate switches, including two requests for the same instance, completed
+without rebuilding or changing either identity or URL.
+
+Stopping and ensuring one instance preserved its data ID, URL, database, and
+blob container. For the other, shared Azurite was stopped for a controlled
+cleanup failure. Worktrunk's `pre-remove` hook stopped the Coast and dropped its
+database, then blocked worktree removal when blob deletion failed. The registry
+record remained in `removing`, the worktree and blob container remained, and
+the other instance stayed ready. After restarting Azurite, retrying the same
+`wt remove` tolerated the absent database and removed the blob container,
+Coast, registry record, and worktree. Normal removal of the second worktree did
+the same. The disposable branches, instances, databases, and blob containers
+were absent after the run.
 
 ### Feedback-loop measurements
 
