@@ -1,4 +1,6 @@
 import "@app/style.css";
+import DevelopmentInstance from "@app/DevelopmentInstance";
+import { getDocumentTitle } from "@app/development";
 import { readSentryDsn, SENTRY_DSN_META_NAME } from "@app/sentryDsn";
 import { readServerNow, SERVER_NOW_META_NAME } from "@app/serverNow";
 import LoadingPlaceholder from "@base/LoadingPlaceholder";
@@ -33,7 +35,7 @@ export const Route = createRootRouteWithContext<RouterContext>()({
 				{ charSet: "utf-8" },
 				{ name: "viewport", content: "width=device-width, initial-scale=1" },
 				{ httpEquiv: "X-UA-Compatible", content: "IE=edge" },
-				{ title: "Virtool" },
+				{ title: getDocumentTitle("Virtool") },
 				// The instant every server-rendered relative time was measured
 				// against. The browser reads it back to render the same strings
 				// during hydration, then switches to its own clock. See
@@ -85,6 +87,7 @@ function RootShell({ children }: { children: ReactNode }) {
 				    cannot catch stops here instead of unmounting the page. `Scripts`
 				    stays outside it — the reload prompt is worthless without them. */}
 				<ShellErrorBoundary>{children}</ShellErrorBoundary>
+				{import.meta.env.DEV && <DevelopmentInstance />}
 				<Scripts />
 			</body>
 		</html>

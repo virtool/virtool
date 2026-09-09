@@ -288,9 +288,12 @@ Run from the monorepo root.
 
 | Command | Action |
 | --- | --- |
+| `pnpm --filter @virtool/internal develop serve` / `develop run` | Watch, rebuild, and gracefully restart the selected service. |
 | `pnpm --filter @virtool/internal build` | Bundle to `dist/index.mjs`. |
 | `pnpm --filter @virtool/internal test` | Run the Vitest suite (needs Docker — Postgres testcontainer). |
 | `pnpm --filter @virtool/internal typecheck` | Run `tsc --noEmit`. |
+
+Migrations remain a one-shot startup step; see [the development guide](../../dev/README.md#builds-dependencies-and-rollout).
 
 Run a subcommand from the built bundle with `node dist/index.mjs serve`,
 `node dist/index.mjs run`, or `node dist/index.mjs migrate`.

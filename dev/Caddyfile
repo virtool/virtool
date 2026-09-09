@@ -1,0 +1,18 @@
+{
+	auto_https disable_redirects
+	admin off
+}
+
+https://{$VT_DEV_HOSTNAME}:9443 {
+	tls internal
+	handle /devstoreaccount1/* {
+		reverse_proxy azurite:10000 {
+			header_up Host azurite:10000
+		}
+	}
+	handle {
+		reverse_proxy web:9900 {
+			flush_interval -1
+		}
+	}
+}

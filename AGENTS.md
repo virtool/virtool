@@ -42,8 +42,8 @@ Apps bundle; packages stay source.
 ## Rules
 
 - No app may import another app's source.
-- Don't use the dev server. Use Tilt and Minikube via the root `Tiltfile`; see
-  [dev/README.md](dev/README.md).
+- Run development servers inside the Coasts environment, not directly on the
+  host. See [dev/README.md](dev/README.md).
 
 ## Tooling
 

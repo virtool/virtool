@@ -22,8 +22,9 @@ config.json
 *.log*
 .cache
 .DS_store
-.TILT_PORT
-.WT
+.coasts
+.worktrees
+**/.dev-instances.json
 env
 tags
 .vscode

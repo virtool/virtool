@@ -1,0 +1,41 @@
+[coast]
+name = "virtool"
+compose = "dev/compose.yaml"
+primary_port = "https"
+autostart = false
+worktree_dir = [".worktrees", "${HOME}/Projects"]
+default_worktree_dir = ".worktrees"
+
+[secrets.auth_secret]
+extractor = "command"
+run = 'python3 -c "import base64, secrets; print(base64.b64encode(secrets.token_bytes(32)).decode())"'
+inject = "file:/run/secrets/virtool-auth-secret"
+
+[secrets.encryption_key]
+extractor = "command"
+run = 'python3 -c "import base64, secrets; print(base64.b64encode(secrets.token_bytes(32)).decode())"'
+inject = "file:/run/secrets/virtool-encryption-key"
+
+[ports]
+web = 9900
+jobs-api = 9950
+https = 9443
+
+[shared_services.postgres]
+image = "postgres:18"
+ports = ["15432:5432"]
+volumes = ["virtool-coasts-postgres:/var/lib/postgresql"]
+env = { POSTGRES_USER = "virtool", POSTGRES_PASSWORD = "virtool", POSTGRES_DB = "postgres" }
+
+[shared_services.azurite]
+image = "mcr.microsoft.com/azure-storage/azurite:3.37.0"
+ports = ["11000:10000"]
+volumes = ["virtool-coasts-azurite:/data"]
+
+[volumes.instance-config]
+strategy = "isolated"
+service = "database-init"
+mount = "/run/virtool-dev"
+
+[assign]
+default = "none"

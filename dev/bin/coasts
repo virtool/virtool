@@ -1,0 +1,6 @@
+#!/bin/sh
+
+set -eu
+
+worktree=$(git rev-parse --show-toplevel)
+exec python3 "$worktree/dev/scripts/coast.py" --worktree "$worktree" "$@"
