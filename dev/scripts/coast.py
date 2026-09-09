@@ -32,6 +32,7 @@ MOUNTED_SOURCES = ("apps/web/src/", "apps/web/public/", "apps/internal/src/",
                    *(f"packages/{name}/src/" for name in ("archive", "bio", "contracts", "data",
                      "logger", "ncbi", "sentry", "service", "sqlite", "storage")))
 CONFIG_INPUTS = ("Coastfile", "dev/compose.yaml", "dev/Caddyfile", "dev/scripts/init-coast-data.sh")
+WORKFLOWS = ("create_sample", "create_subtraction", "pathoscope", "nuvs")
 
 
 def run(args, cwd, log=None):
@@ -69,6 +70,18 @@ def lock(path):
     with path.open("a") as handle:
         fcntl.flock(handle, fcntl.LOCK_EX)
         yield
+
+
+@contextlib.contextmanager
+def try_lock(path):
+    path.parent.mkdir(parents=True, exist_ok=True)
+    with path.open("a") as handle:
+        try:
+            fcntl.flock(handle, fcntl.LOCK_EX | fcntl.LOCK_NB)
+        except BlockingIOError:
+            yield False
+            return
+        yield True
 
 
 def development_dockerfile(root):
@@ -198,6 +211,13 @@ class Coast:
     def ports(self, name):
         return self.api("/ports", {"action": "List", "project": self.project, "name": name})["ports"]
 
+    def service_port(self, name, service):
+        ports = self.ports(name)
+        try:
+            return next(item["dynamic_port"] for item in ports if item["logical_name"] == service)
+        except StopIteration as error:
+            raise RuntimeError(f"Coast {name} has no {service} port") from error
+
     def latest_build(self):
         builds = self.api("/builds?" + urllib.parse.urlencode({"project": self.project}))["builds"]
         return next((build["build_id"] for build in builds if build["is_latest"]), None)
@@ -223,6 +243,41 @@ class Coast:
 
     def compose(self, name, *args):
         return self.command("docker", "--root", name, "compose", *args)
+
+    def job_counts(self, name):
+        url = f"http://127.0.0.1:{self.service_port(name, 'jobs-api')}/jobs/counts"
+        try:
+            with urllib.request.urlopen(url, timeout=5) as response:
+                return json.load(response)
+        except (urllib.error.URLError, ValueError) as error:
+            raise RuntimeError(f"Could not read the job queue for {name}: {error}") from error
+
+    def prepare_workflow(self, record, workflow):
+        target = workflow.replace("_", "-")
+        tag = f"virtool-worktree/{target}:dev"
+        worktree = Path(record["worktree"])
+        run(["docker", "build", "--target", target, "-t", tag, "."], worktree, self.log)
+        image_id = run(["docker", "image", "inspect", "--format", "{{.Id}}", tag], worktree)
+        outer = f"{self.project}-coasts-{record['name']}"
+        present = subprocess.run(
+            ["docker", "exec", outer, "docker", "image", "inspect", image_id],
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL,
+        ).returncode == 0
+        if present:
+            run(["docker", "exec", outer, "docker", "tag", image_id, tag], worktree, self.log)
+            return
+        with subprocess.Popen(["docker", "save", tag], stdout=subprocess.PIPE, stderr=self.log) as save:
+            loaded = subprocess.run(["docker", "exec", "-i", outer, "docker", "load"],
+                                    stdin=save.stdout, stdout=self.log, stderr=self.log)
+            save.stdout.close()
+            if save.wait() or loaded.returncode:
+                raise RuntimeError(f"Failed to load {workflow} image into Coast")
+
+    def run_workflow(self, record, workflow):
+        self.prepare_workflow(record, workflow)
+        service = "workflow-" + workflow.replace("_", "-")
+        self.compose(record["name"], "--profile", "workflows", "run", "--rm", "--no-deps", service)
 
     def is_running(self, name):
         return run(["docker", "inspect", "--format", "{{.State.Running}}",
@@ -493,12 +548,49 @@ class Lifecycle:
         print(f"Removed {record['name']}, its database, and its blobs")
 
 
+def next_pending_workflow(counts, allowed):
+    pending = counts.get("pending")
+    if not isinstance(pending, dict):
+        raise RuntimeError("Jobs API returned an invalid counts response")
+    for workflow in allowed:
+        count = pending.get(workflow)
+        if not isinstance(count, int):
+            raise RuntimeError(f"Jobs API counts response has no integer pending.{workflow}")
+        if count > 0:
+            return workflow
+    return None
+
+
+def run_workflows(coast, registry, record, allowed, once=False):
+    print(f"Watching {record['name']} for {', '.join(allowed)} jobs; Ctrl-C to stop")
+    cursor = 0
+    while True:
+        ordered = allowed[cursor:] + allowed[:cursor]
+        with try_lock(registry / "workflow.lock") as acquired:
+            if acquired:
+                workflow = next_pending_workflow(coast.job_counts(record["name"]), ordered)
+                if workflow is not None:
+                    print(f"Running {workflow} for {record['name']}", flush=True)
+                    coast.run_workflow(record, workflow)
+                    cursor = (allowed.index(workflow) + 1) % len(allowed)
+                    if once:
+                        return
+                    continue
+        if once:
+            return
+        time.sleep(2)
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("command", choices=("ensure", "status", "list", "stop", "remove"))
+    parser.add_argument("command", choices=("ensure", "status", "list", "stop", "remove", "workflows"))
     parser.add_argument("--worktree", type=Path, default=Path.cwd())
     parser.add_argument("--instance", help="Registry instance name, including one whose worktree is gone")
     parser.add_argument("--rebuild", action="store_true", help="Rebuild an existing instance")
+    parser.add_argument("--workflow", choices=WORKFLOWS, action="append",
+                        help="Only run this workflow type; repeat to select several")
+    parser.add_argument("--once", action="store_true",
+                        help="Check once and run at most one workflow")
     args = parser.parse_args()
     worktree = args.worktree.resolve()
     common = Path(git(Path.cwd(), "rev-parse", "--path-format=absolute", "--git-common-dir"))
@@ -530,6 +622,21 @@ def main():
     if args.command == "status":
         print(json.dumps(read_json(path, {"state": "absent"}), indent=2))
         print(f"Logs: {registry / 'logs' / (key + '.log')}")
+        return
+    if args.command == "workflows":
+        record = read_json(path)
+        if not record or record.get("state") != "ready":
+            raise RuntimeError("The managed Coast must be ready before workflows can run")
+        config = tomllib.loads((primary / "Coastfile").read_text())
+        coast = Coast(primary, config["coast"]["name"])
+        coast.check()
+        if not coast.ready(record):
+            raise RuntimeError("The managed Coast is not currently ready; run ensure before workflows")
+        allowed = tuple(args.workflow or WORKFLOWS)
+        try:
+            run_workflows(coast, registry, record, allowed, args.once)
+        except KeyboardInterrupt:
+            print("Stopped workflow launcher")
         return
     with lock(registry / "locks" / f"{key}.lock"):
         log_path = registry / "logs" / f"{key}.log"

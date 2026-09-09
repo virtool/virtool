@@ -31,6 +31,19 @@ x-internal-volumes: &internal-volumes
   - ../packages/storage/src:/repo/packages/storage/src:ro
   - ../packages/data/drizzle:/repo/packages/data/drizzle:ro
 
+x-workflow-environment: &workflow-environment
+  VT_JOBS_API_URL: http://jobs-api:9950
+  VT_TIMEOUT: "120"
+  VT_WORK_PATH: /work
+  VT_STORAGE_BACKEND: azure
+  VT_STORAGE_AZURE_ACCOUNT: devstoreaccount1
+  VT_STORAGE_AZURE_CONTAINER_FILE: /run/virtool-dev/namespace
+  VT_STORAGE_AZURE_ACCESS_KEY: Eby8vdM02xNOcqFlqUwJPLlmEtlCDXJ1OUzFT50uSRZ6IFsuFq2UVErCz4I6tq/K1SZFPTOtr/KBHBeksoGMGw==
+  VT_STORAGE_AZURE_ENDPOINT: http://azurite:10000/devstoreaccount1
+
+x-workflow-volumes: &workflow-volumes
+  - instance-config:/run/virtool-dev:ro
+
 services:
   postgres:
     image: postgres:18
@@ -193,6 +206,58 @@ services:
     depends_on:
       web:
         condition: service_started
+
+  workflow-create-sample:
+    profiles: [workflows]
+    image: virtool-worktree/create-sample:dev
+    environment:
+      <<: *workflow-environment
+      VT_IMAGE: virtool-dev/create-sample
+      VT_MEM: "4"
+      VT_PROC: "2"
+      VT_WORKFLOW: create_sample
+    volumes: *workflow-volumes
+    cpus: 2.5
+    mem_limit: 5g
+
+  workflow-create-subtraction:
+    profiles: [workflows]
+    image: virtool-worktree/create-subtraction:dev
+    environment:
+      <<: *workflow-environment
+      VT_IMAGE: virtool-dev/create-subtraction
+      VT_MEM: "2"
+      VT_PROC: "2"
+      VT_WORKFLOW: create_subtraction
+    volumes: *workflow-volumes
+    cpus: 2
+    mem_limit: 3g
+
+  workflow-pathoscope:
+    profiles: [workflows]
+    image: virtool-worktree/pathoscope:dev
+    environment:
+      <<: *workflow-environment
+      VT_IMAGE: virtool-dev/pathoscope
+      VT_MEM: "6"
+      VT_PROC: "2"
+      VT_WORKFLOW: pathoscope
+    volumes: *workflow-volumes
+    cpus: 3
+    mem_limit: 7g
+
+  workflow-nuvs:
+    profiles: [workflows]
+    image: virtool-worktree/nuvs:dev
+    environment:
+      <<: *workflow-environment
+      VT_IMAGE: virtool-dev/nuvs
+      VT_MEM: "6"
+      VT_PROC: "2"
+      VT_WORKFLOW: nuvs
+    volumes: *workflow-volumes
+    cpus: 3
+    mem_limit: 7g
 
 volumes:
   instance-config:

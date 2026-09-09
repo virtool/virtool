@@ -2,10 +2,10 @@
 
 ## Coasts and Worktrunk
 
-The root `Coastfile` uses `dev/compose.yaml` for an isolated core application
-per worktree. Postgres and Azurite are shared; each instance owns a database
-and blob container. Workflow executors still require the Minikube environment
-below. The root `docker-compose.yml` remains the database test environment.
+The root `Coastfile` uses `dev/compose.yaml` for an isolated application per
+worktree. Postgres and Azurite are shared; each instance owns a database and
+blob container. The root `docker-compose.yml` remains the database test
+environment.
 
 Requires Docker Engine, Python 3.11+, Worktrunk 0.77.0, and Coasts 0.1.53.
 The integration checks the Coast version because it uses that release's local
@@ -45,6 +45,40 @@ background hook output in `wt config state logs`. `--worktree <path>` targets
 another worktree. To clean an instance whose worktree was already deleted, use
 `remove --instance <name>` from any remaining worktree. `list` includes these
 pending records so bypassed hooks do not hide leftover data.
+
+### Workflow execution
+
+Run the local workflow launcher in a terminal while developing workflows:
+
+```bash
+python3 dev/scripts/coast.py workflows
+```
+
+The Coast must be live and ready; run `python3 dev/scripts/coast.py ensure`
+first if the launcher reports otherwise.
+
+It reads the owning instance's job counts and builds and starts only the image
+needed by the next pending job. Each executor still claims through the jobs API
+and owns the normal ping, cancellation, finalization, failure, and exit
+contracts. Images use that instance's private jobs API, database-backed job
+queue, and blob container; the jobs API is never reached through another
+worktree's browser origin.
+
+Only one locally launched workflow runs across all managed worktrees at a time.
+The launcher holds a lock in the shared Coast registry until the one-shot
+executor exits, which bounds CPU and memory even when several worktrees have a
+launcher open. Compose also applies the same per-workflow CPU and memory limits
+as the Minikube manifests. Waiting launchers poll without holding the slot.
+
+Use `--workflow nuvs` to restrict the queue types; repeat the option to select
+several. `--once` checks once and runs at most one job, which is useful for a
+controlled failure or cancellation test. Stop the foreground launcher with
+Ctrl-C. Workflow services are behind a Compose profile and reference preloaded
+image tags, so ordinary `ensure` does not scan or build their bioinformatics
+stages. The launcher builds the selected root Dockerfile target on the host,
+transfers it only when its image ID is absent from the Coast, and then starts
+it. Docker caches each tool's independent stage and refreshes only the selected
+target and its dependencies.
 
 ### Browser access
 

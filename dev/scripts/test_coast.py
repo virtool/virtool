@@ -430,5 +430,37 @@ class ReadinessTests(unittest.TestCase):
             self.assertFalse(backend.ready({"name": "watcher"}))
 
 
+class WorkflowLauncherTests(unittest.TestCase):
+    def test_selects_the_first_pending_allowed_workflow(self):
+        counts = {"pending": {workflow: 0 for workflow in coast.WORKFLOWS}}
+        counts["pending"]["pathoscope"] = 2
+        counts["pending"]["nuvs"] = 1
+        self.assertEqual(
+            coast.next_pending_workflow(counts, ("nuvs", "pathoscope")),
+            "nuvs",
+        )
+
+    def test_rejects_an_incomplete_counts_response(self):
+        with self.assertRaisesRegex(RuntimeError, "pending.nuvs"):
+            coast.next_pending_workflow({"pending": {}}, ("nuvs",))
+
+    def test_once_runs_one_image_while_holding_the_global_slot(self):
+        backend = FakeCoast()
+        backend.job_counts = lambda name: {
+            "pending": {workflow: int(workflow == "create_sample")
+                        for workflow in coast.WORKFLOWS}
+        }
+        backend.run_workflow = unittest.mock.Mock()
+        with tempfile.TemporaryDirectory() as directory:
+            coast.run_workflows(
+                backend,
+                Path(directory),
+                {"name": "first"},
+                coast.WORKFLOWS,
+                once=True,
+            )
+        backend.run_workflow.assert_called_once_with({"name": "first"}, "create_sample")
+
+
 if __name__ == "__main__":
     unittest.main()
