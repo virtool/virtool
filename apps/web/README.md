@@ -418,22 +418,11 @@ by rewriting the response body, because doing so buffers the HTML stream.
 ### Server-function HTTP methods
 
 Use explicit `POST` for free-text searches, structured filters, and batch reads.
-TanStack Start puts GET inputs in a `payload` query parameter; POST moves them
-into a JSON request body containing a Seroval envelope. Keep simple ID lookups,
-no-input reads, and small bounded pagination/filter reads on explicit `GET`.
-Keep read calls in React Query queries with the same keys, prefetching,
-invalidation, and retry behavior; the HTTP method does not control that cache.
-
-Search terms accept up to 1,000 UTF-16 code units. Sample and analysis filter
-arrays accept up to 100 entries each; sample workflow filter strings accept up
-to 100 code units. Job/task batches retain their 1–100 ID limit. Validate these
-bounds on the server even for POST requests. Schema limits apply after body
-parsing, so deployments still need request-body size limits.
-
-`src/app/__tests__/serverFnTransport.test.ts` calls the generated browser RPCs
-over loopback HTTP and decodes their Seroval bodies, including Unicode filters
-and full batches. It also checks response dates and React Query prefetch,
-hydration, and invalidation. Server tests cover input limits and authorization.
+TanStack Start puts GET inputs in a `payload` query parameter, while POST sends
+them in the request body. Keep simple ID lookups, no-input reads, and small
+bounded pagination or filter reads on explicit `GET`. HTTP methods do not affect
+React Query caching, so read calls remain queries. Bound POST inputs on the
+server, and enforce request-body limits before parsing.
 
 Changing an RPC method requires coordinating browser and server versions:
 TanStack rejects a mismatched method with 405. Use version-pinned routing that
@@ -441,14 +430,9 @@ keeps old tabs on their matching server, or a coordinated cutover that drains
 old replicas and requires open tabs to reload. Do not mix versions behind
 unversioned load balancing or add a GET retry that puts searches back into URLs.
 
-Before release, send representative generated requests through Application
-Gateway/WAF, including maximum-length Unicode terms, combined filters, and
-100-ID batches. Check body-size and JSON-inspection rules, and confirm the
-original origin and fetch-metadata headers reach the application so same-origin
-requests succeed and cross-origin requests receive 403. Local transport tests
-do not verify deployment gateway settings. Page navigation URLs may still
-contain filters; changing RPC methods does not change those URLs or establish
-a response-cache policy.
+Before release, send maximum-size searches, filters, and batches through
+Application Gateway/WAF. Check body-size and JSON-inspection rules, and confirm
+that origin and fetch-metadata headers reach the application for CSRF checks.
 
 ### Authorization and raw routes
 
