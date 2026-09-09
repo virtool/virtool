@@ -169,6 +169,13 @@
       "when": 1788632326294,
       "tag": "0023_convert_settings_cache_storage_budget_to_gb",
       "breakpoints": true
+    },
+    {
+      "idx": 24,
+      "version": "7",
+      "when": 1788632326295,
+      "tag": "0024_add_settings_max_upload_size",
+      "breakpoints": true
     }
   ]
 }

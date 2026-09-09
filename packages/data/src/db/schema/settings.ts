@@ -5,7 +5,7 @@
 // is why `DEFAULT_SETTINGS` in `../../settings/data.ts` carries them rather
 // than this file.
 
-import type { SampleGroup } from "@virtool/contracts";
+import { MAX_UPLOAD_SIZE, type SampleGroup } from "@virtool/contracts";
 import { sql } from "drizzle-orm";
 import {
 	bigint,
@@ -38,6 +38,8 @@ export const settings = pgTable(
 		emailSenderAddress: text("email_sender_address").notNull(),
 		emailSenderName: text("email_sender_name").notNull(),
 		enableSentry: boolean("enable_sentry").notNull(),
+		// The upload limit in bytes fits within JavaScript's safe integer range.
+		maxUploadSize: bigint("max_upload_size", { mode: "number" }).notNull(),
 		minimumPasswordLength: integer("minimum_password_length").notNull(),
 		// Encrypted under the environment-owned process encryption key. Null
 		// means unset, and the GenBank request layer omits `api_key` rather than
@@ -54,6 +56,10 @@ export const settings = pgTable(
 		check(
 			"ck_settings_cache_storage_budget",
 			sql`${table.cacheStorageBudget} > 0`,
+		),
+		check(
+			"ck_settings_max_upload_size",
+			sql`${table.maxUploadSize} > 0 AND ${table.maxUploadSize} <= ${sql.raw(String(MAX_UPLOAD_SIZE))}`,
 		),
 		check(
 			"ck_settings_sample_group",

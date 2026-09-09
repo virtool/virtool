@@ -1,7 +1,5 @@
-import { useFetchEmailSettings } from "@administration/queries";
+import { useSuspenseEmailSettings } from "@administration/queries";
 import { BoxGroup } from "@base/Box";
-import LoadingPlaceholder from "@base/LoadingPlaceholder";
-import QueryError from "@base/QueryError";
 import SectionHeader from "@base/SectionHeader";
 import { useState } from "react";
 import EmailApiKey from "./EmailApiKey";
@@ -22,16 +20,8 @@ import EmailTest from "./EmailTest";
  * either.
  */
 export default function EmailDelivery() {
-	const { data, isPending, isError } = useFetchEmailSettings();
+	const { data } = useSuspenseEmailSettings();
 	const [testResetToken, setTestResetToken] = useState(0);
-
-	if (isError && !data) {
-		return <QueryError noun="email settings" />;
-	}
-
-	if (isPending) {
-		return <LoadingPlaceholder />;
-	}
 
 	return (
 		<section className="flex flex-col gap-4">

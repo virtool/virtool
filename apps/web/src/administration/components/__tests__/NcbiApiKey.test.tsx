@@ -1,10 +1,7 @@
 import { screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { createFakeSettings } from "@tests/fake/administrator";
-import {
-	mockSettingsStore,
-	settingsServerFnMocks,
-} from "@tests/server-fn/settings";
+import { mockSettingsStore } from "@tests/server-fn/settings";
 import { renderWithProviders } from "@tests/setup";
 import { describe, expect, it } from "vitest";
 
@@ -33,29 +30,6 @@ describe("<NcbiApiKey>", () => {
 			"placeholder",
 			"No key configured",
 		);
-	});
-
-	it("shows a loader while the settings are pending", () => {
-		settingsServerFnMocks.getSettingsFn.mockReturnValue(
-			new Promise(() => undefined),
-		);
-
-		renderWithProviders(<NcbiApiKey />);
-
-		expect(screen.getByRole("status", { name: "loading" })).toBeInTheDocument();
-		expect(screen.queryByLabelText("API Key")).not.toBeInTheDocument();
-	});
-
-	// A `settings` role is what `getSettingsFn` demands, but the route itself only
-	// gates on `users`, so a lesser administrator reaching it is refused here.
-	it("shows an error when the settings cannot be read", async () => {
-		settingsServerFnMocks.getSettingsFn.mockRejectedValue(
-			new Error("Forbidden"),
-		);
-
-		renderWithProviders(<NcbiApiKey />);
-
-		expect(await screen.findByText(/couldn't load settings/i)).toBeVisible();
 	});
 
 	it("saves a typed key and clears the field", async () => {

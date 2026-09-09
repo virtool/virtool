@@ -8,5 +8,11 @@ export const Route = createFileRoute("/_authenticated/administration/email")({
 			throw redirect({ to: "/administration/users" });
 		}
 	},
+	loader: async ({ context: { queryClient } }) => {
+		const { emailSettingsQueryOptions } = await import(
+			"@administration/queries"
+		);
+		await queryClient.ensureQueryData(emailSettingsQueryOptions());
+	},
 	component: EmailDelivery,
 });

@@ -1,3 +1,4 @@
+import { MAX_UPLOAD_SIZE } from "@virtool/contracts";
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
 
 import type { Db } from "../db/pg";
@@ -139,6 +140,39 @@ describe("updateSettings", () => {
 		});
 	});
 
+	it("stores a new maximum upload size", async () => {
+		await seedSettings(db);
+
+		await expect(
+			updateSettings(db, { maxUploadSize: 20_000_000_000 }),
+		).resolves.toMatchObject({ maxUploadSize: 20_000_000_000 });
+
+		await expect(getSettings(db)).resolves.toMatchObject({
+			maxUploadSize: 20_000_000_000,
+		});
+	});
+
+	it("accepts the application ceiling as the maximum upload size", async () => {
+		await expect(
+			updateSettings(db, { maxUploadSize: MAX_UPLOAD_SIZE }),
+		).resolves.toMatchObject({ maxUploadSize: MAX_UPLOAD_SIZE });
+	});
+
+	it.each([0, -1, MAX_UPLOAD_SIZE + 1])(
+		"rejects an invalid maximum upload size of %s",
+		async (maxUploadSize) => {
+			await seedSettings(db);
+			await expect(updateSettings(db, { maxUploadSize })).rejects.toMatchObject(
+				{
+					cause: { constraint_name: "ck_settings_max_upload_size" },
+				},
+			);
+			await expect(getSettings(db)).resolves.toMatchObject({
+				maxUploadSize: DEFAULT_SETTINGS.maxUploadSize,
+			});
+		},
+	);
+
 	it("returns the stored settings when given no values", async () => {
 		await seedSettings(db, { minimumPasswordLength: 15 });
 
@@ -162,6 +196,7 @@ describe("DEFAULT_SETTINGS", () => {
 			emailSenderAddress: "",
 			emailSenderName: "",
 			enableSentry: true,
+			maxUploadSize: 5_000_000_000,
 			minimumPasswordLength: 8,
 			ncbiApiKey: null,
 			sampleAllRead: true,
