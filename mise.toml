@@ -1,3 +1,6 @@
+[env]
+_.path = "./dev/bin"
+
 [tasks.init]
 description = "Set up the shared Minikube services and certificate"
 run = "bash dev/scripts/init.sh"

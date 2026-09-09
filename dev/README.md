@@ -7,44 +7,44 @@ worktree. Postgres and Azurite are shared; each instance owns a database and
 blob container. The root `docker-compose.yml` remains the database test
 environment.
 
-Requires Docker Engine, Python 3.11+, Worktrunk 0.77.0, and Coasts 0.1.53.
+Requires Docker Engine, Python 3.11+, Worktrunk 0.77.0, Coasts 0.1.53, and mise
+with shell activation enabled. Mise adds the repository's `dev/bin` directory
+to `PATH` so the `coasts` command is available in each up-to-date worktree.
 The integration checks the Coast version because it uses that release's local
 JSON API for state and readiness. Coasts 0.1.53 interpolates assignment paths
 into shell commands without quoting them. The controller therefore accepts
 only letters, numbers, `/`, `_`, `.`, `+`, and `-` in repository/worktree paths
-and branch names, rejecting spaces or shell metacharacters before provisioning. `coast` can be on PATH or installed at
-`~/.coast/bin/coast`.
+and branch names, rejecting spaces or shell metacharacters before provisioning.
+`coast` can be on `PATH` or installed at `~/.coast/bin/coast`.
 
 Start the daemon once, then start the current worktree:
 
 ```bash
 coast daemon start
-python3 dev/scripts/coast.py ensure
+coasts up
 coast ui
 ```
 
-After approving the project's Worktrunk hooks, `wt switch -c fix-thing` starts
-its Coast in the background. Switching to an existing worktree resumes its
-instance if stopped and leaves a healthy instance alone. Other instances keep
-running. `wt switch --no-hooks` skips automatic startup. A successful switch
-means the background operation was launched; wait for readiness before opening
-the application.
+Creating or switching worktrees does not provision a Coast. Run `coasts up`
+from a worktree when it needs a development instance. It creates the instance
+on first use, resumes it if stopped, and leaves a healthy instance alone. Other
+instances keep running. The command waits for readiness before returning.
 
 ```bash
-python3 dev/scripts/coast.py status
-python3 dev/scripts/coast.py list
-python3 dev/scripts/coast.py ensure                 # Retry startup
-python3 dev/scripts/coast.py ensure --rebuild       # Force an image rebuild
-python3 dev/scripts/coast.py stop                  # Keep data for resume
-python3 dev/scripts/coast.py remove                # Delete instance and data
+coasts status
+coasts list
+coasts up                  # Start or resume
+coasts up --rebuild        # Force an image rebuild
+coasts stop                # Keep data for resume
+coasts remove              # Delete instance and data
 ```
 
 `status` prints the last lifecycle result and the log path. Coastguard shows
-live service status. Logs are replaced on each operation; Worktrunk also keeps
-background hook output in `wt config state logs`. `--worktree <path>` targets
-another worktree. To clean an instance whose worktree was already deleted, use
-`remove --instance <name>` from any remaining worktree. `list` includes these
-pending records so bypassed hooks do not hide leftover data.
+live service status. Logs are replaced on each operation. `--worktree <path>`
+targets another worktree. To clean an instance whose worktree was already
+deleted, use `coasts remove --instance <name>` from any remaining worktree.
+`list` includes these pending records so bypassed hooks do not hide leftover
+data.
 
 ### Workflow execution
 
@@ -93,8 +93,9 @@ start/stop/remove operations. The endpoint and switcher are absent from
 production output. The generated file is excluded from Docker build contexts
 and Vite watching, so switching terminals does not trigger page reloads.
 
-Use `wt list` for branch/worktree status and application links, Coastguard for
-live service status and logs, and the badge for browser switching. These cover
+Use `wt list` for branch/worktree status and application links after `coasts
+up`, Coastguard for live service status and logs, and the badge for browser
+switching. These cover
 the section 2 overview needs; a separate TUI would duplicate them and is not
 planned. Revisit only if a concrete missing operation appears in daily use.
 
@@ -136,7 +137,7 @@ complete before the application starts. Coasts 0.1.53 does not wire its
 documented automatic database injection into startup, so initialization remains
 explicit.
 
-Removing a worktree through Worktrunk stops its Coast, drops its database,
+Removing a worktree through Worktrunk still stops its Coast, drops its database,
 deletes its blob container, and removes the Coast. Cleanup failure blocks
 worktree removal and preserves a pending record for retry. Starting an instance
 with pending cleanup is refused. Only that instance's data is deleted; shared
@@ -179,13 +180,13 @@ disconnect shared-service networks or reset their volumes.
 
 ### Builds, dependencies, and rollout
 
-Hooks call the controller in the primary worktree. Keep that worktree on a
-branch containing this integration. The primary and destination worktrees must
-have matching Coast configuration; a mismatch produces an actionable failure.
-Worktrunk reads hook configuration from the invoking worktree, so older branches
-can still invoke their Tilt hooks. Merge the integration into those branches
-before relying on automatic startup or cleanup. Manual controller commands from
-the primary worktree remain available.
+The removal hook calls the controller in the primary worktree. Keep that
+worktree on a branch containing this integration. The primary and destination
+worktrees must have matching Coast configuration; a mismatch produces an
+actionable failure. Worktrunk reads hook configuration from the invoking
+worktree, so older branches can still invoke their previous hooks. Merge the
+integration into those branches before relying on opt-in startup or automatic
+cleanup. Manual controller commands from the primary worktree remain available.
 
 Initial Coast builds are serialized and reused while their inputs and latest
 build ID match. Assignment changes the source mount; the controller builds the

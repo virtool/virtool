@@ -185,7 +185,9 @@ class LifecycleTests(unittest.TestCase):
         first = self.ensure()
         second = self.ensure("second", "feature/second")
         directory = Path(first["worktree"]) / "apps/web/src"
-        directory.mkdir(parents=True)
+        marker = directory / "app/DevelopmentInstance.tsx"
+        marker.parent.mkdir(parents=True)
+        marker.touch()
         with patch.object(coast, "worktree_key", side_effect=["first", None]):
             self.lifecycle.publish_instances()
         self.assertEqual(coast.read_json(directory / ".dev-instances.json"), [

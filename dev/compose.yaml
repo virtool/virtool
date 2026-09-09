@@ -66,9 +66,8 @@ services:
       PGUSER: virtool
       PGPASSWORD: virtool
       PGDATABASE: postgres
-    entrypoint: [/bin/sh, /usr/local/bin/init-coast-data.sh]
+    entrypoint: [/bin/sh, /run/virtool-dev/init-coast-data.sh]
     volumes:
-      - ./scripts/init-coast-data.sh:/usr/local/bin/init-coast-data.sh:ro
       - instance-config:/run/virtool-dev
     depends_on:
       postgres:
@@ -195,11 +194,10 @@ services:
     command:
       - |
         export VT_DEV_HOSTNAME="$$(cat /run/virtool-dev/hostname)"
-        exec caddy run --config /etc/caddy/Caddyfile --adapter caddyfile
+        exec caddy run --config /run/virtool-dev/Caddyfile --adapter caddyfile
     ports:
       - "9443:9443"
     volumes:
-      - ./Caddyfile:/etc/caddy/Caddyfile:ro
       - instance-config:/run/virtool-dev:ro
       - caddy-data:/data
       - caddy-config:/config

@@ -12,4 +12,4 @@ if [ "$1" = migrate ]; then
 fi
 
 exec setpriv --reuid="$dev_uid" --regid="$dev_gid" --clear-groups env HOME=/tmp/virtool-home \
-    pnpm develop "$1"
+    node dev/main.ts "$1"

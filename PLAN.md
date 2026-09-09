@@ -41,16 +41,15 @@ failure and must never delete another instance's data or shared-service volumes.
 | --- | --- | --- |
 | What data should a new worktree start with? | A reusable development seed. | Requires a maintained seed containing matching database rows and blobs. Empty setup remains useful for onboarding tests. |
 
-Current interaction: `wt switch -c fix-thing` starts that worktree's Coast in
-the background. Returning with `wt switch fix-thing` resumes the same instance
-if stopped. Switching terminals leaves other instances running and does not
-redirect existing browser tabs. Worktrunk's `--no-hooks` provides an explicit
-way to create a worktree without starting services.
+Current interaction: worktree creation and switching do not start services.
+`coasts up` explicitly creates or resumes the current worktree's Coast without
+redirecting existing browser tabs. Worktrunk still purges the Coast and its data
+when its worktree is removed.
 
 ## 1. Integrate Worktrunk lifecycle
 
-Worktrunk 0.77.0 is installed. Its switch hook runs startup in the background;
-`pre-remove` runs while the worktree still exists. The lifecycle integration is
+Worktrunk 0.77.0 is installed. Startup is explicit; `pre-remove` runs while the
+worktree still exists. The lifecycle integration is
 implemented; the checks below track implementation. The controller provisions
 a Coast with autostart disabled, writes its data identity, and assigns its worktree
 before starting services. In Coasts 0.1.53, raw rebuild bypasses shared-service
@@ -64,9 +63,9 @@ Compose configuration.
 - [x] Implement an idempotent ensure-running operation: create if missing,
   resume if stopped, leave a healthy instance alone. Serialize concurrent
   requests for the same instance and avoid duplicate builds across worktrees.
-- [x] Connect background startup/resume to `.config/wt.toml`. Both `post-start`
-  and `post-switch` fire on creation; choose one owner for startup or guard
-  duplicate calls. Do not rebuild unchanged images on every switch.
+- [x] Expose startup/resume as the explicit `coasts up` command and leave
+  worktree creation and switching free of provisioning. Do not rebuild
+  unchanged images when resuming an instance.
 - [x] Check daemon availability, installed Coast version, and executable path;
   provide actionable errors and a manual retry command. Expose readiness and
   background failure logs rather than treating successful `wt switch` as

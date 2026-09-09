@@ -269,6 +269,8 @@ class Coast:
 
     def configure(self, record):
         values = {
+            "Caddyfile": (self.root / "dev/Caddyfile").read_text(),
+            "init-coast-data.sh": (self.root / "dev/scripts/init-coast-data.sh").read_text(),
             "namespace": record["data_id"],
             "public-origin": record["url"],
             "hostname": record["hostname"],
@@ -289,7 +291,8 @@ class Coast:
                                 stderr=subprocess.DEVNULL).returncode == 0
         if not cached:
             prepare_development_dockerfile(worktree)
-            run(["docker", "build", "-f", ".coasts/Dockerfile", "--target", "dev-coast", "-t", tag, "."], worktree, self.log)
+            run(["docker", "build", "-f", ".coasts/Dockerfile", "--target", "dev-coast",
+                 "-t", tag, "."], worktree, self.log)
         outer = f"{self.project}-coasts-{record['name']}"
         image_id = run(["docker", "image", "inspect", "--format", "{{.Id}}", tag], worktree)
         present = subprocess.run(["docker", "exec", outer, "docker", "image", "inspect",
@@ -373,7 +376,7 @@ class Lifecycle:
                        for record in active if record.get("url")]
             for record in active:
                 directory = Path(record["worktree"]) / "apps/web/src"
-                if directory.is_dir():
+                if (directory / "app/DevelopmentInstance.tsx").is_file():
                     write_json(directory / ".dev-instances.json", listing)
 
     def build(self, primary):
@@ -495,8 +498,8 @@ class Lifecycle:
 
 
 def main():
-    parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("command", choices=("ensure", "status", "list", "stop", "remove"))
+    parser = argparse.ArgumentParser(prog="coasts", description=__doc__)
+    parser.add_argument("command", choices=("up", "status", "list", "stop", "remove"))
     parser.add_argument("--worktree", type=Path, default=Path.cwd())
     parser.add_argument("--instance", help="Registry instance name, including one whose worktree is gone")
     parser.add_argument("--rebuild", action="store_true", help="Rebuild an existing instance")
@@ -523,7 +526,7 @@ def main():
         key = matching[0].stem
         worktree = Path(read_json(matching[0])["worktree"])
     else:
-        key = worktree_key(worktree, registry, create=args.command == "ensure")
+        key = worktree_key(worktree, registry, create=args.command == "up")
         if key is None:
             print("No managed Coast for this worktree")
             return
@@ -545,7 +548,7 @@ def main():
                     print("No managed Coast for this worktree")
                     return
                 coast.check()
-                if args.command == "ensure":
+                if args.command == "up":
                     branch = git(worktree, "symbolic-ref", "--short", "HEAD")
                     record = lifecycle.ensure(key, worktree, branch, primary, args.rebuild)
                     coast.configure_links()
@@ -567,7 +570,7 @@ def main():
                     record["error"] = str(error)
                     lifecycle.save(key, record)
                 print(str(error), file=log)
-                raise RuntimeError(f"{error}\nLogs: {log_path}\nRetry: python3 dev/scripts/coast.py {args.command} --worktree {shlex.quote(str(worktree))}") from error
+                raise RuntimeError(f"{error}\nLogs: {log_path}\nRetry: coasts {args.command}") from error
 
 
 if __name__ == "__main__":

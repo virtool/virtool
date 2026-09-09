@@ -128,10 +128,15 @@ RUN wget -q --tries=3 --timeout=30 https://github.com/shenwei356/seqkit/releases
 
 # Bullseye, alone in this file: skewer 0.2.2's comparator is non-const, which
 # bookworm's GCC 12 rejects outright. The binary is a plain glibc build and runs
-# on the bookworm runtime stages unchanged.
+# on the bookworm runtime stages unchanged. Bullseye is archived, so this
+# build-only stage uses the final snapshot advertised by the base image.
 FROM debian:bullseye AS skewer
 WORKDIR /build
-RUN apt-get update \
+RUN printf '%s\n' \
+        'deb [check-valid-until=no] http://snapshot.debian.org/archive/debian/20260824T000000Z bullseye main' \
+        'deb [check-valid-until=no] http://snapshot.debian.org/archive/debian-security/20260824T000000Z bullseye-security main' \
+        > /etc/apt/sources.list \
+    && apt-get update \
     && apt-get install -y build-essential wget \
     && rm -rf /var/lib/apt/lists/*
 RUN wget -q --tries=3 --timeout=30 https://github.com/relipmoc/skewer/archive/0.2.2.tar.gz \
