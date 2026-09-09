@@ -15,12 +15,17 @@ import { authenticated, permission } from "../auth/policy";
 import { db, storage } from "../composition";
 import { ClientError } from "../errors";
 import { logger } from "../logger";
-import { pageSchema, perPageSchema, rowIdSchema } from "../validation";
+import {
+	pageSchema,
+	perPageSchema,
+	rowIdSchema,
+	searchTermSchema,
+} from "../validation";
 
 const findSubtractionsSchema = z.object({
 	page: pageSchema,
 	perPage: perPageSchema,
-	term: z.string().default(""),
+	term: searchTermSchema,
 });
 
 const subtractionIdSchema = z.object({
@@ -50,7 +55,7 @@ function rethrowAsHttp(err: unknown): never {
 	throw err;
 }
 
-export const findSubtractionsFn = createServerFn({ method: "GET" })
+export const findSubtractionsFn = createServerFn({ method: "POST" })
 	.middleware([authenticated()])
 	.validator(findSubtractionsSchema)
 	.handler(async ({ data }) =>

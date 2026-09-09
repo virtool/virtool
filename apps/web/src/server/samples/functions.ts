@@ -43,6 +43,7 @@ import {
 	pageSchema,
 	perPageSchema,
 	rowIdSchema,
+	searchTermSchema,
 } from "../validation";
 
 const sampleIdSchema = z.object({
@@ -52,11 +53,11 @@ const sampleIdSchema = z.object({
 const findSamplesSchema = z.object({
 	page: pageSchema,
 	perPage: perPageSchema,
-	term: z.string().default(""),
-	labels: z.array(rowIdSchema).default([]),
-	workflows: z.array(z.string()).default([]),
-	users: z.array(rowIdSchema).default([]),
-	groups: z.array(rowIdSchema).default([]),
+	term: searchTermSchema,
+	labels: z.array(rowIdSchema).max(100).default([]),
+	workflows: z.array(z.string().max(100)).max(100).default([]),
+	users: z.array(rowIdSchema).max(100).default([]),
+	groups: z.array(rowIdSchema).max(100).default([]),
 	createdAfter: calendarDateSchema.optional(),
 	createdBefore: calendarDateSchema.optional(),
 	// A direction without a column falls back to the creation date below, so a
@@ -154,7 +155,7 @@ function coerceGroup(group: string | number | null | undefined): number | null {
 	return typeof group === "number" ? group : Number(group);
 }
 
-export const findSamplesFn = createServerFn({ method: "GET" })
+export const findSamplesFn = createServerFn({ method: "POST" })
 	.middleware([authenticated()])
 	.validator(findSamplesSchema)
 	.handler(async ({ context, data }) => {

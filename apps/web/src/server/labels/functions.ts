@@ -13,7 +13,7 @@ import { z } from "zod";
 import { authenticated } from "../auth/policy";
 import { db } from "../composition";
 import { ClientError } from "../errors";
-import { rowIdSchema } from "../validation";
+import { rowIdSchema, searchTermSchema } from "../validation";
 
 const colorSchema = z
 	.string()
@@ -40,7 +40,7 @@ const labelIdSchema = z.object({
 	labelId: rowIdSchema,
 });
 
-const findLabelsSchema = z.object({ term: z.string().default("") }).optional();
+const findLabelsSchema = z.object({ term: searchTermSchema }).optional();
 
 function rethrowAsHttp(err: unknown): never {
 	if (err instanceof LabelNotFoundError) {
@@ -54,7 +54,7 @@ function rethrowAsHttp(err: unknown): never {
 	throw err;
 }
 
-export const findLabelsFn = createServerFn({ method: "GET" })
+export const findLabelsFn = createServerFn({ method: "POST" })
 	.middleware([authenticated()])
 	.validator(findLabelsSchema)
 	.handler(async ({ data }) => findLabels(db, data?.term ?? ""));

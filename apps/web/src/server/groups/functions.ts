@@ -15,7 +15,12 @@ import { z } from "zod";
 import { adminRole, authenticated } from "../auth/policy";
 import { db } from "../composition";
 import { ClientError } from "../errors";
-import { pageSchema, perPageSchema, rowIdSchema } from "../validation";
+import {
+	pageSchema,
+	perPageSchema,
+	rowIdSchema,
+	searchTermSchema,
+} from "../validation";
 
 const groupIdSchema = z.object({
 	groupId: rowIdSchema,
@@ -23,7 +28,7 @@ const groupIdSchema = z.object({
 
 const findGroupsSchema = z
 	.object({
-		term: z.string().default(""),
+		term: searchTermSchema,
 		page: pageSchema,
 		perPage: perPageSchema,
 	})
@@ -56,7 +61,7 @@ export const listGroupsFn = createServerFn({ method: "GET" })
 	.middleware([authenticated()])
 	.handler(async () => listGroups(db));
 
-export const findGroupsFn = createServerFn({ method: "GET" })
+export const findGroupsFn = createServerFn({ method: "POST" })
 	.middleware([authenticated()])
 	.validator(findGroupsSchema)
 	.handler(async ({ data }) =>

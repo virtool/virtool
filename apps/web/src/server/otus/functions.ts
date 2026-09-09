@@ -42,7 +42,12 @@ import { ForbiddenError } from "../auth/middleware";
 import { authenticated } from "../auth/policy";
 import { db } from "../composition";
 import { ClientError } from "../errors";
-import { pageSchema, perPageSchema, rowIdSchema } from "../validation";
+import {
+	pageSchema,
+	perPageSchema,
+	rowIdSchema,
+	searchTermSchema,
+} from "../validation";
 
 // An OTU, isolate, or sequence id is the 8-character string Mongo's `_id` held,
 // not a Postgres serial, so `rowIdSchema` does not apply.
@@ -60,7 +65,7 @@ const findOtusSchema = z.object({
 	referenceId: rowIdSchema,
 	page: pageSchema,
 	perPage: perPageSchema,
-	term: z.string().default(""),
+	term: searchTermSchema,
 });
 
 const createOtuSchema = z
@@ -160,7 +165,7 @@ const authorizeOtu = createServerOnlyFn(
 	},
 );
 
-export const findOtusFn = createServerFn({ method: "GET" })
+export const findOtusFn = createServerFn({ method: "POST" })
 	.middleware([authenticated()])
 	.validator(findOtusSchema)
 	.handler(async ({ data }) => {

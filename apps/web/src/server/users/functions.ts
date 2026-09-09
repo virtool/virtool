@@ -31,7 +31,12 @@ import { adminRole, authenticated } from "../auth/policy";
 import { checkConfiguredPasswordLength } from "../auth/service";
 import { db } from "../composition";
 import { ClientError } from "../errors";
-import { pageSchema, perPageSchema, rowIdSchema } from "../validation";
+import {
+	pageSchema,
+	perPageSchema,
+	rowIdSchema,
+	searchTermSchema,
+} from "../validation";
 
 const administratorRoleSchema = z.enum(ADMINISTRATOR_ROLE_NAMES);
 
@@ -41,7 +46,7 @@ const userIdSchema = z.object({
 
 const findUsersSchema = z
 	.object({
-		term: z.string().default(""),
+		term: searchTermSchema,
 		page: pageSchema,
 		perPage: perPageSchema,
 		administrator: z.boolean().optional(),
@@ -51,7 +56,7 @@ const findUsersSchema = z
 
 const searchUsersSchema = z
 	.object({
-		term: z.string().default(""),
+		term: searchTermSchema,
 		page: pageSchema,
 		perPage: perPageSchema,
 	})
@@ -146,7 +151,7 @@ export const listUsersFn = createServerFn({ method: "GET" })
 	.middleware([authenticated()])
 	.handler(async () => listUsers(db));
 
-export const findUsersFn = createServerFn({ method: "GET" })
+export const findUsersFn = createServerFn({ method: "POST" })
 	.middleware([adminRole("users")])
 	.validator(findUsersSchema)
 	.handler(async ({ data }) => {
@@ -169,7 +174,7 @@ export const findUsersFn = createServerFn({ method: "GET" })
 // who holds `modify` on a reference searches users to add. `findUsersFn` above
 // is the stricter administrator-only variant used by the user administration
 // views.
-export const searchUsersFn = createServerFn({ method: "GET" })
+export const searchUsersFn = createServerFn({ method: "POST" })
 	.middleware([authenticated()])
 	.validator(searchUsersSchema)
 	.handler(async ({ data }) =>

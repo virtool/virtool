@@ -415,6 +415,25 @@ Server-rendered documents use a per-request CSP nonce for Router dehydration
 and streamed React scripts. Set it through the router SSR options; never add it
 by rewriting the response body, because doing so buffers the HTML stream.
 
+### Server-function HTTP methods
+
+Use explicit `POST` for free-text searches, structured filters, and batch reads.
+TanStack Start puts GET inputs in a `payload` query parameter, while POST sends
+them in the request body. Keep simple ID lookups, no-input reads, and small
+bounded pagination or filter reads on explicit `GET`. HTTP methods do not affect
+React Query caching, so read calls remain queries. Bound POST inputs on the
+server, and enforce request-body limits before parsing.
+
+Changing an RPC method requires coordinating browser and server versions:
+TanStack rejects a mismatched method with 405. Use version-pinned routing that
+keeps old tabs on their matching server, or a coordinated cutover that drains
+old replicas and requires open tabs to reload. Do not mix versions behind
+unversioned load balancing or add a GET retry that puts searches back into URLs.
+
+Before release, send maximum-size searches, filters, and batches through
+Application Gateway/WAF. Check body-size and JSON-inspection rules, and confirm
+that origin and fetch-metadata headers reach the application for CSRF checks.
+
 ### Authorization and raw routes
 
 Every exported server function declares exactly one policy from
