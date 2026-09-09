@@ -1,9 +1,7 @@
 import { Dialog, DialogTitle } from "@base/Dialog";
 import type { HmmSearchResult } from "@virtool/contracts";
-import HmmAlert from "../HmmAlert";
+import CreateAnalysisBody from "./CreateAnalysisBody";
 import CreateAnalysisDialogContent from "./CreateAnalysisDialogContent";
-import CreateAnalysisForm from "./CreateAnalysisForm";
-import { getCompatibleWorkflows } from "./workflows";
 
 type CreateAnalysisProps = {
 	/** The HMM search results */
@@ -26,15 +24,12 @@ export default function CreateAnalysis({
 	setOpen,
 	sampleId,
 }: CreateAnalysisProps) {
-	const compatibleWorkflows = getCompatibleWorkflows(Boolean(hmms.totalCount));
-
 	return (
 		<Dialog open={open} onOpenChange={setOpen}>
 			<CreateAnalysisDialogContent>
 				<DialogTitle>Analyze</DialogTitle>
-				<HmmAlert installed={Boolean(hmms.status.task?.complete)} />
-				<CreateAnalysisForm
-					compatibleWorkflows={compatibleWorkflows}
+				<CreateAnalysisBody
+					hmms={hmms}
 					onClose={() => setOpen(false)}
 					sampleCount={1}
 					sampleIds={[sampleId]}

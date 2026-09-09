@@ -15,28 +15,6 @@ function findStatus() {
 }
 
 describe("<EmailDelivery>", () => {
-	it("shows a loader while the configuration is pending", () => {
-		emailServerFnMocks.getEmailSettingsFn.mockReturnValue(
-			new Promise(() => undefined),
-		);
-
-		renderWithProviders(<EmailDelivery />);
-
-		expect(screen.getByRole("status", { name: "loading" })).toBeInTheDocument();
-	});
-
-	it("shows an error when the configuration cannot be read", async () => {
-		emailServerFnMocks.getEmailSettingsFn.mockRejectedValue(
-			new Error("Forbidden"),
-		);
-
-		renderWithProviders(<EmailDelivery />);
-
-		expect(
-			await screen.findByText(/couldn't load email settings/i),
-		).toBeVisible();
-	});
-
 	describe("availability", () => {
 		it("reports a ready instance", async () => {
 			mockEmailSettingsStore(createFakeEmailSettings());

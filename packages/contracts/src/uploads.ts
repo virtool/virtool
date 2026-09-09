@@ -50,3 +50,36 @@ export type UploadSearchResult = SearchResult & {
 	/** The uploads on this page */
 	items: Upload[];
 };
+
+/** The application-wide upload size ceiling, in bytes (120 GB). */
+export const MAX_UPLOAD_SIZE = 120_000_000_000;
+
+/** The default maximum upload size, in bytes (5 GB). */
+export const DEFAULT_MAX_UPLOAD_SIZE = 5_000_000_000;
+
+const byteFormatter = new Intl.NumberFormat("en-US");
+
+/** Build the message shown when a file exceeds the configured maximum. */
+export function formatMaxUploadSizeMessage(maximum: number): string {
+	return `File exceeds the maximum upload size of ${byteFormatter.format(maximum)} bytes.`;
+}
+
+/** Raised when a declared upload size is above the configured maximum. */
+export class UploadTooLargeError extends Error {
+	constructor(readonly maximum: number) {
+		super(formatMaxUploadSizeMessage(maximum));
+		this.name = "UploadTooLargeError";
+	}
+}
+
+/** Throw UploadTooLargeError when the declared size exceeds the configured maximum. */
+export function checkUploadSize(size: number, maximum: number): void {
+	if (size > maximum) {
+		throw new UploadTooLargeError(maximum);
+	}
+}
+
+/** The upload rule a client needs to refuse a file before transferring it. */
+export type UploadPolicy = {
+	maxUploadSize: number;
+};

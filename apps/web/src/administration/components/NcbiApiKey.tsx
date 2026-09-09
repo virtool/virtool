@@ -1,15 +1,13 @@
 import {
 	useClearNcbiApiKey,
-	useFetchSettings,
 	useSetNcbiApiKey,
+	useSuspenseSettings,
 } from "@administration/queries";
 import Alert from "@base/Alert";
 import { BoxGroup, BoxGroupSection } from "@base/Box";
 import Button from "@base/Button";
 import ExternalLink from "@base/ExternalLink";
 import { InputError, InputGroup, InputLabel, InputPassword } from "@base/Input";
-import LoadingPlaceholder from "@base/LoadingPlaceholder";
-import QueryError from "@base/QueryError";
 import SaveButton from "@base/SaveButton";
 import SectionHeader from "@base/SectionHeader";
 import { TriangleAlert } from "lucide-react";
@@ -34,7 +32,7 @@ type NcbiApiKeyFormValues = {
  * replaces whatever is stored and clearing removes it.
  */
 export default function NcbiApiKey() {
-	const { data, isPending, isError } = useFetchSettings();
+	const { data } = useSuspenseSettings();
 	const setKey = useSetNcbiApiKey();
 	const clearKey = useClearNcbiApiKey();
 
@@ -44,14 +42,6 @@ export default function NcbiApiKey() {
 		register,
 		reset,
 	} = useForm<NcbiApiKeyFormValues>({ defaultValues: { apiKey: "" } });
-
-	if (isError && !data) {
-		return <QueryError noun="settings" />;
-	}
-
-	if (isPending) {
-		return <LoadingPlaceholder />;
-	}
 
 	function save({ apiKey }: NcbiApiKeyFormValues) {
 		setKey.mutate(apiKey.trim(), { onSuccess: () => reset() });

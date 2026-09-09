@@ -1,4 +1,4 @@
-import { createServerFn, createServerOnlyFn } from "@tanstack/react-start";
+import { createServerFn } from "@tanstack/react-start";
 import { setResponseStatus } from "@tanstack/react-start/server";
 import {
 	ADMINISTRATOR_ROLE_NAMES,
@@ -31,7 +31,12 @@ import { adminRole, authenticated } from "../auth/policy";
 import { checkConfiguredPasswordLength } from "../auth/service";
 import { db } from "../composition";
 import { ClientError } from "../errors";
-import { pageSchema, perPageSchema, rowIdSchema } from "../validation";
+import {
+	pageSchema,
+	perPageSchema,
+	rowIdSchema,
+	searchTermSchema,
+} from "../validation";
 
 const administratorRoleSchema = z.enum(ADMINISTRATOR_ROLE_NAMES);
 
@@ -41,7 +46,7 @@ const userIdSchema = z.object({
 
 const findUsersSchema = z
 	.object({
-		term: z.string().default(""),
+		term: searchTermSchema,
 		page: pageSchema,
 		perPage: perPageSchema,
 		administrator: z.boolean().optional(),
@@ -51,7 +56,7 @@ const findUsersSchema = z
 
 const searchUsersSchema = z
 	.object({
-		term: z.string().default(""),
+		term: searchTermSchema,
 		page: pageSchema,
 		perPage: perPageSchema,
 	})
@@ -100,7 +105,7 @@ const changePasswordSchema = z.object({
 function checkEmail(email: string): void {
 	if (email !== "" && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
 		setResponseStatus(400);
-		throw new ClientError("The format of the email is invalid");
+		throw new ClientError("The format of the email is invalid", 400);
 	}
 }
 
@@ -108,37 +113,33 @@ const setAdministratorRoleSchema = userIdSchema.extend({
 	role: administratorRoleSchema.nullable(),
 });
 
-// Wrapped in createServerOnlyFn so the compiler can strip this body — and the
-// domain-error imports it references — from the client bundle. A plain
-// top-level helper would pin ./data and its postgres transitive dependency in
-// the client graph.
-const rethrowAsHttp = createServerOnlyFn((err: unknown): never => {
+function rethrowAsHttp(err: unknown): never {
 	if (err instanceof PasswordTooShortError) {
 		setResponseStatus(400);
-		throw new ClientError(err.message);
+		throw new ClientError(err.message, 400);
 	}
 	if (err instanceof InvalidPasswordError) {
 		setResponseStatus(400);
-		throw new ClientError("Invalid credentials");
+		throw new ClientError("Invalid credentials", 400);
 	}
 	if (err instanceof UserNotFoundError) {
 		setResponseStatus(404);
-		throw new ClientError("User not found.");
+		throw new ClientError("User not found.", 404);
 	}
 	if (err instanceof UserConflictError) {
 		setResponseStatus(409);
-		throw new ClientError("User already exists.");
+		throw new ClientError("User already exists.", 409);
 	}
 	if (err instanceof GroupMembershipError) {
 		setResponseStatus(400);
-		throw new ClientError("User is not a member of group.");
+		throw new ClientError("User is not a member of group.", 400);
 	}
 	if (err instanceof PendingAccountError) {
 		setResponseStatus(409);
-		throw new ClientError("User has not completed account setup.");
+		throw new ClientError("User has not completed account setup.", 409);
 	}
 	throw err;
-});
+}
 
 export const listAdministratorRolesFn = createServerFn({ method: "GET" })
 	.middleware([adminRole("base")])
@@ -150,7 +151,7 @@ export const listUsersFn = createServerFn({ method: "GET" })
 	.middleware([authenticated()])
 	.handler(async () => listUsers(db));
 
-export const findUsersFn = createServerFn({ method: "GET" })
+export const findUsersFn = createServerFn({ method: "POST" })
 	.middleware([adminRole("users")])
 	.validator(findUsersSchema)
 	.handler(async ({ data }) => {
@@ -173,7 +174,7 @@ export const findUsersFn = createServerFn({ method: "GET" })
 // who holds `modify` on a reference searches users to add. `findUsersFn` above
 // is the stricter administrator-only variant used by the user administration
 // views.
-export const searchUsersFn = createServerFn({ method: "GET" })
+export const searchUsersFn = createServerFn({ method: "POST" })
 	.middleware([authenticated()])
 	.validator(searchUsersSchema)
 	.handler(async ({ data }) =>
@@ -314,7 +315,7 @@ export const setAdministratorRoleFn = createServerFn({ method: "POST" })
 	.handler(async ({ context, data }) => {
 		if (context.session.userId === data.userId) {
 			setResponseStatus(400);
-			throw new ClientError("Cannot change own role");
+			throw new ClientError("Cannot change own role", 400);
 		}
 
 		try {

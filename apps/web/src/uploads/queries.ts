@@ -1,4 +1,8 @@
-import { deleteUploadFn, findUploadsFn } from "@server/uploads/functions";
+import {
+	deleteUploadFn,
+	findUploadsFn,
+	getUploadPolicyFn,
+} from "@server/uploads/functions";
 import {
 	keepPreviousData,
 	useInfiniteQuery,
@@ -6,13 +10,22 @@ import {
 	useQuery,
 	useQueryClient,
 } from "@tanstack/react-query";
-import { fileQueryKeys } from "@uploads/keys";
+import { fileQueryKeys, uploadPolicyQueryKeys } from "@uploads/keys";
 import type {
 	SortDirection,
+	UploadPolicy,
 	UploadSearchResult,
 	UploadSortField,
 	UploadType,
 } from "@virtool/contracts";
+
+/** Fetch the upload limit for client validation; initialization enforces it again. */
+export function useUploadPolicy() {
+	return useQuery<UploadPolicy>({
+		queryKey: uploadPolicyQueryKeys.all(),
+		queryFn: () => getUploadPolicyFn(),
+	});
+}
 
 export function useListFiles(
 	type: UploadType,

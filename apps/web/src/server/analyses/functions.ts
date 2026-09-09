@@ -44,8 +44,8 @@ const analysisIdSchema = z.object({
 
 const findAnalysesSchema = z.object({
 	sampleId: rowIdSchema.optional(),
-	userIds: z.array(rowIdSchema).default([]),
-	workflows: z.array(AnalysisWorkflow).default([]),
+	userIds: z.array(rowIdSchema).max(100).default([]),
+	workflows: z.array(AnalysisWorkflow).max(100).default([]),
 	page: pageSchema,
 	perPage: perPageSchema,
 	// A direction without a column has nothing to order by, so the pair is
@@ -65,9 +65,7 @@ const blastSchema = analysisIdSchema.extend({
 	sequenceIndex: z.number().int().nonnegative(),
 });
 
-// Wrapped in createServerOnlyFn so the compiler can strip this body — and the
-// ./data imports it references — from the client bundle.
-const rethrowAsHttp = createServerOnlyFn((err: unknown): never => {
+function rethrowAsHttp(err: unknown): never {
 	if (err instanceof AnalysisNotFoundError) {
 		setResponseStatus(404);
 		throw new ClientError("Analysis not found.", 404);
@@ -95,7 +93,7 @@ const rethrowAsHttp = createServerOnlyFn((err: unknown): never => {
 	// HMM annotation — is a data-integrity failure rather than a client mistake,
 	// and surfaces as a 500 that reaches Sentry.
 	throw err;
-});
+}
 
 // The `authenticated()` floor guarantees a signed-in caller; an analysis's own
 // visibility is entirely its parent sample's, so this resolves that sample's
@@ -126,7 +124,7 @@ const authorizeAnalysis = createServerOnlyFn(
 	},
 );
 
-export const findAnalysesFn = createServerFn({ method: "GET" })
+export const findAnalysesFn = createServerFn({ method: "POST" })
 	.middleware([authenticated()])
 	.validator(findAnalysesSchema)
 	.handler(async ({ context, data }) => {

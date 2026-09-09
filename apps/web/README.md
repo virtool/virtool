@@ -386,6 +386,28 @@ Expected 4xx outcomes set the response status and throw `ClientError` from
 not set 204, 205, or 304 because TanStack Start serializes an RPC body. Return
 `null` with 200 for deletion instead.
 
+Map domain errors in one plain, module-local
+`function rethrowAsHttp(err: unknown): never` per `functions.ts`. Hand caught
+errors to it, match known error classes with `instanceof`, and end with
+`throw err` so unknown failures retain their identity and cause. Each expected
+4xx branch sets `setResponseStatus(status)` and throws
+`new ClientError(message, status)` with the same status. Preserve feature-specific
+messages and statuses: a missing upload can be a 404 when fetched and a 400
+when selected as an input to another operation.
+
+TanStack Start serializes thrown errors, but its default error serializer keeps
+only the message. `ClientError` and our `serverErrorSerializationAdapter` preserve
+the name and status needed by query handling and Sentry filtering; setting the
+HTTP response status alone does not carry it onto the client-side error. Router
+`notFound()` and raw `Response` values do not replace this contract.
+
+Do not wrap these local mappers in `createServerOnlyFn`: the Start compiler
+removes them and their imports when it removes the handlers that call them.
+Use `createServerOnlyFn` when code remains reachable from the browser graph and
+its body must be stripped, as in the global auth and metrics middleware.
+Keep upstream-service error handling explicit, including its existing reporting
+behavior; a 502 is not an expected client 4xx.
+
 ### Server and client boundaries
 
 `apps/web` type-checks server and browser code as separate projects. Browser
@@ -409,6 +431,25 @@ legacy JSONB blobs are the documented exception.
 Server-rendered documents use a per-request CSP nonce for Router dehydration
 and streamed React scripts. Set it through the router SSR options; never add it
 by rewriting the response body, because doing so buffers the HTML stream.
+
+### Server-function HTTP methods
+
+Use explicit `POST` for free-text searches, structured filters, and batch reads.
+TanStack Start puts GET inputs in a `payload` query parameter, while POST sends
+them in the request body. Keep simple ID lookups, no-input reads, and small
+bounded pagination or filter reads on explicit `GET`. HTTP methods do not affect
+React Query caching, so read calls remain queries. Bound POST inputs on the
+server, and enforce request-body limits before parsing.
+
+Changing an RPC method requires coordinating browser and server versions:
+TanStack rejects a mismatched method with 405. Use version-pinned routing that
+keeps old tabs on their matching server, or a coordinated cutover that drains
+old replicas and requires open tabs to reload. Do not mix versions behind
+unversioned load balancing or add a GET retry that puts searches back into URLs.
+
+Before release, send maximum-size searches, filters, and batches through
+Application Gateway/WAF. Check body-size and JSON-inspection rules, and confirm
+that origin and fetch-metadata headers reach the application for CSRF checks.
 
 ### Authorization and raw routes
 
@@ -480,8 +521,16 @@ intentional breaking change: there is no proxied upload or supported legacy
 size limit.
 
 When direct uploads are disabled or the storage backend cannot issue an upload
-SAS, initialization returns `503` instead of falling back. The maximum declared
-size is 209,715,200,000,000 bytes, the Azure block-count and block-size limit.
+SAS, initialization returns `503` instead of falling back.
+
+Both browser and API uploads enforce `settings.max_upload_size` through
+`initializeUpload`. A valid declared size above the configured limit returns `413`
+before a reservation or SAS is created. The limit is read on every initialization,
+so changes apply to the next upload without a restart. `getUploadPolicyFn` exposes
+the limit to authenticated users for client validation.
+
+The setting and declared sizes are capped at the application ceiling of
+120,000,000,000 bytes (120 GB), independent of the storage backend.
 
 ### The setup boundary
 
@@ -657,6 +706,12 @@ server setting and has no `_FILE` variant.
 Client code must read individual `import.meta.env` properties. Reading the
 whole object would serialize every `VT_` variable, including storage secrets,
 into the browser bundle.
+
+## Administering uploads
+
+`/administration/uploads` sets the maximum upload size. The setting is stored in
+bytes and entered in gigabytes, and is 5 GB on a new instance. It applies to the
+browser client and to API clients alike.
 
 ## Administering email delivery
 

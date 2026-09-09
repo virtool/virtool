@@ -1,4 +1,4 @@
-import { createServerFn, createServerOnlyFn } from "@tanstack/react-start";
+import { createServerFn } from "@tanstack/react-start";
 import { setResponseStatus } from "@tanstack/react-start/server";
 import { getTask, getTasks, TaskNotFoundError } from "@virtool/data/tasks/data";
 import { z } from "zod";
@@ -18,19 +18,15 @@ const taskIdsSchema = z.object({
 	taskIds: z.array(rowIdSchema).min(1).max(100),
 });
 
-// Wrapped in createServerOnlyFn so the compiler can strip this body — and the
-// TaskNotFoundError import it references — from the client bundle. A plain
-// top-level helper would pin ./data and its postgres transitive dependency in
-// the client graph.
-const rethrowAsHttp = createServerOnlyFn((err: unknown): never => {
+function rethrowAsHttp(err: unknown): never {
 	if (err instanceof TaskNotFoundError) {
 		setResponseStatus(404);
-		throw new ClientError("Task not found.");
+		throw new ClientError("Task not found.", 404);
 	}
 	throw err;
-});
+}
 
-export const getTasksFn = createServerFn({ method: "GET" })
+export const getTasksFn = createServerFn({ method: "POST" })
 	.middleware([authenticated()])
 	.validator(taskIdsSchema)
 	.handler(async ({ data }) => getTasks(db, data.taskIds));

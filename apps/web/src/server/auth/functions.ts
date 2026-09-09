@@ -42,6 +42,30 @@ const createFirstUserSchema = z.object({
 	password: z.string(),
 });
 
+function rethrowAsHttp(err: unknown): never {
+	if (err instanceof InvalidCredentialsError) {
+		setResponseStatus(400);
+		throw new ClientError("Invalid handle or password.", 400);
+	}
+	if (err instanceof PasswordTooShortError) {
+		setResponseStatus(400);
+		throw new ClientError(err.message, 400);
+	}
+	if (err instanceof FirstUserExistsError) {
+		setResponseStatus(409);
+		throw new ClientError("Virtool already has a user.", 409);
+	}
+	if (err instanceof InvalidResetSessionError) {
+		setResponseStatus(400);
+		throw new ClientError("Invalid session", 400);
+	}
+	if (err instanceof PasswordReuseError) {
+		setResponseStatus(400);
+		throw new ClientError("Cannot reuse current password", 400);
+	}
+	throw err;
+}
+
 /** Login server function. Unauthenticated by necessity — this *creates* the session. */
 export const loginFn = createServerFn({ method: "POST" })
 	.middleware([open()])
@@ -63,11 +87,7 @@ export const loginFn = createServerFn({ method: "POST" })
 			setResponseStatus(201);
 			return { reset: false as const };
 		} catch (err) {
-			if (err instanceof InvalidCredentialsError) {
-				setResponseStatus(400);
-				throw new ClientError("Invalid handle or password.");
-			}
-			throw err;
+			rethrowAsHttp(err);
 		}
 	});
 
@@ -94,15 +114,7 @@ export const createFirstUserFn = createServerFn({ method: "POST" })
 			setResponseStatus(201);
 			return user;
 		} catch (err) {
-			if (err instanceof PasswordTooShortError) {
-				setResponseStatus(400);
-				throw new ClientError(err.message);
-			}
-			if (err instanceof FirstUserExistsError) {
-				setResponseStatus(409);
-				throw new ClientError("Virtool already has a user.");
-			}
-			throw err;
+			rethrowAsHttp(err);
 		}
 	});
 
@@ -141,18 +153,6 @@ export const resetPasswordFn = createServerFn({ method: "POST" })
 			setResponseStatus(200);
 			return { login: false as const, reset: false as const };
 		} catch (err) {
-			if (err instanceof PasswordTooShortError) {
-				setResponseStatus(400);
-				throw new ClientError(err.message);
-			}
-			if (err instanceof InvalidResetSessionError) {
-				setResponseStatus(400);
-				throw new ClientError("Invalid session");
-			}
-			if (err instanceof PasswordReuseError) {
-				setResponseStatus(400);
-				throw new ClientError("Cannot reuse current password");
-			}
-			throw err;
+			rethrowAsHttp(err);
 		}
 	});

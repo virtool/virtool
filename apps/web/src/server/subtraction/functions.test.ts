@@ -145,7 +145,11 @@ describe("createSubtraction", () => {
 				nickname: "",
 				uploadId: 999_999,
 			}),
-		).rejects.toThrow("Upload does not exist.");
+		).rejects.toMatchObject({
+			name: "ClientError",
+			message: "Upload does not exist.",
+			status: 400,
+		});
 		expect(setResponseStatus).toHaveBeenCalledWith(400);
 	});
 });
@@ -156,7 +160,11 @@ describe("getSubtraction", () => {
 
 		await expect(
 			call("getSubtractionFn", { subtractionId: 999_999 }),
-		).rejects.toThrow("Subtraction not found.");
+		).rejects.toMatchObject({
+			name: "ClientError",
+			message: "Subtraction not found.",
+			status: 404,
+		});
 		expect(setResponseStatus).toHaveBeenCalledWith(404);
 	});
 });

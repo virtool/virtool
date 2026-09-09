@@ -43,6 +43,7 @@ import {
 	pageSchema,
 	perPageSchema,
 	rowIdSchema,
+	searchTermSchema,
 } from "../validation";
 
 const sampleIdSchema = z.object({
@@ -52,11 +53,11 @@ const sampleIdSchema = z.object({
 const findSamplesSchema = z.object({
 	page: pageSchema,
 	perPage: perPageSchema,
-	term: z.string().default(""),
-	labels: z.array(rowIdSchema).default([]),
-	workflows: z.array(z.string()).default([]),
-	users: z.array(rowIdSchema).default([]),
-	groups: z.array(rowIdSchema).default([]),
+	term: searchTermSchema,
+	labels: z.array(rowIdSchema).max(100).default([]),
+	workflows: z.array(z.string().max(100)).max(100).default([]),
+	users: z.array(rowIdSchema).max(100).default([]),
+	groups: z.array(rowIdSchema).max(100).default([]),
 	createdAfter: calendarDateSchema.optional(),
 	createdBefore: calendarDateSchema.optional(),
 	// A direction without a column falls back to the creation date below, so a
@@ -83,11 +84,7 @@ const updateRightsSchema = sampleIdSchema.extend({
 // creation job is finished and will not resume.
 const DELETABLE_JOB_STATES = new Set(["cancelled", "failed", "succeeded"]);
 
-// Wrapped in createServerOnlyFn so the compiler can strip this body — and the
-// ./data imports it references — from the client bundle. A plain top-level
-// helper would pin ./data and its postgres transitive dependency in the client
-// graph.
-const rethrowAsHttp = createServerOnlyFn((err: unknown): never => {
+function rethrowAsHttp(err: unknown): never {
 	if (err instanceof SampleNotFoundError) {
 		setResponseStatus(404);
 		throw new ClientError("Sample not found.", 404);
@@ -115,7 +112,7 @@ const rethrowAsHttp = createServerOnlyFn((err: unknown): never => {
 		throw new ClientError("File is already reserved.", 400);
 	}
 	throw err;
-});
+}
 
 // The `authenticated()` floor guarantees a signed-in caller; this enforces the
 // per-sample right the operation needs on top of it. A lookup for a nonexistent
@@ -158,7 +155,7 @@ function coerceGroup(group: string | number | null | undefined): number | null {
 	return typeof group === "number" ? group : Number(group);
 }
 
-export const findSamplesFn = createServerFn({ method: "GET" })
+export const findSamplesFn = createServerFn({ method: "POST" })
 	.middleware([authenticated()])
 	.validator(findSamplesSchema)
 	.handler(async ({ context, data }) => {

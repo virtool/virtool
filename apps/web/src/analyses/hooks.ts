@@ -148,7 +148,7 @@ type UseCompatibleIndexesResult = {
 	isError: boolean;
 };
 
-export function useCompatibleIndexes(): UseCompatibleIndexesResult {
+function useCompatibleIndexes(): UseCompatibleIndexesResult {
 	const { data, isPending, isError } = useListReadyIndexes(false);
 
 	const indexes = Object.values(
@@ -157,7 +157,7 @@ export function useCompatibleIndexes(): UseCompatibleIndexesResult {
 		.map((group) => maxBy(group, (item) => Number(item.version)))
 		.filter((index): index is IndexMinimal => index !== undefined);
 
-	return { indexes, isPending, isError };
+	return { indexes, isPending, isError: isError && data === undefined };
 }
 
 type UseSubtractionOptionsResult = {
@@ -178,7 +178,7 @@ type UseSubtractionOptionsResult = {
  *
  * @param sampleIds
  */
-export function useSubtractionOptions(
+function useSubtractionOptions(
 	sampleIds: number[],
 ): UseSubtractionOptionsResult {
 	const {
@@ -195,7 +195,10 @@ export function useSubtractionOptions(
 		isError: isErrorSample,
 	} = useFetchSample(sampleId);
 
-	if (isErrorSample || isErrorSubtractionShortlist) {
+	if (
+		(isErrorSample && !sample) ||
+		(isErrorSubtractionShortlist && !subtractionShortlist)
+	) {
 		return {
 			defaultSubtractions: [],
 			subtractions: [],
@@ -241,5 +244,41 @@ export function useSubtractionOptions(
 		subtractions,
 		isPending: false,
 		isError: false,
+	};
+}
+
+type UseCreateAnalysisOptionsResult = {
+	defaultSubtractions: SubtractionOption[];
+	indexes: IndexMinimal[];
+	subtractions: SubtractionOption[];
+	isError: boolean;
+	isPending: boolean;
+};
+
+/**
+ * Load indexes and subtractions together so the form can appear all at once.
+ */
+export function useCreateAnalysisOptions(
+	sampleIds: number[],
+): UseCreateAnalysisOptionsResult {
+	const {
+		indexes,
+		isPending: isPendingIndexes,
+		isError: isErrorIndexes,
+	} = useCompatibleIndexes();
+
+	const {
+		defaultSubtractions,
+		subtractions,
+		isPending: isPendingSubtractions,
+		isError: isErrorSubtractions,
+	} = useSubtractionOptions(sampleIds);
+
+	return {
+		defaultSubtractions,
+		indexes,
+		subtractions,
+		isError: isErrorIndexes || isErrorSubtractions,
+		isPending: isPendingIndexes || isPendingSubtractions,
 	};
 }

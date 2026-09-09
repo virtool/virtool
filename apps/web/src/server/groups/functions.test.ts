@@ -8,6 +8,7 @@ import {
 	createTestDatabase,
 	type TestDatabase,
 } from "@virtool/data/db/test/fixtures";
+import * as groupData from "@virtool/data/groups/data";
 import {
 	NO_PERMISSIONS,
 	seedGroup as seedGroupImpl,
@@ -15,6 +16,7 @@ import {
 import { eq } from "drizzle-orm";
 import {
 	afterAll,
+	afterEach,
 	beforeAll,
 	beforeEach,
 	describe,
@@ -85,6 +87,10 @@ beforeEach(async () => {
 	);
 });
 
+afterEach(() => {
+	vi.restoreAllMocks();
+});
+
 /** Authenticate the next call as a user with the given administrator role. */
 
 function seedGroup(): Promise<number> {
@@ -94,6 +100,49 @@ function seedGroup(): Promise<number> {
 function call(name: string, data?: unknown) {
 	return callServerFn(handlers, name, data);
 }
+
+describe("error mapping", () => {
+	it("carries a missing group's status on the client error", async () => {
+		await signIn(db, getRequest, { administratorRole: null });
+
+		await expect(
+			call("getGroupFn", { groupId: 999_999 }),
+		).rejects.toMatchObject({
+			name: "ClientError",
+			message: "Group not found.",
+			status: 404,
+		});
+		expect(setResponseStatus).toHaveBeenCalledWith(404);
+	});
+
+	it("carries a duplicate group's conflict status on the client error", async () => {
+		await signIn(db, getRequest, { administratorRole: "base" });
+		await call("createGroupFn", { name: "technicians" });
+		setResponseStatus.mockClear();
+
+		await expect(
+			call("createGroupFn", { name: "technicians" }),
+		).rejects.toMatchObject({
+			name: "ClientError",
+			message: "Group name already exists.",
+			status: 409,
+		});
+		expect(setResponseStatus).toHaveBeenCalledWith(409);
+	});
+
+	it.each([
+		new Error("query failed", { cause: new Error("connection lost") }),
+		"failure",
+	])("rethrows an unmapped failure unchanged: %s", async (failure) => {
+		await signIn(db, getRequest, { administratorRole: null });
+		vi.spyOn(groupData, "getGroup").mockRejectedValueOnce(failure);
+
+		await expect(call("getGroupFn", { groupId: 999_999 })).rejects.toBe(
+			failure,
+		);
+		expect(setResponseStatus).not.toHaveBeenCalled();
+	});
+});
 
 describe("createGroup", () => {
 	it("refuses a user with no administrator role", async () => {

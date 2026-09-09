@@ -42,7 +42,12 @@ import { ForbiddenError } from "../auth/middleware";
 import { authenticated } from "../auth/policy";
 import { db } from "../composition";
 import { ClientError } from "../errors";
-import { pageSchema, perPageSchema, rowIdSchema } from "../validation";
+import {
+	pageSchema,
+	perPageSchema,
+	rowIdSchema,
+	searchTermSchema,
+} from "../validation";
 
 // An OTU, isolate, or sequence id is the 8-character string Mongo's `_id` held,
 // not a Postgres serial, so `rowIdSchema` does not apply.
@@ -60,7 +65,7 @@ const findOtusSchema = z.object({
 	referenceId: rowIdSchema,
 	page: pageSchema,
 	perPage: perPageSchema,
-	term: z.string().default(""),
+	term: searchTermSchema,
 });
 
 const createOtuSchema = z
@@ -81,11 +86,7 @@ const updateSequenceSchema = sequenceIdSchema.extend(
 	SequenceUpdateRequest.shape,
 );
 
-// Wrapped in createServerOnlyFn so the compiler can strip these bodies — and the
-// ./data imports they reference — from the client bundle. A plain top-level
-// helper would pin ./data and its postgres transitive dependency in the client
-// graph.
-const rethrowAsHttp = createServerOnlyFn((err: unknown): never => {
+function rethrowAsHttp(err: unknown): never {
 	if (
 		err instanceof OtuNotFoundError ||
 		err instanceof IsolateNotFoundError ||
@@ -111,7 +112,7 @@ const rethrowAsHttp = createServerOnlyFn((err: unknown): never => {
 		throw new ClientError(err.message, 400);
 	}
 	throw err;
-});
+}
 
 const notFound = createServerOnlyFn((message: string): never => {
 	setResponseStatus(404);
@@ -164,7 +165,7 @@ const authorizeOtu = createServerOnlyFn(
 	},
 );
 
-export const findOtusFn = createServerFn({ method: "GET" })
+export const findOtusFn = createServerFn({ method: "POST" })
 	.middleware([authenticated()])
 	.validator(findOtusSchema)
 	.handler(async ({ data }) => {

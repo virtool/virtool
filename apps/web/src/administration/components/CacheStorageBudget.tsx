@@ -1,8 +1,9 @@
-import { useFetchSettings, useUpdateSettings } from "@administration/queries";
+import {
+	useSuspenseSettings,
+	useUpdateSettings,
+} from "@administration/queries";
 import { BoxGroup, BoxGroupSection } from "@base/Box";
 import Input, { InputError, InputGroup, InputLabel } from "@base/Input";
-import LoadingPlaceholder from "@base/LoadingPlaceholder";
-import QueryError from "@base/QueryError";
 import SaveButton from "@base/SaveButton";
 import SectionHeader from "@base/SectionHeader";
 import { useForm } from "react-hook-form";
@@ -20,7 +21,7 @@ type CacheStorageBudgetFormValues = {
  * The field uses decimal gigabytes; the setting stores bytes.
  */
 export default function CacheStorageBudget() {
-	const { data, isPending, isError } = useFetchSettings();
+	const { data } = useSuspenseSettings();
 	const mutation = useUpdateSettings();
 
 	const {
@@ -29,17 +30,9 @@ export default function CacheStorageBudget() {
 		register,
 	} = useForm<CacheStorageBudgetFormValues>({
 		values: {
-			budgetGigabytes: data ? data.cacheStorageBudget / BYTES_PER_GIGABYTE : 0,
+			budgetGigabytes: data.cacheStorageBudget / BYTES_PER_GIGABYTE,
 		},
 	});
-
-	if (isError && !data) {
-		return <QueryError noun="settings" />;
-	}
-
-	if (isPending) {
-		return <LoadingPlaceholder />;
-	}
 
 	function save({ budgetGigabytes }: CacheStorageBudgetFormValues) {
 		mutation.mutate({
