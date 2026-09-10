@@ -48,7 +48,9 @@ describe("<CreateSamplesFromFiles>", () => {
 	}
 
 	async function submitForm() {
-		await userEvent.click(screen.getByRole("button", { name: "Save" }));
+		await userEvent.click(
+			screen.getByRole("button", { name: /^Create \d+ samples?$/ }),
+		);
 	}
 
 	it("should make one row per selected file, prefilled with its name", async () => {
@@ -67,6 +69,77 @@ describe("<CreateSamplesFromFiles>", () => {
 		).toHaveValue("sample_two");
 		expect(screen.getAllByText("Unpaired")).toHaveLength(2);
 		expect(screen.getByText("2 samples")).toBeInTheDocument();
+	});
+
+	it("should preserve the draft when the dialog closes and reopens", async () => {
+		await renderDialog([createFakeFile({ name: "sample_one.fastq.gz" })]);
+
+		const name = screen.getByRole("textbox", {
+			name: "Name for sample_one.fastq.gz",
+		});
+		await userEvent.clear(name);
+		await userEvent.type(name, "Edited sample");
+		await userEvent.type(
+			screen.getByRole("textbox", { name: "Match text" }),
+			"sample",
+		);
+		await userEvent.type(
+			screen.getByRole("textbox", { name: "Replacement" }),
+			"specimen",
+		);
+		await userEvent.click(
+			screen.getByRole("button", { name: "Show Metadata Fields" }),
+		);
+
+		await userEvent.keyboard("{Escape}");
+
+		expect(
+			screen.queryByRole("heading", { name: "Create Samples" }),
+		).not.toBeInTheDocument();
+		await userEvent.click(
+			screen.getByRole("button", { name: "Create Samples" }),
+		);
+
+		expect(
+			screen.getByRole("textbox", {
+				name: "Name for sample_one.fastq.gz",
+			}),
+		).toHaveValue("Edited sample");
+		expect(screen.getByRole("textbox", { name: "Match text" })).toHaveValue(
+			"sample",
+		);
+		expect(screen.getByRole("textbox", { name: "Replacement" })).toHaveValue(
+			"specimen",
+		);
+		expect(screen.getByLabelText("Host")).toBeVisible();
+	});
+
+	it("should stay open while samples are being created", async () => {
+		let resolveCreate: ((value: object) => void) | undefined;
+		sampleServerFnMocks.createSampleFn.mockImplementation(
+			() =>
+				new Promise((resolve) => {
+					resolveCreate = resolve;
+				}),
+		);
+		await renderDialog([createFakeFile({ name: "sample_one.fastq.gz" })]);
+
+		await submitForm();
+
+		expect(
+			screen.getByRole("button", { name: "Creating 1 sample…" }),
+		).toBeDisabled();
+		await userEvent.keyboard("{Escape}");
+		expect(
+			screen.getByRole("heading", { name: "Create Samples" }),
+		).toBeInTheDocument();
+
+		resolveCreate?.({});
+		await waitFor(() =>
+			expect(
+				screen.queryByRole("heading", { name: "Create Samples" }),
+			).not.toBeInTheDocument(),
+		);
 	});
 
 	it("should scroll the rows without scrolling the bulk rename controls", async () => {
@@ -253,7 +326,9 @@ describe("<CreateSamplesFromFiles>", () => {
 		expect(firstName).toHaveAttribute("aria-invalid", "true");
 		expect(secondName).toHaveAttribute("aria-invalid", "true");
 		expect(screen.getAllByText("Duplicate sample name")).toHaveLength(2);
-		expect(screen.getByRole("button", { name: "Save" })).toBeDisabled();
+		expect(
+			screen.getByRole("button", { name: /^Create \d+ samples?$/ }),
+		).toBeDisabled();
 		await submitForm();
 		expect(createSample).not.toHaveBeenCalled();
 
@@ -263,7 +338,9 @@ describe("<CreateSamplesFromFiles>", () => {
 		expect(screen.queryByText("Duplicate sample name")).not.toBeInTheDocument();
 		expect(firstName).not.toHaveAttribute("aria-invalid", "true");
 		expect(secondName).not.toHaveAttribute("aria-invalid", "true");
-		expect(screen.getByRole("button", { name: "Save" })).toBeEnabled();
+		expect(
+			screen.getByRole("button", { name: /^Create \d+ samples?$/ }),
+		).toBeEnabled();
 
 		await submitForm();
 		await waitFor(() => expect(createSample).toHaveBeenCalledTimes(2));
@@ -277,7 +354,9 @@ describe("<CreateSamplesFromFiles>", () => {
 
 		expect(screen.getByText("2 samples")).toBeInTheDocument();
 		expect(screen.getAllByText("Duplicate sample name")).toHaveLength(2);
-		expect(screen.getByRole("button", { name: "Save" })).toBeDisabled();
+		expect(
+			screen.getByRole("button", { name: /^Create \d+ samples?$/ }),
+		).toBeDisabled();
 
 		await userEvent.click(
 			screen.getByRole("button", { name: "Remove sample.fastq.gz" }),
@@ -285,7 +364,9 @@ describe("<CreateSamplesFromFiles>", () => {
 
 		expect(screen.getByText("1 sample")).toBeInTheDocument();
 		expect(screen.queryByText("Duplicate sample name")).not.toBeInTheDocument();
-		expect(screen.getByRole("button", { name: "Save" })).toBeEnabled();
+		expect(
+			screen.getByRole("button", { name: /^Create \d+ samples?$/ }),
+		).toBeEnabled();
 	});
 
 	it("should reset an edited name to its own initial value after removing another row", async () => {
@@ -335,7 +416,9 @@ describe("<CreateSamplesFromFiles>", () => {
 			screen.getByRole("textbox", { name: "Match text" }),
 			"_batch*_end",
 		);
-		await userEvent.click(screen.getByRole("button", { name: "Replace all" }));
+		await userEvent.click(
+			screen.getByRole("button", { name: /^Replace in \d+ names?$/ }),
+		);
 
 		expect(
 			screen.getByRole("textbox", {
@@ -348,7 +431,9 @@ describe("<CreateSamplesFromFiles>", () => {
 			}),
 		).toHaveValue("sample");
 		expect(screen.getAllByText("Duplicate sample name")).toHaveLength(2);
-		expect(screen.getByRole("button", { name: "Save" })).toBeDisabled();
+		expect(
+			screen.getByRole("button", { name: /^Create \d+ samples?$/ }),
+		).toBeDisabled();
 	});
 
 	it("should replace all literal matches with literal replacement text", async () => {
@@ -365,7 +450,9 @@ describe("<CreateSamplesFromFiles>", () => {
 			screen.getByRole("textbox", { name: "Replacement" }),
 			"$&",
 		);
-		await userEvent.click(screen.getByRole("button", { name: "Replace all" }));
+		await userEvent.click(
+			screen.getByRole("button", { name: /^Replace in \d+ names?$/ }),
+		);
 
 		expect(
 			screen.getByRole("textbox", {
@@ -377,6 +464,32 @@ describe("<CreateSamplesFromFiles>", () => {
 				name: "Name for sample.A+.fastq.gz",
 			}),
 		).toHaveValue("sample.A+");
+	});
+
+	it("should undo the last bulk rename", async () => {
+		await renderDialog([
+			createFakeFile({ name: "sample_one.fastq.gz" }),
+			createFakeFile({ name: "sample_two.fastq.gz" }),
+		]);
+
+		await userEvent.type(
+			screen.getByRole("textbox", { name: "Match text" }),
+			"sample_",
+		);
+		await userEvent.click(
+			screen.getByRole("button", { name: "Replace in 2 names" }),
+		);
+
+		expect(
+			screen.getByRole("textbox", { name: "Name for sample_one.fastq.gz" }),
+		).toHaveValue("one");
+		await userEvent.click(screen.getByRole("button", { name: "Undo rename" }));
+		expect(
+			screen.getByRole("textbox", { name: "Name for sample_one.fastq.gz" }),
+		).toHaveValue("sample_one");
+		expect(
+			screen.getByRole("textbox", { name: "Name for sample_two.fastq.gz" }),
+		).toHaveValue("sample_two");
 	});
 
 	it.each([
@@ -403,7 +516,7 @@ describe("<CreateSamplesFromFiles>", () => {
 				);
 			}
 			await userEvent.click(
-				screen.getByRole("button", { name: "Replace all" }),
+				screen.getByRole("button", { name: /^Replace in \d+ names?$/ }),
 			);
 
 			expect(
@@ -418,7 +531,9 @@ describe("<CreateSamplesFromFiles>", () => {
 			name: "Use regular expression",
 		});
 		const match = screen.getByRole("textbox", { name: "Match text" });
-		const replace = screen.getByRole("button", { name: "Replace all" });
+		const replace = screen.getByRole("button", {
+			name: /^Replace in \d+ names?$/,
+		});
 
 		await userEvent.click(toggle);
 		expect(replace).toBeDisabled();
@@ -461,7 +576,9 @@ describe("<CreateSamplesFromFiles>", () => {
 			screen.getByRole("textbox", { name: "Replacement" }),
 			"renamed",
 		);
-		await userEvent.click(screen.getByRole("button", { name: "Replace all" }));
+		await userEvent.click(
+			screen.getByRole("button", { name: /^Replace in \d+ names?$/ }),
+		);
 
 		expect(
 			screen.getByRole("textbox", {
@@ -478,7 +595,9 @@ describe("<CreateSamplesFromFiles>", () => {
 			screen.getByRole("textbox", { name: "Match text" }),
 			"*",
 		);
-		await userEvent.click(screen.getByRole("button", { name: "Replace all" }));
+		await userEvent.click(
+			screen.getByRole("button", { name: /^Replace in \d+ names?$/ }),
+		);
 
 		expect(
 			screen.getByRole("textbox", {
@@ -532,9 +651,9 @@ describe("<CreateSamplesFromFiles>", () => {
 			await screen.findByText("1 sample could not be created."),
 		).toBeInTheDocument();
 
-		// The created sample's reads are reserved, so its row is gone and the
-		// selection it came from was cleared.
-		expect(onCreated).toHaveBeenCalled();
+		// The created sample's reads are reserved, so its row and only its files
+		// leave the draft selection.
+		expect(onCreated).toHaveBeenCalledWith([first]);
 		expect(
 			screen.queryByRole("textbox", { name: "Name for sample_one.fastq.gz" }),
 		).not.toBeInTheDocument();

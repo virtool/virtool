@@ -51,10 +51,13 @@ export type FileManagerProps = {
 	   files listed with it. */
 	renderItemAction?: (upload: Upload, uploads: Upload[]) => ReactNode;
 
-	/* Renders a control acting on the whole selection, shown in the list header
-	   while at least one file is selected. Providing it makes the list
-	   selectable even when the account can't delete files. */
-	renderSelectionAction?: (selected: Upload[], clear: () => void) => ReactNode;
+	/* Renders a control acting on the whole selection. The renderer stays mounted
+	   while the list is mounted so it can preserve an in-progress action. */
+	renderSelectionAction?: (
+		selected: Upload[],
+		clear: () => void,
+		remove: (uploads: Upload[]) => void,
+	) => ReactNode;
 
 	setPage?: (page: number) => void;
 
@@ -144,6 +147,13 @@ export function FileManager({
 		selection.clear();
 	}
 
+	function removeFromSelection(uploads: Upload[]) {
+		const removedIds = new Set(uploads.map((upload) => upload.id));
+		selection.setSelected((selected) =>
+			selected.filter((upload) => !removedIds.has(upload.id)),
+		);
+	}
+
 	function handleSort(field: UploadSortField) {
 		setSort(field, nextSortDirection(field, sort, direction));
 	}
@@ -211,15 +221,15 @@ export function FileManager({
 									: pluralize(files.foundCount, "file")
 							}
 						>
-							{selection.selected.length > 0 && (
-								<>
-									{renderSelectionAction?.(selection.selected, selection.clear)}
-									{canDelete && (
-										<Button color="red" size="small" onClick={handleDelete}>
-											Delete
-										</Button>
-									)}
-								</>
+							{renderSelectionAction?.(
+								selection.selected,
+								selection.clear,
+								removeFromSelection,
+							)}
+							{selection.selected.length > 0 && canDelete && (
+								<Button color="red" size="small" onClick={handleDelete}>
+									Delete
+								</Button>
 							)}
 						</ListHeader>
 						<BoxGroupTable className="table-fixed" variant="data">

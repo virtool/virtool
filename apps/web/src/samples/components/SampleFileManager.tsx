@@ -50,10 +50,10 @@ export default function SampleFileManager({
 				}
 				renderSelectionAction={
 					canCreate
-						? (selected, clear) => (
+						? (selected, _clear, remove) => (
 								<CreateSamplesFromFiles
 									labels={labels}
-									onCreated={clear}
+									onCreated={remove}
 									selected={selected}
 								/>
 							)

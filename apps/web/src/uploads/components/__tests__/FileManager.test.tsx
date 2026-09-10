@@ -6,10 +6,40 @@ import { mockFindUploads, uploadServerFnMocks } from "@tests/server-fn/uploads";
 import { mockGetAccount } from "@tests/server-fn/users";
 import { renderWithRouter } from "@tests/setup";
 import { upload } from "@uploads/uploader";
+import { useState } from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { FileManager, type FileManagerProps } from "../FileManager";
 
 vi.mock("@uploads/uploader");
+
+type PersistentSelectionActionProps = {
+	clear: () => void;
+	selectedCount: number;
+};
+
+function PersistentSelectionAction({
+	clear,
+	selectedCount,
+}: PersistentSelectionActionProps) {
+	const [draft, setDraft] = useState("");
+
+	if (selectedCount === 0 && !draft) {
+		return null;
+	}
+
+	return (
+		<>
+			<input
+				aria-label="Draft name"
+				value={draft}
+				onChange={(event) => setDraft(event.target.value)}
+			/>
+			<button onClick={clear} type="button">
+				Clear selection
+			</button>
+		</>
+	);
+}
 
 describe("<FileManager>", () => {
 	let props: FileManagerProps;
@@ -303,6 +333,72 @@ describe("<FileManager>", () => {
 
 			expect(screen.getByText("2 files")).toBeInTheDocument();
 			expect(screen.queryByText("2 selected")).not.toBeInTheDocument();
+		});
+
+		it("should keep a selection action mounted after its selection is cleared", async () => {
+			mockGetAccount(createFakeAccount({ administratorRole: "full" }));
+			mockFindUploads([createFakeFile({ name: "one.fq.gz" })]);
+
+			await renderWithRouter(
+				<FileManager
+					{...props}
+					renderSelectionAction={(selected, clear) => (
+						<PersistentSelectionAction
+							clear={clear}
+							selectedCount={selected.length}
+						/>
+					)}
+				/>,
+				path,
+			);
+
+			await userEvent.click(
+				await screen.findByRole("checkbox", { name: "Select one.fq.gz" }),
+			);
+			await userEvent.type(screen.getByLabelText("Draft name"), "My draft");
+			await userEvent.click(
+				screen.getByRole("button", { name: "Clear selection" }),
+			);
+
+			expect(screen.getByLabelText("Draft name")).toHaveValue("My draft");
+			expect(screen.getByText("1 file")).toBeInTheDocument();
+		});
+
+		it("should let a selection action remove only completed items", async () => {
+			const first = createFakeFile({ name: "one.fq.gz" });
+			const second = createFakeFile({ name: "two.fq.gz" });
+			mockGetAccount(createFakeAccount({ administratorRole: "full" }));
+			mockFindUploads([first, second]);
+
+			await renderWithRouter(
+				<FileManager
+					{...props}
+					renderSelectionAction={(selected, _clear, remove) =>
+						selected.length > 1 ? (
+							<button onClick={() => remove([first])} type="button">
+								Remove completed
+							</button>
+						) : null
+					}
+				/>,
+				path,
+			);
+
+			const firstCheckbox = await screen.findByRole("checkbox", {
+				name: "Select one.fq.gz",
+			});
+			const secondCheckbox = screen.getByRole("checkbox", {
+				name: "Select two.fq.gz",
+			});
+			await userEvent.click(firstCheckbox);
+			await userEvent.click(secondCheckbox);
+			await userEvent.click(
+				screen.getByRole("button", { name: "Remove completed" }),
+			);
+
+			expect(firstCheckbox).not.toBeChecked();
+			expect(secondCheckbox).toBeChecked();
+			expect(screen.getByText("1 selected")).toBeInTheDocument();
 		});
 
 		it("should delete every selected file", async () => {

@@ -17,6 +17,8 @@ type SampleSettingsFieldsProps = {
 	groups: GroupMinimal[];
 	labels: Label[];
 	metadataColumns?: 2 | 3;
+	onShowMetadataChange?: (showMetadata: boolean) => void;
+	showMetadata?: boolean;
 	value: SampleSettingsValues;
 	onChange: (value: SampleSettingsValues) => void;
 };
@@ -25,10 +27,15 @@ export default function SampleSettingsFields({
 	groups,
 	labels,
 	metadataColumns = 3,
+	onShowMetadataChange,
+	showMetadata,
 	value,
 	onChange,
 }: SampleSettingsFieldsProps) {
-	const [showMetadata, setShowMetadata] = useState(false);
+	const [internalShowMetadata, setInternalShowMetadata] = useState(false);
+	const isShowingMetadata = showMetadata ?? internalShowMetadata;
+	const handleShowMetadataChange =
+		onShowMetadataChange ?? setInternalShowMetadata;
 	return (
 		<>
 			<SampleUserGroup
@@ -39,8 +46,8 @@ export default function SampleSettingsFields({
 
 			<Collapsible
 				className="mb-4"
-				open={showMetadata}
-				onOpenChange={setShowMetadata}
+				open={isShowingMetadata}
+				onOpenChange={handleShowMetadataChange}
 			>
 				<CollapsibleTrigger>Show Metadata Fields</CollapsibleTrigger>
 				<CollapsibleContent

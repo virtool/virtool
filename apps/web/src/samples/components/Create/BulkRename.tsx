@@ -5,17 +5,33 @@ import { InputSimple } from "@base/Input";
 import Popover from "@base/Popover";
 import Tooltip from "@base/Tooltip";
 import { Info, Regex, ReplaceAll } from "lucide-react";
-import { useId, useState } from "react";
+import { useId } from "react";
 
 type BulkRenameProps = {
+	canUndo: boolean;
+	isRegex: boolean;
+	match: string;
 	names: string[];
 	onRename: (names: string[]) => void;
+	onRegexChange: (isRegex: boolean) => void;
+	onMatchChange: (match: string) => void;
+	onReplacementChange: (replacement: string) => void;
+	onUndo: () => void;
+	replacement: string;
 };
 
-export default function BulkRename({ names, onRename }: BulkRenameProps) {
-	const [match, setMatch] = useState("");
-	const [replacement, setReplacement] = useState("");
-	const [isRegex, setIsRegex] = useState(false);
+export default function BulkRename({
+	canUndo,
+	isRegex,
+	match,
+	names,
+	onMatchChange,
+	onRegexChange,
+	onRename,
+	onReplacementChange,
+	onUndo,
+	replacement,
+}: BulkRenameProps) {
 	const errorId = useId();
 	const { pattern, error } = getPattern(match, isRegex);
 	const renamed = names.map((name) => {
@@ -46,37 +62,43 @@ export default function BulkRename({ names, onRename }: BulkRenameProps) {
 					className="h-9 w-50 min-w-0 max-w-50 rounded-r-none focus-visible:z-10"
 					placeholder="Match"
 					value={match}
-					onChange={(event) => setMatch(event.target.value)}
+					onChange={(event) => onMatchChange(event.target.value)}
 				/>
 				<InputSimple
 					aria-label="Replacement"
 					className="-ml-px h-9 w-50 min-w-0 max-w-50 rounded-none focus-visible:z-10"
 					placeholder="Replacement"
 					value={replacement}
-					onChange={(event) => setReplacement(event.target.value)}
+					onChange={(event) => onReplacementChange(event.target.value)}
 				/>
 				<Tooltip tip="Use regular expression">
 					<ButtonToggle
 						aria-label="Use regular expression"
 						pressed={isRegex}
-						onPressedChange={setIsRegex}
+						onPressedChange={onRegexChange}
 						className="relative -ml-px h-9 min-h-9 w-9 shrink-0 justify-center rounded-none border border-gray-300 bg-white px-0 text-sm text-gray-600 hover:bg-gray-100 hover:text-gray-900 focus-visible:z-10 focus-visible:ring-offset-0"
 					>
 						<Regex aria-hidden="true" size={16} />
 					</ButtonToggle>
 				</Tooltip>
-				<Tooltip tip="Replace all">
+				<Tooltip tip={`Replace in ${pluralize(changedCount, "name")}`}>
 					<Button
 						size="small"
-						aria-label="Replace all"
-						className="relative -ml-px h-9 w-9 shrink-0 justify-center px-0 rounded-l-none rounded-r border border-gray-300 bg-white hover:bg-gray-100 focus-visible:z-10 focus-visible:ring-offset-0 disabled:cursor-default disabled:opacity-100 disabled:text-gray-400 disabled:hover:bg-white disabled:hover:text-gray-400 disabled:active:brightness-100"
+						aria-label={`Replace in ${pluralize(changedCount, "name")}`}
+						className="relative -ml-px h-9 shrink-0 justify-center rounded-l-none rounded-r border border-gray-300 bg-white hover:bg-gray-100 focus-visible:z-10 focus-visible:ring-offset-0 disabled:cursor-default disabled:opacity-100 disabled:text-gray-400 disabled:hover:bg-white disabled:hover:text-gray-400 disabled:active:brightness-100"
 						disabled={changedCount === 0}
 						onClick={() => onRename(renamed)}
 					>
 						<ReplaceAll aria-hidden="true" size={16} />
+						{changedCount > 0 && pluralize(changedCount, "name")}
 					</Button>
 				</Tooltip>
 			</fieldset>
+			{canUndo && (
+				<Button size="small" onClick={onUndo}>
+					Undo rename
+				</Button>
+			)}
 			<Popover
 				align="end"
 				alignOffset={0}
