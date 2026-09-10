@@ -96,6 +96,7 @@ export default function CreateSamplesFromFiles({
 }: CreateSamplesFromFilesProps) {
 	const [open, setOpen] = useState(false);
 	const [hasDraft, setHasDraft] = useState(false);
+	const [createdCount, setCreatedCount] = useState(0);
 	const [failedCount, setFailedCount] = useState(0);
 	const [match, setMatch] = useState("");
 	const [replacement, setReplacement] = useState("");
@@ -255,6 +256,7 @@ export default function CreateSamplesFromFiles({
 				}
 
 				setFailedCount(failed.length);
+				setCreatedCount(created.length);
 				replace(failedRows);
 				setUndoNames(null);
 			},
@@ -281,6 +283,7 @@ export default function CreateSamplesFromFiles({
 			samples: buildSampleRows(selected),
 		});
 		setFailedCount(0);
+		setCreatedCount(0);
 		setMatch("");
 		setReplacement("");
 		setIsRegex(false);
@@ -320,7 +323,12 @@ export default function CreateSamplesFromFiles({
 									<strong>
 										{pluralize(failedCount, "sample")} could not be created.
 									</strong>
-									<span> The others were created and have left the list.</span>
+									{createdCount > 0 && (
+										<span>
+											{" "}
+											The others were created and have left the list.
+										</span>
+									)}
 								</span>
 							</Alert>
 						)}

@@ -650,6 +650,9 @@ describe("<CreateSamplesFromFiles>", () => {
 		expect(
 			await screen.findByText("1 sample could not be created."),
 		).toBeInTheDocument();
+		expect(
+			screen.getByText("The others were created and have left the list."),
+		).toBeInTheDocument();
 
 		// The created sample's reads are reserved, so its row and only its files
 		// leave the draft selection.
@@ -660,5 +663,22 @@ describe("<CreateSamplesFromFiles>", () => {
 		expect(
 			screen.getByRole("textbox", { name: "Name for sample_two.fastq.gz" }),
 		).toHaveValue("sample_two");
+	});
+
+	it("should not claim any samples were created when the entire batch fails", async () => {
+		const file = createFakeFile({ name: "sample_one.fastq.gz" });
+		sampleServerFnMocks.createSampleFn.mockRejectedValue(
+			new Error("Name is already in use"),
+		);
+
+		await renderDialog([file]);
+		await submitForm();
+
+		expect(
+			await screen.findByText("1 sample could not be created."),
+		).toBeInTheDocument();
+		expect(
+			screen.queryByText("The others were created and have left the list."),
+		).not.toBeInTheDocument();
 	});
 });
