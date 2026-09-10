@@ -19,6 +19,7 @@ import { Route as AuthenticatedIndexRouteImport } from './routes/_authenticated/
 import { Route as AuthenticatedAccountRouteImport } from './routes/_authenticated/account'
 import { Route as AuthenticatedAdministrationRouteRouteImport } from './routes/_authenticated/administration/route'
 import { Route as AuthenticatedHmmsRouteImport } from './routes/_authenticated/hmms'
+import { Route as AuthenticatedHomeRouteImport } from './routes/_authenticated/home'
 import { Route as AuthenticatedJobsRouteImport } from './routes/_authenticated/jobs'
 import { Route as AuthenticatedRefsRouteRouteImport } from './routes/_authenticated/refs/route'
 import { Route as AuthenticatedSamplesRouteImport } from './routes/_authenticated/samples'
@@ -136,6 +137,11 @@ const AuthenticatedAdministrationRouteRoute =
 const AuthenticatedHmmsRoute = AuthenticatedHmmsRouteImport.update({
   id: '/hmms',
   path: '/hmms',
+  getParentRoute: () => AuthenticatedRoute,
+} as any)
+const AuthenticatedHomeRoute = AuthenticatedHomeRouteImport.update({
+  id: '/home',
+  path: '/home',
   getParentRoute: () => AuthenticatedRoute,
 } as any)
 const AuthenticatedJobsRoute = AuthenticatedJobsRouteImport.update({
@@ -542,6 +548,7 @@ export interface FileRoutesByFullPath {
   '/refs': typeof AuthenticatedRefsRouteRouteWithChildren
   '/account': typeof AuthenticatedAccountRouteWithChildren
   '/hmms': typeof AuthenticatedHmmsRouteWithChildren
+  '/home': typeof AuthenticatedHomeRoute
   '/jobs': typeof AuthenticatedJobsRouteWithChildren
   '/samples': typeof AuthenticatedSamplesRouteWithChildren
   '/subtractions': typeof AuthenticatedSubtractionsRouteWithChildren
@@ -616,6 +623,7 @@ export interface FileRoutesByTo {
   '/metrics': typeof MetricsRoute
   '/monitoring': typeof MonitoringRoute
   '/setup': typeof SetupRoute
+  '/home': typeof AuthenticatedHomeRoute
   '/health/live': typeof HealthLiveRoute
   '/health/ready': typeof HealthReadyRoute
   '/uploads/$uploadId': typeof UploadsUploadIdRoute
@@ -689,6 +697,7 @@ export interface FileRoutesById {
   '/_authenticated/refs': typeof AuthenticatedRefsRouteRouteWithChildren
   '/_authenticated/account': typeof AuthenticatedAccountRouteWithChildren
   '/_authenticated/hmms': typeof AuthenticatedHmmsRouteWithChildren
+  '/_authenticated/home': typeof AuthenticatedHomeRoute
   '/_authenticated/jobs': typeof AuthenticatedJobsRouteWithChildren
   '/_authenticated/samples': typeof AuthenticatedSamplesRouteWithChildren
   '/_authenticated/subtractions': typeof AuthenticatedSubtractionsRouteWithChildren
@@ -771,6 +780,7 @@ export interface FileRouteTypes {
     | '/refs'
     | '/account'
     | '/hmms'
+    | '/home'
     | '/jobs'
     | '/samples'
     | '/subtractions'
@@ -845,6 +855,7 @@ export interface FileRouteTypes {
     | '/metrics'
     | '/monitoring'
     | '/setup'
+    | '/home'
     | '/health/live'
     | '/health/ready'
     | '/uploads/$uploadId'
@@ -917,6 +928,7 @@ export interface FileRouteTypes {
     | '/_authenticated/refs'
     | '/_authenticated/account'
     | '/_authenticated/hmms'
+    | '/_authenticated/home'
     | '/_authenticated/jobs'
     | '/_authenticated/samples'
     | '/_authenticated/subtractions'
@@ -1079,6 +1091,13 @@ declare module '@tanstack/react-router' {
       path: '/hmms'
       fullPath: '/hmms'
       preLoaderRoute: typeof AuthenticatedHmmsRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/home': {
+      id: '/_authenticated/home'
+      path: '/home'
+      fullPath: '/home'
+      preLoaderRoute: typeof AuthenticatedHomeRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
     '/_authenticated/jobs': {
@@ -1826,6 +1845,7 @@ interface AuthenticatedRouteChildren {
   AuthenticatedRefsRouteRoute: typeof AuthenticatedRefsRouteRouteWithChildren
   AuthenticatedAccountRoute: typeof AuthenticatedAccountRouteWithChildren
   AuthenticatedHmmsRoute: typeof AuthenticatedHmmsRouteWithChildren
+  AuthenticatedHomeRoute: typeof AuthenticatedHomeRoute
   AuthenticatedJobsRoute: typeof AuthenticatedJobsRouteWithChildren
   AuthenticatedSamplesRoute: typeof AuthenticatedSamplesRouteWithChildren
   AuthenticatedSubtractionsRoute: typeof AuthenticatedSubtractionsRouteWithChildren
@@ -1838,6 +1858,7 @@ const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
   AuthenticatedRefsRouteRoute: AuthenticatedRefsRouteRouteWithChildren,
   AuthenticatedAccountRoute: AuthenticatedAccountRouteWithChildren,
   AuthenticatedHmmsRoute: AuthenticatedHmmsRouteWithChildren,
+  AuthenticatedHomeRoute: AuthenticatedHomeRoute,
   AuthenticatedJobsRoute: AuthenticatedJobsRouteWithChildren,
   AuthenticatedSamplesRoute: AuthenticatedSamplesRouteWithChildren,
   AuthenticatedSubtractionsRoute: AuthenticatedSubtractionsRouteWithChildren,

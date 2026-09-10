@@ -201,7 +201,7 @@ export const sampleReads = pgTable(
 			foreignColumns: [uploads.id],
 			name: "sample_reads_upload_fkey",
 		}),
-		unique("uq_sample_reads_storage_key").on(table.storage_key),
+		unique("sample_reads_storage_key_key").on(table.storage_key),
 		unique("sample_reads_sample_id_name_key").on(table.sample_id, table.name),
 		unique("sample_reads_sample_name_key").on(table.sample, table.name),
 	],
