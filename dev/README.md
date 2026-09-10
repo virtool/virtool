@@ -193,6 +193,54 @@ attachment. Resume restores a missing default bridge before starting the inner
 daemon, preserving the host-gateway route to the shared services. It does not
 disconnect shared-service networks or reset their volumes.
 
+### Shared-service recovery
+
+Run `coasts up` when an instance is running but cannot reach Postgres or
+Azurite. The controller checks shared-service registrations and actual host
+containers, starts stopped shared containers, and probes the proxy addresses
+from the effective Compose configuration. If a proxy is unreachable, it stops
+and resumes the Coast through its lifecycle, then checks the proxies again
+before proceeding. This preserves the instance's data identity and URL. A
+second failed proxy check stops startup with a routing error.
+
+Missing registrations or host containers stop startup with an explicit error.
+The controller never automatically recreates shared storage. In Coasts 0.1.53,
+`shared-services start` starts an existing registered container; it cannot
+recreate a removed service. `shared-services rm` deletes the service's named
+volumes as well as its container and registration. Do not use it to repair
+connectivity. That release's documentation mentions **Refresh Shared Services**,
+but its UI does not implement the operation.
+
+To deliberately provision a missing shared service, use a temporary, unassigned
+Coast from the primary worktree. Choose an unused temporary instance name:
+
+```bash
+coast run repair-shared-services
+coast rm repair-shared-services
+```
+
+With this project's `autostart = false`, provisioning creates the missing shared
+containers and registrations without initializing application data. Removing
+this unmanaged temporary Coast preserves shared services. Existing named volumes
+are reused; absent volumes are created empty. Then run `coasts up` from the
+affected worktree to initialize its database, apply migrations, and check
+application readiness. Keep using `coasts remove` for managed instances.
+
+The relevant pinned implementations are
+[shared-service provisioning](https://github.com/coast-guard/coasts/blob/v0.1.53/coast-daemon/src/handlers/run/shared_services_setup.rs),
+[proxy restoration during start](https://github.com/coast-guard/coasts/blob/v0.1.53/coast-daemon/src/handlers/start.rs),
+and [shared-service lifecycle commands](https://github.com/coast-guard/coasts/blob/v0.1.53/coast-daemon/src/handlers/shared.rs).
+
+Live validation on 2026-09-10 provisioned a fresh shared Postgres through a
+temporary Coast and restored the existing instance with Coast stop/start.
+Database initialization, migrations, storage initialization, and application
+readiness succeeded. Killing the verified Postgres proxy listener and removing
+its alias from `docker0` reproduced an unreachable database while the outer
+container remained running. `coasts up` repaired it in 36.60 seconds. A normal
+stop/resume took 2.20/28.13 seconds. Both preserved a test database row, the
+instance data ID, and the HTTPS URL; the test table and temporary Coast were
+removed. These are single observations, not benchmarks.
+
 ### Builds, dependencies, and rollout
 
 The removal hook calls the controller in the primary worktree. Keep that
