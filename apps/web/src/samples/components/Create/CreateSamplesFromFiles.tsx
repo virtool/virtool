@@ -221,90 +221,99 @@ function CreateSamplesForm({
 
 			<div className="flex flex-col gap-6 lg:flex-row">
 				<div className="min-w-0 flex-1">
-					<BoxGroup className="max-h-192 overflow-y-auto">
+					<BoxGroup className="flex max-h-192 flex-col">
 						<BulkRename
 							names={samples.map((sample) => sample.name)}
 							onRename={renameSamples}
 						/>
-						<BoxGroupTable className="table-fixed" variant="data">
-							<caption className="sr-only">Samples</caption>
-							<TableHead className="sticky top-0 z-10">
-								<th scope="col">Name</th>
-								<th scope="col">Read Files</th>
-								<th className="w-28" scope="col">
-									Pairing
-								</th>
-								<TableActionsHead className="w-14" />
-							</TableHead>
-							<tbody>
-								{fields.map((field, index) => {
-									const isDuplicate =
-										(nameCounts.get(samples[index]?.name.trim() ?? "") ?? 0) >
-										1;
-									const error = isDuplicate
-										? "Duplicate sample name"
-										: errors.samples?.[index]?.name?.message;
-									const initialName = getSampleNameFromReads(field.reads);
-									const errorId = `${nameErrorPrefix}-${index}`;
+						<div className="min-h-0 overflow-y-auto">
+							<BoxGroupTable className="table-fixed" variant="data">
+								<caption className="sr-only">Samples</caption>
+								<TableHead className="sticky top-0 z-10">
+									<th scope="col">Name</th>
+									<th scope="col">Read Files</th>
+									<th className="w-28" scope="col">
+										Pairing
+									</th>
+									<TableActionsHead className="w-14" />
+								</TableHead>
+								<tbody>
+									{fields.map((field, index) => {
+										const isDuplicate =
+											(nameCounts.get(samples[index]?.name.trim() ?? "") ?? 0) >
+											1;
+										const error = isDuplicate
+											? "Duplicate sample name"
+											: errors.samples?.[index]?.name?.message;
+										const initialName = getSampleNameFromReads(field.reads);
+										const errorId = `${nameErrorPrefix}-${index}`;
 
-									return (
-										<tr key={field.id}>
-											<td>
-												<InputContainer align="right" className="items-center">
-													<InputSimple
-														aria-describedby={error ? errorId : undefined}
-														aria-invalid={Boolean(error) || undefined}
-														aria-label={`Name for ${field.reads[0]?.name}`}
-														{...register(`samples.${index}.name`, {
-															validate: (name) =>
-																Boolean(name.trim()) || "Required Field",
-														})}
-													/>
-													{samples[index]?.name !== initialName && (
-														<InputIconButton
-															IconComponent={PencilOff}
-															ariaLabel={`Reset name for ${field.reads[0]?.name}`}
-															tip="Reset name"
-															onClick={() =>
-																setValue(`samples.${index}.name`, initialName, {
-																	shouldDirty: true,
-																	shouldValidate: true,
-																})
-															}
+										return (
+											<tr key={field.id}>
+												<td>
+													<InputContainer
+														align="right"
+														className="items-center"
+													>
+														<InputSimple
+															aria-describedby={error ? errorId : undefined}
+															aria-invalid={Boolean(error) || undefined}
+															aria-label={`Name for ${field.reads[0]?.name}`}
+															{...register(`samples.${index}.name`, {
+																validate: (name) =>
+																	Boolean(name.trim()) || "Required Field",
+															})}
 														/>
-													)}
-												</InputContainer>
-												<InputError id={errorId}>{error}</InputError>
-											</td>
-											<td>
-												<div className="flex flex-col gap-1">
-													{field.reads.map((read) => (
-														<span
-															className="break-all font-mono text-xs text-gray-500"
-															key={read.id}
-														>
-															{read.name}
-														</span>
-													))}
-												</div>
-											</td>
-											<td>
-												<ReadPairBadge count={field.reads.length} />
-											</td>
-											<TableActionsCell>
-												<IconButton
-													ariaLabel={`Remove ${field.reads[0]?.name}`}
-													color="gray"
-													IconComponent={X}
-													onClick={() => remove(index)}
-													tip="remove"
-												/>
-											</TableActionsCell>
-										</tr>
-									);
-								})}
-							</tbody>
-						</BoxGroupTable>
+														{samples[index]?.name !== initialName && (
+															<InputIconButton
+																IconComponent={PencilOff}
+																ariaLabel={`Reset name for ${field.reads[0]?.name}`}
+																tip="Reset name"
+																onClick={() =>
+																	setValue(
+																		`samples.${index}.name`,
+																		initialName,
+																		{
+																			shouldDirty: true,
+																			shouldValidate: true,
+																		},
+																	)
+																}
+															/>
+														)}
+													</InputContainer>
+													<InputError id={errorId}>{error}</InputError>
+												</td>
+												<td>
+													<div className="flex flex-col gap-1">
+														{field.reads.map((read) => (
+															<span
+																className="break-all font-mono text-xs text-gray-500"
+																key={read.id}
+															>
+																{read.name}
+															</span>
+														))}
+													</div>
+												</td>
+												<td>
+													<ReadPairBadge count={field.reads.length} />
+												</td>
+												<TableActionsCell>
+													<IconButton
+														ariaLabel={`Remove ${field.reads[0]?.name}`}
+														color="gray"
+														IconComponent={X}
+														onClick={() => remove(index)}
+														tip="remove"
+													/>
+												</TableActionsCell>
+											</tr>
+										);
+									})}
+								</tbody>
+							</BoxGroupTable>
+						</div>
 					</BoxGroup>
 				</div>
 				<div className="w-full min-w-0 lg:w-80 lg:shrink-0">

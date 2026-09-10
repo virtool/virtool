@@ -69,6 +69,21 @@ describe("<CreateSamplesFromFiles>", () => {
 		expect(screen.getByText("2 samples")).toBeInTheDocument();
 	});
 
+	it("should scroll the rows without scrolling the bulk rename controls", async () => {
+		await renderDialog([
+			createFakeFile({ name: "sample_one.fastq.gz" }),
+			createFakeFile({ name: "sample_two.fastq.gz" }),
+		]);
+
+		const table = screen.getByRole("table", { name: "Samples" });
+		const scrollContainer = table.parentElement;
+		const bulkRename = screen.getByRole("group", { name: "Bulk rename" });
+
+		expect(scrollContainer).toHaveClass("overflow-y-auto");
+		expect(scrollContainer).not.toContainElement(bulkRename);
+		expect(table.querySelector("thead")).toHaveClass("sticky", "top-0");
+	});
+
 	it("should collapse a detected mate pair into one paired row", async () => {
 		const left = createFakeFile({ name: "sample_one_R1.fastq.gz" });
 		const right = createFakeFile({ name: "sample_one_R2.fastq.gz" });
