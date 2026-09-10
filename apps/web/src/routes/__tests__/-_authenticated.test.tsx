@@ -5,6 +5,12 @@ import { renderRoute } from "@tests/setup";
 import { describe, expect, it } from "vitest";
 
 describe("<AuthenticatedLayout />", () => {
+	it("redirects /home to the dashboard", async () => {
+		const { router } = await renderRoute("/home");
+
+		expect(router.state.location.pathname).toBe("/");
+	});
+
 	it("redirects to /login when the account is not authenticated", async () => {
 		mockGetAccountUnauthorized();
 
