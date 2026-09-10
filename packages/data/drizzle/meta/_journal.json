@@ -176,6 +176,13 @@
       "when": 1788632326295,
       "tag": "0024_add_settings_max_upload_size",
       "breakpoints": true
+    },
+    {
+      "idx": 25,
+      "version": "7",
+      "when": 1789058051921,
+      "tag": "0025_friendly_franklin_richards",
+      "breakpoints": true
     }
   ]
 }
