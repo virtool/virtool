@@ -100,6 +100,9 @@ describe("<Settings />", () => {
 			settingsServerFnMocks.getSettingsFn.mockRejectedValue(
 				new Error("Unavailable"),
 			);
+			settingsServerFnMocks.getCacheUsageFn.mockRejectedValue(
+				new Error("Unavailable"),
+			);
 			emailServerFnMocks.getEmailSettingsFn.mockRejectedValue(
 				new Error("Unavailable"),
 			);
@@ -124,6 +127,7 @@ describe("<Settings />", () => {
 
 			expect(router.state.location.pathname).toBe("/administration/users");
 			expect(settingsServerFnMocks.getSettingsFn).not.toHaveBeenCalled();
+			expect(settingsServerFnMocks.getCacheUsageFn).not.toHaveBeenCalled();
 			expect(emailServerFnMocks.getEmailSettingsFn).not.toHaveBeenCalled();
 		},
 	);

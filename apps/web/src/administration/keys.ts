@@ -3,6 +3,9 @@ import { createQueryKeys } from "@app/queryKeys";
 /** Query keys for the server settings. */
 export const settingsQueryKeys = createQueryKeys("settings");
 
+/** Query keys for retained workflow-cache usage snapshots. */
+export const cacheUsageQueryKeys = createQueryKeys("cacheUsage");
+
 /**
  * Query keys for the instance email delivery configuration.
  *

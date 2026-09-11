@@ -1,5 +1,6 @@
 import type { Db } from "@virtool/data/db/pg";
 import { caches } from "@virtool/data/db/schema/caches";
+import { cacheUsageSnapshots } from "@virtool/data/db/schema/cacheUsageSnapshots";
 import { settings } from "@virtool/data/db/schema/settings";
 import { tasks } from "@virtool/data/db/schema/tasks";
 import {
@@ -40,6 +41,7 @@ afterAll(async () => {
 });
 
 beforeEach(async () => {
+	await db.delete(cacheUsageSnapshots);
 	await db.delete(caches);
 	await db.delete(tasks);
 	// Cleared so each test starts from the seeded default budget unless it sets
@@ -156,6 +158,9 @@ describe("evictCachesLruTask", () => {
 
 		expect(outcome).toEqual({ status: "completed" });
 		expect(await remainingKeys()).toEqual(keys.slice(5));
+		expect(await db.select().from(cacheUsageSnapshots)).toMatchObject([
+			{ cache_count: 15, total_size: 150 * GB },
+		]);
 
 		await expect(
 			storage.size(cacheKey("0".padStart(32, "0"))),

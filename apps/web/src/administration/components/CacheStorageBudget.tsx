@@ -1,4 +1,5 @@
 import {
+	useSuspenseCacheUsage,
 	useSuspenseSettings,
 	useUpdateSettings,
 } from "@administration/queries";
@@ -7,6 +8,7 @@ import Input, { InputError, InputGroup, InputLabel } from "@base/Input";
 import SaveButton from "@base/SaveButton";
 import SectionHeader from "@base/SectionHeader";
 import { useForm } from "react-hook-form";
+import CacheUsageChart from "./CacheUsageChart";
 
 const BYTES_PER_GIGABYTE = 1000 ** 3;
 
@@ -22,6 +24,7 @@ type CacheStorageBudgetFormValues = {
  */
 export default function CacheStorageBudget() {
 	const { data } = useSuspenseSettings();
+	const { data: cacheUsage } = useSuspenseCacheUsage();
 	const mutation = useUpdateSettings();
 
 	const {
@@ -47,10 +50,23 @@ export default function CacheStorageBudget() {
 			</SectionHeader>
 			<section>
 				<SectionHeader level={3}>
+					<h3>Usage</h3>
+				</SectionHeader>
+				<BoxGroup>
+					<BoxGroupSection>
+						<CacheUsageChart
+							budget={data.cacheStorageBudget}
+							snapshots={cacheUsage}
+						/>
+					</BoxGroupSection>
+				</BoxGroup>
+			</section>
+			<section>
+				<SectionHeader level={3}>
 					<h3>Storage Budget</h3>
 					<p>
-						The eviction task removes least-recently-used caches until the cache
-						store is back under this budget.
+						Least recently used caches are removed to keep cache storage usage
+						below this limit.
 					</p>
 				</SectionHeader>
 				<BoxGroup>

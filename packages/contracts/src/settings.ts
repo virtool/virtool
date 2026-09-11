@@ -24,6 +24,13 @@ export type SampleGroup = (typeof sampleGroups)[number];
  */
 export type NcbiAvailability = "unconfigured" | "ready" | "configuration_error";
 
+/** Aggregate workflow-cache usage recorded at one hourly sampling point. */
+export type CacheUsageSnapshot = {
+	cacheCount: number;
+	recordedAt: Date;
+	totalSize: number;
+};
+
 /**
  * The instance settings singleton, as an administration client reads it.
  *
