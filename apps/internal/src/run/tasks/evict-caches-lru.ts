@@ -1,4 +1,5 @@
 import { evictLruCaches } from "@virtool/data/caches/data";
+import { recordCacheUsage } from "@virtool/data/caches/usage";
 import { getSettings } from "@virtool/data/settings/data";
 import { z } from "zod";
 import { defineTask } from "../framework/define";
@@ -45,7 +46,10 @@ export const evictCachesLruTask = defineTask<typeof payload, TaskContext>({
 	steps: ["evict"],
 	async run({ ctx, helpers, logger, signal }) {
 		await helpers.runStep("evict", async () => {
-			const { cacheStorageBudget } = await getSettings(ctx.db);
+			const [{ cacheStorageBudget }] = await Promise.all([
+				getSettings(ctx.db),
+				recordCacheUsage(ctx.db),
+			]);
 
 			await evictLruCaches(
 				ctx.db,

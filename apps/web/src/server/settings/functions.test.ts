@@ -5,6 +5,7 @@ import {
 	type Keyring,
 } from "@virtool/data/crypto/keyring";
 import type { Db } from "@virtool/data/db/pg";
+import { cacheUsageSnapshots } from "@virtool/data/db/schema/cacheUsageSnapshots";
 import { sessions } from "@virtool/data/db/schema/sessions";
 import { settings } from "@virtool/data/db/schema/settings";
 import { users } from "@virtool/data/db/schema/users";
@@ -97,12 +98,42 @@ function encryptNcbiApiKey(plaintext: string): EncryptedValue {
 beforeEach(async () => {
 	vi.clearAllMocks();
 	keyring = createKeyring(activeKey, undefined);
+	await db.delete(cacheUsageSnapshots);
 	await db.delete(sessions);
 	await db.delete(settings);
 	await db.delete(users);
 	getRequest.mockReturnValue(
 		new Request("https://virtool.test/_serverFn/test"),
 	);
+});
+
+describe("getCacheUsage", () => {
+	it("refuses an unauthenticated caller", async () => {
+		await expect(call("getCacheUsageFn")).rejects.toBeInstanceOf(
+			UnauthorizedError,
+		);
+	});
+
+	it("refuses a caller without the settings role", async () => {
+		await signIn(db, getRequest, { administratorRole: "base" });
+		await expect(call("getCacheUsageFn")).rejects.toBeInstanceOf(
+			ForbiddenError,
+		);
+	});
+
+	it("returns cache usage to a settings administrator", async () => {
+		await signIn(db, getRequest, { administratorRole: "settings" });
+		const recordedAt = new Date("2026-09-11T12:00:00Z");
+		await db.insert(cacheUsageSnapshots).values({
+			recorded_at: recordedAt,
+			cache_count: 4,
+			total_size: 50,
+		});
+
+		await expect(call("getCacheUsageFn")).resolves.toEqual([
+			{ cacheCount: 4, recordedAt, totalSize: 50 },
+		]);
+	});
 });
 
 function call(name: string, data?: unknown) {

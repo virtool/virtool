@@ -1,4 +1,5 @@
 import {
+	type CacheUsageSnapshot,
 	DEFAULT_MINIMUM_PASSWORD_LENGTH,
 	type Settings,
 } from "@virtool/contracts";
@@ -11,6 +12,7 @@ import { type Mock, vi } from "vitest";
  */
 export const settingsServerFnMocks = {
 	clearNcbiApiKeyFn: vi.fn(),
+	getCacheUsageFn: vi.fn(),
 	getPasswordPolicyFn: vi.fn(),
 	getSettingsFn: vi.fn(),
 	setNcbiApiKeyFn: vi.fn(),
@@ -31,6 +33,12 @@ export function mockGetPasswordPolicy(
 export function mockGetSettings(settings: Settings): Mock {
 	settingsServerFnMocks.getSettingsFn.mockResolvedValue(settings);
 	return settingsServerFnMocks.getSettingsFn;
+}
+
+/** Resolve the cache-usage query with the given retained snapshots. */
+export function mockGetCacheUsage(snapshots: CacheUsageSnapshot[]): Mock {
+	settingsServerFnMocks.getCacheUsageFn.mockResolvedValue(snapshots);
+	return settingsServerFnMocks.getCacheUsageFn;
 }
 
 /** Resolve the settings update, echoing the given settings back to the caller. */
@@ -58,6 +66,7 @@ export function mockSettingsStore(initial: Settings): {
 	updateSettings: Mock;
 } {
 	let current = initial;
+	settingsServerFnMocks.getCacheUsageFn.mockResolvedValue([]);
 
 	settingsServerFnMocks.getSettingsFn.mockImplementation(async () => current);
 	settingsServerFnMocks.updateSettingsFn.mockImplementation(

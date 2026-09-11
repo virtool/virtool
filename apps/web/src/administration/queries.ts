@@ -1,4 +1,5 @@
 import {
+	cacheUsageQueryKeys,
 	emailQueryKeys,
 	passwordPolicyQueryKeys,
 	roleQueryKeys,
@@ -13,6 +14,7 @@ import {
 } from "@server/email/functions";
 import {
 	clearNcbiApiKeyFn,
+	getCacheUsageFn,
 	getSettingsFn,
 	setNcbiApiKeyFn,
 	updateSettingsFn,
@@ -27,6 +29,7 @@ import {
 } from "@tanstack/react-query";
 import { uploadPolicyQueryKeys } from "@uploads/keys";
 import type {
+	CacheUsageSnapshot,
 	EmailSettings,
 	EmailTestResult,
 	Settings,
@@ -67,6 +70,19 @@ export function settingsQueryOptions() {
  */
 export function useSuspenseSettings() {
 	return useSuspenseQuery(settingsQueryOptions());
+}
+
+/** Query options for the retained workflow-cache usage history. */
+export function cacheUsageQueryOptions() {
+	return queryOptions<CacheUsageSnapshot[]>({
+		queryKey: cacheUsageQueryKeys.all(),
+		queryFn: () => getCacheUsageFn(),
+	});
+}
+
+/** Fetch the workflow-cache usage history prefetched by the caching route. */
+export function useSuspenseCacheUsage() {
+	return useSuspenseQuery(cacheUsageQueryOptions());
 }
 
 /**
