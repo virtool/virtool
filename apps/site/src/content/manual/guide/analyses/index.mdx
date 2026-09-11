@@ -15,7 +15,7 @@ When an analysis is started, the sample data is run through a series of bioinfor
 
 Analyzing sample data is the most computationally intensive task Virtool performs. It can take minutes or hours to run analyses for large, complex sample libraries.
 
-Long-running analyses are therefore tracked under the **Jobs** tab.
+Long-running analyses are so tracked under the **Jobs** tab.
 
 ![Finished and running analysis jobs](./jobs.png?url)
 
@@ -33,13 +33,13 @@ Sample data is automatically trimmed during analysis. Trimmed data are cached so
 
 Analyses make use of [references](/docs/guide/references) composed of pathogen sequences. Since references are modifiable and versioned, analyses are linked to specific versions of a reference. If a sample needs to be analyzed against newer version, a new analysis must be created.
 
-Here is an example of a sample with multiple analyses using different workflows and different reference versions:
+Here is an example of a sample with many analyses using different workflows and different reference versions:
 
 ![Multi-analysis sample with different workflows and index versions](./list_many.png?url)
 
 ### Subtractions
 
-Subtractions are sets of host or non-pest sequence data used to eliminate non-pathogen reads from analysis results.
+Subtractions are sets of host or non-pest sequence data used to remove non-pathogen reads from analysis results.
 
 You can read more about creating and managing subtractions from the links below:
 
@@ -91,7 +91,7 @@ You can read more about creating and managing subtractions from the links below:
    ![Pathoscope workflow tag](./tag.png?url)
 
 <Note>
-  Multiple samples can be analyzed at once using the quick analysis feature.
+  Many samples can be analyzed at once using the quick analysis feature.
   [Read more about quick analyses](/docs/guide/samples).
 </Note>
 
@@ -143,7 +143,7 @@ present in a sample.
 
 4. Click the <DummyButton icon="filter">Filter OTUs</DummyButton> button to show all OTUs
 
-   By default, OTUs with low coverage or weight (relative abundance) are filtered out.
+   By default, OTUs with low coverage or weight (relative many) are filtered out.
    The OTUs shown here would normally be filtered out:
 
    ![Unfiltered](./pathoscope_unfiltered.png?url)
@@ -156,12 +156,12 @@ present in a sample.
    - Shallow, wide, and broken coverage is suggestive of intra-plate contamination. Hits
      due to contamination also typically have low weights.
    - Isolates with high weight, and deep localized coverage are typical of low-complexity
-     or host-similar regions in the isolate genome and do not indicate true infections.
+     or host-similar regions in the isolate genome and do not show true infections.
 
-Generally, approximately 5 million reads is a good base line for a dsRNA library, however
+Generally, approximately 5 million reads is a good base line for a dsRNA library, but
 the percentage of mapped reads is of greater importance. For dsRNA, percentages can range
 from less than 1% to greater than 80%. The greater the enrichment of viral RNA and
-consequently the proportion of reads mapped, the lesser total reads are required. For
+so the proportion of reads mapped, the lesser total reads are required. For
 example, 2% of 5 million reads or 100,000 mapped reads is good.
 
 | Values   | Description                                                                                                                                                                                                        |
@@ -180,7 +180,7 @@ sample.
 
 ![Likely Viruses](./pathoscope_filtered.png?url)
 
-By default, pathogens with low coverage or weight (relative abundance) are filtered out.
+By default, pathogens with low coverage or weight (relative many) are filtered out.
 These pathogens can be made
 visible by clicking <DummyButton color="grey" icon="filter" />.
 
@@ -196,7 +196,7 @@ reads in the sample.
 In this sample, we have over 5.3 million total reads and over 3.7 million mapped reads
 (69.78% mapped reads), illustrating that we have a good enrichment of viral RNA.
 
-The values for weight, depth, and coverage are all very high therefore we can be confident
+The values for weight, depth, and coverage are all very high so we can be confident
 that indeed these pathogens are present in the sample.
 
 Clicking on a pathogen will show sequencing coverage charts for the isolates that may be
@@ -212,7 +212,7 @@ number of reads.
 
 In the above image, only two isolates from the Plum bark necrosis stem pitting-associated
 virus are present in the sample. Notice that viruses have larger genomes than viroids
-therefore the x-axis runs a greater distance covering the entire distance of the virus
+so the x-axis runs a greater distance covering the entire distance of the virus
 genome.
 
 #### High Quality Negative
@@ -237,18 +237,18 @@ Below is an example of an analysis from a contaminated sample.
 
 Although we have a large number of mapped reads that cover 53.26% of the viral genome, we
 see that the majority of the pathogens listed are associated with grapevines. Grape
-viruses are usually not found in tree fruits therefore this is likely a case of
+viruses are usually not found in tree fruits so this is likely a case of
 contamination.
 
 ![Poor quality analysis](./poor_quality_analysis.png?url)
 
 In this example above, only 0.04% of reads are mapped to the total number of reads
-therefore it is highly unlikely that the pathogens listed are actually present in the
+so it's highly unlikely that the pathogens listed are actually present in the
 sample. Although weight and coverage are high, no sample has a high depth value. This
 is likely a sample of low quality.
 
-Additionally when we take a look at the isolate coverage charts we see that the maximum
-depth is 14. This is very small compared to the maximum depth in a high quality positive
+Additionally when we take a look at the isolate coverage charts we see that the max
+depth is 14. This is very small compared to the max depth in a high quality positive
 sample which reaches a range in the thousands.
 
 ![Coverage Charts](./pathoscope_isolates_contaminated.png?url)
@@ -290,7 +290,7 @@ sample which reaches a range in the thousands.
 6. Wait for the BLAST search to complete.
 
    Part of interpreting Nuvs results is BLASTing contigs to make sure they are truly
-   unknown. The BLAST results for this sequence show it is likely a contamination from a
+   unknown. The BLAST results for this sequence show it's likely a contamination from a
    technician.
 
    ![BLAST Results](./nuvs_blast.png?url)
@@ -298,7 +298,7 @@ sample which reaches a range in the thousands.
 Nuvs is a novel workflow used for discovering potential novel viral sequences in a sample
 library. The steps in the workflow are:
 
-- Eliminate known viral and subtraction reads
+- Remove known viral and subtraction reads
 - Assemble sample reads into long sequences called _contigs_
 - Predict open reading frames (ORFs) in the contigs
 - Scan the translated ORFs for viral protein motifs using a collection of profile hidden
@@ -334,7 +334,7 @@ graphic. An example of sequence 37 and its protein motifs is shown below.
 ![Sequence 37](./nuvs_sequence.png?url)
 
 Contigs can be sent to NCBI for a BLAST search by clicking <DummyButton color="grey" icon="cloud">BLAST at NCBI</DummyButton>.
-Many contigs derived from known viruses or non-viral sources will be assembled. It is
+Many contigs derived from known viruses or non-viral sources will be assembled. It's
 necessary to BLAST significant contigs to ensure they are novel.
 
 ### Good Result
@@ -344,9 +344,9 @@ This table states the E-value, score, and identity of the viral sequences found 
 
 ![NCBI BLAST](./nuvs_blast_pvev.png?url)
 
-The E-values, score, and identities in the BLAST results indicate high quality matches.
+The E-values, score, and identities in the BLAST results show high quality matches.
 Knowing this we can interpret that these contigs do not represent novel viral genomes.
-However, they do not exist in our reference database in Virtool because they were not
+But, they do not exist in our reference database in Virtool because they were not
 eliminated during the initial subtraction step of the Nuvs workflow.
 
 This sample contains Phaseolus vulgaris endornavirus as an internal control introduced
@@ -368,7 +368,7 @@ This sample is from a _Prunus_ host. The most likely source of this contig is th
 genome.
 
 This interpretation assumes that the _Prunus dulcis_ sequences used to build the HMM
-reference are actually from the host. It is important to bear in mind that reference
+reference are actually from the host. It's important to bear in mind that reference
 databases are not reliable and may contain viral nucleotide and protein sequences
 mis-annotated as originating from the host.
 
@@ -381,13 +381,13 @@ The result view below suggests a potential novel virus.
 The HMM match has a very low E-value of 5e-96 indicating a strong match.
 
 The NCBI BLAST results suggest that this contig could represent a novel virus. The contig has
-significant BLAST hits to known viruses (for example, Nectarine marafivirus M), however the
+significant BLAST hits to known viruses (for example, Nectarine marafivirus M), but the
 identities are low (0.73 - 0.76). This low identity suggests that this contig may
 represent a virus the is novel but significantly dissimilar to related known viruses.
 
 Additionally, this sample is isolated from a _Prunus_ host and Nectarine marafivirus M is
 not known to infect _Prunus_ species. Because the size of the sequence is large (6382 bp)
-it is worth assembling to discover more about the viral genome.
+it's worth assembling to discover more about the viral genome.
 
 ### Non-viral Result
 
@@ -413,7 +413,7 @@ human contamination.
 
 #### Next Steps
 
-If a suspicious result is found during interpretation of Nuvs results, it is important to
+If a suspicious result is found during interpretation of Nuvs results, it's important to
 further characterize the sequence using other bioinformatic tools and the help of a
 bioinformatician. Nuvs makes a best effort to detect **potential** novel viral sequences
 in an automated manner. Further manual work is almost always required to produce a

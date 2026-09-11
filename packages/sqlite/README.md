@@ -26,7 +26,7 @@ package:
   task.
 - **The workflow executors** stream-decompress that snapshot back to the raw
   filename before opening it. Pathoscope also *writes* one:
-  `cd-hit-est` collapses the reference it was given, and the survivors go into
+  `cd-hit-est` collapses the supplied reference, and the survivors go into
   `index.v1.sqlite`, which later steps reopen through `openWorkflowIndex`.
 
 The two names are not interchangeable and the constants are separate for that
@@ -54,7 +54,7 @@ the no-fallback rule, and `errors.ts` covers what each failure means.
 `src/fixtures/` holds a reference artifact plus the golden results of every
 query, captured from the Python server the reader is pinned to. The script that
 wrote them is gone, and there is no supported way to regenerate them from this
-package — `git log --diff-filter=D` under `src/fixtures/` finds it if it is
+package — `git log --diff-filter=D` under `src/fixtures/` finds it if it's
 wanted. **Never edit a golden to match this implementation's output** — that
 converts a caught divergence into a permanent one.
 

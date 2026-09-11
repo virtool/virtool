@@ -25,7 +25,7 @@ The runtime is deliberately small and explicit:
   input downloads it.
 - No teardown layer exists. Workflow containers are ephemeral, and process
   exit reclaims their work directory. Do not add `dispose`,
-  `Symbol.asyncDispose`, or an `AsyncExitStack` equivalent.
+  `Symbol.asyncDispose`, or an `AsyncExitStack` equal.
 - No lifecycle-hook registry exists. `RunWorkflowOptions.onStepStart` is the
   sole optional callback. Successful completion is represented by the returned
   `RunOutcome`; a failed run leaves a partially built resource for the user to
@@ -70,7 +70,7 @@ ownership boundary between this package and the jobs API (`@virtool/internal`).
 - Transfer files with `downloadToPath()` and `uploadFromPath()`; never buffer
   workflow files in memory.
 - Read storage keys from API records. Mint output keys with `mintStorageKey()`
-  and send them back in the finalize manifest; never derive them from row IDs.
+  and send them back in the finalization manifest; never derive them from row IDs.
 - `createWorkflowCache()` stores an uncompressed tar containing one top-level
   directory. Upload the blob before registering the cache row.
 

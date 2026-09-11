@@ -12,7 +12,7 @@ with shell activation enabled. Mise adds the repository's `dev/bin` directory
 to `PATH` so the `coasts` command is available in each up-to-date worktree.
 The integration checks the Coast version because it uses that release's local
 JSON API for state and readiness. Coasts 0.1.53 interpolates assignment paths
-into shell commands without quoting them. The controller therefore accepts
+into shell commands without quoting them. The controller accepts
 only letters, numbers, `/`, `_`, `.`, `+`, and `-` in repository/worktree paths
 and branch names, rejecting spaces or shell metacharacters before provisioning.
 `coast` can be on `PATH` or installed at `~/.coast/bin/coast`.
@@ -85,7 +85,7 @@ refreshes every five seconds while expanded and shows the controller's last
 reported state, not a live health check. Lifecycle operations refresh discovery
 for all existing managed worktrees; orphaned records and unmanaged trials are
 excluded. Raw Coast operations bypass this publication; run `ensure` to refresh
-it. Stopped instances retain their links but must be resumed from the terminal.
+it. Stopped instances keep their links but must be resumed from the terminal.
 
 Discovery is a read-only, same-origin Vite endpoint backed by an ignored local
 file. It publishes no data IDs, credentials, or worktree paths, and has no
@@ -140,7 +140,7 @@ explicit.
 Removing a worktree through Worktrunk still stops its Coast, drops its database,
 deletes its blob container, and removes the Coast. Cleanup failure blocks
 worktree removal and preserves a pending record for retry. Stopping an instance
-with pending cleanup preserves that state; starting it is refused until removal
+with pending cleanup preserves that state; starting it's refused until removal
 succeeds. Only that instance's data is deleted; shared
 service volumes are never reset. Stopping an instance preserves its data.
 
@@ -154,7 +154,7 @@ readiness before reporting success. This never recreates the configuration
 volume or changes the data identity.
 
 Do not use raw `coast rm` for managed instances: it leaves their database and
-blobs behind. If it was used, run the lifecycle `remove` command before
+blobs behind. If you used it, run the lifecycle `remove` command before
 recreating the instance. Legacy manually created trial instances are not
 adopted or deleted by the hooks; clean those separately after identifying their
 data ID in `/run/virtool-dev/namespace`.
@@ -172,7 +172,7 @@ read them through `VT_AUTH_SECRET_FILE` and `VT_ENCRYPTION_KEY_FILE`.
 
 Coasts 0.1.53 extracts fresh values on each Coast build and injects the current
 values when creating an instance. Instances created from the same extraction
-share these secrets. Existing instances retain their injected values across
+share these secrets. Existing instances keep their injected values across
 stop/start and application image rebuilds. Re-running secrets on an existing
 instance rotates its keys, invalidating sessions and making encrypted data
 unreadable without the old keys. See [environment configuration](../docs/env.md).
@@ -209,7 +209,7 @@ The controller never automatically recreates shared storage. In Coasts 0.1.53,
 recreate a removed service. `shared-services rm` deletes the service's named
 volumes as well as its container and registration. Do not use it to repair
 connectivity. That release's documentation mentions **Refresh Shared Services**,
-but its UI does not implement the operation.
+but its UI does not build the operation.
 
 To deliberately provision a missing shared service, use a temporary, unassigned
 Coast from the primary worktree. Choose an unused temporary instance name:
@@ -405,7 +405,7 @@ The uncached image controls used `docker build --no-cache --target dev-coast`
 with the root and generated Dockerfiles, in that order, retaining the same
 local Node base image. This measures uncached application layers, not a
 fresh-machine download. Their similar times are expected: BuildKit already
-prunes unreachable stages. A subsequent cached generated-file build took
+prunes unreachable stages. A later cached generated-file build took
 1.99 s (an earlier observation was 1.90 s).
 
 Artifact creation improved by 62%. Its manifest's base images went from Node,
@@ -461,7 +461,7 @@ On 2026-09-08, headless Chromium exercised the two managed instances
   recovered the same instance from Coast's stale running status. The original
   incident's historical PID value was not retained.
 - A second stopped-instance resume with the injected stale PID also succeeded.
-  Both existing browser sessions and previously uploaded bytes survived, with
+  Both existing browser sessions and before uploaded bytes survived, with
   unchanged origins and data IDs; primary health probes stayed successful
   throughout the secondary's fault and recovery tests.
 - The production web build contained no discovery endpoint or switcher strings,

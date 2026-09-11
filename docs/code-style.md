@@ -6,7 +6,7 @@ the rationale and shows the preferred forms.
 ## Functions and React refs
 
 Use function declarations throughout the repository. Biome enforces this for
-React components with `useReactFunctionComponentDefinition`; elsewhere it is a
+React components with `useReactFunctionComponentDefinition`; elsewhere it's a
 convention that keeps function style consistent and gives declarations useful
 names in stack traces.
 

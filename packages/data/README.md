@@ -49,7 +49,7 @@ differs between real buckets and `MemoryStorage`.
 
 A chunked upload reserves an `uploads` row with `createPendingUpload` before
 any bytes are staged. The row records the storage key and declared
-`expected_size`, and remains `ready: false` so it is excluded from upload lists
+`expected_size`, and remains `ready: false` so it's excluded from upload lists
 and downloads.
 
 After writing directly to storage, the client calls `finalizePendingUpload`.
@@ -92,7 +92,7 @@ for objects that cannot be retrieved. The index OTU JSON key is stored on the
 index because the on-demand artifact should not appear in its file listing.
 
 Mint new keys with `@virtool/storage/keys`. UUID leaves are written in hex and
-therefore contain no hyphens, matching the keys already in the bucket.
+so contain no hyphens, matching the keys already in the bucket.
 
 | Minter | Shape |
 | --- | --- |
@@ -111,7 +111,7 @@ must be read from their rows.
 
 Workflow output keys cross the jobs API boundary because the workflow wrote
 the object and knows its location. Record the supplied key verbatim after
-validating that it is beneath `{domain}/{parentId}/`, has no leading slash,
+validating that it's beneath `{domain}/{parentId}/`, has no leading slash,
 and contains neither empty nor `..` segments. `POST /caches` is the exception:
 it accepts a bare UUID and constructs `cacheKey(uuid)` server-side.
 
@@ -121,7 +121,7 @@ The web server parses storage configuration in `src/server/config.ts`.
 `VT_STORAGE_BACKEND` is required and must be `s3` or `azure`; there is no
 filesystem backend.
 
-| Variable | Backend | Requirement |
+| Variable | Backend | Need |
 | --- | --- | --- |
 | `VT_STORAGE_BACKEND` | Both | Required |
 | `VT_STORAGE_S3_BUCKET` | S3 | Required |
@@ -151,7 +151,7 @@ the whole object could include storage credentials in the browser bundle.
 ### Backend behavior
 
 For custom S3 endpoints, the backend enables path-style addressing; AWS uses
-virtual-hosted addressing. Multipart parts use S3's 5 MiB minimum rather than
+virtual-hosted addressing. Multipart parts use S3's 5 MiB min rather than
 the smaller streaming chunk size. Response checksum validation is disabled to
 support Garage's multipart checksum representation, while uploads continue to
 send checksums.
@@ -225,7 +225,7 @@ rather than an index.
 
 `users.lifecycle_state` is the persisted half of the account lifecycle:
 `pending` for an account that exists but holds no credential, `normal` for one
-that can be used. It is **not** `users.active`. Activation remains the
+that can be used. It's **not** `users.active`. Activation remains the
 administrator's switch and stays authoritative — a deactivated account is
 unusable whatever its lifecycle state, and completing setup never activates
 anyone.
@@ -246,15 +246,15 @@ and API-key resolution.
 
 - A **setup token** is the bearer secret in an invitation, bootstrap or
   remediation link. Only its SHA-256 is stored; the plaintext is returned to
-  the issuing caller once and is never readable back. It is purpose-bound,
+  the issuing caller once and is never readable back. It's purpose-bound,
   expiring, single-use — `consumeSetupToken` is one conditional `UPDATE ...
   RETURNING`, so concurrent submissions of one token produce exactly one
   winner — and superseded when a replacement is issued.
 - A **restricted setup session** is what a holder gets in exchange: a
   non-secret `session_id` for attribution plus a secret whose digest is
   stored, bound to one purpose and expiring. `verifySetupSession` re-reads
-  `users.active` on every request, so deactivation revokes it at once. It is
-  never an application session, which is why it is a table of its own rather
+  `users.active` on every request, so deactivation revokes it at once. It's
+  never an application session, which is why it's a table of its own rather
   than another `sessions.session_type`.
 
 `src/auth/lifecycle.ts` holds one transactional completion primitive per
@@ -290,7 +290,7 @@ client at import time.
 
 This package speaks to two NCBI services, and they are not the same API.
 
-`src/blast/ncbi.ts` is the BLAST URL API client. It is a separate CGI endpoint
+`src/blast/ncbi.ts` is the BLAST URL API client. It's a separate CGI endpoint
 that answers with HTML, plain text, and zip archives, so it stays here.
 
 Nucleotide records and taxonomy come from `@virtool/ncbi`, which speaks to
@@ -333,7 +333,7 @@ Features enqueue mail through `enqueueEmail(db, input)` in
 - Pass an `EmailTemplate` and a stable domain idempotency key, never HTML.
 - Use a transaction when domain state and its email must commit together.
 - Keep provider errors, retries, and the Resend SDK behind the email package.
-- Handle `{ status: "discarded" }`. It is an ordinary outcome, not an error:
+- Handle `{ status: "discarded" }`. It's an ordinary outcome, not an error:
   a flow that depends on the email must offer the user another route rather
   than fail.
 
@@ -366,7 +366,7 @@ producers and `apps/internal`'s `run` subcommand. Task names live in
 Create on-demand tasks through `createTask()`. When a domain row points at a
 task, create both and attach them in the same transaction so neither can be
 published without the other. The row itself is the enqueue signal; the runner
-polls Postgres, so producers send no additional notification.
+polls Postgres, so producers send no extra notification.
 
 The data layer also owns claiming, lease renewal, fencing, progress, completion,
 failure, release, and queue metrics reads. Every mutation that changes a task's
@@ -390,7 +390,7 @@ emitter on its connection. If a test mocks `@virtool/data/events/emit`, mock
 both `emit` and `createEmitter` so fixture setup can still install the emitter.
 
 The shared container uses `withReuse()` and deliberately has no teardown, so
-local suites reuse it. Remove it with `docker rm -f` when it is no longer
+local suites reuse it. Remove it with `docker rm -f` when it's no longer
 wanted; each CI job still starts its own containers.
 
 ## Commands

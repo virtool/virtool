@@ -16,7 +16,7 @@ quality-core --input reads_1.fq.gz --output quality.json
 
 One invocation, one file, one blob. Gzipped or plain; the results go to
 `--output` and never to stdout, because the workflow runtime opens a
-subprocess's stdout on `/dev/null` unless it is given a handler.
+subprocess's stdout on `/dev/null` unless it's given a handler.
 
 ## It computes FastQC's statistics, not the textbook ones
 
@@ -44,7 +44,7 @@ Two more that are easy to miss:
   `NaN` for all five, which cannot be stored — not valid JSON, and rejected by
   both the JSONB column and the `Quality` schema — so the row is resolved by
   substituting the first value in it that is a real number, the mean, for the
-  whole row. It is not a rare shape: a file of variable-length reads thins out
+  whole row. It's not a rare shape: a file of variable-length reads thins out
   toward its longest read.
 
 **Do not "correct" any of these.** The blob is compared against the ones
@@ -86,14 +86,14 @@ report by hand against the field table above, rather than trusting any parser
 to do it.
 
 The inputs are synthetic and are committed alongside the goldens, so nothing
-has to be reconstructed to do this. The script that first produced all of it
+has to be reconstructed to do this. The script that first produced all it
 was deleted once the goldens were committed; `git log --diff-filter=D` under
-this directory finds it if it is wanted as a starting point.
+this directory finds it if it's wanted as a starting point.
 
 Four cases, each reaching a specific branch rather than being a slice of a real
 run, which would reach whichever ones it happened to:
 
-| Case | What it is for |
+| Case | What it's for |
 | --- | --- |
 | `unbinned` | 400 reads of exactly 75bp — the deepest comparison possible cycle for cycle. Exact equality |
 | `variable` | Plain input, lengths of 30/55/75, tail cycles covered by exactly 100 reads then 40 — the row-collapse rule. Exact equality |
@@ -104,7 +104,7 @@ run, which would reach whichever ones it happened to:
 `{value, digits, expected}` where `expected` is `value` rounded half to even at
 `digits` places, on the exact binary value of the double. It pins
 `round_half_even` on every value the blob can hold, and the TypeScript
-`roundHalfEven` in `packages/bio` must agree with it figure for figure. It is
+`roundHalfEven` in `packages/bio` must agree with it figure for figure. It's
 frozen on the same terms as the goldens above.
 
 ## Dependencies stay small
@@ -117,7 +117,7 @@ binary links nothing but glibc, which is why the create-sample runtime stage
 installs nothing at all.
 
 `clap`, `serde`/`serde_json` and `thiserror` are the rest. No
-`libclang` requirement applies here — that is `pathoscope-core`'s `hts-sys`.
+`libclang` need applies here — that is `pathoscope-core`'s `hts-sys`.
 
 ## Commands
 

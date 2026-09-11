@@ -5,14 +5,14 @@ They have no `build` script, no `dist`, and `packages/tsconfig.base.json`
 sets `noEmit: true`; their `exports` maps point straight at
 `./src/*.ts`. Nothing resolves them through a compiled artifact, which is
 what lets a change to `@virtool/data` be visible to every consumer with
-no build step in between.
+no intermediate build step.
 
 A plain `node` process cannot import a `.ts` file, so the apps are where
 the compilation happens: **each non-Vite app bundles to a single
 `dist/index.mjs` with every `@virtool/*` package inlined from source.**
 
 Do not "fix" the asymmetry by giving the packages a `dist` build. The
-apps bundling is not a workaround for the packages being unbuilt — it is
+apps bundling is not a workaround for the packages being unbuilt — it's
 the design. A package that emitted `dist` would have to be rebuilt before
 any consumer saw a change, and the type-declaration trap that
 `apps/web/src/server` lives with (`TS2883`, no `.d.ts`, every
@@ -37,7 +37,7 @@ reads two things out of `tsdown.config.ts`:
 Between them, an app needs no entry in `knip.json` at all. Raw Rolldown
 and esbuild have knip plugins too, but neither gives you the second half.
 
-Externals must therefore be written as **string literals** in
+Externals must so be written as **string literals** in
 `deps.neverBundle`. A regular expression there is invisible to knip and
 its packages come back as unused dependencies.
 
@@ -68,7 +68,7 @@ list gets inlined — `drizzle-orm` and `es-toolkit`, for instance. That is
 deliberate: it keeps the deployed `node_modules` to the handful of
 packages that genuinely have to be real files on disk.
 
-An app's `package.json` must therefore declare every external directly,
+An app's `package.json` must so declare every external directly,
 even when the import comes from inside a workspace package. Bundling
 flattens the module graph, so `import postgres from "postgres"` ends up at
 the *top level* of the app's `dist/index.mjs` and resolves from the app's
@@ -110,7 +110,7 @@ apps/<name>/
 `apps/web/tsconfig.json`, which carries the browser path aliases and a
 DOM lib.
 
-Its `moduleResolution: "Bundler"` is load-bearing. It is what lets
+Its `moduleResolution: "Bundler"` is load-bearing. It's what lets
 `@virtool/storage` resolve through the package's `exports` map straight
 into `packages/storage/src/*.ts`; a `"node16"` resolution will not follow
 an exports map to a `.ts` file.

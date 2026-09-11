@@ -54,7 +54,7 @@ management view.
 
 ## Start Quick Analysis
 
-Quick analyses allows you to start analysis jobs for multiple samples at once.
+Quick analyses allows you to start analysis jobs for many samples at once.
 
 1. Select the samples of interest and click <Icon name="chart-area" color="green" />.
 
@@ -64,7 +64,7 @@ Quick analyses allows you to start analysis jobs for multiple samples at once.
 2. Choose the workflows (PathoscopeBowtie or Nuvs), subtraction, and references you
    want to use to analyze your samples.
 
-   Selecting multiple references will start a separate job for each sample-reference
+   Selecting many references will start a separate job for each sample-reference
    combination.
 
 3. Click <DummyButton icon="play">Start</DummyButton> to start the analysis jobs.
@@ -99,7 +99,7 @@ Quick analyses allows you to start analysis jobs for multiple samples at once.
 4. Populate the sample creation form.
 
    You **must** set a unique sample _name_ and _read size_. _Read size_ can be set to
-   either _normal_, _sRNA_, or amplicon. Subsequent analysis workflows will run using
+   either _normal_, _sRNA_, or amplicon. Later analysis workflows will run using
    different parameters based on the _read size_ setting.
 
    The sample creation dialog allows you to set optional metadata including _isolate_,
@@ -157,7 +157,7 @@ Quick analyses allows you to start analysis jobs for multiple samples at once.
 
 6. Wait for job to complete.
 
-   Your sample will look something like this when it is ready.
+   Your sample will look something like this when it's ready.
 
    ![Sample Creation Complete](./ready.png?url)
 
@@ -177,7 +177,7 @@ You will see three different graphs on this page as shown below.
 
 This graph shows the quality of your sample library. The Y-axis shows the quality score, the higher the better. The quality tends to decrease as the run progresses.
 
-Median values of less than 25 or a lower quartile of less than 10 is concerning. In the case of the sample above, the quality of our sample library is fine and further analysis can take place.
+Median values of less than 25 or a lower quartile of less than 10 is about. For the sample above, the quality of our sample library is fine and further analysis can take place.
 
 ### Nucleotide Composition at Read Positions
 
@@ -185,7 +185,7 @@ Median values of less than 25 or a lower quartile of less than 10 is concerning.
 
 This plot shows the proportion of each base's position in a file. In general, one should expect A/T to be roughly equal and G/C to be roughly equal. Viruses genomes are often unevenly distributed in composition and are usually A/T rich.
 
-With all of the things being equal in a diverse library, you should see an even distribution of the four bases which doesn't change with base position. Although the relative amount of G/C content will be determined by your library, but what you should see on the graph are parallel lines going across the plot.
+With all the things being equal in a diverse library, you should see an even distribution of the four bases which doesn't change with base position. Although the relative amount of G/C content will be determined by your library, but what you should see on the graph are parallel lines going across the plot.
 
 ### Read-wise Quality Occurrence
 
@@ -267,7 +267,7 @@ Quality metrics are recalculated for reads trimmed during an analysis. The quali
 
 ![Quality after Trimming](./quality5.png?url)
 
-In the **Quality Distribution at Read Positions - Raw** chart we see that the mean base quality degrades as we get closer to the end of the read. This is a common issue in Illumina libraries. In the **Trimmed** charts we can see that low quality ends were removed resulting in a higher mean and minimum base quality.
+In the **Quality Distribution at Read Positions - Raw** chart we see that the mean base quality degrades as we get closer to the end of the read. This is a common issue in Illumina libraries. In the **Trimmed** charts we can see that low quality ends were removed resulting in a higher mean and min base quality.
 
 #### Read-wise Quality Occurrence - Raw
 
@@ -283,7 +283,7 @@ In the **Read-wise Quality Occurrence - Raw** image we see one small curve befor
 
 ### Concepts
 
-Virtool allows for fine control of the rights users have to view or modify samples.
+Virtool allows for fine control of the rights users have to view or change samples.
 
 #### Management Levels
 
@@ -298,7 +298,7 @@ Rights can apply at four different levels.
 
 #### Group Ownership
 
-Each sample can be owned by a specific user group. This allows multiple groups of diagnosticians or researchers to keep their data private or safe from one another while sharing a single Virtool instance.
+Each sample can be owned by a specific user group. This allows many groups of diagnosticians or researchers to keep their data private or safe from one another while sharing a single Virtool instance.
 
 Samples are not required to have an owner group. The group can be set to `None`. In this case, group rights settings will have no effect.
 
@@ -341,7 +341,7 @@ Samples have their initial access rights configured when they are first created.
 
 ### Unique Sample Names
 
-By default, sample names must be unique to the sample manager. This prevents confusion between identically named samples. It is possible to disable this feature. To do so, click **Settings** on the left sidebar under the samples overview page.
+By default, sample names must be unique to the sample manager. This prevents confusion between identically named samples. It's possible to disable this feature. To do so, click **Settings** on the left sidebar under the samples overview page.
 ![Samples Overview](./samples_overview3.png?url)
 
 Check the **Unique Sample Names** box to ensure that every created sample has a unique name.
@@ -354,7 +354,7 @@ These settings determine how rights are assigned to newly created samples. Sampl
 
 #### Sample Group
 
-This determines how an owner group is applied to the sample when it is created.
+This determines how an owner group is applied to the sample when it's created.
 
 !["Sample Group Options"](./sample_group.png?url)
 
@@ -378,7 +378,7 @@ This setting determines how members of the owner group can interact with the sam
 | -------------- | ------------------------------------------------------------------------------------------------------------------- |
 | _None_         | Sample is not returned in searches and is not accessible by URL.                                                    |
 | _Read_         | Sample is returned in searches and is viewable. All editing interfaces are disabled and analyses cannot be started. |
-| _Read & Write_ | In addition to _Read_ rights, editing interfaces are enabled and analyses can be run.                               |
+| _Read & Write_ | Also to _Read_ rights, editing interfaces are enabled and analyses can be run.                               |
 
 #### All Users' Rights
 

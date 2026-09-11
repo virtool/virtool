@@ -17,7 +17,7 @@ matches exactly. The corpus is a frozen reference: **never edit a vector to
 make a failing comparison pass.**
 
 Floats are compared with `f64::to_bits()` — not a tolerance, and not as text.
-"Equivalent within tolerance" is not the bar for a diagnostic workflow, and
+"Equal within tolerance" is not the bar for a diagnostic workflow, and
 comparing rendered text would fail on a harmless difference between float
 formatters while saying nothing about the values. The harness catches a one-ULP
 drift.
@@ -28,10 +28,10 @@ entries of which ~200 are non-zero; dense storage made the corpus 1.3 MB, 98%
 of it zeros. The encoding is lossless — the harness rebuilds the dense array.
 
 The corpus was captured from the PyO3 build of `workflow-pathoscope` before the
-crate moved here. The script that captured it is gone, and there is no supported
+crate moved here. The script that captured it's gone, and there is no supported
 way to produce a new vector: it needed the Python extension module, which this
 repository does not hold. `git log --diff-filter=D` under `tests/golden/` finds
-the script if it is wanted as a starting point. A new vector is never
+the script if it's wanted as a starting point. A new vector is never
 needed — a failing vector is a finding about the code, never a golden to
 re-baseline. **Never edit a vector to make a failing comparison pass**, and
 never regenerate the corpus from this crate — a corpus generated from the code
@@ -115,7 +115,7 @@ This is a recorded decision, not an oversight.
 `cargo fmt --check` runs in CI. The code already satisfied it.
 
 `cargo clippy -- -D warnings` is **not** a gate. The five frozen modules are
-2,511 lines that would need edits inside them to satisfy it — `sam.rs` alone
+2,511 lines that would need edits inside them to meet it — `sam.rs` alone
 carries two unused imports that the build warns about today — and those edits
 are exactly what byte-identity with the golden corpus forbids. Revisit once
 those modules can be re-pinned. Until then, clippy is advisory: run it, don't
@@ -123,7 +123,7 @@ gate on it.
 
 ## Tooling exclusions
 
-The crate has no `package.json`, so it is not a pnpm workspace, and `pnpm test`
+The crate has no `package.json`, so it's not a pnpm workspace, and `pnpm test`
 and `pnpm typecheck` do not reach it. Two exclusions are still needed and must
 stay:
 
@@ -137,7 +137,7 @@ stay:
   local `cargo build`. knip itself emits a configuration hint asking for this
   ignore to be removed, because in a checkout where the crate has never been
   built `target/` does not exist and the pattern matches nothing. Do not act on
-  that hint: it is right about the clean checkout and wrong about every machine
+  that hint: it's right about the clean checkout and wrong about every machine
   that has run `cargo build`.
 
 The root `Dockerfile` copies `packages/` **per package**, not as a blanket
@@ -154,7 +154,7 @@ its only consumer, so there is no second release stream to coordinate and no
 window in which the workflow and its core disagree.
 
 The `Pathoscope / Build` job compiles the Dockerfile on every run and
-`release-ghcr` pushes it on release. `ghcr.io/virtool/pathoscope` previously
+`release-ghcr` pushes it on release. `ghcr.io/virtool/pathoscope` before
 came from `virtool/workflow-pathoscope`, which shipped the Python workflow
 under that name; this repository's release supersedes it and owns the name now.
 
@@ -175,7 +175,7 @@ reports `CACHED`.
 against htslib's headers for `x86_64-unknown-linux-gnu` and does not fall back
 to the pre-generated bindings that ship for some targets. Dropping the package
 fails the build with `Unable to find libclang`. This was verified empirically,
-and the same requirement applies to the `pathoscope-test` CI job and to any
+and the same need applies to the `pathoscope-test` CI job and to any
 developer machine.
 
 The runtime stage installs `libcurl4`, `libgomp1`, `libncursesw6` and `perl`.

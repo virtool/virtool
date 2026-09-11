@@ -57,7 +57,7 @@ and gzipping back to produce bytes the user already sent.
 Writing them next to their sources as `reads_{i + 1}.fq.gz` is a collision
 waiting to happen: upload names are user-supplied, so a sample whose *second*
 upload is called `reads_1.fq.gz` would have the first upload renamed onto it,
-destroying the second's bytes, and finalize with one read stored twice.
+destroying the second's bytes, and finalization with one read stored twice.
 Separate directories put the target names out of reach of the source names. The
 rename is still a rename — both directories are under the one work path, which
 is all `rename(2)` requires.

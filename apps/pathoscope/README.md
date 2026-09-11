@@ -14,7 +14,7 @@ of scope by decision.
 ## Two rules it carries
 
 - **It writes no result file.** Every figure a `report.tsv` would carry is
-  already in the `results` blob, so the finalize manifest is empty and
+  already in the `results` blob, so the finalization manifest is empty and
   `FinalizeAnalysisRequest.files` allows that for this workflow's sake.
 - **Nothing deletes an analysis on failure.** A failed run leaves its half-built
   analysis for the user to delete, and the jobs API has no delete route.
@@ -43,7 +43,7 @@ carries neither interpreter in full:
 `bowtie2-build` is the wrapper that picks between the real `bowtie2-build-s` and
 `bowtie2-build-l` by index size. Calling those directly and porting bowtie2's own
 size heuristic is the alternative to shipping python3, and it belongs here rather
-than in a shared base if it is ever taken.
+than in a shared base if it's ever taken.
 
 The shared libraries each back a specific `ldd ... => not found`: `libgomp1` for
 bowtie2's OpenMP, `libcurl4` and `libncursesw6` for samtools. `pathoscope-core`

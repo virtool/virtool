@@ -79,13 +79,13 @@ free in a component.
 
 Never statically import a feature's `queries.ts` from the critical half. A
 feature's query module carries its whole request layer: every server-function
-stub and the zod schemas those stubs validate against. Pulling in one
-`queryOptions` factory brings all of it. Import the factory inside the loader
+stub and the zod schemas those stubs check against. Pulling in one
+`queryOptions` factory brings all it. Import the factory inside the loader
 body instead, as described in
 [Query options and route prefetching](#query-options-and-route-prefetching).
 
 `validateSearch` is synchronous, so it cannot defer zod with a dynamic import.
-A zod schema there pins all of zod into the eager bundle. Use the
+A zod schema there pins all zod into the eager bundle. Use the
 dependency-free coercion helpers in `@app/searchParams`, and type the function
 so partial navigation still type-checks:
 
@@ -107,7 +107,7 @@ before a user can sign in, including modules reached through a dynamic
 `import()`. Deferral changes when the chunk loads, not whether an
 unauthenticated visitor loads it.
 
-The `queryOptions` needed by guards therefore live apart from their feature's
+The `queryOptions` needed by guards so live apart from their feature's
 `queries.ts`, each importing exactly one server function and nothing else:
 
 | Module | Exports | Backed by |
@@ -126,7 +126,7 @@ wall unnoticed.
 #### Keep heavy dependencies isolated
 
 A module's imports survive tree-shaking when the package does not declare
-`sideEffects: false`. A grab-bag utility module can therefore leak its heaviest
+`sideEffects: false`. A grab-bag utility module can so leak its heaviest
 dependency into every bundle that wants any of its exports.
 
 `cn()` lives in `@app/cn` rather than `@app/utils` so `tailwind-merge` does not
@@ -159,7 +159,7 @@ only `.output`, so nothing else would put them there. Use `traceDeps` on the
 `@sentry/profiling-node` is the current case.
 
 The server is bundled in two stages, and Nitro cannot recover a package that
-Vite inlined first. A native package therefore needs both of the following:
+Vite inlined first. A native package so needs both of the following:
 
 - An entry in `environments.ssr.resolve.external` in `vite.config.js`, so Vite
   preserves the import for Nitro.
@@ -218,7 +218,7 @@ the compiler; CI enables it with `VT_TEST_REACT_COMPILER=1`.
 - Use suspense queries for primary route data. For secondary data, show
   `QueryError` when `isError && !data` before checking `isPending`, preserving
   stale data after a failed refetch.
-- Only suspense queries and loader prefetches participate in SSR. Plain
+- Only suspense queries and loader prefetches join in SSR. Plain
   `useQuery` starts in the browser after hydration.
 
 #### Query modules and keys
@@ -277,7 +277,7 @@ loader: async ({ context: { queryClient }, params: { sampleId } }) => {
 
 Import independent modules and prefetch independent resources concurrently
 with `Promise.all`. Data that is not needed until an interaction, such as
-dialog content, should be queried where it is consumed instead of in a loader.
+dialog content, should be queried where it's consumed instead of in a loader.
 
 #### Loading and error states
 
@@ -304,7 +304,7 @@ if (isPending) {
 ```
 
 `if (isPending || !data)` is an error-state bug: an initial failure has no data
-and would render a loading state forever. For multiple queries, show the inline
+and would render a loading state forever. For many queries, show the inline
 error when any query failed and any required result is missing, then handle
 their pending states.
 
@@ -348,7 +348,7 @@ off and top-aligned. `data` is a list of records, where the first column is a
 field like any other.
 
 Size anything that holds text in `rem`; reserve pixels for graphics without
-text. If an API requires a number, express it as a rem multiple and resolve it
+text. If an API requires a number, express it as a rem many and resolve it
 with `useRootFontSize` from `@app/hooks`. Known exceptions are the virtualized
 row heights in `NuvsList` and `IsolateList`, and the avatar text in
 `InitialIcon`.
@@ -361,7 +361,7 @@ A feature flows `functions.ts` → optional `service.ts` → `data.ts`:
 
 - `functions.ts` is the TanStack Start boundary. It validates input, applies
   authorization, shapes the wire payload, and maps expected failures.
-- `service.ts` coordinates multiple data operations when needed.
+- `service.ts` coordinates many data operations when needed.
 - `data.ts` contains framework-free domain and persistence code and lives in
   `packages/data/src/<feature>/`.
 
@@ -377,7 +377,7 @@ the module at that dependency boundary instead of mocking the unrelated
 dependency.
 
 Inject data-layer dependencies in the order `db`, `storage`, `logger`; server
-functions obtain them from `@server/composition`. Use `DbOrTx` for helpers that
+functions get them from `@server/composition`. Use `DbOrTx` for helpers that
 may run in a transaction. Build validators from `@server/validation` primitives
 and extend existing schemas instead of redeclaring their fields.
 
@@ -389,7 +389,7 @@ not set 204, 205, or 304 because TanStack Start serializes an RPC body. Return
 Map domain errors in one plain, module-local
 `function rethrowAsHttp(err: unknown): never` per `functions.ts`. Hand caught
 errors to it, match known error classes with `instanceof`, and end with
-`throw err` so unknown failures retain their identity and cause. Each expected
+`throw err` so unknown failures keep their identity and cause. Each expected
 4xx branch sets `setResponseStatus(status)` and throws
 `new ClientError(message, status)` with the same status. Preserve feature-specific
 messages and statuses: a missing upload can be a 404 when fetched and a 400
@@ -447,7 +447,7 @@ keeps old tabs on their matching server, or a coordinated cutover that drains
 old replicas and requires open tabs to reload. Do not mix versions behind
 unversioned load balancing or add a GET retry that puts searches back into URLs.
 
-Before release, send maximum-size searches, filters, and batches through
+Before release, send max-size searches, filters, and batches through
 Application Gateway/WAF. Check body-size and JSON-inspection rules, and confirm
 that origin and fetch-metadata headers reach the application for CSRF checks.
 
@@ -512,7 +512,7 @@ REST routes share the reservation and finalization service in
 `@server/uploads/service`; file bytes never pass through the web server.
 
 API clients reserve an upload, transfer and commit its blocks using the returned
-write-only SAS, then finalize it. See the [upload API guide on the Virtool
+write-only SAS, then finalization it. See the [upload API guide on the Virtool
 website](../site/src/content/manual/api/uploads.mdx) for request shapes and the
 complete protocol.
 
@@ -674,7 +674,7 @@ probes.
 | --- | --- | --- | --- |
 | `VT_POSTGRES_URL` | URL | Required | Connect to the Virtool Postgres database. |
 | `VT_POSTGRES_POOL_MAX` | Positive integer | `10` | Limit the Postgres connection pool. |
-| `VT_PUBLIC_ORIGIN` | URL origin | Required | Name the one public origin this instance is served on, such as `https://virtool.example`. Better Auth builds its callbacks from it and WebAuthn validates ceremony origins against it, and the WebAuthn RP ID is its hostname. It must carry no path, query, fragment or credentials, and must be `https` anywhere but `localhost`, because the RP ID is a domain and no browser accepts an IP literal as one. It is never inferred from `Host` or the forwarded headers, so a deployment behind a proxy or a renamed domain must set it to the address users actually type. |
+| `VT_PUBLIC_ORIGIN` | URL origin | Required | Name the one public origin this instance is served on, such as `https://virtool.example`. Better Auth builds its callbacks from it and WebAuthn validates ceremony origins against it, and the WebAuthn RP ID is its hostname. It must carry no path, query, fragment or credentials, and must be `https` anywhere but `localhost`, because the RP ID is a domain and no browser accepts an IP literal as one. It's never inferred from `Host` or the forwarded headers, so a deployment behind a proxy or a renamed domain must set it to the address users actually type. |
 | `VT_AUTH_SECRET` | String (32+ characters) | Required | Sign and encrypt the authentication state Better Auth issues, including stored recovery codes. Generate with `openssl rand -base64 32`. Changing it invalidates every Better Auth session. |
 | `VT_METRICS_TOKEN` | String | Unset | Enable `/metrics` and authenticate scrapes with a bearer token. When unset, `/metrics` returns 404. |
 | `VT_SENTRY_DSN` | URL string | Unset | Send server errors to Sentry. Vite also embeds this value in the client at build time; that client value cannot use `_FILE`. |
@@ -696,7 +696,7 @@ probes.
 | `VT_UPLOADS_CHUNKED` | `0` \| `1` \| `true` \| `false` \| `yes` \| `no` | Unset (`false`) | Enable direct-to-blob chunked uploads when the storage backend can presign them. Unset or disable it to use the proxied upload route. |
 | `VT_UPLOADS_CHUNKED_CONCURRENCY` | Positive integer | `8` | Set how many block PUTs a browser runs at once across all active uploads. Raise it to lift throughput on a high-latency upload path. |
 
-The build and test tooling reads one additional variable. It is not a runtime
+The build and test tooling reads one extra variable. It's not a runtime
 server setting and has no `_FILE` variant.
 
 | Variable | Type | Default | Use |
@@ -709,14 +709,14 @@ into the browser bundle.
 
 ## Administering uploads
 
-`/administration/uploads` sets the maximum upload size. The setting is stored in
+`/administration/uploads` sets the max upload size. The setting is stored in
 bytes and entered in gigabytes, and is 5 GB on a new instance. It applies to the
 browser client and to API clients alike.
 
 ## Administering email delivery
 
 `/administration/settings` carries an **Email Delivery** section, rendered only
-for full administrators. Hiding it is presentation: every email server function
+for full administrators. Hiding it's presentation: every email server function
 demands `adminRole("full")` of its own accord, so a direct call from a lesser
 administrator is refused whatever the page shows.
 
@@ -730,7 +730,7 @@ another form:
 - **Sender identity** saves the sender name, the sender address, and an optional
   address for replies. Leaving it empty sends replies to the sender address. The
   server validates authoritatively and the fields re-render from its response.
-- **Resend API key** is write-only. The field starts empty however the key is
+- **Resend API key** is write-only. The field starts empty but the key is
   stored, because the server reports only whether one is configured. Saving
   replaces what is stored, and the replaced value cannot be read back. An empty
   field is refused rather than treated as a removal — removing a key is the
@@ -760,7 +760,7 @@ intact and is not changed, so the fix is the encryption key rather than the API
 key; the section links to [the encryption-key
 guide](../../docs/env.md#encryption-key) and disables enabling and test delivery
 until the instance is healthy. Saving a replacement key is the other way out,
-and it is deliberate rather than automatic.
+and it's deliberate rather than automatic.
 
 Delivery needs a Resend account and a sending domain verified with Resend.
 While delivery is unavailable, the authentication views still offer copyable
@@ -774,7 +774,7 @@ becomes a metric label.
 ## Metrics
 
 `GET /metrics` serves the Prometheus text exposition format from a single
-process-wide registry. It is one of several scrape targets — `apps/web` and
+process-wide registry. It's one of several scrape targets — `apps/web` and
 `apps/internal`'s `serve` and `run` subcommands — each with its own process and
 its own
 registry; see [docs/metrics.md](../../docs/metrics.md) for the handful of
@@ -796,7 +796,7 @@ API's.
 
 Prometheus scrapes over plain HTTP with a `GET`. It cannot speak the
 generated server-function RPC client, which posts to a hashed URL and
-expects a framed response. `/metrics` is therefore a `createFileRoute` handler,
+expects a framed response. `/metrics` is so a `createFileRoute` handler,
 like `/uploads` and `/events`.
 
 Routes get no policy middleware, so the handler enforces its own
@@ -825,7 +825,7 @@ meaningfully narrows the search.
 
 The **scheme** is matched case-insensitively, as RFC 9110 §11.1 requires
 — `bearer`, `Bearer`, and `BEARER` are the same scheme. The **credential**
-after it is not: it is compared byte for byte, so a token differing in
+after it's not: it's compared byte for byte, so a token differing in
 case or carrying interior whitespace is a different token. Nothing trims
 it, and nothing needs to — the `Headers` implementation already strips
 the optional whitespace around a header value before the handler ever
@@ -877,14 +877,14 @@ Counter over every handled request.
 
 `status` is the response status as a string, with one exception:
 `"error"` for the rare non-`Error` throw that escapes the whole request
-middleware chain. An `Error` that escapes it is recorded as `"500"`, not
+middleware chain. An `Error` that escapes it's recorded as `"500"`, not
 `"error"` — h3's `toResponse`, outside this middleware's visibility,
 wraps an escaping `Error` as an `HTTPError` and answers 500 by default
 (the one way it wouldn't is a `.status` set on the error itself, which is
 the server-function-only `ClientError` pattern, and `handleServerAction`
 resolves that to a response itself rather than rethrowing — so it never
 reaches this middleware's catch). A non-`Error` throw gets no such
-treatment from h3 — it is read as a response *body* instead of an error —
+treatment from h3 — it's read as a response *body* instead of an error —
 so no status this middleware could report would be accurate for that
 case, and `"error"` is reserved for it.
 
@@ -906,7 +906,7 @@ Gauge of this process's open Postgres backends, bucketed as `active`,
 
 #### `virtool_postgres_pool_max`
 
-The configured pool ceiling. Static, but it is the denominator: pool
+The configured pool ceiling. Static, but it's the denominator: pool
 saturation is only legible as
 `virtool_postgres_connections / virtool_postgres_pool_max`.
 
@@ -943,7 +943,7 @@ Two constraints shape the file:
   imports it. A static import of the registry would drag prom-client —
   and the `node:os`, `node:process`, and `node:perf_hooks` reads behind
   `collectDefaultMetrics` — into the client graph. The middleware
-  therefore reaches the registry through `createServerOnlyFn` and a dynamic
+  so reaches the registry through `createServerOnlyFn` and a dynamic
   import, which the Vite plugin strips client-side. Node's module cache
   makes every call after the first a resolved-promise lookup.
 - Recording runs on the path of every request in the process, so a
@@ -963,7 +963,7 @@ no matching increment cannot drive a gauge.
 `totalCount` / `idleCount` / `waitingCount` belong to **node-postgres**
 (`pg`), a different library. Do not go looking for them here.
 
-Occupancy is therefore read from Postgres' own view instead. `createDb`
+Occupancy is so read from Postgres' own view instead. `createDb`
 (`@virtool/data/db/pg`) sets a distinctive `application_name` on every
 connection and hands it back alongside the pool:
 
@@ -985,11 +985,11 @@ cluster-wide total, and summing the series in Grafana would multiply it
 by the replica count.
 
 The `service` — `"web"` or `"jobs-api"`, passed as `createDb`'s second
-argument — is the other part, and it is what keeps **two services'
+argument — is the other part, and it's what keeps **two services'
 pools apart**. They share a database, and on a developer machine a
 hostname as well, so without it each would count the other's backends
-and both would report the sum. It is a separate argument rather than a
-config field because it is a fact about the process, not something read
+and both would report the sum. It's a separate argument rather than a
+config field because it's a fact about the process, not something read
 from the environment.
 
 #### The name has to survive the round trip
@@ -1010,7 +1010,7 @@ the *end*. Clipping would collapse a deployment's replicas onto one name
 and reintroduce the multiplication the hostname was there to prevent.
 
 The **service segment is never digested away**, only the hostname is. It
-is short, bounded by the number of services shipped, and it is the
+is short, bounded by the number of services shipped, and it's the
 discriminator worth keeping legible — a digest that swallowed it would
 put the web app and the jobs API back in one bucket for exactly the
 long-hostname deployments most likely to have several replicas.
@@ -1094,7 +1094,7 @@ expectNoViolations(element, {
 
 `@virtool/data` and `@virtool/storage` may be imported by server-side apps,
 including `apps/internal` and the workflow apps. Within the web
-app, however, they must not be imported into client-reachable code. A Biome
+app, but, they must not be imported into client-reachable code. A Biome
 `noRestrictedImports` override enforces this in `src/**` outside `src/server/**`.
 
 The `web` Vitest project also aliases `@server/composition`, `@server/config`,

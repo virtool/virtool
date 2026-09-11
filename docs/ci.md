@@ -18,7 +18,7 @@ jobs. `release-ghcr` publishes all six targets on every release.
 `dist` retains its name because tooling outside this repository targets it.
 
 The four workflow images publish under their bare, unprefixed names. Those
-names previously came from separate legacy repositories shipping the Python
+names before came from separate legacy repositories shipping the Python
 workflow of the same name; this repository's release supersedes them. The
 `ts-` prefixed variants were a transitional second tag during the TypeScript
 port and are no longer published; their existing tags stay in the registry

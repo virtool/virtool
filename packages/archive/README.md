@@ -3,7 +3,7 @@
 Tar, gzip and zip, for anything in the monorepo that reads or writes an archive.
 
 Framework-agnostic and dependency-light: `tar-stream` and `fflate` plus
-`node:zlib`, no database, no object storage, no logger. It is imported by
+`node:zlib`, no database, no object storage, no logger. It's imported by
 `@virtool/workflow` (cache archives), by the workflow apps (reading gzip magic),
 by `@virtool/internal`'s `run` subcommand (the HMM release archive) and by `@virtool/data` (the NCBI
 BLAST result zip).

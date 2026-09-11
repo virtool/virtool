@@ -14,12 +14,12 @@ hit to its annotation, belongs to the workflow that does the IO.
 
 ## Byte-identity with the stored data is the governing constraint
 
-Virtool runs in certified lab settings. A parser that produces *equivalent but
+Virtool runs in certified lab settings. A parser that produces *equal but
 differently rounded* output is a failure, not a nit. Analysis documents already
 written sit in the same table as the ones written today and are rendered by the
 same UI.
 
-The rule for everything in this package is therefore: **match the stored and golden
+The rule for everything in this package is so: **match the stored and golden
 output exactly, including its bugs.** `roundHalfEven` exists because
 `Math.round` rounds half away from zero rather than half to even;
 `parseHmmerTblout` reads the best-domain score and bias from each other's
@@ -30,7 +30,7 @@ Do not "fix" a quirk in this package alone. A fix means a coordinated change to
 the stored documents and to the UI — and until both move, a correction here is
 a silent disagreement with every record written so far.
 
-Where a divergence is deliberate it is commented at the site and pinned by a
+Where a divergence is deliberate it's commented at the site and pinned by a
 test.
 
 ## Expected values come from the goldens

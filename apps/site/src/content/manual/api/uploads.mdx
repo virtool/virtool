@@ -9,7 +9,7 @@ Upload a file in three steps:
 
 1. Start the upload and receive a temporary storage URL.
 2. Send the file directly to storage at that URL.
-3. Tell Virtool to finalize the upload.
+3. Tell Virtool to finalization the upload.
 
 The file bytes never pass through the Virtool server, allowing very large
 uploads.
@@ -50,11 +50,11 @@ curl --user "$VT_HANDLE:$VT_API_KEY" \
 | --- | --- | --- |
 | `name` | string | File name. |
 | `type` | string | One of `reference`, `reads`, or `subtraction`. |
-| `size` | integer | Exact file size in bytes, from 0 to the instance's maximum upload size. |
+| `size` | integer | Exact file size in bytes, from 0 to the instance's max upload size. |
 
-An administrator sets the maximum upload size, which is 5,000,000,000 bytes on a
+An administrator sets the max upload size, which is 5,000,000,000 bytes on a
 new instance and can be raised to 120,000,000,000 bytes (120 GB), the application
-ceiling. A `size` above the configured maximum returns `413`; a size above
+ceiling. A `size` above the configured max returns `413`; a size above
 the application ceiling fails validation with `422`. Check the initialization response
 before starting the block uploads.
 
@@ -116,7 +116,7 @@ Use the `url`, `blockSize`, and `concurrency` values from the start response.
 ```
 
    Set `x-ms-blob-content-type` to the file's media type, or
-   `application/octet-stream` when it is unknown.
+   `application/octet-stream` when it's unknown.
 
 These are standard HTTP requests and do not require an Azure SDK. If a request
 fails because of a network or server error, retry it. Cancel the upload if it
@@ -133,7 +133,7 @@ curl --user "$VT_HANDLE:$VT_API_KEY" \
 ```
 
 The server verifies the stored file size, marks the upload ready, and returns
-the upload record. Finalization is idempotent, so it is safe to retry if the
+the upload record. Finalization is idempotent, so it's safe to retry if the
 response is lost. A missing block list or mismatched size returns `409`.
 
 ## Cancel an upload
@@ -162,6 +162,6 @@ pending upload does not remain until automatic cleanup.
 | `403` | The API key or its owner lacks `upload_file`. |
 | `404` | The upload does not exist, is not owned by the caller, or is not in the required unfinished state. |
 | `409` | Finalization found no committed blob or its byte size differs from `size`. |
-| `413` | The declared `size` exceeds the configured maximum but is within the application ceiling. |
+| `413` | The declared `size` exceeds the configured max but is within the application ceiling. |
 | `422` | The initialization fields are invalid. |
 | `503` | Direct upload support is unavailable on this deployment. |

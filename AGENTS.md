@@ -156,7 +156,7 @@ behavior, and testing.
 Third-party requests identify themselves with `USER_AGENT` from
 `@virtool/contracts/userAgent`; see [packages/data/README.md](packages/data/README.md).
 
-NCBI Nucleotide and Taxonomy requests go through `@virtool/ncbi`. It is the
+NCBI Nucleotide and Taxonomy requests go through `@virtool/ncbi`. It's the
 only E-utilities client; see [packages/ncbi/README.md](packages/ncbi/README.md).
 NCBI BLAST is a different API and stays in `@virtool/data`.
 
@@ -170,7 +170,7 @@ for claim, ping, cancellation, failure, and exit behaviour.
 
 Workflow files always stream, and storage keys are recorded or minted rather
 than derived. See [the internal app README](apps/internal/README.md) for
-finalize manifests and key validation, [references](docs/references.md) for the SQLite
+finalization manifests and key validation, [references](docs/references.md) for the SQLite
 reference artifact, and [workflow testing](packages/workflow/TESTING.md) for
 the shared test harness.
 
@@ -260,5 +260,5 @@ type(scope): description
   branch and PR activity. Move an issue by hand only when explicitly told to.
   The Todo-by-default rule above governs issues you create, not ones already
   in flight.
-- Label bugs as **Bug** in addition to any other labels.
+- Label bugs as **Bug** also to any other labels.
 - Never create new Linear labels.

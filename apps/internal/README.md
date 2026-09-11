@@ -50,7 +50,7 @@ resource's `{domain}/{parentId}/` prefix, reads the object's size from storage,
 and records the submitted key verbatim. Keys with a leading slash, an empty
 segment, or a `..` segment are invalid.
 
-The shared contracts enforce the minimum usable output: a sample has one or two
+The shared contracts enforce the min usable output: a sample has one or two
 reads, a subtraction has at least its source FASTA, and an analysis requires
 `results` but may have an empty file manifest. Subtraction runs write only
 `subtraction.fa.gz`; reads still serve older subtractions whose rows also
@@ -139,14 +139,14 @@ Every task body must:
 ### Spawner
 
 The spawner checks `PERIODIC_TASKS` every 30 seconds. A task's interval is a
-minimum suppression window, not an exact schedule, and a new row is created
+min suppression window, not an exact schedule, and a new row is created
 only when no outstanding task of that type exists. An outstanding row that
 never finishes stops suppressing the type once it ages past the wedge ceiling
 (`TASK_WEDGE_SECONDS`), so a runner stuck without ever completing or failing
 its task cannot block the type for good.
 
 Each spawn attempt takes a transaction-scoped advisory lock derived from the
-bare task name. This prevents multiple replicas from inserting the same
+bare task name. This prevents many replicas from inserting the same
 periodic task. A failure for one type is logged without skipping the remaining
 types or stopping the loop.
 
@@ -179,7 +179,7 @@ non-zero if any step fails. A second signal is logged and ignored.
 The runner stops claiming, waits for its in-flight task within
 `VT_TASKS_DRAIN_TIMEOUT`, aborts it if necessary, waits briefly for cooperative
 cleanup, stops the heartbeat, and releases this runner's remaining claims. The
-drain timeout is part of the total shutdown budget, not additional to it. The
+drain timeout is part of the total shutdown budget, not extra to it. The
 container must execute Node directly so SIGTERM reaches these handlers.
 
 ## `migrate` — database migrations

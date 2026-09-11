@@ -2,7 +2,7 @@
 
 A client for NCBI Nucleotide and NCBI Taxonomy.
 
-It is a port of `ref_builder/ncbi/` from the [ref-builder](https://github.com/virtool/ref-builder)
+It's a port of `ref_builder/ncbi/` from the [ref-builder](https://github.com/virtool/ref-builder)
 project, which is the specification the projections here hit. The models are a
 projection into a known shape, not a general GBSeq parser.
 
@@ -41,8 +41,8 @@ Four call shapes cover everything:
 ESearch supports `retmode=json` and EFetch does not, for any database, so two
 of the four are typed JSON fetches.
 
-**NCBI's Datasets v2 API is not used for taxonomy.** It was evaluated and
-rejected: it is still `v2alpha`, it takes two calls — `taxonomy/taxon/{id}/dataset_report`
+**NCBI's Datasets v2 API is not used for taxonomy.** The team evaluated and
+rejected: it's still `v2alpha`, it takes two calls — `taxonomy/taxon/{id}/dataset_report`
 for the ranked lineage and `.../name_report` for acronyms and synonyms — to
 cover what one `efetch(taxonomy)` returns in a single response, and it has no
 subtree search at all, only a taxon's direct `children`, which would turn one
@@ -63,12 +63,12 @@ DTD-driven coercion and years of accumulated special cases — is what this
 client does without.
 
 - **Errors returned with HTTP 200.** An ESearch refusal arrives as
-  `{"esearchresult": {"ERROR": "..."}}` with a 200 status. It is detected
+  `{"esearchresult": {"ERROR": "..."}}` with a 200 status. It's detected
   before the result schema, which would otherwise default the absent `count`
   and `idlist` and report a refusal as a search that legitimately matched
   nothing. A term that matched nothing is a different thing — a real envelope
   with an `errorlist` — and is read as an empty result.
-- **Every JSON scalar is quoted.** `count` arrives as `"872"`, so it is coerced
+- **Every JSON scalar is quoted.** `count` arrives as `"872"`, so it's coerced
   before any paging arithmetic.
 - **A repeated XML element has no stable shape.** One `<Acronym>` parses to a
   string and two parse to an array, so every repeated element goes through
@@ -92,7 +92,7 @@ paid for with a refusal that costs another request against the same limit.
 `fetchDescendantTaxids` is the one call that is not a fixed number of requests.
 The subtree search is one, but NCBI sends no rank alongside the ids, so telling
 subspecific taxa from the rest costs a taxonomy fetch per descendant. A species
-with a dozen isolates takes seconds. ref-builder pays the same cost; it is
+with a dozen isolates takes seconds. ref-builder pays the same cost; it's
 inherent to the question, not to this implementation.
 
 `apiKey` is the instance's NCBI API key. An empty string means no key is
@@ -123,11 +123,11 @@ for each is on the function.
 - **`rank` is a plain string.** ref-builder rejects any taxon above species at
   validation time, because an OTU must be species-or-below. That is a
   reference-building policy, not a property of the record, and this client is
-  also used to validate an arbitrary taxonomy ID a user has typed. `getSpecies()`
+  also used to check an arbitrary taxonomy ID a user has typed. `getSpecies()`
   returns `null` for a taxon above species rather than throwing.
 - **No `fetch_lineage`.** It assembles ref-builder's own `Lineage` and `Taxon`
   domain objects, which belong to reference building rather than to an NCBI
-  client. The pieces it is built from — `fetchTaxonomyRecord` and
+  client. The pieces it's built from — `fetchTaxonomyRecord` and
   `fetchDescendantTaxids` — are both here.
 - **No on-disk cache.** `NCBICache` writes to a user cache directory, which
   suits a CLI and not a server. Caching belongs to the caller.
@@ -169,7 +169,7 @@ retired from beet black scorch virus's lineage.
 ### Live smoke tests
 
 `src/live.test.ts` runs against the real NCBI and is skipped unless
-`VT_NCBI_LIVE=1`. It is excluded from CI, where NCBI being down or rate-limiting
+`VT_NCBI_LIVE=1`. It's excluded from CI, where NCBI being down or rate-limiting
 the runner would fail a build for reasons unrelated to the change.
 
 ```

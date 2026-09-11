@@ -46,7 +46,7 @@ The normal sequence is:
    job from `running` to `succeeded`.
 
 A pod learns its job id and credential from the claim response and nowhere
-else. An aborted claim returns `null`; both the overall claim timeout and a
+else. An aborted claim returns `null`; both the total claim timeout and a
 `SIGTERM` arrive through that result.
 
 ## Cancellation
@@ -131,7 +131,7 @@ two forms over one `JobsApiState` object:
 Both forms route through `handleJobsApiRequest`. Responses are serialized and
 parsed with the same contract schemas as production, so the fake client cannot
 silently accept a wire shape that the real client would reject. The shared state
-records claims, step starts, finish and finalize calls, cache registrations,
+records claims, step starts, finish and finalization calls, cache registrations,
 resource metadata, credentials, and the injected clock.
 
 The embedded server preserves the lifecycle behavior described above:
