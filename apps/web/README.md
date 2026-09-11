@@ -832,7 +832,7 @@ the optional whitespace around a header value before the handler ever
 sees it.
 
 The gate exists because the server listens on **one port**
-(`EXPOSE 9900`). No separate admin socket exists, so `/metrics` shares
+(`EXPOSE 9900`). No separate administrator socket exists, so `/metrics` shares
 its listener with the app and would otherwise be readable by
 anyone who guesses the path. That is a different situation from
 `/health/live` and `/health/ready`, which are deliberately contentless

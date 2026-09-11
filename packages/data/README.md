@@ -169,7 +169,7 @@ listing fixtures are exported from `@virtool/storage/test/fixtures`.
 
 The storage package's integration Vitest project runs the shared backend suite
 against Garage and Azurite. Garage setup applies a single-node layout and
-credentials through its admin API and waits on a log line because the image is
+credentials through its administrator API and waits on a log line because the image is
 distroless. Containers are reused; tests isolate and purge their own
 `test/{worker}/{testName}/` prefixes. Run storage server tests in a Node
 environment so typed arrays come from the same JavaScript realm.
