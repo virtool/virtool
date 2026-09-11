@@ -1,3 +1,4 @@
+import { analysesQueryKeys } from "@analyses/keys";
 import {
 	createUserFn,
 	findUsersFn,
@@ -178,6 +179,9 @@ export function useUpdateUser() {
 				queryClient.setQueryData(userQueryKeys.detail(result.id), result);
 			}
 			queryClient.invalidateQueries({ queryKey: userQueryKeys.lists() });
+			queryClient.invalidateQueries({
+				queryKey: analysesQueryKeys.users(),
+			});
 		},
 	});
 }
