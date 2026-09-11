@@ -34,7 +34,7 @@
 		"@virtool/sentry": "workspace:*",
 		"@virtool/storage": "workspace:*",
 		"bcrypt": "^6.0.0",
-		"better-auth": "1.6.30",
+		"better-auth": "1.7.4",
 		"class-variance-authority": "^0.7.1",
 		"clsx": "^2.1.1",
 		"d3": "^7.9.0",
