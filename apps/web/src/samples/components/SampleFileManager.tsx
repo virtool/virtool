@@ -3,6 +3,7 @@ import { ContainerNarrow } from "@base/Container";
 import { FileManager } from "@uploads/components/FileManager";
 import type { Label, SortDirection, UploadSortField } from "@virtool/contracts";
 import CreateSampleFromFile from "./Create/CreateSampleFromFile";
+import CreateSamplesFromFiles from "./Create/CreateSamplesFromFiles";
 
 type SampleFileManagerProps = {
 	direction: SortDirection;
@@ -43,6 +44,17 @@ export default function SampleFileManager({
 									labels={labels}
 									upload={upload}
 									uploads={uploads}
+								/>
+							)
+						: undefined
+				}
+				renderSelectionAction={
+					canCreate
+						? (selected, _clear, remove) => (
+								<CreateSamplesFromFiles
+									labels={labels}
+									onCreated={remove}
+									selected={selected}
 								/>
 							)
 						: undefined

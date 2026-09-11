@@ -25,6 +25,8 @@ class FakeCoast:
         self.fail_start = False
         self.fail_stop = False
         self.fail_assign = False
+        self.proxies_running = True
+        self.shared_services_missing = False
 
     def instances(self):
         return self.items.copy()
@@ -40,6 +42,14 @@ class FakeCoast:
 
     def resume(self, name, status):
         self.command("start", name)
+        self.proxies_running = True
+
+    def check_shared_services(self):
+        if self.shared_services_missing:
+            raise RuntimeError("Shared services are not registered in Coast")
+
+    def has_shared_service_proxies(self, name):
+        return self.proxies_running
 
     def clear_url(self, record):
         self.events.append(("clear_url", record["name"]))
@@ -137,6 +147,105 @@ class LifecycleTests(unittest.TestCase):
             second = self.ensure()
         resume.assert_called_once_with(first["name"], "running")
         self.assertEqual(second["data_id"], first["data_id"])
+
+    def test_running_instance_with_missing_proxies_restarts_without_recreating_data(self):
+        first = self.ensure()
+        self.backend.events.clear()
+        self.backend.proxies_running = False
+        second = self.ensure()
+        self.assertEqual(second["data_id"], first["data_id"])
+        self.assertEqual(second["url"], first["url"])
+        self.assertIn(first["data_id"], self.backend.databases)
+        self.assertIn(first["data_id"], self.backend.blobs)
+        self.assertEqual(self.backend.events[:2], [("stop", first["name"]), ("start", first["name"])])
+        self.assertFalse(any(event[0] in ("run", "rm", "rebuild", "configure", "delete_data")
+                             for event in self.backend.events))
+
+    def test_missing_shared_service_blocks_existing_instance_without_mutations(self):
+        first = self.ensure()
+        self.backend.events.clear()
+        self.backend.shared_services_missing = True
+        with self.assertRaisesRegex(RuntimeError, "not registered"):
+            self.ensure()
+        self.assertFalse(self.backend.events)
+        self.assertIn(first["data_id"], self.backend.databases)
+
+    def test_idle_primary_with_missing_proxies_is_started_once(self):
+        record = self.ensure(worktree=self.root)
+        self.backend.events.clear()
+        self.backend.items[record["name"]]["status"] = "idle"
+        self.backend.proxies_running = False
+        self.ensure(worktree=self.root)
+        self.assertEqual(self.backend.events.count(("start", record["name"])), 1)
+
+    def test_failed_proxy_repair_stops_before_compose_startup(self):
+        first = self.ensure()
+        self.backend.events.clear()
+        with patch.object(self.backend, "has_shared_service_proxies", return_value=False):
+            with self.assertRaisesRegex(RuntimeError, "proxies are still unreachable"):
+                self.ensure()
+        self.assertEqual(self.backend.events, [("stop", first["name"]), ("start", first["name"])])
+
+    def test_missing_shared_registration_fails_before_docker_commands(self):
+        backend = coast.Coast(self.root, "virtool")
+        with patch.object(backend, "shared_services", return_value={"postgres": {}}), \
+                patch.object(backend, "api", return_value={"services": []}), \
+                patch.object(coast.subprocess, "run") as command:
+            with self.assertRaisesRegex(RuntimeError, "not registered.*postgres"):
+                backend.check_shared_services()
+        command.assert_not_called()
+
+    def test_missing_shared_container_is_not_recreated(self):
+        backend = coast.Coast(self.root, "virtool")
+        missing = subprocess.CompletedProcess([], 1, stdout="", stderr="No such container")
+        with patch.object(backend, "shared_services", return_value={"postgres": {}}), \
+                patch.object(backend, "api", return_value={"services": [{"name": "postgres"}]}), \
+                patch.object(coast.subprocess, "run", return_value=missing), \
+                patch.object(backend, "command") as command:
+            with self.assertRaisesRegex(RuntimeError, "Cannot inspect shared service.*postgres"):
+                backend.check_shared_services()
+        command.assert_not_called()
+
+    def test_stopped_shared_service_is_started_and_checked(self):
+        backend = coast.Coast(self.root, "virtool")
+        stopped = subprocess.CompletedProcess([], 0, stdout="false\n", stderr="")
+        for running in ("true", "false"):
+            with self.subTest(running=running), \
+                    patch.object(backend, "shared_services", return_value={"postgres": {}}), \
+                    patch.object(backend, "api", return_value={"services": [{"name": "postgres"}]}), \
+                    patch.object(coast.subprocess, "run", return_value=stopped), \
+                    patch.object(coast, "run", return_value=running), \
+                    patch.object(backend, "command") as command:
+                if running == "true":
+                    backend.check_shared_services()
+                else:
+                    with self.assertRaisesRegex(RuntimeError, "did not start"):
+                        backend.check_shared_services()
+                command.assert_called_once_with("shared-services", "start", "postgres")
+
+    def test_proxy_probe_uses_effective_addresses_and_container_ports(self):
+        backend = coast.Coast(self.root, "virtool")
+        shared = {"postgres": {"ports": ["15432:5432"]}, "azurite": {"ports": ["11000:10000"]}}
+        hosts = ["postgres=172.18.255.253", "azurite:172.18.255.254"]
+        configuration = {"services": {"database-init": {"extra_hosts": hosts}}}
+        for exit_code in (0, 1):
+            with self.subTest(exit_code=exit_code), \
+                    patch.object(backend, "shared_services", return_value=shared), \
+                    patch.object(coast, "run", return_value=json.dumps(configuration)), \
+                    patch.object(coast.subprocess, "run", return_value=subprocess.CompletedProcess([], exit_code)) as probe:
+                self.assertEqual(backend.has_shared_service_proxies("secondary"), exit_code == 0)
+                self.assertEqual(probe.call_args.args[0], [
+                    "docker", "exec", "virtool-coasts-secondary", "sh", "-ec",
+                    "nc -z -w 2 172.18.255.253 5432\nnc -z -w 2 172.18.255.254 10000",
+                ])
+
+    def test_missing_proxy_host_mapping_is_unhealthy(self):
+        backend = coast.Coast(self.root, "virtool")
+        with patch.object(backend, "shared_services", return_value={"postgres": {"ports": [5432]}}), \
+                patch.object(coast, "run", return_value='{"services": {"database-init": {}}}'), \
+                patch.object(coast.subprocess, "run") as probe:
+            self.assertFalse(backend.has_shared_service_proxies("secondary"))
+        probe.assert_not_called()
 
     def test_resume_clears_previous_boot_proxy_pids_before_coast_start(self):
         backend = coast.Coast(self.root, "virtool")

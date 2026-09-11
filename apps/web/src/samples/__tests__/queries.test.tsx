@@ -7,7 +7,7 @@ import { describe, expect, it, vi } from "vitest";
 import { useCreateSample } from "../queries";
 
 describe("useCreateSample()", () => {
-	it("invalidates the reads selector on success so reserved files leave it", async () => {
+	it("invalidates every upload list on success so reserved files leave them", async () => {
 		const queryClient = new QueryClient();
 		const invalidateQueries = vi.spyOn(queryClient, "invalidateQueries");
 
@@ -38,7 +38,7 @@ describe("useCreateSample()", () => {
 		await waitFor(() => expect(result.current.isSuccess).toBe(true));
 
 		expect(invalidateQueries).toHaveBeenCalledWith({
-			queryKey: [...fileQueryKeys.infiniteLists(), "reads"],
+			queryKey: fileQueryKeys.lists(),
 		});
 	});
 });

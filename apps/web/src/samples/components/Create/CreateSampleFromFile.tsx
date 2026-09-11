@@ -1,10 +1,5 @@
 import { useFetchAccount } from "@account/account";
 import {
-	Collapsible,
-	CollapsibleContent,
-	CollapsibleTrigger,
-} from "@base/Collapsible";
-import {
 	Dialog,
 	DialogContent,
 	DialogFooter,
@@ -24,12 +19,10 @@ import type { Label, Upload } from "@virtool/contracts";
 import { CirclePlus } from "lucide-react";
 import { useEffect, useState } from "react";
 import { Controller, useForm } from "react-hook-form";
-import DefaultSubtractionSelector from "./DefaultSubtractionSelector";
-import LabelSelector from "./LabelSelector";
-import LibraryTypeSelector from "./LibraryTypeSelector";
 import ReadPairBadge from "./ReadPairBadge";
 import ReadSlot from "./ReadSlot";
-import SampleUserGroup from "./SampleUserGroup";
+import SampleSettingsFields from "./SampleSettingsFields";
+import { type SampleSettingsValues, sampleSettingsDefaults } from "./settings";
 
 type ReadFilesProps = {
 	/** The read files the sample will be created from, in [LEFT, RIGHT] order */
@@ -62,14 +55,8 @@ function ReadFiles({ reads }: ReadFilesProps) {
 }
 
 type FormValues = {
+	settings: SampleSettingsValues;
 	name: string;
-	isolate: string;
-	host: string;
-	locale: string;
-	libraryType: string;
-	group: string;
-	labels: number[];
-	subtractionIds: number[];
 };
 
 type CreateSampleFromFileFormProps = {
@@ -107,29 +94,21 @@ function CreateSampleFromFileForm({
 		setValue,
 	} = useForm<FormValues>({
 		defaultValues: {
+			settings: sampleSettingsDefaults,
 			name: getSampleNameFromReads(reads),
-			isolate: "",
-			host: "",
-			locale: "",
-			libraryType: "normal",
-			group: "",
-			labels: [],
-			subtractionIds: [],
 		},
 	});
 
 	const mutation = useCreateSample();
 
-	const [showMetadata, setShowMetadata] = useState(false);
-
 	useEffect(() => {
-		setValue("group", String(account?.primaryGroup?.id ?? ""));
+		setValue("settings.group", String(account?.primaryGroup?.id ?? ""));
 	}, [account, setValue]);
 
 	function onSubmit(values: FormValues) {
 		mutation.mutate(
 			getCreateSampleRequest(
-				values,
+				{ ...values.settings, name: values.name },
 				reads.map((read) => read.id),
 			),
 			{ onSuccess: onClose },
@@ -166,69 +145,15 @@ function CreateSampleFromFileForm({
 
 					<Controller
 						control={control}
-						render={({ field: { onChange, value } }) => (
-							<SampleUserGroup
-								selected={value}
+						name="settings"
+						render={({ field }) => (
+							<SampleSettingsFields
 								groups={groups}
-								onChange={onChange}
-							/>
-						)}
-						name="group"
-					/>
-
-					<Collapsible
-						className="mb-4"
-						open={showMetadata}
-						onOpenChange={setShowMetadata}
-					>
-						<CollapsibleTrigger>Show Metadata Fields</CollapsibleTrigger>
-						<CollapsibleContent className="grid grid-cols-3 gap-x-4 pt-4">
-							<InputGroup>
-								<InputLabel htmlFor="locale">Locale</InputLabel>
-								<InputSimple id="locale" {...register("locale")} />
-							</InputGroup>
-
-							<InputGroup>
-								<InputLabel htmlFor="isolate">Isolate</InputLabel>
-								<InputSimple id="isolate" {...register("isolate")} />
-							</InputGroup>
-
-							<InputGroup>
-								<InputLabel htmlFor="host">Host</InputLabel>
-								<InputSimple id="host" {...register("host")} />
-							</InputGroup>
-						</CollapsibleContent>
-					</Collapsible>
-
-					<Controller
-						control={control}
-						render={({ field: { onChange, value } }) => (
-							<LibraryTypeSelector libraryType={value} onSelect={onChange} />
-						)}
-						name="libraryType"
-					/>
-
-					<Controller
-						control={control}
-						render={({ field: { onChange, value } }) => (
-							<LabelSelector
 								labels={labels}
-								selected={value}
-								onChange={onChange}
+								value={field.value}
+								onChange={field.onChange}
 							/>
 						)}
-						name="labels"
-					/>
-
-					<Controller
-						control={control}
-						render={({ field: { onChange, value } }) => (
-							<DefaultSubtractionSelector
-								selected={value}
-								onChange={onChange}
-							/>
-						)}
-						name="subtractionIds"
 					/>
 
 					<DialogFooter>

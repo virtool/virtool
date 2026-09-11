@@ -25,12 +25,84 @@ export type ChunkedInit = {
 	uploadId: number;
 	url: string;
 	blockSize: number;
-	/** How many blocks are PUT at once. */
+	/** How many block PUTs this browser may run at once across all uploads. */
 	concurrency: number;
 };
 
 /** How many times a single block PUT is retried before the upload fails. */
 const BLOCK_MAX_ATTEMPTS = 3;
+
+type BlockWaiter = {
+	limit: number;
+	reject: (reason: DOMException) => void;
+	resolve: (release: () => void) => void;
+	signal: AbortSignal | undefined;
+};
+
+let activeBlockRequests = 0;
+const blockWaiters: BlockWaiter[] = [];
+
+/** Start queued block requests while the shared browser-wide limit allows it. */
+function startBlockRequests(): void {
+	while (
+		blockWaiters.length > 0 &&
+		activeBlockRequests < (blockWaiters[0]?.limit ?? 0)
+	) {
+		const waiter = blockWaiters.shift();
+		if (!waiter) {
+			return;
+		}
+
+		if (waiter.signal?.aborted) {
+			waiter.reject(new DOMException("Upload aborted.", "AbortError"));
+			continue;
+		}
+
+		activeBlockRequests++;
+		let released = false;
+		waiter.resolve(() => {
+			if (released) {
+				return;
+			}
+			released = true;
+			activeBlockRequests--;
+			startBlockRequests();
+		});
+	}
+}
+
+/** Wait for one slot in the block-request pool shared by every upload. */
+function acquireBlockRequest(
+	limit: number,
+	signal: AbortSignal | undefined,
+): Promise<() => void> {
+	return new Promise((resolve, reject) => {
+		if (signal?.aborted) {
+			reject(new DOMException("Upload aborted.", "AbortError"));
+			return;
+		}
+
+		const waiter: BlockWaiter = { limit, reject, resolve, signal };
+
+		function onAbort() {
+			const index = blockWaiters.indexOf(waiter);
+			if (index === -1) {
+				return;
+			}
+			blockWaiters.splice(index, 1);
+			reject(new DOMException("Upload aborted.", "AbortError"));
+			startBlockRequests();
+		}
+
+		signal?.addEventListener("abort", onAbort, { once: true });
+		waiter.resolve = (release) => {
+			signal?.removeEventListener("abort", onAbort);
+			resolve(release);
+		};
+		blockWaiters.push(waiter);
+		startBlockRequests();
+	});
+}
 
 /**
  * The block id for the block at `index`.
@@ -250,6 +322,7 @@ async function stageBlocks(
 			const start = index * blockSize;
 			const body = file.slice(start, Math.min(start + blockSize, file.size));
 
+			const release = await acquireBlockRequest(concurrency, controller.signal);
 			try {
 				await putBlock(
 					url,
@@ -261,6 +334,8 @@ async function stageBlocks(
 			} catch (error) {
 				controller.abort();
 				throw error;
+			} finally {
+				release();
 			}
 		}
 	}

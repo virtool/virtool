@@ -228,6 +228,56 @@ class Coast:
         return run(["docker", "inspect", "--format", "{{.State.Running}}",
                     f"{self.project}-coasts-{name}"], self.root) == "true"
 
+    def shared_services(self):
+        return tomllib.loads((self.root / "Coastfile").read_text()).get("shared_services", {})
+
+    def check_shared_services(self):
+        configured = self.shared_services()
+        if not configured:
+            return
+        registered = {service["name"] for service in self.api(
+            "/shared/ls?" + urllib.parse.urlencode({"project": self.project}))["services"]}
+        missing = configured.keys() - registered
+        if missing:
+            raise RuntimeError(f"Shared services are not registered in Coast: {', '.join(sorted(missing))}. Restore them through Coast provisioning before retrying; `shared-services start` cannot recreate them. See dev/README.md#shared-service-recovery.")
+        for service in configured:
+            container = f"{self.project}-shared-services-{service}"
+            inspected = subprocess.run(["docker", "inspect", "--format", "{{.State.Running}}", container],
+                                       text=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+            if inspected.returncode:
+                raise RuntimeError(f"Cannot inspect shared service {service!r}: {inspected.stderr.strip()}. Restore the shared container before retrying. See dev/README.md#shared-service-recovery.")
+            if inspected.stdout.strip() != "true":
+                self.command("shared-services", "start", service)
+                if run(["docker", "inspect", "--format", "{{.State.Running}}", container], self.root) != "true":
+                    raise RuntimeError(f"Shared service {service!r} did not start; inspect its Docker logs before retrying")
+
+    def has_shared_service_proxies(self, name):
+        configured = self.shared_services()
+        if not configured:
+            return True
+        configuration = json.loads(run([self.binary, "--project", self.project, "docker", "--root", name,
+                                        "compose", "config", "--format", "json"], self.root))
+        targets = set()
+        for service, settings in configured.items():
+            addresses = set()
+            for inner in configuration["services"].values():
+                hosts = inner.get("extra_hosts", [])
+                if isinstance(hosts, list):
+                    hosts = dict(host.split("=" if "=" in host else ":", 1) for host in hosts)
+                if service in hosts:
+                    addresses.add(hosts[service])
+            if not addresses:
+                return False
+            for port in settings.get("ports", []):
+                targets.update((address, str(port).split(":")[-1]) for address in addresses)
+        if not targets:
+            return True
+        script = "\n".join(shlex.join(["nc", "-z", "-w", "2", address, port])
+                           for address, port in sorted(targets))
+        result = subprocess.run(["docker", "exec", f"{self.project}-coasts-{name}", "sh", "-ec", script],
+                                stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        return result.returncode == 0
+
     def check_resume_ports(self, name):
         for mapping in self.ports(name):
             port = mapping["dynamic_port"]
@@ -424,10 +474,13 @@ class Lifecycle:
         record["config_hash"] = config_hash
         self.save(key, record)
         instance = instances.get(record["name"])
+        if instance is not None:
+            self.coast.check_shared_services()
         if (instance and instance["status"] in ("running", "checked_out")
                 and instance.get("worktree") == (branch if worktree != primary else None)
                 and not changed_identity and not rebuild
-                and record.get("build_hash") == source_hash and self.coast.ready(record)):
+                and record.get("build_hash") == source_hash and self.coast.ready(record)
+                and self.coast.has_shared_service_proxies(record["name"])):
             self.coast.check_worktree(record)
             record["state"] = "ready"
             record.pop("error", None)
@@ -445,8 +498,16 @@ class Lifecycle:
             record["provisioned"] = True
             record["image_hash"] = build_hash
             self.save(key, record)
+            self.coast.check_shared_services()
         if instance["status"] == "stopped" or not self.coast.is_running(record["name"]):
             self.coast.resume(record["name"], instance["status"])
+            instance = self.coast.instances()[record["name"]]
+        if not self.coast.has_shared_service_proxies(record["name"]):
+            self.coast.command("stop", record["name"])
+            self.coast.resume(record["name"], "stopped")
+            instance = self.coast.instances()[record["name"]]
+            if not self.coast.has_shared_service_proxies(record["name"]):
+                raise RuntimeError("Coast restarted but shared-service proxies are still unreachable; inspect Coast's shared-service proxy logs before retrying")
         ports = self.coast.ports(record["name"])
         port = next(port["dynamic_port"] for port in ports if port["logical_name"] == "https")
         record["url"] = f"https://{record['hostname']}:{port}"

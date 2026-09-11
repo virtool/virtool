@@ -11,7 +11,8 @@ describe("<LibraryTypeSelector>", () => {
 			<LibraryTypeSelector libraryType="normal" onSelect={onSelect} />,
 		);
 
-		await userEvent.click(screen.getByRole("radio", { name: /sRNA/i }));
+		await userEvent.click(screen.getByRole("combobox"));
+		await userEvent.click(screen.getByRole("option", { name: /sRNA/i }));
 		expect(onSelect).toHaveBeenCalledWith("srna");
 	});
 
@@ -20,13 +21,6 @@ describe("<LibraryTypeSelector>", () => {
 			<LibraryTypeSelector libraryType="normal" onSelect={vi.fn()} />,
 		);
 
-		expect(screen.getByRole("radio", { name: /Normal/i })).toHaveAttribute(
-			"data-state",
-			"on",
-		);
-		expect(screen.getByRole("radio", { name: /sRNA/i })).toHaveAttribute(
-			"data-state",
-			"off",
-		);
+		expect(screen.getByRole("combobox")).toHaveTextContent("Normal");
 	});
 });

@@ -4,7 +4,6 @@ import { byteSize, pluralize } from "@app/format";
 import Alert from "@base/Alert";
 import { BoxGroup, BoxGroupTable } from "@base/Box";
 import Button from "@base/Button";
-import Icon from "@base/Icon";
 import ListEmpty from "@base/ListEmpty";
 import ListHeader from "@base/ListHeader";
 import LoadingPlaceholder from "@base/LoadingPlaceholder";
@@ -20,7 +19,7 @@ import type {
 	UploadType,
 } from "@virtool/contracts";
 import { capitalize } from "es-toolkit";
-import { AlertCircle, FileUp, Trash } from "lucide-react";
+import { AlertCircle, FileUp } from "lucide-react";
 import type { MouseEvent, ReactNode } from "react";
 import { useState } from "react";
 import type { Accept } from "react-dropzone";
@@ -52,6 +51,14 @@ export type FileManagerProps = {
 	   files listed with it. */
 	renderItemAction?: (upload: Upload, uploads: Upload[]) => ReactNode;
 
+	/* Renders a control acting on the whole selection. The renderer stays mounted
+	   while the list is mounted so it can preserve an in-progress action. */
+	renderSelectionAction?: (
+		selected: Upload[],
+		clear: () => void,
+		remove: (uploads: Upload[]) => void,
+	) => ReactNode;
+
 	setPage?: (page: number) => void;
 
 	setSort?: (sort: UploadSortField, direction: SortDirection) => void;
@@ -68,6 +75,7 @@ export function FileManager({
 	page = 1,
 	regex,
 	renderItemAction,
+	renderSelectionAction,
 	setPage = () => {},
 	setSort = () => {},
 	sort,
@@ -113,6 +121,7 @@ export function FileManager({
 		account,
 		"remove_file",
 	);
+	const canSelect = canDelete || Boolean(renderSelectionAction);
 
 	const title = `${fileType === "reads" ? "Read" : capitalize(fileType)} Files`;
 
@@ -136,6 +145,13 @@ export function FileManager({
 	function handleDelete() {
 		deleteFiles({ ids: selection.selected.map((item) => item.id) });
 		selection.clear();
+	}
+
+	function removeFromSelection(uploads: Upload[]) {
+		const removedIds = new Set(uploads.map((upload) => upload.id));
+		selection.setSelected((selected) =>
+			selected.filter((upload) => !removedIds.has(upload.id)),
+		);
 	}
 
 	function handleSort(field: UploadSortField) {
@@ -205,9 +221,14 @@ export function FileManager({
 									: pluralize(files.foundCount, "file")
 							}
 						>
-							{canDelete && selection.selected.length > 0 && (
+							{renderSelectionAction?.(
+								selection.selected,
+								selection.clear,
+								removeFromSelection,
+							)}
+							{selection.selected.length > 0 && canDelete && (
 								<Button color="red" size="small" onClick={handleDelete}>
-									<Icon icon={Trash} /> Delete
+									Delete
 								</Button>
 							)}
 						</ListHeader>
@@ -217,7 +238,7 @@ export function FileManager({
 								checked={selection.getVisibleState(files.items)}
 								direction={direction}
 								onSelectAll={
-									canDelete
+									canSelect
 										? () => selection.toggleVisible(files.items)
 										: undefined
 								}
@@ -233,7 +254,7 @@ export function FileManager({
 										checked={selection.isSelected(item)}
 										key={item.id}
 										onSelect={
-											canDelete
+											canSelect
 												? (event: MouseEvent<HTMLButtonElement>) =>
 														selection.select(item, {
 															shiftKey: event.shiftKey,

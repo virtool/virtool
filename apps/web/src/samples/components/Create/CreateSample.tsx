@@ -1,10 +1,5 @@
 import { useFetchAccount } from "@account/account";
 import Button from "@base/Button";
-import {
-	Collapsible,
-	CollapsibleContent,
-	CollapsibleTrigger,
-} from "@base/Collapsible";
 import { ContainerNarrow } from "@base/Container";
 import CreatedCount from "@base/CreatedCount";
 import {
@@ -29,34 +24,20 @@ import type { Label } from "@virtool/contracts";
 import { WandSparkles } from "lucide-react";
 import { useEffect, useState } from "react";
 import { Controller, useForm } from "react-hook-form";
-import DefaultSubtractionSelector from "./DefaultSubtractionSelector";
-import LabelSelector from "./LabelSelector";
-import LibraryTypeSelector from "./LibraryTypeSelector";
 import ReadSelector from "./ReadSelector";
-import SampleUserGroup from "./SampleUserGroup";
+import SampleSettingsFields from "./SampleSettingsFields";
+import { type SampleSettingsValues, sampleSettingsDefaults } from "./settings";
 
 type FormValues = {
+	settings: SampleSettingsValues;
 	name: string;
-	isolate: string;
-	host: string;
-	locale: string;
-	libraryType: string;
 	readFiles: number[];
-	group: string;
-	labels: number[];
-	subtractionIds: number[];
 };
 
 const emptyValues: FormValues = {
+	settings: sampleSettingsDefaults,
 	name: "",
-	isolate: "",
-	host: "",
-	locale: "",
-	libraryType: "normal",
 	readFiles: [],
-	group: "",
-	labels: [],
-	subtractionIds: [],
 };
 
 type CreateSampleProps = {
@@ -99,12 +80,11 @@ export default function CreateSample({ labels }: CreateSampleProps) {
 	});
 	const mutation = useCreateSample();
 
-	const [showMetadata, setShowMetadata] = useState(false);
 	const [createMore, setCreateMore] = useState(false);
 	const [createdCount, setCreatedCount] = useState(0);
 
 	useEffect(() => {
-		setValue("group", String(account?.primaryGroup?.id ?? ""));
+		setValue("settings.group", String(account?.primaryGroup?.id ?? ""));
 	}, [account, setValue]);
 
 	const reads = readsResponse?.pages.flatMap((page) => page.items) ?? [];
@@ -137,7 +117,10 @@ export default function CreateSample({ labels }: CreateSampleProps) {
 	function clearForm() {
 		reset({
 			...emptyValues,
-			group: String(account?.primaryGroup?.id ?? ""),
+			settings: {
+				...sampleSettingsDefaults,
+				group: String(account?.primaryGroup?.id ?? ""),
+			},
 		});
 	}
 
@@ -147,18 +130,24 @@ export default function CreateSample({ labels }: CreateSampleProps) {
 	}
 
 	function onSubmit(values: FormValues) {
-		mutation.mutate(getCreateSampleRequest(values, values.readFiles), {
-			onSuccess: () => {
-				clearForm();
+		mutation.mutate(
+			getCreateSampleRequest(
+				{ ...values.settings, name: values.name },
+				values.readFiles,
+			),
+			{
+				onSuccess: () => {
+					clearForm();
 
-				if (createMore) {
-					setCreatedCount((count) => count + 1);
-					return;
-				}
+					if (createMore) {
+						setCreatedCount((count) => count + 1);
+						return;
+					}
 
-				navigate({ to: "/samples" });
+					navigate({ to: "/samples" });
+				},
 			},
-		});
+		);
 	}
 
 	return (
@@ -203,69 +192,16 @@ export default function CreateSample({ labels }: CreateSampleProps) {
 
 						<Controller
 							control={control}
-							render={({ field: { onChange, value } }) => (
-								<SampleUserGroup
-									selected={value}
+							name="settings"
+							render={({ field }) => (
+								<SampleSettingsFields
 									groups={groups}
-									onChange={onChange}
-								/>
-							)}
-							name="group"
-						/>
-
-						<Collapsible
-							className="mb-4"
-							open={showMetadata}
-							onOpenChange={setShowMetadata}
-						>
-							<CollapsibleTrigger>Show Metadata Fields</CollapsibleTrigger>
-							<CollapsibleContent className="grid grid-cols-2 gap-x-4 pt-4">
-								<InputGroup>
-									<InputLabel htmlFor="locale">Locale</InputLabel>
-									<InputSimple id="locale" {...register("locale")} />
-								</InputGroup>
-
-								<InputGroup>
-									<InputLabel htmlFor="isolate">Isolate</InputLabel>
-									<InputSimple id="isolate" {...register("isolate")} />
-								</InputGroup>
-
-								<InputGroup>
-									<InputLabel htmlFor="host">Host</InputLabel>
-									<InputSimple id="host" {...register("host")} />
-								</InputGroup>
-							</CollapsibleContent>
-						</Collapsible>
-
-						<Controller
-							control={control}
-							render={({ field: { onChange, value } }) => (
-								<LibraryTypeSelector libraryType={value} onSelect={onChange} />
-							)}
-							name="libraryType"
-						/>
-
-						<Controller
-							control={control}
-							render={({ field: { onChange, value } }) => (
-								<LabelSelector
 									labels={labels}
-									selected={value}
-									onChange={onChange}
+									value={field.value}
+									onChange={field.onChange}
+									metadataColumns={2}
 								/>
 							)}
-							name="labels"
-						/>
-
-						<Controller
-							control={control}
-							render={({ field: { onChange, value } }) => (
-								<DefaultSubtractionSelector
-									selected={value}
-									onChange={onChange}
-								/>
-							)}
-							name="subtractionIds"
 						/>
 
 						<Controller

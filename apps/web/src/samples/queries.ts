@@ -268,11 +268,76 @@ export function useCreateSample() {
 			}) as Promise<Sample>,
 		onSuccess: () => {
 			// The created sample reserves its read files, so the server stops
-			// returning them. Only the reads selector shows them — an infinite
-			// list — so refetch just that, not every upload type and page.
-			queryClient.invalidateQueries({
-				queryKey: [...fileQueryKeys.infiniteLists(), "reads"],
+			// returning them. `lists()` is a prefix of `infiniteLists()`, so this
+			// refreshes both the paginated file manager and the reads selector.
+			queryClient.invalidateQueries({ queryKey: fileQueryKeys.lists() });
+		},
+	});
+}
+
+/** The outcome of creating a batch of samples. */
+export type CreateSamplesResult = {
+	/** The samples that were created. */
+	created: Sample[];
+
+	/** The requests that failed, each with the error that rejected it. */
+	failed: { error: Error; request: CreateSampleRequest }[];
+};
+
+/**
+ * Initializes a mutator for creating several samples at once.
+ *
+ * Every request is attempted, so one rejection doesn't strand the rest. The
+ * mutation resolves with both outcomes rather than rejecting, letting the
+ * caller keep the failed requests on screen while the created ones leave.
+ */
+export function useCreateSamples() {
+	const queryClient = useQueryClient();
+
+	return useMutation<CreateSamplesResult, Error, CreateSampleRequest[]>({
+		mutationFn: async (requests) => {
+			const results = await Promise.allSettled(
+				requests.map(
+					(request) =>
+						createSampleFn({
+							data: {
+								...request,
+								libraryType: request.libraryType as LibraryType,
+							},
+						}) as Promise<Sample>,
+				),
+			);
+
+			const created: Sample[] = [];
+			const failed: CreateSamplesResult["failed"] = [];
+
+			results.forEach((result, index) => {
+				const request = requests[index];
+
+				if (request === undefined) {
+					return;
+				}
+
+				if (result.status === "fulfilled") {
+					created.push(result.value);
+				} else {
+					failed.push({
+						error:
+							result.reason instanceof Error
+								? result.reason
+								: new Error(String(result.reason)),
+						request,
+					});
+				}
 			});
+
+			return { created, failed };
+		},
+		// Settled, not success: a partial failure still reserved the read files of
+		// the samples that were created, so the lists have to be refreshed either
+		// way.
+		onSettled: () => {
+			queryClient.invalidateQueries({ queryKey: fileQueryKeys.lists() });
 		},
 	});
 }

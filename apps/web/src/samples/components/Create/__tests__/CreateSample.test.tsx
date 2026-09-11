@@ -156,7 +156,10 @@ describe("<CreateSample>", () => {
 		await userEvent.type(await screen.findByLabelText("Isolate"), "Clone AB");
 		await userEvent.type(screen.getByLabelText("Host"), "Apple");
 		await userEvent.type(screen.getByLabelText("Locale"), "Earth");
-		await userEvent.click(screen.getByText("Normal"));
+		await userEvent.click(
+			screen.getByRole("combobox", { name: "Library Type" }),
+		);
+		await userEvent.click(screen.getByRole("option", { name: /^sRNA/ }));
 
 		// Select Files
 		await setReadSelectorMode("Manual");
@@ -189,7 +192,7 @@ describe("<CreateSample>", () => {
 					isolate: "Clone AB",
 					host: "Apple",
 					locale: "Earth",
-					libraryType: "normal",
+					libraryType: "srna",
 					files: [firstFile.id, secondFile.id],
 					labels: [firstLabel.id],
 					subtractions: [subtractionShortlist.id],
