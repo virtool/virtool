@@ -24,6 +24,7 @@ export type DataMigrationFinding = {
 	detail?: Record<string, unknown>;
 };
 
+// Keep this key stable so every migration process contends on the same lock.
 const LOCK_KEY = "virtool:data_migrations";
 
 /**
