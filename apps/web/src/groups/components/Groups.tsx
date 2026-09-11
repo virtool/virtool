@@ -1,12 +1,14 @@
 import Button from "@base/Button";
 import DeleteAlert from "@base/DeleteAlert";
 import { InputHeader } from "@base/Input";
+import ListEmpty from "@base/ListEmpty";
 import LoadingPlaceholder from "@base/LoadingPlaceholder";
 import QueryError from "@base/QueryError";
 import SectionHeader from "@base/SectionHeader";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@base/Tabs";
 import type { GroupMinimal } from "@virtool/contracts";
 import { sortBy } from "es-toolkit/compat";
+import { Users } from "lucide-react";
 import { useState } from "react";
 import {
 	useDeleteGroup,
@@ -116,9 +118,11 @@ export default function Groups() {
 					</TabsContent>
 				</Tabs>
 			) : (
-				<div className="bg-gray-200 flex items-center h-48 justify-center rounded-md text-gray-600">
-					No Groups Exist
-				</div>
+				<ListEmpty
+					icon={Users}
+					title="No groups found"
+					description="No groups have been created yet."
+				/>
 			)}
 
 			<Create open={openCreateGroup} setOpen={setOpenCreateGroup} />

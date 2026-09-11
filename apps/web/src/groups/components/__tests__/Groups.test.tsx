@@ -11,7 +11,7 @@ describe("Groups", () => {
 	it("should render correctly when loading = true", async () => {
 		await renderWithRouter(<Groups />);
 
-		expect(screen.queryByText("No Groups Exist")).not.toBeInTheDocument();
+		expect(screen.queryByText("No groups found")).not.toBeInTheDocument();
 		expect(screen.queryByText("cancel_job")).not.toBeInTheDocument();
 		expect(screen.queryByText("No Group Members")).not.toBeInTheDocument();
 		expect(
@@ -29,7 +29,10 @@ describe("Groups", () => {
 		expect(
 			screen.getByText("Manage group memberships and permissions."),
 		).toBeInTheDocument();
-		expect(await screen.findByText("No Groups Exist")).toBeInTheDocument();
+		expect(await screen.findByText("No groups found")).toBeInTheDocument();
+		expect(
+			screen.getByText("No groups have been created yet."),
+		).toBeInTheDocument();
 		expect(
 			screen.queryByRole("button", { name: "Delete" }),
 		).not.toBeInTheDocument();
