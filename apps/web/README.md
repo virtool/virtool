@@ -23,9 +23,8 @@ Follow [AGENTS.md](../../AGENTS.md) for repository-wide rules and checks, and
 ### Imports and bundles
 
 Use specific path aliases across directories; reserve `@/*` for `src/routes`
-and `src/types`. [tsconfig.json](tsconfig.json) defines the aliases. Client
-imports of server declarations use `@server/*`; add new feature aliases to the
-server `noRestrictedImports` list.
+and `src/types`. [tsconfig.json](tsconfig.json) defines the aliases. Follow the
+server-import restrictions in [AGENTS.md](../../AGENTS.md#client).
 
 Route loaders, guards, and search validators are eager exports. Dynamically
 import feature query modules inside loaders so their request dependencies do
@@ -68,8 +67,8 @@ in a separate `keys.ts` and import them directly. This lets invalidators use
 keys without loading the request layer.
 
 Declare reusable keys and fetchers together with `queryOptions`. Prefetch data
-needed for the first render with `ensureQueryData` in a route loader, importing
-the query module inside the loader. Fetch interaction-only data at its point of use. Import modules and prefetch independent resources concurrently.
+needed for the first render with `ensureQueryData` in a route loader. Fetch
+interaction-only data at its point of use.
 
 Primary route data uses suspense queries. Route boundaries handle pending and
 error states. Preserve `notFound()` mappings where a route has a
@@ -82,10 +81,10 @@ Do not treat missing data as loading: an initial error has no data either.
 Paginated queries use `placeholderData: keepPreviousData`. Read server-function
 error statuses with `getErrorStatus` from `@app/queryErrors`.
 
-Put invalidation in `useMutation` callbacks so it runs even after the component unmounts. Put
-navigation, toasts, and other view effects in `mutate` callbacks. Invalidate the
-narrowest hierarchical key; reserve `setQueryData` for frequent updates where
-repeated requests are too expensive.
+Put invalidation in `useMutation` callbacks so it runs even after the component
+unmounts. Put navigation, toasts, and other view effects in `mutate` callbacks.
+Invalidate the narrowest hierarchical key; reserve `setQueryData` for frequent
+updates where repeated requests are too expensive.
 
 ### Styling
 
@@ -162,9 +161,9 @@ authorization. `requireAuthenticatedRequest` accepts sessions and API keys;
 server functions are session-only. Better Auth owns sign-in, while Virtool owns
 account state and authorization; see [betterAuth.ts](src/server/auth/betterAuth.ts).
 
-Resolve downloads to a database row or explicit whitelist, use the recorded
-storage key, and stream the response. Use the display name for
-`Content-Disposition`. Direct upload reservations and finalization share
+Use [streamStorageObject](src/server/http.ts) to stream stored files or redirect
+to a presigned URL according to deployment configuration. Use the display name
+for `Content-Disposition`. Direct upload reservations and finalization share
 [src/server/uploads/service.ts](src/server/uploads/service.ts); file bytes go
 to Azure Blob storage. See the [upload API guide](../site/src/content/manual/api/uploads.mdx)
 for the protocol.
@@ -190,11 +189,12 @@ Place component and helper tests in adjacent `__tests__/` directories. Use
 [src/tests/setup.tsx](src/tests/setup.tsx). Mock server-function modules with
 the typed stubs in `src/tests/server-fn/`, named `mock<ServerFnName>`; keep plain
 data generators in `src/tests/fake/`. For raw transports, mock the module that
-initiates the request. Missing mocks can cause real requests; no HTTP interceptor catches them.
+initiates the request. Missing mocks can cause real requests; no HTTP
+interceptor catches them.
 
-Server-function tests import the `?tss-serverfn-split` module and call its
-handler through [callServerFn](src/server/test/serverFn.ts), which isolates the
-handler's own authorization guard.
+Test server-function handlers with
+[callServerFn](src/server/test/serverFn.ts); its documentation explains how to
+import the handler after the compiler transform.
 
 Use `user-event` and accessible queries such as `getByRole` and `getByLabelText`;
 do not disambiguate controls by index. Call `expectNoViolations(baseElement)`
@@ -211,8 +211,9 @@ Server variables are validated before the listener starts. See
 [configSchema.ts](src/server/configSchema.ts) for validation and
 [the environment guide](../../docs/env.md) for file-backed values and key
 rotation. Every runtime variable accepts a `_FILE` variant, which takes
-precedence. `VT_SENTRY_DSN` is also embedded in the browser at build time, where
-`_FILE` is unavailable.
+precedence. Configure the required storage backend using
+[the shared storage settings](../../packages/data/README.md#configuration).
+The table below covers the remaining settings and web-specific storage behavior.
 
 | Variable | Type | Default | Use |
 | --- | --- | --- | --- |
@@ -224,16 +225,6 @@ precedence. `VT_SENTRY_DSN` is also embedded in the browser at build time, where
 | `VT_SENTRY_DSN` | URL string | Unset | Send server errors to Sentry. Vite also embeds this value in the client at build time; that client value cannot use `_FILE`. |
 | `VT_ENCRYPTION_KEY` | Base64 string (32 bytes) | Unset | Encrypt secrets stored by Virtool: the Resend API key and the NCBI API key. When unset or invalid, email is unavailable and GenBank lookups drop to the anonymous rate limit, but the server runs. See [the encryption-key guide](../../docs/env.md#encryption-key). |
 | `VT_ENCRYPTION_KEY_PREVIOUS` | Base64 string (32 bytes) | Unset | Accept encrypted values written under the prior key during rotation. |
-| `VT_STORAGE_BACKEND` | `s3` \| `azure` | Required | Select the object-storage backend shared with the other Virtool services. |
-| `VT_STORAGE_S3_BUCKET` | String | Required for S3 | Name the S3 bucket. |
-| `VT_STORAGE_S3_REGION` | String | Unset | Set the S3 region. |
-| `VT_STORAGE_S3_ENDPOINT` | URL string | Unset | Override the S3 endpoint; leave unset for AWS. |
-| `VT_STORAGE_S3_ACCESS_KEY_ID` | String | Unset | Set an explicit S3 access key. Set with `VT_STORAGE_S3_SECRET_ACCESS_KEY`, or leave both unset for the AWS credential chain. |
-| `VT_STORAGE_S3_SECRET_ACCESS_KEY` | String | Unset | Set an explicit S3 secret key. Set with `VT_STORAGE_S3_ACCESS_KEY_ID`, or leave both unset for the AWS credential chain. |
-| `VT_STORAGE_AZURE_ACCOUNT` | String | Required for Azure | Name the Azure Storage account. |
-| `VT_STORAGE_AZURE_CONTAINER` | String | Required for Azure | Name the Azure Blob container. |
-| `VT_STORAGE_AZURE_ACCESS_KEY` | String | Unset | Set an Azure account key; leave unset to use managed identity. |
-| `VT_STORAGE_AZURE_ENDPOINT` | URL string | Unset | Override the Azure Blob endpoint. |
 | `VT_STORAGE_AZURE_DOWNLOAD_URL` | URL origin | Unset | Rehost redirected Azure downloads on a public origin, such as `https://files.virtool.ca`. Applies only in `redirect` download mode. |
 | `VT_STORAGE_AZURE_UPLOAD_URL` | URL origin | Unset | Rehost presigned Azure uploads on a public origin, such as a Front Door route to a private storage account. Falls back to `VT_STORAGE_AZURE_DOWNLOAD_URL`, then the Azure Blob endpoint. |
 | `VT_STORAGE_DOWNLOAD_MODE` | `stream` \| `redirect` | `stream` | Serve file downloads by streaming the bytes through this server, or by 302-redirecting to a short-lived presigned storage URL. `redirect` falls back to streaming when the backend cannot presign. |
@@ -243,13 +234,11 @@ precedence. `VT_SENTRY_DSN` is also embedded in the browser at build time, where
 ## Administration
 
 `/administration/uploads` configures the upload-size limit for browser and API
-clients. Direct uploads require Azure and `VT_UPLOADS_CHUNKED`; deployments
-without them reject upload initialization.
+clients.
 
 Full administrators configure email delivery at `/administration/settings`.
 Delivery needs a Resend account, a verified sending domain, and a working
-`VT_ENCRYPTION_KEY`. Turning sending off preserves configuration and stops new
-mail entering the outbox; already queued mail still goes out. See
+`VT_ENCRYPTION_KEY`. See
 [the email delivery contract](../../packages/data/README.md#email-delivery) and
 [encryption-key recovery and rotation](../../docs/env.md#encryption-key).
 
