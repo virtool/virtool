@@ -374,6 +374,28 @@ visible state publishes the corresponding `tasks` event. The execution and
 shutdown contracts are documented in
 [`apps/internal/README.md`](../../apps/internal/README.md).
 
+## Data migrations
+
+`src/data-migrations/data.ts` owns persistence for paired data migrations:
+`data_migrations` records each `(key, version)` attempt outcome and checkpoint;
+`data_migration_findings` stores bounded finding details. Kinds are `audit` and
+`backfill`, and statuses are `running`, `passed`, `failed`, and `errored`.
+
+A retry increments the attempt count and clears the previous findings and
+outcome, retaining the last safe checkpoint. A pass clears that checkpoint.
+Only TypeScript writes these records. Paired SQL asserts that the exact key and
+version passed before making its schema changes.
+
+`0026_add_data_migrations` bootstraps the framework tables and precedes every
+paired migration. The schema mirror and migration snapshot describe these
+same tables. Body implementations use raw SQL pinned to their historical schema;
+they do not import the moving domain mirror.
+
+The internal app owns pairing, journal order, segmented application, and the
+operator commands. See [data migrations](../../apps/internal/README.md#paired-data-migrations)
+for authoring, SQL assertions, and retries. The direct `db:migrate` command
+cannot run TypeScript bodies; its SQL assertions stop at unsatisfied pairs.
+
 ## Testing
 
 Tests run as one Node Vitest project against a Postgres testcontainer. The

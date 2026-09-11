@@ -183,6 +183,13 @@
       "when": 1789058051921,
       "tag": "0025_friendly_franklin_richards",
       "breakpoints": true
+    },
+    {
+      "idx": 26,
+      "version": "7",
+      "when": 1789058051922,
+      "tag": "0026_add_data_migrations",
+      "breakpoints": true
     }
   ]
 }

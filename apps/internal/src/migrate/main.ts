@@ -1,9 +1,15 @@
 import { fileURLToPath } from "node:url";
 import { resolveFileBacked } from "@virtool/contracts/env";
-import { createDb } from "@virtool/data/db/pg";
+import {
+	acquireDataMigrationsLock,
+	releaseDataMigrationsLock,
+} from "@virtool/data/data-migrations/data";
 import { createLogger } from "@virtool/logger";
-import { migrate } from "drizzle-orm/postgres-js/migrator";
 import { z } from "zod";
+
+import { DATA_MIGRATIONS } from "../data-migrations/registry";
+import { applyGatedMigrations } from "./apply";
+import { createMigrationDb } from "./connection";
 
 /**
  * The name this entrypoint reports under, in logs and in `application_name`.
@@ -54,42 +60,74 @@ async function doMigrate(): Promise<void> {
 
 	const migrationsFolder = env.VT_MIGRATIONS_PATH ?? DEFAULT_MIGRATIONS_PATH;
 
-	// One connection: migrations are serial by construction, and a pool would
-	// leave idle backends open for the length of a DDL statement that may hold
-	// locks the rest of the fleet is waiting on.
-	const { client, db } = createDb(
-		{ postgresUrl: env.VT_POSTGRES_URL, postgresPoolMax: 1 },
-		SERVICE,
-	);
+	const controller = new AbortController();
+	const { client, db } = createMigrationDb(env.VT_POSTGRES_URL, controller);
+	function abort(): void {
+		logger.warn("stopping migrations at the next boundary");
+		controller.abort();
+	}
+	process.once("SIGTERM", abort);
+	process.once("SIGINT", abort);
 
 	try {
-		logger.info({ migrationsFolder }, "applying migrations");
+		if (!(await acquireDataMigrationsLock(client))) {
+			logger.error(
+				"another migration run holds the lock; not applying migrations",
+			);
+			process.exitCode = 1;
+			return;
+		}
 
-		/*
-		 The table and schema are pinned to the same values `drizzle.config.ts`
-		 sets, and to the ones production's baseline row was stamped into by hand.
-		 They are drizzle-orm's defaults today; naming them here means a default
-		 moving on either side cannot orphan that stamp and re-run `0000` against a
-		 database that already has every table in it.
-		*/
-		await migrate(db, {
-			migrationsFolder,
-			migrationsSchema: "drizzle",
-			migrationsTable: "__drizzle_migrations",
-		});
+		try {
+			logger.info({ migrationsFolder }, "applying migrations");
 
-		logger.info("migrations applied");
+			/*
+			 The table and schema are pinned to the same values `drizzle.config.ts`
+			 sets, and to the ones production's baseline row was stamped into by
+			 hand. They are drizzle-orm's defaults today; naming them here means a
+			 default moving on either side cannot orphan that stamp and re-run
+			 `0000` against a database that already has every table in it.
+			*/
+			const result = await applyGatedMigrations({
+				db,
+				client,
+				signal: controller.signal,
+				logger,
+				migrationsFolder,
+				migrationsSchema: "drizzle",
+				migrationsTable: "__drizzle_migrations",
+				registry: DATA_MIGRATIONS,
+			});
+
+			if (result.blockedAt === undefined) {
+				logger.info(
+					{ applied_through: result.appliedThrough },
+					"migrations applied",
+				);
+				return;
+			}
+
+			logger.error(
+				{
+					blocked_at: result.blockedAt,
+					applied_through: result.appliedThrough,
+					...result.outcome,
+				},
+				"data migration did not pass; inspect its findings, remediate, and rerun migrate",
+			);
+
+			process.exitCode = 1;
+		} finally {
+			await releaseDataMigrationsLock(client);
+		}
 	} finally {
+		process.off("SIGTERM", abort);
+		process.off("SIGINT", abort);
 		await client.end();
 	}
 }
 
-/**
- * Apply pending Drizzle migrations — the `migrate` subcommand.
- *
- * A function rather than module-scope side effects so the merged binary's
- * dispatcher decides when it runs, and so importing this module costs nothing.
- */
+/** Apply pending SQL and paired data migrations, stopping at the first failed attempt. */
 export async function startMigrate(): Promise<void> {
 	try {
 		await doMigrate();

@@ -8,6 +8,7 @@ export * from "./apiKeys";
 export * from "./auth";
 export * from "./banners";
 export * from "./caches";
+export * from "./dataMigrations";
 export * from "./emailOutbox";
 export * from "./groups";
 export * from "./history";

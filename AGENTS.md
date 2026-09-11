@@ -125,6 +125,12 @@ repository-wide rules in view:
   `/metrics` endpoint. Keep labels bounded and use the shared constant-time
   bearer-token helper. See [the web metrics guide](apps/web/README.md#metrics)
   and [the internal metrics guide](apps/internal/README.md#metrics).
+- Schema changes that depend on the data being in a particular state pair with
+  a data migration — an audit or resumable backfill recorded in
+  `data_migrations`. Register its exact SQL migration tag and start that SQL
+  file with the matching key/version assertion. Bump both versions when the
+  body changes what it accepts or writes. Bodies use historical SQL, not the
+  moving schema mirror. See [the data migrations guide](apps/internal/README.md#paired-data-migrations).
 - `apps/internal`'s `run` subcommand carries both the periodic spawner and the
   task runner. Its lease, fencing, shutdown, progress, metrics, and task-body
   contracts are maintained in [its README](apps/internal/README.md); do not
