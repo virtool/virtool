@@ -21,7 +21,7 @@ and committed to Virtool's database.
 
 The FASTQ files and quality data are used for further analyses triggered by the user.
 
-## Browse Samples
+## Browse samples
 
 Once you have imported one or more samples, they can be browsed in the main sample
 management view.
@@ -52,7 +52,7 @@ management view.
 
    ![The sample detail view for Q10A_2](./detail.png?url)
 
-## Start Quick Analysis
+## Start quick analysis
 
 Quick analyses allows you to start analysis jobs for many samples at once.
 
@@ -75,7 +75,7 @@ Quick analyses allows you to start analysis jobs for many samples at once.
    Once the analysis is running, you can view its progress under the **Jobs** tab.
    ![Analysis in progress](./progress.png?url)
 
-## Create a Sample
+## Create a sample
 
 1. Go to **Samples** view via the main navigation bar
 
@@ -161,7 +161,7 @@ Quick analyses allows you to start analysis jobs for many samples at once.
 
    ![Sample Creation Complete](./ready.png?url)
 
-## Interpreting Sample Quality
+## Interpreting sample quality
 
 Quality metrics are calculated using [FastQC](https://www.bioinformatics.babraham.ac.uk/projects/fastqc) during the sample creation process. These metrics are based on the raw data provided by the user.
 
@@ -171,7 +171,7 @@ The quality information can be viewed under the **Quality** tab:
 
 You see three different graphs on this page as shown below.
 
-### Quality Distribution at Read Positions
+### Quality distribution at read positions
 
 ![Quality Distribution at Read Positions](./quality_dist_at_read_positions.png?url)
 
@@ -179,7 +179,7 @@ This graph shows the quality of your sample library. The Y-axis shows the qualit
 
 Median values of less than 25 or a lower quartile of less than 10 is about. For the preceding sample, the quality of our sample library is fine and further analysis can take place.
 
-### Nucleotide Composition at Read Positions
+### Nucleotide composition at read positions
 
 ![Nucleotide Composition at Read Positions](./nuc_comp_at_read_positions.png?url)
 
@@ -187,13 +187,13 @@ This plot shows the proportion of each base's position in a file. In general, on
 
 With all the things being equal in a diverse library, you should see an even distribution of the four bases which doesn't change with base position. Although the relative amount of G/C content is determined by your library, but what you should see on the graph are parallel lines going across the plot.
 
-### Read-wise Quality Occurrence
+### Read-wise quality occurrence
 
 ![Read-wise Quality Occurrence](./read_wise_quality_occurrence.png?url)
 
 In this case we are taking every sequence and looking at the mean score across all the bases in that particular sequence. The distribution of those means are then plotted as shown previously. All sequences should form one tight distribution (sharp curve) with universally high quality and no sequences of low quality. This sharp curve is the average quality per read. A mean quality below 27 is a cause for concern.
 
-## Edit a Sample
+## Edit a sample
 
 1. Click on **Samples** in the top navigation bar to see the sample listing.
 
@@ -216,7 +216,7 @@ In this case we are taking every sequence and looking at the mean score across a
 
    ![Apple stem pitting virus edited](./apple_stem_edited.png?url)
 
-## Delete a Sample
+## Delete a sample
 
 1. Click on **Samples** in the top navigation bar to see a list of available samples.
    ![Samples List Overview](./samples_overview.png?url)
@@ -230,7 +230,7 @@ Click on the <Icon name="trash" color="red"/> to delete the sample. A dialog box
 Click <Icon name="check" color="green" /> **Confirm**. The sample is now removed from the samples list.
 ![Samples List Overview](./samples_overview2.png?url)
 
-## Download a FASTQ File
+## Download a FASTQ file
 
 You can download the original FASTQ files used to create a sample. To do so, click on the sample of interest and then click **Files**.
 ![Sample of Interest](./files2.png?url)
@@ -238,7 +238,7 @@ You can download the original FASTQ files used to create a sample. To do so, cli
 Click the link under **Raw Data** to download the FASTQ file that was originally used to create the sample.
 ![Downloaded File](./downloaded_file.png?url)
 
-## Trim Caches
+## Trim caches
 
 Sample data is automatically trimmed during analysis to remove sequencing artefacts and low quality regions. After the first analysis, the trimmed data are cached for reuse in future analyses that use the same trimming parameters. This saves running the trimming workflow steps for every analysis for a given sample.
 
@@ -255,25 +255,25 @@ When you click on the link under **Cached Trims** you see all the parameters use
 Additionally, below the parameters you see the quality of the data that has been trimmed and cached.
 ![Quality of Trimmed Data](./quality2.png?url)
 
-### Trim Cache Quality
+### Trim cache quality
 
 Quality metrics are recalculated for reads trimmed during an analysis. The quality information is associated with the generated trim cache. Since low quality reads are discarded and low quality ends are removed, we expected the trim cache quality metrics to improve over those for the raw data.
 
-#### Quality Distribution at Read Positions - Raw
+#### Quality distribution at read positions - raw
 
 ![Quality of Sample](./quality3.png?url)
 
-#### Quality Distribution at Read Positions - Trimmed
+#### Quality distribution at read positions - trimmed
 
 ![Quality after Trimming](./quality5.png?url)
 
 In the **Quality Distribution at Read Positions - Raw** chart we see that the mean base quality degrades as we get closer to the end of the read. This is a common issue in Illumina libraries. In the **Trimmed** charts we can see that low quality ends were removed resulting in a higher mean and min base quality.
 
-#### Read-wise Quality Occurrence - Raw
+#### Read-wise quality occurrence - raw
 
 ![Read-wise Quality of Sample](./quality4.png?url)
 
-#### Read-wise Quality Occurrence - Trimmed
+#### Read-wise quality occurrence - trimmed
 
 ![Read-wise Quality after Trimming](./quality6.png?url)
 
@@ -285,7 +285,7 @@ In the **Read-wise Quality Occurrence - Raw** image we see one small curve befor
 
 Virtool allows for fine control of the rights users have to view or change samples.
 
-#### Management Levels
+#### Management levels
 
 Rights can apply at four different levels.
 
@@ -296,7 +296,7 @@ Rights can apply at four different levels.
 | _group_          | The group that owns the sample. Read and write privileges can be independently set at this level.                                                                 |
 | _all users_      | All users registered on the Virtool instance. Read and write privileges can be independently set at this level.                                                   |
 
-#### Group Ownership
+#### Group ownership
 
 Each sample can be owned by a specific user group. This allows many groups of diagnosticians or researchers to keep their data private or safe from one another while sharing a single Virtool instance.
 
@@ -304,19 +304,19 @@ Samples are not required to have an owner group. The group can be set to `None`.
 
 #### Privileges
 
-##### none
+##### None
 
 The management level (such as group or all users) cannot read or write the sample. Included users never see the sample in the sample management interface.
 
 This privilege is useful for completely isolating samples between separate groups of users.
 
-##### read
+##### Read
 
 The management level (such as group or all users) can only read the sample. The included users see the sample in the sample management interface and can view its general information, quality, and analyses.
 
 They cannot edit or remove the sample or create new analyses. The elements in the user interface associated with these actions are hidden.
 
-##### read & write
+##### Read & write
 
 The management level (such as group or all users) can only read the sample. The included users see the sample in the sample management interface and can view its general information, quality, and analyses.
 
@@ -330,7 +330,7 @@ Access the rights management controls by clicking the <Icon name="key" /> tab in
 
 ![The sample rights view](./sample_rights_view.png?url)
 
-### Default Rights
+### Default rights
 
 Samples have their initial access rights configured when they are first created. How these rights are assigned can be configured in the administrative settings.
 
@@ -339,7 +339,7 @@ Samples have their initial access rights configured when they are first created.
 
 ## Settings
 
-### Unique Sample Names
+### Unique sample names
 
 By default, sample names must be unique to the sample manager. This prevents confusion between identically named samples. It's possible to disable this feature. To do so, click **Settings** on the left sidebar under the samples overview page.
 ![Samples Overview](./samples_overview3.png?url)
@@ -348,11 +348,11 @@ Check the **Unique Sample Names** box to ensure that every created sample has a 
 
 !["Unique Sample Names Off"](./unique_sample_names.png?url)
 
-### Default Sample Rights
+### Default sample rights
 
 These settings determine how rights are assigned to newly created samples. Sample rights in Virtool are reminiscent of UNIX permissions.
 
-#### Sample Group
+#### Sample group
 
 This determines how an owner group is applied to the sample when it's created.
 
@@ -364,11 +364,11 @@ This determines how an owner group is applied to the sample when it's created.
 | _Force Choice_  | The sample creator is forced to choose the owner group from their member groups |
 | _Primary Group_ | The sample is automatically assigned the creators primary group                 |
 
-#### Group Rights
+#### Group rights
 
 This setting determines how members of the owner group can interact with the sample. If the owner group is _None_, this setting has no effect.
 
-#### Group Rights
+#### Group rights
 
 This setting determines how members of the owner group can interact with the sample. If the owner group is _None_, this setting has no effect. Rights can be changed by sample owners and administrators at any time.
 
@@ -380,6 +380,6 @@ This setting determines how members of the owner group can interact with the sam
 | _Read_         | Sample is returned in searches and is viewable. All editing interfaces are off and analyses cannot be started. |
 | _Read & Write_ | Also to _Read_ rights, editing interfaces are enabled and analyses can be run.                               |
 
-#### All Users' Rights
+#### All users' rights
 
 This settings determines how any Virtool user can interact with the sample. Rights for all users behave exactly as they do in **Group Rights**. Rights can be changed by sample owners and administrators at any time.

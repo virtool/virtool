@@ -11,7 +11,7 @@ Analyses are the results of running a bioinformatic workflow on sample data.
 
 When an analysis is started, the sample data is run through a series of bioinformatic tools to produce a meaningful result that is made available to the user.
 
-### Analysis Jobs
+### Analysis jobs
 
 Analyzing sample data is the most computationally intensive task Virtool performs. It can take minutes or hours to run analyses for large, complex sample libraries.
 
@@ -29,7 +29,7 @@ Sample data is automatically trimmed during analysis. Trimmed data is cached so 
 
 ![Sample files with no cache created](./cache.png?url)
 
-### Reference Versions
+### Reference versions
 
 Analyses make use of [references](/docs/guide/references) composed of pathogen sequences. Since references are modifiable and versioned, analyses are linked to specific versions of a reference. If a sample needs to be analyzed against newer version, a new analysis must be created.
 
@@ -46,7 +46,7 @@ You can read more about creating and managing subtractions from the links below:
 - [Subtraction Creation Tutorial](/docs/guide/subtractions)
 - [Subtraction User Guide](/docs/guide/subtractions)
 
-## View Analyses
+## View analyses
 
 1. Navigate to a sample and click the **Analyses** tab
 
@@ -58,7 +58,7 @@ You can read more about creating and managing subtractions from the links below:
 
    ![List of Analysis](./list_one.png?url)
 
-## Create an Analysis
+## Create an analysis
 
 1. Navigate to the analyses list for a sample.
 
@@ -95,7 +95,7 @@ You can read more about creating and managing subtractions from the links below:
   [Read more about quick analyses](/docs/guide/samples).
 </Note>
 
-## Delete an Analysis
+## Delete an analysis
 
 <Note color="red">
 
@@ -172,7 +172,7 @@ example, 2% of 5 million reads or 100,000 mapped reads is good.
 
 ### Examples
 
-#### High Quality Positive
+#### High quality positive
 
 After running Pathoscope, the analyses tab lists all viruses Virtool thinks are likely
 to be in the sample. In our example, one viroid and four viruses are likely to be in the
@@ -215,7 +215,7 @@ virus are present in the sample. Notice that viruses have larger genomes than vi
 so the x-axis runs a greater distance covering the entire distance of the virus
 genome.
 
-#### High Quality Negative
+#### High quality negative
 
 The image below is an example of an analysis from a healthy sample.
 ![Healthy sample analysis](./pathoscope_healthy.png?url)
@@ -337,7 +337,7 @@ Contigs can be sent to NCBI for a BLAST search by clicking <DummyButton color="g
 Many contigs derived from known viruses or non-viral sources are assembled. It's
 necessary to BLAST significant contigs to ensure they are novel.
 
-### Good Result
+### Good result
 
 When a BLAST search is completed, a result table is shown below the contig graphic.
 This table states the E-value, score, and identity of the viral sequences found on NCBI.
@@ -372,7 +372,7 @@ reference are actually from the host. It's important to bear in mind that refere
 databases are not reliable and may contain viral nucleotide and protein sequences
 mis-annotated as originating from the host.
 
-### Suspicious Result
+### Suspicious result
 
 The result view below suggests a potential novel virus.
 
@@ -389,7 +389,7 @@ Additionally, this sample is isolated from a _Prunus_ host and Nectarine marafiv
 not known to infect _Prunus_ species. Because the size of the sequence is large (6382 bp)
 it's worth assembling to discover more about the viral genome.
 
-### Non-viral Result
+### Non-viral result
 
 This contig represents likely bacterial contamination from the field or laboratory:
 
@@ -411,7 +411,7 @@ Further, the BLAST results for this contig reveal strong matches to _Homo sapien
 and _Pan troglodytes_ (chimpanzee). Given this information, this is very likely a case of
 human contamination.
 
-#### Next Steps
+#### Next steps
 
 If a suspicious result is found during interpretation of Nuvs results, it's important to
 further characterize the sequence using other bioinformatic tools and the help of a

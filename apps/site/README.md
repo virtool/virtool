@@ -1,4 +1,4 @@
-# Virtool.ca Website
+# Virtool.ca website
 
 The product [website](https://www.virtool.ca) for Virtool.
 

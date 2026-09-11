@@ -1,6 +1,6 @@
 # Indexes
 
-## SQLite Artifact
+## SQLite artifact
 
 A reference index is stored as one gzip-encoded SQLite file. A workflow
 stream-decompresses it to a transient raw SQLite path before `packages/sqlite/`
