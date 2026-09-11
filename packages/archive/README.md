@@ -69,7 +69,7 @@ runs `pigz`.
 `decompressGzipToFile` takes an `AsyncIterable<Uint8Array>` so object-storage
 callers can inflate directly into a destination without buffering or retaining
 a compressed copy. Its optional limit counts decompressed bytes and fails with
-`DecompressedSizeLimitError`; its optional abort signal tears down the whole
+`DecompressedSizeLimitError`; its optional cancellation signal tears down the whole
 pipeline.
 
 ## Testing

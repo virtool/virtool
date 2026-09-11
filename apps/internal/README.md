@@ -124,8 +124,8 @@ fraction from 0 to 1, and the framework debounces, serializes, and keeps writes
 monotonic. Task bodies do not write the `tasks` table or publish task events
 themselves.
 
-Cleanup runs after failure or cooperative abort, but not after success. Its
-reason distinguishes terminal failure from an aborted run that another runner
+Cleanup runs after failure or cooperative cancellation, but not after success. Its
+reason distinguishes terminal failure from a cancelled run that another runner
 another runner retries it. Cleanup errors are logged without replacing the original outcome.
 
 Every task body must:
