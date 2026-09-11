@@ -462,7 +462,7 @@ handler. Register each new `functions.ts` module in
 `server/__tests__/authorization.test.ts`.
 
 Keep `createServerFn` at the definition site. The Vite transform recognizes
-the call syntactically and will not recognize a wrapper factory.
+the call syntactically and does not recognize a wrapper factory.
 
 Use a raw `createFileRoute` handler only when RPC cannot provide the required
 transport: upload progress, streaming downloads, SSE, health probes, Prometheus,
@@ -569,7 +569,7 @@ the rows and the purposes; this app owns the transport and the boundary.
 the invitation, recovery and required-MFA work, so a restricted principal
 reaches nothing yet.
 
-Raw routes reject restricted principals and always will:
+Raw routes reject restricted principals:
 `requireAuthenticatedRequest` reads the session cookies or an `Authorization`
 header and never the setup pair, so SSE, uploads, downloads, and streamed files
 answer a restricted holder the same 401 they answer anyone else. API-key Basic
@@ -735,7 +735,7 @@ another form:
   replaces what is stored, and the replaced value cannot be read back. An empty
   field is refused rather than treated as a removal — removing a key is the
   separate **Remove** action, which asks for confirmation and also switches
-  delivery off. Encryption-key rotation is documented separately and will be
+  delivery off. Encryption-key rotation is documented separately and is
   automated in a future change.
 - **Test delivery** sends the dedicated test template to one recipient with the
   stored configuration. It never enqueues an authentication template and never

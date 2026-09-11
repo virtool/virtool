@@ -183,6 +183,6 @@ field is.
 ## Residual risk
 
 The fixtures cover organisms that are already curated, so novel GBSeq shapes
-from new submissions will still surprise. The live smoke tests and the golden
+from new submissions still surprise. The live smoke tests and the golden
 files, which can be refreshed, are how that surfaces as a reviewable diff rather
 than a silent regression.

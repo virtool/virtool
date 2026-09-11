@@ -54,7 +54,7 @@ You can read more about creating and managing subtractions from the links below:
 
 2. View the list of analyses
 
-   This page will list all the analyses that have been created or currently running on your sample. The following image shows that one analysis has been completed.
+   This page lists all the analyses that have been created or currently running on your sample. The following image shows that one analysis has been completed.
 
    ![List of Analysis](./list_one.png?url)
 
@@ -76,11 +76,11 @@ You can read more about creating and managing subtractions from the links below:
 
 4. Click <DummyButton icon="play">Start</DummyButton> to start the analysis
 
-   The dialog will close and you will immediately see your new analysis appear in the list.
+   The dialog closes and you immediately see your new analysis appear in the list.
 
    ![Pathoscope running](./running.png?url)
 
-   When the analysis is complete it will look like this:
+   When the analysis is complete it looks like this:
 
    ![Pathoscope complete](./ready.png?url)
 
@@ -109,7 +109,7 @@ You can read more about creating and managing subtractions from the links below:
 
 2. Click on the <Icon name="trash" color="red" /> icon on the analysis
 
-   The analysis record will be removed from the list.
+   The analysis record is removed from the list.
 
    ![Analyses](./list_empty.png?url)
 
@@ -174,7 +174,7 @@ example, 2% of 5 million reads or 100,000 mapped reads is good.
 
 #### High Quality Positive
 
-After running Pathoscope, the analyses tab will list all viruses Virtool thinks are likely
+After running Pathoscope, the analyses tab lists all viruses Virtool thinks are likely
 to be in the sample. In our example, one viroid and four viruses are likely to be in the
 sample.
 
@@ -186,7 +186,7 @@ visible by clicking <DummyButton color="grey" icon="filter" />.
 
 ![Filtered Out](./pathoscope_unfiltered.png?url)
 
-For this example we will focus on the five pathogens that have the greatest coverage.
+For this example we focus on the five pathogens that have the greatest coverage.
 
 The section on top of the list of pathogens gives a quick overview of the total and mapped
 reads in the sample.
@@ -199,7 +199,7 @@ In this sample, we have over 5.3 million total reads and over 3.7 million mapped
 The values for weight, depth, and coverage are all very high so we can be confident
 that indeed these pathogens are present in the sample.
 
-Clicking on a pathogen will show sequencing coverage charts for the isolates that may be
+Clicking on a pathogen shows sequencing coverage charts for the isolates that may be
 in your sample.
 
 ![Coverage Charts](./pathoscope_isolates_peach.png?url)
@@ -304,8 +304,8 @@ library. The steps in the workflow are:
 - Scan the translated ORFs for viral protein motifs using a collection of profile hidden
   Markov models (HMMs)
 
-Under the **Analysis** tab click on the Nuvs analysis you would like to view. You will
-see a result viewer like the one shown below.
+Under the **Analysis** tab click on the Nuvs analysis you would like to view. You see a
+result viewer like the one shown below.
 
 ![Nuvs analysis page](./nuvs.png?url)
 
@@ -323,7 +323,7 @@ ORFs with significant HMM matches are not shown. This can be toggled by clicking
 In our example, out of the 1072 assembled contigs, only 278 contained ORFs with
 significant HMM matches.
 
-Clicking on a contig in the left pane will display a detailed view for the contig in the
+Clicking on a contig in the left pane displays a detailed view for the contig in the
 right pane. The contig is display as a black line with the ORFs identified underneath. By
 default, ORFs with no significant HMM matches are not shown. This can be toggled clicking <DummyButton color="grey" icon="filter">Filter ORFs</DummyButton>.
 
@@ -334,12 +334,12 @@ graphic. An example of sequence 37 and its protein motifs is shown below.
 ![Sequence 37](./nuvs_sequence.png?url)
 
 Contigs can be sent to NCBI for a BLAST search by clicking <DummyButton color="grey" icon="cloud">BLAST at NCBI</DummyButton>.
-Many contigs derived from known viruses or non-viral sources will be assembled. It's
+Many contigs derived from known viruses or non-viral sources are assembled. It's
 necessary to BLAST significant contigs to ensure they are novel.
 
 ### Good Result
 
-When a BLAST search is completed, a result table will be shown below the contig graphic.
+When a BLAST search is completed, a result table is shown below the contig graphic.
 This table states the E-value, score, and identity of the viral sequences found on NCBI.
 
 ![NCBI BLAST](./nuvs_blast_pvev.png?url)
@@ -420,6 +420,6 @@ in an automated manner. Further manual work is almost always required to produce
 full-length genome sequence.
 
 In the common case that new variants of known viruses are found, adding them to a virus
-reference in Virtool will be beneficial for future runs using Pathoscope. Doing so will
-save time analyzing data as more sequence information will be available and will also
-present users with more accurate results.
+reference in Virtool is beneficial for future runs using Pathoscope. Doing so saves time
+analyzing data as more sequence information is available and also presents users with
+more accurate results.

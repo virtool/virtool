@@ -126,7 +126,7 @@ themselves.
 
 Cleanup runs after failure or cooperative abort, but not after success. Its
 reason distinguishes terminal failure from an aborted run that another runner
-will retry. Cleanup errors are logged without replacing the original outcome.
+another runner retries it. Cleanup errors are logged without replacing the original outcome.
 
 Every task body must:
 

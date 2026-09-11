@@ -112,7 +112,7 @@ DOM lib.
 
 Its `moduleResolution: "Bundler"` is load-bearing. It's what lets
 `@virtool/storage` resolve through the package's `exports` map straight
-into `packages/storage/src/*.ts`; a `"node16"` resolution will not follow
+into `packages/storage/src/*.ts`; a `"node16"` resolution does not follow
 an exports map to a `.ts` file.
 
 Adding a directory in that shape is enough to be covered by `pnpm build`,

@@ -342,7 +342,7 @@ sketched against no longer exist — `mintStorageKey`, `mintRootStorageKey` and 
 two fixed HMM constants are all that is left.
 
 A helper writes its bytes under a freshly minted key and **returns that
-key**, and the caller attaches it to the fake row the jobs API fixture will
+key**, and the caller attaches it to the fake row the jobs API fixture serves
 serve — `reads[].storageKey`, `files[].storageKey`, `upload.storageKey`. The code
 under test reads the key out of that metadata, which is its only route to the
 object.

@@ -45,7 +45,7 @@ uploaded goes through tar, or nowhere.
 
 ## Two rules the extractors carry so callers cannot get them wrong
 
-**Every entry is drained.** `tar-stream` will not advance past an entry that is
+**Every entry is drained.** `tar-stream` does not advance past an entry that is
 neither piped nor `resume()`d — it stalls silently and forever, no error, no
 exit. Both loops resume what they skip, and both have a regression test that
 asserts completion under a timeout rather than asserting an error.

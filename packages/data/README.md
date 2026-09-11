@@ -304,7 +304,7 @@ environment-owned encryption key documented in
 transport boundary or reach a log; a caller learns only whether a key is stored
 and whether it can be decrypted.
 
-Decrypt at client construction and nowhere else. A key that will not decrypt is
+Decrypt at client construction and nowhere else. A key that does not decrypt is
 a configuration error to report, not a value to replace: `resolveNcbiApiKey`
 writes nothing, so the stored key survives a bad encryption key, and lookups
 fall back to the anonymous rate limit rather than failing.

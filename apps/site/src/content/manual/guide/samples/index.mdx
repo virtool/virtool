@@ -12,7 +12,7 @@ samples can be created, viewed,edited, analyzed, and removed.
 
 ### What happens during sample creation?
 
-Sample FASTQ files are copied into a new sample directory. The files will be compressed
+Sample FASTQ files are copied into a new sample directory. The files are compressed
 if necessary. Files associated with the sample can be viewed and downloaded under the
 sample detail tab.
 
@@ -58,13 +58,13 @@ Quick analyses allows you to start analysis jobs for many samples at once.
 
 1. Select the samples of interest and click <Icon name="chart-area" color="green" />.
 
-   An **Analyze** dialog box will appear.
+   An **Analyze** dialog box appears.
    ![Samples Selected](./selected.png?url)
 
 2. Choose the workflows (PathoscopeBowtie or Nuvs), subtraction, and references you
    want to use to analyze your samples.
 
-   Selecting many references will start a separate job for each sample-reference
+   Selecting many references starts a separate job for each sample-reference
    combination.
 
 3. Click <DummyButton icon="play">Start</DummyButton> to start the analysis jobs.
@@ -99,7 +99,7 @@ Quick analyses allows you to start analysis jobs for many samples at once.
 4. Populate the sample creation form.
 
    You **must** set a unique sample _name_ and _read size_. _Read size_ can be set to
-   either _normal_, _sRNA_, or amplicon. Later analysis workflows will run using
+   either _normal_, _sRNA_, or amplicon. Later analysis workflows run using
    different parameters based on the _read size_ setting.
 
    The sample creation dialog allows you to set optional metadata including _isolate_,
@@ -132,7 +132,7 @@ Quick analyses allows you to start analysis jobs for many samples at once.
 
    <Aside title="Default Subtraction">
 
-   The default subtraction for a sample will be pre-selected as whenever you create an
+   The default subtraction for a sample is pre-selected as whenever you create an
    analysis for that sample. You can find the default subtraction for a given sample at
    the bottom of its detail view.
 
@@ -143,7 +143,7 @@ Quick analyses allows you to start analysis jobs for many samples at once.
    ![Default Subtraction](./default_subtraction.png?url)
 
    When you open an analysis creation dialog for the sample, the default subtraction
-   (**Banana**) will already be pre-selected.
+   (**Banana**) is already pre-selected.
 
    ![Default Subtraction Dialog](./default_subtraction_dialog.png?url)
 
@@ -157,7 +157,7 @@ Quick analyses allows you to start analysis jobs for many samples at once.
 
 6. Wait for job to complete.
 
-   Your sample will look something like this when it's ready.
+   Your sample looks something like this when it's ready.
 
    ![Sample Creation Complete](./ready.png?url)
 
@@ -169,7 +169,7 @@ The quality information can be viewed under the **Quality** tab:
 
 ![Quality](./quality.png?url)
 
-You will see three different graphs on this page as shown below.
+You see three different graphs on this page as shown below.
 
 ### Quality Distribution at Read Positions
 
@@ -185,7 +185,7 @@ Median values of less than 25 or a lower quartile of less than 10 is about. For 
 
 This plot shows the proportion of each base's position in a file. In general, one should expect A/T to be roughly equal and G/C to be roughly equal. Viruses genomes are often unevenly distributed in composition and are usually A/T rich.
 
-With all the things being equal in a diverse library, you should see an even distribution of the four bases which doesn't change with base position. Although the relative amount of G/C content will be determined by your library, but what you should see on the graph are parallel lines going across the plot.
+With all the things being equal in a diverse library, you should see an even distribution of the four bases which doesn't change with base position. Although the relative amount of G/C content is determined by your library, but what you should see on the graph are parallel lines going across the plot.
 
 ### Read-wise Quality Occurrence
 
@@ -199,7 +199,7 @@ In this case we are taking every sequence and looking at the mean score across a
 
    ![Samples List Overview](./edit_sample_overview.png?url)
 
-2. Click on the sample you would like to edit. Here we will choose
+2. Click on the sample you would like to edit. Here we choose
    **Apple Stem Pitting Virus**.
 
    ![Apple Stem Pitting Virus](./apple_stem.png?url)
@@ -212,7 +212,7 @@ In this case we are taking every sequence and looking at the mean score across a
 
    ![Apple stem pitting virus dialog box](./apple_stem_dialog_edited.png?url)
 
-5. The changes will be reflected in the sample detail view.
+5. The changes are reflected in the sample detail view.
 
    ![Apple stem pitting virus edited](./apple_stem_edited.png?url)
 
@@ -221,13 +221,13 @@ In this case we are taking every sequence and looking at the mean score across a
 1. Click on **Samples** in the top navigation bar to see a list of available samples.
    ![Samples List Overview](./samples_overview.png?url)
 
-Click on the sample you wish to delete. Here we will delete **Test A**.
+Click on the sample you wish to delete. Here we delete **Test A**.
 ![Test A](./Test_A.png?url)
 
-Click on the <Icon name="trash" color="red"/> to delete the sample. A dialog box such as the one below will show up to confirm the deletion of the sample.
+Click on the <Icon name="trash" color="red"/> to delete the sample. A dialog box such as the one below shows up to confirm the deletion of the sample.
 ![Test A Deletion](./test_A_deletion.png?url)
 
-Click <Icon name="check" color="green" /> **Confirm**. The sample will now be removed from the samples list.
+Click <Icon name="check" color="green" /> **Confirm**. The sample is now removed from the samples list.
 ![Samples List Overview](./samples_overview2.png?url)
 
 ## Download a FASTQ File
@@ -242,17 +242,17 @@ Click the link under **Raw Data** to download the FASTQ file that was originally
 
 Sample data is automatically trimmed during analysis to remove sequencing artefacts and low quality regions. After the first analysis, the trimmed data are cached for reuse in future analyses that use the same trimming parameters. This saves running the trimming workflow steps for every analysis for a given sample.
 
-A sample that has not yet been analyzed will not have any caches associated with it.
+A sample that has not yet been analyzed has no caches associated with it.
 ![No Cache](./no_cache.png?url)
 
-Running an analysis for this sample will create an analysis job. During the job the raw sample reads will be trimmed and cached for future analyses. As soon as trimming is complete the cache will be created.
+Running an analysis for this sample creates an analysis job. During the job the raw sample reads are trimmed and cached for future analyses. As soon as trimming is complete the cache is created.
 Caches are always smaller than the raw data. This library was reduced from 220.8 MB to 153.9 MB. This is due to removal of low quality reads and localized shortening of reads with low quality ends.
 ![Cache](./cache.png?url)
 
-When you click on the link under **Cached Trims** you will see all the parameters used by the trimming program as well as the name of the trimming command (`skewer-0.2.2`). The _hash_ is a unique identifier for the program-parameters combination used to trim this cache.
+When you click on the link under **Cached Trims** you see all the parameters used by the trimming program as well as the name of the trimming command (`skewer-0.2.2`). The _hash_ is a unique identifier for the program-parameters combination used to trim this cache.
 ![Trimming Parameters](./cache_parameters.png?url)
 
-Additionally, below the parameters you will see the quality of the data that has been trimmed and cached.
+Additionally, below the parameters you see the quality of the data that has been trimmed and cached.
 ![Quality of Trimmed Data](./quality2.png?url)
 
 ### Trim Cache Quality
@@ -300,27 +300,27 @@ Rights can apply at four different levels.
 
 Each sample can be owned by a specific user group. This allows many groups of diagnosticians or researchers to keep their data private or safe from one another while sharing a single Virtool instance.
 
-Samples are not required to have an owner group. The group can be set to `None`. In this case, group rights settings will have no effect.
+Samples are not required to have an owner group. The group can be set to `None`. In this case, group rights settings have no effect.
 
 #### Privileges
 
 ##### none
 
-The management level (such as group or all users) cannot read or write the sample. included users will never see the sample in the sample management interface.
+The management level (such as group or all users) cannot read or write the sample. Included users never see the sample in the sample management interface.
 
 This privilege is useful for completely isolating samples between separate groups of users.
 
 ##### read
 
-The management level (such as group or all users) can only read the sample. The included users will see the sample in the sample management interface and be able to view its general information, quality, and analyses.
+The management level (such as group or all users) can only read the sample. The included users see the sample in the sample management interface and can view its general information, quality, and analyses.
 
-They will not be able to edit or remove the sample and they will not be able to create new analyses. The elements in the user interface associated with the described actions will be hidden.
+They cannot edit or remove the sample or create new analyses. The elements in the user interface associated with these actions are hidden.
 
 ##### read & write
 
-The management level (such as group or all users) can only read the sample. The included users will see the sample in the sample management interface and be able to view its general information, quality, and analyses.
+The management level (such as group or all users) can only read the sample. The included users see the sample in the sample management interface and can view its general information, quality, and analyses.
 
-They will also be able to edit and remove the sample and create new analyses.
+They can also edit and remove the sample and create new analyses.
 
 ### Management
 
