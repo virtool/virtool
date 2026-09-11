@@ -23,6 +23,12 @@ describe("Groups", () => {
 		mockListGroups([]);
 		await renderWithRouter(<Groups />);
 
+		expect(
+			await screen.findByRole("heading", { name: "Groups" }),
+		).toBeInTheDocument();
+		expect(
+			screen.getByText("Manage group memberships and permissions."),
+		).toBeInTheDocument();
 		expect(await screen.findByText("No Groups Exist")).toBeInTheDocument();
 		expect(
 			screen.queryByRole("button", { name: "Delete" }),

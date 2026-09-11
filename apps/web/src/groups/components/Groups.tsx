@@ -3,6 +3,7 @@ import DeleteAlert from "@base/DeleteAlert";
 import { InputHeader } from "@base/Input";
 import LoadingPlaceholder from "@base/LoadingPlaceholder";
 import QueryError from "@base/QueryError";
+import SectionHeader from "@base/SectionHeader";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@base/Tabs";
 import type { GroupMinimal } from "@virtool/contracts";
 import { sortBy } from "es-toolkit/compat";
@@ -67,12 +68,17 @@ export default function Groups() {
 
 	return (
 		<>
-			<header className="flex items-center justify-between mb-5">
-				<h2>Groups</h2>
-				<Button color="blue" onClick={() => setOpenCreateGroup(true)}>
-					Create
-				</Button>
-			</header>
+			<SectionHeader>
+				<div className="flex items-start justify-between gap-4">
+					<div>
+						<h2>Groups</h2>
+						<p>Manage group memberships and permissions.</p>
+					</div>
+					<Button color="blue" onClick={() => setOpenCreateGroup(true)}>
+						Create
+					</Button>
+				</div>
+			</SectionHeader>
 
 			{groups.length && selectedGroup ? (
 				<Tabs
