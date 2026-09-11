@@ -90,7 +90,7 @@ work; the job is left for the same stalled-job sweep.
 Ordinary jobs API requests retry transport failures five times with a flat
 five-second delay. They never retry an HTTP response chosen by the jobs API.
 
-Ping requests disable that client retry policy because the ping loop owns its
+Ping requests turn off that client retry policy because the ping loop owns its
 failure budget:
 
 - `401` is neither retried nor counted; it cancels the run immediately.

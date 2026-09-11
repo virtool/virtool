@@ -168,14 +168,6 @@ for `Content-Disposition`. Direct upload reservations and finalization share
 to Azure Blob storage. See the [upload API guide](../site/src/content/manual/api/uploads.mdx)
 for the protocol.
 
-### Server push
-
-The authenticated `/events` stream carries id-only cache invalidations; clients
-refetch through the authorized API. The client connection and query routing live
-in [src/app/sse](src/app/sse), with server transport in
-[src/server/events](src/server/events). Domain schemas live in
-[@virtool/contracts](../../packages/contracts/src/sse.ts).
-
 ## Testing
 
 [vitest.config.js](vitest.config.js) defines `web` (jsdom), `server` (Node and
@@ -230,17 +222,6 @@ The table below covers the remaining settings and web-specific storage behavior.
 | `VT_STORAGE_DOWNLOAD_MODE` | `stream` \| `redirect` | `stream` | Serve file downloads by streaming the bytes through this server, or by 302-redirecting to a short-lived presigned storage URL. `redirect` falls back to streaming when the backend cannot presign. |
 | `VT_UPLOADS_CHUNKED` | Boolean | `false` | Enable direct Azure Block Blob uploads. When off, or when the backend cannot presign uploads, initialization returns 503; there is no proxied fallback. |
 | `VT_UPLOADS_CHUNKED_CONCURRENCY` | Positive integer | `8` | Set how many block PUTs a browser runs at once across all active uploads. Raise it to lift throughput on a high-latency upload path. |
-
-## Administration
-
-`/administration/uploads` configures the upload-size limit for browser and API
-clients.
-
-Full administrators configure email delivery at `/administration/settings`.
-Delivery needs a Resend account, a verified sending domain, and a working
-`VT_ENCRYPTION_KEY`. See
-[the email delivery contract](../../packages/data/README.md#email-delivery) and
-[encryption-key recovery and rotation](../../docs/env.md#encryption-key).
 
 ## Metrics
 
