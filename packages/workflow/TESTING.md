@@ -1,7 +1,7 @@
 # Workflow testing
 
 `@virtool/workflow/testing` is what every workflow test stands on. It covers
-the whole surface a workflow test needs: fixture builders, a fixed clock and a
+the whole surface a workflow test needs: fixture builders, a fixed clock, and a
 deterministic random source, a fake subprocess runner, checksum helpers, and
 both halves of the jobs API fixture.
 
@@ -85,11 +85,10 @@ on port 0, because retry, backoff, ping-driven cancellation, credential handling
 and status-to-error mapping only mean something over a real wire. A fetch mock
 would assert them into existence rather than test them.
 
-Both run `handleJobsApiRequest` over the same `JobsApiState`. That is not a
-convenience — it is what keeps the two from drifting, and the half a test is not
-using is the half that would quietly stop matching the real service. It is also
-what lets a test be moved from one to the other without rewriting its setup, the
-property that makes the fixture usable at all.
+Both run `handleJobsApiRequest` over the same `JobsApiState`. This shared path
+keeps the two from drifting: a test's unused half cannot quietly stop matching
+the real service. The shared setup also lets a test move from one to the other
+without rewriting its fixture.
 
 The faked client is not a shortcut around the contract either. Every response
 goes through `JSON.stringify` and back and is parsed with the same schema the
@@ -109,14 +108,14 @@ against:
 | `acquired` | Whether the job is claimed. A second claim, or one naming another workflow, is a 404. |
 | `stepStartUpdates` | Step ids started, in order. |
 | `finishCalled` | Whether `POST /jobs/{id}/finish` succeeded. |
-| `finalizeCalls` | Every finalize call with the manifest it carried. |
+| `finalizeCalls` | Every finalization call with the manifest it carried. |
 | `cacheRegistrations` | Every `POST /caches` body, losers of a race included. |
 | `caches` | Cache rows, by logical key. |
 | `samples`, `subtractions`, `indexes`, `analyses`, `references` | Rows the metadata reads serve. |
 | `settings` | The settings singleton. |
 | `now` | The clock the routes stamp with. Injected, never patched. |
 
-### camelCase, and why it is not a spelling nit
+### camelCase, and why it isn't a spelling nit
 
 The fixture's responses are built from the schemas in `@virtool/contracts`
 rather than hand-spelled, and every field crossing this wire is camelCase —
@@ -149,8 +148,8 @@ await expect(client.ping()).rejects.toThrow("Job is cancelled.");
 
 **The refusal covers every route but the claim**, not the ping alone. The real
 service refuses in `requireJobRequest`, which is the floor under every handler;
-the ping is only where a run *notices*. A terminal job's key therefore stops serving
-metadata reads, step starts and finalize calls too, and the three messages are
+the ping is only where a run *notices*. A terminal job's key thus stops serving
+metadata reads, step starts and finalization calls too, and the three messages are
 the service's own wording — `Job is cancelled.`, `Job has failed.`,
 `Job has succeeded.` A fixture that checked terminal state on the ping alone
 would let a workflow keep working against a job production had already shut off,
@@ -221,7 +220,7 @@ per call, so two builders cannot influence each other through a shared stream
 and a file's fixtures do not change when a test is added ahead of them.
 
 `STATIC_TIME` pins `2015-10-06T20:00:00Z` and is **injected** rather than
-patched onto a global clock. It is an ISO string
+patched onto a global clock. The value is an ISO string
 with a `staticTime()` accessor rather than a shared `Date`, because a shared
 `Date` is module-level mutable state and one test mutating it would silently move
 every other test's fixtures.
@@ -232,7 +231,7 @@ genome and all six Bowtie2 shards, an unfinished subtraction with `ready: false`
 and no counts, and an analysis wired to the sample, index, reference and
 subtraction.
 
-`createFakeNewSample` is the one that needs reading before it is used. It is a
+`createFakeNewSample` is the one that needs reading before use. It represents a
 sample `create_sample` has not finished, so it carries **uploads and no reads**,
 and three of its details are load-bearing:
 
@@ -302,7 +301,7 @@ Several steps probe a tool's version, and `cd-hit-est -h` prints its banner and
 exits 1.
 
 **`RunSubprocessOptions` has no allowed-exit-codes escape**, and the runner
-throws `SubprocessFailedError` on any non-zero exit. The fake therefore models
+throws `SubprocessFailedError` on any non-zero exit. The fake models
 that probe as an ordinary non-zero exit, and **the call site catches the error and
 reads `stderrTail`**. The runner does not return success for it and must not be
 taught to:
@@ -342,7 +341,7 @@ reads that column, so the per-domain key builders this harness was first
 sketched against no longer exist — `mintStorageKey`, `mintRootStorageKey` and the
 two fixed HMM constants are all that is left.
 
-A helper therefore writes its bytes under a freshly minted key and **returns that
+A helper writes its bytes under a freshly minted key and **returns that
 key**, and the caller attaches it to the fake row the jobs API fixture will
 serve — `reads[].storageKey`, `files[].storageKey`, `upload.storageKey`. The code
 under test reads the key out of that metadata, which is its only route to the
@@ -391,7 +390,7 @@ piped through `createGunzip()` first. gzip embeds an mtime and varies by
 compressor and level, so `pigz` and `node:zlib` produce different bytes from
 identical input — hashing the compressed bytes would fail every comparison
 against a fixture compressed by anything else, for reasons that have nothing to
-do with correctness. A file and its gzipped form therefore have the same digest,
+do with correctness. A file and its gzipped form have the same digest,
 as does the same content gzipped at two different levels.
 
 Detection consumes `isGzipped` from `@virtool/archive/compression` rather than
