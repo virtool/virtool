@@ -11,11 +11,20 @@ export const analysisServerFnMocks = {
 	findRecentlyViewedAnalysesFn: vi.fn(),
 	getAnalysisFn: vi.fn(),
 	getAnalysisResultsFn: vi.fn(),
+	listAnalysisUsersFn: vi.fn(),
 	recordAnalysisViewFn: vi.fn(),
 	createAnalysisFn: vi.fn(),
 	deleteAnalysisFn: vi.fn(),
 	blastNuvsFn: vi.fn(),
 };
+
+/** Sets up listAnalysisUsers to resolve with the given users. */
+export function mockListAnalysisUsers(
+	users: Array<{ handle: string; id: number }>,
+): Mock {
+	analysisServerFnMocks.listAnalysisUsersFn.mockResolvedValue(users);
+	return analysisServerFnMocks.listAnalysisUsersFn;
+}
 
 /**
  * Sets up findAnalyses to resolve with a single page of the given analyses.

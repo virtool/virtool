@@ -8,6 +8,7 @@ import {
 	findRecentlyViewedAnalysesFn,
 	getAnalysisFn,
 	getAnalysisResultsFn,
+	listAnalysisUsersFn,
 	recordAnalysisViewFn,
 } from "@server/analyses/functions";
 import {
@@ -25,6 +26,7 @@ import type {
 	AnalysisSortField,
 	AnalysisWorkflow,
 	SortDirection,
+	UserNested,
 } from "@virtool/contracts";
 import { useEffect } from "react";
 
@@ -81,6 +83,19 @@ export function useListAnalyses({
 				data: { sampleId, page, perPage, sort, direction, userIds, workflows },
 			}),
 		placeholderData: keepPreviousData,
+	});
+}
+
+/**
+ * Fetch the users who own an analysis matching the sample and workflow scope.
+ */
+export function useListAnalysisUsers(
+	sampleId: number,
+	workflows: AnalysisWorkflow[],
+) {
+	return useQuery<UserNested[]>({
+		queryKey: analysesQueryKeys.users([sampleId, workflows]),
+		queryFn: () => listAnalysisUsersFn({ data: { sampleId, workflows } }),
 	});
 }
 
