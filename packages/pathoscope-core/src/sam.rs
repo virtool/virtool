@@ -123,7 +123,7 @@ mod tests {
                 chunk_count += 1;
                 total_records += chunk.len();
 
-                // Verify we can access records
+                // Verify that records are accessible
                 for record in chunk {
                     if !record.is_unmapped() {
                         let _read_id = std::str::from_utf8(record.qname()).unwrap();

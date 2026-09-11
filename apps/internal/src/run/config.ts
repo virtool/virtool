@@ -31,7 +31,7 @@ const DEFAULT_SHUTDOWN_TIMEOUT = 40;
  * Seconds in-flight tasks are given to finish on shutdown, when
  * `VT_TASKS_DRAIN_TIMEOUT` is unset.
  *
- * Draining to completion is not on offer at any grace period we can set — these
+ * Draining to completion is not on offer at any configurable grace period — these
  * tasks run for minutes, and a cluster autoscaler force-removes a pod well
  * before an hour whatever the field says. So the drain is a window, and what
  * follows it is a release: a task handed back takes milliseconds to become

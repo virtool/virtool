@@ -95,7 +95,7 @@ export type ClaimableJobWorkflow = z.infer<typeof ClaimableJobWorkflow>;
 // # Naming, both halves
 //
 // **Every field crossing a wire is camelCase** — `runnerId`, `startedAt`,
-// `runtimeVersion`. Both ends are code we own and ship together, and it is the
+// `runtimeVersion`. Both ends are code maintained and shipped together, and it is the
 // convention the rest of this package already follows.
 //
 // **Row content is not the wire, and stays snake_case.** The elements of the

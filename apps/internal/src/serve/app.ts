@@ -82,7 +82,7 @@ export type AppDeps = {
 	 * Report an unhandled error to Sentry.
 	 *
 	 * Injected rather than imported so `app.ts` carries no dependency on
-	 * `@sentry/node` — the SDK's graph stays out of the test path, and "did we
+	 * `@sentry/node` — the SDK's graph stays out of the test path, and "did the
 	 * report it?" is assertable with a `vi.fn()`. Optional because a test app
 	 * has nothing to report to.
 	 */

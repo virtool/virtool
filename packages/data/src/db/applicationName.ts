@@ -28,7 +28,7 @@ const DIGEST_LENGTH = 16;
  * from another — the pod's random suffix — at the *end*. Truncating would
  * collapse every replica of a deployment onto one name and multiply its counts.
  * The service segment is never digested away: it is short, bounded by the
- * number of services we ship, and it is the discriminator worth keeping legible.
+ * number of services shipped, and it is the discriminator worth keeping legible.
  */
 export function buildApplicationName(service: string, host: string): string {
 	const prefix = `${PREFIX}-${service}@`;

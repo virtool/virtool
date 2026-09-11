@@ -10,8 +10,8 @@ use rustc_hash::FxHashMap;
 // read1 has a higher probability (0.9) for ref0. This suggests the current logic includes
 // ALL alignments above threshold rather than just the best assignments per read.
 //
-// This behavior is currently pinned as correct by the golden vectors, but we should
-// investigate whether this is the intended behavior or if we should only include the best
+// This behavior is currently pinned as correct by the golden vectors, but it should be
+// investigated to determine whether it is intended or whether only the best
 
 /// Calculate coverage from BAM file directly (second pass approach)
 ///
@@ -83,7 +83,7 @@ pub fn calculate_coverage_from_bam(
             let ref_name =
                 std::str::from_utf8(header.tid2name(record.tid() as u32))?.to_string();
 
-            // Get indices from our mappings
+            // Get indices from the mappings
             let read_index = match read_name_to_idx.get(&read_name) {
                 Some(&idx) => idx,
                 None => continue, // Read not in matrix, skip
@@ -168,7 +168,7 @@ mod tests {
         // Basic assertions
         assert!(!coverage.is_empty(), "Coverage should not be empty");
 
-        // Check that we have coverage for the references in the matrix
+        // Check that the references in the matrix have coverage
         for ref_name in &matrix.refs {
             assert!(
                 coverage.contains_key(ref_name),

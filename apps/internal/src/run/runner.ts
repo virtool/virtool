@@ -472,7 +472,7 @@ export function createTaskRunner<C>(options: TaskRunnerOptions<C>): TaskRunner {
 	 * Stop claiming, wait out the in-flight work, then hand back what is left.
 	 *
 	 * Drain-then-release rather than drain-to-completion, which is not on offer at
-	 * any grace period we can set: these tasks run for minutes and a cluster
+	 * any configurable grace period: these tasks run for minutes and a cluster
 	 * autoscaler force-removes a pod regardless of the field. A released task is
 	 * claimable again in milliseconds; an abandoned one sits out the full lease.
 	 *

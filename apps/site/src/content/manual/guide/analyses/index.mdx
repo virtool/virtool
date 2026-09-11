@@ -175,7 +175,7 @@ example, 2% of 5 million reads or 100,000 mapped reads is good.
 #### High quality positive
 
 After running Pathoscope, the analyses tab lists all viruses Virtool thinks are likely
-to be in the sample. In our example, one viroid and four viruses are likely to be in the
+to be in the sample. In this example, one viroid and four viruses are likely to be in the
 sample.
 
 ![Likely Viruses](./pathoscope_filtered.png?url)
@@ -186,17 +186,17 @@ visible by clicking <DummyButton color="grey" icon="filter" />.
 
 ![Filtered Out](./pathoscope_unfiltered.png?url)
 
-For this example we focus on the five pathogens that have the greatest coverage.
+For this example, the focus is on the five pathogens that have the greatest coverage.
 
 The section on top of the list of pathogens gives a quick overview of the total and mapped
 reads in the sample.
 
 ![Overview](./pathoscope_mapping.png?url)
 
-In this sample, we have over 5.3 million total reads and over 3.7 million mapped reads
-(69.78% mapped reads), illustrating that we have a good enrichment of viral RNA.
+This sample has over 5.3 million total reads and over 3.7 million mapped reads
+(69.78% mapped reads), illustrating good enrichment of viral RNA.
 
-The values for weight, depth, and coverage are all very high so we can be confident
+The values for weight, depth, and coverage are all very high, so the pathogens can be confidently
 that indeed these pathogens are present in the sample.
 
 Clicking on a pathogen shows sequencing coverage charts for the isolates that may be
@@ -226,16 +226,16 @@ control to verify that the extraction succeeded.
 
 ![Healthy sample filtered results](./pathoscope_healthy_unfiltered.png?url)
 
-When we filter our results we see that all other viruses have low weight, depth, and
-coverage, assuring us that these are not present in the sample. With these results in
-mind, we can confidently say that this sample is from a healthy plant.
+When the results are filtered, all other viruses have low weight, depth, and
+coverage, indicating that they are not present in the sample. These results indicate
+that this sample is from a healthy plant.
 
 #### Contamination
 
 Below is an example of an analysis from a contaminated sample.
 ![Contaminated sample analysis](./pathoscope_contaminated.png?url)
 
-Although we have a large number of mapped reads that cover 53.26% of the viral genome, we
+Although the sample has a large number of mapped reads that cover 53.26% of the viral genome, it
 see that the majority of the pathogens listed are associated with grapevines. Grape
 viruses are usually not found in tree fruits so this is likely a case of
 contamination.
@@ -247,7 +247,7 @@ so it's highly unlikely that the pathogens listed are actually present in the
 sample. Although weight and coverage are high, no sample has a high depth value. This
 is likely a sample of low quality.
 
-Additionally when we take a look at the isolate coverage charts we see that the max
+Additionally, the isolate coverage charts show that the max
 depth is 14. This is very small compared to the max depth in a high quality positive
 sample which reaches a range in the thousands.
 
@@ -320,7 +320,7 @@ there are three values:
 
 A list of the assembled contigs is shown in the left pane. By default, contigs with no
 ORFs with significant HMM matches are not shown. This can be toggled by clicking <DummyButton color="grey" icon="filter">Filter Sequences</DummyButton>.
-In our example, out of the 1072 assembled contigs, only 278 contained ORFs with
+In this example, out of the 1072 assembled contigs, only 278 contained ORFs with
 significant HMM matches.
 
 Clicking on a contig in the left pane displays a detailed view for the contig in the
@@ -345,8 +345,8 @@ This table states the E-value, score, and identity of the viral sequences found 
 ![NCBI BLAST](./nuvs_blast_pvev.png?url)
 
 The E-values, score, and identities in the BLAST results show high quality matches.
-Knowing this we can interpret that these contigs do not represent novel viral genomes.
-But, they do not exist in our reference database in Virtool because they were not
+This indicates that these contigs do not represent novel viral genomes.
+However, they do not exist in the Virtool reference database because they were not
 eliminated during the initial subtraction step of the Nuvs workflow.
 
 This sample contains Phaseolus vulgaris endornavirus as an internal control introduced

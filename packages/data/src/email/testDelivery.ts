@@ -14,7 +14,7 @@ import { renderEmailTemplate } from "./templates";
 /**
  * Resend's own identifiers for the things an administrator can act on.
  *
- * Anything absent falls back to the class of the outcome, so an identifier we
+ * Anything absent falls back to the class of the outcome, so an identifier that
  * have never seen still produces a bounded code.
  */
 const FAILURE_CODES_BY_PROVIDER_CODE: Partial<

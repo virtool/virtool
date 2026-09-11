@@ -33,7 +33,7 @@ export default function ButtonGroup({
 				"items-stretch",
 				"[&>*:not(:first-child)]:rounded-l-none",
 				"[&>*:not(:last-child)]:rounded-r-none",
-				// Our buttons are solid fills, so adjacent ones need a seam to read as
+				// These buttons are solid fills, so adjacent ones need a seam to read as
 				// two. Translucent, to hold up on a member of any colour.
 				"[&>*:not(:first-child)]:border-l",
 				"[&>*:not(:first-child)]:border-black/10",

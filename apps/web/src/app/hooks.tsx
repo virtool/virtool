@@ -125,7 +125,7 @@ export function useIsSecureContext(): boolean {
  * resync happens during render rather than in an effect so a stale draft can
  * never reach the timer and undo the change that just arrived.
  *
- * The guard tracks the last `value` we synced from, not the value we last
+ * The guard tracks the last `value` synchronized from, not the value last
  * committed. Advancing a committed baseline locally would run ahead of an async
  * `onChange` (URL navigation) whose echo lands a render later: the guard would
  * read the still-stale `value`, treat it as an outside change, and blank the

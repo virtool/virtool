@@ -8,7 +8,7 @@
 // # Naming, both halves
 //
 // **Every field crossing this wire is camelCase** — `runnerId`, `pingedAt`,
-// `runtimeVersion`, `nameOnDisk`. Both ends are code we own and ship together,
+// `runtimeVersion`, `nameOnDisk`. Both ends are code maintained and shipped together,
 // and it is the convention the rest of this package already follows.
 //
 // **Row content is not the wire, and stays snake_case.** The elements of the

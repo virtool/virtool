@@ -42,7 +42,7 @@ management view.
    - analysis in progress
    - at least one completed analysis
 
-   Here we are looking for samples with names containing _q10_ that have **a completed Nuvs analysis**:
+   This searches for samples with names containing _q10_ that have **a completed Nuvs analysis**:
 
    <video src="./filter.mp4" alt="Filter samples" autoplay />
 
@@ -177,7 +177,7 @@ You see three different graphs on this page as shown below.
 
 This graph shows the quality of your sample library. The Y-axis shows the quality score, the higher the better. The quality tends to decrease as the run progresses.
 
-Median values of less than 25 or a lower quartile of less than 10 is about. For the preceding sample, the quality of our sample library is fine and further analysis can take place.
+Median values of less than 25 or a lower quartile of less than 10 is about. For the preceding sample, the quality of the sample library is fine and further analysis can take place.
 
 ### Nucleotide composition at read positions
 
@@ -191,7 +191,7 @@ With all the things being equal in a diverse library, you should see an even dis
 
 ![Read-wise Quality Occurrence](./read_wise_quality_occurrence.png?url)
 
-In this case we are taking every sequence and looking at the mean score across all the bases in that particular sequence. The distribution of those means are then plotted as shown previously. All sequences should form one tight distribution (sharp curve) with universally high quality and no sequences of low quality. This sharp curve is the average quality per read. A mean quality below 27 is a cause for concern.
+In this case, every sequence is evaluated by looking at the mean score across all the bases in that particular sequence. The distribution of those means is then plotted as shown previously. All sequences should form one tight distribution (sharp curve) with universally high quality and no sequences of low quality. This sharp curve is the average quality per read. A mean quality below 27 is a cause for concern.
 
 ## Edit a sample
 
@@ -199,7 +199,7 @@ In this case we are taking every sequence and looking at the mean score across a
 
    ![Samples List Overview](./edit_sample_overview.png?url)
 
-2. Click on the sample you would like to edit. Here we choose
+2. Click on the sample to edit. In this example, select
    **Apple Stem Pitting Virus**.
 
    ![Apple Stem Pitting Virus](./apple_stem.png?url)
@@ -221,7 +221,7 @@ In this case we are taking every sequence and looking at the mean score across a
 1. Click on **Samples** in the top navigation bar to see a list of available samples.
    ![Samples List Overview](./samples_overview.png?url)
 
-Click on the sample you wish to delete. Here we delete **Test A**.
+Click on the sample to delete. In this example, delete **Test A**.
 ![Test A](./Test_A.png?url)
 
 Click on the <Icon name="trash" color="red"/> to delete the sample. A dialog box such as the one below shows up to confirm the deletion of the sample.
@@ -257,7 +257,7 @@ Additionally, below the parameters you see the quality of the data that has been
 
 ### Trim cache quality
 
-Quality metrics are recalculated for reads trimmed during an analysis. The quality information is associated with the generated trim cache. Since low quality reads are discarded and low quality ends are removed, we expected the trim cache quality metrics to improve over those for the raw data.
+Quality metrics are recalculated for reads trimmed during an analysis. The quality information is associated with the generated trim cache. Since low quality reads are discarded and low quality ends are removed, the trim cache quality metrics are expected to improve over those for the raw data.
 
 #### Quality distribution at read positions - raw
 
@@ -267,7 +267,7 @@ Quality metrics are recalculated for reads trimmed during an analysis. The quali
 
 ![Quality after Trimming](./quality5.png?url)
 
-In the **Quality Distribution at Read Positions - Raw** chart we see that the mean base quality degrades as we get closer to the end of the read. This is a common issue in Illumina libraries. In the **Trimmed** charts we can see that low quality ends were removed resulting in a higher mean and min base quality.
+In the **Quality Distribution at Read Positions - Raw** chart, the mean base quality degrades closer to the end of the read. This is a common issue in Illumina libraries. In the **Trimmed** charts, low quality ends were removed, resulting in a higher mean and min base quality.
 
 #### Read-wise quality occurrence - raw
 
@@ -277,7 +277,7 @@ In the **Quality Distribution at Read Positions - Raw** chart we see that the me
 
 ![Read-wise Quality after Trimming](./quality6.png?url)
 
-In the **Read-wise Quality Occurrence - Raw** image we see one small curve before a sharp peak. This is due to a significant number of reads with low mean quality being present in the library. The trimming process discards reads with low mean qualities. This is reflected in the **Trimmed** chart where the smaller peak is no longer present.
+The **Read-wise Quality Occurrence - Raw** image shows one small curve before a sharp peak. This is due to a significant number of reads with low mean quality being present in the library. The trimming process discards reads with low mean qualities. This is reflected in the **Trimmed** chart where the smaller peak is no longer present.
 
 ## Rights
 

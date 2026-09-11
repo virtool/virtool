@@ -13,7 +13,7 @@ import type { Account } from "@virtool/contracts";
  * Apart from `queries.ts` because the route guards on `/login`, `/_authenticated`
  * and `/administration` all resolve an account in `beforeLoad`, and `beforeLoad`
  * is a critical route export. Anything it reaches is in the eager bundle every
- * page load pays for. Tree-shaking cannot save us here — the chunk is the unit
+ * page load pays for. Tree-shaking cannot eliminate this cost — the chunk is the unit
  * of loading, so importing `queries.ts` for this one export would put every
  * other account request, and the zod schemas they carry, on the login wall.
  *

@@ -243,7 +243,7 @@ fn em_e_step(
             if let Some(nu_entry) = nu.get_mut(&j) {
                 nu_entry.2.clone_from(&x_norm);
 
-                // Only update theta_sum if we have meaningful scores (optimization)
+                // Only update theta_sum when meaningful scores exist (optimization)
                 if x_sum > 0.0 {
                     for (k, &ref_idx) in ind.iter().enumerate() {
                         if let Some(&x_val) = x_norm.get(k) {
@@ -1138,7 +1138,7 @@ mod tests {
         );
 
         let pi_sum: f64 = results.pi.iter().sum();
-        // Pi represents genome abundances, should sum to ~1.0 when we have multi-mapping reads
+        // Pi represents genome abundances and should sum to ~1.0 with multi-mapping reads
         if results.updated_matrix.multi_mapping_reads.len() > 0 {
             assert!(
                 (pi_sum - 1.0).abs() < 0.01,
@@ -1185,7 +1185,7 @@ mod tests {
         assert!(matrix.refs.len() >= 1, "Should have at least one reference");
         assert!(matrix.reads.len() >= 1, "Should have at least one read");
 
-        // Test that we have both unique and multi-mapping reads
+        // Test that both unique and multi-mapping reads exist
         assert!(
             matrix.unique_reads.len() > 0,
             "Should have some unique reads, got {}",
@@ -1197,7 +1197,7 @@ mod tests {
             results.updated_matrix.multi_mapping_reads.len()
         );
 
-        // Test that pi is meaningful (positive) since we have multi-mapping reads
+        // Test that pi is meaningful (positive) with multi-mapping reads
         let pi_sum: f64 = results.pi.iter().sum();
         assert!(
             pi_sum > 0.0,

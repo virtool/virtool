@@ -87,7 +87,7 @@ export async function verifyAuthenticatedSession(
 
 /**
  * Parse a `Cookie` header into a flat map. Lightweight; sufficient for reading
- * our two session cookies from a raw `Request` (where the `getCookie` helper
+ * the two session cookies from a raw `Request` (where the `getCookie` helper
  * tied to async-local request context isn't available).
  */
 export function parseCookieHeader(
