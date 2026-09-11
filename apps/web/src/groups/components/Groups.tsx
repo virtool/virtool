@@ -1,11 +1,14 @@
 import Button from "@base/Button";
 import DeleteAlert from "@base/DeleteAlert";
 import { InputHeader } from "@base/Input";
+import ListEmpty from "@base/ListEmpty";
 import LoadingPlaceholder from "@base/LoadingPlaceholder";
 import QueryError from "@base/QueryError";
+import SectionHeader from "@base/SectionHeader";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@base/Tabs";
 import type { GroupMinimal } from "@virtool/contracts";
 import { sortBy } from "es-toolkit/compat";
+import { Users } from "lucide-react";
 import { useState } from "react";
 import {
 	useDeleteGroup,
@@ -67,12 +70,17 @@ export default function Groups() {
 
 	return (
 		<>
-			<header className="flex items-center justify-between mb-5">
-				<h2>Groups</h2>
-				<Button color="blue" onClick={() => setOpenCreateGroup(true)}>
-					Create
-				</Button>
-			</header>
+			<SectionHeader>
+				<div className="flex items-start justify-between gap-4">
+					<div>
+						<h2>Groups</h2>
+						<p>Manage group memberships and permissions.</p>
+					</div>
+					<Button color="blue" onClick={() => setOpenCreateGroup(true)}>
+						Create
+					</Button>
+				</div>
+			</SectionHeader>
 
 			{groups.length && selectedGroup ? (
 				<Tabs
@@ -110,9 +118,11 @@ export default function Groups() {
 					</TabsContent>
 				</Tabs>
 			) : (
-				<div className="bg-gray-200 flex items-center h-48 justify-center rounded-md text-gray-600">
-					No Groups Exist
-				</div>
+				<ListEmpty
+					icon={Users}
+					title="No groups found"
+					description="No groups have been created yet."
+				/>
 			)}
 
 			<Create open={openCreateGroup} setOpen={setOpenCreateGroup} />

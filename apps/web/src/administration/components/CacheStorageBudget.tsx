@@ -41,45 +41,52 @@ export default function CacheStorageBudget() {
 	}
 
 	return (
-		<section>
-			<SectionHeader>
-				<h2>Cache Storage Budget</h2>
-				<p>
-					The eviction task removes least-recently-used caches until the cache
-					store is back under this budget.
-				</p>
+		<section className="flex flex-col gap-4">
+			<SectionHeader className="mb-0">
+				<h2>Caching</h2>
 			</SectionHeader>
-			<BoxGroup>
-				<BoxGroupSection>
-					<form onSubmit={handleSubmit(save)}>
-						<InputGroup>
-							<InputLabel htmlFor="cacheStorageBudget">Budget (GB)</InputLabel>
-							<Input
-								id="cacheStorageBudget"
-								aria-describedby="cacheStorageBudget-error"
-								aria-invalid={Boolean(errors.budgetGigabytes) || undefined}
-								min={1}
-								step="any"
-								type="number"
-								{...register("budgetGigabytes", {
-									valueAsNumber: true,
-									required: "A budget is required.",
-									min: {
-										value: 1,
-										message: "The budget must be at least 1 GB.",
-									},
-								})}
-							/>
-							<InputError id="cacheStorageBudget-error">
-								{errors.budgetGigabytes?.message}
-							</InputError>
-						</InputGroup>
-						<div className="flex justify-end">
-							<SaveButton />
-						</div>
-					</form>
-				</BoxGroupSection>
-			</BoxGroup>
+			<section>
+				<SectionHeader level={3}>
+					<h3>Storage Budget</h3>
+					<p>
+						The eviction task removes least-recently-used caches until the cache
+						store is back under this budget.
+					</p>
+				</SectionHeader>
+				<BoxGroup>
+					<BoxGroupSection>
+						<form onSubmit={handleSubmit(save)}>
+							<InputGroup>
+								<InputLabel htmlFor="cacheStorageBudget">
+									Budget (GB)
+								</InputLabel>
+								<Input
+									id="cacheStorageBudget"
+									aria-describedby="cacheStorageBudget-error"
+									aria-invalid={Boolean(errors.budgetGigabytes) || undefined}
+									min={1}
+									step="any"
+									type="number"
+									{...register("budgetGigabytes", {
+										valueAsNumber: true,
+										required: "A budget is required.",
+										min: {
+											value: 1,
+											message: "The budget must be at least 1 GB.",
+										},
+									})}
+								/>
+								<InputError id="cacheStorageBudget-error">
+									{errors.budgetGigabytes?.message}
+								</InputError>
+							</InputGroup>
+							<div className="flex justify-end">
+								<SaveButton />
+							</div>
+						</form>
+					</BoxGroupSection>
+				</BoxGroup>
+			</section>
 		</section>
 	);
 }
