@@ -35,7 +35,7 @@ when the binding itself must be reassigned.
 
 Use `type` rather than `interface`. Biome enforces this with
 `useConsistentTypeDefinitions`; the exceptions are declarations that must use
-interface merging, such as framework module or global augmentation.
+interface merging, such as framework module, or global augmentation.
 
 Every exported type needs a one-line JSDoc label. Start with what the type is
 so the useful label appears first in editor hovers:

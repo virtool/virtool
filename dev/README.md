@@ -14,7 +14,7 @@ The integration checks the Coast version because it uses that release's local
 JSON API for state and readiness. Coasts 0.1.53 interpolates assignment paths
 into shell commands without quoting them. The controller accepts
 only letters, numbers, `/`, `_`, `.`, `+`, and `-` in repository/worktree paths
-and branch names, rejecting spaces or shell metacharacters before provisioning.
+and branch names, rejecting spaces, or shell metacharacters before provisioning.
 `coast` can be on `PATH` or installed at `~/.coast/bin/coast`.
 
 Start the daemon once, then start the current worktree:
@@ -121,7 +121,7 @@ trial instances still require their original `http://localhost:9900` URL.
 ### Lifecycle and data
 
 The registry, operation locks, build cache record, and logs live in
-`<git-common-dir>/virtool-coasts/`, outside individual worktrees and Coast
+`<git-common-dir>/virtool-coasts/`, outside individual worktrees, and Coast
 volumes. A generation marker in each worktree's Git directory survives branch
 renames and worktree moves. Git removes that marker when deleting a worktree,
 so reusing the same path cannot inherit its old data even if hooks were bypassed.
@@ -174,7 +174,7 @@ Coasts 0.1.53 extracts fresh values on each Coast build and injects the current
 values when creating an instance. Instances created from the same extraction
 share these secrets. Existing instances keep their injected values across
 stop/start and application image rebuilds. Re-running secrets on an existing
-instance rotates its keys, invalidating sessions and making encrypted data
+instance rotates its keys, invalidating sessions, and making encrypted data
 unreadable without the old keys. See [environment configuration](../docs/env.md).
 As with other Coast configuration changes, existing instances must be removed
 and recreated to adopt these mounts; removal deletes their development data.
@@ -371,7 +371,7 @@ benchmark. No shared Docker caches were cleared.
 | Web source edit to updated Vite module response | 0.53 s |
 
 Edit measurements include polling and Docker exec overhead. The web measurement
-checks the served module, not browser paint or HMR delivery. Both internal
+checks the served module, not browser paint, or HMR delivery. Both internal
 services logged clean shutdown on source edits. An invalid TypeScript edit made
 controller readiness fail; restoring valid source recovered both services.
 The service children and `coast exec` used the source owner's UID, and the
@@ -392,7 +392,7 @@ those inputs and reducing repeated export/import remains unfinished.
 Compared the full root Dockerfile with the generated development stages using
 Coasts 0.1.53 on the same host. Both artifact builds used warm Docker layers;
 no shared caches were pruned. The full-file control temporarily occupied the
-ignored generated Dockerfile path, keeping Compose and the build target
+ignored generated Dockerfile path, keeping Compose, and the build target
 identical. The generated file was restored before the second build.
 
 | Operation | Full-file / forced-transfer control | Optimized |

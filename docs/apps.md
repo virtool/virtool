@@ -106,7 +106,7 @@ apps/<name>/
 ```
 
 `apps/tsconfig.node.json` is the shared base: Node-only, `types:
-["node"]`, no DOM lib and no JSX. It deliberately does **not** extend
+["node"]`, no DOM lib, and no JSX. It deliberately does **not** extend
 `apps/web/tsconfig.json`, which carries the browser path aliases and a
 DOM lib.
 

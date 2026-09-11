@@ -252,7 +252,7 @@ and API-key resolution.
   winner — and superseded when a replacement is issued.
 - A **restricted setup session** is what a holder gets in exchange: a
   non-secret `session_id` for attribution plus a secret whose digest is
-  stored, bound to one purpose and expiring. `verifySetupSession` re-reads
+  stored, bound to one purpose, and expiring. `verifySetupSession` re-reads
   `users.active` on every request, so deactivation revokes it at once. It's
   never an application session, which is why it's a table of its own rather
   than another `sessions.session_type`.

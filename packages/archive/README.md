@@ -25,7 +25,7 @@ greppable.
 ## Which tar function
 
 `extractTarToDir` restores a whole tree and enforces the **cache archive
-contract**: exactly one top-level entry, staged and renamed so a failure leaves
+contract**: exactly one top-level entry, staged, and renamed so a failure leaves
 nothing behind, and the target must be free. `writePathAsTar` is its inverse.
 Both are uncompressed-only.
 
@@ -50,7 +50,7 @@ neither piped nor `resume()`d — it stalls silently and forever, no error, no
 exit. Both loops resume what they skip, and both have a regression test that
 asserts completion under a timeout rather than asserting an error.
 
-**Every entry is validated, wanted or not.** Absolute paths, `..` segments and
+**Every entry is validated, wanted, or not.** Absolute paths, `..` segments and
 anything that is not a plain file or directory fail the extraction. A guard that
 only looks at what the caller asked for never looks at the payload.
 

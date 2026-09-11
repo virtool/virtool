@@ -180,7 +180,7 @@ developer machine.
 
 The runtime stage installs `libcurl4`, `libgomp1`, `libncursesw6` and `perl`.
 Each backs a specific `ldd ... => not found` against the slim base: perl and
-libgomp1 for bowtie2, libcurl4 and libncursesw6 for samtools. `pathoscope-core`
+libgomp1 for bowtie2, libcurl4, and libncursesw6 for samtools. `pathoscope-core`
 itself needs none of them — `hts-sys` links htslib statically.
 
 The `build-pathoscope` CI job and its release entry use the same `pathoscope`

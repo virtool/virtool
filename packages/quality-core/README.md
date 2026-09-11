@@ -125,6 +125,6 @@ Run from this directory.
 
 | Command | Action |
 | --- | --- |
-| `cargo test` | Unit tests, the FastQC goldens and the rounding corpus |
+| `cargo test` | Unit tests, the FastQC goldens, and the rounding corpus |
 | `cargo clippy --all-targets -- -D warnings` | Lint |
 | `cargo fmt` | Format |

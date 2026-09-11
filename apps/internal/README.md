@@ -87,7 +87,7 @@ imported to read a type without opening anything.
 - `src/run/download.ts` — downloading a release archive to disk, with the
   bounded retry, idle-stall timeout and status check `install_hmms` needs
 
-A claim is a lease encoded on `acquired_at`, renewed every 60 s and live for
+A claim is a lease encoded on `acquired_at`, renewed every 60 s, and live for
 300. A reclaimed task re-runs from step zero, so **every task body must be
 idempotent**.
 

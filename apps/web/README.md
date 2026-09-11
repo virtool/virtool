@@ -81,8 +81,8 @@ Never statically import a feature's `queries.ts` from the critical half. A
 feature's query module carries its whole request layer: every server-function
 stub and the zod schemas those stubs check against. Pulling in one
 `queryOptions` factory brings all it. Import the factory inside the loader
-body instead, as described in
-[Query options and route prefetching](#query-options-and-route-prefetching).
+body instead, as described in the section on
+[query options and route prefetching](#query-options-and-route-prefetching).
 
 `validateSearch` is synchronous, so it cannot defer zod with a dynamic import.
 A zod schema there pins all zod into the eager bundle. Use the
@@ -404,7 +404,7 @@ HTTP response status alone does not carry it onto the client-side error. Router
 Do not wrap these local mappers in `createServerOnlyFn`: the Start compiler
 removes them and their imports when it removes the handlers that call them.
 Use `createServerOnlyFn` when code remains reachable from the browser graph and
-its body must be stripped, as in the global auth and metrics middleware.
+its body must be stripped, as in the global auth, and metrics middleware.
 Keep upstream-service error handling explicit, including its existing reporting
 behavior; a 502 is not an expected client 4xx.
 
@@ -571,7 +571,7 @@ reaches nothing yet.
 
 Raw routes reject restricted principals and always will:
 `requireAuthenticatedRequest` reads the session cookies or an `Authorization`
-header and never the setup pair, so SSE, uploads, downloads and streamed files
+header and never the setup pair, so SSE, uploads, downloads, and streamed files
 answer a restricted holder the same 401 they answer anyone else. API-key Basic
 authentication is untouched — a restricted credential can never mint, accept
 or inherit a key, and `verifyApiKey` refuses a key whose owner has not
@@ -1046,7 +1046,7 @@ counter — real instrumentation, not a read of existing state.
 The Vitest configuration defines three projects:
 
 - `web` runs browser code under jsdom;
-- `server` runs `src/server/**` under Node, matching production and avoiding
+- `server` runs `src/server/**` under Node, matching production, and avoiding
   cross-realm typed-array comparisons; and
 - `a11y` runs `*.a11y.test.tsx` under headless Chromium so layout-dependent axe
   rules such as `color-contrast` can run. Install it with `playwright install
