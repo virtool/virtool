@@ -73,6 +73,8 @@ export default defineConfig(({ command, mode }) => ({
 				// stage untouched. That in turn is why `bcrypt` is a dependency of this
 				// app: Nitro resolves the external from the app root, and pnpm does not
 				// hoist a package reached only through `@virtool/data`.
+				// List tracing-only app dependencies in knip's ignoreDependencies too;
+				// their imports live in workspace packages rather than this app.
 				external: ["bcrypt"],
 			},
 		},
