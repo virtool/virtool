@@ -152,7 +152,7 @@ the whole object could include storage credentials in the browser bundle.
 
 For custom S3 endpoints, the backend enables path-style addressing; AWS uses
 virtual-hosted addressing. Multipart parts use S3's 5 MiB min rather than
-the smaller streaming chunk size. Response checksum validation is disabled to
+the smaller streaming chunk size. Response checksum validation is off to
 support Garage's multipart checksum representation, while uploads continue to
 send checksums.
 
@@ -254,7 +254,7 @@ and API-key resolution.
   non-secret `session_id` for attribution plus a secret whose digest is
   stored, bound to one purpose, and expiring. `verifySetupSession` re-reads
   `users.active` on every request, so deactivation revokes it at once. It's
-  never an application session, which is why it's a table of its own rather
+  never an app session, which is why it's a table of its own rather
   than another `sessions.session_type`.
 
 `src/auth/lifecycle.ts` holds one transactional completion primitive per
@@ -315,7 +315,7 @@ fall back to the anonymous rate limit rather than failing.
 templates, retries, and the Resend integration. The periodic `deliver_email`
 task in `apps/internal` performs delivery.
 
-Disabled, unconfigured, or invalid email configuration does not prevent the
+Off, unconfigured, or invalid email configuration does not prevent the
 services from running. Only a `ready` configuration permits delivery. Provider
 acceptance is not proof of mailbox delivery.
 

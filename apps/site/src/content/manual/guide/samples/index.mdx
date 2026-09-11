@@ -177,7 +177,7 @@ You will see three different graphs on this page as shown below.
 
 This graph shows the quality of your sample library. The Y-axis shows the quality score, the higher the better. The quality tends to decrease as the run progresses.
 
-Median values of less than 25 or a lower quartile of less than 10 is about. For the sample above, the quality of our sample library is fine and further analysis can take place.
+Median values of less than 25 or a lower quartile of less than 10 is about. For the preceding sample, the quality of our sample library is fine and further analysis can take place.
 
 ### Nucleotide Composition at Read Positions
 
@@ -191,7 +191,7 @@ With all the things being equal in a diverse library, you should see an even dis
 
 ![Read-wise Quality Occurrence](./read_wise_quality_occurrence.png?url)
 
-In this case we are taking every sequence and looking at the mean score across all the bases in that particular sequence. The distribution of those means are then plotted as shown above. All sequences should form one tight distribution (sharp curve) with universally high quality and no sequences of low quality. This sharp curve is the average quality per read. A mean quality below 27 is a cause for concern.
+In this case we are taking every sequence and looking at the mean score across all the bases in that particular sequence. The distribution of those means are then plotted as shown previously. All sequences should form one tight distribution (sharp curve) with universally high quality and no sequences of low quality. This sharp curve is the average quality per read. A mean quality below 27 is a cause for concern.
 
 ## Edit a Sample
 
@@ -346,7 +346,7 @@ By default, sample names must be unique to the sample manager. This prevents con
 
 Check the **Unique Sample Names** box to ensure that every created sample has a unique name.
 
-!["Unique Sample Names Disabled"](./unique_sample_names.png?url)
+!["Unique Sample Names Off"](./unique_sample_names.png?url)
 
 ### Default Sample Rights
 
@@ -377,7 +377,7 @@ This setting determines how members of the owner group can interact with the sam
 |                |                                                                                                                     |
 | -------------- | ------------------------------------------------------------------------------------------------------------------- |
 | _None_         | Sample is not returned in searches and is not accessible by URL.                                                    |
-| _Read_         | Sample is returned in searches and is viewable. All editing interfaces are disabled and analyses cannot be started. |
+| _Read_         | Sample is returned in searches and is viewable. All editing interfaces are off and analyses cannot be started. |
 | _Read & Write_ | Also to _Read_ rights, editing interfaces are enabled and analyses can be run.                               |
 
 #### All Users' Rights

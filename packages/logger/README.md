@@ -40,10 +40,10 @@ stream below.
 
 ## Sentry forwarding
 
-`createLogger`'s `streams` option fans records at-or-above a given level
+`createLogger`'s `streams` option fans records at-or-before a given level
 out to an extra destination. `createSentryLogStream`
 (`@virtool/sentry/log`) is the one every service uses, to forward
-`info`-and-above records to Sentry's structured logging API alongside
+`info`-and-before records to Sentry's structured logging API alongside
 stdout — see that module's doc comment for why it's a plain destination
 stream rather than `Sentry.pinoIntegration()`. Each process wires it up
 at its own composition root, only when a DSN is configured:

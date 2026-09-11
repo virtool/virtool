@@ -71,7 +71,7 @@ of the coarser one rather than a different measurement.
 ## The goldens come from FastQC, and must keep coming from FastQC
 
 `tests/fixtures/*.json` are blobs derived from real FastQC 0.11.9 reports, and
-the field table above records exactly how each one maps onto `Quality`. They
+the preceding field table records exactly how each one maps onto `Quality`. They
 are frozen references. **Never edit a golden to make a failing comparison
 pass**, and never regenerate one from this crate. That converts a caught
 divergence into a permanent one, and leaves a test that asserts only that the
@@ -82,7 +82,7 @@ one exists. If a golden is ever found to be wrong, re-derive it from FastQC itse
 install FastQC 0.11.9 (a JRE and the full `perl`, not `perl-base` — its
 launcher opens with `use FindBin`), run it over the input with `-f fastq
 --extract`, and work the expected `quality` and `baseGroups` out of the raw
-report by hand against the field table above, rather than trusting any parser
+report by hand against the preceding field table, rather than trusting any parser
 to do it.
 
 The inputs are synthetic and are committed alongside the goldens, so nothing
@@ -105,7 +105,7 @@ run, which would reach whichever ones it happened to:
 `digits` places, on the exact binary value of the double. It pins
 `round_half_even` on every value the blob can hold, and the TypeScript
 `roundHalfEven` in `packages/bio` must agree with it figure for figure. It's
-frozen on the same terms as the goldens above.
+frozen on the same terms as the preceding goldens.
 
 ## Dependencies stay small
 

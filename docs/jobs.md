@@ -134,7 +134,7 @@ silently accept a wire shape that the real client would reject. The shared state
 records claims, step starts, finish and finalization calls, cache registrations,
 resource metadata, credentials, and the injected clock.
 
-The embedded server preserves the lifecycle behavior described above:
+The embedded server preserves the lifecycle behavior described previously:
 
 - claims are unauthenticated and filtered by workflow;
 - every later request uses HTTP Basic credentials and verifies route job IDs;

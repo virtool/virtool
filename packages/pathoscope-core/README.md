@@ -44,20 +44,20 @@ lines — are pinned by the golden corpus and are not to be edited. A diff
 showing a change inside `em()` is a divergence, not an improvement.
 
 `coverage.rs` carries a TODO at the top flagging an unresolved question about
-whether the score calculation should include all alignments above the threshold
+whether the score calculation should include all alignments preceding the threshold
 or only the best assignment per read. **Leave it there.** The golden vectors now
 pin the current behaviour, including that behaviour, so the question can be
 answered against a baseline later instead of guessed at. VIR-2913 tracks it.
 
 `candidates.rs` is the sixth module and the one exception, and the reason is
-where each sits. The five above are the numeric core: their intermediate
+where each sits. The five preceding are the numeric core: their intermediate
 arithmetic is unobservable from outside, so leaving them alone is the only way
 to keep it right. `candidates.rs` is process plumbing — it spawns bowtie2,
 streams its stdout, applies the score cutoff and maps failures onto
 `PathoscopeError` — and may be restructured freely, because the golden
 `candidates` vectors pin the set of references it returns, not how it arrives
 at them. The bowtie2 flags it passes are part of that output, so they are as
-fixed as anything above.
+fixed as anything preceding.
 
 ## The CLI contract
 

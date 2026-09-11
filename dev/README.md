@@ -2,7 +2,7 @@
 
 ## Coasts and Worktrunk
 
-The root `Coastfile` uses `dev/compose.yaml` for an isolated application per
+The root `Coastfile` uses `dev/compose.yaml` for an isolated app per
 worktree. Postgres and Azurite are shared; each instance owns a database and
 blob container. The root `docker-compose.yml` remains the database test
 environment.
@@ -67,7 +67,7 @@ Coasts before exercising heavy workflows on a constrained host.
 All four workflow targets are part of the Coast build instead of being built
 on demand. Docker still caches their independent tool stages, but a new artifact
 includes every executor and can take substantially longer to build than the
-core application alone.
+core app alone.
 
 ### Browser access
 
@@ -93,7 +93,7 @@ start/stop/remove operations. The endpoint and switcher are absent from
 production output. The generated file is excluded from Docker build contexts
 and Vite watching, so switching terminals does not trigger page reloads.
 
-Use `wt list` for branch/worktree status and application links after `coasts
+Use `wt list` for branch/worktree status and app links after `coasts
 up`, Coastguard for live service status and logs, and the badge for browser
 switching. These cover
 the section 2 overview needs; a separate TUI would duplicate them and is not
@@ -129,11 +129,11 @@ Instance names combine a readable branch slug with a random suffix; recreating
 a removed worktree creates a new data identity. `list` flags unmatched records
 as orphaned; clean them with `remove --instance <name>`.
 
-Provisioning runs with Compose autostart disabled. The lifecycle script first
+Provisioning runs with Compose autostart off. The lifecycle script first
 records an instance's data ID, then writes its identity and origin into the
-isolated configuration volume before starting initialization or application
+isolated configuration volume before starting initialization or app
 services. Database creation, migrations, and blob-container initialization
-complete before the application starts. Coasts 0.1.53 does not wire its
+complete before the app starts. Coasts 0.1.53 does not wire its
 documented automatic database injection into startup, so initialization remains
 explicit.
 
@@ -149,7 +149,7 @@ Coasts 0.1.53 can report successful startup even after the outer container has
 exited. Its shared-service setup kills PIDs saved by an earlier boot without
 checking process identity. The controller starts the stopped outer container,
 clears those obsolete proxy PID files, then lets Coast restore mounts, proxies,
-and services. It checks the outer container again and still requires application
+and services. It checks the outer container again and still requires app
 readiness before reporting success. This never recreates the configuration
 volume or changes the data identity.
 
@@ -167,13 +167,13 @@ separation is for development: instances share service credentials.
 
 The `Coastfile` generates the auth secret and encryption key with Python's
 cryptographic random generator. Coast stores them in its encrypted keystore
-and mounts them into application containers under `/run/secrets`; services
+and mounts them into app containers under `/run/secrets`; services
 read them through `VT_AUTH_SECRET_FILE` and `VT_ENCRYPTION_KEY_FILE`.
 
 Coasts 0.1.53 extracts fresh values on each Coast build and injects the current
 values when creating an instance. Instances created from the same extraction
 share these secrets. Existing instances keep their injected values across
-stop/start and application image rebuilds. Re-running secrets on an existing
+stop/start and app image rebuilds. Re-running secrets on an existing
 instance rotates its keys, invalidating sessions, and making encrypted data
 unreadable without the old keys. See [environment configuration](../docs/env.md).
 As with other Coast configuration changes, existing instances must be removed
@@ -220,11 +220,11 @@ coast rm repair-shared-services
 ```
 
 With this project's `autostart = false`, provisioning creates the missing shared
-containers and registrations without initializing application data. Removing
+containers and registrations without initializing app data. Removing
 this unmanaged temporary Coast preserves shared services. Existing named volumes
 are reused; absent volumes are created empty. Then run `coasts up` from the
 affected worktree to initialize its database, apply migrations, and check
-application readiness. Keep using `coasts remove` for managed instances.
+app readiness. Keep using `coasts remove` for managed instances.
 
 The relevant pinned implementations are
 [shared-service provisioning](https://github.com/coast-guard/coasts/blob/v0.1.53/coast-daemon/src/handlers/run/shared_services_setup.rs),
@@ -233,7 +233,7 @@ and [shared-service lifecycle commands](https://github.com/coast-guard/coasts/bl
 
 Live validation on 2026-09-10 provisioned a fresh shared Postgres through a
 temporary Coast and restored the existing instance with Coast stop/start.
-Database initialization, migrations, storage initialization, and application
+Database initialization, migrations, storage initialization, and app
 readiness succeeded. Killing the verified Postgres proxy listener and removing
 its alias from `docker0` reproduced an unreachable database while the outer
 container remained running. `coasts up` repaired it in 36.60 seconds. A normal
@@ -295,8 +295,8 @@ builds. Build failures remain visible in service logs; a successful later edit
 starts the service again. Readiness checks probe both internal services because
 a running watcher can outlive a failed build. Each container owns its build
 output and dependencies.
-Compose allows 50 seconds for shutdown, above the default task budget of 40
-seconds; increase that grace period if you increase the application budget.
+Compose allows 50 seconds for shutdown, exceeding the default task budget of 40
+seconds; increase that grace period if you increase the app budget.
 
 Migrations run once as a prerequisite at startup, without a watcher. After
 editing migration code or SQL, use `ensure --rebuild` explicitly. Ordinary
@@ -397,13 +397,13 @@ identical. The generated file was restored before the second build.
 
 | Operation | Full-file / forced-transfer control | Optimized |
 | --- | --- | --- |
-| Development image, uncached application layers | 75.76 s | 77.33 s |
+| Development image, uncached app layers | 75.76 s | 77.33 s |
 | Coast artifact build | 126.53 s | 47.86 s |
 | Existing instance refresh to readiness | 22.68 s | 13.82 s |
 
 The uncached image controls used `docker build --no-cache --target dev-coast`
 with the root and generated Dockerfiles, in that order, retaining the same
-local Node base image. This measures uncached application layers, not a
+local Node base image. This measures uncached app layers, not a
 fresh-machine download. Their similar times are expected: BuildKit already
 prunes unreachable stages. A later cached generated-file build took
 1.99 s (an earlier observation was 1.90 s).
@@ -443,7 +443,7 @@ On 2026-09-08, headless Chromium exercised the two managed instances
 `test-coast-integration-87d274966a` (HTTPS 53438) in one browser context:
 
 - Distinct authenticated users and host-only cookies persisted in both tabs.
-- Both switchers discovered the other instance and opened its exact application
+- Both switchers discovered the other instance and opened its exact app
   URL in a new tab. Four Worktrunk switches preserved both original tabs and
   authenticated users without navigation.
 - A source edit updated the primary tab through HMR without navigation or a
@@ -470,7 +470,7 @@ On 2026-09-08, headless Chromium exercised the two managed instances
 
 Chromium used `ignoreHTTPSErrors` for this automated run; separate HTTPS probes
 validated the exported CA and instance hostname. OS/browser trust-store setup
-was not changed. WebAuthn accepted the application's RP hostname in a virtual
+was not changed. WebAuthn accepted the app's RP hostname in a virtual
 authenticator ceremony, but full enrollment returned 401: the existing legacy
 login session is not accepted by the passkey registration endpoint. End-to-end
 passkey enrollment/sign-in and physical authenticators remain unverified.

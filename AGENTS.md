@@ -258,7 +258,7 @@ type(scope): description
 - Never assign issues to anyone.
 - **Never change an issue's status.** Status is managed automatically from
   branch and PR activity. Move an issue by hand only when explicitly told to.
-  The Todo-by-default rule above governs issues you create, not ones already
+  The Todo-by-default rule previously stated governs issues you create, not ones already
   in flight.
 - Label bugs as **Bug** also to any other labels.
 - Never create new Linear labels.

@@ -191,8 +191,8 @@ same initial result in Node and the browser:
 - Hold viewer-local absolute times back with `useHydrated`; the server cannot
   know the viewer's timezone or locale.
 - Give `<title>` exactly one string child, including inside SVG.
-- Disable SSR only on the route that requires it; SSR cannot be re-enabled
-  below a disabled parent.
+- Turn off SSR only on the route that requires it; SSR cannot be re-enabled
+  below a parent where SSR is off.
 - Never keep per-user render state at module scope. Server module state is
   shared by every request handled by the process.
 
@@ -448,8 +448,8 @@ old replicas and requires open tabs to reload. Do not mix versions behind
 unversioned load balancing or add a GET retry that puts searches back into URLs.
 
 Before release, send max-size searches, filters, and batches through
-Application Gateway/WAF. Check body-size and JSON-inspection rules, and confirm
-that origin and fetch-metadata headers reach the application for CSRF checks.
+the gateway/WAF. Check body-size and JSON-inspection rules, and confirm
+that origin and fetch-metadata headers reach the app for CSRF checks.
 
 ### Authorization and raw routes
 
@@ -520,16 +520,16 @@ The former `POST /uploads` raw-body endpoint has been removed. This is an
 intentional breaking change: there is no proxied upload or supported legacy
 size limit.
 
-When direct uploads are disabled or the storage backend cannot issue an upload
+When direct uploads are off or the storage backend cannot issue an upload
 SAS, initialization returns `503` instead of falling back.
 
 Both browser and API uploads enforce `settings.max_upload_size` through
-`initializeUpload`. A valid declared size above the configured limit returns `413`
+`initializeUpload`. A valid declared size exceeding the configured limit returns `413`
 before a reservation or SAS is created. The limit is read on every initialization,
 so changes apply to the next upload without a restart. `getUploadPolicyFn` exposes
 the limit to authenticated users for client validation.
 
-The setting and declared sizes are capped at the application ceiling of
+The setting and declared sizes are capped at the app ceiling of
 120,000,000,000 bytes (120 GB), independent of the storage backend.
 
 ### The setup boundary
@@ -550,7 +550,7 @@ the rows and the purposes; this app owns the transport and the boundary.
   no roles, no permissions, no API-key cap. A second reader would be a second
   chance to widen it.
 - The **global authentication middleware** enforces the restriction, before
-  any policy runs. An application session wins outright; only then is the
+  any policy runs. An app session wins outright; only then is the
   restricted credential considered, and a restricted caller is refused
   anything absent from `@server/auth/setupExceptions` with a 403
   `SetupRequiredError` naming the purpose. That error crosses the boundary
@@ -578,7 +578,7 @@ or inherit a key, and `verifyApiKey` refuses a key whose owner has not
 completed setup.
 
 `logout` is the abandon path. It deletes the restricted session and clears its
-cookies alongside the application pair, so there is one way to end a browser's
+cookies alongside the app pair, so there is one way to end a browser's
 authority rather than one per kind.
 
 ### Server push
@@ -747,7 +747,7 @@ Four status states render distinctly:
 | State | Meaning |
 | --- | --- |
 | Active | The configuration is valid and email sending is enabled. |
-| Disabled | The configuration is valid, but email sending is turned off. |
+| Off | The configuration is valid, but email sending is turned off. |
 | Needs Configuration | An API key, a sender address, or both are still missing. |
 | Configuration Error | The stored key cannot be decrypted with the encryption key this instance is running with. |
 
@@ -833,7 +833,7 @@ sees it.
 
 The gate exists because the server listens on **one port**
 (`EXPOSE 9900`). No separate admin socket exists, so `/metrics` shares
-its listener with the application and would otherwise be readable by
+its listener with the app and would otherwise be readable by
 anyone who guesses the path. That is a different situation from
 `/health/live` and `/health/ready`, which are deliberately contentless
 and so cost nothing to expose.
@@ -912,7 +912,7 @@ saturation is only legible as
 
 ### Cardinality
 
-**No label may be unbounded.** Every series above draws its labels from
+**No label may be unbounded.** Every series preceding draws its labels from
 a fixed set.
 
 The request path is deliberately **not** a label. Pathnames carry sample
@@ -933,7 +933,7 @@ middleware chain wraps both the server-function branch and the router
 branch, so one middleware sees every HTTP request the process handles:
 RPC calls, raw routes, and rendered pages alike.
 
-Its position — above `csrfMiddleware` and `documentHeadersMiddleware` —
+Its position — preceding `csrfMiddleware` and `documentHeadersMiddleware` —
 means its timing covers everything the request actually pays for,
 including the CSRF check and the document-header rewrite.
 
@@ -1081,7 +1081,7 @@ queries such as `getByRole` and `getByLabelText` over `getByTestId`, and do not
 disambiguate by index.
 
 Call `expectNoViolations(container)` from `src/tests/axe.ts` explicitly for
-each subtree under test. Colour contrast is disabled under jsdom; enable it in
+each subtree under test. Colour contrast is off under jsdom; enable it in
 an `*.a11y.test.tsx` test with:
 
 ```ts

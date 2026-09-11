@@ -234,7 +234,7 @@ a rate has a prior sample and a failure series at zero reads as evidence.
 splitting it by template would thin the samples behind every quantile.
 `virtool_email_availability` is one-hot, so
 `virtool_email_availability{state="ready"} == 1` is directly alertable. The
-`disabled` state still delivers: switching sending off stops new mail entering
+`off` state still delivers: switching sending off stops new mail entering
 the outbox, and `deliver_email` drains what was already queued, so the outbox
 gauge falls to zero instead of holding until sending returns.
 
@@ -265,7 +265,7 @@ unset.
 | `VT_POSTGRES_URL` | URL | Required | Connect to the Virtool Postgres database. |
 | `VT_POSTGRES_POOL_MAX` | Positive integer | `10` | Limit the Postgres connection pool (`serve` and `run`; `migrate` always uses one connection). |
 | `VT_METRICS_TOKEN` | String | Unset | Enable `/metrics` and authenticate scrapes with a bearer token. When unset, `/metrics` returns 404. |
-| `VT_SENTRY_DSN` | URL string | Unset | Send errors to Sentry. When unset, Sentry is disabled. |
+| `VT_SENTRY_DSN` | URL string | Unset | Send errors to Sentry. When unset, Sentry is off. |
 | `VT_ENCRYPTION_KEY` | Base64 string (32 bytes) | Unset | `run`: decrypt secrets stored by Virtool, currently the Resend API key for `deliver_email`. When unset or invalid, email is unavailable and every other task runs normally. See [the encryption-key guide](../../docs/env.md#encryption-key). |
 | `VT_ENCRYPTION_KEY_PREVIOUS` | Base64 string (32 bytes) | Unset | `run`: accept encrypted values written under the prior key during rotation. |
 | `VT_STORAGE_BACKEND` | `s3` \| `azure` | Required | Select the object-storage backend shared with the other Virtool services. |

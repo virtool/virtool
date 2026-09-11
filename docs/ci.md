@@ -27,7 +27,7 @@ but never move again.
 Adding an image requires a Dockerfile target and a release-matrix entry. For
 the five targets in `build`, keep its matrix entry in step with
 `release-ghcr`. Pathoscope and Nuvs instead use the dedicated build jobs
-above, and their `matrix.image` values must match the cache scopes those jobs
+preceding, and their `matrix.image` values must match the cache scopes those jobs
 write, so the release reuses the caches they populated rather than rebuilding
 the Rust crate, bioinformatics tools, or SPAdes inside the shared 20-minute
 release timeout.

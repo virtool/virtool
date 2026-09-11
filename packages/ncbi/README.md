@@ -120,11 +120,11 @@ for each is on the function.
 
 ## Divergences from ref-builder
 
-- **`rank` is a plain string.** ref-builder rejects any taxon above species at
+- **`rank` is a plain string.** ref-builder rejects any taxon preceding species at
   validation time, because an OTU must be species-or-below. That is a
   reference-building policy, not a property of the record, and this client is
   also used to check an arbitrary taxonomy ID a user has typed. `getSpecies()`
-  returns `null` for a taxon above species rather than throwing.
+  returns `null` for a taxon preceding species rather than throwing.
 - **No `fetch_lineage`.** It assembles ref-builder's own `Lineage` and `Taxon`
   domain objects, which belong to reference building rather than to an NCBI
   client. The pieces it's built from — `fetchTaxonomyRecord` and
