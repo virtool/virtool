@@ -21,6 +21,7 @@ import {
 	getAnalysis,
 	getAnalysisResults,
 	getAnalysisSampleRights,
+	listAnalysisUsers,
 	recordAnalysisView,
 } from "@virtool/data/analyses/data";
 import {
@@ -52,6 +53,11 @@ const findAnalysesSchema = z.object({
 	// applied only once a column is named.
 	sort: z.enum(ANALYSIS_SORT_FIELDS).optional(),
 	direction: z.enum(SORT_DIRECTIONS).default("descending"),
+});
+
+const listAnalysisUsersSchema = z.object({
+	sampleId: rowIdSchema,
+	workflows: z.array(AnalysisWorkflow).max(100).default([]),
 });
 
 const createAnalysisSchema = z.object({
@@ -142,6 +148,19 @@ export const findAnalysesFn = createServerFn({ method: "POST" })
 				userIds: data.userIds,
 				workflows: data.workflows,
 			},
+			actor,
+		);
+	});
+
+export const listAnalysisUsersFn = createServerFn({ method: "POST" })
+	.middleware([authenticated()])
+	.validator(listAnalysisUsersSchema)
+	.handler(async ({ context, data }) => {
+		const actor = await resolveSampleActor(db, context.session.userId);
+
+		return listAnalysisUsers(
+			db,
+			{ sampleId: data.sampleId, workflows: data.workflows },
 			actor,
 		);
 	});

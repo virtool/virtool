@@ -15,7 +15,7 @@ import type { AnalysisSortField, AnalysisWorkflow } from "@virtool/contracts";
 import { xor } from "es-toolkit/array";
 import { Microscope, SearchX } from "lucide-react";
 import { useState } from "react";
-import { useListAnalyses } from "../queries";
+import { useListAnalyses, useListAnalysisUsers } from "../queries";
 import AnalysisItem from "./AnalysisItem";
 import AnalysisTableHead from "./AnalysisTableHead";
 import CreateAnalysis from "./Create/CreateAnalysis";
@@ -79,6 +79,11 @@ export default function AnalysesList({
 		isError: isErrorSample,
 	} = useFetchSample(sampleId);
 	const { hasPermission: canCreate } = useCheckCanEditSample(sampleId);
+	const {
+		data: analysisUsers,
+		isError: isErrorAnalysisUsers,
+		isPending: isPendingAnalysisUsers,
+	} = useListAnalysisUsers(sampleId, workflows);
 
 	if (
 		(isErrorAnalyses && !analyses) ||
@@ -129,6 +134,8 @@ export default function AnalysesList({
 			/>
 			<div className="mb-3 flex min-h-9 flex-wrap items-center gap-4">
 				<FilterBar
+					isUsersError={isErrorAnalysisUsers}
+					isUsersPending={isPendingAnalysisUsers}
 					onClearUsers={() => setSearch({ page: 1, users: [] })}
 					onClearWorkflows={() => setSearch({ page: 1, workflows: [] })}
 					onToggleUser={(userId) =>
@@ -139,6 +146,7 @@ export default function AnalysesList({
 					}
 					selectedUsers={users}
 					selectedWorkflows={workflows}
+					users={analysisUsers}
 				/>
 				<span className="text-sm font-medium text-gray-600">
 					Showing {analyses.foundCount} of{" "}
