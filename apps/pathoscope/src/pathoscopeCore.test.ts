@@ -170,7 +170,7 @@ describe("runExpectationMaximization", () => {
 		expect(results.read_count).toBe(12345);
 	});
 
-	// Singular: that is what the core's CLI names it.
+	// Singular: that is what the core's command-line tool names it.
 	it("passes the alignment as --alignment", async () => {
 		const outputPath = join(await tempDir(), "em.json");
 		const runSubprocess = coreWriting({ refs: [], read_count: 0 });
@@ -199,7 +199,7 @@ describe("subtractionProc", () => {
 	});
 
 	// The core gets `proc - 1`, which is a zero on a single-core run. A bare `u32`
-	// would take that, but the CLI validates `--proc` as `range(1..)` and would
+	// would take that, but the command-line tool validates `--proc` as `range(1..)` and would
 	// refuse it.
 	it("never asks for fewer than one thread", () => {
 		expect(subtractionProc(1)).toBe(1);

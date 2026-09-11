@@ -59,7 +59,7 @@ streams its stdout, applies the score cutoff and maps failures onto
 at them. The bowtie2 flags it passes are part of that output, so they are as
 fixed as anything preceding.
 
-## The CLI contract
+## The command-line tool contract
 
 One binary, three subcommands, no shared state between invocations.
 

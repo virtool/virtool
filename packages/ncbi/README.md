@@ -130,7 +130,7 @@ for each is on the function.
   client. The pieces it's built from — `fetchTaxonomyRecord` and
   `fetchDescendantTaxids` — are both here.
 - **No on-disk cache.** `NCBICache` writes to a user cache directory, which
-  suits a CLI and not a server. Caching belongs to the caller.
+  suits a command-line tool and not a server. Caching belongs to the caller.
 
 ## Testing
 
