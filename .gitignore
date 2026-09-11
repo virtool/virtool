@@ -32,6 +32,7 @@ tags
 # Sentry Config File
 .env.sentry-build-plugin
 
-# Vale styles are fetched with `vale sync`; the vocabulary is checked in.
+# Vale package styles are fetched with `vale sync`; Virtool rules are checked in.
 .vale/styles/*
 !.vale/styles/config
+!.vale/styles/Virtool

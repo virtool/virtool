@@ -196,8 +196,8 @@ jobs:
     # in `.vale.ini`. `MinAlertLevel = warning` prints warnings but only
     # error-level alerts set a non-zero exit, so this gate fails on errors and
     # leaves warnings advisory. No checkout of the styles: they are gitignored
-    # and `vale sync` fetches them from the pinned packages. No `Setup` action
-    # either — this job runs no pnpm, and skipping node_modules keeps `vale .`
+    # and `vale sync` fetches them from pinned package release URLs. No `Setup`
+    # action either — this job runs no pnpm, and skipping node_modules keeps `vale .`
     # off the dependency tree it would otherwise walk.
     docs-lint:
         name: Docs / Lint

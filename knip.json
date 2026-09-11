@@ -4,6 +4,9 @@
 	"ignoreDependencies": [
 		"conventional-changelog-conventionalcommits"
 	],
+	"ignoreBinaries": [
+		"vale"
+	],
 	"ignoreWorkspaces": [
 		"apps/site"
 	],

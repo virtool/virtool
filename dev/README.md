@@ -51,15 +51,15 @@ data.
 Each Coast starts one Compose service for each workflow type. An executor polls
 only its own queue, claims at most one job, and exits after that job or after
 120 seconds without one. Compose restarts it unless the Coast was stopped.
-There is no separate workflow launcher to run.
+No separate workflow launcher runs.
 
 The executors still use the production claim, ping, cancellation, finalization,
 failure, and exit paths. Each one connects directly to its Coast's private jobs
 API and blob container. Compose applies per-executor CPU and memory limits, and
 stopping a Coast stops its executors.
 
-This deliberately does not reproduce KEDA. There is always one polling
-executor per workflow type, queue depth does not add parallel workers, and
+This deliberately does not reproduce KEDA. One polling executor always runs
+per workflow type, queue depth does not add parallel workers, and
 there is no global concurrency limit across Coasts. Up to four jobs can run in
 each active Coast, including several memory-heavy jobs at once. Stop unused
 Coasts before exercising heavy workflows on a constrained host.

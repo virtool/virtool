@@ -720,15 +720,15 @@ for full administrators. Hiding it is presentation: every email server function
 demands `adminRole("full")` of its own accord, so a direct call from a lesser
 administrator is refused whatever the page shows.
 
-The section is four independent forms, so no action can submit another's
-values:
+The section is four independent forms, so no action can submit values from
+another form:
 
 - **Send email** switches delivery on and off on its own. Turning it off keeps
   the stored key and every other setting; it stops new mail entering the outbox,
   and mail queued before the switch is still sent. Turning it on needs a
   configuration the server has already resolved.
 - **Sender identity** saves the sender name, the sender address, and an optional
-  reply-to address. An empty reply-to sends replies to the sender address. The
+  address for replies. Leaving it empty sends replies to the sender address. The
   server validates authoritatively and the fields re-render from its response.
 - **Resend API key** is write-only. The field starts empty however the key is
   stored, because the server reports only whether one is configured. Saving
