@@ -170,6 +170,30 @@ describe("completeAccountSetup", () => {
 		).rejects.toBeInstanceOf(EmailInUseError);
 	});
 
+	it("refuses an address another account holds with surrounding whitespace", async () => {
+		const existing = await seedUser(db, {
+			handle: "bob",
+			email: " ADA@example.com ",
+		});
+		await db
+			.update(users)
+			.set({ authMigratedAt: new Date() })
+			.where(eq(users.id, existing));
+		const userId = await seedUser(db, {
+			handle: "ada",
+			lifecycleState: "pending",
+		});
+		const { token } = await seedSetupToken(db, userId, "account_completion");
+
+		await expect(
+			completeAccountSetup(db, {
+				token,
+				password: "a-good-password",
+				email: "ada@example.com",
+			}),
+		).rejects.toBeInstanceOf(EmailInUseError);
+	});
+
 	// The rollback is what makes a failed completion retryable. A spent token
 	// against an unchanged account is a link the holder can never use again.
 	it("rolls the whole transition back when it fails", async () => {

@@ -39,10 +39,9 @@ export function normalizeEmail(email: string): string {
 /**
  * Claim `email` for `userId`, or throw {@link EmailInUseError}.
  *
- * **`users.email` carries no unique constraint and cannot yet.** Legacy rows
- * share an empty address and duplicate real ones exist, so an index would fail
- * to build against a production database. Until those are resolved, the rule
- * is held here.
+ * Migrated rows are protected by a partial unique index over their normalized
+ * addresses. Legacy rows can still share blank or duplicate addresses, so the
+ * claim must also check every row before admitting an identity to that index.
  *
  * A `SELECT` alone would not hold it: two transactions claiming one address
  * would both find it free and both commit. So the claim runs under a
@@ -63,7 +62,10 @@ async function claimEmail(
 		.select({ id: users.id })
 		.from(users)
 		.where(
-			and(sql`lower(${users.email}) = ${email}`, sql`${users.id} <> ${userId}`),
+			and(
+				sql`lower(trim(${users.email})) = ${email}`,
+				sql`${users.id} <> ${userId}`,
+			),
 		)
 		.limit(1);
 
