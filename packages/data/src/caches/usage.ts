@@ -1,28 +1,36 @@
 import type { CacheUsageSnapshot } from "@virtool/contracts";
-import { asc, desc, sql } from "drizzle-orm";
+import { asc, sql } from "drizzle-orm";
 import type { Db } from "../db/pg";
 import { caches } from "../db/schema/caches";
 import { cacheUsageSnapshots } from "../db/schema/cacheUsageSnapshots";
 
-/** Maximum hourly cache-usage snapshots retained, equivalent to 30 days. */
-export const CACHE_USAGE_SNAPSHOT_LIMIT = 720;
+const CACHE_USAGE_RETENTION_MS = 30 * 24 * 60 * 60 * 1000;
 
-/** Record current aggregate cache usage and discard snapshots beyond the limit. */
+/** Record current aggregate cache usage once per task and expire old snapshots. */
 export async function recordCacheUsage(
 	db: Db,
+	taskId: number,
 	recordedAt: Date = new Date(),
 ): Promise<CacheUsageSnapshot> {
+	const cutoff = new Date(recordedAt.getTime() - CACHE_USAGE_RETENTION_MS);
+
 	return db.transaction(async (tx) => {
 		const [snapshot] = await tx.execute<
-			Pick<CacheUsageSnapshot, "cacheCount" | "totalSize">
+			Pick<CacheUsageSnapshot, "cacheCount" | "totalSize"> & {
+				recordedAt: string;
+			}
 		>(sql`
-			insert into ${cacheUsageSnapshots} (recorded_at, cache_count, total_size)
+			insert into ${cacheUsageSnapshots} (task_id, recorded_at, cache_count, total_size)
 			select
+				${taskId},
 				${sql.param(recordedAt, cacheUsageSnapshots.recorded_at)},
 				count(*)::int,
 				coalesce(sum(${caches.size}), 0)
 			from ${caches}
+			on conflict (task_id) do update
+			set task_id = excluded.task_id
 			returning
+				${cacheUsageSnapshots.recorded_at} as "recordedAt",
 				${cacheUsageSnapshots.cache_count} as "cacheCount",
 				${cacheUsageSnapshots.total_size}::float8 as "totalSize"
 		`);
@@ -31,17 +39,12 @@ export async function recordCacheUsage(
 			throw new Error("failed to record cache usage");
 		}
 
-		const retained = tx
-			.select({ id: cacheUsageSnapshots.id })
-			.from(cacheUsageSnapshots)
-			.orderBy(desc(cacheUsageSnapshots.id))
-			.limit(CACHE_USAGE_SNAPSHOT_LIMIT);
-
 		await tx.execute(
-			sql`delete from ${cacheUsageSnapshots} where ${cacheUsageSnapshots.id} not in (${retained})`,
+			sql`delete from ${cacheUsageSnapshots}
+				where ${cacheUsageSnapshots.recorded_at} < ${sql.param(cutoff, cacheUsageSnapshots.recorded_at)}`,
 		);
 
-		return { ...snapshot, recordedAt };
+		return { ...snapshot, recordedAt: new Date(snapshot.recordedAt) };
 	});
 }
 

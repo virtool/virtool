@@ -1299,6 +1299,12 @@
             "cycle": false
           }
         },
+        "task_id": {
+          "name": "task_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
         "recorded_at": {
           "name": "recorded_at",
           "type": "timestamp",
@@ -1321,7 +1327,15 @@
       "indexes": {},
       "foreignKeys": {},
       "compositePrimaryKeys": {},
-      "uniqueConstraints": {},
+      "uniqueConstraints": {
+        "cache_usage_snapshots_task_id_key": {
+          "name": "cache_usage_snapshots_task_id_key",
+          "nullsNotDistinct": false,
+          "columns": [
+            "task_id"
+          ]
+        }
+      },
       "policies": {},
       "checkConstraints": {
         "ck_cache_usage_snapshots_cache_count": {

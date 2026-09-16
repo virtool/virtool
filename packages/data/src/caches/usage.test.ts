@@ -2,11 +2,7 @@ import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
 import { caches } from "../db/schema/caches";
 import { cacheUsageSnapshots } from "../db/schema/cacheUsageSnapshots";
 import { createTestDatabase, type TestDatabase } from "../db/test/fixtures";
-import {
-	CACHE_USAGE_SNAPSHOT_LIMIT,
-	listCacheUsage,
-	recordCacheUsage,
-} from "./usage";
+import { listCacheUsage, recordCacheUsage } from "./usage";
 
 let database: TestDatabase;
 
@@ -27,11 +23,13 @@ describe("recordCacheUsage", () => {
 	it("records an empty cache store", async () => {
 		const recordedAt = new Date("2026-09-11T12:00:00Z");
 
-		await expect(recordCacheUsage(database.db, recordedAt)).resolves.toEqual({
-			cacheCount: 0,
-			recordedAt,
-			totalSize: 0,
-		});
+		await expect(recordCacheUsage(database.db, 1, recordedAt)).resolves.toEqual(
+			{
+				cacheCount: 0,
+				recordedAt,
+				totalSize: 0,
+			},
+		);
 	});
 
 	it("records the cache count and total size", async () => {
@@ -54,32 +52,53 @@ describe("recordCacheUsage", () => {
 			},
 		]);
 
-		await expect(recordCacheUsage(database.db)).resolves.toMatchObject({
+		await expect(recordCacheUsage(database.db, 1)).resolves.toMatchObject({
 			cacheCount: 2,
 			totalSize: 50,
 		});
 	});
 
-	it("retains only the newest 720 snapshots", async () => {
-		const start = new Date("2026-08-12T12:00:00Z");
-		await database.db.insert(cacheUsageSnapshots).values(
-			Array.from({ length: CACHE_USAGE_SNAPSHOT_LIMIT }, (_, index) => ({
-				recorded_at: new Date(start.getTime() + index * 60 * 60 * 1000),
-				cache_count: index,
-				total_size: index * 10,
-			})),
-		);
+	it("does not record the same task twice", async () => {
+		const first = new Date("2026-09-11T11:00:00Z");
+		const retry = new Date("2026-09-11T12:00:00Z");
 
-		const newest = new Date("2026-09-11T12:00:00Z");
-		await recordCacheUsage(database.db, newest);
+		await recordCacheUsage(database.db, 1, first);
+		await recordCacheUsage(database.db, 1, retry);
 
 		const snapshots = await listCacheUsage(database.db);
 
-		expect(snapshots).toHaveLength(CACHE_USAGE_SNAPSHOT_LIMIT);
-		expect(snapshots[0]?.recordedAt).toEqual(
-			new Date(start.getTime() + 60 * 60 * 1000),
-		);
-		expect(snapshots.at(-1)?.recordedAt).toEqual(newest);
+		expect(snapshots).toEqual([
+			{ cacheCount: 0, recordedAt: first, totalSize: 0 },
+		]);
+	});
+
+	it("expires snapshots older than 30 days", async () => {
+		const recordedAt = new Date("2026-09-11T12:00:00Z");
+		await database.db.insert(cacheUsageSnapshots).values([
+			{
+				task_id: 1,
+				recorded_at: new Date("2026-08-12T11:59:59Z"),
+				cache_count: 1,
+				total_size: 10,
+			},
+			{
+				task_id: 2,
+				recorded_at: new Date("2026-08-12T12:00:00Z"),
+				cache_count: 2,
+				total_size: 20,
+			},
+		]);
+
+		await recordCacheUsage(database.db, 3, recordedAt);
+
+		await expect(listCacheUsage(database.db)).resolves.toEqual([
+			{
+				cacheCount: 2,
+				recordedAt: new Date("2026-08-12T12:00:00Z"),
+				totalSize: 20,
+			},
+			{ cacheCount: 0, recordedAt, totalSize: 0 },
+		]);
 	});
 });
 
@@ -89,8 +108,8 @@ describe("listCacheUsage", () => {
 		const newer = new Date("2026-09-11T11:00:00Z");
 
 		await database.db.insert(cacheUsageSnapshots).values([
-			{ recorded_at: newer, cache_count: 2, total_size: 30 },
-			{ recorded_at: older, cache_count: 1, total_size: 20 },
+			{ task_id: 2, recorded_at: newer, cache_count: 2, total_size: 30 },
+			{ task_id: 1, recorded_at: older, cache_count: 1, total_size: 20 },
 		]);
 
 		await expect(listCacheUsage(database.db)).resolves.toEqual([

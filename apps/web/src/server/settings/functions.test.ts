@@ -125,6 +125,7 @@ describe("getCacheUsage", () => {
 		await signIn(db, getRequest, { administratorRole: "settings" });
 		const recordedAt = new Date("2026-09-11T12:00:00Z");
 		await db.insert(cacheUsageSnapshots).values({
+			task_id: 1,
 			recorded_at: recordedAt,
 			cache_count: 4,
 			total_size: 50,

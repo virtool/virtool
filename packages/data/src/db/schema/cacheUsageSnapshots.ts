@@ -5,17 +5,20 @@ import {
 	integer,
 	pgTable,
 	timestamp,
+	unique,
 } from "drizzle-orm/pg-core";
 
 export const cacheUsageSnapshots = pgTable(
 	"cache_usage_snapshots",
 	{
 		id: integer("id").primaryKey().generatedAlwaysAsIdentity(),
+		task_id: integer("task_id").notNull(),
 		recorded_at: timestamp("recorded_at").notNull(),
 		cache_count: integer("cache_count").notNull(),
 		total_size: bigint("total_size", { mode: "number" }).notNull(),
 	},
 	(table) => [
+		unique("cache_usage_snapshots_task_id_key").on(table.task_id),
 		check(
 			"ck_cache_usage_snapshots_cache_count",
 			sql`${table.cache_count} >= 0`,
