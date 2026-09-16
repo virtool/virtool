@@ -285,8 +285,8 @@ data helpers that depend on it. Framework persistence owns its own mirror and
 bookkeeping tables; bodies must not write those tables.
 
 `legacy_identities@2` stays paired with `0029_audit_legacy_identities`. It scans
-in batches of 500 within one transaction, locking users and credential accounts
-against concurrent writes through commit (lock acquisition times out after five
+all users and credential accounts in one transaction, locking them against
+concurrent writes through commit (lock acquisition times out after five
 seconds). A retry after interruption starts over; a completed retry leaves
 matching credentials untouched. Incomplete email users remain unchanged, but
 handle, password, and credential-state findings are checked independently.
@@ -313,8 +313,8 @@ verbatim and must contain no credentials; persisted errors are redacted. At most
 3. Rerun `migrate`. It retries the pending pair and continues only after a pass.
 
 The `legacy_identities@2` body is paired with
-`0029_audit_legacy_identities`. It eagerly migrates eligible identities in
-bounded batches and leaves blank, malformed, and duplicate-email users
+`0029_audit_legacy_identities`. It eagerly migrates eligible identities and
+leaves blank, malformed, and duplicate-email users
 unchanged for the restricted remediation flow. Their counts remain in the
 recorded summary without failing the migration. Invalid handles, invalid
 bcrypt hashes, migration-state corruption, and unsafe credential linkages are

@@ -243,21 +243,18 @@ it("repairs stale credentials and rejects invalid legacy passwords on migrated u
 	]);
 });
 
-it("observes cancellation and rolls back writes before retry", async () => {
+it("observes cancellation before starting the migration", async () => {
 	await seedUser(db, { email: "valid@example.com", password });
 	const controller = new AbortController();
+	controller.abort();
 	const definition = DATA_MIGRATIONS.legacy_identities;
 	if (definition?.kind !== "audit") {
 		throw new Error("missing audit");
 	}
-	const logger = createLogger({ name: "test", level: "silent" });
-	logger.info = function abortAfterBatch() {
-		controller.abort();
-	};
 	await expect(
 		definition.run({
 			client: database.client,
-			logger,
+			logger: createLogger({ name: "test", level: "silent" }),
 			signal: controller.signal,
 			report() {},
 		}),
