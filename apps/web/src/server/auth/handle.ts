@@ -1,28 +1,12 @@
 import { setResponseStatus } from "@tanstack/react-start/server";
+import {
+	HANDLE_MAX_LENGTH,
+	HANDLE_MIN_LENGTH,
+	isValidHandle,
+} from "@virtool/data/auth/handle";
 import { ClientError } from "../errors";
 
-/** The characters a handle may contain. */
-const HANDLE_PATTERN = /^[a-zA-Z0-9_.]+$/;
-
-/** The fewest characters a handle may have. */
-export const HANDLE_MIN_LENGTH = 3;
-
-/** The most characters a handle may have. */
-export const HANDLE_MAX_LENGTH = 30;
-
-/**
- * Report whether a handle has a usable shape.
- *
- * Better Auth matches a sign-in against this same rule before it looks the user
- * up, so a handle this rejects is one that could be created but never used.
- */
-export function isValidHandle(handle: string): boolean {
-	return (
-		handle.length >= HANDLE_MIN_LENGTH &&
-		handle.length <= HANDLE_MAX_LENGTH &&
-		HANDLE_PATTERN.test(handle)
-	);
-}
+export { HANDLE_MAX_LENGTH, HANDLE_MIN_LENGTH, isValidHandle };
 
 /**
  * Reject a handle that cannot be signed in with.

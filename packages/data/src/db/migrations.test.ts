@@ -1,9 +1,9 @@
 import { randomBytes } from "node:crypto";
 import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
-
+import { readMigrationFiles } from "drizzle-orm/migrator";
+import { PgDialect, type PgSession } from "drizzle-orm/pg-core";
 import { drizzle } from "drizzle-orm/postgres-js";
-import { migrate } from "drizzle-orm/postgres-js/migrator";
 import postgres from "postgres";
 import { expect, it, onTestFinished } from "vitest";
 
@@ -98,11 +98,33 @@ it("apply from empty and land on the schema mirror", async () => {
 		await admin.end();
 	});
 
-	await migrate(drizzle(client, { schema }), {
+	const config = {
 		migrationsFolder: MIGRATIONS_FOLDER,
 		migrationsSchema: "drizzle",
 		migrationsTable: "__drizzle_migrations",
-	});
+	};
+	const db = drizzle(client, { schema });
+	const dialect = new PgDialect();
+	const migrations = readMigrationFiles(config);
+	const session = db._.session as unknown as PgSession;
+
+	for (const [index, migration] of migrations.entries()) {
+		const assertion = migration.sql[0]?.match(
+			/key\s*=\s*'([^']+)'\s+AND\s+version\s*=\s*(\d+)\s+AND\s+status\s*=\s*'passed'/i,
+		);
+		if (assertion === null || assertion === undefined) {
+			continue;
+		}
+
+		await dialect.migrate(migrations.slice(0, index), session, config);
+		await client`
+			insert into data_migrations (key, version, kind, status)
+			values (${assertion[1]}, ${Number(assertion[2])}, 'audit', 'passed')
+			on conflict (key, version) do nothing
+		`;
+	}
+
+	await dialect.migrate(migrations, session, config);
 
 	const mirror = await createTestDatabase();
 	onTestFinished(mirror.drop);

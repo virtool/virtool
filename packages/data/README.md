@@ -215,11 +215,10 @@ A Drizzle property name in `auth.ts` is a Better Auth *field* name — the adapt
 looks fields up by property — so `userId` and `credentialID` keep their exact
 spelling while their columns stay snake_case.
 
-`users.email` is deliberately not unique, though Better Auth declares it so.
-Legacy rows share an empty email, and normalizing them is separate work. Until
-that lands, `src/auth/lifecycle.ts` holds uniqueness for the addresses it
-establishes with a transaction-scoped advisory lock on the normalized address
-rather than an index.
+`users.email` is deliberately not globally unique, though Better Auth declares
+it so. Legacy rows share an empty email. The identity audit reports malformed
+and colliding addresses, while `users_migrated_email_unique` enforces
+normalized uniqueness only after `auth_migrated_at` is set.
 
 ### Account lifecycle and setup state
 
