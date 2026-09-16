@@ -178,23 +178,51 @@ the shared test harness.
 
 See [docs/code-style.md](docs/code-style.md) for rationale and examples.
 
-- **Functions:** Use function declarations, not arrow functions.
-- **Refs:** Treat `ref` as an ordinary prop; do not use `forwardRef`.
-- **Imports:** Biome organises imports automatically. Don't manually organise
-  or clean up unused imports.
-- **Conditionals:** Always use curly braces with `if`/`else`.
-- **Prefer `const`** over `let`.
-- **Types:** Use `type`, not `interface`.
-- **JSDoc:** Give every exported `type` a one-line `/** ... */` that begins
-  with what the type is.
-- **Naming:** `is`/`has`/`get` for pure reads; `check`/`validate`/
-  `assert` for operations that may throw. Suffix `createServerFn` exports with
-  `Fn`; keep wrapped domain-function names unsuffixed.
-- **Comments:** Default to none. Comment only to explain non-obvious reasons;
-  do not restate code, narrate history, reference the current task, or name a
-  caller.
-- **Concurrency:** Put independent awaits in `Promise.all`; use
-  `Promise.allSettled` when every outcome is required.
+### Functions
+
+Use function declarations, not arrow functions.
+
+### Refs
+
+Treat `ref` as an ordinary prop; do not use `forwardRef`.
+
+### Imports
+
+Biome organises imports automatically. Don't manually organise or clean up
+unused imports.
+
+### Conditionals
+
+Always use curly braces with `if`/`else`.
+
+### Prefer `const`
+
+Use `const` over `let`.
+
+### Types
+
+Use `type`, not `interface`.
+
+### JSDoc
+
+Give every exported `type` a one-line `/** ... */` that begins with what the
+type is.
+
+### Naming
+
+`is`/`has`/`get` for pure reads; `check`/`validate`/`assert` for operations that
+may throw. Suffix `createServerFn` exports with `Fn`; keep wrapped domain-function
+names unsuffixed.
+
+### Comments
+
+Default to none. Comment only to explain non-obvious reasons; do not restate
+code, narrate history, reference the current task, or name a caller.
+
+### Concurrency
+
+Put independent awaits in `Promise.all`; use `Promise.allSettled` when every
+outcome is required.
 
 ## Testing
 
