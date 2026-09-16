@@ -129,5 +129,11 @@ export function reactQueryHandler(queryClient: QueryClient) {
 		queryClient.invalidateQueries({
 			queryKey: selectQueryKey(domain, message.operation, message.id),
 		});
+
+		if (message.domain === "users" && message.operation === "update") {
+			queryClient.invalidateQueries({
+				queryKey: analysesQueryKeys.users(),
+			});
+		}
 	};
 }
