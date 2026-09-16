@@ -9,7 +9,7 @@ and test harness shared by Virtool workflow executors.
   Step IDs use snake case and are stored verbatim by the jobs API.
 - Build the run context once with `buildContext`. Its `data` field must survive
   a JSON round trip; use `state` for mutable step-to-step data.
-- `runWorkflow()` returns an outcome. It does not use the network, install
+- `runWorkflow()` returns an outcome. It doesn't use the network, install
   signal handlers, exit the process, run teardown, or provide lifecycle hooks.
 - `runWorkflowApp()` owns configuration, job claiming, pings, cancellation,
   reporting, Sentry flushing, and process exit.
@@ -24,7 +24,7 @@ The runtime is deliberately small and explicit:
   required objects with `storage.size()`, while the step that needs an optional
   input downloads it.
 - No teardown layer exists. Workflow containers are ephemeral, and process
-  exit reclaims their work directory. Do not add `dispose`,
+  exit reclaims their work directory. Don't add `dispose`,
   `Symbol.asyncDispose`, or an `AsyncExitStack` equal.
 - No lifecycle-hook registry exists. `RunWorkflowOptions.onStepStart` is the
   sole optional callback. Successful completion is represented by the returned
@@ -58,9 +58,9 @@ ownership boundary between this package and the jobs API (`@virtool/internal`).
 - Claim paths are unprefixed and wire fields are camel case.
 - A pod gets its job ID and credential from the claim response.
 - Transport failures retry five times at five-second intervals. HTTP responses
-  are not retried.
+  aren't retried.
 - The ping loop treats `401` as cancellation. Five consecutive other failures
-  stop the ping loop but do not stop the workflow.
+  stop the ping loop but don't stop the workflow.
 - A completed or failed workflow exits `0`; the jobs API owns those state
   transitions. A broken runner exits `1`, and `SIGTERM` exits `124`.
 
@@ -84,10 +84,10 @@ That layout is what lets every workflow share the `reference_mapping_index` and
 key is success. `deriveCacheKey()` serialises params as JSON with keys sorted
 by code point, `,` and `:` separators, and every character outside
 `0x20`-`0x7E` escaped, then takes the SHA-256 of the result; mark floats with
-`float()`, and do not change the frozen golden fixtures to match what the
+`float()`, and don't change the frozen golden fixtures to match what the
 implementation currently produces.
 
-Tar and gzip operations belong to `@virtool/archive`; this package does not
+Tar and gzip operations belong to `@virtool/archive`; this package doesn't
 re-export them.
 
 ## Configuration
@@ -143,7 +143,7 @@ out of `apps/web/vitest.config.js`; the workflow harness has no dependency on
 the SPA. Place tests beside their source as `*.test.ts`.
 
 Workflow data generators, jobs API fakes, and process fakes live in
-`src/testing/` and are imported through `@virtool/workflow/testing`. Do not
+`src/testing/` and are imported through `@virtool/workflow/testing`. Don't
 duplicate them in `apps/web/src/tests/` or a workflow app. Tests that store
 files use `MemoryStorage`.
 

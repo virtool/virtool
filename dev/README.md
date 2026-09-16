@@ -25,7 +25,7 @@ coasts up
 coast ui
 ```
 
-Creating or switching worktrees does not provision a Coast. Run `coasts up`
+Creating or switching worktrees doesn't provision a Coast. Run `coasts up`
 from a worktree when it needs a development instance. It creates the instance
 on first use, resumes it if stopped, and leaves a healthy instance alone. Other
 instances keep running. The command waits for readiness before returning.
@@ -43,7 +43,7 @@ coasts remove              # Delete instance and data
 live service status. Logs are replaced on each operation. `--worktree <path>`
 targets another worktree. To clean an instance whose worktree was already
 deleted, use `coasts remove --instance <name>` from any remaining worktree.
-`list` includes these pending records so bypassed hooks do not hide leftover
+`list` includes these pending records so bypassed hooks don't hide leftover
 data.
 
 ### Workflow execution
@@ -58,8 +58,8 @@ failure, and exit paths. Each one connects directly to its Coast's private jobs
 API and blob container. Compose applies per-executor CPU and memory limits, and
 stopping a Coast stops its executors.
 
-This deliberately does not reproduce KEDA. One polling executor always runs
-per workflow type, queue depth does not add parallel workers, and
+This deliberately doesn't reproduce KEDA. One polling executor always runs
+per workflow type, queue depth doesn't add parallel workers, and
 there is no global concurrency limit across Coasts. Up to four jobs can run in
 each active Coast, including memory-heavy jobs at once. Stop unused
 Coasts before exercising heavy workflows on a constrained host.
@@ -91,18 +91,18 @@ Discovery is a read-only, same-origin Vite endpoint backed by an ignored local
 file. It publishes no data IDs, credentials, or worktree paths, and has no
 start/stop/remove operations. The endpoint and switcher are absent from
 production output. The generated file is excluded from Docker build contexts
-and Vite watching, so switching terminals does not trigger page reloads.
+and Vite watching, so switching terminals doesn't trigger page reloads.
 
 Use `wt list` for branch/worktree status and app links after `coasts
 up`, Coastguard for live service status and logs, and the badge for browser
 switching. These cover
-the section 2 overview needs; a separate TUI would duplicate them and is not
+the section 2 overview needs; a separate TUI would duplicate them and isn't
 planned. Revisit only if a concrete missing operation appears in daily use.
 
 Coasts shares its local Caddy CA across instances. After the first successful
 startup, the controller copies the public certificate to
 `<git-common-dir>/virtool-coasts/root.crt`. Trust that certificate in your
-OS/browser once. No private key is exported and the controller does not change
+OS/browser once. No private key is exported and the controller doesn't change
 your trust store. It reads the public certificate through the proxy because
 Coasts 0.1.53 can leave the host CA directory unreadable to the developer.
 
@@ -115,7 +115,7 @@ The controller enables project subdomain links in Coastguard and sets the
 HTTPS service's URL template. Its primary badge opens the managed instance.
 If you manually check out an instance, Coastguard may show its canonical port;
 use `wt list` or the dynamic HTTPS link on the Ports tab for the configured
-origin. Raw Vite port 9900 is not the configured authentication origin. Legacy
+origin. Raw Vite port 9900 isn't the configured authentication origin. Legacy
 trial instances still require their original `http://localhost:9900` URL.
 
 ### Lifecycle and data
@@ -124,7 +124,7 @@ The registry, operation locks, build cache record, and logs live in
 `<git-common-dir>/virtool-coasts/`, outside individual worktrees, and Coast
 volumes. A generation marker in each worktree's Git directory survives branch
 renames and worktree moves. Git removes that marker when deleting a worktree,
-so reusing the same path cannot inherit its old data even if hooks were bypassed.
+so reusing the same path can't inherit its old data even if hooks were bypassed.
 Instance names combine a readable branch slug with a random suffix; recreating
 a removed worktree creates a new data identity. `list` flags unmatched records
 as orphaned; clean them with `remove --instance <name>`.
@@ -133,7 +133,7 @@ Provisioning runs with Compose autostart off. The lifecycle script first
 records an instance's data ID, then writes its identity and origin into the
 isolated configuration volume before starting initialization or app
 services. Database creation, migrations, and blob-container initialization
-complete before the app starts. Coasts 0.1.53 does not wire its
+complete before the app starts. Coasts 0.1.53 doesn't wire its
 documented automatic database injection into startup, so initialization remains
 explicit.
 
@@ -153,9 +153,9 @@ and services. It checks the outer container again and still requires app
 readiness before reporting success. This never recreates the configuration
 volume or changes the data identity.
 
-Do not use raw `coast rm` for managed instances: it leaves their database and
+Don't use raw `coast rm` for managed instances: it leaves their database and
 blobs behind. If you used it, run the lifecycle `remove` command before
-recreating the instance. Legacy manually created trial instances are not
+recreating the instance. Legacy manually created trial instances aren't
 adopted or deleted by the hooks; clean those separately after identifying their
 data ID in `/run/virtool-dev/namespace`.
 
@@ -182,7 +182,7 @@ and recreated to adopt these mounts; removal deletes their development data.
 If another process takes a stopped instance's reserved dynamic port, `ensure`
 reports the occupied port before starting Docker, instead of changing its
 origin. A bind race can still fail in Docker; its detailed error is in the
-lifecycle log. Release that port and retry `ensure`; do not
+lifecycle log. Release that port and retry `ensure`; don't
 remove the instance or reset its data. The root test stack uses 5432 and 27017,
 so it can run alongside the shared Coast services on 15432 and 11000. Those
 fixed shared-service ports must remain available to Coast; there is no automatic
@@ -190,12 +190,12 @@ fallback to another port.
 
 A failed Docker port bind can also drop the stopped container's default bridge
 attachment. Resume restores a missing default bridge before starting the inner
-daemon, preserving the host-gateway route to the shared services. It does not
+daemon, preserving the host-gateway route to the shared services. It doesn't
 disconnect shared-service networks or reset their volumes.
 
 ### Shared-service recovery
 
-Run `coasts up` when an instance is running but cannot reach Postgres or
+Run `coasts up` when an instance is running but can't reach Postgres or
 Azurite. The controller checks shared-service registrations and actual host
 containers, starts stopped shared containers, and probes the proxy addresses
 from the effective Compose configuration. If a proxy is unreachable, it stops
@@ -205,11 +205,11 @@ second failed proxy check stops startup with a routing error.
 
 Missing registrations or host containers stop startup with an explicit error.
 The controller never automatically recreates shared storage. In Coasts 0.1.53,
-`shared-services start` starts an existing registered container; it cannot
+`shared-services start` starts an existing registered container; it can't
 recreate a removed service. `shared-services rm` deletes the service's named
-volumes as well as its container and registration. Do not use it to repair
+volumes as well as its container and registration. Don't use it to repair
 connectivity. That release's documentation mentions **Refresh Shared Services**,
-but its UI does not build the operation.
+but its UI doesn't build the operation.
 
 To deliberately provision a missing shared service, use a temporary, unassigned
 Coast from the primary worktree. Choose an unused temporary instance name:
@@ -256,14 +256,14 @@ build ID match. Assignment changes the source mount; the controller builds the
 development image on the host, caches it by input hash, and loads it into the
 owning Coast. Dependency manifests, lockfiles, build configuration, migration
 SQL, workflow sources, shared package sources, and workflow Rust crates
-invalidate that cache. Mounted web and internal source edits do not. Shared
+invalidate that cache. Mounted web and internal source edits don't. Shared
 package edits reach the running web and internal watchers immediately; run
 `coasts up` to rebuild their bundled copies in workflow images.
 `coasts up --rebuild` reapplies cached images or builds changed inputs. Changing
 Coast configuration requires removing and recreating the instance with fresh data. Existing instances keep
 running on their previous configuration until explicitly recreated.
 
-Do not use `coast rebuild` with this stack. In Coasts 0.1.53 it bypasses the
+Don't use `coast rebuild` with this stack. In Coasts 0.1.53 it bypasses the
 shared-service override and can launch an unintended second Compose project.
 The controller uses `coast docker ... compose` to preserve the effective
 configuration and builds the root Dockerfile's `dev-coast`
@@ -285,7 +285,7 @@ Coasts 0.1.53 still builds/exports the same development target once per service
 when creating an artifact, and exports the Node base once per build directive.
 Removing that remaining duplication requires a different artifact mechanism or
 an upstream change. Keep each service's `build` and
-`volumes` keys explicit: Coasts 0.1.53 does not discover these through a
+`volumes` keys explicit: Coasts 0.1.53 doesn't discover these through a
 service-level YAML merge. Aliases for their values are supported.
 
 Jobs API and tasks bundle mounted source with tsdown watch mode. A source edit

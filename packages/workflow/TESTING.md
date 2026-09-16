@@ -16,7 +16,7 @@ depending on the SPA.
 ## Factory functions, not framework magic
 
 Vitest has no mechanism for injecting fixtures by parameter name or resolving a
-dependency graph between them, and this harness deliberately does not build
+dependency graph between them, and this harness deliberately doesn't build
 one.
 
 - Everything is an exported factory taking explicit arguments and returning a
@@ -86,15 +86,15 @@ and status-to-error mapping only mean something over a real wire. A fetch mock
 would assert them into existence rather than test them.
 
 Both run `handleJobsApiRequest` over the same `JobsApiState`. This shared path
-keeps the two from drifting: a test's unused half cannot quietly stop matching
+keeps the two from drifting: a test's unused half can't quietly stop matching
 the real service. The shared setup also lets a test move from one to the other
 without rewriting its fixture.
 
-The faked client is not a shortcut around the contract either. Every response
+The faked client isn't a shortcut around the contract either. Every response
 goes through `JSON.stringify` and back and is parsed with the same schema the
 real client parses the real service's response with, and every non-2xx status
 goes through the same `assertOkResponse`. A fixture answering with a shape the
-contract does not describe fails there exactly as it would over a wire.
+contract doesn't describe fails there exactly as it would over a wire.
 
 ### The state is the assertion surface
 
@@ -164,9 +164,9 @@ for the race between the guard's read and the transaction's lock.
 
 `POST /jobs/claim` reads its `workflow` query parameter, the way the real
 service does. Asking for a workflow this fixture's job
-does not run is answered **404**, the same "no job available" a second claim
-gets; a workflow that is not claimable at all, such as `build_index`, parses as a
-job workflow, but nothing creates it anymore, so it is **422**. Without the filter
+doesn't run is answered **404**, the same "no job available" a second claim
+gets; a workflow that's not claimable at all, such as `build_index`, parses as a
+job workflow, but nothing creates it anymore, so it's **422**. Without the filter
 a test could claim `nuvs` off a `create_subtraction` fixture and pass with a
 configuration that leaves a real pod polling until its timeout.
 
@@ -199,7 +199,7 @@ in order:
 - `hangNextRequest()`: hold the response open forever. The socket stays up, so
   this is a stalled response rather than a connection failure.
 - `destroyNextRequest()`: destroy the socket mid-connection, producing a genuine
-  transport failure. That is the **only** thing the client retries; a status is a
+  transport failure. That's the **only** thing the client retries; a status is a
   decision the jobs API made, and repeating it five times over 25 s would be a
   bug.
 
@@ -213,11 +213,11 @@ in order:
 `@virtool/contracts`, which defines what the jobs API actually serves as a
 workflow, not the wider shapes the SPA reads.
 
-Two calls with the same seed produce identical values. Determinism is not
+Two calls with the same seed produce identical values. Determinism isn't
 decoration: checksums are the assertion, and a fixture that changed between
 runs would make one unusable. Nothing global is seeded. A generator is derived
-per call, so two builders cannot influence each other through a shared stream
-and a file's fixtures do not change when a test is added ahead of them.
+per call, so two builders can't influence each other through a shared stream
+and a file's fixtures don't change when a test is added ahead of them.
 
 `STATIC_TIME` pins `2015-10-06T20:00:00Z` and is **injected** rather than
 patched onto a global clock. The value is an ISO string
@@ -232,7 +232,7 @@ and no counts, and an analysis wired to the sample, index, reference and
 subtraction.
 
 `createFakeNewSample` is the one that needs reading before use. It represents a
-sample `create_sample` has not finished, so it carries **uploads and no reads**,
+sample `create_sample` hasn't finished, so it carries **uploads and no reads**,
 and three of its details are load-bearing:
 
 - The uploads are named `sample_R{1,2}.fastq.gz`, deliberately *not*
@@ -242,7 +242,7 @@ and three of its details are load-bearing:
 - Their order is `sample_uploads.index`, which is the only thing linking an
   upload to the reads file it becomes.
 - **`paired` is `false` even with two uploads**, because `getSample` derives it
-  from the reads rows and those do not exist yet. That is what the jobs API
+  from the reads rows and those don't exist yet. That's what the jobs API
   really serves a running job, and a workflow must branch on `uploads.length`.
 
 ## Contexts stay serializable
@@ -263,7 +263,7 @@ an open handle on `data`. A test asserting only on the values would not notice.
 
 `createFakeContext(data, state, overrides)` skips `buildContext` for a step test
 that wants to supply both halves directly. Its default client is
-`createUnreachableJobsApiClient`, which rejects every call: a test that did not
+`createUnreachableJobsApiClient`, which rejects every call: a test that didn't
 set out to exercise the lifecycle should fail loudly rather than silently reach
 the network.
 
@@ -282,7 +282,7 @@ naive fake collapses into one are the three a workflow step branches on:
 
 Cancellation is `exitCode === null && signal === "SIGTERM"`, **not**
 `exitCode === 15`. Treating 15 as a success on the reasoning that the run was
-already failing for another reason does not survive a tool choosing 15 as an
+already failing for another reason doesn't survive a tool choosing 15 as an
 ordinary error code.
 
 The stderr tail matters: the real runner drains stderr *and* the process promise
@@ -303,7 +303,7 @@ exits 1.
 **`RunSubprocessOptions` has no allowed-exit-codes escape**, and the runner
 throws `SubprocessFailedError` on any non-zero exit. The fake models
 that probe as an ordinary non-zero exit, and **the call site catches the error and
-reads `stderrTail`**. The runner does not return success for it and must not be
+reads `stderrTail`**. The runner doesn't return success for it and must not be
 taught to:
 
 ```ts
@@ -339,7 +339,7 @@ there is nothing to intercept.
 side of the real system does. A row records its complete key and every read path
 reads that column, so the per-domain key builders this harness was first
 sketched against no longer exist. `mintStorageKey`, `mintRootStorageKey`, and the
-two fixed HMM constants are all that is left.
+two fixed HMM constants are all that's left.
 
 A helper writes its bytes under a freshly minted key and **returns that
 key**, and the caller attaches it to the fake row the jobs API fixture serves
@@ -399,7 +399,7 @@ re-reading the magic number here; a second copy of that check is a second thing
 to get wrong. `decompressFile` is deliberately not used because it writes a second
 file, and this only needs a stream. Everything is streamed, because these files
 run to many gigabytes and a fixture that read one into memory would be the only
-part of the harness that could not be pointed at a real workflow output.
+part of the harness that couldn't be pointed at a real workflow output.
 
 ## The lower-level HTTP server
 

@@ -13,7 +13,7 @@ The available types are:
 - `feat`: a new user-facing feature or capability;
 - `fix`: a bug fix or correction to user-visible behaviour, including UI and
   performance improvements;
-- `chore`: internal code that is not yet exposed to users, configuration,
+- `chore`: internal code that's not yet exposed to users, configuration,
   dependencies, file moves, and build scripts;
 - `refactor`: restructuring without a change in behaviour;
 - `style`: formatting without logic changes;

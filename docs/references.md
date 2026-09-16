@@ -35,7 +35,7 @@ what each error means. The relevant comments are `queries.ts`'s module comment a
 the `SELECT_OTUS`/`checkOtu` comments cover ordering and streaming;
 `schema.ts`'s `openIndexArtifact` covers the no-fallback rule; `errors.ts`'s
 `Index*Error` classes cover what each failure means and when it fires. Read
-there first. This file holds only what is not already in the code: the
+there first. This file holds only what's not already in the code: the
 measurements behind those decisions.
 
 ### Measurements

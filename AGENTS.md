@@ -68,10 +68,10 @@ source, to the corresponding filter in `.github/workflows/ci.yaml`. See
 
 Every shipped image is a target in the root `Dockerfile` and builds from the
 repository root. Keep runtime stages on `node:24-bookworm-slim`; workflow tools
-are glibc-linked, so do not add an Alpine stage. Give each bioinformatics tool
+are glibc-linked, so don't add an Alpine stage. Give each bioinformatics tool
 its own independent build stage so a target builds only the tools it uses.
 When adding a tool, inspect the pinned entry point and install every runtime
-interpreter and shared library it needs; a missing interpreter does not fail
+interpreter and shared library it needs; a missing interpreter doesn't fail
 the image build and surfaces only when the workflow runs.
 
 ### When to run checks
@@ -89,7 +89,7 @@ the image build and surfaces only when the workflow runs.
 ## Client
 
 Client code is server-rendered and compiled with React Compiler. Keep render
-pure: do not read browser globals, clocks, randomness, locale, or mutable
+pure: don't read browser globals, clocks, randomness, locale, or mutable
 module state during render. Use `useSyncExternalStore` with a cached server
 snapshot for ambient browser state and `ClientOnly` for measured subtrees.
 
@@ -127,7 +127,7 @@ repository-wide rules in view:
   and [the internal metrics guide](apps/internal/README.md#metrics).
 - `apps/internal`'s `run` subcommand carries both the periodic spawner and the
   task runner. Its lease, fencing, shutdown, progress, metrics, and task-body
-  contracts are maintained in [its README](apps/internal/README.md); do not
+  contracts are maintained in [its README](apps/internal/README.md); don't
   duplicate them here.
 
 ## Data
@@ -184,7 +184,7 @@ Use function declarations, not arrow functions.
 
 ### Refs
 
-Treat `ref` as an ordinary prop; do not use `forwardRef`.
+Treat `ref` as an ordinary prop; don't use `forwardRef`.
 
 ### Imports
 
@@ -216,7 +216,7 @@ names unsuffixed.
 
 ### Comments
 
-Default to none. Comment only to explain non-obvious reasons; do not restate
+Default to none. Comment only to explain non-obvious reasons; don't restate
 code, narrate history, reference the current task, or name a caller.
 
 ### Concurrency
@@ -261,7 +261,7 @@ type(scope): description
 ```
 
 - Title: lowercase, no period, under 72 characters.
-- Scope is optional. Allowed scope: `deps` (dependency changes). Do not scope
+- Scope is optional. Allowed scope: `deps` (dependency changes). Don't scope
   by domain.
 - Releases are automated with semantic-release. Only `feat` (minor) and `fix`
   (patch) trigger a release; use them for every user-visible change.

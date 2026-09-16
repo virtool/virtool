@@ -7,12 +7,12 @@ sets `noEmit: true`; their `exports` maps point straight at
 what lets a change to `@virtool/data` be visible to every consumer with
 no intermediate build step.
 
-A plain `node` process cannot import a `.ts` file, so the apps are where
+A plain `node` process can't import a `.ts` file, so the apps are where
 the compilation happens: **each non-Vite app bundles to a single
 `dist/index.mjs` with every `@virtool/*` package inlined from source.**
 
-Do not "fix" the asymmetry by giving the packages a `dist` build. The
-apps bundling is not a workaround for the packages being unbuilt. It is
+Don't "fix" the asymmetry by giving the packages a `dist` build. The
+apps bundling isn't a workaround for the packages being unbuilt. It's
 the design. A package that emitted `dist` would have to be rebuilt before
 any consumer saw a change, and the type-declaration trap that
 `apps/web/src/server` lives with (`TS2883`, no `.d.ts`, every
@@ -32,7 +32,7 @@ reads two things out of `tsdown.config.ts`:
   the app's source without a `knip.json` block; and
 - every **string** in `deps.neverBundle` counts as a used dependency, so
   a package that appears in the app's manifest only because the bundle
-  imports it at top level is not reported as unused.
+  imports it at top level isn't reported as unused.
 
 Between them, an app needs no entry in `knip.json` at all. Raw Rolldown
 and esbuild have knip plugins too, but neither gives you the second half.
@@ -41,7 +41,7 @@ Externals must so be written as **string literals** in
 `deps.neverBundle`. A regular expression there is invisible to knip and
 its packages come back as unused dependencies.
 
-## What is bundled and what is external
+## What's bundled and what's external
 
 tsdown externalises everything in `dependencies` and `peerDependencies`
 by default. Two overrides shape that into what these apps need:
@@ -56,15 +56,15 @@ deps: {
 - **`alwaysBundle: [/^@virtool\//]`**: workspace packages are declared as
   `dependencies`, so without this they would stay external and the output
   would carry an `import "@virtool/data/db/pg"` that resolves to a `.ts`
-  file `node` cannot load.
+  file `node` can't load.
 - **`neverBundle`**: native addons and anything with a worker-thread or
-  dynamic-path runtime. `bcrypt` is a native addon and cannot be bundled
+  dynamic-path runtime. `bcrypt` is a native addon and can't be bundled
   at all. `pino` resolves transport worker files by path at runtime.
   `postgres`, `@aws-sdk/*` and `@azure/*` are heavyweight and gain
   nothing from inlining.
 
-Everything a bundled workspace package pulls in that is *not* on that
-list gets inlined. This includes `drizzle-orm` and `es-toolkit`, for instance. That is
+Everything a bundled workspace package pulls in that's *not* on that
+list gets inlined. This includes `drizzle-orm` and `es-toolkit`, for instance. That's
 deliberate: it keeps the deployed `node_modules` to the handful of
 packages that genuinely have to be real files on disk.
 
@@ -106,13 +106,13 @@ apps/<name>/
 ```
 
 `apps/tsconfig.node.json` is the shared base: Node-only, `types:
-["node"]`, no DOM lib, and no JSX. It deliberately does **not** extend
+["node"]`, no DOM lib, and no JSX. It deliberately doesn't extend
 `apps/web/tsconfig.json`, which carries the browser path aliases and a
 DOM lib.
 
 Its `moduleResolution: "Bundler"` is load-bearing. It's what lets
 `@virtool/storage` resolve through the package's `exports` map straight
-into `packages/storage/src/*.ts`; a `"node16"` resolution does not follow
+into `packages/storage/src/*.ts`; a `"node16"` resolution doesn't follow
 an exports map to a `.ts` file.
 
 Adding a directory in that shape is enough to be covered by `pnpm build`,
@@ -129,7 +129,7 @@ Dockerfile stage and a CI matrix entry. This is the one deliberate exception.
   CI job.
 - **`pnpm check` / `pnpm format`** run biome over `apps packages` rather
   than a literal `apps/web/src`. `apps/site` is excluded once, in
-  `biome.json`'s `files.includes`, because Astro is not linted by biome.
+  `biome.json`'s `files.includes`, because Astro isn't linted by biome.
 - **`pnpm typecheck` and `pnpm test`** were already `pnpm -r`; an app is
   picked up as soon as it declares the script.
 - **CI's `packages-test`** filters by exclusion: `!@virtool/web`,

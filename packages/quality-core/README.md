@@ -7,7 +7,7 @@ subprocess. It replaced FastQC 0.11.9 in that workflow.
 
 One of two Rust crates here; the other is
 [`pathoscope-core`](../pathoscope-core/README.md). Neither is a pnpm workspace
-member, so `pnpm test` does not reach them. Run `cargo` in this directory, and
+member, so `pnpm test` doesn't reach them. Run `cargo` in this directory, and
 CI gates it with a `quality-test` job.
 
 ```
@@ -42,14 +42,14 @@ Two more that are easy to miss:
   file**, and that decision sets the offset every score in the blob is measured
   against. A file of nothing but high scores reads as Illumina, not Sanger.
 - **A cycle covered by 100 reads or fewer has no percentiles.** FastQC reports
-  `NaN` for all five, which cannot be stored because it is not valid JSON and is
+  `NaN` for all five, which can't be stored because it's not valid JSON and is
   rejected by both the JSONB column and the `Quality` schema. The row is resolved
   by
-  substituting the first value in it that is a real number, the mean, for the
+  substituting the first value in it that's a real number, the mean, for the
   whole row. It's not a rare shape: a file of variable-length reads thins out
   toward its longest read.
 
-**Do not "correct" any of these.** The blob is compared against the ones
+**Don't "correct" any of these.** The blob is compared against the ones
 samples already hold, and a more defensible statistic is a divergence in stored
 data.
 
@@ -119,7 +119,7 @@ binary links nothing but glibc, which is why the create-sample runtime stage
 installs nothing at all.
 
 `clap`, `serde`/`serde_json` and `thiserror` are the rest. No
-`libclang` need applies here. That is `pathoscope-core`'s `hts-sys`.
+`libclang` need applies here. That's `pathoscope-core`'s `hts-sys`.
 
 ## Commands
 

@@ -29,7 +29,7 @@ package:
   `cd-hit-est` collapses the supplied reference, and the survivors go into
   `index.v1.sqlite`, which later steps reopen through `openWorkflowIndex`.
 
-The two names are not interchangeable and the constants are separate for that
+The two names aren't interchangeable and the constants are separate for that
 reason. A collapsed reference is missing every isolate `cd-hit-est` dropped,
 and one name for both is how a partial artifact gets uploaded as a whole one.
 
@@ -41,8 +41,8 @@ opinions about one binary format.
 
 ## This package specifies the format
 
-The artifact format is specified here, and what is specified is the *schema*:
-columns, constraints, and indexes. It is not any particular DDL text. The tables are
+The artifact format is specified here, and what's specified is the *schema*:
+columns, constraints, and indexes. It's not any particular DDL text. The tables are
 declared explicitly and never reflected, so only the schema itself binds a
 writer.
 
@@ -54,7 +54,7 @@ the no-fallback rule, and `errors.ts` covers what each failure means.
 `src/fixtures/` holds a reference artifact plus the golden results of every
 query, captured from the Python server the reader is pinned to. The script that
 wrote them is gone, and there is no supported way to regenerate them from this
-package. `git log --diff-filter=D` under `src/fixtures/` finds it if it is
+package. `git log --diff-filter=D` under `src/fixtures/` finds it if it's
 wanted. **Never edit a golden to match this implementation's output.** That
 converts a caught divergence into a permanent one.
 

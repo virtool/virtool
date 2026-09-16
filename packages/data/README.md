@@ -39,9 +39,9 @@ Keys are `/`-delimited and have no leading slash. `write` creates or
 overwrites an object and returns the byte count; `delete` is idempotent.
 Missing objects cause `read` and `size` to throw `StorageKeyNotFoundError`.
 Other failures throw `StorageError`. Both errors come from
-`@virtool/storage/errors` and do not depend on the data layer's `AppError`.
+`@virtool/storage/errors` and don't depend on the data layer's `AppError`.
 
-`StorageObjectInfo` contains `key`, `size`, and `lastModified`. Do not compare
+`StorageObjectInfo` contains `key`, `size`, and `lastModified`. Don't compare
 `lastModified` across backends or depend on it for ordering because its source
 differs between real buckets and `MemoryStorage`.
 
@@ -88,8 +88,8 @@ key stored in the corresponding row:
 | `indexes` | `otus_json_storage_key` | Yes |
 
 Nullable columns mirror nullable legacy sources rather than inventing keys
-for objects that cannot be retrieved. The index OTU JSON key is stored on the
-index because the on-demand artifact should not appear in its file listing.
+for objects that can't be retrieved. The index OTU JSON key is stored on the
+index because the on-demand artifact shouldn't appear in its file listing.
 
 Mint new keys with `@virtool/storage/keys`. UUID leaves are written in hex and
 so contain no hyphens, matching the keys already in the bucket.
@@ -185,9 +185,9 @@ moved here. Production was stamped as already migrated rather than having that
 baseline applied to it, so it must never be run against an existing database.
 
 Many tables keep legacy shapes, including `legacy_` prefixes, dead columns held for
-snapshot fidelity, promoted-from-JSONB projections. Serve them as they are
-rather than renormalizing them; the schema files say per-table what is dead and
-what is load-bearing.
+snapshot fidelity, promoted-from-JSONB projections. Serve them as they're
+rather than renormalizing them; the schema files say per-table what's dead and
+what's load-bearing.
 
 Keep `drizzle-orm` and `drizzle-kit` on compatible versions. Check both release
 notes when updating either package because their schema-generation internals
@@ -207,7 +207,7 @@ Two rules hold this together:
   `id` on insert and treat it as a number. That setting is instance-wide in 1.6,
   so every `auth_*` table takes an identity primary key too. Composition lives
   in `apps/web`; see `@server/auth/betterAuth`.
-- **The legacy `sessions` table is not Better Auth's.** It still carries the
+- **The legacy `sessions` table isn't Better Auth's.** It still carries the
   current cookie pair and its cleanup task, and nothing in Better Auth reads or
   writes it. `auth_sessions` is a separate table.
 
@@ -232,7 +232,7 @@ anyone.
 
 A pending account keeps its handle, administrator role and group memberships,
 so an administrator states who a person is and what they may do at the moment
-of invitation. What it does not have is a credential: `users.password` is null,
+of invitation. What it doesn't have is a credential: `users.password` is null,
 which the `pending_has_no_password` constraint holds, and `createPendingUser`
 is the only thing that writes the state.
 
@@ -249,7 +249,7 @@ and API-key resolution.
   the issuing caller once and is never readable back. It's purpose-bound,
   expiring, single-use. `consumeSetupToken` is one conditional `UPDATE ...
   RETURNING`, so concurrent submissions of one token produce exactly one
-  winner. It is superseded when a replacement is issued.
+  winner. It's superseded when a replacement is issued.
 - A **restricted setup session** is what a holder gets in exchange: a
   non-secret `session_id` for attribution plus a secret whose digest is
   stored, bound to one purpose, and expiring. `verifySetupSession` re-reads
@@ -268,7 +268,7 @@ belong to `apps/web`.
 Credential state is written on both sides during the Better Auth migration:
 `users.password` for the boundary `apps/web`'s `login()` still reads, and
 `auth_accounts.password` plus `users.username`/`display_username` for Better
-Auth. An account credentialed against only one of them cannot sign in under
+Auth. An account credentialed against only one of them can't sign in under
 the other.
 
 Expiry cleanup is the internal runner's `cleanup_setup_state` periodic task.
@@ -279,7 +279,7 @@ are no request-path scans.
 
 Third-party requests use `USER_AGENT` from `@virtool/contracts/userAgent`,
 which is the product name `virtool` and has no version. NCBI limits or blocks
-requests that do not give a name. GitHub refuses requests that have no
+requests that don't give a name. GitHub refuses requests that have no
 `User-Agent` header.
 
 This repository has no shared HTTP client. Each caller sets its own timeout.
@@ -288,13 +288,13 @@ client at import time.
 
 ### NCBI
 
-This package speaks to two NCBI services, and they are not the same API.
+This package speaks to two NCBI services, and they're not the same API.
 
 `src/blast/ncbi.ts` is the BLAST URL API client. It's a separate CGI endpoint
 that answers with HTML, plain text, and zip archives, so it stays here.
 
 Nucleotide records and taxonomy come from `@virtool/ncbi`, which speaks to
-E-utilities. Do not add a second E-utilities client to this package.
+E-utilities. Don't add a second E-utilities client to this package.
 
 The instance NCBI API key raises the rate limit E-utilities applies to the
 deployment. `src/settings/ncbi.ts` owns it, encrypted under the
@@ -304,7 +304,7 @@ environment-owned encryption key documented in
 transport boundary or reach a log; a caller learns only whether a key is stored
 and whether it can be decrypted.
 
-Decrypt at client construction and nowhere else. A key that does not decrypt is
+Decrypt at client construction and nowhere else. A key that doesn't decrypt is
 a configuration error to report, not a value to replace: `resolveNcbiApiKey`
 writes nothing, so the stored key survives a bad encryption key, and lookups
 fall back to the anonymous rate limit rather than failing.
@@ -317,9 +317,9 @@ fall back to the anonymous rate limit rather than failing.
 templates, retries, and the Resend integration. The periodic `deliver_email`
 task in `apps/internal` performs delivery.
 
-Off, unconfigured, or invalid email configuration does not prevent the
+Off, unconfigured, or invalid email configuration doesn't prevent the
 services from running. Only a `ready` configuration permits delivery. Provider
-acceptance is not proof of mailbox delivery.
+acceptance isn't proof of mailbox delivery.
 
 The `enabled` flag gates intake, not delivery. While sending is off,
 `enqueueEmail` writes no row and answers `{ status: "discarded" }`, and
@@ -345,8 +345,8 @@ deadline in `src/email/retry.ts`, which stays inside the lifetime of the tokens
 in the auth-link templates; the attempt cap is only a backstop.
 
 Terminal rows are pruned after their configured retention periods. Template
-payloads remain stored until their rows are pruned; do not enqueue data that
-cannot tolerate that retention.
+payloads remain stored until their rows are pruned; don't enqueue data that
+can't tolerate that retention.
 
 `sendEmailViaResend` in `src/email/send.ts` is the only module that talks to
 Resend, and its unit tests stub global `fetch` rather than the network. A failed

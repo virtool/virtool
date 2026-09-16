@@ -46,7 +46,7 @@ else. Their order is `sample_uploads.index`, which is the *only* thing linking
 an upload to the reads file it becomes: `finalizeSample` pairs the rows it
 writes with the uploads by that same order.
 
-Do not branch on `sample.paired`. `getSample` derives it from the reads rows,
+Don't branch on `sample.paired`. `getSample` derives it from the reads rows,
 so a running `create_sample` job is always served `paired: false`.
 
 **An already-gzipped upload is renamed, not re-encoded.** Almost every one is,
@@ -67,12 +67,12 @@ FastQC.** FastQC is a Java program behind a Perl launcher that forces a JRE and
 the full `perl` into an image, holds ~250 MB per file in flight, and produces a
 blob small enough to be beside the point. The crate computes the same seven
 fields in one streaming pass. See its README for the statistics it reproduces
-and the one place it deliberately differs, which is that it does not reproduce
+and the one place it deliberately differs, which is that it doesn't reproduce
 FastQC's base-position binning.
 
 The step id is `run_fastqc`, because a step id is stored in the `jobs.steps`
 column and rendered by the UI, so renaming one changes what users see. Its
-*display name* is "Measure quality": that is a label rather than a key, and
+*display name* is "Measure quality": that's a label rather than a key, and
 naming FastQC there would name a tool this image no longer carries.
 
 **It runs once per read, each writing its own results file.** A single
@@ -92,7 +92,7 @@ FastQC, whose launcher opens with `use FindBin`. `FindBin` lives in
 `perl-modules-5.36`, not the `perl-base` the Node image carries, and whose
 absence failed at exec with a message about `@INC`. `quality-core` is one
 static binary linking nothing but glibc, so the runtime stage copies it in and
-that is all. The image went from 886 MB to 491 MB.
+that's all. The image went from 886 MB to 491 MB.
 
 ## Fixtures
 

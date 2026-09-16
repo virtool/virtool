@@ -20,7 +20,7 @@ Authenticate requests to Virtool with HTTP Basic authentication. Use your user
 handle as the username and an API key as the password. The API key and its owner
 must both have the `upload_file` permission.
 
-The signed storage requests in the transfer step do not use the API key. The
+The signed storage requests in the transfer step don't use the API key. The
 temporary storage URL contains all authorization needed to write that one file.
 
 ## Start an upload
@@ -78,7 +78,7 @@ The server sends back a `201` response.
 
 <Note type="warning">
 The upload API requires a Virtool instance configured for direct uploads to
-Azure Blob Storage. A `503` response means this instance does not support the
+Azure Blob Storage. A `503` response means this instance doesn't support the
 upload API; contact its administrator.
 </Note>
 
@@ -96,7 +96,7 @@ Use the `url`, `blockSize`, and `concurrency` values from the start response.
    {url}&comp=block&blockid={blockId}
    ```
 
-   Pieces can upload in parallel, but do not run more than `concurrency`
+   Pieces can upload in parallel, but don't run more than `concurrency`
    requests at once.
 4. After every piece has uploaded, commit the file with `PUT` to:
 
@@ -118,9 +118,9 @@ Use the `url`, `blockSize`, and `concurrency` values from the start response.
    Set `x-ms-blob-content-type` to the file's media type, or
    `application/octet-stream` when it's unknown.
 
-These are standard HTTP requests and do not require an Azure SDK. If a request
+These are standard HTTP requests and don't require an Azure SDK. If a request
 fails because of a network or server error, retry it. Cancel the upload if it
-cannot be completed.
+can't be completed.
 
 ## Finish an upload
 
@@ -148,7 +148,7 @@ curl --user "$VT_HANDLE:$VT_API_KEY" \
 
 Cancellation removes an unfinished upload owned by the caller and returns
 `204`. Use it after a permanent transfer, commit, or finalization failure so the
-pending upload does not remain until automatic cleanup.
+pending upload doesn't remain until automatic cleanup.
 
 ## Responses
 
@@ -160,7 +160,7 @@ pending upload does not remain until automatic cleanup.
 | `400` | The JSON body or upload ID is malformed. |
 | `401` | The API credentials are missing or invalid. |
 | `403` | The API key or its owner lacks `upload_file`. |
-| `404` | The upload does not exist, is not owned by the caller, or is not in the required unfinished state. |
+| `404` | The upload doesn't exist, isn't owned by the caller, or isn't in the required unfinished state. |
 | `409` | Finalization found no committed blob or its byte size differs from `size`. |
 | `413` | The declared `size` exceeds the configured max but is within the app ceiling. |
 | `422` | The initialization fields are invalid. |

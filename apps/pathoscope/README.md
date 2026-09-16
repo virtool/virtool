@@ -49,7 +49,7 @@ The shared libraries each back a specific `ldd ... => not found`: `libgomp1` for
 bowtie2's OpenMP, `libcurl4` and `libncursesw6` for samtools. `pathoscope-core`
 needs none of them. `hts-sys` links htslib statically.
 
-A missing interpreter does not fail the build; it fails the first time the step
+A missing interpreter doesn't fail the build; it fails the first time the step
 runs in a pod. Verify a shebang against the version the `Dockerfile` pins, never
 upstream's current source:
 
@@ -87,7 +87,7 @@ Run from the monorepo root.
 | `pnpm --filter @virtool/pathoscope test:watch` | Vitest in watch mode |
 | `pnpm --filter @virtool/pathoscope typecheck` | `tsc --noEmit` |
 
-The Rust crate is not a pnpm workspace. Run `cargo test` in
+The Rust crate isn't a pnpm workspace. Run `cargo test` in
 `packages/pathoscope-core` directly. Building it needs `libclang-dev`.
 
 ## Documentation

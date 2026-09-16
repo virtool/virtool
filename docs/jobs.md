@@ -109,7 +109,7 @@ lifecycle request is refused because the credential is no longer valid.
 | Workflow succeeds and `finish` succeeds | `running` to `succeeded` | `0` |
 | Workflow fails | `running` to `failed` later, by the stalled-job sweep | `0` |
 | User cancels the job | active state to `cancelled`; the next ping cancels the run | `0` |
-| Finish cannot be reported | `running` to `failed` later, by the stalled-job sweep | `0` |
+| Finish can't be reported | `running` to `failed` later, by the stalled-job sweep | `0` |
 | Claim times out before a job is acquired | none | `0` |
 | Pod infrastructure or preparation fails | no runner-driven terminal transition | `1` |
 | Pod receives `SIGTERM` | no runner-driven terminal transition | `124` |
@@ -129,7 +129,7 @@ two forms over one `JobsApiState` object:
   `node:http` server on an ephemeral port.
 
 Both forms route through `handleJobsApiRequest`. Responses are serialized and
-parsed with the same contract schemas as production, so the fake client cannot
+parsed with the same contract schemas as production, so the fake client can't
 silently accept a wire shape that the real client would reject. The shared state
 records claims, step starts, finish and finalization calls, cache registrations,
 resource metadata, credentials, and the injected clock.

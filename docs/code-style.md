@@ -10,7 +10,7 @@ React components with `useReactFunctionComponentDefinition`; elsewhere it's a
 convention that keeps function style consistent and gives declarations useful
 names in stack traces.
 
-React 19 treats `ref` as an ordinary prop, so wrappers do not need
+React 19 treats `ref` as an ordinary prop, so wrappers don't need
 `forwardRef`. Type the wrapper with `ComponentPropsWithRef` and pass the ref
 through the props spread:
 
@@ -56,7 +56,7 @@ not a rigid vocabulary: prefer `getLifetime` to a prepositional name such as
 
 A `createServerFn` export is an RPC boundary, so suffix its name with `Fn` to
 mark that boundary at every call site. The domain function it wraps keeps the
-unsuffixed name and does not cross the network:
+unsuffixed name and doesn't cross the network:
 
 ```ts
 import { listGroups } from "./data";
@@ -73,16 +73,16 @@ suffix already distinguishes the RPC export, so aliases such as
 ## Comments
 
 Default to no comment. Add one when the reason for a choice is non-obvious,
-and explain that reason rather than restating the code. Do not reference the
+and explain that reason rather than restating the code. Don't reference the
 current task or a particular caller because both become stale when code moves.
 
-Do not narrate history. Git records what changed. If reverting a detail would
+Don't narrate history. Git records what changed. If reverting a detail would
 silently restore a bug, phrase the comment as a standing warning about the
 constraint instead of a changelog entry.
 
 Use `/** ... */` for the required exported-type label and for the occasional
 function or constant that benefits from API documentation. Use `/* ... */` for
-a multi-line explanation and `//` for a one-line explanation; do not assemble
+a multi-line explanation and `//` for a one-line explanation; don't assemble
 a block from consecutive `//` lines.
 
 ## Concurrent awaits

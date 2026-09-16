@@ -10,7 +10,7 @@ the first argument to the bundle (`node dist/index.mjs <command>`):
 | `run` | The periodic task spawner and the task runner, in one long-lived process. |
 | `migrate` | Applies pending Drizzle migrations, then exits. Run as an init Job. |
 
-Image: `ghcr.io/virtool/internal`. The image is fused; the processes are not.
+Image: `ghcr.io/virtool/internal`. The image is fused; the processes aren't.
 `serve` scales to N request replicas, while `run` is a lease singleton. Folding
 them into one process would multiply task-lease contention across every HTTP
 replica, so they stay separate containers differentiated only by the argument
@@ -34,7 +34,7 @@ See [Job lifecycle](../../docs/jobs.md) for the protocol shared with
 ### Workflow files and finalization
 
 Workflow runners transfer bytes directly through object storage. The jobs API
-records and serves complete storage keys; it does not derive a key from a row
+records and serves complete storage keys; it doesn't derive a key from a row
 id, legacy id, or filename.
 
 A runner mints an output key with `mintStorageKey(domain, parentId)`, uploads
@@ -45,7 +45,7 @@ the object, and sends that key in one resource-finalization request:
 - `PATCH /analyses/{id}`.
 
 The request carries the resource fields and its complete file manifest so the
-parent cannot become ready without its file rows. Manifests omit `size` and
+parent can't become ready without its file rows. Manifests omit `size` and
 `name_on_disk`; the route validates that each non-empty key is beneath the
 resource's `{domain}/{parentId}/` prefix, reads the object's size from storage,
 and records the submitted key verbatim. Keys with a leading slash, an empty
@@ -105,7 +105,7 @@ The task taxonomy lives in `@virtool/contracts`:
 `taskRegistry` is typed as a complete registry over `TaskName`, so changing the
 shared taxonomy requires a handler here. `PERIODIC_TASKS` separately defines
 the schedule and is checked against the registry. The taxonomy intentionally
-does not record which feature creates each on-demand task; producers use the
+doesn't record which feature creates each on-demand task; producers use the
 shared `createTask()` boundary and keep their domain-specific lifecycle local.
 
 Postgres queue persistence belongs to `@virtool/data`, including enqueueing,
@@ -123,7 +123,7 @@ fail through the same terminal path as body errors.
 
 Each declared step occupies an equal slice of 0-100 progress. A step reports a
 fraction from 0 to 1, and the framework debounces, serializes, and keeps writes
-monotonic. Task bodies do not write the `tasks` table or publish task events
+monotonic. Task bodies don't write the `tasks` table or publish task events
 themselves.
 
 Cleanup runs after failure or cooperative cancellation, but not after success. Its
@@ -145,14 +145,14 @@ min suppression window, not an exact schedule, and a new row is created
 only when no outstanding task of that type exists. An outstanding row that
 never finishes stops suppressing the type once it ages past the wedge ceiling
 (`TASK_WEDGE_SECONDS`), so a runner stuck without ever completing or failing
-its task cannot block the type for good.
+its task can't block the type for good.
 
 Each spawn attempt takes a transaction-scoped advisory lock derived from the
 bare task name. This prevents many replicas from inserting the same
 periodic task. A failure for one type is logged without skipping the remaining
 types or stopping the loop.
 
-During shutdown the spawner stops before the runner drains, so it cannot add
+During shutdown the spawner stops before the runner drains, so it can't add
 new work while claims are being released.
 
 ### Runner, leases, and fencing
@@ -165,10 +165,10 @@ change without redesigning lease storage.
 A claim records a runner id and acquisition time. The heartbeat renews all
 in-flight claims every 60 seconds against a 300-second lease. Expired leases
 are reclaimable. Every runner mutation is fenced by task id and runner id, so a
-runner whose lease has been reclaimed cannot update the new owner's task.
+runner whose lease has been reclaimed can't update the new owner's task.
 
 When renewal reports that a claim was lost, the runner aborts that task and
-does not write or release it. Claim and heartbeat failures are logged and
+doesn't write or release it. Claim and heartbeat failures are logged and
 retried rather than crashing the process.
 
 ### Shutdown
@@ -303,7 +303,7 @@ Run a subcommand from the built bundle with `node dist/index.mjs serve`,
 
 Tests run as one Node Vitest project against a Postgres testcontainer. The
 project has its own CI job and is excluded from `Packages / Test` so container
-startup is not part of the fast package loop. It imports the shared container
+startup isn't part of the fast package loop. It imports the shared container
 setup from `@virtool/data/db/test/globalSetup`.
 
 ## Related documentation

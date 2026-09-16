@@ -9,7 +9,7 @@ import Key from "@components/Key.astro";
 
 Analyses are the results of running a bioinformatic workflow on sample data.
 
-When an analysis is started, the sample data is run through a series of bioinformatic tools to produce a meaningful result that is made available to the user.
+When an analysis is started, the sample data is run through a series of bioinformatic tools to produce a meaningful result that's made available to the user.
 
 ### Analysis jobs
 
@@ -99,7 +99,7 @@ You can read more about creating and managing subtractions from the links below:
 
 <Note color="red">
 
-**Analysis deletion is permanent**. A deleted analysis cannot be recovered.
+**Analysis deletion is permanent**. A deleted analysis can't be recovered.
 
 </Note>
 
@@ -156,7 +156,7 @@ present in a sample.
    - Shallow, wide, and broken coverage is suggestive of intra-plate contamination. Hits
      due to contamination also typically have low weights.
    - Isolates with high weight, and deep localized coverage are typical of low-complexity
-     or host-similar regions in the isolate genome and do not show true infections.
+     or host-similar regions in the isolate genome and don't show true infections.
 
 Generally, approximately 5 million reads is a good base line for a dsRNA library, but
 the percentage of mapped reads is of greater importance. For dsRNA, percentages can range
@@ -220,14 +220,14 @@ genome.
 The image below is an example of an analysis from a healthy sample.
 ![Healthy sample analysis](./pathoscope_healthy.png?url)
 
-The only virus that is present in the sample is Phaseolus vulgaris endornavirus 1. This
+The only virus that's present in the sample is Phaseolus vulgaris endornavirus 1. This
 virus was intentionally introduced into the nucleic acid extraction as a positive internal
 control to verify that the extraction succeeded.
 
 ![Healthy sample filtered results](./pathoscope_healthy_unfiltered.png?url)
 
 When the results are filtered, all other viruses have low weight, depth, and
-coverage, indicating that they are not present in the sample. These results indicate
+coverage, indicating that they're not present in the sample. These results indicate
 that this sample is from a healthy plant.
 
 #### Contamination
@@ -272,14 +272,14 @@ sample which reaches a range in the thousands.
 3. Click <DummyButton color="grey" icon="filter">Filter ORFs</DummyButton> to show ORFs
    with no HMM annotations
 
-   ORFs with no significant HMM hits are not shown by default.
+   ORFs with no significant HMM hits aren't shown by default.
 
    ![Unfiltered ORFs](./nuvs_unfiltered_orfs.png?url)
 
 4. Click <DummyButton color="grey" icon="filter">Filter Sequences</DummyButton> to toggle
    the visibility of contigs without HMM annotations.
 
-   Contigs with no significant HMM hits are not shown by default.
+   Contigs with no significant HMM hits aren't shown by default.
 
    ![Unfiltered Sequences](./nuvs_unfiltered_sequences.png?url)
 
@@ -289,7 +289,7 @@ sample which reaches a range in the thousands.
 
 6. Wait for the BLAST search to complete.
 
-   Part of interpreting Nuvs results is BLASTing contigs to make sure they are truly
+   Part of interpreting Nuvs results is BLASTing contigs to make sure they're truly
    unknown. The BLAST results for this sequence show it's likely a contamination from a
    technician.
 
@@ -319,13 +319,13 @@ there are three values:
 | ORFs    | The number of open reading frames predicted in the contig                     |
 
 A list of the assembled contigs is shown in the left pane. By default, contigs with no
-ORFs with significant HMM matches are not shown. This can be toggled by clicking <DummyButton color="grey" icon="filter">Filter Sequences</DummyButton>.
+ORFs with significant HMM matches aren't shown. This can be toggled by clicking <DummyButton color="grey" icon="filter">Filter Sequences</DummyButton>.
 In this example, out of the 1072 assembled contigs, only 278 contained ORFs with
 significant HMM matches.
 
 Clicking on a contig in the left pane displays a detailed view for the contig in the
 right pane. The contig is display as a black line with the ORFs identified underneath. By
-default, ORFs with no significant HMM matches are not shown. This can be toggled clicking <DummyButton color="grey" icon="filter">Filter ORFs</DummyButton>.
+default, ORFs with no significant HMM matches aren't shown. This can be toggled clicking <DummyButton color="grey" icon="filter">Filter ORFs</DummyButton>.
 
 For ORFs with significant HMM matches, the size of the ORF and the E-value of the match is
 shown. The taxonomic families associated with the HMM data appear before the graphic. An
@@ -335,7 +335,7 @@ example of sequence 37 and its protein motifs is shown below.
 
 Contigs can be sent to NCBI for a BLAST search by clicking <DummyButton color="grey" icon="cloud">BLAST at NCBI</DummyButton>.
 Many contigs derived from known viruses or non-viral sources are assembled. It's
-necessary to BLAST significant contigs to ensure they are novel.
+necessary to BLAST significant contigs to ensure they're novel.
 
 ### Good result
 
@@ -345,8 +345,8 @@ This table states the E-value, score, and identity of the viral sequences found 
 ![NCBI BLAST](./nuvs_blast_pvev.png?url)
 
 The E-values, score, and identities in the BLAST results show high quality matches.
-This indicates that these contigs do not represent novel viral genomes.
-However, they do not exist in the Virtool reference database because they were not
+This indicates that these contigs don't represent novel viral genomes.
+However, they don't exist in the Virtool reference database because they weren't
 eliminated during the initial subtraction step of the Nuvs workflow.
 
 This sample contains Phaseolus vulgaris endornavirus as an internal control introduced
@@ -369,7 +369,7 @@ genome.
 
 This interpretation assumes that the _Prunus dulcis_ sequences used to build the HMM
 reference are actually from the host. It's important to bear in mind that reference
-databases are not reliable and may contain viral nucleotide and protein sequences
+databases aren't reliable and may contain viral nucleotide and protein sequences
 mis-annotated as originating from the host.
 
 ### Suspicious result
@@ -396,8 +396,8 @@ This contig represents likely bacterial contamination from the field or laborato
 ![NCBI BLAST 6](./nuvs_bacteria.png?url)
 
 The BLAST results for this contig show hits for bacterial species all with
-identities 1.00. Based on their scores, they are all similar matches. Knowing that
-these bacterial species are not commonly found in plants, specifically in _Malus_, this
+identities 1.00. Based on their scores, they're all similar matches. Knowing that
+these bacterial species aren't commonly found in plants, specifically in _Malus_, this
 is most likely a case of contamination.
 
 The following contig demonstrates contamination from a lab technician or field collector:

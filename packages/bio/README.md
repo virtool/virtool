@@ -26,7 +26,7 @@ output exactly, including its bugs.** `roundHalfEven` exists because
 columns; `findOrfs` emits a negative coordinate. None of those are defects to
 be tidied up.
 
-Do not "fix" a quirk in this package alone. A fix means a coordinated change to
+Don't "fix" a quirk in this package alone. A fix means a coordinated change to
 a stored document and the UI. Until both move, a correction here is
 a silent disagreement with every record written so far.
 
@@ -37,7 +37,7 @@ test.
 
 Tests here write their expectations out rather than capturing them from a
 fixture, so a diff shows the number that changed. Those numbers are what the
-frozen goldens hold and what is already stored in analysis documents. The
+frozen goldens hold and what's already stored in analysis documents. The
 goldens are frozen references: **never edit one to make a failing comparison
 pass.**
 

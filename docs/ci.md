@@ -57,19 +57,19 @@ cheap mocked vitest, filtered only for parity with the other workflow apps.
 
 Keep a separate filter for each job. The crate jobs run Cargo, not TypeScript.
 The image jobs copy different packages: Pathoscope copies
-`packages/pathoscope-core`; Nuvs does not. `nuvs-app` is narrower than
+`packages/pathoscope-core`; Nuvs doesn't. `nuvs-app` is narrower than
 `nuvs-image`: no `Dockerfile` or `.dockerignore`, and only the packages Nuvs
 imports (so no `data`, `ncbi`, or `service`). Sharing one filter would rebuild
-each image, and rerun Cargo, for inputs it does not use.
+each image, and rerun Cargo, for inputs it doesn't use.
 
 Extend a filter in the same change that gives its job a new input. Every path a
 workflow image's Dockerfile stages `COPY` must appear under that image's
-filter, even when the app does not import it. The shared `base` stage copies
+filter, even when the app doesn't import it. The shared `base` stage copies
 `packages/data`, `packages/service`, and `packages/bio` for both targets, so
 both image filters include all three packages. Image filters also include
 `.dockerignore`, because its rules determine which files are available to
 those `COPY` instructions.
 
 A missing input can skip the affected build on the pull request that changes
-it. Pushes to `main` do not use the filters, so the same change can then fail
+it. Pushes to `main` don't use the filters, so the same change can then fail
 after merging.

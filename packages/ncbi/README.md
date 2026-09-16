@@ -38,22 +38,22 @@ Four call shapes cover everything:
 | `efetch(taxonomy, id=taxid)` | TaxaSet XML |
 | `efetch(nuccore, rettype=gb, retmode=xml)` | GBSet XML |
 
-ESearch supports `retmode=json` and EFetch does not, for any database, so two
+ESearch supports `retmode=json` and EFetch doesn't, for any database, so two
 of the four are typed JSON fetches.
 
-**NCBI's Datasets v2 API is not used for taxonomy.** The team evaluated and
-rejected: it is still `v2alpha`, and it takes two calls. The calls are
+**NCBI's Datasets v2 API isn't used for taxonomy.** The team evaluated and
+rejected: it's still `v2alpha`, and it takes two calls. The calls are
 `taxonomy/taxon/{id}/dataset_report` for the ranked lineage and
 `.../name_report` for acronyms and synonyms. These are needed to
 cover what one `efetch(taxonomy)` returns in a single response, and it has no
 subtree search at all, only a taxon's direct `children`, which would turn one
 request into a recursive walk.
 
-**EMBL-EBI's ENA is not used either.** The RefSeq gap is real and was measured
+**EMBL-EBI's ENA isn't used either.** The RefSeq gap is real and was measured
 rather than assumed: `ena/browser/api/embl/NC_005954.1` answers `400 Unknown
 accession format`, while INSDC accessions such as `AF395128.1` and `MN908947.3`
 answer `200`. RefSeq is NCBI-curated and outside INSDC, and Virtool's
-RefSeq-first isolate rules depend on it, so ENA cannot be a replacement. It
+RefSeq-first isolate rules depend on it, so ENA can't be a replacement. It
 remains available as a cross-check or fallback for INSDC records if NCBI
 rate-limiting ever makes that worth building.
 
@@ -68,7 +68,7 @@ client does without.
   before the result schema, which would otherwise default the absent `count`
   and `idlist` and report a refusal as a search that legitimately matched
   nothing. A term that matched nothing is a different thing: a real envelope
-  with an `errorlist`. It is read as an empty result.
+  with an `errorlist`. It's read as an empty result.
 - **Every JSON scalar is quoted.** `count` arrives as `"872"`, so it's coerced
   before any paging arithmetic.
 - **A repeated XML element has no stable shape.** One `<Acronym>` parses to a
@@ -80,7 +80,7 @@ client does without.
   and becomes `true`.
 - **A fetch of many accessions can answer with fewer.** NCBI sends what it has
   and says nothing about the rest.
-- **An unknown accession is not a 404.** NCBI answers with HTTP 200 and an
+- **An unknown accession isn't a 404.** NCBI answers with HTTP 200 and an
   empty `GBSet` that contains an error string.
 
 ## Rate limiting
@@ -90,7 +90,7 @@ NCBI allows has elapsed since the last: three requests a second anonymously,
 ten with an API key. A queue rather than a token bucket, because a burst is
 paid for with a refusal that costs another request against the same limit.
 
-`fetchDescendantTaxids` is the one call that is not a fixed number of requests.
+`fetchDescendantTaxids` is the one call that's not a fixed number of requests.
 The subtree search is one, but NCBI sends no rank alongside the ids, so telling
 subspecific taxa from the rest costs a taxonomy fetch per descendant. A species
 with a dozen isolates takes seconds. ref-builder pays the same cost; it's
@@ -115,20 +115,20 @@ retrying.
 ## One record or many
 
 Use `fetchGenbankRecord` for one accession and `fetchGenbankRecords` for a set.
-They differ in what they do with a record that this client cannot read: the
+They differ in what they do with a record that this client can't read: the
 batch drops it, and the single fetch throws `NcbiUnreadableError`. The reason
 for each is on the function.
 
 ## Divergences from ref-builder
 
 - **`rank` is a plain string.** ref-builder rejects any taxon preceding species at
-  validation time, because an OTU must be species-or-below. That is a
+  validation time, because an OTU must be species-or-below. That's a
   reference-building policy, not a property of the record, and this client is
   also used to check an arbitrary taxonomy ID a user has typed. `getSpecies()`
   returns `null` for a taxon preceding species rather than throwing.
 - **No `fetch_lineage`.** It assembles ref-builder's own `Lineage` and `Taxon`
   domain objects, which belong to reference building rather than to an NCBI
-  client. The pieces it is built from, `fetchTaxonomyRecord` and
+  client. The pieces it's built from, `fetchTaxonomyRecord` and
   `fetchDescendantTaxids`, are both here.
 - **No on-disk cache.** `NCBICache` writes to a user cache directory, which
   suits a command-line tool and not a server. Caching belongs to the caller.
@@ -178,7 +178,7 @@ VT_NCBI_LIVE=1 pnpm --filter @virtool/ncbi test
 ```
 
 Set `VT_NCBI_API_KEY` to use the higher rate limit. These assert the shape NCBI
-still sends, not the values. A renamed taxon is not a regression, but a moved
+still sends, not the values. A renamed taxon isn't a regression, but a moved
 field is.
 
 ## Residual risk

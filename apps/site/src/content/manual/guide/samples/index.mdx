@@ -116,7 +116,7 @@ Quick analyses allows you to start analysis jobs for many samples at once.
    Paired or unpaired FASTQ data can be used to create a sample.
 
    Samples created from only one file are assumed to be unpaired. Paired samples must
-   comprise two paired FASTQ files. **Interleaved FASTQ files are not currently supported**.
+   comprise two paired FASTQ files. **Interleaved FASTQ files aren't currently supported**.
 
    For paired data, make sure the file orientation labels (left and right) are correct
    before you create a sample. You can use the <DummyButton color="grey" icon="retweet" />
@@ -138,7 +138,7 @@ Quick analyses allows you to start analysis jobs for many samples at once.
 
    For Banana bunchy top virus below, the default subtraction is **Banana**. This was
    the same subtraction that was selected when first creating this sample. Once a
-   default subtraction has been made for a sample, you cannot change it.
+   default subtraction has been made for a sample, you can't change it.
 
    ![Default Subtraction](./default_subtraction.png?url)
 
@@ -242,7 +242,7 @@ Click the link under **Raw Data** to download the FASTQ file that was originally
 
 Sample data is automatically trimmed during analysis to remove sequencing artefacts and low quality regions. After the first analysis, the trimmed data is cached for reuse in future analyses that use the same trimming parameters. This saves running the trimming workflow steps for every analysis for a given sample.
 
-A sample that has not yet been analyzed has no caches associated with it.
+A sample that hasn't yet been analyzed has no caches associated with it.
 ![No Cache](./no_cache.png?url)
 
 Running an analysis for this sample creates an analysis job. During the job the raw sample reads are trimmed and cached for future analyses. As soon as trimming is complete the cache is created.
@@ -300,13 +300,13 @@ Rights can apply at four different levels.
 
 Each sample can be owned by a specific user group. This allows many groups of diagnosticians or researchers to keep their data private or safe from one another while sharing a single Virtool instance.
 
-Samples are not required to have an owner group. The group can be set to `None`. In this case, group rights settings have no effect.
+Samples aren't required to have an owner group. The group can be set to `None`. In this case, group rights settings have no effect.
 
 #### Privileges
 
 ##### None
 
-The management level (such as group or all users) cannot read or write the sample. Included users never see the sample in the sample management interface.
+The management level (such as group or all users) can't read or write the sample. Included users never see the sample in the sample management interface.
 
 This privilege is useful for isolating samples between separate groups of users.
 
@@ -314,7 +314,7 @@ This privilege is useful for isolating samples between separate groups of users.
 
 The management level (such as group or all users) can only read the sample. The included users see the sample in the sample management interface and can view its general information, quality, and analyses.
 
-They cannot edit or remove the sample or create new analyses. The elements in the user interface associated with these actions are hidden.
+They can't edit or remove the sample or create new analyses. The elements in the user interface associated with these actions are hidden.
 
 ##### Read & write
 
@@ -332,7 +332,7 @@ Access the rights management controls by clicking the <Icon name="key" /> tab in
 
 ### Default rights
 
-Samples have their initial access rights configured when they are first created. How these rights are assigned can be configured in the administrative settings.
+Samples have their initial access rights configured when they're first created. How these rights are assigned can be configured in the administrative settings.
 
 1. Go to the **Settings | General** view as an administrator.
    ![General settings](/static/images/settings_general.png?url)
@@ -360,7 +360,7 @@ This determines how an owner group is applied to the sample when it's created.
 
 |                 |                                                                                 |
 | --------------- | ------------------------------------------------------------------------------- |
-| _None_          | No group owner is assigned. Group rights do not apply                           |
+| _None_          | No group owner is assigned. Group rights don't apply                           |
 | _Force Choice_  | The sample creator is forced to choose the owner group from their member groups |
 | _Primary Group_ | The sample is automatically assigned the creators primary group                 |
 
@@ -376,8 +376,8 @@ This setting determines how members of the owner group can interact with the sam
 
 |                |                                                                                                                     |
 | -------------- | ------------------------------------------------------------------------------------------------------------------- |
-| _None_         | Sample is not returned in searches and is not accessible by URL.                                                    |
-| _Read_         | Sample is returned in searches and is viewable. All editing interfaces are off and analyses cannot be started. |
+| _None_         | Sample isn't returned in searches and isn't accessible by URL.                                                    |
+| _Read_         | Sample is returned in searches and is viewable. All editing interfaces are off and analyses can't be started. |
 | _Read & Write_ | Also to _Read_ rights, editing interfaces are enabled and analyses can be run.                               |
 
 #### All users' rights

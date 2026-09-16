@@ -44,7 +44,7 @@ stream below.
 out to an extra destination. `createSentryLogStream`
 (`@virtool/sentry/log`) is the one every service uses, to forward
 `info`-and-before records to Sentry's structured logging API alongside
-stdout. See that module's doc comment for why it is a plain destination
+stdout. See that module's doc comment for why it's a plain destination
 stream rather than `Sentry.pinoIntegration()`. Each process wires it up
 at its own composition root, only when a DSN is configured:
 `apps/web/src/server/logger.ts`, `apps/internal/src/serve/logger.ts`, and

@@ -34,7 +34,7 @@ loads everything its guards need.
 
 Use the dependency-free helpers in [searchParams.ts](src/app/searchParams.ts)
 for synchronous search validation. Keep utilities with heavy dependencies in
-separate modules so importing a lightweight helper does not load them too.
+separate modules so importing a lightweight helper doesn't load them too.
 
 Code reachable through `start.ts` belongs to the browser graph as well. Follow
 [auth middleware](src/server/auth/middleware.ts) when a shared entry needs
@@ -48,9 +48,9 @@ Follow the render-purity rules in [AGENTS.md](../../AGENTS.md#client). Use
 `@app/serverNow` for elapsed time, `useHydrated` for viewer-local absolute times,
 and `ClientOnly` for measured subtrees. Give `<title>` one string child,
 including inside SVG. Turn off SSR only at the route that needs it; descendants
-cannot re-enable it.
+can't re-enable it.
 
-For React Compiler compatibility, do not spread a `react-hook-form` methods
+For React Compiler compatibility, don't spread a `react-hook-form` methods
 object, sync form props with `useForm({ values })`, and use
 `@app/useMatchPartialPath` instead of `useMatchRoute`.
 
@@ -62,7 +62,7 @@ search defaults in `validateSearch`, strip them from URLs with
 
 Call TanStack Start server functions through React Query. Keep query options,
 hooks, mutations, and inline server-function calls in each feature's
-`queries.ts`; do not add a separate `api.ts`. Build keys with `createQueryKeys`
+`queries.ts`; don't add a separate `api.ts`. Build keys with `createQueryKeys`
 in a separate `keys.ts` and import them directly. This lets invalidators use
 keys without loading the request layer.
 
@@ -77,7 +77,7 @@ SSR; plain `useQuery` starts after hydration.
 
 Secondary data uses `useQuery`. Check `isError && !data` and render `QueryError`
 before checking `isPending`, keeping stale data visible after a failed refetch.
-Do not treat missing data as loading: an initial error has no data either.
+Don't treat missing data as loading: an initial error has no data either.
 Paginated queries use `placeholderData: keepPreviousData`. Read server-function
 error statuses with `getErrorStatus` from `@app/queryErrors`.
 
@@ -125,9 +125,9 @@ Map expected domain failures in one module-local
 sets the response status and throws `ClientError` with the same status. Throw
 unknown failures unchanged, preserving upstream error reporting. See
 [errors.ts](src/server/errors.ts) for why setting the HTTP status alone is
-insufficient. Local error mappers do not need `createServerOnlyFn` wrappers.
+insufficient. Local error mappers don't need `createServerOnlyFn` wrappers.
 
-Server functions serialize an RPC body, so do not return 204, 205, or 304; return
+Server functions serialize an RPC body, so don't return 204, 205, or 304; return
 `null` with 200 for deletion.
 
 Use explicit `POST` for free-text searches, structured filters, and batch reads,
@@ -155,7 +155,7 @@ Restricted setup credentials may complete only their named transition. Each
 `setupOnly` function must also appear with the matching purpose in
 [setupExceptions.ts](src/server/auth/setupExceptions.ts).
 
-Raw routes handle transports RPC cannot provide, such as uploads, streaming
+Raw routes handle transports RPC can't provide, such as uploads, streaming
 downloads, SSE, probes, metrics, and `/api/auth/*`. They enforce their own
 authorization. `requireAuthenticatedRequest` accepts sessions and API keys;
 server functions are session-only. Better Auth owns sign-in, while Virtool owns
@@ -189,7 +189,7 @@ Test server-function handlers with
 import the handler after the compiler transform.
 
 Use `user-event` and accessible queries such as `getByRole` and `getByLabelText`;
-do not disambiguate controls by index. Call `expectNoViolations(baseElement)`
+don't disambiguate controls by index. Call `expectNoViolations(baseElement)`
 from [axe.ts](src/tests/axe.ts) explicitly to include portals. For contrast
 checks, use `*.a11y.test.tsx` with real theme classes and explicitly enable the
 `color-contrast` rule. Install Chromium with
@@ -214,13 +214,13 @@ The table below covers the remaining settings and web-specific storage behavior.
 | `VT_PUBLIC_ORIGIN` | URL origin | Required | Public browser origin for authentication and WebAuthn, including behind a proxy. Use an HTTPS hostname (HTTP is allowed for localhost), with no path, query, fragment, or credentials. |
 | `VT_AUTH_SECRET` | String (32+ characters) | Required | Sign and encrypt the authentication state Better Auth issues, including stored recovery codes. Generate with `openssl rand -base64 32`. Changing it invalidates every Better Auth session. |
 | `VT_METRICS_TOKEN` | String | Unset | Enable `/metrics` and authenticate scrapes with a bearer token. When unset, `/metrics` returns 404. |
-| `VT_SENTRY_DSN` | URL string | Unset | Send server errors to Sentry. Vite also embeds this value in the client at build time; that client value cannot use `_FILE`. |
+| `VT_SENTRY_DSN` | URL string | Unset | Send server errors to Sentry. Vite also embeds this value in the client at build time; that client value can't use `_FILE`. |
 | `VT_ENCRYPTION_KEY` | Base64 string (32 bytes) | Unset | Encrypt secrets stored by Virtool: the Resend API key and the NCBI API key. When unset or invalid, email is unavailable and GenBank lookups drop to the anonymous rate limit, but the server runs. See [the encryption-key guide](../../docs/env.md#encryption-key). |
 | `VT_ENCRYPTION_KEY_PREVIOUS` | Base64 string (32 bytes) | Unset | Accept encrypted values written under the prior key during rotation. |
 | `VT_STORAGE_AZURE_DOWNLOAD_URL` | URL origin | Unset | Rehost redirected Azure downloads on a public origin, such as `https://files.virtool.ca`. Applies only in `redirect` download mode. |
 | `VT_STORAGE_AZURE_UPLOAD_URL` | URL origin | Unset | Rehost presigned Azure uploads on a public origin, such as a Front Door route to a private storage account. Falls back to `VT_STORAGE_AZURE_DOWNLOAD_URL`, then the Azure Blob endpoint. |
-| `VT_STORAGE_DOWNLOAD_MODE` | `stream` \| `redirect` | `stream` | Serve file downloads by streaming the bytes through this server, or by 302-redirecting to a short-lived presigned storage URL. `redirect` falls back to streaming when the backend cannot presign. |
-| `VT_UPLOADS_CHUNKED` | Boolean | `false` | Enable direct Azure Block Blob uploads. When off, or when the backend cannot presign uploads, initialization returns 503; there is no proxied fallback. |
+| `VT_STORAGE_DOWNLOAD_MODE` | `stream` \| `redirect` | `stream` | Serve file downloads by streaming the bytes through this server, or by 302-redirecting to a short-lived presigned storage URL. `redirect` falls back to streaming when the backend can't presign. |
+| `VT_UPLOADS_CHUNKED` | Boolean | `false` | Enable direct Azure Block Blob uploads. When off, or when the backend can't presign uploads, initialization returns 503; there is no proxied fallback. |
 | `VT_UPLOADS_CHUNKED_CONCURRENCY` | Positive integer | `8` | Set how many block PUTs a browser runs at once across all active uploads. Raise it to lift throughput on a high-latency upload path. |
 
 ## Metrics

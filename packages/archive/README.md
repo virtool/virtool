@@ -30,28 +30,28 @@ nothing behind, and the target must be free. `writePathAsTar` is its inverse.
 Both are uncompressed-only.
 
 `extractTarMembers` pulls **named members** out of an archive whose other
-contents do not matter, to destinations the caller chooses. It takes `gzip:
+contents don't matter, to destinations the caller chooses. It takes `gzip:
 true` for a `.tar.gz`. Use it when you want two files out of a release archive,
 not when you want a directory back.
 
-## Zip does not stream, and that is not a gap to fill
+## Zip doesn't stream, and that's not a gap to fill
 
 `readZipMember` takes the whole archive as a `Uint8Array` and returns one
-member's bytes. It cannot stream: a zip's index is a central directory written
+member's bytes. It can't stream: a zip's index is a central directory written
 at the *end* of the file, so nothing can name a member until the last byte has
-arrived. That is acceptable for the one thing here that reads a zip: an NCBI
-BLAST result that is only a handful of kilobytes. Anything a user
+arrived. That's acceptable for the one thing here that reads a zip: an NCBI
+BLAST result that's only a handful of kilobytes. Anything a user
 uploaded goes through tar, or nowhere.
 
-## Two rules the extractors carry so callers cannot get them wrong
+## Two rules the extractors carry so callers can't get them wrong
 
-**Every entry is drained.** `tar-stream` does not advance past an entry that is
+**Every entry is drained.** `tar-stream` doesn't advance past an entry that's
 neither piped nor `resume()`d. It stalls silently and forever, with no error or
 exit. Both loops resume what they skip, and both have a regression test that
 asserts completion under a timeout rather than asserting an error.
 
 **Every entry is validated, wanted, or not.** Absolute paths, `..` segments and
-anything that is not a plain file or directory fail the extraction. A guard that
+anything that's not a plain file or directory fail the extraction. A guard that
 only looks at what the caller asked for never looks at the payload.
 
 `extractTarToDir` stages and renames rather than pre-validating the archive up

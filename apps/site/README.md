@@ -4,7 +4,7 @@ The product [website](https://www.virtool.ca) for Virtool.
 
 ## Configuration
 
-The site has one optional build-time environment variable. It does not use the
+The site has one optional build-time environment variable. It doesn't use the
 Virtool service `_FILE` convention.
 
 | Variable | Type | Default | Use |
