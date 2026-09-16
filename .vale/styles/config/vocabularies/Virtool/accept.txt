@@ -152,7 +152,6 @@ READMEs
 [Uu]nreferenced
 [Uu]nsuffixed
 [Uu]nversioned
-UUIDs
 [Vv]alidators
 [Vv]irtualized
 WebSockets
