@@ -3,14 +3,14 @@
 Sequence utilities (complement, translation, ORF finding, FASTA/FASTQ) and the
 pure text parsers the workflows need: `hmmscan --tblout`
 (`@virtool/bio/hmmer`) and paired-end quality averaging
-(`@virtool/bio/fastqc`) — `compositeQuality`, which `apps/create-sample` uses
+(`@virtool/bio/fastqc`): `compositeQuality`, which `apps/create-sample` uses
 to reduce two `packages/quality-core` reports into the one blob a sample
 stores, and `roundHalfEven`, the half-to-even rounding both that averaging and
 `quality-core` are specified to use.
 
 Nothing here touches the filesystem, the network, or the database. Callers read
-the bytes and hand over text — walking a results directory, or joining an HMM
-hit to its annotation, belongs to the workflow that does the IO.
+the bytes and hand over text. Walking a results directory or joining an HMM
+hit to its annotation belongs to the workflow that does the IO.
 
 ## Byte-identity with the stored data is the governing constraint
 
@@ -27,7 +27,7 @@ columns; `findOrfs` emits a negative coordinate. None of those are defects to
 be tidied up.
 
 Do not "fix" a quirk in this package alone. A fix means a coordinated change to
-the stored documents and to the UI — and until both move, a correction here is
+a stored document and the UI. Until both move, a correction here is
 a silent disagreement with every record written so far.
 
 Where a divergence is deliberate it's commented at the site and pinned by a

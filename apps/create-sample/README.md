@@ -7,7 +7,7 @@ measures their quality, normalizes them to `reads_1.fq.gz` and
 `reads_2.fq.gz`, and commits them to object storage.
 
 Two steps, `run_fastqc` and `finalize`, and two external binaries: `pigz` and
-[`quality-core`](../../packages/quality-core/README.md) — a Rust crate in this
+[`quality-core`](../../packages/quality-core/README.md), a Rust crate in this
 repo rather than a third-party tool.
 
 ## Building the image
@@ -41,7 +41,7 @@ Run from the monorepo root.
 **Its input is `WorkflowSample.uploads`, and the count comes from there.** A
 sample this workflow is running has no `sample_reads` rows yet, so the uploads
 are the only files it has. They ride on `GET /samples/{id}` for the same reason
-a subtraction's upload does — the job's `args` carry `sample_id` and nothing
+a subtraction's upload does. The job's `args` carry `sample_id` and nothing
 else. Their order is `sample_uploads.index`, which is the *only* thing linking
 an upload to the reads file it becomes: `finalizeSample` pairs the rows it
 writes with the uploads by that same order.
@@ -50,7 +50,7 @@ Do not branch on `sample.paired`. `getSample` derives it from the reads rows,
 so a running `create_sample` job is always served `paired: false`.
 
 **An already-gzipped upload is renamed, not re-encoded.** Almost every one is,
-and these files run to gigabytes — recompressing means decompressing
+and these files run to gigabytes. Recompressing means decompressing
 and gzipping back to produce bytes the user already sent.
 
 **The normalized reads go in `{work_path}/reads/`, not beside their uploads.**
@@ -59,14 +59,14 @@ waiting to happen: upload names are user-supplied, so a sample whose *second*
 upload is called `reads_1.fq.gz` would have the first upload renamed onto it,
 destroying the second's bytes, and finalization with one read stored twice.
 Separate directories put the target names out of reach of the source names. The
-rename is still a rename — both directories are under the one work path, which
+rename is still a rename. Both directories are under the one work path, which
 is all `rename(2)` requires.
 
 **`quality-core` does the work FastQC would, and the step id still names
 FastQC.** FastQC is a Java program behind a Perl launcher that forces a JRE and
 the full `perl` into an image, holds ~250 MB per file in flight, and produces a
 blob small enough to be beside the point. The crate computes the same seven
-fields in one streaming pass — see its README for the statistics it reproduces
+fields in one streaming pass. See its README for the statistics it reproduces
 and the one place it deliberately differs, which is that it does not reproduce
 FastQC's base-position binning.
 
@@ -88,7 +88,7 @@ the user to remove, and the jobs API exposes no destructive route a job key
 could reach. This matches `create_subtraction`, `pathoscope` and `nuvs`.
 
 **The image installs nothing.** It used to need a JRE *and* the full `perl` for
-FastQC, whose launcher opens with `use FindBin` — which lives in
+FastQC, whose launcher opens with `use FindBin`. `FindBin` lives in
 `perl-modules-5.36`, not the `perl-base` the Node image carries, and whose
 absence failed at exec with a message about `@INC`. `quality-core` is one
 static binary linking nothing but glibc, so the runtime stage copies it in and
@@ -99,5 +99,5 @@ that is all. The image went from 886 MB to 491 MB.
 The tests here use small blobs built inline; nothing in this app parses a
 FastQC report any more.
 
-The statistics are pinned in the crate, against real FastQC 0.11.9 output —
-see `packages/quality-core/tests/fixtures/`.
+The statistics are pinned in the crate against real FastQC 0.11.9 output. See
+`packages/quality-core/tests/fixtures/`.

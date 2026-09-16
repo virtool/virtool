@@ -2,7 +2,7 @@
 
 A thin wrapper over [pino](https://getpino.io), shared by `apps/web` and
 `apps/internal`. Server code logs through this, never
-`console.*` — Biome's `noConsole` rule fails `pnpm check` on any that do.
+`console.*`. Biome's `noConsole` rule fails `pnpm check` on any that do.
 
 ```ts
 import { createLogger } from "@virtool/logger";
@@ -12,14 +12,14 @@ logger.info({ userId }, "login");
 ```
 
 Pass structured fields as the first argument and the message as the
-second — never interpolate values into the message string, that defeats
+second. Never interpolate values into the message string. That defeats
 redaction and makes records ungreppable.
 
 Each process builds **one** logger at its composition root and passes it
 down; there is no request-scoped logger anywhere in the server, and
 `logger.child({...})` (pino's own) exists but sits unused today.
 `@virtool/data`'s functions that log take a `Logger` argument rather than
-importing one, because the singleton — and its Sentry forwarding stream —
+importing one, because the singleton and its Sentry forwarding stream
 belongs to whichever app built it. See `packages/data/src/test/logger.ts`
 for the silent logger tests pass in its place.
 
@@ -44,7 +44,7 @@ stream below.
 out to an extra destination. `createSentryLogStream`
 (`@virtool/sentry/log`) is the one every service uses, to forward
 `info`-and-before records to Sentry's structured logging API alongside
-stdout — see that module's doc comment for why it's a plain destination
+stdout. See that module's doc comment for why it is a plain destination
 stream rather than `Sentry.pinoIntegration()`. Each process wires it up
 at its own composition root, only when a DSN is configured:
 `apps/web/src/server/logger.ts`, `apps/internal/src/serve/logger.ts`, and

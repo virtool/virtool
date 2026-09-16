@@ -7,7 +7,7 @@ subprocess. It replaced FastQC 0.11.9 in that workflow.
 
 One of two Rust crates here; the other is
 [`pathoscope-core`](../pathoscope-core/README.md). Neither is a pnpm workspace
-member, so `pnpm test` does not reach them — run `cargo` in this directory, and
+member, so `pnpm test` does not reach them. Run `cargo` in this directory, and
 CI gates it with a `quality-test` job.
 
 ```
@@ -21,7 +21,8 @@ subprocess's stdout on `/dev/null` unless it's given a handler.
 ## It computes FastQC's statistics, not the textbook ones
 
 The output is the seven fields of the `Quality` object in
-`packages/contracts/src/samples.ts` — what `legacy_samples.quality` holds and
+`packages/contracts/src/samples.ts`, which defines what `legacy_samples.quality`
+holds and
 every chart in the SPA reads. Nothing else FastQC produces came across: no HTML
 report, no adapter content, no duplication estimate, no pass/warn/fail.
 
@@ -41,8 +42,9 @@ Two more that are easy to miss:
   file**, and that decision sets the offset every score in the blob is measured
   against. A file of nothing but high scores reads as Illumina, not Sanger.
 - **A cycle covered by 100 reads or fewer has no percentiles.** FastQC reports
-  `NaN` for all five, which cannot be stored — not valid JSON, and rejected by
-  both the JSONB column and the `Quality` schema — so the row is resolved by
+  `NaN` for all five, which cannot be stored because it is not valid JSON and is
+  rejected by both the JSONB column and the `Quality` schema. The row is resolved
+  by
   substituting the first value in it that is a real number, the mean, for the
   whole row. It's not a rare shape: a file of variable-length reads thins out
   toward its longest read.
@@ -54,7 +56,7 @@ data.
 ## One divergence is deliberate: no binning
 
 FastQC groups base positions once the longest read passes **75bp**, reporting
-one averaged row per group and repeating it across the group's members — so a
+one averaged row per group and repeating it across the group's members. Thus, a
 stored blob from a 301bp run holds runs of five identical rows. This crate
 reports every cycle.
 
@@ -65,7 +67,7 @@ data is simply finer. For reads of 75bp or less there is no divergence at all.
 case it asserts that the five non-per-cycle fields are identical, that the row
 count is identical, that positions 1-9 (which FastQC leaves ungrouped at any
 length) are identical, and that **every grouped row is the mean of the cycles
-this crate reports for it** — which is what makes the finer data a refinement
+this crate reports for it**. This makes the finer data a refinement
 of the coarser one rather than a different measurement.
 
 ## The goldens come from FastQC, and must keep coming from FastQC
@@ -79,7 +81,7 @@ code still does what it did.
 
 No script here writes them, and no supported way to regenerate
 one exists. If a golden is ever found to be wrong, re-derive it from FastQC itself:
-install FastQC 0.11.9 (a JRE and the full `perl`, not `perl-base` — its
+install FastQC 0.11.9. This requires a JRE and the full `perl`, not `perl-base`, because its
 launcher opens with `use FindBin`), run it over the input with `-f fastq
 --extract`, and work the expected `quality` and `baseGroups` out of the raw
 report by hand against the preceding field table, rather than trusting any parser
@@ -95,10 +97,10 @@ run, which would reach whichever ones it happened to:
 
 | Case | What it's for |
 | --- | --- |
-| `unbinned` | 400 reads of exactly 75bp — the deepest comparison possible cycle for cycle. Exact equality |
-| `variable` | Plain input, lengths of 30/55/75, tail cycles covered by exactly 100 reads then 40 — the row-collapse rule. Exact equality |
-| `all_n` | One cycle where every read is `N` — the zero-denominator rule. Exact equality |
-| `binned` | 400 reads of 150bp — the one deliberate divergence |
+| `unbinned` | 400 reads of exactly 75bp. This is the deepest possible cycle-for-cycle comparison. Exact equality |
+| `variable` | Plain input with lengths of 30/55/75. Tail cycles are covered by exactly 100 reads, then 40. This is the row-collapse rule. Exact equality |
+| `all_n` | One cycle where every read is `N`. This is the zero-denominator rule. Exact equality |
+| `binned` | 400 reads of 150bp. This is the one deliberate divergence. |
 
 `tests/fixtures/rounding.jsonl` is a separate corpus, 2,058 cases of
 `{value, digits, expected}` where `expected` is `value` rounded half to even at
@@ -117,7 +119,7 @@ binary links nothing but glibc, which is why the create-sample runtime stage
 installs nothing at all.
 
 `clap`, `serde`/`serde_json` and `thiserror` are the rest. No
-`libclang` need applies here — that is `pathoscope-core`'s `hts-sys`.
+`libclang` need applies here. That is `pathoscope-core`'s `hts-sys`.
 
 ## Commands
 

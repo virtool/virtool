@@ -42,8 +42,9 @@ ESearch supports `retmode=json` and EFetch does not, for any database, so two
 of the four are typed JSON fetches.
 
 **NCBI's Datasets v2 API is not used for taxonomy.** The team evaluated and
-rejected: it's still `v2alpha`, it takes two calls — `taxonomy/taxon/{id}/dataset_report`
-for the ranked lineage and `.../name_report` for acronyms and synonyms — to
+rejected: it is still `v2alpha`, and it takes two calls. The calls are
+`taxonomy/taxon/{id}/dataset_report` for the ranked lineage and
+`.../name_report` for acronyms and synonyms. These are needed to
 cover what one `efetch(taxonomy)` returns in a single response, and it has no
 subtree search at all, only a taxon's direct `children`, which would turn one
 request into a recursive walk.
@@ -58,16 +59,16 @@ rate-limiting ever makes that worth building.
 
 ## NCBI's irregularities
 
-These are handled deliberately, because Biopython's `Entrez.read()` — with its
-DTD-driven coercion and years of accumulated special cases — is what this
+These are handled deliberately because Biopython's `Entrez.read()`, with its
+DTD-driven coercion and years of accumulated special cases, is what this
 client does without.
 
 - **Errors returned with HTTP 200.** An ESearch refusal arrives as
   `{"esearchresult": {"ERROR": "..."}}` with a 200 status. It's detected
   before the result schema, which would otherwise default the absent `count`
   and `idlist` and report a refusal as a search that legitimately matched
-  nothing. A term that matched nothing is a different thing — a real envelope
-  with an `errorlist` — and is read as an empty result.
+  nothing. A term that matched nothing is a different thing: a real envelope
+  with an `errorlist`. It is read as an empty result.
 - **Every JSON scalar is quoted.** `count` arrives as `"872"`, so it's coerced
   before any paging arithmetic.
 - **A repeated XML element has no stable shape.** One `<Acronym>` parses to a
@@ -96,7 +97,7 @@ with a dozen isolates takes seconds. ref-builder pays the same cost; it's
 inherent to the question, not to this implementation.
 
 `apiKey` is the instance's NCBI API key. An empty string means no key is
-configured and `api_key` is left off the query string entirely — NCBI treats a
+configured and `api_key` is left off the query string entirely. NCBI treats a
 blank one as a bad key and refuses the request rather than falling back to the
 anonymous tier.
 
@@ -127,8 +128,8 @@ for each is on the function.
   returns `null` for a taxon preceding species rather than throwing.
 - **No `fetch_lineage`.** It assembles ref-builder's own `Lineage` and `Taxon`
   domain objects, which belong to reference building rather than to an NCBI
-  client. The pieces it's built from — `fetchTaxonomyRecord` and
-  `fetchDescendantTaxids` — are both here.
+  client. The pieces it is built from, `fetchTaxonomyRecord` and
+  `fetchDescendantTaxids`, are both here.
 - **No on-disk cache.** `NCBICache` writes to a user cache directory, which
   suits a command-line tool and not a server. Caching belongs to the caller.
 
@@ -147,8 +148,8 @@ holds ref-builder's own validated models, copied from its
 accessions and 11 taxonomy IDs. The test parses the responses and asserts the result
 equals ref-builder's model, field for field.
 
-**ref-builder records no raw XML of its own** — everything it keeps is already
-past `Entrez.read()` — so recording the responses here is what puts the
+**ref-builder records no raw XML of its own.** Everything it keeps is already
+past `Entrez.read()`. Recording the responses here is what puts the
 XML-to-model step under test rather than only the model step.
 
 Refresh the recorded responses with:
@@ -162,7 +163,7 @@ models from this client's own output would make the test compare the client to
 itself, so a shape change at NCBI shows up as a failing test with a reviewable
 diff. When a failure turns out to be NCBI having changed the *data* rather than
 this client having broken, edit the expected file by hand and say so in the
-commit — as was done for the realm `Monodnaviria` being renamed `Floreoviria`
+commit. This was done for the realm `Monodnaviria` being renamed `Floreoviria`
 (taxonomy ID 2731342) and for `unclassified Tolucaviricetes` (taxonomy ID 2788833) being
 retired from beet black scorch virus's lineage.
 
@@ -177,7 +178,7 @@ VT_NCBI_LIVE=1 pnpm --filter @virtool/ncbi test
 ```
 
 Set `VT_NCBI_API_KEY` to use the higher rate limit. These assert the shape NCBI
-still sends, not the values — a renamed taxon is not a regression, a moved
+still sends, not the values. A renamed taxon is not a regression, but a moved
 field is.
 
 ## Residual risk

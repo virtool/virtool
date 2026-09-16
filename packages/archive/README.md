@@ -18,7 +18,7 @@ BLAST result zip).
 | `@virtool/archive/compression` | `compressFile`, `decompressFile`, `decompressGzipToFile`, `DecompressedSizeLimitError`, `isGzipped` |
 | `@virtool/archive/errors` | `ArchiveError`, `TarArchiveError`, `TarMemberMissingError`, `TarTargetExistsError`, `ZipArchiveError`, `ZipMemberMissingError` |
 
-Prefer a subpath. `@virtool/workflow` re-exports none of these any more —
+Prefer a subpath. `@virtool/workflow` no longer re-exports any of these.
 consumers import them from here directly, so the definition site stays
 greppable.
 
@@ -39,14 +39,14 @@ not when you want a directory back.
 `readZipMember` takes the whole archive as a `Uint8Array` and returns one
 member's bytes. It cannot stream: a zip's index is a central directory written
 at the *end* of the file, so nothing can name a member until the last byte has
-arrived. That is acceptable for the one thing here that reads a zip — an NCBI
-BLAST result, a handful of kilobytes — and only for that. Anything a user
+arrived. That is acceptable for the one thing here that reads a zip: an NCBI
+BLAST result that is only a handful of kilobytes. Anything a user
 uploaded goes through tar, or nowhere.
 
 ## Two rules the extractors carry so callers cannot get them wrong
 
 **Every entry is drained.** `tar-stream` does not advance past an entry that is
-neither piped nor `resume()`d — it stalls silently and forever, no error, no
+neither piped nor `resume()`d. It stalls silently and forever, with no error or
 exit. Both loops resume what they skip, and both have a regression test that
 asserts completion under a timeout rather than asserting an error.
 
@@ -74,6 +74,6 @@ pipeline.
 
 ## Testing
 
-`vitest run` from this directory, or `pnpm test` from the root. No containers
-and no fixtures checked into the repo — archives are built in-test with
+`vitest run` from this directory, or `pnpm test` from the root. The tests use no
+containers, and no fixtures are checked into the repo. Archives are built in-test with
 `tar-stream`'s `pack`.

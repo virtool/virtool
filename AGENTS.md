@@ -1,9 +1,9 @@
 # Virtool
 
-`CLAUDE.md` is a symlink to this file. Edit `AGENTS.md` — never write to
+`CLAUDE.md` is a symlink to this file. Edit `AGENTS.md`. Never write to
 `CLAUDE.md` directly.
 
-This is a pnpm monorepo. Use `pnpm` for all install, run, and exec commands —
+This is a pnpm monorepo. Use `pnpm` for all install, run, and exec commands.
 never `npm` or `bun`.
 
 ## Apps

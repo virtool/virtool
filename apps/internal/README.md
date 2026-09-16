@@ -11,7 +11,7 @@ the first argument to the bundle (`node dist/index.mjs <command>`):
 | `migrate` | Applies pending Drizzle migrations, then exits. Run as an init Job. |
 
 Image: `ghcr.io/virtool/internal`. The image is fused; the processes are not.
-`serve` scales to N request replicas, while `run` is a lease singleton — folding
+`serve` scales to N request replicas, while `run` is a lease singleton. Folding
 them into one process would multiply task-lease contention across every HTTP
 replica, so they stay separate containers differentiated only by the argument
 each passes.
@@ -19,10 +19,11 @@ each passes.
 `src/index.ts` is the dispatcher: it reads `argv[2]` and dynamically imports the
 selected command's graph, so the migration Job never loads Hono and the HTTP
 server never loads the task registry. Each command lives under its own
-directory — `src/serve/`, `src/run/`, `src/migrate/` — and owns its own config,
+directory. The directories are `src/serve/`, `src/run/`, and `src/migrate/`.
+Each owns its own config,
 Sentry service name (`jobs-api`, `tasks`, `migrate`) and fatal logging.
 
-## `serve` — the jobs API
+## `serve`: the jobs API
 
 The process workflow runners use to claim, update, and finish jobs. Binds
 `VT_JOBS_API_PORT` (**9950**) and is fronted by `jobs-api-service`.
@@ -60,11 +61,11 @@ Caches are the sole key-composition exception. `POST /caches` accepts a bare
 UUID and composes its cache key server-side. The workflow uploads the cache blob
 before registering it, and an already-registered logical key is success.
 
-## `run` — the task spawner and runner
+## `run`: the task spawner and runner
 
-**One** long-lived process carrying both halves of Virtool's task system — the
+**One** long-lived process carries both halves of Virtool's task system: the
 periodic spawner that inserts scheduled tasks, and the runner that claims and
-executes what it spawns. No ingress and **no Service** — its HTTP listener
+executes what it spawns. The process has no ingress and **no Service**. Its HTTP listener
 serves only `GET /health/live`, `GET /health/ready` and a token-gated
 `GET /metrics` on `VT_TASKS_PROBE_PORT` (**9900**).
 
@@ -74,17 +75,18 @@ user, so a staged rollout buys nothing.
 ### Shape
 
 Everything is built inside `bootstrap()` (`src/run/bootstrap.ts`), the
-composition root — config, logger, pool, emitter, storage, registry, listener.
+composition root. It creates the config, logger, pool, emitter, storage,
+registry, and listener.
 This command has no module-scope singleton of any kind, so a module of it can be
 imported to read a type without opening anything.
 
-- `src/run/spawner.ts` — the periodic spawner, over `src/run/tasks/periodic.ts`
-- `src/run/runner.ts` — claim, dispatch, heartbeat, drain
-- `src/run/framework/` — `defineTask`, the progress writer and `runTask`
-- `src/run/tasks/` — the task bodies, named for the `type` column in skewer case
+- `src/run/spawner.ts`: the periodic spawner over `src/run/tasks/periodic.ts`
+- `src/run/runner.ts`: claim, dispatch, heartbeat, and drain
+- `src/run/framework/`: `defineTask`, the progress writer, and `runTask`
+- `src/run/tasks/`: the task bodies, named for the `type` column in skewer case
   (`refresh-hmms.ts` for `refresh_hmms`), registered in
   `src/run/tasks/registry.ts`
-- `src/run/download.ts` — downloading a release archive to disk, with the
+- `src/run/download.ts`: downloading a release archive to disk, with the
   bounded retry, idle-stall timeout and status check `install_hmms` needs
 
 A claim is a lease encoded on `acquired_at`, renewed every 60 s, and live for
@@ -119,7 +121,7 @@ schema, optional ordered steps, a `run` function, and optional cleanup.
 `runTask()` parses the row context before calling the body; invalid payloads
 fail through the same terminal path as body errors.
 
-Each declared step occupies an equal slice of 0–100 progress. A step reports a
+Each declared step occupies an equal slice of 0-100 progress. A step reports a
 fraction from 0 to 1, and the framework debounces, serializes, and keeps writes
 monotonic. Task bodies do not write the `tasks` table or publish task events
 themselves.
@@ -182,10 +184,10 @@ cleanup, stops the heartbeat, and releases this runner's remaining claims. The
 drain timeout is part of the total shutdown budget, not extra to it. The
 container must execute Node directly so SIGTERM reaches these handlers.
 
-## `migrate` — database migrations
+## `migrate`: database migrations
 
-Applies pending Drizzle migrations and exits. It reads a lean environment —
-`VT_POSTGRES_URL` and the optional `VT_MIGRATIONS_PATH` — with none of the
+Applies pending Drizzle migrations and exits. It reads a lean environment with
+`VT_POSTGRES_URL` and the optional `VT_MIGRATIONS_PATH`. It has none of the
 storage credentials, ports or shutdown budget the long-lived processes need, so
 the Job's pod spec carries only what a migration uses. It opens a single
 connection (migrations are serial) and reports under the `migrate` service name,
@@ -200,7 +202,7 @@ run outside the image against the working tree's own `packages/data/drizzle`.
 ## Metrics
 
 Both long-lived subcommands own a private Prometheus registry and a token-gated
-`GET /metrics` — `serve` on 9950, `run` on 9900. Each requires the configured
+`GET /metrics`: `serve` on 9950 and `run` on 9900. Each requires the configured
 bearer token; when `VT_METRICS_TOKEN` is unset the route returns 404. Both
 registries carry the default Node metrics, `virtool_app_info`, and Postgres pool
 occupancy.
@@ -289,7 +291,7 @@ Run from the monorepo root.
 | --- | --- |
 | `pnpm --filter @virtool/internal develop serve` / `develop run` | Watch, rebuild, and gracefully restart the selected service. |
 | `pnpm --filter @virtool/internal build` | Bundle to `dist/index.mjs`. |
-| `pnpm --filter @virtool/internal test` | Run the Vitest suite (needs Docker — Postgres testcontainer). |
+| `pnpm --filter @virtool/internal test` | Run the Vitest suite. It needs Docker for the Postgres testcontainer. |
 | `pnpm --filter @virtool/internal typecheck` | Run `tsc --noEmit`. |
 
 Migrations remain a one-shot startup step; see [the development guide](../../dev/README.md#builds-dependencies-and-rollout).

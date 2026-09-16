@@ -83,7 +83,7 @@ That layout is what lets every workflow share the `reference_mapping_index` and
 `subtraction_mapping_index` namespaces. Registering an already-existing cache
 key is success. `deriveCacheKey()` serialises params as JSON with keys sorted
 by code point, `,` and `:` separators, and every character outside
-`0x20`–`0x7E` escaped, then takes the SHA-256 of the result; mark floats with
+`0x20`-`0x7E` escaped, then takes the SHA-256 of the result; mark floats with
 `float()`, and do not change the frozen golden fixtures to match what the
 implementation currently produces.
 

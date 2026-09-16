@@ -12,7 +12,7 @@ the compilation happens: **each non-Vite app bundles to a single
 `dist/index.mjs` with every `@virtool/*` package inlined from source.**
 
 Do not "fix" the asymmetry by giving the packages a `dist` build. The
-apps bundling is not a workaround for the packages being unbuilt — it's
+apps bundling is not a workaround for the packages being unbuilt. It is
 the design. A package that emitted `dist` would have to be rebuilt before
 any consumer saw a change, and the type-declaration trap that
 `apps/web/src/server` lives with (`TS2883`, no `.d.ts`, every
@@ -53,18 +53,18 @@ deps: {
 },
 ```
 
-- **`alwaysBundle: [/^@virtool\//]`** — workspace packages are declared as
+- **`alwaysBundle: [/^@virtool\//]`**: workspace packages are declared as
   `dependencies`, so without this they would stay external and the output
   would carry an `import "@virtool/data/db/pg"` that resolves to a `.ts`
   file `node` cannot load.
-- **`neverBundle`** — native addons and anything with a worker-thread or
+- **`neverBundle`**: native addons and anything with a worker-thread or
   dynamic-path runtime. `bcrypt` is a native addon and cannot be bundled
   at all. `pino` resolves transport worker files by path at runtime.
   `postgres`, `@aws-sdk/*` and `@azure/*` are heavyweight and gain
   nothing from inlining.
 
 Everything a bundled workspace package pulls in that is *not* on that
-list gets inlined — `drizzle-orm` and `es-toolkit`, for instance. That is
+list gets inlined. This includes `drizzle-orm` and `es-toolkit`, for instance. That is
 deliberate: it keeps the deployed `node_modules` to the handful of
 packages that genuinely have to be real files on disk.
 
@@ -91,7 +91,7 @@ alongside the manifest and `node_modules`. Without it the deployed tree
 has the dependencies and none of the code.
 
 If an app's externals list is ever empty, the deploy step can be skipped
-for that image — but every app has one today.
+for that image. Every app has one today.
 
 ## Layout of an app
 
@@ -119,7 +119,7 @@ Adding a directory in that shape is enough to be covered by `pnpm build`,
 `pnpm check`, `pnpm typecheck`, `pnpm test`, and `pnpm knip`, with no
 edits to root scripts, `knip.json`, `biome.json`, the Dockerfile install
 layer, or `pnpm-workspace.yaml`. Adding a new *image* still needs a
-Dockerfile stage and a CI matrix entry — the one deliberate exception.
+Dockerfile stage and a CI matrix entry. This is the one deliberate exception.
 
 ## Repo-wide gates
 
@@ -132,7 +132,7 @@ Dockerfile stage and a CI matrix entry — the one deliberate exception.
   `biome.json`'s `files.includes`, because Astro is not linted by biome.
 - **`pnpm typecheck` and `pnpm test`** were already `pnpm -r`; an app is
   picked up as soon as it declares the script.
-- **CI's `packages-test`** filters by exclusion (`!@virtool/web`,
-  `!@virtool/data`, `!@virtool/storage` — the three with their own jobs)
+- **CI's `packages-test`** filters by exclusion: `!@virtool/web`,
+  `!@virtool/data`, and `!@virtool/storage`. These three have their own jobs.
   rather than by an inclusion list, so a new workspace that declares
   `test` is covered without editing the job.

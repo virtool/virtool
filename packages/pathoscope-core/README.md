@@ -16,7 +16,8 @@ member, so `pnpm test` does not reach them.
 matches exactly. The corpus is a frozen reference: **never edit a vector to
 make a failing comparison pass.**
 
-Floats are compared with `f64::to_bits()` — not a tolerance, and not as text.
+Floats are compared using `f64::to_bits()`. The comparison does not use a
+tolerance or rendered text.
 "Equal within tolerance" is not the bar for a diagnostic workflow, and
 comparing rendered text would fail on a harmless difference between float
 formatters while saying nothing about the values. The harness catches a one-ULP
@@ -25,22 +26,22 @@ drift.
 Coverage arrays are stored sparsely (a length plus the non-zero positions).
 They are sized to the reference, so a vector over a 50 kb reference is 50,000
 entries of which ~200 are non-zero; dense storage made the corpus 1.3 MB, 98%
-of it zeros. The encoding is lossless — the harness rebuilds the dense array.
+of it zeros. The encoding is lossless. The harness rebuilds the dense array.
 
 The corpus was captured from the PyO3 build of `workflow-pathoscope` before the
 crate moved here. The script that captured it's gone, and there is no supported
 way to produce a new vector: it needed the Python extension module, which this
 repository does not hold. `git log --diff-filter=D` under `tests/golden/` finds
 the script if it's wanted as a starting point. A new vector is never
-needed — a failing vector is a finding about the code, never a golden to
+needed. A failing vector is a finding about the code, never a golden to
 re-baseline. **Never edit a vector to make a failing comparison pass**, and
-never regenerate the corpus from this crate — a corpus generated from the code
+never regenerate the corpus from this crate. A corpus generated from the code
 under test asserts nothing.
 
 ## Five modules are frozen
 
-`em.rs`, `matrix.rs`, `sam.rs`, `subtraction.rs` and `coverage.rs` — 2,511
-lines — are pinned by the golden corpus and are not to be edited. A diff
+`em.rs`, `matrix.rs`, `sam.rs`, `subtraction.rs` and `coverage.rs`, totaling 2,511
+lines, are pinned by the golden corpus and are not to be edited. A diff
 showing a change inside `em()` is a divergence, not an improvement.
 
 `coverage.rs` carries a TODO at the top flagging an unresolved question about
@@ -52,9 +53,9 @@ answered against a baseline later instead of guessed at. VIR-2913 tracks it.
 `candidates.rs` is the sixth module and the one exception, and the reason is
 where each sits. The five preceding are the numeric core: their intermediate
 arithmetic is unobservable from outside, so leaving them alone is the only way
-to keep it right. `candidates.rs` is process plumbing — it spawns bowtie2,
+to keep it right. `candidates.rs` is process plumbing. It spawns bowtie2,
 streams its stdout, applies the score cutoff and maps failures onto
-`PathoscopeError` — and may be restructured freely, because the golden
+`PathoscopeError` and may be restructured freely, because the golden
 `candidates` vectors pin the set of references it returns, not how it arrives
 at them. The bowtie2 flags it passes are part of that output, so they are as
 fixed as anything preceding.
@@ -85,7 +86,7 @@ Other contracts:
 - **Results go to files, never stdout.** stdout carries nothing at all, so a
   stray `println!` cannot corrupt a result. The golden harness asserts stdout is
   empty for every invocation.
-- **Diagnostics go to stderr as JSON lines** — `{"level","target","msg"}`. The
+- **Diagnostics go to stderr as JSON lines**: `{"level","target","msg"}`. The
   parent's logger (`@virtool/logger`, a pino wrapper) reads JSON. Level comes
   from `--log-level` or `RUST_LOG`, which wins when set.
 - **Exit 0 on success, non-zero on failure** with a human-readable message on
@@ -96,14 +97,14 @@ Other contracts:
 
 ## Commands
 
-Run from this directory — the crate is not a pnpm workspace, so `pnpm test`
+Run from this directory. The crate is not a pnpm workspace, so `pnpm test`
 and `pnpm typecheck` do not reach it.
 
 | Command | Action |
 | --- | --- |
 | `cargo test` | Run the suite, golden vectors included |
 | `cargo fmt` | Format (`rustfmt.toml`, `max_width = 88`) |
-| `cargo clippy` | Lint — advisory only, see below |
+| `cargo clippy` | Lint. Advisory only, see below. |
 
 Building needs `libclang-dev` installed, because `hts-sys` runs bindgen against
 htslib's headers.
@@ -115,8 +116,8 @@ This is a recorded decision, not an oversight.
 `cargo fmt --check` runs in CI. The code already satisfied it.
 
 `cargo clippy -- -D warnings` is **not** a gate. The five frozen modules are
-2,511 lines that would need edits inside them to meet it — `sam.rs` alone
-carries two unused imports that the build warns about today — and those edits
+2,511 lines that would need edits inside them to meet it. `sam.rs` alone
+carries two unused imports that the build warns about today. Those edits
 are exactly what byte-identity with the golden corpus forbids. Revisit once
 those modules can be re-pinned. Until then, clippy is advisory: run it, don't
 gate on it.
@@ -127,11 +128,11 @@ The crate has no `package.json`, so it's not a pnpm workspace, and `pnpm test`
 and `pnpm typecheck` do not reach it. Two exclusions are still needed and must
 stay:
 
-- **biome** — `!packages/pathoscope-core` in `biome.json`'s `files.includes`.
+- **biome**: `!packages/pathoscope-core` in `biome.json`'s `files.includes`.
   Biome ignores `.rs`, `.toml` and the fixtures, but it does parse
   `tests/golden/vectors.json` and wants to reformat it. That file is machine
   generated; formatting it would only make the next regeneration fail the gate.
-- **knip** — `packages/pathoscope-core/**` in `knip.json`'s `ignore`. `hts-sys`
+- **knip**: `packages/pathoscope-core/**` in `knip.json`'s `ignore`. `hts-sys`
   vendors htslib's C source into `target/`, and that tree carries a
   `htscodecs/javascript/` directory which knip reports as unused files after any
   local `cargo build`. knip itself emits a configuration hint asking for this
@@ -181,7 +182,7 @@ developer machine.
 The runtime stage installs `libcurl4`, `libgomp1`, `libncursesw6` and `perl`.
 Each backs a specific `ldd ... => not found` against the slim base: perl and
 libgomp1 for bowtie2, libcurl4, and libncursesw6 for samtools. `pathoscope-core`
-itself needs none of them — `hts-sys` links htslib statically.
+itself needs none of them. `hts-sys` links htslib statically.
 
 The `build-pathoscope` CI job and its release entry use the same `pathoscope`
 GitHub Actions cache scope. See
@@ -190,7 +191,7 @@ and release pipeline.
 
 **A job that exports a cache must run `docker/setup-buildx-action` first.** The
 runner's default builder uses the `docker` driver, which cannot export a build
-cache at all — `cache-to` fails the build outright with "Cache export is not
+cache at all. `cache-to` fails the build outright with "Cache export is not
 supported for the docker driver" rather than degrading to an uncached build.
 The action swaps in a `docker-container` builder that can. This applies to
 every job here that sets `cache-to`, the UI image's `build` and `release-ghcr`

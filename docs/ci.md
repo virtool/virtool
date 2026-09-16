@@ -51,14 +51,14 @@ Most CI jobs run for every pull request. Five jobs use the `changes` job in
 | `nuvs-image` | `build-nuvs` | The Nuvs app and everything copied into its image |
 | `nuvs-app` | `nuvs-test` | The Nuvs app and the workspace packages it imports |
 
-The first four are expensive outliers — libclang, Cargo, and from-source
+The first four are expensive outliers. They use libclang, Cargo, and from-source
 bioinformatics compiles that would otherwise run on every PR. `nuvs-test` is
 cheap mocked vitest, filtered only for parity with the other workflow apps.
 
 Keep a separate filter for each job. The crate jobs run Cargo, not TypeScript.
 The image jobs copy different packages: Pathoscope copies
 `packages/pathoscope-core`; Nuvs does not. `nuvs-app` is narrower than
-`nuvs-image` — no `Dockerfile` or `.dockerignore`, and only the packages Nuvs
+`nuvs-image`: no `Dockerfile` or `.dockerignore`, and only the packages Nuvs
 imports (so no `data`, `ncbi`, or `service`). Sharing one filter would rebuild
 each image, and rerun Cargo, for inputs it does not use.
 

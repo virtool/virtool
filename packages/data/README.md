@@ -184,7 +184,7 @@ migrations are generated from it with `db:generate` and applied with
 moved here. Production was stamped as already migrated rather than having that
 baseline applied to it, so it must never be run against an existing database.
 
-Many tables keep legacy shapes — `legacy_` prefixes, dead columns held for
+Many tables keep legacy shapes, including `legacy_` prefixes, dead columns held for
 snapshot fidelity, promoted-from-JSONB projections. Serve them as they are
 rather than renormalizing them; the schema files say per-table what is dead and
 what is load-bearing.
@@ -197,7 +197,7 @@ change together.
 
 `src/db/schema/auth.ts` mirrors the tables Better Auth owns: `auth_accounts`,
 `auth_sessions`, `auth_verifications`, `auth_two_factors` and `auth_passkeys`.
-`users` is shared — Better Auth uses it as its user model — and carries the
+`users` is shared. Better Auth uses it as its user model, and it carries the
 columns it needs alongside Virtool's own.
 
 Two rules hold this together:
@@ -211,8 +211,8 @@ Two rules hold this together:
   current cookie pair and its cleanup task, and nothing in Better Auth reads or
   writes it. `auth_sessions` is a separate table.
 
-A Drizzle property name in `auth.ts` is a Better Auth *field* name — the adapter
-looks fields up by property — so `userId` and `credentialID` keep their exact
+A Drizzle property name in `auth.ts` is a Better Auth *field* name. The adapter
+looks fields up by property, so `userId` and `credentialID` keep their exact
 spelling while their columns stay snake_case.
 
 `users.email` is deliberately not unique, though Better Auth declares it so.
@@ -226,7 +226,7 @@ rather than an index.
 `users.lifecycle_state` is the persisted half of the account lifecycle:
 `pending` for an account that exists but holds no credential, `normal` for one
 that can be used. It's **not** `users.active`. Activation remains the
-administrator's switch and stays authoritative — a deactivated account is
+administrator's switch and stays authoritative. A deactivated account is
 unusable whatever its lifecycle state, and completing setup never activates
 anyone.
 
@@ -247,9 +247,9 @@ and API-key resolution.
 - A **setup token** is the bearer secret in an invitation, bootstrap or
   remediation link. Only its SHA-256 is stored; the plaintext is returned to
   the issuing caller once and is never readable back. It's purpose-bound,
-  expiring, single-use — `consumeSetupToken` is one conditional `UPDATE ...
+  expiring, single-use. `consumeSetupToken` is one conditional `UPDATE ...
   RETURNING`, so concurrent submissions of one token produce exactly one
-  winner — and superseded when a replacement is issued.
+  winner. It is superseded when a replacement is issued.
 - A **restricted setup session** is what a holder gets in exchange: a
   non-secret `session_id` for attribution plus a secret whose digest is
   stored, bound to one purpose, and expiring. `verifySetupSession` re-reads
@@ -259,7 +259,7 @@ and API-key resolution.
 
 `src/auth/lifecycle.ts` holds one transactional completion primitive per
 purpose. Each spends the token, writes the credential and identity state,
-moves the account, and revokes every setup credential the user held — in one
+moves the account, and revokes every setup credential the user held in one
 transaction, so a failure rolls the whole transition back and a spent token
 never outlives the change it paid for. None of them mints a session; which
 session a completed holder gets is the calling flow's decision, and cookies
@@ -272,7 +272,7 @@ Auth. An account credentialed against only one of them cannot sign in under
 the other.
 
 Expiry cleanup is the internal runner's `cleanup_setup_state` periodic task.
-Nothing waits on it — both readers refuse an expired row on sight — so there
+Nothing waits on it. Both readers refuse an expired row on sight, so there
 are no request-path scans.
 
 ## Outbound requests

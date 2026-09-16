@@ -29,19 +29,19 @@ Four modules, all exported from `@virtool/sqlite`:
 | `create.ts` | `createIndexArtifact`, the bulk load |
 | `errors.ts` | `IndexArtifactError` and the five failures a caller can tell apart |
 
-The rules that shape those modules — why ordering is pinned, why nothing
-materialises the index, and what each error means — are documented as
-JSDoc on the code itself, not repeated here: `queries.ts`'s module comment and
+The rules that shape those modules are documented as JSDoc on the code itself.
+They explain why ordering is pinned, why nothing materialises the index, and
+what each error means. The relevant comments are `queries.ts`'s module comment and
 the `SELECT_OTUS`/`checkOtu` comments cover ordering and streaming;
 `schema.ts`'s `openIndexArtifact` covers the no-fallback rule; `errors.ts`'s
 `Index*Error` classes cover what each failure means and when it fires. Read
-there first — this file holds only what isn't already on the code: the
+there first. This file holds only what is not already in the code: the
 measurements behind those decisions.
 
 ### Measurements
 
-Measured on a synthetic 300 MB artifact — 20,000 OTUs, 60,000 sequences of
-5 kb — scanning the whole index to a 287 MB FASTA moved peak RSS not at all:
+Measured on a synthetic 300 MB artifact containing 20,000 OTUs and 60,000 sequences
+of 5 kb, scanning the whole index to a 287 MB FASTA moved peak RSS not at all:
 87 MB before and 87 MB after. Reaching for `.all()` on any of the queries in
 `queries.ts` undoes that.
 

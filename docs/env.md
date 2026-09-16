@@ -67,7 +67,7 @@ non-zero at boot rather than start and fail each request, which reads as a
 healthy-but-dead instance. The `apps/internal` subcommands parse inside
 `main()`; `apps/web` parses in a Nitro startup plugin, because its server entry
 is loaded on the first request. Report every invalid key in one message, and
-report key names and reasons only — never a configured value.
+report key names and reasons only. Never report a configured value.
 
 Current integrations are:
 

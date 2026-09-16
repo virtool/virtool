@@ -10,7 +10,7 @@ once by each of the four workflow apps and once more by the runtime itself.
 
 It lives in `packages/workflow/src/testing/`, runs under Node via
 `packages/workflow`'s own `test` script, and **imports nothing from
-`apps/web`** — which is what lets a workflow app's tests use it without
+`apps/web`**. This lets a workflow app's tests use it without
 depending on the SPA.
 
 ## Factory functions, not framework magic
@@ -118,13 +118,13 @@ against:
 ### camelCase, and why it isn't a spelling nit
 
 The fixture's responses are built from the schemas in `@virtool/contracts`
-rather than hand-spelled, and every field crossing this wire is camelCase —
+rather than hand-spelled, and every field crossing this wire is camelCase:
 `startedAt`, `pingedAt`, never `started_at` / `pinged_at`.
 
 The embedded server is the fixture the jobs API client is tested *against*. If
 server and client were both written snake_case they would agree with each other,
 every test would pass, and the mismatch would surface only against the real
-jobs API in `apps/internal` — the worst place to find it.
+jobs API in `apps/internal`, the worst place to find it.
 
 ### Cancellation is a 401, not a flag
 
@@ -132,7 +132,7 @@ jobs API in `apps/internal` — the worst place to find it.
 stops a job key authenticating, so a cancelled job's next ping is answered
 **401 with the state named in the body** (`Job is cancelled.`) rather than 200
 with a flag set. A flag would have to be readable by a credential the same
-transition revokes, and it would speak only for `cancelled` — a job swept up by
+transition revokes, and it would speak only for `cancelled`. A job swept up by
 the ping timeout is `failed`, and the runner has to stop for that too.
 
 That check sits *after* the key comparison, which is what makes naming the state
@@ -150,7 +150,7 @@ await expect(client.ping()).rejects.toThrow("Job is cancelled.");
 service refuses in `requireJobRequest`, which is the floor under every handler;
 the ping is only where a run *notices*. A terminal job's key thus stops serving
 metadata reads, step starts and finalization calls too, and the three messages are
-the service's own wording — `Job is cancelled.`, `Job has failed.`,
+the service's own wording: `Job is cancelled.`, `Job has failed.`,
 `Job has succeeded.` A fixture that checked terminal state on the ping alone
 would let a workflow keep working against a job production had already shut off,
 and finishing a job would leave its own key working.
@@ -165,8 +165,8 @@ for the race between the guard's read and the transaction's lock.
 `POST /jobs/claim` reads its `workflow` query parameter, the way the real
 service does. Asking for a workflow this fixture's job
 does not run is answered **404**, the same "no job available" a second claim
-gets; a workflow that is not claimable at all — `build_index`, which parses as a
-job workflow but which nothing creates any more — is **422**. Without the filter
+gets; a workflow that is not claimable at all, such as `build_index`, parses as a
+job workflow, but nothing creates it anymore, so it is **422**. Without the filter
 a test could claim `nuvs` off a `create_subtraction` fixture and pass with a
 configuration that leaves a real pod polling until its timeout.
 
@@ -179,7 +179,7 @@ Two more places the fixture matches the service rather than being permissive:
   work.
 - Finalizing a sample or a subtraction **records the manifest's files on the
   row**, so the next metadata read serves the keys the workflow just declared.
-  The read path has to be reachable from the write path — that round trip is
+  The read path has to be reachable from the write path. That round trip is
   what a create-sample or create-subtraction test asserts. Sizes come back as
   `0`: the real route reads each one from storage, and the manifest declares
   none.
@@ -189,16 +189,16 @@ Two more places the fixture matches the service rather than being permissive:
 The embedded server enforces `job-{id}:{key}` over HTTP Basic on every route but
 `POST /jobs/claim`, which is unauthenticated because the key comes back *from*
 it. A route carrying a job id also checks it against the authenticated one and
-answers 403 on a mismatch — the guard refuses a credential, the handler refuses a
+answers 403 on a mismatch. The guard refuses a credential, and the handler refuses a
 path.
 
 Three levers exist for the failure paths, each queued so calls set up requests
 in order:
 
-- `respondNextWith(status, body?)` — answer with any status instead of routing.
-- `hangNextRequest()` — hold the response open forever. The socket stays up, so
+- `respondNextWith(status, body?)`: answer with any status instead of routing.
+- `hangNextRequest()`: hold the response open forever. The socket stays up, so
   this is a stalled response rather than a connection failure.
-- `destroyNextRequest()` — destroy the socket mid-connection, producing a genuine
+- `destroyNextRequest()`: destroy the socket mid-connection, producing a genuine
   transport failure. That is the **only** thing the client retries; a status is a
   decision the jobs API made, and repeating it five times over 25 s would be a
   bug.
@@ -210,12 +210,12 @@ in order:
 `createFakeIndex`, `createFakeReference`, `createFakeAnalysis`,
 `createFakeSettings`, `createFakeQuality` and `createFakeUser` each take
 `(overrides, seed)` and are typed against the `Workflow*` shapes in
-`@virtool/contracts` — what the jobs API actually serves a workflow, not the
-wider shapes the SPA reads.
+`@virtool/contracts`, which defines what the jobs API actually serves as a
+workflow, not the wider shapes the SPA reads.
 
 Two calls with the same seed produce identical values. Determinism is not
 decoration: checksums are the assertion, and a fixture that changed between
-runs would make one unusable. Nothing global is seeded — a generator is derived
+runs would make one unusable. Nothing global is seeded. A generator is derived
 per call, so two builders cannot influence each other through a shared stream
 and a file's fixtures do not change when a test is added ahead of them.
 
@@ -257,8 +257,8 @@ const { data } = await buildTestContext(workflow);
 expect(JSON.parse(JSON.stringify(data))).toEqual(data);
 ```
 
-That seam is what the deferred end-to-end bed depends on — a run there is files
-plus a JSON blob — and it rots silently the first time someone parks a closure or
+That seam is what the deferred end-to-end bed depends on. A run there is files
+plus a JSON blob, and it rots silently the first time someone parks a closure or
 an open handle on `data`. A test asserting only on the values would not notice.
 
 `createFakeContext(data, state, overrides)` skips `buildContext` for a step test
@@ -323,7 +323,7 @@ try {
 }
 ```
 
-If the runner ever grows an `okExitCodes` option this changes — and it changes
+If the runner ever grows an `okExitCodes` option, this changes. It changes
 there, not here.
 
 ## Storage: keys are minted and handed back
@@ -338,19 +338,20 @@ there is nothing to intercept.
 **No helper composes a key from database identity**, because nothing on either
 side of the real system does. A row records its complete key and every read path
 reads that column, so the per-domain key builders this harness was first
-sketched against no longer exist — `mintStorageKey`, `mintRootStorageKey` and the
+sketched against no longer exist. `mintStorageKey`, `mintRootStorageKey`, and the
 two fixed HMM constants are all that is left.
 
 A helper writes its bytes under a freshly minted key and **returns that
 key**, and the caller attaches it to the fake row the jobs API fixture serves
-serve — `reads[].storageKey`, `files[].storageKey`, `upload.storageKey`. The code
+serve: `reads[].storageKey`, `files[].storageKey`, `upload.storageKey`. The code
 under test reads the key out of that metadata, which is its only route to the
 object.
 
 **This is a stronger guarantee than the one it replaces, not a weaker one.**
 Seeding through shared builders only caught a divergence between two builders.
 Minting means the key is unguessable by construction, so a fixture that tries to
-compose one — or quietly falls back to a filename — finds nothing and fails.
+A fixture that composes one or quietly falls back to a filename finds nothing
+and fails.
 
 `seedAtKey` exists for the other half of that: a migrated row keeps whatever
 prefix its object was written under, so at least one fixture should sit under a
@@ -371,7 +372,7 @@ key the seeding helper returns, and that one *is* minted.
 of `{reads, uploads, subtractions, indexes, hmms, caches}` asked for.
 
 **Never a fixed path.** `createWorkPath` unconditionally empties its target, and
-Vitest runs test files in parallel processes — so a shared path means one test
+Vitest runs test files in parallel processes, so a shared path means one test
 deleting the tree out from under another mid-run, which surfaces as a missing
 file in whichever test lost the race. `mkdtemp` guarantees uniqueness per call, covering both
 parallel files and repeated calls within one.
@@ -388,14 +389,14 @@ assertion.
 Both hash **decompressed** content: gzip is detected by the two-byte magic and
 piped through `createGunzip()` first. gzip embeds an mtime and varies by
 compressor and level, so `pigz` and `node:zlib` produce different bytes from
-identical input — hashing the compressed bytes would fail every comparison
+identical input. Hashing the compressed bytes would fail every comparison
 against a fixture compressed by anything else, for reasons that have nothing to
 do with correctness. A file and its gzipped form have the same digest,
 as does the same content gzipped at two different levels.
 
 Detection consumes `isGzipped` from `@virtool/archive/compression` rather than
 re-reading the magic number here; a second copy of that check is a second thing
-to get wrong. `decompressFile` is deliberately not used — it writes a second
+to get wrong. `decompressFile` is deliberately not used because it writes a second
 file, and this only needs a stream. Everything is streamed, because these files
 run to many gigabytes and a fixture that read one into memory would be the only
 part of the harness that could not be pointed at a real workflow output.
@@ -408,7 +409,7 @@ and a handler can leave the response alone to hang it or call `response.destroy(
 for a genuine transport failure. Reach for it when the test is about a status or
 a socket rather than about the jobs API's behaviour.
 
-`UNREACHABLE_BASE_URL` points at port 1 — privileged and unbound, so a connect
+`UNREACHABLE_BASE_URL` points at port 1, which is privileged and unbound, so a connect
 attempt is refused immediately rather than hanging until a timeout.
 
 ## Wiring
@@ -423,6 +424,6 @@ The harness is a subpath export of `packages/workflow`:
 ```
 
 Its tests run under Node through `packages/workflow`'s own `test` script, which
-`pnpm -r test` picks up — the per-package model every `packages/*` follows. A
+`pnpm -r test` picks up. This is the per-package model every `packages/*` follows. A
 project inside `apps/web/vitest.config.js` would contradict the harness's own
 rule that nothing in it reaches the SPA, so there is none.

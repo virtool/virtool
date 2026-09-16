@@ -7,7 +7,7 @@ carrying every isolate of just those OTUs, maps again, drops reads that belong
 to the host, and reassigns the reads that matched more than one isolate.
 
 Image: `ghcr.io/virtool/pathoscope`. Eight steps, four external
-tools — `bowtie2`, `cd-hit-est`, `pigz`, `samtools` — and `pathoscope-core`,
+tools: `bowtie2`, `cd-hit-est`, `pigz`, and `samtools`. It also uses `pathoscope-core`,
 which it drives **as a subprocess**; there is no FFI here and adding one is out
 of scope by decision.
 
@@ -37,8 +37,8 @@ carries neither interpreter in full:
 
 | Tool | Shebang | Needs |
 | --- | --- | --- |
-| `bowtie2` | `#!/usr/bin/env perl` | full `perl` — the slim base ships `perl-base`, which omits `Sys::Hostname` |
-| `bowtie2-build` | `#!/usr/bin/env python3` | `python3` with the stdlib — `python3-minimal` omits it and the script dies on `import gzip` |
+| `bowtie2` | `#!/usr/bin/env perl` | full `perl`. The slim base ships `perl-base`, which omits `Sys::Hostname` |
+| `bowtie2-build` | `#!/usr/bin/env python3` | `python3` with the standard library. `python3-minimal` omits it and the script dies on `import gzip` |
 
 `bowtie2-build` is the wrapper that picks between the real `bowtie2-build-s` and
 `bowtie2-build-l` by index size. Calling those directly and porting bowtie2's own
@@ -47,7 +47,7 @@ than in a shared base if it's ever taken.
 
 The shared libraries each back a specific `ldd ... => not found`: `libgomp1` for
 bowtie2's OpenMP, `libcurl4` and `libncursesw6` for samtools. `pathoscope-core`
-needs none of them — `hts-sys` links htslib statically.
+needs none of them. `hts-sys` links htslib statically.
 
 A missing interpreter does not fail the build; it fails the first time the step
 runs in a pod. Verify a shebang against the version the `Dockerfile` pins, never
@@ -87,7 +87,7 @@ Run from the monorepo root.
 | `pnpm --filter @virtool/pathoscope test:watch` | Vitest in watch mode |
 | `pnpm --filter @virtool/pathoscope typecheck` | `tsc --noEmit` |
 
-The Rust crate is not a pnpm workspace — run `cargo test` in
+The Rust crate is not a pnpm workspace. Run `cargo test` in
 `packages/pathoscope-core` directly. Building it needs `libclang-dev`.
 
 ## Documentation
