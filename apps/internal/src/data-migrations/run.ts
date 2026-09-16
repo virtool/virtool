@@ -141,7 +141,6 @@ export async function executeDataMigration(
 
 	const args: DataMigrationArgs = {
 		client: options.client,
-		db: options.db,
 		logger,
 		signal,
 		report: sink.report,

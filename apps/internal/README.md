@@ -228,8 +228,8 @@ this app's segmented `migrate` command for deployment.
 
 ## `data-migrations` — inspection
 
-An **audit** reads and reports findings. A **backfill** writes in bounded,
-idempotent batches and retains a cursor. Both are data migrations. Any finding
+An **audit** scans and reports findings; it may also perform retry-safe repairs.
+A **backfill** writes in bounded, idempotent batches and retains a cursor. Both are data migrations. Any finding
 fails an attempt; an exception records it as errored. Outcomes are stored in
 `data_migrations`, with bounded finding details in `data_migration_findings`.
 
@@ -252,7 +252,9 @@ Define an audit with `defineAudit` or a backfill with `defineBackfill` in
 also names its exact `migrationTag`, positive integer `version`, and description.
 Keys use lowercase letters, digits, and underscores, beginning with a letter.
 Registry insertion order does not determine execution order; the journal does.
-Retain historical implementations for databases that have not reached them yet.
+Retain historical implementations in `src/data-migrations/bodies/` for databases
+that have not reached them yet. Biome restricts data-package and schema imports
+in this directory; framework bookkeeping remains outside it.
 
 The paired SQL file must start with this assertion as a separate statement,
 using the definition's key and version (here `legacy_identities` and `2`):
@@ -281,6 +283,14 @@ callback. Use SQL pinned to the schema at that boundary, or table definitions
 frozen alongside the body. Do not import the current domain schema mirror or
 data helpers that depend on it. Framework persistence owns its own mirror and
 bookkeeping tables; bodies must not write those tables.
+
+`legacy_identities@2` stays paired with `0029_audit_legacy_identities`. It scans
+in batches of 500 within one transaction, locking users and credential accounts
+against concurrent writes through commit (lock acquisition times out after five
+seconds). A retry after interruption starts over; a completed retry leaves
+matching credentials untouched. Incomplete email users remain unchanged, but
+handle, password, and credential-state findings are checked independently.
+Summary counts can overlap when a user has multiple conditions.
 
 Backfills also receive a parsed cursor and positive `batchSize`. They own their
 transactions and return `{ cursor, processed }` after a batch commits, or `null`

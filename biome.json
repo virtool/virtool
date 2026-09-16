@@ -10,10 +10,10 @@
 			"**",
 			"!packages/pathoscope-core",
 			"!packages/quality-core/tests/fixtures/*.json",
-			"!apps/site/**",
-			"!dev/**",
-			"!packages/sqlite/src/fixtures/**",
-			"!packages/data/drizzle/**",
+			"!apps/site",
+			"!dev",
+			"!packages/sqlite/src/fixtures",
+			"!packages/data/drizzle",
 			"!**/routeTree.gen.ts",
 			"!**/node_modules",
 			"!**/dist",
@@ -103,7 +103,11 @@
 							"options": {
 								"patterns": [
 									{
-										"group": ["@virtool/data/**", "@virtool/storage", "@virtool/storage/**"],
+										"group": [
+											"@virtool/data/**",
+											"@virtool/storage",
+											"@virtool/storage/**"
+										],
 										"message": "@virtool/data and @virtool/storage are server-only: they open Postgres and object storage, and reach node:* APIs the browser has none of. Reach them through src/server/**, which the client transform strips."
 									},
 									{
@@ -237,6 +241,75 @@
 											"**/nuvs/src/**"
 										],
 										"message": "No app may import another app's source, in any direction. apps/internal is the likeliest offender against apps/web because it does work src/server also does, so copying an import from there is an easy mistake. Shared shapes and helpers belong in @virtool/contracts, @virtool/data or @virtool/storage, which every app imports down into."
+									}
+								]
+							}
+						}
+					}
+				}
+			}
+		},
+		{
+			"includes": ["apps/internal/src/data-migrations/bodies/**"],
+			"linter": {
+				"rules": {
+					"style": {
+						"noRestrictedImports": {
+							"level": "error",
+							"options": {
+								"patterns": [
+									{
+										"group": [
+											"@/**",
+											"@account/**",
+											"@administration/**",
+											"@analyses/**",
+											"@app/**",
+											"@banner/**",
+											"@base/**",
+											"@dashboard/**",
+											"@forms/**",
+											"@groups/**",
+											"@hmm/**",
+											"@indexes/**",
+											"@jobs/**",
+											"@labels/**",
+											"@nav/**",
+											"@otus/**",
+											"@quality/**",
+											"@references/**",
+											"@samples/**",
+											"@sequences/**",
+											"@server/**",
+											"@subtraction/**",
+											"@tasks/**",
+											"@tests/**",
+											"@uploads/**",
+											"@users/**",
+											"@virtool/web",
+											"@wall/**",
+											"**/apps/web/**",
+											"**/web/src/**",
+											"**/apps/internal/**",
+											"**/internal/src/**",
+											"**/apps/create-subtraction/**",
+											"**/create-subtraction/src/**",
+											"**/apps/pathoscope/**",
+											"**/pathoscope/src/**",
+											"**/apps/nuvs/**",
+											"**/nuvs/src/**"
+										],
+										"message": "No app may import another app's source, in any direction. apps/internal is the likeliest offender against apps/web because it does work src/server also does, so copying an import from there is an easy mistake. Shared shapes and helpers belong in @virtool/contracts, @virtool/data or @virtool/storage, which every app imports down into."
+									},
+									{
+										"group": [
+											"@virtool/data",
+											"@virtool/data/**",
+											"**/packages/data/**",
+											"**/db/schema",
+											"**/db/schema/**"
+										],
+										"message": "Migration bodies use boundary-pinned SQL and local frozen helpers, never the current data schema or domain helpers. Import framework types from ../define."
 									}
 								]
 							}

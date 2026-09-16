@@ -32,6 +32,7 @@ import {
 	BOOTSTRAP_MIGRATION_TAG,
 	getDataMigrationAssertion,
 } from "../data-migrations/pairs";
+import { DATA_MIGRATIONS } from "../data-migrations/registry";
 import { applyGatedMigrations } from "./apply";
 import { createMigrationDb } from "./connection";
 
@@ -438,4 +439,53 @@ it("rejects an out-of-order journal before executing bodies", async () => {
 	await expect(f.apply()).rejects.toThrow("increasing indices and timestamps");
 	expect(f.calls).toEqual([]);
 	expect(await f.hasTable("data_migrations")).toBe(false);
+});
+
+it("unblocks a failed version 1 at the real 0029 schema boundary", async () => {
+	const f = await fixture();
+	const root = fileURLToPath(
+		new URL("../../../../packages/data/drizzle/", import.meta.url),
+	);
+	const journal = JSON.parse(
+		readFileSync(join(root, "meta/_journal.json"), "utf8"),
+	) as {
+		entries: { tag: string }[];
+	};
+	const historical = journal.entries
+		.filter((entry) => Number(entry.tag.slice(0, 4)) <= 29)
+		.map(({ tag }) => ({
+			tag,
+			sql: readFileSync(join(root, `${tag}.sql`), "utf8"),
+		}));
+	await migrate(f.db, { migrationsFolder: folderFor(historical.slice(0, -1)) });
+	const old = await startDataMigrationAttempt(
+		f.db,
+		"legacy_identities",
+		1,
+		"audit",
+	);
+	await finishDataMigration(f.db, old.id, { status: "failed", summary: {} });
+	const password = Buffer.from(`$2b$12$${"A".repeat(53)}`);
+	await f.client`INSERT INTO public.users
+		(active, email, force_reset, handle, last_password_change, password, settings)
+		SELECT true, CASE WHEN n IN (1, 501) THEN 'duplicate@example.com' ELSE 'user' || n || '@example.com' END,
+		false, 'user' || n, now(), ${password}, '{}'::jsonb FROM generate_series(1, 501) AS n`;
+	expect(
+		await f.apply({
+			registry: DATA_MIGRATIONS,
+			migrationsFolder: folderFor(historical),
+		}),
+	).toEqual({ appliedThrough: "0029_audit_legacy_identities" });
+	expect(await getDataMigration(f.db, "legacy_identities", 2)).toMatchObject({
+		status: "passed",
+		summary: {
+			users: 501,
+			credentials: { inserted: 499 },
+			counts: { duplicateEmail: { active: 2, deactivated: 0 } },
+		},
+	});
+	expect(
+		await f.client`SELECT id FROM public.users WHERE auth_migrated_at IS NULL`,
+	).toHaveLength(2);
+	expect(await f.client`SELECT id FROM public.auth_accounts`).toHaveLength(499);
 });

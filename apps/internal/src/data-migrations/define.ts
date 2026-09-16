@@ -1,5 +1,5 @@
 import type { DataMigrationFinding } from "@virtool/data/data-migrations/data";
-import type { Db, PgClient } from "@virtool/data/db/pg";
+import type { PgClient } from "@virtool/data/db/pg";
 import type { Logger } from "@virtool/logger";
 import type { z } from "zod";
 
@@ -9,7 +9,6 @@ export type FindingReporter = (finding: DataMigrationFinding) => void;
 /** The historical database connection and services available to a migration body. */
 export type DataMigrationArgs = {
 	client: PgClient;
-	db: Db;
 	logger: Logger;
 	signal: AbortSignal;
 	report: FindingReporter;
@@ -23,7 +22,7 @@ type Definition = {
 	description: string;
 };
 
-/** A read-only migration that passes when it reports no findings. */
+/** A full scan with retry-safe repairs that passes when it reports no findings. */
 export type AuditDefinition = Definition & {
 	kind: "audit";
 	run: (
