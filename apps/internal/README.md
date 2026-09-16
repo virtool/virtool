@@ -229,9 +229,10 @@ this app's segmented `migrate` command for deployment.
 ## `data-migrations` — inspection
 
 An **audit** scans and reports findings; it may also perform retry-safe repairs.
-A **backfill** writes in bounded, idempotent batches and retains a cursor. Both are data migrations. Any finding
-fails an attempt; an exception records it as errored. Outcomes are stored in
-`data_migrations`, with bounded finding details in `data_migration_findings`.
+A **backfill** writes in bounded, idempotent batches and retains a cursor. Both
+are data migrations. Any finding fails an attempt; an exception records it as
+errored. Outcomes are stored in `data_migrations`, with bounded finding details
+in `data_migration_findings`.
 
 | Command | Action |
 | --- | --- |
@@ -257,13 +258,13 @@ that have not reached them yet. Biome restricts data-package and schema imports
 in this directory; framework bookkeeping remains outside it.
 
 The paired SQL file must start with this assertion as a separate statement,
-using the definition's key and version (here `legacy_identities` and `2`):
+using the definition's key and version:
 
 ```sql
 DO $$ BEGIN
   IF NOT EXISTS (SELECT 1 FROM public.data_migrations
-                 WHERE key = 'legacy_identities' AND version = 2 AND status = 'passed')
-  THEN RAISE EXCEPTION 'data migration legacy_identities@2 has not passed';
+                 WHERE key = 'example_records' AND version = 1 AND status = 'passed')
+  THEN RAISE EXCEPTION 'data migration example_records@1 has not passed';
   END IF;
 END $$;
 --> statement-breakpoint
@@ -283,14 +284,6 @@ callback. Use SQL pinned to the schema at that boundary, or table definitions
 frozen alongside the body. Do not import the current domain schema mirror or
 data helpers that depend on it. Framework persistence owns its own mirror and
 bookkeeping tables; bodies must not write those tables.
-
-`legacy_identities@2` stays paired with `0029_audit_legacy_identities`. It scans
-all users and credential accounts in one transaction, locking them against
-concurrent writes through commit (lock acquisition times out after five
-seconds). A retry after interruption starts over; a completed retry leaves
-matching credentials untouched. Incomplete email users remain unchanged, but
-handle, password, and credential-state findings are checked independently.
-Summary counts can overlap when a user has multiple conditions.
 
 Backfills also receive a parsed cursor and positive `batchSize`. They own their
 transactions and return `{ cursor, processed }` after a batch commits, or `null`
@@ -312,21 +305,10 @@ verbatim and must contain no credentials; persisted errors are redacted. At most
 2. Remediate the data, or correct the body and bump its version and SQL assertion.
 3. Rerun `migrate`. It retries the pending pair and continues only after a pass.
 
-The `legacy_identities@2` body is paired with
-`0029_audit_legacy_identities`. It eagerly migrates eligible identities and
-leaves blank, malformed, and duplicate-email users
-unchanged for the restricted remediation flow. Their counts remain in the
-recorded summary without failing the migration. Invalid handles, invalid
-bcrypt hashes, migration-state corruption, and unsafe credential linkages are
-persisted as actionable findings under the `user:<id>` subject without
-password material.
-
-Version 2 replaced the deployed version-1 audit after expected incomplete-email
-findings blocked `0029`. On retry, the migration runner records a separate
-version-2 attempt, retains the failed version-1 row as history, applies `0029`
-after version 2 passes, and continues through later SQL migrations. The
-preceding `0028` migration remains unchanged; it adds
-`users.auth_migrated_at` and the partial normalized-email uniqueness index.
+`legacy_identities@2` migrates eligible identities. Blank, malformed, and
+duplicate emails are summarized without failing the migration. Invalid handles
+or bcrypt hashes, corrupt migration state, and unsafe credential linkages are
+recorded as findings under the `user:<id>` subject without password material.
 
 ## Metrics
 
