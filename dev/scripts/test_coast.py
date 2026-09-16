@@ -24,6 +24,7 @@ class FakeCoast:
         self.fail_delete = False
         self.fail_start = False
         self.fail_stop = False
+        self.unassigning_stop_attempts = 0
         self.fail_assign = False
         self.proxies_running = True
         self.shared_services_missing = False
@@ -64,6 +65,9 @@ class FakeCoast:
                 raise RuntimeError("start failed")
             self.items[args[1]]["status"] = "running"
         elif action == "stop":
+            if self.unassigning_stop_attempts:
+                self.unassigning_stop_attempts -= 1
+                raise RuntimeError("currently unassigning")
             if not self.fail_stop:
                 self.items[args[1]]["status"] = "stopped"
         elif action == "rm":
@@ -387,6 +391,15 @@ class LifecycleTests(unittest.TestCase):
             self.lifecycle.remove("first")
         self.assertIn(record["data_id"], self.backend.databases)
         self.assertIn(record["data_id"], self.backend.blobs)
+
+    def test_remove_retries_stop_while_instance_is_unassigning(self):
+        record = self.ensure()
+        self.backend.unassigning_stop_attempts = 1
+        with patch.object(coast.time, "sleep") as sleep:
+            self.lifecycle.remove("first")
+        self.assertIsNone(self.record())
+        self.assertEqual(sleep.call_count, 1)
+        self.assertNotIn(record["name"], self.backend.items)
 
     def test_branch_rename_and_worktree_move_preserve_identity(self):
         first = self.ensure()
