@@ -8,7 +8,7 @@ both halves of the jobs API fixture.
 The workflow test code outweighs the workflow source, so this harness is used
 once by each of the four workflow apps and once more by the runtime itself.
 
-It lives in `packages/workflow/src/testing/`, runs under node via
+It lives in `packages/workflow/src/testing/`, runs under Node via
 `packages/workflow`'s own `test` script, and **imports nothing from
 `apps/web`** — which is what lets a workflow app's tests use it without
 depending on the SPA.
@@ -422,7 +422,7 @@ The harness is a subpath export of `packages/workflow`:
 }
 ```
 
-Its tests run under node through `packages/workflow`'s own `test` script, which
+Its tests run under Node through `packages/workflow`'s own `test` script, which
 `pnpm -r test` picks up — the per-package model every `packages/*` follows. A
 project inside `apps/web/vitest.config.js` would contradict the harness's own
 rule that nothing in it reaches the SPA, so there is none.

@@ -1,3 +1,16 @@
+# Product names
+Coasts
+
+# One-off identifiers
+Q10A_2
+
+# Scientific acronyms
+DNA
+
+# Technology names
+Node
+
+# Everything Else
 [Vv]irtool
 [Nn]uvs
 OTUs?
