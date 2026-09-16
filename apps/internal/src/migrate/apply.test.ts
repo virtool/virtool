@@ -217,6 +217,29 @@ it("retains the preceding prefix and retries a failed audit after remediation", 
 	});
 });
 
+it("runs a corrected version while retaining the failed deployed attempt", async () => {
+	const f = await fixture();
+	await f.prefix();
+	const failed = await startDataMigrationAttempt(f.db, "b", 1, "audit");
+	await finishDataMigration(f.db, failed.id, { status: "failed" });
+
+	f.registry.b.version = 2;
+	writeFileSync(
+		join(f.migrationsFolder, `${B_TAG}.sql`),
+		`${getDataMigrationAssertion("b", 2)}\n--> statement-breakpoint\nALTER TABLE legacy DROP COLUMN value;`,
+	);
+
+	expect(await f.apply()).toEqual({ appliedThrough: "0028_suffix" });
+	expect(await getDataMigration(f.db, "b", 1)).toMatchObject({
+		status: "failed",
+	});
+	expect(await getDataMigration(f.db, "b", 2)).toMatchObject({
+		status: "passed",
+	});
+	expect(f.calls).toEqual(["b", "c"]);
+	expect(await f.hasTable("suffix")).toBe(true);
+});
+
 it.each(["errored", "running", "passed", "wrong_version"] as const)(
 	"handles a pending pair with a %s record",
 	async (status) => {

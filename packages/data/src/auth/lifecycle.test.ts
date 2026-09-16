@@ -70,6 +70,7 @@ describe("completeAccountSetup", () => {
 		expect(row.emailVerified).toBe(true);
 		expect(row.username).toBe("ada");
 		expect(row.displayUsername).toBe("Ada");
+		expect(row.authMigratedAt).toBeInstanceOf(Date);
 		expect(row.password).not.toBeNull();
 		expect(
 			await verifyPassword("a-good-password", row.password as Buffer),
@@ -262,9 +263,39 @@ describe("completeEmailRemediation", () => {
 		expect(row.email).toBe("ada@example.com");
 		expect(row.emailVerified).toBe(true);
 		expect(row.username).toBe("ada");
+		expect(row.authMigratedAt).toBeInstanceOf(Date);
 
 		const [account] = await db.select().from(authAccounts);
 		expect(account?.password).toBe(password.toString("utf8"));
+	});
+
+	it("places the remediated address under normalized uniqueness", async () => {
+		const userId = await seedUser(db, {
+			handle: "Ada",
+			password: await hashPassword("legacy-password"),
+		});
+		const { token } = await seedSetupToken(db, userId, "email_remediation");
+
+		await completeEmailRemediation(db, {
+			token,
+			email: "ada@example.com",
+		});
+
+		const other = await seedUser(db, {
+			handle: "other",
+			email: "other@example.com",
+		});
+		await db
+			.update(users)
+			.set({ authMigratedAt: new Date() })
+			.where(eq(users.id, other));
+
+		await expect(
+			db
+				.update(users)
+				.set({ email: " ADA@EXAMPLE.COM " })
+				.where(eq(users.id, other)),
+		).rejects.toThrow();
 	});
 
 	it("refuses a pending account", async () => {

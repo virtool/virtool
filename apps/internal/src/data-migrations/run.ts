@@ -141,6 +141,7 @@ export async function executeDataMigration(
 
 	const args: DataMigrationArgs = {
 		client: options.client,
+		db: options.db,
 		logger,
 		signal,
 		report: sink.report,
@@ -201,9 +202,7 @@ async function runAudit(
 	definition: AuditDefinition,
 	args: DataMigrationArgs,
 ): Promise<Record<string, unknown>> {
-	await definition.run(args);
-
-	return {};
+	return (await definition.run(args)) ?? {};
 }
 
 /** Checkpoint only clean batches; committed writes may be replayed after interruption. */

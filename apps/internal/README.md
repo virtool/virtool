@@ -255,13 +255,13 @@ Registry insertion order does not determine execution order; the journal does.
 Retain historical implementations for databases that have not reached them yet.
 
 The paired SQL file must start with this assertion as a separate statement,
-using the definition's key and version (here `legacy_identities` and `1`):
+using the definition's key and version (here `legacy_identities` and `2`):
 
 ```sql
 DO $$ BEGIN
   IF NOT EXISTS (SELECT 1 FROM public.data_migrations
-                 WHERE key = 'legacy_identities' AND version = 1 AND status = 'passed')
-  THEN RAISE EXCEPTION 'data migration legacy_identities@1 has not passed';
+                 WHERE key = 'legacy_identities' AND version = 2 AND status = 'passed')
+  THEN RAISE EXCEPTION 'data migration legacy_identities@2 has not passed';
   END IF;
 END $$;
 --> statement-breakpoint
@@ -302,12 +302,21 @@ verbatim and must contain no credentials; persisted errors are redacted. At most
 2. Remediate the data, or correct the body and bump its version and SQL assertion.
 3. Rerun `migrate`. It retries the pending pair and continues only after a pass.
 
-The `legacy_identities@1` audit is paired with `0029_audit_legacy_identities`.
-It checks email eligibility, bcrypt password hashes, migration state, and the
-one-to-one Better Auth credential contract. Findings are persisted under the
-`user:<id>` subject without password material. The preceding `0028` migration
-adds `users.auth_migrated_at` and the partial normalized-email uniqueness index;
-the audit itself is read-only and must pass before its assertion is applied.
+The `legacy_identities@2` body is paired with
+`0029_audit_legacy_identities`. It eagerly migrates eligible identities in
+bounded batches and leaves blank, malformed, and duplicate-email users
+unchanged for the restricted remediation flow. Their counts remain in the
+recorded summary without failing the migration. Invalid handles, invalid
+bcrypt hashes, migration-state corruption, and unsafe credential linkages are
+persisted as actionable findings under the `user:<id>` subject without
+password material.
+
+Version 2 replaced the deployed version-1 audit after expected incomplete-email
+findings blocked `0029`. On retry, the migration runner records a separate
+version-2 attempt, retains the failed version-1 row as history, applies `0029`
+after version 2 passes, and continues through later SQL migrations. The
+preceding `0028` migration remains unchanged; it adds
+`users.auth_migrated_at` and the partial normalized-email uniqueness index.
 
 ## Metrics
 

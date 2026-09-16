@@ -1,5 +1,5 @@
 import type { DataMigrationFinding } from "@virtool/data/data-migrations/data";
-import type { PgClient } from "@virtool/data/db/pg";
+import type { Db, PgClient } from "@virtool/data/db/pg";
 import type { Logger } from "@virtool/logger";
 import type { z } from "zod";
 
@@ -9,6 +9,7 @@ export type FindingReporter = (finding: DataMigrationFinding) => void;
 /** The historical database connection and services available to a migration body. */
 export type DataMigrationArgs = {
 	client: PgClient;
+	db: Db;
 	logger: Logger;
 	signal: AbortSignal;
 	report: FindingReporter;
@@ -25,7 +26,9 @@ type Definition = {
 /** A read-only migration that passes when it reports no findings. */
 export type AuditDefinition = Definition & {
 	kind: "audit";
-	run: (args: DataMigrationArgs) => Promise<void>;
+	run: (
+		args: DataMigrationArgs,
+	) => Promise<Record<string, unknown> | undefined>;
 };
 
 /** The checkpoint and maximum batch size passed to a backfill. */

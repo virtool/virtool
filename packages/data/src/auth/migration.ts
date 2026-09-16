@@ -144,6 +144,7 @@ export type IdentityMigrationMode = "audit" | "apply";
 export type IdentityMigrationOptions = {
 	mode: IdentityMigrationMode;
 	batchSize?: number;
+	signal?: AbortSignal;
 };
 
 /** One legacy user, as the audit reads it. */
@@ -276,10 +277,12 @@ export async function checkAuthSchema(db: Db): Promise<void> {
 async function findDuplicateEmails(
 	db: Db,
 	batchSize: number,
+	signal?: AbortSignal,
 ): Promise<Map<string, number[]>> {
 	const seen = new Map<string, number[]>();
 
 	for await (const batch of scanUsers(db, batchSize)) {
+		signal?.throwIfAborted();
 		for (const user of batch) {
 			if (!isValidEmail(user.email)) {
 				continue;
@@ -520,11 +523,12 @@ function emptySplit(): Record<IdentityClassification, ActivitySplit> {
 export async function runIdentityMigration(
 	db: Db,
 	logger: Logger,
-	{ mode, batchSize = DEFAULT_BATCH_SIZE }: IdentityMigrationOptions,
+	{ mode, batchSize = DEFAULT_BATCH_SIZE, signal }: IdentityMigrationOptions,
 ): Promise<IdentityReport> {
+	signal?.throwIfAborted();
 	await checkAuthSchema(db);
 
-	const duplicates = await findDuplicateEmails(db, batchSize);
+	const duplicates = await findDuplicateEmails(db, batchSize, signal);
 	const duplicateEmails = new Set(duplicates.keys());
 
 	const counts = emptySplit();
@@ -541,12 +545,14 @@ export async function runIdentityMigration(
 	let scanned = 0;
 
 	for await (const batch of scanUsers(db, batchSize)) {
+		signal?.throwIfAborted();
 		const byUser = await readCredentials(
 			db,
 			batch.map((user) => user.id),
 		);
 
 		for (const user of batch) {
+			signal?.throwIfAborted();
 			scanned += 1;
 
 			const classification = classifyIdentity(

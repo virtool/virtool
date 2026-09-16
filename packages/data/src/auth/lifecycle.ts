@@ -76,10 +76,10 @@ async function claimEmail(
  * Give a user the Better Auth credential identity that lets the interactive
  * endpoints authenticate them.
  *
- * Three things together make an identity: the `auth_accounts` row holding the
- * password, and the `username`/`display_username` pair the `username` plugin
- * matches a sign-in against. Without the pair the row exists but no sign-in
- * resolves to it.
+ * Four things together make an identity: the `auth_accounts` row holding the
+ * password, the `username`/`display_username` pair the `username` plugin
+ * matches a sign-in against, and `auth_migrated_at`, which admits the address
+ * to the normalized uniqueness index. They are established in one transaction.
  *
  * `onConflictDoNothing` rather than an insert: a completion retried after its
  * transaction already committed must not mint a second identity, and the
@@ -97,7 +97,7 @@ async function establishAuthIdentity(
 ): Promise<void> {
 	const now = new Date();
 
-	await tx
+	const inserted = await tx
 		.insert(authAccounts)
 		.values({
 			accountId: String(userId),
@@ -109,9 +109,36 @@ async function establishAuthIdentity(
 		})
 		.onConflictDoNothing({
 			target: [authAccounts.providerId, authAccounts.accountId],
-		});
+		})
+		.returning({ id: authAccounts.id });
+
+	if (inserted.length === 0) {
+		const [existing] = await tx
+			.select({
+				userId: authAccounts.userId,
+				password: authAccounts.password,
+			})
+			.from(authAccounts)
+			.where(
+				and(
+					eq(authAccounts.providerId, CREDENTIAL_PROVIDER_ID),
+					eq(authAccounts.accountId, String(userId)),
+				),
+			)
+			.limit(1);
+
+		if (existing?.userId !== userId || existing.password !== passwordHash) {
+			throw new SetupCredentialError();
+		}
+	}
 
 	await updateAuthUsername(tx, userId, handle);
+	await tx
+		.update(users)
+		.set({
+			authMigratedAt: sql`coalesce(${users.authMigratedAt}, timezone('utc', now()))`,
+		})
+		.where(eq(users.id, userId));
 }
 
 /** What {@link completeAccountSetup} accepts. */
