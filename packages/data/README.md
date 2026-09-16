@@ -309,7 +309,9 @@ a configuration error to report, not a value to replace: `resolveNcbiApiKey`
 writes nothing, so the stored key survives a bad encryption key, and lookups
 fall back to the anonymous rate limit rather than failing.
 
+<!-- vale Google.WordListCase = NO -->
 ## Email delivery
+<!-- vale Google.WordListCase = YES -->
 
 `src/email/` owns transactional email configuration, the durable outbox,
 templates, retries, and the Resend integration. The periodic `deliver_email`

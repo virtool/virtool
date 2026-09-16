@@ -61,12 +61,12 @@ stopping a Coast stops its executors.
 This deliberately does not reproduce KEDA. One polling executor always runs
 per workflow type, queue depth does not add parallel workers, and
 there is no global concurrency limit across Coasts. Up to four jobs can run in
-each active Coast, including several memory-heavy jobs at once. Stop unused
+each active Coast, including memory-heavy jobs at once. Stop unused
 Coasts before exercising heavy workflows on a constrained host.
 
 All four workflow targets are part of the Coast build instead of being built
 on demand. Docker still caches their independent tool stages, but a new artifact
-includes every executor and can take substantially longer to build than the
+includes every executor and can take longer to build than the
 core app alone.
 
 ### Browser access

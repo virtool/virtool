@@ -19,7 +19,7 @@ sample detail tab.
 Quality information is calculated from the library using [FastQC](https://www.bioinformatics.babraham.ac.uk/projects/fastqc/)
 and committed to Virtool's database.
 
-The FASTQ files and quality data are used for further analyses triggered by the user.
+The FASTQ files and quality data support further analyses triggered by the user.
 
 ## Browse samples
 
@@ -183,7 +183,7 @@ Median values of less than 25 or a lower quartile of less than 10 is about. For 
 
 ![Nucleotide Composition at Read Positions](./nuc_comp_at_read_positions.png?url)
 
-This plot shows the proportion of each base's position in a file. In general, one should expect A/T to be roughly equal and G/C to be roughly equal. Viruses genomes are often unevenly distributed in composition and are usually A/T rich.
+This plot shows the proportion of each base's position in a file. In general, one should expect A/T to be roughly equal and G/C to be roughly equal. Viruses genomes are often unevenly distributed in composition and can be A/T rich.
 
 With all the things being equal in a diverse library, you should see an even distribution of the four bases which doesn't change with base position. Although the relative amount of G/C content is determined by your library, but what you should see on the graph are parallel lines going across the plot.
 
@@ -240,7 +240,7 @@ Click the link under **Raw Data** to download the FASTQ file that was originally
 
 ## Trim caches
 
-Sample data is automatically trimmed during analysis to remove sequencing artefacts and low quality regions. After the first analysis, the trimmed data are cached for reuse in future analyses that use the same trimming parameters. This saves running the trimming workflow steps for every analysis for a given sample.
+Sample data is automatically trimmed during analysis to remove sequencing artefacts and low quality regions. After the first analysis, the trimmed data is cached for reuse in future analyses that use the same trimming parameters. This saves running the trimming workflow steps for every analysis for a given sample.
 
 A sample that has not yet been analyzed has no caches associated with it.
 ![No Cache](./no_cache.png?url)
@@ -308,7 +308,7 @@ Samples are not required to have an owner group. The group can be set to `None`.
 
 The management level (such as group or all users) cannot read or write the sample. Included users never see the sample in the sample management interface.
 
-This privilege is useful for completely isolating samples between separate groups of users.
+This privilege is useful for isolating samples between separate groups of users.
 
 ##### Read
 
@@ -341,7 +341,7 @@ Samples have their initial access rights configured when they are first created.
 
 ### Unique sample names
 
-By default, sample names must be unique to the sample manager. This prevents confusion between identically named samples. It's possible to disable this feature. To do so, click **Settings** on the left sidebar under the samples overview page.
+By default, sample names must be unique to the sample manager. This prevents confusion between identically named samples. It's possible to turn off this feature. To do so, click **Settings** on the left sidebar under the samples overview page.
 ![Samples Overview](./samples_overview3.png?url)
 
 Check the **Unique Sample Names** box to ensure that every created sample has a unique name.

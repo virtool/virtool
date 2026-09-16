@@ -196,7 +196,7 @@ reads in the sample.
 This sample has over 5.3 million total reads and over 3.7 million mapped reads
 (69.78% mapped reads), illustrating good enrichment of viral RNA.
 
-The values for weight, depth, and coverage are all very high, so the pathogens can be confidently
+The values for weight, depth, and coverage are all high, so the pathogens can be confidently
 that indeed these pathogens are present in the sample.
 
 Clicking on a pathogen shows sequencing coverage charts for the isolates that may be
@@ -237,7 +237,7 @@ Below is an example of an analysis from a contaminated sample.
 
 Although the sample has a large number of mapped reads that cover 53.26% of the viral genome, it
 see that the majority of the pathogens listed are associated with grapevines. Grape
-viruses are usually not found in tree fruits so this is likely a case of
+viruses are uncommon in tree fruits so this is likely a case of
 contamination.
 
 ![Poor quality analysis](./poor_quality_analysis.png?url)
@@ -248,7 +248,7 @@ sample. Although weight and coverage are high, no sample has a high depth value.
 is likely a sample of low quality.
 
 Additionally, the isolate coverage charts show that the max
-depth is 14. This is very small compared to the max depth in a high quality positive
+depth is 14. This is small compared to the max depth in a high quality positive
 sample which reaches a range in the thousands.
 
 ![Coverage Charts](./pathoscope_isolates_contaminated.png?url)
@@ -328,8 +328,8 @@ right pane. The contig is display as a black line with the ORFs identified under
 default, ORFs with no significant HMM matches are not shown. This can be toggled clicking <DummyButton color="grey" icon="filter">Filter ORFs</DummyButton>.
 
 For ORFs with significant HMM matches, the size of the ORF and the E-value of the match is
-shown. The taxonomic families associated with the HMM data are also display preceding the
-graphic. An example of sequence 37 and its protein motifs is shown below.
+shown. The taxonomic families associated with the HMM data appear before the graphic. An
+example of sequence 37 and its protein motifs is shown below.
 
 ![Sequence 37](./nuvs_sequence.png?url)
 
@@ -357,12 +357,12 @@ Another contig has the following BLAST results:
 
 ![NCBI BLAST 2](./nuvs_blast_prunus.png?url)
 
-The high E-value for the HMM match (0.39) indicates the capsid protein match is quite
+The high E-value for the HMM match (0.39) indicates the capsid protein match is
 tenuous.
 
 Additionally the BLAST results show that the contig is strongly related to _Prunus dulcis_
 (almond). The E-values for all accessions are zero and the scores and identities are
-relatively high.
+high.
 
 This sample is from a _Prunus_ host. The most likely source of this contig is the host
 genome.
@@ -378,12 +378,12 @@ The result view below suggests a potential novel virus.
 
 ![NCBI BLAST 4](./nuvs_blast_novel.png?url)
 
-The HMM match has a very low E-value of 5e-96 indicating a strong match.
+The HMM match has a low E-value of 5e-96 indicating a strong match.
 
 The NCBI BLAST results suggest that this contig could represent a novel virus. The contig has
 significant BLAST hits to known viruses (for example, Nectarine marafivirus M), but the
 identities are low (0.73 - 0.76). This low identity suggests that this contig may
-represent a virus the is novel but significantly dissimilar to related known viruses.
+represent a virus the is novel but dissimilar to related known viruses.
 
 Additionally, this sample is isolated from a _Prunus_ host and Nectarine marafivirus M is
 not known to infect _Prunus_ species. Because the size of the sequence is large (6382 bp)
@@ -395,8 +395,8 @@ This contig represents likely bacterial contamination from the field or laborato
 
 ![NCBI BLAST 6](./nuvs_bacteria.png?url)
 
-The BLAST results for this contig show hits for several bacterial species all with
-identities 1.00. Based on their scores, they are all very similar matches. Knowing that
+The BLAST results for this contig show hits for bacterial species all with
+identities 1.00. Based on their scores, they are all similar matches. Knowing that
 these bacterial species are not commonly found in plants, specifically in _Malus_, this
 is most likely a case of contamination.
 
@@ -404,11 +404,11 @@ The following contig demonstrates contamination from a lab technician or field c
 
 ![NCBI BLAST 6](./nuvs_human.png?url)
 
-The E-value for the HMM match is very weak indicating that the annotation is very
+The E-value for the HMM match is weak indicating that the annotation is
 unreliable.
 
 Further, the BLAST results for this contig reveal strong matches to _Homo sapiens_ (human)
-and _Pan troglodytes_ (chimpanzee). Given this information, this is very likely a case of
+and _Pan troglodytes_ (chimpanzee). Given this information, this is likely a case of
 human contamination.
 
 #### Next steps

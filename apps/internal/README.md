@@ -239,9 +239,8 @@ the outbox, and `deliver_email` drains what was already queued, so the outbox
 gauge falls to zero instead of holding until sending returns.
 
 The probe listener (`run`) accepts only `GET`. `/health/live` returns a static
-success and never checks Postgres — a database outage must not restart every pod
-and kill tasks in flight. `/health/ready` checks Postgres and returns
-unavailable as soon as shutdown begins.
+success, while `/health/ready` checks Postgres and returns unavailable as soon as
+shutdown begins.
 
 ## Configuration
 

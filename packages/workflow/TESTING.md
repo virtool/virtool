@@ -192,8 +192,8 @@ it. A route carrying a job id also checks it against the authenticated one and
 answers 403 on a mismatch — the guard refuses a credential, the handler refuses a
 path.
 
-Three levers exist for the failure paths, each queued so several calls set up
-several requests in order:
+Three levers exist for the failure paths, each queued so calls set up requests
+in order:
 
 - `respondNextWith(status, body?)` — answer with any status instead of routing.
 - `hangNextRequest()` — hold the response open forever. The socket stays up, so
@@ -297,7 +297,7 @@ are the assertion helpers.
 
 ### `cd-hit-est -h` exits 1 while succeeding
 
-Several steps probe a tool's version, and `cd-hit-est -h` prints its banner and
+The version probes run in steps, and `cd-hit-est -h` prints its banner and
 exits 1.
 
 **`RunSubprocessOptions` has no allowed-exit-codes escape**, and the runner

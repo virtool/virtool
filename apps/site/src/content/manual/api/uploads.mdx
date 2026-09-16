@@ -11,7 +11,7 @@ Upload a file in three steps:
 2. Send the file directly to storage at that URL.
 3. Tell Virtool to finalization the upload.
 
-The file bytes never pass through the Virtool server, allowing very large
+The file bytes never pass through the Virtool server, allowing large
 uploads.
 
 ## Authenticate
@@ -48,7 +48,7 @@ curl --user "$VT_HANDLE:$VT_API_KEY" \
 
 | Field | Type | Rule |
 | --- | --- | --- |
-| `name` | string | File name. |
+| `name` | string | Filename. |
 | `type` | string | One of `reference`, `reads`, or `subtraction`. |
 | `size` | integer | Exact file size in bytes, from 0 to the instance's max upload size. |
 

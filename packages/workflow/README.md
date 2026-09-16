@@ -43,12 +43,12 @@ Run every external tool through `context.runSubprocess`:
 - stdout goes to `/dev/null` unless a handler consumes it;
 - stderr is logged line by line and the last 20 lines are attached to failures;
 - lines are limited to 128 MiB by default;
-- the child runs in a process group so cancellation kills descendants;
+- the child runs in a process group so cancellation terminates descendants;
 - cancellation sends `SIGTERM`, then `SIGKILL` after five seconds.
 
 `createRunSubprocess()` logs `ESRCH` and `EPIPE` from a signal racing process
 exit at debug level. An ordinary tool exit with code 15 is a failure; only a
-cancellation-driven kill resolves with `cancelled: true`.
+cancellation-driven termination resolves with `cancelled: true`.
 
 ### Job lifecycle
 

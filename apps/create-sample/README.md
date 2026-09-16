@@ -50,7 +50,7 @@ Do not branch on `sample.paired`. `getSample` derives it from the reads rows,
 so a running `create_sample` job is always served `paired: false`.
 
 **An already-gzipped upload is renamed, not re-encoded.** Almost every one is,
-and these files run to several gigabytes — recompressing means decompressing
+and these files run to gigabytes — recompressing means decompressing
 and gzipping back to produce bytes the user already sent.
 
 **The normalized reads go in `{work_path}/reads/`, not beside their uploads.**
