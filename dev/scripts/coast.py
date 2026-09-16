@@ -447,7 +447,11 @@ class Lifecycle:
                 self.coast.command("stop", name)
                 return
             except RuntimeError as error:
-                if "currently unassigning" not in str(error):
+                try:
+                    unassigning = self.coast.instances().get(name, {}).get("status") == "unassigning"
+                except RuntimeError:
+                    unassigning = False
+                if not unassigning:
                     raise
                 if time.monotonic() >= deadline:
                     raise RuntimeError(f"Timed out waiting for Coast to finish unassigning {name}") from error

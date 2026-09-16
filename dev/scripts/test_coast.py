@@ -67,7 +67,8 @@ class FakeCoast:
         elif action == "stop":
             if self.unassigning_stop_attempts:
                 self.unassigning_stop_attempts -= 1
-                raise RuntimeError("currently unassigning")
+                self.items[args[1]]["status"] = "unassigning"
+                raise RuntimeError("stop failed")
             if not self.fail_stop:
                 self.items[args[1]]["status"] = "stopped"
         elif action == "rm":
