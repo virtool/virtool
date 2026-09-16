@@ -219,6 +219,38 @@ function call(name: string, data?: unknown) {
 	return callServerFn(handlers, name, data);
 }
 
+describe("listAnalysisUsers", () => {
+	it("lists users with analyses matching the sample and workflow scope", async () => {
+		await signInAsNewUser();
+		const matchingUser = await seedUser(db, { handle: "matching" });
+		const otherUser = await seedUser(db, { handle: "other" });
+		const sampleId = await seedSample({ all_read: true });
+
+		await seedAnalysis({
+			sample_id: sampleId,
+			user_id: matchingUser,
+			workflow: "pathoscope",
+		});
+		await seedAnalysis({
+			sample_id: sampleId,
+			user_id: ownerId,
+			workflow: "nuvs",
+		});
+		await seedAnalysis({
+			sample_id: await seedSample({ all_read: true }),
+			user_id: otherUser,
+			workflow: "pathoscope",
+		});
+
+		expect(
+			await call("listAnalysisUsersFn", {
+				sampleId,
+				workflows: ["pathoscope"],
+			}),
+		).toEqual([{ id: matchingUser, handle: "matching" }]);
+	});
+});
+
 describe("getAnalysis", () => {
 	it("returns 404 for an analysis that does not exist", async () => {
 		await signInAsNewUser();

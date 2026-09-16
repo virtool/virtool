@@ -194,15 +194,22 @@
     {
       "idx": 27,
       "version": "7",
-      "when": 1789058051923,
-      "tag": "0027_add_auth_migration_state",
+      "when": 1789160323470,
+      "tag": "0027_cheerful_edwin_jarvis",
       "breakpoints": true
     },
     {
       "idx": 28,
       "version": "7",
-      "when": 1789058051924,
-      "tag": "0028_audit_legacy_identities",
+      "when": 1789160323471,
+      "tag": "0028_add_auth_migration_state",
+      "breakpoints": true
+    },
+    {
+      "idx": 29,
+      "version": "7",
+      "when": 1789160323472,
+      "tag": "0029_audit_legacy_identities",
       "breakpoints": true
     }
   ]

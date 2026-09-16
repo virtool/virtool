@@ -1,9 +1,15 @@
 import { FilterChip, FilterGroup } from "@base/Filter";
-import { useListUsers } from "@users/queries";
+import type { UserNested } from "@virtool/contracts";
 import { Users } from "lucide-react";
 import UserFilterMenu from "./UserFilterMenu";
 
 type UserFilterGroupProps = {
+	/** Whether loading the available users failed. */
+	isError: boolean;
+
+	/** Whether the available users are loading. */
+	isPending: boolean;
+
 	/** Deselects every user. */
 	onClear: () => void;
 
@@ -12,20 +18,22 @@ type UserFilterGroupProps = {
 
 	/** The ids of the selected users. */
 	selected: number[];
+
+	/** The users available in the current list context. */
+	users?: UserNested[];
 };
 
 /**
  * The users filter of a list view, with a chip for each selected user
  */
 export default function UserFilterGroup({
+	isError,
+	isPending,
 	onClear,
 	onToggle,
 	selected,
+	users,
 }: UserFilterGroupProps) {
-	// Shares a query key with the menu's own list, so this resolves from the cache
-	// rather than issuing a second request.
-	const { data: users, isPending } = useListUsers();
-
 	const handlesById = new Map(users?.map((user) => [user.id, user.handle]));
 
 	return (
@@ -33,9 +41,12 @@ export default function UserFilterGroup({
 			icon={<Users size={14} />}
 			menu={
 				<UserFilterMenu
+					isError={isError}
+					isPending={isPending}
 					onClear={onClear}
 					onToggle={onToggle}
 					selected={selected}
+					users={users}
 				/>
 			}
 			title="Users"

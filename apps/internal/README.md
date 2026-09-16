@@ -302,10 +302,10 @@ verbatim and must contain no credentials; persisted errors are redacted. At most
 2. Remediate the data, or correct the body and bump its version and SQL assertion.
 3. Rerun `migrate`. It retries the pending pair and continues only after a pass.
 
-The `legacy_identities@1` audit is paired with `0028_audit_legacy_identities`.
+The `legacy_identities@1` audit is paired with `0029_audit_legacy_identities`.
 It checks email eligibility, bcrypt password hashes, migration state, and the
 one-to-one Better Auth credential contract. Findings are persisted under the
-`user:<id>` subject without password material. The preceding `0027` migration
+`user:<id>` subject without password material. The preceding `0028` migration
 adds `users.auth_migrated_at` and the partial normalized-email uniqueness index;
 the audit itself is read-only and must pass before its assertion is applied.
 

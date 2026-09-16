@@ -1,14 +1,17 @@
-import { CREDENTIAL_PROVIDER_ID, credentialAccountId } from "@virtool/data/auth/credential";
-import { isBcryptHash } from "@virtool/data/auth/migration";
+import {
+	CREDENTIAL_PROVIDER_ID,
+	credentialAccountId,
+} from "@virtool/data/auth/credential";
 import { isValidEmail, normalizeEmail } from "@virtool/data/auth/email";
+import { isBcryptHash } from "@virtool/data/auth/migration";
 
-import { defineAudit, type DataMigrationRegistry } from "./define";
+import { type DataMigrationRegistry, defineAudit } from "./define";
 
 /** Audit the legacy identity population before the authentication cutover. */
 const legacyIdentities = defineAudit({
 	key: "legacy_identities",
 	version: 1,
-	migrationTag: "0028_audit_legacy_identities",
+	migrationTag: "0029_audit_legacy_identities",
 	kind: "audit",
 	description: "audit legacy users and Better Auth credential accounts",
 	async run({ client, report, signal }) {

@@ -488,8 +488,8 @@ async function reconcileStale(
 		}
 
 		if (current.password === null || !isBcryptHash(current.password)) {
-				return "skipped";
-			}
+			return "skipped";
+		}
 
 		await syncCredentialPassword(tx, user.id, current.password);
 
