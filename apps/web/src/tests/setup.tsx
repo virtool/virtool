@@ -156,6 +156,7 @@ beforeEach(() => {
 		analysisServerFnMocks.getAnalysisResultsFn,
 		analysisServerFnMocks.listAnalysisUsersFn,
 		settingsServerFnMocks.getSettingsFn,
+		settingsServerFnMocks.getCacheUsageFn,
 		emailServerFnMocks.getEmailSettingsFn,
 		...Object.values(indexServerFnMocks),
 		otuServerFnMocks.findOtusFn,
