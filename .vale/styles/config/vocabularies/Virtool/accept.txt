@@ -194,6 +194,7 @@ Caddy
 [Mm]etacharacters?
 [Mm]isconfigured
 PIDs?
+UUIDs
 [Pp]laintext
 [Pp]resign(er|ed|ing|s)?
 [Pp]roxied
