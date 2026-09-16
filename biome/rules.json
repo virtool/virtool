@@ -1,0 +1,55 @@
+{
+	"linter": {
+		"enabled": true,
+		"rules": {
+			"nursery": {
+				"useReactFunctionComponentDefinition": "error"
+			},
+			"style": {
+				"noRestrictedImports": {
+					"level": "error",
+					"options": {
+						"paths": {
+							"@tanstack/react-router": {
+								"importNames": ["useMatchRoute"],
+								"message": "useMatchRoute breaks React Compiler reactivity (TanStack Router #4499). Use useMatchPartialPath from @app/useMatchPartialPath instead."
+							}
+						}
+					}
+				},
+				"useConsistentTypeDefinitions": {
+					"level": "error",
+					"options": {
+						"style": "type"
+					}
+				},
+				"useLiteralEnumMembers": "error"
+			},
+			"suspicious": {
+				"noConsole": "error",
+				"noImplicitAnyLet": "error",
+				"noExplicitAny": "error",
+				"noArrayIndexKey": "error",
+				"useIterableCallbackReturn": "error",
+				"noShadowRestrictedNames": "error",
+				"noGlobalAssign": "error"
+			},
+			"correctness": {
+				"noUnusedVariables": "error",
+				"noUnusedFunctionParameters": "error",
+				"noInvalidPositionAtImportRule": "error"
+			},
+			"security": {
+				"noDangerouslySetInnerHtml": "error"
+			},
+			"a11y": {
+				"noLabelWithoutControl": "error",
+				"noSvgWithoutTitle": "error",
+				"noStaticElementInteractions": "error",
+				"useValidAnchor": "error",
+				"useKeyWithClickEvents": "error",
+				"useHtmlLang": "error"
+			}
+		}
+	}
+}
