@@ -22,10 +22,12 @@ type Definition = {
 	description: string;
 };
 
-/** A read-only migration that passes when it reports no findings. */
+/** A full scan with retry-safe repairs that passes when it reports no findings. */
 export type AuditDefinition = Definition & {
 	kind: "audit";
-	run: (args: DataMigrationArgs) => Promise<void>;
+	run: (
+		args: DataMigrationArgs,
+	) => Promise<Record<string, unknown> | undefined>;
 };
 
 /** The checkpoint and maximum batch size passed to a backfill. */

@@ -228,10 +228,11 @@ this app's segmented `migrate` command for deployment.
 
 ## `data-migrations` — inspection
 
-An **audit** reads and reports findings. A **backfill** writes in bounded,
-idempotent batches and retains a cursor. Both are data migrations. Any finding
-fails an attempt; an exception records it as errored. Outcomes are stored in
-`data_migrations`, with bounded finding details in `data_migration_findings`.
+An **audit** scans and reports findings; it may also perform retry-safe repairs.
+A **backfill** writes in bounded, idempotent batches and retains a cursor. Both
+are data migrations. Any finding fails an attempt; an exception records it as
+errored. Outcomes are stored in `data_migrations`, with bounded finding details
+in `data_migration_findings`.
 
 | Command | Action |
 | --- | --- |
@@ -252,16 +253,18 @@ Define an audit with `defineAudit` or a backfill with `defineBackfill` in
 also names its exact `migrationTag`, positive integer `version`, and description.
 Keys use lowercase letters, digits, and underscores, beginning with a letter.
 Registry insertion order does not determine execution order; the journal does.
-Retain historical implementations for databases that have not reached them yet.
+Retain historical implementations in `src/data-migrations/bodies/` for databases
+that have not reached them yet. Biome restricts data-package and schema imports
+in this directory; framework bookkeeping remains outside it.
 
 The paired SQL file must start with this assertion as a separate statement,
-using the definition's key and version (here `legacy_identities` and `1`):
+using the definition's key and version:
 
 ```sql
 DO $$ BEGIN
   IF NOT EXISTS (SELECT 1 FROM public.data_migrations
-                 WHERE key = 'legacy_identities' AND version = 1 AND status = 'passed')
-  THEN RAISE EXCEPTION 'data migration legacy_identities@1 has not passed';
+                 WHERE key = 'example_records' AND version = 1 AND status = 'passed')
+  THEN RAISE EXCEPTION 'data migration example_records@1 has not passed';
   END IF;
 END $$;
 --> statement-breakpoint
@@ -302,12 +305,10 @@ verbatim and must contain no credentials; persisted errors are redacted. At most
 2. Remediate the data, or correct the body and bump its version and SQL assertion.
 3. Rerun `migrate`. It retries the pending pair and continues only after a pass.
 
-The `legacy_identities@1` audit is paired with `0029_audit_legacy_identities`.
-It checks email eligibility, bcrypt password hashes, migration state, and the
-one-to-one Better Auth credential contract. Findings are persisted under the
-`user:<id>` subject without password material. The preceding `0028` migration
-adds `users.auth_migrated_at` and the partial normalized-email uniqueness index;
-the audit itself is read-only and must pass before its assertion is applied.
+`legacy_identities@2` migrates eligible identities. Blank, malformed, and
+duplicate emails are summarized without failing the migration. Invalid handles
+or bcrypt hashes, corrupt migration state, and unsafe credential linkages are
+recorded as findings under the `user:<id>` subject without password material.
 
 ## Metrics
 
