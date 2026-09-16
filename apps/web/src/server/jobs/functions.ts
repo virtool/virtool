@@ -49,23 +49,7 @@ function rethrowAsHttp(err: unknown): never {
 	throw err;
 }
 
-/**
- * Narrow a row's `workflow` onto the union the SPA reads.
- *
- * `jobs.workflow` is a `text` column carrying no CHECK constraint, so the data
- * layer types it as a plain string. The SPA renders a workflow name as a label
- * and a link and so reads the closed union, and this is the boundary that
- * publishes the wire shape — narrowing here rather than declaring the union on
- * the client is what makes the two disagreeing a type error.
- *
- * A row that does not fit is a **bare throw**, not a `ClientError`: nothing the
- * caller sent is wrong, and this side owns the data. That is a 500 and a Sentry
- * event naming the job, rather than routine control flow the `beforeSend`
- * filter drops.
- *
- * The message carries the id and never the value. It is a Sentry title, and an
- * unbounded one buries the incident among its own variants.
- */
+/** Convert a stored workflow name to a value supported by this build. */
 function narrowWorkflow(job: { id: number; workflow: string }): JobWorkflow {
 	const parsed = JobWorkflow.safeParse(job.workflow);
 
@@ -77,7 +61,7 @@ function narrowWorkflow(job: { id: number; workflow: string }): JobWorkflow {
 }
 
 /**
- * Map a job row onto the shape the SPA reads.
+ * Map a job row to the shape returned by the web app.
  *
  * A timestamp crosses as a `Date`: the RPC boundary serialises with seroval,
  * which revives one as a `Date` rather than the string `JSON.stringify` would

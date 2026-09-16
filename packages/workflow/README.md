@@ -140,7 +140,7 @@ Run from the monorepo root.
 The package runs its server-shaped tests under Node through its own `test`
 script, which the recursive workspace test command discovers. Keep this project
 out of `apps/web/vitest.config.js`; the workflow harness has no dependency on
-the SPA. Place tests beside their source as `*.test.ts`.
+the web app. Place tests beside their source as `*.test.ts`.
 
 Workflow data generators, jobs API fakes, and process fakes live in
 `src/testing/` and are imported through `@virtool/workflow/testing`. Don't

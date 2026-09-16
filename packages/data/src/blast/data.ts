@@ -76,18 +76,14 @@ const MAX_CONCURRENT_INITIALIZATIONS = 1;
 /**
  * What NCBI's `Status=FAILED` and `Status=UNKNOWN` are recorded as.
  *
- * Rendered by the SPA's BLAST panel beside a retry button — see
- * `checkBlastStatus`.
  */
 const SEARCH_FAILED_MESSAGE = "NCBI could not complete the search";
 
 /**
  * What a search that outlived {@link SEARCH_TIMEOUT_MS} is recorded as.
  *
- * Rendered by the SPA's BLAST panel beside a retry button, which is the whole
- * point of recording it rather than deleting the row: a contig whose row is
- * gone draws as one that was never BLASTed at all, so a user who waited half
- * an hour would be told nothing happened.
+ * The row is retained so a timed-out search is distinguishable from one that
+ * was never submitted.
  */
 const SEARCH_TIMEOUT_MESSAGE = `NCBI did not return a result within ${SEARCH_TIMEOUT_MINUTES} minutes`;
 

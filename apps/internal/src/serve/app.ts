@@ -220,9 +220,8 @@ export function createApp(deps: AppDeps): Hono {
 		handleFinishJob(deps, c.req.raw, c.req.param("jobId")),
 	);
 
-	// These sit at the top level, with no prefix — a separate app has no SPA to
-	// collide with. Each handler calls the job-auth guard itself; nothing here
-	// runs middleware on its behalf.
+	// These routes sit at the top level because this is a separate service. Each
+	// handler calls the job-auth guard itself; nothing here runs middleware for it.
 	app.get("/caches/:key", (c) =>
 		handleGetCache(deps, c.req.raw, c.req.param("key")),
 	);

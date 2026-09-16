@@ -1,6 +1,6 @@
 # @virtool/web
 
-The Virtool SPA and its TanStack Start server. The root Dockerfile's `dist`
+The Virtool web app. The root Dockerfile's `dist`
 target is published as `ghcr.io/virtool/web`; see [CI](../../docs/ci.md#images).
 
 Follow [AGENTS.md](../../AGENTS.md) for repository-wide rules and checks, and

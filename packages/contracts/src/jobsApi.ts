@@ -21,14 +21,14 @@
 // `JobStep` / `JobClaim`, their `StoredJobStep` / `StoredJobClaim` column
 // spellings and the mappers between them live in `./jobs`, not here. They are
 // not this service's contract: the web app publishes the same two shapes to the
-// SPA off the same column through the same mappers. **A route must never return
+// browser off the same column through the same mappers. **A route must never return
 // a JSONB element straight out of the column** — that leaks `started_at` onto
 // the wire and is the single most likely way this rule gets broken in practice.
 //
 // # Endpoint surface
 //
-// Paths carry no prefix. The jobs API is its own app serving no SPA, so
-// nothing collides with the SPA's own `/jobs/{jobId}` route.
+// Paths carry no prefix. The jobs API is a separate app, so nothing collides
+// with the web app's `/jobs/{jobId}` route.
 //
 //   POST   /jobs/claim                         CreateJobClaimRequest -> JobClaimed     (200 | 404 no job available | 422 unclaimable workflow)
 //   GET    /jobs/{jobId}                       -                     -> Job            (200 | 401 | 403 | 404)
@@ -50,9 +50,8 @@
 // own object-storage credentials and fetches every file itself, so each file
 // reference carries the recorded `storageKey` and the response carries no
 // payload and no download URL. The `Workflow*` shapes are deliberately narrower
-// than the ones the SPA reads: they carry what a workflow actually branches on
-// and drop the presentation fields — download URLs, contributor lists, linked
-// samples — that would otherwise have to be kept parseable here forever.
+// than the web app's shapes: they contain only workflow fields and omit
+// presentation fields such as download URLs and contributor lists.
 //
 // The cache shapes live in `./caches` rather than here, because they are the one
 // part of this surface a workflow reaches on its own behalf rather than on

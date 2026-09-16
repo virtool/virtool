@@ -10,8 +10,7 @@ once by each of the four workflow apps and once more by the runtime itself.
 
 It lives in `packages/workflow/src/testing/`, runs under Node via
 `packages/workflow`'s own `test` script, and **imports nothing from
-`apps/web`**. This lets a workflow app's tests use it without
-depending on the SPA.
+`apps/web`**.
 
 ## Factory functions, not framework magic
 
@@ -211,7 +210,7 @@ in order:
 `createFakeSettings`, `createFakeQuality` and `createFakeUser` each take
 `(overrides, seed)` and are typed against the `Workflow*` shapes in
 `@virtool/contracts`, which defines what the jobs API actually serves as a
-workflow, not the wider shapes the SPA reads.
+workflow, not the wider shapes the web app reads.
 
 Two calls with the same seed produce identical values. Determinism isn't
 decoration: checksums are the assertion, and a fixture that changed between
@@ -426,4 +425,4 @@ The harness is a subpath export of `packages/workflow`:
 Its tests run under Node through `packages/workflow`'s own `test` script, which
 `pnpm -r test` picks up. This is the per-package model every `packages/*` follows. A
 project inside `apps/web/vitest.config.js` would contradict the harness's own
-rule that nothing in it reaches the SPA, so there is none.
+rule that workflow tests do not depend on the web app, so there is none.

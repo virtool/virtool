@@ -22,9 +22,7 @@ subprocess's stdout on `/dev/null` unless it's given a handler.
 
 The output is the seven fields of the `Quality` object in
 `packages/contracts/src/samples.ts`, which defines what `legacy_samples.quality`
-holds and
-every chart in the SPA reads. Nothing else FastQC produces came across: no HTML
-report, no adapter content, no duplication estimate, no pass/warn/fail.
+holds.
 
 None of the definitions is the obvious one, and each is ported from a named
 Java file:
