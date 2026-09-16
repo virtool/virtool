@@ -425,4 +425,4 @@ The harness is a subpath export of `packages/workflow`:
 Its tests run under Node through `packages/workflow`'s own `test` script, which
 `pnpm -r test` picks up. This is the per-package model every `packages/*` follows. A
 project inside `apps/web/vitest.config.js` would contradict the harness's own
-rule that workflow tests do not depend on the web app, so there is none.
+rule that workflow tests don't depend on the web app, so there is none.
