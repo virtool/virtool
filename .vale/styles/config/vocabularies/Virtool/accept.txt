@@ -208,6 +208,7 @@ Resend('s)?
 SDK('s|s)?
 [Uu]nconfigured
 [Uu]ndecryptable
+[Uu]nmigrated
 [Uu]nmanaged
 [Uu]nsetting
 [Ww]orktrees?('s)?

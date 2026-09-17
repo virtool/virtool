@@ -170,7 +170,7 @@ Better Auth is mounted at `/api/auth/$` and composed in
 first-user detection all stay Virtool's, and `@server/auth/policy` remains the
 only thing that decides what a caller may do. Its handler is deliberately not
 listed in `@server/auth/exceptions`, which exempts *server functions* from the
-global authentication middleware — a raw route was never subject to it. The
+global authentication middleware—a raw route was never subject to it. The
 global CSRF middleware in `start.ts` is likewise scoped to
 `handlerType === "serverFn"`, so it does not apply either; Better Auth does its
 own origin check against `VT_PUBLIC_ORIGIN`, which
@@ -178,7 +178,7 @@ own origin check against `VT_PUBLIC_ORIGIN`, which
 
 Virtool account state still gates every Better Auth sign-in. A `session.create`
 database hook refuses a user who is not `active`, or whose
-`lifecycle_state` is still `pending` — both with the same 401 a wrong password
+`lifecycle_state` is still `pending`—both with the same 401 a wrong password
 gets, because neither a switched-off account nor an outstanding invitation is
 public information. A normal Better Auth session is issued when `force_reset`
 is set, but Virtool resolves it as a `password_reset` principal. The global
@@ -253,7 +253,7 @@ the rows and the purposes; this app owns the transport and the boundary.
 
 - `@server/auth/restricted` is the **one** authority for what a restricted
   caller is. `resolveRestrictedSetup` turns the cookies into a credential
-  carrying a user id, a non-secret session id, one purpose and an expiry —
+  carrying a user id, a non-secret session id, one purpose and an expiry—
   no roles, no permissions, no API-key cap. A second reader would be a second
   chance to widen it.
 - The **global authentication middleware** enforces the restriction, before
@@ -262,7 +262,7 @@ the rows and the purposes; this app owns the transport and the boundary.
   anything absent from `@server/auth/setupExceptions` with a 403
   `SetupRequiredError` naming the purpose. That error crosses the boundary
   through `serverErrorSerializationAdapter`, and is what tells the router
-  which setup surface the caller belongs on — it carries no token and no
+  which setup surface the caller belongs on—it carries no token and no
   authorization data.
 - `setupOnly(purpose)` is the other half. The middleware decides whether a
   restricted caller may reach a function at all; the policy decides whether
@@ -280,7 +280,7 @@ Raw routes reject restricted principals and always will:
 `requireAuthenticatedRequest` reads the session cookies or an `Authorization`
 header and never the setup pair, so SSE, uploads, downloads and streamed files
 answer a restricted holder the same 401 they answer anyone else. API-key Basic
-authentication is untouched — a restricted credential can never mint, accept
+authentication is untouched—a restricted credential can never mint, accept
 or inherit a key, and `verifyApiKey` refuses a key whose owner has not
 completed setup.
 
@@ -297,8 +297,8 @@ Postgres `client_events` channel; the route converts each event to the id-only
 normal API so authorization remains at the request boundary.
 
 Adding a domain requires all three of `SseDomainSchema`, `SseMessageSchema`,
-and `reactQueryHandler`'s `domains` record. A frame that fails validation — an
-unknown domain, a bad operation, a wrong id type — is contract drift and is
+and `reactQueryHandler`'s `domains` record. A frame that fails validation—an
+unknown domain, a bad operation, a wrong id type—is contract drift and is
 reported to Sentry.
 
 The handshake uses `requireAuthenticatedRequest`. While connected, the server
