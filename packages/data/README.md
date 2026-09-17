@@ -223,13 +223,13 @@ A Drizzle property name in `auth.ts` is a Better Auth *field* name — the adapt
 looks fields up by property — so `userId` and `credentialID` keep their exact
 spelling while their columns stay snake_case.
 
-Migration `0030_sparkling_silverclaw` removes the superseded `sessions` table.
-Drain web and runner replicas running code older than this migration before
-applying it; they still query that table. A rollback across this boundary must
-first restore the old table schema, then deploy the old application. The rows
-need not be restored: users can authenticate again and receive new sessions.
-The migration also revokes every pre-cutover Better Auth session so a token
-minted before a legacy password change cannot become valid again at cutover.
+Migration `0030_sparkling_silverclaw` revokes every pre-cutover Better Auth
+session so a token minted before a legacy password change cannot become valid
+again at cutover. The superseded `sessions` table remains in the schema through
+this release so old replicas do not fail during a rolling deployment and the
+application can be rolled back without recreating it. Drop it in a later
+migration only after every supported application version has stopped querying
+it.
 
 `users.email` is deliberately not globally unique, though Better Auth declares
 it so. Legacy rows share an empty email. The identity audit reports malformed
