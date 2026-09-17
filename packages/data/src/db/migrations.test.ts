@@ -1,6 +1,7 @@
 import { randomBytes } from "node:crypto";
 import { readdirSync, readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
+import { generateDrizzleJson } from "drizzle-kit/api";
 import { readMigrationFiles } from "drizzle-orm/migrator";
 import { PgDialect, type PgSession } from "drizzle-orm/pg-core";
 import { drizzle } from "drizzle-orm/postgres-js";
@@ -46,6 +47,19 @@ it("keep migration SQL and snapshots aligned with the journal", () => {
 				id: string;
 				prevId: string;
 			},
+	);
+	const latestSnapshot = JSON.parse(
+		readFileSync(`${MIGRATIONS_FOLDER}/meta/${snapshotFiles.at(-1)}`, "utf8"),
+	) as Record<string, unknown> & { id: string; prevId: string };
+	const generatedSnapshot = generateDrizzleJson(
+		schema as never,
+		latestSnapshot.prevId,
+		undefined,
+		"snake_case",
+	);
+
+	expect({ ...generatedSnapshot, id: latestSnapshot.id }).toEqual(
+		latestSnapshot,
 	);
 
 	expect(snapshots[0]?.prevId).toBe("00000000-0000-0000-0000-000000000000");
