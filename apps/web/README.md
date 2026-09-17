@@ -165,40 +165,22 @@ server functions are session-only. Better Auth owns sign-in, while Virtool owns
 account state and authorization; see [betterAuth.ts](src/server/auth/betterAuth.ts).
 
 Better Auth is mounted at `/api/auth/$` and composed in
-`@server/auth/betterAuth`. It answers *who is signing in* and nothing else:
-`users.active`, administrator roles, groups, permissions, API keys and
-first-user detection all stay Virtool's, and `@server/auth/policy` remains the
-only thing that decides what a caller may do. Its handler is deliberately not
-listed in `@server/auth/exceptions`, which exempts *server functions* from the
-global authentication middleware—a raw route was never subject to it. The
-global CSRF middleware in `start.ts` is likewise scoped to
-`handlerType === "serverFn"`, so it does not apply either; Better Auth does its
-own origin check against `VT_PUBLIC_ORIGIN`, which
-`@server/auth/betterAuth.test.ts` pins.
+`@server/auth/betterAuth`. It authenticates interactive users; Virtool still
+owns account state, API keys, and authorization. Its raw handler is outside the
+server-function authentication and CSRF middleware, so Better Auth performs its
+own origin check against `VT_PUBLIC_ORIGIN`.
 
-Virtool account state still gates every Better Auth sign-in. A `session.create`
-database hook refuses a user who is not `active`, or whose
-`lifecycle_state` is still `pending`—both with the same 401 a wrong password
-gets, because neither a switched-off account nor an outstanding invitation is
-public information. A normal Better Auth session is issued when `force_reset`
-is set, but Virtool resolves it as a `password_reset` principal. The global
-server-function boundary permits only the reset and logout flows, and the raw
-Better Auth handler permits only session inspection and logout until the reset
-transaction revokes every session and mints a replacement. `/sign-in/email` is
-answered 404 by a `before` hook:
-`emailAndPassword` is enabled only for its bcrypt hashing, and `users.email`
-carries no unique constraint, so an email lookup could resolve to an arbitrary
-one of several holders. Virtool signs in by handle.
+Virtool rejects inactive and pending users with the same 401 as bad credentials.
+A user with `force_reset` receives a session that resolves to a
+`password_reset` principal, which can only inspect or end its session and
+replace the password. Virtool signs in by handle; email sign-in is off because
+`users.email` isn't globally unique.
 
-Better Auth's tables live in `@virtool/data` as `auth_*` and are keyed by
-integer identity columns, because `advanced.database.generateId: "serial"` is
-what keeps `users.id` the integer the rest of the schema references. The setting
-is instance-wide in 1.6, so the auxiliary tables share the key type.
-`auth_sessions` is the target browser-application session store. The legacy
-`sessions` table remains a compatibility path until incomplete identities can
-finish email remediation; Better Auth wins when both credentials are present.
-Setup sessions remain separate because they authorize only one
-pre-authentication transition.
+Better Auth's `auth_*` tables use integer identity keys so `users.id` remains
+compatible with existing foreign keys. `auth_sessions` is the target browser
+session store. The legacy `sessions` table remains available to unmigrated users
+during email remediation, but Better Auth wins when both credentials are
+present. Purpose-bound setup sessions remain separate from both.
 
 Uploads and downloads must stream. Resolve a requested file to a database row
 or explicit whitelist first, then use that row's `storage_key`; never construct

@@ -110,8 +110,8 @@ export const requireBrowserPrincipal = createServerOnlyFn(
 	},
 );
 
-// The non-throwing half of `requireBrowserPrincipal`, for the global middleware, which
-// has a second credential to consider before it can answer 401.
+// The global middleware also checks restricted setup credentials before it can
+// answer 401, so it needs a non-throwing browser-session lookup.
 const resolveBrowserOrNull = createServerOnlyFn(async () =>
 	verifyBrowserRequest(db, getRequest()),
 );

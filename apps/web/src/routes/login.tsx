@@ -47,9 +47,8 @@ export const Route = createFileRoute("/login")({
 
 		throw redirect({ to: search.redirect ?? "/" });
 	},
-	// The forced-reset form this route can render needs the policy up front.
-	// prefetchQuery rather than
-	// ensureQueryData: a failed policy read must not take down the wall.
+	// The forced-reset form needs the policy up front. A failed policy read must
+	// not take down the wall, so prefetch rather than ensuring the query.
 	loader: async ({ context }) => {
 		const { passwordPolicyQueryOptions } = await import(
 			"@administration/passwordPolicy"

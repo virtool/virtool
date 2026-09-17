@@ -27,9 +27,8 @@ export default function ResetForm({ redirect }: ResetFormProps) {
 	function onSubmit({ password }: { password: string }) {
 		resetPasswordMutation.mutate(
 			{ password },
-			// The reset already authenticated us: it rotated the session cookies
-			// and invalidated the account query. Without this the user sits on the
-			// form with no feedback.
+			// The mutation rotates the session cookies and invalidates the account
+			// query, but navigation still belongs to the form.
 			{ onSuccess: () => navigate({ to: redirect ?? "/" }) },
 		);
 	}
@@ -65,8 +64,6 @@ export default function ResetForm({ redirect }: ResetFormProps) {
 						</InputError>
 					)}
 				</InputGroup>
-				{/* The reset rotates this session. Avoid submitting twice against a
-				    credential that the first request has already invalidated. */}
 				<Button type="submit" color="blue" disabled={isPending}>
 					Reset
 				</Button>

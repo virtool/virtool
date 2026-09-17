@@ -67,12 +67,8 @@ export const PERIODIC_TASKS: PeriodicTaskRegistration[] = [
 	 */
 	{ type: "cleanup_sessions", intervalSeconds: 3600 },
 	/*
-	 * Hourly. Correctness never waits on it: `consumeSetupToken` and
-	 * `verifySetupSession` both
-	 * refuse an expired row on sight, so a row lingering between sweeps is
-	 * inert. A restricted setup session lives 30 minutes and a setup link 72
-	 * hours, so hourly keeps the shorter of the two from outliving its expiry
-	 * by much.
+	 * Hourly. `consumeSetupToken` and `verifySetupSession` reject expired rows,
+	 * so cleanup only bounds how long inert rows remain.
 	 */
 	{ type: "cleanup_setup_state", intervalSeconds: 3600 },
 	{ type: "reap_orphaned_uploads", intervalSeconds: 86_400 },
