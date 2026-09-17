@@ -28,6 +28,7 @@ describe("<LoginForm />", () => {
 	});
 
 	it("calls the login mutation with the form values", async () => {
+		const user = userEvent.setup();
 		const handle = "test_Username";
 		const password = "Password";
 		const setResetRequired = vi.fn();
@@ -40,9 +41,9 @@ describe("<LoginForm />", () => {
 			</MemoryRouter>,
 		);
 
-		await userEvent.type(await screen.findByLabelText("Username"), handle);
-		await userEvent.type(screen.getByLabelText("Password"), password);
-		await userEvent.click(screen.getByRole("button", { name: "Login" }));
+		await user.type(await screen.findByLabelText("Username"), handle);
+		await user.type(screen.getByLabelText("Password"), password);
+		await user.click(screen.getByRole("button", { name: "Login" }));
 
 		await waitFor(() => expect(loginMock).toHaveBeenCalledTimes(1));
 		expect(loginMock).toHaveBeenCalledWith(
@@ -55,6 +56,7 @@ describe("<LoginForm />", () => {
 	});
 
 	it("displays the thrown error message on login failure", async () => {
+		const user = userEvent.setup();
 		const handle = "test_Username";
 		const password = "Password";
 		const errorMessage = "Invalid handle or password.";
@@ -68,50 +70,52 @@ describe("<LoginForm />", () => {
 			</MemoryRouter>,
 		);
 
-		await userEvent.type(await screen.findByLabelText("Username"), handle);
-		await userEvent.type(screen.getByLabelText("Password"), password);
-		await userEvent.click(screen.getByRole("button", { name: "Login" }));
+		await user.type(await screen.findByLabelText("Username"), handle);
+		await user.type(screen.getByLabelText("Password"), password);
+		await user.click(screen.getByRole("button", { name: "Login" }));
 
 		expect(await screen.findByText(errorMessage)).toBeInTheDocument();
 	});
-});
 
-it("continues a two-factor challenge and handles forced reset only after verification", async () => {
-	loginMock.mockResolvedValue({ twoFactorRedirect: true });
-	verifyMock.mockRejectedValueOnce(
-		new Error("Invalid or expired verification code."),
-	);
-	verifyMock.mockResolvedValueOnce({ reset: true });
-	const setResetRequired = vi.fn();
-	renderWithProviders(
-		<MemoryRouter>
-			<LoginForm redirect="/samples" setResetRequired={setResetRequired} />
-		</MemoryRouter>,
-	);
-	await userEvent.type(await screen.findByLabelText("Username"), "Alice");
-	await userEvent.type(screen.getByLabelText("Password"), "password");
-	await userEvent.click(screen.getByRole("button", { name: "Login" }));
-	await userEvent.type(
-		await screen.findByLabelText("Authentication code"),
-		"123456",
-	);
-	expect(setResetRequired).not.toHaveBeenCalled();
-	await userEvent.click(screen.getByRole("button", { name: "Verify" }));
-	expect(await screen.findByRole("alert")).toHaveTextContent(
-		"Invalid or expired",
-	);
-	expect(verifyMock).toHaveBeenCalledWith(
-		{ code: "123456", recovery: false },
-		expect.anything(),
-	);
-	await userEvent.click(
-		screen.getByRole("button", { name: "Use recovery code" }),
-	);
-	await userEvent.type(screen.getByLabelText("Recovery code"), "backup-code");
-	await userEvent.click(screen.getByRole("button", { name: "Verify" }));
-	await waitFor(() => expect(setResetRequired).toHaveBeenCalledWith(true));
-	expect(verifyMock).toHaveBeenLastCalledWith(
-		{ code: "backup-code", recovery: true },
-		expect.anything(),
-	);
+	it("continues a two-factor challenge and handles forced reset only after verification", async () => {
+		const user = userEvent.setup();
+		loginMock.mockResolvedValue({ twoFactorRedirect: true });
+		verifyMock.mockRejectedValueOnce(
+			new Error("Invalid or expired verification code."),
+		);
+		verifyMock.mockResolvedValueOnce({ reset: true });
+		const setResetRequired = vi.fn();
+		renderWithProviders(
+			<MemoryRouter>
+				<LoginForm redirect="/samples" setResetRequired={setResetRequired} />
+			</MemoryRouter>,
+		);
+		await user.type(await screen.findByLabelText("Username"), "Alice");
+		await user.type(screen.getByLabelText("Password"), "password");
+		await user.click(screen.getByRole("button", { name: "Login" }));
+		await user.type(
+			await screen.findByLabelText("Authentication code"),
+			"123456",
+		);
+		expect(setResetRequired).not.toHaveBeenCalled();
+		await user.click(screen.getByRole("button", { name: "Verify" }));
+		expect(await screen.findByRole("alert")).toHaveTextContent(
+			"Invalid or expired",
+		);
+		expect(verifyMock).toHaveBeenCalledWith(
+			{ code: "123456", recovery: false },
+			expect.anything(),
+		);
+		await user.click(screen.getByRole("button", { name: "Use recovery code" }));
+		await user.type(
+			await screen.findByLabelText("Recovery code"),
+			"backup-code",
+		);
+		await user.click(screen.getByRole("button", { name: "Verify" }));
+		await waitFor(() => expect(setResetRequired).toHaveBeenCalledWith(true));
+		expect(verifyMock).toHaveBeenLastCalledWith(
+			{ code: "backup-code", recovery: true },
+			expect.anything(),
+		);
+	});
 });
