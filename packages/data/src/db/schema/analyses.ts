@@ -133,7 +133,7 @@ export const analysisFiles = pgTable(
 	],
 );
 
-// A BLAST request against one NuVs contig. Unique on
+// A BLAST request against one Nuvs contig. Unique on
 // (`analysis_id`, `sequence_index`): requesting a BLAST for a sequence that
 // already has one replaces the previous row.
 export const nuvsBlast = pgTable(

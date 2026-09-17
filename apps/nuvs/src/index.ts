@@ -6,7 +6,7 @@ import { APP_VERSION } from "./version";
 import { nuvsWorkflow } from "./workflow";
 
 /**
- * The NuVs workflow executor: a one-shot process that claims a job, runs it,
+ * The Nuvs workflow executor: a one-shot process that claims a job, runs it,
  * reports how it ended, and exits.
  *
  * Everything past this line belongs to `runWorkflowApp` — the claim, the ping

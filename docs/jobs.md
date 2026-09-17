@@ -46,7 +46,7 @@ The normal sequence is:
    job from `running` to `succeeded`.
 
 A pod learns its job id and credential from the claim response and nowhere
-else. An aborted claim returns `null`; both the overall claim timeout and a
+else. An aborted claim returns `null`; both the total claim timeout and a
 `SIGTERM` arrive through that result.
 
 ## Cancellation
@@ -71,7 +71,7 @@ distinction for operators without changing the runner's response.
 
 ## Workflow failure
 
-There is deliberately no endpoint for a runner to report failure. If a step or
+By design, no endpoint lets a runner report failure. If a step or
 workflow finalization fails, `runWorkflow` returns `failed`, the pod stops
 pinging, and `runWorkflowApp` exits `0`. The stalled-job sweep eventually moves
 the job from `running` to `failed` after its last ping becomes more than five
@@ -90,7 +90,7 @@ work; the job is left for the same stalled-job sweep.
 Ordinary jobs API requests retry transport failures five times with a flat
 five-second delay. They never retry an HTTP response chosen by the jobs API.
 
-Ping requests disable that client retry policy because the ping loop owns its
+Ping requests turn off that client retry policy because the ping loop owns its
 failure budget:
 
 - `401` is neither retried nor counted; it cancels the run immediately.
@@ -109,7 +109,7 @@ lifecycle request is refused because the credential is no longer valid.
 | Workflow succeeds and `finish` succeeds | `running` to `succeeded` | `0` |
 | Workflow fails | `running` to `failed` later, by the stalled-job sweep | `0` |
 | User cancels the job | active state to `cancelled`; the next ping cancels the run | `0` |
-| Finish cannot be reported | `running` to `failed` later, by the stalled-job sweep | `0` |
+| Finish can't be reported | `running` to `failed` later, by the stalled-job sweep | `0` |
 | Claim times out before a job is acquired | none | `0` |
 | Pod infrastructure or preparation fails | no runner-driven terminal transition | `1` |
 | Pod receives `SIGTERM` | no runner-driven terminal transition | `124` |
@@ -129,12 +129,12 @@ two forms over one `JobsApiState` object:
   `node:http` server on an ephemeral port.
 
 Both forms route through `handleJobsApiRequest`. Responses are serialized and
-parsed with the same contract schemas as production, so the fake client cannot
+parsed with the same contract schemas as production, so the fake client can't
 silently accept a wire shape that the real client would reject. The shared state
 records claims, step starts, finish and finalize calls, cache registrations,
 resource metadata, credentials, and the injected clock.
 
-The embedded server preserves the lifecycle behavior described above:
+The embedded server preserves the lifecycle behavior described in this document:
 
 - claims are unauthenticated and filtered by workflow;
 - every later request uses HTTP Basic credentials and verifies route job IDs;

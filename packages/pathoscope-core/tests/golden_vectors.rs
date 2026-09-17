@@ -1,4 +1,4 @@
-//! Assert the CLI reproduces the golden-vector corpus exactly.
+//! Assert the command-line tool reproduces the golden-vector corpus exactly.
 //!
 //! The corpus in `tests/golden/vectors.json` was captured from the PyO3 build
 //! of `workflow-pathoscope` before the crate moved here. The script that

@@ -921,8 +921,7 @@ export async function getSample(db: Db, sampleId: number): Promise<Sample> {
  *
  * These are the raw reads `create_sample` normalizes, and the only files a
  * sample has before it is finalized. It is not folded into {@link getSample}:
- * that shape is served to the SPA as well, and an upload's `storage_key` has no
- * business crossing that wire.
+ * an upload's `storage_key` must not be returned.
  *
  * **The order is the link.** `sample_uploads.index` is the position the upload
  * held in the create request, and {@link finalizeSample} pairs the reads rows it

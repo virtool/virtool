@@ -317,8 +317,7 @@ function readArray(value: JsonValue | undefined, path: string): JsonValue[] {
 /**
  * Read a key that must be present, so a result that has lost it is a shape
  * change rather than a hit with a blank field. Failing here records the row as
- * unreadable; defaulting it would store a result the SPA renders as a real,
- * empty answer.
+ * unreadable; defaulting it would make a malformed result look valid.
  */
 function readRequired(
 	object: JsonObject,
@@ -377,9 +376,9 @@ function formatBlastHit(hit: JsonObject, path: string): JsonObject {
 /**
  * Reduce NCBI's result envelope to the seven keys Virtool stores.
  *
- * This shape is a contract with the SPA, which narrows the `result` column to
- * it in `apps/web/src/analyses/types.ts` and reads `hits[]` straight out. It is
- * also a contract with every row already written to that column, so neither
+ * This shape must match the `result` column and the type used by the web app in
+ * `apps/web/src/analyses/types.ts`. It must also match every row already
+ * written to that column, so neither
  * the envelope keys nor the per-hit keys may be added to or renamed here
  * alone.
  *

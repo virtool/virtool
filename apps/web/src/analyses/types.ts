@@ -21,19 +21,19 @@ export type FormattedPathoscopeAnalysis = AnalysisMinimal & {
 };
 
 /**
- * A NuVs contig whose BLAST request has had NCBI's verbatim `result` narrowed to
+ * A Nuvs contig whose BLAST request has had NCBI's verbatim `result` narrowed to
  * the shape this side renders.
  */
 export type FormattedNuvsHit = Omit<NuvsHit, "blast"> & {
 	blast: Blast | null;
 };
 
-/** All results for a NuVs analysis, with BLAST responses narrowed. */
+/** All results for a Nuvs analysis, with BLAST responses narrowed. */
 export type FormattedNuvsResults = Omit<NuvsResults, "hits"> & {
 	hits: FormattedNuvsHit[];
 };
 
-/** A complete NuVs analysis, with its results shaped by the server. */
+/** A complete Nuvs analysis, with its results shaped by the server. */
 export type FormattedNuvsAnalysis = AnalysisMinimal & {
 	files: AnalysisFile[];
 	results: FormattedNuvsResults;

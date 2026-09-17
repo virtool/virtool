@@ -1,7 +1,7 @@
 # Environment configuration
 
 Virtool services own their configuration schemas, but follow one environment
-loading convention. There is no shared configuration package: the shared piece
+loading convention. No shared configuration package exists: the shared piece
 is `resolveFileBacked` from `@virtool/contracts/env`.
 
 ## Variable names
@@ -38,7 +38,7 @@ The file deliberately wins when both forms exist. During a rollout, an
 environment variable synchronized from a Kubernetes `Secret` may be stale while
 the CSI-mounted file is current.
 
-The resolver does not mutate the supplied environment object.
+The resolver doesn't mutate the supplied environment object.
 
 ## Service integration
 
@@ -67,7 +67,7 @@ non-zero at boot rather than start and fail each request, which reads as a
 healthy-but-dead instance. The `apps/internal` subcommands parse inside
 `main()`; `apps/web` parses in a Nitro startup plugin, because its server entry
 is loaded on the first request. Report every invalid key in one message, and
-report key names and reasons only — never a configured value.
+report key names and reasons only. Never report a configured value.
 
 Current integrations are:
 
@@ -124,14 +124,14 @@ openssl rand -base64 32
 ```
 
 An invalid or mismatched key makes encrypted secrets unavailable without
-preventing either service from starting. Stored values are not changed on
+preventing either service from starting. Stored values aren't changed on
 decryption failure.
 
 ### Rotation
 
 1. Set `VT_ENCRYPTION_KEY` to the new key and
    `VT_ENCRYPTION_KEY_PREVIOUS` to the old key, then roll out both services.
-2. Confirm email is available and the NCBI API key does not report a
+2. Confirm email is available and the NCBI API key doesn't report a
    configuration error.
 3. Keep both keys configured.
 

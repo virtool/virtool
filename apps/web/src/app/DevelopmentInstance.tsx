@@ -72,9 +72,7 @@ function InstanceSwitcher() {
 				<span>{__DEV_INSTANCE__.name}</span>
 				<span>{__DEV_INSTANCE__.worktree}</span>
 				{isUnavailable ? (
-					<span>
-						Instance list unavailable. Run coast.py ensure to refresh.
-					</span>
+					<span>Instance list unavailable. Run coasts up to refresh.</span>
 				) : (
 					instances
 						.filter(function other(instance) {

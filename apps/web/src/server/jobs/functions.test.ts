@@ -72,9 +72,8 @@ function call(name: string, data?: unknown) {
 }
 
 // `jobs.workflow` is a plain `text` column, so a row naming a workflow this
-// build has never heard of is a row Postgres accepts. These pin what the SPA is
-// served when one shows up: never the unknown value, because the client renders
-// a workflow as a label and a link.
+// build has never heard of is a row Postgres accepts. These pin the response
+// for unknown workflows: omit the unknown value so the client does not render it.
 describe("workflow narrowing", () => {
 	it("serves a job whose workflow it knows", async () => {
 		const userId = await signIn(db, getRequest);

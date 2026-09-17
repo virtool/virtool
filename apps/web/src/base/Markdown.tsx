@@ -11,7 +11,7 @@ type MarkdownProps = {
  * Renders markdown as React elements, escaping any raw HTML it contains.
  *
  * Raw HTML is escaped rather than parsed — `rehype-raw` is deliberately not
- * installed — so this is safe for markdown from sources we do not control.
+ * installed — so this is safe for markdown from uncontrolled sources.
  */
 export default function Markdown({ className, markdown = "" }: MarkdownProps) {
 	return (

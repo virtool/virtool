@@ -79,7 +79,7 @@ export async function handleGetSubtraction(
 
 	try {
 		// The upload is a second statement rather than a join on the subtraction
-		// read, which is shared with the SPA and must not learn a bucket key.
+		// read, which is also used by the web app and must not learn a bucket key.
 		const [subtraction, upload] = await Promise.all([
 			getSubtraction(deps.db, subtractionId),
 			getSubtractionUpload(deps.db, subtractionId),

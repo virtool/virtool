@@ -36,7 +36,7 @@ allowBuilds:
 # s3-request-presigner disagree), and two copies of `@smithy/core` — which owns
 # the base `Client` class and its private fields — give `getSignedUrl` and
 # `S3Client` structurally different `Client` types that will not assign. Dedupe
-# each to one version so the presigner accepts our client. Remove once the AWS
+# each to one version so the presigner accepts the client. Remove once the AWS
 # packages converge on their own.
 overrides:
   '@smithy/core': 3.33.3

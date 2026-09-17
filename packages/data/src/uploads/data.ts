@@ -584,7 +584,7 @@ export async function deleteUpload(
 		.where(eq(uploadsTable.id, uploadId));
 
 	// `storage_key` is nullable at the database level. A row that lacks one names
-	// no object we can locate — it predates keys being recorded — so leave its
+	// no object can be located — it predates keys being recorded — so leave its
 	// bytes to the orphan sweep rather than guessing at a key.
 	if (row.storageKey) {
 		await storage.delete(row.storageKey);

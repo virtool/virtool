@@ -1,8 +1,7 @@
 /**
  * The workflow test harness, exported as `@virtool/workflow/testing`.
  *
- * It is what every workflow app's tests stand on. Three rules hold it
- * together:
+ * Every workflow app uses it. Three rules govern the harness:
  *
  * - **Everything is a factory function.** Nothing is installed by importing this
  *   module, and there is no module-level mutable state — Vitest runs test files
@@ -10,8 +9,7 @@
  *   shared module state is a cross-test data race.
  * - **Anything needing cleanup returns its disposer**, for the caller to register
  *   with `onTestFinished`. There is no global `beforeEach`.
- * - **Nothing here imports from `apps/web`**, so a workflow app's tests can use
- *   it without depending on the SPA.
+ * - **Nothing here imports from `apps/web`**.
  */
 
 export * from "./builders";

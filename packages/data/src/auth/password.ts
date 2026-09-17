@@ -1,7 +1,7 @@
 import bcrypt from "bcrypt";
 
 // Bcrypt cost factor. The `$2b$12$...` hashes already present in the `users`
-// table were generated with this cost, and any new hashes we write must keep
+// table were generated with this cost, and any new hashes must keep
 // it.
 const COST = 12;
 

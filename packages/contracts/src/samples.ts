@@ -22,7 +22,7 @@ export type WorkflowState = "complete" | "pending" | "none" | "incompatible";
 
 /** The state of each workflow tracked for a sample. */
 export type SampleWorkflows = {
-	/** The state of the NuVs workflow */
+	/** The state of the Nuvs workflow */
 	nuvs: WorkflowState;
 
 	/** The state of the Pathoscope workflow */

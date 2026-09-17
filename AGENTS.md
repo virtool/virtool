@@ -1,16 +1,16 @@
 # Virtool
 
-`CLAUDE.md` is a symlink to this file. Edit `AGENTS.md` — never write to
+`CLAUDE.md` is a symlink to this file. Edit `AGENTS.md`. Never write to
 `CLAUDE.md` directly.
 
-This is a pnpm monorepo. Use `pnpm` for all install, run, and exec commands —
+This is a pnpm monorepo. Use `pnpm` for all install, run, and exec commands.
 never `npm` or `bun`.
 
 ## Apps
 
 | App | Purpose |
 | --- | --- |
-| [`@virtool/web`](apps/web/README.md) | The Virtool SPA and its TanStack Start server. |
+| [`@virtool/web`](apps/web/README.md) | The Virtool web app. |
 | [`@virtool/site`](apps/site/README.md) | The product website at [virtool.ca](https://www.virtool.ca). |
 | [`@virtool/internal`](apps/internal/README.md) | One image, three subcommands: `serve` (jobs API), `run` (task spawner and runner), `migrate` (Drizzle migrations). |
 | [`@virtool/create-sample`](apps/create-sample/README.md) | Creates a sample from uploaded FASTQ files. |
@@ -68,10 +68,10 @@ source, to the corresponding filter in `.github/workflows/ci.yaml`. See
 
 Every shipped image is a target in the root `Dockerfile` and builds from the
 repository root. Keep runtime stages on `node:24-bookworm-slim`; workflow tools
-are glibc-linked, so do not add an Alpine stage. Give each bioinformatics tool
+are glibc-linked, so don't add an Alpine stage. Give each bioinformatics tool
 its own independent build stage so a target builds only the tools it uses.
 When adding a tool, inspect the pinned entry point and install every runtime
-interpreter and shared library it needs; a missing interpreter does not fail
+interpreter and shared library it needs; a missing interpreter doesn't fail
 the image build and surfaces only when the workflow runs.
 
 ### When to run checks
@@ -89,7 +89,7 @@ the image build and surfaces only when the workflow runs.
 ## Client
 
 Client code is server-rendered and compiled with React Compiler. Keep render
-pure: do not read browser globals, clocks, randomness, locale, or mutable
+pure: don't read browser globals, clocks, randomness, locale, or mutable
 module state during render. Use `useSyncExternalStore` with a cached server
 snapshot for ambient browser state and `ClientOnly` for measured subtrees.
 
@@ -126,14 +126,14 @@ repository-wide rules in view:
   bearer-token helper. See [the web metrics guide](apps/web/README.md#metrics)
   and [the internal metrics guide](apps/internal/README.md#metrics).
 - Schema changes that depend on the data being in a particular state pair with
-  a data migration — an audit or resumable backfill recorded in
+  a data migration: an audit or resumable backfill recorded in
   `data_migrations`. Register its exact SQL migration tag and start that SQL
   file with the matching key/version assertion. Bump both versions when the
   body changes what it accepts or writes. Bodies use historical SQL, not the
   moving schema mirror. See [the data migrations guide](apps/internal/README.md#paired-data-migrations).
 - `apps/internal`'s `run` subcommand carries both the periodic spawner and the
   task runner. Its lease, fencing, shutdown, progress, metrics, and task-body
-  contracts are maintained in [its README](apps/internal/README.md); do not
+  contracts are maintained in [its README](apps/internal/README.md); don't
   duplicate them here.
 
 ## Data
@@ -162,7 +162,7 @@ behavior, and testing.
 Third-party requests identify themselves with `USER_AGENT` from
 `@virtool/contracts/userAgent`; see [packages/data/README.md](packages/data/README.md).
 
-NCBI Nucleotide and Taxonomy requests go through `@virtool/ncbi`. It is the
+NCBI Nucleotide and Taxonomy requests go through `@virtool/ncbi`. It's the
 only E-utilities client; see [packages/ncbi/README.md](packages/ncbi/README.md).
 NCBI BLAST is a different API and stays in `@virtool/data`.
 
@@ -176,7 +176,7 @@ for claim, ping, cancellation, failure, and exit behaviour.
 
 Workflow files always stream, and storage keys are recorded or minted rather
 than derived. See [the internal app README](apps/internal/README.md) for
-finalize manifests and key validation, [references](docs/references.md) for the SQLite
+finalization manifests and key validation, [references](docs/references.md) for the SQLite
 reference artifact, and [workflow testing](packages/workflow/TESTING.md) for
 the shared test harness.
 
@@ -184,23 +184,51 @@ the shared test harness.
 
 See [docs/code-style.md](docs/code-style.md) for rationale and examples.
 
-- **Functions:** Use function declarations, not arrow functions.
-- **Refs:** Treat `ref` as an ordinary prop; do not use `forwardRef`.
-- **Imports:** Biome organises imports automatically. Don't manually organise
-  or clean up unused imports.
-- **Conditionals:** Always use curly braces with `if`/`else`.
-- **Prefer `const`** over `let`.
-- **Types:** Use `type`, not `interface`.
-- **JSDoc:** Give every exported `type` a one-line `/** ... */` that begins
-  with what the type is.
-- **Naming:** `is`/`has`/`get` for pure reads; `check`/`validate`/
-  `assert` for operations that may throw. Suffix `createServerFn` exports with
-  `Fn`; keep wrapped domain-function names unsuffixed.
-- **Comments:** Default to none. Comment only to explain non-obvious reasons;
-  do not restate code, narrate history, reference the current task, or name a
-  caller.
-- **Concurrency:** Put independent awaits in `Promise.all`; use
-  `Promise.allSettled` when every outcome is required.
+### Functions
+
+Use function declarations, not arrow functions.
+
+### Refs
+
+Treat `ref` as an ordinary prop; don't use `forwardRef`.
+
+### Imports
+
+Biome organises imports automatically. Don't manually organise or clean up
+unused imports.
+
+### Conditionals
+
+Always use curly braces with `if`/`else`.
+
+### Prefer `const`
+
+Use `const` over `let`.
+
+### Types
+
+Use `type`, not `interface`.
+
+### JSDoc
+
+Give every exported `type` a one-line `/** ... */` that begins with what the
+type is.
+
+### Naming
+
+`is`/`has`/`get` for pure reads; `check`/`validate`/`assert` for operations that
+may throw. Suffix `createServerFn` exports with `Fn`; keep wrapped domain-function
+names unsuffixed.
+
+### Comments
+
+Default to none. Comment only to explain non-obvious reasons; don't restate
+code, narrate history, reference the current task, or name a caller.
+
+### Concurrency
+
+Put independent awaits in `Promise.all`; use `Promise.allSettled` when every
+outcome is required.
 
 ## Testing
 
@@ -239,7 +267,7 @@ type(scope): description
 ```
 
 - Title: lowercase, no period, under 72 characters.
-- Scope is optional. Allowed scope: `deps` (dependency changes). Do not scope
+- Scope is optional. Allowed scope: `deps` (dependency changes). Don't scope
   by domain.
 - Releases are automated with semantic-release. Only `feat` (minor) and `fix`
   (patch) trigger a release; use them for every user-visible change.
@@ -264,7 +292,7 @@ type(scope): description
 - Never assign issues to anyone.
 - **Never change an issue's status.** Status is managed automatically from
   branch and PR activity. Move an issue by hand only when explicitly told to.
-  The Todo-by-default rule above governs issues you create, not ones already
+  The Todo-by-default rule applies only to issues you create, not ones already
   in flight.
 - Label bugs as **Bug** in addition to any other labels.
 - Never create new Linear labels.

@@ -5,8 +5,8 @@
  * with the same seed produce identical values, which is what makes a checksum
  * usable as an assertion.
  *
- * The resource shapes are the `Workflow*` ones from `@virtool/contracts` — what
- * the jobs API actually serves a workflow — not the wider shapes the SPA reads.
+ * The resource shapes are the `Workflow*` ones from `@virtool/contracts` and
+ * match what the jobs API returns, not the wider shapes used by the web app.
  * A builder that produced a shape no endpoint returns would let a workflow test
  * pass against fields the real run cannot see.
  */

@@ -33,8 +33,8 @@ proxy in the path trips and no bytes pass through the server.
   download SAS (`cw` permissions). `uploadUrl` rehosts the URL on a configured
   public origin, such as a Front Door route to a private storage account. It
   falls back to `downloadUrl` and then the blob endpoint.
-- **S3** and **`MemoryStorage`** leave the method undefined — chunked direct
-  upload is an Azure capability — and a caller falls back to the proxied upload
+- **S3** and **`MemoryStorage`** leave the method undefined. Chunked direct
+  upload is an Azure capability, so a caller falls back to the proxied upload
   route.
 
 ## Testing

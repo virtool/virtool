@@ -13,8 +13,7 @@ Four modules, all exported from the package root:
 | `errors.ts` | `IndexArtifactError` and the five failures a caller can tell apart |
 
 Nothing here touches the network or the database, and it constructs nothing at
-import time. `node:sqlite` and the filesystem are its whole dependency surface —
-there are no runtime dependencies at all, workspace ones included.
+import time.
 
 ## Two callers, one artifact format
 
@@ -26,11 +25,11 @@ package:
   task.
 - **The workflow executors** stream-decompress that snapshot back to the raw
   filename before opening it. Pathoscope also *writes* one:
-  `cd-hit-est` collapses the reference it was given, and the survivors go into
+  `cd-hit-est` collapses the supplied reference, and the survivors go into
   `index.v1.sqlite`, which later steps reopen through `openWorkflowIndex`.
 
-The two names are not interchangeable and the constants are separate for that
-reason — a collapsed reference is missing every isolate `cd-hit-est` dropped,
+The two names aren't interchangeable and the constants are separate for that
+reason. A collapsed reference is missing every isolate `cd-hit-est` dropped,
 and one name for both is how a partial artifact gets uploaded as a whole one.
 
 That second caller is why this is a package rather than part of
@@ -41,22 +40,15 @@ opinions about one binary format.
 
 ## This package specifies the format
 
-The artifact format is specified here, and what is specified is the *schema* —
-columns, constraints and indexes — not any particular DDL text. The tables are
+The artifact format is specified here, and what's specified is the *schema*:
+columns, constraints, and indexes. It's not any particular DDL text. The tables are
 declared explicitly and never reflected, so only the schema itself binds a
 writer.
 
-The rules that shape the modules are documented as JSDoc on the code, not
-repeated here: `queries.ts`'s module comment covers why ordering is pinned and
-why nothing materialises the index, `schema.ts`'s `openIndexArtifact` covers
-the no-fallback rule, and `errors.ts` covers what each failure means.
-
 `src/fixtures/` holds a reference artifact plus the golden results of every
-query, captured from the Python server the reader is pinned to. The script that
-wrote them is gone, and there is no supported way to regenerate them from this
-package — `git log --diff-filter=D` under `src/fixtures/` finds it if it is
-wanted. **Never edit a golden to match this implementation's output** — that
-converts a caught divergence into a permanent one.
+query, captured independently from the legacy server. Don't regenerate them
+from this package or edit a golden to match this implementation's output. Doing
+so would convert a caught divergence into a permanent one.
 
 See [docs/references.md](../../docs/references.md) for the measurements
 behind the streaming and bulk-load decisions.

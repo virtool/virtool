@@ -60,8 +60,13 @@ export type AuthOptions = {
  * authorization, API keys and first-user detection; `./policy` remains the
  * only authority for what a caller may do.
  *
+ * Keep Better Auth and its passkey plugin pinned together on 1.6 until the
+ * integer identity integration is migrated for 1.7's account model.
+ * `@simplewebauthn/server` is a direct dependency so the passkey plugin's inferred
+ * types are nameable across the server/browser TypeScript project boundary.
+ *
  * Takes its dependencies as arguments so tests can build an instance against a
- * throwaway database. The process-wide one is {@link auth}.
+ * throwaway database.
  */
 export function createAuth({
 	db,

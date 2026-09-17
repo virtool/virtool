@@ -4,7 +4,7 @@ import { type AnalysisSearch, DEFAULT_ANALYSIS_SEARCH } from "@analyses/search";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { createFakeFormattedNuVsAnalysis } from "@tests/fake/analyses";
+import { createFakeFormattedNuvsAnalysis } from "@tests/fake/analyses";
 import { createFakeSample } from "@tests/fake/samples";
 import { mockBlastNuvs } from "@tests/server-fn/analyses";
 import { at, MemoryRouter } from "@tests/setup";
@@ -30,13 +30,13 @@ function renderWithAnalysisSearch(
 
 describe("<NuvsViewer />", () => {
 	let sample: ReturnType<typeof createFakeSample>;
-	let nuvs: ReturnType<typeof createFakeFormattedNuVsAnalysis>;
+	let nuvs: ReturnType<typeof createFakeFormattedNuvsAnalysis>;
 	let firstHit: (typeof nuvs.results.hits)[number];
 	let props: { detail: typeof nuvs; sample: typeof sample };
 
 	beforeEach(() => {
 		sample = createFakeSample();
-		nuvs = createFakeFormattedNuVsAnalysis();
+		nuvs = createFakeFormattedNuvsAnalysis();
 
 		firstHit = at(nuvs.results.hits, 0);
 
@@ -46,7 +46,7 @@ describe("<NuvsViewer />", () => {
 		};
 	});
 
-	describe("<NuVsDetail />", () => {
+	describe("<NuvsDetail />", () => {
 		it("should default to the first hit when no active hit is set", async () => {
 			renderWithAnalysisSearch(<NuvsViewer {...props} />);
 
@@ -88,7 +88,7 @@ describe("<NuvsViewer />", () => {
 		});
 	});
 
-	describe("<NuVsExport />", () => {
+	describe("<NuvsExport />", () => {
 		it("should render export dialog when exporting", async () => {
 			renderWithAnalysisSearch(<NuvsViewer {...props} />, {
 				hit: String(firstHit.id),

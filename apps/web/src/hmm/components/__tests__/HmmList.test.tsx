@@ -52,7 +52,7 @@ describe("<HmmList />", () => {
 				await screen.findByText("HMM profiles not installed."),
 			).toBeInTheDocument();
 			expect(
-				screen.getByText(/HMM profiles are required for NuVs analysis/),
+				screen.getByText(/HMM profiles are required for Nuvs analysis/),
 			).toBeInTheDocument();
 
 			expect(

@@ -13,7 +13,7 @@ import {
  * outside `0x20`–`0x7E` escaped as `\uXXXX`, and the key as the SHA-256 hex
  * digest of that string's UTF-8 bytes.
  *
- * These pin the wire format, not a snapshot of our own output. Cache blobs
+ * These pin the wire format, not a snapshot of generated output. Cache blobs
  * already in the bucket are addressed by these keys, so never "fix" one by
  * pasting in what this implementation currently produces — that converts a
  * caught divergence into a permanent one.

@@ -1,6 +1,6 @@
 import { AnalysisSearchProvider } from "@analyses/components/AnalysisSearchContext";
 import {
-	useSortAndFilterNuVsHits,
+	useSortAndFilterNuvsHits,
 	useSortAndFilterPathoscopeHits,
 } from "@analyses/hooks";
 import { type AnalysisSearch, DEFAULT_ANALYSIS_SEARCH } from "@analyses/search";
@@ -172,14 +172,14 @@ function renderNuvs(
 		results: { hits, maxSequenceLength: 4 },
 	} as FormattedNuvsAnalysis;
 
-	const { result } = renderHook(() => useSortAndFilterNuVsHits(analysis), {
+	const { result } = renderHook(() => useSortAndFilterNuvsHits(analysis), {
 		wrapper: createWrapper(search),
 	});
 
 	return result.current.map((hit) => hit.id);
 }
 
-describe("useSortAndFilterNuVsHits()", () => {
+describe("useSortAndFilterNuvsHits()", () => {
 	it("should search the annotation names the server derived", () => {
 		// The names are a list on the shaped hit; the field the search used to read
 		// was `name`, which no hit carries.

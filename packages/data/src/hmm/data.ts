@@ -632,7 +632,7 @@ export async function installHmms(
 
 		// Fails the install even though the rows and profiles are committed.
 		// Nothing else writes this key, so swallowing it would report success and
-		// leave NuVs failing on a blob nothing can recreate.
+		// leave Nuvs failing on a blob nothing can recreate.
 		throw err;
 	}
 
@@ -642,7 +642,7 @@ export async function installHmms(
 /**
  * Rebuild `hmm/annotations.json.gz` from the installed rows.
  *
- * NuVs reads this blob straight from storage and there is no route to warm it,
+ * Nuvs reads this blob straight from storage and there is no route to warm it,
  * so an install is its only writer.
  *
  * Called **after** the commit. Any earlier reads the rows the install replaced,

@@ -70,7 +70,7 @@ async function seedHmm(values: {
 	).id;
 }
 
-/** A NuVs results blob with one contig, one ORF, and one HMM hit. */
+/** A Nuvs results blob with one contig, one ORF, and one HMM hit. */
 function nuvsResults(hitId: number | string) {
 	return {
 		hits: [
@@ -295,7 +295,7 @@ describe("formatAnalysis for nuvs", () => {
 		});
 
 		// An unmatched orf scores zero and the minimum is taken across all of them,
-		// so one drags the whole contig down. Deliberate: the NuVs list sorts and
+		// so one drags the whole contig down. Deliberate: the Nuvs list sorts and
 		// filters on this figure.
 		expect(results.hits).toMatchObject([{ annotatedOrfCount: 1, e: 0 }]);
 	});

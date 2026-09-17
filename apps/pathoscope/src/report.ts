@@ -4,9 +4,8 @@
  *
  * **No file is written.** A `report.tsv` uploaded as the analysis's one
  * retained file would never be read back — every figure it could carry is in
- * the `results` blob built here, and that blob is what the server formats and
- * the SPA renders. That is why `FinalizeAnalysisRequest.files` is allowed to be
- * empty, and pathoscope is the reason it is.
+ * the `results` blob built here, and that blob is what the server formats.
+ * Pathoscope therefore finalizes with an empty file manifest.
  *
  * The EM core hands back eleven parallel arrays plus `refs`. They are gathered
  * into one entry per reference, ordered, and cut off at the first uninteresting

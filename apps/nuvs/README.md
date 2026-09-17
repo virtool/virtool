@@ -1,11 +1,11 @@
 # @virtool/nuvs
 
-NuVs finds viruses the reference does **not**
+Nuvs finds viruses the reference doesn't
 describe: it discards every read that maps to a known OTU or to a
-subtraction, assembles what is left with SPAdes, and searches the contigs for
+subtraction, assembles what's left with SPAdes, and searches the contigs for
 viral motifs with HMMER.
 
-Image: `ghcr.io/virtool/nuvs`. Ten steps, six external tools — `skewer`,
+Image: `ghcr.io/virtool/nuvs`. Ten steps use six external tools: `skewer`,
 `bowtie2`, SPAdes, `hmmpress`, `hmmscan` and `pigz`.
 
 ## Building the image

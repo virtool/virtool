@@ -1,4 +1,4 @@
-type NuVsValuesProps = {
+type NuvsValuesProps = {
 	e: number | null;
 	orfCount: number;
 };
@@ -6,7 +6,7 @@ type NuVsValuesProps = {
 /**
  * Displays the values associated with the Nuvs
  */
-export default function NuvsValues({ e, orfCount }: NuVsValuesProps) {
+export default function NuvsValues({ e, orfCount }: NuvsValuesProps) {
 	return (
 		<span className="pt-1">
 			<span className="text-rose-700">{orfCount} ORFs</span>
