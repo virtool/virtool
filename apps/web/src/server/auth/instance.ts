@@ -1,7 +1,7 @@
 import { createServerOnlyFn } from "@tanstack/react-start";
 import { db } from "../composition";
 import { config } from "../config";
-import { createAuth } from "./betterAuth";
+import { createAuth, createAuthRequestHandler } from "./betterAuth";
 
 /**
  * The Better Auth instance for this process.
@@ -26,5 +26,5 @@ export const auth = createAuth({
  * browser graph through the route tree.
  */
 export const handleAuthRequest = createServerOnlyFn(
-	(request: Request): Promise<Response> => auth.handler(request),
+	createAuthRequestHandler(db, auth),
 );

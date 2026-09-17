@@ -23,12 +23,11 @@ import {
 	updateUser,
 } from "@virtool/data/users/data";
 import { z } from "zod";
-import { realCookies } from "../auth/cookies";
 import { checkHandle, checkReservedHandle } from "../auth/handle";
-import { getClientIp } from "../auth/ip";
 import { requireAdminRole } from "../auth/middleware";
 import { adminRole, authenticated } from "../auth/policy";
 import { checkConfiguredPasswordLength } from "../auth/service";
+import { signInUsername } from "../auth/sessionActions";
 import { db } from "../composition";
 import { ClientError } from "../errors";
 import {
@@ -190,7 +189,7 @@ export const searchUsersFn = createServerFn({ method: "POST" })
 // rejected call is how they learn there is no session.
 export const getAccountFn = createServerFn({ method: "GET" })
 	.middleware([authenticated()])
-	.handler(async ({ context }) => getAccount(db, context.session.userId));
+	.handler(async ({ context }) => getAccount(db, context.principal.userId));
 
 export const getUserFn = createServerFn({ method: "GET" })
 	.middleware([adminRole("users")])
@@ -236,7 +235,7 @@ export const updateUserFn = createServerFn({ method: "POST" })
 		// requires the full role.
 		const targetRole = await getAdministratorRole(db, data.userId);
 		if (targetRole !== null) {
-			await requireAdminRole(context.session, "full");
+			await requireAdminRole(context.principal, "full");
 		}
 
 		const { userId, ...values } = data;
@@ -262,7 +261,7 @@ export const updateAccountHandleFn = createServerFn({ method: "POST" })
 		checkReservedHandle(data.handle);
 
 		try {
-			return await updateUser(db, context.session.userId, {
+			return await updateUser(db, context.principal.userId, {
 				handle: data.handle,
 			});
 		} catch (err) {
@@ -277,7 +276,7 @@ export const updateAccountEmailFn = createServerFn({ method: "POST" })
 		checkEmail(data.email);
 
 		try {
-			return await updateAccountEmail(db, context.session.userId, data.email);
+			return await updateAccountEmail(db, context.principal.userId, data.email);
 		} catch (err) {
 			throw rethrowAsHttp(err);
 		}
@@ -290,18 +289,13 @@ export const changePasswordFn = createServerFn({ method: "POST" })
 		try {
 			await checkConfiguredPasswordLength(db, data.password);
 
-			const { account, sessionId, token } = await changePassword(db, {
-				userId: context.session.userId,
+			const { account, handle } = await changePassword(db, {
+				userId: context.principal.userId,
 				oldPassword: data.oldPassword,
 				password: data.password,
-				ip: getClientIp(),
 			});
 
-			// The change revoked every session the user held, including the one that
-			// authenticated this request. Handing back the replacement is what keeps
-			// the browser signed in.
-			realCookies.setSessionId(sessionId);
-			realCookies.setSessionToken(token);
+			await signInUsername(handle, data.password);
 
 			return account;
 		} catch (err) {
@@ -313,7 +307,7 @@ export const setAdministratorRoleFn = createServerFn({ method: "POST" })
 	.middleware([adminRole("full")])
 	.validator(setAdministratorRoleSchema)
 	.handler(async ({ context, data }) => {
-		if (context.session.userId === data.userId) {
+		if (context.principal.userId === data.userId) {
 			setResponseStatus(400);
 			throw new ClientError("Cannot change own role", 400);
 		}

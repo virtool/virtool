@@ -7,10 +7,9 @@ import {
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { rootQueryKeys } from "@wall/keys";
 
-/** Result of a login attempt. `resetCode` is only set when `reset` is true. */
+/** Result of a login attempt. */
 export type LoginResult = {
 	reset: boolean;
-	resetCode?: string;
 };
 
 /** Result of a successful password reset. */
@@ -54,13 +53,9 @@ export function useCreateFirstUser() {
 export function useLoginMutation() {
 	const queryClient = useQueryClient();
 
-	return useMutation<
-		LoginResult,
-		Error,
-		{ handle: string; password: string; remember: boolean }
-	>({
-		mutationFn: ({ handle, password, remember }) =>
-			loginFn({ data: { handle, password, remember } }),
+	return useMutation<LoginResult, Error, { handle: string; password: string }>({
+		mutationFn: ({ handle, password }) =>
+			loginFn({ data: { handle, password } }),
 		onSuccess: (data) => {
 			if (!data.reset) {
 				queryClient.invalidateQueries({ queryKey: accountQueryKeys.all() });
@@ -77,13 +72,8 @@ export function useLoginMutation() {
 export function useResetPasswordMutation() {
 	const queryClient = useQueryClient();
 
-	return useMutation<
-		ResetPasswordResult,
-		Error,
-		{ password: string; resetCode: string }
-	>({
-		mutationFn: ({ password, resetCode }) =>
-			resetPasswordFn({ data: { password, resetCode } }),
+	return useMutation<ResetPasswordResult, Error, { password: string }>({
+		mutationFn: ({ password }) => resetPasswordFn({ data: { password } }),
 		onSuccess: () => {
 			queryClient.invalidateQueries({ queryKey: accountQueryKeys.all() });
 		},

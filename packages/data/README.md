@@ -207,13 +207,19 @@ Two rules hold this together:
   `id` on insert and treat it as a number. That setting is instance-wide in 1.6,
   so every `auth_*` table takes an identity primary key too. Composition lives
   in `apps/web`; see `@server/auth/betterAuth`.
-- **The legacy `sessions` table is not Better Auth's.** It still carries the
-  current cookie pair and its cleanup task, and nothing in Better Auth reads or
-  writes it. `auth_sessions` is a separate table.
+- **`auth_sessions` is the application session store.** Better Auth owns its
+  tokens, expiry, rotation, and revocation. Virtool re-reads account state when
+  resolving one and performs authorization after authentication.
 
 A Drizzle property name in `auth.ts` is a Better Auth *field* name — the adapter
 looks fields up by property — so `userId` and `credentialID` keep their exact
 spelling while their columns stay snake_case.
+
+Migration `0030_sparkling_silverclaw` removes the superseded `sessions` table.
+Drain web and runner replicas running code older than this migration before
+applying it; they still query that table. A rollback across this boundary must
+first restore the old table schema, then deploy the old application. The rows
+need not be restored: users can authenticate again and receive new sessions.
 
 `users.email` is deliberately not globally unique, though Better Auth declares
 it so. Legacy rows share an empty email. The identity audit reports malformed
@@ -254,7 +260,7 @@ and API-key resolution.
   stored, bound to one purpose and expiring. `verifySetupSession` re-reads
   `users.active` on every request, so deactivation revokes it at once. It is
   never an application session, which is why it is a table of its own rather
-  than another `sessions.session_type`.
+  than an application-session subtype.
 
 `src/auth/lifecycle.ts` holds one transactional completion primitive per
 purpose. Each spends the token, writes the credential and identity state,
@@ -264,11 +270,9 @@ never outlives the change it paid for. None of them mints a session; which
 session a completed holder gets is the calling flow's decision, and cookies
 belong to `apps/web`.
 
-Credential state is written on both sides during the Better Auth migration:
-`users.password` for the boundary `apps/web`'s `login()` still reads, and
-`auth_accounts.password` plus `users.username`/`display_username` for Better
-Auth. An account credentialed against only one of them cannot sign in under
-the other.
+Credential state is written to both `users.password` and
+`auth_accounts.password`. The former remains part of Virtool's account and
+password-change transactions; Better Auth verifies the latter.
 
 Expiry cleanup is the internal runner's `cleanup_setup_state` periodic task.
 Nothing waits on it — both readers refuse an expired row on sight — so there

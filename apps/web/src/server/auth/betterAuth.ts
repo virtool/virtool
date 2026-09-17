@@ -81,9 +81,8 @@ export function createAuth({
 		database: drizzleAdapter(db, {
 			provider: "pg",
 			// Named explicitly rather than left to `db._.fullSchema`. Better Auth
-			// addresses models by singular name (`user`, `session`), the schema
-			// exports them plural, and the legacy `sessions` table would otherwise
-			// be a candidate for the `session` model it must never touch.
+			// addresses models by singular name (`user`, `session`) while the schema
+			// exports them plural, so explicit mapping keeps model ownership clear.
 			schema: {
 				user: users,
 				account: authAccounts,
@@ -144,9 +143,7 @@ export function createAuth({
 				create: {
 					// Better Auth answers *who*, so the Virtool states that gate a
 					// sign-in are enforced at the one point every password, passkey and
-					// two-factor path has to pass through. `login()` in `./core` refuses
-					// the same set; without this the Better Auth endpoints would be the
-					// looser of the two doors on the same accounts.
+					// two-factor path has to pass through.
 					//
 					// A deactivated user gets the same 401 the wrong password gets: that
 					// an account exists but is switched off is not something an
@@ -162,7 +159,6 @@ export function createAuth({
 						const [user] = await db
 							.select({
 								active: users.active,
-								forceReset: users.forceReset,
 								lifecycleState: users.lifecycleState,
 							})
 							.from(users)
@@ -173,13 +169,6 @@ export function createAuth({
 							throw new APIError("UNAUTHORIZED", {
 								message: "Invalid credentials",
 								code: "INVALID_CREDENTIALS",
-							});
-						}
-
-						if (user.forceReset) {
-							throw new APIError("FORBIDDEN", {
-								message: "Password reset required",
-								code: "PASSWORD_RESET_REQUIRED",
 							});
 						}
 					},
@@ -223,4 +212,48 @@ export function createAuth({
 			tanstackStartCookies(),
 		],
 	});
+}
+
+const FORCED_RESET_ALLOWED_PATHS = new Set([
+	`${AUTH_BASE_PATH}/get-session`,
+	`${AUTH_BASE_PATH}/sign-out`,
+]);
+
+/** Wrap Better Auth's raw handler with Virtool's forced-reset restriction. */
+export function createAuthRequestHandler(
+	db: Db,
+	auth: ReturnType<typeof createAuth>,
+): (request: Request) => Promise<Response> {
+	return async function handleAuthRequest(request: Request): Promise<Response> {
+		const pathname = new URL(request.url).pathname;
+		if (!FORCED_RESET_ALLOWED_PATHS.has(pathname)) {
+			const session = await auth.api.getSession({
+				headers: request.headers,
+				query: { disableCookieCache: true, disableRefresh: true },
+			});
+
+			if (session) {
+				const userId = Number(session.user.id);
+				const [user] = Number.isSafeInteger(userId)
+					? await db
+							.select({ forceReset: users.forceReset })
+							.from(users)
+							.where(eq(users.id, userId))
+							.limit(1)
+					: [];
+
+				if (!user || user.forceReset) {
+					return Response.json(
+						{
+							code: "PASSWORD_RESET_REQUIRED",
+							message: "Password reset required",
+						},
+						{ status: 403 },
+					);
+				}
+			}
+		}
+
+		return auth.handler(request);
+	};
 }

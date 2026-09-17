@@ -3,20 +3,28 @@ import { createMiddleware, createServerOnlyFn } from "@tanstack/react-start";
 import { getRequest, setResponseStatus } from "@tanstack/react-start/server";
 import {
 	type AdministratorRoleName,
+	type AuthenticatedPrincipal,
+	type AuthenticationPrincipal,
+	type BrowserPrincipal,
 	FORBIDDEN_ERROR_NAME,
 	hasSufficientAdminRole,
-	type RestrictedSetup,
+	isPasswordResetPrincipal,
+	type PasswordResetPrincipal,
+	type SetupPrincipal,
 	UNAUTHORIZED_ERROR_NAME,
 } from "@virtool/contracts";
 import { users } from "@virtool/data/db/schema/users";
 import { eq } from "drizzle-orm";
 import { db } from "../composition";
-import { resolveRestrictedSetup, SetupRequiredError } from "./restricted";
 import {
-	type AuthenticatedSession,
+	PasswordResetRequiredError,
+	resolveRestrictedSetup,
+	SetupRequiredError,
+} from "./restricted";
+import {
 	parseBasicAuthHeader,
 	verifyApiKey,
-	verifyRequest,
+	verifyBrowserRequest,
 } from "./verify";
 
 /** Thrown by the auth middleware when a request has no valid session. */
@@ -49,13 +57,13 @@ export class ForbiddenError extends Error {
  */
 export const requireAdminRole = createServerOnlyFn(
 	async (
-		session: AuthenticatedSession,
+		principal: BrowserPrincipal,
 		requiredRole: AdministratorRoleName,
 	): Promise<void> => {
 		const [row] = await db
 			.select({ administratorRole: users.administratorRole })
 			.from(users)
-			.where(eq(users.id, session.userId))
+			.where(eq(users.id, principal.userId))
 			.limit(1);
 
 		if (
@@ -74,36 +82,51 @@ export const requireAdminRole = createServerOnlyFn(
  * 401. Sets the HTTP response status as a side effect so the serialized error
  * reaches the client as a real 401.
  *
- * Handlers do **not** call this. They read `context.session`, which their policy
+ * Handlers do **not** call this. They read `context.principal`, which their policy
  * put there; calling this in a handler buys a second Postgres lookup for a
  * session that has already been resolved.
  *
- * A restricted setup credential resolves to nothing here, because it is not an
- * application session: `verifyRequest` reads only the authenticated cookie
- * pair, and a restricted holder carries neither half of it. That is what makes
- * every ordinary policy refuse a restricted caller without knowing the concept
- * exists.
+ * A restricted setup credential resolves to nothing here because it is not a
+ * Better Auth session. A forced-reset session resolves to its distinct
+ * principal and is rejected here so ordinary policies cannot accidentally
+ * authorize it.
  */
-// createServerOnlyFn keeps the getRequest / db / verifyRequest references
+// createServerOnlyFn keeps the getRequest / db / verification references
 // behind a server boundary so import-protection doesn't pin
 // @tanstack/react-start/server in the client graph via start.ts.
-export const requireSession = createServerOnlyFn(
-	async (): Promise<AuthenticatedSession> => {
-		const session = await verifyRequest(db, getRequest());
-		if (!session) {
+export const requireBrowserPrincipal = createServerOnlyFn(
+	async (): Promise<BrowserPrincipal> => {
+		const principal = await verifyBrowserRequest(db, getRequest());
+		if (!principal) {
 			setResponseStatus(401);
 			throw new UnauthorizedError();
 		}
-		return session;
+		if (isPasswordResetPrincipal(principal)) {
+			setResponseStatus(403);
+			throw new PasswordResetRequiredError();
+		}
+		return principal;
 	},
 );
 
-// The non-throwing half of `requireSession`, for the global middleware, which
+// The non-throwing half of `requireBrowserPrincipal`, for the global middleware, which
 // has a second credential to consider before it can answer 401.
-const resolveSessionOrNull = createServerOnlyFn(
-	async (): Promise<AuthenticatedSession | null> =>
-		verifyRequest(db, getRequest()),
+const resolveBrowserOrNull = createServerOnlyFn(async () =>
+	verifyBrowserRequest(db, getRequest()),
 );
+
+function attributePrincipal(principal: AuthenticationPrincipal): void {
+	Sentry.setUser({ id: principal.userId });
+	Sentry.setContext("credential", {
+		kind: principal.kind,
+		id: principal.kind === "api_key" ? principal.keyId : principal.sessionId,
+	});
+}
+
+function clearPrincipalAttribution(): void {
+	Sentry.setUser(null);
+	Sentry.setContext("credential", null);
+}
 
 /**
  * Resolve the identity behind a raw `Request` (used by `createFileRoute`
@@ -125,24 +148,27 @@ const resolveSessionOrNull = createServerOnlyFn(
  * third branch.
  */
 export const requireAuthenticatedRequest = createServerOnlyFn(
-	async (request: Request): Promise<AuthenticatedSession | Response> => {
+	async (request: Request): Promise<AuthenticatedPrincipal | Response> => {
+		clearPrincipalAttribution();
 		const header = request.headers.get("authorization");
 
-		let session: AuthenticatedSession | null;
+		let principal: AuthenticatedPrincipal | null;
 
 		if (header) {
 			const credentials = parseBasicAuthHeader(header);
-			session = credentials
+			principal = credentials
 				? await verifyApiKey(db, credentials.handle, credentials.key)
 				: null;
 		} else {
-			session = await verifyRequest(db, request);
+			const browser = await verifyBrowserRequest(db, request);
+			principal = browser?.kind === "browser" ? browser : null;
 		}
 
-		if (!session) {
+		if (!principal) {
 			return new Response("Unauthorized", { status: 401 });
 		}
-		return session;
+		attributePrincipal(principal);
+		return principal;
 	},
 );
 
@@ -180,8 +206,7 @@ const loadAuthenticationExceptions = createServerOnlyFn(
  * without having to know which branch produced the context.
  */
 export type AuthContext = {
-	session: AuthenticatedSession | null;
-	restricted: RestrictedSetup | null;
+	principal: BrowserPrincipal | PasswordResetPrincipal | SetupPrincipal | null;
 };
 
 /** Resolves the server functions a restricted setup principal may call. */
@@ -198,10 +223,22 @@ const loadSetupEndpoints = createServerOnlyFn(
 	},
 );
 
+/** Resolves the server functions a password-reset principal may call. */
+export type LoadPasswordResetEndpoints = () => Promise<
+	ReadonlyArray<{ url: string }>
+>;
+
+const loadPasswordResetEndpoints = createServerOnlyFn(
+	async (): Promise<ReadonlyArray<{ url: string }>> => {
+		const { passwordResetEndpoints } = await import("./exceptions");
+		return passwordResetEndpoints;
+	},
+);
+
 /**
  * Build the global server-function middleware that enforces authentication on
  * every server function except those in `./exceptions`. Resolved sessions are
- * exposed to downstream handlers as `context.session`.
+ * exposed to downstream handlers as `context.principal`.
  *
  * Authentication is enforced here rather than by a `requireSession()` call in
  * each handler, because forgetting that call is silent — the function would
@@ -223,23 +260,29 @@ const loadSetupEndpoints = createServerOnlyFn(
 export function createAuthenticationMiddleware(
 	loadExceptions: LoadAuthenticationExceptions = loadAuthenticationExceptions,
 	loadSetup: LoadSetupEndpoints = loadSetupEndpoints,
+	loadPasswordReset: LoadPasswordResetEndpoints = loadPasswordResetEndpoints,
 ) {
 	// Resolved on the first call and cached: the ids never change.
 	let exceptionIds: Set<string> | null = null;
 	let setupIds: Set<string> | null = null;
+	let passwordResetIds: Set<string> | null = null;
 
 	return createMiddleware({ type: "function" }).server(
 		async ({ next, serverFnMeta }) => {
+			clearPrincipalAttribution();
 			exceptionIds ??= new Set(
 				(await loadExceptions()).map((fn) => serverFnIdFromUrl(fn.url)),
 			);
 			setupIds ??= new Set(
 				(await loadSetup()).map(({ fn }) => serverFnIdFromUrl(fn.url)),
 			);
+			passwordResetIds ??= new Set(
+				(await loadPasswordReset()).map((fn) => serverFnIdFromUrl(fn.url)),
+			);
 
 			const context: AuthContext = exceptionIds.has(serverFnMeta.id)
-				? { session: null, restricted: null }
-				: await resolvePrincipal(setupIds, serverFnMeta.id);
+				? { principal: null }
+				: await resolvePrincipal(setupIds, passwordResetIds, serverFnMeta.id);
 
 			return next({ context });
 		},
@@ -263,15 +306,23 @@ export function createAuthenticationMiddleware(
  * tokens, sessions or what the holder may do.
  */
 const resolvePrincipal = createServerOnlyFn(
-	async (setupIds: Set<string>, serverFnId: string): Promise<AuthContext> => {
-		const session = await resolveSessionOrNull();
+	async (
+		setupIds: Set<string>,
+		passwordResetIds: Set<string>,
+		serverFnId: string,
+	): Promise<AuthContext> => {
+		const browser = await resolveBrowserOrNull();
 
-		if (session) {
-			// Attach the user to the request's isolation scope so errors and logs
-			// from this handler are tied to the acting user. Id-only here — the
-			// handle isn't on the session and isn't worth a per-request lookup.
-			Sentry.setUser({ id: session.userId });
-			return { session, restricted: null };
+		if (browser) {
+			attributePrincipal(browser);
+			if (
+				isPasswordResetPrincipal(browser) &&
+				!passwordResetIds.has(serverFnId)
+			) {
+				setResponseStatus(403);
+				throw new PasswordResetRequiredError();
+			}
+			return { principal: browser };
 		}
 
 		const restricted = await resolveRestrictedSetup(getRequest());
@@ -283,13 +334,14 @@ const resolvePrincipal = createServerOnlyFn(
 
 		// The user id, and nothing else. A restricted principal has no role to
 		// attribute and its secret half must not reach a log.
-		Sentry.setUser({ id: restricted.userId });
+		const principal: SetupPrincipal = { kind: "setup", ...restricted };
+		attributePrincipal(principal);
 
 		if (!setupIds.has(serverFnId)) {
 			setResponseStatus(403);
 			throw new SetupRequiredError(restricted.purpose);
 		}
 
-		return { session: null, restricted };
+		return { principal };
 	},
 );

@@ -455,10 +455,12 @@ that origin and fetch-metadata headers reach the application for CSRF checks.
 
 Every exported server function declares exactly one policy from
 `@server/auth/policy`: `open()`, `authenticated()`, `adminRole(role)`,
-`permission(name)`, or `setupOnly(purpose)`. Read the resolved session from
-`context.session` — or the restricted credential from `context.restricted` —
-and do not perform a second lookup. Row-dependent authorization remains in the
-handler. Register each new `functions.ts` module in
+`permission(name)`, `setupOnly(purpose)`, or `passwordResetOnly()`. Read the
+discriminated principal from `context.principal` and do not perform a second
+lookup. Browser sessions, API keys, setup sessions, and forced-reset sessions
+have distinct principal kinds so a policy cannot silently widen one credential
+into another. Row-dependent authorization remains in the handler. Register
+each new `functions.ts` module in
 `server/__tests__/authorization.test.ts`.
 
 Keep `createServerFn` at the definition site. The Vite transform recognizes
@@ -484,13 +486,16 @@ global CSRF middleware in `start.ts` is likewise scoped to
 own origin check against `VT_PUBLIC_ORIGIN`, which
 `@server/auth/betterAuth.test.ts` pins.
 
-Three Virtool states still gate every Better Auth sign-in. A `session.create`
-database hook refuses a user who is not `active`, and one whose
+Virtool account state still gates every Better Auth sign-in. A `session.create`
+database hook refuses a user who is not `active`, or whose
 `lifecycle_state` is still `pending` — both with the same 401 a wrong password
 gets, because neither a switched-off account nor an outstanding invitation is
-public information — and refuses one carrying `force_reset` with a 403, so the
-password, passkey and two-factor endpoints are no looser than `login()` in
-`@server/auth/core`. `/sign-in/email` is answered 404 by a `before` hook:
+public information. A normal Better Auth session is issued when `force_reset`
+is set, but Virtool resolves it as a `password_reset` principal. The global
+server-function boundary permits only the reset and logout flows, and the raw
+Better Auth handler permits only session inspection and logout until the reset
+transaction revokes every session and mints a replacement. `/sign-in/email` is
+answered 404 by a `before` hook:
 `emailAndPassword` is enabled only for its bcrypt hashing, and `users.email`
 carries no unique constraint, so an email lookup could resolve to an arbitrary
 one of several holders. Virtool signs in by handle.
@@ -498,9 +503,9 @@ one of several holders. Virtool signs in by handle.
 Better Auth's tables live in `@virtool/data` as `auth_*` and are keyed by
 integer identity columns, because `advanced.database.generateId: "serial"` is
 what keeps `users.id` the integer the rest of the schema references. The setting
-is instance-wide in 1.6, so the auxiliary tables share the key type. The legacy
-`sessions` table still carries the current cookie pair and Better Auth never
-reads or writes it.
+is instance-wide in 1.6, so the auxiliary tables share the key type.
+`auth_sessions` is the sole browser-application session store. Setup sessions
+remain separate because they authorize only one pre-authentication transition.
 
 Uploads and downloads must stream. Resolve a requested file to a database row
 or explicit whitelist first, then use that row's `storage_key`; never construct
@@ -539,6 +544,13 @@ administrator-created account that has not been claimed, an active legacy
 account with no usable unique email, and a user under a `required` MFA policy
 who has not enrolled. Each holds a **restricted setup credential** that
 completes exactly one named transition and reaches nothing else.
+
+Login checks an unmigrated legacy identity before Better Auth. A matching
+legacy password mints an `email_remediation` setup session; every other account
+continues through Better Auth. A wrong remediation password is rejected without
+falling through to a second password verification; unknown or ineligible
+handles pay one dummy bcrypt verification. Every failed path keeps the same
+generic response.
 
 The credential is its own cookie pair, `setup_session_id` and
 `setup_session_token`, deliberately not the session pair. `@virtool/data` owns

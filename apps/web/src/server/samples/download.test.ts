@@ -2,6 +2,7 @@ import type { Db } from "@virtool/data/db/pg";
 import { takeFirstOrThrow } from "@virtool/data/db/rows";
 import { analyses } from "@virtool/data/db/schema/analyses";
 import { apiKeys } from "@virtool/data/db/schema/apiKeys";
+import { authSessions } from "@virtool/data/db/schema/auth";
 import { groups, userGroups } from "@virtool/data/db/schema/groups";
 import {
 	legacySampleLabels,
@@ -10,7 +11,6 @@ import {
 	sampleReads,
 	sampleUploads,
 } from "@virtool/data/db/schema/samples";
-import { sessions } from "@virtool/data/db/schema/sessions";
 import { users } from "@virtool/data/db/schema/users";
 import {
 	createTestDatabase,
@@ -38,6 +38,7 @@ vi.mock("@tanstack/react-start/server", () => ({
 vi.mock("@sentry/tanstackstart-react", () => ({
 	captureException: vi.fn(),
 	setUser: vi.fn(),
+	setContext: vi.fn(),
 }));
 
 let db: Db;
@@ -84,7 +85,7 @@ beforeEach(async () => {
 	await db.delete(sampleReads);
 	await db.delete(legacySamples);
 	await db.delete(apiKeys);
-	await db.delete(sessions);
+	await db.delete(authSessions);
 	await db.delete(userGroups);
 	await db.delete(groups);
 	await db.delete(users);

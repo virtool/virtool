@@ -60,7 +60,7 @@ export const installHmmFn = createServerFn({ method: "POST" })
 	.middleware([permission("modify_hmm")])
 	.handler(async ({ context }) => {
 		try {
-			const installed = await installUpdate(db, context.session.userId);
+			const installed = await installUpdate(db, context.principal.userId);
 			setResponseStatus(201);
 			return installed;
 		} catch (err) {

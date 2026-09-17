@@ -14,8 +14,8 @@ import {
  *
  * createFirstUserFn runs before any user or session exists.
  *
- * getPasswordPolicyFn serves the first-user and forced-reset forms, which set a
- * password before there is a session to authenticate.
+ * getPasswordPolicyFn serves the first-user form before a session exists and
+ * the forced-reset form while ordinary application access is restricted.
  *
  * getRootFn reports whether first-user setup is needed, read by the
  * `_authenticated` guard before a session exists.
@@ -32,5 +32,9 @@ export const authenticationExceptions: ReadonlyArray<{ url: string }> = [
 	getRootFn,
 	loginFn,
 	logoutFn,
+];
+
+/** Server functions reachable by a forced-password-reset principal. */
+export const passwordResetEndpoints: ReadonlyArray<{ url: string }> = [
 	resetPasswordFn,
 ];

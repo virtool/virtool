@@ -22,3 +22,6 @@ export const FORBIDDEN_ERROR_NAME = "ForbiddenError";
  * what the 401 name already means to the client.
  */
 export const SETUP_REQUIRED_ERROR_NAME = "SetupRequiredError";
+
+/** Error name returned when a signed-in user must replace their password. */
+export const PASSWORD_RESET_REQUIRED_ERROR_NAME = "PasswordResetRequiredError";

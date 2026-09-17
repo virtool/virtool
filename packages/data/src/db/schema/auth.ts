@@ -2,8 +2,8 @@
 //
 // Better Auth owns interactive human authentication: credential accounts,
 // browser sessions, verification challenges, TOTP enrollment, and passkeys.
-// It does not own the legacy `sessions` table, which still carries the current
-// cookie pair and is left untouched here.
+// `auth_sessions` is the sole interactive application-session table. Restricted
+// setup credentials remain in their purpose-bound setup tables.
 //
 // Every table is keyed by an `integer ... generated always as identity` primary
 // key rather than the string ids Better Auth mints by default. Better Auth 1.6

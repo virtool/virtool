@@ -139,7 +139,8 @@ describe("setupOnly", () => {
 
 		expect(next).toHaveBeenCalledWith({
 			context: {
-				restricted: {
+				principal: {
+					kind: "setup",
 					userId,
 					sessionId: session.sessionId,
 					purpose: "account_completion",
@@ -188,16 +189,17 @@ describe("setupOnly", () => {
 
 	it("reuses the credential the global middleware already resolved", async () => {
 		const next = vi.fn().mockResolvedValue("result");
-		const restricted = {
+		const principal = {
+			kind: "setup" as const,
 			userId: 7,
 			sessionId: "setup_upstream",
 			purpose: "totp_enrollment" as const,
 			expiresAt: new Date(Date.now() + 60_000),
 		};
 
-		await handlerFor("totp_enrollment")({ context: { restricted }, next });
+		await handlerFor("totp_enrollment")({ context: { principal }, next });
 
-		expect(next).toHaveBeenCalledWith({ context: { restricted } });
+		expect(next).toHaveBeenCalledWith({ context: { principal } });
 		expect(getRequest).not.toHaveBeenCalled();
 	});
 });

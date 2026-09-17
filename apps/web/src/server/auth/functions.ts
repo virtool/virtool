@@ -2,24 +2,28 @@ import * as Sentry from "@sentry/tanstackstart-react";
 import { createServerFn } from "@tanstack/react-start";
 import { setResponseStatus } from "@tanstack/react-start/server";
 import { PasswordTooShortError } from "@virtool/contracts";
+import { users } from "@virtool/data/db/schema/users";
+import { APIError } from "better-auth/api";
+import { eq } from "drizzle-orm";
 import { z } from "zod";
 import { db } from "../composition";
 import { ClientError } from "../errors";
 import { realCookies } from "./cookies";
 import {
+	beginLegacyEmailRemediation,
 	createFirstUser,
 	FirstUserExistsError,
 	InvalidCredentialsError,
-	InvalidResetSessionError,
-	login,
 	logout,
 	PasswordReuseError,
 	resetPassword,
 } from "./core";
 import { checkHandle, checkReservedHandle } from "./handle";
 import { getClientIp } from "./ip";
-import { open } from "./policy";
+import { open, passwordResetOnly } from "./policy";
+import { SetupRequiredError } from "./restricted";
 import { checkConfiguredPasswordLength } from "./service";
+import { signInUsername, signOut } from "./sessionActions";
 
 // `password` is deliberately not length-checked here. Login authenticates an
 // existing credential rather than setting a new one, and rejecting a short
@@ -27,14 +31,12 @@ import { checkConfiguredPasswordLength } from "./service";
 const loginSchema = z.object({
 	handle: z.string().min(1),
 	password: z.string().min(1),
-	remember: z.boolean().default(false),
 });
 
 // Length is enforced by checkConfiguredPasswordLength in the handlers below, not
 // here — see that function for why the validator is the wrong place for it.
 const resetPasswordSchema = z.object({
 	password: z.string(),
-	resetCode: z.string().min(1),
 });
 
 const createFirstUserSchema = z.object({
@@ -43,7 +45,10 @@ const createFirstUserSchema = z.object({
 });
 
 function rethrowAsHttp(err: unknown): never {
-	if (err instanceof InvalidCredentialsError) {
+	if (
+		err instanceof InvalidCredentialsError ||
+		(err instanceof APIError && err.statusCode < 500)
+	) {
 		setResponseStatus(400);
 		throw new ClientError("Invalid handle or password.", 400);
 	}
@@ -54,10 +59,6 @@ function rethrowAsHttp(err: unknown): never {
 	if (err instanceof FirstUserExistsError) {
 		setResponseStatus(409);
 		throw new ClientError("Virtool already has a user.", 409);
-	}
-	if (err instanceof InvalidResetSessionError) {
-		setResponseStatus(400);
-		throw new ClientError("Invalid session", 400);
 	}
 	if (err instanceof PasswordReuseError) {
 		setResponseStatus(400);
@@ -72,20 +73,32 @@ export const loginFn = createServerFn({ method: "POST" })
 	.validator(loginSchema)
 	.handler(async ({ data }) => {
 		try {
-			const result = await login(db, realCookies, {
-				handle: data.handle,
-				password: data.password,
-				remember: data.remember,
-				ip: getClientIp(),
-			});
+			if (
+				await beginLegacyEmailRemediation(db, realCookies, {
+					handle: data.handle,
+					password: data.password,
+					ip: getClientIp(),
+				})
+			) {
+				setResponseStatus(403);
+				throw new SetupRequiredError("email_remediation");
+			}
 
-			if (result.status === "reset_required") {
-				setResponseStatus(200);
-				return { reset: true as const, resetCode: result.resetCode };
+			const result = await signInUsername(data.handle, data.password);
+
+			const userId = Number(result.user.id);
+			const [user] = await db
+				.select({ forceReset: users.forceReset })
+				.from(users)
+				.where(eq(users.id, userId))
+				.limit(1);
+
+			if (!user) {
+				throw new APIError("UNAUTHORIZED");
 			}
 
 			setResponseStatus(201);
-			return { reset: false as const };
+			return { reset: user.forceReset };
 		} catch (err) {
 			rethrowAsHttp(err);
 		}
@@ -106,11 +119,11 @@ export const createFirstUserFn = createServerFn({ method: "POST" })
 		try {
 			await checkConfiguredPasswordLength(db, data.password);
 
-			const user = await createFirstUser(db, realCookies, {
+			const user = await createFirstUser(db, {
 				handle: data.handle,
 				password: data.password,
-				ip: getClientIp(),
 			});
+			await signInUsername(data.handle, data.password);
 			setResponseStatus(201);
 			return user;
 		} catch (err) {
@@ -128,28 +141,29 @@ export const createFirstUserFn = createServerFn({ method: "POST" })
 export const logoutFn = createServerFn({ method: "POST" })
 	.middleware([open()])
 	.handler(async () => {
+		await signOut();
 		await logout(db, realCookies);
 		Sentry.setUser(null);
 		return null;
 	});
 
 /**
- * Reset-password server function. Unauthenticated by necessity — this is the
- * forced-reset flow that runs before the user has a session. Authorization is
- * carried by the `resetCode` returned from `loginFn`.
+ * Reset-password server function. The caller has a real Better Auth session,
+ * restricted by policy until the required password change is complete.
  */
 export const resetPasswordFn = createServerFn({ method: "POST" })
-	.middleware([open()])
+	.middleware([passwordResetOnly()])
 	.validator(resetPasswordSchema)
-	.handler(async ({ data }) => {
+	.handler(async ({ context, data }) => {
 		try {
 			await checkConfiguredPasswordLength(db, data.password);
 
-			await resetPassword(db, realCookies, {
+			const handle = await resetPassword(db, {
+				userId: context.principal.userId,
 				password: data.password,
-				resetCode: data.resetCode,
-				ip: getClientIp(),
 			});
+
+			await signInUsername(handle, data.password);
 			setResponseStatus(200);
 			return { login: false as const, reset: false as const };
 		} catch (err) {

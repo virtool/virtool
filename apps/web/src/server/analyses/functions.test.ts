@@ -5,11 +5,11 @@ import {
 	analysisSubtractions,
 	nuvsBlast,
 } from "@virtool/data/db/schema/analyses";
+import { authSessions } from "@virtool/data/db/schema/auth";
 import { indexes } from "@virtool/data/db/schema/indexes";
 import { jobs } from "@virtool/data/db/schema/jobs";
 import { legacyReferences } from "@virtool/data/db/schema/references";
 import { legacySamples } from "@virtool/data/db/schema/samples";
-import { sessions } from "@virtool/data/db/schema/sessions";
 import { users } from "@virtool/data/db/schema/users";
 import {
 	createTestDatabase,
@@ -42,6 +42,7 @@ vi.mock("@tanstack/react-start/server", () => ({
 vi.mock("@sentry/tanstackstart-react", () => ({
 	captureException: vi.fn(),
 	setUser: vi.fn(),
+	setContext: vi.fn(),
 }));
 
 // The handlers read the `db` singleton at module scope. A getter defers the
@@ -95,7 +96,7 @@ beforeEach(async () => {
 	await db.delete(legacyReferences);
 	await db.delete(legacySamples);
 	await db.delete(jobs);
-	await db.delete(sessions);
+	await db.delete(authSessions);
 	await db.delete(users);
 
 	getRequest.mockReturnValue(

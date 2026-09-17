@@ -1,7 +1,7 @@
 import type { Db } from "@virtool/data/db/pg";
 import { takeFirstOrThrow } from "@virtool/data/db/rows";
+import { authSessions } from "@virtool/data/db/schema/auth";
 import { jobs } from "@virtool/data/db/schema/jobs";
-import { sessions } from "@virtool/data/db/schema/sessions";
 import { subtractions } from "@virtool/data/db/schema/subtractions";
 import { uploads } from "@virtool/data/db/schema/uploads";
 import { users } from "@virtool/data/db/schema/users";
@@ -34,6 +34,7 @@ vi.mock("@tanstack/react-start/server", () => ({
 vi.mock("@sentry/tanstackstart-react", () => ({
 	captureException: vi.fn(),
 	setUser: vi.fn(),
+	setContext: vi.fn(),
 }));
 
 let db: Db;
@@ -65,7 +66,7 @@ afterAll(async () => {
 
 beforeEach(async () => {
 	vi.clearAllMocks();
-	await db.delete(sessions);
+	await db.delete(authSessions);
 	await db.delete(subtractions);
 	await db.delete(jobs);
 	await db.delete(uploads);

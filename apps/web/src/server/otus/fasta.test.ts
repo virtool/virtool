@@ -1,7 +1,7 @@
 import type { Db } from "@virtool/data/db/pg";
+import { authSessions } from "@virtool/data/db/schema/auth";
 import { legacyOtus, legacySequences } from "@virtool/data/db/schema/otus";
 import { legacyReferences } from "@virtool/data/db/schema/references";
-import { sessions } from "@virtool/data/db/schema/sessions";
 import { users } from "@virtool/data/db/schema/users";
 import {
 	createTestDatabase,
@@ -28,6 +28,7 @@ vi.mock("@tanstack/react-start/server", () => ({
 vi.mock("@sentry/tanstackstart-react", () => ({
 	captureException: vi.fn(),
 	setUser: vi.fn(),
+	setContext: vi.fn(),
 }));
 
 let db: Db;
@@ -64,7 +65,7 @@ beforeEach(async () => {
 	await db.delete(legacySequences);
 	await db.delete(legacyOtus);
 	await db.delete(legacyReferences);
-	await db.delete(sessions);
+	await db.delete(authSessions);
 	await db.delete(users);
 
 	const userId = await seedUser(db);

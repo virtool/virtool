@@ -1,6 +1,6 @@
 import type { Db } from "@virtool/data/db/pg";
+import { authSessions } from "@virtool/data/db/schema/auth";
 import { jobs } from "@virtool/data/db/schema/jobs";
-import { sessions } from "@virtool/data/db/schema/sessions";
 import { users } from "@virtool/data/db/schema/users";
 import {
 	createTestDatabase,
@@ -31,6 +31,7 @@ vi.mock("@tanstack/react-start/server", () => ({
 vi.mock("@sentry/tanstackstart-react", () => ({
 	captureException: vi.fn(),
 	setUser: vi.fn(),
+	setContext: vi.fn(),
 }));
 
 // The handlers read the `db` singleton at module scope. A getter defers the
@@ -63,7 +64,7 @@ afterAll(async () => {
 beforeEach(async () => {
 	vi.clearAllMocks();
 	await db.delete(jobs);
-	await db.delete(sessions);
+	await db.delete(authSessions);
 	await db.delete(users);
 });
 

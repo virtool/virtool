@@ -27,19 +27,18 @@ describe("<LoginForm />", () => {
 	it("calls the login mutation with the form values", async () => {
 		const handle = "test_Username";
 		const password = "Password";
-		const setResetCode = vi.fn();
+		const setResetRequired = vi.fn();
 
 		loginMock.mockResolvedValue({ reset: false });
 
 		renderWithProviders(
 			<MemoryRouter>
-				<LoginForm setResetCode={setResetCode} />
+				<LoginForm setResetRequired={setResetRequired} />
 			</MemoryRouter>,
 		);
 
 		await userEvent.type(await screen.findByLabelText("Username"), handle);
 		await userEvent.type(screen.getByLabelText("Password"), password);
-		await userEvent.click(screen.getByLabelText("Remember Me"));
 		await userEvent.click(screen.getByRole("button", { name: "Login" }));
 
 		await waitFor(() => expect(loginMock).toHaveBeenCalledTimes(1));
@@ -47,7 +46,6 @@ describe("<LoginForm />", () => {
 			{
 				handle,
 				password,
-				remember: true,
 			},
 			expect.anything(),
 		);
@@ -57,13 +55,13 @@ describe("<LoginForm />", () => {
 		const handle = "test_Username";
 		const password = "Password";
 		const errorMessage = "Invalid handle or password.";
-		const setResetCode = vi.fn();
+		const setResetRequired = vi.fn();
 
 		loginMock.mockRejectedValue(new Error(errorMessage));
 
 		renderWithProviders(
 			<MemoryRouter>
-				<LoginForm setResetCode={setResetCode} />
+				<LoginForm setResetRequired={setResetRequired} />
 			</MemoryRouter>,
 		);
 

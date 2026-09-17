@@ -125,7 +125,6 @@ describe("PERIODIC_TASKS", () => {
 			refresh_hmms: 600,
 			timeout_jobs: 600,
 			evict_caches_lru: 3600,
-			cleanup_sessions: 3600,
 			cleanup_setup_state: 3600,
 			reap_orphaned_uploads: 86400,
 		});

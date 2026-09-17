@@ -91,7 +91,7 @@ export const createSubtractionFn = createServerFn({ method: "POST" })
 				name: data.name,
 				nickname: data.nickname,
 				uploadId: data.uploadId,
-				userId: context.session.userId,
+				userId: context.principal.userId,
 			});
 			setResponseStatus(201);
 			return subtraction;

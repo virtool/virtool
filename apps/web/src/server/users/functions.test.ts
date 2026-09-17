@@ -1,5 +1,5 @@
 import type { Db } from "@virtool/data/db/pg";
-import { sessions } from "@virtool/data/db/schema/sessions";
+import { authAccounts, authSessions } from "@virtool/data/db/schema/auth";
 import { users } from "@virtool/data/db/schema/users";
 import {
 	createTestDatabase,
@@ -20,6 +20,8 @@ import { callServerFn, type SplitServerFnModule } from "../test/serverFn";
 const getRequest = vi.fn();
 const setCookie = vi.fn();
 const setResponseStatus = vi.fn();
+const signInUsername = vi.fn();
+let currentUserId: number | null = null;
 
 vi.mock("@tanstack/react-start/server", () => ({
 	deleteCookie: vi.fn(),
@@ -32,6 +34,23 @@ vi.mock("@tanstack/react-start/server", () => ({
 vi.mock("@sentry/tanstackstart-react", () => ({
 	captureException: vi.fn(),
 	setUser: vi.fn(),
+	setContext: vi.fn(),
+}));
+
+vi.mock("../auth/instance", () => ({
+	auth: {
+		api: {
+			getSession: vi.fn(async () =>
+				currentUserId === null
+					? null
+					: {
+							session: { id: 1 },
+							user: { id: currentUserId },
+						},
+			),
+			signInUsername,
+		},
+	},
 }));
 
 // `createTestDatabase` imports this module, so the factory runs during the
@@ -56,16 +75,12 @@ vi.mock("../composition", () => ({
 const handlers = (await import(
 	"./functions.ts?tss-serverfn-split"
 )) as SplitServerFnModule;
-const { SESSION_ID_COOKIE, SESSION_TOKEN_COOKIE } = await import(
-	"../auth/cookies"
-);
 const { hashPassword, verifyPassword } = await import(
 	"@virtool/data/auth/password"
 );
 const { seedSession, seedUser } = await import(
 	"@virtool/data/auth/test/fixtures"
 );
-const { hashToken } = await import("@virtool/data/auth/tokens");
 
 let database: TestDatabase;
 
@@ -80,7 +95,8 @@ afterAll(async () => {
 
 beforeEach(async () => {
 	vi.clearAllMocks();
-	await db.delete(sessions);
+	currentUserId = null;
+	await db.delete(authSessions);
 	await db.delete(users);
 	getRequest.mockReturnValue(
 		new Request("https://virtool.test/_serverFn/test"),
@@ -92,16 +108,19 @@ beforeEach(async () => {
  * return its id alongside the session that authenticates it.
  */
 async function signIn(password = "old_password_123") {
-	const userId = await seedUser(db, { password: await hashPassword(password) });
+	const hashed = await hashPassword(password);
+	const userId = await seedUser(db, { password: hashed });
+	const now = new Date();
+	await db.insert(authAccounts).values({
+		accountId: String(userId),
+		providerId: "credential",
+		userId,
+		password: hashed.toString("utf8"),
+		createdAt: now,
+		updatedAt: now,
+	});
 	const session = await seedSession(db, userId);
-
-	getRequest.mockReturnValue(
-		new Request("https://virtool.test/_serverFn/test", {
-			headers: {
-				cookie: `${SESSION_ID_COOKIE}=${session.sessionId}; ${SESSION_TOKEN_COOKIE}=${session.token}`,
-			},
-		}),
-	);
+	currentUserId = userId;
 
 	return { session, userId };
 }
@@ -149,7 +168,7 @@ describe("updateAccountEmail", () => {
 
 describe("changePassword", () => {
 	it("hands the browser the session that replaces the revoked one", async () => {
-		const { session, userId } = await signIn();
+		const { userId } = await signIn();
 
 		await call("changePasswordFn", {
 			oldPassword: "old_password_123",
@@ -158,23 +177,15 @@ describe("changePassword", () => {
 
 		const rows = await db
 			.select()
-			.from(sessions)
-			.where(eq(sessions.userId, userId));
+			.from(authSessions)
+			.where(eq(authSessions.userId, userId));
 
-		// The request's own session went with the rest, so the cookies must carry
-		// the replacement or the user is signed out by their own password change.
-		expect(rows).toHaveLength(1);
-		expect(rows[0]?.sessionId).not.toBe(session.sessionId);
-
-		const idCookie = setCookie.mock.calls.find(
-			(args) => args[0] === SESSION_ID_COOKIE,
+		expect(rows).toHaveLength(0);
+		expect(signInUsername).toHaveBeenCalledWith(
+			expect.objectContaining({
+				body: expect.objectContaining({ password: "new_password_123" }),
+			}),
 		);
-		const tokenCookie = setCookie.mock.calls.find(
-			(args) => args[0] === SESSION_TOKEN_COOKIE,
-		);
-
-		expect(idCookie?.[1]).toBe(rows[0]?.sessionId);
-		expect(hashToken(tokenCookie?.[1] as string)).toBe(rows[0]?.tokenHash);
 	});
 
 	// lastPasswordChange and forceReset are both on the administration user

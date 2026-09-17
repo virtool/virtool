@@ -62,23 +62,8 @@ export const PERIODIC_TASKS: PeriodicTaskRegistration[] = [
 	{ type: "timeout_jobs", intervalSeconds: 600 },
 	{ type: "evict_caches_lru", intervalSeconds: 3600 },
 	/*
-	 * Hourly. Nothing swept expired `sessions` rows before this registration
-	 * existed, so there is no established cadence to hold to and the interval is
-	 * chosen on its own merits.
-	 *
-	 * Correctness never waits on this: `verify.ts` and the reset path in `core.ts`
-	 * both reject an expired row on sight, so a row lingering between sweeps is
-	 * inert and the sweep is harmless when late. That removes the usual argument
-	 * for a short interval. Hourly keeps the shortest-lived rows — 10 minute reset
-	 * sessions, 60 minute no-remember ones — from outliving their expiry by much,
-	 * without running an indexed scan that finds nothing dozens of times an hour.
-	 * Daily is the defensible alternative and is rejected because a day's
-	 * accumulation makes each run a larger delete for no benefit.
-	 */
-	{ type: "cleanup_sessions", intervalSeconds: 3600 },
-	/*
-	 * Hourly, for the same reasons `cleanup_sessions` is. Correctness never
-	 * waits on it either: `consumeSetupToken` and `verifySetupSession` both
+	 * Hourly. Correctness never waits on it: `consumeSetupToken` and
+	 * `verifySetupSession` both
 	 * refuse an expired row on sight, so a row lingering between sweeps is
 	 * inert. A restricted setup session lives 30 minutes and a setup link 72
 	 * hours, so hourly keeps the shorter of the two from outliving its expiry
