@@ -19,11 +19,11 @@ An OTU must contain one or more isolates and each isolate must have one or more 
 
 Here is the structure of a single viral OTU containing one isolate and its sequences:
 
-### Isolate Naming
+### Isolate naming
 
-Virtool isolates are named with two pieces of information: the source type and source name. This naming system was inspired by the way isolate information is stored in Genbank records.
+Virtool isolates are named with two pieces of information: the source type and source name. This naming system was inspired by the way isolate information is stored in GenBank records.
 
-A **source type** is the first word in the isolate name and is a classification keyword used by the publisher of the sequence. Examples include _strain_, _genotype_, _culture_, and _variant_. The use of the **source type** keywords are not standardized in Genbank.
+A **source type** is the first word in the isolate name and is a classification keyword used by the publisher of the sequence. Examples include _strain_, _genotype_, _culture_, and _variant_. **Source type** keywords aren't standardized in GenBank.
 
 A **source name** is the unique second part of the isolate name that identifies the isolate.
 
@@ -40,7 +40,7 @@ Here are some examples of isolate names, source types, and source names:
 
 In Virtool, OTU _schemas_ are a way of defining what each isolate in the OTU should look like.
 
-Schemas allow you to define what sequence segments should be present in isolates created for the OTU. Once a schema is defined, users will be to mark each sequence in the isolate with the segment it represents. Assigning a segment to a sequence has the follow effects:
+Schemas allow you to define what sequence segments should be present in isolates created for the OTU. Once a schema is defined, users can mark each sequence in the isolate with the segment it represents. Assigning a segment to a sequence has the following effects:
 
 - sequences in the OTU detail view are sorted according to the schema order
 - sequences in the OTU detail view sequence headers display the segment name instead of the definition
@@ -56,17 +56,20 @@ The history for an OTU can be viewed in its detail view under the **History** ta
 
 ## Browse OTUs
 
+The examples in this guide use Abaca Bunchy Top Virus (ABTV) and Tobacco Mosaic Virus (TMV),
+with SXFQ as the name of an isolate.
+
 The OTUs that belong to a Virtool reference can be easily browsed and edited. To start browsing member OTUs for a given reference:
 
-1. Click on **References** in the main navigation bar
+1. Click **References** in the main navigation bar
 
-   This will show a list of all references.
+   This shows a list of all references.
 
    ![References list](./references.png?url)
 
 2. Click the reference of interest
 
-   This will open the detail view for the reference.
+   This opens the detail view for the reference.
 
    ![Banana Viruses reference](./reference_detail.png?url)
 
@@ -76,7 +79,7 @@ The OTUs that belong to a Virtool reference can be easily browsed and edited. To
 
    ![Banana Viruses OTUs](./reference_otu_list.png?url)
 
-4. Click on an OTU item to view its detail page
+4. Click an OTU item to view its detail page
 
    ![ABTV Detail](./abtv_detail.png?url)
 
@@ -88,7 +91,7 @@ Creating a new OTU for a given reference requires only a name. You can optionall
 
    ![Create OTU button](./create_button.png?url)
 
-   A dialog will appear with a form for creating a new OTU.
+   A dialog appears with a form for creating a new OTU.
 
    ![Create OTU dialog](./create.png?url)
 
@@ -102,9 +105,9 @@ Creating a new OTU for a given reference requires only a name. You can optionall
 
    ![New OTU in modified state](./created.png?url)
 
-4. Click on the newly created OTU
+4. Click the newly created OTU
 
-   This will navigate to the OTU's detail view. Notice that there is a warning indicating that the OTU is not ready for use in analyses.
+   This navigates to the OTU's detail view. Notice that there is a warning indicating that the OTU isn't ready for use in analyses.
 
    ![New OTU detail](./bad_banana.png?url)
 
@@ -116,15 +119,15 @@ The name or abbreviation for an OTU can be changed after its creation.
 
    ![Bad Banana Detail](./bad_banana.png?url)
 
-2. Click on the <Icon  name="pencil-alt"  color="orange" /> icon in the top-right
+2. Click the <Icon  name="pencil-alt"  color="orange" /> icon in the top-right
 
-   This will display the edit dialog. **Note that you will not see this icon if you don't have modification rights on the parent reference**.
+   This displays the edit dialog. **Note that you don't see this icon if you don't have modification rights on the parent reference**.
 
    ![Edit dialog](./edit.png?url)
 
 3. Change any of the fields and click <DummySaveButton />
 
-   We will change the abbreviation in this example.
+   The abbreviation is changed in this example.
 
    ![Edit dialog changes](./edit_changed.png?url)
 
@@ -134,45 +137,45 @@ The name or abbreviation for an OTU can be changed after its creation.
 
    ![Remove OTU](./tmv_initial.png?url)
 
-2. Click on the topmost <Icon name="trash" color="red" /> next to the OTU name
+2. Click the topmost <Icon name="trash" color="red" /> next to the OTU name
 
-   A dialog box like the one below will show up to confirm the deletion of the OTU.
+   A dialog box like the one below shows up to confirm the deletion of the OTU.
 
    ![Confirm removal of OTU](./remove.png?url)
 
 3. Click the <DummyButton icon="check" color="red">Confirm</DummyButton> button to permanently remove the OTU
 
-   The OTU will be removed from the **OTUs** list and the index must be rebuilt to include this change in future analyses.
+   The OTU is removed from the **OTUs** list and the index must be rebuilt to include this change in future analyses.
 
    ![Remove OTU](./removed.png?url)
 
-## Add an Isolate
+## Add an isolate
 
-Isolates are how sequence data are organized within the OTU record. Read about isolates in the [section overview](#overview).
+Isolates are how sequence data is organized within the OTU record. Read about isolates in the [section overview](#overview).
 
 1. Navigate to the detail view for an OTU
 
    ![TMV with one existing isolate](./tmv_initial.png?url)
 
-2. Click on <DummyLink>Add Isolate</DummyLink> to the right of the **Isolates** heading
+2. Click <DummyLink>Add Isolate</DummyLink> to the right of the **Isolates** heading
 
-   This will display a dialog for creating isolates.
+   This displays a dialog for creating isolates.
 
    ![Add isolate initial](./isolate_add.png?url)
 
 3. Fill the form with your **source type** and **source name** values
 
-   Notice that the **Isolate Name** field changes with the other two fields. Both fields are optional and the isolate name will be **Unnamed** if they are both empty. Multiple isolates in a single OTU can have the same name.
+   Notice that the **Isolate Name** field changes with the other two fields. Both fields are optional and the isolate name is **Unnamed** if they're both empty. Isolate names don't have to be unique within an OTU.
 
    ![Add isolate dialog filled](./isolate_add_filled.png?url)
 
 4. Save the changes by clicking <DummySaveButton />
 
-   The new isolate will appear in the isolate editor
+   The new isolate appears in the isolate editor
 
    ![Virus detail with one empty isolate](./tmv_sxfq.png?url)
 
-## Edit an Isolate
+## Edit an isolate
 
 1. Navigate to the OTU whose isolate you would like to edit
 
@@ -180,37 +183,37 @@ Isolates are how sequence data are organized within the OTU record. Read about i
 
 2. Select the isolate you want to edit
 
-   We will select _Isolate SXFQ_ in this example. This isolate is new and has no sequences associated with it.
+   _Isolate SXFQ_ is selected in this example. This isolate is new and has no sequences associated with it.
 
    ![TMV with Isolate SXFQ selected](./tmv_sxfq_selected.png?url)
 
-3. Click on the <Icon name="pencil-alt" color="orange" /> icon next to the isolate
+3. Click the <Icon name="pencil-alt" color="orange" /> icon next to the isolate
 
-   A dialog box will show up like the one below. The fields are populated with the current isolate data.
+   A dialog box shows up like the one below. The fields are populated with the current isolate data.
 
-   ![Dialog box for editing an isolete](./isolate_edit.png?url)
+   ![Dialog box for editing an isolate](./isolate_edit.png?url)
 
 4. Make the necessary changes to the isolate
 
-   In this example, we changed the source name to _TMV-WS06_.
+   In this example, the source name changes to _TMV-WS06_.
 
    ![Edited Isolate](./isolate_edit_filled.png?url)
 
 5. Click <DummySaveButton />
 
-   The new changes will be reflected in the detail view page of the OTU.
+   The new changes are reflected in the OTU detail view.
 
    ![New changes to OTU name displayed](./isolate_edited.png?url)
 
-## Remove an Isolate
+## Remove an isolate
 
 1. Select the isolate you would like to remove
 
    ![Delete new isolate](./tmv_sxfq_selected.png?url)
 
-2. Click on the <Icon name="trash" color="red" /> next to the isolate name
+2. Click the <Icon name="trash" color="red" /> next to the isolate name
 
-   A removal confirmation dialog like the one shown below will appear.
+   A removal confirmation dialog like the one shown below appears.
 
    ![Confirm removal of isolate](./isolate_remove_confirm.png?url)
 
@@ -220,7 +223,7 @@ Isolates are how sequence data are organized within the OTU record. Read about i
 
    ![Isolate is removed from list](./tmv_initial.png?url)
 
-## Add a Sequence
+## Add a sequence
 
 1. Select the isolate you want to add a sequence to
 
@@ -228,7 +231,7 @@ Isolates are how sequence data are organized within the OTU record. Read about i
 
 2. Click the <DummyLink>Add Sequence</DummyLink> link near the **Sequences** heading
 
-   This will display the **Add Sequence** dialog
+   This displays the **Add Sequence** dialog
 
    ![Sequence addition dialog](./sequence_add.png?url)
 
@@ -240,31 +243,31 @@ Isolates are how sequence data are organized within the OTU record. Read about i
 
 4. Click <DummySaveButton /> to create the new virus
 
-   It will appear in the isolate editor.
+   It appears in the isolate editor.
 
    ![TMV with sequence added for Isolate SXFQ](./sequence_added.png?url)
 
-5. Click on the sequence entry to expand it
+5. Click the sequence entry to expand it
 
    ![Sequence Record](./sequence_expanded.png?url)
 
-## Edit a Sequence
+## Edit a sequence
 
 1. Select the isolate and sequence you want to edit
 
-   Here we have selected sequence _JX993906.1_ in _Isolate SXFQ_.
+   Here, sequence _JX993906.1_ is selected in _Isolate SXFQ_.
 
    ![Sequence Record](./sequence_expanded.png?url)
 
 2. Click the <Icon name="pencil-alt" color="orange" /> icon in the sequence header
 
-   The **Edit Sequence** dialog will appear.
+   The **Edit Sequence** dialog appears.
 
    ![Edit sequence dialog box](./sequence_edit.png?url)
 
 3. Make your changes to the sequence
 
-   Here we changed the host field from _Solanum lycopersicum_ to _Tomato_.
+   Here, the host field was changed from _Solanum lycopersicum_ to _Tomato_.
 
    ![Edit sequence dialog box with change to host field](./sequence_edit_changed.png?url)
 
@@ -278,13 +281,13 @@ Isolates are how sequence data are organized within the OTU record. Read about i
 
 1. Select the sequence you want to remove
 
-   Here we have selected sequence _JX993906.1_ in _Isolate SXFQ_.
+   Here, sequence _JX993906.1_ is selected in _Isolate SXFQ_.
 
    ![Sequence Record](./sequence_expanded.png?url)
 
-2. Click on the <Icon name="trash" color="red" /> next to the sequence header
+2. Click the <Icon name="trash" color="red" /> next to the sequence header
 
-   A dialog box like the one shown below will show up.
+   A dialog box like the one shown below shows up.
 
    ![Confirm removal of the sequence](./sequence_remove.png?url)
 
@@ -294,11 +297,11 @@ Isolates are how sequence data are organized within the OTU record. Read about i
 
    ![Isolate is removed from list](./sequence_removed.png?url)
 
-## Add a Segment
+## Add a segment
 
 1. Navigate to an OTU you want to define a schema for
 
-   We will look at Abutilon mosaic virus (AbMV) in this example. Notice that AbMV has two genome segments: _DNA-A_ and _DNA-B_.
+   This example uses Abutilon mosaic virus (AbMV). Notice that AbMV has two genome segments: _DNA-A_ and _DNA-B_.
 
    ![Abutilon mosaic virus detail](./abmv.png?url)
 
@@ -308,7 +311,7 @@ Isolates are how sequence data are organized within the OTU record. Read about i
 
 3. Click <DummyButton icon="plus-square">Add Segment</DummyButton>
 
-   The **Add Segment** dialog box will appear.
+   The **Add Segment** dialog box appears.
 
    ![Add Segment](./segment_add.png?url)
 
@@ -322,7 +325,7 @@ Isolates are how sequence data are organized within the OTU record. Read about i
 
 5. Click <DummySaveButton /> to add the segment
 
-   The new _DNA-A_ segment will be displayed in the schema list.
+   The new _DNA-A_ segment is displayed in the schema list.
 
    ![DNA-A added to AbMV schema](./segment_added.png?url)
 
@@ -330,39 +333,39 @@ Isolates are how sequence data are organized within the OTU record. Read about i
 
    ![Both segments added to AbMV schema](./segments_added.png?url)
 
-## Edit a Segment
+## Edit a segment
 
 1. Locate the segment you want to edit
 
-   We will change the name of _DNA-A_.
+   The name of _DNA-A_ is changed.
 
-   ![DNA-A will be edited](./segments_added.png?url)
+   ![DNA-A is edited](./segments_added.png?url)
 
 2. Click the <Icon name="pencil-alt" color="orange" /> icon
 
-   The **Edit Segment** dialog will appear. The form will be populated with the current segment data.
+   The **Edit Segment** dialog appears. The form is populated with the current segment data.
 
    ![Edit segment dialog](./segment_edit.png?url)
 
 3. Make your changes to the segment
 
-   Here, we changed the name from _DNA-A_ to _DNA A_.
+   Here, the name changes from _DNA-A_ to _DNA A_.
 
    ![Edit segment dialog with changes](./segment_edit_changed.png?url)
 
 4. Click <DummySaveButton />
 
-   The changes made will be reflected under the **Schema** tab.
+   The updated name appears under the **Schema** tab.
 
    ![DNA-A was changed to DNA A](./segment_edited.png?url)
 
-## Use a Segment
+## Use a segment
 
 Once you have defined a schema for an OTU, you can set a segment on each isolate sequence when adding or editing them.
 
 1. Check the schema for the OTU
 
-   We have defined _DNA-A_ and _DNA-B_ for AbMV. The segments are ordered alphabetically.
+   _DNA-A_ and _DNA-B_ are defined for AbMV. The segments are ordered alphabetically.
 
    ![Schema for AbMV](./segments_added.png?url)
 
@@ -372,41 +375,41 @@ Once you have defined a schema for an OTU, you can set a segment on each isolate
 
 3. Select a sequence
 
-   Here, we have selected _NC_001929_. Notice that the **Segment** field is _Not configured_.
+   Here, _NC_001929_ is selected. Notice that the **Segment** field isn't configured.
 
    ![AbMV with NC_001929](./segment_use_select.png?url)
 
 4. Click the <Icon name="pencil-alt" color="orange" /> icon
 
-   The **Edit Sequence** dialog will appear.
+   The **Edit Sequence** dialog appears.
 
    ![Sequence edit dialog for NC_001929](./segment_use_edit.png?url)
 
 5. Click the **Segment** dropdown
 
-   The segments defined in the schema will be available for selection.
+   The segments defined in the schema are available for selection.
 
    ![Sequence edit dialog with Segment dropdown](./segment_use_edit_dropdown.png?url)
 
 6. Select the segment for your sequence
 
-   Here, we will select _DNA-B_ to match the information from the Genbank-sourced definition for the sequence.
+   Here, select _DNA-B_ to match the information from the GenBank-sourced definition for the sequence.
 
    ![Sequence edit dialog with segment set](./segment_use_edit_changed.png?url)
 
 7. Click <DummySaveButton />
 
-   The change to the **Segment** field will be reflected in the sequence record and the sequence header will contain the segment name instead of the sequence definition.
+   The change to the **Segment** field is reflected in the sequence record and the sequence header contains the segment name instead of the sequence definition.
 
    ![AbMV sequence list with segment change reflected](./segment_use_changed.png?url)
 
 8. Set the segment for the other sequence
 
-   When this has been done, the **Sequences** list will be ordered according to the schema.
+   When this has been done, the **Sequences** list is ordered according to the schema.
 
    ![AbMV sequence list ordered according to schema](./segment_use_ordered.png?url)
 
-## Reorder a Schema
+## Reorder a schema
 
 1. Select an OTU and isolate and note the current sequence ordering
 
@@ -430,7 +433,7 @@ Once you have defined a schema for an OTU, you can set a segment on each isolate
 
    ![AbMV schema with both segments](./sequences_reordered.png?url)
 
-## Remove a Segment
+## Remove a segment
 
 1. Navigate to the schema page for an OTU
 
@@ -438,12 +441,12 @@ Once you have defined a schema for an OTU, you can set a segment on each isolate
 
 2. Click the <Icon name="trash" color="red" /> icon on a segment
 
-   The **Remove Segment** dialog will appear.
+   The **Remove Segment** dialog appears.
 
    ![Confirm removal of segment](./segment_remove.png?url)
 
 3. Click <DummyButton icon="check" color="red">Confirm</DummyButton> button to remove the segment
 
-   The segment will be removed from the schema segment list.
+   The segment is removed from the schema segment list.
 
    ![Segment removed](./segment_removed.png?url)

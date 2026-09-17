@@ -43,7 +43,7 @@ type SerializedServerError = {
  * a `SetupRequiredError`'s `purpose`, which is the only thing telling the
  * router which setup surface a restricted caller belongs on.
  * Registered adapters run before the default plugins, so this one
- * re-serializes our own errors with those fields intact and rebuilds them
+ * re-serializes application errors with those fields intact and rebuilds them
  * client-side. Everything else still falls through to `ShallowErrorPlugin`
  * unchanged.
  */

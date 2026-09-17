@@ -440,7 +440,7 @@ describe("installHmms", () => {
 
 		expect(records).toHaveLength(2);
 		expect(records.map((record) => record.cluster)).toEqual([7, 9]);
-		// The id NuVs maps each vFam cluster onto, assigned by Postgres.
+		// The id Nuvs maps each vFam cluster onto, assigned by Postgres.
 		expect(records.every((record) => typeof record.id === "number")).toBe(true);
 	});
 
@@ -463,7 +463,7 @@ describe("installHmms", () => {
 	});
 
 	// Nothing else writes this key, so a swallowed failure would report a
-	// successful install and leave NuVs with a blob nothing can recreate.
+	// successful install and leave Nuvs with a blob nothing can recreate.
 	it("fails when the annotations blob cannot be written", async () => {
 		const storage = new MemoryStorage();
 		await seedPendingStatus();

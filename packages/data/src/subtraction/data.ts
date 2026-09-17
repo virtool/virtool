@@ -321,8 +321,7 @@ async function checkSubtractionExists(
  *
  * This is the source genome `create_subtraction` reads, and the only file a
  * subtraction has before it is finalized. It is not folded into
- * {@link getSubtraction}: that shape is served to the SPA as well, and an
- * upload's `storage_key` has no business crossing that wire.
+ * {@link getSubtraction}: an upload's `storage_key` must not be returned.
  *
  * Returns null when the subtraction does not exist, names no upload, or names a
  * removed one. Every column here is nullable, so the fields are handed back as

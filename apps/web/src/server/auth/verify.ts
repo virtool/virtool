@@ -137,8 +137,8 @@ export async function verifyLegacyBrowserPrincipal(
 
 /**
  * Parse a `Cookie` header into a flat map. Lightweight; sufficient for reading
- * setup-session cookies from a raw `Request` (where the `getCookie` helper tied
- * to async-local request context isn't available).
+ * session cookies from a raw `Request` (where the `getCookie` helper
+ * tied to async-local request context isn't available).
  */
 export function parseCookieHeader(
 	header: string | null,

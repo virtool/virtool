@@ -2,7 +2,7 @@ import NuvsBlast from "@analyses/components/Nuvs/NuvsBlast";
 import type { Blast } from "@analyses/types";
 import { screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { createFakeFormattedNuVsHit } from "@tests/fake/analyses";
+import { createFakeFormattedNuvsHit } from "@tests/fake/analyses";
 import { mockBlastNuvs } from "@tests/server-fn/analyses";
 import { renderWithProviders } from "@tests/setup";
 import { describe, expect, it } from "vitest";
@@ -24,7 +24,7 @@ function createBlast(overrides: Partial<Blast>): Blast {
 }
 
 function renderBlast(blast?: Blast) {
-	const hit = createFakeFormattedNuVsHit({ blast, index: 0 });
+	const hit = createFakeFormattedNuvsHit({ blast, index: 0 });
 
 	return renderWithProviders(<NuvsBlast analysisId={5} hit={hit} />);
 }

@@ -37,9 +37,6 @@ describe("buildTestContext", () => {
 		expect(context.state).toEqual({ count: 0 });
 	});
 
-	// The seam the deferred end-to-end bed stands on: a run there is files plus a
-	// JSON blob, and it rots silently the first time someone parks a closure or
-	// an open handle on `data`.
 	it("produces data that survives a JSON round trip unchanged", async () => {
 		const { data } = await buildTestContext(workflow);
 

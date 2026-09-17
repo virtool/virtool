@@ -1,0 +1,10 @@
+extends: substitution
+message: "Use '%s' instead of '%s'."
+level: error
+ignorecase: true
+nonword: true
+action:
+  name: replace
+swap:
+  taxids: taxonomy IDs
+  taxid: taxonomy ID

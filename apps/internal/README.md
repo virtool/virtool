@@ -11,8 +11,9 @@ the first argument to the bundle (`node dist/index.mjs <command>`):
 | `migrate` | Applies pending Drizzle migrations, then exits. Run as an init Job. |
 | `data-migrations` | Inspects recorded audits and backfills. Run as a Job. |
 
-Image: `ghcr.io/virtool/internal`. The image is fused; the processes are not.
-`serve` scales to N request replicas, while `run` is a lease singleton — folding
+Image: `ghcr.io/virtool/internal`. The image is shared; the processes are
+separate.
+`serve` scales to N request replicas, while `run` is a lease singleton. Folding
 them into one process would multiply task-lease contention across every HTTP
 replica, so they stay separate containers differentiated only by the argument
 each passes.
@@ -20,11 +21,11 @@ each passes.
 `src/index.ts` is the dispatcher: it reads `argv[2]` and dynamically imports the
 selected command's graph, so the migration Job never loads Hono and the HTTP
 server never loads the task registry. Each command lives under its own
-directory — `src/serve/`, `src/run/`, `src/migrate/`, `src/data-migrations/` — and
+directory: `src/serve/`, `src/run/`, `src/migrate/`, `src/data-migrations/`, and
 owns its own config, Sentry service name (`jobs-api`, `tasks`, `migrate`,
 `data-migrations`) and fatal logging.
 
-## `serve` — the jobs API
+## `serve`: the jobs API
 
 The process workflow runners use to claim, update, and finish jobs. Binds
 `VT_JOBS_API_PORT` (**9950**) and is fronted by `jobs-api-service`.
@@ -35,7 +36,7 @@ See [Job lifecycle](../../docs/jobs.md) for the protocol shared with
 ### Workflow files and finalization
 
 Workflow runners transfer bytes directly through object storage. The jobs API
-records and serves complete storage keys; it does not derive a key from a row
+records and serves complete storage keys; it doesn't derive a key from a row
 id, legacy id, or filename.
 
 A runner mints an output key with `mintStorageKey(domain, parentId)`, uploads
@@ -46,13 +47,13 @@ the object, and sends that key in one resource-finalization request:
 - `PATCH /analyses/{id}`.
 
 The request carries the resource fields and its complete file manifest so the
-parent cannot become ready without its file rows. Manifests omit `size` and
+parent can't become ready without its file rows. Manifests omit `size` and
 `name_on_disk`; the route validates that each non-empty key is beneath the
 resource's `{domain}/{parentId}/` prefix, reads the object's size from storage,
 and records the submitted key verbatim. Keys with a leading slash, an empty
 segment, or a `..` segment are invalid.
 
-The shared contracts enforce the minimum usable output: a sample has one or two
+The shared contracts enforce the minimum valid output: a sample has one or two
 reads, a subtraction has at least its source FASTA, and an analysis requires
 `results` but may have an empty file manifest. Subtraction runs write only
 `subtraction.fa.gz`; reads still serve older subtractions whose rows also
@@ -62,12 +63,12 @@ Caches are the sole key-composition exception. `POST /caches` accepts a bare
 UUID and composes its cache key server-side. The workflow uploads the cache blob
 before registering it, and an already-registered logical key is success.
 
-## `run` — the task spawner and runner
+## `run`: the task spawner and runner
 
-**One** long-lived process carrying both halves of Virtool's task system — the
+**One** long-lived process carries both halves of Virtool's task system: the
 periodic spawner that inserts scheduled tasks, and the runner that claims and
-executes what it spawns. No ingress and **no Service** — its HTTP listener
-serves only `GET /health/live`, `GET /health/ready` and a token-gated
+executes what it spawns. The process has no ingress and **no Service**. Its HTTP
+listener serves only `GET /health/live`, `GET /health/ready`, and a token-gated
 `GET /metrics` on `VT_TASKS_PROBE_PORT` (**9900**).
 
 Neither half has a flag to turn it off. A minute of task lag is invisible to a
@@ -76,21 +77,22 @@ user, so a staged rollout buys nothing.
 ### Shape
 
 Everything is built inside `bootstrap()` (`src/run/bootstrap.ts`), the
-composition root — config, logger, pool, emitter, storage, registry, listener.
+composition root. It creates the config, logger, pool, emitter, storage,
+registry, and listener.
 This command has no module-scope singleton of any kind, so a module of it can be
 imported to read a type without opening anything.
 
-- `src/run/spawner.ts` — the periodic spawner, over `src/run/tasks/periodic.ts`
-- `src/run/runner.ts` — claim, dispatch, heartbeat, drain
-- `src/run/framework/` — `defineTask`, the progress writer and `runTask`
-- `src/run/tasks/` — the task bodies, named for the `type` column in skewer case
+- `src/run/spawner.ts`: the periodic spawner over `src/run/tasks/periodic.ts`
+- `src/run/runner.ts`: claim, dispatch, heartbeat, and drain
+- `src/run/framework/`: `defineTask`, the progress writer, and `runTask`
+- `src/run/tasks/`: the task bodies, named for the `type` column in kebab-case
   (`refresh-hmms.ts` for `refresh_hmms`), registered in
   `src/run/tasks/registry.ts`
-- `src/run/download.ts` — downloading a release archive to disk, with the
+- `src/run/download.ts`: downloading a release archive to disk, with the
   bounded retry, idle-stall timeout and status check `install_hmms` needs
 
-A claim is a lease encoded on `acquired_at`, renewed every 60 s and live for
-300. A reclaimed task re-runs from step zero, so **every task body must be
+A claim is a lease encoded on `acquired_at`, renewed every 60 seconds, and live
+for 300 seconds. A reclaimed task re-runs from step zero, so **every task body must be
 idempotent**.
 
 ### Task names and queue ownership
@@ -105,7 +107,7 @@ The task taxonomy lives in `@virtool/contracts`:
 `taskRegistry` is typed as a complete registry over `TaskName`, so changing the
 shared taxonomy requires a handler here. `PERIODIC_TASKS` separately defines
 the schedule and is checked against the registry. The taxonomy intentionally
-does not record which feature creates each on-demand task; producers use the
+doesn't record which feature creates each on-demand task; producers use the
 shared `createTask()` boundary and keep their domain-specific lifecycle local.
 
 Postgres queue persistence belongs to `@virtool/data`, including enqueueing,
@@ -121,14 +123,14 @@ schema, optional ordered steps, a `run` function, and optional cleanup.
 `runTask()` parses the row context before calling the body; invalid payloads
 fail through the same terminal path as body errors.
 
-Each declared step occupies an equal slice of 0–100 progress. A step reports a
+Each declared step occupies an equal slice of 0-100 progress. A step reports a
 fraction from 0 to 1, and the framework debounces, serializes, and keeps writes
-monotonic. Task bodies do not write the `tasks` table or publish task events
+monotonic. Task bodies don't write the `tasks` table or publish task events
 themselves.
 
-Cleanup runs after failure or cooperative abort, but not after success. Its
-reason distinguishes terminal failure from an aborted run that another runner
-will retry. Cleanup errors are logged without replacing the original outcome.
+Cleanup runs after failure or cooperative cancellation, but not after success.
+Its reason distinguishes terminal failure from a cancelled run that another runner
+may retry. Cleanup errors are logged without replacing the original outcome.
 
 Every task body must:
 
@@ -140,19 +142,20 @@ Every task body must:
 
 ### Spawner
 
-The spawner checks `PERIODIC_TASKS` every 30 seconds. A task's interval is a
-minimum suppression window, not an exact schedule, and a new row is created
-only when no outstanding task of that type exists. An outstanding row that
+The spawner checks `PERIODIC_TASKS` every 30 seconds. A task's interval is the
+minimum time before another task of that type can be spawned, not an exact
+schedule. A new row is created only when no outstanding task of that type
+exists. An outstanding row that
 never finishes stops suppressing the type once it ages past the wedge ceiling
 (`TASK_WEDGE_SECONDS`), so a runner stuck without ever completing or failing
-its task cannot block the type for good.
+its task can't block the type for good.
 
 Each spawn attempt takes a transaction-scoped advisory lock derived from the
 bare task name. This prevents multiple replicas from inserting the same
 periodic task. A failure for one type is logged without skipping the remaining
 types or stopping the loop.
 
-During shutdown the spawner stops before the runner drains, so it cannot add
+During shutdown the spawner stops before the runner drains, so it can't add
 new work while claims are being released.
 
 ### Runner, leases, and fencing
@@ -165,10 +168,10 @@ change without redesigning lease storage.
 A claim records a runner id and acquisition time. The heartbeat renews all
 in-flight claims every 60 seconds against a 300-second lease. Expired leases
 are reclaimable. Every runner mutation is fenced by task id and runner id, so a
-runner whose lease has been reclaimed cannot update the new owner's task.
+runner whose lease has been reclaimed can't update the new owner's task.
 
 When renewal reports that a claim was lost, the runner aborts that task and
-does not write or release it. Claim and heartbeat failures are logged and
+doesn't write or release it. Claim and heartbeat failures are logged and
 retried rather than crashing the process.
 
 ### Shutdown
@@ -181,13 +184,13 @@ non-zero if any step fails. A second signal is logged and ignored.
 The runner stops claiming, waits for its in-flight task within
 `VT_TASKS_DRAIN_TIMEOUT`, aborts it if necessary, waits briefly for cooperative
 cleanup, stops the heartbeat, and releases this runner's remaining claims. The
-drain timeout is part of the total shutdown budget, not additional to it. The
-container must execute Node directly so SIGTERM reaches these handlers.
+drain timeout is included in the total shutdown budget. The container must
+execute Node directly so SIGTERM reaches these handlers.
 
-## `migrate` — database migrations
+## `migrate`: database migrations
 
-Applies pending Drizzle migrations and exits. It reads a lean environment —
-`VT_POSTGRES_URL` and the optional `VT_MIGRATIONS_PATH` — with none of the
+Applies pending Drizzle migrations and exits. It reads a lean environment with
+`VT_POSTGRES_URL` and the optional `VT_MIGRATIONS_PATH`. It has none of the
 storage credentials, ports or shutdown budget the long-lived processes need, so
 the Job's pod spec carries only what a migration uses. It opens a single
 connection (migrations are serial) and reports under the `migrate` service name,
@@ -226,7 +229,7 @@ SQL assertions still prevent it from applying an unsatisfied pair, but its
 single pending-migration transaction can roll back the preceding SQL too. Use
 this app's segmented `migrate` command for deployment.
 
-## `data-migrations` — inspection
+## `data-migrations`: inspection
 
 An **audit** scans and reports findings; it may also perform retry-safe repairs.
 A **backfill** writes in bounded, idempotent batches and retains a cursor. Both
@@ -313,7 +316,7 @@ recorded as findings under the `user:<id>` subject without password material.
 ## Metrics
 
 Both long-lived subcommands own a private Prometheus registry and a token-gated
-`GET /metrics` — `serve` on 9950, `run` on 9900. Each requires the configured
+`GET /metrics`: `serve` on 9950 and `run` on 9900. Each requires the configured
 bearer token; when `VT_METRICS_TOKEN` is unset the route returns 404. Both
 registries carry the default Node metrics, `virtool_app_info`, and Postgres pool
 occupancy.
@@ -352,9 +355,8 @@ the outbox, and `deliver_email` drains what was already queued, so the outbox
 gauge falls to zero instead of holding until sending returns.
 
 The probe listener (`run`) accepts only `GET`. `/health/live` returns a static
-success and never checks Postgres — a database outage must not restart every pod
-and kill tasks in flight. `/health/ready` checks Postgres and returns
-unavailable as soon as shutdown begins.
+success, while `/health/ready` checks Postgres and returns unavailable as soon as
+shutdown begins.
 
 ## Configuration
 
@@ -374,11 +376,11 @@ unset.
 | `VT_TASKS_PROBE_PORT` | Positive integer | `9900` | `run`: listen for health probes and Prometheus scrapes. |
 | `VT_TASKS_SHUTDOWN_TIMEOUT` | Positive integer (seconds) | `40` | `run`: bound the complete graceful-shutdown sequence. It must remain below the pod termination grace period. |
 | `VT_TASKS_DRAIN_TIMEOUT` | Positive integer (seconds) | `25` | `run`: allow an in-flight task to finish before releasing its claim. This must be less than `VT_TASKS_SHUTDOWN_TIMEOUT` and is part of that budget. |
-| `VT_MIGRATIONS_PATH` | String | Bundled `drizzle/` | `migrate`: override the migrations folder, e.g. to run against the working tree. |
+| `VT_MIGRATIONS_PATH` | String | Bundled `drizzle/` | `migrate`: override the migrations folder, for example to run against the working tree. |
 | `VT_POSTGRES_URL` | URL | Required | Connect to the Virtool Postgres database. |
 | `VT_POSTGRES_POOL_MAX` | Positive integer | `10` | Limit the Postgres connection pool (`serve` and `run`; `migrate` always uses one connection). |
 | `VT_METRICS_TOKEN` | String | Unset | Enable `/metrics` and authenticate scrapes with a bearer token. When unset, `/metrics` returns 404. |
-| `VT_SENTRY_DSN` | URL string | Unset | Send errors to Sentry. When unset, Sentry is disabled. |
+| `VT_SENTRY_DSN` | URL string | Unset | Send errors to Sentry. When unset, errors aren't sent to Sentry. |
 | `VT_ENCRYPTION_KEY` | Base64 string (32 bytes) | Unset | `run`: decrypt secrets stored by Virtool, currently the Resend API key for `deliver_email`. When unset or invalid, email is unavailable and every other task runs normally. See [the encryption-key guide](../../docs/env.md#encryption-key). |
 | `VT_ENCRYPTION_KEY_PREVIOUS` | Base64 string (32 bytes) | Unset | `run`: accept encrypted values written under the prior key during rotation. |
 | `VT_STORAGE_BACKEND` | `s3` \| `azure` | Required | Select the object-storage backend shared with the other Virtool services. |
@@ -404,7 +406,7 @@ Run from the monorepo root.
 | --- | --- |
 | `pnpm --filter @virtool/internal develop serve` / `develop run` | Watch, rebuild, and gracefully restart the selected service. |
 | `pnpm --filter @virtool/internal build` | Bundle to `dist/index.mjs`. |
-| `pnpm --filter @virtool/internal test` | Run the Vitest suite (needs Docker — Postgres testcontainer). |
+| `pnpm --filter @virtool/internal test` | Run the Vitest suite. It needs Docker for the Postgres testcontainer. |
 | `pnpm --filter @virtool/internal typecheck` | Run `tsc --noEmit`. |
 
 Migrations remain a one-shot startup step; see [the development guide](../../dev/README.md#builds-dependencies-and-rollout).
@@ -417,7 +419,7 @@ Run a subcommand from the built bundle with `node dist/index.mjs serve`,
 
 Tests run as one Node Vitest project against a Postgres testcontainer. The
 project has its own CI job and is excluded from `Packages / Test` so container
-startup is not part of the fast package loop. It imports the shared container
+startup isn't part of the fast package loop. It imports the shared container
 setup from `@virtool/data/db/test/globalSetup`.
 
 ## Related documentation

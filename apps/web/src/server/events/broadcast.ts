@@ -7,7 +7,7 @@ import type { ClientEvent } from "@virtool/data/events/channel";
  * invalidation, so the server does no resource resolution here.
  *
  * The wire schema enforces per-domain id types at the client parse boundary;
- * we forward the resource id as-is and let SseMessageSchema reject mismatches.
+ * the resource id is forwarded as-is and SseMessageSchema rejects mismatches.
  */
 export function eventToSseMessage(event: ClientEvent): SseMessage {
 	const operation =

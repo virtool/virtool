@@ -63,8 +63,6 @@ describe("createWorkflowContext", () => {
 		expect(second.state.hits).toBe(0);
 	});
 
-	// The assertion runs on every real run, not only under test: the failure it
-	// catches is otherwise invisible until the end-to-end bed is built.
 	it("rejects data that does not survive a JSON round trip", async () => {
 		await expect(
 			createWorkflowContext(

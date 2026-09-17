@@ -18,7 +18,7 @@ function clientError(message: string, status: number): Error {
 }
 
 describe("serverErrorSerializationAdapter", () => {
-	it("matches our server errors by name", () => {
+	it("matches server errors by name", () => {
 		expect(
 			serverErrorSerializationAdapter.test(
 				namedError(UNAUTHORIZED_ERROR_NAME, "Unauthorized"),

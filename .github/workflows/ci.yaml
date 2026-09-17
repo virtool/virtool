@@ -197,6 +197,36 @@ jobs:
                   fi
 
     # -------------------------------------------------------------------------
+    # Docs prose (*.md, *.mdx)
+    # -------------------------------------------------------------------------
+    # Vale lints Markdown and MDX against the Google and write-good styles named
+    # in `.vale.ini`. `MinAlertLevel = warning` prints warnings but only
+    # error-level alerts set a non-zero exit, so this gate fails on errors and
+    # leaves warnings advisory. No checkout of the styles: they are gitignored
+    # and `vale sync` fetches them from pinned package release URLs. No `Setup`
+    # action either — this job runs no pnpm, and skipping node_modules keeps `vale .`
+    # off the dependency tree it would otherwise walk.
+    docs-lint:
+        name: Docs / Lint
+        runs-on: ubuntu-24.04
+        timeout-minutes: 5
+        steps:
+            - name: Checkout
+              uses: actions/checkout@v7
+            # Pinned to the version the vocabulary and style overrides were
+            # cleared against; a floating install could add rules that fail a
+            # branch nothing changed.
+            - name: Install Vale
+              run: |
+                  curl -sfL https://github.com/errata-ai/vale/releases/download/v3.18.0/vale_3.18.0_Linux_64-bit.tar.gz \
+                      | sudo tar -xz -C /usr/local/bin vale
+                  vale --version
+            - name: Sync styles
+              run: vale sync
+            - name: Lint
+              run: vale --glob='*.{md,mdx}' .
+
+    # -------------------------------------------------------------------------
     # Docker images (apps/web, apps/internal, apps/create-subtraction,
     # apps/pathoscope)
     # -------------------------------------------------------------------------
@@ -359,7 +389,7 @@ jobs:
                   TZ: UTC
 
     # -------------------------------------------------------------------------
-    # NuVs (apps/nuvs)
+    # Nuvs (apps/nuvs)
     # -------------------------------------------------------------------------
     # Also published by `release-ghcr` as `ghcr.io/virtool/nuvs`.
     #
@@ -368,7 +398,7 @@ jobs:
     # workflow build does. It is the first stage in the Dockerfile and depends on
     # nothing else, so a warm layer cache skips it entirely.
     build-nuvs:
-        name: NuVs / Build
+        name: Nuvs / Build
         runs-on: ubuntu-24.04
         timeout-minutes: 60
         needs: [changes]
@@ -597,6 +627,7 @@ jobs:
                 build-pathoscope,
                 checks,
                 data-storage-test,
+                docs-lint,
                 internal-test,
                 nuvs-test,
                 packages-test,

@@ -12,16 +12,16 @@ samples can be created, viewed,edited, analyzed, and removed.
 
 ### What happens during sample creation?
 
-Sample FASTQ files are copied into a new sample directory. The files will be compressed
+Sample FASTQ files are copied into a new sample directory. The files are compressed
 if necessary. Files associated with the sample can be viewed and downloaded under the
 sample detail tab.
 
 Quality information is calculated from the library using [FastQC](https://www.bioinformatics.babraham.ac.uk/projects/fastqc/)
 and committed to Virtool's database.
 
-The FASTQ files and quality data are used for further analyses triggered by the user.
+The FASTQ files and quality data support further analyses triggered by the user.
 
-## Browse Samples
+## Browse samples
 
 Once you have imported one or more samples, they can be browsed in the main sample
 management view.
@@ -42,32 +42,32 @@ management view.
    - analysis in progress
    - at least one completed analysis
 
-   Here we are looking for samples with names containing _q10_ that have **a completed Nuvs analysis**:
+   This searches for samples with names containing _q10_ that have **a completed Nuvs analysis**:
 
    <video src="./filter.mp4" alt="Filter samples" autoplay />
 
-4. Click on a sample to navigate to its detail view
+4. Click a sample to navigate to its detail view
 
-   Here is the detail view for samples from the previous step: _Q10A_2_.
+   Here is the detail view for the sample named _Q10A_2_.
 
    ![The sample detail view for Q10A_2](./detail.png?url)
 
-## Start Quick Analysis
+## Start quick analysis
 
-Quick analyses allows you to start analysis jobs for multiple samples at once.
+Quick analysis lets you start analysis jobs for multiple samples at once.
 
 1. Select the samples of interest and click <Icon name="chart-area" color="green" />.
 
-   An **Analyze** dialog box will appear.
+   An **Analyze** dialog box appears.
    ![Samples Selected](./selected.png?url)
 
-2. Choose the workflow(s) (PathoscopeBowtie or Nuvs), subtraction, and reference(s) you
-   want to use to analyze your sample(s).
+2. Choose the workflows (PathoscopeBowtie or Nuvs), subtraction, and references you
+   want to use to analyze your samples.
 
-   Selecting multiple references will start a separate job for each sample-reference
+   Selecting multiple references starts a separate job for each sample-reference
    combination.
 
-3. Click <DummyButton icon="play">Start</DummyButton> to start the analysis job(s).
+3. Click <DummyButton icon="play">Start</DummyButton> to start the analysis jobs.
    ![Analyze](./analyze.png?url)
 
 4. Wait for the analysis to complete.
@@ -75,7 +75,7 @@ Quick analyses allows you to start analysis jobs for multiple samples at once.
    Once the analysis is running, you can view its progress under the **Jobs** tab.
    ![Analysis in progress](./progress.png?url)
 
-## Create a Sample
+## Create a sample
 
 1. Go to **Samples** view via the main navigation bar
 
@@ -92,14 +92,14 @@ Quick analyses allows you to start analysis jobs for multiple samples at once.
 3. Return to the **Samples** view and click <DummyButton icon="plus-square" /> to open the
    sample creation dialog
 
-   The file you uploaded should now be available in file list.
+   The uploaded file appears in the file list.
 
    ![Sample creation dialog](./create.png?url)
 
 4. Populate the sample creation form.
 
    You **must** set a unique sample _name_ and _read size_. _Read size_ can be set to
-   either _normal_, _sRNA_, or amplicon. Subsequent analysis workflows will run using
+   either _normal_, _sRNA_, or amplicon. Later analysis workflows run using
    different parameters based on the _read size_ setting.
 
    The sample creation dialog allows you to set optional metadata including _isolate_,
@@ -116,9 +116,9 @@ Quick analyses allows you to start analysis jobs for multiple samples at once.
    Paired or unpaired FASTQ data can be used to create a sample.
 
    Samples created from only one file are assumed to be unpaired. Paired samples must
-   comprise two paired FASTQ files. **Interleaved FASTQ files are not currently supported**.
+   comprise two paired FASTQ files. **Interleaved FASTQ files aren't currently supported**.
 
-   For paired data, make sure the file orientation labels (left and right) are correct
+   For paired data, check that the file orientation labels (left and right) are correct
    before you create a sample. You can use the <DummyButton color="grey" icon="retweet" />
    button to swap orientations.
 
@@ -132,18 +132,18 @@ Quick analyses allows you to start analysis jobs for multiple samples at once.
 
    <Aside title="Default Subtraction">
 
-   The default subtraction for a sample will be pre-selected as whenever you create an
-   analysis for that sample. You can find the default subtraction for a given sample at
+   The default subtraction is preselected whenever you create an analysis for the sample.
+   You can find the default subtraction for a given sample at
    the bottom of its detail view.
 
    For Banana bunchy top virus below, the default subtraction is **Banana**. This was
    the same subtraction that was selected when first creating this sample. Once a
-   default subtraction has been made for a sample, you cannot change it.
+   default subtraction has been made for a sample, you can't change it.
 
    ![Default Subtraction](./default_subtraction.png?url)
 
    When you open an analysis creation dialog for the sample, the default subtraction
-   (**Banana**) will already be pre-selected.
+   (**Banana**) is already pre-selected.
 
    ![Default Subtraction Dialog](./default_subtraction_dialog.png?url)
 
@@ -157,11 +157,11 @@ Quick analyses allows you to start analysis jobs for multiple samples at once.
 
 6. Wait for job to complete.
 
-   Your sample will look something like this when it is ready.
+   Your sample looks something like this when it's ready.
 
    ![Sample Creation Complete](./ready.png?url)
 
-## Interpreting Sample Quality
+## Interpreting sample quality
 
 Quality metrics are calculated using [FastQC](https://www.bioinformatics.babraham.ac.uk/projects/fastqc) during the sample creation process. These metrics are based on the raw data provided by the user.
 
@@ -169,37 +169,40 @@ The quality information can be viewed under the **Quality** tab:
 
 ![Quality](./quality.png?url)
 
-You will see three different graphs on this page as shown below.
+The page shows three graphs.
 
-### Quality Distribution at Read Positions
+### Quality distribution at read positions
 
 ![Quality Distribution at Read Positions](./quality_dist_at_read_positions.png?url)
 
 This graph shows the quality of your sample library. The Y-axis shows the quality score, the higher the better. The quality tends to decrease as the run progresses.
 
-Median values of less than 25 or a lower quartile of less than 10 is concerning. In the case of the sample above, the quality of our sample library is fine and further analysis can take place.
+A median below 25 or a lower quartile below 10 is cause for concern. The sample shown
+here has sufficient quality for further analysis.
 
-### Nucleotide Composition at Read Positions
+### Nucleotide composition at read positions
 
 ![Nucleotide Composition at Read Positions](./nuc_comp_at_read_positions.png?url)
 
-This plot shows the proportion of each base's position in a file. In general, one should expect A/T to be roughly equal and G/C to be roughly equal. Viruses genomes are often unevenly distributed in composition and are usually A/T rich.
+This plot shows the proportion of each nucleotide at every read position. In a
+diverse library, nucleotide proportions shouldn't vary systematically by read
+position, so the lines should be roughly parallel. Overall nucleotide
+composition depends on the library; viral genomes may, for example, be
+A/T-rich.
 
-With all of the things being equal in a diverse library, you should see an even distribution of the four bases which doesn't change with base position. Although the relative amount of G/C content will be determined by your library, but what you should see on the graph are parallel lines going across the plot.
-
-### Read-wise Quality Occurrence
+### Read-wise quality occurrence
 
 ![Read-wise Quality Occurrence](./read_wise_quality_occurrence.png?url)
 
-In this case we are taking every sequence and looking at the mean score across all the bases in that particular sequence. The distribution of those means are then plotted as shown above. All sequences should form one tight distribution (sharp curve) with universally high quality and no sequences of low quality. This sharp curve is the average quality per read. A mean quality below 27 is a cause for concern.
+In this case, every sequence is evaluated by looking at the mean score across all the bases in that particular sequence. The distribution of those means is then plotted as shown previously. All sequences should form one tight distribution (sharp curve) with universally high quality and no sequences of low quality. This sharp curve is the average quality per read. A mean quality below 27 is a cause for concern.
 
-## Edit a Sample
+## Edit a sample
 
-1. Click on **Samples** in the top navigation bar to see the sample listing.
+1. Click **Samples** in the top navigation bar to see the sample listing.
 
    ![Samples List Overview](./edit_sample_overview.png?url)
 
-2. Click on the sample you would like to edit. Here we will choose
+2. Click the sample to edit. In this example, select
    **Apple Stem Pitting Virus**.
 
    ![Apple Stem Pitting Virus](./apple_stem.png?url)
@@ -212,80 +215,80 @@ In this case we are taking every sequence and looking at the mean score across a
 
    ![Apple stem pitting virus dialog box](./apple_stem_dialog_edited.png?url)
 
-5. The changes will be reflected in the sample detail view.
+5. The changes are reflected in the sample detail view.
 
    ![Apple stem pitting virus edited](./apple_stem_edited.png?url)
 
-## Delete a Sample
+## Delete a sample
 
-1. Click on **Samples** in the top navigation bar to see a list of available samples.
+1. Click **Samples** in the top navigation bar to see a list of available samples.
    ![Samples List Overview](./samples_overview.png?url)
 
-Click on the sample you wish to delete. Here we will delete **Test A**.
+Click the sample to delete. In this example, delete **Test A**.
 ![Test A](./Test_A.png?url)
 
-Click on the <Icon name="trash" color="red"/> to delete the sample. A dialog box such as the one below will show up to confirm the deletion of the sample.
+Click the <Icon name="trash" color="red"/> to delete the sample. A dialog box such as the one below shows up to confirm the deletion of the sample.
 ![Test A Deletion](./test_A_deletion.png?url)
 
-Click <Icon name="check" color="green" /> **Confirm**. The sample will now be removed from the samples list.
+Click <Icon name="check" color="green" /> **Confirm**. The sample is now removed from the samples list.
 ![Samples List Overview](./samples_overview2.png?url)
 
-## Download a FASTQ File
+## Download a FASTQ file
 
-You can download the original FASTQ files used to create a sample. To do so, click on the sample of interest and then click **Files**.
+You can download the original FASTQ files used to create a sample. To do so, click the sample of interest. Then click **Files**.
 ![Sample of Interest](./files2.png?url)
 
 Click the link under **Raw Data** to download the FASTQ file that was originally used to create the sample.
 ![Downloaded File](./downloaded_file.png?url)
 
-## Trim Caches
+## Trim caches
 
-Sample data is automatically trimmed during analysis to remove sequencing artefacts and low quality regions. After the first analysis, the trimmed data are cached for reuse in future analyses that use the same trimming parameters. This saves running the trimming workflow steps for every analysis for a given sample.
+Sample data is automatically trimmed during analysis to remove sequencing artefacts and low quality regions. After the first analysis, the trimmed data is cached for reuse in future analyses that use the same trimming parameters. This saves running the trimming workflow steps for every analysis for a given sample.
 
-A sample that has not yet been analyzed will not have any caches associated with it.
+A sample that hasn't yet been analyzed has no caches associated with it.
 ![No Cache](./no_cache.png?url)
 
-Running an analysis for this sample will create an analysis job. During the job the raw sample reads will be trimmed and cached for future analyses. As soon as trimming is complete the cache will be created.
+Running an analysis for this sample creates an analysis job. During the job the raw sample reads are trimmed and cached for future analyses. As soon as trimming is complete the cache is created.
 Caches are always smaller than the raw data. This library was reduced from 220.8 MB to 153.9 MB. This is due to removal of low quality reads and localized shortening of reads with low quality ends.
 ![Cache](./cache.png?url)
 
-When you click on the link under **Cached Trims** you will see all the parameters used by the trimming program as well as the name of the trimming command (`skewer-0.2.2`). The _hash_ is a unique identifier for the program-parameters combination used to trim this cache.
+When you click the link under **Cached Trims** you see all the parameters used by the trimming program as well as the name of the trimming command (`skewer-0.2.2`). The _hash_ is a unique identifier for the program-parameters combination used to trim this cache.
 ![Trimming Parameters](./cache_parameters.png?url)
 
-Additionally, below the parameters you will see the quality of the data that has been trimmed and cached.
+Additionally, below the parameters you see the quality of the data that has been trimmed and cached.
 ![Quality of Trimmed Data](./quality2.png?url)
 
-### Trim Cache Quality
+### Trim cache quality
 
-Quality metrics are recalculated for reads trimmed during an analysis. The quality information is associated with the generated trim cache. Since low quality reads are discarded and low quality ends are removed, we expected the trim cache quality metrics to improve over those for the raw data.
+Quality metrics are recalculated for reads trimmed during an analysis. The quality information is associated with the generated trim cache. Since low quality reads are discarded and low quality ends are removed, the trim cache quality metrics are expected to improve over those for the raw data.
 
-#### Quality Distribution at Read Positions - Raw
+#### Quality distribution at read positions - raw
 
 ![Quality of Sample](./quality3.png?url)
 
-#### Quality Distribution at Read Positions - Trimmed
+#### Quality distribution at read positions - trimmed
 
 ![Quality after Trimming](./quality5.png?url)
 
-In the **Quality Distribution at Read Positions - Raw** chart we see that the mean base quality degrades as we get closer to the end of the read. This is a common issue in Illumina libraries. In the **Trimmed** charts we can see that low quality ends were removed resulting in a higher mean and minimum base quality.
+In the **Quality Distribution at Read Positions - Raw** chart, the mean base quality degrades closer to the end of the read. This is a common issue in Illumina libraries. In the **Trimmed** charts, low quality ends were removed. As a result, both quality measures increased.
 
-#### Read-wise Quality Occurrence - Raw
+#### Read-wise quality occurrence - raw
 
 ![Read-wise Quality of Sample](./quality4.png?url)
 
-#### Read-wise Quality Occurrence - Trimmed
+#### Read-wise quality occurrence - trimmed
 
 ![Read-wise Quality after Trimming](./quality6.png?url)
 
-In the **Read-wise Quality Occurrence - Raw** image we see one small curve before a sharp peak. This is due to a significant number of reads with low mean quality being present in the library. The trimming process discards reads with low mean qualities. This is reflected in the **Trimmed** chart where the smaller peak is no longer present.
+The **Read-wise Quality Occurrence - Raw** image shows one small curve before a sharp peak. This is due to a significant number of reads with low mean quality being present in the library. The trimming process discards reads with low mean qualities. This is reflected in the **Trimmed** chart where the smaller peak is no longer present.
 
 ## Rights
 
 ### Concepts
 
-Virtool allows for fine control of the rights users have to view or modify samples.
+Virtool allows for fine control of the rights users have to view or change samples.
 
-#### Management Levels
+#### Management levels
 
 Rights can apply at four different levels.
 
@@ -296,79 +299,73 @@ Rights can apply at four different levels.
 | _group_          | The group that owns the sample. Read and write privileges can be independently set at this level.                                                                 |
 | _all users_      | All users registered on the Virtool instance. Read and write privileges can be independently set at this level.                                                   |
 
-#### Group Ownership
+#### Group ownership
 
-Each sample can be owned by a specific user group. This allows multiple groups of diagnosticians or researchers to keep their data private or safe from one another while sharing a single Virtool instance.
+Each sample can be owned by a user group. This lets multiple groups of
+diagnosticians or researchers keep their data private while sharing one Virtool
+instance.
 
-Samples are not required to have an owner group. The group can be set to `None`. In this case, group rights settings will have no effect.
+Samples aren't required to have an owner group. The group can be set to `None`. In this case, group rights settings have no effect.
 
 #### Privileges
 
-##### none
+##### None
 
-The management level (_eg_. group, all users) cannot read or write the sample. included users will never see the sample in the sample management interface.
+The management level (such as group or all users) can't read or write the sample. Included users never see the sample in the sample management interface.
 
-This privilege is useful for completely isolating samples between separate groups of users.
+This privilege is useful for isolating samples between separate groups of users.
 
-##### read
+##### Read
 
-The management level (_eg_. group, all users) can only read the sample. The included users will see the sample in the sample management interface and be able to view its general information, quality, and analyses.
+The management level (such as group or all users) can only read the sample. The included users see the sample in the sample management interface and can view its general information, quality, and analyses.
 
-They will not be able to edit or remove the sample and they will not be able to create new analyses. The elements in the user interface associated with the described actions will be hidden.
+They can't edit or remove the sample or create new analyses. The elements in the user interface associated with these actions are hidden.
 
-##### read & write
+##### Read & write
 
-The management level (_eg_. group, all users) can only read the sample. The included users will see the sample in the sample management interface and be able to view its general information, quality, and analyses.
+The management level (such as group or all users) can only read the sample. The included users see the sample in the sample management interface and can view its general information, quality, and analyses.
 
-They will also be able to edit and remove the sample and create new analyses.
+They can also edit and remove the sample and create new analyses.
 
 ### Management
 
-The access rights for an existing sample can be easily changed by the sample owner or an administrator.
+The sample owner or an administrator can change an existing sample's access
+rights.
 
 Access the rights management controls by clicking the <Icon name="key" /> tab in the sample detail view.
 
 ![The sample rights view](./sample_rights_view.png?url)
 
-### Default Rights
-
-Samples have their initial access rights configured when they are first created. How these rights are assigned can be configured in the adminstrative settings.
-
-1. Go to the **Settings | General** view as an administrator.
-   ![General settings](/static/images/settings_general.png?url)
-
 ## Settings
 
-### Unique Sample Names
+### Unique sample names
 
-By default, sample names must be unique to the sample manager. This prevents confusion with duplicately named samples. It is possible to disable this feature. To do so, click **Settings** on the left sidebar under the samples overview page.
+By default, sample names must be unique to the sample manager. This prevents
+confusion between identically named samples. Administrators can change this in
+**Settings** on the Samples page.
 ![Samples Overview](./samples_overview3.png?url)
 
 Check the **Unique Sample Names** box to ensure that every created sample has a unique name.
 
-!["Unique Sample Names Disabled"](./unique_sample_names.png?url)
+!["Unique Sample Names Off"](./unique_sample_names.png?url)
 
-### Default Sample Rights
+### Default sample rights
 
 These settings determine how rights are assigned to newly created samples. Sample rights in Virtool are reminiscent of UNIX permissions.
 
-#### Sample Group
+#### Sample group
 
-This determines how an owner group is applied to the sample when it is created.
+This determines how an owner group is applied to the sample when it's created.
 
 !["Sample Group Options"](./sample_group.png?url)
 
 |                 |                                                                                 |
 | --------------- | ------------------------------------------------------------------------------- |
-| _None_          | No group owner is assigned. Group rights do not apply                           |
+| _None_          | No group owner is assigned. Group rights don't apply                           |
 | _Force Choice_  | The sample creator is forced to choose the owner group from their member groups |
-| _Primary Group_ | The sample is automatically assigned the creators primary group                 |
+| _Primary Group_ | The sample is automatically assigned the creator's primary group                |
 
-#### Group Rights
-
-This setting determines how members of the owner group can interact with the sample. If the owner group is _None_, this setting has no effect.
-
-#### Group Rights
+#### Group rights
 
 This setting determines how members of the owner group can interact with the sample. If the owner group is _None_, this setting has no effect. Rights can be changed by sample owners and administrators at any time.
 
@@ -376,10 +373,12 @@ This setting determines how members of the owner group can interact with the sam
 
 |                |                                                                                                                     |
 | -------------- | ------------------------------------------------------------------------------------------------------------------- |
-| _None_         | Sample is not returned in searches and is not accessible by URL.                                                    |
-| _Read_         | Sample is returned in searches and is viewable. All editing interfaces are disabled and analyses cannot be started. |
-| _Read & Write_ | In addition to _Read_ rights, editing interfaces are enabled and analyses can be run.                               |
+| _None_         | Sample isn't returned in searches and isn't accessible by URL.                                                    |
+| _Read_         | Sample appears in searches. Users can view it but can't edit it or start analyses. |
+| _Read & Write_ | Includes _Read_ rights. Users can also edit the sample and run analyses.                               |
 
-#### All Users' Rights
+#### All users' rights
 
-This settings determines how any Virtool user can interact with the sample. Rights for all users behave exactly as they do in **Group Rights**. Rights can be changed by sample owners and administrators at any time.
+This setting determines how any Virtool user can interact with the sample. These
+rights behave like group rights and can be changed by sample owners and
+administrators at any time.

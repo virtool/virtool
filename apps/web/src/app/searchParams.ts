@@ -10,6 +10,9 @@
  * the number `2` and `?labels=[1,2]` as an array. Every helper takes `unknown`
  * and falls back rather than throwing — a malformed URL should render the page,
  * not an error boundary.
+ *
+ * Type validators' inputs as `Partial<Search> & SearchSchemaInput` and their
+ * results as `Search` so links can supply only the parameters they change.
  */
 
 import { isCalendarDate } from "@app/date";

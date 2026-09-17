@@ -114,10 +114,10 @@ export class AnalysisNotOwnedError extends AppError {}
 /** Thrown when an operation requires a finished analysis and it is still running. */
 export class AnalysisRunningError extends AppError {}
 
-/** Thrown when a NuVs-only operation is attempted on another workflow. */
+/** Thrown when a Nuvs-only operation is attempted on another workflow. */
 export class AnalysisNotNuvsError extends AppError {}
 
-/** Thrown when a NuVs analysis has no contig at the requested sequence index. */
+/** Thrown when a Nuvs analysis has no contig at the requested sequence index. */
 export class AnalysisSequenceNotFoundError extends AppError {}
 
 /** Thrown when a create names a sample, reference, or subtraction that does not exist. */
@@ -1033,7 +1033,7 @@ export async function blastNuvs(
 	}
 
 	if (row.workflow !== "nuvs") {
-		throw new AnalysisNotNuvsError("Not a NuVs analysis");
+		throw new AnalysisNotNuvsError("Not a Nuvs analysis");
 	}
 
 	if (!row.ready) {
@@ -1085,7 +1085,7 @@ export async function blastNuvs(
 }
 
 /**
- * The contig at `sequenceIndex` in a NuVs results blob, or `null` when there is
+ * The contig at `sequenceIndex` in a Nuvs results blob, or `null` when there is
  * none.
  */
 export function findNuvsSequenceByIndex(

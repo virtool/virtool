@@ -5,7 +5,7 @@
 // only per-sequence hit metrics; every OTU, isolate and sequence name,
 // accession and length is recovered by taking each detected OTU back to the
 // version the analysis saw, and every coverage and depth figure is derived from
-// the raw alignments before they are reduced to drawable polylines. NuVs results
+// the raw alignments before they are reduced to drawable polylines. Nuvs results
 // reference HMM annotations by id and have them merged in.
 
 import {
@@ -422,7 +422,7 @@ async function formatPathoscope(
 	};
 }
 
-/** The ORFs of a NuVs contig, read structurally out of the raw blob. */
+/** The ORFs of a Nuvs contig, read structurally out of the raw blob. */
 function asOrfs(value: unknown): NuvsOrf[] {
 	return asArray(value).filter((orf): orf is NuvsOrf => asRecord(orf) !== null);
 }
@@ -436,7 +436,7 @@ function orfHits(orfs: NuvsOrf[]): NuvsOrfHit[] {
  *
  * An ORF that matched no annotation contributes zero, so a single unmatched ORF
  * drags the whole contig down. A contig with no ORFs at all has no e-value, and
- * the NuVs list offers a filter that hides exactly those.
+ * the Nuvs list offers a filter that hides exactly those.
  */
 function minimumE(orfs: NuvsOrf[]): number | null {
 	if (orfs.length === 0) {

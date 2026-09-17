@@ -78,7 +78,7 @@ function NotFoundComponent() {
 
 function RootShell({ children }: { children: ReactNode }) {
 	return (
-		<html lang="en">
+		<html lang="en-CA">
 			<head>
 				<HeadContent />
 			</head>

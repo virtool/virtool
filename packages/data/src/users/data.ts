@@ -506,7 +506,7 @@ export async function changePassword(
 	// the old sessions, then create the replacement, which has to come last or
 	// the revocation would take it with the rest.
 	//
-	// The update matches on the hash we verified, not just the id. Nothing held a
+	// The update matches on the verified hash, not just the id. Nothing held a
 	// lock across the read, the bcrypt verify, and the bcrypt hash above, and at
 	// cost 12 that gap is hundreds of milliseconds — long enough for an
 	// administrator responding to a compromise to reset this password or set

@@ -3,7 +3,7 @@
 Tar, gzip and zip, for anything in the monorepo that reads or writes an archive.
 
 Framework-agnostic and dependency-light: `tar-stream` and `fflate` plus
-`node:zlib`, no database, no object storage, no logger. It is imported by
+`node:zlib`, no database, no object storage, no logger. It's imported by
 `@virtool/workflow` (cache archives), by the workflow apps (reading gzip magic),
 by `@virtool/internal`'s `run` subcommand (the HMM release archive) and by `@virtool/data` (the NCBI
 BLAST result zip).
@@ -18,40 +18,39 @@ BLAST result zip).
 | `@virtool/archive/compression` | `compressFile`, `decompressFile`, `decompressGzipToFile`, `DecompressedSizeLimitError`, `isGzipped` |
 | `@virtool/archive/errors` | `ArchiveError`, `TarArchiveError`, `TarMemberMissingError`, `TarTargetExistsError`, `ZipArchiveError`, `ZipMemberMissingError` |
 
-Prefer a subpath. `@virtool/workflow` re-exports none of these any more —
-consumers import them from here directly, so the definition site stays
-greppable.
+Prefer a subpath. Consumers import these functions directly from this package
+so their definitions remain easy to find.
 
 ## Which tar function
 
 `extractTarToDir` restores a whole tree and enforces the **cache archive
-contract**: exactly one top-level entry, staged and renamed so a failure leaves
+contract**: exactly one top-level entry, staged, and renamed so a failure leaves
 nothing behind, and the target must be free. `writePathAsTar` is its inverse.
 Both are uncompressed-only.
 
 `extractTarMembers` pulls **named members** out of an archive whose other
-contents do not matter, to destinations the caller chooses. It takes `gzip:
+contents don't matter, to destinations the caller chooses. It takes `gzip:
 true` for a `.tar.gz`. Use it when you want two files out of a release archive,
 not when you want a directory back.
 
-## Zip does not stream, and that is not a gap to fill
+## Zip doesn't stream, and that's not a gap to fill
 
 `readZipMember` takes the whole archive as a `Uint8Array` and returns one
-member's bytes. It cannot stream: a zip's index is a central directory written
+member's bytes. It can't stream: a zip's index is a central directory written
 at the *end* of the file, so nothing can name a member until the last byte has
-arrived. That is acceptable for the one thing here that reads a zip — an NCBI
-BLAST result, a handful of kilobytes — and only for that. Anything a user
+arrived. That's acceptable for the one thing here that reads a zip: an NCBI
+BLAST result that's only a handful of kilobytes. Anything a user
 uploaded goes through tar, or nowhere.
 
-## Two rules the extractors carry so callers cannot get them wrong
+## Extraction safety rules
 
-**Every entry is drained.** `tar-stream` will not advance past an entry that is
-neither piped nor `resume()`d — it stalls silently and forever, no error, no
+**Every entry is drained.** `tar-stream` doesn't advance past an entry that's
+neither piped nor `resume()`d. It stalls silently and forever, with no error or
 exit. Both loops resume what they skip, and both have a regression test that
 asserts completion under a timeout rather than asserting an error.
 
-**Every entry is validated, wanted or not.** Absolute paths, `..` segments and
-anything that is not a plain file or directory fail the extraction. A guard that
+**Validation applies to every entry, including ones the caller didn't request.** Absolute paths, `..` segments and
+anything that's not a plain file or directory fail the extraction. A guard that
 only looks at what the caller asked for never looks at the payload.
 
 `extractTarToDir` stages and renames rather than pre-validating the archive up
@@ -69,11 +68,11 @@ runs `pigz`.
 `decompressGzipToFile` takes an `AsyncIterable<Uint8Array>` so object-storage
 callers can inflate directly into a destination without buffering or retaining
 a compressed copy. Its optional limit counts decompressed bytes and fails with
-`DecompressedSizeLimitError`; its optional abort signal tears down the whole
+`DecompressedSizeLimitError`; its optional `AbortSignal` tears down the whole
 pipeline.
 
 ## Testing
 
-`vitest run` from this directory, or `pnpm test` from the root. No containers
-and no fixtures checked into the repo — archives are built in-test with
+`vitest run` from this directory, or `pnpm test` from the root. The tests use no
+containers, and no fixtures are checked into the repo. Archives are built in-test with
 `tar-stream`'s `pack`.

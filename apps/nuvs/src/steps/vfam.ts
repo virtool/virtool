@@ -158,7 +158,7 @@ async function annotate(
 	}
 }
 
-/** The three files a NuVs analysis retains, in the order they were produced. */
+/** The three files a Nuvs analysis retains, in the order they were produced. */
 const RETAINED_FILES: ReadonlyArray<{
 	format: AnalysisFileManifest["format"];
 	name: string;
@@ -184,7 +184,7 @@ const RETAINED_FILES: ReadonlyArray<{
  * checks it sits under this analysis's own prefix and then records it verbatim,
  * so there is one opinion about where the bytes went rather than two.
  *
- * Unlike pathoscope, whose manifest is legitimately empty, NuVs always has all
+ * Unlike pathoscope, whose manifest is legitimately empty, Nuvs always has all
  * three files — `results` and the manifest are written by the same call, so an
  * analysis cannot end up `ready` with its file rows missing.
  */

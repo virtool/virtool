@@ -157,7 +157,7 @@ function BlastResults({ hits, onBlast }: BlastResultsProps) {
 	);
 }
 
-type NuVsBLASTProps = {
+type NuvsBLASTProps = {
 	analysisId: number;
 
 	/** Complete information for a Nuvs hit */
@@ -168,7 +168,7 @@ type NuVsBLASTProps = {
  * A contig's BLAST request against NCBI, in whichever state it is in: absent,
  * in progress, failed, or returned.
  */
-export default function NuvsBlast({ analysisId, hit }: NuVsBLASTProps) {
+export default function NuvsBlast({ analysisId, hit }: NuvsBLASTProps) {
 	const { blast, index } = hit;
 	const mutation = useBlastNuvs(analysisId);
 

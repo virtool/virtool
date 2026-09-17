@@ -6,7 +6,7 @@ description: "Learn how Pathoscope detects known viruses in your sample and deal
 The Pathoscope workflow is used for detecting known reference OTUs in an Illumina sample
 library.
 
-## How Does it Work?
+## How does it work?
 
 Sample reads are mapped against a Virtool [reference](/docs/guide/references) and
 reads matching OTUs are counted and used to arrive at a detection result. To understand
@@ -22,19 +22,18 @@ The second step begins with the creation of a Bowtie2 mapping index containing a
 isolates of the OTUs identified in the _default_ isolate mapping. This step provides a
 more diverse mapping target for each virus and allows isolate-level detection.
 
-A major complication of this diagnostic method is multi-mapping, the situation in which
-single reads find multiple mapping positions in a set of reference sequences. We can make
-the assumption that there are only a small number of real source sequences in the sample.
-In practice, reads with a single real source sequence find multiple mapping locations in
-Virtool references. This is especially true when OTUs contain large numbers of similar
-isolates.
+A major complication of this diagnostic method is multi-mapping, where a single
+read aligns to multiple positions in the reference sequences. Although a sample
+may contain only a small number of true source sequences, reads from one source
+can align to multiple locations in the Virtool reference. This is especially
+common when an OTU contains many similar isolates.
 
 Virtool uses the [Pathoscope2 library](https://github.com/PathoScope/PathoScope) to
 reassign multi-mapped reads to their most likely source sequences. An expectation
 maximization (EM) algorithm is used to perform the reassignment. Pathoscope makes the
 assumption that source sequences with high numbers of **uniquely mapped**
 (not multi-mapped) reads are most likely to be real source sequences. Read counts are
-reassigned fractionally when it is assigned to multiple genomes after reassignment.
+fractionally reassigned when a read maps to multiple genomes.
 
 ## Quality
 
@@ -43,23 +42,22 @@ interest. These analyses can be found under the **Analyses** tab.
 
 ![Cache quality analysis](./list.png?url)
 
-Click on the **PathoscopeBowtie**.
+Click the **PathoscopeBowtie**.
 ![PathoscopeBowtie](./header.png?url)
 
-Pathoscope is the primary tool in Virtool used for determining whether a known virus is
-present in a sample. A number of statistics are used to determine the presence of a
-pathogen.
+Pathoscope uses mapped-read percentage, coverage, depth, and weight to determine
+whether a known virus is present in a sample.
 
 Generally, approximately 5 million reads is a good base line for a dsRNA library,
-however the percentage of mapped reads is of greater importance. For dsRNA, percentages
-can range from less than 1% to greater than 80%. The greater the enrichment of viral RNA
-(i.e. the higher the percent of mapped reads) the less number of total reads are required.
+but the percentage of mapped reads is of greater importance. For dsRNA, percentages
+can range from less than 1% to greater than 80%. Greater viral RNA enrichment, measured
+by the percentage of mapped reads, reduces the total number of reads required.
 For example, 2% of 5 million reads or 100 000 mapped reads is good.
 
-Additional statistics include:
+Other statistics include:
 
 **Coverage:** a measure for how well the mapped reads cover the viral genome. In general,
-coverage of greater than 0.5 indicates positve detection and coverage less than 0.2
+coverage of greater than 0.5 indicates positive detection and coverage less than 0.2
 indicates negative detection.
 
 **Depth:** a measure of how many times a genome is covered by mapped reads.
@@ -74,12 +72,10 @@ Three pathogens are likely to be in the sample. Although the total number of map
 is less than 5 million, the percentage of mapped reads is 8.12%, which is a good indicator
 of enrichment of viral RNA.
 
-Additionally, all three pathogens have high weight, depth, and coverage values, therefore
-we can confidently say that indeed these pathogens are present in the sample.
+Additionally, all three pathogens have high weight, depth, and coverage values, so
+the pathogens can be confidently identified as present in the sample.
 
-The results from Pathoscope were successful in identifying the pathogens present in the
-sample, therefore further analysis using Nuvs is not necessary. An indication that would
-result in using Nuvs would be if our results showed high weight and depth values in
-combination with low coverage values. This would indicate that the virus sequence in the
-sample may be significantly different than what is in the database. This may represent a
-new genotype or possibly a new, closely related virus.
+Further analysis with Nuvs isn't necessary for this sample. High weight and depth
+combined with low coverage would instead suggest that the virus sequence differs from
+the database reference. This may represent a new genotype or a new, closely related
+virus.

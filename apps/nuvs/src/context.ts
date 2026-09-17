@@ -385,7 +385,7 @@ function resolveIndex(index: WorkflowIndex, path: string): NuvsIndex {
 /**
  * Locate a subtraction's gzipped source genome, and only that.
  *
- * A subtraction row can list six bowtie2 shards alongside its genome. NuVs
+ * A subtraction row can list six bowtie2 shards alongside its genome. Nuvs
  * reads none of them — `create_subtraction_indexes` builds its own index from
  * this FASTA — so downloading them would be six large transfers for nothing. A
  * subtraction finalized by the `create_subtraction` workflow has no shards to

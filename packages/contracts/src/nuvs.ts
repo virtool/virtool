@@ -1,4 +1,4 @@
-// The NuVs workflow's shapes: the BLAST requests made against its contigs, and
+// The Nuvs workflow's shapes: the BLAST requests made against its contigs, and
 // the `results` blob once the server has formatted it.
 //
 // The *raw* blob is the worker's contract and stays exactly as the workflow
@@ -10,7 +10,7 @@
 import type { JsonObject } from "./json";
 
 /**
- * A BLAST request against one NuVs contig.
+ * A BLAST request against one Nuvs contig.
  *
  * The envelope is ours; `result` is NCBI's response, stored and returned
  * verbatim, so it stays an uninterpreted JSON object at this boundary. A caller
@@ -41,14 +41,14 @@ export type NuvsBlast = {
 	/** NCBI's request id, absent until the request is accepted */
 	rid: string | null;
 
-	/** The index of the NuVs contig the request was made for */
+	/** The index of the Nuvs contig the request was made for */
 	sequenceIndex: number;
 
 	/** When the request was last updated */
 	updatedAt: Date;
 };
 
-/** An HMM annotation matched against a NuVs open reading frame. */
+/** An HMM annotation matched against a Nuvs open reading frame. */
 export type NuvsOrfHit = {
 	best_bias: number;
 	best_e: number;
@@ -75,7 +75,7 @@ export type NuvsOrfHit = {
 	names: string[];
 };
 
-/** An open reading frame found in a NuVs contig. */
+/** An open reading frame found in a Nuvs contig. */
 export type NuvsOrf = {
 	frame: number;
 	hits: NuvsOrfHit[];
@@ -85,7 +85,7 @@ export type NuvsOrf = {
 	strand: number;
 };
 
-/** A NuVs contig, with the metrics derived from its open reading frames. */
+/** A Nuvs contig, with the metrics derived from its open reading frames. */
 export type NuvsHit = {
 	/** The number of the contig's ORFs that matched at least one annotation */
 	annotatedOrfCount: number;
@@ -115,7 +115,7 @@ export type NuvsHit = {
 	sequence: string;
 };
 
-/** A formatted NuVs analysis's results. */
+/** A formatted Nuvs analysis's results. */
 export type NuvsResults = {
 	/** The assembled contigs and their metrics */
 	hits: NuvsHit[];

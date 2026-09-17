@@ -434,9 +434,6 @@ describe("the HMM blobs", () => {
 	});
 });
 
-// `createWorkflowContext` asserts this on every run, not only under test: the
-// deferred end-to-end bed expresses a run as files plus a JSON blob, and the
-// constraint rots silently the first time someone parks a handle on `data`.
 describe("the run context", () => {
 	it("round-trips through JSON serialization", async () => {
 		const { input } = await setup({ subtractions: 2 });

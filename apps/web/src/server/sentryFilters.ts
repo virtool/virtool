@@ -47,7 +47,7 @@ export function dropExpectedClientErrors(
  *
  * Both are unactionable by construction: the peer is gone before anything this
  * side could act on. Each is matched as a *pair* of fields, because the halves
- * on their own are shapes we want reported.
+ * on their own are shapes worth reporting.
  */
 function isClientDisconnect(exception: unknown): boolean {
 	return isSocketReset(exception) || isRequestAbort(exception);

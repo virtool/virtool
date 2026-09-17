@@ -64,7 +64,7 @@ function AuthenticatedLayout() {
 
 	useEffect(() => {
 		if (data) {
-			// A 401 only means the session ended once we know there was one. Until
+			// A 401 only means the session ended once it is known there was one. Until
 			// this runs, the account fetches on the wall and in the route guard are
 			// allowed to 401 without ending anything.
 			armSessionEnd();

@@ -708,9 +708,7 @@ describe("handleGetSubtraction", () => {
 		expect(subtraction.files[0]?.storageKey).toBeNull();
 	});
 
-	// The SPA reads the same data function, which returns `createdAt`,
-	// `sampleCount`, and a `downloadUrl`. None of those belong on this wire.
-	it("omits fields that only the SPA needs", async () => {
+	it("omits fields not included in this response", async () => {
 		const subtractionId = await seedSubtraction();
 
 		const response = await handleGetSubtraction(

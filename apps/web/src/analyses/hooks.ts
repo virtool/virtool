@@ -41,7 +41,7 @@ function pathoscopeSortValue(
 }
 
 /**
- * The value a NuVs sort key ranks a contig by.
+ * The value a Nuvs sort key ranks a contig by.
  *
  * "Length" is the length of the contig's own sequence. A `NuvsHit` carries no
  * `length` field — reading the key off the hit gave `undefined` for every one of
@@ -99,7 +99,7 @@ export function useSortAndFilterPathoscopeHits(
 }
 
 /** Sort and filter a list of Nuvs hits  */
-export function useSortAndFilterNuVsHits(detail: FormattedNuvsAnalysis) {
+export function useSortAndFilterNuvsHits(detail: FormattedNuvsAnalysis) {
 	let hits = detail.results.hits;
 
 	const {

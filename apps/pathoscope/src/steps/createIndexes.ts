@@ -96,7 +96,7 @@ async function writeDefaultIsolateFasta({
  * Build one bowtie2 index per subtraction.
  *
  * The gzipped FASTA is handed to `bowtie2-build` directly — it reads gzip — so
- * unlike NuVs there is nothing to decompress first.
+ * unlike Nuvs there is nothing to decompress first.
  *
  * The genome is downloaded here rather than with the run's other inputs, and
  * only once the cache has missed. The `subtraction_mapping_index` namespace is

@@ -186,8 +186,6 @@ describe("Job", () => {
 		);
 	});
 
-	// One shape serves the SPA and the workflow runtime. A runner reading an
-	// older build's response must not trip over a field it does not name.
 	it("strips an unknown field rather than refusing the response", () => {
 		const parsed = Job.parse({ ...base, pingedAt: "2026-07-31T16:31:00.000Z" });
 

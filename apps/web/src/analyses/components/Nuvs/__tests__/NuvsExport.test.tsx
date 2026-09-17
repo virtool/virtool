@@ -1,7 +1,7 @@
 import NuvsExport from "@analyses/components/Nuvs/NuvsExport";
 import { screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { createFakeFormattedNuVsAnalysis } from "@tests/fake/analyses";
+import { createFakeFormattedNuvsAnalysis } from "@tests/fake/analyses";
 import { renderWithProviders } from "@tests/setup";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
@@ -10,7 +10,7 @@ describe("<NuvsExport />", () => {
 	let clickSpy: ReturnType<typeof vi.spyOn>;
 
 	beforeEach(() => {
-		const analysis = createFakeFormattedNuVsAnalysis();
+		const analysis = createFakeFormattedNuvsAnalysis();
 
 		props = {
 			analysisId: 42,

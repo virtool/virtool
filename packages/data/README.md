@@ -39,9 +39,9 @@ Keys are `/`-delimited and have no leading slash. `write` creates or
 overwrites an object and returns the byte count; `delete` is idempotent.
 Missing objects cause `read` and `size` to throw `StorageKeyNotFoundError`.
 Other failures throw `StorageError`. Both errors come from
-`@virtool/storage/errors` and do not depend on the data layer's `AppError`.
+`@virtool/storage/errors` and don't depend on the data layer's `AppError`.
 
-`StorageObjectInfo` contains `key`, `size`, and `lastModified`. Do not compare
+`StorageObjectInfo` contains `key`, `size`, and `lastModified`. Don't compare
 `lastModified` across backends or depend on it for ordering because its source
 differs between real buckets and `MemoryStorage`.
 
@@ -49,7 +49,7 @@ differs between real buckets and `MemoryStorage`.
 
 A chunked upload reserves an `uploads` row with `createPendingUpload` before
 any bytes are staged. The row records the storage key and declared
-`expected_size`, and remains `ready: false` so it is excluded from upload lists
+`expected_size`, and remains `ready: false` so it's excluded from upload lists
 and downloads.
 
 After writing directly to storage, the client calls `finalizePendingUpload`.
@@ -67,7 +67,7 @@ returns `{ key, error }` pairs for failures; callers must log every returned
 failure so orphaned objects remain observable. Collect recorded keys before
 deleting their rows, including child keys removed by database cascades.
 
-There is no prefix-based cleanup. Objects that were written without a key
+No prefix-based cleanup exists. Objects that were written without a key
 being recorded remain for a future orphan sweep.
 
 `reapUploads` removes unfinished chunked uploads that clients never finalized
@@ -88,11 +88,11 @@ key stored in the corresponding row:
 | `indexes` | `otus_json_storage_key` | Yes |
 
 Nullable columns mirror nullable legacy sources rather than inventing keys
-for objects that cannot be retrieved. The index OTU JSON key is stored on the
-index because the on-demand artifact should not appear in its file listing.
+for objects that can't be retrieved. The index OTU JSON key is stored on the
+index because the on-demand artifact shouldn't appear in its file listing.
 
 Mint new keys with `@virtool/storage/keys`. UUID leaves are written in hex and
-therefore contain no hyphens, matching the keys already in the bucket.
+so contain no hyphens, matching the keys already in the bucket.
 
 | Minter | Shape |
 | --- | --- |
@@ -111,7 +111,7 @@ must be read from their rows.
 
 Workflow output keys cross the jobs API boundary because the workflow wrote
 the object and knows its location. Record the supplied key verbatim after
-validating that it is beneath `{domain}/{parentId}/`, has no leading slash,
+validating that it's beneath `{domain}/{parentId}/`, has no leading slash,
 and contains neither empty nor `..` segments. `POST /caches` is the exception:
 it accepts a bare UUID and constructs `cacheKey(uuid)` server-side.
 
@@ -151,8 +151,9 @@ the whole object could include storage credentials in the browser bundle.
 ### Backend behavior
 
 For custom S3 endpoints, the backend enables path-style addressing; AWS uses
-virtual-hosted addressing. Multipart parts use S3's 5 MiB minimum rather than
-the smaller streaming chunk size. Response checksum validation is disabled to
+virtual-hosted addressing. Multipart uploads use S3's 5 MiB minimum part size
+rather than the smaller streaming chunk size. Response checksum validation is
+turned off to
 support Garage's multipart checksum representation, while uploads continue to
 send checksums.
 
@@ -168,11 +169,11 @@ Use `MemoryStorage` for data and service unit tests. Streaming, draining, and
 listing fixtures are exported from `@virtool/storage/test/fixtures`.
 
 The storage package's integration Vitest project runs the shared backend suite
-against Garage and Azurite. Garage setup applies a single-node layout and
-credentials through its admin API and waits on a log line because the image is
-distroless. Containers are reused; tests isolate and purge their own
-`test/{worker}/{testName}/` prefixes. Run storage server tests in a Node
-environment so typed arrays come from the same JavaScript realm.
+against Garage and Azurite. Garage setup uses its administration API to
+configure a single-server layout and credentials, then waits on a log line
+because the image is distroless. Containers are reused; tests isolate and purge
+their own `test/{worker}/{testName}/` prefixes. Run storage server tests in a
+Node environment so typed arrays come from the same JavaScript realm.
 
 ## Schema ownership
 
@@ -192,10 +193,10 @@ would diff against an older schema state and emit duplicate DDL. Rerun
 moved here. Production was stamped as already migrated rather than having that
 baseline applied to it, so it must never be run against an existing database.
 
-Many tables keep legacy shapes — `legacy_` prefixes, dead columns held for
-snapshot fidelity, promoted-from-JSONB projections. Serve them as they are
-rather than renormalizing them; the schema files say per-table what is dead and
-what is load-bearing.
+Many tables keep legacy shapes, including `legacy_` prefixes, dead columns held for
+snapshot fidelity, promoted-from-JSONB projections. Preserve these shapes rather
+than renormalizing them; the schema files identify which fields are dead and
+which are load-bearing.
 
 Keep `drizzle-orm` and `drizzle-kit` on compatible versions. Check both release
 notes when updating either package because their schema-generation internals
@@ -205,7 +206,7 @@ change together.
 
 `src/db/schema/auth.ts` mirrors the tables Better Auth owns: `auth_accounts`,
 `auth_sessions`, `auth_verifications`, `auth_two_factors` and `auth_passkeys`.
-`users` is shared — Better Auth uses it as its user model — and carries the
+`users` is shared. Better Auth uses it as its user model, and it carries the
 columns it needs alongside Virtool's own.
 
 Two rules hold this together:
@@ -221,8 +222,8 @@ Two rules hold this together:
   both credential families are present. Virtool re-reads account state for
   either credential and performs authorization after authentication.
 
-A Drizzle property name in `auth.ts` is a Better Auth *field* name — the adapter
-looks fields up by property — so `userId` and `credentialID` keep their exact
+A Drizzle property name in `auth.ts` is a Better Auth *field* name. The adapter
+looks fields up by property, so `userId` and `credentialID` keep their exact
 spelling while their columns stay snake_case.
 
 Migration `0030_sparkling_silverclaw` revokes every pre-cutover Better Auth
@@ -241,14 +242,14 @@ normalized uniqueness only after `auth_migrated_at` is set.
 
 `users.lifecycle_state` is the persisted half of the account lifecycle:
 `pending` for an account that exists but holds no credential, `normal` for one
-that can be used. It is **not** `users.active`. Activation remains the
-administrator's switch and stays authoritative — a deactivated account is
+that can be used. It's **not** `users.active`. Activation remains the
+administrator's switch and stays authoritative. A deactivated account is
 unusable whatever its lifecycle state, and completing setup never activates
 anyone.
 
 A pending account keeps its handle, administrator role and group memberships,
 so an administrator states who a person is and what they may do at the moment
-of invitation. What it does not have is a credential: `users.password` is null,
+of invitation. What it doesn't have is a credential: `users.password` is null,
 which the `pending_has_no_password` constraint holds, and `createPendingUser`
 is the only thing that writes the state.
 
@@ -262,10 +263,10 @@ and API-key resolution.
 
 - A **setup token** is the bearer secret in an invitation, bootstrap or
   remediation link. Only its SHA-256 is stored; the plaintext is returned to
-  the issuing caller once and is never readable back. It is purpose-bound,
-  expiring, single-use — `consumeSetupToken` is one conditional `UPDATE ...
+  the issuing caller once and is never readable back. It's purpose-bound,
+  expiring, single-use. `consumeSetupToken` is one conditional `UPDATE ...
   RETURNING`, so concurrent submissions of one token produce exactly one
-  winner — and superseded when a replacement is issued.
+  winner. It's superseded when a replacement is issued.
 - A **restricted setup session** is what a holder gets in exchange: a
   non-secret `session_id` for attribution plus a secret whose digest is
   stored, bound to one purpose and expiring. `verifySetupSession` re-reads
@@ -275,7 +276,7 @@ and API-key resolution.
 
 `src/auth/lifecycle.ts` holds one transactional completion primitive per
 purpose. Each spends the token, writes the credential and identity state,
-moves the account, and revokes every setup credential the user held — in one
+moves the account, and revokes every setup credential the user held in one
 transaction, so a failure rolls the whole transition back and a spent token
 never outlives the change it paid for. None of them mints a session; which
 session a completed holder gets is the calling flow's decision, and cookies
@@ -286,14 +287,14 @@ Credential state is written to both `users.password` and
 password-change transactions; Better Auth verifies the latter.
 
 Expiry cleanup is the internal runner's `cleanup_setup_state` periodic task.
-Nothing waits on it — both readers refuse an expired row on sight — so there
+Nothing waits on it. Both readers refuse an expired row on sight, so there
 are no request-path scans.
 
 ## Outbound requests
 
 Third-party requests use `USER_AGENT` from `@virtool/contracts/userAgent`,
 which is the product name `virtool` and has no version. NCBI limits or blocks
-requests that do not give a name. GitHub refuses requests that have no
+requests that don't give a name. GitHub refuses requests that have no
 `User-Agent` header.
 
 This repository has no shared HTTP client. Each caller sets its own timeout.
@@ -302,13 +303,13 @@ client at import time.
 
 ### NCBI
 
-This package speaks to two NCBI services, and they are not the same API.
+This package speaks to two NCBI services, and they're not the same API.
 
-`src/blast/ncbi.ts` is the BLAST URL API client. It is a separate CGI endpoint
+`src/blast/ncbi.ts` is the BLAST URL API client. It's a separate CGI endpoint
 that answers with HTML, plain text, and zip archives, so it stays here.
 
 Nucleotide records and taxonomy come from `@virtool/ncbi`, which speaks to
-E-utilities. Do not add a second E-utilities client to this package.
+E-utilities. Don't add a second E-utilities client to this package.
 
 The instance NCBI API key raises the rate limit E-utilities applies to the
 deployment. `src/settings/ncbi.ts` owns it, encrypted under the
@@ -318,20 +319,20 @@ environment-owned encryption key documented in
 transport boundary or reach a log; a caller learns only whether a key is stored
 and whether it can be decrypted.
 
-Decrypt at client construction and nowhere else. A key that will not decrypt is
+Decrypt at client construction and nowhere else. A key that doesn't decrypt is
 a configuration error to report, not a value to replace: `resolveNcbiApiKey`
 writes nothing, so the stored key survives a bad encryption key, and lookups
 fall back to the anonymous rate limit rather than failing.
 
-## Email delivery
+## Outbound email
 
 `src/email/` owns transactional email configuration, the durable outbox,
 templates, retries, and the Resend integration. The periodic `deliver_email`
 task in `apps/internal` performs delivery.
 
-Disabled, unconfigured, or invalid email configuration does not prevent the
+Off, unconfigured, or invalid email configuration doesn't prevent the
 services from running. Only a `ready` configuration permits delivery. Provider
-acceptance is not proof of mailbox delivery.
+acceptance isn't proof of mailbox delivery.
 
 The `enabled` flag gates intake, not delivery. While sending is off,
 `enqueueEmail` writes no row and answers `{ status: "discarded" }`, and
@@ -347,7 +348,7 @@ Features enqueue mail through `enqueueEmail(db, input)` in
 - Pass an `EmailTemplate` and a stable domain idempotency key, never HTML.
 - Use a transaction when domain state and its email must commit together.
 - Keep provider errors, retries, and the Resend SDK behind the email package.
-- Handle `{ status: "discarded" }`. It is an ordinary outcome, not an error:
+- Handle `{ status: "discarded" }`. It's an ordinary outcome, not an error:
   a flow that depends on the email must offer the user another route rather
   than fail.
 
@@ -357,8 +358,8 @@ deadline in `src/email/retry.ts`, which stays inside the lifetime of the tokens
 in the auth-link templates; the attempt cap is only a backstop.
 
 Terminal rows are pruned after their configured retention periods. Template
-payloads remain stored until their rows are pruned; do not enqueue data that
-cannot tolerate that retention.
+payloads remain stored until their rows are pruned; don't enqueue data that
+can't tolerate that retention.
 
 `sendEmailViaResend` in `src/email/send.ts` is the only module that talks to
 Resend, and its unit tests stub global `fetch` rather than the network. A failed
@@ -380,7 +381,7 @@ producers and `apps/internal`'s `run` subcommand. Task names live in
 Create on-demand tasks through `createTask()`. When a domain row points at a
 task, create both and attach them in the same transaction so neither can be
 published without the other. The row itself is the enqueue signal; the runner
-polls Postgres, so producers send no additional notification.
+polls Postgres, so producers send no extra notification.
 
 The data layer also owns claiming, lease renewal, fencing, progress, completion,
 failure, release, and queue metrics reads. Every mutation that changes a task's
@@ -426,7 +427,7 @@ emitter on its connection. If a test mocks `@virtool/data/events/emit`, mock
 both `emit` and `createEmitter` so fixture setup can still install the emitter.
 
 The shared container uses `withReuse()` and deliberately has no teardown, so
-local suites reuse it. Remove it with `docker rm -f` when it is no longer
+local suites reuse it. Remove it with `docker rm -f` when it's no longer
 wanted; each CI job still starts its own containers.
 
 ## Commands

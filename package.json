@@ -7,6 +7,7 @@
 		"build": "pnpm -r --filter \"./apps/*\" --filter \"!@virtool/site\" build",
 		"check": "biome check --error-on-warnings apps packages",
 		"develop": "pnpm --filter @virtool/web develop",
+		"docs:lint": "vale sync && vale --glob='*.{md,mdx}' .",
 		"format": "biome check --write apps packages",
 		"knip": "knip",
 		"test": "pnpm -r test",

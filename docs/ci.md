@@ -6,7 +6,7 @@ Every image ships from a target in the root `Dockerfile`. Four targets use the
 `build` job matrix; Pathoscope and Nuvs have separate, longer path-filtered
 jobs. `release-ghcr` publishes all six targets on every release.
 
-| Target | Published image(s) | Build job |
+| Target | Published images | Build job |
 | --- | --- | --- |
 | `dist` | `ghcr.io/virtool/web` | `build` |
 | `internal` | `ghcr.io/virtool/internal` | `build` |
@@ -17,17 +17,12 @@ jobs. `release-ghcr` publishes all six targets on every release.
 
 `dist` retains its name because tooling outside this repository targets it.
 
-The four workflow images publish under their bare, unprefixed names. Those
-names previously came from separate legacy repositories shipping the Python
-workflow of the same name; this repository's release supersedes them. The
-`ts-` prefixed variants were a transitional second tag during the TypeScript
-port and are no longer published; their existing tags stay in the registry
-but never move again.
+The four workflow images publish under their bare, unprefixed names.
 
 Adding an image requires a Dockerfile target and a release-matrix entry. For
-the five targets in `build`, keep its matrix entry in step with
-`release-ghcr`. Pathoscope and Nuvs instead use the dedicated build jobs
-above, and their `matrix.image` values must match the cache scopes those jobs
+the four targets in `build`, keep its matrix entry in step with
+`release-ghcr`. Pathoscope and Nuvs instead use the dedicated build jobs listed
+in the table, and their `matrix.image` values must match the cache scopes those jobs
 write, so the release reuses the caches they populated rather than rebuilding
 the Rust crate, bioinformatics tools, or SPAdes inside the shared 20-minute
 release timeout.
@@ -51,25 +46,25 @@ Most CI jobs run for every pull request. Five jobs use the `changes` job in
 | `nuvs-image` | `build-nuvs` | The Nuvs app and everything copied into its image |
 | `nuvs-app` | `nuvs-test` | The Nuvs app and the workspace packages it imports |
 
-The first four are expensive outliers — libclang, Cargo, and from-source
+The first four are expensive outliers. They use libclang, Cargo, and from-source
 bioinformatics compiles that would otherwise run on every PR. `nuvs-test` is
 cheap mocked vitest, filtered only for parity with the other workflow apps.
 
 Keep a separate filter for each job. The crate jobs run Cargo, not TypeScript.
 The image jobs copy different packages: Pathoscope copies
-`packages/pathoscope-core`; Nuvs does not. `nuvs-app` is narrower than
-`nuvs-image` — no `Dockerfile` or `.dockerignore`, and only the packages Nuvs
+`packages/pathoscope-core`; Nuvs doesn't. `nuvs-app` is narrower than
+`nuvs-image`: no `Dockerfile` or `.dockerignore`, and only the packages Nuvs
 imports (so no `data`, `ncbi`, or `service`). Sharing one filter would rebuild
-each image, and rerun Cargo, for inputs it does not use.
+each image, and rerun Cargo, for inputs it doesn't use.
 
 Extend a filter in the same change that gives its job a new input. Every path a
 workflow image's Dockerfile stages `COPY` must appear under that image's
-filter, even when the app does not import it. The shared `base` stage copies
+filter, even when the app doesn't import it. The shared `base` stage copies
 `packages/data`, `packages/service`, and `packages/bio` for both targets, so
 both image filters include all three packages. Image filters also include
 `.dockerignore`, because its rules determine which files are available to
 those `COPY` instructions.
 
 A missing input can skip the affected build on the pull request that changes
-it. Pushes to `main` do not use the filters, so the same change can then fail
+it. Pushes to `main` don't use the filters, so the same change can then fail
 after merging.

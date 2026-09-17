@@ -235,7 +235,7 @@ describe("handleUploadDownload", () => {
 		expect(response.status).toBe(404);
 	});
 
-	// A row predating recorded keys names no object we can locate.
+	// A row predating recorded keys names no object that can be located.
 	it("returns a 404 when the row has no storage_key", async () => {
 		const uploadId = await seedUpload({ storageKey: null });
 

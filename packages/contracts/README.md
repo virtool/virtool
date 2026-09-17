@@ -5,7 +5,7 @@ wire boundaries. Import public contracts from the package root.
 
 Types written by a server and consumed by a client belong here so neither side
 depends on the other's implementation modules. Search this package before
-declaring a wire shape, import its names directly, and do not re-export them
+declaring a wire shape, import its names directly, and don't re-export them
 through an app feature. Keep client-only request state in the app and
 data-layer options, values, errors, and row types in `@virtool/data`.
 

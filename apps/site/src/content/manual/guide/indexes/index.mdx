@@ -11,7 +11,7 @@ associated with optimized read mapping indices managed by Virtool.
 When changes are made to OTUs, the index is rebuilt to include those changes in future analysis jobs. Each analysis is
 tied to a specific index (version) of its target reference.
 
-## View Indexes
+## View indexes
 
 You can view the indexes that have been built for a specific reference
 
@@ -19,59 +19,59 @@ You can view the indexes that have been built for a specific reference
 
    Check the reference list to see what the latest built index is for the reference.
 
-   The **Latest Build** box shows the latest index build. This index will be used for any analyses started using that
-   reference. In the example above, the latest index is **Index 20**.
+   The **Latest Build** box shows the latest index build. This index is used for any analyses started using that
+   reference. In this example, the latest index is **Index 20**.
 
    ![References Overview Page](./reference_list.png?url)
 
-2. Click on the reference
+2. Click the reference
 
-   You will be able to view the **Latest Index Build** for the reference you are using.
+   You can view the **Latest Index Build** for the reference you are using.
 
    ![Original Reference](./reference_latest.png?url)
 
-3. Click on the **Indexes** tab under the reference's name
+3. Click the **Indexes** tab under the reference's name
 
-   Here you will see all the index versions for that reference. The top index will be the latest version.
+   Here you see all the index versions for that reference. The top index is the latest version.
 
    ![Indexes Overview](./list.png?url)
 
-## View a Specific Index
+## View a specific index
 
-1. Click on an index to view its details
+1. Click an index to view its details
 
-   In this view, we can view all the OTUs that changed and who contributed to the changes.
+   In this view, all the OTUs that changed and the contributors to those changes are visible.
 
    ![View Index 20](./detail.png?url)
 
-2. Click on the **Changes** tab
+2. Click the **Changes** tab
 
    Here all 259 changes are listed. The list shows all OTUs and what changes were made to them.
 
    ![Index Changes](./detail_changes.png?url)
 
-## Build an Index
+## Build an index
 
-When changes are made to reference, a new index must be built before the changes will be
+When changes are made to a reference, a new index must be built before the changes are
 used in analyses.
 
-1. You will see an alert in the **OTUs** and **Indexes** views when an index build is required
+1. You see an alert in the **OTUs** and **Indexes** views when an index build is required
 
    ![Rebuild Index](./rebuild.png?url)
 
 2. Click the <DummyLink>Rebuild the index</DummyLink>
 
-   The **Rebuild Index** dialog will appear and will list all the changes that will be included in the index.
+   The **Rebuild Index** dialog appears and lists all the changes that are included in the index.
 
    ![Rebuild index dialog box](./rebuild_dialog.png?url)
 
 3. To start making these changes and rebuilding the index, click <DummyButton icon="wrench">Start</DummyButton> on the
    bottom of the dialog box
 
-   This will start an index build job.
+   This starts an index build job.
 
    ![Start button to rebuild index](./rebuild_start.png?url)
 
-4. Once the job is complete have been made, there will be a new index record that is now <Icon name="check" /> **Active**.
+4. Once the job is complete, there is a new index record marked <Icon name="check" /> **Active**.
 
    ![Version 1 index active](./rebuild_active.png?url)

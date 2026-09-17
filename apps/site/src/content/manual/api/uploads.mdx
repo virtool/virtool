@@ -9,9 +9,9 @@ Upload a file in three steps:
 
 1. Start the upload and receive a temporary storage URL.
 2. Send the file directly to storage at that URL.
-3. Tell Virtool to finalize the upload.
+3. Tell Virtool to finish the upload.
 
-The file bytes never pass through the Virtool server, allowing very large
+The file bytes never pass through the Virtool server, allowing large
 uploads.
 
 ## Authenticate
@@ -20,7 +20,7 @@ Authenticate requests to Virtool with HTTP Basic authentication. Use your user
 handle as the username and an API key as the password. The API key and its owner
 must both have the `upload_file` permission.
 
-The signed storage requests in the transfer step do not use the API key. The
+The signed storage requests in the transfer step don't use the API key. The
 temporary storage URL contains all authorization needed to write that one file.
 
 ## Start an upload
@@ -48,15 +48,15 @@ curl --user "$VT_HANDLE:$VT_API_KEY" \
 
 | Field | Type | Rule |
 | --- | --- | --- |
-| `name` | string | File name. |
+| `name` | string | Filename. |
 | `type` | string | One of `reference`, `reads`, or `subtraction`. |
-| `size` | integer | Exact file size in bytes, from 0 to the instance's maximum upload size. |
+| `size` | integer | Exact file size in bytes, from 0 to the configured maximum upload size. |
 
-An administrator sets the maximum upload size, which is 5,000,000,000 bytes on a
-new instance and can be raised to 120,000,000,000 bytes (120 GB), the application
-ceiling. A `size` above the configured maximum returns `413`; a size above
-the application ceiling fails validation with `422`. Check the initialization response
-before starting the block uploads.
+An administrator sets the maximum upload size. It defaults to 5,000,000,000
+bytes and can be raised to the hard upload limit of 120,000,000,000 bytes (120
+GB). A `size` that exceeds the configured maximum returns `413`; one that
+exceeds the hard upload limit fails validation with `422`. Check the
+initialization response before starting the block uploads.
 
 The server sends back a `201` response.
 
@@ -78,7 +78,7 @@ The server sends back a `201` response.
 
 <Note type="warning">
 The upload API requires a Virtool instance configured for direct uploads to
-Azure Blob Storage. A `503` response means this instance does not support the
+Azure Blob Storage. A `503` response means this instance doesn't support the
 upload API; contact its administrator.
 </Note>
 
@@ -96,7 +96,7 @@ Use the `url`, `blockSize`, and `concurrency` values from the start response.
    {url}&comp=block&blockid={blockId}
    ```
 
-   Pieces can upload in parallel, but do not run more than `concurrency`
+   Pieces can upload in parallel, but don't run more than `concurrency`
    requests at once.
 4. After every piece has uploaded, commit the file with `PUT` to:
 
@@ -116,11 +116,11 @@ Use the `url`, `blockSize`, and `concurrency` values from the start response.
 ```
 
    Set `x-ms-blob-content-type` to the file's media type, or
-   `application/octet-stream` when it is unknown.
+   `application/octet-stream` when it's unknown.
 
-These are standard HTTP requests and do not require an Azure SDK. If a request
+These are standard HTTP requests and don't require an Azure SDK. If a request
 fails because of a network or server error, retry it. Cancel the upload if it
-cannot be completed.
+can't be completed.
 
 ## Finish an upload
 
@@ -133,7 +133,7 @@ curl --user "$VT_HANDLE:$VT_API_KEY" \
 ```
 
 The server verifies the stored file size, marks the upload ready, and returns
-the upload record. Finalization is idempotent, so it is safe to retry if the
+the upload record. Finalization is idempotent, so it's safe to retry if the
 response is lost. A missing block list or mismatched size returns `409`.
 
 ## Cancel an upload
@@ -148,7 +148,7 @@ curl --user "$VT_HANDLE:$VT_API_KEY" \
 
 Cancellation removes an unfinished upload owned by the caller and returns
 `204`. Use it after a permanent transfer, commit, or finalization failure so the
-pending upload does not remain until automatic cleanup.
+pending upload doesn't remain until automatic cleanup.
 
 ## Responses
 
@@ -160,8 +160,8 @@ pending upload does not remain until automatic cleanup.
 | `400` | The JSON body or upload ID is malformed. |
 | `401` | The API credentials are missing or invalid. |
 | `403` | The API key or its owner lacks `upload_file`. |
-| `404` | The upload does not exist, is not owned by the caller, or is not in the required unfinished state. |
+| `404` | The upload doesn't exist, isn't owned by the caller, or isn't in the required unfinished state. |
 | `409` | Finalization found no committed blob or its byte size differs from `size`. |
-| `413` | The declared `size` exceeds the configured maximum but is within the application ceiling. |
+| `413` | The declared `size` exceeds the configured maximum but is within the hard upload limit. |
 | `422` | The initialization fields are invalid. |
 | `503` | Direct upload support is unavailable on this deployment. |

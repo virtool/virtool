@@ -90,11 +90,8 @@ export function createFakeContext<TData, TState>(
 /**
  * Build a real context by running a workflow's own `buildContext`.
  *
- * Goes through `createWorkflowContext`, so `assertSerializableData` runs. That
- * seam is what the deferred end-to-end bed depends on — a run there is files
- * plus a JSON blob — and it rots silently the first time someone parks a closure
- * or an open handle on `data`. A test asserting only on the values would not
- * notice; this one cannot avoid it.
+ * Uses `createWorkflowContext` so tests enforce the same serializability
+ * contract as real runs.
  */
 export function buildTestContext<TData, TState>(
 	workflow: Workflow<TData, TState>,
