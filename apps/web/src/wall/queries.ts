@@ -3,14 +3,13 @@ import {
 	createFirstUserFn,
 	loginFn,
 	resetPasswordFn,
+	verifyTwoFactorFn,
 } from "@server/auth/functions";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { rootQueryKeys } from "@wall/keys";
 
 /** Result of a login attempt. */
-export type LoginResult = {
-	reset: boolean;
-};
+export type LoginResult = Awaited<ReturnType<typeof loginFn>>;
 
 /** Result of a successful password reset. */
 export type ResetPasswordResult = {
@@ -57,7 +56,7 @@ export function useLoginMutation() {
 		mutationFn: ({ handle, password }) =>
 			loginFn({ data: { handle, password } }),
 		onSuccess: (data) => {
-			if (!data.reset) {
+			if (!("twoFactorRedirect" in data) && !data.reset) {
 				queryClient.invalidateQueries({ queryKey: accountQueryKeys.all() });
 			}
 		},
@@ -76,6 +75,20 @@ export function useResetPasswordMutation() {
 		mutationFn: ({ password }) => resetPasswordFn({ data: { password } }),
 		onSuccess: () => {
 			queryClient.invalidateQueries({ queryKey: accountQueryKeys.all() });
+		},
+	});
+}
+
+/** Verify a second factor before refreshing authenticated account data. */
+export function useVerifyTwoFactorMutation() {
+	const queryClient = useQueryClient();
+	return useMutation({
+		mutationFn: (data: { code: string; recovery: boolean }) =>
+			verifyTwoFactorFn({ data }),
+		onSuccess: (data) => {
+			if (!data.reset) {
+				queryClient.invalidateQueries({ queryKey: accountQueryKeys.all() });
+			}
 		},
 	});
 }

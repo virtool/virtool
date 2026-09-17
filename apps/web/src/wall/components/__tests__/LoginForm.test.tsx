@@ -3,13 +3,15 @@ import userEvent from "@testing-library/user-event";
 import { MemoryRouter, renderWithProviders } from "@tests/setup";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
-const { loginMock } = vi.hoisted(() => ({
+const { loginMock, verifyMock } = vi.hoisted(() => ({
 	loginMock: vi.fn(),
+	verifyMock: vi.fn(),
 }));
 
 vi.mock("../../queries", async () => {
 	const { useMutation } = await import("@tanstack/react-query");
 	return {
+		useVerifyTwoFactorMutation: () => useMutation({ mutationFn: verifyMock }),
 		useLoginMutation: () =>
 			useMutation({
 				mutationFn: loginMock,
@@ -22,6 +24,7 @@ import LoginForm from "../LoginForm";
 describe("<LoginForm />", () => {
 	afterEach(() => {
 		loginMock.mockReset();
+		verifyMock.mockReset();
 	});
 
 	it("calls the login mutation with the form values", async () => {
@@ -71,4 +74,44 @@ describe("<LoginForm />", () => {
 
 		expect(await screen.findByText(errorMessage)).toBeInTheDocument();
 	});
+});
+
+it("continues a two-factor challenge and handles forced reset only after verification", async () => {
+	loginMock.mockResolvedValue({ twoFactorRedirect: true });
+	verifyMock.mockRejectedValueOnce(
+		new Error("Invalid or expired verification code."),
+	);
+	verifyMock.mockResolvedValueOnce({ reset: true });
+	const setResetRequired = vi.fn();
+	renderWithProviders(
+		<MemoryRouter>
+			<LoginForm redirect="/samples" setResetRequired={setResetRequired} />
+		</MemoryRouter>,
+	);
+	await userEvent.type(await screen.findByLabelText("Username"), "Alice");
+	await userEvent.type(screen.getByLabelText("Password"), "password");
+	await userEvent.click(screen.getByRole("button", { name: "Login" }));
+	await userEvent.type(
+		await screen.findByLabelText("Authentication code"),
+		"123456",
+	);
+	expect(setResetRequired).not.toHaveBeenCalled();
+	await userEvent.click(screen.getByRole("button", { name: "Verify" }));
+	expect(await screen.findByRole("alert")).toHaveTextContent(
+		"Invalid or expired",
+	);
+	expect(verifyMock).toHaveBeenCalledWith(
+		{ code: "123456", recovery: false },
+		expect.anything(),
+	);
+	await userEvent.click(
+		screen.getByRole("button", { name: "Use recovery code" }),
+	);
+	await userEvent.type(screen.getByLabelText("Recovery code"), "backup-code");
+	await userEvent.click(screen.getByRole("button", { name: "Verify" }));
+	await waitFor(() => expect(setResetRequired).toHaveBeenCalledWith(true));
+	expect(verifyMock).toHaveBeenLastCalledWith(
+		{ code: "backup-code", recovery: true },
+		expect.anything(),
+	);
 });

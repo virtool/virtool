@@ -2,8 +2,10 @@ import Button from "@base/Button";
 import { InputGroup, InputLabel, InputSimple } from "@base/Input";
 import { useNavigate } from "@tanstack/react-router";
 import { CircleAlert } from "lucide-react";
+import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { useLoginMutation } from "../queries";
+import TwoFactorForm from "./TwoFactorForm";
 import { WallTitle } from "./WallTitle";
 
 type LoginFormProps = {
@@ -25,6 +27,7 @@ export default function LoginForm({
 }: LoginFormProps) {
 	const { handleSubmit, register } = useForm<FormValues>();
 	const loginMutation = useLoginMutation();
+	const [twoFactor, setTwoFactor] = useState(false);
 	const navigate = useNavigate();
 
 	function onSubmit({ handle, password }: FormValues) {
@@ -32,6 +35,10 @@ export default function LoginForm({
 			{ handle, password },
 			{
 				onSuccess: (data) => {
+					if ("twoFactorRedirect" in data) {
+						setTwoFactor(true);
+						return;
+					}
 					if (data.reset) {
 						setResetRequired(true);
 						return;
@@ -43,6 +50,19 @@ export default function LoginForm({
 	}
 
 	const { error, isError } = loginMutation;
+
+	if (twoFactor) {
+		return (
+			<TwoFactorForm
+				redirect={redirect}
+				setResetRequired={setResetRequired}
+				restart={() => {
+					setTwoFactor(false);
+					loginMutation.reset();
+				}}
+			/>
+		);
+	}
 
 	return (
 		<>

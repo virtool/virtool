@@ -5,6 +5,7 @@ import {
 	loginFn,
 	logoutFn,
 	resetPasswordFn,
+	verifyTwoFactorFn,
 } from "./functions";
 
 /**
@@ -32,6 +33,7 @@ export const authenticationExceptions: ReadonlyArray<{ url: string }> = [
 	getRootFn,
 	loginFn,
 	logoutFn,
+	verifyTwoFactorFn,
 ];
 
 /** Server functions reachable by a forced-password-reset principal. */

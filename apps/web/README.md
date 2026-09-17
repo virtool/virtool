@@ -224,7 +224,9 @@ Login checks an unmigrated legacy identity before Better Auth. During the
 compatibility window, a matching legacy password mints a short-lived legacy
 application or forced-reset session so incomplete users are not locked out
 before the remediation surface ships. Migrated identities continue through
-Better Auth. Unknown, ineligible, and wrong-password attempts keep the same
+Better Auth. A two-factor challenge keeps the login wall open for an authenticator
+or recovery code; only successful verification establishes a session and checks
+whether a password reset is required. Unknown, ineligible, and wrong-password attempts keep the same
 generic response and constant-cost behavior. The final cutover replaces this
 temporary branch with the restricted `email_remediation` session only after
 its setup endpoints and wall are available.

@@ -23,7 +23,7 @@ import { checkHandle, checkReservedHandle } from "./handle";
 import { getClientIp } from "./ip";
 import { open, passwordResetOnly } from "./policy";
 import { checkConfiguredPasswordLength } from "./service";
-import { signInUsername, signOut } from "./sessionActions";
+import { signInUsername, signOut, verifyTwoFactor } from "./sessionActions";
 
 // `password` is deliberately not length-checked here. Login authenticates an
 // existing credential rather than setting a new one, and rejecting a short
@@ -85,21 +85,50 @@ export const loginFn = createServerFn({ method: "POST" })
 
 			const result = await signInUsername(data.handle, data.password);
 
-			const userId = Number(result.user.id);
-			const [user] = await db
-				.select({ forceReset: users.forceReset })
-				.from(users)
-				.where(eq(users.id, userId))
-				.limit(1);
-
-			if (!user) {
-				throw new APIError("UNAUTHORIZED");
+			if ("twoFactorRedirect" in result) {
+				return { twoFactorRedirect: true as const };
 			}
 
-			setResponseStatus(201);
-			return { reset: user.forceReset };
+			return await completeLogin(Number(result.user.id));
 		} catch (err) {
 			rethrowAsHttp(err);
+		}
+	});
+
+async function completeLogin(userId: number) {
+	const [user] = await db
+		.select({ forceReset: users.forceReset })
+		.from(users)
+		.where(eq(users.id, userId))
+		.limit(1);
+
+	if (!user) {
+		throw new APIError("UNAUTHORIZED");
+	}
+
+	setResponseStatus(201);
+	return { reset: user.forceReset };
+}
+
+/** Complete a login using Better Auth's pending two-factor challenge cookie. */
+export const verifyTwoFactorFn = createServerFn({ method: "POST" })
+	.middleware([open()])
+	.validator(
+		z.object({ code: z.string().trim().min(1), recovery: z.boolean() }),
+	)
+	.handler(async ({ data }) => {
+		try {
+			const result = await verifyTwoFactor(data.code, data.recovery);
+			return await completeLogin(Number(result.user.id));
+		} catch (err) {
+			if (err instanceof APIError && err.statusCode < 500) {
+				setResponseStatus(400);
+				throw new ClientError(
+					"Invalid or expired verification code. Try again or restart login.",
+					400,
+				);
+			}
+			throw err;
 		}
 	});
 

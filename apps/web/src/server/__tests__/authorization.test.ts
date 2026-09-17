@@ -301,6 +301,7 @@ describe("the open endpoints are reachable without a session", () => {
 			"getRootFn",
 			"loginFn",
 			"logoutFn",
+			"verifyTwoFactorFn",
 		]);
 	});
 

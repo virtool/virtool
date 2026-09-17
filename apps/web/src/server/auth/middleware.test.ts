@@ -69,9 +69,13 @@ const {
 	requireBrowserPrincipal,
 	UnauthorizedError,
 } = await import("./middleware");
-const { createFirstUserFn, loginFn, logoutFn, resetPasswordFn } = await import(
-	"./functions"
-);
+const {
+	createFirstUserFn,
+	loginFn,
+	logoutFn,
+	resetPasswordFn,
+	verifyTwoFactorFn,
+} = await import("./functions");
 const { getPasswordPolicyFn } = await import("../settings/functions");
 const { getRootFn } = await import("../root/functions");
 const { basicAuthHeader, sessionCookie, setupSessionCookie } = await import(
@@ -130,9 +134,16 @@ function requestFor(cookie?: string, authorization?: string): Request {
 }
 
 describe("authentication exceptions", () => {
-	it("exempts exactly the five open functions", () => {
+	it("exempts exactly the six open functions", () => {
 		expect(authenticationExceptions.map((fn) => fn.url).sort()).toEqual(
-			[createFirstUserFn, getPasswordPolicyFn, getRootFn, loginFn, logoutFn]
+			[
+				createFirstUserFn,
+				getPasswordPolicyFn,
+				getRootFn,
+				loginFn,
+				logoutFn,
+				verifyTwoFactorFn,
+			]
 				.map((fn) => fn.url)
 				.sort(),
 		);
