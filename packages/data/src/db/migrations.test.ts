@@ -1,9 +1,10 @@
 import { randomBytes } from "node:crypto";
-import { readFileSync } from "node:fs";
+import { readdirSync, readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
-
+import { generateDrizzleJson } from "drizzle-kit/api";
+import { readMigrationFiles } from "drizzle-orm/migrator";
+import { PgDialect, type PgSession } from "drizzle-orm/pg-core";
 import { drizzle } from "drizzle-orm/postgres-js";
-import { migrate } from "drizzle-orm/postgres-js/migrator";
 import postgres from "postgres";
 import { expect, it, onTestFinished } from "vitest";
 
@@ -20,6 +21,52 @@ const JOURNAL_PATH = fileURLToPath(
 );
 
 type JournalEntry = { idx: number; when: number; tag: string };
+
+it("keep migration SQL and snapshots aligned with the journal", () => {
+	const journal = JSON.parse(readFileSync(JOURNAL_PATH, "utf8")) as {
+		entries: JournalEntry[];
+	};
+	const entries = [...journal.entries].sort((a, b) => a.idx - b.idx);
+	const sqlFiles = readdirSync(MIGRATIONS_FOLDER)
+		.filter((file) => file.endsWith(".sql"))
+		.sort();
+	const snapshotFiles = readdirSync(`${MIGRATIONS_FOLDER}/meta`)
+		.filter((file) => file.endsWith("_snapshot.json"))
+		.sort();
+
+	expect(sqlFiles).toEqual(entries.map(({ tag }) => `${tag}.sql`));
+	expect(snapshotFiles).toEqual(
+		entries.map(
+			({ idx }) => `${idx.toString().padStart(4, "0")}_snapshot.json`,
+		),
+	);
+
+	const snapshots = snapshotFiles.map(
+		(file) =>
+			JSON.parse(readFileSync(`${MIGRATIONS_FOLDER}/meta/${file}`, "utf8")) as {
+				id: string;
+				prevId: string;
+			},
+	);
+	const latestSnapshot = JSON.parse(
+		readFileSync(`${MIGRATIONS_FOLDER}/meta/${snapshotFiles.at(-1)}`, "utf8"),
+	) as Record<string, unknown> & { id: string; prevId: string };
+	const generatedSnapshot = generateDrizzleJson(
+		schema as never,
+		latestSnapshot.prevId,
+		undefined,
+		"snake_case",
+	);
+
+	expect({ ...generatedSnapshot, id: latestSnapshot.id }).toEqual(
+		latestSnapshot,
+	);
+
+	expect(snapshots[0]?.prevId).toBe("00000000-0000-0000-0000-000000000000");
+	for (let i = 1; i < snapshots.length; i++) {
+		expect(snapshots[i]?.prevId).toBe(snapshots[i - 1]?.id);
+	}
+});
 
 // The migrator applies every journal entry whose `when` is greater than the
 // last `when` already recorded in `__drizzle_migrations`. A later entry with an
@@ -98,11 +145,33 @@ it("apply from empty and land on the schema mirror", async () => {
 		await admin.end();
 	});
 
-	await migrate(drizzle(client, { schema }), {
+	const config = {
 		migrationsFolder: MIGRATIONS_FOLDER,
 		migrationsSchema: "drizzle",
 		migrationsTable: "__drizzle_migrations",
-	});
+	};
+	const db = drizzle(client, { schema });
+	const dialect = new PgDialect();
+	const migrations = readMigrationFiles(config);
+	const session = db._.session as unknown as PgSession;
+
+	for (const [index, migration] of migrations.entries()) {
+		const assertion = migration.sql[0]?.match(
+			/key\s*=\s*'([^']+)'\s+AND\s+version\s*=\s*(\d+)\s+AND\s+status\s*=\s*'passed'/i,
+		);
+		if (assertion === null || assertion === undefined) {
+			continue;
+		}
+
+		await dialect.migrate(migrations.slice(0, index), session, config);
+		await client`
+			insert into data_migrations (key, version, kind, status)
+			values (${assertion[1]}, ${Number(assertion[2])}, 'audit', 'passed')
+			on conflict (key, version) do nothing
+		`;
+	}
+
+	await dialect.migrate(migrations, session, config);
 
 	const mirror = await createTestDatabase();
 	onTestFinished(mirror.drop);

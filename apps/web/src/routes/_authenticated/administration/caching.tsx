@@ -11,8 +11,13 @@ export const Route = createFileRoute("/_authenticated/administration/caching")({
 		}
 	},
 	loader: async ({ context: { queryClient } }) => {
-		const { settingsQueryOptions } = await import("@administration/queries");
-		await queryClient.ensureQueryData(settingsQueryOptions());
+		const { cacheUsageQueryOptions, settingsQueryOptions } = await import(
+			"@administration/queries"
+		);
+		await Promise.all([
+			queryClient.ensureQueryData(settingsQueryOptions()),
+			queryClient.ensureQueryData(cacheUsageQueryOptions()),
+		]);
 	},
 	component: CacheStorageBudget,
 });

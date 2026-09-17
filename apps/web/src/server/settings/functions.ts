@@ -1,11 +1,13 @@
 import { createServerFn } from "@tanstack/react-start";
 import { setResponseStatus } from "@tanstack/react-start/server";
 import {
+	type CacheUsageSnapshot,
 	MAX_UPLOAD_SIZE,
 	type SampleGroup,
 	type Settings,
 	sampleGroups,
 } from "@virtool/contracts";
+import { listCacheUsage } from "@virtool/data/caches/usage";
 import {
 	getSettings,
 	type Settings as StoredSettings,
@@ -116,6 +118,10 @@ const updateSettingsSchema = z
 export const getSettingsFn = createServerFn({ method: "GET" })
 	.middleware([adminRole("settings")])
 	.handler(async (): Promise<Settings> => toSettings(await getSettings(db)));
+
+export const getCacheUsageFn = createServerFn({ method: "GET" })
+	.middleware([adminRole("settings")])
+	.handler(async (): Promise<CacheUsageSnapshot[]> => listCacheUsage(db));
 
 export const updateSettingsFn = createServerFn({ method: "POST" })
 	.middleware([adminRole("settings")])

@@ -15,6 +15,12 @@ describe("<ManageUsers />", () => {
 
 		await renderRoute("/administration/users", { account });
 
+		expect(
+			await screen.findByRole("heading", { name: "Users" }),
+		).toBeInTheDocument();
+		expect(
+			screen.getByText("Manage user accounts and access."),
+		).toBeInTheDocument();
 		expect(await screen.findByLabelText("Search users")).toBeInTheDocument();
 		expect(screen.getByRole("button", { name: "Create" })).toBeInTheDocument();
 		expect(await screen.findByText(/Administrator/)).toBeInTheDocument();

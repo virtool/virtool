@@ -87,10 +87,6 @@ describe("reactQueryHandler", () => {
 				queryKey: samplesQueryKeys.lists(),
 			},
 			{
-				message: { domain: "users", operation: "update", id: 7 },
-				queryKey: userQueryKeys.detail(7),
-			},
-			{
 				message: { domain: "users", operation: "delete", id: 7 },
 				queryKey: userQueryKeys.lists(),
 			},
@@ -242,9 +238,11 @@ describe("reactQueryHandler", () => {
 		}
 	});
 
-	it("marks only the matching user detail stale on update", () => {
+	it("marks the matching user detail and analysis user options stale on update", () => {
 		queryClient.setQueryData(userQueryKeys.detail(7), { id: 7 });
 		queryClient.setQueryData(userQueryKeys.detail(8), { id: 8 });
+		const analysisUsers = analysesQueryKeys.users([1, ["pathoscope"]]);
+		queryClient.setQueryData(analysisUsers, []);
 
 		reactQueryHandler(queryClient)({
 			domain: "users",
@@ -258,6 +256,7 @@ describe("reactQueryHandler", () => {
 		expect(
 			queryClient.getQueryState(userQueryKeys.detail(8))?.isInvalidated,
 		).toBe(false);
+		expect(queryClient.getQueryState(analysisUsers)?.isInvalidated).toBe(true);
 	});
 
 	// Every on-screen job holds its own detail query, so invalidating the frame's

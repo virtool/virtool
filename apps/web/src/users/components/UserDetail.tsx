@@ -2,6 +2,7 @@ import { useCheckAdminRole } from "@administration/hooks";
 import Alert from "@base/Alert";
 import { InitialIcon } from "@base/Icon";
 import Label from "@base/Label";
+import SectionHeader from "@base/SectionHeader";
 import { useSuspenseUser, useUpdateUser } from "@users/queries";
 import { CircleAlert, ShieldUserIcon } from "lucide-react";
 import Handle from "./Handle";
@@ -52,18 +53,20 @@ export default function UserDetail({ userId }: UserDetailProps) {
 
 	return (
 		<div>
-			<header className="flex items-center justify-between mb-5">
-				<h2 className="flex items-center text-2xl gap-3">
-					<InitialIcon size="xl" handle={handle} />
-					<span>{handle}</span>
-				</h2>
-				{administratorRole && (
-					<Label>
-						<ShieldUserIcon aria-label="Administrator" size={18} />
-						Administrator
-					</Label>
-				)}
-			</header>
+			<SectionHeader>
+				<div className="flex items-center justify-between gap-4">
+					<h2 className="flex items-center gap-3">
+						<InitialIcon size="xl" handle={handle} />
+						<span>{handle}</span>
+					</h2>
+					{administratorRole && (
+						<Label>
+							<ShieldUserIcon aria-label="Administrator" size={18} />
+							Administrator
+						</Label>
+					)}
+				</div>
+			</SectionHeader>
 
 			<UserAdministratorRole id={id} role={administratorRole} />
 

@@ -38,50 +38,55 @@ export default function MaxUploadSize() {
 	}
 
 	return (
-		<section>
-			<SectionHeader>
-				<h2>Maximum Upload Size</h2>
-				<p>
-					A file larger than this is refused before its transfer begins. It
-					applies to every upload, whether it comes from the web interface or
-					the API.
-				</p>
+		<section className="flex flex-col gap-4">
+			<SectionHeader className="mb-0">
+				<h2>Uploads</h2>
 			</SectionHeader>
-			<BoxGroup>
-				<BoxGroupSection>
-					<form onSubmit={handleSubmit(save)}>
-						<InputGroup>
-							<InputLabel htmlFor="maxUploadSize">Maximum (GB)</InputLabel>
-							<Input
-								id="maxUploadSize"
-								aria-describedby="maxUploadSize-error"
-								aria-invalid={Boolean(errors.maximumGigabytes) || undefined}
-								min={1}
-								step={1}
-								type="number"
-								{...register("maximumGigabytes", {
-									valueAsNumber: true,
-									required: "A maximum is required.",
-									min: {
-										value: 1,
-										message: "The maximum must be at least 1 GB.",
-									},
-									max: {
-										value: MAX_GIGABYTES,
-										message: `The maximum cannot exceed ${MAX_GIGABYTES} GB.`,
-									},
-								})}
-							/>
-							<InputError id="maxUploadSize-error">
-								{errors.maximumGigabytes?.message}
-							</InputError>
-						</InputGroup>
-						<div className="flex justify-end">
-							<SaveButton />
-						</div>
-					</form>
-				</BoxGroupSection>
-			</BoxGroup>
+			<section>
+				<SectionHeader level={3}>
+					<h3>Maximum Size</h3>
+					<p>
+						A file larger than this is refused before its transfer begins. It
+						applies to every upload, whether it comes from the web interface or
+						the API.
+					</p>
+				</SectionHeader>
+				<BoxGroup>
+					<BoxGroupSection>
+						<form onSubmit={handleSubmit(save)}>
+							<InputGroup>
+								<InputLabel htmlFor="maxUploadSize">Maximum (GB)</InputLabel>
+								<Input
+									id="maxUploadSize"
+									aria-describedby="maxUploadSize-error"
+									aria-invalid={Boolean(errors.maximumGigabytes) || undefined}
+									min={1}
+									step={1}
+									type="number"
+									{...register("maximumGigabytes", {
+										valueAsNumber: true,
+										required: "A maximum is required.",
+										min: {
+											value: 1,
+											message: "The maximum must be at least 1 GB.",
+										},
+										max: {
+											value: MAX_GIGABYTES,
+											message: `The maximum cannot exceed ${MAX_GIGABYTES} GB.`,
+										},
+									})}
+								/>
+								<InputError id="maxUploadSize-error">
+									{errors.maximumGigabytes?.message}
+								</InputError>
+							</InputGroup>
+							<div className="flex justify-end">
+								<SaveButton />
+							</div>
+						</form>
+					</BoxGroupSection>
+				</BoxGroup>
+			</section>
 		</section>
 	);
 }

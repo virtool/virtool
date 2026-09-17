@@ -181,6 +181,14 @@ This package owns the Postgres schema. `src/db/schema/` is the source of truth;
 migrations are generated from it with `db:generate` and applied with
 `db:migrate`.
 
+Create migrations generated-first: update the schema mirror, run
+`pnpm --filter @virtool/data db:generate --name <name>`, then make only the SQL
+edits that generation cannot express, such as a data-migration assertion. Commit
+the generated SQL, `meta/_journal.json`, and matching snapshot together. Never
+add a journal entry or SQL migration without its snapshot; the next generation
+would diff against an older schema state and emit duplicate DDL. Rerun
+`db:generate` before committing and expect it to report no schema changes.
+
 `drizzle/0000_baseline.sql` describes the schema as it stood when ownership
 moved here. Production was stamped as already migrated rather than having that
 baseline applied to it, so it must never be run against an existing database.
@@ -216,11 +224,10 @@ A Drizzle property name in `auth.ts` is a Better Auth *field* name. The adapter
 looks fields up by property, so `userId` and `credentialID` keep their exact
 spelling while their columns stay snake_case.
 
-`users.email` is deliberately not unique, though Better Auth declares it so.
-Legacy rows share an empty email, and normalizing them is separate work. Until
-that lands, `src/auth/lifecycle.ts` holds uniqueness for the addresses it
-establishes with a transaction-scoped advisory lock on the normalized address
-rather than an index.
+`users.email` is deliberately not globally unique, though Better Auth declares
+it so. Legacy rows share an empty email. The identity audit reports malformed
+and colliding addresses, while `users_migrated_email_unique` enforces
+normalized uniqueness only after `auth_migrated_at` is set.
 
 ### Account lifecycle and setup state
 
@@ -374,6 +381,28 @@ failure, release, and queue metrics reads. Every mutation that changes a task's
 visible state publishes the corresponding `tasks` event. The execution and
 shutdown contracts are documented in
 [`apps/internal/README.md`](../../apps/internal/README.md).
+
+## Data migrations
+
+`src/data-migrations/data.ts` owns persistence for paired data migrations:
+`data_migrations` records each `(key, version)` attempt outcome and checkpoint;
+`data_migration_findings` stores bounded finding details. Kinds are `audit` and
+`backfill`, and statuses are `running`, `passed`, `failed`, and `errored`.
+
+A retry increments the attempt count and clears the previous findings and
+outcome, retaining the last safe checkpoint. A pass clears that checkpoint.
+Only TypeScript writes these records. Paired SQL asserts that the exact key and
+version passed before making its schema changes.
+
+`0026_add_data_migrations` bootstraps the framework tables and precedes every
+paired migration. The schema mirror and migration snapshot describe these
+same tables. Body implementations use raw SQL pinned to their historical schema;
+they do not import the moving domain mirror.
+
+The internal app owns pairing, journal order, segmented application, and the
+operator commands. See [data migrations](../../apps/internal/README.md#paired-data-migrations)
+for authoring, SQL assertions, and retries. The direct `db:migrate` command
+cannot run TypeScript bodies; its SQL assertions stop at unsatisfied pairs.
 
 ## Testing
 

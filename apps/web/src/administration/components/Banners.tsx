@@ -50,11 +50,13 @@ export default function Banners() {
 	return (
 		<section>
 			<SectionHeader>
-				<h2>Banners</h2>
-				<p>
-					Manage the banner displayed to all users above the navigation bar.
-				</p>
-				<div className="mt-3 flex justify-end">
+				<div className="flex items-start justify-between gap-4">
+					<div>
+						<h2>Banners</h2>
+						<p>
+							Manage the banner displayed to all users above the navigation bar.
+						</p>
+					</div>
 					<CreateBanner
 						onSubmit={(values) => createMutation.mutateAsync(values)}
 					/>

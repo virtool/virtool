@@ -58,6 +58,12 @@ export type FindAnalysesOptions = {
 	workflows?: AnalysisWorkflow[];
 };
 
+/** The scope and non-user filters used to list analysis owners. */
+export type ListAnalysisUsersOptions = Pick<
+	FindAnalysesOptions,
+	"sampleId" | "workflows"
+>;
+
 /** The fields an analysis is created from, plus the user starting it. */
 export type CreateAnalysisValues = {
 	sampleId: number;
@@ -307,6 +313,40 @@ function analysisReadableFilter(db: Db, actor: SampleActor): SQL | undefined {
 		analyses.sample_id,
 		db.select({ id: legacySamples.id }).from(legacySamples).where(readable),
 	);
+}
+
+/**
+ * List active users who own at least one analysis in the readable filter scope.
+ */
+export async function listAnalysisUsers(
+	db: Db,
+	options: ListAnalysisUsersOptions,
+	actor: SampleActor,
+): Promise<UserNested[]> {
+	const readable = analysisReadableFilter(db, actor);
+	const sample =
+		options.sampleId === undefined
+			? undefined
+			: eq(analyses.sample_id, options.sampleId);
+	const workflow = options.workflows?.length
+		? inArray(analyses.workflow, options.workflows)
+		: undefined;
+
+	return db
+		.select({ id: users.id, handle: users.handle })
+		.from(users)
+		.innerJoin(analyses, eq(analyses.user_id, users.id))
+		.where(
+			and(
+				eq(users.active, true),
+				eq(users.lifecycleState, "normal"),
+				readable,
+				sample,
+				workflow,
+			),
+		)
+		.groupBy(users.id, users.handle)
+		.orderBy(asc(sql`lower(${users.handle})`));
 }
 
 const SORT_COLUMNS = {

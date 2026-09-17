@@ -43,15 +43,35 @@ describe("<Settings />", () => {
 	});
 
 	const settingsPages = [
-		{ path: "/administration/uploads", heading: "Maximum Upload Size" },
-		{ path: "/administration/caching", heading: "Cache Storage Budget" },
-		{ path: "/administration/ncbi", heading: "NCBI API Key" },
-		{ path: "/administration/email", heading: "Email Delivery" },
+		{
+			path: "/administration/uploads",
+			pageTitle: "Uploads",
+			settingTitle: "Maximum Size",
+			settingLevel: 3,
+		},
+		{
+			path: "/administration/caching",
+			pageTitle: "Caching",
+			settingTitle: "Storage Budget",
+			settingLevel: 3,
+		},
+		{
+			path: "/administration/ncbi",
+			pageTitle: "NCBI API Key",
+			settingTitle: "NCBI API Key",
+			settingLevel: 2,
+		},
+		{
+			path: "/administration/email",
+			pageTitle: "Email Delivery",
+			settingTitle: "Email Delivery",
+			settingLevel: 2,
+		},
 	];
 
 	it.each(settingsPages)(
 		"loads primary settings for $path",
-		async ({ path, heading }) => {
+		async ({ path, pageTitle, settingTitle, settingLevel }) => {
 			mockSettingsStore(createFakeSettings());
 			mockEmailSettingsStore(createFakeEmailSettings());
 
@@ -60,7 +80,16 @@ describe("<Settings />", () => {
 			});
 
 			expect(
-				await screen.findByRole("heading", { name: heading }),
+				await screen.findByRole("heading", {
+					level: 2,
+					name: pageTitle,
+				}),
+			).toBeVisible();
+			expect(
+				screen.getByRole("heading", {
+					level: settingLevel,
+					name: settingTitle,
+				}),
 			).toBeVisible();
 		},
 	);
@@ -69,6 +98,9 @@ describe("<Settings />", () => {
 		"handles failed settings at the route boundary for $path",
 		async ({ path }) => {
 			settingsServerFnMocks.getSettingsFn.mockRejectedValue(
+				new Error("Unavailable"),
+			);
+			settingsServerFnMocks.getCacheUsageFn.mockRejectedValue(
 				new Error("Unavailable"),
 			);
 			emailServerFnMocks.getEmailSettingsFn.mockRejectedValue(
@@ -95,6 +127,7 @@ describe("<Settings />", () => {
 
 			expect(router.state.location.pathname).toBe("/administration/users");
 			expect(settingsServerFnMocks.getSettingsFn).not.toHaveBeenCalled();
+			expect(settingsServerFnMocks.getCacheUsageFn).not.toHaveBeenCalled();
 			expect(emailServerFnMocks.getEmailSettingsFn).not.toHaveBeenCalled();
 		},
 	);

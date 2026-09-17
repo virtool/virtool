@@ -31,6 +31,7 @@ AZURE_KEY = "Eby8vdM02xNOcqFlqUwJPLlmEtlCDXJ1OUzFT50uSRZ6IFsuFq2UVErCz4I6tq/K1SZ
 LIVE_ONLY_SOURCES = ("apps/web/src/", "apps/web/public/", "apps/internal/src/")
 WORKFLOW_TARGETS = ("create-sample", "create-subtraction", "pathoscope", "nuvs")
 CONFIG_INPUTS = ("Coastfile", "dev/compose.yaml", "dev/Caddyfile", "dev/scripts/init-coast-data.sh")
+STOP_RETRY_TIMEOUT = 60
 
 
 def run(args, cwd, log=None):
@@ -439,6 +440,23 @@ class Lifecycle:
                 if (directory / "app/DevelopmentInstance.tsx").is_file():
                     write_json(directory / ".dev-instances.json", listing)
 
+    def stop(self, name):
+        deadline = time.monotonic() + STOP_RETRY_TIMEOUT
+        while True:
+            try:
+                self.coast.command("stop", name)
+                return
+            except RuntimeError as error:
+                try:
+                    unassigning = self.coast.instances().get(name, {}).get("status") == "unassigning"
+                except RuntimeError:
+                    unassigning = False
+                if not unassigning:
+                    raise
+                if time.monotonic() >= deadline:
+                    raise RuntimeError(f"Timed out waiting for Coast to finish unassigning {name}") from error
+                time.sleep(1)
+
     def build(self, primary):
         build_hash = fingerprint(primary)
         build = read_json(self.registry / "build.json", {})
@@ -555,7 +573,7 @@ class Lifecycle:
         self.save(key, record)
         instance = self.coast.instances().get(record["name"])
         if instance is not None and instance["status"] != "stopped":
-            self.coast.command("stop", record["name"])
+            self.stop(record["name"])
             if self.coast.instances()[record["name"]]["status"] != "stopped":
                 raise RuntimeError("Coast did not stop; refusing to delete data while writers may be active")
         if instance is not None or record.get("provisioned"):

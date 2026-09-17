@@ -188,6 +188,13 @@ jobs:
               run: pnpm knip
             - name: Typescript
               run: pnpm typecheck
+            - name: Drizzle schema
+              run: |
+                  pnpm --filter @virtool/data db:generate
+                  if [[ -n "$(git status --porcelain --untracked-files=all -- packages/data/drizzle)" ]]; then
+                      git status --short --untracked-files=all -- packages/data/drizzle
+                      exit 1
+                  fi
 
     # -------------------------------------------------------------------------
     # Docs prose (*.md, *.mdx)

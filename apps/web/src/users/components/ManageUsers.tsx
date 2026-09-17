@@ -3,6 +3,7 @@ import Alert from "@base/Alert";
 import LoadingPlaceholder from "@base/LoadingPlaceholder";
 import QueryError from "@base/QueryError";
 import SearchToolbar from "@base/SearchToolbar";
+import SectionHeader from "@base/SectionHeader";
 import { ToggleGroup, ToggleGroupItem } from "@base/Toggle";
 import { CircleAlert } from "lucide-react";
 import CreateUser from "./CreateUser";
@@ -40,6 +41,15 @@ export function ManageUsers({
 	if (hasPermission) {
 		return (
 			<>
+				<SectionHeader>
+					<div className="flex items-start justify-between gap-4">
+						<div>
+							<h2>Users</h2>
+							<p>Manage user accounts and access.</p>
+						</div>
+						<CreateUser />
+					</div>
+				</SectionHeader>
 				<SearchToolbar
 					aria-label="Search users"
 					onChange={(term) => setSearch({ term, page: 1 }, { replace: true })}
@@ -53,7 +63,6 @@ export function ManageUsers({
 						<ToggleGroupItem value="active">Active</ToggleGroupItem>
 						<ToggleGroupItem value="deactivated">Deactivated</ToggleGroupItem>
 					</ToggleGroup>
-					<CreateUser />
 				</SearchToolbar>
 
 				<UsersList
