@@ -12,21 +12,29 @@ type TwoFactorFormProps = {
 	restart: () => void;
 };
 
+type FormValues = {
+	authenticatorCode?: string;
+	recoveryCode?: string;
+};
+
 export default function TwoFactorForm({
 	redirect,
 	setResetRequired,
 	restart,
 }: TwoFactorFormProps) {
 	const [recovery, setRecovery] = useState(false);
-	const { register, handleSubmit, reset } = useForm<{ code: string }>({
-		defaultValues: { code: "" },
+	const { register, handleSubmit } = useForm<FormValues>({
+		shouldUnregister: true,
 	});
 	const mutation = useVerifyTwoFactorMutation();
 	const navigate = useNavigate();
 
-	function onSubmit({ code }: { code: string }) {
+	function onSubmit({ authenticatorCode, recoveryCode }: FormValues) {
 		mutation.mutate(
-			{ code, recovery },
+			{
+				code: recovery ? (recoveryCode ?? "") : (authenticatorCode ?? ""),
+				recovery,
+			},
 			{
 				onSuccess: (data) => {
 					if (data.reset) {
@@ -37,6 +45,11 @@ export default function TwoFactorForm({
 				},
 			},
 		);
+	}
+
+	function toggleRecovery() {
+		setRecovery(!recovery);
+		mutation.reset();
 	}
 
 	return (
@@ -55,6 +68,7 @@ export default function TwoFactorForm({
 						{recovery ? "Recovery code" : "Authentication code"}
 					</InputLabel>
 					<InputSimple
+						key={recovery ? "recovery" : "authenticator"}
 						id="code"
 						autoComplete="one-time-code"
 						autoFocus
@@ -63,7 +77,9 @@ export default function TwoFactorForm({
 						aria-describedby={
 							mutation.isError ? "verification-error" : undefined
 						}
-						{...register("code", { required: true })}
+						{...register(recovery ? "recoveryCode" : "authenticatorCode", {
+							required: true,
+						})}
 					/>
 				</InputGroup>
 				{mutation.isError && (
@@ -82,11 +98,7 @@ export default function TwoFactorForm({
 				<Button
 					type="button"
 					disabled={mutation.isPending}
-					onClick={() => {
-						setRecovery(!recovery);
-						reset();
-						mutation.reset();
-					}}
+					onClick={toggleRecovery}
 				>
 					{recovery ? "Use authenticator code" : "Use recovery code"}
 				</Button>
