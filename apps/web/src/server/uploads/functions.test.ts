@@ -1,5 +1,5 @@
 import type { Db } from "@virtool/data/db/pg";
-import { sessions } from "@virtool/data/db/schema/sessions";
+import { authSessions } from "@virtool/data/db/schema/auth";
 import {
 	type UploadRow,
 	uploads as uploadsTable,
@@ -28,6 +28,8 @@ async function* bodyOf(text: string): AsyncIterable<Uint8Array> {
 
 const getRequest = vi.fn();
 const setResponseStatus = vi.fn();
+let currentSessionId: number | null = null;
+let currentUserId: number | null = null;
 
 vi.mock("@tanstack/react-start/server", () => ({
 	deleteCookie: vi.fn(),
@@ -40,6 +42,22 @@ vi.mock("@tanstack/react-start/server", () => ({
 vi.mock("@sentry/tanstackstart-react", () => ({
 	captureException: vi.fn(),
 	setUser: vi.fn(),
+	setContext: vi.fn(),
+}));
+
+vi.mock("../auth/instance", () => ({
+	auth: {
+		api: {
+			getSession: vi.fn(async () =>
+				currentSessionId === null || currentUserId === null
+					? null
+					: {
+							session: { id: currentSessionId },
+							user: { id: currentUserId },
+						},
+			),
+		},
+	},
 }));
 
 let db: Db;
@@ -65,8 +83,11 @@ const presignUpload = vi.fn();
 
 // Mutable so a test can flip the chunked-upload flag; reset in `beforeEach`.
 const testConfig = {
+	authSecret: "test-auth-secret-test-auth-secret",
+	publicOrigin: "https://virtool.test",
 	uploadsChunked: false,
 	uploadsChunkedConcurrency: 8,
+	webauthnRpId: "virtool.test",
 };
 
 const handlers = (await import(
@@ -98,8 +119,10 @@ beforeEach(async () => {
 	vi.clearAllMocks();
 	testConfig.uploadsChunked = false;
 	cookieHeader = "";
+	currentSessionId = null;
+	currentUserId = null;
 	await db.delete(uploadsTable);
-	await db.delete(sessions);
+	await db.delete(authSessions);
 	await db.delete(users);
 	// The settings row outlives the tables cleared above, so a test that moves
 	// the maximum would otherwise leave it moved for its successors.
@@ -116,6 +139,8 @@ beforeEach(async () => {
 async function signIn(administratorRole: "full" | null): Promise<number> {
 	const userId = await seedUser(db, { administratorRole });
 	const { sessionId, token } = await seedSession(db, userId);
+	currentSessionId = sessionId;
+	currentUserId = userId;
 	cookieHeader = sessionCookie({ sessionId, token });
 	return userId;
 }

@@ -1,38 +1,46 @@
 import Button from "@base/Button";
-import Checkbox from "@base/Checkbox";
 import { InputGroup, InputLabel, InputSimple } from "@base/Input";
 import { useNavigate } from "@tanstack/react-router";
 import { CircleAlert } from "lucide-react";
-import { Controller, useForm } from "react-hook-form";
+import { useState } from "react";
+import { useForm } from "react-hook-form";
 import { useLoginMutation } from "../queries";
+import TwoFactorForm from "./TwoFactorForm";
 import { WallTitle } from "./WallTitle";
 
 type LoginFormProps = {
 	/** URL to navigate to after a successful login. Defaults to "/". */
 	redirect?: string;
-	/** Callback to set the reset code in the parent component state. */
-	setResetCode: (resetCode: string) => void;
+	/** Shows the forced-reset form after the password has been authenticated. */
+	setResetRequired: (required: boolean) => void;
 };
 
 type FormValues = {
 	handle: string;
 	password: string;
-	remember: boolean;
 };
 
 /** Handles the user login process. */
-export default function LoginForm({ redirect, setResetCode }: LoginFormProps) {
-	const { control, handleSubmit, register } = useForm<FormValues>();
+export default function LoginForm({
+	redirect,
+	setResetRequired,
+}: LoginFormProps) {
+	const { handleSubmit, register } = useForm<FormValues>();
 	const loginMutation = useLoginMutation();
+	const [twoFactor, setTwoFactor] = useState(false);
 	const navigate = useNavigate();
 
-	function onSubmit({ handle, password, remember }: FormValues) {
+	function onSubmit({ handle, password }: FormValues) {
 		loginMutation.mutate(
-			{ handle, password, remember },
+			{ handle, password },
 			{
 				onSuccess: (data) => {
-					if (data.resetCode) {
-						setResetCode(data.resetCode);
+					if ("twoFactorRedirect" in data) {
+						setTwoFactor(true);
+						return;
+					}
+					if (data.reset) {
+						setResetRequired(true);
 						return;
 					}
 					navigate({ to: redirect ?? "/" });
@@ -42,6 +50,19 @@ export default function LoginForm({ redirect, setResetCode }: LoginFormProps) {
 	}
 
 	const { error, isError } = loginMutation;
+
+	if (twoFactor) {
+		return (
+			<TwoFactorForm
+				redirect={redirect}
+				setResetRequired={setResetRequired}
+				restart={() => {
+					setTwoFactor(false);
+					loginMutation.reset();
+				}}
+			/>
+		);
+	}
 
 	return (
 		<>
@@ -72,19 +93,7 @@ export default function LoginForm({ redirect, setResetCode }: LoginFormProps) {
 						{...register("password", { required: true })}
 					/>
 				</InputGroup>
-				<div className="flex justify-between my-4">
-					<Controller
-						name="remember"
-						control={control}
-						render={({ field: { onChange, value } }) => (
-							<Checkbox
-								checked={value}
-								id="RememberMe"
-								label="Remember Me"
-								onClick={() => onChange(!value)}
-							/>
-						)}
-					/>
+				<div className="flex justify-end my-4">
 					{isError && (
 						<div
 							id="login-error"

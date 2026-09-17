@@ -1,11 +1,11 @@
 import { hashPassword, verifyPassword } from "@virtool/data/auth/password";
-import * as sessionModule from "@virtool/data/auth/session";
 import {
 	seedSession,
 	seedSetupSession,
 	seedUser,
 } from "@virtool/data/auth/test/fixtures";
 import type { Db } from "@virtool/data/db/pg";
+import { authAccounts, authSessions } from "@virtool/data/db/schema/auth";
 import { sessions } from "@virtool/data/db/schema/sessions";
 import { setupSessions } from "@virtool/data/db/schema/setup";
 import { users } from "@virtool/data/db/schema/users";
@@ -28,79 +28,11 @@ import {
 	createFirstUser,
 	FirstUserExistsError,
 	InvalidCredentialsError,
-	InvalidResetSessionError,
-	login,
+	loginLegacyIdentity,
 	logout,
 	PasswordReuseError,
 	resetPassword,
 } from "./core";
-
-// `createAuthenticatedSession` is the third and last write in the reset. Making
-// it fail creates the partial failure that the transaction must undo. The
-// rest of the module keeps its real behaviour — the other two writes must
-// actually hit the database for a rollback to be worth asserting.
-vi.mock("@virtool/data/auth/session", async (importOriginal) => {
-	const actual =
-		await importOriginal<typeof import("@virtool/data/auth/session")>();
-	return {
-		...actual,
-		createAuthenticatedSession: vi.fn(actual.createAuthenticatedSession),
-	};
-});
-
-const { createResetSession } = sessionModule;
-const createAuthenticatedSession = vi.mocked(
-	sessionModule.createAuthenticatedSession,
-);
-
-const OLD_PASSWORD = "old-password";
-const NEW_PASSWORD = "new-password";
-
-type FakeCookies = CookieAdapter & {
-	sessionId: string | undefined;
-	token: string | undefined;
-	setupSessionId: string | undefined;
-	setupToken: string | undefined;
-};
-
-function fakeCookies(sessionId?: string): FakeCookies {
-	return {
-		sessionId,
-		token: undefined,
-		setupSessionId: undefined,
-		setupToken: undefined,
-		getSessionId() {
-			return this.sessionId;
-		},
-		getSessionToken() {
-			return this.token;
-		},
-		setSessionId(value: string) {
-			this.sessionId = value;
-		},
-		setSessionToken(value: string) {
-			this.token = value;
-		},
-		clear() {
-			this.sessionId = undefined;
-			this.token = undefined;
-		},
-		getSetupSessionId() {
-			return this.setupSessionId;
-		},
-		getSetupSessionToken() {
-			return this.setupToken;
-		},
-		setSetupSession(sessionId: string, token: string) {
-			this.setupSessionId = sessionId;
-			this.setupToken = token;
-		},
-		clearSetup() {
-			this.setupSessionId = undefined;
-			this.setupToken = undefined;
-		},
-	};
-}
 
 let database: TestDatabase;
 let db: Db;
@@ -115,426 +47,186 @@ afterAll(async () => {
 });
 
 beforeEach(async () => {
-	vi.mocked(createAuthenticatedSession).mockClear();
-	await db.delete(sessions);
-	await db.delete(setupSessions);
 	await db.delete(users);
 });
 
-/** Seed a force-reset user with a real bcrypt hash, plus a live reset session. */
-async function seedResetFlow() {
-	const userId = await seedUser(db, {
-		forceReset: true,
-		password: await hashPassword(OLD_PASSWORD),
-	});
+function fakeCookies(setupSessionId?: string): CookieAdapter {
+	return {
+		clearLegacySession: vi.fn(),
+		clearSetup: vi.fn(),
+		getSessionId: vi.fn(),
+		getSessionToken: vi.fn(),
+		getSetupSessionId: vi.fn(() => setupSessionId),
+		getSetupSessionToken: vi.fn(),
+		setLegacyResetSession: vi.fn(),
+		setLegacySession: vi.fn(),
+		setSetupSession: vi.fn(),
+	};
+}
 
-	const { sessionId, resetCode } = await createResetSession(db, {
+async function seedCredentialedUser(forceReset = true): Promise<number> {
+	const password = await hashPassword("old-password-123");
+	const userId = await seedUser(db, { forceReset, password });
+	await db
+		.update(users)
+		.set({ authMigratedAt: new Date() })
+		.where(eq(users.id, userId));
+	const now = new Date();
+	await db.insert(authAccounts).values({
+		accountId: String(userId),
+		providerId: "credential",
 		userId,
-		ip: "127.0.0.1",
-		remember: false,
+		password: password.toString("utf8"),
+		createdAt: now,
+		updatedAt: now,
 	});
-
-	return { userId, sessionId, resetCode };
+	return userId;
 }
 
-function readUser(userId: number) {
-	return db
-		.select()
-		.from(users)
-		.where(eq(users.id, userId))
-		.limit(1)
-		.then((rows) => rows[0]);
-}
+describe("loginLegacyIdentity", () => {
+	it("exchanges a valid unmigrated password for a legacy session", async () => {
+		const password = await hashPassword("legacy-password-123");
+		const userId = await seedUser(db, {
+			email: "",
+			handle: "LegacyUser",
+			password,
+		});
+		const cookies = fakeCookies();
 
-describe("resetPassword", () => {
-	it("changes the password and sets the session cookies", async () => {
-		const { userId, sessionId, resetCode } = await seedResetFlow();
-		const cookies = fakeCookies(sessionId);
+		await expect(
+			loginLegacyIdentity(db, cookies, {
+				handle: "legacyuser",
+				password: "legacy-password-123",
+				ip: "127.0.0.1",
+			}),
+		).resolves.toEqual({ reset: false });
 
-		await resetPassword(db, cookies, {
-			password: NEW_PASSWORD,
-			resetCode,
+		const [session] = await db.select().from(sessions);
+		expect(session).toMatchObject({
+			userId,
+			sessionType: "authenticated",
 			ip: "127.0.0.1",
 		});
-
-		const user = await readUser(userId);
-		expect(user).toBeDefined();
-		expect(await verifyPassword(NEW_PASSWORD, user?.password as Buffer)).toBe(
-			true,
+		expect(cookies.setLegacySession).toHaveBeenCalledWith(
+			session?.sessionId,
+			expect.any(String),
 		);
-		expect(user?.forceReset).toBe(false);
-
-		// The reset session is gone and an authenticated one took its place.
-		const rows = await db
-			.select()
-			.from(sessions)
-			.where(eq(sessions.userId, userId));
-		expect(rows).toHaveLength(1);
-		expect(rows[0]?.sessionType).toBe("authenticated");
-
-		expect(cookies.sessionId).toBe(rows[0]?.sessionId);
-		expect(cookies.token).toBeDefined();
 	});
 
-	it("rolls the password back when the session write fails", async () => {
-		const { userId, sessionId, resetCode } = await seedResetFlow();
-		const before = await readUser(userId);
-
-		// A session the user already holds. It must survive the failed reset —
-		// `invalidateUserSessions` runs first and has to be undone too.
-		const existing = await seedSession(db, userId);
-
-		const cookies = fakeCookies(sessionId);
-
-		createAuthenticatedSession.mockRejectedValueOnce(
-			new Error("session insert failed"),
-		);
+	it("refuses the wrong legacy password", async () => {
+		const password = await hashPassword("legacy-password-123");
+		await seedUser(db, { password });
 
 		await expect(
-			resetPassword(db, cookies, {
-				password: NEW_PASSWORD,
-				resetCode,
+			loginLegacyIdentity(db, fakeCookies(), {
+				handle: "alice",
+				password: "wrong-password",
 				ip: "127.0.0.1",
 			}),
-		).rejects.toThrow("session insert failed");
-
-		// The password is untouched: the old one still works, the new one does not.
-		const after = await readUser(userId);
-		expect(await verifyPassword(OLD_PASSWORD, after?.password as Buffer)).toBe(
-			true,
-		);
-		expect(await verifyPassword(NEW_PASSWORD, after?.password as Buffer)).toBe(
-			false,
-		);
-		expect(after?.forceReset).toBe(true);
-		expect(after?.lastPasswordChange).toEqual(before?.lastPasswordChange);
-
-		// The session deletion rolled back with it.
-		const surviving = await db
-			.select()
-			.from(sessions)
-			.where(eq(sessions.sessionId, existing.sessionId));
-		expect(surviving).toHaveLength(1);
-
-		// And the browser was told nothing.
-		expect(cookies.sessionId).toBe(sessionId);
-		expect(cookies.token).toBeUndefined();
+		).rejects.toBeInstanceOf(InvalidCredentialsError);
+		expect(await db.select().from(sessions)).toHaveLength(0);
 	});
 
-	it("lets only one of two concurrent resets for the same code win", async () => {
-		const { userId, sessionId, resetCode } = await seedResetFlow();
-
-		const first = fakeCookies(sessionId);
-		const second = fakeCookies(sessionId);
-
-		// A double-clicked submit. Both pass validation and the reuse check before
-		// either commits — neither has written yet, so both still read the old hash.
-		const results = await Promise.allSettled([
-			resetPassword(db, first, {
-				password: NEW_PASSWORD,
-				resetCode,
-				ip: "127.0.0.1",
-			}),
-			resetPassword(db, second, {
-				password: NEW_PASSWORD,
-				resetCode,
-				ip: "127.0.0.1",
-			}),
-		]);
-
-		const fulfilled = results.filter((r) => r.status === "fulfilled");
-		const rejected = results.filter((r) => r.status === "rejected");
-
-		expect(fulfilled).toHaveLength(1);
-		expect(rejected).toHaveLength(1);
-		expect((rejected[0] as PromiseRejectedResult).reason).toBeInstanceOf(
-			InvalidResetSessionError,
-		);
-
-		// The loser rolled back rather than deleting the winner's session, so the
-		// one surviving session is the one whose cookies the winner was handed.
-		const rows = await db
-			.select()
-			.from(sessions)
-			.where(eq(sessions.userId, userId));
-		expect(rows).toHaveLength(1);
-		expect(rows[0]?.sessionType).toBe("authenticated");
-
-		const winner = [first, second].find((c) => c.token !== undefined);
-		expect(winner?.sessionId).toBe(rows[0]?.sessionId);
-	});
-
-	it("rejects a password matching the current one", async () => {
-		const { userId, sessionId, resetCode } = await seedResetFlow();
-		const cookies = fakeCookies(sessionId);
+	it("keeps an unmigrated forced-reset user in the legacy reset flow", async () => {
+		const password = await hashPassword("legacy-password-123");
+		await seedUser(db, { forceReset: true, password });
+		const cookies = fakeCookies();
 
 		await expect(
-			resetPassword(db, cookies, {
-				password: OLD_PASSWORD,
-				resetCode,
+			loginLegacyIdentity(db, cookies, {
+				handle: "alice",
+				password: "legacy-password-123",
 				ip: "127.0.0.1",
 			}),
-		).rejects.toThrow(PasswordReuseError);
+		).resolves.toEqual({ reset: true });
 
-		expect(createAuthenticatedSession).not.toHaveBeenCalled();
-
-		const user = await readUser(userId);
-		expect(user?.forceReset).toBe(true);
-	});
-
-	it("rejects a wrong reset code and burns the session", async () => {
-		const { userId, sessionId, resetCode } = await seedResetFlow();
-		const cookies = fakeCookies(sessionId);
-
-		await expect(
-			resetPassword(db, cookies, {
-				password: NEW_PASSWORD,
-				resetCode: "0".repeat(resetCode.length),
-				ip: "127.0.0.1",
-			}),
-		).rejects.toThrow(InvalidResetSessionError);
-
-		const rows = await db
-			.select()
-			.from(sessions)
-			.where(eq(sessions.userId, userId));
-		expect(rows).toHaveLength(0);
-
-		const user = await readUser(userId);
-		expect(await verifyPassword(OLD_PASSWORD, user?.password as Buffer)).toBe(
-			true,
+		const [session] = await db.select().from(sessions);
+		expect(session?.sessionType).toBe("reset");
+		expect(cookies.setLegacyResetSession).toHaveBeenCalledWith(
+			session?.sessionId,
+			expect.any(String),
 		);
 	});
 
-	it("rejects when there is no session cookie", async () => {
-		await seedResetFlow();
+	it("leaves migrated identities to Better Auth", async () => {
+		const userId = await seedUser(db);
+		await db
+			.update(users)
+			.set({ authMigratedAt: new Date() })
+			.where(eq(users.id, userId));
 
 		await expect(
-			resetPassword(db, fakeCookies(), {
-				password: NEW_PASSWORD,
-				resetCode: "whatever",
+			loginLegacyIdentity(db, fakeCookies(), {
+				handle: "alice",
+				password: "any-password",
 				ip: "127.0.0.1",
 			}),
-		).rejects.toThrow(InvalidResetSessionError);
+		).resolves.toBeNull();
 	});
 });
 
 describe("createFirstUser", () => {
-	it("creates a full-administrator user and signs them in", async () => {
-		const cookies = fakeCookies();
-
-		const user = await createFirstUser(db, cookies, {
-			handle: "root",
+	it("creates the full administrator and Better Auth credential", async () => {
+		const user = await createFirstUser(db, {
+			handle: "alice",
 			password: "a-real-password",
-			ip: "127.0.0.1",
 		});
 
-		expect(user.handle).toBe("root");
 		expect(user.administratorRole).toBe("full");
-
-		// The caller lands in the app: an authenticated session and both cookies.
-		const rows = await db
-			.select()
-			.from(sessions)
-			.where(eq(sessions.userId, user.id));
-		expect(rows).toHaveLength(1);
-		expect(rows[0]?.sessionType).toBe("authenticated");
-		expect(cookies.sessionId).toBe(rows[0]?.sessionId);
-		expect(cookies.token).toBeDefined();
+		expect(await db.select().from(authAccounts)).toHaveLength(1);
 	});
 
-	it("refuses once any user exists", async () => {
-		await seedUser(db, { handle: "existing" });
-		const cookies = fakeCookies();
-
+	it("refuses a second first user", async () => {
+		await seedUser(db);
 		await expect(
-			createFirstUser(db, cookies, {
-				handle: "root",
-				password: "a-real-password",
-				ip: "127.0.0.1",
-			}),
+			createFirstUser(db, { handle: "bob", password: "a-real-password" }),
 		).rejects.toBeInstanceOf(FirstUserExistsError);
-		expect(cookies.token).toBeUndefined();
-	});
-});
-
-describe("login", () => {
-	// That an invitation is outstanding is not something an unauthenticated
-	// caller should be able to read off a login response, so a pending account
-	// gets exactly the answer a wrong password gets.
-	it("refuses a pending account as a bad credential", async () => {
-		await seedUser(db, { handle: "alice", lifecycleState: "pending" });
-		const cookies = fakeCookies();
-
-		await expect(
-			login(db, cookies, {
-				handle: "alice",
-				password: OLD_PASSWORD,
-				remember: false,
-				ip: "127.0.0.1",
-			}),
-		).rejects.toBeInstanceOf(InvalidCredentialsError);
-		expect(cookies.sessionId).toBeUndefined();
-	});
-
-	it("authenticates a valid credential and sets both cookies", async () => {
-		const userId = await seedUser(db, {
-			handle: "alice",
-			password: await hashPassword(OLD_PASSWORD),
-		});
-		const cookies = fakeCookies();
-
-		const result = await login(db, cookies, {
-			handle: "alice",
-			password: OLD_PASSWORD,
-			remember: false,
-			ip: "127.0.0.1",
-		});
-
-		expect(result).toEqual({ status: "authenticated" });
-		const rows = await db
-			.select()
-			.from(sessions)
-			.where(eq(sessions.userId, userId));
-		expect(rows).toHaveLength(1);
-		expect(rows[0]?.sessionType).toBe("authenticated");
-		expect(cookies.sessionId).toBe(rows[0]?.sessionId);
-		expect(cookies.token).toBeDefined();
-	});
-
-	it("matches the handle case-insensitively", async () => {
-		await seedUser(db, {
-			handle: "alice",
-			password: await hashPassword(OLD_PASSWORD),
-		});
-		const cookies = fakeCookies();
-
-		const result = await login(db, cookies, {
-			handle: "ALICE",
-			password: OLD_PASSWORD,
-			remember: false,
-			ip: "127.0.0.1",
-		});
-
-		expect(result).toEqual({ status: "authenticated" });
-	});
-
-	it("rejects a wrong password without creating a session", async () => {
-		const userId = await seedUser(db, {
-			handle: "alice",
-			password: await hashPassword(OLD_PASSWORD),
-		});
-		const cookies = fakeCookies();
-
-		await expect(
-			login(db, cookies, {
-				handle: "alice",
-				password: "wrong-password",
-				remember: false,
-				ip: "127.0.0.1",
-			}),
-		).rejects.toBeInstanceOf(InvalidCredentialsError);
-
-		expect(
-			await db.select().from(sessions).where(eq(sessions.userId, userId)),
-		).toHaveLength(0);
-		expect(cookies.sessionId).toBeUndefined();
-	});
-
-	it("rejects an unknown handle", async () => {
-		const cookies = fakeCookies();
-
-		await expect(
-			login(db, cookies, {
-				handle: "nobody",
-				password: OLD_PASSWORD,
-				remember: false,
-				ip: "127.0.0.1",
-			}),
-		).rejects.toBeInstanceOf(InvalidCredentialsError);
-	});
-
-	it("rejects an inactive user", async () => {
-		await seedUser(db, {
-			handle: "alice",
-			active: false,
-			password: await hashPassword(OLD_PASSWORD),
-		});
-		const cookies = fakeCookies();
-
-		await expect(
-			login(db, cookies, {
-				handle: "alice",
-				password: OLD_PASSWORD,
-				remember: false,
-				ip: "127.0.0.1",
-			}),
-		).rejects.toBeInstanceOf(InvalidCredentialsError);
-	});
-
-	it("defers a force-reset user to /reset instead of authenticating", async () => {
-		const userId = await seedUser(db, {
-			handle: "alice",
-			forceReset: true,
-			password: await hashPassword(OLD_PASSWORD),
-		});
-		const cookies = fakeCookies();
-
-		const result = await login(db, cookies, {
-			handle: "alice",
-			password: OLD_PASSWORD,
-			remember: false,
-			ip: "127.0.0.1",
-		});
-
-		expect(result.status).toBe("reset_required");
-		// A reset session is set, but no token cookie — the reset is not yet a login.
-		const rows = await db
-			.select()
-			.from(sessions)
-			.where(eq(sessions.userId, userId));
-		expect(rows).toHaveLength(1);
-		expect(rows[0]?.sessionType).toBe("reset");
-		expect(cookies.sessionId).toBe(rows[0]?.sessionId);
-		expect(cookies.token).toBeUndefined();
 	});
 });
 
 describe("logout", () => {
-	it("invalidates the session and clears the cookies", async () => {
-		const userId = await seedUser(db);
-		const { sessionId } = await seedSession(db, userId);
-		const cookies = fakeCookies(sessionId);
-
-		await logout(db, cookies);
-
-		expect(
-			await db.select().from(sessions).where(eq(sessions.sessionId, sessionId)),
-		).toHaveLength(0);
-		expect(cookies.sessionId).toBeUndefined();
-		expect(cookies.token).toBeUndefined();
-	});
-
-	it("still clears the cookies when there is no session", async () => {
-		const cookies = fakeCookies();
-
-		await logout(db, cookies);
-
-		expect(cookies.sessionId).toBeUndefined();
-	});
-
-	// Logout is the abandon path for a setup flow, so it has to end a
-	// restricted credential as thoroughly as it ends an ordinary session.
-	it("invalidates a restricted setup session and clears its cookies", async () => {
+	it("invalidates setup state and clears setup and obsolete cookies", async () => {
 		const userId = await seedUser(db, { lifecycleState: "pending" });
 		const setup = await seedSetupSession(db, userId, "account_completion");
-		const cookies = fakeCookies();
-		cookies.setSetupSession(setup.sessionId, setup.token);
+		const cookies = fakeCookies(setup.sessionId);
 
 		await logout(db, cookies);
 
 		expect(await db.select().from(setupSessions)).toHaveLength(0);
-		expect(cookies.setupSessionId).toBeUndefined();
-		expect(cookies.setupToken).toBeUndefined();
+		expect(cookies.clearLegacySession).toHaveBeenCalledOnce();
+		expect(cookies.clearSetup).toHaveBeenCalledOnce();
+	});
+});
+
+describe("resetPassword", () => {
+	it("updates both password copies and revokes every Better Auth session", async () => {
+		const userId = await seedCredentialedUser();
+		await seedSession(db, userId);
+		await seedSession(db, userId);
+
+		const result = await resetPassword(db, {
+			userId,
+			password: "new-password-123",
+		});
+
+		const [user] = await db.select().from(users).where(eq(users.id, userId));
+		const [credential] = await db
+			.select()
+			.from(authAccounts)
+			.where(eq(authAccounts.userId, userId));
+		expect(result).toEqual({ handle: "alice", migrated: true });
+		expect(user?.forceReset).toBe(false);
+		expect(
+			await verifyPassword("new-password-123", user?.password as Buffer),
+		).toBe(true);
+		expect(credential?.password).toBe(user?.password?.toString("utf8"));
+		expect(await db.select().from(authSessions)).toHaveLength(0);
+	});
+
+	it("refuses password reuse", async () => {
+		const userId = await seedCredentialedUser();
+		await expect(
+			resetPassword(db, { userId, password: "old-password-123" }),
+		).rejects.toBeInstanceOf(PasswordReuseError);
 	});
 });

@@ -2,8 +2,9 @@
 //
 // Better Auth owns interactive human authentication: credential accounts,
 // browser sessions, verification challenges, TOTP enrollment, and passkeys.
-// It does not own the legacy `sessions` table, which still carries the current
-// cookie pair and is left untouched here.
+// `auth_sessions` is the target interactive application-session table. The
+// legacy session table remains active during the remediation compatibility
+// window. Restricted setup credentials remain in their purpose-bound tables.
 //
 // Every table is keyed by an `integer ... generated always as identity` primary
 // key rather than the string ids Better Auth mints by default. Better Auth 1.6
@@ -88,6 +89,7 @@ export const authSessions = pgTable(
 			name: "auth_sessions_user_id_fkey",
 		}).onDelete("cascade"),
 		unique("auth_sessions_token_key").on(table.token),
+		index("idx_auth_sessions_expires_at").on(table.expiresAt),
 		index("idx_auth_sessions_user_id").on(table.userId),
 	],
 );

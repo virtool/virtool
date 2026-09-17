@@ -8,7 +8,11 @@ import {
 } from "@virtool/data/db/test/fixtures";
 import { eq } from "drizzle-orm";
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
-import { AUTH_BASE_PATH, createAuth } from "./betterAuth";
+import {
+	AUTH_BASE_PATH,
+	createAuth,
+	createAuthRequestHandler,
+} from "./betterAuth";
 
 const ORIGIN = "https://virtool.test";
 
@@ -187,6 +191,36 @@ describe("legacy bcrypt credentials", () => {
 });
 
 describe("the mounted handler", () => {
+	it("blocks Better Auth account operations for a forced-reset session", async () => {
+		await seedMigratedUser(LEGACY_HASH, { forceReset: true });
+		const signInResponse = await auth.handler(
+			post("/sign-in/username", {
+				username: "alice",
+				password: LEGACY_PASSWORD,
+			}),
+		);
+		const cookie = signInResponse.headers.get("set-cookie")?.split(";", 1)[0];
+		expect(cookie).toBeDefined();
+
+		const handler = createAuthRequestHandler(db, auth);
+		const response = await handler(
+			new Request(`${ORIGIN}${AUTH_BASE_PATH}/change-password`, {
+				method: "POST",
+				headers: { cookie: cookie as string, origin: ORIGIN },
+				body: JSON.stringify({
+					currentPassword: LEGACY_PASSWORD,
+					newPassword: "new-password-123",
+				}),
+			}),
+		);
+
+		expect(response.status).toBe(403);
+		expect(await response.json()).toEqual({
+			code: "PASSWORD_RESET_REQUIRED",
+			message: "Password reset required",
+		});
+	});
+
 	it("refuses public sign-up", async () => {
 		const response = await auth.handler(
 			post("/sign-up/email", {
@@ -285,7 +319,7 @@ describe("virtool account state", () => {
 		expect(await db.select().from(authSessions)).toHaveLength(0);
 	});
 
-	it("refuses a user who has to reset their password", async () => {
+	it("issues a session to a user whose password-reset restriction is enforced by policy", async () => {
 		await seedMigratedUser(LEGACY_HASH, { forceReset: true });
 
 		const response = await auth.handler(
@@ -295,8 +329,8 @@ describe("virtool account state", () => {
 			}),
 		);
 
-		expect(response.status).toBe(403);
-		expect(await db.select().from(authSessions)).toHaveLength(0);
+		expect(response.status).toBe(200);
+		expect(await db.select().from(authSessions)).toHaveLength(1);
 	});
 });
 
@@ -350,21 +384,5 @@ describe("the integer user id", () => {
 
 		expect(typeof first).toBe("number");
 		expect(second).toBeGreaterThan(first);
-	});
-
-	it("never writes the legacy sessions table", async () => {
-		await seedMigratedUser();
-
-		await auth.handler(
-			post("/sign-in/username", {
-				username: "alice",
-				password: LEGACY_PASSWORD,
-			}),
-		);
-
-		const { sessions } = await import("@virtool/data/db/schema/sessions");
-
-		expect(await db.select().from(sessions)).toHaveLength(0);
-		expect(await db.select().from(authSessions)).toHaveLength(1);
 	});
 });

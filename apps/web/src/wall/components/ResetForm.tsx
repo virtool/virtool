@@ -9,12 +9,10 @@ import { WallTitle } from "./WallTitle";
 type ResetFormProps = {
 	/** URL to navigate to after a successful reset. Defaults to "/". */
 	redirect?: string;
-	/** Code required for password reset. */
-	resetCode: string;
 };
 
 /** Handles the password reset process. */
-export default function ResetForm({ redirect, resetCode }: ResetFormProps) {
+export default function ResetForm({ redirect }: ResetFormProps) {
 	const {
 		formState: { errors },
 		register,
@@ -28,10 +26,9 @@ export default function ResetForm({ redirect, resetCode }: ResetFormProps) {
 
 	function onSubmit({ password }: { password: string }) {
 		resetPasswordMutation.mutate(
-			{ password, resetCode },
-			// The reset already created an authenticated session and rotated its cookies
-			// and invalidated the account query. Without this the user sits on the
-			// form with no feedback.
+			{ password },
+			// The mutation rotates the session cookies and invalidates the account
+			// query, but navigation still belongs to the form.
 			{ onSuccess: () => navigate({ to: redirect ?? "/" }) },
 		);
 	}
@@ -67,8 +64,6 @@ export default function ResetForm({ redirect, resetCode }: ResetFormProps) {
 						</InputError>
 					)}
 				</InputGroup>
-				{/* A reset code is single-use. Letting a double-click fire a second
-				    submission only ever earns the user an error. */}
 				<Button type="submit" color="blue" disabled={isPending}>
 					Reset
 				</Button>

@@ -3,15 +3,13 @@ import {
 	createFirstUserFn,
 	loginFn,
 	resetPasswordFn,
+	verifyTwoFactorFn,
 } from "@server/auth/functions";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { rootQueryKeys } from "@wall/keys";
 
-/** Result of a login attempt. `resetCode` is only set when `reset` is true. */
-export type LoginResult = {
-	reset: boolean;
-	resetCode?: string;
-};
+/** Result of a login attempt. */
+export type LoginResult = Awaited<ReturnType<typeof loginFn>>;
 
 /** Result of a successful password reset. */
 export type ResetPasswordResult = {
@@ -54,15 +52,11 @@ export function useCreateFirstUser() {
 export function useLoginMutation() {
 	const queryClient = useQueryClient();
 
-	return useMutation<
-		LoginResult,
-		Error,
-		{ handle: string; password: string; remember: boolean }
-	>({
-		mutationFn: ({ handle, password, remember }) =>
-			loginFn({ data: { handle, password, remember } }),
+	return useMutation<LoginResult, Error, { handle: string; password: string }>({
+		mutationFn: ({ handle, password }) =>
+			loginFn({ data: { handle, password } }),
 		onSuccess: (data) => {
-			if (!data.reset) {
+			if (!("twoFactorRedirect" in data) && !data.reset) {
 				queryClient.invalidateQueries({ queryKey: accountQueryKeys.all() });
 			}
 		},
@@ -77,15 +71,24 @@ export function useLoginMutation() {
 export function useResetPasswordMutation() {
 	const queryClient = useQueryClient();
 
-	return useMutation<
-		ResetPasswordResult,
-		Error,
-		{ password: string; resetCode: string }
-	>({
-		mutationFn: ({ password, resetCode }) =>
-			resetPasswordFn({ data: { password, resetCode } }),
+	return useMutation<ResetPasswordResult, Error, { password: string }>({
+		mutationFn: ({ password }) => resetPasswordFn({ data: { password } }),
 		onSuccess: () => {
 			queryClient.invalidateQueries({ queryKey: accountQueryKeys.all() });
+		},
+	});
+}
+
+/** Verify a second factor before refreshing authenticated account data. */
+export function useVerifyTwoFactorMutation() {
+	const queryClient = useQueryClient();
+	return useMutation({
+		mutationFn: (data: { code: string; recovery: boolean }) =>
+			verifyTwoFactorFn({ data }),
+		onSuccess: (data) => {
+			if (!data.reset) {
+				queryClient.invalidateQueries({ queryKey: accountQueryKeys.all() });
+			}
 		},
 	});
 }

@@ -1,20 +1,19 @@
-import type { SetupPurpose } from "@virtool/contracts";
+import { createHmac } from "node:crypto";
 import {
 	type SeededSession,
 	type SeededSetupSession,
 	type SeedUserOptions,
 	seedSession,
-	seedSetupSession,
 	seedUser,
 } from "@virtool/data/auth/test/fixtures";
 import type { Db } from "@virtool/data/db/pg";
 import type { Mock } from "vitest";
 import {
-	SESSION_ID_COOKIE,
-	SESSION_TOKEN_COOKIE,
 	SETUP_SESSION_ID_COOKIE,
 	SETUP_SESSION_TOKEN_COOKIE,
 } from "../cookies";
+
+const AUTH_SECRET = "test-auth-secret-test-auth-secret";
 
 /**
  * Encode a seeded session as the `Cookie` header value that authenticates it.
@@ -23,10 +22,12 @@ import {
  * {@link basicAuthHeader}.
  */
 export function sessionCookie({
-	sessionId,
 	token,
 }: Pick<SeededSession, "sessionId" | "token">): string {
-	return `${SESSION_ID_COOKIE}=${sessionId}; ${SESSION_TOKEN_COOKIE}=${token}`;
+	const signature = createHmac("sha256", AUTH_SECRET)
+		.update(token)
+		.digest("base64");
+	return `better-auth.session_token=${encodeURIComponent(`${token}.${signature}`)}`;
 }
 
 /**
@@ -85,28 +86,4 @@ export function setupSessionCookie({
 	token,
 }: Pick<SeededSetupSession, "sessionId" | "token">): string {
 	return `${SETUP_SESSION_ID_COOKIE}=${sessionId}; ${SETUP_SESSION_TOKEN_COOKIE}=${token}`;
-}
-
-/**
- * Open a restricted setup session for an already-seeded user and point
- * `getRequest` at a request carrying its cookies.
- *
- * The caller is then a restricted principal: it holds a credential for exactly
- * `purpose` and no application session at all.
- */
-export async function restrictTo(
-	db: Db,
-	getRequest: Mock,
-	userId: number,
-	purpose: SetupPurpose,
-): Promise<SeededSetupSession> {
-	const session = await seedSetupSession(db, userId, purpose);
-
-	getRequest.mockReturnValue(
-		new Request("https://virtool.test/_serverFn/test", {
-			headers: { cookie: setupSessionCookie(session) },
-		}),
-	);
-
-	return session;
 }

@@ -252,8 +252,7 @@ describe("apply", () => {
 		expect(user?.displayUsername).toBe("Alice");
 		expect(user?.handle).toBe("Alice");
 		expect(user?.authMigratedAt).toBeInstanceOf(Date);
-		// The legacy column is not touched: the legacy login path stays
-		// authoritative until the boundary cutover.
+		// Virtool password-change transactions retain this synchronized copy.
 		expect(user?.password?.toString("utf8")).toBe(LEGACY_HASH);
 
 		const [credential] = await readCredentials(userId);
@@ -459,7 +458,6 @@ describe("password writes before cutover", () => {
 			userId,
 			oldPassword: LEGACY_PASSWORD,
 			password: "a-brand-new-password",
-			ip: "127.0.0.1",
 		});
 
 		const user = await readUser(userId);

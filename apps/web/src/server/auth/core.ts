@@ -1,4 +1,3 @@
-import { timingSafeEqual } from "node:crypto";
 import type { User } from "@virtool/contracts";
 import { updateAuthPassword } from "@virtool/data/auth/identity";
 import { hashPassword, verifyPassword } from "@virtool/data/auth/password";
@@ -11,7 +10,7 @@ import {
 } from "@virtool/data/auth/session";
 import { invalidateSetupSession } from "@virtool/data/auth/setup";
 import type { Db } from "@virtool/data/db/pg";
-import { sessions } from "@virtool/data/db/schema/sessions";
+import { authSessions } from "@virtool/data/db/schema/auth";
 import { users } from "@virtool/data/db/schema/users";
 import {
 	createUser,
@@ -21,42 +20,16 @@ import {
 import { and, eq, sql } from "drizzle-orm";
 import type { CookieAdapter } from "./cookies";
 
-/**
- * A real bcrypt hash used to equalize timing when no user is found.
- *
- * Keeps the missing-handle and wrong-password code paths indistinguishable to a
- * timing observer.
- */
 const TIMING_DUMMY_HASH = Buffer.from(
 	"$2b$12$0000000000000000000000000000000000000000000000000000O",
 	"utf8",
 );
 
-/** Plaintext credentials submitted by a login attempt. */
-export type LoginInput = {
-	handle: string;
-	password: string;
-	remember: boolean;
-	ip: string;
-};
-
-/** Outcome of a successful credential check; reset_required defers to /reset. */
-export type LoginResult =
-	| { status: "authenticated" }
-	| { status: "reset_required"; resetCode: string };
-
+/** Submitted credentials do not identify an eligible account. */
 export class InvalidCredentialsError extends Error {
 	constructor() {
 		super("Invalid credentials");
 		this.name = "InvalidCredentialsError";
-	}
-}
-
-/** Reset session is missing, expired, or the supplied resetCode does not match. */
-export class InvalidResetSessionError extends Error {
-	constructor() {
-		super("Invalid session");
-		this.name = "InvalidResetSessionError";
 	}
 }
 
@@ -76,11 +49,74 @@ export class FirstUserExistsError extends Error {
 	}
 }
 
+/** Inputs for the temporary legacy-login compatibility path. */
+export type LegacyLoginInput = {
+	handle: string;
+	password: string;
+	ip: string;
+};
+
+/**
+ * Authenticate an unmigrated identity with the retained legacy session system.
+ * Returns `null` for a migrated identity so the caller can continue through
+ * Better Auth. This bridge is removed only after email remediation is usable.
+ */
+export async function loginLegacyIdentity(
+	db: Db,
+	cookies: CookieAdapter,
+	input: LegacyLoginInput,
+): Promise<{ reset: boolean } | null> {
+	const [user] = await db
+		.select({
+			active: users.active,
+			authMigratedAt: users.authMigratedAt,
+			forceReset: users.forceReset,
+			id: users.id,
+			lifecycleState: users.lifecycleState,
+			password: users.password,
+		})
+		.from(users)
+		.where(sql`lower(${users.handle}) = ${input.handle.toLowerCase()}`)
+		.limit(1);
+
+	if (user && user.authMigratedAt !== null) {
+		return null;
+	}
+
+	if (
+		!user?.active ||
+		user.lifecycleState !== "normal" ||
+		user.password === null
+	) {
+		await verifyPassword(input.password, TIMING_DUMMY_HASH);
+		throw new InvalidCredentialsError();
+	}
+
+	if (!(await verifyPassword(input.password, user.password))) {
+		throw new InvalidCredentialsError();
+	}
+
+	if (user.forceReset) {
+		const reset = await createResetSession(db, {
+			userId: user.id,
+			ip: input.ip,
+		});
+		cookies.setLegacyResetSession(reset.sessionId, reset.token);
+		return { reset: true };
+	}
+
+	const session = await createAuthenticatedSession(db, {
+		userId: user.id,
+		ip: input.ip,
+	});
+	cookies.setLegacySession(session.sessionId, session.token);
+	return { reset: false };
+}
+
 /** Inputs to create and authenticate the first instance user. */
 export type CreateFirstUserInput = {
 	handle: string;
 	password: string;
-	ip: string;
 };
 
 /**
@@ -94,7 +130,6 @@ export type CreateFirstUserInput = {
  */
 export async function createFirstUser(
 	db: Db,
-	cookies: CookieAdapter,
 	input: CreateFirstUserInput,
 ): Promise<User> {
 	if ((await getUserCount(db)) > 0) {
@@ -116,88 +151,18 @@ export async function createFirstUser(
 		throw err;
 	}
 
-	const { sessionId, token } = await createAuthenticatedSession(db, {
-		userId: user.id,
-		ip: input.ip,
-		remember: false,
-	});
-	cookies.setSessionId(sessionId);
-	cookies.setSessionToken(token);
-
 	return user;
 }
 
 /**
- * Authenticate a handle and password, and mint whichever session the user's
- * state calls for.
- *
- * The handle is matched case-insensitively. A missing or deactivated user still
- * pays the `verifyPassword` cost against `TIMING_DUMMY_HASH`, so the
- * missing-handle and wrong-password paths are indistinguishable to a timing
- * observer.
- *
- * A user carrying `force_reset` gets a reset session and only the `session_id`
- * cookie; everyone else gets an authenticated session and both cookies. The
- * `resetCode` goes back in the response body rather than a cookie so the client
- * can hold it in memory for the length of the reset flow.
- */
-export async function login(
-	db: Db,
-	cookies: CookieAdapter,
-	input: LoginInput,
-): Promise<LoginResult> {
-	const handle = input.handle.toLowerCase();
-
-	const [user] = await db
-		.select()
-		.from(users)
-		.where(sql`lower(${users.handle}) = ${handle}`)
-		.limit(1);
-
-	// An account that has not completed setup is refused here too, and with the
-	// same answer. It has no password to verify against — the two conditions
-	// cannot come apart, which `pending_has_no_password` is what holds — and
-	// that an invitation is outstanding is not something an unauthenticated
-	// caller should be able to read off a login response.
-	if (!user?.active || user.lifecycleState !== "normal" || !user.password) {
-		await verifyPassword(input.password, TIMING_DUMMY_HASH);
-		throw new InvalidCredentialsError();
-	}
-
-	const ok = await verifyPassword(input.password, user.password);
-	if (!ok) {
-		throw new InvalidCredentialsError();
-	}
-
-	if (user.forceReset) {
-		const { sessionId, resetCode } = await createResetSession(db, {
-			userId: user.id,
-			ip: input.ip,
-			remember: input.remember,
-		});
-		cookies.setSessionId(sessionId);
-		return { status: "reset_required", resetCode };
-	}
-
-	const { sessionId, token } = await createAuthenticatedSession(db, {
-		userId: user.id,
-		ip: input.ip,
-		remember: input.remember,
-	});
-	cookies.setSessionId(sessionId);
-	cookies.setSessionToken(token);
-	return { status: "authenticated" };
-}
-
-/**
- * Delete the session named by the `session_id` cookie, delete the restricted
- * setup session named by the `setup_session_id` cookie, and clear every one of
- * those cookies.
+ * Delete retained legacy and restricted setup sessions named by their cookies,
+ * then clear both cookie pairs.
  *
  * Safe to call with no session, or with a stale one: the cookies are cleared
  * either way, which is why `logoutFn` is exempt from authentication.
  *
- * This is also the abandon path for a setup flow. A holder who walks away from
+ * Better Auth invalidation happens in `logoutFn` before this cleanup. This is
+ * also the abandon path for a setup flow. A holder who walks away from
  * an invitation or an enrollment has to be able to drop the credential, and
  * doing it here means there is one way to end a browser's authority rather
  * than one per kind.
@@ -213,97 +178,43 @@ export async function logout(db: Db, cookies: CookieAdapter): Promise<void> {
 		await invalidateSetupSession(db, setupSessionId);
 	}
 
-	cookies.clear();
+	cookies.clearLegacySession();
 	cookies.clearSetup();
 }
 
 /** Inputs to complete a forced-reset password change. */
 export type ResetPasswordInput = {
+	userId: number;
 	password: string;
-	resetCode: string;
-	ip: string;
+	legacySessionId?: string;
 };
 
 /**
- * Compare two strings in constant time.
- *
- * `timingSafeEqual` requires equal-length buffers; mismatched lengths
- * short-circuit to false without leaking timing on the contents.
- */
-function constantTimeEqualHex(a: string, b: string): boolean {
-	if (a.length !== b.length) {
-		return false;
-	}
-	return timingSafeEqual(Buffer.from(a, "utf8"), Buffer.from(b, "utf8"));
-}
-
-/**
- * Complete a forced reset: check the code minted by `login`, set the new
- * password, and hand back an authenticated session.
- *
- * The `session_id` cookie names a session of type `reset`, and the `resetCode`
- * it carries is compared in constant time. The password must not match the
- * user's current one, and every other session the user holds is invalidated
- * before the replacement is minted, so the reset is also a revocation.
- *
- * A reset session is invalidated by exactly three things: a successful reset,
- * which rotates the cookies onto the new authenticated session; a `resetCode`
- * mismatch here; and its own 10-minute expiry.
- *
- * On success the client navigates off the wall — the cookies have already
- * rotated, so the user is authenticated and leaving them on the form would
- * strand them there.
+ * Complete a forced reset for a Better Auth or retained legacy session. The
+ * password must differ from the current one. The transaction updates every
+ * applicable credential copy, clears `force_reset`, and revokes both session
+ * families; the caller then mints one replacement through the same family.
  */
 export async function resetPassword(
 	db: Db,
-	cookies: CookieAdapter,
 	input: ResetPasswordInput,
-): Promise<void> {
-	const sessionId = cookies.getSessionId();
-	if (!sessionId) {
-		throw new InvalidResetSessionError();
-	}
-
+): Promise<{ handle: string; migrated: boolean }> {
 	const [row] = await db
-		.select()
-		.from(sessions)
-		.where(
-			and(eq(sessions.sessionId, sessionId), eq(sessions.sessionType, "reset")),
-		)
-		.limit(1);
-
-	if (!row?.resetCode || row.userId === null) {
-		throw new InvalidResetSessionError();
-	}
-
-	// Bound here rather than read off `row` below: the narrowing above does not
-	// survive into the transaction callback.
-	const userId = row.userId;
-
-	if (!constantTimeEqualHex(row.resetCode, input.resetCode)) {
-		await invalidateSession(db, sessionId);
-		throw new InvalidResetSessionError();
-	}
-
-	if (row.expiresAt.getTime() <= Date.now()) {
-		await invalidateSession(db, sessionId);
-		throw new InvalidResetSessionError();
-	}
-
-	const [user] = await db
-		.select({ password: users.password })
+		.select({
+			authMigratedAt: users.authMigratedAt,
+			forceReset: users.forceReset,
+			handle: users.handle,
+			password: users.password,
+		})
 		.from(users)
-		.where(eq(users.id, userId))
+		.where(eq(users.id, input.userId))
 		.limit(1);
 
-	// A null password means the account never completed setup, so there is no
-	// forced reset to be part-way through. Nothing can mint a reset session for
-	// one — `login` refuses it before that — so this is a floor.
-	if (!user?.password) {
-		throw new InvalidResetSessionError();
+	if (!row?.forceReset || !row.password) {
+		throw new PasswordReuseError();
 	}
 
-	const sameAsCurrent = await verifyPassword(input.password, user.password);
+	const sameAsCurrent = await verifyPassword(input.password, row.password);
 	if (sameAsCurrent) {
 		throw new PasswordReuseError();
 	}
@@ -312,46 +223,51 @@ export async function resetPassword(
 	// transaction opens rather than holding one idle for the duration.
 	const newHash = await hashPassword(input.password);
 
-	const remember = row.resetRemember ?? false;
+	await db.transaction(async (tx) => {
+		const updated = await tx
+			.update(users)
+			.set({
+				password: newHash,
+				forceReset: false,
+				lastPasswordChange: new Date(),
+			})
+			.where(
+				and(
+					eq(users.id, input.userId),
+					eq(users.forceReset, true),
+					sql`${users.password} = ${row.password}`,
+				),
+			)
+			.returning({ id: users.id });
 
-	// The writes are one unit: a failure partway through must not leave the
-	// password changed with no session to show for it.
-	//
-	// Consuming the reset session first makes the code single-use under
-	// concurrency. Everything above — validation, the reuse check, the hash —
-	// takes no lock, so two submissions of the same code can both reach this
-	// point; only the one that deletes the row proceeds. Without it the loser
-	// would go on to invalidate the sessions of the winner, handing the browser
-	// cookies for a session that no longer exists.
-	const { sessionId: newSessionId, token } = await db.transaction(
-		async (tx) => {
-			if (!(await consumeResetSession(tx, sessionId))) {
-				throw new InvalidResetSessionError();
-			}
+		if (updated.length === 0) {
+			throw new PasswordReuseError();
+		}
 
-			await invalidateUserSessions(tx, userId);
+		if (row.authMigratedAt !== null) {
+			await updateAuthPassword(tx, input.userId, newHash);
+		}
+		if (
+			row.authMigratedAt === null &&
+			(!input.legacySessionId ||
+				!(await consumeResetSession(tx, input.legacySessionId)))
+		) {
+			throw new PasswordReuseError();
+		}
+		await tx.delete(authSessions).where(eq(authSessions.userId, input.userId));
+		await invalidateUserSessions(tx, input.userId);
+	});
 
-			await tx
-				.update(users)
-				.set({
-					password: newHash,
-					forceReset: false,
-					lastPasswordChange: new Date(),
-				})
-				.where(eq(users.id, userId));
+	return { handle: row.handle, migrated: row.authMigratedAt !== null };
+}
 
-			await updateAuthPassword(tx, userId, newHash);
-
-			return createAuthenticatedSession(tx, {
-				userId,
-				ip: input.ip,
-				remember,
-			});
-		},
-	);
-
-	// Only after the commit. A rolled-back reset must leave the browser holding
-	// no new session.
-	cookies.setSessionId(newSessionId);
-	cookies.setSessionToken(token);
+/** Mint a replacement legacy application session after a credential change. */
+export async function establishLegacySession(
+	db: Db,
+	cookies: CookieAdapter,
+	userId: number,
+	ip: string,
+): Promise<void> {
+	const session = await createAuthenticatedSession(db, { userId, ip });
+	cookies.setLegacySession(session.sessionId, session.token);
 }

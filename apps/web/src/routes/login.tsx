@@ -1,6 +1,7 @@
 import { oneOfOptional, strOptional } from "@app/searchParams";
 import type { SearchSchemaInput } from "@tanstack/react-router";
 import { createFileRoute, redirect } from "@tanstack/react-router";
+import { PASSWORD_RESET_REQUIRED_ERROR_NAME } from "@virtool/contracts";
 import LoginWall from "@wall/components/LoginWall";
 
 function isSafeRedirect(value: string): boolean {
@@ -36,15 +37,18 @@ export const Route = createFileRoute("/login")({
 
 		try {
 			await queryClient.ensureQueryData(accountQueryOptions());
-		} catch {
-			return;
+		} catch (error) {
+			return {
+				passwordResetRequired:
+					error instanceof Error &&
+					error.name === PASSWORD_RESET_REQUIRED_ERROR_NAME,
+			};
 		}
 
 		throw redirect({ to: search.redirect ?? "/" });
 	},
-	// The forced-reset form this route can render sets a password before there is
-	// a session, so it needs the policy up front. prefetchQuery rather than
-	// ensureQueryData: a failed policy read must not take down the wall.
+	// The forced-reset form needs the policy up front. A failed policy read must
+	// not take down the wall, so prefetch rather than ensuring the query.
 	loader: async ({ context }) => {
 		const { passwordPolicyQueryOptions } = await import(
 			"@administration/passwordPolicy"

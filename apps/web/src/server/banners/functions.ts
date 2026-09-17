@@ -59,7 +59,7 @@ export const createBannerFn = createServerFn({ method: "POST" })
 			db,
 			data.message,
 			data.color,
-			context.session.userId,
+			context.principal.userId,
 		);
 		setResponseStatus(201);
 		return banner;
@@ -74,7 +74,7 @@ export const updateBannerFn = createServerFn({ method: "POST" })
 				db,
 				data.id,
 				{ message: data.message, color: data.color },
-				context.session.userId,
+				context.principal.userId,
 			);
 		} catch (err) {
 			rethrowAsHttp(err);

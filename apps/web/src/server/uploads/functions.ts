@@ -106,7 +106,7 @@ export const initUploadFn = createServerFn({ method: "POST" })
 	.validator(initUploadSchema)
 	.handler(async ({ data, context }) => {
 		try {
-			return await initializeUpload(data, context.session.userId);
+			return await initializeUpload(data, context.principal.userId);
 		} catch (err) {
 			return rethrowAsHttp(err);
 		}
@@ -128,7 +128,7 @@ export const finalizeChunkedUploadFn = createServerFn({ method: "POST" })
 	.validator(uploadIdSchema)
 	.handler(async ({ data, context }) => {
 		try {
-			return await finalizeUpload(data.id, context.session.userId);
+			return await finalizeUpload(data.id, context.principal.userId);
 		} catch (err) {
 			return rethrowAsHttp(err);
 		}
@@ -142,7 +142,7 @@ export const cancelChunkedUploadFn = createServerFn({ method: "POST" })
 	.validator(uploadIdSchema)
 	.handler(async ({ data, context }) => {
 		try {
-			await cancelUpload(data.id, context.session.userId);
+			await cancelUpload(data.id, context.principal.userId);
 			return null;
 		} catch (err) {
 			return rethrowAsHttp(err);

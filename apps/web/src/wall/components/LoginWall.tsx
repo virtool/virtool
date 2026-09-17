@@ -9,7 +9,10 @@ import { WallContainer } from "./WallContainer";
 const loginRouteApi = getRouteApi("/login");
 
 export default function LoginWall() {
-	const [resetCode, setResetCode] = useState<string | null>(null);
+	const { passwordResetRequired } = loginRouteApi.useRouteContext();
+	const [isResetRequired, setIsResetRequired] = useState(
+		passwordResetRequired ?? false,
+	);
 	const { reason, redirect } = loginRouteApi.useSearch();
 
 	return (
@@ -19,10 +22,10 @@ export default function LoginWall() {
 					Your session ended. Please log in again.
 				</Alert>
 			)}
-			{resetCode ? (
-				<ResetForm redirect={redirect} resetCode={resetCode} />
+			{isResetRequired ? (
+				<ResetForm redirect={redirect} />
 			) : (
-				<LoginForm redirect={redirect} setResetCode={setResetCode} />
+				<LoginForm redirect={redirect} setResetRequired={setIsResetRequired} />
 			)}
 		</WallContainer>
 	);

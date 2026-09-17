@@ -26,6 +26,7 @@ vi.mock("@tanstack/react-start/server", () => ({
 vi.mock("@sentry/tanstackstart-react", () => ({
 	captureException: vi.fn(),
 	setUser: vi.fn(),
+	setContext: vi.fn(),
 }));
 vi.mock("@virtool/data/events/emit", () => ({
 	createEmitter: vi.fn(),

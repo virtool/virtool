@@ -37,13 +37,13 @@ function rethrowAsHttp(err: unknown): never {
 
 export const findApiKeysFn = createServerFn({ method: "GET" })
 	.middleware([authenticated()])
-	.handler(async ({ context }) => findApiKeys(db, context.session.userId));
+	.handler(async ({ context }) => findApiKeys(db, context.principal.userId));
 
 export const createApiKeyFn = createServerFn({ method: "POST" })
 	.middleware([authenticated()])
 	.validator(createApiKeySchema)
 	.handler(async ({ context, data }) => {
-		const { key, apiKey } = await createApiKey(db, context.session.userId, {
+		const { key, apiKey } = await createApiKey(db, context.principal.userId, {
 			name: data.name,
 			permissions: data.permissions,
 		});
@@ -58,7 +58,7 @@ export const updateApiKeyFn = createServerFn({ method: "POST" })
 		try {
 			return await updateApiKey(
 				db,
-				context.session.userId,
+				context.principal.userId,
 				data.keyId,
 				data.permissions,
 			);
@@ -72,7 +72,7 @@ export const deleteApiKeyFn = createServerFn({ method: "POST" })
 	.validator(keyIdSchema)
 	.handler(async ({ context, data }) => {
 		try {
-			await deleteApiKey(db, context.session.userId, data.keyId);
+			await deleteApiKey(db, context.principal.userId, data.keyId);
 			return null;
 		} catch (err) {
 			return rethrowAsHttp(err);

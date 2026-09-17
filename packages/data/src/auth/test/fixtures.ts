@@ -10,10 +10,10 @@ import {
 
 import type { Db } from "../../db/pg";
 import { apiKeys } from "../../db/schema/apiKeys";
-import { sessions } from "../../db/schema/sessions";
+import { authSessions } from "../../db/schema/auth";
 import { setupSessions, setupTokens } from "../../db/schema/setup";
 import { users } from "../../db/schema/users";
-import { hashToken, newSessionId, newSessionToken } from "../tokens";
+import { hashToken, newSessionToken } from "../tokens";
 
 /** What {@link seedUser} accepts. */
 export type SeedUserOptions = {
@@ -29,7 +29,7 @@ export type SeedUserOptions = {
 
 /** A seeded session and the plaintext token that authenticates it. */
 export type SeededSession = {
-	sessionId: string;
+	sessionId: number;
 	token: string;
 	userId: number;
 };
@@ -94,28 +94,29 @@ export async function seedSession(
 	userId: number,
 	{
 		expiresAt = new Date(Date.now() + 60_000),
-		sessionType = "authenticated" as const,
-		withToken = true,
 	}: {
 		expiresAt?: Date;
-		sessionType?: "anonymous" | "authenticated" | "reset";
-		withToken?: boolean;
 	} = {},
 ): Promise<SeededSession> {
-	const sessionId = newSessionId();
 	const token = newSessionToken();
 
-	await db.insert(sessions).values({
-		createdAt: new Date(),
-		expiresAt,
-		ip: "127.0.0.1",
-		sessionId,
-		sessionType,
-		tokenHash: withToken ? hashToken(token) : null,
-		userId,
-	});
+	const [session] = await db
+		.insert(authSessions)
+		.values({
+			createdAt: new Date(),
+			expiresAt,
+			ipAddress: "127.0.0.1",
+			token,
+			updatedAt: new Date(),
+			userId,
+		})
+		.returning({ id: authSessions.id });
 
-	return { sessionId, token, userId };
+	if (!session) {
+		throw new Error("failed to seed session");
+	}
+
+	return { sessionId: session.id, token, userId };
 }
 
 /**

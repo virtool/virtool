@@ -23,12 +23,13 @@ import {
 	sql,
 } from "drizzle-orm";
 import type { PostgresError } from "postgres";
-import { updateAuthPassword, updateAuthUsername } from "../auth/identity";
-import { hashPassword, verifyPassword } from "../auth/password";
 import {
-	createAuthenticatedSession,
-	invalidateUserSessions,
-} from "../auth/session";
+	CREDENTIAL_PROVIDER_ID,
+	updateAuthPassword,
+	updateAuthUsername,
+} from "../auth/identity";
+import { hashPassword, verifyPassword } from "../auth/password";
+import { invalidateUserSessions } from "../auth/session";
 import {
 	invalidateUserSetupSessions,
 	invalidateUserSetupTokens,
@@ -36,6 +37,7 @@ import {
 } from "../auth/setup";
 import type { Db } from "../db/pg";
 import { takeFirstOrThrow } from "../db/rows";
+import { authAccounts, authSessions } from "../db/schema/auth";
 import {
 	groups as groupsTable,
 	userGroups as userGroupsTable,
@@ -144,7 +146,6 @@ export type ChangePasswordValues = {
 	userId: number;
 	oldPassword: string;
 	password: string;
-	ip: string;
 };
 
 /**
@@ -153,8 +154,8 @@ export type ChangePasswordValues = {
  */
 export type ChangePasswordResult = {
 	account: Account;
-	sessionId: string;
-	token: string;
+	handle: string;
+	migrated: boolean;
 };
 
 /** A selectable administrator role with its human-readable name and description. */
@@ -461,22 +462,20 @@ export async function updateAccountEmail(
  * Change the signed-in user's own password, after verifying the one they
  * already hold.
  *
- * The change clears `force_reset`, revokes every session the user has, and
- * mints a replacement so the browser that submitted the form is not signed out
- * by its own request. The replacement never remembers — `remember` is false
- * here too — so a password change downgrades a 30-day session to the 60-minute
- * one.
- *
- * The caller writes the returned credentials to the response cookies. Unlike
- * login and reset, which set different cookies depending on how they resolve,
- * this has no branch to make, so the transport stays out of the data layer.
+ * The change clears `force_reset` and revokes every Better Auth session in the
+ * same transaction. The web boundary signs the caller in again after commit;
+ * session cookies remain transport state and never enter the data layer.
  */
 export async function changePassword(
 	db: Db,
-	{ userId, oldPassword, password, ip }: ChangePasswordValues,
+	{ userId, oldPassword, password }: ChangePasswordValues,
 ): Promise<ChangePasswordResult> {
 	const [existing] = await db
-		.select({ password: usersTable.password })
+		.select({
+			authMigratedAt: usersTable.authMigratedAt,
+			handle: usersTable.handle,
+			password: usersTable.password,
+		})
 		.from(usersTable)
 		.where(eq(usersTable.id, userId))
 		.limit(1);
@@ -511,12 +510,12 @@ export async function changePassword(
 	// lock across the read, the bcrypt verify, and the bcrypt hash above, and at
 	// cost 12 that gap is hundreds of milliseconds — long enough for an
 	// administrator responding to a compromise to reset this password or set
-	// force_reset in between. Without the guard, this transaction could overwrite
-	// the newer credential, clear the flag the administrator just set, and hand
-	// the attacker a fresh session. Matching on the old hash makes the losing
-	// transaction update no rows, which the caller already reports as bad
-	// credentials.
-	const { sessionId, token } = await db.transaction(async (tx) => {
+	// force_reset in between. Without the guard we would overwrite their newer
+	// credential, clear the flag they just set, and hand the attacker a fresh
+	// session. Matching on the old hash makes the loser of that race update
+	// nothing, and an unchanged password is exactly the case the caller already
+	// reports as bad credentials.
+	await db.transaction(async (tx) => {
 		const updated = await tx
 			.update(usersTable)
 			.set({
@@ -536,11 +535,12 @@ export async function changePassword(
 			throw new InvalidPasswordError();
 		}
 
-		await updateAuthPassword(tx, userId, hashed);
+		if (existing.authMigratedAt !== null) {
+			await updateAuthPassword(tx, userId, hashed);
+		}
 
+		await tx.delete(authSessions).where(eq(authSessions.userId, userId));
 		await invalidateUserSessions(tx, userId);
-
-		return createAuthenticatedSession(tx, { userId, ip, remember: false });
 	});
 
 	// An administrator with this user's detail open sees last_password_change and
@@ -548,7 +548,11 @@ export async function changePassword(
 	// updateUser publishes its own.
 	await emit("users", userId, "update");
 
-	return { account: await getAccount(db, userId), sessionId, token };
+	return {
+		account: await getAccount(db, userId),
+		handle: existing.handle,
+		migrated: existing.authMigratedAt !== null,
+	};
 }
 
 /** Read a user's administrator role without assembling the full user. */
@@ -635,24 +639,41 @@ export async function createUser(
 	const password = await hashPassword(values.password);
 
 	try {
-		const row = takeFirstOrThrow(
-			await db
-				.insert(usersTable)
-				.values({
-					handle: values.handle,
-					password,
-					forceReset: values.forceReset,
-					administratorRole: values.administratorRole ?? null,
-					lastPasswordChange: new Date(),
-					legacyId: null,
-					settings: toStoredAccountSettings(DEFAULT_USER_SETTINGS),
-				})
-				.returning({ id: usersTable.id }),
-		);
+		const userId = await db.transaction(async (tx) => {
+			const row = takeFirstOrThrow(
+				await tx
+					.insert(usersTable)
+					.values({
+						authMigratedAt: new Date(),
+						handle: values.handle,
+						username: values.handle.toLowerCase(),
+						displayUsername: values.handle,
+						password,
+						forceReset: values.forceReset,
+						administratorRole: values.administratorRole ?? null,
+						lastPasswordChange: new Date(),
+						legacyId: null,
+						settings: toStoredAccountSettings(DEFAULT_USER_SETTINGS),
+					})
+					.returning({ id: usersTable.id }),
+			);
 
-		await emit("users", row.id, "create");
+			const now = new Date();
+			await tx.insert(authAccounts).values({
+				accountId: String(row.id),
+				providerId: CREDENTIAL_PROVIDER_ID,
+				userId: row.id,
+				password: password.toString("utf8"),
+				createdAt: now,
+				updatedAt: now,
+			});
 
-		return getUser(db, row.id);
+			return row.id;
+		});
+
+		await emit("users", userId, "create");
+
+		return getUser(db, userId);
 	} catch (error) {
 		if (isUniqueViolation(error)) {
 			throw new UserConflictError();
@@ -747,6 +768,7 @@ export async function updateUser(
 		}
 
 		if (revokeSessions) {
+			await tx.delete(authSessions).where(eq(authSessions.userId, userId));
 			await invalidateUserSessions(tx, userId);
 		}
 

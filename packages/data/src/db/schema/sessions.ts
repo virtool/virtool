@@ -1,6 +1,3 @@
-// Schema for the `sessions` table.
-
-import type { SessionType } from "@virtool/contracts";
 import { sql } from "drizzle-orm";
 import {
 	boolean,
@@ -17,6 +14,10 @@ import {
 
 import { users } from "./users";
 
+/** A legacy browser-session row kind retained during the compatibility window. */
+export type LegacySessionType = "anonymous" | "authenticated" | "reset";
+
+/** The retained legacy session table pending a later schema contraction. */
 export const sessions = pgTable(
 	"sessions",
 	{
@@ -29,7 +30,7 @@ export const sessions = pgTable(
 		tokenHash: text("token_hash"),
 		resetCode: text("reset_code"),
 		resetRemember: boolean("reset_remember"),
-		sessionType: text("session_type").$type<SessionType>().notNull(),
+		sessionType: text("session_type").$type<LegacySessionType>().notNull(),
 	},
 	(table) => [
 		foreignKey({
@@ -49,5 +50,5 @@ export const sessions = pgTable(
 	],
 );
 
-/** A row from the `sessions` table. */
+/** A row from the retained legacy `sessions` table. */
 export type SessionRow = typeof sessions.$inferSelect;

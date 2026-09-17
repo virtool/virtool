@@ -134,7 +134,7 @@ export const findAnalysesFn = createServerFn({ method: "POST" })
 	.middleware([authenticated()])
 	.validator(findAnalysesSchema)
 	.handler(async ({ context, data }) => {
-		const actor = await resolveSampleActor(db, context.session.userId);
+		const actor = await resolveSampleActor(db, context.principal.userId);
 
 		return findAnalyses(
 			db,
@@ -156,7 +156,7 @@ export const listAnalysisUsersFn = createServerFn({ method: "POST" })
 	.middleware([authenticated()])
 	.validator(listAnalysisUsersSchema)
 	.handler(async ({ context, data }) => {
-		const actor = await resolveSampleActor(db, context.session.userId);
+		const actor = await resolveSampleActor(db, context.principal.userId);
 
 		return listAnalysisUsers(
 			db,
@@ -169,11 +169,11 @@ export const findRecentlyViewedAnalysesFn = createServerFn({ method: "GET" })
 	.middleware([authenticated()])
 	.validator(z.object({ perPage: perPageSchema }))
 	.handler(async ({ context, data }) => {
-		const actor = await resolveSampleActor(db, context.session.userId);
+		const actor = await resolveSampleActor(db, context.principal.userId);
 
 		return findRecentlyViewedAnalyses(
 			db,
-			context.session.userId,
+			context.principal.userId,
 			data.perPage,
 			actor,
 		);
@@ -186,10 +186,10 @@ export const recordAnalysisViewFn = createServerFn({ method: "POST" })
 		try {
 			// A view is only recorded for an analysis the caller may read, so a
 			// probe of an id they cannot see leaves no trace.
-			await authorizeAnalysis(data.analysisId, context.session.userId, [
+			await authorizeAnalysis(data.analysisId, context.principal.userId, [
 				"read",
 			]);
-			await recordAnalysisView(db, context.session.userId, data.analysisId);
+			await recordAnalysisView(db, context.principal.userId, data.analysisId);
 			return null;
 		} catch (err) {
 			return rethrowAsHttp(err);
@@ -201,7 +201,7 @@ export const getAnalysisFn = createServerFn({ method: "GET" })
 	.validator(analysisIdSchema)
 	.handler(async ({ context, data }) => {
 		try {
-			await authorizeAnalysis(data.analysisId, context.session.userId, [
+			await authorizeAnalysis(data.analysisId, context.principal.userId, [
 				"read",
 			]);
 			return await getAnalysis(db, data.analysisId);
@@ -215,7 +215,7 @@ export const getAnalysisResultsFn = createServerFn({ method: "GET" })
 	.validator(analysisIdSchema)
 	.handler(async ({ context, data }) => {
 		try {
-			await authorizeAnalysis(data.analysisId, context.session.userId, [
+			await authorizeAnalysis(data.analysisId, context.principal.userId, [
 				"read",
 			]);
 			return await getAnalysisResults(db, data.analysisId);
@@ -237,7 +237,7 @@ export const createAnalysisFn = createServerFn({ method: "POST" })
 			}
 
 			// Starting an analysis writes to the sample, so it takes the write right.
-			const actor = await resolveSampleActor(db, context.session.userId);
+			const actor = await resolveSampleActor(db, context.principal.userId);
 
 			if (!(await checkSampleRight(db, data.sampleId, actor, "write"))) {
 				setResponseStatus(403);
@@ -249,7 +249,7 @@ export const createAnalysisFn = createServerFn({ method: "POST" })
 				referenceId: data.refId,
 				subtractionIds: data.subtractionIds,
 				workflow: data.workflow,
-				userId: context.session.userId,
+				userId: context.principal.userId,
 			});
 
 			setResponseStatus(201);
@@ -265,7 +265,7 @@ export const deleteAnalysisFn = createServerFn({ method: "POST" })
 	.validator(analysisIdSchema)
 	.handler(async ({ context, data }) => {
 		try {
-			await authorizeAnalysis(data.analysisId, context.session.userId, [
+			await authorizeAnalysis(data.analysisId, context.principal.userId, [
 				"read",
 				"write",
 			]);
@@ -281,7 +281,7 @@ export const blastNuvsFn = createServerFn({ method: "POST" })
 	.validator(blastSchema)
 	.handler(async ({ context, data }) => {
 		try {
-			await authorizeAnalysis(data.analysisId, context.session.userId, [
+			await authorizeAnalysis(data.analysisId, context.principal.userId, [
 				"write",
 			]);
 
