@@ -217,7 +217,7 @@ jobs:
             - name: Sync styles
               run: vale sync
             - name: Lint
-              run: vale .
+              run: vale --glob='*.{md,mdx}' .
 
     # -------------------------------------------------------------------------
     # Docker images (apps/web, apps/internal, apps/create-subtraction,
