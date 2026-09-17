@@ -1,5 +1,4 @@
 import "@app/style.css";
-import DevelopmentInstance from "@app/DevelopmentInstance";
 import { getDocumentTitle } from "@app/development";
 import { readSentryDsn, SENTRY_DSN_META_NAME } from "@app/sentryDsn";
 import { readServerNow, SERVER_NOW_META_NAME } from "@app/serverNow";
@@ -87,7 +86,6 @@ function RootShell({ children }: { children: ReactNode }) {
 				    cannot catch stops here instead of unmounting the page. `Scripts`
 				    stays outside it — the reload prompt is worthless without them. */}
 				<ShellErrorBoundary>{children}</ShellErrorBoundary>
-				{import.meta.env.DEV && <DevelopmentInstance />}
 				<Scripts />
 			</body>
 		</html>

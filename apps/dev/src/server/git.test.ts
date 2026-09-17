@@ -1,0 +1,21 @@
+import { expect, it, vi } from "vitest";
+import type { CommandRunner } from "./command.ts";
+import { discoverWorktrees } from "./git.ts";
+
+it("parses all null-delimited worktrees and ignores prunable entries", async () => {
+	const run = vi.fn<CommandRunner>(async (_command, args, options) => {
+		if (args.includes("list")) {
+			return {
+				stderr: "",
+				stdout:
+					"worktree /one\0HEAD abc\0branch refs/heads/main\0\0worktree /gone\0prunable reason\0\0worktree /two\0HEAD def\0detached\0\0",
+			};
+		}
+		return { stderr: "", stdout: `${options?.cwd}/.git\n` };
+	});
+	const worktrees = await discoverWorktrees(run, "/one");
+	expect(worktrees).toEqual([
+		{ branch: "main", id: "/one/.git", path: "/one" },
+		{ branch: "detached", id: "/two/.git", path: "/two" },
+	]);
+});

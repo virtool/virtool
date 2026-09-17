@@ -1,4 +1,4 @@
-pre-remove = "python3 {{ primary_worktree_path }}/dev/scripts/coast.py remove --worktree {{ worktree_path }}"
+pre-remove = "{{ primary_worktree_path }}/dev/bin/virtool-dev remove --worktree {{ worktree_path }}"
 
 [list]
-url = "{{ vars.coasturl | default('') }}"
+url = "https://dev.localhost:9443"

@@ -2,11 +2,8 @@
 .agents
 .codex
 data
-# Local Coast state and development configuration are not part of image builds.
-Coastfile
-.coasts
+# Local development configuration is not part of shipped image builds.
 .worktrees
-**/.dev-instances.json
 dev
 **/dist
 docker

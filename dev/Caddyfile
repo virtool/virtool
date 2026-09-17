@@ -1,18 +1,22 @@
 {
-	auto_https disable_redirects
 	admin off
 }
 
-https://{$VT_DEV_HOSTNAME}:9443 {
+https://dev.localhost:9443 {
 	tls internal
-	handle /devstoreaccount1/* {
-		reverse_proxy azurite:10000 {
-			header_up Host azurite:10000
-		}
+	reverse_proxy host.docker.internal:9843
+}
+
+https://*.localhost:9443 {
+	tls internal
+
+	@upload path /devstoreaccount1/*
+	handle @upload {
+		reverse_proxy azurite:10000
 	}
-	handle {
-		reverse_proxy web:9900 {
-			flush_interval -1
-		}
+
+	@environment host_regexp environment ^([a-z0-9-]+)\.localhost$
+	handle @environment {
+		reverse_proxy {re.environment.1}:9900
 	}
 }

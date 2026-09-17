@@ -22,9 +22,7 @@ config.json
 *.log*
 .cache
 .DS_store
-.coasts
 .worktrees
-**/.dev-instances.json
 env
 tags
 .vscode
