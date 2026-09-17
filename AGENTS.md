@@ -12,6 +12,7 @@ never `npm` or `bun`.
 | --- | --- |
 | [`@virtool/web`](apps/web/README.md) | The Virtool web app. |
 | [`@virtool/site`](apps/site/README.md) | The product website at [virtool.ca](https://www.virtool.ca). |
+| [`@virtool/dev`](apps/dev/README.md) | Local worktree environments and workflow scheduling. |
 | [`@virtool/internal`](apps/internal/README.md) | One image, three subcommands: `serve` (jobs API), `run` (task spawner and runner), `migrate` (Drizzle migrations). |
 | [`@virtool/create-sample`](apps/create-sample/README.md) | Creates a sample from uploaded FASTQ files. |
 | [`@virtool/create-subtraction`](apps/create-subtraction/README.md) | Creates a subtraction from an uploaded FASTA. |
@@ -42,7 +43,7 @@ Apps bundle; packages stay source.
 ## Rules
 
 - No app may import another app's source.
-- Run development servers inside the Coasts environment, not directly on the
+- Run development servers through `virtool-dev`, not directly on the
   host. See [dev/README.md](dev/README.md).
 
 ## Tooling

@@ -1,0 +1,57 @@
+services:
+  postgres:
+    image: postgres:18
+    environment:
+      POSTGRES_DB: postgres
+      POSTGRES_PASSWORD: virtool
+      POSTGRES_USER: virtool
+    healthcheck:
+      test: [CMD-SHELL, pg_isready -U virtool -d postgres]
+      interval: 2s
+      timeout: 5s
+      retries: 30
+    labels: &labels
+      ca.virtool.dev.repository: ${VT_DEV_REPOSITORY_ID}
+      ca.virtool.dev.role: shared
+    ports:
+      - 127.0.0.1:15432:5432
+    volumes:
+      - postgres:/var/lib/postgresql
+
+  azurite:
+    image: mcr.microsoft.com/azure-storage/azurite:3.37.0
+    command: azurite --blobHost 0.0.0.0 --location /data --disableProductStyleUrl
+    labels: *labels
+    ports:
+      - 127.0.0.1:11000:10000
+    volumes:
+      - azurite:/data
+
+  caddy:
+    image: caddy:2.10.2
+    extra_hosts:
+      - host.docker.internal:host-gateway
+    labels: *labels
+    ports:
+      - 127.0.0.1:9443:9443
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy-data:/data
+    depends_on:
+      - azurite
+
+networks:
+  default:
+    name: virtool-dev-${VT_DEV_REPOSITORY_ID}
+    labels: *labels
+
+volumes:
+  postgres:
+    name: virtool-dev-${VT_DEV_REPOSITORY_ID}-postgres
+    labels: *labels
+  azurite:
+    name: virtool-dev-${VT_DEV_REPOSITORY_ID}-azurite
+    labels: *labels
+  caddy-data:
+    name: virtool-dev-${VT_DEV_REPOSITORY_ID}-caddy-data
+    labels: *labels

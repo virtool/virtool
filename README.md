@@ -2,17 +2,18 @@
 
 ## Development
 
-The local development environment uses Coasts and Docker Compose. Install the
-tools listed in [the development documentation](dev/README.md), then run these
-commands from the repository root:
+Virtool uses a repository-scoped development service to run isolated Docker
+Compose environments for Git worktrees. Install Docker Engine, Node 24, pnpm,
+and Worktrunk, then run:
 
 ```shell
-coast daemon start
-coasts up               # create or resume this worktree's Coast
-coasts status
-coasts stop             # stop the Coast and keep its data
-coasts remove           # remove the Coast and its data
+virtool-dev up
+virtool-dev ui
+virtool-dev list
+virtool-dev stop
+virtool-dev remove
 ```
 
-See [the development documentation](dev/README.md) for the architecture,
-worktree isolation, live editing, and lifecycle details.
+Lifecycle commands acknowledge immediately. Follow progress in the management
+UI at <https://dev.localhost:9443>. See [the development guide](dev/README.md)
+for architecture, data safety, workflow scheduling, and troubleshooting.

@@ -1,0 +1,127 @@
+import { existsSync } from "node:fs";
+import { readFile } from "node:fs/promises";
+import { join } from "node:path";
+import { serveStatic } from "@hono/node-server/serve-static";
+import { Hono } from "hono";
+import { streamSSE } from "hono/streaming";
+import type { Mutation, Snapshot } from "../shared/types.ts";
+import { MANAGEMENT_ORIGIN } from "./constants.ts";
+
+/** Mutable snapshot feed shared by API requests and SSE clients. */
+export class SnapshotFeed {
+	private listeners = new Set<(snapshot: Snapshot) => void>();
+
+	constructor(private snapshot: Snapshot) {}
+
+	get(): Snapshot {
+		return this.snapshot;
+	}
+
+	set(snapshot: Snapshot): void {
+		this.snapshot = snapshot;
+		for (const listener of this.listeners) {
+			listener(snapshot);
+		}
+	}
+
+	subscribe(listener: (snapshot: Snapshot) => void): () => void {
+		this.listeners.add(listener);
+		return () => this.listeners.delete(listener);
+	}
+}
+
+/** Create the loopback management API and static UI application. */
+export function createApi(
+	feed: SnapshotFeed,
+	mutate: (mutation: Mutation) => void,
+	setConcurrency: (value: number) => void,
+	clientDirectory: string,
+	resetShared: () => Promise<void> = async () => undefined,
+	logPath?: string,
+) {
+	const app = new Hono();
+	app.use("/api/*", async (context, next) => {
+		const host = (
+			context.req.header("host") ?? new URL(context.req.url).hostname
+		).split(":")[0];
+		if (
+			host !== "127.0.0.1" &&
+			host !== "localhost" &&
+			host !== "dev.localhost"
+		) {
+			return context.json({ error: "host not allowed" }, 403);
+		}
+		if (context.req.method !== "GET") {
+			const origin = context.req.header("origin");
+			if (origin !== MANAGEMENT_ORIGIN) {
+				return context.json({ error: "origin not allowed" }, 403);
+			}
+		}
+		await next();
+	});
+	app.get("/api/state", (context) => context.json(feed.get()));
+	app.get("/api/logs", async (context) => {
+		if (!logPath) {
+			return context.text("");
+		}
+		try {
+			const lines = (await readFile(logPath, "utf8")).split("\n");
+			return context.text(lines.slice(-200).join("\n"));
+		} catch {
+			return context.text("");
+		}
+	});
+	app.get("/api/events", (context) =>
+		streamSSE(context, async (stream) => {
+			let resolve: (() => void) | undefined;
+			const snapshots: Snapshot[] = [feed.get()];
+			const unsubscribe = feed.subscribe((snapshot) => {
+				snapshots.push(snapshot);
+				resolve?.();
+			});
+			stream.onAbort(() => unsubscribe());
+			while (!stream.aborted) {
+				const snapshot = snapshots.shift();
+				if (snapshot) {
+					await stream.writeSSE({
+						data: JSON.stringify(snapshot),
+						event: "state",
+					});
+					continue;
+				}
+				await new Promise<void>((done) => {
+					resolve = done;
+				});
+				resolve = undefined;
+			}
+		}),
+	);
+	app.post("/api/environments", async (context) => {
+		const mutation = (await context.req.json()) as Mutation;
+		mutate(mutation);
+		return context.json({ accepted: true }, 202);
+	});
+	app.post("/api/scheduler", async (context) => {
+		const body = (await context.req.json()) as { concurrency: number };
+		setConcurrency(body.concurrency);
+		return context.json({ accepted: true }, 202);
+	});
+	app.post("/api/shared/reset", async (context) => {
+		const body = (await context.req.json()) as { confirmation?: string };
+		if (body.confirmation !== "reset") {
+			return context.json({ error: "confirmation required" }, 422);
+		}
+		await resetShared();
+		return context.json({ accepted: true }, 202);
+	});
+	if (existsSync(clientDirectory)) {
+		app.use("/assets/*", serveStatic({ root: clientDirectory }));
+		app.get("/", serveStatic({ path: join(clientDirectory, "index.html") }));
+		app.get("/*", serveStatic({ path: join(clientDirectory, "index.html") }));
+	} else {
+		app.get("/", (context) =>
+			context.text("Build @virtool/dev to install the management UI", 503),
+		);
+	}
+	return app;
+}
