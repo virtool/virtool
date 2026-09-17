@@ -12,6 +12,8 @@ type ComposeContainer = {
 	State: string;
 };
 
+const CORE_SERVICES = ["jobs-api", "tasks", "web"];
+
 function parseJsonLines<T>(value: string): T[] {
 	return value
 		.split("\n")
@@ -42,6 +44,7 @@ export class DockerObserver {
 					"--file",
 					composeFile,
 					"ps",
+					"--all",
 					"--format",
 					"json",
 				],
@@ -63,11 +66,15 @@ export class DockerObserver {
 			const running = containers.filter(
 				(container) => container.State === "running",
 			);
-			const ready =
-				running.some((container) => container.Service === "web") &&
-				running.every(
-					(container) => !container.Health || container.Health === "healthy",
+			const ready = CORE_SERVICES.every((service) => {
+				const container = containers.find(
+					(candidate) => candidate.Service === service,
 				);
+				return (
+					container?.State === "running" &&
+					(!container.Health || container.Health === "healthy")
+				);
+			});
 			return {
 				ready,
 				services,

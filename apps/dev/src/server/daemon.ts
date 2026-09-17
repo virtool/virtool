@@ -3,6 +3,7 @@ import { createHash } from "node:crypto";
 import { access, readdir, readFile, rm } from "node:fs/promises";
 import { join } from "node:path";
 import { serve } from "@hono/node-server";
+import { createLogger } from "@virtool/logger";
 import type { Mutation, Snapshot } from "../shared/types.ts";
 import { createApi, SnapshotFeed } from "./api.ts";
 import { BuildCoordinator } from "./builds.ts";
@@ -49,6 +50,7 @@ function emptySnapshot(repositoryId: string, concurrency: number): Snapshot {
 			buildQueue: [],
 			capacity: concurrency,
 			concurrency,
+			lastError: null,
 			queues: {},
 		},
 		shared: { initialized: false, lastError: null, services: {} },
@@ -88,6 +90,7 @@ export async function runDaemon(
 		emptySnapshot(store.repositoryId, store.getWorkflowConcurrency()),
 	);
 	const builds = new BuildCoordinator();
+	const logger = createLogger({ name: "dev" });
 	let refreshPromise: Promise<void> | undefined;
 	const reconciler = new Reconciler(
 		store,
@@ -106,6 +109,7 @@ export async function runDaemon(
 			void refresh().catch(() => undefined);
 		},
 		builds,
+		logger,
 	);
 	const dockerEvents = new DockerEvents(store.repositoryId, () => {
 		void refresh().catch(() => undefined);
@@ -136,7 +140,7 @@ export async function runDaemon(
 					updatedAt: Date.now(),
 					updateAvailable: currentHash !== primaryHash,
 				});
-				void workflows.tick(environments).catch(() => undefined);
+				void workflows.tick(environments);
 			} finally {
 				refreshPromise = undefined;
 			}
@@ -158,14 +162,18 @@ export async function runDaemon(
 			void refresh().catch(() => undefined);
 			return;
 		}
-		const desired =
-			mutation.action === "remove"
-				? "absent"
-				: mutation.action === "stop"
-					? "stopped"
-					: "up";
 		for (const worktreeId of mutation.worktreeIds) {
-			const environmentId = store.setDesired(worktreeId, desired);
+			const environmentId =
+				mutation.action === "retry"
+					? store.retryEnvironment(worktreeId)
+					: store.setDesired(
+							worktreeId,
+							mutation.action === "remove"
+								? "absent"
+								: mutation.action === "stop"
+									? "stopped"
+									: "up",
+						);
 			if (mutation.action === "restart") {
 				reconciler.requestRestart(environmentId);
 			}

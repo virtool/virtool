@@ -9,6 +9,7 @@ const EMPTY: Snapshot = {
 		buildQueue: [],
 		capacity: 0,
 		concurrency: 1,
+		lastError: null,
 		queues: {},
 	},
 	shared: { initialized: false, lastError: null, services: {} },

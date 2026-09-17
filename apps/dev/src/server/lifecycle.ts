@@ -135,6 +135,8 @@ export class Reconciler {
 						"restarting services",
 					);
 					await this.compose(environment, files.envFile, files.composeFile, [
+						"--profile",
+						"workflow",
 						"stop",
 					]);
 				}
@@ -146,6 +148,8 @@ export class Reconciler {
 				);
 			} else if (environment.desired === "stopped") {
 				await this.compose(environment, files.envFile, files.composeFile, [
+					"--profile",
+					"workflow",
 					"stop",
 				]);
 			} else {
@@ -208,7 +212,18 @@ export class Reconciler {
 		}
 		await this.run(
 			"docker",
-			["compose", "--project-name", project, "--file", file, "up", "--detach"],
+			[
+				"compose",
+				"--project-name",
+				project,
+				"--file",
+				file,
+				"up",
+				"--detach",
+				"--wait",
+				"--wait-timeout",
+				"60",
+			],
 			{ cwd: this.primaryWorktree, env: this.sharedEnvironment() },
 		);
 		for (let attempt = 0; attempt < 20; attempt += 1) {
@@ -411,10 +426,9 @@ export class Reconciler {
 		);
 		this.store.updateOperation(operationId, "running", "stopping writers");
 		await this.compose(environment, envFile, composeFile, [
+			"--profile",
+			"workflow",
 			"stop",
-			"jobs-api",
-			"tasks",
-			"web",
 		]);
 		this.store.updateOperation(
 			operationId,
@@ -443,6 +457,8 @@ export class Reconciler {
 			"deleting Docker resources",
 		);
 		await this.compose(environment, envFile, composeFile, [
+			"--profile",
+			"workflow",
 			"down",
 			"--volumes",
 			"--remove-orphans",

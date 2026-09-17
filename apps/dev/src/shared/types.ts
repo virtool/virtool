@@ -56,6 +56,7 @@ export type SchedulerState = {
 	buildQueue: Array<{ environmentId: string; workflow: Workflow }>;
 	capacity: number;
 	concurrency: number;
+	lastError: string | null;
 	queues: Record<string, Partial<Record<Workflow, number>>>;
 };
 

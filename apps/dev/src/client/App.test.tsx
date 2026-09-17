@@ -31,6 +31,7 @@ const snapshot: Snapshot = {
 		buildQueue: [],
 		capacity: 1,
 		concurrency: 1,
+		lastError: null,
 		queues: {},
 	},
 	shared: { initialized: true, lastError: null, services: {} },

@@ -217,6 +217,19 @@ export class StateStore {
 		return environmentId;
 	}
 
+	retryEnvironment(worktreeId: string): string {
+		const environment = this.database
+			.prepare("SELECT id FROM environments WHERE worktree_id = ?")
+			.get(worktreeId) as { id: string } | undefined;
+		if (!environment) {
+			throw new Error(`Worktree ${worktreeId} has no environment to retry`);
+		}
+		this.database
+			.prepare("UPDATE environments SET last_error = NULL WHERE id = ?")
+			.run(environment.id);
+		return environment.id;
+	}
+
 	getDesiredEnvironments(): Array<{
 		desired: DesiredState;
 		generation: number;

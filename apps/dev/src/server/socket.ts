@@ -1,4 +1,4 @@
-import { mkdir, rm } from "node:fs/promises";
+import { mkdir } from "node:fs/promises";
 import { createServer, type Server, Socket } from "node:net";
 import { dirname } from "node:path";
 
@@ -13,14 +13,35 @@ function readRequest(
 	handle: (request: ControlRequest) => Promise<unknown>,
 ): void {
 	let input = "";
+	let handled = false;
 	socket.setEncoding("utf8");
+	function fail(error: unknown): void {
+		handled = true;
+		socket.end(
+			`${JSON.stringify({ error: error instanceof Error ? error.message : String(error), ok: false })}\n`,
+		);
+	}
 	socket.on("data", (chunk) => {
+		if (handled) {
+			return;
+		}
 		input += chunk;
 		const newline = input.indexOf("\n");
 		if (newline === -1) {
 			return;
 		}
-		const request = JSON.parse(input.slice(0, newline)) as ControlRequest;
+		handled = true;
+		let request: ControlRequest;
+		try {
+			const value = JSON.parse(input.slice(0, newline)) as unknown;
+			if (!isControlRequest(value)) {
+				throw new Error("Invalid control request");
+			}
+			request = value;
+		} catch (error) {
+			fail(error);
+			return;
+		}
 		void handle(request).then(
 			(result) => socket.end(`${JSON.stringify({ ok: true, result })}\n`),
 			(error) =>
@@ -29,6 +50,24 @@ function readRequest(
 				),
 		);
 	});
+	socket.on("end", () => {
+		if (!handled && input.length > 0) {
+			fail(new Error("Control request ended before newline"));
+		}
+	});
+}
+
+function isControlRequest(value: unknown): value is ControlRequest {
+	if (!value || typeof value !== "object") {
+		return false;
+	}
+	const request = value as Record<string, unknown>;
+	return (
+		["list", "remove", "shutdown", "stop", "up"].includes(
+			request.command as string,
+		) &&
+		(request.worktree === undefined || typeof request.worktree === "string")
+	);
 }
 
 export async function createControlServer(
@@ -36,7 +75,6 @@ export async function createControlServer(
 	handle: (request: ControlRequest) => Promise<unknown>,
 ): Promise<Server> {
 	await mkdir(dirname(path), { recursive: true, mode: 0o700 });
-	await rm(path, { force: true });
 	const server = createServer((socket) => readRequest(socket, handle));
 	await new Promise<void>((resolve, reject) => {
 		server.once("error", reject);

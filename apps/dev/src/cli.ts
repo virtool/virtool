@@ -1,6 +1,6 @@
 import { spawn } from "node:child_process";
 import { closeSync, mkdirSync, openSync, renameSync, statSync } from "node:fs";
-import { access } from "node:fs/promises";
+import { access, type FileHandle, open, rm } from "node:fs/promises";
 import { connect } from "node:net";
 import { join } from "node:path";
 import { runCommand } from "./server/command.ts";
@@ -27,13 +27,26 @@ async function canConnect(path: string): Promise<boolean> {
 }
 
 async function waitForDaemon(path: string): Promise<void> {
-	for (let attempt = 0; attempt < 40; attempt += 1) {
+	for (let attempt = 0; attempt < 1_200; attempt += 1) {
 		if (await canConnect(path)) {
 			return;
 		}
-		await new Promise((resolve) => setTimeout(resolve, 50));
+		await new Promise((resolve) => setTimeout(resolve, 100));
 	}
 	throw new Error("Development daemon did not start");
+}
+
+async function acquireDaemonLock(path: string): Promise<FileHandle | null> {
+	try {
+		const lock = await open(path, "wx", 0o600);
+		await lock.writeFile(String(process.pid));
+		return lock;
+	} catch (error) {
+		if ((error as NodeJS.ErrnoException).code === "EEXIST") {
+			return null;
+		}
+		throw error;
+	}
 }
 
 function openDaemonLog(stateDirectory: string): number {
@@ -58,28 +71,43 @@ async function ensureDaemon(
 	if (await canConnect(socketPath)) {
 		return;
 	}
-	const entry = join(primaryWorktree, "apps/dev/src/main.ts");
-	await access(entry);
-	const log = openDaemonLog(stateDirectory);
-	const child = spawn(
-		"pnpm",
-		[
-			"--dir",
-			primaryWorktree,
-			"--filter",
-			"@virtool/dev",
-			"exec",
-			"tsx",
-			entry,
-			"daemon",
-			"run",
-			socketPath,
-		],
-		{ detached: true, stdio: ["ignore", log, log] },
-	);
-	closeSync(log);
-	child.unref();
-	await waitForDaemon(socketPath);
+	const lockPath = join(stateDirectory, "daemon.lock");
+	const lock = await acquireDaemonLock(lockPath);
+	if (!lock) {
+		await waitForDaemon(socketPath);
+		return;
+	}
+	try {
+		if (await canConnect(socketPath)) {
+			return;
+		}
+		await rm(socketPath, { force: true });
+		const entry = join(primaryWorktree, "apps/dev/src/main.ts");
+		await access(entry);
+		const log = openDaemonLog(stateDirectory);
+		const child = spawn(
+			"pnpm",
+			[
+				"--dir",
+				primaryWorktree,
+				"--filter",
+				"@virtool/dev",
+				"exec",
+				"tsx",
+				entry,
+				"daemon",
+				"run",
+				socketPath,
+			],
+			{ detached: true, stdio: ["ignore", log, log] },
+		);
+		closeSync(log);
+		child.unref();
+		await waitForDaemon(socketPath);
+	} finally {
+		await lock.close();
+		await rm(lockPath, { force: true });
+	}
 }
 
 export async function runCli(args: string[]): Promise<void> {

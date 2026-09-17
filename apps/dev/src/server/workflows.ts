@@ -1,4 +1,5 @@
 import { join } from "node:path";
+import type { Logger } from "@virtool/logger";
 import type { Environment, SchedulerState, Workflow } from "../shared/types.ts";
 import type { BuildCoordinator } from "./builds.ts";
 import type { CommandRunner } from "./command.ts";
@@ -19,6 +20,7 @@ type Executor = { environmentId: string; workflow: Workflow };
 export class WorkflowCoordinator {
 	private active: Executor[] = [];
 	private buildQueue: SchedulerState["buildQueue"] = [];
+	private lastError: string | null = null;
 	private queues: SchedulerState["queues"] = {};
 	private running = false;
 	private readonly fair = new FairScheduler();
@@ -29,6 +31,7 @@ export class WorkflowCoordinator {
 		private readonly primaryWorktree: string,
 		private readonly publish: () => void,
 		private readonly builds: BuildCoordinator,
+		private readonly logger: Logger,
 	) {}
 
 	getState(): SchedulerState {
@@ -38,6 +41,7 @@ export class WorkflowCoordinator {
 			buildQueue: this.buildQueue,
 			capacity: Math.max(0, concurrency - this.active.length),
 			concurrency,
+			lastError: this.lastError,
 			queues: this.queues,
 		};
 	}
@@ -79,6 +83,11 @@ export class WorkflowCoordinator {
 			for (const candidate of this.fair.select(candidates, capacity)) {
 				await this.launch(candidate);
 			}
+			this.lastError = null;
+		} catch (error) {
+			this.buildQueue = [];
+			this.lastError = error instanceof Error ? error.message : String(error);
+			this.logger.error({ err: error }, "workflow scheduler tick failed");
 		} finally {
 			this.running = false;
 			this.publish();

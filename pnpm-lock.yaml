@@ -161,6 +161,9 @@ importers:
       '@hono/node-server':
         specifier: ^2.1.1
         version: 2.1.1(hono@4.13.5)
+      '@virtool/logger':
+        specifier: workspace:*
+        version: link:../../packages/logger
       hono:
         specifier: ^4.13.5
         version: 4.13.5

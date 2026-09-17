@@ -45,6 +45,19 @@ describe("StateStore", () => {
 		store.setDesired("wt-1", "absent");
 		expect(store.getDesiredEnvironments()[0]?.desired).toBe("absent");
 	});
+
+	it("retries without changing the desired state", () => {
+		const store = createStore();
+		store.synchronizeWorktrees([{ id: "wt-1", path: "/one", branch: "main" }]);
+		const environmentId = store.setDesired("wt-1", "absent");
+		store.setEnvironmentError(environmentId, "cleanup failed");
+
+		expect(store.retryEnvironment("wt-1")).toBe(environmentId);
+		expect(store.getDesiredEnvironments()[0]).toMatchObject({
+			desired: "absent",
+			lastError: null,
+		});
+	});
 });
 
 it("creates safe readable slugs", () => {

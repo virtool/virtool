@@ -188,6 +188,11 @@ function Scheduler({ state }: { state: SchedulerState }) {
 				Workflow scheduler · {pending} pending · {state.active.length} running
 			</summary>
 			<div className="mt-4 flex flex-wrap items-end gap-3 text-sm">
+				{state.lastError && (
+					<pre className="w-full whitespace-pre-wrap rounded-lg bg-red-50 p-3 text-red-800">
+						{state.lastError}
+					</pre>
+				)}
 				<label className="grid gap-1 font-medium">
 					Global concurrency
 					<input
