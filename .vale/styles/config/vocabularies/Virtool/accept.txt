@@ -82,6 +82,7 @@ Starlark
 [Aa]rgv
 [Aa]utocommit
 [Bb]ackoff
+[Bb]ackfill(s)?
 [Bb]asename
 [Bb]reakpoint
 [Bb]undler
@@ -93,11 +94,13 @@ camelCase
 [Dd]eduplicate
 [Dd]ebounces?
 [Ee]nqueueing
+[Ee]rrored
 [Ff]ormatters?
 [Ff]sync
 Gbps
 [Gg]reppable
 [Uu]ngreppable
+[Uu]nrun
 [Gg]zip(ped|ping)?
 [Hh]ostname
 [Ii]nlin(ed|ing)

@@ -21,7 +21,7 @@ each passes.
 `src/index.ts` is the dispatcher: it reads `argv[2]` and dynamically imports the
 selected command's graph, so the migration Job never loads Hono and the HTTP
 server never loads the task registry. Each command lives under its own
-directory — `src/serve/`, `src/run/`, `src/migrate/`, `src/data-migrations/` — and
+directory: `src/serve/`, `src/run/`, `src/migrate/`, `src/data-migrations/`, and
 owns its own config, Sentry service name (`jobs-api`, `tasks`, `migrate`,
 `data-migrations`) and fatal logging.
 
@@ -229,7 +229,7 @@ SQL assertions still prevent it from applying an unsatisfied pair, but its
 single pending-migration transaction can roll back the preceding SQL too. Use
 this app's segmented `migrate` command for deployment.
 
-## `data-migrations` — inspection
+## `data-migrations`: inspection
 
 An **audit** scans and reports findings; it may also perform retry-safe repairs.
 A **backfill** writes in bounded, idempotent batches and retains a cursor. Both
