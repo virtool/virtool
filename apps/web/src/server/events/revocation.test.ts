@@ -1,5 +1,5 @@
 import type { Db } from "@virtool/data/db/pg";
-import { sessions } from "@virtool/data/db/schema/sessions";
+import { authSessions } from "@virtool/data/db/schema/auth";
 import { users } from "@virtool/data/db/schema/users";
 import {
 	createTestDatabase,
@@ -18,6 +18,7 @@ import {
 vi.mock("@sentry/tanstackstart-react", () => ({
 	captureException: vi.fn(),
 	setUser: vi.fn(),
+	setContext: vi.fn(),
 }));
 
 vi.mock("../logger", () => ({
@@ -57,7 +58,7 @@ afterAll(async () => {
 });
 
 beforeEach(async () => {
-	await db.delete(sessions);
+	await db.delete(authSessions);
 	await db.delete(users);
 });
 
@@ -89,7 +90,7 @@ describe("watchForRevocation", () => {
 		const onRevoked = vi.fn();
 
 		const stop = watchForRevocation(request, INTERVAL, onRevoked);
-		await db.delete(sessions);
+		await db.delete(authSessions);
 
 		await vi.waitFor(() => expect(onRevoked).toHaveBeenCalled(), {
 			timeout: 2000,
@@ -115,7 +116,7 @@ describe("watchForRevocation", () => {
 		const onRevoked = vi.fn();
 
 		const stop = watchForRevocation(request, INTERVAL, onRevoked);
-		await db.delete(sessions);
+		await db.delete(authSessions);
 
 		await vi.waitFor(() => expect(onRevoked).toHaveBeenCalled(), {
 			timeout: 2000,
@@ -133,7 +134,7 @@ describe("watchForRevocation", () => {
 		const stop = watchForRevocation(request, INTERVAL, onRevoked);
 		stop();
 
-		await db.delete(sessions);
+		await db.delete(authSessions);
 		await new Promise((resolve) => setTimeout(resolve, INTERVAL * 5));
 
 		expect(onRevoked).not.toHaveBeenCalled();

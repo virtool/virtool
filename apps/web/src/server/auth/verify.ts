@@ -1,6 +1,10 @@
 import { timingSafeEqual } from "node:crypto";
 
-import { emptyPermissions, type Permissions } from "@virtool/contracts";
+import {
+	type ApiKeyPrincipal,
+	type BrowserSessionPrincipal,
+	emptyPermissions,
+} from "@virtool/contracts";
 import { hashToken } from "@virtool/data/auth/tokens";
 
 import type { Db } from "@virtool/data/db/pg";
@@ -10,49 +14,85 @@ import { users } from "@virtool/data/db/schema/users";
 import { and, eq, sql } from "drizzle-orm";
 import { SESSION_ID_COOKIE, SESSION_TOKEN_COOKIE } from "./cookies";
 
-/** Authenticated identity resolved from a session cookie pair or an API key. */
-export type AuthenticatedSession = {
-	userId: number;
-	/**
-	 * Set only when the caller authenticated with an API key. The key's
-	 * permissions cap the user's own, so `hasPermission` must intersect the two.
-	 */
-	keyPermissions?: Permissions;
+async function getBetterAuthSession(headers: Headers) {
+	const { auth } = await import("./instance");
+	return auth.api.getSession({
+		headers,
+		query: { disableCookieCache: true, disableRefresh: true },
+	});
+}
+
+type BetterAuthSession = {
+	session: { id: unknown };
+	user: { id: unknown };
 };
 
 /**
- * Resolve an authenticated session from cookie values. Returns `null` for any
- * non-fatal failure (missing cookies, unknown session, wrong type, expired,
- * deactivated user, an account that has not completed setup, or token
- * mismatch) so callers can respond with a single 401 without leaking which
- * check failed.
+ * Resolve an authoritative Better Auth browser session and its Virtool state.
+ * Missing, invalid, expired, revoked, inactive, and unmapped credentials all
+ * return `null`; provider failures throw so callers do not mistake an outage
+ * for revocation.
  */
-export async function verifyAuthenticatedSession(
+export async function verifyBrowserPrincipal(
 	db: Db,
-	sessionId: string | undefined,
-	sessionToken: string | undefined,
-): Promise<AuthenticatedSession | null> {
-	if (!sessionId || !sessionToken) {
+	request: Request,
+	resolveSession: (
+		headers: Headers,
+	) => Promise<BetterAuthSession | null> = getBetterAuthSession,
+): Promise<BrowserSessionPrincipal | null> {
+	const resolved = await resolveSession(request.headers);
+	if (!resolved) {
 		return null;
 	}
 
-	// Deactivating a user deletes their sessions, but sessions created before
-	// this release can outlive the deactivation, so `active` still has to be
-	// checked on every request rather than trusted at login — such a session must
-	// stop verifying the moment the user goes inactive. The inner join only drops
-	// anonymous sessions, which carry no user_id and are rejected anyway.
-	//
-	// `lifecycle_state` is read for the same reason: an account that has not
-	// completed setup is not an application principal, whatever session row
-	// happens to name it.
+	const userId = Number(resolved.user.id);
+	const sessionId = Number(resolved.session.id);
+	if (!Number.isSafeInteger(userId) || !Number.isSafeInteger(sessionId)) {
+		return null;
+	}
+
 	const [row] = await db
 		.select({
+			active: users.active,
+			forceReset: users.forceReset,
+			lifecycleState: users.lifecycleState,
+		})
+		.from(users)
+		.where(eq(users.id, userId))
+		.limit(1);
+
+	if (!row?.active || row.lifecycleState !== "normal") {
+		return null;
+	}
+
+	return {
+		kind: row.forceReset ? "password_reset" : "browser",
+		userId,
+		sessionId,
+	};
+}
+
+/** Resolve a retained legacy browser or forced-reset session. */
+export async function verifyLegacyBrowserPrincipal(
+	db: Db,
+	request: Request,
+): Promise<BrowserSessionPrincipal | null> {
+	const cookies = parseCookieHeader(request.headers.get("cookie"));
+	const sessionId = cookies[SESSION_ID_COOKIE];
+	if (!sessionId) {
+		return null;
+	}
+
+	const [row] = await db
+		.select({
+			id: sessions.id,
 			userId: sessions.userId,
 			sessionType: sessions.sessionType,
 			tokenHash: sessions.tokenHash,
 			expiresAt: sessions.expiresAt,
 			active: users.active,
 			lifecycleState: users.lifecycleState,
+			forceReset: users.forceReset,
 		})
 		.from(sessions)
 		.innerJoin(users, eq(users.id, sessions.userId))
@@ -60,21 +100,25 @@ export async function verifyAuthenticatedSession(
 		.limit(1);
 
 	if (
-		row?.sessionType !== "authenticated" ||
-		!row.tokenHash ||
+		!row?.active ||
 		row.userId === null ||
-		!row.active ||
-		row.lifecycleState !== "normal"
+		row.lifecycleState !== "normal" ||
+		row.expiresAt.getTime() <= Date.now()
 	) {
 		return null;
 	}
 
-	if (row.expiresAt.getTime() <= Date.now()) {
+	const token = cookies[SESSION_TOKEN_COOKIE];
+	if (
+		(row.sessionType !== "authenticated" && row.sessionType !== "reset") ||
+		!row.tokenHash ||
+		!token
+	) {
 		return null;
 	}
 
 	const expected = Buffer.from(row.tokenHash, "utf8");
-	const provided = Buffer.from(hashToken(sessionToken), "utf8");
+	const provided = Buffer.from(hashToken(token), "utf8");
 	if (
 		expected.length !== provided.length ||
 		!timingSafeEqual(expected, provided)
@@ -82,12 +126,18 @@ export async function verifyAuthenticatedSession(
 		return null;
 	}
 
-	return { userId: row.userId };
+	if (row.sessionType === "reset") {
+		return row.forceReset
+			? { kind: "password_reset", sessionId: row.id, userId: row.userId }
+			: null;
+	}
+
+	return { kind: "browser", sessionId: row.id, userId: row.userId };
 }
 
 /**
  * Parse a `Cookie` header into a flat map. Lightweight; sufficient for reading
- * the two session cookies from a raw `Request` (where the `getCookie` helper
+ * session cookies from a raw `Request` (where the `getCookie` helper
  * tied to async-local request context isn't available).
  */
 export function parseCookieHeader(
@@ -166,7 +216,7 @@ export async function verifyApiKey(
 	db: Db,
 	handle: string,
 	key: string,
-): Promise<AuthenticatedSession | null> {
+): Promise<ApiKeyPrincipal | null> {
 	// The lookup below matches the handle case-insensitively, so the prefix check
 	// has to as well — otherwise `JOB-1` would slip past a guard that `job-1`
 	// trips and then resolve to the very same row.
@@ -181,6 +231,7 @@ export async function verifyApiKey(
 
 	const [row] = await db
 		.select({
+			keyId: apiKeys.id,
 			userId: users.id,
 			active: users.active,
 			lifecycleState: users.lifecycleState,
@@ -206,20 +257,20 @@ export async function verifyApiKey(
 	// Keys written by an older release stored only the permissions that were
 	// granted, so expand against the full set before it becomes a cap.
 	return {
+		kind: "api_key",
+		keyId: row.keyId,
 		userId: row.userId,
-		keyPermissions: { ...emptyPermissions(), ...row.permissions },
+		permissions: { ...emptyPermissions(), ...row.permissions },
 	};
 }
 
-/** Resolve an authenticated session directly from a `Request`. */
-export async function verifyRequest(
+/** Resolve Better Auth first, then the retained legacy compatibility session. */
+export async function verifyBrowserRequest(
 	db: Db,
 	request: Request,
-): Promise<AuthenticatedSession | null> {
-	const cookies = parseCookieHeader(request.headers.get("cookie"));
-	return verifyAuthenticatedSession(
-		db,
-		cookies[SESSION_ID_COOKIE],
-		cookies[SESSION_TOKEN_COOKIE],
+): Promise<BrowserSessionPrincipal | null> {
+	return (
+		(await verifyBrowserPrincipal(db, request)) ??
+		(await verifyLegacyBrowserPrincipal(db, request))
 	);
 }

@@ -211,7 +211,7 @@ export const createOtuFn = createServerFn({ method: "POST" })
 		try {
 			// The reference comes from the request rather than from an OTU that does
 			// not exist yet, so the right is checked against it directly.
-			const actor = await resolveReferenceActor(db, context.session.userId);
+			const actor = await resolveReferenceActor(db, context.principal.userId);
 
 			if (!(await checkReferenceRight(db, referenceId, "modifyOtu", actor))) {
 				setResponseStatus(403);
@@ -222,7 +222,7 @@ export const createOtuFn = createServerFn({ method: "POST" })
 				db,
 				referenceId,
 				values,
-				context.session.userId,
+				context.principal.userId,
 			);
 
 			setResponseStatus(201);
@@ -240,9 +240,9 @@ export const updateOtuFn = createServerFn({ method: "POST" })
 		const { otuId, ...values } = data;
 
 		try {
-			await authorizeOtu(otuId, context.session.userId);
+			await authorizeOtu(otuId, context.principal.userId);
 
-			return await updateOtu(db, otuId, values, context.session.userId);
+			return await updateOtu(db, otuId, values, context.principal.userId);
 		} catch (err) {
 			return rethrowAsHttp(err);
 		}
@@ -253,9 +253,9 @@ export const deleteOtuFn = createServerFn({ method: "POST" })
 	.validator(otuIdSchema)
 	.handler(async ({ context, data }) => {
 		try {
-			await authorizeOtu(data.otuId, context.session.userId);
+			await authorizeOtu(data.otuId, context.principal.userId);
 
-			await deleteOtu(db, data.otuId, context.session.userId);
+			await deleteOtu(db, data.otuId, context.principal.userId);
 
 			return null;
 		} catch (err) {
@@ -270,13 +270,13 @@ export const createIsolateFn = createServerFn({ method: "POST" })
 		const { otuId, ...values } = data;
 
 		try {
-			await authorizeOtu(otuId, context.session.userId);
+			await authorizeOtu(otuId, context.principal.userId);
 
 			const isolate = await createIsolate(
 				db,
 				otuId,
 				values,
-				context.session.userId,
+				context.principal.userId,
 			);
 
 			setResponseStatus(201);
@@ -294,14 +294,14 @@ export const updateIsolateFn = createServerFn({ method: "POST" })
 		const { otuId, isolateId, ...values } = data;
 
 		try {
-			await authorizeOtu(otuId, context.session.userId, isolateId);
+			await authorizeOtu(otuId, context.principal.userId, isolateId);
 
 			return await updateIsolate(
 				db,
 				otuId,
 				isolateId,
 				values,
-				context.session.userId,
+				context.principal.userId,
 			);
 		} catch (err) {
 			return rethrowAsHttp(err);
@@ -313,13 +313,13 @@ export const setIsolateAsDefaultFn = createServerFn({ method: "POST" })
 	.validator(isolateIdSchema)
 	.handler(async ({ context, data }) => {
 		try {
-			await authorizeOtu(data.otuId, context.session.userId, data.isolateId);
+			await authorizeOtu(data.otuId, context.principal.userId, data.isolateId);
 
 			return await setIsolateAsDefault(
 				db,
 				data.otuId,
 				data.isolateId,
-				context.session.userId,
+				context.principal.userId,
 			);
 		} catch (err) {
 			return rethrowAsHttp(err);
@@ -331,13 +331,13 @@ export const deleteIsolateFn = createServerFn({ method: "POST" })
 	.validator(isolateIdSchema)
 	.handler(async ({ context, data }) => {
 		try {
-			await authorizeOtu(data.otuId, context.session.userId, data.isolateId);
+			await authorizeOtu(data.otuId, context.principal.userId, data.isolateId);
 
 			await deleteIsolate(
 				db,
 				data.otuId,
 				data.isolateId,
-				context.session.userId,
+				context.principal.userId,
 			);
 
 			return null;
@@ -353,14 +353,14 @@ export const createSequenceFn = createServerFn({ method: "POST" })
 		const { otuId, isolateId, ...values } = data;
 
 		try {
-			await authorizeOtu(otuId, context.session.userId, isolateId);
+			await authorizeOtu(otuId, context.principal.userId, isolateId);
 
 			const sequence = await createSequence(
 				db,
 				otuId,
 				isolateId,
 				values,
-				context.session.userId,
+				context.principal.userId,
 			);
 
 			setResponseStatus(201);
@@ -385,7 +385,7 @@ export const updateSequenceFn = createServerFn({ method: "POST" })
 				return notFound("Sequence not found.");
 			}
 
-			await authorizeOtu(otuId, context.session.userId, isolateId);
+			await authorizeOtu(otuId, context.principal.userId, isolateId);
 
 			return await updateSequence(
 				db,
@@ -393,7 +393,7 @@ export const updateSequenceFn = createServerFn({ method: "POST" })
 				isolateId,
 				sequenceId,
 				values,
-				context.session.userId,
+				context.principal.userId,
 			);
 		} catch (err) {
 			return rethrowAsHttp(err);
@@ -411,14 +411,14 @@ export const deleteSequenceFn = createServerFn({ method: "POST" })
 				return notFound("Sequence not found.");
 			}
 
-			await authorizeOtu(data.otuId, context.session.userId, data.isolateId);
+			await authorizeOtu(data.otuId, context.principal.userId, data.isolateId);
 
 			await deleteSequence(
 				db,
 				data.otuId,
 				data.isolateId,
 				data.sequenceId,
-				context.session.userId,
+				context.principal.userId,
 			);
 
 			return null;

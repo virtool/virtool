@@ -31,6 +31,7 @@ vi.mock("@tanstack/react-start/server", () => ({
 vi.mock("@sentry/tanstackstart-react", () => ({
 	captureException: vi.fn(),
 	setUser: vi.fn(),
+	setContext: vi.fn(),
 }));
 
 let db: Db;
@@ -300,7 +301,7 @@ describe("the open endpoints are reachable without a session", () => {
 			"getRootFn",
 			"loginFn",
 			"logoutFn",
-			"resetPasswordFn",
+			"verifyTwoFactorFn",
 		]);
 	});
 

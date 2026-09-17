@@ -7,10 +7,9 @@
 // gets in exchange: it proves an in-progress setup for one named purpose and
 // nothing else.
 //
-// Neither is the legacy `sessions` table and neither is `auth_sessions`. A
-// restricted setup credential must not be an ordinary application session —
-// the whole point is that it reaches only its own setup surface — so it is
-// held apart rather than added as another `session_type`.
+// Neither is `auth_sessions`. A restricted setup credential must not be an
+// ordinary application session — the whole point is that it reaches only its
+// own setup surface — so it is held apart rather than added as a session kind.
 
 import type { SetupPurpose } from "@virtool/contracts";
 import { type SQL, sql } from "drizzle-orm";

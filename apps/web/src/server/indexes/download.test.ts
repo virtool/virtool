@@ -1,5 +1,6 @@
 import type { Db } from "@virtool/data/db/pg";
 import { apiKeys } from "@virtool/data/db/schema/apiKeys";
+import { authSessions } from "@virtool/data/db/schema/auth";
 import { groups, userGroups } from "@virtool/data/db/schema/groups";
 import { legacyHistory } from "@virtool/data/db/schema/history";
 import { indexes, indexFiles } from "@virtool/data/db/schema/indexes";
@@ -9,7 +10,6 @@ import {
 	legacyReferences,
 	legacyReferenceUsers,
 } from "@virtool/data/db/schema/references";
-import { sessions } from "@virtool/data/db/schema/sessions";
 import { tasks } from "@virtool/data/db/schema/tasks";
 import { users } from "@virtool/data/db/schema/users";
 import {
@@ -39,6 +39,7 @@ vi.mock("@tanstack/react-start/server", () => ({
 vi.mock("@sentry/tanstackstart-react", () => ({
 	captureException: vi.fn(),
 	setUser: vi.fn(),
+	setContext: vi.fn(),
 }));
 
 let db: Db;
@@ -87,7 +88,7 @@ beforeEach(async () => {
 	await db.delete(legacyReferences);
 	await db.delete(tasks);
 	await db.delete(apiKeys);
-	await db.delete(sessions);
+	await db.delete(authSessions);
 	await db.delete(userGroups);
 	await db.delete(groups);
 	await db.delete(users);

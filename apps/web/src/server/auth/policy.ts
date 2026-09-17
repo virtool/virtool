@@ -3,9 +3,16 @@ import { getRequest, setResponseStatus } from "@tanstack/react-start/server";
 import {
 	AdministratorPermissions,
 	type AdministratorRoleName,
+	type AuthenticatedPrincipal,
+	type BrowserPrincipal,
 	hasSufficientAdminRole,
+	isApiKeyPrincipal,
+	isBrowserPrincipal,
+	isPasswordResetPrincipal,
+	isSetupPrincipal,
+	type PasswordResetPrincipal,
 	type Permission,
-	type RestrictedSetup,
+	type SetupPrincipal,
 	type SetupPurpose,
 } from "@virtool/contracts";
 import { groups, userGroups } from "@virtool/data/db/schema/groups";
@@ -14,11 +21,13 @@ import { eq } from "drizzle-orm";
 import { db } from "../composition";
 import {
 	ForbiddenError,
-	requireSession,
+	requireBrowserPrincipal,
 	UnauthorizedError,
 } from "./middleware";
-import { resolveRestrictedSetup } from "./restricted";
-import type { AuthenticatedSession } from "./verify";
+import {
+	PasswordResetRequiredError,
+	resolveRestrictedSetup,
+} from "./restricted";
 
 // Every server function declares one of the policies below with `.middleware()`.
 // A policy answers *what the caller may do*; the global authentication
@@ -37,14 +46,21 @@ import type { AuthenticatedSession } from "./verify";
 // The global authentication middleware has already resolved the session and put
 // it here. Reusing it keeps an authenticated call to a single session lookup.
 type UpstreamContext = {
-	session?: AuthenticatedSession | null;
-	restricted?: RestrictedSetup | null;
+	principal?: BrowserPrincipal | PasswordResetPrincipal | SetupPrincipal | null;
 };
 
 // Absent only in tests, which run a handler without the global middleware.
-const resolveSession = createServerOnlyFn(
-	async (context: unknown): Promise<AuthenticatedSession> => {
-		return (context as UpstreamContext).session ?? (await requireSession());
+const resolveBrowser = createServerOnlyFn(
+	async (context: unknown): Promise<BrowserPrincipal> => {
+		const principal = (context as UpstreamContext).principal;
+		if (principal && isBrowserPrincipal(principal)) {
+			return principal;
+		}
+		if (principal && isPasswordResetPrincipal(principal)) {
+			setResponseStatus(403);
+			throw new PasswordResetRequiredError();
+		}
+		return requireBrowserPrincipal();
 	},
 );
 
@@ -57,18 +73,33 @@ const forbid = createServerOnlyFn((): never => {
 //
 // 401, not 403: with no restricted credential resolved there is no caller to
 // forbid, and this is the answer every other policy gives an anonymous call.
-const resolveRestricted = createServerOnlyFn(
-	async (context: unknown): Promise<RestrictedSetup> => {
-		const restricted =
-			(context as UpstreamContext).restricted ??
-			(await resolveRestrictedSetup(getRequest()));
+const resolveSetup = createServerOnlyFn(
+	async (context: unknown): Promise<SetupPrincipal> => {
+		const principal = (context as UpstreamContext).principal;
+		if (principal && isSetupPrincipal(principal)) {
+			return principal;
+		}
+
+		const restricted = await resolveRestrictedSetup(getRequest());
 
 		if (!restricted) {
 			setResponseStatus(401);
 			throw new UnauthorizedError();
 		}
 
-		return restricted;
+		return { kind: "setup", ...restricted };
+	},
+);
+
+const resolvePasswordReset = createServerOnlyFn(
+	async (context: unknown): Promise<PasswordResetPrincipal> => {
+		const principal = (context as UpstreamContext).principal;
+		if (principal && isPasswordResetPrincipal(principal)) {
+			return principal;
+		}
+
+		setResponseStatus(401);
+		throw new UnauthorizedError();
 	},
 );
 
@@ -87,15 +118,18 @@ const resolveRestricted = createServerOnlyFn(
  * its own checkboxes would be a lie.
  */
 export const hasPermission = createServerOnlyFn(
-	async (session: AuthenticatedSession, name: Permission): Promise<boolean> => {
-		if (session.keyPermissions && !session.keyPermissions[name]) {
+	async (
+		principal: AuthenticatedPrincipal,
+		name: Permission,
+	): Promise<boolean> => {
+		if (isApiKeyPrincipal(principal) && !principal.permissions[name]) {
 			return false;
 		}
 
 		const [row] = await db
 			.select({ administratorRole: users.administratorRole })
 			.from(users)
-			.where(eq(users.id, session.userId))
+			.where(eq(users.id, principal.userId))
 			.limit(1);
 
 		if (!row) {
@@ -115,16 +149,15 @@ export const hasPermission = createServerOnlyFn(
 			.select({ permissions: groups.permissions })
 			.from(groups)
 			.innerJoin(userGroups, eq(userGroups.groupId, groups.id))
-			.where(eq(userGroups.userId, session.userId));
+			.where(eq(userGroups.userId, principal.userId));
 
 		return memberships.some((membership) => membership.permissions[name]);
 	},
 );
 
 /**
- * Callable without a session. Reserved for the endpoints that *establish* one:
- * login, first-user setup, logout, and the password policy the reset form reads
- * before it has anywhere to authenticate to.
+ * Callable without an ordinary session. Reserved for endpoints that establish
+ * or clear one, plus bootstrap and password-policy reads.
  *
  * A function declared `open()` must also appear in `authenticationExceptions`,
  * and one that isn't declared `open()` must not — `authorization.test.ts` pins
@@ -133,8 +166,9 @@ export const hasPermission = createServerOnlyFn(
 export function open() {
 	return createMiddleware({ type: "function" }).server(
 		async ({ context, next }) => {
-			const session = (context as unknown as UpstreamContext).session ?? null;
-			return next({ context: { session } });
+			const principal =
+				(context as unknown as UpstreamContext).principal ?? null;
+			return next({ context: { principal } });
 		},
 	);
 }
@@ -147,8 +181,8 @@ export function open() {
 export function authenticated() {
 	return createMiddleware({ type: "function" }).server(
 		async ({ context, next }) => {
-			const session = await resolveSession(context);
-			return next({ context: { session } });
+			const principal = await resolveBrowser(context);
+			return next({ context: { principal } });
 		},
 	);
 }
@@ -159,19 +193,19 @@ export function authenticated() {
 export function adminRole(role: AdministratorRoleName) {
 	return createMiddleware({ type: "function" }).server(
 		async ({ context, next }) => {
-			const session = await resolveSession(context);
+			const principal = await resolveBrowser(context);
 
 			const [row] = await db
 				.select({ administratorRole: users.administratorRole })
 				.from(users)
-				.where(eq(users.id, session.userId))
+				.where(eq(users.id, principal.userId))
 				.limit(1);
 
 			if (!row || !hasSufficientAdminRole(role, row.administratorRole)) {
 				forbid();
 			}
 
-			return next({ context: { session } });
+			return next({ context: { principal } });
 		},
 	);
 }
@@ -183,13 +217,13 @@ export function adminRole(role: AdministratorRoleName) {
 export function permission(name: Permission) {
 	return createMiddleware({ type: "function" }).server(
 		async ({ context, next }) => {
-			const session = await resolveSession(context);
+			const principal = await resolveBrowser(context);
 
-			if (!(await hasPermission(session, name))) {
+			if (!(await hasPermission(principal, name))) {
 				forbid();
 			}
 
-			return next({ context: { session } });
+			return next({ context: { principal } });
 		},
 	);
 }
@@ -217,13 +251,23 @@ export function permission(name: Permission) {
 export function setupOnly(purpose: SetupPurpose) {
 	return createMiddleware({ type: "function" }).server(
 		async ({ context, next }) => {
-			const restricted = await resolveRestricted(context);
+			const principal = await resolveSetup(context);
 
-			if (restricted.purpose !== purpose) {
+			if (principal.purpose !== purpose) {
 				forbid();
 			}
 
-			return next({ context: { restricted } });
+			return next({ context: { principal } });
+		},
+	);
+}
+
+/** Callable only while the Better Auth session requires a password reset. */
+export function passwordResetOnly() {
+	return createMiddleware({ type: "function" }).server(
+		async ({ context, next }) => {
+			const principal = await resolvePasswordReset(context);
+			return next({ context: { principal } });
 		},
 	);
 }

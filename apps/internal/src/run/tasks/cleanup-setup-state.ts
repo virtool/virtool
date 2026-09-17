@@ -11,11 +11,6 @@ const payload = z.object({});
 /**
  * Delete expired setup tokens and restricted setup sessions.
  *
- * Kept apart from `cleanup_sessions` rather than folded into it. The two sweep
- * different tables on different lifetimes, and a single task that failed
- * part-way would leave whichever half ran second permanently unswept while
- * reporting the same one failure.
- *
  * It is idempotent as a reclaim requires: a re-run deletes whatever is expired
  * when it runs, which is nothing if the first attempt got there.
  */

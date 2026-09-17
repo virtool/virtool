@@ -36,31 +36,29 @@ describe("<ResetForm />", () => {
 	});
 
 	it("calls the reset mutation with the form values", async () => {
-		const resetCode = "test_reset_code";
 		const password = "P@ssword123";
 
 		resetPasswordMock.mockResolvedValue({ login: false, reset: false });
 
-		renderWithProviders(<ResetForm resetCode={resetCode} />);
+		renderWithProviders(<ResetForm />);
 
 		await userEvent.type(screen.getByLabelText("Password"), password);
 		await userEvent.click(screen.getByRole("button", { name: "Reset" }));
 
 		await waitFor(() => expect(resetPasswordMock).toHaveBeenCalledTimes(1));
 		expect(resetPasswordMock).toHaveBeenCalledWith(
-			{ password, resetCode },
+			{ password },
 			expect.anything(),
 		);
 	});
 
 	it("displays the thrown error message on reset failure", async () => {
-		const resetCode = "test_reset_code";
 		const password = "P@ssword123";
 		const errorMessage = "Cannot reuse current password";
 
 		resetPasswordMock.mockRejectedValue(new Error(errorMessage));
 
-		renderWithProviders(<ResetForm resetCode={resetCode} />);
+		renderWithProviders(<ResetForm />);
 
 		await userEvent.type(screen.getByLabelText("Password"), password);
 		await userEvent.click(screen.getByRole("button", { name: "Reset" }));
@@ -69,7 +67,7 @@ describe("<ResetForm />", () => {
 	});
 
 	it("rejects a password shorter than eight characters without submitting", async () => {
-		renderWithProviders(<ResetForm resetCode="test_reset_code" />);
+		renderWithProviders(<ResetForm />);
 
 		await userEvent.type(screen.getByLabelText("Password"), "short12");
 		await userEvent.click(screen.getByRole("button", { name: "Reset" }));
@@ -85,7 +83,7 @@ describe("<ResetForm />", () => {
 	it("rejects a password shorter than the configured minimum without submitting", async () => {
 		mockGetPasswordPolicy(12);
 
-		renderWithProviders(<ResetForm resetCode="test_reset_code" />);
+		renderWithProviders(<ResetForm />);
 
 		// Eleven characters: long enough for the default minimum, so this only
 		// fails if the form is reading the configured one.
@@ -104,7 +102,7 @@ describe("<ResetForm />", () => {
 		mockGetPasswordPolicy(4);
 		resetPasswordMock.mockResolvedValue({ login: false, reset: false });
 
-		renderWithProviders(<ResetForm resetCode="test_reset_code" />);
+		renderWithProviders(<ResetForm />);
 
 		await userEvent.type(screen.getByLabelText("Password"), "abcd");
 		await userEvent.click(screen.getByRole("button", { name: "Reset" }));
@@ -120,7 +118,7 @@ describe("<ResetForm />", () => {
 		);
 		resetPasswordMock.mockResolvedValue({ login: false, reset: false });
 
-		renderWithProviders(<ResetForm resetCode="test_reset_code" />);
+		renderWithProviders(<ResetForm />);
 
 		await userEvent.type(screen.getByLabelText("Password"), "abcd");
 		await userEvent.click(screen.getByRole("button", { name: "Reset" }));
@@ -132,7 +130,7 @@ describe("<ResetForm />", () => {
 		mockGetPasswordPolicy(12);
 		resetPasswordMock.mockResolvedValue({ login: false, reset: false });
 
-		renderWithProviders(<ResetForm resetCode="test_reset_code" />);
+		renderWithProviders(<ResetForm />);
 
 		await userEvent.type(screen.getByLabelText("Password"), "twelvechars!");
 		await userEvent.click(screen.getByRole("button", { name: "Reset" }));
@@ -143,9 +141,7 @@ describe("<ResetForm />", () => {
 	it("navigates to the redirect on a successful reset", async () => {
 		resetPasswordMock.mockResolvedValue({ login: false, reset: false });
 
-		renderWithProviders(
-			<ResetForm redirect="/samples" resetCode="test_reset_code" />,
-		);
+		renderWithProviders(<ResetForm redirect="/samples" />);
 
 		await userEvent.type(screen.getByLabelText("Password"), "P@ssword123");
 		await userEvent.click(screen.getByRole("button", { name: "Reset" }));
@@ -158,7 +154,7 @@ describe("<ResetForm />", () => {
 	it("navigates to the root when no redirect is provided", async () => {
 		resetPasswordMock.mockResolvedValue({ login: false, reset: false });
 
-		renderWithProviders(<ResetForm resetCode="test_reset_code" />);
+		renderWithProviders(<ResetForm />);
 
 		await userEvent.type(screen.getByLabelText("Password"), "P@ssword123");
 		await userEvent.click(screen.getByRole("button", { name: "Reset" }));

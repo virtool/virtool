@@ -145,9 +145,12 @@ origin and fetch-metadata headers when changing these request shapes.
 
 Every exported server function declares exactly one policy from
 `@server/auth/policy`: `open()`, `authenticated()`, `adminRole(role)`,
-`permission(name)`, or `setupOnly(purpose)`. Use the resolved `context.session`
-or `context.restricted`; keep row-dependent authorization in the handler.
-Register new `functions.ts` modules in
+`permission(name)`, `setupOnly(purpose)`, or `passwordResetOnly()`. Read the
+discriminated principal from `context.principal` and do not perform a second
+lookup. Browser sessions, API keys, setup sessions, and forced-reset sessions
+have distinct principal kinds so a policy cannot silently widen one credential
+into another. Row-dependent authorization remains in the handler. Register
+each new `functions.ts` module in
 [src/server/__tests__/authorization.test.ts](src/server/__tests__/authorization.test.ts).
 Keep `createServerFn` at the definition site so the compiler recognizes it.
 
@@ -161,12 +164,151 @@ authorization. `requireAuthenticatedRequest` accepts sessions and API keys;
 server functions are session-only. Better Auth owns sign-in, while Virtool owns
 account state and authorization; see [betterAuth.ts](src/server/auth/betterAuth.ts).
 
-Use [streamStorageObject](src/server/http.ts) to stream stored files or redirect
-to a presigned URL according to deployment configuration. Use the display name
-for `Content-Disposition`. Direct upload reservations and finalization share
-[src/server/uploads/service.ts](src/server/uploads/service.ts); file bytes go
-to Azure Blob storage. See the [upload API guide](../site/src/content/manual/api/uploads.mdx)
-for the protocol.
+Better Auth is mounted at `/api/auth/$` and composed in
+`@server/auth/betterAuth`. It authenticates interactive users; Virtool still
+owns account state, API keys, and authorization. Its raw handler is outside the
+server-function authentication and CSRF middleware, so Better Auth performs its
+own origin check against `VT_PUBLIC_ORIGIN`.
+
+Virtool rejects inactive and pending users with the same 401 as bad credentials.
+A user with `force_reset` receives a session that resolves to a
+`password_reset` principal, which can only inspect or end its session and
+replace the password. Virtool signs in by handle; email sign-in is off because
+`users.email` isn't globally unique.
+
+Better Auth's `auth_*` tables use integer identity keys so `users.id` remains
+compatible with existing foreign keys. `auth_sessions` is the target browser
+session store. The legacy `sessions` table remains available to unmigrated users
+during email remediation, but Better Auth wins when both credentials are
+present. Purpose-bound setup sessions remain separate from both.
+
+Uploads and downloads must stream. Resolve a requested file to a database row
+or explicit whitelist first, then use that row's `storage_key`; never construct
+a key from URL parameters. Use the row's display name for
+`Content-Disposition`.
+
+Uploads use a direct Azure Block Blob protocol. The browser adapters and public
+REST routes share the reservation and finalization service in
+`@server/uploads/service`; file bytes never pass through the web server.
+
+API clients reserve an upload, transfer and commit its blocks using the returned
+write-only SAS, then finalize it. See the [upload API guide on the Virtool
+website](../site/src/content/manual/api/uploads.mdx) for request shapes and the
+complete protocol.
+
+The former `POST /uploads` raw-body endpoint has been removed. This is an
+intentional breaking change: there is no proxied upload or supported legacy
+size limit.
+
+When direct uploads are disabled or the storage backend cannot issue an upload
+SAS, initialization returns `503` instead of falling back.
+
+Both browser and API uploads enforce `settings.max_upload_size` through
+`initializeUpload`. A valid declared size above the configured limit returns `413`
+before a reservation or SAS is created. The limit is read on every initialization,
+so changes apply to the next upload without a restart. `getUploadPolicyFn` exposes
+the limit to authenticated users for client validation.
+
+The setting and declared sizes are capped at the application ceiling of
+120,000,000,000 bytes (120 GB), independent of the storage backend.
+
+### The setup boundary
+
+Some accounts are neither anonymous nor fully authenticated: an
+administrator-created account that has not been claimed, an active legacy
+account with no usable unique email, and a user under a `required` MFA policy
+who has not enrolled. Each holds a **restricted setup credential** that
+completes exactly one named transition and reaches nothing else.
+
+Login checks an unmigrated legacy identity before Better Auth. During the
+compatibility window, a matching legacy password mints a short-lived legacy
+application or forced-reset session so incomplete users are not locked out
+before the remediation surface ships. Migrated identities continue through
+Better Auth. A two-factor challenge keeps the login wall open for an authenticator
+or recovery code; only successful verification establishes a session and checks
+whether a password reset is required. Unknown, ineligible, and wrong-password attempts keep the same
+generic response and constant-cost behavior. The final cutover replaces this
+temporary branch with the restricted `email_remediation` session only after
+its setup endpoints and wall are available.
+
+The credential is its own cookie pair, `setup_session_id` and
+`setup_session_token`, deliberately not the session pair. `@virtool/data` owns
+the rows and the purposes; this app owns the transport and the boundary.
+
+- `@server/auth/restricted` is the **one** authority for what a restricted
+  caller is. `resolveRestrictedSetup` turns the cookies into a credential
+  carrying a user id, a non-secret session id, one purpose and an expiry—
+  no roles, no permissions, no API-key cap. A second reader would be a second
+  chance to widen it.
+- The **global authentication middleware** enforces the restriction, before
+  any policy runs. An application session wins outright; only then is the
+  restricted credential considered, and a restricted caller is refused
+  anything absent from `@server/auth/setupExceptions` with a 403
+  `SetupRequiredError` naming the purpose. That error crosses the boundary
+  through `serverErrorSerializationAdapter`, and is what tells the router
+  which setup surface the caller belongs on—it carries no token and no
+  authorization data.
+- `setupOnly(purpose)` is the other half. The middleware decides whether a
+  restricted caller may reach a function at all; the policy decides whether
+  the purpose they hold is the one it completes, and refuses an ordinary
+  authenticated caller too.
+- A function listed in `setupExceptions` must declare `setupOnly()` and vice
+  versa. `authorization.test.ts` pins both directions, and separately proves
+  every ordinary server function refuses a restricted principal on its own.
+
+`setupExceptions` is currently empty: the setup surfaces themselves belong to
+the invitation, recovery and required-MFA work, so a restricted principal
+reaches nothing yet.
+
+Raw routes reject restricted principals and always will:
+`requireAuthenticatedRequest` reads the session cookies or an `Authorization`
+header and never the setup pair, so SSE, uploads, downloads and streamed files
+answer a restricted holder the same 401 they answer anyone else. API-key Basic
+authentication is untouched—a restricted credential can never mint, accept
+or inherit a key, and `verifyApiKey` refuses a key whose owner has not
+completed setup.
+
+`logout` is the abandon path. It deletes the restricted session and clears its
+cookies alongside the application pair, so there is one way to end a browser's
+authority rather than one per kind.
+
+### Server push
+
+Server-pushed cache invalidations arrive through the authenticated `/events`
+SSE stream. Events are published as `{ domain, resource_id, operation }` on the
+Postgres `client_events` channel; the route converts each event to the id-only
+`{ domain, operation, id }` wire shape. The client then refetches through the
+normal API so authorization remains at the request boundary.
+
+Adding a domain requires all three of `SseDomainSchema`, `SseMessageSchema`,
+and `reactQueryHandler`'s `domains` record. A frame that fails validation—an
+unknown domain, a bad operation, a wrong id type—is contract drift and is
+reported to Sentry.
+
+The handshake uses `requireAuthenticatedRequest`. While connected, the server
+rechecks the session on each keepalive interval and closes a revoked stream.
+Because an `EventSource` error exposes no HTTP status, the client probes
+`HEAD /events`: only a 401 ends the session; other failures reconnect with
+backoff. A reconnect invalidates active queries to recover events missed while
+the stream was down.
+
+Most frames invalidate the narrowest matching React Query key. `jobs` and
+`tasks` update frames instead go through `createJobRefreshQueue` and
+`createTaskRefreshQueue`, which deduplicate ids, batch reads, and serialize
+waves so an older response cannot overwrite newer progress. Keep the
+active-observer filtering and do not restore per-frame `detail(id)` refetches.
+The jobs queue also invalidates job lists because progress changes their state,
+ordering, and counts; tasks have no collection query to invalidate.
+
+| File | Responsibility |
+| --- | --- |
+| `packages/contracts/src/sse.ts` | Domain and per-domain message schemas |
+| `packages/data/src/events/` | Postgres channel contract and publisher |
+| `src/server/events/` | Listener, wire-shape conversion, and session revocation |
+| `src/routes/events.ts` | Authenticated SSE route, keepalive, and framing |
+| `src/app/sse/` | Connection lifecycle, validation, and query routing |
+| `src/jobs/refresh.ts` | Batched job refresh queue |
+| `src/tasks/refresh.ts` | Batched task refresh queue |
 
 ## Testing
 

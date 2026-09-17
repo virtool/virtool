@@ -3,18 +3,9 @@ import { z } from "zod";
 import { defineTask } from "../framework/define";
 import type { TaskContext } from "./registry";
 
-/**
- * `cleanup_sessions` carries nothing.
- */
 const payload = z.object({});
 
-/**
- * Delete expired session rows.
- *
- * It is idempotent as a reclaim requires: a re-run deletes whatever is expired
- * when it runs, which is nothing if the first attempt got there.
- *
- */
+/** Delete expired Better Auth and retained legacy application sessions. */
 export const cleanupSessionsTask = defineTask<typeof payload, TaskContext>({
 	type: "cleanup_sessions",
 	payload,

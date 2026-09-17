@@ -1,4 +1,5 @@
 import type { Db } from "@virtool/data/db/pg";
+import { authSessions } from "@virtool/data/db/schema/auth";
 import { groups, userGroups } from "@virtool/data/db/schema/groups";
 import {
 	HMM_STATUS_ID,
@@ -6,7 +7,6 @@ import {
 	hmms,
 	legacyHmmStatus,
 } from "@virtool/data/db/schema/hmms";
-import { sessions } from "@virtool/data/db/schema/sessions";
 import { tasks } from "@virtool/data/db/schema/tasks";
 import { users } from "@virtool/data/db/schema/users";
 import {
@@ -40,6 +40,7 @@ vi.mock("@tanstack/react-start/server", () => ({
 vi.mock("@sentry/tanstackstart-react", () => ({
 	captureException: vi.fn(),
 	setUser: vi.fn(),
+	setContext: vi.fn(),
 }));
 
 let db: Db;
@@ -73,7 +74,7 @@ afterAll(async () => {
 beforeEach(async () => {
 	vi.clearAllMocks();
 	await db.delete(userGroups);
-	await db.delete(sessions);
+	await db.delete(authSessions);
 	await db.delete(users);
 	await db.delete(groups);
 	await db.delete(legacyHmmStatus);

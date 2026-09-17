@@ -120,12 +120,12 @@ describe("PERIODIC_TASKS", () => {
 				]),
 			),
 		).toEqual({
+			cleanup_sessions: 3600,
 			sweep_blast: 30,
 			deliver_email: 30,
 			refresh_hmms: 600,
 			timeout_jobs: 600,
 			evict_caches_lru: 3600,
-			cleanup_sessions: 3600,
 			cleanup_setup_state: 3600,
 			reap_orphaned_uploads: 86400,
 		});

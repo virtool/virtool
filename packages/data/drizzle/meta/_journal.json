@@ -211,6 +211,13 @@
       "when": 1789160323472,
       "tag": "0029_audit_legacy_identities",
       "breakpoints": true
+    },
+    {
+      "idx": 30,
+      "version": "7",
+      "when": 1789600234309,
+      "tag": "0030_sparkling_silverclaw",
+      "breakpoints": true
     }
   ]
 }

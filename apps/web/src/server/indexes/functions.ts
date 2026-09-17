@@ -121,12 +121,12 @@ export const createIndexFn = createServerFn({ method: "POST" })
 	.validator(referenceIdSchema)
 	.handler(async ({ context, data }) => {
 		try {
-			await authorizeBuild(data.referenceId, context.session.userId);
+			await authorizeBuild(data.referenceId, context.principal.userId);
 
 			const index = await createIndex(
 				db,
 				data.referenceId,
-				context.session.userId,
+				context.principal.userId,
 			);
 
 			// The build changes what the reference's index list holds for every

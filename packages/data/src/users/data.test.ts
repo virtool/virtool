@@ -2,9 +2,10 @@ import { eq } from "drizzle-orm";
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
 
 import { hashPassword, verifyPassword } from "../auth/password";
+import { createAuthenticatedSession } from "../auth/session";
 import { seedSession, seedUser } from "../auth/test/fixtures";
-import { hashToken } from "../auth/tokens";
 import type { Db } from "../db/pg";
+import { authSessions } from "../db/schema/auth";
 import { groups, userGroups } from "../db/schema/groups";
 import { sessions } from "../db/schema/sessions";
 import { users } from "../db/schema/users";
@@ -123,11 +124,17 @@ describe("getAccount", () => {
 });
 
 async function countSessions(userId: number): Promise<number> {
-	const rows = await db
-		.select({ sessionId: sessions.sessionId })
-		.from(sessions)
-		.where(eq(sessions.userId, userId));
-	return rows.length;
+	const [betterAuth, legacy] = await Promise.all([
+		db
+			.select({ sessionId: authSessions.id })
+			.from(authSessions)
+			.where(eq(authSessions.userId, userId)),
+		db
+			.select({ sessionId: sessions.id })
+			.from(sessions)
+			.where(eq(sessions.userId, userId)),
+	]);
+	return betterAuth.length + legacy.length;
 }
 
 async function readUser(userId: number) {
@@ -140,6 +147,7 @@ describe("updateUser", () => {
 		const userId = await seedUser(db);
 		await seedSession(db, userId);
 		await seedSession(db, userId);
+		await createAuthenticatedSession(db, { userId, ip: "127.0.0.1" });
 
 		await updateUser(db, userId, { active: false });
 
@@ -150,6 +158,7 @@ describe("updateUser", () => {
 	it("deletes the user's sessions when their password changes", async () => {
 		const userId = await seedUser(db);
 		await seedSession(db, userId);
+		await createAuthenticatedSession(db, { userId, ip: "127.0.0.1" });
 		const before = await readUser(userId);
 
 		await updateUser(db, userId, { password: "new-password-1234" });
@@ -167,6 +176,7 @@ describe("updateUser", () => {
 	it("deletes the user's sessions when forceReset is set", async () => {
 		const userId = await seedUser(db);
 		await seedSession(db, userId);
+		await createAuthenticatedSession(db, { userId, ip: "127.0.0.1" });
 
 		await updateUser(db, userId, { forceReset: true });
 
@@ -177,10 +187,11 @@ describe("updateUser", () => {
 	it("leaves sessions alone when only the handle changes", async () => {
 		const userId = await seedUser(db);
 		await seedSession(db, userId);
+		await createAuthenticatedSession(db, { userId, ip: "127.0.0.1" });
 
 		await updateUser(db, userId, { handle: "renamed" });
 
-		expect(await countSessions(userId)).toBe(1);
+		expect(await countSessions(userId)).toBe(2);
 		expect((await readUser(userId))?.handle).toBe("renamed");
 	});
 
@@ -352,7 +363,6 @@ describe("changePassword", () => {
 			userId,
 			oldPassword: "old_password_123",
 			password: "new_password_123",
-			ip: "127.0.0.1",
 		});
 
 		const after = await readUser(userId);
@@ -366,51 +376,28 @@ describe("changePassword", () => {
 		expect(account.id).toBe(userId);
 	});
 
-	it("revokes every existing session and returns the replacement", async () => {
+	it("revokes every existing Better Auth and legacy session", async () => {
 		const userId = await seedUserWithPassword("old_password_123");
-		const stale = await seedSession(db, userId);
 		await seedSession(db, userId);
+		await seedSession(db, userId);
+		await createAuthenticatedSession(db, { userId, ip: "127.0.0.1" });
 
-		const { sessionId, token } = await changePassword(db, {
+		const { handle } = await changePassword(db, {
 			userId,
 			oldPassword: "old_password_123",
 			password: "new_password_123",
-			ip: "10.0.0.1",
 		});
 
 		const rows = await db
 			.select()
-			.from(sessions)
-			.where(eq(sessions.userId, userId));
+			.from(authSessions)
+			.where(eq(authSessions.userId, userId));
 
-		expect(rows).toHaveLength(1);
-		expect(rows[0]?.sessionId).toBe(sessionId);
-		expect(rows[0]?.sessionId).not.toBe(stale.sessionId);
-		expect(rows[0]?.tokenHash).toBe(hashToken(token));
-		expect(rows[0]?.sessionType).toBe("authenticated");
-		expect(rows[0]?.ip).toBe("10.0.0.1");
-	});
-
-	// `remember` is false on the replacement, so it gets the 60-minute lifetime
-	// even if the session it replaces was a 30-day one.
-	it("never remembers the replacement session", async () => {
-		const userId = await seedUserWithPassword("old_password_123");
-
-		await changePassword(db, {
-			userId,
-			oldPassword: "old_password_123",
-			password: "new_password_123",
-			ip: "127.0.0.1",
-		});
-
-		const [row] = await db
-			.select()
-			.from(sessions)
-			.where(eq(sessions.userId, userId));
-
-		const lifetime =
-			(row?.expiresAt.getTime() ?? 0) - (row?.createdAt.getTime() ?? 0);
-		expect(lifetime).toBe(60 * 60 * 1000);
+		expect(rows).toHaveLength(0);
+		expect(
+			await db.select().from(sessions).where(eq(sessions.userId, userId)),
+		).toHaveLength(0);
+		expect(handle).toBe("alice");
 	});
 
 	it("rejects a wrong old password and leaves everything alone", async () => {
@@ -422,7 +409,6 @@ describe("changePassword", () => {
 				userId,
 				oldPassword: "wrong_password_123",
 				password: "new_password_123",
-				ip: "127.0.0.1",
 			}),
 		).rejects.toBeInstanceOf(InvalidPasswordError);
 
@@ -441,7 +427,6 @@ describe("changePassword", () => {
 				userId: 404,
 				oldPassword: "old_password_123",
 				password: "new_password_123",
-				ip: "127.0.0.1",
 			}),
 		).rejects.toBeInstanceOf(UserNotFoundError);
 	});
@@ -460,7 +445,6 @@ describe("changePassword", () => {
 			userId,
 			oldPassword: "old_password_123",
 			password: "new_password_123",
-			ip: "127.0.0.1",
 		});
 
 		await db
@@ -786,7 +770,6 @@ describe("changePassword on a pending account", () => {
 				userId: user.id,
 				oldPassword: "anything",
 				password: "a-real-password",
-				ip: "127.0.0.1",
 			}),
 		).rejects.toBeInstanceOf(InvalidPasswordError);
 	});

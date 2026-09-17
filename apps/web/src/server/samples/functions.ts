@@ -159,7 +159,7 @@ export const findSamplesFn = createServerFn({ method: "POST" })
 	.middleware([authenticated()])
 	.validator(findSamplesSchema)
 	.handler(async ({ context, data }) => {
-		const actor = await resolveSampleActor(db, context.session.userId);
+		const actor = await resolveSampleActor(db, context.principal.userId);
 
 		return findSamples(
 			db,
@@ -187,11 +187,11 @@ export const findRecentlyViewedSamplesFn = createServerFn({ method: "GET" })
 	.middleware([authenticated()])
 	.validator(z.object({ perPage: perPageSchema }))
 	.handler(async ({ context, data }) => {
-		const actor = await resolveSampleActor(db, context.session.userId);
+		const actor = await resolveSampleActor(db, context.principal.userId);
 
 		return findRecentlyViewedSamples(
 			db,
-			context.session.userId,
+			context.principal.userId,
 			data.perPage,
 			actor,
 		);
@@ -204,8 +204,8 @@ export const recordSampleViewFn = createServerFn({ method: "POST" })
 		try {
 			// A view is only recorded for a sample the caller may read, so a probe
 			// of an id they cannot see leaves no trace.
-			await authorizeSample(data.sampleId, context.session.userId, "read");
-			await recordSampleView(db, context.session.userId, data.sampleId);
+			await authorizeSample(data.sampleId, context.principal.userId, "read");
+			await recordSampleView(db, context.principal.userId, data.sampleId);
 			return null;
 		} catch (err) {
 			return rethrowAsHttp(err);
@@ -215,7 +215,7 @@ export const recordSampleViewFn = createServerFn({ method: "POST" })
 export const listSampleGroupsFn = createServerFn({ method: "GET" })
 	.middleware([authenticated()])
 	.handler(async ({ context }) => {
-		const actor = await resolveSampleActor(db, context.session.userId);
+		const actor = await resolveSampleActor(db, context.principal.userId);
 		return listSampleGroups(db, actor);
 	});
 
@@ -224,7 +224,7 @@ export const getSampleFn = createServerFn({ method: "GET" })
 	.validator(sampleIdSchema)
 	.handler(async ({ context, data }) => {
 		try {
-			await authorizeSample(data.sampleId, context.session.userId, "read");
+			await authorizeSample(data.sampleId, context.principal.userId, "read");
 			return await getSample(db, data.sampleId);
 		} catch (err) {
 			return rethrowAsHttp(err);
@@ -247,7 +247,7 @@ export const createSampleFn = createServerFn({ method: "POST" })
 				subtractions: data.subtractions,
 				labels: data.labels,
 				files: data.files,
-				userId: context.session.userId,
+				userId: context.principal.userId,
 			});
 			setResponseStatus(201);
 			return sample;
@@ -262,7 +262,7 @@ export const updateSampleFn = createServerFn({ method: "POST" })
 	.handler(async ({ context, data }) => {
 		const { sampleId, ...values } = data;
 		try {
-			await authorizeSample(sampleId, context.session.userId, "write");
+			await authorizeSample(sampleId, context.principal.userId, "write");
 			return await updateSample(db, sampleId, values);
 		} catch (err) {
 			return rethrowAsHttp(err);
@@ -274,7 +274,7 @@ export const deleteSampleFn = createServerFn({ method: "POST" })
 	.validator(sampleIdSchema)
 	.handler(async ({ context, data }) => {
 		try {
-			await authorizeSample(data.sampleId, context.session.userId, "write");
+			await authorizeSample(data.sampleId, context.principal.userId, "write");
 
 			const sample = await getSample(db, data.sampleId);
 
@@ -319,7 +319,7 @@ export const updateSampleRightsFn = createServerFn({ method: "POST" })
 			throw new ClientError("Sample not found.", 404);
 		}
 
-		const actor = await resolveSampleActor(db, context.session.userId);
+		const actor = await resolveSampleActor(db, context.principal.userId);
 
 		// Only the owner or a full administrator may change a sample's rights.
 		if (!actor.isAdmin && actor.userId !== ownerId) {

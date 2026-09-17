@@ -8,6 +8,7 @@ import { type Mock, vi } from "vitest";
  */
 export const authServerFnMocks = {
 	loginFn: vi.fn(),
+	verifyTwoFactorFn: vi.fn(),
 	logoutFn: vi.fn(),
 	resetPasswordFn: vi.fn(),
 	createFirstUserFn: vi.fn(),

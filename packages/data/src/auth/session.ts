@@ -1,55 +1,36 @@
-import { randomBytes } from "node:crypto";
-
 import { and, eq, sql } from "drizzle-orm";
 
 import type { DbOrTx } from "../db/pg";
 import { takeFirstOrThrow } from "../db/rows";
+import { authSessions } from "../db/schema/auth";
 import { type SessionRow, sessions } from "../db/schema/sessions";
 import { nowUtc } from "../db/time";
 import { hashToken, newSessionId, newSessionToken } from "./tokens";
 
-/**
- * How long an authenticated session lasts when the user ticked "remember me".
- */
-const SESSION_LIFETIME_REMEMBER_MS = 30 * 24 * 60 * 60 * 1000;
-
-/**
- * How long an authenticated session lasts when the user did not.
- */
-const SESSION_LIFETIME_NO_REMEMBER_MS = 60 * 60 * 1000;
-
-/**
- * How long a forced-reset session lasts.
- */
+const SESSION_LIFETIME_MS = 60 * 60 * 1000;
 const RESET_LIFETIME_MS = 10 * 60 * 1000;
 
-/** Inputs to mint an authenticated session row. */
+/** Inputs to mint a temporary legacy authenticated session. */
 export type CreateAuthenticatedSessionInput = {
 	userId: number;
 	ip: string;
-	remember: boolean;
 };
 
-/** Output: the cookie values the caller must set, plus the inserted row. */
+/** A temporary legacy authenticated session and its plaintext cookie values. */
 export type CreateAuthenticatedSessionResult = {
 	sessionId: string;
 	token: string;
 	row: SessionRow;
 };
 
+/** Mint a one-hour legacy session during the staged authentication cutover. */
 export async function createAuthenticatedSession(
 	db: DbOrTx,
-	{ userId, ip, remember }: CreateAuthenticatedSessionInput,
+	{ userId, ip }: CreateAuthenticatedSessionInput,
 ): Promise<CreateAuthenticatedSessionResult> {
 	const sessionId = newSessionId();
 	const token = newSessionToken();
-	const tokenHash = hashToken(token);
 	const now = new Date();
-	const lifetime = remember
-		? SESSION_LIFETIME_REMEMBER_MS
-		: SESSION_LIFETIME_NO_REMEMBER_MS;
-	const expiresAt = new Date(now.getTime() + lifetime);
-
 	const row = takeFirstOrThrow(
 		await db
 			.insert(sessions)
@@ -58,8 +39,8 @@ export async function createAuthenticatedSession(
 				userId,
 				ip,
 				createdAt: now,
-				expiresAt,
-				tokenHash,
+				expiresAt: new Date(now.getTime() + SESSION_LIFETIME_MS),
+				tokenHash: hashToken(token),
 				sessionType: "authenticated",
 			})
 			.returning(),
@@ -68,29 +49,27 @@ export async function createAuthenticatedSession(
 	return { sessionId, token, row };
 }
 
-/** Inputs to mint a forced-reset session row. */
+/** Inputs to mint a temporary legacy forced-reset session. */
 export type CreateResetSessionInput = {
 	userId: number;
 	ip: string;
-	remember: boolean;
 };
 
-/** Output: the session_id cookie value, the reset_code returned to the client, and the row. */
+/** A temporary legacy reset session and its plaintext cookie token. */
 export type CreateResetSessionResult = {
 	sessionId: string;
-	resetCode: string;
+	token: string;
 	row: SessionRow;
 };
 
+/** Mint a legacy reset session during the staged authentication cutover. */
 export async function createResetSession(
 	db: DbOrTx,
-	{ userId, ip, remember }: CreateResetSessionInput,
+	{ userId, ip }: CreateResetSessionInput,
 ): Promise<CreateResetSessionResult> {
 	const sessionId = newSessionId();
-	const resetCode = randomBytes(32).toString("hex");
+	const token = newSessionToken();
 	const now = new Date();
-	const expiresAt = new Date(now.getTime() + RESET_LIFETIME_MS);
-
 	const row = takeFirstOrThrow(
 		await db
 			.insert(sessions)
@@ -99,17 +78,17 @@ export async function createResetSession(
 				userId,
 				ip,
 				createdAt: now,
-				expiresAt,
-				resetCode,
-				resetRemember: remember,
+				expiresAt: new Date(now.getTime() + RESET_LIFETIME_MS),
+				tokenHash: hashToken(token),
 				sessionType: "reset",
 			})
 			.returning(),
 	);
 
-	return { sessionId, resetCode, row };
+	return { sessionId, token, row };
 }
 
+/** Invalidate one retained legacy browser session. */
 export async function invalidateSession(
 	db: DbOrTx,
 	sessionId: string,
@@ -117,30 +96,7 @@ export async function invalidateSession(
 	await db.delete(sessions).where(eq(sessions.sessionId, sessionId));
 }
 
-/**
- * Delete a reset session, reporting whether this call is the one that consumed
- * it. False means it was already spent (or never existed).
- *
- * A reset code is single-use, but nothing between reading it and writing the
- * new password holds a lock — and the bcrypt hash in that gap is slow. Called
- * inside the reset transaction, this is the point two concurrent resets for the
- * same code serialize on: the second blocks on the row lock, then finds nothing
- * to delete and rolls back rather than clobbering the session the first minted.
- */
-export async function consumeResetSession(
-	db: DbOrTx,
-	sessionId: string,
-): Promise<boolean> {
-	const rows = await db
-		.delete(sessions)
-		.where(
-			and(eq(sessions.sessionId, sessionId), eq(sessions.sessionType, "reset")),
-		)
-		.returning({ sessionId: sessions.sessionId });
-
-	return rows.length > 0;
-}
-
+/** Invalidate every retained legacy browser session for a user. */
 export async function invalidateUserSessions(
 	db: DbOrTx,
 	userId: number,
@@ -148,54 +104,41 @@ export async function invalidateUserSessions(
 	await db.delete(sessions).where(eq(sessions.userId, userId));
 }
 
-/**
- * How many expired sessions one statement removes.
- *
- * Low thousands, so a single pass is short enough that nothing else waiting on
- * a `sessions` row waits long, and few enough passes are needed that the loop
- * is not itself the cost. The first production run clears years of accumulated
- * rows, which is the run this bound exists for.
- */
+/** Atomically consume a retained legacy forced-reset session. */
+export async function consumeResetSession(
+	db: DbOrTx,
+	sessionId: string,
+): Promise<boolean> {
+	const deleted = await db
+		.delete(sessions)
+		.where(
+			and(eq(sessions.sessionId, sessionId), eq(sessions.sessionType, "reset")),
+		)
+		.returning({ id: sessions.id });
+	return deleted.length === 1;
+}
+
+/** Rows removed per statement so the sweep does not hold every row lock at once. */
 const SESSION_CLEANUP_BATCH_SIZE = 2_000;
 
-/** What {@link deleteExpiredSessions} accepts. */
+/** Options for deleting expired application sessions. */
 export type DeleteExpiredSessionsOptions = {
-	/** Rows removed per statement. Defaults to {@link SESSION_CLEANUP_BATCH_SIZE}. */
+	/** Rows removed per statement. */
 	batchSize?: number;
-	/** Aborts the loop between batches. Committed batches stand. */
+	/** Aborts the loop between batches. */
 	signal?: AbortSignal;
 };
 
 /**
- * Delete every session row whose `expires_at` has passed, and report how many
- * went.
+ * Delete every expired Better Auth and retained legacy session.
  *
- * **The delete is batched, and each batch is its own transaction.** A single
- * statement covering years of accumulated rows would hold every one of their
- * locks and pin `xmin` for its whole duration, stalling autovacuum across the
- * database rather than just this table. Nothing here opens a transaction, so a
- * `db` handle runs each statement autocommitted; passing a transaction instead
- * folds the whole loop into it and gives back exactly the long-running delete
- * being avoided.
+ * Each batch autocommits when `db` is a database handle, keeping the delete
+ * from holding every expired row lock until the full sweep finishes. Postgres
+ * supplies the cutoff because `expires_at` is a naive UTC timestamp and
+ * binding a JavaScript `Date` would cast it through the connection time zone.
  *
- * **The cutoff is Postgres's clock, never a `Date` bound from here.**
- * `expires_at` is `timestamp without time zone` holding naive UTC, and a
- * JavaScript `Date` bound against it casts through the session `TimeZone` —
- * unset in this pool, so the offset is silent and hour-scale. Deleting a live
- * session logs a user out early, which is the only harm this can do.
- *
- * **The expiry test is repeated on the outer `delete`**, where it looks
- * redundant against the subquery that already applied it. Under Read Committed
- * a row updated by a transaction that commits mid-statement is re-checked
- * against the outer `where` alone — the subquery is not re-run — so a predicate
- * naming only the id passes on a row whose `expires_at` has since moved
- * forward, and a session the sliding refresh just extended is deleted out from
- * under its user.
- *
- * The loop stops on a batch shorter than the limit. A concurrent logout that
- * removes an expired row between the select and the delete, or a refresh the
- * re-check then spares, can end a run one batch early; the next run takes what
- * is left, and no run deletes a row it should not have.
+ * The outer expiry check protects a session that Better Auth refreshes after
+ * the subquery selects it but before the delete acquires its row lock.
  */
 export async function deleteExpiredSessions(
 	db: DbOrTx,
@@ -216,6 +159,27 @@ export async function deleteExpiredSessions(
 		signal?.throwIfAborted();
 
 		const deleted = await db
+			.delete(authSessions)
+			.where(
+				sql`${authSessions.expiresAt} < ${nowUtc()} and ${authSessions.id} in (
+					select id from ${authSessions}
+					where expires_at < ${nowUtc()}
+					limit ${batchSize}
+				)`,
+			)
+			.returning({ id: authSessions.id });
+
+		total += deleted.length;
+
+		if (deleted.length < batchSize) {
+			break;
+		}
+	}
+
+	for (;;) {
+		signal?.throwIfAborted();
+
+		const deleted = await db
 			.delete(sessions)
 			.where(
 				sql`${sessions.expiresAt} < ${nowUtc()} and ${sessions.id} in (
@@ -227,7 +191,6 @@ export async function deleteExpiredSessions(
 			.returning({ id: sessions.id });
 
 		total += deleted.length;
-
 		if (deleted.length < batchSize) {
 			return total;
 		}

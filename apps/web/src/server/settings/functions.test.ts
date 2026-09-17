@@ -5,8 +5,8 @@ import {
 	type Keyring,
 } from "@virtool/data/crypto/keyring";
 import type { Db } from "@virtool/data/db/pg";
+import { authSessions } from "@virtool/data/db/schema/auth";
 import { cacheUsageSnapshots } from "@virtool/data/db/schema/cacheUsageSnapshots";
-import { sessions } from "@virtool/data/db/schema/sessions";
 import { settings } from "@virtool/data/db/schema/settings";
 import { users } from "@virtool/data/db/schema/users";
 import {
@@ -38,6 +38,7 @@ vi.mock("@tanstack/react-start/server", () => ({
 vi.mock("@sentry/tanstackstart-react", () => ({
 	captureException: vi.fn(),
 	setUser: vi.fn(),
+	setContext: vi.fn(),
 }));
 
 function key(): string {
@@ -99,7 +100,7 @@ beforeEach(async () => {
 	vi.clearAllMocks();
 	keyring = createKeyring(activeKey, undefined);
 	await db.delete(cacheUsageSnapshots);
-	await db.delete(sessions);
+	await db.delete(authSessions);
 	await db.delete(settings);
 	await db.delete(users);
 	getRequest.mockReturnValue(
