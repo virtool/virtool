@@ -5,7 +5,7 @@ import type { TaskContext } from "./registry";
 
 const payload = z.object({});
 
-/** Delete expired Better Auth application sessions. */
+/** Delete expired Better Auth and retained legacy application sessions. */
 export const cleanupSessionsTask = defineTask<typeof payload, TaskContext>({
 	type: "cleanup_sessions",
 	payload,

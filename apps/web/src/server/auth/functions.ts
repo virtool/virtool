@@ -10,10 +10,11 @@ import { db } from "../composition";
 import { ClientError } from "../errors";
 import { realCookies } from "./cookies";
 import {
-	beginLegacyEmailRemediation,
 	createFirstUser,
+	establishLegacySession,
 	FirstUserExistsError,
 	InvalidCredentialsError,
+	loginLegacyIdentity,
 	logout,
 	PasswordReuseError,
 	resetPassword,
@@ -21,7 +22,6 @@ import {
 import { checkHandle, checkReservedHandle } from "./handle";
 import { getClientIp } from "./ip";
 import { open, passwordResetOnly } from "./policy";
-import { SetupRequiredError } from "./restricted";
 import { checkConfiguredPasswordLength } from "./service";
 import { signInUsername, signOut } from "./sessionActions";
 
@@ -73,15 +73,14 @@ export const loginFn = createServerFn({ method: "POST" })
 	.validator(loginSchema)
 	.handler(async ({ data }) => {
 		try {
-			if (
-				await beginLegacyEmailRemediation(db, realCookies, {
-					handle: data.handle,
-					password: data.password,
-					ip: getClientIp(),
-				})
-			) {
-				setResponseStatus(403);
-				throw new SetupRequiredError("email_remediation");
+			const legacy = await loginLegacyIdentity(db, realCookies, {
+				handle: data.handle,
+				password: data.password,
+				ip: getClientIp(),
+			});
+			if (legacy) {
+				setResponseStatus(201);
+				return legacy;
 			}
 
 			const result = await signInUsername(data.handle, data.password);
@@ -148,8 +147,8 @@ export const logoutFn = createServerFn({ method: "POST" })
 	});
 
 /**
- * Reset-password server function. The caller has a real Better Auth session,
- * restricted by policy until the required password change is complete.
+ * Reset-password server function. The caller has a Better Auth or retained
+ * legacy reset session restricted until the password change is complete.
  */
 export const resetPasswordFn = createServerFn({ method: "POST" })
 	.middleware([passwordResetOnly()])
@@ -158,12 +157,22 @@ export const resetPasswordFn = createServerFn({ method: "POST" })
 		try {
 			await checkConfiguredPasswordLength(db, data.password);
 
-			const handle = await resetPassword(db, {
+			const result = await resetPassword(db, {
 				userId: context.principal.userId,
 				password: data.password,
+				legacySessionId: realCookies.getSessionId(),
 			});
 
-			await signInUsername(handle, data.password);
+			if (result.migrated) {
+				await signInUsername(result.handle, data.password);
+			} else {
+				await establishLegacySession(
+					db,
+					realCookies,
+					context.principal.userId,
+					getClientIp(),
+				);
+			}
 			setResponseStatus(200);
 			return { login: false as const, reset: false as const };
 		} catch (err) {

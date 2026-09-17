@@ -14,7 +14,8 @@ import {
 
 import { users } from "./users";
 
-type LegacySessionType = "anonymous" | "authenticated" | "reset";
+/** A legacy browser-session row kind retained during the compatibility window. */
+export type LegacySessionType = "anonymous" | "authenticated" | "reset";
 
 /** The retained legacy session table pending a later schema contraction. */
 export const sessions = pgTable(
@@ -48,3 +49,6 @@ export const sessions = pgTable(
 		),
 	],
 );
+
+/** A row from the retained legacy `sessions` table. */
+export type SessionRow = typeof sessions.$inferSelect;

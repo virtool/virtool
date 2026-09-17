@@ -23,7 +23,10 @@ import {
 	updateUser,
 } from "@virtool/data/users/data";
 import { z } from "zod";
+import { realCookies } from "../auth/cookies";
+import { establishLegacySession } from "../auth/core";
 import { checkHandle, checkReservedHandle } from "../auth/handle";
+import { getClientIp } from "../auth/ip";
 import { requireAdminRole } from "../auth/middleware";
 import { adminRole, authenticated } from "../auth/policy";
 import { checkConfiguredPasswordLength } from "../auth/service";
@@ -289,13 +292,22 @@ export const changePasswordFn = createServerFn({ method: "POST" })
 		try {
 			await checkConfiguredPasswordLength(db, data.password);
 
-			const { account, handle } = await changePassword(db, {
+			const { account, handle, migrated } = await changePassword(db, {
 				userId: context.principal.userId,
 				oldPassword: data.oldPassword,
 				password: data.password,
 			});
 
-			await signInUsername(handle, data.password);
+			if (migrated) {
+				await signInUsername(handle, data.password);
+			} else {
+				await establishLegacySession(
+					db,
+					realCookies,
+					context.principal.userId,
+					getClientIp(),
+				);
+			}
 
 			return account;
 		} catch (err) {

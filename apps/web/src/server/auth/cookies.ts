@@ -5,10 +5,10 @@ import {
 	setCookie,
 } from "@tanstack/react-start/server";
 
-/** Obsolete legacy-session cookie name, retained only for logout cleanup. */
+/** Retained legacy-session identifier used during the compatibility window. */
 export const SESSION_ID_COOKIE = "session_id";
 
-/** Obsolete legacy-session token cookie, retained only for logout cleanup. */
+/** Retained legacy-session bearer token used during the compatibility window. */
 export const SESSION_TOKEN_COOKIE = "session_token";
 
 /**
@@ -41,6 +41,7 @@ export const SETUP_SESSION_TOKEN_COOKIE = "setup_session_token";
  * it can be of any use.
  */
 const SETUP_MAX_AGE_SECONDS = 3_600;
+const LEGACY_SESSION_MAX_AGE_SECONDS = 3_600;
 
 type Bool = boolean;
 
@@ -58,8 +59,12 @@ function isSecure(): boolean {
 	return process.env.NODE_ENV === "production";
 }
 
-/** Read/write/clear access to setup cookies and obsolete-session cleanup. */
+/** Read/write/clear access to legacy compatibility and setup cookies. */
 export type CookieAdapter = {
+	getSessionId(): string | undefined;
+	getSessionToken(): string | undefined;
+	setLegacySession(sessionId: string, token: string): void;
+	setLegacyResetSession(sessionId: string, token: string): void;
 	clearLegacySession(): void;
 	getSetupSessionId(): string | undefined;
 	getSetupSessionToken(): string | undefined;
@@ -72,6 +77,34 @@ export type CookieAdapter = {
    recognizes — otherwise the object literal at module scope would pin
    @tanstack/react-start/server in any client-reachable import chain. */
 export const realCookies: CookieAdapter = {
+	getSessionId: createServerOnlyFn(() => getCookie(SESSION_ID_COOKIE)),
+	getSessionToken: createServerOnlyFn(() => getCookie(SESSION_TOKEN_COOKIE)),
+	setLegacySession: createServerOnlyFn((sessionId: string, token: string) => {
+		setCookie(
+			SESSION_ID_COOKIE,
+			sessionId,
+			cookieOptions(isSecure(), LEGACY_SESSION_MAX_AGE_SECONDS),
+		);
+		setCookie(
+			SESSION_TOKEN_COOKIE,
+			token,
+			cookieOptions(isSecure(), LEGACY_SESSION_MAX_AGE_SECONDS),
+		);
+	}),
+	setLegacyResetSession: createServerOnlyFn(
+		(sessionId: string, token: string) => {
+			setCookie(
+				SESSION_ID_COOKIE,
+				sessionId,
+				cookieOptions(isSecure(), LEGACY_SESSION_MAX_AGE_SECONDS),
+			);
+			setCookie(
+				SESSION_TOKEN_COOKIE,
+				token,
+				cookieOptions(isSecure(), LEGACY_SESSION_MAX_AGE_SECONDS),
+			);
+		},
+	),
 	clearLegacySession: createServerOnlyFn(() => {
 		deleteCookie(SESSION_ID_COOKIE, { path: "/" });
 		deleteCookie(SESSION_TOKEN_COOKIE, { path: "/" });

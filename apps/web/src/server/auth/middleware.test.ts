@@ -3,6 +3,7 @@ import {
 	PASSWORD_RESET_REQUIRED_ERROR_NAME,
 	SETUP_REQUIRED_ERROR_NAME,
 } from "@virtool/contracts";
+import { createAuthenticatedSession } from "@virtool/data/auth/session";
 import {
 	seedApiKey,
 	seedSession,
@@ -59,6 +60,7 @@ vi.mock("../composition", () => ({
 const { authenticationExceptions, passwordResetEndpoints } = await import(
 	"./exceptions"
 );
+const { SESSION_ID_COOKIE, SESSION_TOKEN_COOKIE } = await import("./cookies");
 const {
 	createAuthenticationMiddleware,
 	ForbiddenError,
@@ -150,6 +152,32 @@ describe("authentication exceptions", () => {
 });
 
 describe("browser boundary", () => {
+	it("resolves a retained legacy browser principal", async () => {
+		const userId = await seedUser(db);
+		const session = await createAuthenticatedSession(db, {
+			userId,
+			ip: "127.0.0.1",
+		});
+		getRequest.mockReturnValue(
+			requestFor(
+				`${SESSION_ID_COOKIE}=${session.sessionId}; ${SESSION_TOKEN_COOKIE}=${session.token}`,
+			),
+		);
+		const next = vi.fn().mockResolvedValue("result");
+
+		await serverHandler()({ next, serverFnMeta: { id: "ordinary" } });
+
+		expect(next).toHaveBeenCalledWith({
+			context: {
+				principal: {
+					kind: "browser",
+					sessionId: session.row.id,
+					userId,
+				},
+			},
+		});
+	});
+
 	it("resolves one Better Auth browser principal", async () => {
 		const userId = await seedUser(db);
 		const session = await seedSession(db, userId);
@@ -170,6 +198,33 @@ describe("browser boundary", () => {
 		expect(setContext).toHaveBeenCalledWith("credential", {
 			kind: "browser",
 			id: session.sessionId,
+		});
+	});
+
+	it("prefers Better Auth when both session families are present", async () => {
+		const userId = await seedUser(db);
+		const betterAuth = await seedSession(db, userId);
+		const legacy = await createAuthenticatedSession(db, {
+			userId,
+			ip: "127.0.0.1",
+		});
+		getRequest.mockReturnValue(
+			requestFor(
+				`${sessionCookie(betterAuth)}; ${SESSION_ID_COOKIE}=${legacy.sessionId}; ${SESSION_TOKEN_COOKIE}=${legacy.token}`,
+			),
+		);
+		const next = vi.fn().mockResolvedValue("result");
+
+		await serverHandler()({ next, serverFnMeta: { id: "ordinary" } });
+
+		expect(next).toHaveBeenCalledWith({
+			context: {
+				principal: {
+					kind: "browser",
+					sessionId: betterAuth.sessionId,
+					userId,
+				},
+			},
 		});
 	});
 
@@ -242,6 +297,23 @@ describe("setup boundary", () => {
 });
 
 describe("raw request boundary", () => {
+	it("accepts retained legacy sessions", async () => {
+		const userId = await seedUser(db);
+		const session = await createAuthenticatedSession(db, {
+			userId,
+			ip: "127.0.0.1",
+		});
+		const cookie = `${SESSION_ID_COOKIE}=${session.sessionId}; ${SESSION_TOKEN_COOKIE}=${session.token}`;
+
+		await expect(
+			requireAuthenticatedRequest(requestFor(cookie)),
+		).resolves.toEqual({
+			kind: "browser",
+			sessionId: session.row.id,
+			userId,
+		});
+	});
+
 	it("accepts browser sessions and API keys as distinct principals", async () => {
 		const userId = await seedUser(db);
 		const session = await seedSession(db, userId);

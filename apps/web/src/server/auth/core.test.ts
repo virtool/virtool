@@ -6,6 +6,7 @@ import {
 } from "@virtool/data/auth/test/fixtures";
 import type { Db } from "@virtool/data/db/pg";
 import { authAccounts, authSessions } from "@virtool/data/db/schema/auth";
+import { sessions } from "@virtool/data/db/schema/sessions";
 import { setupSessions } from "@virtool/data/db/schema/setup";
 import { users } from "@virtool/data/db/schema/users";
 import {
@@ -24,10 +25,10 @@ import {
 } from "vitest";
 import type { CookieAdapter } from "./cookies";
 import {
-	beginLegacyEmailRemediation,
 	createFirstUser,
 	FirstUserExistsError,
 	InvalidCredentialsError,
+	loginLegacyIdentity,
 	logout,
 	PasswordReuseError,
 	resetPassword,
@@ -53,8 +54,12 @@ function fakeCookies(setupSessionId?: string): CookieAdapter {
 	return {
 		clearLegacySession: vi.fn(),
 		clearSetup: vi.fn(),
+		getSessionId: vi.fn(),
+		getSessionToken: vi.fn(),
 		getSetupSessionId: vi.fn(() => setupSessionId),
 		getSetupSessionToken: vi.fn(),
+		setLegacyResetSession: vi.fn(),
+		setLegacySession: vi.fn(),
 		setSetupSession: vi.fn(),
 	};
 }
@@ -62,6 +67,10 @@ function fakeCookies(setupSessionId?: string): CookieAdapter {
 async function seedCredentialedUser(forceReset = true): Promise<number> {
 	const password = await hashPassword("old-password-123");
 	const userId = await seedUser(db, { forceReset, password });
+	await db
+		.update(users)
+		.set({ authMigratedAt: new Date() })
+		.where(eq(users.id, userId));
 	const now = new Date();
 	await db.insert(authAccounts).values({
 		accountId: String(userId),
@@ -74,8 +83,8 @@ async function seedCredentialedUser(forceReset = true): Promise<number> {
 	return userId;
 }
 
-describe("beginLegacyEmailRemediation", () => {
-	it("exchanges a valid legacy password for an email-remediation session", async () => {
+describe("loginLegacyIdentity", () => {
+	it("exchanges a valid unmigrated password for a legacy session", async () => {
 		const password = await hashPassword("legacy-password-123");
 		const userId = await seedUser(db, {
 			email: "",
@@ -85,20 +94,20 @@ describe("beginLegacyEmailRemediation", () => {
 		const cookies = fakeCookies();
 
 		await expect(
-			beginLegacyEmailRemediation(db, cookies, {
+			loginLegacyIdentity(db, cookies, {
 				handle: "legacyuser",
 				password: "legacy-password-123",
 				ip: "127.0.0.1",
 			}),
-		).resolves.toBe(true);
+		).resolves.toEqual({ reset: false });
 
-		const [session] = await db.select().from(setupSessions);
+		const [session] = await db.select().from(sessions);
 		expect(session).toMatchObject({
 			userId,
-			purpose: "email_remediation",
+			sessionType: "authenticated",
 			ip: "127.0.0.1",
 		});
-		expect(cookies.setSetupSession).toHaveBeenCalledWith(
+		expect(cookies.setLegacySession).toHaveBeenCalledWith(
 			session?.sessionId,
 			expect.any(String),
 		);
@@ -109,13 +118,34 @@ describe("beginLegacyEmailRemediation", () => {
 		await seedUser(db, { password });
 
 		await expect(
-			beginLegacyEmailRemediation(db, fakeCookies(), {
+			loginLegacyIdentity(db, fakeCookies(), {
 				handle: "alice",
 				password: "wrong-password",
 				ip: "127.0.0.1",
 			}),
 		).rejects.toBeInstanceOf(InvalidCredentialsError);
-		expect(await db.select().from(setupSessions)).toHaveLength(0);
+		expect(await db.select().from(sessions)).toHaveLength(0);
+	});
+
+	it("keeps an unmigrated forced-reset user in the legacy reset flow", async () => {
+		const password = await hashPassword("legacy-password-123");
+		await seedUser(db, { forceReset: true, password });
+		const cookies = fakeCookies();
+
+		await expect(
+			loginLegacyIdentity(db, cookies, {
+				handle: "alice",
+				password: "legacy-password-123",
+				ip: "127.0.0.1",
+			}),
+		).resolves.toEqual({ reset: true });
+
+		const [session] = await db.select().from(sessions);
+		expect(session?.sessionType).toBe("reset");
+		expect(cookies.setLegacyResetSession).toHaveBeenCalledWith(
+			session?.sessionId,
+			expect.any(String),
+		);
 	});
 
 	it("leaves migrated identities to Better Auth", async () => {
@@ -126,12 +156,12 @@ describe("beginLegacyEmailRemediation", () => {
 			.where(eq(users.id, userId));
 
 		await expect(
-			beginLegacyEmailRemediation(db, fakeCookies(), {
+			loginLegacyIdentity(db, fakeCookies(), {
 				handle: "alice",
 				password: "any-password",
 				ip: "127.0.0.1",
 			}),
-		).resolves.toBe(false);
+		).resolves.toBeNull();
 	});
 });
 
@@ -174,7 +204,7 @@ describe("resetPassword", () => {
 		await seedSession(db, userId);
 		await seedSession(db, userId);
 
-		const handle = await resetPassword(db, {
+		const result = await resetPassword(db, {
 			userId,
 			password: "new-password-123",
 		});
@@ -184,7 +214,7 @@ describe("resetPassword", () => {
 			.select()
 			.from(authAccounts)
 			.where(eq(authAccounts.userId, userId));
-		expect(handle).toBe("alice");
+		expect(result).toEqual({ handle: "alice", migrated: true });
 		expect(user?.forceReset).toBe(false);
 		expect(
 			await verifyPassword("new-password-123", user?.password as Buffer),

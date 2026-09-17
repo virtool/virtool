@@ -29,6 +29,7 @@ import {
 	updateAuthUsername,
 } from "../auth/identity";
 import { hashPassword, verifyPassword } from "../auth/password";
+import { invalidateUserSessions } from "../auth/session";
 import {
 	invalidateUserSetupSessions,
 	invalidateUserSetupTokens,
@@ -154,6 +155,7 @@ export type ChangePasswordValues = {
 export type ChangePasswordResult = {
 	account: Account;
 	handle: string;
+	migrated: boolean;
 };
 
 /** A selectable administrator role with its human-readable name and description. */
@@ -469,7 +471,11 @@ export async function changePassword(
 	{ userId, oldPassword, password }: ChangePasswordValues,
 ): Promise<ChangePasswordResult> {
 	const [existing] = await db
-		.select({ handle: usersTable.handle, password: usersTable.password })
+		.select({
+			authMigratedAt: usersTable.authMigratedAt,
+			handle: usersTable.handle,
+			password: usersTable.password,
+		})
 		.from(usersTable)
 		.where(eq(usersTable.id, userId))
 		.limit(1);
@@ -529,9 +535,12 @@ export async function changePassword(
 			throw new InvalidPasswordError();
 		}
 
-		await updateAuthPassword(tx, userId, hashed);
+		if (existing.authMigratedAt !== null) {
+			await updateAuthPassword(tx, userId, hashed);
+		}
 
 		await tx.delete(authSessions).where(eq(authSessions.userId, userId));
+		await invalidateUserSessions(tx, userId);
 	});
 
 	// An administrator with this user's detail open sees last_password_change and
@@ -539,7 +548,11 @@ export async function changePassword(
 	// updateUser publishes its own.
 	await emit("users", userId, "update");
 
-	return { account: await getAccount(db, userId), handle: existing.handle };
+	return {
+		account: await getAccount(db, userId),
+		handle: existing.handle,
+		migrated: existing.authMigratedAt !== null,
+	};
 }
 
 /** Read a user's administrator role without assembling the full user. */
@@ -756,6 +769,7 @@ export async function updateUser(
 
 		if (revokeSessions) {
 			await tx.delete(authSessions).where(eq(authSessions.userId, userId));
+			await invalidateUserSessions(tx, userId);
 		}
 
 		if (values.active === false) {

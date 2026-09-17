@@ -1,3 +1,5 @@
+import { timingSafeEqual } from "node:crypto";
+
 import {
 	type ApiKeyPrincipal,
 	type BrowserSessionPrincipal,
@@ -7,8 +9,10 @@ import { hashToken } from "@virtool/data/auth/tokens";
 
 import type { Db } from "@virtool/data/db/pg";
 import { apiKeys } from "@virtool/data/db/schema/apiKeys";
+import { sessions } from "@virtool/data/db/schema/sessions";
 import { users } from "@virtool/data/db/schema/users";
 import { and, eq, sql } from "drizzle-orm";
+import { SESSION_ID_COOKIE, SESSION_TOKEN_COOKIE } from "./cookies";
 
 async function getBetterAuthSession(headers: Headers) {
 	const { auth } = await import("./instance");
@@ -66,6 +70,69 @@ export async function verifyBrowserPrincipal(
 		userId,
 		sessionId,
 	};
+}
+
+/** Resolve a retained legacy browser or forced-reset session. */
+export async function verifyLegacyBrowserPrincipal(
+	db: Db,
+	request: Request,
+): Promise<BrowserSessionPrincipal | null> {
+	const cookies = parseCookieHeader(request.headers.get("cookie"));
+	const sessionId = cookies[SESSION_ID_COOKIE];
+	if (!sessionId) {
+		return null;
+	}
+
+	const [row] = await db
+		.select({
+			id: sessions.id,
+			userId: sessions.userId,
+			sessionType: sessions.sessionType,
+			tokenHash: sessions.tokenHash,
+			expiresAt: sessions.expiresAt,
+			active: users.active,
+			lifecycleState: users.lifecycleState,
+			forceReset: users.forceReset,
+		})
+		.from(sessions)
+		.innerJoin(users, eq(users.id, sessions.userId))
+		.where(eq(sessions.sessionId, sessionId))
+		.limit(1);
+
+	if (
+		!row?.active ||
+		row.userId === null ||
+		row.lifecycleState !== "normal" ||
+		row.expiresAt.getTime() <= Date.now()
+	) {
+		return null;
+	}
+
+	const token = cookies[SESSION_TOKEN_COOKIE];
+	if (
+		(row.sessionType !== "authenticated" && row.sessionType !== "reset") ||
+		!row.tokenHash ||
+		!token
+	) {
+		return null;
+	}
+
+	const expected = Buffer.from(row.tokenHash, "utf8");
+	const provided = Buffer.from(hashToken(token), "utf8");
+	if (
+		expected.length !== provided.length ||
+		!timingSafeEqual(expected, provided)
+	) {
+		return null;
+	}
+
+	if (row.sessionType === "reset") {
+		return row.forceReset
+			? { kind: "password_reset", sessionId: row.id, userId: row.userId }
+			: null;
+	}
+
+	return { kind: "browser", sessionId: row.id, userId: row.userId };
 }
 
 /**
@@ -197,10 +264,13 @@ export async function verifyApiKey(
 	};
 }
 
-/** Resolve an authoritative Better Auth browser principal from a request. */
+/** Resolve Better Auth first, then the retained legacy compatibility session. */
 export async function verifyBrowserRequest(
 	db: Db,
 	request: Request,
 ): Promise<BrowserSessionPrincipal | null> {
-	return verifyBrowserPrincipal(db, request);
+	return (
+		(await verifyBrowserPrincipal(db, request)) ??
+		(await verifyLegacyBrowserPrincipal(db, request))
+	);
 }

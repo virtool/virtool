@@ -215,9 +215,11 @@ Two rules hold this together:
   `id` on insert and treat it as a number. That setting is instance-wide in 1.6,
   so every `auth_*` table takes an identity primary key too. Composition lives
   in `apps/web`; see `@server/auth/betterAuth`.
-- **`auth_sessions` is the application session store.** Better Auth owns its
-  tokens, expiry, rotation, and revocation. Virtool re-reads account state when
-  resolving one and performs authorization after authentication.
+- **`auth_sessions` is the target application session store.** During the
+  staged cutover, existing legacy sessions remain valid, while new legacy
+  sessions are issued only to unmigrated users. Better Auth is preferred when
+  both credential families are present. Virtool re-reads account state for
+  either credential and performs authorization after authentication.
 
 A Drizzle property name in `auth.ts` is a Better Auth *field* name — the adapter
 looks fields up by property — so `userId` and `credentialID` keep their exact
@@ -225,11 +227,10 @@ spelling while their columns stay snake_case.
 
 Migration `0030_sparkling_silverclaw` revokes every pre-cutover Better Auth
 session so a token minted before a legacy password change cannot become valid
-again at cutover. The superseded `sessions` table remains in the schema through
-this release so old replicas do not fail during a rolling deployment and the
-application can be rolled back without recreating it. Drop it in a later
-migration only after every supported application version has stopped querying
-it.
+again. The `sessions` table remains active during the remediation compatibility
+window. Drop it in a later migration only after remediation is deployed, the
+final Better Auth-only cutover has completed, and every supported application
+version has stopped querying it.
 
 `users.email` is deliberately not globally unique, though Better Auth declares
 it so. Legacy rows share an empty email. The identity audit reports malformed

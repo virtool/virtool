@@ -86,10 +86,11 @@ export const requireAdminRole = createServerOnlyFn(
  * put there; calling this in a handler buys a second Postgres lookup for a
  * session that has already been resolved.
  *
- * A restricted setup credential resolves to nothing here because it is not a
- * Better Auth session. A forced-reset session resolves to its distinct
- * principal and is rejected here so ordinary policies cannot accidentally
- * authorize it.
+ * A restricted setup credential resolves to nothing here because it is not an
+ * application session. Better Auth is preferred, with retained legacy sessions
+ * accepted during the remediation compatibility window. A forced-reset session
+ * resolves to its distinct principal and is rejected here so ordinary policies
+ * cannot accidentally authorize it.
  */
 // createServerOnlyFn keeps the getRequest / db / verification references
 // behind a server boundary so import-protection doesn't pin

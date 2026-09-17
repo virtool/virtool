@@ -111,6 +111,10 @@ async function signIn(password = "old_password_123") {
 	const hashed = await hashPassword(password);
 	const userId = await seedUser(db, { password: hashed });
 	const now = new Date();
+	await db
+		.update(users)
+		.set({ authMigratedAt: now })
+		.where(eq(users.id, userId));
 	await db.insert(authAccounts).values({
 		accountId: String(userId),
 		providerId: "credential",

@@ -504,8 +504,11 @@ Better Auth's tables live in `@virtool/data` as `auth_*` and are keyed by
 integer identity columns, because `advanced.database.generateId: "serial"` is
 what keeps `users.id` the integer the rest of the schema references. The setting
 is instance-wide in 1.6, so the auxiliary tables share the key type.
-`auth_sessions` is the sole browser-application session store. Setup sessions
-remain separate because they authorize only one pre-authentication transition.
+`auth_sessions` is the target browser-application session store. The legacy
+`sessions` table remains a compatibility path until incomplete identities can
+finish email remediation; Better Auth wins when both credentials are present.
+Setup sessions remain separate because they authorize only one
+pre-authentication transition.
 
 Uploads and downloads must stream. Resolve a requested file to a database row
 or explicit whitelist first, then use that row's `storage_key`; never construct
@@ -545,12 +548,14 @@ account with no usable unique email, and a user under a `required` MFA policy
 who has not enrolled. Each holds a **restricted setup credential** that
 completes exactly one named transition and reaches nothing else.
 
-Login checks an unmigrated legacy identity before Better Auth. A matching
-legacy password mints an `email_remediation` setup session; every other account
-continues through Better Auth. A wrong remediation password is rejected without
-falling through to a second password verification; unknown or ineligible
-handles pay one dummy bcrypt verification. Every failed path keeps the same
-generic response.
+Login checks an unmigrated legacy identity before Better Auth. During the
+compatibility window, a matching legacy password mints a short-lived legacy
+application or forced-reset session so incomplete users are not locked out
+before the remediation surface ships. Migrated identities continue through
+Better Auth. Unknown, ineligible, and wrong-password attempts keep the same
+generic response and constant-cost behavior. The final cutover replaces this
+temporary branch with the restricted `email_remediation` session only after
+its setup endpoints and wall are available.
 
 The credential is its own cookie pair, `setup_session_id` and
 `setup_session_token`, deliberately not the session pair. `@virtool/data` owns

@@ -1,4 +1,5 @@
 import { emptyPermissions } from "@virtool/contracts";
+import { createAuthenticatedSession } from "@virtool/data/auth/session";
 import { seedApiKey, seedUser } from "@virtool/data/auth/test/fixtures";
 import type { Db } from "@virtool/data/db/pg";
 import { apiKeys } from "@virtool/data/db/schema/apiKeys";
@@ -16,11 +17,13 @@ import {
 	it,
 	vi,
 } from "vitest";
+import { SESSION_ID_COOKIE, SESSION_TOKEN_COOKIE } from "./cookies";
 import {
 	parseBasicAuthHeader,
 	parseCookieHeader,
 	verifyApiKey,
 	verifyBrowserPrincipal,
+	verifyLegacyBrowserPrincipal,
 } from "./verify";
 
 let database: TestDatabase;
@@ -100,6 +103,42 @@ describe("verifyBrowserPrincipal", () => {
 				vi.fn().mockRejectedValue(new Error("database unavailable")),
 			),
 		).rejects.toThrow("database unavailable");
+	});
+});
+
+describe("verifyLegacyBrowserPrincipal", () => {
+	it("accepts a retained legacy session", async () => {
+		const userId = await seedUser(db);
+		const session = await createAuthenticatedSession(db, {
+			userId,
+			ip: "127.0.0.1",
+		});
+		const request = new Request("https://virtool.test/", {
+			headers: {
+				cookie: `${SESSION_ID_COOKIE}=${session.sessionId}; ${SESSION_TOKEN_COOKIE}=${session.token}`,
+			},
+		});
+
+		await expect(verifyLegacyBrowserPrincipal(db, request)).resolves.toEqual({
+			kind: "browser",
+			sessionId: session.row.id,
+			userId,
+		});
+	});
+
+	it("rejects a wrong retained legacy token", async () => {
+		const userId = await seedUser(db);
+		const session = await createAuthenticatedSession(db, {
+			userId,
+			ip: "127.0.0.1",
+		});
+		const request = new Request("https://virtool.test/", {
+			headers: {
+				cookie: `${SESSION_ID_COOKIE}=${session.sessionId}; ${SESSION_TOKEN_COOKIE}=wrong`,
+			},
+		});
+
+		await expect(verifyLegacyBrowserPrincipal(db, request)).resolves.toBeNull();
 	});
 });
 

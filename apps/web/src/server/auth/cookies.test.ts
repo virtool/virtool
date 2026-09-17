@@ -31,7 +31,39 @@ afterEach(() => {
 });
 
 describe("realCookies", () => {
-	it("clears both obsolete legacy cookies from the root path", () => {
+	it("writes a short-lived retained legacy session pair", () => {
+		realCookies.setLegacySession("legacy-session", "legacy-token");
+
+		expect(setCookie).toHaveBeenNthCalledWith(
+			1,
+			SESSION_ID_COOKIE,
+			"legacy-session",
+			expect.objectContaining({ maxAge: 3_600 }),
+		);
+		expect(setCookie).toHaveBeenNthCalledWith(
+			2,
+			SESSION_TOKEN_COOKIE,
+			"legacy-token",
+			expect.objectContaining({ maxAge: 3_600 }),
+		);
+	});
+
+	it("writes a short-lived retained reset cookie pair", () => {
+		realCookies.setLegacyResetSession("legacy-reset", "reset-token");
+
+		expect(setCookie).toHaveBeenCalledWith(
+			SESSION_ID_COOKIE,
+			"legacy-reset",
+			expect.objectContaining({ maxAge: 3_600 }),
+		);
+		expect(setCookie).toHaveBeenCalledWith(
+			SESSION_TOKEN_COOKIE,
+			"reset-token",
+			expect.objectContaining({ maxAge: 3_600 }),
+		);
+	});
+
+	it("clears both retained legacy cookies from the root path", () => {
 		realCookies.clearLegacySession();
 
 		expect(deleteCookie).toHaveBeenCalledTimes(2);

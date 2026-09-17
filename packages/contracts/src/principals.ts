@@ -1,11 +1,11 @@
 import type { Permissions } from "./permissions";
 import type { RestrictedSetup } from "./setup";
 
-/** A human authorized for ordinary application access by a Better Auth session. */
+/** A human authorized for ordinary application access by a browser session. */
 export type BrowserPrincipal = {
 	kind: "browser";
 	userId: number;
-	/** Stable Better Auth row identifier; never the bearer token. */
+	/** Stable session-row identifier; never the bearer token. */
 	sessionId: number;
 };
 
@@ -13,7 +13,7 @@ export type BrowserPrincipal = {
 export type PasswordResetPrincipal = {
 	kind: "password_reset";
 	userId: number;
-	/** Stable Better Auth row identifier; never the bearer token. */
+	/** Stable session-row identifier; never the bearer token. */
 	sessionId: number;
 };
 
@@ -34,7 +34,7 @@ export type SetupPrincipal = RestrictedSetup & {
 /** A principal accepted by ordinary Virtool authorization policies. */
 export type AuthenticatedPrincipal = BrowserPrincipal | ApiKeyPrincipal;
 
-/** A principal backed by a Better Auth browser session. */
+/** A principal backed by a Better Auth or retained legacy browser session. */
 export type BrowserSessionPrincipal = BrowserPrincipal | PasswordResetPrincipal;
 
 /** Any credential resolved by the web authentication boundary. */

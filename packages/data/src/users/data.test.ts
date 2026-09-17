@@ -2,10 +2,12 @@ import { eq } from "drizzle-orm";
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
 
 import { hashPassword, verifyPassword } from "../auth/password";
+import { createAuthenticatedSession } from "../auth/session";
 import { seedSession, seedUser } from "../auth/test/fixtures";
 import type { Db } from "../db/pg";
 import { authSessions } from "../db/schema/auth";
 import { groups, userGroups } from "../db/schema/groups";
+import { sessions } from "../db/schema/sessions";
 import { users } from "../db/schema/users";
 import { createTestDatabase, type TestDatabase } from "../db/test/fixtures";
 import { addToGroup, seedGroup } from "../groups/test/fixtures";
@@ -122,11 +124,17 @@ describe("getAccount", () => {
 });
 
 async function countSessions(userId: number): Promise<number> {
-	const rows = await db
-		.select({ sessionId: authSessions.id })
-		.from(authSessions)
-		.where(eq(authSessions.userId, userId));
-	return rows.length;
+	const [betterAuth, legacy] = await Promise.all([
+		db
+			.select({ sessionId: authSessions.id })
+			.from(authSessions)
+			.where(eq(authSessions.userId, userId)),
+		db
+			.select({ sessionId: sessions.id })
+			.from(sessions)
+			.where(eq(sessions.userId, userId)),
+	]);
+	return betterAuth.length + legacy.length;
 }
 
 async function readUser(userId: number) {
@@ -139,6 +147,7 @@ describe("updateUser", () => {
 		const userId = await seedUser(db);
 		await seedSession(db, userId);
 		await seedSession(db, userId);
+		await createAuthenticatedSession(db, { userId, ip: "127.0.0.1" });
 
 		await updateUser(db, userId, { active: false });
 
@@ -149,6 +158,7 @@ describe("updateUser", () => {
 	it("deletes the user's sessions when their password changes", async () => {
 		const userId = await seedUser(db);
 		await seedSession(db, userId);
+		await createAuthenticatedSession(db, { userId, ip: "127.0.0.1" });
 		const before = await readUser(userId);
 
 		await updateUser(db, userId, { password: "new-password-1234" });
@@ -166,6 +176,7 @@ describe("updateUser", () => {
 	it("deletes the user's sessions when forceReset is set", async () => {
 		const userId = await seedUser(db);
 		await seedSession(db, userId);
+		await createAuthenticatedSession(db, { userId, ip: "127.0.0.1" });
 
 		await updateUser(db, userId, { forceReset: true });
 
@@ -176,10 +187,11 @@ describe("updateUser", () => {
 	it("leaves sessions alone when only the handle changes", async () => {
 		const userId = await seedUser(db);
 		await seedSession(db, userId);
+		await createAuthenticatedSession(db, { userId, ip: "127.0.0.1" });
 
 		await updateUser(db, userId, { handle: "renamed" });
 
-		expect(await countSessions(userId)).toBe(1);
+		expect(await countSessions(userId)).toBe(2);
 		expect((await readUser(userId))?.handle).toBe("renamed");
 	});
 
@@ -364,10 +376,11 @@ describe("changePassword", () => {
 		expect(account.id).toBe(userId);
 	});
 
-	it("revokes every existing Better Auth session", async () => {
+	it("revokes every existing Better Auth and legacy session", async () => {
 		const userId = await seedUserWithPassword("old_password_123");
 		await seedSession(db, userId);
 		await seedSession(db, userId);
+		await createAuthenticatedSession(db, { userId, ip: "127.0.0.1" });
 
 		const { handle } = await changePassword(db, {
 			userId,
@@ -381,6 +394,9 @@ describe("changePassword", () => {
 			.where(eq(authSessions.userId, userId));
 
 		expect(rows).toHaveLength(0);
+		expect(
+			await db.select().from(sessions).where(eq(sessions.userId, userId)),
+		).toHaveLength(0);
 		expect(handle).toBe("alice");
 	});
 
