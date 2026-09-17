@@ -8,6 +8,7 @@ import { z } from "zod";
  * zero forever and read as a task that never runs.
  */
 export const PeriodicTaskName = z.enum([
+	"cleanup_sessions",
 	"cleanup_setup_state",
 	"deliver_email",
 	"evict_caches_lru",

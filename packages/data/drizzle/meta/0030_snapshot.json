@@ -942,6 +942,21 @@
         }
       },
       "indexes": {
+        "idx_auth_sessions_expires_at": {
+          "name": "idx_auth_sessions_expires_at",
+          "columns": [
+            {
+              "expression": "expires_at",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
         "idx_auth_sessions_user_id": {
           "name": "idx_auth_sessions_user_id",
           "columns": [

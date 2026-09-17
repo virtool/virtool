@@ -62,6 +62,11 @@ export const PERIODIC_TASKS: PeriodicTaskRegistration[] = [
 	{ type: "timeout_jobs", intervalSeconds: 600 },
 	{ type: "evict_caches_lru", intervalSeconds: 3600 },
 	/*
+	 * Hourly. Better Auth rejects expired sessions without waiting for cleanup,
+	 * so this only bounds retained rows and index growth.
+	 */
+	{ type: "cleanup_sessions", intervalSeconds: 3600 },
+	/*
 	 * Hourly. Correctness never waits on it: `consumeSetupToken` and
 	 * `verifySetupSession` both
 	 * refuse an expired row on sight, so a row lingering between sweeps is

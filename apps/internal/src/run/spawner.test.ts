@@ -120,6 +120,7 @@ describe("PERIODIC_TASKS", () => {
 				]),
 			),
 		).toEqual({
+			cleanup_sessions: 3600,
 			sweep_blast: 30,
 			deliver_email: 30,
 			refresh_hmms: 600,

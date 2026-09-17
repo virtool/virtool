@@ -220,6 +220,8 @@ Drain web and runner replicas running code older than this migration before
 applying it; they still query that table. A rollback across this boundary must
 first restore the old table schema, then deploy the old application. The rows
 need not be restored: users can authenticate again and receive new sessions.
+The migration also revokes every pre-cutover Better Auth session so a token
+minted before a legacy password change cannot become valid again at cutover.
 
 `users.email` is deliberately not globally unique, though Better Auth declares
 it so. Legacy rows share an empty email. The identity audit reports malformed

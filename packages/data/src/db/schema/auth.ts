@@ -88,6 +88,7 @@ export const authSessions = pgTable(
 			name: "auth_sessions_user_id_fkey",
 		}).onDelete("cascade"),
 		unique("auth_sessions_token_key").on(table.token),
+		index("idx_auth_sessions_expires_at").on(table.expiresAt),
 		index("idx_auth_sessions_user_id").on(table.userId),
 	],
 );
