@@ -180,6 +180,14 @@ This package owns the Postgres schema. `src/db/schema/` is the source of truth;
 migrations are generated from it with `db:generate` and applied with
 `db:migrate`.
 
+Create migrations generated-first: update the schema mirror, run
+`pnpm --filter @virtool/data db:generate --name <name>`, then make only the SQL
+edits that generation cannot express, such as a data-migration assertion. Commit
+the generated SQL, `meta/_journal.json`, and matching snapshot together. Never
+add a journal entry or SQL migration without its snapshot; the next generation
+would diff against an older schema state and emit duplicate DDL. Rerun
+`db:generate` before committing and expect it to report no schema changes.
+
 `drizzle/0000_baseline.sql` describes the schema as it stood when ownership
 moved here. Production was stamped as already migrated rather than having that
 baseline applied to it, so it must never be run against an existing database.
