@@ -23,7 +23,7 @@ Here is the structure of a single viral OTU containing one isolate and its seque
 
 Virtool isolates are named with two pieces of information: the source type and source name. This naming system was inspired by the way isolate information is stored in GenBank records.
 
-A **source type** is the first word in the isolate name and is a classification keyword used by the publisher of the sequence. Examples include _strain_, _genotype_, _culture_, and _variant_. The use of the **source type** keywords aren't standardized in GenBank.
+A **source type** is the first word in the isolate name and is a classification keyword used by the publisher of the sequence. Examples include _strain_, _genotype_, _culture_, and _variant_. **Source type** keywords aren't standardized in GenBank.
 
 A **source name** is the unique second part of the isolate name that identifies the isolate.
 
@@ -165,7 +165,7 @@ Isolates are how sequence data is organized within the OTU record. Read about is
 
 3. Fill the form with your **source type** and **source name** values
 
-   Notice that the **Isolate Name** field changes with the other two fields. Both fields are optional and the isolate name is **Unnamed** if they're both empty. Many isolates in a single OTU can have the same name.
+   Notice that the **Isolate Name** field changes with the other two fields. Both fields are optional and the isolate name is **Unnamed** if they're both empty. Isolate names don't have to be unique within an OTU.
 
    ![Add isolate dialog filled](./isolate_add_filled.png?url)
 
@@ -355,7 +355,7 @@ Isolates are how sequence data is organized within the OTU record. Read about is
 
 4. Click <DummySaveButton />
 
-   The changes made is reflected under the **Schema** tab.
+   The updated name appears under the **Schema** tab.
 
    ![DNA-A was changed to DNA A](./segment_edited.png?url)
 
@@ -387,7 +387,7 @@ Once you have defined a schema for an OTU, you can set a segment on each isolate
 
 5. Click the **Segment** dropdown
 
-   The segments defined in the schema is available for selection.
+   The segments defined in the schema are available for selection.
 
    ![Sequence edit dialog with Segment dropdown](./segment_use_edit_dropdown.png?url)
 

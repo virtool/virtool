@@ -471,10 +471,9 @@ export function createTaskRunner<C>(options: TaskRunnerOptions<C>): TaskRunner {
 	/**
 	 * Stop claiming, wait out the in-flight work, then hand back what is left.
 	 *
-	 * Drain-then-release rather than drain-to-completion, which is not on offer at
-	 * any configurable grace period: these tasks run for minutes and a cluster
-	 * autoscaler force-removes a pod regardless of the field. A released task is
-	 * claimable again in milliseconds; an abandoned one sits out the full lease.
+	 * Tasks can outlast any practical termination grace period, so shutdown waits
+	 * for the configured drain window and then releases the task. A released task
+	 * is claimable again immediately; an abandoned one sits out the full lease.
 	 *
 	 * Everything here is caught. `process.exitCode`, the listener, the pool and
 	 * the Sentry flush belong to the shutdown controller that calls this, and a

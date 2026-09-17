@@ -32,7 +32,7 @@ Java file:
 | `bases` | `PerBaseQualityScores.java`, `QualityCount.java` | Percentiles are a cumulative walk over an integer histogram, not an interpolation, so every one is a whole number |
 | `composition` | `PerBaseSequenceContent.java` | The denominator is A+C+G+T, so `N` is excluded from it |
 | `count`, `gc`, `length`, `encoding` | `BasicStats.java` | `%GC` is *integer* division and has already lost its fraction |
-| `sequences` | `PerSequenceQualityScores.java` | The per-read mean truncates the summed **raw** characters, before the offset comes off |
+| `sequences` | `PerSequenceQualityScores.java` | The per-read mean truncates the summed **raw** characters before subtracting the encoding offset |
 
 Two more that are easy to miss:
 
@@ -41,11 +41,9 @@ Two more that are easy to miss:
   against. A file of nothing but high scores reads as Illumina, not Sanger.
 - **A cycle covered by 100 reads or fewer has no percentiles.** FastQC reports
   `NaN` for all five, which can't be stored because it's not valid JSON and is
-  rejected by both the JSONB column and the `Quality` schema. The row is resolved
-  by
-  substituting the first value in it that's a real number, the mean, for the
-  whole row. It's not a rare shape: a file of variable-length reads thins out
-  toward its longest read.
+  rejected by both the JSONB column and the `Quality` schema. The row instead
+  uses the mean for all five values. This isn't a rare shape: a file of
+  variable-length reads thins out toward its longest read.
 
 **Don't "correct" any of these.** The blob is compared against the ones
 samples already hold, and a more defensible statistic is a divergence in stored
@@ -58,8 +56,8 @@ one averaged row per group and repeating it across the group's members. Thus, a
 stored blob from a 301bp run holds runs of five identical rows. This crate
 reports every cycle.
 
-The shape is unchanged, so nothing needs a backfill and no chart changes; the
-data is simply finer. For reads of 75bp or less there is no divergence at all.
+The shape is unchanged, so no backfill or chart changes are needed. The data has
+finer per-cycle resolution. For reads of 75bp or less, there is no divergence.
 
 `tests/fastqc.rs` pins the difference rather than tolerating it: for a binned
 case it asserts that the five non-per-cycle fields are identical, that the row
@@ -70,28 +68,19 @@ of the coarser one rather than a different measurement.
 
 ## The goldens come from FastQC, and must keep coming from FastQC
 
-`tests/fixtures/*.json` are blobs derived from real FastQC 0.11.9 reports, and
-the preceding field table records exactly how each one maps onto `Quality`. They
-are frozen references. **Never edit a golden to make a failing comparison
-pass**, and never regenerate one from this crate. That converts a caught
-divergence into a permanent one, and leaves a test that asserts only that the
-code still does what it did.
+`tests/fixtures/*.json` are derived from real FastQC 0.11.9 reports. The field
+table earlier in this document records how each field maps onto `Quality`.
+**Never edit a golden to make a failing comparison pass**, and never derive one
+from this crate. Doing so would hide a divergence by making the test assert the
+crate's existing behavior.
 
-No script here writes them, and no supported way to regenerate
-one exists. If a golden is ever found to be wrong, re-derive it from FastQC itself:
-install FastQC 0.11.9. This requires a JRE and the full `perl`, not `perl-base`, because its
-launcher opens with `use FindBin`), run it over the input with `-f fastq
---extract`, and work the expected `quality` and `baseGroups` out of the raw
-report by hand against the preceding field table, rather than trusting any parser
-to do it.
+If a golden is wrong, re-derive it from FastQC 0.11.9. FastQC requires a JRE and
+the full `perl` package because its launcher uses `FindBin`. Run FastQC over the
+committed synthetic input with `-f fastq --extract`, then calculate the expected
+`quality` and `baseGroups` from the raw report using the field table. Don't use
+this crate's parser to produce the expected values.
 
-The inputs are synthetic and are committed alongside the goldens, so nothing
-has to be reconstructed to do this. The script that first produced all it
-was deleted once the goldens were committed; `git log --diff-filter=D` under
-this directory finds it if it's wanted as a starting point.
-
-Four cases, each reaching a specific branch rather than being a slice of a real
-run, which would reach whichever ones it happened to:
+Each fixture targets a specific branch:
 
 | Case | What it's for |
 | --- | --- |
@@ -100,12 +89,12 @@ run, which would reach whichever ones it happened to:
 | `all_n` | One cycle where every read is `N`. This is the zero-denominator rule. Exact equality |
 | `binned` | 400 reads of 150bp. This is the one deliberate divergence. |
 
-`tests/fixtures/rounding.jsonl` is a separate corpus, 2,058 cases of
-`{value, digits, expected}` where `expected` is `value` rounded half to even at
-`digits` places, on the exact binary value of the double. It pins
-`round_half_even` on every value the blob can hold, and the TypeScript
-`roundHalfEven` in `packages/bio` must agree with it figure for figure. It's
-frozen on the same terms as the preceding goldens.
+`tests/fixtures/rounding.jsonl` is a separate corpus of 2,058
+`{value, digits, expected}` cases. Each `expected` value is the exact binary
+double rounded half to even at `digits` places. The corpus pins
+`round_half_even`, and the TypeScript `roundHalfEven` function in `packages/bio`
+must produce the same results. Treat this corpus like the other golden fixtures:
+don't derive expected values from either implementation under test.
 
 ## Dependencies stay small
 
@@ -116,8 +105,7 @@ gzipped or plain. `flate2` resolves to the pure-Rust `miniz_oxide`, so the
 binary links nothing but glibc, which is why the create-sample runtime stage
 installs nothing at all.
 
-`clap`, `serde`/`serde_json` and `thiserror` are the rest. No
-`libclang` need applies here. That's `pathoscope-core`'s `hts-sys`.
+`clap`, `serde`/`serde_json` and `thiserror` are the remaining dependencies.
 
 ## Commands
 

@@ -54,7 +54,7 @@ management view.
 
 ## Start quick analysis
 
-Quick analyses allows you to start analysis jobs for many samples at once.
+Quick analysis lets you start analysis jobs for multiple samples at once.
 
 1. Select the samples of interest and click <Icon name="chart-area" color="green" />.
 
@@ -64,7 +64,7 @@ Quick analyses allows you to start analysis jobs for many samples at once.
 2. Choose the workflows (PathoscopeBowtie or Nuvs), subtraction, and references you
    want to use to analyze your samples.
 
-   Selecting many references starts a separate job for each sample-reference
+   Selecting multiple references starts a separate job for each sample-reference
    combination.
 
 3. Click <DummyButton icon="play">Start</DummyButton> to start the analysis jobs.
@@ -92,7 +92,7 @@ Quick analyses allows you to start analysis jobs for many samples at once.
 3. Return to the **Samples** view and click <DummyButton icon="plus-square" /> to open the
    sample creation dialog
 
-   The file you uploaded should now be available in file list.
+   The uploaded file appears in the file list.
 
    ![Sample creation dialog](./create.png?url)
 
@@ -118,7 +118,7 @@ Quick analyses allows you to start analysis jobs for many samples at once.
    Samples created from only one file are assumed to be unpaired. Paired samples must
    comprise two paired FASTQ files. **Interleaved FASTQ files aren't currently supported**.
 
-   For paired data, make sure the file orientation labels (left and right) are correct
+   For paired data, check that the file orientation labels (left and right) are correct
    before you create a sample. You can use the <DummyButton color="grey" icon="retweet" />
    button to swap orientations.
 
@@ -132,8 +132,8 @@ Quick analyses allows you to start analysis jobs for many samples at once.
 
    <Aside title="Default Subtraction">
 
-   The default subtraction for a sample is pre-selected as whenever you create an
-   analysis for that sample. You can find the default subtraction for a given sample at
+   The default subtraction is preselected whenever you create an analysis for the sample.
+   You can find the default subtraction for a given sample at
    the bottom of its detail view.
 
    For Banana bunchy top virus below, the default subtraction is **Banana**. This was
@@ -169,7 +169,7 @@ The quality information can be viewed under the **Quality** tab:
 
 ![Quality](./quality.png?url)
 
-You see three different graphs on this page as shown below.
+The page shows three graphs.
 
 ### Quality distribution at read positions
 
@@ -177,15 +177,18 @@ You see three different graphs on this page as shown below.
 
 This graph shows the quality of your sample library. The Y-axis shows the quality score, the higher the better. The quality tends to decrease as the run progresses.
 
-Median values of less than 25 or a lower quartile of less than 10 is about. For the preceding sample, the quality of the sample library is fine and further analysis can take place.
+A median below 25 or a lower quartile below 10 is cause for concern. The sample shown
+here has sufficient quality for further analysis.
 
 ### Nucleotide composition at read positions
 
 ![Nucleotide Composition at Read Positions](./nuc_comp_at_read_positions.png?url)
 
-This plot shows the proportion of each base's position in a file. In general, one should expect A/T to be roughly equal and G/C to be roughly equal. Viruses genomes are often unevenly distributed in composition and can be A/T rich.
-
-With all the things being equal in a diverse library, you should see an even distribution of the four bases which doesn't change with base position. Although the relative amount of G/C content is determined by your library, but what you should see on the graph are parallel lines going across the plot.
+This plot shows the proportion of each nucleotide at every read position. In a
+diverse library, nucleotide proportions shouldn't vary systematically by read
+position, so the lines should be roughly parallel. Overall nucleotide
+composition depends on the library; viral genomes may, for example, be
+A/T-rich.
 
 ### Read-wise quality occurrence
 
@@ -298,7 +301,9 @@ Rights can apply at four different levels.
 
 #### Group ownership
 
-Each sample can be owned by a specific user group. This allows many groups of diagnosticians or researchers to keep their data private or safe from one another while sharing a single Virtool instance.
+Each sample can be owned by a user group. This lets multiple groups of
+diagnosticians or researchers keep their data private while sharing one Virtool
+instance.
 
 Samples aren't required to have an owner group. The group can be set to `None`. In this case, group rights settings have no effect.
 
@@ -324,24 +329,20 @@ They can also edit and remove the sample and create new analyses.
 
 ### Management
 
-The access rights for an existing sample can be easily changed by the sample owner or an administrator.
+The sample owner or an administrator can change an existing sample's access
+rights.
 
 Access the rights management controls by clicking the <Icon name="key" /> tab in the sample detail view.
 
 ![The sample rights view](./sample_rights_view.png?url)
 
-### Default rights
-
-Samples have their initial access rights configured when they're first created. How these rights are assigned can be configured in the administrative settings.
-
-1. Go to the **Settings | General** view as an administrator.
-   ![General settings](/static/images/settings_general.png?url)
-
 ## Settings
 
 ### Unique sample names
 
-By default, sample names must be unique to the sample manager. This prevents confusion between identically named samples. It's possible to turn off this feature. To do so, click **Settings** on the left sidebar under the samples overview page.
+By default, sample names must be unique to the sample manager. This prevents
+confusion between identically named samples. Administrators can change this in
+**Settings** on the Samples page.
 ![Samples Overview](./samples_overview3.png?url)
 
 Check the **Unique Sample Names** box to ensure that every created sample has a unique name.
@@ -362,11 +363,7 @@ This determines how an owner group is applied to the sample when it's created.
 | --------------- | ------------------------------------------------------------------------------- |
 | _None_          | No group owner is assigned. Group rights don't apply                           |
 | _Force Choice_  | The sample creator is forced to choose the owner group from their member groups |
-| _Primary Group_ | The sample is automatically assigned the creators primary group                 |
-
-#### Group rights
-
-This setting determines how members of the owner group can interact with the sample. If the owner group is _None_, this setting has no effect.
+| _Primary Group_ | The sample is automatically assigned the creator's primary group                |
 
 #### Group rights
 
@@ -377,9 +374,11 @@ This setting determines how members of the owner group can interact with the sam
 |                |                                                                                                                     |
 | -------------- | ------------------------------------------------------------------------------------------------------------------- |
 | _None_         | Sample isn't returned in searches and isn't accessible by URL.                                                    |
-| _Read_         | Sample is returned in searches and is viewable. All editing interfaces are off and analyses can't be started. |
-| _Read & Write_ | Also to _Read_ rights, editing interfaces are enabled and analyses can be run.                               |
+| _Read_         | Sample appears in searches. Users can view it but can't edit it or start analyses. |
+| _Read & Write_ | Includes _Read_ rights. Users can also edit the sample and run analyses.                               |
 
 #### All users' rights
 
-This settings determines how any Virtool user can interact with the sample. Rights for all users behave exactly as they do in **Group Rights**. Rights can be changed by sample owners and administrators at any time.
+This setting determines how any Virtool user can interact with the sample. These
+rights behave like group rights and can be changed by sample owners and
+administrators at any time.

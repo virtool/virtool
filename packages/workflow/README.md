@@ -25,7 +25,7 @@ The runtime is deliberately small and explicit:
   input downloads it.
 - No teardown layer exists. Workflow containers are ephemeral, and process
   exit reclaims their work directory. Don't add `dispose`,
-  `Symbol.asyncDispose`, or an `AsyncExitStack` equal.
+  `Symbol.asyncDispose`, or an `AsyncExitStack`-style abstraction.
 - No lifecycle-hook registry exists. `RunWorkflowOptions.onStepStart` is the
   sole optional callback. Successful completion is represented by the returned
   `RunOutcome`; a failed run leaves a partially built resource for the user to
@@ -33,8 +33,7 @@ The runtime is deliberately small and explicit:
 
 `createWorkflowContext()` verifies on every run that `data` survives a JSON
 round trip. Put storage keys, paths, ids, and other serializable inputs there;
-put live handles and mutable cross-step scratch in `state`. This boundary is
-also the serialization seam for the end-to-end test bed.
+put live handles and mutable cross-step scratch in `state`.
 
 ### Subprocesses
 
@@ -84,8 +83,8 @@ That layout is what lets every workflow share the `reference_mapping_index` and
 key is success. `deriveCacheKey()` serialises params as JSON with keys sorted
 by code point, `,` and `:` separators, and every character outside
 `0x20`-`0x7E` escaped, then takes the SHA-256 of the result; mark floats with
-`float()`, and don't change the frozen golden fixtures to match what the
-implementation currently produces.
+`float()`. Treat committed golden fixtures as independent expected output;
+don't update them merely to match the current implementation.
 
 Tar and gzip operations belong to `@virtool/archive`; this package doesn't
 re-export them.

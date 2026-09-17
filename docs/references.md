@@ -20,29 +20,11 @@ artifact ends up uploaded as a whole reference. Both carry
 `format = virtool-reference-sqlite` and `format_version = 1` in their `metadata`
 table, which `openIndexArtifact` checks before a run reads a row.
 
-Four modules, all exported from `@virtool/sqlite`:
-
-| Module | What it holds |
-| --- | --- |
-| `schema.ts` | the schema mirror, the filename and format constants, `openIndexArtifact`, `createIndexArtifactSchema` |
-| `queries.ts` | `openWorkflowIndex` and the six reads, plus `writeFasta` |
-| `create.ts` | `createIndexArtifact`, the bulk load |
-| `errors.ts` | `IndexArtifactError` and the five failures a caller can tell apart |
-
-The rules that shape those modules are documented as JSDoc on the code itself.
-They explain why ordering is pinned, why nothing materialises the index, and
-what each error means. The relevant comments are `queries.ts`'s module comment and
-the `SELECT_OTUS`/`checkOtu` comments cover ordering and streaming;
-`schema.ts`'s `openIndexArtifact` covers the no-fallback rule; `errors.ts`'s
-`Index*Error` classes cover what each failure means and when it fires. Read
-there first. This file holds only what's not already in the code: the
-measurements behind those decisions.
-
 ### Measurements
 
-Measured on a synthetic 300 MB artifact containing 20,000 OTUs and 60,000 sequences
-of 5 kb, scanning the whole index to a 287 MB FASTA moved peak RSS not at all:
-87 MB before and 87 MB after. Reaching for `.all()` on any of the queries in
+When measured on a synthetic 300 MB artifact containing 20,000 OTUs and 60,000
+sequences of 5 kb, scanning the whole index to a 287 MB FASTA didn't increase
+peak RSS: it was 87 MB before and after. Using `.all()` on any query in
 `queries.ts` undoes that.
 
 The bulk-load transaction (`createIndexArtifact` in `create.ts`), same

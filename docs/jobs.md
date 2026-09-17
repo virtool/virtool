@@ -131,10 +131,10 @@ two forms over one `JobsApiState` object:
 Both forms route through `handleJobsApiRequest`. Responses are serialized and
 parsed with the same contract schemas as production, so the fake client can't
 silently accept a wire shape that the real client would reject. The shared state
-records claims, step starts, finish and finalization calls, cache registrations,
+records claims, step starts, finish and finalize calls, cache registrations,
 resource metadata, credentials, and the injected clock.
 
-The embedded server preserves the lifecycle behavior described previously:
+The embedded server preserves the lifecycle behavior described in this document:
 
 - claims are unauthenticated and filtered by workflow;
 - every later request uses HTTP Basic credentials and verifies route job IDs;

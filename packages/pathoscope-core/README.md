@@ -28,38 +28,6 @@ They're sized to the reference, so a vector over a 50 kb reference is 50,000
 entries of which ~200 are non-zero; dense storage made the corpus 1.3 MB, 98%
 of it zeros. The encoding is lossless. The harness rebuilds the dense array.
 
-The corpus was captured from the PyO3 build of `workflow-pathoscope` before the
-crate moved here. The script that captured it's gone, and there is no supported
-way to produce a new vector: it needed the Python extension module, which this
-repository doesn't hold. `git log --diff-filter=D` under `tests/golden/` finds
-the script if it's wanted as a starting point. A new vector is never
-needed. A failing vector is a finding about the code, never a golden to
-re-baseline. **Never edit a vector to make a failing comparison pass**, and
-never regenerate the corpus from this crate. A corpus generated from the code
-under test asserts nothing.
-
-## Five modules are frozen
-
-`em.rs`, `matrix.rs`, `sam.rs`, `subtraction.rs` and `coverage.rs`, totaling 2,511
-lines, are pinned by the golden corpus and aren't to be edited. A diff
-showing a change inside `em()` is a divergence, not an improvement.
-
-`coverage.rs` carries a TODO at the top flagging an unresolved question about
-whether the score calculation should include all alignments preceding the threshold
-or only the best assignment per read. **Leave it there.** The golden vectors now
-pin the current behaviour, including that behaviour, so the question can be
-answered against a baseline later instead of guessed at. VIR-2913 tracks it.
-
-`candidates.rs` is the sixth module and the one exception, and the reason is
-where each sits. The five preceding are the numeric core: their intermediate
-arithmetic is unobservable from outside, so leaving them alone is the only way
-to keep it right. `candidates.rs` is process plumbing. It spawns bowtie2,
-streams its stdout, applies the score cutoff and maps failures onto
-`PathoscopeError` and may be restructured freely, because the golden
-`candidates` vectors pin the set of references it returns, not how it arrives
-at them. The bowtie2 flags it passes are part of that output, so they're as
-fixed as anything preceding.
-
 ## The command-line tool contract
 
 One binary, three subcommands, no shared state between invocations.
@@ -104,23 +72,10 @@ and `pnpm typecheck` don't reach it.
 | --- | --- |
 | `cargo test` | Run the suite, golden vectors included |
 | `cargo fmt` | Format (`rustfmt.toml`, `max_width = 88`) |
-| `cargo clippy` | Lint. Advisory only, see below. |
+| `cargo clippy` | Lint |
 
 Building needs `libclang-dev` installed, because `hts-sys` runs bindgen against
 htslib's headers.
-
-## Rust is formatted but not clippy-gated
-
-This is a recorded decision, not an oversight.
-
-`cargo fmt --check` runs in CI. The code already satisfied it.
-
-`cargo clippy -- -D warnings` isn't a gate. The five frozen modules are
-2,511 lines that would need edits inside them to meet it. `sam.rs` alone
-carries two unused imports that the build warns about today. Those edits
-are exactly what byte-identity with the golden corpus forbids. Revisit once
-those modules can be re-pinned. Until then, clippy is advisory: run it, don't
-gate on it.
 
 ## Tooling exclusions
 
@@ -155,9 +110,7 @@ its only consumer, so there is no second release stream to coordinate and no
 window in which the workflow and its core disagree.
 
 The `Pathoscope / Build` job compiles the Dockerfile on every run and
-`release-ghcr` pushes it on release. `ghcr.io/virtool/pathoscope` before
-came from `virtool/workflow-pathoscope`, which shipped the Python workflow
-under that name; this repository's release supersedes it and owns the name now.
+`release-ghcr` pushes it on release.
 
 **The crate is built on `rust:1.97-bookworm`.** The runtime copies binaries from
 the tool stages in the same file, which are built on `debian:bookworm`, so the
@@ -174,10 +127,9 @@ reports `CACHED`.
 
 **`libclang-dev` is required, not optional.** `hts-sys` 2.2.x runs bindgen 0.69
 against htslib's headers for `x86_64-unknown-linux-gnu` and doesn't fall back
-to the pre-generated bindings that ship for some targets. Dropping the package
-fails the build with `Unable to find libclang`. This was verified empirically,
-and the same need applies to the `pathoscope-test` CI job and to any
-developer machine.
+to the pre-generated bindings that ship for some targets. Without the package,
+the build fails with `Unable to find libclang`. The requirement also applies to
+the `pathoscope-test` CI job and developer machines.
 
 The runtime stage installs `libcurl4`, `libgomp1`, `libncursesw6` and `perl`.
 Each backs a specific `ldd ... => not found` against the slim base: perl and

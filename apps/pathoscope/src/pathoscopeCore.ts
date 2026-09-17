@@ -177,7 +177,7 @@ export function runExpectationMaximization(
 ): Promise<PathoscopeEmResults> {
 	return runCore<PathoscopeEmResults>(run, [
 		"em",
-		// Singular: that is what the core's command-line tool names it.
+		// Singular: that is what the core's CLI names it.
 		"--alignment",
 		alignmentPath,
 		"--p-score-cutoff",
@@ -191,7 +191,7 @@ export function runExpectationMaximization(
  * The thread count `eliminate-subtraction` is given.
  *
  * The core gets `proc - 1`, which is a zero when `proc = 1`. A bare `u32` would
- * take that, but the command-line tool validates `--proc` as `range(1..)` and would refuse
+ * take that, but the CLI validates `--proc` as `range(1..)` and would refuse
  * it, turning a working single-core run into a failed one — so the floor is
  * applied here rather than left to clap.
  */

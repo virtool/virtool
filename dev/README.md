@@ -71,7 +71,7 @@ core app alone.
 
 ### Browser access
 
-Use the HTTPS URL printed by `ensure` or shown in `wt list`. Each instance has
+Use the HTTPS URL printed by `coasts up` or shown in `wt list`. Each instance has
 a unique `*.localhost` hostname and a dynamic HTTPS port that survives
 stop/start. Caddy proxies HTTPS, HMR WebSockets, and streaming responses to
 Vite inside that Coast. Signed uploads use the same HTTPS origin: Caddy proxies
@@ -84,7 +84,7 @@ Expand the badge to open another managed instance in a new tab. The list
 refreshes every five seconds while expanded and shows the controller's last
 reported state, not a live health check. Lifecycle operations refresh discovery
 for all existing managed worktrees; orphaned records and unmanaged trials are
-excluded. Raw Coast operations bypass this publication; run `ensure` to refresh
+excluded. Raw Coast operations bypass this publication; run `coasts up` to refresh
 it. Stopped instances keep their links but must be resumed from the terminal.
 
 Discovery is a read-only, same-origin Vite endpoint backed by an ignored local
@@ -95,9 +95,7 @@ and Vite watching, so switching terminals doesn't trigger page reloads.
 
 Use `wt list` for branch/worktree status and app links after `coasts
 up`, Coastguard for live service status and logs, and the badge for browser
-switching. These cover
-the section 2 overview needs; a separate TUI would duplicate them and isn't
-planned. Revisit only if a concrete missing operation appears in daily use.
+switching.
 
 Coasts shares its local Caddy CA across instances. After the first successful
 startup, the controller copies the public certificate to
@@ -140,8 +138,8 @@ explicit.
 Removing a worktree through Worktrunk still stops its Coast, drops its database,
 deletes its blob container, and removes the Coast. Cleanup failure blocks
 worktree removal and preserves a pending record for retry. Stopping an instance
-with pending cleanup preserves that state; starting it's refused until removal
-succeeds. Only that instance's data is deleted; shared
+with pending cleanup preserves that state; the controller refuses to start it
+until removal succeeds. Only that instance's data is deleted; shared
 service volumes are never reset. Stopping an instance preserves its data.
 
 Resume checks Docker's outer-container state as well as Coast's recorded state.
@@ -179,10 +177,10 @@ unreadable without the old keys. See [environment configuration](../docs/env.md)
 As with other Coast configuration changes, existing instances must be removed
 and recreated to adopt these mounts; removal deletes their development data.
 
-If another process takes a stopped instance's reserved dynamic port, `ensure`
+If another process takes a stopped instance's reserved dynamic port, `coasts up`
 reports the occupied port before starting Docker, instead of changing its
 origin. A bind race can still fail in Docker; its detailed error is in the
-lifecycle log. Release that port and retry `ensure`; don't
+lifecycle log. Release that port and retry `coasts up`; don't
 remove the instance or reset its data. The root test stack uses 5432 and 27017,
 so it can run alongside the shared Coast services on 15432 and 11000. Those
 fixed shared-service ports must remain available to Coast; there is no automatic
@@ -208,8 +206,7 @@ The controller never automatically recreates shared storage. In Coasts 0.1.53,
 `shared-services start` starts an existing registered container; it can't
 recreate a removed service. `shared-services rm` deletes the service's named
 volumes as well as its container and registration. Don't use it to repair
-connectivity. That release's documentation mentions **Refresh Shared Services**,
-but its UI doesn't build the operation.
+connectivity.
 
 To deliberately provision a missing shared service, use a temporary, unassigned
 Coast from the primary worktree. Choose an unused temporary instance name:
@@ -225,21 +222,6 @@ this unmanaged temporary Coast preserves shared services. Existing named volumes
 are reused; absent volumes are created empty. Then run `coasts up` from the
 affected worktree to initialize its database, apply migrations, and check
 app readiness. Keep using `coasts remove` for managed instances.
-
-The relevant pinned implementations are
-[shared-service provisioning](https://github.com/coast-guard/coasts/blob/v0.1.53/coast-daemon/src/handlers/run/shared_services_setup.rs),
-[proxy restoration during start](https://github.com/coast-guard/coasts/blob/v0.1.53/coast-daemon/src/handlers/start.rs),
-and [shared-service lifecycle commands](https://github.com/coast-guard/coasts/blob/v0.1.53/coast-daemon/src/handlers/shared.rs).
-
-Live validation on 2026-09-10 provisioned a fresh shared Postgres through a
-temporary Coast and restored the existing instance with Coast stop/start.
-Database initialization, migrations, storage initialization, and app
-readiness succeeded. Killing the verified Postgres proxy listener and removing
-its alias from `docker0` reproduced an unreachable database while the outer
-container remained running. `coasts up` repaired it in 36.60 seconds. A normal
-stop/resume took 2.20/28.13 seconds. Both preserved a test database row, the
-instance data ID, and the HTTPS URL; the test table and temporary Coast were
-removed. These are single observations, not benchmarks.
 
 ### Builds, dependencies, and rollout
 
@@ -299,7 +281,7 @@ Compose allows 50 seconds for shutdown, exceeding the default task budget of 40
 seconds; increase that grace period if you increase the app budget.
 
 Migrations run once as a prerequisite at startup, without a watcher. After
-editing migration code or SQL, use `ensure --rebuild` explicitly. Ordinary
+editing migration code or SQL, use `coasts up --rebuild` explicitly. Ordinary
 service edits never apply migrations.
 
 Host dependencies are no longer installed by a blocking Worktrunk hook. Run

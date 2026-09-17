@@ -18,9 +18,8 @@ BLAST result zip).
 | `@virtool/archive/compression` | `compressFile`, `decompressFile`, `decompressGzipToFile`, `DecompressedSizeLimitError`, `isGzipped` |
 | `@virtool/archive/errors` | `ArchiveError`, `TarArchiveError`, `TarMemberMissingError`, `TarTargetExistsError`, `ZipArchiveError`, `ZipMemberMissingError` |
 
-Prefer a subpath. `@virtool/workflow` no longer re-exports any of these.
-consumers import them from here directly, so the definition site stays
-greppable.
+Prefer a subpath. Consumers import these functions directly from this package
+so their definitions remain easy to find.
 
 ## Which tar function
 
@@ -43,14 +42,14 @@ arrived. That's acceptable for the one thing here that reads a zip: an NCBI
 BLAST result that's only a handful of kilobytes. Anything a user
 uploaded goes through tar, or nowhere.
 
-## Two rules the extractors carry so callers can't get them wrong
+## Extraction safety rules
 
 **Every entry is drained.** `tar-stream` doesn't advance past an entry that's
 neither piped nor `resume()`d. It stalls silently and forever, with no error or
 exit. Both loops resume what they skip, and both have a regression test that
 asserts completion under a timeout rather than asserting an error.
 
-**Every entry is validated, wanted, or not.** Absolute paths, `..` segments and
+**Validation applies to every entry, including ones the caller didn't request.** Absolute paths, `..` segments and
 anything that's not a plain file or directory fail the extraction. A guard that
 only looks at what the caller asked for never looks at the payload.
 
@@ -69,7 +68,7 @@ runs `pigz`.
 `decompressGzipToFile` takes an `AsyncIterable<Uint8Array>` so object-storage
 callers can inflate directly into a destination without buffering or retaining
 a compressed copy. Its optional limit counts decompressed bytes and fails with
-`DecompressedSizeLimitError`; its optional cancellation signal tears down the whole
+`DecompressedSizeLimitError`; its optional `AbortSignal` tears down the whole
 pipeline.
 
 ## Testing

@@ -224,12 +224,10 @@ pub fn filter_fastq_file(
             }
         }
 
-        // Check if EOF was reached
         if lines.is_empty() {
             break;
         }
 
-        // Check if a complete 4-line record is present
         if lines.len() != 4 {
             break;
         }

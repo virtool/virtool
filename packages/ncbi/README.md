@@ -2,9 +2,8 @@
 
 A client for NCBI Nucleotide and NCBI Taxonomy.
 
-It's a port of `ref_builder/ncbi/` from the [ref-builder](https://github.com/virtool/ref-builder)
-project, which is the specification the projections here hit. The models are a
-projection into a known shape, not a general GBSeq parser.
+The models project responses into Virtool's established record shapes; this
+isn't a general GBSeq parser.
 
 ## Surface
 
@@ -41,11 +40,11 @@ Four call shapes cover everything:
 ESearch supports `retmode=json` and EFetch doesn't, for any database, so two
 of the four are typed JSON fetches.
 
-**NCBI's Datasets v2 API isn't used for taxonomy.** The team evaluated and
-rejected: it's still `v2alpha`, and it takes two calls. The calls are
+**NCBI's Datasets v2 API isn't used for taxonomy.** It's still `v2alpha` and
+requires two calls:
 `taxonomy/taxon/{id}/dataset_report` for the ranked lineage and
-`.../name_report` for acronyms and synonyms. These are needed to
-cover what one `efetch(taxonomy)` returns in a single response, and it has no
+`.../name_report` for acronyms and synonyms. Together they cover what one
+`efetch(taxonomy)` returns in a single response. The API also has no
 subtree search at all, only a taxon's direct `children`, which would turn one
 request into a recursive walk.
 
@@ -59,9 +58,7 @@ rate-limiting ever makes that worth building.
 
 ## NCBI's irregularities
 
-These are handled deliberately because Biopython's `Entrez.read()`, with its
-DTD-driven coercion and years of accumulated special cases, is what this
-client does without.
+NCBI responses require explicit handling for the following cases:
 
 - **Errors returned with HTTP 200.** An ESearch refusal arrives as
   `{"esearchresult": {"ERROR": "..."}}` with a 200 status. It's detected
@@ -78,7 +75,7 @@ client does without.
   decision in the models rather than the parser.
 - **Qualifiers written bare are flags.** `/proviral` has a name and no value,
   and becomes `true`.
-- **A fetch of many accessions can answer with fewer.** NCBI sends what it has
+- **A batch fetch can return fewer records than requested.** NCBI sends what it has
   and says nothing about the rest.
 - **An unknown accession isn't a 404.** NCBI answers with HTTP 200 and an
   empty `GBSet` that contains an error string.
@@ -93,8 +90,7 @@ paid for with a refusal that costs another request against the same limit.
 `fetchDescendantTaxids` is the one call that's not a fixed number of requests.
 The subtree search is one, but NCBI sends no rank alongside the ids, so telling
 subspecific taxa from the rest costs a taxonomy fetch per descendant. A species
-with a dozen isolates takes seconds. ref-builder pays the same cost; it's
-inherent to the question, not to this implementation.
+with a dozen isolates takes seconds. This cost is inherent to the request.
 
 `apiKey` is the instance's NCBI API key. An empty string means no key is
 configured and `api_key` is left off the query string entirely. NCBI treats a
@@ -112,26 +108,24 @@ a malformed term and is returned to the caller, since no later attempt settles
 it. A caller's `AbortSignal` escapes untranslated so a drain stops rather than
 retrying.
 
-## One record or many
+## Single and batch fetches
 
 Use `fetchGenbankRecord` for one accession and `fetchGenbankRecords` for a set.
 They differ in what they do with a record that this client can't read: the
 batch drops it, and the single fetch throws `NcbiUnreadableError`. The reason
 for each is on the function.
 
-## Divergences from ref-builder
+## API boundaries
 
-- **`rank` is a plain string.** ref-builder rejects any taxon preceding species at
-  validation time, because an OTU must be species-or-below. That's a
-  reference-building policy, not a property of the record, and this client is
-  also used to check an arbitrary taxonomy ID a user has typed. `getSpecies()`
-  returns `null` for a taxon preceding species rather than throwing.
-- **No `fetch_lineage`.** It assembles ref-builder's own `Lineage` and `Taxon`
-  domain objects, which belong to reference building rather than to an NCBI
-  client. The pieces it's built from, `fetchTaxonomyRecord` and
-  `fetchDescendantTaxids`, are both here.
-- **No on-disk cache.** `NCBICache` writes to a user cache directory, which
-  suits a command-line tool and not a server. Caching belongs to the caller.
+- **`rank` is a plain string.** Requiring an OTU to be at species rank or lower
+  is a reference-building policy, not a property of an NCBI record. This client
+  also checks arbitrary taxonomy IDs. `getSpecies()` returns `null` for a taxon
+  at a rank higher than species rather than throwing.
+- **No lineage domain objects.** `Lineage` and `Taxon` belong to reference
+  building. Callers can assemble them from `fetchTaxonomyRecord` and
+  `fetchDescendantTaxids`.
+- **No on-disk cache.** Caching belongs to the caller because this package is
+  used by a server, not a command-line tool.
 
 ## Testing
 
@@ -142,15 +136,14 @@ pnpm --filter @virtool/ncbi test
 ### Differential tests
 
 `src/differential.test.ts` is the correctness bar. `src/fixtures/expected/`
-holds ref-builder's own validated models, copied from its
-`tests/fixtures/ncbi/otus/`; `src/fixtures/genbank/` and
+holds validated models copied from [ref-builder](https://github.com/virtool/ref-builder);
+`src/fixtures/genbank/` and
 `src/fixtures/taxonomy/` hold the raw NCBI responses for the same 47
-accessions and 11 taxonomy IDs. The test parses the responses and asserts the result
-equals ref-builder's model, field for field.
+accessions and 11 taxonomy IDs. The test parses the responses and compares the
+result with the expected model field by field.
 
-**ref-builder records no raw XML of its own.** Everything it keeps is already
-past `Entrez.read()`. Recording the responses here is what puts the
-XML-to-model step under test rather than only the model step.
+The expected models don't contain raw XML. Recording the responses here puts
+the XML-to-model step under test rather than only the model shape.
 
 Refresh the recorded responses with:
 
@@ -183,7 +176,6 @@ field is.
 
 ## Residual risk
 
-The fixtures cover organisms that are already curated, so novel GBSeq shapes
-from new submissions still surprise. The live smoke tests and the golden
-files, which can be refreshed, are how that surfaces as a reviewable diff rather
-than a silent regression.
+The fixtures cover organisms that are already curated, so new submissions may
+introduce untested GBSeq shapes. The live smoke tests and golden files surface
+those changes as reviewable diffs rather than silent regressions.

@@ -57,18 +57,15 @@ and gzipping back to produce bytes the user already sent.
 Writing them next to their sources as `reads_{i + 1}.fq.gz` is a collision
 waiting to happen: upload names are user-supplied, so a sample whose *second*
 upload is called `reads_1.fq.gz` would have the first upload renamed onto it,
-destroying the second's bytes, and finalization with one read stored twice.
+destroying the second's bytes and causing finalization to store one read twice.
 Separate directories put the target names out of reach of the source names. The
 rename is still a rename. Both directories are under the one work path, which
 is all `rename(2)` requires.
 
-**`quality-core` does the work FastQC would, and the step id still names
-FastQC.** FastQC is a Java program behind a Perl launcher that forces a JRE and
-the full `perl` into an image, holds ~250 MB per file in flight, and produces a
-blob small enough to be beside the point. The crate computes the same seven
-fields in one streaming pass. See its README for the statistics it reproduces
-and the one place it deliberately differs, which is that it doesn't reproduce
-FastQC's base-position binning.
+**`quality-core` computes the quality statistics, while the step id still names
+FastQC.** The crate computes the seven stored fields in one streaming pass. See
+its README for the definitions and the deliberate difference in base-position
+binning.
 
 The step id is `run_fastqc`, because a step id is stored in the `jobs.steps`
 column and rendered by the UI, so renaming one changes what users see. Its
@@ -87,12 +84,8 @@ quality objects.
 the user to remove, and the jobs API exposes no destructive route a job key
 could reach. This matches `create_subtraction`, `pathoscope` and `nuvs`.
 
-**The image installs nothing.** It used to need a JRE *and* the full `perl` for
-FastQC, whose launcher opens with `use FindBin`. `FindBin` lives in
-`perl-modules-5.36`, not the `perl-base` the Node image carries, and whose
-absence failed at exec with a message about `@INC`. `quality-core` is one
-static binary linking nothing but glibc, so the runtime stage copies it in and
-that's all. The image went from 886 MB to 491 MB.
+**The runtime installs only `pigz`.** `quality-core` links only glibc, so it
+doesn't require a JRE, Python, Perl, or additional shared libraries.
 
 ## Fixtures
 

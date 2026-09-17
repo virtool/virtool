@@ -22,19 +22,18 @@ The second step begins with the creation of a Bowtie2 mapping index containing a
 isolates of the OTUs identified in the _default_ isolate mapping. This step provides a
 more diverse mapping target for each virus and allows isolate-level detection.
 
-A major complication of this diagnostic method is multi-mapping, the situation in which
-single reads find many mapping positions in a set of reference sequences. It's possible to make
-the assumption that there are only a small number of real source sequences in the sample.
-In practice, reads with a single real source sequence find many mapping locations in
-Virtool references. This is especially true when OTUs contain large numbers of similar
-isolates.
+A major complication of this diagnostic method is multi-mapping, where a single
+read aligns to multiple positions in the reference sequences. Although a sample
+may contain only a small number of true source sequences, reads from one source
+can align to multiple locations in the Virtool reference. This is especially
+common when an OTU contains many similar isolates.
 
 Virtool uses the [Pathoscope2 library](https://github.com/PathoScope/PathoScope) to
 reassign multi-mapped reads to their most likely source sequences. An expectation
 maximization (EM) algorithm is used to perform the reassignment. Pathoscope makes the
 assumption that source sequences with high numbers of **uniquely mapped**
 (not multi-mapped) reads are most likely to be real source sequences. Read counts are
-reassigned fractionally when it's assigned to many genomes after reassignment.
+fractionally reassigned when a read maps to multiple genomes.
 
 ## Quality
 
@@ -46,17 +45,16 @@ interest. These analyses can be found under the **Analyses** tab.
 Click the **PathoscopeBowtie**.
 ![PathoscopeBowtie](./header.png?url)
 
-Pathoscope is the primary tool in Virtool used for determining whether a known virus is
-present in a sample. Many statistics are used to determine the presence of a
-pathogen.
+Pathoscope uses mapped-read percentage, coverage, depth, and weight to determine
+whether a known virus is present in a sample.
 
 Generally, approximately 5 million reads is a good base line for a dsRNA library,
 but the percentage of mapped reads is of greater importance. For dsRNA, percentages
-can range from less than 1% to greater than 80%. The greater the enrichment of viral RNA
-(that's, the higher the percent of mapped reads) the less number of total reads are required.
+can range from less than 1% to greater than 80%. Greater viral RNA enrichment, measured
+by the percentage of mapped reads, reduces the total number of reads required.
 For example, 2% of 5 million reads or 100 000 mapped reads is good.
 
-Extra statistics include:
+Other statistics include:
 
 **Coverage:** a measure for how well the mapped reads cover the viral genome. In general,
 coverage of greater than 0.5 indicates positive detection and coverage less than 0.2
@@ -77,9 +75,7 @@ of enrichment of viral RNA.
 Additionally, all three pathogens have high weight, depth, and coverage values, so
 the pathogens can be confidently identified as present in the sample.
 
-The results from Pathoscope were successful in identifying the pathogens present in the
-sample, so further analysis using Nuvs isn't necessary. An sign that would
-result in using Nuvs would be if the results showed high weight and depth values in
-combination with low coverage values. This would show that the virus sequence in the
-sample may differ from what's in the database. This may represent a
-new genotype or possibly a new, closely related virus.
+Further analysis with Nuvs isn't necessary for this sample. High weight and depth
+combined with low coverage would instead suggest that the virus sequence differs from
+the database reference. This may represent a new genotype or a new, closely related
+virus.

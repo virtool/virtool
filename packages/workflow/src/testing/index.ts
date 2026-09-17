@@ -1,8 +1,7 @@
 /**
  * The workflow test harness, exported as `@virtool/workflow/testing`.
  *
- * It is what every workflow app's tests stand on. Three rules hold it
- * together:
+ * Every workflow app uses it. Three rules govern the harness:
  *
  * - **Everything is a factory function.** Nothing is installed by importing this
  *   module, and there is no module-level mutable state — Vitest runs test files

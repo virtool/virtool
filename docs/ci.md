@@ -17,17 +17,12 @@ jobs. `release-ghcr` publishes all six targets on every release.
 
 `dist` retains its name because tooling outside this repository targets it.
 
-The four workflow images publish under their bare, unprefixed names. Those
-names before came from separate legacy repositories shipping the Python
-workflow of the same name; this repository's release supersedes them. The
-`ts-` prefixed variants were a transitional second tag during the TypeScript
-port and are no longer published; their existing tags stay in the registry
-but never move again.
+The four workflow images publish under their bare, unprefixed names.
 
 Adding an image requires a Dockerfile target and a release-matrix entry. For
-the five targets in `build`, keep its matrix entry in step with
-`release-ghcr`. Pathoscope and Nuvs instead use the dedicated build jobs
-preceding, and their `matrix.image` values must match the cache scopes those jobs
+the four targets in `build`, keep its matrix entry in step with
+`release-ghcr`. Pathoscope and Nuvs instead use the dedicated build jobs listed
+in the table, and their `matrix.image` values must match the cache scopes those jobs
 write, so the release reuses the caches they populated rather than rebuilding
 the Rust crate, bioinformatics tools, or SPAdes inside the shared 20-minute
 release timeout.

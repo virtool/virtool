@@ -36,7 +36,7 @@ import {
 } from "./core";
 
 // `createAuthenticatedSession` is the third and last write in the reset. Making
-// it fail is how the partial failure that the transaction has to undo is driven. The
+// it fail creates the partial failure that the transaction must undo. The
 // rest of the module keeps its real behaviour — the other two writes must
 // actually hit the database for a rollback to be worth asserting.
 vi.mock("@virtool/data/auth/session", async (importOriginal) => {

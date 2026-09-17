@@ -121,7 +121,7 @@ The web server parses storage configuration in `src/server/config.ts`.
 `VT_STORAGE_BACKEND` is required and must be `s3` or `azure`; there is no
 filesystem backend.
 
-| Variable | Backend | Need |
+| Variable | Backend | Requirement |
 | --- | --- | --- |
 | `VT_STORAGE_BACKEND` | Both | Required |
 | `VT_STORAGE_S3_BUCKET` | S3 | Required |
@@ -151,8 +151,9 @@ the whole object could include storage credentials in the browser bundle.
 ### Backend behavior
 
 For custom S3 endpoints, the backend enables path-style addressing; AWS uses
-virtual-hosted addressing. Multipart parts use S3's 5 MiB min rather than
-the smaller streaming chunk size. Response checksum validation is off to
+virtual-hosted addressing. Multipart uploads use S3's 5 MiB minimum part size
+rather than the smaller streaming chunk size. Response checksum validation is
+turned off to
 support Garage's multipart checksum representation, while uploads continue to
 send checksums.
 
@@ -168,11 +169,11 @@ Use `MemoryStorage` for data and service unit tests. Streaming, draining, and
 listing fixtures are exported from `@virtool/storage/test/fixtures`.
 
 The storage package's integration Vitest project runs the shared backend suite
-against Garage and Azurite. Garage setup uses a single instance and
-credentials through its administrator API and waits on a log line because the image is
-distroless. Containers are reused; tests isolate and purge their own
-`test/{worker}/{testName}/` prefixes. Run storage server tests in Node
-environment so typed arrays come from the same JavaScript realm.
+against Garage and Azurite. Garage setup uses its administration API to
+configure a single-server layout and credentials, then waits on a log line
+because the image is distroless. Containers are reused; tests isolate and purge
+their own `test/{worker}/{testName}/` prefixes. Run storage server tests in a
+Node environment so typed arrays come from the same JavaScript realm.
 
 ## Schema ownership
 
@@ -185,9 +186,9 @@ moved here. Production was stamped as already migrated rather than having that
 baseline applied to it, so it must never be run against an existing database.
 
 Many tables keep legacy shapes, including `legacy_` prefixes, dead columns held for
-snapshot fidelity, promoted-from-JSONB projections. Serve them as they're
-rather than renormalizing them; the schema files say per-table what's dead and
-what's load-bearing.
+snapshot fidelity, promoted-from-JSONB projections. Preserve these shapes rather
+than renormalizing them; the schema files identify which fields are dead and
+which are load-bearing.
 
 Keep `drizzle-orm` and `drizzle-kit` on compatible versions. Check both release
 notes when updating either package because their schema-generation internals
@@ -309,9 +310,7 @@ a configuration error to report, not a value to replace: `resolveNcbiApiKey`
 writes nothing, so the stored key survives a bad encryption key, and lookups
 fall back to the anonymous rate limit rather than failing.
 
-<!-- vale Google.WordListCase = NO -->
-## Email delivery
-<!-- vale Google.WordListCase = YES -->
+## Outbound email
 
 `src/email/` owns transactional email configuration, the durable outbox,
 templates, retries, and the Resend integration. The periodic `deliver_email`

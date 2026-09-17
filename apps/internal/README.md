@@ -10,7 +10,8 @@ the first argument to the bundle (`node dist/index.mjs <command>`):
 | `run` | The periodic task spawner and the task runner, in one long-lived process. |
 | `migrate` | Applies pending Drizzle migrations, then exits. Run as an init Job. |
 
-Image: `ghcr.io/virtool/internal`. The image is fused; the processes aren't.
+Image: `ghcr.io/virtool/internal`. The image is shared; the processes are
+separate.
 `serve` scales to N request replicas, while `run` is a lease singleton. Folding
 them into one process would multiply task-lease contention across every HTTP
 replica, so they stay separate containers differentiated only by the argument
@@ -20,8 +21,8 @@ each passes.
 selected command's graph, so the migration Job never loads Hono and the HTTP
 server never loads the task registry. Each command lives under its own
 directory. The directories are `src/serve/`, `src/run/`, and `src/migrate/`.
-Each owns its own config,
-Sentry service name (`jobs-api`, `tasks`, `migrate`) and fatal logging.
+Each owns its own config, Sentry service name (`jobs-api`, `tasks`, `migrate`),
+and fatal logging.
 
 ## `serve`: the jobs API
 
@@ -51,7 +52,7 @@ resource's `{domain}/{parentId}/` prefix, reads the object's size from storage,
 and records the submitted key verbatim. Keys with a leading slash, an empty
 segment, or a `..` segment are invalid.
 
-The shared contracts enforce the min usable output: a sample has one or two
+The shared contracts enforce the minimum valid output: a sample has one or two
 reads, a subtraction has at least its source FASTA, and an analysis requires
 `results` but may have an empty file manifest. Subtraction runs write only
 `subtraction.fa.gz`; reads still serve older subtractions whose rows also
@@ -65,8 +66,8 @@ before registering it, and an already-registered logical key is success.
 
 **One** long-lived process carries both halves of Virtool's task system: the
 periodic spawner that inserts scheduled tasks, and the runner that claims and
-executes what it spawns. The process has no ingress and **no Service**. Its HTTP listener
-serves only `GET /health/live`, `GET /health/ready` and a token-gated
+executes what it spawns. The process has no ingress and **no Service**. Its HTTP
+listener serves only `GET /health/live`, `GET /health/ready`, and a token-gated
 `GET /metrics` on `VT_TASKS_PROBE_PORT` (**9900**).
 
 Neither half has a flag to turn it off. A minute of task lag is invisible to a
@@ -83,14 +84,14 @@ imported to read a type without opening anything.
 - `src/run/spawner.ts`: the periodic spawner over `src/run/tasks/periodic.ts`
 - `src/run/runner.ts`: claim, dispatch, heartbeat, and drain
 - `src/run/framework/`: `defineTask`, the progress writer, and `runTask`
-- `src/run/tasks/`: the task bodies, named for the `type` column in skewer case
+- `src/run/tasks/`: the task bodies, named for the `type` column in kebab-case
   (`refresh-hmms.ts` for `refresh_hmms`), registered in
   `src/run/tasks/registry.ts`
 - `src/run/download.ts`: downloading a release archive to disk, with the
   bounded retry, idle-stall timeout and status check `install_hmms` needs
 
-A claim is a lease encoded on `acquired_at`, renewed every 60 s, and live for
-300. A reclaimed task re-runs from step zero, so **every task body must be
+A claim is a lease encoded on `acquired_at`, renewed every 60 seconds, and live
+for 300 seconds. A reclaimed task re-runs from step zero, so **every task body must be
 idempotent**.
 
 ### Task names and queue ownership
@@ -126,9 +127,9 @@ fraction from 0 to 1, and the framework debounces, serializes, and keeps writes
 monotonic. Task bodies don't write the `tasks` table or publish task events
 themselves.
 
-Cleanup runs after failure or cooperative cancellation, but not after success. Its
-reason distinguishes terminal failure from a cancelled run that another runner
-another runner retries it. Cleanup errors are logged without replacing the original outcome.
+Cleanup runs after failure or cooperative cancellation, but not after success.
+Its reason distinguishes terminal failure from a cancelled run that another runner
+may retry. Cleanup errors are logged without replacing the original outcome.
 
 Every task body must:
 
@@ -140,15 +141,16 @@ Every task body must:
 
 ### Spawner
 
-The spawner checks `PERIODIC_TASKS` every 30 seconds. A task's interval is a
-min suppression window, not an exact schedule, and a new row is created
-only when no outstanding task of that type exists. An outstanding row that
+The spawner checks `PERIODIC_TASKS` every 30 seconds. A task's interval is the
+minimum time before another task of that type can be spawned, not an exact
+schedule. A new row is created only when no outstanding task of that type
+exists. An outstanding row that
 never finishes stops suppressing the type once it ages past the wedge ceiling
 (`TASK_WEDGE_SECONDS`), so a runner stuck without ever completing or failing
 its task can't block the type for good.
 
 Each spawn attempt takes a transaction-scoped advisory lock derived from the
-bare task name. This prevents many replicas from inserting the same
+bare task name. This prevents multiple replicas from inserting the same
 periodic task. A failure for one type is logged without skipping the remaining
 types or stopping the loop.
 
@@ -181,8 +183,8 @@ non-zero if any step fails. A second signal is logged and ignored.
 The runner stops claiming, waits for its in-flight task within
 `VT_TASKS_DRAIN_TIMEOUT`, aborts it if necessary, waits briefly for cooperative
 cleanup, stops the heartbeat, and releases this runner's remaining claims. The
-drain timeout is part of the total shutdown budget, not extra to it. The
-container must execute Node directly so SIGTERM reaches these handlers.
+drain timeout is included in the total shutdown budget. The container must
+execute Node directly so SIGTERM reaches these handlers.
 
 ## `migrate`: database migrations
 
@@ -236,7 +238,7 @@ a rate has a prior sample and a failure series at zero reads as evidence.
 splitting it by template would thin the samples behind every quantile.
 `virtool_email_availability` is one-hot, so
 `virtool_email_availability{state="ready"} == 1` is directly alertable. The
-`off` state still delivers: switching sending off stops new mail entering
+`disabled` state still delivers: switching sending off stops new mail entering
 the outbox, and `deliver_email` drains what was already queued, so the outbox
 gauge falls to zero instead of holding until sending returns.
 
@@ -266,7 +268,7 @@ unset.
 | `VT_POSTGRES_URL` | URL | Required | Connect to the Virtool Postgres database. |
 | `VT_POSTGRES_POOL_MAX` | Positive integer | `10` | Limit the Postgres connection pool (`serve` and `run`; `migrate` always uses one connection). |
 | `VT_METRICS_TOKEN` | String | Unset | Enable `/metrics` and authenticate scrapes with a bearer token. When unset, `/metrics` returns 404. |
-| `VT_SENTRY_DSN` | URL string | Unset | Send errors to Sentry. When unset, Sentry is off. |
+| `VT_SENTRY_DSN` | URL string | Unset | Send errors to Sentry. When unset, errors aren't sent to Sentry. |
 | `VT_ENCRYPTION_KEY` | Base64 string (32 bytes) | Unset | `run`: decrypt secrets stored by Virtool, currently the Resend API key for `deliver_email`. When unset or invalid, email is unavailable and every other task runs normally. See [the encryption-key guide](../../docs/env.md#encryption-key). |
 | `VT_ENCRYPTION_KEY_PREVIOUS` | Base64 string (32 bytes) | Unset | `run`: accept encrypted values written under the prior key during rotation. |
 | `VT_STORAGE_BACKEND` | `s3` \| `azure` | Required | Select the object-storage backend shared with the other Virtool services. |

@@ -3,16 +3,6 @@ use crate::matrix::PathoscopeMatrix;
 use crate::PathoscopeError;
 use rustc_hash::FxHashMap;
 
-// TODO: Fix the updated score calculation logic
-// The current implementation includes any alignment where posterior probability >= p_score_cutoff,
-// but this may not match the expected behavior. The Rust unit test that was attempted revealed
-// that read1 with probability 0.1 for ref1 gets included because 0.1 > 0.01, even though
-// read1 has a higher probability (0.9) for ref0. This suggests the current logic includes
-// ALL alignments above threshold rather than just the best assignments per read.
-//
-// This behavior is currently pinned as correct by the golden vectors, but it should be
-// investigated to determine whether it is intended or whether only the best
-
 /// Calculate coverage from BAM file directly (second pass approach)
 ///
 /// This function reads the BAM file a second time to calculate coverage,
@@ -83,7 +73,6 @@ pub fn calculate_coverage_from_bam(
             let ref_name =
                 std::str::from_utf8(header.tid2name(record.tid() as u32))?.to_string();
 
-            // Get indices from the mappings
             let read_index = match read_name_to_idx.get(&read_name) {
                 Some(&idx) => idx,
                 None => continue, // Read not in matrix, skip
@@ -168,7 +157,6 @@ mod tests {
         // Basic assertions
         assert!(!coverage.is_empty(), "Coverage should not be empty");
 
-        // Check that the references in the matrix have coverage
         for ref_name in &matrix.refs {
             assert!(
                 coverage.contains_key(ref_name),

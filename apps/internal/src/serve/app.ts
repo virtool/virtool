@@ -82,9 +82,9 @@ export type AppDeps = {
 	 * Report an unhandled error to Sentry.
 	 *
 	 * Injected rather than imported so `app.ts` carries no dependency on
-	 * `@sentry/node` — the SDK's graph stays out of the test path, and "did the
-	 * report it?" is assertable with a `vi.fn()`. Optional because a test app
-	 * has nothing to report to.
+	 * `@sentry/node`, the SDK's graph stays out of the test path, and tests can
+	 * assert reporting with a `vi.fn()`. Optional because a test app has nothing
+	 * to report to.
 	 */
 	captureException?: (err: unknown) => void;
 };
@@ -221,7 +221,7 @@ export function createApp(deps: AppDeps): Hono {
 	);
 
 	// These routes sit at the top level because this is a separate service. Each
-	// handler calls the job-auth guard itself; nothing here runs middleware for it.
+	// handler performs job authentication directly; no middleware does it here.
 	app.get("/caches/:key", (c) =>
 		handleGetCache(deps, c.req.raw, c.req.param("key")),
 	);

@@ -18,15 +18,11 @@ any consumer saw a change, and the type-declaration trap that
 `apps/web/src/server` lives with (`TS2883`, no `.d.ts`, every
 `@server/*` import breaking at once) would spread to every package.
 
-## The bundler is tsdown
+## Bundling with tsdown
 
-`tsdown` is Rolldown-backed and declares itself the successor to tsup,
-whose own README declares that project unmaintained. Rolldown was already
-in this repo's dependency graph through `@rolldown/plugin-babel`, so it
-adds no new toolchain family.
+`tsdown` is the Rolldown-backed bundler for non-Vite apps.
 
-The deciding argument was knip. **knip ships a `tsdown` plugin**, and it
-reads two things out of `tsdown.config.ts`:
+Knip's `tsdown` plugin reads two settings from `tsdown.config.ts`:
 
 - `entry` becomes the workspace's production entry points, so knip finds
   the app's source without a `knip.json` block; and
@@ -34,10 +30,9 @@ reads two things out of `tsdown.config.ts`:
   a package that appears in the app's manifest only because the bundle
   imports it at top level isn't reported as unused.
 
-Between them, an app needs no entry in `knip.json` at all. Raw Rolldown
-and esbuild have knip plugins too, but neither gives you the second half.
+Together, these settings let an app avoid a separate `knip.json` entry.
 
-Externals must so be written as **string literals** in
+Write externals as **string literals** in
 `deps.neverBundle`. A regular expression there is invisible to knip and
 its packages come back as unused dependencies.
 
@@ -68,7 +63,7 @@ list gets inlined. This includes `drizzle-orm` and `es-toolkit`, for instance. T
 deliberate: it keeps the deployed `node_modules` to the handful of
 packages that genuinely have to be real files on disk.
 
-An app's `package.json` must so declare every external directly,
+An app's `package.json` must therefore declare every external directly,
 even when the import comes from inside a workspace package. Bundling
 flattens the module graph, so `import postgres from "postgres"` ends up at
 the *top level* of the app's `dist/index.mjs` and resolves from the app's
@@ -132,7 +127,7 @@ Dockerfile stage and a CI matrix entry. This is the one deliberate exception.
   `biome.json`'s `files.includes`, because Astro isn't linted by biome.
 - **`pnpm typecheck` and `pnpm test`** were already `pnpm -r`; an app is
   picked up as soon as it declares the script.
-- **CI's `packages-test`** filters by exclusion: `!@virtool/web`,
-  `!@virtool/data`, and `!@virtool/storage`. These three have their own jobs.
-  rather than by an inclusion list, so a new workspace that declares
+- **CI's `packages-test`** filters by exclusion (`!@virtool/web`,
+  `!@virtool/data`, and `!@virtool/storage`) rather than by an inclusion list.
+  Those three workspaces have their own jobs, and a new workspace that declares
   `test` is covered without editing the job.
