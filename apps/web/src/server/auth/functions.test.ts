@@ -1,5 +1,9 @@
 import { createHmac } from "node:crypto";
-import { seedSetupSession, seedUser } from "@virtool/data/auth/test/fixtures";
+import {
+	seedSession,
+	seedSetupSession,
+	seedUser,
+} from "@virtool/data/auth/test/fixtures";
 import { createKeyring } from "@virtool/data/crypto/keyring";
 import type { Db } from "@virtool/data/db/pg";
 import { authAccounts, authSessions } from "@virtool/data/db/schema/auth";
@@ -59,6 +63,7 @@ vi.mock("./instance", () => ({
 	},
 }));
 const { createAuth } = await import("./betterAuth");
+const { sessionCookie } = await import("./test/fixtures");
 const handlers = (await import(
 	"./functions.ts?tss-serverfn-split"
 )) as SplitServerFnModule;
@@ -90,6 +95,32 @@ beforeEach(async () => {
 	await db.delete(emailOutbox);
 	await db.delete(settings);
 	await db.delete(users);
+});
+
+it("refreshes a foreground browser session at the configured interval", async () => {
+	const userId = await seedUser(db);
+	const previousActivity = new Date(Date.now() - 10 * 60_000);
+	const session = await seedSession(db, userId, {
+		absoluteExpiresAt: new Date(Date.now() + 2 * 60 * 60_000),
+		expiresAt: new Date(Date.now() + 30 * 60_000),
+		lastActivityAt: previousActivity,
+		lastRefreshedAt: previousActivity,
+	});
+	const cookie = sessionCookie(session).replace(
+		"better-auth.session_token",
+		"__Secure-better-auth.session_token",
+	);
+	const separator = cookie.indexOf("=");
+	cookies.set(cookie.slice(0, separator), cookie.slice(separator + 1));
+
+	expect(await callServerFn(handlers, "heartbeatBrowserSessionFn")).toEqual({
+		nextHeartbeatInMilliseconds: 300_000,
+	});
+
+	const [refreshed] = await db.select().from(authSessions);
+	expect(refreshed?.lastActivityAt.getTime()).toBeGreaterThan(
+		previousActivity.getTime(),
+	);
 });
 
 it("completes offline remediation with an unverified email and one session", async () => {

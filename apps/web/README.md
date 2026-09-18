@@ -192,7 +192,9 @@ user-initiated server functions. Passive reads, background refetches, SSE
 handshakes and revocation checks, API keys, retained legacy sessions, and
 restricted setup sessions authenticate without refreshing activity. The
 foreground heartbeat contract is `refreshBrowserPrincipalActivity`; browser
-activity detection and scheduling are owned by dependent client work.
+activity is recorded while the authenticated document is visible. Upgrading to
+this session model invalidates existing Better Auth sessions because a SQL
+migration cannot safely apply the deployment's runtime timing configuration.
 
 Uploads and downloads must stream. Resolve a requested file to a database row
 or explicit whitelist first, then use that row's `storage_key`; never construct
