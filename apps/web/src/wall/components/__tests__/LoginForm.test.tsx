@@ -3,9 +3,15 @@ import userEvent from "@testing-library/user-event";
 import { MemoryRouter, renderWithProviders } from "@tests/setup";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
-const { loginMock, verifyMock } = vi.hoisted(() => ({
+const { loginMock, navigateMock, verifyMock } = vi.hoisted(() => ({
 	loginMock: vi.fn(),
+	navigateMock: vi.fn(),
 	verifyMock: vi.fn(),
+}));
+
+vi.mock("@tanstack/react-router", async (importOriginal) => ({
+	...(await importOriginal<typeof import("@tanstack/react-router")>()),
+	useNavigate: () => navigateMock,
 }));
 
 vi.mock("../../queries", async () => {
@@ -24,7 +30,30 @@ import LoginForm from "../LoginForm";
 describe("<LoginForm />", () => {
 	afterEach(() => {
 		loginMock.mockReset();
+		navigateMock.mockReset();
 		verifyMock.mockReset();
+	});
+
+	it("carries the redirect into email remediation", async () => {
+		loginMock.mockResolvedValue({ remediation: true, reset: false });
+		const setResetRequired = vi.fn();
+
+		renderWithProviders(
+			<MemoryRouter>
+				<LoginForm redirect="/samples" setResetRequired={setResetRequired} />
+			</MemoryRouter>,
+		);
+
+		await userEvent.type(await screen.findByLabelText("Username"), "Alice");
+		await userEvent.type(screen.getByLabelText("Password"), "password");
+		await userEvent.click(screen.getByRole("button", { name: "Login" }));
+
+		await waitFor(() =>
+			expect(navigateMock).toHaveBeenCalledWith({
+				to: "/email-remediation",
+				search: { redirect: "/samples" },
+			}),
+		);
 	});
 
 	it("calls the login mutation with the form values", async () => {

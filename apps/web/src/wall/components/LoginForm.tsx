@@ -43,6 +43,13 @@ export default function LoginForm({
 						setResetRequired(true);
 						return;
 					}
+					if ("remediation" in data && data.remediation) {
+						navigate({
+							to: "/email-remediation",
+							search: { redirect },
+						});
+						return;
+					}
 					navigate({ to: redirect ?? "/" });
 				},
 			},

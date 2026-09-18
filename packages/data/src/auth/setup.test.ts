@@ -73,7 +73,11 @@ describe("issueSetupToken", () => {
 
 		await expect(
 			consumeSetupToken(db, remediation.token, "email_remediation"),
-		).resolves.toEqual({ userId, purpose: "email_remediation" });
+		).resolves.toEqual({
+			candidateEmail: null,
+			userId,
+			purpose: "email_remediation",
+		});
 	});
 });
 
@@ -84,7 +88,11 @@ describe("consumeSetupToken", () => {
 
 		await expect(
 			consumeSetupToken(db, token, "account_completion"),
-		).resolves.toEqual({ userId, purpose: "account_completion" });
+		).resolves.toEqual({
+			candidateEmail: null,
+			userId,
+			purpose: "account_completion",
+		});
 
 		const [row] = await db.select().from(setupTokens);
 		expect(row?.consumedAt).toBeInstanceOf(Date);

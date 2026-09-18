@@ -1,11 +1,19 @@
 import { accountQueryKeys } from "@account/keys";
 import {
+	completeEmailRemediationFn,
 	createFirstUserFn,
+	getEmailRemediationFn,
 	loginFn,
+	logoutFn,
 	resetPasswordFn,
+	submitEmailRemediationFn,
 	verifyTwoFactorFn,
 } from "@server/auth/functions";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import {
+	queryOptions,
+	useMutation,
+	useQueryClient,
+} from "@tanstack/react-query";
 import { rootQueryKeys } from "@wall/keys";
 
 /** Result of a login attempt. */
@@ -14,8 +22,17 @@ export type LoginResult = Awaited<ReturnType<typeof loginFn>>;
 /** Result of a successful password reset. */
 export type ResetPasswordResult = {
 	login: false;
+	remediation: boolean;
 	reset: false;
 };
+
+/** Query options for resumable restricted email-remediation state. */
+export function emailRemediationQueryOptions() {
+	return queryOptions({
+		queryKey: ["email-remediation"],
+		queryFn: () => getEmailRemediationFn(),
+	});
+}
 
 /**
  * Initializes a mutator for creating the first instance user.
@@ -91,4 +108,22 @@ export function useVerifyTwoFactorMutation() {
 			}
 		},
 	});
+}
+
+/** Submit an address for online verification or offline completion. */
+export function useSubmitEmailRemediation() {
+	return useMutation({
+		mutationFn: ({ email, redirect }: { email: string; redirect?: string }) =>
+			submitEmailRemediationFn({ data: { email, redirect } }),
+	});
+}
+
+/** Complete remediation with the one-time mailbox token. */
+export function completeEmailRemediation(token: string) {
+	return completeEmailRemediationFn({ data: { token } });
+}
+
+/** Abandon the restricted flow and clear every browser credential. */
+export function useCancelEmailRemediation() {
+	return useMutation({ mutationFn: () => logoutFn() });
 }

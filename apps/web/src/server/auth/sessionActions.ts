@@ -25,6 +25,14 @@ export const signOut = createServerOnlyFn(async () => {
 	return auth.api.signOut({ headers: getRequest().headers });
 });
 
+/** Mint the sole ordinary session after a restricted remediation commits. */
+export const createRemediationSession = createServerOnlyFn(
+	async (userId: number) => {
+		const { auth } = await import("./instance");
+		return auth.api.createRemediationSession({ body: { userId } });
+	},
+);
+
 /** Verify the pending second factor and copy the resulting session cookies. */
 export const verifyTwoFactor = createServerOnlyFn(
 	async (code: string, recovery: boolean) => {

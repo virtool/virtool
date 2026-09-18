@@ -1,6 +1,6 @@
 {
-  "id": "1a18e503-4f0b-4097-a8b4-6130b2db4355",
-  "prevId": "93b276c9-972e-4c63-b6e9-66df230dad0b",
+  "id": "32a996b4-dccc-4fc2-a0f9-9b88015d560f",
+  "prevId": "1a18e503-4f0b-4097-a8b4-6130b2db4355",
   "version": "7",
   "dialect": "postgresql",
   "tables": {
@@ -559,12 +559,6 @@
         "idx_api_keys_user_id": {
           "name": "idx_api_keys_user_id",
           "columns": [
-            {
-              "expression": "primary",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            },
             {
               "expression": "user_id",
               "isExpression": false,
@@ -1965,7 +1959,7 @@
             }
           ],
           "isUnique": true,
-          "where": "false",
+          "where": "\"user_groups\".\"primary\" = true",
           "concurrently": false,
           "method": "btree",
           "with": {}
