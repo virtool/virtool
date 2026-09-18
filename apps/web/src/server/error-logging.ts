@@ -13,8 +13,10 @@ import { logger } from "./logger";
  * recorded regardless of how each feature maps its own domain errors.
  *
  * Intentional client errors set a 4xx status before throwing (see each
- * feature's `rethrowAsHttp`); those are logged at debug. Anything else is
- * unexpected and logged at error with its full `cause` chain.
+ * feature's `rethrowAsHttp`); those are logged at debug. Expected
+ * authentication and authorization rejections omit the error object so routine
+ * 401/403 responses do not emit stacks or credential-bearing details. Anything
+ * else is unexpected and logged at error with its full `cause` chain.
  */
 export const errorLoggingMiddleware = createMiddleware({
 	type: "function",
@@ -29,7 +31,17 @@ export const errorLoggingMiddleware = createMiddleware({
 		const path = new URL(getRequest().url).pathname;
 		const serverFn = serverFnMeta.name;
 
-		if (status >= 400 && status < 500) {
+		if (status === 401 || status === 403) {
+			logger.debug(
+				{
+					errorName: err instanceof Error ? err.name : undefined,
+					path,
+					serverFn,
+					status,
+				},
+				"server function rejected request",
+			);
+		} else if (status >= 400 && status < 500) {
 			logger.debug(
 				{ err, path, serverFn, status },
 				"server function rejected request",
