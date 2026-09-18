@@ -22,6 +22,7 @@ import { migrate } from "drizzle-orm/postgres-js/migrator";
 import postgres from "postgres";
 import { expect, it, onTestFinished } from "vitest";
 import { z } from "zod";
+import { legacyIdentities } from "../data-migrations/bodies/legacy-identities";
 import {
 	type DataMigrationRegistry,
 	defineAudit,
@@ -32,7 +33,6 @@ import {
 	BOOTSTRAP_MIGRATION_TAG,
 	getDataMigrationAssertion,
 } from "../data-migrations/pairs";
-import { DATA_MIGRATIONS } from "../data-migrations/registry";
 import { applyGatedMigrations } from "./apply";
 import { createMigrationDb } from "./connection";
 
@@ -472,7 +472,7 @@ it("unblocks a failed version 1 at the real 0029 schema boundary", async () => {
 		false, 'user' || n, now(), ${password}, '{}'::jsonb FROM generate_series(1, 501) AS n`;
 	expect(
 		await f.apply({
-			registry: DATA_MIGRATIONS,
+			registry: { [legacyIdentities.key]: legacyIdentities },
 			migrationsFolder: folderFor(historical),
 		}),
 	).toEqual({ appliedThrough: "0029_audit_legacy_identities" });
