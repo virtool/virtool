@@ -158,10 +158,13 @@ Every task body must:
 The spawner checks `PERIODIC_TASKS` every 30 seconds. A task's interval is the
 minimum time before another task of that type can be spawned, not an exact
 schedule. A new row is created only when no outstanding task of that type
-exists. An outstanding row that
-never finishes stops suppressing the type once it ages past the wedge ceiling
-(`TASK_WEDGE_SECONDS`), so a runner stuck without ever completing or failing
-its task can't block the type for good.
+exists. An outstanding row that never finishes is failed once it reaches the
+wedge ceiling (`TASK_WEDGE_SECONDS`) before the spawner considers a
+replacement. The terminal write fences a runner that still holds the row, and
+retiring the row keeps a single runner from reclaiming it ahead of the
+replacement forever. The claim predicate also excludes periodic rows at the
+ceiling, closing the startup race between the runner's first claim and the
+first retirement pass by the spawner.
 
 Each spawn attempt takes a transaction-scoped advisory lock derived from the
 bare task name. This prevents multiple replicas from inserting the same
