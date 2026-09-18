@@ -82,7 +82,6 @@ const { getRootFn } = await import("../root/functions");
 const { createSampleFn, findSamplesFn, recordSampleViewFn } = await import(
 	"../samples/functions"
 );
-const { userActivityEndpoints } = await import("./activityEndpoints");
 const { basicAuthHeader, sessionCookie, setupSessionCookie } = await import(
 	"./test/fixtures"
 );
@@ -115,13 +114,11 @@ function serverHandler(
 	exceptions: ReadonlyArray<{ url: string }> = authenticationExceptions,
 	setup: ReadonlyArray<SetupEndpoint> = [],
 	passwordReset: ReadonlyArray<{ url: string }> = passwordResetEndpoints,
-	activity: ReadonlyArray<{ url: string }> = [],
 ) {
 	const middleware = createAuthenticationMiddleware(
 		async () => exceptions,
 		async () => setup,
 		async () => passwordReset,
-		async () => activity,
 	);
 	return (middleware as unknown as { options: { server: ServerHandler } })
 		.options.server;
@@ -141,13 +138,11 @@ function requestFor(cookie?: string, authorization?: string): Request {
 }
 
 function browserPrincipal(userId: number) {
-	const now = new Date();
 	return {
 		kind: "browser" as const,
 		sessionId: 1,
 		sessionStore: "better_auth" as const,
 		userId,
-		timing: { lastActivityAt: now, expiresAt: now, absoluteExpiresAt: now },
 	};
 }
 
@@ -181,65 +176,28 @@ describe("authentication exceptions", () => {
 });
 
 describe("browser boundary", () => {
-	it("classifies deliberate mutations but not query-shaped background work", () => {
-		const urls = new Set(userActivityEndpoints.map(({ url }) => url));
+	it.each([createSampleFn, findSamplesFn, recordSampleViewFn])(
+		"keeps application reads and mutations read-only ($url)",
+		async (fn) => {
+			const userId = await seedUser(db);
+			const expiresAt = new Date(Date.now() + 30 * 60_000);
+			const session = await seedSession(db, userId, {
+				expiresAt,
+			});
+			getRequest.mockReturnValue(requestFor(sessionCookie(session)));
 
-		expect(urls.has(createSampleFn.url)).toBe(true);
-		expect(urls.has(findSamplesFn.url)).toBe(false);
-		expect(urls.has(recordSampleViewFn.url)).toBe(false);
-		expect(urls.has(getPasswordPolicyFn.url)).toBe(false);
-		expect(urls.has(loginFn.url)).toBe(false);
-	});
+			await serverHandler()({
+				next: vi.fn().mockResolvedValue("result"),
+				serverFnMeta: metaFor(fn),
+			});
 
-	it("refreshes only a server function explicitly marked as user activity", async () => {
-		const userId = await seedUser(db);
-		const oldActivity = new Date(Date.now() - 10 * 60_000);
-		const session = await seedSession(db, userId, {
-			expiresAt: new Date(Date.now() + 30 * 60_000),
-			absoluteExpiresAt: new Date(Date.now() + 2 * 60 * 60_000),
-			lastActivityAt: oldActivity,
-			lastRefreshedAt: oldActivity,
-		});
-		getRequest.mockReturnValue(requestFor(sessionCookie(session)));
-
-		await serverHandler(undefined, undefined, undefined, [
-			{ url: "/_serverFn/user-action" },
-		])({
-			next: vi.fn().mockResolvedValue("result"),
-			serverFnMeta: { id: "user-action" },
-		});
-
-		const [refreshed] = await db
-			.select({ lastActivityAt: authSessions.lastActivityAt })
-			.from(authSessions)
-			.where(eq(authSessions.id, session.sessionId));
-		expect(refreshed?.lastActivityAt.getTime()).toBeGreaterThan(
-			oldActivity.getTime(),
-		);
-	});
-
-	it("keeps an unmarked passive function read-only", async () => {
-		const userId = await seedUser(db);
-		const oldActivity = new Date(Date.now() - 10 * 60_000);
-		const session = await seedSession(db, userId, {
-			expiresAt: new Date(Date.now() + 30 * 60_000),
-			absoluteExpiresAt: new Date(Date.now() + 2 * 60 * 60_000),
-			lastActivityAt: oldActivity,
-			lastRefreshedAt: oldActivity,
-		});
-		getRequest.mockReturnValue(requestFor(sessionCookie(session)));
-
-		await serverHandler()({
-			next: vi.fn().mockResolvedValue("result"),
-			serverFnMeta: { id: "passive-read" },
-		});
-
-		const [unchanged] = await db
-			.select({ lastActivityAt: authSessions.lastActivityAt })
-			.from(authSessions)
-			.where(eq(authSessions.id, session.sessionId));
-		expect(unchanged?.lastActivityAt).toEqual(oldActivity);
-	});
+			const [unchanged] = await db
+				.select({ expiresAt: authSessions.expiresAt })
+				.from(authSessions)
+				.where(eq(authSessions.id, session.sessionId));
+			expect(unchanged?.expiresAt).toEqual(expiresAt);
+		},
+	);
 
 	it("resolves a retained legacy browser principal", async () => {
 		const userId = await seedUser(db);
@@ -414,8 +372,8 @@ describe("raw request boundary", () => {
 
 	it("accepts browser sessions and API keys as distinct principals", async () => {
 		const userId = await seedUser(db);
-		const lastActivityAt = new Date(Date.now() - 10 * 60_000);
-		const session = await seedSession(db, userId, { lastActivityAt });
+		const expiresAt = new Date(Date.now() + 30 * 60_000);
+		const session = await seedSession(db, userId, { expiresAt });
 		await expect(
 			requireAuthenticatedRequest(requestFor(sessionCookie(session))),
 		).resolves.toMatchObject({
@@ -425,10 +383,10 @@ describe("raw request boundary", () => {
 			userId,
 		});
 		const [unchanged] = await db
-			.select({ lastActivityAt: authSessions.lastActivityAt })
+			.select({ expiresAt: authSessions.expiresAt })
 			.from(authSessions)
 			.where(eq(authSessions.id, session.sessionId));
-		expect(unchanged?.lastActivityAt).toEqual(lastActivityAt);
+		expect(unchanged?.expiresAt).toEqual(expiresAt);
 
 		const key = await seedApiKey(db, userId, { upload_file: true });
 		const [row] = await db.select({ id: apiKeys.id }).from(apiKeys);

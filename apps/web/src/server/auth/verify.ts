@@ -62,11 +62,6 @@ export async function verifyBrowserPrincipal(
 		userId,
 		sessionId,
 		sessionStore: "better_auth",
-		timing: {
-			lastActivityAt: row.lastActivityAt,
-			expiresAt: row.expiresAt,
-			absoluteExpiresAt: row.absoluteExpiresAt,
-		},
 	};
 }
 
@@ -132,11 +127,6 @@ export async function verifyLegacyBrowserPrincipal(
 					sessionId: row.id,
 					sessionStore: "legacy",
 					userId: row.userId,
-					timing: {
-						lastActivityAt: row.createdAt,
-						expiresAt: row.expiresAt,
-						absoluteExpiresAt: row.expiresAt,
-					},
 				}
 			: null;
 	}
@@ -146,11 +136,6 @@ export async function verifyLegacyBrowserPrincipal(
 		sessionId: row.id,
 		sessionStore: "legacy",
 		userId: row.userId,
-		timing: {
-			lastActivityAt: row.createdAt,
-			expiresAt: row.expiresAt,
-			absoluteExpiresAt: row.expiresAt,
-		},
 	};
 }
 

@@ -2,7 +2,7 @@ import { useFetchAccount } from "@account/account";
 import { getDocumentTitle } from "@app/development";
 import { CONTENT_SCROLL_ID } from "@app/scroll";
 import { armSessionEnd } from "@app/session";
-import { useBrowserSessionHeartbeat } from "@app/sessionHeartbeat";
+import { useBrowserSessionRefresh } from "@app/sessionRefresh";
 import * as Sse from "@app/sse/SseConnection";
 import Banner from "@banner/components/Banner";
 import LoadingPlaceholder from "@base/LoadingPlaceholder";
@@ -62,7 +62,6 @@ function AuthenticatedLayout() {
 	const queryClient = useQueryClient();
 	const { data, isPending } = useFetchAccount();
 	const location = useLocation();
-	useBrowserSessionHeartbeat(Boolean(data));
 
 	useEffect(() => {
 		if (data) {
@@ -73,6 +72,7 @@ function AuthenticatedLayout() {
 			setupSse(queryClient);
 		}
 	}, [data, queryClient]);
+	useBrowserSessionRefresh(Boolean(data));
 
 	useEffect(() => {
 		if (data) {

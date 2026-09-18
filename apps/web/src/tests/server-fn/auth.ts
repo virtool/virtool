@@ -7,10 +7,10 @@ import { type Mock, vi } from "vitest";
  * unauthenticated auth server functions without per-file `vi.mock` boilerplate.
  */
 export const authServerFnMocks = {
+	refreshBrowserSessionFn: vi.fn(),
 	completeEmailRemediationFn: vi.fn(),
 	loginFn: vi.fn(),
 	getEmailRemediationFn: vi.fn(),
-	heartbeatBrowserSessionFn: vi.fn(),
 	verifyTwoFactorFn: vi.fn(),
 	logoutFn: vi.fn(),
 	resetPasswordFn: vi.fn(),

@@ -94,14 +94,8 @@ export async function seedSession(
 	userId: number,
 	{
 		expiresAt = new Date(Date.now() + 60_000),
-		lastActivityAt = new Date(),
-		absoluteExpiresAt = expiresAt,
-		lastRefreshedAt = lastActivityAt,
 	}: {
 		expiresAt?: Date;
-		lastActivityAt?: Date;
-		absoluteExpiresAt?: Date;
-		lastRefreshedAt?: Date;
 	} = {},
 ): Promise<SeededSession> {
 	const token = newSessionToken();
@@ -109,13 +103,9 @@ export async function seedSession(
 	const [session] = await db
 		.insert(authSessions)
 		.values({
-			absoluteExpiresAt,
 			createdAt: new Date(),
 			expiresAt,
-			idleExpiresAt: expiresAt,
 			ipAddress: "127.0.0.1",
-			lastActivityAt,
-			lastRefreshedAt,
 			token,
 			updatedAt: new Date(),
 			userId,

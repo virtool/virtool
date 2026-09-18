@@ -1,5 +1,4 @@
 import { resolveFileBacked } from "@virtool/contracts/env";
-import type { BrowserSessionTimingConfig } from "@virtool/data/auth/session";
 import type { StorageConfig } from "@virtool/storage";
 import { z } from "zod";
 
@@ -8,15 +7,6 @@ const DEFAULT_POSTGRES_POOL_MAX = 10;
 
 /** How many blocks a chunked upload PUTs at once when unconfigured. */
 const DEFAULT_UPLOADS_CHUNKED_CONCURRENCY = 8;
-
-/** Default idle lifetime for a normal browser session. */
-export const DEFAULT_BROWSER_SESSION_IDLE_LIFETIME_SECONDS = 60 * 60;
-
-/** Default immutable lifetime for a normal browser session. */
-export const DEFAULT_BROWSER_SESSION_ABSOLUTE_LIFETIME_SECONDS = 24 * 60 * 60;
-
-/** Default lower bound between persisted activity refreshes. */
-export const DEFAULT_BROWSER_SESSION_MINIMUM_REFRESH_INTERVAL_SECONDS = 5 * 60;
 
 /** The shortest `VT_AUTH_SECRET` accepted, in characters. */
 const MINIMUM_AUTH_SECRET_LENGTH = 32;
@@ -30,7 +20,6 @@ export type ServerConfig = {
 	publicOrigin: string;
 	webauthnRpId: string;
 	authSecret: string;
-	browserSessionTiming: BrowserSessionTimingConfig;
 	metricsToken: string | undefined;
 	/**
 	 * Server-side Sentry DSN.
@@ -79,9 +68,6 @@ const ServerEnv = z.object({
 	VT_AUTH_SECRET: z.string().min(MINIMUM_AUTH_SECRET_LENGTH, {
 		message: `VT_AUTH_SECRET must be at least ${MINIMUM_AUTH_SECRET_LENGTH} characters`,
 	}),
-	VT_AUTH_SESSION_IDLE_LIFETIME_SECONDS: durationSeconds(),
-	VT_AUTH_SESSION_ABSOLUTE_LIFETIME_SECONDS: durationSeconds(),
-	VT_AUTH_SESSION_MINIMUM_REFRESH_INTERVAL_SECONDS: durationSeconds(),
 	// Gates the Prometheus scrape endpoint. Unset — or empty, which deployment
 	// tooling injects for a value it has nothing to put in — leaves `/metrics`
 	// returning 404, so upgrading never starts exposing internals by surprise.
@@ -151,73 +137,6 @@ const ServerEnv = z.object({
 		z.coerce.number().int().positive().optional(),
 	),
 });
-
-function durationSeconds() {
-	return z.preprocess(
-		(value) => (value === "" ? undefined : value),
-		z
-			.string()
-			.regex(/^\d+$/, "must be a positive whole number of seconds")
-			.transform(Number)
-			.pipe(z.number().int().safe().positive())
-			.optional(),
-	);
-}
-
-function buildBrowserSessionTiming(
-	env: z.infer<typeof ServerEnv>,
-): BrowserSessionTimingConfig {
-	const idleLifetimeSeconds =
-		env.VT_AUTH_SESSION_IDLE_LIFETIME_SECONDS ??
-		DEFAULT_BROWSER_SESSION_IDLE_LIFETIME_SECONDS;
-	const absoluteLifetimeSeconds =
-		env.VT_AUTH_SESSION_ABSOLUTE_LIFETIME_SECONDS ??
-		DEFAULT_BROWSER_SESSION_ABSOLUTE_LIFETIME_SECONDS;
-	const minimumRefreshIntervalSeconds =
-		env.VT_AUTH_SESSION_MINIMUM_REFRESH_INTERVAL_SECONDS ??
-		DEFAULT_BROWSER_SESSION_MINIMUM_REFRESH_INTERVAL_SECONDS;
-
-	if (idleLifetimeSeconds > absoluteLifetimeSeconds) {
-		throw new z.ZodError([
-			{
-				code: "custom",
-				path: ["VT_AUTH_SESSION_IDLE_LIFETIME_SECONDS"],
-				message: "must not exceed the absolute session lifetime",
-				input: idleLifetimeSeconds,
-			},
-		]);
-	}
-	if (minimumRefreshIntervalSeconds >= idleLifetimeSeconds) {
-		throw new z.ZodError([
-			{
-				code: "custom",
-				path: ["VT_AUTH_SESSION_MINIMUM_REFRESH_INTERVAL_SECONDS"],
-				message: "must be less than the idle session lifetime",
-				input: minimumRefreshIntervalSeconds,
-			},
-		]);
-	}
-	if (
-		absoluteLifetimeSeconds - idleLifetimeSeconds <
-		minimumRefreshIntervalSeconds
-	) {
-		throw new z.ZodError([
-			{
-				code: "custom",
-				path: ["VT_AUTH_SESSION_ABSOLUTE_LIFETIME_SECONDS"],
-				message:
-					"must leave at least one refresh interval beyond the idle session lifetime",
-				input: absoluteLifetimeSeconds,
-			},
-		]);
-	}
-
-	return {
-		idleLifetimeSeconds,
-		absoluteLifetimeSeconds,
-		minimumRefreshIntervalSeconds,
-	};
-}
 
 // Unset and empty are the same thing for storage variables. Deployment tooling
 // routinely injects an empty string for a value it has nothing to put in, and
@@ -414,7 +333,6 @@ export function parseServerConfig(
 		publicOrigin: publicOrigin.url.origin,
 		webauthnRpId: publicOrigin.url.hostname,
 		authSecret: raw.VT_AUTH_SECRET,
-		browserSessionTiming: buildBrowserSessionTiming(raw),
 		metricsToken: raw.VT_METRICS_TOKEN,
 		sentryDsn: raw.VT_SENTRY_DSN,
 		encryptionKey: raw.VT_ENCRYPTION_KEY,

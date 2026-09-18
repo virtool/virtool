@@ -2,7 +2,7 @@ import { createServerOnlyFn } from "@tanstack/react-start";
 
 /** Sign in with a Virtool handle and copy Better Auth's cookie to the response. */
 export const signInUsername = createServerOnlyFn(
-	async (username: string, password: string, rememberMe = false) => {
+	async (username: string, password: string) => {
 		const [{ getRequest }, { auth }] = await Promise.all([
 			import("@tanstack/react-start/server"),
 			import("./instance"),
@@ -10,7 +10,7 @@ export const signInUsername = createServerOnlyFn(
 
 		return auth.api.signInUsername({
 			headers: getRequest().headers,
-			body: { username, password, rememberMe },
+			body: { username, password },
 		});
 	},
 );
@@ -26,7 +26,7 @@ export const signOut = createServerOnlyFn(async () => {
 });
 
 /**
- * Mint a replacement session with a fresh immutable absolute window.
+ * Mint a replacement Better Auth session.
  *
  * @public
  */
