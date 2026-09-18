@@ -239,6 +239,13 @@
       "when": 1789757528197,
       "tag": "0033_petite_blade",
       "breakpoints": true
+    },
+    {
+      "idx": 34,
+      "version": "7",
+      "when": 1789764514402,
+      "tag": "0034_better_auth_rolling_sessions",
+      "breakpoints": true
     }
   ]
 }

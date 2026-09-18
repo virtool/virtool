@@ -1,9 +1,5 @@
 import { passkey } from "@better-auth/passkey";
 import { hashPassword, verifyPassword } from "@virtool/data/auth/password";
-import {
-	type BrowserSessionTimingConfig,
-	createBrowserSessionTiming,
-} from "@virtool/data/auth/session";
 import type { Db } from "@virtool/data/db/pg";
 import {
 	authAccounts,
@@ -61,7 +57,6 @@ export type AuthOptions = {
 	publicOrigin: string;
 	webauthnRpId: string;
 	secret: string;
-	browserSessionTiming: BrowserSessionTimingConfig;
 };
 
 function remediationSessionPlugin() {
@@ -113,7 +108,6 @@ export function createAuth({
 	publicOrigin,
 	webauthnRpId,
 	secret,
-	browserSessionTiming,
 }: AuthOptions) {
 	return betterAuth({
 		appName: "Virtool",
@@ -139,17 +133,7 @@ export function createAuth({
 			},
 		}),
 		session: {
-			// The cookie survives for the immutable window. The database's effective
-			// expiry starts at the shorter idle deadline and remains authoritative.
-			expiresIn: browserSessionTiming.absoluteLifetimeSeconds,
-			disableSessionRefresh: true,
 			cookieCache: { enabled: false },
-			additionalFields: {
-				lastActivityAt: { type: "date", input: false },
-				idleExpiresAt: { type: "date", input: false },
-				absoluteExpiresAt: { type: "date", input: false },
-				lastRefreshedAt: { type: "date", input: false },
-			},
 		},
 		advanced: {
 			// Stated rather than left to default. Better Auth turns its origin check
@@ -230,21 +214,6 @@ export function createAuth({
 								code: "INVALID_CREDENTIALS",
 							});
 						}
-
-						const timing = await createBrowserSessionTiming(
-							db,
-							browserSessionTiming,
-						);
-						return {
-							data: {
-								...session,
-								expiresAt: timing.expiresAt,
-								idleExpiresAt: timing.expiresAt,
-								lastActivityAt: timing.lastActivityAt,
-								absoluteExpiresAt: timing.absoluteExpiresAt,
-								lastRefreshedAt: timing.lastRefreshedAt,
-							},
-						};
 					},
 				},
 			},

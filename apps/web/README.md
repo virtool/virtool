@@ -182,19 +182,25 @@ session store. The legacy `sessions` table remains available to unmigrated users
 during email remediation, but Better Auth wins when both credentials are
 present. Purpose-bound setup sessions remain separate from both.
 
-Normal Better Auth sessions have two server-authoritative clocks: an idle
-deadline extended by qualifying activity and an immutable absolute deadline.
-Both default to one hour and 24 hours respectively. A persisted refresh occurs
-at most once every five minutes and never moves the absolute deadline. The
-explicit list in
-[activityEndpoints.ts](src/server/auth/activityEndpoints.ts) classifies
-user-initiated server functions. Passive reads, background refetches, SSE
-handshakes and revocation checks, API keys, retained legacy sessions, and
-restricted setup sessions authenticate without refreshing activity. The
-foreground heartbeat contract is `refreshBrowserPrincipalActivity`; browser
-activity is recorded while the authenticated document is visible. Upgrading to
-this session model invalidates existing Better Auth sessions because a SQL
-migration cannot safely apply the deployment's runtime timing configuration.
+Normal Better Auth sessions use the library's seven-day rolling lifetime and
+one-day refresh age, with no absolute cap. The authenticated shell calls
+`refreshBrowserSessionFn` once on mount and when the window regains focus.
+That function lets Better Auth extend eligible sessions and propagate its
+cookie through the TanStack Start integration. Retained legacy sessions are
+validated without extension.
+
+Ordinary server functions, React Query reads and mutations, raw routes, SSE
+handshakes, revocation checks, reconnects, and HEAD probes use read-only session
+resolution (`disableRefresh: true`). The browser doesn't poll sessions, track
+input activity, send heartbeats, show a countdown, or display a warning dialog.
+An unattended tab can't extend its session through background traffic.
+
+After the authenticated shell arms `endSession()`, definitive session failures
+from refresh, query or mutation HTTP 401 responses, and SSE HTTP 401 responses
+converge on that idempotent path. It clears session storage and performs
+full-document navigation to login with “Your session ended” and a return location.
+Network and server failures are operational errors, not evidence that a session
+expired.
 
 Uploads and downloads must stream. Resolve a requested file to a database row
 or explicit whitelist first, then use that row's `storage_key`; never construct
@@ -371,9 +377,6 @@ The table below covers the remaining settings and web-specific storage behavior.
 | `VT_POSTGRES_POOL_MAX` | Positive integer | `10` | Limit the Postgres connection pool. |
 | `VT_PUBLIC_ORIGIN` | URL origin | Required | Public browser origin for authentication and WebAuthn, including behind a proxy. Use an HTTPS hostname (HTTP is allowed for localhost), with no path, query, fragment, or credentials. |
 | `VT_AUTH_SECRET` | String (32+ characters) | Required | Sign and encrypt the authentication state Better Auth issues, including stored recovery codes. Generate with `openssl rand -base64 32`. Changing it invalidates every Better Auth session. |
-| `VT_AUTH_SESSION_IDLE_LIFETIME_SECONDS` | Positive integer seconds | `3600` | Expire a normal browser session after this much time without qualifying activity. Must be shorter than the absolute lifetime. |
-| `VT_AUTH_SESSION_ABSOLUTE_LIFETIME_SECONDS` | Positive integer seconds | `86400` | Set the immutable maximum lifetime of a normal browser session. Must leave at least one refresh interval beyond the idle lifetime. |
-| `VT_AUTH_SESSION_MINIMUM_REFRESH_INTERVAL_SECONDS` | Positive integer seconds | `300` | Bound persisted activity refreshes to at most one write per interval. Must be shorter than the idle lifetime. |
 | `VT_METRICS_TOKEN` | String | Unset | Enable `/metrics` and authenticate scrapes with a bearer token. When unset, `/metrics` returns 404. |
 | `VT_SENTRY_DSN` | URL string | Unset | Send server errors to Sentry. Vite also embeds this value in the client at build time; that client value can't use `_FILE`. |
 | `VT_ENCRYPTION_KEY` | Base64 string (32 bytes) | Unset | Encrypt secrets stored by Virtool: the Resend API key and the NCBI API key. When unset or invalid, email is unavailable and GenBank lookups drop to the anonymous rate limit, but the server runs. See [the encryption-key guide](../../docs/env.md#encryption-key). |

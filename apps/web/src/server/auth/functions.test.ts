@@ -1,4 +1,5 @@
 import { createHmac } from "node:crypto";
+import { createAuthenticatedSession } from "@virtool/data/auth/session";
 import {
 	seedSession,
 	seedSetupSession,
@@ -16,6 +17,7 @@ import {
 	type TestDatabase,
 } from "@virtool/data/db/test/fixtures";
 import { seedSettings } from "@virtool/data/settings/test/fixtures";
+import { eq } from "drizzle-orm";
 import { afterAll, beforeAll, beforeEach, expect, it, vi } from "vitest";
 import { callServerFn, type SplitServerFnModule } from "../test/serverFn";
 
@@ -79,11 +81,6 @@ beforeAll(async () => {
 		publicOrigin: "https://virtool.test",
 		webauthnRpId: "virtool.test",
 		secret: "test-auth-secret-test-auth-secret",
-		browserSessionTiming: {
-			idleLifetimeSeconds: 3_600,
-			absoluteLifetimeSeconds: 86_400,
-			minimumRefreshIntervalSeconds: 300,
-		},
 	});
 }, 60_000);
 afterAll(async () => {
@@ -97,15 +94,50 @@ beforeEach(async () => {
 	await db.delete(users);
 });
 
-it("refreshes a foreground browser session at the configured interval", async () => {
-	const userId = await seedUser(db);
-	const previousActivity = new Date(Date.now() - 10 * 60_000);
-	const session = await seedSession(db, userId, {
-		absoluteExpiresAt: new Date(Date.now() + 2 * 60 * 60_000),
-		expiresAt: new Date(Date.now() + 30 * 60_000),
-		lastActivityAt: previousActivity,
-		lastRefreshedAt: previousActivity,
+it("signs in with a persistent seven-day rolling session", async () => {
+	const userId = await seedUser(db, {
+		password: Buffer.from(hash),
+		email: "alice@virtool.test",
 	});
+	await db
+		.update(users)
+		.set({
+			username: "alice",
+			displayUsername: "Alice",
+			authMigratedAt: new Date(),
+		})
+		.where(eq(users.id, userId));
+	await db.insert(authAccounts).values({
+		accountId: String(userId),
+		providerId: "credential",
+		userId,
+		password: hash,
+		createdAt: new Date(),
+		updatedAt: new Date(),
+	});
+	expect(
+		await callServerFn(handlers, "loginFn", { handle: "alice", password }),
+	).toEqual({ reset: false });
+	const [session] = await db.select().from(authSessions);
+	expect(
+		(session?.expiresAt.getTime() ?? 0) - (session?.createdAt.getTime() ?? 0),
+	).toBeCloseTo(7 * 24 * 60 * 60_000, -2);
+	expect(
+		[...cookies.keys()].some((name) => name.endsWith("dont_remember")),
+	).toBe(false);
+	await db
+		.update(authSessions)
+		.set({ expiresAt: new Date(Date.now() + 2 * 24 * 60 * 60_000) });
+	await callServerFn(handlers, "refreshBrowserSessionFn");
+	expect(
+		(await db.select().from(authSessions))[0]?.expiresAt.getTime(),
+	).toBeGreaterThan(Date.now() + 6 * 24 * 60 * 60_000);
+});
+
+it("rolls an eligible session only through the intentional refresh function", async () => {
+	const userId = await seedUser(db);
+	const expiresAt = new Date(Date.now() + 2 * 24 * 60 * 60_000);
+	const session = await seedSession(db, userId, { expiresAt });
 	const cookie = sessionCookie(session).replace(
 		"better-auth.session_token",
 		"__Secure-better-auth.session_token",
@@ -113,14 +145,53 @@ it("refreshes a foreground browser session at the configured interval", async ()
 	const separator = cookie.indexOf("=");
 	cookies.set(cookie.slice(0, separator), cookie.slice(separator + 1));
 
-	expect(await callServerFn(handlers, "heartbeatBrowserSessionFn")).toEqual({
-		nextHeartbeatInMilliseconds: 300_000,
+	await auth.api.getSession({
+		headers: getRequest().headers,
+		query: { disableRefresh: true },
 	});
-
-	const [refreshed] = await db.select().from(authSessions);
-	expect(refreshed?.lastActivityAt.getTime()).toBeGreaterThan(
-		previousActivity.getTime(),
+	expect((await db.select().from(authSessions))[0]?.expiresAt).toEqual(
+		expiresAt,
 	);
+	expect(await callServerFn(handlers, "refreshBrowserSessionFn")).toBeNull();
+	const [refreshed] = await db.select().from(authSessions);
+	expect(refreshed?.expiresAt.getTime()).toBeGreaterThan(
+		Date.now() + 6 * 24 * 60 * 60_000,
+	);
+	expect(refreshed?.token).toBe(session.token);
+
+	await callServerFn(handlers, "refreshBrowserSessionFn");
+	expect((await db.select().from(authSessions))[0]?.expiresAt).toEqual(
+		refreshed?.expiresAt,
+	);
+});
+
+it("validates retained legacy sessions without ending or extending them", async () => {
+	const userId = await seedUser(db);
+	const session = await createAuthenticatedSession(db, {
+		userId,
+		ip: "127.0.0.1",
+	});
+	cookies.set("session_id", session.sessionId);
+	cookies.set("session_token", session.token);
+	expect(await callServerFn(handlers, "refreshBrowserSessionFn")).toBeNull();
+	expect(await db.select().from(authSessions)).toHaveLength(0);
+});
+
+it("rejects an expired session without reviving it", async () => {
+	const userId = await seedUser(db);
+	const session = await seedSession(db, userId, {
+		expiresAt: new Date(Date.now() - 60_000),
+	});
+	const cookie = sessionCookie(session).replace(
+		"better-auth.session_token",
+		"__Secure-better-auth.session_token",
+	);
+	const separator = cookie.indexOf("=");
+	cookies.set(cookie.slice(0, separator), cookie.slice(separator + 1));
+	await expect(
+		callServerFn(handlers, "refreshBrowserSessionFn"),
+	).rejects.toThrow("Unauthorized");
+	expect(setResponseStatus).toHaveBeenCalledWith(401);
 });
 
 it("completes offline remediation with an unverified email and one session", async () => {

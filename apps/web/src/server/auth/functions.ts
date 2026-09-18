@@ -1,6 +1,6 @@
 import * as Sentry from "@sentry/tanstackstart-react";
 import { createServerFn } from "@tanstack/react-start";
-import { setResponseStatus } from "@tanstack/react-start/server";
+import { getRequest, setResponseStatus } from "@tanstack/react-start/server";
 import { PasswordTooShortError } from "@virtool/contracts";
 import {
 	completeEmailRemediation,
@@ -21,7 +21,6 @@ import { z } from "zod";
 import { db, keyring } from "../composition";
 import { config } from "../config";
 import { ClientError } from "../errors";
-import { refreshBrowserPrincipalActivity } from "./activity";
 import { realCookies } from "./cookies";
 import {
 	createFirstUser,
@@ -212,23 +211,24 @@ export const logoutFn = createServerFn({ method: "POST" })
 		return null;
 	});
 
-/** Record that an authenticated browser remains in the foreground. */
-export const heartbeatBrowserSessionFn = createServerFn({ method: "POST" })
+/** Revalidate the established shell and allow Better Auth to roll its session. */
+export const refreshBrowserSessionFn = createServerFn({ method: "POST" })
 	.middleware([authenticated()])
 	.handler(async ({ context }) => {
-		const principal = await refreshBrowserPrincipalActivity(
-			context.principal,
-			"foreground_heartbeat",
-		);
-		if (!principal) {
+		if (context.principal.sessionStore === "legacy") {
+			return null;
+		}
+
+		const { auth } = await import("./instance");
+		const session = await auth.api.getSession({
+			headers: getRequest().headers,
+			query: { disableCookieCache: true },
+		});
+		if (!session) {
 			setResponseStatus(401);
 			throw new UnauthorizedError();
 		}
-
-		return {
-			nextHeartbeatInMilliseconds:
-				config.browserSessionTiming.minimumRefreshIntervalSeconds * 1_000,
-		};
+		return null;
 	});
 
 /**
