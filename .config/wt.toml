@@ -1,4 +1,4 @@
-pre-remove = "{{ primary_worktree_path }}/dev/bin/virtool-dev remove --worktree {{ worktree_path }}"
+pre-remove = "{{ primary_worktree_path }}/dev/bin/vtd remove --worktree {{ worktree_path }}"
 
 [list]
 url = "https://dev.localhost:9443"

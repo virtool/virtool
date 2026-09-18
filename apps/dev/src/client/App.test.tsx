@@ -60,6 +60,14 @@ function getEnvironment() {
 	return environment;
 }
 
+async function openEnvironmentDetails(): Promise<void> {
+	await userEvent
+		.setup()
+		.click(
+			screen.getByRole("button", { name: "View details for feature/test" }),
+		);
+}
+
 beforeEach(() => {
 	Object.assign(snapshot, structuredClone(initial));
 	connection = "live";
@@ -78,7 +86,11 @@ it("shows live environment state and confirms destructive removal", async () => 
 	render(<App />);
 	expect(screen.getByText("feature/test")).toBeInTheDocument();
 	expect(screen.getByText("Ready")).toBeInTheDocument();
-	await user.click(screen.getByText("Environment details"));
+	expect(screen.queryByText("/repo/worktree")).not.toBeInTheDocument();
+	await user.click(
+		screen.getByRole("button", { name: "View details for feature/test" }),
+	);
+	expect(screen.getByText("/repo/worktree")).toBeVisible();
 	await user.click(
 		screen.getByRole("button", { name: "Delete environment data" }),
 	);
@@ -87,22 +99,29 @@ it("shows live environment state and confirms destructive removal", async () => 
 		"/api/environments",
 		expect.anything(),
 	);
+	await user.click(screen.getByRole("button", { name: "← Back to worktrees" }));
+	expect(screen.queryByText("/repo/worktree")).not.toBeInTheDocument();
 });
 
-it("shows the open pull request for a worktree", () => {
+it("shows the open pull request in the worktree details", async () => {
 	getEnvironment().openPullRequest = {
 		number: 42,
 		url: "https://github.com/virtool/virtool/pull/42",
 	};
 	render(<App />);
+	expect(
+		screen.queryByRole("link", { name: "Open PR #42 ↗" }),
+	).not.toBeInTheDocument();
+	await openEnvironmentDetails();
 	expect(screen.getByRole("link", { name: "Open PR #42 ↗" })).toHaveAttribute(
 		"href",
 		"https://github.com/virtool/virtool/pull/42",
 	);
 });
 
-it("shows actions for ready, stopped, and failed environments", () => {
+it("shows actions for ready, stopped, and failed environments", async () => {
 	const { rerender } = render(<App />);
+	await openEnvironmentDetails();
 	expect(screen.getByRole("link", { name: "Open app ↗" })).toHaveAttribute(
 		"href",
 		getEnvironment().url,
@@ -129,7 +148,7 @@ it("shows actions for ready, stopped, and failed environments", () => {
 	expect(screen.getByRole("alert")).toHaveTextContent("Build failed");
 });
 
-it("keeps progress visible and prevents conflicting actions", () => {
+it("keeps progress visible and prevents conflicting actions", async () => {
 	Object.assign(getEnvironment(), {
 		ready: false,
 		observed: "starting",
@@ -140,14 +159,16 @@ it("keeps progress visible and prevents conflicting actions", () => {
 		},
 	});
 	render(<App />);
+	await openEnvironmentDetails();
 	expect(screen.getByText("Migrating database")).toBeVisible();
 	expect(screen.getByRole("button", { name: "Working…" })).toBeDisabled();
 });
 
-it("marks disconnected snapshots and disables mutations until reconnected", () => {
+it("marks disconnected snapshots and disables mutations until reconnected", async () => {
 	connection = "reconnecting";
 	const { rerender } = render(<App />);
 	expect(screen.getByText(/Showing the last received state/)).toBeVisible();
+	await openEnvironmentDetails();
 	expect(screen.getByRole("button", { name: "Stop" })).toBeDisabled();
 	connection = "live";
 	rerender(<App />);
@@ -208,6 +229,9 @@ it("reports rejected mutations", async () => {
 	);
 	const user = userEvent.setup();
 	render(<App />);
+	await user.click(
+		screen.getByRole("button", { name: "View details for feature/test" }),
+	);
 	await user.click(screen.getByRole("button", { name: "Stop" }));
 	expect(await screen.findByRole("alert")).toHaveTextContent("Unable to stop");
 	expect(screen.getByRole("button", { name: "Stop" })).toBeEnabled();

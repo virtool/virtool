@@ -7,8 +7,8 @@ local gateway and storage services, and schedules one-shot workflow executors.
 Use the repository launcher rather than running this package directly:
 
 ```shell
-virtool-dev up
-virtool-dev ui
+vtd up
+vtd ui
 ```
 
 ```shell

@@ -211,18 +211,88 @@ function isBusy(environment: Environment): boolean {
 	);
 }
 
-function EnvironmentRow({
+function getEnvironmentStatus(environment: Environment): {
+	label: string;
+	tone: "neutral" | "good" | "bad" | "busy";
+} {
+	const busy = isBusy(environment);
+	const failed =
+		environment.observed === "failed" ||
+		environment.observed === "missing" ||
+		Boolean(environment.lastError);
+	return {
+		label: busy
+			? environment.operation?.action === "start"
+				? "Starting"
+				: environment.observed.replaceAll("_", " ")
+			: environment.ready
+				? "Ready"
+				: environment.observed.replaceAll("_", " "),
+		tone: busy
+			? "busy"
+			: failed
+				? "bad"
+				: environment.ready
+					? "good"
+					: "neutral",
+	};
+}
+
+function EnvironmentCard({
 	environment,
-	scheduler,
 	connected,
 	selected,
 	onSelect,
+	onOpen,
+}: {
+	environment: Environment;
+	connected: boolean;
+	selected: boolean;
+	onSelect: (selected: boolean) => void;
+	onOpen: () => void;
+}) {
+	const busy = isBusy(environment);
+	const status = getEnvironmentStatus(environment);
+	return (
+		<article className={`${PANEL} flex items-center overflow-hidden pl-4`}>
+			<div className="flex items-center">
+				<input
+					aria-label={`Select ${environment.branch}`}
+					type="checkbox"
+					checked={selected}
+					onChange={(event) => onSelect(event.target.checked)}
+					disabled={!environment.id || !connected || busy}
+					className="size-4 accent-emerald-700"
+				/>
+			</div>
+			<button
+				aria-label={`View details for ${environment.branch}`}
+				className="flex min-w-0 flex-1 cursor-pointer items-center gap-3 p-4 text-left transition-colors hover:bg-slate-50"
+				type="button"
+				onClick={onOpen}
+			>
+				<h2 className="min-w-0 flex-1 break-all font-semibold text-emerald-950">
+					{environment.branch}
+				</h2>
+				<Badge label={status.label} tone={status.tone} />
+				<span aria-hidden="true" className="text-slate-400">
+					&rsaquo;
+				</span>
+			</button>
+		</article>
+	);
+}
+
+function EnvironmentDetails({
+	environment,
+	scheduler,
+	connected,
+	onBack,
 }: {
 	environment: Environment;
 	scheduler: SchedulerState;
 	connected: boolean;
-	selected: boolean;
-	onSelect: (selected: boolean) => void;
+	onBack: () => void;
 }) {
 	const action = useAction();
 	const busy = isBusy(environment);
@@ -234,6 +304,7 @@ function EnvironmentRow({
 	const running = environment.observed === "running";
 	const primary =
 		failed && environment.id ? "retry" : running ? "stop" : "start";
+	const status = getEnvironmentStatus(environment);
 	const active = scheduler.active.filter(
 		(item) => item.environmentId === environment.id,
 	).length;
@@ -259,52 +330,26 @@ function EnvironmentRow({
 		);
 	}
 	return (
-		<article className={`${PANEL} p-4`}>
-			<div className="flex flex-wrap items-center gap-3">
-				<input
-					aria-label={`Select ${environment.branch}`}
-					type="checkbox"
-					checked={selected}
-					onChange={(event) => onSelect(event.target.checked)}
-					disabled={!environment.id || disabled}
-					className="size-4 accent-emerald-700"
-				/>
-				<h2 className="min-w-0 flex-1 break-all font-semibold text-emerald-950">
-					{environment.branch}
-				</h2>
-				<Badge
-					label={
-						busy
-							? environment.operation?.action === "start"
-								? "Starting"
-								: environment.observed.replaceAll("_", " ")
-							: environment.ready
-								? "Ready"
-								: environment.observed.replaceAll("_", " ")
-					}
-					tone={
-						busy
-							? "busy"
-							: failed
-								? "bad"
-								: environment.ready
-									? "good"
-									: "neutral"
-					}
-				/>
-				{environment.openPullRequest ? (
-					<a
-						className="text-xs font-semibold text-blue-700 hover:underline"
-						href={environment.openPullRequest.url}
-						target="_blank"
-						rel="noreferrer"
-					>
-						Open PR #{environment.openPullRequest.number} ↗
-					</a>
-				) : (
-					<span className="text-xs text-slate-400">No open PR</span>
-				)}
-				<div className="flex gap-2">
+		<section aria-label={`${environment.branch} details`}>
+			<button className={CONTROL} type="button" onClick={onBack}>
+				← Back to worktrees
+			</button>
+			<article className={`${PANEL} mt-3 p-5`}>
+				<div className="flex flex-wrap items-center gap-3">
+					<h2 className="min-w-0 flex-1 break-all text-xl font-semibold text-emerald-950">
+						{environment.branch}
+					</h2>
+					<Badge label={status.label} tone={status.tone} />
+					{environment.openPullRequest && (
+						<a
+							className="text-xs font-semibold text-blue-700 hover:underline"
+							href={environment.openPullRequest.url}
+							target="_blank"
+							rel="noreferrer"
+						>
+							Open PR #{environment.openPullRequest.number} ↗
+						</a>
+					)}
 					{environment.ready && environment.url && (
 						<a
 							className={PRIMARY}
@@ -332,27 +377,17 @@ function EnvironmentRow({
 										: "Start"}
 					</button>
 				</div>
-			</div>
-			{busy && (
-				<p role="status" className="mt-2 text-sm text-amber-900">
-					{environment.operation?.progress || "Waiting for environment state…"}
-				</p>
-			)}
-			<div className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-xs text-slate-500">
-				<span>
-					{active} workflows running · {queued} queued
-				</span>
-				{!environment.workflowEnabled && <span>Workflows paused</span>}
-			</div>
-			<Feedback
-				error={action.error ?? environment.lastError}
-				message={action.message}
-			/>
-			<details className="mt-3 text-sm">
-				<summary className="w-fit cursor-pointer text-slate-600">
-					Environment details
-				</summary>
-				<div className="mt-3 space-y-3 border-t border-slate-100 pt-3">
+				{busy && (
+					<p role="status" className="mt-3 text-sm text-amber-900">
+						{environment.operation?.progress ||
+							"Waiting for environment state…"}
+					</p>
+				)}
+				<Feedback
+					error={action.error ?? environment.lastError}
+					message={action.message}
+				/>
+				<div className="mt-5 space-y-4 border-t border-slate-100 pt-4">
 					<code className="block break-all text-xs text-slate-500">
 						{environment.path}
 					</code>
@@ -363,6 +398,12 @@ function EnvironmentRow({
 								Created {new Date(environment.age).toISOString()}
 							</time>
 						)}
+					</div>
+					<div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-slate-500">
+						<span>
+							{active} workflows running · {queued} queued
+						</span>
+						{!environment.workflowEnabled && <span>Workflows paused</span>}
 					</div>
 					<Services services={environment.services} />
 					<div className="flex flex-wrap gap-2">
@@ -400,8 +441,8 @@ function EnvironmentRow({
 						</button>
 					</div>
 				</div>
-			</details>
-		</article>
+			</article>
+		</section>
 	);
 }
 
@@ -518,7 +559,11 @@ export default function App() {
 	const { snapshot, connection } = useSnapshot();
 	const connected = connection === "live";
 	const [selected, setSelected] = useState<string[]>([]);
+	const [openWorktreeId, setOpenWorktreeId] = useState<string | null>(null);
 	const action = useAction();
+	const openEnvironment = snapshot.environments.find(
+		(environment) => environment.worktreeId === openWorktreeId,
+	);
 	const selectedIds = snapshot.environments
 		.filter(
 			(environment) =>
@@ -625,62 +670,73 @@ export default function App() {
 					</Tabs.Trigger>
 				</Tabs.List>
 				<Tabs.Content value="worktrees">
-					<div className="mb-3 flex flex-wrap items-center gap-3 text-sm text-slate-600">
-						<h2 className="mr-auto font-semibold">
-							{snapshot.environments.length} worktrees
-						</h2>
-						{selectedIds.length > 0 && (
-							<>
-								<span>{selectedIds.length} selected</span>
-								<button
-									className={CONTROL}
-									disabled={!connected || action.pending}
-									type="button"
-									onClick={() => void bulk("stop")}
-								>
-									Stop selected
-								</button>
-								<button
-									className={DANGER}
-									disabled={!connected || action.pending}
-									type="button"
-									onClick={() => void bulk("remove")}
-								>
-									Delete selected data
-								</button>
-							</>
-						)}
-					</div>
-					<Feedback
-						error={action.error}
-						message={action.pending ? "Sending request…" : action.message}
-					/>
-					<section aria-label="Environments" className="mt-3 grid gap-3">
-						{connected && snapshot.environments.length === 0 && (
-							<p className={`${PANEL} p-6 text-sm text-slate-500`}>
-								No Git worktrees found. Worktrees appear here automatically when
-								discovered.
-							</p>
-						)}
-						{snapshot.environments.map((environment) => (
-							<EnvironmentRow
-								key={environment.worktreeId}
-								environment={environment}
-								scheduler={snapshot.scheduler}
-								connected={connected}
-								selected={selectedIds.includes(environment.worktreeId)}
-								onSelect={(checked) =>
-									setSelected(
-										checked
-											? [...selectedIds, environment.worktreeId]
-											: selectedIds.filter(
-													(id) => id !== environment.worktreeId,
-												),
-									)
-								}
+					{openEnvironment ? (
+						<EnvironmentDetails
+							environment={openEnvironment}
+							scheduler={snapshot.scheduler}
+							connected={connected}
+							onBack={() => setOpenWorktreeId(null)}
+						/>
+					) : (
+						<>
+							<div className="mb-3 flex flex-wrap items-center gap-3 text-sm text-slate-600">
+								<h2 className="mr-auto font-semibold">
+									{snapshot.environments.length} worktrees
+								</h2>
+								{selectedIds.length > 0 && (
+									<>
+										<span>{selectedIds.length} selected</span>
+										<button
+											className={CONTROL}
+											disabled={!connected || action.pending}
+											type="button"
+											onClick={() => void bulk("stop")}
+										>
+											Stop selected
+										</button>
+										<button
+											className={DANGER}
+											disabled={!connected || action.pending}
+											type="button"
+											onClick={() => void bulk("remove")}
+										>
+											Delete selected data
+										</button>
+									</>
+								)}
+							</div>
+							<Feedback
+								error={action.error}
+								message={action.pending ? "Sending request…" : action.message}
 							/>
-						))}
-					</section>
+							<section aria-label="Environments" className="mt-3 grid gap-3">
+								{connected && snapshot.environments.length === 0 && (
+									<p className={`${PANEL} p-6 text-sm text-slate-500`}>
+										No Git worktrees found. Worktrees appear here automatically
+										when discovered.
+									</p>
+								)}
+								{snapshot.environments.map((environment) => (
+									<EnvironmentCard
+										key={environment.worktreeId}
+										environment={environment}
+										connected={connected}
+										selected={selectedIds.includes(environment.worktreeId)}
+										onSelect={(checked) =>
+											setSelected(
+												checked
+													? [...selectedIds, environment.worktreeId]
+													: selectedIds.filter(
+															(id) => id !== environment.worktreeId,
+														),
+											)
+										}
+										onOpen={() => setOpenWorktreeId(environment.worktreeId)}
+									/>
+								))}
+							</section>
+						</>
+					)}
 				</Tabs.Content>
 				<Tabs.Content className="grid gap-3" value="shared">
 					<section aria-label="Shared infrastructure">

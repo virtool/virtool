@@ -9,12 +9,12 @@ The pnpm workspace must be installed before the first command. Mise adds
 `dev/bin` to `PATH`.
 
 ```shell
-virtool-dev up
-virtool-dev stop
-virtool-dev remove
-virtool-dev list
-virtool-dev ui
-virtool-dev daemon stop
+vtd up
+vtd stop
+vtd remove
+vtd list
+vtd ui
+vtd daemon stop
 ```
 
 The first command starts a detached daemon from the primary checkout. Mutations

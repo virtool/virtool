@@ -112,7 +112,7 @@ async function ensureDaemon(
 
 export async function runCli(args: string[]): Promise<void> {
 	if (process.platform !== "linux") {
-		throw new Error("virtool-dev supports Linux only");
+		throw new Error("vtd supports Linux only");
 	}
 	const cwd = await realpath(process.env.OLDPWD ?? process.cwd());
 	const repository = await resolveRepository(runCommand, cwd);
@@ -144,7 +144,7 @@ export async function runCli(args: string[]): Promise<void> {
 	}
 	const supported = new Set(["list", "remove", "stop", "up"]);
 	if (!command || !supported.has(command)) {
-		throw new Error("Usage: virtool-dev <up|stop|remove|list|ui|daemon stop>");
+		throw new Error("Usage: vtd <up|stop|remove|list|ui|daemon stop>");
 	}
 	const worktreeIndex = args.indexOf("--worktree");
 	const worktree = worktreeIndex === -1 ? cwd : args[worktreeIndex + 1];
