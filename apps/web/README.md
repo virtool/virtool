@@ -190,16 +190,17 @@ cookie through the TanStack Start integration. Retained legacy sessions are
 validated without extension.
 
 Ordinary server functions, React Query reads and mutations, raw routes, SSE
-handshakes, revocation checks, reconnects and HEAD probes use read-only session
-resolution (`disableRefresh: true`). There is no session polling, input activity
-tracking, heartbeat, countdown or warning dialog. An unattended tab cannot
-extend its session through background traffic.
+handshakes, revocation checks, reconnects, and HEAD probes use read-only session
+resolution (`disableRefresh: true`). The browser doesn't poll sessions, track
+input activity, send heartbeats, show a countdown, or display a warning dialog.
+An unattended tab can't extend its session through background traffic.
 
 After the authenticated shell arms `endSession()`, definitive session failures
-from refresh, query/mutation 401s and SSE 401s converge on that idempotent path.
-It clears session storage and performs full-document navigation to login with
-“Your session ended” and a return location. Network and server failures are
-operational errors, not evidence that a session expired.
+from refresh, query or mutation HTTP 401 responses, and SSE HTTP 401 responses
+converge on that idempotent path. It clears session storage and performs
+full-document navigation to login with “Your session ended” and a return location.
+Network and server failures are operational errors, not evidence that a session
+expired.
 
 Uploads and downloads must stream. Resolve a requested file to a database row
 or explicit whitelist first, then use that row's `storage_key`; never construct
