@@ -60,7 +60,7 @@
 	"devDependencies": {
 		"@babel/core": "^8.0.1",
 		"@faker-js/faker": "^10.6.0",
-		"@rolldown/plugin-babel": "^0.2.3",
+		"@rolldown/plugin-babel": "^0.2.4",
 		"@tailwindcss/vite": "^4.3.3",
 		"@tanstack/start-storage-context": "1.167.34",
 		"@testing-library/jest-dom": "^7.0.1",
