@@ -17,9 +17,10 @@ vtd ui
 vtd daemon stop
 ```
 
-The first command starts a detached daemon from the primary checkout. Mutations
-record desired state and return immediately with <https://dev.localhost:9443>;
-the UI reports build, migration, readiness, failure, and cleanup progress.
+The first command installs and starts a repository-specific systemd user
+service from the primary checkout. Mutations record desired state and return
+immediately with <https://dev.localhost:9443>; the UI reports build, migration,
+readiness, failure, and cleanup progress.
 
 ## Architecture
 
@@ -29,6 +30,20 @@ Compose inputs, and logs under `<git-common-dir>/virtool-dev/`. Its CLI uses a
 repository-specific Unix socket below `$XDG_RUNTIME_DIR/virtool-dev/`. The HTTP
 API uses a repository-local Unix socket that Caddy exposes at the management
 origin.
+
+The generated `virtool-dev-<repository-id>.service` unit is stored under
+`<git-common-dir>/virtool-dev/systemd/`, linked into the user manager, and
+started on demand. It is not enabled at login. The daemon stays in the
+foreground, systemd restarts it after crashes and source updates, and a
+process-lifetime `flock` prevents a second service from owning the same
+repository. `vtd daemon stop` asks systemd to stop the unit. Use
+`systemctl --user status virtool-dev-<repository-id>.service` for service state;
+the management UI continues to read `<git-common-dir>/virtool-dev/logs/daemon.log`.
+
+An update waits for lifecycle operations and workflow executors to finish, then
+the daemon drains its background reconciliation and scheduler work before
+closing SQLite. It exits with a restart status and relies on systemd to launch
+the replacement; it never spawns a detached copy itself.
 
 The daemon continuously reconciles Git, durable desired state, and Docker. Git
 worktrees appear in the UI before an environment is created. The first `up`

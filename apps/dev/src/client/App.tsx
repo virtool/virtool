@@ -219,15 +219,40 @@ function isBusy(environment: Environment): boolean {
 	);
 }
 
+function isFailed(environment: Environment): boolean {
+	return (
+		environment.observed === "failed" ||
+		environment.observed === "missing" ||
+		Boolean(environment.lastError)
+	);
+}
+
+function getEnvironmentTier(environment: Environment): number {
+	if (!environment.id) {
+		return 3;
+	}
+	if (environment.ready) {
+		return 0;
+	}
+	if (isFailed(environment)) {
+		return 1;
+	}
+	return 2;
+}
+
+function compareEnvironments(left: Environment, right: Environment): number {
+	return (
+		getEnvironmentTier(left) - getEnvironmentTier(right) ||
+		left.branch.localeCompare(right.branch)
+	);
+}
+
 function getEnvironmentStatus(environment: Environment): {
 	label: string;
 	tone: "neutral" | "good" | "bad" | "busy";
 } {
 	const busy = isBusy(environment);
-	const failed =
-		environment.observed === "failed" ||
-		environment.observed === "missing" ||
-		Boolean(environment.lastError);
+	const failed = isFailed(environment);
 	return {
 		label: busy
 			? environment.operation?.action === "start"
@@ -249,42 +274,85 @@ function getEnvironmentStatus(environment: Environment): {
 function EnvironmentCard({
 	environment,
 	connected,
-	selected,
-	onSelect,
 }: {
 	environment: Environment;
 	connected: boolean;
-	selected: boolean;
-	onSelect: (selected: boolean) => void;
 }) {
+	const action = useAction();
 	const busy = isBusy(environment);
+	const disabled = !environment.id || !connected || busy || action.pending;
 	const status = getEnvironmentStatus(environment);
+	async function act(value: Mutation["action"]): Promise<void> {
+		await action.run(
+			() =>
+				post("/api/environments", {
+					action: value,
+					worktreeIds: [environment.worktreeId],
+				}),
+			"Request accepted.",
+		);
+	}
 	return (
-		<article className={`${PANEL} flex items-center overflow-hidden pl-4`}>
-			<div className="flex items-center">
-				<input
-					aria-label={`Select ${environment.branch}`}
-					type="checkbox"
-					checked={selected}
-					onChange={(event) => onSelect(event.target.checked)}
-					disabled={!environment.id || !connected || busy}
-					className="size-4 accent-emerald-700"
-				/>
-			</div>
-			<Link
-				aria-label={`View details for ${environment.branch}`}
-				className="flex min-w-0 flex-1 cursor-pointer items-center gap-3 p-4 text-left transition-colors hover:bg-slate-50"
-				params={{ worktreeId: environment.worktreeId }}
-				to="/worktrees/$worktreeId"
-			>
-				<h2 className="min-w-0 flex-1 break-all font-semibold text-emerald-950">
+		<article className={`${PANEL} p-4`}>
+			<div className="flex min-w-0 items-center gap-3">
+				<Link
+					aria-label={`View details for ${environment.branch}`}
+					className="min-w-0 flex-1 cursor-pointer break-all font-semibold text-emerald-950 hover:underline"
+					params={{ worktreeId: environment.worktreeId }}
+					to="/worktrees/$worktreeId"
+				>
 					{environment.branch}
-				</h2>
+				</Link>
 				<Badge label={status.label} tone={status.tone} />
-				<span aria-hidden="true" className="text-slate-400">
-					&rsaquo;
-				</span>
-			</Link>
+			</div>
+			<div className="mt-3 flex flex-wrap gap-2 border-t border-slate-100 pt-3">
+				{environment.ready && environment.url ? (
+					<a
+						className={CONTROL}
+						href={environment.url}
+						target="_blank"
+						rel="noreferrer"
+					>
+						Open
+					</a>
+				) : (
+					<button className={CONTROL} disabled type="button">
+						Open
+					</button>
+				)}
+				<button
+					className={CONTROL}
+					disabled={disabled}
+					type="button"
+					onClick={() => void act("stop")}
+				>
+					Stop
+				</button>
+				<button
+					className={CONTROL}
+					disabled={disabled}
+					type="button"
+					onClick={() => void act("restart")}
+				>
+					Restart
+				</button>
+				<button
+					aria-pressed={environment.workflowEnabled}
+					className={environment.workflowEnabled ? PRIMARY : CONTROL}
+					disabled={disabled}
+					type="button"
+					onClick={() =>
+						void act(
+							environment.workflowEnabled
+								? "disable_workflows"
+								: "enable_workflows",
+						)
+					}
+				>
+					Workflow
+				</button>
+			</div>
+			<Feedback error={action.error} message={action.message} />
 		</article>
 	);
 }
@@ -301,10 +369,7 @@ function EnvironmentDetails({
 	const action = useAction();
 	const busy = isBusy(environment);
 	const disabled = !connected || busy || action.pending;
-	const failed =
-		environment.observed === "failed" ||
-		environment.observed === "missing" ||
-		Boolean(environment.lastError);
+	const failed = isFailed(environment);
 	const running = environment.observed === "running";
 	const primary =
 		failed && environment.id ? "retry" : running ? "stop" : "start";
@@ -562,38 +627,34 @@ function DaemonLog() {
 function AppContent() {
 	const { snapshot, connection } = useSnapshot();
 	const connected = connection === "live";
-	const [selected, setSelected] = useState<string[]>([]);
 	const pathname = useLocation({ select: (location) => location.pathname });
 	const { worktreeId } = useParams({ strict: false });
 	const action = useAction();
 	const openEnvironment = snapshot.environments.find(
 		(environment) => environment.worktreeId === worktreeId,
 	);
-	const selectedIds = snapshot.environments
-		.filter(
-			(environment) =>
-				selected.includes(environment.worktreeId) &&
-				environment.id &&
-				!isBusy(environment),
-		)
+	const environments = snapshot.environments.toSorted(compareEnvironments);
+	const activeEnvironments = environments.filter(
+		(environment) => environment.id,
+	);
+	const uncreatedEnvironments = environments.filter(
+		(environment) => !environment.id,
+	);
+	const stoppableIds = activeEnvironments
+		.filter((environment) => !isBusy(environment))
 		.map((environment) => environment.worktreeId);
-	async function bulk(value: "remove" | "stop"): Promise<void> {
-		if (
-			!selectedIds.length ||
-			(value === "remove" &&
-				!window.confirm(
-					`Delete the databases, stored files, and containers for ${selectedIds.length} environments? Git worktrees will be kept.`,
-				))
-		) {
+	async function stopAll(): Promise<void> {
+		if (!stoppableIds.length) {
 			return;
 		}
-		await action.run(async () => {
-			await post("/api/environments", {
-				action: value,
-				worktreeIds: selectedIds,
-			});
-			setSelected([]);
-		}, "Request accepted.");
+		await action.run(
+			() =>
+				post("/api/environments", {
+					action: "stop",
+					worktreeIds: stoppableIds,
+				}),
+			"Request accepted.",
+		);
 	}
 	async function resetShared(): Promise<void> {
 		if (
@@ -709,31 +770,20 @@ function AppContent() {
 						</p>
 					) : (
 						<>
-							<div className="mb-3 flex flex-wrap items-center gap-3 text-sm text-slate-600">
-								<h2 className="mr-auto font-semibold">
+							<div className="mb-3 flex items-center gap-3 text-sm text-slate-600">
+								<h2 className="font-semibold">
 									{snapshot.environments.length} worktrees
 								</h2>
-								{selectedIds.length > 0 && (
-									<>
-										<span>{selectedIds.length} selected</span>
-										<button
-											className={CONTROL}
-											disabled={!connected || action.pending}
-											type="button"
-											onClick={() => void bulk("stop")}
-										>
-											Stop selected
-										</button>
-										<button
-											className={DANGER}
-											disabled={!connected || action.pending}
-											type="button"
-											onClick={() => void bulk("remove")}
-										>
-											Delete selected data
-										</button>
-									</>
-								)}
+								<button
+									className={`${CONTROL} ml-auto`}
+									disabled={
+										!connected || action.pending || !stoppableIds.length
+									}
+									type="button"
+									onClick={() => void stopAll()}
+								>
+									Stop all
+								</button>
 							</div>
 							<Feedback
 								error={action.error}
@@ -746,21 +796,25 @@ function AppContent() {
 										when discovered.
 									</p>
 								)}
-								{snapshot.environments.map((environment) => (
+								{activeEnvironments.map((environment) => (
 									<EnvironmentCard
 										key={environment.worktreeId}
 										environment={environment}
 										connected={connected}
-										selected={selectedIds.includes(environment.worktreeId)}
-										onSelect={(checked) =>
-											setSelected(
-												checked
-													? [...selectedIds, environment.worktreeId]
-													: selectedIds.filter(
-															(id) => id !== environment.worktreeId,
-														),
-											)
-										}
+									/>
+								))}
+								{uncreatedEnvironments.length > 0 && (
+									<div className="flex items-center gap-3 py-1 text-xs font-semibold uppercase tracking-wider text-slate-400">
+										<div className="h-px flex-1 bg-slate-200" />
+										<span>Not created</span>
+										<div className="h-px flex-1 bg-slate-200" />
+									</div>
+								)}
+								{uncreatedEnvironments.map((environment) => (
+									<EnvironmentCard
+										key={environment.worktreeId}
+										environment={environment}
+										connected={connected}
 									/>
 								))}
 							</section>

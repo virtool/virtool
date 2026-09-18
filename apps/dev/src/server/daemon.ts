@@ -1,4 +1,3 @@
-import { spawn } from "node:child_process";
 import { createHash } from "node:crypto";
 import { access, readdir, readFile, rm } from "node:fs/promises";
 import { createServer } from "node:http";
@@ -19,7 +18,11 @@ import {
 } from "./git.ts";
 import { Reconciler } from "./lifecycle.ts";
 import { checkPortAvailable } from "./port.ts";
-import { type ControlRequest, createControlServer } from "./socket.ts";
+import {
+	type ControlRequest,
+	createControlServer,
+	listenOnUnixSocket,
+} from "./socket.ts";
 import { StateStore } from "./state.ts";
 import { WorkflowCoordinator } from "./workflows.ts";
 
@@ -74,9 +77,10 @@ export async function runDaemon(
 	cwd: string,
 	socketPath: string,
 	run: CommandRunner = runCommand,
-): Promise<void> {
+): Promise<"restart" | "shutdown"> {
 	const repository = await resolveRepository(run, cwd);
 	const store = new StateStore(repository.stateDirectory);
+	store.interruptActiveOperations();
 	store.setMeta("protocol_version", String(PROTOCOL_VERSION));
 	if (store.getMeta("shared_initialized") !== "true") {
 		await checkPortAvailable(9443);
@@ -102,28 +106,35 @@ export async function runDaemon(
 	const builds = new BuildCoordinator();
 	const logger = createLogger({ name: "dev" });
 	let refreshPromise: Promise<void> | undefined;
+	let restartRequested = false;
+	let shuttingDown = false;
+	let shutdownResolve: (() => void) | undefined;
+	const shutdown = new Promise<void>((resolve) => {
+		shutdownResolve = resolve;
+	});
+
+	function requestRefresh(): void {
+		if (!shuttingDown) {
+			void refresh().catch(() => undefined);
+		}
+	}
+
 	const reconciler = new Reconciler(
 		store,
 		run,
 		repository.primaryWorktree,
-		() => {
-			void refresh().catch(() => undefined);
-		},
+		requestRefresh,
 		builds,
 	);
 	const workflows = new WorkflowCoordinator(
 		store,
 		run,
 		repository.primaryWorktree,
-		() => {
-			void refresh().catch(() => undefined);
-		},
+		requestRefresh,
 		builds,
 		logger,
 	);
-	const dockerEvents = new DockerEvents(store.repositoryId, () => {
-		void refresh().catch(() => undefined);
-	});
+	const dockerEvents = new DockerEvents(store.repositoryId, requestRefresh);
 
 	async function refresh(): Promise<void> {
 		if (refreshPromise) {
@@ -142,15 +153,27 @@ export async function runDaemon(
 					hashDirectory(join(repository.primaryWorktree, "apps/dev")),
 				]);
 				const environments = store.listEnvironments(observed, openPullRequests);
+				const updateAvailable = currentHash !== primaryHash;
 				feed.set({
 					...feed.get(),
 					environments,
 					scheduler: workflows.getState(),
 					shared,
 					updatedAt: Date.now(),
-					updateAvailable: currentHash !== primaryHash,
+					updateAvailable,
 				});
-				void workflows.tick(environments);
+				await workflows.tick(environments, !updateAvailable);
+				feed.set({ ...feed.get(), scheduler: workflows.getState() });
+				if (
+					updateAvailable &&
+					!store.hasActiveOperations() &&
+					!reconciler.hasActiveWork() &&
+					workflows.getState().active.length === 0
+				) {
+					restartRequested = true;
+					shuttingDown = true;
+					shutdownResolve?.();
+				}
 			} finally {
 				refreshPromise = undefined;
 			}
@@ -192,23 +215,11 @@ export async function runDaemon(
 		void refresh().catch(() => undefined);
 	}
 
-	let shutdownResolve: (() => void) | undefined;
-	let restartRequested = false;
-	const shutdown = new Promise<void>((resolve) => {
-		shutdownResolve = resolve;
-	});
 	async function control(request: ControlRequest): Promise<unknown> {
 		if (request.command === "shutdown") {
+			shuttingDown = true;
 			shutdownResolve?.();
 			return { accepted: true };
-		}
-		if (
-			feed.get().updateAvailable &&
-			!store.hasActiveOperations() &&
-			workflows.getState().active.length === 0
-		) {
-			restartRequested = true;
-			setTimeout(() => shutdownResolve?.(), 50);
 		}
 		if (request.command === "list") {
 			return feed.get();
@@ -240,15 +251,8 @@ export async function runDaemon(
 		join(repository.stateDirectory, "logs/daemon.log"),
 	);
 	const httpSocketPath = join(repository.stateDirectory, "http.sock");
-	await rm(httpSocketPath, { force: true });
 	const http = createServer(getRequestListener(app.fetch));
-	await new Promise<void>((resolve, reject) => {
-		http.once("error", reject);
-		http.listen(httpSocketPath, () => {
-			http.off("error", reject);
-			resolve();
-		});
-	});
+	await listenOnUnixSocket(http, httpSocketPath);
 	const controlServer = await createControlServer(socketPath, control);
 	const discovery = setInterval(
 		() => void refresh().catch(() => undefined),
@@ -257,38 +261,30 @@ export async function runDaemon(
 	dockerEvents.start();
 	reconciler.start();
 	for (const signal of ["SIGINT", "SIGTERM"] as const) {
-		process.once(signal, () => shutdownResolve?.());
+		process.once(signal, () => {
+			shuttingDown = true;
+			shutdownResolve?.();
+		});
 	}
 	await shutdown;
+	shuttingDown = true;
 	clearInterval(discovery);
 	dockerEvents.stop();
-	reconciler.stop();
+	const httpClosed = new Promise<void>((resolve) =>
+		http.close(() => resolve()),
+	);
+	http.closeAllConnections();
 	await Promise.all([
-		new Promise<void>((resolve) => http.close(() => resolve())),
+		httpClosed,
 		new Promise<void>((resolve) => controlServer.close(() => resolve())),
 	]);
+	await reconciler.stop();
+	await refreshPromise;
+	await workflows.stop();
 	await Promise.all([
 		rm(socketPath, { force: true }),
 		rm(httpSocketPath, { force: true }),
 	]);
 	store.close();
-	if (restartRequested) {
-		const child = spawn(
-			"pnpm",
-			[
-				"--dir",
-				repository.primaryWorktree,
-				"--filter",
-				"@virtool/dev",
-				"exec",
-				"tsx",
-				join(repository.primaryWorktree, "apps/dev/src/main.ts"),
-				"daemon",
-				"run",
-				socketPath,
-			],
-			{ detached: true, stdio: "inherit" },
-		);
-		child.unref();
-	}
+	return restartRequested ? "restart" : "shutdown";
 }

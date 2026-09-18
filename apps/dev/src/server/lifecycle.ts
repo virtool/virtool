@@ -20,12 +20,14 @@ function actionFor(desired: DesiredState): "remove" | "start" | "stop" {
 
 /** Reconciles durable desired state with Docker Compose. */
 export class Reconciler {
-	private readonly active = new Set<string>();
+	private readonly active = new Map<string, Promise<void>>();
 	private readonly observer: DockerObserver;
 	private readonly removalAttempts = new Map<string, number>();
 	private readonly retryAt = new Map<string, number>();
 	private readonly restarts = new Set<string>();
 	private timer: NodeJS.Timeout | undefined;
+	private stopping = false;
+	private tickPromise: Promise<void> | undefined;
 
 	constructor(
 		private readonly store: StateStore,
@@ -38,18 +40,21 @@ export class Reconciler {
 	}
 
 	start(): void {
-		this.timer = setInterval(() => void this.tick(), 1_000);
-		void this.tick();
+		this.timer = setInterval(() => void this.runTick(), 1_000);
+		void this.runTick();
 	}
 
-	stop(): void {
+	async stop(): Promise<void> {
+		this.stopping = true;
 		if (this.timer) {
 			clearInterval(this.timer);
 		}
+		await this.tickPromise;
+		await Promise.all(this.active.values());
 	}
 
 	wake(): void {
-		void this.tick();
+		void this.runTick();
 	}
 
 	requestRestart(environmentId: string): void {
@@ -57,7 +62,14 @@ export class Reconciler {
 		this.wake();
 	}
 
+	hasActiveWork(): boolean {
+		return this.active.size > 0 || this.tickPromise !== undefined;
+	}
+
 	private async tick(): Promise<void> {
+		if (this.stopping) {
+			return;
+		}
 		for (const environment of this.store.getDesiredEnvironments()) {
 			const canRetryRemoval =
 				environment.desired === "absent" &&
@@ -66,7 +78,7 @@ export class Reconciler {
 				!this.active.has(environment.id) &&
 				(!environment.lastError || canRetryRemoval)
 			) {
-				void this.reconcile(environment).catch((error) => {
+				const promise = this.reconcile(environment).catch((error) => {
 					this.store.setEnvironmentError(
 						environment.id,
 						error instanceof Error ? error.message : String(error),
@@ -81,9 +93,22 @@ export class Reconciler {
 					}
 					this.publish();
 				});
+				this.active.set(environment.id, promise);
 			}
 		}
 		this.publish();
+	}
+
+	private async runTick(): Promise<void> {
+		if (this.tickPromise || this.stopping) {
+			return this.tickPromise;
+		}
+		this.tickPromise = this.tick();
+		try {
+			await this.tickPromise;
+		} finally {
+			this.tickPromise = undefined;
+		}
 	}
 
 	private async reconcile(environment: DesiredEnvironment): Promise<void> {
@@ -120,7 +145,6 @@ export class Reconciler {
 				return;
 			}
 		}
-		this.active.add(environment.id);
 		const operationId = this.store.startOperation(
 			environment.id,
 			actionFor(environment.desired),

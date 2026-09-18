@@ -425,6 +425,18 @@ export class StateStore {
 		return row.active === 1;
 	}
 
+	interruptActiveOperations(): void {
+		this.database
+			.prepare(`
+				UPDATE operations
+				SET status = 'failed', progress = 'interrupted',
+					error = 'Daemon stopped before the operation completed',
+					finished_at = ?
+				WHERE status IN ('pending', 'running')
+			`)
+			.run(Date.now());
+	}
+
 	setWorkflowConcurrency(value: number): void {
 		if (!Number.isInteger(value) || value < 1 || value > 32) {
 			throw new Error("Workflow concurrency must be an integer from 1 to 32");

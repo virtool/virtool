@@ -284,23 +284,88 @@ it("reports rejected mutations", async () => {
 	expect(screen.getByRole("button", { name: "Stop" })).toBeEnabled();
 });
 
-it("only offers bulk actions after selection", async () => {
+it("stops all created environments without selection", async () => {
 	const user = userEvent.setup();
 	await renderApp();
-	expect(
-		screen.queryByRole("button", { name: "Stop selected" }),
-	).not.toBeInTheDocument();
-	await user.click(
-		screen.getByRole("checkbox", { name: "Select feature/test" }),
-	);
-	await user.click(screen.getByRole("button", { name: "Stop selected" }));
+	expect(screen.queryByRole("checkbox")).not.toBeInTheDocument();
+	await user.click(screen.getByRole("button", { name: "Stop all" }));
 	expect(fetch).toHaveBeenCalledWith(
 		"/api/environments",
 		expect.objectContaining({
 			body: JSON.stringify({ action: "stop", worktreeIds: ["worktree"] }),
 		}),
 	);
+});
+
+it("shows worktree actions and toggles workflows", async () => {
+	const user = userEvent.setup();
+	await renderApp();
+	expect(screen.getByRole("link", { name: "Open" })).toHaveAttribute(
+		"href",
+		getEnvironment().url,
+	);
+	expect(screen.getByRole("button", { name: "Workflow" })).toHaveAttribute(
+		"aria-pressed",
+		"true",
+	);
+	await user.click(screen.getByRole("button", { name: "Restart" }));
+	expect(fetch).toHaveBeenLastCalledWith(
+		"/api/environments",
+		expect.objectContaining({
+			body: JSON.stringify({
+				action: "restart",
+				worktreeIds: ["worktree"],
+			}),
+		}),
+	);
+	await user.click(screen.getByRole("button", { name: "Workflow" }));
+	expect(fetch).toHaveBeenLastCalledWith(
+		"/api/environments",
+		expect.objectContaining({
+			body: JSON.stringify({
+				action: "disable_workflows",
+				worktreeIds: ["worktree"],
+			}),
+		}),
+	);
+});
+
+it("sorts ready and failed environments above uncreated worktrees", async () => {
+	const base = getEnvironment();
+	snapshot.environments = [
+		{
+			...base,
+			branch: "uncreated",
+			id: null,
+			observed: "not_created",
+			ready: false,
+			url: null,
+			worktreeId: "uncreated",
+		},
+		{
+			...base,
+			branch: "stopped",
+			observed: "stopped",
+			ready: false,
+			url: null,
+			worktreeId: "stopped",
+		},
+		{
+			...base,
+			branch: "failed",
+			lastError: "Failed",
+			observed: "failed",
+			ready: false,
+			url: null,
+			worktreeId: "failed",
+		},
+		base,
+	];
+	await renderApp();
 	expect(
-		screen.queryByRole("button", { name: "Stop selected" }),
-	).not.toBeInTheDocument();
+		screen
+			.getAllByRole("link", { name: /View details for/ })
+			.map((link) => link.textContent),
+	).toEqual(["feature/test", "failed", "stopped", "uncreated"]);
+	expect(screen.getByText("Not created")).toBeVisible();
 });
