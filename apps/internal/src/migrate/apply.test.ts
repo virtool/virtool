@@ -33,6 +33,7 @@ import {
 	BOOTSTRAP_MIGRATION_TAG,
 	getDataMigrationAssertion,
 } from "../data-migrations/pairs";
+import { DATA_MIGRATIONS } from "../data-migrations/registry";
 import { applyGatedMigrations } from "./apply";
 import { createMigrationDb } from "./connection";
 
@@ -441,7 +442,7 @@ it("rejects an out-of-order journal before executing bodies", async () => {
 	expect(await f.hasTable("data_migrations")).toBe(false);
 });
 
-it("unblocks a failed version 1 at the real 0029 schema boundary", async () => {
+it("runs the production registry through the latest checked-in migration", async () => {
 	const f = await fixture();
 	const root = fileURLToPath(
 		new URL("../../../../packages/data/drizzle/", import.meta.url),
@@ -451,13 +452,19 @@ it("unblocks a failed version 1 at the real 0029 schema boundary", async () => {
 	) as {
 		entries: { tag: string }[];
 	};
-	const historical = journal.entries
-		.filter((entry) => Number(entry.tag.slice(0, 4)) <= 29)
-		.map(({ tag }) => ({
-			tag,
-			sql: readFileSync(join(root, `${tag}.sql`), "utf8"),
-		}));
-	await migrate(f.db, { migrationsFolder: folderFor(historical.slice(0, -1)) });
+	const checkedIn = journal.entries.map(({ tag }) => ({
+		tag,
+		sql: readFileSync(join(root, `${tag}.sql`), "utf8"),
+	}));
+	const legacyBoundary = checkedIn.findIndex(
+		(file) => file.tag === legacyIdentities.migrationTag,
+	);
+	if (legacyBoundary < 0) {
+		throw new Error("legacy identity migration is missing from the journal");
+	}
+	await migrate(f.db, {
+		migrationsFolder: folderFor(checkedIn.slice(0, legacyBoundary)),
+	});
 	const old = await startDataMigrationAttempt(
 		f.db,
 		"legacy_identities",
@@ -472,10 +479,10 @@ it("unblocks a failed version 1 at the real 0029 schema boundary", async () => {
 		false, 'user' || n, now(), ${password}, '{}'::jsonb FROM generate_series(1, 501) AS n`;
 	expect(
 		await f.apply({
-			registry: { [legacyIdentities.key]: legacyIdentities },
-			migrationsFolder: folderFor(historical),
+			registry: DATA_MIGRATIONS,
+			migrationsFolder: folderFor(checkedIn),
 		}),
-	).toEqual({ appliedThrough: "0029_audit_legacy_identities" });
+	).toEqual({ appliedThrough: checkedIn.at(-1)?.tag });
 	expect(await getDataMigration(f.db, "legacy_identities", 2)).toMatchObject({
 		status: "passed",
 		summary: {

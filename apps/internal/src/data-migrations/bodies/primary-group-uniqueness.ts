@@ -31,7 +31,7 @@ async function audit({ client, signal, report }: DataMigrationArgs) {
 export const primaryGroupUniqueness = defineAudit({
 	key: "primary_group_uniqueness",
 	version: 1,
-	migrationTag: "0031_enforce_primary_group_uniqueness",
+	migrationTag: "0032_enforce_primary_group_uniqueness",
 	kind: "audit",
 	description: "report users assigned to multiple primary groups",
 	run: audit,
