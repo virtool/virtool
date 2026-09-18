@@ -315,6 +315,51 @@ describe("completeEmailRemediation", () => {
 		});
 	});
 
+	it("serializes address resubmission with verification completion", async () => {
+		const userId = await seedUser(db, { handle: "Ada" });
+		const token = await startOfflineEmailRemediation(
+			userId,
+			"first@example.com",
+		);
+		const other = database.connect();
+
+		try {
+			const results = await Promise.allSettled([
+				startEmailRemediation(db, {
+					deliveryAvailable: false,
+					email: "second@example.com",
+					getVerificationUrl: () => "https://virtool.test/unused",
+					userId,
+				}),
+				completeEmailRemediation(other.db, { token, userId, verified: true }),
+			]);
+
+			expect(
+				results.filter((result) => result.status === "fulfilled"),
+			).toHaveLength(1);
+			for (const result of results) {
+				if (result.status === "rejected") {
+					expect(
+						result.reason instanceof SetupCredentialError ||
+							result.reason instanceof SetupNotEligibleError,
+					).toBe(true);
+				}
+			}
+			const row = await readUser(userId);
+			if (results[1].status === "fulfilled") {
+				expect(row.email).toBe("first@example.com");
+				expect(row.authMigratedAt).not.toBeNull();
+			} else {
+				expect(row.authMigratedAt).toBeNull();
+				expect(await getEmailRemediationState(db, userId)).toEqual({
+					email: "second@example.com",
+				});
+			}
+		} finally {
+			await other.close();
+		}
+	});
+
 	it("keeps concurrent address submissions bound to their own tokens", async () => {
 		const userId = await seedUser(db, { handle: "Ada" });
 		await seedSettings(db, { emailEnabled: true });

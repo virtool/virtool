@@ -17,6 +17,7 @@ import {
 	consumeSetupToken,
 	invalidateUserSetupSessions,
 	issueSetupTokenInTransaction,
+	lockUserSetupCredentials,
 	SetupCredentialError,
 	supersedeSetupTokens,
 } from "./setup";
@@ -352,6 +353,8 @@ async function prepareEmailRemediationInTransaction(
 		throw new EmailInUseError();
 	}
 
+	await lockUserSetupCredentials(tx, userId);
+
 	const [row] = await tx
 		.select({
 			active: users.active,
@@ -436,6 +439,7 @@ export async function completeEmailRemediation(
 	{ token, userId: expectedUserId, verified }: CompleteEmailRemediationInput,
 ): Promise<User> {
 	const userId = await db.transaction(async (tx) => {
+		await lockUserSetupCredentials(tx, expectedUserId);
 		const consumed = await consumeSetupToken(tx, token, "email_remediation");
 		if (consumed.userId !== expectedUserId) {
 			throw new SetupCredentialError();

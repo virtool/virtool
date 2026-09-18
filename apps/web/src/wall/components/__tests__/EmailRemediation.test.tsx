@@ -66,3 +66,21 @@ it("returns to the requested page after offline remediation", async () => {
 		data: { email: "alice@example.com", redirect: "/samples" },
 	});
 });
+
+it.each(["", "abc", "g".repeat(64), "a".repeat(63), "a".repeat(65)])(
+	"shows the retry form for malformed verification token %s",
+	async (token) => {
+		authServerFnMocks.getEmailRemediationFn.mockResolvedValue({ email: "" });
+		const { router } = await renderRoute(
+			`/email-remediation-verify?token=${token}&redirect=%2Fsamples`,
+		);
+
+		expect(await screen.findByLabelText("Email address")).toBeInTheDocument();
+		expect(router.state.location.pathname).toBe("/email-remediation");
+		expect(router.state.location.search).toEqual({
+			error: "invalid-link",
+			redirect: "/samples",
+		});
+		expect(authServerFnMocks.completeEmailRemediationFn).not.toHaveBeenCalled();
+	},
+);

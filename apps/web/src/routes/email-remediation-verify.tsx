@@ -11,7 +11,7 @@ export const Route = createFileRoute("/email-remediation-verify")({
 		token: typeof input.token === "string" ? input.token : undefined,
 	}),
 	beforeLoad: async ({ context, search }) => {
-		if (!search.token) {
+		if (!search.token || !/^[0-9a-f]{64}$/.test(search.token)) {
 			throw redirect({
 				to: "/email-remediation",
 				replace: true,
