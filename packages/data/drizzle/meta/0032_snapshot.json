@@ -1,5 +1,5 @@
 {
-  "id": "923bc8b7-7b37-43ca-a855-3ddb931d80a5",
+  "id": "32a996b4-dccc-4fc2-a0f9-9b88015d560f",
   "prevId": "1a18e503-4f0b-4097-a8b4-6130b2db4355",
   "version": "7",
   "dialect": "postgresql",
@@ -904,30 +904,6 @@
           "primaryKey": false,
           "notNull": true
         },
-        "last_activity_at": {
-          "name": "last_activity_at",
-          "type": "timestamp",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "idle_expires_at": {
-          "name": "idle_expires_at",
-          "type": "timestamp",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "absolute_expires_at": {
-          "name": "absolute_expires_at",
-          "type": "timestamp",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "last_refreshed_at": {
-          "name": "last_refreshed_at",
-          "type": "timestamp",
-          "primaryKey": false,
-          "notNull": true
-        },
         "token": {
           "name": "token",
           "type": "text",
@@ -971,21 +947,6 @@
           "columns": [
             {
               "expression": "expires_at",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            }
-          ],
-          "isUnique": false,
-          "concurrently": false,
-          "method": "btree",
-          "with": {}
-        },
-        "idx_auth_sessions_absolute_expires_at": {
-          "name": "idx_auth_sessions_absolute_expires_at",
-          "columns": [
-            {
-              "expression": "absolute_expires_at",
               "isExpression": false,
               "asc": true,
               "nulls": "last"
@@ -1991,12 +1952,6 @@
           "name": "primary_group_unique",
           "columns": [
             {
-              "expression": "primary",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            },
-            {
               "expression": "user_id",
               "isExpression": false,
               "asc": true,
@@ -2004,7 +1959,7 @@
             }
           ],
           "isUnique": true,
-          "where": "false",
+          "where": "\"user_groups\".\"primary\" = true",
           "concurrently": false,
           "method": "btree",
           "with": {}

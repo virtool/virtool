@@ -289,6 +289,19 @@ describe("updateUser", () => {
 		).toEqual([second]);
 	});
 
+	it("rejects multiple primary groups for one user", async () => {
+		const userId = await seedUser(db);
+		const first = await seedGroup(db, { name: "first" });
+		const second = await seedGroup(db, { name: "second" });
+		await db
+			.insert(userGroups)
+			.values({ userId, groupId: first, primary: true });
+
+		await expect(
+			db.insert(userGroups).values({ userId, groupId: second, primary: true }),
+		).rejects.toMatchObject({ cause: { code: "23505" } });
+	});
+
 	it("clears the primary group", async () => {
 		const userId = await seedUser(db);
 		const groupId = await seedGroup(db);
