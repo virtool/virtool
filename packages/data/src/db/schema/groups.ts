@@ -54,12 +54,9 @@ export const userGroups = pgTable(
 			name: "user_groups_pkey",
 			columns: [table.groupId, table.userId],
 		}),
-		/* `WHERE false` indexes no row, so this enforces nothing. It is what
-		   upstream created and is mirrored as-is; narrowing the predicate to what
-		   the name implies would start rejecting rows the real database accepts. */
 		uniqueIndex("primary_group_unique")
-			.on(table.primary, table.userId)
-			.where(sql`false`),
+			.on(table.userId)
+			.where(sql`${table.primary} = true`),
 	],
 );
 

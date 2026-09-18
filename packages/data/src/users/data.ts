@@ -19,7 +19,6 @@ import {
 	inArray,
 	isNotNull,
 	isNull,
-	ne,
 	sql,
 } from "drizzle-orm";
 import type { PostgresError } from "postgres";
@@ -815,6 +814,11 @@ export async function updateUser(
 				.set({ primary: false })
 				.where(eq(userGroupsTable.userId, userId));
 		} else if (values.primaryGroup !== undefined) {
+			await tx
+				.update(userGroupsTable)
+				.set({ primary: false })
+				.where(eq(userGroupsTable.userId, userId));
+
 			const promoted = await tx
 				.update(userGroupsTable)
 				.set({ primary: true })
@@ -829,16 +833,6 @@ export async function updateUser(
 			if (promoted.length === 0) {
 				throw new GroupMembershipError();
 			}
-
-			await tx
-				.update(userGroupsTable)
-				.set({ primary: false })
-				.where(
-					and(
-						eq(userGroupsTable.userId, userId),
-						ne(userGroupsTable.groupId, values.primaryGroup),
-					),
-				);
 		}
 	});
 
