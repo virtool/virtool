@@ -112,30 +112,27 @@ export async function issueSetupTokenInTransaction(
 }
 
 /**
- * Delete every unspent setup token a user holds for `purpose`, and report how
- * many went.
- *
- * Deleted rather than flagged: a superseded link and an unknown one have to be
- * indistinguishable to whoever submits them, and the simplest way to say
- * nothing is to have nothing to say.
+ * Supersede every live setup token a user holds for `purpose`.
  */
 export async function supersedeSetupTokens(
 	db: DbOrTx,
 	userId: number,
 	purpose: SetupPurpose,
 ): Promise<number> {
-	const deleted = await db
-		.delete(setupTokens)
+	const superseded = await db
+		.update(setupTokens)
+		.set({ supersededAt: sql`${nowUtc()}` })
 		.where(
 			and(
 				eq(setupTokens.userId, userId),
 				eq(setupTokens.purpose, purpose),
 				isNull(setupTokens.consumedAt),
+				isNull(setupTokens.supersededAt),
 			),
 		)
 		.returning({ id: setupTokens.id });
 
-	return deleted.length;
+	return superseded.length;
 }
 
 /** Delete every setup token held by a user. */
@@ -187,6 +184,7 @@ export async function consumeSetupToken(
 				eq(setupTokens.tokenHash, hashToken(token)),
 				eq(setupTokens.purpose, purpose),
 				isNull(setupTokens.consumedAt),
+				isNull(setupTokens.supersededAt),
 				sql`${setupTokens.expiresAt} > ${nowUtc()}`,
 				sql`exists (select 1 from ${users} where ${users.id} = ${setupTokens.userId} and ${users.active})`,
 			),

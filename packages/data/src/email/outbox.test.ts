@@ -44,6 +44,7 @@ function input(overrides: Partial<EnqueueEmailInput> = {}): EnqueueEmailInput {
 		idempotencyKey: "email_verification/1/1",
 		recipient: "someone@example.com",
 		template: {
+			expiresInHours: 72,
 			type: "email_verification",
 			username: "alice",
 			verifyUrl: "https://virtool.example/verify?token=abc",

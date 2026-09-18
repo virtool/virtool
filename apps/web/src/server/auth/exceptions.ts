@@ -1,6 +1,7 @@
 import { getRootFn } from "../root/functions";
 import { getPasswordPolicyFn } from "../settings/functions";
 import {
+	completeEmailRemediationFn,
 	createFirstUserFn,
 	loginFn,
 	logoutFn,
@@ -29,6 +30,7 @@ import {
  */
 export const authenticationExceptions: ReadonlyArray<{ url: string }> = [
 	createFirstUserFn,
+	completeEmailRemediationFn,
 	getPasswordPolicyFn,
 	getRootFn,
 	loginFn,

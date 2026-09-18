@@ -296,6 +296,7 @@ describe("the open endpoints are reachable without a session", () => {
 
 	it("lists exactly the declared exceptions", () => {
 		expect(open.map((endpoint) => endpoint.name).sort()).toEqual([
+			"completeEmailRemediationFn",
 			"createFirstUserFn",
 			"getPasswordPolicyFn",
 			"getRootFn",

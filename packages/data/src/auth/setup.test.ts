@@ -16,6 +16,7 @@ import {
 	verifySetupSession,
 } from "./setup";
 import { seedSetupSession, seedSetupToken, seedUser } from "./test/fixtures";
+import { hashToken } from "./tokens";
 
 let database: TestDatabase;
 let db: Db;
@@ -59,7 +60,11 @@ describe("issueSetupToken", () => {
 		await expect(
 			consumeSetupToken(db, first.token, "account_completion"),
 		).rejects.toBeInstanceOf(SetupCredentialError);
-		expect(await db.select().from(setupTokens)).toHaveLength(1);
+		const rows = await db.select().from(setupTokens);
+		expect(rows).toHaveLength(2);
+		expect(
+			rows.find((row) => row.tokenHash === hashToken(first.token)),
+		).toMatchObject({ supersededAt: expect.any(Date) });
 	});
 
 	it("leaves a token for a different purpose alone", async () => {
@@ -183,7 +188,7 @@ describe("consumeSetupToken", () => {
 });
 
 describe("supersedeSetupTokens", () => {
-	it("removes only the unspent tokens for that purpose", async () => {
+	it("marks only the unspent tokens for that purpose", async () => {
 		const userId = await seedUser(db);
 		await seedSetupToken(db, userId, "email_remediation");
 		await seedSetupToken(db, userId, "email_remediation", {
@@ -192,7 +197,9 @@ describe("supersedeSetupTokens", () => {
 		await seedSetupToken(db, userId, "totp_enrollment");
 
 		expect(await supersedeSetupTokens(db, userId, "email_remediation")).toBe(1);
-		expect(await db.select().from(setupTokens)).toHaveLength(2);
+		const rows = await db.select().from(setupTokens);
+		expect(rows).toHaveLength(3);
+		expect(rows.filter((row) => row.supersededAt)).toHaveLength(1);
 	});
 });
 

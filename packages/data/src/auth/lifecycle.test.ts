@@ -1,4 +1,4 @@
-import { eq } from "drizzle-orm";
+import { eq, isNull } from "drizzle-orm";
 import { beforeEach, describe, expect, it } from "vitest";
 import type { Db } from "../db/pg";
 import { authAccounts, authTwoFactors } from "../db/schema/auth";
@@ -9,16 +9,22 @@ import { users } from "../db/schema/users";
 import { createTestDatabase, type TestDatabase } from "../db/test/fixtures";
 import { seedSettings } from "../settings/test/fixtures";
 import {
+	cancelEmailRemediation,
+	changeEmailRemediation,
+	claimEmailRemediationPromotion,
 	completeAccountSetup,
 	completeEmailRemediation,
 	completeTotpEnrollment,
 	EmailInUseError,
+	EmailRemediationRateLimitedError,
 	getEmailRemediationState,
 	normalizeEmail,
 	prepareEmailRemediation,
+	resendEmailRemediation,
 	SetupNotEligibleError,
 	startEmailRemediation,
 	TotpNotEnrolledError,
+	verifyEmailRemediationToken,
 } from "./lifecycle";
 import { hashPassword, verifyPassword } from "./password";
 import { SetupCredentialError } from "./setup";
@@ -310,8 +316,9 @@ describe("completeEmailRemediation", () => {
 		});
 
 		expect((await readUser(userId)).email).toBe("legacy@example.com");
-		expect(await getEmailRemediationState(db, userId)).toEqual({
-			email: "new@example.com",
+		expect(await getEmailRemediationState(db, userId)).toMatchObject({
+			status: "pending",
+			maskedEmail: "n***w@example.com",
 		});
 	});
 
@@ -351,8 +358,9 @@ describe("completeEmailRemediation", () => {
 				expect(row.authMigratedAt).not.toBeNull();
 			} else {
 				expect(row.authMigratedAt).toBeNull();
-				expect(await getEmailRemediationState(db, userId)).toEqual({
-					email: "second@example.com",
+				expect(await getEmailRemediationState(db, userId)).toMatchObject({
+					status: "pending",
+					maskedEmail: "s***d@example.com",
 				});
 			}
 		} finally {
@@ -534,6 +542,191 @@ describe("completeEmailRemediation", () => {
 				verified: true,
 			}),
 		).rejects.toBeInstanceOf(SetupCredentialError);
+	});
+});
+
+describe("email remediation journey", () => {
+	it("verifies with the bearer token alone and leaves the setup browser resumable", async () => {
+		const userId = await seedUser(db, { handle: "Ada" });
+		const setup = await seedSetupSession(db, userId, "email_remediation");
+		const token = await startOfflineEmailRemediation(userId, "ada@example.com");
+
+		expect(await verifyEmailRemediationToken(db, token)).toEqual({
+			status: "verified",
+			userId,
+		});
+		expect(await db.select().from(setupSessions)).toHaveLength(1);
+		expect(await getEmailRemediationState(db, userId)).toEqual({
+			status: "verified",
+		});
+		expect(
+			await claimEmailRemediationPromotion(db, userId, setup.sessionId),
+		).toBe(true);
+		expect(await db.select().from(setupSessions)).toHaveLength(0);
+	});
+
+	it("allows exactly one promotion claim for a matching setup browser", async () => {
+		const userId = await seedUser(db, { handle: "Ada" });
+		const setup = await seedSetupSession(db, userId, "email_remediation");
+		const token = await startOfflineEmailRemediation(userId, "ada@example.com");
+		await verifyEmailRemediationToken(db, token);
+		const other = database.connect();
+
+		try {
+			const claims = await Promise.all([
+				claimEmailRemediationPromotion(db, userId, setup.sessionId),
+				claimEmailRemediationPromotion(other.db, userId, setup.sessionId),
+			]);
+			expect(claims.sort()).toEqual([false, true]);
+		} finally {
+			await other.close();
+		}
+	});
+
+	it("returns an already-verified result for replay and concurrent consumption", async () => {
+		const userId = await seedUser(db, { handle: "Ada" });
+		const token = await startOfflineEmailRemediation(userId, "ada@example.com");
+		const other = database.connect();
+
+		try {
+			const results = await Promise.all([
+				verifyEmailRemediationToken(db, token),
+				verifyEmailRemediationToken(other.db, token),
+			]);
+			expect(results.map((result) => result.status).sort()).toEqual([
+				"already_verified",
+				"verified",
+			]);
+			expect(await verifyEmailRemediationToken(db, token)).toEqual({
+				status: "already_verified",
+				userId,
+			});
+		} finally {
+			await other.close();
+		}
+	});
+
+	it("classifies expired, superseded, and unknown tokens without changing users", async () => {
+		const userId = await seedUser(db, { handle: "Ada" });
+		const expired = await seedSetupToken(db, userId, "email_remediation", {
+			candidateEmail: "ada@example.com",
+			expiresAt: new Date(Date.now() - 1_000),
+		});
+		const superseded = await seedSetupToken(db, userId, "email_remediation", {
+			candidateEmail: "ada@example.com",
+			supersededAt: new Date(),
+		});
+
+		expect(await verifyEmailRemediationToken(db, expired.token)).toEqual({
+			status: "expired",
+			userId,
+		});
+		expect(await verifyEmailRemediationToken(db, superseded.token)).toEqual({
+			status: "superseded",
+			userId,
+		});
+		expect(await verifyEmailRemediationToken(db, "0".repeat(64))).toEqual({
+			status: "unusable",
+		});
+		expect((await readUser(userId)).authMigratedAt).toBeNull();
+	});
+
+	it("revokes the challenge on change and cancellation", async () => {
+		const userId = await seedUser(db, { handle: "Ada" });
+		await seedSetupSession(db, userId, "email_remediation");
+		const first = await startOfflineEmailRemediation(userId, "ada@example.com");
+
+		await changeEmailRemediation(db, userId);
+		expect(await getEmailRemediationState(db, userId)).toEqual({
+			status: "input",
+		});
+		expect(await verifyEmailRemediationToken(db, first)).toMatchObject({
+			status: "superseded",
+		});
+
+		await startOfflineEmailRemediation(userId, "ada@example.com");
+		await cancelEmailRemediation(db, userId);
+		expect(await db.select().from(setupSessions)).toHaveLength(0);
+		const live = await db
+			.select()
+			.from(setupTokens)
+			.where(isNull(setupTokens.supersededAt));
+		expect(live).toHaveLength(0);
+	});
+
+	it("reports terminal delivery failure and replaces the link on resend", async () => {
+		const userId = await seedUser(db, { handle: "Ada" });
+		await seedSettings(db, { emailEnabled: true });
+		await startEmailRemediation(db, {
+			deliveryAvailable: true,
+			email: "ada@example.com",
+			getVerificationUrl: (token) =>
+				`https://virtool.test/email-remediation-verify#token=${token}`,
+			userId,
+		});
+		const [message] = await db.select().from(emailOutbox);
+		if (!message) {
+			throw new Error("expected verification message");
+		}
+		await db
+			.update(emailOutbox)
+			.set({ status: "failed" })
+			.where(eq(emailOutbox.id, message.id));
+		await db
+			.update(setupTokens)
+			.set({ createdAt: new Date(Date.now() - 61_000) })
+			.where(isNull(setupTokens.supersededAt));
+
+		expect(await getEmailRemediationState(db, userId)).toMatchObject({
+			status: "pending",
+			deliveryFailed: true,
+			canResend: true,
+		});
+		await resendEmailRemediation(db, {
+			deliveryAvailable: true,
+			getVerificationUrl: (token) =>
+				`https://virtool.test/email-remediation-verify#token=${token}`,
+			userId,
+		});
+		expect(await db.select().from(emailOutbox)).toHaveLength(2);
+		const tokens = await db.select().from(setupTokens);
+		expect(tokens.filter((token) => token.supersededAt)).toHaveLength(1);
+		expect(tokens.filter((token) => !token.supersededAt)).toHaveLength(1);
+	});
+
+	it("rate-limits immediate resend attempts", async () => {
+		const userId = await seedUser(db, { handle: "Ada" });
+		await seedSettings(db, { emailEnabled: true });
+		const input = {
+			deliveryAvailable: true,
+			getVerificationUrl: (token: string) =>
+				`https://virtool.test/email-remediation-verify#token=${token}`,
+			userId,
+		};
+		await startEmailRemediation(db, { ...input, email: "ada@example.com" });
+
+		await expect(resendEmailRemediation(db, input)).rejects.toBeInstanceOf(
+			EmailRemediationRateLimitedError,
+		);
+		expect(await db.select().from(emailOutbox)).toHaveLength(1);
+	});
+
+	it("extends the initiating setup session to the link expiry", async () => {
+		const userId = await seedUser(db, { handle: "Ada" });
+		const setup = await seedSetupSession(db, userId, "email_remediation");
+		await seedSettings(db, { emailEnabled: true });
+
+		await startEmailRemediation(db, {
+			deliveryAvailable: true,
+			email: "ada@example.com",
+			getVerificationUrl: () => "https://virtool.test/verify",
+			setupSessionId: setup.sessionId,
+			userId,
+		});
+
+		const [session] = await db.select().from(setupSessions);
+		const [token] = await db.select().from(setupTokens);
+		expect(session?.expiresAt).toEqual(token?.expiresAt);
 	});
 });
 

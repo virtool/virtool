@@ -270,7 +270,8 @@ and API-key resolution.
   the issuing caller once and is never readable back. It's purpose-bound,
   expiring, single-use. `consumeSetupToken` is one conditional `UPDATE ...
   RETURNING`, so concurrent submissions of one token produce exactly one
-  winner. It's superseded when a replacement is issued.
+  winner. Replacements mark older rows superseded instead of deleting them so
+  a bearer holder can receive a bounded result without exposing account data.
 - A **restricted setup session** is what a holder gets in exchange: a
   non-secret `session_id` for attribution plus a secret whose digest is
   stored, bound to one purpose and expiring. `verifySetupSession` re-reads
@@ -279,12 +280,14 @@ and API-key resolution.
   than an application-session subtype.
 
 `src/auth/lifecycle.ts` holds one transactional completion primitive per
-purpose. Each spends the token, writes the credential and identity state,
-moves the account, and revokes every setup credential the user held in one
-transaction, so a failure rolls the whole transition back and a spent token
-never outlives the change it paid for. None of them mints a session; which
-session a completed holder gets is the calling flow's decision, and cookies
-belong to `apps/web`.
+purpose. Each spends the token and writes its credential and identity state in
+one transaction, so a failure rolls the whole transition back and a spent
+token never outlives the change it paid for. Most completions revoke setup
+credentials immediately. Email remediation retains its restricted session
+until the initiating browser claims promotion, allowing token-only
+verification in another browser without authenticating that browser. None of
+the primitives mints a session; which session a completed holder gets is the
+calling flow's decision, and cookies belong to `apps/web`.
 
 Credential state is written to both `users.password` and
 `auth_accounts.password`. The former remains part of Virtool's account and

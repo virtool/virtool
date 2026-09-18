@@ -9,6 +9,7 @@ const linkTemplates: EmailTemplate[] = [
 		setupUrl: "https://virtool.example/setup?token=abc",
 	},
 	{
+		expiresInHours: 72,
 		type: "email_verification",
 		username: "alice",
 		verifyUrl: "https://virtool.example/verify?token=abc",

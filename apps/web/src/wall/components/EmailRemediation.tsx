@@ -4,13 +4,16 @@ import Button from "@base/Button";
 import { InputError, InputGroup, InputLabel, InputSimple } from "@base/Input";
 import { useQueryClient, useSuspenseQuery } from "@tanstack/react-query";
 import { getRouteApi, useNavigate } from "@tanstack/react-router";
-import { MailCheck, TriangleAlert } from "lucide-react";
-import { useState } from "react";
+import { EMAIL_REMEDIATION_TOKEN_LIFETIME_HOURS } from "@virtool/contracts";
+import { CircleCheck, MailCheck, TriangleAlert } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { rootQueryKeys } from "../keys";
 import {
 	emailRemediationQueryOptions,
 	useCancelEmailRemediation,
+	useChangeEmailRemediation,
+	usePromoteEmailRemediation,
+	useResendEmailRemediation,
 	useSubmitEmailRemediation,
 } from "../queries";
 import { WallContainer } from "./WallContainer";
@@ -26,14 +29,22 @@ const remediationRouteApi = getRouteApi("/email-remediation");
 export default function EmailRemediation() {
 	const { data } = useSuspenseQuery(emailRemediationQueryOptions());
 	const submit = useSubmitEmailRemediation();
+	const resend = useResendEmailRemediation();
+	const changeEmail = useChangeEmailRemediation();
+	const promote = usePromoteEmailRemediation();
 	const cancel = useCancelEmailRemediation();
 	const navigate = useNavigate();
 	const queryClient = useQueryClient();
-	const { error: searchError, redirect } = remediationRouteApi.useSearch();
-	const [waitingForEmail, setWaitingForEmail] = useState(false);
+	const { redirect } = remediationRouteApi.useSearch();
 	const { handleSubmit, register } = useForm<FormValues>({
-		values: { email: data.email },
+		defaultValues: { email: "" },
 	});
+
+	function enterApplication() {
+		queryClient.removeQueries({ queryKey: rootQueryKeys.all() });
+		queryClient.removeQueries({ queryKey: accountQueryKeys.all() });
+		navigate({ to: redirect ?? "/" });
+	}
 
 	function onSubmit({ email }: FormValues) {
 		submit.mutate(
@@ -41,12 +52,13 @@ export default function EmailRemediation() {
 			{
 				onSuccess: (result) => {
 					if (!result.complete) {
-						setWaitingForEmail(true);
+						queryClient.setQueryData(
+							emailRemediationQueryOptions().queryKey,
+							result.state,
+						);
 						return;
 					}
-					queryClient.removeQueries({ queryKey: rootQueryKeys.all() });
-					queryClient.removeQueries({ queryKey: accountQueryKeys.all() });
-					navigate({ to: redirect ?? "/" });
+					enterApplication();
 				},
 			},
 		);
@@ -55,8 +67,8 @@ export default function EmailRemediation() {
 	function onCancel() {
 		cancel.mutate(undefined, {
 			onSuccess: () => {
-				queryClient.setQueryData(emailRemediationQueryOptions().queryKey, {
-					email: "",
+				queryClient.removeQueries({
+					queryKey: emailRemediationQueryOptions().queryKey,
 				});
 				queryClient.removeQueries({ queryKey: accountQueryKeys.all() });
 				navigate({
@@ -68,66 +80,142 @@ export default function EmailRemediation() {
 		});
 	}
 
+	function onResend() {
+		resend.mutate(
+			{ redirect },
+			{
+				onSuccess: (result) => {
+					if (result.complete) {
+						enterApplication();
+						return;
+					}
+					queryClient.setQueryData(
+						emailRemediationQueryOptions().queryKey,
+						result.state,
+					);
+				},
+			},
+		);
+	}
+
+	function onChangeEmail() {
+		changeEmail.mutate(undefined, {
+			onSuccess: (state) => {
+				queryClient.setQueryData(
+					emailRemediationQueryOptions().queryKey,
+					state,
+				);
+			},
+		});
+	}
+
+	function onContinue() {
+		promote.mutate(undefined, { onSuccess: enterApplication });
+	}
+
 	return (
 		<WallContainer>
-			<WallTitle
-				title="Add your email"
-				subtitle="Your account needs a unique email address before you can continue."
-			/>
-			{searchError === "invalid-link" && (
-				<Alert color="orange" icon={TriangleAlert}>
-					That verification link is invalid or expired. Submit your email again
-					to get a new link.
-				</Alert>
+			{data.status === "input" && (
+				<>
+					<WallTitle
+						title="Add your email"
+						subtitle="Your account needs a unique email address before you can continue."
+					/>
+					<form onSubmit={handleSubmit(onSubmit)}>
+						<InputGroup>
+							<InputLabel htmlFor="email">Email address</InputLabel>
+							<InputSimple
+								id="email"
+								type="email"
+								autoComplete="email"
+								aria-required
+								aria-invalid={submit.isError || undefined}
+								aria-describedby={
+									submit.isError ? "remediation-error" : undefined
+								}
+								{...register("email", { required: true })}
+								autoFocus
+							/>
+							{submit.isError && (
+								<InputError id="remediation-error">
+									{submit.error.message ||
+										"Email remediation could not be completed."}
+								</InputError>
+							)}
+						</InputGroup>
+						<div className="flex justify-between">
+							<Button
+								type="button"
+								disabled={submit.isPending || cancel.isPending}
+								onClick={onCancel}
+							>
+								Cancel
+							</Button>
+							<Button type="submit" color="blue" disabled={submit.isPending}>
+								Continue
+							</Button>
+						</div>
+					</form>
+				</>
 			)}
-			{waitingForEmail ? (
-				<Alert color="blue" icon={MailCheck}>
-					Check your email and open the verification link. You can leave this
-					page open or return to it later.
-				</Alert>
-			) : (
-				<form onSubmit={handleSubmit(onSubmit)}>
-					<InputGroup>
-						<InputLabel htmlFor="email">Email address</InputLabel>
-						<InputSimple
-							id="email"
-							type="email"
-							autoComplete="email"
-							aria-required
-							aria-invalid={submit.isError || undefined}
-							aria-describedby={
-								submit.isError ? "remediation-error" : undefined
-							}
-							{...register("email", { required: true })}
-							autoFocus
-						/>
-						{submit.isError && (
-							<InputError id="remediation-error">
-								{submit.error.message ||
-									"Email remediation could not be completed."}
-							</InputError>
-						)}
-					</InputGroup>
-					<div className="flex justify-between">
+			{data.status === "pending" && (
+				<>
+					<WallTitle
+						title="Check your email"
+						subtitle={`We sent a verification link to ${data.maskedEmail}.`}
+					/>
+					<Alert color="blue" icon={MailCheck}>
+						Open the link in any browser. It remains valid for up to{" "}
+						{EMAIL_REMEDIATION_TOKEN_LIFETIME_HOURS} hours after it was sent.
+					</Alert>
+					{data.deliveryFailed && (
+						<Alert color="orange" icon={TriangleAlert}>
+							The message could not be sent. Resend it or choose another email
+							address.
+						</Alert>
+					)}
+					{resend.isError && <InputError>{resend.error.message}</InputError>}
+					<div className="flex flex-wrap justify-between gap-2">
 						<Button
-							type="button"
-							disabled={submit.isPending || cancel.isPending}
+							disabled={cancel.isPending || changeEmail.isPending}
 							onClick={onCancel}
 						>
 							Cancel
 						</Button>
-						<Button type="submit" color="blue" disabled={submit.isPending}>
+						<div className="flex gap-2">
+							<Button disabled={changeEmail.isPending} onClick={onChangeEmail}>
+								Change email
+							</Button>
+							<Button
+								color="blue"
+								disabled={!data.canResend || resend.isPending}
+								onClick={onResend}
+							>
+								Resend
+							</Button>
+						</div>
+					</div>
+				</>
+			)}
+			{data.status === "verified" && (
+				<>
+					<WallTitle
+						title="Email verified"
+						subtitle="Your email was verified in another browser."
+					/>
+					<Alert color="green" icon={CircleCheck}>
+						You can continue to Virtool in this browser.
+					</Alert>
+					<div className="flex justify-end">
+						<Button
+							color="blue"
+							disabled={promote.isPending}
+							onClick={onContinue}
+						>
 							Continue
 						</Button>
 					</div>
-				</form>
-			)}
-			{waitingForEmail && (
-				<div className="flex justify-end">
-					<Button disabled={cancel.isPending} onClick={onCancel}>
-						Cancel
-					</Button>
-				</div>
+				</>
 			)}
 		</WallContainer>
 	);

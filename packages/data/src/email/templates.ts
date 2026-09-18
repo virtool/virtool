@@ -58,7 +58,7 @@ export function renderEmailTemplate(template: EmailTemplate): RenderedEmail {
 				`Hello ${template.username},`,
 				"Open this link to verify the email address on your Virtool account:",
 				template.verifyUrl,
-				"If you did not request this, you can ignore this email.",
+				`This link expires in ${template.expiresInHours} hours. If you did not request this, you can ignore this email.`,
 			);
 
 		case "password_recovery":

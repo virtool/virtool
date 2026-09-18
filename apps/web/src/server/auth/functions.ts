@@ -3,11 +3,18 @@ import { createServerFn } from "@tanstack/react-start";
 import { getRequest, setResponseStatus } from "@tanstack/react-start/server";
 import { PasswordTooShortError } from "@virtool/contracts";
 import {
+	cancelEmailRemediation,
+	changeEmailRemediation,
+	checkEmailRemediationComplete,
+	claimEmailRemediationPromotion,
 	completeEmailRemediation,
 	EmailInUseError,
+	EmailRemediationRateLimitedError,
 	getEmailRemediationState,
+	resendEmailRemediation,
 	SetupNotEligibleError,
 	startEmailRemediation,
+	verifyEmailRemediationToken,
 } from "@virtool/data/auth/lifecycle";
 import { SetupCredentialError } from "@virtool/data/auth/setup";
 import { users } from "@virtool/data/db/schema/users";
@@ -36,6 +43,7 @@ import { checkHandle, checkReservedHandle } from "./handle";
 import { getClientIp } from "./ip";
 import { UnauthorizedError } from "./middleware";
 import { authenticated, open, passwordResetOnly, setupOnly } from "./policy";
+import { resolveRestrictedSetup } from "./restricted";
 import { checkConfiguredPasswordLength } from "./service";
 import {
 	createReplacementSession,
@@ -43,6 +51,7 @@ import {
 	signOut,
 	verifyTwoFactor,
 } from "./sessionActions";
+import { verifyBrowserPrincipal } from "./verify";
 
 // `password` is deliberately not length-checked here. Login authenticates an
 // existing credential rather than setting a new one, and rejecting a short
@@ -79,6 +88,13 @@ function rethrowAsHttp(err: unknown): never {
 	) {
 		setResponseStatus(400);
 		throw new ClientError("Invalid handle or password.", 400);
+	}
+	if (err instanceof EmailRemediationRateLimitedError) {
+		setResponseStatus(429);
+		throw new ClientError(
+			"Wait before sending another verification email.",
+			429,
+		);
 	}
 	if (err instanceof PasswordTooShortError) {
 		setResponseStatus(400);
@@ -271,6 +287,7 @@ export const resetPasswordFn = createServerFn({ method: "POST" })
 
 async function finishEmailRemediation(
 	userId: number,
+	setupSessionId: string,
 	token: string,
 	verified: boolean,
 ) {
@@ -279,6 +296,16 @@ async function finishEmailRemediation(
 		userId,
 		verified,
 	});
+	if (
+		!(await claimEmailRemediationPromotion(
+			db,
+			user.id,
+			setupSessionId,
+			verified,
+		))
+	) {
+		throw new SetupCredentialError();
+	}
 	realCookies.clearLegacySession();
 	realCookies.clearSetup();
 	await createReplacementSession(user.id);
@@ -308,22 +335,22 @@ export const submitEmailRemediationFn = createServerFn({ method: "POST" })
 				deliveryAvailable:
 					settings.enabled && delivery.availability === "ready",
 				email: data.email,
-				getVerificationUrl: (token) => {
-					const search = new URLSearchParams({ token });
-					if (data.redirect) {
-						search.set("redirect", data.redirect);
-					}
-					return `${config.publicOrigin}/email-remediation-verify?${search}`;
-				},
+				getVerificationUrl: (token) =>
+					getRemediationVerificationUrl(token, data.redirect),
+				setupSessionId: context.principal.sessionId,
 				userId: context.principal.userId,
 			});
 
 			if (result.status === "verification_required") {
-				return { complete: false as const };
+				return {
+					complete: false as const,
+					state: await getEmailRemediationState(db, context.principal.userId),
+				};
 			}
 
 			return await finishEmailRemediation(
 				context.principal.userId,
+				context.principal.sessionId,
 				result.token,
 				false,
 			);
@@ -332,18 +359,129 @@ export const submitEmailRemediationFn = createServerFn({ method: "POST" })
 		}
 	});
 
-/** Spend the mailbox challenge and finish a restricted email remediation. */
+/** Spend a mailbox challenge without requiring or granting browser authority. */
 export const completeEmailRemediationFn = createServerFn({ method: "POST" })
-	.middleware([setupOnly("email_remediation")])
+	.middleware([open()])
 	.validator(emailRemediationTokenSchema)
-	.handler(async ({ context, data }) => {
+	.handler(async ({ data }) => {
 		try {
-			return await finishEmailRemediation(
-				context.principal.userId,
-				data.token,
-				true,
-			);
+			const request = getRequest();
+			const [setup, browser, result] = await Promise.all([
+				resolveRestrictedSetup(request),
+				verifyBrowserPrincipal(db, request),
+				verifyEmailRemediationToken(db, data.token),
+			]);
+			let authenticated = browser?.userId === result.userId;
+			if (
+				!authenticated &&
+				result.userId &&
+				setup?.purpose === "email_remediation" &&
+				setup.userId === result.userId &&
+				(result.status === "verified" || result.status === "already_verified")
+			) {
+				const claimed = await claimEmailRemediationPromotion(
+					db,
+					result.userId,
+					setup.sessionId,
+				);
+				if (claimed) {
+					await createReplacementSession(result.userId);
+					realCookies.clearLegacySession();
+					realCookies.clearSetup();
+					authenticated = true;
+				}
+			}
+			return {
+				status: result.status,
+				authenticated,
+				canRetry:
+					setup?.purpose === "email_remediation" &&
+					setup.userId === result.userId,
+			};
 		} catch (err) {
 			rethrowAsHttp(err);
 		}
+	});
+
+function getRemediationVerificationUrl(token: string, redirect?: string) {
+	const fragment = new URLSearchParams({ token });
+	if (redirect) {
+		fragment.set("redirect", redirect);
+	}
+	return `${config.publicOrigin}/email-remediation-verify#${fragment}`;
+}
+
+/** Send a replacement mailbox challenge for the staged address. */
+export const resendEmailRemediationFn = createServerFn({ method: "POST" })
+	.middleware([setupOnly("email_remediation")])
+	.validator(z.object({ redirect: z.string().max(2048).optional() }))
+	.handler(async ({ context, data }) => {
+		try {
+			const settings = await getEmailSettings(db);
+			const delivery = resolveEmailDelivery(settings, keyring);
+			const result = await resendEmailRemediation(db, {
+				deliveryAvailable:
+					settings.enabled && delivery.availability === "ready",
+				getVerificationUrl: (token) =>
+					getRemediationVerificationUrl(token, data.redirect),
+				setupSessionId: context.principal.sessionId,
+				userId: context.principal.userId,
+			});
+			if (result.status === "offline") {
+				return await finishEmailRemediation(
+					context.principal.userId,
+					context.principal.sessionId,
+					result.token,
+					false,
+				);
+			}
+			return {
+				complete: false as const,
+				state: await getEmailRemediationState(db, context.principal.userId),
+			};
+		} catch (err) {
+			rethrowAsHttp(err);
+		}
+	});
+
+/** Discard the staged address while retaining the restricted login proof. */
+export const changeEmailRemediationFn = createServerFn({ method: "POST" })
+	.middleware([setupOnly("email_remediation")])
+	.handler(async ({ context }) => {
+		await changeEmailRemediation(db, context.principal.userId);
+		return { status: "input" as const };
+	});
+
+/** Finish a remediation that was verified in another browser. */
+export const promoteEmailRemediationFn = createServerFn({ method: "POST" })
+	.middleware([setupOnly("email_remediation")])
+	.handler(async ({ context }) => {
+		try {
+			await checkEmailRemediationComplete(db, context.principal.userId);
+			if (
+				!(await claimEmailRemediationPromotion(
+					db,
+					context.principal.userId,
+					context.principal.sessionId,
+				))
+			) {
+				throw new SetupCredentialError();
+			}
+			await createReplacementSession(context.principal.userId);
+			realCookies.clearLegacySession();
+			realCookies.clearSetup();
+			return { complete: true as const };
+		} catch (err) {
+			rethrowAsHttp(err);
+		}
+	});
+
+/** Revoke the pending challenge and abandon restricted remediation. */
+export const cancelEmailRemediationFn = createServerFn({ method: "POST" })
+	.middleware([setupOnly("email_remediation")])
+	.handler(async ({ context }) => {
+		await cancelEmailRemediation(db, context.principal.userId);
+		realCookies.clearLegacySession();
+		realCookies.clearSetup();
+		return null;
 	});

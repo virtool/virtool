@@ -1,10 +1,16 @@
-import type { User } from "@virtool/contracts";
+import {
+	EMAIL_REMEDIATION_RESEND_DELAY_SECONDS,
+	EMAIL_REMEDIATION_TOKEN_LIFETIME_HOURS,
+	type EmailRemediationState,
+	type User,
+} from "@virtool/contracts";
 import { and, eq, isNull, sql } from "drizzle-orm";
 
 import type { Db, DbOrTx } from "../db/pg";
 import { authAccounts, authSessions, authTwoFactors } from "../db/schema/auth";
+import { emailOutbox } from "../db/schema/emailOutbox";
 import { sessions } from "../db/schema/sessions";
-import { setupTokens } from "../db/schema/setup";
+import { setupSessions, setupTokens } from "../db/schema/setup";
 import { users } from "../db/schema/users";
 import { enqueueEmail } from "../email/outbox";
 import { AppError } from "../errors";
@@ -21,12 +27,16 @@ import {
 	SetupCredentialError,
 	supersedeSetupTokens,
 } from "./setup";
+import { hashToken } from "./tokens";
 
 /** Thrown when a completion is aimed at an account that is not eligible. */
 export class SetupNotEligibleError extends AppError {}
 
 /** Thrown when the address a completion would establish is already in use. */
 export class EmailInUseError extends AppError {}
+
+/** Thrown when a remediation message is requested before the resend window. */
+export class EmailRemediationRateLimitedError extends AppError {}
 
 /** Thrown when TOTP enrollment has not actually happened. */
 export class TotpNotEnrolledError extends AppError {}
@@ -250,8 +260,8 @@ export async function completeAccountSetup(
 export type CompleteEmailRemediationInput = {
 	/** The plaintext setup token from the remediation link. */
 	token: string;
-	/** The restricted setup principal completing its own transition. */
-	userId: number;
+	/** The restricted setup user expected by an offline completion. */
+	userId?: number;
 	/** Whether a real mailbox challenge was completed. */
 	verified: boolean;
 };
@@ -276,17 +286,14 @@ export type StartEmailRemediationInput = PrepareEmailRemediationInput & {
 	deliveryAvailable: boolean;
 	/** Build the public mailbox-challenge URL around the new bearer token. */
 	getVerificationUrl: (token: string) => string;
+	/** The restricted browser session to keep alive for the challenge lifetime. */
+	setupSessionId?: string;
 };
 
 /** Whether remediation now waits for mail or can finish under offline policy. */
 export type EmailRemediationStart =
 	| { status: "verification_required" }
 	| { status: "offline"; token: string };
-
-/** The resumable state exposed to an email-remediation holder. */
-export type EmailRemediationState = {
-	email: string;
-};
 
 /** Read the staged address for an eligible restricted remediation holder. */
 export async function getEmailRemediationState(
@@ -297,6 +304,7 @@ export async function getEmailRemediationState(
 		.select({
 			active: users.active,
 			authMigratedAt: users.authMigratedAt,
+			emailVerified: users.emailVerified,
 			lifecycleState: users.lifecycleState,
 			password: users.password,
 		})
@@ -304,28 +312,77 @@ export async function getEmailRemediationState(
 		.where(eq(users.id, userId))
 		.limit(1);
 
-	if (
-		!row?.active ||
-		row.authMigratedAt !== null ||
-		row.lifecycleState !== "normal" ||
-		row.password === null
-	) {
+	if (!row?.active || row.lifecycleState !== "normal") {
+		throw new SetupNotEligibleError();
+	}
+	if (row.authMigratedAt !== null) {
+		if (row.emailVerified) {
+			return { status: "verified" };
+		}
+		throw new SetupNotEligibleError();
+	}
+	if (row.password === null) {
 		throw new SetupNotEligibleError();
 	}
 
 	const [staged] = await db
-		.select({ email: setupTokens.candidateEmail })
+		.select({
+			id: setupTokens.id,
+			email: setupTokens.candidateEmail,
+			createdAt: setupTokens.createdAt,
+			expiresAt: setupTokens.expiresAt,
+			canResend: sql<boolean>`${setupTokens.createdAt} <= timezone('utc', clock_timestamp()) - make_interval(secs => ${EMAIL_REMEDIATION_RESEND_DELAY_SECONDS})`,
+		})
 		.from(setupTokens)
 		.where(
 			and(
 				eq(setupTokens.userId, userId),
 				eq(setupTokens.purpose, "email_remediation"),
 				isNull(setupTokens.consumedAt),
+				isNull(setupTokens.supersededAt),
+				sql`${setupTokens.expiresAt} > timezone('utc', clock_timestamp())`,
 			),
 		)
 		.limit(1);
 
-	return { email: staged?.email ?? "" };
+	if (!staged?.email) {
+		return { status: "input" };
+	}
+
+	const resendAt = new Date(
+		staged.createdAt.getTime() + EMAIL_REMEDIATION_RESEND_DELAY_SECONDS * 1000,
+	);
+	const [delivery] = await db
+		.select({ status: emailOutbox.status })
+		.from(emailOutbox)
+		.where(
+			eq(
+				emailOutbox.idempotency_key,
+				`email_remediation/${userId}/${staged.id}`,
+			),
+		)
+		.limit(1);
+
+	return {
+		status: "pending",
+		maskedEmail: maskEmail(staged.email),
+		expiresAt: staged.expiresAt,
+		resendAt,
+		canResend: staged.canResend,
+		deliveryFailed: delivery?.status === "failed",
+	};
+}
+
+function maskEmail(email: string): string {
+	const separator = email.lastIndexOf("@");
+	if (separator <= 0) {
+		return "***";
+	}
+	const local = email.slice(0, separator);
+	const domain = email.slice(separator + 1);
+	const visible =
+		local.length > 2 ? `${local[0]}***${local.at(-1)}` : `${local[0]}***`;
+	return `${visible}@${domain}`;
 }
 
 /**
@@ -385,39 +442,118 @@ async function prepareEmailRemediationInTransaction(
 /** Atomically stage an address, replace its token, and enqueue its challenge. */
 export async function startEmailRemediation(
 	db: Db,
+	input: StartEmailRemediationInput,
+): Promise<EmailRemediationStart> {
+	return db.transaction((tx) => startEmailRemediationInTransaction(tx, input));
+}
+
+async function startEmailRemediationInTransaction(
+	tx: DbOrTx,
 	{
 		deliveryAvailable,
 		email,
 		getVerificationUrl,
+		setupSessionId,
 		userId,
 	}: StartEmailRemediationInput,
 ): Promise<EmailRemediationStart> {
-	return db.transaction(async (tx) => {
-		const prepared = await prepareEmailRemediationInTransaction(tx, {
-			email,
-			userId,
-		});
-		const issued = await issueSetupTokenInTransaction(tx, {
-			candidateEmail: prepared.email,
-			purpose: "email_remediation",
-			userId,
-		});
-		if (!deliveryAvailable) {
-			return { status: "offline", token: issued.token };
-		}
-		const delivery = await enqueueEmail(tx, {
-			idempotencyKey: `email_remediation/${userId}/${issued.tokenId}`,
-			recipient: prepared.email,
-			template: {
-				type: "email_verification",
-				username: prepared.handle,
-				verifyUrl: getVerificationUrl(issued.token),
-			},
-		});
+	const prepared = await prepareEmailRemediationInTransaction(tx, {
+		email,
+		userId,
+	});
+	const issued = await issueSetupTokenInTransaction(tx, {
+		candidateEmail: prepared.email,
+		lifetimeMs: EMAIL_REMEDIATION_TOKEN_LIFETIME_HOURS * 60 * 60 * 1000,
+		purpose: "email_remediation",
+		userId,
+	});
+	if (setupSessionId) {
+		await tx
+			.update(setupSessions)
+			.set({ expiresAt: issued.expiresAt })
+			.where(
+				and(
+					eq(setupSessions.sessionId, setupSessionId),
+					eq(setupSessions.userId, userId),
+					eq(setupSessions.purpose, "email_remediation"),
+				),
+			);
+	}
+	if (!deliveryAvailable) {
+		return { status: "offline", token: issued.token };
+	}
+	const delivery = await enqueueEmail(tx, {
+		idempotencyKey: `email_remediation/${userId}/${issued.tokenId}`,
+		recipient: prepared.email,
+		template: {
+			type: "email_verification",
+			username: prepared.handle,
+			verifyUrl: getVerificationUrl(issued.token),
+			expiresInHours: EMAIL_REMEDIATION_TOKEN_LIFETIME_HOURS,
+		},
+	});
 
-		return delivery.status === "queued"
-			? { status: "verification_required" }
-			: { status: "offline", token: issued.token };
+	return delivery.status === "queued"
+		? { status: "verification_required" }
+		: { status: "offline", token: issued.token };
+}
+
+/** Reissue the current remediation challenge after the resend interval. */
+export async function resendEmailRemediation(
+	db: Db,
+	input: Omit<StartEmailRemediationInput, "email">,
+): Promise<EmailRemediationStart> {
+	return db.transaction(async (tx) => {
+		await lockUserSetupCredentials(tx, input.userId);
+		const [current] = await tx
+			.select({
+				canResend: sql<boolean>`${setupTokens.createdAt} <= timezone('utc', clock_timestamp()) - make_interval(secs => ${EMAIL_REMEDIATION_RESEND_DELAY_SECONDS})`,
+				email: setupTokens.candidateEmail,
+			})
+			.from(setupTokens)
+			.where(
+				and(
+					eq(setupTokens.userId, input.userId),
+					eq(setupTokens.purpose, "email_remediation"),
+					isNull(setupTokens.consumedAt),
+					isNull(setupTokens.supersededAt),
+					sql`${setupTokens.expiresAt} > timezone('utc', clock_timestamp())`,
+				),
+			)
+			.limit(1);
+		if (!current?.email) {
+			throw new SetupCredentialError();
+		}
+		if (!current.canResend) {
+			throw new EmailRemediationRateLimitedError();
+		}
+		return startEmailRemediationInTransaction(tx, {
+			...input,
+			email: current.email,
+		});
+	});
+}
+
+/** Return a restricted remediation holder to address entry. */
+export async function changeEmailRemediation(
+	db: Db,
+	userId: number,
+): Promise<void> {
+	await db.transaction(async (tx) => {
+		await lockUserSetupCredentials(tx, userId);
+		await supersedeSetupTokens(tx, userId, "email_remediation");
+	});
+}
+
+/** Revoke an outstanding remediation challenge and every restricted session. */
+export async function cancelEmailRemediation(
+	db: Db,
+	userId: number,
+): Promise<void> {
+	await db.transaction(async (tx) => {
+		await lockUserSetupCredentials(tx, userId);
+		await supersedeSetupTokens(tx, userId, "email_remediation");
+		await invalidateUserSetupSessions(tx, userId);
 	});
 }
 
@@ -439,11 +575,24 @@ export async function completeEmailRemediation(
 	{ token, userId: expectedUserId, verified }: CompleteEmailRemediationInput,
 ): Promise<User> {
 	const userId = await db.transaction(async (tx) => {
-		await lockUserSetupCredentials(tx, expectedUserId);
-		const consumed = await consumeSetupToken(tx, token, "email_remediation");
-		if (consumed.userId !== expectedUserId) {
+		const [credential] = await tx
+			.select({ userId: setupTokens.userId })
+			.from(setupTokens)
+			.where(
+				and(
+					eq(setupTokens.tokenHash, hashToken(token)),
+					eq(setupTokens.purpose, "email_remediation"),
+				),
+			)
+			.limit(1);
+		if (
+			!credential ||
+			(expectedUserId && credential.userId !== expectedUserId)
+		) {
 			throw new SetupCredentialError();
 		}
+		await lockUserSetupCredentials(tx, credential.userId);
+		const consumed = await consumeSetupToken(tx, token, "email_remediation");
 		if (!consumed.candidateEmail || !isValidEmail(consumed.candidateEmail)) {
 			throw new SetupCredentialError();
 		}
@@ -489,7 +638,6 @@ export async function completeEmailRemediation(
 		);
 
 		await supersedeSetupTokens(tx, consumed.userId, "email_remediation");
-		await invalidateUserSetupSessions(tx, consumed.userId);
 		await tx.delete(sessions).where(eq(sessions.userId, consumed.userId));
 		await tx
 			.delete(authSessions)
@@ -501,6 +649,137 @@ export async function completeEmailRemediation(
 	await emit("users", userId, "update");
 
 	return getUser(db, userId);
+}
+
+/** Outcome of public token verification, with the user id kept server-side. */
+export type EmailRemediationTokenResult = {
+	status:
+		| "verified"
+		| "already_verified"
+		| "expired"
+		| "superseded"
+		| "unusable";
+	userId?: number;
+};
+
+/** Verify a remediation bearer token without requiring a browser session. */
+export async function verifyEmailRemediationToken(
+	db: Db,
+	token: string,
+): Promise<EmailRemediationTokenResult> {
+	try {
+		const user = await completeEmailRemediation(db, { token, verified: true });
+		return { status: "verified", userId: user.id };
+	} catch (error) {
+		if (
+			!(error instanceof SetupCredentialError) &&
+			!(error instanceof SetupNotEligibleError)
+		) {
+			throw error;
+		}
+	}
+
+	const [row] = await db
+		.select({
+			active: users.active,
+			candidateEmail: setupTokens.candidateEmail,
+			consumedAt: setupTokens.consumedAt,
+			email: users.email,
+			emailVerified: users.emailVerified,
+			expired: sql<boolean>`${setupTokens.expiresAt} <= timezone('utc', clock_timestamp())`,
+			supersededAt: setupTokens.supersededAt,
+			userId: setupTokens.userId,
+		})
+		.from(setupTokens)
+		.innerJoin(users, eq(users.id, setupTokens.userId))
+		.where(
+			and(
+				eq(setupTokens.tokenHash, hashToken(token)),
+				eq(setupTokens.purpose, "email_remediation"),
+			),
+		)
+		.limit(1);
+
+	if (!row?.active) {
+		return { status: "unusable" };
+	}
+	if (
+		row.consumedAt &&
+		row.emailVerified &&
+		row.candidateEmail &&
+		normalizeEmail(row.candidateEmail) === normalizeEmail(row.email)
+	) {
+		return { status: "already_verified", userId: row.userId };
+	}
+	if (row.supersededAt) {
+		return { status: "superseded", userId: row.userId };
+	}
+	if (row.expired) {
+		return { status: "expired", userId: row.userId };
+	}
+	return { status: "unusable" };
+}
+
+/** Confirm that a restricted holder's remediation completed elsewhere. */
+export async function checkEmailRemediationComplete(
+	db: Db,
+	userId: number,
+): Promise<void> {
+	const [row] = await db
+		.select({
+			active: users.active,
+			authMigratedAt: users.authMigratedAt,
+			emailVerified: users.emailVerified,
+		})
+		.from(users)
+		.where(eq(users.id, userId))
+		.limit(1);
+	if (!row?.active || !row.authMigratedAt || !row.emailVerified) {
+		throw new SetupNotEligibleError();
+	}
+}
+
+/** Claim the one restricted session that may be promoted after verification. */
+export async function claimEmailRemediationPromotion(
+	db: Db,
+	userId: number,
+	setupSessionId: string,
+	requireVerified = true,
+): Promise<boolean> {
+	return db.transaction(async (tx) => {
+		await lockUserSetupCredentials(tx, userId);
+		const [row] = await tx
+			.select({
+				active: users.active,
+				authMigratedAt: users.authMigratedAt,
+				emailVerified: users.emailVerified,
+			})
+			.from(users)
+			.where(eq(users.id, userId))
+			.limit(1);
+		if (
+			!row?.active ||
+			!row.authMigratedAt ||
+			(requireVerified && !row.emailVerified)
+		) {
+			return false;
+		}
+		const claimed = await tx
+			.delete(setupSessions)
+			.where(
+				and(
+					eq(setupSessions.sessionId, setupSessionId),
+					eq(setupSessions.userId, userId),
+					eq(setupSessions.purpose, "email_remediation"),
+				),
+			)
+			.returning({ id: setupSessions.id });
+		if (claimed.length === 0) {
+			return false;
+		}
+		await invalidateUserSetupSessions(tx, userId);
+		return true;
+	});
 }
 
 /** What {@link completeTotpEnrollment} accepts. */

@@ -250,8 +250,15 @@ whether a password reset is required. Unknown, ineligible, and wrong-password at
 generic response and constant-cost behavior. The remediation wall stages a
 normalized unique email as unverified. When delivery is enabled, only the
 emailed one-time link marks it verified; when delivery is unavailable, setup
-completes immediately and leaves `email_verified` false. Completion revokes
-legacy and setup sessions before minting one Better Auth session.
+completes immediately and leaves `email_verified` false. Online links carry
+their token in the URL fragment, which the client removes before submitting it
+to the open verification function. The token works without the initiating
+browser's cookie and never authenticates a different browser. A matching setup
+session has the same 72-hour expiry as the link and can be claimed once for one
+Better Auth session; otherwise the result screen sends the holder to login.
+Pending state is server-owned, reports terminal outbox failure, and supports a
+server-throttled resend, address change, and cancellation. Completion revokes
+legacy sessions; claiming promotion revokes the restricted setup sessions.
 
 The credential is its own cookie pair, `setup_session_id` and
 `setup_session_token`, deliberately not the session pair. `@virtool/data` owns
@@ -278,9 +285,11 @@ the rows and the purposes; this app owns the transport and the boundary.
   versa. `authorization.test.ts` pins both directions, and separately proves
   every ordinary server function refuses a restricted principal on its own.
 
-`setupExceptions` currently contains only the three email-remediation
-operations: read resumable state, submit an address, and consume its mailbox
-challenge. Invitation, recovery and required-MFA surfaces remain separate work.
+`setupExceptions` contains only email-remediation operations that require the
+restricted principal: read resumable state, submit or resend an address,
+change/cancel the pending address, and claim promotion after cross-browser
+verification. Bearer-token verification is open by design and decides only
+mailbox ownership; it does not grant application authority on its own.
 
 Raw routes reject restricted principals and always will:
 `requireAuthenticatedRequest` reads the session cookies or an `Authorization`

@@ -30,7 +30,9 @@ export function safeRedirect(value: unknown): string | undefined {
 	const target = strOptional(value);
 	return target?.startsWith("/") &&
 		!target.startsWith("//") &&
-		!target.startsWith("/login")
+		!target.startsWith("/login") &&
+		target !== "/setup" &&
+		!target.startsWith("/email-remediation")
 		? target
 		: undefined;
 }

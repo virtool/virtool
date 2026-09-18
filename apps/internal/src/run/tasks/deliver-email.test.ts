@@ -259,6 +259,7 @@ async function readOutboxRow(outboxId: number) {
 }
 
 const template = {
+	expiresInHours: 72,
 	type: "email_verification",
 	username: "alice",
 	verifyUrl: "https://virtool.example/verify?token=abc",
