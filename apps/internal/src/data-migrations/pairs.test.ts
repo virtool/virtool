@@ -1,3 +1,7 @@
+import { readFileSync } from "node:fs";
+import { join } from "node:path";
+import { fileURLToPath } from "node:url";
+import { readMigrationFiles } from "drizzle-orm/migrator";
 import { expect, it } from "vitest";
 import { defineAudit } from "./define";
 import {
@@ -5,6 +9,11 @@ import {
 	getDataMigrationAssertion,
 	validateMigrationPairs,
 } from "./pairs";
+import { DATA_MIGRATIONS } from "./registry";
+
+const migrationsFolder = fileURLToPath(
+	new URL("../../../../packages/data/drizzle/", import.meta.url),
+);
 
 function fixture() {
 	const registry = {
@@ -34,6 +43,20 @@ it("pairs an assertion-only SQL migration with its implementation", () => {
 	);
 });
 
+it("validates the checked-in migration journal against the production registry", () => {
+	const journal = JSON.parse(
+		readFileSync(join(migrationsFolder, "meta/_journal.json"), "utf8"),
+	) as { entries: { tag: string }[] };
+	const migrations = readMigrationFiles({ migrationsFolder });
+	const files = journal.entries.map((entry, index) => ({
+		tag: entry.tag,
+		sql: migrations[index]?.sql ?? [],
+	}));
+
+	expect(migrations).toHaveLength(journal.entries.length);
+	expect(() => validateMigrationPairs(files, DATA_MIGRATIONS)).not.toThrow();
+});
+
 it("rejects SQL requiring an implementation missing from the image", () => {
 	const { files } = fixture();
 	expect(() => validateMigrationPairs(files, {})).toThrow(
@@ -46,6 +69,24 @@ it("rejects two bodies at one SQL boundary", () => {
 	const duplicate = { ...registry, other: { ...registry.demo, key: "other" } };
 	expect(() => validateMigrationPairs(files, duplicate)).toThrow(
 		"duplicate pair",
+	);
+});
+
+it("rejects a body tag left stale when conflict resolution renumbers its SQL", () => {
+	const { files, registry } = fixture();
+	files.splice(
+		1,
+		1,
+		{ tag: "0024_competing", sql: ["select 1"] },
+		{
+			tag: "0025_demo",
+			sql: [getDataMigrationAssertion("demo", 1)],
+		},
+	);
+	registry.demo.migrationTag = "0024_competing";
+
+	expect(() => validateMigrationPairs(files, registry)).toThrow(
+		"missing or mismatched data migration assertion in 0024_competing",
 	);
 });
 
