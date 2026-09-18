@@ -1,3 +1,9 @@
+import {
+	FORBIDDEN_ERROR_NAME,
+	PASSWORD_RESET_REQUIRED_ERROR_NAME,
+	SETUP_REQUIRED_ERROR_NAME,
+	UNAUTHORIZED_ERROR_NAME,
+} from "@virtool/contracts";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const { debug, error, getResponseStatus } = vi.hoisted(() => ({
@@ -37,8 +43,10 @@ beforeEach(() => {
 
 describe("errorLoggingMiddleware", () => {
 	it.each([
-		[401, "UnauthorizedError"],
-		[403, "ForbiddenError"],
+		[401, UNAUTHORIZED_ERROR_NAME],
+		[403, FORBIDDEN_ERROR_NAME],
+		[403, PASSWORD_RESET_REQUIRED_ERROR_NAME],
+		[403, SETUP_REQUIRED_ERROR_NAME],
 	])(
 		"logs a %i rejection without its error object or stack",
 		async (status, name) => {
@@ -50,6 +58,28 @@ describe("errorLoggingMiddleware", () => {
 			expect(debug).toHaveBeenCalledWith(
 				{
 					errorName: name,
+					path: "/refs",
+					serverFn: "getAccountFn",
+					status,
+				},
+				"server function rejected request",
+			);
+			expect(error).not.toHaveBeenCalled();
+		},
+	);
+
+	it.each([401, 403])(
+		"retains the full error when a stale %i status precedes an unexpected failure",
+		async (status) => {
+			const cause = new Error("database unavailable");
+			const thrown = new Error("query failed", { cause });
+			getResponseStatus.mockReturnValue(status);
+
+			await expect(call(thrown)).rejects.toBe(thrown);
+
+			expect(debug).toHaveBeenCalledWith(
+				{
+					err: thrown,
 					path: "/refs",
 					serverFn: "getAccountFn",
 					status,

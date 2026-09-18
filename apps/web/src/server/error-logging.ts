@@ -1,6 +1,26 @@
 import { createMiddleware } from "@tanstack/react-start";
 import { getRequest, getResponseStatus } from "@tanstack/react-start/server";
+import {
+	FORBIDDEN_ERROR_NAME,
+	PASSWORD_RESET_REQUIRED_ERROR_NAME,
+	SETUP_REQUIRED_ERROR_NAME,
+	UNAUTHORIZED_ERROR_NAME,
+} from "@virtool/contracts";
 import { logger } from "./logger";
+
+const FORBIDDEN_ERROR_NAMES = new Set([
+	FORBIDDEN_ERROR_NAME,
+	PASSWORD_RESET_REQUIRED_ERROR_NAME,
+	SETUP_REQUIRED_ERROR_NAME,
+]);
+
+function isExpectedAuthenticationError(err: unknown, status: number): boolean {
+	return (
+		err instanceof Error &&
+		((status === 401 && err.name === UNAUTHORIZED_ERROR_NAME) ||
+			(status === 403 && FORBIDDEN_ERROR_NAMES.has(err.name)))
+	);
+}
 
 /**
  * Global server-function middleware that logs every error a server function
@@ -31,7 +51,7 @@ export const errorLoggingMiddleware = createMiddleware({
 		const path = new URL(getRequest().url).pathname;
 		const serverFn = serverFnMeta.name;
 
-		if (status === 401 || status === 403) {
+		if (isExpectedAuthenticationError(err, status)) {
 			logger.debug(
 				{
 					errorName: err instanceof Error ? err.name : undefined,
