@@ -21,7 +21,7 @@
 		"@virtool/sentry": "workspace:*",
 		"@virtool/storage": "workspace:*",
 		"execa": "^10.0.1",
-		"undici": "^8.10.0",
+		"undici": "^8.10.2",
 		"zod": "^4.5.4"
 	},
 	"devDependencies": {
