@@ -1,5 +1,5 @@
 import { createHash } from "node:crypto";
-import { access, readdir, readFile, rm } from "node:fs/promises";
+import { readdir, readFile, rm } from "node:fs/promises";
 import { createServer } from "node:http";
 import { join } from "node:path";
 import { getRequestListener } from "@hono/node-server";
@@ -7,6 +7,7 @@ import { createLogger } from "@virtool/logger";
 import type { Mutation, Snapshot } from "../shared/types.ts";
 import { createApi, SnapshotFeed } from "./api.ts";
 import { BuildCoordinator } from "./builds.ts";
+import { ensureClientBuild } from "./client-build.ts";
 import type { CommandRunner } from "./command.ts";
 import { runCommand } from "./command.ts";
 import { PROTOCOL_VERSION } from "./constants.ts";
@@ -85,20 +86,21 @@ export async function runDaemon(
 	if (store.getMeta("shared_initialized") !== "true") {
 		await checkPortAvailable(9443);
 	}
+	const primaryHash = await hashDirectory(
+		join(repository.primaryWorktree, "apps/dev"),
+	);
 	const clientDirectory = join(
 		repository.primaryWorktree,
 		"apps/dev/dist/client",
 	);
-	try {
-		await access(join(clientDirectory, "index.html"));
-	} catch {
-		await run("pnpm", ["--filter", "@virtool/dev", "exec", "vite", "build"], {
-			cwd: repository.primaryWorktree,
-		});
-	}
-	const primaryHash = await hashDirectory(
-		join(repository.primaryWorktree, "apps/dev"),
+	await ensureClientBuild(
+		repository.primaryWorktree,
+		clientDirectory,
+		store.getMeta("client_hash"),
+		primaryHash,
+		run,
 	);
+	store.setMeta("client_hash", primaryHash);
 	store.setMeta("daemon_hash", primaryHash);
 	const feed = new SnapshotFeed(
 		emptySnapshot(store.repositoryId, store.getWorkflowConcurrency()),

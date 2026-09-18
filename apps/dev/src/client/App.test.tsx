@@ -261,7 +261,7 @@ it("shows infrastructure failures even after initialization", async () => {
 	expect(screen.getByText("Needs attention")).toBeVisible();
 	expect(
 		screen.getByRole("article", { name: "postgres service" }),
-	).toHaveTextContent("postgresunhealthy");
+	).toHaveTextContent("postgresVolume usage: 1.5 MBunhealthy");
 	expect(
 		screen.getByRole("article", { name: "caddy service" }),
 	).toHaveTextContent("caddyhealthy");

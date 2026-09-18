@@ -78,21 +78,25 @@ export class Reconciler {
 				!this.active.has(environment.id) &&
 				(!environment.lastError || canRetryRemoval)
 			) {
-				const promise = this.reconcile(environment).catch((error) => {
-					this.store.setEnvironmentError(
-						environment.id,
-						error instanceof Error ? error.message : String(error),
-					);
-					if (environment.desired === "absent") {
-						const attempt = this.removalAttempts.get(environment.id) ?? 0;
-						this.removalAttempts.set(environment.id, attempt + 1);
-						this.retryAt.set(
+				const promise = this.reconcile(environment)
+					.catch((error) => {
+						this.store.setEnvironmentError(
 							environment.id,
-							Date.now() + getRetryDelay(attempt),
+							error instanceof Error ? error.message : String(error),
 						);
-					}
-					this.publish();
-				});
+						if (environment.desired === "absent") {
+							const attempt = this.removalAttempts.get(environment.id) ?? 0;
+							this.removalAttempts.set(environment.id, attempt + 1);
+							this.retryAt.set(
+								environment.id,
+								Date.now() + getRetryDelay(attempt),
+							);
+						}
+					})
+					.finally(() => {
+						this.active.delete(environment.id);
+						this.publish();
+					});
 				this.active.set(environment.id, promise);
 			}
 		}
@@ -199,8 +203,6 @@ export class Reconciler {
 			}
 		} finally {
 			this.restarts.delete(environment.id);
-			this.active.delete(environment.id);
-			this.publish();
 		}
 	}
 

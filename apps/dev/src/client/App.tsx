@@ -130,10 +130,15 @@ function Services({ services }: { services: Record<string, ServiceState> }) {
 
 function SharedServices({
 	services,
+	storage,
 }: {
 	services: Record<string, ServiceState>;
+	storage: { azurite: number | null; postgres: number | null };
 }) {
-	const entries = Object.entries(services);
+	const entries = [
+		...Object.keys(services),
+		...(["postgres", "azurite"] as const).filter((name) => !(name in services)),
+	];
 	if (entries.length === 0) {
 		return (
 			<p className={`${PANEL} p-6 text-sm text-slate-500`}>
@@ -146,25 +151,38 @@ function SharedServices({
 			aria-label="Shared services"
 			className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3"
 		>
-			{entries.map(([name, health]) => (
-				<article
-					aria-label={`${name} service`}
-					className={`${PANEL} flex items-center justify-between gap-3 p-4`}
-					key={name}
-				>
-					<h3 className="font-semibold text-emerald-950">{name}</h3>
-					<Badge
-						label={health}
-						tone={
-							health === "healthy"
-								? "good"
-								: health === "stopped"
-									? "neutral"
-									: "bad"
-						}
-					/>
-				</article>
-			))}
+			{entries.map((name) => {
+				const health = services[name];
+				const volumeSize = storage[name as keyof typeof storage];
+				return (
+					<article
+						aria-label={`${name} service`}
+						className={`${PANEL} flex items-center justify-between gap-3 p-4`}
+						key={name}
+					>
+						<div>
+							<h3 className="font-semibold text-emerald-950">{name}</h3>
+							{volumeSize !== undefined && (
+								<p className="mt-1 text-xs text-slate-500">
+									Volume usage: <span>{formatBytes(volumeSize)}</span>
+								</p>
+							)}
+						</div>
+						{health && (
+							<Badge
+								label={health}
+								tone={
+									health === "healthy"
+										? "good"
+										: health === "stopped"
+											? "neutral"
+											: "bad"
+								}
+							/>
+						)}
+					</article>
+				);
+			})}
 		</section>
 	);
 }
@@ -187,28 +205,6 @@ function formatBytes(bytes: number | null): string {
 		unit = next;
 	}
 	return `${value.toFixed(value >= 10 ? 0 : 1)} ${unit}`;
-}
-
-function SharedStorage({
-	storage,
-}: {
-	storage: { azurite: number | null; postgres: number | null };
-}) {
-	return (
-		<section aria-label="Shared storage" className="grid gap-3 sm:grid-cols-2">
-			{(["postgres", "azurite"] as const).map((name) => (
-				<article className={`${PANEL} p-4`} key={name}>
-					<div className="flex items-center justify-between gap-3">
-						<h3 className="font-semibold text-emerald-950">{name}</h3>
-						<span className="text-sm font-medium text-slate-600">
-							{formatBytes(storage[name])}
-						</span>
-					</div>
-					<p className="mt-1 text-xs text-slate-500">Volume usage</p>
-				</article>
-			))}
-		</section>
-	);
 }
 
 function isBusy(environment: Environment): boolean {
@@ -847,10 +843,10 @@ function AppContent() {
 								}
 							/>
 						</div>
-						<SharedServices services={snapshot.shared.services} />
-						<div className="mt-3">
-							<SharedStorage storage={sharedStorage} />
-						</div>
+						<SharedServices
+							services={snapshot.shared.services}
+							storage={sharedStorage}
+						/>
 						<Feedback error={snapshot.shared.lastError} message={null} />
 						<details className="mt-3 text-xs text-slate-500">
 							<summary className="w-fit cursor-pointer">

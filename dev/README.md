@@ -43,7 +43,8 @@ the management UI continues to read `<git-common-dir>/virtool-dev/logs/daemon.lo
 An update waits for lifecycle operations and workflow executors to finish, then
 the daemon drains its background reconciliation and scheduler work before
 closing SQLite. It exits with a restart status and relies on systemd to launch
-the replacement; it never spawns a detached copy itself.
+the replacement, which rebuilds the management client when its source changed;
+it never spawns a detached copy itself.
 
 The daemon continuously reconciles Git, durable desired state, and Docker. Git
 worktrees appear in the UI before an environment is created. The first `up`
