@@ -6,7 +6,12 @@ import { useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "@tanstack/react-router";
 import type { EmailRemediationVerificationResult } from "@virtool/contracts";
 import { CircleCheck, TriangleAlert } from "lucide-react";
-import { useLayoutEffect, useState } from "react";
+import {
+	type Dispatch,
+	type SetStateAction,
+	useLayoutEffect,
+	useState,
+} from "react";
 import { rootQueryKeys } from "../keys";
 import { completeEmailRemediation } from "../queries";
 import { WallContainer } from "./WallContainer";
@@ -14,10 +19,22 @@ import { WallTitle } from "./WallTitle";
 
 type VerificationState =
 	| { status: "loading" }
+	| { status: "interrupted"; token: string; redirect?: string }
 	| (EmailRemediationVerificationResult & {
 			canRetry: boolean;
 			redirect?: string;
 	  });
+
+function verifyToken(
+	token: string,
+	redirect: string | undefined,
+	setState: Dispatch<SetStateAction<VerificationState>>,
+) {
+	setState({ status: "loading" });
+	void completeEmailRemediation(token)
+		.then((result) => setState({ ...result, redirect }))
+		.catch(() => setState({ status: "interrupted", token, redirect }));
+}
 
 /** Token-safe result screen for an emailed remediation challenge. */
 export default function EmailRemediationVerification() {
@@ -27,8 +44,11 @@ export default function EmailRemediationVerification() {
 
 	useLayoutEffect(() => {
 		const fragment = new URLSearchParams(window.location.hash.slice(1));
-		const token = fragment.get("token");
-		const redirect = safeRedirect(fragment.get("redirect"));
+		const query = new URLSearchParams(window.location.search);
+		const token = fragment.get("token") ?? query.get("token");
+		const redirect = safeRedirect(
+			fragment.get("redirect") ?? query.get("redirect"),
+		);
 		window.history.replaceState(
 			window.history.state,
 			"",
@@ -45,20 +65,11 @@ export default function EmailRemediationVerification() {
 			return;
 		}
 
-		void completeEmailRemediation(token)
-			.then((result) => setState({ ...result, redirect }))
-			.catch(() =>
-				setState({
-					status: "unusable",
-					authenticated: false,
-					canRetry: false,
-					redirect,
-				}),
-			);
+		verifyToken(token, redirect, setState);
 	}, []);
 
 	function continueJourney() {
-		if (state.status === "loading") {
+		if (state.status === "loading" || state.status === "interrupted") {
 			return;
 		}
 		queryClient.removeQueries({ queryKey: rootQueryKeys.all() });
@@ -77,6 +88,10 @@ export default function EmailRemediationVerification() {
 		if (state.status === "loading") {
 			return;
 		}
+		if (state.status === "interrupted") {
+			verifyToken(state.token, state.redirect, setState);
+			return;
+		}
 		navigate({
 			to: "/email-remediation",
 			search: { redirect: state.redirect },
@@ -90,6 +105,25 @@ export default function EmailRemediationVerification() {
 					title="Verifying email"
 					subtitle="Checking your verification link…"
 				/>
+			</WallContainer>
+		);
+	}
+
+	if (state.status === "interrupted") {
+		return (
+			<WallContainer>
+				<WallTitle
+					title="Verification interrupted"
+					subtitle="The verification service could not be reached."
+				/>
+				<Alert color="orange" icon={TriangleAlert}>
+					Your link has not been rejected. Try the verification again.
+				</Alert>
+				<div className="flex justify-end">
+					<Button color="blue" onClick={retry}>
+						Try again
+					</Button>
+				</div>
 			</WallContainer>
 		);
 	}

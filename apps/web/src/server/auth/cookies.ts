@@ -68,7 +68,11 @@ export type CookieAdapter = {
 	clearLegacySession(): void;
 	getSetupSessionId(): string | undefined;
 	getSetupSessionToken(): string | undefined;
-	setSetupSession(sessionId: string, token: string): void;
+	setSetupSession(
+		sessionId: string,
+		token: string,
+		maxAgeSeconds?: number,
+	): void;
 	clearSetup(): void;
 };
 
@@ -117,18 +121,24 @@ export const realCookies: CookieAdapter = {
 	),
 	/* Both halves together, because a setup session is worthless without either
 	   and there is no flow that sets one alone. */
-	setSetupSession: createServerOnlyFn((sessionId: string, token: string) => {
-		setCookie(
-			SETUP_SESSION_ID_COOKIE,
-			sessionId,
-			cookieOptions(isSecure(), SETUP_MAX_AGE_SECONDS),
-		);
-		setCookie(
-			SETUP_SESSION_TOKEN_COOKIE,
-			token,
-			cookieOptions(isSecure(), SETUP_MAX_AGE_SECONDS),
-		);
-	}),
+	setSetupSession: createServerOnlyFn(
+		(
+			sessionId: string,
+			token: string,
+			maxAgeSeconds = SETUP_MAX_AGE_SECONDS,
+		) => {
+			setCookie(
+				SETUP_SESSION_ID_COOKIE,
+				sessionId,
+				cookieOptions(isSecure(), maxAgeSeconds),
+			);
+			setCookie(
+				SETUP_SESSION_TOKEN_COOKIE,
+				token,
+				cookieOptions(isSecure(), maxAgeSeconds),
+			);
+		},
+	),
 	clearSetup: createServerOnlyFn(() => {
 		deleteCookie(SETUP_SESSION_ID_COOKIE, { path: "/" });
 		deleteCookie(SETUP_SESSION_TOKEN_COOKIE, { path: "/" });

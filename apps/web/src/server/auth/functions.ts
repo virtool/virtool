@@ -1,7 +1,10 @@
 import * as Sentry from "@sentry/tanstackstart-react";
 import { createServerFn } from "@tanstack/react-start";
 import { getRequest, setResponseStatus } from "@tanstack/react-start/server";
-import { PasswordTooShortError } from "@virtool/contracts";
+import {
+	EMAIL_REMEDIATION_TOKEN_LIFETIME_HOURS,
+	PasswordTooShortError,
+} from "@virtool/contracts";
 import {
 	cancelEmailRemediation,
 	changeEmailRemediation,
@@ -66,6 +69,18 @@ const loginSchema = z.object({
 const resetPasswordSchema = z.object({
 	password: z.string(),
 });
+
+function extendEmailRemediationCookies(sessionId: string) {
+	const token = realCookies.getSetupSessionToken();
+	if (!token) {
+		throw new SetupCredentialError();
+	}
+	realCookies.setSetupSession(
+		sessionId,
+		token,
+		EMAIL_REMEDIATION_TOKEN_LIFETIME_HOURS * 60 * 60,
+	);
+}
 
 const createFirstUserSchema = z.object({
 	handle: z.string().trim().min(1),
@@ -342,6 +357,7 @@ export const submitEmailRemediationFn = createServerFn({ method: "POST" })
 			});
 
 			if (result.status === "verification_required") {
+				extendEmailRemediationCookies(context.principal.sessionId);
 				return {
 					complete: false as const,
 					state: await getEmailRemediationState(db, context.principal.userId),
@@ -371,7 +387,11 @@ export const completeEmailRemediationFn = createServerFn({ method: "POST" })
 				verifyBrowserPrincipal(db, request),
 				verifyEmailRemediationToken(db, data.token),
 			]);
-			let authenticated = browser?.userId === result.userId;
+			let authenticated =
+				browser !== null &&
+				browser !== undefined &&
+				result.userId !== undefined &&
+				browser.userId === result.userId;
 			if (
 				!authenticated &&
 				result.userId &&
@@ -435,6 +455,7 @@ export const resendEmailRemediationFn = createServerFn({ method: "POST" })
 					false,
 				);
 			}
+			extendEmailRemediationCookies(context.principal.sessionId);
 			return {
 				complete: false as const,
 				state: await getEmailRemediationState(db, context.principal.userId),

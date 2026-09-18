@@ -174,6 +174,53 @@ it("waits for explicit Continue after same-browser verification", async () => {
 	await waitFor(() => expect(router.state.location.pathname).toBe("/samples"));
 });
 
+it("accepts and scrubs a legacy query-based verification link", async () => {
+	const token = "c".repeat(64);
+	window.history.replaceState(
+		{},
+		"",
+		`/email-remediation-verify?token=${token}&redirect=%2Fsamples`,
+	);
+	authServerFnMocks.completeEmailRemediationFn.mockResolvedValue({
+		status: "verified",
+		authenticated: false,
+		canRetry: false,
+	});
+	await renderRoute("/email-remediation-verify");
+
+	expect(await screen.findByText("Email verified")).toBeInTheDocument();
+	expect(window.location.search).toBe("");
+	expect(window.location.href).not.toContain(token);
+	expect(authServerFnMocks.completeEmailRemediationFn).toHaveBeenCalledWith({
+		data: { token },
+	});
+});
+
+it("retries an interrupted verification without restoring the token to the URL", async () => {
+	const token = "d".repeat(64);
+	window.history.replaceState(
+		{},
+		"",
+		`/email-remediation-verify#token=${token}`,
+	);
+	authServerFnMocks.completeEmailRemediationFn
+		.mockRejectedValueOnce(new Error("network interrupted"))
+		.mockResolvedValueOnce({
+			status: "verified",
+			authenticated: false,
+			canRetry: false,
+		});
+	await renderRoute("/email-remediation-verify");
+
+	expect(
+		await screen.findByText("Verification interrupted"),
+	).toBeInTheDocument();
+	expect(window.location.href).not.toContain(token);
+	await userEvent.click(screen.getByRole("button", { name: "Try again" }));
+	expect(await screen.findByText("Email verified")).toBeInTheDocument();
+	expect(authServerFnMocks.completeEmailRemediationFn).toHaveBeenCalledTimes(2);
+});
+
 it("shows a safe result for a malformed fragment token", async () => {
 	window.history.replaceState(
 		{},

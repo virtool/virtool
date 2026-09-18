@@ -42,6 +42,20 @@ describe("renderEmailTemplate", () => {
 		expect(rendered.html).toContain("<p>");
 	});
 
+	it("renders queued version-one verification payloads without an expiry", () => {
+		const rendered = renderEmailTemplate(
+			{
+				type: "email_verification",
+				username: "alice",
+				verifyUrl: "https://virtool.example/verify?token=abc",
+			} as EmailTemplate,
+			1,
+		);
+
+		expect(rendered.text).not.toContain("undefined");
+		expect(rendered.text).not.toContain("expires");
+	});
+
 	it("escapes untrusted values in the HTML body", () => {
 		const rendered = renderEmailTemplate({
 			type: "account_setup",

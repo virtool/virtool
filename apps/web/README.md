@@ -257,7 +257,7 @@ browser's cookie and never authenticates a different browser. A matching setup
 session has the same 72-hour expiry as the link and can be claimed once for one
 Better Auth session; otherwise the result screen sends the holder to login.
 Pending state is server-owned, reports terminal outbox failure, and supports a
-server-throttled resend, address change, and cancellation. Completion revokes
+server-throttled repeat delivery, address change, and cancellation. Completion revokes
 legacy sessions; claiming promotion revokes the restricted setup sessions.
 
 The credential is its own cookie pair, `setup_session_id` and
@@ -286,7 +286,7 @@ the rows and the purposes; this app owns the transport and the boundary.
   every ordinary server function refuses a restricted principal on its own.
 
 `setupExceptions` contains only email-remediation operations that require the
-restricted principal: read resumable state, submit or resend an address,
+restricted principal: read resumable state, submit or send an address again,
 change/cancel the pending address, and claim promotion after cross-browser
 verification. Bearer-token verification is open by design and decides only
 mailbox ownership; it does not grant application authority on its own.

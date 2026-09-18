@@ -313,6 +313,28 @@ describe("deliverEmailTask", () => {
 		expect(recorded.acceptedAges).toHaveLength(1);
 	});
 
+	it("sends queued version-one verification payloads without an expiry", async () => {
+		await seedEmailSettings();
+
+		const { outboxId } = await queue({ idempotencyKey: "version-one" });
+		await db
+			.update(emailOutbox)
+			.set({
+				template: sql`'{"type":"email_verification","username":"alice","verifyUrl":"https://virtool.example/verify?token=abc"}'::jsonb`,
+				template_version: 1,
+			})
+			.where(eq(emailOutbox.id, outboxId));
+		const fetchMock = stubSend(jsonResponse(200, { id: "msg_1" }));
+
+		await runDrain();
+
+		expect((await readOutboxRow(outboxId)).status).toBe("accepted");
+		const [, init] = fetchMock.mock.calls[0] as [string, RequestInit];
+		const body = JSON.parse(String(init.body));
+		expect(body.text).not.toContain("undefined");
+		expect(body.text).not.toContain("expires");
+	});
+
 	it("drains the backlog while sending is disabled", async () => {
 		await seedEmailSettings();
 

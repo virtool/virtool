@@ -358,6 +358,18 @@ it("verifies cross-browser without authentication and lets the original browser 
 	expect(await db.select().from(setupSessions)).toHaveLength(0);
 });
 
+it("does not report an anonymous unknown token as authenticated", async () => {
+	expect(
+		await callServerFn(handlers, "completeEmailRemediationFn", {
+			token: "a".repeat(64),
+		}),
+	).toEqual({
+		status: "unusable",
+		authenticated: false,
+		canRetry: false,
+	});
+});
+
 async function enroll(forceReset: boolean) {
 	const [user] = await db
 		.insert(users)
