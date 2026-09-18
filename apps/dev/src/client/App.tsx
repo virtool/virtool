@@ -1,4 +1,12 @@
-import { Tabs } from "radix-ui";
+import {
+	createRootRoute,
+	createRoute,
+	createRouter,
+	Link,
+	RouterProvider,
+	useLocation,
+	useParams,
+} from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import type {
 	Environment,
@@ -243,13 +251,11 @@ function EnvironmentCard({
 	connected,
 	selected,
 	onSelect,
-	onOpen,
 }: {
 	environment: Environment;
 	connected: boolean;
 	selected: boolean;
 	onSelect: (selected: boolean) => void;
-	onOpen: () => void;
 }) {
 	const busy = isBusy(environment);
 	const status = getEnvironmentStatus(environment);
@@ -265,11 +271,11 @@ function EnvironmentCard({
 					className="size-4 accent-emerald-700"
 				/>
 			</div>
-			<button
+			<Link
 				aria-label={`View details for ${environment.branch}`}
 				className="flex min-w-0 flex-1 cursor-pointer items-center gap-3 p-4 text-left transition-colors hover:bg-slate-50"
-				type="button"
-				onClick={onOpen}
+				params={{ worktreeId: environment.worktreeId }}
+				to="/worktrees/$worktreeId"
 			>
 				<h2 className="min-w-0 flex-1 break-all font-semibold text-emerald-950">
 					{environment.branch}
@@ -278,7 +284,7 @@ function EnvironmentCard({
 				<span aria-hidden="true" className="text-slate-400">
 					&rsaquo;
 				</span>
-			</button>
+			</Link>
 		</article>
 	);
 }
@@ -287,12 +293,10 @@ function EnvironmentDetails({
 	environment,
 	scheduler,
 	connected,
-	onBack,
 }: {
 	environment: Environment;
 	scheduler: SchedulerState;
 	connected: boolean;
-	onBack: () => void;
 }) {
 	const action = useAction();
 	const busy = isBusy(environment);
@@ -331,9 +335,9 @@ function EnvironmentDetails({
 	}
 	return (
 		<section aria-label={`${environment.branch} details`}>
-			<button className={CONTROL} type="button" onClick={onBack}>
+			<Link className={CONTROL} to="/">
 				← Back to worktrees
-			</button>
+			</Link>
 			<article className={`${PANEL} mt-3 p-5`}>
 				<div className="flex flex-wrap items-center gap-3">
 					<h2 className="min-w-0 flex-1 break-all text-xl font-semibold text-emerald-950">
@@ -555,14 +559,15 @@ function DaemonLog() {
 	);
 }
 
-export default function App() {
+function AppContent() {
 	const { snapshot, connection } = useSnapshot();
 	const connected = connection === "live";
 	const [selected, setSelected] = useState<string[]>([]);
-	const [openWorktreeId, setOpenWorktreeId] = useState<string | null>(null);
+	const pathname = useLocation({ select: (location) => location.pathname });
+	const { worktreeId } = useParams({ strict: false });
 	const action = useAction();
 	const openEnvironment = snapshot.environments.find(
-		(environment) => environment.worktreeId === openWorktreeId,
+		(environment) => environment.worktreeId === worktreeId,
 	);
 	const selectedIds = snapshot.environments
 		.filter(
@@ -651,32 +656,57 @@ export default function App() {
 					An updated daemon is ready and will restart when operations finish.
 				</p>
 			)}
-			<Tabs.Root defaultValue="worktrees">
-				<Tabs.List
-					aria-label="Development environment sections"
-					className="mb-5 flex border-b border-slate-200"
+			<nav
+				aria-label="Development environment sections"
+				className="mb-5 flex border-b border-slate-200"
+			>
+				<Link
+					aria-current={pathname === "/" || worktreeId ? "page" : undefined}
+					className={TAB}
+					data-state={pathname === "/" || worktreeId ? "active" : "inactive"}
+					to="/"
 				>
-					<Tabs.Trigger className={TAB} value="worktrees">
-						Worktrees
-					</Tabs.Trigger>
-					<Tabs.Trigger className={TAB} value="shared">
-						Shared
-					</Tabs.Trigger>
-					<Tabs.Trigger className={TAB} value="workflows">
-						Workflows
-					</Tabs.Trigger>
-					<Tabs.Trigger className={TAB} value="daemon-log">
-						Daemon log
-					</Tabs.Trigger>
-				</Tabs.List>
-				<Tabs.Content value="worktrees">
+					Worktrees
+				</Link>
+				<Link
+					aria-current={pathname === "/shared" ? "page" : undefined}
+					className={TAB}
+					data-state={pathname === "/shared" ? "active" : "inactive"}
+					to="/shared"
+				>
+					Shared
+				</Link>
+				<Link
+					aria-current={pathname === "/workflows" ? "page" : undefined}
+					className={TAB}
+					data-state={pathname === "/workflows" ? "active" : "inactive"}
+					to="/workflows"
+				>
+					Workflows
+				</Link>
+				<Link
+					aria-current={pathname === "/logs" ? "page" : undefined}
+					className={TAB}
+					data-state={pathname === "/logs" ? "active" : "inactive"}
+					to="/logs"
+				>
+					Daemon log
+				</Link>
+			</nav>
+			{(pathname === "/" || Boolean(worktreeId)) && (
+				<section aria-label="Worktrees">
 					{openEnvironment ? (
 						<EnvironmentDetails
 							environment={openEnvironment}
 							scheduler={snapshot.scheduler}
 							connected={connected}
-							onBack={() => setOpenWorktreeId(null)}
 						/>
+					) : worktreeId ? (
+						<p role="alert" className={`${PANEL} p-6 text-sm text-slate-600`}>
+							{connected
+								? "Worktree not found."
+								: "Waiting for worktree state…"}
+						</p>
 					) : (
 						<>
 							<div className="mb-3 flex flex-wrap items-center gap-3 text-sm text-slate-600">
@@ -731,14 +761,15 @@ export default function App() {
 														),
 											)
 										}
-										onOpen={() => setOpenWorktreeId(environment.worktreeId)}
 									/>
 								))}
 							</section>
 						</>
 					)}
-				</Tabs.Content>
-				<Tabs.Content className="grid gap-3" value="shared">
+				</section>
+			)}
+			{pathname === "/shared" && (
+				<section aria-label="Shared" className="grid gap-3">
 					<section aria-label="Shared infrastructure">
 						<div className="mb-3 flex flex-wrap items-center gap-3">
 							<h2 className="text-sm font-semibold">Shared infrastructure</h2>
@@ -785,14 +816,70 @@ export default function App() {
 							</button>
 						</details>
 					</section>
-				</Tabs.Content>
-				<Tabs.Content value="workflows">
+				</section>
+			)}
+			{pathname === "/workflows" && (
+				<section aria-label="Workflows">
 					<Scheduler state={snapshot.scheduler} connected={connected} />
-				</Tabs.Content>
-				<Tabs.Content value="daemon-log">
-					<DaemonLog />
-				</Tabs.Content>
-			</Tabs.Root>
+				</section>
+			)}
+			{pathname === "/logs" && <DaemonLog />}
+			{pathname !== "/" &&
+				!worktreeId &&
+				!["/shared", "/workflows", "/logs"].includes(pathname) && (
+					<p role="alert" className={`${PANEL} p-6 text-sm text-slate-600`}>
+						Page not found.
+					</p>
+				)}
 		</main>
 	);
+}
+
+const rootRoute = createRootRoute({
+	component: AppContent,
+});
+const worktreesRoute = createRoute({
+	getParentRoute: () => rootRoute,
+	path: "/",
+});
+const environmentRoute = createRoute({
+	getParentRoute: () => rootRoute,
+	path: "/worktrees/$worktreeId",
+});
+const sharedRoute = createRoute({
+	getParentRoute: () => rootRoute,
+	path: "/shared",
+});
+const workflowsRoute = createRoute({
+	getParentRoute: () => rootRoute,
+	path: "/workflows",
+});
+const logsRoute = createRoute({
+	getParentRoute: () => rootRoute,
+	path: "/logs",
+});
+const routeTree = rootRoute.addChildren([
+	worktreesRoute,
+	environmentRoute,
+	sharedRoute,
+	workflowsRoute,
+	logsRoute,
+]);
+
+function createAppRouter() {
+	return createRouter({ routeTree });
+}
+
+type AppRouter = ReturnType<typeof createAppRouter>;
+
+declare module "@tanstack/react-router" {
+	// biome-ignore lint/style/useConsistentTypeDefinitions: module augmentation merges into TanStack Router's Register interface
+	interface Register {
+		router: AppRouter;
+	}
+}
+
+export default function App() {
+	const [router] = useState(createAppRouter);
+	return <RouterProvider router={router} />;
 }

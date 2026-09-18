@@ -63,12 +63,18 @@ function getEnvironment() {
 async function openEnvironmentDetails(): Promise<void> {
 	await userEvent
 		.setup()
-		.click(
-			screen.getByRole("button", { name: "View details for feature/test" }),
-		);
+		.click(screen.getByRole("link", { name: "View details for feature/test" }));
+}
+
+async function renderApp() {
+	const result = render(<App />);
+	await screen.findByRole("heading", { name: "Development environments" });
+	return result;
 }
 
 beforeEach(() => {
+	window.history.replaceState(null, "", "/");
+	vi.stubGlobal("scrollTo", vi.fn());
 	Object.assign(snapshot, structuredClone(initial));
 	connection = "live";
 	vi.stubGlobal(
@@ -83,12 +89,12 @@ beforeEach(() => {
 
 it("shows live environment state and confirms destructive removal", async () => {
 	const user = userEvent.setup();
-	render(<App />);
+	await renderApp();
 	expect(screen.getByText("feature/test")).toBeInTheDocument();
 	expect(screen.getByText("Ready")).toBeInTheDocument();
 	expect(screen.queryByText("/repo/worktree")).not.toBeInTheDocument();
 	await user.click(
-		screen.getByRole("button", { name: "View details for feature/test" }),
+		screen.getByRole("link", { name: "View details for feature/test" }),
 	);
 	expect(screen.getByText("/repo/worktree")).toBeVisible();
 	await user.click(
@@ -99,7 +105,7 @@ it("shows live environment state and confirms destructive removal", async () => 
 		"/api/environments",
 		expect.anything(),
 	);
-	await user.click(screen.getByRole("button", { name: "← Back to worktrees" }));
+	await user.click(screen.getByRole("link", { name: "← Back to worktrees" }));
 	expect(screen.queryByText("/repo/worktree")).not.toBeInTheDocument();
 });
 
@@ -108,7 +114,7 @@ it("shows the open pull request in the worktree details", async () => {
 		number: 42,
 		url: "https://github.com/virtool/virtool/pull/42",
 	};
-	render(<App />);
+	await renderApp();
 	expect(
 		screen.queryByRole("link", { name: "Open PR #42 ↗" }),
 	).not.toBeInTheDocument();
@@ -120,7 +126,7 @@ it("shows the open pull request in the worktree details", async () => {
 });
 
 it("shows actions for ready, stopped, and failed environments", async () => {
-	const { rerender } = render(<App />);
+	await renderApp();
 	await openEnvironmentDetails();
 	expect(screen.getByRole("link", { name: "Open app ↗" })).toHaveAttribute(
 		"href",
@@ -134,7 +140,10 @@ it("shows actions for ready, stopped, and failed environments", async () => {
 		ready: false,
 		observed: "stopped",
 	});
-	rerender(<App />);
+	await userEvent
+		.setup()
+		.click(screen.getByRole("link", { name: "← Back to worktrees" }));
+	await openEnvironmentDetails();
 	expect(screen.getByRole("button", { name: "Start" })).toBeEnabled();
 	expect(
 		screen.queryByRole("link", { name: "Open app ↗" }),
@@ -143,7 +152,10 @@ it("shows actions for ready, stopped, and failed environments", async () => {
 		observed: "failed",
 		lastError: "Build failed",
 	});
-	rerender(<App />);
+	await userEvent
+		.setup()
+		.click(screen.getByRole("link", { name: "← Back to worktrees" }));
+	await openEnvironmentDetails();
 	expect(screen.getByRole("button", { name: "Retry" })).toBeEnabled();
 	expect(screen.getByRole("alert")).toHaveTextContent("Build failed");
 });
@@ -158,7 +170,7 @@ it("keeps progress visible and prevents conflicting actions", async () => {
 			progress: "Migrating database",
 		},
 	});
-	render(<App />);
+	await renderApp();
 	await openEnvironmentDetails();
 	expect(screen.getByText("Migrating database")).toBeVisible();
 	expect(screen.getByRole("button", { name: "Working…" })).toBeDisabled();
@@ -166,42 +178,77 @@ it("keeps progress visible and prevents conflicting actions", async () => {
 
 it("marks disconnected snapshots and disables mutations until reconnected", async () => {
 	connection = "reconnecting";
-	const { rerender } = render(<App />);
+	await renderApp();
 	expect(screen.getByText(/Showing the last received state/)).toBeVisible();
 	await openEnvironmentDetails();
 	expect(screen.getByRole("button", { name: "Stop" })).toBeDisabled();
 	connection = "live";
-	rerender(<App />);
+	await userEvent
+		.setup()
+		.click(screen.getByRole("link", { name: "← Back to worktrees" }));
+	await openEnvironmentDetails();
 	expect(screen.getByRole("button", { name: "Stop" })).toBeEnabled();
 });
 
-it("switches between worktree, shared, workflow, and daemon log tabs", async () => {
+it("navigates between worktree, shared, workflow, and daemon log views", async () => {
 	const user = userEvent.setup();
-	render(<App />);
-	expect(screen.getByRole("tab", { name: "Worktrees" })).toHaveAttribute(
-		"aria-selected",
-		"true",
+	await renderApp();
+	expect(screen.getByRole("link", { name: "Worktrees" })).toHaveAttribute(
+		"aria-current",
+		"page",
 	);
 	expect(screen.getByText("feature/test")).toBeVisible();
-	await user.click(screen.getByRole("tab", { name: "Shared" }));
-	expect(screen.getByRole("tabpanel", { name: "Shared" })).toBeVisible();
+	await user.click(screen.getByRole("link", { name: "Shared" }));
+	expect(screen.getByRole("region", { name: "Shared" })).toBeVisible();
 	expect(screen.getByText("Shared infrastructure")).toBeVisible();
 	expect(screen.getByText("1.5 MB")).toBeVisible();
 	expect(screen.getByText("2.5 MB")).toBeVisible();
-	await user.click(screen.getByRole("tab", { name: "Workflows" }));
-	expect(screen.getByRole("tabpanel", { name: "Workflows" })).toBeVisible();
+	await user.click(screen.getByRole("link", { name: "Workflows" }));
+	expect(screen.getByRole("region", { name: "Workflows" })).toBeVisible();
 	expect(screen.getByText(/Workflow scheduler/)).toBeVisible();
-	await user.click(screen.getByRole("tab", { name: "Daemon log" }));
-	expect(screen.getByRole("tabpanel", { name: "Daemon log" })).toBeVisible();
+	await user.click(screen.getByRole("link", { name: "Daemon log" }));
 	expect(screen.getByRole("heading", { name: "Daemon log" })).toBeVisible();
+});
+
+it("restores routed views with browser navigation", async () => {
+	const user = userEvent.setup();
+	await renderApp();
+	await user.click(screen.getByRole("link", { name: "Shared" }));
+	expect(window.location.pathname).toBe("/shared");
+	await user.click(screen.getByRole("link", { name: "Workflows" }));
+	expect(window.location.pathname).toBe("/workflows");
+	window.history.back();
+	expect(await screen.findByRole("region", { name: "Shared" })).toBeVisible();
+	expect(window.location.pathname).toBe("/shared");
+	window.history.forward();
+	expect(
+		await screen.findByRole("region", { name: "Workflows" }),
+	).toBeVisible();
+	expect(window.location.pathname).toBe("/workflows");
+});
+
+it("loads environment detail URLs directly", async () => {
+	window.history.replaceState(null, "", "/worktrees/worktree");
+	await renderApp();
+	expect(screen.getByText("/repo/worktree")).toBeVisible();
+	expect(screen.getByRole("link", { name: "Worktrees" })).toHaveAttribute(
+		"aria-current",
+		"page",
+	);
+});
+
+it("shows a not-found message for unknown URLs", async () => {
+	window.history.replaceState(null, "", "/unknown");
+	await renderApp();
+	expect(screen.getByRole("alert")).toHaveTextContent("Page not found.");
 });
 
 it("keeps the shared tab compatible with older daemon snapshots", async () => {
 	delete (snapshot.shared as Partial<typeof snapshot.shared>).storage;
 	const user = userEvent.setup();
-	render(<App />);
-	await user.click(screen.getByRole("tab", { name: "Shared" }));
-	expect(screen.getByRole("tabpanel", { name: "Shared" })).toBeVisible();
+	await renderApp();
+	await user.click(screen.getByRole("link", { name: "Shared" }));
+	expect(screen.getByRole("region", { name: "Shared" })).toBeVisible();
 	expect(screen.getAllByText("Unavailable")).toHaveLength(2);
 });
 
@@ -209,8 +256,8 @@ it("shows infrastructure failures even after initialization", async () => {
 	snapshot.shared.services = { postgres: "unhealthy", caddy: "healthy" };
 	snapshot.shared.lastError = "Postgres unavailable";
 	const user = userEvent.setup();
-	render(<App />);
-	await user.click(screen.getByRole("tab", { name: "Shared" }));
+	await renderApp();
+	await user.click(screen.getByRole("link", { name: "Shared" }));
 	expect(screen.getByText("Needs attention")).toBeVisible();
 	expect(
 		screen.getByRole("article", { name: "postgres service" }),
@@ -228,9 +275,9 @@ it("reports rejected mutations", async () => {
 			: new Response(""),
 	);
 	const user = userEvent.setup();
-	render(<App />);
+	await renderApp();
 	await user.click(
-		screen.getByRole("button", { name: "View details for feature/test" }),
+		screen.getByRole("link", { name: "View details for feature/test" }),
 	);
 	await user.click(screen.getByRole("button", { name: "Stop" }));
 	expect(await screen.findByRole("alert")).toHaveTextContent("Unable to stop");
@@ -239,7 +286,7 @@ it("reports rejected mutations", async () => {
 
 it("only offers bulk actions after selection", async () => {
 	const user = userEvent.setup();
-	render(<App />);
+	await renderApp();
 	expect(
 		screen.queryByRole("button", { name: "Stop selected" }),
 	).not.toBeInTheDocument();
