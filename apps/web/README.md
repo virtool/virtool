@@ -221,15 +221,17 @@ who has not enrolled. Each holds a **restricted setup credential** that
 completes exactly one named transition and reaches nothing else.
 
 Login checks an unmigrated legacy identity before Better Auth. During the
-compatibility window, a matching legacy password mints a short-lived legacy
-application or forced-reset session so incomplete users are not locked out
-before the remediation surface ships. Migrated identities continue through
+compatibility window, a matching legacy password mints a purpose-bound
+`email_remediation` setup session, or a forced-reset session followed by that
+setup session. Migrated identities continue through
 Better Auth. A two-factor challenge keeps the login wall open for an authenticator
 or recovery code; only successful verification establishes a session and checks
 whether a password reset is required. Unknown, ineligible, and wrong-password attempts keep the same
-generic response and constant-cost behavior. The final cutover replaces this
-temporary branch with the restricted `email_remediation` session only after
-its setup endpoints and wall are available.
+generic response and constant-cost behavior. The remediation wall stages a
+normalized unique email as unverified. When delivery is enabled, only the
+emailed one-time link marks it verified; when delivery is unavailable, setup
+completes immediately and leaves `email_verified` false. Completion revokes
+legacy and setup sessions before minting one Better Auth session.
 
 The credential is its own cookie pair, `setup_session_id` and
 `setup_session_token`, deliberately not the session pair. `@virtool/data` owns
@@ -256,9 +258,9 @@ the rows and the purposes; this app owns the transport and the boundary.
   versa. `authorization.test.ts` pins both directions, and separately proves
   every ordinary server function refuses a restricted principal on its own.
 
-`setupExceptions` is currently empty: the setup surfaces themselves belong to
-the invitation, recovery and required-MFA work, so a restricted principal
-reaches nothing yet.
+`setupExceptions` currently contains only the three email-remediation
+operations: read resumable state, submit an address, and consume its mailbox
+challenge. Invitation, recovery and required-MFA surfaces remain separate work.
 
 Raw routes reject restricted principals and always will:
 `requireAuthenticatedRequest` reads the session cookies or an `Authorization`

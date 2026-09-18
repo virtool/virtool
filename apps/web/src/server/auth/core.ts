@@ -1,5 +1,7 @@
 import type { User } from "@virtool/contracts";
+import { isValidHandle } from "@virtool/data/auth/handle";
 import { updateAuthPassword } from "@virtool/data/auth/identity";
+import { isBcryptHash } from "@virtool/data/auth/migration";
 import { hashPassword, verifyPassword } from "@virtool/data/auth/password";
 import {
 	consumeResetSession,
@@ -8,7 +10,10 @@ import {
 	invalidateSession,
 	invalidateUserSessions,
 } from "@virtool/data/auth/session";
-import { invalidateSetupSession } from "@virtool/data/auth/setup";
+import {
+	createSetupSession,
+	invalidateSetupSession,
+} from "@virtool/data/auth/setup";
 import type { Db } from "@virtool/data/db/pg";
 import { authSessions } from "@virtool/data/db/schema/auth";
 import { users } from "@virtool/data/db/schema/users";
@@ -65,7 +70,7 @@ export async function loginLegacyIdentity(
 	db: Db,
 	cookies: CookieAdapter,
 	input: LegacyLoginInput,
-): Promise<{ reset: boolean } | null> {
+): Promise<{ remediation: true; reset: false } | { reset: true } | null> {
 	const [user] = await db
 		.select({
 			active: users.active,
@@ -86,7 +91,9 @@ export async function loginLegacyIdentity(
 	if (
 		!user?.active ||
 		user.lifecycleState !== "normal" ||
-		user.password === null
+		!isValidHandle(input.handle) ||
+		user.password === null ||
+		!isBcryptHash(user.password)
 	) {
 		await verifyPassword(input.password, TIMING_DUMMY_HASH);
 		throw new InvalidCredentialsError();
@@ -105,12 +112,14 @@ export async function loginLegacyIdentity(
 		return { reset: true };
 	}
 
-	const session = await createAuthenticatedSession(db, {
+	const session = await createSetupSession(db, {
 		userId: user.id,
+		purpose: "email_remediation",
 		ip: input.ip,
 	});
-	cookies.setLegacySession(session.sessionId, session.token);
-	return { reset: false };
+	cookies.clearLegacySession();
+	cookies.setSetupSession(session.sessionId, session.token);
+	return { remediation: true, reset: false };
 }
 
 /** Inputs to create and authenticate the first instance user. */
@@ -270,4 +279,20 @@ export async function establishLegacySession(
 ): Promise<void> {
 	const session = await createAuthenticatedSession(db, { userId, ip });
 	cookies.setLegacySession(session.sessionId, session.token);
+}
+
+/** Mint a restricted email-remediation session after a legacy password reset. */
+export async function establishEmailRemediationSession(
+	db: Db,
+	cookies: CookieAdapter,
+	userId: number,
+	ip: string,
+): Promise<void> {
+	const session = await createSetupSession(db, {
+		userId,
+		purpose: "email_remediation",
+		ip,
+	});
+	cookies.clearLegacySession();
+	cookies.setSetupSession(session.sessionId, session.token);
 }

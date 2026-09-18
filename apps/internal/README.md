@@ -1,6 +1,6 @@
 # @virtool/internal
 
-Virtool's internal service: **one** image carrying four processes that share a
+Virtool's internal service: **one** image carrying five processes that share a
 schema, a data layer and an object store but not a lifecycle. The subcommand is
 the first argument to the bundle (`node dist/index.mjs <command>`):
 
@@ -10,6 +10,7 @@ the first argument to the bundle (`node dist/index.mjs <command>`):
 | `run` | The periodic task spawner and the task runner, in one long-lived process. |
 | `migrate` | Applies pending Drizzle migrations, then exits. Run as an init Job. |
 | `data-migrations` | Inspects recorded audits and backfills. Run as a Job. |
+| `auth-remediation` | Reports the live legacy-email population that gates auth cutover. |
 
 Image: `ghcr.io/virtool/internal`. The image is shared; the processes are
 separate.
@@ -23,7 +24,19 @@ selected command's graph, so the migration Job never loads Hono and the HTTP
 server never loads the task registry. Each command lives under its own
 directory: `src/serve/`, `src/run/`, `src/migrate/`, `src/data-migrations/`, and
 owns its own config, Sentry service name (`jobs-api`, `tasks`, `migrate`,
-`data-migrations`) and fatal logging.
+`data-migrations`, `auth-remediation`) and fatal logging.
+
+## `auth-remediation`: cutover report
+
+Run `node dist/index.mjs auth-remediation report` against the production
+database immediately before disabling legacy authentication. It writes one JSON
+document with active and deactivated normal users whose `auth_migrated_at` is
+still null. The command exits non-zero while `activeUnmigrated` is non-zero.
+
+Legacy login may be disabled only when `readyForCutover` is `true` (equivalently,
+`activeUnmigrated` is zero) on production-shaped data. Pending invitations and
+deactivated legacy accounts do not block cutover; their separate lifecycle
+policies remain authoritative.
 
 ## `serve`: the jobs API
 

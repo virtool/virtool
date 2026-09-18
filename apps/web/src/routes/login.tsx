@@ -1,7 +1,10 @@
 import { oneOfOptional, strOptional } from "@app/searchParams";
 import type { SearchSchemaInput } from "@tanstack/react-router";
 import { createFileRoute, redirect } from "@tanstack/react-router";
-import { PASSWORD_RESET_REQUIRED_ERROR_NAME } from "@virtool/contracts";
+import {
+	PASSWORD_RESET_REQUIRED_ERROR_NAME,
+	SETUP_REQUIRED_ERROR_NAME,
+} from "@virtool/contracts";
 import LoginWall from "@wall/components/LoginWall";
 
 function isSafeRedirect(value: string): boolean {
@@ -14,7 +17,7 @@ function isSafeRedirect(value: string): boolean {
 
 /** Search params for the login wall. */
 type LoginSearch = {
-	reason?: "session-ended";
+	reason?: "remediation-expired" | "session-ended";
 	redirect?: string;
 };
 
@@ -24,7 +27,10 @@ function validateLoginSearch(
 	const target = strOptional(input.redirect);
 
 	return {
-		reason: oneOfOptional(input.reason, ["session-ended"] as const),
+		reason: oneOfOptional(input.reason, [
+			"remediation-expired",
+			"session-ended",
+		] as const),
 		redirect: target && isSafeRedirect(target) ? target : undefined,
 	};
 }
@@ -38,6 +44,13 @@ export const Route = createFileRoute("/login")({
 		try {
 			await queryClient.ensureQueryData(accountQueryOptions());
 		} catch (error) {
+			if (
+				error instanceof Error &&
+				error.name === SETUP_REQUIRED_ERROR_NAME &&
+				(error as Error & { purpose?: string }).purpose === "email_remediation"
+			) {
+				throw redirect({ to: "/email-remediation" });
+			}
 			return {
 				passwordResetRequired:
 					error instanceof Error &&

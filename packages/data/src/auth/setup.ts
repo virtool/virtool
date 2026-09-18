@@ -50,6 +50,8 @@ export type IssueSetupTokenInput = {
  * is not written to the row, not logged, and not readable back.
  */
 export type IssuedSetupToken = {
+	/** The non-secret row identifier, suitable for idempotency and attribution. */
+	tokenId: number;
 	token: string;
 	userId: number;
 	purpose: SetupPurpose;
@@ -70,6 +72,14 @@ export type IssuedSetupToken = {
  */
 export async function issueSetupToken(
 	db: Db,
+	input: IssueSetupTokenInput,
+): Promise<IssuedSetupToken> {
+	return db.transaction((tx) => issueSetupTokenInTransaction(tx, input));
+}
+
+/** Issue a setup token inside the caller's transition transaction. */
+export async function issueSetupTokenInTransaction(
+	db: DbOrTx,
 	{
 		userId,
 		purpose,
@@ -79,19 +89,22 @@ export async function issueSetupToken(
 	const token = randomBytes(32).toString("hex");
 	const expiresAt = new Date(Date.now() + lifetimeMs);
 
-	await db.transaction(async (tx) => {
-		await lockUserSetupCredentials(tx, userId);
-		await supersedeSetupTokens(tx, userId, purpose);
+	await lockUserSetupCredentials(db, userId);
+	await supersedeSetupTokens(db, userId, purpose);
 
-		await tx.insert(setupTokens).values({
-			userId,
-			purpose,
-			tokenHash: hashToken(token),
-			expiresAt,
-		});
-	});
+	const tokenId = takeFirstOrThrow(
+		await db
+			.insert(setupTokens)
+			.values({
+				userId,
+				purpose,
+				tokenHash: hashToken(token),
+				expiresAt,
+			})
+			.returning({ id: setupTokens.id }),
+	).id;
 
-	return { token, userId, purpose, expiresAt };
+	return { tokenId, token, userId, purpose, expiresAt };
 }
 
 /**

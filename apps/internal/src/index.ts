@@ -23,9 +23,14 @@ async function dispatch(command: string | undefined): Promise<void> {
 			await startDataMigrations(process.argv.slice(3));
 			return;
 		}
+		case "auth-remediation": {
+			const { startAuthRemediation } = await import("./auth-remediation/main");
+			await startAuthRemediation(process.argv.slice(3));
+			return;
+		}
 		default:
 			throw new Error(
-				`unknown command ${command ? `"${command}"` : "(none)"}; expected one of serve, run, migrate, data-migrations`,
+				`unknown command ${command ? `"${command}"` : "(none)"}; expected one of serve, run, migrate, data-migrations, auth-remediation`,
 			);
 	}
 }

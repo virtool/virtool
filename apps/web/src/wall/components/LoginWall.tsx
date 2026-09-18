@@ -17,6 +17,11 @@ export default function LoginWall() {
 
 	return (
 		<WallContainer>
+			{reason === "remediation-expired" && (
+				<Alert color="orange" icon={TriangleAlert} level>
+					Your email setup expired. Log in again to continue.
+				</Alert>
+			)}
 			{reason === "session-ended" && (
 				<Alert color="orange" icon={TriangleAlert} level>
 					Your session ended. Please log in again.
