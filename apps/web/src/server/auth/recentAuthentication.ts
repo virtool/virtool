@@ -24,6 +24,14 @@ function rejectUnsupportedSession(): never {
 }
 
 function rethrowChallengeError(err: unknown): never {
+	if (
+		err instanceof APIError &&
+		err.statusCode === 401 &&
+		err.body?.code === "UNAUTHORIZED"
+	) {
+		setResponseStatus(401);
+		throw new UnauthorizedError();
+	}
 	if (err instanceof APIError && err.statusCode < 500) {
 		const status = err.statusCode === 429 ? 429 : 400;
 		setResponseStatus(status);

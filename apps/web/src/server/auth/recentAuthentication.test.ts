@@ -180,7 +180,7 @@ describe("challengeRecentAuthenticationFn", () => {
 
 	it.each([
 		new APIError("UNAUTHORIZED", {
-			code: "INVALID_TOTP",
+			code: "INVALID_CODE",
 			message: "invalid code",
 		}),
 		new APIError("BAD_REQUEST", {
@@ -228,6 +228,25 @@ describe("challengeRecentAuthenticationFn", () => {
 				password: "correct-password",
 			}),
 		).rejects.toThrow("provider unavailable");
+		expect(createStepUpSession).not.toHaveBeenCalled();
+	});
+
+	it("preserves unauthorized when the session ends during verification", async () => {
+		await signIn();
+		verifyPassword.mockRejectedValue(
+			new APIError("UNAUTHORIZED", {
+				code: "UNAUTHORIZED",
+				message: "Unauthorized",
+			}),
+		);
+
+		await expect(
+			call("challengeRecentAuthenticationFn", {
+				method: "password",
+				password: "correct-password",
+			}),
+		).rejects.toBeInstanceOf(UnauthorizedError);
+		expect(setResponseStatus).toHaveBeenCalledWith(401);
 		expect(createStepUpSession).not.toHaveBeenCalled();
 	});
 

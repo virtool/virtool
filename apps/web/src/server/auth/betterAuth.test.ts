@@ -341,6 +341,24 @@ describe("step-up session replacement", () => {
 		);
 	});
 
+	it("replaces a valid session older than the freshness window", async () => {
+		const { cookie, session: oldSession } = await signInForReplacement();
+		const staleCreatedAt = new Date(
+			Date.now() - (SESSION_FRESH_AGE_SECONDS + 1) * 1000,
+		);
+		await db
+			.update(authSessions)
+			.set({ createdAt: staleCreatedAt })
+			.where(eq(authSessions.id, oldSession.id));
+
+		const result = await auth.api.createStepUpSession({
+			headers: new Headers({ cookie, origin: ORIGIN }),
+		});
+
+		expect(Number(result.sessionId)).not.toBe(oldSession.id);
+		expect(await db.select().from(authSessions)).toHaveLength(1);
+	});
+
 	it("keeps exactly one durable winner across concurrent replacements", async () => {
 		const { cookie, session: oldSession } = await signInForReplacement();
 		const headers = new Headers({ cookie, origin: ORIGIN });
