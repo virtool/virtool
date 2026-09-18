@@ -57,6 +57,8 @@ export const setupTokens = pgTable(
 		expiresAt: timestamp("expires_at").notNull(),
 		/** When this token was spent. Null while it is still usable. */
 		consumedAt: timestamp("consumed_at"),
+		/** When a replacement or cancellation made this token unusable. */
+		supersededAt: timestamp("superseded_at"),
 	},
 	(table) => [
 		foreignKey({

@@ -71,6 +71,7 @@ const {
 	UnauthorizedError,
 } = await import("./middleware");
 const {
+	completeEmailRemediationFn,
 	createFirstUserFn,
 	loginFn,
 	logoutFn,
@@ -147,9 +148,10 @@ function browserPrincipal(userId: number) {
 }
 
 describe("authentication exceptions", () => {
-	it("exempts exactly the six open functions", () => {
+	it("exempts exactly the seven open functions", () => {
 		expect(authenticationExceptions.map((fn) => fn.url).sort()).toEqual(
 			[
+				completeEmailRemediationFn,
 				createFirstUserFn,
 				getPasswordPolicyFn,
 				getRootFn,

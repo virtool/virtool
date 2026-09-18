@@ -256,16 +256,23 @@ it("requires the emailed token before marking a remediated email verified", asyn
 			email: "alice@example.com",
 			redirect: "/samples",
 		}),
-	).toEqual({ complete: false });
+	).toMatchObject({
+		complete: false,
+		state: {
+			status: "pending",
+			maskedEmail: "a***e@example.com",
+		},
+	});
 
 	const [queued] = await db.select().from(emailOutbox);
 	if (queued?.template.type !== "email_verification") {
 		throw new Error("expected an email verification message");
 	}
-	const token = new URL(queued.template.verifyUrl).searchParams.get("token");
-	expect(new URL(queued.template.verifyUrl).searchParams.get("redirect")).toBe(
-		"/samples",
+	const fragment = new URLSearchParams(
+		new URL(queued.template.verifyUrl).hash.slice(1),
 	);
+	const token = fragment.get("token");
+	expect(fragment.get("redirect")).toBe("/samples");
 	if (!token) {
 		throw new Error("expected a verification token");
 	}
@@ -277,12 +284,90 @@ it("requires the emailed token before marking a remediated email verified", asyn
 
 	expect(
 		await callServerFn(handlers, "completeEmailRemediationFn", { token }),
-	).toEqual({ complete: true });
+	).toEqual({
+		status: "verified",
+		authenticated: true,
+		canRetry: true,
+	});
 
 	const [user] = await db.select().from(users);
 	expect(user?.emailVerified).toBe(true);
 	expect(user?.authMigratedAt).toBeInstanceOf(Date);
 	expect(await db.select().from(authSessions)).toHaveLength(1);
+});
+
+it("verifies cross-browser without authentication and lets the original browser continue", async () => {
+	const userId = await seedUser(db, {
+		email: "",
+		handle: "Alice",
+		password: Buffer.from(hash),
+	});
+	const encrypted = keyring.encrypt("resend_api_key", "re_secret");
+	if (!encrypted.ok) {
+		throw new Error("expected a ready keyring");
+	}
+	await seedSettings(db, {
+		emailApiKey: encrypted.value,
+		emailEnabled: true,
+		emailSenderAddress: "noreply@virtool.test",
+	});
+	const setup = await seedSetupSession(db, userId, "email_remediation");
+	cookies.set("setup_session_id", setup.sessionId);
+	cookies.set("setup_session_token", setup.token);
+	await callServerFn(handlers, "submitEmailRemediationFn", {
+		email: "alice@example.com",
+	});
+	const [queued] = await db.select().from(emailOutbox);
+	if (queued?.template.type !== "email_verification") {
+		throw new Error("expected an email verification message");
+	}
+	const token = new URLSearchParams(
+		new URL(queued.template.verifyUrl).hash.slice(1),
+	).get("token");
+	if (!token) {
+		throw new Error("expected verification token");
+	}
+
+	cookies.clear();
+	expect(
+		await callServerFn(handlers, "completeEmailRemediationFn", { token }),
+	).toEqual({
+		status: "verified",
+		authenticated: false,
+		canRetry: false,
+	});
+	expect(await db.select().from(authSessions)).toHaveLength(0);
+	expect(await db.select().from(setupSessions)).toHaveLength(1);
+	expect(
+		await callServerFn(handlers, "completeEmailRemediationFn", { token }),
+	).toEqual({
+		status: "already_verified",
+		authenticated: false,
+		canRetry: false,
+	});
+
+	cookies.set("setup_session_id", setup.sessionId);
+	cookies.set("setup_session_token", setup.token);
+	expect(await callServerFn(handlers, "getEmailRemediationFn")).toEqual({
+		status: "verified",
+	});
+	expect(await callServerFn(handlers, "promoteEmailRemediationFn")).toEqual({
+		complete: true,
+	});
+	expect(await db.select().from(authSessions)).toHaveLength(1);
+	expect(await db.select().from(setupSessions)).toHaveLength(0);
+});
+
+it("does not report an anonymous unknown token as authenticated", async () => {
+	expect(
+		await callServerFn(handlers, "completeEmailRemediationFn", {
+			token: "a".repeat(64),
+		}),
+	).toEqual({
+		status: "unusable",
+		authenticated: false,
+		canRetry: false,
+	});
 });
 
 async function enroll(forceReset: boolean) {

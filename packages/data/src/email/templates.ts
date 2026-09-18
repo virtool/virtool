@@ -1,7 +1,10 @@
 import type { EmailTemplate } from "@virtool/contracts";
 
 /** The template payload revision stored on queued email. */
-export const EMAIL_TEMPLATE_VERSION = 1;
+export const EMAIL_TEMPLATE_VERSION = 2;
+
+/** The oldest queued template payload this release can still render. */
+export const MIN_EMAIL_TEMPLATE_VERSION = 1;
 
 /** A rendered message: subject line plus text and HTML bodies. */
 export type RenderedEmail = {
@@ -41,7 +44,10 @@ function renderLinkEmail(
 }
 
 /** Render `template` into a subject and both bodies, escaping every payload value. */
-export function renderEmailTemplate(template: EmailTemplate): RenderedEmail {
+export function renderEmailTemplate(
+	template: EmailTemplate,
+	templateVersion = EMAIL_TEMPLATE_VERSION,
+): RenderedEmail {
 	switch (template.type) {
 		case "account_setup":
 			return renderLinkEmail(
@@ -58,7 +64,9 @@ export function renderEmailTemplate(template: EmailTemplate): RenderedEmail {
 				`Hello ${template.username},`,
 				"Open this link to verify the email address on your Virtool account:",
 				template.verifyUrl,
-				"If you did not request this, you can ignore this email.",
+				templateVersion === 1
+					? "If you did not request this, you can ignore this email."
+					: `This link expires in ${template.expiresInHours} hours. If you did not request this, you can ignore this email.`,
 			);
 
 		case "password_recovery":

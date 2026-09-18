@@ -1,5 +1,35 @@
 import { z } from "zod";
 
+/** How long an emailed remediation link remains usable. */
+export const EMAIL_REMEDIATION_TOKEN_LIFETIME_HOURS = 72;
+
+/** Minimum delay between remediation verification messages. */
+export const EMAIL_REMEDIATION_RESEND_DELAY_SECONDS = 60;
+
+/** Authoritative state of a restricted email-remediation journey. */
+export type EmailRemediationState =
+	| { status: "input" }
+	| {
+			status: "pending";
+			maskedEmail: string;
+			expiresAt: Date;
+			resendAt: Date;
+			canResend: boolean;
+			deliveryFailed: boolean;
+	  }
+	| { status: "verified" };
+
+/** Public result of consuming an email-remediation link. */
+export type EmailRemediationVerificationResult = {
+	status:
+		| "verified"
+		| "already_verified"
+		| "expired"
+		| "superseded"
+		| "unusable";
+	authenticated: boolean;
+};
+
 /**
  * Where a Virtool human account sits between creation and ordinary use.
  *

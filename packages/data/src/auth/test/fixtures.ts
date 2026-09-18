@@ -163,10 +163,12 @@ export async function seedSetupToken(
 		candidateEmail,
 		expiresAt = new Date(Date.now() + 60_000),
 		consumedAt = null,
+		supersededAt = null,
 	}: {
 		candidateEmail?: string;
 		expiresAt?: Date;
 		consumedAt?: Date | null;
+		supersededAt?: Date | null;
 	} = {},
 ): Promise<SeededSetupToken> {
 	const token = randomBytes(32).toString("hex");
@@ -176,6 +178,7 @@ export async function seedSetupToken(
 		consumedAt,
 		expiresAt,
 		purpose,
+		supersededAt,
 		tokenHash: hashToken(token),
 		userId,
 	});

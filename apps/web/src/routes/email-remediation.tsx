@@ -1,12 +1,11 @@
 import { getErrorStatus } from "@app/queryErrors";
-import { oneOfOptional, safeRedirect } from "@app/searchParams";
+import { safeRedirect } from "@app/searchParams";
 import type { SearchSchemaInput } from "@tanstack/react-router";
 import { createFileRoute, redirect } from "@tanstack/react-router";
 import { UNAUTHORIZED_ERROR_NAME } from "@virtool/contracts";
 import EmailRemediation from "@wall/components/EmailRemediation";
 
 type EmailRemediationSearch = {
-	error?: "invalid-link";
 	redirect?: string;
 };
 
@@ -14,7 +13,6 @@ function validateSearch(
 	input: Partial<EmailRemediationSearch> & SearchSchemaInput,
 ): EmailRemediationSearch {
 	return {
-		error: oneOfOptional(input.error, ["invalid-link"] as const),
 		redirect: safeRedirect(input.redirect),
 	};
 }
