@@ -16,6 +16,7 @@ import {
 	releaseEmailClaim,
 	scheduleEmailRetry,
 } from "./outbox";
+import { EMAIL_TEMPLATE_VERSION } from "./templates";
 
 let database: TestDatabase;
 let db: Db;
@@ -101,7 +102,7 @@ describe("enqueueEmail", () => {
 		expect(row.status).toBe("queued");
 		expect(row.attempt_count).toBe(0);
 		expect(row.template.type).toBe("email_verification");
-		expect(row.template_version).toBe(1);
+		expect(row.template_version).toBe(EMAIL_TEMPLATE_VERSION);
 	});
 
 	it("returns the existing row for a duplicate idempotency key", async () => {
