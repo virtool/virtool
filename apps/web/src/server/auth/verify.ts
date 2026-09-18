@@ -5,6 +5,7 @@ import {
 	type BrowserSessionPrincipal,
 	emptyPermissions,
 } from "@virtool/contracts";
+import { resolveBrowserSession } from "@virtool/data/auth/session";
 import { hashToken } from "@virtool/data/auth/tokens";
 
 import type { Db } from "@virtool/data/db/pg";
@@ -51,17 +52,8 @@ export async function verifyBrowserPrincipal(
 		return null;
 	}
 
-	const [row] = await db
-		.select({
-			active: users.active,
-			forceReset: users.forceReset,
-			lifecycleState: users.lifecycleState,
-		})
-		.from(users)
-		.where(eq(users.id, userId))
-		.limit(1);
-
-	if (!row?.active || row.lifecycleState !== "normal") {
+	const row = await resolveBrowserSession(db, sessionId, userId);
+	if (!row) {
 		return null;
 	}
 
@@ -69,6 +61,12 @@ export async function verifyBrowserPrincipal(
 		kind: row.forceReset ? "password_reset" : "browser",
 		userId,
 		sessionId,
+		sessionStore: "better_auth",
+		timing: {
+			lastActivityAt: row.lastActivityAt,
+			expiresAt: row.expiresAt,
+			absoluteExpiresAt: row.absoluteExpiresAt,
+		},
 	};
 }
 
@@ -87,6 +85,7 @@ export async function verifyLegacyBrowserPrincipal(
 		.select({
 			id: sessions.id,
 			userId: sessions.userId,
+			createdAt: sessions.createdAt,
 			sessionType: sessions.sessionType,
 			tokenHash: sessions.tokenHash,
 			expiresAt: sessions.expiresAt,
@@ -96,15 +95,15 @@ export async function verifyLegacyBrowserPrincipal(
 		})
 		.from(sessions)
 		.innerJoin(users, eq(users.id, sessions.userId))
-		.where(eq(sessions.sessionId, sessionId))
+		.where(
+			and(
+				eq(sessions.sessionId, sessionId),
+				sql`${sessions.expiresAt} > timezone('utc', clock_timestamp())`,
+			),
+		)
 		.limit(1);
 
-	if (
-		!row?.active ||
-		row.userId === null ||
-		row.lifecycleState !== "normal" ||
-		row.expiresAt.getTime() <= Date.now()
-	) {
+	if (!row?.active || row.userId === null || row.lifecycleState !== "normal") {
 		return null;
 	}
 
@@ -128,11 +127,31 @@ export async function verifyLegacyBrowserPrincipal(
 
 	if (row.sessionType === "reset") {
 		return row.forceReset
-			? { kind: "password_reset", sessionId: row.id, userId: row.userId }
+			? {
+					kind: "password_reset",
+					sessionId: row.id,
+					sessionStore: "legacy",
+					userId: row.userId,
+					timing: {
+						lastActivityAt: row.createdAt,
+						expiresAt: row.expiresAt,
+						absoluteExpiresAt: row.expiresAt,
+					},
+				}
 			: null;
 	}
 
-	return { kind: "browser", sessionId: row.id, userId: row.userId };
+	return {
+		kind: "browser",
+		sessionId: row.id,
+		sessionStore: "legacy",
+		userId: row.userId,
+		timing: {
+			lastActivityAt: row.createdAt,
+			expiresAt: row.expiresAt,
+			absoluteExpiresAt: row.expiresAt,
+		},
+	};
 }
 
 /**

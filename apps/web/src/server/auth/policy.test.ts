@@ -70,7 +70,14 @@ function addToGroup(userId: number, groupId: number): Promise<void> {
 }
 
 function browser(userId: number) {
-	return { kind: "browser" as const, sessionId: 1, userId };
+	const now = new Date();
+	return {
+		kind: "browser" as const,
+		sessionId: 1,
+		sessionStore: "better_auth" as const,
+		userId,
+		timing: { lastActivityAt: now, expiresAt: now, absoluteExpiresAt: now },
+	};
 }
 
 describe("hasPermission", () => {

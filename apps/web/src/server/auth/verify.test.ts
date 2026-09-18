@@ -1,6 +1,10 @@
 import { emptyPermissions } from "@virtool/contracts";
 import { createAuthenticatedSession } from "@virtool/data/auth/session";
-import { seedApiKey, seedUser } from "@virtool/data/auth/test/fixtures";
+import {
+	seedApiKey,
+	seedSession,
+	seedUser,
+} from "@virtool/data/auth/test/fixtures";
 import type { Db } from "@virtool/data/db/pg";
 import { apiKeys } from "@virtool/data/db/schema/apiKeys";
 import { users } from "@virtool/data/db/schema/users";
@@ -46,26 +50,38 @@ beforeEach(async () => {
 describe("verifyBrowserPrincipal", () => {
 	it("maps an active Better Auth session to numeric Virtool ids", async () => {
 		const userId = await seedUser(db);
+		const seeded = await seedSession(db, userId);
 		const resolve = vi.fn().mockResolvedValue({
-			session: { id: "41" },
+			session: { id: String(seeded.sessionId) },
 			user: { id: String(userId) },
 		});
 
 		await expect(
 			verifyBrowserPrincipal(db, new Request("https://virtool.test/"), resolve),
-		).resolves.toEqual({ kind: "browser", sessionId: 41, userId });
+		).resolves.toMatchObject({
+			kind: "browser",
+			sessionId: seeded.sessionId,
+			sessionStore: "better_auth",
+			userId,
+		});
 	});
 
 	it("classifies a forced-reset user without widening their authority", async () => {
 		const userId = await seedUser(db, { forceReset: true });
+		const seeded = await seedSession(db, userId);
 		const resolve = vi.fn().mockResolvedValue({
-			session: { id: 42 },
+			session: { id: seeded.sessionId },
 			user: { id: userId },
 		});
 
 		await expect(
 			verifyBrowserPrincipal(db, new Request("https://virtool.test/"), resolve),
-		).resolves.toEqual({ kind: "password_reset", sessionId: 42, userId });
+		).resolves.toMatchObject({
+			kind: "password_reset",
+			sessionId: seeded.sessionId,
+			sessionStore: "better_auth",
+			userId,
+		});
 	});
 
 	it.each([
@@ -119,9 +135,12 @@ describe("verifyLegacyBrowserPrincipal", () => {
 			},
 		});
 
-		await expect(verifyLegacyBrowserPrincipal(db, request)).resolves.toEqual({
+		await expect(
+			verifyLegacyBrowserPrincipal(db, request),
+		).resolves.toMatchObject({
 			kind: "browser",
 			sessionId: session.row.id,
+			sessionStore: "legacy",
 			userId,
 		});
 	});

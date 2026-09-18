@@ -221,6 +221,10 @@ Two rules hold this together:
   sessions are issued only to unmigrated users. Better Auth is preferred when
   both credential families are present. Virtool re-reads account state for
   either credential and performs authorization after authentication.
+  Virtool-owned timing columns hold last qualifying activity, effective idle
+  expiry, immutable absolute expiry, and the last persisted refresh. Session
+  resolution, refresh, and cleanup compare them with PostgreSQL's UTC clock;
+  refresh is one conditional update and never rotates the bearer token.
 
 A Drizzle property name in `auth.ts` is a Better Auth *field* name. The adapter
 looks fields up by property, so `userId` and `credentialID` keep their exact
