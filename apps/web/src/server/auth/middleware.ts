@@ -116,7 +116,8 @@ const resolveBrowserOrNull = createServerOnlyFn(async () =>
 	verifyBrowserRequest(db, getRequest()),
 );
 
-function attributePrincipal(principal: AuthenticationPrincipal): void {
+/** Attribute a resolved credential without exposing its bearer secret. */
+export function attributePrincipal(principal: AuthenticationPrincipal): void {
 	Sentry.setUser({ id: principal.userId });
 	Sentry.setContext("credential", {
 		kind: principal.kind,

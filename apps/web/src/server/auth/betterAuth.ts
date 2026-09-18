@@ -15,12 +15,14 @@ import {
 	APIError,
 	createAuthEndpoint,
 	createAuthMiddleware,
+	sensitiveSessionMiddleware,
 } from "better-auth/api";
 import { setSessionCookie } from "better-auth/cookies";
 import { twoFactor, username } from "better-auth/plugins";
 import { tanstackStartCookies } from "better-auth/tanstack-start";
-import { eq } from "drizzle-orm";
+import { and, eq } from "drizzle-orm";
 import { z } from "zod";
+import { SESSION_FRESH_AGE_SECONDS } from "./freshness";
 import { HANDLE_MAX_LENGTH, HANDLE_MIN_LENGTH, isValidHandle } from "./handle";
 
 /** Where the Better Auth handler is mounted. */
@@ -59,9 +61,9 @@ export type AuthOptions = {
 	secret: string;
 };
 
-function remediationSessionPlugin() {
+function virtoolSessionPlugin(db: Db) {
 	return {
-		id: "virtool-remediation-session",
+		id: "virtool-session",
 		endpoints: {
 			createRemediationSession: createAuthEndpoint.serverOnly(
 				{
@@ -82,6 +84,71 @@ function remediationSessionPlugin() {
 					await setSessionCookie(ctx, { session, user });
 
 					return ctx.json({ user });
+				},
+			),
+			createStepUpSession: createAuthEndpoint.serverOnly(
+				{
+					method: "POST",
+					use: [sensitiveSessionMiddleware],
+				},
+				async (ctx) => {
+					const current = ctx.context.session;
+					const sessionId = Number(current.session.id);
+					const userId = Number(current.user.id);
+					if (
+						!Number.isSafeInteger(sessionId) ||
+						!Number.isSafeInteger(userId)
+					) {
+						throw new APIError("UNAUTHORIZED");
+					}
+					const dontRememberMe = Boolean(
+						await ctx.getSignedCookie(
+							ctx.context.authCookies.dontRememberToken.name,
+							ctx.context.secret,
+						),
+					);
+
+					const replacement = await ctx.context.internalAdapter.createSession(
+						current.user.id,
+						dontRememberMe,
+						{
+							ipAddress: current.session.ipAddress,
+							userAgent: current.session.userAgent,
+						},
+					);
+					const deleted = await db
+						.delete(authSessions)
+						.where(
+							and(
+								eq(authSessions.id, sessionId),
+								eq(authSessions.userId, userId),
+								eq(authSessions.token, current.session.token),
+							),
+						)
+						.returning({ id: authSessions.id });
+
+					if (deleted.length !== 1) {
+						await ctx.context.internalAdapter.deleteSession(replacement.token);
+						throw new APIError("UNAUTHORIZED", {
+							code: "STEP_UP_SESSION_ENDED",
+							message: "Session ended during authentication",
+						});
+					}
+
+					try {
+						await setSessionCookie(ctx, {
+							session: replacement,
+							user: current.user,
+						});
+					} catch (err) {
+						await ctx.context.internalAdapter.deleteSession(replacement.token);
+						throw err;
+					}
+
+					return ctx.json({
+						createdAt: replacement.createdAt,
+						sessionId: replacement.id,
+					});
 				},
 			),
 		},
@@ -134,6 +201,7 @@ export function createAuth({
 		}),
 		session: {
 			cookieCache: { enabled: false },
+			freshAge: SESSION_FRESH_AGE_SECONDS,
 		},
 		advanced: {
 			// Stated rather than left to default. Better Auth turns its origin check
@@ -219,7 +287,7 @@ export function createAuth({
 			},
 		},
 		plugins: [
-			remediationSessionPlugin(),
+			virtoolSessionPlugin(db),
 			// A Virtool handle is case-insensitive and keeps its original case for
 			// display, which is exactly the split this plugin draws between the
 			// normalized `username` it matches on and the `displayUsername` it

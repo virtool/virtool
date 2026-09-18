@@ -13,6 +13,7 @@ import {
 	createAuth,
 	createAuthRequestHandler,
 } from "./betterAuth";
+import { SESSION_FRESH_AGE_SECONDS } from "./freshness";
 
 const ORIGIN = "https://virtool.test";
 
@@ -114,6 +115,10 @@ async function seedMigratedUser(
 }
 
 describe("legacy bcrypt credentials", () => {
+	it("configures the explicit recent-authentication window", () => {
+		expect(auth.options.session?.freshAge).toBe(SESSION_FRESH_AGE_SECONDS);
+	});
+
 	it("authenticates a copied production hash without rehashing it", async () => {
 		const userId = await seedMigratedUser();
 
@@ -291,6 +296,69 @@ describe("the mounted handler", () => {
 		expect(cookie).toContain("HttpOnly");
 		expect(cookie).toContain("Secure");
 		expect(cookie).toContain("SameSite=Lax");
+	});
+});
+
+describe("step-up session replacement", () => {
+	async function signInForReplacement() {
+		await seedMigratedUser();
+		const response = await auth.handler(
+			post("/sign-in/username", {
+				username: "alice",
+				password: LEGACY_PASSWORD,
+			}),
+		);
+		const cookie = response.headers.get("set-cookie")?.split(";", 1)[0];
+		if (!cookie) {
+			throw new Error("sign-in did not set a session cookie");
+		}
+		const [session] = await db.select().from(authSessions);
+		if (!session) {
+			throw new Error("sign-in did not create a session");
+		}
+		return { cookie, session };
+	}
+
+	it("creates a fresh replacement and revokes the old session", async () => {
+		const { cookie, session: oldSession } = await signInForReplacement();
+
+		const result = await auth.api.createStepUpSession({
+			headers: new Headers({ cookie, origin: ORIGIN }),
+			returnHeaders: true,
+		});
+		const sessions = await db.select().from(authSessions);
+
+		expect(sessions).toHaveLength(1);
+		expect(sessions[0]?.id).toBe(Number(result.response.sessionId));
+		expect(sessions[0]?.id).not.toBe(oldSession.id);
+		expect(sessions[0]?.createdAt.getTime()).toBeGreaterThanOrEqual(
+			oldSession.createdAt.getTime(),
+		);
+		expect(sessions[0]?.ipAddress).toBe(oldSession.ipAddress);
+		expect(sessions[0]?.userAgent).toBe(oldSession.userAgent);
+		expect(result.headers.get("set-cookie")).toContain(
+			"better-auth.session_token=",
+		);
+	});
+
+	it("keeps exactly one durable winner across concurrent replacements", async () => {
+		const { cookie, session: oldSession } = await signInForReplacement();
+		const headers = new Headers({ cookie, origin: ORIGIN });
+
+		const results = await Promise.allSettled([
+			auth.api.createStepUpSession({ headers }),
+			auth.api.createStepUpSession({ headers }),
+		]);
+		const sessions = await db.select().from(authSessions);
+
+		expect(results.filter(({ status }) => status === "fulfilled")).toHaveLength(
+			1,
+		);
+		expect(results.filter(({ status }) => status === "rejected")).toHaveLength(
+			1,
+		);
+		expect(sessions).toHaveLength(1);
+		expect(sessions[0]?.id).not.toBe(oldSession.id);
 	});
 });
 

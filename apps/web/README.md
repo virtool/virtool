@@ -145,7 +145,8 @@ origin and fetch-metadata headers when changing these request shapes.
 
 Every exported server function declares exactly one policy from
 `@server/auth/policy`: `open()`, `authenticated()`, `adminRole(role)`,
-`permission(name)`, `setupOnly(purpose)`, or `passwordResetOnly()`. Read the
+`permission(name)`, `recentlyAuthenticated(operation)`, `setupOnly(purpose)`,
+or `passwordResetOnly()`. Read the
 discriminated principal from `context.principal` and do not perform a second
 lookup. Browser sessions, API keys, setup sessions, and forced-reset sessions
 have distinct principal kinds so a policy cannot silently widen one credential
@@ -188,6 +189,34 @@ one-day refresh age, with no absolute cap. The authenticated shell calls
 That function lets Better Auth extend eligible sessions and propagate its
 cookie through the TanStack Start integration. Retained legacy sessions are
 validated without extension.
+
+Security-sensitive mutations additionally require recent authentication. A
+Better Auth session is fresh for 15 minutes from its immutable `created_at`;
+the inclusive boundary is stale (`now - created_at >= 15 minutes`). Rolling
+expiry updates `updated_at` and `expires_at` but never renews freshness. The
+central inventory in `@server/auth/freshness` covers current-account password
+and email changes; TOTP enrollment, disablement, reset, and recovery-code
+regeneration; passkey registration, removal, and security changes; API-key
+creation, permission changes, deletion, and rotation; revocation of another or
+all other browser sessions; and administrator-issued setup or recovery links.
+Logout and revocation of the current session remain available without recent
+authentication. Reads require it only when they reveal a one-time secret.
+
+Only a normal Better Auth browser principal can satisfy this policy. API keys,
+restricted setup credentials, forced-reset sessions, retained legacy sessions,
+and trusted-device state cannot. A stale protected call returns 403 with the
+stable `SESSION_NOT_FRESH` code; an invalid or ended session remains 401, and
+insufficient operation-specific authority remains an ordinary 403. The client
+responds only to the code: it opens one shared inline password or TOTP challenge,
+then retries each waiting mutation once. Cancellation leaves the ordinary
+session and form state intact and never navigates to the login wall.
+
+Step-up delegates password and TOTP verification to Better Auth, with trusted
+device disabled and recovery codes excluded. Success creates a new session
+through Better Auth, atomically retires the old session, installs Better Auth's
+cookie, and attributes the remainder of the request to the new non-secret
+session id. Concurrent challenges have one durable winner; losing replacement
+sessions are removed.
 
 Ordinary server functions, React Query reads and mutations, raw routes, SSE
 handshakes, revocation checks, reconnects, and HEAD probes use read-only session

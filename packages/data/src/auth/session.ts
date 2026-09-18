@@ -15,6 +15,7 @@ const RESET_LIFETIME_MS = 10 * 60 * 1000;
 export type ResolvedBrowserSession = {
 	sessionId: number;
 	userId: number;
+	createdAt: Date;
 	forceReset: boolean;
 };
 
@@ -28,6 +29,7 @@ export async function resolveBrowserSession(
 		.select({
 			sessionId: authSessions.id,
 			userId: authSessions.userId,
+			createdAt: authSessions.createdAt,
 			forceReset: users.forceReset,
 		})
 		.from(authSessions)

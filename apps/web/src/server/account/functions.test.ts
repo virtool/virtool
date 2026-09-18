@@ -6,6 +6,7 @@ import {
 	createTestDatabase,
 	type TestDatabase,
 } from "@virtool/data/db/test/fixtures";
+import { eq } from "drizzle-orm";
 import {
 	afterAll,
 	beforeAll,
@@ -49,6 +50,8 @@ const handlers = (await import(
 	"./functions.ts?tss-serverfn-split"
 )) as SplitServerFnModule;
 const { UnauthorizedError } = await import("../auth/middleware");
+const { SESSION_FRESH_AGE_SECONDS } = await import("../auth/freshness");
+const { SessionNotFreshError } = await import("../auth/policy");
 const { signIn } = await import("../auth/test/fixtures");
 
 let database: TestDatabase;
@@ -108,6 +111,25 @@ describe("createApiKey", () => {
 		expect(created.key).toMatch(/^[0-9a-f]{64}$/);
 		expect(created.name).toBe("Robot");
 		expect(setResponseStatus).toHaveBeenCalledWith(201);
+	});
+
+	it("does not let rolling expiry renew freshness", async () => {
+		const userId = await signIn(db, getRequest);
+		await db
+			.update(authSessions)
+			.set({
+				createdAt: new Date(
+					Date.now() - (SESSION_FRESH_AGE_SECONDS * 1000 + 1),
+				),
+				expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60_000),
+				updatedAt: new Date(),
+			})
+			.where(eq(authSessions.userId, userId));
+
+		await expect(
+			call("createApiKeyFn", { name: "Robot", permissions: {} }),
+		).rejects.toBeInstanceOf(SessionNotFreshError);
+		expect(await db.select().from(apiKeys)).toHaveLength(0);
 	});
 });
 

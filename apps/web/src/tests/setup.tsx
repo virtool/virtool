@@ -1,4 +1,5 @@
 import { accountQueryKeys } from "@account/keys";
+import { RecentAuthenticationProvider } from "@app/recentAuthentication";
 import { faker } from "@faker-js/faker";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import {
@@ -31,6 +32,7 @@ import { indexServerFnMocks } from "./server-fn/indexes";
 import { jobServerFnMocks } from "./server-fn/jobs";
 import { labelServerFnMocks } from "./server-fn/labels";
 import { genbankServerFnMocks, otuServerFnMocks } from "./server-fn/otus";
+import { recentAuthenticationServerFnMocks } from "./server-fn/recentAuthentication";
 import { referenceServerFnMocks } from "./server-fn/references";
 import { rootServerFnMocks } from "./server-fn/root";
 import { sampleServerFnMocks } from "./server-fn/samples";
@@ -56,6 +58,12 @@ vi.mock("@server/account/functions", async () => {
 vi.mock("@server/auth/functions", async () => {
 	const { authServerFnMocks } = await import("./server-fn/auth");
 	return authServerFnMocks;
+});
+vi.mock("@server/auth/recentAuthentication", async () => {
+	const { recentAuthenticationServerFnMocks } = await import(
+		"./server-fn/recentAuthentication"
+	);
+	return recentAuthenticationServerFnMocks;
 });
 // Resolve the mock lazily via dynamic import. A direct reference to the
 // imported `userServerFnMocks` binding races route modules (pulled in by
@@ -137,6 +145,7 @@ beforeEach(() => {
 		...Object.values(taskServerFnMocks),
 		...Object.values(hmmServerFnMocks),
 		...Object.values(authServerFnMocks),
+		...Object.values(recentAuthenticationServerFnMocks),
 		...Object.values(labelServerFnMocks),
 		...Object.values(rootServerFnMocks),
 		uploadServerFnMocks.findUploadsFn,
@@ -266,7 +275,11 @@ export function at<T>(items: readonly T[], index: number): T {
 export function wrapWithProviders(ui: ReactNode) {
 	const queryClient = createTestQueryClient();
 
-	return <QueryClientProvider client={queryClient}>{ui}</QueryClientProvider>;
+	return (
+		<QueryClientProvider client={queryClient}>
+			<RecentAuthenticationProvider>{ui}</RecentAuthenticationProvider>
+		</QueryClientProvider>
+	);
 }
 
 export function renderWithProviders(ui: ReactNode) {
@@ -276,7 +289,9 @@ export function renderWithProviders(ui: ReactNode) {
 
 	function wrap(node: ReactNode) {
 		return (
-			<QueryClientProvider client={queryClient}>{node}</QueryClientProvider>
+			<QueryClientProvider client={queryClient}>
+				<RecentAuthenticationProvider>{node}</RecentAuthenticationProvider>
+			</QueryClientProvider>
 		);
 	}
 

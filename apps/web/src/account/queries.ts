@@ -1,4 +1,5 @@
 import { accountQueryKeys } from "@account/keys";
+import { useRecentlyAuthenticatedMutation } from "@app/recentAuthentication";
 import { resetClient } from "@app/utils";
 import * as Sentry from "@sentry/tanstackstart-react";
 import {
@@ -23,13 +24,16 @@ import type { ApiKey, Permissions } from "@virtool/contracts";
  */
 export function useUpdateAccount() {
 	const queryClient = useQueryClient();
+	const mutationFn = useRecentlyAuthenticatedMutation(
+		({ email }: { email: string }) => updateAccountEmailFn({ data: { email } }),
+	);
 
 	return useMutation<
 		Awaited<ReturnType<typeof updateAccountEmailFn>>,
 		Error,
 		{ email: string }
 	>({
-		mutationFn: ({ email }) => updateAccountEmailFn({ data: { email } }),
+		mutationFn,
 		onSuccess: () => {
 			queryClient.invalidateQueries({ queryKey: accountQueryKeys.all() });
 		},
@@ -63,14 +67,17 @@ export function useUpdateHandle() {
  */
 export function useChangePassword() {
 	const queryClient = useQueryClient();
+	const mutationFn = useRecentlyAuthenticatedMutation(
+		({ oldPassword, password }: { oldPassword: string; password: string }) =>
+			changePasswordFn({ data: { oldPassword, password } }),
+	);
 
 	return useMutation<
 		Awaited<ReturnType<typeof changePasswordFn>>,
 		Error,
 		{ oldPassword: string; password: string }
 	>({
-		mutationFn: ({ oldPassword, password }) =>
-			changePasswordFn({ data: { oldPassword, password } }),
+		mutationFn,
 		onSuccess: () => {
 			queryClient.invalidateQueries({ queryKey: accountQueryKeys.all() });
 		},
@@ -96,14 +103,17 @@ export function useFetchApiKeys() {
  */
 export function useCreateApiKey() {
 	const queryClient = useQueryClient();
+	const mutationFn = useRecentlyAuthenticatedMutation(
+		({ name, permissions }: { name: string; permissions: Permissions }) =>
+			createApiKeyFn({ data: { name, permissions } }),
+	);
 
 	return useMutation<
 		Awaited<ReturnType<typeof createApiKeyFn>>,
 		Error,
 		{ name: string; permissions: Permissions }
 	>({
-		mutationFn: ({ name, permissions }) =>
-			createApiKeyFn({ data: { name, permissions } }),
+		mutationFn,
 		onSuccess: () => {
 			queryClient.invalidateQueries({ queryKey: accountQueryKeys.apiKeys() });
 		},
@@ -117,14 +127,17 @@ export function useCreateApiKey() {
  */
 export function useUpdateApiKey() {
 	const queryClient = useQueryClient();
+	const mutationFn = useRecentlyAuthenticatedMutation(
+		({ keyId, permissions }: { keyId: number; permissions: Permissions }) =>
+			updateApiKeyFn({ data: { keyId, permissions } }),
+	);
 
 	return useMutation<
 		Awaited<ReturnType<typeof updateApiKeyFn>>,
 		Error,
 		{ keyId: number; permissions: Permissions }
 	>({
-		mutationFn: ({ keyId, permissions }) =>
-			updateApiKeyFn({ data: { keyId, permissions } }),
+		mutationFn,
 		onSuccess: () => {
 			queryClient.invalidateQueries({ queryKey: accountQueryKeys.apiKeys() });
 		},
@@ -138,9 +151,12 @@ export function useUpdateApiKey() {
  */
 export function useDeleteApiKey() {
 	const queryClient = useQueryClient();
+	const mutationFn = useRecentlyAuthenticatedMutation(
+		({ keyId }: { keyId: number }) => deleteApiKeyFn({ data: { keyId } }),
+	);
 
 	return useMutation<null, Error, { keyId: number }>({
-		mutationFn: ({ keyId }) => deleteApiKeyFn({ data: { keyId } }),
+		mutationFn,
 		onSuccess: () => {
 			queryClient.invalidateQueries({ queryKey: accountQueryKeys.apiKeys() });
 		},
