@@ -21,7 +21,7 @@
     "@tailwindcss/typography": "^0.5.19",
     "@tailwindcss/vite": "^4.2.2",
     "@types/node": "^26.4.1",
-    "astro": "^7.3.2",
+    "astro": "^7.3.3",
     "micromark": "^4.0.2",
     "micromark-extension-gfm": "^3.0.0",
     "node-cache": "^5.1.2",
