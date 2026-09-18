@@ -64,6 +64,7 @@ const createFirstUserSchema = z.object({
 
 const emailRemediationSchema = z.object({
 	email: z.string().trim().min(1).max(254),
+	redirect: z.string().max(2048).optional(),
 });
 
 const emailRemediationTokenSchema = z.object({
@@ -286,8 +287,13 @@ export const submitEmailRemediationFn = createServerFn({ method: "POST" })
 				deliveryAvailable:
 					settings.enabled && delivery.availability === "ready",
 				email: data.email,
-				getVerificationUrl: (token) =>
-					`${config.publicOrigin}/email-remediation-verify?token=${encodeURIComponent(token)}`,
+				getVerificationUrl: (token) => {
+					const search = new URLSearchParams({ token });
+					if (data.redirect) {
+						search.set("redirect", data.redirect);
+					}
+					return `${config.publicOrigin}/email-remediation-verify?${search}`;
+				},
 				userId: context.principal.userId,
 			});
 

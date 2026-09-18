@@ -44,7 +44,10 @@ export default function LoginForm({
 						return;
 					}
 					if ("remediation" in data && data.remediation) {
-						navigate({ to: "/email-remediation" });
+						navigate({
+							to: "/email-remediation",
+							search: { redirect },
+						});
 						return;
 					}
 					navigate({ to: redirect ?? "/" });

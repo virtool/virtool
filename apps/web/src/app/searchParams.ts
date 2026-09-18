@@ -25,6 +25,16 @@ export function strOptional(value: unknown): string | undefined {
 	return typeof value === "string" ? value : undefined;
 }
 
+/** Return an internal post-authentication redirect, or discard it. */
+export function safeRedirect(value: unknown): string | undefined {
+	const target = strOptional(value);
+	return target?.startsWith("/") &&
+		!target.startsWith("//") &&
+		!target.startsWith("/login")
+		? target
+		: undefined;
+}
+
 export function num(value: unknown, fallback: number): number {
 	return typeof value === "number" && Number.isFinite(value) ? value : fallback;
 }

@@ -1,11 +1,13 @@
 import { accountQueryKeys } from "@account/keys";
 import { getErrorStatus } from "@app/queryErrors";
+import { safeRedirect } from "@app/searchParams";
 import { createFileRoute, isRedirect, redirect } from "@tanstack/react-router";
 import { UNAUTHORIZED_ERROR_NAME } from "@virtool/contracts";
 import { rootQueryKeys } from "@wall/keys";
 
 export const Route = createFileRoute("/email-remediation-verify")({
 	validateSearch: (input: Record<string, unknown>) => ({
+		redirect: safeRedirect(input.redirect),
 		token: typeof input.token === "string" ? input.token : undefined,
 	}),
 	beforeLoad: async ({ context, search }) => {
@@ -13,7 +15,7 @@ export const Route = createFileRoute("/email-remediation-verify")({
 			throw redirect({
 				to: "/email-remediation",
 				replace: true,
-				search: { error: "invalid-link" },
+				search: { error: "invalid-link", redirect: search.redirect },
 			});
 		}
 
@@ -22,7 +24,7 @@ export const Route = createFileRoute("/email-remediation-verify")({
 			await completeEmailRemediation(search.token);
 			context.queryClient.removeQueries({ queryKey: rootQueryKeys.all() });
 			context.queryClient.removeQueries({ queryKey: accountQueryKeys.all() });
-			throw redirect({ to: "/", replace: true });
+			throw redirect({ to: search.redirect ?? "/", replace: true });
 		} catch (error) {
 			if (isRedirect(error)) {
 				throw error;
@@ -37,7 +39,7 @@ export const Route = createFileRoute("/email-remediation-verify")({
 			throw redirect({
 				to: "/email-remediation",
 				replace: true,
-				search: { error: "invalid-link" },
+				search: { error: "invalid-link", redirect: search.redirect },
 			});
 		}
 	},

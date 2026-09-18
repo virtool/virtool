@@ -29,29 +29,42 @@ export default function EmailRemediation() {
 	const cancel = useCancelEmailRemediation();
 	const navigate = useNavigate();
 	const queryClient = useQueryClient();
-	const { error: searchError } = remediationRouteApi.useSearch();
+	const { error: searchError, redirect } = remediationRouteApi.useSearch();
 	const [waitingForEmail, setWaitingForEmail] = useState(false);
 	const { handleSubmit, register } = useForm<FormValues>({
 		values: { email: data.email },
 	});
 
 	function onSubmit({ email }: FormValues) {
-		submit.mutate(email, {
-			onSuccess: (result) => {
-				if (!result.complete) {
-					setWaitingForEmail(true);
-					return;
-				}
-				queryClient.removeQueries({ queryKey: rootQueryKeys.all() });
-				queryClient.removeQueries({ queryKey: accountQueryKeys.all() });
-				navigate({ to: "/" });
+		submit.mutate(
+			{ email, redirect },
+			{
+				onSuccess: (result) => {
+					if (!result.complete) {
+						setWaitingForEmail(true);
+						return;
+					}
+					queryClient.removeQueries({ queryKey: rootQueryKeys.all() });
+					queryClient.removeQueries({ queryKey: accountQueryKeys.all() });
+					navigate({ to: redirect ?? "/" });
+				},
 			},
-		});
+		);
 	}
 
 	function onCancel() {
 		cancel.mutate(undefined, {
-			onSuccess: () => navigate({ to: "/login", replace: true }),
+			onSuccess: () => {
+				queryClient.setQueryData(emailRemediationQueryOptions().queryKey, {
+					email: "",
+				});
+				queryClient.removeQueries({ queryKey: accountQueryKeys.all() });
+				navigate({
+					to: "/login",
+					replace: true,
+					search: { redirect },
+				});
+			},
 		});
 	}
 

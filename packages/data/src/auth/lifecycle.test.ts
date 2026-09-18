@@ -13,6 +13,7 @@ import {
 	completeEmailRemediation,
 	completeTotpEnrollment,
 	EmailInUseError,
+	getEmailRemediationState,
 	normalizeEmail,
 	prepareEmailRemediation,
 	SetupNotEligibleError,
@@ -44,6 +45,19 @@ async function readUser(userId: number) {
 		throw new Error("user missing");
 	}
 	return row;
+}
+
+async function startOfflineEmailRemediation(userId: number, email: string) {
+	const result = await startEmailRemediation(db, {
+		deliveryAvailable: false,
+		email,
+		getVerificationUrl: () => "https://virtool.test/unused",
+		userId,
+	});
+	if (result.status !== "offline") {
+		throw new Error("expected offline remediation");
+	}
+	return result.token;
 }
 
 describe("normalizeEmail", () => {
@@ -280,6 +294,27 @@ describe("completeAccountSetup", () => {
 });
 
 describe("completeEmailRemediation", () => {
+	it("keeps a staged address off the user row until completion", async () => {
+		const userId = await seedUser(db, {
+			email: "legacy@example.com",
+			handle: "Ada",
+		});
+		await seedSettings(db, { emailEnabled: true });
+
+		await startEmailRemediation(db, {
+			deliveryAvailable: true,
+			email: "new@example.com",
+			getVerificationUrl: (token) =>
+				`https://virtool.test/email-remediation-verify?token=${token}`,
+			userId,
+		});
+
+		expect((await readUser(userId)).email).toBe("legacy@example.com");
+		expect(await getEmailRemediationState(db, userId)).toEqual({
+			email: "new@example.com",
+		});
+	});
+
 	it("keeps concurrent address submissions bound to their own tokens", async () => {
 		const userId = await seedUser(db, { handle: "Ada" });
 		await seedSettings(db, { emailEnabled: true });
@@ -303,43 +338,40 @@ describe("completeEmailRemediation", () => {
 				}),
 			]);
 
-			const user = await readUser(userId);
 			const messages = await db.select().from(emailOutbox);
-			const current = messages.find(
-				(message) => message.recipient === user.email,
-			);
-			const stale = messages.find(
-				(message) => message.recipient !== user.email,
-			);
 			if (
-				current?.template.type !== "email_verification" ||
-				stale?.template.type !== "email_verification"
+				messages.length !== 2 ||
+				messages.some(
+					(message) => message.template.type !== "email_verification",
+				)
 			) {
 				throw new Error("expected two verification messages");
 			}
-			const currentToken = new URL(current.template.verifyUrl).searchParams.get(
-				"token",
-			);
-			const staleToken = new URL(stale.template.verifyUrl).searchParams.get(
-				"token",
-			);
-			if (!currentToken || !staleToken) {
-				throw new Error("expected verification tokens");
-			}
-
-			await expect(
-				completeEmailRemediation(db, {
-					token: staleToken,
-					userId,
-					verified: true,
+			const attempts = await Promise.allSettled(
+				messages.map((message) => {
+					if (message.template.type !== "email_verification") {
+						throw new Error("expected verification message");
+					}
+					const token = new URL(message.template.verifyUrl).searchParams.get(
+						"token",
+					);
+					if (!token) {
+						throw new Error("expected verification token");
+					}
+					return completeEmailRemediation(db, {
+						token,
+						userId,
+						verified: true,
+					});
 				}),
-			).rejects.toBeInstanceOf(SetupCredentialError);
-			await completeEmailRemediation(db, {
-				token: currentToken,
-				userId,
-				verified: true,
-			});
-			expect((await readUser(userId)).email).toBe(user.email);
+			);
+			expect(
+				attempts.filter((result) => result.status === "fulfilled"),
+			).toHaveLength(1);
+			const winner = attempts.findIndex(
+				(result) => result.status === "fulfilled",
+			);
+			expect((await readUser(userId)).email).toBe(messages[winner]?.recipient);
 		} finally {
 			await other.close();
 		}
@@ -348,11 +380,10 @@ describe("completeEmailRemediation", () => {
 	it("claims the address and derives an identity from the legacy hash", async () => {
 		const password = await hashPassword("legacy-password");
 		const userId = await seedUser(db, { handle: "Ada", password });
-		await prepareEmailRemediation(db, {
+		const token = await startOfflineEmailRemediation(
 			userId,
-			email: " Ada@Example.com ",
-		});
-		const { token } = await seedSetupToken(db, userId, "email_remediation");
+			" Ada@Example.com ",
+		);
 
 		await completeEmailRemediation(db, {
 			token,
@@ -375,8 +406,7 @@ describe("completeEmailRemediation", () => {
 			handle: "Ada",
 			password: await hashPassword("legacy-password"),
 		});
-		await prepareEmailRemediation(db, { userId, email: "ada@example.com" });
-		const { token } = await seedSetupToken(db, userId, "email_remediation");
+		const token = await startOfflineEmailRemediation(userId, "ada@example.com");
 
 		await completeEmailRemediation(db, {
 			token,
@@ -403,7 +433,9 @@ describe("completeEmailRemediation", () => {
 
 	it("refuses a pending account", async () => {
 		const userId = await seedUser(db, { lifecycleState: "pending" });
-		const { token } = await seedSetupToken(db, userId, "email_remediation");
+		const { token } = await seedSetupToken(db, userId, "email_remediation", {
+			candidateEmail: "ada@example.com",
+		});
 
 		await expect(
 			completeEmailRemediation(db, { token, userId, verified: true }),
@@ -429,8 +461,7 @@ describe("completeEmailRemediation", () => {
 
 	it("leaves an offline-remediated address explicitly unverified", async () => {
 		const userId = await seedUser(db);
-		await prepareEmailRemediation(db, { userId, email: "ada@example.com" });
-		const { token } = await seedSetupToken(db, userId, "email_remediation");
+		const token = await startOfflineEmailRemediation(userId, "ada@example.com");
 		await completeEmailRemediation(db, {
 			token,
 			userId,
@@ -444,14 +475,11 @@ describe("completeEmailRemediation", () => {
 	it("binds completion to the restricted setup user", async () => {
 		const firstUserId = await seedUser(db, { handle: "ada" });
 		const secondUserId = await seedUser(db, { handle: "bob" });
-		await prepareEmailRemediation(db, {
-			userId: firstUserId,
-			email: "ada@example.com",
-		});
 		const { token } = await seedSetupToken(
 			db,
 			firstUserId,
 			"email_remediation",
+			{ candidateEmail: "ada@example.com" },
 		);
 
 		await expect(

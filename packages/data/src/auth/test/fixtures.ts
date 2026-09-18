@@ -160,13 +160,19 @@ export async function seedSetupToken(
 	userId: number,
 	purpose: SetupPurpose,
 	{
+		candidateEmail,
 		expiresAt = new Date(Date.now() + 60_000),
 		consumedAt = null,
-	}: { expiresAt?: Date; consumedAt?: Date | null } = {},
+	}: {
+		candidateEmail?: string;
+		expiresAt?: Date;
+		consumedAt?: Date | null;
+	} = {},
 ): Promise<SeededSetupToken> {
 	const token = randomBytes(32).toString("hex");
 
 	await db.insert(setupTokens).values({
+		candidateEmail,
 		consumedAt,
 		expiresAt,
 		purpose,

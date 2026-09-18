@@ -38,6 +38,8 @@ export class SetupCredentialError extends AppError {}
 export type IssueSetupTokenInput = {
 	userId: number;
 	purpose: SetupPurpose;
+	/** Purpose-bound address carried by an email-remediation token. */
+	candidateEmail?: string;
 	/** Defaults to {@link SETUP_TOKEN_LIFETIME_MS}. */
 	lifetimeMs?: number;
 };
@@ -83,6 +85,7 @@ export async function issueSetupTokenInTransaction(
 	{
 		userId,
 		purpose,
+		candidateEmail,
 		lifetimeMs = SETUP_TOKEN_LIFETIME_MS,
 	}: IssueSetupTokenInput,
 ): Promise<IssuedSetupToken> {
@@ -98,6 +101,7 @@ export async function issueSetupTokenInTransaction(
 			.values({
 				userId,
 				purpose,
+				candidateEmail,
 				tokenHash: hashToken(token),
 				expiresAt,
 			})
@@ -144,6 +148,7 @@ export async function invalidateUserSetupTokens(
 
 /** The user a consumed setup token names. */
 export type ConsumedSetupToken = {
+	candidateEmail: string | null;
 	userId: number;
 	purpose: SetupPurpose;
 };
@@ -186,7 +191,11 @@ export async function consumeSetupToken(
 				sql`exists (select 1 from ${users} where ${users.id} = ${setupTokens.userId} and ${users.active})`,
 			),
 		)
-		.returning({ userId: setupTokens.userId, purpose: setupTokens.purpose });
+		.returning({
+			candidateEmail: setupTokens.candidateEmail,
+			userId: setupTokens.userId,
+			purpose: setupTokens.purpose,
+		});
 
 	if (!row) {
 		throw new SetupCredentialError();

@@ -1,4 +1,4 @@
-import { oneOfOptional, strOptional } from "@app/searchParams";
+import { oneOfOptional, safeRedirect } from "@app/searchParams";
 import type { SearchSchemaInput } from "@tanstack/react-router";
 import { createFileRoute, redirect } from "@tanstack/react-router";
 import {
@@ -6,14 +6,6 @@ import {
 	SETUP_REQUIRED_ERROR_NAME,
 } from "@virtool/contracts";
 import LoginWall from "@wall/components/LoginWall";
-
-function isSafeRedirect(value: string): boolean {
-	return (
-		value.startsWith("/") &&
-		!value.startsWith("//") &&
-		!value.startsWith("/login")
-	);
-}
 
 /** Search params for the login wall. */
 type LoginSearch = {
@@ -24,14 +16,12 @@ type LoginSearch = {
 function validateLoginSearch(
 	input: Partial<LoginSearch> & SearchSchemaInput,
 ): LoginSearch {
-	const target = strOptional(input.redirect);
-
 	return {
 		reason: oneOfOptional(input.reason, [
 			"remediation-expired",
 			"session-ended",
 		] as const),
-		redirect: target && isSafeRedirect(target) ? target : undefined,
+		redirect: safeRedirect(input.redirect),
 	};
 }
 
@@ -49,7 +39,10 @@ export const Route = createFileRoute("/login")({
 				error.name === SETUP_REQUIRED_ERROR_NAME &&
 				(error as Error & { purpose?: string }).purpose === "email_remediation"
 			) {
-				throw redirect({ to: "/email-remediation" });
+				throw redirect({
+					to: "/email-remediation",
+					search: { redirect: search.redirect },
+				});
 			}
 			return {
 				passwordResetRequired:

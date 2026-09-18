@@ -30,10 +30,16 @@ export default function ResetForm({ redirect }: ResetFormProps) {
 			// The mutation rotates the session cookies and invalidates the account
 			// query, but navigation still belongs to the form.
 			{
-				onSuccess: (data) =>
-					navigate({
-						to: data.remediation ? "/email-remediation" : (redirect ?? "/"),
-					}),
+				onSuccess: (data) => {
+					if (data.remediation) {
+						navigate({
+							to: "/email-remediation",
+							search: { redirect },
+						});
+						return;
+					}
+					navigate({ to: redirect ?? "/" });
+				},
 			},
 		);
 	}

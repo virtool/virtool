@@ -113,8 +113,8 @@ export function useVerifyTwoFactorMutation() {
 /** Submit an address for online verification or offline completion. */
 export function useSubmitEmailRemediation() {
 	return useMutation({
-		mutationFn: (email: string) =>
-			submitEmailRemediationFn({ data: { email } }),
+		mutationFn: ({ email, redirect }: { email: string; redirect?: string }) =>
+			submitEmailRemediationFn({ data: { email, redirect } }),
 	});
 }
 

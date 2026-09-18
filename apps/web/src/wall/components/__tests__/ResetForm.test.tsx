@@ -151,6 +151,26 @@ describe("<ResetForm />", () => {
 		);
 	});
 
+	it("carries the redirect into email remediation", async () => {
+		resetPasswordMock.mockResolvedValue({
+			login: false,
+			remediation: true,
+			reset: false,
+		});
+
+		renderWithProviders(<ResetForm redirect="/samples" />);
+
+		await userEvent.type(screen.getByLabelText("Password"), "P@ssword123");
+		await userEvent.click(screen.getByRole("button", { name: "Reset" }));
+
+		await waitFor(() =>
+			expect(navigateMock).toHaveBeenCalledWith({
+				to: "/email-remediation",
+				search: { redirect: "/samples" },
+			}),
+		);
+	});
+
 	it("navigates to the root when no redirect is provided", async () => {
 		resetPasswordMock.mockResolvedValue({ login: false, reset: false });
 

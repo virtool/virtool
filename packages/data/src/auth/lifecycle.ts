@@ -1,9 +1,10 @@
 import type { User } from "@virtool/contracts";
-import { and, eq, sql } from "drizzle-orm";
+import { and, eq, isNull, sql } from "drizzle-orm";
 
 import type { Db, DbOrTx } from "../db/pg";
 import { authAccounts, authSessions, authTwoFactors } from "../db/schema/auth";
 import { sessions } from "../db/schema/sessions";
+import { setupTokens } from "../db/schema/setup";
 import { users } from "../db/schema/users";
 import { enqueueEmail } from "../email/outbox";
 import { AppError } from "../errors";
@@ -295,7 +296,6 @@ export async function getEmailRemediationState(
 		.select({
 			active: users.active,
 			authMigratedAt: users.authMigratedAt,
-			email: users.email,
 			lifecycleState: users.lifecycleState,
 			password: users.password,
 		})
@@ -312,15 +312,26 @@ export async function getEmailRemediationState(
 		throw new SetupNotEligibleError();
 	}
 
-	return { email: isValidEmail(row.email) ? normalizeEmail(row.email) : "" };
+	const [staged] = await db
+		.select({ email: setupTokens.candidateEmail })
+		.from(setupTokens)
+		.where(
+			and(
+				eq(setupTokens.userId, userId),
+				eq(setupTokens.purpose, "email_remediation"),
+				isNull(setupTokens.consumedAt),
+			),
+		)
+		.limit(1);
+
+	return { email: staged?.email ?? "" };
 }
 
 /**
- * Stage a unique address for an eligible legacy identity.
+ * Validate a candidate address for an eligible legacy identity.
  *
- * Staging never claims that the mailbox was verified. The address is stored so
- * the later token completion is bound to server-side state rather than to an
- * address repeated beside the bearer token in a URL or browser cache.
+ * The candidate is only checked here. The setup token carries it until
+ * completion so an abandoned mailbox challenge cannot reserve the address.
  */
 export async function prepareEmailRemediation(
 	db: Db,
@@ -364,10 +375,6 @@ async function prepareEmailRemediationInTransaction(
 	}
 
 	await claimEmail(tx, userId, normalized);
-	await tx
-		.update(users)
-		.set({ email: normalized, emailVerified: false })
-		.where(eq(users.id, userId));
 
 	return { email: normalized, handle: row.handle };
 }
@@ -388,6 +395,7 @@ export async function startEmailRemediation(
 			userId,
 		});
 		const issued = await issueSetupTokenInTransaction(tx, {
+			candidateEmail: prepared.email,
 			purpose: "email_remediation",
 			userId,
 		});
@@ -432,12 +440,14 @@ export async function completeEmailRemediation(
 		if (consumed.userId !== expectedUserId) {
 			throw new SetupCredentialError();
 		}
+		if (!consumed.candidateEmail || !isValidEmail(consumed.candidateEmail)) {
+			throw new SetupCredentialError();
+		}
 
 		const [row] = await tx
 			.select({
 				active: users.active,
 				authMigratedAt: users.authMigratedAt,
-				email: users.email,
 				handle: users.handle,
 				lifecycleState: users.lifecycleState,
 				password: users.password,
@@ -454,13 +464,12 @@ export async function completeEmailRemediation(
 			!row.active ||
 			row.authMigratedAt !== null ||
 			row.lifecycleState !== "normal" ||
-			row.password === null ||
-			!isValidEmail(row.email)
+			row.password === null
 		) {
 			throw new SetupNotEligibleError();
 		}
 
-		const normalized = normalizeEmail(row.email);
+		const normalized = normalizeEmail(consumed.candidateEmail);
 		await claimEmail(tx, consumed.userId, normalized);
 
 		await tx

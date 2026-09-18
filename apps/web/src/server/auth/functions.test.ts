@@ -147,6 +147,7 @@ it("requires the emailed token before marking a remediated email verified", asyn
 	expect(
 		await callServerFn(handlers, "submitEmailRemediationFn", {
 			email: "alice@example.com",
+			redirect: "/samples",
 		}),
 	).toEqual({ complete: false });
 
@@ -155,10 +156,16 @@ it("requires the emailed token before marking a remediated email verified", asyn
 		throw new Error("expected an email verification message");
 	}
 	const token = new URL(queued.template.verifyUrl).searchParams.get("token");
+	expect(new URL(queued.template.verifyUrl).searchParams.get("redirect")).toBe(
+		"/samples",
+	);
 	if (!token) {
 		throw new Error("expected a verification token");
 	}
-	expect((await db.select().from(users))[0]?.emailVerified).toBe(false);
+	expect((await db.select().from(users))[0]).toMatchObject({
+		email: "",
+		emailVerified: false,
+	});
 	expect(await db.select().from(authAccounts)).toHaveLength(0);
 
 	expect(

@@ -1,5 +1,5 @@
 import { getErrorStatus } from "@app/queryErrors";
-import { oneOfOptional } from "@app/searchParams";
+import { oneOfOptional, safeRedirect } from "@app/searchParams";
 import type { SearchSchemaInput } from "@tanstack/react-router";
 import { createFileRoute, redirect } from "@tanstack/react-router";
 import { UNAUTHORIZED_ERROR_NAME } from "@virtool/contracts";
@@ -7,6 +7,7 @@ import EmailRemediation from "@wall/components/EmailRemediation";
 
 type EmailRemediationSearch = {
 	error?: "invalid-link";
+	redirect?: string;
 };
 
 function validateSearch(
@@ -14,12 +15,13 @@ function validateSearch(
 ): EmailRemediationSearch {
 	return {
 		error: oneOfOptional(input.error, ["invalid-link"] as const),
+		redirect: safeRedirect(input.redirect),
 	};
 }
 
 export const Route = createFileRoute("/email-remediation")({
 	validateSearch,
-	beforeLoad: async ({ context }) => {
+	beforeLoad: async ({ context, search }) => {
 		const { emailRemediationQueryOptions } = await import("@wall/queries");
 		try {
 			await context.queryClient.ensureQueryData(emailRemediationQueryOptions());
@@ -34,7 +36,10 @@ export const Route = createFileRoute("/email-remediation")({
 			throw redirect({
 				to: "/login",
 				replace: true,
-				search: { reason: "remediation-expired" },
+				search: {
+					reason: "remediation-expired",
+					redirect: search.redirect,
+				},
 			});
 		}
 	},
