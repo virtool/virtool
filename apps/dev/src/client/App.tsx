@@ -1,181 +1,420 @@
+import { Tabs } from "radix-ui";
 import { useEffect, useState } from "react";
-import type { Environment, Mutation, SchedulerState } from "../shared/types.ts";
+import type {
+	Environment,
+	Mutation,
+	SchedulerState,
+	ServiceState,
+} from "../shared/types.ts";
 import { useSnapshot } from "./store.ts";
 
-async function mutate(mutation: Mutation): Promise<void> {
-	const response = await fetch("/api/environments", {
-		body: JSON.stringify(mutation),
+const CONTROL =
+	"cursor-pointer rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-sm font-medium transition-colors hover:bg-slate-50 disabled:cursor-default disabled:opacity-45";
+const PRIMARY = `${CONTROL} border-emerald-700 bg-emerald-700 text-white hover:bg-emerald-800`;
+const DANGER = `${CONTROL} border-red-200 text-red-800 hover:bg-red-50`;
+const PANEL = "rounded-xl border border-slate-200 bg-white";
+const TAB =
+	"cursor-pointer border-b-2 border-transparent px-4 py-3 text-sm font-semibold text-slate-500 transition-colors hover:text-emerald-900 data-[state=active]:border-emerald-700 data-[state=active]:text-emerald-900";
+
+async function post(path: string, body: unknown): Promise<void> {
+	const response = await fetch(path, {
+		body: JSON.stringify(body),
 		headers: { "content-type": "application/json" },
 		method: "POST",
 	});
 	if (!response.ok) {
-		throw new Error(await response.text());
+		throw new Error(
+			(await response.text()) || `Request failed (${response.status})`,
+		);
 	}
 }
 
-function status(environment: Environment): string {
-	if (
-		environment.operation?.status === "running" ||
-		environment.operation?.status === "pending"
-	) {
-		return `${environment.observed} · ${environment.operation.progress}`;
-	}
-	return environment.ready ? "ready" : environment.observed.replace("_", " ");
-}
-
-const CONTROL =
-	"cursor-pointer rounded-lg border border-emerald-950/20 bg-slate-50 px-3 py-1.5 text-sm font-medium transition-colors hover:bg-emerald-50 disabled:cursor-default disabled:opacity-45";
-const DANGER = `${CONTROL} border-red-200 text-red-800 hover:bg-red-50`;
-
-function EnvironmentRow({ environment }: { environment: Environment }) {
+function useAction() {
+	const [pending, setPending] = useState(false);
 	const [error, setError] = useState<string | null>(null);
-	async function act(action: Mutation["action"]): Promise<void> {
+	const [message, setMessage] = useState<string | null>(null);
+	async function run(
+		action: () => Promise<void>,
+		success: string,
+	): Promise<void> {
+		setPending(true);
+		setError(null);
+		setMessage(null);
+		try {
+			await action();
+			setMessage(success);
+		} catch (caught) {
+			setError(caught instanceof Error ? caught.message : String(caught));
+		} finally {
+			setPending(false);
+		}
+	}
+	return { pending, error, message, run };
+}
+
+function Feedback({
+	error,
+	message,
+}: {
+	error: string | null;
+	message: string | null;
+}) {
+	return (
+		<>
+			{error && (
+				<pre
+					role="alert"
+					className="mt-3 whitespace-pre-wrap break-words rounded-lg bg-red-50 p-3 text-sm text-red-800"
+				>
+					{error}
+				</pre>
+			)}
+			{message && (
+				<p role="status" className="mt-2 text-sm text-slate-600">
+					{message}
+				</p>
+			)}
+		</>
+	);
+}
+
+function Badge({
+	label,
+	tone = "neutral",
+}: {
+	label: string;
+	tone?: "neutral" | "good" | "bad" | "busy";
+}) {
+	const colors = {
+		neutral: "bg-slate-100 text-slate-600",
+		good: "bg-emerald-50 text-emerald-800",
+		bad: "bg-red-50 text-red-800",
+		busy: "bg-amber-50 text-amber-900",
+	};
+	return (
+		<span
+			className={`inline-flex rounded-full px-2.5 py-1 text-xs font-semibold ${colors[tone]}`}
+		>
+			{label}
+		</span>
+	);
+}
+
+function Services({ services }: { services: Record<string, ServiceState> }) {
+	return (
+		<div className="flex flex-wrap gap-2">
+			{Object.entries(services).map(([name, health]) => (
+				<Badge
+					key={name}
+					label={`${name}: ${health}`}
+					tone={
+						health === "healthy"
+							? "good"
+							: health === "stopped"
+								? "neutral"
+								: "bad"
+					}
+				/>
+			))}
+		</div>
+	);
+}
+
+function SharedServices({
+	services,
+}: {
+	services: Record<string, ServiceState>;
+}) {
+	const entries = Object.entries(services);
+	if (entries.length === 0) {
+		return (
+			<p className={`${PANEL} p-6 text-sm text-slate-500`}>
+				No shared service health checks are available yet.
+			</p>
+		);
+	}
+	return (
+		<section
+			aria-label="Shared services"
+			className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3"
+		>
+			{entries.map(([name, health]) => (
+				<article
+					aria-label={`${name} service`}
+					className={`${PANEL} flex items-center justify-between gap-3 p-4`}
+					key={name}
+				>
+					<h3 className="font-semibold text-emerald-950">{name}</h3>
+					<Badge
+						label={health}
+						tone={
+							health === "healthy"
+								? "good"
+								: health === "stopped"
+									? "neutral"
+									: "bad"
+						}
+					/>
+				</article>
+			))}
+		</section>
+	);
+}
+
+function formatBytes(bytes: number | null): string {
+	if (bytes === null) {
+		return "Unavailable";
+	}
+	if (bytes < 1_000) {
+		return `${bytes} B`;
+	}
+	const units = ["kB", "MB", "GB", "TB"];
+	let value = bytes;
+	let unit = "B";
+	for (const next of units) {
+		if (value < 1_000) {
+			break;
+		}
+		value /= 1_000;
+		unit = next;
+	}
+	return `${value.toFixed(value >= 10 ? 0 : 1)} ${unit}`;
+}
+
+function SharedStorage({
+	storage,
+}: {
+	storage: { azurite: number | null; postgres: number | null };
+}) {
+	return (
+		<section aria-label="Shared storage" className="grid gap-3 sm:grid-cols-2">
+			{(["postgres", "azurite"] as const).map((name) => (
+				<article className={`${PANEL} p-4`} key={name}>
+					<div className="flex items-center justify-between gap-3">
+						<h3 className="font-semibold text-emerald-950">{name}</h3>
+						<span className="text-sm font-medium text-slate-600">
+							{formatBytes(storage[name])}
+						</span>
+					</div>
+					<p className="mt-1 text-xs text-slate-500">Volume usage</p>
+				</article>
+			))}
+		</section>
+	);
+}
+
+function isBusy(environment: Environment): boolean {
+	return (
+		environment.operation?.status === "running" ||
+		environment.operation?.status === "pending" ||
+		["starting", "stopping", "removing"].includes(environment.observed)
+	);
+}
+
+function EnvironmentRow({
+	environment,
+	scheduler,
+	connected,
+	selected,
+	onSelect,
+}: {
+	environment: Environment;
+	scheduler: SchedulerState;
+	connected: boolean;
+	selected: boolean;
+	onSelect: (selected: boolean) => void;
+}) {
+	const action = useAction();
+	const busy = isBusy(environment);
+	const disabled = !connected || busy || action.pending;
+	const failed =
+		environment.observed === "failed" ||
+		environment.observed === "missing" ||
+		Boolean(environment.lastError);
+	const running = environment.observed === "running";
+	const primary =
+		failed && environment.id ? "retry" : running ? "stop" : "start";
+	const active = scheduler.active.filter(
+		(item) => item.environmentId === environment.id,
+	).length;
+	const queued = Object.values(
+		scheduler.queues[environment.id ?? ""] ?? {},
+	).reduce((total, count) => total + (count ?? 0), 0);
+	async function act(value: Mutation["action"]): Promise<void> {
 		if (
-			action === "remove" &&
-			!window.confirm(`Remove ${environment.branch} and its development data?`)
+			value === "remove" &&
+			!window.confirm(
+				`Delete the database, stored files, and containers for ${environment.branch}? The Git worktree will be kept.`,
+			)
 		) {
 			return;
 		}
-		try {
-			setError(null);
-			await mutate({ action, worktreeIds: [environment.worktreeId] });
-		} catch (caught) {
-			setError(caught instanceof Error ? caught.message : String(caught));
-		}
+		await action.run(
+			() =>
+				post("/api/environments", {
+					action: value,
+					worktreeIds: [environment.worktreeId],
+				}),
+			"Request accepted.",
+		);
 	}
-	const statusColor = environment.ready
-		? "bg-emerald-100 text-emerald-800"
-		: environment.observed === "failed" || environment.observed === "missing"
-			? "bg-red-100 text-red-800"
-			: "bg-slate-100 text-slate-700";
 	return (
-		<article className="rounded-2xl border border-emerald-950/10 bg-white p-5 shadow-[0_8px_30px_rgb(26_55_37/0.06)]">
-			<div className="flex flex-col justify-between gap-3 sm:flex-row">
-				<div>
-					<h2 className="text-lg font-bold tracking-tight text-emerald-950">
-						{environment.branch}
-					</h2>
-					<code className="break-all text-xs text-slate-500">
+		<article className={`${PANEL} p-4`}>
+			<div className="flex flex-wrap items-center gap-3">
+				<input
+					aria-label={`Select ${environment.branch}`}
+					type="checkbox"
+					checked={selected}
+					onChange={(event) => onSelect(event.target.checked)}
+					disabled={!environment.id || disabled}
+					className="size-4 accent-emerald-700"
+				/>
+				<h2 className="min-w-0 flex-1 break-all font-semibold text-emerald-950">
+					{environment.branch}
+				</h2>
+				<Badge
+					label={
+						busy
+							? environment.operation?.action === "start"
+								? "Starting"
+								: environment.observed.replaceAll("_", " ")
+							: environment.ready
+								? "Ready"
+								: environment.observed.replaceAll("_", " ")
+					}
+					tone={
+						busy
+							? "busy"
+							: failed
+								? "bad"
+								: environment.ready
+									? "good"
+									: "neutral"
+					}
+				/>
+				{environment.openPullRequest ? (
+					<a
+						className="text-xs font-semibold text-blue-700 hover:underline"
+						href={environment.openPullRequest.url}
+						target="_blank"
+						rel="noreferrer"
+					>
+						Open PR #{environment.openPullRequest.number} ↗
+					</a>
+				) : (
+					<span className="text-xs text-slate-400">No open PR</span>
+				)}
+				<div className="flex gap-2">
+					{environment.ready && environment.url && (
+						<a
+							className={PRIMARY}
+							href={environment.url}
+							target="_blank"
+							rel="noreferrer"
+						>
+							Open app ↗
+						</a>
+					)}
+					<button
+						className={environment.ready ? CONTROL : PRIMARY}
+						disabled={disabled}
+						type="button"
+						onClick={() => void act(primary)}
+					>
+						{action.pending
+							? "Sending…"
+							: busy
+								? "Working…"
+								: primary === "retry"
+									? "Retry"
+									: primary === "stop"
+										? "Stop"
+										: "Start"}
+					</button>
+				</div>
+			</div>
+			{busy && (
+				<p role="status" className="mt-2 text-sm text-amber-900">
+					{environment.operation?.progress || "Waiting for environment state…"}
+				</p>
+			)}
+			<div className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-xs text-slate-500">
+				<span>
+					{active} workflows running · {queued} queued
+				</span>
+				{!environment.workflowEnabled && <span>Workflows paused</span>}
+			</div>
+			<Feedback
+				error={action.error ?? environment.lastError}
+				message={action.message}
+			/>
+			<details className="mt-3 text-sm">
+				<summary className="w-fit cursor-pointer text-slate-600">
+					Environment details
+				</summary>
+				<div className="mt-3 space-y-3 border-t border-slate-100 pt-3">
+					<code className="block break-all text-xs text-slate-500">
 						{environment.path}
 					</code>
-				</div>
-				<span
-					className={`self-start rounded-full px-3 py-1 text-xs font-bold ${statusColor}`}
-				>
-					{status(environment)}
-				</span>
-			</div>
-			<div className="my-4 flex flex-wrap gap-x-5 gap-y-2 text-sm text-slate-600">
-				<span>desired: {environment.desired}</span>
-				{environment.url && (
-					<a
-						className="font-medium text-emerald-700 hover:text-emerald-900"
-						href={environment.url}
-					>
-						{environment.url}
-					</a>
-				)}
-				{environment.age && (
-					<time dateTime={new Date(environment.age).toISOString()}>
-						created {new Date(environment.age).toISOString()}
-					</time>
-				)}
-			</div>
-			{(error || environment.lastError) && (
-				<pre className="mb-4 whitespace-pre-wrap rounded-lg bg-red-50 p-3 text-sm text-red-800">
-					{error ?? environment.lastError}
-				</pre>
-			)}
-			<div className="flex flex-wrap gap-2">
-				<button
-					className={CONTROL}
-					type="button"
-					onClick={() => void act("start")}
-				>
-					Start
-				</button>
-				<button
-					className={CONTROL}
-					type="button"
-					onClick={() => void act("stop")}
-					disabled={!environment.id}
-				>
-					Stop
-				</button>
-				<button
-					className={CONTROL}
-					type="button"
-					onClick={() => void act("restart")}
-					disabled={!environment.id}
-				>
-					Restart
-				</button>
-				<button
-					className={CONTROL}
-					type="button"
-					onClick={() => void act("retry")}
-					disabled={!environment.lastError}
-				>
-					Retry
-				</button>
-				<button
-					className={CONTROL}
-					type="button"
-					onClick={() =>
-						void act(
-							environment.workflowEnabled
-								? "disable_workflows"
-								: "enable_workflows",
-						)
-					}
-					disabled={!environment.id}
-				>
-					{environment.workflowEnabled ? "Pause workflows" : "Enable workflows"}
-				</button>
-				<button
-					className={DANGER}
-					type="button"
-					onClick={() => void act("remove")}
-					disabled={!environment.id}
-				>
-					Remove
-				</button>
-			</div>
-			{Object.keys(environment.services).length > 0 && (
-				<details className="mt-4 border-t border-emerald-950/10 pt-3 text-sm">
-					<summary className="cursor-pointer font-semibold text-emerald-950">
-						Services
-					</summary>
-					<div className="mt-2 grid gap-1 sm:grid-cols-3">
-						{Object.entries(environment.services).map(
-							([service, serviceState]) => (
-								<div
-									className="flex justify-between rounded-lg bg-slate-50 px-3 py-2"
-									key={service}
-								>
-									<span>{service}</span>
-									<span className="font-medium text-slate-600">
-										{serviceState}
-									</span>
-								</div>
-							),
+					<div className="flex flex-wrap gap-4 text-xs text-slate-500">
+						<span>Desired state: {environment.desired}</span>
+						{environment.age !== null && (
+							<time dateTime={new Date(environment.age).toISOString()}>
+								Created {new Date(environment.age).toISOString()}
+							</time>
 						)}
 					</div>
-				</details>
-			)}
+					<Services services={environment.services} />
+					<div className="flex flex-wrap gap-2">
+						<button
+							className={CONTROL}
+							disabled={disabled || !environment.id}
+							type="button"
+							onClick={() => void act("restart")}
+						>
+							Restart
+						</button>
+						<button
+							className={CONTROL}
+							disabled={disabled || !environment.id}
+							type="button"
+							onClick={() =>
+								void act(
+									environment.workflowEnabled
+										? "disable_workflows"
+										: "enable_workflows",
+								)
+							}
+						>
+							{environment.workflowEnabled
+								? "Pause workflows"
+								: "Enable workflows"}
+						</button>
+						<button
+							className={DANGER}
+							disabled={disabled || !environment.id}
+							type="button"
+							onClick={() => void act("remove")}
+						>
+							Delete environment data
+						</button>
+					</div>
+				</div>
+			</details>
 		</article>
 	);
 }
 
-function Scheduler({ state }: { state: SchedulerState }) {
-	const [concurrency, setConcurrency] = useState(state.concurrency);
-	async function save(): Promise<void> {
-		await fetch("/api/scheduler", {
-			body: JSON.stringify({ concurrency }),
-			headers: { "content-type": "application/json" },
-			method: "POST",
-		});
-	}
+function Scheduler({
+	state,
+	connected,
+}: {
+	state: SchedulerState;
+	connected: boolean;
+}) {
+	const [draft, setDraft] = useState<number | null>(null);
+	const concurrency = draft ?? state.concurrency;
+	const action = useAction();
 	const pending = Object.values(state.queues).reduce(
 		(total, queue) =>
 			total +
@@ -183,34 +422,51 @@ function Scheduler({ state }: { state: SchedulerState }) {
 		0,
 	);
 	return (
-		<details className="mb-4 rounded-xl border border-emerald-950/10 bg-white p-4">
-			<summary className="cursor-pointer font-bold text-emerald-950">
-				Workflow scheduler · {pending} pending · {state.active.length} running
+		<details className={`${PANEL} p-4`}>
+			<summary className="cursor-pointer text-sm font-semibold">
+				Workflow scheduler · {pending} queued · {state.active.length}/
+				{state.concurrency} running
 			</summary>
+			<Feedback
+				error={action.error ?? state.lastError}
+				message={action.message}
+			/>
 			<div className="mt-4 flex flex-wrap items-end gap-3 text-sm">
-				{state.lastError && (
-					<pre className="w-full whitespace-pre-wrap rounded-lg bg-red-50 p-3 text-red-800">
-						{state.lastError}
-					</pre>
-				)}
 				<label className="grid gap-1 font-medium">
 					Global concurrency
 					<input
-						className="w-24 rounded-lg border border-emerald-950/20 px-3 py-1.5"
+						className="w-24 rounded-lg border border-slate-200 px-3 py-1.5"
 						max={32}
 						min={1}
 						type="number"
-						value={concurrency}
-						onChange={(event) => setConcurrency(event.target.valueAsNumber)}
+						value={Number.isNaN(concurrency) ? "" : concurrency}
+						onChange={(event) => setDraft(event.target.valueAsNumber)}
 					/>
 				</label>
-				<button className={CONTROL} type="button" onClick={() => void save()}>
-					Save
+				<button
+					className={CONTROL}
+					disabled={
+						!connected ||
+						action.pending ||
+						!Number.isInteger(concurrency) ||
+						concurrency < 1 ||
+						concurrency > 32 ||
+						concurrency === state.concurrency
+					}
+					type="button"
+					onClick={() =>
+						void action.run(async () => {
+							await post("/api/scheduler", { concurrency });
+							setDraft(null);
+						}, "Concurrency saved.")
+					}
+				>
+					{action.pending ? "Saving…" : "Save"}
 				</button>
 				<span>{state.capacity} slots available</span>
 				{state.buildQueue.map((build) => (
 					<span key={`${build.environmentId}-${build.workflow}`}>
-						building {build.workflow}
+						Building {build.workflow}
 					</span>
 				))}
 			</div>
@@ -218,14 +474,26 @@ function Scheduler({ state }: { state: SchedulerState }) {
 	);
 }
 
-function Logs() {
+function DaemonLog() {
 	const [logs, setLogs] = useState("");
+	const [error, setError] = useState<string | null>(null);
 	useEffect(() => {
 		let active = true;
 		async function refresh(): Promise<void> {
-			const response = await fetch("/api/logs");
-			if (active && response.ok) {
-				setLogs(await response.text());
+			try {
+				const response = await fetch("/api/logs");
+				if (!response.ok) {
+					throw new Error("Unable to load daemon logs.");
+				}
+				const text = await response.text();
+				if (active) {
+					setLogs(text);
+					setError(null);
+				}
+			} catch {
+				if (active) {
+					setError("Unable to load daemon logs.");
+				}
 			}
 		}
 		void refresh();
@@ -236,31 +504,46 @@ function Logs() {
 		};
 	}, []);
 	return (
-		<details className="mb-4 rounded-xl border border-emerald-950/10 bg-white p-4">
-			<summary className="cursor-pointer font-bold text-emerald-950">
-				Daemon log
-			</summary>
+		<section aria-label="Daemon log" className={`${PANEL} p-4`}>
+			<h2 className="text-sm font-semibold">Daemon log</h2>
+			<Feedback error={error} message={null} />
 			<pre className="mt-3 max-h-80 overflow-auto whitespace-pre-wrap rounded-lg bg-slate-950 p-4 text-xs text-slate-100">
 				{logs || "No log output"}
 			</pre>
-		</details>
+		</section>
 	);
 }
 
 export default function App() {
-	const snapshot = useSnapshot();
+	const { snapshot, connection } = useSnapshot();
+	const connected = connection === "live";
 	const [selected, setSelected] = useState<string[]>([]);
-	async function bulk(action: "remove" | "stop"): Promise<void> {
-		if (selected.length === 0) {
-			return;
-		}
+	const action = useAction();
+	const selectedIds = snapshot.environments
+		.filter(
+			(environment) =>
+				selected.includes(environment.worktreeId) &&
+				environment.id &&
+				!isBusy(environment),
+		)
+		.map((environment) => environment.worktreeId);
+	async function bulk(value: "remove" | "stop"): Promise<void> {
 		if (
-			action === "remove" &&
-			!window.confirm(`Remove ${selected.length} environments and their data?`)
+			!selectedIds.length ||
+			(value === "remove" &&
+				!window.confirm(
+					`Delete the databases, stored files, and containers for ${selectedIds.length} environments? Git worktrees will be kept.`,
+				))
 		) {
 			return;
 		}
-		await mutate({ action, worktreeIds: selected });
+		await action.run(async () => {
+			await post("/api/environments", {
+				action: value,
+				worktreeIds: selectedIds,
+			});
+			setSelected([]);
+		}, "Request accepted.");
 	}
 	async function resetShared(): Promise<void> {
 		if (
@@ -270,88 +553,190 @@ export default function App() {
 		) {
 			return;
 		}
-		await fetch("/api/shared/reset", {
-			body: JSON.stringify({ confirmation: "reset" }),
-			headers: { "content-type": "application/json" },
-			method: "POST",
-		});
+		await action.run(
+			() => post("/api/shared/reset", { confirmation: "reset" }),
+			"Shared data reset completed.",
+		);
 	}
+	const sharedProblems =
+		Boolean(snapshot.shared.lastError) ||
+		Object.values(snapshot.shared.services).some(
+			(state) => state !== "healthy",
+		);
+	const sharedStorage = snapshot.shared.storage ?? {
+		azurite: null,
+		postgres: null,
+	};
 	return (
-		<main className="mx-auto max-w-6xl px-4 py-8 sm:px-7 sm:py-12">
-			<header className="mb-8 flex flex-col items-stretch justify-between gap-6 sm:flex-row sm:items-end">
+		<main className="mx-auto max-w-6xl px-4 py-6 sm:px-7 sm:py-8">
+			<header className="mb-6 flex flex-wrap items-center justify-between gap-3">
 				<div>
-					<p className="mb-1 text-xs font-black uppercase tracking-[0.18em] text-emerald-700">
-						Virtool
+					<p className="mb-1 text-xs font-bold uppercase tracking-widest text-emerald-700">
+						Virtool dev
 					</p>
-					<h1 className="max-w-3xl text-4xl font-black tracking-[-0.055em] text-emerald-950 sm:text-6xl">
+					<h1 className="text-2xl font-bold tracking-tight text-emerald-950">
 						Development environments
 					</h1>
 				</div>
-				<div className="grid min-w-56 gap-1 rounded-xl bg-emerald-950 px-5 py-4 text-white shadow-lg shadow-emerald-950/10">
-					<strong>Shared infrastructure</strong>
-					<span className="text-sm text-emerald-200">
-						{snapshot.shared.initialized ? "running" : "not started"}
-					</span>
-					<button
-						className="mt-2 cursor-pointer justify-self-start text-xs font-semibold text-red-200 underline hover:text-white"
-						type="button"
-						onClick={() => void resetShared()}
-					>
-						Reset shared data
-					</button>
+				<div role="status">
+					<Badge
+						label={
+							connected
+								? "Live"
+								: connection === "connecting"
+									? "Connecting…"
+									: "Reconnecting…"
+						}
+						tone={connected ? "good" : "busy"}
+					/>
 				</div>
 			</header>
-			{snapshot.updateAvailable && (
-				<div className="mb-4 rounded-xl border border-amber-300 bg-amber-100 px-4 py-3 text-amber-950">
-					An updated daemon is ready and will restart when operations finish.
-				</div>
+			{!connected && (
+				<p
+					role="status"
+					className="mb-4 rounded-lg bg-amber-50 p-3 text-sm text-amber-900"
+				>
+					{snapshot.updatedAt
+						? "Connection interrupted. Showing the last received state; controls will return when reconnected."
+						: "Connecting to the daemon to load environments…"}
+				</p>
 			)}
-			<section className="mb-4 flex flex-col items-stretch gap-3 rounded-xl border border-emerald-950/10 bg-white p-3 text-sm sm:flex-row sm:items-center">
-				<span>{snapshot.environments.length} worktrees</span>
-				<span className="sm:mr-auto">
-					{snapshot.scheduler.active.length}/{snapshot.scheduler.concurrency}{" "}
-					workflow slots
-				</span>
-				<button
-					className={CONTROL}
-					type="button"
-					onClick={() => void bulk("stop")}
+			{snapshot.updateAvailable && (
+				<p className="mb-4 rounded-lg bg-amber-50 p-3 text-sm text-amber-900">
+					An updated daemon is ready and will restart when operations finish.
+				</p>
+			)}
+			<Tabs.Root defaultValue="worktrees">
+				<Tabs.List
+					aria-label="Development environment sections"
+					className="mb-5 flex border-b border-slate-200"
 				>
-					Stop selected
-				</button>
-				<button
-					className={DANGER}
-					type="button"
-					onClick={() => void bulk("remove")}
-				>
-					Remove selected
-				</button>
-			</section>
-			<Scheduler state={snapshot.scheduler} />
-			<Logs />
-			<section className="grid gap-3">
-				{snapshot.environments.map((environment) => (
-					<div
-						className="grid grid-cols-[1.5rem_1fr] items-start gap-2"
-						key={environment.worktreeId}
-					>
-						<input
-							aria-label={`Select ${environment.branch}`}
-							type="checkbox"
-							checked={selected.includes(environment.worktreeId)}
-							className="mt-6 size-4 accent-emerald-700"
-							onChange={(event) =>
-								setSelected((current) =>
-									event.target.checked
-										? [...current, environment.worktreeId]
-										: current.filter((id) => id !== environment.worktreeId),
-								)
-							}
-						/>
-						<EnvironmentRow environment={environment} />
+					<Tabs.Trigger className={TAB} value="worktrees">
+						Worktrees
+					</Tabs.Trigger>
+					<Tabs.Trigger className={TAB} value="shared">
+						Shared
+					</Tabs.Trigger>
+					<Tabs.Trigger className={TAB} value="workflows">
+						Workflows
+					</Tabs.Trigger>
+					<Tabs.Trigger className={TAB} value="daemon-log">
+						Daemon log
+					</Tabs.Trigger>
+				</Tabs.List>
+				<Tabs.Content value="worktrees">
+					<div className="mb-3 flex flex-wrap items-center gap-3 text-sm text-slate-600">
+						<h2 className="mr-auto font-semibold">
+							{snapshot.environments.length} worktrees
+						</h2>
+						{selectedIds.length > 0 && (
+							<>
+								<span>{selectedIds.length} selected</span>
+								<button
+									className={CONTROL}
+									disabled={!connected || action.pending}
+									type="button"
+									onClick={() => void bulk("stop")}
+								>
+									Stop selected
+								</button>
+								<button
+									className={DANGER}
+									disabled={!connected || action.pending}
+									type="button"
+									onClick={() => void bulk("remove")}
+								>
+									Delete selected data
+								</button>
+							</>
+						)}
 					</div>
-				))}
-			</section>
+					<Feedback
+						error={action.error}
+						message={action.pending ? "Sending request…" : action.message}
+					/>
+					<section aria-label="Environments" className="mt-3 grid gap-3">
+						{connected && snapshot.environments.length === 0 && (
+							<p className={`${PANEL} p-6 text-sm text-slate-500`}>
+								No Git worktrees found. Worktrees appear here automatically when
+								discovered.
+							</p>
+						)}
+						{snapshot.environments.map((environment) => (
+							<EnvironmentRow
+								key={environment.worktreeId}
+								environment={environment}
+								scheduler={snapshot.scheduler}
+								connected={connected}
+								selected={selectedIds.includes(environment.worktreeId)}
+								onSelect={(checked) =>
+									setSelected(
+										checked
+											? [...selectedIds, environment.worktreeId]
+											: selectedIds.filter(
+													(id) => id !== environment.worktreeId,
+												),
+									)
+								}
+							/>
+						))}
+					</section>
+				</Tabs.Content>
+				<Tabs.Content className="grid gap-3" value="shared">
+					<section aria-label="Shared infrastructure">
+						<div className="mb-3 flex flex-wrap items-center gap-3">
+							<h2 className="text-sm font-semibold">Shared infrastructure</h2>
+							<Badge
+								label={
+									sharedProblems
+										? "Needs attention"
+										: !snapshot.shared.initialized
+											? "Not started"
+											: Object.keys(snapshot.shared.services).length
+												? "Healthy"
+												: "Awaiting health checks"
+								}
+								tone={
+									sharedProblems
+										? "bad"
+										: snapshot.shared.initialized &&
+												Object.keys(snapshot.shared.services).length
+											? "good"
+											: "neutral"
+								}
+							/>
+						</div>
+						<SharedServices services={snapshot.shared.services} />
+						<div className="mt-3">
+							<SharedStorage storage={sharedStorage} />
+						</div>
+						<Feedback error={snapshot.shared.lastError} message={null} />
+						<details className="mt-3 text-xs text-slate-500">
+							<summary className="w-fit cursor-pointer">
+								Infrastructure settings
+							</summary>
+							<p className="my-3">
+								Reset deletes shared database, object storage, and HTTPS data
+								for every environment.
+							</p>
+							<button
+								className={DANGER}
+								type="button"
+								disabled={!connected || action.pending}
+								onClick={() => void resetShared()}
+							>
+								Reset shared data
+							</button>
+						</details>
+					</section>
+				</Tabs.Content>
+				<Tabs.Content value="workflows">
+					<Scheduler state={snapshot.scheduler} connected={connected} />
+				</Tabs.Content>
+				<Tabs.Content value="daemon-log">
+					<DaemonLog />
+				</Tabs.Content>
+			</Tabs.Root>
 		</main>
 	);
 }

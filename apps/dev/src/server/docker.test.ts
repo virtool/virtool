@@ -52,4 +52,31 @@ describe("DockerObserver", () => {
 
 		expect(result.ready).toBe(true);
 	});
+
+	it("reports shared volume usage", async () => {
+		const run = vi
+			.fn<CommandRunner>()
+			.mockResolvedValueOnce({
+				stderr: "",
+				stdout: [container("postgres"), container("azurite")].join("\n"),
+			})
+			.mockResolvedValueOnce({
+				stderr: "",
+				stdout:
+					"Local Volumes space usage:\nNAME LINKS SIZE\nvirtool-dev-repository-id-postgres 1 1.5 MB\nvirtool-dev-repository-id-azurite 1 2.5 MB\n",
+			});
+		const observer = new DockerObserver(run);
+
+		const result = await observer.inspectShared(
+			"project",
+			"shared.compose.yaml",
+			"/repo",
+			{ VT_DEV_REPOSITORY_ID: "repository-id" },
+		);
+
+		expect(result.storage).toEqual({
+			azurite: 2_500_000,
+			postgres: 1_500_000,
+		});
+	});
 });

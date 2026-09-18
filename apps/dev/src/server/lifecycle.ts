@@ -1,6 +1,6 @@
-import { access, readFile, rm, writeFile } from "node:fs/promises";
+import { access, readFile, rm, stat, writeFile } from "node:fs/promises";
 import { request } from "node:https";
-import { join } from "node:path";
+import { dirname, join } from "node:path";
 import type { DesiredState, Environment } from "../shared/types.ts";
 import type { BuildCoordinator } from "./builds.ts";
 import type { CommandRunner } from "./command.ts";
@@ -307,9 +307,13 @@ export class Reconciler {
 			"running",
 			"initializing database and storage",
 		);
+		const worktreeOwner = await stat(environment.path);
+		await rm(join(dirname(composeFile), "postgres-url"), { force: true });
 		await this.compose(environment, envFile, composeFile, [
 			"run",
 			"--rm",
+			"--user",
+			`${worktreeOwner.uid}:${worktreeOwner.gid}`,
 			"database-init",
 		]);
 		await this.compose(environment, envFile, composeFile, [
@@ -552,6 +556,7 @@ export class Reconciler {
 			this.sharedProject(),
 			join(this.primaryWorktree, "dev/shared.compose.yaml"),
 			this.primaryWorktree,
+			this.sharedEnvironment(),
 		);
 	}
 

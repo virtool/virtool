@@ -11,11 +11,6 @@ virtool-dev up
 virtool-dev ui
 ```
 
-The server and CLI are TypeScript under `src/server` and `src/cli.ts`. The
-client-only React UI is under `src/client`, uses Tailwind CSS 4 through its Vite
-plugin, and receives snapshots over Server-Sent Events. Shared API shapes stay
-in `src/shared`; this app does not import from `@virtool/web`.
-
 ```shell
 pnpm --filter @virtool/dev test
 pnpm --filter @virtool/dev typecheck

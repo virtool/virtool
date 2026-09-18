@@ -1,6 +1,7 @@
 #!/bin/sh
 set -eu
 
+worktree="$(pwd -P)"
 primary_line="$(git worktree list --porcelain | sed -n '1p')"
 primary="${primary_line#worktree }"
-exec pnpm --dir "${primary}" --filter @virtool/dev exec tsx "${primary}/apps/dev/src/main.ts" "$@"
+exec pnpm --dir "${primary}" --filter @virtool/dev exec tsx "${primary}/apps/dev/src/main.ts" "$@" --worktree "${worktree}"

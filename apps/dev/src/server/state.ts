@@ -2,7 +2,12 @@ import { randomBytes, randomUUID } from "node:crypto";
 import { mkdirSync } from "node:fs";
 import { join } from "node:path";
 import { DatabaseSync } from "node:sqlite";
-import type { DesiredState, Environment, Operation } from "../shared/types.ts";
+import type {
+	DesiredState,
+	Environment,
+	OpenPullRequest,
+	Operation,
+} from "../shared/types.ts";
 import { CONFIG_VERSION } from "./constants.ts";
 
 type WorktreeInput = {
@@ -338,6 +343,7 @@ export class StateStore {
 				state: Environment["observed"];
 			}
 		>,
+		openPullRequests: Map<string, OpenPullRequest> = new Map(),
 	): Environment[] {
 		const rows = this.database
 			.prepare(`
@@ -375,6 +381,7 @@ export class StateStore {
 				lastError: row.last_error,
 				name: row.name,
 				observed: observedState,
+				openPullRequest: openPullRequests.get(row.branch) ?? null,
 				operation,
 				path: row.path,
 				ready: current?.ready ?? false,

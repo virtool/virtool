@@ -4,18 +4,20 @@
 
 https://dev.localhost:9443 {
 	tls internal
-	reverse_proxy host.docker.internal:9843
+	reverse_proxy unix//run/virtool-dev/http.sock
 }
 
-https://*.localhost:9443 {
-	tls internal
+https://:9443 {
+	tls internal {
+		on_demand
+	}
 
 	@upload path /devstoreaccount1/*
 	handle @upload {
 		reverse_proxy azurite:10000
 	}
 
-	@environment host_regexp environment ^([a-z0-9-]+)\.localhost$
+	@environment header_regexp environment Host ^([a-z0-9-]+)\.localhost(?::\d+)?$
 	handle @environment {
 		reverse_proxy {re.environment.1}:9900
 	}

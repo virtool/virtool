@@ -1,17 +1,22 @@
 import { spawn } from "node:child_process";
 import { createHash } from "node:crypto";
 import { access, readdir, readFile, rm } from "node:fs/promises";
+import { createServer } from "node:http";
 import { join } from "node:path";
-import { serve } from "@hono/node-server";
+import { getRequestListener } from "@hono/node-server";
 import { createLogger } from "@virtool/logger";
 import type { Mutation, Snapshot } from "../shared/types.ts";
 import { createApi, SnapshotFeed } from "./api.ts";
 import { BuildCoordinator } from "./builds.ts";
 import type { CommandRunner } from "./command.ts";
 import { runCommand } from "./command.ts";
-import { HTTP_PORT, PROTOCOL_VERSION } from "./constants.ts";
+import { PROTOCOL_VERSION } from "./constants.ts";
 import { DockerEvents } from "./events.ts";
-import { discoverWorktrees, resolveRepository } from "./git.ts";
+import {
+	discoverWorktrees,
+	getOpenPullRequests,
+	resolveRepository,
+} from "./git.ts";
 import { Reconciler } from "./lifecycle.ts";
 import { checkPortAvailable } from "./port.ts";
 import { type ControlRequest, createControlServer } from "./socket.ts";
@@ -53,7 +58,12 @@ function emptySnapshot(repositoryId: string, concurrency: number): Snapshot {
 			lastError: null,
 			queues: {},
 		},
-		shared: { initialized: false, lastError: null, services: {} },
+		shared: {
+			initialized: false,
+			lastError: null,
+			services: {},
+			storage: { azurite: null, postgres: null },
+		},
 		updatedAt: Date.now(),
 		updateAvailable: false,
 	};
@@ -121,17 +131,17 @@ export async function runDaemon(
 		}
 		refreshPromise = (async () => {
 			try {
-				const worktrees = await discoverWorktrees(
-					run,
-					repository.primaryWorktree,
-				);
+				const [worktrees, openPullRequests] = await Promise.all([
+					discoverWorktrees(run, repository.primaryWorktree),
+					getOpenPullRequests(run, repository.primaryWorktree),
+				]);
 				store.synchronizeWorktrees(worktrees);
 				const [observed, shared, currentHash] = await Promise.all([
 					reconciler.observe(),
 					reconciler.inspectShared(),
 					hashDirectory(join(repository.primaryWorktree, "apps/dev")),
 				]);
-				const environments = store.listEnvironments(observed);
+				const environments = store.listEnvironments(observed, openPullRequests);
 				feed.set({
 					...feed.get(),
 					environments,
@@ -229,10 +239,15 @@ export async function runDaemon(
 		() => reconciler.resetShared(),
 		join(repository.stateDirectory, "logs/daemon.log"),
 	);
-	const http = serve({
-		fetch: app.fetch,
-		hostname: "127.0.0.1",
-		port: HTTP_PORT,
+	const httpSocketPath = join(repository.stateDirectory, "http.sock");
+	await rm(httpSocketPath, { force: true });
+	const http = createServer(getRequestListener(app.fetch));
+	await new Promise<void>((resolve, reject) => {
+		http.once("error", reject);
+		http.listen(httpSocketPath, () => {
+			http.off("error", reject);
+			resolve();
+		});
 	});
 	const controlServer = await createControlServer(socketPath, control);
 	const discovery = setInterval(
@@ -252,7 +267,10 @@ export async function runDaemon(
 		new Promise<void>((resolve) => http.close(() => resolve())),
 		new Promise<void>((resolve) => controlServer.close(() => resolve())),
 	]);
-	await rm(socketPath, { force: true });
+	await Promise.all([
+		rm(socketPath, { force: true }),
+		rm(httpSocketPath, { force: true }),
+	]);
 	store.close();
 	if (restartRequested) {
 		const child = spawn(

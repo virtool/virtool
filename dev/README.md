@@ -27,7 +27,8 @@ The daemon resolves the repository through the absolute Git common directory and
 stores its generated UUID, SQLite state, operation history, secrets, rendered
 Compose inputs, and logs under `<git-common-dir>/virtool-dev/`. Its CLI uses a
 repository-specific Unix socket below `$XDG_RUNTIME_DIR/virtool-dev/`. The HTTP
-API listens only on loopback and Caddy exposes it at the management origin.
+API uses a repository-local Unix socket that Caddy exposes at the management
+origin.
 
 The daemon continuously reconciles Git, durable desired state, and Docker. Git
 worktrees appear in the UI before an environment is created. The first `up`

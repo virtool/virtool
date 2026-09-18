@@ -13,7 +13,12 @@ const snapshot: Snapshot = {
 		lastError: null,
 		queues: {},
 	},
-	shared: { initialized: false, lastError: null, services: {} },
+	shared: {
+		initialized: false,
+		lastError: null,
+		services: {},
+		storage: { azurite: null, postgres: null },
+	},
 	updatedAt: 1,
 	updateAvailable: false,
 };

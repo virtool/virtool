@@ -1,6 +1,6 @@
 import { spawn } from "node:child_process";
 import { closeSync, mkdirSync, openSync, renameSync, statSync } from "node:fs";
-import { access, type FileHandle, open, rm } from "node:fs/promises";
+import { access, type FileHandle, open, realpath, rm } from "node:fs/promises";
 import { connect } from "node:net";
 import { join } from "node:path";
 import { runCommand } from "./server/command.ts";
@@ -114,7 +114,7 @@ export async function runCli(args: string[]): Promise<void> {
 	if (process.platform !== "linux") {
 		throw new Error("virtool-dev supports Linux only");
 	}
-	const cwd = process.cwd();
+	const cwd = await realpath(process.env.OLDPWD ?? process.cwd());
 	const repository = await resolveRepository(runCommand, cwd);
 	const store = new StateStore(repository.stateDirectory);
 	const socketPath = join(
