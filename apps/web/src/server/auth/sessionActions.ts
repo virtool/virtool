@@ -25,8 +25,12 @@ export const signOut = createServerOnlyFn(async () => {
 	return auth.api.signOut({ headers: getRequest().headers });
 });
 
-/** Mint the sole ordinary session after a restricted remediation commits. */
-export const createRemediationSession = createServerOnlyFn(
+/**
+ * Mint a replacement session with a fresh immutable absolute window.
+ *
+ * @public
+ */
+export const createReplacementSession = createServerOnlyFn(
 	async (userId: number) => {
 		const { auth } = await import("./instance");
 		return auth.api.createRemediationSession({ body: { userId } });

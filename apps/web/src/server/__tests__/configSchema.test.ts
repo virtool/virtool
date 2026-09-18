@@ -375,6 +375,64 @@ describe("parseServerConfig", () => {
 		});
 	});
 
+	describe("browser session timing", () => {
+		it("uses the documented defaults", () => {
+			expect(parseServerConfig(minimalS3).browserSessionTiming).toEqual({
+				idleLifetimeSeconds: 3_600,
+				absoluteLifetimeSeconds: 86_400,
+				minimumRefreshIntervalSeconds: 300,
+			});
+		});
+
+		it("reads independently configured whole seconds", () => {
+			const config = parseServerConfig({
+				...minimalS3,
+				VT_AUTH_SESSION_IDLE_LIFETIME_SECONDS: "600",
+				VT_AUTH_SESSION_ABSOLUTE_LIFETIME_SECONDS: "1800",
+				VT_AUTH_SESSION_MINIMUM_REFRESH_INTERVAL_SECONDS: "120",
+			} as NodeJS.ProcessEnv);
+
+			expect(config.browserSessionTiming).toEqual({
+				idleLifetimeSeconds: 600,
+				absoluteLifetimeSeconds: 1_800,
+				minimumRefreshIntervalSeconds: 120,
+			});
+		});
+
+		it.each(["0", "-1", "1.5", "Infinity", "one hour"])(
+			"rejects malformed duration %s",
+			(value) => {
+				expect(() =>
+					parseServerConfig({
+						...minimalS3,
+						VT_AUTH_SESSION_IDLE_LIFETIME_SECONDS: value,
+					} as NodeJS.ProcessEnv),
+				).toThrow(/VT_AUTH_SESSION_IDLE_LIFETIME_SECONDS/);
+			},
+		);
+
+		it("rejects an idle lifetime longer than the absolute lifetime", () => {
+			expect(() =>
+				parseServerConfig({
+					...minimalS3,
+					VT_AUTH_SESSION_IDLE_LIFETIME_SECONDS: "601",
+					VT_AUTH_SESSION_ABSOLUTE_LIFETIME_SECONDS: "600",
+				} as NodeJS.ProcessEnv),
+			).toThrow(/must not exceed/);
+		});
+
+		it("requires room for a useful refresh before the absolute cap", () => {
+			expect(() =>
+				parseServerConfig({
+					...minimalS3,
+					VT_AUTH_SESSION_IDLE_LIFETIME_SECONDS: "600",
+					VT_AUTH_SESSION_ABSOLUTE_LIFETIME_SECONDS: "650",
+					VT_AUTH_SESSION_MINIMUM_REFRESH_INTERVAL_SECONDS: "60",
+				} as NodeJS.ProcessEnv),
+			).toThrow(/at least one refresh interval/);
+		});
+	});
+
 	describe("file-backed values", () => {
 		let directory: string;
 
@@ -400,6 +458,27 @@ describe("parseServerConfig", () => {
 			} as NodeJS.ProcessEnv);
 
 			expect(config.metricsToken).toBe("from-file");
+		});
+
+		it("reads browser session durations from files", () => {
+			const config = parseServerConfig({
+				...minimalS3,
+				VT_AUTH_SESSION_IDLE_LIFETIME_SECONDS_FILE: write("idle", "600"),
+				VT_AUTH_SESSION_ABSOLUTE_LIFETIME_SECONDS_FILE: write(
+					"absolute",
+					"1800",
+				),
+				VT_AUTH_SESSION_MINIMUM_REFRESH_INTERVAL_SECONDS_FILE: write(
+					"refresh",
+					"120",
+				),
+			} as NodeJS.ProcessEnv);
+
+			expect(config.browserSessionTiming).toEqual({
+				idleLifetimeSeconds: 600,
+				absoluteLifetimeSeconds: 1_800,
+				minimumRefreshIntervalSeconds: 120,
+			});
 		});
 
 		it("resolves the auth secret and public origin from mounted files", () => {

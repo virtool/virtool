@@ -21,6 +21,7 @@ import { z } from "zod";
 import { db, keyring } from "../composition";
 import { config } from "../config";
 import { ClientError } from "../errors";
+import { refreshBrowserPrincipalActivity } from "./activity";
 import { realCookies } from "./cookies";
 import {
 	createFirstUser,
@@ -34,10 +35,11 @@ import {
 } from "./core";
 import { checkHandle, checkReservedHandle } from "./handle";
 import { getClientIp } from "./ip";
-import { open, passwordResetOnly, setupOnly } from "./policy";
+import { UnauthorizedError } from "./middleware";
+import { authenticated, open, passwordResetOnly, setupOnly } from "./policy";
 import { checkConfiguredPasswordLength } from "./service";
 import {
-	createRemediationSession,
+	createReplacementSession,
 	signInUsername,
 	signOut,
 	verifyTwoFactor,
@@ -210,6 +212,25 @@ export const logoutFn = createServerFn({ method: "POST" })
 		return null;
 	});
 
+/** Record that an authenticated browser remains in the foreground. */
+export const heartbeatBrowserSessionFn = createServerFn({ method: "POST" })
+	.middleware([authenticated()])
+	.handler(async ({ context }) => {
+		const principal = await refreshBrowserPrincipalActivity(
+			context.principal,
+			"foreground_heartbeat",
+		);
+		if (!principal) {
+			setResponseStatus(401);
+			throw new UnauthorizedError();
+		}
+
+		return {
+			nextHeartbeatInMilliseconds:
+				config.browserSessionTiming.minimumRefreshIntervalSeconds * 1_000,
+		};
+	});
+
 /**
  * Reset-password server function. The caller has a Better Auth or retained
  * legacy reset session restricted until the password change is complete.
@@ -260,7 +281,7 @@ async function finishEmailRemediation(
 	});
 	realCookies.clearLegacySession();
 	realCookies.clearSetup();
-	await createRemediationSession(user.id);
+	await createReplacementSession(user.id);
 	return { complete: true as const };
 }
 

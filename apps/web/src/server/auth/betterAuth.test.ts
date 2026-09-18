@@ -38,6 +38,11 @@ beforeAll(async () => {
 		publicOrigin: ORIGIN,
 		webauthnRpId: "virtool.test",
 		secret: "test-auth-secret-test-auth-secret",
+		browserSessionTiming: {
+			idleLifetimeSeconds: 3_600,
+			absoluteLifetimeSeconds: 86_400,
+			minimumRefreshIntervalSeconds: 300,
+		},
 	});
 }, 60_000);
 
@@ -128,10 +133,27 @@ describe("legacy bcrypt credentials", () => {
 
 		// The session is Better Auth's own table, keyed to the integer users.id.
 		const [session] = await db
-			.select({ userId: authSessions.userId })
+			.select({
+				userId: authSessions.userId,
+				lastActivityAt: authSessions.lastActivityAt,
+				expiresAt: authSessions.expiresAt,
+				idleExpiresAt: authSessions.idleExpiresAt,
+				absoluteExpiresAt: authSessions.absoluteExpiresAt,
+				lastRefreshedAt: authSessions.lastRefreshedAt,
+			})
 			.from(authSessions);
 
 		expect(session?.userId).toBe(userId);
+		expect(session?.expiresAt).toEqual(session?.idleExpiresAt);
+		expect(session?.lastRefreshedAt).toEqual(session?.lastActivityAt);
+		expect(
+			(session?.expiresAt.getTime() ?? 0) -
+				(session?.lastActivityAt.getTime() ?? 0),
+		).toBe(3_600_000);
+		expect(
+			(session?.absoluteExpiresAt.getTime() ?? 0) -
+				(session?.lastActivityAt.getTime() ?? 0),
+		).toBe(86_400_000);
 
 		// Verification must not rewrite the stored hash.
 		const [account] = await db
