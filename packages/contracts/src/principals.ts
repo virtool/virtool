@@ -1,12 +1,21 @@
 import type { Permissions } from "./permissions";
 import type { RestrictedSetup } from "./setup";
 
+/** The server-authoritative clocks attached to a browser session. */
+export type BrowserSessionTiming = {
+	lastActivityAt: Date;
+	expiresAt: Date;
+	absoluteExpiresAt: Date;
+};
+
 /** A human authorized for ordinary application access by a browser session. */
 export type BrowserPrincipal = {
 	kind: "browser";
 	userId: number;
 	/** Stable session-row identifier; never the bearer token. */
 	sessionId: number;
+	sessionStore: "better_auth" | "legacy";
+	timing: BrowserSessionTiming;
 };
 
 /** A signed-in human restricted to replacing a forced-reset password. */
@@ -15,6 +24,8 @@ export type PasswordResetPrincipal = {
 	userId: number;
 	/** Stable session-row identifier; never the bearer token. */
 	sessionId: number;
+	sessionStore: "better_auth" | "legacy";
+	timing: BrowserSessionTiming;
 };
 
 /** A machine caller authenticated by a Virtool API key. */

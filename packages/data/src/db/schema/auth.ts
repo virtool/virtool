@@ -75,6 +75,10 @@ export const authSessions = pgTable(
 	{
 		id: integer("id").primaryKey().generatedAlwaysAsIdentity(),
 		expiresAt: timestamp("expires_at").notNull(),
+		lastActivityAt: timestamp("last_activity_at").notNull(),
+		idleExpiresAt: timestamp("idle_expires_at").notNull(),
+		absoluteExpiresAt: timestamp("absolute_expires_at").notNull(),
+		lastRefreshedAt: timestamp("last_refreshed_at").notNull(),
 		token: text("token").notNull(),
 		createdAt: timestamp("created_at").notNull(),
 		updatedAt: timestamp("updated_at").notNull(),
@@ -90,6 +94,7 @@ export const authSessions = pgTable(
 		}).onDelete("cascade"),
 		unique("auth_sessions_token_key").on(table.token),
 		index("idx_auth_sessions_expires_at").on(table.expiresAt),
+		index("idx_auth_sessions_absolute_expires_at").on(table.absoluteExpiresAt),
 		index("idx_auth_sessions_user_id").on(table.userId),
 	],
 );

@@ -37,7 +37,7 @@ import { getClientIp } from "./ip";
 import { open, passwordResetOnly, setupOnly } from "./policy";
 import { checkConfiguredPasswordLength } from "./service";
 import {
-	createRemediationSession,
+	createReplacementSession,
 	signInUsername,
 	signOut,
 	verifyTwoFactor,
@@ -260,7 +260,7 @@ async function finishEmailRemediation(
 	});
 	realCookies.clearLegacySession();
 	realCookies.clearSetup();
-	await createRemediationSession(user.id);
+	await createReplacementSession(user.id);
 	return { complete: true as const };
 }
 

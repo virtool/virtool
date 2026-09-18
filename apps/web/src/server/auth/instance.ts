@@ -16,6 +16,7 @@ export const auth = createAuth({
 	publicOrigin: config.publicOrigin,
 	webauthnRpId: config.webauthnRpId,
 	secret: config.authSecret,
+	browserSessionTiming: config.browserSessionTiming,
 });
 
 /**

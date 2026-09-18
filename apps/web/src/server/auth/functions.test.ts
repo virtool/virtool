@@ -74,6 +74,11 @@ beforeAll(async () => {
 		publicOrigin: "https://virtool.test",
 		webauthnRpId: "virtool.test",
 		secret: "test-auth-secret-test-auth-secret",
+		browserSessionTiming: {
+			idleLifetimeSeconds: 3_600,
+			absoluteLifetimeSeconds: 86_400,
+			minimumRefreshIntervalSeconds: 300,
+		},
 	});
 }, 60_000);
 afterAll(async () => {

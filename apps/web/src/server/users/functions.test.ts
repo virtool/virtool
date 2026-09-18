@@ -22,6 +22,7 @@ const setCookie = vi.fn();
 const setResponseStatus = vi.fn();
 const signInUsername = vi.fn();
 let currentUserId: number | null = null;
+let currentSessionId: number | null = null;
 
 vi.mock("@tanstack/react-start/server", () => ({
 	deleteCookie: vi.fn(),
@@ -41,10 +42,10 @@ vi.mock("../auth/instance", () => ({
 	auth: {
 		api: {
 			getSession: vi.fn(async () =>
-				currentUserId === null
+				currentUserId === null || currentSessionId === null
 					? null
 					: {
-							session: { id: 1 },
+							session: { id: currentSessionId },
 							user: { id: currentUserId },
 						},
 			),
@@ -96,6 +97,7 @@ afterAll(async () => {
 beforeEach(async () => {
 	vi.clearAllMocks();
 	currentUserId = null;
+	currentSessionId = null;
 	await db.delete(authSessions);
 	await db.delete(users);
 	getRequest.mockReturnValue(
@@ -125,6 +127,7 @@ async function signIn(password = "old_password_123") {
 	});
 	const session = await seedSession(db, userId);
 	currentUserId = userId;
+	currentSessionId = session.sessionId;
 
 	return { session, userId };
 }
