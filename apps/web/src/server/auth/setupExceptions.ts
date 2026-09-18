@@ -1,4 +1,9 @@
 import type { SetupPurpose } from "@virtool/contracts";
+import {
+	completeEmailRemediationFn,
+	getEmailRemediationFn,
+	submitEmailRemediationFn,
+} from "./functions";
 
 /** A server function a restricted setup principal may call, and for what. */
 export type SetupEndpoint = {
@@ -20,13 +25,19 @@ export type SetupEndpoint = {
  * purpose, and one declaring `setupOnly()` must appear here.
  * `authorization.test.ts` pins both directions, so the two cannot drift.
  *
- * **It is deliberately empty.** The setup surfaces themselves — invitation and
- * bootstrap completion, account recovery, required-TOTP enrollment — are the
- * dependent issues' work. This issue builds the boundary they are declared
- * against, and an empty allowlist means a restricted principal currently
- * reaches nothing at all, which is the right default for a door with no rooms
- * behind it yet.
- *
  * @public
  */
-export const setupEndpoints: ReadonlyArray<SetupEndpoint> = [];
+export const setupEndpoints: ReadonlyArray<SetupEndpoint> = [
+	{
+		fn: completeEmailRemediationFn,
+		purpose: "email_remediation",
+	},
+	{
+		fn: getEmailRemediationFn,
+		purpose: "email_remediation",
+	},
+	{
+		fn: submitEmailRemediationFn,
+		purpose: "email_remediation",
+	},
+];

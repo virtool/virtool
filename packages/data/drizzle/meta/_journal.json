@@ -218,6 +218,13 @@
       "when": 1789600234309,
       "tag": "0030_sparkling_silverclaw",
       "breakpoints": true
+    },
+    {
+      "idx": 31,
+      "version": "7",
+      "when": 1789690907834,
+      "tag": "0031_stage_email_remediation_candidate",
+      "breakpoints": true
     }
   ]
 }

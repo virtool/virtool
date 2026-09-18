@@ -1,11 +1,17 @@
 import { createHmac } from "node:crypto";
+import { seedSetupSession, seedUser } from "@virtool/data/auth/test/fixtures";
+import { createKeyring } from "@virtool/data/crypto/keyring";
 import type { Db } from "@virtool/data/db/pg";
 import { authAccounts, authSessions } from "@virtool/data/db/schema/auth";
+import { emailOutbox } from "@virtool/data/db/schema/emailOutbox";
+import { settings } from "@virtool/data/db/schema/settings";
+import { setupSessions } from "@virtool/data/db/schema/setup";
 import { users } from "@virtool/data/db/schema/users";
 import {
 	createTestDatabase,
 	type TestDatabase,
 } from "@virtool/data/db/test/fixtures";
+import { seedSettings } from "@virtool/data/settings/test/fixtures";
 import { afterAll, beforeAll, beforeEach, expect, it, vi } from "vitest";
 import { callServerFn, type SplitServerFnModule } from "../test/serverFn";
 
@@ -34,10 +40,17 @@ vi.mock("@tanstack/react-start/server", () => ({
 	},
 }));
 let db: Db;
+const keyring = createKeyring(
+	Buffer.alloc(32, 1).toString("base64"),
+	undefined,
+);
 let auth: ReturnType<typeof import("./betterAuth").createAuth>;
 vi.mock("../composition", () => ({
 	get db() {
 		return db;
+	},
+	get keyring() {
+		return keyring;
 	},
 }));
 vi.mock("./instance", () => ({
@@ -69,7 +82,100 @@ afterAll(async () => {
 beforeEach(async () => {
 	cookies.clear();
 	vi.clearAllMocks();
+	await db.delete(emailOutbox);
+	await db.delete(settings);
 	await db.delete(users);
+});
+
+it("completes offline remediation with an unverified email and one session", async () => {
+	const userId = await seedUser(db, {
+		email: "",
+		handle: "Alice",
+		password: Buffer.from(hash),
+	});
+
+	expect(
+		await callServerFn(handlers, "loginFn", {
+			handle: "alice",
+			password,
+		}),
+	).toEqual({ remediation: true, reset: false });
+	expect(await db.select().from(setupSessions)).toHaveLength(1);
+
+	expect(
+		await callServerFn(handlers, "submitEmailRemediationFn", {
+			email: " Alice@Example.com ",
+		}),
+	).toEqual({ complete: true });
+
+	const [user] = await db.select().from(users);
+	expect(user).toMatchObject({
+		id: userId,
+		email: "alice@example.com",
+		emailVerified: false,
+	});
+	expect(user?.authMigratedAt).toBeInstanceOf(Date);
+	expect(await db.select().from(authAccounts)).toHaveLength(1);
+	expect(await db.select().from(authSessions)).toHaveLength(1);
+	expect(await db.select().from(setupSessions)).toHaveLength(0);
+	expect(
+		Number(
+			(await auth.api.getSession({ headers: getRequest().headers }))?.user.id,
+		),
+	).toBe(userId);
+});
+
+it("requires the emailed token before marking a remediated email verified", async () => {
+	const userId = await seedUser(db, {
+		email: "",
+		handle: "Alice",
+		password: Buffer.from(hash),
+	});
+	const encrypted = keyring.encrypt("resend_api_key", "re_secret");
+	if (!encrypted.ok) {
+		throw new Error("expected a ready keyring");
+	}
+	await seedSettings(db, {
+		emailApiKey: encrypted.value,
+		emailEnabled: true,
+		emailSenderAddress: "noreply@virtool.test",
+	});
+	const setup = await seedSetupSession(db, userId, "email_remediation");
+	cookies.set("setup_session_id", setup.sessionId);
+	cookies.set("setup_session_token", setup.token);
+
+	expect(
+		await callServerFn(handlers, "submitEmailRemediationFn", {
+			email: "alice@example.com",
+			redirect: "/samples",
+		}),
+	).toEqual({ complete: false });
+
+	const [queued] = await db.select().from(emailOutbox);
+	if (queued?.template.type !== "email_verification") {
+		throw new Error("expected an email verification message");
+	}
+	const token = new URL(queued.template.verifyUrl).searchParams.get("token");
+	expect(new URL(queued.template.verifyUrl).searchParams.get("redirect")).toBe(
+		"/samples",
+	);
+	if (!token) {
+		throw new Error("expected a verification token");
+	}
+	expect((await db.select().from(users))[0]).toMatchObject({
+		email: "",
+		emailVerified: false,
+	});
+	expect(await db.select().from(authAccounts)).toHaveLength(0);
+
+	expect(
+		await callServerFn(handlers, "completeEmailRemediationFn", { token }),
+	).toEqual({ complete: true });
+
+	const [user] = await db.select().from(users);
+	expect(user?.emailVerified).toBe(true);
+	expect(user?.authMigratedAt).toBeInstanceOf(Date);
+	expect(await db.select().from(authSessions)).toHaveLength(1);
 });
 
 async function enroll(forceReset: boolean) {

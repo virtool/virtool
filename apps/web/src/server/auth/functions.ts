@@ -2,16 +2,29 @@ import * as Sentry from "@sentry/tanstackstart-react";
 import { createServerFn } from "@tanstack/react-start";
 import { setResponseStatus } from "@tanstack/react-start/server";
 import { PasswordTooShortError } from "@virtool/contracts";
+import {
+	completeEmailRemediation,
+	EmailInUseError,
+	getEmailRemediationState,
+	SetupNotEligibleError,
+	startEmailRemediation,
+} from "@virtool/data/auth/lifecycle";
+import { SetupCredentialError } from "@virtool/data/auth/setup";
 import { users } from "@virtool/data/db/schema/users";
+import {
+	getEmailSettings,
+	resolveEmailDelivery,
+} from "@virtool/data/email/settings";
 import { APIError } from "better-auth/api";
 import { eq } from "drizzle-orm";
 import { z } from "zod";
-import { db } from "../composition";
+import { db, keyring } from "../composition";
+import { config } from "../config";
 import { ClientError } from "../errors";
 import { realCookies } from "./cookies";
 import {
 	createFirstUser,
-	establishLegacySession,
+	establishEmailRemediationSession,
 	FirstUserExistsError,
 	InvalidCredentialsError,
 	loginLegacyIdentity,
@@ -21,9 +34,14 @@ import {
 } from "./core";
 import { checkHandle, checkReservedHandle } from "./handle";
 import { getClientIp } from "./ip";
-import { open, passwordResetOnly } from "./policy";
+import { open, passwordResetOnly, setupOnly } from "./policy";
 import { checkConfiguredPasswordLength } from "./service";
-import { signInUsername, signOut, verifyTwoFactor } from "./sessionActions";
+import {
+	createRemediationSession,
+	signInUsername,
+	signOut,
+	verifyTwoFactor,
+} from "./sessionActions";
 
 // `password` is deliberately not length-checked here. Login authenticates an
 // existing credential rather than setting a new one, and rejecting a short
@@ -42,6 +60,15 @@ const resetPasswordSchema = z.object({
 const createFirstUserSchema = z.object({
 	handle: z.string().trim().min(1),
 	password: z.string(),
+});
+
+const emailRemediationSchema = z.object({
+	email: z.string().trim().min(1).max(254),
+	redirect: z.string().max(2048).optional(),
+});
+
+const emailRemediationTokenSchema = z.object({
+	token: z.string().regex(/^[0-9a-f]{64}$/),
 });
 
 function rethrowAsHttp(err: unknown): never {
@@ -63,6 +90,14 @@ function rethrowAsHttp(err: unknown): never {
 	if (err instanceof PasswordReuseError) {
 		setResponseStatus(400);
 		throw new ClientError("Cannot reuse current password", 400);
+	}
+	if (
+		err instanceof EmailInUseError ||
+		err instanceof SetupCredentialError ||
+		err instanceof SetupNotEligibleError
+	) {
+		setResponseStatus(400);
+		throw new ClientError("Email remediation could not be completed.", 400);
 	}
 	throw err;
 }
@@ -195,7 +230,7 @@ export const resetPasswordFn = createServerFn({ method: "POST" })
 			if (result.migrated) {
 				await signInUsername(result.handle, data.password);
 			} else {
-				await establishLegacySession(
+				await establishEmailRemediationSession(
 					db,
 					realCookies,
 					context.principal.userId,
@@ -203,7 +238,90 @@ export const resetPasswordFn = createServerFn({ method: "POST" })
 				);
 			}
 			setResponseStatus(200);
-			return { login: false as const, reset: false as const };
+			return {
+				login: false as const,
+				remediation: !result.migrated,
+				reset: false as const,
+			};
+		} catch (err) {
+			rethrowAsHttp(err);
+		}
+	});
+
+async function finishEmailRemediation(
+	userId: number,
+	token: string,
+	verified: boolean,
+) {
+	const user = await completeEmailRemediation(db, {
+		token,
+		userId,
+		verified,
+	});
+	realCookies.clearLegacySession();
+	realCookies.clearSetup();
+	await createRemediationSession(user.id);
+	return { complete: true as const };
+}
+
+/** Read resumable state for the restricted email-remediation wall. */
+export const getEmailRemediationFn = createServerFn({ method: "GET" })
+	.middleware([setupOnly("email_remediation")])
+	.handler(async ({ context }) => {
+		try {
+			return await getEmailRemediationState(db, context.principal.userId);
+		} catch (err) {
+			rethrowAsHttp(err);
+		}
+	});
+
+/** Stage an address, then verify it by mail or complete under offline policy. */
+export const submitEmailRemediationFn = createServerFn({ method: "POST" })
+	.middleware([setupOnly("email_remediation")])
+	.validator(emailRemediationSchema)
+	.handler(async ({ context, data }) => {
+		try {
+			const settings = await getEmailSettings(db);
+			const delivery = resolveEmailDelivery(settings, keyring);
+			const result = await startEmailRemediation(db, {
+				deliveryAvailable:
+					settings.enabled && delivery.availability === "ready",
+				email: data.email,
+				getVerificationUrl: (token) => {
+					const search = new URLSearchParams({ token });
+					if (data.redirect) {
+						search.set("redirect", data.redirect);
+					}
+					return `${config.publicOrigin}/email-remediation-verify?${search}`;
+				},
+				userId: context.principal.userId,
+			});
+
+			if (result.status === "verification_required") {
+				return { complete: false as const };
+			}
+
+			return await finishEmailRemediation(
+				context.principal.userId,
+				result.token,
+				false,
+			);
+		} catch (err) {
+			rethrowAsHttp(err);
+		}
+	});
+
+/** Spend the mailbox challenge and finish a restricted email remediation. */
+export const completeEmailRemediationFn = createServerFn({ method: "POST" })
+	.middleware([setupOnly("email_remediation")])
+	.validator(emailRemediationTokenSchema)
+	.handler(async ({ context, data }) => {
+		try {
+			return await finishEmailRemediation(
+				context.principal.userId,
+				data.token,
+				true,
+			);
 		} catch (err) {
 			rethrowAsHttp(err);
 		}

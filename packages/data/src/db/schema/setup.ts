@@ -44,6 +44,8 @@ export const setupTokens = pgTable(
 		id: integer("id").primaryKey().generatedAlwaysAsIdentity(),
 		userId: integer("user_id").notNull(),
 		purpose: text("purpose").$type<SetupPurpose>().notNull(),
+		/** Purpose-bound candidate address for an email-remediation token. */
+		candidateEmail: text("candidate_email"),
 		/**
 		 * SHA-256 of the plaintext token, the only form it is ever stored in.
 		 * The plaintext is returned to the issuing caller once and never again.

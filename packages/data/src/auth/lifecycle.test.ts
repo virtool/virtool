@@ -2,16 +2,22 @@ import { eq } from "drizzle-orm";
 import { beforeEach, describe, expect, it } from "vitest";
 import type { Db } from "../db/pg";
 import { authAccounts, authTwoFactors } from "../db/schema/auth";
+import { emailOutbox } from "../db/schema/emailOutbox";
+import { settings } from "../db/schema/settings";
 import { setupSessions, setupTokens } from "../db/schema/setup";
 import { users } from "../db/schema/users";
 import { createTestDatabase, type TestDatabase } from "../db/test/fixtures";
+import { seedSettings } from "../settings/test/fixtures";
 import {
 	completeAccountSetup,
 	completeEmailRemediation,
 	completeTotpEnrollment,
 	EmailInUseError,
+	getEmailRemediationState,
 	normalizeEmail,
+	prepareEmailRemediation,
 	SetupNotEligibleError,
+	startEmailRemediation,
 	TotpNotEnrolledError,
 } from "./lifecycle";
 import { hashPassword, verifyPassword } from "./password";
@@ -24,6 +30,8 @@ let db: Db;
 beforeEach(async () => {
 	database ??= await createTestDatabase();
 	db = database.db;
+	await db.delete(emailOutbox);
+	await db.delete(settings);
 	await db.delete(setupSessions);
 	await db.delete(setupTokens);
 	await db.delete(authAccounts);
@@ -37,6 +45,19 @@ async function readUser(userId: number) {
 		throw new Error("user missing");
 	}
 	return row;
+}
+
+async function startOfflineEmailRemediation(userId: number, email: string) {
+	const result = await startEmailRemediation(db, {
+		deliveryAvailable: false,
+		email,
+		getVerificationUrl: () => "https://virtool.test/unused",
+		userId,
+	});
+	if (result.status !== "offline") {
+		throw new Error("expected offline remediation");
+	}
+	return result.token;
 }
 
 describe("normalizeEmail", () => {
@@ -273,14 +294,146 @@ describe("completeAccountSetup", () => {
 });
 
 describe("completeEmailRemediation", () => {
+	it("keeps a staged address off the user row until completion", async () => {
+		const userId = await seedUser(db, {
+			email: "legacy@example.com",
+			handle: "Ada",
+		});
+		await seedSettings(db, { emailEnabled: true });
+
+		await startEmailRemediation(db, {
+			deliveryAvailable: true,
+			email: "new@example.com",
+			getVerificationUrl: (token) =>
+				`https://virtool.test/email-remediation-verify?token=${token}`,
+			userId,
+		});
+
+		expect((await readUser(userId)).email).toBe("legacy@example.com");
+		expect(await getEmailRemediationState(db, userId)).toEqual({
+			email: "new@example.com",
+		});
+	});
+
+	it("serializes address resubmission with verification completion", async () => {
+		const userId = await seedUser(db, { handle: "Ada" });
+		const token = await startOfflineEmailRemediation(
+			userId,
+			"first@example.com",
+		);
+		const other = database.connect();
+
+		try {
+			const results = await Promise.allSettled([
+				startEmailRemediation(db, {
+					deliveryAvailable: false,
+					email: "second@example.com",
+					getVerificationUrl: () => "https://virtool.test/unused",
+					userId,
+				}),
+				completeEmailRemediation(other.db, { token, userId, verified: true }),
+			]);
+
+			expect(
+				results.filter((result) => result.status === "fulfilled"),
+			).toHaveLength(1);
+			for (const result of results) {
+				if (result.status === "rejected") {
+					expect(
+						result.reason instanceof SetupCredentialError ||
+							result.reason instanceof SetupNotEligibleError,
+					).toBe(true);
+				}
+			}
+			const row = await readUser(userId);
+			if (results[1].status === "fulfilled") {
+				expect(row.email).toBe("first@example.com");
+				expect(row.authMigratedAt).not.toBeNull();
+			} else {
+				expect(row.authMigratedAt).toBeNull();
+				expect(await getEmailRemediationState(db, userId)).toEqual({
+					email: "second@example.com",
+				});
+			}
+		} finally {
+			await other.close();
+		}
+	});
+
+	it("keeps concurrent address submissions bound to their own tokens", async () => {
+		const userId = await seedUser(db, { handle: "Ada" });
+		await seedSettings(db, { emailEnabled: true });
+		const other = database.connect();
+
+		try {
+			await Promise.all([
+				startEmailRemediation(db, {
+					deliveryAvailable: true,
+					email: "first@example.com",
+					getVerificationUrl: (token) =>
+						`https://virtool.test/email-remediation-verify?token=${token}`,
+					userId,
+				}),
+				startEmailRemediation(other.db, {
+					deliveryAvailable: true,
+					email: "second@example.com",
+					getVerificationUrl: (token) =>
+						`https://virtool.test/email-remediation-verify?token=${token}`,
+					userId,
+				}),
+			]);
+
+			const messages = await db.select().from(emailOutbox);
+			if (
+				messages.length !== 2 ||
+				messages.some(
+					(message) => message.template.type !== "email_verification",
+				)
+			) {
+				throw new Error("expected two verification messages");
+			}
+			const attempts = await Promise.allSettled(
+				messages.map((message) => {
+					if (message.template.type !== "email_verification") {
+						throw new Error("expected verification message");
+					}
+					const token = new URL(message.template.verifyUrl).searchParams.get(
+						"token",
+					);
+					if (!token) {
+						throw new Error("expected verification token");
+					}
+					return completeEmailRemediation(db, {
+						token,
+						userId,
+						verified: true,
+					});
+				}),
+			);
+			expect(
+				attempts.filter((result) => result.status === "fulfilled"),
+			).toHaveLength(1);
+			const winner = attempts.findIndex(
+				(result) => result.status === "fulfilled",
+			);
+			expect((await readUser(userId)).email).toBe(messages[winner]?.recipient);
+		} finally {
+			await other.close();
+		}
+	});
+
 	it("claims the address and derives an identity from the legacy hash", async () => {
 		const password = await hashPassword("legacy-password");
 		const userId = await seedUser(db, { handle: "Ada", password });
-		const { token } = await seedSetupToken(db, userId, "email_remediation");
+		const token = await startOfflineEmailRemediation(
+			userId,
+			" Ada@Example.com ",
+		);
 
 		await completeEmailRemediation(db, {
 			token,
-			email: " Ada@Example.com ",
+			userId,
+			verified: true,
 		});
 
 		const row = await readUser(userId);
@@ -298,11 +451,12 @@ describe("completeEmailRemediation", () => {
 			handle: "Ada",
 			password: await hashPassword("legacy-password"),
 		});
-		const { token } = await seedSetupToken(db, userId, "email_remediation");
+		const token = await startOfflineEmailRemediation(userId, "ada@example.com");
 
 		await completeEmailRemediation(db, {
 			token,
-			email: "ada@example.com",
+			userId,
+			verified: true,
 		});
 
 		const other = await seedUser(db, {
@@ -324,47 +478,62 @@ describe("completeEmailRemediation", () => {
 
 	it("refuses a pending account", async () => {
 		const userId = await seedUser(db, { lifecycleState: "pending" });
-		const { token } = await seedSetupToken(db, userId, "email_remediation");
+		const { token } = await seedSetupToken(db, userId, "email_remediation", {
+			candidateEmail: "ada@example.com",
+		});
 
 		await expect(
-			completeEmailRemediation(db, { token, email: "ada@example.com" }),
+			completeEmailRemediation(db, { token, userId, verified: true }),
 		).rejects.toBeInstanceOf(SetupNotEligibleError);
 	});
 
-	it("refuses an empty address", async () => {
+	it("refuses an empty address while staging", async () => {
 		const userId = await seedUser(db);
-		const { token } = await seedSetupToken(db, userId, "email_remediation");
 
 		await expect(
-			completeEmailRemediation(db, { token, email: "   " }),
+			prepareEmailRemediation(db, { userId, email: "   " }),
 		).rejects.toBeInstanceOf(EmailInUseError);
 	});
 
-	it("refuses an address another account already holds", async () => {
+	it("refuses an address another account already holds while staging", async () => {
 		await seedUser(db, { handle: "bob", email: "ada@example.com" });
 		const userId = await seedUser(db, { handle: "ada" });
-		const { token } = await seedSetupToken(db, userId, "email_remediation");
 
 		await expect(
-			completeEmailRemediation(db, { token, email: "ada@example.com" }),
+			prepareEmailRemediation(db, { userId, email: "ada@example.com" }),
 		).rejects.toBeInstanceOf(EmailInUseError);
 	});
 
-	it("is idempotent against a retry with the same address", async () => {
+	it("leaves an offline-remediated address explicitly unverified", async () => {
 		const userId = await seedUser(db);
-		const first = await seedSetupToken(db, userId, "email_remediation");
+		const token = await startOfflineEmailRemediation(userId, "ada@example.com");
 		await completeEmailRemediation(db, {
-			token: first.token,
-			email: "ada@example.com",
+			token,
+			userId,
+			verified: false,
 		});
 
-		const second = await seedSetupToken(db, userId, "email_remediation");
-		await completeEmailRemediation(db, {
-			token: second.token,
-			email: "ada@example.com",
-		});
-
+		expect((await readUser(userId)).emailVerified).toBe(false);
 		expect(await db.select().from(authAccounts)).toHaveLength(1);
+	});
+
+	it("binds completion to the restricted setup user", async () => {
+		const firstUserId = await seedUser(db, { handle: "ada" });
+		const secondUserId = await seedUser(db, { handle: "bob" });
+		const { token } = await seedSetupToken(
+			db,
+			firstUserId,
+			"email_remediation",
+			{ candidateEmail: "ada@example.com" },
+		);
+
+		await expect(
+			completeEmailRemediation(db, {
+				token,
+				userId: secondUserId,
+				verified: true,
+			}),
+		).rejects.toBeInstanceOf(SetupCredentialError);
 	});
 });
 

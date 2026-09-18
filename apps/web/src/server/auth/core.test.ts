@@ -84,7 +84,7 @@ async function seedCredentialedUser(forceReset = true): Promise<number> {
 }
 
 describe("loginLegacyIdentity", () => {
-	it("exchanges a valid unmigrated password for a legacy session", async () => {
+	it("exchanges a valid unmigrated password for a remediation session", async () => {
 		const password = await hashPassword("legacy-password-123");
 		const userId = await seedUser(db, {
 			email: "",
@@ -99,18 +99,19 @@ describe("loginLegacyIdentity", () => {
 				password: "legacy-password-123",
 				ip: "127.0.0.1",
 			}),
-		).resolves.toEqual({ reset: false });
+		).resolves.toEqual({ remediation: true, reset: false });
 
-		const [session] = await db.select().from(sessions);
+		const [session] = await db.select().from(setupSessions);
 		expect(session).toMatchObject({
 			userId,
-			sessionType: "authenticated",
+			purpose: "email_remediation",
 			ip: "127.0.0.1",
 		});
-		expect(cookies.setLegacySession).toHaveBeenCalledWith(
+		expect(cookies.setSetupSession).toHaveBeenCalledWith(
 			session?.sessionId,
 			expect.any(String),
 		);
+		expect(await db.select().from(sessions)).toHaveLength(0);
 	});
 
 	it("refuses the wrong legacy password", async () => {
@@ -126,6 +127,29 @@ describe("loginLegacyIdentity", () => {
 		).rejects.toBeInstanceOf(InvalidCredentialsError);
 		expect(await db.select().from(sessions)).toHaveLength(0);
 	});
+
+	it.each(["invalid-handle", "invalid-password"] as const)(
+		"generically refuses an ineligible legacy identity with %s",
+		async (reason) => {
+			const identity =
+				reason === "invalid-handle"
+					? {
+							handle: "bad handle",
+							password: await hashPassword("legacy-password-123"),
+						}
+					: { handle: "alice", password: Buffer.from("not-bcrypt") };
+			await seedUser(db, identity);
+
+			await expect(
+				loginLegacyIdentity(db, fakeCookies(), {
+					handle: identity.handle,
+					password: "legacy-password-123",
+					ip: "127.0.0.1",
+				}),
+			).rejects.toBeInstanceOf(InvalidCredentialsError);
+			expect(await db.select().from(setupSessions)).toHaveLength(0);
+		},
+	);
 
 	it("keeps an unmigrated forced-reset user in the legacy reset flow", async () => {
 		const password = await hashPassword("legacy-password-123");

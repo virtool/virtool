@@ -9,12 +9,18 @@ import {
 	authVerifications,
 } from "@virtool/data/db/schema/auth";
 import { users } from "@virtool/data/db/schema/users";
-import { betterAuth } from "better-auth";
+import { type BetterAuthPlugin, betterAuth } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
-import { APIError, createAuthMiddleware } from "better-auth/api";
+import {
+	APIError,
+	createAuthEndpoint,
+	createAuthMiddleware,
+} from "better-auth/api";
+import { setSessionCookie } from "better-auth/cookies";
 import { twoFactor, username } from "better-auth/plugins";
 import { tanstackStartCookies } from "better-auth/tanstack-start";
 import { eq } from "drizzle-orm";
+import { z } from "zod";
 import { HANDLE_MAX_LENGTH, HANDLE_MIN_LENGTH, isValidHandle } from "./handle";
 
 /** Where the Better Auth handler is mounted. */
@@ -52,6 +58,35 @@ export type AuthOptions = {
 	webauthnRpId: string;
 	secret: string;
 };
+
+function remediationSessionPlugin() {
+	return {
+		id: "virtool-remediation-session",
+		endpoints: {
+			createRemediationSession: createAuthEndpoint.serverOnly(
+				{
+					method: "POST",
+					body: z.object({ userId: z.number().int().positive() }),
+				},
+				async (ctx) => {
+					const user = await ctx.context.internalAdapter.findUserById(
+						String(ctx.body.userId),
+					);
+					if (!user) {
+						throw new APIError("UNAUTHORIZED");
+					}
+
+					const session = await ctx.context.internalAdapter.createSession(
+						user.id,
+					);
+					await setSessionCookie(ctx, { session, user });
+
+					return ctx.json({ user });
+				},
+			),
+		},
+	} satisfies BetterAuthPlugin;
+}
 
 /**
  * Build the Better Auth instance.
@@ -181,6 +216,7 @@ export function createAuth({
 			},
 		},
 		plugins: [
+			remediationSessionPlugin(),
 			// A Virtool handle is case-insensitive and keeps its original case for
 			// display, which is exactly the split this plugin draws between the
 			// normalized `username` it matches on and the `displayUsername` it

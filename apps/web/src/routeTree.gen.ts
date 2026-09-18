@@ -10,6 +10,8 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as AuthenticatedRouteImport } from './routes/_authenticated'
+import { Route as EmailRemediationRouteImport } from './routes/email-remediation'
+import { Route as EmailRemediationVerifyRouteImport } from './routes/email-remediation-verify'
 import { Route as EventsRouteImport } from './routes/events'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as MetricsRouteImport } from './routes/metrics'
@@ -91,6 +93,16 @@ import { Route as OtusOtuIdIsolatesIsolateIdSequencesSequenceIdFastaRouteImport 
 
 const AuthenticatedRoute = AuthenticatedRouteImport.update({
   id: '/_authenticated',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const EmailRemediationRoute = EmailRemediationRouteImport.update({
+  id: '/email-remediation',
+  path: '/email-remediation',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const EmailRemediationVerifyRoute = EmailRemediationVerifyRouteImport.update({
+  id: '/email-remediation-verify',
+  path: '/email-remediation-verify',
   getParentRoute: () => rootRouteImport,
 } as any)
 const EventsRoute = EventsRouteImport.update({
@@ -539,6 +551,8 @@ const OtusOtuIdIsolatesIsolateIdSequencesSequenceIdFastaRoute =
 
 export interface FileRoutesByFullPath {
   '/': typeof AuthenticatedIndexRoute
+  '/email-remediation': typeof EmailRemediationRoute
+  '/email-remediation-verify': typeof EmailRemediationVerifyRoute
   '/events': typeof EventsRoute
   '/login': typeof LoginRoute
   '/metrics': typeof MetricsRoute
@@ -618,6 +632,8 @@ export interface FileRoutesByFullPath {
   '/refs/$refId/otus/$otuId/isolates/': typeof AuthenticatedRefsRefIdOtusOtuIdIsolatesIndexRoute
 }
 export interface FileRoutesByTo {
+  '/email-remediation': typeof EmailRemediationRoute
+  '/email-remediation-verify': typeof EmailRemediationVerifyRoute
   '/events': typeof EventsRoute
   '/login': typeof LoginRoute
   '/metrics': typeof MetricsRoute
@@ -688,6 +704,8 @@ export interface FileRoutesByTo {
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/_authenticated': typeof AuthenticatedRouteWithChildren
+  '/email-remediation': typeof EmailRemediationRoute
+  '/email-remediation-verify': typeof EmailRemediationVerifyRoute
   '/events': typeof EventsRoute
   '/login': typeof LoginRoute
   '/metrics': typeof MetricsRoute
@@ -771,6 +789,8 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/email-remediation'
+    | '/email-remediation-verify'
     | '/events'
     | '/login'
     | '/metrics'
@@ -850,6 +870,8 @@ export interface FileRouteTypes {
     | '/refs/$refId/otus/$otuId/isolates/'
   fileRoutesByTo: FileRoutesByTo
   to:
+    | '/email-remediation'
+    | '/email-remediation-verify'
     | '/events'
     | '/login'
     | '/metrics'
@@ -919,6 +941,8 @@ export interface FileRouteTypes {
   id:
     | '__root__'
     | '/_authenticated'
+    | '/email-remediation'
+    | '/email-remediation-verify'
     | '/events'
     | '/login'
     | '/metrics'
@@ -1001,6 +1025,8 @@ export interface FileRouteTypes {
 }
 export interface RootRouteChildren {
   AuthenticatedRoute: typeof AuthenticatedRouteWithChildren
+  EmailRemediationRoute: typeof EmailRemediationRoute
+  EmailRemediationVerifyRoute: typeof EmailRemediationVerifyRoute
   EventsRoute: typeof EventsRoute
   LoginRoute: typeof LoginRoute
   MetricsRoute: typeof MetricsRoute
@@ -1028,6 +1054,20 @@ declare module '@tanstack/react-router' {
       path: ''
       fullPath: '/'
       preLoaderRoute: typeof AuthenticatedRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/email-remediation': {
+      id: '/email-remediation'
+      path: '/email-remediation'
+      fullPath: '/email-remediation'
+      preLoaderRoute: typeof EmailRemediationRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/email-remediation-verify': {
+      id: '/email-remediation-verify'
+      path: '/email-remediation-verify'
+      fullPath: '/email-remediation-verify'
+      preLoaderRoute: typeof EmailRemediationVerifyRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/events': {
@@ -1882,6 +1922,8 @@ const ApiV1UploadsUploadIdRouteWithChildren =
 
 const rootRouteChildren: RootRouteChildren = {
   AuthenticatedRoute: AuthenticatedRouteWithChildren,
+  EmailRemediationRoute: EmailRemediationRoute,
+  EmailRemediationVerifyRoute: EmailRemediationVerifyRoute,
   EventsRoute: EventsRoute,
   LoginRoute: LoginRoute,
   MetricsRoute: MetricsRoute,
