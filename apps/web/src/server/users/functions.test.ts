@@ -79,6 +79,8 @@ const handlers = (await import(
 const { hashPassword, verifyPassword } = await import(
 	"@virtool/data/auth/password"
 );
+const { SESSION_FRESH_AGE_SECONDS } = await import("../auth/freshness");
+const { SessionNotFreshError } = await import("../auth/policy");
 const { seedSession, seedUser } = await import(
 	"@virtool/data/auth/test/fixtures"
 );
@@ -169,6 +171,26 @@ describe("updateAccountEmail", () => {
 			call("updateAccountEmailFn", { email: "not-an-address" }),
 		).rejects.toThrow("The format of the email is invalid");
 		expect(setResponseStatus).toHaveBeenCalledWith(400);
+		expect((await readUser(userId))?.email).toBe("");
+	});
+
+	it("rejects a valid session whose immutable creation time is stale", async () => {
+		const { session, userId } = await signIn();
+		await db
+			.update(authSessions)
+			.set({
+				createdAt: new Date(
+					Date.now() - (SESSION_FRESH_AGE_SECONDS * 1000 + 1),
+				),
+				expiresAt: new Date(Date.now() + 60_000),
+				updatedAt: new Date(),
+			})
+			.where(eq(authSessions.id, session.sessionId));
+
+		await expect(
+			call("updateAccountEmailFn", { email: "alice@example.com" }),
+		).rejects.toBeInstanceOf(SessionNotFreshError);
+		expect(setResponseStatus).toHaveBeenCalledWith(403);
 		expect((await readUser(userId))?.email).toBe("");
 	});
 });

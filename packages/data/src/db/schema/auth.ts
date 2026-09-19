@@ -20,6 +20,7 @@
 // keep their exact spelling even though their columns are snake_case.
 
 import {
+	bigint,
 	boolean,
 	foreignKey,
 	index,
@@ -171,3 +172,14 @@ export const authPasskeys = pgTable(
 
 /** A row from the `auth_passkeys` table. */
 export type AuthPasskeyRow = typeof authPasskeys.$inferSelect;
+
+export const authRateLimits = pgTable(
+	"auth_rate_limits",
+	{
+		id: integer("id").primaryKey().generatedAlwaysAsIdentity(),
+		key: text("key").notNull(),
+		count: integer("count").notNull(),
+		lastRequest: bigint("last_request", { mode: "number" }).notNull(),
+	},
+	(table) => [unique("auth_rate_limits_key_key").on(table.key)],
+);

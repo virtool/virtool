@@ -12,6 +12,9 @@ export const UNAUTHORIZED_ERROR_NAME = "UnauthorizedError";
  */
 export const FORBIDDEN_ERROR_NAME = "ForbiddenError";
 
+/** Error code returned when a sensitive operation needs recent authentication. */
+export const SESSION_NOT_FRESH_ERROR_NAME = "SESSION_NOT_FRESH";
+
 /**
  * Name of the error the server auth middleware throws when a request carries a
  * restricted setup credential and asks for something outside that credential's

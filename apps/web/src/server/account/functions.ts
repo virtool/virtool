@@ -9,7 +9,8 @@ import {
 	updateApiKey,
 } from "@virtool/data/account/data";
 import { z } from "zod";
-import { authenticated } from "../auth/policy";
+import { PROTECTED_OPERATIONS } from "../auth/freshness";
+import { authenticated, recentlyAuthenticated } from "../auth/policy";
 import { db } from "../composition";
 import { ClientError } from "../errors";
 import { rowIdSchema } from "../validation";
@@ -40,7 +41,7 @@ export const findApiKeysFn = createServerFn({ method: "GET" })
 	.handler(async ({ context }) => findApiKeys(db, context.principal.userId));
 
 export const createApiKeyFn = createServerFn({ method: "POST" })
-	.middleware([authenticated()])
+	.middleware([recentlyAuthenticated(PROTECTED_OPERATIONS.apiKeyCreate)])
 	.validator(createApiKeySchema)
 	.handler(async ({ context, data }) => {
 		const { key, apiKey } = await createApiKey(db, context.principal.userId, {
@@ -52,7 +53,9 @@ export const createApiKeyFn = createServerFn({ method: "POST" })
 	});
 
 export const updateApiKeyFn = createServerFn({ method: "POST" })
-	.middleware([authenticated()])
+	.middleware([
+		recentlyAuthenticated(PROTECTED_OPERATIONS.apiKeyPermissionsUpdate),
+	])
 	.validator(updateApiKeySchema)
 	.handler(async ({ context, data }) => {
 		try {
@@ -68,7 +71,7 @@ export const updateApiKeyFn = createServerFn({ method: "POST" })
 	});
 
 export const deleteApiKeyFn = createServerFn({ method: "POST" })
-	.middleware([authenticated()])
+	.middleware([recentlyAuthenticated(PROTECTED_OPERATIONS.apiKeyDelete)])
 	.validator(keyIdSchema)
 	.handler(async ({ context, data }) => {
 		try {

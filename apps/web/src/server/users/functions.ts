@@ -25,10 +25,15 @@ import {
 import { z } from "zod";
 import { realCookies } from "../auth/cookies";
 import { establishLegacySession } from "../auth/core";
+import { PROTECTED_OPERATIONS } from "../auth/freshness";
 import { checkHandle, checkReservedHandle } from "../auth/handle";
 import { getClientIp } from "../auth/ip";
 import { requireAdminRole } from "../auth/middleware";
-import { adminRole, authenticated } from "../auth/policy";
+import {
+	adminRole,
+	authenticated,
+	recentlyAuthenticated,
+} from "../auth/policy";
 import { checkConfiguredPasswordLength } from "../auth/service";
 import { signInUsername } from "../auth/sessionActions";
 import { db } from "../composition";
@@ -273,7 +278,7 @@ export const updateAccountHandleFn = createServerFn({ method: "POST" })
 	});
 
 export const updateAccountEmailFn = createServerFn({ method: "POST" })
-	.middleware([authenticated()])
+	.middleware([recentlyAuthenticated(PROTECTED_OPERATIONS.accountEmailChange)])
 	.validator(accountEmailSchema)
 	.handler(async ({ context, data }) => {
 		checkEmail(data.email);
@@ -286,7 +291,9 @@ export const updateAccountEmailFn = createServerFn({ method: "POST" })
 	});
 
 export const changePasswordFn = createServerFn({ method: "POST" })
-	.middleware([authenticated()])
+	.middleware([
+		recentlyAuthenticated(PROTECTED_OPERATIONS.accountPasswordChange),
+	])
 	.validator(changePasswordSchema)
 	.handler(async ({ context, data }) => {
 		try {
