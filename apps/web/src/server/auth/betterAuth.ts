@@ -4,6 +4,7 @@ import type { Db } from "@virtool/data/db/pg";
 import {
 	authAccounts,
 	authPasskeys,
+	authRateLimits,
 	authSessions,
 	authTwoFactors,
 	authVerifications,
@@ -24,6 +25,7 @@ import { and, eq } from "drizzle-orm";
 import { z } from "zod";
 import { SESSION_FRESH_AGE_SECONDS } from "./freshness";
 import { HANDLE_MAX_LENGTH, HANDLE_MIN_LENGTH, isValidHandle } from "./handle";
+import { recentAuthenticationPlugin } from "./recentAuthenticationChallenge";
 
 /** Where the Better Auth handler is mounted. */
 export const AUTH_BASE_PATH = "/api/auth";
@@ -176,11 +178,12 @@ export function createAuth({
 	webauthnRpId,
 	secret,
 }: AuthOptions) {
-	return betterAuth({
+	const auth = betterAuth({
 		appName: "Virtool",
 		baseURL: publicOrigin,
 		basePath: AUTH_BASE_PATH,
 		secret,
+		rateLimit: { enabled: true, storage: "database" },
 		// The one origin this instance answers on. Better Auth otherwise trusts
 		// whatever `Host` says, and every callback and WebAuthn ceremony would
 		// then validate against an attacker-supplied value.
@@ -197,6 +200,7 @@ export function createAuth({
 				verification: authVerifications,
 				twoFactor: authTwoFactors,
 				passkey: authPasskeys,
+				rateLimit: authRateLimits,
 			},
 		}),
 		session: {
@@ -288,6 +292,21 @@ export function createAuth({
 		},
 		plugins: [
 			virtoolSessionPlugin(db),
+			recentAuthenticationPlugin(
+				async function verify(headers, challenge): Promise<void> {
+					if (challenge.method === "password") {
+						await auth.api.verifyPassword({
+							headers,
+							body: { password: challenge.password },
+						});
+					} else {
+						await auth.api.verifyTOTP({
+							headers,
+							body: { code: challenge.code, trustDevice: false },
+						});
+					}
+				},
+			),
 			// A Virtool handle is case-insensitive and keeps its original case for
 			// display, which is exactly the split this plugin draws between the
 			// normalized `username` it matches on and the `displayUsername` it
@@ -324,6 +343,7 @@ export function createAuth({
 			tanstackStartCookies(),
 		],
 	});
+	return auth;
 }
 
 const FORCED_RESET_ALLOWED_PATHS = new Set([

@@ -19,8 +19,7 @@ import { callServerFn, type SplitServerFnModule } from "../test/serverFn";
 
 const getRequest = vi.fn();
 const setResponseStatus = vi.fn();
-const verifyPassword = vi.fn();
-const verifyTOTP = vi.fn();
+const handleAuthRequest = vi.fn();
 const createStepUpSession = vi.fn();
 const setContext = vi.fn();
 let currentUserId: number | null = null;
@@ -37,6 +36,7 @@ vi.mock("@sentry/tanstackstart-react", () => ({
 }));
 
 vi.mock("./instance", () => ({
+	handleAuthRequest,
 	auth: {
 		api: {
 			createStepUpSession,
@@ -48,8 +48,6 @@ vi.mock("./instance", () => ({
 							user: { id: currentUserId },
 						},
 			),
-			verifyPassword,
-			verifyTOTP,
 		},
 	},
 }));
@@ -88,11 +86,15 @@ beforeEach(async () => {
 	await db.delete(users);
 	getRequest.mockReturnValue(
 		new Request("https://virtool.test/_serverFn/test", {
-			headers: { cookie: "better-auth.session_token=secret" },
+			headers: {
+				cookie: "better-auth.session_token=secret",
+				"x-forwarded-for": "192.0.2.1",
+			},
 		}),
 	);
-	verifyPassword.mockResolvedValue({ status: true });
-	verifyTOTP.mockResolvedValue({ token: "never-returned", user: {} });
+	handleAuthRequest.mockImplementation(async () =>
+		Response.json({ status: true }),
+	);
 	createStepUpSession.mockResolvedValue({
 		createdAt: new Date(),
 		sessionId: 99,
@@ -149,9 +151,18 @@ describe("challengeRecentAuthenticationFn", () => {
 			password: "correct-password",
 		});
 
-		expect(verifyPassword).toHaveBeenCalledWith({
-			headers: expect.any(Headers),
-			body: { password: "correct-password" },
+		const request = handleAuthRequest.mock.calls[0]?.[0] as Request;
+		expect(request.url).toBe(
+			"https://virtool.test/api/auth/virtool-session/challenge",
+		);
+		expect(request.method).toBe("POST");
+		expect(request.headers.get("x-forwarded-for")).toBe("192.0.2.1");
+		expect(request.headers.get("cookie")).toBe(
+			"better-auth.session_token=secret",
+		);
+		expect(await request.json()).toEqual({
+			method: "password",
+			password: "correct-password",
 		});
 		expect(createStepUpSession).toHaveBeenCalledWith({
 			headers: expect.any(Headers),
@@ -164,7 +175,7 @@ describe("challengeRecentAuthenticationFn", () => {
 		});
 	});
 
-	it("uses native TOTP verification without trusting the device", async () => {
+	it("forwards TOTP challenges to the rate-limited handler", async () => {
 		await signIn({ totp: true });
 
 		await call("challengeRecentAuthenticationFn", {
@@ -172,10 +183,8 @@ describe("challengeRecentAuthenticationFn", () => {
 			code: "012345",
 		});
 
-		expect(verifyTOTP).toHaveBeenCalledWith({
-			headers: expect.any(Headers),
-			body: { code: "012345", trustDevice: false },
-		});
+		const request = handleAuthRequest.mock.calls[0]?.[0] as Request;
+		expect(await request.json()).toEqual({ method: "totp", code: "012345" });
 	});
 
 	it.each([
@@ -189,7 +198,9 @@ describe("challengeRecentAuthenticationFn", () => {
 		}),
 	])("returns one generic response for an invalid challenge", async (error) => {
 		await signIn({ totp: true });
-		verifyTOTP.mockRejectedValue(error);
+		handleAuthRequest.mockResolvedValue(
+			Response.json(error.body, { status: error.statusCode }),
+		);
 
 		await expect(
 			call("challengeRecentAuthenticationFn", {
@@ -200,13 +211,10 @@ describe("challengeRecentAuthenticationFn", () => {
 		expect(setResponseStatus).toHaveBeenCalledWith(400);
 	});
 
-	it("preserves Better Auth's lockout status without exposing details", async () => {
+	it("preserves the handler rate-limit status without rotating the session", async () => {
 		await signIn({ totp: true });
-		verifyTOTP.mockRejectedValue(
-			new APIError("TOO_MANY_REQUESTS", {
-				code: "ACCOUNT_TEMPORARILY_LOCKED",
-				message: "locked",
-			}),
+		handleAuthRequest.mockResolvedValue(
+			Response.json({ message: "Too many requests" }, { status: 429 }),
 		);
 
 		await expect(
@@ -216,11 +224,12 @@ describe("challengeRecentAuthenticationFn", () => {
 			}),
 		).rejects.toThrow("Authentication challenge failed.");
 		expect(setResponseStatus).toHaveBeenCalledWith(429);
+		expect(createStepUpSession).not.toHaveBeenCalled();
 	});
 
 	it("does not disguise an operational provider failure", async () => {
 		await signIn();
-		verifyPassword.mockRejectedValue(new Error("provider unavailable"));
+		handleAuthRequest.mockRejectedValue(new Error("provider unavailable"));
 
 		await expect(
 			call("challengeRecentAuthenticationFn", {
@@ -231,13 +240,23 @@ describe("challengeRecentAuthenticationFn", () => {
 		expect(createStepUpSession).not.toHaveBeenCalled();
 	});
 
+	it("does not treat a handler failure as an invalid credential", async () => {
+		await signIn();
+		handleAuthRequest.mockResolvedValue(new Response(null, { status: 500 }));
+		await expect(
+			call("challengeRecentAuthenticationFn", {
+				method: "password",
+				password: "correct-password",
+			}),
+		).rejects.toThrow("Authentication challenge provider failed.");
+		expect(createStepUpSession).not.toHaveBeenCalled();
+		expect(setResponseStatus).not.toHaveBeenCalled();
+	});
+
 	it("preserves unauthorized when the session ends during verification", async () => {
 		await signIn();
-		verifyPassword.mockRejectedValue(
-			new APIError("UNAUTHORIZED", {
-				code: "UNAUTHORIZED",
-				message: "Unauthorized",
-			}),
+		handleAuthRequest.mockResolvedValue(
+			Response.json({ code: "UNAUTHORIZED" }, { status: 401 }),
 		);
 
 		await expect(

@@ -1,13 +1,25 @@
 import type { AccountLifecycleState } from "@virtool/contracts";
 import type { Db } from "@virtool/data/db/pg";
-import { authAccounts, authSessions } from "@virtool/data/db/schema/auth";
+import {
+	authAccounts,
+	authRateLimits,
+	authSessions,
+} from "@virtool/data/db/schema/auth";
 import { users } from "@virtool/data/db/schema/users";
 import {
 	createTestDatabase,
 	type TestDatabase,
 } from "@virtool/data/db/test/fixtures";
 import { eq } from "drizzle-orm";
-import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
+import {
+	afterAll,
+	beforeAll,
+	beforeEach,
+	describe,
+	expect,
+	it,
+	vi,
+} from "vitest";
 import {
 	AUTH_BASE_PATH,
 	createAuth,
@@ -47,7 +59,7 @@ afterAll(async () => {
 });
 
 beforeEach(async () => {
-	await db.delete(users);
+	await Promise.all([db.delete(users), db.delete(authRateLimits)]);
 });
 
 function post(path: string, body: unknown, origin = ORIGIN): Request {
@@ -318,6 +330,125 @@ describe("step-up session replacement", () => {
 		}
 		return { cookie, session };
 	}
+
+	it("shares the challenge limit across methods and releases it after expiry", async () => {
+		const { cookie } = await signInForReplacement();
+		const password = vi.spyOn(auth.api, "verifyPassword");
+		const totp = vi.spyOn(auth.api, "verifyTOTP");
+		try {
+			for (const method of [
+				"password",
+				"totp",
+				"password",
+				"totp",
+				"password",
+			]) {
+				const request = post(
+					"/virtool-session/challenge",
+					method === "password"
+						? { method, password: "wrong-password" }
+						: { method, code: "000000" },
+				);
+				request.headers.set("cookie", cookie);
+				const response = await auth.handler(request);
+				expect(response.status).toBeGreaterThanOrEqual(400);
+				expect(response.status).toBeLessThan(429);
+			}
+			for (const method of ["password", "totp"]) {
+				const request = post(
+					"/virtool-session/challenge",
+					method === "password"
+						? { method, password: LEGACY_PASSWORD }
+						: { method, code: "000000" },
+				);
+				request.headers.set("cookie", cookie);
+				const response = await auth.handler(request);
+				expect(response.status).toBe(429);
+				expect(Number(response.headers.get("x-retry-after"))).toBeGreaterThan(
+					0,
+				);
+			}
+			expect(password).toHaveBeenCalledTimes(3);
+			expect(totp).toHaveBeenCalledTimes(2);
+			expect(totp).toHaveBeenCalledWith({
+				headers: expect.any(Headers),
+				body: { code: "000000", trustDevice: false },
+			});
+			await db.update(authRateLimits).set({ lastRequest: Date.now() - 61_000 });
+			const request = post("/virtool-session/challenge", {
+				method: "password",
+				password: LEGACY_PASSWORD,
+			});
+			request.headers.set("cookie", cookie);
+			expect((await auth.handler(request)).status).toBe(200);
+			expect(password).toHaveBeenCalledTimes(4);
+		} finally {
+			password.mockRestore();
+			totp.mockRestore();
+		}
+	});
+
+	it("shares the challenge budget across instances under concurrent requests", async () => {
+		const { cookie } = await signInForReplacement();
+		const connection = database.connect();
+		const otherAuth = createAuth({
+			db: connection.db,
+			publicOrigin: ORIGIN,
+			webauthnRpId: "virtool.test",
+			secret: "test-auth-secret-test-auth-secret",
+		});
+		try {
+			const responses = await Promise.all(
+				Array.from({ length: 10 }, async (_, index) => {
+					const request = post("/virtool-session/challenge", {
+						method: "totp",
+						code: "000000",
+					});
+					request.headers.set("cookie", cookie);
+					return (index % 2 === 0 ? auth : otherAuth).handler(request);
+				}),
+			);
+			expect(
+				responses.filter((response) => response.status === 429),
+			).toHaveLength(5);
+			expect(
+				responses.filter((response) => response.status === 400),
+			).toHaveLength(5);
+		} finally {
+			await connection.close();
+		}
+	});
+
+	it("keeps challenge budgets separate by client IP", async () => {
+		const { cookie } = await signInForReplacement();
+		for (const ip of [
+			"192.0.2.1",
+			"192.0.2.1",
+			"192.0.2.1",
+			"192.0.2.1",
+			"192.0.2.1",
+			"192.0.2.1",
+			"192.0.2.2",
+		]) {
+			const request = post("/virtool-session/challenge", {
+				method: "totp",
+				code: "000000",
+			});
+			request.headers.set("cookie", cookie);
+			request.headers.set("x-forwarded-for", ip);
+			const response = await auth.handler(request);
+			if (ip === "192.0.2.2") {
+				expect(response.status).toBe(400);
+			}
+		}
+		const request = post("/virtool-session/challenge", {
+			method: "totp",
+			code: "000000",
+		});
+		request.headers.set("cookie", cookie);
+		request.headers.set("x-forwarded-for", "192.0.2.1");
+		expect((await auth.handler(request)).status).toBe(429);
+	});
 
 	it("creates a fresh replacement and revokes the old session", async () => {
 		const { cookie, session: oldSession } = await signInForReplacement();

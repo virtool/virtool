@@ -253,6 +253,13 @@
       "when": 1789768181352,
       "tag": "0035_boring_dorian_gray",
       "breakpoints": true
+    },
+    {
+      "idx": 36,
+      "version": "7",
+      "when": 1789777792881,
+      "tag": "0036_auth_rate_limits",
+      "breakpoints": true
     }
   ]
 }
