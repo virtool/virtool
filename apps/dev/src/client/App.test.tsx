@@ -128,7 +128,7 @@ it("shows the open pull request in the worktree details", async () => {
 it("shows actions for ready, stopped, and failed environments", async () => {
 	await renderApp();
 	await openEnvironmentDetails();
-	expect(screen.getByRole("link", { name: "Open app ↗" })).toHaveAttribute(
+	expect(screen.getByRole("link", { name: "Open app" })).toHaveAttribute(
 		"href",
 		getEnvironment().url,
 	);
@@ -146,7 +146,7 @@ it("shows actions for ready, stopped, and failed environments", async () => {
 	await openEnvironmentDetails();
 	expect(screen.getByRole("button", { name: "Start" })).toBeEnabled();
 	expect(
-		screen.queryByRole("link", { name: "Open app ↗" }),
+		screen.queryByRole("link", { name: "Open app" }),
 	).not.toBeInTheDocument();
 	Object.assign(getEnvironment(), {
 		observed: "failed",
@@ -300,14 +300,12 @@ it("stops all created environments without selection", async () => {
 it("shows worktree actions and toggles workflows", async () => {
 	const user = userEvent.setup();
 	await renderApp();
-	expect(screen.getByRole("link", { name: "Open" })).toHaveAttribute(
-		"href",
-		getEnvironment().url,
-	);
-	expect(screen.getByRole("button", { name: "Workflow" })).toHaveAttribute(
-		"aria-pressed",
-		"true",
-	);
+	const open = screen.getByRole("link", { name: "Open" });
+	expect(open).toHaveAttribute("href", getEnvironment().url);
+	expect(open.querySelector(".lucide-external-link")).toBeInTheDocument();
+	const workflows = screen.getByRole("button", { name: "Workflows" });
+	expect(workflows).toHaveAttribute("aria-pressed", "true");
+	expect(workflows.querySelector(".lucide-play")).toBeInTheDocument();
 	await user.click(screen.getByRole("button", { name: "Restart" }));
 	expect(fetch).toHaveBeenLastCalledWith(
 		"/api/environments",
@@ -318,7 +316,11 @@ it("shows worktree actions and toggles workflows", async () => {
 			}),
 		}),
 	);
-	await user.click(screen.getByRole("button", { name: "Workflow" }));
+	await user.click(workflows);
+	expect(screen.queryByText("Request accepted.")).not.toBeInTheDocument();
+	expect(workflows.querySelector(".lucide-loader-circle")).toHaveClass(
+		"animate-spin",
+	);
 	expect(fetch).toHaveBeenLastCalledWith(
 		"/api/environments",
 		expect.objectContaining({
@@ -328,6 +330,25 @@ it("shows worktree actions and toggles workflows", async () => {
 			}),
 		}),
 	);
+	getEnvironment().workflowEnabled = false;
+	await openEnvironmentDetails();
+	await user.click(screen.getByRole("link", { name: "← Back to worktrees" }));
+	const pausedWorkflows = screen.getByRole("button", { name: "Workflows" });
+	expect(pausedWorkflows).toHaveAttribute("aria-pressed", "false");
+	expect(pausedWorkflows.querySelector(".lucide-pause")).toBeInTheDocument();
+});
+
+it("shows progress while a workflow toggle request is pending", async () => {
+	vi.mocked(fetch).mockImplementationOnce(() => new Promise(() => undefined));
+	const user = userEvent.setup();
+	await renderApp();
+	const workflows = screen.getByRole("button", { name: "Workflows" });
+	await user.click(workflows);
+	expect(workflows).toBeDisabled();
+	expect(workflows.querySelector(".lucide-loader-circle")).toHaveClass(
+		"animate-spin",
+	);
+	expect(screen.queryByText("Request accepted.")).not.toBeInTheDocument();
 });
 
 it("sorts ready and failed environments above uncreated worktrees", async () => {
@@ -368,4 +389,14 @@ it("sorts ready and failed environments above uncreated worktrees", async () => 
 			.map((link) => link.textContent),
 	).toEqual(["feature/test", "failed", "stopped", "uncreated"]);
 	expect(screen.getByText("Not created")).toBeVisible();
+	await userEvent.setup().click(screen.getByRole("button", { name: "Create" }));
+	expect(fetch).toHaveBeenLastCalledWith(
+		"/api/environments",
+		expect.objectContaining({
+			body: JSON.stringify({
+				action: "start",
+				worktreeIds: ["uncreated"],
+			}),
+		}),
+	);
 });

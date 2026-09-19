@@ -7,6 +7,7 @@ import {
 	useLocation,
 	useParams,
 } from "@tanstack/react-router";
+import { ExternalLink, LoaderCircle, Pause, Play } from "lucide-react";
 import { useEffect, useState } from "react";
 import type {
 	Environment,
@@ -14,12 +15,9 @@ import type {
 	SchedulerState,
 	ServiceState,
 } from "../shared/types.ts";
+import { Button, buttonClassName } from "./Button.tsx";
 import { useSnapshot } from "./store.ts";
 
-const CONTROL =
-	"cursor-pointer rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-sm font-medium transition-colors hover:bg-slate-50 disabled:cursor-default disabled:opacity-45";
-const PRIMARY = `${CONTROL} border-emerald-700 bg-emerald-700 text-white hover:bg-emerald-800`;
-const DANGER = `${CONTROL} border-red-200 text-red-800 hover:bg-red-50`;
 const PANEL = "rounded-xl border border-slate-200 bg-white";
 const TAB =
 	"cursor-pointer border-b-2 border-transparent px-4 py-3 text-sm font-semibold text-slate-500 transition-colors hover:text-emerald-900 data-[state=active]:border-emerald-700 data-[state=active]:text-emerald-900";
@@ -41,23 +39,28 @@ function useAction() {
 	const [pending, setPending] = useState(false);
 	const [error, setError] = useState<string | null>(null);
 	const [message, setMessage] = useState<string | null>(null);
-	async function run(
-		action: () => Promise<void>,
-		success: string,
-	): Promise<void> {
-		setPending(true);
+	function clear(): void {
 		setError(null);
 		setMessage(null);
+	}
+	async function run(
+		action: () => Promise<void>,
+		success: string | null,
+	): Promise<boolean> {
+		setPending(true);
+		clear();
 		try {
 			await action();
 			setMessage(success);
+			return true;
 		} catch (caught) {
 			setError(caught instanceof Error ? caught.message : String(caught));
+			return false;
 		} finally {
 			setPending(false);
 		}
 	}
-	return { pending, error, message, run };
+	return { pending, error, message, clear, run };
 }
 
 function Feedback({
@@ -275,18 +278,40 @@ function EnvironmentCard({
 	connected: boolean;
 }) {
 	const action = useAction();
+	const workflowAction = useAction();
+	const [workflowTarget, setWorkflowTarget] = useState<boolean | null>(null);
 	const busy = isBusy(environment);
-	const disabled = !environment.id || !connected || busy || action.pending;
+	const workflowChanging = workflowAction.pending || workflowTarget !== null;
+	const disabled = !connected || busy || action.pending || workflowChanging;
 	const status = getEnvironmentStatus(environment);
+	useEffect(() => {
+		if (
+			workflowTarget !== null &&
+			environment.workflowEnabled === workflowTarget
+		) {
+			setWorkflowTarget(null);
+		}
+	}, [environment.workflowEnabled, workflowTarget]);
 	async function act(value: Mutation["action"]): Promise<void> {
-		await action.run(
+		const isWorkflowAction =
+			value === "enable_workflows" || value === "disable_workflows";
+		if (isWorkflowAction) {
+			action.clear();
+			setWorkflowTarget(value === "enable_workflows");
+		} else {
+			workflowAction.clear();
+		}
+		const accepted = await (isWorkflowAction ? workflowAction : action).run(
 			() =>
 				post("/api/environments", {
 					action: value,
 					worktreeIds: [environment.worktreeId],
 				}),
-			"Request accepted.",
+			isWorkflowAction ? null : "Request accepted.",
 		);
+		if (isWorkflowAction && !accepted) {
+			setWorkflowTarget(null);
+		}
 	}
 	return (
 		<article className={`${PANEL} p-4`}>
@@ -302,53 +327,61 @@ function EnvironmentCard({
 				<Badge label={status.label} tone={status.tone} />
 			</div>
 			<div className="mt-3 flex flex-wrap gap-2 border-t border-slate-100 pt-3">
-				{environment.ready && environment.url ? (
+				{!environment.id ? (
+					<Button disabled={disabled} onClick={() => void act("start")}>
+						Create
+					</Button>
+				) : environment.ready && environment.url ? (
 					<a
-						className={CONTROL}
+						className={buttonClassName()}
 						href={environment.url}
 						target="_blank"
 						rel="noreferrer"
 					>
 						Open
+						<ExternalLink aria-hidden="true" />
 					</a>
 				) : (
-					<button className={CONTROL} disabled type="button">
+					<Button disabled>
 						Open
-					</button>
+						<ExternalLink aria-hidden="true" />
+					</Button>
 				)}
-				<button
-					className={CONTROL}
-					disabled={disabled}
-					type="button"
-					onClick={() => void act("stop")}
-				>
-					Stop
-				</button>
-				<button
-					className={CONTROL}
-					disabled={disabled}
-					type="button"
-					onClick={() => void act("restart")}
-				>
-					Restart
-				</button>
-				<button
-					aria-pressed={environment.workflowEnabled}
-					className={environment.workflowEnabled ? PRIMARY : CONTROL}
-					disabled={disabled}
-					type="button"
-					onClick={() =>
-						void act(
-							environment.workflowEnabled
-								? "disable_workflows"
-								: "enable_workflows",
-						)
-					}
-				>
-					Workflow
-				</button>
+				{environment.id && (
+					<>
+						<Button disabled={disabled} onClick={() => void act("stop")}>
+							Stop
+						</Button>
+						<Button disabled={disabled} onClick={() => void act("restart")}>
+							Restart
+						</Button>
+						<Button
+							aria-pressed={environment.workflowEnabled}
+							disabled={disabled}
+							onClick={() =>
+								void act(
+									environment.workflowEnabled
+										? "disable_workflows"
+										: "enable_workflows",
+								)
+							}
+						>
+							{workflowChanging ? (
+								<LoaderCircle className="animate-spin" aria-hidden="true" />
+							) : environment.workflowEnabled ? (
+								<Play aria-hidden="true" />
+							) : (
+								<Pause aria-hidden="true" />
+							)}
+							Workflows
+						</Button>
+					</>
+				)}
 			</div>
-			<Feedback error={action.error} message={action.message} />
+			<Feedback
+				error={action.error ?? workflowAction.error}
+				message={action.message}
+			/>
 		</article>
 	);
 }
@@ -363,8 +396,11 @@ function EnvironmentDetails({
 	connected: boolean;
 }) {
 	const action = useAction();
+	const workflowAction = useAction();
+	const [workflowTarget, setWorkflowTarget] = useState<boolean | null>(null);
 	const busy = isBusy(environment);
-	const disabled = !connected || busy || action.pending;
+	const workflowChanging = workflowAction.pending || workflowTarget !== null;
+	const disabled = !connected || busy || action.pending || workflowChanging;
 	const failed = isFailed(environment);
 	const running = environment.observed === "running";
 	const primary =
@@ -376,6 +412,14 @@ function EnvironmentDetails({
 	const queued = Object.values(
 		scheduler.queues[environment.id ?? ""] ?? {},
 	).reduce((total, count) => total + (count ?? 0), 0);
+	useEffect(() => {
+		if (
+			workflowTarget !== null &&
+			environment.workflowEnabled === workflowTarget
+		) {
+			setWorkflowTarget(null);
+		}
+	}, [environment.workflowEnabled, workflowTarget]);
 	async function act(value: Mutation["action"]): Promise<void> {
 		if (
 			value === "remove" &&
@@ -385,18 +429,29 @@ function EnvironmentDetails({
 		) {
 			return;
 		}
-		await action.run(
+		const isWorkflowAction =
+			value === "enable_workflows" || value === "disable_workflows";
+		if (isWorkflowAction) {
+			action.clear();
+			setWorkflowTarget(value === "enable_workflows");
+		} else {
+			workflowAction.clear();
+		}
+		const accepted = await (isWorkflowAction ? workflowAction : action).run(
 			() =>
 				post("/api/environments", {
 					action: value,
 					worktreeIds: [environment.worktreeId],
 				}),
-			"Request accepted.",
+			isWorkflowAction ? null : "Request accepted.",
 		);
+		if (isWorkflowAction && !accepted) {
+			setWorkflowTarget(null);
+		}
 	}
 	return (
 		<section aria-label={`${environment.branch} details`}>
-			<Link className={CONTROL} to="/">
+			<Link className={buttonClassName()} to="/">
 				← Back to worktrees
 			</Link>
 			<article className={`${PANEL} mt-3 p-5`}>
@@ -417,18 +472,18 @@ function EnvironmentDetails({
 					)}
 					{environment.ready && environment.url && (
 						<a
-							className={PRIMARY}
+							className={buttonClassName("primary")}
 							href={environment.url}
 							target="_blank"
 							rel="noreferrer"
 						>
-							Open app ↗
+							Open app
+							<ExternalLink aria-hidden="true" />
 						</a>
 					)}
-					<button
-						className={environment.ready ? CONTROL : PRIMARY}
+					<Button
 						disabled={disabled}
-						type="button"
+						variant={environment.ready ? "secondary" : "primary"}
 						onClick={() => void act(primary)}
 					>
 						{action.pending
@@ -439,8 +494,10 @@ function EnvironmentDetails({
 									? "Retry"
 									: primary === "stop"
 										? "Stop"
-										: "Start"}
-					</button>
+										: environment.id
+											? "Start"
+											: "Create"}
+					</Button>
 				</div>
 				{busy && (
 					<p role="status" className="mt-3 text-sm text-amber-900">
@@ -449,7 +506,7 @@ function EnvironmentDetails({
 					</p>
 				)}
 				<Feedback
-					error={action.error ?? environment.lastError}
+					error={action.error ?? workflowAction.error ?? environment.lastError}
 					message={action.message}
 				/>
 				<div className="mt-5 space-y-4 border-t border-slate-100 pt-4">
@@ -472,18 +529,15 @@ function EnvironmentDetails({
 					</div>
 					<Services services={environment.services} />
 					<div className="flex flex-wrap gap-2">
-						<button
-							className={CONTROL}
+						<Button
 							disabled={disabled || !environment.id}
-							type="button"
 							onClick={() => void act("restart")}
 						>
 							Restart
-						</button>
-						<button
-							className={CONTROL}
+						</Button>
+						<Button
+							aria-pressed={environment.workflowEnabled}
 							disabled={disabled || !environment.id}
-							type="button"
 							onClick={() =>
 								void act(
 									environment.workflowEnabled
@@ -492,18 +546,22 @@ function EnvironmentDetails({
 								)
 							}
 						>
-							{environment.workflowEnabled
-								? "Pause workflows"
-								: "Enable workflows"}
-						</button>
-						<button
-							className={DANGER}
+							{workflowChanging ? (
+								<LoaderCircle className="animate-spin" aria-hidden="true" />
+							) : environment.workflowEnabled ? (
+								<Play aria-hidden="true" />
+							) : (
+								<Pause aria-hidden="true" />
+							)}
+							Workflows
+						</Button>
+						<Button
 							disabled={disabled || !environment.id}
-							type="button"
+							variant="danger"
 							onClick={() => void act("remove")}
 						>
 							Delete environment data
-						</button>
+						</Button>
 					</div>
 				</div>
 			</article>
@@ -549,8 +607,7 @@ function Scheduler({
 						onChange={(event) => setDraft(event.target.valueAsNumber)}
 					/>
 				</label>
-				<button
-					className={CONTROL}
+				<Button
 					disabled={
 						!connected ||
 						action.pending ||
@@ -559,7 +616,6 @@ function Scheduler({
 						concurrency > 32 ||
 						concurrency === state.concurrency
 					}
-					type="button"
 					onClick={() =>
 						void action.run(async () => {
 							await post("/api/scheduler", { concurrency });
@@ -568,7 +624,7 @@ function Scheduler({
 					}
 				>
 					{action.pending ? "Saving…" : "Save"}
-				</button>
+				</Button>
 				<span>{state.capacity} slots available</span>
 				{state.buildQueue.map((build) => (
 					<span key={`${build.environmentId}-${build.workflow}`}>
@@ -770,16 +826,15 @@ function AppContent() {
 								<h2 className="font-semibold">
 									{snapshot.environments.length} worktrees
 								</h2>
-								<button
-									className={`${CONTROL} ml-auto`}
+								<Button
+									className="ml-auto"
 									disabled={
 										!connected || action.pending || !stoppableIds.length
 									}
-									type="button"
 									onClick={() => void stopAll()}
 								>
 									Stop all
-								</button>
+								</Button>
 							</div>
 							<Feedback
 								error={action.error}
@@ -856,14 +911,13 @@ function AppContent() {
 								Reset deletes shared database, object storage, and HTTPS data
 								for every environment.
 							</p>
-							<button
-								className={DANGER}
-								type="button"
+							<Button
 								disabled={!connected || action.pending}
+								variant="danger"
 								onClick={() => void resetShared()}
 							>
 								Reset shared data
-							</button>
+							</Button>
 						</details>
 					</section>
 				</section>
