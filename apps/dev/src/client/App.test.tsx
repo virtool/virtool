@@ -205,7 +205,11 @@ it("navigates between worktree, shared, workflow, and daemon log views", async (
 	expect(screen.getByText("2.5 MB")).toBeVisible();
 	await user.click(screen.getByRole("link", { name: "Workflows" }));
 	expect(screen.getByRole("region", { name: "Workflows" })).toBeVisible();
-	expect(screen.getByText(/Workflow scheduler/)).toBeVisible();
+	expect(
+		screen.getByRole("heading", { name: "Workflow scheduler" }),
+	).toBeVisible();
+	expect(screen.getByLabelText("Global concurrency")).toBeVisible();
+	expect(document.querySelector("details")).not.toBeInTheDocument();
 	await user.click(screen.getByRole("link", { name: "Daemon log" }));
 	expect(screen.getByRole("heading", { name: "Daemon log" })).toBeVisible();
 });

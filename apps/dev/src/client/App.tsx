@@ -586,53 +586,83 @@ function Scheduler({
 		0,
 	);
 	return (
-		<details className={`${PANEL} p-4`}>
-			<summary className="cursor-pointer text-sm font-semibold">
-				Workflow scheduler · {pending} queued · {state.active.length}/
-				{state.concurrency} running
-			</summary>
-			<Feedback
-				error={action.error ?? state.lastError}
-				message={action.message}
-			/>
-			<div className="mt-4 flex flex-wrap items-end gap-3 text-sm">
-				<label className="grid gap-1 font-medium">
-					Global concurrency
-					<input
-						className="w-24 rounded-lg border border-slate-200 px-3 py-1.5"
-						max={32}
-						min={1}
-						type="number"
-						value={Number.isNaN(concurrency) ? "" : concurrency}
-						onChange={(event) => setDraft(event.target.valueAsNumber)}
-					/>
-				</label>
-				<Button
-					disabled={
-						!connected ||
-						action.pending ||
-						!Number.isInteger(concurrency) ||
-						concurrency < 1 ||
-						concurrency > 32 ||
-						concurrency === state.concurrency
-					}
-					onClick={() =>
-						void action.run(async () => {
-							await post("/api/scheduler", { concurrency });
-							setDraft(null);
-						}, "Concurrency saved.")
-					}
+		<section aria-labelledby="workflow-scheduler-heading" className={PANEL}>
+			<header className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-200 p-4">
+				<h2
+					className="font-semibold text-emerald-950"
+					id="workflow-scheduler-heading"
 				>
-					{action.pending ? "Saving…" : "Save"}
-				</Button>
-				<span>{state.capacity} slots available</span>
-				{state.buildQueue.map((build) => (
-					<span key={`${build.environmentId}-${build.workflow}`}>
-						Building {build.workflow}
-					</span>
-				))}
+					Workflow scheduler
+				</h2>
+				<div className="flex flex-wrap gap-2">
+					<Badge
+						label={`${pending} queued`}
+						tone={pending ? "busy" : "neutral"}
+					/>
+					<Badge
+						label={`${state.active.length}/${state.concurrency} running`}
+						tone={state.active.length ? "good" : "neutral"}
+					/>
+				</div>
+			</header>
+			<div className="p-4">
+				<Feedback
+					error={action.error ?? state.lastError}
+					message={action.message}
+				/>
+				<div className="grid gap-4 text-sm md:grid-cols-2">
+					<section className="rounded-lg bg-slate-50 p-4">
+						<h3 className="font-semibold text-slate-900">Capacity</h3>
+						<p className="mt-2 text-slate-600">
+							{state.capacity} slots available
+						</p>
+						{state.buildQueue.length > 0 && (
+							<div className="mt-3 grid gap-1 text-slate-600">
+								{state.buildQueue.map((build) => (
+									<span key={`${build.environmentId}-${build.workflow}`}>
+										Building {build.workflow}
+									</span>
+								))}
+							</div>
+						)}
+					</section>
+					<section className="rounded-lg border border-slate-200 p-4">
+						<h3 className="font-semibold text-slate-900">Settings</h3>
+						<div className="mt-3 flex flex-wrap items-end gap-3">
+							<label className="grid gap-1 font-medium">
+								Global concurrency
+								<input
+									className="w-24 rounded-lg border border-slate-200 px-3 py-1.5"
+									max={32}
+									min={1}
+									type="number"
+									value={Number.isNaN(concurrency) ? "" : concurrency}
+									onChange={(event) => setDraft(event.target.valueAsNumber)}
+								/>
+							</label>
+							<Button
+								disabled={
+									!connected ||
+									action.pending ||
+									!Number.isInteger(concurrency) ||
+									concurrency < 1 ||
+									concurrency > 32 ||
+									concurrency === state.concurrency
+								}
+								onClick={() =>
+									void action.run(async () => {
+										await post("/api/scheduler", { concurrency });
+										setDraft(null);
+									}, "Concurrency saved.")
+								}
+							>
+								{action.pending ? "Saving…" : "Save"}
+							</Button>
+						</div>
+					</section>
+				</div>
 			</div>
-		</details>
+		</section>
 	);
 }
 
