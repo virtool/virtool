@@ -97,6 +97,8 @@ Workflow images build on demand. The daemon polls the production-compatible
 jobs counts endpoint for ready environments, schedules the four bioinformatics
 executors fairly, and holds one global slot per one-shot container. The default
 repository-wide concurrency is one. Tasks remain a normal long-lived service.
+Polling follows the five-second discovery cycle and container lifecycle changes;
+Docker exec events do not start another poll.
 
 Executors continue to claim atomically from the jobs API and use the production
 ping, cancellation, finalization, failure, and exit contracts. Stopped, failed,
