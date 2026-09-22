@@ -168,6 +168,89 @@ describe("createReferenceV2", () => {
 });
 
 describe("createLocalOtu", () => {
+	it("persists a manual multipartite plan and its first isolate together", async () => {
+		const reference = await createReference();
+		const command = createCommand(randomUUID());
+		const first = command.payload.plan.segments[0];
+		const firstSequence = command.payload.isolate.sequences[0];
+		const secondId = randomUUID();
+		const secondSequenceId = randomUUID();
+		const multipartite = {
+			...command,
+			payload: {
+				...command.payload,
+				plan: {
+					...command.payload.plan,
+					segments: [
+						{ ...first, name: { prefix: "RNA", key: "1" } },
+						{
+							id: secondId,
+							name: { prefix: "RNA", key: "2" },
+							length: 6,
+							lengthTolerance: 0.1,
+							rule: "recommended" as const,
+						},
+					],
+				},
+				isolate: {
+					...command.payload.isolate,
+					sequences: [
+						firstSequence,
+						{
+							id: secondSequenceId,
+							definition: "RNA 2",
+							sequence: "AACCGG",
+							segmentId: secondId,
+						},
+					],
+				},
+			},
+		};
+		const otu = await createLocalOtu(db, {
+			referenceId: reference.id,
+			userId,
+			command: multipartite,
+		});
+		expect(otu.plan.segments).toEqual(
+			expect.arrayContaining([
+				expect.objectContaining({
+					name: { prefix: "RNA", key: "1" },
+					length: 8,
+					rule: "required",
+				}),
+				expect.objectContaining({
+					name: { prefix: "RNA", key: "2" },
+					length: 6,
+					lengthTolerance: 0.1,
+					rule: "recommended",
+				}),
+			]),
+		);
+		expect(
+			otu.isolates[0]?.sequences.map((sequence) => sequence.segmentId).sort(),
+		).toEqual([first.id, secondId].sort());
+		const storedSequences = await Promise.all([
+			getLocalOtuSequence(
+				db,
+				reference.id,
+				command.otuId,
+				command.payload.isolate.id,
+				firstSequence.id,
+			),
+			getLocalOtuSequence(
+				db,
+				reference.id,
+				command.otuId,
+				command.payload.isolate.id,
+				secondSequenceId,
+			),
+		]);
+		expect(storedSequences.map((sequence) => sequence.source)).toEqual([
+			"manual",
+			"manual",
+		]);
+	});
+
 	it("deduplicates active GenBank accessions and permits re-import after deletion", async () => {
 		const reference = await createReference();
 		const command = createCommand(randomUUID());

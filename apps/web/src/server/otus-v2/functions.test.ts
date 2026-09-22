@@ -180,6 +180,56 @@ function call(name: string, data?: unknown) {
 }
 
 describe("createLocalOtu", () => {
+	it("creates a manual multipartite OTU with two validated segment assignments", async () => {
+		const userId = await signIn(db, getRequest, { administratorRole: null });
+		const referenceId = await seedReferenceV2(userId);
+		const command = validCommand();
+		const first = command.payload.plan.segments[0];
+		const firstSequence = command.payload.isolate.sequences[0];
+		const secondId = randomUUID();
+		const multipartite = {
+			...command,
+			payload: {
+				...command.payload,
+				plan: {
+					...command.payload.plan,
+					segments: [
+						{ ...first, name: { prefix: "RNA", key: "1" } },
+						{
+							id: secondId,
+							name: { prefix: "RNA", key: "2" },
+							length: 6,
+							lengthTolerance: 0.1,
+							rule: "required",
+						},
+					],
+				},
+				isolate: {
+					...command.payload.isolate,
+					sequences: [
+						firstSequence,
+						{
+							id: randomUUID(),
+							definition: "RNA 2",
+							sequence: "AACCGG",
+							segmentId: secondId,
+						},
+					],
+				},
+			},
+		};
+		const otu = (await call("createLocalOtuFn", {
+			referenceId,
+			command: multipartite,
+		})) as {
+			plan: { segments: unknown[] };
+			isolates: Array<{ sequences: unknown[] }>;
+		};
+		expect(otu.plan.segments).toHaveLength(2);
+		expect(otu.isolates[0]?.sequences).toHaveLength(2);
+		expect(fetchGenbankRecords).not.toHaveBeenCalled();
+	});
+
 	it("adds a manual isolate to a manual OTU and validates its plan without NCBI", async () => {
 		const userId = await signIn(db, getRequest, { administratorRole: null });
 		const referenceId = await seedReferenceV2(userId);

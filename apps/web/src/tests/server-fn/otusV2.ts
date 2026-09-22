@@ -97,9 +97,3 @@ export function mockGetLocalOtuV2(otu: LocalOtuV2): Mock {
 	);
 	return otuV2ServerFnMocks.getLocalOtuFn;
 }
-
-/** Sets up createLocalOtu to resolve with the given OTU. */
-export function mockCreateLocalOtuV2(otu: LocalOtuV2): Mock {
-	otuV2ServerFnMocks.createLocalOtuFn.mockResolvedValue(otu);
-	return otuV2ServerFnMocks.createLocalOtuFn;
-}

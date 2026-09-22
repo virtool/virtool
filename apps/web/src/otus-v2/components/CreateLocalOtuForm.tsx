@@ -7,6 +7,7 @@ import { getIsolateNameTypeLabel } from "@otus-v2/isolateName";
 import { useCreateLocalOtu } from "@otus-v2/queries";
 import { useNavigate } from "@tanstack/react-router";
 import {
+	CreateLocalOtuCommand,
 	type CreateLocalOtuCommandInput,
 	OtuV2IsolateNameType,
 	OtuV2MoleculeType,
@@ -14,8 +15,18 @@ import {
 	OtuV2Strandedness,
 	OtuV2Topology,
 } from "@virtool/contracts";
-import { useId } from "react";
-import { useForm } from "react-hook-form";
+import { useId, useState } from "react";
+import { useFieldArray, useForm } from "react-hook-form";
+
+type SegmentFormValues = {
+	namePrefix: string;
+	nameKey: string;
+	length: number;
+	lengthTolerance: number;
+	rule: string;
+	sequenceDefinition: string;
+	sequence: string;
+};
 
 type FormValues = {
 	taxonomyName: string;
@@ -23,15 +34,24 @@ type FormValues = {
 	moleculeType: string;
 	strandedness: string;
 	topology: string;
-	segmentLengthTolerance: number;
-	segmentRule: string;
 	isolateNameType: string;
 	isolateNameValue: string;
-	sequenceDefinition: string;
-	sequence: string;
+	segments: SegmentFormValues[];
 };
 
 const selectClasses = cn(inputBaseClasses, inputHeightClass);
+
+function newSegment(lengthTolerance: number): SegmentFormValues {
+	return {
+		namePrefix: "",
+		nameKey: "",
+		length: 0,
+		lengthTolerance,
+		rule: OtuV2SegmentRule.required,
+		sequenceDefinition: "",
+		sequence: "",
+	};
+}
 
 function Options({ values }: { values: readonly string[] }) {
 	return (
@@ -60,6 +80,7 @@ export default function CreateLocalOtuForm({
 }) {
 	const navigate = useNavigate();
 	const mutation = useCreateLocalOtu(referenceId);
+	const [planError, setPlanError] = useState<string>();
 
 	const ids = {
 		taxonomyName: useId(),
@@ -67,17 +88,14 @@ export default function CreateLocalOtuForm({
 		moleculeType: useId(),
 		strandedness: useId(),
 		topology: useId(),
-		segmentLengthTolerance: useId(),
-		segmentRule: useId(),
 		isolateNameType: useId(),
 		isolateNameValue: useId(),
-		sequenceDefinition: useId(),
-		sequence: useId(),
 	};
 
 	const {
 		formState: { errors },
 		handleSubmit,
+		control,
 		register,
 	} = useForm<FormValues>({
 		defaultValues: {
@@ -86,20 +104,24 @@ export default function CreateLocalOtuForm({
 			moleculeType: OtuV2MoleculeType.RNA,
 			strandedness: OtuV2Strandedness.single,
 			topology: OtuV2Topology.linear,
-			segmentLengthTolerance: defaultSegmentLengthTolerance,
-			segmentRule: OtuV2SegmentRule.required,
 			isolateNameType: OtuV2IsolateNameType.isolate,
 			isolateNameValue: "",
-			sequenceDefinition: "",
-			sequence: "",
+			segments: [newSegment(defaultSegmentLengthTolerance)],
 		},
+	});
+	const { fields, append, remove } = useFieldArray({
+		control,
+		name: "segments",
 	});
 
 	function onSubmit(values: FormValues) {
-		const segmentId = crypto.randomUUID();
+		setPlanError(undefined);
 		const acronym = values.acronym.trim();
 		const isolateNameValue = values.isolateNameValue.trim();
-		const segmentLength = values.sequence.replace(/\s/g, "").length;
+		const segments = values.segments.map((segment) => {
+			const id = crypto.randomUUID();
+			return { id, segment };
+		});
 
 		const command: CreateLocalOtuCommandInput = {
 			type: "CreateOTU",
@@ -114,15 +136,16 @@ export default function CreateLocalOtuForm({
 				},
 				plan: {
 					id: crypto.randomUUID(),
-					segments: [
-						{
-							id: segmentId,
-							name: null,
-							length: segmentLength,
-							lengthTolerance: values.segmentLengthTolerance,
-							rule: values.segmentRule as OtuV2SegmentRule,
-						},
-					],
+					segments: segments.map(({ id, segment }) => ({
+						id,
+						name:
+							segment.namePrefix.trim() || segment.nameKey.trim()
+								? { prefix: segment.namePrefix, key: segment.nameKey }
+								: null,
+						length: segment.length,
+						lengthTolerance: segment.lengthTolerance,
+						rule: segment.rule as OtuV2SegmentRule,
+					})),
 				},
 				taxonomy: {
 					kind: "local",
@@ -140,19 +163,23 @@ export default function CreateLocalOtuForm({
 									type: values.isolateNameType as OtuV2IsolateNameType,
 									value: isolateNameValue,
 								},
-					sequences: [
-						{
-							id: crypto.randomUUID(),
-							definition: values.sequenceDefinition,
-							sequence: values.sequence,
-							segmentId,
-						},
-					],
+					sequences: segments.map(({ id, segment }) => ({
+						id: crypto.randomUUID(),
+						definition: segment.sequenceDefinition,
+						sequence: segment.sequence,
+						segmentId: id,
+					})),
 				},
 			},
 		};
 
-		mutation.mutate(command, {
+		const result = CreateLocalOtuCommand.safeParse(command);
+		if (!result.success) {
+			setPlanError(result.error.issues[0]?.message ?? "Invalid OTU plan.");
+			return;
+		}
+
+		mutation.mutate(result.data, {
 			onSuccess: (otu) => {
 				navigate({
 					to: "/refs/alpha/$referenceId/otus/$otuId",
@@ -213,31 +240,6 @@ export default function CreateLocalOtuForm({
 				</select>
 			</InputGroup>
 
-			<InputGroup>
-				<InputLabel htmlFor={ids.segmentLengthTolerance}>
-					Segment length tolerance
-				</InputLabel>
-				<InputSimple
-					id={ids.segmentLengthTolerance}
-					type="number"
-					step="0.01"
-					min={0}
-					max={1}
-					{...register("segmentLengthTolerance", { valueAsNumber: true })}
-				/>
-			</InputGroup>
-
-			<InputGroup>
-				<InputLabel htmlFor={ids.segmentRule}>Segment rule</InputLabel>
-				<select
-					id={ids.segmentRule}
-					className={selectClasses}
-					{...register("segmentRule")}
-				>
-					<Options values={Object.values(OtuV2SegmentRule)} />
-				</select>
-			</InputGroup>
-
 			<div className="grid grid-cols-2 gap-4">
 				<InputGroup>
 					<InputLabel htmlFor={ids.isolateNameType}>
@@ -265,30 +267,131 @@ export default function CreateLocalOtuForm({
 				</InputGroup>
 			</div>
 
-			<InputGroup>
-				<InputLabel htmlFor={ids.sequenceDefinition}>
-					Sequence definition
-				</InputLabel>
-				<InputSimple
-					id={ids.sequenceDefinition}
-					aria-required
-					aria-invalid={Boolean(errors.sequenceDefinition) || undefined}
-					{...register("sequenceDefinition", { required: "Required Field" })}
-				/>
-				<InputError>{errors.sequenceDefinition?.message}</InputError>
-			</InputGroup>
+			{fields.map((field, index) => (
+				<fieldset
+					key={field.id}
+					className="rounded border border-slate-200 p-4"
+				>
+					<legend className="font-semibold">Segment {index + 1}</legend>
+					<div className="grid grid-cols-2 gap-4">
+						<InputGroup>
+							<InputLabel htmlFor={`${field.id}-prefix`}>
+								Segment {index + 1} name prefix
+							</InputLabel>
+							<InputSimple
+								id={`${field.id}-prefix`}
+								{...register(`segments.${index}.namePrefix`)}
+							/>
+						</InputGroup>
+						<InputGroup>
+							<InputLabel htmlFor={`${field.id}-key`}>
+								Segment {index + 1} name key
+							</InputLabel>
+							<InputSimple
+								id={`${field.id}-key`}
+								{...register(`segments.${index}.nameKey`)}
+							/>
+						</InputGroup>
+					</div>
+					<InputGroup>
+						<InputLabel htmlFor={`${field.id}-length`}>
+							Segment {index + 1} expected length
+						</InputLabel>
+						<InputSimple
+							id={`${field.id}-length`}
+							type="number"
+							min={1}
+							aria-required
+							aria-invalid={
+								Boolean(errors.segments?.[index]?.length) || undefined
+							}
+							{...register(`segments.${index}.length`, {
+								valueAsNumber: true,
+								min: { value: 1, message: "Expected length must be positive." },
+							})}
+						/>
+						<InputError>{errors.segments?.[index]?.length?.message}</InputError>
+					</InputGroup>
+					<InputGroup>
+						<InputLabel htmlFor={`${field.id}-tolerance`}>
+							Segment {index + 1} length tolerance
+						</InputLabel>
+						<InputSimple
+							id={`${field.id}-tolerance`}
+							type="number"
+							step="0.01"
+							min={0}
+							max={1}
+							{...register(`segments.${index}.lengthTolerance`, {
+								valueAsNumber: true,
+							})}
+						/>
+					</InputGroup>
+					<InputGroup>
+						<InputLabel htmlFor={`${field.id}-rule`}>
+							Segment {index + 1} rule
+						</InputLabel>
+						<select
+							id={`${field.id}-rule`}
+							className={selectClasses}
+							{...register(`segments.${index}.rule`)}
+						>
+							<Options values={Object.values(OtuV2SegmentRule)} />
+						</select>
+					</InputGroup>
+					<InputGroup>
+						<InputLabel htmlFor={`${field.id}-definition`}>
+							Segment {index + 1} sequence definition
+						</InputLabel>
+						<InputSimple
+							id={`${field.id}-definition`}
+							aria-required
+							aria-invalid={
+								Boolean(errors.segments?.[index]?.sequenceDefinition) ||
+								undefined
+							}
+							{...register(`segments.${index}.sequenceDefinition`, {
+								required: "Required Field",
+							})}
+						/>
+						<InputError>
+							{errors.segments?.[index]?.sequenceDefinition?.message}
+						</InputError>
+					</InputGroup>
+					<InputGroup>
+						<InputLabel htmlFor={`${field.id}-sequence`}>
+							Segment {index + 1} sequence
+						</InputLabel>
+						<TextArea
+							id={`${field.id}-sequence`}
+							aria-required
+							aria-invalid={
+								Boolean(errors.segments?.[index]?.sequence) || undefined
+							}
+							{...register(`segments.${index}.sequence`, {
+								required: "Required Field",
+							})}
+						/>
+						<InputError>
+							{errors.segments?.[index]?.sequence?.message}
+						</InputError>
+					</InputGroup>
+					{fields.length > 1 && (
+						<Button type="button" color="red" onClick={() => remove(index)}>
+							Remove segment {index + 1}
+						</Button>
+					)}
+				</fieldset>
+			))}
+			<Button
+				type="button"
+				color="gray"
+				onClick={() => append(newSegment(defaultSegmentLengthTolerance))}
+			>
+				Add segment
+			</Button>
 
-			<InputGroup>
-				<InputLabel htmlFor={ids.sequence}>Sequence</InputLabel>
-				<TextArea
-					id={ids.sequence}
-					aria-required
-					aria-invalid={Boolean(errors.sequence) || undefined}
-					{...register("sequence", { required: "Required Field" })}
-				/>
-				<InputError>{errors.sequence?.message}</InputError>
-			</InputGroup>
-
+			{planError && <InputError>{planError}</InputError>}
 			{mutation.isError && <InputError>{mutation.error.message}</InputError>}
 
 			<Button color="blue" type="submit" disabled={mutation.isPending}>

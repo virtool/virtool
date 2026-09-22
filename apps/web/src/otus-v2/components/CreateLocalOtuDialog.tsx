@@ -22,7 +22,7 @@ export default function CreateLocalOtuDialog({
 }) {
 	return (
 		<Dialog open={open} onOpenChange={setOpen}>
-			<DialogContent>
+			<DialogContent size="lg">
 				<DialogTitle>Create OTU</DialogTitle>
 				<DialogDescription>Create one complete local OTU.</DialogDescription>
 

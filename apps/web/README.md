@@ -128,6 +128,10 @@ resolves those accessions again at save time and checks taxonomy, sequence
 content, and segment assignment before applying the versioned command. Manual
 `CreateOTU` and `CreateIsolate` requests have no GenBank provenance. Both
 manual and GenBank isolates must satisfy the OTU plan when saved.
+Manual OTU creation accepts one or more segments. Multipartite segments have
+unique names, rules, expected lengths, and tolerances; the first isolate
+supplies one sequence assigned to each segment. The same plan validation runs
+before submission and at the server boundary.
 Creating a GenBank OTU first resolves accessions into a preview of its taxonomy,
 molecule, isolate, and segments. Changing accessions clears that preview; creation
 requires a separate confirmation, and the server checks the records again then.

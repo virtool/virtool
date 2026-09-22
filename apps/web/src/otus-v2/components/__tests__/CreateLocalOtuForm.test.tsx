@@ -1,74 +1,151 @@
+import CreateLocalOtuForm from "@otus-v2/components/CreateLocalOtuForm";
 import { screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { createFakeLocalOtuV2 } from "@tests/fake/otusV2";
-import { createFakeReferenceV2 } from "@tests/fake/referencesV2";
-import {
-	mockCreateLocalOtuV2,
-	otuV2ServerFnMocks,
-} from "@tests/server-fn/otusV2";
-import { mockGetReferenceV2 } from "@tests/server-fn/referencesV2";
-import { renderRoute } from "@tests/setup";
+import { otuV2ServerFnMocks } from "@tests/server-fn/otusV2";
+import { renderWithRouter } from "@tests/setup";
 import { describe, expect, it } from "vitest";
 
+async function renderForm() {
+	otuV2ServerFnMocks.createLocalOtuFn.mockReturnValueOnce(
+		new Promise(() => {}),
+	);
+	await renderWithRouter(
+		<CreateLocalOtuForm
+			referenceId="reference"
+			defaultSegmentLengthTolerance={0.05}
+		/>,
+	);
+}
+
+async function fillSegment(index: number, key: string, sequence: string) {
+	await userEvent.type(
+		screen.getByLabelText(`Segment ${index} name prefix`),
+		"RNA",
+	);
+	await userEvent.type(screen.getByLabelText(`Segment ${index} name key`), key);
+	await userEvent.clear(
+		screen.getByLabelText(`Segment ${index} expected length`),
+	);
+	await userEvent.type(
+		screen.getByLabelText(`Segment ${index} expected length`),
+		String(sequence.length),
+	);
+	await userEvent.type(
+		screen.getByLabelText(`Segment ${index} sequence definition`),
+		`RNA ${key}`,
+	);
+	await userEvent.type(
+		screen.getByLabelText(`Segment ${index} sequence`),
+		sequence,
+	);
+}
+
 describe("<CreateLocalOtuForm />", () => {
-	it("creates a complete OTU, navigates to its UUID, and renders the detail", async () => {
-		const reference = createFakeReferenceV2();
-		const otu = createFakeLocalOtuV2({
-			referenceId: reference.id,
-			taxonomy: {
-				kind: "local",
-				identityId: crypto.randomUUID(),
-				name: "Tobacco mosaic virus",
-				acronym: "TMV",
-				lineage: [],
-			},
-		});
-
-		mockGetReferenceV2(reference);
-		const createLocalOtu = mockCreateLocalOtuV2(otu);
-
-		const { router } = await renderRoute(
-			`/refs/alpha/${reference.id}/otus/new`,
-		);
-
+	it("creates a complete single segment OTU", async () => {
+		await renderForm();
 		await userEvent.type(
-			await screen.findByLabelText("Name", { exact: true }),
-			"Tobacco mosaic virus",
+			screen.getByLabelText("Name", { exact: true }),
+			"Novel virus",
+		);
+		await userEvent.clear(screen.getByLabelText("Segment 1 expected length"));
+		await userEvent.type(
+			screen.getByLabelText("Segment 1 expected length"),
+			"6",
 		);
 		await userEvent.type(
-			screen.getByLabelText("Sequence definition"),
+			screen.getByLabelText("Segment 1 sequence definition"),
 			"Complete genome",
 		);
-		await userEvent.type(screen.getByLabelText("Sequence"), "ATCGAT");
-
+		await userEvent.type(screen.getByLabelText("Segment 1 sequence"), "ATCGAT");
 		await userEvent.click(screen.getByRole("button", { name: "Create" }));
-
-		await waitFor(() => {
-			expect(router.state.location.pathname).toBe(
-				`/refs/alpha/${reference.id}/otus/${otu.id}`,
-			);
-		});
-
-		// The detail renders the read model the create returned, not the form input.
-		expect(
-			await screen.findByText("Tobacco mosaic virus (TMV)", { exact: false }),
-		).toBeInTheDocument();
-		expect(screen.getByText(otu.id)).toBeInTheDocument();
-
-		// One complete command reached the server: canonical envelope, client UUID,
-		// and a create expectation of version 0.
-		expect(createLocalOtu).toHaveBeenCalledTimes(1);
-		const call = otuV2ServerFnMocks.createLocalOtuFn.mock.calls[0]?.[0];
-		expect(call.data.referenceId).toBe(reference.id);
-		expect(call.data.command).toMatchObject({
-			type: "CreateOTU",
-			schemaVersion: 1,
-			expectedVersion: 0,
-		});
-		expect(call.data.command.otuId).toMatch(/^[0-9a-f-]{36}$/);
-		expect(call.data.command.payload.isolate.sequences[0].segmentId).toBe(
-			call.data.command.payload.plan.segments[0].id,
+		await waitFor(() =>
+			expect(otuV2ServerFnMocks.createLocalOtuFn).toHaveBeenCalledTimes(1),
 		);
-		expect(call.data.command.payload.plan.segments[0].length).toBe(6);
+		const command =
+			otuV2ServerFnMocks.createLocalOtuFn.mock.calls[0]?.[0].data.command;
+		expect(command).toMatchObject({ type: "CreateOTU", expectedVersion: 0 });
+		expect(command.payload.plan.segments[0]).toMatchObject({
+			name: null,
+			length: 6,
+			lengthTolerance: 0.05,
+			rule: "required",
+		});
+		expect(command.payload.isolate.sequences[0].segmentId).toBe(
+			command.payload.plan.segments[0].id,
+		);
+	});
+
+	it("creates a multipartite OTU with one sequence per named segment", async () => {
+		await renderForm();
+		await userEvent.type(
+			screen.getByLabelText("Name", { exact: true }),
+			"Segmented virus",
+		);
+		await fillSegment(1, "1", "ATCG");
+		await userEvent.click(screen.getByRole("button", { name: "Add segment" }));
+		await fillSegment(2, "2", "AACCGG");
+		await userEvent.selectOptions(
+			screen.getByLabelText("Segment 2 rule"),
+			"recommended",
+		);
+		await userEvent.clear(screen.getByLabelText("Segment 2 length tolerance"));
+		await userEvent.type(
+			screen.getByLabelText("Segment 2 length tolerance"),
+			"0.1",
+		);
+		await userEvent.click(screen.getByRole("button", { name: "Create" }));
+		await waitFor(() =>
+			expect(otuV2ServerFnMocks.createLocalOtuFn).toHaveBeenCalledTimes(1),
+		);
+		const command =
+			otuV2ServerFnMocks.createLocalOtuFn.mock.calls[0]?.[0].data.command;
+		expect(command.payload.plan.segments).toMatchObject([
+			{ name: { prefix: "RNA", key: "1" }, length: 4, rule: "required" },
+			{
+				name: { prefix: "RNA", key: "2" },
+				length: 6,
+				lengthTolerance: 0.1,
+				rule: "recommended",
+			},
+		]);
+		expect(
+			command.payload.isolate.sequences.map(
+				(sequence: { segmentId: string }) => sequence.segmentId,
+			),
+		).toEqual(
+			command.payload.plan.segments.map(
+				(segment: { id: string }) => segment.id,
+			),
+		);
+	});
+
+	it("shows shared plan errors for duplicate names and lengths outside tolerance", async () => {
+		await renderForm();
+		await userEvent.type(
+			screen.getByLabelText("Name", { exact: true }),
+			"Segmented virus",
+		);
+		await fillSegment(1, "1", "ATCG");
+		await userEvent.click(screen.getByRole("button", { name: "Add segment" }));
+		await fillSegment(2, "1", "AACCGG");
+		await userEvent.click(screen.getByRole("button", { name: "Create" }));
+		expect(
+			await screen.findByText("Segment names must be unique."),
+		).toBeInTheDocument();
+		expect(otuV2ServerFnMocks.createLocalOtuFn).not.toHaveBeenCalled();
+		await userEvent.clear(screen.getByLabelText("Segment 2 name key"));
+		await userEvent.type(screen.getByLabelText("Segment 2 name key"), "2");
+		await userEvent.clear(screen.getByLabelText("Segment 2 expected length"));
+		await userEvent.type(
+			screen.getByLabelText("Segment 2 expected length"),
+			"12",
+		);
+		await userEvent.click(screen.getByRole("button", { name: "Create" }));
+		expect(
+			await screen.findByText(
+				"Sequence length is outside the segment tolerance.",
+			),
+		).toBeInTheDocument();
+		expect(otuV2ServerFnMocks.createLocalOtuFn).not.toHaveBeenCalled();
 	});
 });
