@@ -2,7 +2,12 @@ import { randomBytes, randomUUID } from "node:crypto";
 import { mkdirSync } from "node:fs";
 import { join } from "node:path";
 import { DatabaseSync } from "node:sqlite";
-import type { DesiredState, Environment, Operation } from "../shared/types.ts";
+import type {
+	DesiredState,
+	Environment,
+	OpenPullRequest,
+	Operation,
+} from "../shared/types.ts";
 import { CONFIG_VERSION } from "./constants.ts";
 
 type WorktreeInput = {
@@ -27,6 +32,7 @@ type OperationRow = {
 	action: Operation["action"];
 	created_at: number;
 	error: string | null;
+	finished_at: number | null;
 	id: number;
 	progress: string;
 	status: Operation["status"];
@@ -307,6 +313,15 @@ export class StateStore {
 			.run(status, progress, error, finishedAt, id);
 	}
 
+	failOperation(id: number, error: string): void {
+		this.database
+			.prepare(`
+				UPDATE operations SET status = 'failed', error = ?, finished_at = ?
+				WHERE id = ?
+			`)
+			.run(error, Date.now(), id);
+	}
+
 	setEnvironmentError(environmentId: string, error: string | null): void {
 		this.database
 			.prepare("UPDATE environments SET last_error = ? WHERE id = ?")
@@ -338,6 +353,7 @@ export class StateStore {
 				state: Environment["observed"];
 			}
 		>,
+		openPullRequests: Map<string, OpenPullRequest> = new Map(),
 	): Environment[] {
 		const rows = this.database
 			.prepare(`
@@ -375,6 +391,7 @@ export class StateStore {
 				lastError: row.last_error,
 				name: row.name,
 				observed: observedState,
+				openPullRequest: openPullRequests.get(row.branch) ?? null,
 				operation,
 				path: row.path,
 				ready: current?.ready ?? false,
@@ -389,7 +406,7 @@ export class StateStore {
 	private latestOperation(environmentId: string): Operation | null {
 		const row = this.database
 			.prepare(`
-				SELECT id, action, status, progress, error, created_at
+				SELECT id, action, status, progress, error, created_at, finished_at
 				FROM operations WHERE environment_id = ? ORDER BY id DESC LIMIT 1
 			`)
 			.get(environmentId) as OperationRow | undefined;
@@ -398,6 +415,7 @@ export class StateStore {
 					action: row.action,
 					createdAt: row.created_at,
 					error: row.error,
+					finishedAt: row.finished_at,
 					id: row.id,
 					progress: row.progress,
 					status: row.status,
@@ -416,6 +434,18 @@ export class StateStore {
 			)
 			.get() as { active: number };
 		return row.active === 1;
+	}
+
+	interruptActiveOperations(): void {
+		this.database
+			.prepare(`
+				UPDATE operations
+				SET status = 'failed', progress = 'interrupted',
+					error = 'Daemon stopped before the operation completed',
+					finished_at = ?
+				WHERE status IN ('pending', 'running')
+			`)
+			.run(Date.now());
 	}
 
 	setWorkflowConcurrency(value: number): void {

@@ -58,6 +58,40 @@ describe("StateStore", () => {
 			lastError: null,
 		});
 	});
+
+	it("marks unfinished operations as interrupted after a daemon stop", () => {
+		const store = createStore();
+		store.synchronizeWorktrees([{ branch: "main", id: "wt-1", path: "/one" }]);
+		const environmentId = store.setDesired("wt-1", "up");
+		const operationId = store.startOperation(environmentId, "start");
+		store.updateOperation(operationId, "running", "starting services");
+
+		store.interruptActiveOperations();
+
+		expect(store.hasActiveOperations()).toBe(false);
+		expect(store.listEnvironments(new Map())[0]?.operation).toMatchObject({
+			error: "Daemon stopped before the operation completed",
+			progress: "interrupted",
+			status: "failed",
+		});
+	});
+
+	it("retains the active step when an operation fails", () => {
+		const store = createStore();
+		store.synchronizeWorktrees([{ branch: "main", id: "wt-1", path: "/one" }]);
+		const environmentId = store.setDesired("wt-1", "up");
+		const operationId = store.startOperation(environmentId, "start");
+		store.updateOperation(operationId, "running", "running migrations");
+
+		store.failOperation(operationId, "Migration failed");
+
+		expect(store.listEnvironments(new Map())[0]?.operation).toMatchObject({
+			error: "Migration failed",
+			finishedAt: expect.any(Number),
+			progress: "running migrations",
+			status: "failed",
+		});
+	});
 });
 
 it("creates safe readable slugs", () => {

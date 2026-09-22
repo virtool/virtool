@@ -21,6 +21,7 @@ export type Environment = {
 	lastError: string | null;
 	name: string | null;
 	observed: ObservedState;
+	openPullRequest: OpenPullRequest | null;
 	operation: Operation | null;
 	path: string;
 	ready: boolean;
@@ -28,6 +29,12 @@ export type Environment = {
 	url: string | null;
 	workflowEnabled: boolean;
 	worktreeId: string;
+};
+
+/** An open GitHub pull request associated with a worktree branch. */
+export type OpenPullRequest = {
+	number: number;
+	url: string;
 };
 
 /** Observed health for one Compose service. */
@@ -38,6 +45,7 @@ export type Operation = {
 	action: "remove" | "start" | "stop";
 	createdAt: number;
 	error: string | null;
+	finishedAt: number | null;
 	id: number;
 	progress: string;
 	status: "failed" | "pending" | "running" | "succeeded";
@@ -48,6 +56,13 @@ export type SharedState = {
 	initialized: boolean;
 	lastError: string | null;
 	services: Record<string, ServiceState>;
+	storage: SharedStorage;
+};
+
+/** Disk usage in bytes for the shared service volumes. */
+export type SharedStorage = {
+	azurite: number | null;
+	postgres: number | null;
 };
 
 /** Runtime state of the global workflow scheduler. */

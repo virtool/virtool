@@ -46,3 +46,18 @@ it("rejects malformed requests without stopping the control server", async () =>
 	expect(handle).toHaveBeenCalledTimes(1);
 	await new Promise<void>((resolve) => server.close(() => resolve()));
 });
+
+it("does not unlink a socket owned by a running server", async () => {
+	const directory = await mkdtemp(join(tmpdir(), "virtool-dev-socket-"));
+	directories.push(directory);
+	const path = join(directory, "control.sock");
+	const first = await createControlServer(path, async () => null);
+
+	await expect(createControlServer(path, async () => null)).rejects.toThrow(
+		"Socket is already in use",
+	);
+	expect(await sendRaw(path, `${JSON.stringify({ command: "list" })}\n`)).toBe(
+		'{"ok":true,"result":null}\n',
+	);
+	await new Promise<void>((resolve) => first.close(() => resolve()));
+});

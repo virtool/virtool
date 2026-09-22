@@ -12,12 +12,21 @@ const EMPTY: Snapshot = {
 		lastError: null,
 		queues: {},
 	},
-	shared: { initialized: false, lastError: null, services: {} },
+	shared: {
+		initialized: false,
+		lastError: null,
+		services: {},
+		storage: { azurite: null, postgres: null },
+	},
 	updatedAt: 0,
 	updateAvailable: false,
 };
 
-let snapshot = EMPTY;
+const INITIAL = {
+	snapshot: EMPTY,
+	connection: "connecting" as "connecting" | "live" | "reconnecting",
+};
+let state = INITIAL;
 let source: EventSource | undefined;
 const listeners = new Set<() => void>();
 
@@ -33,13 +42,15 @@ function connect(): void {
 	}
 	source = new EventSource("/api/events");
 	source.addEventListener("state", (event) => {
-		snapshot = JSON.parse(event.data) as Snapshot;
+		state = {
+			snapshot: JSON.parse(event.data) as Snapshot,
+			connection: "live",
+		};
 		emit();
 	});
 	source.onerror = () => {
-		source?.close();
-		source = undefined;
-		setTimeout(connect, 1_000);
+		state = { ...state, connection: "reconnecting" };
+		emit();
 	};
 }
 
@@ -51,15 +62,16 @@ function subscribe(listener: () => void): () => void {
 		if (listeners.size === 0) {
 			source?.close();
 			source = undefined;
+			state = { ...state, connection: "connecting" };
 		}
 	};
 }
 
 /** Subscribe to the daemon's cached live snapshot. */
-export function useSnapshot(): Snapshot {
+export function useSnapshot() {
 	return useSyncExternalStore(
 		subscribe,
-		() => snapshot,
-		() => EMPTY,
+		() => state,
+		() => INITIAL,
 	);
 }
