@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import "@testing-library/jest-dom/vitest";
-import { cleanup, render, screen } from "@testing-library/react";
+import { cleanup, render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, beforeEach, expect, it, vi } from "vitest";
 import type { Snapshot } from "../shared/types.ts";
@@ -238,6 +238,26 @@ it("navigates between worktree, shared, workflow, and daemon log views", async (
 	expect(document.querySelector("details")).not.toBeInTheDocument();
 	await user.click(screen.getByRole("link", { name: "Daemon log" }));
 	expect(screen.getByRole("heading", { name: "Daemon log" })).toBeVisible();
+});
+
+it("shows workflow, build, and queue activity by branch", async () => {
+	snapshot.scheduler.active = [
+		{ environmentId: "environment", workflow: "pathoscope" },
+	];
+	snapshot.scheduler.buildQueue = [
+		{ environmentId: "environment", workflow: "create_sample" },
+	];
+	snapshot.scheduler.queues = {
+		environment: { create_subtraction: 2, nuvs: 1 },
+	};
+	const user = userEvent.setup();
+	await renderApp();
+	await user.click(screen.getByRole("link", { name: "Workflows" }));
+	const row = screen.getByRole("row", { name: /feature\/test/ });
+	expect(within(row).getByText("Pathoscope")).toBeVisible();
+	expect(within(row).getByText("Create sample")).toBeVisible();
+	expect(within(row).getByText("Create subtraction: 2")).toBeVisible();
+	expect(within(row).getByText("NUVs: 1")).toBeVisible();
 });
 
 it("restores routed views with browser navigation", async () => {

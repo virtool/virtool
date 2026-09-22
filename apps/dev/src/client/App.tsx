@@ -23,6 +23,7 @@ import type {
 	Operation,
 	SchedulerState,
 	ServiceState,
+	Workflow,
 } from "../shared/types.ts";
 import { Button, buttonClassName } from "./Button.tsx";
 import { useSnapshot } from "./store.ts";
@@ -42,6 +43,13 @@ const STARTUP_STAGES = [
 	["starting services", "Start services"],
 	["checking HTTPS readiness", "Check HTTPS readiness"],
 ] as const;
+
+const WORKFLOW_LABELS: Record<Workflow, string> = {
+	create_sample: "Create sample",
+	create_subtraction: "Create subtraction",
+	nuvs: "NUVs",
+	pathoscope: "Pathoscope",
+};
 
 async function post(path: string, body: unknown): Promise<void> {
 	const response = await fetch(path, {
@@ -693,9 +701,11 @@ function EnvironmentDetails({
 
 function Scheduler({
 	state,
+	environments,
 	connected,
 }: {
 	state: SchedulerState;
+	environments: Environment[];
 	connected: boolean;
 }) {
 	const [draft, setDraft] = useState<number | null>(null);
@@ -707,6 +717,27 @@ function Scheduler({
 			Object.values(queue).reduce((sum, count) => sum + (count ?? 0), 0),
 		0,
 	);
+	const environmentById = new Map(
+		environments.flatMap((environment) =>
+			environment.id ? [[environment.id, environment] as const] : [],
+		),
+	);
+	const schedulerEnvironmentIds = new Set([
+		...environmentById.keys(),
+		...Object.keys(state.queues),
+		...state.active.map((item) => item.environmentId),
+		...state.buildQueue.map((item) => item.environmentId),
+	]);
+	const branches = [...schedulerEnvironmentIds]
+		.map((environmentId) => ({
+			environment: environmentById.get(environmentId),
+			environmentId,
+		}))
+		.toSorted((left, right) =>
+			(left.environment?.branch ?? left.environmentId).localeCompare(
+				right.environment?.branch ?? right.environmentId,
+			),
+		);
 	return (
 		<section aria-labelledby="workflow-scheduler-heading" className={PANEL}>
 			<header className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-200 p-4">
@@ -727,7 +758,7 @@ function Scheduler({
 					/>
 				</div>
 			</header>
-			<div className="p-4">
+			<div className="grid gap-4 p-4">
 				<Feedback
 					error={action.error ?? state.lastError}
 					message={action.message}
@@ -738,15 +769,6 @@ function Scheduler({
 						<p className="mt-2 text-slate-600">
 							{state.capacity} slots available
 						</p>
-						{state.buildQueue.length > 0 && (
-							<div className="mt-3 grid gap-1 text-slate-600">
-								{state.buildQueue.map((build) => (
-									<span key={`${build.environmentId}-${build.workflow}`}>
-										Building {build.workflow}
-									</span>
-								))}
-							</div>
-						)}
 					</section>
 					<section className="rounded-lg border border-slate-200 p-4">
 						<h3 className="font-semibold text-slate-900">Settings</h3>
@@ -783,8 +805,126 @@ function Scheduler({
 						</div>
 					</section>
 				</div>
+				<section aria-labelledby="branch-activity-heading">
+					<h3
+						className="mb-3 font-semibold text-slate-900"
+						id="branch-activity-heading"
+					>
+						Branch activity
+					</h3>
+					{branches.length === 0 ? (
+						<p className="rounded-lg bg-slate-50 p-4 text-sm text-slate-500">
+							No environments are available for workflow scheduling.
+						</p>
+					) : (
+						<div className="overflow-x-auto rounded-lg border border-slate-200">
+							<table className="w-full min-w-2xl border-collapse text-left text-sm">
+								<thead className="bg-slate-50 text-xs uppercase tracking-wide text-slate-500">
+									<tr>
+										<th className="px-4 py-3 font-semibold" scope="col">
+											Branch
+										</th>
+										<th className="px-4 py-3 font-semibold" scope="col">
+											Running
+										</th>
+										<th className="px-4 py-3 font-semibold" scope="col">
+											Building
+										</th>
+										<th className="px-4 py-3 font-semibold" scope="col">
+											Queued
+										</th>
+									</tr>
+								</thead>
+								<tbody className="divide-y divide-slate-200">
+									{branches.map(({ environment, environmentId }) => {
+										const running = state.active.filter(
+											(item) => item.environmentId === environmentId,
+										);
+										const building = state.buildQueue.filter(
+											(item) => item.environmentId === environmentId,
+										);
+										const queued = Object.entries(
+											state.queues[environmentId] ?? {},
+										).flatMap(([workflow, count]) =>
+											count ? [{ count, workflow: workflow as Workflow }] : [],
+										);
+										return (
+											<tr key={environmentId}>
+												<th className="px-4 py-3 font-semibold" scope="row">
+													{environment ? (
+														<div className="grid justify-items-start gap-1">
+															<Link
+																className="break-all text-emerald-950 hover:underline"
+																params={{ worktreeId: environment.worktreeId }}
+																to="/worktrees/$worktreeId"
+															>
+																{environment.branch}
+															</Link>
+															{!environment.workflowEnabled && (
+																<Badge label="Paused" />
+															)}
+														</div>
+													) : (
+														<span className="break-all text-slate-600">
+															{environmentId}
+														</span>
+													)}
+												</th>
+												<td className="px-4 py-3 text-slate-600">
+													<WorkflowActivity items={running} empty="Idle" />
+												</td>
+												<td className="px-4 py-3 text-slate-600">
+													<WorkflowActivity items={building} empty="None" />
+												</td>
+												<td className="px-4 py-3 text-slate-600">
+													{queued.length ? (
+														<ul className="grid gap-1">
+															{queued.map(({ count, workflow }) => (
+																<li key={workflow}>
+																	{WORKFLOW_LABELS[workflow]}: {count}
+																</li>
+															))}
+														</ul>
+													) : (
+														"None"
+													)}
+												</td>
+											</tr>
+										);
+									})}
+								</tbody>
+							</table>
+						</div>
+					)}
+				</section>
 			</div>
 		</section>
+	);
+}
+
+function WorkflowActivity({
+	items,
+	empty,
+}: {
+	items: Array<{ workflow: Workflow }>;
+	empty: string;
+}) {
+	if (items.length === 0) {
+		return empty;
+	}
+	const workflows = [...new Set(items.map((item) => item.workflow))];
+	return (
+		<ul className="grid gap-1">
+			{workflows.map((workflow) => {
+				const count = items.filter((item) => item.workflow === workflow).length;
+				return (
+					<li key={workflow}>
+						{WORKFLOW_LABELS[workflow]}
+						{count > 1 ? `: ${count}` : ""}
+					</li>
+				);
+			})}
+		</ul>
 	);
 }
 
@@ -1076,7 +1216,11 @@ function AppContent() {
 			)}
 			{pathname === "/workflows" && (
 				<section aria-label="Workflows">
-					<Scheduler state={snapshot.scheduler} connected={connected} />
+					<Scheduler
+						state={snapshot.scheduler}
+						environments={snapshot.environments}
+						connected={connected}
+					/>
 				</section>
 			)}
 			{pathname === "/logs" && <DaemonLog />}
