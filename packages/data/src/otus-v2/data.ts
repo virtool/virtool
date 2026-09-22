@@ -12,12 +12,15 @@ import {
 	type LocalOtuV2IsolateDetail,
 	type LocalOtuV2IsolateSummary,
 	type LocalOtuV2Overview,
+	type LocalOtuV2PlanPreview,
 	type LocalOtuV2Sequence,
 	type LocalOtuV2SequenceSummary,
 	type LocalOtuV2Summary,
 	type OtuV2Change,
 	type OtuV2Isolate,
 	OtuV2IsolatePlan,
+	UpdateLocalOtuPlanCommand,
+	type UpdateLocalOtuPlanCommandInput,
 	UpdateLocalOtuTaxonomyCommand,
 	type UpdateLocalOtuTaxonomyCommandInput,
 } from "@virtool/contracts";
@@ -67,17 +70,22 @@ export class OtuV2LastIsolateError extends AppError {}
 /** Thrown when an isolate does not satisfy its OTU's current plan. */
 export class OtuV2InvalidIsolateError extends AppError {}
 
+/** Thrown when a proposed plan does not belong to the OTU. */
+export class OtuV2InvalidPlanError extends AppError {}
+
 function toOtuV2Change(row: {
 	version: number;
 	command:
 		| "CreateOTU"
 		| "CreateIsolate"
 		| "UpdateTaxonomy"
+		| "UpdatePlan"
 		| "DeleteIsolate"
 		| "DeleteOTU";
 	commandSchemaVersion: number;
 	otuName: string | null;
 	isolateName: OtuV2Isolate["name"];
+	segmentCount: number | null;
 	createdAt: Date;
 	userId: number;
 	userHandle: string;
@@ -100,6 +108,12 @@ function toOtuV2Change(row: {
 				throw new Error("Missing name in taxonomy change.");
 			}
 			return { ...base, command: row.command, name: row.otuName };
+		case "UpdatePlan":
+			return {
+				...base,
+				command: row.command,
+				segmentCount: row.segmentCount ?? 0,
+			};
 		case "DeleteIsolate":
 		case "DeleteOTU":
 			return { ...base, command: row.command };
@@ -394,6 +408,150 @@ export async function deleteLocalOtuIsolate(
 	});
 
 	return getLocalOtu(db, values.referenceId, command.otuId);
+}
+
+function getPlanImpact(
+	otu: LocalOtuV2,
+	command: UpdateLocalOtuPlanCommand,
+): LocalOtuV2PlanPreview {
+	if (otu.plan.id !== command.payload.plan.id) {
+		throw new OtuV2InvalidPlanError();
+	}
+	return {
+		expectedVersion: otu.version,
+		molecule: command.payload.molecule,
+		plan: command.payload.plan,
+		isolates: otu.isolates.map((isolate) => {
+			const result = OtuV2IsolatePlan.safeParse({
+				plan: command.payload.plan,
+				isolate,
+			});
+			return {
+				isolateId: isolate.id,
+				name: isolate.name,
+				issues: result.success
+					? []
+					: Array.from(
+							new Set(result.error.issues.map((issue) => issue.message)),
+						),
+			};
+		}),
+	};
+}
+
+/** Preview all surviving isolates against a proposed molecule and plan. */
+export async function previewLocalOtuPlan(
+	db: Db,
+	referenceId: string,
+	commandInput: UpdateLocalOtuPlanCommandInput,
+): Promise<LocalOtuV2PlanPreview> {
+	const command = UpdateLocalOtuPlanCommand.parse(commandInput);
+	const reference = takeFirst(
+		await db
+			.select({ archived: referenceRoots.archived, kind: referenceRoots.kind })
+			.from(referenceRoots)
+			.where(eq(referenceRoots.id, referenceId)),
+	);
+	if (reference?.archived || reference?.kind !== "local") {
+		throw new OtuV2ReferenceNotWritableError();
+	}
+	const otu = await getLocalOtu(db, referenceId, command.otuId);
+	if (otu.version !== command.expectedVersion) {
+		throw new OtuV2VersionConflictError();
+	}
+	return getPlanImpact(otu, command);
+}
+
+/** Values needed to edit a local OTU's molecule and segment plan. */
+export type UpdateLocalOtuPlanValues = {
+	referenceId: string;
+	userId: number;
+	command: UpdateLocalOtuPlanCommandInput;
+};
+
+/** Apply a proposed plan only if every surviving isolate still satisfies it. */
+export async function updateLocalOtuPlan(
+	db: Db,
+	values: UpdateLocalOtuPlanValues,
+): Promise<LocalOtuV2> {
+	const command = UpdateLocalOtuPlanCommand.parse(values.command);
+	return db.transaction(async (tx) => {
+		await getWritableLocalOtu(
+			tx,
+			values.referenceId,
+			command.otuId,
+			command.expectedVersion,
+		);
+		const otu = await getLocalOtu(tx, values.referenceId, command.otuId);
+		const impact = getPlanImpact(otu, command);
+		if (impact.isolates.some((isolate) => isolate.issues.length > 0)) {
+			throw new OtuV2InvalidIsolateError();
+		}
+		const version = command.expectedVersion + 1;
+		const oldIds = new Set(
+			(
+				await tx
+					.select({ id: otuPlanSegments.id })
+					.from(otuPlanSegments)
+					.where(eq(otuPlanSegments.otuId, command.otuId))
+			).map((segment) => segment.id),
+		);
+		const newSegments = command.payload.plan.segments.filter(
+			(segment) => !oldIds.has(segment.id),
+		);
+		if (newSegments.length > 0) {
+			await tx.insert(otuPlanSegments).values(
+				newSegments.map((segment) => ({
+					id: segment.id,
+					otuId: command.otuId,
+					planId: otu.plan.id,
+				})),
+			);
+		}
+		await tx
+			.update(otuPlanSegmentVersions)
+			.set({ lastVersion: version })
+			.where(
+				and(
+					eq(otuPlanSegmentVersions.otuId, command.otuId),
+					isNull(otuPlanSegmentVersions.lastVersion),
+				),
+			);
+		await tx.insert(otuPlanSegmentVersions).values(
+			command.payload.plan.segments.map((segment) => ({
+				id: randomUUID(),
+				otuId: command.otuId,
+				segmentId: segment.id,
+				namePrefix: segment.name?.prefix ?? null,
+				nameKey: segment.name?.key ?? null,
+				length: segment.length,
+				lengthTolerance: segment.lengthTolerance,
+				rule: segment.rule,
+				firstVersion: version,
+			})),
+		);
+		await tx
+			.update(otusV2)
+			.set({
+				version,
+				moleculeType: command.payload.molecule.type,
+				moleculeStrandedness: command.payload.molecule.strandedness,
+				moleculeTopology: command.payload.molecule.topology,
+			})
+			.where(eq(otusV2.id, command.otuId));
+		await tx.insert(otuChanges).values({
+			referenceId: values.referenceId,
+			otuId: command.otuId,
+			version,
+			command: command.type,
+			commandSchemaVersion: command.schemaVersion,
+			payload: command.payload,
+			source: "user",
+			userId: values.userId,
+			createdAt: new Date(),
+		});
+		return getLocalOtu(tx, values.referenceId, command.otuId);
+	});
 }
 
 /** Soft-delete one local OTU atomically at the expected version. */
@@ -867,6 +1025,9 @@ async function getLocalOtuMetadata(
 				isolateName: sql<
 					OtuV2Isolate["name"]
 				>`${otuChanges.payload}->'isolate'->'name'`,
+				segmentCount: sql<
+					number | null
+				>`jsonb_array_length(${otuChanges.payload}->'plan'->'segments')`,
 				createdAt: otuChanges.createdAt,
 				userId: users.id,
 				userHandle: users.handle,
@@ -1291,6 +1452,9 @@ export async function getLocalOtu(
 					isolateName: sql<
 						OtuV2Isolate["name"]
 					>`${otuChanges.payload}->'isolate'->'name'`,
+					segmentCount: sql<
+						number | null
+					>`jsonb_array_length(${otuChanges.payload}->'plan'->'segments')`,
 					createdAt: otuChanges.createdAt,
 					userId: users.id,
 					userHandle: users.handle,

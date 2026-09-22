@@ -22,6 +22,8 @@ export function getOtuV2ChangeDescription(change: OtuV2Change) {
 		}
 		case "UpdateTaxonomy":
 			return { action: "updated taxonomy", subject: change.name };
+		case "UpdatePlan":
+			return { action: "updated molecule and segment plan", subject: null };
 		case "DeleteIsolate":
 			return { action: "deleted isolate", subject: null };
 		case "DeleteOTU":

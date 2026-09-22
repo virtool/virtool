@@ -113,6 +113,56 @@ describe("<LocalOtuDetail />", () => {
 		});
 	});
 
+	it("clears a plan preview after an edit and confirms the reviewed command", async () => {
+		otuV2ServerFnMocks.previewLocalOtuPlanFn.mockResolvedValue({
+			expectedVersion: otu.version,
+			molecule: otu.molecule,
+			plan: otu.plan,
+			isolates: [
+				{ isolateId: firstIsolate.id, name: firstIsolate.name, issues: [] },
+			],
+		});
+		otuV2ServerFnMocks.updateLocalOtuPlanFn.mockReturnValueOnce(
+			new Promise(() => {}),
+		);
+		await renderDetailRoute(base);
+		await userEvent.click(
+			await screen.findByRole("button", { name: "Edit molecule and plan" }),
+		);
+		await userEvent.click(
+			screen.getByRole("button", { name: "Preview affected isolates" }),
+		);
+		const preview = await screen.findByRole("region", {
+			name: "Plan impact preview",
+		});
+		expect(within(preview).getByText(/Valid/)).toBeInTheDocument();
+		await userEvent.clear(screen.getByLabelText("Expected length"));
+		await userEvent.type(screen.getByLabelText("Expected length"), "8");
+		expect(
+			screen.queryByRole("region", { name: "Plan impact preview" }),
+		).not.toBeInTheDocument();
+		await userEvent.click(
+			screen.getByRole("button", { name: "Preview affected isolates" }),
+		);
+		await screen.findByRole("region", { name: "Plan impact preview" });
+		await userEvent.click(
+			screen.getByRole("button", { name: "Save molecule and plan" }),
+		);
+		expect(otuV2ServerFnMocks.updateLocalOtuPlanFn).toHaveBeenCalledWith({
+			data: {
+				referenceId: reference.id,
+				command: expect.objectContaining({
+					type: "UpdatePlan",
+					otuId: otu.id,
+					expectedVersion: otu.version,
+					payload: expect.objectContaining({
+						plan: expect.objectContaining({ id: otu.plan.id }),
+					}),
+				}),
+			},
+		});
+	});
+
 	it("deletes the OTU and returns to its Reference OTU list", async () => {
 		const deleteOtu = mockDeleteLocalOtuV2();
 		mockGetLocalOtusV2([]);

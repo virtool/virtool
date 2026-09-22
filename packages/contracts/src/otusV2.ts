@@ -103,7 +103,16 @@ const planSchema = z
 	.strict()
 	.superRefine((plan, ctx) => {
 		const names = new Set<string>();
+		const ids = new Set<string>();
 		for (const [index, segment] of plan.segments.entries()) {
+			if (ids.has(segment.id)) {
+				ctx.addIssue({
+					code: "custom",
+					path: ["segments", index, "id"],
+					message: "Segment ids must be unique.",
+				});
+			}
+			ids.add(segment.id);
 			if (plan.segments.length > 1 && !segment.name) {
 				ctx.addIssue({
 					code: "custom",
@@ -355,6 +364,17 @@ export const UpdateLocalOtuTaxonomyCommand = z
 	})
 	.strict();
 
+/** A proposed molecule and segment plan for a locally maintained OTU. */
+export const UpdateLocalOtuPlanCommand = z
+	.object({
+		type: z.literal("UpdatePlan"),
+		schemaVersion: z.literal(1),
+		otuId: uuidSchema,
+		expectedVersion: z.number().int().positive(),
+		payload: z.object({ molecule: moleculeSchema, plan: planSchema }).strict(),
+	})
+	.strict();
+
 /** A command that deletes one isolate from an existing local OTU. */
 export const DeleteLocalOtuIsolateCommand = z
 	.object({
@@ -402,6 +422,31 @@ export type UpdateLocalOtuTaxonomyCommand = z.output<
 export type UpdateLocalOtuTaxonomyCommandInput = z.input<
 	typeof UpdateLocalOtuTaxonomyCommand
 >;
+
+/** A parsed versioned local OTU molecule and plan edit. */
+export type UpdateLocalOtuPlanCommand = z.output<
+	typeof UpdateLocalOtuPlanCommand
+>;
+
+/** Input accepted for a versioned local OTU molecule and plan edit. */
+export type UpdateLocalOtuPlanCommandInput = z.input<
+	typeof UpdateLocalOtuPlanCommand
+>;
+
+/** One surviving isolate's response to a proposed OTU plan. */
+export type LocalOtuV2PlanImpact = {
+	isolateId: string;
+	name: OtuV2Isolate["name"];
+	issues: string[];
+};
+
+/** The validation result shown before confirming an OTU plan edit. */
+export type LocalOtuV2PlanPreview = {
+	expectedVersion: number;
+	plan: OtuV2Plan;
+	molecule: OtuV2Molecule;
+	isolates: LocalOtuV2PlanImpact[];
+};
 
 /** A parsed and normalized local `DeleteIsolate` command. */
 export type DeleteLocalOtuIsolateCommand = z.output<
@@ -480,6 +525,10 @@ export type OtuV2Change = {
 	| {
 			command: "UpdateTaxonomy";
 			name: string;
+	  }
+	| {
+			command: "UpdatePlan";
+			segmentCount: number;
 	  }
 	| {
 			command: "DeleteIsolate";

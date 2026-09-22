@@ -4,6 +4,7 @@ import type {
 	DeleteLocalOtuCommand,
 	DeleteLocalOtuIsolateCommand,
 	OtuV2LineageTaxon,
+	UpdateLocalOtuPlanCommand,
 	UpdateLocalOtuTaxonomyCommand,
 } from "@virtool/contracts";
 import { sql } from "drizzle-orm";
@@ -95,6 +96,7 @@ export const otuChanges = pgTable(
 				| "CreateOTU"
 				| "CreateIsolate"
 				| "UpdateTaxonomy"
+				| "UpdatePlan"
 				| "DeleteIsolate"
 				| "DeleteOTU"
 			>()
@@ -105,6 +107,7 @@ export const otuChanges = pgTable(
 				| CreateLocalOtuCommand["payload"]
 				| CreateLocalOtuIsolateCommand["payload"]
 				| UpdateLocalOtuTaxonomyCommand["payload"]
+				| UpdateLocalOtuPlanCommand["payload"]
 				| DeleteLocalOtuIsolateCommand["payload"]
 				| DeleteLocalOtuCommand["payload"]
 			>()

@@ -17,6 +17,7 @@ const changeStyles: Record<OtuV2Change["command"], ChangeStyle> = {
 	CreateOTU: { icon: GitBranch, color: "blue" },
 	CreateIsolate: { icon: FlaskConical, color: "blue" },
 	UpdateTaxonomy: { icon: Pencil, color: "blue" },
+	UpdatePlan: { icon: Pencil, color: "blue" },
 	DeleteIsolate: { icon: FlaskConical, color: "red" },
 	DeleteOTU: { icon: GitBranch, color: "red" },
 };

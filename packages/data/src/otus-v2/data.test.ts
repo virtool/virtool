@@ -4,7 +4,7 @@ import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { seedUser } from "../auth/test/fixtures";
 import type { Db } from "../db/pg";
 import { otuChanges, otuSequences, otusV2 } from "../db/schema/otusV2";
-import { referenceUsers } from "../db/schema/referencesV2";
+import { referenceRoots, referenceUsers } from "../db/schema/referencesV2";
 import { createTestDatabase, type TestDatabase } from "../db/test/fixtures";
 import {
 	createReferenceV2,
@@ -26,7 +26,10 @@ import {
 	OtuV2InvalidIsolateError,
 	OtuV2LastIsolateError,
 	OtuV2NotFoundError,
+	OtuV2ReferenceNotWritableError,
 	OtuV2VersionConflictError,
+	previewLocalOtuPlan,
+	updateLocalOtuPlan,
 	updateLocalOtuTaxonomy,
 } from "./data";
 
@@ -170,6 +173,206 @@ describe("createReferenceV2", () => {
 });
 
 describe("createLocalOtu", () => {
+	it("previews and versions a plan edit while preserving isolate provenance", async () => {
+		const reference = await createReference();
+		const create = createCommand(randomUUID());
+		const original = await createLocalOtu(db, {
+			referenceId: reference.id,
+			userId,
+			command: create,
+		});
+		const command = {
+			type: "UpdatePlan" as const,
+			schemaVersion: 1 as const,
+			otuId: original.id,
+			expectedVersion: 1,
+			payload: {
+				molecule: {
+					type: "DNA" as const,
+					strandedness: "double" as const,
+					topology: "circular" as const,
+				},
+				plan: {
+					id: original.plan.id,
+					segments: [
+						{
+							...original.plan.segments[0],
+							length: 8,
+							lengthTolerance: 0.1,
+							rule: "required" as const,
+						},
+					],
+				},
+			},
+		};
+		const preview = await previewLocalOtuPlan(db, reference.id, command);
+		expect(preview.isolates).toEqual([
+			{
+				isolateId: create.payload.isolate.id,
+				name: create.payload.isolate.name,
+				issues: [],
+			},
+		]);
+		expect(JSON.stringify(preview)).not.toContain("ATCGNNRY");
+		const updated = await updateLocalOtuPlan(db, {
+			referenceId: reference.id,
+			userId,
+			command,
+		});
+		expect(updated.version).toBe(2);
+		expect(updated.molecule).toEqual(command.payload.molecule);
+		expect(updated.plan.segments[0]).toMatchObject({
+			id: create.payload.plan.segments[0].id,
+			lengthTolerance: 0.1,
+		});
+		expect(updated.isolates).toEqual(original.isolates);
+		expect(updated.changes[0]).toMatchObject({
+			command: "UpdatePlan",
+			segmentCount: 1,
+			version: 2,
+		});
+		expect(JSON.stringify(updated.changes)).not.toContain("ATCGNNRY");
+		await expect(
+			updateLocalOtuPlan(db, { referenceId: reference.id, userId, command }),
+		).rejects.toBeInstanceOf(OtuV2VersionConflictError);
+	});
+
+	it("rejects plans that invalidate surviving isolates without advancing the OTU", async () => {
+		const reference = await createReference();
+		const create = createCommand(randomUUID());
+		create.payload.plan.segments[0].lengthTolerance = 0.25;
+		const original = await createLocalOtu(db, {
+			referenceId: reference.id,
+			userId,
+			command: create,
+		});
+		const secondIsolateId = randomUUID();
+		await createLocalOtuIsolate(db, {
+			referenceId: reference.id,
+			userId,
+			command: {
+				type: "CreateIsolate",
+				schemaVersion: 1,
+				otuId: original.id,
+				expectedVersion: 1,
+				payload: {
+					isolate: {
+						id: secondIsolateId,
+						name: null,
+						sequences: [
+							{
+								id: randomUUID(),
+								definition: "Longer genome",
+								sequence: "ATCGNNRYAA",
+								segmentId: create.payload.plan.segments[0].id,
+							},
+						],
+					},
+				},
+			},
+		});
+		const command = {
+			type: "UpdatePlan" as const,
+			schemaVersion: 1 as const,
+			otuId: original.id,
+			expectedVersion: 2,
+			payload: {
+				molecule: original.molecule,
+				plan: {
+					id: original.plan.id,
+					segments: [{ ...original.plan.segments[0], lengthTolerance: 0 }],
+				},
+			},
+		};
+		const preview = await previewLocalOtuPlan(db, reference.id, command);
+		expect(preview.isolates).toHaveLength(2);
+		expect(
+			preview.isolates.find(
+				(isolate) => isolate.isolateId === create.payload.isolate.id,
+			)?.issues,
+		).toEqual([]);
+		expect(
+			preview.isolates.find((isolate) => isolate.isolateId === secondIsolateId)
+				?.issues.length,
+		).toBeGreaterThan(0);
+		await expect(
+			updateLocalOtuPlan(db, { referenceId: reference.id, userId, command }),
+		).rejects.toBeInstanceOf(OtuV2InvalidIsolateError);
+		expect((await getLocalOtu(db, reference.id, original.id)).version).toBe(2);
+	});
+
+	it("adds an optional named segment while retaining the occupied segment ID", async () => {
+		const reference = await createReference();
+		const create = createCommand(randomUUID());
+		const original = await createLocalOtu(db, {
+			referenceId: reference.id,
+			userId,
+			command: create,
+		});
+		const command = {
+			type: "UpdatePlan" as const,
+			schemaVersion: 1 as const,
+			otuId: original.id,
+			expectedVersion: 1,
+			payload: {
+				molecule: original.molecule,
+				plan: {
+					id: original.plan.id,
+					segments: [
+						{ ...original.plan.segments[0], name: { prefix: "RNA", key: "1" } },
+						{
+							id: randomUUID(),
+							name: { prefix: "RNA", key: "2" },
+							length: 8,
+							lengthTolerance: 0,
+							rule: "optional" as const,
+						},
+					],
+				},
+			},
+		};
+		expect(
+			(await previewLocalOtuPlan(db, reference.id, command)).isolates[0]
+				?.issues,
+		).toEqual([]);
+		const updated = await updateLocalOtuPlan(db, {
+			referenceId: reference.id,
+			userId,
+			command,
+		});
+		expect(updated.plan.segments).toHaveLength(2);
+		expect(updated.isolates[0]?.sequences[0]?.segmentId).toBe(
+			create.payload.plan.segments[0].id,
+		);
+	});
+
+	it("rejects plan preview and save for archived references", async () => {
+		const reference = await createReference();
+		const create = createCommand(randomUUID());
+		const original = await createLocalOtu(db, {
+			referenceId: reference.id,
+			userId,
+			command: create,
+		});
+		await db
+			.update(referenceRoots)
+			.set({ archived: true })
+			.where(eq(referenceRoots.id, reference.id));
+		const command = {
+			type: "UpdatePlan" as const,
+			schemaVersion: 1 as const,
+			otuId: original.id,
+			expectedVersion: 1,
+			payload: { molecule: original.molecule, plan: original.plan },
+		};
+		await expect(
+			previewLocalOtuPlan(db, reference.id, command),
+		).rejects.toBeInstanceOf(OtuV2ReferenceNotWritableError);
+		await expect(
+			updateLocalOtuPlan(db, { referenceId: reference.id, userId, command }),
+		).rejects.toBeInstanceOf(OtuV2ReferenceNotWritableError);
+	});
+
 	it("edits taxonomy without changing ownership or mixed sequence provenance", async () => {
 		const reference = await createReference();
 		const command = createCommand(randomUUID());

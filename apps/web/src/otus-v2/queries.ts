@@ -11,6 +11,8 @@ import {
 	getLocalOtuIsolatesFn,
 	getLocalOtuSequenceFn,
 	getLocalOtusFn,
+	previewLocalOtuPlanFn,
+	updateLocalOtuPlanFn,
 	updateLocalOtuTaxonomyFn,
 } from "@server/otus-v2/functions";
 import {
@@ -30,8 +32,10 @@ import type {
 	LocalOtuV2IsolateDetail,
 	LocalOtuV2IsolateSummary,
 	LocalOtuV2Overview,
+	LocalOtuV2PlanPreview,
 	LocalOtuV2Sequence,
 	LocalOtuV2Summary,
+	UpdateLocalOtuPlanCommandInput,
 	UpdateLocalOtuTaxonomyCommandInput,
 } from "@virtool/contracts";
 
@@ -221,6 +225,42 @@ export function useUpdateLocalOtuTaxonomy(referenceId: string) {
 	return useMutation<LocalOtuV2, Error, UpdateLocalOtuTaxonomyCommandInput>({
 		mutationFn: (command) =>
 			updateLocalOtuTaxonomyFn({
+				data: { referenceId, command },
+			}) as Promise<LocalOtuV2>,
+		onSuccess: (otu) => {
+			cacheLocalOtuOverview(queryClient, otu);
+			queryClient.invalidateQueries({
+				queryKey: otuV2QueryKeys.list([referenceId]),
+			});
+		},
+		onError: (_error, command) => {
+			queryClient.invalidateQueries({
+				queryKey: otuV2QueryKeys.detail(command.otuId),
+			});
+		},
+	});
+}
+
+/** Preview every isolate against a proposed molecule and segment plan. */
+export function usePreviewLocalOtuPlan(referenceId: string) {
+	return useMutation<
+		LocalOtuV2PlanPreview,
+		Error,
+		UpdateLocalOtuPlanCommandInput
+	>({
+		mutationFn: (command) =>
+			previewLocalOtuPlanFn({
+				data: { referenceId, command },
+			}) as Promise<LocalOtuV2PlanPreview>,
+	});
+}
+
+/** Save a reviewed molecule and segment plan at the current OTU version. */
+export function useUpdateLocalOtuPlan(referenceId: string) {
+	const queryClient = useQueryClient();
+	return useMutation<LocalOtuV2, Error, UpdateLocalOtuPlanCommandInput>({
+		mutationFn: (command) =>
+			updateLocalOtuPlanFn({
 				data: { referenceId, command },
 			}) as Promise<LocalOtuV2>,
 		onSuccess: (otu) => {

@@ -7,6 +7,7 @@ import {
 	DeleteLocalOtuIsolateCommand,
 	type GenbankIsolateDraft,
 	type GenbankOtuDraft,
+	UpdateLocalOtuPlanCommand,
 	UpdateLocalOtuTaxonomyCommand,
 } from "@virtool/contracts";
 import {
@@ -23,11 +24,14 @@ import {
 	OtuV2ConflictError,
 	OtuV2DuplicateAccessionError,
 	OtuV2InvalidIsolateError,
+	OtuV2InvalidPlanError,
 	OtuV2InvalidProvenanceError,
 	OtuV2LastIsolateError,
 	OtuV2NotFoundError,
 	OtuV2ReferenceNotWritableError,
 	OtuV2VersionConflictError,
+	previewLocalOtuPlan,
+	updateLocalOtuPlan,
 	updateLocalOtuTaxonomy,
 } from "@virtool/data/otus-v2/data";
 import { resolveReferenceActor } from "@virtool/data/references/data";
@@ -83,6 +87,11 @@ const createLocalOtuIsolateSchema = z.object({
 const updateLocalOtuTaxonomySchema = z.object({
 	referenceId: z.uuid(),
 	command: UpdateLocalOtuTaxonomyCommand,
+});
+
+const updateLocalOtuPlanSchema = z.object({
+	referenceId: z.uuid(),
+	command: UpdateLocalOtuPlanCommand,
 });
 
 const deleteLocalOtuSchema = z.object({
@@ -172,6 +181,10 @@ const rethrowAsHttp = createServerOnlyFn((err: unknown): never => {
 	if (err instanceof OtuV2InvalidIsolateError) {
 		setResponseStatus(422);
 		throw new ClientError("Isolate does not satisfy the OTU plan.", 422);
+	}
+	if (err instanceof OtuV2InvalidPlanError) {
+		setResponseStatus(422);
+		throw new ClientError("Plan does not belong to this OTU.", 422);
 	}
 	if (err instanceof GenbankOtuMixedTaxidError) {
 		setResponseStatus(422);
@@ -325,6 +338,46 @@ export const updateLocalOtuTaxonomyFn = createServerFn({ method: "POST" })
 				throw new ForbiddenError();
 			}
 			return await updateLocalOtuTaxonomy(db, {
+				referenceId: data.referenceId,
+				userId: context.principal.userId,
+				command: data.command,
+			});
+		} catch (err) {
+			return rethrowAsHttp(err);
+		}
+	});
+
+export const previewLocalOtuPlanFn = createServerFn({ method: "POST" })
+	.middleware([authenticated()])
+	.validator(updateLocalOtuPlanSchema)
+	.handler(async ({ context, data }) => {
+		try {
+			const actor = await resolveReferenceActor(db, context.principal.userId);
+			if (
+				!(await checkReferenceV2Right(db, data.referenceId, "modifyOtu", actor))
+			) {
+				setResponseStatus(403);
+				throw new ForbiddenError();
+			}
+			return await previewLocalOtuPlan(db, data.referenceId, data.command);
+		} catch (err) {
+			return rethrowAsHttp(err);
+		}
+	});
+
+export const updateLocalOtuPlanFn = createServerFn({ method: "POST" })
+	.middleware([authenticated()])
+	.validator(updateLocalOtuPlanSchema)
+	.handler(async ({ context, data }) => {
+		try {
+			const actor = await resolveReferenceActor(db, context.principal.userId);
+			if (
+				!(await checkReferenceV2Right(db, data.referenceId, "modifyOtu", actor))
+			) {
+				setResponseStatus(403);
+				throw new ForbiddenError();
+			}
+			return await updateLocalOtuPlan(db, {
 				referenceId: data.referenceId,
 				userId: context.principal.userId,
 				command: data.command,

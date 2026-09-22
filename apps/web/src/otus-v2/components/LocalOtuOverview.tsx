@@ -8,6 +8,7 @@ import {
 import ExternalLink from "@base/ExternalLink";
 import Link from "@base/Link";
 import SectionHeader from "@base/SectionHeader";
+import EditLocalOtuPlan from "@otus-v2/components/EditLocalOtuPlan";
 import EditLocalOtuTaxonomy from "@otus-v2/components/EditLocalOtuTaxonomy";
 import { formatV2IsolateName } from "@otus-v2/isolateName";
 import { useSuspenseLocalOtuV2 } from "@otus-v2/queries";
@@ -83,8 +84,9 @@ export default function LocalOtuOverview({
 			)}
 
 			<section>
-				<SectionHeader>
+				<SectionHeader className="flex items-center justify-between gap-3">
 					<h2>Segments</h2>
+					<EditLocalOtuPlan referenceId={referenceId} otu={otu} />
 				</SectionHeader>
 				<BoxGroup>
 					{otu.plan.segments.map((segment) => (

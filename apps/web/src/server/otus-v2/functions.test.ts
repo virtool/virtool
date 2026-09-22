@@ -180,6 +180,47 @@ function call(name: string, data?: unknown) {
 }
 
 describe("createLocalOtu", () => {
+	it("previews plan impact without sequence bodies and checks rights on save", async () => {
+		const ownerId = await signIn(db, getRequest, {
+			administratorRole: null,
+			handle: "plan-owner",
+		});
+		const referenceId = await seedReferenceV2(ownerId);
+		const created = validCommand();
+		await call("createLocalOtuFn", { referenceId, command: created });
+		const command = {
+			type: "UpdatePlan",
+			schemaVersion: 1,
+			otuId: created.otuId,
+			expectedVersion: 1,
+			payload: {
+				molecule: created.payload.molecule,
+				plan: {
+					...created.payload.plan,
+					segments: [{ ...created.payload.plan.segments[0], length: 100 }],
+				},
+			},
+		};
+		const preview = (await call("previewLocalOtuPlanFn", {
+			referenceId,
+			command,
+		})) as { isolates: Array<{ issues: string[] }> };
+		expect(preview.isolates[0]?.issues.length).toBeGreaterThan(0);
+		expect(JSON.stringify(preview)).not.toContain("ATCGNNRY");
+		await expect(
+			call("updateLocalOtuPlanFn", { referenceId, command }),
+		).rejects.toMatchObject({ status: 422 });
+		await signIn(db, getRequest, {
+			administratorRole: null,
+			handle: "plan-other",
+		});
+		await expect(
+			call("previewLocalOtuPlanFn", { referenceId, command }),
+		).rejects.toBeInstanceOf(ForbiddenError);
+		await expect(
+			call("updateLocalOtuPlanFn", { referenceId, command }),
+		).rejects.toBeInstanceOf(ForbiddenError);
+	});
 	it("protects taxonomy edits with OTU rights, version, and archived state", async () => {
 		const ownerId = await signIn(db, getRequest, {
 			administratorRole: null,

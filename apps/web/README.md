@@ -137,6 +137,12 @@ current version. The edit creates a new local identity revision without changing
 maintenance ownership or sequence provenance. Curators may add an NCBI species
 taxon to a manual OTU's lineage so GenBank isolates can pass species matching.
 Taxonomy history summarizes the new name and omits sequence bodies.
+Local OTU molecule and segment plans can be edited at the OTU's current
+version. The editor previews every surviving isolate against the proposed
+plan, clears the preview after any input change, and requires confirmation.
+The server checks all isolates again in the save transaction and rejects a
+plan that invalidates any of them. Plan edits retain sequence provenance and
+record a semantic history entry without sequence bodies.
 Creating a GenBank OTU first resolves accessions into a preview of its taxonomy,
 molecule, isolate, and segments. Changing accessions clears that preview; creation
 requires a separate confirmation, and the server checks the records again then.
