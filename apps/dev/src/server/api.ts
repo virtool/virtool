@@ -7,6 +7,11 @@ import { streamSSE } from "hono/streaming";
 import type { Mutation, Snapshot } from "../shared/types.ts";
 import { MANAGEMENT_ORIGIN } from "./constants.ts";
 
+type EnvironmentLogReader = (
+	environmentId: string,
+	service?: string,
+) => Promise<string>;
+
 /** Mutable snapshot feed shared by API requests and SSE clients. */
 export class SnapshotFeed {
 	private listeners = new Set<(snapshot: Snapshot) => void>();
@@ -38,6 +43,7 @@ export function createApi(
 	clientDirectory: string,
 	resetShared: () => Promise<void> = async () => undefined,
 	logPath?: string,
+	readEnvironmentLogs?: EnvironmentLogReader,
 ) {
 	const app = new Hono();
 	app.use("/api/*", async (context, next) => {
@@ -61,6 +67,30 @@ export function createApi(
 	});
 	app.get("/api/state", (context) => context.json(feed.get()));
 	app.get("/api/logs", async (context) => {
+		const worktreeId = context.req.query("environment");
+		const service = context.req.query("service");
+		if (worktreeId) {
+			const environment = feed
+				.get()
+				.environments.find((candidate) => candidate.worktreeId === worktreeId);
+			if (!environment?.id) {
+				return context.json({ error: "environment not found" }, 404);
+			}
+			if (service && !Object.hasOwn(environment.services, service)) {
+				return context.json({ error: "service not found" }, 404);
+			}
+			if (!readEnvironmentLogs) {
+				return context.text("");
+			}
+			try {
+				return context.text(await readEnvironmentLogs(environment.id, service));
+			} catch {
+				return context.json({ error: "unable to load environment logs" }, 502);
+			}
+		}
+		if (service) {
+			return context.json({ error: "service requires an environment" }, 400);
+		}
 		if (!logPath) {
 			return context.text("");
 		}

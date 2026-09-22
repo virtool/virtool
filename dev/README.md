@@ -40,6 +40,8 @@ process-lifetime `flock` prevents a second service from owning the same
 repository. `vtd daemon stop` asks systemd to stop the unit. Use
 `systemctl --user status virtool-dev-<repository-id>.service` for service state;
 the management UI continues to read `<git-common-dir>/virtool-dev/logs/daemon.log`.
+Its log viewer can also tail and filter Compose output by environment and
+service, pause automatic scrolling, and copy or download the visible lines.
 
 An update waits for lifecycle operations and workflow executors to finish, then
 the daemon drains its background reconciliation and scheduler work before

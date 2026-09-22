@@ -158,6 +158,10 @@ it("shows actions for ready, stopped, and failed environments", async () => {
 	await openEnvironmentDetails();
 	expect(screen.getByRole("button", { name: "Retry" })).toBeEnabled();
 	expect(screen.getByRole("alert")).toHaveTextContent("Build failed");
+	expect(screen.getByRole("link", { name: "View logs" })).toHaveAttribute(
+		"href",
+		"/logs?environment=worktree",
+	);
 });
 
 it("keeps progress visible and prevents conflicting actions", async () => {
@@ -216,7 +220,7 @@ it("marks disconnected snapshots and disables mutations until reconnected", asyn
 	expect(screen.getByRole("button", { name: "Stop" })).toBeEnabled();
 });
 
-it("navigates between worktree, shared, workflow, and daemon log views", async () => {
+it("navigates between worktree, shared, workflow, and log views", async () => {
 	const user = userEvent.setup();
 	await renderApp();
 	expect(screen.getByRole("link", { name: "Worktrees" })).toHaveAttribute(
@@ -236,8 +240,49 @@ it("navigates between worktree, shared, workflow, and daemon log views", async (
 	).toBeVisible();
 	expect(screen.getByLabelText("Global concurrency")).toBeVisible();
 	expect(document.querySelector("details")).not.toBeInTheDocument();
-	await user.click(screen.getByRole("link", { name: "Daemon log" }));
-	expect(screen.getByRole("heading", { name: "Daemon log" })).toBeVisible();
+	await user.click(screen.getByRole("link", { name: "Logs" }));
+	expect(screen.getByRole("heading", { name: "Logs" })).toBeVisible();
+});
+
+it("filters, pauses, and scopes log output", async () => {
+	vi.mocked(fetch).mockImplementation(async (path) => {
+		if (String(path).startsWith("/api/logs")) {
+			return new Response("web | listening\ntasks | idle");
+		}
+		return new Response(null, { status: 202 });
+	});
+	const user = userEvent.setup();
+	await renderApp();
+	await user.click(screen.getByRole("link", { name: "Logs" }));
+	expect(await screen.findByText(/web \| listening/)).toBeVisible();
+	await user.type(
+		screen.getByRole("searchbox", { name: "Search logs" }),
+		"tasks",
+	);
+	expect(screen.getByText("tasks | idle")).toBeVisible();
+	expect(screen.queryByText(/web \| listening/)).not.toBeInTheDocument();
+	const pause = screen.getByRole("button", { name: "Pause scrolling" });
+	await user.click(pause);
+	expect(
+		screen.getByRole("button", { name: "Resume scrolling" }),
+	).toHaveAttribute("aria-pressed", "true");
+	await user.selectOptions(
+		screen.getByRole("combobox", { name: "Environment" }),
+		"worktree",
+	);
+	await user.selectOptions(
+		screen.getByRole("combobox", { name: "Service" }),
+		"web",
+	);
+	await user.click(screen.getByRole("button", { name: "Resume scrolling" }));
+	expect(
+		await screen.findByRole("button", { name: "Pause scrolling" }),
+	).toBeVisible();
+	expect(fetch).toHaveBeenCalledWith(
+		"/api/logs?environment=worktree&service=web",
+	);
+	expect(screen.getByRole("button", { name: "Copy" })).toBeEnabled();
+	expect(screen.getByRole("button", { name: "Download" })).toBeEnabled();
 });
 
 it("shows workflow, build, and queue activity by branch", async () => {

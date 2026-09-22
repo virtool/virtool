@@ -251,6 +251,32 @@ export async function runDaemon(
 		clientDirectory,
 		() => reconciler.resetShared(),
 		join(repository.stateDirectory, "logs/daemon.log"),
+		async (environmentId, service) => {
+			const directory = join(
+				repository.stateDirectory,
+				"environments",
+				environmentId,
+			);
+			const { stdout } = await run(
+				"docker",
+				[
+					"compose",
+					"--env-file",
+					join(directory, "environment.env"),
+					"--project-name",
+					`virtool-dev-${store.repositoryId.slice(0, 8)}-${environmentId.slice(0, 8)}`,
+					"--file",
+					join(directory, "compose.yaml"),
+					"logs",
+					"--no-color",
+					"--tail",
+					"200",
+					...(service ? [service] : []),
+				],
+				{ cwd: repository.primaryWorktree },
+			);
+			return stdout;
+		},
 	);
 	const httpSocketPath = join(repository.stateDirectory, "http.sock");
 	const http = createServer(getRequestListener(app.fetch));

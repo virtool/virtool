@@ -5,18 +5,22 @@ import {
 	Link,
 	RouterProvider,
 	useLocation,
+	useNavigate,
 	useParams,
 } from "@tanstack/react-router";
 import {
 	Check,
 	Circle,
 	CircleX,
+	Copy,
+	Download,
 	ExternalLink,
 	LoaderCircle,
 	Pause,
 	Play,
+	Search,
 } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import type {
 	Environment,
 	Mutation,
@@ -636,9 +640,33 @@ function EnvironmentDetails({
 					)
 				)}
 				<Feedback
-					error={action.error ?? workflowAction.error ?? environment.lastError}
+					error={action.error ?? workflowAction.error}
 					message={action.message}
 				/>
+				{(environment.lastError || (failed && environment.id)) && (
+					<div className="flex flex-wrap items-start gap-2">
+						{environment.lastError && (
+							<pre
+								role="alert"
+								className="mt-3 min-w-0 flex-1 whitespace-pre-wrap break-words rounded-lg bg-red-50 p-3 text-sm text-red-800"
+							>
+								{environment.lastError}
+							</pre>
+						)}
+						{failed && environment.id && (
+							<Link
+								className={buttonClassName("secondary", "mt-3")}
+								search={{
+									environment: environment.worktreeId,
+									service: undefined,
+								}}
+								to="/logs"
+							>
+								View logs
+							</Link>
+						)}
+					</div>
+				)}
 				<div className="mt-5 space-y-4 border-t border-slate-100 pt-4">
 					<code className="block break-all text-xs text-slate-500">
 						{environment.path}
@@ -928,16 +956,42 @@ function WorkflowActivity({
 	);
 }
 
-function DaemonLog() {
+function Logs({ environments }: { environments: Environment[] }) {
+	const navigate = useNavigate({ from: "/logs" });
+	const { environment: selectedWorktreeId, service } = logsRoute.useSearch();
 	const [logs, setLogs] = useState("");
 	const [error, setError] = useState<string | null>(null);
+	const [message, setMessage] = useState<string | null>(null);
+	const [query, setQuery] = useState("");
+	const [isScrollPaused, setIsScrollPaused] = useState(false);
+	const output = useRef<HTMLPreElement>(null);
+	const selectedEnvironment = environments.find(
+		(environment) => environment.worktreeId === selectedWorktreeId,
+	);
+	const services = Object.keys(selectedEnvironment?.services ?? {}).sort();
+	const normalizedQuery = query.trim().toLowerCase();
+	const visibleLogs = normalizedQuery
+		? logs
+				.split("\n")
+				.filter((line) => line.toLowerCase().includes(normalizedQuery))
+				.join("\n")
+		: logs;
 	useEffect(() => {
 		let active = true;
 		async function refresh(): Promise<void> {
 			try {
-				const response = await fetch("/api/logs");
+				const parameters = new URLSearchParams();
+				if (selectedWorktreeId) {
+					parameters.set("environment", selectedWorktreeId);
+				}
+				if (service) {
+					parameters.set("service", service);
+				}
+				const response = await fetch(
+					`/api/logs${parameters.size ? `?${parameters}` : ""}`,
+				);
 				if (!response.ok) {
-					throw new Error("Unable to load daemon logs.");
+					throw new Error("Unable to load logs.");
 				}
 				const text = await response.text();
 				if (active) {
@@ -946,7 +1000,7 @@ function DaemonLog() {
 				}
 			} catch {
 				if (active) {
-					setError("Unable to load daemon logs.");
+					setError("Unable to load logs.");
 				}
 			}
 		}
@@ -956,13 +1010,124 @@ function DaemonLog() {
 			active = false;
 			clearInterval(timer);
 		};
-	}, []);
+	}, [selectedWorktreeId, service]);
+	useEffect(() => {
+		if (!isScrollPaused && output.current) {
+			output.current.scrollTop = output.current.scrollHeight;
+		}
+	}, [isScrollPaused, visibleLogs]);
+	async function copyLogs(): Promise<void> {
+		try {
+			await navigator.clipboard.writeText(visibleLogs);
+			setMessage("Copied visible logs.");
+			setError(null);
+		} catch {
+			setError("Unable to copy logs.");
+		}
+	}
+	function downloadLogs(): void {
+		const blob = new Blob([visibleLogs], { type: "text/plain;charset=utf-8" });
+		const url = URL.createObjectURL(blob);
+		const link = document.createElement("a");
+		link.download = `${selectedEnvironment?.name ?? "daemon"}.log`;
+		link.href = url;
+		link.click();
+		URL.revokeObjectURL(url);
+	}
 	return (
-		<section aria-label="Daemon log" className={`${PANEL} p-4`}>
-			<h2 className="text-sm font-semibold">Daemon log</h2>
-			<Feedback error={error} message={null} />
-			<pre className="mt-3 max-h-80 overflow-auto whitespace-pre-wrap rounded-lg bg-slate-950 p-4 text-xs text-slate-100">
-				{logs || "No log output"}
+		<section aria-label="Logs" className={`${PANEL} p-4`}>
+			<h2 className="mb-3 text-sm font-semibold">Logs</h2>
+			<div className="flex flex-wrap items-end gap-3">
+				<label className="grid gap-1 text-xs font-medium text-slate-600">
+					Environment
+					<select
+						className="min-h-8 rounded-md border border-slate-300 bg-white px-2 text-sm text-slate-900"
+						value={selectedWorktreeId ?? ""}
+						onChange={(event) =>
+							void navigate({
+								search: {
+									environment: event.target.value || undefined,
+									service: undefined,
+								},
+							})
+						}
+					>
+						<option value="">Daemon</option>
+						{environments
+							.filter((environment) => environment.id)
+							.map((environment) => (
+								<option
+									key={environment.worktreeId}
+									value={environment.worktreeId}
+								>
+									{environment.branch}
+								</option>
+							))}
+					</select>
+				</label>
+				<label className="grid gap-1 text-xs font-medium text-slate-600">
+					Service
+					<select
+						className="min-h-8 rounded-md border border-slate-300 bg-white px-2 text-sm text-slate-900 disabled:bg-slate-100"
+						disabled={!selectedEnvironment}
+						value={service ?? ""}
+						onChange={(event) =>
+							void navigate({
+								search: {
+									environment: selectedWorktreeId,
+									service: event.target.value || undefined,
+								},
+							})
+						}
+					>
+						<option value="">All services</option>
+						{services.map((name) => (
+							<option key={name}>{name}</option>
+						))}
+					</select>
+				</label>
+				<label className="relative grid min-w-48 flex-1 gap-1 text-xs font-medium text-slate-600">
+					Search logs
+					<Search
+						aria-hidden="true"
+						className="absolute bottom-2 left-2 size-4 text-slate-400"
+					/>
+					<input
+						className="min-h-8 rounded-md border border-slate-300 bg-white py-1 pr-2 pl-8 text-sm text-slate-900"
+						onChange={(event) => setQuery(event.target.value)}
+						placeholder="Filter log lines"
+						type="search"
+						value={query}
+					/>
+				</label>
+				<Button
+					aria-pressed={isScrollPaused}
+					onClick={() => setIsScrollPaused((value) => !value)}
+				>
+					{isScrollPaused ? (
+						<Play aria-hidden="true" />
+					) : (
+						<Pause aria-hidden="true" />
+					)}
+					{isScrollPaused ? "Resume scrolling" : "Pause scrolling"}
+				</Button>
+				<Button disabled={!visibleLogs} onClick={() => void copyLogs()}>
+					<Copy aria-hidden="true" />
+					Copy
+				</Button>
+				<Button disabled={!visibleLogs} onClick={downloadLogs}>
+					<Download aria-hidden="true" />
+					Download
+				</Button>
+			</div>
+			<Feedback error={error} message={message} />
+			<pre
+				aria-live="polite"
+				className="mt-3 h-[32rem] overflow-auto whitespace-pre-wrap rounded-lg bg-slate-950 p-4 text-xs text-slate-100"
+				ref={output}
+			>
+				{visibleLogs ||
+					(normalizedQuery ? "No matching log output" : "No log output")}
 			</pre>
 		</section>
 	);
@@ -1093,9 +1258,10 @@ function AppContent() {
 					aria-current={pathname === "/logs" ? "page" : undefined}
 					className={TAB}
 					data-state={pathname === "/logs" ? "active" : "inactive"}
+					search={{ environment: undefined, service: undefined }}
 					to="/logs"
 				>
-					Daemon log
+					Logs
 				</Link>
 			</nav>
 			{(pathname === "/" || Boolean(worktreeId)) && (
@@ -1223,7 +1389,7 @@ function AppContent() {
 					/>
 				</section>
 			)}
-			{pathname === "/logs" && <DaemonLog />}
+			{pathname === "/logs" && <Logs environments={snapshot.environments} />}
 			{pathname !== "/" &&
 				!worktreeId &&
 				!["/shared", "/workflows", "/logs"].includes(pathname) && (
@@ -1257,6 +1423,11 @@ const workflowsRoute = createRoute({
 const logsRoute = createRoute({
 	getParentRoute: () => rootRoute,
 	path: "/logs",
+	validateSearch: (search: Record<string, unknown>) => ({
+		environment:
+			typeof search.environment === "string" ? search.environment : undefined,
+		service: typeof search.service === "string" ? search.service : undefined,
+	}),
 });
 const routeTree = rootRoute.addChildren([
 	worktreesRoute,
