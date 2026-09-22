@@ -7,7 +7,9 @@ services:
       POSTGRES_USER: virtool
     healthcheck:
       test: [CMD-SHELL, pg_isready -U virtool -d postgres]
-      interval: 2s
+      interval: 10s
+      start_interval: 1s
+      start_period: 60s
       timeout: 5s
       retries: 30
     labels: &labels
@@ -23,7 +25,9 @@ services:
     command: azurite --blobHost 0.0.0.0 --location /data --disableProductStyleUrl
     healthcheck:
       test: [CMD, node, -e, "fetch('http://127.0.0.1:10000').then(()=>process.exit(0)).catch(()=>process.exit(1))"]
-      interval: 2s
+      interval: 10s
+      start_interval: 1s
+      start_period: 60s
       timeout: 2s
       retries: 30
     labels: *labels

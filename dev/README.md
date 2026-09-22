@@ -85,6 +85,9 @@ after initialization is treated as possible data loss and shown as an error.
 Use the confirmed shared reset control only when destroying all local
 development state is intentional.
 
+Container health checks run every ten seconds after startup, with one-second
+checks while starting, to limit Docker exec overhead.
+
 Worktrunk's removal hook only requests asynchronous deletion. If a worktree
 disappears without the hook, cleanup is allowed only after successful Git
 inspection proves its durable worktree identity is gone and Docker ownership
