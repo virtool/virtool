@@ -18,6 +18,7 @@ import {
 	deleteLocalOtuIsolate,
 	getLocalOtu,
 	getLocalOtuIsolate,
+	getLocalOtuOverview,
 	getLocalOtuSequence,
 	getLocalOtus,
 	OtuV2ConflictError,
@@ -488,7 +489,6 @@ describe("createLocalOtu", () => {
 		expect(otu.mostRecentChange).toMatchObject({
 			version: 3,
 			command: "DeleteIsolate",
-			payload: { isolateId },
 		});
 		await expect(
 			getLocalOtuIsolate(db, reference.id, command.otuId, isolateId),
@@ -553,9 +553,19 @@ describe("createLocalOtu", () => {
 		});
 
 		expect(otu.changes).toMatchObject([
-			{ version: 2, command: "CreateIsolate" },
-			{ version: 1, command: "CreateOTU" },
+			{
+				version: 2,
+				command: "CreateIsolate",
+				name: { type: "isolate", value: "Lab 2" },
+			},
+			{ version: 1, command: "CreateOTU", name: "Novel virus" },
 		]);
+		expect(otu.changes[0]).not.toHaveProperty("payload");
+		expect(otu.changes[1]).not.toHaveProperty("payload");
+
+		const overview = await getLocalOtuOverview(db, reference.id, otuId);
+		expect(overview.changes).toEqual(otu.changes);
+		expect(JSON.stringify(overview)).not.toContain("ATCGNNRY");
 	});
 
 	it("commits and assembles one complete version with semantic history", async () => {

@@ -372,7 +372,7 @@ describe("<LocalOtuDetail />", () => {
 					version: 2,
 					command: "CreateIsolate",
 					commandSchemaVersion: 1,
-					payload: { isolate },
+					name: isolate.name,
 					source: "user",
 					user: otu.mostRecentChange.user,
 					createdAt: firstChangeAt,

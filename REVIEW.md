@@ -87,15 +87,15 @@ Struck-through findings have since been addressed.
    ~~[LocalOtuIsolates.tsx:43](apps/web/src/otus-v2/components/LocalOtuIsolates.tsx#L43),
    [DeleteLocalOtuIsolate.tsx:37](apps/web/src/otus-v2/components/DeleteLocalOtuIsolate.tsx#L37)~~
 
-8. **[P2] Lazy sequence loading still transfers sequence bodies through history.**
+8. ~~**[P2] Lazy sequence loading still transfers sequence bodies through history.**~~
 
-   The overview selects every change’s complete payload, including sequence
+   ~~The overview selects every change’s complete payload, including sequence
    strings from creation events and deleted isolates. Opening an OTU therefore
    transfers its accumulated sequence history before any sequence is expanded.
    This will become expensive for large OTUs. Return history summaries separately
-   from event bodies.
+   from event bodies.~~
 
-   [data.ts:666](packages/data/src/otus-v2/data.ts#L666)
+   ~~[data.ts:666](packages/data/src/otus-v2/data.ts#L666)~~
 
 ## Unfinished capabilities
 

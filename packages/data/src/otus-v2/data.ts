@@ -16,9 +16,10 @@ import {
 	type LocalOtuV2SequenceSummary,
 	type LocalOtuV2Summary,
 	type OtuV2Change,
+	type OtuV2Isolate,
 	OtuV2IsolatePlan,
 } from "@virtool/contracts";
-import { and, asc, count, desc, eq, inArray, isNull } from "drizzle-orm";
+import { and, asc, count, desc, eq, inArray, isNull, sql } from "drizzle-orm";
 import type { Db, DbOrTx, Transaction } from "../db/pg";
 import { takeFirst } from "../db/rows";
 import {
@@ -63,6 +64,35 @@ export class OtuV2LastIsolateError extends AppError {}
 
 /** Thrown when an isolate does not satisfy its OTU's current plan. */
 export class OtuV2InvalidIsolateError extends AppError {}
+
+function toOtuV2Change(row: {
+	version: number;
+	command: "CreateOTU" | "CreateIsolate" | "DeleteIsolate" | "DeleteOTU";
+	commandSchemaVersion: number;
+	otuName: string | null;
+	isolateName: OtuV2Isolate["name"];
+	createdAt: Date;
+	userId: number;
+	userHandle: string;
+}): OtuV2Change {
+	const base = {
+		version: row.version,
+		commandSchemaVersion: row.commandSchemaVersion,
+		source: "user" as const,
+		user: { id: row.userId, handle: row.userHandle },
+		createdAt: row.createdAt,
+	};
+
+	switch (row.command) {
+		case "CreateOTU":
+			return { ...base, command: row.command, name: row.otuName };
+		case "CreateIsolate":
+			return { ...base, command: row.command, name: row.isolateName };
+		case "DeleteIsolate":
+		case "DeleteOTU":
+			return { ...base, command: row.command };
+	}
+}
 
 async function getWritableLocalOtu(
 	tx: Transaction,
@@ -731,7 +761,10 @@ async function getLocalOtuMetadata(
 				version: otuChanges.version,
 				command: otuChanges.command,
 				commandSchemaVersion: otuChanges.commandSchemaVersion,
-				payload: otuChanges.payload,
+				otuName: sql<string | null>`${otuChanges.payload}->'taxonomy'->>'name'`,
+				isolateName: sql<
+					OtuV2Isolate["name"]
+				>`${otuChanges.payload}->'isolate'->'name'`,
 				createdAt: otuChanges.createdAt,
 				userId: users.id,
 				userHandle: users.handle,
@@ -779,24 +812,8 @@ async function getLocalOtuMetadata(
 			})),
 		},
 		createdAt: otu.createdAt,
-		changes: changeRows.map((row) => ({
-			version: row.version,
-			command: row.command,
-			commandSchemaVersion: row.commandSchemaVersion,
-			payload: row.payload,
-			source: "user",
-			user: { id: row.userId, handle: row.userHandle },
-			createdAt: row.createdAt,
-		})) as OtuV2Change[],
-		mostRecentChange: {
-			version: change.version,
-			command: change.command,
-			commandSchemaVersion: change.commandSchemaVersion,
-			payload: change.payload,
-			source: "user",
-			user: { id: change.userId, handle: change.userHandle },
-			createdAt: change.createdAt,
-		} as OtuV2Change,
+		changes: changeRows.map(toOtuV2Change),
+		mostRecentChange: toOtuV2Change(change),
 	};
 }
 
@@ -1166,7 +1183,12 @@ export async function getLocalOtu(
 					version: otuChanges.version,
 					command: otuChanges.command,
 					commandSchemaVersion: otuChanges.commandSchemaVersion,
-					payload: otuChanges.payload,
+					otuName: sql<
+						string | null
+					>`${otuChanges.payload}->'taxonomy'->>'name'`,
+					isolateName: sql<
+						OtuV2Isolate["name"]
+					>`${otuChanges.payload}->'isolate'->'name'`,
 					createdAt: otuChanges.createdAt,
 					userId: users.id,
 					userHandle: users.handle,
@@ -1227,24 +1249,8 @@ export async function getLocalOtu(
 		},
 		isolates,
 		createdAt: otu.createdAt,
-		changes: changeRows.map((row) => ({
-			version: row.version,
-			command: row.command,
-			commandSchemaVersion: row.commandSchemaVersion,
-			payload: row.payload,
-			source: "user",
-			user: { id: row.userId, handle: row.userHandle },
-			createdAt: row.createdAt,
-		})) as OtuV2Change[],
-		mostRecentChange: {
-			version: change.version,
-			command: change.command,
-			commandSchemaVersion: change.commandSchemaVersion,
-			payload: change.payload,
-			source: "user",
-			user: { id: change.userId, handle: change.userHandle },
-			createdAt: change.createdAt,
-		} as OtuV2Change,
+		changes: changeRows.map(toOtuV2Change),
+		mostRecentChange: toOtuV2Change(change),
 	};
 
 	CreateLocalOtuCommand.parse({

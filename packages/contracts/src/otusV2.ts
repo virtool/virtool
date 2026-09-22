@@ -409,7 +409,7 @@ export type LocalOtuV2IsolateDetail = {
 /** A v2 OTU molecule. */
 export type OtuV2Molecule = z.output<typeof moleculeSchema>;
 
-/** The creation history summary embedded in the tracer read model. */
+/** A local v2 OTU history summary without the stored command payload. */
 export type OtuV2Change = {
 	version: number;
 	commandSchemaVersion: number;
@@ -419,19 +419,17 @@ export type OtuV2Change = {
 } & (
 	| {
 			command: "CreateOTU";
-			payload: CreateLocalOtuCommand["payload"];
+			name: string | null;
 	  }
 	| {
 			command: "CreateIsolate";
-			payload: CreateLocalOtuIsolateCommand["payload"];
+			name: OtuV2Isolate["name"];
 	  }
 	| {
 			command: "DeleteIsolate";
-			payload: DeleteLocalOtuIsolateCommand["payload"];
 	  }
 	| {
 			command: "DeleteOTU";
-			payload: DeleteLocalOtuCommand["payload"];
 	  }
 );
 

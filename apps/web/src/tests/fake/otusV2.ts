@@ -19,45 +19,7 @@ export function createFakeLocalOtuV2(
 		version: 1,
 		command: "CreateOTU",
 		commandSchemaVersion: 1,
-		payload: {
-			molecule: {
-				type: OtuV2MoleculeType.RNA,
-				strandedness: OtuV2Strandedness.single,
-				topology: OtuV2Topology.linear,
-			},
-			plan: {
-				id: faker.string.uuid(),
-				segments: [
-					{
-						id: segmentId,
-						name: null,
-						length: 6,
-						lengthTolerance: 0.05,
-						rule: OtuV2SegmentRule.required,
-					},
-				],
-			},
-			taxonomy: {
-				kind: "local",
-				identityId: faker.string.uuid(),
-				name: faker.word.noun({ strategy: "any-length" }),
-				acronym: null,
-				lineage: [],
-			},
-			promotedAccessions: [],
-			isolate: {
-				id: faker.string.uuid(),
-				name: null,
-				sequences: [
-					{
-						id: faker.string.uuid(),
-						definition: faker.lorem.sentence(),
-						sequence: "ATCGAT",
-						segmentId,
-					},
-				],
-			},
-		},
+		name: faker.word.noun({ strategy: "any-length" }),
 		source: "user",
 		user: {
 			id: faker.number.int(),

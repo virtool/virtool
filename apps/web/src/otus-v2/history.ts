@@ -1,17 +1,6 @@
 import type { OtuV2Change } from "@virtool/contracts";
 import { formatV2IsolateName } from "./isolateName";
 
-function formatIsolateName(
-	change: Extract<OtuV2Change, { command: "CreateIsolate" }>,
-): string | null {
-	const name = change.payload.isolate.name;
-	if (!name) {
-		return null;
-	}
-
-	return formatV2IsolateName(name);
-}
-
 function assertNever(value: never): never {
 	throw new Error(`Unhandled OTU history change: ${JSON.stringify(value)}`);
 }
@@ -22,10 +11,10 @@ export function getOtuV2ChangeDescription(change: OtuV2Change) {
 		case "CreateOTU":
 			return {
 				action: "created OTU",
-				subject: change.payload.taxonomy.name,
+				subject: change.name,
 			};
 		case "CreateIsolate": {
-			const isolateName = formatIsolateName(change);
+			const isolateName = change.name ? formatV2IsolateName(change.name) : null;
 			return {
 				action: isolateName ? "created isolate" : "created an unnamed isolate",
 				subject: isolateName,
