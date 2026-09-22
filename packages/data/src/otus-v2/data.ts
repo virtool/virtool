@@ -18,6 +18,8 @@ import {
 	type OtuV2Change,
 	type OtuV2Isolate,
 	OtuV2IsolatePlan,
+	UpdateLocalOtuTaxonomyCommand,
+	type UpdateLocalOtuTaxonomyCommandInput,
 } from "@virtool/contracts";
 import { and, asc, count, desc, eq, inArray, isNull, sql } from "drizzle-orm";
 import type { Db, DbOrTx, Transaction } from "../db/pg";
@@ -67,7 +69,12 @@ export class OtuV2InvalidIsolateError extends AppError {}
 
 function toOtuV2Change(row: {
 	version: number;
-	command: "CreateOTU" | "CreateIsolate" | "DeleteIsolate" | "DeleteOTU";
+	command:
+		| "CreateOTU"
+		| "CreateIsolate"
+		| "UpdateTaxonomy"
+		| "DeleteIsolate"
+		| "DeleteOTU";
 	commandSchemaVersion: number;
 	otuName: string | null;
 	isolateName: OtuV2Isolate["name"];
@@ -88,6 +95,11 @@ function toOtuV2Change(row: {
 			return { ...base, command: row.command, name: row.otuName };
 		case "CreateIsolate":
 			return { ...base, command: row.command, name: row.isolateName };
+		case "UpdateTaxonomy":
+			if (!row.otuName) {
+				throw new Error("Missing name in taxonomy change.");
+			}
+			return { ...base, command: row.command, name: row.otuName };
 		case "DeleteIsolate":
 		case "DeleteOTU":
 			return { ...base, command: row.command };
@@ -180,6 +192,94 @@ export type CreateLocalOtuIsolateValues = {
 	userId: number;
 	command: CreateLocalOtuIsolateCommandInput;
 };
+
+/** Values needed to edit a local OTU's taxonomy identity. */
+export type UpdateLocalOtuTaxonomyValues = {
+	referenceId: string;
+	userId: number;
+	command: UpdateLocalOtuTaxonomyCommandInput;
+};
+
+/** Apply a versioned taxonomy edit without changing sequence provenance. */
+export async function updateLocalOtuTaxonomy(
+	db: Db,
+	values: UpdateLocalOtuTaxonomyValues,
+): Promise<LocalOtuV2> {
+	const command = UpdateLocalOtuTaxonomyCommand.parse(values.command);
+	return db.transaction(async (tx) => {
+		await getWritableLocalOtu(
+			tx,
+			values.referenceId,
+			command.otuId,
+			command.expectedVersion,
+		);
+		const current = takeFirst(
+			await tx
+				.select({
+					versionId: otuTaxonomyVersions.id,
+					identityId: otuLocalIdentityRevisions.identityId,
+				})
+				.from(otuTaxonomyVersions)
+				.innerJoin(
+					otuLocalIdentityRevisions,
+					eq(
+						otuTaxonomyVersions.localIdentityRevisionId,
+						otuLocalIdentityRevisions.id,
+					),
+				)
+				.where(
+					and(
+						eq(otuTaxonomyVersions.otuId, command.otuId),
+						eq(otuTaxonomyVersions.kind, "local"),
+						isNull(otuTaxonomyVersions.lastVersion),
+					),
+				),
+		);
+		if (!current) {
+			throw new OtuV2NotFoundError();
+		}
+		const version = command.expectedVersion + 1;
+		const revisionId = randomUUID();
+		await tx.insert(otuLocalIdentityRevisions).values({
+			id: revisionId,
+			referenceId: values.referenceId,
+			otuId: command.otuId,
+			identityId: current.identityId,
+			name: command.payload.name,
+			acronym: command.payload.acronym,
+			lineage: command.payload.lineage,
+			createdAt: new Date(),
+		});
+		await tx
+			.update(otuTaxonomyVersions)
+			.set({ lastVersion: version })
+			.where(eq(otuTaxonomyVersions.id, current.versionId));
+		await tx.insert(otuTaxonomyVersions).values({
+			id: randomUUID(),
+			referenceId: values.referenceId,
+			otuId: command.otuId,
+			kind: "local",
+			localIdentityRevisionId: revisionId,
+			firstVersion: version,
+		});
+		await tx
+			.update(otusV2)
+			.set({ version })
+			.where(eq(otusV2.id, command.otuId));
+		await tx.insert(otuChanges).values({
+			referenceId: values.referenceId,
+			otuId: command.otuId,
+			version,
+			command: command.type,
+			commandSchemaVersion: command.schemaVersion,
+			payload: command.payload,
+			source: "user",
+			userId: values.userId,
+			createdAt: new Date(),
+		});
+		return getLocalOtu(tx, values.referenceId, command.otuId);
+	});
+}
 
 /** Values needed to delete a local OTU. */
 export type DeleteLocalOtuValues = {
@@ -761,7 +861,9 @@ async function getLocalOtuMetadata(
 				version: otuChanges.version,
 				command: otuChanges.command,
 				commandSchemaVersion: otuChanges.commandSchemaVersion,
-				otuName: sql<string | null>`${otuChanges.payload}->'taxonomy'->>'name'`,
+				otuName: sql<
+					string | null
+				>`coalesce(${otuChanges.payload}->'taxonomy'->>'name', ${otuChanges.payload}->>'name')`,
 				isolateName: sql<
 					OtuV2Isolate["name"]
 				>`${otuChanges.payload}->'isolate'->'name'`,
@@ -1185,7 +1287,7 @@ export async function getLocalOtu(
 					commandSchemaVersion: otuChanges.commandSchemaVersion,
 					otuName: sql<
 						string | null
-					>`${otuChanges.payload}->'taxonomy'->>'name'`,
+					>`coalesce(${otuChanges.payload}->'taxonomy'->>'name', ${otuChanges.payload}->>'name')`,
 					isolateName: sql<
 						OtuV2Isolate["name"]
 					>`${otuChanges.payload}->'isolate'->'name'`,

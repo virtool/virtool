@@ -10,7 +10,7 @@ import {
 } from "@virtool/data/db/test/fixtures";
 import { NcbiUnreachableError } from "@virtool/ncbi/client";
 import type { NcbiGenbank, NcbiTaxonomy } from "@virtool/ncbi/models";
-import { sql } from "drizzle-orm";
+import { eq, sql } from "drizzle-orm";
 import {
 	afterAll,
 	beforeAll,
@@ -180,6 +180,45 @@ function call(name: string, data?: unknown) {
 }
 
 describe("createLocalOtu", () => {
+	it("protects taxonomy edits with OTU rights, version, and archived state", async () => {
+		const ownerId = await signIn(db, getRequest, {
+			administratorRole: null,
+			handle: "owner",
+		});
+		const referenceId = await seedReferenceV2(ownerId);
+		const created = validCommand();
+		await call("createLocalOtuFn", { referenceId, command: created });
+		const edit = {
+			type: "UpdateTaxonomy",
+			schemaVersion: 1,
+			otuId: created.otuId,
+			expectedVersion: 1,
+			payload: { name: "Updated", acronym: null, lineage: [] },
+		};
+		await signIn(db, getRequest, { administratorRole: null, handle: "other" });
+		await expect(
+			call("updateLocalOtuTaxonomyFn", { referenceId, command: edit }),
+		).rejects.toBeInstanceOf(ForbiddenError);
+		await signIn(db, getRequest, {
+			administratorRole: "full",
+			handle: "admin",
+		});
+		await call("updateLocalOtuTaxonomyFn", { referenceId, command: edit });
+		await expect(
+			call("updateLocalOtuTaxonomyFn", { referenceId, command: edit }),
+		).rejects.toMatchObject({ status: 409 });
+		await db
+			.update(referenceRoots)
+			.set({ archived: true })
+			.where(eq(referenceRoots.id, referenceId));
+		await expect(
+			call("updateLocalOtuTaxonomyFn", {
+				referenceId,
+				command: { ...edit, expectedVersion: 2 },
+			}),
+		).rejects.toMatchObject({ status: 409 });
+	});
+
 	it("creates a manual multipartite OTU with two validated segment assignments", async () => {
 		const userId = await signIn(db, getRequest, { administratorRole: null });
 		const referenceId = await seedReferenceV2(userId);
@@ -503,6 +542,88 @@ describe("createLocalOtu", () => {
 				},
 			}),
 		).rejects.toMatchObject({ status: 422 });
+	});
+
+	it("allows a GenBank isolate after a manual OTU gains matching species lineage", async () => {
+		const userId = await signIn(db, getRequest, { administratorRole: null });
+		const referenceId = await seedReferenceV2(userId);
+		const initial = genbankCommand();
+		await call("createLocalOtuFn", {
+			referenceId,
+			command: {
+				...initial,
+				payload: {
+					...initial.payload,
+					genbank: undefined,
+					taxonomy: { ...initial.payload.taxonomy, lineage: [] },
+				},
+			},
+		});
+		fetchGenbankRecords.mockResolvedValue([record]);
+		fetchTaxonomyRecord.mockResolvedValue(taxonomy);
+		await expect(
+			call("getGenbankIsolateDraftFn", {
+				referenceId,
+				otuId: initial.otuId,
+				accessions: [record.accession_version],
+			}),
+		).rejects.toMatchObject({ status: 422 });
+		const updated = (await call("updateLocalOtuTaxonomyFn", {
+			referenceId,
+			command: {
+				type: "UpdateTaxonomy",
+				schemaVersion: 1,
+				otuId: initial.otuId,
+				expectedVersion: 1,
+				payload: {
+					name: "Tobacco mosaic virus",
+					acronym: null,
+					lineage: [
+						{ id: 12242, name: "Tobacco mosaic virus", rank: "species" },
+					],
+				},
+			},
+		})) as { version: number; taxonomy: { kind: string } };
+		expect(updated).toMatchObject({ version: 2, taxonomy: { kind: "local" } });
+		const draft = (await call("getGenbankIsolateDraftFn", {
+			referenceId,
+			otuId: initial.otuId,
+			accessions: [record.accession_version],
+		})) as { sequences: Array<{ segmentId: string }> };
+		expect(draft.sequences).toHaveLength(1);
+		const matchedSegment = draft.sequences[0];
+		if (!matchedSegment) {
+			throw new Error("Expected a matched segment.");
+		}
+		const sequenceId = randomUUID();
+		const isolate = (await call("createLocalOtuIsolateFn", {
+			referenceId,
+			command: {
+				type: "CreateIsolate",
+				schemaVersion: 1,
+				otuId: initial.otuId,
+				expectedVersion: 2,
+				payload: {
+					genbank: {
+						sequences: [{ sequenceId, accession: record.accession_version }],
+					},
+					isolate: {
+						id: randomUUID(),
+						name: null,
+						sequences: [
+							{
+								id: sequenceId,
+								definition: record.definition,
+								sequence: record.sequence,
+								segmentId: matchedSegment.segmentId,
+							},
+						],
+					},
+				},
+			},
+		})) as { version: number; isolates: unknown[] };
+		expect(isolate.version).toBe(3);
+		expect(isolate.isolates).toHaveLength(2);
 	});
 
 	it("rejects an out-of-tolerance isolate in preview and save", async () => {

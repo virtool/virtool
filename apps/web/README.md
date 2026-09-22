@@ -132,6 +132,11 @@ Manual OTU creation accepts one or more segments. Multipartite segments have
 unique names, rules, expected lengths, and tolerances; the first isolate
 supplies one sequence assigned to each segment. The same plan validation runs
 before submission and at the server boundary.
+Local OTU taxonomy name, acronym, and lineage can be edited at the OTU's
+current version. The edit creates a new local identity revision without changing
+maintenance ownership or sequence provenance. Curators may add an NCBI species
+taxon to a manual OTU's lineage so GenBank isolates can pass species matching.
+Taxonomy history summarizes the new name and omits sequence bodies.
 Creating a GenBank OTU first resolves accessions into a preview of its taxonomy,
 molecule, isolate, and segments. Changing accessions clears that preview; creation
 requires a separate confirmation, and the server checks the records again then.

@@ -7,6 +7,7 @@ import {
 	DeleteLocalOtuIsolateCommand,
 	type GenbankIsolateDraft,
 	type GenbankOtuDraft,
+	UpdateLocalOtuTaxonomyCommand,
 } from "@virtool/contracts";
 import {
 	createLocalOtu,
@@ -27,6 +28,7 @@ import {
 	OtuV2NotFoundError,
 	OtuV2ReferenceNotWritableError,
 	OtuV2VersionConflictError,
+	updateLocalOtuTaxonomy,
 } from "@virtool/data/otus-v2/data";
 import { resolveReferenceActor } from "@virtool/data/references/data";
 import {
@@ -76,6 +78,11 @@ const createLocalOtuSchema = z.object({
 const createLocalOtuIsolateSchema = z.object({
 	referenceId: z.uuid(),
 	command: CreateLocalOtuIsolateCommand,
+});
+
+const updateLocalOtuTaxonomySchema = z.object({
+	referenceId: z.uuid(),
+	command: UpdateLocalOtuTaxonomyCommand,
 });
 
 const deleteLocalOtuSchema = z.object({
@@ -156,7 +163,7 @@ const rethrowAsHttp = createServerOnlyFn((err: unknown): never => {
 	}
 	if (err instanceof OtuV2VersionConflictError) {
 		setResponseStatus(409);
-		throw new ClientError("OTU has changed. Review the isolate again.", 409);
+		throw new ClientError("OTU has changed. Review it again.", 409);
 	}
 	if (err instanceof OtuV2LastIsolateError) {
 		setResponseStatus(409);
@@ -300,6 +307,28 @@ export const createLocalOtuIsolateFn = createServerFn({ method: "POST" })
 			});
 			setResponseStatus(201);
 			return otu;
+		} catch (err) {
+			return rethrowAsHttp(err);
+		}
+	});
+
+export const updateLocalOtuTaxonomyFn = createServerFn({ method: "POST" })
+	.middleware([authenticated()])
+	.validator(updateLocalOtuTaxonomySchema)
+	.handler(async ({ context, data }) => {
+		try {
+			const actor = await resolveReferenceActor(db, context.principal.userId);
+			if (
+				!(await checkReferenceV2Right(db, data.referenceId, "modifyOtu", actor))
+			) {
+				setResponseStatus(403);
+				throw new ForbiddenError();
+			}
+			return await updateLocalOtuTaxonomy(db, {
+				referenceId: data.referenceId,
+				userId: context.principal.userId,
+				command: data.command,
+			});
 		} catch (err) {
 			return rethrowAsHttp(err);
 		}

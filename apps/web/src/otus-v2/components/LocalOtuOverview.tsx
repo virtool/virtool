@@ -8,6 +8,7 @@ import {
 import ExternalLink from "@base/ExternalLink";
 import Link from "@base/Link";
 import SectionHeader from "@base/SectionHeader";
+import EditLocalOtuTaxonomy from "@otus-v2/components/EditLocalOtuTaxonomy";
 import { formatV2IsolateName } from "@otus-v2/isolateName";
 import { useSuspenseLocalOtuV2 } from "@otus-v2/queries";
 
@@ -37,6 +38,13 @@ export default function LocalOtuOverview({
 
 	return (
 		<>
+			<section>
+				<SectionHeader className="flex items-center justify-between gap-3">
+					<h2>Taxonomy</h2>
+					<EditLocalOtuTaxonomy referenceId={referenceId} otu={otu} />
+				</SectionHeader>
+				<Box>{otu.taxonomy.name}</Box>
+			</section>
 			<Box>
 				<dl className="grid grid-cols-[max-content_1fr] gap-x-4 gap-y-1">
 					<dt className="font-semibold">Molecule</dt>

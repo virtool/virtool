@@ -6,7 +6,7 @@ import type { IconColor } from "@base/types";
 import { getOtuV2ChangeDescription } from "@otus-v2/history";
 import { useSuspenseLocalOtuV2 } from "@otus-v2/queries";
 import type { OtuV2Change } from "@virtool/contracts";
-import { FlaskConical, GitBranch, type LucideIcon } from "lucide-react";
+import { FlaskConical, GitBranch, type LucideIcon, Pencil } from "lucide-react";
 
 type ChangeStyle = {
 	color: IconColor;
@@ -16,6 +16,7 @@ type ChangeStyle = {
 const changeStyles: Record<OtuV2Change["command"], ChangeStyle> = {
 	CreateOTU: { icon: GitBranch, color: "blue" },
 	CreateIsolate: { icon: FlaskConical, color: "blue" },
+	UpdateTaxonomy: { icon: Pencil, color: "blue" },
 	DeleteIsolate: { icon: FlaskConical, color: "red" },
 	DeleteOTU: { icon: GitBranch, color: "red" },
 };

@@ -129,10 +129,37 @@ const planSchema = z
 const lineageTaxonSchema = z
 	.object({
 		id: z.number().int().positive(),
-		name: z.string(),
-		rank: z.string(),
+		name: trimmedTextSchema,
+		rank: trimmedTextSchema,
 	})
 	.strict();
+
+const lineageSchema = z
+	.array(lineageTaxonSchema)
+	.superRefine((lineage, ctx) => {
+		const ids = new Set<number>();
+		let speciesCount = 0;
+		for (const [index, taxon] of lineage.entries()) {
+			if (ids.has(taxon.id)) {
+				ctx.addIssue({
+					code: "custom",
+					path: [index, "id"],
+					message: "Taxon IDs must be unique.",
+				});
+			}
+			ids.add(taxon.id);
+			if (taxon.rank === "species") {
+				speciesCount += 1;
+				if (speciesCount > 1) {
+					ctx.addIssue({
+						code: "custom",
+						path: [index, "rank"],
+						message: "Lineage can contain only one species.",
+					});
+				}
+			}
+		}
+	});
 
 const localTaxonomySchema = z
 	.object({
@@ -140,7 +167,7 @@ const localTaxonomySchema = z
 		identityId: uuidSchema,
 		name: trimmedTextSchema,
 		acronym: trimmedTextSchema.nullable().default(null),
-		lineage: z.array(lineageTaxonSchema).default([]),
+		lineage: lineageSchema.default([]),
 	})
 	.strict();
 
@@ -313,6 +340,21 @@ export const CreateLocalOtuIsolateCommand = z
 	})
 	.strict();
 
+/** A versioned edit to a locally maintained OTU's taxonomy identity. */
+export const UpdateLocalOtuTaxonomyCommand = z
+	.object({
+		type: z.literal("UpdateTaxonomy"),
+		schemaVersion: z.literal(1),
+		otuId: uuidSchema,
+		expectedVersion: z.number().int().positive(),
+		payload: localTaxonomySchema.pick({
+			name: true,
+			acronym: true,
+			lineage: true,
+		}),
+	})
+	.strict();
+
 /** A command that deletes one isolate from an existing local OTU. */
 export const DeleteLocalOtuIsolateCommand = z
 	.object({
@@ -349,6 +391,16 @@ export type CreateLocalOtuIsolateCommand = z.output<
 /** Input accepted before a local `CreateIsolate` command is normalized. */
 export type CreateLocalOtuIsolateCommandInput = z.input<
 	typeof CreateLocalOtuIsolateCommand
+>;
+
+/** A parsed versioned local OTU taxonomy edit. */
+export type UpdateLocalOtuTaxonomyCommand = z.output<
+	typeof UpdateLocalOtuTaxonomyCommand
+>;
+
+/** Input accepted for a versioned local OTU taxonomy edit. */
+export type UpdateLocalOtuTaxonomyCommandInput = z.input<
+	typeof UpdateLocalOtuTaxonomyCommand
 >;
 
 /** A parsed and normalized local `DeleteIsolate` command. */
@@ -424,6 +476,10 @@ export type OtuV2Change = {
 	| {
 			command: "CreateIsolate";
 			name: OtuV2Isolate["name"];
+	  }
+	| {
+			command: "UpdateTaxonomy";
+			name: string;
 	  }
 	| {
 			command: "DeleteIsolate";

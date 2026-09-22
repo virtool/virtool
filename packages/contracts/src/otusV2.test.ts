@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { CreateLocalOtuCommand } from "./otusV2";
+import { CreateLocalOtuCommand, UpdateLocalOtuTaxonomyCommand } from "./otusV2";
 
 const IDS = {
 	otu: "00000000-0000-4000-8000-000000000001",
@@ -173,5 +173,36 @@ describe("CreateLocalOtuCommand", () => {
 			id: "00000000-0000-4000-8000-000000000007",
 		});
 		expect(CreateLocalOtuCommand.safeParse(command).success).toBe(false);
+	});
+});
+
+describe("UpdateLocalOtuTaxonomyCommand", () => {
+	it.each([
+		["blank taxon name", [{ id: 12242, name: " ", rank: "species" }]],
+		["blank rank", [{ id: 12242, name: "Tobacco mosaic virus", rank: " " }]],
+		[
+			"duplicate taxon IDs",
+			[
+				{ id: 12242, name: "Viruses", rank: "superkingdom" },
+				{ id: 12242, name: "Tobacco mosaic virus", rank: "species" },
+			],
+		],
+		[
+			"multiple species",
+			[
+				{ id: 12242, name: "Tobacco mosaic virus", rank: "species" },
+				{ id: 12243, name: "Another virus", rank: "species" },
+			],
+		],
+	])("rejects %s", (_label, lineage) => {
+		expect(
+			UpdateLocalOtuTaxonomyCommand.safeParse({
+				type: "UpdateTaxonomy",
+				schemaVersion: 1,
+				otuId: IDS.otu,
+				expectedVersion: 1,
+				payload: { name: "Tobacco mosaic virus", acronym: null, lineage },
+			}).success,
+		).toBe(false);
 	});
 });

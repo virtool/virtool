@@ -20,6 +20,8 @@ export function getOtuV2ChangeDescription(change: OtuV2Change) {
 				subject: isolateName,
 			};
 		}
+		case "UpdateTaxonomy":
+			return { action: "updated taxonomy", subject: change.name };
 		case "DeleteIsolate":
 			return { action: "deleted isolate", subject: null };
 		case "DeleteOTU":

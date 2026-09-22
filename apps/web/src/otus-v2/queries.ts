@@ -11,6 +11,7 @@ import {
 	getLocalOtuIsolatesFn,
 	getLocalOtuSequenceFn,
 	getLocalOtusFn,
+	updateLocalOtuTaxonomyFn,
 } from "@server/otus-v2/functions";
 import {
 	queryOptions,
@@ -31,6 +32,7 @@ import type {
 	LocalOtuV2Overview,
 	LocalOtuV2Sequence,
 	LocalOtuV2Summary,
+	UpdateLocalOtuTaxonomyCommandInput,
 } from "@virtool/contracts";
 
 /**
@@ -208,6 +210,28 @@ export function useCreateLocalOtuIsolate(referenceId: string) {
 			});
 			queryClient.invalidateQueries({
 				queryKey: otuV2QueryKeys.list([referenceId]),
+			});
+		},
+	});
+}
+
+/** Edit local OTU taxonomy identity and lineage at the current version. */
+export function useUpdateLocalOtuTaxonomy(referenceId: string) {
+	const queryClient = useQueryClient();
+	return useMutation<LocalOtuV2, Error, UpdateLocalOtuTaxonomyCommandInput>({
+		mutationFn: (command) =>
+			updateLocalOtuTaxonomyFn({
+				data: { referenceId, command },
+			}) as Promise<LocalOtuV2>,
+		onSuccess: (otu) => {
+			cacheLocalOtuOverview(queryClient, otu);
+			queryClient.invalidateQueries({
+				queryKey: otuV2QueryKeys.list([referenceId]),
+			});
+		},
+		onError: (_error, command) => {
+			queryClient.invalidateQueries({
+				queryKey: otuV2QueryKeys.detail(command.otuId),
 			});
 		},
 	});

@@ -26,6 +26,8 @@ import {
 	OtuV2InvalidIsolateError,
 	OtuV2LastIsolateError,
 	OtuV2NotFoundError,
+	OtuV2VersionConflictError,
+	updateLocalOtuTaxonomy,
 } from "./data";
 
 const IDS = {
@@ -168,6 +170,104 @@ describe("createReferenceV2", () => {
 });
 
 describe("createLocalOtu", () => {
+	it("edits taxonomy without changing ownership or mixed sequence provenance", async () => {
+		const reference = await createReference();
+		const command = createCommand(randomUUID());
+		const manual = {
+			...command,
+			payload: {
+				...command.payload,
+				taxonomy: { ...command.payload.taxonomy, lineage: [] },
+			},
+		};
+		await createLocalOtu(db, {
+			referenceId: reference.id,
+			userId,
+			command: manual,
+		});
+		const edit = {
+			type: "UpdateTaxonomy" as const,
+			schemaVersion: 1 as const,
+			otuId: command.otuId,
+			expectedVersion: 1,
+			payload: {
+				name: "Updated virus",
+				acronym: "UV",
+				lineage: [{ id: 3044, name: "Updated virus", rank: "species" }],
+			},
+		};
+		const updated = await updateLocalOtuTaxonomy(db, {
+			referenceId: reference.id,
+			userId,
+			command: edit,
+		});
+		expect(updated.taxonomy).toMatchObject({
+			kind: "local",
+			identityId: command.payload.taxonomy.identityId,
+			name: "Updated virus",
+			lineage: edit.payload.lineage,
+		});
+		expect(updated.changes[0]).toMatchObject({
+			command: "UpdateTaxonomy",
+			name: "Updated virus",
+			version: 2,
+		});
+		expect(JSON.stringify(updated.changes)).not.toContain("ATCGNNRY");
+		await expect(
+			updateLocalOtuTaxonomy(db, {
+				referenceId: reference.id,
+				userId,
+				command: edit,
+			}),
+		).rejects.toBeInstanceOf(OtuV2VersionConflictError);
+		const segmentId = command.payload.plan.segments[0].id;
+		const sequenceId = randomUUID();
+		const isolateId = randomUUID();
+		await createLocalOtuIsolate(db, {
+			referenceId: reference.id,
+			userId,
+			command: {
+				type: "CreateIsolate",
+				schemaVersion: 1,
+				otuId: command.otuId,
+				expectedVersion: 2,
+				payload: {
+					genbank: { sequences: [{ sequenceId, accession: "NC_001367.1" }] },
+					isolate: {
+						id: isolateId,
+						name: null,
+						sequences: [
+							{
+								id: sequenceId,
+								definition: "Imported",
+								sequence: "ATCGNNRY",
+								segmentId,
+							},
+						],
+					},
+				},
+			},
+		});
+		expect(
+			await getLocalOtuSequence(
+				db,
+				reference.id,
+				command.otuId,
+				command.payload.isolate.id,
+				command.payload.isolate.sequences[0].id,
+			),
+		).toMatchObject({ source: "manual", accessionVersion: null });
+		expect(
+			await getLocalOtuSequence(
+				db,
+				reference.id,
+				command.otuId,
+				isolateId,
+				sequenceId,
+			),
+		).toMatchObject({ source: "genbank", accessionVersion: "NC_001367.1" });
+	});
+
 	it("persists a manual multipartite plan and its first isolate together", async () => {
 		const reference = await createReference();
 		const command = createCommand(randomUUID());

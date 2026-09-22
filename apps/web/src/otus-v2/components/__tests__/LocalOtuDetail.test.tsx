@@ -8,6 +8,7 @@ import {
 	mockDeleteLocalOtuV2,
 	mockGetLocalOtusV2,
 	mockGetLocalOtuV2,
+	otuV2ServerFnMocks,
 } from "@tests/server-fn/otusV2";
 import { mockGetReferenceV2 } from "@tests/server-fn/referencesV2";
 import { renderRoute } from "@tests/setup";
@@ -69,6 +70,47 @@ describe("<LocalOtuDetail />", () => {
 		expect(screen.getByRole("link", { name: "OTU" })).toBeInTheDocument();
 		expect(screen.getByRole("link", { name: "Isolates" })).toBeInTheDocument();
 		expect(screen.getByRole("link", { name: "History" })).toBeInTheDocument();
+	});
+
+	it("submits taxonomy identity and lineage with the observed OTU version", async () => {
+		otuV2ServerFnMocks.updateLocalOtuTaxonomyFn.mockReturnValueOnce(
+			new Promise(() => {}),
+		);
+		await renderDetailRoute(base);
+		await userEvent.click(
+			await screen.findByRole("button", { name: "Edit taxonomy" }),
+		);
+		await userEvent.clear(screen.getByLabelText("Taxonomy name"));
+		await userEvent.type(
+			screen.getByLabelText("Taxonomy name"),
+			"Updated virus",
+		);
+		await userEvent.click(screen.getByRole("button", { name: "Add taxon" }));
+		await userEvent.clear(screen.getByLabelText("Taxon 1 NCBI ID"));
+		await userEvent.type(screen.getByLabelText("Taxon 1 NCBI ID"), "12242");
+		await userEvent.type(
+			screen.getByLabelText("Taxon 1 name"),
+			"Updated virus",
+		);
+		await userEvent.click(
+			screen.getByRole("button", { name: "Save taxonomy" }),
+		);
+		expect(otuV2ServerFnMocks.updateLocalOtuTaxonomyFn).toHaveBeenCalledWith({
+			data: {
+				referenceId: reference.id,
+				command: {
+					type: "UpdateTaxonomy",
+					schemaVersion: 1,
+					otuId: otu.id,
+					expectedVersion: otu.version,
+					payload: {
+						name: "Updated virus",
+						acronym: "CMV",
+						lineage: [{ id: 12242, rank: "species", name: "Updated virus" }],
+					},
+				},
+			},
+		});
 	});
 
 	it("deletes the OTU and returns to its Reference OTU list", async () => {

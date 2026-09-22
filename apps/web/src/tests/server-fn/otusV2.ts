@@ -18,6 +18,7 @@ export const otuV2ServerFnMocks = {
 	getLocalOtuIsolatesFn: vi.fn(),
 	getLocalOtuSequenceFn: vi.fn(),
 	getLocalOtusFn: vi.fn(),
+	updateLocalOtuTaxonomyFn: vi.fn(),
 };
 
 /** Sets up deleteLocalOtu to resolve successfully. */
