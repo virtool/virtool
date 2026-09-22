@@ -320,6 +320,48 @@ describe("createLocalOtu", () => {
 		expect(fetchGenbankRecords).toHaveBeenCalledWith(["NC_001367.1"]);
 	});
 
+	it("returns a conflict when an isolate re-imports an OTU accession", async () => {
+		const userId = await signIn(db, getRequest, { administratorRole: null });
+		const referenceId = await seedReferenceV2(userId);
+		fetchGenbankRecords.mockResolvedValue([record]);
+		fetchTaxonomyRecord.mockResolvedValue(taxonomy);
+		const otuCommand = genbankCommand();
+		await call("createLocalOtuFn", { referenceId, command: otuCommand });
+		const segment = otuCommand.payload.plan.segments[0];
+		if (!segment) {
+			throw new Error("Expected an OTU segment.");
+		}
+		const sequenceId = randomUUID();
+		await expect(
+			call("createLocalOtuIsolateFn", {
+				referenceId,
+				command: {
+					type: "CreateIsolate",
+					schemaVersion: 1,
+					otuId: otuCommand.otuId,
+					expectedVersion: 1,
+					payload: {
+						genbank: {
+							sequences: [{ sequenceId, accession: record.accession_version }],
+						},
+						isolate: {
+							id: randomUUID(),
+							name: null,
+							sequences: [
+								{
+									id: sequenceId,
+									definition: record.definition,
+									sequence: record.sequence,
+									segmentId: segment.id,
+								},
+							],
+						},
+					},
+				},
+			}),
+		).rejects.toMatchObject({ status: 409 });
+	});
+
 	it("rejects an accession changed after preview before writing", async () => {
 		const userId = await signIn(db, getRequest, { administratorRole: null });
 		const referenceId = await seedReferenceV2(userId);
@@ -351,7 +393,13 @@ describe("createLocalOtu", () => {
 		fetchGenbankRecords.mockResolvedValue([record]);
 		fetchTaxonomyRecord.mockResolvedValue(taxonomy);
 		const otuCommand = genbankCommand();
-		await call("createLocalOtuFn", { referenceId, command: otuCommand });
+		await call("createLocalOtuFn", {
+			referenceId,
+			command: {
+				...otuCommand,
+				payload: { ...otuCommand.payload, genbank: undefined },
+			},
+		});
 		const segment = otuCommand.payload.plan.segments[0];
 		if (!segment) {
 			throw new Error("Expected a segment.");

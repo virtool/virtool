@@ -1,8 +1,9 @@
+import { randomUUID } from "node:crypto";
 import { count, eq } from "drizzle-orm";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { seedUser } from "../auth/test/fixtures";
 import type { Db } from "../db/pg";
-import { otuChanges, otusV2 } from "../db/schema/otusV2";
+import { otuChanges, otuSequences, otusV2 } from "../db/schema/otusV2";
 import { referenceUsers } from "../db/schema/referencesV2";
 import { createTestDatabase, type TestDatabase } from "../db/test/fixtures";
 import {
@@ -17,8 +18,10 @@ import {
 	deleteLocalOtuIsolate,
 	getLocalOtu,
 	getLocalOtuIsolate,
+	getLocalOtuSequence,
 	getLocalOtus,
 	OtuV2ConflictError,
+	OtuV2DuplicateAccessionError,
 	OtuV2InvalidIsolateError,
 	OtuV2LastIsolateError,
 	OtuV2NotFoundError,
@@ -164,6 +167,138 @@ describe("createReferenceV2", () => {
 });
 
 describe("createLocalOtu", () => {
+	it("deduplicates active GenBank accessions and permits re-import after deletion", async () => {
+		const reference = await createReference();
+		const command = createCommand(randomUUID());
+		const firstSequence = command.payload.isolate.sequences[0];
+		const segment = command.payload.plan.segments[0];
+		const accession = "NC_001367.1";
+		const imported = {
+			...command,
+			payload: {
+				...command.payload,
+				genbank: {
+					sequences: [{ sequenceId: firstSequence.id, accession }],
+				},
+			},
+		};
+		await createLocalOtu(db, {
+			referenceId: reference.id,
+			userId,
+			command: imported,
+		});
+		expect(
+			await getLocalOtuSequence(
+				db,
+				reference.id,
+				command.otuId,
+				command.payload.isolate.id,
+				firstSequence.id,
+			),
+		).toMatchObject({ source: "genbank", accessionVersion: accession });
+		await expect(
+			db.insert(otuSequences).values({
+				id: randomUUID(),
+				otuId: command.otuId,
+				accessionBase: "NC_001367",
+			}),
+		).rejects.toThrow();
+
+		const manualIsolateId = randomUUID();
+		const manualSequenceId = randomUUID();
+		await createLocalOtuIsolate(db, {
+			referenceId: reference.id,
+			userId,
+			command: {
+				type: "CreateIsolate",
+				schemaVersion: 1,
+				otuId: command.otuId,
+				expectedVersion: 1,
+				payload: {
+					isolate: {
+						id: manualIsolateId,
+						name: null,
+						sequences: [
+							{
+								id: manualSequenceId,
+								definition: "Manual sequence",
+								sequence: "ATCGNNRY",
+								segmentId: segment.id,
+							},
+						],
+					},
+				},
+			},
+		});
+		expect(
+			await getLocalOtuSequence(
+				db,
+				reference.id,
+				command.otuId,
+				manualIsolateId,
+				manualSequenceId,
+			),
+		).toMatchObject({ source: "manual", accessionVersion: null });
+
+		function makeImport(expectedVersion: number) {
+			const sequenceId = randomUUID();
+			return {
+				type: "CreateIsolate" as const,
+				schemaVersion: 1 as const,
+				otuId: command.otuId,
+				expectedVersion,
+				payload: {
+					genbank: {
+						sequences: [{ sequenceId, accession: "nc_001367.2" }],
+					},
+					isolate: {
+						id: randomUUID(),
+						name: null,
+						sequences: [
+							{
+								id: sequenceId,
+								definition: "Complete genome",
+								sequence: "ATCGNNRY",
+								segmentId: segment.id,
+							},
+						],
+					},
+				},
+			};
+		}
+		await expect(
+			createLocalOtuIsolate(db, {
+				referenceId: reference.id,
+				userId,
+				command: makeImport(2),
+			}),
+		).rejects.toBeInstanceOf(OtuV2DuplicateAccessionError);
+		expect((await getLocalOtu(db, reference.id, command.otuId)).version).toBe(
+			2,
+		);
+
+		await deleteLocalOtuIsolate(db, {
+			referenceId: reference.id,
+			userId,
+			command: {
+				type: "DeleteIsolate",
+				schemaVersion: 1,
+				otuId: command.otuId,
+				expectedVersion: 2,
+				payload: { isolateId: command.payload.isolate.id },
+			},
+		});
+		const reimported = makeImport(3);
+		await createLocalOtuIsolate(db, {
+			referenceId: reference.id,
+			userId,
+			command: reimported,
+		});
+		expect((await getLocalOtu(db, reference.id, command.otuId)).version).toBe(
+			4,
+		);
+	});
+
 	it("rejects invalid direct isolate writes without advancing the version", async () => {
 		const reference = await createReference();
 		const command = createCommand("11000000-0000-4000-8000-000000000001");
@@ -180,7 +315,24 @@ describe("createLocalOtu", () => {
 			sequence: "ATCGATCG",
 			segmentId: command.payload.plan.segments[1].id,
 		});
-		await createLocalOtu(db, { referenceId: reference.id, userId, command });
+		const multipartiteCommand = {
+			...command,
+			payload: {
+				...command.payload,
+				plan: {
+					...command.payload.plan,
+					segments: command.payload.plan.segments.map((segment, index) => ({
+						...segment,
+						name: { prefix: "RNA", key: String(index + 1) },
+					})),
+				},
+			},
+		};
+		await createLocalOtu(db, {
+			referenceId: reference.id,
+			userId,
+			command: multipartiteCommand,
+		});
 
 		const base = {
 			type: "CreateIsolate" as const,

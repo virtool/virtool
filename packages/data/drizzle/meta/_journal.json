@@ -288,6 +288,13 @@
       "when": 1790105943676,
       "tag": "0040_careless_nitro",
       "breakpoints": true
+    },
+    {
+      "idx": 41,
+      "version": "7",
+      "when": 1790109496164,
+      "tag": "0041_empty_amphibian",
+      "breakpoints": true
     }
   ]
 }

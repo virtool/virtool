@@ -497,5 +497,8 @@ export type LocalOtuV2Overview = Omit<LocalOtuV2, "isolates"> & {
 	isolateCount: number;
 };
 
-/** The body of one local v2 sequence, fetched on demand. */
-export type LocalOtuV2Sequence = OtuV2LocalSequence;
+/** The body and provenance of one local v2 sequence, fetched on demand. */
+export type LocalOtuV2Sequence = OtuV2LocalSequence & {
+	source: "manual" | "genbank";
+	accessionVersion: string | null;
+};

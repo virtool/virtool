@@ -128,6 +128,10 @@ resolves those accessions again at save time and checks taxonomy, sequence
 content, and segment assignment before applying the versioned command. Manual
 `CreateOTU` and `CreateIsolate` requests have no GenBank provenance. Both
 manual and GenBank isolates must satisfy the OTU plan when saved.
+An OTU can use an accession base only once among its current sequences, even
+when submitted GenBank versions differ. Deleting an isolate releases its
+accessions for re-import. Sequence details expose their source and exact
+GenBank accession version.
 
 ### Error handling and request methods
 

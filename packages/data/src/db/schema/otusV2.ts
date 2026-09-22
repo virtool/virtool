@@ -383,6 +383,8 @@ export const otuSequences = pgTable(
 	{
 		id: uuid("id").primaryKey(),
 		otuId: uuid("otu_id").notNull(),
+		accessionBase: text("accession_base"),
+		retiredVersion: integer("retired_version"),
 	},
 	(table) => [
 		foreignKey({
@@ -391,6 +393,15 @@ export const otuSequences = pgTable(
 			name: "otu_sequences_otu_id_fkey",
 		}),
 		unique("otu_sequences_otu_id_id_key").on(table.otuId, table.id),
+		uniqueIndex("otu_sequences_current_accession_key")
+			.on(table.otuId, table.accessionBase)
+			.where(
+				sql`${table.accessionBase} is not null and ${table.retiredVersion} is null`,
+			),
+		check(
+			"otu_sequences_retired_version_check",
+			sql`${table.retiredVersion} is null or ${table.retiredVersion} >= 2`,
+		),
 	],
 );
 
@@ -402,6 +413,8 @@ export const otuLocalSequenceRecords = pgTable(
 		sequenceId: uuid("sequence_id").notNull(),
 		definition: text("definition").notNull(),
 		sequence: text("sequence").notNull(),
+		source: text("source").$type<"manual" | "genbank">().notNull(),
+		accessionVersion: text("accession_version"),
 		createdAt: timestamp("created_at", { withTimezone: true })
 			.$defaultFn(() => new Date())
 			.notNull(),
@@ -424,6 +437,10 @@ export const otuLocalSequenceRecords = pgTable(
 		check(
 			"otu_local_sequence_records_sequence_check",
 			sql`${table.sequence} <> '' and ${table.sequence} ~ '^[ATCGNRYKMSWBDHV]+$'`,
+		),
+		check(
+			"otu_local_sequence_records_source_check",
+			sql`(${table.source} = 'manual' and ${table.accessionVersion} is null) or (${table.source} = 'genbank' and ${table.accessionVersion} is not null)`,
 		),
 	],
 );

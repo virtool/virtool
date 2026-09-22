@@ -20,7 +20,9 @@ import {
 	getLocalOtuSequence,
 	getLocalOtus,
 	OtuV2ConflictError,
+	OtuV2DuplicateAccessionError,
 	OtuV2InvalidIsolateError,
+	OtuV2InvalidProvenanceError,
 	OtuV2LastIsolateError,
 	OtuV2NotFoundError,
 	OtuV2ReferenceNotWritableError,
@@ -138,6 +140,19 @@ const rethrowAsHttp = createServerOnlyFn((err: unknown): never => {
 	if (err instanceof OtuV2ConflictError) {
 		setResponseStatus(409);
 		throw new ClientError("OTU already exists.", 409);
+	}
+	if (err instanceof OtuV2DuplicateAccessionError) {
+		setResponseStatus(409);
+		throw new ClientError(
+			err.message
+				? `Accession ${err.message} is already in this OTU.`
+				: "An accession is already in this OTU.",
+			409,
+		);
+	}
+	if (err instanceof OtuV2InvalidProvenanceError) {
+		setResponseStatus(422);
+		throw new ClientError("Invalid GenBank accession provenance.", 422);
 	}
 	if (err instanceof OtuV2VersionConflictError) {
 		setResponseStatus(409);

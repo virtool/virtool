@@ -54,15 +54,15 @@ Struck-through findings have since been addressed.
    [genbank.ts:79](apps/web/src/server/otus-v2/genbank.ts#L79),
    [ref-builder plan.py](../ref-builder/ref_builder/plan.py)~~
 
-5. **[P2] Re-importing an accession creates duplicate isolates.**
+5. ~~**[P2] Re-importing an accession creates duplicate isolates.**~~
 
-   Provenance validation checks the submitted records but never checks accessions
+   ~~Provenance validation checks the submitted records but never checks accessions
    already present in the OTU. Each submission receives fresh UUIDs, so importing
    the same accession again passes identity constraints. Although the latest
    changes preserve provenance in command history, current sequence records
    expose neither accession nor source. This also leaves no usable foundation
    for ref-builder’s accession deduplication, RefSeq promotion, and version
-   updates.
+   updates.~~
 
    [functions.ts:255](apps/web/src/server/otus-v2/functions.ts#L255),
    [data.ts:357](packages/data/src/otus-v2/data.ts#L357)
@@ -107,8 +107,8 @@ There are also substantial unfinished capabilities, distinct from the bugs above
   recommended-segment acknowledgement.
 - Publishing/building usable reference versions and exporting sequences.
   Existing indexes still reference legacy references.
-- Accession/source visibility on sequence details. Initial NCBI OTU creation
-  also saves immediately, without the review step offered when adding an isolate.
+- Initial NCBI OTU creation saves immediately, without the review step offered
+  when adding an isolate.
 
 ## Manual and NCBI-derived data
 

@@ -49,6 +49,12 @@ export class OtuV2ReferenceNotWritableError extends AppError {}
 /** Thrown when a v2 OTU command conflicts with existing identity. */
 export class OtuV2ConflictError extends AppError {}
 
+/** Thrown when an accession is already active in an OTU. */
+export class OtuV2DuplicateAccessionError extends AppError {}
+
+/** Thrown when GenBank provenance does not describe the submitted sequences. */
+export class OtuV2InvalidProvenanceError extends AppError {}
+
 /** Thrown when an OTU command is based on an outdated OTU version. */
 export class OtuV2VersionConflictError extends AppError {}
 
@@ -126,6 +132,9 @@ export async function createLocalOtu(
 			await insertLocalOtu(tx, values.referenceId, values.userId, command);
 		});
 	} catch (error) {
+		if (isUniqueViolation(error, "otu_sequences_current_accession_key")) {
+			throw new OtuV2DuplicateAccessionError();
+		}
 		if (isUniqueViolation(error)) {
 			throw new OtuV2ConflictError();
 		}
@@ -202,6 +211,16 @@ export async function deleteLocalOtuIsolate(
 		}
 
 		const version = command.expectedVersion + 1;
+		const sequenceIds = await tx
+			.select({ id: otuSequenceVersions.sequenceId })
+			.from(otuSequenceVersions)
+			.where(
+				and(
+					eq(otuSequenceVersions.otuId, command.otuId),
+					eq(otuSequenceVersions.isolateId, command.payload.isolateId),
+					isNull(otuSequenceVersions.lastVersion),
+				),
+			);
 		await Promise.all([
 			tx
 				.update(otuIsolateVersions)
@@ -218,6 +237,15 @@ export async function deleteLocalOtuIsolate(
 					),
 				),
 		]);
+		await tx
+			.update(otuSequences)
+			.set({ retiredVersion: version })
+			.where(
+				inArray(
+					otuSequences.id,
+					sequenceIds.map((row) => row.id),
+				),
+			);
 		await tx
 			.update(otusV2)
 			.set({ version })
@@ -332,7 +360,13 @@ export async function createLocalOtuIsolate(
 			}
 
 			const version = command.expectedVersion + 1;
-			await insertIsolate(tx, command.otuId, command.payload.isolate, version);
+			await insertIsolate(
+				tx,
+				command.otuId,
+				command.payload.isolate,
+				command.payload.genbank,
+				version,
+			);
 			await tx
 				.update(otusV2)
 				.set({ version })
@@ -350,6 +384,9 @@ export async function createLocalOtuIsolate(
 			});
 		});
 	} catch (error) {
+		if (isUniqueViolation(error, "otu_sequences_current_accession_key")) {
+			throw new OtuV2DuplicateAccessionError();
+		}
 		if (isUniqueViolation(error)) {
 			throw new OtuV2ConflictError();
 		}
@@ -363,9 +400,11 @@ async function insertIsolate(
 	tx: Transaction,
 	otuId: string,
 	isolate: CreateLocalOtuIsolateCommand["payload"]["isolate"],
+	genbank: CreateLocalOtuIsolateCommand["payload"]["genbank"],
 	version: number,
 ): Promise<void> {
 	const now = new Date();
+	const provenance = await getSequenceProvenance(tx, otuId, isolate, genbank);
 	await tx.insert(otuIsolates).values({ id: isolate.id, otuId });
 	await tx.insert(otuIsolateVersions).values({
 		id: randomUUID(),
@@ -379,17 +418,26 @@ async function insertIsolate(
 	const entries = isolate.sequences.map((sequence) => ({
 		sequence,
 		recordId: randomUUID(),
+		accessionVersion: provenance.get(sequence.id) ?? null,
 	}));
-	await tx
-		.insert(otuSequences)
-		.values(entries.map(({ sequence }) => ({ id: sequence.id, otuId })));
+	await tx.insert(otuSequences).values(
+		entries.map(({ sequence, accessionVersion }) => ({
+			id: sequence.id,
+			otuId,
+			accessionBase: accessionVersion
+				? getAccessionBase(accessionVersion)
+				: null,
+		})),
+	);
 	await tx.insert(otuLocalSequenceRecords).values(
-		entries.map(({ sequence, recordId }) => ({
+		entries.map(({ sequence, recordId, accessionVersion }) => ({
 			id: recordId,
 			otuId,
 			sequenceId: sequence.id,
 			definition: sequence.definition,
 			sequence: sequence.sequence,
+			source: accessionVersion ? ("genbank" as const) : ("manual" as const),
+			accessionVersion,
 			createdAt: now,
 		})),
 	);
@@ -404,6 +452,59 @@ async function insertIsolate(
 			firstVersion: version,
 		})),
 	);
+}
+
+function getAccessionBase(accessionVersion: string): string {
+	const match = /^([A-Za-z0-9_-]+)\.[1-9][0-9]*$/.exec(accessionVersion);
+	if (!match?.[1]) {
+		throw new OtuV2InvalidProvenanceError();
+	}
+	return match[1].toUpperCase();
+}
+
+async function getSequenceProvenance(
+	tx: Transaction,
+	otuId: string,
+	isolate: CreateLocalOtuIsolateCommand["payload"]["isolate"],
+	genbank: CreateLocalOtuIsolateCommand["payload"]["genbank"],
+): Promise<Map<string, string>> {
+	if (!genbank) {
+		return new Map();
+	}
+
+	const sequenceIds = new Set(isolate.sequences.map((sequence) => sequence.id));
+	const bySequenceId = new Map<string, string>();
+	const byAccessionBase = new Map<string, string>();
+	for (const { sequenceId, accession } of genbank.sequences) {
+		if (!sequenceIds.has(sequenceId) || bySequenceId.has(sequenceId)) {
+			throw new OtuV2InvalidProvenanceError();
+		}
+		const accessionBase = getAccessionBase(accession);
+		if (byAccessionBase.has(accessionBase)) {
+			throw new OtuV2DuplicateAccessionError(accessionBase);
+		}
+		bySequenceId.set(sequenceId, accession);
+		byAccessionBase.set(accessionBase, accession);
+	}
+	if (bySequenceId.size !== sequenceIds.size) {
+		throw new OtuV2InvalidProvenanceError();
+	}
+
+	const accessionBases = [...byAccessionBase.keys()];
+	const existing = await tx
+		.select({ accessionBase: otuSequences.accessionBase })
+		.from(otuSequences)
+		.where(
+			and(
+				eq(otuSequences.otuId, otuId),
+				isNull(otuSequences.retiredVersion),
+				inArray(otuSequences.accessionBase, accessionBases),
+			),
+		);
+	if (existing[0]?.accessionBase) {
+		throw new OtuV2DuplicateAccessionError(existing[0].accessionBase);
+	}
+	return bySequenceId;
 }
 
 async function insertLocalOtu(
@@ -476,51 +577,7 @@ async function insertLocalOtu(
 		})),
 	);
 
-	await tx.insert(otuIsolates).values({
-		id: payload.isolate.id,
-		otuId: command.otuId,
-	});
-	await tx.insert(otuIsolateVersions).values({
-		id: randomUUID(),
-		otuId: command.otuId,
-		isolateId: payload.isolate.id,
-		nameType: payload.isolate.name?.type ?? null,
-		nameValue: payload.isolate.name?.value ?? null,
-		firstVersion: 1,
-	});
-
-	const sequenceEntries = payload.isolate.sequences.map((sequence) => ({
-		sequence,
-		recordId: randomUUID(),
-	}));
-
-	await tx.insert(otuSequences).values(
-		sequenceEntries.map(({ sequence }) => ({
-			id: sequence.id,
-			otuId: command.otuId,
-		})),
-	);
-	await tx.insert(otuLocalSequenceRecords).values(
-		sequenceEntries.map(({ sequence, recordId }) => ({
-			id: recordId,
-			otuId: command.otuId,
-			sequenceId: sequence.id,
-			definition: sequence.definition,
-			sequence: sequence.sequence,
-			createdAt: now,
-		})),
-	);
-	await tx.insert(otuSequenceVersions).values(
-		sequenceEntries.map(({ sequence, recordId }) => ({
-			id: randomUUID(),
-			otuId: command.otuId,
-			sequenceId: sequence.id,
-			isolateId: payload.isolate.id,
-			segmentId: sequence.segmentId,
-			localRecordId: recordId,
-			firstVersion: 1,
-		})),
-	);
+	await insertIsolate(tx, command.otuId, payload.isolate, payload.genbank, 1);
 
 	await tx.insert(otuChanges).values({
 		referenceId,
@@ -966,6 +1023,8 @@ export async function getLocalOtuSequence(
 				id: otuSequences.id,
 				definition: otuLocalSequenceRecords.definition,
 				sequence: otuLocalSequenceRecords.sequence,
+				source: otuLocalSequenceRecords.source,
+				accessionVersion: otuLocalSequenceRecords.accessionVersion,
 				segmentId: otuSequenceVersions.segmentId,
 			})
 			.from(otuSequences)
@@ -1205,14 +1264,18 @@ export async function getLocalOtu(
 	return assembled;
 }
 
-function isUniqueViolation(error: unknown): boolean {
+function isUniqueViolation(error: unknown, constraint?: string): boolean {
 	if (typeof error !== "object" || error === null) {
 		return false;
 	}
 
 	if ("code" in error && error.code === "23505") {
-		return true;
+		return (
+			constraint === undefined ||
+			("constraint_name" in error && error.constraint_name === constraint) ||
+			("constraint" in error && error.constraint === constraint)
+		);
 	}
 
-	return "cause" in error && isUniqueViolation(error.cause);
+	return "cause" in error && isUniqueViolation(error.cause, constraint);
 }

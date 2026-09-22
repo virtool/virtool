@@ -119,7 +119,14 @@ function LazySequence({
 					{query.isPending && <p>Loading sequence…</p>}
 					{query.isError && <p>Unable to load sequence.</p>}
 					{query.data && (
-						<p className="break-all font-mono">{query.data.sequence}</p>
+						<>
+							<p className="mb-2 text-slate-600 text-sm">
+								{query.data.source === "genbank"
+									? `GenBank · ${query.data.accessionVersion}`
+									: "Entered manually"}
+							</p>
+							<p className="break-all font-mono">{query.data.sequence}</p>
+						</>
 					)}
 				</CollapsibleContent>
 			</Collapsible>
