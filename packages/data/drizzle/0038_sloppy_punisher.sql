@@ -1,2 +1,3 @@
 ALTER TABLE "auth_sessions" ADD COLUMN "replacement_for_session_id" integer;--> statement-breakpoint
-ALTER TABLE "auth_sessions" ADD CONSTRAINT "auth_sessions_replacement_for_session_id_fkey" FOREIGN KEY ("replacement_for_session_id") REFERENCES "public"."auth_sessions"("id") ON DELETE set null ON UPDATE no action;
+ALTER TABLE "auth_sessions" ADD CONSTRAINT "auth_sessions_replacement_for_session_id_fkey" FOREIGN KEY ("replacement_for_session_id") REFERENCES "public"."auth_sessions"("id") ON DELETE set null ON UPDATE no action;--> statement-breakpoint
+CREATE INDEX "idx_auth_sessions_replacement_for_session_id" ON "auth_sessions" USING btree ("replacement_for_session_id");

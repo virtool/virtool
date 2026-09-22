@@ -104,6 +104,9 @@ export const authSessions = pgTable(
 		}).onDelete("set null"),
 		unique("auth_sessions_token_key").on(table.token),
 		index("idx_auth_sessions_expires_at").on(table.expiresAt),
+		index("idx_auth_sessions_replacement_for_session_id").on(
+			table.replacementForSessionId,
+		),
 		index("idx_auth_sessions_user_id").on(table.userId),
 	],
 );

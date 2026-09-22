@@ -235,7 +235,7 @@ queries are always scoped by the principal's numeric user id. The list contains
 only live Better Auth sessions and returns the full observed IP address, bounded
 browser/OS labels, creation time, rolling `updated_at` as last activity,
 effective expiry, and a server-derived current marker. Browser, OS, and IP are
-recognition hints from untrusted headers, not device identity or suspicion
+recognition hints from client-provided headers, not device identity or suspicion
 signals; missing or invalid values use explicit unknown fallbacks.
 
 Selected and all-other revocation require recent authentication and never end

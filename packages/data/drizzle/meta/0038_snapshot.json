@@ -1033,6 +1033,21 @@
           "method": "btree",
           "with": {}
         },
+        "idx_auth_sessions_replacement_for_session_id": {
+          "name": "idx_auth_sessions_replacement_for_session_id",
+          "columns": [
+            {
+              "expression": "replacement_for_session_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
         "idx_auth_sessions_user_id": {
           "name": "idx_auth_sessions_user_id",
           "columns": [

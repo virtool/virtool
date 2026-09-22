@@ -127,7 +127,7 @@ export async function resolveBrowserSessionForUpdate(
 			),
 		)
 		.limit(1)
-		.for("update");
+		.for("update", { of: authSessions });
 
 	return row ?? null;
 }

@@ -92,7 +92,8 @@ describe("Better Auth user relationships", () => {
 });
 
 describe("session replacement relationship", () => {
-	const replacement = getTableConfig(schema.authSessions).foreignKeys.find(
+	const config = getTableConfig(schema.authSessions);
+	const replacement = config.foreignKeys.find(
 		(fk) => fk.reference().columns[0]?.name === "replacement_for_session_id",
 	);
 
@@ -102,5 +103,11 @@ describe("session replacement relationship", () => {
 			getTableConfig(replacement?.reference().foreignTable as PgTable).name,
 		).toBe("auth_sessions");
 		expect(replacement?.onDelete).toBe("set null");
+	});
+
+	it("indexes the replacement marker", () => {
+		expect(config.indexes.map((index) => index.config.name)).toContain(
+			"idx_auth_sessions_replacement_for_session_id",
+		);
 	});
 });
