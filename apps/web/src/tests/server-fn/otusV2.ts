@@ -7,10 +7,12 @@ import { type Mock, vi } from "vitest";
  * them without per-file `vi.mock` boilerplate.
  */
 export const otuV2ServerFnMocks = {
+	allowLocalOtuAccessionFn: vi.fn(),
 	createLocalOtuIsolateFn: vi.fn(),
 	createLocalOtuFn: vi.fn(),
 	deleteLocalOtuFn: vi.fn(),
 	deleteLocalOtuIsolateFn: vi.fn(),
+	excludeLocalOtuAccessionFn: vi.fn(),
 	getGenbankIsolateDraftFn: vi.fn(),
 	getGenbankOtuDraftFn: vi.fn(),
 	getLocalOtuFn: vi.fn(),
@@ -19,6 +21,7 @@ export const otuV2ServerFnMocks = {
 	getLocalOtuSequenceFn: vi.fn(),
 	getLocalOtusFn: vi.fn(),
 	previewLocalOtuPlanFn: vi.fn(),
+	previewExcludeLocalOtuAccessionFn: vi.fn(),
 	updateLocalOtuPlanFn: vi.fn(),
 	updateLocalOtuIsolateFn: vi.fn(),
 	previewLocalOtuSequenceFn: vi.fn(),

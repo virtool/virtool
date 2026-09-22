@@ -1,8 +1,11 @@
 import type {
+	AllowLocalOtuAccessionCommand,
 	CreateLocalOtuCommand,
 	CreateLocalOtuIsolateCommand,
 	DeleteLocalOtuCommand,
 	DeleteLocalOtuIsolateCommand,
+	ExcludeLocalOtuAccessionCommand,
+	OtuV2Isolate,
 	OtuV2LineageTaxon,
 	UpdateLocalOtuIsolateCommand,
 	UpdateLocalOtuPlanCommand,
@@ -19,6 +22,7 @@ import {
 	integer,
 	jsonb,
 	pgTable,
+	primaryKey,
 	text,
 	timestamp,
 	unique,
@@ -101,6 +105,8 @@ export const otuChanges = pgTable(
 				| "UpdatePlan"
 				| "UpdateIsolate"
 				| "UpdateSequence"
+				| "ExcludeAccession"
+				| "AllowAccession"
 				| "DeleteIsolate"
 				| "DeleteOTU"
 			>()
@@ -117,6 +123,13 @@ export const otuChanges = pgTable(
 						previousSource: "manual" | "genbank";
 						previousAccessionVersion: string | null;
 				  })
+				| (ExcludeLocalOtuAccessionCommand["payload"] & {
+						retiredIsolate: {
+							id: string;
+							name: OtuV2Isolate["name"];
+						} | null;
+				  })
+				| AllowLocalOtuAccessionCommand["payload"]
 				| DeleteLocalOtuIsolateCommand["payload"]
 				| DeleteLocalOtuCommand["payload"]
 			>()
@@ -421,6 +434,34 @@ export const otuSequences = pgTable(
 		check(
 			"otu_sequences_retired_version_check",
 			sql`${table.retiredVersion} is null or ${table.retiredVersion} >= 2`,
+		),
+	],
+);
+
+export const otuExcludedAccessionBases = pgTable(
+	"otu_excluded_accession_bases",
+	{
+		otuId: uuid("otu_id").notNull(),
+		accessionBase: text("accession_base").notNull(),
+		createdVersion: integer("created_version").notNull(),
+	},
+	(table) => [
+		primaryKey({
+			columns: [table.otuId, table.accessionBase],
+			name: "otu_excluded_accession_bases_pkey",
+		}),
+		foreignKey({
+			columns: [table.otuId],
+			foreignColumns: [otusV2.id],
+			name: "otu_excluded_accession_bases_otu_id_fkey",
+		}),
+		check(
+			"otu_excluded_accession_bases_accession_base_check",
+			sql`${table.accessionBase} ~ '^[A-Z0-9_-]+$'`,
+		),
+		check(
+			"otu_excluded_accession_bases_created_version_check",
+			sql`${table.createdVersion} >= 2`,
 		),
 	],
 );

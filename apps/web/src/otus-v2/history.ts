@@ -39,6 +39,17 @@ export function getOtuV2ChangeDescription(change: OtuV2Change) {
 							: "updated manual sequence",
 				subject: change.accessionVersion ?? change.previousAccessionVersion,
 			};
+		case "ExcludeAccession":
+			return {
+				action: change.retiredIsolate
+					? "excluded accession and retired isolate"
+					: "excluded accession",
+				subject: change.retiredIsolate
+					? `${change.accessionBase} · ${formatV2IsolateName(change.retiredIsolate.name)} (${change.retiredIsolate.id})`
+					: change.accessionBase,
+			};
+		case "AllowAccession":
+			return { action: "allowed accession", subject: change.accessionBase };
 		case "DeleteIsolate":
 			return { action: "deleted isolate", subject: null };
 		case "DeleteOTU":

@@ -159,6 +159,12 @@ An OTU can use an accession base only once among its current sequences, even
 when submitted GenBank versions differ. Deleting an isolate releases its
 accessions for re-import. Sequence details expose their source and exact
 GenBank accession version.
+Excluded accession bases are stored separately from sequence provenance.
+Excluding an active base retires its whole isolate, including multipartite
+sequences; the last isolate cannot be retired. The base then blocks future
+GenBank imports. Allowing it lifts that block without restoring the retired
+isolate. Exclude and allow actions carry the OTU version and appear in history
+with the base and any retired isolate.
 
 Local v2 Reference settings allow members with `modify` rights to edit name,
 description, and the default segment length tolerance. Each edit carries the

@@ -10,6 +10,7 @@ import Link from "@base/Link";
 import SectionHeader from "@base/SectionHeader";
 import EditLocalOtuPlan from "@otus-v2/components/EditLocalOtuPlan";
 import EditLocalOtuTaxonomy from "@otus-v2/components/EditLocalOtuTaxonomy";
+import LocalOtuAccessionExclusions from "@otus-v2/components/LocalOtuAccessionExclusions";
 import { formatV2IsolateName } from "@otus-v2/isolateName";
 import { useSuspenseLocalOtuV2 } from "@otus-v2/queries";
 
@@ -100,6 +101,15 @@ export default function LocalOtuOverview({
 						</BoxGroupSection>
 					))}
 				</BoxGroup>
+			</section>
+
+			<section>
+				<SectionHeader>
+					<h2>Excluded accession bases</h2>
+				</SectionHeader>
+				<Box>
+					<LocalOtuAccessionExclusions referenceId={referenceId} otu={otu} />
+				</Box>
 			</section>
 
 			<section>

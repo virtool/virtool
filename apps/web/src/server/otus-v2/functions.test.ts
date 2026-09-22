@@ -180,6 +180,92 @@ function call(name: string, data?: unknown) {
 }
 
 describe("createLocalOtu", () => {
+	it("protects accession exclusion and allowance with rights, version, and archived state", async () => {
+		const ownerId = await signIn(db, getRequest, {
+			administratorRole: null,
+			handle: "exclusion-owner",
+		});
+		const referenceId = await seedReferenceV2(ownerId);
+		const created = validCommand();
+		await call("createLocalOtuFn", { referenceId, command: created });
+		const exclude = {
+			type: "ExcludeAccession",
+			schemaVersion: 1,
+			otuId: created.otuId,
+			expectedVersion: 1,
+			payload: { accessionBase: "nc_001367" },
+		};
+		await signIn(db, getRequest, {
+			administratorRole: null,
+			handle: "exclusion-other",
+		});
+		await expect(
+			call("previewExcludeLocalOtuAccessionFn", {
+				referenceId,
+				command: exclude,
+			}),
+		).rejects.toBeInstanceOf(ForbiddenError);
+		await expect(
+			call("excludeLocalOtuAccessionFn", { referenceId, command: exclude }),
+		).rejects.toBeInstanceOf(ForbiddenError);
+		await signIn(db, getRequest, {
+			administratorRole: "full",
+			handle: "exclusion-admin",
+		});
+		const preview = (await call("previewExcludeLocalOtuAccessionFn", {
+			referenceId,
+			command: exclude,
+		})) as { accessionBase: string; retiredIsolate: unknown };
+		expect(preview).toMatchObject({
+			accessionBase: "NC_001367",
+			retiredIsolate: null,
+		});
+		const excluded = (await call("excludeLocalOtuAccessionFn", {
+			referenceId,
+			command: exclude,
+		})) as { excludedAccessionBases: string[] };
+		expect(excluded.excludedAccessionBases).toEqual(["NC_001367"]);
+		await expect(
+			call("getGenbankIsolateDraftFn", {
+				referenceId,
+				otuId: created.otuId,
+				accessions: ["NC_001367.4"],
+			}),
+		).rejects.toMatchObject({ status: 409 });
+		await expect(
+			call("excludeLocalOtuAccessionFn", { referenceId, command: exclude }),
+		).rejects.toMatchObject({ status: 409 });
+		const allow = {
+			type: "AllowAccession",
+			schemaVersion: 1,
+			otuId: created.otuId,
+			expectedVersion: 2,
+			payload: { accessionBase: "NC_001367" },
+		};
+		await call("allowLocalOtuAccessionFn", { referenceId, command: allow });
+		await db
+			.update(referenceRoots)
+			.set({ archived: true })
+			.where(eq(referenceRoots.id, referenceId));
+		await expect(
+			call("previewExcludeLocalOtuAccessionFn", {
+				referenceId,
+				command: { ...exclude, expectedVersion: 3 },
+			}),
+		).rejects.toMatchObject({ status: 409 });
+		await expect(
+			call("excludeLocalOtuAccessionFn", {
+				referenceId,
+				command: { ...exclude, expectedVersion: 3 },
+			}),
+		).rejects.toMatchObject({ status: 409 });
+		await expect(
+			call("allowLocalOtuAccessionFn", {
+				referenceId,
+				command: { ...allow, expectedVersion: 3 },
+			}),
+		).rejects.toMatchObject({ status: 409 });
+	});
 	it("checks sequence preview and edit rights, validation, version, and archived state", async () => {
 		const ownerId = await signIn(db, getRequest, {
 			administratorRole: null,

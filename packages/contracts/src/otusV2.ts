@@ -60,6 +60,12 @@ export type OtuV2IsolateNameType =
 
 const uuidSchema = z.uuid();
 const trimmedTextSchema = z.string().trim().min(1);
+const accessionBaseSchema = z
+	.string()
+	.trim()
+	.toUpperCase()
+	.max(64)
+	.regex(/^[A-Z0-9_-]+$/);
 const sequenceSchema = z
 	.string()
 	.transform((value) => value.replace(/\s/g, "").toUpperCase())
@@ -422,6 +428,28 @@ export const UpdateLocalOtuSequenceCommand = z
 		}
 	});
 
+/** Exclude one accession base from a locally maintained OTU. */
+export const ExcludeLocalOtuAccessionCommand = z
+	.object({
+		type: z.literal("ExcludeAccession"),
+		schemaVersion: z.literal(1),
+		otuId: uuidSchema,
+		expectedVersion: z.number().int().positive(),
+		payload: z.object({ accessionBase: accessionBaseSchema }).strict(),
+	})
+	.strict();
+
+/** Allow a previously excluded accession base. */
+export const AllowLocalOtuAccessionCommand = z
+	.object({
+		type: z.literal("AllowAccession"),
+		schemaVersion: z.literal(1),
+		otuId: uuidSchema,
+		expectedVersion: z.number().int().positive(),
+		payload: z.object({ accessionBase: accessionBaseSchema }).strict(),
+	})
+	.strict();
+
 /** A command that deletes one isolate from an existing local OTU. */
 export const DeleteLocalOtuIsolateCommand = z
 	.object({
@@ -499,6 +527,34 @@ export type UpdateLocalOtuSequenceCommand = z.output<
 export type UpdateLocalOtuSequenceCommandInput = z.input<
 	typeof UpdateLocalOtuSequenceCommand
 >;
+
+/** A parsed accession exclusion command. */
+export type ExcludeLocalOtuAccessionCommand = z.output<
+	typeof ExcludeLocalOtuAccessionCommand
+>;
+
+/** Input accepted for accession exclusion. */
+export type ExcludeLocalOtuAccessionCommandInput = z.input<
+	typeof ExcludeLocalOtuAccessionCommand
+>;
+
+/** A parsed command that allows an excluded accession. */
+export type AllowLocalOtuAccessionCommand = z.output<
+	typeof AllowLocalOtuAccessionCommand
+>;
+
+/** Input accepted for allowing an excluded accession. */
+export type AllowLocalOtuAccessionCommandInput = z.input<
+	typeof AllowLocalOtuAccessionCommand
+>;
+
+/** The isolate affected by excluding a current accession base. */
+export type LocalOtuV2AccessionExclusionPreview = {
+	expectedVersion: number;
+	accessionBase: string;
+	retiredIsolate: { id: string; name: OtuV2Isolate["name"] } | null;
+	canExclude: boolean;
+};
 
 /** One isolate's validation result for a proposed sequence edit. */
 export type LocalOtuV2SequenceImpact = {
@@ -625,6 +681,15 @@ export type OtuV2Change = {
 			previousAccessionVersion: string | null;
 	  }
 	| {
+			command: "ExcludeAccession";
+			accessionBase: string;
+			retiredIsolate: { id: string; name: OtuV2Isolate["name"] } | null;
+	  }
+	| {
+			command: "AllowAccession";
+			accessionBase: string;
+	  }
+	| {
 			command: "DeleteIsolate";
 	  }
 	| {
@@ -683,6 +748,7 @@ export type LocalOtuV2 = {
 	taxonomy: OtuV2LocalTaxonomy;
 	plan: OtuV2Plan;
 	isolates: OtuV2Isolate[];
+	excludedAccessionBases: string[];
 	createdAt: Date;
 	changes: OtuV2Change[];
 	mostRecentChange: OtuV2Change;

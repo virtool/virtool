@@ -14,6 +14,7 @@ import { takeFirst, takeFirstOrThrow } from "../db/rows";
 import { groups } from "../db/schema/groups";
 import {
 	otuChanges,
+	otuExcludedAccessionBases,
 	otuIsolates,
 	otuIsolateVersions,
 	otuLocalIdentities,
@@ -236,6 +237,9 @@ export async function deleteReferenceV2(
 			.delete(otuLocalIdentities)
 			.where(inArray(otuLocalIdentities.otuId, otuIds));
 		await tx.delete(otuChanges).where(inArray(otuChanges.otuId, otuIds));
+		await tx
+			.delete(otuExcludedAccessionBases)
+			.where(inArray(otuExcludedAccessionBases.otuId, otuIds));
 		await tx.delete(otusV2).where(eq(otusV2.referenceId, referenceId));
 
 		const deleted = await tx

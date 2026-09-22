@@ -72,6 +72,82 @@ describe("<LocalOtuDetail />", () => {
 		expect(screen.getByRole("link", { name: "History" })).toBeInTheDocument();
 	});
 
+	it("previews accession exclusion before confirming the versioned command", async () => {
+		otuV2ServerFnMocks.previewExcludeLocalOtuAccessionFn.mockResolvedValue({
+			expectedVersion: otu.version,
+			accessionBase: "NC_001367",
+			retiredIsolate: null,
+			canExclude: true,
+		});
+		otuV2ServerFnMocks.excludeLocalOtuAccessionFn.mockReturnValueOnce(
+			new Promise(() => {}),
+		);
+		await renderDetailRoute(base);
+		await userEvent.type(
+			await screen.findByLabelText("Accession base"),
+			"nc_001367",
+		);
+		await userEvent.click(
+			screen.getByRole("button", { name: "Preview exclusion" }),
+		);
+		const preview = await screen.findByRole("region", {
+			name: "Accession exclusion preview",
+		});
+		expect(
+			within(preview).getByText("No current isolate uses this accession base."),
+		).toBeInTheDocument();
+		await userEvent.type(screen.getByLabelText("Accession base"), "x");
+		expect(
+			screen.queryByRole("region", { name: "Accession exclusion preview" }),
+		).not.toBeInTheDocument();
+		await userEvent.clear(screen.getByLabelText("Accession base"));
+		await userEvent.type(screen.getByLabelText("Accession base"), "nc_001367");
+		await userEvent.click(
+			screen.getByRole("button", { name: "Preview exclusion" }),
+		);
+		await screen.findByRole("region", { name: "Accession exclusion preview" });
+		await userEvent.click(
+			screen.getByRole("button", { name: "Confirm exclusion" }),
+		);
+		expect(otuV2ServerFnMocks.excludeLocalOtuAccessionFn).toHaveBeenCalledWith({
+			data: {
+				referenceId: reference.id,
+				command: {
+					type: "ExcludeAccession",
+					schemaVersion: 1,
+					otuId: otu.id,
+					expectedVersion: otu.version,
+					payload: { accessionBase: "NC_001367" },
+				},
+			},
+		});
+	});
+
+	it("allows an excluded accession without claiming to restore isolates", async () => {
+		mockGetLocalOtuV2(
+			createFakeLocalOtuV2({ ...otu, excludedAccessionBases: ["NC_001367"] }),
+		);
+		otuV2ServerFnMocks.allowLocalOtuAccessionFn.mockReturnValueOnce(
+			new Promise(() => {}),
+		);
+		await renderDetailRoute(base);
+		await userEvent.click(
+			await screen.findByRole("button", { name: "Allow NC_001367" }),
+		);
+		expect(otuV2ServerFnMocks.allowLocalOtuAccessionFn).toHaveBeenCalledWith({
+			data: {
+				referenceId: reference.id,
+				command: {
+					type: "AllowAccession",
+					schemaVersion: 1,
+					otuId: otu.id,
+					expectedVersion: otu.version,
+					payload: { accessionBase: "NC_001367" },
+				},
+			},
+		});
+	});
+
 	it("submits taxonomy identity and lineage with the observed OTU version", async () => {
 		otuV2ServerFnMocks.updateLocalOtuTaxonomyFn.mockReturnValueOnce(
 			new Promise(() => {}),

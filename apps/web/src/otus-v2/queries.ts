@@ -1,9 +1,11 @@
 import { otuV2QueryKeys } from "@otus-v2/keys";
 import {
+	allowLocalOtuAccessionFn,
 	createLocalOtuFn,
 	createLocalOtuIsolateFn,
 	deleteLocalOtuFn,
 	deleteLocalOtuIsolateFn,
+	excludeLocalOtuAccessionFn,
 	getGenbankIsolateDraftFn,
 	getGenbankOtuDraftFn,
 	getLocalOtuFn,
@@ -11,6 +13,7 @@ import {
 	getLocalOtuIsolatesFn,
 	getLocalOtuSequenceFn,
 	getLocalOtusFn,
+	previewExcludeLocalOtuAccessionFn,
 	previewLocalOtuPlanFn,
 	previewLocalOtuSequenceFn,
 	updateLocalOtuIsolateFn,
@@ -25,13 +28,16 @@ import {
 	useSuspenseQuery,
 } from "@tanstack/react-query";
 import type {
+	AllowLocalOtuAccessionCommandInput,
 	CreateLocalOtuCommandInput,
 	CreateLocalOtuIsolateCommandInput,
 	DeleteLocalOtuCommandInput,
 	DeleteLocalOtuIsolateCommandInput,
+	ExcludeLocalOtuAccessionCommandInput,
 	GenbankIsolateDraft,
 	GenbankOtuDraft,
 	LocalOtuV2,
+	LocalOtuV2AccessionExclusionPreview,
 	LocalOtuV2IsolateDetail,
 	LocalOtuV2IsolateSummary,
 	LocalOtuV2Overview,
@@ -44,6 +50,67 @@ import type {
 	UpdateLocalOtuSequenceCommandInput,
 	UpdateLocalOtuTaxonomyCommandInput,
 } from "@virtool/contracts";
+
+/** Preview the isolate affected by excluding an accession base. */
+export function usePreviewExcludeLocalOtuAccession(referenceId: string) {
+	return useMutation<
+		LocalOtuV2AccessionExclusionPreview,
+		Error,
+		ExcludeLocalOtuAccessionCommandInput
+	>({
+		mutationFn: (command) =>
+			previewExcludeLocalOtuAccessionFn({
+				data: { referenceId, command },
+			}) as Promise<LocalOtuV2AccessionExclusionPreview>,
+	});
+}
+
+/** Exclude an accession base at the current OTU version. */
+export function useExcludeLocalOtuAccession(referenceId: string) {
+	const queryClient = useQueryClient();
+	return useMutation<LocalOtuV2, Error, ExcludeLocalOtuAccessionCommandInput>({
+		mutationFn: (command) =>
+			excludeLocalOtuAccessionFn({
+				data: { referenceId, command },
+			}) as Promise<LocalOtuV2>,
+		onSuccess: (otu) => {
+			cacheLocalOtuOverview(queryClient, otu);
+			queryClient.invalidateQueries({
+				queryKey: [...otuV2QueryKeys.detail(otu.id), "isolates"],
+			});
+			queryClient.invalidateQueries({
+				queryKey: otuV2QueryKeys.list([referenceId]),
+			});
+		},
+		onError: (_error, command) => {
+			queryClient.invalidateQueries({
+				queryKey: otuV2QueryKeys.detail(command.otuId),
+			});
+		},
+	});
+}
+
+/** Allow a base for future imports without restoring its retired isolate. */
+export function useAllowLocalOtuAccession(referenceId: string) {
+	const queryClient = useQueryClient();
+	return useMutation<LocalOtuV2, Error, AllowLocalOtuAccessionCommandInput>({
+		mutationFn: (command) =>
+			allowLocalOtuAccessionFn({
+				data: { referenceId, command },
+			}) as Promise<LocalOtuV2>,
+		onSuccess: (otu) => {
+			cacheLocalOtuOverview(queryClient, otu);
+			queryClient.invalidateQueries({
+				queryKey: otuV2QueryKeys.list([referenceId]),
+			});
+		},
+		onError: (_error, command) => {
+			queryClient.invalidateQueries({
+				queryKey: otuV2QueryKeys.detail(command.otuId),
+			});
+		},
+	});
+}
 
 /**
  * Query options for the local v2 OTUs in a Reference.

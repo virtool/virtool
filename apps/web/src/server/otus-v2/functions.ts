@@ -1,10 +1,12 @@
 import { createServerFn, createServerOnlyFn } from "@tanstack/react-start";
 import { setResponseStatus } from "@tanstack/react-start/server";
 import {
+	AllowLocalOtuAccessionCommand,
 	CreateLocalOtuCommand,
 	CreateLocalOtuIsolateCommand,
 	DeleteLocalOtuCommand,
 	DeleteLocalOtuIsolateCommand,
+	ExcludeLocalOtuAccessionCommand,
 	type GenbankIsolateDraft,
 	type GenbankOtuDraft,
 	UpdateLocalOtuIsolateCommand,
@@ -13,18 +15,23 @@ import {
 	UpdateLocalOtuTaxonomyCommand,
 } from "@virtool/contracts";
 import {
+	allowLocalOtuAccession,
 	createLocalOtu,
 	createLocalOtuIsolate,
 	deleteLocalOtu,
 	deleteLocalOtuIsolate,
+	excludeLocalOtuAccession,
 	getLocalOtu,
 	getLocalOtuIsolate,
 	getLocalOtuIsolates,
 	getLocalOtuOverview,
 	getLocalOtuSequence,
 	getLocalOtus,
+	OtuV2AccessionNotExcludedError,
+	OtuV2AlreadyExcludedAccessionError,
 	OtuV2ConflictError,
 	OtuV2DuplicateAccessionError,
+	OtuV2ExcludedAccessionError,
 	OtuV2InvalidIsolateError,
 	OtuV2InvalidPlanError,
 	OtuV2InvalidProvenanceError,
@@ -32,6 +39,7 @@ import {
 	OtuV2NotFoundError,
 	OtuV2ReferenceNotWritableError,
 	OtuV2VersionConflictError,
+	previewExcludeLocalOtuAccession,
 	previewLocalOtuPlan,
 	previewLocalOtuSequence,
 	updateLocalOtuIsolate,
@@ -109,6 +117,16 @@ const updateLocalOtuSequenceSchema = z.object({
 	command: UpdateLocalOtuSequenceCommand,
 });
 
+const excludeLocalOtuAccessionSchema = z.object({
+	referenceId: z.uuid(),
+	command: ExcludeLocalOtuAccessionCommand,
+});
+
+const allowLocalOtuAccessionSchema = z.object({
+	referenceId: z.uuid(),
+	command: AllowLocalOtuAccessionCommand,
+});
+
 const deleteLocalOtuSchema = z.object({
 	referenceId: z.uuid(),
 	command: DeleteLocalOtuCommand,
@@ -152,6 +170,16 @@ const genbankIsolateDraftSchema = z.object({
 		.max(500),
 });
 
+function getExcludedSubmittedBase(
+	accessions: string[],
+	excludedBases: string[],
+): string | undefined {
+	const excluded = new Set(excludedBases);
+	return accessions
+		.map((accession) => accession.replace(/\.[1-9][0-9]*$/, "").toUpperCase())
+		.find((base) => excluded.has(base));
+}
+
 // Wrapped in createServerOnlyFn so the compiler can strip these bodies — and the
 // ./data imports they reference — from the client bundle. A plain top-level
 // helper would pin ./data and its postgres transitive dependency in the client
@@ -180,6 +208,21 @@ const rethrowAsHttp = createServerOnlyFn((err: unknown): never => {
 				: "An accession is already in this OTU.",
 			409,
 		);
+	}
+	if (err instanceof OtuV2ExcludedAccessionError) {
+		setResponseStatus(409);
+		throw new ClientError(
+			`Accession ${err.message} is excluded from this OTU.`,
+			409,
+		);
+	}
+	if (err instanceof OtuV2AlreadyExcludedAccessionError) {
+		setResponseStatus(409);
+		throw new ClientError("Accession is already excluded.", 409);
+	}
+	if (err instanceof OtuV2AccessionNotExcludedError) {
+		setResponseStatus(409);
+		throw new ClientError("Accession is not excluded.", 409);
 	}
 	if (err instanceof OtuV2InvalidProvenanceError) {
 		setResponseStatus(422);
@@ -307,6 +350,13 @@ export const createLocalOtuIsolateFn = createServerFn({ method: "POST" })
 					data.referenceId,
 					data.command.otuId,
 				);
+				const excludedBase = getExcludedSubmittedBase(
+					provenance.sequences.map((sequence) => sequence.accession),
+					otuAtSave.excludedAccessionBases,
+				);
+				if (excludedBase) {
+					throw new OtuV2ExcludedAccessionError(excludedBase);
+				}
 				const { ncbiApiKey } = await getSettings(db);
 				const { apiKey } = resolveNcbiApiKey(ncbiApiKey, keyring);
 				const client = createNcbiClient({ apiKey: apiKey ?? "", logger });
@@ -455,6 +505,74 @@ export const updateLocalOtuPlanFn = createServerFn({ method: "POST" })
 				throw new ForbiddenError();
 			}
 			return await updateLocalOtuPlan(db, {
+				referenceId: data.referenceId,
+				userId: context.principal.userId,
+				command: data.command,
+			});
+		} catch (err) {
+			return rethrowAsHttp(err);
+		}
+	});
+
+export const previewExcludeLocalOtuAccessionFn = createServerFn({
+	method: "POST",
+})
+	.middleware([authenticated()])
+	.validator(excludeLocalOtuAccessionSchema)
+	.handler(async ({ context, data }) => {
+		try {
+			const actor = await resolveReferenceActor(db, context.principal.userId);
+			if (
+				!(await checkReferenceV2Right(db, data.referenceId, "modifyOtu", actor))
+			) {
+				setResponseStatus(403);
+				throw new ForbiddenError();
+			}
+			return await previewExcludeLocalOtuAccession(
+				db,
+				data.referenceId,
+				data.command,
+			);
+		} catch (err) {
+			return rethrowAsHttp(err);
+		}
+	});
+
+export const excludeLocalOtuAccessionFn = createServerFn({ method: "POST" })
+	.middleware([authenticated()])
+	.validator(excludeLocalOtuAccessionSchema)
+	.handler(async ({ context, data }) => {
+		try {
+			const actor = await resolveReferenceActor(db, context.principal.userId);
+			if (
+				!(await checkReferenceV2Right(db, data.referenceId, "modifyOtu", actor))
+			) {
+				setResponseStatus(403);
+				throw new ForbiddenError();
+			}
+			return await excludeLocalOtuAccession(db, {
+				referenceId: data.referenceId,
+				userId: context.principal.userId,
+				command: data.command,
+			});
+		} catch (err) {
+			return rethrowAsHttp(err);
+		}
+	});
+
+export const allowLocalOtuAccessionFn = createServerFn({ method: "POST" })
+	.middleware([authenticated()])
+	.validator(allowLocalOtuAccessionSchema)
+	.handler(async ({ context, data }) => {
+		try {
+			const actor = await resolveReferenceActor(db, context.principal.userId);
+			if (
+				!(await checkReferenceV2Right(db, data.referenceId, "modifyOtu", actor))
+			) {
+				setResponseStatus(403);
+				throw new ForbiddenError();
+			}
+			return await allowLocalOtuAccession(db, {
 				referenceId: data.referenceId,
 				userId: context.principal.userId,
 				command: data.command,
@@ -620,6 +738,17 @@ export const getGenbankIsolateDraftFn = createServerFn({ method: "GET" })
 		}
 
 		const otu = await getLocalOtu(db, data.referenceId, data.otuId);
+		const excludedBase = getExcludedSubmittedBase(
+			data.accessions,
+			otu.excludedAccessionBases,
+		);
+		if (excludedBase) {
+			setResponseStatus(409);
+			throw new ClientError(
+				`Accession ${excludedBase} is excluded from this OTU.`,
+				409,
+			);
+		}
 		const { ncbiApiKey } = await getSettings(db);
 		const { availability, apiKey } = resolveNcbiApiKey(ncbiApiKey, keyring);
 		if (availability === "configuration_error") {
