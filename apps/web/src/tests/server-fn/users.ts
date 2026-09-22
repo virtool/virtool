@@ -15,7 +15,6 @@ export const userServerFnMocks = {
 	getUserFn: vi.fn(),
 	createUserFn: vi.fn(),
 	updateUserFn: vi.fn(),
-	updateAccountEmailFn: vi.fn(),
 	updateAccountHandleFn: vi.fn(),
 	changePasswordFn: vi.fn(),
 	setAdministratorRoleFn: vi.fn(),
@@ -150,36 +149,6 @@ export function mockUpdateAccountHandle(
 		);
 	}
 	return userServerFnMocks.updateAccountHandleFn;
-}
-
-/**
- * Sets up updateAccountEmail to resolve with the account carrying the new
- * address (or reject on a 4xx code, e.g. 400 for a malformed address).
- *
- * When `expectedEmail` is given, the resolved variant also asserts the payload
- * carried the expected address so callers can verify the value actually sent.
- */
-export function mockUpdateAccountEmail(
-	account: Account,
-	statusCode = 200,
-	message = "The format of the email is invalid",
-	expectedEmail?: string,
-): Mock {
-	if (statusCode >= 400) {
-		userServerFnMocks.updateAccountEmailFn.mockRejectedValue(
-			new Error(message),
-		);
-	} else {
-		userServerFnMocks.updateAccountEmailFn.mockImplementation(
-			async ({ data }: { data: { email: string } }) => {
-				if (expectedEmail !== undefined) {
-					expect(data.email).toBe(expectedEmail);
-				}
-				return { ...account, email: data.email };
-			},
-		);
-	}
-	return userServerFnMocks.updateAccountEmailFn;
 }
 
 /**

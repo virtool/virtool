@@ -9,34 +9,31 @@ import {
 	updateApiKeyFn,
 } from "@server/account/functions";
 import { logoutFn } from "@server/auth/functions";
+import { requestAccountEmailChangeFn } from "@server/auth/recoveryFunctions";
 import {
 	changePasswordFn,
-	updateAccountEmailFn,
 	updateAccountHandleFn,
 } from "@server/users/functions";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import type { ApiKey, Permissions } from "@virtool/contracts";
 
 /**
- * Initializes a mutator for updating the current account's email address
+ * Initializes a mutator for requesting verification of a new email address.
  *
- * @returns A mutator for updating the account email
+ * @returns A mutator for queuing an email challenge.
  */
 export function useUpdateAccount() {
-	const queryClient = useQueryClient();
 	const mutationFn = useRecentlyAuthenticatedMutation(
-		({ email }: { email: string }) => updateAccountEmailFn({ data: { email } }),
+		({ email }: { email: string }) =>
+			requestAccountEmailChangeFn({ data: { email } }),
 	);
 
 	return useMutation<
-		Awaited<ReturnType<typeof updateAccountEmailFn>>,
+		Awaited<ReturnType<typeof requestAccountEmailChangeFn>>,
 		Error,
 		{ email: string }
 	>({
 		mutationFn,
-		onSuccess: () => {
-			queryClient.invalidateQueries({ queryKey: accountQueryKeys.all() });
-		},
 	});
 }
 

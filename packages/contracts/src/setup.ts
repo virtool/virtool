@@ -62,12 +62,16 @@ export type AccountLifecycleState = z.infer<typeof AccountLifecycleState>;
  * first-instance bootstrap: an account that exists but has no credential yet.
  * `email_remediation` covers an active legacy account with no usable unique
  * email. `totp_enrollment` covers a user who has authenticated under a
- * `required` MFA policy but has not enrolled.
+ * `required` MFA policy but has not enrolled. The remaining purposes bind
+ * email verification and password recovery to their own one-time links.
  */
 export const SetupPurpose = z.enum([
 	"account_completion",
 	"email_remediation",
 	"totp_enrollment",
+	"email_verification",
+	"password_recovery",
+	"administrator_recovery",
 ]);
 
 export type SetupPurpose = z.infer<typeof SetupPurpose>;
