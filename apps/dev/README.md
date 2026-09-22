@@ -12,7 +12,7 @@ vtd ui
 ```
 
 The launcher installs and starts one foreground systemd user service per Git
-repository. Systemd owns crash and source-update restarts; `vtd daemon stop`
+repository. systemd owns crash and source-update restarts; `vtd daemon stop`
 stops that repository's unit.
 
 ```shell

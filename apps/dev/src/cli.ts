@@ -1,4 +1,3 @@
-import { mkdir } from "node:fs/promises";
 import { connect } from "node:net";
 import { join } from "node:path";
 import { runCommand } from "./server/command.ts";
@@ -46,12 +45,9 @@ async function ensureDaemon(
 	stateDirectory: string,
 	repositoryId: string,
 ): Promise<void> {
-	const logDirectory = join(stateDirectory, "logs");
-	await mkdir(logDirectory, { mode: 0o700, recursive: true });
 	const service = await installDaemonService(runCommand, {
 		entry: join(primaryWorktree, "apps/dev/src/main.ts"),
 		lockPath: join(stateDirectory, "daemon.lock"),
-		logPath: join(logDirectory, "daemon.log"),
 		node: process.execPath,
 		path: process.env.PATH ?? "/usr/local/bin:/usr/bin:/bin",
 		primaryWorktree,
@@ -59,10 +55,10 @@ async function ensureDaemon(
 		socketPath,
 		stateDirectory,
 	});
+	await startDaemonService(runCommand, service);
 	if (await canConnect(socketPath)) {
 		return;
 	}
-	await startDaemonService(runCommand, service);
 	await waitForDaemon(socketPath);
 }
 

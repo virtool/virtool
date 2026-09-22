@@ -42,7 +42,6 @@ export function getDaemonServiceName(repositoryId: string): string {
 export function renderDaemonService(options: {
 	entry: string;
 	lockPath: string;
-	logPath: string;
 	node: string;
 	path: string;
 	primaryWorktree: string;
@@ -75,8 +74,8 @@ Restart=on-failure
 RestartSec=1s
 KillMode=control-group
 UMask=0077
-StandardOutput=append:${escapeUnitPath(options.logPath)}
-StandardError=append:${escapeUnitPath(options.logPath)}
+StandardOutput=journal
+StandardError=journal
 `;
 }
 

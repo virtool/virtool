@@ -25,6 +25,7 @@ export class Reconciler {
 	private readonly removalAttempts = new Map<string, number>();
 	private readonly retryAt = new Map<string, number>();
 	private readonly restarts = new Set<string>();
+	private sharedPromise: Promise<void> | undefined;
 	private timer: NodeJS.Timeout | undefined;
 	private stopping = false;
 	private tickPromise: Promise<void> | undefined;
@@ -217,7 +218,19 @@ export class Reconciler {
 		}
 	}
 
-	private async ensureShared(): Promise<void> {
+	async ensureShared(): Promise<void> {
+		if (this.sharedPromise) {
+			return this.sharedPromise;
+		}
+		this.sharedPromise = this.provisionShared();
+		try {
+			await this.sharedPromise;
+		} finally {
+			this.sharedPromise = undefined;
+		}
+	}
+
+	private async provisionShared(): Promise<void> {
 		const project = this.sharedProject();
 		const file = join(this.primaryWorktree, "dev/shared.compose.yaml");
 		const initialized = this.store.getMeta("shared_initialized") === "true";

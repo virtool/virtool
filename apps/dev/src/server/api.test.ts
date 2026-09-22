@@ -98,4 +98,22 @@ describe("management API", () => {
 		expect(unknownService.status).toBe(404);
 		expect(readEnvironmentLogs).toHaveBeenCalledTimes(1);
 	});
+
+	it("reads daemon logs from the configured service", async () => {
+		const readDaemonLogs = vi.fn(async () => "daemon ready\n");
+		const app = createApi(
+			new SnapshotFeed(snapshot),
+			vi.fn(),
+			vi.fn(),
+			"/missing",
+			undefined,
+			readDaemonLogs,
+		);
+
+		const response = await app.request("http://127.0.0.1/api/logs");
+
+		expect(response.status).toBe(200);
+		expect(await response.text()).toBe("daemon ready\n");
+		expect(readDaemonLogs).toHaveBeenCalledOnce();
+	});
 });

@@ -1,5 +1,4 @@
 import { existsSync } from "node:fs";
-import { readFile } from "node:fs/promises";
 import { join } from "node:path";
 import { serveStatic } from "@hono/node-server/serve-static";
 import { Hono } from "hono";
@@ -11,6 +10,8 @@ type EnvironmentLogReader = (
 	environmentId: string,
 	service?: string,
 ) => Promise<string>;
+
+type DaemonLogReader = () => Promise<string>;
 
 /** Mutable snapshot feed shared by API requests and SSE clients. */
 export class SnapshotFeed {
@@ -42,7 +43,7 @@ export function createApi(
 	setConcurrency: (value: number) => void,
 	clientDirectory: string,
 	resetShared: () => Promise<void> = async () => undefined,
-	logPath?: string,
+	readDaemonLogs?: DaemonLogReader,
 	readEnvironmentLogs?: EnvironmentLogReader,
 ) {
 	const app = new Hono();
@@ -91,12 +92,11 @@ export function createApi(
 		if (service) {
 			return context.json({ error: "service requires an environment" }, 400);
 		}
-		if (!logPath) {
+		if (!readDaemonLogs) {
 			return context.text("");
 		}
 		try {
-			const lines = (await readFile(logPath, "utf8")).split("\n");
-			return context.text(lines.slice(-200).join("\n"));
+			return context.text(await readDaemonLogs());
 		} catch {
 			return context.text("");
 		}

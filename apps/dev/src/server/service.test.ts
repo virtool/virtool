@@ -22,7 +22,6 @@ afterEach(async () => {
 const options = {
 	entry: "/repo/apps/dev/src/main.ts",
 	lockPath: "/state/daemon.lock",
-	logPath: "/state/logs/daemon.log",
 	node: "/usr/bin/node",
 	path: "/usr/bin:/bin",
 	primaryWorktree: "/repo",
@@ -39,24 +38,19 @@ it("renders a foreground service with systemd and lifetime lock ownership", () =
 	expect(unit).toContain('"daemon" "run"');
 	expect(unit).toContain("Restart=on-failure");
 	expect(unit).toContain("UMask=0077");
-	expect(unit).toContain("StandardOutput=append:/state/logs/daemon.log");
-	expect(unit).toContain("StandardError=append:/state/logs/daemon.log");
+	expect(unit).toContain("StandardOutput=journal");
+	expect(unit).toContain("StandardError=journal");
 	expect(unit).not.toContain("--daemonize");
 });
 
 it("escapes directive paths without quoting them", () => {
 	const unit = renderDaemonService({
 		...options,
-		logPath: "/state/log files/daemon.log",
 		primaryWorktree: "/repo worktree",
 	});
 
 	expect(unit).toContain("WorkingDirectory=/repo\\x20worktree");
-	expect(unit).toContain(
-		"StandardOutput=append:/state/log\\x20files/daemon.log",
-	);
 	expect(unit).not.toContain('WorkingDirectory="');
-	expect(unit).not.toContain('StandardOutput="');
 });
 
 it("installs and reloads the repository service", async () => {

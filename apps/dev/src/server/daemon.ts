@@ -4,7 +4,7 @@ import { createServer } from "node:http";
 import { join } from "node:path";
 import { getRequestListener } from "@hono/node-server";
 import { createLogger } from "@virtool/logger";
-import type { Mutation, Snapshot } from "../shared/types.ts";
+import type { Mutation, OpenPullRequest, Snapshot } from "../shared/types.ts";
 import { createApi, SnapshotFeed } from "./api.ts";
 import { BuildCoordinator } from "./builds.ts";
 import { ensureClientBuild } from "./client-build.ts";
@@ -19,6 +19,7 @@ import {
 } from "./git.ts";
 import { Reconciler } from "./lifecycle.ts";
 import { checkPortAvailable } from "./port.ts";
+import { getDaemonServiceName } from "./service.ts";
 import {
 	type ControlRequest,
 	createControlServer,
@@ -108,6 +109,11 @@ export async function runDaemon(
 	const builds = new BuildCoordinator();
 	const logger = createLogger({ name: "dev" });
 	let refreshPromise: Promise<void> | undefined;
+	let openPullRequests = new Map<string, OpenPullRequest>();
+	let pullRequestRefreshPromise: Promise<void> | undefined;
+	let nextPullRequestRefresh = 0;
+	let sharedReconciled = false;
+	let sharedRetryAt = 0;
 	let restartRequested = false;
 	let shuttingDown = false;
 	let shutdownResolve: (() => void) | undefined;
@@ -119,6 +125,44 @@ export async function runDaemon(
 		if (!shuttingDown) {
 			void refresh().catch(() => undefined);
 		}
+	}
+
+	function refreshPullRequests(): void {
+		if (pullRequestRefreshPromise || Date.now() < nextPullRequestRefresh) {
+			return;
+		}
+		nextPullRequestRefresh = Date.now() + 60_000;
+		pullRequestRefreshPromise = getOpenPullRequests(
+			run,
+			repository.primaryWorktree,
+		)
+			.then((result) => {
+				openPullRequests = result;
+				requestRefresh();
+			})
+			.finally(() => {
+				pullRequestRefreshPromise = undefined;
+			});
+	}
+
+	function reconcileSharedServices(): void {
+		if (
+			sharedReconciled ||
+			store.getMeta("shared_initialized") !== "true" ||
+			Date.now() < sharedRetryAt
+		) {
+			return;
+		}
+		sharedRetryAt = Date.now() + 30_000;
+		void reconciler
+			.ensureShared()
+			.then(() => {
+				sharedReconciled = true;
+				requestRefresh();
+			})
+			.catch((error) => {
+				logger.error({ err: error }, "shared service reconciliation failed");
+			});
 	}
 
 	const reconciler = new Reconciler(
@@ -142,12 +186,14 @@ export async function runDaemon(
 		if (refreshPromise) {
 			return refreshPromise;
 		}
+		refreshPullRequests();
+		reconcileSharedServices();
 		refreshPromise = (async () => {
 			try {
-				const [worktrees, openPullRequests] = await Promise.all([
-					discoverWorktrees(run, repository.primaryWorktree),
-					getOpenPullRequests(run, repository.primaryWorktree),
-				]);
+				const worktrees = await discoverWorktrees(
+					run,
+					repository.primaryWorktree,
+				);
 				store.synchronizeWorktrees(worktrees);
 				const [observed, shared, currentHash] = await Promise.all([
 					reconciler.observe(),
@@ -164,8 +210,7 @@ export async function runDaemon(
 					updatedAt: Date.now(),
 					updateAvailable,
 				});
-				await workflows.tick(environments, !updateAvailable);
-				feed.set({ ...feed.get(), scheduler: workflows.getState() });
+				void workflows.tick(environments, !updateAvailable);
 				if (
 					updateAvailable &&
 					!store.hasActiveOperations() &&
@@ -250,7 +295,23 @@ export async function runDaemon(
 		},
 		clientDirectory,
 		() => reconciler.resetShared(),
-		join(repository.stateDirectory, "logs/daemon.log"),
+		async () => {
+			const { stdout } = await run(
+				"journalctl",
+				[
+					"--user",
+					"--unit",
+					getDaemonServiceName(store.repositoryId),
+					"--lines",
+					"200",
+					"--no-pager",
+					"--output",
+					"cat",
+				],
+				{ cwd: repository.primaryWorktree },
+			);
+			return stdout;
+		},
 		async (environmentId, service) => {
 			const directory = join(
 				repository.stateDirectory,
