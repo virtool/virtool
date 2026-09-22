@@ -180,6 +180,69 @@ function call(name: string, data?: unknown) {
 }
 
 describe("createLocalOtu", () => {
+	it("adds a manual isolate to a manual OTU and validates its plan without NCBI", async () => {
+		const userId = await signIn(db, getRequest, { administratorRole: null });
+		const referenceId = await seedReferenceV2(userId);
+		const command = validCommand();
+		await call("createLocalOtuFn", { referenceId, command });
+		const segmentId = command.payload.plan.segments[0]?.id;
+		if (!segmentId) {
+			throw new Error("Expected an OTU segment.");
+		}
+		const isolateCommand = {
+			type: "CreateIsolate",
+			schemaVersion: 1,
+			otuId: command.otuId,
+			expectedVersion: 1,
+			payload: {
+				isolate: {
+					id: randomUUID(),
+					name: { type: "isolate", value: "Lab 2" },
+					sequences: [
+						{
+							id: randomUUID(),
+							definition: "Complete genome",
+							sequence: "ATCGNNRY",
+							segmentId,
+						},
+					],
+				},
+			},
+		};
+		const otu = (await call("createLocalOtuIsolateFn", {
+			referenceId,
+			command: isolateCommand,
+		})) as { version: number; isolates: Array<{ id: string }> };
+		expect(otu.version).toBe(2);
+		expect(otu.isolates).toHaveLength(2);
+		expect(otu.isolates[1]?.id).toBe(isolateCommand.payload.isolate.id);
+		expect(fetchGenbankRecords).not.toHaveBeenCalled();
+
+		await expect(
+			call("createLocalOtuIsolateFn", {
+				referenceId,
+				command: {
+					...isolateCommand,
+					expectedVersion: 2,
+					payload: {
+						isolate: {
+							...isolateCommand.payload.isolate,
+							id: randomUUID(),
+							sequences: [
+								{
+									...isolateCommand.payload.isolate.sequences[0],
+									id: randomUUID(),
+									sequence: "ATCG",
+								},
+							],
+						},
+					},
+				},
+			}),
+		).rejects.toMatchObject({ status: 422 });
+		expect(fetchGenbankRecords).not.toHaveBeenCalled();
+	});
+
 	const taxonomy: NcbiTaxonomy = {
 		id: 12242,
 		name: "Tobacco mosaic virus",

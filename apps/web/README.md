@@ -122,12 +122,12 @@ GenBank OTU drafts require a resolved NCBI species taxon and consistent named
 isolate, strain, or clone identity across records. Anonymous records can join a
 named record. Multipartite plans require unique named segments; GenBank segment
 names are normalized, and unnamed records must match a single segment by length.
-Adding an isolate requires its species to match the OTU lineage.
-GenBank `CreateOTU` and
-`CreateIsolate` requests carry accession-to-sequence provenance; the server
+Adding an isolate from GenBank requires its species to match the OTU lineage.
+GenBank `CreateOTU` and `CreateIsolate` requests carry accession-to-sequence provenance; the server
 resolves those accessions again at save time and checks taxonomy, sequence
 content, and segment assignment before applying the versioned command. Manual
-`CreateOTU` requests have no GenBank provenance.
+`CreateOTU` and `CreateIsolate` requests have no GenBank provenance. Both
+manual and GenBank isolates must satisfy the OTU plan when saved.
 
 ### Error handling and request methods
 

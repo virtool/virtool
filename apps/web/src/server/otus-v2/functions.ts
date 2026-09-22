@@ -251,34 +251,33 @@ export const createLocalOtuIsolateFn = createServerFn({ method: "POST" })
 				throw new ForbiddenError();
 			}
 			const provenance = data.command.payload.genbank;
-			if (!provenance) {
-				throw new GenbankProvenanceError();
+			if (provenance) {
+				const otuAtSave = await getLocalOtu(
+					db,
+					data.referenceId,
+					data.command.otuId,
+				);
+				const { ncbiApiKey } = await getSettings(db);
+				const { apiKey } = resolveNcbiApiKey(ncbiApiKey, keyring);
+				const client = createNcbiClient({ apiKey: apiKey ?? "", logger });
+				const accessions = provenance.sequences.map(
+					(sequence) => sequence.accession,
+				);
+				const records = await client.fetchGenbankRecords(accessions);
+				const found = new Set(
+					records.map((record) => record.accession_version.toLowerCase()),
+				);
+				if (
+					records.length !== accessions.length ||
+					accessions.some((accession) => !found.has(accession.toLowerCase()))
+				) {
+					throw new GenbankProvenanceError();
+				}
+				const taxonomy = records[0]
+					? await client.fetchTaxonomyRecord(records[0].source.taxid)
+					: null;
+				validateGenbankIsolateSave(data.command, records, taxonomy, otuAtSave);
 			}
-			const otuAtSave = await getLocalOtu(
-				db,
-				data.referenceId,
-				data.command.otuId,
-			);
-			const { ncbiApiKey } = await getSettings(db);
-			const { apiKey } = resolveNcbiApiKey(ncbiApiKey, keyring);
-			const client = createNcbiClient({ apiKey: apiKey ?? "", logger });
-			const accessions = provenance.sequences.map(
-				(sequence) => sequence.accession,
-			);
-			const records = await client.fetchGenbankRecords(accessions);
-			const found = new Set(
-				records.map((record) => record.accession_version.toLowerCase()),
-			);
-			if (
-				records.length !== accessions.length ||
-				accessions.some((accession) => !found.has(accession.toLowerCase()))
-			) {
-				throw new GenbankProvenanceError();
-			}
-			const taxonomy = records[0]
-				? await client.fetchTaxonomyRecord(records[0].source.taxid)
-				: null;
-			validateGenbankIsolateSave(data.command, records, taxonomy, otuAtSave);
 			const otu = await createLocalOtuIsolate(db, {
 				referenceId: data.referenceId,
 				userId: context.principal.userId,

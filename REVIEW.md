@@ -1,8 +1,7 @@
 # Refs v2 review
 
-I reviewed the branch, including the uncommitted changes, and compared it with
-the local ref-builder source. **The biggest problems are inconsistent validation
-and the inability to extend manually created OTUs.**
+The original review compared this branch with the local ref-builder source.
+Struck-through findings have since been addressed.
 
 ## Findings
 
@@ -19,17 +18,17 @@ and the inability to extend manually created OTUs.**
    ~~[data.ts:329](packages/data/src/otus-v2/data.ts#L329),
    [genbank.ts:84](apps/web/src/server/otus-v2/genbank.ts#L84)~~
 
-2. **[P1] Manually created OTUs cannot acquire another isolate through the UI.**
+2. ~~**[P1] Manually created OTUs cannot acquire another isolate through the UI.**~~
 
-   Manual creation supplies no lineage. Adding an isolate requires an NCBI species
+   ~~Manual creation supplies no lineage. Adding an isolate requires an NCBI species
    in that lineage, and the save endpoint rejects commands without GenBank
    provenance. There’s neither manual isolate entry nor a way to associate an
    existing manual OTU with NCBI taxonomy. Consequently, a manual OTU is
-   effectively stuck with its initial isolate.
+   effectively stuck with its initial isolate.~~
 
-   [CreateLocalOtuForm.tsx:134](apps/web/src/otus-v2/components/CreateLocalOtuForm.tsx#L134),
+   ~~[CreateLocalOtuForm.tsx:134](apps/web/src/otus-v2/components/CreateLocalOtuForm.tsx#L134),
    [genbank.ts:72](apps/web/src/server/otus-v2/genbank.ts#L72),
-   [functions.ts:243](apps/web/src/server/otus-v2/functions.ts#L243)
+   [functions.ts:243](apps/web/src/server/otus-v2/functions.ts#L243)~~
 
 3. ~~**[P1] Accessions from different isolates can silently become one biological isolate.**~~
 

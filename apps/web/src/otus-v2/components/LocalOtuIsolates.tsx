@@ -54,6 +54,7 @@ export default function LocalOtuIsolates({
 					referenceId={referenceId}
 					otuId={otuId}
 					version={otu.version}
+					plan={otu.plan}
 				/>
 			)}
 			<BoxGroup>
