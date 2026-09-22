@@ -267,13 +267,6 @@
       "when": 1790092871577,
       "tag": "0037_stiff_butterfly",
       "breakpoints": true
-    },
-    {
-      "idx": 38,
-      "version": "7",
-      "when": 1790093158474,
-      "tag": "0038_sloppy_punisher",
-      "breakpoints": true
     }
   ]
 }
