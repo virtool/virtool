@@ -7,6 +7,7 @@ import {
 import Link from "@base/Link";
 import SectionHeader from "@base/SectionHeader";
 import DeleteLocalOtuIsolate from "@otus-v2/components/DeleteLocalOtuIsolate";
+import { formatV2IsolateName } from "@otus-v2/isolateName";
 import {
 	localOtuV2SequenceQueryOptions,
 	useSuspenseLocalOtuV2,
@@ -31,9 +32,7 @@ export default function LocalOtuIsolateDetail() {
 	const { data: otu } = useSuspenseLocalOtuV2(referenceId, otuId);
 	const navigate = routeApi.useNavigate();
 
-	const name = isolate.name
-		? `${isolate.name.type} ${isolate.name.value}`
-		: "Unnamed isolate";
+	const name = formatV2IsolateName(isolate.name);
 
 	return (
 		<>

@@ -8,6 +8,7 @@ import {
 import ExternalLink from "@base/ExternalLink";
 import Link from "@base/Link";
 import SectionHeader from "@base/SectionHeader";
+import { formatV2IsolateName } from "@otus-v2/isolateName";
 import { useSuspenseLocalOtuV2 } from "@otus-v2/queries";
 
 const ISOLATE_PREVIEW_COUNT = 5;
@@ -105,9 +106,7 @@ export default function LocalOtuOverview({
 								to="/refs/alpha/$referenceId/otus/$otuId/isolates/$isolateId"
 								params={{ referenceId, otuId, isolateId: isolate.id }}
 							>
-								{isolate.name
-									? `${isolate.name.type} ${isolate.name.value}`
-									: "Unnamed isolate"}
+								{formatV2IsolateName(isolate.name)}
 							</Link>
 						</BoxGroupSection>
 					))}

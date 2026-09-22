@@ -94,9 +94,9 @@ describe("<LocalOtuDetail />", () => {
 
 		await renderRoute(`/refs/alpha/${reference.id}/otus/${otuWithIsolates.id}`);
 
-		expect(await screen.findByText(/isolate preview-0/)).toBeInTheDocument();
-		expect(screen.getByText(/isolate preview-4/)).toBeInTheDocument();
-		expect(screen.queryByText(/isolate preview-5/)).not.toBeInTheDocument();
+		expect(await screen.findByText("Isolate preview-0")).toBeInTheDocument();
+		expect(screen.getByText("Isolate preview-4")).toBeInTheDocument();
+		expect(screen.queryByText("Isolate preview-5")).not.toBeInTheDocument();
 		expect(
 			screen.getByRole("link", { name: "View 2 more isolates" }),
 		).toBeInTheDocument();
@@ -108,7 +108,7 @@ describe("<LocalOtuDetail />", () => {
 		const isolate = otu.isolates[0];
 		expect(
 			await screen.findByRole("link", {
-				name: `${isolate?.name?.type} ${isolate?.name?.value}`,
+				name: `Isolate ${isolate?.name?.value}`,
 			}),
 		).toHaveAttribute("href", `${base}/isolates/${isolate?.id}`);
 	});
@@ -152,12 +152,13 @@ describe("<LocalOtuDetail />", () => {
 
 		expect(
 			await screen.findByRole("link", {
-				name: `${otu.isolates[0]?.name?.type} ${otu.isolates[0]?.name?.value}`,
+				name: `Isolate ${otu.isolates[0]?.name?.value}`,
 			}),
 		).toBeInTheDocument();
-		expect(
-			screen.getByText(`Created ${otu.createdAt.toISOString().slice(0, 10)}`),
-		).toBeInTheDocument();
+		expect(document.querySelector("time")).toHaveAttribute(
+			"datetime",
+			otu.createdAt.toISOString(),
+		);
 	});
 
 	it("filters isolates by name", async () => {
@@ -188,11 +189,11 @@ describe("<LocalOtuDetail />", () => {
 			"matching",
 		);
 		expect(
-			await screen.findByRole("link", { name: "isolate matching isolate" }),
+			await screen.findByRole("link", { name: "Isolate matching isolate" }),
 		).toBeInTheDocument();
 		expect(
 			screen.queryByRole("link", {
-				name: `${otu.isolates[0]?.name?.type} ${otu.isolates[0]?.name?.value}`,
+				name: `Isolate ${otu.isolates[0]?.name?.value}`,
 			}),
 		).not.toBeInTheDocument();
 	});
@@ -202,7 +203,7 @@ describe("<LocalOtuDetail />", () => {
 
 		expect(
 			await screen.findByRole("link", {
-				name: `${otu.isolates[0]?.name?.type} ${otu.isolates[0]?.name?.value}`,
+				name: `Isolate ${otu.isolates[0]?.name?.value}`,
 			}),
 		).toHaveAttribute("href", `${base}/isolates/${otu.isolates[0]?.id}`);
 	});
@@ -259,7 +260,7 @@ describe("<LocalOtuDetail />", () => {
 
 		expect(
 			await screen.findByRole("heading", {
-				name: `${isolate?.name?.type} ${isolate?.name?.value}`,
+				name: `Isolate ${isolate?.name?.value}`,
 			}),
 		).toBeInTheDocument();
 		await screen.findByRole("button", {
@@ -309,6 +310,7 @@ describe("<LocalOtuDetail />", () => {
 
 		expect(items).toHaveLength(2);
 		expect(items[0]).toHaveTextContent(/created isolate/);
+		expect(items[0]).toHaveTextContent(`Isolate ${isolate.name?.value}`);
 		expect(items[0]).toHaveTextContent("Version 2");
 		expect(items[1]).toHaveTextContent(/created OTU/);
 		expect(items[1]).toHaveTextContent("Version 1");

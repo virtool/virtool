@@ -1,4 +1,5 @@
 import type { OtuV2Change } from "@virtool/contracts";
+import { formatV2IsolateName } from "./isolateName";
 
 function formatIsolateName(
 	change: Extract<OtuV2Change, { command: "CreateIsolate" }>,
@@ -8,7 +9,7 @@ function formatIsolateName(
 		return null;
 	}
 
-	return `${name.type[0]?.toUpperCase()}${name.type.slice(1)} ${name.value}`;
+	return formatV2IsolateName(name);
 }
 
 function assertNever(value: never): never {

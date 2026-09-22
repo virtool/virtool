@@ -1,5 +1,6 @@
 import DeleteDialog from "@base/DeleteDialog";
 import { IconButton } from "@base/Icon";
+import { formatV2IsolateName } from "@otus-v2/isolateName";
 import { useDeleteLocalOtuIsolate } from "@otus-v2/queries";
 import type { LocalOtuV2IsolateSummary } from "@virtool/contracts";
 import { Trash } from "lucide-react";
@@ -21,9 +22,7 @@ export default function DeleteLocalOtuIsolate({
 	onDeleted,
 }: DeleteLocalOtuIsolateProps) {
 	const mutation = useDeleteLocalOtuIsolate(referenceId);
-	const name = isolate.name
-		? `${isolate.name.type} ${isolate.name.value}`
-		: "Unnamed isolate";
+	const name = formatV2IsolateName(isolate.name);
 
 	async function handleConfirm() {
 		await mutation.mutateAsync({

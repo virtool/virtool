@@ -7,6 +7,7 @@ import RelativeTime from "@base/RelativeTime";
 import { TableActionsCell, TableActionsHead, TableHead } from "@base/Table";
 import CreateLocalOtuIsolateDialog from "@otus-v2/components/CreateLocalOtuIsolateDialog";
 import DeleteLocalOtuIsolate from "@otus-v2/components/DeleteLocalOtuIsolate";
+import { formatV2IsolateName } from "@otus-v2/isolateName";
 import {
 	useSuspenseLocalOtuV2,
 	useSuspenseLocalOtuV2Isolates,
@@ -87,9 +88,7 @@ function LocalOtuIsolateRow({
 	referenceId,
 	version,
 }: LocalOtuIsolateRowProps) {
-	const name = isolate.name
-		? `${isolate.name.type} ${isolate.name.value}`
-		: "Unnamed isolate";
+	const name = formatV2IsolateName(isolate.name);
 
 	return (
 		<tr>

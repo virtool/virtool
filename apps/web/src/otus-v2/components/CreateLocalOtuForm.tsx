@@ -3,6 +3,7 @@ import Button from "@base/Button";
 import { InputError, InputGroup, InputLabel, InputSimple } from "@base/Input";
 import { inputBaseClasses, inputHeightClass } from "@base/styles";
 import TextArea from "@base/TextArea";
+import { getIsolateNameTypeLabel } from "@otus-v2/isolateName";
 import { useCreateLocalOtu } from "@otus-v2/queries";
 import { useNavigate } from "@tanstack/react-router";
 import {
@@ -247,7 +248,11 @@ export default function CreateLocalOtuForm({
 						className={selectClasses}
 						{...register("isolateNameType")}
 					>
-						<Options values={Object.values(OtuV2IsolateNameType)} />
+						{Object.values(OtuV2IsolateNameType).map((type) => (
+							<option key={type} value={type}>
+								{getIsolateNameTypeLabel(type)}
+							</option>
+						))}
 					</select>
 				</InputGroup>
 

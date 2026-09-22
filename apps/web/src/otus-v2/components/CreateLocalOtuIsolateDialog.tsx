@@ -9,6 +9,7 @@ import {
 import { InputError, InputGroup, InputLabel } from "@base/Input";
 import TextArea from "@base/TextArea";
 import { buildCreateIsolateCommand } from "@otus-v2/command";
+import { getIsolateNameTypeLabel } from "@otus-v2/isolateName";
 import {
 	useCreateLocalOtuIsolate,
 	useGenbankIsolateDraft,
@@ -117,7 +118,7 @@ export default function CreateLocalOtuIsolateDialog({
 						<h3 className="font-semibold">Preview</h3>
 						<p className="mb-3">
 							{preview.name
-								? `${preview.name.type}: ${preview.name.value}`
+								? `${getIsolateNameTypeLabel(preview.name.type)}: ${preview.name.value}`
 								: "Unnamed isolate"}
 						</p>
 						<div className="divide-y divide-slate-200">
