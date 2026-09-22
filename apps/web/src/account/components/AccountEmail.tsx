@@ -26,7 +26,9 @@ export default function AccountEmail({ email }: EmailProps) {
 	const mutation = useUpdateAccount();
 
 	function onSubmit({ email }: FormValues) {
-		mutation.mutate({ email });
+		if (!mutation.isPending) {
+			mutation.mutate({ email });
+		}
 	}
 
 	return (
@@ -44,6 +46,7 @@ export default function AccountEmail({ email }: EmailProps) {
 								aria-invalid={Boolean(errors.email) || undefined}
 								aria-describedby={errors.email ? "email-error" : undefined}
 								{...register("email", {
+									required: "Please provide an email address",
 									pattern: {
 										value: /^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$/,
 										message: "Please provide a valid email address",
@@ -52,8 +55,20 @@ export default function AccountEmail({ email }: EmailProps) {
 							/>
 							<InputError id="email-error">{errors.email?.message}</InputError>
 						</InputGroup>
+						{mutation.isSuccess && (
+							<p role="status">
+								A verification link has been queued. Your current address stays
+								active until you verify the new one.
+							</p>
+						)}
+						{mutation.isError && (
+							<p role="alert">Could not start email verification. Try again.</p>
+						)}
 						<footer className="flex items-center justify-end mb-4">
-							<SaveButton altText="Change" />
+							<SaveButton
+								altText="Send verification"
+								disabled={mutation.isPending}
+							/>
 						</footer>
 					</BoxGroupSection>
 				</form>

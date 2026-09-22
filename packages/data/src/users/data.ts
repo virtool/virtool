@@ -434,30 +434,6 @@ export async function getAccount(db: Db, userId: number): Promise<Account> {
 }
 
 /**
- * Set the signed-in user's email address.
- *
- * An empty string clears it, which is what a user who wants no address on file
- * submits and what the email check deliberately allows.
- */
-export async function updateAccountEmail(
-	db: Db,
-	userId: number,
-	email: string,
-): Promise<Account> {
-	const [row] = await db
-		.update(usersTable)
-		.set({ email })
-		.where(eq(usersTable.id, userId))
-		.returning({ id: usersTable.id });
-
-	if (!row) {
-		throw new UserNotFoundError();
-	}
-
-	return getAccount(db, userId);
-}
-
-/**
  * Change the signed-in user's own password, after verifying the one they
  * already hold.
  *

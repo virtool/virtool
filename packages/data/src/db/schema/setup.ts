@@ -34,7 +34,7 @@ import { users } from "./users";
  */
 function purposeCheck(): SQL {
 	return sql.raw(
-		"purpose in ('account_completion', 'email_remediation', 'totp_enrollment')",
+		"purpose in ('account_completion', 'email_remediation', 'totp_enrollment', 'email_verification', 'password_recovery', 'administrator_recovery')",
 	);
 }
 
@@ -46,6 +46,8 @@ export const setupTokens = pgTable(
 		purpose: text("purpose").$type<SetupPurpose>().notNull(),
 		/** Purpose-bound candidate address for an email-remediation token. */
 		candidateEmail: text("candidate_email"),
+		/** Address held by the account when an email-change link was issued. */
+		sourceEmail: text("source_email"),
 		/**
 		 * SHA-256 of the plaintext token, the only form it is ever stored in.
 		 * The plaintext is returned to the issuing caller once and never again.

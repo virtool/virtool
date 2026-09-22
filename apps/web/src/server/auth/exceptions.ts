@@ -8,6 +8,13 @@ import {
 	resetPasswordFn,
 	verifyTwoFactorFn,
 } from "./functions";
+import {
+	completePasswordRecoveryFn,
+	inspectEmailVerificationFn,
+	inspectPasswordRecoveryFn,
+	requestPasswordRecoveryFn,
+	verifyCurrentEmailFn,
+} from "./recoveryFunctions";
 
 /**
  * Server functions exempt from global authentication.
@@ -36,6 +43,11 @@ export const authenticationExceptions: ReadonlyArray<{ url: string }> = [
 	loginFn,
 	logoutFn,
 	verifyTwoFactorFn,
+	requestPasswordRecoveryFn,
+	completePasswordRecoveryFn,
+	verifyCurrentEmailFn,
+	inspectEmailVerificationFn,
+	inspectPasswordRecoveryFn,
 ];
 
 /** Server functions reachable by a forced-password-reset principal. */

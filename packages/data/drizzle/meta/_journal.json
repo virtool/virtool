@@ -267,6 +267,13 @@
       "when": 1790092871577,
       "tag": "0037_stiff_butterfly",
       "breakpoints": true
+    },
+    {
+      "idx": 38,
+      "version": "7",
+      "when": 1790108085288,
+      "tag": "0038_add_recovery_token_purposes",
+      "breakpoints": true
     }
   ]
 }

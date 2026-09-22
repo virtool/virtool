@@ -40,6 +40,8 @@ export type IssueSetupTokenInput = {
 	purpose: SetupPurpose;
 	/** Purpose-bound address carried by an email-remediation token. */
 	candidateEmail?: string;
+	/** Address that must still be current when verifying an email change. */
+	sourceEmail?: string;
 	/** Defaults to {@link SETUP_TOKEN_LIFETIME_MS}. */
 	lifetimeMs?: number;
 };
@@ -86,6 +88,7 @@ export async function issueSetupTokenInTransaction(
 		userId,
 		purpose,
 		candidateEmail,
+		sourceEmail,
 		lifetimeMs = SETUP_TOKEN_LIFETIME_MS,
 	}: IssueSetupTokenInput,
 ): Promise<IssuedSetupToken> {
@@ -102,6 +105,7 @@ export async function issueSetupTokenInTransaction(
 				userId,
 				purpose,
 				candidateEmail,
+				sourceEmail,
 				tokenHash: hashToken(token),
 				expiresAt,
 			})
