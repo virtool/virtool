@@ -176,7 +176,13 @@ export async function runDaemon(
 		store,
 		run,
 		repository.primaryWorktree,
-		requestRefresh,
+		() => {
+			feed.set({
+				...feed.get(),
+				scheduler: workflows.getState(),
+				updatedAt: Date.now(),
+			});
+		},
 		builds,
 		logger,
 	);
