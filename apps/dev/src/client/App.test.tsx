@@ -166,6 +166,10 @@ it("keeps progress visible and prevents conflicting actions", async () => {
 		observed: "starting",
 		operation: {
 			action: "start",
+			createdAt: Date.now(),
+			error: null,
+			finishedAt: null,
+			id: 1,
 			status: "running",
 			progress: "Migrating database",
 		},
@@ -174,6 +178,28 @@ it("keeps progress visible and prevents conflicting actions", async () => {
 	await openEnvironmentDetails();
 	expect(screen.getByText("Migrating database")).toBeVisible();
 	expect(screen.getByRole("button", { name: "Working…" })).toBeDisabled();
+});
+
+it("retains the failed startup stage and final elapsed time", async () => {
+	Object.assign(getEnvironment(), {
+		lastError: "Migration failed",
+		observed: "failed",
+		operation: {
+			action: "start",
+			createdAt: 1_000,
+			error: "Migration failed",
+			finishedAt: 6_500,
+			id: 1,
+			progress: "running migrations",
+			status: "failed",
+		},
+		ready: false,
+	});
+	await renderApp();
+	await openEnvironmentDetails();
+	const timeline = screen.getByRole("region", { name: "Startup timeline" });
+	expect(timeline).toHaveTextContent("5s elapsed");
+	expect(timeline).toHaveTextContent("Run migrations (failed)");
 });
 
 it("marks disconnected snapshots and disables mutations until reconnected", async () => {

@@ -32,6 +32,7 @@ type OperationRow = {
 	action: Operation["action"];
 	created_at: number;
 	error: string | null;
+	finished_at: number | null;
 	id: number;
 	progress: string;
 	status: Operation["status"];
@@ -312,6 +313,15 @@ export class StateStore {
 			.run(status, progress, error, finishedAt, id);
 	}
 
+	failOperation(id: number, error: string): void {
+		this.database
+			.prepare(`
+				UPDATE operations SET status = 'failed', error = ?, finished_at = ?
+				WHERE id = ?
+			`)
+			.run(error, Date.now(), id);
+	}
+
 	setEnvironmentError(environmentId: string, error: string | null): void {
 		this.database
 			.prepare("UPDATE environments SET last_error = ? WHERE id = ?")
@@ -396,7 +406,7 @@ export class StateStore {
 	private latestOperation(environmentId: string): Operation | null {
 		const row = this.database
 			.prepare(`
-				SELECT id, action, status, progress, error, created_at
+				SELECT id, action, status, progress, error, created_at, finished_at
 				FROM operations WHERE environment_id = ? ORDER BY id DESC LIMIT 1
 			`)
 			.get(environmentId) as OperationRow | undefined;
@@ -405,6 +415,7 @@ export class StateStore {
 					action: row.action,
 					createdAt: row.created_at,
 					error: row.error,
+					finishedAt: row.finished_at,
 					id: row.id,
 					progress: row.progress,
 					status: row.status,

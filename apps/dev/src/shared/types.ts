@@ -45,6 +45,7 @@ export type Operation = {
 	action: "remove" | "start" | "stop";
 	createdAt: number;
 	error: string | null;
+	finishedAt: number | null;
 	id: number;
 	progress: string;
 	status: "failed" | "pending" | "running" | "succeeded";

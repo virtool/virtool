@@ -20,7 +20,8 @@ vtd daemon stop
 The first command installs and starts a repository-specific systemd user
 service from the primary checkout. Mutations record desired state and return
 immediately with <https://dev.localhost:9443>; the UI reports build, migration,
-readiness, failure, and cleanup progress.
+readiness, failure, and cleanup progress. Environment details retain the latest
+startup timeline, including its elapsed time and failed stage.
 
 ## Architecture
 

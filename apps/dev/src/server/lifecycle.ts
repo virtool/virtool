@@ -194,7 +194,7 @@ export class Reconciler {
 			this.retryAt.delete(environment.id);
 		} catch (error) {
 			const message = error instanceof Error ? error.message : String(error);
-			this.store.updateOperation(operationId, "failed", "failed", message);
+			this.store.failOperation(operationId, message);
 			this.store.setEnvironmentError(environment.id, message);
 			if (environment.desired === "absent") {
 				const attempt = this.removalAttempts.get(environment.id) ?? 0;

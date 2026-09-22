@@ -7,11 +7,20 @@ import {
 	useLocation,
 	useParams,
 } from "@tanstack/react-router";
-import { ExternalLink, LoaderCircle, Pause, Play } from "lucide-react";
+import {
+	Check,
+	Circle,
+	CircleX,
+	ExternalLink,
+	LoaderCircle,
+	Pause,
+	Play,
+} from "lucide-react";
 import { useEffect, useState } from "react";
 import type {
 	Environment,
 	Mutation,
+	Operation,
 	SchedulerState,
 	ServiceState,
 } from "../shared/types.ts";
@@ -21,6 +30,18 @@ import { useSnapshot } from "./store.ts";
 const PANEL = "rounded-xl border border-slate-200 bg-white";
 const TAB =
 	"cursor-pointer border-b-2 border-transparent px-4 py-3 text-sm font-semibold text-slate-500 transition-colors hover:text-emerald-900 data-[state=active]:border-emerald-700 data-[state=active]:text-emerald-900";
+
+const STARTUP_STAGES = [
+	["queued", "Queued"],
+	["checking configuration", "Check configuration"],
+	["starting shared infrastructure", "Start shared infrastructure"],
+	["rendering configuration", "Render configuration"],
+	["initializing database and storage", "Initialize database and storage"],
+	["building core image", "Build core image"],
+	["running migrations", "Run migrations"],
+	["starting services", "Start services"],
+	["checking HTTPS readiness", "Check HTTPS readiness"],
+] as const;
 
 async function post(path: string, body: unknown): Promise<void> {
 	const response = await fetch(path, {
@@ -208,6 +229,103 @@ function formatBytes(bytes: number | null): string {
 		unit = next;
 	}
 	return `${value.toFixed(value >= 10 ? 0 : 1)} ${unit}`;
+}
+
+function formatElapsed(milliseconds: number): string {
+	const seconds = Math.max(0, Math.floor(milliseconds / 1_000));
+	if (seconds < 60) {
+		return `${seconds}s`;
+	}
+	const minutes = Math.floor(seconds / 60);
+	return `${minutes}m ${seconds % 60}s`;
+}
+
+function StartupTimeline({ operation }: { operation: Operation }) {
+	const [now, setNow] = useState(() => Date.now());
+	const isActive = ["pending", "running"].includes(operation.status);
+	useEffect(() => {
+		if (!isActive) {
+			return;
+		}
+		const timer = window.setInterval(() => setNow(Date.now()), 1_000);
+		return () => window.clearInterval(timer);
+	}, [isActive]);
+	const currentIndex = STARTUP_STAGES.findIndex(
+		([progress]) => progress === operation.progress,
+	);
+	const elapsed = (operation.finishedAt ?? now) - operation.createdAt;
+	return (
+		<section
+			aria-label="Startup timeline"
+			className="mt-4 rounded-lg border border-slate-200 bg-slate-50 p-4"
+		>
+			<div className="flex items-baseline justify-between gap-3">
+				<h3 className="text-sm font-semibold text-emerald-950">Startup</h3>
+				<time className="text-xs tabular-nums text-slate-500">
+					{formatElapsed(elapsed)} elapsed
+				</time>
+			</div>
+			<ol className="mt-3 space-y-2">
+				{currentIndex === -1 && operation.status !== "succeeded" && (
+					<li
+						className={`flex items-center gap-2 text-sm font-semibold ${
+							operation.status === "failed" ? "text-red-800" : "text-amber-900"
+						}`}
+					>
+						{operation.status === "failed" ? (
+							<CircleX aria-hidden="true" className="size-4 shrink-0" />
+						) : (
+							<LoaderCircle
+								aria-hidden="true"
+								className="size-4 shrink-0 animate-spin"
+							/>
+						)}
+						<span className="capitalize">{operation.progress}</span>
+						{operation.status === "failed" && (
+							<span className="sr-only"> (failed)</span>
+						)}
+					</li>
+				)}
+				{STARTUP_STAGES.map(([progress, label], index) => {
+					const isCurrent = index === currentIndex;
+					const isFailed = isCurrent && operation.status === "failed";
+					const isComplete =
+						operation.status === "succeeded" ||
+						(currentIndex !== -1 && index < currentIndex);
+					return (
+						<li
+							aria-current={isCurrent && isActive ? "step" : undefined}
+							className={`flex items-center gap-2 text-sm ${
+								isFailed
+									? "font-semibold text-red-800"
+									: isCurrent
+										? "font-semibold text-amber-900"
+										: isComplete
+											? "text-emerald-800"
+											: "text-slate-400"
+							}`}
+							key={progress}
+						>
+							{isFailed ? (
+								<CircleX aria-hidden="true" className="size-4 shrink-0" />
+							) : isComplete ? (
+								<Check aria-hidden="true" className="size-4 shrink-0" />
+							) : isCurrent ? (
+								<LoaderCircle
+									aria-hidden="true"
+									className="size-4 shrink-0 animate-spin"
+								/>
+							) : (
+								<Circle aria-hidden="true" className="size-4 shrink-0" />
+							)}
+							<span>{label}</span>
+							{isFailed && <span className="sr-only"> (failed)</span>}
+						</li>
+					);
+				})}
+			</ol>
+		</section>
+	);
 }
 
 function isBusy(environment: Environment): boolean {
@@ -499,11 +617,15 @@ function EnvironmentDetails({
 											: "Create"}
 					</Button>
 				</div>
-				{busy && (
-					<p role="status" className="mt-3 text-sm text-amber-900">
-						{environment.operation?.progress ||
-							"Waiting for environment state…"}
-					</p>
+				{environment.operation?.action === "start" ? (
+					<StartupTimeline operation={environment.operation} />
+				) : (
+					busy && (
+						<p role="status" className="mt-3 text-sm text-amber-900">
+							{environment.operation?.progress ||
+								"Waiting for environment state…"}
+						</p>
+					)
 				)}
 				<Feedback
 					error={action.error ?? workflowAction.error ?? environment.lastError}

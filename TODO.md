@@ -2,7 +2,7 @@
 
 - [ ] Verify the UI in a browser, including layout, responsiveness, and keyboard
   interaction.
-- [ ] Add a startup timeline with elapsed time, distinct stages, and a persistent
+- [x] Add a startup timeline with elapsed time, distinct stages, and a persistent
   failed-step indicator. Current progress is plain text.
 - [ ] Expand the scheduler view to show workflow, queue, and build activity by
   branch. Environment rows currently show basic counts.
