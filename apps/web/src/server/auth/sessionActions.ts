@@ -32,8 +32,14 @@ export const signOut = createServerOnlyFn(async () => {
  */
 export const createReplacementSession = createServerOnlyFn(
 	async (userId: number) => {
-		const { auth } = await import("./instance");
-		return auth.api.createRemediationSession({ body: { userId } });
+		const [{ getRequest }, { auth }] = await Promise.all([
+			import("@tanstack/react-start/server"),
+			import("./instance"),
+		]);
+		return auth.api.createRemediationSession({
+			headers: getRequest().headers,
+			body: { userId },
+		});
 	},
 );
 

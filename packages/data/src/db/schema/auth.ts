@@ -29,6 +29,7 @@ import {
 	text,
 	timestamp,
 	unique,
+	varchar,
 } from "drizzle-orm/pg-core";
 
 import { users } from "./users";
@@ -79,8 +80,9 @@ export const authSessions = pgTable(
 		token: text("token").notNull(),
 		createdAt: timestamp("created_at").notNull(),
 		updatedAt: timestamp("updated_at").notNull(),
-		ipAddress: text("ip_address"),
-		userAgent: text("user_agent"),
+		ipAddress: varchar("ip_address", { length: 45 }),
+		userAgent: varchar("user_agent", { length: 512 }),
+		replacementForSessionId: integer("replacement_for_session_id"),
 		userId: integer("user_id").notNull(),
 	},
 	(table) => [
@@ -89,8 +91,16 @@ export const authSessions = pgTable(
 			foreignColumns: [users.id],
 			name: "auth_sessions_user_id_fkey",
 		}).onDelete("cascade"),
+		foreignKey({
+			columns: [table.replacementForSessionId],
+			foreignColumns: [table.id],
+			name: "auth_sessions_replacement_for_session_id_fkey",
+		}).onDelete("set null"),
 		unique("auth_sessions_token_key").on(table.token),
 		index("idx_auth_sessions_expires_at").on(table.expiresAt),
+		index("idx_auth_sessions_replacement_for_session_id").on(
+			table.replacementForSessionId,
+		),
 		index("idx_auth_sessions_user_id").on(table.userId),
 	],
 );

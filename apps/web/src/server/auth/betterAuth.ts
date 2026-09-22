@@ -26,6 +26,10 @@ import { z } from "zod";
 import { SESSION_FRESH_AGE_SECONDS } from "./freshness";
 import { HANDLE_MAX_LENGTH, HANDLE_MIN_LENGTH, isValidHandle } from "./handle";
 import { recentAuthenticationPlugin } from "./recentAuthenticationChallenge";
+import {
+	AUTH_IP_ADDRESS_OPTIONS,
+	normalizeBrowserSessionMetadata,
+} from "./sessionMetadata";
 
 /** Where the Better Auth handler is mounted. */
 export const AUTH_BASE_PATH = "/api/auth";
@@ -53,6 +57,10 @@ const REFUSED_PATHS = new Set([
 	"/sign-in/email",
 	"/is-username-available",
 	"/update-user",
+	"/list-sessions",
+	"/revoke-session",
+	"/revoke-sessions",
+	"/revoke-other-sessions",
 ]);
 
 /** What {@link createAuth} needs to build an instance. */
@@ -116,7 +124,9 @@ function virtoolSessionPlugin(db: Db) {
 						{
 							ipAddress: current.session.ipAddress,
 							userAgent: current.session.userAgent,
+							replacementForSessionId: sessionId,
 						},
+						true,
 					);
 					const deleted = await db
 						.delete(authSessions)
@@ -206,8 +216,16 @@ export function createAuth({
 		session: {
 			cookieCache: { enabled: false },
 			freshAge: SESSION_FRESH_AGE_SECONDS,
+			additionalFields: {
+				replacementForSessionId: {
+					type: "number",
+					input: false,
+					returned: false,
+				},
+			},
 		},
 		advanced: {
+			ipAddress: AUTH_IP_ADDRESS_OPTIONS,
 			// Stated rather than left to default. Better Auth turns its origin check
 			// off whenever `NODE_ENV` is `test`, so without this the suite would
 			// exercise a configuration production never runs and prove nothing about
@@ -286,6 +304,13 @@ export function createAuth({
 								code: "INVALID_CREDENTIALS",
 							});
 						}
+
+						return {
+							data: {
+								...session,
+								...normalizeBrowserSessionMetadata(undefined, session),
+							},
+						};
 					},
 				},
 			},

@@ -222,7 +222,30 @@ device disabled and recovery codes excluded. Success creates a new session
 through Better Auth, atomically retires the old session, installs Better Auth's
 cookie, and attributes the remainder of the request to the new non-secret
 session id. Concurrent challenges have one durable winner; losing replacement
-sessions are removed.
+sessions are removed. The database replacement necessarily commits before the
+response can install its cookie; if writing that response fails, the new row is
+deleted, while the retired credential stays retired and the browser must sign
+in again.
+
+Account session management uses that numeric database session id only as an
+opaque management id. Better Auth authenticates with the separate random
+`token`; its native list and revoke routes are disabled so neither that token nor
+another authentication-capable value can enter the account API. List and revoke
+queries are always scoped by the principal's numeric user id. The list contains
+only live Better Auth sessions and returns the full observed IP address, bounded
+browser/OS labels, creation time, rolling `updated_at` as last activity,
+effective expiry, and a server-derived current marker. Browser, OS, and IP are
+recognition hints from client-provided headers, not device identity or suspicion
+signals. Browser and OS labels are derived from Better Auth's bounded stored
+user agent when the list is published; missing or invalid values use explicit
+unknown fallbacks.
+
+Selected and all-other revocation require recent authentication and never end
+the current session; sign-out remains its termination path. A short-lived
+self-reference protects a replacement created by a concurrent step-up until the
+old row is deleted. Revocation takes effect on the next authoritative RPC check
+and on the next SSE recheck; client query invalidation is only a local display
+refresh and is not part of enforcement.
 
 Ordinary server functions, React Query reads and mutations, raw routes, SSE
 handshakes, revocation checks, reconnects, and HEAD probes use read-only session

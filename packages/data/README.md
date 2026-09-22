@@ -226,6 +226,13 @@ Two rules hold this together:
   UTC clock. Migration `0034_better_auth_rolling_sessions` removes obsolete
   activity and deadline columns without changing existing expiry values.
 
+  Session-management reads expose the integer primary key as a non-authenticating
+  management id; only the separate random `token` authenticates. Browser, OS,
+  IP, and raw user-agent metadata are normalized or bounded when the row is
+  created. `replacement_for_session_id` is an internal, self-clearing foreign
+  key used only to keep a concurrent recent-auth replacement out of an
+  all-other-session deletion.
+
 A Drizzle property name in `auth.ts` is a Better Auth *field* name. The adapter
 looks fields up by property, so `userId` and `credentialID` keep their exact
 spelling while their columns stay snake_case.
