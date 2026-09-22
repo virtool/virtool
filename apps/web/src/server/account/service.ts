@@ -7,7 +7,10 @@ import {
 } from "@virtool/data/auth/session";
 import type { Db, DbOrTx } from "@virtool/data/db/pg";
 import { isSessionFresh } from "../auth/freshness";
-import { normalizeBrowserSessionMetadata } from "../auth/sessionMetadata";
+import {
+	getBrowserSessionDisplay,
+	normalizeSessionIpAddress,
+} from "../auth/sessionMetadata";
 
 /** The current session ended while a session-management operation was running. */
 export class BrowserSessionEndedError extends Error {}
@@ -29,18 +32,19 @@ export async function getActiveBrowserSessions(
 		throw new BrowserSessionEndedError();
 	}
 
-	return rows.map((row) => ({
-		managementId: row.id,
-		browser: row.browser,
-		operatingSystem: row.operatingSystem,
-		ipAddress: normalizeBrowserSessionMetadata(undefined, {
-			ipAddress: row.ipAddress,
-		}).ipAddress,
-		createdAt: row.createdAt,
-		lastActivityAt: row.updatedAt,
-		expiresAt: row.expiresAt,
-		isCurrent: row.id === currentSessionId,
-	}));
+	return rows.map((row) => {
+		const display = getBrowserSessionDisplay(row.userAgent);
+
+		return {
+			managementId: row.id,
+			...display,
+			ipAddress: normalizeSessionIpAddress(row.ipAddress),
+			createdAt: row.createdAt,
+			lastActivityAt: row.updatedAt,
+			expiresAt: row.expiresAt,
+			isCurrent: row.id === currentSessionId,
+		};
+	});
 }
 
 async function checkCurrentSession(

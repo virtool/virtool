@@ -1,15 +1,28 @@
 import { isIP } from "node:net";
+import type { BetterAuthOptions } from "better-auth";
+import { getIp } from "better-auth/api";
 
 const UNKNOWN_BROWSER = "Unknown browser";
 const UNKNOWN_OPERATING_SYSTEM = "Unknown operating system";
 const MAX_USER_AGENT_LENGTH = 512;
 
+/** IP address resolution shared by Better Auth and restricted sessions. */
+export const AUTH_IP_ADDRESS_OPTIONS = {
+	ipAddressHeaders: ["cf-connecting-ip", "x-forwarded-for"],
+} satisfies NonNullable<
+	NonNullable<BetterAuthOptions["advanced"]>["ipAddress"]
+>;
+
 /** Bounded metadata stored with a browser session for recognition only. */
 export type BrowserSessionMetadata = {
-	browser: string;
-	operatingSystem: string;
 	ipAddress: string | null;
 	userAgent: string | null;
+};
+
+/** Display labels derived from a browser session's user agent. */
+export type BrowserSessionDisplay = {
+	browser: string;
+	operatingSystem: string;
 };
 
 function clean(value: string, maximumLength: number): string {
@@ -39,7 +52,7 @@ function matchDisplay(
 	return fallback;
 }
 
-function normalizeBrowser(userAgent: string): string {
+function getBrowser(userAgent: string): string {
 	return matchDisplay(
 		userAgent,
 		[
@@ -55,7 +68,7 @@ function normalizeBrowser(userAgent: string): string {
 	);
 }
 
-function normalizeOperatingSystem(userAgent: string): string {
+function getOperatingSystem(userAgent: string): string {
 	return matchDisplay(
 		userAgent,
 		[
@@ -73,15 +86,30 @@ function normalizeOperatingSystem(userAgent: string): string {
 
 /** Resolve the same proxy headers used by Virtool's other session issuers. */
 export function getClientIpFromHeaders(headers: Headers): string | null {
-	const value =
-		headers.get("cf-connecting-ip") ??
-		headers.get("x-forwarded-for")?.split(",")[0]?.trim() ??
-		"";
-	const normalized = clean(value, 45);
-	return isIP(normalized) === 0 ? null : normalized;
+	return getIp(headers, {
+		advanced: { ipAddress: AUTH_IP_ADDRESS_OPTIONS },
+	});
 }
 
-/** Normalize untrusted request metadata into bounded session display fields. */
+/** Validate one stored session IP before publishing it. */
+export function normalizeSessionIpAddress(value: unknown): string | null {
+	const normalized = typeof value === "string" ? clean(value, 45) : null;
+	return normalized && isIP(normalized) !== 0 ? normalized : null;
+}
+
+/** Derive bounded display labels from a stored user agent. */
+export function getBrowserSessionDisplay(
+	userAgent: string | null,
+): BrowserSessionDisplay {
+	return {
+		browser: userAgent ? getBrowser(userAgent) : UNKNOWN_BROWSER,
+		operatingSystem: userAgent
+			? getOperatingSystem(userAgent)
+			: UNKNOWN_OPERATING_SYSTEM,
+	};
+}
+
+/** Normalize untrusted request metadata into bounded session storage fields. */
 export function normalizeBrowserSessionMetadata(
 	headers: Headers | null | undefined,
 	fallback: { ipAddress?: unknown; userAgent?: unknown } = {},
@@ -91,21 +119,11 @@ export function normalizeBrowserSessionMetadata(
 			? fallback.userAgent
 			: (headers?.get("user-agent") ?? "");
 	const userAgent = clean(rawUserAgent, MAX_USER_AGENT_LENGTH);
-	const fallbackIp =
-		typeof fallback.ipAddress === "string"
-			? clean(fallback.ipAddress, 45)
-			: null;
 	const ipAddress = headers
 		? getClientIpFromHeaders(headers)
-		: fallbackIp && isIP(fallbackIp) !== 0
-			? fallbackIp
-			: null;
+		: normalizeSessionIpAddress(fallback.ipAddress);
 
 	return {
-		browser: userAgent ? normalizeBrowser(userAgent) : UNKNOWN_BROWSER,
-		operatingSystem: userAgent
-			? normalizeOperatingSystem(userAgent)
-			: UNKNOWN_OPERATING_SYSTEM,
 		ipAddress,
 		userAgent: userAgent || null,
 	};

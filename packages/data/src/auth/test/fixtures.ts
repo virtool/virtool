@@ -93,19 +93,17 @@ export async function seedSession(
 	db: Db,
 	userId: number,
 	{
-		browser = "Test Browser",
 		createdAt = new Date(),
 		expiresAt = new Date(Date.now() + 60_000),
 		ipAddress = "127.0.0.1",
-		operatingSystem = "Test OS",
 		updatedAt = new Date(),
+		userAgent = "Test Browser/1.0",
 	}: {
-		browser?: string;
 		createdAt?: Date;
 		expiresAt?: Date;
 		ipAddress?: string | null;
-		operatingSystem?: string;
 		updatedAt?: Date;
+		userAgent?: string | null;
 	} = {},
 ): Promise<SeededSession> {
 	const token = newSessionToken();
@@ -113,13 +111,12 @@ export async function seedSession(
 	const [session] = await db
 		.insert(authSessions)
 		.values({
-			browser,
 			createdAt,
 			expiresAt,
 			ipAddress,
-			operatingSystem,
 			token,
 			updatedAt,
+			userAgent,
 			userId,
 		})
 		.returning({ id: authSessions.id });

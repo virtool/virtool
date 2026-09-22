@@ -91,9 +91,8 @@ describe("active browser sessions", () => {
 			olderId.sessionId,
 		]);
 		expect(sessions[0]).toMatchObject({
-			browser: "Test Browser",
-			operatingSystem: "Test OS",
 			ipAddress: "127.0.0.1",
+			userAgent: "Test Browser/1.0",
 		});
 		expect(sessions[0]).not.toHaveProperty("token");
 	});

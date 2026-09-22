@@ -990,20 +990,6 @@
           "primaryKey": false,
           "notNull": false
         },
-        "browser": {
-          "name": "browser",
-          "type": "varchar(80)",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "'Unknown browser'"
-        },
-        "operating_system": {
-          "name": "operating_system",
-          "type": "varchar(80)",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "'Unknown operating system'"
-        },
         "user_id": {
           "name": "user_id",
           "type": "integer",

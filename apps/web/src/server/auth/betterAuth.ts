@@ -26,7 +26,10 @@ import { z } from "zod";
 import { SESSION_FRESH_AGE_SECONDS } from "./freshness";
 import { HANDLE_MAX_LENGTH, HANDLE_MIN_LENGTH, isValidHandle } from "./handle";
 import { recentAuthenticationPlugin } from "./recentAuthenticationChallenge";
-import { normalizeBrowserSessionMetadata } from "./sessionMetadata";
+import {
+	AUTH_IP_ADDRESS_OPTIONS,
+	normalizeBrowserSessionMetadata,
+} from "./sessionMetadata";
 
 /** Where the Better Auth handler is mounted. */
 export const AUTH_BASE_PATH = "/api/auth";
@@ -121,8 +124,6 @@ function virtoolSessionPlugin(db: Db) {
 						{
 							ipAddress: current.session.ipAddress,
 							userAgent: current.session.userAgent,
-							browser: current.session.browser,
-							operatingSystem: current.session.operatingSystem,
 							replacementForSessionId: sessionId,
 						},
 						true,
@@ -216,8 +217,6 @@ export function createAuth({
 			cookieCache: { enabled: false },
 			freshAge: SESSION_FRESH_AGE_SECONDS,
 			additionalFields: {
-				browser: { type: "string", input: false },
-				operatingSystem: { type: "string", input: false },
 				replacementForSessionId: {
 					type: "number",
 					input: false,
@@ -226,9 +225,7 @@ export function createAuth({
 			},
 		},
 		advanced: {
-			ipAddress: {
-				ipAddressHeaders: ["cf-connecting-ip", "x-forwarded-for"],
-			},
+			ipAddress: AUTH_IP_ADDRESS_OPTIONS,
 			// Stated rather than left to default. Better Auth turns its origin check
 			// off whenever `NODE_ENV` is `test`, so without this the suite would
 			// exercise a configuration production never runs and prove nothing about

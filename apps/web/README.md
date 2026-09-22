@@ -236,7 +236,9 @@ only live Better Auth sessions and returns the full observed IP address, bounded
 browser/OS labels, creation time, rolling `updated_at` as last activity,
 effective expiry, and a server-derived current marker. Browser, OS, and IP are
 recognition hints from client-provided headers, not device identity or suspicion
-signals; missing or invalid values use explicit unknown fallbacks.
+signals. Browser and OS labels are derived from Better Auth's bounded stored
+user agent when the list is published; missing or invalid values use explicit
+unknown fallbacks.
 
 Selected and all-other revocation require recent authentication and never end
 the current session; sign-out remains its termination path. A short-lived

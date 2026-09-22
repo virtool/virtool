@@ -186,8 +186,6 @@ describe("legacy bcrypt credentials", () => {
 		const [session] = await db.select().from(authSessions);
 
 		expect(session).toMatchObject({
-			browser: "Chrome 140.0",
-			operatingSystem: "Windows",
 			ipAddress: "2001:0db8:0000:0000:0000:0000:0000:0000",
 		});
 		expect(session?.userAgent).toHaveLength(512);
@@ -513,8 +511,6 @@ describe("step-up session replacement", () => {
 		);
 		expect(sessions[0]?.ipAddress).toBe(oldSession.ipAddress);
 		expect(sessions[0]?.userAgent).toBe(oldSession.userAgent);
-		expect(sessions[0]?.browser).toBe(oldSession.browser);
-		expect(sessions[0]?.operatingSystem).toBe(oldSession.operatingSystem);
 		expect(sessions[0]?.replacementForSessionId).toBeNull();
 		expect(result.headers.get("set-cookie")).toContain(
 			"better-auth.session_token=",

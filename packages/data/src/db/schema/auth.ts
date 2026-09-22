@@ -82,12 +82,6 @@ export const authSessions = pgTable(
 		updatedAt: timestamp("updated_at").notNull(),
 		ipAddress: varchar("ip_address", { length: 45 }),
 		userAgent: varchar("user_agent", { length: 512 }),
-		browser: varchar("browser", { length: 80 })
-			.notNull()
-			.default("Unknown browser"),
-		operatingSystem: varchar("operating_system", { length: 80 })
-			.notNull()
-			.default("Unknown operating system"),
 		replacementForSessionId: integer("replacement_for_session_id"),
 		userId: integer("user_id").notNull(),
 	},

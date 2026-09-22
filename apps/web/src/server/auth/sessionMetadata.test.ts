@@ -1,10 +1,12 @@
 import { describe, expect, it } from "vitest";
 import {
+	getBrowserSessionDisplay,
 	getClientIpFromHeaders,
 	normalizeBrowserSessionMetadata,
+	normalizeSessionIpAddress,
 } from "./sessionMetadata";
 
-describe("normalizeBrowserSessionMetadata", () => {
+describe("getBrowserSessionDisplay", () => {
 	it.each([
 		{
 			browser: "Chrome 140.0",
@@ -25,14 +27,25 @@ describe("normalizeBrowserSessionMetadata", () => {
 				"Mozilla/5.0 (X11; Linux x86_64; rv:142.0) Gecko/20100101 Firefox/142.0",
 		},
 	])("normalizes $browser on $operatingSystem", (expected) => {
-		const metadata = normalizeBrowserSessionMetadata(
-			new Headers({ "user-agent": expected.userAgent }),
-		);
+		const metadata = getBrowserSessionDisplay(expected.userAgent);
 
 		expect(metadata.browser).toBe(expected.browser);
 		expect(metadata.operatingSystem).toBe(expected.operatingSystem);
 	});
 
+	it("uses safe fallbacks when the user agent is absent or unrecognized", () => {
+		expect(getBrowserSessionDisplay("unknown agent")).toEqual({
+			browser: "Unknown browser",
+			operatingSystem: "Unknown operating system",
+		});
+		expect(getBrowserSessionDisplay(null)).toEqual({
+			browser: "Unknown browser",
+			operatingSystem: "Unknown operating system",
+		});
+	});
+});
+
+describe("normalizeBrowserSessionMetadata", () => {
 	it("bounds and sanitizes an untrusted user agent", () => {
 		const metadata = normalizeBrowserSessionMetadata(undefined, {
 			userAgent: `unknown\nagent${"x".repeat(600)}`,
@@ -40,30 +53,50 @@ describe("normalizeBrowserSessionMetadata", () => {
 
 		expect(metadata.userAgent).toHaveLength(512);
 		expect(metadata.userAgent).not.toContain("\n");
-		expect(metadata.browser).toBe("Unknown browser");
-		expect(metadata.operatingSystem).toBe("Unknown operating system");
 	});
 
 	it("uses safe fallbacks when metadata is absent", () => {
 		expect(normalizeBrowserSessionMetadata(undefined)).toEqual({
-			browser: "Unknown browser",
-			operatingSystem: "Unknown operating system",
 			ipAddress: null,
 			userAgent: null,
 		});
 	});
 
-	it("preserves valid IPv4 and IPv6 addresses and rejects invalid input", () => {
+	it("uses Cloudflare before X-Forwarded-For", () => {
 		expect(
-			getClientIpFromHeaders(new Headers({ "cf-connecting-ip": "192.0.2.1" })),
+			getClientIpFromHeaders(
+				new Headers({
+					"cf-connecting-ip": "192.0.2.1",
+					"x-forwarded-for": "198.51.100.1",
+				}),
+			),
 		).toBe("192.0.2.1");
+		expect(
+			getClientIpFromHeaders(
+				new Headers({ "x-forwarded-for": "198.51.100.1" }),
+			),
+		).toBe("198.51.100.1");
+	});
+
+	it("rejects an untrusted X-Forwarded-For chain", () => {
 		expect(
 			getClientIpFromHeaders(
 				new Headers({ "x-forwarded-for": "2001:db8::1, 198.51.100.1" }),
 			),
-		).toBe("2001:db8::1");
+		).toBe("127.0.0.1");
+	});
+
+	it("rejects invalid IP addresses", () => {
 		expect(
 			getClientIpFromHeaders(new Headers({ "x-forwarded-for": "not-an-ip" })),
-		).toBeNull();
+		).toBe("127.0.0.1");
+	});
+});
+
+describe("normalizeSessionIpAddress", () => {
+	it("preserves valid addresses and rejects invalid values", () => {
+		expect(normalizeSessionIpAddress("2001:db8::1")).toBe("2001:db8::1");
+		expect(normalizeSessionIpAddress("not-an-ip")).toBeNull();
+		expect(normalizeSessionIpAddress(null)).toBeNull();
 	});
 });

@@ -104,8 +104,8 @@ describe("active browser sessions", () => {
 	it("returns only safe summaries for the signed-in user", async () => {
 		const userId = await signIn(db, getRequest);
 		await seedSession(db, userId, {
-			browser: "Firefox 142.0",
-			operatingSystem: "Linux",
+			userAgent:
+				"Mozilla/5.0 (X11; Linux x86_64; rv:142.0) Gecko/20100101 Firefox/142.0",
 		});
 		const otherUserId = await seedUser(db, { handle: "bob" });
 		await seedSession(db, otherUserId);

@@ -22,9 +22,8 @@ export type ResolvedBrowserSession = {
 /** A live Better Auth session row safe for account-session display shaping. */
 export type ActiveBrowserSessionRow = {
 	id: number;
-	browser: string;
-	operatingSystem: string;
 	ipAddress: string | null;
+	userAgent: string | null;
 	createdAt: Date;
 	updatedAt: Date;
 	expiresAt: Date;
@@ -39,9 +38,8 @@ export async function findActiveBrowserSessions(
 	return db
 		.select({
 			id: authSessions.id,
-			browser: authSessions.browser,
-			operatingSystem: authSessions.operatingSystem,
 			ipAddress: authSessions.ipAddress,
+			userAgent: authSessions.userAgent,
 			createdAt: authSessions.createdAt,
 			updatedAt: authSessions.updatedAt,
 			expiresAt: authSessions.expiresAt,
