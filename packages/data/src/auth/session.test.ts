@@ -7,7 +7,10 @@ import { users } from "../db/schema/users";
 import { createTestDatabase, type TestDatabase } from "../db/test/fixtures";
 import {
 	createAuthenticatedSession,
+	deleteActiveBrowserSession,
 	deleteExpiredSessions,
+	deleteOtherBrowserSessions,
+	findActiveBrowserSessions,
 	resolveBrowserSession,
 } from "./session";
 import { seedSession, seedUser } from "./test/fixtures";
@@ -57,6 +60,121 @@ describe("resolveBrowserSession", () => {
 		const live = await seedSession(db, userId);
 		await db.update(users).set({ active: false }).where(eq(users.id, userId));
 		expect(await resolveBrowserSession(db, live.sessionId, userId)).toBeNull();
+	});
+});
+
+describe("active browser sessions", () => {
+	it("lists only the user's live sessions with current first and stable ordering", async () => {
+		const userId = await seedUser(db);
+		const otherUserId = await seedUser(db, { handle: "bob" });
+		const current = await seedSession(db, userId, {
+			updatedAt: minutesFromNow(-20),
+		});
+		const olderId = await seedSession(db, userId, {
+			updatedAt: minutesFromNow(-10),
+		});
+		const newerId = await seedSession(db, userId, {
+			updatedAt: minutesFromNow(-5),
+		});
+		await seedSession(db, userId, { expiresAt: minutesFromNow(-1) });
+		await seedSession(db, otherUserId);
+
+		const sessions = await findActiveBrowserSessions(
+			db,
+			userId,
+			current.sessionId,
+		);
+
+		expect(sessions.map(({ id }) => id)).toEqual([
+			current.sessionId,
+			newerId.sessionId,
+			olderId.sessionId,
+		]);
+		expect(sessions[0]).toMatchObject({
+			ipAddress: "127.0.0.1",
+			userAgent: "Test Browser/1.0",
+		});
+		expect(sessions[0]).not.toHaveProperty("token");
+	});
+
+	it("revokes only a live session owned by the user", async () => {
+		const userId = await seedUser(db);
+		const otherUserId = await seedUser(db, { handle: "bob" });
+		const owned = await seedSession(db, userId);
+		const expired = await seedSession(db, userId, {
+			expiresAt: minutesFromNow(-1),
+		});
+		const foreign = await seedSession(db, otherUserId);
+
+		expect(await deleteActiveBrowserSession(db, userId, owned.sessionId)).toBe(
+			true,
+		);
+		expect(await deleteActiveBrowserSession(db, userId, owned.sessionId)).toBe(
+			false,
+		);
+		expect(
+			await deleteActiveBrowserSession(db, userId, expired.sessionId),
+		).toBe(false);
+		expect(
+			await deleteActiveBrowserSession(db, userId, foreign.sessionId),
+		).toBe(false);
+		expect(await db.select({ id: authSessions.id }).from(authSessions)).toEqual(
+			expect.arrayContaining([
+				{ id: expired.sessionId },
+				{ id: foreign.sessionId },
+			]),
+		);
+	});
+
+	it("revokes every other session and preserves exactly the current one", async () => {
+		const userId = await seedUser(db);
+		const current = await seedSession(db, userId);
+		await seedSession(db, userId);
+		await seedSession(db, userId);
+
+		expect(
+			await deleteOtherBrowserSessions(db, userId, current.sessionId),
+		).toBe(2);
+		expect(await db.select({ id: authSessions.id }).from(authSessions)).toEqual(
+			[{ id: current.sessionId }],
+		);
+	});
+
+	it("spares a replacement being issued for the current session", async () => {
+		const userId = await seedUser(db);
+		const current = await seedSession(db, userId);
+		const replacement = await seedSession(db, userId);
+		await db
+			.update(authSessions)
+			.set({ replacementForSessionId: current.sessionId })
+			.where(eq(authSessions.id, replacement.sessionId));
+		await seedSession(db, userId);
+
+		expect(
+			await deleteOtherBrowserSessions(db, userId, current.sessionId),
+		).toBe(1);
+		expect(
+			(await db.select({ id: authSessions.id }).from(authSessions)).map(
+				({ id }) => id,
+			),
+		).toEqual([current.sessionId, replacement.sessionId]);
+	});
+
+	it("converges when two callers revoke the same session", async () => {
+		const userId = await seedUser(db);
+		const target = await seedSession(db, userId);
+		const first = database.connect();
+		const second = database.connect();
+
+		try {
+			const results = await Promise.all([
+				deleteActiveBrowserSession(first.db, userId, target.sessionId),
+				deleteActiveBrowserSession(second.db, userId, target.sessionId),
+			]);
+			expect(results.sort()).toEqual([false, true]);
+		} finally {
+			await Promise.all([first.close(), second.close()]);
+		}
 	});
 });
 

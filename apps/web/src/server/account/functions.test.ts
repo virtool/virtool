@@ -1,3 +1,4 @@
+import { seedSession, seedUser } from "@virtool/data/auth/test/fixtures";
 import type { Db } from "@virtool/data/db/pg";
 import { apiKeys } from "@virtool/data/db/schema/apiKeys";
 import { authSessions } from "@virtool/data/db/schema/auth";
@@ -96,6 +97,123 @@ describe("findApiKeys", () => {
 
 		expect(keys).toHaveLength(1);
 		expect(keys[0]?.name).toBe("Robot");
+	});
+});
+
+describe("active browser sessions", () => {
+	it("returns only safe summaries for the signed-in user", async () => {
+		const userId = await signIn(db, getRequest);
+		await seedSession(db, userId, {
+			userAgent:
+				"Mozilla/5.0 (X11; Linux x86_64; rv:142.0) Gecko/20100101 Firefox/142.0",
+		});
+		const otherUserId = await seedUser(db, { handle: "bob" });
+		await seedSession(db, otherUserId);
+
+		const result = (await call("findActiveBrowserSessionsFn")) as Array<
+			Record<string, unknown>
+		>;
+
+		expect(result).toHaveLength(2);
+		expect(result.filter(({ isCurrent }) => isCurrent)).toHaveLength(1);
+		expect(result[0]?.isCurrent).toBe(true);
+		expect(result[1]).toMatchObject({
+			browser: "Firefox 142.0",
+			operatingSystem: "Linux",
+			isCurrent: false,
+		});
+		for (const session of result) {
+			expect(session).not.toHaveProperty("token");
+			expect(session).not.toHaveProperty("userAgent");
+			expect(session).not.toHaveProperty("replacementForSessionId");
+		}
+	});
+
+	it("revokes an owned non-current session idempotently", async () => {
+		const userId = await signIn(db, getRequest);
+		const target = await seedSession(db, userId);
+
+		expect(
+			await call("revokeBrowserSessionFn", {
+				managementId: target.sessionId,
+			}),
+		).toBeNull();
+		expect(
+			await call("revokeBrowserSessionFn", {
+				managementId: target.sessionId,
+			}),
+		).toBeNull();
+	});
+
+	it("requires a fresh current session", async () => {
+		const userId = await signIn(db, getRequest);
+		const target = await seedSession(db, userId);
+		await db
+			.update(authSessions)
+			.set({
+				createdAt: new Date(
+					Date.now() - (SESSION_FRESH_AGE_SECONDS * 1000 + 1),
+				),
+			})
+			.where(eq(authSessions.userId, userId));
+
+		await expect(
+			call("revokeBrowserSessionFn", { managementId: target.sessionId }),
+		).rejects.toBeInstanceOf(SessionNotFreshError);
+		expect(
+			await db
+				.select({ id: authSessions.id })
+				.from(authSessions)
+				.where(eq(authSessions.id, target.sessionId)),
+		).toEqual([{ id: target.sessionId }]);
+	});
+
+	it("does not disclose or revoke another user's session", async () => {
+		await signIn(db, getRequest);
+		const otherUserId = await seedUser(db, { handle: "bob" });
+		const target = await seedSession(db, otherUserId);
+
+		expect(
+			await call("revokeBrowserSessionFn", {
+				managementId: target.sessionId,
+			}),
+		).toBeNull();
+		expect(
+			await db
+				.select({ id: authSessions.id })
+				.from(authSessions)
+				.where(eq(authSessions.id, target.sessionId)),
+		).toEqual([{ id: target.sessionId }]);
+	});
+
+	it("requires logout to revoke the current session", async () => {
+		const userId = await signIn(db, getRequest);
+		const [current] = await db
+			.select({ id: authSessions.id })
+			.from(authSessions)
+			.where(eq(authSessions.userId, userId));
+
+		await expect(
+			call("revokeBrowserSessionFn", { managementId: current?.id }),
+		).rejects.toThrow("Sign out to end the current browser session.");
+		expect(setResponseStatus).toHaveBeenCalledWith(400);
+	});
+
+	it("revokes all other sessions and preserves the current one", async () => {
+		const userId = await signIn(db, getRequest);
+		await seedSession(db, userId);
+		await seedSession(db, userId);
+		const [current] = await db
+			.select({ id: authSessions.id })
+			.from(authSessions)
+			.where(eq(authSessions.userId, userId))
+			.orderBy(authSessions.id)
+			.limit(1);
+
+		expect(await call("revokeOtherBrowserSessionsFn")).toEqual({ revoked: 2 });
+		expect(await db.select({ id: authSessions.id }).from(authSessions)).toEqual(
+			[{ id: current?.id }],
+		);
 	});
 });
 

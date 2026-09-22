@@ -21,6 +21,10 @@ import {
 	vi,
 } from "vitest";
 import {
+	BrowserSessionEndedError,
+	revokeOtherActiveBrowserSessions,
+} from "../account/service";
+import {
 	AUTH_BASE_PATH,
 	createAuth,
 	createAuthRequestHandler,
@@ -166,6 +170,27 @@ describe("legacy bcrypt credentials", () => {
 		expect(account?.password).toBe(LEGACY_HASH);
 	});
 
+	it("captures bounded session recognition metadata", async () => {
+		await seedMigratedUser();
+		const request = post("/sign-in/username", {
+			username: "alice",
+			password: LEGACY_PASSWORD,
+		});
+		request.headers.set("cf-connecting-ip", "2001:db8::1");
+		request.headers.set(
+			"user-agent",
+			`Mozilla/5.0 (Windows NT 10.0) Chrome/140.0.0.0 ${"x".repeat(600)}`,
+		);
+
+		expect((await auth.handler(request)).status).toBe(200);
+		const [session] = await db.select().from(authSessions);
+
+		expect(session).toMatchObject({
+			ipAddress: "2001:0db8:0000:0000:0000:0000:0000:0000",
+		});
+		expect(session?.userAgent).toHaveLength(512);
+	});
+
 	it("matches the handle case-insensitively", async () => {
 		await seedMigratedUser();
 
@@ -215,6 +240,25 @@ describe("legacy bcrypt credentials", () => {
 });
 
 describe("the mounted handler", () => {
+	it.each([
+		["GET", "/list-sessions"],
+		["POST", "/revoke-session"],
+		["POST", "/revoke-sessions"],
+		["POST", "/revoke-other-sessions"],
+	])("refuses Better Auth's native %s %s surface", async (method, path) => {
+		const response = await auth.handler(
+			new Request(`${ORIGIN}${AUTH_BASE_PATH}${path}`, {
+				method,
+				headers: { "content-type": "application/json", origin: ORIGIN },
+				...(method === "POST" && {
+					body: JSON.stringify({ token: "not-a-session-token" }),
+				}),
+			}),
+		);
+
+		expect(response.status).toBe(404);
+	});
+
 	it("blocks Better Auth account operations for a forced-reset session", async () => {
 		await seedMigratedUser(LEGACY_HASH, { forceReset: true });
 		const signInResponse = await auth.handler(
@@ -467,9 +511,29 @@ describe("step-up session replacement", () => {
 		);
 		expect(sessions[0]?.ipAddress).toBe(oldSession.ipAddress);
 		expect(sessions[0]?.userAgent).toBe(oldSession.userAgent);
+		expect(sessions[0]?.replacementForSessionId).toBeNull();
 		expect(result.headers.get("set-cookie")).toContain(
 			"better-auth.session_token=",
 		);
+	});
+
+	it("preserves the replacement during concurrent all-other revocation", async () => {
+		const { cookie, session: oldSession } = await signInForReplacement();
+		const results = await Promise.allSettled([
+			auth.api.createStepUpSession({
+				headers: new Headers({ cookie, origin: ORIGIN }),
+			}),
+			revokeOtherActiveBrowserSessions(db, oldSession.userId, oldSession.id),
+		]);
+		const sessions = await db.select().from(authSessions);
+
+		expect(results[0].status).toBe("fulfilled");
+		if (results[1].status === "rejected") {
+			expect(results[1].reason).toBeInstanceOf(BrowserSessionEndedError);
+		}
+		expect(sessions).toHaveLength(1);
+		expect(sessions[0]?.id).not.toBe(oldSession.id);
+		expect(sessions[0]?.replacementForSessionId).toBeNull();
 	});
 
 	it("replaces a valid session older than the freshness window", async () => {

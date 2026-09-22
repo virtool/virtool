@@ -32,11 +32,12 @@ import {
 	ReferenceV2NotFoundError,
 } from "@virtool/data/references-v2/data";
 import { getSettings } from "@virtool/data/settings/data";
+import { resolveNcbiApiKey } from "@virtool/data/settings/ncbi";
 import { createNcbiClient, NcbiUnreachableError } from "@virtool/ncbi/client";
 import { z } from "zod";
 import { ForbiddenError } from "../auth/middleware";
 import { authenticated } from "../auth/policy";
-import { db } from "../composition";
+import { db, keyring } from "../composition";
 import { ClientError } from "../errors";
 import { logger } from "../logger";
 import {
@@ -151,7 +152,7 @@ export const createLocalOtuFn = createServerFn({ method: "POST" })
 			// A non-administrator naming a missing Reference gets a 404 here; an
 			// administrator passes and the create raises the same 404 from inside its
 			// transaction.
-			const actor = await resolveReferenceActor(db, context.session.userId);
+			const actor = await resolveReferenceActor(db, context.principal.userId);
 			if (
 				!(await checkReferenceV2Right(db, data.referenceId, "modifyOtu", actor))
 			) {
@@ -161,7 +162,7 @@ export const createLocalOtuFn = createServerFn({ method: "POST" })
 
 			const otu = await createLocalOtu(db, {
 				referenceId: data.referenceId,
-				userId: context.session.userId,
+				userId: context.principal.userId,
 				command: data.command,
 			});
 			setResponseStatus(201);
@@ -176,7 +177,7 @@ export const createLocalOtuIsolateFn = createServerFn({ method: "POST" })
 	.validator(createLocalOtuIsolateSchema)
 	.handler(async ({ context, data }) => {
 		try {
-			const actor = await resolveReferenceActor(db, context.session.userId);
+			const actor = await resolveReferenceActor(db, context.principal.userId);
 			if (
 				!(await checkReferenceV2Right(db, data.referenceId, "modifyOtu", actor))
 			) {
@@ -185,7 +186,7 @@ export const createLocalOtuIsolateFn = createServerFn({ method: "POST" })
 			}
 			const otu = await createLocalOtuIsolate(db, {
 				referenceId: data.referenceId,
-				userId: context.session.userId,
+				userId: context.principal.userId,
 				command: data.command,
 			});
 			setResponseStatus(201);
@@ -200,7 +201,7 @@ export const deleteLocalOtuFn = createServerFn({ method: "POST" })
 	.validator(deleteLocalOtuSchema)
 	.handler(async ({ context, data }) => {
 		try {
-			const actor = await resolveReferenceActor(db, context.session.userId);
+			const actor = await resolveReferenceActor(db, context.principal.userId);
 			if (
 				!(await checkReferenceV2Right(db, data.referenceId, "modifyOtu", actor))
 			) {
@@ -209,7 +210,7 @@ export const deleteLocalOtuFn = createServerFn({ method: "POST" })
 			}
 			await deleteLocalOtu(db, {
 				referenceId: data.referenceId,
-				userId: context.session.userId,
+				userId: context.principal.userId,
 				command: data.command,
 			});
 			return null;
@@ -223,7 +224,7 @@ export const deleteLocalOtuIsolateFn = createServerFn({ method: "POST" })
 	.validator(deleteLocalOtuIsolateSchema)
 	.handler(async ({ context, data }) => {
 		try {
-			const actor = await resolveReferenceActor(db, context.session.userId);
+			const actor = await resolveReferenceActor(db, context.principal.userId);
 			if (
 				!(await checkReferenceV2Right(db, data.referenceId, "modifyOtu", actor))
 			) {
@@ -232,7 +233,7 @@ export const deleteLocalOtuIsolateFn = createServerFn({ method: "POST" })
 			}
 			return await deleteLocalOtuIsolate(db, {
 				referenceId: data.referenceId,
-				userId: context.session.userId,
+				userId: context.principal.userId,
 				command: data.command,
 			});
 		} catch (err) {
@@ -253,7 +254,7 @@ export const getGenbankOtuDraftFn = createServerFn({ method: "GET" })
 	.middleware([authenticated()])
 	.validator(genbankOtuDraftSchema)
 	.handler(async ({ context, data }): Promise<GenbankOtuDraft> => {
-		const actor = await resolveReferenceActor(db, context.session.userId);
+		const actor = await resolveReferenceActor(db, context.principal.userId);
 		if (
 			!(await checkReferenceV2Right(db, data.referenceId, "modifyOtu", actor))
 		) {
@@ -264,7 +265,14 @@ export const getGenbankOtuDraftFn = createServerFn({ method: "GET" })
 		const accessions = Array.from(new Set(data.accessions));
 
 		const { ncbiApiKey } = await getSettings(db);
-		const client = createNcbiClient({ apiKey: ncbiApiKey, logger });
+		const { availability, apiKey } = resolveNcbiApiKey(ncbiApiKey, keyring);
+		if (availability === "configuration_error") {
+			logger.warn(
+				{ availability },
+				"stored NCBI API key could not be decrypted",
+			);
+		}
+		const client = createNcbiClient({ apiKey: apiKey ?? "", logger });
 
 		const records = await client
 			.fetchGenbankRecords(accessions)
@@ -329,7 +337,7 @@ export const getGenbankIsolateDraftFn = createServerFn({ method: "GET" })
 	.middleware([authenticated()])
 	.validator(genbankIsolateDraftSchema)
 	.handler(async ({ context, data }): Promise<GenbankIsolateDraft> => {
-		const actor = await resolveReferenceActor(db, context.session.userId);
+		const actor = await resolveReferenceActor(db, context.principal.userId);
 		if (
 			!(await checkReferenceV2Right(db, data.referenceId, "modifyOtu", actor))
 		) {
@@ -339,7 +347,14 @@ export const getGenbankIsolateDraftFn = createServerFn({ method: "GET" })
 
 		const otu = await getLocalOtu(db, data.referenceId, data.otuId);
 		const { ncbiApiKey } = await getSettings(db);
-		const records = await createNcbiClient({ apiKey: ncbiApiKey, logger })
+		const { availability, apiKey } = resolveNcbiApiKey(ncbiApiKey, keyring);
+		if (availability === "configuration_error") {
+			logger.warn(
+				{ availability },
+				"stored NCBI API key could not be decrypted",
+			);
+		}
+		const records = await createNcbiClient({ apiKey: apiKey ?? "", logger })
 			.fetchGenbankRecords(Array.from(new Set(data.accessions)))
 			.catch((err: unknown): never => {
 				if (err instanceof NcbiUnreachableError) {
@@ -418,7 +433,7 @@ export const getLocalOtusFn = createServerFn({ method: "GET" })
 	.handler(async ({ context, data }) => {
 		try {
 			// An invisible Reference surfaces as a 404, never an empty list.
-			const actor = await resolveReferenceActor(db, context.session.userId);
+			const actor = await resolveReferenceActor(db, context.principal.userId);
 			if (!(await checkReferenceV2Visibility(db, data.referenceId, actor))) {
 				throw new ReferenceV2NotFoundError();
 			}
@@ -434,7 +449,7 @@ export const getLocalOtuFn = createServerFn({ method: "GET" })
 	.handler(async ({ context, data }) => {
 		try {
 			// An invisible Reference and a missing OTU both surface as a 404.
-			const actor = await resolveReferenceActor(db, context.session.userId);
+			const actor = await resolveReferenceActor(db, context.principal.userId);
 			if (!(await checkReferenceV2Visibility(db, data.referenceId, actor))) {
 				throw new ReferenceV2NotFoundError();
 			}
@@ -449,7 +464,7 @@ export const getLocalOtuIsolatesFn = createServerFn({ method: "GET" })
 	.validator(otuReadSchema)
 	.handler(async ({ context, data }) => {
 		try {
-			const actor = await resolveReferenceActor(db, context.session.userId);
+			const actor = await resolveReferenceActor(db, context.principal.userId);
 			if (!(await checkReferenceV2Visibility(db, data.referenceId, actor))) {
 				throw new ReferenceV2NotFoundError();
 			}
@@ -464,7 +479,7 @@ export const getLocalOtuIsolateFn = createServerFn({ method: "GET" })
 	.validator(isolateReadSchema)
 	.handler(async ({ context, data }) => {
 		try {
-			const actor = await resolveReferenceActor(db, context.session.userId);
+			const actor = await resolveReferenceActor(db, context.principal.userId);
 			if (!(await checkReferenceV2Visibility(db, data.referenceId, actor))) {
 				throw new ReferenceV2NotFoundError();
 			}
@@ -484,7 +499,7 @@ export const getLocalOtuSequenceFn = createServerFn({ method: "GET" })
 	.validator(sequenceReadSchema)
 	.handler(async ({ context, data }) => {
 		try {
-			const actor = await resolveReferenceActor(db, context.session.userId);
+			const actor = await resolveReferenceActor(db, context.principal.userId);
 			if (!(await checkReferenceV2Visibility(db, data.referenceId, actor))) {
 				throw new ReferenceV2NotFoundError();
 			}

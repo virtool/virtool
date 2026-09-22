@@ -41,7 +41,7 @@ describe("foreign key constraint names", () => {
 	});
 
 	it("covers every foreign key in the mirror", () => {
-		expect(found).toHaveLength(73);
+		expect(found).toHaveLength(85);
 	});
 
 	it.each(found)("names $expected", ({ actual, expected }) => {
@@ -77,7 +77,8 @@ describe("Better Auth user relationships", () => {
 					onDelete: fk.onDelete,
 				};
 			}),
-		);
+		)
+		.filter((fk) => fk.foreignTable === "users");
 
 	it("gives every Better Auth table exactly one", () => {
 		expect(found.map((fk) => fk.table).sort()).toEqual(authTables);
@@ -87,5 +88,26 @@ describe("Better Auth user relationships", () => {
 		expect(fk.columns).toEqual(["user_id"]);
 		expect(fk.foreignTable).toBe("users");
 		expect(fk.onDelete).toBe("cascade");
+	});
+});
+
+describe("session replacement relationship", () => {
+	const config = getTableConfig(schema.authSessions);
+	const replacement = config.foreignKeys.find(
+		(fk) => fk.reference().columns[0]?.name === "replacement_for_session_id",
+	);
+
+	it("clears the pending marker when the replaced session is deleted", () => {
+		expect(replacement).toBeDefined();
+		expect(
+			getTableConfig(replacement?.reference().foreignTable as PgTable).name,
+		).toBe("auth_sessions");
+		expect(replacement?.onDelete).toBe("set null");
+	});
+
+	it("indexes the replacement marker", () => {
+		expect(config.indexes.map((index) => index.config.name)).toContain(
+			"idx_auth_sessions_replacement_for_session_id",
+		);
 	});
 });

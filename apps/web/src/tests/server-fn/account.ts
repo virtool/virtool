@@ -8,10 +8,13 @@ import { createFakeApiKey } from "../fake/account";
  * view can stub them without per-file `vi.mock` boilerplate.
  */
 export const accountServerFnMocks = {
+	findActiveBrowserSessionsFn: vi.fn(),
 	findApiKeysFn: vi.fn(),
 	createApiKeyFn: vi.fn(),
 	updateApiKeyFn: vi.fn(),
 	deleteApiKeyFn: vi.fn(),
+	revokeBrowserSessionFn: vi.fn(),
+	revokeOtherBrowserSessionsFn: vi.fn(),
 };
 
 /** Sets up findApiKeys to resolve with the given API keys. */

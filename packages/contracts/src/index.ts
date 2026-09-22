@@ -25,6 +25,7 @@ export * from "./references";
 export * from "./referencesV2";
 export * from "./samples";
 export * from "./search";
+export * from "./sessions";
 export * from "./settings";
 export * from "./setup";
 export * from "./sse";

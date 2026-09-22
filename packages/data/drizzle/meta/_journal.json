@@ -103,8 +103,36 @@
     {
       "idx": 14,
       "version": "7",
-      "when": 1787766843340,
-      "tag": "0014_unusual_darwin",
+      "when": 1787687788152,
+      "tag": "0014_add_settings_cache_storage_budget",
+      "breakpoints": true
+    },
+    {
+      "idx": 15,
+      "version": "7",
+      "when": 1787757523999,
+      "tag": "0015_add_analyses_workflow_version",
+      "breakpoints": true
+    },
+    {
+      "idx": 16,
+      "version": "7",
+      "when": 1787766173203,
+      "tag": "0016_add_uploads_expected_size",
+      "breakpoints": true
+    },
+    {
+      "idx": 17,
+      "version": "7",
+      "when": 1787777826760,
+      "tag": "0017_lucky_ender_wiggin",
+      "breakpoints": true
+    },
+    {
+      "idx": 18,
+      "version": "7",
+      "when": 1787779000000,
+      "tag": "0018_backfill_analyses_workflow_version",
       "breakpoints": true
     },
     {
@@ -236,15 +264,22 @@
     {
       "idx": 37,
       "version": "7",
-      "when": 1789599181768,
+      "when": 1789777792882,
       "tag": "0037_round_lionheart",
       "breakpoints": true
     },
     {
       "idx": 38,
       "version": "7",
-      "when": 1789600000000,
+      "when": 1789777792883,
       "tag": "0038_nostalgic_mesmero",
+      "breakpoints": true
+    },
+    {
+      "idx": 39,
+      "version": "7",
+      "when": 1790100778041,
+      "tag": "0039_far_shiver_man",
       "breakpoints": true
     }
   ]

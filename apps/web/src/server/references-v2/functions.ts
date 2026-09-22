@@ -88,7 +88,7 @@ export const createReferenceV2Fn = createServerFn({ method: "POST" })
 			name: data.name,
 			description: data.description,
 			defaultSegmentLengthTolerance: data.defaultSegmentLengthTolerance,
-			userId: context.session.userId,
+			userId: context.principal.userId,
 		});
 		setResponseStatus(201);
 		return reference;
@@ -101,7 +101,7 @@ export const getReferenceV2Fn = createServerFn({ method: "GET" })
 		try {
 			// A non-member, non-administrator caller cannot tell a hidden Reference
 			// from a missing one — both surface as a 404.
-			const actor = await resolveReferenceActor(db, context.session.userId);
+			const actor = await resolveReferenceActor(db, context.principal.userId);
 			if (!(await checkReferenceV2Visibility(db, data.referenceId, actor))) {
 				throw new ReferenceV2NotFoundError();
 			}
@@ -114,7 +114,7 @@ export const getReferenceV2Fn = createServerFn({ method: "GET" })
 export const getReferencesV2Fn = createServerFn({ method: "GET" })
 	.middleware([authenticated()])
 	.handler(async ({ context }) => {
-		const actor = await resolveReferenceActor(db, context.session.userId);
+		const actor = await resolveReferenceActor(db, context.principal.userId);
 		return getReferencesV2(db, actor);
 	});
 
@@ -123,7 +123,7 @@ export const deleteReferenceV2Fn = createServerFn({ method: "POST" })
 	.validator(referenceIdSchema)
 	.handler(async ({ context, data }) => {
 		try {
-			const actor = await resolveReferenceActor(db, context.session.userId);
+			const actor = await resolveReferenceActor(db, context.principal.userId);
 			if (
 				!(await checkReferenceV2Right(db, data.referenceId, "modify", actor))
 			) {
@@ -144,7 +144,7 @@ export const archiveReferenceV2Fn = createServerFn({ method: "POST" })
 		try {
 			await authorizeReferenceV2(
 				data.referenceId,
-				context.session.userId,
+				context.principal.userId,
 				"modify",
 			);
 			return await setReferenceV2Archived(db, data.referenceId, true);
@@ -160,7 +160,7 @@ export const unarchiveReferenceV2Fn = createServerFn({ method: "POST" })
 		try {
 			await authorizeReferenceV2(
 				data.referenceId,
-				context.session.userId,
+				context.principal.userId,
 				"modify",
 			);
 			return await setReferenceV2Archived(db, data.referenceId, false);
@@ -175,7 +175,11 @@ export const addReferenceV2UserFn = createServerFn({ method: "POST" })
 	.handler(async ({ context, data }) => {
 		const { referenceId, userId, ...rights } = data;
 		try {
-			await authorizeReferenceV2(referenceId, context.session.userId, "modify");
+			await authorizeReferenceV2(
+				referenceId,
+				context.principal.userId,
+				"modify",
+			);
 			const member = await addReferenceV2User(db, referenceId, userId, rights);
 			setResponseStatus(201);
 			return member;
@@ -190,7 +194,11 @@ export const addReferenceV2GroupFn = createServerFn({ method: "POST" })
 	.handler(async ({ context, data }) => {
 		const { referenceId, groupId, ...rights } = data;
 		try {
-			await authorizeReferenceV2(referenceId, context.session.userId, "modify");
+			await authorizeReferenceV2(
+				referenceId,
+				context.principal.userId,
+				"modify",
+			);
 			const member = await addReferenceV2Group(
 				db,
 				referenceId,
@@ -210,7 +218,11 @@ export const updateReferenceV2UserFn = createServerFn({ method: "POST" })
 	.handler(async ({ context, data }) => {
 		const { referenceId, userId, ...rights } = data;
 		try {
-			await authorizeReferenceV2(referenceId, context.session.userId, "modify");
+			await authorizeReferenceV2(
+				referenceId,
+				context.principal.userId,
+				"modify",
+			);
 			return await updateReferenceV2User(db, referenceId, userId, rights);
 		} catch (err) {
 			return rethrowAsHttp(err);
@@ -223,7 +235,11 @@ export const updateReferenceV2GroupFn = createServerFn({ method: "POST" })
 	.handler(async ({ context, data }) => {
 		const { referenceId, groupId, ...rights } = data;
 		try {
-			await authorizeReferenceV2(referenceId, context.session.userId, "modify");
+			await authorizeReferenceV2(
+				referenceId,
+				context.principal.userId,
+				"modify",
+			);
 			return await updateReferenceV2Group(db, referenceId, groupId, rights);
 		} catch (err) {
 			return rethrowAsHttp(err);
@@ -237,7 +253,7 @@ export const removeReferenceV2UserFn = createServerFn({ method: "POST" })
 		try {
 			await authorizeReferenceV2(
 				data.referenceId,
-				context.session.userId,
+				context.principal.userId,
 				"modify",
 			);
 			await removeReferenceV2User(db, data.referenceId, data.userId);
@@ -254,7 +270,7 @@ export const removeReferenceV2GroupFn = createServerFn({ method: "POST" })
 		try {
 			await authorizeReferenceV2(
 				data.referenceId,
-				context.session.userId,
+				context.principal.userId,
 				"modify",
 			);
 			await removeReferenceV2Group(db, data.referenceId, data.groupId);
