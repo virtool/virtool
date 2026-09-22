@@ -11,17 +11,24 @@ export function buildCreateIsolateCommand(
 	otuId: string,
 	expectedVersion: number,
 ): CreateLocalOtuIsolateCommandInput {
+	const sequenceIds = draft.sequences.map(() => crypto.randomUUID());
 	return {
 		type: "CreateIsolate",
 		schemaVersion: 1,
 		otuId,
 		expectedVersion,
 		payload: {
+			genbank: {
+				sequences: draft.sequences.map((sequence, index) => ({
+					sequenceId: sequenceIds[index] ?? "",
+					accession: sequence.accession,
+				})),
+			},
 			isolate: {
 				id: crypto.randomUUID(),
 				name: draft.name,
-				sequences: draft.sequences.map((sequence) => ({
-					id: crypto.randomUUID(),
+				sequences: draft.sequences.map((sequence, index) => ({
+					id: sequenceIds[index] ?? "",
 					definition: sequence.definition,
 					sequence: sequence.sequence,
 					segmentId: sequence.segmentId,
@@ -59,6 +66,7 @@ export function buildCreateOtuCommandFromDraft(
 				sequence: segment.sequence,
 				segmentId,
 			},
+			accession: segment.accession,
 		};
 	});
 
@@ -81,6 +89,12 @@ export function buildCreateOtuCommandFromDraft(
 				lineage: draft.taxonomy.lineage,
 			},
 			promotedAccessions: [],
+			genbank: {
+				sequences: entries.map((entry) => ({
+					sequenceId: entry.sequence.id,
+					accession: entry.accession,
+				})),
+			},
 			isolate: {
 				id: crypto.randomUUID(),
 				name: draft.isolate,

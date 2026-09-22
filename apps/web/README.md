@@ -118,6 +118,15 @@ when inference would expose a transitive dependency.
 Shape results in `functions.ts`, without repeating that parsing in React Query
 `select` callbacks. Use `JsonObject` or `JsonValue` for opaque JSON results.
 
+GenBank OTU drafts require a resolved NCBI species taxon and consistent named
+isolate, strain, or clone identity across records. Anonymous records can join a
+named record. Adding an isolate requires its species to match the OTU lineage.
+GenBank `CreateOTU` and
+`CreateIsolate` requests carry accession-to-sequence provenance; the server
+resolves those accessions again at save time and checks taxonomy, sequence
+content, and segment assignment before applying the versioned command. Manual
+`CreateOTU` requests have no GenBank provenance.
+
 ### Error handling and request methods
 
 Map expected domain failures in one module-local

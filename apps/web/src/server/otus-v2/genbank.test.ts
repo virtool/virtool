@@ -1,13 +1,25 @@
 import type {
+	CreateLocalOtuCommand,
+	CreateLocalOtuIsolateCommand,
+	LocalOtuV2,
+} from "@virtool/contracts";
+import type {
 	NcbiGenbank,
 	NcbiSource,
 	NcbiTaxonomy,
 } from "@virtool/ncbi/models";
 import { describe, expect, it } from "vitest";
+import { buildCreateOtuCommandFromDraft } from "../../otus-v2/command";
 import {
+	buildGenbankIsolateDraft,
 	buildGenbankOtuDraft,
+	GenbankMixedIsolateError,
 	GenbankOtuEmptyError,
 	GenbankOtuMixedTaxidError,
+	GenbankProvenanceError,
+	GenbankTaxonomyError,
+	validateGenbankIsolateSave,
+	validateGenbankOtuSave,
 } from "./genbank";
 
 function createSource(overrides: Partial<NcbiSource> = {}): NcbiSource {
@@ -110,14 +122,10 @@ describe("buildGenbankOtuDraft", () => {
 		]);
 	});
 
-	it("falls back to the record organism without a taxonomy record", () => {
-		const draft = buildGenbankOtuDraft([createRecord()], null);
-
-		expect(draft.taxonomy).toEqual({
-			name: "Tobacco mosaic virus",
-			acronym: null,
-			lineage: [],
-		});
+	it("rejects a draft without verifiable taxonomy", () => {
+		expect(() => buildGenbankOtuDraft([createRecord()], null)).toThrow(
+			GenbankTaxonomyError,
+		);
 	});
 
 	it("captures the full lineage, ending at the record's own taxon", () => {
@@ -162,9 +170,254 @@ describe("buildGenbankOtuDraft", () => {
 		).toThrow(GenbankOtuMixedTaxidError);
 	});
 
+	it("rejects named isolates that conflict within one organism", () => {
+		const records = [
+			createRecord({ source: createSource({ isolate: "A" }) }),
+			createRecord({
+				accession: "NC_001368",
+				accession_version: "NC_001368.1",
+				source: createSource({ strain: "B" }),
+			}),
+		];
+		expect(() => buildGenbankOtuDraft(records, taxonomy)).toThrow(
+			GenbankMixedIsolateError,
+		);
+	});
+
+	it("accepts anonymous records alongside a named isolate", () => {
+		const records = [
+			createRecord({ source: createSource({ isolate: "A" }) }),
+			createRecord({
+				accession: "NC_001368",
+				accession_version: "NC_001368.1",
+			}),
+		];
+		expect(buildGenbankOtuDraft(records, taxonomy).segments).toHaveLength(2);
+	});
+
 	it("rejects an empty record list", () => {
 		expect(() => buildGenbankOtuDraft([], taxonomy)).toThrow(
 			GenbankOtuEmptyError,
 		);
+	});
+});
+
+const otu = {
+	taxonomy: {
+		kind: "local",
+		identityId: "id",
+		name: "Tobacco mosaic virus",
+		acronym: null,
+		lineage: [{ id: 12242, name: "Tobacco mosaic virus", rank: "species" }],
+	},
+	plan: {
+		id: "plan",
+		segments: [
+			{
+				id: "segment",
+				name: null,
+				length: 8,
+				lengthTolerance: 0,
+				rule: "required",
+			},
+		],
+	},
+} as Pick<LocalOtuV2, "taxonomy" | "plan">;
+
+function createCommand(): CreateLocalOtuIsolateCommand {
+	return {
+		type: "CreateIsolate",
+		schemaVersion: 1,
+		otuId: "otu",
+		expectedVersion: 1,
+		payload: {
+			genbank: {
+				sequences: [{ sequenceId: "sequence", accession: "NC_001367.1" }],
+			},
+			isolate: {
+				id: "isolate",
+				name: null,
+				sequences: [
+					{
+						id: "sequence",
+						definition: "Tobacco mosaic virus, complete genome",
+						sequence: "ATCGATCG",
+						segmentId: "segment",
+					},
+				],
+			},
+		},
+	};
+}
+
+describe("GenBank isolate validation", () => {
+	it("rejects conflicting isolate identities in preview and save", () => {
+		const firstSegment = otu.plan.segments[0];
+		if (!firstSegment) {
+			throw new Error("Expected an OTU segment.");
+		}
+		const records = [
+			createRecord({ source: createSource({ isolate: "A" }) }),
+			createRecord({
+				accession: "NC_001368",
+				accession_version: "NC_001368.1",
+				source: createSource({ strain: "B" }),
+			}),
+		];
+		const twoSegments = {
+			...otu,
+			plan: {
+				...otu.plan,
+				segments: [...otu.plan.segments, { ...firstSegment, id: "segment-2" }],
+			},
+		};
+		expect(() =>
+			buildGenbankIsolateDraft(records, taxonomy, twoSegments),
+		).toThrow(GenbankMixedIsolateError);
+		const command = createCommand();
+		const firstSequence = command.payload.isolate.sequences[0];
+		if (!firstSequence || !command.payload.genbank) {
+			throw new Error("Expected command sequence and provenance.");
+		}
+		command.payload.genbank.sequences.push({
+			sequenceId: "sequence-2",
+			accession: "NC_001368.1",
+		});
+		command.payload.isolate.sequences.push({
+			...firstSequence,
+			id: "sequence-2",
+			segmentId: "segment-2",
+		});
+		expect(() =>
+			validateGenbankIsolateSave(command, records, taxonomy, twoSegments),
+		).toThrow(GenbankMixedIsolateError);
+	});
+	it("accepts a strain taxon beneath the OTU species", () => {
+		const strainTaxonomy = {
+			...taxonomy,
+			id: 999,
+			rank: "strain",
+			name: "TMV strain U1",
+			lineage: [{ id: 12242, name: "Tobacco mosaic virus", rank: "species" }],
+		};
+		const record = createRecord({
+			source: createSource({ taxid: 999, strain: "U1" }),
+		});
+		expect(
+			buildGenbankIsolateDraft([record], strainTaxonomy, otu).name,
+		).toEqual({ type: "strain", value: "U1" });
+	});
+
+	it("rejects mixed organisms even when taxids match", () => {
+		const second = createRecord({
+			organism: "Another virus",
+			source: createSource({ organism: "Another virus" }),
+		});
+		expect(() =>
+			buildGenbankIsolateDraft([createRecord(), second], taxonomy, otu),
+		).toThrow(GenbankOtuMixedTaxidError);
+	});
+
+	it("rejects another species and missing taxonomy", () => {
+		const otherOtu = {
+			...otu,
+			taxonomy: {
+				...otu.taxonomy,
+				lineage: [{ id: 123, name: "Another species", rank: "species" }],
+			},
+		};
+		expect(() =>
+			buildGenbankIsolateDraft([createRecord()], taxonomy, otherOtu),
+		).toThrow(GenbankTaxonomyError);
+		expect(() => buildGenbankIsolateDraft([createRecord()], null, otu)).toThrow(
+			GenbankTaxonomyError,
+		);
+	});
+
+	it("rejects a save without provenance or with edited sequence content", () => {
+		const command = createCommand();
+		validateGenbankIsolateSave(command, [createRecord()], taxonomy, otu);
+		expect(() =>
+			validateGenbankIsolateSave(
+				{
+					...command,
+					payload: {
+						...command.payload,
+						genbank: undefined,
+					},
+				},
+				[createRecord()],
+				taxonomy,
+				otu,
+			),
+		).toThrow(GenbankProvenanceError);
+		expect(() =>
+			validateGenbankIsolateSave(
+				command,
+				[createRecord({ sequence: "TTTTTTTT" })],
+				taxonomy,
+				otu,
+			),
+		).toThrow(GenbankProvenanceError);
+	});
+});
+
+describe("GenBank OTU save validation", () => {
+	it("rejects named identities that changed after preview", () => {
+		const records = [
+			createRecord(),
+			createRecord({
+				accession: "NC_001368",
+				accession_version: "NC_001368.1",
+			}),
+		];
+		const command = buildCreateOtuCommandFromDraft(
+			buildGenbankOtuDraft(records, taxonomy),
+			0.05,
+		) as CreateLocalOtuCommand;
+		const changed = [
+			{ ...records[0], source: createSource({ isolate: "A" }) },
+			{ ...records[1], source: createSource({ strain: "B" }) },
+		] as NcbiGenbank[];
+		expect(() => validateGenbankOtuSave(command, changed, taxonomy)).toThrow(
+			GenbankMixedIsolateError,
+		);
+	});
+	function createGenbankCommand(): CreateLocalOtuCommand {
+		return buildCreateOtuCommandFromDraft(
+			buildGenbankOtuDraft([createRecord()], taxonomy),
+			0.05,
+		) as CreateLocalOtuCommand;
+	}
+
+	it("accepts a direct save with verifiable accessions", () => {
+		validateGenbankOtuSave(createGenbankCommand(), [createRecord()], taxonomy);
+	});
+
+	it("rejects a record changed since preview", () => {
+		const command = createGenbankCommand();
+		expect(() =>
+			validateGenbankOtuSave(
+				command,
+				[createRecord({ sequence: "TTTTTTTT" })],
+				taxonomy,
+			),
+		).toThrow(GenbankProvenanceError);
+	});
+
+	it("rejects an accession reclassified under another species", () => {
+		const command = createGenbankCommand();
+		const otherTaxonomy = {
+			...taxonomy,
+			id: 999,
+			name: "Another virus",
+		};
+		expect(() =>
+			validateGenbankOtuSave(
+				command,
+				[createRecord({ source: createSource({ taxid: 999 }) })],
+				otherTaxonomy,
+			),
+		).toThrow(GenbankProvenanceError);
 	});
 });

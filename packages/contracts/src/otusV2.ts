@@ -144,12 +144,33 @@ const isolateSchema = z
 	})
 	.strict();
 
+const genbankProvenanceSchema = z
+	.object({
+		sequences: z
+			.array(
+				z
+					.object({
+						sequenceId: uuidSchema,
+						accession: z
+							.string()
+							.min(1)
+							.max(64)
+							.regex(/^[A-Za-z0-9._-]+$/),
+					})
+					.strict(),
+			)
+			.min(1)
+			.max(500),
+	})
+	.strict();
+
 const createOtuPayloadSchema = z
 	.object({
 		molecule: moleculeSchema,
 		plan: planSchema,
 		taxonomy: localTaxonomySchema,
 		promotedAccessions: z.array(z.string()).length(0),
+		genbank: genbankProvenanceSchema.optional(),
 		isolate: isolateSchema,
 	})
 	.strict()
@@ -237,7 +258,12 @@ export const CreateLocalOtuIsolateCommand = z
 		schemaVersion: z.literal(1),
 		otuId: uuidSchema,
 		expectedVersion: z.number().int().positive(),
-		payload: z.object({ isolate: isolateSchema }).strict(),
+		payload: z
+			.object({
+				isolate: isolateSchema,
+				genbank: genbankProvenanceSchema.optional(),
+			})
+			.strict(),
 	})
 	.strict();
 

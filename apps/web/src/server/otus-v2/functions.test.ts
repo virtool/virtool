@@ -8,6 +8,8 @@ import {
 	createTestDatabase,
 	type TestDatabase,
 } from "@virtool/data/db/test/fixtures";
+import { NcbiUnreachableError } from "@virtool/ncbi/client";
+import type { NcbiGenbank, NcbiTaxonomy } from "@virtool/ncbi/models";
 import { sql } from "drizzle-orm";
 import {
 	afterAll,
@@ -22,6 +24,15 @@ import { callServerFn, type SplitServerFnModule } from "../test/serverFn";
 
 const getRequest = vi.fn();
 const setResponseStatus = vi.fn();
+const { fetchGenbankRecords, fetchTaxonomyRecord } = vi.hoisted(() => ({
+	fetchGenbankRecords: vi.fn(),
+	fetchTaxonomyRecord: vi.fn(),
+}));
+
+vi.mock("@virtool/ncbi/client", async (importOriginal) => ({
+	...(await importOriginal<typeof import("@virtool/ncbi/client")>()),
+	createNcbiClient: () => ({ fetchGenbankRecords, fetchTaxonomyRecord }),
+}));
 
 vi.mock("@tanstack/react-start/server", () => ({
 	deleteCookie: vi.fn(),
@@ -39,6 +50,7 @@ vi.mock("@sentry/tanstackstart-react", () => ({
 let db: Db;
 vi.mock("../composition", () => ({
 	client: {},
+	keyring: { status: { state: "unconfigured" } },
 	get db() {
 		return db;
 	},
@@ -168,6 +180,164 @@ function call(name: string, data?: unknown) {
 }
 
 describe("createLocalOtu", () => {
+	const taxonomy: NcbiTaxonomy = {
+		id: 12242,
+		name: "Tobacco mosaic virus",
+		rank: "species",
+		lineage: [],
+		other_names: {
+			acronym: [],
+			genbank_acronym: [],
+			equivalent_name: [],
+			synonym: [],
+			includes: [],
+		},
+	};
+	const record: NcbiGenbank = {
+		accession: "NC_001367",
+		accession_version: "NC_001367.1",
+		organism: "Tobacco mosaic virus",
+		definition: "Complete genome",
+		sequence: "ATCGNNRY",
+		moltype: "RNA",
+		strandedness: "single",
+		topology: "linear",
+		comment: "",
+		refseq: true,
+		source: {
+			taxid: 12242,
+			organism: "Tobacco mosaic virus",
+			mol_type: "genomic RNA",
+			isolate: null,
+			host: null,
+			segment: null,
+			strain: null,
+			clone: null,
+			proviral: false,
+			macronuclear: false,
+			focus: false,
+			transgenic: false,
+		},
+	};
+
+	function genbankCommand() {
+		const command = validCommand();
+		const sequence = command.payload.isolate.sequences[0];
+		if (!sequence) {
+			throw new Error("Expected a sequence.");
+		}
+		return {
+			...command,
+			payload: {
+				...command.payload,
+				taxonomy: {
+					...command.payload.taxonomy,
+					name: "Tobacco mosaic virus",
+					lineage: [
+						{ id: 12242, name: "Tobacco mosaic virus", rank: "species" },
+					],
+				},
+				genbank: {
+					sequences: [{ sequenceId: sequence.id, accession: "NC_001367.1" }],
+				},
+			},
+		};
+	}
+
+	it("validates a direct GenBank save without requiring a preview", async () => {
+		const userId = await signIn(db, getRequest, { administratorRole: null });
+		const referenceId = await seedReferenceV2(userId);
+		fetchGenbankRecords.mockResolvedValue([record]);
+		fetchTaxonomyRecord.mockResolvedValue(taxonomy);
+		const command = genbankCommand();
+		const otu = (await call("createLocalOtuFn", { referenceId, command })) as {
+			id: string;
+		};
+		expect(otu.id).toBe(command.otuId);
+		expect(fetchGenbankRecords).toHaveBeenCalledWith(["NC_001367.1"]);
+	});
+
+	it("rejects an accession changed after preview before writing", async () => {
+		const userId = await signIn(db, getRequest, { administratorRole: null });
+		const referenceId = await seedReferenceV2(userId);
+		fetchGenbankRecords.mockResolvedValue([
+			{ ...record, sequence: "TTTTTTTT" },
+		]);
+		fetchTaxonomyRecord.mockResolvedValue(taxonomy);
+		const command = genbankCommand();
+		await expect(
+			call("createLocalOtuFn", { referenceId, command }),
+		).rejects.toMatchObject({ status: 422 });
+		await expect(
+			call("getLocalOtuFn", { referenceId, otuId: command.otuId }),
+		).rejects.toMatchObject({ status: 404 });
+	});
+
+	it("maps an unreachable NCBI save lookup to 502", async () => {
+		const userId = await signIn(db, getRequest, { administratorRole: null });
+		const referenceId = await seedReferenceV2(userId);
+		fetchGenbankRecords.mockRejectedValue(new NcbiUnreachableError());
+		await expect(
+			call("createLocalOtuFn", { referenceId, command: genbankCommand() }),
+		).rejects.toMatchObject({ status: 502 });
+	});
+
+	it("revalidates an isolate without a preview and rejects changed records", async () => {
+		const userId = await signIn(db, getRequest, { administratorRole: null });
+		const referenceId = await seedReferenceV2(userId);
+		fetchGenbankRecords.mockResolvedValue([record]);
+		fetchTaxonomyRecord.mockResolvedValue(taxonomy);
+		const otuCommand = genbankCommand();
+		await call("createLocalOtuFn", { referenceId, command: otuCommand });
+		const segment = otuCommand.payload.plan.segments[0];
+		if (!segment) {
+			throw new Error("Expected a segment.");
+		}
+		const sequenceId = randomUUID();
+		const isolateCommand = {
+			type: "CreateIsolate",
+			schemaVersion: 1,
+			otuId: otuCommand.otuId,
+			expectedVersion: 1,
+			payload: {
+				genbank: {
+					sequences: [{ sequenceId, accession: record.accession_version }],
+				},
+				isolate: {
+					id: randomUUID(),
+					name: null,
+					sequences: [
+						{
+							id: sequenceId,
+							definition: record.definition,
+							sequence: record.sequence,
+							segmentId: segment.id,
+						},
+					],
+				},
+			},
+		};
+		await call("createLocalOtuIsolateFn", {
+			referenceId,
+			command: isolateCommand,
+		});
+		fetchGenbankRecords.mockResolvedValue([
+			{ ...record, sequence: "TTTTTTTT" },
+		]);
+		await expect(
+			call("createLocalOtuIsolateFn", {
+				referenceId,
+				command: {
+					...isolateCommand,
+					expectedVersion: 2,
+					payload: {
+						...isolateCommand.payload,
+						isolate: { ...isolateCommand.payload.isolate, id: randomUUID() },
+					},
+				},
+			}),
+		).rejects.toMatchObject({ status: 422 });
+	});
 	it("creates a complete OTU for a member with modifyOtu", async () => {
 		const userId = await signIn(db, getRequest, { administratorRole: null });
 		const referenceId = await seedReferenceV2(userId);

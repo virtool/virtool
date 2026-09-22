@@ -41,9 +41,16 @@ import { db, keyring } from "../composition";
 import { ClientError } from "../errors";
 import { logger } from "../logger";
 import {
+	buildGenbankIsolateDraft,
 	buildGenbankOtuDraft,
+	GenbankMixedIsolateError,
 	GenbankOtuEmptyError,
 	GenbankOtuMixedTaxidError,
+	GenbankProvenanceError,
+	GenbankSegmentError,
+	GenbankTaxonomyError,
+	validateGenbankIsolateSave,
+	validateGenbankOtuSave,
 } from "./genbank";
 
 const referenceIdSchema = z.object({
@@ -139,6 +146,39 @@ const rethrowAsHttp = createServerOnlyFn((err: unknown): never => {
 		setResponseStatus(409);
 		throw new ClientError("An OTU must have at least one isolate.", 409);
 	}
+	if (err instanceof GenbankOtuMixedTaxidError) {
+		setResponseStatus(422);
+		throw new ClientError("Accessions belong to different organisms.", 422);
+	}
+	if (err instanceof GenbankMixedIsolateError) {
+		setResponseStatus(422);
+		throw new ClientError("Accessions belong to different isolates.", 422);
+	}
+	if (err instanceof GenbankTaxonomyError) {
+		setResponseStatus(422);
+		throw new ClientError(
+			"A species-level NCBI taxonomy match is required.",
+			422,
+		);
+	}
+	if (err instanceof GenbankSegmentError) {
+		setResponseStatus(422);
+		throw new ClientError(
+			`Could not match ${err.message} to an OTU segment.`,
+			422,
+		);
+	}
+	if (err instanceof GenbankProvenanceError) {
+		setResponseStatus(422);
+		throw new ClientError(
+			"Isolate sequences do not match their GenBank accessions.",
+			422,
+		);
+	}
+	if (err instanceof NcbiUnreachableError) {
+		setResponseStatus(502);
+		throw new ClientError("Could not reach NCBI.", 502);
+	}
 	throw err;
 });
 
@@ -158,6 +198,27 @@ export const createLocalOtuFn = createServerFn({ method: "POST" })
 			) {
 				setResponseStatus(403);
 				throw new ForbiddenError();
+			}
+			const provenance = data.command.payload.genbank;
+			if (provenance) {
+				const { ncbiApiKey } = await getSettings(db);
+				const { apiKey } = resolveNcbiApiKey(ncbiApiKey, keyring);
+				const client = createNcbiClient({ apiKey: apiKey ?? "", logger });
+				const accessions = provenance.sequences.map((item) => item.accession);
+				const records = await client.fetchGenbankRecords(accessions);
+				const found = new Set(
+					records.map((record) => record.accession_version.toLowerCase()),
+				);
+				if (
+					records.length !== accessions.length ||
+					accessions.some((accession) => !found.has(accession.toLowerCase()))
+				) {
+					throw new GenbankProvenanceError();
+				}
+				const taxonomy = records[0]
+					? await client.fetchTaxonomyRecord(records[0].source.taxid)
+					: null;
+				validateGenbankOtuSave(data.command, records, taxonomy);
 			}
 
 			const otu = await createLocalOtu(db, {
@@ -184,6 +245,35 @@ export const createLocalOtuIsolateFn = createServerFn({ method: "POST" })
 				setResponseStatus(403);
 				throw new ForbiddenError();
 			}
+			const provenance = data.command.payload.genbank;
+			if (!provenance) {
+				throw new GenbankProvenanceError();
+			}
+			const otuAtSave = await getLocalOtu(
+				db,
+				data.referenceId,
+				data.command.otuId,
+			);
+			const { ncbiApiKey } = await getSettings(db);
+			const { apiKey } = resolveNcbiApiKey(ncbiApiKey, keyring);
+			const client = createNcbiClient({ apiKey: apiKey ?? "", logger });
+			const accessions = provenance.sequences.map(
+				(sequence) => sequence.accession,
+			);
+			const records = await client.fetchGenbankRecords(accessions);
+			const found = new Set(
+				records.map((record) => record.accession_version.toLowerCase()),
+			);
+			if (
+				records.length !== accessions.length ||
+				accessions.some((accession) => !found.has(accession.toLowerCase()))
+			) {
+				throw new GenbankProvenanceError();
+			}
+			const taxonomy = records[0]
+				? await client.fetchTaxonomyRecord(records[0].source.taxid)
+				: null;
+			validateGenbankIsolateSave(data.command, records, taxonomy, otuAtSave);
 			const otu = await createLocalOtuIsolate(db, {
 				referenceId: data.referenceId,
 				userId: context.principal.userId,
@@ -324,6 +414,12 @@ export const getGenbankOtuDraftFn = createServerFn({ method: "GET" })
 					422,
 				);
 			}
+			if (err instanceof GenbankMixedIsolateError) {
+				return rethrowAsHttp(err);
+			}
+			if (err instanceof GenbankTaxonomyError) {
+				return rethrowAsHttp(err);
+			}
 			if (err instanceof GenbankOtuEmptyError) {
 				setResponseStatus(404);
 				throw new ClientError("Accessions not found.", 404);
@@ -381,50 +477,16 @@ export const getGenbankIsolateDraftFn = createServerFn({ method: "GET" })
 			);
 		}
 
-		const used = new Set<string>();
-		const sequences = records.map((record) => {
-			const segment = otu.plan.segments.find((candidate) => {
-				if (used.has(candidate.id)) return false;
-				const name = record.source.segment?.toLowerCase();
-				return name
-					? candidate.name?.key.toLowerCase() === name
-					: otu.plan.segments.length === 1 ||
-							Math.abs(candidate.length - record.sequence.length) <=
-								candidate.length * candidate.lengthTolerance;
-			});
-			if (!segment) {
-				setResponseStatus(422);
-				throw new ClientError(
-					`Could not match ${record.accession_version} to an OTU segment.`,
-					422,
-				);
-			}
-			used.add(segment.id);
-			return {
-				name: segment.name,
-				definition: record.definition,
-				sequence: record.sequence,
-				length: record.sequence.length,
-				accession: record.accession_version,
-				segmentId: segment.id,
-			};
-		});
-
 		const first = records[0];
-		if (!first) {
-			setResponseStatus(404);
-			throw new ClientError("Accessions not found.", 404);
+		const client = createNcbiClient({ apiKey: apiKey ?? "", logger });
+		const taxonomy = first
+			? await client.fetchTaxonomyRecord(first.source.taxid).catch(() => null)
+			: null;
+		try {
+			return buildGenbankIsolateDraft(records, taxonomy, otu);
+		} catch (err) {
+			return rethrowAsHttp(err);
 		}
-		return {
-			name: first.source.isolate
-				? { type: "isolate", value: first.source.isolate }
-				: first.source.strain
-					? { type: "strain", value: first.source.strain }
-					: first.source.clone
-						? { type: "clone", value: first.source.clone }
-						: null,
-			sequences,
-		};
 	});
 
 export const getLocalOtusFn = createServerFn({ method: "GET" })
