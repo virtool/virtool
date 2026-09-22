@@ -36,8 +36,12 @@ export default function ArchiveReferenceV2({
 
 	return (
 		<>
-			<Button color="red" onClick={() => setOpen(true)}>
-				{verb} reference
+			<Button
+				aria-label={`${verb} reference`}
+				color="red"
+				onClick={() => setOpen(true)}
+			>
+				{verb}
 			</Button>
 			<Dialog open={open} onOpenChange={handleOpenChange}>
 				<DialogContent>

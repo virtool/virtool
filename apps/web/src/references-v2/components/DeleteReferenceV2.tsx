@@ -23,7 +23,11 @@ export default function DeleteReferenceV2({
 			name={reference.name}
 			noun="Reference"
 			onConfirm={handleConfirm}
-			trigger={<Button color="red">Delete reference</Button>}
+			trigger={
+				<Button aria-label="Delete reference" color="red">
+					Delete
+				</Button>
+			}
 		/>
 	);
 }

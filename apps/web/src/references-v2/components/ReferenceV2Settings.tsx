@@ -29,7 +29,7 @@ export default function ReferenceV2Settings({
 				<SectionHeader>
 					<h2 id="danger-zone-heading">Danger zone</h2>
 				</SectionHeader>
-				<Box className="flex items-center justify-between rounded-b-none border-red-200">
+				<Box className="mb-0 flex items-center justify-between rounded-b-none border-red-200">
 					<div>
 						<h4 className="font-semibold">
 							{reference.archived
