@@ -1,6 +1,6 @@
 import { expect, it, vi } from "vitest";
 import type { CommandRunner } from "./command.ts";
-import { discoverWorktrees } from "./git.ts";
+import { discoverWorktrees, getOpenPullRequests } from "./git.ts";
 
 it("parses all null-delimited worktrees and ignores prunable entries", async () => {
 	const run = vi.fn<CommandRunner>(async (_command, args, options) => {
@@ -18,4 +18,29 @@ it("parses all null-delimited worktrees and ignores prunable entries", async () 
 		{ branch: "main", id: "/one/.git", path: "/one" },
 		{ branch: "detached", id: "/two/.git", path: "/two" },
 	]);
+});
+
+it("reads open pull requests by source branch", async () => {
+	const run = vi.fn<CommandRunner>(async () => ({
+		stderr: "",
+		stdout: JSON.stringify([
+			{
+				headRefName: "feature/one",
+				number: 42,
+				url: "https://github.com/pr/42",
+			},
+		]),
+	}));
+
+	await expect(getOpenPullRequests(run, "/repo")).resolves.toEqual(
+		new Map([["feature/one", { number: 42, url: "https://github.com/pr/42" }]]),
+	);
+});
+
+it("ignores unavailable GitHub CLI access", async () => {
+	const run = vi.fn<CommandRunner>(async () => {
+		throw new Error("not authenticated");
+	});
+
+	await expect(getOpenPullRequests(run, "/repo")).resolves.toEqual(new Map());
 });

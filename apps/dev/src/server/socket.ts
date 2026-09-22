@@ -1,5 +1,5 @@
-import { mkdir } from "node:fs/promises";
-import { createServer, type Server, Socket } from "node:net";
+import { mkdir, rm } from "node:fs/promises";
+import { connect, createServer, type Server, Socket } from "node:net";
 import { dirname } from "node:path";
 
 /** A request carried over the repository-scoped Unix control socket. */
@@ -76,11 +76,43 @@ export async function createControlServer(
 ): Promise<Server> {
 	await mkdir(dirname(path), { recursive: true, mode: 0o700 });
 	const server = createServer((socket) => readRequest(socket, handle));
+	await listenOnUnixSocket(server, path);
+	return server;
+}
+
+/** Listen on a Unix socket after removing it only when no server owns it. */
+export async function listenOnUnixSocket(
+	server: Pick<Server, "listen" | "off" | "once">,
+	path: string,
+): Promise<void> {
+	if (await hasSocketListener(path)) {
+		throw new Error(`Socket is already in use: ${path}`);
+	}
+	await rm(path, { force: true });
 	await new Promise<void>((resolve, reject) => {
 		server.once("error", reject);
-		server.listen(path, resolve);
+		server.listen(path, () => {
+			server.off("error", reject);
+			resolve();
+		});
 	});
-	return server;
+}
+
+async function hasSocketListener(path: string): Promise<boolean> {
+	return new Promise((resolve, reject) => {
+		const socket = connect(path);
+		socket.once("connect", () => {
+			socket.destroy();
+			resolve(true);
+		});
+		socket.once("error", (error: NodeJS.ErrnoException) => {
+			if (error.code === "ECONNREFUSED" || error.code === "ENOENT") {
+				resolve(false);
+			} else {
+				reject(error);
+			}
+		});
+	});
 }
 
 export async function sendControlRequest(

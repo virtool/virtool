@@ -22,7 +22,7 @@ export class WorkflowCoordinator {
 	private buildQueue: SchedulerState["buildQueue"] = [];
 	private lastError: string | null = null;
 	private queues: SchedulerState["queues"] = {};
-	private running = false;
+	private tickPromise: Promise<void> | undefined;
 	private readonly fair = new FairScheduler();
 
 	constructor(
@@ -46,17 +46,33 @@ export class WorkflowCoordinator {
 		};
 	}
 
-	async tick(environments: Environment[]): Promise<void> {
-		if (this.running) {
-			return;
+	async tick(environments: Environment[], launchEnabled = true): Promise<void> {
+		if (this.tickPromise) {
+			return this.tickPromise;
 		}
-		this.running = true;
+		this.tickPromise = this.runTick(environments, launchEnabled);
+		try {
+			await this.tickPromise;
+		} finally {
+			this.tickPromise = undefined;
+		}
+	}
+
+	async stop(): Promise<void> {
+		await this.tickPromise;
+	}
+
+	private async runTick(
+		environments: Environment[],
+		launchEnabled: boolean,
+	): Promise<void> {
 		try {
 			this.active = await this.discoverExecutors();
 			const ready = environments.filter(
 				(environment): environment is Environment & { id: string } =>
 					Boolean(
-						environment.id &&
+						launchEnabled &&
+							environment.id &&
 							environment.ready &&
 							environment.desired === "up" &&
 							environment.workflowEnabled,
@@ -89,7 +105,6 @@ export class WorkflowCoordinator {
 			this.lastError = error instanceof Error ? error.message : String(error);
 			this.logger.error({ err: error }, "workflow scheduler tick failed");
 		} finally {
-			this.running = false;
 			this.publish();
 		}
 	}

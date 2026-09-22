@@ -1,11 +1,17 @@
 import { existsSync } from "node:fs";
-import { readFile } from "node:fs/promises";
 import { join } from "node:path";
 import { serveStatic } from "@hono/node-server/serve-static";
 import { Hono } from "hono";
 import { streamSSE } from "hono/streaming";
 import type { Mutation, Snapshot } from "../shared/types.ts";
 import { MANAGEMENT_ORIGIN } from "./constants.ts";
+
+type EnvironmentLogReader = (
+	environmentId: string,
+	service?: string,
+) => Promise<string>;
+
+type DaemonLogReader = () => Promise<string>;
 
 /** Mutable snapshot feed shared by API requests and SSE clients. */
 export class SnapshotFeed {
@@ -37,7 +43,8 @@ export function createApi(
 	setConcurrency: (value: number) => void,
 	clientDirectory: string,
 	resetShared: () => Promise<void> = async () => undefined,
-	logPath?: string,
+	readDaemonLogs?: DaemonLogReader,
+	readEnvironmentLogs?: EnvironmentLogReader,
 ) {
 	const app = new Hono();
 	app.use("/api/*", async (context, next) => {
@@ -61,12 +68,35 @@ export function createApi(
 	});
 	app.get("/api/state", (context) => context.json(feed.get()));
 	app.get("/api/logs", async (context) => {
-		if (!logPath) {
+		const worktreeId = context.req.query("environment");
+		const service = context.req.query("service");
+		if (worktreeId) {
+			const environment = feed
+				.get()
+				.environments.find((candidate) => candidate.worktreeId === worktreeId);
+			if (!environment?.id) {
+				return context.json({ error: "environment not found" }, 404);
+			}
+			if (service && !Object.hasOwn(environment.services, service)) {
+				return context.json({ error: "service not found" }, 404);
+			}
+			if (!readEnvironmentLogs) {
+				return context.text("");
+			}
+			try {
+				return context.text(await readEnvironmentLogs(environment.id, service));
+			} catch {
+				return context.json({ error: "unable to load environment logs" }, 502);
+			}
+		}
+		if (service) {
+			return context.json({ error: "service requires an environment" }, 400);
+		}
+		if (!readDaemonLogs) {
 			return context.text("");
 		}
 		try {
-			const lines = (await readFile(logPath, "utf8")).split("\n");
-			return context.text(lines.slice(-200).join("\n"));
+			return context.text(await readDaemonLogs());
 		} catch {
 			return context.text("");
 		}

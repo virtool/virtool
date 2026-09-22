@@ -43,7 +43,7 @@ Apps bundle; packages stay source.
 ## Rules
 
 - No app may import another app's source.
-- Run development servers through `virtool-dev`, not directly on the
+- Run development servers through `vtd`, not directly on the
   host. See [dev/README.md](dev/README.md).
 
 ## Tooling

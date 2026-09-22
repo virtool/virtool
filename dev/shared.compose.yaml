@@ -34,13 +34,12 @@ services:
 
   caddy:
     image: caddy:2.10.2
-    extra_hosts:
-      - host.docker.internal:host-gateway
     labels: *labels
     ports:
       - 127.0.0.1:9443:9443
     volumes:
       - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - ${VT_DEV_STATE_DIR}:/run/virtool-dev:ro
       - caddy-data:/data
     depends_on:
       - azurite

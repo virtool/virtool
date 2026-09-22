@@ -1,20 +1,30 @@
-import { spawn } from "node:child_process";
 import { createHash } from "node:crypto";
-import { access, readdir, readFile, rm } from "node:fs/promises";
+import { readdir, readFile, rm } from "node:fs/promises";
+import { createServer } from "node:http";
 import { join } from "node:path";
-import { serve } from "@hono/node-server";
+import { getRequestListener } from "@hono/node-server";
 import { createLogger } from "@virtool/logger";
-import type { Mutation, Snapshot } from "../shared/types.ts";
+import type { Mutation, OpenPullRequest, Snapshot } from "../shared/types.ts";
 import { createApi, SnapshotFeed } from "./api.ts";
 import { BuildCoordinator } from "./builds.ts";
+import { ensureClientBuild } from "./client-build.ts";
 import type { CommandRunner } from "./command.ts";
 import { runCommand } from "./command.ts";
-import { HTTP_PORT, PROTOCOL_VERSION } from "./constants.ts";
+import { PROTOCOL_VERSION } from "./constants.ts";
 import { DockerEvents } from "./events.ts";
-import { discoverWorktrees, resolveRepository } from "./git.ts";
+import {
+	discoverWorktrees,
+	getOpenPullRequests,
+	resolveRepository,
+} from "./git.ts";
 import { Reconciler } from "./lifecycle.ts";
 import { checkPortAvailable } from "./port.ts";
-import { type ControlRequest, createControlServer } from "./socket.ts";
+import { getDaemonServiceName } from "./service.ts";
+import {
+	type ControlRequest,
+	createControlServer,
+	listenOnUnixSocket,
+} from "./socket.ts";
 import { StateStore } from "./state.ts";
 import { WorkflowCoordinator } from "./workflows.ts";
 
@@ -53,7 +63,12 @@ function emptySnapshot(repositoryId: string, concurrency: number): Snapshot {
 			lastError: null,
 			queues: {},
 		},
-		shared: { initialized: false, lastError: null, services: {} },
+		shared: {
+			initialized: false,
+			lastError: null,
+			services: {},
+			storage: { azurite: null, postgres: null },
+		},
 		updatedAt: Date.now(),
 		updateAvailable: false,
 	};
@@ -64,27 +79,29 @@ export async function runDaemon(
 	cwd: string,
 	socketPath: string,
 	run: CommandRunner = runCommand,
-): Promise<void> {
+): Promise<"restart" | "shutdown"> {
 	const repository = await resolveRepository(run, cwd);
 	const store = new StateStore(repository.stateDirectory);
+	store.interruptActiveOperations();
 	store.setMeta("protocol_version", String(PROTOCOL_VERSION));
 	if (store.getMeta("shared_initialized") !== "true") {
 		await checkPortAvailable(9443);
 	}
+	const primaryHash = await hashDirectory(
+		join(repository.primaryWorktree, "apps/dev"),
+	);
 	const clientDirectory = join(
 		repository.primaryWorktree,
 		"apps/dev/dist/client",
 	);
-	try {
-		await access(join(clientDirectory, "index.html"));
-	} catch {
-		await run("pnpm", ["--filter", "@virtool/dev", "exec", "vite", "build"], {
-			cwd: repository.primaryWorktree,
-		});
-	}
-	const primaryHash = await hashDirectory(
-		join(repository.primaryWorktree, "apps/dev"),
+	await ensureClientBuild(
+		repository.primaryWorktree,
+		clientDirectory,
+		store.getMeta("client_hash"),
+		primaryHash,
+		run,
 	);
+	store.setMeta("client_hash", primaryHash);
 	store.setMeta("daemon_hash", primaryHash);
 	const feed = new SnapshotFeed(
 		emptySnapshot(store.repositoryId, store.getWorkflowConcurrency()),
@@ -92,33 +109,85 @@ export async function runDaemon(
 	const builds = new BuildCoordinator();
 	const logger = createLogger({ name: "dev" });
 	let refreshPromise: Promise<void> | undefined;
+	let openPullRequests = new Map<string, OpenPullRequest>();
+	let pullRequestRefreshPromise: Promise<void> | undefined;
+	let nextPullRequestRefresh = 0;
+	let sharedReconciled = false;
+	let sharedRetryAt = 0;
+	let restartRequested = false;
+	let shuttingDown = false;
+	let shutdownResolve: (() => void) | undefined;
+	const shutdown = new Promise<void>((resolve) => {
+		shutdownResolve = resolve;
+	});
+
+	function requestRefresh(): void {
+		if (!shuttingDown) {
+			void refresh().catch(() => undefined);
+		}
+	}
+
+	function refreshPullRequests(): void {
+		if (pullRequestRefreshPromise || Date.now() < nextPullRequestRefresh) {
+			return;
+		}
+		nextPullRequestRefresh = Date.now() + 60_000;
+		pullRequestRefreshPromise = getOpenPullRequests(
+			run,
+			repository.primaryWorktree,
+		)
+			.then((result) => {
+				openPullRequests = result;
+				requestRefresh();
+			})
+			.finally(() => {
+				pullRequestRefreshPromise = undefined;
+			});
+	}
+
+	function reconcileSharedServices(): void {
+		if (
+			sharedReconciled ||
+			store.getMeta("shared_initialized") !== "true" ||
+			Date.now() < sharedRetryAt
+		) {
+			return;
+		}
+		sharedRetryAt = Date.now() + 30_000;
+		void reconciler
+			.ensureShared()
+			.then(() => {
+				sharedReconciled = true;
+				requestRefresh();
+			})
+			.catch((error) => {
+				logger.error({ err: error }, "shared service reconciliation failed");
+			});
+	}
+
 	const reconciler = new Reconciler(
 		store,
 		run,
 		repository.primaryWorktree,
-		() => {
-			void refresh().catch(() => undefined);
-		},
+		requestRefresh,
 		builds,
 	);
 	const workflows = new WorkflowCoordinator(
 		store,
 		run,
 		repository.primaryWorktree,
-		() => {
-			void refresh().catch(() => undefined);
-		},
+		requestRefresh,
 		builds,
 		logger,
 	);
-	const dockerEvents = new DockerEvents(store.repositoryId, () => {
-		void refresh().catch(() => undefined);
-	});
+	const dockerEvents = new DockerEvents(store.repositoryId, requestRefresh);
 
 	async function refresh(): Promise<void> {
 		if (refreshPromise) {
 			return refreshPromise;
 		}
+		refreshPullRequests();
+		reconcileSharedServices();
 		refreshPromise = (async () => {
 			try {
 				const worktrees = await discoverWorktrees(
@@ -131,16 +200,27 @@ export async function runDaemon(
 					reconciler.inspectShared(),
 					hashDirectory(join(repository.primaryWorktree, "apps/dev")),
 				]);
-				const environments = store.listEnvironments(observed);
+				const environments = store.listEnvironments(observed, openPullRequests);
+				const updateAvailable = currentHash !== primaryHash;
 				feed.set({
 					...feed.get(),
 					environments,
 					scheduler: workflows.getState(),
 					shared,
 					updatedAt: Date.now(),
-					updateAvailable: currentHash !== primaryHash,
+					updateAvailable,
 				});
-				void workflows.tick(environments);
+				void workflows.tick(environments, !updateAvailable);
+				if (
+					updateAvailable &&
+					!store.hasActiveOperations() &&
+					!reconciler.hasActiveWork() &&
+					workflows.getState().active.length === 0
+				) {
+					restartRequested = true;
+					shuttingDown = true;
+					shutdownResolve?.();
+				}
 			} finally {
 				refreshPromise = undefined;
 			}
@@ -182,23 +262,11 @@ export async function runDaemon(
 		void refresh().catch(() => undefined);
 	}
 
-	let shutdownResolve: (() => void) | undefined;
-	let restartRequested = false;
-	const shutdown = new Promise<void>((resolve) => {
-		shutdownResolve = resolve;
-	});
 	async function control(request: ControlRequest): Promise<unknown> {
 		if (request.command === "shutdown") {
+			shuttingDown = true;
 			shutdownResolve?.();
 			return { accepted: true };
-		}
-		if (
-			feed.get().updateAvailable &&
-			!store.hasActiveOperations() &&
-			workflows.getState().active.length === 0
-		) {
-			restartRequested = true;
-			setTimeout(() => shutdownResolve?.(), 50);
 		}
 		if (request.command === "list") {
 			return feed.get();
@@ -227,13 +295,53 @@ export async function runDaemon(
 		},
 		clientDirectory,
 		() => reconciler.resetShared(),
-		join(repository.stateDirectory, "logs/daemon.log"),
+		async () => {
+			const { stdout } = await run(
+				"journalctl",
+				[
+					"--user",
+					"--unit",
+					getDaemonServiceName(store.repositoryId),
+					"--lines",
+					"200",
+					"--no-pager",
+					"--output",
+					"cat",
+				],
+				{ cwd: repository.primaryWorktree },
+			);
+			return stdout;
+		},
+		async (environmentId, service) => {
+			const directory = join(
+				repository.stateDirectory,
+				"environments",
+				environmentId,
+			);
+			const { stdout } = await run(
+				"docker",
+				[
+					"compose",
+					"--env-file",
+					join(directory, "environment.env"),
+					"--project-name",
+					`virtool-dev-${store.repositoryId.slice(0, 8)}-${environmentId.slice(0, 8)}`,
+					"--file",
+					join(directory, "compose.yaml"),
+					"logs",
+					"--no-color",
+					"--tail",
+					"200",
+					...(service ? [service] : []),
+				],
+				{ cwd: repository.primaryWorktree },
+			);
+			return stdout;
+		},
 	);
-	const http = serve({
-		fetch: app.fetch,
-		hostname: "127.0.0.1",
-		port: HTTP_PORT,
-	});
+	const httpSocketPath = join(repository.stateDirectory, "http.sock");
+	const http = createServer(getRequestListener(app.fetch));
+	await listenOnUnixSocket(http, httpSocketPath);
 	const controlServer = await createControlServer(socketPath, control);
 	const discovery = setInterval(
 		() => void refresh().catch(() => undefined),
@@ -242,35 +350,30 @@ export async function runDaemon(
 	dockerEvents.start();
 	reconciler.start();
 	for (const signal of ["SIGINT", "SIGTERM"] as const) {
-		process.once(signal, () => shutdownResolve?.());
+		process.once(signal, () => {
+			shuttingDown = true;
+			shutdownResolve?.();
+		});
 	}
 	await shutdown;
+	shuttingDown = true;
 	clearInterval(discovery);
 	dockerEvents.stop();
-	reconciler.stop();
+	const httpClosed = new Promise<void>((resolve) =>
+		http.close(() => resolve()),
+	);
+	http.closeAllConnections();
 	await Promise.all([
-		new Promise<void>((resolve) => http.close(() => resolve())),
+		httpClosed,
 		new Promise<void>((resolve) => controlServer.close(() => resolve())),
 	]);
-	await rm(socketPath, { force: true });
+	await reconciler.stop();
+	await refreshPromise;
+	await workflows.stop();
+	await Promise.all([
+		rm(socketPath, { force: true }),
+		rm(httpSocketPath, { force: true }),
+	]);
 	store.close();
-	if (restartRequested) {
-		const child = spawn(
-			"pnpm",
-			[
-				"--dir",
-				repository.primaryWorktree,
-				"--filter",
-				"@virtool/dev",
-				"exec",
-				"tsx",
-				join(repository.primaryWorktree, "apps/dev/src/main.ts"),
-				"daemon",
-				"run",
-				socketPath,
-			],
-			{ detached: true, stdio: "inherit" },
-		);
-		child.unref();
-	}
+	return restartRequested ? "restart" : "shutdown";
 }
