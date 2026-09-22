@@ -15,7 +15,7 @@ import {
 	useGenbankIsolateDraft,
 } from "@otus-v2/queries";
 import type { GenbankIsolateDraft } from "@virtool/contracts";
-import { useId, useState } from "react";
+import { useId, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
 
 type FormValues = { accessions: string };
@@ -39,6 +39,7 @@ export default function CreateLocalOtuIsolateDialog({
 	version: number;
 }) {
 	const [preview, setPreview] = useState<GenbankIsolateDraft>();
+	const previewRevision = useRef(0);
 	const accessionsId = useId();
 	const previewMutation = useGenbankIsolateDraft(referenceId, otuId);
 	const createMutation = useCreateLocalOtuIsolate(referenceId);
@@ -52,6 +53,7 @@ export default function CreateLocalOtuIsolateDialog({
 	function close(next: boolean) {
 		setOpen(next);
 		if (!next) {
+			previewRevision.current += 1;
 			setPreview(undefined);
 			previewMutation.reset();
 			createMutation.reset();
@@ -59,9 +61,22 @@ export default function CreateLocalOtuIsolateDialog({
 		}
 	}
 
+	function invalidatePreview() {
+		previewRevision.current += 1;
+		setPreview(undefined);
+		previewMutation.reset();
+		createMutation.reset();
+	}
+
 	function previewSubmit(values: FormValues) {
+		invalidatePreview();
+		const revision = previewRevision.current;
 		previewMutation.mutate(parseAccessions(values.accessions), {
-			onSuccess: setPreview,
+			onSuccess: (draft) => {
+				if (revision === previewRevision.current) {
+					setPreview(draft);
+				}
+			},
 		});
 	}
 
@@ -91,6 +106,7 @@ export default function CreateLocalOtuIsolateDialog({
 								validate: (value) =>
 									parseAccessions(value).length > 0 ||
 									"Enter at least one accession.",
+								onChange: invalidatePreview,
 							})}
 						/>
 						<InputError>{errors.accessions?.message}</InputError>
