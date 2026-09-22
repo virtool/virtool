@@ -5,9 +5,10 @@ import type {
 	ReferenceV2Group,
 	ReferenceV2Right,
 	ReferenceV2Rights,
+	ReferenceV2UpdateRequest,
 	ReferenceV2User,
 } from "@virtool/contracts";
-import { and, asc, eq, inArray, or, type SQL } from "drizzle-orm";
+import { and, asc, eq, inArray, or, type SQL, sql } from "drizzle-orm";
 import type { Db, DbOrTx } from "../db/pg";
 import { takeFirst, takeFirstOrThrow } from "../db/rows";
 import { groups } from "../db/schema/groups";
@@ -45,6 +46,12 @@ export class ReferenceV2MemberNotFoundError extends AppError {}
 /** Thrown when a v2 Reference member cannot be added. */
 export class ReferenceV2MemberConflictError extends AppError {}
 
+/** Thrown when a Reference metadata edit used an old version. */
+export class ReferenceV2VersionConflictError extends AppError {}
+
+/** Thrown when a Reference is archived or remotely maintained. */
+export class ReferenceV2NotWritableError extends AppError {}
+
 /** Values needed to create a local v2 Reference. */
 export type CreateReferenceV2Values = ReferenceV2CreateRequest & {
 	userId: number;
@@ -57,6 +64,7 @@ function mapReference(
 ): ReferenceV2 {
 	return {
 		id: row.id,
+		version: row.version,
 		name: row.name,
 		description: row.description,
 		kind: row.kind,
@@ -67,6 +75,47 @@ function mapReference(
 		users,
 		groups,
 	};
+}
+
+/** Update local Reference metadata if its observed version is still current. */
+export async function updateReferenceV2(
+	db: Db,
+	referenceId: string,
+	values: ReferenceV2UpdateRequest,
+): Promise<ReferenceV2> {
+	return db.transaction(async (tx) => {
+		const row = takeFirst(
+			await tx
+				.select({
+					version: referenceRoots.version,
+					kind: referenceRoots.kind,
+					archived: referenceRoots.archived,
+				})
+				.from(referenceRoots)
+				.where(eq(referenceRoots.id, referenceId))
+				.for("update"),
+		);
+		if (!row) {
+			throw new ReferenceV2NotFoundError();
+		}
+		if (row.version !== values.expectedVersion) {
+			throw new ReferenceV2VersionConflictError();
+		}
+		if (row.archived || row.kind !== "local") {
+			throw new ReferenceV2NotWritableError();
+		}
+		await tx
+			.update(referenceRoots)
+			.set({
+				name: values.name,
+				description: values.description,
+				defaultSegmentLengthTolerance: values.defaultSegmentLengthTolerance,
+				version: row.version + 1,
+				updatedAt: new Date(),
+			})
+			.where(eq(referenceRoots.id, referenceId));
+		return getReferenceV2(tx, referenceId);
+	});
 }
 
 /** Create a local v2 Reference and grant its creator all Reference rights. */
@@ -255,7 +304,11 @@ export async function setReferenceV2Archived(
 ): Promise<ReferenceV2> {
 	const [reference] = await db
 		.update(referenceRoots)
-		.set({ archived, updatedAt: new Date() })
+		.set({
+			archived,
+			version: sql`${referenceRoots.version} + 1`,
+			updatedAt: new Date(),
+		})
 		.where(eq(referenceRoots.id, referenceId))
 		.returning({ id: referenceRoots.id });
 

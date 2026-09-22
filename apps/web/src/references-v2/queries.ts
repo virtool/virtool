@@ -10,6 +10,7 @@ import {
 	removeReferenceV2GroupFn,
 	removeReferenceV2UserFn,
 	unarchiveReferenceV2Fn,
+	updateReferenceV2Fn,
 	updateReferenceV2GroupFn,
 	updateReferenceV2UserFn,
 } from "@server/references-v2/functions";
@@ -24,6 +25,7 @@ import type {
 	ReferenceV2CreateRequest,
 	ReferenceV2Group,
 	ReferenceV2Rights,
+	ReferenceV2UpdateRequest,
 	ReferenceV2User,
 } from "@virtool/contracts";
 
@@ -82,6 +84,29 @@ export function useCreateReferenceV2() {
 		onSuccess: () => {
 			queryClient.invalidateQueries({
 				queryKey: referenceV2QueryKeys.lists(),
+			});
+		},
+	});
+}
+
+/** Update local Reference metadata at the version shown to the editor. */
+export function useUpdateReferenceV2(referenceId: string) {
+	const queryClient = useQueryClient();
+	return useMutation<ReferenceV2, Error, ReferenceV2UpdateRequest>({
+		mutationFn: (update) =>
+			updateReferenceV2Fn({
+				data: { referenceId, update },
+			}) as Promise<ReferenceV2>,
+		onSuccess: (reference) => {
+			queryClient.setQueryData(
+				referenceV2QueryKeys.detail(referenceId),
+				reference,
+			);
+			queryClient.invalidateQueries({ queryKey: referenceV2QueryKeys.lists() });
+		},
+		onError: () => {
+			queryClient.invalidateQueries({
+				queryKey: referenceV2QueryKeys.detail(referenceId),
 			});
 		},
 	});

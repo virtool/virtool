@@ -44,9 +44,23 @@ export const ReferenceV2CreateRequest = z
 /** Fields accepted when creating a local v2 Reference. */
 export type ReferenceV2CreateRequest = z.infer<typeof ReferenceV2CreateRequest>;
 
+/** A versioned update to editable local Reference metadata. */
+export const ReferenceV2UpdateRequest = z
+	.object({
+		name: z.string().trim().min(1),
+		description: z.string().trim(),
+		defaultSegmentLengthTolerance: z.number().min(0).max(1),
+		expectedVersion: z.number().int().positive(),
+	})
+	.strict();
+
+/** A versioned update to editable local Reference metadata. */
+export type ReferenceV2UpdateRequest = z.infer<typeof ReferenceV2UpdateRequest>;
+
 /** A local v2 Reference as published by the server. */
 export type ReferenceV2 = {
 	id: string;
+	version: number;
 	name: string;
 	description: string;
 	kind: ReferenceV2Kind;

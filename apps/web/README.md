@@ -140,6 +140,11 @@ when submitted GenBank versions differ. Deleting an isolate releases its
 accessions for re-import. Sequence details expose their source and exact
 GenBank accession version.
 
+Local v2 Reference settings allow members with `modify` rights to edit name,
+description, and the default segment length tolerance. Each edit carries the
+Reference version shown in the form; stale versions and archived References
+reject the edit. Archiving and unarchiving advance the version too.
+
 ### Error handling and request methods
 
 Map expected domain failures in one module-local

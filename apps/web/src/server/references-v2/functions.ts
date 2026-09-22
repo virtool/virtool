@@ -3,6 +3,7 @@ import { setResponseStatus } from "@tanstack/react-start/server";
 import {
 	ReferenceV2CreateRequest,
 	type ReferenceV2Right,
+	ReferenceV2UpdateRequest,
 } from "@virtool/contracts";
 import { resolveReferenceActor } from "@virtool/data/references/data";
 import {
@@ -17,9 +18,12 @@ import {
 	ReferenceV2MemberConflictError,
 	ReferenceV2MemberNotFoundError,
 	ReferenceV2NotFoundError,
+	ReferenceV2NotWritableError,
+	ReferenceV2VersionConflictError,
 	removeReferenceV2Group,
 	removeReferenceV2User,
 	setReferenceV2Archived,
+	updateReferenceV2,
 	updateReferenceV2Group,
 	updateReferenceV2User,
 } from "@virtool/data/references-v2/data";
@@ -62,6 +66,14 @@ const rethrowAsHttp = createServerOnlyFn((err: unknown): never => {
 	if (err instanceof ReferenceV2MemberConflictError) {
 		setResponseStatus(400);
 		throw new ClientError(err.message, 400);
+	}
+	if (err instanceof ReferenceV2VersionConflictError) {
+		setResponseStatus(409);
+		throw new ClientError("Reference has changed. Review it again.", 409);
+	}
+	if (err instanceof ReferenceV2NotWritableError) {
+		setResponseStatus(409);
+		throw new ClientError("Reference cannot be modified.", 409);
 	}
 	throw err;
 });
@@ -116,6 +128,22 @@ export const getReferencesV2Fn = createServerFn({ method: "GET" })
 	.handler(async ({ context }) => {
 		const actor = await resolveReferenceActor(db, context.principal.userId);
 		return getReferencesV2(db, actor);
+	});
+
+export const updateReferenceV2Fn = createServerFn({ method: "POST" })
+	.middleware([authenticated()])
+	.validator(referenceIdSchema.extend({ update: ReferenceV2UpdateRequest }))
+	.handler(async ({ context, data }) => {
+		try {
+			await authorizeReferenceV2(
+				data.referenceId,
+				context.principal.userId,
+				"modify",
+			);
+			return await updateReferenceV2(db, data.referenceId, data.update);
+		} catch (err) {
+			return rethrowAsHttp(err);
+		}
 	});
 
 export const deleteReferenceV2Fn = createServerFn({ method: "POST" })

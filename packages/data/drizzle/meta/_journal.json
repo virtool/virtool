@@ -295,6 +295,13 @@
       "when": 1790109496164,
       "tag": "0041_empty_amphibian",
       "breakpoints": true
+    },
+    {
+      "idx": 42,
+      "version": "7",
+      "when": 1790115772946,
+      "tag": "0042_aromatic_sersi",
+      "breakpoints": true
     }
   ]
 }

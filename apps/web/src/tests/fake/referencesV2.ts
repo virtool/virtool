@@ -7,6 +7,7 @@ export function createFakeReferenceV2(
 ): ReferenceV2 {
 	const base: ReferenceV2 = {
 		id: faker.string.uuid(),
+		version: 1,
 		name: faker.word.noun({ strategy: "any-length" }),
 		description: faker.lorem.sentence(),
 		kind: ReferenceV2Kind.local,

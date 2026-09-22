@@ -265,6 +265,66 @@ describe("getReferencesV2", () => {
 	});
 });
 
+describe("updateReferenceV2", () => {
+	it("updates editable metadata and rejects a stale version", async () => {
+		const userId = await signIn(db, getRequest, { administratorRole: null });
+		const referenceId = await seedReferenceV2(userId);
+		const update = {
+			name: "Renamed",
+			description: "New description",
+			defaultSegmentLengthTolerance: 0.2,
+			expectedVersion: 1,
+		};
+		const reference = (await call("updateReferenceV2Fn", {
+			referenceId,
+			update,
+		})) as {
+			name: string;
+			description: string;
+			defaultSegmentLengthTolerance: number;
+			version: number;
+		};
+		expect(reference).toMatchObject({
+			name: "Renamed",
+			description: "New description",
+			defaultSegmentLengthTolerance: 0.2,
+			version: 2,
+		});
+		await expect(
+			call("updateReferenceV2Fn", { referenceId, update }),
+		).rejects.toMatchObject({ status: 409 });
+	});
+
+	it("requires modify rights and refuses archived References", async () => {
+		const ownerId = await signIn(db, getRequest, {
+			administratorRole: null,
+			handle: "owner",
+		});
+		const referenceId = await seedReferenceV2(ownerId);
+		await signIn(db, getRequest, { administratorRole: null, handle: "other" });
+		const update = {
+			name: "Changed",
+			description: "",
+			defaultSegmentLengthTolerance: 0.05,
+			expectedVersion: 1,
+		};
+		await expect(
+			call("updateReferenceV2Fn", { referenceId, update }),
+		).rejects.toBeInstanceOf(ForbiddenError);
+		await signIn(db, getRequest, {
+			administratorRole: "full",
+			handle: "admin",
+		});
+		await call("archiveReferenceV2Fn", { referenceId });
+		await expect(
+			call("updateReferenceV2Fn", {
+				referenceId,
+				update: { ...update, expectedVersion: 2 },
+			}),
+		).rejects.toMatchObject({ status: 409 });
+	});
+});
+
 describe("deleteReferenceV2", () => {
 	it("deletes a Reference for a member with modify rights", async () => {
 		const userId = await signIn(db, getRequest, { administratorRole: null });

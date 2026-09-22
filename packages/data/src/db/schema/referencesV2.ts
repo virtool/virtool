@@ -18,6 +18,7 @@ export const referenceRoots = pgTable(
 	"reference_roots",
 	{
 		id: uuid("id").primaryKey(),
+		version: integer("version").notNull().default(1),
 		name: text("name").notNull(),
 		description: text("description").notNull(),
 		kind: text("kind").$type<"local" | "remote">().notNull(),
@@ -37,6 +38,7 @@ export const referenceRoots = pgTable(
 			.notNull(),
 	},
 	(table) => [
+		check("reference_roots_version_check", sql`${table.version} >= 1`),
 		check(
 			"reference_roots_kind_check",
 			sql`${table.kind} in ('local', 'remote')`,

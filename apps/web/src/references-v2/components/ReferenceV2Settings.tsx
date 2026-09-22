@@ -3,6 +3,7 @@ import SectionHeader from "@base/SectionHeader";
 import { useSuspenseReferenceV2 } from "@references-v2/queries";
 import ArchiveReferenceV2 from "./ArchiveReferenceV2";
 import DeleteReferenceV2 from "./DeleteReferenceV2";
+import EditReferenceV2 from "./EditReferenceV2";
 import ReferenceV2Members from "./ReferenceV2Members";
 
 /** Settings and destructive actions for a local v2 Reference. */
@@ -15,6 +16,7 @@ export default function ReferenceV2Settings({
 
 	return (
 		<>
+			<EditReferenceV2 reference={reference} />
 			<ReferenceV2Members
 				members={reference.users}
 				noun="user"

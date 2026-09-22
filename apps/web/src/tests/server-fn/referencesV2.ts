@@ -11,6 +11,7 @@ export const referenceV2ServerFnMocks = {
 	createReferenceV2Fn: vi.fn(),
 	deleteReferenceV2Fn: vi.fn(),
 	getReferenceV2Fn: vi.fn(),
+	updateReferenceV2Fn: vi.fn(),
 	getReferencesV2Fn: vi.fn(),
 	unarchiveReferenceV2Fn: vi.fn(),
 };

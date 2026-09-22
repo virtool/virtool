@@ -243,6 +243,7 @@ beforeEach(() => {
 		otuServerFnMocks.deleteSequenceFn,
 		genbankServerFnMocks.getGenbankFn,
 		referenceV2ServerFnMocks.createReferenceV2Fn,
+		referenceV2ServerFnMocks.updateReferenceV2Fn,
 		otuV2ServerFnMocks.createLocalOtuFn,
 		otuV2ServerFnMocks.deleteLocalOtuIsolateFn,
 		otuV2ServerFnMocks.deleteLocalOtuFn,
