@@ -12,6 +12,7 @@ export const otuV2ServerFnMocks = {
 	deleteLocalOtuFn: vi.fn(),
 	deleteLocalOtuIsolateFn: vi.fn(),
 	getGenbankIsolateDraftFn: vi.fn(),
+	getGenbankOtuDraftFn: vi.fn(),
 	getLocalOtuFn: vi.fn(),
 	getLocalOtuIsolateFn: vi.fn(),
 	getLocalOtuIsolatesFn: vi.fn(),

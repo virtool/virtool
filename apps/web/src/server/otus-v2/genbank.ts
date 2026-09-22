@@ -234,6 +234,14 @@ export function validateGenbankOtuSave(
 		!species ||
 		!savedSpecies ||
 		species.id !== savedSpecies.id ||
+		JSON.stringify(draft.taxonomy) !==
+			JSON.stringify({
+				name: command.payload.taxonomy.name,
+				acronym: command.payload.taxonomy.acronym,
+				lineage: command.payload.taxonomy.lineage,
+			}) ||
+		JSON.stringify(draft.isolate) !==
+			JSON.stringify(command.payload.isolate.name) ||
 		draft.molecule.type !== command.payload.molecule.type ||
 		draft.molecule.strandedness !== command.payload.molecule.strandedness ||
 		draft.molecule.topology !== command.payload.molecule.topology

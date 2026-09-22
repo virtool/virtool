@@ -560,6 +560,26 @@ describe("GenBank OTU save validation", () => {
 		).toThrow(GenbankProvenanceError);
 	});
 
+	it("rejects changed isolate identity and taxonomy details since preview", () => {
+		const command = createGenbankCommand();
+		expect(() =>
+			validateGenbankOtuSave(
+				command,
+				[createRecord({ source: createSource({ isolate: "New isolate" }) })],
+				taxonomy,
+			),
+		).toThrow(GenbankProvenanceError);
+		expect(() =>
+			validateGenbankOtuSave(command, [createRecord()], {
+				...taxonomy,
+				other_names: {
+					...taxonomy.other_names,
+					acronym: ["NEW"],
+				},
+			}),
+		).toThrow(GenbankProvenanceError);
+	});
+
 	it("rejects an accession reclassified under another species", () => {
 		const command = createGenbankCommand();
 		const otherTaxonomy = {

@@ -1,4 +1,3 @@
-import { buildCreateOtuCommandFromDraft } from "@otus-v2/command";
 import { otuV2QueryKeys } from "@otus-v2/keys";
 import {
 	createLocalOtuFn,
@@ -258,43 +257,12 @@ export function useDeleteLocalOtuIsolate(referenceId: string) {
 	});
 }
 
-/**
- * Initializes a mutator that creates a local v2 OTU from NCBI accessions.
- *
- * The server resolves the accessions into a draft; this mints every UUID,
- * applies the Reference's default segment length tolerance, and writes the
- * assembled command through the same create path as {@link useCreateLocalOtu}.
- *
- * @param referenceId - The UUID of the Reference the OTU is created in
- * @param defaultSegmentLengthTolerance - The tolerance applied to each segment
- * @returns A mutator that takes the accessions and resolves the assembled OTU
- */
-export function useCreateLocalOtuFromAccessions(
-	referenceId: string,
-	defaultSegmentLengthTolerance: number,
-) {
-	const queryClient = useQueryClient();
-
-	return useMutation<LocalOtuV2, Error, string[]>({
-		mutationFn: async (accessions) => {
-			const draft = (await getGenbankOtuDraftFn({
+/** Resolve NCBI accessions into an OTU preview before creation. */
+export function useGenbankOtuDraft(referenceId: string) {
+	return useMutation<GenbankOtuDraft, Error, string[]>({
+		mutationFn: (accessions) =>
+			getGenbankOtuDraftFn({
 				data: { referenceId, accessions },
-			})) as GenbankOtuDraft;
-
-			const command = buildCreateOtuCommandFromDraft(
-				draft,
-				defaultSegmentLengthTolerance,
-			);
-
-			return createLocalOtuFn({
-				data: { referenceId, command },
-			}) as Promise<LocalOtuV2>;
-		},
-		onSuccess: (otu) => {
-			cacheLocalOtuOverview(queryClient, otu);
-			queryClient.invalidateQueries({
-				queryKey: otuV2QueryKeys.list([referenceId]),
-			});
-		},
+			}) as Promise<GenbankOtuDraft>,
 	});
 }

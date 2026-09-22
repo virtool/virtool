@@ -296,9 +296,14 @@ describe("createLocalOtu", () => {
 				taxonomy: {
 					...command.payload.taxonomy,
 					name: "Tobacco mosaic virus",
+					acronym: null,
 					lineage: [
 						{ id: 12242, name: "Tobacco mosaic virus", rank: "species" },
 					],
+				},
+				isolate: {
+					...command.payload.isolate,
+					name: null,
 				},
 				genbank: {
 					sequences: [{ sequenceId: sequence.id, accession: "NC_001367.1" }],
