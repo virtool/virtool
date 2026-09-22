@@ -29,6 +29,7 @@ import {
 	OtuV2ReferenceNotWritableError,
 	OtuV2VersionConflictError,
 	previewLocalOtuPlan,
+	updateLocalOtuIsolate,
 	updateLocalOtuPlan,
 	updateLocalOtuTaxonomy,
 } from "./data";
@@ -173,6 +174,117 @@ describe("createReferenceV2", () => {
 });
 
 describe("createLocalOtu", () => {
+	it("versions isolate name metadata without changing sequences or provenance", async () => {
+		const reference = await createReference();
+		const create = createCommand(randomUUID());
+		const original = await createLocalOtu(db, {
+			referenceId: reference.id,
+			userId,
+			command: create,
+		});
+		const sequence = original.isolates[0]?.sequences[0];
+		const sequenceBefore = await getLocalOtuSequence(
+			db,
+			reference.id,
+			original.id,
+			create.payload.isolate.id,
+			create.payload.isolate.sequences[0].id,
+		);
+		const command = {
+			type: "UpdateIsolate" as const,
+			schemaVersion: 1 as const,
+			otuId: original.id,
+			expectedVersion: 1,
+			payload: {
+				isolateId: create.payload.isolate.id,
+				name: { type: "strain" as const, value: "  A1  " },
+			},
+		};
+		const updated = await updateLocalOtuIsolate(db, {
+			referenceId: reference.id,
+			userId,
+			command,
+		});
+		expect(updated.version).toBe(2);
+		expect(updated.isolates[0]?.name).toEqual({ type: "strain", value: "A1" });
+		expect(updated.isolates[0]?.sequences).toEqual(
+			original.isolates[0]?.sequences,
+		);
+		expect(updated.isolates[0]?.sequences[0]).toEqual(sequence);
+		expect(
+			await getLocalOtuSequence(
+				db,
+				reference.id,
+				original.id,
+				create.payload.isolate.id,
+				create.payload.isolate.sequences[0].id,
+			),
+		).toEqual(sequenceBefore);
+		expect(updated.changes[0]).toMatchObject({
+			command: "UpdateIsolate",
+			name: { type: "strain", value: "A1" },
+			version: 2,
+		});
+		expect(JSON.stringify(updated.changes)).not.toContain("ATCGNNRY");
+		await expect(
+			updateLocalOtuIsolate(db, { referenceId: reference.id, userId, command }),
+		).rejects.toBeInstanceOf(OtuV2VersionConflictError);
+		const cleared = await updateLocalOtuIsolate(db, {
+			referenceId: reference.id,
+			userId,
+			command: {
+				...command,
+				expectedVersion: 2,
+				payload: { ...command.payload, name: null },
+			},
+		});
+		expect(cleared.isolates[0]?.name).toBeNull();
+		expect(cleared.changes[0]).toMatchObject({
+			command: "UpdateIsolate",
+			name: null,
+			version: 3,
+		});
+		expect(cleared.isolates[0]?.sequences).toEqual(
+			original.isolates[0]?.sequences,
+		);
+	});
+
+	it("rejects isolate metadata edits for missing isolates and archived references", async () => {
+		const reference = await createReference();
+		const create = createCommand(randomUUID());
+		const original = await createLocalOtu(db, {
+			referenceId: reference.id,
+			userId,
+			command: create,
+		});
+		const command = {
+			type: "UpdateIsolate" as const,
+			schemaVersion: 1 as const,
+			otuId: original.id,
+			expectedVersion: 1,
+			payload: {
+				isolateId: randomUUID(),
+				name: { type: "strain" as const, value: "A1" },
+			},
+		};
+		await expect(
+			updateLocalOtuIsolate(db, { referenceId: reference.id, userId, command }),
+		).rejects.toBeInstanceOf(OtuV2NotFoundError);
+		await db
+			.update(referenceRoots)
+			.set({ archived: true })
+			.where(eq(referenceRoots.id, reference.id));
+		await expect(
+			updateLocalOtuIsolate(db, {
+				referenceId: reference.id,
+				userId,
+				command: {
+					...command,
+					payload: { ...command.payload, isolateId: create.payload.isolate.id },
+				},
+			}),
+		).rejects.toBeInstanceOf(OtuV2ReferenceNotWritableError);
+	});
 	it("previews and versions a plan edit while preserving isolate provenance", async () => {
 		const reference = await createReference();
 		const create = createCommand(randomUUID());

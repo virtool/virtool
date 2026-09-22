@@ -7,6 +7,7 @@ import {
 import Link from "@base/Link";
 import SectionHeader from "@base/SectionHeader";
 import DeleteLocalOtuIsolate from "@otus-v2/components/DeleteLocalOtuIsolate";
+import EditLocalOtuIsolate from "@otus-v2/components/EditLocalOtuIsolate";
 import { formatV2IsolateName } from "@otus-v2/isolateName";
 import {
 	localOtuV2SequenceQueryOptions,
@@ -49,20 +50,28 @@ export default function LocalOtuIsolateDetail() {
 			</p>
 			<SectionHeader className="flex items-center justify-between gap-3">
 				<h2>{name}</h2>
-				{canDelete && (
-					<DeleteLocalOtuIsolate
+				<div className="flex items-center gap-2">
+					<EditLocalOtuIsolate
 						referenceId={referenceId}
 						otuId={otuId}
 						version={otu.version}
 						isolate={isolate}
-						onDeleted={() =>
-							navigate({
-								to: "/refs/alpha/$referenceId/otus/$otuId/isolates",
-								params: { referenceId, otuId },
-							})
-						}
 					/>
-				)}
+					{canDelete && (
+						<DeleteLocalOtuIsolate
+							referenceId={referenceId}
+							otuId={otuId}
+							version={otu.version}
+							isolate={isolate}
+							onDeleted={() =>
+								navigate({
+									to: "/refs/alpha/$referenceId/otus/$otuId/isolates",
+									params: { referenceId, otuId },
+								})
+							}
+						/>
+					)}
+				</div>
 			</SectionHeader>
 			<section>
 				<SectionHeader>

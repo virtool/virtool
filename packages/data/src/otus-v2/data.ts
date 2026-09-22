@@ -19,6 +19,8 @@ import {
 	type OtuV2Change,
 	type OtuV2Isolate,
 	OtuV2IsolatePlan,
+	UpdateLocalOtuIsolateCommand,
+	type UpdateLocalOtuIsolateCommandInput,
 	UpdateLocalOtuPlanCommand,
 	type UpdateLocalOtuPlanCommandInput,
 	UpdateLocalOtuTaxonomyCommand,
@@ -80,6 +82,7 @@ function toOtuV2Change(row: {
 		| "CreateIsolate"
 		| "UpdateTaxonomy"
 		| "UpdatePlan"
+		| "UpdateIsolate"
 		| "DeleteIsolate"
 		| "DeleteOTU";
 	commandSchemaVersion: number;
@@ -102,6 +105,7 @@ function toOtuV2Change(row: {
 		case "CreateOTU":
 			return { ...base, command: row.command, name: row.otuName };
 		case "CreateIsolate":
+		case "UpdateIsolate":
 			return { ...base, command: row.command, name: row.isolateName };
 		case "UpdateTaxonomy":
 			if (!row.otuName) {
@@ -308,6 +312,74 @@ export type DeleteLocalOtuIsolateValues = {
 	userId: number;
 	command: DeleteLocalOtuIsolateCommandInput;
 };
+
+/** Values needed to edit one isolate's name and name type. */
+export type UpdateLocalOtuIsolateValues = {
+	referenceId: string;
+	userId: number;
+	command: UpdateLocalOtuIsolateCommandInput;
+};
+
+/** Revise isolate metadata without changing any sequence or its provenance. */
+export async function updateLocalOtuIsolate(
+	db: Db,
+	values: UpdateLocalOtuIsolateValues,
+): Promise<LocalOtuV2> {
+	const command = UpdateLocalOtuIsolateCommand.parse(values.command);
+	return db.transaction(async (tx) => {
+		await getWritableLocalOtu(
+			tx,
+			values.referenceId,
+			command.otuId,
+			command.expectedVersion,
+		);
+		const otu = await getLocalOtu(tx, values.referenceId, command.otuId);
+		const isolate = otu.isolates.find(
+			({ id }) => id === command.payload.isolateId,
+		);
+		if (!isolate) {
+			throw new OtuV2NotFoundError();
+		}
+		if (!OtuV2IsolatePlan.safeParse({ plan: otu.plan, isolate }).success) {
+			throw new OtuV2InvalidIsolateError();
+		}
+		const version = command.expectedVersion + 1;
+		await tx
+			.update(otuIsolateVersions)
+			.set({ lastVersion: version })
+			.where(
+				and(
+					eq(otuIsolateVersions.otuId, command.otuId),
+					eq(otuIsolateVersions.isolateId, isolate.id),
+					isNull(otuIsolateVersions.lastVersion),
+				),
+			);
+		await tx.insert(otuIsolateVersions).values({
+			id: randomUUID(),
+			otuId: command.otuId,
+			isolateId: isolate.id,
+			nameType: command.payload.name?.type ?? null,
+			nameValue: command.payload.name?.value ?? null,
+			firstVersion: version,
+		});
+		await tx
+			.update(otusV2)
+			.set({ version })
+			.where(eq(otusV2.id, command.otuId));
+		await tx.insert(otuChanges).values({
+			referenceId: values.referenceId,
+			otuId: command.otuId,
+			version,
+			command: command.type,
+			commandSchemaVersion: command.schemaVersion,
+			payload: command.payload,
+			source: "user",
+			userId: values.userId,
+			createdAt: new Date(),
+		});
+		return getLocalOtu(tx, values.referenceId, command.otuId);
+	});
+}
 
 /** Soft-delete one local isolate and its sequences at the expected version. */
 export async function deleteLocalOtuIsolate(
@@ -1024,7 +1096,7 @@ async function getLocalOtuMetadata(
 				>`coalesce(${otuChanges.payload}->'taxonomy'->>'name', ${otuChanges.payload}->>'name')`,
 				isolateName: sql<
 					OtuV2Isolate["name"]
-				>`${otuChanges.payload}->'isolate'->'name'`,
+				>`coalesce(${otuChanges.payload}->'isolate'->'name', ${otuChanges.payload}->'name')`,
 				segmentCount: sql<
 					number | null
 				>`jsonb_array_length(${otuChanges.payload}->'plan'->'segments')`,
@@ -1451,7 +1523,7 @@ export async function getLocalOtu(
 					>`coalesce(${otuChanges.payload}->'taxonomy'->>'name', ${otuChanges.payload}->>'name')`,
 					isolateName: sql<
 						OtuV2Isolate["name"]
-					>`${otuChanges.payload}->'isolate'->'name'`,
+					>`coalesce(${otuChanges.payload}->'isolate'->'name', ${otuChanges.payload}->'name')`,
 					segmentCount: sql<
 						number | null
 					>`jsonb_array_length(${otuChanges.payload}->'plan'->'segments')`,

@@ -375,6 +375,19 @@ export const UpdateLocalOtuPlanCommand = z
 	})
 	.strict();
 
+/** A change to the editable name of one local OTU isolate. */
+export const UpdateLocalOtuIsolateCommand = z
+	.object({
+		type: z.literal("UpdateIsolate"),
+		schemaVersion: z.literal(1),
+		otuId: uuidSchema,
+		expectedVersion: z.number().int().positive(),
+		payload: z
+			.object({ isolateId: uuidSchema, name: isolateNameSchema.nullable() })
+			.strict(),
+	})
+	.strict();
+
 /** A command that deletes one isolate from an existing local OTU. */
 export const DeleteLocalOtuIsolateCommand = z
 	.object({
@@ -431,6 +444,16 @@ export type UpdateLocalOtuPlanCommand = z.output<
 /** Input accepted for a versioned local OTU molecule and plan edit. */
 export type UpdateLocalOtuPlanCommandInput = z.input<
 	typeof UpdateLocalOtuPlanCommand
+>;
+
+/** A parsed versioned isolate metadata edit command. */
+export type UpdateLocalOtuIsolateCommand = z.output<
+	typeof UpdateLocalOtuIsolateCommand
+>;
+
+/** Input accepted for an isolate metadata edit command. */
+export type UpdateLocalOtuIsolateCommandInput = z.input<
+	typeof UpdateLocalOtuIsolateCommand
 >;
 
 /** One surviving isolate's response to a proposed OTU plan. */
@@ -529,6 +552,10 @@ export type OtuV2Change = {
 	| {
 			command: "UpdatePlan";
 			segmentCount: number;
+	  }
+	| {
+			command: "UpdateIsolate";
+			name: OtuV2Isolate["name"];
 	  }
 	| {
 			command: "DeleteIsolate";

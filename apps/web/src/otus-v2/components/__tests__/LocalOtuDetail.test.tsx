@@ -328,6 +328,41 @@ describe("<LocalOtuDetail />", () => {
 		).toHaveAttribute("href", `${base}/isolates/${otu.isolates[0]?.id}`);
 	});
 
+	it("submits an isolate name edit at the observed OTU version", async () => {
+		const isolate = otu.isolates[0];
+		if (!isolate) {
+			throw new Error("Expected fake OTU to contain an isolate.");
+		}
+		otuV2ServerFnMocks.updateLocalOtuIsolateFn.mockReturnValueOnce(
+			new Promise(() => {}),
+		);
+		await renderDetailRoute(`${base}/isolates/${isolate.id}`);
+		await userEvent.click(
+			await screen.findByRole("button", { name: "Edit isolate name" }),
+		);
+		await userEvent.selectOptions(screen.getByLabelText("Name type"), "strain");
+		await userEvent.clear(screen.getByLabelText("Name"));
+		await userEvent.type(screen.getByLabelText("Name"), "Lab A");
+		await userEvent.click(
+			screen.getByRole("button", { name: "Save isolate name" }),
+		);
+		expect(otuV2ServerFnMocks.updateLocalOtuIsolateFn).toHaveBeenCalledWith({
+			data: {
+				referenceId: reference.id,
+				command: {
+					type: "UpdateIsolate",
+					schemaVersion: 1,
+					otuId: otu.id,
+					expectedVersion: otu.version,
+					payload: {
+						isolateId: isolate.id,
+						name: { type: "strain", value: "Lab A" },
+					},
+				},
+			},
+		});
+	});
+
 	it("shows isolate delete buttons in the list and detail views", async () => {
 		mockGetLocalOtuV2(deletableOtu);
 		const isolate = deletableOtu.isolates[0];

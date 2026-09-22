@@ -4,6 +4,7 @@ import type {
 	DeleteLocalOtuCommand,
 	DeleteLocalOtuIsolateCommand,
 	OtuV2LineageTaxon,
+	UpdateLocalOtuIsolateCommand,
 	UpdateLocalOtuPlanCommand,
 	UpdateLocalOtuTaxonomyCommand,
 } from "@virtool/contracts";
@@ -97,6 +98,7 @@ export const otuChanges = pgTable(
 				| "CreateIsolate"
 				| "UpdateTaxonomy"
 				| "UpdatePlan"
+				| "UpdateIsolate"
 				| "DeleteIsolate"
 				| "DeleteOTU"
 			>()
@@ -108,6 +110,7 @@ export const otuChanges = pgTable(
 				| CreateLocalOtuIsolateCommand["payload"]
 				| UpdateLocalOtuTaxonomyCommand["payload"]
 				| UpdateLocalOtuPlanCommand["payload"]
+				| UpdateLocalOtuIsolateCommand["payload"]
 				| DeleteLocalOtuIsolateCommand["payload"]
 				| DeleteLocalOtuCommand["payload"]
 			>()

@@ -180,6 +180,54 @@ function call(name: string, data?: unknown) {
 }
 
 describe("createLocalOtu", () => {
+	it("checks isolate edit rights, version, and archived state", async () => {
+		const ownerId = await signIn(db, getRequest, {
+			administratorRole: null,
+			handle: "isolate-owner",
+		});
+		const referenceId = await seedReferenceV2(ownerId);
+		const created = validCommand();
+		await call("createLocalOtuFn", { referenceId, command: created });
+		const command = {
+			type: "UpdateIsolate",
+			schemaVersion: 1,
+			otuId: created.otuId,
+			expectedVersion: 1,
+			payload: {
+				isolateId: created.payload.isolate.id,
+				name: { type: "strain", value: "A1" },
+			},
+		};
+		await signIn(db, getRequest, {
+			administratorRole: null,
+			handle: "isolate-other",
+		});
+		await expect(
+			call("updateLocalOtuIsolateFn", { referenceId, command }),
+		).rejects.toBeInstanceOf(ForbiddenError);
+		await signIn(db, getRequest, {
+			administratorRole: "full",
+			handle: "isolate-admin",
+		});
+		const result = (await call("updateLocalOtuIsolateFn", {
+			referenceId,
+			command,
+		})) as { isolates: Array<{ name: unknown }> };
+		expect(result.isolates[0]?.name).toEqual({ type: "strain", value: "A1" });
+		await expect(
+			call("updateLocalOtuIsolateFn", { referenceId, command }),
+		).rejects.toMatchObject({ status: 409 });
+		await db
+			.update(referenceRoots)
+			.set({ archived: true })
+			.where(eq(referenceRoots.id, referenceId));
+		await expect(
+			call("updateLocalOtuIsolateFn", {
+				referenceId,
+				command: { ...command, expectedVersion: 2 },
+			}),
+		).rejects.toMatchObject({ status: 409 });
+	});
 	it("previews plan impact without sequence bodies and checks rights on save", async () => {
 		const ownerId = await signIn(db, getRequest, {
 			administratorRole: null,

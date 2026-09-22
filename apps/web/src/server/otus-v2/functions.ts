@@ -7,6 +7,7 @@ import {
 	DeleteLocalOtuIsolateCommand,
 	type GenbankIsolateDraft,
 	type GenbankOtuDraft,
+	UpdateLocalOtuIsolateCommand,
 	UpdateLocalOtuPlanCommand,
 	UpdateLocalOtuTaxonomyCommand,
 } from "@virtool/contracts";
@@ -31,6 +32,7 @@ import {
 	OtuV2ReferenceNotWritableError,
 	OtuV2VersionConflictError,
 	previewLocalOtuPlan,
+	updateLocalOtuIsolate,
 	updateLocalOtuPlan,
 	updateLocalOtuTaxonomy,
 } from "@virtool/data/otus-v2/data";
@@ -92,6 +94,11 @@ const updateLocalOtuTaxonomySchema = z.object({
 const updateLocalOtuPlanSchema = z.object({
 	referenceId: z.uuid(),
 	command: UpdateLocalOtuPlanCommand,
+});
+
+const updateLocalOtuIsolateSchema = z.object({
+	referenceId: z.uuid(),
+	command: UpdateLocalOtuIsolateCommand,
 });
 
 const deleteLocalOtuSchema = z.object({
@@ -338,6 +345,28 @@ export const updateLocalOtuTaxonomyFn = createServerFn({ method: "POST" })
 				throw new ForbiddenError();
 			}
 			return await updateLocalOtuTaxonomy(db, {
+				referenceId: data.referenceId,
+				userId: context.principal.userId,
+				command: data.command,
+			});
+		} catch (err) {
+			return rethrowAsHttp(err);
+		}
+	});
+
+export const updateLocalOtuIsolateFn = createServerFn({ method: "POST" })
+	.middleware([authenticated()])
+	.validator(updateLocalOtuIsolateSchema)
+	.handler(async ({ context, data }) => {
+		try {
+			const actor = await resolveReferenceActor(db, context.principal.userId);
+			if (
+				!(await checkReferenceV2Right(db, data.referenceId, "modifyOtu", actor))
+			) {
+				setResponseStatus(403);
+				throw new ForbiddenError();
+			}
+			return await updateLocalOtuIsolate(db, {
 				referenceId: data.referenceId,
 				userId: context.principal.userId,
 				command: data.command,

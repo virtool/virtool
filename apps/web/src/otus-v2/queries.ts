@@ -12,6 +12,7 @@ import {
 	getLocalOtuSequenceFn,
 	getLocalOtusFn,
 	previewLocalOtuPlanFn,
+	updateLocalOtuIsolateFn,
 	updateLocalOtuPlanFn,
 	updateLocalOtuTaxonomyFn,
 } from "@server/otus-v2/functions";
@@ -35,6 +36,7 @@ import type {
 	LocalOtuV2PlanPreview,
 	LocalOtuV2Sequence,
 	LocalOtuV2Summary,
+	UpdateLocalOtuIsolateCommandInput,
 	UpdateLocalOtuPlanCommandInput,
 	UpdateLocalOtuTaxonomyCommandInput,
 } from "@virtool/contracts";
@@ -232,6 +234,50 @@ export function useUpdateLocalOtuTaxonomy(referenceId: string) {
 			queryClient.invalidateQueries({
 				queryKey: otuV2QueryKeys.list([referenceId]),
 			});
+		},
+		onError: (_error, command) => {
+			queryClient.invalidateQueries({
+				queryKey: otuV2QueryKeys.detail(command.otuId),
+			});
+		},
+	});
+}
+
+/** Edit an isolate's name at the OTU's current version. */
+export function useUpdateLocalOtuIsolate(referenceId: string) {
+	const queryClient = useQueryClient();
+	return useMutation<LocalOtuV2, Error, UpdateLocalOtuIsolateCommandInput>({
+		mutationFn: (command) =>
+			updateLocalOtuIsolateFn({
+				data: { referenceId, command },
+			}) as Promise<LocalOtuV2>,
+		onSuccess: (otu, command) => {
+			cacheLocalOtuOverview(queryClient, otu);
+			queryClient.invalidateQueries({
+				queryKey: [...otuV2QueryKeys.detail(otu.id), "isolates"],
+			});
+			queryClient.invalidateQueries({
+				queryKey: otuV2QueryKeys.list([referenceId]),
+			});
+			const isolate = otu.isolates.find(
+				({ id }) => id === command.payload.isolateId,
+			);
+			if (isolate) {
+				queryClient.setQueryData(
+					[...otuV2QueryKeys.detail(otu.id), "isolates", isolate.id],
+					{
+						id: isolate.id,
+						name: isolate.name,
+						sequences: isolate.sequences.map(
+							({ id, definition, segmentId }) => ({
+								id,
+								definition,
+								segmentId,
+							}),
+						),
+					} satisfies LocalOtuV2IsolateDetail,
+				);
+			}
 		},
 		onError: (_error, command) => {
 			queryClient.invalidateQueries({
