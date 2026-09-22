@@ -3,6 +3,7 @@ import Button from "@base/Button";
 import { Dialog, DialogContent, DialogTitle } from "@base/Dialog";
 import { InputError, InputGroup, InputLabel, InputSimple } from "@base/Input";
 import { inputBaseClasses, inputHeightClass } from "@base/styles";
+import MissingRecommendedAcknowledgement from "@otus-v2/components/MissingRecommendedAcknowledgement";
 import { formatV2IsolateName } from "@otus-v2/isolateName";
 import {
 	usePreviewLocalOtuPlan,
@@ -69,6 +70,7 @@ export default function EditLocalOtuPlan({
 		result: LocalOtuV2PlanPreview;
 	}>();
 	const [validationError, setValidationError] = useState<string>();
+	const [acknowledged, setAcknowledged] = useState(false);
 	const revision = useRef(0);
 	const previewMutation = usePreviewLocalOtuPlan(referenceId);
 	const saveMutation = useUpdateLocalOtuPlan(referenceId);
@@ -87,6 +89,7 @@ export default function EditLocalOtuPlan({
 
 	function invalidatePreview() {
 		revision.current += 1;
+		setAcknowledged(false);
 		setPreview(undefined);
 		setValidationError(undefined);
 		previewMutation.reset();
@@ -146,15 +149,32 @@ export default function EditLocalOtuPlan({
 	}
 
 	function onSave() {
+		const missing =
+			preview?.result.isolates.flatMap((isolate) =>
+				isolate.missingRecommendedSegmentIds.map((segmentId) => ({
+					isolateId: isolate.isolateId,
+					segmentId,
+				})),
+			) ?? [];
 		if (
 			!preview ||
+			(missing.length > 0 && !acknowledged) ||
 			preview.result.isolates.some((isolate) => isolate.issues.length > 0)
 		) {
 			return;
 		}
-		saveMutation.mutate(preview.command, {
-			onSuccess: () => closeDialog(false),
-		});
+		saveMutation.mutate(
+			{
+				...preview.command,
+				payload: {
+					...preview.command.payload,
+					acknowledgedMissingRecommendedSegments: missing,
+				},
+			},
+			{
+				onSuccess: () => closeDialog(false),
+			},
+		);
 	}
 
 	return (
@@ -350,6 +370,25 @@ export default function EditLocalOtuPlan({
 									</li>
 								))}
 							</ul>
+							<MissingRecommendedAcknowledgement
+								items={preview.result.isolates.flatMap((isolate) =>
+									isolate.missingRecommendedSegmentIds.map((segmentId) => {
+										const segment = preview.result.plan.segments.find(
+											(item) => item.id === segmentId,
+										);
+										return {
+											isolateId: isolate.isolateId,
+											isolateName: isolate.name,
+											segmentId,
+											segmentName: segment?.name
+												? `${segment.name.prefix} ${segment.name.key}`
+												: `Segment ${preview.result.plan.segments.findIndex((item) => item.id === segmentId) + 1}`,
+										};
+									}),
+								)}
+								checked={acknowledged}
+								onChange={setAcknowledged}
+							/>
 							{preview.result.isolates.some(
 								(isolate) => isolate.issues.length > 0,
 							) && (
@@ -365,6 +404,11 @@ export default function EditLocalOtuPlan({
 								onClick={onSave}
 								disabled={
 									saveMutation.isPending ||
+									(preview.result.isolates.some(
+										(isolate) =>
+											isolate.missingRecommendedSegmentIds.length > 0,
+									) &&
+										!acknowledged) ||
 									preview.result.isolates.some(
 										(isolate) => isolate.issues.length > 0,
 									)

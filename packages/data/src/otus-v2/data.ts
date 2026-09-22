@@ -12,6 +12,7 @@ import {
 	type DeleteLocalOtuIsolateCommandInput,
 	ExcludeLocalOtuAccessionCommand,
 	type ExcludeLocalOtuAccessionCommandInput,
+	getMissingRecommendedSegmentIds,
 	type LocalOtuV2,
 	type LocalOtuV2AccessionExclusionPreview,
 	type LocalOtuV2IsolateDetail,
@@ -99,6 +100,32 @@ export class OtuV2InvalidIsolateError extends AppError {}
 /** Thrown when a proposed plan does not belong to the OTU. */
 export class OtuV2InvalidPlanError extends AppError {}
 
+/** Thrown when missing recommended segments were not acknowledged exactly. */
+export class OtuV2MissingRecommendedAcknowledgementError extends AppError {}
+
+function assertRecommendedAcknowledgements(
+	plan: LocalOtuV2["plan"],
+	isolates: OtuV2Isolate[],
+	acknowledged: Array<{ isolateId: string; segmentId: string }>,
+): void {
+	const expected = isolates
+		.flatMap((isolate) =>
+			getMissingRecommendedSegmentIds(plan, isolate).map(
+				(segmentId) => `${isolate.id}:${segmentId}`,
+			),
+		)
+		.sort();
+	const actual = acknowledged
+		.map((item) => `${item.isolateId}:${item.segmentId}`)
+		.sort();
+	if (
+		expected.length !== actual.length ||
+		expected.some((item, index) => item !== actual[index])
+	) {
+		throw new OtuV2MissingRecommendedAcknowledgementError();
+	}
+}
+
 function toOtuV2Change(row: {
 	version: number;
 	command:
@@ -129,6 +156,10 @@ function toOtuV2Change(row: {
 		to: string;
 		kind: "refresh" | "promotion";
 	}> | null;
+	acknowledgedMissingRecommendedSegments: Array<{
+		isolateId: string;
+		segmentId: string;
+	}> | null;
 	createdAt: Date;
 	userId: number;
 	userHandle: string;
@@ -139,6 +170,8 @@ function toOtuV2Change(row: {
 		source: "user" as const,
 		user: { id: row.userId, handle: row.userHandle },
 		createdAt: row.createdAt,
+		acknowledgedMissingRecommendedSegments:
+			row.acknowledgedMissingRecommendedSegments ?? [],
 	};
 
 	switch (row.command) {
@@ -245,6 +278,11 @@ export async function createLocalOtu(
 	values: CreateLocalOtuValues,
 ): Promise<LocalOtuV2> {
 	const command = CreateLocalOtuCommand.parse(values.command);
+	assertRecommendedAcknowledgements(
+		command.payload.plan,
+		[command.payload.isolate],
+		command.payload.acknowledgedMissingRecommendedSegments,
+	);
 
 	try {
 		await db.transaction(async (tx) => {
@@ -508,6 +546,10 @@ function getSequenceImpact(
 			return {
 				isolateId: isolate.id,
 				name: isolate.name,
+				missingRecommendedSegmentIds:
+					isolate.id === command.payload.isolateId
+						? getMissingRecommendedSegmentIds(otu.plan, revised)
+						: [],
 				issues: result.success
 					? []
 					: Array.from(
@@ -583,6 +625,25 @@ export async function updateLocalOtuSequence(
 		if (impact.isolates.some((isolate) => isolate.issues.length > 0)) {
 			throw new OtuV2InvalidIsolateError();
 		}
+		assertRecommendedAcknowledgements(
+			otu.plan,
+			otu.isolates
+				.filter((isolate) => isolate.id === command.payload.isolateId)
+				.map((isolate) => ({
+					...isolate,
+					sequences: isolate.sequences.map((sequence) =>
+						sequence.id === command.payload.sequenceId
+							? {
+									id: sequence.id,
+									segmentId: command.payload.segmentId,
+									definition: command.payload.definition,
+									sequence: command.payload.sequence,
+								}
+							: sequence,
+					),
+				})),
+			command.payload.acknowledgedMissingRecommendedSegments,
+		);
 		const version = command.expectedVersion + 1;
 		const recordId = randomUUID();
 		await tx.insert(otuLocalSequenceRecords).values({
@@ -1283,6 +1344,10 @@ function getPlanImpact(
 			return {
 				isolateId: isolate.id,
 				name: isolate.name,
+				missingRecommendedSegmentIds: getMissingRecommendedSegmentIds(
+					command.payload.plan,
+					isolate,
+				),
 				issues: result.success
 					? []
 					: Array.from(
@@ -1341,6 +1406,11 @@ export async function updateLocalOtuPlan(
 		if (impact.isolates.some((isolate) => isolate.issues.length > 0)) {
 			throw new OtuV2InvalidIsolateError();
 		}
+		assertRecommendedAcknowledgements(
+			command.payload.plan,
+			otu.isolates,
+			command.payload.acknowledgedMissingRecommendedSegments,
+		);
 		const version = command.expectedVersion + 1;
 		const oldIds = new Set(
 			(
@@ -1479,27 +1549,35 @@ export async function createLocalOtuIsolate(
 					.from(otuPlans)
 					.where(eq(otuPlans.otuId, command.otuId)),
 			);
+			if (!plan) {
+				throw new OtuV2InvalidIsolateError();
+			}
+			const currentPlan = {
+				id: plan.id,
+				segments: segmentRows.map((segment) => ({
+					id: segment.id,
+					name:
+						segment.namePrefix && segment.nameKey
+							? { prefix: segment.namePrefix, key: segment.nameKey }
+							: null,
+					length: segment.length,
+					lengthTolerance: segment.lengthTolerance,
+					rule: segment.rule,
+				})),
+			};
 			if (
-				!plan ||
 				!OtuV2IsolatePlan.safeParse({
-					plan: {
-						id: plan.id,
-						segments: segmentRows.map((segment) => ({
-							id: segment.id,
-							name:
-								segment.namePrefix && segment.nameKey
-									? { prefix: segment.namePrefix, key: segment.nameKey }
-									: null,
-							length: segment.length,
-							lengthTolerance: segment.lengthTolerance,
-							rule: segment.rule,
-						})),
-					},
+					plan: currentPlan,
 					isolate: command.payload.isolate,
 				}).success
 			) {
 				throw new OtuV2InvalidIsolateError();
 			}
+			assertRecommendedAcknowledgements(
+				currentPlan,
+				[command.payload.isolate],
+				command.payload.acknowledgedMissingRecommendedSegments,
+			);
 
 			const version = command.expectedVersion + 1;
 			await insertIsolate(
@@ -1934,6 +2012,10 @@ async function getLocalOtuMetadata(
 						to: string;
 						kind: "refresh" | "promotion";
 					}> | null>`${otuChanges.payload}->'accessions'`,
+					acknowledgedMissingRecommendedSegments: sql<Array<{
+						isolateId: string;
+						segmentId: string;
+					}> | null>`${otuChanges.payload}->'acknowledgedMissingRecommendedSegments'`,
 					createdAt: otuChanges.createdAt,
 					userId: users.id,
 					userHandle: users.handle,
@@ -2410,6 +2492,10 @@ export async function getLocalOtu(
 					to: string;
 					kind: "refresh" | "promotion";
 				}> | null>`${otuChanges.payload}->'accessions'`,
+				acknowledgedMissingRecommendedSegments: sql<Array<{
+					isolateId: string;
+					segmentId: string;
+				}> | null>`${otuChanges.payload}->'acknowledgedMissingRecommendedSegments'`,
 				createdAt: otuChanges.createdAt,
 				userId: users.id,
 				userHandle: users.handle,

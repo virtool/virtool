@@ -230,6 +230,25 @@ const genbankProvenanceSchema = z
 	})
 	.strict();
 
+const recommendedAcknowledgementsSchema = z
+	.array(z.object({ isolateId: uuidSchema, segmentId: uuidSchema }).strict())
+	.default([]);
+
+/** Missing recommended segment IDs for one isolate under a proposed plan. */
+export function getMissingRecommendedSegmentIds(
+	plan: z.output<typeof planSchema>,
+	isolate: z.output<typeof isolateSchema>,
+): string[] {
+	const filled = new Set(
+		isolate.sequences.map((sequence) => sequence.segmentId),
+	);
+	return plan.segments
+		.filter(
+			(segment) => segment.rule === "recommended" && !filled.has(segment.id),
+		)
+		.map((segment) => segment.id);
+}
+
 function checkIsolatePlan(
 	plan: z.output<typeof planSchema>,
 	isolate: z.output<typeof isolateSchema>,
@@ -309,6 +328,7 @@ const createOtuPayloadSchema = z
 		promotedAccessions: z.array(z.string()).length(0),
 		genbank: genbankProvenanceSchema.optional(),
 		isolate: isolateSchema,
+		acknowledgedMissingRecommendedSegments: recommendedAcknowledgementsSchema,
 	})
 	.strict()
 	.superRefine((payload, ctx) => {
@@ -350,6 +370,8 @@ export const CreateLocalOtuIsolateCommand = z
 			.object({
 				isolate: isolateSchema,
 				genbank: genbankProvenanceSchema.optional(),
+				acknowledgedMissingRecommendedSegments:
+					recommendedAcknowledgementsSchema,
 			})
 			.strict(),
 	})
@@ -377,7 +399,14 @@ export const UpdateLocalOtuPlanCommand = z
 		schemaVersion: z.literal(1),
 		otuId: uuidSchema,
 		expectedVersion: z.number().int().positive(),
-		payload: z.object({ molecule: moleculeSchema, plan: planSchema }).strict(),
+		payload: z
+			.object({
+				molecule: moleculeSchema,
+				plan: planSchema,
+				acknowledgedMissingRecommendedSegments:
+					recommendedAcknowledgementsSchema,
+			})
+			.strict(),
 	})
 	.strict();
 
@@ -410,6 +439,8 @@ export const UpdateLocalOtuSequenceCommand = z
 				sequence: sequenceSchema,
 				source: z.enum(["manual", "genbank"]),
 				accessionVersion: z.string().min(1).nullable(),
+				acknowledgedMissingRecommendedSegments:
+					recommendedAcknowledgementsSchema,
 			})
 			.strict(),
 	})
@@ -634,6 +665,7 @@ export type LocalOtuV2SequenceImpact = {
 	isolateId: string;
 	name: OtuV2Isolate["name"];
 	issues: string[];
+	missingRecommendedSegmentIds: string[];
 };
 
 /** The sequence source and isolate impact shown before confirmation. */
@@ -650,6 +682,7 @@ export type LocalOtuV2PlanImpact = {
 	isolateId: string;
 	name: OtuV2Isolate["name"];
 	issues: string[];
+	missingRecommendedSegmentIds: string[];
 };
 
 /** The validation result shown before confirming an OTU plan edit. */
@@ -725,6 +758,10 @@ export type OtuV2Change = {
 	source: "user";
 	user: UserNested;
 	createdAt: Date;
+	acknowledgedMissingRecommendedSegments?: Array<{
+		isolateId: string;
+		segmentId: string;
+	}>;
 } & (
 	| {
 			command: "CreateOTU";

@@ -39,6 +39,7 @@ import {
 	OtuV2InvalidPlanError,
 	OtuV2InvalidProvenanceError,
 	OtuV2LastIsolateError,
+	OtuV2MissingRecommendedAcknowledgementError,
 	OtuV2NotFoundError,
 	OtuV2PromotedAccessionError,
 	OtuV2ReferenceNotWritableError,
@@ -263,6 +264,13 @@ const rethrowAsHttp = createServerOnlyFn((err: unknown): never => {
 	if (err instanceof OtuV2InvalidIsolateError) {
 		setResponseStatus(422);
 		throw new ClientError("Isolate does not satisfy the OTU plan.", 422);
+	}
+	if (err instanceof OtuV2MissingRecommendedAcknowledgementError) {
+		setResponseStatus(422);
+		throw new ClientError(
+			"Review and acknowledge every missing recommended segment.",
+			422,
+		);
 	}
 	if (err instanceof OtuV2InvalidPlanError) {
 		setResponseStatus(422);

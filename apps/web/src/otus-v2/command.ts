@@ -10,14 +10,21 @@ export function buildCreateIsolateCommand(
 	draft: import("@virtool/contracts").GenbankIsolateDraft,
 	otuId: string,
 	expectedVersion: number,
+	acknowledgedMissingRecommendedSegmentIds: string[] = [],
 ): CreateLocalOtuIsolateCommandInput {
 	const sequenceIds = draft.sequences.map(() => crypto.randomUUID());
+	const isolateId = crypto.randomUUID();
 	return {
 		type: "CreateIsolate",
 		schemaVersion: 1,
 		otuId,
 		expectedVersion,
 		payload: {
+			acknowledgedMissingRecommendedSegments:
+				acknowledgedMissingRecommendedSegmentIds.map((segmentId) => ({
+					isolateId,
+					segmentId,
+				})),
 			genbank: {
 				sequences: draft.sequences.map((sequence, index) => ({
 					sequenceId: sequenceIds[index] ?? "",
@@ -25,7 +32,7 @@ export function buildCreateIsolateCommand(
 				})),
 			},
 			isolate: {
-				id: crypto.randomUUID(),
+				id: isolateId,
 				name: draft.name,
 				sequences: draft.sequences.map((sequence, index) => ({
 					id: sequenceIds[index] ?? "",

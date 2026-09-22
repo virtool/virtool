@@ -11,6 +11,7 @@ import { InputError, InputGroup, InputLabel, InputSimple } from "@base/Input";
 import { inputBaseClasses, inputHeightClass } from "@base/styles";
 import TextArea from "@base/TextArea";
 import { buildCreateIsolateCommand } from "@otus-v2/command";
+import MissingRecommendedAcknowledgement from "@otus-v2/components/MissingRecommendedAcknowledgement";
 import { getIsolateNameTypeLabel } from "@otus-v2/isolateName";
 import {
 	useCreateLocalOtuIsolate,
@@ -23,7 +24,7 @@ import {
 	type OtuV2Plan,
 } from "@virtool/contracts";
 import { useId, useRef, useState } from "react";
-import { useForm } from "react-hook-form";
+import { useForm, useWatch } from "react-hook-form";
 
 type FormValues = { accessions: string };
 type ManualFormValues = {
@@ -54,10 +55,28 @@ export default function CreateLocalOtuIsolateDialog({
 }) {
 	const [mode, setMode] = useState<"manual" | "genbank">("manual");
 	const [preview, setPreview] = useState<GenbankIsolateDraft>();
+	const [acknowledged, setAcknowledged] = useState(false);
 	const previewRevision = useRef(0);
 	const accessionsId = useId();
 	const previewMutation = useGenbankIsolateDraft(referenceId, otuId);
 	const createMutation = useCreateLocalOtuIsolate(referenceId);
+	const genbankMissing = preview
+		? plan.segments.filter(
+				(segment) =>
+					segment.rule === "recommended" &&
+					!preview.sequences.some(
+						(sequence) => sequence.segmentId === segment.id,
+					),
+			)
+		: [];
+	const genbankMissingItems = genbankMissing.map((segment) => ({
+		isolateId: "new",
+		isolateName: preview?.name ?? null,
+		segmentId: segment.id,
+		segmentName: segment.name
+			? `${segment.name.prefix} ${segment.name.key}`
+			: `Segment ${plan.segments.indexOf(segment) + 1}`,
+	}));
 	const {
 		register,
 		handleSubmit,
@@ -71,6 +90,7 @@ export default function CreateLocalOtuIsolateDialog({
 			setMode("manual");
 			previewRevision.current += 1;
 			setPreview(undefined);
+			setAcknowledged(false);
 			previewMutation.reset();
 			createMutation.reset();
 			reset();
@@ -80,6 +100,7 @@ export default function CreateLocalOtuIsolateDialog({
 	function invalidatePreview() {
 		previewRevision.current += 1;
 		setPreview(undefined);
+		setAcknowledged(false);
 		previewMutation.reset();
 		createMutation.reset();
 	}
@@ -97,10 +118,18 @@ export default function CreateLocalOtuIsolateDialog({
 	}
 
 	function commit() {
-		if (!preview) return;
-		createMutation.mutate(buildCreateIsolateCommand(preview, otuId, version), {
-			onSuccess: () => close(false),
-		});
+		if (!preview || (genbankMissing.length > 0 && !acknowledged)) return;
+		createMutation.mutate(
+			buildCreateIsolateCommand(
+				preview,
+				otuId,
+				version,
+				genbankMissing.map((segment) => segment.id),
+			),
+			{
+				onSuccess: () => close(false),
+			},
+		);
 	}
 
 	return (
@@ -202,11 +231,19 @@ export default function CreateLocalOtuIsolateDialog({
 								{createMutation.isError && (
 									<InputError>{createMutation.error.message}</InputError>
 								)}
+								<MissingRecommendedAcknowledgement
+									items={genbankMissingItems}
+									checked={acknowledged}
+									onChange={setAcknowledged}
+								/>
 								<DialogFooter>
 									<Button
 										color="blue"
 										onClick={commit}
-										disabled={createMutation.isPending}
+										disabled={
+											createMutation.isPending ||
+											(genbankMissing.length > 0 && !acknowledged)
+										}
 									>
 										Create isolate
 									</Button>
@@ -234,12 +271,14 @@ function ManualIsolateForm({
 	onCreated: () => void;
 }) {
 	const [planError, setPlanError] = useState<string>();
+	const [acknowledgedKey, setAcknowledgedKey] = useState<string>();
 	const nameTypeId = useId();
 	const nameId = useId();
 	const createMutation = useCreateLocalOtuIsolate(referenceId);
 	const {
 		register,
 		handleSubmit,
+		control,
 		formState: { errors },
 	} = useForm<ManualFormValues>({
 		defaultValues: {
@@ -248,9 +287,34 @@ function ManualIsolateForm({
 			sequences: plan.segments.map(() => ({ definition: "", sequence: "" })),
 		},
 	});
+	const watchedSequences = useWatch({ control, name: "sequences" });
+	const watchedName = useWatch({ control, name: "isolateNameValue" });
+	const watchedNameType = useWatch({ control, name: "isolateNameType" });
+	const reviewKey = JSON.stringify(watchedSequences);
+	const missingSegments = plan.segments.filter(
+		(segment, index) =>
+			segment.rule === "recommended" &&
+			!watchedSequences?.[index]?.sequence?.trim(),
+	);
+	const missingItems = missingSegments.map((segment) => ({
+		isolateId: "new",
+		isolateName: watchedName?.trim()
+			? { type: watchedNameType as OtuV2IsolateNameType, value: watchedName }
+			: null,
+		segmentId: segment.id,
+		segmentName: segment.name
+			? `${segment.name.prefix} ${segment.name.key}`
+			: `Segment ${plan.segments.indexOf(segment) + 1}`,
+	}));
 
 	function onSubmit(values: ManualFormValues) {
 		setPlanError(undefined);
+		if (missingSegments.length > 0 && acknowledgedKey !== reviewKey) {
+			setPlanError(
+				"Acknowledge the missing recommended segments before creating the isolate.",
+			);
+			return;
+		}
 		const nameValue = values.isolateNameValue.trim();
 		const isolate = {
 			id: crypto.randomUUID(),
@@ -286,7 +350,12 @@ function ManualIsolateForm({
 				schemaVersion: 1,
 				otuId,
 				expectedVersion: version,
-				payload: { isolate: result.data.isolate },
+				payload: {
+					isolate: result.data.isolate,
+					acknowledgedMissingRecommendedSegments: missingSegments.map(
+						(segment) => ({ isolateId: isolate.id, segmentId: segment.id }),
+					),
+				},
 			},
 			{ onSuccess: onCreated },
 		);
@@ -359,6 +428,13 @@ function ManualIsolateForm({
 				);
 			})}
 			{planError && <InputError>{planError}</InputError>}
+			<MissingRecommendedAcknowledgement
+				items={missingItems}
+				checked={missingSegments.length > 0 && acknowledgedKey === reviewKey}
+				onChange={(checked) =>
+					setAcknowledgedKey(checked ? reviewKey : undefined)
+				}
+			/>
 			{createMutation.isError && (
 				<InputError>{createMutation.error.message}</InputError>
 			)}

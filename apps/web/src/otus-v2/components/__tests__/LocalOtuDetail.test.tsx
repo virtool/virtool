@@ -195,7 +195,12 @@ describe("<LocalOtuDetail />", () => {
 			molecule: otu.molecule,
 			plan: otu.plan,
 			isolates: [
-				{ isolateId: firstIsolate.id, name: firstIsolate.name, issues: [] },
+				{
+					isolateId: firstIsolate.id,
+					name: firstIsolate.name,
+					issues: [],
+					missingRecommendedSegmentIds: [],
+				},
 			],
 		});
 		otuV2ServerFnMocks.updateLocalOtuPlanFn.mockReturnValueOnce(
@@ -644,7 +649,20 @@ describe("<LocalOtuDetail />", () => {
 			source: "manual",
 			accessionVersion: null,
 			provenanceIssues: [],
-			isolates: [{ isolateId: isolate.id, name: isolate.name, issues: [] }],
+			isolates: [
+				{
+					isolateId: isolate.id,
+					name: isolate.name,
+					issues: [],
+					missingRecommendedSegmentIds: [],
+				},
+				{
+					isolateId: crypto.randomUUID(),
+					name: null,
+					issues: [],
+					missingRecommendedSegmentIds: [crypto.randomUUID()],
+				},
+			],
 		});
 		otuV2ServerFnMocks.updateLocalOtuSequenceFn.mockReturnValueOnce(
 			new Promise(() => {}),
@@ -667,6 +685,11 @@ describe("<LocalOtuDetail />", () => {
 		expect(
 			within(preview).getByText(/manual, no accession/),
 		).toBeInTheDocument();
+		expect(
+			within(preview).queryByRole("checkbox", {
+				name: /I acknowledge these recommended segments are missing/,
+			}),
+		).not.toBeInTheDocument();
 		await userEvent.click(
 			screen.getByRole("button", { name: "Save sequence" }),
 		);
@@ -679,6 +702,7 @@ describe("<LocalOtuDetail />", () => {
 					otuId: otu.id,
 					expectedVersion: otu.version,
 					payload: {
+						acknowledgedMissingRecommendedSegments: [],
 						isolateId: isolate.id,
 						sequenceId: sequence.id,
 						segmentId: sequence.segmentId,

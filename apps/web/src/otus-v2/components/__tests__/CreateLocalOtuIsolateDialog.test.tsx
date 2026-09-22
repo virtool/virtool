@@ -67,6 +67,7 @@ describe("<CreateLocalOtuIsolateDialog />", () => {
 						otuId: "otu",
 						expectedVersion: 1,
 						payload: {
+							acknowledgedMissingRecommendedSegments: [],
 							isolate: expect.objectContaining({
 								name: { type: "isolate", value: "Lab 2" },
 								sequences: [
@@ -126,6 +127,55 @@ describe("<CreateLocalOtuIsolateDialog />", () => {
 			expect(request.data.command.payload.isolate.sequences[0].segmentId).toBe(
 				multipartitePlan.segments[0]?.id,
 			);
+		});
+	});
+
+	it("requires explicit acknowledgement for an omitted recommended segment", async () => {
+		const firstSegment = plan.segments[0];
+		if (!firstSegment) {
+			throw new Error("Expected a plan segment.");
+		}
+		const recommendedId = crypto.randomUUID();
+		const multipartitePlan: OtuV2Plan = {
+			...plan,
+			segments: [
+				{ ...firstSegment, name: { prefix: "RNA", key: "1" } },
+				{
+					id: recommendedId,
+					name: { prefix: "RNA", key: "2" },
+					length: 4,
+					lengthTolerance: 0,
+					rule: "recommended",
+				},
+			],
+		};
+		otuV2ServerFnMocks.createLocalOtuIsolateFn.mockResolvedValueOnce({});
+		renderDialog(multipartitePlan);
+		fireEvent.change(screen.getByLabelText("RNA 1 definition"), {
+			target: { value: "RNA 1" },
+		});
+		fireEvent.change(screen.getByLabelText("RNA 1 sequence"), {
+			target: { value: "ATCG" },
+		});
+		expect(screen.getByText("Unnamed isolate: RNA 2")).toBeInTheDocument();
+		fireEvent.click(screen.getByRole("button", { name: "Create isolate" }));
+		expect(
+			await screen.findByText(/Acknowledge the missing recommended segments/),
+		).toBeInTheDocument();
+		expect(otuV2ServerFnMocks.createLocalOtuIsolateFn).not.toHaveBeenCalled();
+		fireEvent.click(
+			screen.getByRole("checkbox", {
+				name: /I acknowledge these recommended segments are missing/,
+			}),
+		);
+		fireEvent.click(screen.getByRole("button", { name: "Create isolate" }));
+		await waitFor(() => {
+			const payload =
+				otuV2ServerFnMocks.createLocalOtuIsolateFn.mock.calls[0]?.[0].data
+					.command.payload;
+			expect(payload.acknowledgedMissingRecommendedSegments).toEqual([
+				{ isolateId: payload.isolate.id, segmentId: recommendedId },
+			]);
 		});
 	});
 

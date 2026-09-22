@@ -259,6 +259,7 @@ function createCommand(): CreateLocalOtuIsolateCommand {
 		otuId: "otu",
 		expectedVersion: 1,
 		payload: {
+			acknowledgedMissingRecommendedSegments: [],
 			genbank: {
 				sequences: [{ sequenceId: "sequence", accession: "NC_001367.1" }],
 			},

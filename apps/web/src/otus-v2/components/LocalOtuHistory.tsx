@@ -88,6 +88,15 @@ export default function LocalOtuHistory({
 										</>
 									)}
 								</p>
+								{change.acknowledgedMissingRecommendedSegments &&
+									change.acknowledgedMissingRecommendedSegments.length > 0 && (
+										<p className="mt-1 text-sm">
+											Acknowledged missing recommended segments:{" "}
+											{change.acknowledgedMissingRecommendedSegments
+												.map((item) => `${item.isolateId} / ${item.segmentId}`)
+												.join(", ")}
+										</p>
+									)}
 								<p className="mt-0.5 text-sm text-gray-500">
 									<Tooltip tip={exactTime}>
 										<button

@@ -3,6 +3,7 @@ import Button from "@base/Button";
 import { InputError, InputGroup, InputLabel, InputSimple } from "@base/Input";
 import { inputBaseClasses, inputHeightClass } from "@base/styles";
 import TextArea from "@base/TextArea";
+import MissingRecommendedAcknowledgement from "@otus-v2/components/MissingRecommendedAcknowledgement";
 import { getIsolateNameTypeLabel } from "@otus-v2/isolateName";
 import { useCreateLocalOtu } from "@otus-v2/queries";
 import { useNavigate } from "@tanstack/react-router";
@@ -16,7 +17,7 @@ import {
 	OtuV2Topology,
 } from "@virtool/contracts";
 import { useId, useState } from "react";
-import { useFieldArray, useForm } from "react-hook-form";
+import { useFieldArray, useForm, useWatch } from "react-hook-form";
 
 type SegmentFormValues = {
 	namePrefix: string;
@@ -81,6 +82,7 @@ export default function CreateLocalOtuForm({
 	const navigate = useNavigate();
 	const mutation = useCreateLocalOtu(referenceId);
 	const [planError, setPlanError] = useState<string>();
+	const [acknowledgedKey, setAcknowledgedKey] = useState<string>();
 
 	const ids = {
 		taxonomyName: useId(),
@@ -113,15 +115,40 @@ export default function CreateLocalOtuForm({
 		control,
 		name: "segments",
 	});
+	const watchedSegments = useWatch({ control, name: "segments" });
+	const watchedName = useWatch({ control, name: "isolateNameValue" });
+	const watchedNameType = useWatch({ control, name: "isolateNameType" });
+	const reviewKey = JSON.stringify(watchedSegments);
+	const missingIndexes = (watchedSegments ?? []).flatMap((segment, index) =>
+		segment.rule === "recommended" && !segment.sequence?.trim() ? [index] : [],
+	);
+	const missingItems = missingIndexes.map((index) => ({
+		isolateId: "first",
+		isolateName: watchedName?.trim()
+			? { type: watchedNameType as OtuV2IsolateNameType, value: watchedName }
+			: null,
+		segmentId: String(index),
+		segmentName:
+			watchedSegments?.[index]?.namePrefix && watchedSegments[index]?.nameKey
+				? `${watchedSegments[index]?.namePrefix} ${watchedSegments[index]?.nameKey}`
+				: `Segment ${index + 1}`,
+	}));
 
 	function onSubmit(values: FormValues) {
 		setPlanError(undefined);
+		if (missingIndexes.length > 0 && acknowledgedKey !== reviewKey) {
+			setPlanError(
+				"Acknowledge the missing recommended segments before creating the OTU.",
+			);
+			return;
+		}
 		const acronym = values.acronym.trim();
 		const isolateNameValue = values.isolateNameValue.trim();
 		const segments = values.segments.map((segment) => {
 			const id = crypto.randomUUID();
 			return { id, segment };
 		});
+		const isolateId = crypto.randomUUID();
 
 		const command: CreateLocalOtuCommandInput = {
 			type: "CreateOTU",
@@ -155,7 +182,7 @@ export default function CreateLocalOtuForm({
 				},
 				promotedAccessions: [],
 				isolate: {
-					id: crypto.randomUUID(),
+					id: isolateId,
 					name:
 						isolateNameValue === ""
 							? null
@@ -163,13 +190,19 @@ export default function CreateLocalOtuForm({
 									type: values.isolateNameType as OtuV2IsolateNameType,
 									value: isolateNameValue,
 								},
-					sequences: segments.map(({ id, segment }) => ({
-						id: crypto.randomUUID(),
-						definition: segment.sequenceDefinition,
-						sequence: segment.sequence,
-						segmentId: id,
-					})),
+					sequences: segments
+						.filter(({ segment }) => segment.sequence.trim())
+						.map(({ id, segment }) => ({
+							id: crypto.randomUUID(),
+							definition: segment.sequenceDefinition,
+							sequence: segment.sequence,
+							segmentId: id,
+						})),
 				},
+				acknowledgedMissingRecommendedSegments: missingIndexes.map((index) => ({
+					isolateId,
+					segmentId: segments[index]?.id ?? "",
+				})),
 			},
 		};
 
@@ -301,7 +334,7 @@ export default function CreateLocalOtuForm({
 							id={`${field.id}-length`}
 							type="number"
 							min={1}
-							aria-required
+							aria-required={watchedSegments?.[index]?.rule === "required"}
 							aria-invalid={
 								Boolean(errors.segments?.[index]?.length) || undefined
 							}
@@ -351,7 +384,10 @@ export default function CreateLocalOtuForm({
 								undefined
 							}
 							{...register(`segments.${index}.sequenceDefinition`, {
-								required: "Required Field",
+								validate: (value, form) =>
+									!form.segments[index]?.sequence?.trim() ||
+									Boolean(value?.trim()) ||
+									"Required when a sequence is entered.",
 							})}
 						/>
 						<InputError>
@@ -364,12 +400,15 @@ export default function CreateLocalOtuForm({
 						</InputLabel>
 						<TextArea
 							id={`${field.id}-sequence`}
-							aria-required
+							aria-required={watchedSegments?.[index]?.rule === "required"}
 							aria-invalid={
 								Boolean(errors.segments?.[index]?.sequence) || undefined
 							}
 							{...register(`segments.${index}.sequence`, {
-								required: "Required Field",
+								validate: (value, form) =>
+									form.segments[index]?.rule !== "required" ||
+									Boolean(value?.trim()) ||
+									"Required segment.",
 							})}
 						/>
 						<InputError>
@@ -390,6 +429,13 @@ export default function CreateLocalOtuForm({
 			>
 				Add segment
 			</Button>
+			<MissingRecommendedAcknowledgement
+				items={missingItems}
+				checked={missingIndexes.length > 0 && acknowledgedKey === reviewKey}
+				onChange={(checked) =>
+					setAcknowledgedKey(checked ? reviewKey : undefined)
+				}
+			/>
 
 			{planError && <InputError>{planError}</InputError>}
 			{mutation.isError && <InputError>{mutation.error.message}</InputError>}

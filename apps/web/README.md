@@ -129,9 +129,14 @@ content, and segment assignment before applying the versioned command. Manual
 `CreateOTU` and `CreateIsolate` requests have no GenBank provenance. Both
 manual and GenBank isolates must satisfy the OTU plan when saved.
 Manual OTU creation accepts one or more segments. Multipartite segments have
-unique names, rules, expected lengths, and tolerances; the first isolate
-supplies one sequence assigned to each segment. The same plan validation runs
-before submission and at the server boundary.
+unique names, rules, expected lengths, and tolerances. Required segments need
+sequences; optional segments may be omitted. When a recommended segment is
+missing, creation and affected edits show the isolate and segment names and
+require an explicit acknowledgement of those exact missing pairs. The server
+rechecks plan rules and the acknowledged pairs at save time, rejecting changed
+or stale omissions for a fresh review. This also applies when adding a manual
+or GenBank isolate, changing a plan, or editing a sequence. History records the
+acknowledged pair identifiers without sequence bodies.
 Local OTU taxonomy name, acronym, and lineage can be edited at the OTU's
 current version. The edit creates a new local identity revision without changing
 maintenance ownership or sequence provenance. Curators may add an NCBI species

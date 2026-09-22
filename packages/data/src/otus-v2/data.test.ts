@@ -31,6 +31,7 @@ import {
 	OtuV2InvalidIsolateError,
 	OtuV2InvalidProvenanceError,
 	OtuV2LastIsolateError,
+	OtuV2MissingRecommendedAcknowledgementError,
 	OtuV2NotFoundError,
 	OtuV2PromotedAccessionError,
 	OtuV2ReferenceNotWritableError,
@@ -197,6 +198,246 @@ describe("createReferenceV2", () => {
 });
 
 describe("createLocalOtu", () => {
+	it("requires exact acknowledgement of missing recommended segments in creation and plan edits", async () => {
+		const reference = await createReference();
+		const create = createCommand(randomUUID());
+		const recommendedId = randomUUID();
+		const recommended = {
+			id: recommendedId,
+			name: { prefix: "RNA", key: "2" },
+			length: 8,
+			lengthTolerance: 0,
+			rule: "recommended" as const,
+		};
+		const command = {
+			...create,
+			payload: {
+				...create.payload,
+				plan: {
+					...create.payload.plan,
+					segments: [
+						{
+							...create.payload.plan.segments[0],
+							name: { prefix: "RNA", key: "1" },
+						},
+						recommended,
+					],
+				},
+			},
+		};
+		await expect(
+			createLocalOtu(db, { referenceId: reference.id, userId, command }),
+		).rejects.toBeInstanceOf(OtuV2MissingRecommendedAcknowledgementError);
+		const acknowledged = [
+			{ isolateId: create.payload.isolate.id, segmentId: recommendedId },
+		];
+		await expect(
+			createLocalOtu(db, {
+				referenceId: reference.id,
+				userId,
+				command: {
+					...command,
+					payload: {
+						...command.payload,
+						acknowledgedMissingRecommendedSegments: [
+							...acknowledged,
+							...acknowledged,
+						],
+					},
+				},
+			}),
+		).rejects.toBeInstanceOf(OtuV2MissingRecommendedAcknowledgementError);
+		await expect(
+			createLocalOtu(db, {
+				referenceId: reference.id,
+				userId,
+				command: {
+					...command,
+					payload: {
+						...command.payload,
+						plan: {
+							...command.payload.plan,
+							segments: [
+								command.payload.plan.segments[0],
+								{ ...recommended, rule: "required" as const },
+							],
+						},
+						acknowledgedMissingRecommendedSegments: acknowledged,
+					},
+				},
+			}),
+		).rejects.toThrow();
+		const created = await createLocalOtu(db, {
+			referenceId: reference.id,
+			userId,
+			command: {
+				...command,
+				payload: {
+					...command.payload,
+					acknowledgedMissingRecommendedSegments: acknowledged,
+				},
+			},
+		});
+		expect(created.changes[0]?.acknowledgedMissingRecommendedSegments).toEqual(
+			acknowledged,
+		);
+		const isolateId = randomUUID();
+		const isolateCommand = {
+			type: "CreateIsolate" as const,
+			schemaVersion: 1 as const,
+			otuId: created.id,
+			expectedVersion: 1,
+			payload: {
+				isolate: {
+					id: isolateId,
+					name: null,
+					sequences: [
+						{
+							id: randomUUID(),
+							definition: "Second isolate",
+							sequence: "ATCGNNRY",
+							segmentId: create.payload.plan.segments[0].id,
+						},
+					],
+				},
+			},
+		};
+		await expect(
+			createLocalOtuIsolate(db, {
+				referenceId: reference.id,
+				userId,
+				command: isolateCommand,
+			}),
+		).rejects.toBeInstanceOf(OtuV2MissingRecommendedAcknowledgementError);
+		const secondAck = [{ isolateId, segmentId: recommendedId }];
+		const withSecond = await createLocalOtuIsolate(db, {
+			referenceId: reference.id,
+			userId,
+			command: {
+				...isolateCommand,
+				payload: {
+					...isolateCommand.payload,
+					acknowledgedMissingRecommendedSegments: secondAck,
+				},
+			},
+		});
+		expect(
+			withSecond.changes[0]?.acknowledgedMissingRecommendedSegments,
+		).toEqual(secondAck);
+		const thirdId = randomUUID();
+		const planCommand = {
+			type: "UpdatePlan" as const,
+			schemaVersion: 1 as const,
+			otuId: created.id,
+			expectedVersion: 2,
+			payload: {
+				molecule: created.molecule,
+				plan: {
+					...created.plan,
+					segments: [
+						...created.plan.segments,
+						{ ...recommended, id: thirdId, name: { prefix: "RNA", key: "3" } },
+					],
+				},
+			},
+		};
+		const preview = await previewLocalOtuPlan(db, reference.id, planCommand);
+		expect(
+			preview.isolates.map((isolate) => isolate.missingRecommendedSegmentIds),
+		).toEqual([
+			[recommendedId, thirdId],
+			[recommendedId, thirdId],
+		]);
+		await expect(
+			updateLocalOtuPlan(db, {
+				referenceId: reference.id,
+				userId,
+				command: planCommand,
+			}),
+		).rejects.toBeInstanceOf(OtuV2MissingRecommendedAcknowledgementError);
+		const allAck = [create.payload.isolate.id, isolateId].flatMap((id) =>
+			[recommendedId, thirdId].map((segmentId) => ({
+				isolateId: id,
+				segmentId,
+			})),
+		);
+		const updated = await updateLocalOtuPlan(db, {
+			referenceId: reference.id,
+			userId,
+			command: {
+				...planCommand,
+				payload: {
+					...planCommand.payload,
+					acknowledgedMissingRecommendedSegments: allAck,
+				},
+			},
+		});
+		expect(updated.version).toBe(3);
+		expect(updated.changes[0]?.acknowledgedMissingRecommendedSegments).toEqual(
+			allAck,
+		);
+		await expect(
+			updateLocalOtuPlan(db, {
+				referenceId: reference.id,
+				userId,
+				command: {
+					...planCommand,
+					payload: {
+						...planCommand.payload,
+						acknowledgedMissingRecommendedSegments: allAck,
+					},
+				},
+			}),
+		).rejects.toBeInstanceOf(OtuV2VersionConflictError);
+		const sequenceCommand = {
+			type: "UpdateSequence" as const,
+			schemaVersion: 1 as const,
+			otuId: created.id,
+			expectedVersion: 3,
+			payload: {
+				isolateId: create.payload.isolate.id,
+				sequenceId: create.payload.isolate.sequences[0].id,
+				segmentId: create.payload.plan.segments[0].id,
+				definition: "Revised genome",
+				sequence: "ATCGNNRY",
+				source: "manual" as const,
+				accessionVersion: null,
+			},
+		};
+		const sequencePreview = await previewLocalOtuSequence(
+			db,
+			reference.id,
+			sequenceCommand,
+		);
+		expect(sequencePreview.isolates[0]?.missingRecommendedSegmentIds).toEqual(
+			expect.arrayContaining([recommendedId, thirdId]),
+		);
+		await expect(
+			updateLocalOtuSequence(db, {
+				referenceId: reference.id,
+				userId,
+				command: sequenceCommand,
+			}),
+		).rejects.toBeInstanceOf(OtuV2MissingRecommendedAcknowledgementError);
+		const sequenceAck = [recommendedId, thirdId].map((segmentId) => ({
+			isolateId: create.payload.isolate.id,
+			segmentId,
+		}));
+		const sequenceUpdated = await updateLocalOtuSequence(db, {
+			referenceId: reference.id,
+			userId,
+			command: {
+				...sequenceCommand,
+				payload: {
+					...sequenceCommand.payload,
+					acknowledgedMissingRecommendedSegments: sequenceAck,
+				},
+			},
+		});
+		expect(
+			sequenceUpdated.changes[0]?.acknowledgedMissingRecommendedSegments,
+		).toEqual(sequenceAck);
+	});
 	it("promotes a GenBank base atomically and blocks its reimport", async () => {
 		const reference = await createReference();
 		const create = createCommand(randomUUID());
@@ -1123,6 +1364,7 @@ describe("createLocalOtu", () => {
 				isolateId: create.payload.isolate.id,
 				name: create.payload.isolate.name,
 				issues: [],
+				missingRecommendedSegmentIds: [],
 			},
 		]);
 		expect(JSON.stringify(preview)).not.toContain("ATCGNNRY");
@@ -1916,6 +2158,7 @@ describe("createLocalOtu", () => {
 			.where(eq(otuChanges.otuId, IDS.otu));
 		expect(change.payload).toEqual({
 			...createCommand().payload,
+			acknowledgedMissingRecommendedSegments: [],
 			isolate: {
 				...createCommand().payload.isolate,
 				sequences: [
