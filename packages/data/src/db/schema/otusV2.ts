@@ -468,6 +468,9 @@ export const otuSequenceVersions = pgTable(
 		uniqueIndex("otu_sequence_versions_current_key")
 			.on(table.otuId, table.sequenceId)
 			.where(sql`${table.lastVersion} is null`),
+		uniqueIndex("otu_sequence_versions_current_isolate_segment_key")
+			.on(table.otuId, table.isolateId, table.segmentId)
+			.where(sql`${table.lastVersion} is null`),
 		index("otu_sequence_versions_otu_isolate_idx").on(
 			table.otuId,
 			table.isolateId,

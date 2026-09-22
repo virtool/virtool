@@ -16,6 +16,7 @@ import {
 	type LocalOtuV2SequenceSummary,
 	type LocalOtuV2Summary,
 	type OtuV2Change,
+	OtuV2IsolatePlan,
 } from "@virtool/contracts";
 import { and, asc, count, desc, eq, inArray, isNull } from "drizzle-orm";
 import type { Db, DbOrTx, Transaction } from "../db/pg";
@@ -53,6 +54,39 @@ export class OtuV2VersionConflictError extends AppError {}
 
 /** Thrown when deletion would leave a v2 OTU without an isolate. */
 export class OtuV2LastIsolateError extends AppError {}
+
+/** Thrown when an isolate does not satisfy its OTU's current plan. */
+export class OtuV2InvalidIsolateError extends AppError {}
+
+async function getWritableLocalOtu(
+	tx: Transaction,
+	referenceId: string,
+	otuId: string,
+	expectedVersion: number,
+): Promise<void> {
+	const otu = takeFirst(
+		await tx
+			.select({
+				version: otusV2.version,
+				deletedVersion: otusV2.deletedVersion,
+				archived: referenceRoots.archived,
+				kind: referenceRoots.kind,
+			})
+			.from(otusV2)
+			.innerJoin(referenceRoots, eq(referenceRoots.id, otusV2.referenceId))
+			.where(and(eq(otusV2.id, otuId), eq(otusV2.referenceId, referenceId)))
+			.for("update"),
+	);
+	if (!otu || otu.deletedVersion !== null) {
+		throw new OtuV2NotFoundError();
+	}
+	if (otu.archived || otu.kind !== "local") {
+		throw new OtuV2ReferenceNotWritableError();
+	}
+	if (otu.version !== expectedVersion) {
+		throw new OtuV2VersionConflictError();
+	}
+}
 
 /** Values needed to apply a user-authored local `CreateOTU` command. */
 export type CreateLocalOtuValues = {
@@ -130,34 +164,12 @@ export async function deleteLocalOtuIsolate(
 	const command = DeleteLocalOtuIsolateCommand.parse(values.command);
 
 	await db.transaction(async (tx) => {
-		const otu = takeFirst(
-			await tx
-				.select({
-					version: otusV2.version,
-					deletedVersion: otusV2.deletedVersion,
-					archived: referenceRoots.archived,
-					kind: referenceRoots.kind,
-				})
-				.from(otusV2)
-				.innerJoin(referenceRoots, eq(referenceRoots.id, otusV2.referenceId))
-				.where(
-					and(
-						eq(otusV2.id, command.otuId),
-						eq(otusV2.referenceId, values.referenceId),
-					),
-				)
-				.for("update"),
+		await getWritableLocalOtu(
+			tx,
+			values.referenceId,
+			command.otuId,
+			command.expectedVersion,
 		);
-
-		if (!otu || otu.deletedVersion !== null) {
-			throw new OtuV2NotFoundError();
-		}
-		if (otu.archived || otu.kind !== "local") {
-			throw new OtuV2ReferenceNotWritableError();
-		}
-		if (otu.version !== command.expectedVersion) {
-			throw new OtuV2VersionConflictError();
-		}
 
 		const isolate = takeFirst(
 			await tx
@@ -234,34 +246,12 @@ export async function deleteLocalOtu(
 	const command = DeleteLocalOtuCommand.parse(values.command);
 
 	await db.transaction(async (tx) => {
-		const otu = takeFirst(
-			await tx
-				.select({
-					version: otusV2.version,
-					deletedVersion: otusV2.deletedVersion,
-					archived: referenceRoots.archived,
-					kind: referenceRoots.kind,
-				})
-				.from(otusV2)
-				.innerJoin(referenceRoots, eq(referenceRoots.id, otusV2.referenceId))
-				.where(
-					and(
-						eq(otusV2.id, command.otuId),
-						eq(otusV2.referenceId, values.referenceId),
-					),
-				)
-				.for("update"),
+		await getWritableLocalOtu(
+			tx,
+			values.referenceId,
+			command.otuId,
+			command.expectedVersion,
 		);
-
-		if (!otu || otu.deletedVersion !== null) {
-			throw new OtuV2NotFoundError();
-		}
-		if (otu.archived || otu.kind !== "local") {
-			throw new OtuV2ReferenceNotWritableError();
-		}
-		if (otu.version !== command.expectedVersion) {
-			throw new OtuV2VersionConflictError();
-		}
 
 		const version = command.expectedVersion + 1;
 		await tx
@@ -291,38 +281,54 @@ export async function createLocalOtuIsolate(
 
 	try {
 		await db.transaction(async (tx) => {
-			const otu = takeFirst(
-				await tx
-					.select({ version: otusV2.version, referenceId: otusV2.referenceId })
-					.from(otusV2)
-					.innerJoin(referenceRoots, eq(referenceRoots.id, otusV2.referenceId))
-					.where(
-						and(
-							eq(otusV2.id, command.otuId),
-							eq(otusV2.referenceId, values.referenceId),
-						),
-					)
-					.for("update"),
+			await getWritableLocalOtu(
+				tx,
+				values.referenceId,
+				command.otuId,
+				command.expectedVersion,
 			);
-
-			if (!otu) {
-				throw new OtuV2NotFoundError();
-			}
-			if (otu.version !== command.expectedVersion) {
-				throw new OtuV2VersionConflictError();
-			}
-
-			const reference = takeFirst(
+			const segmentRows = await tx
+				.select({
+					id: otuPlanSegmentVersions.segmentId,
+					namePrefix: otuPlanSegmentVersions.namePrefix,
+					nameKey: otuPlanSegmentVersions.nameKey,
+					length: otuPlanSegmentVersions.length,
+					lengthTolerance: otuPlanSegmentVersions.lengthTolerance,
+					rule: otuPlanSegmentVersions.rule,
+				})
+				.from(otuPlanSegmentVersions)
+				.where(
+					and(
+						eq(otuPlanSegmentVersions.otuId, command.otuId),
+						isNull(otuPlanSegmentVersions.lastVersion),
+					),
+				);
+			const plan = takeFirst(
 				await tx
-					.select({
-						archived: referenceRoots.archived,
-						kind: referenceRoots.kind,
-					})
-					.from(referenceRoots)
-					.where(eq(referenceRoots.id, values.referenceId)),
+					.select({ id: otuPlans.id })
+					.from(otuPlans)
+					.where(eq(otuPlans.otuId, command.otuId)),
 			);
-			if (!reference || reference.archived || reference.kind !== "local") {
-				throw new OtuV2ReferenceNotWritableError();
+			if (
+				!plan ||
+				!OtuV2IsolatePlan.safeParse({
+					plan: {
+						id: plan.id,
+						segments: segmentRows.map((segment) => ({
+							id: segment.id,
+							name:
+								segment.namePrefix && segment.nameKey
+									? { prefix: segment.namePrefix, key: segment.nameKey }
+									: null,
+							length: segment.length,
+							lengthTolerance: segment.lengthTolerance,
+							rule: segment.rule,
+						})),
+					},
+					isolate: command.payload.isolate,
+				}).success
+			) {
+				throw new OtuV2InvalidIsolateError();
 			}
 
 			const version = command.expectedVersion + 1;

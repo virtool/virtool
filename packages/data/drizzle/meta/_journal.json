@@ -281,6 +281,13 @@
       "when": 1790100778041,
       "tag": "0039_far_shiver_man",
       "breakpoints": true
+    },
+    {
+      "idx": 40,
+      "version": "7",
+      "when": 1790105943676,
+      "tag": "0040_careless_nitro",
+      "breakpoints": true
     }
   ]
 }

@@ -19,6 +19,7 @@ import {
 	getLocalOtuIsolate,
 	getLocalOtus,
 	OtuV2ConflictError,
+	OtuV2InvalidIsolateError,
 	OtuV2LastIsolateError,
 	OtuV2NotFoundError,
 } from "./data";
@@ -163,6 +164,131 @@ describe("createReferenceV2", () => {
 });
 
 describe("createLocalOtu", () => {
+	it("rejects invalid direct isolate writes without advancing the version", async () => {
+		const reference = await createReference();
+		const command = createCommand("11000000-0000-4000-8000-000000000001");
+		command.payload.plan.segments.push({
+			id: "11000000-0000-4000-8000-000000000009",
+			name: null,
+			length: 8,
+			lengthTolerance: 0,
+			rule: "required",
+		});
+		command.payload.isolate.sequences.push({
+			id: "11000000-0000-4000-8000-00000000000a",
+			definition: "Segment B",
+			sequence: "ATCGATCG",
+			segmentId: command.payload.plan.segments[1].id,
+		});
+		await createLocalOtu(db, { referenceId: reference.id, userId, command });
+
+		const base = {
+			type: "CreateIsolate" as const,
+			schemaVersion: 1 as const,
+			otuId: command.otuId,
+			expectedVersion: 1,
+			payload: {
+				isolate: {
+					id: "11000000-0000-4000-8000-00000000000b",
+					name: null,
+					sequences: [
+						{
+							id: "11000000-0000-4000-8000-00000000000c",
+							definition: "A",
+							sequence: "ATCGATCG",
+							segmentId: command.payload.plan.segments[0].id,
+						},
+						{
+							id: "11000000-0000-4000-8000-00000000000d",
+							definition: "B",
+							sequence: "ATCGATCG",
+							segmentId: command.payload.plan.segments[1].id,
+						},
+					],
+				},
+			},
+		};
+		const invalid = [
+			{
+				...base,
+				payload: {
+					isolate: {
+						...base.payload.isolate,
+						sequences: base.payload.isolate.sequences.slice(0, 1),
+					},
+				},
+			},
+			{
+				...base,
+				payload: {
+					isolate: {
+						...base.payload.isolate,
+						sequences: [
+							{ ...base.payload.isolate.sequences[0], sequence: "ATCG" },
+							base.payload.isolate.sequences[1],
+						],
+					},
+				},
+			},
+			{
+				...base,
+				payload: {
+					isolate: {
+						...base.payload.isolate,
+						sequences: [
+							base.payload.isolate.sequences[0],
+							{
+								...base.payload.isolate.sequences[1],
+								segmentId: base.payload.isolate.sequences[0].segmentId,
+							},
+						],
+					},
+				},
+			},
+			{
+				...base,
+				payload: {
+					isolate: {
+						...base.payload.isolate,
+						sequences: [
+							base.payload.isolate.sequences[0],
+							{
+								...base.payload.isolate.sequences[1],
+								id: base.payload.isolate.sequences[0].id,
+							},
+						],
+					},
+				},
+			},
+			{
+				...base,
+				payload: {
+					isolate: {
+						...base.payload.isolate,
+						sequences: [
+							base.payload.isolate.sequences[0],
+							{
+								...base.payload.isolate.sequences[1],
+								segmentId: command.payload.plan.id,
+							},
+						],
+					},
+				},
+			},
+		];
+		for (const attempted of invalid) {
+			await expect(
+				createLocalOtuIsolate(db, {
+					referenceId: reference.id,
+					userId,
+					command: attempted,
+				}),
+			).rejects.toBeInstanceOf(OtuV2InvalidIsolateError);
+		}
+		const otu = await getLocalOtu(db, reference.id, command.otuId);
+		expect(otu.version).toBe(1);
+		expect(otu.isolates).toHaveLength(1);
+	});
 	it("soft-deletes an isolate and its sequences in a new version", async () => {
 		const reference = await createReference();
 		const command = createCommand("60000000-0000-4000-8000-000000000001");

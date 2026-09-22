@@ -338,6 +338,63 @@ describe("createLocalOtu", () => {
 			}),
 		).rejects.toMatchObject({ status: 422 });
 	});
+
+	it("rejects a preview-driven isolate outside the current plan tolerance", async () => {
+		const userId = await signIn(db, getRequest, { administratorRole: null });
+		const referenceId = await seedReferenceV2(userId);
+		fetchGenbankRecords.mockResolvedValue([record]);
+		fetchTaxonomyRecord.mockResolvedValue(taxonomy);
+		const otuCommand = genbankCommand();
+		await call("createLocalOtuFn", { referenceId, command: otuCommand });
+
+		const shortRecord = { ...record, sequence: "ATCG" };
+		fetchGenbankRecords.mockResolvedValue([shortRecord]);
+		const draft = (await call("getGenbankIsolateDraftFn", {
+			referenceId,
+			otuId: otuCommand.otuId,
+			accessions: [record.accession_version],
+		})) as { sequences: Array<{ sequence: string; segmentId: string }> };
+		const previewSequence = draft.sequences[0];
+		if (!previewSequence) {
+			throw new Error("Expected a preview sequence.");
+		}
+		expect(previewSequence.sequence).toBe("ATCG");
+		const sequenceId = randomUUID();
+		await expect(
+			call("createLocalOtuIsolateFn", {
+				referenceId,
+				command: {
+					type: "CreateIsolate",
+					schemaVersion: 1,
+					otuId: otuCommand.otuId,
+					expectedVersion: 1,
+					payload: {
+						genbank: {
+							sequences: [{ sequenceId, accession: record.accession_version }],
+						},
+						isolate: {
+							id: randomUUID(),
+							name: null,
+							sequences: [
+								{
+									id: sequenceId,
+									definition: shortRecord.definition,
+									sequence: previewSequence.sequence,
+									segmentId: previewSequence.segmentId,
+								},
+							],
+						},
+					},
+				},
+			}),
+		).rejects.toMatchObject({ status: 422 });
+		const otu = (await call("getLocalOtuFn", {
+			referenceId,
+			otuId: otuCommand.otuId,
+		})) as { version: number; isolates: unknown[] };
+		expect(otu.version).toBe(1);
+		expect(otu.isolates).toHaveLength(1);
+	});
 	it("creates a complete OTU for a member with modifyOtu", async () => {
 		const userId = await signIn(db, getRequest, { administratorRole: null });
 		const referenceId = await seedReferenceV2(userId);

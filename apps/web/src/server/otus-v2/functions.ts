@@ -20,6 +20,7 @@ import {
 	getLocalOtuSequence,
 	getLocalOtus,
 	OtuV2ConflictError,
+	OtuV2InvalidIsolateError,
 	OtuV2LastIsolateError,
 	OtuV2NotFoundError,
 	OtuV2ReferenceNotWritableError,
@@ -145,6 +146,10 @@ const rethrowAsHttp = createServerOnlyFn((err: unknown): never => {
 	if (err instanceof OtuV2LastIsolateError) {
 		setResponseStatus(409);
 		throw new ClientError("An OTU must have at least one isolate.", 409);
+	}
+	if (err instanceof OtuV2InvalidIsolateError) {
+		setResponseStatus(422);
+		throw new ClientError("Isolate does not satisfy the OTU plan.", 422);
 	}
 	if (err instanceof GenbankOtuMixedTaxidError) {
 		setResponseStatus(422);

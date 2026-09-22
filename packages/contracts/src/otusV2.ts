@@ -164,6 +164,77 @@ const genbankProvenanceSchema = z
 	})
 	.strict();
 
+function checkIsolatePlan(
+	plan: z.output<typeof planSchema>,
+	isolate: z.output<typeof isolateSchema>,
+	ctx: z.RefinementCtx,
+): void {
+	const segments = new Map(
+		plan.segments.map((segment) => [segment.id, segment]),
+	);
+	const sequenceIds = new Set<string>();
+	const filledSegments = new Set<string>();
+
+	for (const [index, sequence] of isolate.sequences.entries()) {
+		if (sequenceIds.has(sequence.id)) {
+			ctx.addIssue({
+				code: "custom",
+				path: ["isolate", "sequences", index, "id"],
+				message: "Sequence ids must be unique.",
+			});
+		}
+		sequenceIds.add(sequence.id);
+
+		const segment = segments.get(sequence.segmentId);
+		if (!segment) {
+			ctx.addIssue({
+				code: "custom",
+				path: ["isolate", "sequences", index, "segmentId"],
+				message: "Sequence segment must belong to the OTU plan.",
+			});
+			continue;
+		}
+		if (filledSegments.has(sequence.segmentId)) {
+			ctx.addIssue({
+				code: "custom",
+				path: ["isolate", "sequences", index, "segmentId"],
+				message: "A segment can have only one sequence per isolate.",
+			});
+		}
+		filledSegments.add(sequence.segmentId);
+		const minimum = segment.length * (1 - segment.lengthTolerance);
+		const maximum = segment.length * (1 + segment.lengthTolerance);
+		if (
+			sequence.sequence.length < minimum ||
+			sequence.sequence.length > maximum
+		) {
+			ctx.addIssue({
+				code: "custom",
+				path: ["isolate", "sequences", index, "sequence"],
+				message: "Sequence length is outside the segment tolerance.",
+			});
+		}
+	}
+
+	for (const [index, segment] of plan.segments.entries()) {
+		if (segment.rule === "required" && !filledSegments.has(segment.id)) {
+			ctx.addIssue({
+				code: "custom",
+				path: ["plan", "segments", index],
+				message: "Every required segment must have a sequence.",
+			});
+		}
+	}
+}
+
+/** The shared plan rules for one local OTU isolate. */
+export const OtuV2IsolatePlan = z
+	.object({ plan: planSchema, isolate: isolateSchema })
+	.strict()
+	.superRefine(({ plan, isolate }, ctx) =>
+		checkIsolatePlan(plan, isolate, ctx),
+	);
+
 const createOtuPayloadSchema = z
 	.object({
 		molecule: moleculeSchema,
@@ -188,56 +259,7 @@ const createOtuPayloadSchema = z
 			segmentIds.add(segment.id);
 		}
 
-		const sequenceIds = new Set<string>();
-		const filledSegments = new Set<string>();
-
-		for (const [index, sequence] of payload.isolate.sequences.entries()) {
-			if (sequenceIds.has(sequence.id)) {
-				ctx.addIssue({
-					code: "custom",
-					path: ["isolate", "sequences", index, "id"],
-					message: "Sequence ids must be unique.",
-				});
-			}
-			sequenceIds.add(sequence.id);
-
-			if (!segmentIds.has(sequence.segmentId)) {
-				ctx.addIssue({
-					code: "custom",
-					path: ["isolate", "sequences", index, "segmentId"],
-					message: "Sequence segment must belong to the OTU plan.",
-				});
-			}
-			filledSegments.add(sequence.segmentId);
-
-			const segment = payload.plan.segments.find(
-				(candidate) => candidate.id === sequence.segmentId,
-			);
-			if (segment) {
-				const minimum = segment.length * (1 - segment.lengthTolerance);
-				const maximum = segment.length * (1 + segment.lengthTolerance);
-				if (
-					sequence.sequence.length < minimum ||
-					sequence.sequence.length > maximum
-				) {
-					ctx.addIssue({
-						code: "custom",
-						path: ["isolate", "sequences", index, "sequence"],
-						message: "Sequence length is outside the segment tolerance.",
-					});
-				}
-			}
-		}
-
-		for (const [index, segment] of payload.plan.segments.entries()) {
-			if (segment.rule === "required" && !filledSegments.has(segment.id)) {
-				ctx.addIssue({
-					code: "custom",
-					path: ["plan", "segments", index],
-					message: "Every required segment must have a sequence.",
-				});
-			}
-		}
+		checkIsolatePlan(payload.plan, payload.isolate, ctx);
 	});
 
 /** A canonical local `CreateOTU` command accepted by v2. */
