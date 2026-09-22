@@ -186,7 +186,7 @@ replace the password. Virtool signs in by handle; email sign-in is off because
 Account email changes queue a verification link and leave the current address
 and verified state in place until the new mailbox proves control. The link is
 single use and checks that the original address is still current. Repeated
-requests observe the resend window. Verification links for an unverified
+requests are rate limited. Verification links for an unverified
 current address use the same route. Changing an address supersedes outstanding
 recovery links; an existing browser session remains active.
 
