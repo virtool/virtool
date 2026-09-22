@@ -12,13 +12,16 @@ import {
 	isSetupPrincipal,
 	type PasswordResetPrincipal,
 	type Permission,
+	SESSION_NOT_FRESH_ERROR_NAME,
 	type SetupPrincipal,
 	type SetupPurpose,
 } from "@virtool/contracts";
+import { resolveBrowserSession } from "@virtool/data/auth/session";
 import { groups, userGroups } from "@virtool/data/db/schema/groups";
 import { users } from "@virtool/data/db/schema/users";
 import { eq } from "drizzle-orm";
 import { db } from "../composition";
+import { isSessionFresh, type ProtectedOperation } from "./freshness";
 import {
 	ForbiddenError,
 	requireBrowserPrincipal,
@@ -68,6 +71,24 @@ const forbid = createServerOnlyFn((): never => {
 	setResponseStatus(403);
 	throw new ForbiddenError();
 });
+
+/** Thrown when a sensitive mutation needs a newer browser session. */
+export class SessionNotFreshError extends Error {
+	readonly operation: ProtectedOperation;
+
+	constructor(operation: ProtectedOperation) {
+		super("Recent authentication required");
+		this.name = SESSION_NOT_FRESH_ERROR_NAME;
+		this.operation = operation;
+	}
+}
+
+const rejectStaleSession = createServerOnlyFn(
+	(operation: ProtectedOperation): never => {
+		setResponseStatus(403);
+		throw new SessionNotFreshError(operation);
+	},
+);
 
 // Absent only in tests, which run a handler without the global middleware.
 //
@@ -183,6 +204,38 @@ export function authenticated() {
 		async ({ context, next }) => {
 			const principal = await resolveBrowser(context);
 			return next({ context: { principal } });
+		},
+	);
+}
+
+/** Callable only with an authoritative, recently created Better Auth session. */
+export function recentlyAuthenticated(operation: ProtectedOperation) {
+	return createMiddleware({ type: "function" }).server(
+		async ({ context, next }) => {
+			const principal = await resolveBrowser(context);
+			if (principal.sessionStore !== "better_auth") {
+				rejectStaleSession(operation);
+			}
+
+			const session = await resolveBrowserSession(
+				db,
+				principal.sessionId,
+				principal.userId,
+			);
+			if (!session) {
+				setResponseStatus(401);
+				throw new UnauthorizedError();
+			}
+			if (!isSessionFresh(session.createdAt)) {
+				rejectStaleSession(operation);
+			}
+
+			return next({
+				context: {
+					principal: { ...principal, createdAt: session.createdAt },
+					protectedOperation: operation,
+				},
+			});
 		},
 	);
 }

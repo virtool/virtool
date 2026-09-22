@@ -1,18 +1,31 @@
 import type { AccountLifecycleState } from "@virtool/contracts";
 import type { Db } from "@virtool/data/db/pg";
-import { authAccounts, authSessions } from "@virtool/data/db/schema/auth";
+import {
+	authAccounts,
+	authRateLimits,
+	authSessions,
+} from "@virtool/data/db/schema/auth";
 import { users } from "@virtool/data/db/schema/users";
 import {
 	createTestDatabase,
 	type TestDatabase,
 } from "@virtool/data/db/test/fixtures";
 import { eq } from "drizzle-orm";
-import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
+import {
+	afterAll,
+	beforeAll,
+	beforeEach,
+	describe,
+	expect,
+	it,
+	vi,
+} from "vitest";
 import {
 	AUTH_BASE_PATH,
 	createAuth,
 	createAuthRequestHandler,
 } from "./betterAuth";
+import { SESSION_FRESH_AGE_SECONDS } from "./freshness";
 
 const ORIGIN = "https://virtool.test";
 
@@ -46,7 +59,7 @@ afterAll(async () => {
 });
 
 beforeEach(async () => {
-	await db.delete(users);
+	await Promise.all([db.delete(users), db.delete(authRateLimits)]);
 });
 
 function post(path: string, body: unknown, origin = ORIGIN): Request {
@@ -114,6 +127,10 @@ async function seedMigratedUser(
 }
 
 describe("legacy bcrypt credentials", () => {
+	it("configures the explicit recent-authentication window", () => {
+		expect(auth.options.session?.freshAge).toBe(SESSION_FRESH_AGE_SECONDS);
+	});
+
 	it("authenticates a copied production hash without rehashing it", async () => {
 		const userId = await seedMigratedUser();
 
@@ -291,6 +308,206 @@ describe("the mounted handler", () => {
 		expect(cookie).toContain("HttpOnly");
 		expect(cookie).toContain("Secure");
 		expect(cookie).toContain("SameSite=Lax");
+	});
+});
+
+describe("step-up session replacement", () => {
+	async function signInForReplacement() {
+		await seedMigratedUser();
+		const response = await auth.handler(
+			post("/sign-in/username", {
+				username: "alice",
+				password: LEGACY_PASSWORD,
+			}),
+		);
+		const cookie = response.headers.get("set-cookie")?.split(";", 1)[0];
+		if (!cookie) {
+			throw new Error("sign-in did not set a session cookie");
+		}
+		const [session] = await db.select().from(authSessions);
+		if (!session) {
+			throw new Error("sign-in did not create a session");
+		}
+		return { cookie, session };
+	}
+
+	it("shares the challenge limit across methods and releases it after expiry", async () => {
+		const { cookie } = await signInForReplacement();
+		const password = vi.spyOn(auth.api, "verifyPassword");
+		const totp = vi.spyOn(auth.api, "verifyTOTP");
+		try {
+			for (const method of [
+				"password",
+				"totp",
+				"password",
+				"totp",
+				"password",
+			]) {
+				const request = post(
+					"/virtool-session/challenge",
+					method === "password"
+						? { method, password: "wrong-password" }
+						: { method, code: "000000" },
+				);
+				request.headers.set("cookie", cookie);
+				const response = await auth.handler(request);
+				expect(response.status).toBeGreaterThanOrEqual(400);
+				expect(response.status).toBeLessThan(429);
+			}
+			for (const method of ["password", "totp"]) {
+				const request = post(
+					"/virtool-session/challenge",
+					method === "password"
+						? { method, password: LEGACY_PASSWORD }
+						: { method, code: "000000" },
+				);
+				request.headers.set("cookie", cookie);
+				const response = await auth.handler(request);
+				expect(response.status).toBe(429);
+				expect(Number(response.headers.get("x-retry-after"))).toBeGreaterThan(
+					0,
+				);
+			}
+			expect(password).toHaveBeenCalledTimes(3);
+			expect(totp).toHaveBeenCalledTimes(2);
+			expect(totp).toHaveBeenCalledWith({
+				headers: expect.any(Headers),
+				body: { code: "000000", trustDevice: false },
+			});
+			await db.update(authRateLimits).set({ lastRequest: Date.now() - 61_000 });
+			const request = post("/virtool-session/challenge", {
+				method: "password",
+				password: LEGACY_PASSWORD,
+			});
+			request.headers.set("cookie", cookie);
+			expect((await auth.handler(request)).status).toBe(200);
+			expect(password).toHaveBeenCalledTimes(4);
+		} finally {
+			password.mockRestore();
+			totp.mockRestore();
+		}
+	});
+
+	it("shares the challenge budget across instances under concurrent requests", async () => {
+		const { cookie } = await signInForReplacement();
+		const connection = database.connect();
+		const otherAuth = createAuth({
+			db: connection.db,
+			publicOrigin: ORIGIN,
+			webauthnRpId: "virtool.test",
+			secret: "test-auth-secret-test-auth-secret",
+		});
+		try {
+			const responses = await Promise.all(
+				Array.from({ length: 10 }, async (_, index) => {
+					const request = post("/virtool-session/challenge", {
+						method: "totp",
+						code: "000000",
+					});
+					request.headers.set("cookie", cookie);
+					return (index % 2 === 0 ? auth : otherAuth).handler(request);
+				}),
+			);
+			expect(
+				responses.filter((response) => response.status === 429),
+			).toHaveLength(5);
+			expect(
+				responses.filter((response) => response.status === 400),
+			).toHaveLength(5);
+		} finally {
+			await connection.close();
+		}
+	});
+
+	it("keeps challenge budgets separate by client IP", async () => {
+		const { cookie } = await signInForReplacement();
+		for (const ip of [
+			"192.0.2.1",
+			"192.0.2.1",
+			"192.0.2.1",
+			"192.0.2.1",
+			"192.0.2.1",
+			"192.0.2.1",
+			"192.0.2.2",
+		]) {
+			const request = post("/virtool-session/challenge", {
+				method: "totp",
+				code: "000000",
+			});
+			request.headers.set("cookie", cookie);
+			request.headers.set("x-forwarded-for", ip);
+			const response = await auth.handler(request);
+			if (ip === "192.0.2.2") {
+				expect(response.status).toBe(400);
+			}
+		}
+		const request = post("/virtool-session/challenge", {
+			method: "totp",
+			code: "000000",
+		});
+		request.headers.set("cookie", cookie);
+		request.headers.set("x-forwarded-for", "192.0.2.1");
+		expect((await auth.handler(request)).status).toBe(429);
+	});
+
+	it("creates a fresh replacement and revokes the old session", async () => {
+		const { cookie, session: oldSession } = await signInForReplacement();
+
+		const result = await auth.api.createStepUpSession({
+			headers: new Headers({ cookie, origin: ORIGIN }),
+			returnHeaders: true,
+		});
+		const sessions = await db.select().from(authSessions);
+
+		expect(sessions).toHaveLength(1);
+		expect(sessions[0]?.id).toBe(Number(result.response.sessionId));
+		expect(sessions[0]?.id).not.toBe(oldSession.id);
+		expect(sessions[0]?.createdAt.getTime()).toBeGreaterThanOrEqual(
+			oldSession.createdAt.getTime(),
+		);
+		expect(sessions[0]?.ipAddress).toBe(oldSession.ipAddress);
+		expect(sessions[0]?.userAgent).toBe(oldSession.userAgent);
+		expect(result.headers.get("set-cookie")).toContain(
+			"better-auth.session_token=",
+		);
+	});
+
+	it("replaces a valid session older than the freshness window", async () => {
+		const { cookie, session: oldSession } = await signInForReplacement();
+		const staleCreatedAt = new Date(
+			Date.now() - (SESSION_FRESH_AGE_SECONDS + 1) * 1000,
+		);
+		await db
+			.update(authSessions)
+			.set({ createdAt: staleCreatedAt })
+			.where(eq(authSessions.id, oldSession.id));
+
+		const result = await auth.api.createStepUpSession({
+			headers: new Headers({ cookie, origin: ORIGIN }),
+		});
+
+		expect(Number(result.sessionId)).not.toBe(oldSession.id);
+		expect(await db.select().from(authSessions)).toHaveLength(1);
+	});
+
+	it("keeps exactly one durable winner across concurrent replacements", async () => {
+		const { cookie, session: oldSession } = await signInForReplacement();
+		const headers = new Headers({ cookie, origin: ORIGIN });
+
+		const results = await Promise.allSettled([
+			auth.api.createStepUpSession({ headers }),
+			auth.api.createStepUpSession({ headers }),
+		]);
+		const sessions = await db.select().from(authSessions);
+
+		expect(results.filter(({ status }) => status === "fulfilled")).toHaveLength(
+			1,
+		);
+		expect(results.filter(({ status }) => status === "rejected")).toHaveLength(
+			1,
+		);
+		expect(sessions).toHaveLength(1);
+		expect(sessions[0]?.id).not.toBe(oldSession.id);
 	});
 });
 

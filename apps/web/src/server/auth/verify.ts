@@ -61,6 +61,7 @@ export async function verifyBrowserPrincipal(
 		kind: row.forceReset ? "password_reset" : "browser",
 		userId,
 		sessionId,
+		createdAt: row.createdAt,
 		sessionStore: "better_auth",
 	};
 }
@@ -125,6 +126,7 @@ export async function verifyLegacyBrowserPrincipal(
 			? {
 					kind: "password_reset",
 					sessionId: row.id,
+					createdAt: row.createdAt,
 					sessionStore: "legacy",
 					userId: row.userId,
 				}
@@ -134,6 +136,7 @@ export async function verifyLegacyBrowserPrincipal(
 	return {
 		kind: "browser",
 		sessionId: row.id,
+		createdAt: row.createdAt,
 		sessionStore: "legacy",
 		userId: row.userId,
 	};

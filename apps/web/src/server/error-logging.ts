@@ -3,6 +3,7 @@ import { getRequest, getResponseStatus } from "@tanstack/react-start/server";
 import {
 	FORBIDDEN_ERROR_NAME,
 	PASSWORD_RESET_REQUIRED_ERROR_NAME,
+	SESSION_NOT_FRESH_ERROR_NAME,
 	SETUP_REQUIRED_ERROR_NAME,
 	UNAUTHORIZED_ERROR_NAME,
 } from "@virtool/contracts";
@@ -11,6 +12,7 @@ import { logger } from "./logger";
 const FORBIDDEN_ERROR_NAMES = new Set([
 	FORBIDDEN_ERROR_NAME,
 	PASSWORD_RESET_REQUIRED_ERROR_NAME,
+	SESSION_NOT_FRESH_ERROR_NAME,
 	SETUP_REQUIRED_ERROR_NAME,
 ]);
 

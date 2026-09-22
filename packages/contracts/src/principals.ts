@@ -7,6 +7,8 @@ export type BrowserPrincipal = {
 	userId: number;
 	/** Stable session-row identifier; never the bearer token. */
 	sessionId: number;
+	/** Immutable time at which this browser session was created. */
+	createdAt: Date;
 	sessionStore: "better_auth" | "legacy";
 };
 
@@ -16,6 +18,8 @@ export type PasswordResetPrincipal = {
 	userId: number;
 	/** Stable session-row identifier; never the bearer token. */
 	sessionId: number;
+	/** Immutable time at which this browser session was created. */
+	createdAt: Date;
 	sessionStore: "better_auth" | "legacy";
 };
 
