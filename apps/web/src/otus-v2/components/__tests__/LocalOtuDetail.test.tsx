@@ -483,6 +483,70 @@ describe("<LocalOtuDetail />", () => {
 		).toBeInTheDocument();
 	});
 
+	it("previews and confirms a manual sequence edit with exact source", async () => {
+		const isolate = otu.isolates[0];
+		const sequence = isolate?.sequences[0];
+		if (!isolate || !sequence) {
+			throw new Error("Expected fake isolate with sequence.");
+		}
+		otuV2ServerFnMocks.getLocalOtuSequenceFn.mockResolvedValue({
+			...sequence,
+			source: "manual",
+			accessionVersion: null,
+		});
+		otuV2ServerFnMocks.previewLocalOtuSequenceFn.mockResolvedValue({
+			expectedVersion: otu.version,
+			source: "manual",
+			accessionVersion: null,
+			provenanceIssues: [],
+			isolates: [{ isolateId: isolate.id, name: isolate.name, issues: [] }],
+		});
+		otuV2ServerFnMocks.updateLocalOtuSequenceFn.mockReturnValueOnce(
+			new Promise(() => {}),
+		);
+		await renderDetailRoute(`${base}/isolates/${isolate.id}`);
+		await userEvent.click(
+			await screen.findByRole("button", { name: sequence.definition }),
+		);
+		await userEvent.click(
+			await screen.findByRole("button", { name: "Edit sequence" }),
+		);
+		await userEvent.clear(screen.getByLabelText("Sequence bases"));
+		await userEvent.type(screen.getByLabelText("Sequence bases"), "ATCGAA");
+		await userEvent.click(
+			screen.getByRole("button", { name: "Preview affected isolates" }),
+		);
+		const preview = await screen.findByRole("region", {
+			name: "Sequence impact preview",
+		});
+		expect(
+			within(preview).getByText(/manual, no accession/),
+		).toBeInTheDocument();
+		await userEvent.click(
+			screen.getByRole("button", { name: "Save sequence" }),
+		);
+		expect(otuV2ServerFnMocks.updateLocalOtuSequenceFn).toHaveBeenCalledWith({
+			data: {
+				referenceId: reference.id,
+				command: {
+					type: "UpdateSequence",
+					schemaVersion: 1,
+					otuId: otu.id,
+					expectedVersion: otu.version,
+					payload: {
+						isolateId: isolate.id,
+						sequenceId: sequence.id,
+						segmentId: sequence.segmentId,
+						definition: sequence.definition,
+						sequence: "ATCGAA",
+						source: "manual",
+						accessionVersion: null,
+					},
+				},
+			},
+		});
+	});
+
 	it("renders every change on the history tab", async () => {
 		const isolate = otu.isolates[0];
 		if (!isolate) {

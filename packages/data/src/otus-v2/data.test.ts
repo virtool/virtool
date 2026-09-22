@@ -24,13 +24,16 @@ import {
 	OtuV2ConflictError,
 	OtuV2DuplicateAccessionError,
 	OtuV2InvalidIsolateError,
+	OtuV2InvalidProvenanceError,
 	OtuV2LastIsolateError,
 	OtuV2NotFoundError,
 	OtuV2ReferenceNotWritableError,
 	OtuV2VersionConflictError,
 	previewLocalOtuPlan,
+	previewLocalOtuSequence,
 	updateLocalOtuIsolate,
 	updateLocalOtuPlan,
+	updateLocalOtuSequence,
 	updateLocalOtuTaxonomy,
 } from "./data";
 
@@ -174,6 +177,256 @@ describe("createReferenceV2", () => {
 });
 
 describe("createLocalOtu", () => {
+	it("previews and versions a valid manual sequence edit without body in overview history", async () => {
+		const reference = await createReference();
+		const create = createCommand(randomUUID());
+		const original = await createLocalOtu(db, {
+			referenceId: reference.id,
+			userId,
+			command: create,
+		});
+		const command = {
+			type: "UpdateSequence" as const,
+			schemaVersion: 1 as const,
+			otuId: original.id,
+			expectedVersion: 1,
+			payload: {
+				isolateId: create.payload.isolate.id,
+				sequenceId: create.payload.isolate.sequences[0].id,
+				segmentId: create.payload.plan.segments[0].id,
+				definition: "Revised genome",
+				sequence: " A T C G N N R Y ",
+				source: "manual" as const,
+				accessionVersion: null,
+			},
+		};
+		const preview = await previewLocalOtuSequence(db, reference.id, command);
+		expect(preview.isolates).toMatchObject([
+			{ isolateId: command.payload.isolateId, issues: [] },
+		]);
+		expect(JSON.stringify(preview)).not.toContain("ATCGNNRY");
+		const updated = await updateLocalOtuSequence(db, {
+			referenceId: reference.id,
+			userId,
+			command,
+		});
+		expect(updated.version).toBe(2);
+		expect(
+			await getLocalOtuSequence(
+				db,
+				reference.id,
+				original.id,
+				command.payload.isolateId,
+				command.payload.sequenceId,
+			),
+		).toMatchObject({
+			definition: "Revised genome",
+			sequence: "ATCGNNRY",
+			source: "manual",
+			accessionVersion: null,
+		});
+		expect(updated.changes[0]).toMatchObject({
+			command: "UpdateSequence",
+			sequenceSource: "manual",
+			previousSource: "manual",
+		});
+		expect(
+			JSON.stringify(
+				(await getLocalOtuOverview(db, reference.id, original.id)).changes,
+			),
+		).not.toContain("ATCGNNRY");
+		await expect(
+			updateLocalOtuSequence(db, {
+				referenceId: reference.id,
+				userId,
+				command,
+			}),
+		).rejects.toBeInstanceOf(OtuV2VersionConflictError);
+	});
+
+	it("rejects a sequence edit that invalidates the isolate plan", async () => {
+		const reference = await createReference();
+		const create = createCommand(randomUUID());
+		const original = await createLocalOtu(db, {
+			referenceId: reference.id,
+			userId,
+			command: create,
+		});
+		const command = {
+			type: "UpdateSequence" as const,
+			schemaVersion: 1 as const,
+			otuId: original.id,
+			expectedVersion: 1,
+			payload: {
+				isolateId: create.payload.isolate.id,
+				sequenceId: create.payload.isolate.sequences[0].id,
+				segmentId: create.payload.plan.segments[0].id,
+				definition: "Too short",
+				sequence: "ATCG",
+				source: "manual" as const,
+				accessionVersion: null,
+			},
+		};
+		expect(
+			(await previewLocalOtuSequence(db, reference.id, command)).isolates[0]
+				?.issues.length,
+		).toBeGreaterThan(0);
+		await expect(
+			updateLocalOtuSequence(db, {
+				referenceId: reference.id,
+				userId,
+				command,
+			}),
+		).rejects.toBeInstanceOf(OtuV2InvalidIsolateError);
+		expect((await getLocalOtu(db, reference.id, original.id)).version).toBe(1);
+	});
+
+	it("retains exact GenBank accession only with unchanged bases, then records conversion to manual", async () => {
+		const reference = await createReference();
+		const create = createCommand(randomUUID());
+		const accessionVersion = "NC_001367.1";
+		const imported = {
+			...create,
+			payload: {
+				...create.payload,
+				genbank: {
+					sequences: [
+						{
+							sequenceId: create.payload.isolate.sequences[0].id,
+							accession: accessionVersion,
+						},
+					],
+				},
+			},
+		};
+		const original = await createLocalOtu(db, {
+			referenceId: reference.id,
+			userId,
+			command: imported,
+		});
+		const base = {
+			type: "UpdateSequence" as const,
+			schemaVersion: 1 as const,
+			otuId: original.id,
+			expectedVersion: 1,
+			payload: {
+				isolateId: create.payload.isolate.id,
+				sequenceId: create.payload.isolate.sequences[0].id,
+				segmentId: create.payload.plan.segments[0].id,
+				definition: "Revised GenBank description",
+				sequence: "ATCGNNRY",
+				source: "genbank" as const,
+				accessionVersion,
+			},
+		};
+		const preserved = await updateLocalOtuSequence(db, {
+			referenceId: reference.id,
+			userId,
+			command: base,
+		});
+		expect(preserved.changes[0]).toMatchObject({
+			command: "UpdateSequence",
+			sequenceSource: "genbank",
+			accessionVersion,
+		});
+		const changed = {
+			...base,
+			expectedVersion: 2,
+			payload: { ...base.payload, sequence: "ATCGNNRA" },
+		};
+		expect(
+			(await previewLocalOtuSequence(db, reference.id, changed))
+				.provenanceIssues.length,
+		).toBeGreaterThan(0);
+		await expect(
+			updateLocalOtuSequence(db, {
+				referenceId: reference.id,
+				userId,
+				command: changed,
+			}),
+		).rejects.toBeInstanceOf(OtuV2InvalidProvenanceError);
+		const converted = await updateLocalOtuSequence(db, {
+			referenceId: reference.id,
+			userId,
+			command: {
+				...changed,
+				payload: {
+					...changed.payload,
+					source: "manual" as const,
+					accessionVersion: null,
+				},
+			},
+		});
+		expect(converted.changes[0]).toMatchObject({
+			command: "UpdateSequence",
+			previousSource: "genbank",
+			previousAccessionVersion: accessionVersion,
+			sequenceSource: "manual",
+			accessionVersion: null,
+		});
+		expect(
+			await getLocalOtuSequence(
+				db,
+				reference.id,
+				original.id,
+				base.payload.isolateId,
+				base.payload.sequenceId,
+			),
+		).toMatchObject({
+			source: "manual",
+			accessionVersion: null,
+			sequence: "ATCGNNRA",
+		});
+		const [row] = await db
+			.select({ accessionBase: otuSequences.accessionBase })
+			.from(otuSequences)
+			.where(eq(otuSequences.id, base.payload.sequenceId));
+		expect(row?.accessionBase).toBeNull();
+		const reimportIsolateId = randomUUID();
+		const reimportSequenceId = randomUUID();
+		const reimported = await createLocalOtuIsolate(db, {
+			referenceId: reference.id,
+			userId,
+			command: {
+				type: "CreateIsolate",
+				schemaVersion: 1,
+				otuId: original.id,
+				expectedVersion: 3,
+				payload: {
+					genbank: {
+						sequences: [
+							{ sequenceId: reimportSequenceId, accession: accessionVersion },
+						],
+					},
+					isolate: {
+						id: reimportIsolateId,
+						name: null,
+						sequences: [
+							{
+								id: reimportSequenceId,
+								definition: "Reimported genome",
+								sequence: "ATCGNNRY",
+								segmentId: base.payload.segmentId,
+							},
+						],
+					},
+				},
+			},
+		});
+		expect(reimported.version).toBe(4);
+		expect(
+			await getLocalOtuSequence(
+				db,
+				reference.id,
+				original.id,
+				reimportIsolateId,
+				reimportSequenceId,
+			),
+		).toMatchObject({
+			source: "genbank",
+			accessionVersion,
+		});
+	});
 	it("versions isolate name metadata without changing sequences or provenance", async () => {
 		const reference = await createReference();
 		const create = createCommand(randomUUID());

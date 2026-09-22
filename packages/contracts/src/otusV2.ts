@@ -388,6 +388,40 @@ export const UpdateLocalOtuIsolateCommand = z
 	})
 	.strict();
 
+/** A versioned edit of one local OTU sequence record and its source. */
+export const UpdateLocalOtuSequenceCommand = z
+	.object({
+		type: z.literal("UpdateSequence"),
+		schemaVersion: z.literal(1),
+		otuId: uuidSchema,
+		expectedVersion: z.number().int().positive(),
+		payload: z
+			.object({
+				isolateId: uuidSchema,
+				sequenceId: uuidSchema,
+				segmentId: uuidSchema,
+				definition: trimmedTextSchema,
+				sequence: sequenceSchema,
+				source: z.enum(["manual", "genbank"]),
+				accessionVersion: z.string().min(1).nullable(),
+			})
+			.strict(),
+	})
+	.strict()
+	.superRefine((command, ctx) => {
+		if (
+			(command.payload.source === "manual") !==
+			(command.payload.accessionVersion === null)
+		) {
+			ctx.addIssue({
+				code: "custom",
+				path: ["payload", "accessionVersion"],
+				message:
+					"Manual edits must clear the accession; GenBank edits must keep one.",
+			});
+		}
+	});
+
 /** A command that deletes one isolate from an existing local OTU. */
 export const DeleteLocalOtuIsolateCommand = z
 	.object({
@@ -455,6 +489,32 @@ export type UpdateLocalOtuIsolateCommand = z.output<
 export type UpdateLocalOtuIsolateCommandInput = z.input<
 	typeof UpdateLocalOtuIsolateCommand
 >;
+
+/** A parsed versioned sequence edit command. */
+export type UpdateLocalOtuSequenceCommand = z.output<
+	typeof UpdateLocalOtuSequenceCommand
+>;
+
+/** Input accepted for a versioned sequence edit command. */
+export type UpdateLocalOtuSequenceCommandInput = z.input<
+	typeof UpdateLocalOtuSequenceCommand
+>;
+
+/** One isolate's validation result for a proposed sequence edit. */
+export type LocalOtuV2SequenceImpact = {
+	isolateId: string;
+	name: OtuV2Isolate["name"];
+	issues: string[];
+};
+
+/** The sequence source and isolate impact shown before confirmation. */
+export type LocalOtuV2SequencePreview = {
+	expectedVersion: number;
+	source: "manual" | "genbank";
+	accessionVersion: string | null;
+	provenanceIssues: string[];
+	isolates: LocalOtuV2SequenceImpact[];
+};
 
 /** One surviving isolate's response to a proposed OTU plan. */
 export type LocalOtuV2PlanImpact = {
@@ -556,6 +616,13 @@ export type OtuV2Change = {
 	| {
 			command: "UpdateIsolate";
 			name: OtuV2Isolate["name"];
+	  }
+	| {
+			command: "UpdateSequence";
+			sequenceSource: "manual" | "genbank";
+			accessionVersion: string | null;
+			previousSource: "manual" | "genbank";
+			previousAccessionVersion: string | null;
 	  }
 	| {
 			command: "DeleteIsolate";

@@ -8,6 +8,7 @@ import Link from "@base/Link";
 import SectionHeader from "@base/SectionHeader";
 import DeleteLocalOtuIsolate from "@otus-v2/components/DeleteLocalOtuIsolate";
 import EditLocalOtuIsolate from "@otus-v2/components/EditLocalOtuIsolate";
+import EditLocalOtuSequence from "@otus-v2/components/EditLocalOtuSequence";
 import { formatV2IsolateName } from "@otus-v2/isolateName";
 import {
 	localOtuV2SequenceQueryOptions,
@@ -17,6 +18,7 @@ import {
 import { useCanModifyReferenceV2Otus } from "@references-v2/hooks";
 import { useQuery } from "@tanstack/react-query";
 import { getRouteApi } from "@tanstack/react-router";
+import type { LocalOtuV2Overview } from "@virtool/contracts";
 import { useState } from "react";
 
 const routeApi = getRouteApi(
@@ -86,6 +88,8 @@ export default function LocalOtuIsolateDetail() {
 							isolateId={isolateId}
 							sequenceId={sequence.id}
 							definition={sequence.definition}
+							version={otu.version}
+							plan={otu.plan}
 						/>
 					))}
 				</BoxGroup>
@@ -100,12 +104,16 @@ function LazySequence({
 	isolateId,
 	sequenceId,
 	definition,
+	version,
+	plan,
 }: {
 	referenceId: string;
 	otuId: string;
 	isolateId: string;
 	sequenceId: string;
 	definition: string;
+	version: number;
+	plan: LocalOtuV2Overview["plan"];
 }) {
 	const [open, setOpen] = useState(false);
 	const query = useQuery({
@@ -135,6 +143,14 @@ function LazySequence({
 									: "Entered manually"}
 							</p>
 							<p className="break-all font-mono">{query.data.sequence}</p>
+							<EditLocalOtuSequence
+								referenceId={referenceId}
+								otuId={otuId}
+								isolateId={isolateId}
+								version={version}
+								plan={plan}
+								sequence={query.data}
+							/>
 						</>
 					)}
 				</CollapsibleContent>

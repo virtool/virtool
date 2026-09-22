@@ -180,6 +180,81 @@ function call(name: string, data?: unknown) {
 }
 
 describe("createLocalOtu", () => {
+	it("checks sequence preview and edit rights, validation, version, and archived state", async () => {
+		const ownerId = await signIn(db, getRequest, {
+			administratorRole: null,
+			handle: "sequence-owner",
+		});
+		const referenceId = await seedReferenceV2(ownerId);
+		const created = validCommand();
+		await call("createLocalOtuFn", { referenceId, command: created });
+		const sequence = created.payload.isolate.sequences[0];
+		if (!sequence) {
+			throw new Error("Expected a sequence in the test command.");
+		}
+		const command = {
+			type: "UpdateSequence",
+			schemaVersion: 1,
+			otuId: created.otuId,
+			expectedVersion: 1,
+			payload: {
+				isolateId: created.payload.isolate.id,
+				sequenceId: sequence.id,
+				segmentId: sequence.segmentId,
+				definition: "Edited",
+				sequence: "ATCGNNRY",
+				source: "manual",
+				accessionVersion: null,
+			},
+		};
+		await signIn(db, getRequest, {
+			administratorRole: null,
+			handle: "sequence-other",
+		});
+		await expect(
+			call("previewLocalOtuSequenceFn", { referenceId, command }),
+		).rejects.toBeInstanceOf(ForbiddenError);
+		await expect(
+			call("updateLocalOtuSequenceFn", { referenceId, command }),
+		).rejects.toBeInstanceOf(ForbiddenError);
+		await signIn(db, getRequest, {
+			administratorRole: "full",
+			handle: "sequence-admin",
+		});
+		const invalid = {
+			...command,
+			payload: { ...command.payload, sequence: "ATCG" },
+		};
+		const preview = (await call("previewLocalOtuSequenceFn", {
+			referenceId,
+			command: invalid,
+		})) as { isolates: Array<{ issues: string[] }> };
+		expect(preview.isolates[0]?.issues.length).toBeGreaterThan(0);
+		expect(JSON.stringify(preview)).not.toContain("ATCGNNRY");
+		await expect(
+			call("updateLocalOtuSequenceFn", { referenceId, command: invalid }),
+		).rejects.toMatchObject({ status: 422 });
+		await call("updateLocalOtuSequenceFn", { referenceId, command });
+		await expect(
+			call("updateLocalOtuSequenceFn", { referenceId, command }),
+		).rejects.toMatchObject({ status: 409 });
+		await db
+			.update(referenceRoots)
+			.set({ archived: true })
+			.where(eq(referenceRoots.id, referenceId));
+		await expect(
+			call("previewLocalOtuSequenceFn", {
+				referenceId,
+				command: { ...command, expectedVersion: 2 },
+			}),
+		).rejects.toMatchObject({ status: 409 });
+		await expect(
+			call("updateLocalOtuSequenceFn", {
+				referenceId,
+				command: { ...command, expectedVersion: 2 },
+			}),
+		).rejects.toMatchObject({ status: 409 });
+	});
 	it("checks isolate edit rights, version, and archived state", async () => {
 		const ownerId = await signIn(db, getRequest, {
 			administratorRole: null,

@@ -12,8 +12,10 @@ import {
 	getLocalOtuSequenceFn,
 	getLocalOtusFn,
 	previewLocalOtuPlanFn,
+	previewLocalOtuSequenceFn,
 	updateLocalOtuIsolateFn,
 	updateLocalOtuPlanFn,
+	updateLocalOtuSequenceFn,
 	updateLocalOtuTaxonomyFn,
 } from "@server/otus-v2/functions";
 import {
@@ -35,9 +37,11 @@ import type {
 	LocalOtuV2Overview,
 	LocalOtuV2PlanPreview,
 	LocalOtuV2Sequence,
+	LocalOtuV2SequencePreview,
 	LocalOtuV2Summary,
 	UpdateLocalOtuIsolateCommandInput,
 	UpdateLocalOtuPlanCommandInput,
+	UpdateLocalOtuSequenceCommandInput,
 	UpdateLocalOtuTaxonomyCommandInput,
 } from "@virtool/contracts";
 
@@ -278,6 +282,66 @@ export function useUpdateLocalOtuIsolate(referenceId: string) {
 					} satisfies LocalOtuV2IsolateDetail,
 				);
 			}
+		},
+		onError: (_error, command) => {
+			queryClient.invalidateQueries({
+				queryKey: otuV2QueryKeys.detail(command.otuId),
+			});
+		},
+	});
+}
+
+/** Preview provenance and isolate impact for a sequence edit. */
+export function usePreviewLocalOtuSequence(referenceId: string) {
+	return useMutation<
+		LocalOtuV2SequencePreview,
+		Error,
+		UpdateLocalOtuSequenceCommandInput
+	>({
+		mutationFn: (command) =>
+			previewLocalOtuSequenceFn({
+				data: { referenceId, command },
+			}) as Promise<LocalOtuV2SequencePreview>,
+	});
+}
+
+/** Save a reviewed sequence edit at the current OTU version. */
+export function useUpdateLocalOtuSequence(referenceId: string) {
+	const queryClient = useQueryClient();
+	return useMutation<LocalOtuV2, Error, UpdateLocalOtuSequenceCommandInput>({
+		mutationFn: (command) =>
+			updateLocalOtuSequenceFn({
+				data: { referenceId, command },
+			}) as Promise<LocalOtuV2>,
+		onSuccess: (otu, command) => {
+			cacheLocalOtuOverview(queryClient, otu);
+			queryClient.setQueryData(
+				[
+					...otuV2QueryKeys.detail(otu.id),
+					"isolates",
+					command.payload.isolateId,
+					"sequences",
+					command.payload.sequenceId,
+				],
+				{
+					id: command.payload.sequenceId,
+					definition: command.payload.definition,
+					sequence: command.payload.sequence,
+					segmentId: command.payload.segmentId,
+					source: command.payload.source,
+					accessionVersion: command.payload.accessionVersion,
+				} satisfies LocalOtuV2Sequence,
+			);
+			queryClient.invalidateQueries({
+				queryKey: [
+					...otuV2QueryKeys.detail(otu.id),
+					"isolates",
+					command.payload.isolateId,
+				],
+			});
+			queryClient.invalidateQueries({
+				queryKey: otuV2QueryKeys.list([referenceId]),
+			});
 		},
 		onError: (_error, command) => {
 			queryClient.invalidateQueries({

@@ -14,6 +14,7 @@ import {
 	type LocalOtuV2Overview,
 	type LocalOtuV2PlanPreview,
 	type LocalOtuV2Sequence,
+	type LocalOtuV2SequencePreview,
 	type LocalOtuV2SequenceSummary,
 	type LocalOtuV2Summary,
 	type OtuV2Change,
@@ -23,6 +24,8 @@ import {
 	type UpdateLocalOtuIsolateCommandInput,
 	UpdateLocalOtuPlanCommand,
 	type UpdateLocalOtuPlanCommandInput,
+	UpdateLocalOtuSequenceCommand,
+	type UpdateLocalOtuSequenceCommandInput,
 	UpdateLocalOtuTaxonomyCommand,
 	type UpdateLocalOtuTaxonomyCommandInput,
 } from "@virtool/contracts";
@@ -83,12 +86,17 @@ function toOtuV2Change(row: {
 		| "UpdateTaxonomy"
 		| "UpdatePlan"
 		| "UpdateIsolate"
+		| "UpdateSequence"
 		| "DeleteIsolate"
 		| "DeleteOTU";
 	commandSchemaVersion: number;
 	otuName: string | null;
 	isolateName: OtuV2Isolate["name"];
 	segmentCount: number | null;
+	sequenceSource: "manual" | "genbank" | null;
+	sequenceAccessionVersion: string | null;
+	previousSequenceSource: "manual" | "genbank" | null;
+	previousSequenceAccessionVersion: string | null;
 	createdAt: Date;
 	userId: number;
 	userHandle: string;
@@ -117,6 +125,18 @@ function toOtuV2Change(row: {
 				...base,
 				command: row.command,
 				segmentCount: row.segmentCount ?? 0,
+			};
+		case "UpdateSequence":
+			if (!row.sequenceSource) {
+				throw new Error("Missing source in sequence change.");
+			}
+			return {
+				...base,
+				command: row.command,
+				sequenceSource: row.sequenceSource,
+				accessionVersion: row.sequenceAccessionVersion,
+				previousSource: row.previousSequenceSource ?? "manual",
+				previousAccessionVersion: row.previousSequenceAccessionVersion,
 			};
 		case "DeleteIsolate":
 		case "DeleteOTU":
@@ -373,6 +393,190 @@ export async function updateLocalOtuIsolate(
 			command: command.type,
 			commandSchemaVersion: command.schemaVersion,
 			payload: command.payload,
+			source: "user",
+			userId: values.userId,
+			createdAt: new Date(),
+		});
+		return getLocalOtu(tx, values.referenceId, command.otuId);
+	});
+}
+
+function getSequenceImpact(
+	otu: LocalOtuV2,
+	old: LocalOtuV2Sequence,
+	command: UpdateLocalOtuSequenceCommand,
+): LocalOtuV2SequencePreview {
+	const provenanceIssues: string[] = [];
+	if (command.payload.source === "genbank") {
+		if (old.source !== "genbank") {
+			provenanceIssues.push(
+				"Only an existing GenBank sequence can retain GenBank source.",
+			);
+		}
+		if (old.accessionVersion !== command.payload.accessionVersion) {
+			provenanceIssues.push(
+				"The accession version no longer matches the current record.",
+			);
+		}
+		if (old.sequence !== command.payload.sequence) {
+			provenanceIssues.push(
+				"Changed bases must use manual source and clear the accession.",
+			);
+		}
+	}
+	return {
+		expectedVersion: otu.version,
+		source: command.payload.source,
+		accessionVersion: command.payload.accessionVersion,
+		provenanceIssues,
+		isolates: otu.isolates.map((isolate) => {
+			const revised = {
+				...isolate,
+				sequences: isolate.sequences.map((sequence) =>
+					sequence.id === command.payload.sequenceId
+						? {
+								id: sequence.id,
+								definition: command.payload.definition,
+								sequence: command.payload.sequence,
+								segmentId: command.payload.segmentId,
+							}
+						: sequence,
+				),
+			};
+			const result = OtuV2IsolatePlan.safeParse({
+				plan: otu.plan,
+				isolate: revised,
+			});
+			return {
+				isolateId: isolate.id,
+				name: isolate.name,
+				issues: result.success
+					? []
+					: Array.from(
+							new Set(result.error.issues.map((issue) => issue.message)),
+						),
+			};
+		}),
+	};
+}
+
+/** Preview source and all isolate impacts for a proposed sequence edit. */
+export async function previewLocalOtuSequence(
+	db: Db,
+	referenceId: string,
+	commandInput: UpdateLocalOtuSequenceCommandInput,
+): Promise<LocalOtuV2SequencePreview> {
+	const command = UpdateLocalOtuSequenceCommand.parse(commandInput);
+	const reference = takeFirst(
+		await db
+			.select({ archived: referenceRoots.archived, kind: referenceRoots.kind })
+			.from(referenceRoots)
+			.where(eq(referenceRoots.id, referenceId)),
+	);
+	if (reference?.archived || reference?.kind !== "local") {
+		throw new OtuV2ReferenceNotWritableError();
+	}
+	const otu = await getLocalOtu(db, referenceId, command.otuId);
+	if (otu.version !== command.expectedVersion) {
+		throw new OtuV2VersionConflictError();
+	}
+	const old = await getLocalOtuSequence(
+		db,
+		referenceId,
+		command.otuId,
+		command.payload.isolateId,
+		command.payload.sequenceId,
+	);
+	return getSequenceImpact(otu, old, command);
+}
+
+/** Values needed to edit one sequence record. */
+export type UpdateLocalOtuSequenceValues = {
+	referenceId: string;
+	userId: number;
+	command: UpdateLocalOtuSequenceCommandInput;
+};
+
+/** Save a sequence edit only while every surviving isolate remains valid. */
+export async function updateLocalOtuSequence(
+	db: Db,
+	values: UpdateLocalOtuSequenceValues,
+): Promise<LocalOtuV2> {
+	const command = UpdateLocalOtuSequenceCommand.parse(values.command);
+	return db.transaction(async (tx) => {
+		await getWritableLocalOtu(
+			tx,
+			values.referenceId,
+			command.otuId,
+			command.expectedVersion,
+		);
+		const otu = await getLocalOtu(tx, values.referenceId, command.otuId);
+		const old = await getLocalOtuSequence(
+			tx,
+			values.referenceId,
+			command.otuId,
+			command.payload.isolateId,
+			command.payload.sequenceId,
+		);
+		const impact = getSequenceImpact(otu, old, command);
+		if (impact.provenanceIssues.length > 0) {
+			throw new OtuV2InvalidProvenanceError();
+		}
+		if (impact.isolates.some((isolate) => isolate.issues.length > 0)) {
+			throw new OtuV2InvalidIsolateError();
+		}
+		const version = command.expectedVersion + 1;
+		const recordId = randomUUID();
+		await tx.insert(otuLocalSequenceRecords).values({
+			id: recordId,
+			otuId: command.otuId,
+			sequenceId: command.payload.sequenceId,
+			definition: command.payload.definition,
+			sequence: command.payload.sequence,
+			source: command.payload.source,
+			accessionVersion: command.payload.accessionVersion,
+			createdAt: new Date(),
+		});
+		await tx
+			.update(otuSequenceVersions)
+			.set({ lastVersion: version })
+			.where(
+				and(
+					eq(otuSequenceVersions.otuId, command.otuId),
+					eq(otuSequenceVersions.sequenceId, command.payload.sequenceId),
+					isNull(otuSequenceVersions.lastVersion),
+				),
+			);
+		await tx.insert(otuSequenceVersions).values({
+			id: randomUUID(),
+			otuId: command.otuId,
+			sequenceId: command.payload.sequenceId,
+			isolateId: command.payload.isolateId,
+			segmentId: command.payload.segmentId,
+			localRecordId: recordId,
+			firstVersion: version,
+		});
+		if (command.payload.source === "manual") {
+			await tx
+				.update(otuSequences)
+				.set({ accessionBase: null })
+				.where(eq(otuSequences.id, command.payload.sequenceId));
+		}
+		await tx
+			.update(otusV2)
+			.set({ version })
+			.where(eq(otusV2.id, command.otuId));
+		await tx.insert(otuChanges).values({
+			referenceId: values.referenceId,
+			otuId: command.otuId,
+			version,
+			command: command.type,
+			commandSchemaVersion: command.schemaVersion,
+			payload: {
+				...command.payload,
+				previousSource: old.source,
+				previousAccessionVersion: old.accessionVersion,
+			},
 			source: "user",
 			userId: values.userId,
 			createdAt: new Date(),
@@ -1100,6 +1304,18 @@ async function getLocalOtuMetadata(
 				segmentCount: sql<
 					number | null
 				>`jsonb_array_length(${otuChanges.payload}->'plan'->'segments')`,
+				sequenceSource: sql<
+					"manual" | "genbank" | null
+				>`${otuChanges.payload}->>'source'`,
+				sequenceAccessionVersion: sql<
+					string | null
+				>`${otuChanges.payload}->>'accessionVersion'`,
+				previousSequenceSource: sql<
+					"manual" | "genbank" | null
+				>`${otuChanges.payload}->>'previousSource'`,
+				previousSequenceAccessionVersion: sql<
+					string | null
+				>`${otuChanges.payload}->>'previousAccessionVersion'`,
 				createdAt: otuChanges.createdAt,
 				userId: users.id,
 				userHandle: users.handle,
@@ -1527,6 +1743,18 @@ export async function getLocalOtu(
 					segmentCount: sql<
 						number | null
 					>`jsonb_array_length(${otuChanges.payload}->'plan'->'segments')`,
+					sequenceSource: sql<
+						"manual" | "genbank" | null
+					>`${otuChanges.payload}->>'source'`,
+					sequenceAccessionVersion: sql<
+						string | null
+					>`${otuChanges.payload}->>'accessionVersion'`,
+					previousSequenceSource: sql<
+						"manual" | "genbank" | null
+					>`${otuChanges.payload}->>'previousSource'`,
+					previousSequenceAccessionVersion: sql<
+						string | null
+					>`${otuChanges.payload}->>'previousAccessionVersion'`,
 					createdAt: otuChanges.createdAt,
 					userId: users.id,
 					userHandle: users.handle,

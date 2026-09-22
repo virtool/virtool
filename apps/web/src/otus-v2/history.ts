@@ -29,6 +29,16 @@ export function getOtuV2ChangeDescription(change: OtuV2Change) {
 				action: change.name ? "updated isolate" : "cleared isolate name",
 				subject: change.name ? formatV2IsolateName(change.name) : null,
 			};
+		case "UpdateSequence":
+			return {
+				action:
+					change.sequenceSource === "genbank"
+						? "updated GenBank sequence metadata"
+						: change.previousSource === "genbank"
+							? "converted GenBank sequence to manual"
+							: "updated manual sequence",
+				subject: change.accessionVersion ?? change.previousAccessionVersion,
+			};
 		case "DeleteIsolate":
 			return { action: "deleted isolate", subject: null };
 		case "DeleteOTU":

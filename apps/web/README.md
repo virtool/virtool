@@ -146,6 +146,12 @@ record a semantic history entry without sequence bodies.
 Curators can also edit an isolate's name and name type, or clear its name.
 This advances the OTU version and records semantic history while keeping its
 sequences and their provenance unchanged.
+Sequence definition, bases, and segment assignment can be edited after a
+server preview of every surviving isolate. The save transaction repeats plan
+validation. A GenBank sequence can keep its exact accession only when its bases
+remain unchanged; changed bases become manual and clear the current accession.
+History records the source transition and accession without exposing bases in
+the OTU overview.
 Creating a GenBank OTU first resolves accessions into a preview of its taxonomy,
 molecule, isolate, and segments. Changing accessions clears that preview; creation
 requires a separate confirmation, and the server checks the records again then.

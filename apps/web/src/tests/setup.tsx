@@ -249,6 +249,8 @@ beforeEach(() => {
 		otuV2ServerFnMocks.previewLocalOtuPlanFn,
 		otuV2ServerFnMocks.updateLocalOtuPlanFn,
 		otuV2ServerFnMocks.updateLocalOtuIsolateFn,
+		otuV2ServerFnMocks.previewLocalOtuSequenceFn,
+		otuV2ServerFnMocks.updateLocalOtuSequenceFn,
 		otuV2ServerFnMocks.deleteLocalOtuIsolateFn,
 		otuV2ServerFnMocks.deleteLocalOtuFn,
 	]) {

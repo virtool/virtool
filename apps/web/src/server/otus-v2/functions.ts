@@ -9,6 +9,7 @@ import {
 	type GenbankOtuDraft,
 	UpdateLocalOtuIsolateCommand,
 	UpdateLocalOtuPlanCommand,
+	UpdateLocalOtuSequenceCommand,
 	UpdateLocalOtuTaxonomyCommand,
 } from "@virtool/contracts";
 import {
@@ -32,8 +33,10 @@ import {
 	OtuV2ReferenceNotWritableError,
 	OtuV2VersionConflictError,
 	previewLocalOtuPlan,
+	previewLocalOtuSequence,
 	updateLocalOtuIsolate,
 	updateLocalOtuPlan,
+	updateLocalOtuSequence,
 	updateLocalOtuTaxonomy,
 } from "@virtool/data/otus-v2/data";
 import { resolveReferenceActor } from "@virtool/data/references/data";
@@ -99,6 +102,11 @@ const updateLocalOtuPlanSchema = z.object({
 const updateLocalOtuIsolateSchema = z.object({
 	referenceId: z.uuid(),
 	command: UpdateLocalOtuIsolateCommand,
+});
+
+const updateLocalOtuSequenceSchema = z.object({
+	referenceId: z.uuid(),
+	command: UpdateLocalOtuSequenceCommand,
 });
 
 const deleteLocalOtuSchema = z.object({
@@ -367,6 +375,46 @@ export const updateLocalOtuIsolateFn = createServerFn({ method: "POST" })
 				throw new ForbiddenError();
 			}
 			return await updateLocalOtuIsolate(db, {
+				referenceId: data.referenceId,
+				userId: context.principal.userId,
+				command: data.command,
+			});
+		} catch (err) {
+			return rethrowAsHttp(err);
+		}
+	});
+
+export const previewLocalOtuSequenceFn = createServerFn({ method: "POST" })
+	.middleware([authenticated()])
+	.validator(updateLocalOtuSequenceSchema)
+	.handler(async ({ context, data }) => {
+		try {
+			const actor = await resolveReferenceActor(db, context.principal.userId);
+			if (
+				!(await checkReferenceV2Right(db, data.referenceId, "modifyOtu", actor))
+			) {
+				setResponseStatus(403);
+				throw new ForbiddenError();
+			}
+			return await previewLocalOtuSequence(db, data.referenceId, data.command);
+		} catch (err) {
+			return rethrowAsHttp(err);
+		}
+	});
+
+export const updateLocalOtuSequenceFn = createServerFn({ method: "POST" })
+	.middleware([authenticated()])
+	.validator(updateLocalOtuSequenceSchema)
+	.handler(async ({ context, data }) => {
+		try {
+			const actor = await resolveReferenceActor(db, context.principal.userId);
+			if (
+				!(await checkReferenceV2Right(db, data.referenceId, "modifyOtu", actor))
+			) {
+				setResponseStatus(403);
+				throw new ForbiddenError();
+			}
+			return await updateLocalOtuSequence(db, {
 				referenceId: data.referenceId,
 				userId: context.principal.userId,
 				command: data.command,
