@@ -77,16 +77,16 @@ and the inability to extend manually created OTUs.**
 
    ~~[CreateLocalOtuIsolateDialog.tsx:61](apps/web/src/otus-v2/components/CreateLocalOtuIsolateDialog.tsx#L61)~~
 
-7. **[P2] Read-only users and archived references still show mutation controls.**
+7. ~~**[P2] Read-only users and archived references still show mutation controls.**~~
 
-   OTU/isolate Create and Delete controls don’t check reference rights or archived
+   ~~OTU/isolate Create and Delete controls don’t check reference rights or archived
    state. Users can complete a form or confirmation before receiving a refusal.
    The last isolate also offers deletion despite the invariant forbidding it.
    Server enforcement exists, but the UI should explain these restrictions before
-   users attempt the operation.
+   users attempt the operation.~~
 
-   [LocalOtuIsolates.tsx:43](apps/web/src/otus-v2/components/LocalOtuIsolates.tsx#L43),
-   [DeleteLocalOtuIsolate.tsx:37](apps/web/src/otus-v2/components/DeleteLocalOtuIsolate.tsx#L37)
+   ~~[LocalOtuIsolates.tsx:43](apps/web/src/otus-v2/components/LocalOtuIsolates.tsx#L43),
+   [DeleteLocalOtuIsolate.tsx:37](apps/web/src/otus-v2/components/DeleteLocalOtuIsolate.tsx#L37)~~
 
 8. **[P2] Lazy sequence loading still transfers sequence bodies through history.**
 

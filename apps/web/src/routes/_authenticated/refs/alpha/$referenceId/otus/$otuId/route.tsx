@@ -5,6 +5,7 @@ import SectionHeader from "@base/SectionHeader";
 import DeleteLocalOtu from "@otus-v2/components/DeleteLocalOtu";
 import LocalOtuDetailTabs from "@otus-v2/components/LocalOtuDetailTabs";
 import { useSuspenseLocalOtuV2 } from "@otus-v2/queries";
+import { useCanModifyReferenceV2Otus } from "@references-v2/hooks";
 import { useSuspenseReferenceV2 } from "@references-v2/queries";
 import { createFileRoute, notFound, Outlet } from "@tanstack/react-router";
 
@@ -35,6 +36,7 @@ function LocalOtuDetailLayout() {
 	const { referenceId, otuId } = Route.useParams();
 	const { data: otu } = useSuspenseLocalOtuV2(referenceId, otuId);
 	const { data: reference } = useSuspenseReferenceV2(referenceId);
+	const canModifyOtus = useCanModifyReferenceV2Otus(referenceId);
 
 	return (
 		<>
@@ -67,7 +69,7 @@ function LocalOtuDetailLayout() {
 						</CopyText>
 					</p>
 				</div>
-				<DeleteLocalOtu otu={otu} />
+				{canModifyOtus && <DeleteLocalOtu otu={otu} />}
 			</SectionHeader>
 
 			<LocalOtuDetailTabs referenceId={referenceId} otuId={otuId} />

@@ -25,3 +25,10 @@ export function useCheckReferenceV2Right(
 			account.groups.some((accountGroup) => accountGroup.id === group.id),
 	);
 }
+
+/** Check whether the account can change OTUs in an active v2 Reference. */
+export function useCanModifyReferenceV2Otus(referenceId: string): boolean {
+	const { data: reference } = useSuspenseReferenceV2(referenceId);
+	const hasRight = useCheckReferenceV2Right(referenceId, "modifyOtu");
+	return !reference.archived && hasRight;
+}

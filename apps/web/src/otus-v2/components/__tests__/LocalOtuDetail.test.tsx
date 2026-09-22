@@ -1,5 +1,6 @@
 import { screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
+import { createFakeAccount } from "@tests/fake/account";
 import { createFakeLocalOtuV2 } from "@tests/fake/otusV2";
 import { createFakeReferenceV2 } from "@tests/fake/referencesV2";
 import {
@@ -14,7 +15,18 @@ import { OtuV2IsolateNameType } from "@virtool/contracts";
 import { beforeEach, describe, expect, it } from "vitest";
 
 describe("<LocalOtuDetail />", () => {
-	const reference = createFakeReferenceV2();
+	const account = createFakeAccount();
+	const reference = createFakeReferenceV2({
+		users: [
+			{
+				id: account.id,
+				handle: account.handle,
+				modifyOtu: true,
+				modify: false,
+				publishVersion: false,
+			},
+		],
+	});
 	const otu = createFakeLocalOtuV2({
 		referenceId: reference.id,
 		taxonomy: {
@@ -26,6 +38,18 @@ describe("<LocalOtuDetail />", () => {
 		},
 	});
 	const base = `/refs/alpha/${reference.id}/otus/${otu.id}`;
+	const firstIsolate = otu.isolates[0];
+	if (!firstIsolate) {
+		throw new Error("Expected fake OTU to contain an isolate.");
+	}
+	const deletableOtu = createFakeLocalOtuV2({
+		...otu,
+		isolates: [firstIsolate, { ...firstIsolate, id: crypto.randomUUID() }],
+	});
+
+	function renderDetailRoute(path: string) {
+		return renderRoute(path, { account });
+	}
 
 	beforeEach(() => {
 		mockGetReferenceV2(reference);
@@ -33,7 +57,7 @@ describe("<LocalOtuDetail />", () => {
 	});
 
 	it("renders the header and OTU tab", async () => {
-		await renderRoute(base);
+		await renderDetailRoute(base);
 
 		expect(
 			await screen.findByText("Cucumber mosaic virus (CMV)", {
@@ -50,7 +74,7 @@ describe("<LocalOtuDetail />", () => {
 	it("deletes the OTU and returns to its Reference OTU list", async () => {
 		const deleteOtu = mockDeleteLocalOtuV2();
 		mockGetLocalOtusV2([]);
-		const { router } = await renderRoute(base);
+		const { router } = await renderDetailRoute(base);
 
 		await userEvent.click(
 			await screen.findByRole("button", { name: "Delete" }),
@@ -92,7 +116,9 @@ describe("<LocalOtuDetail />", () => {
 		});
 		mockGetLocalOtuV2(otuWithIsolates);
 
-		await renderRoute(`/refs/alpha/${reference.id}/otus/${otuWithIsolates.id}`);
+		await renderDetailRoute(
+			`/refs/alpha/${reference.id}/otus/${otuWithIsolates.id}`,
+		);
 
 		expect(await screen.findByText("Isolate preview-0")).toBeInTheDocument();
 		expect(screen.getByText("Isolate preview-4")).toBeInTheDocument();
@@ -103,7 +129,7 @@ describe("<LocalOtuDetail />", () => {
 	});
 
 	it("links preview isolates to their detail views", async () => {
-		await renderRoute(base);
+		await renderDetailRoute(base);
 
 		const isolate = otu.isolates[0];
 		expect(
@@ -129,7 +155,9 @@ describe("<LocalOtuDetail />", () => {
 		});
 		mockGetLocalOtuV2(otuWithLineage);
 
-		await renderRoute(`/refs/alpha/${reference.id}/otus/${otuWithLineage.id}`);
+		await renderDetailRoute(
+			`/refs/alpha/${reference.id}/otus/${otuWithLineage.id}`,
+		);
 
 		expect(
 			await screen.findByRole("button", { name: "Show higher taxa" }),
@@ -148,7 +176,7 @@ describe("<LocalOtuDetail />", () => {
 	});
 
 	it("renders isolates on the isolates tab", async () => {
-		await renderRoute(`${base}/isolates`);
+		await renderDetailRoute(`${base}/isolates`);
 
 		expect(
 			await screen.findByRole("link", {
@@ -180,7 +208,7 @@ describe("<LocalOtuDetail />", () => {
 		});
 		mockGetLocalOtuV2(otuWithIsolates);
 
-		await renderRoute(
+		await renderDetailRoute(
 			`/refs/alpha/${reference.id}/otus/${otuWithIsolates.id}/isolates`,
 		);
 
@@ -199,7 +227,7 @@ describe("<LocalOtuDetail />", () => {
 	});
 
 	it("links an isolate to its detail view", async () => {
-		await renderRoute(`${base}/isolates`);
+		await renderDetailRoute(`${base}/isolates`);
 
 		expect(
 			await screen.findByRole("link", {
@@ -209,27 +237,35 @@ describe("<LocalOtuDetail />", () => {
 	});
 
 	it("shows isolate delete buttons in the list and detail views", async () => {
-		const isolate = otu.isolates[0];
-		await renderRoute(`${base}/isolates`);
+		mockGetLocalOtuV2(deletableOtu);
+		const isolate = deletableOtu.isolates[0];
+		await renderDetailRoute(`${base}/isolates`);
 
 		expect(
-			await screen.findByRole("button", { name: "Delete isolate" }),
-		).toBeInTheDocument();
+			await screen.findAllByRole("button", { name: "Delete isolate" }),
+		).toHaveLength(2);
 
-		await renderRoute(`${base}/isolates/${isolate?.id}`);
+		await renderDetailRoute(`${base}/isolates/${isolate?.id}`);
 		expect(
 			await screen.findByRole("button", { name: "Delete isolate" }),
 		).toBeInTheDocument();
 	});
 
 	it("deletes an isolate and returns from its detail to the isolate list", async () => {
-		const isolate = otu.isolates[0];
+		mockGetLocalOtuV2(deletableOtu);
+		const isolate = deletableOtu.isolates[0];
 		if (!isolate) {
 			throw new Error("Expected fake OTU to contain an isolate.");
 		}
-		const updatedOtu = { ...otu, version: otu.version + 1, isolates: [] };
+		const updatedOtu = {
+			...deletableOtu,
+			version: otu.version + 1,
+			isolates: deletableOtu.isolates.slice(1),
+		};
 		const deleteIsolate = mockDeleteLocalOtuIsolateV2(updatedOtu);
-		const { router } = await renderRoute(`${base}/isolates/${isolate.id}`);
+		const { router } = await renderDetailRoute(
+			`${base}/isolates/${isolate.id}`,
+		);
 
 		await userEvent.click(
 			await screen.findByRole("button", { name: "Delete isolate" }),
@@ -254,9 +290,53 @@ describe("<LocalOtuDetail />", () => {
 		expect(router.state.location.pathname).toBe(`${base}/isolates`);
 	});
 
+	it("hides isolate deletion for the final isolate in list and detail views", async () => {
+		await renderDetailRoute(`${base}/isolates`);
+		expect(
+			screen.queryByRole("button", { name: "Delete isolate" }),
+		).not.toBeInTheDocument();
+
+		await renderDetailRoute(`${base}/isolates/${otu.isolates[0]?.id}`);
+		expect(
+			screen.queryByRole("button", { name: "Delete isolate" }),
+		).not.toBeInTheDocument();
+	});
+
+	it.each(["read-only", "archived"])(
+		"hides OTU and isolate mutation controls for %s references",
+		async (restriction) => {
+			mockGetReferenceV2(
+				restriction === "archived"
+					? { ...reference, archived: true }
+					: { ...reference, users: [] },
+			);
+			mockGetLocalOtuV2(deletableOtu);
+
+			await renderDetailRoute(base);
+			expect(
+				screen.queryByRole("button", { name: "Delete" }),
+			).not.toBeInTheDocument();
+
+			await renderDetailRoute(`${base}/isolates`);
+			expect(
+				screen.queryByRole("button", { name: "Create" }),
+			).not.toBeInTheDocument();
+			expect(
+				screen.queryByRole("button", { name: "Delete isolate" }),
+			).not.toBeInTheDocument();
+
+			await renderDetailRoute(
+				`${base}/isolates/${deletableOtu.isolates[0]?.id}`,
+			);
+			expect(
+				screen.queryByRole("button", { name: "Delete isolate" }),
+			).not.toBeInTheDocument();
+		},
+	);
+
 	it("renders an isolate detail view", async () => {
 		const isolate = otu.isolates[0];
-		await renderRoute(`${base}/isolates/${isolate?.id}`);
+		await renderDetailRoute(`${base}/isolates/${isolate?.id}`);
 
 		expect(
 			await screen.findByRole("heading", {
@@ -301,7 +381,7 @@ describe("<LocalOtuDetail />", () => {
 			],
 		});
 		mockGetLocalOtuV2(changedOtu);
-		await renderRoute(`${base}/history`);
+		await renderDetailRoute(`${base}/history`);
 
 		const history = await screen.findByRole("list", {
 			name: "OTU change history",

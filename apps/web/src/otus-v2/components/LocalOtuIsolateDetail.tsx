@@ -13,6 +13,7 @@ import {
 	useSuspenseLocalOtuV2,
 	useSuspenseLocalOtuV2Isolate,
 } from "@otus-v2/queries";
+import { useCanModifyReferenceV2Otus } from "@references-v2/hooks";
 import { useQuery } from "@tanstack/react-query";
 import { getRouteApi } from "@tanstack/react-router";
 import { useState } from "react";
@@ -30,6 +31,8 @@ export default function LocalOtuIsolateDetail() {
 		isolateId,
 	);
 	const { data: otu } = useSuspenseLocalOtuV2(referenceId, otuId);
+	const canDelete =
+		useCanModifyReferenceV2Otus(referenceId) && otu.isolateCount > 1;
 	const navigate = routeApi.useNavigate();
 
 	const name = formatV2IsolateName(isolate.name);
@@ -46,18 +49,20 @@ export default function LocalOtuIsolateDetail() {
 			</p>
 			<SectionHeader className="flex items-center justify-between gap-3">
 				<h2>{name}</h2>
-				<DeleteLocalOtuIsolate
-					referenceId={referenceId}
-					otuId={otuId}
-					version={otu.version}
-					isolate={isolate}
-					onDeleted={() =>
-						navigate({
-							to: "/refs/alpha/$referenceId/otus/$otuId/isolates",
-							params: { referenceId, otuId },
-						})
-					}
-				/>
+				{canDelete && (
+					<DeleteLocalOtuIsolate
+						referenceId={referenceId}
+						otuId={otuId}
+						version={otu.version}
+						isolate={isolate}
+						onDeleted={() =>
+							navigate({
+								to: "/refs/alpha/$referenceId/otus/$otuId/isolates",
+								params: { referenceId, otuId },
+							})
+						}
+					/>
+				)}
 			</SectionHeader>
 			<section>
 				<SectionHeader>

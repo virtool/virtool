@@ -12,6 +12,7 @@ import {
 	useSuspenseLocalOtuV2,
 	useSuspenseLocalOtuV2Isolates,
 } from "@otus-v2/queries";
+import { useCanModifyReferenceV2Otus } from "@references-v2/hooks";
 import type { LocalOtuV2IsolateSummary } from "@virtool/contracts";
 import { useState } from "react";
 
@@ -27,6 +28,7 @@ export default function LocalOtuIsolates({
 }) {
 	const { data: isolates } = useSuspenseLocalOtuV2Isolates(referenceId, otuId);
 	const { data: otu } = useSuspenseLocalOtuV2(referenceId, otuId);
+	const canModifyOtus = useCanModifyReferenceV2Otus(referenceId);
 	const [open, setOpen] = useState(false);
 	const [results, term, setTerm] = useFuse(isolates, ISOLATE_SEARCH_KEYS);
 
@@ -39,17 +41,21 @@ export default function LocalOtuIsolates({
 					value={term}
 					onChange={(event) => setTerm(event.target.value)}
 				/>
-				<Button color="blue" onClick={() => setOpen(true)}>
-					Create
-				</Button>
+				{canModifyOtus && (
+					<Button color="blue" onClick={() => setOpen(true)}>
+						Create
+					</Button>
+				)}
 			</div>
-			<CreateLocalOtuIsolateDialog
-				open={open}
-				setOpen={setOpen}
-				referenceId={referenceId}
-				otuId={otuId}
-				version={otu.version}
-			/>
+			{canModifyOtus && (
+				<CreateLocalOtuIsolateDialog
+					open={open}
+					setOpen={setOpen}
+					referenceId={referenceId}
+					otuId={otuId}
+					version={otu.version}
+				/>
+			)}
 			<BoxGroup>
 				<BoxGroupTable variant="data">
 					<caption className="sr-only">Isolates</caption>
@@ -66,6 +72,7 @@ export default function LocalOtuIsolates({
 								referenceId={referenceId}
 								otuId={otuId}
 								version={otu.version}
+								canDelete={canModifyOtus && otu.isolateCount > 1}
 							/>
 						))}
 					</tbody>
@@ -80,6 +87,7 @@ type LocalOtuIsolateRowProps = {
 	otuId: string;
 	referenceId: string;
 	version: number;
+	canDelete: boolean;
 };
 
 function LocalOtuIsolateRow({
@@ -87,6 +95,7 @@ function LocalOtuIsolateRow({
 	otuId,
 	referenceId,
 	version,
+	canDelete,
 }: LocalOtuIsolateRowProps) {
 	const name = formatV2IsolateName(isolate.name);
 
@@ -104,12 +113,14 @@ function LocalOtuIsolateRow({
 				<RelativeTime time={isolate.createdAt} />
 			</td>
 			<TableActionsCell>
-				<DeleteLocalOtuIsolate
-					referenceId={referenceId}
-					otuId={otuId}
-					version={version}
-					isolate={isolate}
-				/>
+				{canDelete && (
+					<DeleteLocalOtuIsolate
+						referenceId={referenceId}
+						otuId={otuId}
+						version={version}
+						isolate={isolate}
+					/>
+				)}
 			</TableActionsCell>
 		</tr>
 	);
