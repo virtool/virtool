@@ -1,4 +1,4 @@
-import { and, eq, sql } from "drizzle-orm";
+import { and, desc, eq, isNull, ne, or, sql } from "drizzle-orm";
 
 import type { DbOrTx } from "../db/pg";
 import { takeFirstOrThrow } from "../db/rows";
@@ -18,6 +18,119 @@ export type ResolvedBrowserSession = {
 	createdAt: Date;
 	forceReset: boolean;
 };
+
+/** A live Better Auth session row safe for account-session display shaping. */
+export type ActiveBrowserSessionRow = {
+	id: number;
+	browser: string;
+	operatingSystem: string;
+	ipAddress: string | null;
+	createdAt: Date;
+	updatedAt: Date;
+	expiresAt: Date;
+};
+
+/** List one user's live Better Auth sessions with the current row first. */
+export async function findActiveBrowserSessions(
+	db: DbOrTx,
+	userId: number,
+	currentSessionId: number,
+): Promise<ActiveBrowserSessionRow[]> {
+	return db
+		.select({
+			id: authSessions.id,
+			browser: authSessions.browser,
+			operatingSystem: authSessions.operatingSystem,
+			ipAddress: authSessions.ipAddress,
+			createdAt: authSessions.createdAt,
+			updatedAt: authSessions.updatedAt,
+			expiresAt: authSessions.expiresAt,
+		})
+		.from(authSessions)
+		.where(
+			and(
+				eq(authSessions.userId, userId),
+				sql`${authSessions.expiresAt} > ${nowUtc()}`,
+			),
+		)
+		.orderBy(
+			desc(sql`${authSessions.id} = ${currentSessionId}`),
+			desc(authSessions.updatedAt),
+			desc(authSessions.id),
+		);
+}
+
+/** Delete a user's selected live session, returning whether it was present. */
+export async function deleteActiveBrowserSession(
+	db: DbOrTx,
+	userId: number,
+	managementId: number,
+): Promise<boolean> {
+	const deleted = await db
+		.delete(authSessions)
+		.where(
+			and(
+				eq(authSessions.id, managementId),
+				eq(authSessions.userId, userId),
+				sql`${authSessions.expiresAt} > ${nowUtc()}`,
+			),
+		)
+		.returning({ id: authSessions.id });
+	return deleted.length === 1;
+}
+
+/** Delete every Better Auth session for a user except the current row. */
+export async function deleteOtherBrowserSessions(
+	db: DbOrTx,
+	userId: number,
+	currentSessionId: number,
+): Promise<number> {
+	const deleted = await db
+		.delete(authSessions)
+		.where(
+			and(
+				eq(authSessions.userId, userId),
+				ne(authSessions.id, currentSessionId),
+				sql`${authSessions.expiresAt} > ${nowUtc()}`,
+				or(
+					isNull(authSessions.replacementForSessionId),
+					ne(authSessions.replacementForSessionId, currentSessionId),
+				),
+			),
+		)
+		.returning({ id: authSessions.id });
+	return deleted.length;
+}
+
+/** Lock and resolve the authoritative current session for a revocation transaction. */
+export async function resolveBrowserSessionForUpdate(
+	db: DbOrTx,
+	sessionId: number,
+	userId: number,
+): Promise<ResolvedBrowserSession | null> {
+	const [row] = await db
+		.select({
+			sessionId: authSessions.id,
+			userId: authSessions.userId,
+			createdAt: authSessions.createdAt,
+			forceReset: users.forceReset,
+		})
+		.from(authSessions)
+		.innerJoin(users, eq(users.id, authSessions.userId))
+		.where(
+			and(
+				eq(authSessions.id, sessionId),
+				eq(authSessions.userId, userId),
+				eq(users.active, true),
+				eq(users.lifecycleState, "normal"),
+				sql`${authSessions.expiresAt} > ${nowUtc()}`,
+			),
+		)
+		.limit(1)
+		.for("update");
+
+	return row ?? null;
+}
 
 /** Resolve a live Better Auth session and its active user authoritatively. */
 export async function resolveBrowserSession(

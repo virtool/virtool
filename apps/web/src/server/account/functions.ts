@@ -9,11 +9,27 @@ import {
 	updateApiKey,
 } from "@virtool/data/account/data";
 import { z } from "zod";
-import { PROTECTED_OPERATIONS } from "../auth/freshness";
-import { authenticated, recentlyAuthenticated } from "../auth/policy";
+import {
+	PROTECTED_OPERATIONS,
+	type ProtectedOperation,
+} from "../auth/freshness";
+import { UnauthorizedError } from "../auth/middleware";
+import {
+	authenticated,
+	recentlyAuthenticated,
+	SessionNotFreshError,
+} from "../auth/policy";
 import { db } from "../composition";
 import { ClientError } from "../errors";
 import { rowIdSchema } from "../validation";
+import {
+	BrowserSessionEndedError,
+	BrowserSessionNotFreshError,
+	CurrentBrowserSessionError,
+	getActiveBrowserSessions,
+	revokeActiveBrowserSession,
+	revokeOtherActiveBrowserSessions,
+} from "./service";
 
 const createApiKeySchema = z.object({
 	name: z.string().trim().min(1),
@@ -28,6 +44,10 @@ const updateApiKeySchema = keyIdSchema.extend({
 	permissions: permissionsSchema.partial().default({}),
 });
 
+const managementIdSchema = z.object({
+	managementId: rowIdSchema,
+});
+
 function rethrowAsHttp(err: unknown): never {
 	if (err instanceof ApiKeyNotFoundError) {
 		setResponseStatus(404);
@@ -35,6 +55,94 @@ function rethrowAsHttp(err: unknown): never {
 	}
 	throw err;
 }
+
+function rethrowSessionManagementError(
+	err: unknown,
+	operation: ProtectedOperation,
+): never {
+	if (err instanceof BrowserSessionEndedError) {
+		setResponseStatus(401);
+		throw new UnauthorizedError();
+	}
+	if (err instanceof BrowserSessionNotFreshError) {
+		setResponseStatus(403);
+		throw new SessionNotFreshError(operation);
+	}
+	if (err instanceof CurrentBrowserSessionError) {
+		setResponseStatus(400);
+		throw new ClientError("Sign out to end the current browser session.", 400);
+	}
+	throw err;
+}
+
+/** List the signed-in user's live Better Auth browser sessions. */
+export const findActiveBrowserSessionsFn = createServerFn({ method: "GET" })
+	.middleware([authenticated()])
+	.handler(async ({ context }) => {
+		if (context.principal.sessionStore !== "better_auth") {
+			setResponseStatus(403);
+			throw new ClientError(
+				"Active session management is unavailable for this session.",
+				403,
+			);
+		}
+
+		try {
+			return await getActiveBrowserSessions(
+				db,
+				context.principal.userId,
+				context.principal.sessionId,
+			);
+		} catch (err) {
+			return rethrowSessionManagementError(
+				err,
+				PROTECTED_OPERATIONS.sessionRevokeOther,
+			);
+		}
+	});
+
+/** Revoke one selected browser session other than the caller's current one. */
+export const revokeBrowserSessionFn = createServerFn({ method: "POST" })
+	.middleware([recentlyAuthenticated(PROTECTED_OPERATIONS.sessionRevokeOther)])
+	.validator(managementIdSchema)
+	.handler(async ({ context, data }) => {
+		try {
+			await revokeActiveBrowserSession(
+				db,
+				context.principal.userId,
+				context.principal.sessionId,
+				data.managementId,
+			);
+			return null;
+		} catch (err) {
+			return rethrowSessionManagementError(
+				err,
+				PROTECTED_OPERATIONS.sessionRevokeOther,
+			);
+		}
+	});
+
+/** Revoke every browser session belonging to the user except the current one. */
+export const revokeOtherBrowserSessionsFn = createServerFn({ method: "POST" })
+	.middleware([
+		recentlyAuthenticated(PROTECTED_OPERATIONS.sessionRevokeAllOther),
+	])
+	.handler(async ({ context }) => {
+		try {
+			return {
+				revoked: await revokeOtherActiveBrowserSessions(
+					db,
+					context.principal.userId,
+					context.principal.sessionId,
+				),
+			};
+		} catch (err) {
+			return rethrowSessionManagementError(
+				err,
+				PROTECTED_OPERATIONS.sessionRevokeAllOther,
+			);
+		}
+	});
 
 export const findApiKeysFn = createServerFn({ method: "GET" })
 	.middleware([authenticated()])
