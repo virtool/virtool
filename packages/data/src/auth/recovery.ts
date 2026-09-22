@@ -6,6 +6,7 @@ import { sessions } from "../db/schema/sessions";
 import { setupSessions, setupTokens } from "../db/schema/setup";
 import { users } from "../db/schema/users";
 import { enqueueEmail } from "../email/outbox";
+import { EMAIL_DELIVERY_DEADLINE_SECONDS } from "../email/retry";
 import { AppError } from "../errors";
 import { emit } from "../events/emit";
 import { CREDENTIAL_PROVIDER_ID } from "./identity";
@@ -20,6 +21,8 @@ import {
 import { hashToken } from "./tokens";
 
 const RECOVERY_LIFETIME_MS = 60 * 60 * 1000;
+const EMAILED_RECOVERY_LIFETIME_MS =
+	(EMAIL_DELIVERY_DEADLINE_SECONDS + 60 * 60) * 1000;
 
 /** A recovery link cannot be issued for the requested account. */
 export class RecoveryNotEligibleError extends AppError {}
@@ -37,6 +40,7 @@ export type RecoveryPurpose = "password_recovery" | "administrator_recovery";
 export type IssueRecoveryLinkInput = {
 	userId: number;
 	purpose: RecoveryPurpose;
+	issuerUserId?: number;
 	deliveryAvailable: boolean;
 	getRecoveryUrl: (token: string) => string;
 };
@@ -95,6 +99,7 @@ export async function issueRecoveryLink(
 				email: users.email,
 				emailVerified: users.emailVerified,
 				handle: users.handle,
+				administratorRole: users.administratorRole,
 				lifecycleState: users.lifecycleState,
 			})
 			.from(users)
@@ -119,6 +124,20 @@ export async function issueRecoveryLink(
 		) {
 			throw new RecoveryNotEligibleError();
 		}
+		if (
+			input.purpose === "administrator_recovery" &&
+			user.administratorRole !== null &&
+			input.issuerUserId !== undefined
+		) {
+			const [issuer] = await tx
+				.select({ administratorRole: users.administratorRole })
+				.from(users)
+				.where(eq(users.id, input.issuerUserId))
+				.limit(1);
+			if (issuer?.administratorRole !== "full") {
+				throw new RecoveryNotEligibleError();
+			}
+		}
 		const canEmail =
 			input.deliveryAvailable && user.emailVerified && user.email !== "";
 		if (input.purpose === "password_recovery" && !canEmail) {
@@ -127,7 +146,9 @@ export async function issueRecoveryLink(
 		const issued = await issueSetupTokenInTransaction(tx, {
 			userId: input.userId,
 			purpose: input.purpose,
-			lifetimeMs: RECOVERY_LIFETIME_MS,
+			lifetimeMs: canEmail
+				? EMAILED_RECOVERY_LIFETIME_MS
+				: RECOVERY_LIFETIME_MS,
 		});
 		if (!canEmail) {
 			return {
@@ -213,6 +234,9 @@ export async function completePasswordRecovery(
 	purpose: RecoveryPurpose,
 	password: string,
 ): Promise<number> {
+	if ((await inspectRecoveryLink(db, token, purpose)) === "unusable") {
+		throw new SetupCredentialError();
+	}
 	const hashed = await hashPassword(password);
 	const userId = await db.transaction(async (tx) => {
 		const [target] = await tx

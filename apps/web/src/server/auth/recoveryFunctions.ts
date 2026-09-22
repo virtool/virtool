@@ -277,6 +277,7 @@ export const issueAdministratorRecoveryFn = createServerFn({ method: "POST" })
 			const issued = await issueRecoveryLink(db, {
 				userId: data.userId,
 				purpose: "administrator_recovery",
+				issuerUserId: context.principal.userId,
 				deliveryAvailable: getDeliveryAvailable(settings),
 				getRecoveryUrl: (token) =>
 					getPublicLink("/recover", token, "administrator_recovery"),

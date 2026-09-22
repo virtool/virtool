@@ -8,7 +8,13 @@ import { emailOutbox } from "../db/schema/emailOutbox";
 import { setupSessions, setupTokens } from "../db/schema/setup";
 import { users } from "../db/schema/users";
 import { createTestDatabase, type TestDatabase } from "../db/test/fixtures";
+import { EMAIL_DELIVERY_DEADLINE_SECONDS } from "../email/retry";
 import { seedSettings } from "../settings/test/fixtures";
+import {
+	changePassword,
+	setAdministratorRole,
+	updateUser,
+} from "../users/data";
 import {
 	beginEmailVerification,
 	completeEmailVerification,
@@ -71,6 +77,28 @@ async function seedMigratedUser(
 }
 
 describe("email verification", () => {
+	it("recognizes a legacy mixed-case current address", async () => {
+		const userId = await seedMigratedUser({
+			email: "Ada@Example.com",
+			emailVerified: false,
+		});
+		let token = "";
+		await beginEmailVerification(db, {
+			userId,
+			email: "ada@example.com",
+			deliveryAvailable: true,
+			getVerificationUrl(value) {
+				token = value;
+				return `https://virtool.test/verify-email#token=${value}`;
+			},
+		});
+		expect(await inspectEmailVerificationLink(db, token)).toBe("current");
+		await completeEmailVerification(db, token, "current");
+		const [user] = await db.select().from(users).where(eq(users.id, userId));
+		expect(user?.email).toBe("ada@example.com");
+		expect(user?.emailVerified).toBe(true);
+	});
+
 	it("keeps the current address until the new mailbox proves control", async () => {
 		const userId = await seedMigratedUser();
 		let link = "";
@@ -133,6 +161,97 @@ describe("email verification", () => {
 });
 
 describe("password recovery", () => {
+	it("keeps emailed links usable past the delivery retry deadline", async () => {
+		const userId = await seedMigratedUser();
+		const issued = await issueRecoveryLink(db, {
+			userId,
+			purpose: "password_recovery",
+			deliveryAvailable: true,
+			getRecoveryUrl: () => "https://virtool.test/recover",
+		});
+		expect(issued.expiresAt.getTime() - Date.now()).toBeGreaterThan(
+			EMAIL_DELIVERY_DEADLINE_SECONDS * 1000,
+		);
+	});
+
+	it("invalidates links when another password change wins", async () => {
+		const userId = await seedMigratedUser();
+		const issued = await issueRecoveryLink(db, {
+			userId,
+			purpose: "password_recovery",
+			deliveryAvailable: true,
+			getRecoveryUrl: () => "https://virtool.test/recover",
+		});
+		await changePassword(db, {
+			userId,
+			oldPassword: "current-password-123",
+			password: "replacement-password-123",
+		});
+		expect(
+			await inspectRecoveryLink(db, issued.token, "password_recovery"),
+		).toBe("unusable");
+	});
+
+	it("invalidates links when an administrator resets a password", async () => {
+		const userId = await seedMigratedUser();
+		const issued = await issueRecoveryLink(db, {
+			userId,
+			purpose: "administrator_recovery",
+			deliveryAvailable: false,
+			getRecoveryUrl: () => "https://virtool.test/recover",
+		});
+		await updateUser(db, userId, { password: "replacement-password-123" });
+		expect(
+			await inspectRecoveryLink(db, issued.token, "administrator_recovery"),
+		).toBe("unusable");
+	});
+
+	it("invalidates links when an administrator forces a reset", async () => {
+		const userId = await seedMigratedUser();
+		const issued = await issueRecoveryLink(db, {
+			userId,
+			purpose: "administrator_recovery",
+			deliveryAvailable: false,
+			getRecoveryUrl: () => "https://virtool.test/recover",
+		});
+		await updateUser(db, userId, { forceReset: true });
+		expect(
+			await inspectRecoveryLink(db, issued.token, "administrator_recovery"),
+		).toBe("unusable");
+	});
+
+	it("invalidates administrator links on role changes", async () => {
+		const userId = await seedMigratedUser();
+		const issued = await issueRecoveryLink(db, {
+			userId,
+			purpose: "administrator_recovery",
+			deliveryAvailable: false,
+			getRecoveryUrl: () => "https://virtool.test/recover",
+		});
+		await setAdministratorRole(db, userId, "full");
+		expect(
+			await inspectRecoveryLink(db, issued.token, "administrator_recovery"),
+		).toBe("unusable");
+	});
+
+	it("rechecks issuer authority after target role changes", async () => {
+		const userId = await seedMigratedUser();
+		const issuerUserId = await seedUser(db, {
+			handle: "issuer",
+			administratorRole: "users",
+		});
+		await setAdministratorRole(db, userId, "full");
+		await expect(
+			issueRecoveryLink(db, {
+				userId,
+				issuerUserId,
+				purpose: "administrator_recovery",
+				deliveryAvailable: false,
+				getRecoveryUrl: () => "https://virtool.test/recover",
+			}),
+		).rejects.toBeInstanceOf(RecoveryNotEligibleError);
+	});
+
 	it("queues a verified user's recovery link and revokes browser authority after use", async () => {
 		const userId = await seedMigratedUser();
 		await seedSession(db, userId);

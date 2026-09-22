@@ -171,7 +171,9 @@ export async function inspectEmailVerificationLink(
 	) {
 		return "unusable";
 	}
-	return row.candidateEmail === row.currentEmail ? "current" : "change";
+	return normalizeEmail(row.candidateEmail) === normalizeEmail(row.currentEmail)
+		? "current"
+		: "change";
 }
 
 /** Consume one challenge, checking the original and proposed addresses again. */

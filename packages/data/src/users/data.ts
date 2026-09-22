@@ -33,6 +33,7 @@ import {
 	invalidateUserSetupSessions,
 	invalidateUserSetupTokens,
 	lockUserSetupCredentials,
+	supersedeSetupTokens,
 } from "../auth/setup";
 import type { Db } from "../db/pg";
 import { takeFirstOrThrow } from "../db/rows";
@@ -491,6 +492,7 @@ export async function changePassword(
 	// nothing, and an unchanged password is exactly the case the caller already
 	// reports as bad credentials.
 	await db.transaction(async (tx) => {
+		await lockUserSetupCredentials(tx, userId);
 		const updated = await tx
 			.update(usersTable)
 			.set({
@@ -516,6 +518,8 @@ export async function changePassword(
 
 		await tx.delete(authSessions).where(eq(authSessions.userId, userId));
 		await invalidateUserSessions(tx, userId);
+		await supersedeSetupTokens(tx, userId, "password_recovery");
+		await supersedeSetupTokens(tx, userId, "administrator_recovery");
 	});
 
 	// An administrator with this user's detail open sees last_password_change and
@@ -708,6 +712,13 @@ export async function updateUser(
 		values.password !== undefined;
 
 	await db.transaction(async (tx) => {
+		if (
+			values.active === false ||
+			values.password !== undefined ||
+			values.forceReset === true
+		) {
+			await lockUserSetupCredentials(tx, userId);
+		}
 		if (Object.keys(patch).length > 0) {
 			try {
 				await tx.update(usersTable).set(patch).where(eq(usersTable.id, userId));
@@ -746,9 +757,12 @@ export async function updateUser(
 			await tx.delete(authSessions).where(eq(authSessions.userId, userId));
 			await invalidateUserSessions(tx, userId);
 		}
+		if (values.password !== undefined || values.forceReset === true) {
+			await supersedeSetupTokens(tx, userId, "password_recovery");
+			await supersedeSetupTokens(tx, userId, "administrator_recovery");
+		}
 
 		if (values.active === false) {
-			await lockUserSetupCredentials(tx, userId);
 			await invalidateUserSetupTokens(tx, userId);
 			await invalidateUserSetupSessions(tx, userId);
 		}
@@ -822,15 +836,18 @@ export async function setAdministratorRole(
 	userId: number,
 	role: AdministratorRoleName | null,
 ): Promise<User> {
-	const [row] = await db
-		.update(usersTable)
-		.set({ administratorRole: role })
-		.where(eq(usersTable.id, userId))
-		.returning({ id: usersTable.id });
-
-	if (!row) {
-		throw new UserNotFoundError();
-	}
+	await db.transaction(async (tx) => {
+		await lockUserSetupCredentials(tx, userId);
+		const [row] = await tx
+			.update(usersTable)
+			.set({ administratorRole: role })
+			.where(eq(usersTable.id, userId))
+			.returning({ id: usersTable.id });
+		if (!row) {
+			throw new UserNotFoundError();
+		}
+		await supersedeSetupTokens(tx, userId, "administrator_recovery");
+	});
 
 	await emit("users", userId, "update");
 
