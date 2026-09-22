@@ -32,11 +32,13 @@ import {
 	OtuV2InvalidProvenanceError,
 	OtuV2LastIsolateError,
 	OtuV2NotFoundError,
+	OtuV2PromotedAccessionError,
 	OtuV2ReferenceNotWritableError,
 	OtuV2VersionConflictError,
 	previewExcludeLocalOtuAccession,
 	previewLocalOtuPlan,
 	previewLocalOtuSequence,
+	promoteLocalOtuIsolate,
 	updateLocalOtuIsolate,
 	updateLocalOtuPlan,
 	updateLocalOtuSequence,
@@ -195,6 +197,267 @@ describe("createReferenceV2", () => {
 });
 
 describe("createLocalOtu", () => {
+	it("promotes a GenBank base atomically and blocks its reimport", async () => {
+		const reference = await createReference();
+		const create = createCommand(randomUUID());
+		const original = await createLocalOtu(db, {
+			referenceId: reference.id,
+			userId,
+			command: {
+				...create,
+				payload: {
+					...create.payload,
+					genbank: {
+						sequences: [
+							{
+								sequenceId: create.payload.isolate.sequences[0].id,
+								accession: "NC_001367.1",
+							},
+						],
+					},
+				},
+			},
+		});
+		const command = {
+			type: "PromoteIsolate" as const,
+			schemaVersion: 1 as const,
+			otuId: original.id,
+			expectedVersion: 1,
+			payload: {
+				isolateId: create.payload.isolate.id,
+				proposedTaxonomy: {
+					name: "Novel virus",
+					lineage: create.payload.taxonomy.lineage,
+				},
+				sequences: [
+					{
+						sequenceId: create.payload.isolate.sequences[0].id,
+						segmentId: create.payload.plan.segments[0].id,
+						previousAccessionVersion: "NC_001367.1",
+						accessionVersion: "NC_888888.1",
+						definition: "New reference",
+						sequence: "ATCGNNRY",
+						proposedSegment: null,
+						approved: true,
+					},
+				],
+			},
+		};
+		const promoted = await promoteLocalOtuIsolate(db, {
+			referenceId: reference.id,
+			userId,
+			command,
+		});
+		expect(promoted.promotedAccessionBases).toEqual([
+			{ accessionBase: "NC_001367", promotedToBase: "NC_888888" },
+		]);
+		expect(promoted.changes[0]).toMatchObject({
+			command: "PromoteIsolate",
+			isolateId: create.payload.isolate.id,
+			accessions: [
+				{ from: "NC_001367.1", to: "NC_888888.1", kind: "promotion" },
+			],
+		});
+		expect(JSON.stringify(promoted.changes)).not.toContain("ATCGNNRY");
+		expect(
+			(
+				await getLocalOtuSequence(
+					db,
+					reference.id,
+					original.id,
+					create.payload.isolate.id,
+					create.payload.isolate.sequences[0].id,
+				)
+			).accessionVersion,
+		).toBe("NC_888888.1");
+		await expect(
+			promoteLocalOtuIsolate(db, {
+				referenceId: reference.id,
+				userId,
+				command,
+			}),
+		).rejects.toBeInstanceOf(OtuV2VersionConflictError);
+		const reimportSequenceId = randomUUID();
+		await expect(
+			createLocalOtuIsolate(db, {
+				referenceId: reference.id,
+				userId,
+				command: {
+					type: "CreateIsolate",
+					schemaVersion: 1,
+					otuId: original.id,
+					expectedVersion: 2,
+					payload: {
+						isolate: {
+							id: randomUUID(),
+							name: null,
+							sequences: [
+								{
+									id: reimportSequenceId,
+									definition: "Old",
+									sequence: "ATCGNNRY",
+									segmentId: create.payload.plan.segments[0].id,
+								},
+							],
+						},
+						genbank: {
+							sequences: [
+								{ sequenceId: reimportSequenceId, accession: "NC_001367.2" },
+							],
+						},
+					},
+				},
+			}),
+		).rejects.toBeInstanceOf(OtuV2PromotedAccessionError);
+		await expect(
+			previewExcludeLocalOtuAccession(db, reference.id, {
+				type: "ExcludeAccession",
+				schemaVersion: 1,
+				otuId: original.id,
+				expectedVersion: 2,
+				payload: { accessionBase: "NC_001367" },
+			}),
+		).rejects.toBeInstanceOf(OtuV2PromotedAccessionError);
+		await deleteReferenceV2(db, reference.id);
+		await expect(
+			getLocalOtu(db, reference.id, original.id),
+		).rejects.toBeInstanceOf(OtuV2NotFoundError);
+	});
+
+	it("rejects partial, duplicate, and excluded multipartite replacement sets", async () => {
+		const reference = await createReference();
+		const create = createCommand(randomUUID());
+		const secondSegment = {
+			id: randomUUID(),
+			name: { prefix: "RNA", key: "2" },
+			length: 8,
+			lengthTolerance: 0,
+			rule: "required" as const,
+		};
+		const secondSequence = {
+			id: randomUUID(),
+			segmentId: secondSegment.id,
+			definition: "Segment 2",
+			sequence: "ATCGNNRY",
+		};
+		const original = await createLocalOtu(db, {
+			referenceId: reference.id,
+			userId,
+			command: {
+				...create,
+				payload: {
+					...create.payload,
+					plan: {
+						...create.payload.plan,
+						segments: [
+							{
+								...create.payload.plan.segments[0],
+								name: { prefix: "RNA", key: "1" },
+							},
+							secondSegment,
+						],
+					},
+					isolate: {
+						...create.payload.isolate,
+						sequences: [...create.payload.isolate.sequences, secondSequence],
+					},
+					genbank: {
+						sequences: [
+							{
+								sequenceId: create.payload.isolate.sequences[0].id,
+								accession: "NC_001367.1",
+							},
+							{ sequenceId: secondSequence.id, accession: "NC_001368.1" },
+						],
+					},
+				},
+			},
+		});
+		const firstEntry = {
+			sequenceId: create.payload.isolate.sequences[0].id,
+			segmentId: create.payload.plan.segments[0].id,
+			previousAccessionVersion: "NC_001367.1",
+			accessionVersion: "NC_999999.1",
+			definition: "Replacement 1",
+			sequence: "ATCGNNRY",
+			proposedSegment: null,
+			approved: true,
+		};
+		const secondEntry = {
+			sequenceId: secondSequence.id,
+			segmentId: secondSegment.id,
+			previousAccessionVersion: "NC_001368.1",
+			accessionVersion: "NC_001368.1",
+			definition: secondSequence.definition,
+			sequence: secondSequence.sequence,
+			proposedSegment: null,
+			approved: false,
+		};
+		const base = {
+			type: "PromoteIsolate" as const,
+			schemaVersion: 1 as const,
+			otuId: original.id,
+			expectedVersion: 1,
+			payload: {
+				isolateId: create.payload.isolate.id,
+				proposedTaxonomy: {
+					name: "Novel virus",
+					lineage: create.payload.taxonomy.lineage,
+				},
+				sequences: [firstEntry, secondEntry],
+			},
+		};
+		await expect(
+			promoteLocalOtuIsolate(db, {
+				referenceId: reference.id,
+				userId,
+				command: {
+					...base,
+					payload: { ...base.payload, sequences: [firstEntry] },
+				},
+			}),
+		).rejects.toBeInstanceOf(OtuV2InvalidProvenanceError);
+		await expect(
+			promoteLocalOtuIsolate(db, {
+				referenceId: reference.id,
+				userId,
+				command: {
+					...base,
+					payload: {
+						...base.payload,
+						sequences: [
+							firstEntry,
+							{
+								...secondEntry,
+								accessionVersion: "NC_999999.1",
+								approved: true,
+							},
+						],
+					},
+				},
+			}),
+		).rejects.toBeInstanceOf(OtuV2DuplicateAccessionError);
+		await excludeLocalOtuAccession(db, {
+			referenceId: reference.id,
+			userId,
+			command: {
+				type: "ExcludeAccession",
+				schemaVersion: 1,
+				otuId: original.id,
+				expectedVersion: 1,
+				payload: { accessionBase: "NC_999999" },
+			},
+		});
+		await expect(
+			promoteLocalOtuIsolate(db, {
+				referenceId: reference.id,
+				userId,
+				command: { ...base, expectedVersion: 2 },
+			}),
+		).rejects.toBeInstanceOf(OtuV2ExcludedAccessionError);
+		const still = await getLocalOtu(db, reference.id, original.id);
+		expect(still.isolates[0]?.sequences).toHaveLength(2);
+	});
 	it("blocks future imports of excluded bases and allow does not alter existing isolates", async () => {
 		const reference = await createReference();
 		const create = createCommand(randomUUID());

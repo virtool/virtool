@@ -15,7 +15,9 @@ import {
 	getLocalOtusFn,
 	previewExcludeLocalOtuAccessionFn,
 	previewLocalOtuPlanFn,
+	previewLocalOtuPromotionFn,
 	previewLocalOtuSequenceFn,
+	promoteLocalOtuIsolateFn,
 	updateLocalOtuIsolateFn,
 	updateLocalOtuPlanFn,
 	updateLocalOtuSequenceFn,
@@ -42,14 +44,55 @@ import type {
 	LocalOtuV2IsolateSummary,
 	LocalOtuV2Overview,
 	LocalOtuV2PlanPreview,
+	LocalOtuV2PromotionPreview,
 	LocalOtuV2Sequence,
 	LocalOtuV2SequencePreview,
 	LocalOtuV2Summary,
+	PromoteLocalOtuIsolateCommandInput,
 	UpdateLocalOtuIsolateCommandInput,
 	UpdateLocalOtuPlanCommandInput,
 	UpdateLocalOtuSequenceCommandInput,
 	UpdateLocalOtuTaxonomyCommandInput,
 } from "@virtool/contracts";
+
+/** Resolve the current NCBI proposal for a complete isolate. */
+export function usePreviewLocalOtuPromotion(
+	referenceId: string,
+	otuId: string,
+) {
+	return useMutation<
+		LocalOtuV2PromotionPreview,
+		Error,
+		{ isolateId: string; expectedVersion: number }
+	>({
+		mutationFn: ({ isolateId, expectedVersion }) =>
+			previewLocalOtuPromotionFn({
+				data: { referenceId, otuId, isolateId, expectedVersion },
+			}) as Promise<LocalOtuV2PromotionPreview>,
+	});
+}
+
+/** Save one explicitly approved NCBI promotion or refresh set. */
+export function usePromoteLocalOtuIsolate(referenceId: string) {
+	const queryClient = useQueryClient();
+	return useMutation<LocalOtuV2, Error, PromoteLocalOtuIsolateCommandInput>({
+		mutationFn: (command) =>
+			promoteLocalOtuIsolateFn({
+				data: { referenceId, command },
+			}) as Promise<LocalOtuV2>,
+		onSuccess: (otu) => {
+			cacheLocalOtuOverview(queryClient, otu);
+			queryClient.invalidateQueries({
+				queryKey: otuV2QueryKeys.detail(otu.id),
+			});
+		},
+		onError: (_error, command) => {
+			queryClient.invalidateQueries({
+				queryKey: otuV2QueryKeys.detail(command.otuId),
+			});
+		},
+	});
+}
 
 /** Preview the isolate affected by excluding an accession base. */
 export function usePreviewExcludeLocalOtuAccession(referenceId: string) {

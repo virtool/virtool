@@ -439,6 +439,75 @@ describe("<LocalOtuDetail />", () => {
 		});
 	});
 
+	it("requires explicit approval of each NCBI isolate refresh", async () => {
+		const isolate = otu.isolates[0];
+		const sequence = isolate?.sequences[0];
+		if (!isolate || !sequence) {
+			throw new Error("Expected fake isolate sequence.");
+		}
+		otuV2ServerFnMocks.previewLocalOtuPromotionFn.mockResolvedValue({
+			expectedVersion: otu.version,
+			isolateId: isolate.id,
+			currentTaxonomy: otu.taxonomy,
+			proposedTaxonomy: { name: otu.taxonomy.name, lineage: [] },
+			issues: [],
+			sequences: [
+				{
+					sequenceId: sequence.id,
+					segmentId: sequence.segmentId,
+					previousAccessionVersion: "NC_001367.1",
+					accessionVersion: "NC_001367.2",
+					previousDefinition: sequence.definition,
+					definition: sequence.definition,
+					previousSequence: sequence.sequence,
+					sequence: sequence.sequence,
+					previousLength: sequence.sequence.length,
+					length: sequence.sequence.length,
+					sequenceChanged: false,
+					definitionChanged: false,
+					kind: "refresh",
+					segmentName: null,
+					proposedSegment: null,
+				},
+			],
+		});
+		otuV2ServerFnMocks.promoteLocalOtuIsolateFn.mockReturnValue(
+			new Promise(() => {}),
+		);
+		await renderDetailRoute(`${base}/isolates/${isolate.id}`);
+		await userEvent.click(
+			await screen.findByRole("button", { name: "Check NCBI updates" }),
+		);
+		await userEvent.click(screen.getByRole("button", { name: "Check NCBI" }));
+		const save = await screen.findByRole("button", {
+			name: "Save approved updates",
+		});
+		expect(save).toBeDisabled();
+		await userEvent.click(
+			screen.getByRole("checkbox", { name: "Approve this refresh" }),
+		);
+		expect(save).toBeEnabled();
+		await userEvent.click(save);
+		expect(otuV2ServerFnMocks.promoteLocalOtuIsolateFn).toHaveBeenCalledWith({
+			data: {
+				referenceId: reference.id,
+				command: expect.objectContaining({
+					type: "PromoteIsolate",
+					expectedVersion: otu.version,
+					payload: expect.objectContaining({
+						isolateId: isolate.id,
+						sequences: [
+							expect.objectContaining({
+								accessionVersion: "NC_001367.2",
+								approved: true,
+							}),
+						],
+					}),
+				}),
+			},
+		});
+	});
+
 	it("shows isolate delete buttons in the list and detail views", async () => {
 		mockGetLocalOtuV2(deletableOtu);
 		const isolate = deletableOtu.isolates[0];

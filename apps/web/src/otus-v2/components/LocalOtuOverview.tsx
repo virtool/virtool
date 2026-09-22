@@ -111,6 +111,25 @@ export default function LocalOtuOverview({
 					<LocalOtuAccessionExclusions referenceId={referenceId} otu={otu} />
 				</Box>
 			</section>
+			<section>
+				<SectionHeader>
+					<h2>Promoted accession bases</h2>
+				</SectionHeader>
+				<Box>
+					{otu.promotedAccessionBases.length === 0 ? (
+						<p>No promoted accession bases.</p>
+					) : (
+						<ul>
+							{otu.promotedAccessionBases.map((item) => (
+								<li key={item.accessionBase}>
+									<span className="font-mono">{item.accessionBase}</span> →{" "}
+									<span className="font-mono">{item.promotedToBase}</span>
+								</li>
+							))}
+						</ul>
+					)}
+				</Box>
+			</section>
 
 			<section>
 				<SectionHeader>

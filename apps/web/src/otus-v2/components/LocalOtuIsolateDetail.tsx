@@ -9,6 +9,7 @@ import SectionHeader from "@base/SectionHeader";
 import DeleteLocalOtuIsolate from "@otus-v2/components/DeleteLocalOtuIsolate";
 import EditLocalOtuIsolate from "@otus-v2/components/EditLocalOtuIsolate";
 import EditLocalOtuSequence from "@otus-v2/components/EditLocalOtuSequence";
+import PromoteLocalOtuIsolate from "@otus-v2/components/PromoteLocalOtuIsolate";
 import { formatV2IsolateName } from "@otus-v2/isolateName";
 import {
 	localOtuV2SequenceQueryOptions,
@@ -53,6 +54,12 @@ export default function LocalOtuIsolateDetail() {
 			<SectionHeader className="flex items-center justify-between gap-3">
 				<h2>{name}</h2>
 				<div className="flex items-center gap-2">
+					<PromoteLocalOtuIsolate
+						referenceId={referenceId}
+						otuId={otuId}
+						isolateId={isolateId}
+						version={otu.version}
+					/>
 					<EditLocalOtuIsolate
 						referenceId={referenceId}
 						otuId={otuId}

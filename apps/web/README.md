@@ -165,6 +165,17 @@ sequences; the last isolate cannot be retired. The base then blocks future
 GenBank imports. Allowing it lifts that block without restoring the retired
 isolate. Exclude and allow actions carry the OTU version and appear in history
 with the base and any retired isolate.
+Curators can check an existing GenBank isolate for newer accession versions or
+RefSeq replacements. A replacement is proposed only when NCBI returns a single
+retained RefSeq record that lists the old base as a secondary accession. The
+preview shows taxonomy, segment, definition, length, and sequence changes for
+the whole isolate; each changed accession needs its own approval. Save resolves
+NCBI again and rejects a stale or ambiguous proposal. The transaction validates
+the complete isolate, advances one OTU version, records refreshes and base
+promotions separately in history, and blocks future imports of superseded bases.
+Same-base version refreshes keep the base active and do not add a promoted base.
+Mixed manual and GenBank isolates cannot use this update flow; manual sequence
+edits remain available.
 
 Local v2 Reference settings allow members with `modify` rights to edit name,
 description, and the default segment length tolerance. Each edit carries the

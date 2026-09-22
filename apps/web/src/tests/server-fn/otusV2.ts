@@ -21,6 +21,8 @@ export const otuV2ServerFnMocks = {
 	getLocalOtuSequenceFn: vi.fn(),
 	getLocalOtusFn: vi.fn(),
 	previewLocalOtuPlanFn: vi.fn(),
+	previewLocalOtuPromotionFn: vi.fn(),
+	promoteLocalOtuIsolateFn: vi.fn(),
 	previewExcludeLocalOtuAccessionFn: vi.fn(),
 	updateLocalOtuPlanFn: vi.fn(),
 	updateLocalOtuIsolateFn: vi.fn(),

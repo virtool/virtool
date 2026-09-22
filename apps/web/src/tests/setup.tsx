@@ -250,6 +250,8 @@ beforeEach(() => {
 		otuV2ServerFnMocks.allowLocalOtuAccessionFn,
 		otuV2ServerFnMocks.updateLocalOtuTaxonomyFn,
 		otuV2ServerFnMocks.previewLocalOtuPlanFn,
+		otuV2ServerFnMocks.previewLocalOtuPromotionFn,
+		otuV2ServerFnMocks.promoteLocalOtuIsolateFn,
 		otuV2ServerFnMocks.updateLocalOtuPlanFn,
 		otuV2ServerFnMocks.updateLocalOtuIsolateFn,
 		otuV2ServerFnMocks.previewLocalOtuSequenceFn,

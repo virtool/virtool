@@ -606,6 +606,7 @@ describe("createLocalOtu", () => {
 		topology: "linear",
 		comment: "",
 		refseq: true,
+		secondary_accessions: [],
 		source: {
 			taxid: 12242,
 			organism: "Tobacco mosaic virus",
@@ -650,6 +651,169 @@ describe("createLocalOtu", () => {
 			},
 		};
 	}
+
+	it("requires an approved current NCBI proposal and rechecks it at save", async () => {
+		const userId = await signIn(db, getRequest, { administratorRole: null });
+		const referenceId = await seedReferenceV2(userId);
+		const create = genbankCommand();
+		fetchGenbankRecords.mockResolvedValue([record]);
+		fetchTaxonomyRecord.mockResolvedValue(taxonomy);
+		await call("createLocalOtuFn", { referenceId, command: create });
+		const newer = {
+			...record,
+			accession_version: "NC_001367.2",
+			sequence: "ATCGNNRA",
+		};
+		fetchGenbankRecords.mockResolvedValue([newer]);
+		const preview = (await call("previewLocalOtuPromotionFn", {
+			referenceId,
+			otuId: create.otuId,
+			isolateId: create.payload.isolate.id,
+			expectedVersion: 1,
+		})) as {
+			issues: string[];
+			proposedTaxonomy: {
+				name: string;
+				lineage: Array<{ id: number; name: string; rank: string }>;
+			};
+			sequences: Array<{
+				sequenceId: string;
+				segmentId: string;
+				previousAccessionVersion: string;
+				accessionVersion: string;
+				definition: string;
+				sequence: string;
+				proposedSegment: string | null;
+			}>;
+		};
+		expect(preview.issues).toEqual([]);
+		expect(preview.sequences[0]?.accessionVersion).toBe("NC_001367.2");
+		const command = {
+			type: "PromoteIsolate",
+			schemaVersion: 1,
+			otuId: create.otuId,
+			expectedVersion: 1,
+			payload: {
+				isolateId: create.payload.isolate.id,
+				proposedTaxonomy: preview.proposedTaxonomy,
+				sequences: preview.sequences.map((item) => ({
+					sequenceId: item.sequenceId,
+					segmentId: item.segmentId,
+					previousAccessionVersion: item.previousAccessionVersion,
+					accessionVersion: item.accessionVersion,
+					definition: item.definition,
+					sequence: item.sequence,
+					proposedSegment: item.proposedSegment,
+					approved: true,
+				})),
+			},
+		};
+		fetchGenbankRecords.mockResolvedValueOnce([
+			{ ...newer, accession_version: "NC_001367.3" },
+		]);
+		await expect(
+			call("promoteLocalOtuIsolateFn", { referenceId, command }),
+		).rejects.toMatchObject({ status: 422 });
+		fetchTaxonomyRecord.mockResolvedValueOnce({
+			...taxonomy,
+			name: "Changed NCBI taxonomy",
+		});
+		fetchGenbankRecords.mockResolvedValue([newer]);
+		await expect(
+			call("promoteLocalOtuIsolateFn", { referenceId, command }),
+		).rejects.toMatchObject({ status: 422 });
+		fetchGenbankRecords.mockResolvedValue([newer]);
+		const saved = (await call("promoteLocalOtuIsolateFn", {
+			referenceId,
+			command,
+		})) as {
+			version: number;
+			promotedAccessionBases: unknown[];
+			changes: Array<{ command: string; accessions?: unknown[] }>;
+		};
+		expect(saved.version).toBe(2);
+		expect(saved.promotedAccessionBases).toEqual([]);
+		expect(saved.changes[0]).toMatchObject({
+			command: "PromoteIsolate",
+			accessions: [{ from: "NC_001367.1", to: "NC_001367.2", kind: "refresh" }],
+		});
+		await expect(
+			call("promoteLocalOtuIsolateFn", { referenceId, command }),
+		).rejects.toMatchObject({ status: 409 });
+	});
+
+	it("protects promotion preview and save with modify rights and archived state", async () => {
+		const ownerId = await signIn(db, getRequest, {
+			administratorRole: null,
+			handle: "promotion-owner",
+		});
+		const referenceId = await seedReferenceV2(ownerId);
+		const create = genbankCommand();
+		fetchGenbankRecords.mockResolvedValue([record]);
+		fetchTaxonomyRecord.mockResolvedValue(taxonomy);
+		await call("createLocalOtuFn", { referenceId, command: create });
+		const previewInput = {
+			referenceId,
+			otuId: create.otuId,
+			isolateId: create.payload.isolate.id,
+			expectedVersion: 1,
+		};
+		const sequence = create.payload.isolate.sequences[0];
+		if (!sequence) {
+			throw new Error("Expected initial sequence.");
+		}
+		const command = {
+			type: "PromoteIsolate",
+			schemaVersion: 1,
+			otuId: create.otuId,
+			expectedVersion: 1,
+			payload: {
+				isolateId: create.payload.isolate.id,
+				proposedTaxonomy: {
+					name: taxonomy.name,
+					lineage: [
+						{ id: taxonomy.id, name: taxonomy.name, rank: taxonomy.rank },
+					],
+				},
+				sequences: [
+					{
+						sequenceId: sequence.id,
+						segmentId: sequence.segmentId,
+						previousAccessionVersion: "NC_001367.1",
+						accessionVersion: "NC_001367.2",
+						definition: sequence.definition,
+						sequence: sequence.sequence,
+						proposedSegment: null,
+						approved: true,
+					},
+				],
+			},
+		};
+		await signIn(db, getRequest, {
+			administratorRole: null,
+			handle: "promotion-outsider",
+		});
+		await expect(
+			call("previewLocalOtuPromotionFn", previewInput),
+		).rejects.toBeInstanceOf(ForbiddenError);
+		await expect(
+			call("promoteLocalOtuIsolateFn", { referenceId, command }),
+		).rejects.toBeInstanceOf(ForbiddenError);
+		await signIn(db, getRequest, {
+			administratorRole: "full",
+			handle: "promotion-admin",
+		});
+		await db
+			.update(referenceRoots)
+			.set({ archived: true })
+			.where(eq(referenceRoots.id, referenceId));
+		await expect(
+			call("previewLocalOtuPromotionFn", previewInput),
+		).rejects.toMatchObject({ status: 409 });
+		await expect(
+			call("promoteLocalOtuIsolateFn", { referenceId, command }),
+		).rejects.toMatchObject({ status: 409 });
+	});
 
 	it("validates a direct GenBank save without requiring a preview", async () => {
 		const userId = await signIn(db, getRequest, { administratorRole: null });

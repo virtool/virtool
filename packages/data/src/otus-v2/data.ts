@@ -25,6 +25,8 @@ import {
 	type OtuV2Change,
 	type OtuV2Isolate,
 	OtuV2IsolatePlan,
+	PromoteLocalOtuIsolateCommand,
+	type PromoteLocalOtuIsolateCommandInput,
 	UpdateLocalOtuIsolateCommand,
 	type UpdateLocalOtuIsolateCommandInput,
 	UpdateLocalOtuPlanCommand,
@@ -48,6 +50,7 @@ import {
 	otuPlanSegments,
 	otuPlanSegmentVersions,
 	otuPlans,
+	otuPromotedAccessionBases,
 	otuSequences,
 	otuSequenceVersions,
 	otusV2,
@@ -71,6 +74,9 @@ export class OtuV2DuplicateAccessionError extends AppError {}
 
 /** Thrown when an accession base is excluded from an OTU. */
 export class OtuV2ExcludedAccessionError extends AppError {}
+
+/** Thrown when an accession was superseded by a promoted base. */
+export class OtuV2PromotedAccessionError extends AppError {}
 
 /** Thrown when an accession exclusion already exists. */
 export class OtuV2AlreadyExcludedAccessionError extends AppError {}
@@ -102,6 +108,7 @@ function toOtuV2Change(row: {
 		| "UpdatePlan"
 		| "UpdateIsolate"
 		| "UpdateSequence"
+		| "PromoteIsolate"
 		| "ExcludeAccession"
 		| "AllowAccession"
 		| "DeleteIsolate"
@@ -116,6 +123,12 @@ function toOtuV2Change(row: {
 	previousSequenceAccessionVersion: string | null;
 	accessionBase: string | null;
 	retiredIsolate: { id: string; name: OtuV2Isolate["name"] } | null;
+	promotionIsolateId: string | null;
+	promotionAccessions: Array<{
+		from: string;
+		to: string;
+		kind: "refresh" | "promotion";
+	}> | null;
 	createdAt: Date;
 	userId: number;
 	userHandle: string;
@@ -156,6 +169,13 @@ function toOtuV2Change(row: {
 				accessionVersion: row.sequenceAccessionVersion,
 				previousSource: row.previousSequenceSource ?? "manual",
 				previousAccessionVersion: row.previousSequenceAccessionVersion,
+			};
+		case "PromoteIsolate":
+			return {
+				...base,
+				command: row.command,
+				isolateId: row.promotionIsolateId ?? "",
+				accessions: row.promotionAccessions ?? [],
 			};
 		case "ExcludeAccession":
 			if (!row.accessionBase) {
@@ -623,6 +643,282 @@ export async function updateLocalOtuSequence(
 	});
 }
 
+/** Values needed for an approved atomic GenBank isolate replacement. */
+export type PromoteLocalOtuIsolateValues = {
+	referenceId: string;
+	userId: number;
+	command: PromoteLocalOtuIsolateCommandInput;
+};
+
+/** Replace all of an isolate's GenBank records in one OTU version. */
+export async function promoteLocalOtuIsolate(
+	db: Db,
+	values: PromoteLocalOtuIsolateValues,
+): Promise<LocalOtuV2> {
+	const command = PromoteLocalOtuIsolateCommand.parse(values.command);
+	return db.transaction(async (tx) => {
+		await getWritableLocalOtu(
+			tx,
+			values.referenceId,
+			command.otuId,
+			command.expectedVersion,
+		);
+		const otu = await getLocalOtu(tx, values.referenceId, command.otuId);
+		const isolate = otu.isolates.find(
+			(item) => item.id === command.payload.isolateId,
+		);
+		if (
+			!isolate ||
+			isolate.sequences.length !== command.payload.sequences.length
+		) {
+			throw new OtuV2InvalidProvenanceError();
+		}
+		const oldById = new Map(
+			await Promise.all(
+				isolate.sequences.map(
+					async (sequence) =>
+						[
+							sequence.id,
+							await getLocalOtuSequence(
+								tx,
+								values.referenceId,
+								command.otuId,
+								isolate.id,
+								sequence.id,
+							),
+						] as const,
+				),
+			),
+		);
+		const oldBases = new Set<string>();
+		const newBases = new Set<string>();
+		const promotions: Array<{
+			from: string;
+			to: string;
+			kind: "refresh" | "promotion";
+		}> = [];
+		const proposed = [];
+		for (const entry of command.payload.sequences) {
+			const old = oldById.get(entry.sequenceId);
+			if (!old) {
+				throw new OtuV2InvalidProvenanceError();
+			}
+			if (
+				old.source !== "genbank" ||
+				old.accessionVersion !== entry.previousAccessionVersion ||
+				old.segmentId !== entry.segmentId
+			) {
+				throw new OtuV2InvalidProvenanceError();
+			}
+			const oldBase = getAccessionBase(old.accessionVersion);
+			const newBase = getAccessionBase(entry.accessionVersion);
+			if (oldBases.has(oldBase) || newBases.has(newBase)) {
+				throw new OtuV2DuplicateAccessionError(newBase);
+			}
+			oldBases.add(oldBase);
+			newBases.add(newBase);
+			const changed = entry.accessionVersion !== old.accessionVersion;
+			if (
+				changed !== entry.approved ||
+				(!changed &&
+					(entry.sequence !== old.sequence ||
+						entry.definition !== old.definition))
+			) {
+				throw new OtuV2InvalidProvenanceError();
+			}
+			if (changed) {
+				if (
+					newBase === oldBase &&
+					Number(entry.accessionVersion.split(".").at(-1)) <=
+						Number(old.accessionVersion.split(".").at(-1))
+				) {
+					throw new OtuV2InvalidProvenanceError();
+				}
+				promotions.push({
+					from: old.accessionVersion,
+					to: entry.accessionVersion,
+					kind: oldBase === newBase ? "refresh" : "promotion",
+				});
+			}
+			proposed.push({
+				id: old.id,
+				segmentId: entry.segmentId,
+				definition: entry.definition,
+				sequence: entry.sequence,
+			});
+		}
+		if (
+			promotions.length === 0 ||
+			!OtuV2IsolatePlan.safeParse({
+				plan: otu.plan,
+				isolate: { ...isolate, sequences: proposed },
+			}).success
+		) {
+			throw new OtuV2InvalidIsolateError();
+		}
+		if (
+			promotions.some(
+				(item) =>
+					item.kind === "promotion" && oldBases.has(getAccessionBase(item.to)),
+			)
+		) {
+			throw new OtuV2DuplicateAccessionError();
+		}
+		const excluded = await tx
+			.select({ accessionBase: otuExcludedAccessionBases.accessionBase })
+			.from(otuExcludedAccessionBases)
+			.where(
+				and(
+					eq(otuExcludedAccessionBases.otuId, otu.id),
+					inArray(otuExcludedAccessionBases.accessionBase, [...newBases]),
+				),
+			);
+		if (excluded[0]) {
+			throw new OtuV2ExcludedAccessionError(excluded[0].accessionBase);
+		}
+		const superseded = await tx
+			.select({ accessionBase: otuPromotedAccessionBases.accessionBase })
+			.from(otuPromotedAccessionBases)
+			.where(
+				and(
+					eq(otuPromotedAccessionBases.otuId, otu.id),
+					inArray(otuPromotedAccessionBases.accessionBase, [...newBases]),
+				),
+			);
+		if (superseded[0]) {
+			throw new OtuV2PromotedAccessionError(superseded[0].accessionBase);
+		}
+		const active = await tx
+			.select({ accessionBase: otuSequences.accessionBase })
+			.from(otuSequences)
+			.where(
+				and(
+					eq(otuSequences.otuId, otu.id),
+					isNull(otuSequences.retiredVersion),
+					inArray(otuSequences.accessionBase, [...newBases]),
+				),
+			);
+		if (
+			active.some(
+				(row) => row.accessionBase && !oldBases.has(row.accessionBase),
+			)
+		) {
+			throw new OtuV2DuplicateAccessionError();
+		}
+		const version = otu.version + 1;
+		for (const entry of command.payload.sequences) {
+			if (!entry.approved) {
+				continue;
+			}
+			const newBase = getAccessionBase(entry.accessionVersion);
+			const oldBase = getAccessionBase(entry.previousAccessionVersion);
+			const recordId = randomUUID();
+			await tx.insert(otuLocalSequenceRecords).values({
+				id: recordId,
+				otuId: otu.id,
+				sequenceId: entry.sequenceId,
+				definition: entry.definition,
+				sequence: entry.sequence,
+				source: "genbank",
+				accessionVersion: entry.accessionVersion,
+				createdAt: new Date(),
+			});
+			await tx
+				.update(otuSequenceVersions)
+				.set({ lastVersion: version })
+				.where(
+					and(
+						eq(otuSequenceVersions.otuId, otu.id),
+						eq(otuSequenceVersions.sequenceId, entry.sequenceId),
+						isNull(otuSequenceVersions.lastVersion),
+					),
+				);
+			await tx.insert(otuSequenceVersions).values({
+				id: randomUUID(),
+				otuId: otu.id,
+				sequenceId: entry.sequenceId,
+				isolateId: isolate.id,
+				segmentId: entry.segmentId,
+				localRecordId: recordId,
+				firstVersion: version,
+			});
+			if (oldBase !== newBase) {
+				await tx
+					.update(otuSequences)
+					.set({ accessionBase: newBase })
+					.where(eq(otuSequences.id, entry.sequenceId));
+				await tx.insert(otuPromotedAccessionBases).values({
+					otuId: otu.id,
+					accessionBase: oldBase,
+					promotedToBase: newBase,
+					createdVersion: version,
+				});
+			}
+		}
+		await tx.update(otusV2).set({ version }).where(eq(otusV2.id, otu.id));
+		await tx.insert(otuChanges).values({
+			referenceId: values.referenceId,
+			otuId: otu.id,
+			version,
+			command: command.type,
+			commandSchemaVersion: command.schemaVersion,
+			payload: { ...command.payload, accessions: promotions },
+			source: "user",
+			userId: values.userId,
+			createdAt: new Date(),
+		});
+		return getLocalOtu(tx, values.referenceId, otu.id);
+	});
+}
+
+/** Read a writable isolate and its exact active GenBank provenance for preview. */
+export async function getLocalOtuPromotionSource(
+	db: Db,
+	referenceId: string,
+	otuId: string,
+	isolateId: string,
+	expectedVersion: number,
+): Promise<{
+	otu: LocalOtuV2;
+	sequences: LocalOtuV2Sequence[];
+	activeAccessions: Array<{ sequenceId: string; accessionBase: string | null }>;
+}> {
+	const reference = takeFirst(
+		await db
+			.select({ archived: referenceRoots.archived, kind: referenceRoots.kind })
+			.from(referenceRoots)
+			.where(eq(referenceRoots.id, referenceId)),
+	);
+	if (!reference || reference.archived || reference.kind !== "local") {
+		throw new OtuV2ReferenceNotWritableError();
+	}
+	const otu = await getLocalOtu(db, referenceId, otuId);
+	if (otu.version !== expectedVersion) {
+		throw new OtuV2VersionConflictError();
+	}
+	const isolate = otu.isolates.find((item) => item.id === isolateId);
+	if (!isolate) {
+		throw new OtuV2NotFoundError();
+	}
+	const [sequences, activeAccessions] = await Promise.all([
+		Promise.all(
+			isolate.sequences.map((sequence) =>
+				getLocalOtuSequence(db, referenceId, otuId, isolateId, sequence.id),
+			),
+		),
+		db
+			.select({
+				sequenceId: otuSequences.id,
+				accessionBase: otuSequences.accessionBase,
+			})
+			.from(otuSequences)
+			.where(
+				and(eq(otuSequences.otuId, otuId), isNull(otuSequences.retiredVersion)),
+			),
+	]);
+	return { otu, sequences, activeAccessions };
+}
+
 async function getCurrentIsolateCount(
 	tx: DbOrTx,
 	otuId: string,
@@ -767,6 +1063,13 @@ export async function previewExcludeLocalOtuAccession(
 	if (otu.excludedAccessionBases.includes(command.payload.accessionBase)) {
 		throw new OtuV2AlreadyExcludedAccessionError(command.payload.accessionBase);
 	}
+	if (
+		otu.promotedAccessionBases.some(
+			(item) => item.accessionBase === command.payload.accessionBase,
+		)
+	) {
+		throw new OtuV2PromotedAccessionError(command.payload.accessionBase);
+	}
 	const retiredIsolate = await getActiveAccessionIsolate(
 		db,
 		command.otuId,
@@ -818,6 +1121,23 @@ export async function excludeLocalOtuAccession(
 			throw new OtuV2AlreadyExcludedAccessionError(
 				command.payload.accessionBase,
 			);
+		}
+		const promoted = takeFirst(
+			await tx
+				.select({ accessionBase: otuPromotedAccessionBases.accessionBase })
+				.from(otuPromotedAccessionBases)
+				.where(
+					and(
+						eq(otuPromotedAccessionBases.otuId, command.otuId),
+						eq(
+							otuPromotedAccessionBases.accessionBase,
+							command.payload.accessionBase,
+						),
+					),
+				),
+		);
+		if (promoted) {
+			throw new OtuV2PromotedAccessionError(command.payload.accessionBase);
 		}
 		const version = command.expectedVersion + 1;
 		const retiredIsolate = await getActiveAccessionIsolate(
@@ -1325,6 +1645,18 @@ async function getSequenceProvenance(
 	if (excluded[0]?.accessionBase) {
 		throw new OtuV2ExcludedAccessionError(excluded[0].accessionBase);
 	}
+	const promoted = await tx
+		.select({ accessionBase: otuPromotedAccessionBases.accessionBase })
+		.from(otuPromotedAccessionBases)
+		.where(
+			and(
+				eq(otuPromotedAccessionBases.otuId, otuId),
+				inArray(otuPromotedAccessionBases.accessionBase, accessionBases),
+			),
+		);
+	if (promoted[0]?.accessionBase) {
+		throw new OtuV2PromotedAccessionError(promoted[0].accessionBase);
+	}
 	const existing = await tx
 		.select({ accessionBase: otuSequences.accessionBase })
 		.from(otuSequences)
@@ -1510,103 +1842,120 @@ async function getLocalOtuMetadata(
 		throw new OtuV2NotFoundError();
 	}
 
-	const [taxonomyRows, planRows, changeRows, excludedRows] = await Promise.all([
-		db
-			.select({
-				identityId: otuLocalIdentities.id,
-				name: otuLocalIdentityRevisions.name,
-				acronym: otuLocalIdentityRevisions.acronym,
-				lineage: otuLocalIdentityRevisions.lineage,
-			})
-			.from(otuTaxonomyVersions)
-			.innerJoin(
-				otuLocalIdentityRevisions,
-				eq(
-					otuTaxonomyVersions.localIdentityRevisionId,
-					otuLocalIdentityRevisions.id,
+	const [taxonomyRows, planRows, changeRows, excludedRows, promotedRows] =
+		await Promise.all([
+			db
+				.select({
+					identityId: otuLocalIdentities.id,
+					name: otuLocalIdentityRevisions.name,
+					acronym: otuLocalIdentityRevisions.acronym,
+					lineage: otuLocalIdentityRevisions.lineage,
+				})
+				.from(otuTaxonomyVersions)
+				.innerJoin(
+					otuLocalIdentityRevisions,
+					eq(
+						otuTaxonomyVersions.localIdentityRevisionId,
+						otuLocalIdentityRevisions.id,
+					),
+				)
+				.innerJoin(
+					otuLocalIdentities,
+					eq(otuLocalIdentityRevisions.identityId, otuLocalIdentities.id),
+				)
+				.where(
+					and(
+						eq(otuTaxonomyVersions.otuId, otuId),
+						eq(otuTaxonomyVersions.kind, "local"),
+						isNull(otuTaxonomyVersions.lastVersion),
+					),
 				),
-			)
-			.innerJoin(
-				otuLocalIdentities,
-				eq(otuLocalIdentityRevisions.identityId, otuLocalIdentities.id),
-			)
-			.where(
-				and(
-					eq(otuTaxonomyVersions.otuId, otuId),
-					eq(otuTaxonomyVersions.kind, "local"),
-					isNull(otuTaxonomyVersions.lastVersion),
-				),
-			),
-		db
-			.select({
-				planId: otuPlans.id,
-				segmentId: otuPlanSegments.id,
-				namePrefix: otuPlanSegmentVersions.namePrefix,
-				nameKey: otuPlanSegmentVersions.nameKey,
-				length: otuPlanSegmentVersions.length,
-				lengthTolerance: otuPlanSegmentVersions.lengthTolerance,
-				rule: otuPlanSegmentVersions.rule,
-			})
-			.from(otuPlans)
-			.innerJoin(otuPlanSegments, eq(otuPlans.id, otuPlanSegments.planId))
-			.innerJoin(
-				otuPlanSegmentVersions,
-				eq(otuPlanSegments.id, otuPlanSegmentVersions.segmentId),
-			)
-			.where(
-				and(
-					eq(otuPlans.otuId, otuId),
-					isNull(otuPlanSegmentVersions.lastVersion),
-				),
-			)
-			.orderBy(asc(otuPlanSegmentVersions.id)),
-		db
-			.select({
-				version: otuChanges.version,
-				command: otuChanges.command,
-				commandSchemaVersion: otuChanges.commandSchemaVersion,
-				otuName: sql<
-					string | null
-				>`coalesce(${otuChanges.payload}->'taxonomy'->>'name', ${otuChanges.payload}->>'name')`,
-				isolateName: sql<
-					OtuV2Isolate["name"]
-				>`coalesce(${otuChanges.payload}->'isolate'->'name', ${otuChanges.payload}->'name')`,
-				segmentCount: sql<
-					number | null
-				>`jsonb_array_length(${otuChanges.payload}->'plan'->'segments')`,
-				sequenceSource: sql<
-					"manual" | "genbank" | null
-				>`${otuChanges.payload}->>'source'`,
-				sequenceAccessionVersion: sql<
-					string | null
-				>`${otuChanges.payload}->>'accessionVersion'`,
-				previousSequenceSource: sql<
-					"manual" | "genbank" | null
-				>`${otuChanges.payload}->>'previousSource'`,
-				previousSequenceAccessionVersion: sql<
-					string | null
-				>`${otuChanges.payload}->>'previousAccessionVersion'`,
-				accessionBase: sql<
-					string | null
-				>`${otuChanges.payload}->>'accessionBase'`,
-				retiredIsolate: sql<{
-					id: string;
-					name: OtuV2Isolate["name"];
-				} | null>`${otuChanges.payload}->'retiredIsolate'`,
-				createdAt: otuChanges.createdAt,
-				userId: users.id,
-				userHandle: users.handle,
-			})
-			.from(otuChanges)
-			.innerJoin(users, eq(otuChanges.userId, users.id))
-			.where(eq(otuChanges.otuId, otuId))
-			.orderBy(desc(otuChanges.version)),
-		db
-			.select({ accessionBase: otuExcludedAccessionBases.accessionBase })
-			.from(otuExcludedAccessionBases)
-			.where(eq(otuExcludedAccessionBases.otuId, otuId))
-			.orderBy(asc(otuExcludedAccessionBases.accessionBase)),
-	]);
+			db
+				.select({
+					planId: otuPlans.id,
+					segmentId: otuPlanSegments.id,
+					namePrefix: otuPlanSegmentVersions.namePrefix,
+					nameKey: otuPlanSegmentVersions.nameKey,
+					length: otuPlanSegmentVersions.length,
+					lengthTolerance: otuPlanSegmentVersions.lengthTolerance,
+					rule: otuPlanSegmentVersions.rule,
+				})
+				.from(otuPlans)
+				.innerJoin(otuPlanSegments, eq(otuPlans.id, otuPlanSegments.planId))
+				.innerJoin(
+					otuPlanSegmentVersions,
+					eq(otuPlanSegments.id, otuPlanSegmentVersions.segmentId),
+				)
+				.where(
+					and(
+						eq(otuPlans.otuId, otuId),
+						isNull(otuPlanSegmentVersions.lastVersion),
+					),
+				)
+				.orderBy(asc(otuPlanSegmentVersions.id)),
+			db
+				.select({
+					version: otuChanges.version,
+					command: otuChanges.command,
+					commandSchemaVersion: otuChanges.commandSchemaVersion,
+					otuName: sql<
+						string | null
+					>`coalesce(${otuChanges.payload}->'taxonomy'->>'name', ${otuChanges.payload}->>'name')`,
+					isolateName: sql<
+						OtuV2Isolate["name"]
+					>`coalesce(${otuChanges.payload}->'isolate'->'name', ${otuChanges.payload}->'name')`,
+					segmentCount: sql<
+						number | null
+					>`jsonb_array_length(${otuChanges.payload}->'plan'->'segments')`,
+					sequenceSource: sql<
+						"manual" | "genbank" | null
+					>`${otuChanges.payload}->>'source'`,
+					sequenceAccessionVersion: sql<
+						string | null
+					>`${otuChanges.payload}->>'accessionVersion'`,
+					previousSequenceSource: sql<
+						"manual" | "genbank" | null
+					>`${otuChanges.payload}->>'previousSource'`,
+					previousSequenceAccessionVersion: sql<
+						string | null
+					>`${otuChanges.payload}->>'previousAccessionVersion'`,
+					accessionBase: sql<
+						string | null
+					>`${otuChanges.payload}->>'accessionBase'`,
+					retiredIsolate: sql<{
+						id: string;
+						name: OtuV2Isolate["name"];
+					} | null>`${otuChanges.payload}->'retiredIsolate'`,
+					promotionIsolateId: sql<
+						string | null
+					>`${otuChanges.payload}->>'isolateId'`,
+					promotionAccessions: sql<Array<{
+						from: string;
+						to: string;
+						kind: "refresh" | "promotion";
+					}> | null>`${otuChanges.payload}->'accessions'`,
+					createdAt: otuChanges.createdAt,
+					userId: users.id,
+					userHandle: users.handle,
+				})
+				.from(otuChanges)
+				.innerJoin(users, eq(otuChanges.userId, users.id))
+				.where(eq(otuChanges.otuId, otuId))
+				.orderBy(desc(otuChanges.version)),
+			db
+				.select({ accessionBase: otuExcludedAccessionBases.accessionBase })
+				.from(otuExcludedAccessionBases)
+				.where(eq(otuExcludedAccessionBases.otuId, otuId))
+				.orderBy(asc(otuExcludedAccessionBases.accessionBase)),
+			db
+				.select({
+					accessionBase: otuPromotedAccessionBases.accessionBase,
+					promotedToBase: otuPromotedAccessionBases.promotedToBase,
+				})
+				.from(otuPromotedAccessionBases)
+				.where(eq(otuPromotedAccessionBases.otuId, otuId))
+				.orderBy(asc(otuPromotedAccessionBases.accessionBase)),
+		]);
 
 	const taxonomy = takeFirst(taxonomyRows);
 	const change = takeFirst(changeRows);
@@ -1645,6 +1994,7 @@ async function getLocalOtuMetadata(
 			})),
 		},
 		excludedAccessionBases: excludedRows.map((row) => row.accessionBase),
+		promotedAccessionBases: promotedRows,
 		createdAt: otu.createdAt,
 		changes: changeRows.map(toOtuV2Change),
 		mostRecentChange: toOtuV2Change(change),
@@ -1928,6 +2278,7 @@ export async function getLocalOtu(
 		sequenceRows,
 		changeRows,
 		excludedRows,
+		promotedRows,
 	] = await Promise.all([
 		db
 			.select({
@@ -2051,6 +2402,14 @@ export async function getLocalOtu(
 					id: string;
 					name: OtuV2Isolate["name"];
 				} | null>`${otuChanges.payload}->'retiredIsolate'`,
+				promotionIsolateId: sql<
+					string | null
+				>`${otuChanges.payload}->>'isolateId'`,
+				promotionAccessions: sql<Array<{
+					from: string;
+					to: string;
+					kind: "refresh" | "promotion";
+				}> | null>`${otuChanges.payload}->'accessions'`,
 				createdAt: otuChanges.createdAt,
 				userId: users.id,
 				userHandle: users.handle,
@@ -2064,6 +2423,14 @@ export async function getLocalOtu(
 			.from(otuExcludedAccessionBases)
 			.where(eq(otuExcludedAccessionBases.otuId, otuId))
 			.orderBy(asc(otuExcludedAccessionBases.accessionBase)),
+		db
+			.select({
+				accessionBase: otuPromotedAccessionBases.accessionBase,
+				promotedToBase: otuPromotedAccessionBases.promotedToBase,
+			})
+			.from(otuPromotedAccessionBases)
+			.where(eq(otuPromotedAccessionBases.otuId, otuId))
+			.orderBy(asc(otuPromotedAccessionBases.accessionBase)),
 	]);
 
 	const taxonomy = takeFirst(taxonomyRows);
@@ -2116,6 +2483,7 @@ export async function getLocalOtu(
 		},
 		isolates,
 		excludedAccessionBases: excludedRows.map((row) => row.accessionBase),
+		promotedAccessionBases: promotedRows,
 		createdAt: otu.createdAt,
 		changes: changeRows.map(toOtuV2Change),
 		mostRecentChange: toOtuV2Change(change),

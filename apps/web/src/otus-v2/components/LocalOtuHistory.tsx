@@ -20,6 +20,7 @@ const changeStyles: Record<OtuV2Change["command"], ChangeStyle> = {
 	UpdatePlan: { icon: Pencil, color: "blue" },
 	UpdateIsolate: { icon: Pencil, color: "blue" },
 	UpdateSequence: { icon: Pencil, color: "blue" },
+	PromoteIsolate: { icon: Pencil, color: "blue" },
 	ExcludeAccession: { icon: Pencil, color: "red" },
 	AllowAccession: { icon: Pencil, color: "blue" },
 	DeleteIsolate: { icon: FlaskConical, color: "red" },

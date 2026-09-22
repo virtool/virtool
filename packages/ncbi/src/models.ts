@@ -149,6 +149,7 @@ export const ncbiGenbankSchema = z
 		sequence: sequenceSchema,
 		source: ncbiSourceSchema,
 		comment: z.string().default(""),
+		secondary_accessions: z.array(z.string()).default([]),
 	})
 	.refine((record) => record.source.organism === record.organism, {
 		message: "Non-matching organism fields on record and source",

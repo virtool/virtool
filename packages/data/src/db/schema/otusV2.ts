@@ -7,6 +7,7 @@ import type {
 	ExcludeLocalOtuAccessionCommand,
 	OtuV2Isolate,
 	OtuV2LineageTaxon,
+	PromoteLocalOtuIsolateCommand,
 	UpdateLocalOtuIsolateCommand,
 	UpdateLocalOtuPlanCommand,
 	UpdateLocalOtuSequenceCommand,
@@ -105,6 +106,7 @@ export const otuChanges = pgTable(
 				| "UpdatePlan"
 				| "UpdateIsolate"
 				| "UpdateSequence"
+				| "PromoteIsolate"
 				| "ExcludeAccession"
 				| "AllowAccession"
 				| "DeleteIsolate"
@@ -130,6 +132,13 @@ export const otuChanges = pgTable(
 						} | null;
 				  })
 				| AllowLocalOtuAccessionCommand["payload"]
+				| (PromoteLocalOtuIsolateCommand["payload"] & {
+						accessions: Array<{
+							from: string;
+							to: string;
+							kind: "refresh" | "promotion";
+						}>;
+				  })
 				| DeleteLocalOtuIsolateCommand["payload"]
 				| DeleteLocalOtuCommand["payload"]
 			>()
@@ -461,6 +470,39 @@ export const otuExcludedAccessionBases = pgTable(
 		),
 		check(
 			"otu_excluded_accession_bases_created_version_check",
+			sql`${table.createdVersion} >= 2`,
+		),
+	],
+);
+
+export const otuPromotedAccessionBases = pgTable(
+	"otu_promoted_accession_bases",
+	{
+		otuId: uuid("otu_id").notNull(),
+		accessionBase: text("accession_base").notNull(),
+		promotedToBase: text("promoted_to_base").notNull(),
+		createdVersion: integer("created_version").notNull(),
+	},
+	(table) => [
+		primaryKey({
+			columns: [table.otuId, table.accessionBase],
+			name: "otu_promoted_accession_bases_pkey",
+		}),
+		foreignKey({
+			columns: [table.otuId],
+			foreignColumns: [otusV2.id],
+			name: "otu_promoted_accession_bases_otu_id_fkey",
+		}),
+		check(
+			"otu_promoted_accession_bases_accession_base_check",
+			sql`${table.accessionBase} ~ '^[A-Z0-9_-]+$'`,
+		),
+		check(
+			"otu_promoted_accession_bases_promoted_to_base_check",
+			sql`${table.promotedToBase} ~ '^[A-Z0-9_-]+$' and ${table.promotedToBase} <> ${table.accessionBase}`,
+		),
+		check(
+			"otu_promoted_accession_bases_created_version_check",
 			sql`${table.createdVersion} >= 2`,
 		),
 	],

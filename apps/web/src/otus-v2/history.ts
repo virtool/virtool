@@ -39,6 +39,13 @@ export function getOtuV2ChangeDescription(change: OtuV2Change) {
 							: "updated manual sequence",
 				subject: change.accessionVersion ?? change.previousAccessionVersion,
 			};
+		case "PromoteIsolate":
+			return {
+				action: "approved NCBI isolate updates",
+				subject: change.accessions
+					.map((item) => `${item.kind}: ${item.from} → ${item.to}`)
+					.join(" · "),
+			};
 		case "ExcludeAccession":
 			return {
 				action: change.retiredIsolate

@@ -13,6 +13,7 @@ import { buildCreateOtuCommandFromDraft } from "../../otus-v2/command";
 import {
 	buildGenbankIsolateDraft,
 	buildGenbankOtuDraft,
+	buildPromotionPreview,
 	GenbankMixedIsolateError,
 	GenbankOtuEmptyError,
 	GenbankOtuMixedTaxidError,
@@ -45,6 +46,7 @@ function createRecord(overrides: Partial<NcbiGenbank> = {}): NcbiGenbank {
 	return {
 		accession: "NC_001367",
 		accession_version: "NC_001367.1",
+		secondary_accessions: [],
 		strandedness: "single",
 		moltype: "RNA",
 		topology: "linear",
@@ -275,6 +277,142 @@ function createCommand(): CreateLocalOtuIsolateCommand {
 		},
 	};
 }
+
+describe("NCBI isolate promotion preview", () => {
+	const isolateId = "10000000-0000-4000-8000-000000000001";
+	const sequenceId = "10000000-0000-4000-8000-000000000002";
+	const segmentId = "10000000-0000-4000-8000-000000000003";
+	const current = [
+		{
+			id: sequenceId,
+			segmentId,
+			definition: "Tobacco mosaic virus, complete genome",
+			sequence: "ATCGATCG",
+			source: "genbank" as const,
+			accessionVersion: "NC_001367.1",
+		},
+	];
+	const existing = {
+		...otu,
+		molecule: {
+			type: "RNA" as const,
+			strandedness: "single" as const,
+			topology: "linear" as const,
+		},
+		version: 1,
+		plan: {
+			...otu.plan,
+			id: "10000000-0000-4000-8000-000000000004",
+			segments: [
+				{
+					id: segmentId,
+					name: null,
+					length: 8,
+					lengthTolerance: 0,
+					rule: "required" as const,
+				},
+			],
+		},
+		isolates: [
+			{
+				id: isolateId,
+				name: null,
+				sequences: [
+					{
+						id: sequenceId,
+						segmentId,
+						definition: "Tobacco mosaic virus, complete genome",
+						sequence: "ATCGATCG",
+					},
+				],
+			},
+		],
+	};
+	it("detects a newer exact accession version", () => {
+		const preview = buildPromotionPreview(
+			existing,
+			isolateId,
+			current,
+			[
+				[
+					createRecord({
+						accession_version: "NC_001367.2",
+						sequence: "ATCGATCA",
+					}),
+				],
+			],
+			taxonomy,
+		);
+		expect(preview.issues).toEqual([]);
+		expect(preview.sequences[0]).toMatchObject({
+			kind: "refresh",
+			accessionVersion: "NC_001367.2",
+			sequenceChanged: true,
+		});
+	});
+	it("promotes a RefSeq only with explicit secondary accession evidence", () => {
+		const replacement = createRecord({
+			accession: "NC_888888",
+			accession_version: "NC_888888.1",
+			secondary_accessions: ["NC_001367"],
+		});
+		const preview = buildPromotionPreview(
+			existing,
+			isolateId,
+			current,
+			[[replacement]],
+			taxonomy,
+		);
+		expect(preview.issues).toEqual([]);
+		expect(preview.sequences[0]?.kind).toBe("promotion");
+		expect(
+			buildPromotionPreview(
+				existing,
+				isolateId,
+				current,
+				[[{ ...replacement, secondary_accessions: [] }]],
+				taxonomy,
+			).issues,
+		).toContain(
+			"NCBI did not confirm NC_001367 as a secondary accession of NC_888888.",
+		);
+	});
+	it("rejects inconsistent primary and versioned accession fields", () => {
+		const preview = buildPromotionPreview(
+			existing,
+			isolateId,
+			current,
+			[
+				[
+					createRecord({
+						accession: "NC_888888",
+						accession_version: "NC_999999.1",
+						secondary_accessions: ["NC_001367"],
+					}),
+				],
+			],
+			taxonomy,
+		);
+		expect(preview.issues).toContain(
+			"NCBI returned inconsistent accession fields for NC_888888.",
+		);
+	});
+	it("rejects ambiguous and partial lookups", () => {
+		expect(
+			buildPromotionPreview(
+				existing,
+				isolateId,
+				current,
+				[[createRecord(), createRecord()]],
+				taxonomy,
+			).issues,
+		).toContain("Accession NC_001367.1 did not resolve to exactly one record.");
+		expect(
+			buildPromotionPreview(existing, isolateId, current, [[]], taxonomy)
+				.issues,
+		).toContain("The replacement set is incomplete.");
+	});
+});
 
 describe("GenBank isolate validation", () => {
 	it.each(["RNA1", "RNA 1", "1"])(

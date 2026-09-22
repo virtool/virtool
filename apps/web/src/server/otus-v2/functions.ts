@@ -9,6 +9,8 @@ import {
 	ExcludeLocalOtuAccessionCommand,
 	type GenbankIsolateDraft,
 	type GenbankOtuDraft,
+	type LocalOtuV2PromotionPreview,
+	PromoteLocalOtuIsolateCommand,
 	UpdateLocalOtuIsolateCommand,
 	UpdateLocalOtuPlanCommand,
 	UpdateLocalOtuSequenceCommand,
@@ -25,6 +27,7 @@ import {
 	getLocalOtuIsolate,
 	getLocalOtuIsolates,
 	getLocalOtuOverview,
+	getLocalOtuPromotionSource,
 	getLocalOtuSequence,
 	getLocalOtus,
 	OtuV2AccessionNotExcludedError,
@@ -37,11 +40,13 @@ import {
 	OtuV2InvalidProvenanceError,
 	OtuV2LastIsolateError,
 	OtuV2NotFoundError,
+	OtuV2PromotedAccessionError,
 	OtuV2ReferenceNotWritableError,
 	OtuV2VersionConflictError,
 	previewExcludeLocalOtuAccession,
 	previewLocalOtuPlan,
 	previewLocalOtuSequence,
+	promoteLocalOtuIsolate,
 	updateLocalOtuIsolate,
 	updateLocalOtuPlan,
 	updateLocalOtuSequence,
@@ -65,6 +70,7 @@ import { logger } from "../logger";
 import {
 	buildGenbankIsolateDraft,
 	buildGenbankOtuDraft,
+	buildPromotionPreview,
 	GenbankMixedIsolateError,
 	GenbankOtuEmptyError,
 	GenbankOtuMixedTaxidError,
@@ -115,6 +121,17 @@ const updateLocalOtuIsolateSchema = z.object({
 const updateLocalOtuSequenceSchema = z.object({
 	referenceId: z.uuid(),
 	command: UpdateLocalOtuSequenceCommand,
+});
+
+const promotionPreviewSchema = z.object({
+	referenceId: z.uuid(),
+	otuId: z.uuid(),
+	isolateId: z.uuid(),
+	expectedVersion: z.number().int().positive(),
+});
+const promoteLocalOtuIsolateSchema = z.object({
+	referenceId: z.uuid(),
+	command: PromoteLocalOtuIsolateCommand,
 });
 
 const excludeLocalOtuAccessionSchema = z.object({
@@ -216,6 +233,13 @@ const rethrowAsHttp = createServerOnlyFn((err: unknown): never => {
 			409,
 		);
 	}
+	if (err instanceof OtuV2PromotedAccessionError) {
+		setResponseStatus(409);
+		throw new ClientError(
+			`Accession ${err.message} was superseded and cannot be imported.`,
+			409,
+		);
+	}
 	if (err instanceof OtuV2AlreadyExcludedAccessionError) {
 		setResponseStatus(409);
 		throw new ClientError("Accession is already excluded.", 409);
@@ -279,6 +303,148 @@ const rethrowAsHttp = createServerOnlyFn((err: unknown): never => {
 	}
 	throw err;
 });
+
+const resolvePromotionPreview = createServerOnlyFn(
+	async (
+		referenceId: string,
+		otuId: string,
+		isolateId: string,
+		expectedVersion: number,
+	): Promise<LocalOtuV2PromotionPreview> => {
+		const { otu, sequences, activeAccessions } =
+			await getLocalOtuPromotionSource(
+				db,
+				referenceId,
+				otuId,
+				isolateId,
+				expectedVersion,
+			);
+		const { ncbiApiKey } = await getSettings(db);
+		const { apiKey } = resolveNcbiApiKey(ncbiApiKey, keyring);
+		const client = createNcbiClient({ apiKey: apiKey ?? "", logger });
+		const lookups = await Promise.all(
+			sequences.map(async (sequence) => {
+				const base = sequence.accessionVersion?.split(".")[0];
+				return base ? client.fetchGenbankRecords([base]) : [];
+			}),
+		);
+		const first = lookups.flat()[0];
+		const taxonomy = first
+			? await client.fetchTaxonomyRecord(first.source.taxid)
+			: null;
+		const preview = buildPromotionPreview(
+			otu,
+			isolateId,
+			sequences,
+			lookups,
+			taxonomy,
+		);
+		for (const sequence of preview.sequences) {
+			const base = sequence.accessionVersion.split(".")[0]?.toUpperCase();
+			if (base && otu.excludedAccessionBases.includes(base)) {
+				preview.issues.push(`Accession ${base} is excluded.`);
+			}
+			if (
+				base &&
+				otu.promotedAccessionBases.some((item) => item.accessionBase === base)
+			) {
+				preview.issues.push(`Accession ${base} was already superseded.`);
+			}
+			if (
+				base &&
+				activeAccessions.some(
+					(item) =>
+						item.accessionBase === base &&
+						item.sequenceId !== sequence.sequenceId,
+				)
+			) {
+				preview.issues.push(
+					`Accession ${base} is already active in another sequence.`,
+				);
+			}
+		}
+		return preview;
+	},
+);
+
+export const previewLocalOtuPromotionFn = createServerFn({ method: "POST" })
+	.middleware([authenticated()])
+	.validator(promotionPreviewSchema)
+	.handler(async ({ context, data }) => {
+		try {
+			const actor = await resolveReferenceActor(db, context.principal.userId);
+			if (
+				!(await checkReferenceV2Right(db, data.referenceId, "modifyOtu", actor))
+			) {
+				setResponseStatus(403);
+				throw new ForbiddenError();
+			}
+			return await resolvePromotionPreview(
+				data.referenceId,
+				data.otuId,
+				data.isolateId,
+				data.expectedVersion,
+			);
+		} catch (err) {
+			return rethrowAsHttp(err);
+		}
+	});
+
+export const promoteLocalOtuIsolateFn = createServerFn({ method: "POST" })
+	.middleware([authenticated()])
+	.validator(promoteLocalOtuIsolateSchema)
+	.handler(async ({ context, data }) => {
+		try {
+			const actor = await resolveReferenceActor(db, context.principal.userId);
+			if (
+				!(await checkReferenceV2Right(db, data.referenceId, "modifyOtu", actor))
+			) {
+				setResponseStatus(403);
+				throw new ForbiddenError();
+			}
+			const command = data.command;
+			const preview = await resolvePromotionPreview(
+				data.referenceId,
+				command.otuId,
+				command.payload.isolateId,
+				command.expectedVersion,
+			);
+			if (
+				preview.issues.length > 0 ||
+				preview.sequences.length !== command.payload.sequences.length ||
+				JSON.stringify(preview.proposedTaxonomy) !==
+					JSON.stringify(command.payload.proposedTaxonomy)
+			) {
+				throw new GenbankProvenanceError();
+			}
+			const approved = command.payload.sequences;
+			for (const candidate of preview.sequences) {
+				const entry = approved.find(
+					(item) => item.sequenceId === candidate.sequenceId,
+				);
+				if (
+					!entry ||
+					entry.segmentId !== candidate.segmentId ||
+					entry.previousAccessionVersion !==
+						candidate.previousAccessionVersion ||
+					entry.accessionVersion !== candidate.accessionVersion ||
+					entry.definition !== candidate.definition ||
+					entry.sequence !== candidate.sequence ||
+					entry.proposedSegment !== candidate.proposedSegment ||
+					entry.approved !== (candidate.kind !== "unchanged")
+				) {
+					throw new GenbankProvenanceError();
+				}
+			}
+			return await promoteLocalOtuIsolate(db, {
+				referenceId: data.referenceId,
+				userId: context.principal.userId,
+				command,
+			});
+		} catch (err) {
+			return rethrowAsHttp(err);
+		}
+	});
 
 export const createLocalOtuFn = createServerFn({ method: "POST" })
 	.middleware([authenticated()])
@@ -356,6 +522,13 @@ export const createLocalOtuIsolateFn = createServerFn({ method: "POST" })
 				);
 				if (excludedBase) {
 					throw new OtuV2ExcludedAccessionError(excludedBase);
+				}
+				const promotedBase = getExcludedSubmittedBase(
+					provenance.sequences.map((sequence) => sequence.accession),
+					otuAtSave.promotedAccessionBases.map((item) => item.accessionBase),
+				);
+				if (promotedBase) {
+					throw new OtuV2PromotedAccessionError(promotedBase);
 				}
 				const { ncbiApiKey } = await getSettings(db);
 				const { apiKey } = resolveNcbiApiKey(ncbiApiKey, keyring);
@@ -746,6 +919,17 @@ export const getGenbankIsolateDraftFn = createServerFn({ method: "GET" })
 			setResponseStatus(409);
 			throw new ClientError(
 				`Accession ${excludedBase} is excluded from this OTU.`,
+				409,
+			);
+		}
+		const promotedBase = getExcludedSubmittedBase(
+			data.accessions,
+			otu.promotedAccessionBases.map((item) => item.accessionBase),
+		);
+		if (promotedBase) {
+			setResponseStatus(409);
+			throw new ClientError(
+				`Accession ${promotedBase} was superseded and cannot be imported.`,
 				409,
 			);
 		}

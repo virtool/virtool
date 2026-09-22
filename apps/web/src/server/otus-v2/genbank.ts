@@ -1,11 +1,14 @@
-import type {
-	CreateLocalOtuCommand,
-	CreateLocalOtuIsolateCommand,
-	GenbankIsolateDraft,
-	GenbankOtuDraft,
-	LocalOtuV2,
-	OtuV2IsolateNameType,
-	OtuV2LineageTaxon,
+import {
+	type CreateLocalOtuCommand,
+	type CreateLocalOtuIsolateCommand,
+	type GenbankIsolateDraft,
+	type GenbankOtuDraft,
+	type LocalOtuV2,
+	type LocalOtuV2PromotionPreview,
+	type LocalOtuV2Sequence,
+	type OtuV2IsolateNameType,
+	OtuV2IsolatePlan,
+	type OtuV2LineageTaxon,
 } from "@virtool/contracts";
 import {
 	getSpecies,
@@ -31,6 +34,190 @@ export class GenbankSegmentError extends Error {}
 
 /** Thrown when a saved sequence differs from its accession record. */
 export class GenbankProvenanceError extends Error {}
+
+/** Build an actionable candidate only when each base resolves unambiguously. */
+export function buildPromotionPreview(
+	otu: Pick<
+		LocalOtuV2,
+		"plan" | "taxonomy" | "molecule" | "version" | "isolates"
+	>,
+	isolateId: string,
+	current: LocalOtuV2Sequence[],
+	lookups: NcbiGenbank[][],
+	taxonomy: NcbiTaxonomy | null,
+): LocalOtuV2PromotionPreview {
+	const issues: string[] = [];
+	const candidates: NcbiGenbank[] = [];
+	const proposed = current
+		.map((old, index) => {
+			const records = lookups[index] ?? [];
+			const [record] = records;
+			const oldAccession = old.accessionVersion;
+			if (old.source !== "genbank" || !oldAccession) {
+				issues.push(`Sequence ${old.id} is not GenBank-derived.`);
+			}
+			if (records.length !== 1 || !record || !oldAccession) {
+				issues.push(
+					`Accession ${oldAccession ?? old.id} did not resolve to exactly one record.`,
+				);
+				return null;
+			}
+			candidates.push(record);
+			const oldBase = oldAccession.split(".")[0]?.toUpperCase();
+			const newBase = record.accession.toUpperCase();
+			if (
+				record.accession_version.split(".")[0]?.toUpperCase() !== newBase ||
+				!/^[A-Za-z0-9_-]+\.[1-9][0-9]*$/.test(record.accession_version)
+			) {
+				issues.push(
+					`NCBI returned inconsistent accession fields for ${record.accession}.`,
+				);
+			}
+			const oldVersion = Number(oldAccession.split(".").at(-1));
+			const newVersion = Number(record.accession_version.split(".").at(-1));
+			const kind =
+				newBase === oldBase
+					? newVersion > oldVersion
+						? "refresh"
+						: "unchanged"
+					: record.refseq &&
+							record.secondary_accessions.some(
+								(base) => base.toUpperCase() === oldBase,
+							)
+						? "promotion"
+						: "unchanged";
+			if (newBase !== oldBase && kind !== "promotion") {
+				issues.push(
+					`NCBI did not confirm ${oldBase} as a secondary accession of ${newBase}.`,
+				);
+			}
+			if (newBase === oldBase && newVersion < oldVersion) {
+				issues.push(`NCBI returned an older version of ${oldBase}.`);
+			}
+			const segment = otu.plan.segments.find(
+				(item) => item.id === old.segmentId,
+			);
+			if (!segment) {
+				issues.push(`Segment for ${oldAccession} no longer exists.`);
+			}
+			return {
+				sequenceId: old.id,
+				segmentId: old.segmentId,
+				previousAccessionVersion: oldAccession,
+				accessionVersion:
+					kind === "unchanged" ? oldAccession : record.accession_version,
+				definition: kind === "unchanged" ? old.definition : record.definition,
+				sequence: kind === "unchanged" ? old.sequence : record.sequence,
+				previousLength: old.sequence.length,
+				previousSequence: old.sequence,
+				previousDefinition: old.definition,
+				length:
+					kind === "unchanged" ? old.sequence.length : record.sequence.length,
+				sequenceChanged:
+					kind !== "unchanged" && old.sequence !== record.sequence,
+				definitionChanged:
+					kind !== "unchanged" && old.definition !== record.definition,
+				kind,
+				segmentName: segment?.name ?? null,
+				proposedSegment: record.source.segment,
+			} as const;
+		})
+		.filter((item): item is NonNullable<typeof item> => item !== null);
+	if (
+		proposed.length !== current.length ||
+		candidates.length !== current.length
+	) {
+		issues.push("The replacement set is incomplete.");
+	}
+	if (
+		candidates.some(
+			(record) =>
+				record.moltype !== otu.molecule.type ||
+				record.strandedness !== otu.molecule.strandedness ||
+				record.topology !== otu.molecule.topology,
+		)
+	) {
+		issues.push(
+			"The proposed records have a different molecule type, strandedness, or topology.",
+		);
+	}
+	if (
+		new Set(
+			proposed.map((item) =>
+				item.accessionVersion.split(".")[0]?.toUpperCase(),
+			),
+		).size !== proposed.length
+	) {
+		issues.push("The replacement set contains a duplicate accession base.");
+	}
+	const species = taxonomy && getSpecies(taxonomy);
+	const otuSpecies = otu.taxonomy.lineage.find(
+		(item) => item.rank === "species",
+	);
+	if (
+		!taxonomy ||
+		!species ||
+		!otuSpecies ||
+		species.id !== otuSpecies.id ||
+		candidates.some((record) => record.source.taxid !== taxonomy.id)
+	) {
+		issues.push("The proposed records do not match the OTU species.");
+	} else {
+		try {
+			const draft = buildGenbankIsolateDraft(candidates, taxonomy, otu);
+			for (const [index, sequence] of proposed.entries()) {
+				if (draft.sequences[index]?.segmentId !== sequence.segmentId) {
+					issues.push(
+						`NCBI now assigns ${sequence.accessionVersion} to a different segment.`,
+					);
+				}
+			}
+		} catch {
+			issues.push(
+				"NCBI records cannot be mapped unambiguously to the current segment plan.",
+			);
+		}
+	}
+	const isolate = otu.isolates.find((item) => item.id === isolateId);
+	if (
+		!isolate ||
+		!OtuV2IsolatePlan.safeParse({
+			plan: otu.plan,
+			isolate: {
+				...isolate,
+				sequences: proposed.map((item) => ({
+					id: item.sequenceId,
+					segmentId: item.segmentId,
+					definition: item.definition,
+					sequence: item.sequence,
+				})),
+			},
+		}).success
+	) {
+		issues.push("The proposed sequences do not satisfy the segment plan.");
+	}
+	if (proposed.every((item) => item.kind === "unchanged")) {
+		issues.push(
+			"NCBI has no newer versions or confirmed replacements for this isolate.",
+		);
+	}
+	return {
+		expectedVersion: otu.version,
+		isolateId,
+		currentTaxonomy: otu.taxonomy,
+		proposedTaxonomy: {
+			name: taxonomy?.name ?? "Unknown",
+			lineage: taxonomy
+				? [
+						...taxonomy.lineage,
+						{ id: taxonomy.id, name: taxonomy.name, rank: taxonomy.rank },
+					]
+				: [],
+		},
+		sequences: proposed,
+		issues,
+	};
+}
 
 function parseSegmentName(
 	value: string | null,

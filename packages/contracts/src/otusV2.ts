@@ -428,6 +428,40 @@ export const UpdateLocalOtuSequenceCommand = z
 		}
 	});
 
+/** An approved atomic refresh or promotion of one GenBank-derived isolate. */
+export const PromoteLocalOtuIsolateCommand = z
+	.object({
+		type: z.literal("PromoteIsolate"),
+		schemaVersion: z.literal(1),
+		otuId: uuidSchema,
+		expectedVersion: z.number().int().positive(),
+		payload: z
+			.object({
+				isolateId: uuidSchema,
+				proposedTaxonomy: z
+					.object({ name: z.string(), lineage: z.array(lineageTaxonSchema) })
+					.strict(),
+				sequences: z
+					.array(
+						z
+							.object({
+								sequenceId: uuidSchema,
+								segmentId: uuidSchema,
+								previousAccessionVersion: z.string().min(1),
+								accessionVersion: z.string().min(1),
+								definition: trimmedTextSchema,
+								sequence: sequenceSchema,
+								proposedSegment: z.string().nullable(),
+								approved: z.boolean(),
+							})
+							.strict(),
+					)
+					.min(1),
+			})
+			.strict(),
+	})
+	.strict();
+
 /** Exclude one accession base from a locally maintained OTU. */
 export const ExcludeLocalOtuAccessionCommand = z
 	.object({
@@ -527,6 +561,45 @@ export type UpdateLocalOtuSequenceCommand = z.output<
 export type UpdateLocalOtuSequenceCommandInput = z.input<
 	typeof UpdateLocalOtuSequenceCommand
 >;
+
+/** A parsed atomic GenBank isolate promotion command. */
+export type PromoteLocalOtuIsolateCommand = z.output<
+	typeof PromoteLocalOtuIsolateCommand
+>;
+
+/** Input accepted for GenBank isolate promotion. */
+export type PromoteLocalOtuIsolateCommandInput = z.input<
+	typeof PromoteLocalOtuIsolateCommand
+>;
+
+/** One sequence change proposed by NCBI for an existing isolate. */
+export type LocalOtuV2PromotionSequence = {
+	sequenceId: string;
+	segmentId: string;
+	previousAccessionVersion: string;
+	accessionVersion: string;
+	definition: string;
+	sequence: string;
+	previousLength: number;
+	previousSequence: string;
+	previousDefinition: string;
+	length: number;
+	sequenceChanged: boolean;
+	definitionChanged: boolean;
+	kind: "unchanged" | "refresh" | "promotion";
+	segmentName: OtuV2Segment["name"];
+	proposedSegment: string | null;
+};
+
+/** A reviewable proposal for replacing all records in one isolate. */
+export type LocalOtuV2PromotionPreview = {
+	expectedVersion: number;
+	isolateId: string;
+	currentTaxonomy: OtuV2LocalTaxonomy;
+	proposedTaxonomy: { name: string; lineage: OtuV2LineageTaxon[] };
+	sequences: LocalOtuV2PromotionSequence[];
+	issues: string[];
+};
 
 /** A parsed accession exclusion command. */
 export type ExcludeLocalOtuAccessionCommand = z.output<
@@ -681,6 +754,15 @@ export type OtuV2Change = {
 			previousAccessionVersion: string | null;
 	  }
 	| {
+			command: "PromoteIsolate";
+			isolateId: string;
+			accessions: Array<{
+				from: string;
+				to: string;
+				kind: "refresh" | "promotion";
+			}>;
+	  }
+	| {
 			command: "ExcludeAccession";
 			accessionBase: string;
 			retiredIsolate: { id: string; name: OtuV2Isolate["name"] } | null;
@@ -749,6 +831,10 @@ export type LocalOtuV2 = {
 	plan: OtuV2Plan;
 	isolates: OtuV2Isolate[];
 	excludedAccessionBases: string[];
+	promotedAccessionBases: Array<{
+		accessionBase: string;
+		promotedToBase: string;
+	}>;
 	createdAt: Date;
 	changes: OtuV2Change[];
 	mostRecentChange: OtuV2Change;

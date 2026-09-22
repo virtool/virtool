@@ -74,6 +74,7 @@ export function createFakeLocalOtuV2(
 			},
 		],
 		excludedAccessionBases: [],
+		promotedAccessionBases: [],
 		createdAt: faker.date.past(),
 		changes: [change],
 		mostRecentChange: change,

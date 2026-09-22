@@ -23,6 +23,7 @@ import {
 	otuPlanSegments,
 	otuPlanSegmentVersions,
 	otuPlans,
+	otuPromotedAccessionBases,
 	otuSequences,
 	otuSequenceVersions,
 	otusV2,
@@ -240,6 +241,9 @@ export async function deleteReferenceV2(
 		await tx
 			.delete(otuExcludedAccessionBases)
 			.where(inArray(otuExcludedAccessionBases.otuId, otuIds));
+		await tx
+			.delete(otuPromotedAccessionBases)
+			.where(inArray(otuPromotedAccessionBases.otuId, otuIds));
 		await tx.delete(otusV2).where(eq(otusV2.referenceId, referenceId));
 
 		const deleted = await tx
