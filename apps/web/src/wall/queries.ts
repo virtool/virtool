@@ -55,10 +55,10 @@ export function useCreateFirstUser() {
 	return useMutation<
 		Awaited<ReturnType<typeof createFirstUserFn>>,
 		Error,
-		{ handle: string; password: string }
+		{ handle: string; email: string; password: string }
 	>({
-		mutationFn: ({ handle, password }) =>
-			createFirstUserFn({ data: { handle, password } }),
+		mutationFn: ({ handle, email, password }) =>
+			createFirstUserFn({ data: { handle, email, password } }),
 		onSuccess: () => {
 			queryClient.removeQueries({ queryKey: rootQueryKeys.all() });
 			queryClient.removeQueries({ queryKey: accountQueryKeys.all() });

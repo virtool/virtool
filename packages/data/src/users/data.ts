@@ -22,6 +22,7 @@ import {
 	sql,
 } from "drizzle-orm";
 import type { PostgresError } from "postgres";
+import { claimEmail, normalizeEmail } from "../auth/email";
 import {
 	CREDENTIAL_PROVIDER_ID,
 	updateAuthPassword,
@@ -32,10 +33,11 @@ import { invalidateUserSessions } from "../auth/session";
 import {
 	invalidateUserSetupSessions,
 	invalidateUserSetupTokens,
+	issueSetupTokenInTransaction,
 	lockUserSetupCredentials,
 	supersedeSetupTokens,
 } from "../auth/setup";
-import type { Db } from "../db/pg";
+import type { Db, DbOrTx } from "../db/pg";
 import { takeFirstOrThrow } from "../db/rows";
 import { authAccounts, authSessions } from "../db/schema/auth";
 import {
@@ -43,6 +45,7 @@ import {
 	userGroups as userGroupsTable,
 } from "../db/schema/groups";
 import { type UserRow, users as usersTable } from "../db/schema/users";
+import { enqueueEmail } from "../email/outbox";
 import { AppError } from "../errors";
 import { emit } from "../events/emit";
 
@@ -121,14 +124,18 @@ export type CreateUserValues = {
 	handle: string;
 	password: string;
 	forceReset: boolean;
+	email?: string;
+	emailVerified?: boolean;
 	administratorRole?: AdministratorRoleName | null;
 };
 
 /** Values accepted when creating a pending user. */
 export type CreatePendingUserValues = {
 	handle: string;
+	email?: string;
 	administratorRole?: AdministratorRoleName | null;
 	groups?: number[];
+	primaryGroup?: number | null;
 };
 
 /** Partial values accepted when updating a user. */
@@ -182,6 +189,9 @@ export class GroupMembershipError extends AppError {}
  * has not completed setup.
  */
 export class PendingAccountError extends AppError {}
+
+/** Thrown when first-instance creation runs after any user already exists. */
+export class FirstAdministratorExistsError extends AppError {}
 
 // The settings every newly created account starts with, and the fallback for
 // any key a stored blob is missing.
@@ -569,36 +579,10 @@ export async function createPendingUser(
 	db: Db,
 	values: CreatePendingUserValues,
 ): Promise<User> {
-	const groupIds = Array.from(new Set(values.groups ?? []));
-
 	try {
-		const userId = await db.transaction(async (tx) => {
-			const row = takeFirstOrThrow(
-				await tx
-					.insert(usersTable)
-					.values({
-						handle: values.handle,
-						lifecycleState: "pending",
-						administratorRole: values.administratorRole ?? null,
-						lastPasswordChange: new Date(),
-						legacyId: null,
-						settings: toStoredAccountSettings(DEFAULT_USER_SETTINGS),
-					})
-					.returning({ id: usersTable.id }),
-			);
-
-			if (groupIds.length > 0) {
-				await tx.insert(userGroupsTable).values(
-					groupIds.map((groupId) => ({
-						userId: row.id,
-						groupId,
-						primary: false,
-					})),
-				);
-			}
-
-			return row.id;
-		});
+		const userId = await db.transaction((tx) =>
+			createPendingUserInTransaction(tx, values),
+		);
 
 		await emit("users", userId, "create");
 
@@ -611,6 +595,75 @@ export async function createPendingUser(
 	}
 }
 
+/** Create a pending Virtool user and passwordless Better Auth identity. */
+export async function createPendingUserInTransaction(
+	tx: DbOrTx,
+	values: CreatePendingUserValues,
+): Promise<number> {
+	const groupIds = Array.from(new Set(values.groups ?? []));
+	if (
+		values.primaryGroup !== undefined &&
+		values.primaryGroup !== null &&
+		!groupIds.includes(values.primaryGroup)
+	) {
+		throw new GroupMembershipError();
+	}
+
+	if (groupIds.length > 0) {
+		const existing = await tx
+			.select({ id: groupsTable.id })
+			.from(groupsTable)
+			.where(inArray(groupsTable.id, groupIds));
+		if (existing.length !== groupIds.length) {
+			throw new GroupMembershipError();
+		}
+	}
+
+	const email = values.email ? normalizeEmail(values.email) : "";
+	const now = new Date();
+	if (email) {
+		await claimEmail(tx, 0, email);
+	}
+	const row = takeFirstOrThrow(
+		await tx
+			.insert(usersTable)
+			.values({
+				authMigratedAt: now,
+				displayUsername: values.handle,
+				email,
+				handle: values.handle,
+				lifecycleState: "pending",
+				administratorRole: values.administratorRole ?? null,
+				lastPasswordChange: now,
+				legacyId: null,
+				settings: toStoredAccountSettings(DEFAULT_USER_SETTINGS),
+				username: values.handle.toLowerCase(),
+			})
+			.returning({ id: usersTable.id }),
+	);
+
+	await tx.insert(authAccounts).values({
+		accountId: String(row.id),
+		providerId: CREDENTIAL_PROVIDER_ID,
+		userId: row.id,
+		password: null,
+		createdAt: now,
+		updatedAt: now,
+	});
+
+	if (groupIds.length > 0) {
+		await tx.insert(userGroupsTable).values(
+			groupIds.map((groupId) => ({
+				userId: row.id,
+				groupId,
+				primary: groupId === values.primaryGroup,
+			})),
+		);
+	}
+
+	return row.id;
+}
+
 export async function createUser(
 	db: Db,
 	values: CreateUserValues,
@@ -618,37 +671,9 @@ export async function createUser(
 	const password = await hashPassword(values.password);
 
 	try {
-		const userId = await db.transaction(async (tx) => {
-			const row = takeFirstOrThrow(
-				await tx
-					.insert(usersTable)
-					.values({
-						authMigratedAt: new Date(),
-						handle: values.handle,
-						username: values.handle.toLowerCase(),
-						displayUsername: values.handle,
-						password,
-						forceReset: values.forceReset,
-						administratorRole: values.administratorRole ?? null,
-						lastPasswordChange: new Date(),
-						legacyId: null,
-						settings: toStoredAccountSettings(DEFAULT_USER_SETTINGS),
-					})
-					.returning({ id: usersTable.id }),
-			);
-
-			const now = new Date();
-			await tx.insert(authAccounts).values({
-				accountId: String(row.id),
-				providerId: CREDENTIAL_PROVIDER_ID,
-				userId: row.id,
-				password: password.toString("utf8"),
-				createdAt: now,
-				updatedAt: now,
-			});
-
-			return row.id;
-		});
+		const userId = await db.transaction((tx) =>
+			createUserInTransaction(tx, values, password),
+		);
 
 		await emit("users", userId, "create");
 
@@ -659,6 +684,117 @@ export async function createUser(
 		}
 		throw error;
 	}
+}
+
+/** Insert a normal user and Better Auth credential in the caller's transaction. */
+export async function createUserInTransaction(
+	tx: DbOrTx,
+	values: CreateUserValues,
+	password: Buffer,
+): Promise<number> {
+	const now = new Date();
+	const email = values.email ? normalizeEmail(values.email) : "";
+	if (email) {
+		await claimEmail(tx, 0, email);
+	}
+	const row = takeFirstOrThrow(
+		await tx
+			.insert(usersTable)
+			.values({
+				authMigratedAt: now,
+				handle: values.handle,
+				username: values.handle.toLowerCase(),
+				displayUsername: values.handle,
+				email,
+				emailVerified: values.emailVerified ?? false,
+				password,
+				forceReset: values.forceReset,
+				administratorRole: values.administratorRole ?? null,
+				lastPasswordChange: now,
+				legacyId: null,
+				settings: toStoredAccountSettings(DEFAULT_USER_SETTINGS),
+			})
+			.returning({ id: usersTable.id }),
+	);
+
+	await tx.insert(authAccounts).values({
+		accountId: String(row.id),
+		providerId: CREDENTIAL_PROVIDER_ID,
+		userId: row.id,
+		password: password.toString("utf8"),
+		createdAt: now,
+		updatedAt: now,
+	});
+
+	return row.id;
+}
+
+/** Inputs for transactionally creating the first instance administrator. */
+export type CreateFirstAdministratorInput = {
+	handle: string;
+	email: string;
+	password: string;
+	deliveryAvailable: boolean;
+	getVerificationUrl: (token: string) => string;
+};
+
+/** Create exactly one first administrator and optional verification message. */
+export async function createFirstAdministrator(
+	db: Db,
+	input: CreateFirstAdministratorInput,
+): Promise<{ user: User; emailVerificationRequired: boolean }> {
+	const password = await hashPassword(input.password);
+	const result = await db.transaction(async (tx) => {
+		await tx.execute(
+			sql`select pg_advisory_xact_lock(hashtext('first_instance_bootstrap'))`,
+		);
+		const [existing] = await tx.select({ value: count() }).from(usersTable);
+		if ((existing?.value ?? 0) > 0) {
+			throw new FirstAdministratorExistsError();
+		}
+
+		const userId = await createUserInTransaction(
+			tx,
+			{
+				handle: input.handle,
+				email: input.email,
+				password: input.password,
+				forceReset: false,
+				administratorRole: "full",
+				emailVerified: false,
+			},
+			password,
+		);
+
+		let emailVerificationRequired = false;
+		if (input.deliveryAvailable) {
+			const issued = await issueSetupTokenInTransaction(tx, {
+				userId,
+				purpose: "email_verification",
+				candidateEmail: normalizeEmail(input.email),
+				sourceEmail: normalizeEmail(input.email),
+				lifetimeMs: 24 * 60 * 60 * 1000,
+			});
+			const queued = await enqueueEmail(tx, {
+				idempotencyKey: `email_verification/${userId}/${issued.tokenId}`,
+				recipient: normalizeEmail(input.email),
+				template: {
+					type: "email_verification",
+					username: input.handle,
+					verifyUrl: input.getVerificationUrl(issued.token),
+					expiresInHours: 24,
+				},
+			});
+			emailVerificationRequired = queued.status === "queued";
+		}
+		return { userId, emailVerificationRequired };
+	});
+
+	await emit("users", result.userId, "create");
+	return {
+		user: await getUser(db, result.userId),
+		emailVerificationRequired: result.emailVerificationRequired,
+	};
 }
 
 export async function updateUser(

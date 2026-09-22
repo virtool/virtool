@@ -6,6 +6,7 @@ import SectionHeader from "@base/SectionHeader";
 import { useSuspenseUser, useUpdateUser } from "@users/queries";
 import { CircleAlert, ShieldUserIcon } from "lucide-react";
 import Handle from "./Handle";
+import { InvitationControls } from "./InvitationControls";
 import Password from "./Password";
 import { UserActivationBanner } from "./UserActivationBanner";
 import UserAdministratorRole from "./UserAdministratorRole";
@@ -49,6 +50,7 @@ export default function UserDetail({ userId }: UserDetailProps) {
 		permissions,
 		lastPasswordChange,
 		forceReset,
+		lifecycleState,
 	} = data;
 
 	return (
@@ -72,12 +74,16 @@ export default function UserDetail({ userId }: UserDetailProps) {
 
 			<Handle key={`handle-${id}`} id={id} handle={handle} />
 
-			<Password
-				key={id}
-				id={id}
-				lastPasswordChange={lastPasswordChange}
-				forceReset={forceReset}
-			/>
+			{lifecycleState === "pending" ? (
+				<InvitationControls userId={id} />
+			) : (
+				<Password
+					key={id}
+					id={id}
+					lastPasswordChange={lastPasswordChange}
+					forceReset={forceReset}
+				/>
+			)}
 
 			<div className="mb-4 md:grid md:grid-cols-2 md:gap-x-4">
 				<div>

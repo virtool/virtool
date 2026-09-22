@@ -36,6 +36,8 @@ describe("issueSetupToken", () => {
 		const issued = await issueSetupToken(db, {
 			userId,
 			purpose: "account_completion",
+			issuerUserId: userId,
+			delivery: "copy_only",
 		});
 
 		expect(issued.token).toMatch(/^[0-9a-f]{64}$/);
@@ -53,9 +55,16 @@ describe("issueSetupToken", () => {
 		const first = await issueSetupToken(db, {
 			userId,
 			purpose: "account_completion",
+			issuerUserId: userId,
+			delivery: "copy_only",
 		});
 
-		await issueSetupToken(db, { userId, purpose: "account_completion" });
+		await issueSetupToken(db, {
+			userId,
+			purpose: "account_completion",
+			issuerUserId: userId,
+			delivery: "copy_only",
+		});
 
 		await expect(
 			consumeSetupToken(db, first.token, "account_completion"),
@@ -80,6 +89,7 @@ describe("issueSetupToken", () => {
 			consumeSetupToken(db, remediation.token, "email_remediation"),
 		).resolves.toEqual({
 			candidateEmail: null,
+			delivery: null,
 			userId,
 			purpose: "email_remediation",
 		});
@@ -95,6 +105,7 @@ describe("consumeSetupToken", () => {
 			consumeSetupToken(db, token, "account_completion"),
 		).resolves.toEqual({
 			candidateEmail: null,
+			delivery: "queued",
 			userId,
 			purpose: "account_completion",
 		});

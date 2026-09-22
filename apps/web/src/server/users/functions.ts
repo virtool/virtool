@@ -5,8 +5,16 @@ import {
 	PasswordTooShortError,
 } from "@virtool/contracts";
 import {
+	EmailInUseError,
+	isValidEmail,
+	normalizeEmail,
+} from "@virtool/data/auth/email";
+import {
+	getEmailSettings,
+	resolveEmailDelivery,
+} from "@virtool/data/email/settings";
+import {
 	changePassword,
-	createUser,
 	findUsers,
 	GroupMembershipError,
 	getAccount,
@@ -21,6 +29,14 @@ import {
 	UserNotFoundError,
 	updateUser,
 } from "@virtool/data/users/data";
+import {
+	createPendingInvitation,
+	getInvitation,
+	InvitationNotEligibleError,
+	InvitationNotFoundError,
+	regenerateInvitation,
+	revokeInvitation,
+} from "@virtool/data/users/invitations";
 import { z } from "zod";
 import { realCookies } from "../auth/cookies";
 import { establishLegacySession } from "../auth/core";
@@ -35,7 +51,8 @@ import {
 } from "../auth/policy";
 import { checkConfiguredPasswordLength } from "../auth/service";
 import { signInUsername } from "../auth/sessionActions";
-import { db } from "../composition";
+import { db, keyring } from "../composition";
+import { config } from "../config";
 import { ClientError } from "../errors";
 import {
 	pageSchema,
@@ -73,8 +90,11 @@ const searchUsersSchema = z
 // for it.
 const createUserSchema = z.object({
 	handle: z.string().trim().min(1),
-	password: z.string(),
-	forceReset: z.boolean().default(false),
+	email: z.string().trim().min(1).max(254),
+	administratorRole: administratorRoleSchema.nullable().optional(),
+	groups: z.array(rowIdSchema).default([]),
+	primaryGroup: rowIdSchema.nullable().optional(),
+	deliveryIntent: z.enum(["copy_only", "email"]),
 });
 
 const updateUserSchema = userIdSchema.extend({
@@ -121,6 +141,10 @@ function rethrowAsHttp(err: unknown): never {
 		setResponseStatus(409);
 		throw new ClientError("User already exists.", 409);
 	}
+	if (err instanceof EmailInUseError) {
+		setResponseStatus(409);
+		throw new ClientError("Email address is already in use.", 409);
+	}
 	if (err instanceof GroupMembershipError) {
 		setResponseStatus(400);
 		throw new ClientError("User is not a member of group.", 400);
@@ -129,7 +153,47 @@ function rethrowAsHttp(err: unknown): never {
 		setResponseStatus(409);
 		throw new ClientError("User has not completed account setup.", 409);
 	}
+	if (
+		err instanceof InvitationNotEligibleError ||
+		err instanceof InvitationNotFoundError
+	) {
+		setResponseStatus(409);
+		throw new ClientError("Invitation is not available.", 409);
+	}
 	throw err;
+}
+
+async function getDeliveryAvailable(): Promise<boolean> {
+	const settings = await getEmailSettings(db);
+	return (
+		settings.enabled &&
+		resolveEmailDelivery(settings, keyring).availability === "ready"
+	);
+}
+
+async function recordLifecycle(
+	input: Parameters<
+		typeof import("../accountLifecycleTelemetry").recordAccountLifecycle
+	>[0],
+): Promise<void> {
+	const { recordAccountLifecycle } = await import(
+		"../accountLifecycleTelemetry"
+	);
+	recordAccountLifecycle(input);
+}
+
+function getSetupUrl(token: string): string {
+	return `${config.publicOrigin}/account-setup#token=${token}`;
+}
+
+async function requireInvitationAuthority(
+	principal: Parameters<typeof requireAdminRole>[0],
+	administratorRole:
+		| (typeof ADMINISTRATOR_ROLE_NAMES)[number]
+		| null
+		| undefined,
+): Promise<void> {
+	await requireAdminRole(principal, administratorRole ? "full" : "users");
 }
 
 export const listAdministratorRolesFn = createServerFn({ method: "GET" })
@@ -197,23 +261,124 @@ export const getUserFn = createServerFn({ method: "GET" })
 	});
 
 export const createUserFn = createServerFn({ method: "POST" })
-	.middleware([adminRole("users")])
+	.middleware([recentlyAuthenticated(PROTECTED_OPERATIONS.invitationLinkIssue)])
 	.validator(createUserSchema)
-	.handler(async ({ data }) => {
+	.handler(async ({ context, data }) => {
+		await requireInvitationAuthority(context.principal, data.administratorRole);
 		checkHandle(data.handle);
 		checkReservedHandle(data.handle);
+		const email = normalizeEmail(data.email);
+		if (!isValidEmail(email)) {
+			setResponseStatus(400);
+			throw new ClientError("Enter a valid email address.", 400);
+		}
 
 		try {
-			await checkConfiguredPasswordLength(db, data.password);
-
-			const user = await createUser(db, {
+			const result = await createPendingInvitation(db, {
 				handle: data.handle,
-				password: data.password,
-				forceReset: data.forceReset,
+				email,
+				administratorRole: data.administratorRole,
+				groups: data.groups,
+				primaryGroup: data.primaryGroup,
+				deliveryIntent: data.deliveryIntent,
+				deliveryAvailable: await getDeliveryAvailable(),
+				issuerUserId: context.principal.userId,
+				getSetupUrl,
+			});
+			await recordLifecycle({
+				operation: "invitation_create",
+				outcome: result.invitation.delivery,
+				message: "account invitation created",
+				invitationId: result.invitation.id,
+				userId: result.user.id,
+				issuerUserId: context.principal.userId,
 			});
 			setResponseStatus(201);
-			return user;
+			return result;
 		} catch (err) {
+			await recordLifecycle({
+				operation: "invitation_create",
+				outcome: "failure",
+				message: "account invitation creation failed",
+			});
+			throw rethrowAsHttp(err);
+		}
+	});
+
+export const getInvitationFn = createServerFn({ method: "GET" })
+	.middleware([adminRole("users")])
+	.validator(userIdSchema)
+	.handler(async ({ context, data }) => {
+		try {
+			const role = await getAdministratorRole(db, data.userId);
+			await requireInvitationAuthority(context.principal, role);
+			return await getInvitation(db, data.userId);
+		} catch (err) {
+			throw rethrowAsHttp(err);
+		}
+	});
+
+const invitationMutationSchema = userIdSchema.extend({
+	deliveryIntent: z.enum(["copy_only", "email"]).optional(),
+});
+
+export const regenerateInvitationFn = createServerFn({ method: "POST" })
+	.middleware([recentlyAuthenticated(PROTECTED_OPERATIONS.invitationLinkIssue)])
+	.validator(invitationMutationSchema)
+	.handler(async ({ context, data }) => {
+		try {
+			const role = await getAdministratorRole(db, data.userId);
+			await requireInvitationAuthority(context.principal, role);
+			const result = await regenerateInvitation(db, data.userId, {
+				issuerUserId: context.principal.userId,
+				deliveryIntent: data.deliveryIntent ?? "copy_only",
+				deliveryAvailable: await getDeliveryAvailable(),
+				getSetupUrl,
+			});
+			await recordLifecycle({
+				operation: "invitation_regenerate",
+				outcome: result.invitation.delivery,
+				message: "account invitation regenerated",
+				invitationId: result.invitation.id,
+				userId: data.userId,
+				issuerUserId: context.principal.userId,
+			});
+			return result;
+		} catch (err) {
+			await recordLifecycle({
+				operation: "invitation_regenerate",
+				outcome: "failure",
+				message: "account invitation regeneration failed",
+				userId: data.userId,
+			});
+			throw rethrowAsHttp(err);
+		}
+	});
+
+export const revokeInvitationFn = createServerFn({ method: "POST" })
+	.middleware([recentlyAuthenticated(PROTECTED_OPERATIONS.invitationLinkIssue)])
+	.validator(userIdSchema)
+	.handler(async ({ context, data }) => {
+		try {
+			const role = await getAdministratorRole(db, data.userId);
+			await requireInvitationAuthority(context.principal, role);
+			const invitation = await revokeInvitation(db, data.userId);
+			await recordLifecycle({
+				operation: "invitation_revoke",
+				outcome: "success",
+				message: "account invitation revoked",
+				invitationId: invitation.id,
+				userId: data.userId,
+				issuerUserId: context.principal.userId,
+			});
+			return invitation;
+		} catch (err) {
+			await recordLifecycle({
+				operation: "invitation_revoke",
+				outcome: "failure",
+				message: "account invitation revocation failed",
+				userId: data.userId,
+			});
 			throw rethrowAsHttp(err);
 		}
 	});

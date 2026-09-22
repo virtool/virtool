@@ -7,8 +7,7 @@ import { users } from "../db/schema/users";
 import { enqueueEmail } from "../email/outbox";
 import { AppError } from "../errors";
 import { emit } from "../events/emit";
-import { isValidEmail, normalizeEmail } from "./email";
-import { claimEmail } from "./lifecycle";
+import { claimEmail, isValidEmail, normalizeEmail } from "./email";
 import {
 	consumeSetupToken,
 	issueSetupTokenInTransaction,

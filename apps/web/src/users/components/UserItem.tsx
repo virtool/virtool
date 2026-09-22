@@ -3,13 +3,18 @@ import { BoxGroupSection } from "@base/Box";
 import { InitialIcon } from "@base/Icon";
 import Label from "@base/Label";
 import Link from "@base/Link";
-import type { AdministratorRoleName, GroupMinimal } from "@virtool/contracts";
+import type {
+	AccountLifecycleState,
+	AdministratorRoleName,
+	GroupMinimal,
+} from "@virtool/contracts";
 import type { ReactElement } from "react";
 
 type UserItemProps = {
 	administratorRole: AdministratorRoleName | null;
 	handle: string;
 	id: number;
+	lifecycleState: AccountLifecycleState;
 	/** The primary group assigned to the user */
 	primaryGroup: GroupMinimal | null;
 };
@@ -21,6 +26,7 @@ export function UserItem({
 	administratorRole,
 	handle,
 	id,
+	lifecycleState,
 	primaryGroup,
 }: UserItemProps): ReactElement {
 	const { hasPermission: canEdit } = useCheckAdminRole(
@@ -44,6 +50,7 @@ export function UserItem({
 				)}
 			</div>
 			<div className="flex items-center text-sm capitalize">
+				{lifecycleState === "pending" && <Label color="orange">Pending</Label>}
 				{administratorRole && (
 					<Label color="purple">{administratorRole} Administrator</Label>
 				)}

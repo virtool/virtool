@@ -38,6 +38,12 @@ export class SetupCredentialError extends AppError {}
 export type IssueSetupTokenInput = {
 	userId: number;
 	purpose: SetupPurpose;
+	/** Administrator issuing an account-completion invitation. */
+	issuerUserId?: number;
+	/** Monotonic generation for an account-completion invitation. */
+	generation?: number;
+	/** How an account-completion invitation is delivered. */
+	delivery?: "copy_only" | "queued";
 	/** Purpose-bound address carried by an email-remediation token. */
 	candidateEmail?: string;
 	/** Address that must still be current when verifying an email change. */
@@ -89,6 +95,9 @@ export async function issueSetupTokenInTransaction(
 		purpose,
 		candidateEmail,
 		sourceEmail,
+		issuerUserId,
+		generation = 1,
+		delivery,
 		lifetimeMs = SETUP_TOKEN_LIFETIME_MS,
 	}: IssueSetupTokenInput,
 ): Promise<IssuedSetupToken> {
@@ -104,6 +113,9 @@ export async function issueSetupTokenInTransaction(
 			.values({
 				userId,
 				purpose,
+				issuerUserId,
+				generation,
+				delivery,
 				candidateEmail,
 				sourceEmail,
 				tokenHash: hashToken(token),
@@ -132,6 +144,7 @@ export async function supersedeSetupTokens(
 				eq(setupTokens.purpose, purpose),
 				isNull(setupTokens.consumedAt),
 				isNull(setupTokens.supersededAt),
+				isNull(setupTokens.revokedAt),
 			),
 		)
 		.returning({ id: setupTokens.id });
@@ -150,6 +163,7 @@ export async function invalidateUserSetupTokens(
 /** The user a consumed setup token names. */
 export type ConsumedSetupToken = {
 	candidateEmail: string | null;
+	delivery: "copy_only" | "queued" | null;
 	userId: number;
 	purpose: SetupPurpose;
 };
@@ -189,12 +203,14 @@ export async function consumeSetupToken(
 				eq(setupTokens.purpose, purpose),
 				isNull(setupTokens.consumedAt),
 				isNull(setupTokens.supersededAt),
+				isNull(setupTokens.revokedAt),
 				sql`${setupTokens.expiresAt} > ${nowUtc()}`,
 				sql`exists (select 1 from ${users} where ${users.id} = ${setupTokens.userId} and ${users.active})`,
 			),
 		)
 		.returning({
 			candidateEmail: setupTokens.candidateEmail,
+			delivery: setupTokens.delivery,
 			userId: setupTokens.userId,
 			purpose: setupTokens.purpose,
 		});

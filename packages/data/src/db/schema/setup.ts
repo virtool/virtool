@@ -22,8 +22,10 @@ import {
 	text,
 	timestamp,
 	unique,
+	uniqueIndex,
 } from "drizzle-orm/pg-core";
 
+import { emailOutbox } from "./emailOutbox";
 import { users } from "./users";
 
 /**
@@ -43,7 +45,15 @@ export const setupTokens = pgTable(
 	{
 		id: integer("id").primaryKey().generatedAlwaysAsIdentity(),
 		userId: integer("user_id").notNull(),
+		/** Administrator who issued an account-completion link. */
+		issuerUserId: integer("issuer_user_id"),
 		purpose: text("purpose").$type<SetupPurpose>().notNull(),
+		/** Monotonic account-completion link generation for this user. */
+		generation: integer("generation").notNull().default(1),
+		/** Whether this generation was copied or placed in the email outbox. */
+		delivery: text("delivery").$type<"copy_only" | "queued">(),
+		/** Provider-neutral delivery record for this generation, when queued. */
+		outboxId: integer("outbox_id"),
 		/** Purpose-bound candidate address for an email-remediation token. */
 		candidateEmail: text("candidate_email"),
 		/** Address held by the account when an email-change link was issued. */
@@ -61,6 +71,8 @@ export const setupTokens = pgTable(
 		consumedAt: timestamp("consumed_at"),
 		/** When a replacement or cancellation made this token unusable. */
 		supersededAt: timestamp("superseded_at"),
+		/** When an administrator explicitly revoked this token. */
+		revokedAt: timestamp("revoked_at"),
 	},
 	(table) => [
 		foreignKey({
@@ -68,6 +80,11 @@ export const setupTokens = pgTable(
 			foreignColumns: [users.id],
 			name: "setup_tokens_user_id_fkey",
 		}).onDelete("cascade"),
+		foreignKey({
+			columns: [table.outboxId],
+			foreignColumns: [emailOutbox.id],
+			name: "setup_tokens_outbox_id_fkey",
+		}).onDelete("set null"),
 		// The digest is what a submission is looked up by, so it is unique and
 		// indexed by the same constraint. A collision would be two users sharing
 		// one link.
@@ -78,7 +95,21 @@ export const setupTokens = pgTable(
 		// Issuing a replacement supersedes the outstanding tokens for the same
 		// user and purpose, which is the only lookup by user.
 		index("idx_setup_tokens_user_id_purpose").on(table.userId, table.purpose),
+		uniqueIndex("uq_setup_tokens_live_account_completion")
+			.on(table.userId)
+			.where(
+				sql`${table.purpose} = 'account_completion' and ${table.consumedAt} is null and ${table.supersededAt} is null and ${table.revokedAt} is null`,
+			),
 		check("setup_tokens_purpose_valid", purposeCheck()),
+		check("setup_tokens_generation_positive", sql`${table.generation} > 0`),
+		check(
+			"setup_tokens_invitation_metadata_valid",
+			sql`${table.purpose} <> 'account_completion' or (${table.issuerUserId} is not null and ${table.delivery} in ('copy_only', 'queued'))`,
+		),
+		check(
+			"setup_tokens_delivery_outbox_valid",
+			sql`${table.outboxId} is null or ${table.delivery} = 'queued'`,
+		),
 	],
 );
 

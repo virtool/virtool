@@ -2,8 +2,11 @@ import { analysesQueryKeys } from "@analyses/keys";
 import {
 	createUserFn,
 	findUsersFn,
+	getInvitationFn,
 	getUserFn,
 	listUsersFn,
+	regenerateInvitationFn,
+	revokeInvitationFn,
 	searchUsersFn,
 	setAdministratorRoleFn,
 	updateUserFn,
@@ -113,14 +116,58 @@ export function useCreateUser() {
 		Error,
 		{
 			handle: string;
-			password: string;
-			forceReset: boolean;
+			email: string;
+			deliveryIntent: "copy_only" | "email";
+			administratorRole: AdministratorRoleName | null;
+			groups: number[];
+			primaryGroup?: number | null;
 		}
 	>({
-		mutationFn: ({ handle, password, forceReset }) =>
-			createUserFn({ data: { handle, password, forceReset } }),
+		mutationFn: (data) => createUserFn({ data }),
 		onSuccess: () => {
 			queryClient.invalidateQueries({ queryKey: userQueryKeys.lists() });
+		},
+	});
+}
+
+/** Query options for the safe invitation metadata attached to a pending user. */
+export function invitationQueryOptions(userId: number) {
+	return queryOptions({
+		queryKey: [...userQueryKeys.detail(userId), "invitation"],
+		queryFn: () => getInvitationFn({ data: { userId } }),
+	});
+}
+
+/** Issue a fresh invitation generation and expose its token only to the caller. */
+export function useRegenerateInvitation() {
+	const queryClient = useQueryClient();
+	return useMutation({
+		mutationFn: ({
+			userId,
+			deliveryIntent,
+		}: {
+			userId: number;
+			deliveryIntent: "copy_only" | "email";
+		}) => regenerateInvitationFn({ data: { userId, deliveryIntent } }),
+		onSuccess: (result) => {
+			queryClient.setQueryData(
+				[...userQueryKeys.detail(result.user.id), "invitation"],
+				result.invitation,
+			);
+		},
+	});
+}
+
+/** Revoke the current invitation generation. */
+export function useRevokeInvitation() {
+	const queryClient = useQueryClient();
+	return useMutation({
+		mutationFn: (userId: number) => revokeInvitationFn({ data: { userId } }),
+		onSuccess: (invitation) => {
+			queryClient.setQueryData(
+				[...userQueryKeys.detail(invitation.userId), "invitation"],
+				invitation,
+			);
 		},
 	});
 }

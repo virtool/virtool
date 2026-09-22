@@ -84,13 +84,13 @@ describe("completeAccountSetup", () => {
 		});
 		const { token } = await seedSetupToken(db, userId, "account_completion");
 
-		const user = await completeAccountSetup(db, {
+		const result = await completeAccountSetup(db, {
 			token,
 			password: "a-good-password",
 			email: "Ada@Example.com",
 		});
 
-		expect(user.lifecycleState).toBe("normal");
+		expect(result.user.lifecycleState).toBe("normal");
 
 		const row = await readUser(userId);
 		expect(row.email).toBe("ada@example.com");

@@ -13,7 +13,10 @@ export const userServerFnMocks = {
 	listUsersFn: vi.fn(),
 	getAccountFn: vi.fn(),
 	getUserFn: vi.fn(),
+	getInvitationFn: vi.fn(),
 	createUserFn: vi.fn(),
+	regenerateInvitationFn: vi.fn(),
+	revokeInvitationFn: vi.fn(),
 	updateUserFn: vi.fn(),
 	updateAccountHandleFn: vi.fn(),
 	changePasswordFn: vi.fn(),
@@ -99,7 +102,28 @@ export function mockCreateUser(
 	if (statusCode >= 400) {
 		userServerFnMocks.createUserFn.mockRejectedValue(new Error(message));
 	} else {
-		userServerFnMocks.createUserFn.mockResolvedValue(user ?? {});
+		userServerFnMocks.createUserFn.mockResolvedValue(
+			user
+				? {
+						user,
+						setupToken: "a".repeat(64),
+						invitation: {
+							id: 1,
+							userId: user.id,
+							issuerUserId: 2,
+							generation: 1,
+							createdAt: new Date(),
+							expiresAt: new Date(Date.now() + 60_000),
+							consumedAt: null,
+							revokedAt: null,
+							supersededAt: null,
+							delivery: "copy_only",
+							outboxId: null,
+							outboxStatus: null,
+						},
+					}
+				: {},
+		);
 	}
 	return userServerFnMocks.createUserFn;
 }

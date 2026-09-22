@@ -261,8 +261,9 @@ anyone.
 A pending account keeps its handle, administrator role and group memberships,
 so an administrator states who a person is and what they may do at the moment
 of invitation. What it doesn't have is a credential: `users.password` is null,
-which the `pending_has_no_password` constraint holds, and `createPendingUser`
-is the only thing that writes the state.
+which the `pending_has_no_password` constraint holds. Its Better Auth credential
+identity already exists with a null password so invitation acceptance only has
+to fill the credential, never create a second identity.
 
 Every reader that assumes an account is usable checks the state, not just
 `active`: `listUsers`, `findUsers` (which defaults to `normal` and takes
@@ -303,6 +304,21 @@ password-change transactions; Better Auth verifies the latter.
 Expiry cleanup is the internal runner's `cleanup_setup_state` periodic task.
 Nothing waits on it. Both readers refuse an expired row on sight, so there
 are no request-path scans.
+
+Account-completion tokens are invitation generations. Each records its issuer,
+copy-only or queued delivery, optional provider-neutral outbox row, and distinct
+consumed, superseded, and revoked timestamps. `src/users/invitations.ts` creates
+the pending user, identity, role/groups, token, and optional outbox message in
+one transaction. Regeneration serializes on the user's setup advisory lock and
+invalidates older generations. A plaintext token is returned only for a
+copy-only creation or regeneration; emailed generations expose only metadata so
+acceptance proves control of the bound mailbox.
+
+Copied invitations leave the assigned normalized email unverified. A queued
+invitation proves control of that exact address when accepted. Acceptance uses
+the token-bound address, invalidates every prior session and setup credential,
+and cannot race regeneration or revocation. The 72-hour lifetime is shared in
+`@virtool/contracts`; expired rows are removed by `cleanup_setup_state`.
 
 ## Outbound requests
 

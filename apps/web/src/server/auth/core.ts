@@ -18,9 +18,8 @@ import type { Db } from "@virtool/data/db/pg";
 import { authSessions } from "@virtool/data/db/schema/auth";
 import { users } from "@virtool/data/db/schema/users";
 import {
-	createUser,
-	getUserCount,
-	UserConflictError,
+	createFirstAdministrator,
+	FirstAdministratorExistsError,
 } from "@virtool/data/users/data";
 import { and, eq, sql } from "drizzle-orm";
 import type { CookieAdapter } from "./cookies";
@@ -122,45 +121,34 @@ export async function loginLegacyIdentity(
 	return { remediation: true, reset: false };
 }
 
-/** Inputs to create and authenticate the first instance user. */
+/** Inputs to create the first instance user. */
 export type CreateFirstUserInput = {
 	handle: string;
+	email: string;
 	password: string;
+	deliveryAvailable: boolean;
+	getVerificationUrl: (token: string) => string;
 };
 
 /**
- * Create the first instance user and log them in.
+ * Create the first instance user.
  *
  * The first user is always a full administrator. Creation is rejected once any
  * user exists, so the unauthenticated bootstrap endpoint can't be used to mint
- * further accounts. On success an authenticated session is written and the
- * session cookies are set, so the caller lands in the app without a separate
- * login step.
+ * further accounts. The web boundary signs the new identity in after commit.
  */
 export async function createFirstUser(
 	db: Db,
 	input: CreateFirstUserInput,
-): Promise<User> {
-	if ((await getUserCount(db)) > 0) {
-		throw new FirstUserExistsError();
-	}
-
-	let user: User;
+): Promise<{ user: User; emailVerificationRequired: boolean }> {
 	try {
-		user = await createUser(db, {
-			handle: input.handle,
-			password: input.password,
-			forceReset: false,
-			administratorRole: "full",
-		});
+		return await createFirstAdministrator(db, input);
 	} catch (err) {
-		if (err instanceof UserConflictError) {
+		if (err instanceof FirstAdministratorExistsError) {
 			throw new FirstUserExistsError();
 		}
 		throw err;
 	}
-
-	return user;
 }
 
 /**

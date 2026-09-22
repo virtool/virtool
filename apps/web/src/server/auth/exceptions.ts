@@ -1,8 +1,10 @@
 import { getRootFn } from "../root/functions";
 import { getPasswordPolicyFn } from "../settings/functions";
 import {
+	acceptAccountSetupFn,
 	completeEmailRemediationFn,
 	createFirstUserFn,
+	inspectAccountSetupFn,
 	loginFn,
 	logoutFn,
 	resetPasswordFn,
@@ -36,6 +38,7 @@ import {
  * silently becoming publicly callable.
  */
 export const authenticationExceptions: ReadonlyArray<{ url: string }> = [
+	acceptAccountSetupFn,
 	createFirstUserFn,
 	completeEmailRemediationFn,
 	getPasswordPolicyFn,
@@ -48,6 +51,7 @@ export const authenticationExceptions: ReadonlyArray<{ url: string }> = [
 	verifyCurrentEmailFn,
 	inspectEmailVerificationFn,
 	inspectPasswordRecoveryFn,
+	inspectAccountSetupFn,
 ];
 
 /** Server functions reachable by a forced-password-reset principal. */

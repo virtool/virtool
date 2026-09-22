@@ -9,7 +9,7 @@ import CreateUser from "../CreateUser";
 describe("<CreateUser />", () => {
 	it("creates user once form is submitted", async () => {
 		const usernameInput = "Username";
-		const passwordInput = "Password";
+		const emailInput = "user@example.com";
 		const createUser = mockCreateUser(
 			createFakeUser({ handle: usernameInput }),
 		);
@@ -21,13 +21,14 @@ describe("<CreateUser />", () => {
 		await userEvent.type(usernameField, usernameInput);
 		expect(usernameField).toHaveValue(usernameInput);
 
-		const passwordField = screen.getByLabelText("Password");
-		await userEvent.type(passwordField, passwordInput);
-		expect(passwordField).toHaveValue(passwordInput);
+		const emailField = screen.getByLabelText("Email");
+		await userEvent.type(emailField, emailInput);
+		expect(emailField).toHaveValue(emailInput);
 
 		await userEvent.click(screen.getByRole("button", { name: "Save" }));
 
 		await waitFor(() => expect(createUser).toHaveBeenCalled());
+		expect(screen.getByLabelText("Account setup link")).toBeInTheDocument();
 	});
 
 	it("should render correct username error message", async () => {
@@ -38,7 +39,7 @@ describe("<CreateUser />", () => {
 
 		expect(screen.getByText("Please specify a username")).toBeInTheDocument();
 		expect(
-			screen.getByText("Password does not meet minimum length requirement (8)"),
+			screen.getByText("Please specify an email address"),
 		).toBeInTheDocument();
 	});
 });

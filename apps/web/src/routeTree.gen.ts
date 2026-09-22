@@ -10,6 +10,7 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as AuthenticatedRouteImport } from './routes/_authenticated'
+import { Route as AccountSetupRouteImport } from './routes/account-setup'
 import { Route as EmailRemediationRouteImport } from './routes/email-remediation'
 import { Route as EmailRemediationVerifyRouteImport } from './routes/email-remediation-verify'
 import { Route as EventsRouteImport } from './routes/events'
@@ -95,6 +96,11 @@ import { Route as OtusOtuIdIsolatesIsolateIdSequencesSequenceIdFastaRouteImport 
 
 const AuthenticatedRoute = AuthenticatedRouteImport.update({
   id: '/_authenticated',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AccountSetupRoute = AccountSetupRouteImport.update({
+  id: '/account-setup',
+  path: '/account-setup',
   getParentRoute: () => rootRouteImport,
 } as any)
 const EmailRemediationRoute = EmailRemediationRouteImport.update({
@@ -563,6 +569,7 @@ const OtusOtuIdIsolatesIsolateIdSequencesSequenceIdFastaRoute =
 
 export interface FileRoutesByFullPath {
   '/': typeof AuthenticatedIndexRoute
+  '/account-setup': typeof AccountSetupRoute
   '/email-remediation': typeof EmailRemediationRoute
   '/email-remediation-verify': typeof EmailRemediationVerifyRoute
   '/events': typeof EventsRoute
@@ -646,6 +653,7 @@ export interface FileRoutesByFullPath {
   '/refs/$refId/otus/$otuId/isolates/': typeof AuthenticatedRefsRefIdOtusOtuIdIsolatesIndexRoute
 }
 export interface FileRoutesByTo {
+  '/account-setup': typeof AccountSetupRoute
   '/email-remediation': typeof EmailRemediationRoute
   '/email-remediation-verify': typeof EmailRemediationVerifyRoute
   '/events': typeof EventsRoute
@@ -720,6 +728,7 @@ export interface FileRoutesByTo {
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/_authenticated': typeof AuthenticatedRouteWithChildren
+  '/account-setup': typeof AccountSetupRoute
   '/email-remediation': typeof EmailRemediationRoute
   '/email-remediation-verify': typeof EmailRemediationVerifyRoute
   '/events': typeof EventsRoute
@@ -807,6 +816,7 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/account-setup'
     | '/email-remediation'
     | '/email-remediation-verify'
     | '/events'
@@ -890,6 +900,7 @@ export interface FileRouteTypes {
     | '/refs/$refId/otus/$otuId/isolates/'
   fileRoutesByTo: FileRoutesByTo
   to:
+    | '/account-setup'
     | '/email-remediation'
     | '/email-remediation-verify'
     | '/events'
@@ -963,6 +974,7 @@ export interface FileRouteTypes {
   id:
     | '__root__'
     | '/_authenticated'
+    | '/account-setup'
     | '/email-remediation'
     | '/email-remediation-verify'
     | '/events'
@@ -1049,6 +1061,7 @@ export interface FileRouteTypes {
 }
 export interface RootRouteChildren {
   AuthenticatedRoute: typeof AuthenticatedRouteWithChildren
+  AccountSetupRoute: typeof AccountSetupRoute
   EmailRemediationRoute: typeof EmailRemediationRoute
   EmailRemediationVerifyRoute: typeof EmailRemediationVerifyRoute
   EventsRoute: typeof EventsRoute
@@ -1080,6 +1093,13 @@ declare module '@tanstack/react-router' {
       path: ''
       fullPath: '/'
       preLoaderRoute: typeof AuthenticatedRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/account-setup': {
+      id: '/account-setup'
+      path: '/account-setup'
+      fullPath: '/account-setup'
+      preLoaderRoute: typeof AccountSetupRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/email-remediation': {
@@ -1962,6 +1982,7 @@ const ApiV1UploadsUploadIdRouteWithChildren =
 
 const rootRouteChildren: RootRouteChildren = {
   AuthenticatedRoute: AuthenticatedRouteWithChildren,
+  AccountSetupRoute: AccountSetupRoute,
   EmailRemediationRoute: EmailRemediationRoute,
   EmailRemediationVerifyRoute: EmailRemediationVerifyRoute,
   EventsRoute: EventsRoute,

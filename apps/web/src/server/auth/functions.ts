@@ -5,15 +5,18 @@ import {
 	EMAIL_REMEDIATION_TOKEN_LIFETIME_HOURS,
 	PasswordTooShortError,
 } from "@virtool/contracts";
+import { isValidEmail, normalizeEmail } from "@virtool/data/auth/email";
 import {
 	cancelEmailRemediation,
 	changeEmailRemediation,
 	checkEmailRemediationComplete,
 	claimEmailRemediationPromotion,
+	completeAccountSetup,
 	completeEmailRemediation,
 	EmailInUseError,
 	EmailRemediationRateLimitedError,
 	getEmailRemediationState,
+	inspectAccountSetup,
 	resendEmailRemediation,
 	SetupNotEligibleError,
 	startEmailRemediation,
@@ -84,6 +87,12 @@ function extendEmailRemediationCookies(sessionId: string) {
 
 const createFirstUserSchema = z.object({
 	handle: z.string().trim().min(1),
+	email: z.string().trim().min(1).max(254),
+	password: z.string(),
+});
+
+const accountSetupSchema = z.object({
+	token: z.string().regex(/^[0-9a-f]{64}$/),
 	password: z.string(),
 });
 
@@ -95,6 +104,17 @@ const emailRemediationSchema = z.object({
 const emailRemediationTokenSchema = z.object({
 	token: z.string().regex(/^[0-9a-f]{64}$/),
 });
+
+async function recordLifecycle(
+	input: Parameters<
+		typeof import("../accountLifecycleTelemetry").recordAccountLifecycle
+	>[0],
+): Promise<void> {
+	const { recordAccountLifecycle } = await import(
+		"../accountLifecycleTelemetry"
+	);
+	recordAccountLifecycle(input);
+}
 
 function rethrowAsHttp(err: unknown): never {
 	if (
@@ -210,18 +230,94 @@ export const createFirstUserFn = createServerFn({ method: "POST" })
 	.handler(async ({ data }) => {
 		checkHandle(data.handle);
 		checkReservedHandle(data.handle);
+		const email = normalizeEmail(data.email);
+		if (!isValidEmail(email)) {
+			setResponseStatus(400);
+			throw new ClientError("Enter a valid email address.", 400);
+		}
 
 		try {
 			await checkConfiguredPasswordLength(db, data.password);
+			const settings = await getEmailSettings(db);
+			const delivery = resolveEmailDelivery(settings, keyring);
 
-			const user = await createFirstUser(db, {
+			const result = await createFirstUser(db, {
 				handle: data.handle,
+				email,
 				password: data.password,
+				deliveryAvailable:
+					settings.enabled && delivery.availability === "ready",
+				getVerificationUrl: (token) =>
+					`${config.publicOrigin}/verify-email#token=${token}`,
 			});
 			await signInUsername(data.handle, data.password);
+			await recordLifecycle({
+				operation: "bootstrap",
+				outcome: "success",
+				message: "first instance administrator created",
+				userId: result.user.id,
+			});
 			setResponseStatus(201);
-			return user;
+			return result;
 		} catch (err) {
+			await recordLifecycle({
+				operation: "bootstrap",
+				outcome: "failure",
+				message: "first instance administrator creation failed",
+			});
+			rethrowAsHttp(err);
+		}
+	});
+
+/** Inspect a public account-setup bearer token without consuming it. */
+export const inspectAccountSetupFn = createServerFn({ method: "POST" })
+	.middleware([open()])
+	.validator(z.object({ token: accountSetupSchema.shape.token }))
+	.handler(async ({ data }) => inspectAccountSetup(db, data.token));
+
+/** Accept an invitation, establish its credential, and sign the user in. */
+export const acceptAccountSetupFn = createServerFn({ method: "POST" })
+	.middleware([open()])
+	.validator(accountSetupSchema)
+	.handler(async ({ data }) => {
+		try {
+			await checkConfiguredPasswordLength(db, data.password);
+			const settings = await getEmailSettings(db);
+			const delivery = resolveEmailDelivery(settings, keyring);
+			const completed = await completeAccountSetup(db, {
+				token: data.token,
+				password: data.password,
+				deliveryAvailable:
+					settings.enabled && delivery.availability === "ready",
+				getVerificationUrl: (token) =>
+					`${config.publicOrigin}/verify-email#token=${token}`,
+			});
+			await signInUsername(completed.user.handle, data.password);
+			await recordLifecycle({
+				operation: "invitation_accept",
+				outcome: "success",
+				message: "account invitation accepted",
+				userId: completed.user.id,
+			});
+			setResponseStatus(201);
+			return {
+				user: completed.user,
+				emailVerificationRequired: completed.emailVerificationRequired,
+				nextRoute: "/" as const,
+			};
+		} catch (err) {
+			await recordLifecycle({
+				operation: "invitation_accept",
+				outcome: "failure",
+				message: "account invitation acceptance failed",
+			});
+			if (
+				err instanceof SetupCredentialError ||
+				err instanceof SetupNotEligibleError
+			) {
+				setResponseStatus(400);
+				throw new ClientError("This account setup link cannot be used.", 400);
+			}
 			rethrowAsHttp(err);
 		}
 	});
