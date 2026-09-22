@@ -27,7 +27,7 @@ function createCommand() {
 				segments: [
 					{
 						id: IDS.segment,
-						name: null,
+						name: null as { prefix: string; key: string } | null,
 						length: 8,
 						lengthTolerance: 0,
 						rule: "required" as const,
@@ -133,5 +133,45 @@ describe("CreateLocalOtuCommand", () => {
 			CreateLocalOtuCommand.safeParse({ ...createCommand(), extra: true })
 				.success,
 		).toBe(false);
+	});
+
+	it("requires distinct names for multipartite segments", () => {
+		const unnamed = createCommand();
+		unnamed.payload.plan.segments.push({
+			...unnamed.payload.plan.segments[0],
+			id: "00000000-0000-4000-8000-000000000007",
+		});
+		unnamed.payload.isolate.sequences.push({
+			...unnamed.payload.isolate.sequences[0],
+			id: "00000000-0000-4000-8000-000000000008",
+			segmentId: "00000000-0000-4000-8000-000000000007",
+		});
+		expect(CreateLocalOtuCommand.safeParse(unnamed).success).toBe(false);
+
+		const duplicate = createCommand();
+		duplicate.payload.plan.segments[0].name = {
+			prefix: "RNA",
+			key: "1",
+		};
+		duplicate.payload.plan.segments.push({
+			...duplicate.payload.plan.segments[0],
+			id: "00000000-0000-4000-8000-000000000007",
+			name: { prefix: "rna", key: "1" },
+		});
+		duplicate.payload.isolate.sequences.push({
+			...duplicate.payload.isolate.sequences[0],
+			id: "00000000-0000-4000-8000-000000000008",
+			segmentId: "00000000-0000-4000-8000-000000000007",
+		});
+		expect(CreateLocalOtuCommand.safeParse(duplicate).success).toBe(false);
+	});
+
+	it("rejects two sequences assigned to one segment even with distinct ids", () => {
+		const command = createCommand();
+		command.payload.isolate.sequences.push({
+			...command.payload.isolate.sequences[0],
+			id: "00000000-0000-4000-8000-000000000007",
+		});
+		expect(CreateLocalOtuCommand.safeParse(command).success).toBe(false);
 	});
 });

@@ -42,18 +42,18 @@ and the inability to extend manually created OTUs.**
    ~~[genbank.ts:41](apps/web/src/server/otus-v2/genbank.ts#L41),
    [ref-builder plan.py:91](../ref-builder/ref_builder/plan.py#L91)~~
 
-4. **[P2] Segment validation and matching fall short of ref-builder.**
+4. ~~**[P2] Segment validation and matching fall short of ref-builder.**~~
 
-   Multipartite plans accept unnamed or duplicate segment names. Initial creation
+   ~~Multipartite plans accept unnamed or duplicate segment names. Initial creation
    also allows multiple sequences assigned to the same segment. Matching treats
    `RNA1`, `RNA 1`, and `1` as different identifiers; unnamed records use the first
    length-compatible segment, silently resolving ambiguous matches according to
    ordering. Ref-builder normalizes names and requires unique, named multipartite
-   segments.
+   segments.~~
 
-   [otusV2.ts:177](packages/contracts/src/otusV2.ts#L177),
+   ~~[otusV2.ts:177](packages/contracts/src/otusV2.ts#L177),
    [genbank.ts:79](apps/web/src/server/otus-v2/genbank.ts#L79),
-   [ref-builder plan.py](../ref-builder/ref_builder/plan.py)
+   [ref-builder plan.py](../ref-builder/ref_builder/plan.py)~~
 
 5. **[P2] Re-importing an accession creates duplicate isolates.**
 

@@ -32,6 +32,43 @@ export class GenbankSegmentError extends Error {}
 /** Thrown when a saved sequence differs from its accession record. */
 export class GenbankProvenanceError extends Error {}
 
+function parseSegmentName(
+	value: string | null,
+	moltype: string,
+): { prefix: string; key: string } | null {
+	if (!value) {
+		return null;
+	}
+	const name = value.trim();
+	const separated = /^([A-Za-z]+)[-_ ]+(\S+)$/.exec(name);
+	if (separated?.[1] && separated[2]) {
+		return { prefix: separated[1], key: separated[2] };
+	}
+	const undelimited = /^([DR]NA)(\S+)$/i.exec(name);
+	if (undelimited?.[1] && undelimited[2]) {
+		return { prefix: undelimited[1].toUpperCase(), key: undelimited[2] };
+	}
+	if (/^[A-Za-z0-9]+$/.test(name)) {
+		return { prefix: moltype, key: name };
+	}
+	return null;
+}
+
+function matchesSegmentName(
+	planName: { prefix: string; key: string } | null,
+	recordName: { prefix: string; key: string },
+): boolean {
+	const normalizedPlanName =
+		planName?.prefix.toLowerCase() === "segment"
+			? parseSegmentName(planName.key, recordName.prefix)
+			: planName;
+	return (
+		normalizedPlanName?.prefix.toLowerCase() ===
+			recordName.prefix.toLowerCase() &&
+		normalizedPlanName.key.toLowerCase() === recordName.key.toLowerCase()
+	);
+}
+
 /** Validate that records describe one organism and that taxonomy describes it. */
 export function validateGenbankRecords(
 	records: NcbiGenbank[],
@@ -103,20 +140,21 @@ export function buildGenbankIsolateDraft(
 	}
 	const used = new Set<string>();
 	const sequences = records.map((record) => {
-		const segment = otu.plan.segments.find((candidate) => {
-			if (used.has(candidate.id)) {
+		const name = parseSegmentName(record.source.segment, record.moltype);
+		const matches = otu.plan.segments.filter((candidate) => {
+			const withinTolerance =
+				Math.abs(candidate.length - record.sequence.length) <=
+				candidate.length * candidate.lengthTolerance;
+			if (!withinTolerance) {
 				return false;
 			}
-			if (
-				Math.abs(candidate.length - record.sequence.length) >
-				candidate.length * candidate.lengthTolerance
-			) {
-				return false;
+			if (!record.source.segment) {
+				return true;
 			}
-			const name = record.source.segment?.toLowerCase();
-			return !name || candidate.name?.key.toLowerCase() === name;
+			return name && matchesSegmentName(candidate.name, name);
 		});
-		if (!segment) {
+		const [segment] = matches;
+		if (matches.length !== 1 || !segment || used.has(segment.id)) {
 			throw new GenbankSegmentError(record.accession_version);
 		}
 		used.add(segment.id);
@@ -288,6 +326,26 @@ export function buildGenbankOtuDraft(
 	}
 
 	validateGenbankRecords(records, taxonomy);
+	const segments = records.map((record) => ({
+		name: parseSegmentName(record.source.segment, record.moltype),
+		definition: record.definition,
+		sequence: record.sequence,
+		length: record.sequence.length,
+		accession: record.accession_version,
+	}));
+	if (segments.length > 1) {
+		const names = new Set<string>();
+		for (const segment of segments) {
+			if (!segment.name) {
+				throw new GenbankSegmentError(segment.accession);
+			}
+			const key = `${segment.name.prefix.toLowerCase()}\0${segment.name.key.toLowerCase()}`;
+			if (names.has(key)) {
+				throw new GenbankSegmentError(segment.accession);
+			}
+			names.add(key);
+		}
+	}
 
 	return {
 		molecule: {
@@ -297,14 +355,6 @@ export function buildGenbankOtuDraft(
 		},
 		taxonomy: deriveTaxonomy(first.organism, taxonomy),
 		isolate: deriveIsolateName(first.source),
-		segments: records.map((record) => ({
-			name: record.source.segment
-				? { prefix: "Segment", key: record.source.segment }
-				: null,
-			definition: record.definition,
-			sequence: record.sequence,
-			length: record.sequence.length,
-			accession: record.accession_version,
-		})),
+		segments,
 	};
 }

@@ -100,7 +100,31 @@ const planSchema = z
 		id: uuidSchema,
 		segments: z.array(segmentSchema).min(1),
 	})
-	.strict();
+	.strict()
+	.superRefine((plan, ctx) => {
+		const names = new Set<string>();
+		for (const [index, segment] of plan.segments.entries()) {
+			if (plan.segments.length > 1 && !segment.name) {
+				ctx.addIssue({
+					code: "custom",
+					path: ["segments", index, "name"],
+					message: "Every multipartite segment must have a name.",
+				});
+				continue;
+			}
+			if (segment.name) {
+				const name = `${segment.name.prefix.toLowerCase()}\0${segment.name.key.toLowerCase()}`;
+				if (names.has(name)) {
+					ctx.addIssue({
+						code: "custom",
+						path: ["segments", index, "name"],
+						message: "Segment names must be unique.",
+					});
+				}
+				names.add(name);
+			}
+		}
+	});
 
 const lineageTaxonSchema = z
 	.object({

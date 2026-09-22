@@ -118,9 +118,32 @@ describe("buildGenbankOtuDraft", () => {
 		expect(draft.isolate).toEqual({ type: "isolate", value: "Fny" });
 		expect(draft.segments).toHaveLength(2);
 		expect(draft.segments.map((segment) => segment.name)).toEqual([
-			{ prefix: "Segment", key: "RNA1" },
-			{ prefix: "Segment", key: "RNA2" },
+			{ prefix: "RNA", key: "1" },
+			{ prefix: "RNA", key: "2" },
 		]);
+	});
+
+	it("rejects duplicate normalized segments in an initial draft", () => {
+		const records = [
+			createRecord({ source: createSource({ segment: "RNA1" }) }),
+			createRecord({
+				accession_version: "NC_001368.1",
+				source: createSource({ segment: "RNA 1" }),
+			}),
+		];
+		expect(() => buildGenbankOtuDraft(records, taxonomy)).toThrow(
+			GenbankSegmentError,
+		);
+	});
+
+	it("requires names for every segment in a multipartite draft", () => {
+		const records = [
+			createRecord({ source: createSource({ segment: "RNA1" }) }),
+			createRecord({ accession_version: "NC_001368.1" }),
+		];
+		expect(() => buildGenbankOtuDraft(records, taxonomy)).toThrow(
+			GenbankSegmentError,
+		);
 	});
 
 	it("rejects a draft without verifiable taxonomy", () => {
@@ -193,7 +216,9 @@ describe("buildGenbankOtuDraft", () => {
 				accession_version: "NC_001368.1",
 			}),
 		];
-		expect(buildGenbankOtuDraft(records, taxonomy).segments).toHaveLength(2);
+		expect(() => buildGenbankOtuDraft(records, taxonomy)).toThrow(
+			GenbankSegmentError,
+		);
 	});
 
 	it("rejects an empty record list", () => {
@@ -252,6 +277,88 @@ function createCommand(): CreateLocalOtuIsolateCommand {
 }
 
 describe("GenBank isolate validation", () => {
+	it.each(["RNA1", "RNA 1", "1"])(
+		"matches %s to a normalized plan segment",
+		(segmentName) => {
+			const first = otu.plan.segments[0];
+			if (!first) {
+				throw new Error("Expected a segment.");
+			}
+			const namedOtu = {
+				...otu,
+				plan: {
+					...otu.plan,
+					segments: [
+						{ ...first, name: { prefix: "RNA", key: "1" } },
+						{
+							...first,
+							id: "segment-2",
+							name: { prefix: "RNA", key: "2" },
+						},
+					],
+				},
+			};
+			expect(
+				buildGenbankIsolateDraft(
+					[createRecord({ source: createSource({ segment: segmentName }) })],
+					taxonomy,
+					namedOtu,
+				).sequences[0]?.segmentId,
+			).toBe("segment");
+		},
+	);
+
+	it("rejects an unnamed record that fits multiple segments", () => {
+		const first = otu.plan.segments[0];
+		if (!first) {
+			throw new Error("Expected a segment.");
+		}
+		const ambiguousOtu = {
+			...otu,
+			plan: {
+				...otu.plan,
+				segments: [
+					{ ...first, name: { prefix: "RNA", key: "1" } },
+					{
+						...first,
+						id: "segment-2",
+						name: { prefix: "RNA", key: "2" },
+					},
+				],
+			},
+		};
+		expect(() =>
+			buildGenbankIsolateDraft([createRecord()], taxonomy, ambiguousOtu),
+		).toThrow(GenbankSegmentError);
+	});
+
+	it("matches records against legacy Segment-prefixed plans", () => {
+		const first = otu.plan.segments[0];
+		if (!first) {
+			throw new Error("Expected a segment.");
+		}
+		const legacyOtu = {
+			...otu,
+			plan: {
+				...otu.plan,
+				segments: [
+					{ ...first, name: { prefix: "Segment", key: "RNA1" } },
+					{
+						...first,
+						id: "segment-2",
+						name: { prefix: "Segment", key: "RNA2" },
+					},
+				],
+			},
+		};
+		expect(
+			buildGenbankIsolateDraft(
+				[createRecord({ source: createSource({ segment: "RNA 1" }) })],
+				taxonomy,
+				legacyOtu,
+			).sequences[0]?.segmentId,
+		).toBe("segment");
+	});
 	it("rejects an out-of-tolerance sequence for a single-segment plan", () => {
 		expect(() =>
 			buildGenbankIsolateDraft(
@@ -272,11 +379,11 @@ describe("GenBank isolate validation", () => {
 			plan: {
 				...otu.plan,
 				segments: [
-					{ ...segment, name: { prefix: "Segment", key: "RNA1" } },
+					{ ...segment, name: { prefix: "RNA", key: "1" } },
 					{
 						...segment,
 						id: "segment-2",
-						name: { prefix: "Segment", key: "RNA2" },
+						name: { prefix: "RNA", key: "2" },
 					},
 				],
 			},
@@ -409,10 +516,11 @@ describe("GenBank isolate validation", () => {
 describe("GenBank OTU save validation", () => {
 	it("rejects named identities that changed after preview", () => {
 		const records = [
-			createRecord(),
+			createRecord({ source: createSource({ segment: "RNA1" }) }),
 			createRecord({
 				accession: "NC_001368",
 				accession_version: "NC_001368.1",
+				source: createSource({ segment: "RNA2" }),
 			}),
 		];
 		const command = buildCreateOtuCommandFromDraft(
@@ -420,8 +528,11 @@ describe("GenBank OTU save validation", () => {
 			0.05,
 		) as CreateLocalOtuCommand;
 		const changed = [
-			{ ...records[0], source: createSource({ isolate: "A" }) },
-			{ ...records[1], source: createSource({ strain: "B" }) },
+			{
+				...records[0],
+				source: createSource({ segment: "RNA1", isolate: "A" }),
+			},
+			{ ...records[1], source: createSource({ segment: "RNA2", strain: "B" }) },
 		] as NcbiGenbank[];
 		expect(() => validateGenbankOtuSave(command, changed, taxonomy)).toThrow(
 			GenbankMixedIsolateError,
