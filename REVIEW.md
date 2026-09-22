@@ -6,18 +6,18 @@ and the inability to extend manually created OTUs.**
 
 ## Findings
 
-1. **[P1] Invalid isolates can be committed, then break subsequent operations.**
+1. ~~**[P1] Invalid isolates can be committed, then break subsequent operations.**~~
 
-   Adding an isolate doesn’t enforce required segments or sequence-length
+   ~~Adding an isolate doesn’t enforce required segments or sequence-length
    tolerance in the transaction. The GenBank matcher also bypasses length checks
    for named segments and single-segment plans. I reproduced a four-base sequence
    being saved against an eight-base, zero-tolerance plan. Deleting the original
    valid isolate then commits successfully but fails while assembling the
    response; subsequent full OTU reads fail too. Validate every isolate against
-   the plan **before committing**.
+   the plan **before committing**.~~
 
-   [data.ts:329](packages/data/src/otus-v2/data.ts#L329),
-   [genbank.ts:84](apps/web/src/server/otus-v2/genbank.ts#L84)
+   ~~[data.ts:329](packages/data/src/otus-v2/data.ts#L329),
+   [genbank.ts:84](apps/web/src/server/otus-v2/genbank.ts#L84)~~
 
 2. **[P1] Manually created OTUs cannot acquire another isolate through the UI.**
 
@@ -31,16 +31,16 @@ and the inability to extend manually created OTUs.**
    [genbank.ts:72](apps/web/src/server/otus-v2/genbank.ts#L72),
    [functions.ts:243](apps/web/src/server/otus-v2/functions.ts#L243)
 
-3. **[P1] Accessions from different isolates can silently become one biological isolate.**
+3. ~~**[P1] Accessions from different isolates can silently become one biological isolate.**~~
 
-   Validation compares taxid and organism, but never isolate/strain identity.
+   ~~Validation compares taxid and organism, but never isolate/strain identity.
    Supplying segment 1 from isolate A and segment 2 from isolate B creates an
    isolate named A containing both. This affects initial OTU creation and
    additional isolates. Ref-builder explicitly rejects multiple isolate groups
-   when constructing a plan.
+   when constructing a plan.~~
 
-   [genbank.ts:41](apps/web/src/server/otus-v2/genbank.ts#L41),
-   [ref-builder plan.py:91](../ref-builder/ref_builder/plan.py#L91)
+   ~~[genbank.ts:41](apps/web/src/server/otus-v2/genbank.ts#L41),
+   [ref-builder plan.py:91](../ref-builder/ref_builder/plan.py#L91)~~
 
 4. **[P2] Segment validation and matching fall short of ref-builder.**
 

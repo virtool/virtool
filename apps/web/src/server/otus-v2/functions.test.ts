@@ -339,7 +339,7 @@ describe("createLocalOtu", () => {
 		).rejects.toMatchObject({ status: 422 });
 	});
 
-	it("rejects a preview-driven isolate outside the current plan tolerance", async () => {
+	it("rejects an out-of-tolerance isolate in preview and save", async () => {
 		const userId = await signIn(db, getRequest, { administratorRole: null });
 		const referenceId = await seedReferenceV2(userId);
 		fetchGenbankRecords.mockResolvedValue([record]);
@@ -348,17 +348,18 @@ describe("createLocalOtu", () => {
 		await call("createLocalOtuFn", { referenceId, command: otuCommand });
 
 		const shortRecord = { ...record, sequence: "ATCG" };
-		fetchGenbankRecords.mockResolvedValue([shortRecord]);
-		const draft = (await call("getGenbankIsolateDraftFn", {
-			referenceId,
-			otuId: otuCommand.otuId,
-			accessions: [record.accession_version],
-		})) as { sequences: Array<{ sequence: string; segmentId: string }> };
-		const previewSequence = draft.sequences[0];
-		if (!previewSequence) {
-			throw new Error("Expected a preview sequence.");
+		const segment = otuCommand.payload.plan.segments[0];
+		if (!segment) {
+			throw new Error("Expected an OTU segment.");
 		}
-		expect(previewSequence.sequence).toBe("ATCG");
+		fetchGenbankRecords.mockResolvedValue([shortRecord]);
+		await expect(
+			call("getGenbankIsolateDraftFn", {
+				referenceId,
+				otuId: otuCommand.otuId,
+				accessions: [record.accession_version],
+			}),
+		).rejects.toMatchObject({ status: 422 });
 		const sequenceId = randomUUID();
 		await expect(
 			call("createLocalOtuIsolateFn", {
@@ -379,8 +380,8 @@ describe("createLocalOtu", () => {
 								{
 									id: sequenceId,
 									definition: shortRecord.definition,
-									sequence: previewSequence.sequence,
-									segmentId: previewSequence.segmentId,
+									sequence: shortRecord.sequence,
+									segmentId: segment.id,
 								},
 							],
 						},

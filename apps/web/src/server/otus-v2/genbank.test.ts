@@ -17,6 +17,7 @@ import {
 	GenbankOtuEmptyError,
 	GenbankOtuMixedTaxidError,
 	GenbankProvenanceError,
+	GenbankSegmentError,
 	GenbankTaxonomyError,
 	validateGenbankIsolateSave,
 	validateGenbankOtuSave,
@@ -251,6 +252,49 @@ function createCommand(): CreateLocalOtuIsolateCommand {
 }
 
 describe("GenBank isolate validation", () => {
+	it("rejects an out-of-tolerance sequence for a single-segment plan", () => {
+		expect(() =>
+			buildGenbankIsolateDraft(
+				[createRecord({ sequence: "ATCG" })],
+				taxonomy,
+				otu,
+			),
+		).toThrow(GenbankSegmentError);
+	});
+
+	it("rejects an out-of-tolerance named segment", () => {
+		const segment = otu.plan.segments[0];
+		if (!segment) {
+			throw new Error("Expected an OTU segment.");
+		}
+		const namedOtu = {
+			...otu,
+			plan: {
+				...otu.plan,
+				segments: [
+					{ ...segment, name: { prefix: "Segment", key: "RNA1" } },
+					{
+						...segment,
+						id: "segment-2",
+						name: { prefix: "Segment", key: "RNA2" },
+					},
+				],
+			},
+		};
+		expect(() =>
+			buildGenbankIsolateDraft(
+				[
+					createRecord({
+						sequence: "ATCG",
+						source: createSource({ segment: "RNA1" }),
+					}),
+				],
+				taxonomy,
+				namedOtu,
+			),
+		).toThrow(GenbankSegmentError);
+	});
+
 	it("rejects conflicting isolate identities in preview and save", () => {
 		const firstSegment = otu.plan.segments[0];
 		if (!firstSegment) {

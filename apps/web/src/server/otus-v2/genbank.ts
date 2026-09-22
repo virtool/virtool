@@ -107,12 +107,14 @@ export function buildGenbankIsolateDraft(
 			if (used.has(candidate.id)) {
 				return false;
 			}
+			if (
+				Math.abs(candidate.length - record.sequence.length) >
+				candidate.length * candidate.lengthTolerance
+			) {
+				return false;
+			}
 			const name = record.source.segment?.toLowerCase();
-			return name
-				? candidate.name?.key.toLowerCase() === name
-				: otu.plan.segments.length === 1 ||
-						Math.abs(candidate.length - record.sequence.length) <=
-							candidate.length * candidate.lengthTolerance;
+			return !name || candidate.name?.key.toLowerCase() === name;
 		});
 		if (!segment) {
 			throw new GenbankSegmentError(record.accession_version);
