@@ -200,7 +200,8 @@ a new download after curation to obtain the latest state.
 Local v2 Reference settings allow members with `modify` rights to edit name,
 description, and the default segment length tolerance. Each edit carries the
 Reference version shown in the form; stale versions and archived References
-reject the edit. Archiving and unarchiving advance the version too.
+reject the edit. Archiving a Reference or restoring it from the archive advances
+the version too.
 
 ### Error handling and request methods
 

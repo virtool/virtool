@@ -24,7 +24,7 @@ Excluding an accession base retires any isolate that uses it and blocks future
 imports. Allowing the base lifts that block without restoring isolates. A
 RefSeq replacement or newer accession version needs an NCBI preview and
 curator approval before promotion or refresh. Superseded bases cannot be
-reimported. Versioned commands and semantic history record these decisions
+imported again. Versioned commands and semantic history record these decisions
 without exposing sequence bodies in overview reads.
 
 Current Reference, OTU, and isolate FASTA exports need no published version.

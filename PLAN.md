@@ -8,7 +8,7 @@ The PR boundary is **all reference features below**, with v2 hidden behind an
 app beta toggle. Publishing follows in the Reference Overhaul project. Analysis
 integration follows publishing in the Analysis V2 project.
 
-## Phase 1 — Complete OTU creation
+## Phase 1: complete OTU creation
 
 - Give initial NCBI OTU creation the same resolve → preview → confirm flow as
   adding an isolate. Invalidate the preview when accession inputs change;
@@ -22,7 +22,7 @@ integration follows publishing in the Analysis V2 project.
 **Exit:** Both creation paths produce complete, valid OTUs, and curators review
 NCBI-derived data before it is saved.
 
-## Phase 2 — Edit references and OTUs
+## Phase 2: edit references and OTUs
 
 - Add editing for reference name, description, and default segment tolerance.
 - Add versioned commands and UI for editing taxonomy identity and lineage,
@@ -38,7 +38,7 @@ NCBI-derived data before it is saved.
 multipartite OTUs, through the UI. Tests cover invalid edits, provenance,
 permissions, and version conflicts.
 
-## Phase 3 — Curate accessions and recommended segments
+## Phase 3: curate accessions and recommended segments
 
 - Model excluded and promoted accession bases separately from active sequence
   provenance. Define how exclusion affects existing isolates, future imports,
@@ -57,9 +57,9 @@ permissions, and version conflicts.
 
 **Exit:** Curators can explain why an accession is excluded or replaced and
 can knowingly accept a missing recommended segment. Every resulting OTU is
-valid and auditable.
+valid and has a clear history.
 
-## Phase 4 — Export and beta PR
+## Phase 4: export and beta PR
 
 - Stream FASTA exports for the current v2 reference, OTU, and isolate state,
   with stable headers that identify their source. Enforce reference read
@@ -72,7 +72,7 @@ valid and auditable.
   and export sequences. Update the reference documentation and open the PR
   after all reference features above are in place.
 
-**Exit — PR boundary:** Reference v2 has complete authoring, curation, and
+**PR boundary:** Reference v2 has complete authoring, curation, and
 sequence export behind the beta toggle. V1 references continue to work.
 
 ## Delivery rules
