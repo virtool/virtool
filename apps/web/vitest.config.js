@@ -2,7 +2,7 @@ import os from "node:os";
 import path from "node:path";
 import { playwright } from "@vitest/browser-playwright";
 import { defineConfig } from "vitest/config";
-import viteConfigFn from "./vite.config";
+import viteConfigFn from "./vite.config.js";
 
 // `mode: "test"` drops Nitro and `command: "serve"` drops Sentry, so neither is
 // ever constructed here and the plugin list needs no further filtering.

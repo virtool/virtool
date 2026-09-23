@@ -37,11 +37,12 @@ it("clears active work after reconciling an already-ready environment", async ()
 			)
 			.join("\n"),
 	});
+	const publish = vi.fn();
 	const reconciler = new Reconciler(
 		store,
 		run,
 		join(import.meta.dirname, "../../../.."),
-		vi.fn(),
+		publish,
 		new BuildCoordinator(),
 	);
 
@@ -49,4 +50,5 @@ it("clears active work after reconciling an already-ready environment", async ()
 	await reconciler.stop();
 
 	expect(reconciler.hasActiveWork()).toBe(false);
+	expect(publish).not.toHaveBeenCalled();
 });

@@ -274,6 +274,55 @@
       "when": 1790108085288,
       "tag": "0038_add_recovery_token_purposes",
       "breakpoints": true
+    },
+    {
+      "idx": 39,
+      "version": "7",
+      "when": 1790108085289,
+      "tag": "0039_round_lionheart",
+      "breakpoints": true
+    },
+    {
+      "idx": 40,
+      "version": "7",
+      "when": 1790108085290,
+      "tag": "0040_nostalgic_mesmero",
+      "breakpoints": true
+    },
+    {
+      "idx": 41,
+      "version": "7",
+      "when": 1790108085291,
+      "tag": "0041_careless_nitro",
+      "breakpoints": true
+    },
+    {
+      "idx": 42,
+      "version": "7",
+      "when": 1790109496164,
+      "tag": "0042_empty_amphibian",
+      "breakpoints": true
+    },
+    {
+      "idx": 43,
+      "version": "7",
+      "when": 1790115772946,
+      "tag": "0043_aromatic_sersi",
+      "breakpoints": true
+    },
+    {
+      "idx": 44,
+      "version": "7",
+      "when": 1790118489310,
+      "tag": "0044_hard_wong",
+      "breakpoints": true
+    },
+    {
+      "idx": 45,
+      "version": "7",
+      "when": 1790119618034,
+      "tag": "0045_silky_jean_grey",
+      "breakpoints": true
     }
   ]
 }

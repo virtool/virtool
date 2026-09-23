@@ -4,6 +4,9 @@ A client for NCBI Nucleotide and NCBI Taxonomy.
 
 The models project responses into Virtool's established record shapes; this
 isn't a general GBSeq parser.
+GenBank records include `secondary_accessions` from `GBSeq_secondary-accessions`.
+The OTU curator uses these as evidence that a retained RefSeq record replaced
+an old accession base; a free-text comment alone does not authorize promotion.
 
 ## Surface
 

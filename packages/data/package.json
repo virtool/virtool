@@ -8,6 +8,7 @@
 		"./*": "./src/*.ts"
 	},
 	"scripts": {
+		"db:check": "node scripts/check-migration-journal.mjs",
 		"db:generate": "drizzle-kit generate",
 		"db:migrate": "drizzle-kit migrate",
 		"test": "vitest run",

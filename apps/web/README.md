@@ -118,6 +118,91 @@ when inference would expose a transitive dependency.
 Shape results in `functions.ts`, without repeating that parsing in React Query
 `select` callbacks. Use `JsonObject` or `JsonValue` for opaque JSON results.
 
+GenBank OTU drafts require a resolved NCBI species taxon and consistent named
+isolate, strain, or clone identity across records. Anonymous records can join a
+named record. Multipartite plans require unique named segments; GenBank segment
+names are normalized, and unnamed records must match a single segment by length.
+Adding an isolate from GenBank requires its species to match the OTU lineage.
+GenBank `CreateOTU` and `CreateIsolate` requests carry accession-to-sequence provenance; the server
+resolves those accessions again at save time and checks taxonomy, sequence
+content, and segment assignment before applying the versioned command. Manual
+`CreateOTU` and `CreateIsolate` requests have no GenBank provenance. Both
+manual and GenBank isolates must satisfy the OTU plan when saved.
+Manual OTU creation accepts one or more segments. Multipartite segments have
+unique names, rules, expected lengths, and tolerances. Required segments need
+sequences; optional segments may be omitted. When a recommended segment is
+missing, creation and affected edits show the isolate and segment names and
+require an explicit acknowledgement of those exact missing pairs. The server
+rechecks plan rules and the acknowledged pairs at save time, rejecting changed
+or stale omissions for a fresh review. This also applies when adding a manual
+or GenBank isolate, changing a plan, or editing a sequence. History records the
+acknowledged pair identifiers without sequence bodies.
+Local OTU taxonomy name, acronym, and lineage can be edited at the OTU's
+current version. The edit creates a new local identity revision without changing
+maintenance ownership or sequence provenance. Curators may add an NCBI species
+taxon to a manual OTU's lineage so GenBank isolates can pass species matching.
+Taxonomy history summarizes the new name and omits sequence bodies.
+Local OTU molecule and segment plans can be edited at the OTU's current
+version. The editor previews every surviving isolate against the proposed
+plan, clears the preview after any input change, and requires confirmation.
+The server checks all isolates again in the save transaction and rejects a
+plan that invalidates any of them. Plan edits retain sequence provenance and
+record a semantic history entry without sequence bodies.
+Curators can also edit an isolate's name and name type, or clear its name.
+This advances the OTU version and records semantic history while keeping its
+sequences and their provenance unchanged.
+Sequence definition, bases, and segment assignment can be edited after a
+server preview of every surviving isolate. The save transaction repeats plan
+validation. A GenBank sequence can keep its exact accession only when its bases
+remain unchanged; changed bases become manual and clear the current accession.
+History records the source transition and accession without exposing bases in
+the OTU overview.
+Creating a GenBank OTU first resolves accessions into a preview of its taxonomy,
+molecule, isolate, and segments. Changing accessions clears that preview; creation
+requires a separate confirmation, and the server checks the records again then.
+An OTU can use an accession base only once among its current sequences, even
+when submitted GenBank versions differ. Deleting an isolate releases its
+accessions for re-import. Sequence details expose their source and exact
+GenBank accession version.
+Excluded accession bases are stored separately from sequence provenance.
+Excluding an active base retires its whole isolate, including multipartite
+sequences; the last isolate cannot be retired. The base then blocks future
+GenBank imports. Allowing it lifts that block without restoring the retired
+isolate. Exclude and allow actions carry the OTU version and appear in history
+with the base and any retired isolate.
+Curators can check an existing GenBank isolate for newer accession versions or
+RefSeq replacements. A replacement is proposed only when NCBI returns a single
+retained RefSeq record that lists the old base as a secondary accession. The
+preview shows taxonomy, segment, definition, length, and sequence changes for
+the whole isolate; each changed accession needs its own approval. Save resolves
+NCBI again and rejects a stale or ambiguous proposal. The transaction validates
+the complete isolate, advances one OTU version, records refreshes and base
+promotions separately in history, and blocks future imports of superseded bases.
+Same-base version refreshes keep the base active and do not add a promoted base.
+Mixed manual and GenBank isolates cannot use this update flow; manual sequence
+edits remain available.
+
+Current v2 References, OTUs, and isolates can be downloaded as FASTA without a
+published Reference version. Raw download routes require an authenticated caller
+with Reference visibility, including membership without edit rights. They stream
+current, non-deleted sequence versions in bounded pages; archived References
+remain readable. Headers contain stable Reference, OTU, isolate, sequence, and
+segment IDs plus `source=manual` or `source=genbank` with the exact accession
+version. Empty References return an empty FASTA file.
+The v2 sidebar entry and `/refs/alpha` pages are available only when
+`VT_REFERENCE_V2_BETA` is enabled. Direct v2 FASTA download routes return 404
+when it is disabled. V1 Reference routes remain available; v2 server mutations
+continue to enforce their own rights and archived-state checks.
+Pages are read when the stream needs them. An edit during a long download can
+therefore make that file contain sequences from different OTU revisions; start
+a new download after curation to obtain the latest state.
+
+Local v2 Reference settings allow members with `modify` rights to edit name,
+description, and the default segment length tolerance. Each edit carries the
+Reference version shown in the form; stale versions and archived References
+reject the edit. Archiving a Reference or restoring it from the archive advances
+the version too.
+
 ### Error handling and request methods
 
 Map expected domain failures in one module-local
@@ -469,6 +554,7 @@ The table below covers the remaining settings and web-specific storage behavior.
 | `VT_STORAGE_AZURE_UPLOAD_URL` | URL origin | Unset | Rehost presigned Azure uploads on a public origin, such as a Front Door route to a private storage account. Falls back to `VT_STORAGE_AZURE_DOWNLOAD_URL`, then the Azure Blob endpoint. |
 | `VT_STORAGE_DOWNLOAD_MODE` | `stream` \| `redirect` | `stream` | Serve file downloads by streaming the bytes through this server, or by 302-redirecting to a short-lived presigned storage URL. `redirect` falls back to streaming when the backend can't presign. |
 | `VT_UPLOADS_CHUNKED` | Boolean | `false` | Enable direct Azure Block Blob uploads. When off, or when the backend can't presign uploads, initialization returns 503; there is no proxied fallback. |
+| `VT_REFERENCE_V2_BETA` | Boolean | `false` | Show the v2 Reference navigation and pages and enable v2 FASTA downloads. Set to `1`, `true`, or `yes` to enable. V1 References remain available. |
 | `VT_UPLOADS_CHUNKED_CONCURRENCY` | Positive integer | `8` | Set how many block PUTs a browser runs at once across all active uploads. Raise it to lift throughput on a high-latency upload path. |
 
 ## Metrics

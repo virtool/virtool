@@ -6,6 +6,7 @@ import type { ReactNode } from "react";
 type NavTabProps = {
 	children: ReactNode;
 	className?: string;
+	exclude?: string[];
 	isActive?: boolean;
 	search?: Record<string, unknown>;
 	to: string;
@@ -17,11 +18,12 @@ type NavTabProps = {
 export default function NavTab({
 	children,
 	className,
+	exclude,
 	isActive,
 	search,
 	to,
 }: NavTabProps) {
-	isActive = useMatchPartialPath(to) || isActive;
+	isActive = useMatchPartialPath(to, exclude) || isActive;
 
 	const classname = cn(
 		"text-lg",

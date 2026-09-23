@@ -80,6 +80,11 @@ export class Reconciler {
 				(!environment.lastError || canRetryRemoval)
 			) {
 				const promise = this.reconcile(environment)
+					.then((changed) => {
+						if (changed) {
+							this.publish();
+						}
+					})
 					.catch((error) => {
 						this.store.setEnvironmentError(
 							environment.id,
@@ -93,15 +98,14 @@ export class Reconciler {
 								Date.now() + getRetryDelay(attempt),
 							);
 						}
+						this.publish();
 					})
 					.finally(() => {
 						this.active.delete(environment.id);
-						this.publish();
 					});
 				this.active.set(environment.id, promise);
 			}
 		}
-		this.publish();
 	}
 
 	private async runTick(): Promise<void> {
@@ -116,7 +120,7 @@ export class Reconciler {
 		}
 	}
 
-	private async reconcile(environment: DesiredEnvironment): Promise<void> {
+	private async reconcile(environment: DesiredEnvironment): Promise<boolean> {
 		if (!environment.present && environment.desired !== "absent") {
 			await this.observer.validateProjectOwnership(
 				this.environmentProject(environment.id),
@@ -147,7 +151,7 @@ export class Reconciler {
 				["stopped", "missing"].includes(observed.state))
 		) {
 			if (!this.restarts.has(environment.id)) {
-				return;
+				return false;
 			}
 		}
 		const operationId = this.store.startOperation(
@@ -205,6 +209,7 @@ export class Reconciler {
 		} finally {
 			this.restarts.delete(environment.id);
 		}
+		return true;
 	}
 
 	private async checkConfigVersion(worktree: string): Promise<void> {

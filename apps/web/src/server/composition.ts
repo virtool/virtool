@@ -40,6 +40,9 @@ logKeyringStatus(keyring.status, logger);
 /** How file download routes answer: stream the bytes or redirect to storage. */
 export const downloadMode: "stream" | "redirect" = config.downloadMode;
 
+/** Whether the v2 Reference pages and downloads are visible. */
+export const referenceV2Beta: boolean = config.referenceV2Beta;
+
 const handles = createDb(config, "web");
 
 /** The postgres-js connection pool for this process. */

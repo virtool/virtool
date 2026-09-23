@@ -32,9 +32,11 @@ import { indexServerFnMocks } from "./server-fn/indexes";
 import { jobServerFnMocks } from "./server-fn/jobs";
 import { labelServerFnMocks } from "./server-fn/labels";
 import { genbankServerFnMocks, otuServerFnMocks } from "./server-fn/otus";
+import { otuV2ServerFnMocks } from "./server-fn/otusV2";
 import { recentAuthenticationServerFnMocks } from "./server-fn/recentAuthentication";
 import { recoveryServerFnMocks } from "./server-fn/recovery";
 import { referenceServerFnMocks } from "./server-fn/references";
+import { referenceV2ServerFnMocks } from "./server-fn/referencesV2";
 import { rootServerFnMocks } from "./server-fn/root";
 import { sampleServerFnMocks } from "./server-fn/samples";
 import {
@@ -139,6 +141,16 @@ vi.mock("@server/indexes/functions", async () => {
 	return indexServerFnMocks;
 });
 
+vi.mock("@server/references-v2/functions", async () => {
+	const { referenceV2ServerFnMocks } = await import("./server-fn/referencesV2");
+	return referenceV2ServerFnMocks;
+});
+
+vi.mock("@server/otus-v2/functions", async () => {
+	const { otuV2ServerFnMocks } = await import("./server-fn/otusV2");
+	return otuV2ServerFnMocks;
+});
+
 beforeEach(() => {
 	for (const fn of Object.values(groupServerFnMocks)) {
 		fn.mockReset();
@@ -177,6 +189,13 @@ beforeEach(() => {
 		otuServerFnMocks.findOtusFn,
 		otuServerFnMocks.getOtuFn,
 		otuServerFnMocks.listOtuHistoryFn,
+		referenceV2ServerFnMocks.getReferenceV2Fn,
+		referenceV2ServerFnMocks.getReferencesV2Fn,
+		otuV2ServerFnMocks.getLocalOtuFn,
+		otuV2ServerFnMocks.getLocalOtuIsolateFn,
+		otuV2ServerFnMocks.getLocalOtuIsolatesFn,
+		otuV2ServerFnMocks.getLocalOtuSequenceFn,
+		otuV2ServerFnMocks.getLocalOtusFn,
 	]) {
 		fn.mockReset();
 		// Default to a pending promise so an un-stubbed query renders its loading
@@ -192,6 +211,8 @@ beforeEach(() => {
 		referenceServerFnMocks.updateReferenceFn,
 		referenceServerFnMocks.archiveReferenceFn,
 		referenceServerFnMocks.unarchiveReferenceFn,
+		referenceV2ServerFnMocks.archiveReferenceV2Fn,
+		referenceV2ServerFnMocks.unarchiveReferenceV2Fn,
 		referenceServerFnMocks.addReferenceUserFn,
 		referenceServerFnMocks.addReferenceGroupFn,
 		referenceServerFnMocks.updateReferenceUserFn,
@@ -227,6 +248,22 @@ beforeEach(() => {
 		otuServerFnMocks.updateSequenceFn,
 		otuServerFnMocks.deleteSequenceFn,
 		genbankServerFnMocks.getGenbankFn,
+		referenceV2ServerFnMocks.createReferenceV2Fn,
+		referenceV2ServerFnMocks.updateReferenceV2Fn,
+		otuV2ServerFnMocks.createLocalOtuFn,
+		otuV2ServerFnMocks.previewExcludeLocalOtuAccessionFn,
+		otuV2ServerFnMocks.excludeLocalOtuAccessionFn,
+		otuV2ServerFnMocks.allowLocalOtuAccessionFn,
+		otuV2ServerFnMocks.updateLocalOtuTaxonomyFn,
+		otuV2ServerFnMocks.previewLocalOtuPlanFn,
+		otuV2ServerFnMocks.previewLocalOtuPromotionFn,
+		otuV2ServerFnMocks.promoteLocalOtuIsolateFn,
+		otuV2ServerFnMocks.updateLocalOtuPlanFn,
+		otuV2ServerFnMocks.updateLocalOtuIsolateFn,
+		otuV2ServerFnMocks.previewLocalOtuSequenceFn,
+		otuV2ServerFnMocks.updateLocalOtuSequenceFn,
+		otuV2ServerFnMocks.deleteLocalOtuIsolateFn,
+		otuV2ServerFnMocks.deleteLocalOtuFn,
 	]) {
 		fn.mockReset();
 	}
@@ -409,7 +446,10 @@ export async function renderRoute(path: string, opts?: RenderRouteOptions) {
 
 	const queryClient = createTestQueryClient();
 
-	queryClient.setQueryData(rootQueryKeys.all(), { firstUser: false });
+	queryClient.setQueryData(rootQueryKeys.all(), {
+		firstUser: false,
+		referenceV2Beta: true,
+	});
 	queryClient.setQueryData(
 		accountQueryKeys.all(),
 		opts?.account ?? createFakeAccount(),
@@ -434,6 +474,7 @@ export async function renderRoute(path: string, opts?: RenderRouteOptions) {
 		<QueryClientProvider client={queryClient}>
 			<RouterProvider router={router} />
 		</QueryClientProvider>,
+		{ container: document },
 	);
 
 	return { ...result, router, queryClient };

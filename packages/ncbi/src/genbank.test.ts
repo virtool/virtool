@@ -59,6 +59,14 @@ function gbSeq({
 }
 
 describe("parseGenbankSet()", () => {
+	it("reads secondary accessions from a retained RefSeq record", () => {
+		const xml = gbSeq({ accession: "NC_999999" }).replace(
+			"<GBSeq_accession-version>",
+			"<GBSeq_secondary-accessions><GBSecondary-accn>NC_000001</GBSecondary-accn><GBSecondary-accn>NC_000002</GBSecondary-accn></GBSeq_secondary-accessions><GBSeq_accession-version>",
+		);
+		const [record] = parseGenbankSet(gbSet(xml));
+		expect(record?.secondary_accessions).toEqual(["NC_000001", "NC_000002"]);
+	});
 	it("reads a taxid out of db_xref", () => {
 		const [record] = parseGenbankSet(gbSet(gbSeq()));
 

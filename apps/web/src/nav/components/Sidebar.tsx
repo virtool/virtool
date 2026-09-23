@@ -1,7 +1,8 @@
+import { useRootQuery } from "@nav/queries";
 import { useLocation } from "@tanstack/react-router";
 import type { AdministratorRoleName } from "@virtool/contracts";
 import { hasSufficientAdminRole } from "@virtool/contracts";
-import { FolderOpen, List, Settings, Tag } from "lucide-react";
+import { FlaskConical, FolderOpen, List, Settings, Tag } from "lucide-react";
 import type { ReactNode } from "react";
 import SidebarLink from "./SidebarLink";
 
@@ -15,6 +16,7 @@ type SidebarProps = {
 export default function Sidebar({ administratorRole }: SidebarProps) {
 	const fullAdministrator = hasSufficientAdminRole("full", administratorRole);
 	const { pathname } = useLocation();
+	const { data: root } = useRootQuery();
 
 	let links: ReactNode = null;
 
@@ -56,11 +58,14 @@ export default function Sidebar({ administratorRole }: SidebarProps) {
 		links = (
 			<>
 				<SidebarLink
-					exclude={["/refs/settings"]}
+					exclude={["/refs/alpha", "/refs/settings"]}
 					title="Browse"
 					link="/refs"
 					icon={List}
 				/>
+				{root?.referenceV2Beta && (
+					<SidebarLink title="Alpha" link="/refs/alpha" icon={FlaskConical} />
+				)}
 				{fullAdministrator ? (
 					<SidebarLink title="Settings" link="/refs/settings" icon={Settings} />
 				) : null}

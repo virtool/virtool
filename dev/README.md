@@ -85,6 +85,9 @@ after initialization is treated as possible data loss and shown as an error.
 Use the confirmed shared reset control only when destroying all local
 development state is intentional.
 
+Container health checks run every ten seconds after startup, with one-second
+checks while starting, to limit Docker exec overhead.
+
 Worktrunk's removal hook only requests asynchronous deletion. If a worktree
 disappears without the hook, cleanup is allowed only after successful Git
 inspection proves its durable worktree identity is gone and Docker ownership
@@ -97,6 +100,8 @@ Workflow images build on demand. The daemon polls the production-compatible
 jobs counts endpoint for ready environments, schedules the four bioinformatics
 executors fairly, and holds one global slot per one-shot container. The default
 repository-wide concurrency is one. Tasks remain a normal long-lived service.
+Polling follows the five-second discovery cycle and container lifecycle changes;
+Docker exec events do not start another poll.
 
 Executors continue to claim atomically from the jobs API and use the production
 ping, cancellation, finalization, failure, and exit contracts. Stopped, failed,

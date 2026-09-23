@@ -1,7 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { getUserCount } from "@virtool/data/users/data";
 import { open } from "../auth/policy";
-import { db } from "../composition";
+import { db, referenceV2Beta } from "../composition";
 
 // Public: the `_authenticated` guard reads `firstUser` before any session
 // exists to decide whether to redirect to first-user setup, so this cannot
@@ -11,5 +11,6 @@ export const getRootFn = createServerFn({ method: "GET" })
 	.middleware([open()])
 	.handler(async () => ({
 		firstUser: (await getUserCount(db)) === 0,
+		referenceV2Beta,
 		version: __APP_VERSION__,
 	}));

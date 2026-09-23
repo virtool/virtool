@@ -47,6 +47,8 @@ export type ServerConfig = {
 	 * initialization returns 503; there is no proxied fallback.
 	 */
 	uploadsChunked: boolean;
+	/** Gates the v2 Reference pages and downloads; mutations still use rights. */
+	referenceV2Beta: boolean;
 	/**
 	 * How many blocks a chunked upload PUTs at once. Higher values raise
 	 * throughput on a high-latency path at the cost of more concurrent requests.
@@ -122,6 +124,15 @@ const ServerEnv = z.object({
 	// or empty, which deployment tooling injects — leaves it off, so an upgrade
 	// never switches upload paths by surprise. Rollback is unsetting it.
 	VT_UPLOADS_CHUNKED: z.preprocess(
+		(value) => (value === "" ? undefined : value),
+		z
+			.enum(["0", "1", "true", "false", "yes", "no"])
+			.optional()
+			.transform(
+				(value) => value === "1" || value === "true" || value === "yes",
+			),
+	),
+	VT_REFERENCE_V2_BETA: z.preprocess(
 		(value) => (value === "" ? undefined : value),
 		z
 			.enum(["0", "1", "true", "false", "yes", "no"])
@@ -340,6 +351,7 @@ export function parseServerConfig(
 		storage: storage.config,
 		downloadMode: raw.VT_STORAGE_DOWNLOAD_MODE,
 		uploadsChunked: raw.VT_UPLOADS_CHUNKED,
+		referenceV2Beta: raw.VT_REFERENCE_V2_BETA,
 		uploadsChunkedConcurrency:
 			raw.VT_UPLOADS_CHUNKED_CONCURRENCY ?? DEFAULT_UPLOADS_CHUNKED_CONCURRENCY,
 	};

@@ -33,6 +33,7 @@ vi.mock("@sentry/tanstackstart-react", () => ({
 let db: Db;
 vi.mock("../composition", () => ({
 	client: {},
+	referenceV2Beta: false,
 	get db() {
 		return db;
 	},
@@ -72,9 +73,11 @@ describe("getRoot", () => {
 		const root = (await callServerFn(handlers, "getRootFn", undefined)) as {
 			firstUser: boolean;
 			version: string;
+			referenceV2Beta: boolean;
 		};
 
 		expect(root.firstUser).toBe(true);
+		expect(root.referenceV2Beta).toBe(false);
 		expect(root.version).toBe(__APP_VERSION__);
 	});
 

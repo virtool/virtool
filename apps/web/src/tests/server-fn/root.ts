@@ -16,9 +16,11 @@ export const rootServerFnMocks = {
 export function mockGetRoot(root: {
 	firstUser: boolean;
 	version?: string;
+	referenceV2Beta?: boolean;
 }): Mock {
 	rootServerFnMocks.getRootFn.mockResolvedValue({
 		version: __APP_VERSION__,
+		referenceV2Beta: true,
 		...root,
 	});
 	return rootServerFnMocks.getRootFn;

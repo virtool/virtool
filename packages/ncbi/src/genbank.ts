@@ -55,6 +55,9 @@ function readSeq(seq: unknown): NcbiGenbank {
 		sequence: getText(seq, "GBSeq_sequence"),
 		source: readSource(seq),
 		comment: getText(seq, "GBSeq_comment"),
+		secondary_accessions: toArray(
+			getChild(getChild(seq, "GBSeq_secondary-accessions"), "GBSecondary-accn"),
+		).filter((value): value is string => typeof value === "string"),
 	});
 
 	if (!parsed.success) {
