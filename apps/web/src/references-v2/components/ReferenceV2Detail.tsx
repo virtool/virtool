@@ -1,4 +1,5 @@
 import Box from "@base/Box";
+import { DownloadLink } from "@references/components/Detail/DownloadLink";
 import { useSuspenseReferenceV2 } from "@references-v2/queries";
 
 /** The general information for a local v2 Reference. */
@@ -11,6 +12,11 @@ export default function ReferenceV2Detail({
 
 	return (
 		<Box>
+			<p className="mb-4">
+				<DownloadLink href={`/refs/alpha/${referenceId}/fasta`}>
+					Download current Reference FASTA
+				</DownloadLink>
+			</p>
 			<dl className="grid grid-cols-[max-content_1fr] gap-x-4 gap-y-1">
 				<dt className="font-semibold">Kind</dt>
 				<dd>{reference.kind}</dd>

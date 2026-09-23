@@ -16,6 +16,7 @@ import {
 	useSuspenseLocalOtuV2,
 	useSuspenseLocalOtuV2Isolate,
 } from "@otus-v2/queries";
+import { DownloadLink } from "@references/components/Detail/DownloadLink";
 import { useCanModifyReferenceV2Otus } from "@references-v2/hooks";
 import { useQuery } from "@tanstack/react-query";
 import { getRouteApi } from "@tanstack/react-router";
@@ -54,6 +55,12 @@ export default function LocalOtuIsolateDetail() {
 			<SectionHeader className="flex items-center justify-between gap-3">
 				<h2>{name}</h2>
 				<div className="flex items-center gap-2">
+					<DownloadLink
+						size="sm"
+						href={`/refs/alpha/${referenceId}/otus/${otuId}/isolates/${isolateId}/fasta`}
+					>
+						Download isolate FASTA
+					</DownloadLink>
 					<PromoteLocalOtuIsolate
 						referenceId={referenceId}
 						otuId={otuId}

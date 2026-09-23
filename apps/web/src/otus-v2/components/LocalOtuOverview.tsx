@@ -13,6 +13,7 @@ import EditLocalOtuTaxonomy from "@otus-v2/components/EditLocalOtuTaxonomy";
 import LocalOtuAccessionExclusions from "@otus-v2/components/LocalOtuAccessionExclusions";
 import { formatV2IsolateName } from "@otus-v2/isolateName";
 import { useSuspenseLocalOtuV2 } from "@otus-v2/queries";
+import { DownloadLink } from "@references/components/Detail/DownloadLink";
 
 const ISOLATE_PREVIEW_COUNT = 5;
 
@@ -40,6 +41,11 @@ export default function LocalOtuOverview({
 
 	return (
 		<>
+			<p>
+				<DownloadLink href={`/refs/alpha/${referenceId}/otus/${otuId}/fasta`}>
+					Download current OTU FASTA
+				</DownloadLink>
+			</p>
 			<section>
 				<SectionHeader className="flex items-center justify-between gap-3">
 					<h2>Taxonomy</h2>

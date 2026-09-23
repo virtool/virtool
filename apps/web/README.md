@@ -182,6 +182,17 @@ Same-base version refreshes keep the base active and do not add a promoted base.
 Mixed manual and GenBank isolates cannot use this update flow; manual sequence
 edits remain available.
 
+Current v2 References, OTUs, and isolates can be downloaded as FASTA without a
+published Reference version. Raw download routes require an authenticated caller
+with Reference visibility, including membership without edit rights. They stream
+current, non-deleted sequence versions in bounded pages; archived References
+remain readable. Headers contain stable Reference, OTU, isolate, sequence, and
+segment IDs plus `source=manual` or `source=genbank` with the exact accession
+version. Empty References return an empty FASTA file.
+Pages are read when the stream needs them. An edit during a long download can
+therefore make that file contain sequences from different OTU revisions; start
+a new download after curation to obtain the latest state.
+
 Local v2 Reference settings allow members with `modify` rights to edit name,
 description, and the default segment length tolerance. Each edit carries the
 Reference version shown in the form; stale versions and archived References
