@@ -179,6 +179,58 @@ describe("<CreateLocalOtuIsolateDialog />", () => {
 		});
 	});
 
+	it("acknowledges a recommended omission in a GenBank isolate preview", async () => {
+		const firstSegment = plan.segments[0];
+		if (!firstSegment) {
+			throw new Error("Expected a plan segment.");
+		}
+		const recommendedId = crypto.randomUUID();
+		const multipartitePlan: OtuV2Plan = {
+			...plan,
+			segments: [
+				{ ...firstSegment, name: { prefix: "RNA", key: "1" } },
+				{
+					id: recommendedId,
+					name: { prefix: "RNA", key: "2" },
+					length: 4,
+					lengthTolerance: 0,
+					rule: "recommended",
+				},
+			],
+		};
+		otuV2ServerFnMocks.getGenbankIsolateDraftFn.mockResolvedValueOnce({
+			...draft,
+			name: { type: "isolate", value: "Field A" },
+		});
+		otuV2ServerFnMocks.createLocalOtuIsolateFn.mockResolvedValueOnce({});
+		renderDialog(multipartitePlan);
+		fireEvent.click(screen.getByRole("button", { name: "GenBank accessions" }));
+		fireEvent.change(screen.getByLabelText("NCBI accessions"), {
+			target: { value: "A" },
+		});
+		fireEvent.click(screen.getByRole("button", { name: "Preview" }));
+		expect(
+			await screen.findByText("Isolate Field A: RNA 2"),
+		).toBeInTheDocument();
+		const create = screen.getByRole("button", { name: "Create isolate" });
+		expect(create).toBeDisabled();
+		fireEvent.click(
+			screen.getByRole("checkbox", {
+				name: /I acknowledge these recommended segments are missing/,
+			}),
+		);
+		expect(create).toBeEnabled();
+		fireEvent.click(create);
+		await waitFor(() => {
+			const payload =
+				otuV2ServerFnMocks.createLocalOtuIsolateFn.mock.calls[0]?.[0].data
+					.command.payload;
+			expect(payload.acknowledgedMissingRecommendedSegments).toEqual([
+				{ isolateId: payload.isolate.id, segmentId: recommendedId },
+			]);
+		});
+	});
+
 	it("clears a successful preview when the accession changes", async () => {
 		otuV2ServerFnMocks.getGenbankIsolateDraftFn.mockResolvedValueOnce(draft);
 		renderDialog();

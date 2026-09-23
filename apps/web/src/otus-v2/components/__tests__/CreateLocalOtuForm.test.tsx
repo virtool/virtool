@@ -119,6 +119,51 @@ describe("<CreateLocalOtuForm />", () => {
 		);
 	});
 
+	it("requires an explicit missing recommended-segment acknowledgement during creation", async () => {
+		await renderForm();
+		await userEvent.type(
+			screen.getByLabelText("Name", { exact: true }),
+			"Segmented virus",
+		);
+		await fillSegment(1, "1", "ATCG");
+		await userEvent.click(screen.getByRole("button", { name: "Add segment" }));
+		await userEvent.type(screen.getByLabelText("Segment 2 name prefix"), "RNA");
+		await userEvent.type(screen.getByLabelText("Segment 2 name key"), "2");
+		await userEvent.clear(screen.getByLabelText("Segment 2 expected length"));
+		await userEvent.type(
+			screen.getByLabelText("Segment 2 expected length"),
+			"4",
+		);
+		await userEvent.selectOptions(
+			screen.getByLabelText("Segment 2 rule"),
+			"recommended",
+		);
+		const checkbox = screen.getByRole("checkbox", {
+			name: /I acknowledge these recommended segments are missing/,
+		});
+		expect(checkbox).not.toBeChecked();
+		expect(screen.getByText("Unnamed isolate: RNA 2")).toBeInTheDocument();
+		await userEvent.click(screen.getByRole("button", { name: "Create" }));
+		expect(
+			await screen.findByText(/Acknowledge the missing recommended segments/),
+		).toBeInTheDocument();
+		expect(otuV2ServerFnMocks.createLocalOtuFn).not.toHaveBeenCalled();
+		await userEvent.click(checkbox);
+		await userEvent.click(screen.getByRole("button", { name: "Create" }));
+		await waitFor(() =>
+			expect(otuV2ServerFnMocks.createLocalOtuFn).toHaveBeenCalledTimes(1),
+		);
+		const command =
+			otuV2ServerFnMocks.createLocalOtuFn.mock.calls[0]?.[0].data.command;
+		expect(command.payload.isolate.sequences).toHaveLength(1);
+		expect(command.payload.acknowledgedMissingRecommendedSegments).toEqual([
+			{
+				isolateId: command.payload.isolate.id,
+				segmentId: command.payload.plan.segments[1].id,
+			},
+		]);
+	});
+
 	it("shows shared plan errors for duplicate names and lengths outside tolerance", async () => {
 		await renderForm();
 		await userEvent.type(

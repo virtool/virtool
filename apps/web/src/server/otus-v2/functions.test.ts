@@ -519,6 +519,59 @@ describe("createLocalOtu", () => {
 		expect(fetchGenbankRecords).not.toHaveBeenCalled();
 	});
 
+	it("rejects a missing recommended acknowledgement at the server boundary", async () => {
+		const userId = await signIn(db, getRequest, { administratorRole: null });
+		const referenceId = await seedReferenceV2(userId);
+		const command = validCommand();
+		const first = command.payload.plan.segments[0];
+		const recommendedId = randomUUID();
+		const proposed = {
+			...command,
+			payload: {
+				...command.payload,
+				plan: {
+					...command.payload.plan,
+					segments: [
+						{ ...first, name: { prefix: "RNA", key: "1" } },
+						{
+							id: recommendedId,
+							name: { prefix: "RNA", key: "2" },
+							length: 8,
+							lengthTolerance: 0,
+							rule: "recommended",
+						},
+					],
+				},
+			},
+		};
+		await expect(
+			call("createLocalOtuFn", { referenceId, command: proposed }),
+		).rejects.toThrow(
+			"Review and acknowledge every missing recommended segment.",
+		);
+		expect(setResponseStatus).toHaveBeenCalledWith(422);
+		const acknowledged = [
+			{ isolateId: command.payload.isolate.id, segmentId: recommendedId },
+		];
+		const created = (await call("createLocalOtuFn", {
+			referenceId,
+			command: {
+				...proposed,
+				payload: {
+					...proposed.payload,
+					acknowledgedMissingRecommendedSegments: acknowledged,
+				},
+			},
+		})) as {
+			version: number;
+			changes: Array<{ acknowledgedMissingRecommendedSegments: unknown }>;
+		};
+		expect(created.version).toBe(1);
+		expect(created.changes[0]?.acknowledgedMissingRecommendedSegments).toEqual(
+			acknowledged,
+		);
+	});
+
 	it("adds a manual isolate to a manual OTU and validates its plan without NCBI", async () => {
 		const userId = await signIn(db, getRequest, { administratorRole: null });
 		const referenceId = await seedReferenceV2(userId);

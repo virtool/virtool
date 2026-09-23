@@ -116,9 +116,8 @@ export function useUpdateReferenceV2(referenceId: string) {
 export function useDeleteReferenceV2() {
 	const queryClient = useQueryClient();
 
-	return useMutation<void, Error, string>({
-		mutationFn: (referenceId) =>
-			deleteReferenceV2Fn({ data: { referenceId } }) as Promise<void>,
+	return useMutation<null, Error, string>({
+		mutationFn: (referenceId) => deleteReferenceV2Fn({ data: { referenceId } }),
 		onSuccess: (_data, referenceId) => {
 			queryClient.removeQueries({
 				queryKey: referenceV2QueryKeys.detail(referenceId),

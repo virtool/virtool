@@ -64,8 +64,15 @@ describe.each(NAMES)("%s", (name) => {
 			Object.keys(expected.genbank).sort(),
 		);
 
+		// The Python model does not expose RefSeq secondary accession evidence.
 		for (const [accession, want] of Object.entries(expected.genbank)) {
-			expect(byAccession[accession], accession).toEqual(want);
+			const record = byAccession[accession];
+			expect(record, accession).toBeDefined();
+			if (!record) {
+				continue;
+			}
+			const { secondary_accessions: _secondaryAccessions, ...shared } = record;
+			expect(shared, accession).toEqual(want);
 		}
 	});
 

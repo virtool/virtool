@@ -378,7 +378,9 @@ export default function CreateLocalOtuForm({
 						</InputLabel>
 						<InputSimple
 							id={`${field.id}-definition`}
-							aria-required
+							aria-required={Boolean(
+								watchedSegments?.[index]?.sequence?.trim(),
+							)}
 							aria-invalid={
 								Boolean(errors.segments?.[index]?.sequenceDefinition) ||
 								undefined

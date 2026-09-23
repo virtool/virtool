@@ -330,9 +330,9 @@ describe("deleteReferenceV2", () => {
 		const userId = await signIn(db, getRequest, { administratorRole: null });
 		const referenceId = await seedReferenceV2(userId);
 
-		await call("deleteReferenceV2Fn", { referenceId });
+		expect(await call("deleteReferenceV2Fn", { referenceId })).toBeNull();
 
-		expect(setResponseStatus).toHaveBeenCalledWith(204);
+		expect(setResponseStatus).not.toHaveBeenCalledWith(204);
 		const rows = await db
 			.select()
 			.from(referenceRoots)

@@ -1,7 +1,6 @@
 # Reference v2 completion plan
 
-This plan closes the unfinished reference-curation capabilities in
-[REVIEW.md](REVIEW.md). The struck-through review findings are complete. V1 and
+This plan closes the unfinished reference-curation capabilities. V1 and
 v2 coexist: V1 history can be corrupt or incompatible with v2 types, so this
 work does not convert V1 references, indexes, or history into v2.
 

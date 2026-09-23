@@ -159,7 +159,7 @@ export const deleteReferenceV2Fn = createServerFn({ method: "POST" })
 				throw new ForbiddenError();
 			}
 			await deleteReferenceV2(db, data.referenceId);
-			setResponseStatus(204);
+			return null;
 		} catch (err) {
 			return rethrowAsHttp(err);
 		}
