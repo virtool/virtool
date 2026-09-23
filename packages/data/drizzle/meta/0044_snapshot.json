@@ -1,6 +1,6 @@
 {
-  "id": "22d1a1b4-d14a-443d-b83f-9201c362e3bb",
-  "prevId": "ecf4068e-f8be-4299-9467-3592a3259050",
+  "id": "ecf4068e-f8be-4299-9467-3592a3259050",
+  "prevId": "e533f80d-86ce-4ef8-9f2c-74f5f90cdfef",
   "version": "7",
   "dialect": "postgresql",
   "tables": {
@@ -4221,78 +4221,6 @@
       "checkConstraints": {},
       "isRLSEnabled": false
     },
-    "public.otu_promoted_accession_bases": {
-      "name": "otu_promoted_accession_bases",
-      "schema": "",
-      "columns": {
-        "otu_id": {
-          "name": "otu_id",
-          "type": "uuid",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "accession_base": {
-          "name": "accession_base",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "promoted_to_base": {
-          "name": "promoted_to_base",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "created_version": {
-          "name": "created_version",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": true
-        }
-      },
-      "indexes": {},
-      "foreignKeys": {
-        "otu_promoted_accession_bases_otu_id_fkey": {
-          "name": "otu_promoted_accession_bases_otu_id_fkey",
-          "tableFrom": "otu_promoted_accession_bases",
-          "tableTo": "otus",
-          "columnsFrom": [
-            "otu_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "no action",
-          "onUpdate": "no action"
-        }
-      },
-      "compositePrimaryKeys": {
-        "otu_promoted_accession_bases_pkey": {
-          "name": "otu_promoted_accession_bases_pkey",
-          "columns": [
-            "otu_id",
-            "accession_base"
-          ]
-        }
-      },
-      "uniqueConstraints": {},
-      "policies": {},
-      "checkConstraints": {
-        "otu_promoted_accession_bases_accession_base_check": {
-          "name": "otu_promoted_accession_bases_accession_base_check",
-          "value": "\"otu_promoted_accession_bases\".\"accession_base\" ~ '^[A-Z0-9_-]+$'"
-        },
-        "otu_promoted_accession_bases_promoted_to_base_check": {
-          "name": "otu_promoted_accession_bases_promoted_to_base_check",
-          "value": "\"otu_promoted_accession_bases\".\"promoted_to_base\" ~ '^[A-Z0-9_-]+$' and \"otu_promoted_accession_bases\".\"promoted_to_base\" <> \"otu_promoted_accession_bases\".\"accession_base\""
-        },
-        "otu_promoted_accession_bases_created_version_check": {
-          "name": "otu_promoted_accession_bases_created_version_check",
-          "value": "\"otu_promoted_accession_bases\".\"created_version\" >= 2"
-        }
-      },
-      "isRLSEnabled": false
-    },
     "public.otu_sequence_versions": {
       "name": "otu_sequence_versions",
       "schema": "",
@@ -6466,7 +6394,7 @@
       "checkConstraints": {
         "setup_sessions_purpose_valid": {
           "name": "setup_sessions_purpose_valid",
-          "value": "purpose in ('account_completion', 'email_remediation', 'totp_enrollment')"
+          "value": "purpose in ('account_completion', 'email_remediation', 'totp_enrollment', 'email_verification', 'password_recovery', 'administrator_recovery')"
         }
       },
       "isRLSEnabled": false
@@ -6506,6 +6434,12 @@
         },
         "candidate_email": {
           "name": "candidate_email",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "source_email": {
+          "name": "source_email",
           "type": "text",
           "primaryKey": false,
           "notNull": false
@@ -6609,7 +6543,7 @@
       "checkConstraints": {
         "setup_tokens_purpose_valid": {
           "name": "setup_tokens_purpose_valid",
-          "value": "purpose in ('account_completion', 'email_remediation', 'totp_enrollment')"
+          "value": "purpose in ('account_completion', 'email_remediation', 'totp_enrollment', 'email_verification', 'password_recovery', 'administrator_recovery')"
         }
       },
       "isRLSEnabled": false

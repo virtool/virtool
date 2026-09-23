@@ -2,10 +2,10 @@ import AccountProfile from "@account/components/AccountProfile";
 import { screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { createFakeAccount } from "@tests/fake/account";
+import { mockRequestAccountEmailChange } from "@tests/server-fn/recovery";
 import {
 	mockChangePassword,
 	mockGetAccount,
-	mockUpdateAccountEmail,
 	mockUpdateAccountHandle,
 	userServerFnMocks,
 } from "@tests/server-fn/users";
@@ -57,12 +57,7 @@ describe("<AccountProfile />", () => {
 		});
 
 		mockGetAccount(account);
-		const updateAccountEmail = mockUpdateAccountEmail(
-			account,
-			200,
-			undefined,
-			"virtool.devs@gmail.com",
-		);
+		const requestAccountEmailChange = mockRequestAccountEmailChange();
 		renderWithProviders(<AccountProfile />);
 
 		await screen.findByText("Email Address");
@@ -70,7 +65,9 @@ describe("<AccountProfile />", () => {
 		expect(input).toHaveValue("");
 
 		const form = input.closest("form") as HTMLElement;
-		const button = within(form).getByRole("button", { name: "Change" });
+		const button = within(form).getByRole("button", {
+			name: "Send verification",
+		});
 
 		await userEvent.type(input, "invalid");
 		await userEvent.click(button);
@@ -79,13 +76,16 @@ describe("<AccountProfile />", () => {
 		expect(
 			screen.getByText("Please provide a valid email address"),
 		).toBeInTheDocument();
-		expect(updateAccountEmail).not.toHaveBeenCalled();
+		expect(requestAccountEmailChange).not.toHaveBeenCalled();
 
 		await userEvent.clear(input);
 		await userEvent.type(input, "virtool.devs@gmail.com");
 		await userEvent.click(button);
 
-		await waitFor(() => expect(updateAccountEmail).toHaveBeenCalled());
+		await waitFor(() => expect(requestAccountEmailChange).toHaveBeenCalled());
+		expect(requestAccountEmailChange).toHaveBeenCalledWith({
+			data: { email: "virtool.devs@gmail.com" },
+		});
 	});
 
 	it("should render with the current handle", async () => {

@@ -1,6 +1,6 @@
 {
-  "id": "055e63d9-7db6-4833-ba3b-08455fb0cbe3",
-  "prevId": "ca255f47-55fb-417a-bee4-79351afab7dd",
+  "id": "ca255f47-55fb-417a-bee4-79351afab7dd",
+  "prevId": "5783baad-4af9-4af6-b2f8-fd32c7ea138f",
   "version": "7",
   "dialect": "postgresql",
   "tables": {
@@ -3834,18 +3834,6 @@
           "primaryKey": false,
           "notNull": true
         },
-        "source": {
-          "name": "source",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "accession_version": {
-          "name": "accession_version",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false
-        },
         "created_at": {
           "name": "created_at",
           "type": "timestamp with time zone",
@@ -3892,10 +3880,6 @@
         "otu_local_sequence_records_sequence_check": {
           "name": "otu_local_sequence_records_sequence_check",
           "value": "\"otu_local_sequence_records\".\"sequence\" <> '' and \"otu_local_sequence_records\".\"sequence\" ~ '^[ATCGNRYKMSWBDHV]+$'"
-        },
-        "otu_local_sequence_records_source_check": {
-          "name": "otu_local_sequence_records_source_check",
-          "value": "(\"otu_local_sequence_records\".\"source\" = 'manual' and \"otu_local_sequence_records\".\"accession_version\" is null) or (\"otu_local_sequence_records\".\"source\" = 'genbank' and \"otu_local_sequence_records\".\"accession_version\" is not null)"
         }
       },
       "isRLSEnabled": false
@@ -4375,44 +4359,9 @@
           "type": "uuid",
           "primaryKey": false,
           "notNull": true
-        },
-        "accession_base": {
-          "name": "accession_base",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "retired_version": {
-          "name": "retired_version",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": false
         }
       },
-      "indexes": {
-        "otu_sequences_current_accession_key": {
-          "name": "otu_sequences_current_accession_key",
-          "columns": [
-            {
-              "expression": "otu_id",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            },
-            {
-              "expression": "accession_base",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            }
-          ],
-          "isUnique": true,
-          "where": "\"otu_sequences\".\"accession_base\" is not null and \"otu_sequences\".\"retired_version\" is null",
-          "concurrently": false,
-          "method": "btree",
-          "with": {}
-        }
-      },
+      "indexes": {},
       "foreignKeys": {
         "otu_sequences_otu_id_fkey": {
           "name": "otu_sequences_otu_id_fkey",
@@ -4440,12 +4389,7 @@
         }
       },
       "policies": {},
-      "checkConstraints": {
-        "otu_sequences_retired_version_check": {
-          "name": "otu_sequences_retired_version_check",
-          "value": "\"otu_sequences\".\"retired_version\" is null or \"otu_sequences\".\"retired_version\" >= 2"
-        }
-      },
+      "checkConstraints": {},
       "isRLSEnabled": false
     },
     "public.otu_taxonomy_versions": {
@@ -6321,7 +6265,7 @@
       "checkConstraints": {
         "setup_sessions_purpose_valid": {
           "name": "setup_sessions_purpose_valid",
-          "value": "purpose in ('account_completion', 'email_remediation', 'totp_enrollment')"
+          "value": "purpose in ('account_completion', 'email_remediation', 'totp_enrollment', 'email_verification', 'password_recovery', 'administrator_recovery')"
         }
       },
       "isRLSEnabled": false
@@ -6361,6 +6305,12 @@
         },
         "candidate_email": {
           "name": "candidate_email",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "source_email": {
+          "name": "source_email",
           "type": "text",
           "primaryKey": false,
           "notNull": false
@@ -6464,7 +6414,7 @@
       "checkConstraints": {
         "setup_tokens_purpose_valid": {
           "name": "setup_tokens_purpose_valid",
-          "value": "purpose in ('account_completion', 'email_remediation', 'totp_enrollment')"
+          "value": "purpose in ('account_completion', 'email_remediation', 'totp_enrollment', 'email_verification', 'password_recovery', 'administrator_recovery')"
         }
       },
       "isRLSEnabled": false

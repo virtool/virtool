@@ -1,6 +1,6 @@
 import Button from "@base/Button";
 import { InputGroup, InputLabel, InputSimple } from "@base/Input";
-import { useNavigate } from "@tanstack/react-router";
+import { Link, useNavigate } from "@tanstack/react-router";
 import { CircleAlert } from "lucide-react";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
@@ -112,7 +112,8 @@ export default function LoginForm({
 						</div>
 					)}
 				</div>
-				<div className="flex justify-end">
+				<div className="flex items-center justify-between">
+					<Link to="/recover">Forgot your password?</Link>
 					<Button type="submit" color="blue">
 						Login
 					</Button>

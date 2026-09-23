@@ -1,6 +1,6 @@
 {
-  "id": "e533f80d-86ce-4ef8-9f2c-74f5f90cdfef",
-  "prevId": "055e63d9-7db6-4833-ba3b-08455fb0cbe3",
+  "id": "055e63d9-7db6-4833-ba3b-08455fb0cbe3",
+  "prevId": "ca255f47-55fb-417a-bee4-79351afab7dd",
   "version": "7",
   "dialect": "postgresql",
   "tables": {
@@ -5119,13 +5119,6 @@
           "primaryKey": true,
           "notNull": true
         },
-        "version": {
-          "name": "version",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": true,
-          "default": 1
-        },
         "name": {
           "name": "name",
           "type": "text",
@@ -5187,10 +5180,6 @@
       "uniqueConstraints": {},
       "policies": {},
       "checkConstraints": {
-        "reference_roots_version_check": {
-          "name": "reference_roots_version_check",
-          "value": "\"reference_roots\".\"version\" >= 1"
-        },
         "reference_roots_kind_check": {
           "name": "reference_roots_kind_check",
           "value": "\"reference_roots\".\"kind\" in ('local', 'remote')"
@@ -6332,7 +6321,7 @@
       "checkConstraints": {
         "setup_sessions_purpose_valid": {
           "name": "setup_sessions_purpose_valid",
-          "value": "purpose in ('account_completion', 'email_remediation', 'totp_enrollment')"
+          "value": "purpose in ('account_completion', 'email_remediation', 'totp_enrollment', 'email_verification', 'password_recovery', 'administrator_recovery')"
         }
       },
       "isRLSEnabled": false
@@ -6372,6 +6361,12 @@
         },
         "candidate_email": {
           "name": "candidate_email",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "source_email": {
+          "name": "source_email",
           "type": "text",
           "primaryKey": false,
           "notNull": false
@@ -6475,7 +6470,7 @@
       "checkConstraints": {
         "setup_tokens_purpose_valid": {
           "name": "setup_tokens_purpose_valid",
-          "value": "purpose in ('account_completion', 'email_remediation', 'totp_enrollment')"
+          "value": "purpose in ('account_completion', 'email_remediation', 'totp_enrollment', 'email_verification', 'password_recovery', 'administrator_recovery')"
         }
       },
       "isRLSEnabled": false

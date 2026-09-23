@@ -1,3 +1,4 @@
+import { pruneRecoveryRequestBudgets } from "@virtool/data/auth/recoveryRateLimit";
 import { deleteExpiredSetupState } from "@virtool/data/auth/setup";
 import { z } from "zod";
 import { defineTask } from "../framework/define";
@@ -20,12 +21,16 @@ export const cleanupSetupStateTask = defineTask<typeof payload, TaskContext>({
 	steps: ["cleanup_expired_setup_state"],
 	async run({ ctx, helpers, logger, signal }) {
 		await helpers.runStep("cleanup_expired_setup_state", async () => {
-			const { tokens, sessions } = await deleteExpiredSetupState(ctx.db, {
-				signal,
-			});
+			const [{ tokens, sessions }, rateLimits] = await Promise.all([
+				deleteExpiredSetupState(ctx.db, { signal }),
+				pruneRecoveryRequestBudgets(ctx.db),
+			]);
 
-			if (tokens > 0 || sessions > 0) {
-				logger.info({ sessions, tokens }, "cleaned up expired setup state");
+			if (tokens > 0 || sessions > 0 || rateLimits > 0) {
+				logger.info(
+					{ rateLimits, sessions, tokens },
+					"cleaned up expired setup state",
+				);
 			}
 		});
 	},

@@ -1,6 +1,6 @@
 {
-  "id": "ecf4068e-f8be-4299-9467-3592a3259050",
-  "prevId": "e533f80d-86ce-4ef8-9f2c-74f5f90cdfef",
+  "id": "e533f80d-86ce-4ef8-9f2c-74f5f90cdfef",
+  "prevId": "055e63d9-7db6-4833-ba3b-08455fb0cbe3",
   "version": "7",
   "dialect": "postgresql",
   "tables": {
@@ -3480,68 +3480,6 @@
       },
       "isRLSEnabled": false
     },
-    "public.otu_excluded_accession_bases": {
-      "name": "otu_excluded_accession_bases",
-      "schema": "",
-      "columns": {
-        "otu_id": {
-          "name": "otu_id",
-          "type": "uuid",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "accession_base": {
-          "name": "accession_base",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "created_version": {
-          "name": "created_version",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": true
-        }
-      },
-      "indexes": {},
-      "foreignKeys": {
-        "otu_excluded_accession_bases_otu_id_fkey": {
-          "name": "otu_excluded_accession_bases_otu_id_fkey",
-          "tableFrom": "otu_excluded_accession_bases",
-          "tableTo": "otus",
-          "columnsFrom": [
-            "otu_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "no action",
-          "onUpdate": "no action"
-        }
-      },
-      "compositePrimaryKeys": {
-        "otu_excluded_accession_bases_pkey": {
-          "name": "otu_excluded_accession_bases_pkey",
-          "columns": [
-            "otu_id",
-            "accession_base"
-          ]
-        }
-      },
-      "uniqueConstraints": {},
-      "policies": {},
-      "checkConstraints": {
-        "otu_excluded_accession_bases_accession_base_check": {
-          "name": "otu_excluded_accession_bases_accession_base_check",
-          "value": "\"otu_excluded_accession_bases\".\"accession_base\" ~ '^[A-Z0-9_-]+$'"
-        },
-        "otu_excluded_accession_bases_created_version_check": {
-          "name": "otu_excluded_accession_bases_created_version_check",
-          "value": "\"otu_excluded_accession_bases\".\"created_version\" >= 2"
-        }
-      },
-      "isRLSEnabled": false
-    },
     "public.otu_isolate_versions": {
       "name": "otu_isolate_versions",
       "schema": "",
@@ -6394,7 +6332,7 @@
       "checkConstraints": {
         "setup_sessions_purpose_valid": {
           "name": "setup_sessions_purpose_valid",
-          "value": "purpose in ('account_completion', 'email_remediation', 'totp_enrollment')"
+          "value": "purpose in ('account_completion', 'email_remediation', 'totp_enrollment', 'email_verification', 'password_recovery', 'administrator_recovery')"
         }
       },
       "isRLSEnabled": false
@@ -6434,6 +6372,12 @@
         },
         "candidate_email": {
           "name": "candidate_email",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "source_email": {
+          "name": "source_email",
           "type": "text",
           "primaryKey": false,
           "notNull": false
@@ -6537,7 +6481,7 @@
       "checkConstraints": {
         "setup_tokens_purpose_valid": {
           "name": "setup_tokens_purpose_valid",
-          "value": "purpose in ('account_completion', 'email_remediation', 'totp_enrollment')"
+          "value": "purpose in ('account_completion', 'email_remediation', 'totp_enrollment', 'email_verification', 'password_recovery', 'administrator_recovery')"
         }
       },
       "isRLSEnabled": false

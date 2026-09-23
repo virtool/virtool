@@ -34,6 +34,7 @@ import { labelServerFnMocks } from "./server-fn/labels";
 import { genbankServerFnMocks, otuServerFnMocks } from "./server-fn/otus";
 import { otuV2ServerFnMocks } from "./server-fn/otusV2";
 import { recentAuthenticationServerFnMocks } from "./server-fn/recentAuthentication";
+import { recoveryServerFnMocks } from "./server-fn/recovery";
 import { referenceServerFnMocks } from "./server-fn/references";
 import { referenceV2ServerFnMocks } from "./server-fn/referencesV2";
 import { rootServerFnMocks } from "./server-fn/root";
@@ -60,6 +61,10 @@ vi.mock("@server/account/functions", async () => {
 vi.mock("@server/auth/functions", async () => {
 	const { authServerFnMocks } = await import("./server-fn/auth");
 	return authServerFnMocks;
+});
+vi.mock("@server/auth/recoveryFunctions", async () => {
+	const { recoveryServerFnMocks } = await import("./server-fn/recovery");
+	return recoveryServerFnMocks;
 });
 vi.mock("@server/auth/recentAuthentication", async () => {
 	const { recentAuthenticationServerFnMocks } = await import(
@@ -157,6 +162,7 @@ beforeEach(() => {
 		...Object.values(taskServerFnMocks),
 		...Object.values(hmmServerFnMocks),
 		...Object.values(authServerFnMocks),
+		...Object.values(recoveryServerFnMocks),
 		...Object.values(recentAuthenticationServerFnMocks),
 		...Object.values(labelServerFnMocks),
 		...Object.values(rootServerFnMocks),

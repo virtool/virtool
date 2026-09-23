@@ -16,7 +16,9 @@ import { Route as EventsRouteImport } from './routes/events'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as MetricsRouteImport } from './routes/metrics'
 import { Route as MonitoringRouteImport } from './routes/monitoring'
+import { Route as RecoverRouteImport } from './routes/recover'
 import { Route as SetupRouteImport } from './routes/setup'
+import { Route as VerifyEmailRouteImport } from './routes/verify-email'
 import { Route as AuthenticatedIndexRouteImport } from './routes/_authenticated/index'
 import { Route as AuthenticatedAccountRouteImport } from './routes/_authenticated/account'
 import { Route as AuthenticatedAdministrationRouteRouteImport } from './routes/_authenticated/administration/route'
@@ -141,9 +143,19 @@ const MonitoringRoute = MonitoringRouteImport.update({
   path: '/monitoring',
   getParentRoute: () => rootRouteImport,
 } as any)
+const RecoverRoute = RecoverRouteImport.update({
+  id: '/recover',
+  path: '/recover',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const SetupRoute = SetupRouteImport.update({
   id: '/setup',
   path: '/setup',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const VerifyEmailRoute = VerifyEmailRouteImport.update({
+  id: '/verify-email',
+  path: '/verify-email',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AuthenticatedIndexRoute = AuthenticatedIndexRouteImport.update({
@@ -673,7 +685,9 @@ export interface FileRoutesByFullPath {
   '/login': typeof LoginRoute
   '/metrics': typeof MetricsRoute
   '/monitoring': typeof MonitoringRoute
+  '/recover': typeof RecoverRoute
   '/setup': typeof SetupRoute
+  '/verify-email': typeof VerifyEmailRoute
   '/administration': typeof AuthenticatedAdministrationRouteRouteWithChildren
   '/refs': typeof AuthenticatedRefsRouteRouteWithChildren
   '/account': typeof AuthenticatedAccountRouteWithChildren
@@ -770,7 +784,9 @@ export interface FileRoutesByTo {
   '/login': typeof LoginRoute
   '/metrics': typeof MetricsRoute
   '/monitoring': typeof MonitoringRoute
+  '/recover': typeof RecoverRoute
   '/setup': typeof SetupRoute
+  '/verify-email': typeof VerifyEmailRoute
   '/home': typeof AuthenticatedHomeRoute
   '/health/live': typeof HealthLiveRoute
   '/health/ready': typeof HealthReadyRoute
@@ -854,7 +870,9 @@ export interface FileRoutesById {
   '/login': typeof LoginRoute
   '/metrics': typeof MetricsRoute
   '/monitoring': typeof MonitoringRoute
+  '/recover': typeof RecoverRoute
   '/setup': typeof SetupRoute
+  '/verify-email': typeof VerifyEmailRoute
   '/_authenticated/administration': typeof AuthenticatedAdministrationRouteRouteWithChildren
   '/_authenticated/refs': typeof AuthenticatedRefsRouteRouteWithChildren
   '/_authenticated/account': typeof AuthenticatedAccountRouteWithChildren
@@ -955,7 +973,9 @@ export interface FileRouteTypes {
     | '/login'
     | '/metrics'
     | '/monitoring'
+    | '/recover'
     | '/setup'
+    | '/verify-email'
     | '/administration'
     | '/refs'
     | '/account'
@@ -1052,7 +1072,9 @@ export interface FileRouteTypes {
     | '/login'
     | '/metrics'
     | '/monitoring'
+    | '/recover'
     | '/setup'
+    | '/verify-email'
     | '/home'
     | '/health/live'
     | '/health/ready'
@@ -1135,7 +1157,9 @@ export interface FileRouteTypes {
     | '/login'
     | '/metrics'
     | '/monitoring'
+    | '/recover'
     | '/setup'
+    | '/verify-email'
     | '/_authenticated/administration'
     | '/_authenticated/refs'
     | '/_authenticated/account'
@@ -1235,7 +1259,9 @@ export interface RootRouteChildren {
   LoginRoute: typeof LoginRoute
   MetricsRoute: typeof MetricsRoute
   MonitoringRoute: typeof MonitoringRoute
+  RecoverRoute: typeof RecoverRoute
   SetupRoute: typeof SetupRoute
+  VerifyEmailRoute: typeof VerifyEmailRoute
   HealthLiveRoute: typeof HealthLiveRoute
   HealthReadyRoute: typeof HealthReadyRoute
   UploadsUploadIdRoute: typeof UploadsUploadIdRoute
@@ -1305,11 +1331,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof MonitoringRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/recover': {
+      id: '/recover'
+      path: '/recover'
+      fullPath: '/recover'
+      preLoaderRoute: typeof RecoverRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/setup': {
       id: '/setup'
       path: '/setup'
       fullPath: '/setup'
       preLoaderRoute: typeof SetupRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/verify-email': {
+      id: '/verify-email'
+      path: '/verify-email'
+      fullPath: '/verify-email'
+      preLoaderRoute: typeof VerifyEmailRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/_authenticated/': {
@@ -2333,7 +2373,9 @@ const rootRouteChildren: RootRouteChildren = {
   LoginRoute: LoginRoute,
   MetricsRoute: MetricsRoute,
   MonitoringRoute: MonitoringRoute,
+  RecoverRoute: RecoverRoute,
   SetupRoute: SetupRoute,
+  VerifyEmailRoute: VerifyEmailRoute,
   HealthLiveRoute: HealthLiveRoute,
   HealthReadyRoute: HealthReadyRoute,
   UploadsUploadIdRoute: UploadsUploadIdRoute,

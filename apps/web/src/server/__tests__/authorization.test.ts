@@ -57,7 +57,7 @@ const { setupSessionCookie } = await import("../auth/test/fixtures");
 
 /**
  * Every module that defines server functions, paired with the split module
- * carrying its real handler bodies. A `functions.ts` missing from this list
+ * carrying its real handler bodies. A function module missing from this list
  * fails the coverage test below.
  */
 const MODULES = [
@@ -80,6 +80,13 @@ const MODULES = [
 		fns: await import("../auth/functions"),
 		handlers: (await import(
 			"../auth/functions.ts?tss-serverfn-split"
+		)) as SplitServerFnModule,
+	},
+	{
+		path: "../auth/recoveryFunctions.ts",
+		fns: await import("../auth/recoveryFunctions"),
+		handlers: (await import(
+			"../auth/recoveryFunctions.ts?tss-serverfn-split"
 		)) as SplitServerFnModule,
 	},
 	{
@@ -268,11 +275,13 @@ const endpoints = MODULES.flatMap(({ fns, handlers, path }) =>
 
 describe("server function coverage", () => {
 	// The list above is what makes the check exhaustive. A new feature's
-	// functions.ts that nobody adds here would otherwise go unchecked — and an
+	// function module that nobody adds here would otherwise go unchecked — and an
 	// unauthorized endpoint looks exactly like an authorized one.
-	it("checks every functions.ts in src/server", () => {
+	it("checks every server function module in src/server", () => {
 		const onDisk = Object.keys(
-			import.meta.glob("../**/functions.ts", { eager: false }),
+			import.meta.glob(["../**/functions.ts", "../**/*Functions.ts"], {
+				eager: false,
+			}),
 		).sort();
 
 		expect(MODULES.map((module) => module.path).sort()).toEqual(onDisk);
@@ -311,11 +320,16 @@ describe("the open endpoints are reachable without a session", () => {
 	it("lists exactly the declared exceptions", () => {
 		expect(open.map((endpoint) => endpoint.name).sort()).toEqual([
 			"completeEmailRemediationFn",
+			"completePasswordRecoveryFn",
 			"createFirstUserFn",
 			"getPasswordPolicyFn",
 			"getRootFn",
+			"inspectEmailVerificationFn",
+			"inspectPasswordRecoveryFn",
 			"loginFn",
 			"logoutFn",
+			"requestPasswordRecoveryFn",
+			"verifyCurrentEmailFn",
 			"verifyTwoFactorFn",
 		]);
 	});

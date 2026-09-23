@@ -79,8 +79,6 @@ const handlers = (await import(
 const { hashPassword, verifyPassword } = await import(
 	"@virtool/data/auth/password"
 );
-const { SESSION_FRESH_AGE_SECONDS } = await import("../auth/freshness");
-const { SessionNotFreshError } = await import("../auth/policy");
 const { seedSession, seedUser } = await import(
 	"@virtool/data/auth/test/fixtures"
 );
@@ -142,58 +140,6 @@ async function readUser(userId: number) {
 	const [row] = await db.select().from(users).where(eq(users.id, userId));
 	return row;
 }
-
-describe("updateAccountEmail", () => {
-	it("sets the signed-in user's address", async () => {
-		const { userId } = await signIn();
-
-		const account = (await call("updateAccountEmailFn", {
-			email: "alice@example.com",
-		})) as { email: string };
-
-		expect(account.email).toBe("alice@example.com");
-		expect((await readUser(userId))?.email).toBe("alice@example.com");
-	});
-
-	it("accepts an empty string as clearing the address", async () => {
-		const { userId } = await signIn();
-		await call("updateAccountEmailFn", { email: "alice@example.com" });
-
-		await call("updateAccountEmailFn", { email: "" });
-
-		expect((await readUser(userId))?.email).toBe("");
-	});
-
-	it("responds with 400 for a malformed address", async () => {
-		const { userId } = await signIn();
-
-		await expect(
-			call("updateAccountEmailFn", { email: "not-an-address" }),
-		).rejects.toThrow("The format of the email is invalid");
-		expect(setResponseStatus).toHaveBeenCalledWith(400);
-		expect((await readUser(userId))?.email).toBe("");
-	});
-
-	it("rejects a valid session whose immutable creation time is stale", async () => {
-		const { session, userId } = await signIn();
-		await db
-			.update(authSessions)
-			.set({
-				createdAt: new Date(
-					Date.now() - (SESSION_FRESH_AGE_SECONDS * 1000 + 1),
-				),
-				expiresAt: new Date(Date.now() + 60_000),
-				updatedAt: new Date(),
-			})
-			.where(eq(authSessions.id, session.sessionId));
-
-		await expect(
-			call("updateAccountEmailFn", { email: "alice@example.com" }),
-		).rejects.toBeInstanceOf(SessionNotFreshError);
-		expect(setResponseStatus).toHaveBeenCalledWith(403);
-		expect((await readUser(userId))?.email).toBe("");
-	});
-});
 
 describe("changePassword", () => {
 	it("hands the browser the session that replaces the revoked one", async () => {

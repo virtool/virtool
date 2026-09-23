@@ -36,7 +36,7 @@ async function audit({ client, signal, report }: DataMigrationArgs) {
 export const currentIsolateSegments = defineAudit({
 	key: "current_isolate_segments",
 	version: 1,
-	migrationTag: "0040_careless_nitro",
+	migrationTag: "0041_careless_nitro",
 	kind: "audit",
 	description: "report duplicate current isolate segments",
 	run: audit,

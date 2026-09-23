@@ -267,6 +267,23 @@ A user with `force_reset` receives a session that resolves to a
 replace the password. Virtool signs in by handle; email sign-in is off because
 `users.email` isn't globally unique.
 
+Account email changes queue a verification link and leave the current address
+and verified state in place until the new mailbox proves control. The link is
+single use and checks that the original address is still current. Repeated
+requests are rate limited. Verification links for an unverified
+current address use the same route. Changing an address supersedes outstanding
+recovery links; an existing browser session remains active.
+
+Public password recovery accepts a handle and always acknowledges requests
+the same way. Only an eligible account with a verified email receives a queued
+link. Requester and target budgets limit attempts, and disabled email delivery
+does not expose an anonymous recovery URL. An administrator with recent
+authentication can issue a one-time recovery URL, including a copy-only URL
+when delivery is unavailable. Consuming either recovery link changes the
+password and revokes browser and setup sessions and tokens; the user signs in
+again. The minimal `/recover` and `/verify-email` routes consume links now;
+the broader wall experience belongs to the later authentication UX work.
+
 Better Auth's `auth_*` tables use integer identity keys so `users.id` remains
 compatible with existing foreign keys. `auth_sessions` is the target browser
 session store. The legacy `sessions` table remains available to unmigrated users

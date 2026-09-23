@@ -28,7 +28,6 @@ import {
 	setAdministratorRole,
 	UserConflictError,
 	UserNotFoundError,
-	updateAccountEmail,
 	updateUser,
 } from "./data";
 
@@ -329,31 +328,6 @@ describe("updateUser", () => {
 	it("throws when the user does not exist", async () => {
 		await expect(
 			updateUser(db, 404, { handle: "ghost" }),
-		).rejects.toBeInstanceOf(UserNotFoundError);
-	});
-});
-
-describe("updateAccountEmail", () => {
-	it("sets the address and returns the updated account", async () => {
-		const userId = await seedUser(db, { email: "" });
-
-		const account = await updateAccountEmail(db, userId, "alice@example.com");
-
-		expect(account.email).toBe("alice@example.com");
-		expect((await readUser(userId))?.email).toBe("alice@example.com");
-	});
-
-	it("clears the address when given an empty string", async () => {
-		const userId = await seedUser(db, { email: "alice@example.com" });
-
-		const account = await updateAccountEmail(db, userId, "");
-
-		expect(account.email).toBe("");
-	});
-
-	it("throws when the user does not exist", async () => {
-		await expect(
-			updateAccountEmail(db, 404, "alice@example.com"),
 		).rejects.toBeInstanceOf(UserNotFoundError);
 	});
 });

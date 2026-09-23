@@ -78,6 +78,13 @@ const {
 	resetPasswordFn,
 	verifyTwoFactorFn,
 } = await import("./functions");
+const {
+	completePasswordRecoveryFn,
+	inspectEmailVerificationFn,
+	inspectPasswordRecoveryFn,
+	requestPasswordRecoveryFn,
+	verifyCurrentEmailFn,
+} = await import("./recoveryFunctions");
 const { getPasswordPolicyFn } = await import("../settings/functions");
 const { getRootFn } = await import("../root/functions");
 const { createSampleFn, findSamplesFn, recordSampleViewFn } = await import(
@@ -149,15 +156,20 @@ function browserPrincipal(userId: number) {
 }
 
 describe("authentication exceptions", () => {
-	it("exempts exactly the seven open functions", () => {
+	it("exempts exactly the open functions", () => {
 		expect(authenticationExceptions.map((fn) => fn.url).sort()).toEqual(
 			[
 				completeEmailRemediationFn,
+				completePasswordRecoveryFn,
 				createFirstUserFn,
 				getPasswordPolicyFn,
 				getRootFn,
 				loginFn,
 				logoutFn,
+				inspectEmailVerificationFn,
+				inspectPasswordRecoveryFn,
+				requestPasswordRecoveryFn,
+				verifyCurrentEmailFn,
 				verifyTwoFactorFn,
 			]
 				.map((fn) => fn.url)
