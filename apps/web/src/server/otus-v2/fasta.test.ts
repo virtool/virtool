@@ -20,8 +20,12 @@ import {
 import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
 
 const requireAuthenticatedRequest = vi.fn();
+let referenceV2Beta = true;
 vi.mock("../auth/middleware", () => ({ requireAuthenticatedRequest }));
 vi.mock("../composition", () => ({
+	get referenceV2Beta() {
+		return referenceV2Beta;
+	},
 	get db() {
 		return db;
 	},
@@ -110,6 +114,17 @@ async function createOtu(referenceId: string) {
 }
 
 describe("v2 FASTA download", () => {
+	it("is unavailable when the Reference beta is disabled", async () => {
+		referenceV2Beta = false;
+		try {
+			expect(
+				(await handleV2Fasta(request(), { referenceId: randomUUID() })).status,
+			).toBe(404);
+			expect(requireAuthenticatedRequest).not.toHaveBeenCalled();
+		} finally {
+			referenceV2Beta = true;
+		}
+	});
 	it("requires authentication and Reference membership, without modify or a published version", async () => {
 		const reference = await createReference();
 		const otherUserId = await seedUser(db, { handle: "bob" });

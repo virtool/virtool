@@ -1,3 +1,4 @@
+import { useRootQuery } from "@nav/queries";
 import { useLocation } from "@tanstack/react-router";
 import type { AdministratorRoleName } from "@virtool/contracts";
 import { hasSufficientAdminRole } from "@virtool/contracts";
@@ -15,6 +16,7 @@ type SidebarProps = {
 export default function Sidebar({ administratorRole }: SidebarProps) {
 	const fullAdministrator = hasSufficientAdminRole("full", administratorRole);
 	const { pathname } = useLocation();
+	const { data: root } = useRootQuery();
 
 	let links: ReactNode = null;
 
@@ -61,7 +63,9 @@ export default function Sidebar({ administratorRole }: SidebarProps) {
 					link="/refs"
 					icon={List}
 				/>
-				<SidebarLink title="Alpha" link="/refs/alpha" icon={FlaskConical} />
+				{root?.referenceV2Beta && (
+					<SidebarLink title="Alpha" link="/refs/alpha" icon={FlaskConical} />
+				)}
 				{fullAdministrator ? (
 					<SidebarLink title="Settings" link="/refs/settings" icon={Settings} />
 				) : null}

@@ -1,8 +1,15 @@
 import Alert from "@base/Alert";
-import { createFileRoute, Outlet } from "@tanstack/react-router";
+import { rootQueryOptions } from "@nav/queries";
+import { createFileRoute, notFound, Outlet } from "@tanstack/react-router";
 import { TriangleAlert } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/refs/alpha")({
+	beforeLoad: async ({ context: { queryClient } }) => {
+		const root = await queryClient.ensureQueryData(rootQueryOptions());
+		if (!root.referenceV2Beta) {
+			throw notFound();
+		}
+	},
 	component: ReferencesV2Layout,
 });
 

@@ -12,7 +12,7 @@ import {
 } from "@virtool/data/references-v2/data";
 import { z } from "zod";
 import { requireAuthenticatedRequest } from "../auth/middleware";
-import { db } from "../composition";
+import { db, referenceV2Beta } from "../composition";
 import { contentDisposition, textResponse } from "../http";
 
 const scopeSchema = z.object({
@@ -54,6 +54,9 @@ export async function handleV2Fasta(
 	request: Request,
 	input: V2FastaScope,
 ): Promise<Response> {
+	if (!referenceV2Beta) {
+		return textResponse("Not found", 404);
+	}
 	const session = await requireAuthenticatedRequest(request);
 	if (session instanceof Response) {
 		return session;

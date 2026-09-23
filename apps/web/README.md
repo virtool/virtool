@@ -189,6 +189,10 @@ current, non-deleted sequence versions in bounded pages; archived References
 remain readable. Headers contain stable Reference, OTU, isolate, sequence, and
 segment IDs plus `source=manual` or `source=genbank` with the exact accession
 version. Empty References return an empty FASTA file.
+The v2 sidebar entry and `/refs/alpha` pages are available only when
+`VT_REFERENCE_V2_BETA` is enabled. Direct v2 FASTA download routes return 404
+when it is disabled. V1 Reference routes remain available; v2 server mutations
+continue to enforce their own rights and archived-state checks.
 Pages are read when the stream needs them. An edit during a long download can
 therefore make that file contain sequences from different OTU revisions; start
 a new download after curation to obtain the latest state.
@@ -532,6 +536,7 @@ The table below covers the remaining settings and web-specific storage behavior.
 | `VT_STORAGE_AZURE_UPLOAD_URL` | URL origin | Unset | Rehost presigned Azure uploads on a public origin, such as a Front Door route to a private storage account. Falls back to `VT_STORAGE_AZURE_DOWNLOAD_URL`, then the Azure Blob endpoint. |
 | `VT_STORAGE_DOWNLOAD_MODE` | `stream` \| `redirect` | `stream` | Serve file downloads by streaming the bytes through this server, or by 302-redirecting to a short-lived presigned storage URL. `redirect` falls back to streaming when the backend can't presign. |
 | `VT_UPLOADS_CHUNKED` | Boolean | `false` | Enable direct Azure Block Blob uploads. When off, or when the backend can't presign uploads, initialization returns 503; there is no proxied fallback. |
+| `VT_REFERENCE_V2_BETA` | Boolean | `false` | Show the v2 Reference navigation and pages and enable v2 FASTA downloads. Set to `1`, `true`, or `yes` to enable. V1 References remain available. |
 | `VT_UPLOADS_CHUNKED_CONCURRENCY` | Positive integer | `8` | Set how many block PUTs a browser runs at once across all active uploads. Raise it to lift throughput on a high-latency upload path. |
 
 ## Metrics

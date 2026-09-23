@@ -32,6 +32,20 @@ const minimalAzure = {
 } as NodeJS.ProcessEnv;
 
 describe("parseServerConfig", () => {
+	it("keeps Reference v2 hidden unless the beta flag is enabled", () => {
+		expect(parseServerConfig(minimalS3).referenceV2Beta).toBe(false);
+		expect(
+			parseServerConfig({ ...minimalS3, VT_REFERENCE_V2_BETA: "yes" })
+				.referenceV2Beta,
+		).toBe(true);
+		expect(
+			parseServerConfig({ ...minimalS3, VT_REFERENCE_V2_BETA: "" })
+				.referenceV2Beta,
+		).toBe(false);
+		expect(() =>
+			parseServerConfig({ ...minimalS3, VT_REFERENCE_V2_BETA: "sometimes" }),
+		).toThrow(/VT_REFERENCE_V2_BETA/);
+	});
 	it("errors when the postgres url is missing", () => {
 		expect(() =>
 			parseServerConfig({
@@ -400,6 +414,14 @@ describe("parseServerConfig", () => {
 			} as NodeJS.ProcessEnv);
 
 			expect(config.metricsToken).toBe("from-file");
+		});
+
+		it("reads the Reference beta flag from a mounted file", () => {
+			const config = parseServerConfig({
+				...minimalS3,
+				VT_REFERENCE_V2_BETA_FILE: write("reference-beta", "yes\n"),
+			} as NodeJS.ProcessEnv);
+			expect(config.referenceV2Beta).toBe(true);
 		});
 
 		it("resolves the auth secret and public origin from mounted files", () => {
