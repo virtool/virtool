@@ -151,6 +151,7 @@ export default function SamplesList({
 		resetKey: filterKey,
 	});
 	const [openQuickAnalyze, setOpenQuickAnalyze] = useState(false);
+	const [termReset, setTermReset] = useState<{ value: string }>();
 	const [quickAnalyzeTarget, setQuickAnalyzeTarget] =
 		useState<QuickAnalyzeTarget>({ fromSelection: false, samples: [] });
 
@@ -271,7 +272,11 @@ export default function SamplesList({
 				<ViewHeader title="Samples">
 					<ViewHeaderTitle>Samples</ViewHeaderTitle>
 				</ViewHeader>
-				<SampleToolbar term={term} onChange={(term) => setSearch({ term })} />
+				<SampleToolbar
+					term={term}
+					reset={termReset}
+					onChange={(term) => setSearch({ term })}
+				/>
 				<FilterBar
 					dateFilter={dateFilter}
 					groups={groups}
@@ -279,7 +284,10 @@ export default function SamplesList({
 					onChangeDate={handleChangeDate}
 					onClearGroups={() => setSearch({ groups: [] })}
 					onClearLabels={() => setSearch({ labels: [] })}
-					onClearTerm={() => setSearch({ term: "" })}
+					onClearTerm={() => {
+						setTermReset({ value: "" });
+						setSearch({ term: "" });
+					}}
 					onClearUsers={() => setSearch({ users: [] })}
 					onClearWorkflows={() => setSearch({ workflows: [] })}
 					onToggleGroup={(groupId) =>

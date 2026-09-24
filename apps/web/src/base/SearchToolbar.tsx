@@ -16,6 +16,7 @@ type SearchToolbarProps = {
 	onChange: (value: string) => void;
 
 	placeholder?: string;
+	reset?: { value: string };
 
 	/** The committed search term. */
 	value: string;
@@ -31,9 +32,10 @@ export default function SearchToolbar({
 	className,
 	onChange,
 	placeholder,
+	reset,
 	value,
 }: SearchToolbarProps) {
-	const [draft, setDraft] = useDebounce(value, onChange);
+	const [draft, setDraft] = useDebounce(value, onChange, 250, reset);
 
 	return (
 		<Toolbar className={className}>

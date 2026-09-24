@@ -129,25 +129,40 @@ export function useIsSecureContext(): boolean {
  * committed. Advancing a committed baseline locally would run ahead of an async
  * `onChange` (URL navigation) whose echo lands a render later: the guard would
  * read the still-stale `value`, treat it as an outside change, and blank the
- * draft until the echo caught up. The pending commit identifies that echo so it
- * also cannot overwrite characters typed since the commit.
+ * draft until the echo caught up. Pending commits identify those echoes so
+ * they cannot overwrite characters typed since each commit.
  */
 export function useDebounce<T>(
 	value: T,
 	onChange: (next: T) => void,
 	delayMs = 250,
+	reset?: { value: T },
 ): [T, (next: T) => void] {
 	const [draft, setDraft] = useState(value);
 	const [prevValue, setPrevValue] = useState(value);
-	const [pendingCommit, setPendingCommit] = useState<{ value: T } | null>(null);
+	const [prevReset, setPrevReset] = useState(reset);
+	const [pendingCommits, setPendingCommits] = useState<T[]>([]);
+	const [pendingReset, setPendingReset] = useState<{ value: T } | null>(null);
+	const [committedDraft, setCommittedDraft] = useState<{ value: T } | null>(
+		null,
+	);
 
-	if (value !== prevValue) {
+	if (reset !== undefined && reset !== prevReset) {
+		setPrevReset(reset);
 		setPrevValue(value);
-
-		if (pendingCommit !== null && value === pendingCommit.value) {
-			setPendingCommit(null);
+		setPendingCommits(value === reset.value ? [] : [reset.value]);
+		setPendingReset(value === reset.value ? null : reset);
+		setCommittedDraft(null);
+		setDraft(reset.value);
+	} else if (value !== prevValue) {
+		setPrevValue(value);
+		setPendingReset(null);
+		const index = pendingCommits.indexOf(value);
+		if (index !== -1) {
+			setPendingCommits(pendingCommits.filter((_, i) => i !== index));
 		} else {
-			setPendingCommit(null);
+			setPendingCommits([]);
+			setCommittedDraft(null);
 			setDraft(value);
 		}
 	}
@@ -164,17 +179,22 @@ export function useDebounce<T>(
 	});
 
 	useEffect(() => {
-		if (draft === value) {
+		if (
+			draft === value ||
+			draft === pendingReset?.value ||
+			draft === committedDraft?.value
+		) {
 			return;
 		}
 
 		const id = setTimeout(() => {
-			setPendingCommit({ value: draft });
+			setCommittedDraft({ value: draft });
+			setPendingCommits((commits) => [...commits, draft]);
 			onChangeRef.current(draft);
 		}, delayMs);
 
 		return () => clearTimeout(id);
-	}, [delayMs, draft, value]);
+	}, [committedDraft, delayMs, draft, pendingReset, value]);
 
 	return [draft, setDraft];
 }
