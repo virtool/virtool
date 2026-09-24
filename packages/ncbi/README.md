@@ -82,13 +82,10 @@ NCBI responses require explicit handling for the following cases:
 
 ## Rate limiting
 
-Requests are serialised through process-wide queues that hold each one back
-until the rate NCBI allows has elapsed since the last: three requests a second
-anonymously, ten with an API key. All clients using the same transport share
-the corresponding anonymous or keyed queue, so creating a client per server
-request does not reset the deployment's pacing. A queue rather than a token
-bucket, because a burst is paid for with a refusal that costs another request
-against the same limit.
+Requests share process-wide queues by transport and credential tier, including
+when a client is created for every server request. Each queue spaces requests
+within NCBI's limits: three per second anonymously or ten with an API key. This
+avoids bursts that NCBI would reject while counting them against the same limit.
 
 A request already cancelled when it reaches the front of the queue rejects
 without consuming a pacing slot, so it cannot delay the live requests behind

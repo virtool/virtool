@@ -209,7 +209,6 @@ type RequestLimiters = {
 
 const requestLimiters = new WeakMap<typeof globalThis.fetch, RequestLimiters>();
 
-/** Get the process-wide pacing queue for a transport and credential tier. */
 function getLimiter(doFetch: typeof globalThis.fetch, hasApiKey: boolean) {
 	let limiters = requestLimiters.get(doFetch);
 
