@@ -143,6 +143,8 @@ export type NcbiClient = {
 };
 
 function sleep(ms: number, signal?: AbortSignal): Promise<void> {
+	signal?.throwIfAborted();
+
 	return new Promise((resolve, reject) => {
 		const timer = setTimeout(() => {
 			signal?.removeEventListener("abort", onAbort);
@@ -176,6 +178,8 @@ function createLimiter(intervalMs: number) {
 		signal?: AbortSignal,
 	): Promise<T> {
 		const run = tail.then(async () => {
+			signal?.throwIfAborted();
+
 			const wait = last + intervalMs - Date.now();
 
 			if (wait > 0) {
@@ -198,6 +202,29 @@ function createLimiter(intervalMs: number) {
 	};
 }
 
+type RequestLimiters = {
+	anonymous: ReturnType<typeof createLimiter>;
+	keyed: ReturnType<typeof createLimiter>;
+};
+
+const requestLimiters = new WeakMap<typeof globalThis.fetch, RequestLimiters>();
+
+/** Get the process-wide pacing queue for a transport and credential tier. */
+function getLimiter(doFetch: typeof globalThis.fetch, hasApiKey: boolean) {
+	let limiters = requestLimiters.get(doFetch);
+
+	if (limiters === undefined) {
+		limiters = {
+			anonymous: createLimiter(ANONYMOUS_INTERVAL_MS),
+			keyed: createLimiter(KEYED_INTERVAL_MS),
+		};
+
+		requestLimiters.set(doFetch, limiters);
+	}
+
+	return hasApiKey ? limiters.keyed : limiters.anonymous;
+}
+
 /** Whether an error is the caller's abort rather than a fault of NCBI's. */
 function isAborted(err: unknown, signal?: AbortSignal): boolean {
 	return (
@@ -210,9 +237,7 @@ export function createNcbiClient(options: NcbiClientOptions): NcbiClient {
 	const { apiKey = "", logger } = options;
 	const doFetch = options.fetch ?? globalThis.fetch;
 
-	const limit = createLimiter(
-		apiKey ? KEYED_INTERVAL_MS : ANONYMOUS_INTERVAL_MS,
-	);
+	const limit = getLimiter(doFetch, apiKey.length > 0);
 
 	/**
 	 * Build a request URL.
@@ -250,21 +275,19 @@ export function createNcbiClient(options: NcbiClientOptions): NcbiClient {
 		let lastError: unknown;
 
 		for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
-			const deadline = AbortSignal.timeout(REQUEST_TIMEOUT_MS);
-
-			const combined = signal ? AbortSignal.any([signal, deadline]) : deadline;
-
 			try {
-				const response = await limit(
-					() =>
-						doFetch(buildUrl(path, params), {
-							method: body ? "POST" : "GET",
-							...(body ? { body } : {}),
-							headers: { "User-Agent": USER_AGENT },
-							signal: combined,
-						}),
-					signal,
-				);
+				const response = await limit(function send() {
+					// The deadline starts once the request leaves the queue, so time
+					// spent waiting behind other requests can't time it out unsent.
+					const deadline = AbortSignal.timeout(REQUEST_TIMEOUT_MS);
+
+					return doFetch(buildUrl(path, params), {
+						method: body ? "POST" : "GET",
+						...(body ? { body } : {}),
+						headers: { "User-Agent": USER_AGENT },
+						signal: signal ? AbortSignal.any([signal, deadline]) : deadline,
+					});
+				}, signal);
 
 				if (!RETRYABLE_STATUSES.has(response.status)) {
 					return response;

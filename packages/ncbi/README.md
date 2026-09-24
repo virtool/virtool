@@ -82,10 +82,18 @@ NCBI responses require explicit handling for the following cases:
 
 ## Rate limiting
 
-Requests are serialised through a queue that holds each one back until the rate
-NCBI allows has elapsed since the last: three requests a second anonymously,
-ten with an API key. A queue rather than a token bucket, because a burst is
-paid for with a refusal that costs another request against the same limit.
+Requests are serialised through process-wide queues that hold each one back
+until the rate NCBI allows has elapsed since the last: three requests a second
+anonymously, ten with an API key. All clients using the same transport share
+the corresponding anonymous or keyed queue, so creating a client per server
+request does not reset the deployment's pacing. A queue rather than a token
+bucket, because a burst is paid for with a refusal that costs another request
+against the same limit.
+
+A request already cancelled when it reaches the front of the queue rejects
+without consuming a pacing slot, so it cannot delay the live requests behind
+it. The 30-second request timeout starts when a request leaves the queue, so
+time spent waiting behind other requests does not count against it.
 
 `fetchDescendantTaxids` is the one call that's not a fixed number of requests.
 The subtree search is one, but NCBI sends no rank alongside the ids, so telling
