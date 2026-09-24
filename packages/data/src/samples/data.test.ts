@@ -1,6 +1,14 @@
 import { MemoryStorage } from "@virtool/storage";
 import { eq } from "drizzle-orm";
-import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
+import {
+	afterAll,
+	beforeAll,
+	beforeEach,
+	describe,
+	expect,
+	it,
+	onTestFinished,
+} from "vitest";
 import { seedUser } from "../auth/test/fixtures";
 import type { Db } from "../db/pg";
 import { takeFirstOrThrow } from "../db/rows";
@@ -482,14 +490,17 @@ describe("findSamples", () => {
 		it("breaks ties on a sorted column with the id", async () => {
 			const created_at = new Date("2026-03-01T00:00:00.000Z");
 			const ids = [
-				await seedSample({ name: "Same", created_at }),
-				await seedSample({ name: "Same", created_at }),
-				await seedSample({ name: "Same", created_at }),
+				await seedSample({ name: "First", created_at }),
+				await seedSample({ name: "Second", created_at }),
+				await seedSample({ name: "Third", created_at }),
 			];
 
 			const result = await findSamples(
 				db,
-				{ ...options, sort: { direction: "descending", field: "name" } },
+				{
+					...options,
+					sort: { direction: "descending", field: "createdAt" },
+				},
 				adminActor,
 			);
 
@@ -742,6 +753,29 @@ describe("createSample", () => {
 		).rejects.toBeInstanceOf(SampleNameConflictError);
 	});
 
+	it("allows only one of two concurrent creates with the same name", async () => {
+		const connection = database.connect();
+		onTestFinished(connection.close);
+
+		const results = await Promise.allSettled([
+			createSample(db, values({ name: "Contended" })),
+			createSample(connection.db, values({ name: "Contended" })),
+		]);
+
+		expect(
+			results.filter((result) => result.status === "fulfilled"),
+		).toHaveLength(1);
+		expect(
+			results.filter((result) => result.status === "rejected"),
+		).toMatchObject([{ reason: expect.any(SampleNameConflictError) }]);
+		expect(
+			await db
+				.select({ id: legacySamples.id })
+				.from(legacySamples)
+				.where(eq(legacySamples.name, "Contended")),
+		).toHaveLength(1);
+	});
+
 	it("rejects a duplicated upload", async () => {
 		const file = await seedUpload();
 		await expect(
@@ -834,6 +868,31 @@ describe("updateSample", () => {
 		await expect(
 			updateSample(db, sampleId, { name: "Taken" }),
 		).rejects.toBeInstanceOf(SampleNameConflictError);
+	});
+
+	it("allows only one of two concurrent renames to the same name", async () => {
+		const first = await seedSample({ name: "First" });
+		const second = await seedSample({ name: "Second" });
+		const connection = database.connect();
+		onTestFinished(connection.close);
+
+		const results = await Promise.allSettled([
+			updateSample(db, first, { name: "Contended" }),
+			updateSample(connection.db, second, { name: "Contended" }),
+		]);
+
+		expect(
+			results.filter((result) => result.status === "fulfilled"),
+		).toHaveLength(1);
+		expect(
+			results.filter((result) => result.status === "rejected"),
+		).toMatchObject([{ reason: expect.any(SampleNameConflictError) }]);
+		expect(
+			await db
+				.select({ id: legacySamples.id })
+				.from(legacySamples)
+				.where(eq(legacySamples.name, "Contended")),
+		).toHaveLength(1);
 	});
 
 	it("throws when the sample does not exist", async () => {

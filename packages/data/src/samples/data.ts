@@ -37,6 +37,7 @@ import {
 	type SQL,
 	sql,
 } from "drizzle-orm";
+import type { PostgresError } from "postgres";
 import type { Db, DbOrTx } from "../db/pg";
 import { takeFirstOrThrow } from "../db/rows";
 import { analyses, analysisFiles } from "../db/schema/analyses";
@@ -156,6 +157,29 @@ export class SampleNotOwnedError extends AppError {}
 
 /** Thrown when a sample name is already taken. */
 export class SampleNameConflictError extends AppError {}
+
+function isSampleNameUniqueViolation(error: unknown): boolean {
+	if (error === null || typeof error !== "object") {
+		return false;
+	}
+
+	const cause = (error as { cause?: unknown }).cause;
+	const postgresError =
+		cause !== null && typeof cause === "object" ? cause : error;
+
+	return (
+		(postgresError as Partial<PostgresError>).code === "23505" &&
+		(postgresError as Partial<PostgresError>).constraint_name ===
+			"legacy_samples_name_key"
+	);
+}
+
+function mapSampleNameConflict(error: unknown): never {
+	if (isSampleNameUniqueViolation(error)) {
+		throw new SampleNameConflictError("Sample name is already in use");
+	}
+	throw error;
+}
 
 /** Thrown when a create or update references a label that does not exist. */
 export class SampleLabelsNotFoundError extends AppError {}
@@ -1072,29 +1096,6 @@ export async function getSampleReadsFileKey(
 	return read?.storageKey ?? null;
 }
 
-async function checkNameInUse(
-	db: DbOrTx,
-	name: string,
-	excludeId?: number,
-): Promise<void> {
-	const [row] = await db
-		.select({ id: legacySamples.id })
-		.from(legacySamples)
-		.where(
-			excludeId === undefined
-				? eq(legacySamples.name, name)
-				: and(
-						eq(legacySamples.name, name),
-						not(eq(legacySamples.id, excludeId)),
-					),
-		)
-		.limit(1);
-
-	if (row) {
-		throw new SampleNameConflictError("Sample name is already in use");
-	}
-}
-
 async function checkLabelsExist(db: DbOrTx, labelIds: number[]): Promise<void> {
 	if (labelIds.length === 0) {
 		return;
@@ -1185,7 +1186,6 @@ export async function createSample(
 	const settings = await getSettings(db);
 
 	await Promise.all([
-		checkNameInUse(db, values.name),
 		checkLabelsExist(db, values.labels),
 		checkSubtractionsExist(db, values.subtractions),
 	]);
@@ -1196,7 +1196,7 @@ export async function createSample(
 
 	const groupId = await resolveCreateGroup(db, values, settings.sampleGroup);
 
-	const { sampleId, jobId } = await db.transaction(async (tx) => {
+	const create = db.transaction(async (tx) => {
 		// Reserve uploads and create the job inside the sample's transaction so
 		// everything commits atomically: a runner must not claim the job before
 		// the sample row it derives its arguments from exists.
@@ -1265,6 +1265,7 @@ export async function createSample(
 
 		return { sampleId, jobId };
 	});
+	const { sampleId, jobId } = await create.catch(mapSampleNameConflict);
 
 	await emit("jobs", jobId, "create");
 	await emit("samples", sampleId, "create");
@@ -1289,9 +1290,6 @@ export async function updateSample(
 
 	const checks: Promise<void>[] = [];
 
-	if (values.name !== undefined) {
-		checks.push(checkNameInUse(db, values.name, sampleId));
-	}
 	if (values.labels !== undefined) {
 		checks.push(checkLabelsExist(db, values.labels));
 	}
@@ -1321,7 +1319,7 @@ export async function updateSample(
 		scalars.notes = values.notes;
 	}
 
-	await db.transaction(async (tx) => {
+	const update = db.transaction(async (tx) => {
 		if (Object.keys(scalars).length > 0) {
 			await tx
 				.update(legacySamples)
@@ -1359,6 +1357,7 @@ export async function updateSample(
 			}
 		}
 	});
+	await update.catch(mapSampleNameConflict);
 
 	await emit("samples", sampleId, "update");
 
