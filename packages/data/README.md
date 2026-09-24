@@ -258,9 +258,9 @@ administrator's switch and stays authoritative. A deactivated account is
 unusable whatever its lifecycle state, and completing setup never activates
 anyone.
 
-A pending account keeps its handle, administrator role and group memberships,
-so an administrator states who a person is and what they may do at the moment
-of invitation. What it doesn't have is a credential: `users.password` is null,
+A pending account keeps its email, administrator role and group memberships.
+Its handle is empty until the invitee accepts and chooses one; the partial
+handle uniqueness index permits multiple pending invitations. It has no credential: `users.password` is null,
 which the `pending_has_no_password` constraint holds. Its Better Auth credential
 identity already exists with a null password so invitation acceptance only has
 to fill the credential, never create a second identity.

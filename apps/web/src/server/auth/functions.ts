@@ -7,6 +7,7 @@ import {
 } from "@virtool/contracts";
 import { isValidEmail, normalizeEmail } from "@virtool/data/auth/email";
 import {
+	AccountSetupHandleInUseError,
 	cancelEmailRemediation,
 	changeEmailRemediation,
 	checkEmailRemediationComplete,
@@ -93,6 +94,7 @@ const createFirstUserSchema = z.object({
 
 const accountSetupSchema = z.object({
 	token: z.string().regex(/^[0-9a-f]{64}$/),
+	handle: z.string().trim().min(1),
 	password: z.string(),
 });
 
@@ -281,11 +283,14 @@ export const acceptAccountSetupFn = createServerFn({ method: "POST" })
 	.validator(accountSetupSchema)
 	.handler(async ({ data }) => {
 		try {
+			checkHandle(data.handle);
+			checkReservedHandle(data.handle);
 			await checkConfiguredPasswordLength(db, data.password);
 			const settings = await getEmailSettings(db);
 			const delivery = resolveEmailDelivery(settings, keyring);
 			const completed = await completeAccountSetup(db, {
 				token: data.token,
+				handle: data.handle,
 				password: data.password,
 				deliveryAvailable:
 					settings.enabled && delivery.availability === "ready",
@@ -311,6 +316,10 @@ export const acceptAccountSetupFn = createServerFn({ method: "POST" })
 				outcome: "failure",
 				message: "account invitation acceptance failed",
 			});
+			if (err instanceof AccountSetupHandleInUseError) {
+				setResponseStatus(409);
+				throw new ClientError("This username is already taken.", 409);
+			}
 			if (
 				err instanceof SetupCredentialError ||
 				err instanceof SetupNotEligibleError

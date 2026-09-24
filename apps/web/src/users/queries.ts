@@ -1,7 +1,9 @@
 import { analysesQueryKeys } from "@analyses/keys";
+import { useRecentlyAuthenticatedMutation } from "@app/recentAuthentication";
 import {
 	createUserFn,
 	findUsersFn,
+	getInvitationEmailAvailabilityFn,
 	getInvitationFn,
 	getUserFn,
 	listUsersFn,
@@ -22,6 +24,14 @@ import {
 } from "@tanstack/react-query";
 import { userQueryKeys } from "@users/keys";
 import type { AdministratorRoleName, UserNested } from "@virtool/contracts";
+
+/** Query whether invitation emails can currently be sent. */
+export function useInvitationEmailAvailability() {
+	return useQuery({
+		queryKey: [...userQueryKeys.all(), "invitation-email-availability"],
+		queryFn: () => getInvitationEmailAvailabilityFn(),
+	});
+}
 
 /**
  * Fetch every active user, for populating selectors and filters
@@ -111,11 +121,19 @@ export function useSuspenseUsers(
  */
 export function useCreateUser() {
 	const queryClient = useQueryClient();
+	const mutationFn = useRecentlyAuthenticatedMutation(
+		(data: {
+			email: string;
+			deliveryIntent: "copy_only" | "email";
+			administratorRole: AdministratorRoleName | null;
+			groups: number[];
+			primaryGroup?: number | null;
+		}) => createUserFn({ data }),
+	);
 	return useMutation<
 		Awaited<ReturnType<typeof createUserFn>>,
 		Error,
 		{
-			handle: string;
 			email: string;
 			deliveryIntent: "copy_only" | "email";
 			administratorRole: AdministratorRoleName | null;
@@ -123,7 +141,7 @@ export function useCreateUser() {
 			primaryGroup?: number | null;
 		}
 	>({
-		mutationFn: (data) => createUserFn({ data }),
+		mutationFn,
 		onSuccess: () => {
 			queryClient.invalidateQueries({ queryKey: userQueryKeys.lists() });
 		},
@@ -141,14 +159,17 @@ export function invitationQueryOptions(userId: number) {
 /** Issue a fresh invitation generation and expose its token only to the caller. */
 export function useRegenerateInvitation() {
 	const queryClient = useQueryClient();
-	return useMutation({
-		mutationFn: ({
+	const mutationFn = useRecentlyAuthenticatedMutation(
+		({
 			userId,
 			deliveryIntent,
 		}: {
 			userId: number;
 			deliveryIntent: "copy_only" | "email";
 		}) => regenerateInvitationFn({ data: { userId, deliveryIntent } }),
+	);
+	return useMutation({
+		mutationFn,
 		onSuccess: (result) => {
 			queryClient.setQueryData(
 				[...userQueryKeys.detail(result.user.id), "invitation"],
@@ -161,8 +182,11 @@ export function useRegenerateInvitation() {
 /** Revoke the current invitation generation. */
 export function useRevokeInvitation() {
 	const queryClient = useQueryClient();
+	const mutationFn = useRecentlyAuthenticatedMutation((userId: number) =>
+		revokeInvitationFn({ data: { userId } }),
+	);
 	return useMutation({
-		mutationFn: (userId: number) => revokeInvitationFn({ data: { userId } }),
+		mutationFn,
 		onSuccess: (invitation) => {
 			queryClient.setQueryData(
 				[...userQueryKeys.detail(invitation.userId), "invitation"],

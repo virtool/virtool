@@ -32,21 +32,22 @@ export function UserItem({
 	const { hasPermission: canEdit } = useCheckAdminRole(
 		administratorRole === null ? "users" : "full",
 	);
+	const label = lifecycleState === "pending" ? `Invitation #${id}` : handle;
 
 	return (
 		<BoxGroupSection as="li" className="grid grid-cols-4 items-center">
 			<div className="col-span-2 flex items-center gap-3">
-				<InitialIcon size="lg" handle={handle} />
+				<InitialIcon size="lg" handle={label} />
 				{canEdit ? (
 					<Link
 						to="/administration/users/$userId"
 						params={{ userId: String(id) }}
 						className="text-lg font-medium"
 					>
-						{handle}
+						{label}
 					</Link>
 				) : (
-					<strong className="text-lg font-medium">{handle}</strong>
+					<strong className="text-lg font-medium">{label}</strong>
 				)}
 			</div>
 			<div className="flex items-center text-sm capitalize">

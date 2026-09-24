@@ -1,12 +1,13 @@
+import { cn } from "@app/cn";
 import Checkbox from "@base/Checkbox";
 import { InputError, InputGroup, InputLabel, InputSimple } from "@base/Input";
+import Link from "@base/Link";
 import SaveButton from "@base/SaveButton";
 import type { AdministratorRoleName, GroupMinimal } from "@virtool/contracts";
 import { Controller, useForm } from "react-hook-form";
 
 /** Values collected when an administrator invites a user. */
 export type CreateUserFormValues = {
-	handle: string;
 	email: string;
 	deliveryIntent: "copy_only" | "email";
 	administratorRole: AdministratorRoleName | null;
@@ -20,6 +21,8 @@ type CreateUserFormProps = {
 	groups: GroupMinimal[];
 	roles: Array<{ id: AdministratorRoleName; name: string }>;
 	canAssignAdministratorRole: boolean;
+	canConfigureEmailDelivery: boolean;
+	emailDeliveryAvailable: boolean;
 };
 
 /** Form for creating a pending user and issuing an invitation. */
@@ -29,6 +32,8 @@ export function CreateUserForm({
 	groups,
 	roles,
 	canAssignAdministratorRole,
+	canConfigureEmailDelivery,
+	emailDeliveryAvailable,
 }: CreateUserFormProps) {
 	const {
 		formState: { errors },
@@ -40,9 +45,8 @@ export function CreateUserForm({
 		watch,
 	} = useForm<CreateUserFormValues>({
 		defaultValues: {
-			handle: "",
 			email: "",
-			deliveryIntent: "email",
+			deliveryIntent: emailDeliveryAvailable ? "email" : "copy_only",
 			administratorRole: null,
 			groups: [],
 			primaryGroup: null,
@@ -52,41 +56,6 @@ export function CreateUserForm({
 
 	return (
 		<form onSubmit={handleSubmit(onSubmit)}>
-			<InputGroup>
-				<InputLabel htmlFor="handle">Username</InputLabel>
-				<InputSimple
-					id="handle"
-					autoComplete="off"
-					aria-invalid={Boolean(errors.handle) || undefined}
-					{...register("handle", { required: "Please specify a username" })}
-				/>
-				<InputError>{errors.handle?.message}</InputError>
-			</InputGroup>
-			{canAssignAdministratorRole && (
-				<InputGroup>
-					<InputLabel htmlFor="administrator-role">
-						Administrator role
-					</InputLabel>
-					<Controller
-						name="administratorRole"
-						control={control}
-						render={({ field }) => (
-							<select
-								id="administrator-role"
-								value={field.value ?? ""}
-								onChange={(event) => field.onChange(event.target.value || null)}
-							>
-								<option value="">None</option>
-								{roles.map((role) => (
-									<option key={role.id} value={role.id}>
-										{role.name}
-									</option>
-								))}
-							</select>
-						)}
-					/>
-				</InputGroup>
-			)}
 			{groups.length > 0 && (
 				<InputGroup>
 					<InputLabel>Groups</InputLabel>
@@ -157,21 +126,99 @@ export function CreateUserForm({
 				/>
 				<InputError>{errors.email?.message || error}</InputError>
 			</InputGroup>
-			<div className="flex justify-between items-center mb-2.5">
+			{canAssignAdministratorRole && (
+				<InputGroup>
+					<InputLabel htmlFor="administrator-role">
+						Administrator role
+					</InputLabel>
+					<Controller
+						name="administratorRole"
+						control={control}
+						render={({ field }) => (
+							<select
+								className="w-full rounded border border-gray-300 bg-white px-3 py-2 text-gray-900"
+								id="administrator-role"
+								value={field.value ?? ""}
+								onChange={(event) => field.onChange(event.target.value || null)}
+							>
+								<option value="">None</option>
+								{roles.map((role) => (
+									<option key={role.id} value={role.id}>
+										{role.name}
+									</option>
+								))}
+							</select>
+						)}
+					/>
+				</InputGroup>
+			)}
+			<InputGroup>
 				<Controller
 					name="deliveryIntent"
 					control={control}
-					render={({ field: { onChange, value } }) => (
-						<Checkbox
-							checked={value === "email"}
-							id="email-invitation"
-							label="Send invitation by email"
-							onClick={() =>
-								onChange(value === "email" ? "copy_only" : "email")
-							}
-						/>
+					render={({ field }) => (
+						<fieldset className="grid gap-2">
+							<legend className="mb-2 font-medium">Invitation delivery</legend>
+							<div>
+								<label
+									className={cn(
+										"flex items-start gap-2",
+										!emailDeliveryAvailable &&
+											"cursor-not-allowed text-gray-500",
+									)}
+								>
+									<input
+										className="mt-1 shrink-0"
+										type="radio"
+										name={field.name}
+										value="email"
+										checked={field.value === "email"}
+										disabled={!emailDeliveryAvailable}
+										onChange={() => field.onChange("email")}
+									/>
+									<span>
+										<span className="block font-medium">Email invitation</span>
+										<span
+											className={`block text-sm ${emailDeliveryAvailable ? "text-gray-600" : "text-gray-500"}`}
+										>
+											{emailDeliveryAvailable
+												? "Send the setup link to this email address."
+												: "Email invitations aren’t configured."}
+										</span>
+									</span>
+								</label>
+								{!emailDeliveryAvailable && canConfigureEmailDelivery && (
+									<Link
+										className="ml-6 text-sm text-blue-600 underline"
+										to="/administration/email"
+									>
+										Configure email delivery
+									</Link>
+								)}
+							</div>
+							<label className="flex items-start gap-2">
+								<input
+									className="mt-1 shrink-0"
+									type="radio"
+									name={field.name}
+									value="copy_only"
+									checked={field.value === "copy_only"}
+									onChange={() => field.onChange("copy_only")}
+								/>
+								<span>
+									<span className="block font-medium">
+										Create shareable link
+									</span>
+									<span className="block text-sm text-gray-600">
+										You’ll need to send the link yourself.
+									</span>
+								</span>
+							</label>
+						</fieldset>
 					)}
 				/>
+			</InputGroup>
+			<div className="flex justify-end items-center mb-2.5">
 				<SaveButton />
 			</div>
 		</form>

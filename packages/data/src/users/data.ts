@@ -131,7 +131,7 @@ export type CreateUserValues = {
 
 /** Values accepted when creating a pending user. */
 export type CreatePendingUserValues = {
-	handle: string;
+	handle?: string;
 	email?: string;
 	administratorRole?: AdministratorRoleName | null;
 	groups?: number[];
@@ -561,10 +561,9 @@ export async function getAdministratorRole(
 /**
  * Create an account that exists but cannot yet be signed in as.
  *
- * The handle, the administrator role and the group memberships are all set
- * here, so an administrator states who the person is and what they may do at
- * the moment of invitation rather than after they accept. What is missing is
- * the credential: `password` stays null and `lifecycle_state` is `pending`,
+ * The administrator role and group memberships are set here. Invitations
+ * leave the handle empty so the holder can choose it during acceptance.
+ * The credential is also missing: `password` stays null and `lifecycle_state` is `pending`,
  * which the `pending_has_no_password` constraint holds together.
  *
  * No password is generated and none is transmitted. Completing the account is
@@ -629,15 +628,15 @@ export async function createPendingUserInTransaction(
 			.insert(usersTable)
 			.values({
 				authMigratedAt: now,
-				displayUsername: values.handle,
+				displayUsername: values.handle || null,
 				email,
-				handle: values.handle,
+				handle: values.handle ?? "",
 				lifecycleState: "pending",
 				administratorRole: values.administratorRole ?? null,
 				lastPasswordChange: now,
 				legacyId: null,
 				settings: toStoredAccountSettings(DEFAULT_USER_SETTINGS),
-				username: values.handle.toLowerCase(),
+				username: values.handle?.toLowerCase() || null,
 			})
 			.returning({ id: usersTable.id }),
 	);
@@ -820,7 +819,10 @@ export async function updateUser(
 	// carrying a credential the `pending_has_no_password` constraint forbids.
 	// Refused here so the caller gets a stated reason rather than a check
 	// violation.
-	if (values.password !== undefined && existing.lifecycleState === "pending") {
+	if (
+		(values.password !== undefined || values.handle !== undefined) &&
+		existing.lifecycleState === "pending"
+	) {
 		throw new PendingAccountError();
 	}
 

@@ -16,19 +16,19 @@ it("scrubs, inspects, and accepts a usable invitation", async () => {
 	window.history.replaceState({}, "", `/account-setup#token=${token}`);
 	authServerFnMocks.inspectAccountSetupFn.mockResolvedValue({
 		status: "valid",
-		handle: "Ada",
 		email: "ada@example.com",
 		expiresAt: new Date(Date.now() + 60_000),
 	});
 	authServerFnMocks.acceptAccountSetupFn.mockResolvedValue({ nextRoute: "/" });
 
 	await renderWithRouter(<AccountSetup />, "/account-setup");
-	await screen.findByRole("heading", { name: "Welcome, Ada" });
+	await screen.findByRole("heading", { name: "Set up your account" });
 	expect(window.location.hash).toBe("");
+	await userEvent.type(screen.getByLabelText("Username"), "Ada");
 	await userEvent.type(screen.getByLabelText("Password"), "a-real-password");
 	await userEvent.click(screen.getByRole("button", { name: "Create account" }));
 	expect(authServerFnMocks.acceptAccountSetupFn).toHaveBeenCalledWith({
-		data: { token, password: "a-real-password" },
+		data: { token, handle: "Ada", password: "a-real-password" },
 	});
 });
 

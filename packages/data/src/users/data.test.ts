@@ -733,16 +733,16 @@ describe("updateUser on a pending account", () => {
 		expect(row?.lifecycleState).toBe("pending");
 	});
 
-	it("still assigns a handle, a role and groups", async () => {
-		const user = await createPendingUser(db, { handle: "alice" });
+	it("reserves the handle for the invitee while allowing group changes", async () => {
+		const user = await createPendingUser(db, {});
 		const group = await seedGroup(db, { name: "researchers" });
 
-		const updated = await updateUser(db, user.id, {
-			handle: "ada",
-			groups: [group],
-		});
+		await expect(
+			updateUser(db, user.id, { handle: "ada" }),
+		).rejects.toBeInstanceOf(PendingAccountError);
+		const updated = await updateUser(db, user.id, { groups: [group] });
 
-		expect(updated.handle).toBe("ada");
+		expect(updated.handle).toBe("");
 		expect(updated.groups.map((entry) => entry.name)).toEqual(["researchers"]);
 		expect(updated.lifecycleState).toBe("pending");
 	});

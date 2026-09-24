@@ -1,5 +1,5 @@
 import Button from "@base/Button";
-import { InputSimple } from "@base/Input";
+import CopyField from "@base/CopyField";
 import SectionHeader from "@base/SectionHeader";
 import { useQuery } from "@tanstack/react-query";
 import {
@@ -50,6 +50,7 @@ export function InvitationControls({ userId }: InvitationControlsProps) {
 			<SectionHeader>
 				<h3>Invitation</h3>
 			</SectionHeader>
+			{data && <p className="mb-3">Recipient: {data.email}</p>}
 			<p className="mb-3 capitalize">Status: {state}</p>
 			{data?.outboxStatus && <p className="mb-3">Email: {data.outboxStatus}</p>}
 			<div className="flex gap-2 mb-3">
@@ -65,20 +66,12 @@ export function InvitationControls({ userId }: InvitationControlsProps) {
 			</div>
 			{emailQueued && <p>The new invitation email has been queued.</p>}
 			{setupUrl && (
-				<div>
-					<p>This link will not be shown again.</p>
-					<InputSimple
-						readOnly
-						value={setupUrl}
-						aria-label="Account setup link"
-					/>
-					<Button
-						type="button"
-						onClick={() => navigator.clipboard.writeText(setupUrl)}
-					>
-						Copy link
-					</Button>
-				</div>
+				<>
+					<p className="mb-3">
+						Send this link to the user. It won’t be shown again.
+					</p>
+					<CopyField label="Account setup link" value={setupUrl} />
+				</>
 			)}
 		</section>
 	);

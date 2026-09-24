@@ -1,6 +1,10 @@
 import { eq } from "drizzle-orm";
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
-import { completeAccountSetup, inspectAccountSetup } from "../auth/lifecycle";
+import {
+	AccountSetupHandleInUseError,
+	completeAccountSetup,
+	inspectAccountSetup,
+} from "../auth/lifecycle";
 import { seedUser } from "../auth/test/fixtures";
 import type { Db } from "../db/pg";
 import { authAccounts } from "../db/schema/auth";
@@ -37,7 +41,6 @@ beforeEach(async () => {
 async function createInvitation() {
 	const issuerUserId = await seedUser(db, { handle: "admin" });
 	const created = await createPendingInvitation(db, {
-		handle: "Ada",
 		email: " ADA@Example.com ",
 		issuerUserId,
 		deliveryIntent: "copy_only",
@@ -54,14 +57,15 @@ describe("account invitations", () => {
 	it("creates the pending user, passwordless identity, and token atomically", async () => {
 		const created = await createInvitation();
 		expect(created.user.lifecycleState).toBe("pending");
+		expect(created.user.handle).toBe("");
 		expect(created.setupToken).toMatch(/^[0-9a-f]{64}$/);
 		expect(created.invitation.delivery).toBe("copy_only");
+		expect(created.invitation.email).toBe("ada@example.com");
 		const [account] = await db.select().from(authAccounts);
 		expect(account?.userId).toBe(created.user.id);
 		expect(account?.password).toBeNull();
 		expect(await inspectAccountSetup(db, created.setupToken)).toMatchObject({
 			status: "valid",
-			handle: "Ada",
 			email: "ada@example.com",
 		});
 	});
@@ -70,7 +74,6 @@ describe("account invitations", () => {
 		await db.update(settings).set({ emailEnabled: true });
 		const issuerUserId = await seedUser(db, { handle: "admin" });
 		const created = await createPendingInvitation(db, {
-			handle: "Ada",
 			email: "ada@example.com",
 			issuerUserId,
 			deliveryIntent: "email",
@@ -83,11 +86,38 @@ describe("account invitations", () => {
 		expect(created.invitation.outboxId).not.toBeNull();
 	});
 
+	it("allows multiple invitations before recipients choose handles", async () => {
+		const first = await createInvitation();
+		const second = await createPendingInvitation(db, {
+			email: "other@example.com",
+			issuerUserId: first.invitation.issuerUserId,
+			deliveryIntent: "copy_only",
+			deliveryAvailable: false,
+			getSetupUrl: (token) =>
+				`https://virtool.test/account-setup#token=${token}`,
+		});
+		expect(second.user.handle).toBe("");
+	});
+
+	it("keeps the invitation usable after a chosen handle conflicts", async () => {
+		const created = await createInvitation();
+		await seedUser(db, { handle: "Ada" });
+		await expect(
+			completeAccountSetup(db, {
+				token: created.setupToken,
+				handle: "ada",
+				password: "a-real-password",
+			}),
+		).rejects.toBeInstanceOf(AccountSetupHandleInUseError);
+		expect(await inspectAccountSetup(db, created.setupToken)).toMatchObject({
+			status: "valid",
+		});
+	});
+
 	it("rolls back the pending identity when group assignment fails", async () => {
 		const issuerUserId = await seedUser(db, { handle: "admin" });
 		await expect(
 			createPendingInvitation(db, {
-				handle: "Ada",
 				email: "ada@example.com",
 				issuerUserId,
 				groups: [999_999],
@@ -129,10 +159,12 @@ describe("account invitations", () => {
 		const created = await createInvitation();
 		const accepted = await completeAccountSetup(db, {
 			token: created.setupToken,
+			handle: "Ada",
 			password: "a-real-password",
 			deliveryAvailable: false,
 		});
 		expect(accepted.user.lifecycleState).toBe("normal");
+		expect(accepted.user.handle).toBe("Ada");
 		const [row] = await db
 			.select()
 			.from(users)

@@ -24,6 +24,7 @@ import {
 	isValidEmail,
 	normalizeEmail,
 } from "./email";
+import { isValidHandle } from "./handle";
 import { CREDENTIAL_PROVIDER_ID, updateAuthUsername } from "./identity";
 import { hashPassword } from "./password";
 import {
@@ -38,6 +39,9 @@ import { hashToken } from "./tokens";
 
 /** Thrown when a completion is aimed at an account that is not eligible. */
 export class SetupNotEligibleError extends AppError {}
+
+/** Thrown when a chosen account handle is already in use. */
+export class AccountSetupHandleInUseError extends AppError {}
 
 export { EmailInUseError } from "./email";
 
@@ -138,6 +142,8 @@ export type CompleteAccountSetupInput = {
 	token: string;
 	/** The password the holder chose. Never one an administrator picked. */
 	password: string;
+	/** The handle selected by the invitation holder. */
+	handle?: string;
 	/** Whether mailbox verification mail can be queued for a copied link. */
 	deliveryAvailable?: boolean;
 	/** Build a public verification URL if copied-link acceptance needs one. */
@@ -178,6 +184,7 @@ export async function completeAccountSetup(
 	{
 		token,
 		password,
+		handle: requestedHandle,
 		deliveryAvailable = false,
 		getVerificationUrl = () => "",
 		email: fallbackEmail,
@@ -205,117 +212,152 @@ export async function completeAccountSetup(
 	// transaction opens rather than holding one idle for the duration.
 	const hashed = await hashPassword(password);
 
-	const completed = await db.transaction(async (tx) => {
-		const [target] = await tx
-			.select({ userId: setupTokens.userId })
-			.from(setupTokens)
-			.where(
-				and(
-					eq(setupTokens.tokenHash, hashToken(token)),
-					eq(setupTokens.purpose, "account_completion"),
-				),
-			)
-			.limit(1);
-		if (!target) {
-			throw new SetupCredentialError();
-		}
-		await lockUserSetupCredentials(tx, target.userId);
-		const consumed = await consumeSetupToken(tx, token, "account_completion");
+	const completed = await db
+		.transaction(async (tx) => {
+			const [target] = await tx
+				.select({ userId: setupTokens.userId })
+				.from(setupTokens)
+				.where(
+					and(
+						eq(setupTokens.tokenHash, hashToken(token)),
+						eq(setupTokens.purpose, "account_completion"),
+					),
+				)
+				.limit(1);
+			if (!target) {
+				throw new SetupCredentialError();
+			}
+			await lockUserSetupCredentials(tx, target.userId);
+			const consumed = await consumeSetupToken(tx, token, "account_completion");
 
-		const [row] = await tx
-			.select({
-				active: users.active,
-				email: users.email,
-				handle: users.handle,
-				lifecycleState: users.lifecycleState,
-			})
-			.from(users)
-			.where(eq(users.id, consumed.userId))
-			.limit(1);
+			const [row] = await tx
+				.select({
+					active: users.active,
+					email: users.email,
+					handle: users.handle,
+					lifecycleState: users.lifecycleState,
+				})
+				.from(users)
+				.where(eq(users.id, consumed.userId))
+				.limit(1);
 
-		if (!row) {
-			throw new SetupCredentialError();
-		}
+			if (!row) {
+				throw new SetupCredentialError();
+			}
 
-		if (
-			!row.active ||
-			row.lifecycleState !== "pending" ||
-			!(consumed.candidateEmail ?? fallbackEmail)
-		) {
-			throw new SetupNotEligibleError();
-		}
+			if (
+				!row.active ||
+				row.lifecycleState !== "pending" ||
+				!(consumed.candidateEmail ?? fallbackEmail)
+			) {
+				throw new SetupNotEligibleError();
+			}
+			const handle = requestedHandle?.trim() || row.handle;
+			if (!isValidHandle(handle) || handle.toLowerCase() === "virtool") {
+				throw new SetupNotEligibleError();
+			}
+			const [conflict] = await tx
+				.select({ id: users.id })
+				.from(users)
+				.where(
+					and(
+						sql`lower(${users.handle}) = ${handle.toLowerCase()}`,
+						sql`${users.id} <> ${consumed.userId}`,
+					),
+				)
+				.limit(1);
+			if (conflict) {
+				throw new AccountSetupHandleInUseError();
+			}
 
-		const email = normalizeEmail(
-			consumed.candidateEmail ?? fallbackEmail ?? "",
-		);
-		if (consumed.candidateEmail && email !== normalizeEmail(row.email)) {
-			throw new SetupNotEligibleError();
-		}
-		await claimEmail(tx, consumed.userId, email);
-		const verified = consumed.delivery === "queued";
-
-		await tx
-			.update(users)
-			.set({
-				password: hashed,
-				email,
-				emailVerified: verified,
-				forceReset: false,
-				lastPasswordChange: new Date(),
-				lifecycleState: "normal",
-			})
-			.where(eq(users.id, consumed.userId));
-
-		await establishAuthIdentity(
-			tx,
-			consumed.userId,
-			row.handle,
-			hashed.toString("utf8"),
-		);
-
-		// The token just spent is gone, but a second outstanding link for the
-		// same purpose would still work. Completion has to close every door it
-		// opened, not just the one it came through.
-		await tx
-			.update(setupTokens)
-			.set({ supersededAt: sql`${nowUtc()}` })
-			.where(
-				and(
-					eq(setupTokens.userId, consumed.userId),
-					isNull(setupTokens.consumedAt),
-					isNull(setupTokens.supersededAt),
-					isNull(setupTokens.revokedAt),
-				),
+			const email = normalizeEmail(
+				consumed.candidateEmail ?? fallbackEmail ?? "",
 			);
-		await invalidateUserSetupSessions(tx, consumed.userId);
-		await Promise.all([
-			tx.delete(authSessions).where(eq(authSessions.userId, consumed.userId)),
-			tx.delete(sessions).where(eq(sessions.userId, consumed.userId)),
-		]);
+			if (consumed.candidateEmail && email !== normalizeEmail(row.email)) {
+				throw new SetupNotEligibleError();
+			}
+			await claimEmail(tx, consumed.userId, email);
+			const verified = consumed.delivery === "queued";
 
-		let emailVerificationRequired = false;
-		if (!verified && deliveryAvailable) {
-			const verification = await issueSetupTokenInTransaction(tx, {
-				userId: consumed.userId,
-				purpose: "email_verification",
-				candidateEmail: email,
-				sourceEmail: email,
-			});
-			const queued = await enqueueEmail(tx, {
-				idempotencyKey: `email_verification/${consumed.userId}/${verification.tokenId}`,
-				recipient: email,
-				template: {
-					type: "email_verification",
-					username: row.handle,
-					verifyUrl: getVerificationUrl(verification.token),
-					expiresInHours: 24,
-				},
-			});
-			emailVerificationRequired = queued.status === "queued";
-		}
+			await tx
+				.update(users)
+				.set({
+					handle,
+					password: hashed,
+					email,
+					emailVerified: verified,
+					forceReset: false,
+					lastPasswordChange: new Date(),
+					lifecycleState: "normal",
+				})
+				.where(eq(users.id, consumed.userId));
 
-		return { userId: consumed.userId, emailVerificationRequired };
-	});
+			await establishAuthIdentity(
+				tx,
+				consumed.userId,
+				handle,
+				hashed.toString("utf8"),
+			);
+
+			// The token just spent is gone, but a second outstanding link for the
+			// same purpose would still work. Completion has to close every door it
+			// opened, not just the one it came through.
+			await tx
+				.update(setupTokens)
+				.set({ supersededAt: sql`${nowUtc()}` })
+				.where(
+					and(
+						eq(setupTokens.userId, consumed.userId),
+						isNull(setupTokens.consumedAt),
+						isNull(setupTokens.supersededAt),
+						isNull(setupTokens.revokedAt),
+					),
+				);
+			await invalidateUserSetupSessions(tx, consumed.userId);
+			await Promise.all([
+				tx.delete(authSessions).where(eq(authSessions.userId, consumed.userId)),
+				tx.delete(sessions).where(eq(sessions.userId, consumed.userId)),
+			]);
+
+			let emailVerificationRequired = false;
+			if (!verified && deliveryAvailable) {
+				const verification = await issueSetupTokenInTransaction(tx, {
+					userId: consumed.userId,
+					purpose: "email_verification",
+					candidateEmail: email,
+					sourceEmail: email,
+				});
+				const queued = await enqueueEmail(tx, {
+					idempotencyKey: `email_verification/${consumed.userId}/${verification.tokenId}`,
+					recipient: email,
+					template: {
+						type: "email_verification",
+						username: handle,
+						verifyUrl: getVerificationUrl(verification.token),
+						expiresInHours: 24,
+					},
+				});
+				emailVerificationRequired = queued.status === "queued";
+			}
+
+			return { userId: consumed.userId, emailVerificationRequired };
+		})
+		.catch((error: unknown) => {
+			const cause =
+				error && typeof error === "object" && "cause" in error
+					? error.cause
+					: error;
+			if (
+				cause &&
+				typeof cause === "object" &&
+				"constraint_name" in cause &&
+				(cause.constraint_name === "users_handle_lower_unique" ||
+					cause.constraint_name === "users_username_key")
+			) {
+				throw new AccountSetupHandleInUseError();
+			}
+			throw error;
+		});
 
 	// An administrator watching the user list sees the account leave pending.
 	await emit("users", completed.userId, "update");
@@ -337,7 +379,6 @@ export async function inspectAccountSetup(
 			active: users.active,
 			email: users.email,
 			expiresAt: setupTokens.expiresAt,
-			handle: users.handle,
 			lifecycleState: users.lifecycleState,
 		})
 		.from(setupTokens)
@@ -358,7 +399,6 @@ export async function inspectAccountSetup(
 	}
 	return {
 		status: "valid",
-		handle: row.handle,
 		email: row.email,
 		expiresAt: row.expiresAt,
 	};

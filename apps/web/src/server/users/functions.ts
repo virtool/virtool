@@ -89,7 +89,6 @@ const searchUsersSchema = z
 // below, not here — see that function for why the validator is the wrong place
 // for it.
 const createUserSchema = z.object({
-	handle: z.string().trim().min(1),
 	email: z.string().trim().min(1).max(254),
 	administratorRole: administratorRoleSchema.nullable().optional(),
 	groups: z.array(rowIdSchema).default([]),
@@ -200,6 +199,13 @@ export const listAdministratorRolesFn = createServerFn({ method: "GET" })
 	.middleware([adminRole("base")])
 	.handler(async () => listAdministratorRoles());
 
+/** Whether invitation email can currently be delivered. */
+export const getInvitationEmailAvailabilityFn = createServerFn({
+	method: "GET",
+})
+	.middleware([adminRole("users")])
+	.handler(getDeliveryAvailable);
+
 // Any authenticated user can see who else exists — the handles are already
 // visible on samples, jobs, and analyses they can read.
 export const listUsersFn = createServerFn({ method: "GET" })
@@ -265,8 +271,6 @@ export const createUserFn = createServerFn({ method: "POST" })
 	.validator(createUserSchema)
 	.handler(async ({ context, data }) => {
 		await requireInvitationAuthority(context.principal, data.administratorRole);
-		checkHandle(data.handle);
-		checkReservedHandle(data.handle);
 		const email = normalizeEmail(data.email);
 		if (!isValidEmail(email)) {
 			setResponseStatus(400);
@@ -275,7 +279,6 @@ export const createUserFn = createServerFn({ method: "POST" })
 
 		try {
 			const result = await createPendingInvitation(db, {
-				handle: data.handle,
 				email,
 				administratorRole: data.administratorRole,
 				groups: data.groups,

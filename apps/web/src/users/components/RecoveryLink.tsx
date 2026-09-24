@@ -1,4 +1,7 @@
+import { BoxGroup, BoxGroupSection } from "@base/Box";
 import Button from "@base/Button";
+import CopyField from "@base/CopyField";
+import SectionHeader from "@base/SectionHeader";
 import {
 	issueAdministratorRecoveryFn,
 	revokeAdministratorRecoveryFn,
@@ -27,11 +30,11 @@ export default function RecoveryLink({ userId }: RecoveryLinkProps) {
 			setUrl(result.url);
 			setMessage(
 				result.delivery === "queued"
-					? "Recovery email queued. This link can also be copied now."
-					: "Email is unavailable. Copy this link and give it to the user through a trusted channel.",
+					? "Password reset email queued. You can also copy the link below. It won’t be shown again."
+					: "Email is unavailable. Copy the link below and send it to the user. It won’t be shown again.",
 			);
 		} catch {
-			setMessage("Could not issue a recovery link. Try again.");
+			setMessage("Could not create a password reset link. Try again.");
 		} finally {
 			submitting.current = false;
 			setPending(false);
@@ -48,9 +51,9 @@ export default function RecoveryLink({ userId }: RecoveryLinkProps) {
 		try {
 			await revokeAdministratorRecoveryFn({ data: { userId } });
 			setUrl("");
-			setMessage("Outstanding administrator recovery links revoked.");
+			setMessage("Password reset links revoked.");
 		} catch {
-			setMessage("Could not revoke recovery links. Try again.");
+			setMessage("Could not revoke password reset links. Try again.");
 		} finally {
 			submitting.current = false;
 			setPending(false);
@@ -58,32 +61,41 @@ export default function RecoveryLink({ userId }: RecoveryLinkProps) {
 	}
 
 	return (
-		<section className="mt-6" aria-labelledby="recovery-link-title">
-			<h3 id="recovery-link-title">Administrator recovery link</h3>
-			<p>
-				Links work once and expire after one hour. Issuing a new link replaces
-				the previous one.
-			</p>
-			<div className="flex gap-2">
-				<Button color="blue" disabled={pending} onClick={() => void issue()}>
-					Issue link
-				</Button>
-				<Button disabled={pending} onClick={() => void revoke()}>
-					Revoke links
-				</Button>
-			</div>
-			{url && (
-				<div>
-					<label htmlFor="administrator-recovery-url">Recovery URL</label>
-					<input
-						id="administrator-recovery-url"
-						readOnly
-						value={url}
-						onFocus={(event) => event.target.select()}
-					/>
-				</div>
-			)}
-			{message && <p role="status">{message}</p>}
+		<section className="mt-6">
+			<SectionHeader level={3}>
+				<h3>Password reset link</h3>
+				<p>
+					Create a one-time link that lets this user reset their password. It
+					expires after one hour. Creating another link disables the previous
+					one.
+				</p>
+			</SectionHeader>
+			<BoxGroup>
+				<BoxGroupSection>
+					<div className="flex flex-wrap gap-2">
+						<Button
+							color="blue"
+							disabled={pending}
+							onClick={() => void issue()}
+						>
+							Create reset link
+						</Button>
+						<Button disabled={pending} onClick={() => void revoke()}>
+							Revoke links
+						</Button>
+					</div>
+					{message && (
+						<p className="mt-3" role="status">
+							{message}
+						</p>
+					)}
+					{url && (
+						<div className="mt-3">
+							<CopyField label="Password reset link" value={url} />
+						</div>
+					)}
+				</BoxGroupSection>
+			</BoxGroup>
 		</section>
 	);
 }

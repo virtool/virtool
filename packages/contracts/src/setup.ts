@@ -42,8 +42,8 @@ export type EmailRemediationVerificationResult = {
  * remains authoritative: a deactivated account cannot be used whatever its
  * lifecycle state, and completing setup never activates anyone.
  *
- * `pending` means the account exists — handle, administrator role and group
- * memberships are all assigned — but has no credential and cannot be used as
+ * `pending` means the account exists with assigned access, but has no
+ * handle or credential and cannot be used as
  * an application account. `normal` means it can.
  */
 export const AccountLifecycleState = z.enum(["pending", "normal"]);

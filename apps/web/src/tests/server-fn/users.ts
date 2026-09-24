@@ -110,6 +110,7 @@ export function mockCreateUser(
 						invitation: {
 							id: 1,
 							userId: user.id,
+							email: "user@example.com",
 							issuerUserId: 2,
 							generation: 1,
 							createdAt: new Date(),

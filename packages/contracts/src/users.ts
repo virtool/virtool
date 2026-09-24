@@ -36,8 +36,9 @@ export type User = UserNested & {
 	/**
 	 * Whether the account is usable as an application account yet.
 	 *
-	 * Separate from {@link User.active}: a `pending` account has a handle, a
-	 * role and group memberships but no credential, and a deactivated account
+	 * Separate from {@link User.active}: a `pending` account has a role and
+	 * group memberships but no credential. Its handle is empty until acceptance.
+	 * A deactivated account
 	 * is unusable whatever this says.
 	 */
 	lifecycleState: AccountLifecycleState;

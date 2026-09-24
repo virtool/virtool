@@ -12,7 +12,7 @@ import { useForm } from "react-hook-form";
 import { WallContainer } from "./WallContainer";
 import { WallTitle } from "./WallTitle";
 
-type FormValues = { password: string };
+type FormValues = { handle: string; password: string };
 
 /** Public, token-bound account invitation acceptance wall. */
 export default function AccountSetup() {
@@ -52,13 +52,15 @@ export default function AccountSetup() {
 			.catch(() => setInspection({ status: "unusable" }));
 	}, []);
 
-	async function onSubmit({ password }: FormValues) {
+	async function onSubmit({ handle, password }: FormValues) {
 		if (!token) {
 			return;
 		}
 		setSubmissionError("");
 		try {
-			const result = await acceptAccountSetupFn({ data: { token, password } });
+			const result = await acceptAccountSetupFn({
+				data: { token, handle, password },
+			});
 			setToken(null);
 			await navigate({ to: result.nextRoute });
 		} catch (error) {
@@ -92,10 +94,20 @@ export default function AccountSetup() {
 	return (
 		<WallContainer>
 			<WallTitle
-				title={`Welcome, ${inspection.handle}`}
-				subtitle={`Create a password for the account assigned to ${inspection.email}.`}
+				title="Set up your account"
+				subtitle={`Choose a username and password for ${inspection.email}.`}
 			/>
 			<form onSubmit={handleSubmit(onSubmit)}>
+				<InputGroup>
+					<InputLabel htmlFor="handle">Username</InputLabel>
+					<InputSimple
+						id="handle"
+						autoComplete="username"
+						aria-invalid={Boolean(errors.handle) || undefined}
+						{...register("handle", { required: "Please choose a username" })}
+					/>
+					<InputError>{errors.handle?.message}</InputError>
+				</InputGroup>
 				<InputGroup>
 					<InputLabel htmlFor="password">Password</InputLabel>
 					<InputSimple

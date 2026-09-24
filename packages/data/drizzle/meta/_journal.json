@@ -281,6 +281,13 @@
       "when": 1790117183602,
       "tag": "0039_add_invitations",
       "breakpoints": true
+    },
+    {
+      "idx": 40,
+      "version": "7",
+      "when": 1790271173962,
+      "tag": "0040_invitee_handles",
+      "breakpoints": true
     }
   ]
 }

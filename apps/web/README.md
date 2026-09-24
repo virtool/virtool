@@ -200,21 +200,23 @@ password and revokes browser and setup sessions and tokens; the user signs in
 again. The minimal `/recover` and `/verify-email` routes consume links now;
 the broader wall experience belongs to the later authentication UX work.
 
-Administrators create human accounts by invitation, never by choosing another
-person's password. A users administrator may invite an ordinary account; only a
-full administrator may preassign an administrator role. The creation response
+Administrators create human accounts by email invitation and assign access.
+The invitee chooses a handle and password when accepting. A users administrator
+may invite an ordinary account; only a full administrator may preassign an
+administrator role. The creation response
 contains one copyable setup token only when copy delivery is selected or email
 is unavailable, and the mutation UI shows it once. Emailed generations never
-return the bearer secret to the administrator. Safe metadata reads show expiry,
-revocation, consumption, and queued delivery state. Regeneration always
+return the bearer secret to the administrator. Safe administrator metadata reads
+show the recipient address, expiry, revocation, consumption, and queued delivery
+state. Regeneration always
 invalidates older links; choosing email creates a fresh generation. Revocation
 leaves the pending user intact.
 
 `/account-setup` captures the token from the URL fragment and removes it from
 browser history before inspection. Unusable tokens all render one response.
-Acceptance preserves the administrator-assigned handle and email, lets the
-holder choose the password, then signs in through Better Auth. A queued
-invitation verifies its bound address; a copied invitation queues ordinary
+Acceptance claims the invitee's chosen handle and the bound email atomically,
+then signs in through Better Auth. A queued invitation verifies its bound
+address; a copied invitation queues ordinary
 email verification when delivery is ready and otherwise follows the disconnected
 policy with recovery disabled until the address is verified.
 
@@ -256,7 +258,7 @@ restricted setup credentials, forced-reset sessions, retained legacy sessions,
 and trusted-device state cannot. A stale protected call returns 403 with the
 stable `SESSION_NOT_FRESH` code; an invalid or ended session remains 401, and
 insufficient operation-specific authority remains an ordinary 403. The client
-responds only to the code: it opens one shared inline password or TOTP challenge,
+responds only to the code: it opens one shared full-page password or TOTP challenge,
 then retries each waiting mutation once. Cancellation leaves the ordinary
 session and form state intact and never navigates to the login wall.
 

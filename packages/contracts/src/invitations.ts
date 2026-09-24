@@ -10,6 +10,7 @@ export type InvitationDelivery = "copy_only" | "queued";
 export type Invitation = {
 	id: number;
 	userId: number;
+	email: string;
 	issuerUserId: number;
 	generation: number;
 	createdAt: Date;
@@ -33,7 +34,6 @@ export type CreatedInvitation = {
 export type AccountSetupInspection =
 	| {
 			status: "valid";
-			handle: string;
 			email: string;
 			expiresAt: Date;
 	  }

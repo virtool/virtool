@@ -42,7 +42,6 @@ export type InvitationIssueOptions = {
 
 /** Inputs for atomically creating a pending account and its first invitation. */
 export type CreatePendingInvitationInput = InvitationIssueOptions & {
-	handle: string;
 	email: string;
 	administratorRole?: AdministratorRoleName | null;
 	groups?: number[];
@@ -94,7 +93,7 @@ async function issueInvitationInTransaction(
 			recipient: user.email,
 			template: {
 				type: "account_setup",
-				username: user.handle,
+				username: "there",
 				setupUrl: options.getSetupUrl(issued.token),
 			},
 		});
@@ -115,6 +114,7 @@ async function issueInvitationInTransaction(
 function toInvitation(row: {
 	id: number;
 	userId: number;
+	email: string;
 	issuerUserId: number | null;
 	generation: number;
 	createdAt: Date;
@@ -135,6 +135,7 @@ function toInvitation(row: {
 const invitationSelection = {
 	id: setupTokens.id,
 	userId: setupTokens.userId,
+	email: users.email,
 	issuerUserId: setupTokens.issuerUserId,
 	generation: setupTokens.generation,
 	createdAt: setupTokens.createdAt,
@@ -159,7 +160,7 @@ export async function createPendingInvitation(
 				tx,
 				{
 					id: userId,
-					handle: input.handle,
+					handle: "",
 					email: normalizeEmail(input.email),
 				},
 				1,
@@ -191,6 +192,7 @@ export async function getInvitation(
 	const [row] = await db
 		.select(invitationSelection)
 		.from(setupTokens)
+		.innerJoin(users, eq(users.id, setupTokens.userId))
 		.leftJoin(emailOutbox, eq(emailOutbox.id, setupTokens.outboxId))
 		.where(
 			and(

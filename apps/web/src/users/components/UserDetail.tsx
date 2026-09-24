@@ -58,8 +58,13 @@ export default function UserDetail({ userId }: UserDetailProps) {
 			<SectionHeader>
 				<div className="flex items-center justify-between gap-4">
 					<h2 className="flex items-center gap-3">
-						<InitialIcon size="xl" handle={handle} />
-						<span>{handle}</span>
+						<InitialIcon
+							size="xl"
+							handle={lifecycleState === "pending" ? "Invitation" : handle}
+						/>
+						<span>
+							{lifecycleState === "pending" ? `Invitation #${id}` : handle}
+						</span>
 					</h2>
 					{administratorRole && (
 						<Label>
@@ -72,7 +77,9 @@ export default function UserDetail({ userId }: UserDetailProps) {
 
 			<UserAdministratorRole id={id} role={administratorRole} />
 
-			<Handle key={`handle-${id}`} id={id} handle={handle} />
+			{lifecycleState === "normal" && (
+				<Handle key={`handle-${id}`} id={id} handle={handle} />
+			)}
 
 			{lifecycleState === "pending" ? (
 				<InvitationControls userId={id} />

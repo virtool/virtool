@@ -1,15 +1,18 @@
 import { useFetchAccount } from "@account/account";
 import { useGetAdministratorRoles } from "@administration/queries";
 import Button from "@base/Button";
+import CopyField from "@base/CopyField";
 import {
 	Dialog,
 	DialogContent,
+	DialogDescription,
+	DialogFooter,
 	DialogTitle,
 	DialogTrigger,
 } from "@base/Dialog";
-import { InputSimple } from "@base/Input";
 import { useListGroups } from "@groups/queries";
-import { useCreateUser } from "@users/queries";
+import { useCreateUser, useInvitationEmailAvailability } from "@users/queries";
+import { INVITATION_LIFETIME_HOURS } from "@virtool/contracts";
 import { useState } from "react";
 import { CreateUserForm, type CreateUserFormValues } from "./CreateUserForm";
 
@@ -18,11 +21,14 @@ import { CreateUserForm, type CreateUserFormValues } from "./CreateUserForm";
  */
 export default function CreateUser() {
 	const [open, setOpen] = useState(false);
+	const [copied, setCopied] = useState(false);
 	const [result, setResult] = useState<{
+		recipient: string;
 		setupUrl: string | null;
 		emailQueued: boolean;
 	} | null>(null);
 	const mutation = useCreateUser();
+	const { data: emailDeliveryAvailable } = useInvitationEmailAvailability();
 	const { data: account } = useFetchAccount();
 	const { data: roles = [] } = useGetAdministratorRoles();
 	const { data: groups = [] } = useListGroups();
@@ -31,6 +37,7 @@ export default function CreateUser() {
 		mutation.mutate(values, {
 			onSuccess: (created) => {
 				setResult({
+					recipient: created.user.handle || created.invitation.email,
 					setupUrl: created.setupToken
 						? `${window.location.origin}/account-setup#token=${created.setupToken}`
 						: null,
@@ -41,6 +48,7 @@ export default function CreateUser() {
 	}
 
 	function onOpenChange(open: boolean) {
+		setCopied(false);
 		mutation.reset();
 		setResult(null);
 		setOpen(open);
@@ -52,30 +60,30 @@ export default function CreateUser() {
 				Create
 			</Button>
 			<DialogContent>
-				<DialogTitle>Create User</DialogTitle>
+				<DialogTitle>{result ? "User Created" : "Create User"}</DialogTitle>
 				{result ? (
-					<div>
-						{result.emailQueued ? (
-							<p>The invitation email has been queued.</p>
-						) : (
-							<>
-								<p>Share this setup link once. It will not be shown again.</p>
-								<InputSimple
-									readOnly
-									value={result.setupUrl ?? ""}
-									aria-label="Account setup link"
-								/>
-								<Button
-									type="button"
-									onClick={() =>
-										navigator.clipboard.writeText(result.setupUrl ?? "")
-									}
-								>
-									Copy link
-								</Button>
-							</>
+					<>
+						<DialogDescription>
+							{result.emailQueued
+								? `An invitation email to ${result.recipient} has been queued. The link in it expires after ${INVITATION_LIFETIME_HOURS} hours.`
+								: `Send this link to ${result.recipient} so they can set up their account. It expires after ${INVITATION_LIFETIME_HOURS} hours and won’t be shown again.`}
+						</DialogDescription>
+						{result.setupUrl && !result.emailQueued && (
+							<CopyField
+								label="Account setup link"
+								value={result.setupUrl}
+								onCopy={() => setCopied(true)}
+							/>
 						)}
-					</div>
+						<DialogFooter>
+							<Button
+								color={copied || result.emailQueued ? "blue" : "gray"}
+								onClick={() => onOpenChange(false)}
+							>
+								Done
+							</Button>
+						</DialogFooter>
+					</>
 				) : (
 					<CreateUserForm
 						onSubmit={handleSubmit}
@@ -83,6 +91,8 @@ export default function CreateUser() {
 						groups={groups}
 						roles={roles}
 						canAssignAdministratorRole={account?.administratorRole === "full"}
+						canConfigureEmailDelivery={account?.administratorRole === "full"}
+						emailDeliveryAvailable={emailDeliveryAvailable === true}
 					/>
 				)}
 			</DialogContent>

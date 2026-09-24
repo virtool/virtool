@@ -1,11 +1,13 @@
 import { createServerFn } from "@tanstack/react-start";
 import { getRequest, setResponseStatus } from "@tanstack/react-start/server";
+import { resolveBrowserSession } from "@virtool/data/auth/session";
 import { authAccounts, authTwoFactors } from "@virtool/data/db/schema/auth";
 import { APIError } from "better-auth/api";
 import { and, eq, isNotNull } from "drizzle-orm";
 import { db } from "../composition";
 import { ClientError } from "../errors";
 import { AUTH_BASE_PATH } from "./betterAuth";
+import { isSessionFresh } from "./freshness";
 import {
 	attributePrincipal,
 	ForbiddenError,
@@ -56,6 +58,25 @@ function rethrowReplacementError(err: unknown): never {
 	}
 	throw err;
 }
+
+/** Check whether the current browser session is fresh enough for administration. */
+export const isRecentAuthenticationFreshFn = createServerFn({ method: "GET" })
+	.middleware([authenticated()])
+	.handler(async ({ context }) => {
+		if (context.principal.sessionStore !== "better_auth") {
+			return false;
+		}
+		const session = await resolveBrowserSession(
+			db,
+			context.principal.sessionId,
+			context.principal.userId,
+		);
+		if (!session) {
+			setResponseStatus(401);
+			throw new UnauthorizedError();
+		}
+		return isSessionFresh(session.createdAt);
+	});
 
 /** Return the non-secret step-up methods enrolled for the current account. */
 export const getRecentAuthenticationMethodsFn = createServerFn({

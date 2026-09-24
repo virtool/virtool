@@ -34,8 +34,8 @@ export default function Handle({ id, handle }: HandleProps) {
 
 	return (
 		<section>
-			<SectionHeader>
-				<h2>Change Handle</h2>
+			<SectionHeader level={3}>
+				<h3>Change Handle</h3>
 				<p>The username this person signs in with.</p>
 			</SectionHeader>
 			<BoxGroup>
