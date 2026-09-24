@@ -2,23 +2,31 @@ import {
 	type Account,
 	type AccountLifecycleState,
 	type AccountSettings,
+	type AdministeredUserSearchResult,
 	type AdministratorRoleName,
 	emptyPermissions,
 	PERMISSION_NAMES,
 	type Permissions,
+	type SortDirection,
 	type User,
 	type UserNested,
+	type UserRoleFilter,
 	type UserSearchResult,
+	type UserSortField,
+	type UserStatus,
 } from "@virtool/contracts";
 import {
 	and,
 	asc,
 	count,
+	desc,
 	eq,
 	ilike,
 	inArray,
 	isNotNull,
 	isNull,
+	or,
+	type SQL,
 	sql,
 } from "drizzle-orm";
 import type { PostgresError } from "postgres";
@@ -112,9 +120,8 @@ export type FindUsersFilters = {
 	 * Which lifecycle states to return. Defaults to `"normal"`, so a caller
 	 * that has not thought about pending accounts does not publish them.
 	 *
-	 * `"any"` is for the user administration views, which are the one place a
-	 * pending account has to be visible — an administrator needs to see the
-	 * invitation they issued and to be able to re-issue it.
+	 * The user administration list reads pending accounts through
+	 * {@link findAdministeredUsers} instead.
 	 */
 	lifecycleState?: AccountLifecycleState | "any";
 };
@@ -401,6 +408,137 @@ export async function findUsers(
 
 	return {
 		items: await assembleUsers(db, rows),
+		foundCount,
+		totalCount: totalRow?.value ?? 0,
+		page,
+		pageCount: perPage > 0 ? Math.ceil(foundCount / perPage) : 0,
+		perPage,
+	};
+}
+
+/** Filters and ordering accepted by the user administration list. */
+export type FindAdministeredUsersOptions = {
+	term?: string;
+	page?: number;
+	perPage?: number;
+	/** The account states to return. Empty returns every state. */
+	statuses?: UserStatus[];
+	/** The roles to return, where `"none"` means no administrator role. Empty returns every role. */
+	roles?: UserRoleFilter[];
+	sort?: UserSortField;
+	direction?: SortDirection;
+};
+
+function getStatusCondition(status: UserStatus): SQL | undefined {
+	if (status === "deactivated") {
+		return eq(usersTable.active, false);
+	}
+
+	return and(
+		eq(usersTable.active, true),
+		eq(usersTable.lifecycleState, status === "invited" ? "pending" : "normal"),
+	);
+}
+
+function getRoleCondition(roles: UserRoleFilter[]): SQL | undefined {
+	const named = roles.filter((role) => role !== "none");
+
+	return or(
+		named.length ? inArray(usersTable.administratorRole, named) : undefined,
+		roles.includes("none") ? isNull(usersTable.administratorRole) : undefined,
+	);
+}
+
+function getSortExpressions(sort: UserSortField, direction: SortDirection) {
+	const order = direction === "ascending" ? asc : desc;
+	const handle = sql`lower(${usersTable.handle})`;
+
+	switch (sort) {
+		case "email":
+			// Accounts without an address go last in either direction.
+			return [
+				asc(sql`${usersTable.email} = ''`),
+				order(sql`lower(${usersTable.email})`),
+			];
+		case "role":
+			return [
+				order(sql`case ${usersTable.administratorRole}
+					when 'full' then 0
+					when 'settings' then 1
+					when 'users' then 2
+					when 'base' then 3
+					else 4 end`),
+			];
+		case "status":
+			return [
+				order(sql`case
+					when not ${usersTable.active} then 2
+					when ${usersTable.lifecycleState} = 'pending' then 1
+					else 0 end`),
+			];
+		default:
+			// Pending accounts have no handle yet, so they go last in either
+			// direction.
+			return [asc(sql`${usersTable.handle} = ''`), order(handle)];
+	}
+}
+
+/**
+ * Find users for the user administration list, with their email addresses.
+ *
+ * Unlike {@link findUsers}, this returns pending and deactivated accounts, so
+ * only administrators may call it.
+ */
+export async function findAdministeredUsers(
+	db: Db,
+	options: FindAdministeredUsersOptions,
+): Promise<AdministeredUserSearchResult> {
+	const {
+		term = "",
+		page = 1,
+		perPage = 25,
+		statuses = [],
+		roles = [],
+		sort = "handle",
+		direction = "ascending",
+	} = options;
+
+	const filter = and(
+		term
+			? or(
+					ilike(usersTable.handle, `%${term}%`),
+					ilike(usersTable.email, `%${term}%`),
+				)
+			: undefined,
+		statuses.length ? or(...statuses.map(getStatusCondition)) : undefined,
+		roles.length ? getRoleCondition(roles) : undefined,
+	);
+	const skip = page > 1 ? (page - 1) * perPage : 0;
+
+	const [[totalRow], [foundRow], rows] = await Promise.all([
+		db.select({ value: count() }).from(usersTable),
+		db.select({ value: count() }).from(usersTable).where(filter),
+		db
+			.select()
+			.from(usersTable)
+			.where(filter)
+			.orderBy(
+				...getSortExpressions(sort, direction),
+				...getSortExpressions("handle", "ascending"),
+				asc(usersTable.id),
+			)
+			.limit(perPage)
+			.offset(skip),
+	]);
+
+	const foundCount = foundRow?.value ?? 0;
+	const users = await assembleUsers(db, rows);
+
+	return {
+		items: users.map((user, index) => ({
+			...user,
+			email: rows[index]?.email ?? "",
+		})),
 		foundCount,
 		totalCount: totalRow?.value ?? 0,
 		page,

@@ -23,7 +23,14 @@ import {
 	useSuspenseQuery,
 } from "@tanstack/react-query";
 import { userQueryKeys } from "@users/keys";
-import type { AdministratorRoleName, UserNested } from "@virtool/contracts";
+import type {
+	AdministratorRoleName,
+	SortDirection,
+	UserNested,
+	UserRoleFilter,
+	UserSortField,
+	UserStatus,
+} from "@virtool/contracts";
 
 /** Query whether invitation emails can currently be sent. */
 export function useInvitationEmailAvailability() {
@@ -68,33 +75,35 @@ export function useInfiniteFindUsers(perPage: number, term: string) {
 	});
 }
 
-/**
- * Query options for a page of user search results.
- *
- * @param page - The page to fetch
- * @param perPage - The number of users to fetch per page
- * @param term - The search term to filter users by
- * @param administrator - Filter the users by administrator status
- * @param active - Filter the users by whether they are active
- */
-export function usersQueryOptions(
-	page: number,
-	perPage: number,
-	term: string,
-	administrator?: boolean,
-	active?: boolean,
-) {
+/** The filters, ordering, and page of the user administration list. */
+export type AdministeredUsersQuery = {
+	direction: SortDirection;
+	page: number;
+	perPage: number;
+	roles: UserRoleFilter[];
+	sort: UserSortField;
+	statuses: UserStatus[];
+	term: string;
+};
+
+/** Query options for a page of the user administration list. */
+export function usersQueryOptions(query: AdministeredUsersQuery) {
 	return queryOptions({
-		queryKey: userQueryKeys.list([page, perPage, term, administrator, active]),
-		queryFn: () =>
-			findUsersFn({
-				data: { page, perPage, term, administrator, active },
-			}),
+		queryKey: userQueryKeys.list([
+			query.page,
+			query.perPage,
+			query.term,
+			query.statuses,
+			query.roles,
+			query.sort,
+			query.direction,
+		]),
+		queryFn: () => findUsersFn({ data: query }),
 	});
 }
 
 /**
- * Fetch a page of user search results, suspending until it resolves.
+ * Fetch a page of the user administration list, suspending until it resolves.
  *
  * `data` is always defined, and a failed request throws to the nearest route
  * error boundary instead of resolving to `undefined`. Use this from components
@@ -102,16 +111,8 @@ export function usersQueryOptions(
  * page — loading and errors are handled by the route's Suspense and
  * `errorComponent` rather than inline.
  */
-export function useSuspenseUsers(
-	page: number,
-	perPage: number,
-	term: string,
-	administrator?: boolean,
-	active?: boolean,
-) {
-	return useSuspenseQuery(
-		usersQueryOptions(page, perPage, term, administrator, active),
-	);
+export function useSuspenseUsers(query: AdministeredUsersQuery) {
+	return useSuspenseQuery(usersQueryOptions(query));
 }
 
 /**

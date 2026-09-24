@@ -24,10 +24,16 @@ export const userServerFnMocks = {
 	listAdministratorRolesFn: vi.fn(),
 };
 
-/** Sets up findUsers to resolve with a single page containing the given users. */
-export function mockFindUsers(users: User[]): Mock {
+/**
+ * Sets up findUsers to resolve with a single page containing the given users.
+ * A user without an email gets one derived from their handle.
+ */
+export function mockFindUsers(users: (User & { email?: string })[]): Mock {
 	userServerFnMocks.findUsersFn.mockResolvedValue({
-		items: users,
+		items: users.map((user) => ({
+			...user,
+			email: user.email ?? `${user.handle}@example.com`,
+		})),
 		foundCount: users.length,
 		page: 1,
 		pageCount: 1,

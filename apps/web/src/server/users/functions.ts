@@ -3,6 +3,10 @@ import { setResponseStatus } from "@tanstack/react-start/server";
 import {
 	ADMINISTRATOR_ROLE_NAMES,
 	PasswordTooShortError,
+	SORT_DIRECTIONS,
+	USER_ROLE_FILTERS,
+	USER_SORT_FIELDS,
+	USER_STATUSES,
 } from "@virtool/contracts";
 import {
 	EmailInUseError,
@@ -15,6 +19,7 @@ import {
 } from "@virtool/data/email/settings";
 import {
 	changePassword,
+	findAdministeredUsers,
 	findUsers,
 	GroupMembershipError,
 	getAccount,
@@ -72,8 +77,16 @@ const findUsersSchema = z
 		term: searchTermSchema,
 		page: pageSchema,
 		perPage: perPageSchema,
-		administrator: z.boolean().optional(),
-		active: z.boolean().default(true),
+		statuses: z
+			.array(z.enum(USER_STATUSES))
+			.max(USER_STATUSES.length)
+			.default([]),
+		roles: z
+			.array(z.enum(USER_ROLE_FILTERS))
+			.max(USER_ROLE_FILTERS.length)
+			.default([]),
+		sort: z.enum(USER_SORT_FIELDS).default("handle"),
+		direction: z.enum(SORT_DIRECTIONS).default("ascending"),
 	})
 	.optional();
 
@@ -215,20 +228,7 @@ export const listUsersFn = createServerFn({ method: "GET" })
 export const findUsersFn = createServerFn({ method: "POST" })
 	.middleware([adminRole("users")])
 	.validator(findUsersSchema)
-	.handler(async ({ data }) => {
-		return findUsers(db, {
-			term: data?.term ?? "",
-			page: data?.page ?? 1,
-			perPage: data?.perPage ?? 25,
-			administrator: data?.administrator,
-			active: data?.active ?? true,
-			// The one caller that asks for pending accounts. An administrator has
-			// to see the invitation they issued in order to re-issue or revoke it,
-			// and `findUsers` defaults to hiding them so nothing else has to
-			// remember to.
-			lifecycleState: "any",
-		});
-	});
+	.handler(async ({ data }) => findAdministeredUsers(db, data ?? {}));
 
 // A paginated user search any signed-in user may run: authenticated, with no
 // administrator filter. Backs the reference member picker, where a non-admin

@@ -15,6 +15,7 @@ import {
 	changePassword,
 	createPendingUser,
 	createUser,
+	findAdministeredUsers,
 	findUsers,
 	GroupMembershipError,
 	getAccount,
@@ -552,6 +553,106 @@ describe("findUsers", () => {
 		expect(page1.items.map((user) => user.handle)).toEqual(["a", "b"]);
 		expect(page2.items.map((user) => user.handle)).toEqual(["c"]);
 		expect(page1.pageCount).toBe(2);
+	});
+});
+
+describe("findAdministeredUsers", () => {
+	async function seedMixedUsers() {
+		await seedUser(db, {
+			handle: "carol",
+			email: "carol@example.com",
+			administratorRole: "users",
+		});
+		await seedUser(db, {
+			handle: "",
+			email: "invited@example.com",
+			lifecycleState: "pending",
+		});
+		await seedUser(db, {
+			handle: "Alice",
+			email: "zed@example.com",
+			administratorRole: "full",
+		});
+		await seedUser(db, { handle: "bob", active: false });
+	}
+
+	async function getEmails(
+		options: Parameters<typeof findAdministeredUsers>[1],
+	) {
+		return (await findAdministeredUsers(db, options)).items.map(
+			(user) => user.email,
+		);
+	}
+
+	it("returns every account with its email, pending handles last", async () => {
+		await seedMixedUsers();
+
+		const result = await findAdministeredUsers(db, {});
+
+		expect(result.items.map((user) => user.handle)).toEqual([
+			"Alice",
+			"bob",
+			"carol",
+			"",
+		]);
+		expect(result.items[0]?.email).toBe("zed@example.com");
+		expect(result.foundCount).toBe(4);
+	});
+
+	it("filters by status", async () => {
+		await seedMixedUsers();
+
+		expect(await getEmails({ statuses: ["invited"] })).toEqual([
+			"invited@example.com",
+		]);
+		expect(await getEmails({ statuses: ["deactivated"] })).toEqual([""]);
+		expect(await getEmails({ statuses: ["active", "invited"] })).toEqual([
+			"zed@example.com",
+			"carol@example.com",
+			"invited@example.com",
+		]);
+	});
+
+	it("filters by role, where none means no administrator role", async () => {
+		await seedMixedUsers();
+
+		expect(await getEmails({ roles: ["full", "users"] })).toEqual([
+			"zed@example.com",
+			"carol@example.com",
+		]);
+		expect(await getEmails({ roles: ["none"] })).toEqual([
+			"",
+			"invited@example.com",
+		]);
+	});
+
+	it("searches handles and emails", async () => {
+		await seedMixedUsers();
+
+		expect(await getEmails({ term: "zed" })).toEqual(["zed@example.com"]);
+		expect(await getEmails({ term: "car" })).toEqual(["carol@example.com"]);
+	});
+
+	it("sorts by email, role, and status in either direction", async () => {
+		await seedMixedUsers();
+
+		expect(await getEmails({ sort: "email", direction: "descending" })).toEqual(
+			["zed@example.com", "invited@example.com", "carol@example.com", ""],
+		);
+		expect(await getEmails({ sort: "role" })).toEqual([
+			"zed@example.com",
+			"carol@example.com",
+			"",
+			"invited@example.com",
+		]);
+		expect(
+			await getEmails({ sort: "status", direction: "descending" }),
+		).toEqual([
+			"",
+			"invited@example.com",
+			"zed@example.com",
+			"carol@example.com",
+		]);
 	});
 });
 

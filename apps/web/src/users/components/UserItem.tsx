@@ -1,64 +1,71 @@
 import { useCheckAdminRole } from "@administration/hooks";
-import { BoxGroupSection } from "@base/Box";
 import { InitialIcon } from "@base/Icon";
 import Label from "@base/Label";
 import Link from "@base/Link";
-import type {
-	AccountLifecycleState,
-	AdministratorRoleName,
-	GroupMinimal,
-} from "@virtool/contracts";
-import type { ReactElement } from "react";
+import type { PaletteColor } from "@base/types";
+import {
+	getUserStatus,
+	userRoleDisplayNames,
+	userStatusDisplayNames,
+} from "@users/utils";
+import type { AdministeredUser, UserStatus } from "@virtool/contracts";
+
+const statusColors: Record<UserStatus, PaletteColor> = {
+	active: "green",
+	invited: "orange",
+	deactivated: "gray",
+};
 
 type UserItemProps = {
-	administratorRole: AdministratorRoleName | null;
-	handle: string;
-	id: number;
-	lifecycleState: AccountLifecycleState;
-	/** The primary group assigned to the user */
-	primaryGroup: GroupMinimal | null;
+	user: AdministeredUser;
 };
 
 /**
- * A condensed user item for use in a list of users
+ * One user in the table of users
  */
-export function UserItem({
-	administratorRole,
-	handle,
-	id,
-	lifecycleState,
-	primaryGroup,
-}: UserItemProps): ReactElement {
+export function UserItem({ user }: UserItemProps) {
 	const { hasPermission: canEdit } = useCheckAdminRole(
-		administratorRole === null ? "users" : "full",
+		user.administratorRole === null ? "users" : "full",
 	);
-	const label = lifecycleState === "pending" ? `Invitation #${id}` : handle;
+	const label =
+		user.lifecycleState === "pending" ? `Invitation #${user.id}` : user.handle;
+	const status = getUserStatus(user);
 
 	return (
-		<BoxGroupSection as="li" className="grid grid-cols-4 items-center">
-			<div className="col-span-2 flex items-center gap-3">
-				<InitialIcon size="lg" handle={label} />
-				{canEdit ? (
-					<Link
-						to="/administration/users/$userId"
-						params={{ userId: String(id) }}
-						className="text-lg font-medium"
-					>
-						{label}
-					</Link>
+		<tr>
+			<td>
+				<span className="flex items-center gap-2 font-medium">
+					<span aria-hidden className="flex">
+						<InitialIcon size="md" handle={label} />
+					</span>
+					{canEdit ? (
+						<Link
+							to="/administration/users/$userId"
+							params={{ userId: String(user.id) }}
+						>
+							{label}
+						</Link>
+					) : (
+						label
+					)}
+				</span>
+			</td>
+			<td className="text-gray-600">{user.email}</td>
+			<td>
+				{user.administratorRole ? (
+					<Label color="purple">
+						{userRoleDisplayNames[user.administratorRole]}
+					</Label>
 				) : (
-					<strong className="text-lg font-medium">{label}</strong>
+					<span className="text-gray-500">{userRoleDisplayNames.none}</span>
 				)}
-			</div>
-			<div className="flex items-center text-sm capitalize">
-				{lifecycleState === "pending" && <Label color="orange">Pending</Label>}
-				{administratorRole && (
-					<Label color="purple">{administratorRole} Administrator</Label>
-				)}
-			</div>
-			<div className="flex items-center text-sm capitalize">
-				{primaryGroup && <Label>{primaryGroup.name}</Label>}
-			</div>
-		</BoxGroupSection>
+			</td>
+			<td>{user.primaryGroup && <Label>{user.primaryGroup.name}</Label>}</td>
+			<td>
+				<Label color={statusColors[status]}>
+					{userStatusDisplayNames[status]}
+				</Label>
+			</td>
+		</tr>
 	);
 }

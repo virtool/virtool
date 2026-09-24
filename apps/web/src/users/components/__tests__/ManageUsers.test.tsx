@@ -1,4 +1,5 @@
-import { screen } from "@testing-library/react";
+import { screen, within } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import { createFakeAccount } from "@tests/fake/account";
 import { createFakeUsers } from "@tests/fake/user";
 import { mockFindUsers, mockGetAccount } from "@tests/server-fn/users";
@@ -7,10 +8,12 @@ import { describe, expect, it } from "vitest";
 import { ManageUsers } from "../ManageUsers";
 
 describe("<ManageUsers />", () => {
-	it("should render correctly with 3 users", async () => {
+	it("should render a table of users", async () => {
 		const users = createFakeUsers(3);
 		at(users, 0).administratorRole = "full";
-		mockFindUsers(users);
+		at(users, 1).lifecycleState = "pending";
+		at(users, 2).active = false;
+		const findUsers = mockFindUsers(users);
 		const account = createFakeAccount({ administratorRole: "full" });
 
 		await renderRoute("/administration/users", { account });
@@ -18,14 +21,76 @@ describe("<ManageUsers />", () => {
 		expect(
 			await screen.findByRole("heading", { name: "Users" }),
 		).toBeInTheDocument();
-		expect(
-			screen.getByText("Manage user accounts and access."),
-		).toBeInTheDocument();
 		expect(await screen.findByLabelText("Search users")).toBeInTheDocument();
 		expect(screen.getByRole("button", { name: "Create" })).toBeInTheDocument();
-		expect(await screen.findByText(/Administrator/)).toBeInTheDocument();
-		users.forEach((user) => {
-			expect(screen.getByText(user.handle)).toBeInTheDocument();
+		expect(screen.getByText("3 users")).toBeInTheDocument();
+
+		const rows = screen.getAllByRole("row").slice(1);
+		expect(rows).toHaveLength(3);
+
+		const first = within(at(rows, 0));
+		expect(first.getByText(at(users, 0).handle)).toBeInTheDocument();
+		expect(
+			first.getByText(`${at(users, 0).handle}@example.com`),
+		).toBeInTheDocument();
+		expect(first.getByText("Full")).toBeInTheDocument();
+		expect(first.getByText("Active")).toBeInTheDocument();
+
+		const second = within(at(rows, 1));
+		expect(
+			second.getByText(`Invitation #${at(users, 1).id}`),
+		).toBeInTheDocument();
+		expect(second.getByText("Invited")).toBeInTheDocument();
+
+		expect(within(at(rows, 2)).getByText("Deactivated")).toBeInTheDocument();
+
+		expect(findUsers).toHaveBeenCalledWith({
+			data: {
+				direction: "ascending",
+				page: 1,
+				perPage: 25,
+				roles: [],
+				sort: "handle",
+				statuses: [],
+				term: "",
+			},
+		});
+	});
+
+	it("should sort by a column and reverse on a second click", async () => {
+		mockFindUsers(createFakeUsers(2));
+		const account = createFakeAccount({ administratorRole: "full" });
+
+		const { router } = await renderRoute("/administration/users", {
+			account,
+		});
+
+		await userEvent.click(await screen.findByRole("button", { name: "Email" }));
+		expect(router.state.location.search).toMatchObject({
+			sort: "email",
+			direction: "ascending",
+		});
+
+		await userEvent.click(await screen.findByRole("button", { name: "Email" }));
+		expect(router.state.location.search).toMatchObject({
+			sort: "email",
+			direction: "descending",
+		});
+	});
+
+	it("should filter by status", async () => {
+		const findUsers = mockFindUsers(createFakeUsers(2));
+		const account = createFakeAccount({ administratorRole: "full" });
+
+		await renderRoute("/administration/users?statuses=invited", { account });
+
+		expect(
+			await screen.findByRole("button", {
+				name: "Remove Invited status filter",
+			}),
+		).toBeInTheDocument();
+		expect(findUsers).toHaveBeenCalledWith({
+			data: expect.objectContaining({ statuses: ["invited"] }),
 		});
 	});
 
@@ -38,7 +103,20 @@ describe("<ManageUsers />", () => {
 		mockFindUsers(users);
 		mockGetAccount(createFakeAccount({ administratorRole: null }));
 
-		await renderWithRouter(<ManageUsers />);
+		await renderWithRouter(
+			<ManageUsers
+				perPage={25}
+				search={{
+					direction: "ascending",
+					page: 1,
+					roles: [],
+					sort: "handle",
+					statuses: [],
+					term: "",
+				}}
+				setSearch={() => {}}
+			/>,
+		);
 
 		expect(
 			await screen.findByText("You do not have permission to manage users."),
@@ -51,6 +129,5 @@ describe("<ManageUsers />", () => {
 			screen.queryByRole("button", { name: "Create" }),
 		).not.toBeInTheDocument();
 		expect(screen.queryByLabelText("Search users")).not.toBeInTheDocument();
-		expect(screen.queryByText("Administrator")).not.toBeInTheDocument();
 	});
 });
