@@ -186,6 +186,14 @@ describe("useSortAndFilterNuvsHits()", () => {
 		expect(renderNuvs({ find: "Replicase" })).toEqual([2]);
 	});
 
+	it("should normalize surrounding whitespace before searching", () => {
+		expect(renderNuvs({ find: "  Replicase  " })).toEqual([2]);
+	});
+
+	it("should treat a whitespace-only search as empty", () => {
+		expect(renderNuvs({ find: "   " }).toSorted()).toEqual([1, 2]);
+	});
+
 	it("should search families", () => {
 		expect(renderNuvs({ find: "Alphaflexiviridae" })).toEqual([1]);
 	});
