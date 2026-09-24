@@ -29,8 +29,10 @@ export type RunWorkflowOptions<TData, TState> = {
 	 * The only seam the run loop needs into the job lifecycle, and the reason it
 	 * is a callback rather than a return value: it fires mid-run, where every
 	 * other outcome this function reports is terminal and rides back on
-	 * {@link RunOutcome}. A rejection is a failed run — the jobs API not
-	 * knowing which step is executing is not something to continue past.
+	 * {@link RunOutcome}. A rejection fails the run unless cancellation or
+	 * termination has already aborted the signal; that outcome takes precedence.
+	 * The jobs API not knowing which step is executing is not something to
+	 * continue past.
 	 *
 	 * It takes the wire shape the runner declared its steps in at claim time,
 	 * so the callback cannot be handed a step the jobs API has never heard of.
