@@ -4,7 +4,7 @@ import { InitialIcon } from "@base/Icon";
 import Label from "@base/Label";
 import SectionHeader from "@base/SectionHeader";
 import { useSuspenseUser, useUpdateUser } from "@users/queries";
-import { CircleAlert, ShieldUserIcon } from "lucide-react";
+import { CircleAlert, MailClock, ShieldUserIcon } from "lucide-react";
 import Handle from "./Handle";
 import { InvitationControls } from "./InvitationControls";
 import Password from "./Password";
@@ -58,13 +58,17 @@ export default function UserDetail({ userId }: UserDetailProps) {
 			<SectionHeader>
 				<div className="flex items-center justify-between gap-4">
 					<h2 className="flex items-center gap-3">
-						<InitialIcon
-							size="xl"
-							handle={lifecycleState === "pending" ? "Invitation" : handle}
-						/>
-						<span>
-							{lifecycleState === "pending" ? `Invitation #${id}` : handle}
-						</span>
+						{lifecycleState === "pending" ? (
+							<>
+								<InitialIcon size="xl" icon={MailClock} label="Invited user" />
+								<span>Invited user</span>
+							</>
+						) : (
+							<>
+								<InitialIcon size="xl" handle={handle} />
+								<span>{handle}</span>
+							</>
+						)}
 					</h2>
 					{administratorRole && (
 						<Label>

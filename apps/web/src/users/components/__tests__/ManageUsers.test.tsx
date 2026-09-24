@@ -37,8 +37,9 @@ describe("<ManageUsers />", () => {
 		expect(first.getByText("Active")).toBeInTheDocument();
 
 		const second = within(at(rows, 1));
+		expect(second.getByText("No handle yet")).toBeInTheDocument();
 		expect(
-			second.getByText(`Invitation #${at(users, 1).id}`),
+			second.getByRole("img", { name: "Invited user" }),
 		).toBeInTheDocument();
 		expect(second.getByText("Invited")).toBeInTheDocument();
 
