@@ -129,7 +129,8 @@ export function useIsSecureContext(): boolean {
  * committed. Advancing a committed baseline locally would run ahead of an async
  * `onChange` (URL navigation) whose echo lands a render later: the guard would
  * read the still-stale `value`, treat it as an outside change, and blank the
- * draft until the echo caught up.
+ * draft until the echo caught up. The pending commit identifies that echo so it
+ * also cannot overwrite characters typed since the commit.
  */
 export function useDebounce<T>(
 	value: T,
@@ -138,10 +139,17 @@ export function useDebounce<T>(
 ): [T, (next: T) => void] {
 	const [draft, setDraft] = useState(value);
 	const [prevValue, setPrevValue] = useState(value);
+	const [pendingCommit, setPendingCommit] = useState<{ value: T } | null>(null);
 
 	if (value !== prevValue) {
 		setPrevValue(value);
-		setDraft(value);
+
+		if (pendingCommit !== null && value === pendingCommit.value) {
+			setPendingCommit(null);
+		} else {
+			setPendingCommit(null);
+			setDraft(value);
+		}
 	}
 
 	// Held in a ref so a parent re-render that only changes the callback's
@@ -161,6 +169,7 @@ export function useDebounce<T>(
 		}
 
 		const id = setTimeout(() => {
+			setPendingCommit({ value: draft });
 			onChangeRef.current(draft);
 		}, delayMs);
 
