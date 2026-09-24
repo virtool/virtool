@@ -192,6 +192,11 @@ export async function runWorkflow<TData, TState>({
 
 			await onStepStart?.(step);
 
+			if (signals.signal.aborted) {
+				aborted = true;
+				break;
+			}
+
 			logger.info(
 				{ stepId: step.id, name: step.name },
 				"running workflow step",
@@ -203,10 +208,17 @@ export async function runWorkflow<TData, TState>({
 			}
 		}
 	} catch (caught) {
-		// Tracked separately from `error` because a step is free to throw a falsy
-		// value, and `error !== undefined` would then read as a clean run.
-		failed = true;
-		error = caught;
+		// Step reporting uses the run's signal, so cancellation can make its
+		// request reject before control returns here. The cancellation remains the
+		// run's terminal outcome regardless of how that in-flight request settles.
+		if (signals.signal.aborted) {
+			aborted = true;
+		} else {
+			// Tracked separately from `error` because a step is free to throw a falsy
+			// value, and `error !== undefined` would then read as a clean run.
+			failed = true;
+			error = caught;
+		}
 	}
 
 	if (aborted) {
