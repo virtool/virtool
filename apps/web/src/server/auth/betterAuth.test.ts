@@ -452,12 +452,9 @@ describe("step-up session replacement", () => {
 					return (index % 2 === 0 ? auth : otherAuth).handler(request);
 				}),
 			);
-			expect(
-				responses.filter((response) => response.status === 429),
-			).toHaveLength(5);
-			expect(
-				responses.filter((response) => response.status === 400),
-			).toHaveLength(5);
+			expect(responses.map((response) => response.status).sort()).toEqual([
+				400, 400, 400, 400, 400, 429, 429, 429, 429, 429,
+			]);
 		} finally {
 			await connection.close();
 		}
