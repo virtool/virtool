@@ -143,6 +143,53 @@ describe("<SamplesList />", () => {
 		expect(inputElement).toHaveValue("Foo");
 	});
 
+	describe("pagination reset", () => {
+		it("should return to the first page when the search term changes", async () => {
+			const [first, second] = mockSamplePages();
+
+			await renderWithRouter(
+				<SamplesListHarness initialSearch={{ page: 2, term: "" }} />,
+				path,
+			);
+			expect(await screen.findByText(second.name)).toBeInTheDocument();
+
+			await userEvent.type(screen.getByPlaceholderText("Sample name"), "Foo");
+
+			expect(await screen.findByText(first.name)).toBeInTheDocument();
+			expect(sampleServerFnMocks.findSamplesFn).toHaveBeenLastCalledWith(
+				expect.objectContaining({
+					data: expect.objectContaining({ page: 1, term: "Foo" }),
+				}),
+			);
+		});
+
+		it("should return to the first page when an individual filter is cleared", async () => {
+			const [first, second] = mockSamplePages();
+			const label = at(labels, 0);
+
+			await renderWithRouter(
+				<SamplesListHarness
+					initialSearch={{ labels: [label.id], page: 2, term: "" }}
+				/>,
+				path,
+			);
+			expect(await screen.findByText(second.name)).toBeInTheDocument();
+
+			await userEvent.click(
+				screen.getByRole("button", {
+					name: `Remove ${label.name} label filter`,
+				}),
+			);
+
+			expect(await screen.findByText(first.name)).toBeInTheDocument();
+			expect(sampleServerFnMocks.findSamplesFn).toHaveBeenLastCalledWith(
+				expect.objectContaining({
+					data: expect.objectContaining({ labels: [], page: 1 }),
+				}),
+			);
+		});
+	});
+
 	it("should render create button when [canModify=true]", async () => {
 		mockGetAccount(
 			createFakeAccount({
