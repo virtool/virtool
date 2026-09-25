@@ -54,14 +54,14 @@ export default function SampleRights({ settings }: SampleRightsProps) {
 						</SelectBoxItem>
 						<SelectBoxItem value="force_choice">
 							<strong>Force choice</strong>
-							<p>
-								Samples are automatically assigned the creating
-								{"user's"} primary group
-							</p>
+							<p>Samples are assigned by the user in the creation form</p>
 						</SelectBoxItem>
 						<SelectBoxItem value="users_primary_group">
 							<strong>{"User's"} primary group</strong>
-							<p>Samples are assigned by the user in the creation form</p>
+							<p>
+								Samples are automatically assigned the creating {"user's"}{" "}
+								primary group
+							</p>
 						</SelectBoxItem>
 					</SelectBox>
 

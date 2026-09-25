@@ -762,6 +762,7 @@ function Scheduler({
 	const schedulerEnvironmentIds = new Set([
 		...environmentById.keys(),
 		...Object.keys(state.queues),
+		...Object.keys(state.errors),
 		...state.active.map((item) => item.environmentId),
 		...state.buildQueue.map((item) => item.environmentId),
 	]);
@@ -905,6 +906,11 @@ function Scheduler({
 														<span className="break-all text-slate-600">
 															{environmentId}
 														</span>
+													)}
+													{state.errors[environmentId] && (
+														<p className="mt-1 break-all text-xs font-normal text-red-800">
+															{state.errors[environmentId]}
+														</p>
 													)}
 												</th>
 												<td className="px-4 py-3 text-slate-600">

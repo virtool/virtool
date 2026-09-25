@@ -32,6 +32,7 @@ const snapshot: Snapshot = {
 		buildQueue: [],
 		capacity: 1,
 		concurrency: 1,
+		errors: {},
 		lastError: null,
 		queues: {},
 	},
@@ -303,6 +304,15 @@ it("shows workflow, build, and queue activity by branch", async () => {
 	expect(within(row).getByText("Create sample")).toBeVisible();
 	expect(within(row).getByText("Create subtraction: 2")).toBeVisible();
 	expect(within(row).getByText("NUVs: 1")).toBeVisible();
+});
+
+it("shows scheduler failures on the affected branch", async () => {
+	snapshot.scheduler.errors = { environment: "Jobs API unavailable" };
+	const user = userEvent.setup();
+	await renderApp();
+	await user.click(screen.getByRole("link", { name: "Workflows" }));
+	const row = screen.getByRole("row", { name: /feature\/test/ });
+	expect(within(row).getByText("Jobs API unavailable")).toBeVisible();
 });
 
 it("restores routed views with browser navigation", async () => {

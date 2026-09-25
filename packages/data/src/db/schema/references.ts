@@ -133,7 +133,7 @@ export const legacyReferenceGroups = pgTable(
 			columns: [table.group_id],
 			foreignColumns: [groups.id],
 			name: "legacy_reference_groups_group_id_fkey",
-		}),
+		}).onDelete("cascade"),
 		primaryKey({
 			name: "legacy_reference_groups_pkey",
 			columns: [table.reference_id, table.group_id],
