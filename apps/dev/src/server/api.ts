@@ -111,26 +111,35 @@ export function createApi(
 	});
 	app.get("/api/events", (context) =>
 		streamSSE(context, async (stream) => {
-			let resolve: (() => void) | undefined;
-			const snapshots: Snapshot[] = [feed.get()];
+			let pending: Snapshot | undefined = feed.get();
+			let wake: (() => void) | undefined;
+			function notify(): void {
+				const done = wake;
+				wake = undefined;
+				done?.();
+			}
 			const unsubscribe = feed.subscribe((snapshot) => {
-				snapshots.push(snapshot);
-				resolve?.();
+				pending = snapshot;
+				notify();
 			});
-			stream.onAbort(() => unsubscribe());
-			while (!stream.aborted) {
-				const snapshot = snapshots.shift();
-				if (snapshot) {
-					await stream.writeSSE({
-						data: JSON.stringify(snapshot),
-						event: "state",
+			stream.onAbort(notify);
+			try {
+				while (!stream.aborted) {
+					if (pending) {
+						const snapshot = pending;
+						pending = undefined;
+						await stream.writeSSE({
+							data: JSON.stringify(snapshot),
+							event: "state",
+						});
+						continue;
+					}
+					await new Promise<void>((done) => {
+						wake = done;
 					});
-					continue;
 				}
-				await new Promise<void>((done) => {
-					resolve = done;
-				});
-				resolve = undefined;
+			} finally {
+				unsubscribe();
 			}
 		}),
 	);

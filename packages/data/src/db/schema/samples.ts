@@ -95,7 +95,7 @@ export const legacySamples = pgTable(
 			columns: [table.group_id],
 			foreignColumns: [groups.id],
 			name: "legacy_samples_group_id_fkey",
-		}),
+		}).onDelete("set null"),
 		foreignKey({
 			columns: [table.user_id],
 			foreignColumns: [users.id],
@@ -140,7 +140,7 @@ export const legacySampleLabels = pgTable(
 			columns: [table.label_id],
 			foreignColumns: [labels.id],
 			name: "legacy_sample_labels_label_id_fkey",
-		}),
+		}).onDelete("cascade"),
 		primaryKey({
 			name: "legacy_sample_labels_pkey",
 			columns: [table.sample_id, table.label_id],

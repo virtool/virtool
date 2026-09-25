@@ -102,6 +102,29 @@ function selectQueryKey(
 	return domain.keys.all();
 }
 
+/**
+ * Keys in other domains whose cached data a frame's change also alters.
+ *
+ * A label's count is its number of samples, so any sample frame can change it.
+ * Deleting a label or group cascades in the database to sample labels, sample
+ * groups, and reference rights, but emits only the label or group frame.
+ */
+function selectDependentKeys(message: SseMessage): (readonly unknown[])[] {
+	if (message.domain === "samples") {
+		return [labelQueryKeys.lists()];
+	}
+	if (message.operation !== "delete") {
+		return [];
+	}
+	if (message.domain === "labels") {
+		return [samplesQueryKeys.all()];
+	}
+	if (message.domain === "groups") {
+		return [samplesQueryKeys.all(), referenceQueryKeys.all()];
+	}
+	return [];
+}
+
 export function reactQueryHandler(queryClient: QueryClient) {
 	const queueJobRefresh = createJobRefreshQueue(queryClient);
 	const queueTaskRefresh = createTaskRefreshQueue(queryClient);
@@ -129,6 +152,10 @@ export function reactQueryHandler(queryClient: QueryClient) {
 		queryClient.invalidateQueries({
 			queryKey: selectQueryKey(domain, message.operation, message.id),
 		});
+
+		for (const queryKey of selectDependentKeys(message)) {
+			queryClient.invalidateQueries({ queryKey });
+		}
 
 		if (message.domain === "users" && message.operation === "update") {
 			queryClient.invalidateQueries({

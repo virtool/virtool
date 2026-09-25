@@ -501,13 +501,16 @@ export class Reconciler {
 			"running",
 			"deleting database and blobs",
 		);
+		// The rendered compose file comes from whichever branch last started the
+		// environment, so cleanup runs from the daemon's own definitions instead.
+		const cleanupFile = join(this.primaryWorktree, "dev/cleanup.compose.yaml");
 		const cleanup = await Promise.allSettled([
-			this.compose(environment, envFile, composeFile, [
+			this.compose(environment, envFile, cleanupFile, [
 				"run",
 				"--rm",
 				"cleanup-database",
 			]),
-			this.compose(environment, envFile, composeFile, [
+			this.compose(environment, envFile, cleanupFile, [
 				"run",
 				"--rm",
 				"cleanup-storage",

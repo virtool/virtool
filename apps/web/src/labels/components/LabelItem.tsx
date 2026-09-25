@@ -6,6 +6,7 @@ import { EditLabel, type UpdatedLabel } from "./EditLabel";
 
 type LabelItemProps = {
 	color: string;
+	count: number;
 	description: string;
 	id: number;
 	name: string;
@@ -18,6 +19,7 @@ type LabelItemProps = {
  */
 export function LabelItem({
 	color,
+	count,
 	description,
 	id,
 	name,
@@ -43,7 +45,11 @@ export function LabelItem({
 					name={name}
 					onSubmit={(values) => onEdit(id, values)}
 				/>
-				<DeleteLabel name={name} onConfirm={() => onDelete(id)} />
+				<DeleteLabel
+					name={name}
+					sampleCount={count}
+					onConfirm={() => onDelete(id)}
+				/>
 			</div>
 		</BoxGroupSection>
 	);

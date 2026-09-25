@@ -239,12 +239,12 @@ ENV VT_JOBS_API_PORT="9950"
 ENV VT_TASKS_PROBE_PORT="9900"
 
 # Installs Sentry's module hooks before the dispatcher imports the selected
-# command's graph, so the SDK patches Hono and postgres ahead of what it
-# instruments. The subcommand — serve, run or migrate — is the argument each
+# command's graph, so the SDK can inject its diagnostics channels into postgres
+# as it loads. The subcommand — serve, run or migrate — is the argument each
 # workload's manifest supplies; the default is the HTTP server. `migrate` runs
-# under the same preload, which is a no-op there: with no DSN configured the SDK
+# under the same hook, which is a no-op there: with no DSN configured the SDK
 # never initialises.
-ENTRYPOINT ["node", "--import", "@sentry/node/preload", "dist/index.mjs"]
+ENTRYPOINT ["node", "--import", "@sentry/node/import", "dist/index.mjs"]
 CMD ["serve"]
 
 FROM base AS build-create-subtraction

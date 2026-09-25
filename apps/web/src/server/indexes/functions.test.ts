@@ -163,6 +163,70 @@ describe("authorization", () => {
 	});
 });
 
+// A caller who cannot see a reference gets the same 404 as for a missing
+// reference or index, so the response does not reveal that it exists.
+describe("reference visibility", () => {
+	async function seedHiddenIndex(): Promise<{
+		indexId: number;
+		referenceId: number;
+	}> {
+		const ownerId = await signInAsNewUser();
+		const referenceId = await seedBuildableReference(ownerId);
+		const indexId = await seedIndex(db, {
+			referenceId,
+			userId: ownerId,
+			version: 0,
+		});
+
+		await signInAsNewUser();
+
+		return { indexId, referenceId };
+	}
+
+	it("answers 404 from findIndexesFn", async () => {
+		const { referenceId } = await seedHiddenIndex();
+
+		await expect(
+			call("findIndexesFn", { referenceId, page: 1, perPage: 25 }),
+		).rejects.toThrow("Reference not found.");
+		expect(setResponseStatus).toHaveBeenCalledWith(404);
+	});
+
+	it("answers 404 from getIndexFn", async () => {
+		const { indexId } = await seedHiddenIndex();
+
+		await expect(call("getIndexFn", { indexId })).rejects.toThrow(
+			"Index not found.",
+		);
+		expect(setResponseStatus).toHaveBeenCalledWith(404);
+	});
+
+	it("answers 404 from findUnbuiltChangesFn", async () => {
+		const { referenceId } = await seedHiddenIndex();
+
+		await expect(
+			call("findUnbuiltChangesFn", { referenceId, page: 1, perPage: 25 }),
+		).rejects.toThrow("Reference not found.");
+		expect(setResponseStatus).toHaveBeenCalledWith(404);
+	});
+
+	it("answers 404 from createIndexFn", async () => {
+		const { referenceId } = await seedHiddenIndex();
+
+		await expect(call("createIndexFn", { referenceId })).rejects.toThrow(
+			"Reference not found.",
+		);
+		expect(setResponseStatus).toHaveBeenCalledWith(404);
+		expect(setResponseStatus).not.toHaveBeenCalledWith(403);
+	});
+
+	it("omits the index from listReadyIndexesFn", async () => {
+		await seedHiddenIndex();
+
+		expect(await call("listReadyIndexesFn", {})).toEqual([]);
+	});
+});
+
 describe("getIndexFn", () => {
 	it("answers 404 for an index that does not exist", async () => {
 		await signInAsNewUser();

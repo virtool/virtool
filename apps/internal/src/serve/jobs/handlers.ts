@@ -28,7 +28,7 @@ import {
 } from "@virtool/data/jobs/data";
 import type { Logger } from "@virtool/logger";
 import { requireJobRequest } from "../auth/guard";
-import type { JobPrincipal } from "../auth/verify";
+import { getTerminalRefusal, type JobPrincipal } from "../auth/verify";
 import { jsonError, parseJsonBody, requireRowId } from "../http";
 
 /** What the job lifecycle handlers need to serve a request. */
@@ -244,9 +244,10 @@ export async function handleReadJob(
 /**
  * Record a heartbeat.
  *
- * A job that has finished never reaches this handler — its key stops
- * authenticating the moment it reaches a terminal state, so the guard refuses it
- * first. That refusal is the cancellation channel, and the whole of it.
+ * A finished job's key stops authenticating, so the guard usually refuses its
+ * ping first. That refusal is the cancellation channel. A job that finishes
+ * between the guard's read and the write gets the same `401` from here, so the
+ * runner stops on this ping rather than the next.
  */
 export async function handlePingJob(
 	deps: JobHandlerDeps,
@@ -266,6 +267,14 @@ export async function handlePingJob(
 	} catch (err) {
 		if (err instanceof JobNotFoundError) {
 			return jsonError(404, "Job not found");
+		}
+
+		if (err instanceof JobTerminalStateError) {
+			const message = getTerminalRefusal(err.state);
+
+			if (message) {
+				return jsonError(401, message);
+			}
 		}
 
 		throw err;

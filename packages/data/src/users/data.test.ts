@@ -519,6 +519,19 @@ describe("findUsers", () => {
 		expect(result.totalCount).toBe(3);
 	});
 
+	it("matches % and _ in the term literally", async () => {
+		await seedUser(db, { handle: "a_b" });
+		await seedUser(db, { handle: "axb" });
+		await seedUser(db, { handle: "c%d" });
+		await seedUser(db, { handle: "cxd" });
+
+		const underscore = await findUsers(db, { term: "a_b" });
+		const percent = await findUsers(db, { term: "c%d" });
+
+		expect(underscore.items.map((user) => user.handle)).toEqual(["a_b"]);
+		expect(percent.items.map((user) => user.handle)).toEqual(["c%d"]);
+	});
+
 	it("filters to administrators and to non-administrators", async () => {
 		await seedUser(db, { handle: "admin", administratorRole: "full" });
 		await seedUser(db, { handle: "regular" });
