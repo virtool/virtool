@@ -116,9 +116,9 @@ describe("<PathoscopeExport />", () => {
 
 		expect(writeText).toHaveBeenCalledWith(
 			[
-				"Name\tWeight\tDepth\tCoverage",
-				"Beta virus\t0.500\t7\t0.250",
-				"Alpha virus\t0.250\t12\t0.500",
+				"Weight\tDepth\tCoverage\tName",
+				"0.500\t7\t0.250\tBeta virus",
+				"0.250\t12\t0.500\tAlpha virus",
 			].join("\n"),
 		);
 	});
@@ -130,10 +130,10 @@ describe("<PathoscopeExport />", () => {
 
 		expect(writeText).toHaveBeenCalledWith(
 			[
-				"Name\tIsolate\tWeight\tDepth\tCoverage",
-				"Beta virus\tIsolate C\t0.250\t12\t0.500",
-				"Alpha virus\tIsolate A\t0.250\t12\t0.500",
-				"Alpha virus\tIsolate B\t0.100\t4\t0.250",
+				"Weight\tDepth\tCoverage\tName\tIsolate",
+				"0.250\t12\t0.500\tBeta virus\tIsolate C",
+				"0.250\t12\t0.500\tAlpha virus\tIsolate A",
+				"0.100\t4\t0.250\tAlpha virus\tIsolate B",
 			].join("\n"),
 		);
 	});
@@ -145,7 +145,7 @@ describe("<PathoscopeExport />", () => {
 			screen.getByRole("menuitem", { name: "OTUs without headers" }),
 		);
 
-		expect(writeText).toHaveBeenCalledWith("Beta virus\t0.500\t7\t0.250");
+		expect(writeText).toHaveBeenCalledWith("0.500\t7\t0.250\tBeta virus");
 	});
 
 	it("should copy read pseudo-counts when reads are shown", async () => {
@@ -154,7 +154,7 @@ describe("<PathoscopeExport />", () => {
 		await userEvent.click(screen.getByRole("menuitem", { name: "OTUs" }));
 
 		expect(writeText).toHaveBeenCalledWith(
-			["Name\tReads\tDepth\tCoverage", "Alpha virus\t250\t12\t0.500"].join(
+			["Reads\tDepth\tCoverage\tName", "250\t12\t0.500\tAlpha virus"].join(
 				"\n",
 			),
 		);

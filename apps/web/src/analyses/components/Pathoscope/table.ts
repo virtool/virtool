@@ -53,14 +53,14 @@ export function formatPathoscopeHitsAsTsv(
 	options: PathoscopeTableOptions,
 ): string {
 	const rows = hits.map((hit) => [
-		sanitize(hit.name),
 		formatWeight(hit.pi, options),
 		String(hit.depth),
 		hit.coverage.toFixed(3),
+		sanitize(hit.name),
 	]);
 
 	return toTsv(
-		["Name", options.showReads ? "Reads" : "Weight", "Depth", "Coverage"],
+		[options.showReads ? "Reads" : "Weight", "Depth", "Coverage", "Name"],
 		rows,
 		options.headers,
 	);
@@ -79,21 +79,21 @@ export function formatPathoscopeIsolatesAsTsv(
 ): string {
 	const rows = hits.flatMap((hit) =>
 		hit.isolates.map((isolate) => [
-			sanitize(hit.name),
-			sanitize(isolate.name),
 			formatWeight(isolate.pi, options),
 			String(isolate.depth),
 			isolate.coverage.toFixed(3),
+			sanitize(hit.name),
+			sanitize(isolate.name),
 		]),
 	);
 
 	return toTsv(
 		[
-			"Name",
-			"Isolate",
 			options.showReads ? "Reads" : "Weight",
 			"Depth",
 			"Coverage",
+			"Name",
+			"Isolate",
 		],
 		rows,
 		options.headers,

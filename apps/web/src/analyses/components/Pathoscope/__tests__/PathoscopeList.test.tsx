@@ -113,7 +113,7 @@ describe("<PathoscopeList />", () => {
 		await userEvent.click(screen.getByRole("button", { name: "Copy" }));
 
 		expect(writeText).toHaveBeenCalledWith(
-			["Name\tWeight\tDepth\tCoverage", "Beta virus\t0.250\t7\t0.250"].join(
+			["Weight\tDepth\tCoverage\tName", "0.250\t7\t0.250\tBeta virus"].join(
 				"\n",
 			),
 		);
@@ -141,9 +141,9 @@ describe("<PathoscopeList />", () => {
 
 		expect(writeText).toHaveBeenCalledWith(
 			[
-				"Name\tWeight\tDepth\tCoverage",
-				"Beta virus\t0.250\t7\t0.250",
-				"Alpha virus\t0.250\t12\t0.500",
+				"Weight\tDepth\tCoverage\tName",
+				"0.250\t7\t0.250\tBeta virus",
+				"0.250\t12\t0.500\tAlpha virus",
 			].join("\n"),
 		);
 	});
@@ -265,7 +265,7 @@ describe("<PathoscopeList />", () => {
 			await userEvent.click(screen.getByRole("button", { name: "Copy" }));
 
 			expect(writeText).toHaveBeenCalledWith(
-				["Name\tWeight\tDepth\tCoverage", "Beta virus\t0.250\t7\t0.250"].join(
+				["Weight\tDepth\tCoverage\tName", "0.250\t7\t0.250\tBeta virus"].join(
 					"\n",
 				),
 			);

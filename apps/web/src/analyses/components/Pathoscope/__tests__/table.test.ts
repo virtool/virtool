@@ -24,9 +24,9 @@ describe("formatPathoscopeHitsAsTsv()", () => {
 
 		expect(table).toBe(
 			[
-				"Name\tWeight\tDepth\tCoverage",
-				"Alpha virus\t0.250\t12\t0.500",
-				"Beta virus\t1.23E-4\t7\t0.123",
+				"Weight\tDepth\tCoverage\tName",
+				"0.250\t12\t0.500\tAlpha virus",
+				"1.23E-4\t7\t0.123\tBeta virus",
 			].join("\n"),
 		);
 	});
@@ -38,7 +38,7 @@ describe("formatPathoscopeHitsAsTsv()", () => {
 		);
 
 		expect(table).toBe(
-			["Name\tReads\tDepth\tCoverage", "Alpha virus\t250\t12\t0.500"].join(
+			["Reads\tDepth\tCoverage\tName", "250\t12\t0.500\tAlpha virus"].join(
 				"\n",
 			),
 		);
@@ -51,7 +51,7 @@ describe("formatPathoscopeHitsAsTsv()", () => {
 			{ headers: false, mappedCount: 1000, showReads: false },
 		);
 
-		expect(table).toBe("Alpha virus\t0.250\t12\t0.500");
+		expect(table).toBe("0.250\t12\t0.500\tAlpha virus");
 	});
 
 	it("should render only the header row when nothing is selected", () => {
@@ -61,7 +61,7 @@ describe("formatPathoscopeHitsAsTsv()", () => {
 				mappedCount: 1000,
 				showReads: false,
 			}),
-		).toBe("Name\tWeight\tDepth\tCoverage");
+		).toBe("Weight\tDepth\tCoverage\tName");
 	});
 
 	// A name carrying a tab or a newline would otherwise open a column or a row
@@ -72,7 +72,7 @@ describe("formatPathoscopeHitsAsTsv()", () => {
 			{ headers: false, mappedCount: 1000, showReads: false },
 		);
 
-		expect(table).toBe("Alpha virus strain\t0.250\t12\t0.500");
+		expect(table).toBe("0.250\t12\t0.500\tAlpha virus strain");
 	});
 });
 
@@ -121,10 +121,10 @@ describe("formatPathoscopeIsolatesAsTsv()", () => {
 
 		expect(table).toBe(
 			[
-				"Name\tIsolate\tWeight\tDepth\tCoverage",
-				"Alpha virus\tIsolate A\t0.250\t12\t0.500",
-				"Alpha virus\tIsolate B\t0.100\t4\t0.250",
-				"Beta virus\tIsolate C\t0.250\t12\t0.500",
+				"Weight\tDepth\tCoverage\tName\tIsolate",
+				"0.250\t12\t0.500\tAlpha virus\tIsolate A",
+				"0.100\t4\t0.250\tAlpha virus\tIsolate B",
+				"0.250\t12\t0.500\tBeta virus\tIsolate C",
 			].join("\n"),
 		);
 	});
@@ -140,7 +140,7 @@ describe("formatPathoscopeIsolatesAsTsv()", () => {
 			{ headers: false, mappedCount: 1000, showReads: true },
 		);
 
-		expect(table).toBe("Alpha virus\tIsolate A\t250\t12\t0.500");
+		expect(table).toBe("250\t12\t0.500\tAlpha virus\tIsolate A");
 	});
 
 	// A hit whose isolates were all filtered out contributes nothing rather than
