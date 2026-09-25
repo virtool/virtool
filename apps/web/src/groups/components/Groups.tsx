@@ -27,6 +27,10 @@ export default function Groups() {
 
 	const [openCreateGroup, setOpenCreateGroup] = useState(false);
 	const [openDeleteGroup, setOpenDeleteGroup] = useState(false);
+	const [groupToDelete, setGroupToDelete] = useState<{
+		id: number;
+		name: string;
+	} | null>(null);
 	const [selectedGroupId, setSelectedGroupId] = useState<number | null>(null);
 	const [prevGroups, setPrevGroups] = useState<
 		GroupMinimal[] | undefined | null
@@ -115,23 +119,13 @@ export default function Groups() {
 							outerClassName="!mb-0"
 							message="Permanently delete this group."
 							buttonText="Delete"
-							onClick={() => setOpenDeleteGroup(true)}
-						/>
-						<DeleteDialog
-							name={selectedGroup.name}
-							noun="Group"
-							message={
-								<>
-									Are you sure you want to delete{" "}
-									<strong>{selectedGroup.name}</strong>? Its samples will have
-									no group, and its reference rights will be removed.
-								</>
-							}
-							open={openDeleteGroup}
-							onOpenChange={setOpenDeleteGroup}
-							onConfirm={() =>
-								deleteMutation.mutateAsync({ id: selectedGroup.id })
-							}
+							onClick={() => {
+								setGroupToDelete({
+									id: selectedGroup.id,
+									name: selectedGroup.name,
+								});
+								setOpenDeleteGroup(true);
+							}}
 						/>
 					</TabsContent>
 				</Tabs>
@@ -140,6 +134,23 @@ export default function Groups() {
 					icon={Users}
 					title="No groups found"
 					description="No groups have been created yet."
+				/>
+			)}
+
+			{groupToDelete && (
+				<DeleteDialog
+					name={groupToDelete.name}
+					noun="Group"
+					message={
+						<>
+							Are you sure you want to delete{" "}
+							<strong>{groupToDelete.name}</strong>? Its samples will have no
+							group, and its reference rights will be removed.
+						</>
+					}
+					open={openDeleteGroup}
+					onOpenChange={setOpenDeleteGroup}
+					onConfirm={() => deleteMutation.mutateAsync({ id: groupToDelete.id })}
 				/>
 			)}
 
