@@ -15,6 +15,7 @@ import type {
 	Task,
 } from "@virtool/contracts";
 import {
+	type AnyColumn,
 	and,
 	asc,
 	count,
@@ -453,6 +454,29 @@ export async function checkReferenceVisibility(
 		.limit(1);
 
 	return Boolean(row);
+}
+
+/**
+ * A filter that restricts `column`, which holds a reference id, to references
+ * `actor` may see. Returns `undefined` for a full administrator, who sees every
+ * reference.
+ */
+export function visibleReferenceFilter(
+	db: Db,
+	column: AnyColumn,
+	actor: ReferenceActor,
+): SQL | undefined {
+	if (actor.isAdmin) {
+		return undefined;
+	}
+
+	return inArray(
+		column,
+		db
+			.select({ id: legacyReferences.id })
+			.from(legacyReferences)
+			.where(referenceVisibilityFilter(db, actor)),
+	);
 }
 
 // The rows a non-administrator may see: references they own, plus references

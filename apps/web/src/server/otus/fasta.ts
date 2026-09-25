@@ -8,6 +8,10 @@
 // suffix sniffed on the OTU and sequence *read* endpoints, which would conflate
 // two resources on one URL. The filename lives in the `Content-Disposition`
 // where it belongs.
+//
+// Being routes, they run no policy middleware, so each checks for itself that
+// the caller can see the OTU's reference. A hidden OTU is a 404, the same as a
+// missing one.
 
 import { formatIsolateName } from "@virtool/contracts";
 import type { DbOrTx } from "@virtool/data/db/pg";
@@ -16,6 +20,7 @@ import { and, eq, sql } from "drizzle-orm";
 import { requireAuthenticatedRequest } from "../auth/middleware";
 import { db } from "../composition";
 import { contentDisposition, textResponse } from "../http";
+import { isOtuVisible } from "../references/visibility";
 
 const CONTENT_TYPE = "text/plain; charset=utf-8";
 
@@ -127,6 +132,10 @@ export async function handleOtuFasta(
 		return session;
 	}
 
+	if (!(await isOtuVisible(otuId, session.userId))) {
+		return textResponse("Not found", 404);
+	}
+
 	const otu = await readOtu(db, otuId);
 
 	if (otu === null) {
@@ -166,6 +175,10 @@ export async function handleIsolateFasta(
 
 	if (session instanceof Response) {
 		return session;
+	}
+
+	if (!(await isOtuVisible(otuId, session.userId))) {
+		return textResponse("Not found", 404);
 	}
 
 	const names = await readIsolateNames(db, otuId, isolateId);
@@ -209,6 +222,10 @@ export async function handleSequenceFasta(
 
 	if (session instanceof Response) {
 		return session;
+	}
+
+	if (!(await isOtuVisible(otuId, session.userId))) {
+		return textResponse("Not found", 404);
 	}
 
 	const [row] = await selectSequenceBodies(db)

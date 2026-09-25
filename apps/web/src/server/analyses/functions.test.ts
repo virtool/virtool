@@ -8,7 +8,10 @@ import {
 import { authSessions } from "@virtool/data/db/schema/auth";
 import { indexes } from "@virtool/data/db/schema/indexes";
 import { jobs } from "@virtool/data/db/schema/jobs";
-import { legacyReferences } from "@virtool/data/db/schema/references";
+import {
+	legacyReferences,
+	legacyReferenceUsers,
+} from "@virtool/data/db/schema/references";
 import { legacySamples } from "@virtool/data/db/schema/samples";
 import { users } from "@virtool/data/db/schema/users";
 import {
@@ -93,6 +96,7 @@ beforeEach(async () => {
 	await db.delete(analysisSubtractions);
 	await db.delete(analyses);
 	await db.delete(indexes);
+	await db.delete(legacyReferenceUsers);
 	await db.delete(legacyReferences);
 	await db.delete(legacySamples);
 	await db.delete(jobs);
@@ -126,6 +130,17 @@ async function seedReference(
 			})
 			.returning({ id: legacyReferences.id }),
 	).id;
+}
+
+/** Make `userId` a member of the reference, holding no rights. */
+async function addMember(referenceId: number, userId: number): Promise<void> {
+	await db.insert(legacyReferenceUsers).values({
+		reference_id: referenceId,
+		user_id: userId,
+		build: false,
+		modify: false,
+		modify_otu: false,
+	});
 }
 
 async function seedIndex(values: {
@@ -361,12 +376,24 @@ describe("createAnalysis", () => {
 		expect(await db.select().from(analyses)).toHaveLength(0);
 	});
 
+	it("returns 409 for a reference the caller cannot see", async () => {
+		const sampleId = await seedSample({ all_write: true });
+
+		await signInAsNewUser();
+
+		await expect(call("createAnalysisFn", values(sampleId))).rejects.toThrow(
+			"Reference does not exist",
+		);
+		expect(setResponseStatus).toHaveBeenCalledWith(409);
+		expect(await db.select().from(analyses)).toHaveLength(0);
+	});
+
 	it("returns 409 for an archived reference", async () => {
 		const sampleId = await seedSample({ all_write: true });
 		const archived = await seedReference({ archived: true });
 		await seedIndex({ referenceId: archived, ready: true });
 
-		await signInAsNewUser();
+		await addMember(archived, await signInAsNewUser());
 
 		await expect(
 			call("createAnalysisFn", values(sampleId, { refId: archived })),
@@ -379,7 +406,7 @@ describe("createAnalysis", () => {
 		const unbuilt = await seedReference();
 		await seedIndex({ referenceId: unbuilt, ready: false });
 
-		await signInAsNewUser();
+		await addMember(unbuilt, await signInAsNewUser());
 
 		await expect(
 			call("createAnalysisFn", values(sampleId, { refId: unbuilt })),
@@ -390,6 +417,7 @@ describe("createAnalysis", () => {
 	it("returns 201 and the new analysis for a caller with write rights", async () => {
 		const userId = await signInAsNewUser();
 		const sampleId = await seedSample({ user_id: userId });
+		await addMember(referenceId, userId);
 
 		const analysis = (await call("createAnalysisFn", values(sampleId))) as {
 			id: number;
