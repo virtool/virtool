@@ -99,6 +99,47 @@ describe("<CreateSequence>", () => {
 		);
 	});
 
+	it("should submit lowercase multi-line sequence input as one uppercase line", async () => {
+		const segment = at(otu.schema, 0);
+
+		const createSequence = mockCreateSequence({
+			accession: "user_typed_accession",
+			definition: "user_typed_definition",
+			host: "",
+			segment: segment.name,
+			sequence: "ATGRYKM",
+		});
+
+		renderCreateSequence();
+
+		await userEvent.click(await screen.findByRole("combobox"));
+		await userEvent.click(
+			await screen.findByRole("option", { name: segment.name }),
+		);
+		await userEvent.type(
+			screen.getByRole("textbox", { name: "Accession (ID)" }),
+			"user_typed_accession",
+		);
+		await userEvent.type(
+			screen.getByRole("textbox", { name: "Definition" }),
+			"user_typed_definition",
+		);
+		await userEvent.type(
+			screen.getByRole("textbox", { name: /Sequence [0-9]/ }),
+			"atgr{Enter}yk m",
+		);
+
+		expect(screen.getByRole("textbox", { name: "Sequence 7" })).toBeVisible();
+
+		await userEvent.click(screen.getByRole("button", { name: "Save" }));
+
+		await waitFor(() =>
+			expect(createSequence).toHaveBeenCalledWith({
+				data: expect.objectContaining({ sequence: "ATGRYKM" }),
+			}),
+		);
+	});
+
 	it("should display errors when accession, definition, or sequence not defined", async () => {
 		renderCreateSequence();
 

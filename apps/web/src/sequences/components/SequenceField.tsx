@@ -1,6 +1,7 @@
 import Badge from "@base/Badge";
 import { InputError, InputGroup, InputLabel } from "@base/Input";
 import TextArea from "@base/TextArea";
+import { normalizeSequence, SEQUENCE_PATTERN } from "@virtool/contracts";
 import { useFormContext } from "react-hook-form";
 
 /**
@@ -26,8 +27,9 @@ export default function SequenceField() {
 				aria-describedby={errors.sequence ? "sequence-error" : undefined}
 				{...register("sequence", {
 					required: "Required Field",
+					setValueAs: normalizeSequence,
 					pattern: {
-						value: /^[ATCGNRYKM]*$/,
+						value: SEQUENCE_PATTERN,
 						message: "Sequence should only contain the characters: ATCGNRYKM",
 					},
 				})}
