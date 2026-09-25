@@ -275,21 +275,21 @@ export default function SamplesList({
 				<SampleToolbar
 					term={term}
 					reset={termReset}
-					onChange={(term) => setSearch({ term })}
+					onChange={(term) => setSearch({ page: 1, term })}
 				/>
 				<FilterBar
 					dateFilter={dateFilter}
 					groups={groups}
 					labels={labels}
 					onChangeDate={handleChangeDate}
-					onClearGroups={() => setSearch({ groups: [] })}
-					onClearLabels={() => setSearch({ labels: [] })}
+					onClearGroups={() => setSearch({ groups: [], page: 1 })}
+					onClearLabels={() => setSearch({ labels: [], page: 1 })}
 					onClearTerm={() => {
 						setTermReset({ value: "" });
-						setSearch({ term: "" });
+						setSearch({ page: 1, term: "" });
 					}}
-					onClearUsers={() => setSearch({ users: [] })}
-					onClearWorkflows={() => setSearch({ workflows: [] })}
+					onClearUsers={() => setSearch({ page: 1, users: [] })}
+					onClearWorkflows={() => setSearch({ page: 1, workflows: [] })}
 					onToggleGroup={(groupId) =>
 						setSearch({ groups: xor(filterGroups, [groupId]), page: 1 })
 					}
