@@ -11,7 +11,7 @@
  */
 
 import type { LibraryType } from "@virtool/contracts";
-import type { WorkflowContext } from "@virtool/workflow";
+import type { AnalysisSubtraction, WorkflowContext } from "@virtool/workflow";
 import {
 	createFakeAnalysis,
 	createFakeContext,
@@ -23,7 +23,7 @@ import {
 	registerFakePigz,
 } from "@virtool/workflow/testing";
 import { onTestFinished } from "vitest";
-import type { NuvsData, NuvsSubtraction } from "../context";
+import type { NuvsData } from "../context";
 import { workPaths } from "../paths";
 import { createNuvsState, type NuvsRawContig } from "../state";
 
@@ -40,7 +40,7 @@ export type SetupStepOptions = {
 	subtractionCount?: number;
 };
 
-function createSubtraction(id: number, workPath: string): NuvsSubtraction {
+function createSubtraction(id: number, workPath: string): AnalysisSubtraction {
 	return {
 		id,
 		name: `Sub ${id}`,

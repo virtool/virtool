@@ -338,8 +338,8 @@ describe("createReferenceIndexStep", () => {
 		).resolves.toBe("cached shard");
 	});
 
-	// The namespace is shared, so a blob can have been archived from a directory
-	// named something else and unpacks beside the index rather than onto it.
+	// A blob can have been archived by an older run from a directory named
+	// something else and unpacks beside the index rather than onto it.
 	// Reported here rather than left for bowtie2 to hit as a missing index.
 	it("fails when a cached blob restores outside the index directory", async () => {
 		const { builtFastas, paths, run, seedCachedIndex, state, workPath } =
@@ -378,8 +378,8 @@ describe("createSubtractionIndexStep", () => {
 		).resolves.toBe("built shard");
 	});
 
-	// The genome is gigabytes for a host subtraction and the shared
-	// `subtraction_mapping_index` namespace makes a hit the steady state, so a run
+	// The genome is gigabytes for a host subtraction and reuse across analyses
+	// makes a hit the steady state, so a run
 	// that restores the index must not have pulled it out of storage at all.
 	it("downloads no genome on a cache hit", async () => {
 		const { builtFastas, fastaPath, paths, run, seedCachedIndex, state } =

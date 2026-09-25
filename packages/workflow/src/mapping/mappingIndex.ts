@@ -1,25 +1,25 @@
 /**
  * Building a bowtie2 index, and reusing one another run already built.
  *
- * This lives in the runtime rather than in one workflow app because the two
- * namespaces below are shared by every workflow that maps against a reference
- * or a subtraction. `bowtie2-build` produces the same shards from the same
- * FASTA whoever runs it, so the artifact really is interchangeable and the
- * derivation has to be identical everywhere.
+ * This lives in the runtime rather than in one workflow app because every
+ * workflow that maps against a reference or a subtraction builds its index the
+ * same way and derives its key from the same fields.
  *
- * **The workflow name is a parameter, not a constant.** It is a field in every
- * derived key — and in every key already in the bucket — so pathoscope and
- * nuvs memoize under separate keys. Hardcoding it here would silently give
- * every caller the first one's namespace.
+ * **Each workflow has its own namespaces.** The workflow name and version are
+ * fields in every derived key — and in every key already in the bucket — so
+ * pathoscope and nuvs never restore each other's indexes. That is deliberate:
+ * the two workflows prepare different FASTA files, and a key that omitted them
+ * would restore an index built from other input with nothing to report it.
+ * Hardcoding the name here would silently give every caller the first one's
+ * namespace.
  */
 
 import { mkdir } from "node:fs/promises";
 import { dirname } from "node:path";
 import type { JobWorkflow } from "@virtool/contracts";
 import type { Logger } from "@virtool/logger";
-import type { WorkflowCache } from "../cache/cache";
-import { type CacheParams, deriveCacheKey } from "../cache/key";
-import { WorkflowError } from "../errors";
+import { restoreOrBuild, type WorkflowCache } from "../cache/cache";
+import type { CacheParams } from "../cache/key";
 import type { RunSubprocess } from "../subprocess/types";
 import { matchToolVersion } from "../subprocess/version";
 
@@ -81,8 +81,7 @@ export async function getBowtie2BuildVersion(
  * Params for the two shared mapping-index namespaces.
  *
  * This field set is frozen: blobs already in the bucket are addressed by keys
- * derived from exactly these fields. There is deliberately no discriminator:
- * sharing is the point.
+ * derived from exactly these fields.
  *
  * **`parent_id` is a number, not a string.** `WFIndex.id` and
  * `WFSubtraction.id` are both integers, and the canonical form writes
@@ -92,7 +91,7 @@ export async function getBowtie2BuildVersion(
  * `extra` is what describes the FASTA the index was built from, and it differs
  * per workflow: pathoscope builds its reference index off a collapsed reference,
  * nuvs straight off the artifact's default isolates. A caller that gets it wrong
- * shares a namespace with a workflow that built different bytes.
+ * restores an index a different version of itself built from different bytes.
  */
 export function buildMappingIndexCacheParams({
 	extra,
@@ -156,7 +155,7 @@ export type CreateMappingIndexOptions = {
  * archived as `reference_index/` and unpacks to the same place. That is what
  * makes a caller's work-path layout part of the cache contract rather than a
  * local convention: the directory holding `indexPrefix` is named inside the
- * blob, and it is a blob every other workflow may restore.
+ * blob, and it is a blob every later run of the workflow may restore.
  */
 export async function createMappingIndex({
 	cache,
@@ -172,8 +171,6 @@ export async function createMappingIndex({
 	workflow,
 	workflowVersion,
 }: CreateMappingIndexOptions): Promise<void> {
-	const indexDir = dirname(indexPrefix);
-
 	const params = buildMappingIndexCacheParams({
 		extra: extraParams,
 		indexKind,
@@ -183,40 +180,15 @@ export async function createMappingIndex({
 		workflowVersion,
 	});
 
-	const key = deriveCacheKey(params);
-	const log = logger.child({ indexKind, key, parentId });
-
-	const restored = await cache.get(key, dirname(indexDir));
-
-	if (restored !== null) {
-		// A blob's one top-level entry is named after the directory its writer
-		// archived, and both namespaces here are shared — so a blob archived from a
-		// differently named directory unpacks *beside* the index rather than onto
-		// it. Thrown rather than treated as a miss: `cache.put` cannot replace a
-		// registered key, so rebuilding would hand the same blob back to every
-		// later run while leaving the stray tree on a disk sized for one copy of
-		// the index. Reported here, where the key and the two paths say what is
-		// wrong, rather than as bowtie2 failing on a missing index.
-		if (restored !== indexDir) {
-			throw new WorkflowError(
-				`Cached ${indexKind} restored to ${restored}, not ${indexDir}`,
-			);
-		}
-
-		log.info("restored cached mapping index");
-
-		return;
-	}
-
-	log.info("building mapping index");
-
-	await prepareFasta();
-
-	await buildBowtie2Index(runSubprocess, fastaPath, indexPrefix, proc);
-
-	// An already-registered key is success, not an error: another run can have
-	// derived the same key and built the same index while this one was working.
-	const created = await cache.put(key, indexDir, params);
-
-	log.info({ created }, "cached mapping index");
+	await restoreOrBuild({
+		cache,
+		kind: indexKind,
+		params,
+		directory: dirname(indexPrefix),
+		logger: logger.child({ parentId }),
+		async build() {
+			await prepareFasta();
+			await buildBowtie2Index(runSubprocess, fastaPath, indexPrefix, proc);
+		},
+	});
 }

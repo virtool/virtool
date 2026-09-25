@@ -19,6 +19,7 @@
 		"@virtool/contracts": "workspace:*",
 		"@virtool/logger": "workspace:*",
 		"@virtool/sentry": "workspace:*",
+		"@virtool/sqlite": "workspace:*",
 		"@virtool/storage": "workspace:*",
 		"execa": "^10.0.1",
 		"undici": "^8.10.2",

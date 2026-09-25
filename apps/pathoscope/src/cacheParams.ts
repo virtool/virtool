@@ -6,20 +6,20 @@
  * matches the one a blob was archived under derives the same key and the run
  * reuses that blob. That reuse is silent when it works and silent when it does
  * not — a divergence misses every lookup and writes a second copy under a key
- * nothing else will ever ask for — so the shared namespaces are pinned by tests
+ * nothing else will ever ask for — so the mapping-index namespaces are pinned by tests
  * against the keys blobs already in the bucket were written under.
  *
- * ## Two namespaces are shared and one is forked
+ * ## Two namespaces continue and one is forked
  *
- * - `reference_mapping_index` and `subtraction_mapping_index` are **shared**,
- *   and their params are the runtime's `buildMappingIndexCacheParams` rather
- *   than anything declared here. Their artifact is a bowtie2 index, which
- *   `bowtie2-build` produces identically whoever ran it, so this side
- *   contributes only {@link WORKFLOW_NAME} and
- *   {@link REFERENCE_INDEX_EXTRA_PARAMS} — what the index was built from.
- * - `collapsed_reference` is **forked**, deliberately, and is this workflow's
- *   alone. Its artifact is a SQLite index *this code* writes, and a collapsed
- *   index from the shared namespace is not interchangeable with it.
+ * - `reference_mapping_index` and `subtraction_mapping_index` continue the
+ *   namespaces older pathoscope releases wrote. Their params are the runtime's
+ *   `buildMappingIndexCacheParams` rather than anything declared here, so this
+ *   side contributes only {@link WORKFLOW_NAME} and
+ *   {@link REFERENCE_INDEX_EXTRA_PARAMS} — what the index was built from. The
+ *   workflow name keeps them apart from nuvs' mapping indexes.
+ * - `collapsed_reference` is **forked**, deliberately, from the namespace older
+ *   releases wrote. Its artifact is a SQLite index *this code* writes, and a
+ *   collapsed index an older release wrote is not interchangeable with it.
  *   {@link COLLAPSE_IMPL} is the discriminator that makes the derived key
  *   differ by construction, so the two namespaces cannot collide. Removing it
  *   would let a collapsed index this code did not write be restored here and
@@ -37,9 +37,9 @@ export const WORKFLOW_NAME = "pathoscope";
 
 /**
  * The discriminator that forks the `collapsed_reference` namespace away from
- * the shared one.
+ * the one older releases wrote.
  *
- * A field the shared namespace's params do not carry, so the sorted-key
+ * A field the older namespace's params do not carry, so the sorted-key
  * serialization differs and so does the SHA-256 over it. Bump the value if the
  * collapsed artifact's content ever changes shape; do not remove it.
  */
