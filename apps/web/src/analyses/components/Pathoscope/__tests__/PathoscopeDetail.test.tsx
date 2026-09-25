@@ -70,22 +70,22 @@ function renderDetail(search: Partial<AnalysisSearch> = {}) {
 }
 
 describe("<PathoscopeDetail />", () => {
-	it("should hide isolates under the coverage cutoff", () => {
+	it("should show every isolate when the URL says nothing", () => {
 		renderDetail();
-
-		expect(screen.getByText("Covered")).toBeInTheDocument();
-		expect(screen.queryByText("Sparse")).not.toBeInTheDocument();
-	});
-
-	it("should show every isolate once the filter is off", () => {
-		renderDetail({ showLowIsolates: true });
 
 		expect(screen.getByText("Covered")).toBeInTheDocument();
 		expect(screen.getByText("Sparse")).toBeInTheDocument();
 	});
 
+	it("should hide isolates under the coverage cutoff once the filter is on", () => {
+		renderDetail({ showLowIsolates: false });
+
+		expect(screen.getByText("Covered")).toBeInTheDocument();
+		expect(screen.queryByText("Sparse")).not.toBeInTheDocument();
+	});
+
 	it("should hold isolates to the cutoff the search carries", () => {
-		renderDetail({ minCoverage: 0.95 });
+		renderDetail({ minCoverage: 0.95, showLowIsolates: false });
 
 		expect(screen.queryByText("Covered")).not.toBeInTheDocument();
 	});
