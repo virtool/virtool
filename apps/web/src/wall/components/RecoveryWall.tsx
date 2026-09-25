@@ -8,7 +8,8 @@ import {
 } from "@server/auth/recoveryFunctions";
 import { useQueryClient } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
-import { useLayoutEffect, useRef, useState } from "react";
+import { useRef, useState } from "react";
+import { useCapturedUrlParams } from "../hooks";
 import { rootQueryKeys } from "../keys";
 import { WallContainer } from "./WallContainer";
 import { WallTitle } from "./WallTitle";
@@ -30,24 +31,10 @@ export default function RecoveryWall() {
 	const [password, setPassword] = useState("");
 	const [error, setError] = useState("");
 	const [pending, setPending] = useState(false);
-	const captured = useRef(false);
 	const submitting = useRef(false);
 	const queryClient = useQueryClient();
 
-	useLayoutEffect(() => {
-		if (captured.current) {
-			return;
-		}
-		captured.current = true;
-		const fragment = new URLSearchParams(window.location.hash.slice(1));
-		const query = new URLSearchParams(window.location.search);
-		const token = fragment.get("token") ?? query.get("token");
-		const purpose = fragment.get("purpose") ?? query.get("purpose");
-		window.history.replaceState(
-			window.history.state,
-			"",
-			window.location.pathname,
-		);
+	useCapturedUrlParams(["token", "purpose"], ({ token, purpose }) => {
 		if (!token) {
 			setState({ status: "request" });
 			return;
@@ -73,7 +60,7 @@ export default function RecoveryWall() {
 				);
 				setState({ status: "unusable" });
 			});
-	}, []);
+	});
 
 	async function requestRecovery(event: React.FormEvent<HTMLFormElement>) {
 		event.preventDefault();
