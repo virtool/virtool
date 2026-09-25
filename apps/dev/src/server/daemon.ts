@@ -102,8 +102,11 @@ export async function runDaemon(
 	);
 	store.setMeta("client_hash", primaryHash);
 	store.setMeta("daemon_hash", primaryHash);
+	// Storage usage refreshes only while the UI is open, so a new viewer needs a
+	// refresh to avoid waiting for the next Docker event.
 	const feed = new SnapshotFeed(
 		emptySnapshot(store.repositoryId, store.getWorkflowConcurrency()),
+		requestRefresh,
 	);
 	const builds = new BuildCoordinator();
 	const logger = createLogger({ name: "dev" });

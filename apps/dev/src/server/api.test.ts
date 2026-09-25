@@ -23,6 +23,18 @@ const snapshot: Snapshot = {
 	updateAvailable: false,
 };
 
+describe("snapshot feed", () => {
+	it("notifies only when the first subscriber connects", () => {
+		const onFirstSubscriber = vi.fn();
+		const feed = new SnapshotFeed(snapshot, onFirstSubscriber);
+		const unsubscribe = feed.subscribe(vi.fn());
+		feed.subscribe(vi.fn());
+		expect(onFirstSubscriber).toHaveBeenCalledTimes(1);
+		unsubscribe();
+		expect(onFirstSubscriber).toHaveBeenCalledTimes(1);
+	});
+});
+
 describe("management API", () => {
 	it("returns live state", async () => {
 		const app = createApi(
