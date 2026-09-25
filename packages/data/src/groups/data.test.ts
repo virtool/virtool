@@ -192,13 +192,56 @@ describe("updateGroup", () => {
 		expect((await readGroup(groupId))?.permissions).toEqual(group.permissions);
 	});
 
-	it("applies concurrent permission toggles without losing either", async () => {
+	it("keeps a permission toggle committed while another waits on the row", async () => {
 		const groupId = await seedGroup(db);
+		const holder = database.connect();
+		const observer = database.connect();
+		let releaseLock = () => {};
+		const release = new Promise<void>((resolve) => {
+			releaseLock = resolve;
+		});
+		let reportLocked = () => {};
+		const locked = new Promise<void>((resolve) => {
+			reportLocked = resolve;
+		});
 
-		await Promise.all([
-			updateGroup(db, groupId, { permissions: { create_ref: true } }),
-			updateGroup(db, groupId, { permissions: { upload_file: true } }),
-		]);
+		try {
+			const transaction = holder.client.begin(async (tx) => {
+				await tx`update groups set permissions = permissions || '{"create_ref": true}'::jsonb where id = ${groupId}`;
+				reportLocked();
+				await release;
+			});
+			await locked;
+
+			const update = updateGroup(db, groupId, {
+				permissions: { upload_file: true },
+			});
+			let isWaiting = false;
+			for (let attempt = 0; attempt < 100; attempt += 1) {
+				const rows = await observer.client<
+					{ wait_event_type: string | null }[]
+				>`
+					select wait_event_type
+					from pg_stat_activity
+					where datname = current_database()
+						and query like 'update "groups"%'
+						and wait_event_type = 'Lock'
+				`;
+				if (rows.length > 0) {
+					isWaiting = true;
+					break;
+				}
+				await new Promise((resolve) => setTimeout(resolve, 10));
+			}
+			expect(isWaiting).toBe(true);
+
+			releaseLock();
+			await transaction;
+			await update;
+		} finally {
+			releaseLock();
+			await Promise.all([holder.close(), observer.close()]);
+		}
 
 		expect((await readGroup(groupId))?.permissions).toEqual({
 			...NO_PERMISSIONS,
