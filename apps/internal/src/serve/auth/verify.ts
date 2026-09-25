@@ -32,6 +32,11 @@ const TERMINAL_REFUSALS: Record<string, string> = {
 	succeeded: "Job has succeeded.",
 };
 
+/** Get what a runner is told for a job in `state`, or `null` if it is not terminal. */
+export function getTerminalRefusal(state: string): string | null {
+	return TERMINAL_REFUSALS[state] ?? null;
+}
+
 /**
  * The `job-{id}` login carried by the Basic credentials.
  *
@@ -226,7 +231,7 @@ export async function verifyJobRequest(
 
 	// Past the key comparison, so everything below is being told to a caller who
 	// has proved it holds this job's key.
-	const terminalMessage = TERMINAL_REFUSALS[row.state];
+	const terminalMessage = getTerminalRefusal(row.state);
 
 	if (terminalMessage) {
 		return { ok: false, terminalMessage };

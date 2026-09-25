@@ -9,6 +9,7 @@ import {
 	type TestDatabase,
 } from "@virtool/data/db/test/fixtures";
 import { emit } from "@virtool/data/events/emit";
+import { pingJob } from "@virtool/data/jobs/data";
 import { createLogger } from "@virtool/logger";
 import { MemoryStorage } from "@virtool/storage";
 import { eq } from "drizzle-orm";
@@ -38,6 +39,13 @@ vi.mock("@virtool/data/events/emit", () => ({
 	createEmitter: vi.fn(),
 	emit: vi.fn(),
 }));
+
+vi.mock("@virtool/data/jobs/data", async (importOriginal) => {
+	const actual =
+		await importOriginal<typeof import("@virtool/data/jobs/data")>();
+
+	return { ...actual, pingJob: vi.fn(actual.pingJob) };
+});
 
 let database: TestDatabase;
 let db: Db;
@@ -522,6 +530,41 @@ describe("handlePingJob", () => {
 
 		expect(response.status).toBe(401);
 		expect(await response.json()).toEqual({ message: "Job is cancelled." });
+	});
+
+	// The guard has already read the job as running, so only the write itself
+	// can see the cancellation.
+	it("refuses a ping for a job cancelled after the guard let it through", async () => {
+		const job = await seedRunning();
+
+		const { pingJob: actualPingJob } = await vi.importActual<
+			typeof import("@virtool/data/jobs/data")
+		>("@virtool/data/jobs/data");
+
+		vi.mocked(pingJob).mockImplementationOnce(async (db, jobId) => {
+			await db
+				.update(jobs)
+				.set({ state: "cancelled" })
+				.where(eq(jobs.id, jobId));
+
+			return actualPingJob(db, jobId);
+		});
+
+		const response = await handlePingJob(
+			deps,
+			authorized(job, `/jobs/${job.id}/ping`, "PUT"),
+			String(job.id),
+		);
+
+		expect(response.status).toBe(401);
+		expect(await response.json()).toEqual({ message: "Job is cancelled." });
+
+		const [row] = await db
+			.select({ pinged_at: jobs.pinged_at })
+			.from(jobs)
+			.where(eq(jobs.id, job.id));
+
+		expect(row?.pinged_at).toBeNull();
 	});
 
 	it("refuses a job the sweep has already failed", async () => {

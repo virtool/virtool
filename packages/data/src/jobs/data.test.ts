@@ -321,6 +321,32 @@ describe("the lifecycle transitions", () => {
 		},
 	);
 
+	it.each<JobState>(["cancelled", "failed", "succeeded"])(
+		"refuses a ping against a job that is %s",
+		async (state) => {
+			const claimed = await claimFresh();
+
+			const pingedAt = new Date("2020-01-01T00:00:00Z");
+
+			await db
+				.update(jobs)
+				.set({ pinged_at: pingedAt, state })
+				.where(eq(jobs.id, claimed.id));
+
+			await expect(pingJob(db, claimed.id)).rejects.toMatchObject({
+				constructor: JobTerminalStateError,
+				state,
+			});
+
+			const [row] = await db
+				.select({ pinged_at: jobs.pinged_at })
+				.from(jobs)
+				.where(eq(jobs.id, claimed.id));
+
+			expect(row?.pinged_at).toEqual(pingedAt);
+		},
+	);
+
 	it("reports a ping against a job that no longer exists", async () => {
 		const claimed = await claimFresh();
 

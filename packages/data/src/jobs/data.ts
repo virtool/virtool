@@ -86,7 +86,11 @@ export class JobStepNotFoundError extends AppError {}
 export class JobStepAlreadyStartedError extends AppError {}
 
 /** Thrown when a job is asked to do something it has already finished doing. */
-export class JobTerminalStateError extends AppError {}
+export class JobTerminalStateError extends AppError {
+	constructor(readonly state: JobState) {
+		super(`Job is ${state}`);
+	}
+}
 
 /** Thrown when a job that is not running is asked to finish. */
 export class JobNotRunningError extends AppError {}
@@ -444,7 +448,12 @@ export async function claimJob(
  * ping would cost a refetch per job per five seconds for a timestamp no view
  * displays.
  *
+ * The state is checked in the update itself, not trusted from the caller's
+ * earlier read: a job cancelled between that read and this write must not be
+ * stamped as alive.
+ *
  * @throws {JobNotFoundError} when no such job exists.
+ * @throws {JobTerminalStateError} when the job has already finished.
  */
 export async function pingJob(db: Db, jobId: number): Promise<Date> {
 	const pingedAt = new Date();
@@ -452,14 +461,26 @@ export async function pingJob(db: Db, jobId: number): Promise<Date> {
 	const updated = await db
 		.update(jobs)
 		.set({ pinged_at: pingedAt })
-		.where(eq(jobs.id, jobId))
+		.where(
+			and(eq(jobs.id, jobId), inArray(jobs.state, NON_TERMINAL_JOB_STATES)),
+		)
 		.returning({ id: jobs.id });
 
-	if (updated.length === 0) {
+	if (updated.length > 0) {
+		return pingedAt;
+	}
+
+	const [job] = await db
+		.select({ state: jobs.state })
+		.from(jobs)
+		.where(eq(jobs.id, jobId))
+		.limit(1);
+
+	if (!job) {
 		throw new JobNotFoundError();
 	}
 
-	return pingedAt;
+	throw new JobTerminalStateError(job.state);
 }
 
 /** A step that has just been started, so its `started_at` is set by construction. */
@@ -500,7 +521,7 @@ export async function startJobStep(
 		}
 
 		if (isJobStateTerminal(job.state)) {
-			throw new JobTerminalStateError();
+			throw new JobTerminalStateError(job.state);
 		}
 
 		const found = job.steps?.find((each) => each.id === stepId);
