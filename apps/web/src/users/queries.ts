@@ -2,13 +2,13 @@ import { analysesQueryKeys } from "@analyses/keys";
 import { useRecentlyAuthenticatedMutation } from "@app/recentAuthentication";
 import {
 	createUserFn,
+	deletePendingUserFn,
 	findUsersFn,
 	getInvitationEmailAvailabilityFn,
 	getInvitationFn,
 	getUserFn,
 	listUsersFn,
 	regenerateInvitationFn,
-	revokeInvitationFn,
 	searchUsersFn,
 	setAdministratorRoleFn,
 	updateUserFn,
@@ -180,19 +180,16 @@ export function useRegenerateInvitation() {
 	});
 }
 
-/** Revoke the current invitation generation. */
-export function useRevokeInvitation() {
+/** Delete a user whose invitation is still pending. */
+export function useDeletePendingUser() {
 	const queryClient = useQueryClient();
 	const mutationFn = useRecentlyAuthenticatedMutation((userId: number) =>
-		revokeInvitationFn({ data: { userId } }),
+		deletePendingUserFn({ data: { userId } }),
 	);
 	return useMutation({
 		mutationFn,
-		onSuccess: (invitation) => {
-			queryClient.setQueryData(
-				[...userQueryKeys.detail(invitation.userId), "invitation"],
-				invitation,
-			);
+		onSuccess: () => {
+			queryClient.invalidateQueries({ queryKey: userQueryKeys.lists() });
 		},
 	});
 }

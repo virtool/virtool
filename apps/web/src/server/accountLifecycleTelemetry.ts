@@ -6,7 +6,7 @@ export function recordAccountLifecycle(input: {
 	operation:
 		| "invitation_create"
 		| "invitation_regenerate"
-		| "invitation_revoke"
+		| "invitation_delete"
 		| "invitation_accept"
 		| "bootstrap";
 	outcome: "success" | "failure" | "copy_only" | "queued";

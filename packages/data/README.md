@@ -310,14 +310,15 @@ copy-only or queued delivery, optional provider-neutral outbox row, and distinct
 consumed, superseded, and revoked timestamps. `src/users/invitations.ts` creates
 the pending user, identity, role/groups, token, and optional outbox message in
 one transaction. Regeneration serializes on the user's setup advisory lock and
-invalidates older generations. A plaintext token is returned only for a
+invalidates older generations. Deleting a pending user takes the same lock and
+cascades to its tokens. A plaintext token is returned only for a
 copy-only creation or regeneration; emailed generations expose only metadata so
 acceptance proves control of the bound mailbox.
 
 Copied invitations leave the assigned normalized email unverified. A queued
 invitation proves control of that exact address when accepted. Acceptance uses
 the token-bound address, invalidates every prior session and setup credential,
-and cannot race regeneration or revocation. The 72-hour lifetime is shared in
+and cannot race regeneration or deletion. The 72-hour lifetime is shared in
 `@virtool/contracts`; expired rows are removed by `cleanup_setup_state`.
 
 ## Outbound requests

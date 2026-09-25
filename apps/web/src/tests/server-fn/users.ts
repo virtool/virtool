@@ -17,7 +17,7 @@ export const userServerFnMocks = {
 	getInvitationEmailAvailabilityFn: vi.fn(),
 	createUserFn: vi.fn(),
 	regenerateInvitationFn: vi.fn(),
-	revokeInvitationFn: vi.fn(),
+	deletePendingUserFn: vi.fn(),
 	updateUserFn: vi.fn(),
 	updateAccountHandleFn: vi.fn(),
 	changePasswordFn: vi.fn(),
@@ -157,13 +157,10 @@ export function mockRegenerateInvitation(user: User, email: string): Mock {
 	return userServerFnMocks.regenerateInvitationFn;
 }
 
-/** Sets up revokeInvitation to return the given invitation marked revoked. */
-export function mockRevokeInvitation(invitation: Invitation): Mock {
-	userServerFnMocks.revokeInvitationFn.mockResolvedValue({
-		...invitation,
-		revokedAt: new Date(),
-	});
-	return userServerFnMocks.revokeInvitationFn;
+/** Sets up deletePendingUser to resolve. */
+export function mockDeletePendingUser(): Mock {
+	userServerFnMocks.deletePendingUserFn.mockResolvedValue(null);
+	return userServerFnMocks.deletePendingUserFn;
 }
 
 /** Sets up createUser to resolve with the given user (or reject on a 4xx code). */

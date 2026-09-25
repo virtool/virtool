@@ -5,12 +5,12 @@ import { createFakeUser } from "@tests/fake/user";
 import { mockListGroups } from "@tests/server-fn/groups";
 import {
 	createFakeInvitation,
+	mockDeletePendingUser,
 	mockGetAccount,
 	mockGetInvitation,
 	mockGetUser,
 	mockInvitationEmailAvailability,
 	mockRegenerateInvitation,
-	mockRevokeInvitation,
 } from "@tests/server-fn/users";
 import { renderWithRouter } from "@tests/setup";
 import UserDetail from "@users/components/UserDetail";
@@ -42,7 +42,6 @@ describe("<InvitationControls />", () => {
 		expect(
 			await screen.findByRole("heading", { name: /bob@example.com/ }),
 		).toBeInTheDocument();
-		expect(screen.getByText("Invited")).toBeInTheDocument();
 		expect(screen.getByText("Pending")).toBeInTheDocument();
 		expect(screen.getByText("in 3 days")).toBeInTheDocument();
 		expect(screen.getByText("Shared link")).toBeInTheDocument();
@@ -60,7 +59,6 @@ describe("<InvitationControls />", () => {
 			await screen.findByText(/The invitation link expired/),
 		).toBeInTheDocument();
 		expect(screen.getAllByText("Expired")).toHaveLength(2);
-		expect(screen.getByRole("button", { name: "Revoke" })).toBeDisabled();
 	});
 
 	it("warns when the invitation email failed", async () => {
@@ -139,27 +137,43 @@ describe("<InvitationControls />", () => {
 		).not.toBeInTheDocument();
 	});
 
-	it("revokes the invitation after confirmation", async () => {
+	it("deletes the invited user after confirmation", async () => {
 		mockGetInvitation(invitation);
-		const revoke = mockRevokeInvitation(invitation);
+		const deletePendingUser = mockDeletePendingUser();
 
-		await renderWithRouter(<UserDetail userId={user.id} />);
-
-		await userEvent.click(
-			await screen.findByRole("button", { name: "Revoke" }),
+		const { router } = await renderWithRouter(
+			<UserDetail userId={user.id} />,
+			`/administration/users/${user.id}`,
 		);
-		expect(revoke).not.toHaveBeenCalled();
 
-		const dialog = screen.getByRole("dialog");
 		expect(
-			within(dialog).getByText(/The setup link sent to bob@example.com/),
+			await screen.findByRole("heading", { name: "Danger Zone" }),
 		).toBeInTheDocument();
+		expect(
+			screen.queryByRole("button", { name: "Deactivate" }),
+		).not.toBeInTheDocument();
+		expect(
+			screen.queryByRole("button", { name: "Revoke" }),
+		).not.toBeInTheDocument();
+
 		await userEvent.click(
-			within(dialog).getByRole("button", { name: "Revoke" }),
+			await screen.findByRole("button", { name: "Delete" }),
+		);
+		expect(deletePendingUser).not.toHaveBeenCalled();
+
+		const dialog = screen.getByRole("alertdialog");
+		expect(within(dialog).getByText("bob@example.com")).toBeInTheDocument();
+		await userEvent.click(
+			within(dialog).getByRole("button", { name: "Confirm" }),
 		);
 
-		await waitFor(() => expect(revoke).toHaveBeenCalled());
-		expect(await screen.findByText("Revoked")).toBeInTheDocument();
-		expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+		await waitFor(() =>
+			expect(deletePendingUser).toHaveBeenCalledWith({
+				data: { userId: user.id },
+			}),
+		);
+		await waitFor(() =>
+			expect(router.state.location.pathname).toBe("/administration/users"),
+		);
 	});
 });

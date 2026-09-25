@@ -5,7 +5,7 @@ import {
 	type Invitation,
 	type InvitationDelivery,
 } from "@virtool/contracts";
-import { and, desc, eq, isNull, max } from "drizzle-orm";
+import { and, desc, eq, max } from "drizzle-orm";
 import type { PostgresError } from "postgres";
 import { normalizeEmail } from "../auth/email";
 import {
@@ -16,7 +16,6 @@ import type { Db, DbOrTx } from "../db/pg";
 import { emailOutbox } from "../db/schema/emailOutbox";
 import { setupTokens } from "../db/schema/setup";
 import { users } from "../db/schema/users";
-import { nowUtc } from "../db/time";
 import { enqueueEmail } from "../email/outbox";
 import { AppError } from "../errors";
 import { emit } from "../events/emit";
@@ -24,6 +23,7 @@ import {
 	createPendingUserInTransaction,
 	getUser,
 	UserConflictError,
+	UserNotFoundError,
 } from "./data";
 
 /** An invitation operation targeted a user that is not pending and active. */
@@ -255,38 +255,23 @@ export async function regenerateInvitation(
 	};
 }
 
-/** Explicitly revoke every live account-completion link for a pending user. */
-export async function revokeInvitation(
-	db: Db,
-	userId: number,
-): Promise<Invitation> {
+/** Delete a pending user and, through cascades, every invitation it holds. */
+export async function deletePendingUser(db: Db, userId: number): Promise<void> {
 	await db.transaction(async (tx) => {
 		await lockUserSetupCredentials(tx, userId);
 		const [user] = await tx
-			.select({ active: users.active, lifecycleState: users.lifecycleState })
+			.select({ lifecycleState: users.lifecycleState })
 			.from(users)
 			.where(eq(users.id, userId))
 			.for("update")
 			.limit(1);
-		if (user?.lifecycleState !== "pending") {
+		if (!user) {
+			throw new UserNotFoundError();
+		}
+		if (user.lifecycleState !== "pending") {
 			throw new InvitationNotEligibleError();
 		}
-		const revoked = await tx
-			.update(setupTokens)
-			.set({ revokedAt: nowUtc() })
-			.where(
-				and(
-					eq(setupTokens.userId, userId),
-					eq(setupTokens.purpose, "account_completion"),
-					isNull(setupTokens.consumedAt),
-					isNull(setupTokens.supersededAt),
-					isNull(setupTokens.revokedAt),
-				),
-			)
-			.returning({ id: setupTokens.id });
-		if (revoked.length === 0) {
-			throw new InvitationNotFoundError();
-		}
+		await tx.delete(users).where(eq(users.id, userId));
 	});
-	return getInvitation(db, userId);
+	await emit("users", userId, "delete");
 }

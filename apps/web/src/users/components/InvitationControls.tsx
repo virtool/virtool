@@ -12,7 +12,6 @@ import type { Invitation } from "@virtool/contracts";
 import { CircleAlert } from "lucide-react";
 import type { ReactNode } from "react";
 import { ReissueInvitationDialog } from "./ReissueInvitationDialog";
-import { RevokeInvitationDialog } from "./RevokeInvitationDialog";
 
 type InvitationState =
 	| "pending"
@@ -91,7 +90,7 @@ function InvitationFact({ label, children }: InvitationFactProps) {
 
 type InvitationControlsProps = { userId: number };
 
-/** The status of a pending user's invitation, with controls to replace or revoke it. */
+/** The status of a pending user's invitation, with a control to replace it. */
 export function InvitationControls({ userId }: InvitationControlsProps) {
 	const { data } = useQuery(invitationQueryOptions(userId));
 	const now = useNow();
@@ -141,14 +140,7 @@ export function InvitationControls({ userId }: InvitationControlsProps) {
 						)}
 					</dl>
 					{state !== "accepted" && (
-						<div className="flex flex-wrap gap-2">
-							<ReissueInvitationDialog userId={userId} email={data.email} />
-							<RevokeInvitationDialog
-								userId={userId}
-								email={data.email}
-								disabled={state !== "pending"}
-							/>
-						</div>
+						<ReissueInvitationDialog userId={userId} email={data.email} />
 					)}
 				</BoxGroupSection>
 			</BoxGroup>

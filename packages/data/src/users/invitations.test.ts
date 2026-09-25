@@ -13,11 +13,12 @@ import { setupTokens } from "../db/schema/setup";
 import { users } from "../db/schema/users";
 import { createTestDatabase, type TestDatabase } from "../db/test/fixtures";
 import { seedSettings } from "../settings/test/fixtures";
-import { GroupMembershipError } from "./data";
+import { GroupMembershipError, UserNotFoundError } from "./data";
 import {
 	createPendingInvitation,
+	deletePendingUser,
+	InvitationNotEligibleError,
 	regenerateInvitation,
-	revokeInvitation,
 } from "./invitations";
 
 let database: TestDatabase;
@@ -133,7 +134,7 @@ describe("account invitations", () => {
 		expect(await db.select().from(setupTokens)).toHaveLength(0);
 	});
 
-	it("regenerates with one live generation and revokes it explicitly", async () => {
+	it("regenerates with one live generation", async () => {
 		const created = await createInvitation();
 		const regenerated = await regenerateInvitation(db, created.user.id, {
 			issuerUserId: created.invitation.issuerUserId,
@@ -149,10 +150,44 @@ describe("account invitations", () => {
 		expect(await inspectAccountSetup(db, created.setupToken)).toEqual({
 			status: "unusable",
 		});
-		await revokeInvitation(db, created.user.id);
-		expect(await inspectAccountSetup(db, regenerated.setupToken)).toEqual({
+		expect(await inspectAccountSetup(db, regenerated.setupToken)).toMatchObject(
+			{
+				status: "valid",
+			},
+		);
+	});
+
+	it("deletes a pending user and invalidates their link", async () => {
+		const created = await createInvitation();
+		await deletePendingUser(db, created.user.id);
+		expect(
+			await db.select().from(users).where(eq(users.id, created.user.id)),
+		).toEqual([]);
+		expect(
+			await db
+				.select()
+				.from(setupTokens)
+				.where(eq(setupTokens.userId, created.user.id)),
+		).toEqual([]);
+		expect(await inspectAccountSetup(db, created.setupToken)).toEqual({
 			status: "unusable",
 		});
+		await expect(deletePendingUser(db, created.user.id)).rejects.toThrow(
+			UserNotFoundError,
+		);
+	});
+
+	it("refuses to delete a user who accepted their invitation", async () => {
+		const created = await createInvitation();
+		await completeAccountSetup(db, {
+			token: created.setupToken,
+			handle: "Ada",
+			password: "a-real-password",
+			deliveryAvailable: false,
+		});
+		await expect(deletePendingUser(db, created.user.id)).rejects.toThrow(
+			InvitationNotEligibleError,
+		);
 	});
 
 	it("accepts once and leaves copied-link email unverified", async () => {

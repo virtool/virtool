@@ -210,8 +210,8 @@ is unavailable, and the mutation UI shows it once. Emailed generations never
 return the bearer secret to the administrator. Safe administrator metadata reads
 show the recipient address, expiry, revocation, consumption, and queued delivery
 state. Regeneration always
-invalidates older links; choosing email creates a fresh generation. Revocation
-leaves the pending user intact.
+invalidates older links; choosing email creates a fresh generation. Deleting a
+pending user removes the account and every link it holds.
 
 `/account-setup` captures the token from the URL fragment and removes it from
 browser history before inspection. Unusable tokens all render one response.

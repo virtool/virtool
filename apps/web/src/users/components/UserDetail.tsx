@@ -1,6 +1,5 @@
 import { useCheckAdminRole } from "@administration/hooks";
 import Alert from "@base/Alert";
-import Badge from "@base/Badge";
 import { InitialIcon } from "@base/Icon";
 import Label from "@base/Label";
 import SectionHeader from "@base/SectionHeader";
@@ -11,6 +10,7 @@ import {
 	useUpdateUser,
 } from "@users/queries";
 import { CircleAlert, MailClock, ShieldUserIcon } from "lucide-react";
+import { DeletePendingUser } from "./DeletePendingUser";
 import Handle from "./Handle";
 import { InvitationControls } from "./InvitationControls";
 import Password from "./Password";
@@ -83,19 +83,12 @@ export default function UserDetail({ userId }: UserDetailProps) {
 							</>
 						)}
 					</h2>
-					<div className="flex items-center gap-2">
-						{isInvited && (
-							<Badge color="orange" variant="soft">
-								Invited
-							</Badge>
-						)}
-						{administratorRole && (
-							<Label>
-								<ShieldUserIcon aria-label="Administrator" size={18} />
-								Administrator
-							</Label>
-						)}
-					</div>
+					{administratorRole && (
+						<Label>
+							<ShieldUserIcon aria-label="Administrator" size={18} />
+							Administrator
+						</Label>
+					)}
 				</div>
 			</SectionHeader>
 
@@ -128,15 +121,24 @@ export default function UserDetail({ userId }: UserDetailProps) {
 				<UserPermissions permissions={permissions} />
 			</div>
 
-			<UserActivationBanner
-				onClick={() =>
-					mutation.mutate({
-						userId: id,
-						update: { active: !data.active },
-					})
-				}
-				verb={data.active ? "deactivate" : "activate"}
-			/>
+			<section>
+				<SectionHeader level={3}>
+					<h3>Danger Zone</h3>
+				</SectionHeader>
+				{isInvited ? (
+					<DeletePendingUser userId={id} email={invitation?.email} />
+				) : (
+					<UserActivationBanner
+						onClick={() =>
+							mutation.mutate({
+								userId: id,
+								update: { active: !data.active },
+							})
+						}
+						verb={data.active ? "deactivate" : "activate"}
+					/>
+				)}
+			</section>
 		</div>
 	);
 }

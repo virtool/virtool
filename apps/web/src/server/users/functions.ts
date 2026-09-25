@@ -36,11 +36,11 @@ import {
 } from "@virtool/data/users/data";
 import {
 	createPendingInvitation,
+	deletePendingUser,
 	getInvitation,
 	InvitationNotEligibleError,
 	InvitationNotFoundError,
 	regenerateInvitation,
-	revokeInvitation,
 } from "@virtool/data/users/invitations";
 import { z } from "zod";
 import { realCookies } from "../auth/cookies";
@@ -358,28 +358,27 @@ export const regenerateInvitationFn = createServerFn({ method: "POST" })
 		}
 	});
 
-export const revokeInvitationFn = createServerFn({ method: "POST" })
+export const deletePendingUserFn = createServerFn({ method: "POST" })
 	.middleware([recentlyAuthenticated(PROTECTED_OPERATIONS.invitationLinkIssue)])
 	.validator(userIdSchema)
 	.handler(async ({ context, data }) => {
 		try {
 			const role = await getAdministratorRole(db, data.userId);
 			await requireInvitationAuthority(context.principal, role);
-			const invitation = await revokeInvitation(db, data.userId);
+			await deletePendingUser(db, data.userId);
 			await recordLifecycle({
-				operation: "invitation_revoke",
+				operation: "invitation_delete",
 				outcome: "success",
-				message: "account invitation revoked",
-				invitationId: invitation.id,
+				message: "pending user deleted",
 				userId: data.userId,
 				issuerUserId: context.principal.userId,
 			});
-			return invitation;
+			return null;
 		} catch (err) {
 			await recordLifecycle({
-				operation: "invitation_revoke",
+				operation: "invitation_delete",
 				outcome: "failure",
-				message: "account invitation revocation failed",
+				message: "pending user deletion failed",
 				userId: data.userId,
 			});
 			throw rethrowAsHttp(err);
