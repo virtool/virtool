@@ -5,7 +5,7 @@ import { DockerEvents } from "./events.ts";
 
 vi.mock("node:child_process", () => ({ spawn: vi.fn() }));
 
-it("ignores exec events and refreshes for container lifecycle events", () => {
+it("filters Docker events to container lifecycle changes", () => {
 	const stdout = new EventEmitter();
 	const child = Object.assign(new EventEmitter(), {
 		stdout,
@@ -19,11 +19,11 @@ it("ignores exec events and refreshes for container lifecycle events", () => {
 	const events = new DockerEvents("repository", onEvent);
 
 	events.start();
-	stdout.emit("data", Buffer.from("exec_create\nexec_start\nsta"));
-	expect(onEvent).not.toHaveBeenCalled();
-	stdout.emit("data", Buffer.from("rt\nexec_die\n"));
+
+	const args = vi.mocked(spawn).mock.calls[0]?.[1] ?? [];
+	expect(args).toContain("event=health_status");
+	expect(args).not.toContain("event=exec_create");
+	stdout.emit("data", Buffer.from("start\n"));
 	expect(onEvent).toHaveBeenCalledOnce();
-	stdout.emit("data", Buffer.from("die\nhealth_status: healthy\n"));
-	expect(onEvent).toHaveBeenCalledTimes(2);
 	events.stop();
 });

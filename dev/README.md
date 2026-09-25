@@ -100,8 +100,15 @@ Workflow images build on demand. The daemon polls the production-compatible
 jobs counts endpoint for ready environments, schedules the four bioinformatics
 executors fairly, and holds one global slot per one-shot container. The default
 repository-wide concurrency is one. Tasks remain a normal long-lived service.
-Polling follows the five-second discovery cycle and container lifecycle changes;
-Docker exec events do not start another poll.
+Polling follows the five-second discovery cycle and container lifecycle changes.
+The event stream asks Docker for container lifecycle and health-status events
+only, so health-check execs do not reach the daemon.
+
+Each discovery cycle observes every environment and the shared services with a
+single `docker ps` call. The reconciler has no timer of its own: it acts on that
+observation and inspects an environment again only when it appears to need
+work. Shared volume sizes, which need `docker system df`, refresh at most once a
+minute and only while the management UI is open.
 
 Executors continue to claim atomically from the jobs API and use the production
 ping, cancellation, finalization, failure, and exit contracts. Stopped, failed,

@@ -1,11 +1,15 @@
 import { access, readFile, rm, stat, writeFile } from "node:fs/promises";
 import { request } from "node:https";
 import { dirname, join } from "node:path";
-import type { DesiredState, Environment } from "../shared/types.ts";
+import type { DesiredState } from "../shared/types.ts";
 import type { BuildCoordinator } from "./builds.ts";
 import type { CommandRunner } from "./command.ts";
 import { CONFIG_VERSION } from "./constants.ts";
-import { DockerObserver } from "./docker.ts";
+import {
+	DockerObserver,
+	type EnvironmentObservation,
+	type RepositoryObservation,
+} from "./docker.ts";
 import { ensureEnvironmentFiles } from "./files.ts";
 import { getRetryDelay } from "./retry.ts";
 import type { StateStore } from "./state.ts";
@@ -25,8 +29,9 @@ export class Reconciler {
 	private readonly removalAttempts = new Map<string, number>();
 	private readonly retryAt = new Map<string, number>();
 	private readonly restarts = new Set<string>();
+	private observed = new Map<string, EnvironmentObservation>();
 	private sharedPromise: Promise<void> | undefined;
-	private timer: NodeJS.Timeout | undefined;
+	private started = false;
 	private stopping = false;
 	private tickPromise: Promise<void> | undefined;
 
@@ -41,21 +46,20 @@ export class Reconciler {
 	}
 
 	start(): void {
-		this.timer = setInterval(() => void this.runTick(), 1_000);
+		this.started = true;
 		void this.runTick();
 	}
 
 	async stop(): Promise<void> {
 		this.stopping = true;
-		if (this.timer) {
-			clearInterval(this.timer);
-		}
 		await this.tickPromise;
 		await Promise.all(this.active.values());
 	}
 
 	wake(): void {
-		void this.runTick();
+		if (this.started) {
+			void this.runTick();
+		}
 	}
 
 	requestRestart(environmentId: string): void {
@@ -77,7 +81,8 @@ export class Reconciler {
 				Date.now() >= (this.retryAt.get(environment.id) ?? 0);
 			if (
 				!this.active.has(environment.id) &&
-				(!environment.lastError || canRetryRemoval)
+				(!environment.lastError || canRetryRemoval) &&
+				!this.isConverged(environment, this.observed.get(environment.id))
 			) {
 				const promise = this.reconcile(environment)
 					.then((changed) => {
@@ -108,6 +113,24 @@ export class Reconciler {
 		}
 	}
 
+	private isConverged(
+		environment: DesiredEnvironment,
+		observed: EnvironmentObservation | undefined,
+	): boolean {
+		if (
+			!observed ||
+			!environment.present ||
+			this.restarts.has(environment.id)
+		) {
+			return false;
+		}
+		return (
+			(environment.desired === "up" && observed.ready) ||
+			(environment.desired === "stopped" &&
+				["stopped", "missing"].includes(observed.state))
+		);
+	}
+
 	private async runTick(): Promise<void> {
 		if (this.tickPromise || this.stopping) {
 			return this.tickPromise;
@@ -133,27 +156,19 @@ export class Reconciler {
 			this.store.setDesiredByEnvironment(environment.id, "absent");
 			environment.desired = "absent";
 		}
+		const observed = await this.observer.inspectEnvironment(
+			this.environmentProject(environment.id),
+		);
+		this.observed.set(environment.id, observed);
+		if (this.isConverged(environment, observed)) {
+			return false;
+		}
 		const files = await ensureEnvironmentFiles(this.store.directory, {
 			environmentId: environment.id,
 			name: environment.name,
 			repositoryId: this.store.repositoryId,
 			worktree: environment.path,
 		});
-		const project = this.environmentProject(environment.id);
-		const observed = await this.observer.inspectEnvironment(
-			project,
-			files.composeFile,
-			this.primaryWorktree,
-		);
-		if (
-			(environment.desired === "up" && observed.ready) ||
-			(environment.desired === "stopped" &&
-				["stopped", "missing"].includes(observed.state))
-		) {
-			if (!this.restarts.has(environment.id)) {
-				return false;
-			}
-		}
 		const operationId = this.store.startOperation(
 			environment.id,
 			actionFor(environment.desired),
@@ -556,52 +571,30 @@ export class Reconciler {
 		return `virtool-dev-${this.store.repositoryId.slice(0, 8)}-${environmentId.slice(0, 8)}`;
 	}
 
-	async observe(): Promise<
-		Map<
-			string,
-			{
-				ready: boolean;
-				services: Environment["services"];
-				state: Environment["observed"];
-			}
-		>
-	> {
-		const result = new Map<
-			string,
-			{
-				ready: boolean;
-				services: Environment["services"];
-				state: Environment["observed"];
-			}
-		>();
-		await Promise.all(
-			this.store.getDesiredEnvironments().map(async (environment) => {
-				const composeFile = join(
-					this.store.directory,
-					"environments",
-					environment.id,
-					"compose.yaml",
-				);
-				result.set(
-					environment.id,
-					await this.observer.inspectEnvironment(
-						this.environmentProject(environment.id),
-						composeFile,
-						this.primaryWorktree,
-					),
-				);
-			}),
-		);
-		return result;
-	}
-
-	async inspectShared() {
-		return this.observer.inspectShared(
+	/** Observe all environments and shared services, then reconcile any drift. */
+	async observe(includeStorage: boolean): Promise<{
+		environments: Map<string, EnvironmentObservation>;
+		shared: RepositoryObservation["shared"];
+	}> {
+		const observation = await this.observer.observeRepository(
+			this.store.repositoryId,
 			this.sharedProject(),
-			join(this.primaryWorktree, "dev/shared.compose.yaml"),
-			this.primaryWorktree,
-			this.sharedEnvironment(),
+			includeStorage,
 		);
+		const environments = new Map<string, EnvironmentObservation>();
+		for (const environment of this.store.getDesiredEnvironments()) {
+			environments.set(
+				environment.id,
+				observation.error
+					? { ready: false, services: {}, state: "missing" }
+					: (observation.environments.get(
+							this.environmentProject(environment.id),
+						) ?? { ready: false, services: {}, state: "stopped" }),
+			);
+		}
+		this.observed = environments;
+		this.wake();
+		return { environments, shared: observation.shared };
 	}
 
 	async resetShared(): Promise<void> {

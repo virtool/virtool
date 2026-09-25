@@ -30,6 +30,10 @@ export class SnapshotFeed {
 		}
 	}
 
+	hasSubscribers(): boolean {
+		return this.listeners.size > 0;
+	}
+
 	subscribe(listener: (snapshot: Snapshot) => void): () => void {
 		this.listeners.add(listener);
 		return () => this.listeners.delete(listener);

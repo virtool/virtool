@@ -201,12 +201,15 @@ export async function runDaemon(
 					repository.primaryWorktree,
 				);
 				store.synchronizeWorktrees(worktrees);
-				const [observed, shared, currentHash] = await Promise.all([
-					reconciler.observe(),
-					reconciler.inspectShared(),
+				const [observed, currentHash] = await Promise.all([
+					reconciler.observe(feed.hasSubscribers()),
 					hashDirectory(join(repository.primaryWorktree, "apps/dev")),
 				]);
-				const environments = store.listEnvironments(observed, openPullRequests);
+				const { shared } = observed;
+				const environments = store.listEnvironments(
+					observed.environments,
+					openPullRequests,
+				);
 				const updateAvailable = currentHash !== primaryHash;
 				feed.set({
 					...feed.get(),

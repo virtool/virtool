@@ -1,9 +1,20 @@
 import { type ChildProcessWithoutNullStreams, spawn } from "node:child_process";
 
+// Docker filters these server-side, so health-check exec events never reach the daemon.
+const LIFECYCLE_EVENTS = [
+	"create",
+	"destroy",
+	"die",
+	"health_status",
+	"pause",
+	"start",
+	"stop",
+	"unpause",
+];
+
 /** Persistent Docker event stream with bounded reconnect delay. */
 export class DockerEvents {
 	private child: ChildProcessWithoutNullStreams | undefined;
-	private pending = "";
 	private reconnect: NodeJS.Timeout | undefined;
 	private stopped = false;
 
@@ -20,19 +31,15 @@ export class DockerEvents {
 			"events",
 			"--filter",
 			`label=ca.virtool.dev.repository=${this.repositoryId}`,
+			"--filter",
+			"type=container",
+			...LIFECYCLE_EVENTS.flatMap((event) => ["--filter", `event=${event}`]),
 			"--format",
 			"{{.Action}}",
 		]);
 		this.child = child;
 		child.stderr.resume();
-		child.stdout.on("data", (chunk: Buffer) => {
-			this.pending += chunk.toString();
-			const actions = this.pending.split("\n");
-			this.pending = actions.pop() ?? "";
-			if (actions.some((action) => !action.startsWith("exec_"))) {
-				this.onEvent();
-			}
-		});
+		child.stdout.on("data", () => this.onEvent());
 		child.once("error", () => this.scheduleReconnect(child));
 		child.once("close", () => this.scheduleReconnect(child));
 	}
@@ -44,7 +51,6 @@ export class DockerEvents {
 		}
 		this.child?.kill();
 		this.child = undefined;
-		this.pending = "";
 	}
 
 	private scheduleReconnect(child: ChildProcessWithoutNullStreams): void {
@@ -52,7 +58,6 @@ export class DockerEvents {
 			return;
 		}
 		this.child = undefined;
-		this.pending = "";
 		this.reconnect = setTimeout(() => {
 			this.reconnect = undefined;
 			this.start();
