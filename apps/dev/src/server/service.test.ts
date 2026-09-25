@@ -37,6 +37,8 @@ it("renders a foreground service with systemd and lifetime lock ownership", () =
 	expect(unit).toContain('ExecStart="/usr/bin/flock" "--nonblock" "--no-fork"');
 	expect(unit).toContain('"daemon" "run"');
 	expect(unit).toContain("Restart=on-failure");
+	expect(unit).toContain("RestartForceExitStatus=75");
+	expect(unit).toContain("SuccessExitStatus=75");
 	expect(unit).toContain("UMask=0077");
 	expect(unit).toContain("StandardOutput=journal");
 	expect(unit).toContain("StandardError=journal");
