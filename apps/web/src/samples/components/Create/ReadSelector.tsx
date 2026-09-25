@@ -1,4 +1,5 @@
 import { cn } from "@app/cn";
+import { normalizeSearchTerm } from "@app/search";
 import Alert from "@base/Alert";
 import Box, { BoxGroup, BoxGroupSection } from "@base/Box";
 import Button from "@base/Button";
@@ -117,9 +118,9 @@ export default function ReadSelector({
 	const totalCount = data.pages[0]?.totalCount;
 	const items = data.pages.flatMap((page) => page.items);
 
-	const loweredFilter = term.toLowerCase();
+	const loweredFilter = normalizeSearchTerm(term).toLowerCase();
 	const files = items.filter(
-		(file) => !term || file.name.toLowerCase().includes(loweredFilter),
+		(file) => !loweredFilter || file.name.toLowerCase().includes(loweredFilter),
 	);
 
 	const rows: ReadRow[] =

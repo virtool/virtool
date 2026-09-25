@@ -74,7 +74,7 @@
 		"axe-core": "^4.12.1",
 		"babel-plugin-react-compiler": "^1.0.0",
 		"esbuild": "^0.28.2",
-		"jsdom": "^30.0.1",
+		"jsdom": "^30.1.1",
 		"nitro": "3.0.260429-beta",
 		"playwright": "^1.61.1",
 		"tailwindcss": "^4.3.3",

@@ -5,6 +5,7 @@ import SearchToolbar from "@base/SearchToolbar";
 
 type SampleToolbarProps = {
 	onChange: (term: string) => void;
+	reset?: { value: string };
 
 	term: string;
 };
@@ -12,7 +13,11 @@ type SampleToolbarProps = {
 /**
  * A toolbar allowing samples to be filtered by name
  */
-export default function SampleToolbar({ onChange, term }: SampleToolbarProps) {
+export default function SampleToolbar({
+	onChange,
+	reset,
+	term,
+}: SampleToolbarProps) {
 	const { hasPermission: canCreate } =
 		useCheckAdminRoleOrPermission("create_sample");
 
@@ -20,6 +25,7 @@ export default function SampleToolbar({ onChange, term }: SampleToolbarProps) {
 		<SearchToolbar
 			aria-label="Search samples"
 			onChange={onChange}
+			reset={reset}
 			placeholder="Sample name"
 			value={term || ""}
 		>

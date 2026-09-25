@@ -14,7 +14,7 @@
 		"typecheck": "tsc --noEmit"
 	},
 	"dependencies": {
-		"@aws-sdk/client-s3": "^3.1110.0",
+		"@aws-sdk/client-s3": "^3.1139.0",
 		"@aws-sdk/lib-storage": "^3.1119.0",
 		"@azure/identity": "^4.13.2",
 		"@azure/storage-blob": "^12.33.0",
@@ -31,7 +31,7 @@
 	},
 	"devDependencies": {
 		"@types/node": "^26.4.1",
-		"tsdown": "^0.22.14",
+		"tsdown": "^0.23.0",
 		"vitest": "^5.0.1"
 	}
 }
