@@ -8,18 +8,19 @@ export const SERVICE = "jobs-api";
 /**
  * Initialise Sentry for this process.
  *
- * **This runs after `@hono/node-server` and `postgres` have already been
- * imported, and that is fine only because the process is started with
- * `node --import @sentry/node/preload`.** ESM evaluates every static import
+ * **This runs after `postgres` has already been imported, and that is fine
+ * only because the process is started with
+ * `node --import @sentry/node/import`.** ESM evaluates every static import
  * before any top-level statement, and the bundle makes that concrete — the
  * externals land at the top of `dist/index.mjs` while this call sits thousands
- * of lines below. Without the preload flag the SDK's module hooks would install
- * too late to patch either one, and the service would report errors while
- * silently recording no HTTP or database spans.
+ * of lines below. Without the import flag the SDK's module hooks would install
+ * too late to inject diagnostics channels into `postgres`, and the service
+ * would report errors and HTTP spans while silently recording no database
+ * spans. HTTP spans come from Node's built-in `http` channels and need no hook.
  *
  * Init cannot simply move earlier: the DSN comes from `<KEY>_FILE`-backed
  * config, which has to be read first. That is exactly the case Sentry's "late
- * initialization" guidance covers, and the preload hook is its answer. If the
+ * initialization" guidance covers, and the import hook is its answer. If the
  * flag is ever dropped from the Dockerfile ENTRYPOINT, tracing goes
  * quiet with nothing in the logs to say so.
  *

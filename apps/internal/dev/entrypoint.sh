@@ -8,7 +8,7 @@ chown "$dev_uid:$dev_gid" /tmp/virtool-home /repo/apps/internal/dist
 
 if [ "$1" = migrate ]; then
     exec setpriv --reuid="$dev_uid" --regid="$dev_gid" --clear-groups env HOME=/tmp/virtool-home \
-        sh -ec 'pnpm build && exec node --import @sentry/node/preload dist/index.mjs migrate'
+        sh -ec 'pnpm build && exec node --import @sentry/node/import dist/index.mjs migrate'
 fi
 
 exec setpriv --reuid="$dev_uid" --regid="$dev_gid" --clear-groups env HOME=/tmp/virtool-home \
