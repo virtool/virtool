@@ -119,6 +119,17 @@ async function seedReference(
 	return reference.id;
 }
 
+/** Make `userId` a member of the reference, holding no rights. */
+async function addMember(referenceId: number, userId: number): Promise<void> {
+	await db.insert(legacyReferenceUsers).values({
+		reference_id: referenceId,
+		user_id: userId,
+		build: false,
+		modify: false,
+		modify_otu: false,
+	});
+}
+
 async function seedUpload(userId: number): Promise<number> {
 	return takeFirstOrThrow(
 		await db
@@ -306,6 +317,27 @@ describe("createReference", () => {
 		expect(taskRows.some((row) => row.type === "clone_reference")).toBe(true);
 	});
 
+	it("refuses to clone a reference the caller cannot see, as if it were missing", async () => {
+		const ownerId = await seedUser(db, {
+			administratorRole: null,
+			handle: "bob",
+		});
+		// A base administrator holds `create_ref` but not reference visibility.
+		await signIn(db, getRequest, { administratorRole: "base" });
+		const sourceId = await seedReference(ownerId);
+
+		await expect(
+			call("createReferenceFn", {
+				name: "",
+				description: "",
+				organism: "",
+				cloneFrom: sourceId,
+			}),
+		).rejects.toThrow("Source reference does not exist.");
+		expect(setResponseStatus).toHaveBeenCalledWith(400);
+		expect(await db.select().from(legacyReferences)).toHaveLength(1);
+	});
+
 	it("maps a missing import upload to a 400", async () => {
 		await signIn(db, getRequest, { administratorRole: "full" });
 
@@ -337,13 +369,28 @@ describe("createReference", () => {
 });
 
 describe("updateReference", () => {
-	it("refuses a caller without modify on the reference", async () => {
+	it("returns 404 to a caller who cannot see the reference", async () => {
 		const ownerId = await seedUser(db, {
 			administratorRole: null,
 			handle: "bob",
 		});
 		await signIn(db, getRequest, { administratorRole: null });
 		const referenceId = await seedReference(ownerId);
+
+		await expect(
+			call("updateReferenceFn", { referenceId, name: "Renamed" }),
+		).rejects.toThrow("Reference not found.");
+		expect(setResponseStatus).toHaveBeenCalledWith(404);
+	});
+
+	it("refuses a member without modify on the reference", async () => {
+		const ownerId = await seedUser(db, {
+			administratorRole: null,
+			handle: "bob",
+		});
+		const userId = await signIn(db, getRequest, { administratorRole: null });
+		const referenceId = await seedReference(ownerId);
+		await addMember(referenceId, userId);
 
 		await expect(
 			call("updateReferenceFn", { referenceId, name: "Renamed" }),
@@ -415,8 +462,9 @@ describe("reference membership", () => {
 			administratorRole: null,
 			handle: "bob",
 		});
-		await signIn(db, getRequest, { administratorRole: null });
+		const userId = await signIn(db, getRequest, { administratorRole: null });
 		const referenceId = await seedReference(ownerId);
+		await addMember(referenceId, userId);
 		const group = takeFirstOrThrow(
 			await db
 				.insert(groups)

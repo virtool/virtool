@@ -1,5 +1,5 @@
 import { randomBytes } from "node:crypto";
-import { copyFile, mkdir, readFile, writeFile } from "node:fs/promises";
+import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 
 async function writeSecret(path: string): Promise<void> {
@@ -32,14 +32,6 @@ export async function ensureEnvironmentFiles(
 		writeSecret(join(directory, "auth-secret")),
 		writeSecret(join(directory, "encryption-key")),
 	]);
-	try {
-		await copyFile(
-			join(input.worktree, "dev/scripts/cleanup-database.sh"),
-			join(directory, "cleanup-database.sh"),
-		);
-	} catch {
-		await readFile(join(directory, "cleanup-database.sh"));
-	}
 	const database = `virtool_${input.environmentId.replaceAll("-", "")}`;
 	const container = `virtool-${input.environmentId.replaceAll("-", "")}`;
 	const envFile = join(directory, "environment.env");

@@ -67,25 +67,6 @@ services:
       - az storage container create --name "${VT_DEV_BLOB_CONTAINER}" --output none
     labels: *labels
 
-  cleanup-database:
-    image: postgres:18
-    environment:
-      PGPASSWORD: virtool
-      VT_DEV_DATABASE: ${VT_DEV_DATABASE}
-    entrypoint: [/bin/sh, /run/virtool-dev/cleanup-database.sh]
-    labels: *labels
-    volumes:
-      - ${VT_DEV_CONFIG_DIR}:/run/virtool-dev:ro
-
-  cleanup-storage:
-    image: mcr.microsoft.com/azure-cli:2.89.1
-    environment:
-      AZURE_STORAGE_CONNECTION_STRING: DefaultEndpointsProtocol=http;AccountName=devstoreaccount1;AccountKey=Eby8vdM02xNOcqFlqUwJPLlmEtlCDXJ1OUzFT50uSRZ6IFsuFq2UVErCz4I6tq/K1SZFPTOtr/KBHBeksoGMGw==;BlobEndpoint=http://azurite:10000/devstoreaccount1;
-    entrypoint: [/bin/sh, -ec]
-    command:
-      - az storage container delete --name "${VT_DEV_BLOB_CONTAINER}" --output none
-    labels: *labels
-
   migration:
     build: *build
     working_dir: /repo/apps/internal

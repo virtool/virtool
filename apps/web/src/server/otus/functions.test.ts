@@ -56,6 +56,7 @@ const handlers = (await import(
 	"./functions.ts?tss-serverfn-split"
 )) as SplitServerFnModule;
 const { signIn } = await import("../auth/test/fixtures");
+const { seedUser } = await import("@virtool/data/auth/test/fixtures");
 const { createIsolate, createOtu } = await import("@virtool/data/otus/data");
 
 let database: TestDatabase;
@@ -122,6 +123,95 @@ async function archive(referenceId: number): Promise<void> {
 function call(name: string, data?: unknown) {
 	return callServerFn(handlers, name, data);
 }
+
+// A caller who cannot see an OTU's reference gets the same 404 as for a missing
+// OTU, so the response does not reveal that the reference exists.
+describe("reference visibility", () => {
+	async function seedHiddenOtu(): Promise<{
+		otuId: string;
+		referenceId: number;
+		strangerId: number;
+	}> {
+		const ownerId = await seedUser(db, { handle: "owner" });
+		const referenceId = await seedReference(ownerId);
+		const otu = await createOtu(
+			db,
+			referenceId,
+			{ name: "Alpha", abbreviation: "", schema: [] },
+			ownerId,
+		);
+
+		const strangerId = await signIn(db, getRequest, { handle: "stranger" });
+
+		return { otuId: otu.id, referenceId, strangerId };
+	}
+
+	it("returns 404 from findOtusFn", async () => {
+		const { referenceId } = await seedHiddenOtu();
+
+		await expect(call("findOtusFn", { referenceId })).rejects.toThrow(
+			"Reference not found.",
+		);
+		expect(setResponseStatus).toHaveBeenCalledWith(404);
+	});
+
+	it("returns 404 from getOtuFn", async () => {
+		const { otuId } = await seedHiddenOtu();
+
+		await expect(call("getOtuFn", { otuId })).rejects.toThrow("OTU not found.");
+		expect(setResponseStatus).toHaveBeenCalledWith(404);
+	});
+
+	it("returns 404 from listOtuHistoryFn", async () => {
+		const { otuId } = await seedHiddenOtu();
+
+		await expect(call("listOtuHistoryFn", { otuId })).rejects.toThrow(
+			"OTU not found.",
+		);
+		expect(setResponseStatus).toHaveBeenCalledWith(404);
+	});
+
+	it("returns 404 from createOtuFn", async () => {
+		const { referenceId } = await seedHiddenOtu();
+
+		await expect(
+			call("createOtuFn", {
+				referenceId,
+				name: "Beta",
+				abbreviation: "",
+				schema: [],
+			}),
+		).rejects.toThrow("Reference not found.");
+		expect(setResponseStatus).toHaveBeenCalledWith(404);
+		expect(setResponseStatus).not.toHaveBeenCalledWith(403);
+	});
+
+	it("returns 404 from updateOtuFn", async () => {
+		const { otuId } = await seedHiddenOtu();
+
+		await expect(call("updateOtuFn", { otuId, name: "Beta" })).rejects.toThrow(
+			"OTU not found.",
+		);
+		expect(setResponseStatus).toHaveBeenCalledWith(404);
+		expect(setResponseStatus).not.toHaveBeenCalledWith(403);
+	});
+
+	it("returns the OTU to a member holding no rights", async () => {
+		const { otuId, referenceId, strangerId } = await seedHiddenOtu();
+
+		await db.insert(legacyReferenceUsers).values({
+			reference_id: referenceId,
+			user_id: strangerId,
+			build: false,
+			modify: false,
+			modify_otu: false,
+		});
+
+		const otu = (await call("getOtuFn", { otuId })) as { id: string };
+
+		expect(otu.id).toBe(otuId);
+	});
+});
 
 describe("authorizeOtu", () => {
 	it("maps a missing OTU to a 404", async () => {

@@ -10,7 +10,7 @@ if (command !== "serve" && command !== "run") {
 const service = createDevProcess(() =>
 	spawn(
 		process.execPath,
-		["--import", "@sentry/node/preload", "dist/index.mjs", command],
+		["--import", "@sentry/node/import", "dist/index.mjs", command],
 		{ stdio: "inherit" },
 	),
 );

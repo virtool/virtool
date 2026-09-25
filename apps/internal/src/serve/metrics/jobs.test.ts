@@ -218,16 +218,16 @@ describe("setJobQueue", () => {
 		const rendered = await render({
 			counts: [
 				{ workflow: "typo_workflow", state: "pending", count: 2 },
-				{ workflow: "a_future_python_workflow", state: "pending", count: 5 },
+				{ workflow: "a_future_workflow", state: "pending", count: 5 },
 			],
 			oldestPendingAges: [
 				{ workflow: "typo_workflow", ageSeconds: 30 },
-				{ workflow: "a_future_python_workflow", ageSeconds: 900 },
+				{ workflow: "a_future_workflow", ageSeconds: 900 },
 			],
 		});
 
 		expect(rendered).not.toContain("typo_workflow");
-		expect(rendered).not.toContain("a_future_python_workflow");
+		expect(rendered).not.toContain("a_future_workflow");
 
 		// Two workflows on one label: counts add, ages take the oldest.
 		expect(

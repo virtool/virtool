@@ -85,8 +85,8 @@ stay:
 
 - **biome**: `!packages/pathoscope-core` in `biome.json`'s `files.includes`.
   Biome ignores `.rs`, `.toml` and the fixtures, but it does parse
-  `tests/golden/vectors.json` and wants to reformat it. That file is machine
-  generated; formatting it would only make the next regeneration fail the gate.
+  `tests/golden/vectors.json` and wants to reformat it. Keep the corpus as
+  committed; reformatting it rewrites every line without changing a value.
 - **knip**: `packages/pathoscope-core/**` in `knip.json`'s `ignore`. `hts-sys`
   vendors htslib's C source into `target/`, and that tree carries a
   `htscodecs/javascript/` directory which knip reports as unused files after any
