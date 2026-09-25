@@ -33,6 +33,7 @@ import { Button, buttonClassName } from "./Button.tsx";
 import { useSnapshot } from "./store.ts";
 
 const PANEL = "rounded-xl border border-slate-200 bg-white";
+const SECTION_HEADING = "text-sm font-semibold text-slate-600";
 const TAB =
 	"cursor-pointer border-b-2 border-transparent px-4 py-3 text-sm font-semibold text-slate-500 transition-colors hover:text-emerald-900 data-[state=active]:border-emerald-700 data-[state=active]:text-emerald-900";
 
@@ -443,25 +444,37 @@ function EnvironmentCard({
 			setWorkflowTarget(null);
 		}
 	}
-	return (
-		<article className={`${PANEL} p-4`}>
-			<div className="flex min-w-0 items-center gap-3">
-				<Link
-					aria-label={`View details for ${environment.branch}`}
-					className="min-w-0 flex-1 cursor-pointer break-all font-semibold text-emerald-950 hover:underline"
-					params={{ worktreeId: environment.worktreeId }}
-					to="/worktrees/$worktreeId"
-				>
-					{environment.branch}
-				</Link>
-				<Badge label={status.label} tone={status.tone} />
-			</div>
-			<div className="mt-3 flex flex-wrap gap-2 border-t border-slate-100 pt-3">
-				{!environment.id ? (
+	const branchLink = (
+		<Link
+			aria-label={`View details for ${environment.branch}`}
+			className="min-w-0 flex-1 cursor-pointer break-all text-sm font-semibold text-emerald-950 hover:underline"
+			params={{ worktreeId: environment.worktreeId }}
+			to="/worktrees/$worktreeId"
+		>
+			{environment.branch}
+		</Link>
+	);
+	if (!environment.id) {
+		return (
+			<article className={`${PANEL} px-4 py-2.5`}>
+				<div className="flex min-w-0 items-center gap-3">
+					{branchLink}
 					<Button disabled={disabled} onClick={() => void act("start")}>
 						Create
 					</Button>
-				) : environment.ready && environment.url ? (
+				</div>
+				<Feedback error={action.error} message={action.message} />
+			</article>
+		);
+	}
+	return (
+		<article className={`${PANEL} p-4`}>
+			<div className="flex min-w-0 items-center gap-3">
+				{branchLink}
+				<Badge label={status.label} tone={status.tone} />
+			</div>
+			<div className="mt-3 flex flex-wrap gap-2 border-t border-slate-100 pt-3">
+				{environment.ready && environment.url ? (
 					<a
 						className={buttonClassName()}
 						href={environment.url}
@@ -477,36 +490,32 @@ function EnvironmentCard({
 						<ExternalLink aria-hidden="true" />
 					</Button>
 				)}
-				{environment.id && (
-					<>
-						<Button disabled={disabled} onClick={() => void act("stop")}>
-							Stop
-						</Button>
-						<Button disabled={disabled} onClick={() => void act("restart")}>
-							Restart
-						</Button>
-						<Button
-							aria-pressed={environment.workflowEnabled}
-							disabled={disabled}
-							onClick={() =>
-								void act(
-									environment.workflowEnabled
-										? "disable_workflows"
-										: "enable_workflows",
-								)
-							}
-						>
-							{workflowChanging ? (
-								<LoaderCircle className="animate-spin" aria-hidden="true" />
-							) : environment.workflowEnabled ? (
-								<Play aria-hidden="true" />
-							) : (
-								<Pause aria-hidden="true" />
-							)}
-							Workflows
-						</Button>
-					</>
-				)}
+				<Button disabled={disabled} onClick={() => void act("stop")}>
+					Stop
+				</Button>
+				<Button disabled={disabled} onClick={() => void act("restart")}>
+					Restart
+				</Button>
+				<Button
+					aria-pressed={environment.workflowEnabled}
+					disabled={disabled}
+					onClick={() =>
+						void act(
+							environment.workflowEnabled
+								? "disable_workflows"
+								: "enable_workflows",
+						)
+					}
+				>
+					{workflowChanging ? (
+						<LoaderCircle className="animate-spin" aria-hidden="true" />
+					) : environment.workflowEnabled ? (
+						<Play aria-hidden="true" />
+					) : (
+						<Pause aria-hidden="true" />
+					)}
+					Workflows
+				</Button>
 			</div>
 			<Feedback
 				error={action.error ?? workflowAction.error}
@@ -1280,53 +1289,65 @@ function AppContent() {
 						</p>
 					) : (
 						<>
-							<div className="mb-3 flex items-center gap-3 text-sm text-slate-600">
-								<h2 className="font-semibold">
-									{snapshot.environments.length} worktrees
-								</h2>
-								<Button
-									className="ml-auto"
-									disabled={
-										!connected || action.pending || !stoppableIds.length
-									}
-									onClick={() => void stopAll()}
-								>
-									Stop all
-								</Button>
-							</div>
 							<Feedback
 								error={action.error}
 								message={action.pending ? "Sending request…" : action.message}
 							/>
-							<section aria-label="Environments" className="mt-3 grid gap-3">
-								{connected && snapshot.environments.length === 0 && (
-									<p className={`${PANEL} p-6 text-sm text-slate-500`}>
-										No Git worktrees found. Worktrees appear here automatically
-										when discovered.
-									</p>
-								)}
-								{activeEnvironments.map((environment) => (
-									<EnvironmentCard
-										key={environment.worktreeId}
-										environment={environment}
-										connected={connected}
-									/>
-								))}
-								{uncreatedEnvironments.length > 0 && (
-									<div className="flex items-center gap-3 py-1 text-xs font-semibold uppercase tracking-wider text-slate-400">
-										<div className="h-px flex-1 bg-slate-200" />
-										<span>Not created</span>
-										<div className="h-px flex-1 bg-slate-200" />
+							{connected && snapshot.environments.length === 0 && (
+								<p className={`${PANEL} p-6 text-sm text-slate-500`}>
+									No Git worktrees found. Worktrees appear here automatically
+									when discovered.
+								</p>
+							)}
+							{activeEnvironments.length > 0 && (
+								<section aria-labelledby="environments-heading">
+									<div className="mb-3 flex items-center gap-3">
+										<h2 id="environments-heading" className={SECTION_HEADING}>
+											Environments
+										</h2>
+										<Button
+											className="ml-auto"
+											disabled={
+												!connected || action.pending || !stoppableIds.length
+											}
+											onClick={() => void stopAll()}
+										>
+											Stop all
+										</Button>
 									</div>
-								)}
-								{uncreatedEnvironments.map((environment) => (
-									<EnvironmentCard
-										key={environment.worktreeId}
-										environment={environment}
-										connected={connected}
-									/>
-								))}
-							</section>
+									<div className="grid gap-3">
+										{activeEnvironments.map((environment) => (
+											<EnvironmentCard
+												key={environment.worktreeId}
+												environment={environment}
+												connected={connected}
+											/>
+										))}
+									</div>
+								</section>
+							)}
+							{uncreatedEnvironments.length > 0 && (
+								<section
+									aria-labelledby="uncreated-heading"
+									className={activeEnvironments.length > 0 ? "mt-6" : ""}
+								>
+									<h2
+										id="uncreated-heading"
+										className={`mb-3 ${SECTION_HEADING}`}
+									>
+										No environment
+									</h2>
+									<div className="grid gap-2">
+										{uncreatedEnvironments.map((environment) => (
+											<EnvironmentCard
+												key={environment.worktreeId}
+												environment={environment}
+												connected={connected}
+											/>
+										))}
+									</div>
+								</section>
+							)}
 						</>
 					)}
 				</section>
