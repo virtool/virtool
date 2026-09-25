@@ -2,22 +2,23 @@ import Badge from "@base/Badge";
 import { InputError, InputGroup, InputLabel } from "@base/Input";
 import TextArea from "@base/TextArea";
 import { normalizeSequence, SEQUENCE_PATTERN } from "@virtool/contracts";
-import { useFormContext } from "react-hook-form";
+import { useFormContext, useWatch } from "react-hook-form";
 
 /**
  * Displays the sequence field of a form.
  */
 export default function SequenceField() {
 	const {
+		control,
 		formState: { errors },
 		register,
-		watch,
 	} = useFormContext<{ sequence: string }>();
+	const sequence = useWatch({ control, name: "sequence" });
 
 	return (
 		<InputGroup className="flex flex-col">
 			<InputLabel htmlFor="sequence">
-				Sequence <Badge>{watch("sequence")?.length}</Badge>
+				Sequence <Badge>{sequence?.length}</Badge>
 			</InputLabel>
 			<TextArea
 				className="font-mono uppercase"
