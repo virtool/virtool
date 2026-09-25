@@ -68,6 +68,21 @@ async function seedLabelledSample(
 	return sampleId;
 }
 
+describe("findLabels", () => {
+	it("matches % and _ in the term literally", async () => {
+		await seedLabel("50% done");
+		await seedLabel("50 done");
+		await seedLabel("to_do");
+		await seedLabel("to-do");
+
+		const percent = await findLabels(db, "0%");
+		const underscore = await findLabels(db, "o_d");
+
+		expect(percent.map((label) => label.name)).toEqual(["50% done"]);
+		expect(underscore.map((label) => label.name)).toEqual(["to_do"]);
+	});
+});
+
 describe("sample counts", () => {
 	it("counts the samples carrying each label", async () => {
 		const bug = await seedLabel("Bug");

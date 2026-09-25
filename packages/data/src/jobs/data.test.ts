@@ -23,6 +23,7 @@ import { seedIndex, seedReference } from "../indexes/test/fixtures";
 import { collectFrames } from "../test/frames";
 import {
 	claimJob,
+	findJobs,
 	finishJob,
 	getJob,
 	getJobs,
@@ -117,6 +118,35 @@ describe("getJobs", () => {
 
 	it("returns nothing for an empty id list without touching the database", async () => {
 		await expect(getJobs(db, [])).resolves.toEqual([]);
+	});
+});
+
+describe("findJobs", () => {
+	// Jobs created in one transaction share a timestamp, so without an id
+	// tiebreaker the pages could overlap or skip a job.
+	it("pages jobs with the same creation time without overlap", async () => {
+		const createdAt = new Date();
+		const inserted = await db
+			.insert(jobs)
+			.values(
+				Array.from({ length: 5 }, () => ({
+					created_at: createdAt,
+					state: "pending" as const,
+					steps: [],
+					user_id: userId,
+					workflow: "pathoscope",
+				})),
+			)
+			.returning({ id: jobs.id });
+
+		const pages = await Promise.all(
+			[1, 2, 3].map((page) => findJobs(db, { page, perPage: 2, states: [] })),
+		);
+
+		expect(pages.flatMap((result) => result.items.map(({ id }) => id))).toEqual(
+			inserted.map(({ id }) => id).toSorted((a, b) => b - a),
+		);
+		expect(pages[0]?.pageCount).toBe(3);
 	});
 });
 

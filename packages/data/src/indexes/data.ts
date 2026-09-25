@@ -35,6 +35,7 @@ import {
 	isNull,
 	sql,
 } from "drizzle-orm";
+import { getPageCount, getPageOffset } from "../db/pagination";
 import type { Db, DbOrTx } from "../db/pg";
 import { takeFirstOrThrow } from "../db/rows";
 import { legacyHistory } from "../db/schema/history";
@@ -285,7 +286,7 @@ export async function findIndexes(
 		selectIndexes(db)
 			.where(foundFilter)
 			.orderBy(...orderBy)
-			.offset((page - 1) * perPage)
+			.offset(getPageOffset(page, perPage))
 			.limit(perPage),
 		getUnbuiltStats(db, referenceId),
 	]);
@@ -302,7 +303,7 @@ export async function findIndexes(
 		foundCount,
 		totalCount,
 		page,
-		pageCount: foundCount ? Math.ceil(foundCount / perPage) : 0,
+		pageCount: getPageCount(foundCount, perPage),
 		perPage,
 		items: rows.map((row) => mapMinimal(row, counts.get(row.id) ?? NO_COUNTS)),
 		...unbuiltStats,

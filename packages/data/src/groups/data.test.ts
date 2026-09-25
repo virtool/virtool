@@ -90,6 +90,19 @@ describe("findGroups", () => {
 		expect(result.totalCount).toBe(2);
 	});
 
+	it("matches % and _ in the term literally", async () => {
+		await seedGroup(db, { name: "100% techs" });
+		await seedGroup(db, { name: "lab_admins" });
+		await seedGroup(db, { name: "100 techs" });
+		await seedGroup(db, { name: "lab-admins" });
+
+		const percent = await findGroups(db, "0%", 1, 25);
+		const underscore = await findGroups(db, "b_a", 1, 25);
+
+		expect(percent.items.map((group) => group.name)).toEqual(["100% techs"]);
+		expect(underscore.items.map((group) => group.name)).toEqual(["lab_admins"]);
+	});
+
 	it("paginates the matches", async () => {
 		for (const letter of ["a", "b", "c"]) {
 			await seedGroup(db, { name: `group-${letter}` });

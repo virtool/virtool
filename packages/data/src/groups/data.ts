@@ -8,6 +8,7 @@ import {
 } from "@virtool/contracts";
 import { asc, count, eq, ilike } from "drizzle-orm";
 import type { PostgresError } from "postgres";
+import { getPageCount, getPageOffset } from "../db/pagination";
 import type { Db } from "../db/pg";
 import { takeFirstOrThrow } from "../db/rows";
 import {
@@ -16,6 +17,7 @@ import {
 	userGroups as userGroupsTable,
 } from "../db/schema/groups";
 import { users as usersTable } from "../db/schema/users";
+import { toSearchPattern } from "../db/search";
 import { AppError } from "../errors";
 import { emit } from "../events/emit";
 
@@ -78,8 +80,9 @@ export async function findGroups(
 	page: number,
 	perPage: number,
 ): Promise<GroupSearchResult> {
-	const filter = term ? ilike(groupsTable.name, `%${term}%`) : undefined;
-	const skip = page > 1 ? (page - 1) * perPage : 0;
+	const filter = term
+		? ilike(groupsTable.name, toSearchPattern(term))
+		: undefined;
 
 	const [[foundRow], [totalRow], rows] = await Promise.all([
 		db.select({ value: count() }).from(groupsTable).where(filter),
@@ -90,7 +93,7 @@ export async function findGroups(
 			.where(filter)
 			.orderBy(asc(groupsTable.name))
 			.limit(perPage)
-			.offset(skip),
+			.offset(getPageOffset(page, perPage)),
 	]);
 
 	const foundCount = foundRow?.value ?? 0;
@@ -100,7 +103,7 @@ export async function findGroups(
 		foundCount,
 		totalCount: totalRow?.value ?? 0,
 		page,
-		pageCount: perPage > 0 ? Math.ceil(foundCount / perPage) : 0,
+		pageCount: getPageCount(foundCount, perPage),
 		perPage,
 	};
 }
