@@ -306,8 +306,7 @@ Nothing waits on it. Both readers refuse an expired row on sight, so there
 are no request-path scans.
 
 Account-completion tokens are invitation generations. Each records its issuer,
-copy-only or queued delivery, optional provider-neutral outbox row, and distinct
-consumed, superseded, and revoked timestamps. `src/users/invitations.ts` creates
+copy-only or queued delivery, and distinct consumed and superseded timestamps. `src/users/invitations.ts` creates
 the pending user, identity, role/groups, token, and optional outbox message in
 one transaction. Regeneration serializes on the user's setup advisory lock and
 invalidates older generations. Deleting a pending user takes the same lock and
@@ -378,6 +377,10 @@ Features enqueue mail through `enqueueEmail(db, input)` in
 
 - Pass an `EmailTemplate` and a stable domain idempotency key, never HTML.
 - Use a transaction when domain state and its email must commit together.
+- Pass `setupTokenId` when the message carries a setup link. Deleting the
+  token deletes the message, and `claimDueEmails` deletes a queued message
+  whose token was consumed, superseded, or expired, so a dead link is never
+  sent.
 - Keep provider errors, retries, and the Resend SDK behind the email package.
 - Handle `{ status: "discarded" }`. It's an ordinary outcome, not an error:
   a flow that depends on the email must offer the user another route rather

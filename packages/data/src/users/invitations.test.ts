@@ -8,10 +8,12 @@ import {
 import { seedUser } from "../auth/test/fixtures";
 import type { Db } from "../db/pg";
 import { authAccounts } from "../db/schema/auth";
+import { emailOutbox } from "../db/schema/emailOutbox";
 import { settings } from "../db/schema/settings";
 import { setupTokens } from "../db/schema/setup";
 import { users } from "../db/schema/users";
 import { createTestDatabase, type TestDatabase } from "../db/test/fixtures";
+import { claimDueEmails } from "../email/outbox";
 import { seedSettings } from "../settings/test/fixtures";
 import { GroupMembershipError, UserNotFoundError } from "./data";
 import {
@@ -34,6 +36,7 @@ afterAll(async () => {
 });
 
 beforeEach(async () => {
+	await db.delete(emailOutbox);
 	await db.delete(users);
 	await db.delete(settings);
 	await seedSettings(db);
@@ -84,7 +87,49 @@ describe("account invitations", () => {
 		});
 		expect(created.invitation.delivery).toBe("queued");
 		expect(created.setupToken).toBeNull();
-		expect(created.invitation.outboxId).not.toBeNull();
+		expect(created.invitation.outboxStatus).toBe("queued");
+	});
+
+	it("deletes a pending user's queued invitation email", async () => {
+		await db.update(settings).set({ emailEnabled: true });
+		const issuerUserId = await seedUser(db, { handle: "admin" });
+		const created = await createPendingInvitation(db, {
+			email: "ada@example.com",
+			issuerUserId,
+			deliveryIntent: "email",
+			deliveryAvailable: true,
+			getSetupUrl: (token) =>
+				`https://virtool.test/account-setup#token=${token}`,
+		});
+		await deletePendingUser(db, created.user.id);
+		expect(await db.select().from(emailOutbox)).toEqual([]);
+	});
+
+	it("discards a superseded invitation email instead of sending it", async () => {
+		await db.update(settings).set({ emailEnabled: true });
+		const issuerUserId = await seedUser(db, { handle: "admin" });
+		const options = {
+			issuerUserId,
+			deliveryIntent: "email" as const,
+			deliveryAvailable: true,
+			getSetupUrl: (token: string) =>
+				`https://virtool.test/account-setup#token=${token}`,
+		};
+		const created = await createPendingInvitation(db, {
+			...options,
+			email: "ada@example.com",
+		});
+		await regenerateInvitation(db, created.user.id, options);
+
+		const claimed = await claimDueEmails(db, {
+			claimToken: "claim",
+			leaseSeconds: 60,
+			limit: 1,
+		});
+		expect(claimed.map(({ idempotencyKey }) => idempotencyKey)).toEqual([
+			`account_setup/${created.user.id}/2`,
+		]);
+		expect(await db.select().from(emailOutbox)).toHaveLength(1);
 	});
 
 	it("allows multiple invitations before recipients choose handles", async () => {
@@ -236,9 +281,7 @@ describe("account invitations", () => {
 			).toHaveLength(1);
 			const rows = await db.select().from(setupTokens);
 			expect(
-				rows.filter(
-					(row) => !row.consumedAt && !row.supersededAt && !row.revokedAt,
-				).length,
+				rows.filter((row) => !row.consumedAt && !row.supersededAt).length,
 			).toBeLessThanOrEqual(1);
 		} finally {
 			await other.close();

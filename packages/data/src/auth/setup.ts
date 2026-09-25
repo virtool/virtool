@@ -144,7 +144,6 @@ export async function supersedeSetupTokens(
 				eq(setupTokens.purpose, purpose),
 				isNull(setupTokens.consumedAt),
 				isNull(setupTokens.supersededAt),
-				isNull(setupTokens.revokedAt),
 			),
 		)
 		.returning({ id: setupTokens.id });
@@ -203,7 +202,6 @@ export async function consumeSetupToken(
 				eq(setupTokens.purpose, purpose),
 				isNull(setupTokens.consumedAt),
 				isNull(setupTokens.supersededAt),
-				isNull(setupTokens.revokedAt),
 				sql`${setupTokens.expiresAt} > ${nowUtc()}`,
 				sql`exists (select 1 from ${users} where ${users.id} = ${setupTokens.userId} and ${users.active})`,
 			),

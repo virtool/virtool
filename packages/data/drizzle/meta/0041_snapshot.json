@@ -1,5 +1,5 @@
 {
-  "id": "c4e3dc0a-c85b-4e29-bce0-caf96d9f5a6c",
+  "id": "c150f7a1-257e-4891-8692-63579c975838",
   "prevId": "dfbc12b5-f8c0-4e2a-b04b-1ed656a5717f",
   "version": "7",
   "dialect": "postgresql",
@@ -1868,6 +1868,12 @@
           "primaryKey": false,
           "notNull": true
         },
+        "setup_token_id": {
+          "name": "setup_token_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
         "status": {
           "name": "status",
           "type": "text",
@@ -1927,7 +1933,21 @@
           "with": {}
         }
       },
-      "foreignKeys": {},
+      "foreignKeys": {
+        "email_outbox_setup_token_id_fkey": {
+          "name": "email_outbox_setup_token_id_fkey",
+          "tableFrom": "email_outbox",
+          "tableTo": "setup_tokens",
+          "columnsFrom": [
+            "setup_token_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
       "compositePrimaryKeys": {},
       "uniqueConstraints": {
         "uq_email_outbox_idempotency_key": {
@@ -1935,6 +1955,13 @@
           "nullsNotDistinct": false,
           "columns": [
             "idempotency_key"
+          ]
+        },
+        "uq_email_outbox_setup_token_id": {
+          "name": "uq_email_outbox_setup_token_id",
+          "nullsNotDistinct": false,
+          "columns": [
+            "setup_token_id"
           ]
         }
       },
@@ -4745,12 +4772,6 @@
           "primaryKey": false,
           "notNull": false
         },
-        "outbox_id": {
-          "name": "outbox_id",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": false
-        },
         "candidate_email": {
           "name": "candidate_email",
           "type": "text",
@@ -4790,12 +4811,6 @@
         },
         "superseded_at": {
           "name": "superseded_at",
-          "type": "timestamp",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "revoked_at": {
-          "name": "revoked_at",
           "type": "timestamp",
           "primaryKey": false,
           "notNull": false
@@ -4849,7 +4864,7 @@
             }
           ],
           "isUnique": true,
-          "where": "\"setup_tokens\".\"purpose\" = 'account_completion' and \"setup_tokens\".\"consumed_at\" is null and \"setup_tokens\".\"superseded_at\" is null and \"setup_tokens\".\"revoked_at\" is null",
+          "where": "\"setup_tokens\".\"purpose\" = 'account_completion' and \"setup_tokens\".\"consumed_at\" is null and \"setup_tokens\".\"superseded_at\" is null",
           "concurrently": false,
           "method": "btree",
           "with": {}
@@ -4867,19 +4882,6 @@
             "id"
           ],
           "onDelete": "cascade",
-          "onUpdate": "no action"
-        },
-        "setup_tokens_outbox_id_fkey": {
-          "name": "setup_tokens_outbox_id_fkey",
-          "tableFrom": "setup_tokens",
-          "tableTo": "email_outbox",
-          "columnsFrom": [
-            "outbox_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "set null",
           "onUpdate": "no action"
         }
       },
@@ -4906,10 +4908,6 @@
         "setup_tokens_invitation_metadata_valid": {
           "name": "setup_tokens_invitation_metadata_valid",
           "value": "\"setup_tokens\".\"purpose\" <> 'account_completion' or (\"setup_tokens\".\"issuer_user_id\" is not null and \"setup_tokens\".\"delivery\" in ('copy_only', 'queued'))"
-        },
-        "setup_tokens_delivery_outbox_valid": {
-          "name": "setup_tokens_delivery_outbox_valid",
-          "value": "\"setup_tokens\".\"outbox_id\" is null or \"setup_tokens\".\"delivery\" = 'queued'"
         }
       },
       "isRLSEnabled": false

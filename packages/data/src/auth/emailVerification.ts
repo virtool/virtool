@@ -112,6 +112,7 @@ export async function beginEmailVerification(
 		const queued = await enqueueEmail(tx, {
 			idempotencyKey: `email_verification/${input.userId}/${issued.tokenId}`,
 			recipient: candidateEmail,
+			setupTokenId: issued.tokenId,
 			template: {
 				type: "email_verification",
 				username: user.handle,

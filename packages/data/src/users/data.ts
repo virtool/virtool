@@ -916,6 +916,7 @@ export async function createFirstAdministrator(
 			const queued = await enqueueEmail(tx, {
 				idempotencyKey: `email_verification/${userId}/${issued.tokenId}`,
 				recipient: normalizeEmail(input.email),
+				setupTokenId: issued.tokenId,
 				template: {
 					type: "email_verification",
 					username: input.handle,

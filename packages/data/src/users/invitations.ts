@@ -71,7 +71,6 @@ async function issueInvitationInTransaction(
 	tokenId: number;
 	expiresAt: Date;
 	delivery: InvitationDelivery;
-	outboxId: number | null;
 }> {
 	const requestedEmail =
 		options.deliveryIntent === "email" && options.deliveryAvailable;
@@ -86,11 +85,11 @@ async function issueInvitationInTransaction(
 	});
 
 	let delivery: InvitationDelivery = "copy_only";
-	let outboxId: number | null = null;
 	if (requestedEmail) {
 		const queued = await enqueueEmail(tx, {
 			idempotencyKey: `account_setup/${user.id}/${generation}`,
 			recipient: user.email,
+			setupTokenId: issued.tokenId,
 			template: {
 				type: "account_setup",
 				username: "there",
@@ -99,16 +98,15 @@ async function issueInvitationInTransaction(
 		});
 		if (queued.status === "queued") {
 			delivery = "queued";
-			outboxId = queued.outboxId;
 		}
 	}
 
 	await tx
 		.update(setupTokens)
-		.set({ delivery, outboxId })
+		.set({ delivery })
 		.where(eq(setupTokens.id, issued.tokenId));
 
-	return { ...issued, delivery, outboxId };
+	return { ...issued, delivery };
 }
 
 function toInvitation(row: {
@@ -120,10 +118,8 @@ function toInvitation(row: {
 	createdAt: Date;
 	expiresAt: Date;
 	consumedAt: Date | null;
-	revokedAt: Date | null;
 	supersededAt: Date | null;
 	delivery: "copy_only" | "queued" | null;
-	outboxId: number | null;
 	outboxStatus: "queued" | "accepted" | "failed" | null;
 }): Invitation {
 	if (row.issuerUserId === null || row.delivery === null) {
@@ -141,10 +137,8 @@ const invitationSelection = {
 	createdAt: setupTokens.createdAt,
 	expiresAt: setupTokens.expiresAt,
 	consumedAt: setupTokens.consumedAt,
-	revokedAt: setupTokens.revokedAt,
 	supersededAt: setupTokens.supersededAt,
 	delivery: setupTokens.delivery,
-	outboxId: setupTokens.outboxId,
 	outboxStatus: emailOutbox.status,
 };
 
@@ -193,7 +187,7 @@ export async function getInvitation(
 		.select(invitationSelection)
 		.from(setupTokens)
 		.innerJoin(users, eq(users.id, setupTokens.userId))
-		.leftJoin(emailOutbox, eq(emailOutbox.id, setupTokens.outboxId))
+		.leftJoin(emailOutbox, eq(emailOutbox.setup_token_id, setupTokens.id))
 		.where(
 			and(
 				eq(setupTokens.userId, userId),

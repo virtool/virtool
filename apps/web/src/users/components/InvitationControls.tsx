@@ -13,20 +13,13 @@ import { CircleAlert } from "lucide-react";
 import type { ReactNode } from "react";
 import { ReissueInvitationDialog } from "./ReissueInvitationDialog";
 
-type InvitationState =
-	| "pending"
-	| "expired"
-	| "revoked"
-	| "superseded"
-	| "accepted";
+type InvitationState = "pending" | "expired" | "superseded" | "accepted";
 
 const stateDescriptions: Record<InvitationState, string> = {
 	pending:
 		"An invitation link has been created for this user, but they have not accepted it yet.",
 	expired:
 		"The invitation link expired before this user accepted it. Reissue it to send a new link.",
-	revoked:
-		"The invitation link was revoked. Reissue it to invite this user again.",
 	superseded: "A newer invitation link replaced this one.",
 	accepted: "This user accepted the invitation.",
 };
@@ -37,7 +30,6 @@ const stateBadges: Record<
 > = {
 	pending: { color: "gray", label: "Pending" },
 	expired: { color: "orange", label: "Expired" },
-	revoked: { color: "red", label: "Revoked" },
 	superseded: { color: "gray", label: "Replaced" },
 	accepted: { color: "green", label: "Accepted" },
 };
@@ -48,9 +40,6 @@ function getInvitationState(
 ): InvitationState {
 	if (invitation.consumedAt) {
 		return "accepted";
-	}
-	if (invitation.revokedAt) {
-		return "revoked";
 	}
 	if (invitation.supersededAt) {
 		return "superseded";

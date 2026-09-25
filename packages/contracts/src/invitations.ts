@@ -16,10 +16,8 @@ export type Invitation = {
 	createdAt: Date;
 	expiresAt: Date;
 	consumedAt: Date | null;
-	revokedAt: Date | null;
 	supersededAt: Date | null;
 	delivery: InvitationDelivery;
-	outboxId: number | null;
 	outboxStatus: "queued" | "accepted" | "failed" | null;
 };
 

@@ -113,10 +113,8 @@ export function createFakeInvitation(
 		createdAt: new Date(),
 		expiresAt: new Date(Date.now() + 60_000),
 		consumedAt: null,
-		revokedAt: null,
 		supersededAt: null,
 		delivery: "copy_only",
-		outboxId: null,
 		outboxStatus: null,
 		...overrides,
 	};

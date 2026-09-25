@@ -199,7 +199,6 @@ export async function completeAccountSetup(
 				eq(setupTokens.purpose, "account_completion"),
 				isNull(setupTokens.consumedAt),
 				isNull(setupTokens.supersededAt),
-				isNull(setupTokens.revokedAt),
 				sql`${setupTokens.expiresAt} > ${nowUtc()}`,
 			),
 		)
@@ -310,7 +309,6 @@ export async function completeAccountSetup(
 						eq(setupTokens.userId, consumed.userId),
 						isNull(setupTokens.consumedAt),
 						isNull(setupTokens.supersededAt),
-						isNull(setupTokens.revokedAt),
 					),
 				);
 			await invalidateUserSetupSessions(tx, consumed.userId);
@@ -330,6 +328,7 @@ export async function completeAccountSetup(
 				const queued = await enqueueEmail(tx, {
 					idempotencyKey: `email_verification/${consumed.userId}/${verification.tokenId}`,
 					recipient: email,
+					setupTokenId: verification.tokenId,
 					template: {
 						type: "email_verification",
 						username: handle,
@@ -389,7 +388,6 @@ export async function inspectAccountSetup(
 				eq(setupTokens.purpose, "account_completion"),
 				isNull(setupTokens.consumedAt),
 				isNull(setupTokens.supersededAt),
-				isNull(setupTokens.revokedAt),
 				sql`${setupTokens.expiresAt} > ${nowUtc()}`,
 			),
 		)
@@ -633,6 +631,7 @@ async function startEmailRemediationInTransaction(
 	const delivery = await enqueueEmail(tx, {
 		idempotencyKey: `email_remediation/${userId}/${issued.tokenId}`,
 		recipient: prepared.email,
+		setupTokenId: issued.tokenId,
 		template: {
 			type: "email_verification",
 			username: prepared.handle,

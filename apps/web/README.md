@@ -208,7 +208,7 @@ administrator role. The creation response
 contains one copyable setup token only when copy delivery is selected or email
 is unavailable, and the mutation UI shows it once. Emailed generations never
 return the bearer secret to the administrator. Safe administrator metadata reads
-show the recipient address, expiry, revocation, consumption, and queued delivery
+show the recipient address, expiry, consumption, and queued delivery
 state. Regeneration always
 invalidates older links; choosing email creates a fresh generation. Deleting a
 pending user removes the account and every link it holds.

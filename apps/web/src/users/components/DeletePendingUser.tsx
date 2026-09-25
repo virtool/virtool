@@ -25,9 +25,7 @@ export function DeletePendingUser({ userId, email }: DeletePendingUserProps) {
 	return (
 		<>
 			<Alert className="flex !items-center justify-between" color="red">
-				<span>
-					Delete this invited user. Their invitation link will stop working.
-				</span>
+				<span>Delete this user. Their invitation link will stop working.</span>
 				<Button color="red" onClick={() => setOpen(true)}>
 					Delete
 				</Button>
