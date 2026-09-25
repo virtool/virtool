@@ -12,12 +12,12 @@ const launchers = [
 	join(appRoot, "dev/entrypoint.sh"),
 ];
 
-async function getImportSpecifiers(): Promise<string[]> {
+async function getImportSpecifiers(): Promise<string[][]> {
 	const contents = await Promise.all(
 		launchers.map((path) => readFile(path, "utf8")),
 	);
 
-	return contents.flatMap((content) =>
+	return contents.map((content) =>
 		[...content.matchAll(/--import"?,?\s*"?(@sentry\/[^"\s,]+)/g)].map(
 			(match) => match[1] as string,
 		),
@@ -26,14 +26,14 @@ async function getImportSpecifiers(): Promise<string[]> {
 
 test("every launcher preloads the same Sentry hook", async () => {
 	const specifiers = await getImportSpecifiers();
+	const [expected] = specifiers[0] ?? [];
 
-	expect(specifiers).toHaveLength(launchers.length);
-	expect(new Set(specifiers).size).toBe(1);
+	expect(specifiers).toEqual(launchers.map(() => [expected]));
 });
 
 // A Sentry upgrade that drops the hook's export stops every process at launch.
 test("the Sentry hook loads before postgres", async () => {
-	const [specifier] = await getImportSpecifiers();
+	const [specifier] = (await getImportSpecifiers())[0] ?? [];
 
 	await expect(
 		promisify(execFile)(
