@@ -21,5 +21,4 @@ pnpm --filter @virtool/dev typecheck
 pnpm --filter @virtool/dev build
 ```
 
-See [the development guide](../../dev/README.md) for the runtime architecture,
-data and cleanup contracts, scheduler behavior, and rollout notes.
+See [the development guide](../../dev/README.md) for usage.

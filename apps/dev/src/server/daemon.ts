@@ -74,7 +74,6 @@ function emptySnapshot(repositoryId: string, concurrency: number): Snapshot {
 	};
 }
 
-/** Start the repository-scoped coordinator until it receives shutdown. */
 export async function runDaemon(
 	cwd: string,
 	socketPath: string,
@@ -103,8 +102,11 @@ export async function runDaemon(
 	);
 	store.setMeta("client_hash", primaryHash);
 	store.setMeta("daemon_hash", primaryHash);
+	// Storage usage refreshes only while the UI is open, so a new viewer needs a
+	// refresh to avoid waiting for the next Docker event.
 	const feed = new SnapshotFeed(
 		emptySnapshot(store.repositoryId, store.getWorkflowConcurrency()),
+		requestRefresh,
 	);
 	const builds = new BuildCoordinator();
 	const logger = createLogger({ name: "dev" });
@@ -176,7 +178,13 @@ export async function runDaemon(
 		store,
 		run,
 		repository.primaryWorktree,
-		requestRefresh,
+		() => {
+			feed.set({
+				...feed.get(),
+				scheduler: workflows.getState(),
+				updatedAt: Date.now(),
+			});
+		},
 		builds,
 		logger,
 	);
@@ -195,12 +203,15 @@ export async function runDaemon(
 					repository.primaryWorktree,
 				);
 				store.synchronizeWorktrees(worktrees);
-				const [observed, shared, currentHash] = await Promise.all([
-					reconciler.observe(),
-					reconciler.inspectShared(),
+				const [observed, currentHash] = await Promise.all([
+					reconciler.observe(feed.hasSubscribers()),
 					hashDirectory(join(repository.primaryWorktree, "apps/dev")),
 				]);
-				const environments = store.listEnvironments(observed, openPullRequests);
+				const { shared } = observed;
+				const environments = store.listEnvironments(
+					observed.environments,
+					openPullRequests,
+				);
 				const updateAvailable = currentHash !== primaryHash;
 				feed.set({
 					...feed.get(),

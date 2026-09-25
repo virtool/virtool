@@ -16,7 +16,6 @@ const SERVICE: Record<Workflow, string> = {
 
 type Executor = { environmentId: string; workflow: Workflow };
 
-/** Repository-wide, capacity-limited launcher for one-shot workflow containers. */
 export class WorkflowCoordinator {
 	private active: Executor[] = [];
 	private buildQueue: SchedulerState["buildQueue"] = [];
@@ -134,10 +133,9 @@ export class WorkflowCoordinator {
 	private async readCounts(
 		environmentId: string,
 	): Promise<Partial<Record<Workflow, number>>> {
-		const { stdout } = await this.compose(environmentId, [
+		const { stdout } = await this.run("docker", [
 			"exec",
-			"-T",
-			"jobs-api",
+			`${this.project(environmentId)}-jobs-api-1`,
 			"node",
 			"-e",
 			"fetch('http://127.0.0.1:9950/jobs/counts').then(r=>{if(!r.ok)throw Error(String(r.status));return r.text()}).then(console.log)",
@@ -186,12 +184,16 @@ export class WorkflowCoordinator {
 				"--env-file",
 				join(directory, "environment.env"),
 				"--project-name",
-				`virtool-dev-${this.store.repositoryId.slice(0, 8)}-${environmentId.slice(0, 8)}`,
+				this.project(environmentId),
 				"--file",
 				join(directory, "compose.yaml"),
 				...args,
 			],
 			{ cwd: this.primaryWorktree },
 		);
+	}
+
+	private project(environmentId: string): string {
+		return `virtool-dev-${this.store.repositoryId.slice(0, 8)}-${environmentId.slice(0, 8)}`;
 	}
 }

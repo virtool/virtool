@@ -63,7 +63,6 @@ function suffix(): string {
 	return randomBytes(3).toString("hex");
 }
 
-/** Durable repository state for the development daemon. */
 export class StateStore {
 	readonly database: DatabaseSync;
 	readonly directory: string;

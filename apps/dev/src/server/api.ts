@@ -13,11 +13,13 @@ type EnvironmentLogReader = (
 
 type DaemonLogReader = () => Promise<string>;
 
-/** Mutable snapshot feed shared by API requests and SSE clients. */
 export class SnapshotFeed {
 	private listeners = new Set<(snapshot: Snapshot) => void>();
 
-	constructor(private snapshot: Snapshot) {}
+	constructor(
+		private snapshot: Snapshot,
+		private readonly onFirstSubscriber: () => void = () => undefined,
+	) {}
 
 	get(): Snapshot {
 		return this.snapshot;
@@ -30,13 +32,19 @@ export class SnapshotFeed {
 		}
 	}
 
+	hasSubscribers(): boolean {
+		return this.listeners.size > 0;
+	}
+
 	subscribe(listener: (snapshot: Snapshot) => void): () => void {
 		this.listeners.add(listener);
+		if (this.listeners.size === 1) {
+			this.onFirstSubscriber();
+		}
 		return () => this.listeners.delete(listener);
 	}
 }
 
-/** Create the loopback management API and static UI application. */
 export function createApi(
 	feed: SnapshotFeed,
 	mutate: (mutation: Mutation) => void,

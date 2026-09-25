@@ -1,6 +1,5 @@
 import { createServer } from "node:net";
 
-/** Fail when a fixed TCP port cannot be bound on loopback. */
 export async function checkPortAvailable(port: number): Promise<void> {
 	await new Promise<void>((resolve, reject) => {
 		const server = createServer();
