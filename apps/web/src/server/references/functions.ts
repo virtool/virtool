@@ -38,6 +38,7 @@ import {
 	rowIdSchema,
 	searchTermSchema,
 } from "../validation";
+import { assertReferenceVisible, isReferenceVisible } from "./visibility";
 
 const referenceIdSchema = z.object({
 	referenceId: rowIdSchema,
@@ -110,8 +111,9 @@ function rethrowAsHttp(err: unknown): never {
 
 // The `authenticated()` floor guarantees a signed-in caller; this enforces the
 // per-reference right the operation needs on top of it. A full administrator
-// passes every check; a missing reference surfaces as a 404 for a
-// non-administrator via `checkReferenceRight`.
+// passes every check. A reference that is missing or that the caller cannot see
+// is a 404, so only a caller who can see it learns from a 403 that they lack the
+// right.
 const authorizeReference = createServerOnlyFn(
 	async (
 		referenceId: number,
@@ -119,6 +121,10 @@ const authorizeReference = createServerOnlyFn(
 		right: ReferenceRight,
 	): Promise<void> => {
 		const actor = await resolveReferenceActor(db, userId);
+
+		if (!(await checkReferenceVisibility(db, referenceId, actor))) {
+			throw new ReferenceNotFoundError();
+		}
 
 		if (!(await checkReferenceRight(db, referenceId, right, actor))) {
 			setResponseStatus(403);
@@ -153,10 +159,7 @@ export const getReferenceFn = createServerFn({ method: "GET" })
 			// Detail read enforces the same visibility rule as the list: a
 			// non-member, non-administrator caller cannot tell a hidden reference
 			// from a missing one — both surface as a 404.
-			const actor = await resolveReferenceActor(db, context.principal.userId);
-			if (!(await checkReferenceVisibility(db, data.referenceId, actor))) {
-				throw new ReferenceNotFoundError();
-			}
+			await assertReferenceVisible(data.referenceId, context.principal.userId);
 			return await getReference(db, data.referenceId);
 		} catch (err) {
 			return rethrowAsHttp(err);
@@ -168,6 +171,14 @@ export const createReferenceFn = createServerFn({ method: "POST" })
 	.validator(createReferenceSchema)
 	.handler(async ({ context, data }) => {
 		try {
+			// A source the caller cannot see is refused as if it did not exist.
+			if (
+				data.cloneFrom !== undefined &&
+				!(await isReferenceVisible(data.cloneFrom, context.principal.userId))
+			) {
+				throw new ReferenceCloneSourceNotFoundError();
+			}
+
 			const reference = await createReference(db, {
 				name: data.name,
 				description: data.description,

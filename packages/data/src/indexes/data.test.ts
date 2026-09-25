@@ -10,6 +10,7 @@ import { legacyReferences } from "../db/schema/references";
 import { tasks } from "../db/schema/tasks";
 import { users } from "../db/schema/users";
 import { createTestDatabase, type TestDatabase } from "../db/test/fixtures";
+import type { ReferenceActor } from "../references/data";
 import {
 	createIndex,
 	findIndexes,
@@ -51,6 +52,10 @@ let handleCounter = 0;
 function seedNextUser(): Promise<number> {
 	handleCounter += 1;
 	return seedUser(db, { handle: `user-${handleCounter}` });
+}
+
+function adminActor(userId: number): ReferenceActor {
+	return { userId, groupIds: [], isAdmin: true };
 }
 
 describe("findIndexes", () => {
@@ -184,7 +189,7 @@ describe("listReadyIndexes", () => {
 		});
 		await seedIndex(db, { referenceId, userId, version: 2, ready: false });
 
-		const result = await listReadyIndexes(db);
+		const result = await listReadyIndexes(db, adminActor(userId));
 
 		expect(result.map((index) => index.version)).toEqual([1, 0]);
 	});
@@ -200,10 +205,32 @@ describe("listReadyIndexes", () => {
 		await seedIndex(db, { referenceId: active, userId, version: 0 });
 		await seedIndex(db, { referenceId: archived, userId, version: 0 });
 
-		const result = await listReadyIndexes(db, false);
+		const result = await listReadyIndexes(db, adminActor(userId), false);
 
 		expect(result).toHaveLength(1);
 		expect(result[0]?.reference.id).toBe(active);
+	});
+
+	it("omits builds of references a non-administrator cannot see", async () => {
+		const ownerId = await seedNextUser();
+		const strangerId = await seedNextUser();
+		const visible = await seedReference(db, strangerId);
+		const hidden = await seedReference(db, ownerId, { name: "Hidden" });
+
+		await seedIndex(db, {
+			referenceId: visible,
+			userId: strangerId,
+			version: 0,
+		});
+		await seedIndex(db, { referenceId: hidden, userId: ownerId, version: 0 });
+
+		const result = await listReadyIndexes(db, {
+			userId: strangerId,
+			groupIds: [],
+			isAdmin: false,
+		});
+
+		expect(result.map((index) => index.reference.id)).toEqual([visible]);
 	});
 });
 

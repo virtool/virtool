@@ -1,14 +1,8 @@
-import {
-	getIndexFileKey,
-	getIndexReferenceId,
-} from "@virtool/data/indexes/data";
-import {
-	checkReferenceVisibility,
-	resolveReferenceActor,
-} from "@virtool/data/references/data";
+import { getIndexFileKey } from "@virtool/data/indexes/data";
 import { requireAuthenticatedRequest } from "../auth/middleware";
 import { db, downloadMode, storage } from "../composition";
 import { streamStorageObject, textResponse } from "../http";
+import { isIndexVisible } from "../references/visibility";
 
 /**
  * Serve one of a build's artifacts, backing
@@ -24,7 +18,7 @@ import { streamStorageObject, textResponse } from "../http";
  * enforced here, and it is more than a valid session: an index is only as
  * visible as the reference it was built from, so the caller must be able to see
  * that reference. Without this any signed-in user could read every reference's
- * builds.
+ * builds. A hidden index is a 404, the same as a missing one.
  */
 export async function handleIndexFile(
 	request: Request,
@@ -42,16 +36,8 @@ export async function handleIndexFile(
 		return textResponse("Invalid index id", 400);
 	}
 
-	const referenceId = await getIndexReferenceId(db, id);
-
-	if (referenceId === null) {
+	if (!(await isIndexVisible(id, session.userId))) {
 		return textResponse("Not found", 404);
-	}
-
-	const actor = await resolveReferenceActor(db, session.userId);
-
-	if (!(await checkReferenceVisibility(db, referenceId, actor))) {
-		return textResponse("Forbidden", 403);
 	}
 
 	const key = await getIndexFileKey(db, id, filename);
