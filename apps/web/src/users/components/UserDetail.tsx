@@ -1,9 +1,15 @@
 import { useCheckAdminRole } from "@administration/hooks";
 import Alert from "@base/Alert";
+import Badge from "@base/Badge";
 import { InitialIcon } from "@base/Icon";
 import Label from "@base/Label";
 import SectionHeader from "@base/SectionHeader";
-import { useSuspenseUser, useUpdateUser } from "@users/queries";
+import { useQuery } from "@tanstack/react-query";
+import {
+	invitationQueryOptions,
+	useSuspenseUser,
+	useUpdateUser,
+} from "@users/queries";
 import { CircleAlert, MailClock, ShieldUserIcon } from "lucide-react";
 import Handle from "./Handle";
 import { InvitationControls } from "./InvitationControls";
@@ -26,6 +32,12 @@ export default function UserDetail({ userId }: UserDetailProps) {
 	const { hasPermission: canEdit } = useCheckAdminRole(
 		data.administratorRole === null ? "users" : "full",
 	);
+
+	const isInvited = data.lifecycleState === "pending";
+	const { data: invitation } = useQuery({
+		...invitationQueryOptions(userId),
+		enabled: isInvited && Boolean(canEdit),
+	});
 
 	const mutation = useUpdateUser();
 
@@ -50,18 +62,19 @@ export default function UserDetail({ userId }: UserDetailProps) {
 		permissions,
 		lastPasswordChange,
 		forceReset,
-		lifecycleState,
 	} = data;
 
 	return (
 		<div>
 			<SectionHeader>
 				<div className="flex items-center justify-between gap-4">
-					<h2 className="flex items-center gap-3">
-						{lifecycleState === "pending" ? (
+					<h2 className="flex min-w-0 items-center gap-3">
+						{isInvited ? (
 							<>
 								<InitialIcon size="xl" icon={MailClock} label="Invited user" />
-								<span>Invited user</span>
+								<span className="truncate">
+									{invitation?.email ?? "Invited user"}
+								</span>
 							</>
 						) : (
 							<>
@@ -70,30 +83,38 @@ export default function UserDetail({ userId }: UserDetailProps) {
 							</>
 						)}
 					</h2>
-					{administratorRole && (
-						<Label>
-							<ShieldUserIcon aria-label="Administrator" size={18} />
-							Administrator
-						</Label>
-					)}
+					<div className="flex items-center gap-2">
+						{isInvited && (
+							<Badge color="orange" variant="soft">
+								Invited
+							</Badge>
+						)}
+						{administratorRole && (
+							<Label>
+								<ShieldUserIcon aria-label="Administrator" size={18} />
+								Administrator
+							</Label>
+						)}
+					</div>
 				</div>
 			</SectionHeader>
 
-			<UserAdministratorRole id={id} role={administratorRole} />
-
-			{lifecycleState === "normal" && (
-				<Handle key={`handle-${id}`} id={id} handle={handle} />
-			)}
-
-			{lifecycleState === "pending" ? (
-				<InvitationControls userId={id} />
+			{isInvited ? (
+				<>
+					<InvitationControls userId={id} />
+					<UserAdministratorRole id={id} role={administratorRole} />
+				</>
 			) : (
-				<Password
-					key={id}
-					id={id}
-					lastPasswordChange={lastPasswordChange}
-					forceReset={forceReset}
-				/>
+				<>
+					<UserAdministratorRole id={id} role={administratorRole} />
+					<Handle key={`handle-${id}`} id={id} handle={handle} />
+					<Password
+						key={id}
+						id={id}
+						lastPasswordChange={lastPasswordChange}
+						forceReset={forceReset}
+					/>
+				</>
 			)}
 
 			<div className="mb-4 md:grid md:grid-cols-2 md:gap-x-4">

@@ -1,5 +1,5 @@
 import type { AdministratorRole } from "@administration/types";
-import type { Account, User, UserNested } from "@virtool/contracts";
+import type { Account, Invitation, User, UserNested } from "@virtool/contracts";
 import { expect, type Mock, vi } from "vitest";
 
 /**
@@ -14,6 +14,7 @@ export const userServerFnMocks = {
 	getAccountFn: vi.fn(),
 	getUserFn: vi.fn(),
 	getInvitationFn: vi.fn(),
+	getInvitationEmailAvailabilityFn: vi.fn(),
 	createUserFn: vi.fn(),
 	regenerateInvitationFn: vi.fn(),
 	revokeInvitationFn: vi.fn(),
@@ -99,6 +100,72 @@ export function mockGetUser(userId: number, user: User): Mock {
 	return userServerFnMocks.getUserFn;
 }
 
+/** Build an invitation that is pending and shared as a link. */
+export function createFakeInvitation(
+	overrides: Partial<Invitation> = {},
+): Invitation {
+	return {
+		id: 1,
+		userId: 1,
+		email: "user@example.com",
+		issuerUserId: 2,
+		generation: 1,
+		createdAt: new Date(),
+		expiresAt: new Date(Date.now() + 60_000),
+		consumedAt: null,
+		revokedAt: null,
+		supersededAt: null,
+		delivery: "copy_only",
+		outboxId: null,
+		outboxStatus: null,
+		...overrides,
+	};
+}
+
+/** Sets up getInvitation to resolve with the given invitation. */
+export function mockGetInvitation(invitation: Invitation): Mock {
+	userServerFnMocks.getInvitationFn.mockResolvedValue(invitation);
+	return userServerFnMocks.getInvitationFn;
+}
+
+/** Sets up whether invitation emails can be sent. */
+export function mockInvitationEmailAvailability(available: boolean): Mock {
+	userServerFnMocks.getInvitationEmailAvailabilityFn.mockResolvedValue(
+		available,
+	);
+	return userServerFnMocks.getInvitationEmailAvailabilityFn;
+}
+
+/** Sets up regenerateInvitation to return a new generation for the user. */
+export function mockRegenerateInvitation(user: User, email: string): Mock {
+	userServerFnMocks.regenerateInvitationFn.mockImplementation(
+		async ({ data }: { data: { deliveryIntent: "copy_only" | "email" } }) => {
+			const emailed = data.deliveryIntent === "email";
+			return {
+				user,
+				setupToken: emailed ? null : "b".repeat(64),
+				invitation: createFakeInvitation({
+					userId: user.id,
+					email,
+					generation: 2,
+					delivery: emailed ? "queued" : "copy_only",
+					outboxStatus: emailed ? "queued" : null,
+				}),
+			};
+		},
+	);
+	return userServerFnMocks.regenerateInvitationFn;
+}
+
+/** Sets up revokeInvitation to return the given invitation marked revoked. */
+export function mockRevokeInvitation(invitation: Invitation): Mock {
+	userServerFnMocks.revokeInvitationFn.mockResolvedValue({
+		...invitation,
+		revokedAt: new Date(),
+	});
+	return userServerFnMocks.revokeInvitationFn;
+}
+
 /** Sets up createUser to resolve with the given user (or reject on a 4xx code). */
 export function mockCreateUser(
 	user?: User,
@@ -113,21 +180,7 @@ export function mockCreateUser(
 				? {
 						user,
 						setupToken: "a".repeat(64),
-						invitation: {
-							id: 1,
-							userId: user.id,
-							email: "user@example.com",
-							issuerUserId: 2,
-							generation: 1,
-							createdAt: new Date(),
-							expiresAt: new Date(Date.now() + 60_000),
-							consumedAt: null,
-							revokedAt: null,
-							supersededAt: null,
-							delivery: "copy_only",
-							outboxId: null,
-							outboxStatus: null,
-						},
+						invitation: createFakeInvitation({ userId: user.id }),
 					}
 				: {},
 		);

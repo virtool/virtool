@@ -30,3 +30,8 @@ export function getUserStatus(
 
 	return user.lifecycleState === "pending" ? "invited" : "active";
 }
+
+/** Build the account setup link for a newly issued invitation token. */
+export function getAccountSetupUrl(token: string): string {
+	return `${window.location.origin}/account-setup#token=${token}`;
+}

@@ -1,15 +1,17 @@
-import { cn } from "@app/cn";
 import Checkbox from "@base/Checkbox";
 import { InputError, InputGroup, InputLabel, InputSimple } from "@base/Input";
-import Link from "@base/Link";
 import SaveButton from "@base/SaveButton";
 import type { AdministratorRoleName, GroupMinimal } from "@virtool/contracts";
 import { Controller, useForm } from "react-hook-form";
+import {
+	type DeliveryIntent,
+	DeliveryIntentField,
+} from "./DeliveryIntentField";
 
 /** Values collected when an administrator invites a user. */
 export type CreateUserFormValues = {
 	email: string;
-	deliveryIntent: "copy_only" | "email";
+	deliveryIntent: DeliveryIntent;
 	administratorRole: AdministratorRoleName | null;
 	groups: number[];
 	primaryGroup: number | null;
@@ -157,64 +159,13 @@ export function CreateUserForm({
 					name="deliveryIntent"
 					control={control}
 					render={({ field }) => (
-						<fieldset className="grid gap-2">
-							<legend className="mb-2 font-medium">Invitation delivery</legend>
-							<div>
-								<label
-									className={cn(
-										"flex items-start gap-2",
-										!emailDeliveryAvailable &&
-											"cursor-not-allowed text-gray-500",
-									)}
-								>
-									<input
-										className="mt-1 shrink-0"
-										type="radio"
-										name={field.name}
-										value="email"
-										checked={field.value === "email"}
-										disabled={!emailDeliveryAvailable}
-										onChange={() => field.onChange("email")}
-									/>
-									<span>
-										<span className="block font-medium">Email invitation</span>
-										<span
-											className={`block text-sm ${emailDeliveryAvailable ? "text-gray-600" : "text-gray-500"}`}
-										>
-											{emailDeliveryAvailable
-												? "Send the setup link to this email address."
-												: "Email invitations aren’t configured."}
-										</span>
-									</span>
-								</label>
-								{!emailDeliveryAvailable && canConfigureEmailDelivery && (
-									<Link
-										className="ml-6 text-sm text-blue-600 underline"
-										to="/administration/email"
-									>
-										Configure email delivery
-									</Link>
-								)}
-							</div>
-							<label className="flex items-start gap-2">
-								<input
-									className="mt-1 shrink-0"
-									type="radio"
-									name={field.name}
-									value="copy_only"
-									checked={field.value === "copy_only"}
-									onChange={() => field.onChange("copy_only")}
-								/>
-								<span>
-									<span className="block font-medium">
-										Create shareable link
-									</span>
-									<span className="block text-sm text-gray-600">
-										You’ll need to send the link yourself.
-									</span>
-								</span>
-							</label>
-						</fieldset>
+						<DeliveryIntentField
+							name={field.name}
+							value={field.value}
+							onChange={field.onChange}
+							emailDeliveryAvailable={emailDeliveryAvailable}
+							canConfigureEmailDelivery={canConfigureEmailDelivery}
+						/>
 					)}
 				/>
 			</InputGroup>

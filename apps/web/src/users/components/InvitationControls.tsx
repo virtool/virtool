@@ -1,78 +1,157 @@
-import Button from "@base/Button";
-import CopyField from "@base/CopyField";
+import { formatDistanceStrict } from "@app/date";
+import { useNow } from "@app/hooks";
+import Alert from "@base/Alert";
+import Badge from "@base/Badge";
+import { BoxGroup, BoxGroupSection } from "@base/Box";
+import RelativeTime from "@base/RelativeTime";
 import SectionHeader from "@base/SectionHeader";
+import type { PaletteColor } from "@base/types";
 import { useQuery } from "@tanstack/react-query";
-import {
-	invitationQueryOptions,
-	useRegenerateInvitation,
-	useRevokeInvitation,
-} from "@users/queries";
-import { useState } from "react";
+import { invitationQueryOptions } from "@users/queries";
+import type { Invitation } from "@virtool/contracts";
+import { CircleAlert } from "lucide-react";
+import type { ReactNode } from "react";
+import { ReissueInvitationDialog } from "./ReissueInvitationDialog";
+import { RevokeInvitationDialog } from "./RevokeInvitationDialog";
+
+type InvitationState =
+	| "pending"
+	| "expired"
+	| "revoked"
+	| "superseded"
+	| "accepted";
+
+const stateDescriptions: Record<InvitationState, string> = {
+	pending:
+		"An invitation link has been created for this user, but they have not accepted it yet.",
+	expired:
+		"The invitation link expired before this user accepted it. Reissue it to send a new link.",
+	revoked:
+		"The invitation link was revoked. Reissue it to invite this user again.",
+	superseded: "A newer invitation link replaced this one.",
+	accepted: "This user accepted the invitation.",
+};
+
+const stateBadges: Record<
+	InvitationState,
+	{ color: PaletteColor; label: string }
+> = {
+	pending: { color: "gray", label: "Pending" },
+	expired: { color: "orange", label: "Expired" },
+	revoked: { color: "red", label: "Revoked" },
+	superseded: { color: "gray", label: "Replaced" },
+	accepted: { color: "green", label: "Accepted" },
+};
+
+function getInvitationState(
+	invitation: Invitation,
+	now: number,
+): InvitationState {
+	if (invitation.consumedAt) {
+		return "accepted";
+	}
+	if (invitation.revokedAt) {
+		return "revoked";
+	}
+	if (invitation.supersededAt) {
+		return "superseded";
+	}
+	return invitation.expiresAt.getTime() <= now ? "expired" : "pending";
+}
+
+function getDeliveryDescription(invitation: Invitation): string {
+	if (invitation.delivery === "copy_only") {
+		return "Shared link";
+	}
+
+	switch (invitation.outboxStatus) {
+		case "accepted":
+			return "Email sent";
+		case "failed":
+			return "Email failed";
+		default:
+			return "Email queued";
+	}
+}
+
+type InvitationFactProps = { label: string; children: ReactNode };
+
+function InvitationFact({ label, children }: InvitationFactProps) {
+	return (
+		<div className="flex flex-col gap-1">
+			<dt className="text-xs font-semibold uppercase tracking-wide text-gray-500">
+				{label}
+			</dt>
+			<dd className="min-h-6 font-medium leading-6 first-letter:uppercase">
+				{children}
+			</dd>
+		</div>
+	);
+}
 
 type InvitationControlsProps = { userId: number };
 
-/** Safe invitation status and one-time regeneration controls. */
+/** The status of a pending user's invitation, with controls to replace or revoke it. */
 export function InvitationControls({ userId }: InvitationControlsProps) {
 	const { data } = useQuery(invitationQueryOptions(userId));
-	const regenerate = useRegenerateInvitation();
-	const revoke = useRevokeInvitation();
-	const [setupUrl, setSetupUrl] = useState("");
-	const [emailQueued, setEmailQueued] = useState(false);
+	const now = useNow();
 
-	function issue(deliveryIntent: "copy_only" | "email") {
-		regenerate.mutate(
-			{ userId, deliveryIntent },
-			{
-				onSuccess: (result) => {
-					setSetupUrl(
-						result.setupToken
-							? `${window.location.origin}/account-setup#token=${result.setupToken}`
-							: "",
-					);
-					setEmailQueued(result.invitation.delivery === "queued");
-				},
-			},
-		);
+	if (!data) {
+		return null;
 	}
 
-	const state = data?.consumedAt
-		? "accepted"
-		: data?.revokedAt
-			? "revoked"
-			: data?.supersededAt
-				? "superseded"
-				: data
-					? "pending"
-					: "loading";
+	const state = getInvitationState(data, now);
+	const badge = stateBadges[state];
+	const expiry = formatDistanceStrict(data.expiresAt, now, {
+		addSuffix: true,
+	});
 
 	return (
 		<section className="mb-6">
-			<SectionHeader>
+			<SectionHeader level={3}>
 				<h3>Invitation</h3>
+				<p>{stateDescriptions[state]}</p>
 			</SectionHeader>
-			{data && <p className="mb-3">Recipient: {data.email}</p>}
-			<p className="mb-3 capitalize">Status: {state}</p>
-			{data?.outboxStatus && <p className="mb-3">Email: {data.outboxStatus}</p>}
-			<div className="flex gap-2 mb-3">
-				<Button type="button" onClick={() => issue("copy_only")}>
-					New copy link
-				</Button>
-				<Button type="button" onClick={() => issue("email")}>
-					Send new email
-				</Button>
-				<Button type="button" onClick={() => revoke.mutate(userId)}>
-					Revoke
-				</Button>
-			</div>
-			{emailQueued && <p>The new invitation email has been queued.</p>}
-			{setupUrl && (
-				<>
-					<p className="mb-3">
-						Send this link to the user. It won’t be shown again.
-					</p>
-					<CopyField label="Account setup link" value={setupUrl} />
-				</>
+			{data.outboxStatus === "failed" && state === "pending" && (
+				<Alert color="red" icon={CircleAlert} level>
+					The invitation email could not be sent. Reissue the invitation to try
+					again or to share a link yourself.
+				</Alert>
 			)}
+			<BoxGroup>
+				<BoxGroupSection className="flex flex-wrap items-center justify-between gap-4">
+					<dl className="flex flex-wrap gap-x-10 gap-y-3">
+						<InvitationFact label="Status">
+							<Badge color={badge.color} variant="soft">
+								{badge.label}
+							</Badge>
+						</InvitationFact>
+						<InvitationFact label="Delivery">
+							{getDeliveryDescription(data)}
+						</InvitationFact>
+						<InvitationFact label="Sent">
+							<RelativeTime time={data.createdAt} />
+						</InvitationFact>
+						{(state === "pending" || state === "expired") && (
+							<InvitationFact
+								label={state === "pending" ? "Expires" : "Expired"}
+							>
+								{expiry}
+							</InvitationFact>
+						)}
+					</dl>
+					{state !== "accepted" && (
+						<div className="flex flex-wrap gap-2">
+							<ReissueInvitationDialog userId={userId} email={data.email} />
+							<RevokeInvitationDialog
+								userId={userId}
+								email={data.email}
+								disabled={state !== "pending"}
+							/>
+						</div>
+					)}
+				</BoxGroupSection>
+			</BoxGroup>
 		</section>
 	);
 }
