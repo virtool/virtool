@@ -1,4 +1,4 @@
-import { mkdtempSync, rmSync } from "node:fs";
+import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, expect, it, vi } from "vitest";
@@ -87,4 +87,42 @@ it("skips Docker calls for environments observed as converged", async () => {
 	await reconciler.stop();
 
 	expect(run).toHaveBeenCalledOnce();
+});
+
+it("runs removal cleanup from the primary worktree's definitions", async () => {
+	const store = new StateStore(
+		mkdtempSync(join(tmpdir(), "virtool-dev-lifecycle-")),
+	);
+	stores.push(store);
+	store.synchronizeWorktrees([
+		{ branch: "feature", id: "wt-1", path: "/worktrees/feature" },
+	]);
+	const environmentId = store.setDesired("wt-1", "absent");
+	const directory = join(store.directory, "environments", environmentId);
+	mkdirSync(directory, { recursive: true });
+	writeFileSync(join(directory, "compose.yaml"), "services: {}\n");
+	const run = vi
+		.fn<CommandRunner>()
+		.mockResolvedValue({ stderr: "", stdout: "" });
+	const primaryWorktree = "/worktrees/main";
+	const reconciler = new Reconciler(
+		store,
+		run,
+		primaryWorktree,
+		vi.fn(),
+		new BuildCoordinator(),
+	);
+
+	reconciler.start();
+	await reconciler.stop();
+
+	const cleanupFiles = run.mock.calls
+		.map(([, args]) => args)
+		.filter((args) => args.at(-1)?.startsWith("cleanup-"))
+		.map((args) => args[args.indexOf("--file") + 1]);
+	expect(cleanupFiles).toEqual([
+		join(primaryWorktree, "dev/cleanup.compose.yaml"),
+		join(primaryWorktree, "dev/cleanup.compose.yaml"),
+	]);
+	expect(store.getDesiredByEnvironment(environmentId)).toBeNull();
 });
