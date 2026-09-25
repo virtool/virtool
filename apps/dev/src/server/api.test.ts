@@ -80,19 +80,23 @@ describe("event stream", () => {
 
 	it("ends the handler when the client disconnects", async () => {
 		const close = vi.spyOn(SSEStreamingApi.prototype, "close");
+		const write = vi.spyOn(SSEStreamingApi.prototype, "writeSSE");
 		const feed = new SnapshotFeed(snapshot);
 		const app = createApi(feed, vi.fn(), vi.fn(), "/missing");
 		const response = await app.request("http://127.0.0.1/api/events");
 		const reader = (response.body as ReadableStream<Uint8Array>).getReader();
 		await readUntil(reader, "\n\n");
 		expect(feed.hasSubscribers()).toBe(true);
-		await new Promise((done) => setTimeout(done, 0));
+		// The handler awaited this write first, so it is waiting for a wake
+		// when this await resumes.
+		await write.mock.results[0]?.value;
 
 		await reader.cancel();
 
 		await vi.waitFor(() => expect(close).toHaveBeenCalledOnce());
 		expect(feed.hasSubscribers()).toBe(false);
 		close.mockRestore();
+		write.mockRestore();
 	});
 });
 
