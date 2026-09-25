@@ -438,10 +438,6 @@ export async function checkReferenceVisibility(
 	referenceId: number,
 	actor: ReferenceActor,
 ): Promise<boolean> {
-	if (actor.isAdmin) {
-		return true;
-	}
-
 	const [row] = await db
 		.select({ id: legacyReferences.id })
 		.from(legacyReferences)

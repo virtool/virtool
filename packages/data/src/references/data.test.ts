@@ -17,6 +17,7 @@ import { collectFrames } from "../test/frames";
 import {
 	addReferenceGroup,
 	addReferenceUser,
+	checkReferenceVisibility,
 	createReference,
 	removeReferenceGroup,
 	removeReferenceUser,
@@ -197,5 +198,29 @@ describe("membership", () => {
 		});
 
 		expect(frames).toEqual([]);
+	});
+});
+
+describe("checkReferenceVisibility", () => {
+	it("returns true for an administrator and an existing reference", async () => {
+		const referenceId = await seedReference();
+
+		expect(
+			await checkReferenceVisibility(db, referenceId, {
+				userId,
+				groupIds: [],
+				isAdmin: true,
+			}),
+		).toBe(true);
+	});
+
+	it("returns false for an administrator and a missing reference", async () => {
+		expect(
+			await checkReferenceVisibility(db, 999_999, {
+				userId,
+				groupIds: [],
+				isAdmin: true,
+			}),
+		).toBe(false);
 	});
 });
